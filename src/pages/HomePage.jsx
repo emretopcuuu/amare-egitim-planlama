@@ -14,7 +14,7 @@ const HomePage = () => {
             <Sparkles className="w-20 h-20 text-white" />
           </div>
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
-            AMARE
+            ONE TEAM
           </h1>
           <h2 className="text-3xl md:text-4xl font-semibold text-white/90 mb-4">
             Eğitim Planlama Sistemi
