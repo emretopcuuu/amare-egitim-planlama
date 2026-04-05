@@ -24,6 +24,9 @@ const AdminPanel = () => {
     konusmaciFotoSil,
     geminiApiKey,
     geminiApiKeyKaydet,
+    sablonlar,
+    sablonEkle,
+    sablonSil,
     takvimDurumDegistir,
     adminCikis
   } = useData();
@@ -34,6 +37,7 @@ const AdminPanel = () => {
   const [gorselModal, setGorselModal] = useState(null); // { egitim, egitmenFotoURL }
   const [apiKeyInput, setApiKeyInput] = useState(geminiApiKey);
   const [apiKeySaved, setApiKeySaved] = useState(false);
+  const [sablonYukleniyor, setSablonYukleniyor] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -156,6 +160,23 @@ const AdminPanel = () => {
     geminiApiKeyKaydet(apiKeyInput.trim());
     setApiKeySaved(true);
     setTimeout(() => setApiKeySaved(false), 2500);
+  };
+
+  const handleSablonYukle = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = '';
+    setSablonYukleniyor(true);
+    const ad = file.name.replace(/\.[^.]+$/, '');
+    const result = await sablonEkle(ad, file);
+    setSablonYukleniyor(false);
+    if (!result.success) alert('Şablon yüklenemedi: ' + result.error);
+  };
+
+  const handleSablonSil = async (sablonId, sablonAd) => {
+    if (!window.confirm(`"${sablonAd}" şablonunu silmek istediğinize emin misiniz?`)) return;
+    const result = await sablonSil(sablonId);
+    if (!result.success) alert('Silme başarısız: ' + result.error);
   };
 
   const handleEgitimSil = async (egitimId, egitimAdi) => {
@@ -597,6 +618,46 @@ const AdminPanel = () => {
                 )}
               </div>
 
+              {/* Şablon Görseller */}
+              <div className="border-b pb-6 mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+                      <ImageIcon className="w-5 h-5 text-amare-purple" />
+                      Şablon Görseller
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-0.5">Görsel hazırlarken kullanılacak şablon tasarımları</p>
+                  </div>
+                  <label className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm text-white transition-colors ${sablonYukleniyor ? 'bg-gray-400' : 'bg-amare-purple hover:bg-amare-dark'}`}>
+                    <Upload className="w-4 h-4" />
+                    {sablonYukleniyor ? 'Yükleniyor...' : 'Şablon Ekle'}
+                    <input type="file" accept="image/*" className="hidden" disabled={sablonYukleniyor} onChange={handleSablonYukle} />
+                  </label>
+                </div>
+                {sablonlar.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 text-sm">
+                    Henüz şablon eklenmedi
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                    {sablonlar.map((s) => (
+                      <div key={s.id} className="relative group rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                        <img src={s.url} alt={s.ad} className="w-full aspect-square object-cover" />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
+                          <p className="text-white text-xs text-center font-medium leading-tight line-clamp-2">{s.ad}</p>
+                          <button
+                            onClick={() => handleSablonSil(s.id, s.ad)}
+                            className="bg-red-500 hover:bg-red-600 text-white rounded-lg px-2 py-1 text-xs flex items-center gap-1"
+                          >
+                            <Trash2 className="w-3 h-3" /> Sil
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* İstatistikler */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">
@@ -640,6 +701,7 @@ const AdminPanel = () => {
           egitim={gorselModal.egitim}
           egitmenFotoURL={gorselModal.egitmenFotoURL}
           apiKey={geminiApiKey}
+          sablonlar={sablonlar}
           onClose={() => setGorselModal(null)}
         />
       )}

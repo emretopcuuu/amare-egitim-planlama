@@ -33,6 +33,7 @@ export const DataProvider = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [konusmacilar, setKonusmacilar] = useState([]);
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
+  const [sablonlar, setSablonlar] = useState([]);
 
   // Firebase'den veri yükle
   useEffect(() => {
@@ -75,6 +76,11 @@ export const DataProvider = ({ children }) => {
         ...d.data()
       }));
       setKonusmacilar(konusmacilarData);
+
+      // Şablonları yükle
+      const sablonlarSnapshot = await getDocs(collection(db, 'sablonlar'));
+      const sablonlarData = sablonlarSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      setSablonlar(sablonlarData);
 
     } catch (error) {
       console.error('Veri yükleme hatası:', error);
@@ -355,6 +361,40 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  // Şablon yükle
+  const sablonEkle = async (ad, file) => {
+    try {
+      const ext = file.name.split('.').pop();
+      const safeId = `sablon_${Date.now()}`;
+      const storageRef = ref(storage, `sablonlar/${safeId}.${ext}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      await setDoc(doc(db, 'sablonlar', safeId), {
+        id: safeId,
+        ad: ad || file.name,
+        url,
+        olusturuldu: new Date().toISOString()
+      });
+      await loadData();
+      return { success: true, url };
+    } catch (error) {
+      console.error('Şablon yükleme hatası:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Şablon sil
+  const sablonSil = async (sablonId) => {
+    try {
+      await deleteDoc(doc(db, 'sablonlar', sablonId));
+      await loadData();
+      return { success: true };
+    } catch (error) {
+      console.error('Şablon silme hatası:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   // Gemini API key kaydet
   const geminiApiKeyKaydet = (key) => {
     setGeminiApiKey(key);
@@ -403,6 +443,9 @@ export const DataProvider = ({ children }) => {
     konusmaciFotoSil,
     geminiApiKey,
     geminiApiKeyKaydet,
+    sablonlar,
+    sablonEkle,
+    sablonSil,
     adminGiris,
     adminCikis,
     loadData
