@@ -25,10 +25,16 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, apiKey, onClose }) => {
     if (!sablonFile) { setError('Lütfen önce bir şablon görseli seçin.'); return; }
     setGenerating(true);
     setError(null);
+    if (resultDataUrl) URL.revokeObjectURL(resultDataUrl);
     setResultDataUrl(null);
     try {
       const result = await gorselOlustur({ apiKey, egitim, egitmenFotoURL, sablonFile });
-      setResultDataUrl(result.dataUrl);
+      // base64 → Blob URL (Chrome large data URL sorununu çözer)
+      const byteChars = atob(result.base64);
+      const byteArr = new Uint8Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
+      const blob = new Blob([byteArr], { type: result.mimeType });
+      setResultDataUrl(URL.createObjectURL(blob));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -41,7 +47,9 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, apiKey, onClose }) => {
     a.href = resultDataUrl;
     const ad = (egitim.egitim || 'gorsel').replace(/[^a-z0-9]/gi, '_').toLowerCase();
     a.download = `${ad}_${egitim.tarih || ''}.png`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
   };
 
   return (
