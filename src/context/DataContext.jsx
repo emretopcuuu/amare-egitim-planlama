@@ -366,16 +366,17 @@ export const DataProvider = ({ children }) => {
     try {
       const ext = file.name.split('.').pop();
       const safeId = `sablon_${Date.now()}`;
-      const storageRef = ref(storage, `sablonlar/${safeId}.${ext}`);
+      const storageRef = ref(storage, `konusmacilar/sablonlar/${safeId}.${ext}`);
       await uploadBytes(storageRef, file);
       const url = await getDownloadURL(storageRef);
-      await setDoc(doc(db, 'sablonlar', safeId), {
+      const sablonData = {
         id: safeId,
         ad: ad || file.name,
         url,
         olusturuldu: new Date().toISOString()
-      });
-      await loadData();
+      };
+      await setDoc(doc(db, 'sablonlar', safeId), sablonData);
+      setSablonlar(prev => [...prev, sablonData]);
       return { success: true, url };
     } catch (error) {
       console.error('Şablon yükleme hatası:', error);
@@ -387,7 +388,7 @@ export const DataProvider = ({ children }) => {
   const sablonSil = async (sablonId) => {
     try {
       await deleteDoc(doc(db, 'sablonlar', sablonId));
-      await loadData();
+      setSablonlar(prev => prev.filter(s => s.id !== sablonId));
       return { success: true };
     } catch (error) {
       console.error('Şablon silme hatası:', error);
