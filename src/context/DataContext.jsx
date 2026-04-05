@@ -319,29 +319,47 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // Konuşmacı fotoğrafı yükle ve kaydet
+  // Görseli canvas ile yeniden boyutlandırıp base64 döndür
+  const gorseliKucult = (file, maxSize = 600) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else { w = Math.round(w * maxSize / h); h = maxSize; }
+        }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.82));
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  // Konuşmacı fotoğrafı yükle ve kaydet (Firestore base64)
   const konusmaciFotoYukle = async (konusmaciAdi, file) => {
     try {
-      // Konuşmacı adından güvenli bir dosya adı oluştur
       const safeId = konusmaciAdi.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
-      const ext = file.name.split('.').pop();
-      const storageRef = ref(storage, `konusmacilar/${safeId}.${ext}`);
-
-      // Resmi Storage'a yükle
-      await uploadBytes(storageRef, file);
-      const downloadURL = await getDownloadURL(storageRef);
-
-      // Firestore'da konuşmacı kaydını oluştur/güncelle
+      const base64 = await gorseliKucult(file, 500);
       const konusmaciRef = doc(db, 'konusmacilar', safeId);
       await setDoc(konusmaciRef, {
         id: safeId,
         ad: konusmaciAdi.trim(),
-        fotoURL: downloadURL,
+        fotoURL: base64,
         guncellendi: new Date().toISOString()
       }, { merge: true });
-
-      await loadData();
-      return { success: true, url: downloadURL };
+      setKonusmacilar(prev => {
+        const idx = prev.findIndex(k => k.id === safeId);
+        const updated = { id: safeId, ad: konusmaciAdi.trim(), fotoURL: base64 };
+        return idx >= 0 ? prev.map(k => k.id === safeId ? { ...k, ...updated } : k) : [...prev, updated];
+      });
+      return { success: true, url: base64 };
     } catch (error) {
       console.error('Fotoğraf yükleme hatası:', error);
       return { success: false, error: error.message };
@@ -353,7 +371,7 @@ export const DataProvider = ({ children }) => {
     try {
       const konusmaciRef = doc(db, 'konusmacilar', konusmaciId);
       await updateDoc(konusmaciRef, { fotoURL: null, guncellendi: new Date().toISOString() });
-      await loadData();
+      setKonusmacilar(prev => prev.map(k => k.id === konusmaciId ? { ...k, fotoURL: null } : k));
       return { success: true };
     } catch (error) {
       console.error('Fotoğraf silme hatası:', error);
@@ -361,23 +379,20 @@ export const DataProvider = ({ children }) => {
     }
   };
 
-  // Şablon yükle
+  // Şablon yükle (Firestore base64)
   const sablonEkle = async (ad, file) => {
     try {
-      const ext = file.name.split('.').pop();
       const safeId = `sablon_${Date.now()}`;
-      const storageRef = ref(storage, `konusmacilar/sablonlar/${safeId}.${ext}`);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
+      const base64 = await gorseliKucult(file, 800);
       const sablonData = {
         id: safeId,
         ad: ad || file.name,
-        url,
+        url: base64,
         olusturuldu: new Date().toISOString()
       };
       await setDoc(doc(db, 'sablonlar', safeId), sablonData);
       setSablonlar(prev => [...prev, sablonData]);
-      return { success: true, url };
+      return { success: true, url: base64 };
     } catch (error) {
       console.error('Şablon yükleme hatası:', error);
       return { success: false, error: error.message };
