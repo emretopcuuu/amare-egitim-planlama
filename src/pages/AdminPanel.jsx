@@ -167,10 +167,15 @@ const AdminPanel = () => {
     if (!file) return;
     e.target.value = '';
     setSablonYukleniyor(true);
-    const ad = file.name.replace(/\.[^.]+$/, '');
-    const result = await sablonEkle(ad, file);
-    setSablonYukleniyor(false);
-    if (!result.success) alert('Şablon yüklenemedi: ' + result.error);
+    try {
+      const ad = file.name.replace(/\.[^.]+$/, '');
+      const result = await sablonEkle(ad, file);
+      if (!result.success) alert('Şablon yüklenemedi: ' + result.error);
+    } catch (err) {
+      alert('Şablon yüklenemedi: ' + err.message);
+    } finally {
+      setSablonYukleniyor(false);
+    }
   };
 
   const handleSablonSil = async (sablonId, sablonAd) => {
