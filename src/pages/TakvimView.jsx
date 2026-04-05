@@ -10,21 +10,22 @@ const TakvimView = () => {
   const { takvim, takvimYayinlandi, loading } = useData();
 
   // Takvimi haftalara göre grupla
+  const haftaNumaralari = [...new Set(takvim.map(e => e.hafta))].sort((a, b) => a - b);
   const haftalikTakvim = {};
-  for (let i = 1; i <= 4; i++) {
-    haftalikTakvim[i] = takvim.filter(e => e.hafta === i);
-  }
+  haftaNumaralari.forEach(h => {
+    haftalikTakvim[h] = takvim.filter(e => e.hafta === h);
+  });
 
   const exportPDF = () => {
     const doc = new jsPDF();
     
     doc.setFontSize(18);
     doc.setTextColor(107, 70, 193);
-    doc.text('AMARE - MAYIS 2026 EĞİTİM TAKVİMİ', 14, 20);
-    
+    doc.text('ONE TEAM - EGITIM TAKVIMI', 14, 20);
+
     let yPos = 35;
-    
-    for (let hafta = 1; hafta <= 4; hafta++) {
+
+    for (const hafta of haftaNumaralari) {
       const egitimler = haftalikTakvim[hafta];
       
       if (egitimler.length === 0) continue;
@@ -58,7 +59,7 @@ const TakvimView = () => {
       }
     }
     
-    doc.save('AMARE_Mayis_2026_Egitim_Takvimi.pdf');
+    doc.save('ONE_TEAM_Egitim_Takvimi.pdf');
   };
 
   if (loading) {
@@ -79,7 +80,7 @@ const TakvimView = () => {
               Takvim Henüz Yayınlanmadı
             </h2>
             <p className="text-gray-600 mb-6">
-              Mayıs 2026 eğitim takvimi henüz yayınlanmadı. Takvim hazır olduğunda burada görüntülenecektir.
+              Eğitim takvimi henüz yayınlanmadı. Takvim hazır olduğunda burada görüntülenecektir.
             </p>
             <button
               onClick={() => navigate('/')}
@@ -109,7 +110,7 @@ const TakvimView = () => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2">
-                Mayıs 2026 Eğitim Takvimi
+                Eğitim Takvimi
               </h1>
               <p className="text-gray-600">
                 Toplam {takvim.length} eğitim planlandı
@@ -126,22 +127,23 @@ const TakvimView = () => {
         </div>
 
         {/* Takvim - Haftalık */}
-        {[1, 2, 3, 4].map(haftaNo => {
+        {haftaNumaralari.map(haftaNo => {
           const haftaEgitimleri = haftalikTakvim[haftaNo];
-          
-          if (haftaEgitimleri.length === 0) return null;
-          
-          const haftaBasliklari = [
-            "Hafta 1 (1-7 Mayıs) - Motivasyon & Temel",
-            "Hafta 2 (8-14 Mayıs) - Aksiyon & Satış",
-            "Hafta 3 (15-21 Mayıs) - Liderlik & Sistem",
-            "Hafta 4 (22-31 Mayıs) - Büyüme & Kariyer"
-          ];
-          
+
+          if (!haftaEgitimleri || haftaEgitimleri.length === 0) return null;
+
+          // Haftanın tarih aralığını dinamik hesapla
+          const tarihler = haftaEgitimleri.map(e => e.tarih).filter(Boolean);
+          const ilkTarih = tarihler[0] || '';
+          const sonTarih = tarihler[tarihler.length - 1] || '';
+          const haftaBaslik = ilkTarih === sonTarih
+            ? `Hafta ${haftaNo} (${ilkTarih})`
+            : `Hafta ${haftaNo} (${ilkTarih} - ${sonTarih})`;
+
           return (
             <div key={haftaNo} className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
               <h2 className="text-2xl font-bold text-amare-purple mb-6">
-                {haftaBasliklari[haftaNo - 1]}
+                {haftaBaslik}
               </h2>
               
               <div className="space-y-4">
@@ -164,9 +166,9 @@ const TakvimView = () => {
                       <div className="flex items-center">
                         <Clock className="w-5 h-5 text-amare-blue mr-2 flex-shrink-0" />
                         <div>
-                          <div className="text-sm text-gray-500">Saat & Süre</div>
+                          <div className="text-sm text-gray-500">Saat</div>
                           <div className="font-semibold text-gray-800">
-                            {egitim.saat} ({egitim.sure})
+                            {egitim.saat}{egitim.bitisSaati ? ` - ${egitim.bitisSaati}` : ''} ({egitim.sure})
                           </div>
                         </div>
                       </div>
@@ -191,7 +193,7 @@ const TakvimView = () => {
                     
                     <div className="mt-3 bg-blue-50 rounded-lg p-3">
                       <div className="text-sm text-blue-800">
-                        <strong>Platform:</strong> Zoom (Link eğitim gününde paylaşılacaktır)
+                        <strong>Platform:</strong> {egitim.yer || 'Zoom (Link eğitim gününde paylaşılacaktır)'}
                       </div>
                     </div>
                   </div>

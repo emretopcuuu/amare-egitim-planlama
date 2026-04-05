@@ -20,7 +20,7 @@ const HomePage = () => {
             Eğitim Planlama Sistemi
           </h2>
           <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            Mayıs 2026 - Diamond ve üzeri liderler için profesyonel eğitim takvimi
+            Diamond ve üzeri liderler için profesyonel eğitim takvimi
           </p>
         </div>
 
@@ -40,7 +40,7 @@ const HomePage = () => {
               Eğitmen Başvurusu
             </h3>
             <p className="text-gray-600 text-center mb-6">
-              Mayıs ayı eğitim takviminde yer almak için başvurunuzu yapın
+              Eğitim takviminde yer almak için başvurunuzu yapın
             </p>
             <button className="w-full bg-amare-purple text-white py-3 rounded-lg font-semibold hover:bg-amare-dark transition-colors">
               Başvur
@@ -61,7 +61,7 @@ const HomePage = () => {
               Eğitim Takvimi
             </h3>
             <p className="text-gray-600 text-center mb-6">
-              Mayıs 2026 eğitim takvimini görüntüleyin ve indirin
+              Eğitim takvimini görüntüleyin ve indirin
             </p>
             <button className="w-full bg-amare-blue text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors">
               Takvimi Gör
@@ -125,7 +125,7 @@ const HomePage = () => {
               <div>
                 <h4 className="font-semibold mb-1">Takvim Yayınlanır</h4>
                 <p className="text-white/80">
-                  Tüm ekip, Mayıs ayı eğitim takvimini görebilir ve eğitimlere katılabilir
+                  Tüm ekip, eğitim takvimini görebilir ve eğitimlere katılabilir
                 </p>
               </div>
             </div>

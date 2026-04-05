@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
-import { 
-  LogOut, Users, Calendar, Settings, CheckCircle, XCircle, 
-  RefreshCw, Download, Trash2, Eye, EyeOff 
+import {
+  LogOut, Users, Calendar, Settings, CheckCircle, XCircle,
+  RefreshCw, Download, Trash2, Eye, EyeOff, Upload, FileSpreadsheet,
+  UserCircle, Camera, X
 } from 'lucide-react';
 
 const AdminPanel = () => {
@@ -15,13 +16,18 @@ const AdminPanel = () => {
     isAdmin,
     loading,
     otomatikTakvimOlustur,
+    exceldenTakvimYukle,
     egitimSil,
+    konusmacilar,
+    konusmaciFotoYukle,
+    konusmaciFotoSil,
     takvimDurumDegistir,
     adminCikis
   } = useData();
 
   const [activeTab, setActiveTab] = useState('basvurular');
   const [processing, setProcessing] = useState(false);
+  const [fotoUploadingId, setFotoUploadingId] = useState(null);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -55,6 +61,33 @@ const AdminPanel = () => {
     }
   };
 
+  const handleExcelYukle = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+      alert('Lütfen bir Excel dosyası (.xlsx) seçin.');
+      return;
+    }
+
+    if (!window.confirm(`"${file.name}" dosyası yüklenecek ve mevcut takvim silinecek. Emin misiniz?`)) {
+      e.target.value = '';
+      return;
+    }
+
+    setProcessing(true);
+    const result = await exceldenTakvimYukle(file);
+    setProcessing(false);
+    e.target.value = '';
+
+    if (result.success) {
+      alert(`Takvim başarıyla yüklendi! ${result.count} eğitim eklendi.`);
+      setActiveTab('takvim');
+    } else {
+      alert('Yükleme başarısız: ' + result.error);
+    }
+  };
+
   const handleTakvimYayinla = async () => {
     const yeniDurum = !takvimYayinlandi;
     const mesaj = yeniDurum 
@@ -70,6 +103,33 @@ const AdminPanel = () => {
       alert(yeniDurum ? 'Takvim yayınlandı!' : 'Takvim gizlendi!');
     } else {
       alert('İşlem başarısız: ' + result.error);
+    }
+  };
+
+  // Takvimden benzersiz konuşmacıları çıkar
+  const benzersizKonusmacilar = [...new Set(
+    takvim
+      .map(e => e.egitmen)
+      .filter(Boolean)
+      .flatMap(e => e.split(/[\/,]/).map(n => n.trim()).filter(n => n.length > 1))
+  )].sort();
+
+  const handleFotoYukle = async (konusmaciAdi, file) => {
+    if (!file) return;
+    const safeId = konusmaciAdi.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+    setFotoUploadingId(safeId);
+    const result = await konusmaciFotoYukle(konusmaciAdi, file);
+    setFotoUploadingId(null);
+    if (!result.success) {
+      alert('Fotoğraf yüklenemedi: ' + result.error);
+    }
+  };
+
+  const handleFotoSil = async (konusmaciId, konusmaciAd) => {
+    if (!window.confirm(`"${konusmaciAd}" fotoğrafını silmek istediğinize emin misiniz?`)) return;
+    const result = await konusmaciFotoSil(konusmaciId, konusmaciAd);
+    if (!result.success) {
+      alert('Silme başarısız: ' + result.error);
     }
   };
 
@@ -135,6 +195,17 @@ const AdminPanel = () => {
             >
               <Calendar className="w-5 h-5 inline mr-2" />
               Takvim ({takvim.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('konusmacilar')}
+              className={`py-4 px-2 border-b-2 font-semibold transition-colors ${
+                activeTab === 'konusmacilar'
+                  ? 'border-amare-purple text-amare-purple'
+                  : 'border-transparent text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <UserCircle className="w-5 h-5 inline mr-2" />
+              Konuşmacılar ({benzersizKonusmacilar.length})
             </button>
             <button
               onClick={() => setActiveTab('ayarlar')}
@@ -250,6 +321,19 @@ const AdminPanel = () => {
                   </p>
                 </div>
                 <div className="flex gap-3">
+                  <label
+                    className={`flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors cursor-pointer ${processing ? 'opacity-50 pointer-events-none' : ''}`}
+                  >
+                    <Upload className="w-5 h-5 mr-2" />
+                    {processing ? 'Yükleniyor...' : 'Excel Yükle'}
+                    <input
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={handleExcelYukle}
+                      className="hidden"
+                      disabled={processing}
+                    />
+                  </label>
                   <button
                     onClick={handleOtomatikOlustur}
                     disabled={processing || egitmenler.length === 0}
@@ -293,7 +377,11 @@ const AdminPanel = () => {
                             <div className="flex-1">
                               <div className="font-bold text-gray-800">{egitim.egitim}</div>
                               <div className="text-sm text-gray-600 mt-1">
-                                {egitim.gun} {egitim.tarih} - {egitim.saat} ({egitim.sure}) - {egitim.egitmen}
+                                {egitim.gun} {egitim.tarih} - {egitim.saat}{egitim.bitisSaati ? `-${egitim.bitisSaati}` : ''} ({egitim.sure})
+                              </div>
+                              <div className="text-sm text-gray-500 mt-1">
+                                {egitim.egitmen && <span>Konuşmacı: {egitim.egitmen}</span>}
+                                {egitim.yer && <span className="ml-3">Yer: {egitim.yer}</span>}
                               </div>
                             </div>
                             <button
@@ -306,6 +394,85 @@ const AdminPanel = () => {
                           </div>
                         ))}
                       </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Konuşmacılar Tab */}
+        {activeTab === 'konusmacilar' && (
+          <div>
+            <div className="bg-white rounded-lg shadow p-6 mb-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Konuşmacılar</h2>
+              <p className="text-gray-500 text-sm">
+                Takvimden otomatik oluşturulan konuşmacı listesi. Her konuşmacı için fotoğraf yükleyebilirsiniz.
+              </p>
+            </div>
+
+            {benzersizKonusmacilar.length === 0 ? (
+              <div className="bg-white rounded-lg shadow p-8 text-center">
+                <UserCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">Takvimde henüz konuşmacı yok</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {benzersizKonusmacilar.map((ad) => {
+                  const safeId = ad.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+                  const kayitliKonusmaci = konusmacilar.find(k => k.id === safeId);
+                  const isUploading = fotoUploadingId === safeId;
+
+                  return (
+                    <div key={safeId} className="bg-white rounded-xl shadow p-4 flex flex-col items-center gap-3">
+                      {/* Fotoğraf Alanı */}
+                      <div className="relative w-24 h-24">
+                        {kayitliKonusmaci?.fotoURL ? (
+                          <>
+                            <img
+                              src={kayitliKonusmaci.fotoURL}
+                              alt={ad}
+                              className="w-24 h-24 rounded-full object-cover border-2 border-amare-purple"
+                            />
+                            <button
+                              onClick={() => handleFotoSil(safeId, ad)}
+                              className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                              title="Fotoğrafı sil"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </>
+                        ) : (
+                          <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300">
+                            <UserCircle className="w-12 h-12 text-gray-300" />
+                          </div>
+                        )}
+                        {isUploading && (
+                          <div className="absolute inset-0 bg-white/70 rounded-full flex items-center justify-center">
+                            <div className="w-6 h-6 border-2 border-amare-purple border-t-transparent rounded-full animate-spin" />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* İsim */}
+                      <p className="text-center text-sm font-semibold text-gray-800 leading-tight">{ad}</p>
+
+                      {/* Upload Butonu */}
+                      <label className="cursor-pointer flex items-center gap-1 text-xs bg-amare-purple text-white px-3 py-1.5 rounded-lg hover:bg-amare-dark transition-colors">
+                        <Camera className="w-3 h-3" />
+                        {kayitliKonusmaci?.fotoURL ? 'Değiştir' : 'Fotoğraf Yükle'}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={isUploading}
+                          onChange={(e) => {
+                            if (e.target.files[0]) handleFotoYukle(ad, e.target.files[0]);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
                     </div>
                   );
                 })}
