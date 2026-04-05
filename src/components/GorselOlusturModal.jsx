@@ -29,8 +29,9 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, apiKey, onClose }) => {
     setResultDataUrl(null);
     try {
       const result = await gorselOlustur({ apiKey, egitim, egitmenFotoURL, sablonFile });
-      // base64 → Blob URL (Chrome large data URL sorununu çözer)
-      const byteChars = atob(result.base64);
+      // base64 → Blob URL (URL-safe base64 ve büyük data URL sorununu çözer)
+      const standardB64 = result.base64.replace(/-/g, '+').replace(/_/g, '/');
+      const byteChars = atob(standardB64);
       const byteArr = new Uint8Array(byteChars.length);
       for (let i = 0; i < byteChars.length; i++) byteArr[i] = byteChars.charCodeAt(i);
       const blob = new Blob([byteArr], { type: result.mimeType });
