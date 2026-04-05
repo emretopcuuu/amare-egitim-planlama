@@ -128,10 +128,13 @@ const AdminPanel = () => {
     if (!file) return;
     const safeId = konusmaciAdi.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
     setFotoUploadingId(safeId);
-    const result = await konusmaciFotoYukle(konusmaciAdi, file);
-    setFotoUploadingId(null);
-    if (!result.success) {
-      alert('Fotoğraf yüklenemedi: ' + result.error);
+    try {
+      const result = await konusmaciFotoYukle(konusmaciAdi, file);
+      if (!result.success) alert('Fotoğraf yüklenemedi: ' + result.error);
+    } catch (err) {
+      alert('Fotoğraf yüklenemedi: ' + err.message);
+    } finally {
+      setFotoUploadingId(null);
     }
   };
 
