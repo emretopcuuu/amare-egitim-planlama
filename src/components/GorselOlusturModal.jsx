@@ -8,6 +8,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, apiKey, onClose, sablonlar
   const [resultBlobUrl, setResultBlobUrl] = useState(null);
   const [error, setError] = useState(null);
   const [yeniYukle, setYeniYukle] = useState(sablonlar.length === 0);
+  const [ekPrompt, setEkPrompt] = useState('');
 
   const handleDosyaSec = (e) => {
     const file = e.target.files[0];
@@ -34,7 +35,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, apiKey, onClose, sablonlar
     setResultBlobUrl(null);
     try {
       const sablonKaynak = secilenSablon.type === 'file' ? secilenSablon.file : secilenSablon.url;
-      const result = await gorselOlustur({ apiKey, egitim, egitmenFotoURL, sablonFile: sablonKaynak });
+      const result = await gorselOlustur({ apiKey, egitim, egitmenFotoURL, sablonFile: sablonKaynak, ekPrompt });
       const standardB64 = result.base64.replace(/-/g, '+').replace(/_/g, '/');
       const byteChars = atob(standardB64);
       const byteArr = new Uint8Array(byteChars.length);
@@ -145,6 +146,18 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, apiKey, onClose, sablonlar
                 Yüklenen şablonu kaldır
               </button>
             )}
+          </div>
+
+          {/* Ek Prompt */}
+          <div>
+            <label className="text-sm font-semibold text-gray-700 mb-1 block">Ek İstek / Prompt <span className="text-gray-400 font-normal">(isteğe bağlı)</span></label>
+            <textarea
+              value={ekPrompt}
+              onChange={(e) => setEkPrompt(e.target.value)}
+              placeholder="Örn: arka planı koyu mor yap, metinleri daha büyük göster, sağ alta logo ekle..."
+              rows={3}
+              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-none"
+            />
           </div>
 
           {/* Hata */}

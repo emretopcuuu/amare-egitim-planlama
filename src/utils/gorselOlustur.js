@@ -26,7 +26,7 @@ const resmiBase64Yap = async (kaynak) => {
   });
 };
 
-export const gorselOlustur = async ({ apiKey, egitim, egitmenFotoURL, sablonFile }) => {
+export const gorselOlustur = async ({ apiKey, egitim, egitmenFotoURL, sablonFile, ekPrompt = '' }) => {
   if (!apiKey) throw new Error('Gemini API anahtarı girilmedi. Lütfen Ayarlar sekmesinden ekleyin.');
 
   // Şablonu base64'e çevir
@@ -61,7 +61,7 @@ TASARIM KURALLARI:
 - Tarih ve saat belirgin vurgulansın
 - ONE TEAM / Amare Global kurumsal kimliğine uygun olsun
 - Profesyonel ve çekici bir tasarım
-- Sosyal medya paylaşımına uygun kare veya dikey format`;
+- Sosyal medya paylaşımına uygun kare veya dikey format${ekPrompt ? '\n\nEK İSTEKLER:\n' + ekPrompt : ''}`;
 
   // İstek gövdesi
   const parts = [
