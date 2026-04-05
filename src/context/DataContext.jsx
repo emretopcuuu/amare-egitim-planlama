@@ -32,6 +32,7 @@ export const DataProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [konusmacilar, setKonusmacilar] = useState([]);
+  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
 
   // Firebase'den veri yükle
   useEffect(() => {
@@ -354,6 +355,12 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  // Gemini API key kaydet
+  const geminiApiKeyKaydet = (key) => {
+    setGeminiApiKey(key);
+    localStorage.setItem('geminiApiKey', key);
+  };
+
   // Admin girişi
   const adminGiris = (sifre) => {
     if (sifre === 'oneteam10x') {
@@ -394,6 +401,8 @@ export const DataProvider = ({ children }) => {
     takvimDurumDegistir,
     konusmaciFotoYukle,
     konusmaciFotoSil,
+    geminiApiKey,
+    geminiApiKeyKaydet,
     adminGiris,
     adminCikis,
     loadData

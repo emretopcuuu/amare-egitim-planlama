@@ -4,8 +4,9 @@ import { useData } from '../context/DataContext';
 import {
   LogOut, Users, Calendar, Settings, CheckCircle, XCircle,
   RefreshCw, Download, Trash2, Eye, EyeOff, Upload, FileSpreadsheet,
-  UserCircle, Camera, X
+  UserCircle, Camera, X, ImageIcon, Key, Save
 } from 'lucide-react';
+import GorselOlusturModal from '../components/GorselOlusturModal';
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -21,6 +22,8 @@ const AdminPanel = () => {
     konusmacilar,
     konusmaciFotoYukle,
     konusmaciFotoSil,
+    geminiApiKey,
+    geminiApiKeyKaydet,
     takvimDurumDegistir,
     adminCikis
   } = useData();
@@ -28,6 +31,9 @@ const AdminPanel = () => {
   const [activeTab, setActiveTab] = useState('basvurular');
   const [processing, setProcessing] = useState(false);
   const [fotoUploadingId, setFotoUploadingId] = useState(null);
+  const [gorselModal, setGorselModal] = useState(null); // { egitim, egitmenFotoURL }
+  const [apiKeyInput, setApiKeyInput] = useState(geminiApiKey);
+  const [apiKeySaved, setApiKeySaved] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -131,6 +137,25 @@ const AdminPanel = () => {
     if (!result.success) {
       alert('Silme başarısız: ' + result.error);
     }
+  };
+
+  const handleGorselAc = (egitim) => {
+    // Konuşmacının kaydedilmiş fotoğrafını bul
+    const konusmacilar2 = konusmacilar || [];
+    const egitmenAdlari = (egitim.egitmen || '').split(/[\/,]/).map(n => n.trim()).filter(Boolean);
+    let fotoURL = null;
+    for (const ad of egitmenAdlari) {
+      const safeId = ad.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const k = konusmacilar2.find(k => k.id === safeId);
+      if (k?.fotoURL) { fotoURL = k.fotoURL; break; }
+    }
+    setGorselModal({ egitim, egitmenFotoURL: fotoURL });
+  };
+
+  const handleApiKeySave = () => {
+    geminiApiKeyKaydet(apiKeyInput.trim());
+    setApiKeySaved(true);
+    setTimeout(() => setApiKeySaved(false), 2500);
   };
 
   const handleEgitimSil = async (egitimId, egitimAdi) => {
@@ -373,7 +398,7 @@ const AdminPanel = () => {
                       </h3>
                       <div className="space-y-3">
                         {haftaEgitimleri.map((egitim, index) => (
-                          <div key={egitim.id || index} className="border border-gray-200 rounded-lg p-4 flex items-center justify-between">
+                          <div key={egitim.id || index} className="border border-gray-200 rounded-lg p-4 flex items-center justify-between group hover:border-amare-purple/40 hover:bg-purple-50/30 transition-colors">
                             <div className="flex-1">
                               <div className="font-bold text-gray-800">{egitim.egitim}</div>
                               <div className="text-sm text-gray-600 mt-1">
@@ -384,13 +409,23 @@ const AdminPanel = () => {
                                 {egitim.yer && <span className="ml-3">Yer: {egitim.yer}</span>}
                               </div>
                             </div>
-                            <button
-                              onClick={() => handleEgitimSil(egitim.id, egitim.egitim)}
-                              className="text-red-500 hover:text-red-700 p-2"
-                              title="Sil"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleGorselAc(egitim)}
+                                className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 bg-amare-purple text-white text-xs px-3 py-1.5 rounded-lg hover:bg-amare-dark transition-all"
+                                title="Görsel Hazırla"
+                              >
+                                <ImageIcon className="w-3.5 h-3.5" />
+                                Görsel Hazırla
+                              </button>
+                              <button
+                                onClick={() => handleEgitimSil(egitim.id, egitim.egitim)}
+                                className="text-red-500 hover:text-red-700 p-2"
+                                title="Sil"
+                              >
+                                <Trash2 className="w-5 h-5" />
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -529,6 +564,39 @@ const AdminPanel = () => {
                 </div>
               </div>
 
+              {/* Gemini API Key */}
+              <div className="border-b pb-6 mb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-1 flex items-center gap-2">
+                  <Key className="w-5 h-5 text-amare-purple" />
+                  Görsel Oluşturma (Nanobanana / Gemini API)
+                </h3>
+                <p className="text-sm text-gray-500 mb-3">
+                  Eğitim görseli oluşturmak için Google AI Studio'dan aldığınız API anahtarını girin.{' '}
+                  <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-amare-purple underline">
+                    API anahtarı al →
+                  </a>
+                </p>
+                <div className="flex gap-3">
+                  <input
+                    type="password"
+                    value={apiKeyInput}
+                    onChange={(e) => { setApiKeyInput(e.target.value); setApiKeySaved(false); }}
+                    placeholder="AIzaSy..."
+                    className="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/40"
+                  />
+                  <button
+                    onClick={handleApiKeySave}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${apiKeySaved ? 'bg-green-500 text-white' : 'bg-amare-purple text-white hover:bg-amare-dark'}`}
+                  >
+                    <Save className="w-4 h-4" />
+                    {apiKeySaved ? 'Kaydedildi!' : 'Kaydet'}
+                  </button>
+                </div>
+                {geminiApiKey && (
+                  <p className="text-xs text-green-600 mt-1">✅ API anahtarı kayıtlı</p>
+                )}
+              </div>
+
               {/* İstatistikler */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">
@@ -565,6 +633,16 @@ const AdminPanel = () => {
           </div>
         )}
       </div>
+
+      {/* Görsel Oluşturma Modal */}
+      {gorselModal && (
+        <GorselOlusturModal
+          egitim={gorselModal.egitim}
+          egitmenFotoURL={gorselModal.egitmenFotoURL}
+          apiKey={geminiApiKey}
+          onClose={() => setGorselModal(null)}
+        />
+      )}
     </div>
   );
 };
