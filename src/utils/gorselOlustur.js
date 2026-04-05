@@ -101,6 +101,6 @@ TASARIM KURALLARI:
     throw new Error('API görsel döndürmedi. API anahtarınızı ve model erişiminizi kontrol edin.');
   }
 
-  const { base64: imgBase64, mimeType: imgMime } = imgPart.inlineData;
-  return { base64: imgBase64, mimeType: imgMime, dataUrl: `data:${imgMime};base64,${imgBase64}` };
+  const { data: imgBase64, mimeType: imgMime } = imgPart.inlineData;
+  return { base64: imgBase64, mimeType: imgMime };
 };
