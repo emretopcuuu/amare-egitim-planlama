@@ -11,11 +11,13 @@ import {
   CheckSquare, Square, ExternalLink, Loader2, Info,
   MessageCircle, QrCode, Check, Copy, Tag, Filter,
   CheckCircle2, Circle, BarChart2, FileText, Bell, Palette,
+  Users2, TrendingUp, ExternalLink as CanvaIcon,
 } from 'lucide-react';
 import GorselOlusturModal from '../components/GorselOlusturModal';
 import DuyuruModal from '../components/DuyuruModal';
 import HatirlatmaModal from '../components/HatirlatmaModal';
 import SablonTasarimModal from '../components/SablonTasarimModal';
+import RaporModal from '../components/RaporModal';
 import { gorselOlustur } from '../utils/gorselOlustur';
 
 // ── Sabitler ────────────────────────────────────────────────────────────────
@@ -35,7 +37,7 @@ const KATEGORILER = [
 const BOŞ_FORM = {
   egitim: '', gun: 'Pazartesi', tarih: '', saat: '',
   bitisSaati: '', sure: '', egitmen: '', yer: 'ZOOM SALON ID: 937 3761 2425',
-  hafta: 1, kategori: '', aciklama: '',
+  hafta: 1, kategori: '', aciklama: '', katilimSayisi: '',
 };
 
 const inputCls = 'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30';
@@ -95,11 +97,18 @@ const EgitimFormAlanlari = ({ form, setForm }) => (
         </select>
       </FormField>
     </div>
-    <FormField label="Açıklama / Notlar">
-      <textarea value={form.aciklama} onChange={e => setForm(f => ({ ...f, aciklama: e.target.value }))}
-        placeholder="Eğitim hakkında kısa not veya açıklama..." rows={2}
-        className={`${inputCls} resize-none`} />
-    </FormField>
+    <div className="grid grid-cols-2 gap-4">
+      <FormField label="Açıklama / Notlar">
+        <textarea value={form.aciklama} onChange={e => setForm(f => ({ ...f, aciklama: e.target.value }))}
+          placeholder="Kısa not..." rows={2}
+          className={`${inputCls} resize-none`} />
+      </FormField>
+      <FormField label="Katılımcı Sayısı">
+        <input type="number" min="0" value={form.katilimSayisi}
+          onChange={e => setForm(f => ({ ...f, katilimSayisi: e.target.value }))}
+          placeholder="0" className={inputCls} />
+      </FormField>
+    </div>
   </>
 );
 
@@ -185,6 +194,9 @@ const AdminPanel = () => {
 
   // Şablon tasarım modal
   const [sablonTasarimModal, setSablonTasarimModal] = useState(false);
+
+  // PDF rapor modal
+  const [raporModal, setRaporModal] = useState(false);
 
   React.useEffect(() => {
     if (!isAdmin) navigate('/admin-giris');
@@ -365,6 +377,7 @@ const AdminPanel = () => {
       saat: egitim.saat || '', bitisSaati: egitim.bitisSaati || '', sure: egitim.sure || '',
       egitmen: egitim.egitmen || '', yer: egitim.yer || '', hafta: egitim.hafta || 1,
       kategori: egitim.kategori || '', aciklama: egitim.aciklama || '',
+      katilimSayisi: egitim.katilimSayisi || '',
     });
     setDuzenleModal(egitim);
   };
@@ -648,6 +661,20 @@ const AdminPanel = () => {
             {egitim.yer && <span className="ml-3">📍 {egitim.yer}</span>}
           </div>
           {egitim.aciklama && <div className="text-xs text-gray-400 mt-1 truncate">{egitim.aciklama}</div>}
+          <div className="flex items-center gap-2 mt-1">
+            <span className="text-xs text-gray-400 flex items-center gap-1">
+              <Users2 className="w-3 h-3" />
+              Katılım:
+            </span>
+            <input
+              type="number" min="0"
+              value={egitim.katilimSayisi || ''}
+              onChange={e => egitimGuncelle(egitim.id, { katilimSayisi: e.target.value })}
+              placeholder="—"
+              className="w-16 text-xs border border-gray-200 rounded-lg px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-amare-purple/40"
+              onClick={ev => ev.stopPropagation()}
+            />
+          </div>
         </div>
         {!topluMod && (
           <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 ml-2">
@@ -867,6 +894,10 @@ const AdminPanel = () => {
                     <button onClick={() => setOzetModal(true)}
                       className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700">
                       <FileText className="w-4 h-4" />Haftalık Özet
+                    </button>
+                    <button onClick={() => setRaporModal(true)}
+                      className="flex items-center gap-1.5 bg-red-600 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-red-700">
+                      <TrendingUp className="w-4 h-4" />PDF Raporu
                     </button>
                     <button onClick={() => setEkleModal(true)}
                       className="flex items-center gap-1.5 bg-amare-blue text-white px-3 py-2 rounded-xl text-sm font-semibold hover:opacity-90">
@@ -1128,6 +1159,18 @@ const AdminPanel = () => {
                         <img src={s.url} alt={s.ad} className="w-full aspect-square object-cover" />
                         <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2 p-2">
                           <p className="text-white text-xs text-center font-medium line-clamp-2">{s.ad}</p>
+                          <button
+                            onClick={() => {
+                              // Şablonu indir + Canva'yı aç
+                              const a = document.createElement('a');
+                              a.href = s.url;
+                              a.download = `${s.ad}.png`;
+                              a.click();
+                              setTimeout(() => window.open('https://www.canva.com/create/presentations/', '_blank'), 600);
+                            }}
+                            className="bg-blue-500 hover:bg-blue-600 text-white rounded-lg px-2 py-1 text-xs flex items-center gap-1">
+                            <CanvaIcon className="w-3 h-3" />Canva'da Aç
+                          </button>
                           <button onClick={() => handleSablonSil(s.id, s.ad)} className="bg-red-500 hover:bg-red-600 text-white rounded-lg px-2 py-1 text-xs flex items-center gap-1">
                             <Trash2 className="w-3 h-3" />Sil
                           </button>
@@ -1381,6 +1424,11 @@ const AdminPanel = () => {
           apiKey={geminiApiKey}
           onClose={() => setHatirlatmaModal(false)}
         />
+      )}
+
+      {/* PDF Rapor Modal */}
+      {raporModal && (
+        <RaporModal takvim={takvim} onClose={() => setRaporModal(false)} />
       )}
 
       {/* Şablon Tasarım Modal */}
