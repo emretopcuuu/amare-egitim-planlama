@@ -10,11 +10,12 @@ import {
   Plus, Search, LayoutList, LayoutGrid, CalendarDays,
   CheckSquare, Square, ExternalLink, Loader2, Info,
   MessageCircle, QrCode, Check, Copy, Tag, Filter,
-  CheckCircle2, Circle, BarChart2, FileText, Bell,
+  CheckCircle2, Circle, BarChart2, FileText, Bell, Palette,
 } from 'lucide-react';
 import GorselOlusturModal from '../components/GorselOlusturModal';
 import DuyuruModal from '../components/DuyuruModal';
 import HatirlatmaModal from '../components/HatirlatmaModal';
+import SablonTasarimModal from '../components/SablonTasarimModal';
 import { gorselOlustur } from '../utils/gorselOlustur';
 
 // ── Sabitler ────────────────────────────────────────────────────────────────
@@ -181,6 +182,9 @@ const AdminPanel = () => {
 
   // Hatırlatma modal
   const [hatirlatmaModal, setHatirlatmaModal] = useState(false);
+
+  // Şablon tasarım modal
+  const [sablonTasarimModal, setSablonTasarimModal] = useState(false);
 
   React.useEffect(() => {
     if (!isAdmin) navigate('/admin-giris');
@@ -1103,10 +1107,17 @@ const AdminPanel = () => {
                     </h3>
                     <p className="text-sm text-gray-500 mt-0.5">Görsel hazırlarken kullanılacak şablon tasarımları</p>
                   </div>
-                  <label className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm text-white ${sablonYukleniyor ? 'bg-gray-400' : 'bg-amare-purple hover:bg-amare-dark'}`}>
-                    <Upload className="w-4 h-4" />{sablonYukleniyor ? 'Yükleniyor...' : 'Şablon Ekle'}
-                    <input type="file" accept="image/*" className="hidden" disabled={sablonYukleniyor} onChange={handleSablonYukle} />
-                  </label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSablonTasarimModal(true)}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm bg-gradient-to-r from-amare-purple to-amare-blue text-white hover:opacity-90 shadow-sm">
+                      <Palette className="w-4 h-4" />Tasarımcı
+                    </button>
+                    <label className={`cursor-pointer flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm text-white ${sablonYukleniyor ? 'bg-gray-400' : 'bg-gray-600 hover:bg-gray-700'}`}>
+                      <Upload className="w-4 h-4" />{sablonYukleniyor ? 'Yükleniyor...' : 'Yükle'}
+                      <input type="file" accept="image/*" className="hidden" disabled={sablonYukleniyor} onChange={handleSablonYukle} />
+                    </label>
+                  </div>
                 </div>
                 {sablonlar.length === 0 ? (
                   <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 text-gray-400 text-sm">Henüz şablon eklenmedi</div>
@@ -1369,6 +1380,17 @@ const AdminPanel = () => {
           egitmenler={egitmenler}
           apiKey={geminiApiKey}
           onClose={() => setHatirlatmaModal(false)}
+        />
+      )}
+
+      {/* Şablon Tasarım Modal */}
+      {sablonTasarimModal && (
+        <SablonTasarimModal
+          onKaydet={async (ad, file) => {
+            const result = await sablonEkle(ad, file);
+            if (!result.success) throw new Error(result.error);
+          }}
+          onClose={() => setSablonTasarimModal(false)}
         />
       )}
     </div>
