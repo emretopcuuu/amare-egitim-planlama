@@ -1264,7 +1264,7 @@ const AdminPanel = () => {
             <div className="flex items-center justify-between p-6 border-b">
               <div>
                 <h2 className="text-xl font-bold text-gray-800">Konuşmacı Bilgileri</h2>
-                <p className="text-sm text-gray-500 mt-0.5">{bilgiModal.ad}</p>
+                <p className="text-sm text-gray-500 mt-0.5">{bilgiForm.ad || bilgiModal.ad}</p>
               </div>
               <button onClick={() => setBilgiModal(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
             </div>
