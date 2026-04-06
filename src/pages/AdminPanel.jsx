@@ -1,17 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData } from '../context/DataContext';
 import * as XLSX from 'xlsx';
+import QRCode from 'qrcode';
 import {
   LogOut, Users, Calendar, Settings,
   RefreshCw, Download, Trash2, Eye, EyeOff, Upload,
   UserCircle, Camera, X, ImageIcon, Key, Save, Pencil,
-  Plus, Search, LayoutList, LayoutGrid, CheckSquare, Square,
-  ExternalLink, Loader2, Info,
+  Plus, Search, LayoutList, LayoutGrid, CalendarDays,
+  CheckSquare, Square, ExternalLink, Loader2, Info,
+  MessageCircle, QrCode, Check, Copy, Tag, Filter,
+  CheckCircle2, Circle, BarChart2, FileText,
 } from 'lucide-react';
 import GorselOlusturModal from '../components/GorselOlusturModal';
+import DuyuruModal from '../components/DuyuruModal';
 import { gorselOlustur } from '../utils/gorselOlustur';
 
+// ── Sabitler ────────────────────────────────────────────────────────────────
 const DURUM_RENKLER = {
   beklemede: 'bg-yellow-100 text-yellow-800',
   onaylandi: 'bg-green-100 text-green-800',
@@ -20,13 +25,20 @@ const DURUM_RENKLER = {
 
 const GUNLER = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi', 'Pazar'];
 
+const KATEGORILER = [
+  'Liderlik', 'Satış', 'Motivasyon', 'Sağlık', 'Finansal Özgürlük',
+  'Kişisel Gelişim', 'Vizyon Günü', 'Panel', 'Diğer',
+];
+
 const BOŞ_FORM = {
   egitim: '', gun: 'Pazartesi', tarih: '', saat: '',
-  bitisSaati: '', sure: '', egitmen: '', yer: 'ZOOM SALON ID: 937 3761 2425', hafta: 1,
+  bitisSaati: '', sure: '', egitmen: '', yer: 'ZOOM SALON ID: 937 3761 2425',
+  hafta: 1, kategori: '', aciklama: '',
 };
 
 const inputCls = 'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30';
 
+// ── Küçük bileşenler ─────────────────────────────────────────────────────────
 const FormField = ({ label, required, children }) => (
   <div>
     <label className="text-sm font-semibold text-gray-700 block mb-1">
@@ -68,14 +80,41 @@ const EgitimFormAlanlari = ({ form, setForm }) => (
     <FormField label="Yer / Platform">
       <input type="text" value={form.yer} onChange={e => setForm(f => ({ ...f, yer: e.target.value }))} className={inputCls} />
     </FormField>
-    <FormField label="Hafta">
-      <select value={form.hafta} onChange={e => setForm(f => ({ ...f, hafta: Number(e.target.value) }))} className={inputCls}>
-        {[1,2,3,4].map(h => <option key={h} value={h}>Hafta {h}</option>)}
-      </select>
+    <div className="grid grid-cols-2 gap-4">
+      <FormField label="Kategori">
+        <select value={form.kategori} onChange={e => setForm(f => ({ ...f, kategori: e.target.value }))} className={inputCls}>
+          <option value="">— Seçin —</option>
+          {KATEGORILER.map(k => <option key={k}>{k}</option>)}
+        </select>
+      </FormField>
+      <FormField label="Hafta">
+        <select value={form.hafta} onChange={e => setForm(f => ({ ...f, hafta: Number(e.target.value) }))} className={inputCls}>
+          {[1,2,3,4].map(h => <option key={h} value={h}>Hafta {h}</option>)}
+        </select>
+      </FormField>
+    </div>
+    <FormField label="Açıklama / Notlar">
+      <textarea value={form.aciklama} onChange={e => setForm(f => ({ ...f, aciklama: e.target.value }))}
+        placeholder="Eğitim hakkında kısa not veya açıklama..." rows={2}
+        className={`${inputCls} resize-none`} />
     </FormField>
   </>
 );
 
+// ── Yardımcılar ──────────────────────────────────────────────────────────────
+const parseTarih = (tarih) => {
+  if (!tarih) return null;
+  const [d, m, y] = tarih.split('.').map(Number);
+  return new Date(y, m - 1, d);
+};
+
+const extractZoomId = (yer) => {
+  if (!yer) return null;
+  const m = yer.match(/(\d[\d\s]{8,})/);
+  return m ? m[1].replace(/\s/g, '') : null;
+};
+
+// ── Ana bileşen ───────────────────────────────────────────────────────────────
 const AdminPanel = () => {
   const navigate = useNavigate();
   const {
@@ -89,10 +128,27 @@ const AdminPanel = () => {
     takvimDurumDegistir, adminCikis,
   } = useData();
 
+  // Tab
   const [activeTab, setActiveTab] = useState('basvurular');
   const [processing, setProcessing] = useState(false);
+
+  // Konuşmacı
   const [fotoUploadingId, setFotoUploadingId] = useState(null);
+  const [bilgiModal, setBilgiModal] = useState(null);
+  const [bilgiForm, setBilgiForm] = useState({ unvan: '', biyografi: '', linkedin: '' });
+  const [bilgiKaydediliyor, setBilgiKaydediliyor] = useState(false);
+  const [linkKopyalandi, setLinkKopyalandi] = useState(false);
+
+  // Görsel
   const [gorselModal, setGorselModal] = useState(null);
+
+  // Duyuru
+  const [duyuruModal, setDuyuruModal] = useState(null);
+
+  // QR
+  const [qrModal, setQrModal] = useState(null);
+
+  // API key & şablon
   const [apiKeyInput, setApiKeyInput] = useState(geminiApiKey);
   const [apiKeySaved, setApiKeySaved] = useState(false);
   const [sablonYukleniyor, setSablonYukleniyor] = useState(false);
@@ -102,26 +158,27 @@ const AdminPanel = () => {
   const [duzenleForm, setDuzenleForm] = useState({});
   const [duzenleKaydediliyor, setDuzenleKaydediliyor] = useState(false);
 
-  // Manuel ekleme
+  // Ekleme
   const [ekleModal, setEkleModal] = useState(false);
   const [ekleForm, setEkleForm] = useState(BOŞ_FORM);
   const [ekleKaydediliyor, setEkleKaydediliyor] = useState(false);
 
-  // Arama & görünüm
+  // Takvim filtre & görünüm
   const [aramaMetni, setAramaMetni] = useState('');
-  const [gorunum, setGorunum] = useState('liste');
+  const [kategoriFiltre, setKategoriFiltre] = useState('');
+  const [sadeceBekleyen, setSadeceBekleyen] = useState(false);
+  const [gorunum, setGorunum] = useState('liste'); // 'liste' | 'kompakt' | 'takvim'
 
   // Toplu görsel
   const [topluMod, setTopluMod] = useState(false);
   const [topluSecili, setTopluSecili] = useState(new Set());
   const [topluIlerleme, setTopluIlerleme] = useState(null);
 
-  // Konuşmacı bilgi
-  const [bilgiModal, setBilgiModal] = useState(null);
-  const [bilgiForm, setBilgiForm] = useState({ unvan: '', biyografi: '', linkedin: '' });
-  const [bilgiKaydediliyor, setBilgiKaydediliyor] = useState(false);
+  // Haftalık özet modal
+  const [ozetModal, setOzetModal] = useState(false);
+  const [ozetKopyalandi, setOzetKopyalandi] = useState(false);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isAdmin) navigate('/admin-giris');
   }, [isAdmin, navigate]);
 
@@ -132,30 +189,45 @@ const AdminPanel = () => {
     </div>
   );
 
-  // Computed
+  // ── Computed ─────────────────────────────────────────────────────────────
   const benzersizKonusmacilar = [...new Set(
     takvim.map(e => e.egitmen).filter(Boolean)
       .flatMap(e => e.split(/[\/,]/).map(n => n.trim()).filter(n => n.length > 1))
   )].sort();
 
-  const filtreliTakvim = aramaMetni.trim()
-    ? takvim.filter(e =>
-        e.egitim?.toLowerCase().includes(aramaMetni.toLowerCase()) ||
-        e.egitmen?.toLowerCase().includes(aramaMetni.toLowerCase()) ||
-        e.tarih?.includes(aramaMetni)
-      )
-    : takvim;
-
-  const konusmaciEgitimSayisi = {};
-  takvim.forEach(e => {
-    if (e.egitmen) {
-      e.egitmen.split(/[\/,]/).map(n => n.trim()).filter(n => n.length > 1)
-        .forEach(ad => { konusmaciEgitimSayisi[ad] = (konusmaciEgitimSayisi[ad] || 0) + 1; });
-    }
+  const filtreliTakvim = takvim.filter(e => {
+    if (aramaMetni.trim() && !(
+      e.egitim?.toLowerCase().includes(aramaMetni.toLowerCase()) ||
+      e.egitmen?.toLowerCase().includes(aramaMetni.toLowerCase()) ||
+      e.tarih?.includes(aramaMetni)
+    )) return false;
+    if (kategoriFiltre && e.kategori !== kategoriFiltre) return false;
+    if (sadeceBekleyen && e.tamamlandi) return false;
+    return true;
   });
-  const topKonusmacilar = Object.entries(konusmaciEgitimSayisi).sort(([,a],[,b]) => b - a).slice(0, 5);
 
-  // Handlers
+  // Konuşmacı istatistik
+  const konusmaciStat = {};
+  takvim.forEach(e => {
+    if (!e.egitmen) return;
+    e.egitmen.split(/[\/,]/).map(n => n.trim()).filter(n => n.length > 1).forEach(ad => {
+      if (!konusmaciStat[ad]) konusmaciStat[ad] = { toplam: 0, tamamlandi: 0, kategoriler: {} };
+      konusmaciStat[ad].toplam++;
+      if (e.tamamlandi) konusmaciStat[ad].tamamlandi++;
+      if (e.kategori) konusmaciStat[ad].kategoriler[e.kategori] = (konusmaciStat[ad].kategoriler[e.kategori] || 0) + 1;
+    });
+  });
+  const topKonusmacilar = Object.entries(konusmaciStat).sort(([,a],[,b]) => b.toplam - a.toplam).slice(0, 5);
+
+  // Haftalık özet metni
+  const ozetMetni = [1,2,3,4].map(h => {
+    const he = takvim.filter(e => e.hafta === h).sort((a,b) => (parseTarih(a.tarih) - parseTarih(b.tarih)) || (a.saat||'').localeCompare(b.saat||''));
+    if (!he.length) return null;
+    const satirlar = he.map(e => `• ${e.tarih} ${e.gun} ${e.saat}${e.bitisSaati?'-'+e.bitisSaati:''} — ${e.egitim}${e.egitmen?' ('+e.egitmen+')':''}`);
+    return `📅 HAFTA ${h} (${he.length} eğitim)\n${satirlar.join('\n')}`;
+  }).filter(Boolean).join('\n\n');
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleLogout = () => { adminCikis(); navigate('/'); };
 
   const handleOtomatikOlustur = async () => {
@@ -182,11 +254,14 @@ const AdminPanel = () => {
 
   const handleExcelIndir = () => {
     const rows = [...takvim]
-      .sort((a, b) => (a.hafta - b.hafta) || (a.tarih || '').localeCompare(b.tarih || '') || (a.saat || '').localeCompare(b.saat || ''))
+      .sort((a, b) => (a.hafta - b.hafta) || (a.tarih||'').localeCompare(b.tarih||'') || (a.saat||'').localeCompare(b.saat||''))
       .map(e => ({
         'Hafta': e.hafta, 'Gün': e.gun, 'Tarih': e.tarih,
         'Başlangıç': e.saat, 'Bitiş': e.bitisSaati, 'Süre': e.sure,
-        'Eğitim': e.egitim, 'Konuşmacı': e.egitmen, 'Yer': e.yer,
+        'Eğitim': e.egitim, 'Kategori': e.kategori || '',
+        'Konuşmacı': e.egitmen, 'Yer': e.yer,
+        'Açıklama': e.aciklama || '',
+        'Tamamlandı': e.tamamlandi ? 'Evet' : 'Hayır',
       }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -215,9 +290,9 @@ const AdminPanel = () => {
     }
   };
 
-  const handleFotoSil = async (konusmaciId, konusmaciAd) => {
-    if (!window.confirm(`"${konusmaciAd}" fotoğrafını silmek istiyor musunuz?`)) return;
-    const result = await konusmaciFotoSil(konusmaciId, konusmaciAd);
+  const handleFotoSil = async (konusmaciId, ad) => {
+    if (!window.confirm(`"${ad}" fotoğrafını silmek istiyor musunuz?`)) return;
+    const result = await konusmaciFotoSil(konusmaciId, ad);
     if (!result.success) alert('Silme başarısız: ' + result.error);
   };
 
@@ -230,6 +305,22 @@ const AdminPanel = () => {
       if (k?.fotoURL) { fotoURL = k.fotoURL; break; }
     }
     setGorselModal({ egitim, egitmenFotoURL: fotoURL });
+  };
+
+  const handleQrAc = async (egitim) => {
+    const zoomId = extractZoomId(egitim.yer);
+    if (!zoomId) { alert('Bu eğitim için Zoom ID bulunamadı.'); return; }
+    const zoomUrl = `https://zoom.us/j/${zoomId}`;
+    try {
+      const qrDataUrl = await QRCode.toDataURL(zoomUrl, { width: 280, margin: 2, color: { dark: '#6B46C1', light: '#ffffff' } });
+      setQrModal({ egitim, zoomId, zoomUrl, qrDataUrl });
+    } catch (err) {
+      alert('QR kod oluşturulamadı: ' + err.message);
+    }
+  };
+
+  const handleTamamlaToggle = async (egitim) => {
+    await egitimGuncelle(egitim.id, { tamamlandi: !egitim.tamamlandi });
   };
 
   const handleApiKeySave = () => {
@@ -265,6 +356,7 @@ const AdminPanel = () => {
       egitim: egitim.egitim || '', gun: egitim.gun || '', tarih: egitim.tarih || '',
       saat: egitim.saat || '', bitisSaati: egitim.bitisSaati || '', sure: egitim.sure || '',
       egitmen: egitim.egitmen || '', yer: egitim.yer || '', hafta: egitim.hafta || 1,
+      kategori: egitim.kategori || '', aciklama: egitim.aciklama || '',
     });
     setDuzenleModal(egitim);
   };
@@ -328,8 +420,7 @@ const AdminPanel = () => {
         const egitmenAdlari = (egitim.egitmen || '').split(/[\/,]/).map(n => n.trim()).filter(Boolean);
         let fotoURL = null;
         for (const ad of egitmenAdlari) {
-          const safeId = ad.toLowerCase().replace(/[^a-z0-9]/g, '_');
-          const k = konusmacilar.find(k => k.id === safeId);
+          const k = konusmacilar.find(k => k.id === ad.toLowerCase().replace(/[^a-z0-9]/g, '_'));
           if (k?.fotoURL) { fotoURL = k.fotoURL; break; }
         }
         const result = await gorselOlustur({ apiKey: geminiApiKey, egitim, egitmenFotoURL: fotoURL, sablonFile: sablon.url });
@@ -337,8 +428,7 @@ const AdminPanel = () => {
         const byteChars = atob(standardB64);
         const byteArr = new Uint8Array(byteChars.length);
         for (let j = 0; j < byteChars.length; j++) byteArr[j] = byteChars.charCodeAt(j);
-        const blob = new Blob([byteArr], { type: result.mimeType });
-        const blobUrl = URL.createObjectURL(blob);
+        const blobUrl = URL.createObjectURL(new Blob([byteArr], { type: result.mimeType }));
         setTopluIlerleme(prev => ({ ...prev, tamamlanan: i + 1, sonuclar: [...prev.sonuclar, { egitim, blobUrl }] }));
       } catch (err) {
         setTopluIlerleme(prev => ({ ...prev, tamamlanan: i + 1, hatalar: [...prev.hatalar, { egitim: egitim.egitim, hata: err.message }] }));
@@ -346,10 +436,10 @@ const AdminPanel = () => {
     }
   };
 
-  const handleTopluIndir = (blobUrl, egitimAdi) => {
+  const handleTopluIndir = (blobUrl, ad) => {
     const a = document.createElement('a');
     a.href = blobUrl;
-    a.download = `${egitimAdi.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
+    a.download = `${ad.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
 
@@ -375,6 +465,165 @@ const AdminPanel = () => {
     if (!result.success) alert('Silme başarısız: ' + result.error);
   };
 
+  const handleBasvuruLinkKopyala = () => {
+    navigator.clipboard.writeText(`${window.location.origin}/basvuru`);
+    setLinkKopyalandi(true);
+    setTimeout(() => setLinkKopyalandi(false), 2500);
+  };
+
+  const handleOzetKopyala = () => {
+    navigator.clipboard.writeText(ozetMetni);
+    setOzetKopyalandi(true);
+    setTimeout(() => setOzetKopyalandi(false), 2000);
+  };
+
+  // ── Takvim grid view helper ───────────────────────────────────────────────
+  const renderTakvimGrid = (haftaEgitimleri) => {
+    const tarihler = [...new Set(haftaEgitimleri.map(e => e.tarih))]
+      .filter(Boolean)
+      .sort((a, b) => parseTarih(a) - parseTarih(b));
+
+    return (
+      <div className="overflow-x-auto pb-2">
+        <div className="flex gap-3 min-w-max">
+          {tarihler.map(tarih => {
+            const gunEgitimleri = haftaEgitimleri
+              .filter(e => e.tarih === tarih)
+              .sort((a, b) => (a.saat || '').localeCompare(b.saat || ''));
+            const gun = gunEgitimleri[0]?.gun || '';
+            return (
+              <div key={tarih} className="w-52 flex-shrink-0">
+                <div className="bg-amare-purple text-white text-center rounded-t-xl px-3 py-2">
+                  <div className="text-xs font-bold">{gun}</div>
+                  <div className="text-xs opacity-80">{tarih}</div>
+                </div>
+                <div className="space-y-2 mt-2">
+                  {gunEgitimleri.map(egitim => (
+                    <div key={egitim.id}
+                      className={`rounded-xl p-2.5 text-xs border shadow-sm ${egitim.tamamlandi ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-white border-purple-100'}`}>
+                      {egitim.kategori && (
+                        <span className="inline-block mb-1 bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full text-xs">{egitim.kategori}</span>
+                      )}
+                      <div className="font-semibold text-gray-800 line-clamp-2">{egitim.egitim}</div>
+                      {egitim.saat && <div className="text-gray-500 mt-1">🕐 {egitim.saat}{egitim.bitisSaati ? `-${egitim.bitisSaati}` : ''}</div>}
+                      {egitim.egitmen && <div className="text-amare-purple truncate mt-0.5">🎤 {egitim.egitmen}</div>}
+                      {egitim.aciklama && <div className="text-gray-400 mt-1 line-clamp-1">{egitim.aciklama}</div>}
+                      <div className="flex gap-1 mt-2 flex-wrap">
+                        <button onClick={() => handleGorselAc(egitim)} className="bg-amare-purple text-white px-1.5 py-0.5 rounded-lg">Görsel</button>
+                        <button onClick={() => setDuyuruModal(egitim)} className="bg-green-600 text-white px-1.5 py-0.5 rounded-lg">Duyuru</button>
+                        <button onClick={() => handleDuzenleAc(egitim)} className="bg-gray-600 text-white px-1.5 py-0.5 rounded-lg">Düzenle</button>
+                        <button onClick={() => handleTamamlaToggle(egitim)}
+                          className={egitim.tamamlandi ? 'bg-gray-400 text-white px-1.5 py-0.5 rounded-lg' : 'bg-emerald-500 text-white px-1.5 py-0.5 rounded-lg'}>
+                          {egitim.tamamlandi ? 'Geri Al' : '✓'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+          {tarihler.length === 0 && (
+            <div className="text-gray-400 text-sm py-4">Bu haftada eğitim bulunamadı</div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // ── Eğitim kartı (liste/kompakt paylaşımlı render) ───────────────────────
+  const EgitimKarti = ({ egitim, kompakt = false }) => {
+    const isSecili = topluSecili.has(egitim.id);
+    const zoomVar = !!extractZoomId(egitim.yer);
+
+    if (kompakt) return (
+      <div
+        onClick={topluMod ? () => handleTopluSecToggle(egitim.id) : undefined}
+        className={`relative border rounded-xl p-3 transition-all ${topluMod ? 'cursor-pointer' : ''} ${isSecili ? 'border-amare-purple bg-purple-50 ring-2 ring-amare-purple/20' : egitim.tamamlandi ? 'border-gray-200 bg-gray-50 opacity-70' : 'border-gray-200 hover:border-amare-purple/40'}`}>
+        {topluMod && (
+          <div className="absolute top-2 right-2">
+            {isSecili ? <CheckSquare className="w-4 h-4 text-amare-purple" /> : <Square className="w-4 h-4 text-gray-300" />}
+          </div>
+        )}
+        {egitim.tamamlandi && <span className="absolute top-2 left-2 text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-semibold">✓ Tamamlandı</span>}
+        {egitim.kategori && <span className={`block mb-1 text-xs font-semibold text-purple-600 ${egitim.tamamlandi ? 'mt-5' : ''}`}>{egitim.kategori}</span>}
+        <div className={`font-semibold text-xs text-gray-800 line-clamp-2 mb-1 ${topluMod || !egitim.kategori ? 'pr-5' : ''} ${egitim.tamamlandi && !egitim.kategori ? 'mt-5' : ''}`}>{egitim.egitim}</div>
+        <div className="text-xs text-gray-500">{egitim.tarih}{egitim.saat ? ` • ${egitim.saat}` : ''}</div>
+        {egitim.egitmen && <div className="text-xs text-amare-purple truncate mt-0.5">{egitim.egitmen}</div>}
+        {!topluMod && (
+          <div className="flex gap-1 mt-2 flex-wrap">
+            <button onClick={() => handleGorselAc(egitim)} className="text-xs bg-amare-purple text-white px-2 py-0.5 rounded-lg">Görsel</button>
+            <button onClick={() => setDuyuruModal(egitim)} className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-lg">Duyuru</button>
+            {zoomVar && <button onClick={() => handleQrAc(egitim)} className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-lg">QR</button>}
+            <button onClick={() => handleDuzenleAc(egitim)} className="text-xs bg-gray-600 text-white px-2 py-0.5 rounded-lg">Düzenle</button>
+            <button onClick={() => handleTamamlaToggle(egitim)}
+              className={`text-xs px-2 py-0.5 rounded-lg ${egitim.tamamlandi ? 'bg-gray-400 text-white' : 'bg-emerald-500 text-white'}`}>
+              {egitim.tamamlandi ? 'Geri Al' : '✓ Tamam'}
+            </button>
+            <button onClick={() => handleEgitimSil(egitim.id, egitim.egitim)} className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-lg">Sil</button>
+          </div>
+        )}
+      </div>
+    );
+
+    return (
+      <div
+        onClick={topluMod ? () => handleTopluSecToggle(egitim.id) : undefined}
+        className={`border rounded-lg p-4 flex items-center justify-between group transition-colors ${topluMod ? 'cursor-pointer' : ''} ${isSecili ? 'border-amare-purple bg-purple-50' : egitim.tamamlandi ? 'border-gray-200 bg-gray-50 opacity-75' : 'border-gray-200 hover:border-amare-purple/40 hover:bg-purple-50/30'}`}>
+        {topluMod && (
+          <div className="mr-3 flex-shrink-0">
+            {isSecili ? <CheckSquare className="w-5 h-5 text-amare-purple" /> : <Square className="w-5 h-5 text-gray-300" />}
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className={`font-bold text-gray-800 ${egitim.tamamlandi ? 'line-through text-gray-400' : ''}`}>{egitim.egitim}</div>
+            {egitim.tamamlandi && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold flex-shrink-0">✓ Tamamlandı</span>}
+            {egitim.kategori && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full flex-shrink-0">{egitim.kategori}</span>}
+          </div>
+          <div className="text-sm text-gray-600 mt-1">
+            {egitim.gun} {egitim.tarih} — {egitim.saat}{egitim.bitisSaati ? `-${egitim.bitisSaati}` : ''} ({egitim.sure})
+          </div>
+          <div className="text-sm text-gray-500 mt-0.5">
+            {egitim.egitmen && <span>🎤 {egitim.egitmen}</span>}
+            {egitim.yer && <span className="ml-3">📍 {egitim.yer}</span>}
+          </div>
+          {egitim.aciklama && <div className="text-xs text-gray-400 mt-1 truncate">{egitim.aciklama}</div>}
+        </div>
+        {!topluMod && (
+          <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 ml-2">
+            <button onClick={() => handleGorselAc(egitim)}
+              className="flex items-center gap-1 bg-amare-purple text-white text-xs px-2.5 py-1.5 rounded-lg hover:bg-amare-dark">
+              <ImageIcon className="w-3 h-3" />Görsel
+            </button>
+            <button onClick={() => setDuyuruModal(egitim)}
+              className="flex items-center gap-1 bg-green-600 text-white text-xs px-2.5 py-1.5 rounded-lg hover:bg-green-700">
+              <MessageCircle className="w-3 h-3" />Duyuru
+            </button>
+            {zoomVar && (
+              <button onClick={() => handleQrAc(egitim)}
+                className="flex items-center gap-1 bg-blue-500 text-white text-xs px-2.5 py-1.5 rounded-lg hover:bg-blue-600">
+                <QrCode className="w-3 h-3" />QR
+              </button>
+            )}
+            <button onClick={() => handleTamamlaToggle(egitim)}
+              className={`flex items-center gap-1 text-xs px-2.5 py-1.5 rounded-lg ${egitim.tamamlandi ? 'bg-gray-400 text-white hover:bg-gray-500' : 'bg-emerald-500 text-white hover:bg-emerald-600'}`}>
+              {egitim.tamamlandi ? <><Circle className="w-3 h-3" />Geri Al</> : <><CheckCircle2 className="w-3 h-3" />Tamam</>}
+            </button>
+            <button onClick={() => handleDuzenleAc(egitim)}
+              className="flex items-center gap-1 bg-gray-600 text-white text-xs px-2.5 py-1.5 rounded-lg hover:bg-gray-700">
+              <Pencil className="w-3 h-3" />Düzenle
+            </button>
+            <button onClick={() => handleEgitimSil(egitim.id, egitim.egitim)} className="text-red-500 hover:text-red-700 p-1.5">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -390,7 +639,7 @@ const AdminPanel = () => {
       {/* Tabs */}
       <div className="bg-white border-b sticky top-0 z-10">
         <div className="container mx-auto">
-          <div className="flex space-x-8 overflow-x-auto">
+          <div className="flex space-x-6 overflow-x-auto">
             {[
               { key: 'basvurular', label: `Başvurular (${egitmenler.length})`, Icon: Users },
               { key: 'takvim', label: `Takvim (${takvim.length})`, Icon: Calendar },
@@ -398,15 +647,14 @@ const AdminPanel = () => {
               { key: 'ayarlar', label: 'Ayarlar', Icon: Settings },
             ].map(({ key, label, Icon }) => (
               <button key={key} onClick={() => setActiveTab(key)}
-                className={`py-4 px-2 border-b-2 font-semibold whitespace-nowrap transition-colors flex items-center gap-2 ${activeTab === key ? 'border-amare-purple text-amare-purple' : 'border-transparent text-gray-600 hover:text-gray-800'}`}>
-                <Icon className="w-5 h-5 inline" />{label}
+                className={`py-4 px-2 border-b-2 font-semibold whitespace-nowrap flex items-center gap-2 transition-colors ${activeTab === key ? 'border-amare-purple text-amare-purple' : 'border-transparent text-gray-600 hover:text-gray-800'}`}>
+                <Icon className="w-4 h-4" />{label}
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Content */}
       <div className="container mx-auto py-8 px-4">
 
         {/* ===== BAŞVURULAR ===== */}
@@ -431,13 +679,12 @@ const AdminPanel = () => {
                         <select
                           value={egitmen.durum || 'beklemede'}
                           onChange={e => basvuruDurumGuncelle(egitmen.id, e.target.value)}
-                          className={`text-xs font-semibold px-2 py-1 rounded-lg border-0 cursor-pointer ${DURUM_RENKLER[egitmen.durum || 'beklemede']}`}
-                        >
+                          className={`text-xs font-semibold px-2 py-1 rounded-lg border-0 cursor-pointer ${DURUM_RENKLER[egitmen.durum || 'beklemede']}`}>
                           <option value="beklemede">⏳ Beklemede</option>
                           <option value="onaylandi">✅ Onaylandı</option>
                           <option value="reddedildi">❌ Reddedildi</option>
                         </select>
-                        <button onClick={() => handleBasvuruSil(egitmen.id, egitmen.adSoyad)} className="text-red-500 hover:text-red-700 p-1" title="Sil">
+                        <button onClick={() => handleBasvuruSil(egitmen.id, egitmen.adSoyad)} className="text-red-500 hover:text-red-700 p-1">
                           <Trash2 className="w-5 h-5" />
                         </button>
                       </div>
@@ -490,7 +737,7 @@ const AdminPanel = () => {
               <div className="flex items-start justify-between gap-4 mb-4 flex-wrap">
                 <div>
                   <h2 className="text-2xl font-bold text-gray-800">Eğitim Takvimi</h2>
-                  <p className="text-gray-600 mt-1">Toplam {takvim.length} eğitim planlandı</p>
+                  <p className="text-gray-600 mt-1">Toplam {takvim.length} eğitim • {takvim.filter(e => e.tamamlandi).length} tamamlandı</p>
                 </div>
                 <div className="flex gap-2 flex-wrap">
                   <label className={`flex items-center bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 cursor-pointer text-sm font-semibold ${processing ? 'opacity-50 pointer-events-none' : ''}`}>
@@ -508,54 +755,86 @@ const AdminPanel = () => {
               {/* İstatistik kartları */}
               {takvim.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                  {[1,2,3,4].map(h => (
-                    <div key={h} className="bg-purple-50 rounded-xl p-3 text-center">
-                      <div className="text-xs text-purple-600 font-semibold mb-1">Hafta {h}</div>
-                      <div className="text-2xl font-bold text-purple-700">{takvim.filter(e => e.hafta === h).length}</div>
-                      <div className="text-xs text-purple-400">eğitim</div>
-                    </div>
-                  ))}
+                  {[1,2,3,4].map(h => {
+                    const toplam = takvim.filter(e => e.hafta === h).length;
+                    const tamam = takvim.filter(e => e.hafta === h && e.tamamlandi).length;
+                    return (
+                      <div key={h} className="bg-purple-50 rounded-xl p-3 text-center">
+                        <div className="text-xs text-purple-600 font-semibold mb-1">Hafta {h}</div>
+                        <div className="text-2xl font-bold text-purple-700">{toplam}</div>
+                        <div className="text-xs text-purple-400">{tamam > 0 ? `${tamam} tamamlandı` : 'eğitim'}</div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
               {/* Toolbar */}
               {takvim.length > 0 && (
-                <div className="flex gap-2 flex-wrap">
-                  <div className="relative flex-1 min-w-48">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input value={aramaMetni} onChange={e => setAramaMetni(e.target.value)}
-                      placeholder="Eğitim adı, konuşmacı, tarih..."
-                      className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                <div className="space-y-3">
+                  {/* Arama + görünüm + aksiyonlar */}
+                  <div className="flex gap-2 flex-wrap">
+                    <div className="relative flex-1 min-w-48">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <input value={aramaMetni} onChange={e => setAramaMetni(e.target.value)}
+                        placeholder="Eğitim adı, konuşmacı, tarih..."
+                        className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                    </div>
+                    {/* Görünüm toggle */}
+                    <div className="flex border border-gray-200 rounded-xl overflow-hidden">
+                      {[
+                        { val: 'liste', Icon: LayoutList, tip: 'Liste' },
+                        { val: 'kompakt', Icon: LayoutGrid, tip: 'Kompakt' },
+                        { val: 'takvim', Icon: CalendarDays, tip: 'Takvim' },
+                      ].map(({ val, Icon, tip }) => (
+                        <button key={val} onClick={() => setGorunum(val)} title={tip}
+                          className={`px-3 py-2 ${gorunum === val ? 'bg-amare-purple text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
+                          <Icon className="w-4 h-4" />
+                        </button>
+                      ))}
+                    </div>
+                    <button onClick={handleExcelIndir}
+                      className="flex items-center gap-1.5 bg-emerald-600 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-700">
+                      <Download className="w-4 h-4" />Excel İndir
+                    </button>
+                    <button onClick={() => setOzetModal(true)}
+                      className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700">
+                      <FileText className="w-4 h-4" />Haftalık Özet
+                    </button>
+                    <button onClick={() => setEkleModal(true)}
+                      className="flex items-center gap-1.5 bg-amare-blue text-white px-3 py-2 rounded-xl text-sm font-semibold hover:opacity-90">
+                      <Plus className="w-4 h-4" />Eğitim Ekle
+                    </button>
+                    <button onClick={() => { setTopluMod(!topluMod); setTopluSecili(new Set()); }}
+                      className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border transition-colors ${topluMod ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-700 border-gray-200 hover:border-amare-purple/40'}`}>
+                      <ImageIcon className="w-4 h-4" />{topluMod ? `${topluSecili.size} Seçili` : 'Toplu Görsel'}
+                    </button>
+                    {topluMod && topluSecili.size > 0 && (
+                      <button onClick={handleTopluGorselOlustur}
+                        className="flex items-center gap-1.5 bg-amare-purple text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-amare-dark">
+                        <ImageIcon className="w-4 h-4" />{topluSecili.size} Görsel Oluştur
+                      </button>
+                    )}
                   </div>
-                  <div className="flex border border-gray-200 rounded-xl overflow-hidden">
-                    <button onClick={() => setGorunum('liste')} title="Liste"
-                      className={`px-3 py-2 ${gorunum === 'liste' ? 'bg-amare-purple text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-                      <LayoutList className="w-4 h-4" />
+
+                  {/* Kategori filtresi */}
+                  <div className="flex gap-2 flex-wrap items-center">
+                    <Tag className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <button onClick={() => setKategoriFiltre('')}
+                      className={`text-xs px-3 py-1.5 rounded-full font-semibold transition-colors ${!kategoriFiltre ? 'bg-amare-purple text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                      Tümü
                     </button>
-                    <button onClick={() => setGorunum('kompakt')} title="Kompakt"
-                      className={`px-3 py-2 ${gorunum === 'kompakt' ? 'bg-amare-purple text-white' : 'bg-white text-gray-600 hover:bg-gray-50'}`}>
-                      <LayoutGrid className="w-4 h-4" />
+                    {KATEGORILER.map(k => (
+                      <button key={k} onClick={() => setKategoriFiltre(kategoriFiltre === k ? '' : k)}
+                        className={`text-xs px-3 py-1.5 rounded-full font-semibold transition-colors ${kategoriFiltre === k ? 'bg-amare-purple text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>
+                        {k}
+                      </button>
+                    ))}
+                    <button onClick={() => setSadeceBekleyen(!sadeceBekleyen)}
+                      className={`ml-2 text-xs px-3 py-1.5 rounded-full font-semibold border transition-colors flex items-center gap-1 ${sadeceBekleyen ? 'bg-amber-500 text-white border-amber-500' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'}`}>
+                      <Filter className="w-3 h-3" />Tamamlanmayanlar
                     </button>
                   </div>
-                  <button onClick={handleExcelIndir}
-                    className="flex items-center gap-1.5 bg-emerald-600 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-700">
-                    <Download className="w-4 h-4" />Excel İndir
-                  </button>
-                  <button onClick={() => setEkleModal(true)}
-                    className="flex items-center gap-1.5 bg-amare-blue text-white px-3 py-2 rounded-xl text-sm font-semibold hover:opacity-90">
-                    <Plus className="w-4 h-4" />Eğitim Ekle
-                  </button>
-                  <button onClick={() => { setTopluMod(!topluMod); setTopluSecili(new Set()); }}
-                    className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold border transition-colors ${topluMod ? 'bg-orange-500 text-white border-orange-500' : 'bg-white text-gray-700 border-gray-200 hover:border-amare-purple/40'}`}>
-                    <ImageIcon className="w-4 h-4" />
-                    {topluMod ? `${topluSecili.size} Seçili` : 'Toplu Görsel'}
-                  </button>
-                  {topluMod && topluSecili.size > 0 && (
-                    <button onClick={handleTopluGorselOlustur}
-                      className="flex items-center gap-1.5 bg-amare-purple text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-amare-dark">
-                      <ImageIcon className="w-4 h-4" />{topluSecili.size} Görsel Oluştur
-                    </button>
-                  )}
                 </div>
               )}
             </div>
@@ -570,85 +849,31 @@ const AdminPanel = () => {
                 {[1,2,3,4].map(haftaNo => {
                   const haftaEgitimleri = filtreliTakvim.filter(e => e.hafta === haftaNo);
                   if (haftaEgitimleri.length === 0) return null;
+                  const tamam = haftaEgitimleri.filter(e => e.tamamlandi).length;
                   return (
                     <div key={haftaNo} className="bg-white rounded-lg shadow p-6">
-                      <h3 className="text-xl font-bold text-amare-purple mb-4">
-                        Hafta {haftaNo} <span className="text-base font-normal text-gray-500">({haftaEgitimleri.length} eğitim)</span>
-                      </h3>
-                      {gorunum === 'kompakt' ? (
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-xl font-bold text-amare-purple">
+                          Hafta {haftaNo} <span className="text-base font-normal text-gray-500">({haftaEgitimleri.length} eğitim{tamam > 0 ? ` • ${tamam} tamamlandı` : ''})</span>
+                        </h3>
+                      </div>
+                      {gorunum === 'kompakt' && (
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                          {haftaEgitimleri.map(egitim => (
-                            <div key={egitim.id}
-                              onClick={topluMod ? () => handleTopluSecToggle(egitim.id) : undefined}
-                              className={`relative border rounded-xl p-3 transition-all ${topluMod ? 'cursor-pointer' : ''} ${topluSecili.has(egitim.id) ? 'border-amare-purple bg-purple-50 ring-2 ring-amare-purple/20' : 'border-gray-200 hover:border-amare-purple/40'}`}>
-                              {topluMod && (
-                                <div className="absolute top-2 right-2">
-                                  {topluSecili.has(egitim.id)
-                                    ? <CheckSquare className="w-4 h-4 text-amare-purple" />
-                                    : <Square className="w-4 h-4 text-gray-300" />}
-                                </div>
-                              )}
-                              <div className="font-semibold text-xs text-gray-800 line-clamp-2 mb-1 pr-5">{egitim.egitim}</div>
-                              <div className="text-xs text-gray-500">{egitim.tarih}{egitim.saat ? ` • ${egitim.saat}` : ''}</div>
-                              {egitim.egitmen && <div className="text-xs text-amare-purple truncate mt-0.5">{egitim.egitmen}</div>}
-                              {!topluMod && (
-                                <div className="flex gap-1 mt-2 flex-wrap">
-                                  <button onClick={() => handleGorselAc(egitim)} className="text-xs bg-amare-purple text-white px-2 py-0.5 rounded-lg">Görsel</button>
-                                  <button onClick={() => handleDuzenleAc(egitim)} className="text-xs bg-gray-600 text-white px-2 py-0.5 rounded-lg">Düzenle</button>
-                                  <button onClick={() => handleEgitimSil(egitim.id, egitim.egitim)} className="text-xs bg-red-500 text-white px-2 py-0.5 rounded-lg">Sil</button>
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          {haftaEgitimleri.map(egitim => (
-                            <div key={egitim.id}
-                              onClick={topluMod ? () => handleTopluSecToggle(egitim.id) : undefined}
-                              className={`border rounded-lg p-4 flex items-center justify-between group transition-colors ${topluMod ? 'cursor-pointer' : ''} ${topluSecili.has(egitim.id) ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-amare-purple/40 hover:bg-purple-50/30'}`}>
-                              {topluMod && (
-                                <div className="mr-3 flex-shrink-0">
-                                  {topluSecili.has(egitim.id)
-                                    ? <CheckSquare className="w-5 h-5 text-amare-purple" />
-                                    : <Square className="w-5 h-5 text-gray-300" />}
-                                </div>
-                              )}
-                              <div className="flex-1">
-                                <div className="font-bold text-gray-800">{egitim.egitim}</div>
-                                <div className="text-sm text-gray-600 mt-1">
-                                  {egitim.gun} {egitim.tarih} — {egitim.saat}{egitim.bitisSaati ? `-${egitim.bitisSaati}` : ''} ({egitim.sure})
-                                </div>
-                                <div className="text-sm text-gray-500 mt-0.5">
-                                  {egitim.egitmen && <span>🎤 {egitim.egitmen}</span>}
-                                  {egitim.yer && <span className="ml-3">📍 {egitim.yer}</span>}
-                                </div>
-                              </div>
-                              {!topluMod && (
-                                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0">
-                                  <button onClick={() => handleGorselAc(egitim)}
-                                    className="flex items-center gap-1.5 bg-amare-purple text-white text-xs px-3 py-1.5 rounded-lg hover:bg-amare-dark">
-                                    <ImageIcon className="w-3.5 h-3.5" />Görsel
-                                  </button>
-                                  <button onClick={() => handleDuzenleAc(egitim)}
-                                    className="flex items-center gap-1.5 bg-gray-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-gray-700">
-                                    <Pencil className="w-3.5 h-3.5" />Düzenle
-                                  </button>
-                                  <button onClick={() => handleEgitimSil(egitim.id, egitim.egitim)} className="text-red-500 hover:text-red-700 p-2">
-                                    <Trash2 className="w-5 h-5" />
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          ))}
+                          {haftaEgitimleri.map(e => <EgitimKarti key={e.id} egitim={e} kompakt />)}
                         </div>
                       )}
+                      {gorunum === 'liste' && (
+                        <div className="space-y-3">
+                          {haftaEgitimleri.map(e => <EgitimKarti key={e.id} egitim={e} />)}
+                        </div>
+                      )}
+                      {gorunum === 'takvim' && renderTakvimGrid(haftaEgitimleri)}
                     </div>
                   );
                 })}
-                {filtreliTakvim.length === 0 && aramaMetni && (
+                {filtreliTakvim.length === 0 && (
                   <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-                    "{aramaMetni}" için sonuç bulunamadı
+                    Seçili filtreye göre eğitim bulunamadı
                   </div>
                 )}
               </div>
@@ -659,10 +884,19 @@ const AdminPanel = () => {
         {/* ===== KONUŞMACILAR ===== */}
         {activeTab === 'konusmacilar' && (
           <div>
-            <div className="bg-white rounded-lg shadow p-6 mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-1">Konuşmacılar</h2>
-              <p className="text-gray-500 text-sm">Fotoğraf ve profil bilgilerini düzenleyebilirsiniz.</p>
+            <div className="bg-white rounded-lg shadow p-6 mb-4">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-1">Konuşmacılar</h2>
+                  <p className="text-gray-500 text-sm">Fotoğraf ve profil bilgilerini düzenleyebilirsiniz.</p>
+                </div>
+                <button onClick={handleBasvuruLinkKopyala}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${linkKopyalandi ? 'bg-green-500 text-white border-green-500' : 'bg-white text-amare-purple border-amare-purple hover:bg-purple-50'}`}>
+                  {linkKopyalandi ? <><Check className="w-4 h-4" />Link Kopyalandı!</> : <><Copy className="w-4 h-4" />Başvuru Linkini Kopyala</>}
+                </button>
+              </div>
             </div>
+
             {benzersizKonusmacilar.length === 0 ? (
               <div className="bg-white rounded-lg shadow p-8 text-center">
                 <UserCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -670,23 +904,40 @@ const AdminPanel = () => {
               </div>
             ) : (
               <>
+                {/* İstatistik özet */}
                 {topKonusmacilar.length > 0 && (
                   <div className="bg-white rounded-xl shadow p-5 mb-4">
-                    <h3 className="text-sm font-bold text-gray-700 mb-3">En Çok Eğitim Veren Konuşmacılar</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {topKonusmacilar.map(([ad, sayi]) => (
-                        <span key={ad} className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-xs font-semibold">
-                          {ad} <span className="bg-purple-200 text-purple-900 rounded-full px-1.5 py-0.5 ml-1">{sayi}</span>
-                        </span>
+                    <h3 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+                      <BarChart2 className="w-4 h-4 text-amare-purple" />En Çok Eğitim Veren Konuşmacılar
+                    </h3>
+                    <div className="space-y-2">
+                      {topKonusmacilar.map(([ad, stat]) => (
+                        <div key={ad} className="flex items-center gap-3">
+                          <div className="text-sm font-semibold text-gray-700 w-40 truncate">{ad}</div>
+                          <div className="flex-1 bg-gray-100 rounded-full h-2">
+                            <div className="bg-amare-purple h-2 rounded-full" style={{ width: `${(stat.toplam / topKonusmacilar[0][1].toplam) * 100}%` }} />
+                          </div>
+                          <div className="text-sm font-bold text-amare-purple w-8 text-right">{stat.toplam}</div>
+                          {stat.tamamlandi > 0 && <div className="text-xs text-green-600">({stat.tamamlandi} ✓)</div>}
+                          {Object.keys(stat.kategoriler).length > 0 && (
+                            <div className="flex gap-1">
+                              {Object.entries(stat.kategoriler).slice(0,2).map(([k]) => (
+                                <span key={k} className="text-xs bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-full">{k}</span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       ))}
                     </div>
                   </div>
                 )}
+
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                   {benzersizKonusmacilar.map(ad => {
                     const safeId = ad.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
                     const kayitliK = konusmacilar.find(k => k.id === safeId);
                     const isUploading = fotoUploadingId === safeId;
+                    const stat = konusmaciStat[ad];
                     return (
                       <div key={safeId} className="bg-white rounded-xl shadow p-4 flex flex-col items-center gap-3">
                         <div className="relative w-24 h-24">
@@ -712,6 +963,7 @@ const AdminPanel = () => {
                         <div className="text-center">
                           <p className="text-sm font-semibold text-gray-800 leading-tight">{ad}</p>
                           {kayitliK?.unvan && <p className="text-xs text-gray-500 mt-0.5">{kayitliK.unvan}</p>}
+                          {stat && <p className="text-xs text-amare-purple font-semibold mt-0.5">{stat.toplam} eğitim</p>}
                           {kayitliK?.linkedin && (
                             <a href={kayitliK.linkedin} target="_blank" rel="noopener noreferrer"
                               className="text-xs text-blue-500 hover:underline flex items-center gap-1 justify-center mt-0.5">
@@ -745,7 +997,6 @@ const AdminPanel = () => {
             <div className="bg-white rounded-lg shadow p-6 mb-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Takvim Ayarları</h2>
 
-              {/* Takvim Görünürlüğü */}
               <div className="border-b pb-6 mb-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">Takvim Görünürlüğü</h3>
                 <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
@@ -757,19 +1008,17 @@ const AdminPanel = () => {
                   </div>
                   <button onClick={handleTakvimYayinla}
                     className={`flex items-center px-6 py-3 rounded-lg font-semibold transition-colors ${takvimYayinlandi ? 'bg-red-500 hover:bg-red-600 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}>
-                    {takvimYayinlandi ? <><EyeOff className="w-5 h-5 mr-2" />Takvimi Gizle</> : <><Eye className="w-5 h-5 mr-2" />Takvimi Yayınla</>}
+                    {takvimYayinlandi ? <><EyeOff className="w-5 h-5 mr-2" />Gizle</> : <><Eye className="w-5 h-5 mr-2" />Yayınla</>}
                   </button>
                 </div>
               </div>
 
-              {/* Gemini API Key */}
               <div className="border-b pb-6 mb-6">
                 <h3 className="text-lg font-semibold text-gray-800 mb-1 flex items-center gap-2">
                   <Key className="w-5 h-5 text-amare-purple" />Görsel Oluşturma (Gemini API)
                 </h3>
                 <p className="text-sm text-gray-500 mb-3">
-                  Google AI Studio'dan API anahtarı alın.{' '}
-                  <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-amare-purple underline">API anahtarı al →</a>
+                  <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-amare-purple underline">Google AI Studio'dan API anahtarı al →</a>
                 </p>
                 <div className="flex gap-3">
                   <input type="password" value={apiKeyInput}
@@ -783,7 +1032,6 @@ const AdminPanel = () => {
                 {geminiApiKey && <p className="text-xs text-green-600 mt-1">✅ API anahtarı kayıtlı</p>}
               </div>
 
-              {/* Şablon Görseller */}
               <div className="border-b pb-6 mb-6">
                 <div className="flex items-center justify-between mb-3">
                   <div>
@@ -816,10 +1064,9 @@ const AdminPanel = () => {
                 )}
               </div>
 
-              {/* İstatistikler */}
               <div>
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">İstatistikler</h3>
-                <div className="grid md:grid-cols-3 gap-4">
+                <div className="grid md:grid-cols-4 gap-4">
                   <div className="bg-blue-50 p-4 rounded-lg">
                     <div className="text-blue-600 font-semibold mb-1">Toplam Başvuru</div>
                     <div className="text-3xl font-bold text-blue-700">{egitmenler.length}</div>
@@ -829,8 +1076,12 @@ const AdminPanel = () => {
                     <div className="text-3xl font-bold text-purple-700">{takvim.length}</div>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
-                    <div className="text-green-600 font-semibold mb-1">Takvim Durumu</div>
-                    <div className="text-lg font-bold text-green-700">{takvimYayinlandi ? 'Yayında' : 'Gizli'}</div>
+                    <div className="text-green-600 font-semibold mb-1">Tamamlanan</div>
+                    <div className="text-3xl font-bold text-green-700">{takvim.filter(e => e.tamamlandi).length}</div>
+                  </div>
+                  <div className="bg-orange-50 p-4 rounded-lg">
+                    <div className="text-orange-600 font-semibold mb-1">Takvim Durumu</div>
+                    <div className="text-lg font-bold text-orange-700">{takvimYayinlandi ? 'Yayında' : 'Gizli'}</div>
                   </div>
                 </div>
               </div>
@@ -849,9 +1100,7 @@ const AdminPanel = () => {
               <h2 className="text-xl font-bold text-gray-800">Eğitimi Düzenle</h2>
               <button onClick={() => setDuzenleModal(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
             </div>
-            <div className="p-6 space-y-4">
-              <EgitimFormAlanlari form={duzenleForm} setForm={setDuzenleForm} />
-            </div>
+            <div className="p-6 space-y-4"><EgitimFormAlanlari form={duzenleForm} setForm={setDuzenleForm} /></div>
             <div className="flex gap-3 p-6 pt-0">
               <button onClick={() => setDuzenleModal(null)} className="flex-1 py-3 rounded-xl font-bold text-gray-700 bg-gray-100 hover:bg-gray-200">İptal</button>
               <button onClick={handleDuzenleKaydet} disabled={duzenleKaydediliyor}
@@ -871,9 +1120,7 @@ const AdminPanel = () => {
               <h2 className="text-xl font-bold text-gray-800">Yeni Eğitim Ekle</h2>
               <button onClick={() => setEkleModal(false)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
             </div>
-            <div className="p-6 space-y-4">
-              <EgitimFormAlanlari form={ekleForm} setForm={setEkleForm} />
-            </div>
+            <div className="p-6 space-y-4"><EgitimFormAlanlari form={ekleForm} setForm={setEkleForm} /></div>
             <div className="flex gap-3 p-6 pt-0">
               <button onClick={() => setEkleModal(false)} className="flex-1 py-3 rounded-xl font-bold text-gray-700 bg-gray-100 hover:bg-gray-200">İptal</button>
               <button onClick={handleEkleKaydet} disabled={ekleKaydediliyor}
@@ -924,6 +1171,60 @@ const AdminPanel = () => {
         </div>
       )}
 
+      {/* QR Kod Modal */}
+      {qrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div>
+                <h2 className="text-xl font-bold text-gray-800">Zoom QR Kodu</h2>
+                <p className="text-sm text-gray-500 mt-0.5 truncate max-w-xs">{qrModal.egitim.egitim}</p>
+              </div>
+              <button onClick={() => setQrModal(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+            </div>
+            <div className="p-6 flex flex-col items-center gap-4">
+              <img src={qrModal.qrDataUrl} alt="QR Kod" className="w-56 h-56 rounded-xl border border-gray-100 shadow" />
+              <div className="text-center">
+                <div className="text-sm font-semibold text-gray-700">Zoom ID: {qrModal.zoomId}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{qrModal.zoomUrl}</div>
+              </div>
+              <a href={qrModal.qrDataUrl} download={`zoom_qr_${qrModal.zoomId}.png`}
+                className="w-full py-3 rounded-xl font-bold text-white bg-amare-purple hover:bg-amare-dark text-center flex items-center justify-center gap-2">
+                <Download className="w-4 h-4" />QR Kodu İndir
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Haftalık Özet Modal */}
+      {ozetModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-bold text-gray-800">Haftalık Özet Raporu</h2>
+              <button onClick={() => setOzetModal(false)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-2">
+                {[1,2,3,4].map(h => (
+                  <div key={h} className="bg-purple-50 rounded-xl p-3 text-center">
+                    <div className="text-xs text-purple-600 font-semibold">Hafta {h}</div>
+                    <div className="text-2xl font-bold text-purple-700">{takvim.filter(e => e.hafta === h).length}</div>
+                  </div>
+                ))}
+              </div>
+              <textarea readOnly value={ozetMetni} rows={18}
+                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-mono text-gray-700 bg-gray-50 focus:outline-none resize-none leading-relaxed" />
+              <button onClick={handleOzetKopyala}
+                className={`w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors ${ozetKopyalandi ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}>
+                {ozetKopyalandi ? <><Check className="w-4 h-4" />Kopyalandı!</> : <><Copy className="w-4 h-4" />Tümünü Kopyala</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Toplu Görsel İlerleme */}
       {topluIlerleme && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
@@ -945,16 +1246,13 @@ const AdminPanel = () => {
               </div>
               {topluIlerleme.tamamlanan < topluIlerleme.toplam && (
                 <div className="flex items-center gap-2 text-sm text-gray-600 mb-4">
-                  <Loader2 className="w-4 h-4 animate-spin text-amare-purple" />
-                  Görsel oluşturuluyor... Bu işlem birkaç dakika sürebilir.
+                  <Loader2 className="w-4 h-4 animate-spin text-amare-purple" />Görsel oluşturuluyor... Birkaç dakika sürebilir.
                 </div>
               )}
               {topluIlerleme.hatalar.length > 0 && (
                 <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3">
                   <div className="text-sm font-semibold text-red-700 mb-1">Başarısız ({topluIlerleme.hatalar.length})</div>
-                  {topluIlerleme.hatalar.map((h, i) => (
-                    <div key={i} className="text-xs text-red-600 truncate">{h.egitim}: {h.hata}</div>
-                  ))}
+                  {topluIlerleme.hatalar.map((h, i) => <div key={i} className="text-xs text-red-600 truncate">{h.egitim}: {h.hata}</div>)}
                 </div>
               )}
               {topluIlerleme.sonuclar.length > 0 && (
@@ -979,6 +1277,15 @@ const AdminPanel = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Duyuru Modal */}
+      {duyuruModal && (
+        <DuyuruModal
+          egitim={duyuruModal}
+          apiKey={geminiApiKey}
+          onClose={() => setDuyuruModal(null)}
+        />
       )}
 
       {/* Görsel Oluşturma Modal */}
