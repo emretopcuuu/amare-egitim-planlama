@@ -10,10 +10,11 @@ import {
   Plus, Search, LayoutList, LayoutGrid, CalendarDays,
   CheckSquare, Square, ExternalLink, Loader2, Info,
   MessageCircle, QrCode, Check, Copy, Tag, Filter,
-  CheckCircle2, Circle, BarChart2, FileText,
+  CheckCircle2, Circle, BarChart2, FileText, Bell,
 } from 'lucide-react';
 import GorselOlusturModal from '../components/GorselOlusturModal';
 import DuyuruModal from '../components/DuyuruModal';
+import HatirlatmaModal from '../components/HatirlatmaModal';
 import { gorselOlustur } from '../utils/gorselOlustur';
 
 // ── Sabitler ────────────────────────────────────────────────────────────────
@@ -177,6 +178,9 @@ const AdminPanel = () => {
   // Haftalık özet modal
   const [ozetModal, setOzetModal] = useState(false);
   const [ozetKopyalandi, setOzetKopyalandi] = useState(false);
+
+  // Hatırlatma modal
+  const [hatirlatmaModal, setHatirlatmaModal] = useState(false);
 
   React.useEffect(() => {
     if (!isAdmin) navigate('/admin-giris');
@@ -475,6 +479,57 @@ const AdminPanel = () => {
     navigator.clipboard.writeText(ozetMetni);
     setOzetKopyalandi(true);
     setTimeout(() => setOzetKopyalandi(false), 2000);
+  };
+
+  const handleIcsIndir = () => {
+    const formatDt = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}Z/, '');
+    const lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Amare Egitim Planlama//TR',
+      'CALSCALE:GREGORIAN',
+      'METHOD:PUBLISH',
+      'X-WR-CALNAME:Amare Eğitim Takvimi',
+    ];
+    takvim.forEach(egitim => {
+      const tarih = parseTarih(egitim.tarih);
+      if (!tarih) return;
+      const [bSaat = 0, bDakika = 0] = (egitim.saat || '00:00').split(':').map(Number);
+      const dtStart = new Date(tarih);
+      dtStart.setHours(bSaat, bDakika, 0, 0);
+      let dtEnd;
+      if (egitim.bitisSaati) {
+        const [eSaat, eDakika] = egitim.bitisSaati.split(':').map(Number);
+        dtEnd = new Date(tarih);
+        dtEnd.setHours(eSaat, eDakika, 0, 0);
+      } else {
+        dtEnd = new Date(dtStart.getTime() + 60 * 60 * 1000);
+      }
+      const uid = `${egitim.id || Math.random().toString(36).slice(2)}@amare-egitim`;
+      lines.push('BEGIN:VEVENT');
+      lines.push(`UID:${uid}`);
+      lines.push(`DTSTART:${formatDt(dtStart)}`);
+      lines.push(`DTEND:${formatDt(dtEnd)}`);
+      lines.push(`SUMMARY:${(egitim.egitim || '').replace(/[,;\\]/g, '')}`);
+      if (egitim.egitmen || egitim.aciklama) {
+        const desc = [egitim.egitmen ? `Konuşmacı: ${egitim.egitmen}` : '', egitim.aciklama || ''].filter(Boolean).join('\\n');
+        lines.push(`DESCRIPTION:${desc}`);
+      }
+      if (egitim.yer) lines.push(`LOCATION:${egitim.yer.replace(/[,;\\]/g, '')}`);
+      if (egitim.kategori) lines.push(`CATEGORIES:${egitim.kategori}`);
+      lines.push('END:VEVENT');
+    });
+    lines.push('END:VCALENDAR');
+    const icsContent = lines.join('\r\n');
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `amare_takvim_${new Date().toLocaleDateString('tr-TR').replace(/\./g, '_')}.ics`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   };
 
   // ── Takvim grid view helper ───────────────────────────────────────────────
@@ -796,6 +851,14 @@ const AdminPanel = () => {
                     <button onClick={handleExcelIndir}
                       className="flex items-center gap-1.5 bg-emerald-600 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-700">
                       <Download className="w-4 h-4" />Excel İndir
+                    </button>
+                    <button onClick={handleIcsIndir}
+                      className="flex items-center gap-1.5 bg-orange-500 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-orange-600">
+                      <CalendarDays className="w-4 h-4" />iCal İndir
+                    </button>
+                    <button onClick={() => setHatirlatmaModal(true)}
+                      className="flex items-center gap-1.5 bg-rose-500 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-rose-600">
+                      <Bell className="w-4 h-4" />Hatırlatma Gönder
                     </button>
                     <button onClick={() => setOzetModal(true)}
                       className="flex items-center gap-1.5 bg-blue-600 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700">
@@ -1296,6 +1359,16 @@ const AdminPanel = () => {
           apiKey={geminiApiKey}
           sablonlar={sablonlar}
           onClose={() => setGorselModal(null)}
+        />
+      )}
+
+      {/* Hatırlatma Modal */}
+      {hatirlatmaModal && (
+        <HatirlatmaModal
+          takvim={takvim}
+          egitmenler={egitmenler}
+          apiKey={geminiApiKey}
+          onClose={() => setHatirlatmaModal(false)}
         />
       )}
     </div>
