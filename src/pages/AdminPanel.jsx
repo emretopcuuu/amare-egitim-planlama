@@ -221,7 +221,7 @@ const AdminPanel = () => {
   const benzersizKonusmacilar = [...new Set(
     takvim.map(e => e.egitmen).filter(Boolean)
       .flatMap(e => splitEgitmen(e))
-  )].sort();
+  )].sort((a, b) => a.localeCompare(b, 'tr-TR'));
 
   const filtreliTakvim = takvim.filter(e => {
     if (aramaMetni.trim() && !(
