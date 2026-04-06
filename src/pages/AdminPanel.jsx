@@ -113,6 +113,14 @@ const EgitimFormAlanlari = ({ form, setForm }) => (
 );
 
 // ── Yardımcılar ──────────────────────────────────────────────────────────────
+const splitEgitmen = (egitmen) => {
+  if (!egitmen) return [];
+  return egitmen
+    .split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜa-zçğışöşü]*\.?\s*[A-ZÇĞİÖŞÜ]|Prof\.|Doç\.|Uzm\.|Dr\.|Dyt\.|Op\.)/)
+    .map(n => n.trim())
+    .filter(n => n.length > 1);
+};
+
 const parseTarih = (tarih) => {
   if (!tarih) return null;
   const [d, m, y] = tarih.split('.').map(Number);
@@ -212,7 +220,7 @@ const AdminPanel = () => {
   // ── Computed ─────────────────────────────────────────────────────────────
   const benzersizKonusmacilar = [...new Set(
     takvim.map(e => e.egitmen).filter(Boolean)
-      .flatMap(e => e.split(/[\/,]/).map(n => n.trim()).filter(n => n.length > 1))
+      .flatMap(e => splitEgitmen(e))
   )].sort();
 
   const filtreliTakvim = takvim.filter(e => {
@@ -230,7 +238,7 @@ const AdminPanel = () => {
   const konusmaciStat = {};
   takvim.forEach(e => {
     if (!e.egitmen) return;
-    e.egitmen.split(/[\/,]/).map(n => n.trim()).filter(n => n.length > 1).forEach(ad => {
+    splitEgitmen(e.egitmen).forEach(ad => {
       if (!konusmaciStat[ad]) konusmaciStat[ad] = { toplam: 0, tamamlandi: 0, kategoriler: {} };
       konusmaciStat[ad].toplam++;
       if (e.tamamlandi) konusmaciStat[ad].tamamlandi++;
@@ -317,7 +325,7 @@ const AdminPanel = () => {
   };
 
   const handleGorselAc = (egitim) => {
-    const egitmenAdlari = (egitim.egitmen || '').split(/[\/,]/).map(n => n.trim()).filter(Boolean);
+    const egitmenAdlari = splitEgitmen(egitim.egitmen);
     let fotoURL = null;
     for (const ad of egitmenAdlari) {
       const safeId = ad.toLowerCase().replace(/[^a-z0-9]/g, '_');
@@ -438,7 +446,7 @@ const AdminPanel = () => {
     for (let i = 0; i < seciliEgitimler.length; i++) {
       const egitim = seciliEgitimler[i];
       try {
-        const egitmenAdlari = (egitim.egitmen || '').split(/[\/,]/).map(n => n.trim()).filter(Boolean);
+        const egitmenAdlari = splitEgitmen(egitim.egitmen);
         let fotoURL = null;
         for (const ad of egitmenAdlari) {
           const k = konusmacilar.find(k => k.id === ad.toLowerCase().replace(/[^a-z0-9]/g, '_'));
