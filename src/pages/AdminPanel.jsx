@@ -4,7 +4,7 @@ import { useData } from '../context/DataContext';
 import {
   LogOut, Users, Calendar, Settings, CheckCircle, XCircle,
   RefreshCw, Download, Trash2, Eye, EyeOff, Upload, FileSpreadsheet,
-  UserCircle, Camera, X, ImageIcon, Key, Save
+  UserCircle, Camera, X, ImageIcon, Key, Save, Pencil
 } from 'lucide-react';
 import GorselOlusturModal from '../components/GorselOlusturModal';
 
@@ -19,6 +19,7 @@ const AdminPanel = () => {
     otomatikTakvimOlustur,
     exceldenTakvimYukle,
     egitimSil,
+    egitimGuncelle,
     konusmacilar,
     konusmaciFotoYukle,
     konusmaciFotoSil,
@@ -38,6 +39,9 @@ const AdminPanel = () => {
   const [apiKeyInput, setApiKeyInput] = useState(geminiApiKey);
   const [apiKeySaved, setApiKeySaved] = useState(false);
   const [sablonYukleniyor, setSablonYukleniyor] = useState(false);
+  const [duzenleModal, setDuzenleModal] = useState(null); // egitim objesi
+  const [duzenleForm, setDuzenleForm] = useState({});
+  const [duzenleKaydediliyor, setDuzenleKaydediliyor] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) {
@@ -185,6 +189,33 @@ const AdminPanel = () => {
     if (!window.confirm(`"${sablonAd}" şablonunu silmek istediğinize emin misiniz?`)) return;
     const result = await sablonSil(sablonId);
     if (!result.success) alert('Silme başarısız: ' + result.error);
+  };
+
+  const handleDuzenleAc = (egitim) => {
+    setDuzenleForm({
+      egitim: egitim.egitim || '',
+      gun: egitim.gun || '',
+      tarih: egitim.tarih || '',
+      saat: egitim.saat || '',
+      bitisSaati: egitim.bitisSaati || '',
+      sure: egitim.sure || '',
+      egitmen: egitim.egitmen || '',
+      yer: egitim.yer || '',
+      hafta: egitim.hafta || 1,
+    });
+    setDuzenleModal(egitim);
+  };
+
+  const handleDuzenleKaydet = async () => {
+    if (!duzenleModal) return;
+    setDuzenleKaydediliyor(true);
+    const result = await egitimGuncelle(duzenleModal.id, duzenleForm);
+    setDuzenleKaydediliyor(false);
+    if (result.success) {
+      setDuzenleModal(null);
+    } else {
+      alert('Kaydedilemedi: ' + result.error);
+    }
   };
 
   const handleEgitimSil = async (egitimId, egitimAdi) => {
@@ -448,6 +479,14 @@ const AdminPanel = () => {
                                 Görsel Hazırla
                               </button>
                               <button
+                                onClick={() => handleDuzenleAc(egitim)}
+                                className="opacity-0 group-hover:opacity-100 flex items-center gap-1.5 bg-gray-600 text-white text-xs px-3 py-1.5 rounded-lg hover:bg-gray-700 transition-all"
+                                title="Düzenle"
+                              >
+                                <Pencil className="w-3.5 h-3.5" />
+                                Düzenle
+                              </button>
+                              <button
                                 onClick={() => handleEgitimSil(egitim.id, egitim.egitim)}
                                 className="text-red-500 hover:text-red-700 p-2"
                                 title="Sil"
@@ -702,6 +741,135 @@ const AdminPanel = () => {
           </div>
         )}
       </div>
+
+      {/* Eğitim Düzenleme Modal */}
+      {duzenleModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-xl font-bold text-gray-800">Eğitimi Düzenle</h2>
+              <button onClick={() => setDuzenleModal(null)} className="text-gray-400 hover:text-gray-600 p-1">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-1">Eğitim Adı</label>
+                <input
+                  type="text"
+                  value={duzenleForm.egitim}
+                  onChange={(e) => setDuzenleForm(f => ({ ...f, egitim: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 block mb-1">Gün</label>
+                  <select
+                    value={duzenleForm.gun}
+                    onChange={(e) => setDuzenleForm(f => ({ ...f, gun: e.target.value }))}
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30"
+                  >
+                    {['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'].map(g => (
+                      <option key={g} value={g}>{g}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 block mb-1">Tarih</label>
+                  <input
+                    type="text"
+                    value={duzenleForm.tarih}
+                    onChange={(e) => setDuzenleForm(f => ({ ...f, tarih: e.target.value }))}
+                    placeholder="01.01.2025"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 block mb-1">Başlangıç Saati</label>
+                  <input
+                    type="text"
+                    value={duzenleForm.saat}
+                    onChange={(e) => setDuzenleForm(f => ({ ...f, saat: e.target.value }))}
+                    placeholder="19:00"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 block mb-1">Bitiş Saati</label>
+                  <input
+                    type="text"
+                    value={duzenleForm.bitisSaati}
+                    onChange={(e) => setDuzenleForm(f => ({ ...f, bitisSaati: e.target.value }))}
+                    placeholder="20:00"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-semibold text-gray-700 block mb-1">Süre</label>
+                  <input
+                    type="text"
+                    value={duzenleForm.sure}
+                    onChange={(e) => setDuzenleForm(f => ({ ...f, sure: e.target.value }))}
+                    placeholder="60 dk"
+                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-1">Konuşmacı</label>
+                <input
+                  type="text"
+                  value={duzenleForm.egitmen}
+                  onChange={(e) => setDuzenleForm(f => ({ ...f, egitmen: e.target.value }))}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-1">Yer / Platform</label>
+                <input
+                  type="text"
+                  value={duzenleForm.yer}
+                  onChange={(e) => setDuzenleForm(f => ({ ...f, yer: e.target.value }))}
+                  placeholder="ZOOM"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-gray-700 block mb-1">Hafta</label>
+                <select
+                  value={duzenleForm.hafta}
+                  onChange={(e) => setDuzenleForm(f => ({ ...f, hafta: Number(e.target.value) }))}
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30"
+                >
+                  {[1,2,3,4].map(h => <option key={h} value={h}>Hafta {h}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3 p-6 pt-0">
+              <button
+                onClick={() => setDuzenleModal(null)}
+                className="flex-1 py-3 rounded-xl font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleDuzenleKaydet}
+                disabled={duzenleKaydediliyor}
+                className="flex-1 py-3 rounded-xl font-bold text-white bg-amare-purple hover:bg-amare-dark transition disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {duzenleKaydediliyor ? (
+                  <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />Kaydediliyor...</>
+                ) : (
+                  <><Save className="w-4 h-4" />Kaydet</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Görsel Oluşturma Modal */}
       {gorselModal && (
