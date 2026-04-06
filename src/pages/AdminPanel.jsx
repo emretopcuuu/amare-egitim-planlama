@@ -475,14 +475,14 @@ const AdminPanel = () => {
   const handleBilgiAc = (ad) => {
     const safeId = ad.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
     const k = konusmacilar.find(k => k.id === safeId);
-    setBilgiForm({ unvan: k?.unvan || '', biyografi: k?.biyografi || '', linkedin: k?.linkedin || '' });
+    setBilgiForm({ ad: k?.ad || ad, unvan: k?.unvan || '', biyografi: k?.biyografi || '', linkedin: k?.linkedin || '' });
     setBilgiModal({ ad, safeId });
   };
 
   const handleBilgiKaydet = async () => {
     if (!bilgiModal) return;
     setBilgiKaydediliyor(true);
-    const result = await konusmaciBilgiGuncelle(bilgiModal.safeId, { id: bilgiModal.safeId, ad: bilgiModal.ad, ...bilgiForm });
+    const result = await konusmaciBilgiGuncelle(bilgiModal.safeId, { id: bilgiModal.safeId, ...bilgiForm });
     setBilgiKaydediliyor(false);
     if (result.success) setBilgiModal(null);
     else alert('Kaydedilemedi: ' + result.error);
@@ -1269,6 +1269,10 @@ const AdminPanel = () => {
               <button onClick={() => setBilgiModal(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
             </div>
             <div className="p-6 space-y-4">
+              <FormField label="İsim">
+                <input type="text" value={bilgiForm.ad} onChange={e => setBilgiForm(f => ({ ...f, ad: e.target.value }))}
+                  placeholder="Konuşmacı adı" className={inputCls} />
+              </FormField>
               <FormField label="Unvan / Pozisyon">
                 <input type="text" value={bilgiForm.unvan} onChange={e => setBilgiForm(f => ({ ...f, unvan: e.target.value }))}
                   placeholder="Örn: Diamond Lider, Prof.Dr." className={inputCls} />
