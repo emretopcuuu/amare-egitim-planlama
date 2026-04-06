@@ -411,6 +411,46 @@ export const DataProvider = ({ children }) => {
     }
   };
 
+  // Başvuru sil
+  const basvuruSil = async (basvuruId) => {
+    try {
+      await deleteDoc(doc(db, 'egitmenler', basvuruId));
+      setEgitmenler(prev => prev.filter(e => e.id !== basvuruId));
+      return { success: true };
+    } catch (error) {
+      console.error('Başvuru silme hatası:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Başvuru durum güncelle
+  const basvuruDurumGuncelle = async (basvuruId, durum) => {
+    try {
+      await updateDoc(doc(db, 'egitmenler', basvuruId), { durum, durumGuncellendi: new Date().toISOString() });
+      setEgitmenler(prev => prev.map(e => e.id === basvuruId ? { ...e, durum } : e));
+      return { success: true };
+    } catch (error) {
+      console.error('Başvuru durum hatası:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Konuşmacı bilgi güncelle (unvan, biyografi, linkedin)
+  const konusmaciBilgiGuncelle = async (konusmaciId, bilgi) => {
+    try {
+      const konusmaciRef = doc(db, 'konusmacilar', konusmaciId);
+      await setDoc(konusmaciRef, { ...bilgi, guncellendi: new Date().toISOString() }, { merge: true });
+      setKonusmacilar(prev => {
+        const idx = prev.findIndex(k => k.id === konusmaciId);
+        return idx >= 0 ? prev.map(k => k.id === konusmaciId ? { ...k, ...bilgi } : k) : [...prev, { id: konusmaciId, ...bilgi }];
+      });
+      return { success: true };
+    } catch (error) {
+      console.error('Konuşmacı bilgi hatası:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
   // Gemini API key kaydet
   const geminiApiKeyKaydet = (key) => {
     setGeminiApiKey(key);
@@ -462,6 +502,9 @@ export const DataProvider = ({ children }) => {
     sablonlar,
     sablonEkle,
     sablonSil,
+    basvuruSil,
+    basvuruDurumGuncelle,
+    konusmaciBilgiGuncelle,
     adminGiris,
     adminCikis,
     loadData
