@@ -1067,7 +1067,7 @@ const AdminPanel = () => {
                           )}
                         </div>
                         <div className="text-center">
-                          <p className="text-sm font-semibold text-gray-800 leading-tight">{ad}</p>
+                          <p className="text-sm font-semibold text-gray-800 leading-tight">{kayitliK?.ad || ad}</p>
                           {kayitliK?.unvan && <p className="text-xs text-gray-500 mt-0.5">{kayitliK.unvan}</p>}
                           {stat && <p className="text-xs text-amare-purple font-semibold mt-0.5">{stat.toplam} eğitim</p>}
                           {kayitliK?.linkedin && (
