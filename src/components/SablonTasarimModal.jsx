@@ -266,14 +266,15 @@ const RENDER_FUNCS = {
 async function geminiGorselUret(apiKey, prompt) {
   const fullPrompt = `Create a professional 1080x1080 px social media template for a Turkish network marketing education event called "Amare Global - OneTeam10x". The design should be modern, visually striking, and suitable for Instagram. ${prompt}. Include placeholder areas for: event title, speaker name, date/time, and location. Add "AMARE GLOBAL" and "ONE TEAM 10X" branding text. Make it look professional and polished.`;
 
+  // Try Imagen 3 first (dedicated image generation model)
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: fullPrompt }] }],
-        generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+        instances: [{ prompt: fullPrompt }],
+        parameters: { sampleCount: 1, aspectRatio: '1:1' },
       }),
     }
   );
@@ -284,11 +285,10 @@ async function geminiGorselUret(apiKey, prompt) {
   }
 
   const data = await res.json();
-  const parts = data?.candidates?.[0]?.content?.parts || [];
-  const imgPart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
-  if (!imgPart) throw new Error('AI görsel döndürmedi');
+  const pred = data?.predictions?.[0];
+  if (!pred?.bytesBase64Encoded) throw new Error('AI görsel döndürmedi');
 
-  return `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
+  return `data:${pred.mimeType || 'image/png'};base64,${pred.bytesBase64Encoded}`;
 }
 
 // ── Ana bileşen ───────────────────────────────────────────────────────────────
