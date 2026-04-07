@@ -266,29 +266,40 @@ const RENDER_FUNCS = {
 async function aiGorselUret(apiKey, prompt) {
   const fullPrompt = `Profesyonel bir 1080x1080 px kare sosyal medya etkinlik tanıtım şablonu tasarla. Amare Global - OneTeam10x markası için eğitim duyuru görseli olacak. ${prompt}. Tasarımda şunlar için yer bırak: etkinlik başlığı, konuşmacı adı ve fotoğrafı, tarih/saat, yer bilgisi. "AMARE GLOBAL" ve "ONE TEAM" markalarını ekle. Profesyonel, çekici, Instagram'a uygun bir tasarım olsun.`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/nano-banana-pro-preview:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: fullPrompt }] }],
-        generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
-      }),
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/nano-banana-pro-preview:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: fullPrompt }] }],
+          generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+        }),
+        signal: controller.signal,
+      }
+    );
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.error?.message || `API hatası: ${res.status}`);
     }
-  );
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `API hatası: ${res.status}`);
+    const data = await res.json();
+    const parts = data?.candidates?.[0]?.content?.parts || [];
+    const imgPart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
+    if (!imgPart) throw new Error('AI görsel üretemedi. Lütfen tekrar deneyin.');
+
+    return `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
+  } catch (err) {
+    clearTimeout(timeout);
+    if (err.name === 'AbortError') throw new Error('İstek zaman aşımına uğradı (60s). Tekrar deneyin.');
+    throw err;
   }
-
-  const data = await res.json();
-  const parts = data?.candidates?.[0]?.content?.parts || [];
-  const imgPart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
-  if (!imgPart) throw new Error('AI görsel üretemedi. Tekrar deneyin.');
-
-  return `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
 }
 
 // ── Ana bileşen ───────────────────────────────────────────────────────────────
@@ -303,6 +314,7 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiYukleniyor, setAiYukleniyor] = useState(false);
   const [aiGorsel, setAiGorsel] = useState(null); // data URL
+  const [aiHata, setAiHata] = useState(null);
   const [mod, setMod] = useState('canvas'); // 'canvas' | 'ai'
 
   const canvasRef = useRef(null);
@@ -318,14 +330,15 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
   useEffect(() => { if (mod === 'canvas') renderCanvas(); }, [renderCanvas, mod]);
 
   const handleAiUret = async () => {
-    if (!geminiApiKey) { alert('Gemini API anahtarı eksik. Ayarlar > API Anahtarları bölümünden ekleyin.'); return; }
-    if (!aiPrompt.trim()) { alert('Lütfen bir tasarım açıklaması girin.'); return; }
+    if (!geminiApiKey) { setAiHata('Gemini API anahtarı eksik. Ayarlar > API Anahtarları bölümünden ekleyin.'); return; }
+    if (!aiPrompt.trim()) { setAiHata('Lütfen bir tasarım açıklaması girin.'); return; }
     setAiYukleniyor(true);
+    setAiHata(null);
     try {
       const url = await aiGorselUret(geminiApiKey, aiPrompt.trim());
       setAiGorsel(url);
     } catch (err) {
-      alert('AI tasarım oluşturulamadı: ' + err.message);
+      setAiHata(err.message);
     } finally {
       setAiYukleniyor(false);
     }
@@ -486,12 +499,18 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
                 </button>
                 {!geminiApiKey && (
                   <p className="text-xs text-red-500 text-center">
-                    ⚠️ API anahtarı gerekli. Ayarlar sekmesinden ekleyin.
+                    API anahtarı gerekli. Ayarlar sekmesinden ekleyin.
                   </p>
+                )}
+                {aiHata && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-xs text-red-700">
+                    <p className="font-semibold mb-1">Hata:</p>
+                    <p>{aiHata}</p>
+                  </div>
                 )}
                 {aiGorsel && (
                   <button
-                    onClick={() => { setAiParametreler(null); }}
+                    onClick={() => { setAiGorsel(null); setAiHata(null); }}
                     className="w-full py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 flex items-center justify-center gap-1.5"
                   >
                     <ImageIcon className="w-3.5 h-3.5" />Yeniden Oluştur
