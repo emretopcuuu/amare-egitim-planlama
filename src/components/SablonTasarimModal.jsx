@@ -299,11 +299,14 @@ Kurallar:
 
   const data = await geminiTextIste(apiKey, {
     contents: [{ parts: [{ text: systemPrompt }] }],
-    generationConfig: { temperature: 0.7, maxOutputTokens: 200 },
+    generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
   });
 
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  const parts = data?.candidates?.[0]?.content?.parts || [];
+  const text = parts.filter(p => !p.thought).map(p => p.text || '').join('');
+  // Remove markdown code fences if present
+  const cleaned = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
+  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error('AI yanıt formatı hatalı');
   return JSON.parse(jsonMatch[0]);
 }
