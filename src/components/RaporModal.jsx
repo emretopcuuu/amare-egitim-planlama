@@ -94,14 +94,23 @@ const RaporSayfasi = React.forwardRef(({ egitimler, ay, yil }, ref) => {
                 <div style={{ fontSize: 11, color: '#6B7280' }}>{egitimlerH.length} eğitim</div>
               </div>
 
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 10.5, tableLayout: 'fixed' }}>
+                <colgroup>
+                  <col style={{ width: '11%' }} />
+                  <col style={{ width: '11%' }} />
+                  <col style={{ width: '24%' }} />
+                  <col style={{ width: '22%' }} />
+                  <col style={{ width: '12%' }} />
+                  <col style={{ width: '8%' }} />
+                  <col style={{ width: '12%' }} />
+                </colgroup>
                 <thead>
                   <tr style={{ background: '#F5F3FF' }}>
                     {['Gün / Tarih', 'Saat', 'Eğitim Adı', 'Konuşmacı', 'Kategori', 'Katılım', 'Durum'].map(h => (
                       <th key={h} style={{
-                        padding: '7px 8px', textAlign: 'left', fontWeight: 700,
+                        padding: '7px 6px', textAlign: 'left', fontWeight: 700,
                         color: '#5B21B6', borderBottom: '2px solid #DDD6FE',
-                        fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.3,
+                        fontSize: 9.5, textTransform: 'uppercase', letterSpacing: 0.3,
                       }}>{h}</th>
                     ))}
                   </tr>
@@ -109,32 +118,32 @@ const RaporSayfasi = React.forwardRef(({ egitimler, ay, yil }, ref) => {
                 <tbody>
                   {egitimlerH.map((e, i) => (
                     <tr key={e.id || i} style={{ background: i%2===0 ? '#fff' : '#FAFAFA' }}>
-                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB', whiteSpace: 'nowrap' }}>
-                        <div style={{ fontWeight: 600, color: '#374151', fontSize: 11 }}>{e.gun || '—'}</div>
-                        <div style={{ color: '#9CA3AF', fontSize: 10 }}>{e.tarih || ''}</div>
+                      <td style={{ padding: '6px 6px', borderBottom: '1px solid #E5E7EB', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 600, color: '#374151', fontSize: 10.5 }}>{e.gun || '—'}</div>
+                        <div style={{ color: '#9CA3AF', fontSize: 9.5 }}>{e.tarih || ''}</div>
                       </td>
-                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB', color: '#374151', whiteSpace: 'nowrap', fontSize: 11 }}>
+                      <td style={{ padding: '6px 6px', borderBottom: '1px solid #E5E7EB', color: '#374151', fontSize: 10.5, verticalAlign: 'top' }}>
                         {e.saat || '—'}{e.bitisSaati ? `–${e.bitisSaati}` : ''}
                       </td>
-                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB', fontWeight: 600, color: '#111827', fontSize: 11, maxWidth: 160 }}>
+                      <td style={{ padding: '6px 6px', borderBottom: '1px solid #E5E7EB', fontWeight: 600, color: '#111827', fontSize: 10.5, verticalAlign: 'top', wordBreak: 'break-word' }}>
                         {e.egitim || '—'}
                       </td>
-                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB', color: '#4B5563', fontSize: 10.5, maxWidth: 130 }}>
+                      <td style={{ padding: '6px 6px', borderBottom: '1px solid #E5E7EB', color: '#4B5563', fontSize: 10, verticalAlign: 'top', wordBreak: 'break-word', lineHeight: 1.3 }}>
                         {e.egitmen || '—'}
                       </td>
-                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB' }}>
+                      <td style={{ padding: '6px 6px', borderBottom: '1px solid #E5E7EB', verticalAlign: 'top' }}>
                         {e.kategori ? (
                           <span style={{
                             background: (KATEGORI_RENK[e.kategori] || '#6B7280') + '18',
                             color: KATEGORI_RENK[e.kategori] || '#6B7280',
-                            padding: '2px 7px', borderRadius: 99, fontWeight: 600, fontSize: 9, whiteSpace: 'nowrap',
+                            padding: '2px 6px', borderRadius: 99, fontWeight: 600, fontSize: 8.5, whiteSpace: 'nowrap',
                           }}>{e.kategori}</span>
                         ) : '—'}
                       </td>
-                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB', textAlign: 'center', fontWeight: 700, color: '#2563EB', fontSize: 12 }}>
+                      <td style={{ padding: '6px 6px', borderBottom: '1px solid #E5E7EB', textAlign: 'center', fontWeight: 700, color: '#2563EB', fontSize: 11, verticalAlign: 'top' }}>
                         {e.katilimSayisi || '—'}
                       </td>
-                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB' }}>
+                      <td style={{ padding: '6px 6px', borderBottom: '1px solid #E5E7EB', verticalAlign: 'top' }}>
                         <span style={{
                           background: e.tamamlandi ? '#D1FAE5' : '#FEF3C7',
                           color: e.tamamlandi ? '#065F46' : '#92400E',
