@@ -1071,9 +1071,9 @@ const AdminPanel = () => {
                           {kayitliK?.unvan && <p className="text-xs text-gray-500 mt-0.5">{kayitliK.unvan}</p>}
                           {stat && <p className="text-xs text-amare-purple font-semibold mt-0.5">{stat.toplam} eğitim</p>}
                           {kayitliK?.linkedin && (
-                            <a href={kayitliK.linkedin} target="_blank" rel="noopener noreferrer"
-                              className="text-xs text-blue-500 hover:underline flex items-center gap-1 justify-center mt-0.5">
-                              <ExternalLink className="w-3 h-3" />LinkedIn
+                            <a href={`mailto:${kayitliK.linkedin}`}
+                              className="text-xs text-blue-500 hover:underline flex items-center gap-1 justify-center mt-0.5 truncate max-w-full">
+                              {kayitliK.linkedin}
                             </a>
                           )}
                         </div>
@@ -1280,11 +1280,11 @@ const AdminPanel = () => {
                 <input type="text" value={bilgiForm.unvan} onChange={e => setBilgiForm(f => ({ ...f, unvan: e.target.value }))}
                   placeholder="Örn: Diamond Lider, Prof.Dr." className={inputCls} />
               </FormField>
-              <FormField label="LinkedIn Profil URL">
+              <FormField label="E-posta Adresi">
                 <div className="relative">
                   <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                  <input type="url" value={bilgiForm.linkedin} onChange={e => setBilgiForm(f => ({ ...f, linkedin: e.target.value }))}
-                    placeholder="https://linkedin.com/in/..." className={`${inputCls} pl-9`} />
+                  <input type="email" value={bilgiForm.linkedin} onChange={e => setBilgiForm(f => ({ ...f, linkedin: e.target.value }))}
+                    placeholder="ornek@email.com" className={`${inputCls} pl-9`} />
                 </div>
               </FormField>
               <FormField label="Biyografi">
