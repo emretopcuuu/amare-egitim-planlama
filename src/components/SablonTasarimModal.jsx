@@ -267,7 +267,7 @@ async function geminiGorselUret(apiKey, prompt) {
   const fullPrompt = `Create a professional 1080x1080 px social media template for a Turkish network marketing education event called "Amare Global - OneTeam10x". The design should be modern, visually striking, and suitable for Instagram. ${prompt}. Include placeholder areas for: event title, speaker name, date/time, and location. Add "AMARE GLOBAL" and "ONE TEAM 10X" branding text. Make it look professional and polished.`;
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
