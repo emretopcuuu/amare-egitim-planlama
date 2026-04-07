@@ -263,18 +263,36 @@ const RENDER_FUNCS = {
 };
 
 // ── Gemini image generation ───────────────────────────────────────────────────
-async function geminiGorselUret(apiKey, prompt) {
-  const fullPrompt = `Create a professional 1080x1080 px social media template for a Turkish network marketing education event called "Amare Global - OneTeam10x". The design should be modern, visually striking, and suitable for Instagram. ${prompt}. Include placeholder areas for: event title, speaker name, date/time, and location. Add "AMARE GLOBAL" and "ONE TEAM 10X" branding text. Make it look professional and polished.`;
+// Gemini text API ile tasarım parametreleri üret, canvas'a uygula
+async function geminiTasarimParametreleriUret(apiKey, prompt) {
+  const systemPrompt = `Sen bir grafik tasarım asistanısın. Kullanıcının verdiği Türkçe tasarım açıklamasına göre aşağıdaki JSON formatında tasarım parametreleri üret. Sadece JSON döndür, başka metin ekleme.
 
-  // Try Imagen 3 first (dedicated image generation model)
+Format:
+{
+  "preset": "klasik" | "koyu" | "gradient" | "minimal",
+  "primaryColor": "#RRGGBB",
+  "accentColor": "#RRGGBB",
+  "aciklama": "Kısa açıklama"
+}
+
+Kullanıcı isteği: ${prompt}
+
+Kurallar:
+- Koyu/dark tema → "koyu" preset
+- Renkli/canlı → "gradient" preset
+- Sade/temiz → "minimal" preset
+- Klasik/profesyonel → "klasik" preset
+- primaryColor kullanıcının istediği ana renk (hex)
+- accentColor tamamlayıcı ikinci renk (hex)`;
+
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
     {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        instances: [{ prompt: fullPrompt }],
-        parameters: { sampleCount: 1, aspectRatio: '1:1' },
+        contents: [{ parts: [{ text: systemPrompt }] }],
+        generationConfig: { temperature: 0.7, maxOutputTokens: 200 },
       }),
     }
   );
@@ -285,10 +303,10 @@ async function geminiGorselUret(apiKey, prompt) {
   }
 
   const data = await res.json();
-  const pred = data?.predictions?.[0];
-  if (!pred?.bytesBase64Encoded) throw new Error('AI görsel döndürmedi');
-
-  return `data:${pred.mimeType || 'image/png'};base64,${pred.bytesBase64Encoded}`;
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error('AI yanıt formatı hatalı');
+  return JSON.parse(jsonMatch[0]);
 }
 
 // ── Ana bileşen ───────────────────────────────────────────────────────────────
@@ -302,7 +320,7 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
   // AI
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiYukleniyor, setAiYukleniyor] = useState(false);
-  const [aiGorsel, setAiGorsel] = useState(null); // base64 data URL
+  const [aiParametreler, setAiParametreler] = useState(null); // { preset, primaryColor, accentColor, aciklama }
   const [mod, setMod] = useState('canvas'); // 'canvas' | 'ai'
 
   const canvasRef = useRef(null);
@@ -317,16 +335,26 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
 
   useEffect(() => { if (mod === 'canvas') renderCanvas(); }, [renderCanvas, mod]);
 
+  const aiCanvasRef = useRef(null);
+
+  const renderAiCanvas = useCallback((params) => {
+    const canvas = aiCanvasRef.current;
+    if (!canvas || !params) return;
+    const ctx = canvas.getContext('2d');
+    const fn = RENDER_FUNCS[params.preset] || renderKlasik;
+    fn(ctx, params.primaryColor);
+  }, []);
+
   const handleAiUret = async () => {
     if (!geminiApiKey) { alert('Gemini API anahtarı eksik. Ayarlar > API Anahtarları bölümünden ekleyin.'); return; }
     if (!aiPrompt.trim()) { alert('Lütfen bir tasarım açıklaması girin.'); return; }
     setAiYukleniyor(true);
     try {
-      const url = await geminiGorselUret(geminiApiKey, aiPrompt.trim());
-      setAiGorsel(url);
-      setMod('ai');
+      const params = await geminiTasarimParametreleriUret(geminiApiKey, aiPrompt.trim());
+      setAiParametreler(params);
+      setTimeout(() => renderAiCanvas(params), 50);
     } catch (err) {
-      alert('AI görsel oluşturulamadı: ' + err.message);
+      alert('AI tasarım oluşturulamadı: ' + err.message);
     } finally {
       setAiYukleniyor(false);
     }
@@ -338,9 +366,14 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
     try {
       let blob;
 
-      if (mod === 'ai' && aiGorsel) {
-        // AI görselini blob'a çevir
-        const res = await fetch(aiGorsel);
+      if (mod === 'ai' && aiParametreler) {
+        // AI parametreleriyle canvas render et
+        const fullCanvas = document.createElement('canvas');
+        fullCanvas.width = W; fullCanvas.height = H;
+        const fn = RENDER_FUNCS[aiParametreler.preset] || renderKlasik;
+        fn(fullCanvas.getContext('2d'), aiParametreler.primaryColor);
+        const dataUrl = fullCanvas.toDataURL('image/png');
+        const res = await fetch(dataUrl);
         blob = await res.blob();
       } else {
         // Canvas'ı full res render et
@@ -490,9 +523,9 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
                     ⚠️ API anahtarı gerekli. Ayarlar sekmesinden ekleyin.
                   </p>
                 )}
-                {aiGorsel && (
+                {aiParametreler && (
                   <button
-                    onClick={() => { setAiGorsel(null); }}
+                    onClick={() => { setAiParametreler(null); }}
                     className="w-full py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 flex items-center justify-center gap-1.5"
                   >
                     <ImageIcon className="w-3.5 h-3.5" />Yeniden Oluştur
@@ -504,7 +537,7 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
             {/* Kaydet butonu */}
             <button
               onClick={handleKaydet}
-              disabled={kaydediliyor || kaydedildi || (mod === 'ai' && !aiGorsel)}
+              disabled={kaydediliyor || kaydedildi || (mod === 'ai' && !aiParametreler)}
               className={`w-full py-3.5 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all shadow-md ${
                 kaydedildi
                   ? 'bg-green-500'
@@ -518,7 +551,7 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
                   : <><Save className="w-5 h-5" />Şablon Olarak Kaydet</>}
             </button>
 
-            {mod === 'ai' && !aiGorsel && !kaydedildi && (
+            {mod === 'ai' && !aiParametreler && !kaydedildi && (
               <p className="text-xs text-gray-400 text-center">Kaydetmek için önce AI görsel oluşturun.</p>
             )}
             {mod === 'canvas' && (
@@ -544,14 +577,21 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
                 height={H}
                 style={{ width: 480, height: 480, display: mod === 'canvas' ? 'block' : 'none' }}
               />
-              {/* AI görsel */}
+              {/* AI canvas */}
               {mod === 'ai' && (
-                aiGorsel
-                  ? <img src={aiGorsel} alt="AI Tasarım" style={{ width: 480, height: 480, objectFit: 'cover', display: 'block' }} />
+                aiParametreler
+                  ? (
+                    <div style={{ position: 'relative', width: 480, height: 480 }}>
+                      <canvas ref={aiCanvasRef} width={W} height={H} style={{ width: 480, height: 480, display: 'block' }} />
+                      <div style={{ position: 'absolute', bottom: 8, left: 8, right: 8, background: 'rgba(0,0,0,0.55)', borderRadius: 8, padding: '4px 10px', color: '#fff', fontSize: 11 }}>
+                        🤖 AI: {aiParametreler.aciklama}
+                      </div>
+                    </div>
+                  )
                   : (
                     <div style={{ width: 480, height: 480 }} className="flex flex-col items-center justify-center bg-gradient-to-br from-violet-50 to-blue-50 gap-3">
                       {aiYukleniyor
-                        ? <><Loader2 className="w-10 h-10 text-amare-purple animate-spin" /><p className="text-sm text-amare-purple font-semibold">AI görsel oluşturuluyor...</p></>
+                        ? <><Loader2 className="w-10 h-10 text-amare-purple animate-spin" /><p className="text-sm text-amare-purple font-semibold">AI tasarım oluşturuluyor...</p></>
                         : <><Sparkles className="w-12 h-12 text-amare-purple/30" /><p className="text-sm text-gray-400">Prompt yazın ve "Görsel Hazırla"ya basın</p></>
                       }
                     </div>
