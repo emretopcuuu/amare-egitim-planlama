@@ -78,7 +78,7 @@ TASARIM KURALLARI:
     generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
   };
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/nano-banana-pro-preview:generateContent?key=${apiKey}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${apiKey}`;
 
   const res = await fetch(url, {
     method: 'POST',

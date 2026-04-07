@@ -66,7 +66,7 @@ ETKİNLİK:
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: { temperature: 0.8 },
       };
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
