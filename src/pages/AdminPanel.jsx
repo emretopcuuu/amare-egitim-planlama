@@ -892,11 +892,7 @@ const AdminPanel = () => {
                       className="flex items-center gap-1.5 bg-emerald-600 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-emerald-700">
                       <Download className="w-4 h-4" />Excel İndir
                     </button>
-                    <button onClick={handleIcsIndir}
-                      className="flex items-center gap-1.5 bg-orange-500 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-orange-600">
-                      <CalendarDays className="w-4 h-4" />iCal İndir
-                    </button>
-                    <button onClick={() => setHatirlatmaModal(true)}
+<button onClick={() => setHatirlatmaModal(true)}
                       className="flex items-center gap-1.5 bg-rose-500 text-white px-3 py-2 rounded-xl text-sm font-semibold hover:bg-rose-600">
                       <Bell className="w-4 h-4" />Hatırlatma Gönder
                     </button>
