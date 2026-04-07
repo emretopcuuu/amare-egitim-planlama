@@ -1446,6 +1446,7 @@ const AdminPanel = () => {
       {/* Şablon Tasarım Modal */}
       {sablonTasarimModal && (
         <SablonTasarimModal
+          geminiApiKey={geminiApiKey}
           onKaydet={async (ad, file) => {
             const result = await sablonEkle(ad, file);
             if (!result.success) throw new Error(result.error);
