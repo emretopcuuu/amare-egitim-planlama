@@ -155,6 +155,7 @@ const AdminPanel = () => {
   const [fotoUploadingId, setFotoUploadingId] = useState(null);
   const [bilgiModal, setBilgiModal] = useState(null);
   const [bilgiForm, setBilgiForm] = useState({ unvan: '', biyografi: '', linkedin: '' });
+  const [konusmaciArama, setKonusmaciArama] = useState('');
   const [bilgiKaydediliyor, setBilgiKaydediliyor] = useState(false);
   const [linkKopyalandi, setLinkKopyalandi] = useState(false);
 
@@ -1001,6 +1002,21 @@ const AdminPanel = () => {
                   {linkKopyalandi ? <><Check className="w-4 h-4" />Link Kopyalandı!</> : <><Copy className="w-4 h-4" />Başvuru Linkini Kopyala</>}
                 </button>
               </div>
+              <div className="relative mt-4">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={konusmaciArama}
+                  onChange={e => setKonusmaciArama(e.target.value)}
+                  placeholder="Konuşmacı ara..."
+                  className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30"
+                />
+                {konusmaciArama && (
+                  <button onClick={() => setKonusmaciArama('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
             </div>
 
             {benzersizKonusmacilar.length === 0 ? (
@@ -1039,7 +1055,14 @@ const AdminPanel = () => {
                 )}
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {benzersizKonusmacilar.map(ad => {
+                  {benzersizKonusmacilar.filter(ad => {
+                    if (!konusmaciArama.trim()) return true;
+                    const q = konusmaciArama.toLocaleUpperCase('tr-TR');
+                    const safeId = ad.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    const kayitliK = konusmacilar.find(k => k.id === safeId);
+                    const displayName = kayitliK?.ad || ad;
+                    return displayName.toLocaleUpperCase('tr-TR').includes(q) || ad.toLocaleUpperCase('tr-TR').includes(q);
+                  }).map(ad => {
                     const safeId = ad.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
                     const kayitliK = konusmacilar.find(k => k.id === safeId);
                     const isUploading = fotoUploadingId === safeId;
