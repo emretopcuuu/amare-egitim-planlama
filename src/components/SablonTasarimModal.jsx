@@ -264,6 +264,29 @@ const RENDER_FUNCS = {
 
 // ── Gemini image generation ───────────────────────────────────────────────────
 // Gemini text API ile tasarım parametreleri üret, canvas'a uygula
+const GEMINI_TEXT_MODELS = [
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro-latest',
+  'gemini-pro',
+];
+
+async function geminiTextIste(apiKey, body) {
+  for (const model of GEMINI_TEXT_MODELS) {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+    );
+    if (res.ok) return res.json();
+    const err = await res.json().catch(() => ({}));
+    const msg = err?.error?.message || '';
+    // Bu model çalışmıyorsa sonraki dene
+    if (msg.includes('not found') || msg.includes('no longer available') || msg.includes('not supported')) continue;
+    throw new Error(msg || `API hatası: ${res.status}`);
+  }
+  throw new Error('Hiçbir Gemini modeli bu API anahtarıyla çalışmadı. Lütfen Google AI Studio\'dan yeni bir anahtar edinin.');
+}
+
 async function geminiTasarimParametreleriUret(apiKey, prompt) {
   const systemPrompt = `Sen bir grafik tasarım asistanısın. Kullanıcının verdiği Türkçe tasarım açıklamasına göre aşağıdaki JSON formatında tasarım parametreleri üret. Sadece JSON döndür, başka metin ekleme.
 
@@ -285,24 +308,11 @@ Kurallar:
 - primaryColor kullanıcının istediği ana renk (hex)
 - accentColor tamamlayıcı ikinci renk (hex)`;
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: systemPrompt }] }],
-        generationConfig: { temperature: 0.7, maxOutputTokens: 200 },
-      }),
-    }
-  );
+  const data = await geminiTextIste(apiKey, {
+    contents: [{ parts: [{ text: systemPrompt }] }],
+    generationConfig: { temperature: 0.7, maxOutputTokens: 200 },
+  });
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `API hatası: ${res.status}`);
-  }
-
-  const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
   const jsonMatch = text.match(/\{[\s\S]*\}/);
   if (!jsonMatch) throw new Error('AI yanıt formatı hatalı');

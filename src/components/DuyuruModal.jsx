@@ -27,17 +27,16 @@ ETKİNLİK BİLGİLERİ:
         contents: [{ role: 'user', parts: [{ text: prompt }] }],
         generationConfig: { temperature: 0.9 },
       };
-      const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err?.error?.message || `API Hatası: ${res.status}`);
+      const MODELLER = ['gemini-1.5-flash-latest','gemini-1.5-flash','gemini-1.5-pro-latest','gemini-pro'];
+      let data = null;
+      for (const model of MODELLER) {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        if (res.ok) { data = await res.json(); break; }
+        const errBody = await res.json().catch(() => ({}));
+        const msg = errBody?.error?.message || '';
+        if (!msg.includes('not found') && !msg.includes('no longer available') && !msg.includes('not supported')) throw new Error(msg || `API Hatası: ${res.status}`);
       }
-      const data = await res.json();
+      if (!data) throw new Error('Hiçbir Gemini modeli çalışmadı.');
       const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
       if (!text) throw new Error('API metin döndürmedi.');
       setMetin(text);
