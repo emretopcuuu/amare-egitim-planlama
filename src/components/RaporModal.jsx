@@ -7,7 +7,13 @@ const AYLAR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağus
 
 const parseTarih = (t) => { if (!t) return null; const [d,m,y] = t.split('.').map(Number); return new Date(y,m-1,d); };
 
-// ── Sayfa render bileşeni (HTML → Canvas → PDF) ─────────────────────────────
+const KATEGORI_RENK = {
+  'Liderlik': '#7C3AED', 'Satış': '#059669', 'Motivasyon': '#D97706',
+  'Sağlık': '#DC2626', 'Finansal Özgürlük': '#2563EB', 'Kişisel Gelişim': '#8B5CF6',
+  'Vizyon Günü': '#DB2777', 'Panel': '#0891B2', 'Diğer': '#6B7280',
+};
+
+// ── Sayfa render bileşeni ──────────────────────────────────────────────────────
 const RaporSayfasi = React.forwardRef(({ egitimler, ay, yil }, ref) => {
   const toplamKatilim = egitimler.reduce((s,e) => s + (Number(e.katilimSayisi)||0), 0);
   const tamamlanan = egitimler.filter(e => e.tamamlandi).length;
@@ -15,129 +21,181 @@ const RaporSayfasi = React.forwardRef(({ egitimler, ay, yil }, ref) => {
   const konusmaciStat = {};
   egitimler.forEach(e => {
     if (!e.egitmen) return;
-    e.egitmen.split(/[\/,]/).map(n=>n.trim()).filter(Boolean).forEach(ad => {
+    e.egitmen.split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜ])/).map(n=>n.trim()).filter(n=>n.length>1).forEach(ad => {
       if (!konusmaciStat[ad]) konusmaciStat[ad] = { egitim: 0, katilim: 0 };
       konusmaciStat[ad].egitim++;
       konusmaciStat[ad].katilim += Number(e.katilimSayisi)||0;
     });
   });
-  const topKonusmacilar = Object.entries(konusmaciStat).sort(([,a],[,b]) => b.egitim - a.egitim).slice(0, 8);
+  const topKonusmacilar = Object.entries(konusmaciStat).sort(([,a],[,b]) => b.egitim - a.egitim).slice(0, 10);
 
   const kategoriStat = {};
-  egitimler.forEach(e => {
-    const k = e.kategori || 'Kategorisiz';
-    kategoriStat[k] = (kategoriStat[k]||0) + 1;
-  });
+  egitimler.forEach(e => { const k = e.kategori || 'Kategorisiz'; kategoriStat[k] = (kategoriStat[k]||0) + 1; });
+
+  const haftaGruplari = {};
+  egitimler.forEach(e => { const h = e.hafta || 1; if (!haftaGruplari[h]) haftaGruplari[h] = []; haftaGruplari[h].push(e); });
+
+  const S = { // Stil sabitleri
+    page: { width: 794, fontFamily: "'Segoe UI', Arial, sans-serif", backgroundColor: '#fff', color: '#1f2937' },
+    headerBg: 'linear-gradient(135deg, #6B21A8 0%, #4F46E5 100%)',
+  };
 
   return (
-    <div ref={ref} style={{ width: 794, fontFamily: 'Arial, sans-serif', backgroundColor: '#fff', padding: 0 }}>
+    <div ref={ref} style={S.page}>
 
       {/* ── BAŞLIK ── */}
-      <div style={{ background: 'linear-gradient(135deg, #6B46C1 0%, #3182CE 100%)', padding: '32px 40px 24px', color: '#fff' }}>
+      <div style={{ background: S.headerBg, padding: '36px 44px 28px', color: '#fff' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <div style={{ fontSize: 11, letterSpacing: 3, opacity: 0.7, marginBottom: 6, textTransform: 'uppercase' }}>Amare Global</div>
-            <div style={{ fontSize: 26, fontWeight: 700, lineHeight: 1.2 }}>Eğitim Faaliyet Raporu</div>
-            <div style={{ fontSize: 14, marginTop: 6, opacity: 0.85 }}>{AYLAR[ay]} {yil}</div>
+            <div style={{ fontSize: 11, letterSpacing: 3, opacity: 0.7, marginBottom: 8, textTransform: 'uppercase' }}>Amare Global  •  OneTeam10x</div>
+            <div style={{ fontSize: 28, fontWeight: 800, lineHeight: 1.2 }}>Eğitim Faaliyet Raporu</div>
+            <div style={{ fontSize: 15, marginTop: 8, opacity: 0.85, fontWeight: 500 }}>{AYLAR[ay]} {yil}</div>
           </div>
-          <div style={{ textAlign: 'right', opacity: 0.7, fontSize: 11 }}>
-            <div style={{ fontSize: 18, fontWeight: 700, opacity: 1 }}>ONE TEAM 10X</div>
-            <div style={{ marginTop: 4 }}>Oluşturma: {new Date().toLocaleDateString('tr-TR')}</div>
+          <div style={{ textAlign: 'right' }}>
+            <div style={{ fontSize: 20, fontWeight: 800, opacity: 0.9 }}>ONE TEAM</div>
+            <div style={{ fontSize: 10, opacity: 0.6, marginTop: 6 }}>Oluşturma: {new Date().toLocaleDateString('tr-TR')}</div>
           </div>
         </div>
       </div>
 
       {/* ── ÖZET KARTLAR ── */}
-      <div style={{ display: 'flex', gap: 0, background: '#f8f5ff', borderBottom: '1px solid #e9e3ff' }}>
+      <div style={{ display: 'flex', borderBottom: '2px solid #E9D5FF' }}>
         {[
-          { label: 'Toplam Eğitim', value: egitimler.length, color: '#6B46C1', bg: '#f3eeff' },
-          { label: 'Tamamlanan',    value: tamamlanan,        color: '#38A169', bg: '#f0fff4' },
-          { label: 'Toplam Katılım', value: toplamKatilim,   color: '#3182CE', bg: '#ebf8ff' },
-          { label: 'Konuşmacı',     value: Object.keys(konusmaciStat).length, color: '#DD6B20', bg: '#fffaf0' },
+          { label: 'Toplam Eğitim', value: egitimler.length, color: '#7C3AED', bg: '#FAF5FF' },
+          { label: 'Tamamlanan', value: tamamlanan, color: '#059669', bg: '#ECFDF5' },
+          { label: 'Toplam Katılım', value: toplamKatilim, color: '#2563EB', bg: '#EFF6FF' },
+          { label: 'Konuşmacı', value: Object.keys(konusmaciStat).length, color: '#D97706', bg: '#FFFBEB' },
         ].map(({ label, value, color, bg }, i) => (
-          <div key={i} style={{ flex: 1, padding: '20px 0', textAlign: 'center', background: bg, borderRight: i < 3 ? '1px solid #e9e3ff' : 'none' }}>
-            <div style={{ fontSize: 32, fontWeight: 800, color }}>{value}</div>
-            <div style={{ fontSize: 11, color: '#666', marginTop: 3 }}>{label}</div>
+          <div key={i} style={{
+            flex: 1, padding: '22px 16px', textAlign: 'center', background: bg,
+            borderRight: i < 3 ? '1px solid #E9D5FF' : 'none',
+          }}>
+            <div style={{ fontSize: 36, fontWeight: 800, color, lineHeight: 1 }}>{value}</div>
+            <div style={{ fontSize: 11, color: '#6B7280', marginTop: 6, fontWeight: 600, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ padding: '28px 40px' }}>
+      <div style={{ padding: '28px 44px 20px' }}>
 
-        {/* ── EĞİTİM LİSTESİ ── */}
-        <div style={{ marginBottom: 28 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: '#4a1d96', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ background: '#6B46C1', color: '#fff', borderRadius: 4, padding: '2px 10px', fontSize: 12 }}>Eğitim Listesi</span>
-          </div>
-          {egitimler.length === 0 ? (
-            <div style={{ textAlign: 'center', color: '#aaa', padding: 24, background: '#fafafa', borderRadius: 8 }}>Bu ay için eğitim bulunamadı.</div>
-          ) : (
+        {/* ── EĞİTİM TABLOSU (Hafta bazlı) ── */}
+        {Object.keys(haftaGruplari).sort((a,b)=>a-b).map(hafta => {
+          const egitimlerH = haftaGruplari[hafta];
+          return (
+            <div key={hafta} style={{ marginBottom: 24 }}>
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10,
+                paddingBottom: 6, borderBottom: '2px solid #7C3AED',
+              }}>
+                <div style={{
+                  background: '#7C3AED', color: '#fff', borderRadius: 6,
+                  padding: '3px 12px', fontWeight: 700, fontSize: 12,
+                }}>HAFTA {hafta}</div>
+                <div style={{ fontSize: 11, color: '#6B7280' }}>{egitimlerH.length} eğitim</div>
+              </div>
+
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
+                <thead>
+                  <tr style={{ background: '#F5F3FF' }}>
+                    {['Gün / Tarih', 'Saat', 'Eğitim Adı', 'Konuşmacı', 'Kategori', 'Katılım', 'Durum'].map(h => (
+                      <th key={h} style={{
+                        padding: '7px 8px', textAlign: 'left', fontWeight: 700,
+                        color: '#5B21B6', borderBottom: '2px solid #DDD6FE',
+                        fontSize: 10, textTransform: 'uppercase', letterSpacing: 0.3,
+                      }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {egitimlerH.map((e, i) => (
+                    <tr key={e.id || i} style={{ background: i%2===0 ? '#fff' : '#FAFAFA' }}>
+                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB', whiteSpace: 'nowrap' }}>
+                        <div style={{ fontWeight: 600, color: '#374151', fontSize: 11 }}>{e.gun || '—'}</div>
+                        <div style={{ color: '#9CA3AF', fontSize: 10 }}>{e.tarih || ''}</div>
+                      </td>
+                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB', color: '#374151', whiteSpace: 'nowrap', fontSize: 11 }}>
+                        {e.saat || '—'}{e.bitisSaati ? `–${e.bitisSaati}` : ''}
+                      </td>
+                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB', fontWeight: 600, color: '#111827', fontSize: 11, maxWidth: 160 }}>
+                        {e.egitim || '—'}
+                      </td>
+                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB', color: '#4B5563', fontSize: 10.5, maxWidth: 130 }}>
+                        {e.egitmen || '—'}
+                      </td>
+                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB' }}>
+                        {e.kategori ? (
+                          <span style={{
+                            background: (KATEGORI_RENK[e.kategori] || '#6B7280') + '18',
+                            color: KATEGORI_RENK[e.kategori] || '#6B7280',
+                            padding: '2px 7px', borderRadius: 99, fontWeight: 600, fontSize: 9, whiteSpace: 'nowrap',
+                          }}>{e.kategori}</span>
+                        ) : '—'}
+                      </td>
+                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB', textAlign: 'center', fontWeight: 700, color: '#2563EB', fontSize: 12 }}>
+                        {e.katilimSayisi || '—'}
+                      </td>
+                      <td style={{ padding: '6px 8px', borderBottom: '1px solid #E5E7EB' }}>
+                        <span style={{
+                          background: e.tamamlandi ? '#D1FAE5' : '#FEF3C7',
+                          color: e.tamamlandi ? '#065F46' : '#92400E',
+                          padding: '2px 8px', borderRadius: 99, fontSize: 9, fontWeight: 600, whiteSpace: 'nowrap',
+                        }}>
+                          {e.tamamlandi ? 'Tamamlandı' : 'Bekliyor'}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        })}
+
+        {/* ── KONUŞMACI SIRALAMASI ── */}
+        {topKonusmacilar.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#5B21B6', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ background: '#2563EB', color: '#fff', borderRadius: 6, padding: '3px 12px', fontSize: 11, fontWeight: 700 }}>Konuşmacı Sıralaması</span>
+            </div>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
               <thead>
-                <tr style={{ background: '#6B46C1', color: '#fff' }}>
-                  {['Tarih', 'Gün', 'Saat', 'Eğitim Adı', 'Konuşmacı', 'Katılım', 'Durum'].map(h => (
-                    <th key={h} style={{ padding: '8px 10px', textAlign: 'left', fontWeight: 600, fontSize: 11 }}>{h}</th>
-                  ))}
+                <tr style={{ background: '#EFF6FF' }}>
+                  <th style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 700, color: '#1E40AF', fontSize: 10, borderBottom: '2px solid #BFDBFE' }}>#</th>
+                  <th style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 700, color: '#1E40AF', fontSize: 10, borderBottom: '2px solid #BFDBFE' }}>Konuşmacı</th>
+                  <th style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 700, color: '#1E40AF', fontSize: 10, borderBottom: '2px solid #BFDBFE' }}>Eğitim Sayısı</th>
+                  <th style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 700, color: '#1E40AF', fontSize: 10, borderBottom: '2px solid #BFDBFE' }}>Katılımcı</th>
                 </tr>
               </thead>
               <tbody>
-                {egitimler.map((e, i) => (
-                  <tr key={e.id || i} style={{ background: i%2===0 ? '#faf8ff' : '#fff', borderBottom: '1px solid #ede9fe' }}>
-                    <td style={{ padding: '7px 10px', color: '#444', whiteSpace: 'nowrap' }}>{e.tarih || '—'}</td>
-                    <td style={{ padding: '7px 10px', color: '#666' }}>{e.gun || '—'}</td>
-                    <td style={{ padding: '7px 10px', color: '#444', whiteSpace: 'nowrap' }}>{e.saat || '—'}</td>
-                    <td style={{ padding: '7px 10px', fontWeight: 600, color: '#1a1a2e', maxWidth: 200 }}>{e.egitim || '—'}</td>
-                    <td style={{ padding: '7px 10px', color: '#6B46C1' }}>{e.egitmen || '—'}</td>
-                    <td style={{ padding: '7px 10px', textAlign: 'center', color: '#3182CE', fontWeight: 600 }}>{e.katilimSayisi || '—'}</td>
-                    <td style={{ padding: '7px 10px' }}>
-                      <span style={{
-                        background: e.tamamlandi ? '#c6f6d5' : '#fef3c7',
-                        color: e.tamamlandi ? '#276749' : '#92400e',
-                        padding: '2px 8px', borderRadius: 20, fontSize: 10, fontWeight: 600,
-                      }}>
-                        {e.tamamlandi ? '✓ Tamamlandı' : '⏳ Bekliyor'}
-                      </span>
-                    </td>
+                {topKonusmacilar.map(([ad, s], i) => (
+                  <tr key={ad} style={{ background: i%2===0 ? '#fff' : '#F8FAFC' }}>
+                    <td style={{ padding: '5px 10px', borderBottom: '1px solid #E2E8F0', fontWeight: 700, color: '#7C3AED', fontSize: 12 }}>{i+1}</td>
+                    <td style={{ padding: '5px 10px', borderBottom: '1px solid #E2E8F0', fontWeight: 600, color: '#1F2937' }}>{ad}</td>
+                    <td style={{ padding: '5px 10px', borderBottom: '1px solid #E2E8F0', textAlign: 'center', fontWeight: 700, color: '#2563EB' }}>{s.egitim}</td>
+                    <td style={{ padding: '5px 10px', borderBottom: '1px solid #E2E8F0', textAlign: 'center', color: '#6B7280' }}>{s.katilim || '—'}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          )}
-        </div>
-
-        {/* ── KONUŞMACI İSTATİSTİKLERİ ── */}
-        {topKonusmacilar.length > 0 && (
-          <div style={{ marginBottom: 28 }}>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#4a1d96', marginBottom: 12 }}>
-              <span style={{ background: '#3182CE', color: '#fff', borderRadius: 4, padding: '2px 10px', fontSize: 12 }}>Konuşmacı İstatistikleri</span>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
-              {topKonusmacilar.map(([ad, s], i) => (
-                <div key={ad} style={{ display: 'flex', alignItems: 'center', gap: 10, background: '#f8faff', borderRadius: 8, padding: '10px 14px', border: '1px solid #e2e8f0' }}>
-                  <div style={{ width: 28, height: 28, borderRadius: '50%', background: '#6B46C1', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 700, flexShrink: 0 }}>{i+1}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontWeight: 700, fontSize: 12, color: '#1a1a2e', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ad}</div>
-                    <div style={{ fontSize: 10, color: '#666', marginTop: 2 }}>{s.egitim} eğitim{s.katilim > 0 ? ` • ${s.katilim} katılımcı` : ''}</div>
-                  </div>
-                  <div style={{ background: '#6B46C1', color: '#fff', borderRadius: 6, padding: '3px 10px', fontSize: 13, fontWeight: 700 }}>{s.egitim}</div>
-                </div>
-              ))}
-            </div>
           </div>
         )}
 
         {/* ── KATEGORİ DAĞILIMI ── */}
         {Object.keys(kategoriStat).length > 0 && (
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: '#4a1d96', marginBottom: 12 }}>
-              <span style={{ background: '#DD6B20', color: '#fff', borderRadius: 4, padding: '2px 10px', fontSize: 12 }}>Kategori Dağılımı</span>
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: '#5B21B6', marginBottom: 10 }}>
+              <span style={{ background: '#D97706', color: '#fff', borderRadius: 6, padding: '3px 12px', fontSize: 11, fontWeight: 700 }}>Kategori Dağılımı</span>
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
               {Object.entries(kategoriStat).sort(([,a],[,b])=>b-a).map(([k, s]) => (
-                <div key={k} style={{ background: '#f5f3ff', border: '1px solid #c4b5fd', borderRadius: 8, padding: '8px 16px', textAlign: 'center' }}>
-                  <div style={{ fontSize: 18, fontWeight: 800, color: '#6B46C1' }}>{s}</div>
-                  <div style={{ fontSize: 10, color: '#7c3aed', marginTop: 2 }}>{k}</div>
-                  <div style={{ fontSize: 9, color: '#aaa' }}>%{Math.round((s/egitimler.length)*100)}</div>
+                <div key={k} style={{
+                  background: (KATEGORI_RENK[k] || '#6B7280') + '12',
+                  border: `1px solid ${(KATEGORI_RENK[k] || '#6B7280')}40`,
+                  borderRadius: 8, padding: '8px 18px', textAlign: 'center', minWidth: 80,
+                }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: KATEGORI_RENK[k] || '#6B7280' }}>{s}</div>
+                  <div style={{ fontSize: 10, color: '#4B5563', marginTop: 2, fontWeight: 600 }}>{k}</div>
+                  <div style={{ fontSize: 9, color: '#9CA3AF' }}>%{Math.round((s/egitimler.length)*100)}</div>
                 </div>
               ))}
             </div>
@@ -146,9 +204,12 @@ const RaporSayfasi = React.forwardRef(({ egitimler, ay, yil }, ref) => {
       </div>
 
       {/* ── FOOTER ── */}
-      <div style={{ background: '#f3eeff', borderTop: '2px solid #6B46C1', padding: '12px 40px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ fontSize: 11, color: '#6B46C1', fontWeight: 700 }}>Amare Global  •  ONE TEAM 10X</div>
-        <div style={{ fontSize: 10, color: '#999' }}>Bu belge gizlidir. {new Date().toLocaleDateString('tr-TR')}</div>
+      <div style={{
+        background: '#F5F3FF', borderTop: '2px solid #7C3AED', padding: '14px 44px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+      }}>
+        <div style={{ fontSize: 11, color: '#7C3AED', fontWeight: 700 }}>Amare Global  •  OneTeam10x Eğitim Programı</div>
+        <div style={{ fontSize: 10, color: '#9CA3AF' }}>{new Date().toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })} tarihinde oluşturuldu</div>
       </div>
     </div>
   );
@@ -175,28 +236,33 @@ const RaporModal = ({ takvim, onClose }) => {
     setYukleniyor(true);
     try {
       const canvas = await html2canvas(sayfaRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false,
+        scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false,
       });
 
-      const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-      const pdfW = 210;
-      const pdfH = (canvas.height * pdfW) / canvas.width;
+      const pageW = 210;
+      const pageH = 297;
+      const imgW = pageW;
+      const imgH = (canvas.height * pageW) / canvas.width;
 
-      // Sayfaya sığmıyorsa birden fazla sayfa
-      if (pdfH <= 297) {
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
-      } else {
-        let pos = 0;
-        const pageH = 297;
-        while (pos < pdfH) {
-          if (pos > 0) pdf.addPage();
-          pdf.addImage(imgData, 'PNG', 0, -pos, pdfW, pdfH);
-          pos += pageH;
-        }
+      let y = 0;
+      let remaining = imgH;
+
+      while (remaining > 0) {
+        if (y > 0) pdf.addPage();
+        const srcY = (y / imgH) * canvas.height;
+        const sliceH = Math.min(pageH, remaining);
+        const srcH = (sliceH / imgH) * canvas.height;
+
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = srcH;
+        const ctx = sliceCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, srcY, canvas.width, srcH, 0, 0, canvas.width, srcH);
+
+        pdf.addImage(sliceCanvas.toDataURL('image/jpeg', 0.95), 'JPEG', 0, 0, imgW, sliceH);
+        y += pageH;
+        remaining -= pageH;
       }
 
       pdf.save(`amare_rapor_${AYLAR[secilenAy]}_${secilenYil}.pdf`);
@@ -221,7 +287,6 @@ const RaporModal = ({ takvim, onClose }) => {
         </div>
 
         <div className="p-6 space-y-5">
-          {/* Ay & Yıl */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-semibold text-gray-700 block mb-1">Ay</label>
@@ -239,12 +304,11 @@ const RaporModal = ({ takvim, onClose }) => {
             </div>
           </div>
 
-          {/* Özet */}
           <div className="bg-purple-50 rounded-2xl p-4 grid grid-cols-4 gap-3 text-center">
             <div><div className="text-xl font-bold text-amare-purple">{ayEgitimleri.length}</div><div className="text-xs text-gray-500">Eğitim</div></div>
             <div><div className="text-xl font-bold text-green-600">{tamamlanan}</div><div className="text-xs text-gray-500">Tamamlanan</div></div>
             <div><div className="text-xl font-bold text-blue-600">{toplamKatilim}</div><div className="text-xs text-gray-500">Katılım</div></div>
-            <div><div className="text-xl font-bold text-orange-500">{[...new Set(ayEgitimleri.flatMap(e => (e.egitmen||'').split(/[\/,]/).map(n=>n.trim()).filter(Boolean)))].length}</div><div className="text-xs text-gray-500">Konuşmacı</div></div>
+            <div><div className="text-xl font-bold text-orange-500">{[...new Set(ayEgitimleri.flatMap(e => (e.egitmen||'').split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜ])/).map(n=>n.trim()).filter(n=>n.length>1)))].length}</div><div className="text-xs text-gray-500">Konuşmacı</div></div>
           </div>
 
           <button onClick={handlePdfIndir} disabled={yukleniyor || ayEgitimleri.length === 0}
