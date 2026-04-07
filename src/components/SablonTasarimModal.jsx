@@ -262,53 +262,33 @@ const RENDER_FUNCS = {
   minimal: renderMinimal,
 };
 
-// ── Gemini image generation ───────────────────────────────────────────────────
-// Gemini text API ile tasarım parametreleri üret, canvas'a uygula
-async function geminiTextIste(apiKey, body) {
+// ── nano-banana-pro-preview ile gerçek görsel üretimi ─────────────────────────
+async function aiGorselUret(apiKey, prompt) {
+  const fullPrompt = `Profesyonel bir 1080x1080 px kare sosyal medya etkinlik tanıtım şablonu tasarla. Amare Global - OneTeam10x markası için eğitim duyuru görseli olacak. ${prompt}. Tasarımda şunlar için yer bırak: etkinlik başlığı, konuşmacı adı ve fotoğrafı, tarih/saat, yer bilgisi. "AMARE GLOBAL" ve "ONE TEAM" markalarını ekle. Profesyonel, çekici, Instagram'a uygun bir tasarım olsun.`;
+
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+    `https://generativelanguage.googleapis.com/v1beta/models/nano-banana-pro-preview:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: fullPrompt }] }],
+        generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+      }),
+    }
   );
+
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err?.error?.message || `API hatası: ${res.status}`);
   }
-  return res.json();
-}
 
-async function geminiTasarimParametreleriUret(apiKey, prompt) {
-  const systemPrompt = `Sen bir grafik tasarım asistanısın. Kullanıcının verdiği Türkçe tasarım açıklamasına göre aşağıdaki JSON formatında tasarım parametreleri üret. Sadece JSON döndür, başka metin ekleme.
-
-Format:
-{
-  "preset": "klasik" | "koyu" | "gradient" | "minimal",
-  "primaryColor": "#RRGGBB",
-  "accentColor": "#RRGGBB",
-  "aciklama": "Kısa açıklama"
-}
-
-Kullanıcı isteği: ${prompt}
-
-Kurallar:
-- Koyu/dark tema → "koyu" preset
-- Renkli/canlı → "gradient" preset
-- Sade/temiz → "minimal" preset
-- Klasik/profesyonel → "klasik" preset
-- primaryColor kullanıcının istediği ana renk (hex)
-- accentColor tamamlayıcı ikinci renk (hex)`;
-
-  const data = await geminiTextIste(apiKey, {
-    contents: [{ parts: [{ text: systemPrompt }] }],
-    generationConfig: { temperature: 0.7, maxOutputTokens: 1024 },
-  });
-
+  const data = await res.json();
   const parts = data?.candidates?.[0]?.content?.parts || [];
-  const text = parts.filter(p => !p.thought).map(p => p.text || '').join('');
-  // Remove markdown code fences if present
-  const cleaned = text.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
-  const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error('AI yanıt formatı hatalı');
-  return JSON.parse(jsonMatch[0]);
+  const imgPart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
+  if (!imgPart) throw new Error('AI görsel üretemedi. Tekrar deneyin.');
+
+  return `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
 }
 
 // ── Ana bileşen ───────────────────────────────────────────────────────────────
@@ -322,7 +302,7 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
   // AI
   const [aiPrompt, setAiPrompt] = useState('');
   const [aiYukleniyor, setAiYukleniyor] = useState(false);
-  const [aiParametreler, setAiParametreler] = useState(null); // { preset, primaryColor, accentColor, aciklama }
+  const [aiGorsel, setAiGorsel] = useState(null); // data URL
   const [mod, setMod] = useState('canvas'); // 'canvas' | 'ai'
 
   const canvasRef = useRef(null);
@@ -337,24 +317,13 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
 
   useEffect(() => { if (mod === 'canvas') renderCanvas(); }, [renderCanvas, mod]);
 
-  const aiCanvasRef = useRef(null);
-
-  const renderAiCanvas = useCallback((params) => {
-    const canvas = aiCanvasRef.current;
-    if (!canvas || !params) return;
-    const ctx = canvas.getContext('2d');
-    const fn = RENDER_FUNCS[params.preset] || renderKlasik;
-    fn(ctx, params.primaryColor);
-  }, []);
-
   const handleAiUret = async () => {
     if (!geminiApiKey) { alert('Gemini API anahtarı eksik. Ayarlar > API Anahtarları bölümünden ekleyin.'); return; }
     if (!aiPrompt.trim()) { alert('Lütfen bir tasarım açıklaması girin.'); return; }
     setAiYukleniyor(true);
     try {
-      const params = await geminiTasarimParametreleriUret(geminiApiKey, aiPrompt.trim());
-      setAiParametreler(params);
-      setTimeout(() => renderAiCanvas(params), 50);
+      const url = await aiGorselUret(geminiApiKey, aiPrompt.trim());
+      setAiGorsel(url);
     } catch (err) {
       alert('AI tasarım oluşturulamadı: ' + err.message);
     } finally {
@@ -368,14 +337,9 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
     try {
       let blob;
 
-      if (mod === 'ai' && aiParametreler) {
-        // AI parametreleriyle canvas render et
-        const fullCanvas = document.createElement('canvas');
-        fullCanvas.width = W; fullCanvas.height = H;
-        const fn = RENDER_FUNCS[aiParametreler.preset] || renderKlasik;
-        fn(fullCanvas.getContext('2d'), aiParametreler.primaryColor);
-        const dataUrl = fullCanvas.toDataURL('image/png');
-        const res = await fetch(dataUrl);
+      if (mod === 'ai' && aiGorsel) {
+        // AI görselini blob'a çevir
+        const res = await fetch(aiGorsel);
         blob = await res.blob();
       } else {
         // Canvas'ı full res render et
@@ -525,7 +489,7 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
                     ⚠️ API anahtarı gerekli. Ayarlar sekmesinden ekleyin.
                   </p>
                 )}
-                {aiParametreler && (
+                {aiGorsel && (
                   <button
                     onClick={() => { setAiParametreler(null); }}
                     className="w-full py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 flex items-center justify-center gap-1.5"
@@ -539,7 +503,7 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
             {/* Kaydet butonu */}
             <button
               onClick={handleKaydet}
-              disabled={kaydediliyor || kaydedildi || (mod === 'ai' && !aiParametreler)}
+              disabled={kaydediliyor || kaydedildi || (mod === 'ai' && !aiGorsel)}
               className={`w-full py-3.5 rounded-xl font-bold text-white flex items-center justify-center gap-2 transition-all shadow-md ${
                 kaydedildi
                   ? 'bg-green-500'
@@ -553,7 +517,7 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
                   : <><Save className="w-5 h-5" />Şablon Olarak Kaydet</>}
             </button>
 
-            {mod === 'ai' && !aiParametreler && !kaydedildi && (
+            {mod === 'ai' && !aiGorsel && !kaydedildi && (
               <p className="text-xs text-gray-400 text-center">Kaydetmek için önce AI görsel oluşturun.</p>
             )}
             {mod === 'canvas' && (
@@ -579,17 +543,10 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
                 height={H}
                 style={{ width: 480, height: 480, display: mod === 'canvas' ? 'block' : 'none' }}
               />
-              {/* AI canvas */}
+              {/* AI görsel */}
               {mod === 'ai' && (
-                aiParametreler
-                  ? (
-                    <div style={{ position: 'relative', width: 480, height: 480 }}>
-                      <canvas ref={aiCanvasRef} width={W} height={H} style={{ width: 480, height: 480, display: 'block' }} />
-                      <div style={{ position: 'absolute', bottom: 8, left: 8, right: 8, background: 'rgba(0,0,0,0.55)', borderRadius: 8, padding: '4px 10px', color: '#fff', fontSize: 11 }}>
-                        🤖 AI: {aiParametreler.aciklama}
-                      </div>
-                    </div>
-                  )
+                aiGorsel
+                  ? <img src={aiGorsel} alt="AI Tasarım" style={{ width: 480, height: 480, objectFit: 'cover', display: 'block' }} />
                   : (
                     <div style={{ width: 480, height: 480 }} className="flex flex-col items-center justify-center bg-gradient-to-br from-violet-50 to-blue-50 gap-3">
                       {aiYukleniyor
