@@ -160,56 +160,6 @@ const RaporSayfasi = React.forwardRef(({ egitimler, ay, yil }, ref) => {
           );
         })}
 
-        {/* ── KONUŞMACI SIRALAMASI ── */}
-        {topKonusmacilar.length > 0 && (
-          <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#5B21B6', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ background: '#2563EB', color: '#fff', borderRadius: 6, padding: '3px 12px', fontSize: 11, fontWeight: 700 }}>Konuşmacı Sıralaması</span>
-            </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 11 }}>
-              <thead>
-                <tr style={{ background: '#EFF6FF' }}>
-                  <th style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 700, color: '#1E40AF', fontSize: 10, borderBottom: '2px solid #BFDBFE' }}>#</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 700, color: '#1E40AF', fontSize: 10, borderBottom: '2px solid #BFDBFE' }}>Konuşmacı</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 700, color: '#1E40AF', fontSize: 10, borderBottom: '2px solid #BFDBFE' }}>Eğitim Sayısı</th>
-                  <th style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 700, color: '#1E40AF', fontSize: 10, borderBottom: '2px solid #BFDBFE' }}>Katılımcı</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topKonusmacilar.map(([ad, s], i) => (
-                  <tr key={ad} style={{ background: i%2===0 ? '#fff' : '#F8FAFC' }}>
-                    <td style={{ padding: '5px 10px', borderBottom: '1px solid #E2E8F0', fontWeight: 700, color: '#7C3AED', fontSize: 12 }}>{i+1}</td>
-                    <td style={{ padding: '5px 10px', borderBottom: '1px solid #E2E8F0', fontWeight: 600, color: '#1F2937' }}>{ad}</td>
-                    <td style={{ padding: '5px 10px', borderBottom: '1px solid #E2E8F0', textAlign: 'center', fontWeight: 700, color: '#2563EB' }}>{s.egitim}</td>
-                    <td style={{ padding: '5px 10px', borderBottom: '1px solid #E2E8F0', textAlign: 'center', color: '#6B7280' }}>{s.katilim || '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {/* ── KATEGORİ DAĞILIMI ── */}
-        {Object.keys(kategoriStat).length > 0 && (
-          <div style={{ marginBottom: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, color: '#5B21B6', marginBottom: 10 }}>
-              <span style={{ background: '#D97706', color: '#fff', borderRadius: 6, padding: '3px 12px', fontSize: 11, fontWeight: 700 }}>Kategori Dağılımı</span>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {Object.entries(kategoriStat).sort(([,a],[,b])=>b-a).map(([k, s]) => (
-                <div key={k} style={{
-                  background: (KATEGORI_RENK[k] || '#6B7280') + '12',
-                  border: `1px solid ${(KATEGORI_RENK[k] || '#6B7280')}40`,
-                  borderRadius: 8, padding: '8px 18px', textAlign: 'center', minWidth: 80,
-                }}>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: KATEGORI_RENK[k] || '#6B7280' }}>{s}</div>
-                  <div style={{ fontSize: 10, color: '#4B5563', marginTop: 2, fontWeight: 600 }}>{k}</div>
-                  <div style={{ fontSize: 9, color: '#9CA3AF' }}>%{Math.round((s/egitimler.length)*100)}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── FOOTER ── */}
