@@ -78,32 +78,20 @@ TASARIM KURALLARI:
     generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
   };
 
-  const IMAGE_MODELS = [
-    'gemini-2.0-flash-preview-image-generation',
-    'gemini-2.0-flash-exp-image-generation',
-    'gemini-2.0-flash-exp',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash-latest',
-    'gemini-1.5-pro-latest',
-  ];
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
 
-  let data = null;
-  let lastError = '';
-  for (const model of IMAGE_MODELS) {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
-    );
-    if (res.ok) {
-      data = await res.json();
-      break;
-    }
-    const errBody = await res.json().catch(() => ({}));
-    lastError = errBody?.error?.message || `API Hatası: ${res.status}`;
-    if (lastError.includes('not found') || lastError.includes('no longer available') || lastError.includes('not supported')) continue;
-    throw new Error(lastError);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || `API Hatası: ${res.status}`);
   }
-  if (!data) throw new Error(lastError || 'Hiçbir Gemini görsel modeli bu API anahtarıyla çalışmadı.');
+
+  const data = await res.json();
 
   // Görsel parçasını bul
   const parts2 = data?.candidates?.[0]?.content?.parts || [];
