@@ -1119,24 +1119,27 @@ const AdminPanel = () => {
                 </div>
               </div>
 
-              <div className="border-b pb-6 mb-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-1 flex items-center gap-2">
-                  <Key className="w-5 h-5 text-amare-purple" />Görsel Oluşturma (Gemini API)
-                </h3>
-                <p className="text-sm text-gray-500 mb-3">
-                  <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-amare-purple underline">Google AI Studio'dan API anahtarı al →</a>
-                </p>
-                <div className="flex gap-3">
-                  <input type="password" value={apiKeyInput}
-                    onChange={e => { setApiKeyInput(e.target.value); setApiKeySaved(false); }}
-                    placeholder="AIzaSy..." className="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/40" />
-                  <button onClick={handleApiKeySave}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm ${apiKeySaved ? 'bg-green-500 text-white' : 'bg-amare-purple text-white hover:bg-amare-dark'}`}>
-                    <Save className="w-4 h-4" />{apiKeySaved ? 'Kaydedildi!' : 'Kaydet'}
-                  </button>
+              <details className="border-b pb-6 mb-6 group">
+                <summary className="cursor-pointer select-none flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
+                  <Key className="w-4 h-4" />
+                  <span>API Anahtarı {geminiApiKey ? '(kayıtlı)' : '(eksik)'}</span>
+                  <span className={`w-2 h-2 rounded-full ${geminiApiKey ? 'bg-green-500' : 'bg-red-400'}`} />
+                </summary>
+                <div className="mt-3 pl-6">
+                  <p className="text-sm text-gray-500 mb-3">
+                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-amare-purple underline">Google AI Studio'dan API anahtarı al →</a>
+                  </p>
+                  <div className="flex gap-3">
+                    <input type="password" value={apiKeyInput}
+                      onChange={e => { setApiKeyInput(e.target.value); setApiKeySaved(false); }}
+                      placeholder="AIzaSy..." className="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/40" />
+                    <button onClick={handleApiKeySave}
+                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm ${apiKeySaved ? 'bg-green-500 text-white' : 'bg-amare-purple text-white hover:bg-amare-dark'}`}>
+                      <Save className="w-4 h-4" />{apiKeySaved ? 'Kaydedildi!' : 'Kaydet'}
+                    </button>
+                  </div>
                 </div>
-                {geminiApiKey && <p className="text-xs text-green-600 mt-1">✅ API anahtarı kayıtlı</p>}
-              </div>
+              </details>
 
               <div className="border-b pb-6 mb-6">
                 <div className="flex items-center justify-between mb-3">
