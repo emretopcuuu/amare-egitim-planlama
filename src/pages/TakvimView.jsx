@@ -32,7 +32,7 @@ const splitEgitmen = (egitmen) => {
 };
 
 // ── PDF içerik bileşeni ──────────────────────────────────────────────────────
-const TakvimPdfIcerik = React.forwardRef(({ takvim, haftaNumaralari, haftalikTakvim }, ref) => {
+const TakvimPdfIcerik = React.forwardRef(({ takvim, haftaNumaralari, haftalikTakvim, haftaAralikFn }, ref) => {
   const bugun = new Date();
   const ay = bugun.toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
 
@@ -65,16 +65,16 @@ const TakvimPdfIcerik = React.forwardRef(({ takvim, haftaNumaralari, haftalikTak
       </div>
 
       <div style={{ padding: '20px 32px' }}>
-        {haftaNumaralari.map(haftaNo => {
+        {haftaNumaralari.map((haftaNo, idx) => {
           const egitimler = haftalikTakvim[haftaNo];
           if (!egitimler || !egitimler.length) return null;
-          const aralik = haftaAralikPdf(egitimler);
+          const aralik = haftaAralikFn ? haftaAralikFn(egitimler) : haftaAralikPdf(egitimler);
 
           return (
             <div key={haftaNo} style={{ marginBottom: 24 }}>
               {/* Hafta başlığı */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                <div style={{ background: '#6D28D9', color: '#fff', borderRadius: 8, padding: '4px 14px', fontWeight: 800, fontSize: 13 }}>Hafta {haftaNo}</div>
+                <div style={{ background: '#6D28D9', color: '#fff', borderRadius: 8, padding: '4px 14px', fontWeight: 800, fontSize: 13 }}>Hafta {idx + 1}</div>
                 <div style={{ color: '#7C3AED', fontSize: 12, fontWeight: 500 }}>{aralik}</div>
                 <div style={{ flex: 1, height: 1, background: '#DDD6FE' }} />
                 <div style={{ color: '#9CA3AF', fontSize: 11 }}>{egitimler.length} eğitim</div>
@@ -142,8 +142,8 @@ const KonusmaciAvatar = ({ ad, konusmacilar }) => {
   if (!k?.fotoURL) return null;
   return (
     <div className="flex flex-col items-center gap-1 flex-shrink-0">
-      <img src={k.fotoURL} alt={k.ad || ad} className="w-12 h-12 rounded-full object-cover border-2 border-purple-200 shadow-sm" />
-      <span className="text-[10px] text-gray-500 text-center leading-tight max-w-[70px] truncate">{k.ad || ad}</span>
+      <img src={k.fotoURL} alt={k.ad || ad} className="w-16 h-16 rounded-full object-cover border-2 border-purple-200 shadow-sm" />
+      <span className="text-[10px] text-gray-500 text-center leading-tight max-w-[80px] truncate">{k.ad || ad}</span>
     </div>
   );
 };
@@ -155,16 +155,35 @@ const TakvimView = () => {
   const pdfRef = useRef(null);
   const [pdfYukleniyor, setPdfYukleniyor] = useState(false);
 
-  const haftaNumaralari = [...new Set(takvim.map(e => e.hafta))].sort((a, b) => a - b);
+  // Hafta = Pazartesi-Pazar takvim haftası (ISO week)
+  const getHaftaKey = (tarihStr) => {
+    const d = parseTarih(tarihStr);
+    if (!d) return null;
+    // Pazartesi'yi bul (haftanın başı)
+    const pzt = new Date(d);
+    const gun = d.getDay(); // 0=Pazar
+    const fark = gun === 0 ? -6 : 1 - gun; // Pazartesi'ye geri git
+    pzt.setDate(d.getDate() + fark);
+    return pzt.toISOString().split('T')[0]; // "2026-04-06" formatı
+  };
+
+  // Tüm eğitimleri takvim haftasına göre grupla
   const haftalikTakvim = {};
-  haftaNumaralari.forEach(h => {
-    haftalikTakvim[h] = takvim
-      .filter(e => e.hafta === h)
-      .sort((a, b) => {
-        const ta = parseTarih(a.tarih), tb = parseTarih(b.tarih);
-        if (ta && tb && ta.getTime() !== tb.getTime()) return ta - tb;
-        return (a.saat || '').localeCompare(b.saat || '');
-      });
+  takvim.forEach(e => {
+    const key = getHaftaKey(e.tarih);
+    if (!key) return;
+    if (!haftalikTakvim[key]) haftalikTakvim[key] = [];
+    haftalikTakvim[key].push(e);
+  });
+
+  // Hafta anahtarlarını sırala ve her hafta içini tarih+saat'e göre sırala
+  const haftaNumaralari = Object.keys(haftalikTakvim).sort();
+  haftaNumaralari.forEach(key => {
+    haftalikTakvim[key].sort((a, b) => {
+      const ta = parseTarih(a.tarih), tb = parseTarih(b.tarih);
+      if (ta && tb && ta.getTime() !== tb.getTime()) return ta - tb;
+      return (a.saat || '').localeCompare(b.saat || '');
+    });
   });
 
   const exportPDF = async () => {
@@ -230,7 +249,7 @@ const TakvimView = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900">
       {/* Gizli PDF */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-        <TakvimPdfIcerik ref={pdfRef} takvim={takvim} haftaNumaralari={haftaNumaralari} haftalikTakvim={haftalikTakvim} />
+        <TakvimPdfIcerik ref={pdfRef} takvim={takvim} haftaNumaralari={haftaNumaralari} haftalikTakvim={haftalikTakvim} haftaAralikFn={haftaAralik} />
       </div>
 
       {/* Header */}
@@ -241,7 +260,6 @@ const TakvimView = () => {
           </button>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
-              <div className="text-purple-300 text-sm font-medium tracking-wider uppercase mb-1">OneTeam10x</div>
               <h1 className="text-3xl md:text-4xl font-extrabold text-white">Eğitim Takvimi</h1>
               <p className="text-purple-200 mt-2">{takvim.length} eğitim planlandı</p>
             </div>
@@ -256,7 +274,7 @@ const TakvimView = () => {
       {/* Haftalık Bölümler */}
       <div className="px-4 pb-12">
         <div className="container mx-auto max-w-5xl space-y-8">
-          {haftaNumaralari.map(haftaNo => {
+          {haftaNumaralari.map((haftaNo, idx) => {
             const haftaEgitimleri = haftalikTakvim[haftaNo];
             if (!haftaEgitimleri || haftaEgitimleri.length === 0) return null;
             const aralik = haftaAralik(haftaEgitimleri);
@@ -266,7 +284,7 @@ const TakvimView = () => {
                 {/* Hafta Başlığı */}
                 <div className="flex items-center gap-3 mb-4">
                   <div className="bg-white text-purple-800 rounded-xl px-4 py-2 font-extrabold text-lg shadow">
-                    Hafta {haftaNo}
+                    Hafta {idx + 1}
                   </div>
                   <div className="text-purple-200 text-sm font-medium">{aralik}</div>
                   <div className="flex-1 h-px bg-white/20" />
