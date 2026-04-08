@@ -42,6 +42,20 @@ export const gorselOlustur = async ({ apiKey, egitim, egitmenFotoURL, sablonFile
     }
   }
 
+  // Şehir/konum tespiti — online değilse arka plana şehir görseli ekle
+  const yer = egitim.yer || '';
+  const sehir = egitim.sehir || '';
+  const isOnline = sehir === 'Online' || yer.toUpperCase().includes('ZOOM');
+
+  let konumPrompt = '';
+  if (!isOnline && !ekPrompt) {
+    const lokasyon = sehir && sehir !== 'Diğer' ? sehir : '';
+    if (lokasyon) {
+      konumPrompt = `\n\nKONUM TASARIM TALİMATI:
+Bu etkinlik ${lokasyon} şehrinde yüz yüze yapılacak. Arka plana ${lokasyon} şehrinin tanınmış siluetini, simge yapılarını veya şehir manzarasını hafif ve şık bir şekilde ekle. Konuşmacı fotoğrafıyla uyumlu olsun. Arka plan görseli yarı saydam, soft ve profesyonel olsun — metinleri kapatmasın. Bu görseli diğer online eğitim görsellerinden farklı ve daha renkli yap.`;
+    }
+  }
+
   // Prompt oluştur
   const prompt = `Sen profesyonel bir tasarım uzmanısın. Aşağıdaki bilgileri kullanarak etkileyici bir etkinlik tanıtım görseli hazırla.
 
@@ -61,7 +75,7 @@ TASARIM KURALLARI:
 - Tarih ve saat belirgin vurgulansın
 - ONE TEAM / Amare Global kurumsal kimliğine uygun olsun
 - Profesyonel ve çekici bir tasarım
-- Sosyal medya paylaşımına uygun kare veya dikey format${ekPrompt ? '\n\nEK İSTEKLER:\n' + ekPrompt : ''}`;
+- Sosyal medya paylaşımına uygun kare veya dikey format${konumPrompt}${ekPrompt ? '\n\nEK İSTEKLER:\n' + ekPrompt : ''}`;
 
   // İstek gövdesi
   const parts = [
