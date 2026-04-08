@@ -347,15 +347,22 @@ const TakvimView = () => {
           </div>
         </div>
 
-        {/* Hero: En Yakın 3 Eğitim — alt alta, kademeli */}
+        {/* Hero: En Yakın 3 Eğitim — 1. büyük üstte, 2-3 yan yana altta */}
         {enYakinEgitimler.length > 0 && (
           <div className="px-4 py-4">
             <div className="container mx-auto max-w-6xl space-y-3">
-              {enYakinEgitimler.map((egitim, i) => (
-                <HeroBolum key={egitim.id} egitim={egitim} sira={i + 1} konusmacilar={konusmacilar||[]}
-                  onKonusmaci={(a,k)=>setKonusmaciModal({ad:a,kayit:k})}
-                  onPoster={(p)=>setPosterModal(p)} />
-              ))}
+              <HeroBolum egitim={enYakinEgitimler[0]} sira={1} konusmacilar={konusmacilar||[]}
+                onKonusmaci={(a,k)=>setKonusmaciModal({ad:a,kayit:k})}
+                onPoster={(p)=>setPosterModal(p)} />
+              {enYakinEgitimler.length > 1 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {enYakinEgitimler.slice(1).map((egitim, i) => (
+                    <HeroBolum key={egitim.id} egitim={egitim} sira={i + 2} konusmacilar={konusmacilar||[]}
+                      onKonusmaci={(a,k)=>setKonusmaciModal({ad:a,kayit:k})}
+                      onPoster={(p)=>setPosterModal(p)} />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
