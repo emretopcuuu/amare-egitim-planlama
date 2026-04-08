@@ -245,8 +245,14 @@ const AdminPanel = () => {
   );
 
   // ── Computed ─────────────────────────────────────────────────────────────
+  // Konuşmacılar: hem takvimden hem Firestore'dan — hiçbiri kaybolmaz
   const benzersizKonusmacilar = (() => {
     const seen = new Map();
+    // 1. Firestore'daki kayıtlı konuşmacılar (kalıcı, silinmez)
+    (konusmacilar || []).forEach(k => {
+      if (k.id) seen.set(k.id, k.ad || k.id);
+    });
+    // 2. Takvimden gelen isimler (yeni eklenenler)
     takvim.map(e => e.egitmen).filter(Boolean)
       .flatMap(e => splitEgitmen(e))
       .forEach(ad => {
