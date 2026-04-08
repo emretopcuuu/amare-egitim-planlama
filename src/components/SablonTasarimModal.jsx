@@ -264,7 +264,7 @@ const RENDER_FUNCS = {
 
 // ── nano-banana-pro-preview ile gerçek görsel üretimi ─────────────────────────
 async function aiGorselUret(apiKey, prompt) {
-  const fullPrompt = `Profesyonel bir 1080x1080 px kare sosyal medya etkinlik tanıtım şablonu tasarla. Amare Global - OneTeam10x markası için eğitim duyuru görseli olacak. ${prompt}. Tasarımda şunlar için yer bırak: etkinlik başlığı, konuşmacı adı ve fotoğrafı, tarih/saat, yer bilgisi. "AMARE GLOBAL" ve "ONE TEAM" markalarını ekle. Profesyonel, çekici, Instagram'a uygun bir tasarım olsun.`;
+  const fullPrompt = `Profesyonel bir 1080x1080 px kare sosyal medya etkinlik tanıtım şablonu tasarla. Amare Global - OneTeam10x markası için eğitim duyuru görseli olacak. ${prompt}. Tasarımda şunlar için yer bırak: etkinlik başlığı, konuşmacı adı ve fotoğrafı, tarih/saat, yer bilgisi. "AMARE GLOBAL" ve "ONE TEAM" markalarını sadece metin olarak ekle. ÖNEMLİ: Asla sahte logo, amblem veya sembol uydurmayacaksın. Logo çizmeyeceksin. Sadece metin olarak marka isimlerini yaz. Profesyonel, çekici, Instagram'a uygun bir tasarım olsun.`;
 
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 60000);

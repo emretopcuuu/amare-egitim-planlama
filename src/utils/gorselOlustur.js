@@ -75,6 +75,7 @@ TASARIM KURALLARI:
 - Tarih ve saat belirgin vurgulansın
 - ONE TEAM / Amare Global kurumsal kimliğine uygun olsun
 - Profesyonel ve çekici bir tasarım
+- LOGO KURALI: Asla kendi logonu uydurmayacaksın! Şablondaki mevcut logoları koru. Eğer şablonda logo yoksa, sadece "AMARE GLOBAL" ve "ONE TEAM" yazılarını metin olarak ekle. Sahte/uydurma logo, amblem veya sembol çizme.
 - Sosyal medya paylaşımına uygun kare veya dikey format${konumPrompt}${ekPrompt ? '\n\nEK İSTEKLER:\n' + ekPrompt : ''}`;
 
   // İstek gövdesi
