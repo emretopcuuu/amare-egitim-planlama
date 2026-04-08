@@ -115,7 +115,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
   const titleSize = isFirst ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl';
   const padding = isFirst ? 'p-6 md:p-8' : 'p-5 md:p-6';
   const posterSize = isFirst ? 'w-48 md:w-60' : 'w-40 md:w-48';
-  const avatarSize = isFirst ? 'lg' : 'md';
+  const avatarSize = 'lg';
   const countdownSize = isFirst ? 'text-2xl min-w-[52px] px-3 py-2' : 'text-lg min-w-[42px] px-2.5 py-1.5';
 
   return (
