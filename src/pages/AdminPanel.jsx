@@ -1447,6 +1447,10 @@ const AdminPanel = () => {
           apiKey={geminiApiKey}
           sablonlar={sablonlar}
           onClose={() => setGorselModal(null)}
+          onGorselBagla={async (id, dataUrl) => {
+            const result = await egitimGuncelle(id, { gorselUrl: dataUrl });
+            if (!result.success) throw new Error(result.error);
+          }}
         />
       )}
 

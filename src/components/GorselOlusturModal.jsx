@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { X, Upload, ImageIcon, Download, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { X, Upload, ImageIcon, Download, Loader2, AlertCircle, CheckCircle2, Link2 } from 'lucide-react';
 import { gorselOlustur } from '../utils/gorselOlustur';
 
-const GorselOlusturModal = ({ egitim, egitmenFotoURL, apiKey, onClose, sablonlar = [] }) => {
+const GorselOlusturModal = ({ egitim, egitmenFotoURL, apiKey, onClose, sablonlar = [], onGorselBagla }) => {
   const [secilenSablon, setSecilenSablon] = useState(null); // { type: 'saved', url, ad } | { type: 'file', file, preview }
   const [generating, setGenerating] = useState(false);
   const [resultBlobUrl, setResultBlobUrl] = useState(null);
   const [error, setError] = useState(null);
   const [yeniYukle, setYeniYukle] = useState(sablonlar.length === 0);
   const [ekPrompt, setEkPrompt] = useState('');
+  const [baglandi, setBaglandi] = useState(false);
+  const [baglaniyor, setBaglaniyor] = useState(false);
 
   const handleDosyaSec = (e) => {
     const file = e.target.files[0];
@@ -193,14 +195,37 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, apiKey, onClose, sablonlar
                   onClick={handleIndir}
                   className="flex-1 py-3 rounded-xl font-bold text-white bg-green-600 hover:bg-green-700 transition flex items-center justify-center gap-2"
                 >
-                  <Download className="w-5 h-5" />
-                  İndir
+                  <Download className="w-5 h-5" />İndir
                 </button>
+                {onGorselBagla && (
+                  <button
+                    onClick={async () => {
+                      setBaglaniyor(true);
+                      try {
+                        const resp = await fetch(resultBlobUrl);
+                        const blob = await resp.blob();
+                        const reader = new FileReader();
+                        reader.onload = async () => {
+                          await onGorselBagla(egitim.id, reader.result);
+                          setBaglandi(true);
+                          setBaglaniyor(false);
+                        };
+                        reader.readAsDataURL(blob);
+                      } catch { setBaglaniyor(false); }
+                    }}
+                    disabled={baglandi || baglaniyor}
+                    className={`flex-1 py-3 rounded-xl font-bold transition flex items-center justify-center gap-2 ${baglandi ? 'bg-green-100 text-green-700' : 'bg-amare-purple text-white hover:bg-amare-dark'} disabled:opacity-60`}
+                  >
+                    {baglaniyor ? <><Loader2 className="w-4 h-4 animate-spin" />Kaydediliyor...</>
+                      : baglandi ? <><CheckCircle2 className="w-4 h-4" />Bağlandı</>
+                      : <><Link2 className="w-4 h-4" />Eğitime Bağla</>}
+                  </button>
+                )}
                 <button
-                  onClick={() => { setResultBlobUrl(null); setError(null); }}
-                  className="flex-1 py-3 rounded-xl font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
+                  onClick={() => { setResultBlobUrl(null); setError(null); setBaglandi(false); }}
+                  className="py-3 px-4 rounded-xl font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
                 >
-                  Yeniden Oluştur
+                  Yeniden
                 </button>
               </div>
             </div>
