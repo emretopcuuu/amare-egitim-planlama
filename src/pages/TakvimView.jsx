@@ -112,11 +112,10 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
   ];
   const labels = ['Sıradaki Eğitim', '2. Sıradaki Eğitim', '3. Sıradaki Eğitim'];
   const isFirst = sira === 1;
-  const titleSize = isFirst ? 'text-2xl md:text-3xl' : 'text-xl md:text-2xl';
-  const padding = isFirst ? 'p-6 md:p-8' : 'p-5 md:p-6';
-  const posterSize = isFirst ? 'w-48 md:w-60' : 'w-40 md:w-48';
-  const avatarSize = 'lg';
-  const countdownSize = isFirst ? 'text-2xl min-w-[52px] px-3 py-2' : 'text-lg min-w-[42px] px-2.5 py-1.5';
+  const titleSize = isFirst ? 'text-xl md:text-2xl' : 'text-lg md:text-xl';
+  const padding = isFirst ? 'p-5 md:p-6' : 'p-4 md:p-5';
+  const posterSize = isFirst ? 'w-40 md:w-48' : 'w-32 md:w-40';
+  const countdownSize = isFirst ? 'text-xl min-w-[46px] px-2.5 py-1.5' : 'text-lg min-w-[40px] px-2 py-1';
 
   return (
     <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${gradients[sira-1]||gradients[0]} ${padding} shadow-2xl border border-white/10`}>
@@ -135,19 +134,22 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
             <span className="flex items-center gap-1">{online?<Wifi className="w-3.5 h-3.5" />:<MapPin className="w-3.5 h-3.5" />}{online?'Zoom':egitim.yer}</span>
           </div>
 
-          {cd?.durum !== 'gecmis' && cd?.durum !== 'canli' && (
-            <div className={`flex ${isFirst?'gap-3':'gap-2'} mt-3`}>
-              {[{v:gun,l:'Gün'},{v:saat,l:'Saat'},{v:dakika,l:'Dk'},{v:saniye,l:'Sn'}].map(({v,l})=>(
-                <div key={l} className={`bg-white/10 backdrop-blur rounded-xl ${countdownSize} text-center`}>
-                  <div className={`font-extrabold text-white tabular-nums`}>{String(v).padStart(2,'0')}</div>
-                  <div className="text-[9px] text-purple-300 uppercase tracking-wider">{l}</div>
-                </div>
-              ))}
+          <div className="flex items-center gap-4 mt-3 flex-wrap">
+            {/* Geri sayım */}
+            {cd?.durum !== 'gecmis' && cd?.durum !== 'canli' && (
+              <div className={`flex ${isFirst?'gap-2':'gap-1.5'}`}>
+                {[{v:gun,l:'Gün'},{v:saat,l:'Saat'},{v:dakika,l:'Dk'},{v:saniye,l:'Sn'}].map(({v,l})=>(
+                  <div key={l} className={`bg-white/10 backdrop-blur rounded-xl ${countdownSize} text-center`}>
+                    <div className="font-extrabold text-white tabular-nums">{String(v).padStart(2,'0')}</div>
+                    <div className="text-[8px] text-purple-300 uppercase tracking-wider">{l}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+            {/* Konuşmacılar — sayacın yanında */}
+            <div className="flex items-center gap-2">
+              {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size="lg" />)}
             </div>
-          )}
-
-          <div className={`flex items-center ${isFirst?'gap-3':'gap-2'} mt-3`}>
-            {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size={avatarSize} />)}
           </div>
         </div>
 
