@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../context/DataContext';
+import { useData, makeSafeId } from '../context/DataContext';
 import * as XLSX from 'xlsx';
 import QRCode from 'qrcode';
 import {
@@ -333,7 +333,7 @@ const AdminPanel = () => {
 
   const handleFotoYukle = async (konusmaciAdi, file) => {
     if (!file) return;
-    const safeId = konusmaciAdi.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const safeId = makeSafeId(konusmaciAdi);
     setFotoUploadingId(safeId);
     try {
       const result = await konusmaciFotoYukle(konusmaciAdi, file);
@@ -355,7 +355,7 @@ const AdminPanel = () => {
     const egitmenAdlari = splitEgitmen(egitim.egitmen);
     let fotoURL = null;
     for (const ad of egitmenAdlari) {
-      const safeId = ad.toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const safeId = makeSafeId(ad);
       const k = konusmacilar.find(k => k.id === safeId);
       if (k?.fotoURL) { fotoURL = k.fotoURL; break; }
     }
@@ -478,7 +478,7 @@ const AdminPanel = () => {
         const egitmenAdlari = splitEgitmen(egitim.egitmen);
         let fotoURL = null;
         for (const ad of egitmenAdlari) {
-          const k = konusmacilar.find(k => k.id === ad.toLowerCase().replace(/[^a-z0-9]/g, '_'));
+          const k = konusmacilar.find(k => k.id === makeSafeId(ad));
           if (k?.fotoURL) { fotoURL = k.fotoURL; break; }
         }
         const result = await gorselOlustur({ apiKey: geminiApiKey, egitim, egitmenFotoURL: fotoURL, sablonFile: sablon.url });
@@ -502,7 +502,7 @@ const AdminPanel = () => {
   };
 
   const handleBilgiAc = (ad) => {
-    const safeId = ad.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+    const safeId = makeSafeId(ad);
     const k = konusmacilar.find(k => k.id === safeId);
     setBilgiForm({ ad: k?.ad || ad, unvan: k?.unvan || '', biyografi: k?.biyografi || '', linkedin: k?.linkedin || '' });
     setBilgiModal({ ad, safeId });
@@ -1121,12 +1121,12 @@ const AdminPanel = () => {
                   {benzersizKonusmacilar.filter(ad => {
                     if (!konusmaciArama.trim()) return true;
                     const q = konusmaciArama.toLocaleUpperCase('tr-TR');
-                    const safeId = ad.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    const safeId = makeSafeId(ad);
                     const kayitliK = konusmacilar.find(k => k.id === safeId);
                     const displayName = kayitliK?.ad || ad;
                     return displayName.toLocaleUpperCase('tr-TR').includes(q) || ad.toLocaleUpperCase('tr-TR').includes(q);
                   }).map(ad => {
-                    const safeId = ad.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+                    const safeId = makeSafeId(ad);
                     const kayitliK = konusmacilar.find(k => k.id === safeId);
                     const isUploading = fotoUploadingId === safeId;
                     const stat = konusmaciStat[ad];

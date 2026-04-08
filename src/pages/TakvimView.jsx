@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData } from '../context/DataContext';
+import { useData, makeSafeId } from '../context/DataContext';
 import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -36,7 +36,7 @@ const getSehir = (e) => {
 
 // ── Konuşmacı Avatar ─────────────────────────────────────────────────────────
 const KonusmaciAvatar = ({ ad, konusmacilar, onClick }) => {
-  const safeId = ad.trim().toLocaleUpperCase('tr-TR').replace(/[^A-Z0-9]/g, '_').toLowerCase();
+  const safeId = makeSafeId(ad);
   const k = konusmacilar.find(k => k.id === safeId);
   const foto = k?.fotoURL;
   return (

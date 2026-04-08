@@ -13,6 +13,17 @@ import {
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { takvimOlustur } from '../utils/takvimAlgoritma';
+
+// Türkçe karakterleri ASCII'ye çevirip güvenli ID oluştur
+export const makeSafeId = (ad) => {
+  if (!ad) return '';
+  return ad.trim()
+    .replace(/İ/g,'I').replace(/ı/g,'i').replace(/Ş/g,'S').replace(/ş/g,'s')
+    .replace(/Ğ/g,'G').replace(/ğ/g,'g').replace(/Ö/g,'O').replace(/ö/g,'o')
+    .replace(/Ü/g,'U').replace(/ü/g,'u').replace(/Ç/g,'C').replace(/ç/g,'c')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '_');
+};
 import * as XLSX from 'xlsx';
 
 const DataContext = createContext();
@@ -345,7 +356,7 @@ export const DataProvider = ({ children }) => {
   // Konuşmacı fotoğrafı yükle ve kaydet (Firestore base64)
   const konusmaciFotoYukle = async (konusmaciAdi, file) => {
     try {
-      const safeId = konusmaciAdi.trim().toLowerCase().replace(/[^a-z0-9]/g, '_');
+      const safeId = makeSafeId(konusmaciAdi);
       const base64 = await gorseliKucult(file, 500);
       const konusmaciRef = doc(db, 'konusmacilar', safeId);
       await setDoc(konusmaciRef, {
