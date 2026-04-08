@@ -898,29 +898,106 @@ const AdminPanel = () => {
                 </div>
               </div>
 
-              {/* İstatistik kartları */}
-              {takvim.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                  {(() => {
-                    const hg = {};
-                    takvim.forEach(e => { const k = getHaftaKey(e.tarih)||'x'; if(!hg[k])hg[k]=[]; hg[k].push(e); });
-                    return Object.keys(hg).sort();
-                  })().map((k, h) => {
-                    const grp = {};
-                    takvim.forEach(e => { const kk = getHaftaKey(e.tarih)||'x'; if(!grp[kk])grp[kk]=[]; grp[kk].push(e); });
-                    const arr = grp[k]||[];
-                    const toplam = arr.length;
-                    const tamam = arr.filter(e => e.tamamlandi).length;
-                    return (
-                      <div key={h} className="bg-purple-50 rounded-xl p-3 text-center">
-                        <div className="text-xs text-purple-600 font-semibold mb-1">Hafta {h + 1}</div>
-                        <div className="text-2xl font-bold text-purple-700">{toplam}</div>
-                        <div className="text-xs text-purple-400">{tamam > 0 ? `${tamam} tamamlandı` : 'eğitim'}</div>
+              {/* ── Dashboard İstatistik Paneli ── */}
+              {takvim.length > 0 && (() => {
+                const onlineS = takvim.filter(e => e.sehir === 'Online' || (e.yer||'').toUpperCase().includes('ZOOM')).length;
+                const offlineS = takvim.length - onlineS;
+                const tamamS = takvim.filter(e => e.tamamlandi).length;
+                const gorselS = takvim.filter(e => e.gorselUrl).length;
+                const katStat = {};
+                takvim.forEach(e => { const k = e.kategori || 'Kategorisiz'; katStat[k] = (katStat[k]||0)+1; });
+                const topKat = Object.entries(katStat).sort(([,a],[,b])=>b-a);
+                const konStat = {};
+                takvim.forEach(e => { if(!e.egitmen) return; splitEgitmen(e.egitmen).forEach(ad => { const key = makeSafeId(ad); if(!konStat[key]) konStat[key]={ad,count:0}; konStat[key].count++; }); });
+                const topKon = Object.values(konStat).sort((a,b)=>b.count-a.count).slice(0,5);
+                const haftalar = {};
+                takvim.forEach(e => { const k = getHaftaKey(e.tarih)||'x'; if(!haftalar[k]) haftalar[k]=[]; haftalar[k].push(e); });
+                const hKeys = Object.keys(haftalar).sort();
+
+                return (
+                  <div className="mb-4 space-y-3">
+                    {/* Üst: Ana metrikler */}
+                    <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                      <div className="bg-purple-50 rounded-xl p-3 text-center">
+                        <div className="text-2xl font-extrabold text-purple-700">{takvim.length}</div>
+                        <div className="text-xs text-purple-500 font-semibold">Toplam Eğitim</div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                      <div className="bg-green-50 rounded-xl p-3 text-center">
+                        <div className="text-2xl font-extrabold text-green-700">{tamamS}</div>
+                        <div className="text-xs text-green-500 font-semibold">Tamamlanan</div>
+                      </div>
+                      <div className="bg-blue-50 rounded-xl p-3 text-center">
+                        <div className="text-2xl font-extrabold text-blue-700">{onlineS}</div>
+                        <div className="text-xs text-blue-500 font-semibold">Online</div>
+                      </div>
+                      <div className="bg-amber-50 rounded-xl p-3 text-center">
+                        <div className="text-2xl font-extrabold text-amber-700">{offlineS}</div>
+                        <div className="text-xs text-amber-500 font-semibold">Yüz Yüze</div>
+                      </div>
+                      <div className="bg-pink-50 rounded-xl p-3 text-center">
+                        <div className="text-2xl font-extrabold text-pink-700">{gorselS}</div>
+                        <div className="text-xs text-pink-500 font-semibold">Poster Hazır</div>
+                      </div>
+                    </div>
+
+                    {/* Alt: Hafta + Kategori + Top Konuşmacı */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {/* Hafta dağılımı */}
+                      <div className="bg-white border border-gray-100 rounded-xl p-4">
+                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Haftalık Dağılım</div>
+                        <div className="space-y-2">
+                          {hKeys.map((k, i) => {
+                            const arr = haftalar[k];
+                            const pct = Math.round((arr.length / takvim.length) * 100);
+                            return (
+                              <div key={k} className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-purple-600 w-12">H{i+1}</span>
+                                <div className="flex-1 bg-gray-100 rounded-full h-4 overflow-hidden">
+                                  <div className="bg-gradient-to-r from-purple-500 to-indigo-500 h-full rounded-full transition-all" style={{ width: `${pct}%` }} />
+                                </div>
+                                <span className="text-xs font-bold text-gray-600 w-8 text-right">{arr.length}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Kategori dağılımı */}
+                      <div className="bg-white border border-gray-100 rounded-xl p-4">
+                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Kategori Dağılımı</div>
+                        <div className="space-y-2">
+                          {topKat.map(([kat, sayi]) => {
+                            const pct = Math.round((sayi / takvim.length) * 100);
+                            return (
+                              <div key={kat} className="flex items-center gap-2">
+                                <span className="text-xs font-medium text-gray-700 w-24 truncate">{kat}</span>
+                                <div className="flex-1 bg-gray-100 rounded-full h-3.5 overflow-hidden">
+                                  <div className="bg-gradient-to-r from-amber-400 to-orange-500 h-full rounded-full" style={{ width: `${pct}%` }} />
+                                </div>
+                                <span className="text-xs font-bold text-gray-500 w-6 text-right">{sayi}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Top 5 konuşmacı */}
+                      <div className="bg-white border border-gray-100 rounded-xl p-4">
+                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">En Aktif Konuşmacılar</div>
+                        <div className="space-y-2">
+                          {topKon.map((k, i) => (
+                            <div key={k.ad} className="flex items-center gap-2">
+                              <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-700 text-xs font-bold flex items-center justify-center flex-shrink-0">{i+1}</span>
+                              <span className="text-sm text-gray-700 truncate flex-1">{k.ad}</span>
+                              <span className="text-xs font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">{k.count}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Toolbar */}
               {takvim.length > 0 && (
