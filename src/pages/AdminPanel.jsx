@@ -699,10 +699,15 @@ const AdminPanel = () => {
             {isSecili ? <CheckSquare className="w-5 h-5 text-amare-purple" /> : <Square className="w-5 h-5 text-gray-300" />}
           </div>
         )}
+        {/* Poster thumbnail */}
+        {egitim.gorselUrl && (
+          <div className="flex-shrink-0 mr-3">
+            <img src={egitim.gorselUrl} alt="" className="w-14 h-14 rounded-lg object-cover border border-gray-200 shadow-sm" />
+          </div>
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <div className={`font-bold text-gray-800 ${egitim.tamamlandi ? 'line-through text-gray-400' : ''}`}>
-              {egitim.gorselUrl && <ImageIcon className="w-4 h-4 text-green-500 inline mr-1.5" title="Poster oluşturulmuş" />}
               {egitim.egitim}
             </div>
             {egitim.tamamlandi && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold flex-shrink-0">✓ Tamamlandı</span>}
