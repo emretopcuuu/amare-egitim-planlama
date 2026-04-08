@@ -450,21 +450,23 @@ const TakvimView = () => {
                     <div className="text-purple-300 text-sm">{haftaEgitimleri.length} eğitim</div>
                   </div>
 
-                  {/* Gelecek eğitimler — normal göster */}
-                  {gelecekler.length > 0 && renderGrup(gelecekler)}
-
-                  {/* Geçmiş eğitimler — açılır kapanır */}
+                  {/* Geçmiş eğitimler — açılır kapanır, üstte */}
                   {gecmisler.length > 0 && (
-                    <details className="mt-3 group">
-                      <summary className="cursor-pointer select-none flex items-center gap-2 text-white/50 hover:text-white/70 transition-colors py-2">
-                        <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                        <span className="text-sm font-semibold">Geçmiş Eğitimler ({gecmisler.length})</span>
+                    <details className="mb-4 group">
+                      <summary className="cursor-pointer select-none flex items-center gap-3 bg-white/10 backdrop-blur border border-white/20 rounded-xl px-4 py-3 hover:bg-white/15 transition-all">
+                        <svg className="w-5 h-5 text-purple-300 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        <span className="text-sm font-bold text-white">Geçmiş Eğitimler</span>
+                        <span className="bg-white/20 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">{gecmisler.length}</span>
+                        <span className="text-xs text-purple-300 ml-auto">tıklayarak göster</span>
                       </summary>
-                      <div className="mt-2">
+                      <div className="mt-3">
                         {renderGrup(gecmisler)}
                       </div>
                     </details>
                   )}
+
+                  {/* Gelecek eğitimler — normal göster */}
+                  {gelecekler.length > 0 && renderGrup(gelecekler)}
                 </div>
               );
             })}
