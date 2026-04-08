@@ -112,11 +112,12 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
   ];
   const labels = ['Sıradaki Eğitim', '2. Sıradaki Eğitim', '3. Sıradaki Eğitim'];
   const isFirst = sira === 1;
-  const titleSize = isFirst ? 'text-5xl md:text-6xl' : 'text-lg md:text-xl';
-  const padding = isFirst ? 'p-12 md:p-16' : 'p-4 md:p-5';
-  const posterSize = isFirst ? 'w-72 md:w-96' : 'w-32 md:w-40';
-  const countdownSize = isFirst ? 'text-5xl min-w-[90px] px-6 py-5' : 'text-lg min-w-[40px] px-2 py-1';
-  const avatarSizeVal = isFirst ? 'xxl' : 'lg';
+  const titleSize = isFirst ? 'text-xl md:text-5xl lg:text-6xl' : 'text-base md:text-xl';
+  const padding = isFirst ? 'p-4 md:p-12 lg:p-16' : 'p-3 md:p-5';
+  const posterSize = isFirst ? 'w-24 md:w-72 lg:w-96' : 'w-20 md:w-40';
+  const countdownSize = isFirst ? 'text-lg md:text-4xl lg:text-5xl min-w-[36px] md:min-w-[76px] lg:min-w-[90px] px-2 md:px-5 lg:px-6 py-1.5 md:py-4 lg:py-5' : 'text-sm md:text-lg min-w-[32px] md:min-w-[40px] px-1.5 md:px-2 py-1';
+  const avatarSizeVal = isFirst ? 'md' : 'sm';
+  const avatarSizeDesktop = isFirst ? 'xxl' : 'lg';
 
   return (
     <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${gradients[sira-1]||gradients[0]} ${padding} shadow-2xl border border-white/10`}>
@@ -130,7 +131,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
             {cd?.durum === 'canli' && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-green-500 text-white animate-pulse">CANLI</span>}
           </div>
           <h2 className={`${titleSize} font-extrabold text-white leading-tight`}>{egitim.egitim}</h2>
-          <div className={`flex flex-wrap items-center gap-3 mt-2 ${isFirst?'text-sm':'text-xs'} text-purple-200`}>
+          <div className={`flex flex-wrap items-center gap-2 md:gap-3 mt-2 ${isFirst?'text-xs md:text-sm':'text-[10px] md:text-xs'} text-purple-200`}>
             <span className="flex items-center gap-1"><Clock className={`${isFirst?'w-4 h-4':'w-3.5 h-3.5'}`} />{tarih?.toLocaleDateString('tr-TR',{day:'numeric',month:'long',weekday:'long'})} • {egitim.saat}{egitim.bitisSaati?`–${egitim.bitisSaati}`:''}</span>
             <span className="flex items-center gap-1">{online?<Wifi className="w-3.5 h-3.5" />:<MapPin className="w-3.5 h-3.5" />}{online?'Zoom':egitim.yer}</span>
           </div>
@@ -160,9 +161,13 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
                 ))}
               </div>
             )}
-            {/* Konuşmacılar — sayacın yanında */}
-            <div className="flex items-center gap-2">
-              {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size={avatarSizeVal} dark />)}
+            {/* Konuşmacılar — sayacın yanında, mobilde küçük */}
+            <div className="hidden md:flex items-center gap-2">
+              {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size={avatarSizeDesktop} dark />)}
+            </div>
+            <div className="flex md:hidden items-center gap-1.5">
+              {konusmacilar2.slice(0, 3).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size={avatarSizeVal} dark />)}
+              {konusmacilar2.length > 3 && <span className="text-xs text-white/60">+{konusmacilar2.length - 3}</span>}
             </div>
           </div>
         </div>
@@ -336,7 +341,7 @@ const TakvimView = () => {
                 {konusmacilar2.length>0 && <div className="flex items-center gap-1 mt-2 text-sm text-gray-600"><User className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /><span>{konusmacilar2.join(', ')}</span></div>}
                 {online && !gecmis && (() => { const m=(egitim.yer||'').match(/(\d[\d\s]{6,})/); const id=m?m[1].replace(/\s/g,''):null; return id ? <a href={`https://zoom.us/j/${id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow hover:shadow-md transition-all"><Wifi className="w-3.5 h-3.5" />Toplantıya Katıl</a> : null; })()}
               </div>
-              <div className="flex items-start gap-1.5 flex-shrink-0 flex-wrap justify-end">
+              <div className="hidden md:flex items-start gap-1.5 flex-shrink-0 flex-wrap justify-end">
                 {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={(a,k)=>setKonusmaciModal({ad:a,kayit:k})} />)}
               </div>
             </div>
