@@ -193,7 +193,7 @@ const TakvimView = () => {
   const [filtre, setFiltre] = useState('tumu');
   const [sehirFiltre, setSehirFiltre] = useState(null);
   const [arama, setArama] = useState('');
-  const [gorunum, setGorunum] = useState('liste'); // liste | kart | kompakt
+  const [gorunum, setGorunum] = useState(() => window.innerWidth < 768 ? 'kart' : 'liste'); // mobilde kart, masaüstünde liste
   const [konusmaciModal, setKonusmaciModal] = useState(null);
   const [posterModal, setPosterModal] = useState(null);
 
