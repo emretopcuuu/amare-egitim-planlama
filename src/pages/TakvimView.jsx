@@ -196,13 +196,13 @@ const TakvimView = () => {
 
   const haftaAralik = (egitimler) => { const t=egitimler.map(e=>parseTarih(e.tarih)).filter(Boolean).sort((a,b)=>a-b); if(!t.length)return''; const f=d=>d.toLocaleDateString('tr-TR',{day:'numeric',month:'long'}); return t.length===1?f(t[0]):`${f(t[0])} – ${f(t[t.length-1])}`; };
 
-  // En yakın gelecek eğitim (hero için)
-  const enYakinEgitim = useMemo(() => {
-    const simdi = new Date();
+  // En yakın 3 gelecek eğitim (hero için)
+  const enYakinEgitimler = useMemo(() => {
     return takvim
       .map(e => ({ ...e, cd: getCountdown(e) }))
       .filter(e => e.cd && (e.cd.durum === 'gelecek' || e.cd.durum === 'yakin' || e.cd.durum === 'canli'))
-      .sort((a, b) => (a.cd.ms || 0) - (b.cd.ms || 0))[0] || null;
+      .sort((a, b) => (a.cd.ms || 0) - (b.cd.ms || 0))
+      .slice(0, 3);
   }, [takvim]);
 
   // PDF
@@ -338,13 +338,49 @@ const TakvimView = () => {
           </div>
         </div>
 
-        {/* Hero: Bir Sonraki Eğitim */}
-        {enYakinEgitim && (
+        {/* Hero: En Yakın 3 Eğitim */}
+        {enYakinEgitimler.length > 0 && (
           <div className="px-4 py-4">
-            <div className="container mx-auto max-w-6xl">
-              <HeroBolum egitim={enYakinEgitim} konusmacilar={konusmacilar||[]}
+            <div className="container mx-auto max-w-6xl space-y-3">
+              {/* İlk eğitim: büyük hero */}
+              <HeroBolum egitim={enYakinEgitimler[0]} konusmacilar={konusmacilar||[]}
                 onKonusmaci={(a,k)=>setKonusmaciModal({ad:a,kayit:k})}
                 onPoster={(p)=>setPosterModal(p)} />
+
+              {/* 2. ve 3. eğitim: küçük kartlar */}
+              {enYakinEgitimler.length > 1 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {enYakinEgitimler.slice(1).map(egitim => {
+                    const cd = getCountdown(egitim);
+                    const konusmacilar2 = splitEgitmen(egitim.egitmen);
+                    const tarih = parseTarih(egitim.tarih);
+                    const online = isOnline(egitim);
+                    return (
+                      <div key={egitim.id} className="bg-white/10 backdrop-blur border border-white/15 rounded-xl p-4 flex gap-4 items-center hover:bg-white/15 transition-all">
+                        {/* Poster mini */}
+                        {egitim.gorselUrl && (
+                          <button onClick={()=>setPosterModal({url:egitim.gorselUrl,baslik:egitim.egitim})} className="flex-shrink-0 hover:scale-105 transition-transform">
+                            <img src={egitim.gorselUrl} alt="" className="w-16 h-16 rounded-lg object-cover border border-white/20" />
+                          </button>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-white text-sm leading-tight truncate">{egitim.egitim}</h3>
+                          <div className="text-xs text-purple-200 mt-1 flex items-center gap-2">
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{tarih?.toLocaleDateString('tr-TR',{day:'numeric',month:'short'})} {egitim.saat}</span>
+                            {online && <Wifi className="w-3 h-3" />}
+                          </div>
+                          <div className="flex items-center gap-1.5 mt-2">
+                            {konusmacilar2.slice(0,2).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={(a,k)=>setKonusmaciModal({ad:a,kayit:k})} size="sm" />)}
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          {cd && <CountdownBadge egitim={egitim} />}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}
