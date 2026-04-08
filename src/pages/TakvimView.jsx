@@ -188,7 +188,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
 const TakvimView = () => {
   const navigate = useNavigate();
   const { takvim, takvimYayinlandi, loading, konusmacilar } = useData();
-  const contentRef = useRef(null);
+  const contentRef = useRef(null); // sayfa scroll ref
   const [pdfYukleniyor, setPdfYukleniyor] = useState(false);
   const [filtre, setFiltre] = useState('tumu');
   const [sehirFiltre, setSehirFiltre] = useState(null);
@@ -233,19 +233,14 @@ const TakvimView = () => {
       .slice(0, 3);
   }, [takvim]);
 
-  // PDF
+  const pdfRef = useRef(null);
+
+  // PDF — gizli bileşenden oluştur (responsive sorunları önler)
   const exportPDF = async () => {
-    if (!contentRef.current) return;
+    if (!pdfRef.current) return;
     setPdfYukleniyor(true);
     try {
-      const noEx = contentRef.current.querySelectorAll('[data-no-pdf]');
-      noEx.forEach(el => el.style.display = 'none');
-      // PDF için sabit genişlik ayarla (A4 oranına uygun)
-      const origWidth = contentRef.current.style.width;
-      contentRef.current.style.width = '1100px';
-      const canvas = await html2canvas(contentRef.current, { scale: 2, useCORS: true, logging: false, backgroundColor: '#1e1b4b', windowWidth: 1100 });
-      contentRef.current.style.width = origWidth;
-      noEx.forEach(el => el.style.display = '');
+      const canvas = await html2canvas(pdfRef.current, { scale: 2, useCORS: true, logging: false, backgroundColor: '#1e1b4b' });
       const pdf = new jsPDF('portrait','mm','a4');
       const pw=210,ph=297,iw=pw,ih=(canvas.height*pw)/canvas.width;
       let y=0,rem=ih;
@@ -493,6 +488,75 @@ const TakvimView = () => {
         </div>
 
         <div className="border-t border-white/10 py-6 text-center text-white/40 text-sm">© 2026 Powered by OneTeam</div>
+      </div>
+
+      {/* Gizli PDF render bileşeni — inline style, responsive sorunlarından bağımsız */}
+      <div style={{ position: 'fixed', left: '-9999px', top: 0, zIndex: -1 }}>
+        <div ref={pdfRef} style={{ width: 800, background: '#1e1b4b', fontFamily: "'Segoe UI', Arial, sans-serif", color: '#fff', padding: '32px 28px' }}>
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 28, fontWeight: 800 }}>Eğitim Takvimi</div>
+            <div style={{ fontSize: 13, color: '#c4b5fd', marginTop: 4 }}>{takvim.length} eğitim • {new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</div>
+          </div>
+          {haftaKeys.map((haftaKey, idx) => {
+            const haftaEgitimleri = haftalikTakvim[haftaKey];
+            if (!haftaEgitimleri?.length) return null;
+            const aralik = haftaAralik(haftaEgitimleri);
+            return (
+              <div key={haftaKey} style={{ marginBottom: 20 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                  <div style={{ background: '#fff', color: '#6B21A8', borderRadius: 10, padding: '4px 14px', fontWeight: 800, fontSize: 15 }}>Hafta {idx + 1}</div>
+                  <div style={{ color: '#c4b5fd', fontSize: 12 }}>{aralik}</div>
+                  <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.15)' }} />
+                  <div style={{ color: '#a78bfa', fontSize: 12 }}>{haftaEgitimleri.length} eğitim</div>
+                </div>
+                {haftaEgitimleri.map((e, i) => {
+                  const t = parseTarih(e.tarih);
+                  const gunNo = t ? t.getDate() : '';
+                  const ayKisa = t ? t.toLocaleDateString('tr-TR', { month: 'short' }) : '';
+                  const ol = isOnline(e);
+                  const cd = getCountdown(e);
+                  const gecmis = cd?.durum === 'gecmis';
+                  const k2 = splitEgitmen(e.egitmen);
+                  return (
+                    <div key={e.id || i} style={{
+                      display: 'flex', background: gecmis ? 'rgba(255,255,255,0.03)' : '#fff',
+                      borderRadius: 10, marginBottom: 6, overflow: 'hidden',
+                      opacity: gecmis ? 0.4 : 1, border: '1px solid rgba(255,255,255,0.1)',
+                    }}>
+                      <div style={{
+                        background: ol ? 'linear-gradient(180deg,#2563EB,#1E40AF)' : 'linear-gradient(180deg,#7C3AED,#4C1D95)',
+                        color: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                        padding: '8px 14px', minWidth: 60,
+                      }}>
+                        <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1 }}>{gunNo}</div>
+                        <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8, marginTop: 2 }}>{ayKisa}</div>
+                        <div style={{ fontSize: 8, opacity: 0.6, marginTop: 1 }}>{e.gun}</div>
+                      </div>
+                      <div style={{ flex: 1, padding: '8px 14px', color: gecmis ? '#9CA3AF' : '#111827' }}>
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 3 }}>{e.egitim}</div>
+                        <div style={{ fontSize: 11, color: '#6B7280' }}>
+                          {e.saat}{e.bitisSaati ? `–${e.bitisSaati}` : ''} {e.sure && `(${e.sure})`}
+                          {' • '}{ol ? 'Zoom' : e.yer}
+                        </div>
+                        {k2.length > 0 && <div style={{ fontSize: 11, color: '#7C3AED', marginTop: 2 }}>{k2.join(', ')}</div>}
+                        {e.kategori && <span style={{ display: 'inline-block', marginTop: 3, background: '#F3E8FF', color: '#7C3AED', padding: '1px 8px', borderRadius: 99, fontSize: 9, fontWeight: 600 }}>{e.kategori}</span>}
+                        {cd && !gecmis && <span style={{ display: 'inline-block', marginLeft: 6, marginTop: 3, background: '#EDE9FE', color: '#6D28D9', padding: '1px 8px', borderRadius: 99, fontSize: 9, fontWeight: 600 }}>{cd.text}</span>}
+                      </div>
+                      {e.gorselUrl && (
+                        <div style={{ width: 50, flexShrink: 0, borderLeft: '1px solid #E5E7EB' }}>
+                          <img src={e.gorselUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 12, marginTop: 16, textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 10 }}>
+            © 2026 Powered by OneTeam
+          </div>
+        </div>
       </div>
 
       {konusmaciModal && <KonusmaciModal ad={konusmaciModal.ad} kayit={konusmaciModal.kayit} onClose={()=>setKonusmaciModal(null)} />}
