@@ -197,11 +197,14 @@ const EgitmenBasvuru = () => {
               required
             >
               <option value="">Seçin...</option>
+              <option value="Leader">Leader</option>
+              <option value="Senior Leader">Senior Leader</option>
+              <option value="Executive Leader">Executive Leader</option>
               <option value="Diamond">Diamond</option>
               <option value="1 Star Diamond">1 Star Diamond</option>
               <option value="2 Star Diamond">2 Star Diamond</option>
               <option value="Presidential Diamond">Presidential Diamond</option>
-              <option value="Above Presidential">Above Presidential</option>
+              <option value="Kurumsal">Kurumsal</option>
             </select>
           </div>
 
