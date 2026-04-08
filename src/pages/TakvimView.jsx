@@ -36,61 +36,98 @@ const TakvimPdfIcerik = React.forwardRef(({ takvim, haftaNumaralari, haftalikTak
   const bugun = new Date();
   const ay = bugun.toLocaleString('tr-TR', { month: 'long', year: 'numeric' });
 
+  const haftaAralikPdf = (egitimler) => {
+    const tarihler = egitimler.map(e => parseTarih(e.tarih)).filter(Boolean).sort((a,b)=>a-b);
+    if (!tarihler.length) return '';
+    const fmt = d => d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+    return tarihler.length === 1 ? fmt(tarihler[0]) : `${fmt(tarihler[0])} – ${fmt(tarihler[tarihler.length-1])}`;
+  };
+
+  const KRENK = {
+    'Liderlik':'#7C3AED','Satış':'#059669','Motivasyon':'#D97706','Sağlık':'#DC2626',
+    'Finansal Özgürlük':'#2563EB','Kişisel Gelişim':'#8B5CF6','Vizyon Günü':'#DB2777',
+    'Panel':'#0891B2','Diğer':'#6B7280',
+  };
+
   return (
     <div ref={ref} style={{
-      width: '794px', background: '#fff', fontFamily: "'Segoe UI', Arial, sans-serif",
+      width: '794px', background: '#f3f0ff', fontFamily: "'Segoe UI', Arial, sans-serif",
       fontSize: '12px', color: '#1f2937',
     }}>
+      {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #6B21A8 0%, #4F46E5 100%)',
-        padding: '32px 40px', color: '#fff',
+        background: 'linear-gradient(135deg, #581C87 0%, #3730A3 100%)',
+        padding: '32px 40px 28px', color: '#fff',
       }}>
-        <div style={{ fontSize: '11px', opacity: 0.8, marginBottom: '6px', letterSpacing: '2px', textTransform: 'uppercase' }}>
-          Amare Global | OneTeam10x
-        </div>
-        <div style={{ fontSize: '26px', fontWeight: '800', letterSpacing: '1px' }}>EĞİTİM TAKVİMİ</div>
-        <div style={{ fontSize: '13px', opacity: 0.85, marginTop: '6px' }}>{ay} • Toplam {takvim.length} Eğitim</div>
+        <div style={{ fontSize: '10px', opacity: 0.7, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 6 }}>OneTeam10x</div>
+        <div style={{ fontSize: '28px', fontWeight: 800 }}>Eğitim Takvimi</div>
+        <div style={{ fontSize: '13px', opacity: 0.8, marginTop: 6 }}>{ay} • {takvim.length} Eğitim</div>
       </div>
-      <div style={{ padding: '24px 32px' }}>
+
+      <div style={{ padding: '20px 32px' }}>
         {haftaNumaralari.map(haftaNo => {
           const egitimler = haftalikTakvim[haftaNo];
-          if (!egitimler || egitimler.length === 0) return null;
-          const tarihler = egitimler.map(e => e.tarih).filter(Boolean);
-          const aralik = tarihler.length > 1 ? `${tarihler[0]} – ${tarihler[tarihler.length - 1]}` : tarihler[0] || '';
+          if (!egitimler || !egitimler.length) return null;
+          const aralik = haftaAralikPdf(egitimler);
+
           return (
-            <div key={haftaNo} style={{ marginBottom: '28px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px', paddingBottom: '8px', borderBottom: '2px solid #6B21A8' }}>
-                <div style={{ background: '#6B21A8', color: '#fff', borderRadius: '8px', padding: '4px 14px', fontWeight: '700', fontSize: '13px' }}>HAFTA {haftaNo}</div>
-                <div style={{ color: '#6B7280', fontSize: '12px' }}>{aralik}</div>
+            <div key={haftaNo} style={{ marginBottom: 24 }}>
+              {/* Hafta başlığı */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                <div style={{ background: '#6D28D9', color: '#fff', borderRadius: 8, padding: '4px 14px', fontWeight: 800, fontSize: 13 }}>Hafta {haftaNo}</div>
+                <div style={{ color: '#7C3AED', fontSize: 12, fontWeight: 500 }}>{aralik}</div>
+                <div style={{ flex: 1, height: 1, background: '#DDD6FE' }} />
+                <div style={{ color: '#9CA3AF', fontSize: 11 }}>{egitimler.length} eğitim</div>
               </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', tableLayout: 'fixed' }}>
-                <colgroup><col style={{ width: '12%' }} /><col style={{ width: '11%' }} /><col style={{ width: '25%' }} /><col style={{ width: '22%' }} /><col style={{ width: '12%' }} /><col style={{ width: '8%' }} /><col style={{ width: '10%' }} /></colgroup>
-                <thead>
-                  <tr style={{ background: '#F5F3FF' }}>
-                    {['Gün / Tarih', 'Saat', 'Eğitim', 'Konuşmacı', 'Kategori', 'Süre', 'Platform'].map(h => (
-                      <th key={h} style={{ padding: '6px', textAlign: 'left', fontWeight: 700, color: '#5B21B6', borderBottom: '2px solid #DDD6FE', fontSize: '10px', textTransform: 'uppercase' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {egitimler.map((e, i) => (
-                    <tr key={e.id || i} style={{ background: i % 2 === 0 ? '#fff' : '#FAFAFA' }}>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #E5E7EB', verticalAlign: 'top' }}><div style={{ fontWeight: 600, fontSize: '10.5px' }}>{e.gun}</div><div style={{ color: '#9CA3AF', fontSize: '9.5px' }}>{e.tarih}</div></td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #E5E7EB', verticalAlign: 'top', fontSize: '10.5px' }}>{e.saat}{e.bitisSaati ? `–${e.bitisSaati}` : ''}</td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #E5E7EB', fontWeight: 600, verticalAlign: 'top', wordBreak: 'break-word', fontSize: '10.5px' }}>{e.egitim}</td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #E5E7EB', verticalAlign: 'top', wordBreak: 'break-word', fontSize: '10px', color: '#4B5563' }}>{e.egitmen || '—'}</td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #E5E7EB', verticalAlign: 'top', fontSize: '9px' }}>{e.kategori || '—'}</td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #E5E7EB', verticalAlign: 'top', fontSize: '10px', color: '#6B7280' }}>{e.sure || '—'}</td>
-                      <td style={{ padding: '6px', borderBottom: '1px solid #E5E7EB', verticalAlign: 'top', fontSize: '9px', color: '#6B7280', wordBreak: 'break-word' }}>{(e.yer || 'Zoom').replace('ZOOM SALON ID: ', 'Zoom ')}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+
+              {/* Kart listesi */}
+              {egitimler.map((e, i) => {
+                const t = parseTarih(e.tarih);
+                const gunNo = t ? t.getDate() : '';
+                const ayKisa = t ? t.toLocaleDateString('tr-TR', { month: 'short' }) : '';
+                const kRenk = KRENK[e.kategori] || '#6B7280';
+
+                return (
+                  <div key={e.id||i} style={{
+                    display: 'flex', background: '#fff', borderRadius: 10, marginBottom: 6,
+                    border: '1px solid #E9D5FF', overflow: 'hidden',
+                  }}>
+                    {/* Tarih badge */}
+                    <div style={{
+                      background: 'linear-gradient(180deg, #6D28D9, #4C1D95)', color: '#fff',
+                      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                      padding: '8px 12px', minWidth: 56,
+                    }}>
+                      <div style={{ fontSize: 20, fontWeight: 800, lineHeight: 1 }}>{gunNo}</div>
+                      <div style={{ fontSize: 9, textTransform: 'uppercase', opacity: 0.8, marginTop: 2 }}>{ayKisa}</div>
+                      <div style={{ fontSize: 8, opacity: 0.6, marginTop: 1 }}>{e.gun}</div>
+                    </div>
+
+                    {/* İçerik */}
+                    <div style={{ flex: 1, padding: '8px 12px', minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: 12, color: '#111827', marginBottom: 3 }}>{e.egitim}</div>
+                      <div style={{ display: 'flex', gap: 12, fontSize: 10, color: '#6B7280', flexWrap: 'wrap' }}>
+                        <span>🕐 {e.saat}{e.bitisSaati ? `–${e.bitisSaati}` : ''} {e.sure && `(${e.sure})`}</span>
+                        {e.yer && <span>📍 {(e.yer||'').replace('ZOOM SALON ID: ','Zoom ')}</span>}
+                      </div>
+                      {e.egitmen && <div style={{ fontSize: 10, color: '#4B5563', marginTop: 3 }}>🎤 {e.egitmen}</div>}
+                      {e.kategori && (
+                        <span style={{
+                          display: 'inline-block', marginTop: 3, background: kRenk+'18', color: kRenk,
+                          padding: '1px 8px', borderRadius: 99, fontSize: 8.5, fontWeight: 600,
+                        }}>{e.kategori}</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           );
         })}
-        <div style={{ marginTop: '24px', paddingTop: '16px', borderTop: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', color: '#9CA3AF', fontSize: '10px' }}>
-          <span>Amare Global | OneTeam10x Eğitim Programı</span>
+
+        {/* Footer */}
+        <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid #DDD6FE', display: 'flex', justifyContent: 'space-between', color: '#9CA3AF', fontSize: 10 }}>
+          <span>OneTeam10x Eğitim Programı</span>
           <span>{bugun.toLocaleDateString('tr-TR', { day: '2-digit', month: 'long', year: 'numeric' })} tarihinde oluşturuldu</span>
         </div>
       </div>
