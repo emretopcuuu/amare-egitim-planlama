@@ -252,10 +252,12 @@ const TakvimView = () => {
     const konusmacilar2 = splitEgitmen(egitim.egitmen);
     const katRenk = KATEGORI_RENK[egitim.kategori] || KATEGORI_RENK['Diğer'];
     const online = isOnline(egitim);
+    const cdKart = getCountdown(egitim);
+    const gecmis = cdKart?.durum === 'gecmis';
 
     if (gorunum === 'kompakt') {
       return (
-        <tr key={egitim.id} className="hover:bg-purple-50 transition-colors">
+        <tr key={egitim.id} className={`hover:bg-purple-50 transition-colors ${gecmis ? 'opacity-40' : ''}`}>
           <td className="px-3 py-2 text-sm font-semibold text-gray-700 whitespace-nowrap">{egitim.gun} {egitim.tarih}</td>
           <td className="px-3 py-2 text-sm text-gray-600 whitespace-nowrap">{egitim.saat}{egitim.bitisSaati?`–${egitim.bitisSaati}`:''}</td>
           <td className="px-3 py-2 text-sm font-bold text-gray-800">{egitim.egitim}</td>
@@ -268,7 +270,7 @@ const TakvimView = () => {
 
     if (gorunum === 'kart') {
       return (
-        <div key={egitim.id} className="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col">
+        <div key={egitim.id} className={`bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'opacity-40' : ''}`}>
           {egitim.gorselUrl && (
             <button onClick={()=>setPosterModal({url:egitim.gorselUrl,baslik:egitim.egitim})} className="w-full h-40 overflow-hidden">
               <img src={egitim.gorselUrl} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform" />
@@ -295,7 +297,7 @@ const TakvimView = () => {
 
     // Liste (default)
     return (
-      <div key={egitim.id} className="bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden">
+      <div key={egitim.id} className={`bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'opacity-40' : ''}`}>
         <div className="flex">
           <div className={`flex flex-col items-center justify-center px-4 py-4 min-w-[72px] ${online?'bg-gradient-to-b from-blue-600 to-blue-800':'bg-gradient-to-b from-purple-700 to-purple-900'} text-white`}>
             <div className="text-2xl font-extrabold leading-none">{gunNo}</div>
