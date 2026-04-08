@@ -138,8 +138,8 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster }) => {
           )}
 
           {/* Konuşmacılar */}
-          <div className="flex items-center gap-2 mt-4">
-            {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size="md" />)}
+          <div className="flex items-center gap-3 mt-4">
+            {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size="lg" />)}
           </div>
         </div>
 
