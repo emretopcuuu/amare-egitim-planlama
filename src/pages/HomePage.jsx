@@ -79,7 +79,7 @@ const HomePage = () => {
               </div>
             </div>
             <h3 className="text-2xl font-bold text-gray-800 mb-3 text-center">
-              Admin Paneli
+              Eğitim Komisyonu Admin Paneli
             </h3>
             <p className="text-gray-600 text-center mb-6">
               Başvuruları yönetin ve takvimi düzenleyin
