@@ -48,7 +48,7 @@ const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md' }) => {
   const safeId = makeSafeId(ad);
   const k = konusmacilar.find(k => k.id === safeId);
   const foto = k?.fotoURL;
-  const sz = size === 'sm' ? 'w-10 h-10' : size === 'xl' ? 'w-24 h-24' : size === 'lg' ? 'w-20 h-20' : 'w-14 h-14';
+  const sz = size === 'sm' ? 'w-10 h-10' : size === 'xxl' ? 'w-32 h-32' : size === 'xl' ? 'w-24 h-24' : size === 'lg' ? 'w-20 h-20' : 'w-14 h-14';
   return (
     <button onClick={() => onClick?.(ad, k)} className="flex flex-col items-center gap-1 flex-shrink-0 group cursor-pointer">
       {foto ? (
@@ -112,11 +112,11 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
   ];
   const labels = ['Sıradaki Eğitim', '2. Sıradaki Eğitim', '3. Sıradaki Eğitim'];
   const isFirst = sira === 1;
-  const titleSize = isFirst ? 'text-4xl md:text-5xl' : 'text-lg md:text-xl';
-  const padding = isFirst ? 'p-10 md:p-14' : 'p-4 md:p-5';
-  const posterSize = isFirst ? 'w-64 md:w-80' : 'w-32 md:w-40';
-  const countdownSize = isFirst ? 'text-4xl min-w-[76px] px-5 py-4' : 'text-lg min-w-[40px] px-2 py-1';
-  const avatarSizeVal = isFirst ? 'xl' : 'lg';
+  const titleSize = isFirst ? 'text-5xl md:text-6xl' : 'text-lg md:text-xl';
+  const padding = isFirst ? 'p-12 md:p-16' : 'p-4 md:p-5';
+  const posterSize = isFirst ? 'w-72 md:w-96' : 'w-32 md:w-40';
+  const countdownSize = isFirst ? 'text-5xl min-w-[90px] px-6 py-5' : 'text-lg min-w-[40px] px-2 py-1';
+  const avatarSizeVal = isFirst ? 'xxl' : 'lg';
 
   return (
     <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${gradients[sira-1]||gradients[0]} ${padding} shadow-2xl border border-white/10`}>
