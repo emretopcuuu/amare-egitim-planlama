@@ -85,8 +85,8 @@ const EgitimFormAlanlari = ({ form, setForm }) => (
       <input type="text" value={form.yer} onChange={e => setForm(f => ({ ...f, yer: e.target.value }))} className={inputCls} />
     </FormField>
     <div className="grid grid-cols-2 gap-4">
-      <FormField label="Kategori">
-        <select value={form.kategori} onChange={e => setForm(f => ({ ...f, kategori: e.target.value }))} className={inputCls}>
+      <FormField label="Kategori" required>
+        <select value={form.kategori} onChange={e => setForm(f => ({ ...f, kategori: e.target.value }))} className={inputCls} required>
           <option value="">— Seçin —</option>
           {KATEGORILER.map(k => <option key={k}>{k}</option>)}
         </select>
@@ -419,6 +419,7 @@ const AdminPanel = () => {
 
   const handleEkleKaydet = async () => {
     if (!ekleForm.egitim || !ekleForm.tarih || !ekleForm.saat) { alert('Eğitim adı, tarih ve saat zorunludur.'); return; }
+    if (!ekleForm.kategori) { alert('Lütfen bir kategori seçin.'); return; }
     setEkleKaydediliyor(true);
     const result = await manuelEgitimEkle({
       ...ekleForm, sure: hesaplaSure(ekleForm), hafta: Number(ekleForm.hafta),
