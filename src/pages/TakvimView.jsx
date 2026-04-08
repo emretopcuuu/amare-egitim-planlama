@@ -349,8 +349,8 @@ const TakvimView = () => {
                             {/* Sağ kenar: Afiş thumbnail */}
                             {egitim.gorselUrl && (
                               <button onClick={() => setPosterModal({ url: egitim.gorselUrl, baslik: egitim.egitim })}
-                                className="hidden sm:block w-24 flex-shrink-0 border-l border-gray-100 hover:opacity-80 transition cursor-pointer">
-                                <img src={egitim.gorselUrl} alt="Afiş" className="w-full h-full object-cover" />
+                                className="hidden sm:flex w-14 flex-shrink-0 border-l border-gray-100 hover:opacity-80 transition cursor-pointer items-center justify-center p-1">
+                                <img src={egitim.gorselUrl} alt="Afiş" className="w-full rounded shadow-sm object-cover" />
                               </button>
                             )}
                           </div>
