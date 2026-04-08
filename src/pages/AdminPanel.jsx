@@ -597,7 +597,10 @@ const AdminPanel = () => {
                       {egitim.kategori && (
                         <span className="inline-block mb-1 bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full text-xs">{egitim.kategori}</span>
                       )}
-                      <div className="font-semibold text-gray-800 line-clamp-2">{egitim.egitim}</div>
+                      <div className="font-semibold text-gray-800 line-clamp-2">
+                        {egitim.gorselUrl && <ImageIcon className="w-3.5 h-3.5 text-green-500 inline mr-1" />}
+                        {egitim.egitim}
+                      </div>
                       {egitim.saat && <div className="text-gray-500 mt-1">🕐 {egitim.saat}{egitim.bitisSaati ? `-${egitim.bitisSaati}` : ''}</div>}
                       {egitim.egitmen && <div className="text-amare-purple truncate mt-0.5">🎤 {egitim.egitmen}</div>}
                       {egitim.aciklama && <div className="text-gray-400 mt-1 line-clamp-1">{egitim.aciklama}</div>}
@@ -670,7 +673,10 @@ const AdminPanel = () => {
         )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <div className={`font-bold text-gray-800 ${egitim.tamamlandi ? 'line-through text-gray-400' : ''}`}>{egitim.egitim}</div>
+            <div className={`font-bold text-gray-800 ${egitim.tamamlandi ? 'line-through text-gray-400' : ''}`}>
+              {egitim.gorselUrl && <ImageIcon className="w-4 h-4 text-green-500 inline mr-1.5" title="Poster oluşturulmuş" />}
+              {egitim.egitim}
+            </div>
             {egitim.tamamlandi && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold flex-shrink-0">✓ Tamamlandı</span>}
             {egitim.kategori && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full flex-shrink-0">{egitim.kategori}</span>}
           </div>

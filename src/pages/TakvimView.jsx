@@ -92,6 +92,7 @@ const TakvimView = () => {
   const [filtre, setFiltre] = useState('tumu'); // tumu | online | offline
   const [sehirFiltre, setSehirFiltre] = useState(null);
   const [konusmaciModal, setKonusmaciModal] = useState(null); // { ad, kayit }
+  const [posterModal, setPosterModal] = useState(null); // { url, baslik }
 
   // Hafta gruplandırması (Pazartesi-Pazar)
   const getHaftaKey = (tarihStr) => {
@@ -347,9 +348,10 @@ const TakvimView = () => {
 
                             {/* Sağ kenar: Afiş thumbnail */}
                             {egitim.gorselUrl && (
-                              <div className="hidden sm:block w-24 flex-shrink-0 border-l border-gray-100">
+                              <button onClick={() => setPosterModal({ url: egitim.gorselUrl, baslik: egitim.egitim })}
+                                className="hidden sm:block w-24 flex-shrink-0 border-l border-gray-100 hover:opacity-80 transition cursor-pointer">
                                 <img src={egitim.gorselUrl} alt="Afiş" className="w-full h-full object-cover" />
-                              </div>
+                              </button>
                             )}
                           </div>
                         </div>
@@ -371,6 +373,22 @@ const TakvimView = () => {
       {/* Konuşmacı Detay Modal */}
       {konusmaciModal && (
         <KonusmaciModal ad={konusmaciModal.ad} kayit={konusmaciModal.kayit} onClose={() => setKonusmaciModal(null)} />
+      )}
+
+      {/* Poster Modal */}
+      {posterModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setPosterModal(null)}>
+          <div className="relative max-w-lg w-full" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setPosterModal(null)} className="absolute -top-10 right-0 text-white/70 hover:text-white"><X className="w-6 h-6" /></button>
+            <img src={posterModal.url} alt={posterModal.baslik} className="w-full rounded-xl shadow-2xl" />
+            <div className="mt-3 flex justify-center">
+              <a href={posterModal.url} download={`${(posterModal.baslik||'poster').replace(/[^a-z0-9]/gi,'_')}.png`}
+                className="flex items-center gap-2 bg-white text-purple-800 px-5 py-2.5 rounded-xl font-semibold hover:bg-purple-50 transition shadow">
+                <Download className="w-4 h-4" />Posteri İndir
+              </a>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
