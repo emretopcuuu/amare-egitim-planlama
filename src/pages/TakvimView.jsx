@@ -48,7 +48,7 @@ const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md' }) => {
   const safeId = makeSafeId(ad);
   const k = konusmacilar.find(k => k.id === safeId);
   const foto = k?.fotoURL;
-  const sz = size === 'sm' ? 'w-10 h-10' : size === 'lg' ? 'w-20 h-20' : 'w-14 h-14';
+  const sz = size === 'sm' ? 'w-10 h-10' : size === 'xl' ? 'w-24 h-24' : size === 'lg' ? 'w-20 h-20' : 'w-14 h-14';
   return (
     <button onClick={() => onClick?.(ad, k)} className="flex flex-col items-center gap-1 flex-shrink-0 group cursor-pointer">
       {foto ? (
@@ -112,10 +112,11 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
   ];
   const labels = ['Sıradaki Eğitim', '2. Sıradaki Eğitim', '3. Sıradaki Eğitim'];
   const isFirst = sira === 1;
-  const titleSize = isFirst ? 'text-xl md:text-2xl' : 'text-lg md:text-xl';
-  const padding = isFirst ? 'p-5 md:p-6' : 'p-4 md:p-5';
-  const posterSize = isFirst ? 'w-40 md:w-48' : 'w-32 md:w-40';
-  const countdownSize = isFirst ? 'text-xl min-w-[46px] px-2.5 py-1.5' : 'text-lg min-w-[40px] px-2 py-1';
+  const titleSize = isFirst ? 'text-3xl md:text-4xl' : 'text-lg md:text-xl';
+  const padding = isFirst ? 'p-8 md:p-10' : 'p-4 md:p-5';
+  const posterSize = isFirst ? 'w-56 md:w-72' : 'w-32 md:w-40';
+  const countdownSize = isFirst ? 'text-3xl min-w-[64px] px-4 py-3' : 'text-lg min-w-[40px] px-2 py-1';
+  const avatarSizeVal = isFirst ? 'xl' : 'lg';
 
   return (
     <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${gradients[sira-1]||gradients[0]} ${padding} shadow-2xl border border-white/10`}>
@@ -125,7 +126,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
       <div className="relative flex flex-col md:flex-row gap-5 items-center">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
-            <span className={`${isFirst?'text-xs':'text-[10px]'} font-bold uppercase tracking-wider text-purple-300`}>{labels[sira-1]}</span>
+            <span className={`${isFirst?'text-sm':'text-[10px]'} font-bold uppercase tracking-wider text-purple-300`}>{labels[sira-1]}</span>
             {cd?.durum === 'canli' && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-green-500 text-white animate-pulse">CANLI</span>}
           </div>
           <h2 className={`${titleSize} font-extrabold text-white leading-tight`}>{egitim.egitim}</h2>
@@ -148,7 +149,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
             )}
             {/* Konuşmacılar — sayacın yanında */}
             <div className="flex items-center gap-2">
-              {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size="lg" />)}
+              {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size={avatarSizeVal} />)}
             </div>
           </div>
         </div>
