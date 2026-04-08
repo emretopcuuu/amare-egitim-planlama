@@ -112,10 +112,10 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
   ];
   const labels = ['Sıradaki Eğitim', '2. Sıradaki Eğitim', '3. Sıradaki Eğitim'];
   const isFirst = sira === 1;
-  const titleSize = isFirst ? 'text-3xl md:text-4xl' : 'text-lg md:text-xl';
-  const padding = isFirst ? 'p-8 md:p-10' : 'p-4 md:p-5';
-  const posterSize = isFirst ? 'w-56 md:w-72' : 'w-32 md:w-40';
-  const countdownSize = isFirst ? 'text-3xl min-w-[64px] px-4 py-3' : 'text-lg min-w-[40px] px-2 py-1';
+  const titleSize = isFirst ? 'text-4xl md:text-5xl' : 'text-lg md:text-xl';
+  const padding = isFirst ? 'p-10 md:p-14' : 'p-4 md:p-5';
+  const posterSize = isFirst ? 'w-64 md:w-80' : 'w-32 md:w-40';
+  const countdownSize = isFirst ? 'text-4xl min-w-[76px] px-5 py-4' : 'text-lg min-w-[40px] px-2 py-1';
   const avatarSizeVal = isFirst ? 'xl' : 'lg';
 
   return (
