@@ -423,6 +423,23 @@ const TakvimView = () => {
               const haftaEgitimleri = haftalikTakvim[haftaKey];
               if (!haftaEgitimleri?.length) return null;
               const aralik = haftaAralik(haftaEgitimleri);
+              const gelecekler = haftaEgitimleri.filter(e => getCountdown(e)?.durum !== 'gecmis');
+              const gecmisler = haftaEgitimleri.filter(e => getCountdown(e)?.durum === 'gecmis');
+
+              const renderGrup = (egitimler) => {
+                if (gorunum === 'kompakt') return (
+                  <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead><tr className="bg-purple-50 border-b border-purple-200">
+                        {['Tarih','Saat','Eğitim','Konuşmacı','Kategori','Durum'].map(h=><th key={h} className="px-3 py-2 text-xs font-bold text-purple-700 uppercase">{h}</th>)}
+                      </tr></thead>
+                      <tbody className="divide-y divide-gray-100">{egitimler.map(renderEgitimKart)}</tbody>
+                    </table>
+                  </div>
+                );
+                if (gorunum === 'kart') return <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{egitimler.map(renderEgitimKart)}</div>;
+                return <div className="space-y-3">{egitimler.map(renderEgitimKart)}</div>;
+              };
 
               return (
                 <div key={haftaKey}>
@@ -433,19 +450,20 @@ const TakvimView = () => {
                     <div className="text-purple-300 text-sm">{haftaEgitimleri.length} eğitim</div>
                   </div>
 
-                  {gorunum === 'kompakt' ? (
-                    <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
-                      <table className="w-full text-left">
-                        <thead><tr className="bg-purple-50 border-b border-purple-200">
-                          {['Tarih','Saat','Eğitim','Konuşmacı','Kategori','Durum'].map(h=><th key={h} className="px-3 py-2 text-xs font-bold text-purple-700 uppercase">{h}</th>)}
-                        </tr></thead>
-                        <tbody className="divide-y divide-gray-100">{haftaEgitimleri.map(renderEgitimKart)}</tbody>
-                      </table>
-                    </div>
-                  ) : gorunum === 'kart' ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{haftaEgitimleri.map(renderEgitimKart)}</div>
-                  ) : (
-                    <div className="space-y-3">{haftaEgitimleri.map(renderEgitimKart)}</div>
+                  {/* Gelecek eğitimler — normal göster */}
+                  {gelecekler.length > 0 && renderGrup(gelecekler)}
+
+                  {/* Geçmiş eğitimler — açılır kapanır */}
+                  {gecmisler.length > 0 && (
+                    <details className="mt-3 group">
+                      <summary className="cursor-pointer select-none flex items-center gap-2 text-white/50 hover:text-white/70 transition-colors py-2">
+                        <svg className="w-4 h-4 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                        <span className="text-sm font-semibold">Geçmiş Eğitimler ({gecmisler.length})</span>
+                      </summary>
+                      <div className="mt-2">
+                        {renderGrup(gecmisler)}
+                      </div>
+                    </details>
                   )}
                 </div>
               );
