@@ -75,8 +75,20 @@ TASARIM KURALLARI:
 - Tarih ve saat belirgin vurgulansın
 - ONE TEAM / Amare Global kurumsal kimliğine uygun olsun
 - Profesyonel ve çekici bir tasarım
-- LOGO KURALI: Asla kendi logonu uydurmayacaksın! Şablondaki mevcut logoları koru. Eğer şablonda logo yoksa, sadece "AMARE GLOBAL" ve "ONE TEAM" yazılarını metin olarak ekle. Sahte/uydurma logo, amblem veya sembol çizme.
+- LOGO KURALI: Sana verilen resmi logoları (Amare Global ve One Team) görsele entegre et. Asla kendi logonu uydurmayacaksın! Bu logoları şablona uygun konuma yerleştir. Sahte/uydurma logo, amblem veya sembol çizme.
 - Sosyal medya paylaşımına uygun kare veya dikey format${konumPrompt}${ekPrompt ? '\n\nEK İSTEKLER:\n' + ekPrompt : ''}`;
+
+  // Logoları yükle
+  let amareLogo = null;
+  let oneteamLogo = null;
+  try {
+    const koyu = await resmiBase64Yap('/logos/AmareBPLogo-Horizontal-White-TR.png');
+    amareLogo = koyu;
+  } catch {}
+  try {
+    const ot = await resmiBase64Yap('/logos/oneteam logo.JPG');
+    oneteamLogo = ot;
+  } catch {}
 
   // İstek gövdesi
   const parts = [
@@ -86,6 +98,16 @@ TASARIM KURALLARI:
 
   if (egitmenFoto) {
     parts.push({ inlineData: { mimeType: egitmenFoto.mimeType, data: egitmenFoto.base64 } });
+  }
+
+  // Logoları ekle
+  if (amareLogo) {
+    parts.push({ text: 'AMARE GLOBAL RESMİ LOGO (bunu kullan, sahte logo uydurmayacaksın):' });
+    parts.push({ inlineData: { mimeType: amareLogo.mimeType, data: amareLogo.base64 } });
+  }
+  if (oneteamLogo) {
+    parts.push({ text: 'ONE TEAM RESMİ LOGO (bunu kullan, sahte logo uydurmayacaksın):' });
+    parts.push({ inlineData: { mimeType: oneteamLogo.mimeType, data: oneteamLogo.base64 } });
   }
 
   const body = {
