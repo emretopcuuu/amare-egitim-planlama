@@ -24,9 +24,11 @@ const splitEgitmen = (e) => {
   if (!e) return [];
   return e.split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜa-zçğışöşü]*\.?\s*[A-ZÇĞİÖŞÜ]|Prof\.|Doç\.|Uzm\.|Dr\.|Dyt\.|Op\.)/).map(n=>n.trim()).filter(n=>n.length>1);
 };
-const isOnline = (yer) => (yer||'').toLocaleUpperCase('tr-TR').includes('ZOOM');
-const getSehir = (yer) => {
-  if (!yer || isOnline(yer)) return null;
+const isOnline = (e) => e.sehir === 'Online' || (e.yer||'').toLocaleUpperCase('tr-TR').includes('ZOOM');
+const getSehir = (e) => {
+  if (e.sehir && e.sehir !== 'Online') return e.sehir;
+  if (isOnline(e)) return null;
+  const yer = e.yer || '';
   const upper = yer.toLocaleUpperCase('tr-TR');
   for (const s of SEHIRLER) { if (upper.includes(s.toLocaleUpperCase('tr-TR'))) return s; }
   return 'Diğer';
@@ -103,17 +105,17 @@ const TakvimView = () => {
 
   // Filtrelenmiş eğitimler
   const filtrelenmis = takvim.filter(e => {
-    if (filtre === 'online') return isOnline(e.yer);
+    if (filtre === 'online') return isOnline(e);
     if (filtre === 'offline') {
-      if (isOnline(e.yer)) return false;
-      if (sehirFiltre) return getSehir(e.yer) === sehirFiltre;
+      if (isOnline(e)) return false;
+      if (sehirFiltre) return getSehir(e) === sehirFiltre;
       return true;
     }
     return true;
   });
 
   // Şehir listesi (offline eğitimlerden)
-  const sehirler = [...new Set(takvim.filter(e => !isOnline(e.yer)).map(e => getSehir(e.yer)).filter(Boolean))].sort((a,b) => a.localeCompare(b,'tr-TR'));
+  const sehirler = [...new Set(takvim.filter(e => !isOnline(e)).map(e => getSehir(e)).filter(Boolean))].sort((a,b) => a.localeCompare(b,'tr-TR'));
 
   // Haftalık grupla
   const haftalikTakvim = {};
@@ -280,7 +282,7 @@ const TakvimView = () => {
                       const ayAd = tarih ? tarih.toLocaleDateString('tr-TR', { month: 'short' }) : '';
                       const konusmacilar2 = splitEgitmen(egitim.egitmen);
                       const katRenk = KATEGORI_RENK[egitim.kategori] || KATEGORI_RENK['Diğer'];
-                      const online = isOnline(egitim.yer);
+                      const online = isOnline(egitim);
 
                       return (
                         <div key={egitim.id}
@@ -319,9 +321,9 @@ const TakvimView = () => {
                                         <Tag className="w-3 h-3" />{egitim.kategori}
                                       </span>
                                     )}
-                                    {!online && getSehir(egitim.yer) && getSehir(egitim.yer) !== 'Diğer' && (
+                                    {!online && getSehir(egitim) && getSehir(egitim) !== 'Diğer' && (
                                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200">
-                                        <MapPin className="w-3 h-3" />{getSehir(egitim.yer)}
+                                        <MapPin className="w-3 h-3" />{getSehir(egitim)}
                                       </span>
                                     )}
                                   </div>

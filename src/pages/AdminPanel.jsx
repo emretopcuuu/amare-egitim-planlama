@@ -34,10 +34,12 @@ const KATEGORILER = [
   'Kişisel Gelişim', 'Vizyon Günü', 'Panel', 'Diğer',
 ];
 
+const SEHIRLER_LISTESI = ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Kayseri', 'Antalya', 'Konya', 'Nevşehir', 'Eskişehir', 'Trabzon', 'Adana', 'Mersin', 'Gaziantep', 'Diyarbakır', 'Samsun', 'Denizli', 'Muğla', 'Çorlu', 'Tekirdağ'];
+
 const BOŞ_FORM = {
   egitim: '', gun: 'Pazartesi', tarih: '', saat: '',
   bitisSaati: '', sure: '', egitmen: '', yer: 'ZOOM SALON ID: 937 3761 2425',
-  hafta: 1, kategori: '', aciklama: '', katilimSayisi: '',
+  hafta: 1, kategori: '', aciklama: '', katilimSayisi: '', sehir: '',
 };
 
 const inputCls = 'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30';
@@ -85,6 +87,14 @@ const EgitimFormAlanlari = ({ form, setForm }) => (
       <input type="text" value={form.yer} onChange={e => setForm(f => ({ ...f, yer: e.target.value }))} className={inputCls} />
     </FormField>
     <div className="grid grid-cols-2 gap-4">
+      <FormField label="Şehir" required>
+        <select value={form.sehir} onChange={e => setForm(f => ({ ...f, sehir: e.target.value }))} className={inputCls} required>
+          <option value="">— Seçin —</option>
+          <option value="Online">Online (Zoom)</option>
+          {SEHIRLER_LISTESI.map(s => <option key={s}>{s}</option>)}
+          <option value="Diğer">Diğer</option>
+        </select>
+      </FormField>
       <FormField label="Kategori" required>
         <select value={form.kategori} onChange={e => setForm(f => ({ ...f, kategori: e.target.value }))} className={inputCls} required>
           <option value="">— Seçin —</option>
@@ -386,7 +396,7 @@ const AdminPanel = () => {
       saat: egitim.saat || '', bitisSaati: egitim.bitisSaati || '', sure: egitim.sure || '',
       egitmen: egitim.egitmen || '', yer: egitim.yer || '', hafta: egitim.hafta || 1,
       kategori: egitim.kategori || '', aciklama: egitim.aciklama || '',
-      katilimSayisi: egitim.katilimSayisi || '',
+      katilimSayisi: egitim.katilimSayisi || '', sehir: egitim.sehir || '',
     });
     setDuzenleModal(egitim);
   };
@@ -420,6 +430,7 @@ const AdminPanel = () => {
   const handleEkleKaydet = async () => {
     if (!ekleForm.egitim || !ekleForm.tarih || !ekleForm.saat) { alert('Eğitim adı, tarih ve saat zorunludur.'); return; }
     if (!ekleForm.kategori) { alert('Lütfen bir kategori seçin.'); return; }
+    if (!ekleForm.sehir) { alert('Lütfen bir şehir seçin.'); return; }
     setEkleKaydediliyor(true);
     const result = await manuelEgitimEkle({
       ...ekleForm, sure: hesaplaSure(ekleForm), hafta: Number(ekleForm.hafta),
