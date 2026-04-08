@@ -44,7 +44,7 @@ const getCountdown = (egitim) => {
 };
 
 // ── Konuşmacı Avatar ─────────────────────────────────────────────────────────
-const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md' }) => {
+const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md', dark = false }) => {
   const safeId = makeSafeId(ad);
   const k = konusmacilar.find(k => k.id === safeId);
   const foto = k?.fotoURL;
@@ -58,7 +58,7 @@ const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md' }) => {
           <User className="w-1/2 h-1/2 text-purple-400" />
         </div>
       )}
-      {size !== 'sm' && <span className="text-[10px] text-gray-600 text-center leading-tight max-w-[80px]">{k?.ad||ad}</span>}
+      {size !== 'sm' && <span className={`text-[10px] text-center leading-tight max-w-[80px] ${dark ? 'text-white/80' : 'text-gray-600'}`}>{k?.ad||ad}</span>}
     </button>
   );
 };
@@ -149,7 +149,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
             )}
             {/* Konuşmacılar — sayacın yanında */}
             <div className="flex items-center gap-2">
-              {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size={avatarSizeVal} />)}
+              {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size={avatarSizeVal} dark />)}
             </div>
           </div>
         </div>
