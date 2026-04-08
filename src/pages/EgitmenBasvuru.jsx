@@ -203,6 +203,7 @@ const EgitmenBasvuru = () => {
               <option value="Diamond">Diamond</option>
               <option value="1 Star Diamond">1 Star Diamond</option>
               <option value="2 Star Diamond">2 Star Diamond</option>
+              <option value="3 Star Diamond">3 Star Diamond</option>
               <option value="Presidential Diamond">Presidential Diamond</option>
               <option value="Kurumsal">Kurumsal</option>
             </select>
