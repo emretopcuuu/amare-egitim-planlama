@@ -245,10 +245,16 @@ const AdminPanel = () => {
   );
 
   // ── Computed ─────────────────────────────────────────────────────────────
-  const benzersizKonusmacilar = [...new Set(
+  const benzersizKonusmacilar = (() => {
+    const seen = new Map();
     takvim.map(e => e.egitmen).filter(Boolean)
       .flatMap(e => splitEgitmen(e))
-  )].sort((a, b) => a.localeCompare(b, 'tr-TR'));
+      .forEach(ad => {
+        const key = makeSafeId(ad);
+        if (!seen.has(key)) seen.set(key, ad);
+      });
+    return [...seen.values()].sort((a, b) => a.localeCompare(b, 'tr-TR'));
+  })();
 
   const filtreliTakvim = takvim.filter(e => {
     if (aramaMetni.trim() && !(
