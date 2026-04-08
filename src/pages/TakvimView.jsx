@@ -240,12 +240,12 @@ const TakvimView = () => {
     try {
       const noEx = contentRef.current.querySelectorAll('[data-no-pdf]');
       noEx.forEach(el => el.style.display = 'none');
-      // PDF için max-width kaldır, tam genişlik yap
-      const containers = contentRef.current.querySelectorAll('.max-w-6xl');
-      containers.forEach(el => { el.dataset.origClass = el.className; el.classList.remove('max-w-6xl'); el.classList.add('max-w-full'); });
-      const canvas = await html2canvas(contentRef.current, { scale: 2, useCORS: true, logging: false, backgroundColor: '#1e1b4b' });
+      // PDF için sabit genişlik ayarla (A4 oranına uygun)
+      const origWidth = contentRef.current.style.width;
+      contentRef.current.style.width = '1100px';
+      const canvas = await html2canvas(contentRef.current, { scale: 2, useCORS: true, logging: false, backgroundColor: '#1e1b4b', windowWidth: 1100 });
+      contentRef.current.style.width = origWidth;
       noEx.forEach(el => el.style.display = '');
-      containers.forEach(el => { el.className = el.dataset.origClass; delete el.dataset.origClass; });
       const pdf = new jsPDF('portrait','mm','a4');
       const pw=210,ph=297,iw=pw,ih=(canvas.height*pw)/canvas.width;
       let y=0,rem=ih;
