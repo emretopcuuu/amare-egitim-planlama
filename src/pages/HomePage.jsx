@@ -134,7 +134,7 @@ const HomePage = () => {
 
         {/* Footer */}
         <div className="mt-12 text-center text-white/70">
-          <p>© 2026 Amare Global | Powered by OneTeam10x</p>
+          <p>© 2026 Powered by OneTeam</p>
         </div>
       </div>
     </div>
