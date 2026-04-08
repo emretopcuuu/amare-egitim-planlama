@@ -131,6 +131,22 @@ const splitEgitmen = (egitmen) => {
     .filter(n => n.length > 1);
 };
 
+const getHaftaKey = (tarihStr) => {
+  const d = parseTarih(tarihStr);
+  if (!d) return null;
+  const pzt = new Date(d);
+  const gun = d.getDay();
+  pzt.setDate(d.getDate() + (gun === 0 ? -6 : 1 - gun));
+  return pzt.toISOString().split('T')[0];
+};
+
+const haftaAralikHesapla = (egitimler) => {
+  const tarihler = egitimler.map(e => parseTarih(e.tarih)).filter(Boolean).sort((a,b)=>a-b);
+  if (!tarihler.length) return '';
+  const fmt = d => d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+  return tarihler.length === 1 ? fmt(tarihler[0]) : `${fmt(tarihler[0])} – ${fmt(tarihler[tarihler.length-1])}`;
+};
+
 const parseTarih = (tarih) => {
   if (!tarih) return null;
   const [d, m, y] = tarih.split('.').map(Number);
@@ -868,12 +884,19 @@ const AdminPanel = () => {
               {/* İstatistik kartları */}
               {takvim.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                  {[1,2,3,4].map(h => {
-                    const toplam = takvim.filter(e => e.hafta === h).length;
-                    const tamam = takvim.filter(e => e.hafta === h && e.tamamlandi).length;
+                  {(() => {
+                    const hg = {};
+                    takvim.forEach(e => { const k = getHaftaKey(e.tarih)||'x'; if(!hg[k])hg[k]=[]; hg[k].push(e); });
+                    return Object.keys(hg).sort();
+                  })().map((k, h) => {
+                    const grp = {};
+                    takvim.forEach(e => { const kk = getHaftaKey(e.tarih)||'x'; if(!grp[kk])grp[kk]=[]; grp[kk].push(e); });
+                    const arr = grp[k]||[];
+                    const toplam = arr.length;
+                    const tamam = arr.filter(e => e.tamamlandi).length;
                     return (
                       <div key={h} className="bg-purple-50 rounded-xl p-3 text-center">
-                        <div className="text-xs text-purple-600 font-semibold mb-1">Hafta {h}</div>
+                        <div className="text-xs text-purple-600 font-semibold mb-1">Hafta {h + 1}</div>
                         <div className="text-2xl font-bold text-purple-700">{toplam}</div>
                         <div className="text-xs text-purple-400">{tamam > 0 ? `${tamam} tamamlandı` : 'eğitim'}</div>
                       </div>
@@ -967,15 +990,41 @@ const AdminPanel = () => {
               </div>
             ) : (
               <div className="space-y-6">
-                {[1,2,3,4].map(haftaNo => {
-                  const haftaEgitimleri = filtreliTakvim.filter(e => e.hafta === haftaNo);
+                {(() => {
+                  const haftalik = {};
+                  filtreliTakvim.forEach(e => {
+                    const key = getHaftaKey(e.tarih) || 'unknown';
+                    if (!haftalik[key]) haftalik[key] = [];
+                    haftalik[key].push(e);
+                  });
+                  const keys = Object.keys(haftalik).sort();
+                  keys.forEach(k => haftalik[k].sort((a,b) => {
+                    const ta = parseTarih(a.tarih), tb = parseTarih(b.tarih);
+                    if (ta && tb && ta.getTime() !== tb.getTime()) return ta - tb;
+                    return (a.saat||'').localeCompare(b.saat||'');
+                  }));
+                  return keys;
+                })().map((haftaKey, idx) => {
+                  const haftalik = {};
+                  filtreliTakvim.forEach(e => {
+                    const key = getHaftaKey(e.tarih) || 'unknown';
+                    if (!haftalik[key]) haftalik[key] = [];
+                    haftalik[key].push(e);
+                  });
+                  Object.values(haftalik).forEach(arr => arr.sort((a,b) => {
+                    const ta = parseTarih(a.tarih), tb = parseTarih(b.tarih);
+                    if (ta && tb && ta.getTime() !== tb.getTime()) return ta - tb;
+                    return (a.saat||'').localeCompare(b.saat||'');
+                  }));
+                  const haftaEgitimleri = haftalik[haftaKey] || [];
                   if (haftaEgitimleri.length === 0) return null;
                   const tamam = haftaEgitimleri.filter(e => e.tamamlandi).length;
+                  const aralik = haftaAralikHesapla(haftaEgitimleri);
                   return (
-                    <div key={haftaNo} className="bg-white rounded-lg shadow p-6">
+                    <div key={haftaKey} className="bg-white rounded-lg shadow p-6">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-xl font-bold text-amare-purple">
-                          Hafta {haftaNo} <span className="text-base font-normal text-gray-500">({haftaEgitimleri.length} eğitim{tamam > 0 ? ` • ${tamam} tamamlandı` : ''})</span>
+                          Hafta {idx + 1} <span className="text-base font-normal text-gray-500">({aralik} • {haftaEgitimleri.length} eğitim{tamam > 0 ? ` • ${tamam} tamamlandı` : ''})</span>
                         </h3>
                       </div>
                       {gorunum === 'kompakt' && (
