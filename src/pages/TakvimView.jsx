@@ -338,7 +338,7 @@ const TakvimView = () => {
 
                                 {/* Sağ: Konuşmacı Fotoları */}
                                 <div className="flex items-start gap-2 flex-shrink-0">
-                                  {konusmacilar2.slice(0, 3).map(ad => (
+                                  {konusmacilar2.map(ad => (
                                     <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar || []}
                                       onClick={(ad2, k) => setKonusmaciModal({ ad: ad2, kayit: k })} />
                                   ))}
