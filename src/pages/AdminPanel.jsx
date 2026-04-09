@@ -11,7 +11,7 @@ import {
   CheckSquare, Square, ExternalLink, Loader2, Info,
   MessageCircle, QrCode, Check, Copy, Tag, Filter,
   CheckCircle2, Circle, BarChart2, FileText, Bell, Palette,
-  Users2, TrendingUp, ExternalLink as CanvaIcon,
+  Users2, TrendingUp, ExternalLink as CanvaIcon, Bell as BellIcon,
 } from 'lucide-react';
 import GorselOlusturModal from '../components/GorselOlusturModal';
 import DuyuruModal from '../components/DuyuruModal';
@@ -168,7 +168,7 @@ const AdminPanel = () => {
     egitimSil, egitimGuncelle, manuelEgitimEkle,
     basvuruSil, basvuruDurumGuncelle,
     konusmacilar, konusmaciFotoYukle, konusmaciFotoSil, konusmaciBilgiGuncelle,
-    geminiApiKey, geminiApiKeyKaydet,
+    geminiApiKey, geminiApiKeyKaydet, hatirlatmaSayilari,
     sablonlar, sablonEkle, sablonSil,
     takvimDurumDegistir, adminCikis,
   } = useData();
@@ -712,6 +712,7 @@ const AdminPanel = () => {
             </div>
             {egitim.tamamlandi && <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full font-semibold flex-shrink-0">✓ Tamamlandı</span>}
             {egitim.kategori && <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full flex-shrink-0">{egitim.kategori}</span>}
+            {hatirlatmaSayilari[egitim.id] > 0 && <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold flex-shrink-0 flex items-center gap-1"><BellIcon className="w-3 h-3" />{hatirlatmaSayilari[egitim.id]} kayıt</span>}
           </div>
           <div className="text-sm text-gray-600 mt-1">
             {egitim.gun} {egitim.tarih} — {egitim.saat}{egitim.bitisSaati ? `-${egitim.bitisSaati}` : ''} ({egitim.sure})

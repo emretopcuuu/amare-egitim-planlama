@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, makeSafeId } from '../context/DataContext';
-import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer } from 'lucide-react';
+import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell } from 'lucide-react';
+import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -92,7 +93,7 @@ const CountdownBadge = ({ egitim }) => {
 };
 
 // ── Hero: Bir Sonraki Eğitim ─────────────────────────────────────────────────
-const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) => {
+const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, sira = 1 }) => {
   const [cd, setCd] = useState(() => getCountdown(egitim));
   useEffect(() => { const t = setInterval(() => setCd(getCountdown(egitim)), 1000); return () => clearInterval(t); }, [egitim]);
   const konusmacilar2 = splitEgitmen(egitim.egitmen);
@@ -153,6 +154,14 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
             ) : null;
           })()}
 
+          {/* Hatırlatma butonu */}
+          {cd?.durum !== 'gecmis' && (
+            <button onClick={()=>onHatirlatma?.(egitim)}
+              className={`inline-flex items-center gap-2 mt-3 ${isFirst ? 'px-5 py-2.5 text-sm' : 'px-4 py-2 text-xs'} bg-white/15 hover:bg-white/25 text-white font-bold rounded-xl border border-white/20 transition-all`}>
+              <Bell className={`${isFirst ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />Hatırlatma Al
+            </button>
+          )}
+
           <div className="flex items-center gap-4 mt-3 flex-wrap">
             {/* Geri sayım */}
             {cd?.durum !== 'gecmis' && cd?.durum !== 'canli' && (
@@ -200,6 +209,7 @@ const TakvimView = () => {
   const [gorunum, setGorunum] = useState(() => window.innerWidth < 768 ? 'kart' : 'liste'); // mobilde kart, masaüstünde liste
   const [konusmaciModal, setKonusmaciModal] = useState(null);
   const [posterModal, setPosterModal] = useState(null);
+  const [hatirlatmaModal, setHatirlatmaModal] = useState(null);
 
   const getHaftaKey = (tarihStr) => { const d=parseTarih(tarihStr); if(!d) return null; const p=new Date(d); const g=d.getDay(); p.setDate(d.getDate()+(g===0?-6:1-g)); return p.toISOString().split('T')[0]; };
 
@@ -317,6 +327,7 @@ const TakvimView = () => {
             <div className="flex items-center justify-between mb-2">
               <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${online?'bg-blue-100 text-blue-700':'bg-purple-100 text-purple-700'}`}>{online?'Online':getSehir(egitim)||'Yüz Yüze'}</span>
               <CountdownBadge egitim={egitim} />
+              {!gecmis && <button onClick={()=>setHatirlatmaModal(egitim)} className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors"><Bell className="w-3 h-3" />Hatırlat</button>}
             </div>
             <h3 className="font-bold text-gray-900 leading-tight mb-2">{egitim.egitim}</h3>
             <div className="text-sm text-gray-500 space-y-1">
@@ -348,6 +359,7 @@ const TakvimView = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-bold text-gray-900 text-base leading-tight">{egitim.egitim}</h3>
                   <CountdownBadge egitim={egitim} />
+                  {!gecmis && <button onClick={()=>setHatirlatmaModal(egitim)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"><Bell className="w-3 h-3" />Hatırlat</button>}
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-500">
                   <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-500" />{egitim.saat}{egitim.bitisSaati?` – ${egitim.bitisSaati}`:''} {egitim.sure&&<span className="text-gray-400">({egitim.sure})</span>}</span>
@@ -398,13 +410,13 @@ const TakvimView = () => {
             <div className="container mx-auto max-w-6xl space-y-3">
               <HeroBolum egitim={enYakinEgitimler[0]} sira={1} konusmacilar={konusmacilar||[]}
                 onKonusmaci={(a,k)=>setKonusmaciModal({ad:a,kayit:k})}
-                onPoster={(p)=>setPosterModal(p)} />
+                onPoster={(p)=>setPosterModal(p)} onHatirlatma={(e)=>setHatirlatmaModal(e)} />
               {enYakinEgitimler.length > 1 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {enYakinEgitimler.slice(1).map((egitim, i) => (
                     <HeroBolum key={egitim.id} egitim={egitim} sira={i + 2} konusmacilar={konusmacilar||[]}
                       onKonusmaci={(a,k)=>setKonusmaciModal({ad:a,kayit:k})}
-                      onPoster={(p)=>setPosterModal(p)} />
+                      onPoster={(p)=>setPosterModal(p)} onHatirlatma={(e)=>setHatirlatmaModal(e)} />
                   ))}
                 </div>
               )}
@@ -526,6 +538,7 @@ const TakvimView = () => {
           </div>
         </div>
       )}
+      {hatirlatmaModal && <HatirlatmaKayitModal egitim={hatirlatmaModal} onClose={()=>setHatirlatmaModal(null)} />}
     </div>
   );
 };

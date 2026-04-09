@@ -45,6 +45,7 @@ export const DataProvider = ({ children }) => {
   const [konusmacilar, setKonusmacilar] = useState([]);
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
   const [sablonlar, setSablonlar] = useState([]);
+  const [hatirlatmaSayilari, setHatirlatmaSayilari] = useState({}); // { egitimId: uniqueEmailCount }
 
   // Firebase'den veri yükle
   useEffect(() => {
@@ -92,6 +93,21 @@ export const DataProvider = ({ children }) => {
       const sablonlarSnapshot = await getDocs(collection(db, 'sablonlar'));
       const sablonlarData = sablonlarSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       setSablonlar(sablonlarData);
+
+      // Hatırlatma kayıtlarını yükle (eğitim başına unique email sayısı)
+      try {
+        const hatirlatmaSnapshot = await getDocs(collection(db, 'hatirlatmalar'));
+        const sayilar = {};
+        hatirlatmaSnapshot.docs.forEach(d => {
+          const data = d.data();
+          if (!data.egitimId) return;
+          if (!sayilar[data.egitimId]) sayilar[data.egitimId] = new Set();
+          sayilar[data.egitimId].add(data.email);
+        });
+        const result = {};
+        Object.entries(sayilar).forEach(([id, emails]) => { result[id] = emails.size; });
+        setHatirlatmaSayilari(result);
+      } catch {}
 
     } catch (error) {
       console.error('Veri yükleme hatası:', error);
@@ -513,6 +529,7 @@ export const DataProvider = ({ children }) => {
     sablonlar,
     sablonEkle,
     sablonSil,
+    hatirlatmaSayilari,
     basvuruSil,
     basvuruDurumGuncelle,
     konusmaciBilgiGuncelle,
