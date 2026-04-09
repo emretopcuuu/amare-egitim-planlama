@@ -79,7 +79,7 @@ export default async () => {
 </html>`;
 
         await resend.emails.send({
-          from: 'One Team <onboarding@resend.dev>',
+          from: 'One Team Eğitim <noreply@oneteamglobal.ai>',
           to: data.email,
           subject: `Hatırlatma: ${data.egitimAdi} — ${data.tarih} ${data.saat}`,
           html,
