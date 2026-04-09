@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { DataProvider, useData } from './context/DataContext';
+import { LanguageProvider } from './context/LanguageContext';
 import HomePage from './pages/HomePage';
 import EgitmenBasvuru from './pages/EgitmenBasvuru';
 import TakvimView from './pages/TakvimView';
@@ -20,13 +21,13 @@ function AppRoutes() {
         <Route path="/egitmen-basvuru" element={<EgitmenBasvuru />} />
         <Route path="/takvim" element={<TakvimView />} />
         <Route path="/admin-giris" element={<AdminLogin />} />
-        <Route 
-          path="/admin" 
+        <Route
+          path="/admin"
           element={
             <ProtectedRoute>
               <AdminPanel />
             </ProtectedRoute>
-          } 
+          }
         />
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
@@ -36,9 +37,11 @@ function AppRoutes() {
 
 function App() {
   return (
-    <DataProvider>
-      <AppRoutes />
-    </DataProvider>
+    <LanguageProvider>
+      <DataProvider>
+        <AppRoutes />
+      </DataProvider>
+    </LanguageProvider>
   );
 }
 

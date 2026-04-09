@@ -1,7 +1,9 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, makeSafeId } from '../context/DataContext';
+import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell } from 'lucide-react';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -33,15 +35,15 @@ const getCountdown = (egitim) => {
   const bitis = egitim.bitisSaati ? new Date(d) : new Date(baslangic.getTime() + 60*60000);
   if (egitim.bitisSaati) bitis.setHours(bSaat, bDk, 0, 0);
   const simdi = new Date();
-  if (simdi >= baslangic && simdi <= bitis) return { durum: 'canli', text: 'Şu an canlı', ms: 0 };
-  if (simdi > bitis) return { durum: 'gecmis', text: 'Tamamlandı', ms: -1 };
+  if (simdi >= baslangic && simdi <= bitis) return { durum: 'canli', ms: 0, gun: 0, sa: 0, dakika: 0 };
+  if (simdi > bitis) return { durum: 'gecmis', ms: -1, gun: 0, sa: 0, dakika: 0 };
   const fark = baslangic - simdi;
   const gun = Math.floor(fark / 86400000);
   const sa = Math.floor((fark % 86400000) / 3600000);
   const dakika = Math.floor((fark % 3600000) / 60000);
-  if (gun > 0) return { durum: 'gelecek', text: `${gun} gün ${sa} saat`, ms: fark };
-  if (sa > 0) return { durum: 'gelecek', text: `${sa} saat ${dakika} dk`, ms: fark };
-  return { durum: 'yakin', text: `${dakika} dakika sonra`, ms: fark };
+  if (gun > 0) return { durum: 'gelecek', ms: fark, gun, sa, dakika };
+  if (sa > 0) return { durum: 'gelecek', ms: fark, gun, sa, dakika };
+  return { durum: 'yakin', ms: fark, gun, sa, dakika };
 };
 
 // ── Konuşmacı Avatar ─────────────────────────────────────────────────────────
@@ -83,19 +85,26 @@ const KonusmaciModal = ({ ad, kayit, onClose }) => !ad ? null : (
 
 // ── Countdown Badge ──────────────────────────────────────────────────────────
 const CountdownBadge = ({ egitim }) => {
+  const { t } = useTranslation();
   const [cd, setCd] = useState(() => getCountdown(egitim));
-  useEffect(() => { const t = setInterval(() => setCd(getCountdown(egitim)), 60000); return () => clearInterval(t); }, [egitim]);
+  useEffect(() => { const iv = setInterval(() => setCd(getCountdown(egitim)), 60000); return () => clearInterval(iv); }, [egitim]);
   if (!cd) return null;
-  if (cd.durum === 'canli') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-green-500 text-white animate-pulse"><span className="w-1.5 h-1.5 bg-white rounded-full" />Canlı</span>;
-  if (cd.durum === 'gecmis') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-500">Tamamlandı</span>;
-  if (cd.durum === 'yakin') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-orange-500 text-white"><Timer className="w-3 h-3" />{cd.text}</span>;
-  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700"><Timer className="w-3 h-3" />{cd.text}</span>;
+  const formatCd = (c) => {
+    if (c.gun > 0) return `${c.gun} ${t('cd_days')} ${c.sa} ${t('cd_hours')}`;
+    if (c.sa > 0) return `${c.sa} ${t('cd_hours')} ${c.dakika} ${t('cd_min').toLowerCase()}`;
+    return `${c.dakika} ${t('cd_minutes')}`;
+  };
+  if (cd.durum === 'canli') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-green-500 text-white animate-pulse"><span className="w-1.5 h-1.5 bg-white rounded-full" />{t('cd_live')}</span>;
+  if (cd.durum === 'gecmis') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-500">{t('cd_completed')}</span>;
+  if (cd.durum === 'yakin') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-orange-500 text-white"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
+  return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
 };
 
 // ── Hero: Bir Sonraki Eğitim ─────────────────────────────────────────────────
 const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, sira = 1 }) => {
+  const { t, locale } = useTranslation();
   const [cd, setCd] = useState(() => getCountdown(egitim));
-  useEffect(() => { const t = setInterval(() => setCd(getCountdown(egitim)), 1000); return () => clearInterval(t); }, [egitim]);
+  useEffect(() => { const iv = setInterval(() => setCd(getCountdown(egitim)), 1000); return () => clearInterval(iv); }, [egitim]);
   const konusmacilar2 = splitEgitmen(egitim.egitmen);
   const tarih = parseTarih(egitim.tarih);
   const online = isOnline(egitim);
@@ -111,7 +120,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
     'from-indigo-800 via-purple-700 to-violet-800',
     'from-violet-800 via-fuchsia-800 to-purple-800',
   ];
-  const labels = ['Sıradaki Eğitim', '2. Sıradaki Eğitim', '3. Sıradaki Eğitim'];
+  const labels = [t('cd_next'), t('cd_2nd'), t('cd_3rd')];
   const isFirst = sira === 1;
   const titleSize = isFirst ? 'text-xl md:text-5xl lg:text-6xl' : 'text-base md:text-xl';
   const padding = isFirst ? 'p-4 md:p-12 lg:p-16' : 'p-3 md:p-5';
@@ -133,7 +142,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
           </div>
           <h2 className={`${titleSize} font-extrabold text-white leading-tight`}>{egitim.egitim}</h2>
           <div className={`flex flex-wrap items-center gap-2 md:gap-3 mt-2 ${isFirst?'text-xs md:text-sm':'text-[10px] md:text-xs'} text-purple-200`}>
-            <span className="flex items-center gap-1"><Clock className={`${isFirst?'w-4 h-4':'w-3.5 h-3.5'}`} />{tarih?.toLocaleDateString('tr-TR',{day:'numeric',month:'long',weekday:'long'})} • {egitim.saat}{egitim.bitisSaati?`–${egitim.bitisSaati}`:''}</span>
+            <span className="flex items-center gap-1"><Clock className={`${isFirst?'w-4 h-4':'w-3.5 h-3.5'}`} />{tarih?.toLocaleDateString(locale,{day:'numeric',month:'long',weekday:'long'})} • {egitim.saat}{egitim.bitisSaati?`–${egitim.bitisSaati}`:''}</span>
             <span className="flex items-center gap-1">{online?<Wifi className="w-3.5 h-3.5" />:<MapPin className="w-3.5 h-3.5" />}{online?'Zoom':egitim.yer}</span>
           </div>
 
@@ -149,7 +158,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
             return zoomId ? (
               <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer"
                 className={`inline-flex items-center gap-2 mt-3 ${isFirst ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'} bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105`}>
-                <Wifi className={`${isFirst ? 'w-5 h-5' : 'w-4 h-4'}`} />Toplantıya Katıl
+                <Wifi className={`${isFirst ? 'w-5 h-5' : 'w-4 h-4'}`} />{t('cal_join_meeting')}
               </a>
             ) : null;
           })()}
@@ -158,7 +167,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
           {cd?.durum !== 'gecmis' && (
             <button onClick={()=>onHatirlatma?.(egitim)}
               className={`inline-flex items-center gap-2 mt-3 ${isFirst ? 'px-5 py-2.5 text-sm' : 'px-4 py-2 text-xs'} bg-white/15 hover:bg-white/25 text-white font-bold rounded-xl border border-white/20 transition-all`}>
-              <Bell className={`${isFirst ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />Hatırlatma Al
+              <Bell className={`${isFirst ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />{t('cal_get_reminder')}
             </button>
           )}
 
@@ -166,7 +175,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
             {/* Geri sayım */}
             {cd?.durum !== 'gecmis' && cd?.durum !== 'canli' && (
               <div className={`flex ${isFirst?'gap-2':'gap-1.5'}`}>
-                {[{v:gun,l:'Gün'},{v:saat,l:'Saat'},{v:dakika,l:'Dk'},{v:saniye,l:'Sn'}].map(({v,l})=>(
+                {[{v:gun,l:t('cd_day')},{v:saat,l:t('cd_hour')},{v:dakika,l:t('cd_min')},{v:saniye,l:t('cd_sec')}].map(({v,l})=>(
                   <div key={l} className={`bg-white/10 backdrop-blur rounded-xl ${countdownSize} text-center`}>
                     <div className="font-extrabold text-white tabular-nums">{String(v).padStart(2,'0')}</div>
                     <div className="text-[8px] text-purple-300 uppercase tracking-wider">{l}</div>
@@ -201,6 +210,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
 const TakvimView = () => {
   const navigate = useNavigate();
   const { takvim, takvimYayinlandi, loading, konusmacilar } = useData();
+  const { t, locale } = useTranslation();
   const contentRef = useRef(null); // sayfa scroll ref
   const [pdfYukleniyor, setPdfYukleniyor] = useState(false);
   const [filtre, setFiltre] = useState('tumu');
@@ -236,7 +246,7 @@ const TakvimView = () => {
     return { haftalikTakvim: ht, haftaKeys: keys };
   }, [filtrelenmis]);
 
-  const haftaAralik = (egitimler) => { const t=egitimler.map(e=>parseTarih(e.tarih)).filter(Boolean).sort((a,b)=>a-b); if(!t.length)return''; const f=d=>d.toLocaleDateString('tr-TR',{day:'numeric',month:'long'}); return t.length===1?f(t[0]):`${f(t[0])} – ${f(t[t.length-1])}`; };
+  const haftaAralik = (egitimler) => { const tt=egitimler.map(e=>parseTarih(e.tarih)).filter(Boolean).sort((a,b)=>a-b); if(!tt.length)return''; const f=d=>d.toLocaleDateString(locale,{day:'numeric',month:'long'}); return tt.length===1?f(tt[0]):`${f(tt[0])} – ${f(tt[tt.length-1])}`; };
 
   // En yakın 3 gelecek eğitim (hero için)
   const enYakinEgitimler = useMemo(() => {
@@ -280,14 +290,14 @@ const TakvimView = () => {
       let y=0,rem=ih;
       while(rem>0){ if(y>0)pdf.addPage(); const sy=(y/ih)*canvas.height; const sh=Math.min(ph,rem); const sr=(sh/ih)*canvas.height; const sc=document.createElement('canvas'); sc.width=canvas.width;sc.height=sr; sc.getContext('2d').drawImage(canvas,0,sy,canvas.width,sr,0,0,canvas.width,sr); pdf.addImage(sc.toDataURL('image/jpeg',0.92),'JPEG',0,0,iw,sh); y+=ph;rem-=ph; }
       pdf.save('ONE_TEAM_Egitim_Takvimi.pdf');
-    } catch(err){alert('PDF oluşturulamadı: '+err.message);} finally{setPdfYukleniyor(false);}
+    } catch(err){alert(t('cal_pdf_error')+err.message);} finally{setPdfYukleniyor(false);}
   };
 
   if (loading) return <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center"><Loader2 className="w-10 h-10 text-white animate-spin" /></div>;
   if (!takvimYayinlandi) return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 py-12 px-4"><div className="container mx-auto max-w-2xl"><div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
-      <AlertCircle className="w-20 h-20 text-yellow-500 mx-auto mb-4" /><h2 className="text-3xl font-bold text-gray-800 mb-4">Takvim Henüz Yayınlanmadı</h2><p className="text-gray-600 mb-6">Eğitim takvimi hazır olduğunda burada görüntülenecektir.</p>
-      <button onClick={()=>navigate('/')} className="bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-colors">Ana Sayfaya Dön</button>
+      <AlertCircle className="w-20 h-20 text-yellow-500 mx-auto mb-4" /><h2 className="text-3xl font-bold text-gray-800 mb-4">{t('cal_not_published_title')}</h2><p className="text-gray-600 mb-6">{t('cal_not_published_desc')}</p>
+      <button onClick={()=>navigate('/')} className="bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-colors">{t('back_home')}</button>
     </div></div></div>
   );
 
@@ -295,7 +305,7 @@ const TakvimView = () => {
   const renderEgitimKart = (egitim) => {
     const tarih = parseTarih(egitim.tarih);
     const gunNo = tarih ? tarih.getDate() : '';
-    const ayAd = tarih ? tarih.toLocaleDateString('tr-TR', { month: 'short' }) : '';
+    const ayAd = tarih ? tarih.toLocaleDateString(locale, { month: 'short' }) : '';
     const konusmacilar2 = splitEgitmen(egitim.egitmen);
     const katRenk = KATEGORI_RENK[egitim.kategori] || KATEGORI_RENK['Diğer'];
     const online = isOnline(egitim);
@@ -325,9 +335,9 @@ const TakvimView = () => {
           )}
           <div className="p-4 flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-2">
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${online?'bg-blue-100 text-blue-700':'bg-purple-100 text-purple-700'}`}>{online?'Online':getSehir(egitim)||'Yüz Yüze'}</span>
+              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${online?'bg-blue-100 text-blue-700':'bg-purple-100 text-purple-700'}`}>{online?t('cal_filter_online'):getSehir(egitim)||t('cal_filter_offline')}</span>
               <CountdownBadge egitim={egitim} />
-              {!gecmis && <button onClick={()=>setHatirlatmaModal(egitim)} className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors"><Bell className="w-3 h-3" />Hatırlat</button>}
+              {!gecmis && <button onClick={()=>setHatirlatmaModal(egitim)} className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors"><Bell className="w-3 h-3" />{t('cal_remind')}</button>}
             </div>
             <h3 className="font-bold text-gray-900 leading-tight mb-2">{egitim.egitim}</h3>
             <div className="text-sm text-gray-500 space-y-1">
@@ -359,7 +369,7 @@ const TakvimView = () => {
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="font-bold text-gray-900 text-base leading-tight">{egitim.egitim}</h3>
                   <CountdownBadge egitim={egitim} />
-                  {!gecmis && <button onClick={()=>setHatirlatmaModal(egitim)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"><Bell className="w-3 h-3" />Hatırlat</button>}
+                  {!gecmis && <button onClick={()=>setHatirlatmaModal(egitim)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"><Bell className="w-3 h-3" />{t('cal_remind')}</button>}
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-500">
                   <span className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-500" />{egitim.saat}{egitim.bitisSaati?` – ${egitim.bitisSaati}`:''} {egitim.sure&&<span className="text-gray-400">({egitim.sure})</span>}</span>
@@ -370,7 +380,7 @@ const TakvimView = () => {
                   {!online && getSehir(egitim) && getSehir(egitim)!=='Diğer' && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200"><MapPin className="w-3 h-3" />{getSehir(egitim)}</span>}
                 </div>
                 {konusmacilar2.length>0 && <div className="flex items-center gap-1 mt-2 text-sm text-gray-600"><User className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /><span>{konusmacilar2.join(', ')}</span></div>}
-                {online && !gecmis && (() => { const b=new Date(); const et=parseTarih(egitim.tarih); if(!et||et.toDateString()!==b.toDateString()) return null; const m=(egitim.yer||'').match(/(\d[\d\s]{6,})/); const id=m?m[1].replace(/\s/g,''):null; return id ? <a href={`https://zoom.us/j/${id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow hover:shadow-md transition-all"><Wifi className="w-3.5 h-3.5" />Toplantıya Katıl</a> : null; })()}
+                {online && !gecmis && (() => { const b=new Date(); const et=parseTarih(egitim.tarih); if(!et||et.toDateString()!==b.toDateString()) return null; const m=(egitim.yer||'').match(/(\d[\d\s]{6,})/); const id=m?m[1].replace(/\s/g,''):null; return id ? <a href={`https://zoom.us/j/${id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow hover:shadow-md transition-all"><Wifi className="w-3.5 h-3.5" />{t('cal_join_meeting')}</a> : null; })()}
               </div>
               <div className="hidden md:flex items-start gap-1.5 flex-shrink-0 flex-wrap justify-end">
                 {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={(a,k)=>setKonusmaciModal({ad:a,kayit:k})} />)}
@@ -394,13 +404,16 @@ const TakvimView = () => {
         <div className="pt-6 pb-2 px-4">
           <div className="container mx-auto max-w-6xl">
             <div className="flex items-center justify-between" data-no-pdf>
-              <button onClick={()=>navigate('/')} className="flex items-center text-white/70 hover:text-white text-sm"><ArrowLeft className="w-4 h-4 mr-1.5" />Ana Sayfa</button>
-              <button onClick={exportPDF} disabled={pdfYukleniyor} className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-sm">
-                {pdfYukleniyor?<><Loader2 className="w-4 h-4 animate-spin" />Hazırlanıyor...</>:<><Download className="w-4 h-4" />PDF İndir</>}
-              </button>
+              <button onClick={()=>navigate('/')} className="flex items-center text-white/70 hover:text-white text-sm"><ArrowLeft className="w-4 h-4 mr-1.5" />{t('back')}</button>
+              <div className="flex items-center gap-3">
+                <LanguageSwitcher />
+                <button onClick={exportPDF} disabled={pdfYukleniyor} className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-sm">
+                  {pdfYukleniyor?<><Loader2 className="w-4 h-4 animate-spin" />{t('cal_preparing')}</>:<><Download className="w-4 h-4" />{t('cal_download_pdf')}</>}
+                </button>
+              </div>
             </div>
-            <h1 className="text-3xl md:text-4xl font-extrabold text-white mt-3">Eğitim Takvimi</h1>
-            <p className="text-purple-200 mt-1">{filtrelenmis.length} eğitim</p>
+            <h1 className="text-3xl md:text-4xl font-extrabold text-white mt-3">{t('cal_title')}</h1>
+            <p className="text-purple-200 mt-1">{filtrelenmis.length} {t('cal_trainings')}</p>
           </div>
         </div>
 
@@ -431,7 +444,7 @@ const TakvimView = () => {
             <div className="relative mb-3">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300" />
               <input type="text" value={arama} onChange={e=>setArama(e.target.value)}
-                placeholder="Eğitim, konuşmacı, şehir, kategori ara..."
+                placeholder={t('cal_search_placeholder')}
                 className="w-full bg-white/10 backdrop-blur border border-white/20 text-white placeholder-purple-300 rounded-xl pl-11 pr-10 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400" />
               {arama && <button onClick={()=>setArama('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white"><X className="w-4 h-4" /></button>}
             </div>
@@ -439,7 +452,7 @@ const TakvimView = () => {
             <div className="flex items-center justify-between flex-wrap gap-2">
               {/* Filtre butonları */}
               <div className="flex flex-wrap gap-2">
-                {[{key:'tumu',label:'Tümü'},{key:'online',label:'Online',icon:<Wifi className="w-3.5 h-3.5" />},{key:'offline',label:'Yüz Yüze',icon:<Building2 className="w-3.5 h-3.5" />}].map(f=>(
+                {[{key:'tumu',label:t('cal_filter_all')},{key:'online',label:t('cal_filter_online'),icon:<Wifi className="w-3.5 h-3.5" />},{key:'offline',label:t('cal_filter_offline'),icon:<Building2 className="w-3.5 h-3.5" />}].map(f=>(
                   <button key={f.key} onClick={()=>{setFiltre(f.key);setSehirFiltre(null);}}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${filtre===f.key?'bg-white text-purple-800 shadow-lg':'bg-white/10 text-white/80 hover:bg-white/20'}`}>
                     {f.icon}{f.label}
@@ -453,7 +466,7 @@ const TakvimView = () => {
 
               {/* Görünüm butonları */}
               <div className="flex bg-white/10 rounded-lg p-0.5 gap-0.5">
-                {[{key:'liste',icon:<List className="w-4 h-4" />,label:'Liste'},{key:'kart',icon:<LayoutGrid className="w-4 h-4" />,label:'Kart'},{key:'kompakt',icon:<Table2 className="w-4 h-4" />,label:'Tablo'}].map(g=>(
+                {[{key:'liste',icon:<List className="w-4 h-4" />,label:t('cal_view_list')},{key:'kart',icon:<LayoutGrid className="w-4 h-4" />,label:t('cal_view_card')},{key:'kompakt',icon:<Table2 className="w-4 h-4" />,label:t('cal_view_table')}].map(g=>(
                   <button key={g.key} onClick={()=>setGorunum(g.key)} title={g.label}
                     className={`p-2 rounded-md transition-all ${gorunum===g.key?'bg-white text-purple-800 shadow':'text-white/60 hover:text-white'}`}>
                     {g.icon}
@@ -467,7 +480,7 @@ const TakvimView = () => {
         {/* Haftalık Bölümler */}
         <div className="px-4 pb-12 pt-2">
           <div className="container mx-auto max-w-6xl space-y-8">
-            {haftaKeys.length===0 && <div className="text-center py-16 text-white/50"><p className="text-lg">Eğitim bulunamadı.</p></div>}
+            {haftaKeys.length===0 && <div className="text-center py-16 text-white/50"><p className="text-lg">{t('cal_no_results')}</p></div>}
 
             {haftaKeys.map((haftaKey,idx) => {
               const haftaEgitimleri = haftalikTakvim[haftaKey];
@@ -481,7 +494,7 @@ const TakvimView = () => {
                   <div className="bg-white rounded-xl shadow-lg overflow-x-auto">
                     <table className="w-full text-left">
                       <thead><tr className="bg-purple-50 border-b border-purple-200">
-                        {['Tarih','Saat','Eğitim','Konuşmacı','Kategori','Durum'].map(h=><th key={h} className="px-3 py-2 text-xs font-bold text-purple-700 uppercase">{h}</th>)}
+                        {[t('th_date'),t('th_time'),t('th_training'),t('th_speaker'),t('th_category'),t('th_status')].map(h=><th key={h} className="px-3 py-2 text-xs font-bold text-purple-700 uppercase">{h}</th>)}
                       </tr></thead>
                       <tbody className="divide-y divide-gray-100">{egitimler.map(renderEgitimKart)}</tbody>
                     </table>
@@ -494,10 +507,10 @@ const TakvimView = () => {
               return (
                 <div key={haftaKey}>
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="bg-white text-purple-800 rounded-xl px-4 py-2 font-extrabold text-lg shadow">Hafta {idx+1}</div>
+                    <div className="bg-white text-purple-800 rounded-xl px-4 py-2 font-extrabold text-lg shadow">{t('cal_week')} {idx+1}</div>
                     <div className="text-purple-200 text-sm font-medium">{aralik}</div>
                     <div className="flex-1 h-px bg-white/20" />
-                    <div className="text-purple-300 text-sm">{haftaEgitimleri.length} eğitim</div>
+                    <div className="text-purple-300 text-sm">{haftaEgitimleri.length} {t('cal_trainings')}</div>
                   </div>
 
                   {/* Geçmiş eğitimler — açılır kapanır, üstte */}
@@ -505,9 +518,9 @@ const TakvimView = () => {
                     <details className="mb-4 group">
                       <summary className="cursor-pointer select-none flex items-center gap-3 bg-white/10 backdrop-blur border border-white/20 rounded-xl px-4 py-3 hover:bg-white/15 transition-all">
                         <svg className="w-5 h-5 text-purple-300 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-                        <span className="text-sm font-bold text-white">Geçmiş Eğitimler</span>
+                        <span className="text-sm font-bold text-white">{t('cal_past')}</span>
                         <span className="bg-white/20 text-white text-xs font-bold px-2.5 py-0.5 rounded-full">{gecmisler.length}</span>
-                        <span className="text-xs text-purple-300 ml-auto">tıklayarak göster</span>
+                        <span className="text-xs text-purple-300 ml-auto">{t('cal_past_show')}</span>
                       </summary>
                       <div className="mt-3">
                         {renderGrup(gecmisler)}
@@ -523,7 +536,7 @@ const TakvimView = () => {
           </div>
         </div>
 
-        <div className="border-t border-white/10 py-6 text-center text-white/40 text-sm">© 2026 Powered by OneTeam</div>
+        <div className="border-t border-white/10 py-6 text-center text-white/40 text-sm">{t('copyright')}</div>
       </div>
 
       {konusmaciModal && <KonusmaciModal ad={konusmaciModal.ad} kayit={konusmaciModal.kayit} onClose={()=>setKonusmaciModal(null)} />}
@@ -533,7 +546,7 @@ const TakvimView = () => {
             <button onClick={()=>setPosterModal(null)} className="absolute -top-10 right-0 text-white/70 hover:text-white"><X className="w-6 h-6" /></button>
             <img src={posterModal.url} alt={posterModal.baslik} className="w-full rounded-xl shadow-2xl" />
             <div className="mt-3 flex justify-center">
-              <a href={posterModal.url} download={`${(posterModal.baslik||'poster').replace(/[^a-z0-9]/gi,'_')}.png`} className="flex items-center gap-2 bg-white text-purple-800 px-5 py-2.5 rounded-xl font-semibold hover:bg-purple-50 transition shadow"><Download className="w-4 h-4" />Posteri İndir</a>
+              <a href={posterModal.url} download={`${(posterModal.baslik||'poster').replace(/[^a-z0-9]/gi,'_')}.png`} className="flex items-center gap-2 bg-white text-purple-800 px-5 py-2.5 rounded-xl font-semibold hover:bg-purple-50 transition shadow"><Download className="w-4 h-4" />{t('cal_download_poster')}</a>
             </div>
           </div>
         </div>
