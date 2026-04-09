@@ -127,7 +127,7 @@ const splitEgitmen = (egitmen) => {
   if (!egitmen) return [];
   return egitmen
     .split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜa-zçğışöşü]*\.?\s*[A-ZÇĞİÖŞÜ]|Prof\.|Doç\.|Uzm\.|Dr\.|Dyt\.|Op\.)/)
-    .map(n => n.trim().toLocaleUpperCase('tr-TR'))
+    .map(n => n.trim().toLocaleUpperCase('tr-TR').replace(/\s*SÖYLEŞİ\s*/gi, '').replace(/\s*SÖYLEŞI\s*/gi, '').trim())
     .filter(n => n.length > 1);
 };
 
