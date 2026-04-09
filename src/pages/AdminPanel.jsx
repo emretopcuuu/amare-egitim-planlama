@@ -1115,24 +1115,53 @@ const AdminPanel = () => {
                   const tamam = haftaEgitimleri.filter(e => e.tamamlandi).length;
                   const aralik = haftaAralikHesapla(haftaEgitimleri);
                   return (
-                    <div key={haftaKey} className="bg-white rounded-lg shadow p-6">
-                      <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xl font-bold text-amare-purple">
-                          Hafta {idx + 1} <span className="text-base font-normal text-gray-500">({aralik} • {haftaEgitimleri.length} eğitim{tamam > 0 ? ` • ${tamam} tamamlandı` : ''})</span>
-                        </h3>
-                      </div>
-                      {gorunum === 'kompakt' && (
-                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                          {haftaEgitimleri.map(e => <EgitimKarti key={e.id} egitim={e} kompakt />)}
+                    (() => {
+                      const simdi = new Date();
+                      const isGecmis = (e) => {
+                        const d = parseTarih(e.tarih);
+                        if (!d) return false;
+                        const [bs=0,bd=0] = (e.bitisSaati || e.saat || '23:59').split(':').map(Number);
+                        const bitis = new Date(d); bitis.setHours(bs, bd, 0, 0);
+                        return simdi > bitis;
+                      };
+                      const gecmisler = haftaEgitimleri.filter(isGecmis);
+                      const gelecekler = haftaEgitimleri.filter(e => !isGecmis(e));
+
+                      const renderGrupAdmin = (egitimler) => {
+                        if (gorunum === 'kompakt') return <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">{egitimler.map(e => <EgitimKarti key={e.id} egitim={e} kompakt />)}</div>;
+                        if (gorunum === 'takvim') return renderTakvimGrid(egitimler);
+                        return <div className="space-y-3">{egitimler.map(e => <EgitimKarti key={e.id} egitim={e} />)}</div>;
+                      };
+
+                      return (
+                        <div key={haftaKey} className="bg-white rounded-lg shadow p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold text-amare-purple">
+                              Hafta {idx + 1} <span className="text-base font-normal text-gray-500">({aralik} • {haftaEgitimleri.length} eğitim{tamam > 0 ? ` • ${tamam} tamamlandı` : ''})</span>
+                            </h3>
+                          </div>
+
+                          {/* Geçmiş eğitimler — açılır kapanır */}
+                          {gecmisler.length > 0 && (
+                            <details className="mb-4 group">
+                              <summary className="cursor-pointer select-none flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 hover:bg-gray-100 transition-all">
+                                <svg className="w-4 h-4 text-gray-400 transition-transform group-open:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                <span className="text-sm font-bold text-gray-600">Geçmiş Eğitimler</span>
+                                <span className="bg-gray-200 text-gray-600 text-xs font-bold px-2 py-0.5 rounded-full">{gecmisler.length}</span>
+                              </summary>
+                              <div className="mt-3">{renderGrupAdmin(gecmisler)}</div>
+                            </details>
+                          )}
+
+                          {/* Gelecek eğitimler — her zaman görünür */}
+                          {gelecekler.length > 0 && renderGrupAdmin(gelecekler)}
+
+                          {gelecekler.length === 0 && gecmisler.length > 0 && (
+                            <p className="text-sm text-gray-400 text-center py-2">Bu haftanın tüm eğitimleri tamamlandı</p>
+                          )}
                         </div>
-                      )}
-                      {gorunum === 'liste' && (
-                        <div className="space-y-3">
-                          {haftaEgitimleri.map(e => <EgitimKarti key={e.id} egitim={e} />)}
-                        </div>
-                      )}
-                      {gorunum === 'takvim' && renderTakvimGrid(haftaEgitimleri)}
-                    </div>
+                      );
+                    })()
                   );
                 })}
                 {filtreliTakvim.length === 0 && (
