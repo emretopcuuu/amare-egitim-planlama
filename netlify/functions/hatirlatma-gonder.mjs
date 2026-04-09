@@ -1,14 +1,13 @@
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
-import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import admin from 'firebase-admin';
 import { Resend } from 'resend';
 
 // Netlify scheduled function — her 5 dakikada çalışır
 export const config = { schedule: "*/5 * * * *" };
 
 // Firebase Admin init (singleton)
-if (!getApps().length) {
-  initializeApp({
-    credential: cert({
+if (!admin.apps.length) {
+  admin.initializeApp({
+    credential: admin.credential.cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
@@ -16,12 +15,12 @@ if (!getApps().length) {
   });
 }
 
-const db = getFirestore();
+const db = admin.firestore();
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export default async () => {
   try {
-    const simdi = Timestamp.now();
+    const simdi = admin.firestore.Timestamp.now();
 
     // Gönderilmemiş ve zamanı gelmiş hatırlatmaları bul
     const snapshot = await db.collection('hatirlatmalar')
@@ -87,7 +86,7 @@ export default async () => {
 
         await doc.ref.update({
           gonderildi: true,
-          gonderildiZaman: Timestamp.now(),
+          gonderildiZaman: admin.firestore.Timestamp.now(),
         });
 
         gonderilen++;
