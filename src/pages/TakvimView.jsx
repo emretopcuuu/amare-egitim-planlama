@@ -136,8 +136,12 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, sira = 1 }) =>
             <span className="flex items-center gap-1">{online?<Wifi className="w-3.5 h-3.5" />:<MapPin className="w-3.5 h-3.5" />}{online?'Zoom':egitim.yer}</span>
           </div>
 
-          {/* Zoom Bağlan Butonu */}
+          {/* Zoom Bağlan Butonu — sadece bugünkü eğitimlerde */}
           {online && (() => {
+            const bugun = new Date();
+            const egitimTarih = parseTarih(egitim.tarih);
+            const bugunMu = egitimTarih && egitimTarih.toDateString() === bugun.toDateString();
+            if (!bugunMu) return null;
             const yerStr = egitim.yer || '';
             const idMatch = yerStr.match(/(\d[\d\s]{6,})/);
             const zoomId = idMatch ? idMatch[1].replace(/\s/g, '') : null;
@@ -354,7 +358,7 @@ const TakvimView = () => {
                   {!online && getSehir(egitim) && getSehir(egitim)!=='Diğer' && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200"><MapPin className="w-3 h-3" />{getSehir(egitim)}</span>}
                 </div>
                 {konusmacilar2.length>0 && <div className="flex items-center gap-1 mt-2 text-sm text-gray-600"><User className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /><span>{konusmacilar2.join(', ')}</span></div>}
-                {online && !gecmis && (() => { const m=(egitim.yer||'').match(/(\d[\d\s]{6,})/); const id=m?m[1].replace(/\s/g,''):null; return id ? <a href={`https://zoom.us/j/${id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow hover:shadow-md transition-all"><Wifi className="w-3.5 h-3.5" />Toplantıya Katıl</a> : null; })()}
+                {online && !gecmis && (() => { const b=new Date(); const et=parseTarih(egitim.tarih); if(!et||et.toDateString()!==b.toDateString()) return null; const m=(egitim.yer||'').match(/(\d[\d\s]{6,})/); const id=m?m[1].replace(/\s/g,''):null; return id ? <a href={`https://zoom.us/j/${id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow hover:shadow-md transition-all"><Wifi className="w-3.5 h-3.5" />Toplantıya Katıl</a> : null; })()}
               </div>
               <div className="hidden md:flex items-start gap-1.5 flex-shrink-0 flex-wrap justify-end">
                 {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={(a,k)=>setKonusmaciModal({ad:a,kayit:k})} />)}
