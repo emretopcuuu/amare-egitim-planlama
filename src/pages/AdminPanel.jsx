@@ -268,6 +268,17 @@ const AdminPanel = () => {
         const key = makeSafeId(ad);
         if (key && !seen.has(key)) seen.set(key, ad);
       });
+    // 3. Tek kelimelik isimleri at — tam adı olan bir konuşmacının parçasıysa duplike
+    const allIds = [...seen.keys()];
+    const toRemove = [];
+    for (const [id, ad] of seen) {
+      if (!ad.includes(' ')) {
+        // Tek kelime: "ZEYNEP" gibi — başka bir ID bu kelimenin başıyla başlıyorsa at
+        const match = allIds.find(otherId => otherId !== id && otherId.startsWith(id + '_'));
+        if (match) toRemove.push(id);
+      }
+    }
+    toRemove.forEach(id => seen.delete(id));
     return [...seen.values()].sort((a, b) => a.localeCompare(b, 'tr-TR'));
   })();
 
