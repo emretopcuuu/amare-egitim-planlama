@@ -31,9 +31,9 @@ export const LanguageProvider = ({ children }) => {
   const cacheRef = useRef(dynamicCache);
   cacheRef.current = dynamicCache;
 
-  // Çeviri kuyruğu
-  const pendingRef = useRef(new Map());
-  const timerRef = useRef(null);
+  // Çeviri kilidi — aynı anda birden fazla API çağrısını engelle
+  const translatingRef = useRef(false);
+  const retryQueueRef = useRef([]);
 
   // Cache'i localStorage'a kaydet
   useEffect(() => {
@@ -62,10 +62,10 @@ export const LanguageProvider = ({ children }) => {
 
   // ─── DİNAMİK ÇEVİRİ (eğitim başlıkları, kategori isimleri vb.) ───────────
 
-  // Gemini API ile toplu çeviri
+  // Gemini API ile toplu çeviri — TEK SEFER, kilit mekanizmalı
   const callGeminiTranslate = useCallback(async (texts, targetLang) => {
     const apiKey = localStorage.getItem('geminiApiKey') || import.meta.env.VITE_GEMINI_API_KEY || '';
-    if (!apiKey || targetLang === 'tr') return texts;
+    if (!apiKey || targetLang === 'tr') return null;
 
     const langName = targetLang === 'en' ? 'English' : 'German';
     const prompt = `Translate the following Turkish texts to ${langName}. Return ONLY a JSON array of translated strings in the same order. Keep proper nouns, brand names (Amare, One Team, Diamond), city names, and technical terms as-is. Do not add explanations.
@@ -84,6 +84,10 @@ Input: ${JSON.stringify(texts)}`;
           }),
         }
       );
+      if (!res.ok) {
+        console.warn(`Gemini API error: ${res.status}`);
+        return null; // null = başarısız, cache'leme
+      }
       const data = await res.json();
       const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
       const match = responseText.match(/\[[\s\S]*\]/);
@@ -94,67 +98,14 @@ Input: ${JSON.stringify(texts)}`;
     } catch (err) {
       console.warn('Dynamic translation error:', err);
     }
-    return texts;
+    return null; // null = başarısız
   }, []);
 
-  // Kuyruktaki talepleri toplu işle
-  const processBatch = useCallback(async () => {
-    const currentLang = localStorage.getItem('ot_lang') || 'tr';
-    if (currentLang === 'tr') return;
-
-    const batch = new Map(pendingRef.current);
-    pendingRef.current.clear();
-    if (batch.size === 0) return;
-
-    const texts = [...batch.keys()];
-    const toTranslate = [];
-    const toTranslateIdx = [];
-    const results = new Array(texts.length);
-
-    texts.forEach((text, i) => {
-      const cached = cacheRef.current[currentLang]?.[text];
-      if (cached) { results[i] = cached; }
-      else { toTranslate.push(text); toTranslateIdx.push(i); }
-    });
-
-    if (toTranslate.length > 0) {
-      const translated = await callGeminiTranslate(toTranslate, currentLang);
-      const newCache = { ...cacheRef.current };
-      if (!newCache[currentLang]) newCache[currentLang] = {};
-
-      toTranslate.forEach((text, j) => {
-        const result = translated[j] || text;
-        results[toTranslateIdx[j]] = result;
-        newCache[currentLang][text] = result;
-      });
-
-      setDynamicCache(newCache);
-    }
-
-    texts.forEach((text, i) => {
-      const callbacks = batch.get(text);
-      if (callbacks) callbacks.forEach(cb => cb(results[i]));
-    });
-  }, [callGeminiTranslate]);
-
-  // Tek metin çeviri (async, debounced batch)
-  const translateDynamic = useCallback((text) => {
-    if (!text || lang === 'tr') return Promise.resolve(text);
-    const cached = cacheRef.current[lang]?.[text];
-    if (cached) return Promise.resolve(cached);
-
-    return new Promise((resolve) => {
-      if (!pendingRef.current.has(text)) pendingRef.current.set(text, []);
-      pendingRef.current.get(text).push(resolve);
-      clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(processBatch, 100);
-    });
-  }, [lang, processBatch]);
-
-  // Toplu çeviri (array gönder, array al)
+  // Toplu çeviri — TEK GİRİŞ NOKTASI, kilit mekanizmalı
   const translateBatch = useCallback(async (texts) => {
     if (!texts?.length || lang === 'tr') return texts;
 
+    // Zaten çevrilmişleri filtrele
     const toTranslate = [];
     const toTranslateIdx = [];
     const results = new Array(texts.length);
@@ -166,37 +117,65 @@ Input: ${JSON.stringify(texts)}`;
       else { toTranslate.push(text); toTranslateIdx.push(i); }
     });
 
-    if (toTranslate.length > 0) {
+    if (toTranslate.length === 0) return results;
+
+    // Kilit kontrolü — eşzamanlı çağrıları engelle
+    if (translatingRef.current) {
+      // Kuyruğa ekle, sonra tekrar denenecek
+      retryQueueRef.current.push(...toTranslate);
+      return results;
+    }
+
+    translatingRef.current = true;
+
+    try {
       const translated = await callGeminiTranslate(toTranslate, lang);
-      const newCache = { ...cacheRef.current };
-      if (!newCache[lang]) newCache[lang] = {};
 
-      toTranslate.forEach((text, j) => {
-        const result = translated[j] || text;
-        results[toTranslateIdx[j]] = result;
-        newCache[lang][text] = result;
-      });
+      if (translated) {
+        // Başarılı — cache'e yaz
+        const newCache = { ...cacheRef.current };
+        if (!newCache[lang]) newCache[lang] = {};
 
-      setDynamicCache(newCache);
+        toTranslate.forEach((text, j) => {
+          const result = translated[j] || text;
+          // Sadece gerçekten çevrilmişleri cache'le
+          if (result !== text) {
+            results[toTranslateIdx[j]] = result;
+            newCache[lang][text] = result;
+          }
+        });
+
+        setDynamicCache(newCache);
+      }
+      // null dönerse (API hatası) → cache'leme, sonra tekrar denenecek
+    } finally {
+      translatingRef.current = false;
+
+      // Kuyrukta bekleyen varsa tekrar dene
+      if (retryQueueRef.current.length > 0) {
+        const queued = [...new Set(retryQueueRef.current)];
+        retryQueueRef.current = [];
+        // Kısa gecikme ile tekrar dene (rate limit'e takılmamak için)
+        setTimeout(() => translateBatch(queued), 2000);
+      }
     }
 
     return results;
   }, [lang, callGeminiTranslate]);
 
-  // Senkron dinamik çeviri — cache'de varsa döndür, yoksa arka planda çevir
-  // dynamicCache dependency sayesinde cache güncellenince re-render olur
+  // Senkron dinamik çeviri — SADECE cache'den oku
+  // translateBatch zaten useEffect'te çağrılıyor, burada API çağrısı YOK
   const tDynamic = useCallback((text) => {
     if (!text || lang === 'tr') return text;
     const cached = dynamicCache[lang]?.[text];
     if (cached) return cached;
-    translateDynamic(text);
-    return text;
-  }, [lang, dynamicCache, translateDynamic]);
+    return text; // Cache'de yoksa orijinal döndür, translateBatch halleder
+  }, [lang, dynamicCache]);
 
   return (
     <LanguageContext.Provider value={{
       lang, setLang, t, locale, SUPPORTED_LANGS,
-      tDynamic, translateBatch, translateDynamic,
+      tDynamic, translateBatch,
     }}>
       {children}
     </LanguageContext.Provider>

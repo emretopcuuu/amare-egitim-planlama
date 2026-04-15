@@ -221,11 +221,13 @@ const TakvimView = () => {
   const [posterModal, setPosterModal] = useState(null);
   const [hatirlatmaModal, setHatirlatmaModal] = useState(null);
 
-  // Dil değiştiğinde tüm eğitim başlıklarını önceden çevir (cache'e yükle)
+  // Dil değiştiğinde tüm eğitim başlıklarını ve kategorilerini önceden çevir
   useEffect(() => {
     if (lang !== 'tr' && takvim.length > 0) {
       const basliklar = [...new Set(takvim.map(e => e.egitim).filter(Boolean))];
-      translateBatch(basliklar);
+      const kategoriler = [...new Set(takvim.map(e => e.kategori).filter(Boolean))];
+      const hepsi = [...new Set([...basliklar, ...kategoriler])];
+      translateBatch(hepsi);
     }
   }, [lang, takvim.length]);
 
