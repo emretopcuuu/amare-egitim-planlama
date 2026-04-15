@@ -26,19 +26,23 @@ const resmiBase64Yap = async (kaynak) => {
   });
 };
 
-export const gorselOlustur = async ({ apiKey, egitim, egitmenFotoURL, sablonFile, ekPrompt = '' }) => {
+export const gorselOlustur = async ({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, sablonFile, ekPrompt = '' }) => {
   if (!apiKey) throw new Error('Gemini API anahtarı girilmedi. Lütfen Ayarlar sekmesinden ekleyin.');
 
   // Şablonu base64'e çevir
   const sablon = await resmiBase64Yap(sablonFile);
 
-  // Konuşmacı fotoğrafı varsa base64'e çevir
-  let egitmenFoto = null;
-  if (egitmenFotoURL) {
+  // Konuşmacı fotoğraflarını topla
+  // Yeni: egitmenFotoURLs dizisi (çoklu), eski: egitmenFotoURL (tekli, geriye uyumluluk)
+  const fotoURLListesi = egitmenFotoURLs || (egitmenFotoURL ? [egitmenFotoURL] : []);
+  const egitmenFotolar = [];
+
+  for (const url of fotoURLListesi) {
     try {
-      egitmenFoto = await resmiBase64Yap(egitmenFotoURL);
+      const foto = await resmiBase64Yap(url);
+      egitmenFotolar.push(foto);
     } catch {
-      // Fotoğraf alınamazsa devam et
+      // Fotoğraf alınamazsa atla
     }
   }
 
@@ -56,12 +60,20 @@ Bu etkinlik ${lokasyon} şehrinde yüz yüze yapılacak. Arka plana ${lokasyon} 
     }
   }
 
+  // Konuşmacı fotoğrafı talimatları
+  let konusmaciFotoPrompt = '';
+  if (egitmenFotolar.length === 1) {
+    konusmaciFotoPrompt = 'KONUŞMACI FOTOĞRAFI: Sana verilen konuşmacı fotoğrafını şablona uygun bir alana entegre et, yuvarlak veya oval çerçeve içine al.';
+  } else if (egitmenFotolar.length > 1) {
+    konusmaciFotoPrompt = `KONUŞMACI FOTOĞRAFLARI: Sana ${egitmenFotolar.length} adet konuşmacı fotoğrafı verildi. HER BİRİNİ görsele ekle. Yan yana veya alt alta, eşit boyutta, yuvarlak/oval çerçeveler içinde düzenle. Tüm konuşmacılar eşit şekilde görünmeli, hiçbirini atlama.`;
+  }
+
   // Prompt oluştur
   const prompt = `Sen profesyonel bir tasarım uzmanısın. Aşağıdaki bilgileri kullanarak etkileyici bir etkinlik tanıtım görseli hazırla.
 
 ŞABLON: Sana verilen ilk görsel (şablon) esas tasarım düzenini belirliyor. Bu düzeni koru, renk paletini ve genel estetiği kullan.
 
-${egitmenFoto ? 'KONUŞMACI FOTOĞRAFI: İkinci görsel konuşmacının fotoğrafıdır. Bu fotoğrafı şablona uygun bir alana entegre et, yuvarlak veya oval çerçeve içine al.' : ''}
+${konusmaciFotoPrompt}
 
 ETKİNLİK BİLGİLERİ:
 - Başlık: ${egitim.egitim}
@@ -96,9 +108,13 @@ TASARIM KURALLARI:
     { inlineData: { mimeType: sablon.mimeType, data: sablon.base64 } },
   ];
 
-  if (egitmenFoto) {
-    parts.push({ inlineData: { mimeType: egitmenFoto.mimeType, data: egitmenFoto.base64 } });
-  }
+  // TÜM konuşmacı fotoğraflarını ekle
+  egitmenFotolar.forEach((foto, idx) => {
+    if (egitmenFotolar.length > 1) {
+      parts.push({ text: `KONUŞMACI ${idx + 1} FOTOĞRAFI:` });
+    }
+    parts.push({ inlineData: { mimeType: foto.mimeType, data: foto.base64 } });
+  });
 
   // Logoları ekle
   if (amareLogo) {

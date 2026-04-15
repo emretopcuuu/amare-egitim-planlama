@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Upload, ImageIcon, Download, Loader2, AlertCircle, CheckCircle2, Link2 } from 'lucide-react';
 import { gorselOlustur } from '../utils/gorselOlustur';
 
-const GorselOlusturModal = ({ egitim, egitmenFotoURL, apiKey, onClose, sablonlar = [], onGorselBagla }) => {
+const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, apiKey, onClose, sablonlar = [], onGorselBagla }) => {
   const [secilenSablon, setSecilenSablon] = useState(null); // { type: 'saved', url, ad } | { type: 'file', file, preview }
   const [generating, setGenerating] = useState(false);
   const [resultBlobUrl, setResultBlobUrl] = useState(null);
@@ -37,7 +37,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, apiKey, onClose, sablonlar
     setResultBlobUrl(null);
     try {
       const sablonKaynak = secilenSablon.type === 'file' ? secilenSablon.file : secilenSablon.url;
-      const result = await gorselOlustur({ apiKey, egitim, egitmenFotoURL, sablonFile: sablonKaynak, ekPrompt });
+      const result = await gorselOlustur({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, sablonFile: sablonKaynak, ekPrompt });
       const standardB64 = result.base64.replace(/-/g, '+').replace(/_/g, '/');
       const byteChars = atob(standardB64);
       const byteArr = new Uint8Array(byteChars.length);
@@ -84,9 +84,11 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, apiKey, onClose, sablonlar
             <div className="text-gray-600">📅 {egitim.gun} {egitim.tarih} &nbsp;|&nbsp; 🕐 {egitim.saat}{egitim.bitisSaati ? ` - ${egitim.bitisSaati}` : ''}</div>
             {egitim.egitmen && <div className="text-gray-600">🎤 {egitim.egitmen}</div>}
             {egitim.yer && <div className="text-gray-600">📍 {egitim.yer}</div>}
-            {egitmenFotoURL
-              ? <div className="text-green-600 font-medium">✅ Konuşmacı fotoğrafı mevcut</div>
-              : <div className="text-orange-500">⚠️ Konuşmacı fotoğrafı yüklenmemiş — görselsiz oluşturulacak</div>}
+            {(egitmenFotoURLs?.length || 0) > 0
+              ? <div className="text-green-600 font-medium">✅ {egitmenFotoURLs.length} konuşmacı fotoğrafı mevcut</div>
+              : egitmenFotoURL
+                ? <div className="text-green-600 font-medium">✅ Konuşmacı fotoğrafı mevcut</div>
+                : <div className="text-orange-500">⚠️ Konuşmacı fotoğrafı yüklenmemiş — görselsiz oluşturulacak</div>}
           </div>
 
           {/* Şablon Seçimi */}

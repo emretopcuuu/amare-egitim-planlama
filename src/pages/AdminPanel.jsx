@@ -365,13 +365,13 @@ const AdminPanel = () => {
 
   const handleGorselAc = (egitim) => {
     const egitmenAdlari = splitEgitmen(egitim.egitmen);
-    let fotoURL = null;
+    const fotoURLs = [];
     for (const ad of egitmenAdlari) {
       const safeId = makeSafeId(ad);
       const k = konusmacilar.find(k => k.id === safeId);
-      if (k?.fotoURL) { fotoURL = k.fotoURL; break; }
+      if (k?.fotoURL) fotoURLs.push(k.fotoURL);
     }
-    setGorselModal({ egitim, egitmenFotoURL: fotoURL });
+    setGorselModal({ egitim, egitmenFotoURL: fotoURLs[0] || null, egitmenFotoURLs: fotoURLs });
   };
 
   const handleQrAc = async (egitim) => {
@@ -488,12 +488,12 @@ const AdminPanel = () => {
       const egitim = seciliEgitimler[i];
       try {
         const egitmenAdlari = splitEgitmen(egitim.egitmen);
-        let fotoURL = null;
+        const fotoURLs = [];
         for (const ad of egitmenAdlari) {
           const k = konusmacilar.find(k => k.id === makeSafeId(ad));
-          if (k?.fotoURL) { fotoURL = k.fotoURL; break; }
+          if (k?.fotoURL) fotoURLs.push(k.fotoURL);
         }
-        const result = await gorselOlustur({ apiKey: geminiApiKey, egitim, egitmenFotoURL: fotoURL, sablonFile: sablon.url });
+        const result = await gorselOlustur({ apiKey: geminiApiKey, egitim, egitmenFotoURLs: fotoURLs, sablonFile: sablon.url });
         const standardB64 = result.base64.replace(/-/g, '+').replace(/_/g, '/');
         const byteChars = atob(standardB64);
         const byteArr = new Uint8Array(byteChars.length);
@@ -1679,6 +1679,7 @@ const AdminPanel = () => {
         <GorselOlusturModal
           egitim={gorselModal.egitim}
           egitmenFotoURL={gorselModal.egitmenFotoURL}
+          egitmenFotoURLs={gorselModal.egitmenFotoURLs}
           apiKey={geminiApiKey}
           sablonlar={sablonlar}
           onClose={() => setGorselModal(null)}
