@@ -64,7 +64,7 @@ export const LanguageProvider = ({ children }) => {
 
   // Gemini API ile toplu çeviri
   const callGeminiTranslate = useCallback(async (texts, targetLang) => {
-    const apiKey = localStorage.getItem('geminiApiKey');
+    const apiKey = localStorage.getItem('geminiApiKey') || import.meta.env.VITE_GEMINI_API_KEY || '';
     if (!apiKey || targetLang === 'tr') return texts;
 
     const langName = targetLang === 'en' ? 'English' : 'German';
