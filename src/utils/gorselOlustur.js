@@ -60,12 +60,15 @@ Bu etkinlik ${lokasyon} şehrinde yüz yüze yapılacak. Arka plana ${lokasyon} 
     }
   }
 
+  // Konuşmacı adlarını ayır
+  const konusmaciAdlari = (egitim.egitmen || '').split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜa-zçğışöşü]*\.?\s*[A-ZÇĞİÖŞÜ])/).map(n => n.trim().replace(/\s*SÖYLEŞİ\s*/gi, '').trim()).filter(n => n.length > 1);
+
   // Konuşmacı fotoğrafı talimatları
   let konusmaciFotoPrompt = '';
-  if (egitmenFotolar.length === 1) {
+  if (egitmenFotolar.length === 1 && konusmaciAdlari.length === 1) {
     konusmaciFotoPrompt = 'KONUŞMACI FOTOĞRAFI: Sana verilen konuşmacı fotoğrafını şablona uygun bir alana entegre et, yuvarlak veya oval çerçeve içine al.';
-  } else if (egitmenFotolar.length > 1) {
-    konusmaciFotoPrompt = `KONUŞMACI FOTOĞRAFLARI: Sana ${egitmenFotolar.length} adet konuşmacı fotoğrafı verildi. HER BİRİNİ görsele ekle. Yan yana veya alt alta, eşit boyutta, yuvarlak/oval çerçeveler içinde düzenle. Tüm konuşmacılar eşit şekilde görünmeli, hiçbirini atlama.`;
+  } else if (egitmenFotolar.length >= 1) {
+    konusmaciFotoPrompt = `KONUŞMACI FOTOĞRAFLARI: Sana ${egitmenFotolar.length} adet konuşmacı fotoğrafı verildi. Bu eğitimde toplam ${konusmaciAdlari.length} konuşmacı var: ${konusmaciAdlari.join(', ')}. Verilen TÜM fotoğrafları görsele ekle. Yan yana veya alt alta, eşit boyutta, yuvarlak/oval çerçeveler içinde düzenle. Tüm konuşmacılar eşit şekilde görünmeli, hiçbirini atlama. Fotoğrafı olmayan konuşmacıların isimlerini de metin olarak yaz.`;
   }
 
   // Prompt oluştur
@@ -88,7 +91,9 @@ TASARIM KURALLARI:
 - ONE TEAM / Amare Global kurumsal kimliğine uygun olsun
 - Profesyonel ve çekici bir tasarım
 - LOGO KURALI: Sana verilen resmi logoları (Amare Global ve One Team) görsele entegre et. Asla kendi logonu uydurmayacaksın! Bu logoları şablona uygun konuma yerleştir. Sahte/uydurma logo, amblem veya sembol çizme.
-- Sosyal medya paylaşımına uygun kare veya dikey format${konumPrompt}${ekPrompt ? '\n\nEK İSTEKLER:\n' + ekPrompt : ''}`;
+- Sosyal medya paylaşımına uygun kare veya dikey format
+- KESİNLİKLE YASAK: Görselde "Kyani" kelimesi KESİNLİKLE yer almamalı. Ne arka planda, ne logoda, ne metinde, ASLA "Kyani" yazma. Bu marka artık mevcut değil. Sadece "Amare Global" ve "One Team" kullan.
+- Birden fazla konuşmacı varsa HER BİRİNİN fotoğrafını görselde göster. Tek fotoğraf koymak YASAK — kaç fotoğraf verildiyse hepsi görünmeli.${konumPrompt}${ekPrompt ? '\n\nEK İSTEKLER:\n' + ekPrompt : ''}`;
 
   // Logoları yükle
   let amareLogo = null;
