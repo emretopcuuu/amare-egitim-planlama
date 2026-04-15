@@ -5,6 +5,8 @@ const LanguageContext = createContext();
 
 const SUPPORTED_LANGS = ['tr', 'en', 'de'];
 const CACHE_KEY = 'amare_dyn_translations';
+const BATCH_SIZE = 20; // Her API çağrısında max metin sayısı
+const BATCH_DELAY = 1500; // İstekler arası bekleme (ms)
 
 function getInitialLang() {
   const params = new URLSearchParams(window.location.search);
@@ -16,6 +18,15 @@ function getInitialLang() {
   const stored = localStorage.getItem('ot_lang');
   if (stored && SUPPORTED_LANGS.includes(stored)) return stored;
   return 'tr';
+}
+
+// Diziyi parçalara böl
+function chunk(arr, size) {
+  const chunks = [];
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size));
+  }
+  return chunks;
 }
 
 export const LanguageProvider = ({ children }) => {
@@ -31,9 +42,8 @@ export const LanguageProvider = ({ children }) => {
   const cacheRef = useRef(dynamicCache);
   cacheRef.current = dynamicCache;
 
-  // Çeviri kilidi — aynı anda birden fazla API çağrısını engelle
+  // Çeviri kilidi — aynı anda birden fazla translateBatch çağrısını engelle
   const translatingRef = useRef(false);
-  const retryQueueRef = useRef([]);
 
   // Cache'i localStorage'a kaydet
   useEffect(() => {
@@ -52,17 +62,16 @@ export const LanguageProvider = ({ children }) => {
     document.documentElement.lang = lang;
   }, [lang]);
 
-  // Statik çeviri (mevcut sistem — dokunulmadı)
+  // Statik çeviri
   const t = useCallback((key) => {
     return (translations[lang] && translations[lang][key]) || translations.tr[key] || key;
   }, [lang]);
 
-  // Locale string for date formatting
   const locale = lang === 'de' ? 'de-DE' : lang === 'en' ? 'en-US' : 'tr-TR';
 
-  // ─── DİNAMİK ÇEVİRİ (eğitim başlıkları, kategori isimleri vb.) ───────────
+  // ─── DİNAMİK ÇEVİRİ ───────────────────────────────────────────────────────
 
-  // Gemini API ile toplu çeviri — TEK SEFER, kilit mekanizmalı
+  // Gemini API — tek parça çeviri
   const callGeminiTranslate = useCallback(async (texts, targetLang) => {
     const apiKey = localStorage.getItem('geminiApiKey') || import.meta.env.VITE_GEMINI_API_KEY || '';
     if (!apiKey || targetLang === 'tr') return null;
@@ -72,104 +81,100 @@ export const LanguageProvider = ({ children }) => {
 
 Input: ${JSON.stringify(texts)}`;
 
-    try {
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.1, maxOutputTokens: 4096 },
-          }),
-        }
-      );
-      if (!res.ok) {
-        console.warn(`Gemini API error: ${res.status}`);
-        return null; // null = başarısız, cache'leme
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.1, maxOutputTokens: 4096 },
+        }),
       }
-      const data = await res.json();
-      const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      const match = responseText.match(/\[[\s\S]*\]/);
-      if (match) {
-        const parsed = JSON.parse(match[0]);
-        if (Array.isArray(parsed) && parsed.length === texts.length) return parsed;
-      }
-    } catch (err) {
-      console.warn('Dynamic translation error:', err);
+    );
+
+    if (!res.ok) throw new Error(`API ${res.status}`);
+
+    const data = await res.json();
+    const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    const match = responseText.match(/\[[\s\S]*\]/);
+    if (match) {
+      const parsed = JSON.parse(match[0]);
+      if (Array.isArray(parsed) && parsed.length === texts.length) return parsed;
     }
-    return null; // null = başarısız
+    throw new Error('Invalid response format');
   }, []);
 
-  // Toplu çeviri — TEK GİRİŞ NOKTASI, kilit mekanizmalı
+  // delay helper
+  const wait = (ms) => new Promise(r => setTimeout(r, ms));
+
+  // Toplu çeviri — TEK GİRİŞ NOKTASI
+  // Parçalara böl, sırayla gönder, başarısızları cache'leme
   const translateBatch = useCallback(async (texts) => {
     if (!texts?.length || lang === 'tr') return texts;
 
-    // Zaten çevrilmişleri filtrele
-    const toTranslate = [];
-    const toTranslateIdx = [];
-    const results = new Array(texts.length);
-
-    texts.forEach((text, i) => {
-      if (!text) { results[i] = text; return; }
-      const cached = cacheRef.current[lang]?.[text];
-      if (cached) { results[i] = cached; }
-      else { toTranslate.push(text); toTranslateIdx.push(i); }
-    });
-
-    if (toTranslate.length === 0) return results;
-
-    // Kilit kontrolü — eşzamanlı çağrıları engelle
-    if (translatingRef.current) {
-      // Kuyruğa ekle, sonra tekrar denenecek
-      retryQueueRef.current.push(...toTranslate);
-      return results;
-    }
-
+    // Zaten çalışıyorsa atla
+    if (translatingRef.current) return texts;
     translatingRef.current = true;
 
     try {
-      const translated = await callGeminiTranslate(toTranslate, lang);
+      // Cache'de olmayanları filtrele
+      const uncached = texts.filter(text => text && !cacheRef.current[lang]?.[text]);
+      const unique = [...new Set(uncached)];
 
-      if (translated) {
-        // Başarılı — cache'e yaz
-        const newCache = { ...cacheRef.current };
-        if (!newCache[lang]) newCache[lang] = {};
+      if (unique.length === 0) return texts;
 
-        toTranslate.forEach((text, j) => {
-          const result = translated[j] || text;
-          // Sadece gerçekten çevrilmişleri cache'le
-          if (result !== text) {
-            results[toTranslateIdx[j]] = result;
-            newCache[lang][text] = result;
+      console.log(`[i18n] ${unique.length} metin çevrilecek (${lang})...`);
+
+      // Parçalara böl
+      const chunks = chunk(unique, BATCH_SIZE);
+      const newCache = { ...cacheRef.current };
+      if (!newCache[lang]) newCache[lang] = {};
+
+      let totalTranslated = 0;
+
+      for (let i = 0; i < chunks.length; i++) {
+        const batch = chunks[i];
+
+        try {
+          const translated = await callGeminiTranslate(batch, lang);
+
+          if (translated) {
+            batch.forEach((text, j) => {
+              const result = translated[j];
+              if (result && result !== text) {
+                newCache[lang][text] = result;
+                totalTranslated++;
+              }
+            });
+
+            // Her başarılı parçadan sonra cache güncelle (kullanıcı hemen görsün)
+            setDynamicCache({ ...newCache });
           }
-        });
+        } catch (err) {
+          console.warn(`[i18n] Parça ${i + 1}/${chunks.length} başarısız:`, err.message);
+          // Bu parçayı atla, sonraki parçaya devam et
+        }
 
-        setDynamicCache(newCache);
+        // Son parça değilse bekle (rate limit'e takılmamak için)
+        if (i < chunks.length - 1) {
+          await wait(BATCH_DELAY);
+        }
       }
-      // null dönerse (API hatası) → cache'leme, sonra tekrar denenecek
+
+      console.log(`[i18n] ${totalTranslated}/${unique.length} metin çevrildi.`);
     } finally {
       translatingRef.current = false;
-
-      // Kuyrukta bekleyen varsa tekrar dene
-      if (retryQueueRef.current.length > 0) {
-        const queued = [...new Set(retryQueueRef.current)];
-        retryQueueRef.current = [];
-        // Kısa gecikme ile tekrar dene (rate limit'e takılmamak için)
-        setTimeout(() => translateBatch(queued), 2000);
-      }
     }
 
-    return results;
+    return texts;
   }, [lang, callGeminiTranslate]);
 
   // Senkron dinamik çeviri — SADECE cache'den oku
-  // translateBatch zaten useEffect'te çağrılıyor, burada API çağrısı YOK
   const tDynamic = useCallback((text) => {
     if (!text || lang === 'tr') return text;
     const cached = dynamicCache[lang]?.[text];
-    if (cached) return cached;
-    return text; // Cache'de yoksa orijinal döndür, translateBatch halleder
+    return cached || text;
   }, [lang, dynamicCache]);
 
   return (
