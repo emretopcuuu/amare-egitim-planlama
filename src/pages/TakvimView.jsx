@@ -49,7 +49,8 @@ const getCountdown = (egitim) => {
 // ── Konuşmacı Avatar ─────────────────────────────────────────────────────────
 const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md', dark = false }) => {
   const safeId = makeSafeId(ad);
-  const k = konusmacilar.find(k => k.id === safeId);
+  const normalizeId = (id) => id ? id.replace(/_+/g, '_').replace(/^_|_$/g, '') : '';
+  const k = konusmacilar.find(k => k.id === safeId || normalizeId(k.id) === safeId);
   const foto = k?.fotoURL;
   const sz = size === 'sm' ? 'w-10 h-10' : size === 'xxl' ? 'w-32 h-32' : size === 'xl' ? 'w-24 h-24' : size === 'lg' ? 'w-20 h-20' : 'w-14 h-14';
   return (

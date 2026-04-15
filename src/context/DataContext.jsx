@@ -22,7 +22,9 @@ export const makeSafeId = (ad) => {
     .replace(/Ğ/g,'G').replace(/ğ/g,'g').replace(/Ö/g,'O').replace(/ö/g,'o')
     .replace(/Ü/g,'U').replace(/ü/g,'u').replace(/Ç/g,'C').replace(/ç/g,'c')
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, '_');
+    .replace(/[^a-z0-9]/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_|_$/g, '');
 };
 import * as XLSX from 'xlsx';
 
@@ -81,12 +83,43 @@ export const DataProvider = ({ children }) => {
         setTakvimYayinlandi(settings.takvimYayinlandi || false);
       }
 
-      // Konuşmacıları yükle
+      // Konuşmacıları yükle + duplike ID temizliği
       const konusmacilarSnapshot = await getDocs(collection(db, 'konusmacilar'));
-      const konusmacilarData = konusmacilarSnapshot.docs.map(d => ({
+      let konusmacilarData = konusmacilarSnapshot.docs.map(d => ({
         id: d.id,
         ...d.data()
       }));
+      // Eski çift alt çizgili ID'leri düzelt (migration)
+      const normalizeKId = (id) => id ? id.replace(/_+/g, '_').replace(/^_|_$/g, '') : '';
+      const seenNorm = new Map();
+      for (const k of konusmacilarData) {
+        const nId = normalizeKId(k.id);
+        if (nId !== k.id) {
+          // Eski ID, duplike oluşturuyor — verileri yeni ID'ye taşı, eskiyi sil
+          if (!seenNorm.has(nId)) {
+            try {
+              const yeniRef = doc(db, 'konusmacilar', nId);
+              const { id: _oldId, ...veri } = k;
+              await setDoc(yeniRef, { ...veri, id: nId }, { merge: true });
+              await deleteDoc(doc(db, 'konusmacilar', k.id));
+              console.log(`[migration] Konuşmacı ID düzeltildi: ${k.id} → ${nId}`);
+              seenNorm.set(nId, { ...k, id: nId });
+            } catch (err) {
+              console.warn(`[migration] ID düzeltme hatası ${k.id}:`, err.message);
+              seenNorm.set(nId, k);
+            }
+          } else {
+            // Zaten yeni ID var, eski duplikeyi sil
+            try {
+              await deleteDoc(doc(db, 'konusmacilar', k.id));
+              console.log(`[migration] Duplike konuşmacı silindi: ${k.id}`);
+            } catch {}
+          }
+        } else {
+          seenNorm.set(nId, k);
+        }
+      }
+      konusmacilarData = [...seenNorm.values()];
       setKonusmacilar(konusmacilarData);
 
       // Şablonları yükle
@@ -381,10 +414,22 @@ export const DataProvider = ({ children }) => {
         fotoURL: base64,
         guncellendi: new Date().toISOString()
       }, { merge: true });
+      // Eski normalize olmamış ID varsa sil (duplike önleme)
+      const eskiIdler = konusmacilar.filter(k => {
+        const nId = k.id ? k.id.replace(/_+/g, '_').replace(/^_|_$/g, '') : '';
+        return nId === safeId && k.id !== safeId;
+      });
+      for (const eski of eskiIdler) {
+        try { await deleteDoc(doc(db, 'konusmacilar', eski.id)); } catch {}
+      }
       setKonusmacilar(prev => {
-        const idx = prev.findIndex(k => k.id === safeId);
+        const filtered = prev.filter(k => {
+          const nId = k.id ? k.id.replace(/_+/g, '_').replace(/^_|_$/g, '') : '';
+          return !(nId === safeId && k.id !== safeId);
+        });
+        const idx = filtered.findIndex(k => k.id === safeId);
         const updated = { id: safeId, ad: konusmaciAdi.trim(), fotoURL: base64 };
-        return idx >= 0 ? prev.map(k => k.id === safeId ? { ...k, ...updated } : k) : [...prev, updated];
+        return idx >= 0 ? filtered.map(k => k.id === safeId ? { ...k, ...updated } : k) : [...filtered, updated];
       });
       return { success: true, url: base64 };
     } catch (error) {
