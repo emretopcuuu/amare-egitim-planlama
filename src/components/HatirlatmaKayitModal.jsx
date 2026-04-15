@@ -16,7 +16,7 @@ const ZAMAN_KEYS = [
 const parseTarih = (t) => { if (!t) return null; const [d,m,y] = t.split('.').map(Number); return new Date(y,m-1,d); };
 
 const HatirlatmaKayitModal = ({ egitim, onClose }) => {
-  const { t } = useTranslation();
+  const { t, lang } = useTranslation();
   const [email, setEmail] = useState('');
   const [seciliZamanlar, setSeciliZamanlar] = useState(new Set(['24saat']));
   const [kaydediliyor, setKaydediliyor] = useState(false);
@@ -91,6 +91,7 @@ const HatirlatmaKayitModal = ({ egitim, onClose }) => {
           gonderildi: false,
           kayitZamani: Timestamp.now(),
           zoomLink: zoomLink || '',
+          dil: lang,
         });
       }
 

@@ -102,7 +102,7 @@ const CountdownBadge = ({ egitim }) => {
 
 // ── Hero: Bir Sonraki Eğitim ─────────────────────────────────────────────────
 const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, sira = 1 }) => {
-  const { t, locale } = useTranslation();
+  const { t, locale, tDynamic } = useTranslation();
   const [cd, setCd] = useState(() => getCountdown(egitim));
   useEffect(() => { const iv = setInterval(() => setCd(getCountdown(egitim)), 1000); return () => clearInterval(iv); }, [egitim]);
   const konusmacilar2 = splitEgitmen(egitim.egitmen);
@@ -140,7 +140,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
             <span className={`${isFirst?'text-sm':'text-[10px]'} font-bold uppercase tracking-wider text-purple-300`}>{labels[sira-1]}</span>
             {cd?.durum === 'canli' && <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-green-500 text-white animate-pulse">CANLI</span>}
           </div>
-          <h2 className={`${titleSize} font-extrabold text-white leading-tight`}>{egitim.egitim}</h2>
+          <h2 className={`${titleSize} font-extrabold text-white leading-tight`}>{tDynamic(egitim.egitim)}</h2>
           <div className={`flex flex-wrap items-center gap-2 md:gap-3 mt-2 ${isFirst?'text-xs md:text-sm':'text-[10px] md:text-xs'} text-purple-200`}>
             <span className="flex items-center gap-1"><Clock className={`${isFirst?'w-4 h-4':'w-3.5 h-3.5'}`} />{tarih?.toLocaleDateString(locale,{day:'numeric',month:'long',weekday:'long'})} • {egitim.saat}{egitim.bitisSaati?`–${egitim.bitisSaati}`:''}</span>
             <span className="flex items-center gap-1">{online?<Wifi className="w-3.5 h-3.5" />:<MapPin className="w-3.5 h-3.5" />}{online?'Zoom':egitim.yer}</span>
@@ -210,7 +210,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
 const TakvimView = () => {
   const navigate = useNavigate();
   const { takvim, takvimYayinlandi, loading, konusmacilar } = useData();
-  const { t, locale } = useTranslation();
+  const { t, locale, tDynamic, translateBatch, lang } = useTranslation();
   const contentRef = useRef(null); // sayfa scroll ref
   const [pdfYukleniyor, setPdfYukleniyor] = useState(false);
   const [filtre, setFiltre] = useState('tumu');
@@ -220,6 +220,14 @@ const TakvimView = () => {
   const [konusmaciModal, setKonusmaciModal] = useState(null);
   const [posterModal, setPosterModal] = useState(null);
   const [hatirlatmaModal, setHatirlatmaModal] = useState(null);
+
+  // Dil değiştiğinde tüm eğitim başlıklarını önceden çevir (cache'e yükle)
+  useEffect(() => {
+    if (lang !== 'tr' && takvim.length > 0) {
+      const basliklar = [...new Set(takvim.map(e => e.egitim).filter(Boolean))];
+      translateBatch(basliklar);
+    }
+  }, [lang, takvim.length]);
 
   const getHaftaKey = (tarihStr) => { const d=parseTarih(tarihStr); if(!d) return null; const p=new Date(d); const g=d.getDay(); p.setDate(d.getDate()+(g===0?-6:1-g)); return p.toISOString().split('T')[0]; };
 
@@ -311,15 +319,17 @@ const TakvimView = () => {
     const online = isOnline(egitim);
     const cdKart = getCountdown(egitim);
     const gecmis = cdKart?.durum === 'gecmis';
+    const egitimAdi = tDynamic(egitim.egitim);
+    const kategoriAdi = tDynamic(egitim.kategori);
 
     if (gorunum === 'kompakt') {
       return (
         <tr key={egitim.id} className={`hover:bg-purple-50 transition-colors ${gecmis ? 'opacity-40' : ''}`}>
           <td className="px-3 py-2 text-sm font-semibold text-gray-700 whitespace-nowrap">{egitim.gun} {egitim.tarih}</td>
           <td className="px-3 py-2 text-sm text-gray-600 whitespace-nowrap">{egitim.saat}{egitim.bitisSaati?`–${egitim.bitisSaati}`:''}</td>
-          <td className="px-3 py-2 text-sm font-bold text-gray-800">{egitim.egitim}</td>
+          <td className="px-3 py-2 text-sm font-bold text-gray-800">{egitimAdi}</td>
           <td className="px-3 py-2 text-sm text-gray-600">{egitim.egitmen||'—'}</td>
-          <td className="px-3 py-2">{egitim.kategori?<span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${katRenk.bg} ${katRenk.text}`}>{egitim.kategori}</span>:'—'}</td>
+          <td className="px-3 py-2">{egitim.kategori?<span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${katRenk.bg} ${katRenk.text}`}>{kategoriAdi}</span>:'—'}</td>
           <td className="px-3 py-2"><CountdownBadge egitim={egitim} /></td>
         </tr>
       );
@@ -339,10 +349,10 @@ const TakvimView = () => {
               <CountdownBadge egitim={egitim} />
               {!gecmis && <button onClick={()=>setHatirlatmaModal(egitim)} className="ml-auto inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors"><Bell className="w-3 h-3" />{t('cal_remind')}</button>}
             </div>
-            <h3 className="font-bold text-gray-900 leading-tight mb-2">{egitim.egitim}</h3>
+            <h3 className="font-bold text-gray-900 leading-tight mb-2">{egitimAdi}</h3>
             <div className="text-sm text-gray-500 space-y-1">
               <div className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-500" />{egitim.tarih} {egitim.gun} • {egitim.saat}</div>
-              {egitim.kategori && <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${katRenk.bg} ${katRenk.text}`}><Tag className="w-3 h-3" />{egitim.kategori}</span>}
+              {egitim.kategori && <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${katRenk.bg} ${katRenk.text}`}><Tag className="w-3 h-3" />{kategoriAdi}</span>}
             </div>
             <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
               {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={(a,k)=>setKonusmaciModal({ad:a,kayit:k})} size="sm" />)}
@@ -367,7 +377,7 @@ const TakvimView = () => {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="font-bold text-gray-900 text-base leading-tight">{egitim.egitim}</h3>
+                  <h3 className="font-bold text-gray-900 text-base leading-tight">{egitimAdi}</h3>
                   <CountdownBadge egitim={egitim} />
                   {!gecmis && <button onClick={()=>setHatirlatmaModal(egitim)} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"><Bell className="w-3 h-3" />{t('cal_remind')}</button>}
                 </div>
@@ -376,7 +386,7 @@ const TakvimView = () => {
                   {egitim.yer && <span className="flex items-center gap-1">{online?<Wifi className="w-3.5 h-3.5 text-blue-500" />:<MapPin className="w-3.5 h-3.5 text-red-400" />}<span className="truncate max-w-[220px]">{online?'Zoom':egitim.yer}</span></span>}
                 </div>
                 <div className="flex flex-wrap items-center gap-2 mt-2">
-                  {egitim.kategori && <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${katRenk.bg} ${katRenk.text}`}><Tag className="w-3 h-3" />{egitim.kategori}</span>}
+                  {egitim.kategori && <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${katRenk.bg} ${katRenk.text}`}><Tag className="w-3 h-3" />{kategoriAdi}</span>}
                   {!online && getSehir(egitim) && getSehir(egitim)!=='Diğer' && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200"><MapPin className="w-3 h-3" />{getSehir(egitim)}</span>}
                 </div>
                 {konusmacilar2.length>0 && <div className="flex items-center gap-1 mt-2 text-sm text-gray-600"><User className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /><span>{konusmacilar2.join(', ')}</span></div>}
