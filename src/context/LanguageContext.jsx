@@ -71,8 +71,8 @@ export const LanguageProvider = ({ children }) => {
 
   // ─── DİNAMİK ÇEVİRİ ───────────────────────────────────────────────────────
 
-  // Gemini API — tek parça çeviri
-  const callGeminiTranslate = useCallback(async (texts, targetLang) => {
+  // Gemini API — tek parça çeviri (retry mekanizmalı)
+  const callGeminiTranslate = useCallback(async (texts, targetLang, retryCount = 0) => {
     const apiKey = localStorage.getItem('geminiApiKey') || import.meta.env.VITE_GEMINI_API_KEY || '';
     if (!apiKey || targetLang === 'tr') return null;
 
@@ -88,10 +88,22 @@ Input: ${JSON.stringify(texts)}`;
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.1, maxOutputTokens: 4096 },
+          generationConfig: {
+            temperature: 0.1,
+            maxOutputTokens: 4096,
+            thinkingConfig: { thinkingBudget: 256 },
+          },
         }),
       }
     );
+
+    // 503 rate limit → retry (max 3 kez, artan bekleme)
+    if (res.status === 503 && retryCount < 3) {
+      const delay = (retryCount + 1) * 2000; // 2s, 4s, 6s
+      console.warn(`[i18n] API 503, ${delay/1000}s sonra tekrar denenecek...`);
+      await wait(delay);
+      return callGeminiTranslate(texts, targetLang, retryCount + 1);
+    }
 
     if (!res.ok) throw new Error(`API ${res.status}`);
 
