@@ -80,7 +80,7 @@ Bu etkinlik ${lokasyon} şehrinde yüz yüze yapılacak. Arka plana ${lokasyon} 
   if (egitmenFotolar.length === 1 && konusmaciAdlari.length === 1) {
     konusmaciFotoPrompt = 'KONUŞMACI FOTOĞRAFI: Sana verilen konuşmacı fotoğrafını şablona uygun bir alana entegre et, yuvarlak veya oval çerçeve içine al.';
   } else if (egitmenFotolar.length >= 1) {
-    konusmaciFotoPrompt = `KONUŞMACI FOTOĞRAFLARI: Sana ${egitmenFotolar.length} adet konuşmacı fotoğrafı verildi. Bu eğitimde toplam ${konusmaciAdlari.length} konuşmacı var: ${konusmaciAdlari.join(', ')}. Verilen TÜM fotoğrafları görsele ekle. Yan yana veya alt alta, eşit boyutta, yuvarlak/oval çerçeveler içinde düzenle. Tüm konuşmacılar eşit şekilde görünmeli, hiçbirini atlama. Fotoğrafı olmayan konuşmacıların isimlerini de metin olarak yaz.`;
+    konusmaciFotoPrompt = `KONUŞMACI FOTOĞRAFLARI: Sana ${egitmenFotolar.length} adet konuşmacı fotoğrafı verildi. Konuşmacılar: ${konusmaciAdlari.join(', ')}. Her konuşmacının fotoğrafını görselde TAM BİR KEZ göster — TEKRARLAMA, ÇOĞALTMA. Yan yana, eşit boyutta, yuvarlak çerçeve içinde düzenle. Her fotoğrafın altına isim yaz. ASLA aynı kişiyi iki kez gösterme.`;
   }
 
   // Prompt oluştur
@@ -105,7 +105,7 @@ TASARIM KURALLARI:
 - LOGO KURALI: Sana verilen resmi logoları (Amare Global ve One Team) görsele entegre et. Asla kendi logonu uydurmayacaksın! Bu logoları şablona uygun konuma yerleştir. Sahte/uydurma logo, amblem veya sembol çizme.
 - Sosyal medya paylaşımına uygun kare veya dikey format
 - KESİNLİKLE YASAK: Görselde "Kyani" kelimesi KESİNLİKLE yer almamalı. Ne arka planda, ne logoda, ne metinde, ASLA "Kyani" yazma. Bu marka artık mevcut değil. Sadece "Amare Global" ve "One Team" kullan.
-- Birden fazla konuşmacı varsa HER BİRİNİN fotoğrafını görselde göster. Tek fotoğraf koymak YASAK — kaç fotoğraf verildiyse hepsi görünmeli.${konumPrompt}${ekPrompt ? '\n\nEK İSTEKLER:\n' + ekPrompt : ''}`;
+- Her konuşmacı görselde SADECE 1 KEZ görünmeli. Aynı fotoğrafı tekrarlama, çoğaltma. Fotoğraf sayısı = konuşmacı sayısı olmalı.${konumPrompt}${ekPrompt ? '\n\nEK İSTEKLER:\n' + ekPrompt : ''}`;
 
   // Logoları yükle
   let amareLogo = null;
