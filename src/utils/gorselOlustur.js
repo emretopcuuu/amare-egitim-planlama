@@ -37,14 +37,19 @@ export const gorselOlustur = async ({ apiKey, egitim, egitmenFotoURL, egitmenFot
   const fotoURLListesi = egitmenFotoURLs || (egitmenFotoURL ? [egitmenFotoURL] : []);
   const egitmenFotolar = [];
 
+  console.log(`[gorsel] Eğitim: ${egitim.egitim}`);
+  console.log(`[gorsel] Egitmen alanı: ${egitim.egitmen}`);
+  console.log(`[gorsel] Gelen fotoURL sayısı: ${fotoURLListesi.length}`);
+
   for (const url of fotoURLListesi) {
     try {
       const foto = await resmiBase64Yap(url);
       egitmenFotolar.push(foto);
-    } catch {
-      // Fotoğraf alınamazsa atla
+    } catch (err) {
+      console.warn(`[gorsel] Fotoğraf yüklenemedi:`, err.message);
     }
   }
+  console.log(`[gorsel] Yüklenen fotoğraf sayısı: ${egitmenFotolar.length}`);
 
   // Şehir/konum tespiti — online değilse arka plana şehir görseli ekle
   const yer = egitim.yer || '';

@@ -366,11 +366,16 @@ const AdminPanel = () => {
   const handleGorselAc = (egitim) => {
     const egitmenAdlari = splitEgitmen(egitim.egitmen);
     const fotoURLs = [];
+    console.log(`[gorselAc] Eğitim: ${egitim.egitim}`);
+    console.log(`[gorselAc] Egitmen alanı: "${egitim.egitmen}"`);
+    console.log(`[gorselAc] Ayrıştırılan isimler:`, egitmenAdlari);
     for (const ad of egitmenAdlari) {
       const safeId = makeSafeId(ad);
       const k = konusmacilar.find(k => k.id === safeId);
+      console.log(`[gorselAc]   ${ad} → safeId: ${safeId} → foto: ${k?.fotoURL ? 'VAR' : 'YOK'}`);
       if (k?.fotoURL) fotoURLs.push(k.fotoURL);
     }
+    console.log(`[gorselAc] Toplam fotoğraf: ${fotoURLs.length}/${egitmenAdlari.length}`);
     setGorselModal({ egitim, egitmenFotoURL: fotoURLs[0] || null, egitmenFotoURLs: fotoURLs });
   };
 
