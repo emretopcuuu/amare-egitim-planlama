@@ -251,23 +251,22 @@ const AdminPanel = () => {
 
   // ── Computed ─────────────────────────────────────────────────────────────
   // Konuşmacılar: hem takvimden hem Firestore'dan — hiçbiri kaybolmaz
-  // Normalize: eski Firestore ID'leri çift alt çizgi içerebilir, yeni makeSafeId tek üretir
-  const normalizeId = (id) => id ? id.replace(/_+/g, '_').replace(/^_|_$/g, '') : '';
+  // Her iki kaynağı da makeSafeId ile normalize edip duplike önle
   const benzersizKonusmacilar = (() => {
     const seen = new Map(); // normalizedId → ad
-    // 1. Firestore'daki kayıtlı konuşmacılar (kalıcı, silinmez)
+    // 1. Firestore'daki kayıtlı konuşmacılar
     (konusmacilar || []).forEach(k => {
       if (k.id) {
-        const nId = normalizeId(k.id);
-        if (!seen.has(nId)) seen.set(nId, k.ad || k.id);
+        const nId = makeSafeId(k.ad || k.id);
+        if (nId && !seen.has(nId)) seen.set(nId, k.ad || k.id);
       }
     });
     // 2. Takvimden gelen isimler (yeni eklenenler)
     takvim.map(e => e.egitmen).filter(Boolean)
       .flatMap(e => splitEgitmen(e))
       .forEach(ad => {
-        const key = makeSafeId(ad); // zaten normalize
-        if (!seen.has(key)) seen.set(key, ad);
+        const key = makeSafeId(ad);
+        if (key && !seen.has(key)) seen.set(key, ad);
       });
     return [...seen.values()].sort((a, b) => a.localeCompare(b, 'tr-TR'));
   })();
@@ -382,7 +381,7 @@ const AdminPanel = () => {
     for (const ad of egitmenAdlari) {
       const safeId = makeSafeId(ad);
       // Hem exact match hem normalize match dene (eski Firestore ID'leri çift _ içerebilir)
-      const k = konusmacilar.find(k => k.id === safeId || normalizeId(k.id) === safeId);
+      const k = konusmacilar.find(k => k.id === safeId || makeSafeId(k.ad || k.id) === safeId);
       console.log(`[gorselAc]   ${ad} → safeId: ${safeId} → foto: ${k?.fotoURL ? 'VAR' : 'YOK'}`);
       if (k?.fotoURL) fotoURLs.push(k.fotoURL);
     }
@@ -507,7 +506,7 @@ const AdminPanel = () => {
         const fotoURLs = [];
         for (const ad of egitmenAdlari) {
           const sid = makeSafeId(ad);
-          const k = konusmacilar.find(k => k.id === sid || normalizeId(k.id) === sid);
+          const k = konusmacilar.find(k => k.id === sid || makeSafeId(k.ad || k.id) === sid);
           if (k?.fotoURL) fotoURLs.push(k.fotoURL);
         }
         const result = await gorselOlustur({ apiKey: geminiApiKey, egitim, egitmenFotoURLs: fotoURLs, sablonFile: sablon.url });

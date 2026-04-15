@@ -14,10 +14,20 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { takvimOlustur } from '../utils/takvimAlgoritma';
 
+// Unvanları sıyır — sadece kişi adı kalsın
+const stripTitles = (ad) => {
+  if (!ad) return '';
+  return ad
+    .replace(/^(Prof\.?\s*Dr\.?\s*|Doç\.?\s*Dr\.?\s*|Uzm\.?\s*Dr\.?\s*|Dr\.?\s*|Dyt\.?\s*|Op\.?\s*Dr\.?\s*|Psik\.?\s*|Psk\.?\s*|Ecz\.?\s*|Avt?\.?\s*|Öğr\.?\s*Gör\.?\s*|Arş\.?\s*Gör\.?\s*)/gi, '')
+    .trim();
+};
+
 // Türkçe karakterleri ASCII'ye çevirip güvenli ID oluştur
 export const makeSafeId = (ad) => {
   if (!ad) return '';
-  return ad.trim()
+  const cleaned = stripTitles(ad);
+  if (!cleaned) return '';
+  return cleaned
     .replace(/İ/g,'I').replace(/ı/g,'i').replace(/Ş/g,'S').replace(/ş/g,'s')
     .replace(/Ğ/g,'G').replace(/ğ/g,'g').replace(/Ö/g,'O').replace(/ö/g,'o')
     .replace(/Ü/g,'U').replace(/ü/g,'u').replace(/Ç/g,'C').replace(/ç/g,'c')
@@ -89,34 +99,42 @@ export const DataProvider = ({ children }) => {
         id: d.id,
         ...d.data()
       }));
-      // Eski çift alt çizgili ID'leri düzelt (migration)
-      const normalizeKId = (id) => id ? id.replace(/_+/g, '_').replace(/^_|_$/g, '') : '';
+      // Migration: eski ID'leri yeni makeSafeId formatına taşı (unvan + çift _ temizliği)
       const seenNorm = new Map();
       for (const k of konusmacilarData) {
-        const nId = normalizeKId(k.id);
-        if (nId !== k.id) {
-          // Eski ID, duplike oluşturuyor — verileri yeni ID'ye taşı, eskiyi sil
-          if (!seenNorm.has(nId)) {
+        // Kayıtlı ad'dan yeni ID hesapla
+        const yeniId = makeSafeId(k.ad || k.id);
+        if (!yeniId) { seenNorm.set(k.id, k); continue; }
+        if (yeniId !== k.id) {
+          // Eski ID farklı — verileri yeni ID'ye taşı
+          if (!seenNorm.has(yeniId)) {
             try {
-              const yeniRef = doc(db, 'konusmacilar', nId);
+              const yeniRef = doc(db, 'konusmacilar', yeniId);
               const { id: _oldId, ...veri } = k;
-              await setDoc(yeniRef, { ...veri, id: nId }, { merge: true });
+              await setDoc(yeniRef, { ...veri, id: yeniId }, { merge: true });
               await deleteDoc(doc(db, 'konusmacilar', k.id));
-              console.log(`[migration] Konuşmacı ID düzeltildi: ${k.id} → ${nId}`);
-              seenNorm.set(nId, { ...k, id: nId });
+              console.log(`[migration] Konuşmacı ID düzeltildi: ${k.id} → ${yeniId}`);
+              seenNorm.set(yeniId, { ...k, id: yeniId });
             } catch (err) {
               console.warn(`[migration] ID düzeltme hatası ${k.id}:`, err.message);
-              seenNorm.set(nId, k);
+              seenNorm.set(k.id, k);
             }
           } else {
-            // Zaten yeni ID var, eski duplikeyi sil
+            // Yeni ID zaten var — duplike olan eskiyi sil, fotoğrafı varsa aktar
+            const mevcut = seenNorm.get(yeniId);
+            if (!mevcut.fotoURL && k.fotoURL) {
+              try {
+                await setDoc(doc(db, 'konusmacilar', yeniId), { fotoURL: k.fotoURL }, { merge: true });
+                seenNorm.set(yeniId, { ...mevcut, fotoURL: k.fotoURL });
+              } catch {}
+            }
             try {
               await deleteDoc(doc(db, 'konusmacilar', k.id));
-              console.log(`[migration] Duplike konuşmacı silindi: ${k.id}`);
+              console.log(`[migration] Duplike konuşmacı silindi: ${k.id} (→ ${yeniId})`);
             } catch {}
           }
         } else {
-          seenNorm.set(nId, k);
+          if (!seenNorm.has(yeniId)) seenNorm.set(yeniId, k);
         }
       }
       konusmacilarData = [...seenNorm.values()];
