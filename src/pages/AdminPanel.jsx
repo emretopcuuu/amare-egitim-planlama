@@ -499,7 +499,8 @@ const AdminPanel = () => {
         const byteArr = new Uint8Array(byteChars.length);
         for (let j = 0; j < byteChars.length; j++) byteArr[j] = byteChars.charCodeAt(j);
         const blobUrl = URL.createObjectURL(new Blob([byteArr], { type: result.mimeType }));
-        setTopluIlerleme(prev => ({ ...prev, tamamlanan: i + 1, sonuclar: [...prev.sonuclar, { egitim, blobUrl }] }));
+        const dataUrl = `data:${result.mimeType};base64,${standardB64}`;
+        setTopluIlerleme(prev => ({ ...prev, tamamlanan: i + 1, sonuclar: [...prev.sonuclar, { egitim, blobUrl, dataUrl, bagli: false }] }));
       } catch (err) {
         setTopluIlerleme(prev => ({ ...prev, tamamlanan: i + 1, hatalar: [...prev.hatalar, { egitim: egitim.egitim, hata: err.message }] }));
       }
@@ -511,6 +512,29 @@ const AdminPanel = () => {
     a.href = blobUrl;
     a.download = `${ad.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.png`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  };
+
+  const handleTopluBagla = async (idx) => {
+    const s = topluIlerleme.sonuclar[idx];
+    if (!s || s.bagli) return;
+    try {
+      const result = await egitimGuncelle(s.egitim.id, { gorselUrl: s.dataUrl });
+      if (result.success) {
+        setTopluIlerleme(prev => {
+          const yeni = { ...prev, sonuclar: [...prev.sonuclar] };
+          yeni.sonuclar[idx] = { ...yeni.sonuclar[idx], bagli: true };
+          return yeni;
+        });
+      } else { alert('Bağlanamadı: ' + result.error); }
+    } catch (err) { alert('Hata: ' + err.message); }
+  };
+
+  const handleTopluTumunuBagla = async () => {
+    for (let i = 0; i < topluIlerleme.sonuclar.length; i++) {
+      if (!topluIlerleme.sonuclar[i].bagli) {
+        await handleTopluBagla(i);
+      }
+    }
   };
 
   const handleBilgiAc = (ad) => {
@@ -1599,17 +1623,37 @@ const AdminPanel = () => {
               )}
               {topluIlerleme.sonuclar.length > 0 && (
                 <div className="space-y-3">
-                  <div className="text-sm font-semibold text-green-700">✅ Hazır ({topluIlerleme.sonuclar.length})</div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold text-green-700">✅ Hazır ({topluIlerleme.sonuclar.length})</div>
+                    {topluIlerleme.sonuclar.some(s => !s.bagli) && (
+                      <button onClick={handleTopluTumunuBagla}
+                        className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-lg flex items-center gap-1">
+                        <CheckCircle2 className="w-3 h-3" />Tümünü Eğitimlere Bağla
+                      </button>
+                    )}
+                  </div>
                   <div className="grid grid-cols-2 gap-3">
                     {topluIlerleme.sonuclar.map((s, i) => (
-                      <div key={i} className="border rounded-xl overflow-hidden">
+                      <div key={i} className={`border rounded-xl overflow-hidden ${s.bagli ? 'border-green-400 bg-green-50' : ''}`}>
                         <img src={s.blobUrl} alt={s.egitim.egitim} className="w-full object-cover" />
-                        <div className="p-2">
-                          <div className="text-xs font-semibold text-gray-700 truncate mb-1">{s.egitim.egitim}</div>
-                          <button onClick={() => handleTopluIndir(s.blobUrl, s.egitim.egitim)}
-                            className="w-full py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1">
-                            <Download className="w-3 h-3" />İndir
-                          </button>
+                        <div className="p-2 space-y-1">
+                          <div className="text-xs font-semibold text-gray-700 truncate">{s.egitim.egitim}</div>
+                          <div className="flex gap-1">
+                            <button onClick={() => handleTopluIndir(s.blobUrl, s.egitim.egitim)}
+                              className="flex-1 py-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1">
+                              <Download className="w-3 h-3" />İndir
+                            </button>
+                            {s.bagli ? (
+                              <div className="flex-1 py-1.5 bg-purple-100 text-purple-700 text-xs font-semibold rounded-lg flex items-center justify-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" />Bağlı
+                              </div>
+                            ) : (
+                              <button onClick={() => handleTopluBagla(i)}
+                                className="flex-1 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" />Bağla
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
