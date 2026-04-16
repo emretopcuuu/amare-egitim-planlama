@@ -108,7 +108,10 @@ Input: ${JSON.stringify(texts)}`;
     if (!res.ok) throw new Error(`API ${res.status}`);
 
     const data = await res.json();
-    const responseText = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    // Gemini thinking modelde ilk part "thought" olabilir, text part'ı bul
+    const parts = data?.candidates?.[0]?.content?.parts || [];
+    const textPart = parts.find(p => p.text && !p.thought) || parts.find(p => p.text) || {};
+    const responseText = textPart.text || '';
     const match = responseText.match(/\[[\s\S]*\]/);
     if (match) {
       const parsed = JSON.parse(match[0]);
@@ -125,8 +128,17 @@ Input: ${JSON.stringify(texts)}`;
   const translateBatch = useCallback(async (texts) => {
     if (!texts?.length || lang === 'tr') return texts;
 
+    const apiKey = localStorage.getItem('geminiApiKey') || import.meta.env.VITE_GEMINI_API_KEY || '';
+    if (!apiKey) {
+      console.warn('[i18n] Çeviri yapılamadı: API anahtarı yok! localStorage veya VITE_GEMINI_API_KEY boş.');
+      return texts;
+    }
+
     // Zaten çalışıyorsa atla
-    if (translatingRef.current) return texts;
+    if (translatingRef.current) {
+      console.log('[i18n] translateBatch zaten çalışıyor, atlandı.');
+      return texts;
+    }
     translatingRef.current = true;
 
     try {
