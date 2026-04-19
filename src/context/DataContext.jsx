@@ -93,11 +93,28 @@ export const DataProvider = ({ children }) => {
       }
 
       // Konuşmacıları yükle (Firestore'a dokunma, sadece oku)
+      // Client-side dedup: aynı makeCoreId'ye sahip kayıtları birleştir, fotoğraflıyı tercih et
       const konusmacilarSnapshot = await getDocs(collection(db, 'konusmacilar'));
-      const konusmacilarData = konusmacilarSnapshot.docs.map(d => ({
-        id: d.id,
-        ...d.data()
-      }));
+      const rawData = konusmacilarSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      const coreMap = new Map();
+      for (const k of rawData) {
+        const cid = makeCoreId(k.ad || k.id);
+        const existing = coreMap.get(cid);
+        if (!existing) {
+          coreMap.set(cid, k);
+        } else {
+          // Fotoğraflıyı tercih et, bilgileri birleştir
+          if (k.fotoURL && !existing.fotoURL) {
+            coreMap.set(cid, { ...existing, fotoURL: k.fotoURL, id: k.id });
+          } else if (k.fotoURL && existing.fotoURL) {
+            // İkisinde de foto var — daha fazla bilgisi olanı tut
+            if ((k.unvan || k.biyografi) && !(existing.unvan || existing.biyografi)) {
+              coreMap.set(cid, { ...k });
+            }
+          }
+        }
+      }
+      const konusmacilarData = [...coreMap.values()];
       setKonusmacilar(konusmacilarData);
 
       // Şablonları yükle
