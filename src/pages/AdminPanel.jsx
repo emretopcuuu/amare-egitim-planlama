@@ -289,7 +289,13 @@ const AdminPanel = () => {
       }
     }
     toRemove.forEach(cid => seen.delete(cid));
-    return [...seen.values()].map(v => v.ad).sort((a, b) => a.localeCompare(b, 'tr-TR'));
+    const result = [...seen.values()].map(v => v.ad).sort((a, b) => a.localeCompare(b, 'tr-TR'));
+    console.log(`[benzersiz] ${konusmacilar?.length || 0} Firestore + takvim → ${result.length} benzersiz konuşmacı`);
+    // Duplike isimleri logla
+    const adCounts = {};
+    result.forEach(ad => { adCounts[ad] = (adCounts[ad] || 0) + 1; });
+    Object.entries(adCounts).filter(([,c]) => c > 1).forEach(([ad,c]) => console.warn(`[benzersiz] DUPLİKE İSİM: "${ad}" x${c}`));
+    return result;
   })();
 
   const filtreliTakvim = takvim.filter(e => {

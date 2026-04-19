@@ -104,9 +104,13 @@ export const DataProvider = ({ children }) => {
       // Client-side dedup: aynı makeCoreId'ye sahip kayıtları birleştir, fotoğraflıyı tercih et
       const konusmacilarSnapshot = await getDocs(collection(db, 'konusmacilar'));
       const rawData = konusmacilarSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      console.log(`[dedup] Firestore'dan ${rawData.length} konuşmacı yüklendi`);
       const coreMap = new Map();
       for (const k of rawData) {
         const cid = makeCoreId(k.ad || k.id);
+        if (coreMap.has(cid)) {
+          console.log(`[dedup] DUPLİKE: "${k.ad||k.id}" (id:${k.id}) → coreId: ${cid} (mevcut: ${coreMap.get(cid).id})`);
+        }
         const existing = coreMap.get(cid);
         if (!existing) {
           coreMap.set(cid, k);
