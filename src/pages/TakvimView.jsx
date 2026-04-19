@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData, makeSafeId } from '../context/DataContext';
+import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -49,7 +49,10 @@ const getCountdown = (egitim) => {
 // ── Konuşmacı Avatar ─────────────────────────────────────────────────────────
 const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md', dark = false }) => {
   const safeId = makeSafeId(ad);
-  const k = konusmacilar.find(k => k.id === safeId || makeSafeId(k.ad || k.id) === safeId);
+  const coreId = makeCoreId(ad);
+  const k = konusmacilar.find(k => k.id === safeId)
+         || konusmacilar.find(k => k.id === coreId)
+         || konusmacilar.find(k => makeCoreId(k.ad || k.id) === coreId);
   const foto = k?.fotoURL;
   const sz = size === 'sm' ? 'w-10 h-10' : size === 'xxl' ? 'w-32 h-32' : size === 'xl' ? 'w-24 h-24' : size === 'lg' ? 'w-20 h-20' : 'w-14 h-14';
   return (

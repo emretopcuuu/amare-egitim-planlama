@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useData, makeSafeId } from '../context/DataContext';
+import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import * as XLSX from 'xlsx';
 import QRCode from 'qrcode';
 import {
@@ -251,35 +251,45 @@ const AdminPanel = () => {
 
   // ── Computed ─────────────────────────────────────────────────────────────
   // Konuşmacılar: hem takvimden hem Firestore'dan — hiçbiri kaybolmaz
-  // Her iki kaynağı da makeSafeId ile normalize edip duplike önle
+  // makeCoreId ile dedup (unvan sıyırır), fotoğraflı olanı tercih et
+  const konusmaciBul = (ad) => {
+    // Önce exact match, sonra coreId match
+    const sid = makeSafeId(ad);
+    const cid = makeCoreId(ad);
+    return konusmacilar.find(k => k.id === sid)
+        || konusmacilar.find(k => k.id === cid)
+        || konusmacilar.find(k => makeCoreId(k.ad || k.id) === cid);
+  };
   const benzersizKonusmacilar = (() => {
-    const seen = new Map(); // normalizedId → ad
+    const seen = new Map(); // coreId → { ad, hasFoto }
     // 1. Firestore'daki kayıtlı konuşmacılar
     (konusmacilar || []).forEach(k => {
-      if (k.id) {
-        const nId = makeSafeId(k.ad || k.id);
-        if (nId && !seen.has(nId)) seen.set(nId, k.ad || k.id);
+      if (!k.id) return;
+      const cid = makeCoreId(k.ad || k.id);
+      if (!cid) return;
+      const existing = seen.get(cid);
+      // Fotoğraflı olanı tercih et
+      if (!existing || (!existing.hasFoto && k.fotoURL)) {
+        seen.set(cid, { ad: k.ad || k.id, hasFoto: !!k.fotoURL });
       }
     });
     // 2. Takvimden gelen isimler (yeni eklenenler)
     takvim.map(e => e.egitmen).filter(Boolean)
       .flatMap(e => splitEgitmen(e))
       .forEach(ad => {
-        const key = makeSafeId(ad);
-        if (key && !seen.has(key)) seen.set(key, ad);
+        const cid = makeCoreId(ad);
+        if (cid && !seen.has(cid)) seen.set(cid, { ad, hasFoto: false });
       });
-    // 3. Tek kelimelik isimleri at — tam adı olan bir konuşmacının parçasıysa duplike
-    const allIds = [...seen.keys()];
+    // 3. Tek kelimelik isimleri at — tam adı olan başka kayıt varsa
+    const allCids = [...seen.keys()];
     const toRemove = [];
-    for (const [id, ad] of seen) {
-      if (!ad.includes(' ')) {
-        // Tek kelime: "ZEYNEP" gibi — başka bir ID bu kelimenin başıyla başlıyorsa at
-        const match = allIds.find(otherId => otherId !== id && otherId.startsWith(id + '_'));
-        if (match) toRemove.push(id);
+    for (const [cid, val] of seen) {
+      if (!val.ad.includes(' ')) {
+        if (allCids.some(other => other !== cid && other.startsWith(cid + '_'))) toRemove.push(cid);
       }
     }
-    toRemove.forEach(id => seen.delete(id));
-    return [...seen.values()].sort((a, b) => a.localeCompare(b, 'tr-TR'));
+    toRemove.forEach(cid => seen.delete(cid));
+    return [...seen.values()].map(v => v.ad).sort((a, b) => a.localeCompare(b, 'tr-TR'));
   })();
 
   const filtreliTakvim = takvim.filter(e => {
@@ -390,10 +400,8 @@ const AdminPanel = () => {
     console.log(`[gorselAc] Egitmen alanı: "${egitim.egitmen}"`);
     console.log(`[gorselAc] Ayrıştırılan isimler:`, egitmenAdlari);
     for (const ad of egitmenAdlari) {
-      const safeId = makeSafeId(ad);
-      // Hem exact match hem normalize match dene (eski Firestore ID'leri çift _ içerebilir)
-      const k = konusmacilar.find(k => k.id === safeId || makeSafeId(k.ad || k.id) === safeId);
-      console.log(`[gorselAc]   ${ad} → safeId: ${safeId} → foto: ${k?.fotoURL ? 'VAR' : 'YOK'}`);
+      const k = konusmaciBul(ad);
+      console.log(`[gorselAc]   ${ad} → foto: ${k?.fotoURL ? 'VAR' : 'YOK'}`);
       if (k?.fotoURL) fotoURLs.push(k.fotoURL);
     }
     console.log(`[gorselAc] Toplam fotoğraf: ${fotoURLs.length}/${egitmenAdlari.length}`);
@@ -516,8 +524,7 @@ const AdminPanel = () => {
         const egitmenAdlari = splitEgitmen(egitim.egitmen);
         const fotoURLs = [];
         for (const ad of egitmenAdlari) {
-          const sid = makeSafeId(ad);
-          const k = konusmacilar.find(k => k.id === sid || makeSafeId(k.ad || k.id) === sid);
+          const k = konusmaciBul(ad);
           if (k?.fotoURL) fotoURLs.push(k.fotoURL);
         }
         const result = await gorselOlustur({ apiKey: geminiApiKey, egitim, egitmenFotoURLs: fotoURLs, sablonFile: sablon.url });
@@ -566,9 +573,9 @@ const AdminPanel = () => {
 
   const handleBilgiAc = (ad) => {
     const safeId = makeSafeId(ad);
-    const k = konusmacilar.find(k => k.id === safeId);
+    const k = konusmaciBul(ad);
     setBilgiForm({ ad: k?.ad || ad, unvan: k?.unvan || '', biyografi: k?.biyografi || '', linkedin: k?.linkedin || '' });
-    setBilgiModal({ ad, safeId });
+    setBilgiModal({ ad, safeId: k?.id || safeId });
   };
 
   const handleBilgiKaydet = async () => {
@@ -1296,13 +1303,12 @@ const AdminPanel = () => {
                   {benzersizKonusmacilar.filter(ad => {
                     if (!konusmaciArama.trim()) return true;
                     const q = konusmaciArama.toLocaleUpperCase('tr-TR');
-                    const safeId = makeSafeId(ad);
-                    const kayitliK = konusmacilar.find(k => k.id === safeId);
+                    const kayitliK = konusmaciBul(ad);
                     const displayName = kayitliK?.ad || ad;
                     return displayName.toLocaleUpperCase('tr-TR').includes(q) || ad.toLocaleUpperCase('tr-TR').includes(q);
                   }).map(ad => {
                     const safeId = makeSafeId(ad);
-                    const kayitliK = konusmacilar.find(k => k.id === safeId);
+                    const kayitliK = konusmaciBul(ad);
                     const isUploading = fotoUploadingId === safeId;
                     const stat = konusmaciStat[ad];
                     return (

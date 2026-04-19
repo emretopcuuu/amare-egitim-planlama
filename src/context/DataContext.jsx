@@ -14,20 +14,10 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { takvimOlustur } from '../utils/takvimAlgoritma';
 
-// Unvanları sıyır — sadece kişi adı kalsın
-const stripTitles = (ad) => {
-  if (!ad) return '';
-  return ad
-    .replace(/^(Prof\.?\s*Dr\.?\s*|Doç\.?\s*Dr\.?\s*|Uzm\.?\s*Dr\.?\s*|Dr\.?\s*|Dyt\.?\s*|Op\.?\s*Dr\.?\s*|Psik\.?\s*|Psk\.?\s*|Ecz\.?\s*|Avt?\.?\s*|Öğr\.?\s*Gör\.?\s*|Arş\.?\s*Gör\.?\s*)/gi, '')
-    .trim();
-};
-
 // Türkçe karakterleri ASCII'ye çevirip güvenli ID oluştur
 export const makeSafeId = (ad) => {
   if (!ad) return '';
-  const cleaned = stripTitles(ad);
-  if (!cleaned) return '';
-  return cleaned
+  return ad.trim()
     .replace(/İ/g,'I').replace(/ı/g,'i').replace(/Ş/g,'S').replace(/ş/g,'s')
     .replace(/Ğ/g,'G').replace(/ğ/g,'g').replace(/Ö/g,'O').replace(/ö/g,'o')
     .replace(/Ü/g,'U').replace(/ü/g,'u').replace(/Ç/g,'C').replace(/ç/g,'c')
@@ -35,6 +25,15 @@ export const makeSafeId = (ad) => {
     .replace(/[^a-z0-9]/g, '_')
     .replace(/_+/g, '_')
     .replace(/^_|_$/g, '');
+};
+
+// Unvanları sıyırarak sadece kişi adından ID üret (dedup için)
+export const makeCoreId = (ad) => {
+  if (!ad) return '';
+  const stripped = ad
+    .replace(/^(Prof\.?\s*Dr\.?\s*|Doç\.?\s*Dr\.?\s*|Uzm\.?\s*Dr\.?\s*|Dr\.?\s*|Dyt\.?\s*|Op\.?\s*Dr\.?\s*|Psik\.?\s*|Psk\.?\s*|Ecz\.?\s*|Avt?\.?\s*|Öğr\.?\s*Gör\.?\s*|Arş\.?\s*Gör\.?\s*)/gi, '')
+    .trim();
+  return stripped ? makeSafeId(stripped) : makeSafeId(ad);
 };
 import * as XLSX from 'xlsx';
 
@@ -93,51 +92,12 @@ export const DataProvider = ({ children }) => {
         setTakvimYayinlandi(settings.takvimYayinlandi || false);
       }
 
-      // Konuşmacıları yükle + duplike ID temizliği
+      // Konuşmacıları yükle (Firestore'a dokunma, sadece oku)
       const konusmacilarSnapshot = await getDocs(collection(db, 'konusmacilar'));
-      let konusmacilarData = konusmacilarSnapshot.docs.map(d => ({
+      const konusmacilarData = konusmacilarSnapshot.docs.map(d => ({
         id: d.id,
         ...d.data()
       }));
-      // Migration: eski ID'leri yeni makeSafeId formatına taşı (unvan + çift _ temizliği)
-      const seenNorm = new Map();
-      for (const k of konusmacilarData) {
-        // Kayıtlı ad'dan yeni ID hesapla
-        const yeniId = makeSafeId(k.ad || k.id);
-        if (!yeniId) { seenNorm.set(k.id, k); continue; }
-        if (yeniId !== k.id) {
-          // Eski ID farklı — verileri yeni ID'ye taşı
-          if (!seenNorm.has(yeniId)) {
-            try {
-              const yeniRef = doc(db, 'konusmacilar', yeniId);
-              const { id: _oldId, ...veri } = k;
-              await setDoc(yeniRef, { ...veri, id: yeniId }, { merge: true });
-              await deleteDoc(doc(db, 'konusmacilar', k.id));
-              console.log(`[migration] Konuşmacı ID düzeltildi: ${k.id} → ${yeniId}`);
-              seenNorm.set(yeniId, { ...k, id: yeniId });
-            } catch (err) {
-              console.warn(`[migration] ID düzeltme hatası ${k.id}:`, err.message);
-              seenNorm.set(k.id, k);
-            }
-          } else {
-            // Yeni ID zaten var — duplike olan eskiyi sil, fotoğrafı varsa aktar
-            const mevcut = seenNorm.get(yeniId);
-            if (!mevcut.fotoURL && k.fotoURL) {
-              try {
-                await setDoc(doc(db, 'konusmacilar', yeniId), { fotoURL: k.fotoURL }, { merge: true });
-                seenNorm.set(yeniId, { ...mevcut, fotoURL: k.fotoURL });
-              } catch {}
-            }
-            try {
-              await deleteDoc(doc(db, 'konusmacilar', k.id));
-              console.log(`[migration] Duplike konuşmacı silindi: ${k.id} (→ ${yeniId})`);
-            } catch {}
-          }
-        } else {
-          if (!seenNorm.has(yeniId)) seenNorm.set(yeniId, k);
-        }
-      }
-      konusmacilarData = [...seenNorm.values()];
       setKonusmacilar(konusmacilarData);
 
       // Şablonları yükle
@@ -432,22 +392,10 @@ export const DataProvider = ({ children }) => {
         fotoURL: base64,
         guncellendi: new Date().toISOString()
       }, { merge: true });
-      // Eski normalize olmamış ID varsa sil (duplike önleme)
-      const eskiIdler = konusmacilar.filter(k => {
-        const nId = k.id ? k.id.replace(/_+/g, '_').replace(/^_|_$/g, '') : '';
-        return nId === safeId && k.id !== safeId;
-      });
-      for (const eski of eskiIdler) {
-        try { await deleteDoc(doc(db, 'konusmacilar', eski.id)); } catch {}
-      }
       setKonusmacilar(prev => {
-        const filtered = prev.filter(k => {
-          const nId = k.id ? k.id.replace(/_+/g, '_').replace(/^_|_$/g, '') : '';
-          return !(nId === safeId && k.id !== safeId);
-        });
-        const idx = filtered.findIndex(k => k.id === safeId);
+        const idx = prev.findIndex(k => k.id === safeId);
         const updated = { id: safeId, ad: konusmaciAdi.trim(), fotoURL: base64 };
-        return idx >= 0 ? filtered.map(k => k.id === safeId ? { ...k, ...updated } : k) : [...filtered, updated];
+        return idx >= 0 ? prev.map(k => k.id === safeId ? { ...k, ...updated } : k) : [...prev, updated];
       });
       return { success: true, url: base64 };
     } catch (error) {
