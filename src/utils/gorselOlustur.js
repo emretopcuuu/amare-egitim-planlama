@@ -66,7 +66,7 @@ Bu etkinlik ${lokasyon} şehrinde yüz yüze yapılacak. Arka plana ${lokasyon} 
   }
 
   // Konuşmacı adlarını ayır
-  const konusmaciAdlari = (egitim.egitmen || '').split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜa-zçğışöşü]*\.?\s*[A-ZÇĞİÖŞÜ])/)
+  const konusmaciAdlari = (egitim.egitmen || '').normalize('NFC').replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\u00A0/g,' ').split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜa-zçğışöşü]*\.?\s*[A-ZÇĞİÖŞÜ])/)
     .map(n => n.trim()
       .replace(/\s*SÖYLEŞİ\s*/gi, '').replace(/\s*SÖYLEŞI\s*/gi, '')
       .replace(/\s+[İI]LE\.{0,3}\s*$/i, '')

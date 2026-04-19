@@ -126,6 +126,9 @@ const EgitimFormAlanlari = ({ form, setForm }) => (
 const splitEgitmen = (egitmen) => {
   if (!egitmen) return [];
   return egitmen
+    .normalize('NFC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\u00A0/g, ' ')
     .split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜa-zçğışöşü]*\.?\s*[A-ZÇĞİÖŞÜ]|Prof\.|Doç\.|Uzm\.|Dr\.|Dyt\.|Op\.)/)
     .map(n => n.trim().toLocaleUpperCase('tr-TR')
       .replace(/\s*SÖYLEŞİ\s*/gi, '').replace(/\s*SÖYLEŞI\s*/gi, '')

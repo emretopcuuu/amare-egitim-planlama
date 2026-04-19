@@ -17,7 +17,11 @@ import { takvimOlustur } from '../utils/takvimAlgoritma';
 // Türkçe karakterleri ASCII'ye çevirip güvenli ID oluştur
 export const makeSafeId = (ad) => {
   if (!ad) return '';
-  return ad.trim()
+  return ad
+    .normalize('NFC')                    // Unicode normalizasyonu (decomposed → precomposed)
+    .replace(/[\u200B-\u200D\uFEFF]/g, '') // Zero-width karakterleri sil
+    .replace(/\u00A0/g, ' ')             // Non-breaking space → normal space
+    .trim()
     .replace(/İ/g,'I').replace(/ı/g,'i').replace(/Ş/g,'S').replace(/ş/g,'s')
     .replace(/Ğ/g,'G').replace(/ğ/g,'g').replace(/Ö/g,'O').replace(/ö/g,'o')
     .replace(/Ü/g,'U').replace(/ü/g,'u').replace(/Ç/g,'C').replace(/ç/g,'c')
@@ -31,17 +35,23 @@ export const makeSafeId = (ad) => {
 // Hem doğal format (Prof.Dr.) hem ID format (prof_dr_) destekler
 export const makeCoreId = (ad) => {
   if (!ad) return '';
-  let s = ad
-    // Doğal format: "Prof.Dr. İSİM", "Uzm.Dr.İSİM", "Dyt.İSİM" vb.
-    .replace(/^(Prof\.?\s*Dr\.?\s*|Doç\.?\s*Dr\.?\s*|Uzm\.?\s*Dr\.?\s*|Dr\.?\s*|Dyt\.?\s*|Op\.?\s*Dr\.?\s*|Psik\.?\s*|Psk\.?\s*|Ecz\.?\s*|Avt?\.?\s*|Öğr\.?\s*Gör\.?\s*|Arş\.?\s*Gör\.?\s*)/gi, '')
+  // Önce normalize + trim
+  let clean = ad.normalize('NFC')
+    .replace(/[\u200B-\u200D\uFEFF]/g, '')
+    .replace(/\u00A0/g, ' ')
     .trim();
-  // ID format: "prof_dr_isim", "uzm_dr_isim", "dyt_isim" vb.
-  if (s === ad) {
-    s = ad
-      .replace(/^(prof_dr_|doc_dr_|uzm_dr_|op_dr_|dr_|dyt_|psik_|psk_|ecz_|avt?_|ogr_gor_|ars_gor_)/i, '')
+  if (!clean) return '';
+  // Doğal format: "Prof.Dr. İSİM", "Yrd.Doç.Dr. İSİM", "Uzm.Dr.İSİM", "Dyt.İSİM" vb.
+  let s = clean
+    .replace(/^(Yrd\.?\s*Doç\.?\s*Dr\.?\s*|Prof\.?\s*Dr\.?\s*|Doç\.?\s*Dr\.?\s*|Uzm\.?\s*Dr\.?\s*|Op\.?\s*Dr\.?\s*|Dr\.?\s*Öğr\.?\s*Üyesi\.?\s*|Dr\.?\s*|Dt\.?\s*|Dyt\.?\s*|Psik\.?\s*|Psk\.?\s*|Ecz\.?\s*|Avt?\.?\s*|Öğr\.?\s*Gör\.?\s*|Arş\.?\s*Gör\.?\s*)/gi, '')
+    .trim();
+  // ID format: "prof_dr_isim", "yrd_doc_dr_isim", "uzm_dr_isim", "dyt_isim" vb.
+  if (s === clean) {
+    s = clean
+      .replace(/^(yrd_doc_dr_|prof_dr_|doc_dr_|uzm_dr_|op_dr_|dr_ogr_uyesi_|dr_|dt_|dyt_|psik_|psk_|ecz_|avt?_|ogr_gor_|ars_gor_)/i, '')
       .trim();
   }
-  return s ? makeSafeId(s) : makeSafeId(ad);
+  return s ? makeSafeId(s) : makeSafeId(clean);
 };
 import * as XLSX from 'xlsx';
 

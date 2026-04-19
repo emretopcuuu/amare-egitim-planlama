@@ -21,7 +21,7 @@ const KATEGORI_RENK = {
 };
 const SEHIRLER = ['İstanbul','Ankara','İzmir','Bursa','Kayseri','Antalya','Konya','Nevşehir','Eskişehir','Trabzon','Adana','Mersin','Gaziantep','Diyarbakır','Samsun','Denizli','Muğla','Çorlu'];
 const parseTarih = (t) => { if (!t) return null; const [d,m,y] = t.split('.').map(Number); return new Date(y,m-1,d); };
-const splitEgitmen = (e) => { if (!e) return []; return e.split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜa-zçğışöşü]*\.?\s*[A-ZÇĞİÖŞÜ]|Prof\.|Doç\.|Uzm\.|Dr\.|Dyt\.|Op\.)/).map(n=>n.trim().replace(/\s*SÖYLEŞİ\s*/gi,'').replace(/\s*SÖYLEŞI\s*/gi,'').replace(/\s+[İI]LE\.{0,3}\s*$/i,'').replace(/\s+VE\s*$/i,'').replace(/\.{2,}$/g,'').trim()).filter(n=>n.length>1); };
+const splitEgitmen = (e) => { if (!e) return []; return e.normalize('NFC').replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\u00A0/g,' ').split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜa-zçğışöşü]*\.?\s*[A-ZÇĞİÖŞÜ]|Prof\.|Doç\.|Uzm\.|Dr\.|Dyt\.|Op\.)/).map(n=>n.trim().replace(/\s*SÖYLEŞİ\s*/gi,'').replace(/\s*SÖYLEŞI\s*/gi,'').replace(/\s+[İI]LE\.{0,3}\s*$/i,'').replace(/\s+VE\s*$/i,'').replace(/\.{2,}$/g,'').trim()).filter(n=>n.length>1); };
 const isOnline = (e) => e.sehir === 'Online' || (e.yer||'').toLocaleUpperCase('tr-TR').includes('ZOOM');
 const getSehir = (e) => { if (e.sehir && e.sehir !== 'Online') return e.sehir; if (isOnline(e)) return null; const yer=e.yer||''; const u=yer.toLocaleUpperCase('tr-TR'); for (const s of SEHIRLER) { if (u.includes(s.toLocaleUpperCase('tr-TR'))) return s; } return 'Diğer'; };
 
