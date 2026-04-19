@@ -28,12 +28,20 @@ export const makeSafeId = (ad) => {
 };
 
 // Unvanları sıyırarak sadece kişi adından ID üret (dedup için)
+// Hem doğal format (Prof.Dr.) hem ID format (prof_dr_) destekler
 export const makeCoreId = (ad) => {
   if (!ad) return '';
-  const stripped = ad
+  let s = ad
+    // Doğal format: "Prof.Dr. İSİM", "Uzm.Dr.İSİM", "Dyt.İSİM" vb.
     .replace(/^(Prof\.?\s*Dr\.?\s*|Doç\.?\s*Dr\.?\s*|Uzm\.?\s*Dr\.?\s*|Dr\.?\s*|Dyt\.?\s*|Op\.?\s*Dr\.?\s*|Psik\.?\s*|Psk\.?\s*|Ecz\.?\s*|Avt?\.?\s*|Öğr\.?\s*Gör\.?\s*|Arş\.?\s*Gör\.?\s*)/gi, '')
     .trim();
-  return stripped ? makeSafeId(stripped) : makeSafeId(ad);
+  // ID format: "prof_dr_isim", "uzm_dr_isim", "dyt_isim" vb.
+  if (s === ad) {
+    s = ad
+      .replace(/^(prof_dr_|doc_dr_|uzm_dr_|op_dr_|dr_|dyt_|psik_|psk_|ecz_|avt?_|ogr_gor_|ars_gor_)/i, '')
+      .trim();
+  }
+  return s ? makeSafeId(s) : makeSafeId(ad);
 };
 import * as XLSX from 'xlsx';
 
