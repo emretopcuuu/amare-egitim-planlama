@@ -51,6 +51,8 @@ export const makeCoreId = (ad) => {
       .replace(/^(yrd_doc_dr_|prof_dr_|doc_dr_|uzm_dr_|op_dr_|dr_ogr_uyesi_|dr_|dt_|dyt_|psik_|psk_|ecz_|avt?_|ogr_gor_|ars_gor_)/i, '')
       .trim();
   }
+  // Sondaki "İLE", "VE", "SÖYLEŞİ" gibi ekleri temizle
+  s = s.replace(/\s+(İLE|ILE|VE|SÖYLEŞİ|SÖYLEŞI|SOYLESI|ile|ve|söyleşi)\.{0,3}\s*$/gi, '').trim();
   return s ? makeSafeId(s) : makeSafeId(clean);
 };
 import * as XLSX from 'xlsx';
