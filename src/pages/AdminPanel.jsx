@@ -1245,6 +1245,41 @@ const AdminPanel = () => {
         {/* ===== KONUŞMACILAR ===== */}
         {activeTab === 'konusmacilar' && (
           <div>
+            {/* DEBUG PANEL — geçici */}
+            <div className="bg-yellow-50 border-2 border-yellow-400 rounded-lg p-4 mb-4 text-xs font-mono">
+              <div className="font-bold text-sm mb-2">🔍 DEBUG — Dedup Analizi</div>
+              <div>Firestore ham kayıt: <b>{konusmacilar.length}</b></div>
+              <div>Takvim etkinlik: <b>{takvim.length}</b></div>
+              <div>Benzersiz gösterilen: <b>{benzersizKonusmacilar.length}</b></div>
+              {(() => {
+                const coreMap = {};
+                konusmacilar.forEach(k => {
+                  const c = makeCoreId(k.ad || k.id);
+                  (coreMap[c] = coreMap[c] || []).push({ id: k.id, ad: k.ad, foto: !!k.fotoURL });
+                });
+                const dupes = Object.entries(coreMap).filter(([, v]) => v.length > 1);
+                const bakiRecords = konusmacilar.filter(k => /bak/i.test((k.ad || '') + (k.id || '')));
+                const emrahRecords = konusmacilar.filter(k => /emrah/i.test((k.ad || '') + (k.id || '')));
+                return (
+                  <>
+                    <div className="mt-2">Aynı coreId'ye düşen Firestore grupları: <b>{dupes.length}</b></div>
+                    {dupes.slice(0, 10).map(([c, recs], i) => (
+                      <div key={i} className="ml-2 text-red-600">
+                        <b>{c}</b> → {recs.map(r => `${r.id}(ad:"${r.ad}" foto:${r.foto})`).join(' | ')}
+                      </div>
+                    ))}
+                    <div className="mt-2">BAKI/BAKİ içeren Firestore kayıtları: <b>{bakiRecords.length}</b></div>
+                    {bakiRecords.map((k, i) => (
+                      <div key={i} className="ml-2">id:<b>{k.id}</b> ad:"<b>{k.ad}</b>" coreId:<b>{makeCoreId(k.ad||k.id)}</b> foto:{String(!!k.fotoURL)}</div>
+                    ))}
+                    <div className="mt-2">EMRAH içeren Firestore kayıtları: <b>{emrahRecords.length}</b></div>
+                    {emrahRecords.map((k, i) => (
+                      <div key={i} className="ml-2">id:<b>{k.id}</b> ad:"<b>{k.ad}</b>" coreId:<b>{makeCoreId(k.ad||k.id)}</b> foto:{String(!!k.fotoURL)}</div>
+                    ))}
+                  </>
+                );
+              })()}
+            </div>
             <div className="bg-white rounded-lg shadow p-6 mb-4">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
