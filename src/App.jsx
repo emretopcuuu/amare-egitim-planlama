@@ -1,5 +1,5 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { DataProvider, useData } from './context/DataContext';
 import { LanguageProvider } from './context/LanguageContext';
 import HomePage from './pages/HomePage';
@@ -7,15 +7,26 @@ import EgitmenBasvuru from './pages/EgitmenBasvuru';
 import TakvimView from './pages/TakvimView';
 import AdminLogin from './pages/AdminLogin';
 import AdminPanel from './pages/AdminPanel';
+import { trackPageView } from './utils/analytics';
 
 const ProtectedRoute = ({ children }) => {
   const { isAdmin } = useData();
   return isAdmin ? children : <Navigate to="/admin-giris" />;
 };
 
+// Her sayfa değişiminde pageview gönder
+function PageViewTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    trackPageView();
+  }, [location.pathname]);
+  return null;
+}
+
 function AppRoutes() {
   return (
     <BrowserRouter>
+      <PageViewTracker />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/egitmen-basvuru" element={<EgitmenBasvuru />} />

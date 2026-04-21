@@ -52,9 +52,14 @@ export const LanguageProvider = ({ children }) => {
 
   const setLang = useCallback((newLang) => {
     if (SUPPORTED_LANGS.includes(newLang)) {
+      const oldLang = localStorage.getItem('ot_lang') || 'tr';
       localStorage.setItem('ot_lang', newLang);
       setLangState(newLang);
       document.documentElement.lang = newLang;
+      // Analytics — dil değişimi
+      if (oldLang !== newLang) {
+        import('../utils/analytics').then(m => m.trackLangChange(oldLang, newLang)).catch(()=>{});
+      }
     }
   }, []);
 
