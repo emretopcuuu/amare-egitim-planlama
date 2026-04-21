@@ -21,6 +21,9 @@ const KATEGORI_RENK = {
 };
 const SEHIRLER = ['İstanbul','Ankara','İzmir','Bursa','Kayseri','Antalya','Konya','Nevşehir','Eskişehir','Trabzon','Adana','Mersin','Gaziantep','Diyarbakır','Samsun','Denizli','Muğla','Çorlu'];
 const parseTarih = (t) => { if (!t) return null; const [d,m,y] = t.split('.').map(Number); return new Date(y,m-1,d); };
+// Türkçe gün → çeviri anahtarı
+const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
+const trGun = (gun, t) => { if(!gun) return ''; const key = TR_DAY_KEY[gun] || TR_DAY_KEY[gun.trim()]; return key ? t(key) : gun; };
 const splitEgitmen = (e) => { if (!e) return []; return e.normalize('NFC').replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\u00A0/g,' ').split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜa-zçğışöşü]*\.?\s*[A-ZÇĞİÖŞÜ]|Prof\.|Doç\.|Uzm\.|Dr\.|Dyt\.|Op\.)/).map(n=>n.trim().replace(/\s*SÖYLEŞİ\s*/gi,'').replace(/\s*SÖYLEŞI\s*/gi,'').replace(/\s+[İI]LE\.{0,3}\s*$/i,'').replace(/\s+VE\s*$/i,'').replace(/\.{2,}$/g,'').trim()).filter(n=>n.length>1); };
 const isOnline = (e) => e.sehir === 'Online' || (e.yer||'').toLocaleUpperCase('tr-TR').includes('ZOOM');
 const getSehir = (e) => { if (e.sehir && e.sehir !== 'Online') return e.sehir; if (isOnline(e)) return null; const yer=e.yer||''; const u=yer.toLocaleUpperCase('tr-TR'); for (const s of SEHIRLER) { if (u.includes(s.toLocaleUpperCase('tr-TR'))) return s; } return 'Diğer'; };
@@ -330,7 +333,7 @@ const TakvimView = () => {
     if (gorunum === 'kompakt') {
       return (
         <tr key={egitim.id} className={`hover:bg-purple-50 transition-colors ${gecmis ? 'opacity-40' : ''}`}>
-          <td className="px-3 py-2 text-sm font-semibold text-gray-700 whitespace-nowrap">{egitim.gun} {egitim.tarih}</td>
+          <td className="px-3 py-2 text-sm font-semibold text-gray-700 whitespace-nowrap">{trGun(egitim.gun, t)} {egitim.tarih}</td>
           <td className="px-3 py-2 text-sm text-gray-600 whitespace-nowrap">{egitim.saat}{egitim.bitisSaati?`–${egitim.bitisSaati}`:''}</td>
           <td className="px-3 py-2 text-sm font-bold text-gray-800">{egitimAdi}</td>
           <td className="px-3 py-2 text-sm text-gray-600">{egitim.egitmen||'—'}</td>
@@ -356,7 +359,7 @@ const TakvimView = () => {
             </div>
             <h3 className="font-bold text-gray-900 leading-tight mb-2">{egitimAdi}</h3>
             <div className="text-sm text-gray-500 space-y-1">
-              <div className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-500" />{egitim.tarih} {egitim.gun} • {egitim.saat}</div>
+              <div className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-500" />{egitim.tarih} {trGun(egitim.gun, t)} • {egitim.saat}</div>
               {egitim.kategori && <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold ${katRenk.bg} ${katRenk.text}`}><Tag className="w-3 h-3" />{kategoriAdi}</span>}
             </div>
             <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
@@ -375,7 +378,7 @@ const TakvimView = () => {
           <div className={`flex flex-col items-center justify-center px-4 py-4 min-w-[72px] ${online?'bg-gradient-to-b from-blue-600 to-blue-800':'bg-gradient-to-b from-purple-700 to-purple-900'} text-white`}>
             <div className="text-2xl font-extrabold leading-none">{gunNo}</div>
             <div className="text-[11px] uppercase tracking-wider opacity-80 mt-0.5">{ayAd}</div>
-            <div className="text-[10px] opacity-60 mt-1">{egitim.gun}</div>
+            <div className="text-[10px] opacity-60 mt-1">{trGun(egitim.gun, t)}</div>
             {online && <Wifi className="w-3.5 h-3.5 mt-1.5 opacity-70" />}
           </div>
           <div className="flex-1 p-4 min-w-0">
