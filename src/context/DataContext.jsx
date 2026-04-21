@@ -560,6 +560,13 @@ export const DataProvider = ({ children }) => {
     }
   }, []);
 
+  // DEBUG: expose to window for inspection
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      window.__debugData = { takvim, konusmacilar, makeCoreId, makeSafeId };
+    }
+  }, [takvim, konusmacilar]);
+
   const value = {
     egitmenler,
     takvim,
