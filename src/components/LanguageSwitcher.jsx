@@ -1,7 +1,7 @@
 import React from 'react';
 import { useTranslation } from '../context/LanguageContext';
 
-const FLAGS = { tr: '🇹🇷', en: '🇬🇧', de: '🇩🇪' };
+const FLAGS = { tr: '🇹🇷', en: '🇬🇧', de: '🇩🇪', nl: '🇳🇱' };
 
 const LanguageSwitcher = ({ className = '' }) => {
   const { lang, setLang, SUPPORTED_LANGS } = useTranslation();

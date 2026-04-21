@@ -3,7 +3,7 @@ import translations from '../i18n/translations';
 
 const LanguageContext = createContext();
 
-const SUPPORTED_LANGS = ['tr', 'en', 'de'];
+const SUPPORTED_LANGS = ['tr', 'en', 'de', 'nl'];
 const CACHE_KEY = 'amare_dyn_translations';
 const BATCH_SIZE = 20; // Her API çağrısında max metin sayısı
 const BATCH_DELAY = 1500; // İstekler arası bekleme (ms)
@@ -67,7 +67,7 @@ export const LanguageProvider = ({ children }) => {
     return (translations[lang] && translations[lang][key]) || translations.tr[key] || key;
   }, [lang]);
 
-  const locale = lang === 'de' ? 'de-DE' : lang === 'en' ? 'en-US' : 'tr-TR';
+  const locale = lang === 'de' ? 'de-DE' : lang === 'en' ? 'en-US' : lang === 'nl' ? 'nl-NL' : 'tr-TR';
 
   // ─── DİNAMİK ÇEVİRİ ───────────────────────────────────────────────────────
 
@@ -76,7 +76,7 @@ export const LanguageProvider = ({ children }) => {
     const apiKey = localStorage.getItem('geminiApiKey') || import.meta.env.VITE_GEMINI_API_KEY || '';
     if (!apiKey || targetLang === 'tr') return null;
 
-    const langName = targetLang === 'en' ? 'English' : 'German';
+    const langName = targetLang === 'en' ? 'English' : targetLang === 'nl' ? 'Dutch' : 'German';
     const prompt = `Translate the following Turkish texts to ${langName}. Return ONLY a JSON array of translated strings in the same order. Keep proper nouns, brand names (Amare, One Team, Diamond), city names, and technical terms as-is. Do not add explanations.
 
 Input: ${JSON.stringify(texts)}`;
