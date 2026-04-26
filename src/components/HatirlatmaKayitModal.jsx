@@ -13,7 +13,7 @@ const ZAMAN_KEYS = [
   { id: '24saat', key: 'reminder_24h', dk: 1440 },
 ];
 
-const parseTarih = (t) => { if (!t) return null; const [d,m,y] = t.split('.').map(Number); return new Date(y,m-1,d); };
+const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 
 const HatirlatmaKayitModal = ({ egitim, onClose }) => {
   const { t, lang } = useTranslation();

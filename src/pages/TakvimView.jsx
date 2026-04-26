@@ -20,7 +20,7 @@ const KATEGORI_RENK = {
   'Diğer': { bg: 'bg-gray-100', text: 'text-gray-600' },
 };
 const SEHIRLER = ['İstanbul','Ankara','İzmir','Bursa','Kayseri','Antalya','Konya','Nevşehir','Eskişehir','Trabzon','Adana','Mersin','Gaziantep','Diyarbakır','Samsun','Denizli','Muğla','Çorlu'];
-const parseTarih = (t) => { if (!t) return null; const [d,m,y] = t.split('.').map(Number); return new Date(y,m-1,d); };
+const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 // Türkçe gün → çeviri anahtarı
 const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
 const trGun = (gun, t) => { if(!gun) return ''; const key = TR_DAY_KEY[gun] || TR_DAY_KEY[gun.trim()]; return key ? t(key) : gun; };
@@ -237,7 +237,7 @@ const TakvimView = () => {
     }
   }, [lang, takvim.length]);
 
-  const getHaftaKey = (tarihStr) => { const d=parseTarih(tarihStr); if(!d) return null; const p=new Date(d); const g=d.getDay(); p.setDate(d.getDate()+(g===0?-6:1-g)); return p.toISOString().split('T')[0]; };
+  const getHaftaKey = (tarihStr) => { const d=parseTarih(tarihStr); if(!d || isNaN(d.getTime())) return null; const p=new Date(d); const g=d.getDay(); p.setDate(d.getDate()+(g===0?-6:1-g)); if (isNaN(p.getTime())) return null; return p.toISOString().split('T')[0]; };
 
   // Filtrelenmiş + aranan eğitimler
   const filtrelenmis = useMemo(() => takvim.filter(e => {

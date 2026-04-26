@@ -157,8 +157,11 @@ const haftaAralikHesapla = (egitimler) => {
 
 const parseTarih = (tarih) => {
   if (!tarih) return null;
-  const [d, m, y] = tarih.split('.').map(Number);
-  return new Date(y, m - 1, d);
+  const parts = String(tarih).split('.').map(Number);
+  if (parts.length !== 3 || parts.some(isNaN)) return null;
+  const [d, m, y] = parts;
+  const dt = new Date(y, m - 1, d);
+  return isNaN(dt.getTime()) ? null : dt;
 };
 
 const extractZoomId = (yer) => {

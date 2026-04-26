@@ -9,6 +9,26 @@ import AdminLogin from './pages/AdminLogin';
 import AdminPanel from './pages/AdminPanel';
 import { trackPageView } from './utils/analytics';
 
+// Hatayı ekrana basan basit error boundary
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { err: null, info: null }; }
+  static getDerivedStateFromError(err) { return { err }; }
+  componentDidCatch(err, info) { this.setState({ info }); console.error('[ErrorBoundary]', err, info); }
+  render() {
+    if (this.state.err) {
+      return (
+        <div style={{ padding: 20, fontFamily: 'monospace', background: '#fee', color: '#900', whiteSpace: 'pre-wrap', fontSize: 13 }}>
+          <h2 style={{ fontSize: 16, fontWeight: 'bold', marginBottom: 10 }}>UI Hatası</h2>
+          <div><b>Mesaj:</b> {this.state.err?.message || String(this.state.err)}</div>
+          <div style={{ marginTop: 10 }}><b>Stack:</b>{'\n'}{this.state.err?.stack || ''}</div>
+          <div style={{ marginTop: 10 }}><b>Component stack:</b>{'\n'}{this.state.info?.componentStack || ''}</div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const ProtectedRoute = ({ children }) => {
   const { isAdmin } = useData();
   return isAdmin ? children : <Navigate to="/admin-giris" />;
@@ -48,11 +68,13 @@ function AppRoutes() {
 
 function App() {
   return (
-    <LanguageProvider>
-      <DataProvider>
-        <AppRoutes />
-      </DataProvider>
-    </LanguageProvider>
+    <ErrorBoundary>
+      <LanguageProvider>
+        <DataProvider>
+          <AppRoutes />
+        </DataProvider>
+      </LanguageProvider>
+    </ErrorBoundary>
   );
 }
 
