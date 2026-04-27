@@ -82,44 +82,44 @@ export const DataProvider = ({ children }) => {
   const [sablonlar, setSablonlar] = useState([]);
   const [hatirlatmaSayilari, setHatirlatmaSayilari] = useState({}); // { egitimId: uniqueEmailCount }
 
-  // Firebase'den veri yükle
+  // Firebase'den veri yükle — public koleksiyonlar her zaman, admin-only sadece login sonrası
   useEffect(() => {
     loadData();
   }, []);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
-      
-      // Eğitmenleri yükle
-      const egitmenlerSnapshot = await getDocs(
-        query(collection(db, 'egitmenler'), orderBy('timestamp', 'desc'))
-      );
-      const egitmenlerData = egitmenlerSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setEgitmenler(egitmenlerData);
-      
-      // Takvimi yükle
-      const takvimSnapshot = await getDocs(collection(db, 'takvim'));
-      const takvimData = takvimSnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-      setTakvim(takvimData);
-      
-      // Takvim durumunu yükle
-      const settingsSnapshot = await getDocs(collection(db, 'settings'));
-      if (!settingsSnapshot.empty) {
-        const settings = settingsSnapshot.docs[0].data();
-        setTakvimYayinlandi(settings.takvimYayinlandi || false);
-      }
+  // Login/logout olduğunda admin-only koleksiyonları yeniden çek
+  useEffect(() => {
+    if (isAdmin) {
+      loadAdminData();
+    } else {
+      // Logout veya non-admin: admin verilerini temizle
+      setEgitmenler([]);
+      setHatirlatmaSayilari({});
+    }
+  }, [isAdmin]);
 
-      // Konuşmacıları yükle (Firestore'a dokunma, sadece oku)
-      // Client-side dedup: aynı makeCoreId'ye sahip kayıtları birleştir, fotoğraflıyı tercih et
-      const konusmacilarSnapshot = await getDocs(collection(db, 'konusmacilar'));
-      const rawData = konusmacilarSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+  // Public koleksiyonları + sadece okumak için izin verilenleri yükle
+  const loadData = async () => {
+    setLoading(true);
+
+    // Takvim (public read)
+    try {
+      const snap = await getDocs(collection(db, 'takvim'));
+      setTakvim(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (e) { console.warn('[loadData] takvim:', e?.code || e?.message); }
+
+    // Settings (public read)
+    try {
+      const snap = await getDocs(collection(db, 'settings'));
+      if (!snap.empty) {
+        setTakvimYayinlandi(snap.docs[0].data().takvimYayinlandi || false);
+      }
+    } catch (e) { console.warn('[loadData] settings:', e?.code || e?.message); }
+
+    // Konuşmacılar (public read) + dedup
+    try {
+      const snap = await getDocs(collection(db, 'konusmacilar'));
+      const rawData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       const coreMap = new Map();
       for (const k of rawData) {
         const cid = makeCoreId(k.ad || k.id);
@@ -127,45 +127,49 @@ export const DataProvider = ({ children }) => {
         if (!existing) {
           coreMap.set(cid, k);
         } else {
-          // Fotoğraflıyı tercih et, bilgileri birleştir
           if (k.fotoURL && !existing.fotoURL) {
             coreMap.set(cid, { ...existing, fotoURL: k.fotoURL, id: k.id });
           } else if (k.fotoURL && existing.fotoURL) {
-            // İkisinde de foto var — daha fazla bilgisi olanı tut
             if ((k.unvan || k.biyografi) && !(existing.unvan || existing.biyografi)) {
               coreMap.set(cid, { ...k });
             }
           }
         }
       }
-      const konusmacilarData = [...coreMap.values()];
-      setKonusmacilar(konusmacilarData);
+      setKonusmacilar([...coreMap.values()]);
+    } catch (e) { console.warn('[loadData] konusmacilar:', e?.code || e?.message); }
 
-      // Şablonları yükle
-      const sablonlarSnapshot = await getDocs(collection(db, 'sablonlar'));
-      const sablonlarData = sablonlarSnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
-      setSablonlar(sablonlarData);
+    // Şablonlar (public read)
+    try {
+      const snap = await getDocs(collection(db, 'sablonlar'));
+      setSablonlar(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (e) { console.warn('[loadData] sablonlar:', e?.code || e?.message); }
 
-      // Hatırlatma kayıtlarını yükle (eğitim başına unique email sayısı)
-      try {
-        const hatirlatmaSnapshot = await getDocs(collection(db, 'hatirlatmalar'));
-        const sayilar = {};
-        hatirlatmaSnapshot.docs.forEach(d => {
-          const data = d.data();
-          if (!data.egitimId) return;
-          if (!sayilar[data.egitimId]) sayilar[data.egitimId] = new Set();
-          sayilar[data.egitimId].add(data.email);
-        });
-        const result = {};
-        Object.entries(sayilar).forEach(([id, emails]) => { result[id] = emails.size; });
-        setHatirlatmaSayilari(result);
-      } catch {}
+    setLoading(false);
+  };
 
-    } catch (error) {
-      console.error('Veri yükleme hatası:', error);
-    } finally {
-      setLoading(false);
-    }
+  // Sadece admin'in okuyabildiği koleksiyonları yükle
+  const loadAdminData = async () => {
+    // Eğitmen başvuruları (admin-only read)
+    try {
+      const snap = await getDocs(query(collection(db, 'egitmenler'), orderBy('timestamp', 'desc')));
+      setEgitmenler(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (e) { console.warn('[loadAdminData] egitmenler:', e?.code || e?.message); }
+
+    // Hatırlatma kayıtları (admin-only read)
+    try {
+      const snap = await getDocs(collection(db, 'hatirlatmalar'));
+      const sayilar = {};
+      snap.docs.forEach(d => {
+        const data = d.data();
+        if (!data.egitimId) return;
+        if (!sayilar[data.egitimId]) sayilar[data.egitimId] = new Set();
+        sayilar[data.egitimId].add(data.email);
+      });
+      const result = {};
+      Object.entries(sayilar).forEach(([id, emails]) => { result[id] = emails.size; });
+      setHatirlatmaSayilari(result);
+    } catch (e) { console.warn('[loadAdminData] hatirlatmalar:', e?.code || e?.message); }
   };
 
   // Yeni eğitmen ekle
