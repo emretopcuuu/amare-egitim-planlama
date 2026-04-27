@@ -31,7 +31,9 @@ service cloud.firestore {
           'toygarsenelmis@gmail.com',
           'alper.kirbiyik@gmail.com',
           'vitamindestegi@gmail.com',
-          'kmaziliguney@gmail.com'
+          'kmaziliguney@gmail.com',
+          'ilknurakkas17@gmail.com',
+          'giray70@gmail.com'
         ];
     }
 
