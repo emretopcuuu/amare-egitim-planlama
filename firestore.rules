@@ -1,0 +1,84 @@
+rules_version = '2';
+
+// ─────────────────────────────────────────────────────────────────────────
+// Firestore Security Rules — egitimtakvimi.oneteamglobal.ai
+//
+// Yetki modeli:
+//   - PUBLIC: anonim kullanıcı (girişsiz takvim ziyaretçisi, başvuru yapan)
+//   - ADMIN:  Firebase Auth + email whitelist (src/constants.js ADMIN_EMAILS)
+//
+// Whitelist email'leri burada da tutulmalı — server-side enforcement için
+// kod tarafıyla SENKRON tutulmalıdır. Yeni admin eklerken iki yer:
+//   1) src/constants.js -> ADMIN_EMAILS
+//   2) bu dosya -> isAdmin() listesi
+// ─────────────────────────────────────────────────────────────────────────
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Yetki yardımcıları ───
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.email_verified == true
+        && request.auth.token.email in [
+          's.emretopcu@gmail.com',
+          'onlineakademin@gmail.com'
+        ];
+    }
+
+    // ─── KOLEKSİYONLAR ───
+
+    // Eğitim takvimi — herkes görür, sadece admin yazar
+    match /takvim/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Konuşmacılar — herkes görür, sadece admin yazar
+    match /konusmacilar/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Şablonlar — herkes görür (poster üretimi için), sadece admin yazar
+    match /sablonlar/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Sistem ayarları — herkes okur (takvim yayın durumu için), sadece admin yazar
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Eğitmen başvuruları — anonim KAYIT yapabilir, sadece admin OKUR/günceller/siler
+    // (PII koruması: ad-soyad, telefon, e-posta okunamaz)
+    match /egitmenler/{docId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Hatırlatma kayıtları — anonim KAYIT yapabilir, sadece admin OKUR
+    // (e-posta + Zoom link sızıntısını engeller)
+    match /hatirlatmalar/{docId} {
+      allow create: if true;
+      allow read, list, update, delete: if isAdmin();
+    }
+
+    // Analytics event'leri — anonim YAZAR (pageview, lang_change vb), sadece admin OKUR
+    match /egitim_analytics/{docId} {
+      allow create: if true;
+      allow read, list, update, delete: if isAdmin();
+    }
+
+    // Diğer her koleksiyon — varsayılan: tamamen kapalı
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
