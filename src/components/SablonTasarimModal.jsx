@@ -86,7 +86,7 @@ function renderKlasik(ctx, color) {
 
   ctx.fillStyle = color;
   ctx.fillRect(0, H - 100, W, 100);
-  txt(ctx, 'ONE TEAM  •  AMARE GLOBAL  •  oneteam10x', W / 2, H - 38, 'bold 24px Arial', '#FFFFFF', 'center');
+  txt(ctx, 'ONE TEAM  •  AMARE GLOBAL', W / 2, H - 38, 'bold 24px Arial', '#FFFFFF', 'center');
 }
 
 function renderKoyu(ctx, color) {
@@ -204,7 +204,7 @@ function renderGradient(ctx, color) {
   ctx.fillStyle = 'rgba(255,255,255,0.13)';
   ctx.fillRect(0, H - 108, W, 108);
   txt(ctx, 'ONE TEAM  •  AMARE GLOBAL', W / 2, H - 55, 'bold 28px Arial', '#FFFFFF', 'center');
-  txt(ctx, 'oneteam10x', W / 2, H - 22, '20px Arial', 'rgba(255,255,255,0.65)', 'center');
+  txt(ctx, 'egitimtakvimi.oneteamglobal.ai', W / 2, H - 22, '20px Arial', 'rgba(255,255,255,0.65)', 'center');
 }
 
 function renderMinimal(ctx, color) {
@@ -219,7 +219,7 @@ function renderMinimal(ctx, color) {
   ctx.fillRect(0, H - 7, W, 7);
 
   txt(ctx, 'AMARE GLOBAL', W - 50, 58, 'bold 28px Arial', color, 'right');
-  txt(ctx, 'oneteam10x', W - 50, 90, '22px Arial', color + '80', 'right');
+  txt(ctx, 'egitimtakvimi.oneteamglobal.ai', W - 50, 90, '22px Arial', color + '80', 'right');
 
   txt(ctx, 'Eğitim', 60, 210, 'bold 88px Arial', '#1A202C', 'left');
   txt(ctx, 'Başlığı', 60, 315, 'bold 88px Arial', '#1A202C', 'left');
