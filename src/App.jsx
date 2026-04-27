@@ -30,7 +30,14 @@ class ErrorBoundary extends React.Component {
 }
 
 const ProtectedRoute = ({ children }) => {
-  const { isAdmin } = useData();
+  const { isAdmin, authLoading } = useData();
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-gray-500 text-sm">Yetki kontrol ediliyor...</div>
+      </div>
+    );
+  }
   return isAdmin ? children : <Navigate to="/admin-giris" />;
 };
 

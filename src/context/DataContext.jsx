@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
-import { db, storage } from '../utils/firebase';
+import { db, storage, auth, googleProvider } from '../utils/firebase';
 import {
   collection,
   addDoc,
@@ -12,7 +12,9 @@ import {
   setDoc
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
+import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { takvimOlustur } from '../utils/takvimAlgoritma';
+import { isAdminEmail } from '../constants';
 
 // Türkçe karakterleri ASCII'ye çevirip güvenli ID oluştur
 export const makeSafeId = (ad) => {
@@ -72,6 +74,8 @@ export const DataProvider = ({ children }) => {
   const [takvim, setTakvim] = useState([]);
   const [takvimYayinlandi, setTakvimYayinlandi] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [konusmacilar, setKonusmacilar] = useState([]);
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
@@ -532,28 +536,42 @@ export const DataProvider = ({ children }) => {
     localStorage.setItem('geminiApiKey', key);
   };
 
-  // Admin girişi
-  const adminGiris = (sifre) => {
-    if (sifre === 'oneteam10x') {
-      setIsAdmin(true);
-      localStorage.setItem('isAdmin', 'true');
-      return true;
+  // Admin girişi — Google sign-in (Firebase Auth)
+  const adminGiris = async () => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const email = result.user?.email;
+      if (!isAdminEmail(email)) {
+        await signOut(auth);
+        return { success: false, error: `Bu hesap (${email}) admin yetkisine sahip değil.` };
+      }
+      return { success: true, email };
+    } catch (err) {
+      // popup-closed-by-user gibi durumları sessizce ele al
+      if (err?.code === 'auth/popup-closed-by-user' || err?.code === 'auth/cancelled-popup-request') {
+        return { success: false, error: null };
+      }
+      return { success: false, error: err?.message || 'Giriş başarısız.' };
     }
-    return false;
   };
 
   // Admin çıkış
-  const adminCikis = () => {
-    setIsAdmin(false);
+  const adminCikis = async () => {
+    try { await signOut(auth); } catch {}
+    // Eski localStorage flag'ini de temizle (geriye dönük)
     localStorage.removeItem('isAdmin');
   };
 
-  // Sayfa yüklendiğinde admin durumunu kontrol et
+  // Firebase Auth state listener — currentUser ve isAdmin'i otomatik günceller
   useEffect(() => {
-    const adminStatus = localStorage.getItem('isAdmin');
-    if (adminStatus === 'true') {
-      setIsAdmin(true);
-    }
+    const unsub = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      setIsAdmin(isAdminEmail(user?.email));
+      setAuthLoading(false);
+      // Eski localStorage isAdmin flag'ini bypass için artık güvenmiyoruz; sil
+      localStorage.removeItem('isAdmin');
+    });
+    return () => unsub();
   }, []);
 
   const value = {
@@ -562,6 +580,8 @@ export const DataProvider = ({ children }) => {
     takvimYayinlandi,
     loading,
     isAdmin,
+    currentUser,
+    authLoading,
     konusmacilar,
     egitmenEkle,
     otomatikTakvimOlustur,
