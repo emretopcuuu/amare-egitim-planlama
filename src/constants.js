@@ -3,6 +3,10 @@
 export const ADMIN_EMAILS = [
   's.emretopcu@gmail.com',
   'onlineakademin@gmail.com',
+  'toygarsenelmis@gmail.com',
+  'alper.kirbiyik@gmail.com',
+  'vitamindestegi@gmail.com',
+  'kmaziliguney@gmail.com',
 ];
 
 export const isAdminEmail = (email) =>
