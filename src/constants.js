@@ -9,6 +9,7 @@ export const ADMIN_EMAILS = [
   'kmaziliguney@gmail.com',
   'ilknurakkas17@gmail.com',
   'giray70@gmail.com',
+  'furkancite@gmail.com',
 ];
 
 export const isAdminEmail = (email) =>
