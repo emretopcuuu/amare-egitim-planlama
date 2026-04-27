@@ -2,6 +2,7 @@
 // Buraya yeni admin eklemek için sadece bu dosyaya email satırı ekle + commit yeterli.
 export const ADMIN_EMAILS = [
   's.emretopcu@gmail.com',
+  'onlineakademin@gmail.com',
 ];
 
 export const isAdminEmail = (email) =>
