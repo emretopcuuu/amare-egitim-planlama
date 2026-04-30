@@ -46,6 +46,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Arşiv takvim — eski dönem kayıtları, sadece admin okur/yazar
+    match /arsiv_takvim/{docId} {
+      allow read, write: if isAdmin();
+    }
+
     // Konuşmacılar — herkes görür, sadece admin yazar
     match /konusmacilar/{docId} {
       allow read: if true;

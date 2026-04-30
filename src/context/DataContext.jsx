@@ -222,10 +222,26 @@ export const DataProvider = ({ children }) => {
       const sheet = workbook.Sheets[sheetName];
       const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
-      // Mevcut takvimi temizle
+      // ─── ARŞİVLEME ───
+      // Mevcut takvimi 'arsiv_takvim' koleksiyonuna kopyala (gorselUrl dahil),
+      // sonra takvim'i temizle. Bu sayede eski eğitimler ve afişleri kaybolmaz.
       const takvimSnapshot = await getDocs(collection(db, 'takvim'));
-      const deletePromises = takvimSnapshot.docs.map(doc => deleteDoc(doc.ref));
-      await Promise.all(deletePromises);
+      if (takvimSnapshot.size > 0) {
+        const arsivKaynak = sheetName || 'önceki dönem';
+        const arsivTimestamp = new Date().toISOString();
+        const archivePromises = takvimSnapshot.docs.map(d =>
+          addDoc(collection(db, 'arsiv_takvim'), {
+            ...d.data(),
+            eskiId: d.id,
+            arsivlendi: arsivTimestamp,
+            arsivKaynak: arsivKaynak,
+          })
+        );
+        await Promise.all(archivePromises);
+        // Sonra orijinal takvim'i temizle
+        const deletePromises = takvimSnapshot.docs.map(d => deleteDoc(d.ref));
+        await Promise.all(deletePromises);
+      }
 
       const yeniTakvim = [];
       let currentTarih = null;
@@ -264,50 +280,45 @@ export const DataProvider = ({ children }) => {
         const konusmacilar = String(row[6] || '').trim();
         const yer = String(row[2] || '').trim();
 
-        if (!icerik || !baslangic || !currentTarih) continue;
+        // Saatsiz eğitimleri de kabul et — kullanıcı admin panelden saat ekleyebilir
+        if (!icerik || !currentTarih) continue;
 
-        // Saati formatla
-        let saatStr = '';
-        if (baslangic instanceof Date) {
-          saatStr = `${String(baslangic.getHours()).padStart(2, '0')}:${String(baslangic.getMinutes()).padStart(2, '0')}`;
-        } else if (typeof baslangic === 'number' && baslangic < 1) {
-          const totalMinutes = Math.round(baslangic * 24 * 60);
-          const hours = Math.floor(totalMinutes / 60);
-          const minutes = totalMinutes % 60;
-          saatStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-        } else {
-          saatStr = String(baslangic).trim();
-        }
+        // Saati formatla (boş olabilir)
+        const formatSaat = (v) => {
+          if (v === '' || v === null || v === undefined) return '';
+          if (v instanceof Date) {
+            return `${String(v.getHours()).padStart(2, '0')}:${String(v.getMinutes()).padStart(2, '0')}`;
+          }
+          if (typeof v === 'number' && v < 1) {
+            const totalMinutes = Math.round(v * 24 * 60);
+            return `${String(Math.floor(totalMinutes / 60)).padStart(2, '0')}:${String(totalMinutes % 60).padStart(2, '0')}`;
+          }
+          return String(v).trim();
+        };
+        const saatStr = formatSaat(baslangic);
+        const bitisStr = formatSaat(bitis);
 
-        let bitisStr = '';
-        if (bitis instanceof Date) {
-          bitisStr = `${String(bitis.getHours()).padStart(2, '0')}:${String(bitis.getMinutes()).padStart(2, '0')}`;
-        } else if (typeof bitis === 'number' && bitis < 1) {
-          const totalMinutes = Math.round(bitis * 24 * 60);
-          const hours = Math.floor(totalMinutes / 60);
-          const minutes = totalMinutes % 60;
-          bitisStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-        } else {
-          bitisStr = String(bitis || '').trim();
-        }
-
-        // Hafta numarasını hesapla
+        // Hafta numarası — kullanıcı tanımlı:
+        // 1-3 = H1, 4-10 = H2, 11-17 = H3, 18-24 = H4, 25-31 = H5
         const tarihParts = currentTarih.split('.');
         const gun = parseInt(tarihParts[0]);
         let hafta;
-        if (gun >= 1 && gun <= 12) hafta = 1;
-        else if (gun >= 13 && gun <= 17) hafta = 2;
-        else if (gun >= 18 && gun <= 24) hafta = 3;
-        else hafta = 4;
+        if (gun <= 3) hafta = 1;
+        else if (gun <= 10) hafta = 2;
+        else if (gun <= 17) hafta = 3;
+        else if (gun <= 24) hafta = 4;
+        else hafta = 5;
 
-        // Süre hesapla
-        let sure = '45 dk';
-        if (saatStr && bitisStr) {
+        // Süre — başlangıç & bitiş varsa hesapla, yoksa boş bırak (kullanıcı saat eklediğinde otomatik hesaplanmaz, manuel girer)
+        let sure = '';
+        if (saatStr && bitisStr && saatStr.includes(':') && bitisStr.includes(':')) {
           const [bH, bM] = saatStr.split(':').map(Number);
           const [eH, eM] = bitisStr.split(':').map(Number);
           const diff = (eH * 60 + eM) - (bH * 60 + bM);
           if (diff > 0) sure = `${diff} dk`;
         }
+        // Saat hiç yoksa varsayılan değer
+        if (!sure && (saatStr || bitisStr)) sure = '45 dk';
 
         yeniTakvim.push({
           hafta,
@@ -319,8 +330,9 @@ export const DataProvider = ({ children }) => {
           egitmen: konusmacilar,
           yer: yer,
           sure,
-          slot: `${currentTarih}_${saatStr}`,
-          kaynak: 'excel'
+          slot: `${currentTarih}_${saatStr || 'no-time'}`,
+          kaynak: 'excel',
+          saatGirilmedi: !saatStr,  // UI'da işaretlemek için
         });
       }
 
