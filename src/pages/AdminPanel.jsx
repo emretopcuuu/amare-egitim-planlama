@@ -347,12 +347,26 @@ const AdminPanel = () => {
     const file = e.target.files[0];
     if (!file) return;
     if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) { alert('Lütfen .xlsx dosyası seçin.'); return; }
-    if (!window.confirm(`"${file.name}" yüklenecek ve mevcut takvim silinecek. Emin misiniz?`)) { e.target.value = ''; return; }
+    if (!window.confirm(
+      `"${file.name}" yüklenecek.\n\n` +
+      `• Geçmiş eğitimler arşivlenir (afişleri saklanır)\n` +
+      `• Aynı tarih+saatteki eski kayıtlar yenisiyle değiştirilir (eski sürüm arşivlenir)\n` +
+      `• Henüz başlamamış diğer eğitimler listede aynen kalır\n\n` +
+      `Devam edilsin mi?`
+    )) { e.target.value = ''; return; }
     setProcessing(true);
     const result = await exceldenTakvimYukle(file);
     setProcessing(false);
     e.target.value = '';
-    if (result.success) { alert(`${result.count} eğitim yüklendi.`); setActiveTab('takvim'); }
+    if (result.success) {
+      alert(
+        `✅ Yükleme başarılı\n\n` +
+        `• ${result.count} yeni eğitim eklendi\n` +
+        `• ${result.arsivlenen ?? 0} eski kayıt arşive taşındı\n` +
+        `• ${result.korunan ?? 0} gelecek eğitim listede korundu`
+      );
+      setActiveTab('takvim');
+    }
     else alert('Yükleme başarısız: ' + result.error);
   };
 

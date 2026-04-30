@@ -222,27 +222,8 @@ export const DataProvider = ({ children }) => {
       const sheet = workbook.Sheets[sheetName];
       const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
 
-      // ─── ARŞİVLEME ───
-      // Mevcut takvimi 'arsiv_takvim' koleksiyonuna kopyala (gorselUrl dahil),
-      // sonra takvim'i temizle. Bu sayede eski eğitimler ve afişleri kaybolmaz.
-      const takvimSnapshot = await getDocs(collection(db, 'takvim'));
-      if (takvimSnapshot.size > 0) {
-        const arsivKaynak = sheetName || 'önceki dönem';
-        const arsivTimestamp = new Date().toISOString();
-        const archivePromises = takvimSnapshot.docs.map(d =>
-          addDoc(collection(db, 'arsiv_takvim'), {
-            ...d.data(),
-            eskiId: d.id,
-            arsivlendi: arsivTimestamp,
-            arsivKaynak: arsivKaynak,
-          })
-        );
-        await Promise.all(archivePromises);
-        // Sonra orijinal takvim'i temizle
-        const deletePromises = takvimSnapshot.docs.map(d => deleteDoc(d.ref));
-        await Promise.all(deletePromises);
-      }
-
+      // ─── ÖNCE EXCEL'İ PARSE ET (yeniTakvim'i hazırla) ───
+      // Sonra mevcut takvimle karşılaştırarak hangi doc'ların arşivleneceğine karar vereceğiz.
       const yeniTakvim = [];
       let currentTarih = null;
       let currentGun = null;
@@ -336,14 +317,71 @@ export const DataProvider = ({ children }) => {
         });
       }
 
-      // Firebase'e kaydet
+      // ─── AKILLI ARŞİVLEME ───
+      // Mevcut takvim doc'larını oku, üç gruba ayır:
+      //   - Geçmiş eğitimler (bugünden önce): ARŞIV
+      //   - Excel'in yeni doldurduğu slot ile eşleşen eğitimler: ARŞIV (yeni veri yerine geçer)
+      //   - Diğer (gelecek + Excel'de yer almayan): KORU (listede aynen kalır)
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const parseTr = (t) => {
+        if (!t) return null;
+        const parts = String(t).split('.').map(Number);
+        if (parts.length !== 3 || parts.some(isNaN)) return null;
+        const [d, m, y] = parts;
+        const dt = new Date(y, m - 1, d);
+        return isNaN(dt.getTime()) ? null : dt;
+      };
+
+      const yeniSlotSet = new Set(yeniTakvim.map(e => e.slot));
+
+      const takvimSnapshot = await getDocs(collection(db, 'takvim'));
+      const arsivlenecek = [];
+      let korunan = 0;
+      for (const d of takvimSnapshot.docs) {
+        const data = d.data();
+        const egitimTarihi = parseTr(data.tarih);
+        const isGecmis = egitimTarihi && egitimTarihi < today;
+        const sameSlot = yeniSlotSet.has(data.slot);
+        if (isGecmis || sameSlot) {
+          arsivlenecek.push(d);
+        } else {
+          korunan++;
+        }
+      }
+
+      // Arşivlenecekleri 'arsiv_takvim'e taşı
+      if (arsivlenecek.length > 0) {
+        const arsivKaynak = sheetName || 'önceki dönem';
+        const arsivTimestamp = new Date().toISOString();
+        const archivePromises = arsivlenecek.map(d =>
+          addDoc(collection(db, 'arsiv_takvim'), {
+            ...d.data(),
+            eskiId: d.id,
+            arsivlendi: arsivTimestamp,
+            arsivKaynak: arsivKaynak,
+          })
+        );
+        await Promise.all(archivePromises);
+        // Orijinalleri sil (sadece arşivlenenleri, korunanlar yerinde kalır)
+        const deletePromises = arsivlenecek.map(d => deleteDoc(d.ref));
+        await Promise.all(deletePromises);
+      }
+
+      // Yeni Excel kayıtlarını ekle
       const addPromises = yeniTakvim.map(egitim =>
         addDoc(collection(db, 'takvim'), egitim)
       );
       await Promise.all(addPromises);
 
       await loadData();
-      return { success: true, count: yeniTakvim.length };
+      return {
+        success: true,
+        count: yeniTakvim.length,
+        arsivlenen: arsivlenecek.length,
+        korunan,
+      };
     } catch (error) {
       console.error('Excel yükleme hatası:', error);
       return { success: false, error: error.message };
