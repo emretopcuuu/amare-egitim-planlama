@@ -78,8 +78,12 @@ export const DataProvider = ({ children }) => {
   const [authLoading, setAuthLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [konusmacilar, setKonusmacilar] = useState([]);
-  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
-  const [openaiApiKey, setOpenaiApiKey] = useState(() => localStorage.getItem('openaiApiKey') || '');
+  const [geminiApiKey, setGeminiApiKey] = useState(() =>
+    localStorage.getItem('geminiApiKey') || import.meta.env.VITE_GEMINI_API_KEY || ''
+  );
+  const [openaiApiKey, setOpenaiApiKey] = useState(() =>
+    localStorage.getItem('openaiApiKey') || import.meta.env.VITE_OPENAI_API_KEY || ''
+  );
   const [sablonlar, setSablonlar] = useState([]);
   const [hatirlatmaSayilari, setHatirlatmaSayilari] = useState({}); // { egitimId: uniqueEmailCount }
 
