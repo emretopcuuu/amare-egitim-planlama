@@ -219,22 +219,31 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   }
   ctx.shadowBlur = 0;
 
-  // ─── KONUŞMACI KARTLARI ───
+  // ─── KONUŞMACI KARTLARI — büyük + dikey ortalanmış ───
   const liste = (egitmenler || []);
-  const cardsStartY = saatY + 60;
-  const cardsAreaH = (H - 220) - cardsStartY;
+  const titleEnd = saatY + 30;       // başlık+saat bloğu sonu
+  const footerStart = H - 200;        // alt zoom info başlangıcı
+  const cardsAreaTop = titleEnd;
+  const cardsAreaBot = footerStart;
+  const cardsAreaH = cardsAreaBot - cardsAreaTop;
 
   if (liste.length > 0) {
     const cols = Math.min(liste.length, 4);
     const rows = Math.ceil(liste.length / 4);
-    const gap = 22;
-    const maxCardW = (W - 80 - gap * (cols - 1)) / cols;
-    const cardSize = Math.min(maxCardW, cardsAreaH / rows - 90);
+    const gap = 18;                   // daha küçük yatay boşluk
+    const sidePad = 50;                // daha küçük yan boşluk
+    const maxCardW = (W - sidePad * 2 - gap * (cols - 1)) / cols;
+    // Yükseklik: card = foto + 90px (isim+unvan)
+    const maxCardH = cardsAreaH / rows - 30;
+    const cardSize = Math.min(maxCardW, maxCardH - 90);
     const cardW = cardSize;
-    const fotoSize = cardSize * 0.88;
+    const fotoSize = cardSize * 0.92; // foto card'ın daha büyük kısmı
     const totalW = cardW * cols + gap * (cols - 1);
     const startX = (W - totalW) / 2;
-    const rowH = cardSize + 90;
+    const rowH = cardSize + 100;
+    const totalH = rowH * rows - 30;
+    // Dikey olarak alanın ortasına yerleştir
+    const cardsStartY = cardsAreaTop + (cardsAreaH - totalH) / 2;
 
     for (let i = 0; i < liste.length; i++) {
       const e = liste[i];
