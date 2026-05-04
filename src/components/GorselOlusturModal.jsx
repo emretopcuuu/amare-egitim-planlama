@@ -14,8 +14,8 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   const [yeniYukle, setYeniYukle] = useState(sablonlar.length === 0);
   // Model seçimi: 'gemini' | 'openai'
   const [aiModel, setAiModel] = useState(localStorage.getItem('aiModel') || 'gemini');
-  // Fallback toggle
-  const [fallbackOn, setFallbackOn] = useState(localStorage.getItem('aiFallback') !== 'off');
+  // Fallback toggle — default KAPALI çünkü OpenAI image-edits Türkçe karakter ve yüz koruma kötü
+  const [fallbackOn, setFallbackOn] = useState(localStorage.getItem('aiFallback') === 'on');
   const [aktifModel, setAktifModel] = useState(null); // üretim sırasında hangisinin çalıştığını göster
 
   // Ek prompt — modal açılırken konuşmacı isim+unvan listesi ile otomatik doldurulur.
@@ -301,8 +301,8 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                     onClick={() => { setAiModel('openai'); localStorage.setItem('aiModel', 'openai'); }}
                     className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'openai' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
                   >
-                    <div className="flex items-center gap-1 font-bold">🤖 OpenAI</div>
-                    <div className="text-gray-500 mt-0.5">Yüz koruma iyi · ~$0.04</div>
+                    <div className="flex items-center gap-1 font-bold">🤖 OpenAI <span className="text-[10px] bg-amber-200 text-amber-900 px-1 rounded">deneysel</span></div>
+                    <div className="text-gray-500 mt-0.5">Türkçe + yüz sorunlu, kullanma</div>
                   </button>
                 </div>
                 <label className="flex items-center gap-2 mt-2 cursor-pointer text-xs text-gray-600">
