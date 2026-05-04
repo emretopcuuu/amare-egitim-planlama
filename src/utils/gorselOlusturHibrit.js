@@ -180,13 +180,17 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   const bgH = arkaPlanImg.height * ratio;
   ctx.drawImage(arkaPlanImg, (W - bgW) / 2, (H - bgH) / 2, bgW, bgH);
 
-  // Üst kısım — güçlü Plum gradient overlay (Gemini'nin banner'ını kapat)
-  const topGrad = ctx.createLinearGradient(0, 0, 0, 360);
-  topGrad.addColorStop(0, 'rgba(95, 39, 86, 0.95)');   // üst — neredeyse opak Plum
-  topGrad.addColorStop(0.6, 'rgba(95, 39, 86, 0.7)');
+  // Üst kısım — TAM ÜST YARIYA güçlü opak Plum overlay (Gemini'nin tüm logolarını/yazılarını örter)
+  // 0-200px: tamamen opak Plum (logolar buraya gelecek)
+  ctx.fillStyle = 'rgba(95, 39, 86, 0.97)';
+  ctx.fillRect(0, 0, W, 200);
+  // 200-450px: gradient ile geçiş
+  const topGrad = ctx.createLinearGradient(0, 200, 0, 450);
+  topGrad.addColorStop(0, 'rgba(95, 39, 86, 0.97)');
+  topGrad.addColorStop(0.5, 'rgba(95, 39, 86, 0.75)');
   topGrad.addColorStop(1, 'rgba(95, 39, 86, 0)');
   ctx.fillStyle = topGrad;
-  ctx.fillRect(0, 0, W, 360);
+  ctx.fillRect(0, 200, W, 250);
 
   // Alt koyulaştırma (zoom info okunsun)
   const botGrad = ctx.createLinearGradient(0, H - 200, 0, H);
@@ -195,12 +199,12 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.fillStyle = botGrad;
   ctx.fillRect(0, H - 200, W, 200);
 
-  // ─── ÜST: Yeni Amare logo (büyük, belirgin) ───
+  // ─── ÜST: Yeni Amare logo (büyük, belirgin, tam üstte) ───
   try {
     const logo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
-    const logoW = 320;
+    const logoW = 360;
     const logoH = (logo.height / logo.width) * logoW;
-    ctx.drawImage(logo, (W - logoW) / 2, 50, logoW, logoH);
+    ctx.drawImage(logo, (W - logoW) / 2, 60, logoW, logoH);
   } catch {}
 
   // ─── BAŞLIK ───
@@ -209,7 +213,7 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.font = 'bold 56px Arial';
   ctx.shadowColor = 'rgba(0,0,0,0.7)';
   ctx.shadowBlur = 14;
-  const baslikY = drawWrappedText(ctx, egitim.egitim || '', W / 2, 145, W - 100, 64, 3);
+  const baslikY = drawWrappedText(ctx, egitim.egitim || '', W / 2, 200, W - 100, 64, 3);
   ctx.shadowBlur = 0;
 
   // ─── TARİH + SAAT ───
