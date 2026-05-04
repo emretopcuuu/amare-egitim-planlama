@@ -63,9 +63,6 @@ const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight) => {
 };
 
 export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile, ekPrompt = '' }) => {
-  // Şablonu yükle
-  const sablonImg = await urlToImage(sablonFile);
-
   // 1080x1080 Instagram square
   const W = 1080;
   const H = 1080;
@@ -74,19 +71,35 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // Şablon arka plan (cover/fit)
-  const ratio = Math.max(W / sablonImg.width, H / sablonImg.height);
-  const bgW = sablonImg.width * ratio;
-  const bgH = sablonImg.height * ratio;
-  ctx.drawImage(sablonImg, (W - bgW) / 2, (H - bgH) / 2, bgW, bgH);
-
-  // Yarı saydam koyu overlay — metinlerin okunaklı olması için
-  const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, 'rgba(95, 39, 86, 0.55)'); // Amare Plum üst
-  grad.addColorStop(0.45, 'rgba(20, 10, 30, 0.35)');
-  grad.addColorStop(1, 'rgba(95, 39, 86, 0.85)'); // alt koyu
-  ctx.fillStyle = grad;
+  // ─── ARKA PLAN: Plum gradient ───
+  // Şablonu kullanmıyoruz çünkü hazır posterler içlerinde eski tarih/foto/isim
+  // taşıyor — Canvas overlay'i düzgünce kapatamıyor. Onun yerine temiz Amare Plum
+  // gradient arka plan + isteğe bağlı şablon "doku" (yoğun blur + düşük opacity)
+  const baseGrad = ctx.createLinearGradient(0, 0, 0, H);
+  baseGrad.addColorStop(0, '#7A2F6D');   // üst — biraz açık Plum
+  baseGrad.addColorStop(0.5, '#5F2756'); // orta — tam Amare Deep Plum
+  baseGrad.addColorStop(1, '#3D1734');   // alt — koyulaşıyor
+  ctx.fillStyle = baseGrad;
   ctx.fillRect(0, 0, W, H);
+
+  // Şablon dokusu — çok düşük opacity + heavy blur ile arka plan dokusu olarak
+  // (eski içerik tamamen kaybolur, sadece renk hareketi kalır)
+  try {
+    const sablonImg = await urlToImage(sablonFile);
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    ctx.filter = 'blur(40px) saturate(1.5)';
+    const ratio = Math.max(W / sablonImg.width, H / sablonImg.height);
+    const bgW = sablonImg.width * ratio;
+    const bgH = sablonImg.height * ratio;
+    ctx.drawImage(sablonImg, (W - bgW) / 2, (H - bgH) / 2, bgW, bgH);
+    ctx.restore();
+  } catch {}
+
+  // İnce dekoratif çizgi (üst ve alt)
+  ctx.fillStyle = 'rgba(245, 215, 122, 0.7)'; // altın
+  ctx.fillRect(60, 22, W - 120, 3);
+  ctx.fillRect(60, H - 25, W - 120, 3);
 
   // ─── ÜST: Amare logo (yeni beyaz logo) ───
   try {
