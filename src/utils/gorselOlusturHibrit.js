@@ -94,23 +94,36 @@ const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, maxLines = 99) =
 const arkaPlanUret = async (apiKey, sablonFile, egitim) => {
   const sablon = await resmiBase64Yap(sablonFile);
 
-  const prompt = `Sen profesyonel bir tasarım uzmanısın. Sosyal medya için 1080x1080 SQUARE etkinlik poster ARKA PLANI hazırla.
+  const prompt = `Sen profesyonel bir tasarım uzmanısın. 1080x1080 SQUARE etkinlik poster ARKA PLANI üretiyorsun.
 
-ŞABLON: Sana verilen görsel renk paletini ve genel estetiği belirliyor. Bu paletten ilham al.
+⭐ EN ÖNEMLİ KURAL — ŞABLON KOPYASI:
+Sana verilen şablon görseli, üreteceğin posterin TASARIM REFERANSIDIR. Şablonun:
+- TÜM renk paletini (hex kodlarına kadar)
+- Arka plan dokusunu, deseni
+- Çerçeve, kenar, köşe dekoratif öğelerini
+- Işık efektleri, parıltı, parlaklıklarını
+- Genel kompozisyon hissini, şıklığını
+AYNEN kopyala. Yeni özgün bir tasarım YAPMA — şablona MÜMKÜN OLDUĞUNCA SADIK kal.
+Şablon hangi atmosferdeyse (vizyon günü, sağlık paneli, lüks, klasik vb.) AYNI atmosfer.
 
-KESİN KURALLAR — DİKKATLE OKU:
-- Bu sadece BIR ARKA PLAN — yazı, isim, fotoğraf, yüz, kişi RESMI YOKTUR
+🚫 SADECE İÇİNDEKİ ŞU ÖĞELERİ ÇIKAR (Canvas üzerine sonra eklenecek):
+- Yazılar, başlıklar, isimler, tarihler, saatler — TÜMÜ silinmeli, yer boş kalsın
+- Konuşmacı yüzleri, fotoğrafları — TÜMÜ silinmeli, yer boş kalsın
+- Logo metinleri — Amare/One Team logosu sonra eklenecek, yer bırak
+- Zoom ID, URL — silinmeli
+
+ÖZET: Şablonun TASARIMINI olabildiğince yakın kopyala (renkler, çerçeveler, dekorlar) AMA içindeki yazı/yüz/foto öğelerini ÇIKAR — sadece boş dekoratif arka plan kalsın. Sonradan üzerine isim+foto+tarih ekleyeceğim.
+
+KESİN YASAKLAR:
 - ASLA insan yüzü, vücut, fotoğraf çizme
-- ASLA yazı, isim, başlık, tarih, saat yazma — boş bırak
-- Yer adı veya logo da YAZMA
-- Sadece dekoratif arka plan: gradient, doku, parlaklık, ışık efektleri, soyut formlar
-- Amare Global kurumsal kimliğine uygun renkler: Deep Plum (#5F2756), altın aksantlar
-- ÜST KISIM ve ALT KISIM hafif daha koyu/dramatik (orada başlık ve zoom info yazılacak)
-- ORTA KISIM nispeten temiz (orada konuşmacı kartları yerleşecek)
-- "Kyani" KESİNLİKLE YAZMA, hiçbir marka yazısı YOK
-- Estetik: zarif, profesyonel, vizyon günü/sağlık paneli atmosferine uygun
+- ASLA yazı, isim, başlık, tarih, saat, sayı yazma
+- "Kyani" KESİNLİKLE YAZMA
+- Sahte logo/marka YAPMA
 
-ÖZET: Sadece dekoratif boş arka plan tasarımı. Yazı/foto/yüz YOK. Yalnızca renkler, dokular, ışık efektleri.`;
+ALAN BÖLÜMLERİ (boş tut, sadece arkadaki tasarım/desen kalsın):
+- Üst ~30%: başlık ve tarih için boş — sadece dekoratif çerçeve/parlak
+- Orta ~40%: konuşmacı kartları için boş — sade, parlak değil
+- Alt ~30%: zoom/url için boş — sadece dekoratif çerçeve/parlak`;
 
   const parts = [
     { text: prompt },
