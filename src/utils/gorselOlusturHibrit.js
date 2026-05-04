@@ -118,9 +118,12 @@ KESİN YASAKLAR:
 - ASLA insan yüzü, vücut, fotoğraf çizme
 - ASLA yazı, isim, başlık, tarih, saat, sayı yazma
 - ASLA "Amare", "amare", "One Team", "ONE TEAM", "Global", "GLOBAL" yazma — orijinal logolar SONRA Canvas üzerine yerleştirilecek
+- ASLA üst kısımda BANNER, BAR, ŞERİT çizme — üst 240px TAMAMEN BOŞ KALSIN (logolar oraya konacak)
+- ASLA alt kısımda BANNER, ŞERİT çizme — alt 220px TAMAMEN BOŞ KALSIN
 - Logo, marka adı, slogan ÇİZME — boş bırak, yer ayır
 - "Kyani" KESİNLİKLE YAZMA
-- Sahte logo/marka YAPMA — alt orta'da boş alan bırak (orijinal logo oraya gelecek)
+- Sahte logo/marka YAPMA
+- Mavi/turuncu/herhangi RENK BANNER üst-alt kısımda YASAK
 
 ALAN BÖLÜMLERİ (boş tut, sadece arkadaki tasarım/desen kalsın):
 - Üst ~30%: başlık ve tarih için boş — sadece dekoratif çerçeve/parlak
@@ -177,10 +180,11 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   const bgH = arkaPlanImg.height * ratio;
   ctx.drawImage(arkaPlanImg, (W - bgW) / 2, (H - bgH) / 2, bgW, bgH);
 
-  // Üst hafif koyulaştırma (başlık okunsun)
+  // Üst kısım — güçlü Plum gradient overlay (Gemini'nin banner'ını kapat)
   const topGrad = ctx.createLinearGradient(0, 0, 0, 360);
-  topGrad.addColorStop(0, 'rgba(20, 8, 30, 0.55)');
-  topGrad.addColorStop(1, 'rgba(20, 8, 30, 0)');
+  topGrad.addColorStop(0, 'rgba(95, 39, 86, 0.95)');   // üst — neredeyse opak Plum
+  topGrad.addColorStop(0.6, 'rgba(95, 39, 86, 0.7)');
+  topGrad.addColorStop(1, 'rgba(95, 39, 86, 0)');
   ctx.fillStyle = topGrad;
   ctx.fillRect(0, 0, W, 360);
 
@@ -191,12 +195,12 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.fillStyle = botGrad;
   ctx.fillRect(0, H - 200, W, 200);
 
-  // ─── ÜST: Amare logo ───
+  // ─── ÜST: Yeni Amare logo (büyük, belirgin) ───
   try {
     const logo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
-    const logoW = 220;
+    const logoW = 320;
     const logoH = (logo.height / logo.width) * logoW;
-    ctx.drawImage(logo, (W - logoW) / 2, 30, logoW, logoH);
+    ctx.drawImage(logo, (W - logoW) / 2, 50, logoW, logoH);
   } catch {}
 
   // ─── BAŞLIK ───
