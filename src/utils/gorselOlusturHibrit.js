@@ -124,11 +124,6 @@ KESİN YASAKLAR (KESİNLİKLE UYGULA):
 
 ÖZET: TAMAMEN BOŞ bir dekoratif arka plan görseli. Hiçbir yazı, foto, logo, isim, tarih, banner YOK — sadece renk gradientleri ve soft dokular.`;
 
-ALAN BÖLÜMLERİ (boş tut, sadece arkadaki tasarım/desen kalsın):
-- Üst ~30%: başlık ve tarih için boş — sadece dekoratif çerçeve/parlak
-- Orta ~40%: konuşmacı kartları için boş — sade, parlak değil
-- Alt ~30%: zoom/url için boş — sadece dekoratif çerçeve/parlak`;
-
   const parts = [
     { text: prompt },
     { inlineData: { mimeType: sablon.mimeType, data: sablon.base64 } },
