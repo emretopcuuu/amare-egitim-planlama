@@ -199,12 +199,18 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.fillStyle = botGrad;
   ctx.fillRect(0, H - 200, W, 200);
 
-  // ─── ÜST: Yeni Amare logo (büyük, belirgin, tam üstte) ───
+  // ─── ÜST: Amare logo (sol) + One Team logo (sağ) ───
   try {
-    const logo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
-    const logoW = 360;
-    const logoH = (logo.height / logo.width) * logoW;
-    ctx.drawImage(logo, (W - logoW) / 2, 60, logoW, logoH);
+    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
+    const amareW = 320;
+    const amareH = (amareLogo.height / amareLogo.width) * amareW;
+    ctx.drawImage(amareLogo, 60, 60, amareW, amareH);
+  } catch {}
+  try {
+    const otLogo = await urlToImage('/logos/oneteam logo.JPG');
+    const otW = 130;
+    const otH = (otLogo.height / otLogo.width) * otW;
+    ctx.drawImage(otLogo, W - otW - 60, 50, otW, otH);
   } catch {}
 
   // ─── BAŞLIK ───

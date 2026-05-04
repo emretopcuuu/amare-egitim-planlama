@@ -1,3 +1,5 @@
+import { applyLogos } from './applyLogos';
+
 // Resmi base64'e çevirir (URL veya File)
 const resmiBase64Yap = async (kaynak) => {
   if (kaynak instanceof File) {
@@ -293,5 +295,6 @@ Bu yüzü başka bir konuşmacıyla DEĞİŞTİRME, isim/unvan KARIŞTIRMA.`,
   }
 
   const { data: imgBase64, mimeType: imgMime } = imgPart.inlineData;
-  return { base64: imgBase64, mimeType: imgMime };
+  // Post-process: Gemini'nin uydurma logolarını gerçek Amare + One Team ile değiştir
+  return await applyLogos(imgBase64, imgMime);
 };

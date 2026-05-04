@@ -101,12 +101,18 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   ctx.fillRect(60, 22, W - 120, 3);
   ctx.fillRect(60, H - 25, W - 120, 3);
 
-  // ─── ÜST: Amare logo (yeni beyaz logo) ───
+  // ─── ÜST: Amare logo (sol) + One Team logo (sağ) ───
   try {
-    const logo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
-    const logoW = 280;
-    const logoH = (logo.height / logo.width) * logoW;
-    ctx.drawImage(logo, (W - logoW) / 2, 30, logoW, logoH);
+    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
+    const amareW = 320;
+    const amareH = (amareLogo.height / amareLogo.width) * amareW;
+    ctx.drawImage(amareLogo, 60, 50, amareW, amareH);
+  } catch {}
+  try {
+    const otLogo = await urlToImage('/logos/oneteam logo.JPG');
+    const otW = 130;
+    const otH = (otLogo.height / otLogo.width) * otW;
+    ctx.drawImage(otLogo, W - otW - 60, 40, otW, otH);
   } catch {}
 
   // ─── BAŞLIK ───

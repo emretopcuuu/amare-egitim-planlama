@@ -1,3 +1,5 @@
+import { applyLogos } from './applyLogos';
+
 // OpenAI gpt-image-1 ile poster üretimi
 // Yüz koruma için Canvas üzerinde konuşmacı kartlarını ön-kompozit ediyoruz,
 // gpt-image-1'e tek bir referans görsel olarak gönderiyoruz.
@@ -206,5 +208,6 @@ KURALLAR:
   if (!b64) {
     throw new Error('OpenAI görsel döndürmedi.');
   }
-  return { base64: b64, mimeType: 'image/png' };
+  // Post-process: OpenAI'nin uydurma logolarını gerçek Amare + One Team ile değiştir
+  return await applyLogos(b64, 'image/png');
 };
