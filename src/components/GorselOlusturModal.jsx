@@ -11,7 +11,25 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   const [resultBlobUrl, setResultBlobUrl] = useState(null);
   const [error, setError] = useState(null);
   const [yeniYukle, setYeniYukle] = useState(sablonlar.length === 0);
-  const [ekPrompt, setEkPrompt] = useState('');
+
+  // Ek prompt — modal açılırken konuşmacı isim+unvan listesi ile otomatik doldurulur.
+  // Kullanıcı bu listeyi görür ve etkinliğe özel rol değişiklikleri yapabilir
+  // (örn. panel modaratörü = "Modaratör"). Boş satırla ayrılan bloklar Gemini'ye
+  // her konuşmacının ekranda nasıl yazılacağını kesin söyler.
+  const [ekPrompt, setEkPrompt] = useState(() => {
+    if (!egitmenler || egitmenler.length === 0) return '';
+    const lines = [
+      'KONUŞMACI ALTI YAZILACAK ETİKETLER (her bloğu görselde aynen göster, sıra önemli):',
+      '',
+    ];
+    egitmenler.forEach((e, i) => {
+      lines.push(`${i + 1}. ${(e.ad || '').toUpperCase()}`);
+      lines.push(`   ${e.unvan || '(unvan girilmemiş — boş bırak)'}`);
+      lines.push('');
+    });
+    lines.push('NOT: Yukarıdaki unvanlar dışında HİÇBİR şey yazma, başka unvan UYDURMA.');
+    return lines.join('\n');
+  });
 
   // Upload mod state
   const [uploadedFile, setUploadedFile] = useState(null); // { file, preview, dataUrl }
@@ -213,8 +231,14 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
 
               {/* Ek Prompt */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1 block">Ek İstek / Prompt <span className="text-gray-400 font-normal">(isteğe bağlı)</span></label>
-                <textarea value={ekPrompt} onChange={(e) => setEkPrompt(e.target.value)} placeholder="Örn: arka planı koyu mor yap, metinleri daha büyük göster..." rows={3} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-none" />
+                <label className="text-sm font-semibold text-gray-700 mb-1 block">
+                  Ek İstek / Konuşmacı Etiketleri
+                  <span className="text-gray-400 font-normal"> (otomatik dolduruldu, dilersen düzenle)</span>
+                </label>
+                <p className="text-xs text-gray-500 mb-2">
+                  💡 Konuşmacıların altında yazılacak isim+unvan etiketleri. Panel/Vizyon günlerinde özel rol (örn. "Modaratör") yazmak istersen burayı düzenle. Tasarım için ek istek varsa en alta ekle.
+                </p>
+                <textarea value={ekPrompt} onChange={(e) => setEkPrompt(e.target.value)} placeholder="Örn: arka planı koyu mor yap..." rows={10} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
               </div>
 
               {error && (

@@ -141,10 +141,24 @@ KESİN KURAL — KONUŞMACI EŞLEŞTİRMESİ (ÇOK ÖNEMLİ):
 - Yuvarlak/oval çerçeve içinde, eşit boyutta düzenle`;
   }
 
+  // ek prompt MUTLAK öncelikli — kullanıcı orada ad+unvan etiketlerini ve özel rolleri belirtti
+  const ekPromptBlok = ekPrompt && ekPrompt.trim()
+    ? `╔════════════════════════════════════════════════════════════╗
+║  KULLANICI TALİMATLARI — EN YÜKSEK ÖNCELİK, ASLA YOKSAYMA  ║
+╚════════════════════════════════════════════════════════════╝
+${ekPrompt.trim()}
+
+⬆ Yukarıdaki talimatlar HER ŞEYDEN ÜSTÜNDÜR. Tüm konuşmacı isim+unvan
+etiketlerini AYNEN bu listeden al. Burada yazılı OLMAYAN bir unvan/kariyer
+ASLA görselde GÖSTERME — bağlamdan tahmin etme, UYDURMA.
+
+`
+    : '';
+
   // Prompt oluştur
   const prompt = `Sen profesyonel bir tasarım uzmanısın. Aşağıdaki bilgileri kullanarak etkileyici bir etkinlik tanıtım görseli hazırla.
 
-ŞABLON: Sana verilen ilk görsel (şablon) esas tasarım düzenini belirliyor. Bu düzeni koru, renk paletini ve genel estetiği kullan.
+${ekPromptBlok}ŞABLON: Sana verilen ilk görsel (şablon) esas tasarım düzenini belirliyor. Bu düzeni koru, renk paletini ve genel estetiği kullan.
 
 ${konusmaciFotoPrompt}
 
@@ -171,7 +185,7 @@ TASARIM KURALLARI:
 - Profesyonel ve çekici bir tasarım
 - LOGO KURALI: Sana verilen resmi logoları (Amare Global ve One Team) görsele entegre et. Asla kendi logonu uydurmayacaksın! Bu logoları şablona uygun konuma yerleştir. Sahte/uydurma logo, amblem veya sembol çizme.
 - Sosyal medya paylaşımına uygun kare veya dikey format
-- KESİNLİKLE YASAK: Görselde "Kyani" kelimesi KESİNLİKLE yer almamalı. Ne arka planda, ne logoda, ne metinde, ASLA "Kyani" yazma. Bu marka artık mevcut değil. Sadece "Amare Global" ve "One Team" kullan.${konumPrompt}${ekPrompt ? '\n\nEK İSTEKLER:\n' + ekPrompt : ''}`;
+- KESİNLİKLE YASAK: Görselde "Kyani" kelimesi KESİNLİKLE yer almamalı. Ne arka planda, ne logoda, ne metinde, ASLA "Kyani" yazma. Bu marka artık mevcut değil. Sadece "Amare Global" ve "One Team" kullan.${konumPrompt}`;
 
   // Logoları yükle
   let amareLogo = null;
