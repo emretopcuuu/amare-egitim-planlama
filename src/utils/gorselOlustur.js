@@ -141,7 +141,17 @@ KESİN KURAL — KONUŞMACI EŞLEŞTİRMESİ (ÇOK ÖNEMLİ):
 - ASLA bir konuşmacıya yukarıda yazılı OLMAYAN bir kariyer/unvan ATFETME — yoksa sadece adını yaz, UYDURMA
 - "Diamond", "2 Star Diamond", "Prof.Dr.", "Uzm.Dr." gibi unvanlar SADECE yukarıda kime verildiyse o kişide yazılır
 - Her konuşmacı görselde TAM 1 KEZ görünür, ASLA TEKRARLAMA, ASLA ÇOĞALTMA
-- Yuvarlak/oval çerçeve içinde, eşit boyutta düzenle`;
+- Yuvarlak/oval çerçeve içinde, eşit boyutta düzenle
+
+🚫 YÜZLERİ ASLA YENİDEN ÇİZME — KRİTİK KURAL:
+- Sana verilen konuşmacı fotoğraflarını PIKSEL PIKSEL OLDUĞU GİBİ kullan
+- Yüzleri AI ile yeniden oluşturma, yeniden çizme, "iyileştirme" yapma
+- Yüz hatlarını, saç rengini, ten rengini, gözleri, dudakları, yaşı DEĞİŞTİRME
+- Görsel kalitesi düşükse bile YÜZÜ KORU — sadece çerçeveye yerleştir
+- Sana verdiğim foto = görseldeki foto. ASLA "benzer bir yüz" çizme.
+- Eğer konuşmacı kadınsa kadın olarak, erkekse erkek olarak KESINLIKLE ORIJINAL yüz hatlarıyla göster
+- Yüz değişimi/yeniden çizim = HATA. Foto'yu olduğu gibi kırp ve yerleştir.
+- Sadece çerçeve (yuvarlak/oval) ekleyebilirsin, yüzün içine ASLA dokunma`;
   }
 
   // ek prompt MUTLAK öncelikli — kullanıcı orada ad+unvan etiketlerini ve özel rolleri belirtti
@@ -233,6 +243,10 @@ Bu yüzü başka bir konuşmacıyla EŞLEŞTİRME, KARIŞTIRMA.`,
     // SONRA: tekrar vurgu — multimodal modeller için sandviç teyit
     parts.push({
       text: `▲ Yukarıdaki yüz ${ad} kişisidir — unvanı: "${unvan || '(unvan yok)'}".
+Bu YÜZÜ AYNEN, OLDUĞU GİBİ KULLAN — yeniden çizme, değiştirme, "iyileştirme".
+Yüz hatları, saç, gözler, ten rengi, yaş — hepsi orijinal foto ile birebir aynı kalsın.
+Sadece çerçeve ekle (yuvarlak/oval), yüzün içine DOKUNMA.
+
 Bu yüzün altına TAM olarak şunu yaz:
   ${ad}
   ${unvan || ''}
