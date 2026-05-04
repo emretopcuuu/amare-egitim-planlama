@@ -132,9 +132,12 @@ Bu etkinlik ${lokasyon} şehrinde yüz yüze yapılacak. Arka plana ${lokasyon} 
 
 KESİN KURAL — KONUŞMACI EŞLEŞTİRMESİ (ÇOK ÖNEMLİ):
 - Sana ${egitmenler.length} konuşmacı verildi (KONUŞMACI 1, 2, 3, ...)
-- Sana fotoğraflar AYNI SIRADA gönderildi (1. fotoğraf = KONUŞMACI 1, 2. fotoğraf = KONUŞMACI 2 ...)
-- Her fotoğrafın altına SADECE o sıradaki konuşmacının ADI ve UNVANI/KARIYERI yaz
-- ASLA isim+unvan ile fotoğrafları KARIŞTIRMA, SIRA DEĞİŞTİRME
+- Sana fotoğraflar AYNI SIRADA gönderildi
+- HER fotoğrafın ÖNCESİNDE ve SONRASINDA "Bu yüz X kişisidir" şeklinde TEKRARLI etiket vardır
+- Bu sandviç etiketler kesinlikle güvenilirdir — ASLA değiştirme
+- ASLA bir kadın fotoğrafını başka bir kadınla, bir erkek fotoğrafını başka bir erkekle KARIŞTIRMA
+- Her fotoğrafın altına SADECE o fotonun ÇERÇEVELİ ETİKETİNDEKİ kişinin adını ve unvanını yaz
+- ASLA isim+unvan ile fotoğrafları YER DEĞİŞTİRME — fotoğrafın yanındaki etiket kesindir
 - ASLA bir konuşmacıya yukarıda yazılı OLMAYAN bir kariyer/unvan ATFETME — yoksa sadece adını yaz, UYDURMA
 - "Diamond", "2 Star Diamond", "Prof.Dr.", "Uzm.Dr." gibi unvanlar SADECE yukarıda kime verildiyse o kişide yazılır
 - Her konuşmacı görselde TAM 1 KEZ görünür, ASLA TEKRARLAMA, ASLA ÇOĞALTMA
@@ -205,18 +208,36 @@ TASARIM KURALLARI:
     { inlineData: { mimeType: sablon.mimeType, data: sablon.base64 } },
   ];
 
-  // TÜM konuşmacı fotoğraflarını ekle — her fotoğrafın önünde isim+unvan etiketi
+  // TÜM konuşmacı fotoğraflarını ekle — HER FOTONUN ÖNÜNDE VE ARKASINDA çift etiket
+  // Bu sandviç tekniği multimodal modellere kişi-foto eşleştirmesini çok daha sağlam aktarır.
   egitmenFotolar.forEach((foto, idx) => {
-    if (!foto) return; // null fotoğrafları atla
+    if (!foto) return;
     const e = egitmenler[idx] || {};
     const ad = (e.ad || '').toUpperCase();
     const unvan = (e.unvan || '').trim();
-    let etiket = `KONUŞMACI ${idx + 1} FOTOĞRAFI`;
-    if (ad) etiket += ` — ${ad}`;
-    if (unvan) etiket += ` (${unvan})`;
-    etiket += ` — bu fotoğraf SADECE ve SADECE bu kişiye aittir, başka konuşmacıyla karıştırma:`;
-    parts.push({ text: etiket });
+    const adUnvan = unvan ? `${ad} (${unvan})` : ad;
+
+    // ÖNCE: bu foto'nun KİME ait olduğunu net belirt
+    parts.push({
+      text: `╔═══════════════════════════════════════╗
+║  AŞAĞIDAKİ FOTOĞRAF — KONUŞMACI ${idx + 1}  ║
+║  KİŞİ: ${adUnvan}
+╚═══════════════════════════════════════╝
+DİKKAT: Aşağıda göreceğin yüz, KESİN olarak ${ad} kişisinin yüzüdür.
+Görselde bu yüzün altına SADECE "${adUnvan}" yaz, başka isim/unvan ASLA yazma.
+Bu yüzü başka bir konuşmacıyla EŞLEŞTİRME, KARIŞTIRMA.`,
+    });
+
     parts.push({ inlineData: { mimeType: foto.mimeType, data: foto.base64 } });
+
+    // SONRA: tekrar vurgu — multimodal modeller için sandviç teyit
+    parts.push({
+      text: `▲ Yukarıdaki yüz ${ad} kişisidir — unvanı: "${unvan || '(unvan yok)'}".
+Bu yüzün altına TAM olarak şunu yaz:
+  ${ad}
+  ${unvan || ''}
+Bu yüzü başka bir konuşmacıyla DEĞİŞTİRME, isim/unvan KARIŞTIRMA.`,
+    });
   });
 
   // Logoları ekle
