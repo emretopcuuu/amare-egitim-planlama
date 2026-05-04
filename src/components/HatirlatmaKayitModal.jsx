@@ -68,14 +68,21 @@ const HatirlatmaKayitModal = ({ egitim, onClose }) => {
         const zaman = ZAMAN_KEYS.find(z => z.id === zamanId);
         const gonderilecekZaman = new Date(egitimBaslangic.getTime() - zaman.dk * 60000);
 
-        const q = query(
-          collection(db, 'hatirlatmalar'),
-          where('egitimId', '==', egitim.id),
-          where('email', '==', email.trim().toLowerCase()),
-          where('hatirlatmaZamani', '==', zamanId)
-        );
-        const existing = await getDocs(q);
-        if (!existing.empty) continue;
+        // Duplicate kontrolü — sadece admin okuyabildiği için anonim kullanıcıda
+        // bu sorgu PERMISSION_DENIED dönebilir. Hatayı yutup kaydı yine yapıyoruz;
+        // çift kayıt olursa Cloud Function gönderim sırasında deduplicate eder.
+        try {
+          const q = query(
+            collection(db, 'hatirlatmalar'),
+            where('egitimId', '==', egitim.id),
+            where('email', '==', email.trim().toLowerCase()),
+            where('hatirlatmaZamani', '==', zamanId)
+          );
+          const existing = await getDocs(q);
+          if (!existing.empty) continue;
+        } catch (qErr) {
+          // anonim read kapalı — sessizce devam, kayıt yapılır
+        }
 
         await addDoc(collection(db, 'hatirlatmalar'), {
           egitimId: egitim.id,
