@@ -26,30 +26,42 @@ const resmiBase64Yap = async (kaynak) => {
   });
 };
 
-export const gorselOlustur = async ({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, sablonFile, ekPrompt = '' }) => {
+export const gorselOlustur = async ({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler: egitmenObjeler, sablonFile, ekPrompt = '' }) => {
   if (!apiKey) throw new Error('Gemini API anahtarı girilmedi. Lütfen Ayarlar sekmesinden ekleyin.');
 
   // Şablonu base64'e çevir
   const sablon = await resmiBase64Yap(sablonFile);
 
-  // Konuşmacı fotoğraflarını topla
-  // Yeni: egitmenFotoURLs dizisi (çoklu), eski: egitmenFotoURL (tekli, geriye uyumluluk)
-  const fotoURLListesi = egitmenFotoURLs || (egitmenFotoURL ? [egitmenFotoURL] : []);
-  const egitmenFotolar = [];
+  // Konuşmacı bilgileri — yeni format: egitmenler (objeler), eski format: egitmenFotoURLs (sadece URL)
+  // Her egitmen objesi: { ad, unvan, fotoURL, biyografi }
+  let egitmenler;
+  if (egitmenObjeler && egitmenObjeler.length > 0) {
+    egitmenler = egitmenObjeler;
+  } else {
+    const fotoURLListesi = egitmenFotoURLs || (egitmenFotoURL ? [egitmenFotoURL] : []);
+    egitmenler = fotoURLListesi.map(url => ({ ad: '', unvan: '', fotoURL: url }));
+  }
 
   console.log(`[gorsel] Eğitim: ${egitim.egitim}`);
-  console.log(`[gorsel] Egitmen alanı: ${egitim.egitmen}`);
-  console.log(`[gorsel] Gelen fotoURL sayısı: ${fotoURLListesi.length}`);
+  console.log(`[gorsel] Konuşmacı sayısı: ${egitmenler.length}`);
 
-  for (const url of fotoURLListesi) {
+  // Her konuşmacının fotoğrafını base64'e çevir (sıra korunur)
+  const egitmenFotolar = [];
+  for (const e of egitmenler) {
+    if (!e.fotoURL) {
+      egitmenFotolar.push(null);
+      continue;
+    }
     try {
-      const foto = await resmiBase64Yap(url);
+      const foto = await resmiBase64Yap(e.fotoURL);
       egitmenFotolar.push(foto);
     } catch (err) {
-      console.warn(`[gorsel] Fotoğraf yüklenemedi:`, err.message);
+      console.warn(`[gorsel] Fotoğraf yüklenemedi (${e.ad}):`, err.message);
+      egitmenFotolar.push(null);
     }
   }
-  console.log(`[gorsel] Yüklenen fotoğraf sayısı: ${egitmenFotolar.length}`);
+  const fotoluSayi = egitmenFotolar.filter(f => f).length;
+  console.log(`[gorsel] Yüklenen fotoğraf sayısı: ${fotoluSayi}/${egitmenler.length}`);
 
   // Şehir/konum tespiti — online değilse arka plana şehir görseli ekle
   const yer = egitim.yer || '';
@@ -75,12 +87,58 @@ Bu etkinlik ${lokasyon} şehrinde yüz yüze yapılacak. Arka plana ${lokasyon} 
       .trim())
     .filter(n => n.length > 1);
 
-  // Konuşmacı fotoğrafı talimatları
+  // ─── TR / EU SAAT DÖNÜŞÜMÜ ───
+  const isEUSummer = (tarihStr) => {
+    if (!tarihStr) return true;
+    const [d, m, y] = String(tarihStr).split('.').map(Number);
+    if (!y || !m || !d) return true;
+    const dt = new Date(y, m - 1, d);
+    const marLast = new Date(y, 2, 31);
+    while (marLast.getDay() !== 0) marLast.setDate(marLast.getDate() - 1);
+    const octLast = new Date(y, 9, 31);
+    while (octLast.getDay() !== 0) octLast.setDate(octLast.getDate() - 1);
+    return dt >= marLast && dt < octLast;
+  };
+  const trToEU = (saat, tarih) => {
+    if (!saat || !saat.includes(':')) return saat;
+    const [h, mn] = saat.split(':').map(Number);
+    const offset = isEUSummer(tarih) ? 1 : 2;
+    let euH = h - offset;
+    if (euH < 0) euH += 24;
+    return `${String(euH).padStart(2, '0')}:${String(mn).padStart(2, '0')}`;
+  };
+  const trSaat = egitim.saat || '';
+  const trBitis = egitim.bitisSaati || '';
+  const euSaat = trToEU(trSaat, egitim.tarih);
+  const euBitis = trToEU(trBitis, egitim.tarih);
+
+  // ─── KONUŞMACI BLOĞU — sıralı eşleştirme + unvan/kariyer ───
   let konusmaciFotoPrompt = '';
-  if (egitmenFotolar.length === 1 && konusmaciAdlari.length === 1) {
-    konusmaciFotoPrompt = 'KONUŞMACI FOTOĞRAFI: Sana verilen konuşmacı fotoğrafını şablona uygun bir alana entegre et, yuvarlak veya oval çerçeve içine al.';
-  } else if (egitmenFotolar.length >= 1) {
-    konusmaciFotoPrompt = `KONUŞMACI FOTOĞRAFLARI: Sana ${egitmenFotolar.length} adet konuşmacı fotoğrafı verildi. Konuşmacılar: ${konusmaciAdlari.join(', ')}. Her konuşmacının fotoğrafını görselde TAM BİR KEZ göster — TEKRARLAMA, ÇOĞALTMA. Yan yana, eşit boyutta, yuvarlak çerçeve içinde düzenle. Her fotoğrafın altına isim yaz. ASLA aynı kişiyi iki kez gösterme.`;
+  if (egitmenler.length > 0) {
+    const lines = egitmenler.map((e, i) => {
+      const num = i + 1;
+      const ad = (e.ad || '(isim verilmemiş)').toUpperCase();
+      const unvan = (e.unvan || '').trim();
+      const hasPhoto = !!egitmenFotolar[i];
+      let line = `KONUŞMACI ${num}: ${ad}`;
+      if (unvan) line += ` — UNVAN/KARİYER: ${unvan}`;
+      if (hasPhoto) line += `   →  fotoğrafı sıradaki #${num} olarak gönderildi`;
+      else line += `   →  fotoğraf yok, sadece isim+unvan göster`;
+      return line;
+    }).join('\n  ');
+
+    konusmaciFotoPrompt = `KONUŞMACI BİLGİLERİ — KARIŞTIRMA, SIRA ÖNEMLİ:
+  ${lines}
+
+KESİN KURAL — KONUŞMACI EŞLEŞTİRMESİ (ÇOK ÖNEMLİ):
+- Sana ${egitmenler.length} konuşmacı verildi (KONUŞMACI 1, 2, 3, ...)
+- Sana fotoğraflar AYNI SIRADA gönderildi (1. fotoğraf = KONUŞMACI 1, 2. fotoğraf = KONUŞMACI 2 ...)
+- Her fotoğrafın altına SADECE o sıradaki konuşmacının ADI ve UNVANI/KARIYERI yaz
+- ASLA isim+unvan ile fotoğrafları KARIŞTIRMA, SIRA DEĞİŞTİRME
+- ASLA bir konuşmacıya yukarıda yazılı OLMAYAN bir kariyer/unvan ATFETME — yoksa sadece adını yaz, UYDURMA
+- "Diamond", "2 Star Diamond", "Prof.Dr.", "Uzm.Dr." gibi unvanlar SADECE yukarıda kime verildiyse o kişide yazılır
+- Her konuşmacı görselde TAM 1 KEZ görünür, ASLA TEKRARLAMA, ASLA ÇOĞALTMA
+- Yuvarlak/oval çerçeve içinde, eşit boyutta düzenle`;
   }
 
   // Prompt oluştur
@@ -93,19 +151,27 @@ ${konusmaciFotoPrompt}
 ETKİNLİK BİLGİLERİ:
 - Başlık: ${egitim.egitim}
 - Tarih: ${egitim.tarih} ${egitim.gun}
-- Saat: ${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}
+- Saat:
+  Türkiye saati: ${trSaat || 'belirlenmedi'}${trBitis ? ' - ' + trBitis : ''}
+  Avrupa saati  : ${euSaat || 'belirlenmedi'}${euBitis ? ' - ' + euBitis : ''}
 - Platform/Yer: ${egitim.yer || 'ZOOM'}
-- Konuşmacı: ${egitim.egitmen || ''}
+
+SAAT YAZIM KURALI (önemli — Avrupa katılımcıları için):
+- Görselde saati MUTLAKA iki ayrı satır olarak yaz:
+  * "TR ${trSaat || '--:--'}${trBitis ? ' - ' + trBitis : ''}"
+  * "EU ${euSaat || '--:--'}${euBitis ? ' - ' + euBitis : ''}"
+- İki saat eşit boyutta, görselde dengeli yerleşsin (yan yana veya alt alta)
+- "TR" ve "EU" etiketleri net görünsün
+- Saat henüz belirlenmemişse bu bölümü tamamen ATLA, "--:--" yazma
 
 TASARIM KURALLARI:
-- Tüm metinler okunaklar, kontrast yüksek olsun
-- Tarih ve saat belirgin vurgulansın
+- Tüm metinler okunaklı, kontrast yüksek olsun
+- Tarih ve saatler (TR + EU) belirgin vurgulansın
 - ONE TEAM / Amare Global kurumsal kimliğine uygun olsun
 - Profesyonel ve çekici bir tasarım
 - LOGO KURALI: Sana verilen resmi logoları (Amare Global ve One Team) görsele entegre et. Asla kendi logonu uydurmayacaksın! Bu logoları şablona uygun konuma yerleştir. Sahte/uydurma logo, amblem veya sembol çizme.
 - Sosyal medya paylaşımına uygun kare veya dikey format
-- KESİNLİKLE YASAK: Görselde "Kyani" kelimesi KESİNLİKLE yer almamalı. Ne arka planda, ne logoda, ne metinde, ASLA "Kyani" yazma. Bu marka artık mevcut değil. Sadece "Amare Global" ve "One Team" kullan.
-- Her konuşmacı görselde SADECE 1 KEZ görünmeli. Aynı fotoğrafı tekrarlama, çoğaltma. Fotoğraf sayısı = konuşmacı sayısı olmalı.${konumPrompt}${ekPrompt ? '\n\nEK İSTEKLER:\n' + ekPrompt : ''}`;
+- KESİNLİKLE YASAK: Görselde "Kyani" kelimesi KESİNLİKLE yer almamalı. Ne arka planda, ne logoda, ne metinde, ASLA "Kyani" yazma. Bu marka artık mevcut değil. Sadece "Amare Global" ve "One Team" kullan.${konumPrompt}${ekPrompt ? '\n\nEK İSTEKLER:\n' + ekPrompt : ''}`;
 
   // Logoları yükle
   let amareLogo = null;
@@ -125,11 +191,17 @@ TASARIM KURALLARI:
     { inlineData: { mimeType: sablon.mimeType, data: sablon.base64 } },
   ];
 
-  // TÜM konuşmacı fotoğraflarını ekle
+  // TÜM konuşmacı fotoğraflarını ekle — her fotoğrafın önünde isim+unvan etiketi
   egitmenFotolar.forEach((foto, idx) => {
-    if (egitmenFotolar.length > 1) {
-      parts.push({ text: `KONUŞMACI ${idx + 1} FOTOĞRAFI:` });
-    }
+    if (!foto) return; // null fotoğrafları atla
+    const e = egitmenler[idx] || {};
+    const ad = (e.ad || '').toUpperCase();
+    const unvan = (e.unvan || '').trim();
+    let etiket = `KONUŞMACI ${idx + 1} FOTOĞRAFI`;
+    if (ad) etiket += ` — ${ad}`;
+    if (unvan) etiket += ` (${unvan})`;
+    etiket += ` — bu fotoğraf SADECE ve SADECE bu kişiye aittir, başka konuşmacıyla karıştırma:`;
+    parts.push({ text: etiket });
     parts.push({ inlineData: { mimeType: foto.mimeType, data: foto.base64 } });
   });
 

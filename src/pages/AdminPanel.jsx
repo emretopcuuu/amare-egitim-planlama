@@ -416,17 +416,24 @@ const AdminPanel = () => {
 
   const handleGorselAc = (egitim) => {
     const egitmenAdlari = splitEgitmen(egitim.egitmen);
+    const egitmenler = [];
     const fotoURLs = [];
     console.log(`[gorselAc] Eğitim: ${egitim.egitim}`);
     console.log(`[gorselAc] Egitmen alanı: "${egitim.egitmen}"`);
     console.log(`[gorselAc] Ayrıştırılan isimler:`, egitmenAdlari);
     for (const ad of egitmenAdlari) {
       const k = konusmaciBul(ad);
-      console.log(`[gorselAc]   ${ad} → foto: ${k?.fotoURL ? 'VAR' : 'YOK'}`);
+      console.log(`[gorselAc]   ${ad} → foto: ${k?.fotoURL ? 'VAR' : 'YOK'} | unvan: ${k?.unvan || '-'}`);
+      egitmenler.push({
+        ad,
+        unvan: k?.unvan || '',
+        biyografi: k?.biyografi || '',
+        fotoURL: k?.fotoURL || null,
+      });
       if (k?.fotoURL) fotoURLs.push(k.fotoURL);
     }
     console.log(`[gorselAc] Toplam fotoğraf: ${fotoURLs.length}/${egitmenAdlari.length}`);
-    setGorselModal({ egitim, egitmenFotoURL: fotoURLs[0] || null, egitmenFotoURLs: fotoURLs });
+    setGorselModal({ egitim, egitmenFotoURL: fotoURLs[0] || null, egitmenFotoURLs: fotoURLs, egitmenler });
   };
 
   const handleQrAc = async (egitim) => {
@@ -543,12 +550,19 @@ const AdminPanel = () => {
       const egitim = seciliEgitimler[i];
       try {
         const egitmenAdlari = splitEgitmen(egitim.egitmen);
+        const egitmenler = [];
         const fotoURLs = [];
         for (const ad of egitmenAdlari) {
           const k = konusmaciBul(ad);
+          egitmenler.push({
+            ad,
+            unvan: k?.unvan || '',
+            biyografi: k?.biyografi || '',
+            fotoURL: k?.fotoURL || null,
+          });
           if (k?.fotoURL) fotoURLs.push(k.fotoURL);
         }
-        const result = await gorselOlustur({ apiKey: geminiApiKey, egitim, egitmenFotoURLs: fotoURLs, sablonFile: sablon.url });
+        const result = await gorselOlustur({ apiKey: geminiApiKey, egitim, egitmenler, egitmenFotoURLs: fotoURLs, sablonFile: sablon.url });
         const standardB64 = result.base64.replace(/-/g, '+').replace(/_/g, '/');
         const byteChars = atob(standardB64);
         const byteArr = new Uint8Array(byteChars.length);
@@ -1734,6 +1748,7 @@ const AdminPanel = () => {
           egitim={gorselModal.egitim}
           egitmenFotoURL={gorselModal.egitmenFotoURL}
           egitmenFotoURLs={gorselModal.egitmenFotoURLs}
+          egitmenler={gorselModal.egitmenler}
           apiKey={geminiApiKey}
           sablonlar={sablonlar}
           onClose={() => setGorselModal(null)}

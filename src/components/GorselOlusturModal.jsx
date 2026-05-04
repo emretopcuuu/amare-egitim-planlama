@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { X, Upload, ImageIcon, Download, Loader2, AlertCircle, CheckCircle2, Link2, Sparkles, FileImage } from 'lucide-react';
 import { gorselOlustur } from '../utils/gorselOlustur';
 
-const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, apiKey, onClose, sablonlar = [], onGorselBagla }) => {
+const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, apiKey, onClose, sablonlar = [], onGorselBagla }) => {
   const [mod, setMod] = useState('ai'); // 'ai' | 'upload'
 
   // AI mod state
@@ -67,7 +67,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, apiKey, o
     setResultBlobUrl(null);
     try {
       const sablonKaynak = secilenSablon.type === 'file' ? secilenSablon.file : secilenSablon.url;
-      const result = await gorselOlustur({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, sablonFile: sablonKaynak, ekPrompt });
+      const result = await gorselOlustur({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, sablonFile: sablonKaynak, ekPrompt });
       const standardB64 = result.base64.replace(/-/g, '+').replace(/_/g, '/');
       const byteChars = atob(standardB64);
       const byteArr = new Uint8Array(byteChars.length);
