@@ -3,6 +3,7 @@ import { X, Upload, ImageIcon, Download, Loader2, AlertCircle, CheckCircle2, Lin
 import { gorselOlustur } from '../utils/gorselOlustur';
 import { gorselOlusturOpenAI } from '../utils/gorselOlusturOpenAI';
 import { gorselOlusturCanvas } from '../utils/gorselOlusturCanvas';
+import { gorselOlusturHibrit } from '../utils/gorselOlusturHibrit';
 
 const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, apiKey, openaiApiKey, onClose, sablonlar = [], onGorselBagla }) => {
   const [mod, setMod] = useState('ai'); // 'ai' | 'upload'
@@ -13,11 +14,11 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   const [resultBlobUrl, setResultBlobUrl] = useState(null);
   const [error, setError] = useState(null);
   const [yeniYukle, setYeniYukle] = useState(sablonlar.length === 0);
-  // Model seçimi: 'gemini' | 'canvas' | 'openai' — default 'gemini' (en iyi sonuç)
+  // Model seçimi: 'hibrit' | 'gemini' | 'canvas' | 'openai' — default 'hibrit'
   const [aiModel, setAiModel] = useState(() => {
     const saved = localStorage.getItem('aiModel');
-    if (saved === 'canvas' || saved === 'openai' || saved === 'gemini') return saved;
-    return 'gemini';
+    if (saved === 'canvas' || saved === 'openai' || saved === 'gemini' || saved === 'hibrit') return saved;
+    return 'hibrit';
   });
   // Fallback toggle — default KAPALI çünkü OpenAI image-edits Türkçe karakter ve yüz koruma kötü
   const [fallbackOn, setFallbackOn] = useState(localStorage.getItem('aiFallback') === 'on');
@@ -91,6 +92,12 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   // Modeli çalıştıran inner fonksiyon — fallback için kullanılır
   const runModel = async (model, sablonKaynak) => {
     setAktifModel(model);
+    if (model === 'hibrit') {
+      return await gorselOlusturHibrit({
+        apiKey, egitim, egitmenler: egitmenler || [],
+        sablonFile: sablonKaynak, ekPrompt,
+      });
+    }
     if (model === 'canvas') {
       return await gorselOlusturCanvas({
         egitim, egitmenler: egitmenler || [],
@@ -298,14 +305,22 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
               {/* Model Seçici */}
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
                 <div className="text-xs font-semibold text-gray-700 mb-2">ÜRETİM YÖNTEMİ</div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setAiModel('hibrit'); localStorage.setItem('aiModel', 'hibrit'); }}
+                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'hibrit' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <div className="flex items-center gap-1 font-bold">🎯 Hibrit <span className="text-[10px] bg-green-200 text-green-900 px-1 rounded">önerilen</span></div>
+                    <div className="text-gray-500 mt-0.5">AI tasarım + Gerçek yüzler · ~$0.04</div>
+                  </button>
                   <button
                     type="button"
                     onClick={() => { setAiModel('gemini'); localStorage.setItem('aiModel', 'gemini'); }}
                     className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'gemini' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
                   >
-                    <div className="flex items-center gap-1 font-bold">🍌 Gemini <span className="text-[10px] bg-green-200 text-green-900 px-1 rounded">önerilen</span></div>
-                    <div className="text-gray-500 mt-0.5">AI tasarım · En iyi sonuç · ~$0.04</div>
+                    <div className="flex items-center gap-1 font-bold">🍌 Gemini</div>
+                    <div className="text-gray-500 mt-0.5">Tam AI · Yüz değişebilir · ~$0.04</div>
                   </button>
                   <button
                     type="button"
@@ -349,7 +364,8 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                   {generating ? (
                     <>
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      {aktifModel === 'canvas' ? '🎨 Canvas çiziyor...' :
+                      {aktifModel === 'hibrit' ? '🎯 Gemini arka plan + Canvas yüzleri...' :
+                       aktifModel === 'canvas' ? '🎨 Canvas çiziyor...' :
                        aktifModel === 'openai' ? '🤖 OpenAI üretiyor...' :
                        aktifModel === 'gemini' ? '🍌 Gemini üretiyor...' :
                        'Görsel Oluşturuluyor...'}
