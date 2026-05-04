@@ -62,10 +62,9 @@ const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight) => {
   return lineY;
 };
 
-export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile, ekPrompt = '' }) => {
-  // 1080x1080 Instagram square
-  const W = 1080;
-  const H = 1080;
+export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile, ekPrompt = '', width = 1080, height = 1080 }) => {
+  const W = width;
+  const H = height;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;

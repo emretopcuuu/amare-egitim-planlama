@@ -20,6 +20,8 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     if (saved === 'canvas' || saved === 'openai' || saved === 'gemini' || saved === 'hibrit') return saved;
     return 'hibrit';
   });
+  // Format: 'square' (1:1) | 'story' (9:16) | 'landscape' (16:9)
+  const [format, setFormat] = useState(() => localStorage.getItem('aiFormat') || 'square');
   // Fallback toggle — default KAPALI çünkü OpenAI image-edits Türkçe karakter ve yüz koruma kötü
   const [fallbackOn, setFallbackOn] = useState(localStorage.getItem('aiFallback') === 'on');
   const [aktifModel, setAktifModel] = useState(null); // üretim sırasında hangisinin çalıştığını göster
@@ -89,19 +91,27 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     setError(null);
   };
 
+  // Format → boyut dönüşümü
+  const getDimensions = (fmt) => {
+    if (fmt === 'story') return { width: 1080, height: 1920 };
+    if (fmt === 'landscape') return { width: 1920, height: 1080 };
+    return { width: 1080, height: 1080 };
+  };
+
   // Modeli çalıştıran inner fonksiyon — fallback için kullanılır
   const runModel = async (model, sablonKaynak) => {
     setAktifModel(model);
+    const dims = getDimensions(format);
     if (model === 'hibrit') {
       return await gorselOlusturHibrit({
         apiKey, egitim, egitmenler: egitmenler || [],
-        sablonFile: sablonKaynak, ekPrompt,
+        sablonFile: sablonKaynak, ekPrompt, ...dims,
       });
     }
     if (model === 'canvas') {
       return await gorselOlusturCanvas({
         egitim, egitmenler: egitmenler || [],
-        sablonFile: sablonKaynak, ekPrompt,
+        sablonFile: sablonKaynak, ekPrompt, ...dims,
       });
     }
     if (model === 'openai') {
@@ -109,11 +119,11 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
         apiKey: openaiApiKey,
         egitim, egitmenler: egitmenler || [],
         sablonFile: sablonKaynak, ekPrompt,
-        quality: 'medium',
+        quality: 'medium', format,
       });
       return result;
     }
-    return await gorselOlustur({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, sablonFile: sablonKaynak, ekPrompt });
+    return await gorselOlustur({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, sablonFile: sablonKaynak, ekPrompt, format });
   };
 
   const handleOlustur = async () => {
@@ -300,6 +310,46 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                   💡 Konuşmacıların altında yazılacak isim+unvan etiketleri. Panel/Vizyon günlerinde özel rol (örn. "Modaratör") yazmak istersen burayı düzenle. Tasarım için ek istek varsa en alta ekle.
                 </p>
                 <textarea value={ekPrompt} onChange={(e) => setEkPrompt(e.target.value)} placeholder="Örn: arka planı koyu mor yap..." rows={10} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
+              </div>
+
+              {/* Format Seçici */}
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                <div className="text-xs font-semibold text-gray-700 mb-2">GÖRSEL FORMATI</div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setFormat('square'); localStorage.setItem('aiFormat', 'square'); }}
+                    className={`p-2.5 rounded-lg border-2 text-center text-xs transition-all ${format === 'square' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <div className="flex justify-center mb-1">
+                      <div className="w-8 h-8 border-2 border-current rounded" />
+                    </div>
+                    <div className="font-bold">Kare</div>
+                    <div className="text-gray-500 text-[10px]">Instagram post · 1:1</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setFormat('story'); localStorage.setItem('aiFormat', 'story'); }}
+                    className={`p-2.5 rounded-lg border-2 text-center text-xs transition-all ${format === 'story' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <div className="flex justify-center mb-1">
+                      <div className="w-5 h-9 border-2 border-current rounded" />
+                    </div>
+                    <div className="font-bold">Story</div>
+                    <div className="text-gray-500 text-[10px]">IG/FB story · 9:16</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setFormat('landscape'); localStorage.setItem('aiFormat', 'landscape'); }}
+                    className={`p-2.5 rounded-lg border-2 text-center text-xs transition-all ${format === 'landscape' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <div className="flex justify-center mb-1">
+                      <div className="w-9 h-5 border-2 border-current rounded" />
+                    </div>
+                    <div className="font-bold">Yatay</div>
+                    <div className="text-gray-500 text-[10px]">LinkedIn/Banner · 16:9</div>
+                  </button>
+                </div>
               </div>
 
               {/* Model Seçici */}

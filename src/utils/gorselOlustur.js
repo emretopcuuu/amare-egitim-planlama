@@ -28,7 +28,7 @@ const resmiBase64Yap = async (kaynak) => {
   });
 };
 
-export const gorselOlustur = async ({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler: egitmenObjeler, sablonFile, ekPrompt = '' }) => {
+export const gorselOlustur = async ({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler: egitmenObjeler, sablonFile, ekPrompt = '', format = 'square' }) => {
   if (!apiKey) throw new Error('Gemini API anahtarı girilmedi. Lütfen Ayarlar sekmesinden ekleyin.');
 
   // Şablonu base64'e çevir
@@ -199,7 +199,7 @@ TASARIM KURALLARI:
 - ONE TEAM / Amare Global kurumsal kimliğine uygun olsun
 - Profesyonel ve çekici bir tasarım
 - LOGO KURALI: Sana verilen resmi logoları (Amare Global ve One Team) görsele entegre et. Asla kendi logonu uydurmayacaksın! Bu logoları şablona uygun konuma yerleştir. Sahte/uydurma logo, amblem veya sembol çizme.
-- Sosyal medya paylaşımına uygun kare veya dikey format
+- Format: ${format === 'story' ? '1080x1920 DİKEY (Instagram/FB Story, 9:16)' : format === 'landscape' ? '1920x1080 YATAY (LinkedIn/Banner, 16:9)' : '1080x1080 KARE (Instagram post, 1:1)'} — bu boyutlara uy
 - KESİNLİKLE YASAK: Görselde "Kyani" kelimesi KESİNLİKLE yer almamalı. Ne arka planda, ne logoda, ne metinde, ASLA "Kyani" yazma. Bu marka artık mevcut değil. Sadece "Amare Global" ve "One Team" kullan.${konumPrompt}`;
 
   // Logoları yükle

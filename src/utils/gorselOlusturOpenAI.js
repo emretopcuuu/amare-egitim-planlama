@@ -120,7 +120,7 @@ const trToEU = (saat, tarih) => {
   return `${String(euH).padStart(2, '0')}:${String(mn).padStart(2, '0')}`;
 };
 
-export const gorselOlusturOpenAI = async ({ apiKey, egitim, egitmenler = [], sablonFile, ekPrompt = '', quality = 'medium' }) => {
+export const gorselOlusturOpenAI = async ({ apiKey, egitim, egitmenler = [], sablonFile, ekPrompt = '', quality = 'medium', format = 'square' }) => {
   if (!apiKey) throw new Error('OpenAI API anahtarı girilmedi.');
 
   // Şablonu yükle (File veya URL olabilir)
@@ -186,7 +186,9 @@ KURALLAR:
   formData.append('model', 'gpt-image-1');
   formData.append('image', compositeBlob, 'composite.png');
   formData.append('prompt', userPrompt);
-  formData.append('size', '1024x1024');
+  // OpenAI gpt-image-1 desteklenen boyutlar: 1024x1024, 1024x1536 (dikey), 1536x1024 (yatay)
+  const sizeMap = { story: '1024x1536', landscape: '1536x1024', square: '1024x1024' };
+  formData.append('size', sizeMap[format] || '1024x1024');
   formData.append('quality', quality); // low | medium | high
   formData.append('n', '1');
 

@@ -158,7 +158,7 @@ ALAN BÖLÜMLERİ (boş tut, sadece arkadaki tasarım/desen kalsın):
   return imgPart.inlineData; // { mimeType, data }
 };
 
-export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sablonFile, ekPrompt = '' }) => {
+export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sablonFile, ekPrompt = '', width = 1080, height = 1080 }) => {
   if (!apiKey) throw new Error('Gemini API anahtarı yok.');
 
   // 1. AŞAMA: Gemini'den dekoratif arka plan al
@@ -167,8 +167,8 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   const arkaPlanImg = await urlToImage(arkaPlanDataUrl);
 
   // 2. AŞAMA: Canvas üzerine içerik bindir
-  const W = 1080;
-  const H = 1080;
+  const W = width;
+  const H = height;
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
