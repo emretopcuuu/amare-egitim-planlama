@@ -117,8 +117,10 @@ AYNEN kopyala. Yeni özgün bir tasarım YAPMA — şablona MÜMKÜN OLDUĞUNCA 
 KESİN YASAKLAR:
 - ASLA insan yüzü, vücut, fotoğraf çizme
 - ASLA yazı, isim, başlık, tarih, saat, sayı yazma
+- ASLA "Amare", "amare", "One Team", "ONE TEAM", "Global", "GLOBAL" yazma — orijinal logolar SONRA Canvas üzerine yerleştirilecek
+- Logo, marka adı, slogan ÇİZME — boş bırak, yer ayır
 - "Kyani" KESİNLİKLE YAZMA
-- Sahte logo/marka YAPMA
+- Sahte logo/marka YAPMA — alt orta'da boş alan bırak (orijinal logo oraya gelecek)
 
 ALAN BÖLÜMLERİ (boş tut, sadece arkadaki tasarım/desen kalsın):
 - Üst ~30%: başlık ve tarih için boş — sadece dekoratif çerçeve/parlak
@@ -330,20 +332,38 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
     }
   }
 
-  // ─── ALT: Yer + URL ───
+  // ─── ALT: Daha güçlü gradient (Gemini'nin alt yazılarını kapatmak için) ───
+  const botMaskGrad = ctx.createLinearGradient(0, H - 220, 0, H);
+  botMaskGrad.addColorStop(0, 'rgba(20, 8, 30, 0)');
+  botMaskGrad.addColorStop(0.4, 'rgba(20, 8, 30, 0.85)');
+  botMaskGrad.addColorStop(1, 'rgba(20, 8, 30, 0.95)');
+  ctx.fillStyle = botMaskGrad;
+  ctx.fillRect(0, H - 220, W, 220);
+
+  // ─── ALT: Yer ───
   ctx.textAlign = 'center';
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 26px Arial';
+  ctx.font = 'bold 24px Arial';
   ctx.shadowColor = 'rgba(0,0,0,0.7)';
   ctx.shadowBlur = 8;
   if (egitim.yer) {
     const yer = egitim.yer.length > 55 ? egitim.yer.slice(0, 55) + '...' : egitim.yer;
-    ctx.fillText(yer, W / 2, H - 90);
+    ctx.fillText(yer, W / 2, H - 130);
   }
   ctx.shadowBlur = 0;
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  ctx.font = '18px Arial';
-  ctx.fillText('egitimtakvimi.oneteamglobal.ai', W / 2, H - 40);
+
+  // ─── Amare logo (gerçek PNG) — alt orta ───
+  try {
+    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
+    const logoBotW = 200;
+    const logoBotH = (amareLogo.height / amareLogo.width) * logoBotW;
+    ctx.drawImage(amareLogo, (W - logoBotW) / 2, H - 95, logoBotW, logoBotH);
+  } catch {}
+
+  // URL en altta
+  ctx.fillStyle = 'rgba(255,255,255,0.55)';
+  ctx.font = '16px Arial';
+  ctx.fillText('egitimtakvimi.oneteamglobal.ai', W / 2, H - 25);
 
   const dataUrl = canvas.toDataURL('image/png');
   const base64 = dataUrl.split(',')[1];
