@@ -179,6 +179,7 @@ const AdminPanel = () => {
     egitimSil, egitimGuncelle, manuelEgitimEkle,
     basvuruSil, basvuruDurumGuncelle,
     konusmacilar, konusmaciFotoYukle, konusmaciFotoSil, konusmaciBilgiGuncelle,
+    openaiApiKey, openaiApiKeyKaydet,
     geminiApiKey, geminiApiKeyKaydet, hatirlatmaSayilari,
     sablonlar, sablonEkle, sablonSil,
     takvimDurumDegistir, adminCikis,
@@ -207,6 +208,8 @@ const AdminPanel = () => {
 
   // API key & şablon
   const [apiKeyInput, setApiKeyInput] = useState(geminiApiKey);
+  const [openaiKeyInput, setOpenaiKeyInput] = useState(openaiApiKey);
+  const [openaiKeySaved, setOpenaiKeySaved] = useState(false);
   const [apiKeySaved, setApiKeySaved] = useState(false);
   const [sablonYukleniyor, setSablonYukleniyor] = useState(false);
 
@@ -456,6 +459,12 @@ const AdminPanel = () => {
     geminiApiKeyKaydet(apiKeyInput.trim());
     setApiKeySaved(true);
     setTimeout(() => setApiKeySaved(false), 2500);
+  };
+
+  const handleOpenaiKeySave = () => {
+    openaiApiKeyKaydet(openaiKeyInput.trim());
+    setOpenaiKeySaved(true);
+    setTimeout(() => setOpenaiKeySaved(false), 2500);
   };
 
   const handleSablonYukle = async (e) => {
@@ -1424,21 +1433,38 @@ const AdminPanel = () => {
               <details className="border-b pb-6 mb-6 group">
                 <summary className="cursor-pointer select-none flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
                   <Key className="w-4 h-4" />
-                  <span>API Anahtarı {geminiApiKey ? '(kayıtlı)' : '(eksik)'}</span>
-                  <span className={`w-2 h-2 rounded-full ${geminiApiKey ? 'bg-green-500' : 'bg-red-400'}`} />
+                  <span>AI API Anahtarları (Gemini {geminiApiKey ? '✓' : '✗'} · OpenAI {openaiApiKey ? '✓' : '✗'})</span>
                 </summary>
-                <div className="mt-3 pl-6">
-                  <p className="text-sm text-gray-500 mb-3">
-                    <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-amare-purple underline">Google AI Studio'dan API anahtarı al →</a>
-                  </p>
-                  <div className="flex gap-3">
-                    <input type="password" value={apiKeyInput}
-                      onChange={e => { setApiKeyInput(e.target.value); setApiKeySaved(false); }}
-                      placeholder="AIzaSy..." className="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/40" />
-                    <button onClick={handleApiKeySave}
-                      className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm ${apiKeySaved ? 'bg-green-500 text-white' : 'bg-amare-purple text-white hover:bg-amare-dark'}`}>
-                      <Save className="w-4 h-4" />{apiKeySaved ? 'Kaydedildi!' : 'Kaydet'}
-                    </button>
+                <div className="mt-3 pl-6 space-y-4">
+                  <div>
+                    <p className="text-xs text-gray-500 mb-2 flex items-center justify-between">
+                      <span>🍌 <b>Gemini</b> (nano-banana) {geminiApiKey ? '— kayıtlı ✓' : '— eksik'}</span>
+                      <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-amare-purple underline">Anahtar al →</a>
+                    </p>
+                    <div className="flex gap-3">
+                      <input type="password" value={apiKeyInput}
+                        onChange={e => { setApiKeyInput(e.target.value); setApiKeySaved(false); }}
+                        placeholder="AIzaSy..." className="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/40" />
+                      <button onClick={handleApiKeySave}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm ${apiKeySaved ? 'bg-green-500 text-white' : 'bg-amare-purple text-white hover:bg-amare-dark'}`}>
+                        <Save className="w-4 h-4" />{apiKeySaved ? '✓' : 'Kaydet'}
+                      </button>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-2 flex items-center justify-between">
+                      <span>🤖 <b>OpenAI</b> (gpt-image-1) {openaiApiKey ? '— kayıtlı ✓' : '— eksik (env üzerinden de gelebilir)'}</span>
+                      <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="text-amare-purple underline">Anahtar al →</a>
+                    </p>
+                    <div className="flex gap-3">
+                      <input type="password" value={openaiKeyInput}
+                        onChange={e => { setOpenaiKeyInput(e.target.value); setOpenaiKeySaved(false); }}
+                        placeholder="sk-proj-..." className="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/40" />
+                      <button onClick={handleOpenaiKeySave}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm ${openaiKeySaved ? 'bg-green-500 text-white' : 'bg-amare-purple text-white hover:bg-amare-dark'}`}>
+                        <Save className="w-4 h-4" />{openaiKeySaved ? '✓' : 'Kaydet'}
+                      </button>
+                    </div>
                   </div>
                 </div>
               </details>
@@ -1750,6 +1776,7 @@ const AdminPanel = () => {
           egitmenFotoURLs={gorselModal.egitmenFotoURLs}
           egitmenler={gorselModal.egitmenler}
           apiKey={geminiApiKey}
+          openaiApiKey={openaiApiKey}
           sablonlar={sablonlar}
           onClose={() => setGorselModal(null)}
           onGorselBagla={async (id, dataUrl) => {

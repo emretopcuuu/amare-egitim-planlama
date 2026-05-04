@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { X, Upload, ImageIcon, Download, Loader2, AlertCircle, CheckCircle2, Link2, Sparkles, FileImage } from 'lucide-react';
+import { X, Upload, ImageIcon, Download, Loader2, AlertCircle, CheckCircle2, Link2, Sparkles, FileImage, Zap } from 'lucide-react';
 import { gorselOlustur } from '../utils/gorselOlustur';
+import { gorselOlusturOpenAI } from '../utils/gorselOlusturOpenAI';
 
-const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, apiKey, onClose, sablonlar = [], onGorselBagla }) => {
+const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, apiKey, openaiApiKey, onClose, sablonlar = [], onGorselBagla }) => {
   const [mod, setMod] = useState('ai'); // 'ai' | 'upload'
 
   // AI mod state
@@ -11,6 +12,11 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   const [resultBlobUrl, setResultBlobUrl] = useState(null);
   const [error, setError] = useState(null);
   const [yeniYukle, setYeniYukle] = useState(sablonlar.length === 0);
+  // Model seçimi: 'gemini' | 'openai'
+  const [aiModel, setAiModel] = useState(localStorage.getItem('aiModel') || 'gemini');
+  // Fallback toggle
+  const [fallbackOn, setFallbackOn] = useState(localStorage.getItem('aiFallback') !== 'off');
+  const [aktifModel, setAktifModel] = useState(null); // üretim sırasında hangisinin çalıştığını göster
 
   // Ek prompt — modal açılırken konuşmacı isim+unvan listesi ile otomatik doldurulur.
   // Kullanıcı bu listeyi görür ve etkinliğe özel rol değişiklikleri yapabilir
@@ -77,15 +83,52 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     setError(null);
   };
 
+  // Modeli çalıştıran inner fonksiyon — fallback için kullanılır
+  const runModel = async (model, sablonKaynak) => {
+    setAktifModel(model);
+    if (model === 'openai') {
+      const result = await gorselOlusturOpenAI({
+        apiKey: openaiApiKey,
+        egitim, egitmenler: egitmenler || [],
+        sablonFile: sablonKaynak, ekPrompt,
+        quality: 'medium',
+      });
+      return result;
+    }
+    return await gorselOlustur({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, sablonFile: sablonKaynak, ekPrompt });
+  };
+
   const handleOlustur = async () => {
     if (!secilenSablon) { setError('Lütfen bir şablon seçin.'); return; }
     setGenerating(true);
     setError(null);
     if (resultBlobUrl) URL.revokeObjectURL(resultBlobUrl);
     setResultBlobUrl(null);
+    setAktifModel(null);
+    const sablonKaynak = secilenSablon.type === 'file' ? secilenSablon.file : secilenSablon.url;
+
+    // Önce seçili model, başarısız olursa fallback
+    const modelSirasi = fallbackOn
+      ? (aiModel === 'gemini' ? ['gemini', 'openai'] : ['openai', 'gemini'])
+      : [aiModel];
+
+    let lastErr = null;
+    let result = null;
+    for (const m of modelSirasi) {
+      try {
+        if (m === 'openai' && !openaiApiKey) { lastErr = new Error('OpenAI API anahtarı yok.'); continue; }
+        if (m === 'gemini' && !apiKey) { lastErr = new Error('Gemini API anahtarı yok.'); continue; }
+        result = await runModel(m, sablonKaynak);
+        break;
+      } catch (err) {
+        console.warn(`[gorsel] ${m} başarısız:`, err.message);
+        lastErr = err;
+        continue;
+      }
+    }
+
     try {
-      const sablonKaynak = secilenSablon.type === 'file' ? secilenSablon.file : secilenSablon.url;
-      const result = await gorselOlustur({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, sablonFile: sablonKaynak, ekPrompt });
+      if (!result) throw lastErr || new Error('Tüm modeller başarısız.');
       const standardB64 = result.base64.replace(/-/g, '+').replace(/_/g, '/');
       const byteChars = atob(standardB64);
       const byteArr = new Uint8Array(byteChars.length);
@@ -241,6 +284,39 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                 <textarea value={ekPrompt} onChange={(e) => setEkPrompt(e.target.value)} placeholder="Örn: arka planı koyu mor yap..." rows={10} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
               </div>
 
+              {/* AI Model Seçici */}
+              <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
+                <div className="text-xs font-semibold text-gray-700 mb-2">AI MODEL</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => { setAiModel('gemini'); localStorage.setItem('aiModel', 'gemini'); }}
+                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'gemini' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <div className="flex items-center gap-1 font-bold">🍌 Gemini</div>
+                    <div className="text-gray-500 mt-0.5">Hızlı · Çoklu foto · ~$0.04</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAiModel('openai'); localStorage.setItem('aiModel', 'openai'); }}
+                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'openai' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <div className="flex items-center gap-1 font-bold">🤖 OpenAI</div>
+                    <div className="text-gray-500 mt-0.5">Yüz koruma iyi · ~$0.04</div>
+                  </button>
+                </div>
+                <label className="flex items-center gap-2 mt-2 cursor-pointer text-xs text-gray-600">
+                  <input
+                    type="checkbox"
+                    checked={fallbackOn}
+                    onChange={(e) => { setFallbackOn(e.target.checked); localStorage.setItem('aiFallback', e.target.checked ? 'on' : 'off'); }}
+                    className="rounded"
+                  />
+                  <Zap className="w-3.5 h-3.5 text-amber-500" />
+                  Fallback aç: seçili model başarısız olursa diğeri otomatik denensin
+                </label>
+              </div>
+
               {error && (
                 <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
                   <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" /><span>{error}</span>
@@ -249,7 +325,12 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
 
               {!resultBlobUrl && (
                 <button onClick={handleOlustur} disabled={!secilenSablon || generating} className="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-amare-purple to-amare-blue hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                  {generating ? <><Loader2 className="w-5 h-5 animate-spin" />Görsel Oluşturuluyor...</> : <><ImageIcon className="w-5 h-5" />Görsel Hazırla</>}
+                  {generating ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      {aktifModel ? `${aktifModel === 'openai' ? '🤖 OpenAI' : '🍌 Gemini'} ile üretiliyor...` : 'Görsel Oluşturuluyor...'}
+                    </>
+                  ) : <><ImageIcon className="w-5 h-5" />Görsel Hazırla</>}
                 </button>
               )}
 

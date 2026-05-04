@@ -79,6 +79,7 @@ export const DataProvider = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [konusmacilar, setKonusmacilar] = useState([]);
   const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('geminiApiKey') || '');
+  const [openaiApiKey, setOpenaiApiKey] = useState(() => localStorage.getItem('openaiApiKey') || '');
   const [sablonlar, setSablonlar] = useState([]);
   const [hatirlatmaSayilari, setHatirlatmaSayilari] = useState({}); // { egitimId: uniqueEmailCount }
 
@@ -590,6 +591,11 @@ export const DataProvider = ({ children }) => {
     localStorage.setItem('geminiApiKey', key);
   };
 
+  const openaiApiKeyKaydet = (key) => {
+    setOpenaiApiKey(key);
+    localStorage.setItem('openaiApiKey', key);
+  };
+
   // Admin girişi — Google sign-in (Firebase Auth)
   const adminGiris = async () => {
     try {
@@ -648,6 +654,8 @@ export const DataProvider = ({ children }) => {
     konusmaciFotoSil,
     geminiApiKey,
     geminiApiKeyKaydet,
+    openaiApiKey,
+    openaiApiKeyKaydet,
     sablonlar,
     sablonEkle,
     sablonSil,
