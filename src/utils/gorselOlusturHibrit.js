@@ -1,8 +1,11 @@
+import { applyLogos } from './applyLogos';
+
 // Hibrit poster üretimi:
 // 1) Gemini → SADECE dekoratif arka plan üretir (boş, yazısız, foto yok)
 // 2) Canvas → Gemini'nin ürettiği arka plan üzerine GERÇEK fotoğrafları,
 //    isimleri, unvanları, tarihi, saati yapıştırır
-// Sonuç: AI yaratıcılığı + %100 doğru yüzler
+// 3) applyLogos → tek noktadan gerçek Amare + One Team logoları bindirilir
+// Sonuç: AI yaratıcılığı + %100 doğru yüzler + tek logo
 
 const resmiBase64Yap = async (kaynak) => {
   if (kaynak instanceof File) {
@@ -94,36 +97,32 @@ const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, maxLines = 99) =
 const arkaPlanUret = async (apiKey, sablonFile, egitim) => {
   const sablon = await resmiBase64Yap(sablonFile);
 
-  const prompt = `Sen profesyonel bir tasarım uzmanısın. 1080x1080 SQUARE etkinlik poster ARKA PLANI üretiyorsun.
+  const prompt = `Sen profesyonel bir tasarım uzmanısın. 1080x1080 etkinlik poster ARKA PLAN DOKUSU üretiyorsun.
 
-⭐ EN ÖNEMLİ KURAL — ŞABLON KOPYASI:
-Sana verilen şablon görseli, üreteceğin posterin TASARIM REFERANSIDIR. Şablonun:
-- TÜM renk paletini (hex kodlarına kadar)
-- Arka plan dokusunu, deseni
-- Çerçeve, kenar, köşe dekoratif öğelerini
-- Işık efektleri, parıltı, parlaklıklarını
-- Genel kompozisyon hissini, şıklığını
-AYNEN kopyala. Yeni özgün bir tasarım YAPMA — şablona MÜMKÜN OLDUĞUNCA SADIK kal.
-Şablon hangi atmosferdeyse (vizyon günü, sağlık paneli, lüks, klasik vb.) AYNI atmosfer.
+GÖREVİN: Sadece dekoratif arka plan deseni / doku üret. Boş bir tuval gibi.
 
-🚫 SADECE İÇİNDEKİ ŞU ÖĞELERİ ÇIKAR (Canvas üzerine sonra eklenecek):
-- Yazılar, başlıklar, isimler, tarihler, saatler — TÜMÜ silinmeli, yer boş kalsın
-- Konuşmacı yüzleri, fotoğrafları — TÜMÜ silinmeli, yer boş kalsın
-- Logo metinleri — Amare/One Team logosu sonra eklenecek, yer bırak
-- Zoom ID, URL — silinmeli
+ŞABLON: Sana verilen referans görselden SADECE renk paletini al (Plum, mor, altın aksanlar, koyu tonlar). Şablonun İÇİNDEKİ HİÇBİR ŞEYI kopyalama:
+- Şablondaki yazıları, başlıkları KOPYALAMA
+- Şablondaki yüzleri, fotoğrafları KOPYALAMA
+- Şablondaki logoları, marka adlarını KOPYALAMA
+- Şablondaki tarih, saat, ZOOM ID KOPYALAMA
 
-ÖZET: Şablonun TASARIMINI olabildiğince yakın kopyala (renkler, çerçeveler, dekorlar) AMA içindeki yazı/yüz/foto öğelerini ÇIKAR — sadece boş dekoratif arka plan kalsın. Sonradan üzerine isim+foto+tarih ekleyeceğim.
-
-KESİN YASAKLAR:
-- ASLA insan yüzü, vücut, fotoğraf çizme
-- ASLA yazı, isim, başlık, tarih, saat, sayı yazma
-- ASLA "Amare", "amare", "One Team", "ONE TEAM", "Global", "GLOBAL" yazma — orijinal logolar SONRA Canvas üzerine yerleştirilecek
-- ASLA üst kısımda BANNER, BAR, ŞERİT çizme — üst 240px TAMAMEN BOŞ KALSIN (logolar oraya konacak)
-- ASLA alt kısımda BANNER, ŞERİT çizme — alt 220px TAMAMEN BOŞ KALSIN
-- Logo, marka adı, slogan ÇİZME — boş bırak, yer ayır
+KESİN YASAKLAR (KESİNLİKLE UYGULA):
+- HİÇBİR ŞEKİLDE insan yüzü, vücut, kişi resmi ÇİZME
+- HİÇBİR ŞEKİLDE yazı, harf, sayı, başlık, isim, tarih, saat YAZMA
+- HİÇBİR ŞEKİLDE "Amare", "One Team", "Global", marka adı YAZMA
+- HİÇBİR ŞEKİLDE logo, sembol, amblem ÇİZME
 - "Kyani" KESİNLİKLE YAZMA
-- Sahte logo/marka YAPMA
-- Mavi/turuncu/herhangi RENK BANNER üst-alt kısımda YASAK
+- Banner, bar, şerit ÇİZME — üst ve alt KISIMLAR DÜZ KALSIN
+
+İSTEDİĞİM:
+- Amare Global kurumsal renkleri: Deep Plum (#5F2756), koyu mor, altın aksantlar
+- Soyut dekoratif öğeler: ışık efektleri, parıltı, soft gradientler, dokular, soyut formlar
+- Üst, orta, alt kısımlar — hepsi temiz, boş bırakılmış (üzerine sonra Canvas yerleştirilecek)
+- Sadece arka plan dokusu — fotoğraf, yazı, logo, banner YOK
+- Profesyonel, zarif, lüks atmosfer
+
+ÖZET: TAMAMEN BOŞ bir dekoratif arka plan görseli. Hiçbir yazı, foto, logo, isim, tarih, banner YOK — sadece renk gradientleri ve soft dokular.`;
 
 ALAN BÖLÜMLERİ (boş tut, sadece arkadaki tasarım/desen kalsın):
 - Üst ~30%: başlık ve tarih için boş — sadece dekoratif çerçeve/parlak
@@ -199,19 +198,7 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.fillStyle = botGrad;
   ctx.fillRect(0, H - 200, W, 200);
 
-  // ─── ÜST: Amare logo (sol) + One Team logo (sağ) ───
-  try {
-    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
-    const amareW = 320;
-    const amareH = (amareLogo.height / amareLogo.width) * amareW;
-    ctx.drawImage(amareLogo, 60, 60, amareW, amareH);
-  } catch {}
-  try {
-    const otLogo = await urlToImage('/logos/oneteam logo.JPG');
-    const otW = 130;
-    const otH = (otLogo.height / otLogo.width) * otW;
-    ctx.drawImage(otLogo, W - otW - 60, 50, otW, otH);
-  } catch {}
+  // Logolar applyLogos post-process ile sonra eklenecek (çift logo olmaması için)
 
   // ─── BAŞLIK ───
   ctx.textAlign = 'center';
@@ -381,5 +368,6 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
 
   const dataUrl = canvas.toDataURL('image/png');
   const base64 = dataUrl.split(',')[1];
-  return { base64, mimeType: 'image/png' };
+  // Post-process: tek noktadan gerçek logolar bindirilir
+  return await applyLogos(base64, 'image/png');
 };

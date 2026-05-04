@@ -1,3 +1,5 @@
+import { applyLogos } from './applyLogos';
+
 // Tamamen yerel Canvas-only poster üretimi.
 // AI'a HİÇ veri gönderilmez — yüzler ve isimler %100 garantili korunur.
 // Şablon arka plan olarak kullanılır, üzerine layout çizilir.
@@ -100,19 +102,7 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   ctx.fillRect(60, 22, W - 120, 3);
   ctx.fillRect(60, H - 25, W - 120, 3);
 
-  // ─── ÜST: Amare logo (sol) + One Team logo (sağ) ───
-  try {
-    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
-    const amareW = 320;
-    const amareH = (amareLogo.height / amareLogo.width) * amareW;
-    ctx.drawImage(amareLogo, 60, 50, amareW, amareH);
-  } catch {}
-  try {
-    const otLogo = await urlToImage('/logos/oneteam logo.JPG');
-    const otW = 130;
-    const otH = (otLogo.height / otLogo.width) * otW;
-    ctx.drawImage(otLogo, W - otW - 60, 40, otW, otH);
-  } catch {}
+  // Logolar applyLogos post-process ile sonra eklenecek
 
   // ─── BAŞLIK ───
   ctx.textAlign = 'center';
@@ -252,5 +242,6 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   // PNG base64 olarak döndür (Gemini sonucu ile uyumlu format)
   const dataUrl = canvas.toDataURL('image/png');
   const base64 = dataUrl.split(',')[1];
-  return { base64, mimeType: 'image/png' };
+  // Post-process: tek noktadan gerçek logolar bindirilir
+  return await applyLogos(base64, 'image/png');
 };
