@@ -199,6 +199,8 @@ const AdminPanel = () => {
 
   // Görsel
   const [gorselModal, setGorselModal] = useState(null);
+  // Lightbox (poster önizleme)
+  const [lightboxUrl, setLightboxUrl] = useState(null);
 
   // Duyuru
   const [duyuruModal, setDuyuruModal] = useState(null);
@@ -806,9 +808,9 @@ const AdminPanel = () => {
           <div className="flex-shrink-0 mr-3">
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); window.open(egitim.gorselUrl, '_blank', 'noopener'); }}
+              onClick={(e) => { e.stopPropagation(); setLightboxUrl(egitim.gorselUrl); }}
               className="block w-14 h-14 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:ring-2 hover:ring-amare-purple transition cursor-zoom-in"
-              title="Görseli yeni sekmede aç"
+              title="Görseli büyüt"
             >
               <img src={egitim.gorselUrl} alt="" className="w-full h-full object-cover" />
             </button>
@@ -1776,6 +1778,38 @@ const AdminPanel = () => {
       )}
 
       {/* Görsel Oluşturma Modal */}
+      {/* Lightbox — poster önizleme */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setLightboxUrl(null)}
+        >
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
+            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white"
+            title="Kapat"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <a
+            href={lightboxUrl}
+            download="poster.png"
+            onClick={(e) => e.stopPropagation()}
+            className="absolute top-4 right-16 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white"
+            title="İndir"
+          >
+            <Download className="w-6 h-6" />
+          </a>
+          <img
+            src={lightboxUrl}
+            alt="Poster"
+            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
+
       {gorselModal && (
         <GorselOlusturModal
           egitim={gorselModal.egitim}
