@@ -151,16 +151,25 @@ YER: ${egitim.yer || 'ZOOM'}
 KONUŞMACILAR (etiket sırası, AYNEN bunlar):
 ${konusmaciList}
 
-KURALLAR:
+ZORUNLU RENK PALETİ (sadece bunlar, başka renk YOK):
+- Deep Plum #5F2756 (ana arka plan)
+- Koyu Plum #3D1734 (üst/alt koyu bölgeler)
+- Açık mor #7A2F6D (orta vurgu)
+- Sıcak altın #F5D77A (başlık ve aksanlar için)
+- Beyaz/krem #FFFFFF (ana metin için)
+
+YASAK RENKLER: Kırmızı, maroon, kahverengi, turuncu, sarı banner, lacivert, mavi, yeşil. Sadece yukarıdaki mor/altın paleti kullan.
+
+LAYOUT KURALLARI:
+- Başlık üstten en az 80px boşluk bırakarak TAM görünür olmalı, KIRPMA YOK
+- Üstte renkli bant/banner ÇİZME — sadece arka plan gradient'i
 - Türkçe karakterleri (ş ç ğ ü ö ı İ) DOĞRU bas
-- Yüzleri AYNEN koru, hiç değiştirme
+- Yüzleri AYNEN koru
 - İsim ve unvan etiketlerini olduğu gibi tut
 - Saatler iki ayrı format: "TR HH:MM - HH:MM" ve "EU HH:MM - HH:MM"
-- Amare Global ve One Team kurumsal kimliği — Deep Plum #5F2756, altın aksanlar #F5D77A
 - "Kyani" KESİNLİKLE yazma
-- Her konuşmacı görselde TAM 1 KEZ
-- "Etkinliğe X yaşından küçükler katılamaz" GİBİ YAZILAR YAZMA
-- Sosyal medya posteri formatı`;
+- Her konuşmacı TAM 1 KEZ
+- "Etkinliğe X yaşından küçükler" gibi yazılar YAZMA`;
 
   const sizeMap = { story: '1024x1536', landscape: '1536x1024', square: '1024x1024' };
 
