@@ -30,15 +30,19 @@ export const applyLogos = async (base64, mimeType = 'image/png') => {
     ctx.drawImage(img, 0, 0);
 
     const W = img.width;
-    const topBandH = Math.floor(W * 0.16); // üst %16'lık band
+    const H = img.height;
+    const topBandH = Math.floor(H * 0.18); // üst %18 band — Gemini'nin tüm üst öğelerini kapsar
 
-    // Üst güçlü Plum gradient overlay — Gemini/OpenAI'nin uydurma logolarını kapat
-    const topGrad = ctx.createLinearGradient(0, 0, 0, topBandH);
+    // Üst güçlü Plum overlay — Gemini/OpenAI'nin uydurma logolarını TAMAMEN kapat
+    // 0 - %12 yükseklik: tam opak Plum
+    ctx.fillStyle = 'rgba(95, 39, 86, 0.97)';
+    ctx.fillRect(0, 0, W, Math.floor(H * 0.12));
+    // %12 - %22 yükseklik: gradient ile yumuşak geçiş
+    const topGrad = ctx.createLinearGradient(0, Math.floor(H * 0.12), 0, Math.floor(H * 0.22));
     topGrad.addColorStop(0, 'rgba(95, 39, 86, 0.97)');
-    topGrad.addColorStop(0.7, 'rgba(95, 39, 86, 0.85)');
     topGrad.addColorStop(1, 'rgba(95, 39, 86, 0)');
     ctx.fillStyle = topGrad;
-    ctx.fillRect(0, 0, W, topBandH + 40);
+    ctx.fillRect(0, Math.floor(H * 0.12), W, Math.floor(H * 0.10));
 
     // Amare logo — sol orta üst
     let amareDrawn = false;
