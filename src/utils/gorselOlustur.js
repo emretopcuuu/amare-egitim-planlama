@@ -232,7 +232,41 @@ TASARIM KURALLARI:
 - Profesyonel ve çekici bir tasarım
 - LOGO KURALI: Sana verilen resmi logoları (Amare Global ve One Team) görsele entegre et. Asla kendi logonu uydurmayacaksın! Bu logoları şablona uygun konuma yerleştir. Sahte/uydurma logo, amblem veya sembol çizme.
 - Format: ${format === 'story' ? '1080x1920 DİKEY (Instagram/FB Story, 9:16)' : format === 'landscape' ? '1920x1080 YATAY (LinkedIn/Banner, 16:9)' : '1080x1080 KARE (Instagram post, 1:1)'} — bu boyutlara uy
-- KESİNLİKLE YASAK: Görselde "Kyani" kelimesi KESİNLİKLE yer almamalı. Ne arka planda, ne logoda, ne metinde, ASLA "Kyani" yazma. Bu marka artık mevcut değil. Sadece "Amare Global" ve "One Team" kullan.${konumPrompt}`;
+- KESİNLİKLE YASAK: Görselde "Kyani" kelimesi KESİNLİKLE yer almamalı. Ne arka planda, ne logoda, ne metinde, ASLA "Kyani" yazma. Bu marka artık mevcut değil. Sadece "Amare Global" ve "One Team" kullan.${konumPrompt}
+
+╔════════════════════════════════════════════════════════════╗
+║  TEMA UYUMU — ETKİNLİK BAŞLIĞINA UYGUN ATMOSFER           ║
+╚════════════════════════════════════════════════════════════╝
+Başlık "${egitim.egitim || ''}" ne hakkında ise arka plan/dekoratif elemanlar
+buna uygun bir hava taşısın (şablonun renk paletine sadık kalarak):
+- Sağlık/wellness konuları → soft healing dokular, organik formlar, ferah hisli
+- Liderlik/Vizyon → güçlü ışık huzmeleri, dramatik gradient, premium atmosfer
+- Satış/finans → modern keskin geometrik vurgular, dinamik
+- Motivasyon/Kişisel Gelişim → ilhamlı ışık efektleri, parıltı
+- Panel/seminer → ciddi profesyonel doku
+ÖNEMLİ: Tema atmosferi ŞABLONU EZMEZ — şablonun grafik dili ana, tema sadece
+ince dokunuş.
+
+╔════════════════════════════════════════════════════════════╗
+║  SON KONTROL — POSTERİ ÜRETMEDEN ÖNCE DOĞRULA              ║
+╚════════════════════════════════════════════════════════════╝
+Çıktıyı vermeden önce ZİHİNDE şu listeyi tek tek kontrol et:
+
+[ ] Başlık tam ve doğru yazıldı mı? ("${egitim.egitim || ''}")
+[ ] Tarih doğru mu? (${egitim.tarih || ''} ${egitim.gun || ''})
+[ ] TR ve EU saatleri iki ayrı satır olarak yazıldı mı?
+[ ] Her konuşmacının fotoğrafı doğru kişiyle eşleşti mi? Yer değişimi var mı?
+[ ] Her konuşmacının altında SADECE listede verilen unvan var mı? Uydurma var mı?
+[ ] Her konuşmacı TAM 1 KEZ mi görünüyor? Tekrar/çoğaltma var mı?
+[ ] Şablonun layout/renk/dekoratif elemanları korundu mu?
+[ ] Türkçe karakterler (ş ç ğ ü ö ı İ) doğru basıldı mı?
+[ ] "Kyani" kelimesi var mı? — VARSA SİL
+[ ] Hayali yazı/not var mı? ("Etkinliğe X yaşından küçükler" gibi) — VARSA SİL
+[ ] Sahte/uydurma logo var mı? — VARSA SİL
+[ ] Hiçbir tipo/yazım hatası yok mu?
+
+Bu kontrol listesinde HAYIR olan tek bir madde varsa görseli düzelt, sonra üret.
+HAYIR sıfır olunca finalize et.`;
 
   // Logoları yükle
   let amareLogo = null;

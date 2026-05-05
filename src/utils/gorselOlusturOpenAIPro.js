@@ -174,6 +174,14 @@ ZORUNLU RENK PALETİ (sadece bunlar, başka renk YOK):
 
 YASAK RENKLER: Kırmızı, maroon, kahverengi, turuncu, sarı banner, lacivert, mavi, yeşil. Sadece yukarıdaki mor/altın paleti kullan.
 
+TEMA UYUMU — Başlık "${egitim.egitim || ''}" konusuna uygun ince dokunuşlar:
+- Sağlık/wellness → organik formlar, ferah hisli soft dokular
+- Liderlik/Vizyon → güçlü ışık huzmeleri, dramatik premium atmosfer
+- Satış/finans → modern keskin geometrik vurgular
+- Motivasyon → ilhamlı ışık efektleri, parıltı
+- Panel/seminer → ciddi profesyonel doku
+Tema şablonu EZMEZ — sadece ince dokunuş.
+
 LAYOUT KURALLARI:
 - Başlık üstten en az 80px boşluk bırakarak TAM görünür olmalı, KIRPMA YOK
 - Üstte renkli bant/banner ÇİZME — sadece arka plan gradient'i
@@ -183,7 +191,23 @@ LAYOUT KURALLARI:
 - Saatler iki ayrı format: "TR HH:MM - HH:MM" ve "EU HH:MM - HH:MM"
 - "Kyani" KESİNLİKLE yazma
 - Her konuşmacı TAM 1 KEZ
-- "Etkinliğe X yaşından küçükler" gibi yazılar YAZMA`;
+- "Etkinliğe X yaşından küçükler" gibi yazılar YAZMA
+
+╔══════════════════════════════════════════════════════════╗
+║  SON KONTROL — POSTERİ ÜRETMEDEN ÖNCE ZİHNİNDE DOĞRULA    ║
+╚══════════════════════════════════════════════════════════╝
+[ ] Başlık tam ve doğru: "${egitim.egitim || ''}"
+[ ] Tarih doğru: ${egitim.tarih || ''} ${egitim.gun || ''}
+[ ] TR ve EU saatleri iki ayrı satır
+[ ] Her konuşmacı doğru fotoyla eşleşti, yer değişimi yok
+[ ] Her konuşmacının altında SADECE listede verilen unvan, uydurma yok
+[ ] Her konuşmacı TAM 1 KEZ görünüyor
+[ ] Şablonun layout/renk/dekoratif elemanları korundu
+[ ] Türkçe karakterler (ş ç ğ ü ö ı İ) doğru
+[ ] "Kyani" yok, hayali yazı yok, sahte logo yok
+[ ] Yazım/tipo hatası yok
+
+HAYIR varsa düzelt, sonra üret. HAYIR sıfır olunca finalize et.`;
 
   const sizeMap = { story: '1024x1536', landscape: '1536x1024', square: '1024x1024' };
 
@@ -192,7 +216,8 @@ LAYOUT KURALLARI:
   formData.append('image', compositeBlob, 'composite.png');
   formData.append('prompt', prompt);
   formData.append('size', sizeMap[format] || '1024x1024');
-  formData.append('quality', quality);
+  // gpt-image-2 thinking mode için quality='high' — son kontrol listesini reasoning ile değerlendirir
+  formData.append('quality', 'high');
   formData.append('n', '1');
 
   const res = await fetch('https://api.openai.com/v1/images/edits', {
