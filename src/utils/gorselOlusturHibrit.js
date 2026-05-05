@@ -178,14 +178,16 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.fillStyle = botGrad;
   ctx.fillRect(0, H - 200, W, 200);
 
-  // ─── ÜST: Hayali logoları MASKELE — gerçek logo da çizmiyoruz ───
-  // Kullanıcı isteği: tüm logolar kaldırıldı, üst sadece temiz arka plan + başlık
-  const topMaskGrad = ctx.createLinearGradient(0, 0, 0, 160);
-  topMaskGrad.addColorStop(0, 'rgba(20, 8, 30, 0.95)');
-  topMaskGrad.addColorStop(0.6, 'rgba(20, 8, 30, 0.85)');
-  topMaskGrad.addColorStop(1, 'rgba(20, 8, 30, 0)');
-  ctx.fillStyle = topMaskGrad;
-  ctx.fillRect(0, 0, W, 160);
+  // ─── ÜST: TAM OPAK MASKE — Gemini'nin uydurduğu logolar tamamen örtülür
+  // Kullanıcı isteği: hiç logo yok. Üst 180px solid dark plum, gradient yok.
+  ctx.fillStyle = '#3D1734';
+  ctx.fillRect(0, 0, W, 180);
+  // Yumuşak geçiş için 180-260 arası gradient
+  const topFade = ctx.createLinearGradient(0, 180, 0, 260);
+  topFade.addColorStop(0, 'rgba(61, 23, 52, 1)');
+  topFade.addColorStop(1, 'rgba(61, 23, 52, 0)');
+  ctx.fillStyle = topFade;
+  ctx.fillRect(0, 180, W, 80);
 
   // ─── BAŞLIK ───
   // Üst overlay olmadığı için başlığa daha güçlü shadow + double-stroke

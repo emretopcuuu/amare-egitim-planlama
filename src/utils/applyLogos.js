@@ -31,14 +31,17 @@ export const applyLogos = async (base64, mimeType = 'image/png') => {
     const W = img.width;
     const H = img.height;
 
-    // Kullanıcı isteği: tüm logolar kaldırıldı — sadece üst köşelerdeki AI'nın
-    // hayalettiği sahte logoları opak maske ile kapat (gerçek logo basmıyoruz)
-    const topMaskGrad = ctx.createLinearGradient(0, 0, 0, H * 0.18);
-    topMaskGrad.addColorStop(0, 'rgba(20, 8, 30, 0.95)');
-    topMaskGrad.addColorStop(0.6, 'rgba(20, 8, 30, 0.85)');
-    topMaskGrad.addColorStop(1, 'rgba(20, 8, 30, 0)');
-    ctx.fillStyle = topMaskGrad;
-    ctx.fillRect(0, 0, W, H * 0.18);
+    // Tüm logolar kaldırıldı — üst 18% TAM OPAK dark plum ile kapla,
+    // sonra 8% yumuşak fade. AI'nın hayali logoları kesinlikle görünmez.
+    const opaqueH = Math.floor(H * 0.18);
+    const fadeH = Math.floor(H * 0.08);
+    ctx.fillStyle = '#3D1734';
+    ctx.fillRect(0, 0, W, opaqueH);
+    const fade = ctx.createLinearGradient(0, opaqueH, 0, opaqueH + fadeH);
+    fade.addColorStop(0, 'rgba(61, 23, 52, 1)');
+    fade.addColorStop(1, 'rgba(61, 23, 52, 0)');
+    ctx.fillStyle = fade;
+    ctx.fillRect(0, opaqueH, W, fadeH);
 
     const newDataUrl = canvas.toDataURL('image/png');
     const newBase64 = newDataUrl.split(',')[1];
