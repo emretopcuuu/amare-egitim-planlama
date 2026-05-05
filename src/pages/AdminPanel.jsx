@@ -801,10 +801,17 @@ const AdminPanel = () => {
             {isSecili ? <CheckSquare className="w-5 h-5 text-amare-purple" /> : <Square className="w-5 h-5 text-gray-300" />}
           </div>
         )}
-        {/* Poster thumbnail */}
+        {/* Poster thumbnail — tıklanınca lightbox */}
         {egitim.gorselUrl && (
           <div className="flex-shrink-0 mr-3">
-            <img src={egitim.gorselUrl} alt="" className="w-14 h-14 rounded-lg object-cover border border-gray-200 shadow-sm" />
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); window.open(egitim.gorselUrl, '_blank', 'noopener'); }}
+              className="block w-14 h-14 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:ring-2 hover:ring-amare-purple transition cursor-zoom-in"
+              title="Görseli yeni sekmede aç"
+            >
+              <img src={egitim.gorselUrl} alt="" className="w-full h-full object-cover" />
+            </button>
           </div>
         )}
         <div className="flex-1 min-w-0">
