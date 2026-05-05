@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { X, Upload, ImageIcon, Download, Loader2, AlertCircle, CheckCircle2, Link2, Sparkles, FileImage, Zap } from 'lucide-react';
 import { gorselOlustur } from '../utils/gorselOlustur';
-import { gorselOlusturOpenAI } from '../utils/gorselOlusturOpenAI';
 import { gorselOlusturOpenAIPro } from '../utils/gorselOlusturOpenAIPro';
 import { gorselOlusturCanvas } from '../utils/gorselOlusturCanvas';
 import { gorselOlusturHibrit } from '../utils/gorselOlusturHibrit';
@@ -15,10 +14,12 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   const [resultBlobUrl, setResultBlobUrl] = useState(null);
   const [error, setError] = useState(null);
   const [yeniYukle, setYeniYukle] = useState(sablonlar.length === 0);
-  // Model seçimi: 'hibrit' | 'gemini' | 'canvas' | 'openai' — default 'hibrit'
+  // Model seçimi: 'hibrit' | 'gemini' | 'canvas' | 'openai-pro' — default 'hibrit'
   const [aiModel, setAiModel] = useState(() => {
     const saved = localStorage.getItem('aiModel');
-    if (['canvas', 'openai', 'openai-pro', 'gemini', 'hibrit'].includes(saved)) return saved;
+    // Eski 'openai' kayıtlarını 'openai-pro'ya migrate et
+    if (saved === 'openai') return 'openai-pro';
+    if (['canvas', 'openai-pro', 'gemini', 'hibrit'].includes(saved)) return saved;
     return 'hibrit';
   });
   // Format: 'square' (1:1) | 'story' (9:16) | 'landscape' (16:9)
@@ -115,15 +116,6 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
         sablonFile: sablonKaynak, ekPrompt, ...dims,
       });
     }
-    if (model === 'openai') {
-      const result = await gorselOlusturOpenAI({
-        apiKey: openaiApiKey,
-        egitim, egitmenler: egitmenler || [],
-        sablonFile: sablonKaynak, ekPrompt,
-        quality: 'medium', format,
-      });
-      return result;
-    }
     if (model === 'openai-pro') {
       const result = await gorselOlusturOpenAIPro({
         apiKey: openaiApiKey,
@@ -145,16 +137,16 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     setAktifModel(null);
     const sablonKaynak = secilenSablon.type === 'file' ? secilenSablon.file : secilenSablon.url;
 
-    // Önce seçili model, başarısız olursa fallback
+    // Önce seçili model, başarısız olursa fallback (Gemini ↔ OpenAI Pro)
     const modelSirasi = fallbackOn
-      ? (aiModel === 'gemini' ? ['gemini', 'openai'] : ['openai', 'gemini'])
+      ? (aiModel === 'gemini' ? ['gemini', 'openai-pro'] : aiModel === 'openai-pro' ? ['openai-pro', 'gemini'] : [aiModel])
       : [aiModel];
 
     let lastErr = null;
     let result = null;
     for (const m of modelSirasi) {
       try {
-        if (m === 'openai' && !openaiApiKey) { lastErr = new Error('OpenAI API anahtarı yok.'); continue; }
+        if (m === 'openai-pro' && !openaiApiKey) { lastErr = new Error('OpenAI API anahtarı yok.'); continue; }
         if (m === 'gemini' && !apiKey) { lastErr = new Error('Gemini API anahtarı yok.'); continue; }
         result = await runModel(m, sablonKaynak);
         break;
@@ -365,7 +357,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
               {/* Model Seçici */}
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
                 <div className="text-xs font-semibold text-gray-700 mb-2">ÜRETİM YÖNTEMİ</div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
                     onClick={() => { setAiModel('hibrit'); localStorage.setItem('aiModel', 'hibrit'); }}
@@ -392,18 +384,10 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setAiModel('openai'); localStorage.setItem('aiModel', 'openai'); }}
-                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'openai' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
-                  >
-                    <div className="flex items-center gap-1 font-bold">🤖 OpenAI</div>
-                    <div className="text-gray-500 mt-0.5">AI tasarım + Gerçek yüzler · ~$0.04</div>
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => { setAiModel('openai-pro'); localStorage.setItem('aiModel', 'openai-pro'); }}
                     className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'openai-pro' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
                   >
-                    <div className="flex items-center gap-1 font-bold">✨ OpenAI Pro <span className="text-[10px] bg-amber-200 text-amber-900 px-1 rounded">yeni</span></div>
+                    <div className="flex items-center gap-1 font-bold">✨ OpenAI Pro</div>
                     <div className="text-gray-500 mt-0.5">gpt-image-2 · Tam AI · ~$0.08</div>
                   </button>
                 </div>
@@ -434,7 +418,6 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                       <Loader2 className="w-5 h-5 animate-spin" />
                       {aktifModel === 'hibrit' ? '🎯 Gemini arka plan + Canvas yüzleri...' :
                        aktifModel === 'canvas' ? '🎨 Canvas çiziyor...' :
-                       aktifModel === 'openai' ? '🤖 OpenAI üretiyor...' :
                        aktifModel === 'openai-pro' ? '✨ OpenAI Pro (gpt-image-2) üretiyor...' :
                        aktifModel === 'gemini' ? '🍌 Gemini üretiyor...' :
                        'Görsel Oluşturuluyor...'}
