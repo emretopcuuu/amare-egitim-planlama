@@ -139,9 +139,23 @@ export const gorselOlusturOpenAIPro = async ({ apiKey, egitim, egitmenler = [], 
     return unvan ? `${i + 1}. ${ad} — ${unvan}` : `${i + 1}. ${ad}`;
   }).join('\n');
 
-  const prompt = `${ekPrompt ? ekPrompt + '\n\n' : ''}Profesyonel etkinlik tanıtım posteri. Referans görseldeki konuşmacı yüzlerini ve etiketlerini AYNEN KORU - hiç değiştirme, yeniden çizme.
+  const prompt = `${ekPrompt ? ekPrompt + '\n\n' : ''}╔══════════════════════════════════════════════════════════╗
+║  ŞABLON = REFERANS GÖRSELİN — MUTLAK ÖNCELİK              ║
+╚══════════════════════════════════════════════════════════╝
+Sana verilen referans görsel TASARIM ŞABLONUDUR. Aşağıdaki maddeler ZORUNLUDUR:
 
-Etkinlik bilgilerini referansa Türkçe karakterleri doğru basarak ekle:
+1. KOMPOZİSYON: Şablonun layout'unu (başlık konumu, foto kartı yerleşimi,
+   tarih/saat bloğu, alt bilgi şeridi) AYNEN ÖRNEK AL.
+2. RENK PALETİ: Şablondaki renkleri AYNEN kullan. Yeni renk uydurma.
+3. DEKORATİF ELEMANLAR: Şablondaki parıltılar, çerçeveler, geometrik şekiller,
+   ışık efektleri NE İSE onları koru veya benzerini koy.
+4. TİPOGRAFİ: Font ağırlığı, hizalama, vurgu stili şablonla AYNI olsun.
+5. FOTO ÇERÇEVELERİ: Şablon yuvarlak ise yuvarlak, kare ise kare. Aynı stil.
+6. ESKİ İÇERİĞİ TEMİZLE: Orijinal başlık, eski tarih, eski isimler — SİL.
+   Yerlerine aşağıdaki YENİ bilgileri koy.
+7. KONUŞMACI YÜZLERİNİ AYNEN KORU - hiç değiştirme, yeniden çizme.
+
+Profesyonel etkinlik tanıtım posteri. Etkinlik bilgilerini Türkçe karakterleri doğru basarak ekle:
 
 BAŞLIK: ${egitim.egitim || ''}
 TARİH: ${egitim.tarih || ''} ${egitim.gun || ''}

@@ -173,7 +173,39 @@ ASLA görselde GÖSTERME — bağlamdan tahmin etme, UYDURMA.
   // Prompt oluştur
   const prompt = `Sen profesyonel bir tasarım uzmanısın. Aşağıdaki bilgileri kullanarak etkileyici bir etkinlik tanıtım görseli hazırla.
 
-${ekPromptBlok}ŞABLON: Sana verilen ilk görsel (şablon) esas tasarım düzenini belirliyor. Bu düzeni koru, renk paletini ve genel estetiği kullan.
+${ekPromptBlok}╔════════════════════════════════════════════════════════════╗
+║   ŞABLON KULLANIMI — MUTLAK ÖNCELİK, SAPMAYACAKSIN          ║
+╚════════════════════════════════════════════════════════════╝
+Sana verilen İLK GÖRSEL = ŞABLON. Bu, üretmen gereken posterin TASARIM REFERANSIDIR.
+Aşağıdaki maddeler ZORUNLUDUR:
+
+1. KOMPOZİSYON: Şablonun layout'unu (başlık konumu, foto kartı yerleşimi,
+   tarih/saat bloğu konumu, alt bilgi şeridi) AYNEN ÖRNEK AL. Yeni bir
+   düzen icat etme — şablonun grid'ine uy.
+
+2. RENK PALETİ: Şablondaki renkleri (gradient yönü, ana renk, vurgu rengi,
+   altın/beyaz aksanlar) AYNEN kullan. Yeni renk uydurma. Şablon mor ise mor,
+   lacivert ise lacivert, açık ise açık olsun.
+
+3. DEKORATİF ELEMANLAR: Şablondaki parıltılar, geometrik şekiller, çerçeveler,
+   yıldızlar, ışık efektleri ne ise — onları KORU veya benzerini koy.
+
+4. TİPOGRAFİ STİLİ: Şablondaki font ağırlığı, harf aralığı, hizalama
+   (sola/ortala/sağa) AYNI olsun.
+
+5. FOTO ÇERÇEVELERİ: Şablon yuvarlak ise yuvarlak, kare ise kare, hexagon ise
+   hexagon. Aynı çerçeve stilini kullan.
+
+6. ESKİ İÇERİĞİ TEMİZLE: Şablondaki orijinal başlık, eski tarih, eski isimler,
+   eski fotolar, eski zoom ID — HEPSİNİ SİL. Yerine aşağıda verdiğim YENİ
+   bilgileri yerleştir. Şablonun TASARIMINI al, İÇERİĞİNİ at.
+
+7. SAPMA YOK: Şablonu "geliştirme" yapma, "modernleştirme" yapma. Birebir
+   uydur. Kullanıcı şablonu sebepsiz seçmedi — sadık kal.
+
+KISACA: Şablon = template. Senin işin = şablonun grafik dilini koruyarak
+yeni etkinlik bilgileriyle DOLDUR. Yeni tasarım yaratma, mevcut şablonu
+yeniden içerikleştir.
 
 ${konusmaciFotoPrompt}
 
