@@ -32,13 +32,21 @@ export const applyLogos = async (base64, mimeType = 'image/png') => {
     const W = img.width;
     const H = img.height;
 
-    // Üst hafif gradient — orijinal renkleri ezmesin
+    // Üst gradient — Gemini'nin orta üst uydurma yazılarını örter, alt kısım açık
     const topGrad = ctx.createLinearGradient(0, 0, 0, Math.floor(H * 0.18));
-    topGrad.addColorStop(0, 'rgba(20, 8, 30, 0.55)');
-    topGrad.addColorStop(0.6, 'rgba(20, 8, 30, 0.25)');
+    topGrad.addColorStop(0, 'rgba(20, 8, 30, 0.85)');   // logo bandı tam örtülü
+    topGrad.addColorStop(0.5, 'rgba(20, 8, 30, 0.7)');
     topGrad.addColorStop(1, 'rgba(20, 8, 30, 0)');
     ctx.fillStyle = topGrad;
     ctx.fillRect(0, 0, W, Math.floor(H * 0.18));
+
+    // Logoların ARASINDA orta üst — Gemini'nin "ONE TEAM" yazısını lokal olarak da örter
+    // Sol logoyu sonrası, sağ logodan önce: %35-65 yatay arası
+    const midGrad = ctx.createLinearGradient(0, 0, 0, Math.floor(H * 0.13));
+    midGrad.addColorStop(0, 'rgba(20, 8, 30, 0.92)');
+    midGrad.addColorStop(1, 'rgba(20, 8, 30, 0)');
+    ctx.fillStyle = midGrad;
+    ctx.fillRect(Math.floor(W * 0.32), 0, Math.floor(W * 0.36), Math.floor(H * 0.13));
 
     // Amare logo — sol üst (logo arkasına lokal soft koyu kutu, Gemini uydurmaları örtülür)
     try {
