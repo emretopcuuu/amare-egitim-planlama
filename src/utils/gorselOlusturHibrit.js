@@ -178,8 +178,15 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.fillStyle = botGrad;
   ctx.fillRect(0, H - 200, W, 200);
 
-  // ─── ÜST: Canvas'tan gerçek logolar (sol Amare + sağ One Team) ───
-  // Gemini text-only çalıştığı için sahte logo çizmez; bunlar tek gerçek logolar.
+  // ─── ÜST: Önce hayali logoları MASKELEYIP sonra gerçek logoları bindir ───
+  // Gemini text-only olsa da bazen logo/yazı hayal ediyor — opak gradient ile kapat
+  const topMaskGrad = ctx.createLinearGradient(0, 0, 0, 160);
+  topMaskGrad.addColorStop(0, 'rgba(20, 8, 30, 0.95)');
+  topMaskGrad.addColorStop(0.6, 'rgba(20, 8, 30, 0.85)');
+  topMaskGrad.addColorStop(1, 'rgba(20, 8, 30, 0)');
+  ctx.fillStyle = topMaskGrad;
+  ctx.fillRect(0, 0, W, 160);
+
   try {
     const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
     const amareW = W * 0.28;
@@ -331,12 +338,12 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   }
 
   // ─── ALT: Daha güçlü gradient (Gemini'nin alt yazılarını kapatmak için) ───
-  const botMaskGrad = ctx.createLinearGradient(0, H - 220, 0, H);
+  const botMaskGrad = ctx.createLinearGradient(0, H - 260, 0, H);
   botMaskGrad.addColorStop(0, 'rgba(20, 8, 30, 0)');
-  botMaskGrad.addColorStop(0.4, 'rgba(20, 8, 30, 0.85)');
-  botMaskGrad.addColorStop(1, 'rgba(20, 8, 30, 0.95)');
+  botMaskGrad.addColorStop(0.3, 'rgba(20, 8, 30, 0.95)');
+  botMaskGrad.addColorStop(1, 'rgba(20, 8, 30, 1)');
   ctx.fillStyle = botMaskGrad;
-  ctx.fillRect(0, H - 220, W, 220);
+  ctx.fillRect(0, H - 260, W, 260);
 
   // ─── ALT: Yer ───
   ctx.textAlign = 'center';
