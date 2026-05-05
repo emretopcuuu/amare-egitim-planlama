@@ -31,41 +31,38 @@ export const applyLogos = async (base64, mimeType = 'image/png') => {
 
     const W = img.width;
     const H = img.height;
-    const topBandH = Math.floor(H * 0.18); // üst %18 band — Gemini'nin tüm üst öğelerini kapsar
 
-    // Üst güçlü Plum overlay — Gemini/OpenAI'nin uydurma logolarını TAMAMEN kapat
-    // 0 - %12 yükseklik: tam opak Plum
-    ctx.fillStyle = 'rgba(95, 39, 86, 0.97)';
-    ctx.fillRect(0, 0, W, Math.floor(H * 0.12));
-    // %12 - %22 yükseklik: gradient ile yumuşak geçiş
-    const topGrad = ctx.createLinearGradient(0, Math.floor(H * 0.12), 0, Math.floor(H * 0.22));
-    topGrad.addColorStop(0, 'rgba(95, 39, 86, 0.97)');
-    topGrad.addColorStop(1, 'rgba(95, 39, 86, 0)');
+    // Üst hafif gradient — orijinal renkleri ezmesin
+    const topGrad = ctx.createLinearGradient(0, 0, 0, Math.floor(H * 0.18));
+    topGrad.addColorStop(0, 'rgba(20, 8, 30, 0.55)');
+    topGrad.addColorStop(0.6, 'rgba(20, 8, 30, 0.25)');
+    topGrad.addColorStop(1, 'rgba(20, 8, 30, 0)');
     ctx.fillStyle = topGrad;
-    ctx.fillRect(0, Math.floor(H * 0.12), W, Math.floor(H * 0.10));
+    ctx.fillRect(0, 0, W, Math.floor(H * 0.18));
 
-    // Amare logo — sol orta üst
-    let amareDrawn = false;
+    // Amare logo — sol üst (logo arkasına lokal soft koyu kutu, Gemini uydurmaları örtülür)
     try {
       const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
-      const amareW = Math.floor(W * 0.30);
+      const amareW = Math.floor(W * 0.28);
       const amareH = (amareLogo.height / amareLogo.width) * amareW;
       const amareX = Math.floor(W * 0.05);
-      const amareY = Math.floor(topBandH * 0.25);
+      const amareY = Math.floor(H * 0.04);
+      // Logo arkası lokal Plum kutu (soft) — Gemini'nin orta yazılarını lokal kapatır
+      ctx.fillStyle = 'rgba(95, 39, 86, 0.65)';
+      ctx.fillRect(amareX - 12, amareY - 8, amareW + 24, amareH + 16);
       ctx.drawImage(amareLogo, amareX, amareY, amareW, amareH);
-      amareDrawn = true;
     } catch {}
 
-    // One Team logo — sağ üst köşe
+    // One Team logo — sağ üst (logo arkasına lokal koyu kutu)
     try {
       const otLogo = await urlToImage('/logos/oneteam logo.JPG');
-      const otW = Math.floor(W * 0.13);
+      const otW = Math.floor(W * 0.12);
       const otH = (otLogo.height / otLogo.width) * otW;
       const otX = W - otW - Math.floor(W * 0.05);
-      const otY = Math.floor(topBandH * 0.18);
-      // One Team logosu JPG olduğu için arkasına şeffaf değil — ince Plum çerçeve
-      ctx.fillStyle = 'rgba(95, 39, 86, 0.8)';
-      ctx.fillRect(otX - 5, otY - 5, otW + 10, otH + 10);
+      const otY = Math.floor(H * 0.04);
+      // JPG için ince Plum çerçeve
+      ctx.fillStyle = 'rgba(95, 39, 86, 0.85)';
+      ctx.fillRect(otX - 8, otY - 8, otW + 16, otH + 16);
       ctx.drawImage(otLogo, otX, otY, otW, otH);
     } catch {}
 
