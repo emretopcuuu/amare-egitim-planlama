@@ -216,22 +216,8 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.fillStyle = botGrad;
   ctx.fillRect(0, H - 200, W, 200);
 
-  // ─── KÖŞE-ONLY MASKE — sahte logoların oluştuğu sol/sağ üst bölgeleri kapla
-  // Orta serbest → Hibrit'in başlık/tarih bloğu temiz arka plan üzerinde durur
-  const cornerW = Math.floor(W * 0.35);
-  const cornerH = Math.floor(H * 0.12);
-  const lg = ctx.createLinearGradient(0, 0, cornerW, cornerH);
-  lg.addColorStop(0, 'rgba(61, 23, 52, 1)');
-  lg.addColorStop(0.7, 'rgba(61, 23, 52, 0.95)');
-  lg.addColorStop(1, 'rgba(61, 23, 52, 0)');
-  ctx.fillStyle = lg;
-  ctx.fillRect(0, 0, cornerW, cornerH);
-  const rg = ctx.createLinearGradient(W, 0, W - cornerW, cornerH);
-  rg.addColorStop(0, 'rgba(61, 23, 52, 1)');
-  rg.addColorStop(0.7, 'rgba(61, 23, 52, 0.95)');
-  rg.addColorStop(1, 'rgba(61, 23, 52, 0)');
-  ctx.fillStyle = rg;
-  ctx.fillRect(W - cornerW, 0, cornerW, cornerH);
+  // Köşe maskeleri kaldırıldı - kullanıcı isteği
+  // Gemini'nin temiz prompt'la üreteceği arka plan dokunulmaz
 
   // ─── BAŞLIK ───
   // Üst overlay olmadığı için başlığa daha güçlü shadow + double-stroke
