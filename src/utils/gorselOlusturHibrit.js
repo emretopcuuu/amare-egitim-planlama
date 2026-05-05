@@ -178,17 +178,8 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   const bgH = arkaPlanImg.height * ratio;
   ctx.drawImage(arkaPlanImg, (W - bgW) / 2, (H - bgH) / 2, bgW, bgH);
 
-  // Üst kısım — TAM ÜST YARIYA güçlü opak Plum overlay (Gemini'nin tüm logolarını/yazılarını örter)
-  // 0-200px: tamamen opak Plum (logolar buraya gelecek)
-  ctx.fillStyle = 'rgba(95, 39, 86, 0.97)';
-  ctx.fillRect(0, 0, W, 200);
-  // 200-450px: gradient ile geçiş
-  const topGrad = ctx.createLinearGradient(0, 200, 0, 450);
-  topGrad.addColorStop(0, 'rgba(95, 39, 86, 0.97)');
-  topGrad.addColorStop(0.5, 'rgba(95, 39, 86, 0.75)');
-  topGrad.addColorStop(1, 'rgba(95, 39, 86, 0)');
-  ctx.fillStyle = topGrad;
-  ctx.fillRect(0, 200, W, 250);
+  // Üst kısımda HİÇBİR overlay yok — kullanıcı isteği üzerine kaldırıldı.
+  // Başlık metninin okunabilir olması için sadece yumuşak text-shadow kullanılır.
 
   // Alt koyulaştırma (zoom info okunsun)
   const botGrad = ctx.createLinearGradient(0, H - 200, 0, H);
@@ -200,10 +191,14 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   // Logolar applyLogos post-process ile sonra eklenecek (çift logo olmaması için)
 
   // ─── BAŞLIK ───
+  // Üst overlay olmadığı için başlığa daha güçlü shadow + double-stroke
   ctx.textAlign = 'center';
-  ctx.fillStyle = '#FFFFFF';
   ctx.font = 'bold 56px Arial';
-  ctx.shadowColor = 'rgba(0,0,0,0.7)';
+  ctx.shadowColor = 'rgba(0,0,0,0.95)';
+  ctx.shadowBlur = 24;
+  ctx.fillStyle = '#FFFFFF';
+  // İki kez çiz — daha güçlü gölge için
+  drawWrappedText(ctx, egitim.egitim || '', W / 2, 200, W - 100, 64, 3);
   ctx.shadowBlur = 14;
   const baslikY = drawWrappedText(ctx, egitim.egitim || '', W / 2, 200, W - 100, 64, 3);
   ctx.shadowBlur = 0;
