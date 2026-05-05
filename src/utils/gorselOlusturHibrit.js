@@ -178,27 +178,14 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.fillStyle = botGrad;
   ctx.fillRect(0, H - 200, W, 200);
 
-  // ─── ÜST: Önce hayali logoları MASKELEYIP sonra gerçek logoları bindir ───
-  // Gemini text-only olsa da bazen logo/yazı hayal ediyor — opak gradient ile kapat
+  // ─── ÜST: Hayali logoları MASKELE — gerçek logo da çizmiyoruz ───
+  // Kullanıcı isteği: tüm logolar kaldırıldı, üst sadece temiz arka plan + başlık
   const topMaskGrad = ctx.createLinearGradient(0, 0, 0, 160);
   topMaskGrad.addColorStop(0, 'rgba(20, 8, 30, 0.95)');
   topMaskGrad.addColorStop(0.6, 'rgba(20, 8, 30, 0.85)');
   topMaskGrad.addColorStop(1, 'rgba(20, 8, 30, 0)');
   ctx.fillStyle = topMaskGrad;
   ctx.fillRect(0, 0, W, 160);
-
-  try {
-    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
-    const amareW = W * 0.28;
-    const amareH = (amareLogo.height / amareLogo.width) * amareW;
-    ctx.drawImage(amareLogo, W * 0.05, H * 0.04, amareW, amareH);
-  } catch {}
-  try {
-    const otLogo = await urlToImage('/logos/oneteam logo.JPG');
-    const otW = W * 0.10;
-    const otH = (otLogo.height / otLogo.width) * otW;
-    ctx.drawImage(otLogo, W - otW - W * 0.05, H * 0.04, otW, otH);
-  } catch {}
 
   // ─── BAŞLIK ───
   // Üst overlay olmadığı için başlığa daha güçlü shadow + double-stroke
@@ -357,14 +344,7 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   }
   ctx.shadowBlur = 0;
 
-  // ─── Amare logo (gerçek PNG) — alt orta ───
-  try {
-    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
-    const logoBotW = 200;
-    const logoBotH = (amareLogo.height / amareLogo.width) * logoBotW;
-    ctx.drawImage(amareLogo, (W - logoBotW) / 2, H - 95, logoBotW, logoBotH);
-  } catch {}
-
+  // Alt logo da kaldırıldı — kullanıcı isteği: hiç logo yok
   // URL en altta
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
   ctx.font = '16px Arial';

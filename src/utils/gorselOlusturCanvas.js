@@ -100,19 +100,7 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   ctx.fillRect(60, 22, W - 120, 3);
   ctx.fillRect(60, H - 25, W - 120, 3);
 
-  // ─── ÜST: gerçek Amare (sol) + One Team (sağ) logoları ───
-  try {
-    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
-    const amareW = W * 0.28;
-    const amareH = (amareLogo.height / amareLogo.width) * amareW;
-    ctx.drawImage(amareLogo, W * 0.05, H * 0.04, amareW, amareH);
-  } catch {}
-  try {
-    const otLogo = await urlToImage('/logos/oneteam logo.JPG');
-    const otW = W * 0.10;
-    const otH = (otLogo.height / otLogo.width) * otW;
-    ctx.drawImage(otLogo, W - otW - W * 0.05, H * 0.04, otW, otH);
-  } catch {}
+  // Üst logolar kaldırıldı — kullanıcı isteği: temiz çıktı, hiç logo yok
 
   // ─── BAŞLIK ───
   ctx.textAlign = 'center';

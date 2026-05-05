@@ -31,21 +31,14 @@ export const applyLogos = async (base64, mimeType = 'image/png') => {
     const W = img.width;
     const H = img.height;
 
-    // Sol üst — gerçek Amare logo
-    try {
-      const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
-      const amareW = W * 0.28;
-      const amareH = (amareLogo.height / amareLogo.width) * amareW;
-      ctx.drawImage(amareLogo, W * 0.05, H * 0.04, amareW, amareH);
-    } catch {}
-
-    // Sağ üst — gerçek One Team logo
-    try {
-      const otLogo = await urlToImage('/logos/oneteam logo.JPG');
-      const otW = W * 0.10;
-      const otH = (otLogo.height / otLogo.width) * otW;
-      ctx.drawImage(otLogo, W - otW - W * 0.05, H * 0.04, otW, otH);
-    } catch {}
+    // Kullanıcı isteği: tüm logolar kaldırıldı — sadece üst köşelerdeki AI'nın
+    // hayalettiği sahte logoları opak maske ile kapat (gerçek logo basmıyoruz)
+    const topMaskGrad = ctx.createLinearGradient(0, 0, 0, H * 0.18);
+    topMaskGrad.addColorStop(0, 'rgba(20, 8, 30, 0.95)');
+    topMaskGrad.addColorStop(0.6, 'rgba(20, 8, 30, 0.85)');
+    topMaskGrad.addColorStop(1, 'rgba(20, 8, 30, 0)');
+    ctx.fillStyle = topMaskGrad;
+    ctx.fillRect(0, 0, W, H * 0.18);
 
     const newDataUrl = canvas.toDataURL('image/png');
     const newBase64 = newDataUrl.split(',')[1];
