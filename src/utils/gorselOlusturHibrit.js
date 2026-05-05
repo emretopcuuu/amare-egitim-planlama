@@ -93,45 +93,37 @@ const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, maxLines = 99) =
   return curY;
 };
 
-// Gemini'den DEKORATIF arka plan üret
-const arkaPlanUret = async (apiKey, sablonFile, egitim) => {
-  const sablon = await resmiBase64Yap(sablonFile);
+// Gemini'den DEKORATIF arka plan üret — şablon GÖNDERİLMEZ
+// Şablonu Gemini'ye verince hazır posterdeki logo/yazıları taklit ediyordu.
+// Sadece text prompt → tamamen abstract arka plan
+const arkaPlanUret = async (apiKey, _sablonFile, egitim) => {
+  const prompt = `Sen profesyonel bir tasarım uzmanısın. 1080x1080 SQUARE abstract dekoratif POSTER ARKA PLANI üretiyorsun.
 
-  const prompt = `Sen profesyonel bir tasarım uzmanısın. 1080x1080 etkinlik poster ARKA PLAN DOKUSU üretiyorsun.
+GÖREVİN: Tamamen abstract, soyut, dekoratif bir arka plan görseli. Boş bir kanvas gibi — sonradan Canvas ile içerik (yazı, foto, logo) yerleştirilecek.
 
-GÖREVİN: Sadece dekoratif arka plan deseni / doku üret. Boş bir tuval gibi.
+İSTEDİĞİM TASARIM:
+- Amare Global kurumsal renk paleti: Deep Plum #5F2756 (ana renk), koyu mor #3D1734, sıcak altın aksanlar #F5D77A
+- Yumuşak gradientler, ışık efektleri, soft parıltılar
+- Soyut dokular: hafif bokeh, soft glow, ipeksi yüzey hissi
+- Dramatik ama zarif — vizyon günü/sağlık paneli atmosferine uygun lüks his
+- Üst → orta → alt: tek tutarlı, akıcı renk geçişi
+- Üst kısım biraz daha koyu (başlık okunaklı olsun), orta açık (foto kartları için), alt biraz koyu (zoom info için)
 
-ŞABLON: Sana verilen referans görselden SADECE renk paletini al (Plum, mor, altın aksanlar, koyu tonlar). Şablonun İÇİNDEKİ HİÇBİR ŞEYI kopyalama:
-- Şablondaki yazıları, başlıkları KOPYALAMA
-- Şablondaki yüzleri, fotoğrafları KOPYALAMA
-- Şablondaki logoları, marka adlarını KOPYALAMA
-- Şablondaki tarih, saat, ZOOM ID KOPYALAMA
-
-KESİN YASAKLAR (KESİNLİKLE UYGULA):
-- HİÇBİR ŞEKİLDE insan yüzü, vücut, kişi resmi ÇİZME
-- HİÇBİR ŞEKİLDE yazı, harf, sayı, başlık, isim, tarih, saat YAZMA
-- HİÇBİR ŞEKİLDE "Amare", "One Team", "Global", marka adı YAZMA
-- HİÇBİR ŞEKİLDE logo, sembol, amblem, ikon, rozet ÇİZME
-- HİÇBİR ŞEKİLDE siyah/koyu KARE, KUTU, ÇERÇEVE çizme — köşelere logo yerleştirme
-- HİÇBİR ŞEKİLDE podyum, sahne, masa, mobilya, kürsü, mimari nesne çizme
-- HİÇBİR ŞEKİLDE flat renk podyum + gradient arka plan kombinasyonu yapma
-- TEK TUTARLI STİL: TÜM görsel yumuşak mor gradient + soft ışık dokuları olsun
-- ÜST → ORTA → ALT geçişi tek bir akıcı gradient olmalı, parça parça stil ÇAKIŞMASI YASAK
+KESİN YASAKLAR — UYGULA:
+- ASLA insan yüzü, vücut, kişi figürü ÇİZME
+- ASLA yazı, harf, sayı, başlık, isim, tarih, saat YAZMA
+- ASLA "Amare", "amare", "ONE TEAM", "Global", "GLOBAL" gibi MARKA ADI YAZMA
+- ASLA logo, sembol, amblem, ikon, rozet, ® işareti ÇİZME
+- ASLA siyah/koyu KARE, KUTU, ÇERÇEVE çizme
+- ASLA podyum, sahne, masa, mobilya, mimari nesne çizme
+- ASLA banner, bar, şerit, başlık çubuğu çizme
+- ASLA "Etkinliğe X yaşından küçükler katılamaz" gibi yazı YAZMA
 - "Kyani" KESİNLİKLE YAZMA
+- ASLA hazır posterleri taklit etme
 
-İSTEDİĞİM:
-- Amare Global kurumsal renkleri: Deep Plum (#5F2756), koyu mor, altın aksantlar
-- Soyut dekoratif öğeler: ışık efektleri, parıltı, soft gradientler, dokular, soyut formlar
-- Üst, orta, alt kısımlar — hepsi temiz, boş bırakılmış (üzerine sonra Canvas yerleştirilecek)
-- Sadece arka plan dokusu — fotoğraf, yazı, logo, banner YOK
-- Profesyonel, zarif, lüks atmosfer
+ÖZET: TAMAMEN ABSTRACT bir arka plan görseli. Hiçbir yazı, foto, yüz, logo, marka, banner, kutu, mimari nesne YOK. Sadece renk gradientleri, soft ışık ve abstract formlar — bir mor lüks atölye duvarı gibi.`;
 
-ÖZET: TAMAMEN BOŞ bir dekoratif arka plan görseli. Hiçbir yazı, foto, logo, isim, tarih, banner YOK — sadece renk gradientleri ve soft dokular.`;
-
-  const parts = [
-    { text: prompt },
-    { inlineData: { mimeType: sablon.mimeType, data: sablon.base64 } },
-  ];
+  const parts = [{ text: prompt }];
 
   const body = {
     contents: [{ role: 'user', parts }],
