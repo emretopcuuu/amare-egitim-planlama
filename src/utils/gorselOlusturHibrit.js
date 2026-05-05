@@ -91,37 +91,56 @@ const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, maxLines = 99) =
   return curY;
 };
 
-// Gemini'den DEKORATIF arka plan üret — şablon GÖNDERİLMEZ
-// Şablonu Gemini'ye verince hazır posterdeki logo/yazıları taklit ediyordu.
-// Sadece text prompt → tamamen abstract arka plan
-const arkaPlanUret = async (apiKey, _sablonFile, egitim) => {
-  const prompt = `Sen profesyonel bir tasarım uzmanısın. 1080x1080 SQUARE abstract dekoratif POSTER ARKA PLANI üretiyorsun.
+// Gemini'den ŞABLON-BAZLI arka plan üret
+// Şablonu referans olarak gönderir, Gemini şablonun renk/atmosferini koruyarak
+// tüm yazı/logo/foto'ları temizler. Sonra Canvas üzerine yeni içerik bindirilir.
+const arkaPlanUret = async (apiKey, sablonFile, egitim) => {
+  // Şablonu base64'e çevir
+  const sablonB64 = await new Promise(async (resolve, reject) => {
+    if (sablonFile instanceof File) {
+      const r = new FileReader();
+      r.onload = () => resolve({ b64: r.result.split(',')[1], mt: sablonFile.type || 'image/jpeg' });
+      r.onerror = reject;
+      r.readAsDataURL(sablonFile);
+    } else {
+      try {
+        const res = await fetch(sablonFile);
+        const blob = await res.blob();
+        const r = new FileReader();
+        r.onload = () => resolve({ b64: r.result.split(',')[1], mt: blob.type || 'image/jpeg' });
+        r.onerror = reject;
+        r.readAsDataURL(blob);
+      } catch (e) { reject(e); }
+    }
+  });
 
-GÖREVİN: Tamamen abstract, soyut, dekoratif bir arka plan görseli. Boş bir kanvas gibi — sonradan Canvas ile içerik (yazı, foto, logo) yerleştirilecek.
+  const prompt = `Sen profesyonel bir tasarım uzmanısın. Sana referans olarak bir poster şablonu veriyorum.
 
-İSTEDİĞİM TASARIM:
-- Amare Global kurumsal renk paleti: Deep Plum #5F2756 (ana renk), koyu mor #3D1734, sıcak altın aksanlar #F5D77A
-- Yumuşak gradientler, ışık efektleri, soft parıltılar
-- Soyut dokular: hafif bokeh, soft glow, ipeksi yüzey hissi
-- Dramatik ama zarif — vizyon günü/sağlık paneli atmosferine uygun lüks his
-- Üst → orta → alt: tek tutarlı, akıcı renk geçişi
-- Üst kısım biraz daha koyu (başlık okunaklı olsun), orta açık (foto kartları için), alt biraz koyu (zoom info için)
+GÖREVİN: Bu şablonun renk paletini, kompozisyon hissini, dekoratif elemanlarını ve genel atmosferini KORU. Ama şablondaki TÜM YAZI, İSİM, TARİH, FOTO, LOGO, KİŞİ FİGÜRÜ ve POSTERE ÖZGÜ İÇERİĞİ TAMAMEN TEMİZLE — sadece arka plan, renkler, dekoratif motifler ve doku kalsın.
+
+Sonuç: Şablonun grafik tasarımına çok benzer ama içeriği boşaltılmış, yeni Canvas yazıları için hazır temiz bir arka plan.
+
+KORU:
+- Şablonun renk paleti (örn. mavi/mor/altın geçişler, vurgu renkleri)
+- Dekoratif elemanlar (yıldızlar, parıltılar, geometrik şekiller, gradient'ler)
+- Genel kompozisyon hissi
+- Lüks/profesyonel atmosfer
 
 KESİN YASAKLAR — UYGULA:
-- ASLA insan yüzü, vücut, kişi figürü ÇİZME
+- ASLA insan yüzü, vücut, kişi figürü ÇİZME (şablonda olsa bile sil)
 - ASLA yazı, harf, sayı, başlık, isim, tarih, saat YAZMA
-- ASLA "Amare", "amare", "ONE TEAM", "Global", "GLOBAL" gibi MARKA ADI YAZMA
-- ASLA logo, sembol, amblem, ikon, rozet, ® işareti ÇİZME
-- ASLA siyah/koyu KARE, KUTU, ÇERÇEVE çizme
-- ASLA podyum, sahne, masa, mobilya, mimari nesne çizme
-- ASLA banner, bar, şerit, başlık çubuğu çizme
-- ASLA "Etkinliğe X yaşından küçükler katılamaz" gibi yazı YAZMA
+- ASLA "Amare", "amare", "ONE TEAM", "Global", "GLOBAL", "ZOOM", "SALON" gibi yazı veya MARKA ADI YAZMA
+- ASLA logo, sembol, amblem, rozet, ® işareti ÇİZME
+- ASLA "Etkinliğe X yaşından küçükler" GİBİ KÜÇÜK NOTLAR YAZMA
 - "Kyani" KESİNLİKLE YAZMA
-- ASLA hazır posterleri taklit etme
+- ASLA orijinal posterin içeriğini tekrar etme — sadece renk/doku/motif al
 
-ÖZET: TAMAMEN ABSTRACT bir arka plan görseli. Hiçbir yazı, foto, yüz, logo, marka, banner, kutu, mimari nesne YOK. Sadece renk gradientleri, soft ışık ve abstract formlar — bir mor lüks atölye duvarı gibi.`;
+ÖZET: Aynı tasarım dilinde (renk + atmosfer) ama tüm içerik silinmiş, boş bir arka plan. Sonradan Canvas üzerine yeni başlık/foto eklenecek.`;
 
-  const parts = [{ text: prompt }];
+  const parts = [
+    { inlineData: { mimeType: sablonB64.mt, data: sablonB64.b64 } },
+    { text: prompt },
+  ];
 
   const body = {
     contents: [{ role: 'user', parts }],
@@ -143,7 +162,7 @@ KESİN YASAKLAR — UYGULA:
   const parts2 = data?.candidates?.[0]?.content?.parts || [];
   const imgPart = parts2.find((p) => p.inlineData?.mimeType?.startsWith('image/'));
   if (!imgPart) throw new Error('Gemini arka plan döndürmedi.');
-  return imgPart.inlineData; // { mimeType, data }
+  return imgPart.inlineData;
 };
 
 export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sablonFile, ekPrompt = '', width = 1080, height = 1080 }) => {

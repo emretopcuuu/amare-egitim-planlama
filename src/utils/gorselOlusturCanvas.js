@@ -70,30 +70,46 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // ─── ARKA PLAN: Plum gradient ───
-  // Şablonu kullanmıyoruz çünkü hazır posterler içlerinde eski tarih/foto/isim
-  // taşıyor — Canvas overlay'i düzgünce kapatamıyor. Onun yerine temiz Amare Plum
-  // gradient arka plan + isteğe bağlı şablon "doku" (yoğun blur + düşük opacity)
-  const baseGrad = ctx.createLinearGradient(0, 0, 0, H);
-  baseGrad.addColorStop(0, '#7A2F6D');   // üst — biraz açık Plum
-  baseGrad.addColorStop(0.5, '#5F2756'); // orta — tam Amare Deep Plum
-  baseGrad.addColorStop(1, '#3D1734');   // alt — koyulaşıyor
-  ctx.fillStyle = baseGrad;
-  ctx.fillRect(0, 0, W, H);
-
-  // Şablon dokusu — çok düşük opacity + heavy blur ile arka plan dokusu olarak
-  // (eski içerik tamamen kaybolur, sadece renk hareketi kalır)
+  // ─── ARKA PLAN: Şablon dominant ───
+  // Şablon arka plan olarak %100 görünür, üstüne foto+text overlay yapılır
+  // Eski içerikleri kapatmak için üst ve alt bölgeler koyulaştırılır (mask)
+  let sablonOk = false;
   try {
     const sablonImg = await urlToImage(sablonFile);
-    ctx.save();
-    ctx.globalAlpha = 0.18;
-    ctx.filter = 'blur(40px) saturate(1.5)';
     const ratio = Math.max(W / sablonImg.width, H / sablonImg.height);
     const bgW = sablonImg.width * ratio;
     const bgH = sablonImg.height * ratio;
     ctx.drawImage(sablonImg, (W - bgW) / 2, (H - bgH) / 2, bgW, bgH);
-    ctx.restore();
+    sablonOk = true;
   } catch {}
+
+  // Şablon yüklenemezse fallback gradient
+  if (!sablonOk) {
+    const baseGrad = ctx.createLinearGradient(0, 0, 0, H);
+    baseGrad.addColorStop(0, '#7A2F6D');
+    baseGrad.addColorStop(0.5, '#5F2756');
+    baseGrad.addColorStop(1, '#3D1734');
+    ctx.fillStyle = baseGrad;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // Üst maske — şablonun eski başlık/logo bölgesini kapat (yeni başlık için yer)
+  const topMaskH = Math.floor(H * 0.22);
+  const topMask = ctx.createLinearGradient(0, 0, 0, topMaskH);
+  topMask.addColorStop(0, 'rgba(61, 23, 52, 0.95)');
+  topMask.addColorStop(0.7, 'rgba(61, 23, 52, 0.85)');
+  topMask.addColorStop(1, 'rgba(61, 23, 52, 0)');
+  ctx.fillStyle = topMask;
+  ctx.fillRect(0, 0, W, topMaskH);
+
+  // Alt maske — şablonun eski tarih/zoom bölgesini kapat
+  const botMaskH = Math.floor(H * 0.20);
+  const botMask = ctx.createLinearGradient(0, H - botMaskH, 0, H);
+  botMask.addColorStop(0, 'rgba(20, 8, 30, 0)');
+  botMask.addColorStop(0.4, 'rgba(20, 8, 30, 0.85)');
+  botMask.addColorStop(1, 'rgba(20, 8, 30, 0.97)');
+  ctx.fillStyle = botMask;
+  ctx.fillRect(0, H - botMaskH, W, botMaskH);
 
   // İnce dekoratif çizgi (üst ve alt)
   ctx.fillStyle = 'rgba(245, 215, 122, 0.7)'; // altın
