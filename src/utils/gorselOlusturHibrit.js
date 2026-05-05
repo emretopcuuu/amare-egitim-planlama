@@ -111,9 +111,13 @@ KESİN YASAKLAR (KESİNLİKLE UYGULA):
 - HİÇBİR ŞEKİLDE insan yüzü, vücut, kişi resmi ÇİZME
 - HİÇBİR ŞEKİLDE yazı, harf, sayı, başlık, isim, tarih, saat YAZMA
 - HİÇBİR ŞEKİLDE "Amare", "One Team", "Global", marka adı YAZMA
-- HİÇBİR ŞEKİLDE logo, sembol, amblem ÇİZME
+- HİÇBİR ŞEKİLDE logo, sembol, amblem, ikon, rozet ÇİZME
+- HİÇBİR ŞEKİLDE siyah/koyu KARE, KUTU, ÇERÇEVE çizme — köşelere logo yerleştirme
+- HİÇBİR ŞEKİLDE podyum, sahne, masa, mobilya, kürsü, mimari nesne çizme
+- HİÇBİR ŞEKİLDE flat renk podyum + gradient arka plan kombinasyonu yapma
+- TEK TUTARLI STİL: TÜM görsel yumuşak mor gradient + soft ışık dokuları olsun
+- ÜST → ORTA → ALT geçişi tek bir akıcı gradient olmalı, parça parça stil ÇAKIŞMASI YASAK
 - "Kyani" KESİNLİKLE YAZMA
-- Banner, bar, şerit ÇİZME — üst ve alt KISIMLAR DÜZ KALSIN
 
 İSTEDİĞİM:
 - Amare Global kurumsal renkleri: Deep Plum (#5F2756), koyu mor, altın aksantlar
