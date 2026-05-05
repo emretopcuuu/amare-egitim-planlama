@@ -114,28 +114,35 @@ const arkaPlanUret = async (apiKey, sablonFile, egitim) => {
     }
   });
 
-  const prompt = `Sen profesyonel bir tasarım uzmanısın. Sana referans olarak bir poster şablonu veriyorum.
+  const prompt = `# GÖREV
+Sana referans olarak verilen şablon görselin GRAFİK DİLİNİ koruyarak,
+TAMAMEN BOŞ bir arka plan görseli üret. Posterin yazı/foto/logo bölümlerini
+sonradan Canvas dolduracak — sen sadece DEKORATİF ZEMİN üretirsin.
 
-GÖREVİN: Bu şablonun renk paletini, kompozisyon hissini, dekoratif elemanlarını ve genel atmosferini KORU. Ama şablondaki TÜM YAZI, İSİM, TARİH, FOTO, LOGO, KİŞİ FİGÜRÜ ve POSTERE ÖZGÜ İÇERİĞİ TAMAMEN TEMİZLE — sadece arka plan, renkler, dekoratif motifler ve doku kalsın.
+# 1 · ŞABLONDAN AL
+• Renk paleti (gradient yönü, ana renk, vurgular)
+• Dekoratif elemanlar (parıltı, ışık efekti, geometrik formlar, doku)
+• Genel atmosfer/kompozisyon hissi
+• Lüks profesyonel havayı
 
-Sonuç: Şablonun grafik tasarımına çok benzer ama içeriği boşaltılmış, yeni Canvas yazıları için hazır temiz bir arka plan.
+# 2 · ŞABLONDAN ATIL
+• Tüm yazılar (başlık, isim, tarih, saat, zoom ID)
+• Tüm fotolar/yüzler/insan figürleri
+• Tüm logolar/amblemler/markalar
+• Tüm aşağı şeritler/banner/bilgi kutuları
 
-KORU:
-- Şablonun renk paleti (örn. mavi/mor/altın geçişler, vurgu renkleri)
-- Dekoratif elemanlar (yıldızlar, parıltılar, geometrik şekiller, gradient'ler)
-- Genel kompozisyon hissi
-- Lüks/profesyonel atmosfer
+# 3 · KISITLAR (TEK YER)
+✗ İnsan yüzü, vücut, figür çizme
+✗ Yazı, harf, sayı, başlık YAZMA
+✗ "Amare", "ONE TEAM", "Global", "ZOOM" yazma
+✗ Logo, sembol, amblem, ®, rozet çizme
+✗ "Kyani" yazma
+✗ Hayali not/uyarı yazma
 
-KESİN YASAKLAR — UYGULA:
-- ASLA insan yüzü, vücut, kişi figürü ÇİZME (şablonda olsa bile sil)
-- ASLA yazı, harf, sayı, başlık, isim, tarih, saat YAZMA
-- ASLA "Amare", "amare", "ONE TEAM", "Global", "GLOBAL", "ZOOM", "SALON" gibi yazı veya MARKA ADI YAZMA
-- ASLA logo, sembol, amblem, rozet, ® işareti ÇİZME
-- ASLA "Etkinliğe X yaşından küçükler" GİBİ KÜÇÜK NOTLAR YAZMA
-- "Kyani" KESİNLİKLE YAZMA
-- ASLA orijinal posterin içeriğini tekrar etme — sadece renk/doku/motif al
-
-ÖZET: Aynı tasarım dilinde (renk + atmosfer) ama tüm içerik silinmiş, boş bir arka plan. Sonradan Canvas üzerine yeni başlık/foto eklenecek.`;
+# 4 · ÇIKTI
+Şablonun renk + atmosfer dilini koruyan, üzerine yazı/foto eklenmeye hazır
+TAMAMEN BOŞ bir grafik zemin. Önemli: dekoratif olsun ama yer kaplamasın —
+ortada büyük boş alan kalsın ki Canvas başlık/foto'ları yerleştirebilsin.`;
 
   const parts = [
     { inlineData: { mimeType: sablonB64.mt, data: sablonB64.b64 } },

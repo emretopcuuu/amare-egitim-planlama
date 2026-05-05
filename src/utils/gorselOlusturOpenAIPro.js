@@ -139,75 +139,70 @@ export const gorselOlusturOpenAIPro = async ({ apiKey, egitim, egitmenler = [], 
     return unvan ? `${i + 1}. ${ad} — ${unvan}` : `${i + 1}. ${ad}`;
   }).join('\n');
 
-  const prompt = `${ekPrompt ? ekPrompt + '\n\n' : ''}╔══════════════════════════════════════════════════════════╗
-║  ŞABLON = REFERANS GÖRSELİN — MUTLAK ÖNCELİK              ║
-╚══════════════════════════════════════════════════════════╝
-Sana verilen referans görsel TASARIM ŞABLONUDUR. Aşağıdaki maddeler ZORUNLUDUR:
+  const formatTanim = format === 'story' ? '1024x1536 dikey (9:16)'
+                    : format === 'landscape' ? '1536x1024 yatay (16:9)'
+                    : '1024x1024 kare (1:1)';
 
-1. KOMPOZİSYON: Şablonun layout'unu (başlık konumu, foto kartı yerleşimi,
-   tarih/saat bloğu, alt bilgi şeridi) AYNEN ÖRNEK AL.
-2. RENK PALETİ: Şablondaki renkleri AYNEN kullan. Yeni renk uydurma.
-3. DEKORATİF ELEMANLAR: Şablondaki parıltılar, çerçeveler, geometrik şekiller,
-   ışık efektleri NE İSE onları koru veya benzerini koy.
-4. TİPOGRAFİ: Font ağırlığı, hizalama, vurgu stili şablonla AYNI olsun.
-5. FOTO ÇERÇEVELERİ: Şablon yuvarlak ise yuvarlak, kare ise kare. Aynı stil.
-6. ESKİ İÇERİĞİ TEMİZLE: Orijinal başlık, eski tarih, eski isimler — SİL.
-   Yerlerine aşağıdaki YENİ bilgileri koy.
-7. KONUŞMACI YÜZLERİNİ AYNEN KORU - hiç değiştirme, yeniden çizme.
+  const prompt = `# GÖREV
+Sana verilen referans görselin (şablon + üzerine yerleştirilmiş konuşmacı yüzleri)
+layout'unu kullanarak ${formatTanim} bir etkinlik posteri üret.
 
-Profesyonel etkinlik tanıtım posteri. Etkinlik bilgilerini Türkçe karakterleri doğru basarak ekle:
+${ekPrompt ? ekPrompt + '\n\n' : ''}# 1 · ŞABLON SADAKATİ
+Referans görsel = grafik dili kaynağın. Şu özelliklerini AYNEN kullan:
+• Layout (başlık/foto/tarih/zoom konumları)
+• Renk paleti (gradient yönü, ana renk, vurgular)
+• Dekoratif elemanlar (parıltı, çerçeve, ışık efekti)
+• Tipografi stili (font ağırlığı, hizalama)
+• Foto çerçeve şekli (yuvarlak/kare)
 
-BAŞLIK: ${egitim.egitim || ''}
-TARİH: ${egitim.tarih || ''} ${egitim.gun || ''}
-${trSaat ? `TR ${trSaat}${trBitis ? ' - ' + trBitis : ''} | EU ${euSaat}${euBitis ? ' - ' + euBitis : ''}` : ''}
-YER: ${egitim.yer || 'ZOOM'}
+Referansta görünen ESKİ içerik (eski başlık, eski tarih, eski zoom ID) varsa SİL,
+aşağıdaki YENİ bilgileri yerleştir. Konuşmacı yüzleri AYNEN korunur, asla
+yeniden çizilmez/iyileştirilmez.
+
+# 2 · İÇERİK
+Başlık: ${egitim.egitim || ''}
+Tarih: ${egitim.tarih || ''} ${egitim.gun || ''}
+${trSaat ? `Saat (iki ayrı satır olarak yaz):
+  TR ${trSaat}${trBitis ? ' - ' + trBitis : ''}
+  EU ${euSaat}${euBitis ? ' - ' + euBitis : ''}` : 'Saat: belirlenmedi (yazma)'}
+Yer: ${egitim.yer || 'ZOOM'}
 
 KONUŞMACILAR (etiket sırası, AYNEN bunlar):
 ${konusmaciList}
 
-ZORUNLU RENK PALETİ (sadece bunlar, başka renk YOK):
-- Deep Plum #5F2756 (ana arka plan)
-- Koyu Plum #3D1734 (üst/alt koyu bölgeler)
-- Açık mor #7A2F6D (orta vurgu)
-- Sıcak altın #F5D77A (başlık ve aksanlar için)
-- Beyaz/krem #FFFFFF (ana metin için)
+# 3 · RENK PALETİ
+İzinli: Deep Plum #5F2756 · Koyu Plum #3D1734 · Açık mor #7A2F6D · Altın #F5D77A · Beyaz #FFFFFF
+Yasak: Kırmızı, maroon, kahverengi, turuncu, sarı bant, lacivert, mavi, yeşil
 
-YASAK RENKLER: Kırmızı, maroon, kahverengi, turuncu, sarı banner, lacivert, mavi, yeşil. Sadece yukarıdaki mor/altın paleti kullan.
+# 4 · TEMA NOKTASI
+Başlık "${egitim.egitim || ''}" konusuna uygun ince atmosferik dokunuş
+(palette sadık kalarak):
+• Sağlık/wellness → organik soft formlar
+• Liderlik/Vizyon → ışık huzmeleri, dramatik
+• Satış/finans → modern keskin geometrik
+• Motivasyon → ilhamlı parıltı
+• Panel/seminer → ciddi profesyonel
+Şablonu EZMEZ.
 
-TEMA UYUMU — Başlık "${egitim.egitim || ''}" konusuna uygun ince dokunuşlar:
-- Sağlık/wellness → organik formlar, ferah hisli soft dokular
-- Liderlik/Vizyon → güçlü ışık huzmeleri, dramatik premium atmosfer
-- Satış/finans → modern keskin geometrik vurgular
-- Motivasyon → ilhamlı ışık efektleri, parıltı
-- Panel/seminer → ciddi profesyonel doku
-Tema şablonu EZMEZ — sadece ince dokunuş.
+# 5 · KISITLAR (TEK YER)
+✗ "Kyani" yazma
+✗ Sahte logo/amblem/® çizme — referansta logo varsa onu kullan
+✗ Hayali yaş notu, hukuki uyarı yazma
+✗ Listede yazmayan unvan UYDURMA
+✗ Konuşmacı yüzlerini değiştirme/iyileştirme
+✗ Konuşmacıyı 1'den fazla gösterme
+✗ Türkçe karakterleri (ş ç ğ ü ö ı İ) yanlış basma
+✗ Üstte renkli bant/banner çizme
+✗ Başlığı kırpma — üstten 80px boşluk bırak
 
-LAYOUT KURALLARI:
-- Başlık üstten en az 80px boşluk bırakarak TAM görünür olmalı, KIRPMA YOK
-- Üstte renkli bant/banner ÇİZME — sadece arka plan gradient'i
-- Türkçe karakterleri (ş ç ğ ü ö ı İ) DOĞRU bas
-- Yüzleri AYNEN koru
-- İsim ve unvan etiketlerini olduğu gibi tut
-- Saatler iki ayrı format: "TR HH:MM - HH:MM" ve "EU HH:MM - HH:MM"
-- "Kyani" KESİNLİKLE yazma
-- Her konuşmacı TAM 1 KEZ
-- "Etkinliğe X yaşından küçükler" gibi yazılar YAZMA
+# 6 · ÇIKTIDAN ÖNCE — KENDİ ÇIKTINI DOĞRULA
+1. Şablonu mu çoğaltıyorum yoksa yeni tasarım mı yarattım? (Şablon olmalı)
+2. Verilen 6 bilgi (başlık, tarih, TR saat, EU saat, yer, konuşmacılar)
+   görselde EKSİKSİZ ve DOĞRU mu?
+3. Her konuşmacının yüzü kendi etiketine bağlı mı? Karışıklık var mı?
+4. Listede olmayan herhangi bir yazı/unvan/hukuki not var mı?
 
-╔══════════════════════════════════════════════════════════╗
-║  SON KONTROL — POSTERİ ÜRETMEDEN ÖNCE ZİHNİNDE DOĞRULA    ║
-╚══════════════════════════════════════════════════════════╝
-[ ] Başlık tam ve doğru: "${egitim.egitim || ''}"
-[ ] Tarih doğru: ${egitim.tarih || ''} ${egitim.gun || ''}
-[ ] TR ve EU saatleri iki ayrı satır
-[ ] Her konuşmacı doğru fotoyla eşleşti, yer değişimi yok
-[ ] Her konuşmacının altında SADECE listede verilen unvan, uydurma yok
-[ ] Her konuşmacı TAM 1 KEZ görünüyor
-[ ] Şablonun layout/renk/dekoratif elemanları korundu
-[ ] Türkçe karakterler (ş ç ğ ü ö ı İ) doğru
-[ ] "Kyani" yok, hayali yazı yok, sahte logo yok
-[ ] Yazım/tipo hatası yok
-
-HAYIR varsa düzelt, sonra üret. HAYIR sıfır olunca finalize et.`;
+Hata varsa düzelt, sonra finalize et.`;
 
   const sizeMap = { story: '1024x1536', landscape: '1536x1024', square: '1024x1024' };
 

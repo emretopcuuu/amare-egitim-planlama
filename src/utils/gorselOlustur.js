@@ -170,103 +170,71 @@ ASLA görselde GÖSTERME — bağlamdan tahmin etme, UYDURMA.
 `
     : '';
 
-  // Prompt oluştur
-  const prompt = `Sen profesyonel bir tasarım uzmanısın. Aşağıdaki bilgileri kullanarak etkileyici bir etkinlik tanıtım görseli hazırla.
+  // Prompt — temiz, tek yer, çelişkisiz
+  const formatTanim = format === 'story' ? '1080x1920 dikey (9:16, Story)'
+                    : format === 'landscape' ? '1920x1080 yatay (16:9, Banner)'
+                    : '1080x1080 kare (1:1, Instagram post)';
 
-${ekPromptBlok}╔════════════════════════════════════════════════════════════╗
-║   ŞABLON KULLANIMI — MUTLAK ÖNCELİK, SAPMAYACAKSIN          ║
-╚════════════════════════════════════════════════════════════╝
-Sana verilen İLK GÖRSEL = ŞABLON. Bu, üretmen gereken posterin TASARIM REFERANSIDIR.
-Aşağıdaki maddeler ZORUNLUDUR:
+  const prompt = `# GÖREV
+Sana verilen şablon (ilk inlineData görseli) layout'unu kullanarak,
+aşağıdaki yeni etkinlik bilgileriyle ${formatTanim} bir poster üret.
 
-1. KOMPOZİSYON: Şablonun layout'unu (başlık konumu, foto kartı yerleşimi,
-   tarih/saat bloğu konumu, alt bilgi şeridi) AYNEN ÖRNEK AL. Yeni bir
-   düzen icat etme — şablonun grid'ine uy.
+${ekPromptBlok}# 1 · ŞABLON SADAKATİ
+Şablon = grafik dili kaynağın. Şu özelliklerini AYNEN kullan:
+• Layout (başlık/foto/tarih/zoom konumları)
+• Renk paleti (gradient yönü, ana renk, vurgular)
+• Dekoratif elemanlar (parıltı, çerçeve, yıldız, ışık efekti)
+• Tipografi stili (font ağırlığı, hizalama)
+• Foto çerçeve şekli (yuvarlak/kare/hexagon)
 
-2. RENK PALETİ: Şablondaki renkleri (gradient yönü, ana renk, vurgu rengi,
-   altın/beyaz aksanlar) AYNEN kullan. Yeni renk uydurma. Şablon mor ise mor,
-   lacivert ise lacivert, açık ise açık olsun.
+Şablondaki ESKİ içerik (eski başlık, tarih, isimler, fotolar, zoom ID) —
+hepsini SİL. Yerlerine aşağıdaki YENİ bilgileri yerleştir.
 
-3. DEKORATİF ELEMANLAR: Şablondaki parıltılar, geometrik şekiller, çerçeveler,
-   yıldızlar, ışık efektleri ne ise — onları KORU veya benzerini koy.
+Şablonu "modernleştirme/iyileştirme" — birebir uy. Tek esneklik: aşağıdaki
+TEMA NOKTASI (renk paletini koruyarak başlığa uygun ince doku).
 
-4. TİPOGRAFİ STİLİ: Şablondaki font ağırlığı, harf aralığı, hizalama
-   (sola/ortala/sağa) AYNI olsun.
-
-5. FOTO ÇERÇEVELERİ: Şablon yuvarlak ise yuvarlak, kare ise kare, hexagon ise
-   hexagon. Aynı çerçeve stilini kullan.
-
-6. ESKİ İÇERİĞİ TEMİZLE: Şablondaki orijinal başlık, eski tarih, eski isimler,
-   eski fotolar, eski zoom ID — HEPSİNİ SİL. Yerine aşağıda verdiğim YENİ
-   bilgileri yerleştir. Şablonun TASARIMINI al, İÇERİĞİNİ at.
-
-7. SAPMA YOK: Şablonu "geliştirme" yapma, "modernleştirme" yapma. Birebir
-   uydur. Kullanıcı şablonu sebepsiz seçmedi — sadık kal.
-
-KISACA: Şablon = template. Senin işin = şablonun grafik dilini koruyarak
-yeni etkinlik bilgileriyle DOLDUR. Yeni tasarım yaratma, mevcut şablonu
-yeniden içerikleştir.
+# 2 · İÇERİK
+Başlık: ${egitim.egitim}
+Tarih: ${egitim.tarih} ${egitim.gun}
+${trSaat ? `Saat (iki ayrı satır olarak yaz):
+  TR ${trSaat}${trBitis ? ' - ' + trBitis : ''}
+  EU ${euSaat}${euBitis ? ' - ' + euBitis : ''}` : 'Saat: belirlenmedi (yazma)'}
+Yer: ${egitim.yer || 'ZOOM'}
 
 ${konusmaciFotoPrompt}
 
-ETKİNLİK BİLGİLERİ:
-- Başlık: ${egitim.egitim}
-- Tarih: ${egitim.tarih} ${egitim.gun}
-- Saat:
-  Türkiye saati: ${trSaat || 'belirlenmedi'}${trBitis ? ' - ' + trBitis : ''}
-  Avrupa saati  : ${euSaat || 'belirlenmedi'}${euBitis ? ' - ' + euBitis : ''}
-- Platform/Yer: ${egitim.yer || 'ZOOM'}
+# 3 · LOGOLAR
+Sana resmi Amare Global ve One Team logoları inlineData olarak verildi.
+Bunları şablonun logo konumuna entegre et. Yeni logo ÇİZME, sembol UYDURMA.
 
-SAAT YAZIM KURALI (önemli — Avrupa katılımcıları için):
-- Görselde saati MUTLAKA iki ayrı satır olarak yaz:
-  * "TR ${trSaat || '--:--'}${trBitis ? ' - ' + trBitis : ''}"
-  * "EU ${euSaat || '--:--'}${euBitis ? ' - ' + euBitis : ''}"
-- İki saat eşit boyutta, görselde dengeli yerleşsin (yan yana veya alt alta)
-- "TR" ve "EU" etiketleri net görünsün
-- Saat henüz belirlenmemişse bu bölümü tamamen ATLA, "--:--" yazma
+# 4 · TEMA NOKTASI
+Başlık "${egitim.egitim || ''}" konusuna uygun ince atmosferik dokunuş ekle
+(şablonun renk paletini KORUYARAK):
+• Sağlık/wellness → organik soft formlar
+• Liderlik/Vizyon → ışık huzmeleri, dramatik
+• Satış/finans → modern keskin geometrik
+• Motivasyon → ilhamlı parıltı
+• Panel/seminer → ciddi profesyonel
+Bu dokunuş şablonu EZMEZ. Şablon dominant, tema yalnızca his.
 
-TASARIM KURALLARI:
-- Tüm metinler okunaklı, kontrast yüksek olsun
-- Tarih ve saatler (TR + EU) belirgin vurgulansın
-- ONE TEAM / Amare Global kurumsal kimliğine uygun olsun
-- Profesyonel ve çekici bir tasarım
-- LOGO KURALI: Sana verilen resmi logoları (Amare Global ve One Team) görsele entegre et. Asla kendi logonu uydurmayacaksın! Bu logoları şablona uygun konuma yerleştir. Sahte/uydurma logo, amblem veya sembol çizme.
-- Format: ${format === 'story' ? '1080x1920 DİKEY (Instagram/FB Story, 9:16)' : format === 'landscape' ? '1920x1080 YATAY (LinkedIn/Banner, 16:9)' : '1080x1080 KARE (Instagram post, 1:1)'} — bu boyutlara uy
-- KESİNLİKLE YASAK: Görselde "Kyani" kelimesi KESİNLİKLE yer almamalı. Ne arka planda, ne logoda, ne metinde, ASLA "Kyani" yazma. Bu marka artık mevcut değil. Sadece "Amare Global" ve "One Team" kullan.${konumPrompt}
+# 5 · KISITLAR (TEK YER, BAŞKA YERDE TEKRAR YOK)
+✗ "Kyani" kelimesini ASLA yazma
+✗ Sahte/uydurma logo, amblem, ® işareti çizme
+✗ Hayali yaş notu, hukuki uyarı yazma ("X yaşından küçükler" vb.)
+✗ Listede yazmayan unvan UYDURMA
+✗ Konuşmacı yüzlerini yeniden çizme/iyileştirme
+✗ Konuşmacıyı 1'den fazla gösterme
+✗ Türkçe karakterleri (ş ç ğ ü ö ı İ) yanlış basma${konumPrompt}
 
-╔════════════════════════════════════════════════════════════╗
-║  TEMA UYUMU — ETKİNLİK BAŞLIĞINA UYGUN ATMOSFER           ║
-╚════════════════════════════════════════════════════════════╝
-Başlık "${egitim.egitim || ''}" ne hakkında ise arka plan/dekoratif elemanlar
-buna uygun bir hava taşısın (şablonun renk paletine sadık kalarak):
-- Sağlık/wellness konuları → soft healing dokular, organik formlar, ferah hisli
-- Liderlik/Vizyon → güçlü ışık huzmeleri, dramatik gradient, premium atmosfer
-- Satış/finans → modern keskin geometrik vurgular, dinamik
-- Motivasyon/Kişisel Gelişim → ilhamlı ışık efektleri, parıltı
-- Panel/seminer → ciddi profesyonel doku
-ÖNEMLİ: Tema atmosferi ŞABLONU EZMEZ — şablonun grafik dili ana, tema sadece
-ince dokunuş.
+# 6 · ÇIKTIDAN ÖNCE — KENDİ ÇIKTINI DOĞRULA
+Şu soruları zihninde cevapla:
+1. Şablonu mu çoğaltıyorum yoksa yeni tasarım mı yarattım? (Şablon olmalı)
+2. Verilen 6 bilgi (başlık, tarih, TR saat, EU saat, yer, konuşmacılar)
+   görselde EKSİKSİZ ve DOĞRU mu?
+3. Her konuşmacının yüzü kendi etiketine bağlı mı? Karışıklık var mı?
+4. Listede olmayan herhangi bir yazı/unvan/hukuki not var mı?
 
-╔════════════════════════════════════════════════════════════╗
-║  SON KONTROL — POSTERİ ÜRETMEDEN ÖNCE DOĞRULA              ║
-╚════════════════════════════════════════════════════════════╝
-Çıktıyı vermeden önce ZİHİNDE şu listeyi tek tek kontrol et:
-
-[ ] Başlık tam ve doğru yazıldı mı? ("${egitim.egitim || ''}")
-[ ] Tarih doğru mu? (${egitim.tarih || ''} ${egitim.gun || ''})
-[ ] TR ve EU saatleri iki ayrı satır olarak yazıldı mı?
-[ ] Her konuşmacının fotoğrafı doğru kişiyle eşleşti mi? Yer değişimi var mı?
-[ ] Her konuşmacının altında SADECE listede verilen unvan var mı? Uydurma var mı?
-[ ] Her konuşmacı TAM 1 KEZ mi görünüyor? Tekrar/çoğaltma var mı?
-[ ] Şablonun layout/renk/dekoratif elemanları korundu mu?
-[ ] Türkçe karakterler (ş ç ğ ü ö ı İ) doğru basıldı mı?
-[ ] "Kyani" kelimesi var mı? — VARSA SİL
-[ ] Hayali yazı/not var mı? ("Etkinliğe X yaşından küçükler" gibi) — VARSA SİL
-[ ] Sahte/uydurma logo var mı? — VARSA SİL
-[ ] Hiçbir tipo/yazım hatası yok mu?
-
-Bu kontrol listesinde HAYIR olan tek bir madde varsa görseli düzelt, sonra üret.
-HAYIR sıfır olunca finalize et.`;
+Hata varsa düzelt, sonra finalize et.`;
 
   // Logoları yükle
   let amareLogo = null;
