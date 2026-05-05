@@ -180,7 +180,20 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.fillStyle = botGrad;
   ctx.fillRect(0, H - 200, W, 200);
 
-  // Logolar applyLogos post-process ile sonra eklenecek (çift logo olmaması için)
+  // ─── ÜST: Canvas'tan gerçek logolar (sol Amare + sağ One Team) ───
+  // Gemini text-only çalıştığı için sahte logo çizmez; bunlar tek gerçek logolar.
+  try {
+    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
+    const amareW = W * 0.28;
+    const amareH = (amareLogo.height / amareLogo.width) * amareW;
+    ctx.drawImage(amareLogo, W * 0.05, H * 0.04, amareW, amareH);
+  } catch {}
+  try {
+    const otLogo = await urlToImage('/logos/oneteam logo.JPG');
+    const otW = W * 0.10;
+    const otH = (otLogo.height / otLogo.width) * otW;
+    ctx.drawImage(otLogo, W - otW - W * 0.05, H * 0.04, otW, otH);
+  } catch {}
 
   // ─── BAŞLIK ───
   // Üst overlay olmadığı için başlığa daha güçlü shadow + double-stroke
