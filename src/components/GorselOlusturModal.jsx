@@ -24,8 +24,11 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   });
   // Format: 'square' (1:1) | 'story' (9:16) | 'landscape' (16:9)
   const [format, setFormat] = useState(() => localStorage.getItem('aiFormat') || 'square');
-  // Fallback toggle — default KAPALI çünkü OpenAI image-edits Türkçe karakter ve yüz koruma kötü
-  const [fallbackOn, setFallbackOn] = useState(localStorage.getItem('aiFallback') === 'on');
+  // Fallback toggle — DEFAULT AÇIK: Gemini cap dolduğunda otomatik OpenAI Pro'ya geçer
+  const [fallbackOn, setFallbackOn] = useState(() => {
+    const v = localStorage.getItem('aiFallback');
+    return v === null ? true : v === 'on';
+  });
   const [aktifModel, setAktifModel] = useState(null); // üretim sırasında hangisinin çalıştığını göster
 
   // Ek prompt — modal açılırken konuşmacı isim+unvan listesi ile otomatik doldurulur.
@@ -137,9 +140,14 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     setAktifModel(null);
     const sablonKaynak = secilenSablon.type === 'file' ? secilenSablon.file : secilenSablon.url;
 
-    // Önce seçili model, başarısız olursa fallback (Gemini ↔ OpenAI Pro)
+    // Önce seçili model, başarısız olursa fallback zinciri
+    // Hibrit/Gemini başarısız → OpenAI Pro
+    // OpenAI Pro başarısız → Hibrit (varsa)
     const modelSirasi = fallbackOn
-      ? (aiModel === 'gemini' ? ['gemini', 'openai-pro'] : aiModel === 'openai-pro' ? ['openai-pro', 'gemini'] : [aiModel])
+      ? (aiModel === 'hibrit' ? ['hibrit', 'openai-pro', 'canvas']
+        : aiModel === 'gemini' ? ['gemini', 'openai-pro', 'canvas']
+        : aiModel === 'openai-pro' ? ['openai-pro', 'hibrit', 'canvas']
+        : [aiModel])
       : [aiModel];
 
     let lastErr = null;
@@ -147,7 +155,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     for (const m of modelSirasi) {
       try {
         if (m === 'openai-pro' && !openaiApiKey) { lastErr = new Error('OpenAI API anahtarı yok.'); continue; }
-        if (m === 'gemini' && !apiKey) { lastErr = new Error('Gemini API anahtarı yok.'); continue; }
+        if ((m === 'gemini' || m === 'hibrit') && !apiKey) { lastErr = new Error('Gemini API anahtarı yok.'); continue; }
         result = await runModel(m, sablonKaynak);
         break;
       } catch (err) {
