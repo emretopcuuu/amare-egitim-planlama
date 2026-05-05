@@ -225,7 +225,9 @@ Bu dokunuş şablonu EZMEZ. Şablon dominant, tema yalnızca his.
 ✗ Listede yazmayan unvan UYDURMA
 ✗ Konuşmacı yüzlerini yeniden çizme/iyileştirme
 ✗ Konuşmacıyı 1'den fazla gösterme
-✗ Türkçe karakterleri (ş ç ğ ü ö ı İ) yanlış basma${konumPrompt}
+✗ Türkçe karakterleri (ş ç ğ ü ö ı İ) yanlış basma
+✗ Üst kenara yatay koyu band/şerit/header bar çizme — gradient yumuşak ve
+  tutarlı olmalı, üstte ayrı bir karanlık zon OLMASIN${konumPrompt}
 
 # 6 · ÇIKTIDAN ÖNCE — KENDİ ÇIKTINI DOĞRULA
 Şu soruları zihninde cevapla:

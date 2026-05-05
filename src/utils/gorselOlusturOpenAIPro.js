@@ -192,7 +192,7 @@ Başlık "${egitim.egitim || ''}" konusuna uygun ince atmosferik dokunuş
 ✗ Konuşmacı yüzlerini değiştirme/iyileştirme
 ✗ Konuşmacıyı 1'den fazla gösterme
 ✗ Türkçe karakterleri (ş ç ğ ü ö ı İ) yanlış basma
-✗ Üstte renkli bant/banner çizme
+✗ Üstte yatay koyu band/şerit/header bar çizme — gradient yumuşak olmalı
 ✗ Başlığı kırpma — üstten 80px boşluk bırak
 
 # 6 · ÇIKTIDAN ÖNCE — KENDİ ÇIKTINI DOĞRULA
