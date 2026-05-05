@@ -1,5 +1,3 @@
-import { applyLogos } from './applyLogos';
-
 // Hibrit poster üretimi:
 // 1) Gemini → SADECE dekoratif arka plan üretir (boş, yazısız, foto yok)
 // 2) Canvas → Gemini'nin ürettiği arka plan üzerine GERÇEK fotoğrafları,
@@ -367,6 +365,6 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
 
   const dataUrl = canvas.toDataURL('image/png');
   const base64 = dataUrl.split(',')[1];
-  // Post-process: tek noktadan gerçek logolar bindirilir
-  return await applyLogos(base64, 'image/png');
+  // Logolar zaten yukarıda Canvas üst köşelerine bindirildi — applyLogos çağırılmaz
+  return { base64, mimeType: 'image/png' };
 };

@@ -1,5 +1,3 @@
-import { applyLogos } from './applyLogos';
-
 // Tamamen yerel Canvas-only poster üretimi.
 // AI'a HİÇ veri gönderilmez — yüzler ve isimler %100 garantili korunur.
 // Şablon arka plan olarak kullanılır, üzerine layout çizilir.
@@ -254,6 +252,6 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   // PNG base64 olarak döndür (Gemini sonucu ile uyumlu format)
   const dataUrl = canvas.toDataURL('image/png');
   const base64 = dataUrl.split(',')[1];
-  // Post-process: tek noktadan gerçek logolar bindirilir
-  return await applyLogos(base64, 'image/png');
+  // Logolar zaten yukarıda Canvas üst köşelerine bindirildi — applyLogos çağırılmaz
+  return { base64, mimeType: 'image/png' };
 };
