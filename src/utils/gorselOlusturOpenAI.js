@@ -80,7 +80,7 @@ CRITICAL EXCLUSIONS: Do NOT draw any "amare" text, "ONE TEAM" text, "Amare Globa
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: 'gpt-image-2',
+      model: 'gpt-image-1',
       prompt,
       size,
       quality: 'medium',
