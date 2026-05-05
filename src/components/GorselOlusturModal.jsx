@@ -385,8 +385,8 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                     onClick={() => { setAiModel('openai'); localStorage.setItem('aiModel', 'openai'); }}
                     className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'openai' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
                   >
-                    <div className="flex items-center gap-1 font-bold">🤖 OpenAI <span className="text-[10px] bg-amber-200 text-amber-900 px-1 rounded">deneysel</span></div>
-                    <div className="text-gray-500 mt-0.5">Türkçe + yüz sorunlu</div>
+                    <div className="flex items-center gap-1 font-bold">🤖 OpenAI</div>
+                    <div className="text-gray-500 mt-0.5">AI tasarım + Gerçek yüzler · ~$0.04</div>
                   </button>
                 </div>
                 {aiModel !== 'canvas' && (
