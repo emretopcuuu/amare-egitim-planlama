@@ -31,17 +31,26 @@ export const applyLogos = async (base64, mimeType = 'image/png') => {
     const W = img.width;
     const H = img.height;
 
-    // Tüm logolar kaldırıldı — üst 18% TAM OPAK dark plum ile kapla,
-    // sonra 8% yumuşak fade. AI'nın hayali logoları kesinlikle görünmez.
-    const opaqueH = Math.floor(H * 0.18);
-    const fadeH = Math.floor(H * 0.08);
-    ctx.fillStyle = '#3D1734';
-    ctx.fillRect(0, 0, W, opaqueH);
-    const fade = ctx.createLinearGradient(0, opaqueH, 0, opaqueH + fadeH);
-    fade.addColorStop(0, 'rgba(61, 23, 52, 1)');
-    fade.addColorStop(1, 'rgba(61, 23, 52, 0)');
-    ctx.fillStyle = fade;
-    ctx.fillRect(0, opaqueH, W, fadeH);
+    // KÖŞE-ONLY maske — sadece sol üst + sağ üst (logoların oluştuğu bölge)
+    // Orta kısım dokunulmaz → AI'nın başlık/tasarımı korunur
+    const cornerW = Math.floor(W * 0.35);
+    const cornerH = Math.floor(H * 0.12);
+
+    // Sol üst köşe — radial-like fade
+    const lg = ctx.createLinearGradient(0, 0, cornerW, cornerH);
+    lg.addColorStop(0, 'rgba(61, 23, 52, 1)');
+    lg.addColorStop(0.7, 'rgba(61, 23, 52, 0.95)');
+    lg.addColorStop(1, 'rgba(61, 23, 52, 0)');
+    ctx.fillStyle = lg;
+    ctx.fillRect(0, 0, cornerW, cornerH);
+
+    // Sağ üst köşe
+    const rg = ctx.createLinearGradient(W, 0, W - cornerW, cornerH);
+    rg.addColorStop(0, 'rgba(61, 23, 52, 1)');
+    rg.addColorStop(0.7, 'rgba(61, 23, 52, 0.95)');
+    rg.addColorStop(1, 'rgba(61, 23, 52, 0)');
+    ctx.fillStyle = rg;
+    ctx.fillRect(W - cornerW, 0, cornerW, cornerH);
 
     const newDataUrl = canvas.toDataURL('image/png');
     const newBase64 = newDataUrl.split(',')[1];
