@@ -20,6 +20,39 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Stale bundle koruması: 5dk'da bir HEAD request ile ana HTML değiştiyse otomatik reload
+      // Ayrıca: build hash'i localStorage'da tut, mismatch varsa zorla refresh
+      (function() {
+        const KEY = 'app_build_hash';
+        function getCurrentBundleHash() {
+          const s = document.querySelector('script[src*="/assets/index-"]');
+          if (!s) return null;
+          const m = s.src.match(/index-([A-Za-z0-9]+)\./);
+          return m ? m[1] : null;
+        }
+        // İlk yüklemede: localStorage'a hash yaz
+        window.addEventListener('load', function() {
+          const h = getCurrentBundleHash();
+          if (h) localStorage.setItem(KEY, h);
+        });
+        // 3 dakikada bir tekrar fetch HTML, hash farklıysa reload
+        setInterval(async function() {
+          try {
+            const r = await fetch(location.origin + '/?_=' + Date.now(), { cache: 'no-store' });
+            const html = await r.text();
+            const m = html.match(/index-([A-Za-z0-9]+)\.js/);
+            if (!m) return;
+            const liveHash = m[1];
+            const curHash = getCurrentBundleHash();
+            if (curHash && liveHash && curHash !== liveHash) {
+              console.log('[stale-bundle] eski:', curHash, 'yeni:', liveHash, '— reload');
+              location.reload();
+            }
+          } catch (e) {}
+        }, 180000); // 3dk
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
