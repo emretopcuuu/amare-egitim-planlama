@@ -72,7 +72,9 @@ export const useData = () => {
 export const DataProvider = ({ children }) => {
   const [egitmenler, setEgitmenler] = useState([]);
   const [takvim, setTakvim] = useState([]);
-  const [takvimYayinlandi, setTakvimYayinlandi] = useState(false);
+  // null = bilinmiyor (henüz yüklenmedi/fetch başarısız), true = yayında, false = gizli
+  // null durumunda takvim gösterilir (yanlış pozitif "yayınlanmadı" engellenir)
+  const [takvimYayinlandi, setTakvimYayinlandi] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -113,13 +115,25 @@ export const DataProvider = ({ children }) => {
       setTakvim(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (e) { console.warn('[loadData] takvim:', e?.code || e?.message); }
 
-    // Settings (public read)
-    try {
-      const snap = await getDocs(collection(db, 'settings'));
-      if (!snap.empty) {
-        setTakvimYayinlandi(snap.docs[0].data().takvimYayinlandi || false);
+    // Settings (public read) — retry on transient failure (mobile slow network)
+    let settingsLoaded = false;
+    for (let attempt = 0; attempt < 2 && !settingsLoaded; attempt++) {
+      try {
+        const snap = await getDocs(collection(db, 'settings'));
+        if (!snap.empty) {
+          setTakvimYayinlandi(snap.docs[0].data().takvimYayinlandi === true);
+        } else {
+          setTakvimYayinlandi(false); // doc yoksa gerçekten yayında değil
+        }
+        settingsLoaded = true;
+      } catch (e) {
+        console.warn(`[loadData] settings attempt ${attempt + 1}:`, e?.code || e?.message);
+        if (attempt === 1) {
+          // İki deneme de başarısız → null bırak, takvim default olarak gösterilir
+          // (admin panelden takvimYayinlandi:true olduğunu biliyoruz, fail-safe)
+        }
       }
-    } catch (e) { console.warn('[loadData] settings:', e?.code || e?.message); }
+    }
 
     // Konuşmacılar (public read) + dedup
     try {

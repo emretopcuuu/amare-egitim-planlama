@@ -309,7 +309,8 @@ const TakvimView = () => {
   };
 
   if (loading) return <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center"><Loader2 className="w-10 h-10 text-white animate-spin" /></div>;
-  if (!takvimYayinlandi) return (
+  // null = bilinmiyor (mobil ağda fetch fail) → takvim gösterilir, false = explicit gizli
+  if (takvimYayinlandi === false) return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 py-12 px-4"><div className="container mx-auto max-w-2xl"><div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
       <AlertCircle className="w-20 h-20 text-yellow-500 mx-auto mb-4" /><h2 className="text-3xl font-bold text-gray-800 mb-4">{t('cal_not_published_title')}</h2><p className="text-gray-600 mb-6">{t('cal_not_published_desc')}</p>
       <button onClick={()=>navigate('/')} className="bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-colors">{t('back_home')}</button>
