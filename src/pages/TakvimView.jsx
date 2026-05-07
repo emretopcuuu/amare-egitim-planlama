@@ -416,16 +416,16 @@ const TakvimView = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900">
       <div ref={contentRef}>
         {/* Header */}
         <div className="pt-6 pb-2 px-4">
           <div className="container mx-auto max-w-6xl">
-            <div className="flex items-center justify-between" data-no-pdf>
+            <div className="flex flex-wrap items-center justify-between gap-2" data-no-pdf>
               <button onClick={()=>navigate('/')} className="flex items-center text-white/70 hover:text-white text-sm"><ArrowLeft className="w-4 h-4 mr-1.5" />{t('back')}</button>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <LanguageSwitcher />
-                <button onClick={exportPDF} disabled={pdfYukleniyor} className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-sm">
+                <button onClick={exportPDF} disabled={pdfYukleniyor} className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-xs sm:text-sm">
                   {pdfYukleniyor?<><Loader2 className="w-4 h-4 animate-spin" />{t('cal_preparing')}</>:<><Download className="w-4 h-4" />{t('cal_download_pdf')}</>}
                 </button>
               </div>

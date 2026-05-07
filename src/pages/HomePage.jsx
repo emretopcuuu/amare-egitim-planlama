@@ -9,7 +9,7 @@ const HomePage = () => {
   const { t } = useTranslation();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amare-purple via-amare-blue to-amare-light">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-amare-purple via-amare-blue to-amare-light">
       <div className="container mx-auto px-4 py-12">
         {/* Language Switcher */}
         <div className="flex justify-end mb-4">
