@@ -115,7 +115,7 @@ export const DataProvider = ({ children }) => {
       setTakvim(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (e) { console.warn('[loadData] takvim:', e?.code || e?.message); }
 
-    // Settings (public read) — retry on transient failure (mobile slow network)
+    // Settings (public read) — Firestore SDK fail olursa REST API fallback
     let settingsLoaded = false;
     for (let attempt = 0; attempt < 2 && !settingsLoaded; attempt++) {
       try {
@@ -123,15 +123,25 @@ export const DataProvider = ({ children }) => {
         if (!snap.empty) {
           setTakvimYayinlandi(snap.docs[0].data().takvimYayinlandi === true);
         } else {
-          setTakvimYayinlandi(false); // doc yoksa gerçekten yayında değil
+          setTakvimYayinlandi(false);
         }
         settingsLoaded = true;
       } catch (e) {
-        console.warn(`[loadData] settings attempt ${attempt + 1}:`, e?.code || e?.message);
-        if (attempt === 1) {
-          // İki deneme de başarısız → null bırak, takvim default olarak gösterilir
-          // (admin panelden takvimYayinlandi:true olduğunu biliyoruz, fail-safe)
-        }
+        console.warn(`[loadData] settings SDK attempt ${attempt + 1}:`, e?.code || e?.message);
+      }
+    }
+    // SDK fail olursa direct REST API ile dene (WhatsApp in-app browser, eski cache vs)
+    if (!settingsLoaded) {
+      try {
+        const res = await fetch('https://firestore.googleapis.com/v1/projects/amare-egitim-planlama/databases/(default)/documents/settings');
+        const data = await res.json();
+        const doc = data?.documents?.[0];
+        const yayinda = doc?.fields?.takvimYayinlandi?.booleanValue === true;
+        setTakvimYayinlandi(yayinda);
+        console.log('[loadData] settings REST fallback:', yayinda);
+      } catch (e) {
+        console.warn('[loadData] settings REST fallback failed:', e?.message);
+        // Son çare: null bırak, takvim default gösterilir
       }
     }
 

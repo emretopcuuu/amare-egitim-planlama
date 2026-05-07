@@ -313,7 +313,13 @@ const TakvimView = () => {
   if (takvimYayinlandi === false) return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 py-12 px-4"><div className="container mx-auto max-w-2xl"><div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
       <AlertCircle className="w-20 h-20 text-yellow-500 mx-auto mb-4" /><h2 className="text-3xl font-bold text-gray-800 mb-4">{t('cal_not_published_title')}</h2><p className="text-gray-600 mb-6">{t('cal_not_published_desc')}</p>
-      <button onClick={()=>navigate('/')} className="bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-colors">{t('back_home')}</button>
+      <p className="text-gray-500 text-sm mb-6">Eğer takvim yayında olduğu halde bu uyarıyı görüyorsanız, tarayıcı önbelleğini sıfırlamak için aşağıdaki butona tıklayın.</p>
+      <div className="flex gap-3 justify-center flex-wrap">
+        <button onClick={() => { window.location.href = window.location.pathname + '?bust=' + Date.now(); }} className="bg-purple-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-purple-800 transition-colors flex items-center gap-2">
+          <Loader2 className="w-4 h-4" /> Sayfayı Yenile
+        </button>
+        <button onClick={()=>navigate('/')} className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-semibold hover:bg-gray-300 transition-colors">{t('back_home')}</button>
+      </div>
     </div></div></div>
   );
 
