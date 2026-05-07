@@ -21,36 +21,39 @@
   <body>
     <div id="root"></div>
     <script>
-      // Stale bundle koruması: 5dk'da bir HEAD request ile ana HTML değiştiyse otomatik reload
-      // Ayrıca: build hash'i localStorage'da tut, mismatch varsa zorla refresh
+      // Stale bundle koruması — iOS Safari & WhatsApp in-app browser cache sorunu
+      // 1. Sayfa açılır açılmaz hash kontrolü — eski ise ANINDA reload
+      // 2. Sonra 3dk'da bir periyodik kontrol
       (function() {
-        const KEY = 'app_build_hash';
+        var RELOAD_FLAG = 'sb_reloaded_' + Date.now().toString().slice(0, -5); // 10sn loop koruması
         function getCurrentBundleHash() {
-          const s = document.querySelector('script[src*="/assets/index-"]');
+          var s = document.querySelector('script[src*="/assets/index-"]');
           if (!s) return null;
-          const m = s.src.match(/index-([A-Za-z0-9]+)\./);
+          var m = s.src.match(/index-([A-Za-z0-9_-]+)\./);
           return m ? m[1] : null;
         }
-        // İlk yüklemede: localStorage'a hash yaz
-        window.addEventListener('load', function() {
-          const h = getCurrentBundleHash();
-          if (h) localStorage.setItem(KEY, h);
-        });
-        // 3 dakikada bir tekrar fetch HTML, hash farklıysa reload
-        setInterval(async function() {
+        async function checkStale(immediate) {
           try {
-            const r = await fetch(location.origin + '/?_=' + Date.now(), { cache: 'no-store' });
-            const html = await r.text();
-            const m = html.match(/index-([A-Za-z0-9]+)\.js/);
+            var r = await fetch(location.origin + '/?_sb=' + Date.now(), { cache: 'no-store' });
+            var html = await r.text();
+            var m = html.match(/index-([A-Za-z0-9_-]+)\.js/);
             if (!m) return;
-            const liveHash = m[1];
-            const curHash = getCurrentBundleHash();
+            var liveHash = m[1];
+            var curHash = getCurrentBundleHash();
             if (curHash && liveHash && curHash !== liveHash) {
-              console.log('[stale-bundle] eski:', curHash, 'yeni:', liveHash, '— reload');
-              location.reload();
+              if (immediate && sessionStorage.getItem(RELOAD_FLAG)) return; // reload loop koruması
+              if (immediate) sessionStorage.setItem(RELOAD_FLAG, '1');
+              console.log('[stale-bundle] ' + curHash + ' → ' + liveHash + ' reload');
+              // Cache bust query string ile reload
+              var url = location.pathname + '?v=' + liveHash + location.hash;
+              location.replace(url);
             }
           } catch (e) {}
-        }, 180000); // 3dk
+        }
+        // 1. ANINDA kontrol (script type="module" yüklenmeden önce)
+        checkStale(true);
+        // 2. Periyodik kontrol
+        setInterval(function() { checkStale(false); }, 180000);
       })();
     </script>
     <script type="module" src="/src/main.jsx"></script>
