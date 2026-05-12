@@ -211,9 +211,9 @@ Hata varsa düzelt, sonra finalize et.`;
   formData.append('image', compositeBlob, 'composite.png');
   formData.append('prompt', prompt);
   formData.append('size', sizeMap[format] || '1024x1024');
-  // Quality medium: Netlify Function 26s timeout sığsın diye thinking mode kapalı
-  // (high → 60-180s, medium → 20-40s)
-  formData.append('quality', 'medium');
+  // Quality high: gpt-image-2 thinking mode aktif, en kaliteli sonuç
+  // (medium → 20-40s, high → 60-180s — direct call'da 4dk client timeout var)
+  formData.append('quality', 'high');
   formData.append('n', '1');
 
   // Network/timeout koruması + otomatik retry (transient hatalar için)
@@ -225,10 +225,10 @@ Hata varsa düzelt, sonra finalize et.`;
     const ctrl = new AbortController();
     const tid = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
     try {
-      // Netlify Function proxy üzerinden (CORS/firewall/ad-blocker bypass)
-      // Sebep: bazı kullanıcı tarayıcıları api.openai.com'u direkt çağırırken
-      // engelliyor. Same-origin proxy bu sorunu çözer.
-      const res = await fetch('/api/openai-image-edit', {
+      // Direkt OpenAI çağrısı — gpt-image-2 60-90s sürer, Netlify Function
+      // 26s sınırı bunu karşılayamıyor (504 dönüyordu). Direct call'da
+      // network problemi olursa retry zaten devreye giriyor.
+      const res = await fetch('https://api.openai.com/v1/images/edits', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${apiKey}` },
         body: formData,
