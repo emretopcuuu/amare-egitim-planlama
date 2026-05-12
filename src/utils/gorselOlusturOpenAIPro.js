@@ -215,18 +215,54 @@ Hata varsa düzelt, sonra finalize et.`;
   formData.append('quality', 'high');
   formData.append('n', '1');
 
-  const res = await fetch('https://api.openai.com/v1/images/edits', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}` },
-    body: formData,
-  });
+  // Network/timeout koruması + otomatik retry (transient hatalar için)
+  const MAX_RETRY = 2;
+  const TIMEOUT_MS = 240000; // 4 dakika (thinking mode için yeterli)
 
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err?.error?.message || `OpenAI API Hatası: ${res.status}`);
+  let lastErr = null;
+  for (let attempt = 1; attempt <= MAX_RETRY + 1; attempt++) {
+    const ctrl = new AbortController();
+    const tid = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
+    try {
+      const res = await fetch('https://api.openai.com/v1/images/edits', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${apiKey}` },
+        body: formData,
+        signal: ctrl.signal,
+      });
+      clearTimeout(tid);
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        const msg = err?.error?.message || `OpenAI API Hatası: ${res.status}`;
+        // 429/5xx retry, diğerleri direkt fırlat
+        if ((res.status === 429 || res.status >= 500) && attempt <= MAX_RETRY) {
+          lastErr = new Error(msg);
+          await new Promise(r => setTimeout(r, 2000 * attempt));
+          continue;
+        }
+        throw new Error(msg);
+      }
+      const data = await res.json();
+      const b64 = data?.data?.[0]?.b64_json;
+      if (!b64) throw new Error('OpenAI görsel döndürmedi.');
+      return { base64: b64, mimeType: 'image/png' };
+    } catch (e) {
+      clearTimeout(tid);
+      // AbortError veya network hatası → retry
+      const isNetwork = e.name === 'AbortError' || /Failed to fetch|NetworkError|network/i.test(e.message);
+      if (isNetwork && attempt <= MAX_RETRY) {
+        lastErr = e;
+        console.warn(`[OpenAI Pro] ${attempt}. deneme başarısız (${e.message}), tekrar deneniyor...`);
+        await new Promise(r => setTimeout(r, 2000 * attempt));
+        continue;
+      }
+      // Network hatasıysa anlamlı Türkçe mesaj
+      if (isNetwork) {
+        throw new Error(`İnternet bağlantısı veya OpenAI sunucusuna erişim hatası (${MAX_RETRY + 1} deneme). Lütfen ağı kontrol edip tekrar deneyin. Detay: ${e.message}`);
+      }
+      throw e;
+    }
   }
-  const data = await res.json();
-  const b64 = data?.data?.[0]?.b64_json;
-  if (!b64) throw new Error('OpenAI görsel döndürmedi.');
-  return { base64: b64, mimeType: 'image/png' };
+  throw lastErr || new Error('OpenAI çağrısı başarısız.');
 };
