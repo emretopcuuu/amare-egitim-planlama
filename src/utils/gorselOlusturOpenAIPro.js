@@ -211,8 +211,9 @@ Hata varsa düzelt, sonra finalize et.`;
   formData.append('image', compositeBlob, 'composite.png');
   formData.append('prompt', prompt);
   formData.append('size', sizeMap[format] || '1024x1024');
-  // gpt-image-2 thinking mode için quality='high' — son kontrol listesini reasoning ile değerlendirir
-  formData.append('quality', 'high');
+  // Quality medium: Netlify Function 26s timeout sığsın diye thinking mode kapalı
+  // (high → 60-180s, medium → 20-40s)
+  formData.append('quality', 'medium');
   formData.append('n', '1');
 
   // Network/timeout koruması + otomatik retry (transient hatalar için)
