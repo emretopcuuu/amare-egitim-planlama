@@ -3,6 +3,7 @@ import { X, Bell, Clock, Mail, CheckCircle2, Loader2, AlertCircle } from 'lucide
 import { db } from '../utils/firebase';
 import { collection, addDoc, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { useTranslation } from '../context/LanguageContext';
+import confetti from 'canvas-confetti';
 
 const ZAMAN_KEYS = [
   { id: '5dk', key: 'reminder_5min', dk: 5 },
@@ -103,6 +104,16 @@ const HatirlatmaKayitModal = ({ egitim, onClose }) => {
       }
 
       setBasarili(true);
+      // Confetti burst — başarılı kayıt feedback'i
+      try {
+        confetti({
+          particleCount: 60,
+          spread: 70,
+          origin: { y: 0.5 },
+          colors: ['#F5D77A', '#A855F7', '#5F2756', '#FFFFFF'],
+          disableForReducedMotion: true,
+        });
+      } catch {}
     } catch (err) {
       setHata(t('reminder_err_save') + err.message);
     } finally {

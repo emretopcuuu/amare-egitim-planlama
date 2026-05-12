@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "canvas-confetti": "^1.9.4",
     "date-fns": "^3.0.0",
     "firebase": "^10.7.1",
     "firebase-admin": "^13.7.0",

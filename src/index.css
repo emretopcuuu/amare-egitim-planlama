@@ -5,30 +5,144 @@
 @layer base {
   html, body {
     @apply bg-gray-50 text-gray-900;
-    /* Mobil yatay scroll engelleme - global safety net */
     overflow-x: hidden;
     max-width: 100vw;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-      sans-serif;
+    /* Premium font stack — Inter (modern sans-serif) */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Modern numerik — tabular figürler için varsayılan: proportional */
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
+  }
+
+  /* Başlıklar için display font */
+  h1, h2, h3, .font-display {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  /* Tabular nums için utility — countdown vs */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum';
   }
 }
 
 @layer utilities {
+  /* ── Fade-in ──────────────────────────────────────────── */
   .animate-fade-in {
     animation: fadeIn 0.5s ease-in;
   }
-
   @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Hero animated gradient mesh ──────────────────────── */
+  /* Yavaş döner mor→altın gradient — premium atmosfer */
+  .hero-mesh {
+    background:
+      radial-gradient(at 20% 30%, rgba(245, 215, 122, 0.18) 0%, transparent 50%),
+      radial-gradient(at 80% 70%, rgba(122, 47, 109, 0.4) 0%, transparent 50%),
+      radial-gradient(at 50% 100%, rgba(245, 215, 122, 0.1) 0%, transparent 60%),
+      linear-gradient(135deg, #5F2756 0%, #3D1734 100%);
+    background-size: 200% 200%;
+    animation: meshShift 20s ease-in-out infinite;
+  }
+  @keyframes meshShift {
+    0%, 100% { background-position: 0% 0%, 100% 100%, 50% 100%, 0 0; }
+    50% { background-position: 30% 60%, 70% 40%, 50% 80%, 0 0; }
+  }
+
+  /* ── Canlı yayın nabız efekti ────────────────────────── */
+  .canli-pulse {
+    animation: canliPulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  @keyframes canliPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+    50% { box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+  }
+
+  /* ── 1 dk kala uyarı ─────────────────────────────────── */
+  .imminent-pulse {
+    animation: imminentPulse 1s ease-in-out infinite;
+  }
+  @keyframes imminentPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+
+  /* ── Geçmiş eğitim sepia ─────────────────────────────── */
+  .past-event {
+    filter: grayscale(0.4) sepia(0.15) brightness(0.85);
+    transition: filter 0.3s ease;
+  }
+  .past-event:hover {
+    filter: grayscale(0.2) sepia(0.05) brightness(0.95);
+  }
+
+  /* ── Countdown flip kart ─────────────────────────────── */
+  .cd-digit {
+    display: inline-block;
+    animation: cdFlip 0.4s ease;
+  }
+  @keyframes cdFlip {
+    0% { transform: rotateX(0); }
+    50% { transform: rotateX(90deg); opacity: 0.3; }
+    100% { transform: rotateX(0); opacity: 1; }
+  }
+
+  /* ── Spring tap (mikro-haptic) ───────────────────────── */
+  .spring-tap {
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .spring-tap:active {
+    transform: scale(0.95);
+  }
+
+  /* ── Altın aksanlar (premium glow) ────────────────────── */
+  .gold-glow {
+    box-shadow: 0 0 16px rgba(245, 215, 122, 0.4), 0 2px 8px rgba(245, 215, 122, 0.15);
+  }
+  .gold-text-glow {
+    text-shadow: 0 0 18px rgba(245, 215, 122, 0.55), 0 0 4px rgba(245, 215, 122, 0.3);
+  }
+
+  /* ── Scale-in (modaller için) ──────────────────────────── */
+  .animate-scaleIn {
+    animation: scaleIn 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes scaleIn {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* ── Sticky day label gradient mask ─────────────────────── */
+  .sticky-day {
+    position: sticky;
+    top: 200px;
+    z-index: 10;
+    backdrop-filter: blur(8px);
+    background: linear-gradient(90deg, rgba(88, 28, 135, 0.85), rgba(67, 56, 202, 0.75));
+  }
+
+  /* ── Hover lift (kartlar için sade) ─────────────────────── */
+  .hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+  }
+
+  /* ── prefers-reduced-motion saygı ─────────────────────── */
+  @media (prefers-reduced-motion: reduce) {
+    .hero-mesh, .canli-pulse, .imminent-pulse, .cd-digit, .animate-fade-in, .animate-scaleIn {
+      animation: none !important;
     }
-    to {
-      opacity: 1;
-      transform: translateY(0);
+    .hover-lift, .spring-tap {
+      transition: none !important;
     }
   }
 }
