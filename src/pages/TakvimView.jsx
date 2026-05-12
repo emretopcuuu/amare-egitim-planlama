@@ -63,11 +63,14 @@ const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md', dark = false 
   const foto = k?.fotoURL;
   const sz = size === 'sm' ? 'w-10 h-10' : size === 'xxl' ? 'w-32 h-32' : size === 'xl' ? 'w-24 h-24' : size === 'lg' ? 'w-20 h-20' : 'w-14 h-14';
   return (
-    <button onClick={() => onClick?.(ad, k)} className="flex flex-col items-center gap-1 flex-shrink-0 group cursor-pointer">
+    <button onClick={() => onClick?.(ad, k)}
+      aria-label={`${k?.ad||ad} konuşmacı detayını aç`}
+      className="flex flex-col items-center gap-1 flex-shrink-0 group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 focus-visible:ring-offset-2 rounded-full">
       {foto ? (
-        <img src={foto} alt={k?.ad||ad} className={`${sz} rounded-full object-cover object-top border-2 border-purple-200 shadow-sm group-hover:scale-110 group-hover:ring-4 group-hover:ring-purple-300 transition-all duration-200`} />
+        <img src={foto} alt={k?.ad||ad} loading="lazy" decoding="async"
+          className={`${sz} rounded-full object-cover object-top border-2 border-purple-200 shadow-sm group-hover:scale-110 group-hover:ring-4 group-hover:ring-purple-300 transition-all duration-200`} />
       ) : (
-        <div className={`${sz} rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200 group-hover:scale-110 transition-all duration-200`}>
+        <div className={`${sz} rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200 group-hover:scale-110 transition-all duration-200`} aria-hidden="true">
           <User className="w-1/2 h-1/2 text-purple-400" />
         </div>
       )}
@@ -617,7 +620,7 @@ const TakvimView = () => {
               <input type="text" value={arama} onChange={e=>setArama(e.target.value)}
                 placeholder={t('cal_search_placeholder')}
                 className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-12 pr-10 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
-              {arama && <button onClick={()=>setArama('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white"><X className="w-4 h-4" /></button>}
+              {arama && <button onClick={()=>setArama('')} aria-label="Aramayı temizle" className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white spring-tap"><X className="w-4 h-4" /></button>}
             </div>
 
             {/* Hızlı zaman filtreleri + Bugün + Sıfırla */}
@@ -656,8 +659,8 @@ const TakvimView = () => {
               {/* Görünüm butonları */}
               <div className="flex bg-white/10 rounded-lg p-0.5 gap-0.5">
                 {[{key:'liste',icon:<List className="w-4 h-4" />,label:t('cal_view_list')},{key:'kart',icon:<LayoutGrid className="w-4 h-4" />,label:t('cal_view_card')},{key:'kompakt',icon:<Table2 className="w-4 h-4" />,label:t('cal_view_table')}].map(g=>(
-                  <button key={g.key} onClick={()=>setGorunum(g.key)} title={g.label}
-                    className={`p-2 rounded-md transition-all ${gorunum===g.key?'bg-white text-purple-800 shadow':'text-white/60 hover:text-white'}`}>
+                  <button key={g.key} onClick={()=>setGorunum(g.key)} title={g.label} aria-label={g.label} aria-pressed={gorunum===g.key}
+                    className={`p-2 rounded-md transition-all spring-tap ${gorunum===g.key?'bg-white text-purple-800 shadow':'text-white/60 hover:text-white'}`}>
                     {g.icon}
                   </button>
                 ))}
@@ -782,8 +785,8 @@ const TakvimView = () => {
       {/* Floating Scroll-to-Top FAB */}
       {showScrollTop && (
         <button onClick={()=>window.scrollTo({top:0,behavior:'smooth'})}
-          className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-amber-400 hover:bg-amber-300 text-gray-900 shadow-2xl flex items-center justify-center transition-all hover:scale-110"
-          title="Yukarı çık" data-no-pdf>
+          className="fixed bottom-6 right-6 z-40 w-12 h-12 rounded-full bg-amber-400 hover:bg-amber-300 text-gray-900 shadow-2xl flex items-center justify-center transition-all hover:scale-110 spring-tap"
+          title="Yukarı çık" aria-label="Sayfanın başına dön" data-no-pdf>
           <ChevronUp className="w-6 h-6" />
         </button>
       )}

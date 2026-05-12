@@ -5,6 +5,7 @@ import { LanguageProvider } from './context/LanguageContext';
 import HomePage from './pages/HomePage';
 import EgitmenBasvuru from './pages/EgitmenBasvuru';
 import TakvimView from './pages/TakvimView';
+import EgitimDetay from './pages/EgitimDetay';
 import AdminLogin from './pages/AdminLogin';
 import AdminPanel from './pages/AdminPanel';
 import { trackPageView } from './utils/analytics';
@@ -58,6 +59,7 @@ function AppRoutes() {
         <Route path="/" element={<HomePage />} />
         <Route path="/egitmen-basvuru" element={<EgitmenBasvuru />} />
         <Route path="/takvim" element={<TakvimView />} />
+        <Route path="/e/:id" element={<EgitimDetay />} />
         <Route path="/admin-giris" element={<AdminLogin />} />
         <Route
           path="/admin"

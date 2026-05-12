@@ -167,10 +167,10 @@ export const whatsappShareUrl = (egitim, baseUrl) => {
   return `https://wa.me/?text=${encodeURIComponent(lines)}`;
 };
 
-// Deep link — paylaşılabilir URL
+// Deep link — paylaşılabilir URL (/e/:id formatı SEO + OG önizleme için)
 export const deepLink = (egitim, baseUrl) => {
-  const base = baseUrl || (typeof window !== 'undefined' ? window.location.origin + '/takvim' : '');
-  return `${base}?id=${encodeURIComponent(egitim.id || '')}`;
+  const origin = baseUrl || (typeof window !== 'undefined' ? window.location.origin : '');
+  return `${origin}/e/${encodeURIComponent(egitim.id || '')}`;
 };
 
 // Linki kopyala

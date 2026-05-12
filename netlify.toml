@@ -1,6 +1,7 @@
 [build]
   command = "npm run build"
   functions = "netlify/functions"
+  edge_functions = "netlify/edge-functions"
   publish = "dist"
 
 [[redirects]]

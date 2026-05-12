@@ -1,0 +1,41 @@
+{
+  "name": "One Team Eğitim Takvimi",
+  "short_name": "OT Takvim",
+  "description": "Amare Global - One Team eğitim takvimi: panel, vizyon günü, satış ve liderlik eğitimleri",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#3D1734",
+  "theme_color": "#5F2756",
+  "lang": "tr",
+  "categories": ["education", "productivity", "business"],
+  "icons": [
+    {
+      "src": "/logos/oneteam logo.JPG",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/logos/oneteam logo.JPG",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any"
+    },
+    {
+      "src": "/logos/oneteam logo.JPG",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Eğitim Takvimi",
+      "short_name": "Takvim",
+      "url": "/takvim",
+      "description": "Tüm eğitimleri görüntüle"
+    }
+  ]
+}
