@@ -125,9 +125,9 @@ const HatirlatmaKayitModal = ({ egitim, onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={onClose}>
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-        <div className="bg-gradient-to-r from-purple-700 to-indigo-700 rounded-t-2xl p-5 text-white">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 sm:p-4" onClick={onClose}>
+      <div className="bg-white shadow-2xl w-full max-w-md sm:rounded-2xl rounded-t-3xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="bg-gradient-to-r from-purple-700 to-indigo-700 sm:rounded-t-2xl rounded-t-3xl p-5 text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Bell className="w-5 h-5" />
