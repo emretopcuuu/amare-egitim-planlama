@@ -211,14 +211,14 @@ Hata varsa düzelt, sonra finalize et.`;
   formData.append('image', compositeBlob, 'composite.png');
   formData.append('prompt', prompt);
   formData.append('size', sizeMap[format] || '1024x1024');
-  // Quality high: gpt-image-2 thinking mode aktif, en kaliteli sonuç
-  // (medium → 20-40s, high → 60-180s — direct call'da 4dk client timeout var)
-  formData.append('quality', 'high');
+  // Quality medium: 20-40s, kullanıcı deneyimi için makul süre
+  // High thinking mode 60-300s sürüyordu, test sırasında 5dk+ takıldı
+  formData.append('quality', 'medium');
   formData.append('n', '1');
 
   // Network/timeout koruması + otomatik retry (transient hatalar için)
   const MAX_RETRY = 2;
-  const TIMEOUT_MS = 240000; // 4 dakika (thinking mode için yeterli)
+  const TIMEOUT_MS = 90000; // 90s (quality medium için yeterli, kullanıcı çok beklemesin)
 
   let lastErr = null;
   for (let attempt = 1; attempt <= MAX_RETRY + 1; attempt++) {
