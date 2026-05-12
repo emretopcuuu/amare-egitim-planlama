@@ -65,7 +65,12 @@ export default async (request, context) => {
       egitim.aciklama || 'One Team eğitim takvimi - Amare Global',
     ].filter(Boolean).join(' • ').slice(0, 200);
 
-    const ogImage = egitim.gorselUrl || 'https://egitimtakvimi.oneteamglobal.ai/logos/oneteam%20logo.JPG';
+    // og:image — sadece HTTPS URL olabilir. base64 data: URL ise (Firestore inline)
+    // WhatsApp/FB preview gösteremez, fallback olarak One Team logosu kullan
+    let ogImage = 'https://egitimtakvimi.oneteamglobal.ai/logos/oneteam%20logo.JPG';
+    if (egitim.gorselUrl && /^https?:\/\//.test(egitim.gorselUrl)) {
+      ogImage = egitim.gorselUrl;
+    }
     const canonicalUrl = `https://egitimtakvimi.oneteamglobal.ai/e/${encodeURIComponent(egitimId)}`;
     const safeTitle = `${escapeHtml(baslik)} - One Team Eğitim Takvimi`;
     const safeDesc = escapeHtml(aciklama);
