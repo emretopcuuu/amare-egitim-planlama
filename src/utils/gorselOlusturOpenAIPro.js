@@ -224,7 +224,10 @@ Hata varsa düzelt, sonra finalize et.`;
     const ctrl = new AbortController();
     const tid = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
     try {
-      const res = await fetch('https://api.openai.com/v1/images/edits', {
+      // Netlify Function proxy üzerinden (CORS/firewall/ad-blocker bypass)
+      // Sebep: bazı kullanıcı tarayıcıları api.openai.com'u direkt çağırırken
+      // engelliyor. Same-origin proxy bu sorunu çözer.
+      const res = await fetch('/api/openai-image-edit', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${apiKey}` },
         body: formData,
