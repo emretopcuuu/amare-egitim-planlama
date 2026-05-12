@@ -153,16 +153,18 @@ export const outlookCalendarUrl = (egitim) => {
 };
 
 // WhatsApp paylaş — eğitim bilgisi + zoom linki
+// Detay linki BAŞTA — WhatsApp ilk URL'i preview olarak gösterir
+// (mesajda 2 link varsa sadece birini önizler). Zoom altta zaten /e/ sayfasında da var.
 export const whatsappShareUrl = (egitim, baseUrl) => {
   const zoomUrl = extractZoomUrl(egitim.yer);
   const dl = deepLink(egitim, baseUrl);
   const lines = [
+    `${dl}\n`, // ← İLK URL: bizim sayfamız, WhatsApp bunu önizler (zengin OG)
     `📅 *${egitim.egitim || 'Eğitim'}*`,
     `🗓️ ${egitim.tarih || ''} ${egitim.gun || ''}`,
     egitim.saat ? `⏰ ${egitim.saat}${egitim.bitisSaati ? ` - ${egitim.bitisSaati}` : ''}` : '',
     egitim.egitmen ? `🎤 ${egitim.egitmen}` : '',
-    zoomUrl ? `\n📡 Zoom: ${zoomUrl}` : '',
-    `\n🔗 Detaylar: ${dl}`,
+    zoomUrl ? `\n📡 Zoom toplantı: ${zoomUrl}` : '',
   ].filter(Boolean).join('\n');
   return `https://wa.me/?text=${encodeURIComponent(lines)}`;
 };
