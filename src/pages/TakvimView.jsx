@@ -259,23 +259,46 @@ const TakvimView = () => {
     }, 500);
   }, [loading, takvim?.length]);
 
-  // "Bugün" butonuna scroll
+  // "Bugün" butonuna scroll — önce bugünkü eğitim, yoksa bugünden sonra EN YAKIN
   const scrollToToday = () => {
     const bugun = new Date();
     bugun.setHours(0, 0, 0, 0);
-    let target = null;
-    for (const e of takvim) {
-      const d = parseTarih(e.tarih);
-      if (d && d >= bugun) {
-        target = document.getElementById(`egitim-${e.id}`);
-        if (target) break;
+    const bugunStr = `${String(bugun.getDate()).padStart(2,'0')}.${String(bugun.getMonth()+1).padStart(2,'0')}.${bugun.getFullYear()}`;
+
+    // 1) Bugün eğitim var mı? Varsa ona git
+    const bugunEgitimleri = takvim
+      .filter(e => e.tarih === bugunStr)
+      .sort((a, b) => (a.saat || '').localeCompare(b.saat || ''));
+
+    // 2) Bugün yoksa: bugünden sonraki EN YAKIN tarihli eğitim (sıralanır, ilk seçilir)
+    const hedef = bugunEgitimleri[0] || takvim
+      .map(e => ({ e, d: parseTarih(e.tarih) }))
+      .filter(x => x.d && x.d >= bugun)
+      .sort((a, b) => {
+        const dt = a.d - b.d;
+        if (dt !== 0) return dt;
+        return (a.e.saat || '').localeCompare(b.e.saat || '');
+      })[0]?.e;
+
+    if (!hedef) return;
+
+    const goTo = () => {
+      const target = document.getElementById(`egitim-${hedef.id}`);
+      if (!target) return;
+      // Eğer kart kapalı bir <details> içindeyse aç
+      let p = target.parentElement;
+      while (p && p !== document.body) {
+        if (p.tagName === 'DETAILS' && !p.open) p.open = true;
+        p = p.parentElement;
       }
-    }
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      target.classList.add('ring-4', 'ring-amber-400');
-      setTimeout(() => target.classList.remove('ring-4', 'ring-amber-400'), 2500);
-    }
+      // Tekrar scroll — details açıldıktan sonra düzgün konumlanır
+      requestAnimationFrame(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        target.classList.add('ring-4', 'ring-amber-400');
+        setTimeout(() => target.classList.remove('ring-4', 'ring-amber-400'), 2500);
+      });
+    };
+    goTo();
   };
 
   // Tüm konuşmacı isimlerini liste haline getir (unique, sıralı)
