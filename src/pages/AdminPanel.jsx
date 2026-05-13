@@ -20,6 +20,7 @@ import HatirlatmaModal from '../components/HatirlatmaModal';
 import SablonTasarimModal from '../components/SablonTasarimModal';
 import RaporModal from '../components/RaporModal';
 import AdminKayitliEgitimlerTab from '../components/AdminKayitliEgitimlerTab';
+import YeniEgitmenModal from '../components/YeniEgitmenModal';
 import { gorselOlustur } from '../utils/gorselOlustur';
 
 // ── Sabitler ────────────────────────────────────────────────────────────────
@@ -196,6 +197,7 @@ const AdminPanel = () => {
   const [bilgiModal, setBilgiModal] = useState(null);
   const [bilgiForm, setBilgiForm] = useState({ unvan: '', biyografi: '', linkedin: '' });
   const [konusmaciArama, setKonusmaciArama] = useState('');
+  const [yeniEgitmenAcik, setYeniEgitmenAcik] = useState(false);
   const [bilgiKaydediliyor, setBilgiKaydediliyor] = useState(false);
   const [linkKopyalandi, setLinkKopyalandi] = useState(false);
 
@@ -1298,10 +1300,16 @@ const AdminPanel = () => {
                   <h2 className="text-2xl font-bold text-gray-800 mb-1">Eğitmenler</h2>
                   <p className="text-gray-500 text-sm">Fotoğraf ve profil bilgilerini düzenleyebilirsiniz.</p>
                 </div>
-                <button onClick={handleBasvuruLinkKopyala}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${linkKopyalandi ? 'bg-green-500 text-white border-green-500' : 'bg-white text-amare-purple border-amare-purple hover:bg-purple-50'}`}>
-                  {linkKopyalandi ? <><Check className="w-4 h-4" />Link Kopyalandı!</> : <><Copy className="w-4 h-4" />Başvuru Linkini Kopyala</>}
-                </button>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <button onClick={() => setYeniEgitmenAcik(true)}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-amare-purple hover:bg-purple-700 text-white border border-amare-purple transition-colors">
+                    <Plus className="w-4 h-4" />Yeni Eğitmen Ekle
+                  </button>
+                  <button onClick={handleBasvuruLinkKopyala}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border transition-colors ${linkKopyalandi ? 'bg-green-500 text-white border-green-500' : 'bg-white text-amare-purple border-amare-purple hover:bg-purple-50'}`}>
+                    {linkKopyalandi ? <><Check className="w-4 h-4" />Link Kopyalandı!</> : <><Copy className="w-4 h-4" />Başvuru Linkini Kopyala</>}
+                  </button>
+                </div>
               </div>
               <div className="relative mt-4">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -1857,6 +1865,17 @@ const AdminPanel = () => {
             if (!result.success) throw new Error(result.error);
           }}
           onClose={() => setSablonTasarimModal(false)}
+        />
+      )}
+
+      {/* Yeni Eğitmen Ekle Modal */}
+      {yeniEgitmenAcik && (
+        <YeniEgitmenModal
+          onClose={() => setYeniEgitmenAcik(false)}
+          onSaved={({ ad }) => {
+            // Sayfayı yenile ki yeni eğitmen kart olarak görünsün
+            window.location.reload();
+          }}
         />
       )}
     </div>
