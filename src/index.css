@@ -153,6 +153,42 @@
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
   }
 
+  /* ── Scrollbar gizle (story strip için) ──────────────────── */
+  .scrollbar-hide::-webkit-scrollbar { display: none; }
+  .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+  /* ── Line clamp ──────────────────────────────────────────── */
+  .line-clamp-1 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 1;
+  }
+  .line-clamp-2 {
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  /* ── Hover preview tooltip ──────────────────────────────── */
+  .hover-preview {
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    opacity: 0;
+    transform: translateY(4px);
+    pointer-events: none;
+  }
+  .has-hover-preview:hover .hover-preview {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+    transition-delay: 500ms; /* 500ms gecikme — istemsiz açılmaz */
+  }
+  @media (hover: none) {
+    /* Mobilde hover preview tamamen kapalı */
+    .hover-preview { display: none !important; }
+  }
+
   /* ── prefers-reduced-motion saygı ─────────────────────── */
   @media (prefers-reduced-motion: reduce) {
     .hero-mesh, .canli-pulse, .imminent-pulse, .cd-digit, .animate-fade-in, .animate-scaleIn {

@@ -6,6 +6,10 @@ import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wi
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import EventActions from '../components/EventActions';
+import KonusmaciFullModal from '../components/KonusmaciFullModal';
+import StoryStrip from '../components/StoryStrip';
+import { EmptySearch, EmptyCompleted } from '../components/EmptyState';
+import { DayMotif } from '../utils/dayIcon';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -107,12 +111,16 @@ const CountdownBadge = ({ egitim }) => {
     if (c.sa > 0) return `${c.sa} ${t('cd_hours')} ${c.dakika} ${t('cd_min').toLowerCase()}`;
     return `${c.dakika} ${t('cd_minutes')}`;
   };
-  if (cd.durum === 'canli') return <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse"><span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />ŞİMDİ CANLI</span>;
+  if (cd.durum === 'canli') return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-red-500 text-white animate-pulse ring-4 ring-red-300/40"><span className="w-2 h-2 bg-white rounded-full animate-ping" />ŞİMDİ CANLI</span>;
   if (cd.durum === 'gecmis') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-500">{t('cd_completed')}</span>;
-  // 1 dakika kala — kart titretmesi + altın halka
+  // 1 dakika kala — dev rozet + altın halka
   const oneMinuteAway = cd.durum === 'yakin' && cd.gun === 0 && cd.sa === 0 && cd.dakika <= 1;
-  if (oneMinuteAway) return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-400 text-gray-900 imminent-pulse ring-2 ring-amber-300"><Timer className="w-3 h-3" />Birazdan başlıyor!</span>;
-  if (cd.durum === 'yakin') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-orange-500 text-white"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
+  if (oneMinuteAway) return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-amber-400 text-gray-900 imminent-pulse ring-4 ring-amber-300/60 gold-glow"><Timer className="w-4 h-4" />Birazdan başlıyor!</span>;
+  // < 1 saat — orta boy + turuncu (acil)
+  if (cd.durum === 'yakin') return <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-orange-500 text-white ring-2 ring-orange-300/40"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
+  // < 24 saat — küçük + altın (yakın)
+  if (cd.gun === 0) return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
+  // > 1 gün — sade (sakin)
   return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-700"><Timer className="w-3 h-3" />{formatCd(cd)}</span>;
 };
 
@@ -369,6 +377,23 @@ const TakvimView = () => {
   const aktifFiltreSayisi = (filtre !== 'tumu' ? 1 : 0) + (sehirFiltre ? 1 : 0) + (kategoriFiltre ? 1 : 0) + (konusmaciFiltre ? 1 : 0) + (zamanFiltre ? 1 : 0) + (arama.trim() ? 1 : 0);
   const filtreyiSifirla = () => { setFiltre('tumu'); setSehirFiltre(null); setKategoriFiltre(null); setKonusmaciFiltre(null); setZamanFiltre(null); setArama(''); };
 
+  // Bugün özel — bugün gerçekleşen tüm eğitimleri ayır
+  const bugunEgitimleri = useMemo(() => {
+    const bugun = new Date();
+    bugun.setHours(0, 0, 0, 0);
+    const bugunStr = `${String(bugun.getDate()).padStart(2,'0')}.${String(bugun.getMonth()+1).padStart(2,'0')}.${bugun.getFullYear()}`;
+    return takvim
+      .filter(e => e.tarih === bugunStr)
+      .sort((a, b) => (a.saat || '').localeCompare(b.saat || ''));
+  }, [takvim]);
+
+  const bugunCanli = bugunEgitimleri.filter(e => getCountdown(e)?.durum === 'canli').length;
+  const bugunGelecek = bugunEgitimleri.filter(e => {
+    const cd = getCountdown(e);
+    return cd && (cd.durum === 'gelecek' || cd.durum === 'yakin');
+  }).length;
+  const bugunGecmis = bugunEgitimleri.filter(e => getCountdown(e)?.durum === 'gecmis').length;
+
   const sehirler = [...new Set(takvim.filter(e=>!isOnline(e)).map(e=>getSehir(e)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr-TR'));
 
   // Haftalık grupla
@@ -491,7 +516,9 @@ const TakvimView = () => {
 
     if (gorunum === 'kart') {
       return (
-        <div key={egitim.id} id={`egitim-${egitim.id}`} className={`bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'}`}>
+        <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'}`}>
+          {/* Kategori accent — üst kenar 3px renkli bar */}
+          {egitim.kategori && <div className={`absolute left-0 right-0 top-0 h-1 ${katRenk.dot}`} aria-hidden="true" />}
           {egitim.gorselUrl && (
             <button onClick={()=>setPosterModal({url:egitim.gorselUrl,baslik:egitim.egitim})} className="w-full h-40 overflow-hidden">
               <img src={egitim.gorselUrl} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform" />
@@ -526,12 +553,14 @@ const TakvimView = () => {
 
     // Liste (default)
     return (
-      <div key={egitim.id} id={`egitim-${egitim.id}`} className={`bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'}`}>
+      <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'}`}>
+        {/* Kategori accent — sol kenar 4px renkli border */}
+        {egitim.kategori && <div className={`absolute left-0 top-0 bottom-0 w-1 ${katRenk.dot}`} aria-hidden="true" />}
         <div className="flex">
           <div className={`flex flex-col items-center justify-center px-4 py-4 min-w-[72px] ${online?'bg-gradient-to-b from-blue-600 to-blue-800':'bg-gradient-to-b from-purple-700 to-purple-900'} text-white`}>
-            <div className="text-2xl font-extrabold leading-none">{gunNo}</div>
+            <div className="text-2xl font-extrabold leading-none font-display">{gunNo}</div>
             <div className="text-[11px] uppercase tracking-wider opacity-80 mt-0.5">{ayAd}</div>
-            <div className="text-[10px] opacity-60 mt-1">{trGun(egitim.gun, t)}</div>
+            <div className="text-[10px] opacity-60 mt-1 flex items-center gap-0.5"><DayMotif date={tarih} className="text-[8px]" />{trGun(egitim.gun, t)}</div>
             {online && <Wifi className="w-3.5 h-3.5 mt-1.5 opacity-70" />}
           </div>
           <div className="flex-1 p-4 min-w-0">
@@ -581,7 +610,11 @@ const TakvimView = () => {
               <button onClick={()=>navigate('/')} className="flex items-center text-white/70 hover:text-white text-sm"><ArrowLeft className="w-4 h-4 mr-1.5" />{t('back')}</button>
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <LanguageSwitcher />
-                <button onClick={exportPDF} disabled={pdfYukleniyor} className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-xs sm:text-sm">
+                <button onClick={()=>navigate('/konusmacilar')}
+                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
+                  <User className="w-4 h-4" /><span className="hidden sm:inline">Konuşmacılar</span><span className="sm:hidden">Konuşmacı</span>
+                </button>
+                <button onClick={exportPDF} disabled={pdfYukleniyor} className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-xs sm:text-sm spring-tap">
                   {pdfYukleniyor?<><Loader2 className="w-4 h-4 animate-spin" />{t('cal_preparing')}</>:<><Download className="w-4 h-4" />{t('cal_download_pdf')}</>}
                 </button>
               </div>
@@ -590,6 +623,47 @@ const TakvimView = () => {
             <p className="text-purple-200 mt-1">{filtrelenmis.length} {t('cal_trainings')}</p>
           </div>
         </div>
+
+        {/* Mobil Story Şeridi — önümüzdeki 14 gün */}
+        <div className="px-4 pt-2">
+          <div className="container mx-auto max-w-7xl">
+            <StoryStrip takvim={takvim} konusmacilar={konusmacilar||[]}
+              onDayClick={(egitimId) => {
+                setTimeout(() => {
+                  const el = document.getElementById(`egitim-${egitimId}`);
+                  if (el) {
+                    let p = el.parentElement;
+                    while (p && p !== document.body) {
+                      if (p.tagName === 'DETAILS' && !p.open) p.open = true;
+                      p = p.parentElement;
+                    }
+                    requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+                  }
+                }, 100);
+              }} />
+          </div>
+        </div>
+
+        {/* Bugün özel bölüm — eğer bugün eğitim varsa */}
+        {bugunEgitimleri.length > 0 && (
+          <div className="px-4 pt-2">
+            <div className="container mx-auto max-w-7xl">
+              <div className="bg-gradient-to-r from-amber-500/20 via-purple-600/20 to-pink-500/20 border-2 border-amber-400/40 rounded-2xl p-4 backdrop-blur-sm">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="bg-amber-400 text-gray-900 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider gold-glow">
+                    📍 Bugün
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {bugunCanli > 0 && <span className="bg-red-500 text-white px-2.5 py-1 rounded-full font-bold animate-pulse inline-flex items-center gap-1"><span className="w-1.5 h-1.5 bg-white rounded-full" />{bugunCanli} CANLI</span>}
+                    {bugunGelecek > 0 && <span className="bg-green-500 text-white px-2.5 py-1 rounded-full font-bold">{bugunGelecek} GELECEK</span>}
+                    {bugunGecmis > 0 && <span className="bg-white/15 text-white/70 px-2.5 py-1 rounded-full">{bugunGecmis} TAMAMLANDI</span>}
+                  </div>
+                  <span className="text-purple-200 text-sm ml-auto hidden sm:inline">{bugunEgitimleri.length} toplam eğitim bugün</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Hero: En Yakın 3 Eğitim — 1. büyük üstte, 2-3 yan yana altta */}
         {enYakinEgitimler.length > 0 && (
@@ -706,7 +780,11 @@ const TakvimView = () => {
         {/* Haftalık Bölümler */}
         <div className="px-4 pb-12 pt-2">
           <div className="container mx-auto max-w-7xl space-y-8">
-            {haftaKeys.length===0 && <div className="text-center py-16 text-white/50"><p className="text-lg">{t('cal_no_results')}</p></div>}
+            {haftaKeys.length===0 && (
+              aktifFiltreSayisi > 0
+                ? <EmptySearch onReset={filtreyiSifirla} />
+                : <EmptyCompleted />
+            )}
 
             {haftaKeys.map((haftaKey,idx) => {
               const haftaEgitimleri = haftalikTakvim[haftaKey];
@@ -768,7 +846,7 @@ const TakvimView = () => {
         <div className="border-t border-white/10 py-6 text-center text-white/40 text-sm">{t('copyright')}</div>
       </div>
 
-      {konusmaciModal && <KonusmaciModal ad={konusmaciModal.ad} kayit={konusmaciModal.kayit} onClose={()=>setKonusmaciModal(null)} />}
+      {konusmaciModal && <KonusmaciFullModal ad={konusmaciModal.ad} kayit={konusmaciModal.kayit} takvim={takvim} onClose={()=>setKonusmaciModal(null)} />}
       {posterModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={()=>setPosterModal(null)}>
           <div className="relative max-w-lg w-full animate-scaleIn" onClick={e=>e.stopPropagation()}>
