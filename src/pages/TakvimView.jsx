@@ -230,7 +230,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
 // ═══════════════════════════════════════════════════════════════════════════════
 const TakvimView = () => {
   const navigate = useNavigate();
-  const { takvim, takvimYayinlandi, loading, konusmacilar } = useData();
+  const { takvim, takvimYayinlandi, loading, konusmacilar, hatirlatmaSayilari } = useData();
   const { t, locale, tDynamic, translateBatch, lang } = useTranslation();
   const contentRef = useRef(null); // sayfa scroll ref
   const [pdfYukleniyor, setPdfYukleniyor] = useState(false);
@@ -500,6 +500,7 @@ const TakvimView = () => {
     const gecmis = cdKart?.durum === 'gecmis';
     const egitimAdi = tDynamic(egitim.egitim);
     const kategoriAdi = tDynamic(egitim.kategori);
+    const hatirlatmaCount = hatirlatmaSayilari?.[egitim.id] || 0;
 
     if (gorunum === 'kompakt') {
       return (
@@ -542,7 +543,7 @@ const TakvimView = () => {
               <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
                 <button onClick={()=>setHatirlatmaModal(egitim)}
                   title="Eğitim öncesi 5dk/10dk/4sa/8sa/12sa/24sa email hatırlatması al"
-                  className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors"><Bell className="w-3 h-3" />{t('cal_remind')}</button>
+                  className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors"><Bell className="w-3 h-3" />{t('cal_remind')}{hatirlatmaCount > 0 && <span className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] bg-white/30">{hatirlatmaCount}</span>}</button>
                 <EventActions egitim={egitim} />
               </div>
             )}
@@ -572,6 +573,11 @@ const TakvimView = () => {
                   {!gecmis && <button onClick={()=>setHatirlatmaModal(egitim)}
                     title="Eğitim öncesi 5dk/10dk/4sa/8sa/12sa/24sa email hatırlatması al"
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold bg-purple-100 text-purple-700 hover:bg-purple-200 transition-colors"><Bell className="w-3 h-3" />{t('cal_remind')}</button>}
+                  {hatirlatmaCount > 0 && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300" title={`${hatirlatmaCount} kişi hatırlatma kaydetti`}>
+                      <UsersIcon className="w-2.5 h-2.5" />{hatirlatmaCount}
+                    </span>
+                  )}
                   {!gecmis && <EventActions egitim={egitim} />}
                 </div>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-sm text-gray-500">

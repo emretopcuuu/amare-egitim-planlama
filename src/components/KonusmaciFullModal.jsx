@@ -1,9 +1,10 @@
 // Zengin tam ekran konuşmacı detay modal
 // Mobilde otomatik tam ekran, desktop'ta büyük sheet
 import React, { useEffect, useMemo, useState } from 'react';
-import { X, User, Mail, Calendar, Clock, MapPin, Wifi, ExternalLink, Tag } from 'lucide-react';
+import { X, User, Mail, Calendar, Clock, MapPin, Wifi, ExternalLink, Tag, UserPlus } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 import { Link } from 'react-router-dom';
+import KonusmaciTakipModal from './KonusmaciTakipModal';
 
 const parseTarih = (t) => {
   if (!t) return null;
@@ -24,6 +25,7 @@ const splitEgitmen = (e) => {
 const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) => {
   const { t, locale, tDynamic } = useTranslation();
   const [tab, setTab] = useState('gelecek'); // 'gelecek' | 'gecmis' | 'bio'
+  const [takipModal, setTakipModal] = useState(false);
 
   // ESC ile kapan
   useEffect(() => {
@@ -115,6 +117,10 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
                     <Mail className="w-3.5 h-3.5" />İletişim
                   </a>
                 )}
+                <button onClick={() => setTakipModal(true)}
+                  className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 px-3 py-1 rounded-full transition-colors font-bold spring-tap gold-glow">
+                  <UserPlus className="w-3.5 h-3.5" />Takip Et
+                </button>
               </div>
             </div>
           </div>
@@ -158,6 +164,8 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
           )}
         </div>
       </div>
+
+      {takipModal && <KonusmaciTakipModal konusmaciAd={displayAd} onClose={() => setTakipModal(false)} />}
     </div>
   );
 };

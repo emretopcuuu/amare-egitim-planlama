@@ -1,18 +1,24 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Users, Shield, Sparkles } from 'lucide-react';
+import { Calendar, Users, Shield, Sparkles, Newspaper } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import BultenModal from '../components/BultenModal';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const [bultenModal, setBultenModal] = useState(false);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-amare-purple via-amare-blue to-amare-light">
       <div className="container mx-auto px-4 py-12">
-        {/* Language Switcher */}
-        <div className="flex justify-end mb-4">
+        {/* Language Switcher + Bülten */}
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-2">
+          <button onClick={() => setBultenModal(true)}
+            className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-gray-900 px-4 py-2 rounded-full text-sm font-bold transition-all gold-glow spring-tap">
+            <Newspaper className="w-4 h-4" /><span className="hidden sm:inline">Haftalık Bülten</span><span className="sm:hidden">Bülten</span>
+          </button>
           <LanguageSwitcher />
         </div>
 
@@ -124,6 +130,7 @@ const HomePage = () => {
           <p>{t('copyright')}</p>
         </div>
       </div>
+      {bultenModal && <BultenModal onClose={() => setBultenModal(false)} />}
     </div>
   );
 };
