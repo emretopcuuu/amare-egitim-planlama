@@ -122,7 +122,11 @@ async function main() {
   let ok = 0;
   let withTranscript = 0;
   let failed = 0;
+  let idx = 0;
+  const total = snap.size;
+  const startTime = Date.now();
   for (const d of snap.docs) {
+    idx++;
     const data = d.data();
     try {
       // 1. Başlık + açıklama dene
@@ -155,11 +159,19 @@ async function main() {
         });
       }
       ok++;
+      // Her 10 video'da bir ilerleme + ETA
+      if (idx % 10 === 0 || idx === total) {
+        const elapsed = (Date.now() - startTime) / 1000;
+        const rate = idx / elapsed;
+        const eta = rate > 0 ? Math.round((total - idx) / rate) : 0;
+        const m = Math.floor(eta / 60), s = eta % 60;
+        console.log(`  [${idx}/${total}] ok=${ok} fail=${failed} | hız: ${rate.toFixed(1)} v/s | ETA: ${m}d ${s}s`);
+      }
       // Rate limit dostu
       await new Promise(r => setTimeout(r, 400));
     } catch (err) {
       failed++;
-      console.warn(`  ${data.vimeoId} HATA: ${err.message}`);
+      console.warn(`  [${idx}/${total}] ${data.vimeoId} HATA: ${err.message?.slice(0, 100)}`);
     }
   }
 
