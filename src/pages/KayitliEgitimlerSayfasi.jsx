@@ -1,16 +1,18 @@
-// /kayitli-egitimler — Vimeo kayıtlı eğitim arşivi
-// Tüm filtreler: kategori (multi), eğitmen, dil, yıl, süre, sıralama, arama
-// + Favoriler, izleme geçmişi, URL persist, sonsuz scroll, süre + plays rozetleri
-import React, { useEffect, useMemo, useState, useCallback, useRef } from 'react';
+// /kayitli-egitimler — Vimeo arşivi
+// Mobile-first: bottom sheet filter, sticky active chips, compact card, haptic
+import React, { useEffect, useMemo, useState, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Search, X, Video, Play, Calendar, Tag, Loader2, User, Globe,
-  Clock, Eye, Heart, Filter, History, ArrowDownUp, ChevronDown,
+  Clock, Eye, Heart, History, ArrowDownUp, ChevronDown, SlidersHorizontal,
+  Share2, ChevronUp, RotateCcw,
 } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, limit as fbLimit, getDocs } from 'firebase/firestore';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import VideoOynatModal from '../components/VideoOynatModal';
+import { useToast } from '../components/Toast';
+import { haptic, nativeShare } from '../utils/mobileHelpers';
 
 // ─── Sabitler ────────────────────────────────────────────────────────────
 const KATEGORILER = [
@@ -18,6 +20,23 @@ const KATEGORILER = [
   'Sunum Teknikleri', 'Zaman Yönetimi', 'Kişisel Gelişim',
   'Sağlık', 'Finansal Özgürlük', 'Vizyon', 'Hikaye', 'Ürün Eğitimi',
 ];
+
+// Kategori renk paleti (Tailwind class'ları)
+const KATEGORI_RENK = {
+  'Liderlik':         'bg-blue-500/80 text-white',
+  'Satış':            'bg-emerald-500/80 text-white',
+  'Motivasyon':       'bg-orange-500/80 text-white',
+  'Davet':            'bg-purple-500/80 text-white',
+  'Kapanış':          'bg-yellow-500/80 text-gray-900',
+  'Sunum Teknikleri': 'bg-cyan-500/80 text-white',
+  'Zaman Yönetimi':   'bg-indigo-500/80 text-white',
+  'Kişisel Gelişim':  'bg-rose-500/80 text-white',
+  'Sağlık':           'bg-teal-500/80 text-white',
+  'Finansal Özgürlük':'bg-green-600/80 text-white',
+  'Vizyon':           'bg-fuchsia-500/80 text-white',
+  'Hikaye':           'bg-amber-500/80 text-gray-900',
+  'Ürün Eğitimi':     'bg-sky-500/80 text-white',
+};
 
 const DIL_PATTERNS = [
   { kod: 'RU', etiket: 'Rusça',      regex: /russian|russia|русск|россия|russisch/i },
@@ -34,16 +53,16 @@ const DILLER = [
   { kod: 'NL',  etiket: 'Hollandaca' },
 ];
 const SURE_FILTRELERI = [
-  { kod: 'all',   etiket: 'Tüm Süreler' },
-  { kod: 'kisa',  etiket: '< 15 dk', min: 0,    max: 900 },
-  { kod: 'orta',  etiket: '15-60 dk', min: 900,  max: 3600 },
-  { kod: 'uzun',  etiket: '> 1 saat',  min: 3600, max: Infinity },
+  { kod: 'all',  etiket: 'Tüm Süreler' },
+  { kod: 'kisa', etiket: '< 15 dk',   min: 0,    max: 900 },
+  { kod: 'orta', etiket: '15-60 dk', min: 900,  max: 3600 },
+  { kod: 'uzun', etiket: '> 1 saat',  min: 3600, max: Infinity },
 ];
 const SIRALAMALAR = [
-  { kod: 'yeni',     etiket: 'En Yeni' },
-  { kod: 'eski',     etiket: 'En Eski' },
-  { kod: 'populer',  etiket: 'En Popüler' },
-  { kod: 'alfabe',   etiket: 'Alfabetik' },
+  { kod: 'yeni',    etiket: 'En Yeni' },
+  { kod: 'eski',    etiket: 'En Eski' },
+  { kod: 'populer', etiket: 'En Popüler' },
+  { kod: 'alfabe',  etiket: 'Alfabetik' },
 ];
 
 function detectDil(video) {
@@ -77,39 +96,27 @@ const HIST_KEY = 'amare_video_gecmis';
 const HIST_MAX = 100;
 const PAGE_SIZE = 60;
 
-// Helper — localStorage Set
 function loadSet(key) {
-  try {
-    const raw = localStorage.getItem(key);
-    return new Set(raw ? JSON.parse(raw) : []);
-  } catch { return new Set(); }
+  try { return new Set(JSON.parse(localStorage.getItem(key) || '[]')); } catch { return new Set(); }
 }
 function saveSet(key, set) {
-  try {
-    localStorage.setItem(key, JSON.stringify([...set]));
-  } catch {}
+  try { localStorage.setItem(key, JSON.stringify([...set])); } catch {}
 }
 function loadList(key) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : [];
-  } catch { return []; }
+  try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch { return []; }
 }
 function saveList(key, list) {
-  try {
-    localStorage.setItem(key, JSON.stringify(list));
-  } catch {}
+  try { localStorage.setItem(key, JSON.stringify(list)); } catch {}
 }
 
 const KayitliEgitimlerSayfasi = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // ─── State ─────────────────────────────────────────────────────────────
   const [tumVideolar, setTumVideolar] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  // URL-persistent filtreler
   const initKategoriSet = () => new Set((searchParams.get('kat') || '').split(',').filter(Boolean));
   const [kategoriSet, setKategoriSet] = useState(initKategoriSet);
   const [dilKod, setDilKod] = useState(searchParams.get('dil') || 'all');
@@ -120,12 +127,11 @@ const KayitliEgitimlerSayfasi = () => {
   const [arama, setArama] = useState(searchParams.get('q') || '');
   const [sadeceFav, setSadeceFav] = useState(searchParams.get('fav') === '1');
   const [oynatilan, setOynatilan] = useState(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
-  // localStorage state
   const [favoriler, setFavoriler] = useState(() => loadSet(FAV_KEY));
   const [gecmis, setGecmis] = useState(() => new Set(loadList(HIST_KEY)));
-
-  // Sonsuz scroll
   const [gosterilen, setGosterilen] = useState(PAGE_SIZE);
   const sentinelRef = useRef(null);
 
@@ -143,7 +149,7 @@ const KayitliEgitimlerSayfasi = () => {
     setSearchParams(p, { replace: true });
   }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav, setSearchParams]);
 
-  // ─── Veri çekme ───────────────────────────────────────────────────────
+  // ─── Veri çek ─────────────────────────────────────────────────────────
   useEffect(() => {
     try {
       const cached = localStorage.getItem(CACHE_KEY);
@@ -184,25 +190,22 @@ const KayitliEgitimlerSayfasi = () => {
     })();
   }, []);
 
-  // ─── Türev: yıl seçenekleri ───────────────────────────────────────────
+  // ─── Türevler ─────────────────────────────────────────────────────────
   const yilOpsiyonlari = useMemo(() => {
     const map = new Map();
     for (const v of tumVideolar) {
       const y = (v.tarih || '').slice(0, 4);
-      if (y && /^\d{4}$/.test(y)) {
-        map.set(y, (map.get(y) || 0) + 1);
-      }
+      if (y && /^\d{4}$/.test(y)) map.set(y, (map.get(y) || 0) + 1);
     }
     return [...map.entries()].sort((a, b) => b[0].localeCompare(a[0]));
   }, [tumVideolar]);
 
-  // ─── Türev: eğitmen seçenekleri (alfabetik) ───────────────────────────
   const egitmenOpsiyonlari = useMemo(() => {
     const map = new Map();
     for (const v of tumVideolar) {
-      const coreIds = v.egitmenler || [];
+      const cids = v.egitmenler || [];
       const adlar = v.egitmenAdlari || [];
-      coreIds.forEach((cid, i) => {
+      cids.forEach((cid, i) => {
         if (!cid) return;
         if (!map.has(cid)) map.set(cid, { coreId: cid, ad: adlar[i] || cid, count: 0 });
         map.get(cid).count++;
@@ -211,24 +214,22 @@ const KayitliEgitimlerSayfasi = () => {
     return [...map.values()].sort((a, b) => a.ad.localeCompare(b.ad, 'tr-TR'));
   }, [tumVideolar]);
 
+  const egitmenAdMap = useMemo(() => {
+    const m = new Map();
+    for (const e of egitmenOpsiyonlari) m.set(e.coreId, e.ad);
+    return m;
+  }, [egitmenOpsiyonlari]);
+
   // ─── Filtre + sıralama ────────────────────────────────────────────────
   const filtrelenmis = useMemo(() => {
     let arr = tumVideolar;
-    if (kategoriSet.size > 0) {
-      arr = arr.filter(v => {
-        const kats = v.kategoriler || [];
-        return kats.some(k => kategoriSet.has(k));
-      });
-    }
+    if (kategoriSet.size > 0) arr = arr.filter(v => (v.kategoriler || []).some(k => kategoriSet.has(k)));
     if (dilKod !== 'all') arr = arr.filter(v => v.dil === dilKod);
     if (egitmenCoreId) arr = arr.filter(v => (v.egitmenler || []).includes(egitmenCoreId));
     if (yil !== 'all') arr = arr.filter(v => (v.tarih || '').startsWith(yil));
     if (sureKod !== 'all') {
       const f = SURE_FILTRELERI.find(s => s.kod === sureKod);
-      if (f) arr = arr.filter(v => {
-        const s = v.sure || 0;
-        return s >= f.min && s < f.max;
-      });
+      if (f) arr = arr.filter(v => { const s = v.sure || 0; return s >= f.min && s < f.max; });
     }
     if (sadeceFav) arr = arr.filter(v => favoriler.has(v.id));
     if (arama.trim()) {
@@ -239,19 +240,17 @@ const KayitliEgitimlerSayfasi = () => {
         return b.includes(q) || e.includes(q);
       });
     }
-    // Sıralama
     const sorted = [...arr];
-    if (siralama === 'yeni')      sorted.sort((a, b) => (b.tarih || '').localeCompare(a.tarih || ''));
-    else if (siralama === 'eski') sorted.sort((a, b) => (a.tarih || '').localeCompare(b.tarih || ''));
+    if (siralama === 'yeni')         sorted.sort((a, b) => (b.tarih || '').localeCompare(a.tarih || ''));
+    else if (siralama === 'eski')    sorted.sort((a, b) => (a.tarih || '').localeCompare(b.tarih || ''));
     else if (siralama === 'populer') sorted.sort((a, b) => (b.plays || 0) - (a.plays || 0));
-    else if (siralama === 'alfabe') sorted.sort((a, b) => (a.baslik || '').localeCompare(b.baslik || '', 'tr-TR'));
+    else if (siralama === 'alfabe')  sorted.sort((a, b) => (a.baslik || '').localeCompare(b.baslik || '', 'tr-TR'));
     return sorted;
   }, [tumVideolar, kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav, favoriler]);
 
-  // Filtre değişince sayfa sıfırla
   useEffect(() => { setGosterilen(PAGE_SIZE); }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav]);
 
-  // Sonsuz scroll: sentinel IntersectionObserver
+  // Sonsuz scroll
   useEffect(() => {
     if (!sentinelRef.current) return;
     const obs = new IntersectionObserver(entries => {
@@ -263,18 +262,46 @@ const KayitliEgitimlerSayfasi = () => {
     return () => obs.disconnect();
   }, [filtrelenmis.length, gosterilen]);
 
-  // ─── Aktif filtre sayısı ──────────────────────────────────────────────
-  const aktifFiltreSayisi = [
-    kategoriSet.size > 0,
-    dilKod !== 'all',
-    !!egitmenCoreId,
-    yil !== 'all',
-    sureKod !== 'all',
-    sadeceFav,
-    !!arama.trim(),
-  ].filter(Boolean).length;
+  // Scroll-to-top buton görünümü
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 600);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // ─── Aktif filtre listesi (chip bar için) ─────────────────────────────
+  const aktifFiltreler = useMemo(() => {
+    const list = [];
+    [...kategoriSet].forEach(k => list.push({
+      kod: 'kat-' + k, etiket: k,
+      kaldir: () => { haptic(8); setKategoriSet(s => { const n = new Set(s); n.delete(k); return n; }); },
+      renk: KATEGORI_RENK[k] || 'bg-amber-400 text-gray-900',
+    }));
+    if (dilKod !== 'all') {
+      const d = DILLER.find(x => x.kod === dilKod);
+      list.push({ kod: 'dil', etiket: d?.etiket, kaldir: () => { haptic(8); setDilKod('all'); }, renk: 'bg-white/20 text-white' });
+    }
+    if (egitmenCoreId) {
+      list.push({ kod: 'eg', etiket: egitmenAdMap.get(egitmenCoreId) || egitmenCoreId, kaldir: () => { haptic(8); setEgitmenCoreId(''); }, renk: 'bg-white/20 text-white' });
+    }
+    if (yil !== 'all') {
+      list.push({ kod: 'yil', etiket: yil, kaldir: () => { haptic(8); setYil('all'); }, renk: 'bg-white/20 text-white' });
+    }
+    if (sureKod !== 'all') {
+      const s = SURE_FILTRELERI.find(x => x.kod === sureKod);
+      list.push({ kod: 'sure', etiket: s?.etiket, kaldir: () => { haptic(8); setSureKod('all'); }, renk: 'bg-white/20 text-white' });
+    }
+    if (sadeceFav) {
+      list.push({ kod: 'fav', etiket: '💗 Favoriler', kaldir: () => { haptic(8); setSadeceFav(false); }, renk: 'bg-pink-500/80 text-white' });
+    }
+    if (arama.trim()) {
+      list.push({ kod: 'q', etiket: `"${arama.trim()}"`, kaldir: () => { haptic(8); setArama(''); }, renk: 'bg-white/20 text-white' });
+    }
+    return list;
+  }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, sadeceFav, arama, egitmenAdMap]);
 
   const filtreleriTemizle = () => {
+    haptic(20);
     setKategoriSet(new Set());
     setDilKod('all');
     setEgitmenCoreId('');
@@ -282,174 +309,157 @@ const KayitliEgitimlerSayfasi = () => {
     setSureKod('all');
     setSadeceFav(false);
     setArama('');
+    toast('Tüm filtreler temizlendi', { type: 'info' });
   };
 
   // ─── Eylemler ─────────────────────────────────────────────────────────
   const toggleKategori = (k) => {
+    haptic(8);
     setKategoriSet(s => {
-      const next = new Set(s);
-      next.has(k) ? next.delete(k) : next.add(k);
-      return next;
+      const n = new Set(s);
+      n.has(k) ? n.delete(k) : n.add(k);
+      return n;
     });
   };
 
-  const toggleFavori = (e, vid) => {
+  const toggleFavori = (e, v) => {
     e.stopPropagation();
+    haptic(10);
     setFavoriler(s => {
       const next = new Set(s);
-      next.has(vid) ? next.delete(vid) : next.add(vid);
+      if (next.has(v.id)) {
+        next.delete(v.id);
+        toast('Favoriden çıkarıldı', { type: 'info' });
+      } else {
+        next.add(v.id);
+        toast('💗 Favoriye eklendi', { type: 'success' });
+      }
       saveSet(FAV_KEY, next);
       return next;
     });
   };
 
-  const handleOynat = (v) => {
-    // Geçmişe ekle (en son izlenen en başta)
+  const handleOynat = useCallback((v) => {
+    haptic(5);
     setGecmis(s => {
-      const next = new Set(s);
-      next.add(v.id);
       const list = [v.id, ...[...s].filter(x => x !== v.id)].slice(0, HIST_MAX);
       saveList(HIST_KEY, list);
       return new Set(list);
     });
     setOynatilan(v);
+  }, []);
+
+  const handleShare = async (e, v) => {
+    e.stopPropagation();
+    haptic(8);
+    const url = `${window.location.origin}/kayitli-egitimler?eg=${(v.egitmenler || [])[0] || ''}#v=${v.id}`;
+    const res = await nativeShare({
+      title: v.baslik,
+      text: `${v.baslik} — ${(v.egitmenAdlari || []).join(', ')}`,
+      url: v.vimeoUrl || url,
+    });
+    if (res.method === 'clipboard') toast('Link kopyalandı', { type: 'success' });
+    else if (res.method === 'native') toast('Paylaşıldı', { type: 'success' });
+  };
+
+  const scrollToTop = () => {
+    haptic(8);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const onSheetUygula = () => {
+    haptic(15);
+    setSheetOpen(false);
+    toast(`${filtrelenmis.length} eğitim bulundu`, { type: 'info' });
   };
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900">
-      {/* Header */}
-      <div className="pt-6 pb-4 px-4 sticky top-0 z-30 bg-gradient-to-b from-purple-900/95 to-purple-900/85 backdrop-blur-md border-b border-white/10">
+      {/* Header — sadeleştirildi */}
+      <div className="pt-6 pb-3 px-4 sticky top-0 z-30 bg-gradient-to-b from-purple-900/95 to-purple-900/85 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto max-w-7xl">
-          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <button onClick={() => navigate('/takvim')} aria-label="Takvime dön"
-              className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
+              className="flex items-center text-white/70 hover:text-white text-sm spring-tap p-1">
               <ArrowLeft className="w-4 h-4 mr-1.5" />Takvim
             </button>
             <LanguageSwitcher />
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display">Kayıtlı Eğitimler</h1>
-          <p className="text-purple-200 mt-1 text-sm">
-            {filtrelenmis.length} / {tumVideolar.length} eğitim
-            {aktifFiltreSayisi > 0 && (
-              <button onClick={filtreleriTemizle}
-                className="ml-3 inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 text-xs underline">
-                <X className="w-3 h-3" />{aktifFiltreSayisi} filtreyi temizle
-              </button>
-            )}
+          <h1 className="text-2xl md:text-4xl font-extrabold text-white font-display">Kayıtlı Eğitimler</h1>
+          <p className="text-purple-200 mt-0.5 text-xs sm:text-sm">
+            <strong>{filtrelenmis.length}</strong> / {tumVideolar.length} eğitim
             {favoriler.size > 0 && !sadeceFav && (
               <button onClick={() => setSadeceFav(true)}
-                className="ml-3 inline-flex items-center gap-1 text-pink-300 hover:text-pink-200 text-xs">
-                <Heart className="w-3 h-3" fill="currentColor" />{favoriler.size} favorim
+                className="ml-3 inline-flex items-center gap-1 text-pink-300 hover:text-pink-200">
+                <Heart className="w-3 h-3" fill="currentColor" />{favoriler.size}
               </button>
             )}
           </p>
 
-          {/* Arama */}
-          <div className="relative mt-4">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />
-            <input type="text" value={arama} onChange={e => setArama(e.target.value)}
-              placeholder="Eğitim adı veya eğitmen ara..."
-              className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-12 pr-10 py-3 text-base focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
-            {arama && (
-              <button onClick={() => setArama('')} aria-label="Aramayı temizle"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white spring-tap">
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-
-          {/* Dropdownlar: Eğitmen / Dil / Yıl / Süre / Sıralama */}
-          <div className="mt-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
-            <DropdownField icon={User} value={egitmenCoreId} onChange={setEgitmenCoreId}>
-              <option value="" className="bg-purple-900">Tüm Eğitmenler ({egitmenOpsiyonlari.length})</option>
-              {egitmenOpsiyonlari.map(o => (
-                <option key={o.coreId} value={o.coreId} className="bg-purple-900">{o.ad} ({o.count})</option>
-              ))}
-            </DropdownField>
-            <DropdownField icon={Globe} value={dilKod} onChange={setDilKod}>
-              {DILLER.map(d => <option key={d.kod} value={d.kod} className="bg-purple-900">{d.etiket}</option>)}
-            </DropdownField>
-            <DropdownField icon={Calendar} value={yil} onChange={setYil}>
-              <option value="all" className="bg-purple-900">Tüm Yıllar</option>
-              {yilOpsiyonlari.map(([y, c]) => (
-                <option key={y} value={y} className="bg-purple-900">{y} ({c})</option>
-              ))}
-            </DropdownField>
-            <DropdownField icon={Clock} value={sureKod} onChange={setSureKod}>
-              {SURE_FILTRELERI.map(s => <option key={s.kod} value={s.kod} className="bg-purple-900">{s.etiket}</option>)}
-            </DropdownField>
-            <DropdownField icon={ArrowDownUp} value={siralama} onChange={setSiralama}>
-              {SIRALAMALAR.map(s => <option key={s.kod} value={s.kod} className="bg-purple-900">{s.etiket}</option>)}
-            </DropdownField>
-          </div>
-
-          {/* Hızlı filtreler */}
-          <div className="mt-3 flex flex-wrap gap-2 items-center">
-            <button onClick={() => setSadeceFav(s => !s)}
-              className={`px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 transition-all spring-tap ${
-                sadeceFav ? 'bg-pink-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-              }`}>
-              <Heart className="w-3.5 h-3.5" fill={sadeceFav ? 'currentColor' : 'none'} />
-              Favoriler ({favoriler.size})
+          {/* Arama + Filtre butonu */}
+          <div className="mt-3 flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300" />
+              <input type="text" value={arama} onChange={e => setArama(e.target.value)}
+                placeholder="Ara..."
+                className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
+              {arama && (
+                <button onClick={() => setArama('')} aria-label="Aramayı temizle"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white p-1">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <button onClick={() => { haptic(8); setSheetOpen(true); }} aria-label="Filtreler"
+              className="relative bg-white/15 hover:bg-white/25 border-2 border-white/20 text-white rounded-xl px-3 py-2.5 spring-tap inline-flex items-center gap-1.5 text-sm font-semibold">
+              <SlidersHorizontal className="w-4 h-4" />
+              <span className="hidden sm:inline">Filtreler</span>
+              {aktifFiltreler.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-400 text-gray-900 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {aktifFiltreler.length}
+                </span>
+              )}
             </button>
-            {gecmis.size > 0 && (
-              <span className="px-3 py-1.5 rounded-full text-xs sm:text-sm font-semibold bg-white/5 text-white/60 inline-flex items-center gap-1.5 border border-white/10">
-                <History className="w-3.5 h-3.5" />İzlendi: {gecmis.size}
-              </span>
-            )}
           </div>
 
-          {/* Kategori chip'leri (multi-select) */}
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button onClick={() => setKategoriSet(new Set())}
-              className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
-                kategoriSet.size === 0
-                  ? 'bg-amber-400 text-gray-900 shadow-md'
-                  : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-              }`}>
-              Tümü
-            </button>
-            {KATEGORILER.map(k => (
-              <button key={k} onClick={() => toggleKategori(k)}
-                className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
-                  kategoriSet.has(k)
-                    ? 'bg-amber-400 text-gray-900 shadow-md'
-                    : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                }`}>
-                {k}
-              </button>
-            ))}
-          </div>
+          {/* Aktif filtre chip bar — yatay scroll, tıkla kaldır */}
+          {aktifFiltreler.length > 0 && (
+            <div className="mt-2 -mx-4 px-4 overflow-x-auto scrollbar-hide">
+              <div className="flex gap-1.5 pb-1 min-w-max">
+                {aktifFiltreler.map(f => (
+                  <button key={f.kod} onClick={f.kaldir}
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold whitespace-nowrap ${f.renk} hover:opacity-80 transition-opacity spring-tap`}>
+                    <X className="w-3 h-3" />
+                    <span className="line-clamp-1 max-w-[140px]">{f.etiket}</span>
+                  </button>
+                ))}
+                <button onClick={filtreleriTemizle}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold whitespace-nowrap bg-red-500/30 text-red-200 hover:bg-red-500/40 spring-tap">
+                  <RotateCcw className="w-3 h-3" />Hepsini sıfırla
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Grid */}
-      <div className="px-4 py-6 pb-16">
+      <div className="px-4 py-4 pb-24 md:pb-16">
         <div className="container mx-auto max-w-7xl">
           {loading ? (
-            <div className="text-center py-16 text-white/70">
-              <Loader2 className="w-12 h-12 mx-auto mb-3 animate-spin opacity-70" />
-              <p>Kayıtlı eğitimler yükleniyor...</p>
-            </div>
+            <SkeletonGrid />
           ) : filtrelenmis.length === 0 ? (
-            <div className="text-center py-16 text-white/50">
-              <Video className="w-20 h-20 mx-auto mb-3 opacity-30" />
-              <p className="text-lg">Filtreye uyan kayıt bulunamadı.</p>
-              {aktifFiltreSayisi > 0 && (
-                <button onClick={filtreleriTemizle}
-                  className="mt-3 inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 text-sm underline">
-                  Filtreleri temizle
-                </button>
-              )}
-            </div>
+            <EmptyState onClear={filtreleriTemizle} hasFilters={aktifFiltreler.length > 0} />
           ) : (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {/* Mobile: compact list, Desktop: grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                 {filtrelenmis.slice(0, gosterilen).map(v => (
                   <VideoKart key={v.id} video={v}
                     favori={favoriler.has(v.id)}
                     izlendi={gecmis.has(v.id)}
-                    onToggleFav={(e) => toggleFavori(e, v.id)}
+                    onToggleFav={(e) => toggleFavori(e, v)}
+                    onShare={(e) => handleShare(e, v)}
                     onOynat={() => handleOynat(v)}
                   />
                 ))}
@@ -457,18 +467,44 @@ const KayitliEgitimlerSayfasi = () => {
               {gosterilen < filtrelenmis.length && (
                 <div ref={sentinelRef} className="py-8 text-center text-white/50 text-sm">
                   <Loader2 className="w-6 h-6 mx-auto mb-2 animate-spin opacity-50" />
-                  Daha fazla yükleniyor... ({gosterilen} / {filtrelenmis.length})
+                  ({gosterilen} / {filtrelenmis.length})
                 </div>
               )}
               {gosterilen >= filtrelenmis.length && filtrelenmis.length > PAGE_SIZE && (
                 <div className="py-8 text-center text-white/40 text-sm">
-                  ✓ Tümü gösterildi ({filtrelenmis.length} eğitim)
+                  ✓ Tümü gösterildi ({filtrelenmis.length})
                 </div>
               )}
             </>
           )}
         </div>
       </div>
+
+      {/* Filter Bottom Sheet */}
+      {sheetOpen && (
+        <FilterSheet
+          onClose={() => setSheetOpen(false)}
+          onUygula={onSheetUygula}
+          kategoriSet={kategoriSet} setKategoriSet={setKategoriSet}
+          egitmenCoreId={egitmenCoreId} setEgitmenCoreId={setEgitmenCoreId} egitmenOpsiyonlari={egitmenOpsiyonlari}
+          dilKod={dilKod} setDilKod={setDilKod}
+          yil={yil} setYil={setYil} yilOpsiyonlari={yilOpsiyonlari}
+          sureKod={sureKod} setSureKod={setSureKod}
+          siralama={siralama} setSiralama={setSiralama}
+          sadeceFav={sadeceFav} setSadeceFav={setSadeceFav}
+          favoriCount={favoriler.size}
+          filtrelenmisSayi={filtrelenmis.length}
+          filtreleriTemizle={filtreleriTemizle}
+        />
+      )}
+
+      {/* Scroll-to-top FAB */}
+      {showScrollTop && (
+        <button onClick={scrollToTop} aria-label="En üste dön"
+          className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 rounded-full bg-amber-400 hover:bg-amber-300 text-gray-900 shadow-xl flex items-center justify-center spring-tap animate-fade-in">
+          <ChevronUp className="w-6 h-6" />
+        </button>
+      )}
 
       {oynatilan && (
         <VideoOynatModal video={oynatilan} onClose={() => setOynatilan(null)}
@@ -480,22 +516,212 @@ const KayitliEgitimlerSayfasi = () => {
   );
 };
 
-// ─── Yardımcı: dropdown alanı ──────────────────────────────────────────
-const DropdownField = ({ icon: Icon, value, onChange, children }) => (
-  <div className="relative">
-    <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300 pointer-events-none" />
-    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300 pointer-events-none" />
-    <select value={value} onChange={e => onChange(e.target.value)}
-      className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white rounded-xl pl-9 pr-7 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 appearance-none cursor-pointer">
-      {children}
-    </select>
+// ─── Skeleton grid ──────────────────────────────────────────────────────
+const SkeletonGrid = () => (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+    {Array.from({ length: 8 }).map((_, i) => (
+      <div key={i} className="bg-white/5 border border-white/10 rounded-xl overflow-hidden animate-pulse">
+        <div className="aspect-video bg-white/10" />
+        <div className="p-3 space-y-2">
+          <div className="h-4 bg-white/10 rounded w-3/4" />
+          <div className="h-3 bg-white/10 rounded w-1/2" />
+          <div className="h-3 bg-white/10 rounded w-1/3" />
+        </div>
+      </div>
+    ))}
   </div>
 );
 
-// ─── Yardımcı: video kartı ─────────────────────────────────────────────
-const VideoKart = ({ video: v, favori, izlendi, onToggleFav, onOynat }) => {
+// ─── Empty state ────────────────────────────────────────────────────────
+const EmptyState = ({ onClear, hasFilters }) => (
+  <div className="text-center py-16 text-white/50">
+    <Video className="w-20 h-20 mx-auto mb-3 opacity-30" />
+    <p className="text-lg">Filtreye uyan kayıt bulunamadı.</p>
+    {hasFilters && (
+      <button onClick={onClear}
+        className="mt-4 inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold px-5 py-2.5 rounded-xl spring-tap">
+        <RotateCcw className="w-4 h-4" />Filtreleri temizle
+      </button>
+    )}
+  </div>
+);
+
+// ─── Filter Bottom Sheet ────────────────────────────────────────────────
+const FilterSheet = ({
+  onClose, onUygula,
+  kategoriSet, setKategoriSet,
+  egitmenCoreId, setEgitmenCoreId, egitmenOpsiyonlari,
+  dilKod, setDilKod,
+  yil, setYil, yilOpsiyonlari,
+  sureKod, setSureKod,
+  siralama, setSiralama,
+  sadeceFav, setSadeceFav,
+  favoriCount, filtrelenmisSayi,
+  filtreleriTemizle,
+}) => {
+  useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+
+  const toggleKat = (k) => {
+    haptic(8);
+    setKategoriSet(s => { const n = new Set(s); n.has(k) ? n.delete(k) : n.add(k); return n; });
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm animate-fade-in"
+      onClick={onClose}>
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-b from-purple-900 to-indigo-950 rounded-t-3xl shadow-2xl max-h-[88vh] flex flex-col animate-slide-up"
+        onClick={e => e.stopPropagation()}>
+        {/* Drag handle */}
+        <div className="pt-3 pb-1 flex justify-center flex-shrink-0">
+          <div className="w-12 h-1.5 rounded-full bg-white/30" />
+        </div>
+        {/* Header */}
+        <div className="px-5 pb-3 flex items-center justify-between flex-shrink-0">
+          <h3 className="text-white text-lg font-bold inline-flex items-center gap-2">
+            <SlidersHorizontal className="w-5 h-5" />Filtreler
+          </h3>
+          <button onClick={onClose}
+            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4">
+          {/* Sıralama */}
+          <SheetSection icon={ArrowDownUp} title="Sıralama">
+            <div className="flex flex-wrap gap-2">
+              {SIRALAMALAR.map(s => (
+                <SheetChip key={s.kod} active={siralama === s.kod}
+                  onClick={() => { haptic(8); setSiralama(s.kod); }}>
+                  {s.etiket}
+                </SheetChip>
+              ))}
+            </div>
+          </SheetSection>
+
+          {/* Süre */}
+          <SheetSection icon={Clock} title="Süre">
+            <div className="flex flex-wrap gap-2">
+              {SURE_FILTRELERI.map(s => (
+                <SheetChip key={s.kod} active={sureKod === s.kod}
+                  onClick={() => { haptic(8); setSureKod(s.kod); }}>
+                  {s.etiket}
+                </SheetChip>
+              ))}
+            </div>
+          </SheetSection>
+
+          {/* Dil */}
+          <SheetSection icon={Globe} title="Dil">
+            <div className="flex flex-wrap gap-2">
+              {DILLER.map(d => (
+                <SheetChip key={d.kod} active={dilKod === d.kod}
+                  onClick={() => { haptic(8); setDilKod(d.kod); }}>
+                  {d.etiket}
+                </SheetChip>
+              ))}
+            </div>
+          </SheetSection>
+
+          {/* Yıl */}
+          <SheetSection icon={Calendar} title="Yıl">
+            <div className="flex flex-wrap gap-2">
+              <SheetChip active={yil === 'all'} onClick={() => { haptic(8); setYil('all'); }}>Tümü</SheetChip>
+              {yilOpsiyonlari.map(([y, c]) => (
+                <SheetChip key={y} active={yil === y}
+                  onClick={() => { haptic(8); setYil(y); }}>
+                  {y} ({c})
+                </SheetChip>
+              ))}
+            </div>
+          </SheetSection>
+
+          {/* Eğitmen */}
+          <SheetSection icon={User} title="Eğitmen">
+            <select value={egitmenCoreId} onChange={e => { haptic(8); setEgitmenCoreId(e.target.value); }}
+              className="w-full bg-white/15 border-2 border-white/20 text-white rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 appearance-none">
+              <option value="" className="bg-purple-900">Tüm Eğitmenler ({egitmenOpsiyonlari.length})</option>
+              {egitmenOpsiyonlari.map(o => (
+                <option key={o.coreId} value={o.coreId} className="bg-purple-900">{o.ad} ({o.count})</option>
+              ))}
+            </select>
+          </SheetSection>
+
+          {/* Kategori */}
+          <SheetSection icon={Tag} title={`Kategori${kategoriSet.size > 0 ? ` (${kategoriSet.size} seçili)` : ''}`}>
+            <div className="flex flex-wrap gap-2">
+              {KATEGORILER.map(k => (
+                <SheetChip key={k} active={kategoriSet.has(k)}
+                  onClick={() => toggleKat(k)}
+                  color={kategoriSet.has(k) ? KATEGORI_RENK[k] : null}>
+                  {k}
+                </SheetChip>
+              ))}
+            </div>
+          </SheetSection>
+
+          {/* Favoriler toggle */}
+          {favoriCount > 0 && (
+            <SheetSection icon={Heart} title="">
+              <SheetChip active={sadeceFav}
+                onClick={() => { haptic(8); setSadeceFav(s => !s); }}
+                color={sadeceFav ? 'bg-pink-500 text-white' : null}>
+                <Heart className="w-3.5 h-3.5 inline mr-1" fill={sadeceFav ? 'currentColor' : 'none'} />
+                Sadece favorilerim ({favoriCount})
+              </SheetChip>
+            </SheetSection>
+          )}
+        </div>
+
+        {/* Footer: Sıfırla + Uygula */}
+        <div className="px-5 py-3 border-t border-white/10 flex gap-2 flex-shrink-0">
+          <button onClick={filtreleriTemizle}
+            className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl spring-tap text-sm inline-flex items-center justify-center gap-1.5">
+            <RotateCcw className="w-4 h-4" />Sıfırla
+          </button>
+          <button onClick={onUygula}
+            className="flex-[2] bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold py-3 rounded-xl spring-tap text-sm">
+            {filtrelenmisSayi} eğitimi göster
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SheetSection = ({ icon: Icon, title, children }) => (
+  <div>
+    {title && (
+      <div className="text-white/80 text-xs sm:text-sm font-bold mb-2 inline-flex items-center gap-1.5 uppercase tracking-wider">
+        {Icon && <Icon className="w-3.5 h-3.5" />}{title}
+      </div>
+    )}
+    {children}
+  </div>
+);
+
+const SheetChip = ({ active, onClick, color, children }) => (
+  <button onClick={onClick}
+    className={`px-3.5 py-2 rounded-full text-xs sm:text-sm font-semibold transition-all spring-tap min-h-[36px] ${
+      active
+        ? (color || 'bg-amber-400 text-gray-900 shadow-md')
+        : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+    }`}>
+    {children}
+  </button>
+);
+
+// ─── Video kartı (mobile compact + desktop grid) ─────────────────────────
+const VideoKart = ({ video: v, favori, izlendi, onToggleFav, onShare, onOynat }) => {
   const sureMetin = formatSure(v.sure);
   const playsMetin = formatPlays(v.plays);
+  const kategori = v.kategoriler?.[0];
+  const renkClass = kategori ? (KATEGORI_RENK[kategori] || 'bg-amber-400/80 text-gray-900') : '';
+
   return (
     <button onClick={onOynat}
       className="relative bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-400 rounded-xl overflow-hidden text-left transition-all hover-lift spring-tap group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
@@ -522,11 +748,17 @@ const VideoKart = ({ video: v, favori, izlendi, onToggleFav, onOynat }) => {
         )}
         {/* Sağ alt: süre */}
         {sureMetin && (
-          <div className="absolute bottom-2 right-2 bg-black/80 text-white text-[11px] font-semibold px-1.5 py-0.5 rounded">
+          <div className="absolute bottom-2 right-2 bg-black/85 text-white text-[11px] font-semibold px-1.5 py-0.5 rounded">
             {sureMetin}
           </div>
         )}
-        {/* Hover: play */}
+        {/* Sol alt: kategori chip */}
+        {kategori && (
+          <div className={`absolute bottom-2 left-2 ${renkClass} text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1 shadow-md`}>
+            <Tag className="w-2.5 h-2.5" />{kategori}
+          </div>
+        )}
+        {/* Hover: play overlay */}
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/50 transition-all">
           <div className="w-14 h-14 rounded-full bg-white/95 group-hover:bg-amber-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
             <Play className="w-7 h-7 text-purple-800 ml-0.5" fill="currentColor" />
@@ -534,34 +766,35 @@ const VideoKart = ({ video: v, favori, izlendi, onToggleFav, onOynat }) => {
         </div>
       </div>
       <div className="p-3">
-        <div className="flex items-start gap-2">
-          <h4 className="font-bold text-white text-sm line-clamp-2 mb-1.5 flex-1">{v.baslik}</h4>
-          <button onClick={onToggleFav} aria-label={favori ? 'Favoriden çıkar' : 'Favoriye ekle'}
-            className={`flex-shrink-0 p-1 rounded-full transition-all ${favori ? 'text-pink-400 hover:text-pink-300' : 'text-white/40 hover:text-pink-300'}`}>
-            <Heart className="w-4 h-4" fill={favori ? 'currentColor' : 'none'} />
-          </button>
-        </div>
+        <h4 className="font-bold text-white text-sm line-clamp-2 mb-1.5">{v.baslik}</h4>
         {v.egitmenAdlari?.length > 0 && (
           <div className="text-xs text-purple-200 mb-1.5 line-clamp-1">
             {v.egitmenAdlari.join(', ')}
           </div>
         )}
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-white/60">
-          {v.tarih && (
-            <span className="inline-flex items-center gap-1">
-              <Calendar className="w-3 h-3" />{v.tarih}
-            </span>
-          )}
-          {playsMetin && (
-            <span className="inline-flex items-center gap-1">
-              <Eye className="w-3 h-3" />{playsMetin}
-            </span>
-          )}
-          {v.kategoriler?.[0] && (
-            <span className="inline-flex items-center gap-1 text-amber-300">
-              <Tag className="w-3 h-3" />{v.kategoriler[0]}
-            </span>
-          )}
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-white/60">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            {v.tarih && (
+              <span className="inline-flex items-center gap-1">
+                <Calendar className="w-3 h-3" />{v.tarih}
+              </span>
+            )}
+            {playsMetin && (
+              <span className="inline-flex items-center gap-1">
+                <Eye className="w-3 h-3" />{playsMetin}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center gap-0.5">
+            <button onClick={onShare} aria-label="Paylaş"
+              className="p-1.5 -mr-1 rounded-full text-white/40 hover:text-amber-300 hover:bg-white/10 transition-all">
+              <Share2 className="w-4 h-4" />
+            </button>
+            <button onClick={onToggleFav} aria-label={favori ? 'Favoriden çıkar' : 'Favoriye ekle'}
+              className={`p-1.5 -mr-1 rounded-full transition-all ${favori ? 'text-pink-400 hover:text-pink-300' : 'text-white/40 hover:text-pink-300 hover:bg-white/10'}`}>
+              <Heart className="w-4 h-4" fill={favori ? 'currentColor' : 'none'} />
+            </button>
+          </div>
         </div>
       </div>
     </button>

@@ -5,6 +5,8 @@ import { LanguageProvider } from './context/LanguageContext';
 import HomePage from './pages/HomePage';
 import { trackPageView } from './utils/analytics';
 import LoadingProgress from './components/LoadingProgress';
+import BottomNav from './components/BottomNav';
+import { ToastProvider } from './components/Toast';
 
 // Code-split — public sayfalar dahil hepsi route-level lazy load
 // İlk yükleme: sadece HomePage indirilir, diğerleri kullanıcı navigasyonu ile
@@ -82,6 +84,7 @@ function AppRoutes() {
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </Suspense>
+      <BottomNav />
     </BrowserRouter>
   );
 }
@@ -91,7 +94,9 @@ function App() {
     <ErrorBoundary>
       <LanguageProvider>
         <DataProvider>
-          <AppRoutes />
+          <ToastProvider>
+            <AppRoutes />
+          </ToastProvider>
         </DataProvider>
       </LanguageProvider>
     </ErrorBoundary>

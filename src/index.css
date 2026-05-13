@@ -157,6 +157,22 @@
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+  /* ── Mobile bottom nav için body bottom padding ───────────── */
+  /* BottomNav yüksekliği ~64px + safe-area */
+  @media (max-width: 767px) {
+    body { padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)); }
+  }
+  .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
+  /* ── Bottom sheet slide-in ────────────────────────────────── */
+  .animate-slide-up {
+    animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
   /* ── Line clamp ──────────────────────────────────────────── */
   .line-clamp-1 {
     overflow: hidden;
