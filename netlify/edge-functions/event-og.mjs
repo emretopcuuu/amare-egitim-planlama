@@ -61,7 +61,7 @@ export default async (request, context) => {
 
     const aciklama = [
       `${tarih} ${gun}${saat ? ` - ${saat}` : ''}`,
-      egitmen ? `Konuşmacı: ${egitmen}` : '',
+      egitmen ? `Eğitmen: ${egitmen}` : '',
       egitim.aciklama || 'One Team eğitim takvimi - Amare Global',
     ].filter(Boolean).join(' • ').slice(0, 200);
 

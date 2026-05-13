@@ -1,10 +1,14 @@
-// Zengin tam ekran konuşmacı detay modal
+// Zengin tam ekran eğitmen detay modal
 // Mobilde otomatik tam ekran, desktop'ta büyük sheet
 import React, { useEffect, useMemo, useState } from 'react';
-import { X, User, Mail, Calendar, Clock, MapPin, Wifi, ExternalLink, Tag, UserPlus } from 'lucide-react';
+import { X, User, Mail, Calendar, Clock, MapPin, Wifi, ExternalLink, Tag, UserPlus, Play, Video } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 import { Link } from 'react-router-dom';
 import KonusmaciTakipModal from './KonusmaciTakipModal';
+import VideoOynatModal from './VideoOynatModal';
+import { db } from '../utils/firebase';
+import { collection, query, where, orderBy, limit as fbLimit, getDocs } from 'firebase/firestore';
+import { makeCoreId } from '../context/DataContext';
 
 const parseTarih = (t) => {
   if (!t) return null;
@@ -24,8 +28,11 @@ const splitEgitmen = (e) => {
 
 const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) => {
   const { t, locale, tDynamic } = useTranslation();
-  const [tab, setTab] = useState('gelecek'); // 'gelecek' | 'gecmis' | 'bio'
+  const [tab, setTab] = useState('gelecek'); // 'gelecek' | 'gecmis' | 'kayitli' | 'bio'
   const [takipModal, setTakipModal] = useState(false);
+  const [kayitliVideolar, setKayitliVideolar] = useState(null); // null = henüz yüklenmedi
+  const [kayitliLoading, setKayitliLoading] = useState(false);
+  const [oynatilanVideo, setOynatilanVideo] = useState(null);
 
   // ESC ile kapan
   useEffect(() => {
@@ -55,6 +62,52 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
   bugun.setHours(0, 0, 0, 0);
   const gelecek = ilgiliEgitimler.filter(e => e.d >= bugun).sort((a, b) => a.d - b.d);
   const gecmis = ilgiliEgitimler.filter(e => e.d < bugun).sort((a, b) => b.d - a.d);
+
+  // Bu eğitmenin coreId'si — kayitli_egitimler query'si için
+  const egitmenCoreId = useMemo(() => makeCoreId(ad || ''), [ad]);
+
+  // Kayıtlı eğitimler — sekmeye basılınca lazy fetch (24h cache)
+  useEffect(() => {
+    if (tab !== 'kayitli' || kayitliVideolar !== null || !egitmenCoreId) return;
+    const cacheKey = `amare_videos_${egitmenCoreId}_v1`;
+    const TTL = 24 * 60 * 60 * 1000;
+
+    // Cache check
+    try {
+      const cached = localStorage.getItem(cacheKey);
+      if (cached) {
+        const { ts, data } = JSON.parse(cached);
+        if (Date.now() - ts < TTL && Array.isArray(data)) {
+          setKayitliVideolar(data);
+          return;
+        }
+      }
+    } catch {}
+
+    setKayitliLoading(true);
+    (async () => {
+      try {
+        const q = query(
+          collection(db, 'kayitli_egitimler'),
+          where('egitmenler', 'array-contains', egitmenCoreId),
+          where('kayeneFiltrelendi', '==', false),
+          orderBy('tarih', 'desc'),
+          fbLimit(50)
+        );
+        const snap = await getDocs(q);
+        const videos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setKayitliVideolar(videos);
+        try {
+          localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: videos }));
+        } catch {}
+      } catch (err) {
+        console.warn('[kayitli_egitimler] fetch hatası:', err.message);
+        setKayitliVideolar([]); // hata durumunda boş — tekrar denemek için cache yazma
+      } finally {
+        setKayitliLoading(false);
+      }
+    })();
+  }, [tab, egitmenCoreId, kayitliVideolar]);
 
   if (!ad) return null;
 
@@ -131,6 +184,7 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
           {[
             { key: 'gelecek', label: `Gelecek (${gelecek.length})`, show: true },
             { key: 'gecmis', label: `Geçmiş (${gecmis.length})`, show: gecmis.length > 0 },
+            { key: 'kayitli', label: 'Kayıtlı Eğitimler', show: true },
             { key: 'bio', label: 'Biyografi', show: !!kayit?.biyografi },
           ].filter(x => x.show).map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
@@ -157,6 +211,55 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
           {tab === 'gecmis' && (
             <div className="space-y-2">{gecmis.map(renderEgitimItem)}</div>
           )}
+          {tab === 'kayitli' && (
+            <>
+              {kayitliLoading && (
+                <div className="text-center py-12 text-gray-400">
+                  <Video className="w-12 h-12 mx-auto mb-2 opacity-40 animate-pulse" />
+                  <p>Kayıtlı eğitimler yükleniyor...</p>
+                </div>
+              )}
+              {!kayitliLoading && kayitliVideolar?.length === 0 && (
+                <div className="text-center py-12 text-gray-400">
+                  <Video className="w-16 h-16 mx-auto mb-3 opacity-30" />
+                  <p>Bu eğitmen için henüz kayıtlı eğitim yok.</p>
+                </div>
+              )}
+              {!kayitliLoading && kayitliVideolar?.length > 0 && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {kayitliVideolar.map(v => (
+                    <button key={v.id} onClick={() => setOynatilanVideo(v)}
+                      className="bg-white border border-gray-200 hover:border-purple-400 hover:shadow-md rounded-xl overflow-hidden text-left transition-all group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+                      <div className="relative aspect-video bg-gray-100">
+                        {v.thumbnailUrl ? (
+                          <img src={v.thumbnailUrl} alt={v.baslik} loading="lazy"
+                            className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center">
+                            <Video className="w-10 h-10 text-gray-300" />
+                          </div>
+                        )}
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-all">
+                          <div className="w-12 h-12 rounded-full bg-white/90 group-hover:bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                            <Play className="w-6 h-6 text-purple-700 ml-0.5" fill="currentColor" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <h4 className="font-bold text-gray-900 text-sm line-clamp-2 mb-1">{v.baslik}</h4>
+                        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                          {v.tarih && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{v.tarih}</span>}
+                          {v.kategoriler?.length > 0 && (
+                            <span className="inline-flex items-center gap-1 text-purple-600"><Tag className="w-3 h-3" />{v.kategoriler[0]}</span>
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
           {tab === 'bio' && kayit?.biyografi && (
             <div className="prose max-w-none">
               <p className="text-gray-700 leading-relaxed whitespace-pre-line">{kayit.biyografi}</p>
@@ -166,6 +269,7 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
       </div>
 
       {takipModal && <KonusmaciTakipModal konusmaciAd={displayAd} onClose={() => setTakipModal(false)} />}
+      {oynatilanVideo && <VideoOynatModal video={oynatilanVideo} onClose={() => setOynatilanVideo(null)} />}
     </div>
   );
 };

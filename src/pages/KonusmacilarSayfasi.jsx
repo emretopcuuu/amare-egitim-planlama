@@ -99,13 +99,13 @@ const KonusmacilarSayfasi = () => {
             </button>
             <LanguageSwitcher />
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display">Konuşmacılar</h1>
-          <p className="text-purple-200 mt-1">{tumKonusmacilar.length} konuşmacı, {takvim.length} eğitim</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display">Eğitmenler</h1>
+          <p className="text-purple-200 mt-1">{tumKonusmacilar.length} eğitmen, {takvim.length} eğitim</p>
           {/* Arama */}
           <div className="relative mt-4">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />
             <input type="text" value={arama} onChange={e => setArama(e.target.value)}
-              placeholder="Konuşmacı ara..."
+              placeholder="Eğitmen ara..."
               className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-12 pr-10 py-3 text-base focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
             {arama && (
               <button onClick={() => setArama('')} aria-label="Aramayı temizle"
@@ -123,7 +123,7 @@ const KonusmacilarSayfasi = () => {
           {filtrelenmis.length === 0 ? (
             <div className="text-center py-16 text-white/50">
               <User className="w-20 h-20 mx-auto mb-3 opacity-30" />
-              <p className="text-lg">Aradığınız konuşmacı bulunamadı</p>
+              <p className="text-lg">Aradığınız eğitmen bulunamadı</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">

@@ -232,7 +232,7 @@ const EgitimDetay = () => {
               {/* Konuşmacılar — tıklanınca tam ekran modal açılır */}
               {konusmaciKayitlari.length > 0 && (
                 <div className="mb-6">
-                  <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Konuşmacılar</h2>
+                  <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Eğitmenler</h2>
                   <div className="flex flex-wrap gap-4">
                     {konusmaciKayitlari.map(({ ad, kayit }) => (
                       <button key={ad} onClick={() => setKonusmaciModal({ ad, kayit })}
@@ -283,7 +283,7 @@ const EgitimDetay = () => {
           {/* Aynı konuşmacının diğer eğitimleri */}
           {ayniKonusmaciEgitimleri.length > 0 && (
             <div className="mt-6 bg-white/5 border border-white/10 rounded-2xl p-4 sm:p-6 backdrop-blur-sm">
-              <h2 className="text-amber-300 text-sm font-bold uppercase tracking-wider mb-3 gold-text-glow">Aynı konuşmacıdan</h2>
+              <h2 className="text-amber-300 text-sm font-bold uppercase tracking-wider mb-3 gold-text-glow">Aynı eğitmenden</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 {ayniKonusmaciEgitimleri.map(e => (
                   <Link key={e.id} to={`/e/${e.id}`}

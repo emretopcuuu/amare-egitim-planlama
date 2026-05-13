@@ -53,7 +53,7 @@ export const generateICS = (egitim) => {
 
   const zoomUrl = extractZoomUrl(egitim.yer);
   const aciklama = [
-    egitim.egitmen ? `Konuşmacı: ${egitim.egitmen}` : '',
+    egitim.egitmen ? `Eğitmen: ${egitim.egitmen}` : '',
     egitim.kategori ? `Kategori: ${egitim.kategori}` : '',
     zoomUrl ? `\n${zoomUrl}` : '',
     egitim.aciklama || '',
@@ -115,7 +115,7 @@ export const googleCalendarUrl = (egitim) => {
   };
   const zoomUrl = extractZoomUrl(egitim.yer);
   const details = [
-    egitim.egitmen ? `Konuşmacı: ${egitim.egitmen}` : '',
+    egitim.egitmen ? `Eğitmen: ${egitim.egitmen}` : '',
     egitim.kategori ? `Kategori: ${egitim.kategori}` : '',
     zoomUrl ? zoomUrl : '',
     egitim.aciklama || '',
@@ -136,7 +136,7 @@ export const outlookCalendarUrl = (egitim) => {
   if (!zaman) return null;
   const zoomUrl = extractZoomUrl(egitim.yer);
   const body = [
-    egitim.egitmen ? `Konuşmacı: ${egitim.egitmen}` : '',
+    egitim.egitmen ? `Eğitmen: ${egitim.egitmen}` : '',
     egitim.kategori ? `Kategori: ${egitim.kategori}` : '',
     zoomUrl ? zoomUrl : '',
   ].filter(Boolean).join('\n');

@@ -107,6 +107,22 @@ service cloud.firestore {
       allow read, list, update, delete: if isAdmin();
     }
 
+    // Kayıtlı eğitimler (Vimeo videoları + transcript + AI kategori)
+    // Herkes görür (kataloga read), sadece admin/Netlify Function yazar
+    // Netlify Function firebase-admin SDK ile auth bypass eder
+    //
+    // GEREKLİ COMPOSITE INDEXES (Firebase Console → Indexes → Composite, manuel):
+    //   1) collection: kayitli_egitimler
+    //      fields: egitmenler (array-contains) + kayeneFiltrelendi (==) + tarih (desc)
+    //   2) collection: kayitli_egitimler
+    //      fields: kategoriler (array-contains) + kayeneFiltrelendi (==) + tarih (desc)
+    //   3) collection: kayitli_egitimler  (admin "eşleşmemiş" listesi için)
+    //      fields: egitmenler (array-contains-any) + olusturulmaTarihi (desc)
+    match /kayitli_egitimler/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Diğer her koleksiyon — varsayılan: tamamen kapalı
     match /{document=**} {
       allow read, write: if false;

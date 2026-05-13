@@ -59,7 +59,7 @@ ETKİNLİK:
 - Eğitim: ${egitim.egitim}
 - Tarih: ${egitim.tarih} ${egitim.gun || ''}
 - Saat: ${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}
-- Platform: ${egitim.yer || 'ZOOM'}${egitim.egitmen ? '\n- Konuşmacı: ' + egitim.egitmen : ''}${egitim.kategori ? '\n- Kategori: ' + egitim.kategori : ''}`;
+- Platform: ${egitim.yer || 'ZOOM'}${egitim.egitmen ? '\n- Eğitmen: ' + egitim.egitmen : ''}${egitim.kategori ? '\n- Kategori: ' + egitim.kategori : ''}`;
 
     try {
       const body = {
@@ -185,7 +185,7 @@ ETKİNLİK:
                       {/* Konuşmacı iletişim */}
                       {konusmacilar.some(k => k.egitmen) && (
                         <div>
-                          <div className="text-sm font-semibold text-gray-700 mb-2">Konuşmacı İletişim</div>
+                          <div className="text-sm font-semibold text-gray-700 mb-2">Eğitmen İletişim</div>
                           <div className="space-y-2">
                             {konusmacilar.map(({ ad, egitmen: eg }, idx) => {
                               if (!eg) return null;

@@ -64,7 +64,7 @@ const RaporSayfasi = React.forwardRef(({ egitimler, ay, yil }, ref) => {
           { label: 'Toplam Eğitim', value: egitimler.length, color: '#7C3AED', bg: '#FAF5FF' },
           { label: 'Tamamlanan', value: tamamlanan, color: '#059669', bg: '#ECFDF5' },
           { label: 'Toplam Katılım', value: toplamKatilim, color: '#2563EB', bg: '#EFF6FF' },
-          { label: 'Konuşmacı', value: Object.keys(konusmaciStat).length, color: '#D97706', bg: '#FFFBEB' },
+          { label: 'Eğitmen', value: Object.keys(konusmaciStat).length, color: '#D97706', bg: '#FFFBEB' },
         ].map(({ label, value, color, bg }, i) => (
           <div key={i} style={{
             flex: 1, padding: '22px 16px', textAlign: 'center', background: bg,
@@ -106,7 +106,7 @@ const RaporSayfasi = React.forwardRef(({ egitimler, ay, yil }, ref) => {
                 </colgroup>
                 <thead>
                   <tr style={{ background: '#F5F3FF' }}>
-                    {['Gün / Tarih', 'Saat', 'Eğitim Adı', 'Konuşmacı', 'Kategori', 'Katılım', 'Durum'].map(h => (
+                    {['Gün / Tarih', 'Saat', 'Eğitim Adı', 'Eğitmen', 'Kategori', 'Katılım', 'Durum'].map(h => (
                       <th key={h} style={{
                         padding: '7px 6px', textAlign: 'left', fontWeight: 700,
                         color: '#5B21B6', borderBottom: '2px solid #DDD6FE',
@@ -267,7 +267,7 @@ const RaporModal = ({ takvim, onClose }) => {
             <div><div className="text-xl font-bold text-amare-purple">{ayEgitimleri.length}</div><div className="text-xs text-gray-500">Eğitim</div></div>
             <div><div className="text-xl font-bold text-green-600">{tamamlanan}</div><div className="text-xs text-gray-500">Tamamlanan</div></div>
             <div><div className="text-xl font-bold text-blue-600">{toplamKatilim}</div><div className="text-xs text-gray-500">Katılım</div></div>
-            <div><div className="text-xl font-bold text-orange-500">{[...new Set(ayEgitimleri.flatMap(e => (e.egitmen||'').split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜ])/).map(n=>n.trim()).filter(n=>n.length>1)))].length}</div><div className="text-xs text-gray-500">Konuşmacı</div></div>
+            <div><div className="text-xl font-bold text-orange-500">{[...new Set(ayEgitimleri.flatMap(e => (e.egitmen||'').split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜ])/).map(n=>n.trim()).filter(n=>n.length>1)))].length}</div><div className="text-xs text-gray-500">Eğitmen</div></div>
           </div>
 
           <button onClick={handlePdfIndir} disabled={yukleniyor || ayEgitimleri.length === 0}

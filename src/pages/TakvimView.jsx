@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss } from 'lucide-react';
+import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import EventActions from '../components/EventActions';
@@ -776,7 +776,11 @@ const TakvimView = () => {
                 <LanguageSwitcher />
                 <button onClick={()=>navigate('/konusmacilar')}
                   className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
-                  <User className="w-4 h-4" /><span className="hidden sm:inline">Konuşmacılar</span><span className="sm:hidden">Konuşmacı</span>
+                  <User className="w-4 h-4" /><span className="hidden sm:inline">Eğitmenler</span><span className="sm:hidden">Eğitmen</span>
+                </button>
+                <button onClick={()=>navigate('/kayitli-egitimler')}
+                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
+                  <Video className="w-4 h-4" /><span className="hidden sm:inline">Kayıtlı Eğitimler</span><span className="sm:hidden">Kayıt</span>
                 </button>
                 <button onClick={exportPDF} disabled={pdfYukleniyor} className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-xs sm:text-sm spring-tap">
                   {pdfYukleniyor?<><Loader2 className="w-4 h-4 animate-spin" />{t('cal_preparing')}</>:<><Download className="w-4 h-4" />{t('cal_download_pdf')}</>}
@@ -956,7 +960,7 @@ const TakvimView = () => {
                 <UsersIcon className="w-3.5 h-3.5 text-purple-300 flex-shrink-0" />
                 <select value={konusmaciFiltre || ''} onChange={e=>setKonusmaciFiltre(e.target.value || null)}
                   className="bg-white/10 backdrop-blur border border-white/20 text-white text-xs rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-amber-400 max-w-[280px]">
-                  <option value="" className="bg-purple-900">Tüm Konuşmacılar ({tumKonusmacilar.length})</option>
+                  <option value="" className="bg-purple-900">Tüm Eğitmenler ({tumKonusmacilar.length})</option>
                   {tumKonusmacilar.map(k => <option key={k} value={k} className="bg-purple-900">{k}</option>)}
                 </select>
                 <a href="/api/ical" target="_blank" rel="noopener noreferrer" title="Google Calendar / Apple Calendar / Outlook aboneliği — otomatik senkronize"

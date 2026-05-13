@@ -11,6 +11,7 @@ import LoadingProgress from './components/LoadingProgress';
 const TakvimView = lazy(() => import('./pages/TakvimView'));
 const EgitimDetay = lazy(() => import('./pages/EgitimDetay'));
 const KonusmacilarSayfasi = lazy(() => import('./pages/KonusmacilarSayfasi'));
+const KayitliEgitimlerSayfasi = lazy(() => import('./pages/KayitliEgitimlerSayfasi'));
 const EgitmenBasvuru = lazy(() => import('./pages/EgitmenBasvuru'));
 // Admin sayfaları — public kullanıcı hiç indirmez (en büyük kazanç)
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
@@ -68,6 +69,7 @@ function AppRoutes() {
           <Route path="/takvim" element={<TakvimView />} />
           <Route path="/e/:id" element={<EgitimDetay />} />
           <Route path="/konusmacilar" element={<KonusmacilarSayfasi />} />
+          <Route path="/kayitli-egitimler" element={<KayitliEgitimlerSayfasi />} />
           <Route path="/admin-giris" element={<AdminLogin />} />
           <Route
             path="/admin"

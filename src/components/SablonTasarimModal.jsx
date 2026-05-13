@@ -73,7 +73,7 @@ function renderKlasik(ctx, color) {
   [
     { icon: '📅', label: 'Tarih & Saat', y: 330 },
     { icon: '📍', label: 'Yer / Platform', y: 470 },
-    { icon: '🎤', label: 'Konuşmacı', y: 610 },
+    { icon: '🎤', label: 'Eğitmen', y: 610 },
   ].forEach(({ icon, label, y }) => {
     rrPath(ctx, 60, y, 700, 100, 16);
     ctx.fillStyle = '#F5F3FF';
@@ -131,7 +131,7 @@ function renderKoyu(ctx, color) {
   ctx.fillStyle = dl;
   ctx.fillRect(60, 368, 520, 4);
 
-  ['📅  Tarih & Saat', '📍  Yer / Platform', '🎤  Konuşmacı'].forEach((info, i) => {
+  ['📅  Tarih & Saat', '📍  Yer / Platform', '🎤  Eğitmen'].forEach((info, i) => {
     txt(ctx, info, 60, 450 + i * 95, '34px Arial', 'rgba(255,255,255,0.65)', 'left');
     if (i < 2) {
       ctx.fillStyle = 'rgba(255,255,255,0.07)';
@@ -194,7 +194,7 @@ function renderGradient(ctx, color) {
   ctx.stroke();
   txt(ctx, '📷', W / 2, 392, '54px Arial', 'rgba(255,255,255,0.5)', 'center');
 
-  ['📅  Tarih & Saat', '📍  Platform', '🎤  Konuşmacı'].forEach((info, i) => {
+  ['📅  Tarih & Saat', '📍  Platform', '🎤  Eğitmen'].forEach((info, i) => {
     rrPath(ctx, 100, 520 + i * 100, W - 200, 78, 16);
     ctx.fillStyle = 'rgba(255,255,255,0.10)';
     ctx.fill();
@@ -235,10 +235,10 @@ function renderMinimal(ctx, color) {
   ctx.setLineDash([16, 10]);
   ctx.stroke();
   ctx.setLineDash([]);
-  txt(ctx, '📷 Konuşmacı', W - 232, 265, '26px Arial', color + '88', 'center');
+  txt(ctx, '📷 Eğitmen', W - 232, 265, '26px Arial', color + '88', 'center');
   txt(ctx, 'Fotoğrafı', W - 232, 300, '26px Arial', color + '88', 'center');
 
-  ['📅  Tarih & Saat', '📍  Yer / Platform', '🎤  Konuşmacı'].forEach((info, i) => {
+  ['📅  Tarih & Saat', '📍  Yer / Platform', '🎤  Eğitmen'].forEach((info, i) => {
     txt(ctx, info, 60, 455 + i * 95, '36px Arial', '#4A5568', 'left');
     if (i < 2) {
       ctx.fillStyle = '#E2E8F0';

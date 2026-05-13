@@ -12,12 +12,14 @@ import {
   MessageCircle, QrCode, Check, Copy, Tag, Filter,
   CheckCircle2, Circle, BarChart2, FileText, Bell, Palette,
   Users2, TrendingUp, ExternalLink as CanvaIcon, Bell as BellIcon,
+  Video, Play,
 } from 'lucide-react';
 import GorselOlusturModal from '../components/GorselOlusturModal';
 import DuyuruModal from '../components/DuyuruModal';
 import HatirlatmaModal from '../components/HatirlatmaModal';
 import SablonTasarimModal from '../components/SablonTasarimModal';
 import RaporModal from '../components/RaporModal';
+import AdminKayitliEgitimlerTab from '../components/AdminKayitliEgitimlerTab';
 import { gorselOlustur } from '../utils/gorselOlustur';
 
 // ── Sabitler ────────────────────────────────────────────────────────────────
@@ -80,7 +82,7 @@ const EgitimFormAlanlari = ({ form, setForm }) => (
         <input type="text" value={form.sure} onChange={e => setForm(f => ({ ...f, sure: e.target.value }))} placeholder="60 dk" className={inputCls} />
       </FormField>
     </div>
-    <FormField label="Konuşmacı">
+    <FormField label="Eğitmen">
       <input type="text" value={form.egitmen} onChange={e => setForm(f => ({ ...f, egitmen: e.target.value }))} className={inputCls} />
     </FormField>
     <FormField label="Yer / Platform">
@@ -382,7 +384,7 @@ const AdminPanel = () => {
         'Hafta': e.hafta, 'Gün': e.gun, 'Tarih': e.tarih,
         'Başlangıç': e.saat, 'Bitiş': e.bitisSaati, 'Süre': e.sure,
         'Eğitim': e.egitim, 'Kategori': e.kategori || '',
-        'Konuşmacı': e.egitmen, 'Yer': e.yer,
+        'Eğitmen': e.egitmen, 'Yer': e.yer,
         'Açıklama': e.aciklama || '',
         'Tamamlandı': e.tamamlandi ? 'Evet' : 'Hayır',
       }));
@@ -901,7 +903,8 @@ const AdminPanel = () => {
             {[
               { key: 'basvurular', label: `Başvurular (${egitmenler.length})`, Icon: Users },
               { key: 'takvim', label: `Takvim (${takvim.length})`, Icon: Calendar },
-              { key: 'konusmacilar', label: `Konuşmacılar (${benzersizKonusmacilar.length})`, Icon: UserCircle },
+              { key: 'konusmacilar', label: `Eğitmenler (${benzersizKonusmacilar.length})`, Icon: UserCircle },
+              { key: 'kayitli', label: 'Kayıtlı Eğitimler', Icon: Video },
               { key: 'ayarlar', label: 'Ayarlar', Icon: Settings },
             ].map(({ key, label, Icon }) => (
               <button key={key} onClick={() => setActiveTab(key)}
@@ -1095,7 +1098,7 @@ const AdminPanel = () => {
 
                       {/* Top 5 konuşmacı */}
                       <div className="bg-white border border-gray-100 rounded-xl p-4">
-                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">En Aktif Konuşmacılar</div>
+                        <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">En Aktif Eğitmenler</div>
                         <div className="space-y-2">
                           {topKon.map((k, i) => (
                             <div key={k.ad} className="flex items-center gap-2">
@@ -1119,7 +1122,7 @@ const AdminPanel = () => {
                     <div className="relative flex-1 min-w-48">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                       <input value={aramaMetni} onChange={e => setAramaMetni(e.target.value)}
-                        placeholder="Eğitim adı, konuşmacı, tarih..."
+                        placeholder="Eğitim adı, eğitmen, tarih..."
                         className="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
                     </div>
                     {/* Görünüm toggle */}
@@ -1292,7 +1295,7 @@ const AdminPanel = () => {
             <div className="bg-white rounded-lg shadow p-6 mb-4">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                  <h2 className="text-2xl font-bold text-gray-800 mb-1">Konuşmacılar</h2>
+                  <h2 className="text-2xl font-bold text-gray-800 mb-1">Eğitmenler</h2>
                   <p className="text-gray-500 text-sm">Fotoğraf ve profil bilgilerini düzenleyebilirsiniz.</p>
                 </div>
                 <button onClick={handleBasvuruLinkKopyala}
@@ -1306,7 +1309,7 @@ const AdminPanel = () => {
                   type="text"
                   value={konusmaciArama}
                   onChange={e => setKonusmaciArama(e.target.value)}
-                  placeholder="Konuşmacı ara..."
+                  placeholder="Eğitmen ara..."
                   className="w-full border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30"
                 />
                 {konusmaciArama && (
@@ -1320,7 +1323,7 @@ const AdminPanel = () => {
             {benzersizKonusmacilar.length === 0 ? (
               <div className="bg-white rounded-lg shadow p-8 text-center">
                 <UserCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Takvimde henüz konuşmacı yok</p>
+                <p className="text-gray-500">Takvimde henüz eğitmen yok</p>
               </div>
             ) : (
               <>
@@ -1416,6 +1419,9 @@ const AdminPanel = () => {
             )}
           </div>
         )}
+
+        {/* ===== KAYITLI EĞİTİMLER (Vimeo videoları) ===== */}
+        {activeTab === 'kayitli' && <AdminKayitliEgitimlerTab />}
 
         {/* ===== AYARLAR ===== */}
         {activeTab === 'ayarlar' && (
@@ -1603,7 +1609,7 @@ const AdminPanel = () => {
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b">
               <div>
-                <h2 className="text-xl font-bold text-gray-800">Konuşmacı Bilgileri</h2>
+                <h2 className="text-xl font-bold text-gray-800">Eğitmen Bilgileri</h2>
                 <p className="text-sm text-gray-500 mt-0.5">{bilgiForm.ad || bilgiModal.ad}</p>
               </div>
               <button onClick={() => setBilgiModal(null)} className="text-gray-400 hover:text-gray-600"><X className="w-6 h-6" /></button>
@@ -1611,7 +1617,7 @@ const AdminPanel = () => {
             <div className="p-6 space-y-4">
               <FormField label="İsim">
                 <input type="text" value={bilgiForm.ad} onChange={e => setBilgiForm(f => ({ ...f, ad: e.target.value }))}
-                  placeholder="Konuşmacı adı" className={inputCls} />
+                  placeholder="Eğitmen adı" className={inputCls} />
               </FormField>
               <FormField label="Unvan / Pozisyon">
                 <input type="text" value={bilgiForm.unvan} onChange={e => setBilgiForm(f => ({ ...f, unvan: e.target.value }))}

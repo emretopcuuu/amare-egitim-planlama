@@ -77,7 +77,7 @@ export default async (request) => {
 
       const zoomUrl = extractZoomUrl(e.yer);
       const desc = [
-        e.egitmen ? `Konuşmacı: ${e.egitmen}` : '',
+        e.egitmen ? `Eğitmen: ${e.egitmen}` : '',
         e.kategori ? `Kategori: ${e.kategori}` : '',
         zoomUrl || '',
         `Detaylar: https://egitimtakvimi.oneteamglobal.ai/takvim?id=${e.id}`,

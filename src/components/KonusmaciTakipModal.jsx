@@ -74,7 +74,7 @@ const KonusmaciTakipModal = ({ konusmaciAd, onClose }) => {
                 <UserPlus className="w-6 h-6 text-purple-600" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-gray-800">Konuşmacıyı Takip Et</h3>
+                <h3 className="text-lg font-bold text-gray-800">Eğitmeni Takip Et</h3>
                 <p className="text-sm text-gray-500">{konusmaciAd}</p>
               </div>
             </div>

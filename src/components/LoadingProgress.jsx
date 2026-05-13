@@ -5,7 +5,7 @@ import { Loader2, Sparkles } from 'lucide-react';
 
 const LOADING_TIPS = [
   'Eğitim takvimi yükleniyor...',
-  'Konuşmacılar hazırlanıyor...',
+  'Eğitmenler hazırlanıyor...',
   'Yaklaşan eğitimler getiriliyor...',
   'Son güncellemeler kontrol ediliyor...',
   'Az kaldı, neredeyse hazır...',

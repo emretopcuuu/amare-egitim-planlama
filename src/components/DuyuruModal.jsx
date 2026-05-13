@@ -20,7 +20,7 @@ ETKİNLİK BİLGİLERİ:
 - Eğitim Adı: ${egitim.egitim}
 - Tarih: ${egitim.tarih} ${egitim.gun || ''}
 - Saat: ${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}
-- Platform/Yer: ${egitim.yer || 'ZOOM'}${egitim.egitmen ? '\n- Konuşmacı: ' + egitim.egitmen : ''}${egitim.kategori ? '\n- Kategori: ' + egitim.kategori : ''}${egitim.aciklama ? '\n- Açıklama: ' + egitim.aciklama : ''}`;
+- Platform/Yer: ${egitim.yer || 'ZOOM'}${egitim.egitmen ? '\n- Eğitmen: ' + egitim.egitmen : ''}${egitim.kategori ? '\n- Kategori: ' + egitim.kategori : ''}${egitim.aciklama ? '\n- Açıklama: ' + egitim.aciklama : ''}`;
 
     try {
       const body = {
