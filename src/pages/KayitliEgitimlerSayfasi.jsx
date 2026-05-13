@@ -110,10 +110,8 @@ const KayitliEgitimlerSayfasi = () => {
         map.get(cid).count++;
       });
     }
-    return [...map.values()].sort((a, b) => {
-      if (b.count !== a.count) return b.count - a.count;
-      return a.ad.localeCompare(b.ad, 'tr-TR');
-    });
+    // Alfabetik sıra (Türkçe collation)
+    return [...map.values()].sort((a, b) => a.ad.localeCompare(b.ad, 'tr-TR'));
   }, [tumVideolar]);
 
   // Combined filter: kategori + dil + eğitmen + arama
