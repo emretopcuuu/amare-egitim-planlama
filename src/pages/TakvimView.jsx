@@ -630,23 +630,10 @@ const TakvimView = () => {
           </div>
         </div>
 
-        {/* Mobil Story Şeridi — önümüzdeki 14 gün */}
+        {/* Konuşmacı Şeridi — en çok eğitimi olan ilk, tıkla → konuşmacı modal */}
         <div className="px-4 pt-2">
           <div className="container mx-auto max-w-7xl">
-            <StoryStrip takvim={takvim} konusmacilar={konusmacilar||[]}
-              onDayClick={(egitimId) => {
-                setTimeout(() => {
-                  const el = document.getElementById(`egitim-${egitimId}`);
-                  if (el) {
-                    let p = el.parentElement;
-                    while (p && p !== document.body) {
-                      if (p.tagName === 'DETAILS' && !p.open) p.open = true;
-                      p = p.parentElement;
-                    }
-                    requestAnimationFrame(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }));
-                  }
-                }, 100);
-              }} />
+            <StoryStrip takvim={takvim} konusmacilar={konusmacilar||[]} />
           </div>
         </div>
 
