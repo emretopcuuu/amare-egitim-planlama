@@ -119,20 +119,18 @@ const KayitliEgitimlerSayfasi = () => {
             )}
           </div>
 
-          {/* Kategori chip'leri (yatay scroll mobilde) */}
-          <div className="mt-4 -mx-4 px-4 overflow-x-auto scrollbar-hide">
-            <div className="flex gap-2 pb-1 min-w-max">
-              {KATEGORILER.map(k => (
-                <button key={k} onClick={() => setKategori(k)}
-                  className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
-                    kategori === k
-                      ? 'bg-amber-400 text-gray-900 shadow-md'
-                      : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                  }`}>
-                  {k}
-                </button>
-              ))}
-            </div>
+          {/* Kategori chip'leri — flex-wrap ile birden fazla satıra yayılır */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            {KATEGORILER.map(k => (
+              <button key={k} onClick={() => setKategori(k)}
+                className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
+                  kategori === k
+                    ? 'bg-amber-400 text-gray-900 shadow-md'
+                    : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                }`}>
+                {k}
+              </button>
+            ))}
           </div>
         </div>
       </div>
