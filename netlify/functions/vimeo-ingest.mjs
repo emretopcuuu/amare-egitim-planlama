@@ -218,9 +218,12 @@ export default async (req) => {
     const videos = data.data || [];
     console.log(`[vimeo-ingest] page ${startPage}: ${videos.length} videos`);
 
-    // Batch write (Firestore max 500/batch)
+    // Batch write — Firestore commit hard limit ~11.5 MB / 500 doc
     let batch = db.batch();
     let batchCount = 0;
+    let batchBytes = 0;
+    const BATCH_BYTE_BUDGET = 7_500_000;
+    const BATCH_DOC_LIMIT = 100;
 
     for (const video of videos) {
       if (totalIngested >= limit) break;
@@ -247,6 +250,7 @@ export default async (req) => {
             guncellemeTarihi: admin.firestore.FieldValue.serverTimestamp(),
           }, { merge: true });
           batchCount++;
+          batchBytes += 500;
         }
         continue;
       }
@@ -276,11 +280,13 @@ export default async (req) => {
         const ref = db.collection('kayitli_egitimler').doc(vimeoId);
         batch.set(ref, doc, { merge: true });
         batchCount++;
-        // Firestore batch max 500
-        if (batchCount >= 400) {
+        const docBytes = (doc.transcript?.length || 0) * 1.5 + (doc.aciklama?.length || 0) + (doc.baslik?.length || 0) + 500;
+        batchBytes += docBytes;
+        if (batchCount >= BATCH_DOC_LIMIT || batchBytes >= BATCH_BYTE_BUDGET) {
           await batch.commit();
           batch = db.batch();
           batchCount = 0;
+          batchBytes = 0;
         }
       }
 

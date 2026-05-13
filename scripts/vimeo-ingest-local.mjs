@@ -215,6 +215,10 @@ async function main() {
 
   let batch = db.batch();
   let batchCount = 0;
+  let batchBytes = 0;
+  // Firestore commit hard limit: ~11.5 MB. Safe budget: 7.5 MB.
+  const BATCH_BYTE_BUDGET = 7_500_000;
+  const BATCH_DOC_LIMIT = 100;
 
   for (const vimeoId of transcriptKeys) {
     if (totalIngested >= LIMIT) break;
@@ -240,6 +244,7 @@ async function main() {
           guncellemeTarihi: admin.firestore.FieldValue.serverTimestamp(),
         }, { merge: true });
         batchCount++;
+        batchBytes += 500; // dışlanan kayıtlar küçük
       }
       if (DRY_RUN && sample.length < 20) {
         sample.push({ vimeoId, title: baslik, status: `EXCLUDE:${excludeReason}` });
@@ -296,11 +301,15 @@ async function main() {
       }
       batch.set(db.collection('kayitli_egitimler').doc(vimeoId), doc, { merge: true });
       batchCount++;
-      if (batchCount >= 400) {
+      // Byte tahmini: transcript + diğer alanlar; UTF-8 için en kötü ~3x ama avg 1.5x
+      const docBytes = (doc.transcript?.length || 0) * 1.5 + (doc.aciklama?.length || 0) + (doc.baslik?.length || 0) + 500;
+      batchBytes += docBytes;
+      if (batchCount >= BATCH_DOC_LIMIT || batchBytes >= BATCH_BYTE_BUDGET) {
         await batch.commit();
-        console.log(`[ingest] commit | toplam ${totalIngested + 1}`);
+        console.log(`[ingest] commit | toplam ${totalIngested + 1} | batch ${batchCount} doc / ~${Math.round(batchBytes/1024)}KB`);
         batch = db.batch();
         batchCount = 0;
+        batchBytes = 0;
       }
     }
     totalIngested++;
