@@ -645,7 +645,7 @@ const TakvimView = () => {
       ? 'bg-gradient-to-b from-blue-600 to-blue-800'
       : 'bg-gradient-to-b from-purple-700 to-purple-900';
     return (
-      <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden min-h-[140px] max-h-[180px] ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+      <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
         {/* Yurtdışı rozeti — kartın sağ üst köşesinde */}
         {yurtdisi && (
           <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg gold-glow">
@@ -653,16 +653,17 @@ const TakvimView = () => {
             <span>ULUSLARARASI · {yurtdisi.kisa}</span>
           </div>
         )}
-        <div className="flex">
-          <div className={`flex flex-col items-center justify-center px-4 py-4 min-w-[72px] ${dateColumnGradient} text-white`}>
-            <div className="text-2xl font-extrabold leading-none font-display">{gunNo}</div>
-            <div className="text-[11px] uppercase tracking-wider opacity-80 mt-0.5">{ayAd}</div>
-            <div className="text-[10px] opacity-60 mt-1 flex items-center gap-0.5"><DayMotif date={tarih} className="text-[8px]" />{trGun(egitim.gun, t)}</div>
-            {yurtdisi ? <span className="text-base mt-1.5">{yurtdisi.bayrak}</span> : online && <Wifi className="w-3.5 h-3.5 mt-1.5 opacity-70" />}
+        {/* Kategori accent — üst yatay bar */}
+        {egitim.kategori && <div className={`absolute left-0 right-0 top-0 h-1 ${katRenk.dot}`} aria-hidden="true" />}
+        <div className="flex items-start gap-3 p-3">
+          {/* Date badge — FIXED size, her kartta aynı boyut */}
+          <div className={`flex-shrink-0 flex flex-col items-center justify-center px-2 py-3 w-[64px] h-[88px] ${dateColumnGradient} text-white rounded-xl shadow-lg`}>
+            <div className="text-xl font-extrabold leading-none font-display">{gunNo}</div>
+            <div className="text-[10px] uppercase tracking-wider opacity-80 mt-0.5">{ayAd}</div>
+            <div className="text-[9px] opacity-70 mt-1 leading-none">{trGun(egitim.gun, t).slice(0, 3)}</div>
+            {yurtdisi ? <span className="text-sm mt-1">{yurtdisi.bayrak}</span> : online && <Wifi className="w-3 h-3 mt-1 opacity-70" />}
           </div>
-          {/* Kategori accent — date column'dan sonra, beyaz içerik başında (her zaman görünür) */}
-          {egitim.kategori && <div className={`w-1 ${katRenk.dot}`} aria-hidden="true" />}
-          <div className="flex-1 p-4 min-w-0">
+          <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 flex-wrap">
