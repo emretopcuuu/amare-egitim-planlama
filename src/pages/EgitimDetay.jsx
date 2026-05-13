@@ -67,6 +67,39 @@ const EgitimDetay = () => {
   const egitim = useMemo(() => takvim.find(e => e.id === id), [takvim, id]);
   const cd = useCountdown(egitim);
 
+  // ⚠️ TÜM HOOK'LAR ÖNCE — early return'lerden sonra useMemo kullanılırsa React error #310
+
+  const konusmaciAdlari = useMemo(() => splitEgitmen(egitim?.egitmen), [egitim?.egitmen]);
+
+  // Aynı konuşmacının diğer eğitimleri (en fazla 4)
+  const ayniKonusmaciEgitimleri = useMemo(() => {
+    if (!egitim || !konusmaciAdlari.length) return [];
+    const adSet = new Set(konusmaciAdlari.map(a => a.toLocaleUpperCase('tr-TR').trim()));
+    const bugun = new Date(); bugun.setHours(0, 0, 0, 0);
+    return takvim
+      .filter(e => {
+        if (e.id === egitim.id) return false;
+        const d = parseTarih(e.tarih);
+        if (!d || d < bugun) return false;
+        return splitEgitmen(e.egitmen).some(a => adSet.has(a.toLocaleUpperCase('tr-TR').trim()));
+      })
+      .map(e => ({ ...e, d: parseTarih(e.tarih) }))
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 4);
+  }, [takvim, konusmaciAdlari, egitim?.id]);
+
+  // Aynı kategoride benzer eğitimler (en fazla 3)
+  const benzerKategoriler = useMemo(() => {
+    if (!egitim?.kategori) return [];
+    const bugun = new Date(); bugun.setHours(0, 0, 0, 0);
+    return takvim
+      .filter(e => e.id !== egitim.id && e.kategori === egitim.kategori)
+      .map(e => ({ ...e, d: parseTarih(e.tarih) }))
+      .filter(e => e.d && e.d >= bugun)
+      .sort((a, b) => a.d - b.d)
+      .slice(0, 3);
+  }, [takvim, egitim?.id, egitim?.kategori]);
+
   // Title + meta — SPA için (Edge Function crawler için ayrıca yapıyor)
   useEffect(() => {
     if (egitim) {
@@ -75,6 +108,7 @@ const EgitimDetay = () => {
     return () => { document.title = 'One Team Eğitim Yönetim Sistemi'; };
   }, [egitim]);
 
+  // ────────── EARLY RETURNS (TÜM HOOK'LARDAN SONRA) ──────────
   if (loading) return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center">
       <Loader2 className="w-10 h-10 text-white animate-spin" />
@@ -93,9 +127,9 @@ const EgitimDetay = () => {
     </div>
   );
 
+  // ────────── Normal compute (hook değil) ──────────
   const tarih = parseTarih(egitim.tarih);
   const tarihStr = tarih ? tarih.toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : egitim.tarih;
-  const konusmaciAdlari = splitEgitmen(egitim.egitmen);
   const isOnline = egitim.sehir === 'Online' || (egitim.yer || '').toLocaleUpperCase('tr-TR').includes('ZOOM');
   const yerStr = egitim.yer || '';
   const zoomMatch = yerStr.match(/(\d[\d\s]{6,})/);
@@ -105,35 +139,6 @@ const EgitimDetay = () => {
     const safeId = makeSafeId(ad);
     return { ad, kayit: konusmacilar.find(k => k.id === safeId || makeSafeId(k.ad || k.id) === safeId) };
   });
-
-  // Aynı konuşmacının diğer eğitimleri (en fazla 4)
-  const ayniKonusmaciEgitimleri = useMemo(() => {
-    if (!konusmaciAdlari.length) return [];
-    const adSet = new Set(konusmaciAdlari.map(a => a.toLocaleUpperCase('tr-TR').trim()));
-    const bugun = new Date(); bugun.setHours(0, 0, 0, 0);
-    return takvim
-      .filter(e => {
-        if (e.id === egitim.id) return false;
-        const d = parseTarih(e.tarih);
-        if (!d || d < bugun) return false;
-        return splitEgitmen(e.egitmen).some(a => adSet.has(a.toLocaleUpperCase('tr-TR').trim()));
-      })
-      .map(e => ({ ...e, d: parseTarih(e.tarih) }))
-      .sort((a, b) => a.d - b.d)
-      .slice(0, 4);
-  }, [takvim, konusmaciAdlari, egitim?.id]);
-
-  // Aynı kategoride benzer eğitimler (en fazla 3)
-  const benzerKategoriler = useMemo(() => {
-    if (!egitim.kategori) return [];
-    const bugun = new Date(); bugun.setHours(0, 0, 0, 0);
-    return takvim
-      .filter(e => e.id !== egitim.id && e.kategori === egitim.kategori)
-      .map(e => ({ ...e, d: parseTarih(e.tarih) }))
-      .filter(e => e.d && e.d >= bugun)
-      .sort((a, b) => a.d - b.d)
-      .slice(0, 3);
-  }, [takvim, egitim?.id, egitim?.kategori]);
 
   // Geri sayım: dev banner için durum
   const cdBig = cd && cd.durum === 'gelecek' && cd.gun < 7;
