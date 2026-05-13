@@ -645,7 +645,7 @@ const TakvimView = () => {
       ? 'bg-gradient-to-b from-blue-600 to-blue-800'
       : 'bg-gradient-to-b from-purple-700 to-purple-900';
     return (
-      <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+      <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden min-h-[120px] ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
         {/* Yurtdışı rozeti — kartın sağ üst köşesinde */}
         {yurtdisi && (
           <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg gold-glow">
