@@ -89,6 +89,24 @@ service cloud.firestore {
       allow read, list, update, delete: if isAdmin();
     }
 
+    // Haftalık bülten aboneleri — anonim KAYIT olur, sadece admin OKUR
+    match /bulten_aboneleri/{docId} {
+      allow create: if true;
+      allow read, list, update, delete: if isAdmin();
+    }
+
+    // Konuşmacı takip aboneleri — anonim KAYIT olur, sadece admin OKUR
+    match /konusmaci_aboneleri/{docId} {
+      allow create: if true;
+      allow read, list, update, delete: if isAdmin();
+    }
+
+    // Web Push aboneleri — anonim KAYIT olur, sadece admin OKUR
+    match /web_push_aboneleri/{docId} {
+      allow create: if true;
+      allow read, list, update, delete: if isAdmin();
+    }
+
     // Diğer her koleksiyon — varsayılan: tamamen kapalı
     match /{document=**} {
       allow read, write: if false;
