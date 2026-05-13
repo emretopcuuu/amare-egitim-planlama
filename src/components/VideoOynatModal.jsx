@@ -18,6 +18,9 @@ const VideoOynatModal = ({ video, onClose }) => {
   if (!video) return null;
 
   const embedUrl = video.embedUrl || `https://player.vimeo.com/video/${video.vimeoId}`;
+  // embedUrl zaten ?h=hash içerebilir (Vimeo unlisted) — & ile birleştir, yoksa ? kullan
+  const sep = embedUrl.includes('?') ? '&' : '?';
+  const iframeSrc = `${embedUrl}${sep}autoplay=1&title=0&byline=0&portrait=0`;
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-2 sm:p-6 animate-fade-in"
@@ -36,7 +39,7 @@ const VideoOynatModal = ({ video, onClose }) => {
         {/* Iframe */}
         <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-2xl" style={{ paddingTop: '56.25%' }}>
           <iframe
-            src={`${embedUrl}?autoplay=1&title=0&byline=0&portrait=0`}
+            src={iframeSrc}
             className="absolute inset-0 w-full h-full"
             frameBorder="0"
             allow="autoplay; fullscreen; picture-in-picture"
