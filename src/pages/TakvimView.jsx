@@ -645,7 +645,7 @@ const TakvimView = () => {
       ? 'bg-gradient-to-b from-blue-600 to-blue-800'
       : 'bg-gradient-to-b from-purple-700 to-purple-900';
     return (
-      <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden min-h-[120px] ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+      <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden min-h-[140px] max-h-[180px] ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
         {/* Yurtdışı rozeti — kartın sağ üst köşesinde */}
         {yurtdisi && (
           <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg gold-glow">
@@ -686,11 +686,17 @@ const TakvimView = () => {
                   {egitim.kategori && <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>}
                   {!online && getSehir(egitim) && getSehir(egitim)!=='Diğer' && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200"><MapPin className="w-3 h-3" />{getSehir(egitim)}</span>}
                 </div>
-                {konusmacilar2.length>0 && <div className="flex items-center gap-1 mt-2 text-sm text-gray-600"><User className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /><span>{konusmacilar2.join(', ')}</span></div>}
+                {konusmacilar2.length>0 && <div className="flex items-center gap-1 mt-2 text-sm text-gray-600"><User className="w-3.5 h-3.5 text-purple-500 flex-shrink-0" /><span className="line-clamp-1 min-w-0">{konusmacilar2.join(', ')}</span></div>}
                 {online && !gecmis && (() => { const m=(egitim.yer||'').match(/(\d[\d\s]{6,})/); const id=m?m[1].replace(/\s/g,''):null; return id ? <a href={`https://zoom.us/j/${id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow hover:shadow-md transition-all"><Wifi className="w-3.5 h-3.5" />{t('cal_join_meeting')}</a> : null; })()}
               </div>
-              <div className="hidden md:flex items-start gap-1.5 flex-shrink-0 flex-wrap justify-end">
-                {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={(a,k)=>setKonusmaciModal({ad:a,kayit:k})} />)}
+              <div className="hidden md:flex items-start gap-1.5 flex-shrink-0 justify-end max-w-[280px]">
+                {konusmacilar2.slice(0, 4).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={(a,k)=>setKonusmaciModal({ad:a,kayit:k})} />)}
+                {konusmacilar2.length > 4 && (
+                  <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                    <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200 text-purple-700 font-bold text-sm">+{konusmacilar2.length - 4}</div>
+                    <span className="text-[10px] text-gray-500">daha</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
