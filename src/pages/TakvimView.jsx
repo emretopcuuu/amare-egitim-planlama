@@ -26,6 +26,65 @@ const KATEGORI_RENK = {
   'Diğer':              { bg: 'bg-slate-50',   text: 'text-slate-700',   border: 'border-slate-300',   dot: 'bg-slate-500' },
 };
 const SEHIRLER = ['İstanbul','Ankara','İzmir','Bursa','Kayseri','Antalya','Konya','Nevşehir','Eskişehir','Trabzon','Adana','Mersin','Gaziantep','Diyarbakır','Samsun','Denizli','Muğla','Çorlu'];
+
+// Yurtdışı tespiti — ülke adı veya AB büyük şehir adı yer'de/başlıkta geçerse
+const YURTDISI_ULKELER = {
+  'HOLLANDA': { bayrak: '🇳🇱', kisa: 'NL', renk: 'from-orange-500 to-orange-700' },
+  'NEDERLAND': { bayrak: '🇳🇱', kisa: 'NL', renk: 'from-orange-500 to-orange-700' },
+  'AMSTERDAM': { bayrak: '🇳🇱', kisa: 'NL', renk: 'from-orange-500 to-orange-700' },
+  'AVUSTURYA': { bayrak: '🇦🇹', kisa: 'AT', renk: 'from-red-500 to-red-700' },
+  'AUSTRIA': { bayrak: '🇦🇹', kisa: 'AT', renk: 'from-red-500 to-red-700' },
+  'VİYANA': { bayrak: '🇦🇹', kisa: 'AT', renk: 'from-red-500 to-red-700' },
+  'VIYANA': { bayrak: '🇦🇹', kisa: 'AT', renk: 'from-red-500 to-red-700' },
+  'VIENNA': { bayrak: '🇦🇹', kisa: 'AT', renk: 'from-red-500 to-red-700' },
+  'WIEN': { bayrak: '🇦🇹', kisa: 'AT', renk: 'from-red-500 to-red-700' },
+  'ALMANYA': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
+  'GERMANY': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
+  'BERLIN': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
+  'MÜNİH': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
+  'MUNIH': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
+  'MÜNCHEN': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
+  'FRANKFURT': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
+  'HAMBURG': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
+  'KÖLN': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
+  'KOLN': { bayrak: '🇩🇪', kisa: 'DE', renk: 'from-yellow-500 to-yellow-700' },
+  'BELÇİKA': { bayrak: '🇧🇪', kisa: 'BE', renk: 'from-yellow-600 to-red-600' },
+  'BELGIUM': { bayrak: '🇧🇪', kisa: 'BE', renk: 'from-yellow-600 to-red-600' },
+  'BRÜKSEL': { bayrak: '🇧🇪', kisa: 'BE', renk: 'from-yellow-600 to-red-600' },
+  'BRUKSEL': { bayrak: '🇧🇪', kisa: 'BE', renk: 'from-yellow-600 to-red-600' },
+  'BRUSSELS': { bayrak: '🇧🇪', kisa: 'BE', renk: 'from-yellow-600 to-red-600' },
+  'FRANSA': { bayrak: '🇫🇷', kisa: 'FR', renk: 'from-blue-500 to-red-600' },
+  'FRANCE': { bayrak: '🇫🇷', kisa: 'FR', renk: 'from-blue-500 to-red-600' },
+  'PARİS': { bayrak: '🇫🇷', kisa: 'FR', renk: 'from-blue-500 to-red-600' },
+  'PARIS': { bayrak: '🇫🇷', kisa: 'FR', renk: 'from-blue-500 to-red-600' },
+  'İSVİÇRE': { bayrak: '🇨🇭', kisa: 'CH', renk: 'from-red-600 to-pink-700' },
+  'ISVICRE': { bayrak: '🇨🇭', kisa: 'CH', renk: 'from-red-600 to-pink-700' },
+  'SWITZERLAND': { bayrak: '🇨🇭', kisa: 'CH', renk: 'from-red-600 to-pink-700' },
+  'ZÜRİH': { bayrak: '🇨🇭', kisa: 'CH', renk: 'from-red-600 to-pink-700' },
+  'ZURICH': { bayrak: '🇨🇭', kisa: 'CH', renk: 'from-red-600 to-pink-700' },
+  'CENEVRE': { bayrak: '🇨🇭', kisa: 'CH', renk: 'from-red-600 to-pink-700' },
+  'GENEVA': { bayrak: '🇨🇭', kisa: 'CH', renk: 'from-red-600 to-pink-700' },
+  'İNGİLTERE': { bayrak: '🇬🇧', kisa: 'UK', renk: 'from-blue-700 to-red-700' },
+  'INGILTERE': { bayrak: '🇬🇧', kisa: 'UK', renk: 'from-blue-700 to-red-700' },
+  'LONDRA': { bayrak: '🇬🇧', kisa: 'UK', renk: 'from-blue-700 to-red-700' },
+  'LONDON': { bayrak: '🇬🇧', kisa: 'UK', renk: 'from-blue-700 to-red-700' },
+  'AVRUPA': { bayrak: '🇪🇺', kisa: 'EU', renk: 'from-blue-600 to-amber-500' },
+  'EUROPE': { bayrak: '🇪🇺', kisa: 'EU', renk: 'from-blue-600 to-amber-500' },
+};
+
+// Yurtdışı tespit — yer veya başlıkta ülke/şehir adı
+const getYurtdisi = (egitim) => {
+  if (!egitim) return null;
+  const yer = (egitim.yer || '').normalize('NFC').toLocaleUpperCase('tr-TR');
+  const baslik = (egitim.egitim || '').normalize('NFC').toLocaleUpperCase('tr-TR');
+  // ZOOM ise yurtdışı sayma (genelde online)
+  if (yer.includes('ZOOM')) return null;
+  const arananMetin = yer + ' ' + baslik;
+  for (const [anahtar, val] of Object.entries(YURTDISI_ULKELER)) {
+    if (arananMetin.includes(anahtar)) return { ...val, anahtar };
+  }
+  return null;
+};
 const parseTarih = (t) => { if (!t) return null; const parts = String(t).split('.').map(Number); if (parts.length !== 3 || parts.some(isNaN)) return null; const [d,m,y] = parts; const dt = new Date(y, m-1, d); return isNaN(dt.getTime()) ? null : dt; };
 // Türkçe gün → çeviri anahtarı
 const TR_DAY_KEY = { 'Pazartesi':'monday','Salı':'tuesday','Çarşamba':'wednesday','Perşembe':'thursday','Cuma':'friday','Cumartesi':'saturday','Pazar':'sunday', 'PAZARTESİ':'monday','SALI':'tuesday','ÇARŞAMBA':'wednesday','PERŞEMBE':'thursday','CUMA':'friday','CUMARTESİ':'saturday','PAZAR':'sunday' };
@@ -153,15 +212,23 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
   const avatarSizeVal = isFirst ? 'md' : 'sm';
   const avatarSizeDesktop = isFirst ? 'xxl' : 'lg';
 
+  const yurtdisi = getYurtdisi(egitim);
   return (
-    <div className={`relative overflow-hidden rounded-2xl ${isFirst ? 'hero-mesh' : 'bg-gradient-to-r ' + (gradients[sira-1]||gradients[0])} ${padding} shadow-2xl border border-white/10 ${cd?.durum === 'canli' ? 'canli-pulse' : ''}`}>
+    <div className={`relative overflow-hidden rounded-2xl ${isFirst && !yurtdisi ? 'hero-mesh' : yurtdisi ? `bg-gradient-to-br ${yurtdisi.renk} ring-4 ring-amber-400/30` : 'bg-gradient-to-r ' + (gradients[sira-1]||gradients[0])} ${padding} shadow-2xl border border-white/10 ${cd?.durum === 'canli' ? 'canli-pulse' : ''}`}>
       <div className="absolute -right-20 -top-20 w-64 h-64 bg-white/5 rounded-full pointer-events-none" />
       <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full pointer-events-none" />
+      {yurtdisi && (
+        <div className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-400 text-gray-900 shadow-2xl gold-glow">
+          <span className="text-base leading-none">{yurtdisi.bayrak}</span>
+          ULUSLARARASI · {yurtdisi.kisa}
+        </div>
+      )}
 
       <div className="relative flex flex-col md:flex-row gap-5 items-center">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className={`${isFirst?'text-sm':'text-[10px]'} font-bold uppercase tracking-wider text-amber-300 gold-text-glow`}>{labels[sira-1]}</span>
+            {yurtdisi && isFirst && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">{yurtdisi.bayrak} {yurtdisi.anahtar}</span>}
             {cd?.durum === 'canli' && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />ŞİMDİ CANLI</span>}
           </div>
           <h2 className={`${titleSize} font-extrabold text-white leading-tight`}>{tDynamic(egitim.egitim)}</h2>
@@ -342,6 +409,7 @@ const TakvimView = () => {
   const filtrelenmis = useMemo(() => takvim.filter(e => {
     if (filtre === 'online' && !isOnline(e)) return false;
     if (filtre === 'offline') { if (isOnline(e)) return false; if (sehirFiltre && getSehir(e) !== sehirFiltre) return false; }
+    if (filtre === 'yurtdisi' && !getYurtdisi(e)) return false;
     if (kategoriFiltre && e.kategori !== kategoriFiltre) return false;
     if (konusmaciFiltre) {
       const konusmacilar = splitEgitmen(e.egitmen).map(k => k.trim());
@@ -375,6 +443,16 @@ const TakvimView = () => {
   }), [takvim, filtre, sehirFiltre, kategoriFiltre, konusmaciFiltre, zamanFiltre, arama]);
 
   const aktifFiltreSayisi = (filtre !== 'tumu' ? 1 : 0) + (sehirFiltre ? 1 : 0) + (kategoriFiltre ? 1 : 0) + (konusmaciFiltre ? 1 : 0) + (zamanFiltre ? 1 : 0) + (arama.trim() ? 1 : 0);
+
+  // Yurtdışı yaklaşan eğitimler (gelecek 30 gün)
+  const yurtdisiYaklasan = useMemo(() => {
+    const bugun = new Date(); bugun.setHours(0,0,0,0);
+    const limit = new Date(bugun); limit.setDate(bugun.getDate() + 60);
+    return takvim
+      .map(e => ({ ...e, _yd: getYurtdisi(e), _d: parseTarih(e.tarih) }))
+      .filter(e => e._yd && e._d && e._d >= bugun && e._d <= limit)
+      .sort((a, b) => a._d - b._d);
+  }, [takvim]);
   const filtreyiSifirla = () => { setFiltre('tumu'); setSehirFiltre(null); setKategoriFiltre(null); setKonusmaciFiltre(null); setZamanFiltre(null); setArama(''); };
 
   // Bugün özel — bugün gerçekleşen tüm eğitimleri ayır
@@ -501,6 +579,7 @@ const TakvimView = () => {
     const egitimAdi = tDynamic(egitim.egitim);
     const kategoriAdi = tDynamic(egitim.kategori);
     const hatirlatmaCount = hatirlatmaSayilari?.[egitim.id] || 0;
+    const yurtdisi = getYurtdisi(egitim);
 
     if (gorunum === 'kompakt') {
       return (
@@ -517,7 +596,14 @@ const TakvimView = () => {
 
     if (gorunum === 'kart') {
       return (
-        <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'}`}>
+        <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+          {/* Yurtdışı rozeti */}
+          {yurtdisi && (
+            <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg">
+              <span className="text-xs leading-none">{yurtdisi.bayrak}</span>
+              <span>{yurtdisi.kisa}</span>
+            </div>
+          )}
           {/* Kategori accent — üst kenar 3px renkli bar */}
           {egitim.kategori && <div className={`absolute left-0 right-0 top-0 h-1 ${katRenk.dot}`} aria-hidden="true" />}
           {egitim.gorselUrl && (
@@ -553,14 +639,26 @@ const TakvimView = () => {
     }
 
     // Liste (default)
+    const dateColumnGradient = yurtdisi
+      ? `bg-gradient-to-b ${yurtdisi.renk}`
+      : online
+      ? 'bg-gradient-to-b from-blue-600 to-blue-800'
+      : 'bg-gradient-to-b from-purple-700 to-purple-900';
     return (
-      <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'}`}>
+      <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+        {/* Yurtdışı rozeti — kartın sağ üst köşesinde */}
+        {yurtdisi && (
+          <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg gold-glow">
+            <span className="text-sm leading-none">{yurtdisi.bayrak}</span>
+            <span>ULUSLARARASI · {yurtdisi.kisa}</span>
+          </div>
+        )}
         <div className="flex">
-          <div className={`flex flex-col items-center justify-center px-4 py-4 min-w-[72px] ${online?'bg-gradient-to-b from-blue-600 to-blue-800':'bg-gradient-to-b from-purple-700 to-purple-900'} text-white`}>
+          <div className={`flex flex-col items-center justify-center px-4 py-4 min-w-[72px] ${dateColumnGradient} text-white`}>
             <div className="text-2xl font-extrabold leading-none font-display">{gunNo}</div>
             <div className="text-[11px] uppercase tracking-wider opacity-80 mt-0.5">{ayAd}</div>
             <div className="text-[10px] opacity-60 mt-1 flex items-center gap-0.5"><DayMotif date={tarih} className="text-[8px]" />{trGun(egitim.gun, t)}</div>
-            {online && <Wifi className="w-3.5 h-3.5 mt-1.5 opacity-70" />}
+            {yurtdisi ? <span className="text-base mt-1.5">{yurtdisi.bayrak}</span> : online && <Wifi className="w-3.5 h-3.5 mt-1.5 opacity-70" />}
           </div>
           {/* Kategori accent — date column'dan sonra, beyaz içerik başında (her zaman görünür) */}
           {egitim.kategori && <div className={`w-1 ${katRenk.dot}`} aria-hidden="true" />}
@@ -658,6 +756,39 @@ const TakvimView = () => {
           </div>
         )}
 
+        {/* Yurtdışı yaklaşan etkinlikler — özel altın bant */}
+        {yurtdisiYaklasan.length > 0 && (
+          <div className="px-4 pt-2">
+            <div className="container mx-auto max-w-7xl">
+              <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/15 to-amber-500/15 border-2 border-amber-400/40 rounded-2xl p-4 backdrop-blur-sm overflow-hidden">
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider gold-glow">
+                    🌍 Uluslararası
+                  </span>
+                  <span className="text-amber-200 text-sm font-semibold">
+                    {yurtdisiYaklasan.length} yurtdışı etkinliği yaklaşıyor
+                  </span>
+                </div>
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+                  {yurtdisiYaklasan.slice(0, 8).map(e => (
+                    <a key={e.id} href={`/e/${e.id}`}
+                      className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-amber-400/30 hover:border-amber-400 rounded-xl p-3 transition-all hover-lift spring-tap">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-xl leading-none">{e._yd.bayrak}</span>
+                        <span className="bg-amber-400 text-gray-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{e._yd.kisa}</span>
+                        <span className="text-amber-200 text-[10px] font-semibold uppercase ml-auto">{e._yd.anahtar}</span>
+                      </div>
+                      <div className="text-white font-bold text-sm leading-tight line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
+                      <div className="text-purple-200 text-xs">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
+                      {e.yer && <div className="text-amber-300/70 text-[11px] mt-0.5 line-clamp-1">📍 {e.yer.slice(0, 45)}</div>}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Hero: En Yakın 3 Eğitim — 1. büyük üstte, 2-3 yan yana altta */}
         {enYakinEgitimler.length > 0 && (
           <div className="px-4 py-4">
@@ -711,9 +842,16 @@ const TakvimView = () => {
             <div className="flex items-center justify-between flex-wrap gap-2">
               {/* Filtre butonları */}
               <div className="flex flex-wrap gap-2">
-                {[{key:'tumu',label:t('cal_filter_all')},{key:'online',label:t('cal_filter_online'),icon:<Wifi className="w-3.5 h-3.5" />},{key:'offline',label:t('cal_filter_offline'),icon:<Building2 className="w-3.5 h-3.5" />}].map(f=>(
+                {[
+                  {key:'tumu',label:t('cal_filter_all')},
+                  {key:'online',label:t('cal_filter_online'),icon:<Wifi className="w-3.5 h-3.5" />},
+                  {key:'offline',label:t('cal_filter_offline'),icon:<Building2 className="w-3.5 h-3.5" />},
+                  {key:'yurtdisi',label:'🌍 Yurt Dışı',special:true},
+                ].map(f=>(
                   <button key={f.key} onClick={()=>{setFiltre(f.key);setSehirFiltre(null);}}
-                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all ${filtre===f.key?'bg-white text-purple-800 shadow-lg':'bg-white/10 text-white/80 hover:bg-white/20'}`}>
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap ${filtre===f.key
+                      ? (f.special ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg ring-2 ring-amber-300' : 'bg-white text-purple-800 shadow-lg')
+                      : (f.special ? 'bg-amber-500/20 text-amber-200 hover:bg-amber-500/30 border border-amber-400/30' : 'bg-white/10 text-white/80 hover:bg-white/20')}`}>
                     {f.icon}{f.label}
                   </button>
                 ))}
