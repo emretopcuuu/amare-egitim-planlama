@@ -89,9 +89,69 @@ export const DataProvider = ({ children }) => {
   const [sablonlar, setSablonlar] = useState([]);
   const [hatirlatmaSayilari, setHatirlatmaSayilari] = useState({}); // { egitimId: uniqueEmailCount }
 
+  // ── LocalStorage cache helpers ──────────────────────────────────
+  // Return visit'lerde anında açılış sağlar: cache → setState → fresh fetch arkaplanda
+  const CACHE_KEY = 'amare_data_cache_v2';
+  const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 gün
+
+  const loadFromCache = () => {
+    try {
+      const raw = localStorage.getItem(CACHE_KEY);
+      if (!raw) return null;
+      const data = JSON.parse(raw);
+      if (Date.now() - data.ts > CACHE_TTL) return null;
+      return data;
+    } catch { return null; }
+  };
+
+  const saveToCache = (data) => {
+    try {
+      // base64 posterleri stripleyerek kaydet (büyük inline gorselUrl)
+      const slimTakvim = (data.takvim || []).map(e => {
+        if (e.gorselUrl && !/^https?:/.test(e.gorselUrl)) {
+          const { gorselUrl, ...rest } = e;
+          return { ...rest, _hasGorsel: true }; // marker — kart'ta thumbnail olduğunu göstermek için
+        }
+        return e;
+      });
+      const slimKonusmacilar = (data.konusmacilar || []).map(k => {
+        if (k.fotoURL && !/^https?:/.test(k.fotoURL)) {
+          const { fotoURL, ...rest } = k;
+          return { ...rest, _hasFoto: true };
+        }
+        return k;
+      });
+      const slim = {
+        takvim: slimTakvim,
+        konusmacilar: slimKonusmacilar,
+        sablonlar: data.sablonlar || [],
+        takvimYayinlandi: data.takvimYayinlandi,
+        ts: Date.now(),
+      };
+      const json = JSON.stringify(slim);
+      if (json.length > 4 * 1024 * 1024) {
+        console.warn('[cache] 4MB üstü, atlanıyor');
+        return;
+      }
+      localStorage.setItem(CACHE_KEY, json);
+    } catch (e) {
+      console.warn('[cache save]', e.message);
+    }
+  };
+
   // Firebase'den veri yükle — public koleksiyonlar her zaman, admin-only sadece login sonrası
   useEffect(() => {
-    loadData();
+    // 1. CACHE'den anında göster (return visit instant)
+    const cached = loadFromCache();
+    if (cached) {
+      if (cached.takvim) setTakvim(cached.takvim);
+      if (cached.konusmacilar) setKonusmacilar(cached.konusmacilar);
+      if (cached.sablonlar) setSablonlar(cached.sablonlar);
+      if (cached.takvimYayinlandi !== undefined) setTakvimYayinlandi(cached.takvimYayinlandi);
+      setLoading(false); // İlk paint anında, kullanıcı eski veri görmeye başlar
+    }
+    // 2. Fresh fetch — cache yoksa loading göster, varsa background
+    loadData(!cached);
   }, []);
 
   // Login/logout olduğunda admin-only koleksiyonları yeniden çek
@@ -106,49 +166,54 @@ export const DataProvider = ({ children }) => {
   }, [isAdmin]);
 
   // Public koleksiyonları + sadece okumak için izin verilenleri yükle
-  const loadData = async () => {
-    setLoading(true);
+  // PARALEL fetch — 4 koleksiyon aynı anda (önce sıralı idi)
+  const loadData = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
 
-    // Takvim (public read)
-    try {
-      const snap = await getDocs(collection(db, 'takvim'));
-      setTakvim(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    } catch (e) { console.warn('[loadData] takvim:', e?.code || e?.message); }
+    // 4 koleksiyonu paralel çek
+    const [takvimResult, settingsResult, konusmacilarResult, sablonlarResult] = await Promise.allSettled([
+      getDocs(collection(db, 'takvim')),
+      getDocs(collection(db, 'settings')),
+      getDocs(collection(db, 'konusmacilar')),
+      getDocs(collection(db, 'sablonlar')),
+    ]);
 
-    // Settings (public read) — Firestore SDK fail olursa REST API fallback
-    let settingsLoaded = false;
-    for (let attempt = 0; attempt < 2 && !settingsLoaded; attempt++) {
-      try {
-        const snap = await getDocs(collection(db, 'settings'));
-        if (!snap.empty) {
-          setTakvimYayinlandi(snap.docs[0].data().takvimYayinlandi === true);
-        } else {
-          setTakvimYayinlandi(false);
-        }
-        settingsLoaded = true;
-      } catch (e) {
-        console.warn(`[loadData] settings SDK attempt ${attempt + 1}:`, e?.code || e?.message);
-      }
+    // Sonuçları işle ve state'e yaz
+    let freshTakvim = null;
+    let freshKonusmacilar = null;
+    let freshSablonlar = null;
+    let freshYayinlandi = null;
+
+    // Takvim
+    if (takvimResult.status === 'fulfilled') {
+      freshTakvim = takvimResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
+      setTakvim(freshTakvim);
+    } else {
+      console.warn('[loadData] takvim:', takvimResult.reason?.code || takvimResult.reason?.message);
     }
-    // SDK fail olursa direct REST API ile dene (WhatsApp in-app browser, eski cache vs)
-    if (!settingsLoaded) {
+
+    // Settings
+    if (settingsResult.status === 'fulfilled') {
+      const snap = settingsResult.value;
+      freshYayinlandi = snap.empty ? false : snap.docs[0].data().takvimYayinlandi === true;
+      setTakvimYayinlandi(freshYayinlandi);
+    } else {
+      // SDK fail olursa REST API fallback
+      console.warn('[loadData] settings SDK:', settingsResult.reason?.code || settingsResult.reason?.message);
       try {
         const res = await fetch('https://firestore.googleapis.com/v1/projects/amare-egitim-planlama/databases/(default)/documents/settings');
         const data = await res.json();
         const doc = data?.documents?.[0];
-        const yayinda = doc?.fields?.takvimYayinlandi?.booleanValue === true;
-        setTakvimYayinlandi(yayinda);
-        console.log('[loadData] settings REST fallback:', yayinda);
+        freshYayinlandi = doc?.fields?.takvimYayinlandi?.booleanValue === true;
+        setTakvimYayinlandi(freshYayinlandi);
       } catch (e) {
-        console.warn('[loadData] settings REST fallback failed:', e?.message);
-        // Son çare: null bırak, takvim default gösterilir
+        console.warn('[loadData] settings REST fallback:', e?.message);
       }
     }
 
-    // Konuşmacılar (public read) + dedup
-    try {
-      const snap = await getDocs(collection(db, 'konusmacilar'));
-      const rawData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Konuşmacılar + dedup (coreId ile)
+    if (konusmacilarResult.status === 'fulfilled') {
+      const rawData = konusmacilarResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
       const coreMap = new Map();
       for (const k of rawData) {
         const cid = makeCoreId(k.ad || k.id);
@@ -165,16 +230,29 @@ export const DataProvider = ({ children }) => {
           }
         }
       }
-      setKonusmacilar([...coreMap.values()]);
-    } catch (e) { console.warn('[loadData] konusmacilar:', e?.code || e?.message); }
+      freshKonusmacilar = [...coreMap.values()];
+      setKonusmacilar(freshKonusmacilar);
+    } else {
+      console.warn('[loadData] konusmacilar:', konusmacilarResult.reason?.code || konusmacilarResult.reason?.message);
+    }
 
-    // Şablonlar (public read)
-    try {
-      const snap = await getDocs(collection(db, 'sablonlar'));
-      setSablonlar(snap.docs.map(d => ({ id: d.id, ...d.data() })));
-    } catch (e) { console.warn('[loadData] sablonlar:', e?.code || e?.message); }
+    // Şablonlar
+    if (sablonlarResult.status === 'fulfilled') {
+      freshSablonlar = sablonlarResult.value.docs.map(d => ({ id: d.id, ...d.data() }));
+      setSablonlar(freshSablonlar);
+    } else {
+      console.warn('[loadData] sablonlar:', sablonlarResult.reason?.code || sablonlarResult.reason?.message);
+    }
 
     setLoading(false);
+
+    // Cache'e yaz (gelecek visit için instant açılış)
+    saveToCache({
+      takvim: freshTakvim,
+      konusmacilar: freshKonusmacilar,
+      sablonlar: freshSablonlar,
+      takvimYayinlandi: freshYayinlandi,
+    });
   };
 
   // Sadece admin'in okuyabildiği koleksiyonları yükle
