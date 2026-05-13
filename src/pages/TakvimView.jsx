@@ -224,27 +224,28 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
       <div className="absolute -right-20 -top-20 w-64 h-64 bg-white/5 rounded-full pointer-events-none" />
       <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full pointer-events-none" />
 
-      {/* MOBIL HERO — yalnızca isFirst & poster varsa */}
-      {isFirst && egitim.gorselUrl && (
+      {/* MOBIL HERO — TÜM hero kartları için poster üstte (1. büyük, 2-3 daha küçük aspect) */}
+      {egitim.gorselUrl && (
         <div className="md:hidden relative">
-          {/* Tam genişlik poster */}
-          <button onClick={()=>onPoster?.({url:egitim.gorselUrl,baslik:egitim.egitim})} className="block w-full aspect-square overflow-hidden bg-black/20">
+          {/* Poster — 1. için tam kare, 2-3 için daha kısa (4:3) */}
+          <button onClick={()=>onPoster?.({url:egitim.gorselUrl,baslik:egitim.egitim})}
+            className={`block w-full ${isFirst ? 'aspect-square' : 'aspect-[4/3]'} overflow-hidden bg-black/20`}>
             <img src={egitim.gorselUrl} alt={egitim.egitim} className="w-full h-full object-cover" />
           </button>
           {/* Üst overlay — label + rozetler */}
           <div className="absolute top-0 left-0 right-0 p-3 flex items-center gap-2 flex-wrap bg-gradient-to-b from-black/60 to-transparent">
-            <span className="text-xs font-extrabold uppercase tracking-wider text-amber-300 gold-text-glow">{labels[sira-1]}</span>
+            <span className={`${isFirst ? 'text-xs' : 'text-[10px]'} font-extrabold uppercase tracking-wider text-amber-300 gold-text-glow`}>{labels[sira-1]}</span>
             {yurtdisi && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400 text-gray-900 shadow"><span>{yurtdisi.bayrak}</span>{yurtdisi.kisa}</span>}
             {cd?.durum === 'canli' && <span className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />ŞİMDİ CANLI</span>}
           </div>
         </div>
       )}
 
-      <div className={`relative ${isFirst && egitim.gorselUrl ? 'md:p-12 lg:p-16 p-4' : padding}`}>
+      <div className={`relative ${egitim.gorselUrl ? (isFirst ? 'md:p-12 lg:p-16 p-4' : 'md:p-5 p-3') : padding}`}>
         <div className="flex flex-col md:flex-row gap-5 items-stretch md:items-center">
           <div className="flex-1 min-w-0">
             {/* DESKTOP label + rozet (mobil'de yok, poster overlay'i var) */}
-            <div className={`flex items-center gap-2 mb-2 flex-wrap ${isFirst && egitim.gorselUrl ? 'hidden md:flex' : ''}`}>
+            <div className={`flex items-center gap-2 mb-2 flex-wrap ${egitim.gorselUrl ? 'hidden md:flex' : ''}`}>
               <span className={`${isFirst?'text-sm':'text-[10px]'} font-bold uppercase tracking-wider text-amber-300 gold-text-glow`}>{labels[sira-1]}</span>
               {yurtdisi && isFirst && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">{yurtdisi.bayrak} {yurtdisi.anahtar}</span>}
               {cd?.durum === 'canli' && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />ŞİMDİ CANLI</span>}
@@ -301,9 +302,9 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
             )}
           </div>
 
-          {/* DESKTOP poster — sağda */}
+          {/* DESKTOP poster — sağda (mobilde üstte gösterildi) */}
           {egitim.gorselUrl && (
-            <button onClick={()=>onPoster?.({url:egitim.gorselUrl,baslik:egitim.egitim})} className={`flex-shrink-0 hover:scale-105 transition-transform ${isFirst && egitim.gorselUrl ? 'hidden md:block' : 'block'}`}>
+            <button onClick={()=>onPoster?.({url:egitim.gorselUrl,baslik:egitim.egitim})} className="hidden md:block flex-shrink-0 hover:scale-105 transition-transform">
               <img src={egitim.gorselUrl} alt="Poster" className={`${posterSize} rounded-xl shadow-2xl border-2 border-white/20`} />
             </button>
           )}
@@ -311,7 +312,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
 
         {/* DESKTOP yurtdışı badge — sağ üst absolute (mobilde poster overlay'inde) */}
         {yurtdisi && (
-          <div className={`absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-400 text-gray-900 shadow-2xl gold-glow ${isFirst && egitim.gorselUrl ? 'hidden md:inline-flex' : ''}`}>
+          <div className={`absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-400 text-gray-900 shadow-2xl gold-glow ${egitim.gorselUrl ? 'hidden md:inline-flex' : ''}`}>
             <span className="text-base leading-none">{yurtdisi.bayrak}</span>
             ULUSLARARASI · {yurtdisi.kisa}
           </div>
