@@ -774,13 +774,14 @@ const TakvimView = () => {
               <button onClick={()=>navigate('/')} className="flex items-center text-white/70 hover:text-white text-sm"><ArrowLeft className="w-4 h-4 mr-1.5" />{t('back')}</button>
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <LanguageSwitcher />
+                {/* Bu butonlar mobile'da bottom nav ile duplicate — sadece md+ ekranlarda göster */}
                 <button onClick={()=>navigate('/konusmacilar')}
-                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
-                  <User className="w-4 h-4" /><span className="hidden sm:inline">Eğitmenler</span><span className="sm:hidden">Eğitmen</span>
+                  className="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
+                  <User className="w-4 h-4" />Eğitmenler
                 </button>
                 <button onClick={()=>navigate('/kayitli-egitimler')}
-                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
-                  <Video className="w-4 h-4" /><span className="hidden sm:inline">Kayıtlı Eğitimler</span><span className="sm:hidden">Kayıt</span>
+                  className="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
+                  <Video className="w-4 h-4" />Kayıtlı Eğitimler
                 </button>
                 <button onClick={exportPDF} disabled={pdfYukleniyor} className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-xs sm:text-sm spring-tap">
                   {pdfYukleniyor?<><Loader2 className="w-4 h-4 animate-spin" />{t('cal_preparing')}</>:<><Download className="w-4 h-4" />{t('cal_download_pdf')}</>}
