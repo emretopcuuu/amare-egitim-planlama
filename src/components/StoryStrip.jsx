@@ -1,10 +1,10 @@
 // Yatay konuşmacı şeridi — eğitim sayısına göre sıralı, tıklayınca konuşmacı modal'ı
 // Hem mobilde hem desktop'ta görünür (eskiden mobil-only idi, gün gün gösteriyordu)
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useTranslation } from '../context/LanguageContext';
 import { makeSafeId, makeCoreId } from '../context/DataContext';
 import KonusmaciFullModal from './KonusmaciFullModal';
-import { User } from 'lucide-react';
+import { User, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const parseTarih = (t) => {
   if (!t) return null;
@@ -33,6 +33,61 @@ const splitEgitmen = (e) => {
 
 const StoryStrip = ({ takvim, konusmacilar }) => {
   const [secili, setSecili] = useState(null);
+  const scrollRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  // Scroll durumu takip — sol/sağ ok butonları aktiflik için
+  const updateScrollState = () => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 5);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 5);
+  };
+
+  useEffect(() => {
+    updateScrollState();
+    const el = scrollRef.current;
+    if (!el) return;
+    el.addEventListener('scroll', updateScrollState, { passive: true });
+    window.addEventListener('resize', updateScrollState);
+    return () => {
+      el.removeEventListener('scroll', updateScrollState);
+      window.removeEventListener('resize', updateScrollState);
+    };
+  }, []);
+
+  // Sol/sağ ok ile scroll
+  const scrollBy = (dir) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * 320, behavior: 'smooth' });
+  };
+
+  // Mouse drag-to-scroll — desktop'ta tutup sürükleyerek scroll
+  const dragState = useRef({ active: false, startX: 0, startScroll: 0 });
+  const onMouseDown = (e) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    dragState.current = { active: true, startX: e.pageX, startScroll: el.scrollLeft };
+    el.style.cursor = 'grabbing';
+    el.style.userSelect = 'none';
+  };
+  const onMouseMove = (e) => {
+    if (!dragState.current.active) return;
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollLeft = dragState.current.startScroll - (e.pageX - dragState.current.startX);
+  };
+  const onMouseUpOrLeave = () => {
+    if (!dragState.current.active) return;
+    dragState.current.active = false;
+    const el = scrollRef.current;
+    if (el) {
+      el.style.cursor = '';
+      el.style.userSelect = '';
+    }
+  };
 
   // Gelecek eğitimlerden konuşmacıları topla, eğitim sayısına göre sırala
   const konusmaciListesi = useMemo(() => {
@@ -121,7 +176,41 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
             En aktif {konusmaciListesi.length}
           </span>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-3 -mx-4 px-4 scrollbar-hide">
+        <div className="relative group">
+          {/* Sol ok butonu — desktop'ta görünür, scrollable iken aktif */}
+          {canScrollLeft && (
+            <button onClick={() => scrollBy(-1)} aria-label="Sola kaydır"
+              className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-purple-800 shadow-xl items-center justify-center transition-all opacity-0 group-hover:opacity-100 spring-tap"
+              style={{ marginLeft: '-12px' }}>
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+          )}
+          {canScrollRight && (
+            <button onClick={() => scrollBy(1)} aria-label="Sağa kaydır"
+              className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white/90 hover:bg-white text-purple-800 shadow-xl items-center justify-center transition-all opacity-0 group-hover:opacity-100 spring-tap"
+              style={{ marginRight: '-12px' }}>
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          )}
+          <div ref={scrollRef}
+            className="flex gap-3 overflow-x-auto pb-3 -mx-4 px-4 scrollbar-hide cursor-grab md:cursor-grab"
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onMouseUp={onMouseUpOrLeave}
+            onMouseLeave={onMouseUpOrLeave}
+            onWheel={(e) => {
+              // Yatay scroll wheel desteği (Shift+wheel veya yatay trackpad)
+              if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // zaten yatay
+              if (e.shiftKey || e.deltaX !== 0) return;
+              // Normal wheel'i yatay scroll'a çevir
+              const el = scrollRef.current;
+              if (!el) return;
+              if ((e.deltaY > 0 && canScrollRight) || (e.deltaY < 0 && canScrollLeft)) {
+                e.preventDefault();
+                el.scrollLeft += e.deltaY;
+              }
+            }}
+          >
           {konusmaciListesi.map(({ ad, kayit, sayi }, idx) => {
             const top3 = idx < 3;
             return (
@@ -150,6 +239,7 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
               </button>
             );
           })}
+          </div>
         </div>
       </div>
 
