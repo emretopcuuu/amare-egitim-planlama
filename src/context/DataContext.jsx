@@ -240,18 +240,22 @@ export const DataProvider = ({ children }) => {
       getDocs(collection(db, 'sablonlar')),
     ]);
 
-    // Light data'yı hemen göster — kullanıcı eğitimleri ANINDA görür (posterler yok ama önemli değil)
+    // Light data'yı state'e koy
+    let lightTakvimData = [];
+    let lightKonusmacilarData = [];
+
     if (takvimLight.status === 'fulfilled') {
-      setTakvim(takvimLight.value.map(t => ({ ...t, _light: true })));
+      lightTakvimData = takvimLight.value.map(t => ({ ...t, _light: true }));
+      setTakvim(lightTakvimData);
     }
     if (konusmacilarLight.status === 'fulfilled') {
-      // Dedup + light data
       const coreMap = new Map();
       for (const k of konusmacilarLight.value) {
         const cid = makeCoreId(k.ad || k.id);
         if (!coreMap.has(cid)) coreMap.set(cid, { ...k, _light: true });
       }
-      setKonusmacilar([...coreMap.values()]);
+      lightKonusmacilarData = [...coreMap.values()];
+      setKonusmacilar(lightKonusmacilarData);
     }
     if (settingsResult.status === 'fulfilled') {
       const snap = settingsResult.value;
@@ -261,7 +265,42 @@ export const DataProvider = ({ children }) => {
       setSablonlar(sablonlarResult.value.docs.map(d => ({ id: d.id, ...d.data() })));
     }
 
-    setLoading(false); // ⚡ Kullanıcı SAYFAYA ANINDA GİRER (posterler henüz yok)
+    // 🎯 SAYFA AÇILMADAN ÖNCE: Top 10 konuşmacı fotosu yüklen (StoryStrip için)
+    // Kullanıcı talebi: 'önümüzdeki konuşmacıların 10 adedini sayfa açmadan yükle'
+    if (lightKonusmacilarData.length > 0 && lightTakvimData.length > 0) {
+      const bugun = new Date(); bugun.setHours(0, 0, 0, 0);
+      const konSayilari = new Map();
+      lightTakvimData.forEach(e => {
+        const d = parseTarihLocal(e.tarih);
+        if (!d || d < bugun) return;
+        (e.egitmen || '').split(/[\/,&]/).map(s => s.trim()).filter(s => s.length > 1)
+          .forEach(ad => konSayilari.set(ad, (konSayilari.get(ad) || 0) + 1));
+      });
+      const kAdToId = new Map();
+      lightKonusmacilarData.forEach(k => kAdToId.set((k.ad || '').toLocaleUpperCase('tr-TR'), k.id));
+      // Top 10 (sıralı StoryStrip ilk gösterilecekler)
+      const top10Ids = [...konSayilari.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10)
+        .map(([ad]) => kAdToId.get(ad.toLocaleUpperCase('tr-TR')))
+        .filter(Boolean);
+
+      if (top10Ids.length > 0) {
+        // SENKRON paralel fetch — sayfa açılışından ÖNCE bekle
+        const results = await Promise.allSettled(
+          top10Ids.map(id => fetchSingleDoc('konusmacilar', id))
+        );
+        const top10Map = new Map();
+        results.forEach(r => {
+          if (r.status === 'fulfilled' && r.value) top10Map.set(r.value.id, r.value);
+        });
+        // Light data ile birleştir
+        const updated = lightKonusmacilarData.map(k => top10Map.get(k.id) || k);
+        setKonusmacilar(updated);
+      }
+    }
+
+    setLoading(false); // ⚡ Sayfa açılır — StoryStrip top 10 fotolu, eğitimler text
 
     // 2. AŞAMA: ÖNCELİK fetch — Hero için top 5 eğitim posteri + StoryStrip için top 30 konuşmacı fotosu
     //    Bunlar viewport'un üstünde, kullanıcının ilk göreceği şey
