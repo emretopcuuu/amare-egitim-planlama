@@ -9,6 +9,7 @@ import EventActions from '../components/EventActions';
 import KonusmaciFullModal from '../components/KonusmaciFullModal';
 import StoryStrip from '../components/StoryStrip';
 import { EmptySearch, EmptyCompleted } from '../components/EmptyState';
+import LoadingProgress from '../components/LoadingProgress';
 import { DayMotif } from '../utils/dayIcon.jsx';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -530,28 +531,7 @@ const TakvimView = () => {
     } catch(err){alert(t('cal_pdf_error')+err.message);} finally{setPdfYukleniyor(false);}
   };
 
-  if (loading) return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 px-4 py-8">
-      <div className="container mx-auto max-w-7xl">
-        {/* Header skeleton */}
-        <div className="h-8 w-40 bg-white/10 rounded-lg animate-pulse mb-3" />
-        <div className="h-12 w-80 bg-white/10 rounded-lg animate-pulse mb-2" />
-        <div className="h-5 w-32 bg-white/10 rounded-lg animate-pulse mb-6" />
-        {/* Hero skeleton */}
-        <div className="bg-white/5 border border-white/10 rounded-2xl h-48 animate-pulse mb-3" />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-          <div className="bg-white/5 border border-white/10 rounded-2xl h-32 animate-pulse" />
-          <div className="bg-white/5 border border-white/10 rounded-2xl h-32 animate-pulse" />
-        </div>
-        {/* Filter skeleton */}
-        <div className="h-12 bg-white/10 rounded-xl animate-pulse mb-3" />
-        {/* Card skeletons */}
-        <div className="space-y-3">
-          {[1,2,3,4].map(i => <div key={i} className="bg-white/5 border border-white/10 rounded-xl h-24 animate-pulse" />)}
-        </div>
-      </div>
-    </div>
-  );
+  if (loading) return <LoadingProgress />;
   // null = bilinmiyor (mobil ağda fetch fail) → takvim gösterilir, false = explicit gizli
   if (takvimYayinlandi === false) return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 py-12 px-4"><div className="container mx-auto max-w-2xl"><div className="bg-white rounded-2xl shadow-2xl p-8 text-center">
