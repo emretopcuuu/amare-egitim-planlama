@@ -10,6 +10,7 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 import EventActions from '../components/EventActions';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import KonusmaciFullModal from '../components/KonusmaciFullModal';
+import LoadingProgress from '../components/LoadingProgress';
 
 const parseTarih = (t) => {
   if (!t) return null;
@@ -109,11 +110,7 @@ const EgitimDetay = () => {
   }, [egitim]);
 
   // ────────── EARLY RETURNS (TÜM HOOK'LARDAN SONRA) ──────────
-  if (loading) return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center">
-      <Loader2 className="w-10 h-10 text-white animate-spin" />
-    </div>
-  );
+  if (loading) return <LoadingProgress />;
 
   if (!egitim) return (
     <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center px-4">

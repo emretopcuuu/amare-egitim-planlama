@@ -6,6 +6,7 @@ import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, User, Search, X, Loader2 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import KonusmaciFullModal from '../components/KonusmaciFullModal';
+import LoadingProgress from '../components/LoadingProgress';
 
 const splitEgitmen = (e) => {
   if (!e) return [];
@@ -62,11 +63,7 @@ const KonusmacilarSayfasi = () => {
     });
   }, [tumKonusmacilar, arama]);
 
-  if (loading) return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center">
-      <Loader2 className="w-10 h-10 text-white animate-spin" />
-    </div>
-  );
+  if (loading) return <LoadingProgress />;
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900">
