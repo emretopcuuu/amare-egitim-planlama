@@ -214,79 +214,107 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
   const avatarSizeDesktop = isFirst ? 'xxl' : 'lg';
 
   const yurtdisi = getYurtdisi(egitim);
+  const zoomMatch = (egitim.yer || '').match(/(\d[\d\s]{6,})/);
+  const zoomId = zoomMatch ? zoomMatch[1].replace(/\s/g, '') : null;
+
+  // MOBIL: poster üstte tam, içerik altta sıkı
+  // DESKTOP (md+): yan yana — content sol, poster sağ
   return (
-    <div className={`relative overflow-hidden rounded-2xl ${isFirst && !yurtdisi ? 'hero-mesh' : yurtdisi ? `bg-gradient-to-br ${yurtdisi.renk} ring-4 ring-amber-400/30` : 'bg-gradient-to-r ' + (gradients[sira-1]||gradients[0])} ${padding} shadow-2xl border border-white/10 ${cd?.durum === 'canli' ? 'canli-pulse' : ''}`}>
+    <div className={`relative overflow-hidden rounded-2xl ${isFirst && !yurtdisi ? 'hero-mesh' : yurtdisi ? `bg-gradient-to-br ${yurtdisi.renk} ring-4 ring-amber-400/30` : 'bg-gradient-to-r ' + (gradients[sira-1]||gradients[0])} shadow-2xl border border-white/10 ${cd?.durum === 'canli' ? 'canli-pulse' : ''}`}>
       <div className="absolute -right-20 -top-20 w-64 h-64 bg-white/5 rounded-full pointer-events-none" />
       <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-white/5 rounded-full pointer-events-none" />
-      {yurtdisi && (
-        <div className="absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-400 text-gray-900 shadow-2xl gold-glow">
-          <span className="text-base leading-none">{yurtdisi.bayrak}</span>
-          ULUSLARARASI · {yurtdisi.kisa}
+
+      {/* MOBIL HERO — yalnızca isFirst & poster varsa */}
+      {isFirst && egitim.gorselUrl && (
+        <div className="md:hidden relative">
+          {/* Tam genişlik poster */}
+          <button onClick={()=>onPoster?.({url:egitim.gorselUrl,baslik:egitim.egitim})} className="block w-full aspect-square overflow-hidden bg-black/20">
+            <img src={egitim.gorselUrl} alt={egitim.egitim} className="w-full h-full object-cover" />
+          </button>
+          {/* Üst overlay — label + rozetler */}
+          <div className="absolute top-0 left-0 right-0 p-3 flex items-center gap-2 flex-wrap bg-gradient-to-b from-black/60 to-transparent">
+            <span className="text-xs font-extrabold uppercase tracking-wider text-amber-300 gold-text-glow">{labels[sira-1]}</span>
+            {yurtdisi && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400 text-gray-900 shadow"><span>{yurtdisi.bayrak}</span>{yurtdisi.kisa}</span>}
+            {cd?.durum === 'canli' && <span className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />ŞİMDİ CANLI</span>}
+          </div>
         </div>
       )}
 
-      <div className="relative flex flex-col md:flex-row gap-5 items-center">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className={`${isFirst?'text-sm':'text-[10px]'} font-bold uppercase tracking-wider text-amber-300 gold-text-glow`}>{labels[sira-1]}</span>
-            {yurtdisi && isFirst && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">{yurtdisi.bayrak} {yurtdisi.anahtar}</span>}
-            {cd?.durum === 'canli' && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />ŞİMDİ CANLI</span>}
-          </div>
-          <h2 className={`${titleSize} font-extrabold text-white leading-tight`}>{tDynamic(egitim.egitim)}</h2>
-          <div className={`flex flex-wrap items-center gap-2 md:gap-3 mt-2 ${isFirst?'text-xs md:text-sm':'text-[10px] md:text-xs'} text-purple-200`}>
-            <span className="flex items-center gap-1"><Clock className={`${isFirst?'w-4 h-4':'w-3.5 h-3.5'}`} />{tarih?.toLocaleDateString(locale,{day:'numeric',month:'long',weekday:'long'})}{egitim.saat ? ` • ${egitim.saat}${egitim.bitisSaati?`–${egitim.bitisSaati}`:''}` : ''}</span>
-            <span className="flex items-center gap-1">{online?<Wifi className="w-3.5 h-3.5" />:<MapPin className="w-3.5 h-3.5" />}{online?'Zoom':egitim.yer}</span>
-          </div>
+      <div className={`relative ${isFirst && egitim.gorselUrl ? 'md:p-12 lg:p-16 p-4' : padding}`}>
+        <div className="flex flex-col md:flex-row gap-5 items-stretch md:items-center">
+          <div className="flex-1 min-w-0">
+            {/* DESKTOP label + rozet (mobil'de yok, poster overlay'i var) */}
+            <div className={`flex items-center gap-2 mb-2 flex-wrap ${isFirst && egitim.gorselUrl ? 'hidden md:flex' : ''}`}>
+              <span className={`${isFirst?'text-sm':'text-[10px]'} font-bold uppercase tracking-wider text-amber-300 gold-text-glow`}>{labels[sira-1]}</span>
+              {yurtdisi && isFirst && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">{yurtdisi.bayrak} {yurtdisi.anahtar}</span>}
+              {cd?.durum === 'canli' && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />ŞİMDİ CANLI</span>}
+            </div>
 
-          {/* Zoom Bağlan Butonu — tüm gelecek online eğitimlerde */}
-          {online && cd?.durum !== 'gecmis' && (() => {
-            const yerStr = egitim.yer || '';
-            const idMatch = yerStr.match(/(\d[\d\s]{6,})/);
-            const zoomId = idMatch ? idMatch[1].replace(/\s/g, '') : null;
-            if (!zoomId) return null;
-            return (
-              <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer"
-                className={`inline-flex items-center gap-2 mt-3 ${isFirst ? 'px-6 py-3 text-base' : 'px-4 py-2 text-sm'} bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all hover:scale-105`}>
-                <Wifi className={`${isFirst ? 'w-5 h-5' : 'w-4 h-4'}`} />{t('cal_join_meeting')}
-              </a>
-            );
-          })()}
+            <h2 className={`${titleSize} font-extrabold text-white leading-tight font-display`}>{tDynamic(egitim.egitim)}</h2>
 
-          {/* Hatırlatma butonu */}
-          {cd?.durum !== 'gecmis' && (
-            <button onClick={()=>onHatirlatma?.(egitim)}
-              className={`inline-flex items-center gap-2 mt-3 ${isFirst ? 'px-5 py-2.5 text-sm' : 'px-4 py-2 text-xs'} bg-white/15 hover:bg-white/25 text-white font-bold rounded-xl border border-white/20 transition-all`}>
-              <Bell className={`${isFirst ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />{t('cal_get_reminder')}
-            </button>
-          )}
+            <div className={`flex flex-wrap items-center gap-2 md:gap-3 mt-2 ${isFirst?'text-xs md:text-sm':'text-[10px] md:text-xs'} text-purple-200`}>
+              <span className="flex items-center gap-1.5"><Clock className={`${isFirst?'w-4 h-4':'w-3.5 h-3.5'} text-amber-300`} />{tarih?.toLocaleDateString(locale,{day:'numeric',month:'long',weekday:'long'})}{egitim.saat ? ` • ${egitim.saat}${egitim.bitisSaati?`–${egitim.bitisSaati}`:''}` : ''}</span>
+              <span className="flex items-center gap-1.5">{online?<Wifi className="w-3.5 h-3.5 text-amber-300" />:<MapPin className="w-3.5 h-3.5 text-amber-300" />}{online?'Zoom':egitim.yer}</span>
+            </div>
 
-          <div className="flex items-center gap-4 mt-3 flex-wrap">
-            {/* Geri sayım — flip animasyonu saniye değişiminde */}
+            {/* Geri sayım — mobil compact, desktop büyük */}
             {cd?.durum !== 'gecmis' && cd?.durum !== 'canli' && (
-              <div className={`flex ${isFirst?'gap-2':'gap-1.5'}`}>
+              <div className="flex gap-1.5 md:gap-2 mt-3">
                 {[{v:gun,l:t('cd_day'),k:'g'},{v:saat,l:t('cd_hour'),k:'s'},{v:dakika,l:t('cd_min'),k:'d'},{v:saniye,l:t('cd_sec'),k:'sn'}].map(({v,l,k})=>(
-                  <div key={l} className={`bg-white/10 backdrop-blur rounded-xl ${countdownSize} text-center border border-white/10`}>
-                    <div className="font-extrabold text-white tabular-nums font-display"><span key={`${k}-${v}`} className="cd-digit">{String(v).padStart(2,'0')}</span></div>
+                  <div key={l} className={`flex-1 md:flex-none bg-white/10 backdrop-blur rounded-xl ${isFirst ? 'py-2 md:py-4 px-2 md:px-5 lg:px-6' : 'py-1 px-1.5 md:px-2'} text-center border border-white/10`}>
+                    <div className={`font-extrabold text-white tabular-nums font-display ${isFirst ? 'text-xl md:text-4xl lg:text-5xl' : 'text-sm md:text-lg'}`}><span key={`${k}-${v}`} className="cd-digit">{String(v).padStart(2,'0')}</span></div>
                     <div className="text-[8px] text-amber-300/80 uppercase tracking-wider">{l}</div>
                   </div>
                 ))}
               </div>
             )}
-            {/* Konuşmacılar — sayacın yanında, mobilde küçük */}
-            <div className="hidden md:flex items-center gap-2">
-              {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size={avatarSizeDesktop} dark />)}
-            </div>
-            <div className="flex md:hidden items-center gap-1.5">
-              {konusmacilar2.slice(0, 3).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size={avatarSizeVal} dark />)}
-              {konusmacilar2.length > 3 && <span className="text-xs text-white/60">+{konusmacilar2.length - 3}</span>}
-            </div>
+
+            {/* Aksiyon butonları — mobilde yan yana full width, desktop'ta sade */}
+            {cd?.durum !== 'gecmis' && (
+              <div className="flex gap-2 mt-3">
+                {online && zoomId && (
+                  <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer"
+                    className={`flex-1 md:flex-none inline-flex items-center justify-center gap-2 ${isFirst ? 'px-3 md:px-6 py-2.5 md:py-3 text-sm md:text-base' : 'px-3 py-2 text-xs'} bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all spring-tap`}>
+                    <Wifi className={`${isFirst ? 'w-4 h-4 md:w-5 md:h-5' : 'w-3.5 h-3.5'}`} />{t('cal_join_meeting')}
+                  </a>
+                )}
+                <button onClick={()=>onHatirlatma?.(egitim)}
+                  className={`flex-1 md:flex-none inline-flex items-center justify-center gap-2 ${isFirst ? 'px-3 md:px-5 py-2.5 text-sm' : 'px-3 py-2 text-xs'} bg-white/15 hover:bg-white/25 text-white font-bold rounded-xl border border-white/20 transition-all spring-tap`}>
+                  <Bell className={`${isFirst ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />{t('cal_get_reminder')}
+                </button>
+              </div>
+            )}
+
+            {/* Konuşmacılar — alt satır (mobil + desktop) */}
+            {konusmacilar2.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-white/10">
+                <div className="hidden md:flex items-center gap-2 flex-wrap">
+                  {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size={avatarSizeDesktop} dark />)}
+                </div>
+                <div className="flex md:hidden items-center gap-2">
+                  <div className="flex -space-x-2">
+                    {konusmacilar2.slice(0, 4).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={onKonusmaci} size="sm" dark />)}
+                  </div>
+                  <span className="text-xs text-white/70 line-clamp-1 flex-1">{konusmacilar2.join(', ')}</span>
+                </div>
+              </div>
+            )}
           </div>
+
+          {/* DESKTOP poster — sağda */}
+          {egitim.gorselUrl && (
+            <button onClick={()=>onPoster?.({url:egitim.gorselUrl,baslik:egitim.egitim})} className={`flex-shrink-0 hover:scale-105 transition-transform ${isFirst && egitim.gorselUrl ? 'hidden md:block' : 'block'}`}>
+              <img src={egitim.gorselUrl} alt="Poster" className={`${posterSize} rounded-xl shadow-2xl border-2 border-white/20`} />
+            </button>
+          )}
         </div>
 
-        {egitim.gorselUrl && (
-          <button onClick={()=>onPoster?.({url:egitim.gorselUrl,baslik:egitim.egitim})} className="flex-shrink-0 hover:scale-105 transition-transform">
-            <img src={egitim.gorselUrl} alt="Poster" className={`${posterSize} rounded-xl shadow-2xl border-2 border-white/20`} />
-          </button>
+        {/* DESKTOP yurtdışı badge — sağ üst absolute (mobilde poster overlay'inde) */}
+        {yurtdisi && (
+          <div className={`absolute top-3 right-3 z-10 inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-400 text-gray-900 shadow-2xl gold-glow ${isFirst && egitim.gorselUrl ? 'hidden md:inline-flex' : ''}`}>
+            <span className="text-base leading-none">{yurtdisi.bayrak}</span>
+            ULUSLARARASI · {yurtdisi.kisa}
+          </div>
         )}
       </div>
     </div>
