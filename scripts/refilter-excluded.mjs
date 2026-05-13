@@ -22,16 +22,26 @@ admin.initializeApp({
 });
 const db = admin.firestore();
 
-// Yeni regex'ler (vimeo-ingest-local.mjs ile aynı)
+// Türkçe + diakritik normalize — "KYANİ", "Kyäni", "Dalkılıç" gibi
+// varyantları ASCII Latin'e indirir, sonra basit regex ile match eder.
+function normalize(s) {
+  return (s || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '') // diakritikleri kaldır
+    .replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i') // Türkçe i varyantları
+    .replace(/Ş/gi, 's').replace(/Ç/gi, 'c').replace(/Ğ/gi, 'g')
+    .replace(/Ö/gi, 'o').replace(/Ü/gi, 'u')
+    .toLowerCase();
+}
+
 const EXCLUDE_PATTERNS = [
   { name: 'Kayene',         regex: /kayene/i },
-  { name: 'Kyani',          regex: /kyani/i }, // boundary yok — KyaniPro, Kyaniyi vs.
-  { name: 'Tolga Camsoy',   regex: /tolga\s+cam[sş]oy/i },
-  { name: 'Hakan Dalkılıç', regex: /hakan\s+dalk[ıi]l[ıi][çc]/i },
+  { name: 'Kyani',          regex: /kyani/i }, // normalize sonrası Kyäni→kyani, KYANİ→kyani
+  { name: 'Tolga Camsoy',   regex: /tolga\s+camsoy/i },
+  { name: 'Hakan Dalkılıç', regex: /hakan\s+dalkilic/i },
 ];
 
 function checkExclude(baslik, aciklama) {
-  const text = `${baslik || ''} ${aciklama || ''}`;
+  const text = normalize(`${baslik || ''} ${aciklama || ''}`);
   for (const p of EXCLUDE_PATTERNS) {
     if (p.regex.test(text)) return p.name;
   }

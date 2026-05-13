@@ -184,15 +184,23 @@ function matchEgitmen(text, known) {
 }
 
 // ─── Dışlama filtresi (Kayene + Kyani + Tolga Camsoy + Hakan Dalkılıç) ───
-// Bu isimleri içeren videolar hiç kullanılmayacak.
+// Türkçe karakter ve diakritik normalize (Kyäni, KYANİ, Dalkılıç vs.)
+function normalize(s) {
+  return (s || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i')
+    .replace(/Ş/gi, 's').replace(/Ç/gi, 'c').replace(/Ğ/gi, 'g')
+    .replace(/Ö/gi, 'o').replace(/Ü/gi, 'u')
+    .toLowerCase();
+}
 const EXCLUDE_PATTERNS = [
   { name: 'Kayene',          regex: /kayene/i },
-  { name: 'Kyani',           regex: /kyani/i },
-  { name: 'Tolga Camsoy',    regex: /tolga\s+cam[sş]oy/i },
-  { name: 'Hakan Dalkılıç',  regex: /hakan\s+dalk[ıi]l[ıi][çc]/i },
+  { name: 'Kyani',           regex: /kyani/i }, // normalize sonrası Kyäni→kyani, KYANİ→kyani
+  { name: 'Tolga Camsoy',    regex: /tolga\s+camsoy/i },
+  { name: 'Hakan Dalkılıç',  regex: /hakan\s+dalkilic/i },
 ];
 function checkExclude(title, description) {
-  const text = `${title || ''} ${description || ''}`;
+  const text = normalize(`${title || ''} ${description || ''}`);
   for (const p of EXCLUDE_PATTERNS) {
     if (p.regex.test(text)) return p.name;
   }

@@ -137,14 +137,23 @@ function matchEgitmen(text, knownCoreIds) {
 }
 
 // ─── Dışlama filtresi (Kayene + Kyani + Tolga Camsoy + Hakan Dalkılıç) ───
+// Türkçe karakter + diakritik normalize (Kyäni, KYANİ, Dalkılıç vs.)
+function normalize(s) {
+  return (s || '')
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/İ/g, 'i').replace(/I/g, 'i').replace(/ı/g, 'i')
+    .replace(/Ş/gi, 's').replace(/Ç/gi, 'c').replace(/Ğ/gi, 'g')
+    .replace(/Ö/gi, 'o').replace(/Ü/gi, 'u')
+    .toLowerCase();
+}
 const EXCLUDE_PATTERNS = [
   { name: 'Kayene',         regex: /kayene/i },
   { name: 'Kyani',          regex: /kyani/i },
-  { name: 'Tolga Camsoy',   regex: /tolga\s+cam[sş]oy/i },
-  { name: 'Hakan Dalkılıç', regex: /hakan\s+dalk[ıi]l[ıi][çc]/i },
+  { name: 'Tolga Camsoy',   regex: /tolga\s+camsoy/i },
+  { name: 'Hakan Dalkılıç', regex: /hakan\s+dalkilic/i },
 ];
 function checkExclude(video) {
-  const text = `${video?.name || ''} ${video?.description || ''}`;
+  const text = normalize(`${video?.name || ''} ${video?.description || ''}`);
   for (const p of EXCLUDE_PATTERNS) {
     if (p.regex.test(text)) return p.name;
   }
