@@ -1,6 +1,14 @@
 {
   "indexes": [
     {
+      "collectionGroup": "hatirlatmalar",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "gonderildi", "order": "ASCENDING" },
+        { "fieldPath": "gonderilecekZaman", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "kayitli_egitimler",
       "queryScope": "COLLECTION",
       "fields": [
