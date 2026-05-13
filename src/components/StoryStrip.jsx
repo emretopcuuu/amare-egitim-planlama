@@ -17,9 +17,18 @@ const parseTarih = (t) => {
 
 const splitEgitmen = (e) => {
   if (!e) return [];
-  return e.normalize('NFC').replace(/[​-‍﻿]/g, '').replace(/ /g, ' ')
+  return e.normalize('NFC')
+    .replace(/[​-‍﻿]/g, '')
+    .replace(/ /g, ' ')
     .split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜa-zçğışöşü]*\.?\s*[A-ZÇĞİÖŞÜ]|Prof\.|Doç\.|Uzm\.|Dr\.|Dyt\.|Op\.)/)
-    .map(n => n.trim()).filter(n => n.length > 1);
+    .map(n => n.trim()
+      .replace(/\s*SÖYLEŞİ\s*/gi, '')
+      .replace(/\s*SÖYLEŞI\s*/gi, '')
+      .replace(/\s+[İI]LE\.{0,3}\s*$/i, '')
+      .replace(/\s+VE\s*$/i, '')
+      .replace(/\.{2,}$/g, '')
+      .trim())
+    .filter(n => n.length > 1);
 };
 
 const StoryStrip = ({ takvim, konusmacilar }) => {
@@ -30,16 +39,45 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
     const bugun = new Date();
     bugun.setHours(0, 0, 0, 0);
 
-    // Konuşmacı kaydını esnek bul — safeId, coreId (unvan stripped) ile match
+    // Konuşmacı kaydını esnek bul — 5 katmanlı match
     const findKayit = (ad) => {
       if (!konusmacilar || !konusmacilar.length) return null;
-      const safeId = makeSafeId(ad);
-      const coreId = makeCoreId(ad);
-      return konusmacilar.find(k => k.id === safeId)
-          || konusmacilar.find(k => k.id === coreId)
-          || konusmacilar.find(k => makeSafeId(k.ad || k.id) === safeId)
-          || konusmacilar.find(k => makeCoreId(k.ad || k.id) === coreId)
-          || null;
+      const adNorm = ad.normalize('NFC').replace(/[​-‍﻿]/g, '').replace(/ /g, ' ').trim();
+      const safeId = makeSafeId(adNorm);
+      const coreId = makeCoreId(adNorm);
+
+      // Strateji 1-4: ID variant'larıyla
+      for (const k of konusmacilar) {
+        if (k.id === safeId || k.id === coreId) return k;
+        const kAd = k.ad || k.id || '';
+        if (makeSafeId(kAd) === safeId || makeCoreId(kAd) === coreId) return k;
+        if (makeCoreId(k.id || '') === coreId) return k;
+      }
+
+      // Strateji 5: Ad+soyad substring match (unvan'sız parça)
+      const adsiz = adNorm.replace(/^(Yrd\.?\s*Doç\.?\s*Dr\.?\s*|Prof\.?\s*Dr\.?\s*|Doç\.?\s*Dr\.?\s*|Uzm\.?\s*Dr\.?\s*|Op\.?\s*Dr\.?\s*|Dr\.?\s*Öğr\.?\s*Üyesi\.?\s*|Dr\.?\s*|Dt\.?\s*|Dyt\.?\s*|Psik\.?\s*|Psk\.?\s*|Ecz\.?\s*|Av\.?\s*|Öğr\.?\s*Gör\.?\s*|Arş\.?\s*Gör\.?\s*)/gi, '').trim();
+      const parcalar = adsiz.split(/\s+/).filter(p => p.length > 1);
+      if (parcalar.length >= 2) {
+        const ilk = parcalar[0].toLocaleUpperCase('tr-TR');
+        const son = parcalar[parcalar.length - 1].toLocaleUpperCase('tr-TR');
+        // Hem ad hem soyad eşleşmeli (false positive engelle)
+        const m = konusmacilar.find(k => {
+          const kAd = (k.ad || '').normalize('NFC').toLocaleUpperCase('tr-TR');
+          return kAd.includes(ilk) && kAd.includes(son);
+        });
+        if (m) return m;
+      }
+      // Strateji 6: Tek isim/soyad ile arama (son fallback)
+      if (parcalar.length === 1) {
+        const p = parcalar[0].toLocaleUpperCase('tr-TR');
+        const m = konusmacilar.find(k => {
+          const kAd = (k.ad || '').normalize('NFC').toLocaleUpperCase('tr-TR');
+          return kAd.includes(p) && p.length >= 4;
+        });
+        if (m) return m;
+      }
+
+      return null;
     };
 
     const sayilar = new Map(); // coreId → { ad (en uzun gördüğümüz), kayit, sayi, ilkTarih }
