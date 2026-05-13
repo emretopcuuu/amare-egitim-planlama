@@ -1,39 +1,66 @@
-// /kayitli-egitimler — Tüm Vimeo kayıtlı eğitimleri kategori chip'leri ile listeler
+// /kayitli-egitimler — Vimeo kayıtlı eğitim arşivi
+// Filtreler: kategori (chip), eğitmen (dropdown), dil (dropdown), arama (input)
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, X, Video, Play, Calendar, Tag, Loader2 } from 'lucide-react';
+import { ArrowLeft, Search, X, Video, Play, Calendar, Tag, Loader2, User, Globe } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, limit as fbLimit, getDocs } from 'firebase/firestore';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import VideoOynatModal from '../components/VideoOynatModal';
 
-// 13 kategori + Tümü (Faz 4 ile aynı sıralama)
+// 13 kategori + Tümü
 const KATEGORILER = [
   'Tümü', 'Liderlik', 'Satış', 'Motivasyon', 'Davet', 'Kapanış',
   'Sunum Teknikleri', 'Zaman Yönetimi', 'Kişisel Gelişim',
   'Sağlık', 'Finansal Özgürlük', 'Vizyon', 'Hikaye', 'Ürün Eğitimi',
 ];
 
-const CACHE_PREFIX = 'amare_kayitli_egitimler_';
-const TTL = 12 * 60 * 60 * 1000; // 12 saat
+// Dil tespiti — başlık + açıklama içinde regex eşleşmesi
+const DIL_PATTERNS = [
+  { kod: 'RU', etiket: 'Rusça',     regex: /russian|russia|русск|россия|russisch/i },
+  { kod: 'EN', etiket: 'İngilizce', regex: /\benglish\b|englisch|\(en\)|in english/i },
+  { kod: 'DE', etiket: 'Almanca',   regex: /\bdeutsch\b|\bgerman\b|deutschland|germany|\(de\)/i },
+  { kod: 'NL', etiket: 'Hollandaca', regex: /nederlands|\bdutch\b|nederland|holland|\(nl\)/i },
+];
+function detectDil(video) {
+  const text = `${video.baslik || ''} ${video.aciklama || ''}`;
+  for (const p of DIL_PATTERNS) {
+    if (p.regex.test(text)) return p.kod;
+  }
+  return 'TR'; // varsayılan
+}
+const DILLER = [
+  { kod: 'all', etiket: 'Tüm Diller' },
+  { kod: 'TR',  etiket: 'Türkçe' },
+  { kod: 'RU',  etiket: 'Rusça' },
+  { kod: 'EN',  etiket: 'İngilizce' },
+  { kod: 'DE',  etiket: 'Almanca' },
+  { kod: 'NL',  etiket: 'Hollandaca' },
+];
+
+const CACHE_KEY = 'amare_kayitli_egitimler_all_v2'; // v2: tek query, client filter
+const TTL = 12 * 60 * 60 * 1000;
 
 const KayitliEgitimlerSayfasi = () => {
   const navigate = useNavigate();
-  const [kategori, setKategori] = useState('Tümü');
-  const [videolar, setVideolar] = useState([]);
+  const [tumVideolar, setTumVideolar] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [kategori, setKategori] = useState('Tümü');
+  const [dilKod, setDilKod] = useState('all');
+  const [egitmenCoreId, setEgitmenCoreId] = useState('');
   const [arama, setArama] = useState('');
   const [oynatilan, setOynatilan] = useState(null);
 
-  // Kategori bazında fetch (her kategori için ayrı cache)
+  // Tek seferde tüm video'ları çek (cache 12h)
   useEffect(() => {
-    const cacheKey = CACHE_PREFIX + (kategori === 'Tümü' ? 'all' : kategori) + '_v1';
     try {
-      const cached = localStorage.getItem(cacheKey);
+      const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
         const { ts, data } = JSON.parse(cached);
         if (Date.now() - ts < TTL && Array.isArray(data)) {
-          setVideolar(data);
+          // Dil etiketini cache'den oku, yoksa hesapla
+          const enriched = data.map(v => v.dil ? v : { ...v, dil: detectDil(v) });
+          setTumVideolar(enriched);
           setLoading(false);
           return;
         }
@@ -43,52 +70,88 @@ const KayitliEgitimlerSayfasi = () => {
     setLoading(true);
     (async () => {
       try {
-        let q;
-        if (kategori === 'Tümü') {
-          q = query(
-            collection(db, 'kayitli_egitimler'),
-            where('kayeneFiltrelendi', '==', false),
-            orderBy('tarih', 'desc'),
-            fbLimit(2000)
-          );
-        } else {
-          q = query(
-            collection(db, 'kayitli_egitimler'),
-            where('kategoriler', 'array-contains', kategori),
-            where('kayeneFiltrelendi', '==', false),
-            orderBy('tarih', 'desc'),
-            fbLimit(2000)
-          );
-        }
+        const q = query(
+          collection(db, 'kayitli_egitimler'),
+          where('kayeneFiltrelendi', '==', false),
+          orderBy('tarih', 'desc'),
+          fbLimit(2500)
+        );
         const snap = await getDocs(q);
-        // Transcript field UI'da gereksiz — bandwidth tasarrufu için at
         const data = snap.docs.map(d => {
           const { transcript, ...rest } = d.data();
-          return { id: d.id, ...rest };
+          const v = { id: d.id, ...rest };
+          v.dil = detectDil(v); // tespit + cache'e dahil
+          return v;
         });
-        setVideolar(data);
+        setTumVideolar(data);
         try {
-          localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
+          localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
         } catch {}
       } catch (err) {
         console.warn('[kayitli_egitimler] fetch hatası:', err.message);
-        setVideolar([]);
+        setTumVideolar([]);
       } finally {
         setLoading(false);
       }
     })();
-  }, [kategori]);
+  }, []);
 
-  // Client-side arama filtresi
-  const filtrelenmis = useMemo(() => {
-    if (!arama.trim()) return videolar;
-    const q = arama.toLocaleLowerCase('tr-TR');
-    return videolar.filter(v => {
-      const b = (v.baslik || '').toLocaleLowerCase('tr-TR');
-      const e = (v.egitmenAdlari || []).join(' ').toLocaleLowerCase('tr-TR');
-      return b.includes(q) || e.includes(q);
+  // Eğitmen listesi (unique + video sayısı) — tüm video'lardan derle
+  const egitmenOpsiyonlari = useMemo(() => {
+    const map = new Map(); // coreId → { coreId, ad, count }
+    for (const v of tumVideolar) {
+      const coreIds = v.egitmenler || [];
+      const adlar = v.egitmenAdlari || [];
+      coreIds.forEach((cid, i) => {
+        if (!cid) return;
+        if (!map.has(cid)) {
+          map.set(cid, { coreId: cid, ad: adlar[i] || cid, count: 0 });
+        }
+        map.get(cid).count++;
+      });
+    }
+    return [...map.values()].sort((a, b) => {
+      if (b.count !== a.count) return b.count - a.count;
+      return a.ad.localeCompare(b.ad, 'tr-TR');
     });
-  }, [videolar, arama]);
+  }, [tumVideolar]);
+
+  // Combined filter: kategori + dil + eğitmen + arama
+  const filtrelenmis = useMemo(() => {
+    let arr = tumVideolar;
+    if (kategori !== 'Tümü') {
+      arr = arr.filter(v => (v.kategoriler || []).includes(kategori));
+    }
+    if (dilKod !== 'all') {
+      arr = arr.filter(v => v.dil === dilKod);
+    }
+    if (egitmenCoreId) {
+      arr = arr.filter(v => (v.egitmenler || []).includes(egitmenCoreId));
+    }
+    if (arama.trim()) {
+      const q = arama.toLocaleLowerCase('tr-TR');
+      arr = arr.filter(v => {
+        const b = (v.baslik || '').toLocaleLowerCase('tr-TR');
+        const e = (v.egitmenAdlari || []).join(' ').toLocaleLowerCase('tr-TR');
+        return b.includes(q) || e.includes(q);
+      });
+    }
+    return arr;
+  }, [tumVideolar, kategori, dilKod, egitmenCoreId, arama]);
+
+  const aktifFiltreSayisi = [
+    kategori !== 'Tümü',
+    dilKod !== 'all',
+    !!egitmenCoreId,
+    !!arama.trim(),
+  ].filter(Boolean).length;
+
+  const filtreleriTemizle = () => {
+    setKategori('Tümü');
+    setDilKod('all');
+    setEgitmenCoreId('');
+    setArama('');
+  };
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900">
@@ -103,7 +166,15 @@ const KayitliEgitimlerSayfasi = () => {
             <LanguageSwitcher />
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display">Kayıtlı Eğitimler</h1>
-          <p className="text-purple-200 mt-1">{videolar.length} kayıtlı eğitim · kategori bazlı arşiv</p>
+          <p className="text-purple-200 mt-1">
+            {filtrelenmis.length} / {tumVideolar.length} kayıtlı eğitim
+            {aktifFiltreSayisi > 0 && (
+              <button onClick={filtreleriTemizle}
+                className="ml-3 inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 text-xs underline">
+                <X className="w-3 h-3" />Filtreleri temizle
+              </button>
+            )}
+          </p>
 
           {/* Arama */}
           <div className="relative mt-4">
@@ -119,8 +190,33 @@ const KayitliEgitimlerSayfasi = () => {
             )}
           </div>
 
-          {/* Kategori chip'leri — flex-wrap ile birden fazla satıra yayılır */}
-          <div className="mt-4 flex flex-wrap gap-2">
+          {/* Eğitmen + Dil dropdownları */}
+          <div className="mt-3 flex flex-col sm:flex-row gap-2">
+            <div className="relative flex-1">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300 pointer-events-none" />
+              <select value={egitmenCoreId} onChange={e => setEgitmenCoreId(e.target.value)}
+                className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white rounded-xl pl-10 pr-8 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 appearance-none cursor-pointer">
+                <option value="" className="bg-purple-900">Tüm Eğitmenler ({egitmenOpsiyonlari.length})</option>
+                {egitmenOpsiyonlari.map(o => (
+                  <option key={o.coreId} value={o.coreId} className="bg-purple-900">
+                    {o.ad} ({o.count})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="relative sm:w-56">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300 pointer-events-none" />
+              <select value={dilKod} onChange={e => setDilKod(e.target.value)}
+                className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white rounded-xl pl-10 pr-8 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 appearance-none cursor-pointer">
+                {DILLER.map(d => (
+                  <option key={d.kod} value={d.kod} className="bg-purple-900">{d.etiket}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Kategori chip'leri */}
+          <div className="mt-3 flex flex-wrap gap-2">
             {KATEGORILER.map(k => (
               <button key={k} onClick={() => setKategori(k)}
                 className={`px-4 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
@@ -146,9 +242,11 @@ const KayitliEgitimlerSayfasi = () => {
           ) : filtrelenmis.length === 0 ? (
             <div className="text-center py-16 text-white/50">
               <Video className="w-20 h-20 mx-auto mb-3 opacity-30" />
-              <p className="text-lg">
-                {arama ? 'Arama kriterine uyan kayıt yok.' : 'Bu kategoride henüz kayıtlı eğitim yok.'}
-              </p>
+              <p className="text-lg">Filtreye uyan kayıt bulunamadı.</p>
+              <button onClick={filtreleriTemizle}
+                className="mt-3 inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 text-sm underline">
+                Filtreleri temizle
+              </button>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -162,6 +260,11 @@ const KayitliEgitimlerSayfasi = () => {
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
                         <Video className="w-12 h-12 text-white/30" />
+                      </div>
+                    )}
+                    {v.dil && v.dil !== 'TR' && (
+                      <div className="absolute top-2 right-2 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {v.dil}
                       </div>
                     )}
                     <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/50 transition-all">
