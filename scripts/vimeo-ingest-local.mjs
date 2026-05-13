@@ -187,7 +187,7 @@ function matchEgitmen(text, known) {
 // Bu isimleri içeren videolar hiç kullanılmayacak.
 const EXCLUDE_PATTERNS = [
   { name: 'Kayene',          regex: /kayene/i },
-  { name: 'Kyani',           regex: /\bkyani\b/i },
+  { name: 'Kyani',           regex: /kyani/i },
   { name: 'Tolga Camsoy',    regex: /tolga\s+cam[sş]oy/i },
   { name: 'Hakan Dalkılıç',  regex: /hakan\s+dalk[ıi]l[ıi][çc]/i },
 ];
