@@ -151,7 +151,7 @@ function buildVideoDoc(video, egitmenler, transcript) {
     aciklama: video.description || '',
     tarih, // YYYY-MM-DD
     sure: video.duration || 0,
-    embedUrl: `https://player.vimeo.com/video/${vimeoId}`,
+    embedUrl: video.player_embed_url || `https://player.vimeo.com/video/${vimeoId}`,
     vimeoUrl: video.link || '',
     thumbnailUrl: thumb,
     egitmenler: egitmenler.coreIds,
@@ -206,7 +206,7 @@ export default async (req) => {
   console.log(`[vimeo-ingest] ${knownCoreIds.size} known coreId loaded`);
 
   // 2. Vimeo'dan paginate çek
-  let nextUrl = `/me/videos?per_page=100&page=${startPage}&fields=uri,name,description,link,duration,release_time,created_time,pictures.sizes`;
+  let nextUrl = `/me/videos?per_page=100&page=${startPage}&fields=uri,name,description,link,player_embed_url,duration,release_time,created_time,pictures.sizes`;
   let totalIngested = 0;
   let totalExcluded = 0;
   const excludedBreakdown = {};

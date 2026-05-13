@@ -104,7 +104,7 @@ async function fetchAllVimeoMetadata() {
     return new Map();
   }
   const map = new Map();
-  let url = '/me/videos?per_page=100&page=1&fields=uri,name,description,link,duration,release_time,created_time,pictures.sizes';
+  let url = '/me/videos?per_page=100&page=1&fields=uri,name,description,link,player_embed_url,duration,release_time,created_time,pictures.sizes';
   let page = 0;
   while (url) {
     page++;
@@ -268,7 +268,7 @@ async function main() {
       aciklama,
       tarih,
       sure: meta?.duration || 0,
-      embedUrl: `https://player.vimeo.com/video/${vimeoId}`,
+      embedUrl: meta?.player_embed_url || `https://player.vimeo.com/video/${vimeoId}`,
       vimeoUrl: t.link || meta?.link || `https://vimeo.com/${vimeoId}`,
       thumbnailUrl: thumb,
       egitmenler: eg.coreIds,
