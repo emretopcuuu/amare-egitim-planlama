@@ -37,26 +37,37 @@ const db = admin.firestore();
 const VIMEO_TOKEN = process.env.VIMEO_TOKEN;
 const VIMEO_BASE = 'https://api.vimeo.com';
 
-// ─── Yardımcı: isim normalize (DataContext.jsx makeCoreId muadili) ────────
-// Unvanları temizle, Türkçe karakterleri ASCII'ye indir, underscore ile id üret.
+// ─── Yardımcı: isim normalize (DataContext.jsx ile birebir aynı) ────────
 const TR_LOWER = { 'Ç': 'c', 'Ğ': 'g', 'İ': 'i', 'I': 'i', 'Ö': 'o', 'Ş': 's', 'Ü': 'u' };
 function makeSafeId(ad) {
   if (!ad) return '';
-  let s = String(ad).normalize('NFC').replace(/[​-‍﻿]/g, '').trim();
+  let s = String(ad).normalize('NFC').replace(/[​-‍﻿]/g, '').replace(/ /g, ' ').trim();
   s = s.replace(/[ÇĞİIÖŞÜçğıöşü]/g, c => TR_LOWER[c.toUpperCase()] || c.toLowerCase());
   s = s.toLowerCase();
   s = s.replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
   return s;
 }
 
-// Unvan prefiksleri (DataContext.jsx ile aynı liste)
-const UNVAN_REGEX = /^(prof\.?\s*dr\.?|do[çc]\.?\s*dr\.?|uzm\.?\s*dr\.?|op\.?\s*dr\.?|dr\.?|dyt\.?|prof\.?|do[çc]\.?|uzm\.?|op\.?|av\.?|mh\.?|y\.?\s*mh\.?)\s+/i;
+// Unvanları \s* ile sıyır — "Dr.TUNÇ" gibi boşluksuz formatlar da geçer
 function makeCoreId(ad) {
   if (!ad) return '';
-  let s = String(ad).normalize('NFC').trim();
-  // Unvanları temizle (tekrarlı)
-  while (UNVAN_REGEX.test(s)) s = s.replace(UNVAN_REGEX, '').trim();
-  return makeSafeId(s);
+  let clean = String(ad).normalize('NFC')
+    .replace(/[​-‍﻿]/g, '')
+    .replace(/ /g, ' ')
+    .trim();
+  if (!clean) return '';
+  let s = clean.replace(
+    /^(Yrd\.?\s*Doç\.?\s*Dr\.?\s*|Prof\.?\s*Dr\.?\s*|Doç\.?\s*Dr\.?\s*|Uzm\.?\s*Dr\.?\s*|Op\.?\s*Dr\.?\s*|Dr\.?\s*Öğr\.?\s*Üyesi\.?\s*|Dr\.?\s*|Dt\.?\s*|Dyt\.?\s*|Psik\.?\s*|Psk\.?\s*|Ecz\.?\s*|Avt?\.?\s*|Öğr\.?\s*Gör\.?\s*|Arş\.?\s*Gör\.?\s*)/gi,
+    ''
+  ).trim();
+  if (s === clean) {
+    s = clean.replace(
+      /^(yrd_doc_dr_|prof_dr_|doc_dr_|uzm_dr_|op_dr_|dr_ogr_uyesi_|dr_|dt_|dyt_|psik_|psk_|ecz_|avt?_|ogr_gor_|ars_gor_)/i,
+      ''
+    ).trim();
+  }
+  s = s.replace(/\s+(İLE|ILE|VE|SÖYLEŞİ|SÖYLEŞI|SOYLESI|ile|ve|söyleşi)\.{0,3}\s*$/gi, '').trim();
+  return s ? makeSafeId(s) : makeSafeId(clean);
 }
 
 // İsim parse — virgül/slash/ampersand/tire ile ayrılmış adları böl
