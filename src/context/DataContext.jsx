@@ -165,12 +165,130 @@ export const DataProvider = ({ children }) => {
     }
   }, [isAdmin]);
 
+  // Firestore REST API value parser
+  const parseValue = (v) => {
+    if (v == null) return null;
+    if (v.stringValue !== undefined) return v.stringValue;
+    if (v.integerValue !== undefined) return parseInt(v.integerValue, 10);
+    if (v.doubleValue !== undefined) return v.doubleValue;
+    if (v.booleanValue !== undefined) return v.booleanValue;
+    if (v.nullValue !== undefined) return null;
+    if (v.timestampValue !== undefined) return v.timestampValue;
+    if (v.arrayValue) return (v.arrayValue.values || []).map(parseValue);
+    if (v.mapValue) {
+      const o = {};
+      for (const [k, val] of Object.entries(v.mapValue.fields || {})) o[k] = parseValue(val);
+      return o;
+    }
+    return null;
+  };
+
+  const parseFields = (fields) => {
+    const out = {};
+    for (const [k, v] of Object.entries(fields || {})) out[k] = parseValue(v);
+    return out;
+  };
+
+  // HIZLI takvim fetch — base64 gorselUrl HARİÇ (her doc 1MB → 1KB!)
+  // gorselUrl marker ile bilinir, lazy yüklenir
+  const TAKVIM_LIGHT_FIELDS = ['egitim','gun','tarih','saat','bitisSaati','sure','egitmen','yer','hafta','kategori','sehir','aciklama','katilimSayisi','tamamlandi'];
+  const KONUSMACI_LIGHT_FIELDS = ['ad','unvan','biyografi','linkedin']; // fotoURL hariç
+
+  const fetchLightCollection = async (name, fields) => {
+    const mask = fields.map(f => `mask.fieldPaths=${f}`).join('&');
+    const url = `https://firestore.googleapis.com/v1/projects/amare-egitim-planlama/databases/(default)/documents/${name}?${mask}&pageSize=300`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Firestore REST ${res.status}`);
+    const data = await res.json();
+    return (data.documents || []).map(d => ({
+      id: d.name.split('/').pop(),
+      ...parseFields(d.fields),
+    }));
+  };
+
   // Public koleksiyonları + sadece okumak için izin verilenleri yükle
-  // PARALEL fetch — 4 koleksiyon aynı anda (önce sıralı idi)
+  // İKİ AŞAMALI: önce LIGHT (base64'siz, anında), sonra background'da FULL
   const loadData = async (showLoading = true) => {
     if (showLoading) setLoading(true);
 
-    // 4 koleksiyonu paralel çek
+    // 1. AŞAMA: LIGHT fetch — REST API + field mask, gorselUrl/fotoURL hariç
+    //    Her şey paralel, ~500ms-1sn'de bitti
+    const [takvimLight, settingsResult, konusmacilarLight, sablonlarResult] = await Promise.allSettled([
+      fetchLightCollection('takvim', TAKVIM_LIGHT_FIELDS),
+      getDocs(collection(db, 'settings')),
+      fetchLightCollection('konusmacilar', KONUSMACI_LIGHT_FIELDS),
+      getDocs(collection(db, 'sablonlar')),
+    ]);
+
+    // Light data'yı hemen göster — kullanıcı eğitimleri ANINDA görür (posterler yok ama önemli değil)
+    if (takvimLight.status === 'fulfilled') {
+      setTakvim(takvimLight.value.map(t => ({ ...t, _light: true })));
+    }
+    if (konusmacilarLight.status === 'fulfilled') {
+      // Dedup + light data
+      const coreMap = new Map();
+      for (const k of konusmacilarLight.value) {
+        const cid = makeCoreId(k.ad || k.id);
+        if (!coreMap.has(cid)) coreMap.set(cid, { ...k, _light: true });
+      }
+      setKonusmacilar([...coreMap.values()]);
+    }
+    if (settingsResult.status === 'fulfilled') {
+      const snap = settingsResult.value;
+      setTakvimYayinlandi(snap.empty ? false : snap.docs[0].data().takvimYayinlandi === true);
+    }
+    if (sablonlarResult.status === 'fulfilled') {
+      setSablonlar(sablonlarResult.value.docs.map(d => ({ id: d.id, ...d.data() })));
+    }
+
+    setLoading(false); // ⚡ Kullanıcı SAYFAYA ANINDA GİRER (posterler henüz yok)
+
+    // 2. AŞAMA: FULL fetch — arkaplanda gorselUrl + fotoURL dahil hepsi
+    //    Yaklaşık 3-5sn sonra gelir, state silent update edilir, kullanıcı yavaş yavaş posterleri görür
+    setTimeout(async () => {
+      const [takvimFull, konusmacilarFull] = await Promise.allSettled([
+        getDocs(collection(db, 'takvim')),
+        getDocs(collection(db, 'konusmacilar')),
+      ]);
+
+      let freshTakvim = null;
+      let freshKonusmacilar = null;
+
+      if (takvimFull.status === 'fulfilled') {
+        freshTakvim = takvimFull.value.docs.map(d => ({ id: d.id, ...d.data() }));
+        setTakvim(freshTakvim);
+      }
+      if (konusmacilarFull.status === 'fulfilled') {
+        const rawData = konusmacilarFull.value.docs.map(d => ({ id: d.id, ...d.data() }));
+        const coreMap = new Map();
+        for (const k of rawData) {
+          const cid = makeCoreId(k.ad || k.id);
+          const existing = coreMap.get(cid);
+          if (!existing) {
+            coreMap.set(cid, k);
+          } else if (k.fotoURL && !existing.fotoURL) {
+            coreMap.set(cid, { ...existing, fotoURL: k.fotoURL, id: k.id });
+          }
+        }
+        freshKonusmacilar = [...coreMap.values()];
+        setKonusmacilar(freshKonusmacilar);
+      }
+
+      // Cache'e yaz (base64'ler stripleniyor zaten)
+      saveToCache({
+        takvim: freshTakvim,
+        konusmacilar: freshKonusmacilar,
+        sablonlar: sablonlarResult.status === 'fulfilled' ? sablonlarResult.value.docs.map(d => ({ id: d.id, ...d.data() })) : null,
+        takvimYayinlandi: settingsResult.status === 'fulfilled' && !settingsResult.value.empty ? settingsResult.value.docs[0].data().takvimYayinlandi === true : null,
+      });
+    }, 100); // 100ms gecikme — UI render önceliği
+
+    return; // Sequence here
+  };
+
+  // OLD CODE - kalmasın diye yorum (referans):
+  /*
+  const loadDataOld = async () => {
     const [takvimResult, settingsResult, konusmacilarResult, sablonlarResult] = await Promise.allSettled([
       getDocs(collection(db, 'takvim')),
       getDocs(collection(db, 'settings')),
@@ -254,6 +372,7 @@ export const DataProvider = ({ children }) => {
       takvimYayinlandi: freshYayinlandi,
     });
   };
+  */
 
   // Sadece admin'in okuyabildiği koleksiyonları yükle
   const loadAdminData = async () => {
