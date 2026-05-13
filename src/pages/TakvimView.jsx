@@ -581,40 +581,79 @@ const TakvimView = () => {
 
     if (gorunum === 'kart') {
       return (
-        <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
-          {/* Yurtdışı rozeti */}
+        <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+          {/* Yurtdışı rozeti — z-20 (poster üstünde) */}
           {yurtdisi && (
-            <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg">
+            <div className="absolute top-2 right-2 z-20 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg">
               <span className="text-xs leading-none">{yurtdisi.bayrak}</span>
               <span>{yurtdisi.kisa}</span>
             </div>
           )}
-          {/* Kategori accent — üst kenar 3px renkli bar */}
-          {egitim.kategori && <div className={`absolute left-0 right-0 top-0 h-1 ${katRenk.dot}`} aria-hidden="true" />}
-          {egitim.gorselUrl && (
-            <button onClick={()=>setPosterModal({url:egitim.gorselUrl,baslik:egitim.egitim})} className="w-full h-40 overflow-hidden">
-              <img src={egitim.gorselUrl} alt="" className="w-full h-full object-cover hover:scale-105 transition-transform" />
+          {/* Kategori accent — üst kenar 3px (poster yoksa görünür) */}
+          {egitim.kategori && !egitim.gorselUrl && <div className={`absolute left-0 right-0 top-0 h-1 z-10 ${katRenk.dot}`} aria-hidden="true" />}
+
+          {/* SİNEMA POSTERİ TASARIMI — poster aspect-square + gradient overlay altta */}
+          {egitim.gorselUrl ? (
+            <button onClick={()=>setPosterModal({url:egitim.gorselUrl,baslik:egitim.egitim})}
+              className="relative w-full aspect-square overflow-hidden group bg-gray-100">
+              <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              {/* Üst sağ: countdown overlay */}
+              <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 flex-wrap">
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full backdrop-blur-md ${online?'bg-blue-500/80 text-white':'bg-white/80 text-purple-800'}`}>
+                  {online ? '🌐 Online' : '📍 ' + (getSehir(egitim) || 'Yer')}
+                </span>
+                <CountdownBadge egitim={egitim} />
+              </div>
+              {/* Alt gradient — başlık okunurluğu için */}
+              <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none" />
+              {/* Alt: başlık + tarih overlay */}
+              <div className="absolute inset-x-0 bottom-0 p-3 text-left">
+                <div className="text-white/80 text-[10px] uppercase tracking-wider font-bold mb-1 flex items-center gap-1.5">
+                  <Clock className="w-3 h-3" />{egitim.tarih} {trGun(egitim.gun, t).slice(0, 3)}{egitim.saat ? ` • ${egitim.saat}` : ''}
+                </div>
+                <h3 className="font-extrabold text-white leading-tight text-base line-clamp-2 font-display drop-shadow-md">{egitimAdi}</h3>
+              </div>
             </button>
+          ) : (
+            /* Posteri olmayan kartlar için kompakt üst kısım */
+            <div className="p-4 border-b border-gray-100">
+              <div className="flex items-center justify-between mb-2 gap-1">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${online?'bg-blue-100 text-blue-700':'bg-purple-100 text-purple-700'}`}>{online?t('cal_filter_online'):getSehir(egitim)||t('cal_filter_offline')}</span>
+                <CountdownBadge egitim={egitim} />
+              </div>
+              <h3 className="font-bold text-gray-900 leading-tight text-base">{egitimAdi}</h3>
+              <div className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                <Clock className="w-3 h-3" />{egitim.tarih} {trGun(egitim.gun, t)}{egitim.saat ? ` • ${egitim.saat}` : ''}
+              </div>
+            </div>
           )}
-          <div className="p-4 flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-2 gap-1">
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${online?'bg-blue-100 text-blue-700':'bg-purple-100 text-purple-700'}`}>{online?t('cal_filter_online'):getSehir(egitim)||t('cal_filter_offline')}</span>
-              <CountdownBadge egitim={egitim} />
-            </div>
-            <h3 className="font-bold text-gray-900 leading-tight mb-2">{egitimAdi}</h3>
-            <div className="text-sm text-gray-500 space-y-1">
-              <div className="flex items-center gap-1"><Clock className="w-3.5 h-3.5 text-purple-500" />{egitim.tarih} {trGun(egitim.gun, t)}{egitim.saat ? ` • ${egitim.saat}` : ''}</div>
-              {egitim.kategori && <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}><span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}</span>}
-            </div>
-            <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-gray-100">
-              {konusmacilar2.map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={(a,k)=>setKonusmaciModal({ad:a,kayit:k})} size="sm" />)}
-              {konusmacilar2.length > 0 && <span className="text-xs text-gray-500 ml-1 truncate">{konusmacilar2.join(', ')}</span>}
-            </div>
+
+          {/* Alt kısım: konuşmacılar + butonlar */}
+          <div className="p-4 flex-1 flex flex-col gap-3">
+            {egitim.kategori && (
+              <div>
+                <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold border ${katRenk.bg} ${katRenk.text} ${katRenk.border}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${katRenk.dot}`} />{kategoriAdi}
+                </span>
+              </div>
+            )}
+            {konusmacilar2.length > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="flex -space-x-2">
+                  {konusmacilar2.slice(0, 3).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={(a,k)=>setKonusmaciModal({ad:a,kayit:k})} size="sm" />)}
+                </div>
+                <span className="text-xs text-gray-600 line-clamp-1 flex-1">{konusmacilar2.join(', ')}</span>
+              </div>
+            )}
             {!gecmis && (
-              <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-100">
+              <div className="flex items-center gap-2 mt-auto pt-2">
                 <button onClick={()=>setHatirlatmaModal(egitim)}
                   title="Eğitim öncesi 5dk/10dk/4sa/8sa/12sa/24sa email hatırlatması al"
-                  className="flex-1 inline-flex items-center justify-center gap-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-purple-600 text-white hover:bg-purple-700 transition-colors"><Bell className="w-3 h-3" />{t('cal_remind')}{hatirlatmaCount > 0 && <span className="ml-1 px-1.5 py-0.5 rounded-full text-[9px] bg-white/30">{hatirlatmaCount}</span>}</button>
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-purple-600 text-white hover:bg-purple-700 transition-colors spring-tap">
+                  <Bell className="w-3.5 h-3.5" />{t('cal_remind')}
+                  {hatirlatmaCount > 0 && <span className="ml-0.5 px-1.5 py-0.5 rounded-full text-[9px] bg-white/30">{hatirlatmaCount}</span>}
+                </button>
                 <EventActions egitim={egitim} />
               </div>
             )}
