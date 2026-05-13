@@ -9,7 +9,7 @@ import EventActions from '../components/EventActions';
 import KonusmaciFullModal from '../components/KonusmaciFullModal';
 import StoryStrip from '../components/StoryStrip';
 import { EmptySearch, EmptyCompleted } from '../components/EmptyState';
-import { DayMotif } from '../utils/dayIcon';
+import { DayMotif } from '../utils/dayIcon.jsx';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
