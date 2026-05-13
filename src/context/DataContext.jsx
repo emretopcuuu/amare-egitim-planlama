@@ -147,7 +147,10 @@ export const DataProvider = ({ children }) => {
       if (cached.takvim) setTakvim(cached.takvim);
       if (cached.konusmacilar) setKonusmacilar(cached.konusmacilar);
       if (cached.sablonlar) setSablonlar(cached.sablonlar);
-      if (cached.takvimYayinlandi !== undefined) setTakvimYayinlandi(cached.takvimYayinlandi);
+      // Cache'te 'false' güvenilmez — eski cache'lerden stale değer gelebilir.
+      // Sadece 'true' ise cache'i kabul et. 'false'/undefined → null, fresh fetch beklesin.
+      if (cached.takvimYayinlandi === true) setTakvimYayinlandi(true);
+      else setTakvimYayinlandi(null);
       setLoading(false); // İlk paint anında, kullanıcı eski veri görmeye başlar
     }
     // 2. Fresh fetch — cache yoksa loading göster, varsa background
