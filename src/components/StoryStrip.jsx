@@ -2,6 +2,7 @@
 // Hem mobilde hem desktop'ta görünür (eskiden mobil-only idi, gün gün gösteriyordu)
 import React, { useMemo, useState } from 'react';
 import { useTranslation } from '../context/LanguageContext';
+import { makeSafeId, makeCoreId } from '../context/DataContext';
 import KonusmaciFullModal from './KonusmaciFullModal';
 import { User } from 'lucide-react';
 
@@ -29,21 +30,39 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
     const bugun = new Date();
     bugun.setHours(0, 0, 0, 0);
 
-    const sayilar = new Map(); // key (uppercase ad) → { ad, kayit, sayi, ilkTarih }
+    // Konuşmacı kaydını esnek bul — safeId, coreId (unvan stripped) ile match
+    const findKayit = (ad) => {
+      if (!konusmacilar || !konusmacilar.length) return null;
+      const safeId = makeSafeId(ad);
+      const coreId = makeCoreId(ad);
+      return konusmacilar.find(k => k.id === safeId)
+          || konusmacilar.find(k => k.id === coreId)
+          || konusmacilar.find(k => makeSafeId(k.ad || k.id) === safeId)
+          || konusmacilar.find(k => makeCoreId(k.ad || k.id) === coreId)
+          || null;
+    };
+
+    const sayilar = new Map(); // coreId → { ad (en uzun gördüğümüz), kayit, sayi, ilkTarih }
     takvim.forEach(e => {
       const d = parseTarih(e.tarih);
       if (!d || d < bugun) return;
       const adlar = splitEgitmen(e.egitmen);
       adlar.forEach(ad => {
-        const key = ad.normalize('NFC').toLocaleUpperCase('tr-TR').trim();
+        // CoreId üzerinden grupla — "Dr. TUNÇ TUNCER" ile "TUNÇ TUNCER" aynı kişi
+        const key = makeCoreId(ad) || ad.normalize('NFC').toLocaleUpperCase('tr-TR').trim();
         if (!sayilar.has(key)) {
-          // Firestore kaydını bul (foto için)
-          const kayit = (konusmacilar || []).find(k => (k.ad || '').normalize('NFC').toLocaleUpperCase('tr-TR').trim() === key);
-          sayilar.set(key, { ad, kayit, sayi: 0, ilkTarih: d });
+          const kayit = findKayit(ad);
+          // Kayıt varsa kayıt.ad kullan (resmi isim), yoksa takvimdeki adı kullan
+          sayilar.set(key, { ad: kayit?.ad || ad, kayit, sayi: 0, ilkTarih: d });
         }
         const item = sayilar.get(key);
         item.sayi += 1;
         if (d < item.ilkTarih) item.ilkTarih = d;
+        // Kayıt sonradan bulunabilir mi diye tekrar dene
+        if (!item.kayit) {
+          const k = findKayit(ad);
+          if (k) { item.kayit = k; item.ad = k.ad || item.ad; }
+        }
       });
     });
 
