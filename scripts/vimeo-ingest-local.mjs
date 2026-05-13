@@ -268,6 +268,7 @@ async function main() {
       thumbnailUrl: thumb,
       egitmenler: eg.coreIds,
       egitmenAdlari: eg.displayNames,
+      eslesmemis: eg.coreIds.length === 0,  // admin paneli için
       kategoriler: [],
       kategoriKaynagi: 'pending',
       transcript: t.transcript || null,

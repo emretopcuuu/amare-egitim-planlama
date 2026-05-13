@@ -49,7 +49,7 @@ const AdminKayitliEgitimlerTab = () => {
         q = query(
           collection(db, 'kayitli_egitimler'),
           where('kayeneFiltrelendi', '==', false),
-          where('egitmenler', '==', []),
+          where('eslesmemis', '==', true),
           orderBy('olusturulmaTarihi', 'desc'),
           fbLimit(100)
         );
@@ -185,6 +185,7 @@ const VideoRow = ({ video, egitmenOptions, kategoriler, kaydediliyor, onKaydet }
       const op = egitmenOptions.find(o => o.coreId === secilenEgitmen);
       updates.egitmenler = [secilenEgitmen];
       updates.egitmenAdlari = op ? [op.ad] : [];
+      updates.eslesmemis = false; // artık eşleşti
     }
     if (secilenKategori) {
       updates.kategoriler = [secilenKategori];

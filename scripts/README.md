@@ -46,6 +46,25 @@ node vimeo-kategorize-local.mjs                        # 50'şer çalışır, ge
 
 `--force` ile mevcut kategorileri yeniden hesapla (manuel atama silinmez sadece `pending` değilse atlanır).
 
+## Firebase Rules + Index Deploy
+
+İlk ingest'ten ÖNCE rules + composite index'leri deploy et:
+
+```bash
+# Proje kökünden (scripts/ değil)
+cd ..
+firebase login                      # ilk seferse
+firebase deploy --only firestore    # rules + indexes
+```
+
+Çıktı:
+```
+✓ firestore: released rules firestore.rules
+✓ firestore: deployed 5 indexes successfully for ...
+```
+
+Index oluşturma 2-10 dakika sürer (asenkron). Console → Firestore → Indexes'ten "Building" durumunu izle. Bitmeden query yaparsan "missing index" hatası alabilirsin.
+
 ## Notlar
 
 - `transcript` Firestore'a 800K karakter sınırıyla yazılır (1 MB doc limiti).

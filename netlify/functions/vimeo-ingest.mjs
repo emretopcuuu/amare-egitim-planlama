@@ -156,6 +156,7 @@ function buildVideoDoc(video, egitmenler, transcript) {
     thumbnailUrl: thumb,
     egitmenler: egitmenler.coreIds,
     egitmenAdlari: egitmenler.displayNames,
+    eslesmemis: egitmenler.coreIds.length === 0,  // admin paneli için
     kategoriler: [], // Faz 4'te AI doldurur
     kategoriKaynagi: 'pending',
     transcript: transcript || null,
