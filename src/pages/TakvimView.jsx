@@ -555,8 +555,6 @@ const TakvimView = () => {
     // Liste (default)
     return (
       <div key={egitim.id} id={`egitim-${egitim.id}`} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'}`}>
-        {/* Kategori accent — sol kenar 4px renkli border */}
-        {egitim.kategori && <div className={`absolute left-0 top-0 bottom-0 w-1 ${katRenk.dot}`} aria-hidden="true" />}
         <div className="flex">
           <div className={`flex flex-col items-center justify-center px-4 py-4 min-w-[72px] ${online?'bg-gradient-to-b from-blue-600 to-blue-800':'bg-gradient-to-b from-purple-700 to-purple-900'} text-white`}>
             <div className="text-2xl font-extrabold leading-none font-display">{gunNo}</div>
@@ -564,6 +562,8 @@ const TakvimView = () => {
             <div className="text-[10px] opacity-60 mt-1 flex items-center gap-0.5"><DayMotif date={tarih} className="text-[8px]" />{trGun(egitim.gun, t)}</div>
             {online && <Wifi className="w-3.5 h-3.5 mt-1.5 opacity-70" />}
           </div>
+          {/* Kategori accent — date column'dan sonra, beyaz içerik başında (her zaman görünür) */}
+          {egitim.kategori && <div className={`w-1 ${katRenk.dot}`} aria-hidden="true" />}
           <div className="flex-1 p-4 min-w-0">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
