@@ -10,6 +10,13 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+    <!-- Firestore + Firebase Auth — paralel olarak preconnect ile DNS/TLS handshake önden başlar -->
+    <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://identitytoolkit.googleapis.com" crossorigin />
+    <link rel="dns-prefetch" href="https://www.googleapis.com" />
+    <!-- Logo image preload — ilk paint'te görünür -->
+    <link rel="preload" as="image" href="/logos/oneteam%20logo.JPG" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#6B46C1" />
     <link rel="apple-touch-icon" href="/logos/oneteam logo.JPG" />

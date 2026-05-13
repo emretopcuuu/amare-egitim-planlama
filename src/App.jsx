@@ -1,15 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { DataProvider, useData } from './context/DataContext';
 import { LanguageProvider } from './context/LanguageContext';
 import HomePage from './pages/HomePage';
-import EgitmenBasvuru from './pages/EgitmenBasvuru';
-import TakvimView from './pages/TakvimView';
-import EgitimDetay from './pages/EgitimDetay';
-import KonusmacilarSayfasi from './pages/KonusmacilarSayfasi';
-import AdminLogin from './pages/AdminLogin';
-import AdminPanel from './pages/AdminPanel';
 import { trackPageView } from './utils/analytics';
+import LoadingProgress from './components/LoadingProgress';
+
+// Code-split — public sayfalar dahil hepsi route-level lazy load
+// İlk yükleme: sadece HomePage indirilir, diğerleri kullanıcı navigasyonu ile
+const TakvimView = lazy(() => import('./pages/TakvimView'));
+const EgitimDetay = lazy(() => import('./pages/EgitimDetay'));
+const KonusmacilarSayfasi = lazy(() => import('./pages/KonusmacilarSayfasi'));
+const EgitmenBasvuru = lazy(() => import('./pages/EgitmenBasvuru'));
+// Admin sayfaları — public kullanıcı hiç indirmez (en büyük kazanç)
+const AdminLogin = lazy(() => import('./pages/AdminLogin'));
+const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 
 // Hatayı ekrana basan basit error boundary
 class ErrorBoundary extends React.Component {
@@ -56,23 +61,25 @@ function AppRoutes() {
   return (
     <BrowserRouter>
       <PageViewTracker />
-      <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/egitmen-basvuru" element={<EgitmenBasvuru />} />
-        <Route path="/takvim" element={<TakvimView />} />
-        <Route path="/e/:id" element={<EgitimDetay />} />
-        <Route path="/konusmacilar" element={<KonusmacilarSayfasi />} />
-        <Route path="/admin-giris" element={<AdminLogin />} />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <AdminPanel />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
+      <Suspense fallback={<LoadingProgress />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/egitmen-basvuru" element={<EgitmenBasvuru />} />
+          <Route path="/takvim" element={<TakvimView />} />
+          <Route path="/e/:id" element={<EgitimDetay />} />
+          <Route path="/konusmacilar" element={<KonusmacilarSayfasi />} />
+          <Route path="/admin-giris" element={<AdminLogin />} />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <AdminPanel />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

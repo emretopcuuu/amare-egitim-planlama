@@ -11,8 +11,8 @@ import StoryStrip from '../components/StoryStrip';
 import { EmptySearch, EmptyCompleted } from '../components/EmptyState';
 import LoadingProgress from '../components/LoadingProgress';
 import { DayMotif } from '../utils/dayIcon.jsx';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
+// jsPDF + html2canvas dinamik import — sadece PDF indir butonu tıklandığında yüklenir
+// İlk yükleme süresinden ~400KB tasarruf
 
 // Sofistike kategori renkleri: bg + text + border + ring (hover/active)
 const KATEGORI_RENK = {
@@ -500,6 +500,11 @@ const TakvimView = () => {
     if (!contentRef.current) return;
     setPdfYukleniyor(true);
     try {
+      // Dinamik import — jsPDF + html2canvas sadece ihtiyaç anında yüklenir (~400KB)
+      const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([
+        import('jspdf'),
+        import('html2canvas'),
+      ]);
       // PDF'den hariç tutulacak elementleri gizle
       const noEx = contentRef.current.querySelectorAll('[data-no-pdf]');
       noEx.forEach(el => el.style.display = 'none');
