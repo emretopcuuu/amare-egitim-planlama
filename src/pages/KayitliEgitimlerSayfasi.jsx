@@ -396,12 +396,12 @@ const KayitliEgitimlerSayfasi = () => {
             )}
           </p>
 
-          {/* Arama + Filtre butonu */}
+          {/* Arama + Filtre butonu (mobile için) */}
           <div className="mt-3 flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300" />
               <input type="text" value={arama} onChange={e => setArama(e.target.value)}
-                placeholder="Ara..."
+                placeholder="Eğitim adı veya eğitmen ara..."
                 className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
               {arama && (
                 <button onClick={() => setArama('')} aria-label="Aramayı temizle"
@@ -410,10 +410,10 @@ const KayitliEgitimlerSayfasi = () => {
                 </button>
               )}
             </div>
+            {/* Filtre butonu sadece mobile/tablet */}
             <button onClick={() => { haptic(8); setSheetOpen(true); }} aria-label="Filtreler"
-              className="relative bg-white/15 hover:bg-white/25 border-2 border-white/20 text-white rounded-xl px-3 py-2.5 spring-tap inline-flex items-center gap-1.5 text-sm font-semibold">
+              className="md:hidden relative bg-white/15 hover:bg-white/25 border-2 border-white/20 text-white rounded-xl px-3 py-2.5 spring-tap inline-flex items-center gap-1.5 text-sm font-semibold">
               <SlidersHorizontal className="w-4 h-4" />
-              <span className="hidden sm:inline">Filtreler</span>
               {aktifFiltreler.length > 0 && (
                 <span className="absolute -top-1 -right-1 bg-amber-400 text-gray-900 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
                   {aktifFiltreler.length}
@@ -422,20 +422,74 @@ const KayitliEgitimlerSayfasi = () => {
             </button>
           </div>
 
-          {/* Aktif filtre chip bar — yatay scroll, tıkla kaldır */}
+          {/* Desktop'ta inline filtre dropdownları */}
+          <div className="hidden md:grid mt-3 grid-cols-3 lg:grid-cols-5 gap-2">
+            <DropdownField icon={User} value={egitmenCoreId} onChange={v => { haptic(5); setEgitmenCoreId(v); }}>
+              <option value="" className="bg-purple-900">Tüm Eğitmenler ({egitmenOpsiyonlari.length})</option>
+              {egitmenOpsiyonlari.map(o => (
+                <option key={o.coreId} value={o.coreId} className="bg-purple-900">{o.ad} ({o.count})</option>
+              ))}
+            </DropdownField>
+            <DropdownField icon={Globe} value={dilKod} onChange={v => { haptic(5); setDilKod(v); }}>
+              {DILLER.map(d => <option key={d.kod} value={d.kod} className="bg-purple-900">{d.etiket}</option>)}
+            </DropdownField>
+            <DropdownField icon={Calendar} value={yil} onChange={v => { haptic(5); setYil(v); }}>
+              <option value="all" className="bg-purple-900">Tüm Yıllar</option>
+              {yilOpsiyonlari.map(([y, c]) => (
+                <option key={y} value={y} className="bg-purple-900">{y} ({c})</option>
+              ))}
+            </DropdownField>
+            <DropdownField icon={Clock} value={sureKod} onChange={v => { haptic(5); setSureKod(v); }}>
+              {SURE_FILTRELERI.map(s => <option key={s.kod} value={s.kod} className="bg-purple-900">{s.etiket}</option>)}
+            </DropdownField>
+            <DropdownField icon={ArrowDownUp} value={siralama} onChange={v => { haptic(5); setSiralama(v); }}>
+              {SIRALAMALAR.map(s => <option key={s.kod} value={s.kod} className="bg-purple-900">{s.etiket}</option>)}
+            </DropdownField>
+          </div>
+
+          {/* Desktop: favoriler hızlı toggle */}
+          {favoriler.size > 0 && (
+            <div className="hidden md:flex mt-2 gap-2">
+              <button onClick={() => { haptic(8); setSadeceFav(s => !s); }}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-all spring-tap ${
+                  sadeceFav ? 'bg-pink-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                }`}>
+                <Heart className="w-3.5 h-3.5" fill={sadeceFav ? 'currentColor' : 'none'} />
+                Sadece favorilerim ({favoriler.size})
+              </button>
+            </div>
+          )}
+
+          {/* Desktop: kategori chip'leri */}
+          <div className="hidden md:flex mt-3 flex-wrap gap-2">
+            <button onClick={() => { haptic(8); setKategoriSet(new Set()); }}
+              className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
+                kategoriSet.size === 0 ? 'bg-amber-400 text-gray-900 shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+              }`}>Tümü</button>
+            {KATEGORILER.map(k => (
+              <button key={k} onClick={() => toggleKategori(k)}
+                className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
+                  kategoriSet.has(k) ? (KATEGORI_RENK[k] || 'bg-amber-400 text-gray-900') + ' shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                }`}>
+                {k}
+              </button>
+            ))}
+          </div>
+
+          {/* Aktif filtre chip bar — sadece mobile (desktop'ta zaten görünüyor) */}
           {aktifFiltreler.length > 0 && (
-            <div className="mt-2 -mx-4 px-4 overflow-x-auto scrollbar-hide">
+            <div className="md:hidden mt-2 -mx-4 px-4 overflow-x-auto scrollbar-hide">
               <div className="flex gap-1.5 pb-1 min-w-max">
                 {aktifFiltreler.map(f => (
                   <button key={f.kod} onClick={f.kaldir}
-                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold whitespace-nowrap ${f.renk} hover:opacity-80 transition-opacity spring-tap`}>
+                    className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap ${f.renk} hover:opacity-80 transition-opacity spring-tap`}>
                     <X className="w-3 h-3" />
                     <span className="line-clamp-1 max-w-[140px]">{f.etiket}</span>
                   </button>
                 ))}
                 <button onClick={filtreleriTemizle}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-semibold whitespace-nowrap bg-red-500/30 text-red-200 hover:bg-red-500/40 spring-tap">
-                  <RotateCcw className="w-3 h-3" />Hepsini sıfırla
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap bg-red-500/30 text-red-200 hover:bg-red-500/40 spring-tap">
+                  <RotateCcw className="w-3 h-3" />Sıfırla
                 </button>
               </div>
             </div>
@@ -692,6 +746,18 @@ const FilterSheet = ({
     </div>
   );
 };
+
+// ─── Desktop inline dropdown ─────────────────────────────────────────────
+const DropdownField = ({ icon: Icon, value, onChange, children }) => (
+  <div className="relative">
+    <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300 pointer-events-none" />
+    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300 pointer-events-none" />
+    <select value={value} onChange={e => onChange(e.target.value)}
+      className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white rounded-xl pl-9 pr-7 py-2.5 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 appearance-none cursor-pointer">
+      {children}
+    </select>
+  </div>
+);
 
 const SheetSection = ({ icon: Icon, title, children }) => (
   <div>
