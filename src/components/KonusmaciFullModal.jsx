@@ -95,7 +95,11 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
           fbLimit(50)
         );
         const snap = await getDocs(q);
-        const videos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Transcript field UI'da gereksiz — kaldır
+        const videos = snap.docs.map(d => {
+          const { transcript, ...rest } = d.data();
+          return { id: d.id, ...rest };
+        });
         setKayitliVideolar(videos);
         try {
           localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: videos }));

@@ -49,7 +49,7 @@ const KayitliEgitimlerSayfasi = () => {
             collection(db, 'kayitli_egitimler'),
             where('kayeneFiltrelendi', '==', false),
             orderBy('tarih', 'desc'),
-            fbLimit(200)
+            fbLimit(2000)
           );
         } else {
           q = query(
@@ -57,11 +57,15 @@ const KayitliEgitimlerSayfasi = () => {
             where('kategoriler', 'array-contains', kategori),
             where('kayeneFiltrelendi', '==', false),
             orderBy('tarih', 'desc'),
-            fbLimit(200)
+            fbLimit(2000)
           );
         }
         const snap = await getDocs(q);
-        const data = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        // Transcript field UI'da gereksiz — bandwidth tasarrufu için at
+        const data = snap.docs.map(d => {
+          const { transcript, ...rest } = d.data();
+          return { id: d.id, ...rest };
+        });
         setVideolar(data);
         try {
           localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data }));
