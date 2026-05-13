@@ -206,6 +206,26 @@ export const DataProvider = ({ children }) => {
     }));
   };
 
+  // Tek doc full fetch (gorselUrl/fotoURL dahil)
+  const fetchSingleDoc = async (collection, id) => {
+    try {
+      const url = `https://firestore.googleapis.com/v1/projects/amare-egitim-planlama/databases/(default)/documents/${collection}/${id}`;
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const data = await res.json();
+      return { id, ...parseFields(data.fields) };
+    } catch { return null; }
+  };
+
+  // Tarih parser
+  const parseTarihLocal = (t) => {
+    if (!t) return null;
+    const parts = String(t).split('.').map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return null;
+    const d = new Date(parts[2], parts[1] - 1, parts[0]);
+    return isNaN(d.getTime()) ? null : d;
+  };
+
   // Public koleksiyonları + sadece okumak için izin verilenleri yükle
   // İKİ AŞAMALI: önce LIGHT (base64'siz, anında), sonra background'da FULL
   const loadData = async (showLoading = true) => {
@@ -243,45 +263,101 @@ export const DataProvider = ({ children }) => {
 
     setLoading(false); // ⚡ Kullanıcı SAYFAYA ANINDA GİRER (posterler henüz yok)
 
-    // 2. AŞAMA: FULL fetch — arkaplanda gorselUrl + fotoURL dahil hepsi
-    //    Yaklaşık 3-5sn sonra gelir, state silent update edilir, kullanıcı yavaş yavaş posterleri görür
+    // 2. AŞAMA: ÖNCELİK fetch — Hero için top 5 eğitim posteri + StoryStrip için top 30 konuşmacı fotosu
+    //    Bunlar viewport'un üstünde, kullanıcının ilk göreceği şey
+    //    Paralel single-doc fetch ile ~1-2sn'de gelir
     setTimeout(async () => {
-      const [takvimFull, konusmacilarFull] = await Promise.allSettled([
-        getDocs(collection(db, 'takvim')),
-        getDocs(collection(db, 'konusmacilar')),
+      const lightTakvim = takvimLight.status === 'fulfilled' ? takvimLight.value : [];
+      const lightKonusmacilar = konusmacilarLight.status === 'fulfilled' ? konusmacilarLight.value : [];
+
+      // Top 5 gelecek eğitim
+      const bugun = new Date(); bugun.setHours(0, 0, 0, 0);
+      const top5Egitim = lightTakvim
+        .map(e => ({ ...e, _d: parseTarihLocal(e.tarih) }))
+        .filter(e => e._d && e._d >= bugun)
+        .sort((a, b) => a._d - b._d || (a.saat || '').localeCompare(b.saat || ''))
+        .slice(0, 5);
+
+      // Top 30 konuşmacı (eğitim sayısına göre — gelecek eğitimlerden)
+      const konSayilari = new Map();
+      lightTakvim.forEach(e => {
+        const d = parseTarihLocal(e.tarih);
+        if (!d || d < bugun) return;
+        (e.egitmen || '').split(/[\/,&]/).map(s => s.trim()).filter(s => s.length > 1)
+          .forEach(ad => konSayilari.set(ad, (konSayilari.get(ad) || 0) + 1));
+      });
+      // Map konusmacı ad → kayıt (light)
+      const kAdToKayit = new Map();
+      lightKonusmacilar.forEach(k => kAdToKayit.set((k.ad || '').toLocaleUpperCase('tr-TR'), k));
+      // Top 30 isim
+      const top30Konusmaci = [...konSayilari.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 30)
+        .map(([ad]) => {
+          const k = kAdToKayit.get(ad.toLocaleUpperCase('tr-TR'));
+          return k?.id;
+        })
+        .filter(Boolean);
+
+      // PARALEL single-doc fetch
+      const [priEgitimResults, priKonusmacilarResults] = await Promise.all([
+        Promise.allSettled(top5Egitim.map(e => fetchSingleDoc('takvim', e.id))),
+        Promise.allSettled(top30Konusmaci.map(id => fetchSingleDoc('konusmacilar', id))),
       ]);
 
-      let freshTakvim = null;
-      let freshKonusmacilar = null;
-
-      if (takvimFull.status === 'fulfilled') {
-        freshTakvim = takvimFull.value.docs.map(d => ({ id: d.id, ...d.data() }));
-        setTakvim(freshTakvim);
-      }
-      if (konusmacilarFull.status === 'fulfilled') {
-        const rawData = konusmacilarFull.value.docs.map(d => ({ id: d.id, ...d.data() }));
-        const coreMap = new Map();
-        for (const k of rawData) {
-          const cid = makeCoreId(k.ad || k.id);
-          const existing = coreMap.get(cid);
-          if (!existing) {
-            coreMap.set(cid, k);
-          } else if (k.fotoURL && !existing.fotoURL) {
-            coreMap.set(cid, { ...existing, fotoURL: k.fotoURL, id: k.id });
-          }
-        }
-        freshKonusmacilar = [...coreMap.values()];
-        setKonusmacilar(freshKonusmacilar);
-      }
-
-      // Cache'e yaz (base64'ler stripleniyor zaten)
-      saveToCache({
-        takvim: freshTakvim,
-        konusmacilar: freshKonusmacilar,
-        sablonlar: sablonlarResult.status === 'fulfilled' ? sablonlarResult.value.docs.map(d => ({ id: d.id, ...d.data() })) : null,
-        takvimYayinlandi: settingsResult.status === 'fulfilled' && !settingsResult.value.empty ? settingsResult.value.docs[0].data().takvimYayinlandi === true : null,
+      // State'i güncelle — light data + priority full data
+      const priEgitimMap = new Map();
+      priEgitimResults.forEach(r => {
+        if (r.status === 'fulfilled' && r.value) priEgitimMap.set(r.value.id, r.value);
       });
-    }, 100); // 100ms gecikme — UI render önceliği
+      const priKonusmacilarMap = new Map();
+      priKonusmacilarResults.forEach(r => {
+        if (r.status === 'fulfilled' && r.value) priKonusmacilarMap.set(r.value.id, r.value);
+      });
+
+      // Takvim'i güncelle — priority items full, geri kalanı hala light
+      setTakvim(prev => prev.map(e => priEgitimMap.get(e.id) || e));
+      // Konuşmacılar — priority items full
+      setKonusmacilar(prev => prev.map(k => priKonusmacilarMap.get(k.id) || k));
+
+      // 3. AŞAMA: Geri kalan herkes (background full fetch)
+      setTimeout(async () => {
+        const [takvimFull, konusmacilarFull] = await Promise.allSettled([
+          getDocs(collection(db, 'takvim')),
+          getDocs(collection(db, 'konusmacilar')),
+        ]);
+
+        let freshTakvim = null;
+        let freshKonusmacilar = null;
+
+        if (takvimFull.status === 'fulfilled') {
+          freshTakvim = takvimFull.value.docs.map(d => ({ id: d.id, ...d.data() }));
+          setTakvim(freshTakvim);
+        }
+        if (konusmacilarFull.status === 'fulfilled') {
+          const rawData = konusmacilarFull.value.docs.map(d => ({ id: d.id, ...d.data() }));
+          const coreMap = new Map();
+          for (const k of rawData) {
+            const cid = makeCoreId(k.ad || k.id);
+            const existing = coreMap.get(cid);
+            if (!existing) {
+              coreMap.set(cid, k);
+            } else if (k.fotoURL && !existing.fotoURL) {
+              coreMap.set(cid, { ...existing, fotoURL: k.fotoURL, id: k.id });
+            }
+          }
+          freshKonusmacilar = [...coreMap.values()];
+          setKonusmacilar(freshKonusmacilar);
+        }
+
+        saveToCache({
+          takvim: freshTakvim,
+          konusmacilar: freshKonusmacilar,
+          sablonlar: sablonlarResult.status === 'fulfilled' ? sablonlarResult.value.docs.map(d => ({ id: d.id, ...d.data() })) : null,
+          takvimYayinlandi: settingsResult.status === 'fulfilled' && !settingsResult.value.empty ? settingsResult.value.docs[0].data().takvimYayinlandi === true : null,
+        });
+      }, 500); // 500ms sonra geri kalanı
+    }, 50); // 50ms — UI ilk render'a izin ver
 
     return; // Sequence here
   };
