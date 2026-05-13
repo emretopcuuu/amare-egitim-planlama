@@ -1,7 +1,7 @@
 // /konusmacilar — Tüm konuşmacıların grid sayfası
 import React, { useMemo, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useData, makeSafeId } from '../context/DataContext';
+import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, User, Search, X, Loader2 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -22,34 +22,56 @@ const KonusmacilarSayfasi = () => {
   const [arama, setArama] = useState('');
   const [secili, setSecili] = useState(null);
 
-  // Tüm konuşmacıları topla — Firestore kayıtları + takvimden çıkan isimler
+  // Tüm konuşmacıları topla — coreId ile dedupe (unvan + Türkçe normalize)
+  // "ZEYNEP" vs "ZEYNEP DEMİR" hala farklı kişiler olabilir, sadece exact aynı core
+  // "Dr.TUNÇ TUNCER" + "TUNÇ TUNCER" + "Uzm.Dr. TUNÇ TUNCER" → 1 entry
   const tumKonusmacilar = useMemo(() => {
-    const map = new Map();
-    // Önce kayıtlı olanları ekle (foto + bio garantili)
+    const map = new Map(); // coreId → { ad, kayit (en bilgili), egitimSayisi, allNames }
+
+    const addOrMerge = (ad, kayit) => {
+      const cid = makeCoreId(ad) || ad.toLocaleUpperCase('tr-TR').trim();
+      if (!cid || cid.length < 2) return null;
+      if (!map.has(cid)) {
+        map.set(cid, { ad: kayit?.ad || ad, kayit: kayit || null, egitimSayisi: 0, allNames: new Set([ad]) });
+      } else {
+        const item = map.get(cid);
+        item.allNames.add(ad);
+        // Daha bilgili kayıt varsa onunla güncelle (foto + unvan tercih)
+        if (kayit) {
+          if (!item.kayit) {
+            item.kayit = kayit;
+            item.ad = kayit.ad || item.ad;
+          } else if (kayit.fotoURL && !item.kayit.fotoURL) {
+            item.kayit = kayit;
+            item.ad = kayit.ad || item.ad;
+          } else if (kayit.unvan && !item.kayit.unvan) {
+            // Foto eşit ama unvan farklı → en uzun unvanı tut
+            item.kayit = { ...item.kayit, unvan: kayit.unvan };
+          }
+        }
+      }
+      return cid;
+    };
+
+    // Firestore kayıtlarını ekle
     (konusmacilar || []).forEach(k => {
-      if (!k.ad) return;
-      map.set(k.ad.toLocaleUpperCase('tr-TR').trim(), {
-        ad: k.ad,
-        kayit: k,
-        egitimSayisi: 0,
-      });
+      if (k.ad) addOrMerge(k.ad, k);
     });
-    // Takvimde geçen isimlerden eklemediklerimizi de listeye al
+
+    // Takvimde geçen isimleri ekle + eğitim sayar
     takvim.forEach(e => {
       splitEgitmen(e.egitmen).forEach(ad => {
-        const key = ad.toLocaleUpperCase('tr-TR').trim();
-        if (!map.has(key)) {
-          // Firestore'da yok ama takvimde var → boş kayıt oluştur
-          map.set(key, { ad, kayit: null, egitimSayisi: 0 });
-        }
-        map.get(key).egitimSayisi += 1;
+        const cid = addOrMerge(ad, null);
+        if (cid && map.has(cid)) map.get(cid).egitimSayisi += 1;
       });
     });
-    return [...map.values()].sort((a, b) => {
-      // Önce eğitim sayısına göre, sonra alfabetik
-      if (b.egitimSayisi !== a.egitimSayisi) return b.egitimSayisi - a.egitimSayisi;
-      return a.ad.localeCompare(b.ad, 'tr-TR');
-    });
+
+    return [...map.values()]
+      .filter(v => v.ad && v.ad.length >= 2)
+      .sort((a, b) => {
+        if (b.egitimSayisi !== a.egitimSayisi) return b.egitimSayisi - a.egitimSayisi;
+        return a.ad.localeCompare(b.ad, 'tr-TR');
+      });
   }, [takvim, konusmacilar]);
 
   // Arama filtresi
