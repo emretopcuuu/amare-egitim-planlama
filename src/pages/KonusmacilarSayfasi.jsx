@@ -118,7 +118,7 @@ const KonusmacilarSayfasi = () => {
       </div>
 
       {/* Grid */}
-      <div className="px-4 py-6 pb-16">
+      <div className="px-4 py-6 pb-bottom-nav">
         <div className="container mx-auto max-w-7xl">
           {filtrelenmis.length === 0 ? (
             <div className="text-center py-16 text-white/50">

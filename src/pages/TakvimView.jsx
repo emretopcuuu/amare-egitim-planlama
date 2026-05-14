@@ -974,7 +974,7 @@ const TakvimView = () => {
         </div>
 
         {/* Haftalık Bölümler */}
-        <div className="px-4 pb-12 pt-2">
+        <div className="px-4 pb-bottom-nav pt-2">
           <div className="container mx-auto max-w-7xl space-y-8">
             {haftaKeys.length===0 && (
               aktifFiltreSayisi > 0

@@ -164,6 +164,16 @@
   }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
+  /* ── Sayfa içeriği için bottom nav payını veren utility ─────
+     Mobile: 64px nav + iOS home-bar safe-area + 1rem nefes
+     Desktop: sadece 3rem (nav yok) */
+  .pb-bottom-nav {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 1rem);
+  }
+  @media (min-width: 768px) {
+    .pb-bottom-nav { padding-bottom: 3rem; }
+  }
+
   /* ── Bottom sheet slide-in ────────────────────────────────── */
   .animate-slide-up {
     animation: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);

@@ -567,7 +567,7 @@ const KayitliEgitimlerSayfasi = () => {
       </div>
 
       {/* Grid */}
-      <div className="px-4 py-4 pb-24 md:pb-16">
+      <div className="px-4 py-4 pb-bottom-nav">
         <div className="container mx-auto max-w-7xl">
           {loading ? (
             <SkeletonGrid />
@@ -625,7 +625,8 @@ const KayitliEgitimlerSayfasi = () => {
       {/* Scroll-to-top FAB */}
       {showScrollTop && (
         <button onClick={scrollToTop} aria-label="En üste dön"
-          className="fixed bottom-20 md:bottom-6 right-4 z-40 w-12 h-12 rounded-full bg-amber-400 hover:bg-amber-300 text-gray-900 shadow-xl flex items-center justify-center spring-tap animate-fade-in">
+          style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 12px)' }}
+          className="fixed md:!bottom-6 right-4 z-40 w-12 h-12 rounded-full bg-amber-400 hover:bg-amber-300 text-gray-900 shadow-xl flex items-center justify-center spring-tap animate-fade-in">
           <ChevronUp className="w-6 h-6" />
         </button>
       )}
