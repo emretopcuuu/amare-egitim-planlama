@@ -202,6 +202,14 @@ const KayitliEgitimlerSayfasi = () => {
   const [transcriptMatches, setTranscriptMatches] = useState({}); // { videoId: [{start, snippet, text}] }
   const [transcriptAraniyor, setTranscriptAraniyor] = useState(false);
   const [seekTo, setSeekTo] = useState(null); // VideoOynatModal'a iletilen başlangıç saniyesi
+
+  // Bookmark/share: URL'den gelen ?v=ID&t=SEC ile direkt oynatma için bekleyen
+  const [pendingPlay, setPendingPlay] = useState(() => {
+    const v = searchParams.get('v');
+    const t = searchParams.get('t');
+    return v ? { id: v, t: t ? parseFloat(t) : null } : null;
+  });
+
   useEffect(() => {
     try { localStorage.setItem('amare_transcript_search', transcriptAramaAcik ? '1' : '0'); } catch {}
   }, [transcriptAramaAcik]);
@@ -217,8 +225,11 @@ const KayitliEgitimlerSayfasi = () => {
     if (siralama !== 'yeni') p.sira = siralama;
     if (arama.trim()) p.q = arama.trim();
     if (sadeceFav) p.fav = '1';
+    // Açık video varsa bookmark için URL'e yaz
+    if (oynatilan?.id) p.v = oynatilan.id;
+    if (seekTo != null && seekTo > 0) p.t = String(Math.floor(seekTo));
     setSearchParams(p, { replace: true });
-  }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav, setSearchParams]);
+  }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav, oynatilan, seekTo, setSearchParams]);
 
   // Kategori sıralamasını Firestore'dan yükle (cache 1h)
   useEffect(() => {
@@ -538,6 +549,34 @@ const KayitliEgitimlerSayfasi = () => {
     setOynatilan(v);
   }, []);
 
+  // URL'den ?v=ID&t=SEC ile direkt oynat
+  useEffect(() => {
+    if (!pendingPlay || tumVideolar.length === 0) return;
+    const v = tumVideolar.find(x => x.id === pendingPlay.id);
+    if (v) handleOynat(v, pendingPlay.t);
+    setPendingPlay(null);
+  }, [tumVideolar, pendingPlay, handleOynat]);
+
+  // Snippet için link kopyalama — Bu sahneye link kopyala
+  const handleShareSnippet = useCallback(async (v, startSn) => {
+    haptic(8);
+    const url = `${window.location.origin}/kayitli-egitimler?v=${v.id}${startSn ? `&t=${Math.floor(startSn)}` : ''}`;
+    try {
+      // Native share varsa onu kullan, yoksa clipboard'a kopyala
+      if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+        await navigator.share({ title: v.baslik, text: `${v.baslik} — bu sahneden`, url });
+        toast('Paylaşıldı', { type: 'success' });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast('🔗 Sahne linki kopyalandı', { type: 'success' });
+      }
+    } catch (err) {
+      // Fallback
+      try { await navigator.clipboard.writeText(url); toast('🔗 Link kopyalandı', { type: 'success' }); }
+      catch { toast('Kopyalanamadı: ' + err.message, { type: 'error' }); }
+    }
+  }, [toast]);
+
   const handleShare = async (e, v) => {
     e.stopPropagation();
     haptic(8);
@@ -791,6 +830,7 @@ const KayitliEgitimlerSayfasi = () => {
                     onToggleFav={(e) => toggleFavori(e, v)}
                     onShare={(e) => handleShare(e, v)}
                     onOynat={(startSn) => handleOynat(v, startSn ?? null)}
+                    onShareSnippet={(startSn) => handleShareSnippet(v, startSn)}
                   />
                 ))}
               </div>
@@ -1064,7 +1104,7 @@ const SheetChip = ({ active, onClick, color, children }) => (
 );
 
 // ─── Video kartı (mobile compact + desktop grid) ─────────────────────────
-const VideoKart = ({ video: v, favori, izlendi, transcriptMatch, aramaQ, onToggleFav, onShare, onOynat }) => {
+const VideoKart = ({ video: v, favori, izlendi, transcriptMatch, aramaQ, onToggleFav, onShare, onOynat, onShareSnippet }) => {
   const sureMetin = formatSure(v.sure);
   const playsMetin = formatPlays(v.plays);
   const kategori = v.kategoriler?.[0];
@@ -1122,24 +1162,37 @@ const VideoKart = ({ video: v, favori, izlendi, transcriptMatch, aramaQ, onToggl
         )}
 
         {/* Transcript match snippets — sahneye atlama (timestamp varsa) ya da
-            sadece içerikte geçtiği bilgisi (timestamp yoksa, eski videolar) */}
+            sadece içerikte geçtiği bilgisi (timestamp yoksa, eski videolar)
+            Her snippet'in sağında 🔗 link kopyala (sadece timestamp varsa) */}
         {transcriptMatch?.length > 0 && (
           <div className="mb-2 space-y-1">
             {transcriptMatch.slice(0, 2).map((m, i) => {
               const hasTime = m.start != null && m.start >= 0;
               return (
                 <div key={i}
-                  role="button" tabIndex={0}
-                  onClick={(e) => { e.stopPropagation(); onOynat?.(hasTime ? m.start : null); }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOynat?.(hasTime ? m.start : null); } }}
-                  title={hasTime ? `${formatSure(m.start)} — bu sahneden başlat` : 'Bu video konuşmasında geçiyor'}
-                  className="block w-full text-left bg-amber-500/10 hover:bg-amber-500/25 border border-amber-400/30 rounded-md px-2 py-1.5 cursor-pointer transition-all">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300">
-                    <FileText className="w-3 h-3" />
-                    {hasTime ? formatSure(m.start) : 'Konuşmada geçiyor'}
-                  </span>
-                  <p className="text-[11px] text-white/85 line-clamp-2 mt-0.5 leading-snug"
-                     dangerouslySetInnerHTML={{ __html: highlightSnippet(m.snippet, aramaQ) }} />
+                  className="bg-amber-500/10 hover:bg-amber-500/25 border border-amber-400/30 rounded-md flex items-stretch overflow-hidden transition-all">
+                  <div
+                    role="button" tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); onOynat?.(hasTime ? m.start : null); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOynat?.(hasTime ? m.start : null); } }}
+                    title={hasTime ? `${formatSure(m.start)} — bu sahneden başlat` : 'Bu video konuşmasında geçiyor'}
+                    className="flex-1 min-w-0 px-2 py-1.5 cursor-pointer text-left">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300">
+                      <FileText className="w-3 h-3" />
+                      {hasTime ? formatSure(m.start) : 'Konuşmada geçiyor'}
+                    </span>
+                    <p className="text-[11px] text-white/85 line-clamp-2 mt-0.5 leading-snug"
+                       dangerouslySetInnerHTML={{ __html: highlightSnippet(m.snippet, aramaQ) }} />
+                  </div>
+                  {hasTime && onShareSnippet && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onShareSnippet(m.start); }}
+                      title="Bu sahneye link kopyala"
+                      aria-label="Bu sahneye link kopyala"
+                      className="flex-shrink-0 px-2.5 hover:bg-amber-400/30 text-amber-300/70 hover:text-amber-100 transition-all border-l border-amber-400/20 flex items-center">
+                      <Share2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               );
             })}
