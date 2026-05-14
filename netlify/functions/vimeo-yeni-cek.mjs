@@ -122,16 +122,45 @@ function matchEgitmen(text, knownList) {
   };
 }
 
+// ─── Admin email whitelist ──────────────────────────────────────────────
+const ADMIN_EMAILS = new Set([
+  's.emretopcu@gmail.com',
+  'onlineakademin@gmail.com',
+  'toygarsenelmis@gmail.com',
+  'alper.kirbiyik@gmail.com',
+  'vitamindestegi@gmail.com',
+  'kmaziliguney@gmail.com',
+  'ilknurakkas17@gmail.com',
+  'giray70@gmail.com',
+  'furkancite@gmail.com',
+]);
+
 // ─── Ana iş ─────────────────────────────────────────────────────────────
 export default async (req) => {
   const isScheduled = req?.headers?.get?.('user-agent')?.includes('Netlify');
   const url = req?.url ? new URL(req.url) : null;
 
-  // Manuel tetik için secret check (scheduled değilse)
+  // Manuel tetik: Firebase Auth ID token VEYA INGEST_ADMIN_SECRET (legacy)
   if (!isScheduled && url) {
+    const authHeader = req.headers.get('authorization') || '';
+    const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
     const secret = req.headers.get('x-admin-secret') || url.searchParams.get('secret');
-    if (!process.env.INGEST_ADMIN_SECRET || secret !== process.env.INGEST_ADMIN_SECRET) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+
+    let yetkili = false;
+    if (idToken) {
+      try {
+        const decoded = await admin.auth().verifyIdToken(idToken);
+        if (decoded?.email && ADMIN_EMAILS.has(decoded.email)) yetkili = true;
+        else console.warn('Auth: email whitelist dışı:', decoded?.email);
+      } catch (err) {
+        console.warn('Auth: token verify hatası:', err.message);
+      }
+    }
+    if (!yetkili && secret && process.env.INGEST_ADMIN_SECRET === secret) {
+      yetkili = true;
+    }
+    if (!yetkili) {
+      return new Response(JSON.stringify({ error: 'Yetkisiz — admin girişi gerekli' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' },
       });

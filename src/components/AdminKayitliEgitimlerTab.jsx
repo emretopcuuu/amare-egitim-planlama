@@ -1,7 +1,7 @@
 // AdminPanel için "Kayıtlı Eğitimler" sekmesi
 // Faz 3'te otomatik eşleşmeyen videoları listele, manuel eğitmen + kategori ata
 import React, { useEffect, useMemo, useState } from 'react';
-import { db } from '../utils/firebase';
+import { db, auth } from '../utils/firebase';
 import {
   collection, query, where, orderBy, limit as fbLimit,
   getDocs, doc, updateDoc, serverTimestamp,
@@ -109,18 +109,22 @@ const AdminKayitliEgitimlerTab = () => {
 
   const [vimeoSenkron, setVimeoSenkron] = useState(false);
   const handleVimeoSync = async () => {
-    const secret = window.prompt('INGEST_ADMIN_SECRET gir:');
-    if (!secret) return;
+    if (!auth.currentUser) {
+      setMesaj('✗ Giriş gerekli');
+      return;
+    }
     setVimeoSenkron(true);
-    setMesaj('');
+    setMesaj('Vimeo taranıyor...');
     try {
-      const res = await fetch('/.netlify/functions/vimeo-yeni-cek?secret=' + encodeURIComponent(secret));
+      const idToken = await auth.currentUser.getIdToken();
+      const res = await fetch('/.netlify/functions/vimeo-yeni-cek', {
+        headers: { 'Authorization': 'Bearer ' + idToken },
+      });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || res.statusText);
       setMesaj(`✓ ${data.yeni} yeni · ${data.excludedYeni} dışlandı · ${data.mevcut} mevcut · ${data.sureSn}s`);
       setTimeout(() => setMesaj(''), 8000);
       if (data.yeni > 0) {
-        // localStorage cache invalide et — UI yenilensin
         Object.keys(localStorage).filter(k => k.startsWith('amare_kayitli_egitimler_')).forEach(k => localStorage.removeItem(k));
         fetchVideolar();
       }
