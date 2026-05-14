@@ -17,38 +17,27 @@ import { auth, db } from '../utils/firebase';
 
 const GirisTamamla = () => {
   const navigate = useNavigate();
-  const [durum, setDurum] = useState('isleniyor'); // isleniyor | basarili | hata | email_iste
-  const [mesaj, setMesaj] = useState('Giriş işleniyor...');
+  const [durum, setDurum] = useState('hazir'); // hazir | isleniyor | basarili | hata | email_iste
+  const [mesaj, setMesaj] = useState('');
   const [email, setEmail] = useState('');
+  const [savedEmail, setSavedEmail] = useState(null);
 
   useEffect(() => {
-    (async () => {
-      try {
-        const url = window.location.href;
-        if (!isSignInWithEmailLink(auth, url)) {
-          setDurum('hata');
-          setMesaj('Geçersiz giriş linki. Lütfen yeni link iste.');
-          return;
-        }
-
-        // Email genelde localStorage'da saklanır ama burada user farklı cihazda
-        // olabilir. Email'i URL'den çıkarmaya gerek yok — Firebase yapıyor.
-        // Önce localStorage'ı dene.
-        let emailIcin = window.localStorage.getItem('amare_giris_email');
-        if (!emailIcin) {
-          // Farklı cihaz/tarayıcı — kullanıcıdan email iste
-          setDurum('email_iste');
-          setMesaj('Hangi adrese link gönderdik? Doğrulamak için email yaz.');
-          return;
-        }
-        await tamamla(emailIcin);
-      } catch (err) {
-        console.error('[giris-tamamla] hata:', err);
-        setDurum('hata');
-        setMesaj('Hata: ' + (err?.message || 'bilinmeyen'));
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Link valid mi kontrol et — auto signIn YAPMA (gmail bot link'i tüketmesin)
+    const url = window.location.href;
+    if (!isSignInWithEmailLink(auth, url)) {
+      setDurum('hata');
+      setMesaj('Geçersiz giriş linki. Lütfen yeni link iste.');
+      return;
+    }
+    const emailIcin = window.localStorage.getItem('amare_giris_email');
+    if (emailIcin) {
+      setSavedEmail(emailIcin);
+      setDurum('hazir');
+    } else {
+      setDurum('email_iste');
+      setMesaj('Hangi adrese link gönderdik? Doğrulamak için email yaz.');
+    }
   }, []);
 
   const tamamla = async (emailIcin) => {
@@ -126,10 +115,28 @@ const GirisTamamla = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 p-4">
       <div className="bg-gradient-to-br from-purple-800/50 to-indigo-900/50 backdrop-blur-md border border-white/10 rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
 
+        {durum === 'hazir' && savedEmail && (
+          <>
+            <div className="inline-block w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-400 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
+              <ArrowRight className="w-9 h-9 text-purple-900" />
+            </div>
+            <h1 className="text-2xl font-bold text-white mb-2">Giriş için tıkla</h1>
+            <p className="text-purple-100 text-sm mb-1">Email adresin:</p>
+            <p className="text-amber-300 font-mono font-bold mb-6">{savedEmail}</p>
+            <button onClick={() => tamamla(savedEmail)}
+              className="w-full bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-3 px-6 rounded-xl spring-tap inline-flex items-center justify-center gap-2 shadow-lg">
+              Girişi tamamla <ArrowRight className="w-5 h-5" />
+            </button>
+            <p className="mt-4 text-purple-200/60 text-xs">
+              🔒 Güvenlik için tek tıkla doğrulama gerekiyor
+            </p>
+          </>
+        )}
+
         {durum === 'isleniyor' && (
           <>
             <Loader2 className="w-12 h-12 text-amber-400 animate-spin mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-white mb-2">{mesaj}</h1>
+            <h1 className="text-2xl font-bold text-white mb-2">{mesaj || 'Giriş işleniyor...'}</h1>
             <p className="text-purple-200 text-sm">Birkaç saniye sürer...</p>
           </>
         )}
@@ -152,10 +159,16 @@ const GirisTamamla = () => {
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">Giriş başarısız</h1>
             <p className="text-purple-100 text-sm mb-6">{mesaj}</p>
-            <button onClick={() => navigate('/takvim')}
-              className="bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-2.5 px-6 rounded-xl spring-tap inline-flex items-center gap-2">
-              Takvime dön <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="flex flex-col gap-2">
+              <button onClick={() => navigate('/takvim')}
+                className="bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-2.5 px-6 rounded-xl spring-tap inline-flex items-center justify-center gap-2">
+                Takvime dön <ArrowRight className="w-4 h-4" />
+              </button>
+              <p className="text-purple-200/70 text-xs mt-2">
+                💡 İpucu: Bazı e-posta servisleri linki güvenlik için önceden tıklar.<br />
+                Takvimden tekrar "Üye Girişi" yapıp yeni link iste.
+              </p>
+            </div>
           </>
         )}
 
