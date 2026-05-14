@@ -5,7 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Search, X, Video, Play, Calendar, Tag, Loader2, User, Globe,
   Clock, Eye, Heart, History, ArrowDownUp, ChevronDown, SlidersHorizontal,
-  Share2, ChevronUp, RotateCcw,
+  Share2, ChevronUp, RotateCcw, Mic, Sparkles,
 } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, limit as fbLimit, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -107,6 +107,40 @@ function formatPlays(n) {
   return (n / 1_000_000).toFixed(1).replace('.0', '') + 'M';
 }
 
+// Türkçe normalize (transcript-search.mjs backend ile aynı algoritma)
+const TR_LOWER_MAP = { 'Ç': 'c', 'Ğ': 'g', 'İ': 'i', 'I': 'i', 'Ö': 'o', 'Ş': 's', 'Ü': 'u' };
+function normalizeTr(s) {
+  if (!s) return '';
+  return String(s)
+    .normalize('NFC')
+    .replace(/[ÇĞİIÖŞÜçğıöşü]/g, c => TR_LOWER_MAP[c.toUpperCase()] || c.toLowerCase())
+    .toLowerCase();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// Snippet içinde sorguyu <mark> ile vurgula (Türkçe-uyumlu)
+function highlightSnippet(text, q) {
+  if (!q || !text) return escapeHtml(text || '');
+  const nText = normalizeTr(text);
+  const nQ = normalizeTr(q);
+  if (!nQ) return escapeHtml(text);
+  const out = [];
+  let i = 0;
+  while (i < text.length) {
+    const idx = nText.indexOf(nQ, i);
+    if (idx < 0) { out.push(escapeHtml(text.slice(i))); break; }
+    out.push(escapeHtml(text.slice(i, idx)));
+    out.push('<mark class="bg-amber-400/40 text-amber-100 font-bold px-0.5 rounded">');
+    out.push(escapeHtml(text.slice(idx, idx + nQ.length)));
+    out.push('</mark>');
+    i = idx + nQ.length;
+  }
+  return out.join('');
+}
+
 // v6 → v7: DIL_PATTERNS genişletildi (business presentation, geschäftspräsentation vb.)
 const CACHE_KEY = 'amare_kayitli_egitimler_all_v7';
 const TTL = 12 * 60 * 60 * 1000;
@@ -154,6 +188,18 @@ const KayitliEgitimlerSayfasi = () => {
   const [gecmis, setGecmis] = useState(() => new Set(loadList(HIST_KEY)));
   const [gosterilen, setGosterilen] = useState(PAGE_SIZE);
   const sentinelRef = useRef(null);
+
+  // ─── Transcript arama (Faz: video içinde arama) ──────────────────────
+  // localStorage'da hatırla (kullanıcı tercihi)
+  const [transcriptAramaAcik, setTranscriptAramaAcik] = useState(() => {
+    try { return localStorage.getItem('amare_transcript_search') === '1'; } catch { return false; }
+  });
+  const [transcriptMatches, setTranscriptMatches] = useState({}); // { videoId: [{start, snippet, text}] }
+  const [transcriptAraniyor, setTranscriptAraniyor] = useState(false);
+  const [seekTo, setSeekTo] = useState(null); // VideoOynatModal'a iletilen başlangıç saniyesi
+  useEffect(() => {
+    try { localStorage.setItem('amare_transcript_search', transcriptAramaAcik ? '1' : '0'); } catch {}
+  }, [transcriptAramaAcik]);
 
   // ─── URL persistence ──────────────────────────────────────────────────
   useEffect(() => {
@@ -282,8 +328,8 @@ const KayitliEgitimlerSayfasi = () => {
     return m;
   }, [egitmenOpsiyonlari]);
 
-  // ─── Filtre + sıralama ────────────────────────────────────────────────
-  const filtrelenmis = useMemo(() => {
+  // ─── Filtre — arama hariç (transcript-search candidate seti olarak da kullanılır) ──
+  const prefiltre = useMemo(() => {
     let arr = tumVideolar;
     if (kategoriSet.size > 0) arr = arr.filter(v => (v.kategoriler || []).some(k => kategoriSet.has(k)));
     if (dilKod !== 'all') arr = arr.filter(v => v.dil === dilKod);
@@ -294,12 +340,21 @@ const KayitliEgitimlerSayfasi = () => {
       if (f) arr = arr.filter(v => { const s = v.sure || 0; return s >= f.min && s < f.max; });
     }
     if (sadeceFav) arr = arr.filter(v => favoriler.has(v.id));
+    return arr;
+  }, [tumVideolar, kategoriSet, dilKod, egitmenCoreId, yil, sureKod, sadeceFav, favoriler]);
+
+  // ─── Arama + sıralama ─────────────────────────────────────────────────
+  const filtrelenmis = useMemo(() => {
+    let arr = prefiltre;
     if (arama.trim()) {
       const q = arama.toLocaleLowerCase('tr-TR');
       arr = arr.filter(v => {
         const b = (v.baslik || '').toLocaleLowerCase('tr-TR');
         const e = (v.egitmenAdlari || []).join(' ').toLocaleLowerCase('tr-TR');
-        return b.includes(q) || e.includes(q);
+        // Başlık/eğitmen match ya da transcript match — ikisinden biri yeterli
+        const titleMatch = b.includes(q) || e.includes(q);
+        const transcriptMatch = transcriptAramaAcik && transcriptMatches[v.id]?.length > 0;
+        return titleMatch || transcriptMatch;
       });
     }
     const sorted = [...arr];
@@ -308,7 +363,40 @@ const KayitliEgitimlerSayfasi = () => {
     else if (siralama === 'populer') sorted.sort((a, b) => (b.plays || 0) - (a.plays || 0));
     else if (siralama === 'alfabe')  sorted.sort((a, b) => (a.baslik || '').localeCompare(b.baslik || '', 'tr-TR'));
     return sorted;
-  }, [tumVideolar, kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav, favoriler]);
+  }, [prefiltre, arama, siralama, transcriptAramaAcik, transcriptMatches]);
+
+  // ─── Transcript arama debounce'lu backend çağrısı ───────────────────
+  useEffect(() => {
+    if (!transcriptAramaAcik || !arama.trim() || arama.trim().length < 2) {
+      setTranscriptMatches({});
+      setTranscriptAraniyor(false);
+      return;
+    }
+    const ids = prefiltre.map(v => v.id);
+    if (ids.length === 0) {
+      setTranscriptMatches({});
+      return;
+    }
+    setTranscriptAraniyor(true);
+    const t = setTimeout(async () => {
+      try {
+        const res = await fetch('/.netlify/functions/transcript-search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ q: arama.trim(), videoIds: ids }),
+        });
+        const data = await res.json();
+        const map = {};
+        for (const r of data.results || []) map[r.id] = r.matches;
+        setTranscriptMatches(map);
+      } catch (err) {
+        console.warn('[transcript-search]', err.message);
+      } finally {
+        setTranscriptAraniyor(false);
+      }
+    }, 500);
+    return () => clearTimeout(t);
+  }, [transcriptAramaAcik, arama, prefiltre]);
 
   useEffect(() => { setGosterilen(PAGE_SIZE); }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav]);
 
@@ -401,13 +489,14 @@ const KayitliEgitimlerSayfasi = () => {
     });
   };
 
-  const handleOynat = useCallback((v) => {
+  const handleOynat = useCallback((v, startSn = null) => {
     haptic(5);
     setGecmis(s => {
       const list = [v.id, ...[...s].filter(x => x !== v.id)].slice(0, HIST_MAX);
       saveList(HIST_KEY, list);
       return new Set(list);
     });
+    setSeekTo(startSn);
     setOynatilan(v);
   }, []);
 
@@ -482,6 +571,28 @@ const KayitliEgitimlerSayfasi = () => {
                 </span>
               )}
             </button>
+          </div>
+
+          {/* Transcript arama toggle + mini açıklama */}
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <button onClick={() => { haptic(8); setTranscriptAramaAcik(s => !s); }}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold spring-tap transition-all border ${
+                transcriptAramaAcik
+                  ? 'bg-amber-400 text-gray-900 border-amber-300 shadow-md'
+                  : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+              }`}>
+              <Mic className="w-3.5 h-3.5" />
+              Video içinde ara
+              {transcriptAramaAcik && transcriptAraniyor && (
+                <Loader2 className="w-3 h-3 animate-spin" />
+              )}
+            </button>
+            <p className="text-[11px] sm:text-xs text-purple-200/90 flex items-center gap-1">
+              <Sparkles className="w-3 h-3 text-amber-300" />
+              {transcriptAramaAcik
+                ? 'Konuşulan içerikte de arar, eşleşen sahneden başlatır'
+                : 'Aç → eğitim konuşmasında arama yapar, sahneye atlar'}
+            </p>
           </div>
 
           {/* Desktop'ta inline filtre dropdownları */}
@@ -581,9 +692,11 @@ const KayitliEgitimlerSayfasi = () => {
                   <VideoKart key={v.id} video={v}
                     favori={favoriler.has(v.id)}
                     izlendi={gecmis.has(v.id)}
+                    transcriptMatch={transcriptAramaAcik ? transcriptMatches[v.id] : null}
+                    aramaQ={arama}
                     onToggleFav={(e) => toggleFavori(e, v)}
                     onShare={(e) => handleShare(e, v)}
-                    onOynat={() => handleOynat(v)}
+                    onOynat={(startSn) => handleOynat(v, startSn ?? null)}
                   />
                 ))}
               </div>
@@ -632,9 +745,10 @@ const KayitliEgitimlerSayfasi = () => {
       )}
 
       {oynatilan && (
-        <VideoOynatModal video={oynatilan} onClose={() => setOynatilan(null)}
+        <VideoOynatModal video={oynatilan} onClose={() => { setOynatilan(null); setSeekTo(null); }}
           tumVideolar={tumVideolar}
           onOynat={handleOynat}
+          seekTo={seekTo}
         />
       )}
     </div>
@@ -854,14 +968,14 @@ const SheetChip = ({ active, onClick, color, children }) => (
 );
 
 // ─── Video kartı (mobile compact + desktop grid) ─────────────────────────
-const VideoKart = ({ video: v, favori, izlendi, onToggleFav, onShare, onOynat }) => {
+const VideoKart = ({ video: v, favori, izlendi, transcriptMatch, aramaQ, onToggleFav, onShare, onOynat }) => {
   const sureMetin = formatSure(v.sure);
   const playsMetin = formatPlays(v.plays);
   const kategori = v.kategoriler?.[0];
   const renkClass = kategori ? (KATEGORI_RENK[kategori] || 'bg-amber-400/80 text-gray-900') : '';
 
   return (
-    <button onClick={onOynat}
+    <button onClick={() => onOynat?.()}
       className="relative bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-400 rounded-xl overflow-hidden text-left transition-all hover-lift spring-tap group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
       <div className="relative aspect-video bg-black/30">
         {v.thumbnailUrl ? (
@@ -910,6 +1024,32 @@ const VideoKart = ({ video: v, favori, izlendi, onToggleFav, onShare, onOynat })
             {v.egitmenAdlari.join(', ')}
           </div>
         )}
+
+        {/* Transcript match snippets — sahneye atlama */}
+        {transcriptMatch?.length > 0 && (
+          <div className="mb-2 space-y-1">
+            {transcriptMatch.slice(0, 2).map((m, i) => (
+              <div key={i}
+                role="button" tabIndex={0}
+                onClick={(e) => { e.stopPropagation(); onOynat?.(m.start); }}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOynat?.(m.start); } }}
+                title={`${formatSure(m.start)} — bu sahneden başlat`}
+                className="block w-full text-left bg-amber-500/10 hover:bg-amber-500/25 border border-amber-400/30 rounded-md px-2 py-1.5 cursor-pointer transition-all">
+                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300">
+                  <Mic className="w-3 h-3" />{formatSure(m.start)}
+                </span>
+                <p className="text-[11px] text-white/85 line-clamp-2 mt-0.5 leading-snug"
+                   dangerouslySetInnerHTML={{ __html: highlightSnippet(m.snippet, aramaQ) }} />
+              </div>
+            ))}
+            {transcriptMatch.length > 2 && (
+              <div className="text-[10px] text-amber-300/70 px-1">
+                +{transcriptMatch.length - 2} eşleşme daha (videoyu aç)
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-white/60">
           <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
             {v.tarih && (

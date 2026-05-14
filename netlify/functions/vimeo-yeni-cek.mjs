@@ -85,6 +85,43 @@ async function vimeoFetch(path) {
   return res.json();
 }
 
+// VTT → { text, chunks: [{ start, end, text }] }
+// Plain text (transcript) ile timestamp'li chunks (transcriptChunks) bir arada.
+function parseVtt(vtt) {
+  if (!vtt) return { text: '', chunks: [] };
+  const tsRe = /^(\d{2}):(\d{2}):(\d{2})[.,](\d{3})\s*-->\s*(\d{2}):(\d{2}):(\d{2})[.,](\d{3})/;
+  const lines = vtt.split(/\r?\n/);
+  const raw = [];
+  let cur = null;
+  for (const line of lines) {
+    const m = tsRe.exec(line);
+    if (m) {
+      if (cur && cur.text) raw.push(cur);
+      const start = (+m[1]) * 3600 + (+m[2]) * 60 + (+m[3]) + (+m[4]) / 1000;
+      const end   = (+m[5]) * 3600 + (+m[6]) * 60 + (+m[7]) + (+m[8]) / 1000;
+      cur = { start: Math.round(start * 10) / 10, end: Math.round(end * 10) / 10, text: '' };
+    } else if (cur && line.trim() && !/^WEBVTT/.test(line) && !/^\d+\s*$/.test(line.trim())) {
+      cur.text = (cur.text ? cur.text + ' ' : '') + line.trim();
+    } else if (!line.trim() && cur && cur.text) {
+      raw.push(cur);
+      cur = null;
+    }
+  }
+  if (cur && cur.text) raw.push(cur);
+  // Ardışık küçük chunk'ları birleştir (~6-8 sn'lik bloklar — Firestore doc boyutu için)
+  const merged = [];
+  for (const c of raw) {
+    const last = merged[merged.length - 1];
+    if (last && c.start - last.end < 0.6 && (c.end - last.start) < 8) {
+      last.end = c.end;
+      last.text += ' ' + c.text;
+    } else {
+      merged.push({ ...c });
+    }
+  }
+  return { text: merged.map(c => c.text).join('\n'), chunks: merged };
+}
+
 async function fetchTranscript(vimeoId) {
   try {
     const tracks = await vimeoFetch(`/videos/${vimeoId}/texttracks`);
@@ -94,12 +131,7 @@ async function fetchTranscript(vimeoId) {
     const vttRes = await fetch(tr.link);
     if (!vttRes.ok) return null;
     const vtt = await vttRes.text();
-    return vtt
-      .replace(/^WEBVTT.*\n/, '')
-      .replace(/\d{2}:\d{2}:\d{2}[.,]\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}[.,]\d{3}.*$/gm, '')
-      .replace(/^\d+\s*$/gm, '')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
+    return parseVtt(vtt);
   } catch { return null; }
 }
 
@@ -232,7 +264,7 @@ export default async (req) => {
 
     const matchText = `${v.name || ''} ${(v.description || '').slice(0, 300)}`;
     const eg = matchEgitmen(matchText, knownList);
-    const transcript = await fetchTranscript(vimeoId);
+    const tx = await fetchTranscript(vimeoId);
 
     const thumb = v.pictures?.sizes?.[3]?.link || v.pictures?.sizes?.slice(-1)?.[0]?.link || null;
     const tarih = (v.release_time || v.created_time || '').slice(0, 10);
@@ -251,8 +283,9 @@ export default async (req) => {
       eslesmemis: eg.coreIds.length === 0,
       kategoriler: [],
       kategoriKaynagi: 'pending', // sonra Gemini scheduled function işler
-      transcript,
-      transcriptVar: !!transcript,
+      transcript: tx?.text || null,
+      transcriptChunks: tx?.chunks || null,  // [{ start, end, text }] — zaman atlatma için
+      transcriptVar: !!tx?.text,
       kayeneFiltrelendi: false,
       olusturulmaTarihi: admin.firestore.FieldValue.serverTimestamp(),
       guncellemeTarihi: admin.firestore.FieldValue.serverTimestamp(),

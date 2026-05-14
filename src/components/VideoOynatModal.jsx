@@ -19,7 +19,7 @@ function formatPlays(n) {
   return (n / 1_000_000).toFixed(1).replace('.0', '') + 'M';
 }
 
-const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat }) => {
+const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = null }) => {
   const [aciklamaAcik, setAciklamaAcik] = useState(false);
 
   useEffect(() => {
@@ -48,7 +48,9 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat }) => {
 
   const embedUrl = video.embedUrl || `https://player.vimeo.com/video/${video.vimeoId}`;
   const sep = embedUrl.includes('?') ? '&' : '?';
-  const iframeSrc = `${embedUrl}${sep}autoplay=1&title=0&byline=0&portrait=0`;
+  // seekTo varsa Vimeo'nun #t= hash parametresi ile başlangıç saniyesini atla
+  const hash = seekTo && seekTo > 0 ? `#t=${Math.floor(seekTo)}s` : '';
+  const iframeSrc = `${embedUrl}${sep}autoplay=1&title=0&byline=0&portrait=0${hash}`;
 
   const sureMetin = formatSure(video.sure);
   const playsMetin = formatPlays(video.plays);
