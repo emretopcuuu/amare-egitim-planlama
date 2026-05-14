@@ -12,6 +12,7 @@ import { collection, query, where, orderBy, limit as fbLimit, getDocs, doc, getD
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import VideoOynatModal from '../components/VideoOynatModal';
 import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
+import { useTranslation } from '../context/LanguageContext';
 import { useToast } from '../components/Toast';
 import { haptic, nativeShare } from '../utils/mobileHelpers';
 import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
@@ -61,25 +62,26 @@ const DIL_PATTERNS = [
   { kod: 'DE', etiket: 'Almanca',    regex: /\bdeutsch\b|\bgerman\b|deutschland|germany|\(de\)|gesch[aä]ftspr[aä]sentation|produktpr[aä]sentation/i },
   { kod: 'NL', etiket: 'Hollandaca', regex: /nederlands|\bdutch\b|nederland|holland|\(nl\)|gezondheidsdriehoek|productpresentatie/i },
 ];
+// Etiketleri dinamik dile çevirmek için tKey kullanıyoruz
 const DILLER = [
-  { kod: 'all', etiket: 'Tüm Diller' },
-  { kod: 'TR',  etiket: 'Türkçe' },
-  { kod: 'RU',  etiket: 'Rusça' },
-  { kod: 'EN',  etiket: 'İngilizce' },
-  { kod: 'DE',  etiket: 'Almanca' },
-  { kod: 'NL',  etiket: 'Hollandaca' },
+  { kod: 'all', tKey: 'rec_all_languages' },
+  { kod: 'TR',  tKey: 'rec_lang_tr' },
+  { kod: 'RU',  tKey: 'rec_lang_ru' },
+  { kod: 'EN',  tKey: 'rec_lang_en' },
+  { kod: 'DE',  tKey: 'rec_lang_de' },
+  { kod: 'NL',  tKey: 'rec_lang_nl' },
 ];
 const SURE_FILTRELERI = [
-  { kod: 'all',  etiket: 'Tüm Süreler' },
-  { kod: 'kisa', etiket: '< 15 dk',   min: 0,    max: 900 },
-  { kod: 'orta', etiket: '15-60 dk', min: 900,  max: 3600 },
-  { kod: 'uzun', etiket: '> 1 saat',  min: 3600, max: Infinity },
+  { kod: 'all',  tKey: 'rec_all_durations', min: 0, max: Infinity },
+  { kod: 'kisa', tKey: 'rec_dur_short',  min: 0,    max: 900 },
+  { kod: 'orta', tKey: 'rec_dur_medium', min: 900,  max: 3600 },
+  { kod: 'uzun', tKey: 'rec_dur_long',   min: 3600, max: Infinity },
 ];
 const SIRALAMALAR = [
-  { kod: 'yeni',    etiket: 'En Yeni' },
-  { kod: 'eski',    etiket: 'En Eski' },
-  { kod: 'populer', etiket: 'En Popüler' },
-  { kod: 'alfabe',  etiket: 'Alfabetik' },
+  { kod: 'yeni',    tKey: 'rec_sort_newest' },
+  { kod: 'eski',    tKey: 'rec_sort_oldest' },
+  { kod: 'populer', tKey: 'rec_sort_popular' },
+  { kod: 'alfabe',  tKey: 'rec_sort_alpha' },
 ];
 
 function detectDil(video) {
@@ -169,6 +171,7 @@ function saveList(key, list) {
 const KayitliEgitimlerSayfasi = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // ─── State ─────────────────────────────────────────────────────────────
@@ -685,9 +688,9 @@ const KayitliEgitimlerSayfasi = () => {
             </button>
             <LanguageSwitcher />
           </div>
-          <h1 className="text-2xl md:text-4xl font-extrabold text-white font-display">Kayıtlı Eğitimler</h1>
+          <h1 className="text-2xl md:text-4xl font-extrabold text-white font-display">{t('rec_title')}</h1>
           <p className="text-purple-200 mt-0.5 text-xs sm:text-sm">
-            <strong>{filtrelenmis.length}</strong> / {tumVideolar.length} eğitim
+            <strong>{filtrelenmis.length}</strong> / {tumVideolar.length} {t('rec_count_suffix')}
             {favoriler.size > 0 && !sadeceFav && (
               <button onClick={() => setSadeceFav(true)}
                 className="ml-3 inline-flex items-center gap-1 text-pink-300 hover:text-pink-200">
@@ -701,17 +704,17 @@ const KayitliEgitimlerSayfasi = () => {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300" />
               <input type="text" ref={aramaInputRef} value={arama} onChange={e => setArama(e.target.value)}
-                placeholder="Eğitim adı veya eğitmen ara… ( / ile odaklan)"
+                placeholder={t('rec_search_placeholder')}
                 className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
               {arama && (
-                <button onClick={() => setArama('')} aria-label="Aramayı temizle"
+                <button onClick={() => setArama('')} aria-label={t('rec_clear_search_aria')}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white p-1">
                   <X className="w-4 h-4" />
                 </button>
               )}
             </div>
             {/* Filtre butonu sadece mobile/tablet */}
-            <button onClick={() => { haptic(8); setSheetOpen(true); }} aria-label="Filtreler"
+            <button onClick={() => { haptic(8); setSheetOpen(true); }} aria-label={t('rec_filters')}
               className="md:hidden relative bg-white/15 hover:bg-white/25 border-2 border-white/20 text-white rounded-xl px-3 py-2.5 spring-tap inline-flex items-center gap-1.5 text-sm font-semibold">
               <SlidersHorizontal className="w-4 h-4" />
               {aktifFiltreler.length > 0 && (
@@ -725,14 +728,14 @@ const KayitliEgitimlerSayfasi = () => {
           {/* Transcript arama toggle + mini açıklama */}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <button onClick={() => { haptic(8); setTranscriptAramaAcik(s => !s); }}
-              title="Video içeriğinde (söylenenlerde) arama yapar"
+              title={t('rec_search_in_video_desc_on')}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold spring-tap transition-all border ${
                 transcriptAramaAcik
                   ? 'bg-amber-400 text-gray-900 border-amber-300 shadow-md'
                   : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
               }`}>
               <FileText className="w-3.5 h-3.5" />
-              Video içinde ara
+              {t('rec_search_in_video')}
               {transcriptAramaAcik && transcriptAraniyor && (
                 <Loader2 className="w-3 h-3 animate-spin" />
               )}
@@ -740,8 +743,8 @@ const KayitliEgitimlerSayfasi = () => {
             <p className="text-[11px] sm:text-xs text-purple-200/90 flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-amber-300" />
               {transcriptAramaAcik
-                ? 'Eğitimde söylenenlerde de arar, geçtiği sahneden başlatır'
-                : 'Aç → eğitimde söylenenlerde de arama yapar'}
+                ? t('rec_search_in_video_desc_on')
+                : t('rec_search_in_video_desc_off')}
             </p>
           </div>
 
@@ -749,32 +752,32 @@ const KayitliEgitimlerSayfasi = () => {
           {transcriptAramaAcik && timestampMatchSayisi > 0 && (
             <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400/15 border border-amber-300/40 text-amber-100 text-[11px] sm:text-xs animate-fade-in">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              <span><strong className="text-amber-200">{timestampMatchSayisi} video</strong>da zaman damgalı eşleşme — sahneye atlamak için listenin üstünde</span>
+              <span><strong className="text-amber-200">{timestampMatchSayisi}</strong> {t('rec_timestamp_banner_pre')}</span>
             </div>
           )}
 
           {/* Desktop'ta inline filtre dropdownları */}
           <div className="hidden md:grid mt-3 grid-cols-3 lg:grid-cols-5 gap-2">
             <DropdownField icon={User} value={egitmenCoreId} onChange={v => { haptic(5); setEgitmenCoreId(v); }}>
-              <option value="" className="bg-purple-900">Tüm Eğitmenler ({egitmenOpsiyonlari.length})</option>
+              <option value="" className="bg-purple-900">{t('rec_all_trainers')} ({egitmenOpsiyonlari.length})</option>
               {egitmenOpsiyonlari.map(o => (
                 <option key={o.coreId} value={o.coreId} className="bg-purple-900">{o.ad} ({o.count})</option>
               ))}
             </DropdownField>
             <DropdownField icon={Globe} value={dilKod} onChange={v => { haptic(5); setDilKod(v); }}>
-              {DILLER.map(d => <option key={d.kod} value={d.kod} className="bg-purple-900">{d.etiket}</option>)}
+              {DILLER.map(d => <option key={d.kod} value={d.kod} className="bg-purple-900">{t(d.tKey)}</option>)}
             </DropdownField>
             <DropdownField icon={Calendar} value={yil} onChange={v => { haptic(5); setYil(v); }}>
-              <option value="all" className="bg-purple-900">Tüm Yıllar</option>
+              <option value="all" className="bg-purple-900">{t('rec_all_years')}</option>
               {yilOpsiyonlari.map(([y, c]) => (
                 <option key={y} value={y} className="bg-purple-900">{y} ({c})</option>
               ))}
             </DropdownField>
             <DropdownField icon={Clock} value={sureKod} onChange={v => { haptic(5); setSureKod(v); }}>
-              {SURE_FILTRELERI.map(s => <option key={s.kod} value={s.kod} className="bg-purple-900">{s.etiket}</option>)}
+              {SURE_FILTRELERI.map(s => <option key={s.kod} value={s.kod} className="bg-purple-900">{t(s.tKey)}</option>)}
             </DropdownField>
             <DropdownField icon={ArrowDownUp} value={siralama} onChange={v => { haptic(5); setSiralama(v); }}>
-              {SIRALAMALAR.map(s => <option key={s.kod} value={s.kod} className="bg-purple-900">{s.etiket}</option>)}
+              {SIRALAMALAR.map(s => <option key={s.kod} value={s.kod} className="bg-purple-900">{t(s.tKey)}</option>)}
             </DropdownField>
           </div>
 
@@ -787,7 +790,7 @@ const KayitliEgitimlerSayfasi = () => {
                     sadeceFav ? 'bg-pink-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
                   }`}>
                   <Heart className="w-3.5 h-3.5" fill={sadeceFav ? 'currentColor' : 'none'} />
-                  Sadece favorilerim ({favoriler.size})
+                  {t('rec_only_favs')} ({favoriler.size})
                 </button>
               )}
               {gecmis.size > 0 && (
@@ -796,7 +799,7 @@ const KayitliEgitimlerSayfasi = () => {
                     sadeceIzlenen ? 'bg-blue-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
                   }`}>
                   <Eye className="w-3.5 h-3.5" />
-                  Sadece izlediklerim ({gecmis.size})
+                  {t('rec_only_watched')} ({gecmis.size})
                 </button>
               )}
             </div>
@@ -807,7 +810,7 @@ const KayitliEgitimlerSayfasi = () => {
             <button onClick={() => { haptic(8); setKategoriSet(new Set()); }}
               className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
                 kategoriSet.size === 0 ? 'bg-amber-400 text-gray-900 shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-              }`}>Tümü</button>
+              }`}>{t('rec_all')}</button>
             {kategoriler.map(k => (
               <button key={k} onClick={() => toggleKategori(k)}
                 className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
@@ -820,7 +823,7 @@ const KayitliEgitimlerSayfasi = () => {
               <button onClick={filtreleriTemizle}
                 className="ml-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap bg-red-500/30 hover:bg-red-500/50 text-red-100 border border-red-400/40 spring-tap transition-all">
                 <RotateCcw className="w-3.5 h-3.5" />
-                Tüm filtreleri temizle ({aktifFiltreler.length})
+                {t('rec_clear_all_filters')} ({aktifFiltreler.length})
               </button>
             )}
           </div>
@@ -838,7 +841,7 @@ const KayitliEgitimlerSayfasi = () => {
                 ))}
                 <button onClick={filtreleriTemizle}
                   className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap bg-red-500/30 text-red-200 hover:bg-red-500/40 spring-tap">
-                  <RotateCcw className="w-3 h-3" />Sıfırla
+                  <RotateCcw className="w-3 h-3" />{t('rec_reset')}
                 </button>
               </div>
             </div>
@@ -848,7 +851,7 @@ const KayitliEgitimlerSayfasi = () => {
 
       {/* Yarıda kaldıkların — sadece filtre/arama yokken göster */}
       {!loading && yaridaKalanlar.length > 0 && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && !sadeceIzlenen && dilKod === 'all' && (
-        <YaridaKalanRaf list={yaridaKalanlar} onOynat={(v, t) => handleOynat(v, t)} onTemizle={(id) => watchProgress.remove(id)} />
+        <YaridaKalanRaf t={t} list={yaridaKalanlar} onOynat={(v, startSn) => handleOynat(v, startSn)} onTemizle={(id) => watchProgress.remove(id)} />
       )}
 
       {/* Grid */}
@@ -857,13 +860,14 @@ const KayitliEgitimlerSayfasi = () => {
           {loading ? (
             <SkeletonGrid />
           ) : filtrelenmis.length === 0 ? (
-            <EmptyState onClear={filtreleriTemizle} hasFilters={aktifFiltreler.length > 0} />
+            <EmptyState t={t} onClear={filtreleriTemizle} hasFilters={aktifFiltreler.length > 0} />
           ) : (
             <>
               {/* Mobile: compact list, Desktop: grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                 {filtrelenmis.slice(0, gosterilen).map(v => (
                   <VideoKart key={v.id} video={v}
+                    t={t}
                     favori={favoriler.has(v.id)}
                     izlendi={gecmis.has(v.id)}
                     progress={watchProgress.get(v.id)}
@@ -895,6 +899,7 @@ const KayitliEgitimlerSayfasi = () => {
       {/* Filter Bottom Sheet */}
       {sheetOpen && (
         <FilterSheet
+          t={t}
           onClose={() => setSheetOpen(false)}
           onUygula={onSheetUygula}
           kategoriler={kategoriler}
@@ -914,7 +919,7 @@ const KayitliEgitimlerSayfasi = () => {
 
       {/* Scroll-to-top FAB */}
       {showScrollTop && (
-        <button onClick={scrollToTop} aria-label="En üste dön"
+        <button onClick={scrollToTop} aria-label={t('rec_to_top')}
           style={{ bottom: 'calc(64px + env(safe-area-inset-bottom, 0px) + 12px)' }}
           className="fixed md:!bottom-6 right-4 z-40 w-12 h-12 rounded-full bg-amber-400 hover:bg-amber-300 text-gray-900 shadow-xl flex items-center justify-center spring-tap animate-fade-in">
           <ChevronUp className="w-6 h-6" />
@@ -951,14 +956,14 @@ const SkeletonGrid = () => (
 );
 
 // ─── Empty state ────────────────────────────────────────────────────────
-const EmptyState = ({ onClear, hasFilters }) => (
+const EmptyState = ({ t, onClear, hasFilters }) => (
   <div className="text-center py-16 text-white/50">
     <Video className="w-20 h-20 mx-auto mb-3 opacity-30" />
-    <p className="text-lg">Filtreye uyan kayıt bulunamadı.</p>
+    <p className="text-lg">{t('rec_no_results')}</p>
     {hasFilters && (
       <button onClick={onClear}
         className="mt-4 inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold px-5 py-2.5 rounded-xl spring-tap">
-        <RotateCcw className="w-4 h-4" />Filtreleri temizle
+        <RotateCcw className="w-4 h-4" />{t('rec_clear_filters')}
       </button>
     )}
   </div>
@@ -966,6 +971,7 @@ const EmptyState = ({ onClear, hasFilters }) => (
 
 // ─── Filter Bottom Sheet ────────────────────────────────────────────────
 const FilterSheet = ({
+  t,
   onClose, onUygula,
   kategoriler,
   kategoriSet, setKategoriSet,
@@ -1001,7 +1007,7 @@ const FilterSheet = ({
         {/* Header */}
         <div className="px-5 pb-3 flex items-center justify-between flex-shrink-0">
           <h3 className="text-white text-lg font-bold inline-flex items-center gap-2">
-            <SlidersHorizontal className="w-5 h-5" />Filtreler
+            <SlidersHorizontal className="w-5 h-5" />{t('rec_filters')}
           </h3>
           <button onClick={onClose}
             className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
@@ -1012,45 +1018,45 @@ const FilterSheet = ({
         {/* Scrollable content */}
         <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4">
           {/* Sıralama */}
-          <SheetSection icon={ArrowDownUp} title="Sıralama">
+          <SheetSection icon={ArrowDownUp} title={t('rec_sort_title')}>
             <div className="flex flex-wrap gap-2">
               {SIRALAMALAR.map(s => (
                 <SheetChip key={s.kod} active={siralama === s.kod}
                   onClick={() => { haptic(8); setSiralama(s.kod); }}>
-                  {s.etiket}
+                  {t(s.tKey)}
                 </SheetChip>
               ))}
             </div>
           </SheetSection>
 
           {/* Süre */}
-          <SheetSection icon={Clock} title="Süre">
+          <SheetSection icon={Clock} title={t('rec_duration_title')}>
             <div className="flex flex-wrap gap-2">
               {SURE_FILTRELERI.map(s => (
                 <SheetChip key={s.kod} active={sureKod === s.kod}
                   onClick={() => { haptic(8); setSureKod(s.kod); }}>
-                  {s.etiket}
+                  {t(s.tKey)}
                 </SheetChip>
               ))}
             </div>
           </SheetSection>
 
           {/* Dil */}
-          <SheetSection icon={Globe} title="Dil">
+          <SheetSection icon={Globe} title={t('rec_language_title')}>
             <div className="flex flex-wrap gap-2">
               {DILLER.map(d => (
                 <SheetChip key={d.kod} active={dilKod === d.kod}
                   onClick={() => { haptic(8); setDilKod(d.kod); }}>
-                  {d.etiket}
+                  {t(d.tKey)}
                 </SheetChip>
               ))}
             </div>
           </SheetSection>
 
           {/* Yıl */}
-          <SheetSection icon={Calendar} title="Yıl">
+          <SheetSection icon={Calendar} title={t('rec_year_title')}>
             <div className="flex flex-wrap gap-2">
-              <SheetChip active={yil === 'all'} onClick={() => { haptic(8); setYil('all'); }}>Tümü</SheetChip>
+              <SheetChip active={yil === 'all'} onClick={() => { haptic(8); setYil('all'); }}>{t('rec_all')}</SheetChip>
               {yilOpsiyonlari.map(([y, c]) => (
                 <SheetChip key={y} active={yil === y}
                   onClick={() => { haptic(8); setYil(y); }}>
@@ -1061,10 +1067,10 @@ const FilterSheet = ({
           </SheetSection>
 
           {/* Eğitmen */}
-          <SheetSection icon={User} title="Eğitmen">
+          <SheetSection icon={User} title={t('rec_trainer_title')}>
             <select value={egitmenCoreId} onChange={e => { haptic(8); setEgitmenCoreId(e.target.value); }}
               className="w-full bg-white/15 border-2 border-white/20 text-white rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 appearance-none">
-              <option value="" className="bg-purple-900">Tüm Eğitmenler ({egitmenOpsiyonlari.length})</option>
+              <option value="" className="bg-purple-900">{t('rec_all_trainers')} ({egitmenOpsiyonlari.length})</option>
               {egitmenOpsiyonlari.map(o => (
                 <option key={o.coreId} value={o.coreId} className="bg-purple-900">{o.ad} ({o.count})</option>
               ))}
@@ -1072,7 +1078,7 @@ const FilterSheet = ({
           </SheetSection>
 
           {/* Kategori */}
-          <SheetSection icon={Tag} title={`Kategori${kategoriSet.size > 0 ? ` (${kategoriSet.size} seçili)` : ''}`}>
+          <SheetSection icon={Tag} title={`${t('rec_category_title')}${kategoriSet.size > 0 ? ` (${kategoriSet.size})` : ''}`}>
             <div className="flex flex-wrap gap-2">
               {(kategoriler || []).map(k => (
                 <SheetChip key={k} active={kategoriSet.has(k)}
@@ -1093,7 +1099,7 @@ const FilterSheet = ({
                     onClick={() => { haptic(8); setSadeceFav(s => !s); }}
                     color={sadeceFav ? 'bg-pink-500 text-white' : null}>
                     <Heart className="w-3.5 h-3.5 inline mr-1" fill={sadeceFav ? 'currentColor' : 'none'} />
-                    Sadece favorilerim ({favoriCount})
+                    {t('rec_only_favs')} ({favoriCount})
                   </SheetChip>
                 )}
                 {izlenenCount > 0 && (
@@ -1101,7 +1107,7 @@ const FilterSheet = ({
                     onClick={() => { haptic(8); setSadeceIzlenen(s => !s); }}
                     color={sadeceIzlenen ? 'bg-blue-500 text-white' : null}>
                     <Eye className="w-3.5 h-3.5 inline mr-1" />
-                    Sadece izlediklerim ({izlenenCount})
+                    {t('rec_only_watched')} ({izlenenCount})
                   </SheetChip>
                 )}
               </div>
@@ -1113,11 +1119,11 @@ const FilterSheet = ({
         <div className="px-5 py-3 border-t border-white/10 flex gap-2 flex-shrink-0">
           <button onClick={filtreleriTemizle}
             className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl spring-tap text-sm inline-flex items-center justify-center gap-1.5">
-            <RotateCcw className="w-4 h-4" />Sıfırla
+            <RotateCcw className="w-4 h-4" />{t('rec_reset')}
           </button>
           <button onClick={onUygula}
             className="flex-[2] bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold py-3 rounded-xl spring-tap text-sm">
-            {filtrelenmisSayi} eğitimi göster
+            {filtrelenmisSayi} {t('rec_show_count')}
           </button>
         </div>
       </div>
@@ -1160,7 +1166,7 @@ const SheetChip = ({ active, onClick, color, children }) => (
 );
 
 // ─── Yarıda kaldıkların rafı (horizontal carousel) ───────────────────────
-const YaridaKalanRaf = ({ list, onOynat, onTemizle }) => {
+const YaridaKalanRaf = ({ t, list, onOynat, onTemizle }) => {
   if (!list?.length) return null;
   return (
     <div className="px-4 pt-2 pb-3">
@@ -1168,7 +1174,7 @@ const YaridaKalanRaf = ({ list, onOynat, onTemizle }) => {
         <div className="flex items-center justify-between mb-2">
           <h2 className="text-white text-sm sm:text-base font-bold inline-flex items-center gap-2">
             <History className="w-4 h-4 text-amber-300" />
-            Yarıda kaldıkların
+            {t('rec_resume_title')}
             <span className="text-amber-300/70 text-xs font-normal">({list.length})</span>
           </h2>
         </div>
@@ -1197,11 +1203,11 @@ const YaridaKalanRaf = ({ list, onOynat, onTemizle }) => {
                   </div>
                   {/* Resume indicator */}
                   <div className="absolute top-2 left-2 bg-black/75 text-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    {formatSure(p.t)} • {kalan}dk kaldı
+                    {formatSure(p.t)} • {kalan} {t('rec_resume_remaining')}
                   </div>
                   {/* Sil butonu */}
                   <button onClick={(e) => { e.stopPropagation(); onTemizle(v.id); }}
-                    title="Listeden çıkar" aria-label="Listeden çıkar"
+                    title={t('rec_resume_remove')} aria-label={t('rec_resume_remove')}
                     className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 hover:bg-red-500/80 text-white/80 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -1230,7 +1236,7 @@ const YaridaKalanRaf = ({ list, onOynat, onTemizle }) => {
 };
 
 // ─── Video kartı (mobile compact + desktop grid) ─────────────────────────
-const VideoKart = ({ video: v, favori, izlendi, progress, transcriptMatch, aramaQ, onToggleFav, onShare, onOynat, onShareSnippet }) => {
+const VideoKart = ({ video: v, t, favori, izlendi, progress, transcriptMatch, aramaQ, onToggleFav, onShare, onOynat, onShareSnippet }) => {
   const sureMetin = formatSure(v.sure);
   const playsMetin = formatPlays(v.plays);
   const kategori = v.kategoriler?.[0];
@@ -1253,7 +1259,7 @@ const VideoKart = ({ video: v, favori, izlendi, progress, transcriptMatch, arama
         {/* Sol üst: izlendi */}
         {izlendi && (
           <div className="absolute top-2 left-2 bg-black/70 text-white/90 text-[10px] font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-            <History className="w-3 h-3" />İzlendi
+            <History className="w-3 h-3" />{t('rec_played')}
           </div>
         )}
         {/* Sağ üst: dil */}
@@ -1311,11 +1317,11 @@ const VideoKart = ({ video: v, favori, izlendi, progress, transcriptMatch, arama
                     role="button" tabIndex={0}
                     onClick={(e) => { e.stopPropagation(); onOynat?.(hasTime ? m.start : null); }}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOynat?.(hasTime ? m.start : null); } }}
-                    title={hasTime ? `${formatSure(m.start)} — bu sahneden başlat` : 'Bu video konuşmasında geçiyor'}
+                    title={hasTime ? formatSure(m.start) : t('rec_in_speech')}
                     className="flex-1 min-w-0 px-2 py-1.5 cursor-pointer text-left">
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300">
                       <FileText className="w-3 h-3" />
-                      {hasTime ? formatSure(m.start) : 'Konuşmada geçiyor'}
+                      {hasTime ? formatSure(m.start) : t('rec_in_speech')}
                     </span>
                     <p className="text-[11px] text-white/85 line-clamp-2 mt-0.5 leading-snug"
                        dangerouslySetInnerHTML={{ __html: highlightSnippet(m.snippet, aramaQ) }} />
@@ -1323,8 +1329,8 @@ const VideoKart = ({ video: v, favori, izlendi, progress, transcriptMatch, arama
                   {hasTime && onShareSnippet && (
                     <button
                       onClick={(e) => { e.stopPropagation(); onShareSnippet(m.start); }}
-                      title="Bu sahneye link kopyala"
-                      aria-label="Bu sahneye link kopyala"
+                      title={t('rec_share_scene_label')}
+                      aria-label={t('rec_share_scene_label')}
                       className="flex-shrink-0 px-2.5 hover:bg-amber-400/30 text-amber-300/70 hover:text-amber-100 transition-all border-l border-amber-400/20 flex items-center">
                       <Share2 className="w-3.5 h-3.5" />
                     </button>
@@ -1334,7 +1340,7 @@ const VideoKart = ({ video: v, favori, izlendi, progress, transcriptMatch, arama
             })}
             {transcriptMatch.length > 2 && (
               <div className="text-[10px] text-amber-300/70 px-1">
-                +{transcriptMatch.length - 2} eşleşme daha (videoyu aç)
+                +{transcriptMatch.length - 2} {t('rec_more_matches')}
               </div>
             )}
           </div>
@@ -1354,11 +1360,11 @@ const VideoKart = ({ video: v, favori, izlendi, progress, transcriptMatch, arama
             )}
           </div>
           <div className="flex items-center gap-0.5">
-            <button onClick={onShare} aria-label="Paylaş"
+            <button onClick={onShare} aria-label={t('rec_share_aria')}
               className="p-1.5 -mr-1 rounded-full text-white/40 hover:text-amber-300 hover:bg-white/10 transition-all">
               <Share2 className="w-4 h-4" />
             </button>
-            <button onClick={onToggleFav} aria-label={favori ? 'Favoriden çıkar' : 'Favoriye ekle'}
+            <button onClick={onToggleFav} aria-label={favori ? t('rec_fav_remove') : t('rec_fav_add')}
               className={`p-1.5 -mr-1 rounded-full transition-all ${favori ? 'text-pink-400 hover:text-pink-300' : 'text-white/40 hover:text-pink-300 hover:bg-white/10'}`}>
               <Heart className="w-4 h-4" fill={favori ? 'currentColor' : 'none'} />
             </button>
