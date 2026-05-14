@@ -102,7 +102,8 @@ function formatPlays(n) {
   return (n / 1_000_000).toFixed(1).replace('.0', '') + 'M';
 }
 
-const CACHE_KEY = 'amare_kayitli_egitimler_all_v3';
+// Cache version bumped from v3 → v4 after Amare İş Sunumu + new categories
+const CACHE_KEY = 'amare_kayitli_egitimler_all_v4';
 const TTL = 12 * 60 * 60 * 1000;
 const FAV_KEY = 'amare_video_favoriler';
 const HIST_KEY = 'amare_video_gecmis';
@@ -197,6 +198,16 @@ const KayitliEgitimlerSayfasi = () => {
 
   // ─── Veri çek ─────────────────────────────────────────────────────────
   useEffect(() => {
+    // Eski cache versiyonlarını temizle
+    try {
+      ['amare_kayitli_egitimler_all_v1', 'amare_kayitli_egitimler_all_v2', 'amare_kayitli_egitimler_all_v3']
+        .forEach(k => localStorage.removeItem(k));
+      // Eski per-category cache'leri de sil (v1 mantığından kalan)
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('amare_kayitli_egitimler_') && k.endsWith('_v1') && k !== CACHE_KEY)
+        .forEach(k => localStorage.removeItem(k));
+    } catch {}
+
     try {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
