@@ -41,7 +41,9 @@ const KEYWORD_KATEGORI = {
   'Kamp':             /\bkamp(lar[a-z]*|a[a-z]*|ta[a-z]*|tan[a-z]*|in[a-z]*|im[a-z]*|i[a-z]*|cilar[a-z]*)?\b/g,
   'Katlama':          /\bkatla(ma|n|n[ıi]r|n[ıi]l|m[ıi]y|ma[a-z]*|nan|nd[a-z]*|m[a-z]*)\b/g,
   // "İş Sunumu", "İş sunum", "is sunumu" (normalize edilmiş)
-  'Amare İş Sunumu':  /\bis\s+sunum(u|umuz|umun|undan|udur|una|larin|larini|undaki|umla)?\b|amare.*?is\s+sunum|business\s+presentation|online\s+is\s+sunum/g,
+  // EN: business presentation, DE: geschaeftspraesentation/produktpraesentation,
+  // RU: презентация бизнеса (transliteration normalize'da düşmez ama RU video sayısı az)
+  'Amare İş Sunumu':  /\bis\s+sunum(u|umuz|umun|undan|udur|una|larin|larini|undaki|umla)?\b|amare.*?is\s+sunum|business\s+presentation|geschaftspra[se]ntation|produkt.*?gescha?ft.*?pra[se]sentation|presentaci[óo]n\s+de\s+negoci/g,
 };
 
 const TR_LOWER = { 'Ç': 'c', 'Ğ': 'g', 'İ': 'i', 'I': 'i', 'Ö': 'o', 'Ş': 's', 'Ü': 'u' };
@@ -77,7 +79,9 @@ async function main() {
 
   for (const d of snap.docs) {
     const data = d.data();
-    const baslik = normalize(data.baslik || '');
+    // Hem yeni başlık hem orijinal başlık üzerinde ara (çeviri sonrası ENG/DE
+    // başlıklarda Türkçe regex eşleşmiyordu)
+    const baslik = normalize((data.baslik || '') + ' ' + (data.baslikOrijinal || ''));
     const transcript = normalize(data.transcript || '');
     const mevcut = new Set(data.kategoriler || []);
     const eklenenler = [];

@@ -31,10 +31,10 @@ admin.initializeApp({
 const db = admin.firestore();
 
 const DIL_PATTERNS = [
-  { kod: 'RU', ad: 'Russian',  regex: /russian|russia|русск|россия|russisch/i },
-  { kod: 'EN', ad: 'English',  regex: /\benglish\b|englisch|\(en\)|in english/i },
-  { kod: 'DE', ad: 'German',   regex: /\bdeutsch\b|\bgerman\b|deutschland|germany|\(de\)/i },
-  { kod: 'NL', ad: 'Dutch',    regex: /nederlands|\bdutch\b|nederland|holland|\(nl\)/i },
+  { kod: 'RU', ad: 'Russian',  regex: /russian|russia|русск|россия|russisch|презентац|продукт/i },
+  { kod: 'EN', ad: 'English',  regex: /\benglish\b|englisch|\(en\)|in english|\bbusiness presentation\b|english dub/i },
+  { kod: 'DE', ad: 'German',   regex: /\bdeutsch\b|\bgerman\b|deutschland|germany|\(de\)|gesch[aä]ftspr[aä]sentation|produktpr[aä]sentation/i },
+  { kod: 'NL', ad: 'Dutch',    regex: /nederlands|\bdutch\b|nederland|holland|\(nl\)|gezondheidsdriehoek|productpresentatie/i },
 ];
 
 function detectDil(baslik, aciklama) {

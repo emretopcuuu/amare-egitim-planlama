@@ -52,10 +52,10 @@ const KATEGORI_RENK = {
 };
 
 const DIL_PATTERNS = [
-  { kod: 'RU', etiket: 'Rusça',      regex: /russian|russia|русск|россия|russisch/i },
-  { kod: 'EN', etiket: 'İngilizce',  regex: /\benglish\b|englisch|\(en\)|in english/i },
-  { kod: 'DE', etiket: 'Almanca',    regex: /\bdeutsch\b|\bgerman\b|deutschland|germany|\(de\)/i },
-  { kod: 'NL', etiket: 'Hollandaca', regex: /nederlands|\bdutch\b|nederland|holland|\(nl\)/i },
+  { kod: 'RU', etiket: 'Rusça',      regex: /russian|russia|русск|россия|russisch|презентац|продукт/i },
+  { kod: 'EN', etiket: 'İngilizce',  regex: /\benglish\b|englisch|\(en\)|in english|\bbusiness presentation\b|english dub/i },
+  { kod: 'DE', etiket: 'Almanca',    regex: /\bdeutsch\b|\bgerman\b|deutschland|germany|\(de\)|gesch[aä]ftspr[aä]sentation|produktpr[aä]sentation/i },
+  { kod: 'NL', etiket: 'Hollandaca', regex: /nederlands|\bdutch\b|nederland|holland|\(nl\)|gezondheidsdriehoek|productpresentatie/i },
 ];
 const DILLER = [
   { kod: 'all', etiket: 'Tüm Diller' },
@@ -107,8 +107,8 @@ function formatPlays(n) {
   return (n / 1_000_000).toFixed(1).replace('.0', '') + 'M';
 }
 
-// v5 → v6: dil tespiti Firestore baslikDili alanından önceliklendirildi
-const CACHE_KEY = 'amare_kayitli_egitimler_all_v6';
+// v6 → v7: DIL_PATTERNS genişletildi (business presentation, geschäftspräsentation vb.)
+const CACHE_KEY = 'amare_kayitli_egitimler_all_v7';
 const TTL = 12 * 60 * 60 * 1000;
 const FAV_KEY = 'amare_video_favoriler';
 const HIST_KEY = 'amare_video_gecmis';
@@ -205,7 +205,7 @@ const KayitliEgitimlerSayfasi = () => {
   useEffect(() => {
     // Eski cache versiyonlarını temizle
     try {
-      ['amare_kayitli_egitimler_all_v1', 'amare_kayitli_egitimler_all_v2', 'amare_kayitli_egitimler_all_v3', 'amare_kayitli_egitimler_all_v4', 'amare_kayitli_egitimler_all_v5']
+      ['amare_kayitli_egitimler_all_v1', 'amare_kayitli_egitimler_all_v2', 'amare_kayitli_egitimler_all_v3', 'amare_kayitli_egitimler_all_v4', 'amare_kayitli_egitimler_all_v5', 'amare_kayitli_egitimler_all_v6']
         .forEach(k => localStorage.removeItem(k));
       // Eski per-category cache'leri de sil (v1 mantığından kalan)
       Object.keys(localStorage)
