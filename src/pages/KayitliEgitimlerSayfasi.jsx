@@ -343,6 +343,23 @@ const KayitliEgitimlerSayfasi = () => {
     return arr;
   }, [tumVideolar, kategoriSet, dilKod, egitmenCoreId, yil, sureKod, sadeceFav, favoriler]);
 
+  // Helper: video için timestamp'lı (Whisper chunks) eşleşme var mı?
+  const hasTimestampMatch = (v) => {
+    const m = transcriptMatches[v.id];
+    return Array.isArray(m) && m.length > 0 && m[0]?.start != null && m[0].start >= 0;
+  };
+
+  // Banner için: timestamp'lı eşleşme bulunan video sayısı
+  const timestampMatchSayisi = useMemo(() => {
+    if (!transcriptAramaAcik) return 0;
+    let n = 0;
+    for (const id in transcriptMatches) {
+      const m = transcriptMatches[id];
+      if (m?.length > 0 && m[0]?.start != null && m[0].start >= 0) n++;
+    }
+    return n;
+  }, [transcriptAramaAcik, transcriptMatches]);
+
   // ─── Arama + sıralama ─────────────────────────────────────────────────
   const filtrelenmis = useMemo(() => {
     let arr = prefiltre;
@@ -357,13 +374,29 @@ const KayitliEgitimlerSayfasi = () => {
         return titleMatch || transcriptMatch;
       });
     }
+    // Kullanıcının seçtiği sıralamayı uygula
+    const userSort = (a, b) => {
+      if (siralama === 'yeni')         return (b.tarih || '').localeCompare(a.tarih || '');
+      else if (siralama === 'eski')    return (a.tarih || '').localeCompare(b.tarih || '');
+      else if (siralama === 'populer') return (b.plays || 0) - (a.plays || 0);
+      else if (siralama === 'alfabe')  return (a.baslik || '').localeCompare(b.baslik || '', 'tr-TR');
+      return 0;
+    };
     const sorted = [...arr];
-    if (siralama === 'yeni')         sorted.sort((a, b) => (b.tarih || '').localeCompare(a.tarih || ''));
-    else if (siralama === 'eski')    sorted.sort((a, b) => (a.tarih || '').localeCompare(b.tarih || ''));
-    else if (siralama === 'populer') sorted.sort((a, b) => (b.plays || 0) - (a.plays || 0));
-    else if (siralama === 'alfabe')  sorted.sort((a, b) => (a.baslik || '').localeCompare(b.baslik || '', 'tr-TR'));
+    if (transcriptAramaAcik && arama.trim() && timestampMatchSayisi > 0) {
+      // Timestamp'lı (Whisper chunks) match'ler ÖNCE — sahneye atlama mümkün olan
+      // sonuçların görünür olması için. Eşitlik durumunda user sırasını uygula.
+      sorted.sort((a, b) => {
+        const aHas = hasTimestampMatch(a) ? 1 : 0;
+        const bHas = hasTimestampMatch(b) ? 1 : 0;
+        if (aHas !== bHas) return bHas - aHas;
+        return userSort(a, b);
+      });
+    } else {
+      sorted.sort(userSort);
+    }
     return sorted;
-  }, [prefiltre, arama, siralama, transcriptAramaAcik, transcriptMatches]);
+  }, [prefiltre, arama, siralama, transcriptAramaAcik, transcriptMatches, timestampMatchSayisi]);
 
   // ─── Transcript arama debounce'lu backend çağrısı ───────────────────
   useEffect(() => {
@@ -595,6 +628,14 @@ const KayitliEgitimlerSayfasi = () => {
                 : 'Aç → eğitimde söylenenlerde de arama yapar'}
             </p>
           </div>
+
+          {/* Banner: zaman damgalı (Whisper chunks) eşleşme sayısı */}
+          {transcriptAramaAcik && timestampMatchSayisi > 0 && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400/15 border border-amber-300/40 text-amber-100 text-[11px] sm:text-xs animate-fade-in">
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span><strong className="text-amber-200">{timestampMatchSayisi} video</strong>da zaman damgalı eşleşme — sahneye atlamak için listenin üstünde</span>
+            </div>
+          )}
 
           {/* Desktop'ta inline filtre dropdownları */}
           <div className="hidden md:grid mt-3 grid-cols-3 lg:grid-cols-5 gap-2">
