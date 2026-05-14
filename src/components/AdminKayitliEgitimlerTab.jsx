@@ -12,8 +12,10 @@ import { useData, makeCoreId } from '../context/DataContext';
 const KATEGORILER = [
   'Liderlik', 'Satış', 'Motivasyon', 'Davet', 'Kapanış',
   'Sunum Teknikleri', 'Zaman Yönetimi', 'Kişisel Gelişim',
-  'Sağlık', 'Finansal Özgürlük', 'Vizyon', 'Hikaye',
-  'Ürün Eğitimi', 'Diğer',
+  'Sağlık', 'Finansal Özgürlük', 'Vizyon', 'Hikaye', 'Ürün Eğitimi',
+  'Liste', 'Kazanç Planı', 'Backoffice', 'Odak', 'İtiraz Karşılama',
+  'Takip', 'Doğru Başlangıç', 'Kamp', 'Katlama',
+  'Diğer',
 ];
 
 const FILTRELER = [

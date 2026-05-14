@@ -19,23 +19,36 @@ const KATEGORILER = [
   'Liderlik', 'Satış', 'Motivasyon', 'Davet', 'Kapanış',
   'Sunum Teknikleri', 'Zaman Yönetimi', 'Kişisel Gelişim',
   'Sağlık', 'Finansal Özgürlük', 'Vizyon', 'Hikaye', 'Ürün Eğitimi',
+  // Yeni kategoriler
+  'Liste', 'Kazanç Planı', 'Backoffice', 'Odak', 'İtiraz Karşılama',
+  'Takip', 'Doğru Başlangıç', 'Kamp', 'Katlama',
 ];
 
 // Kategori renk paleti (Tailwind class'ları)
 const KATEGORI_RENK = {
-  'Liderlik':         'bg-blue-500/80 text-white',
-  'Satış':            'bg-emerald-500/80 text-white',
-  'Motivasyon':       'bg-orange-500/80 text-white',
-  'Davet':            'bg-purple-500/80 text-white',
-  'Kapanış':          'bg-yellow-500/80 text-gray-900',
-  'Sunum Teknikleri': 'bg-cyan-500/80 text-white',
-  'Zaman Yönetimi':   'bg-indigo-500/80 text-white',
-  'Kişisel Gelişim':  'bg-rose-500/80 text-white',
-  'Sağlık':           'bg-teal-500/80 text-white',
-  'Finansal Özgürlük':'bg-green-600/80 text-white',
-  'Vizyon':           'bg-fuchsia-500/80 text-white',
-  'Hikaye':           'bg-amber-500/80 text-gray-900',
-  'Ürün Eğitimi':     'bg-sky-500/80 text-white',
+  'Liderlik':          'bg-blue-500/80 text-white',
+  'Satış':             'bg-emerald-500/80 text-white',
+  'Motivasyon':        'bg-orange-500/80 text-white',
+  'Davet':             'bg-purple-500/80 text-white',
+  'Kapanış':           'bg-yellow-500/80 text-gray-900',
+  'Sunum Teknikleri':  'bg-cyan-500/80 text-white',
+  'Zaman Yönetimi':    'bg-indigo-500/80 text-white',
+  'Kişisel Gelişim':   'bg-rose-500/80 text-white',
+  'Sağlık':            'bg-teal-500/80 text-white',
+  'Finansal Özgürlük': 'bg-green-600/80 text-white',
+  'Vizyon':            'bg-fuchsia-500/80 text-white',
+  'Hikaye':            'bg-amber-500/80 text-gray-900',
+  'Ürün Eğitimi':      'bg-sky-500/80 text-white',
+  // Yeni
+  'Liste':             'bg-lime-500/80 text-gray-900',
+  'Kazanç Planı':      'bg-emerald-700/80 text-white',
+  'Backoffice':        'bg-slate-500/80 text-white',
+  'Odak':              'bg-red-500/80 text-white',
+  'İtiraz Karşılama':  'bg-pink-600/80 text-white',
+  'Takip':             'bg-violet-500/80 text-white',
+  'Doğru Başlangıç':   'bg-green-700/80 text-white',
+  'Kamp':              'bg-amber-700/80 text-white',
+  'Katlama':           'bg-stone-500/80 text-white',
 };
 
 const DIL_PATTERNS = [
