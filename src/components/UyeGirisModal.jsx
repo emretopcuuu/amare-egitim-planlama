@@ -7,7 +7,7 @@ import { X, Loader2, CheckCircle2, AlertCircle, ArrowRight, Mail, Lock } from 'l
 
 const UyeGirisModal = ({ acik, onClose }) => {
   const [lookup, setLookup] = useState('');
-  const [durum, setDurum] = useState('giris'); // giris | gonderildi | hata
+  const [durum, setDurum] = useState('giris'); // giris | gonderildi
   const [mesaj, setMesaj] = useState('');
   const [emailMask, setEmailMask] = useState('');
   const [adKisa, setAdKisa] = useState('');
@@ -40,27 +40,23 @@ const UyeGirisModal = ({ acik, onClose }) => {
     const v = lookup.trim();
     if (v.length < 3) {
       setMesaj('En az 3 karakter gir');
-      setDurum('hata');
       return;
     }
     setYukleniyor(true);
     setMesaj('');
-    setDurum('giris');
     try {
       const res = await fetch('/.netlify/functions/uye-giris-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ lookup: v }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setMesaj(data.error || 'Sistem hatası');
-        setDurum('hata');
+        setMesaj(data.error || data.detail || `Sistem hatası (${res.status}). Birazdan tekrar dene.`);
         return;
       }
       if (!data.found) {
-        setMesaj(data.message || 'Üye bulunamadı');
-        setDurum('hata');
+        setMesaj(data.message || 'Bu bilgi ile kayıtlı üye bulunamadı.');
         return;
       }
       // Başarılı — email gönderildi
@@ -73,8 +69,7 @@ const UyeGirisModal = ({ acik, onClose }) => {
       setAdKisa(data.adKisa || '');
       setDurum('gonderildi');
     } catch (err) {
-      setMesaj('Bağlantı hatası: ' + err.message);
-      setDurum('hata');
+      setMesaj('Bağlantı hatası: ' + (err?.message || 'bilinmeyen') + '. İnternet bağlantını kontrol et.');
     } finally {
       setYukleniyor(false);
     }
