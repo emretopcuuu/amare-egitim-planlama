@@ -1,7 +1,7 @@
 // Zengin tam ekran eğitmen detay modal
 // Mobilde otomatik tam ekran, desktop'ta büyük sheet
 import React, { useEffect, useMemo, useState } from 'react';
-import { X, User, Mail, Calendar, Clock, MapPin, Wifi, ExternalLink, Tag, UserPlus, Play, Video } from 'lucide-react';
+import { X, User, Mail, Calendar, Clock, MapPin, Wifi, ExternalLink, Tag, UserPlus, Play, Video, Star } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 import { Link } from 'react-router-dom';
 import KonusmaciTakipModal from './KonusmaciTakipModal';
@@ -9,6 +9,7 @@ import VideoOynatModal from './VideoOynatModal';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, limit as fbLimit, getDocs } from 'firebase/firestore';
 import { makeCoreId } from '../context/DataContext';
+import { useTakipEgitmenler } from '../utils/takip';
 
 const parseTarih = (t) => {
   if (!t) return null;
@@ -33,6 +34,9 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
   const [kayitliVideolar, setKayitliVideolar] = useState(null); // null = henüz yüklenmedi
   const [kayitliLoading, setKayitliLoading] = useState(false);
   const [oynatilanVideo, setOynatilanVideo] = useState(null);
+  const { toggle: takipToggle, isTakip } = useTakipEgitmenler();
+  const coreId = makeCoreId(ad);
+  const favoriEgitmen = coreId ? isTakip(coreId) : false;
 
   // ESC ile kapan
   useEffect(() => {
@@ -174,9 +178,19 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
                     <Mail className="w-3.5 h-3.5" />İletişim
                   </a>
                 )}
+                <button onClick={() => coreId && takipToggle(coreId)}
+                  title={favoriEgitmen ? 'Favorilerden çıkar' : 'Favori eğitmenlere ekle'}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full transition-all font-bold spring-tap ${
+                    favoriEgitmen
+                      ? 'bg-yellow-400 hover:bg-yellow-300 text-gray-900'
+                      : 'bg-white/10 hover:bg-white/20 text-white border border-white/20'
+                  }`}>
+                  <Star className="w-3.5 h-3.5" fill={favoriEgitmen ? 'currentColor' : 'none'} />
+                  {favoriEgitmen ? 'Favori' : 'Favoriye ekle'}
+                </button>
                 <button onClick={() => setTakipModal(true)}
                   className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 px-3 py-1 rounded-full transition-colors font-bold spring-tap gold-glow">
-                  <UserPlus className="w-3.5 h-3.5" />Takip Et
+                  <UserPlus className="w-3.5 h-3.5" />E-posta ile takip
                 </button>
               </div>
             </div>

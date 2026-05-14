@@ -5,14 +5,17 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Search, X, Video, Play, Calendar, Tag, Loader2, User, Globe,
   Clock, Eye, Heart, History, ArrowDownUp, ChevronDown, SlidersHorizontal,
-  Share2, ChevronUp, RotateCcw, FileText, Sparkles,
+  Share2, ChevronUp, RotateCcw, FileText, Sparkles, RotateCw,
 } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, limit as fbLimit, getDocs, doc, getDoc } from 'firebase/firestore';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import VideoOynatModal from '../components/VideoOynatModal';
+import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
 import { useToast } from '../components/Toast';
 import { haptic, nativeShare } from '../utils/mobileHelpers';
+import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
+import { usePullToRefresh } from '../utils/usePullToRefresh';
 
 // ─── Sabitler ────────────────────────────────────────────────────────────
 const VARSAYILAN_KATEGORILER = [
@@ -187,7 +190,9 @@ const KayitliEgitimlerSayfasi = () => {
   const [favoriler, setFavoriler] = useState(() => loadSet(FAV_KEY));
   const [gecmis, setGecmis] = useState(() => new Set(loadList(HIST_KEY)));
   const [gosterilen, setGosterilen] = useState(PAGE_SIZE);
+  const [yardimAcik, setYardimAcik] = useState(false);
   const sentinelRef = useRef(null);
+  const aramaInputRef = useRef(null);
 
   // ─── Transcript arama (Faz: video içinde arama) ──────────────────────
   // localStorage'da hatırla (kullanıcı tercihi)
@@ -557,8 +562,55 @@ const KayitliEgitimlerSayfasi = () => {
     toast(`${filtrelenmis.length} eğitim bulundu`, { type: 'info' });
   };
 
+  // ─── Klavye kısayolları ─────────────────────────────────────────────
+  const oynatilanIdx = oynatilan ? filtrelenmis.findIndex(v => v.id === oynatilan.id) : -1;
+  useKeyboardShortcuts({
+    '/': () => aramaInputRef.current?.focus(),
+    '?': () => setYardimAcik(true),
+    'Escape': () => {
+      if (oynatilan) { setOynatilan(null); setSeekTo(null); }
+      else if (sheetOpen) setSheetOpen(false);
+      else if (yardimAcik) setYardimAcik(false);
+    },
+    'ArrowLeft': () => {
+      if (oynatilan && oynatilanIdx > 0) handleOynat(filtrelenmis[oynatilanIdx - 1]);
+    },
+    'ArrowRight': () => {
+      if (oynatilan && oynatilanIdx >= 0 && oynatilanIdx < filtrelenmis.length - 1) handleOynat(filtrelenmis[oynatilanIdx + 1]);
+    },
+    'f': () => {
+      if (oynatilan) {
+        haptic(10);
+        setFavoriler(s => {
+          const next = new Set(s);
+          if (next.has(oynatilan.id)) { next.delete(oynatilan.id); toast('Favoriden çıkarıldı', { type: 'info' }); }
+          else { next.add(oynatilan.id); toast('💗 Favoriye eklendi', { type: 'success' }); }
+          saveSet(FAV_KEY, next);
+          return next;
+        });
+      }
+    },
+  }, [oynatilan, oynatilanIdx, filtrelenmis, sheetOpen, yardimAcik]);
+
+  // ─── Pull-to-refresh ────────────────────────────────────────────────
+  const handleRefresh = async () => {
+    Object.keys(localStorage).filter(k => k.startsWith('amare_kayitli_egitimler_')).forEach(k => localStorage.removeItem(k));
+    toast('Yenileniyor...', { type: 'info' });
+    setTimeout(() => window.location.reload(), 200);
+  };
+  const { pullY, refreshing } = usePullToRefresh(handleRefresh);
+
   return (
     <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900">
+      {/* Pull-to-refresh göstergesi (mobile) */}
+      {pullY > 0 && (
+        <div style={{ height: `${pullY}px` }}
+          className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-end justify-center pb-2 bg-gradient-to-b from-purple-950 to-purple-900 transition-[height]">
+          <RotateCw className={`w-6 h-6 text-amber-300 ${refreshing ? 'animate-spin' : ''}`}
+            style={{ transform: refreshing ? '' : `rotate(${Math.min(pullY * 3, 360)}deg)` }} />
+        </div>
+      )}
+
       {/* Header — sadeleştirildi */}
       <div className="pt-6 pb-3 px-4 sticky top-0 z-30 bg-gradient-to-b from-purple-900/95 to-purple-900/85 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto max-w-7xl">
@@ -584,8 +636,8 @@ const KayitliEgitimlerSayfasi = () => {
           <div className="mt-3 flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300" />
-              <input type="text" value={arama} onChange={e => setArama(e.target.value)}
-                placeholder="Eğitim adı veya eğitmen ara..."
+              <input type="text" ref={aramaInputRef} value={arama} onChange={e => setArama(e.target.value)}
+                placeholder="Eğitim adı veya eğitmen ara… ( / ile odaklan)"
                 className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-10 pr-9 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
               {arama && (
                 <button onClick={() => setArama('')} aria-label="Aramayı temizle"
@@ -793,6 +845,8 @@ const KayitliEgitimlerSayfasi = () => {
           seekTo={seekTo}
         />
       )}
+
+      <KeyboardShortcutsHelp acik={yardimAcik} onClose={() => setYardimAcik(false)} />
     </div>
   );
 };
