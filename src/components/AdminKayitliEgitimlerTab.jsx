@@ -6,7 +6,7 @@ import {
   collection, query, where, orderBy, limit as fbLimit,
   getDocs, doc, updateDoc, serverTimestamp,
 } from 'firebase/firestore';
-import { Loader2, Video, Save, Search, RefreshCw, ExternalLink } from 'lucide-react';
+import { Loader2, Video, Save, Search, RefreshCw, ExternalLink, Download } from 'lucide-react';
 import { useData, makeCoreId } from '../context/DataContext';
 
 const KATEGORILER = [
@@ -107,13 +107,46 @@ const AdminKayitliEgitimlerTab = () => {
     }
   };
 
+  const [vimeoSenkron, setVimeoSenkron] = useState(false);
+  const handleVimeoSync = async () => {
+    const secret = window.prompt('INGEST_ADMIN_SECRET gir:');
+    if (!secret) return;
+    setVimeoSenkron(true);
+    setMesaj('');
+    try {
+      const res = await fetch('/.netlify/functions/vimeo-yeni-cek?secret=' + encodeURIComponent(secret));
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      setMesaj(`✓ ${data.yeni} yeni · ${data.excludedYeni} dışlandı · ${data.mevcut} mevcut · ${data.sureSn}s`);
+      setTimeout(() => setMesaj(''), 8000);
+      if (data.yeni > 0) {
+        // localStorage cache invalide et — UI yenilensin
+        Object.keys(localStorage).filter(k => k.startsWith('amare_kayitli_egitimler_')).forEach(k => localStorage.removeItem(k));
+        fetchVideolar();
+      }
+    } catch (err) {
+      setMesaj('✗ ' + err.message);
+    } finally {
+      setVimeoSenkron(false);
+    }
+  };
+
   return (
     <div>
       <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-1">Kayıtlı Eğitimler — Admin</h2>
-        <p className="text-gray-500 text-sm">
-          Vimeo'dan çekilen videoları manuel eğitmen + kategori atayarak temizle.
-        </p>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-1">Kayıtlı Eğitimler — Admin</h2>
+            <p className="text-gray-500 text-sm">
+              Vimeo'dan çekilen videoları manuel eğitmen + kategori atayarak temizle.
+            </p>
+          </div>
+          <button onClick={handleVimeoSync} disabled={vimeoSenkron}
+            className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-sm font-bold disabled:opacity-50 transition-colors">
+            {vimeoSenkron ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+            Vimeo'dan Yeni Çek
+          </button>
+        </div>
 
         {mesaj && (
           <div className="mt-3 px-3 py-2 rounded-lg bg-blue-50 text-blue-700 text-sm">{mesaj}</div>
