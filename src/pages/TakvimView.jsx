@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video } from 'lucide-react';
+import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import EventActions from '../components/EventActions';
@@ -10,7 +10,10 @@ import KonusmaciFullModal from '../components/KonusmaciFullModal';
 import StoryStrip from '../components/StoryStrip';
 import { EmptySearch, EmptyCompleted } from '../components/EmptyState';
 import LoadingProgress from '../components/LoadingProgress';
+import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
 import { DayMotif } from '../utils/dayIcon.jsx';
+import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
+import { usePullToRefresh } from '../utils/usePullToRefresh';
 // jsPDF + html2canvas dinamik import — sadece PDF indir butonu tıklandığında yüklenir
 // İlk yükleme süresinden ~400KB tasarruf
 
@@ -342,6 +345,25 @@ const TakvimView = () => {
   const [posterModal, setPosterModal] = useState(null);
   const [hatirlatmaModal, setHatirlatmaModal] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [yardimAcik, setYardimAcik] = useState(false);
+  const aramaInputRef = useRef(null);
+
+  // Klavye kısayolları
+  useKeyboardShortcuts({
+    '/': () => aramaInputRef.current?.focus(),
+    '?': () => setYardimAcik(true),
+    'Escape': () => {
+      if (konusmaciModal) setKonusmaciModal(null);
+      else if (posterModal) setPosterModal(null);
+      else if (hatirlatmaModal) setHatirlatmaModal(null);
+      else if (yardimAcik) setYardimAcik(false);
+    },
+  }, [konusmaciModal, posterModal, hatirlatmaModal, yardimAcik]);
+
+  // Pull-to-refresh (mobile)
+  const { pullY, refreshing } = usePullToRefresh(async () => {
+    window.location.reload();
+  });
 
   // Scroll-to-top floating button
   useEffect(() => {
@@ -766,6 +788,14 @@ const TakvimView = () => {
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900">
+      {/* Pull-to-refresh göstergesi (mobile) */}
+      {pullY > 0 && (
+        <div style={{ height: `${pullY}px` }}
+          className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-end justify-center pb-2 bg-gradient-to-b from-purple-950 to-purple-900 transition-[height]">
+          <RotateCw className={`w-6 h-6 text-amber-300 ${refreshing ? 'animate-spin' : ''}`}
+            style={{ transform: refreshing ? '' : `rotate(${Math.min(pullY * 3, 360)}deg)` }} />
+        </div>
+      )}
       <div ref={contentRef}>
         {/* Header */}
         <div className="pt-6 pb-2 px-4">
@@ -880,7 +910,7 @@ const TakvimView = () => {
             {/* Arama — daha belirgin */}
             <div className="relative mb-3">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />
-              <input type="text" value={arama} onChange={e=>setArama(e.target.value)}
+              <input type="text" ref={aramaInputRef} value={arama} onChange={e=>setArama(e.target.value)}
                 placeholder={t('cal_search_placeholder')}
                 className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-12 pr-10 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
               {arama && <button onClick={()=>setArama('')} aria-label="Aramayı temizle" className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white spring-tap"><X className="w-4 h-4" /></button>}
@@ -1055,6 +1085,8 @@ const TakvimView = () => {
         </div>
       )}
       {hatirlatmaModal && <HatirlatmaKayitModal egitim={hatirlatmaModal} onClose={()=>setHatirlatmaModal(null)} />}
+
+      <KeyboardShortcutsHelp acik={yardimAcik} onClose={() => setYardimAcik(false)} />
 
       {/* Floating Scroll-to-Top FAB */}
       {showScrollTop && (
