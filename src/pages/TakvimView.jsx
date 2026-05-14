@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw } from 'lucide-react';
+import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw, LogIn, LogOut } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import EventActions from '../components/EventActions';
@@ -11,9 +11,13 @@ import StoryStrip from '../components/StoryStrip';
 import { EmptySearch, EmptyCompleted } from '../components/EmptyState';
 import LoadingProgress from '../components/LoadingProgress';
 import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
+import UyeGirisModal from '../components/UyeGirisModal';
 import { DayMotif } from '../utils/dayIcon.jsx';
 import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
+import { useAuth } from '../context/AuthContext';
+import { signOut } from 'firebase/auth';
+import { auth } from '../utils/firebase';
 // jsPDF + html2canvas dinamik import — sadece PDF indir butonu tıklandığında yüklenir
 // İlk yükleme süresinden ~400KB tasarruf
 
@@ -346,7 +350,9 @@ const TakvimView = () => {
   const [hatirlatmaModal, setHatirlatmaModal] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [yardimAcik, setYardimAcik] = useState(false);
+  const [girisModalAcik, setGirisModalAcik] = useState(false);
   const aramaInputRef = useRef(null);
+  const { isAuthenticated, email, displayName } = useAuth();
 
   // Klavye kısayolları
   useKeyboardShortcuts({
@@ -816,6 +822,28 @@ const TakvimView = () => {
                 <button onClick={exportPDF} disabled={pdfYukleniyor} className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-xs sm:text-sm spring-tap">
                   {pdfYukleniyor?<><Loader2 className="w-4 h-4 animate-spin" />{t('cal_preparing')}</>:<><Download className="w-4 h-4" />{t('cal_download_pdf')}</>}
                 </button>
+                {/* Üye Girişi — pasif buton, isteyen tıklar */}
+                {!isAuthenticated ? (
+                  <button onClick={() => setGirisModalAcik(true)}
+                    title="Üye girişi yap (email/telefon/Amare ID)"
+                    className="flex items-center gap-1.5 bg-amber-400/20 hover:bg-amber-400/40 border border-amber-300/40 text-amber-100 px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
+                    <LogIn className="w-4 h-4" />
+                    <span className="hidden sm:inline">Üye Girişi</span>
+                    <span className="sm:hidden">Giriş</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-1">
+                    <div className="hidden sm:flex items-center gap-1.5 bg-green-400/15 border border-green-300/30 text-green-100 px-3 py-2 rounded-xl text-xs font-semibold">
+                      <div className="w-2 h-2 rounded-full bg-green-400" />
+                      {displayName?.split(' ')[0] || email?.split('@')[0] || 'Üye'}
+                    </div>
+                    <button onClick={() => signOut(auth)}
+                      title="Çıkış yap"
+                      className="bg-white/10 hover:bg-white/20 border border-white/20 text-white p-2 rounded-xl transition spring-tap">
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
             <h1 className="text-3xl md:text-4xl font-extrabold text-white mt-3">{t('cal_title')}</h1>
@@ -1087,6 +1115,7 @@ const TakvimView = () => {
       {hatirlatmaModal && <HatirlatmaKayitModal egitim={hatirlatmaModal} onClose={()=>setHatirlatmaModal(null)} />}
 
       <KeyboardShortcutsHelp acik={yardimAcik} onClose={() => setYardimAcik(false)} />
+      <UyeGirisModal acik={girisModalAcik} onClose={() => setGirisModalAcik(false)} />
 
       {/* Floating Scroll-to-Top FAB */}
       {showScrollTop && (
