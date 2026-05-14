@@ -5,7 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Search, X, Video, Play, Calendar, Tag, Loader2, User, Globe,
   Clock, Eye, Heart, History, ArrowDownUp, ChevronDown, SlidersHorizontal,
-  Share2, ChevronUp, RotateCcw, Mic, Sparkles,
+  Share2, ChevronUp, RotateCcw, FileText, Sparkles,
 } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, limit as fbLimit, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -576,12 +576,13 @@ const KayitliEgitimlerSayfasi = () => {
           {/* Transcript arama toggle + mini açıklama */}
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <button onClick={() => { haptic(8); setTranscriptAramaAcik(s => !s); }}
+              title="Video içeriğinde (söylenenlerde) arama yapar"
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold spring-tap transition-all border ${
                 transcriptAramaAcik
                   ? 'bg-amber-400 text-gray-900 border-amber-300 shadow-md'
                   : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
               }`}>
-              <Mic className="w-3.5 h-3.5" />
+              <FileText className="w-3.5 h-3.5" />
               Video içinde ara
               {transcriptAramaAcik && transcriptAraniyor && (
                 <Loader2 className="w-3 h-3 animate-spin" />
@@ -590,8 +591,8 @@ const KayitliEgitimlerSayfasi = () => {
             <p className="text-[11px] sm:text-xs text-purple-200/90 flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-amber-300" />
               {transcriptAramaAcik
-                ? 'Konuşulan içerikte de arar, eşleşen sahneden başlatır'
-                : 'Aç → eğitim konuşmasında arama yapar, sahneye atlar'}
+                ? 'Eğitimde söylenenlerde de arar, geçtiği sahneden başlatır'
+                : 'Aç → eğitimde söylenenlerde de arama yapar'}
             </p>
           </div>
 
@@ -1039,7 +1040,7 @@ const VideoKart = ({ video: v, favori, izlendi, transcriptMatch, aramaQ, onToggl
                   title={hasTime ? `${formatSure(m.start)} — bu sahneden başlat` : 'Bu video konuşmasında geçiyor'}
                   className="block w-full text-left bg-amber-500/10 hover:bg-amber-500/25 border border-amber-400/30 rounded-md px-2 py-1.5 cursor-pointer transition-all">
                   <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300">
-                    <Mic className="w-3 h-3" />
+                    <FileText className="w-3 h-3" />
                     {hasTime ? formatSure(m.start) : 'Konuşmada geçiyor'}
                   </span>
                   <p className="text-[11px] text-white/85 line-clamp-2 mt-0.5 leading-snug"
