@@ -118,6 +118,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Üye profilleri — kendi profil doc'una okuma/yazma izni
+    // Tier 1 üye girişi sonrası kullanıcı profili oluşturmak/güncellemek için.
+    // Diğer kullanıcı profillerine erişim YOK (privacy).
+    match /users/{uid} {
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+    }
+
     // Diğer her koleksiyon — varsayılan: tamamen kapalı
     match /{document=**} {
       allow read, write: if false;
