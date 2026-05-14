@@ -523,7 +523,7 @@ const KayitliEgitimlerSayfasi = () => {
           )}
 
           {/* Desktop: kategori chip'leri */}
-          <div className="hidden md:flex mt-3 flex-wrap gap-2">
+          <div className="hidden md:flex mt-3 flex-wrap gap-2 items-center">
             <button onClick={() => { haptic(8); setKategoriSet(new Set()); }}
               className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
                 kategoriSet.size === 0 ? 'bg-amber-400 text-gray-900 shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
@@ -536,6 +536,13 @@ const KayitliEgitimlerSayfasi = () => {
                 {k}
               </button>
             ))}
+            {aktifFiltreler.length > 0 && (
+              <button onClick={filtreleriTemizle}
+                className="ml-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap bg-red-500/30 hover:bg-red-500/50 text-red-100 border border-red-400/40 spring-tap transition-all">
+                <RotateCcw className="w-3.5 h-3.5" />
+                Tüm filtreleri temizle ({aktifFiltreler.length})
+              </button>
+            )}
           </div>
 
           {/* Aktif filtre chip bar — sadece mobile (desktop'ta zaten görünüyor) */}
