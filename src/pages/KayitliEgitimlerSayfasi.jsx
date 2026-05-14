@@ -102,8 +102,8 @@ function formatPlays(n) {
   return (n / 1_000_000).toFixed(1).replace('.0', '') + 'M';
 }
 
-// Cache version bumped from v3 → v4 after Amare İş Sunumu + new categories
-const CACHE_KEY = 'amare_kayitli_egitimler_all_v4';
+// v4 → v5: 43 non-TR video başlığı yeniden formatlandı
+const CACHE_KEY = 'amare_kayitli_egitimler_all_v5';
 const TTL = 12 * 60 * 60 * 1000;
 const FAV_KEY = 'amare_video_favoriler';
 const HIST_KEY = 'amare_video_gecmis';
@@ -200,7 +200,7 @@ const KayitliEgitimlerSayfasi = () => {
   useEffect(() => {
     // Eski cache versiyonlarını temizle
     try {
-      ['amare_kayitli_egitimler_all_v1', 'amare_kayitli_egitimler_all_v2', 'amare_kayitli_egitimler_all_v3']
+      ['amare_kayitli_egitimler_all_v1', 'amare_kayitli_egitimler_all_v2', 'amare_kayitli_egitimler_all_v3', 'amare_kayitli_egitimler_all_v4']
         .forEach(k => localStorage.removeItem(k));
       // Eski per-category cache'leri de sil (v1 mantığından kalan)
       Object.keys(localStorage)
