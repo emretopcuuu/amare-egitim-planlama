@@ -17,6 +17,7 @@ const KonusmacilarSayfasi = lazy(() => import('./pages/KonusmacilarSayfasi'));
 const KayitliEgitimlerSayfasi = lazy(() => import('./pages/KayitliEgitimlerSayfasi'));
 const EgitmenBasvuru = lazy(() => import('./pages/EgitmenBasvuru'));
 const GirisTamamla = lazy(() => import('./pages/GirisTamamla'));
+const SsoCallback = lazy(() => import('./pages/SsoCallback'));
 // Admin sayfaları — public kullanıcı hiç indirmez (en büyük kazanç)
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
@@ -71,6 +72,7 @@ function AppRoutes() {
           <Route path="/" element={<HomePage />} />
           <Route path="/egitmen-basvuru" element={<EgitmenBasvuru />} />
           <Route path="/giris-tamamla" element={<GirisTamamla />} />
+          <Route path="/sso" element={<SsoCallback />} />
           <Route path="/takvim" element={<TakvimView />} />
           <Route path="/e/:id" element={<EgitimDetay />} />
           <Route path="/konusmacilar" element={<KonusmacilarSayfasi />} />
