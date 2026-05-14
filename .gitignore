@@ -9,3 +9,11 @@ Thumbs.db
 
 # Local Netlify folder
 .netlify
+
+# Whisper backfill — geçici audio download klasörü
+scripts/whisper_audio/
+scripts/whisper_audio
+*.m4a
+*.mp4
+*.opus
+*.webm
