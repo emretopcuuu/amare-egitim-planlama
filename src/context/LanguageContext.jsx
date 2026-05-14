@@ -9,14 +9,18 @@ const BATCH_SIZE = 20; // Her API çağrısında max metin sayısı
 const BATCH_DELAY = 1500; // İstekler arası bekleme (ms)
 
 function getInitialLang() {
+  // 1. ÖNCE localStorage — kullanıcı zaten tercih ettiyse buna saygı duy
+  // (Firebase magic link'i URL'e lang=en ekliyor, bunu yoksay)
+  const stored = localStorage.getItem('ot_lang');
+  if (stored && SUPPORTED_LANGS.includes(stored)) return stored;
+  // 2. localStorage boşsa URL parametresine bak (paylaşılan link senaryosu)
   const params = new URLSearchParams(window.location.search);
   const urlLang = params.get('lang');
   if (urlLang && SUPPORTED_LANGS.includes(urlLang)) {
     localStorage.setItem('ot_lang', urlLang);
     return urlLang;
   }
-  const stored = localStorage.getItem('ot_lang');
-  if (stored && SUPPORTED_LANGS.includes(stored)) return stored;
+  // 3. Default Türkçe
   return 'tr';
 }
 
