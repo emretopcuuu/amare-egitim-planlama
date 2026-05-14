@@ -2,6 +2,7 @@ import React, { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { DataProvider, useData } from './context/DataContext';
 import { LanguageProvider } from './context/LanguageContext';
+import { AuthProvider } from './context/AuthContext';
 import HomePage from './pages/HomePage';
 import { trackPageView } from './utils/analytics';
 import LoadingProgress from './components/LoadingProgress';
@@ -92,13 +93,15 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary>
-      <LanguageProvider>
-        <DataProvider>
-          <ToastProvider>
-            <AppRoutes />
-          </ToastProvider>
-        </DataProvider>
-      </LanguageProvider>
+      <AuthProvider>
+        <LanguageProvider>
+          <DataProvider>
+            <ToastProvider>
+              <AppRoutes />
+            </ToastProvider>
+          </DataProvider>
+        </LanguageProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }
