@@ -3,7 +3,7 @@ import React, { useMemo, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, User, Search, X, Loader2, Star, RotateCw } from 'lucide-react';
+import { ArrowLeft, User, Search, X, Loader2, Star, RotateCw, SlidersHorizontal, ArrowDownUp } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import KonusmaciFullModal from '../components/KonusmaciFullModal';
 import LoadingProgress from '../components/LoadingProgress';
@@ -11,6 +11,13 @@ import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
 import { useTakipEgitmenler } from '../utils/takip';
 import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
+import { haptic } from '../utils/mobileHelpers';
+
+const SIRALAMA_OPSIYONLARI = [
+  { kod: 'aktif', etiket: 'Eğitim sayısına göre' },
+  { kod: 'alfabe', etiket: 'Alfabetik (A→Z)' },
+  { kod: 'alfabe_zy', etiket: 'Alfabetik (Z→A)' },
+];
 
 const splitEgitmen = (e) => {
   if (!e) return [];
@@ -26,6 +33,8 @@ const KonusmacilarSayfasi = () => {
   const [arama, setArama] = useState('');
   const [secili, setSecili] = useState(null);
   const [sadeceFav, setSadeceFav] = useState(false);
+  const [siralama, setSiralama] = useState('aktif');
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [yardimAcik, setYardimAcik] = useState(false);
   const aramaRef = useRef(null);
   const { takipSet, count: favSayisi } = useTakipEgitmenler();
@@ -88,14 +97,10 @@ const KonusmacilarSayfasi = () => {
     });
 
     return [...map.values()]
-      .filter(v => v.ad && v.ad.length >= 2)
-      .sort((a, b) => {
-        if (b.egitimSayisi !== a.egitimSayisi) return b.egitimSayisi - a.egitimSayisi;
-        return a.ad.localeCompare(b.ad, 'tr-TR');
-      });
+      .filter(v => v.ad && v.ad.length >= 2);
   }, [takvim, konusmacilar]);
 
-  // Arama + favori filtresi
+  // Arama + favori filtresi + sıralama
   const filtrelenmis = useMemo(() => {
     let arr = tumKonusmacilar;
     if (sadeceFav) {
@@ -112,8 +117,22 @@ const KonusmacilarSayfasi = () => {
         return ad.includes(q) || unvan.includes(q);
       });
     }
-    return arr;
-  }, [tumKonusmacilar, arama, sadeceFav, takipSet]);
+    // Sıralama
+    const sorted = [...arr];
+    if (siralama === 'aktif') {
+      sorted.sort((a, b) => {
+        if (b.egitimSayisi !== a.egitimSayisi) return b.egitimSayisi - a.egitimSayisi;
+        return a.ad.localeCompare(b.ad, 'tr-TR');
+      });
+    } else if (siralama === 'alfabe') {
+      sorted.sort((a, b) => a.ad.localeCompare(b.ad, 'tr-TR'));
+    } else if (siralama === 'alfabe_zy') {
+      sorted.sort((a, b) => b.ad.localeCompare(a.ad, 'tr-TR'));
+    }
+    return sorted;
+  }, [tumKonusmacilar, arama, sadeceFav, takipSet, siralama]);
+
+  const aktifFiltreSayisi = (sadeceFav ? 1 : 0) + (siralama !== 'aktif' ? 1 : 0) + (arama.trim() ? 1 : 0);
 
   if (loading) return <LoadingProgress />;
 
@@ -141,23 +160,43 @@ const KonusmacilarSayfasi = () => {
           </div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display">Eğitmenler</h1>
           <p className="text-purple-200 mt-1">{tumKonusmacilar.length} eğitmen, {takvim.length} eğitim</p>
-          {/* Arama */}
-          <div className="relative mt-4">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />
-            <input type="text" ref={aramaRef} value={arama} onChange={e => setArama(e.target.value)}
-              placeholder="Eğitmen ara… ( / ile odaklan)"
-              className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-12 pr-10 py-3 text-base focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
-            {arama && (
-              <button onClick={() => setArama('')} aria-label="Aramayı temizle"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white spring-tap">
-                <X className="w-4 h-4" />
-              </button>
-            )}
+          {/* Arama + mobile filtre butonu */}
+          <div className="relative mt-4 flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />
+              <input type="text" ref={aramaRef} value={arama} onChange={e => setArama(e.target.value)}
+                placeholder="Eğitmen ara… ( / ile odaklan)"
+                className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-12 pr-10 py-3 text-base focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
+              {arama && (
+                <button onClick={() => setArama('')} aria-label="Aramayı temizle"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white spring-tap">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <button onClick={() => { haptic(8); setSheetOpen(true); }} aria-label="Filtreler"
+              className="md:hidden relative bg-white/15 hover:bg-white/25 border-2 border-white/20 text-white rounded-xl px-3 py-3 spring-tap inline-flex items-center gap-1.5 text-sm font-semibold">
+              <SlidersHorizontal className="w-5 h-5" />
+              {aktifFiltreSayisi > 0 && (
+                <span className="absolute -top-1 -right-1 bg-amber-400 text-gray-900 text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {aktifFiltreSayisi}
+                </span>
+              )}
+            </button>
           </div>
 
-          {/* Favori filtresi */}
-          {favSayisi > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
+          {/* Desktop: favori + sıralama inline */}
+          <div className="hidden md:flex mt-3 flex-wrap gap-2">
+            <div className="relative">
+              <ArrowDownUp className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300 pointer-events-none" />
+              <select value={siralama} onChange={e => setSiralama(e.target.value)}
+                className="bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white rounded-xl pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400/30 appearance-none cursor-pointer">
+                {SIRALAMA_OPSIYONLARI.map(s => (
+                  <option key={s.kod} value={s.kod} className="bg-purple-900">{s.etiket}</option>
+                ))}
+              </select>
+            </div>
+            {favSayisi > 0 && (
               <button onClick={() => setSadeceFav(s => !s)}
                 className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold spring-tap transition-all ${
                   sadeceFav ? 'bg-yellow-400 text-gray-900' : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
@@ -165,8 +204,8 @@ const KonusmacilarSayfasi = () => {
                 <Star className="w-3.5 h-3.5" fill={sadeceFav ? 'currentColor' : 'none'} />
                 Sadece favorilerim ({favSayisi})
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -210,7 +249,94 @@ const KonusmacilarSayfasi = () => {
 
       {secili && <KonusmaciFullModal {...secili} takvim={takvim} onClose={() => setSecili(null)} />}
 
+      {/* Mobile filter bottom sheet */}
+      {sheetOpen && (
+        <KonusmaciFilterSheet
+          onClose={() => setSheetOpen(false)}
+          onUygula={() => { haptic(15); setSheetOpen(false); }}
+          siralama={siralama} setSiralama={setSiralama}
+          sadeceFav={sadeceFav} setSadeceFav={setSadeceFav}
+          favSayisi={favSayisi}
+          filtrelenmisSayi={filtrelenmis.length}
+          sifirla={() => { setSiralama('aktif'); setSadeceFav(false); setArama(''); }}
+        />
+      )}
+
       <KeyboardShortcutsHelp acik={yardimAcik} onClose={() => setYardimAcik(false)} />
+    </div>
+  );
+};
+
+// ─── Mobile filter bottom sheet ────────────────────────────────────────
+const KonusmaciFilterSheet = ({ onClose, onUygula, siralama, setSiralama, sadeceFav, setSadeceFav, favSayisi, filtrelenmisSayi, sifirla }) => {
+  React.useEffect(() => {
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = ''; };
+  }, []);
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm animate-fade-in" onClick={onClose}>
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-b from-purple-900 to-indigo-950 rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col animate-slide-up"
+        onClick={e => e.stopPropagation()}>
+        {/* Drag handle */}
+        <div className="pt-3 pb-1 flex justify-center"><div className="w-12 h-1.5 rounded-full bg-white/30" /></div>
+        {/* Header */}
+        <div className="px-5 pb-3 flex items-center justify-between">
+          <h3 className="text-white text-lg font-bold inline-flex items-center gap-2">
+            <SlidersHorizontal className="w-5 h-5" />Filtreler
+          </h3>
+          <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-4">
+          {/* Sıralama */}
+          <div>
+            <div className="text-white/80 text-xs font-bold mb-2 inline-flex items-center gap-1.5 uppercase tracking-wider">
+              <ArrowDownUp className="w-3.5 h-3.5" />Sıralama
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {SIRALAMA_OPSIYONLARI.map(s => (
+                <button key={s.kod} onClick={() => { haptic(8); setSiralama(s.kod); }}
+                  className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all spring-tap min-h-[36px] ${
+                    siralama === s.kod ? 'bg-amber-400 text-gray-900 shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                  }`}>
+                  {s.etiket}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Favori */}
+          {favSayisi > 0 && (
+            <div>
+              <div className="text-white/80 text-xs font-bold mb-2 inline-flex items-center gap-1.5 uppercase tracking-wider">
+                <Star className="w-3.5 h-3.5" />Filtreler
+              </div>
+              <button onClick={() => { haptic(8); setSadeceFav(s => !s); }}
+                className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all spring-tap min-h-[36px] inline-flex items-center gap-1.5 ${
+                  sadeceFav ? 'bg-yellow-400 text-gray-900 shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                }`}>
+                <Star className="w-3.5 h-3.5" fill={sadeceFav ? 'currentColor' : 'none'} />
+                Sadece favorilerim ({favSayisi})
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-white/10 flex gap-2">
+          <button onClick={sifirla}
+            className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl spring-tap text-sm inline-flex items-center justify-center gap-1.5">
+            <RotateCw className="w-4 h-4" />Sıfırla
+          </button>
+          <button onClick={onUygula}
+            className="flex-[2] bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold py-3 rounded-xl spring-tap text-sm">
+            {filtrelenmisSayi} eğitmeni göster
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

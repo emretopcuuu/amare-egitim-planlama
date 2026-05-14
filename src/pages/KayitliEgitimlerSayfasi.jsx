@@ -184,6 +184,7 @@ const KayitliEgitimlerSayfasi = () => {
   const [siralama, setSiralama] = useState(searchParams.get('sira') || 'yeni');
   const [arama, setArama] = useState(searchParams.get('q') || '');
   const [sadeceFav, setSadeceFav] = useState(searchParams.get('fav') === '1');
+  const [sadeceIzlenen, setSadeceIzlenen] = useState(searchParams.get('izlenen') === '1');
   const [oynatilan, setOynatilan] = useState(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -229,11 +230,12 @@ const KayitliEgitimlerSayfasi = () => {
     if (siralama !== 'yeni') p.sira = siralama;
     if (arama.trim()) p.q = arama.trim();
     if (sadeceFav) p.fav = '1';
+    if (sadeceIzlenen) p.izlenen = '1';
     // Açık video varsa bookmark için URL'e yaz
     if (oynatilan?.id) p.v = oynatilan.id;
     if (seekTo != null && seekTo > 0) p.t = String(Math.floor(seekTo));
     setSearchParams(p, { replace: true });
-  }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav, oynatilan, seekTo, setSearchParams]);
+  }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav, sadeceIzlenen, oynatilan, seekTo, setSearchParams]);
 
   // Kategori sıralamasını Firestore'dan yükle (cache 1h)
   useEffect(() => {
@@ -366,8 +368,9 @@ const KayitliEgitimlerSayfasi = () => {
       if (f) arr = arr.filter(v => { const s = v.sure || 0; return s >= f.min && s < f.max; });
     }
     if (sadeceFav) arr = arr.filter(v => favoriler.has(v.id));
+    if (sadeceIzlenen) arr = arr.filter(v => gecmis.has(v.id));
     return arr;
-  }, [tumVideolar, kategoriSet, dilKod, egitmenCoreId, yil, sureKod, sadeceFav, favoriler]);
+  }, [tumVideolar, kategoriSet, dilKod, egitmenCoreId, yil, sureKod, sadeceFav, favoriler, sadeceIzlenen, gecmis]);
 
   // Helper: video için timestamp'lı (Whisper chunks) eşleşme var mı?
   const hasTimestampMatch = (v) => {
@@ -457,7 +460,7 @@ const KayitliEgitimlerSayfasi = () => {
     return () => clearTimeout(t);
   }, [transcriptAramaAcik, arama, prefiltre]);
 
-  useEffect(() => { setGosterilen(PAGE_SIZE); }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav]);
+  useEffect(() => { setGosterilen(PAGE_SIZE); }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav, sadeceIzlenen]);
 
   // Sonsuz scroll
   useEffect(() => {
@@ -503,11 +506,14 @@ const KayitliEgitimlerSayfasi = () => {
     if (sadeceFav) {
       list.push({ kod: 'fav', etiket: '💗 Favoriler', kaldir: () => { haptic(8); setSadeceFav(false); }, renk: 'bg-pink-500/80 text-white' });
     }
+    if (sadeceIzlenen) {
+      list.push({ kod: 'izlenen', etiket: '👁 İzlediklerim', kaldir: () => { haptic(8); setSadeceIzlenen(false); }, renk: 'bg-blue-500/80 text-white' });
+    }
     if (arama.trim()) {
       list.push({ kod: 'q', etiket: `"${arama.trim()}"`, kaldir: () => { haptic(8); setArama(''); }, renk: 'bg-white/20 text-white' });
     }
     return list;
-  }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, sadeceFav, arama, egitmenAdMap]);
+  }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, sadeceFav, sadeceIzlenen, arama, egitmenAdMap]);
 
   const filtreleriTemizle = () => {
     haptic(20);
@@ -517,6 +523,7 @@ const KayitliEgitimlerSayfasi = () => {
     setYil('all');
     setSureKod('all');
     setSadeceFav(false);
+    setSadeceIzlenen(false);
     setArama('');
     toast('Tüm filtreler temizlendi', { type: 'info' });
   };
@@ -771,16 +778,27 @@ const KayitliEgitimlerSayfasi = () => {
             </DropdownField>
           </div>
 
-          {/* Desktop: favoriler hızlı toggle */}
-          {favoriler.size > 0 && (
+          {/* Desktop: favoriler + izlediklerim hızlı toggle */}
+          {(favoriler.size > 0 || gecmis.size > 0) && (
             <div className="hidden md:flex mt-2 gap-2">
-              <button onClick={() => { haptic(8); setSadeceFav(s => !s); }}
-                className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-all spring-tap ${
-                  sadeceFav ? 'bg-pink-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                }`}>
-                <Heart className="w-3.5 h-3.5" fill={sadeceFav ? 'currentColor' : 'none'} />
-                Sadece favorilerim ({favoriler.size})
-              </button>
+              {favoriler.size > 0 && (
+                <button onClick={() => { haptic(8); setSadeceFav(s => !s); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-all spring-tap ${
+                    sadeceFav ? 'bg-pink-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                  }`}>
+                  <Heart className="w-3.5 h-3.5" fill={sadeceFav ? 'currentColor' : 'none'} />
+                  Sadece favorilerim ({favoriler.size})
+                </button>
+              )}
+              {gecmis.size > 0 && (
+                <button onClick={() => { haptic(8); setSadeceIzlenen(s => !s); }}
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-all spring-tap ${
+                    sadeceIzlenen ? 'bg-blue-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                  }`}>
+                  <Eye className="w-3.5 h-3.5" />
+                  Sadece izlediklerim ({gecmis.size})
+                </button>
+              )}
             </div>
           )}
 
@@ -829,7 +847,7 @@ const KayitliEgitimlerSayfasi = () => {
       </div>
 
       {/* Yarıda kaldıkların — sadece filtre/arama yokken göster */}
-      {!loading && yaridaKalanlar.length > 0 && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && dilKod === 'all' && (
+      {!loading && yaridaKalanlar.length > 0 && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && !sadeceIzlenen && dilKod === 'all' && (
         <YaridaKalanRaf list={yaridaKalanlar} onOynat={(v, t) => handleOynat(v, t)} onTemizle={(id) => watchProgress.remove(id)} />
       )}
 
@@ -887,6 +905,7 @@ const KayitliEgitimlerSayfasi = () => {
           sureKod={sureKod} setSureKod={setSureKod}
           siralama={siralama} setSiralama={setSiralama}
           sadeceFav={sadeceFav} setSadeceFav={setSadeceFav}
+          sadeceIzlenen={sadeceIzlenen} setSadeceIzlenen={setSadeceIzlenen} izlenenCount={gecmis.size}
           favoriCount={favoriler.size}
           filtrelenmisSayi={filtrelenmis.length}
           filtreleriTemizle={filtreleriTemizle}
@@ -956,6 +975,7 @@ const FilterSheet = ({
   sureKod, setSureKod,
   siralama, setSiralama,
   sadeceFav, setSadeceFav,
+  sadeceIzlenen, setSadeceIzlenen, izlenenCount,
   favoriCount, filtrelenmisSayi,
   filtreleriTemizle,
 }) => {
@@ -1064,15 +1084,27 @@ const FilterSheet = ({
             </div>
           </SheetSection>
 
-          {/* Favoriler toggle */}
-          {favoriCount > 0 && (
+          {/* Favoriler + İzlediklerim toggle */}
+          {(favoriCount > 0 || izlenenCount > 0) && (
             <SheetSection icon={Heart} title="">
-              <SheetChip active={sadeceFav}
-                onClick={() => { haptic(8); setSadeceFav(s => !s); }}
-                color={sadeceFav ? 'bg-pink-500 text-white' : null}>
-                <Heart className="w-3.5 h-3.5 inline mr-1" fill={sadeceFav ? 'currentColor' : 'none'} />
-                Sadece favorilerim ({favoriCount})
-              </SheetChip>
+              <div className="flex flex-wrap gap-2">
+                {favoriCount > 0 && (
+                  <SheetChip active={sadeceFav}
+                    onClick={() => { haptic(8); setSadeceFav(s => !s); }}
+                    color={sadeceFav ? 'bg-pink-500 text-white' : null}>
+                    <Heart className="w-3.5 h-3.5 inline mr-1" fill={sadeceFav ? 'currentColor' : 'none'} />
+                    Sadece favorilerim ({favoriCount})
+                  </SheetChip>
+                )}
+                {izlenenCount > 0 && (
+                  <SheetChip active={sadeceIzlenen}
+                    onClick={() => { haptic(8); setSadeceIzlenen(s => !s); }}
+                    color={sadeceIzlenen ? 'bg-blue-500 text-white' : null}>
+                    <Eye className="w-3.5 h-3.5 inline mr-1" />
+                    Sadece izlediklerim ({izlenenCount})
+                  </SheetChip>
+                )}
+              </div>
             </SheetSection>
           )}
         </div>
