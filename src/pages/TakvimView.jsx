@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw } from 'lucide-react';
+import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw, Printer } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import EventActions from '../components/EventActions';
@@ -812,6 +812,11 @@ const TakvimView = () => {
                 <button onClick={()=>navigate('/kayitli-egitimler')}
                   className="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
                   <Video className="w-4 h-4" />Kayıtlı Eğitimler
+                </button>
+                <button onClick={() => window.print()}
+                  title="Tarayıcı yazıcısıyla bas (Ctrl+P)"
+                  className="hidden md:flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
+                  <Printer className="w-4 h-4" />Yazdır
                 </button>
                 <button onClick={exportPDF} disabled={pdfYukleniyor} className="flex items-center gap-2 bg-white/10 backdrop-blur border border-white/20 text-white px-3 sm:px-5 py-2 rounded-xl font-semibold hover:bg-white/20 transition disabled:opacity-50 text-xs sm:text-sm spring-tap">
                   {pdfYukleniyor?<><Loader2 className="w-4 h-4 animate-spin" />{t('cal_preparing')}</>:<><Download className="w-4 h-4" />{t('cal_download_pdf')}</>}

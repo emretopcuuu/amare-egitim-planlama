@@ -225,3 +225,48 @@
     }
   }
 }
+
+/* ── PRINT — Yazıcıya basılırken kullanıcı arayüzünü gizle ─────────────
+   Ctrl+P / Cmd+P ile veya "Yazdır" butonuyla tetiklenir.
+   data-no-pdf attribute'ü olan elemanlar zaten PDF İndir için kullanılıyor;
+   print için de saklanır. Gradient'leri beyaz yap, metni siyah, bottom nav
+   ve floating buton gibi UI chrome'larını gizle. */
+@media print {
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    padding-bottom: 0 !important;
+  }
+  /* PDF İndir attribute'ünü print'te de uygula */
+  [data-no-pdf] { display: none !important; }
+  /* Bottom navigation ve floating butonlar */
+  nav.fixed, button.fixed { display: none !important; }
+  /* Modal'lar print'te kapansın */
+  .fixed.inset-0 { display: none !important; }
+  /* Sticky header'lar normal flow'a alın */
+  .sticky { position: static !important; }
+  /* Gradient/koyu arkaplanları beyaz yap */
+  [class*="bg-gradient"], [class*="bg-purple-"], [class*="bg-indigo-"], [class*="bg-white\\/"] {
+    background: #fff !important;
+    background-image: none !important;
+    backdrop-filter: none !important;
+  }
+  /* Beyaz metinleri siyaha çevir */
+  .text-white, [class*="text-purple-"], [class*="text-amber-"] {
+    color: #000 !important;
+  }
+  .text-white\/70, .text-white\/60, .text-white\/80, .text-purple-200 {
+    color: #444 !important;
+  }
+  /* Kart sınırları gri */
+  [class*="border-white"] { border-color: #ccc !important; }
+  /* Eğitim kartı bölünmesin */
+  article, [class*="rounded-2xl"], [class*="rounded-xl"] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  /* Gölgeler print'te zaten kötü gözükür */
+  * { box-shadow: none !important; text-shadow: none !important; }
+  /* Logo/ikonları küçült */
+  svg { max-width: 20px; max-height: 20px; }
+}
