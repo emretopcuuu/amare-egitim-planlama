@@ -40,6 +40,8 @@ const KEYWORD_KATEGORI = {
   'Doğru Başlangıç':  /dogru\s+baslan[gı]ic|dogru\s+baslama|\bdbe\b|d\s*\.\s*b\s*\.\s*e/g,
   'Kamp':             /\bkamp(lar[a-z]*|a[a-z]*|ta[a-z]*|tan[a-z]*|in[a-z]*|im[a-z]*|i[a-z]*|cilar[a-z]*)?\b/g,
   'Katlama':          /\bkatla(ma|n|n[ıi]r|n[ıi]l|m[ıi]y|ma[a-z]*|nan|nd[a-z]*|m[a-z]*)\b/g,
+  // "İş Sunumu", "İş sunum", "is sunumu" (normalize edilmiş)
+  'Amare İş Sunumu':  /\bis\s+sunum(u|umuz|umun|undan|udur|una|larin|larini|undaki|umla)?\b|amare.*?is\s+sunum|business\s+presentation|online\s+is\s+sunum/g,
 };
 
 const TR_LOWER = { 'Ç': 'c', 'Ğ': 'g', 'İ': 'i', 'I': 'i', 'Ö': 'o', 'Ş': 's', 'Ü': 'u' };

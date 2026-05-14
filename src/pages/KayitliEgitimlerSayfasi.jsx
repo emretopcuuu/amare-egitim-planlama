@@ -20,7 +20,7 @@ const VARSAYILAN_KATEGORILER = [
   'Sunum Teknikleri', 'Zaman Yönetimi', 'Kişisel Gelişim',
   'Sağlık', 'Finansal Özgürlük', 'Vizyon', 'Hikaye', 'Ürün Eğitimi',
   'Liste', 'Kazanç Planı', 'Backoffice', 'Odak', 'İtiraz Karşılama',
-  'Takip', 'Doğru Başlangıç', 'Kamp', 'Katlama',
+  'Takip', 'Doğru Başlangıç', 'Kamp', 'Katlama', 'Amare İş Sunumu',
 ];
 
 // Kategori renk paleti (Tailwind class'ları)
@@ -48,6 +48,7 @@ const KATEGORI_RENK = {
   'Doğru Başlangıç':   'bg-green-700/80 text-white',
   'Kamp':              'bg-amber-700/80 text-white',
   'Katlama':           'bg-stone-500/80 text-white',
+  'Amare İş Sunumu':   'bg-purple-700/80 text-white',
 };
 
 const DIL_PATTERNS = [

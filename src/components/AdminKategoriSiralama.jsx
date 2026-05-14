@@ -10,7 +10,7 @@ const VARSAYILAN_KATEGORILER = [
   'Sunum Teknikleri', 'Zaman Yönetimi', 'Kişisel Gelişim',
   'Sağlık', 'Finansal Özgürlük', 'Vizyon', 'Hikaye', 'Ürün Eğitimi',
   'Liste', 'Kazanç Planı', 'Backoffice', 'Odak', 'İtiraz Karşılama',
-  'Takip', 'Doğru Başlangıç', 'Kamp', 'Katlama',
+  'Takip', 'Doğru Başlangıç', 'Kamp', 'Katlama', 'Amare İş Sunumu',
 ];
 
 const KATEGORI_RENK = {
@@ -36,6 +36,7 @@ const KATEGORI_RENK = {
   'Doğru Başlangıç':   'bg-green-700',
   'Kamp':              'bg-amber-700',
   'Katlama':           'bg-stone-500',
+  'Amare İş Sunumu':   'bg-purple-700',
 };
 
 const AdminKategoriSiralama = () => {

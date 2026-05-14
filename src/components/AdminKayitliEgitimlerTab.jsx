@@ -14,7 +14,7 @@ const KATEGORILER = [
   'Sunum Teknikleri', 'Zaman Yönetimi', 'Kişisel Gelişim',
   'Sağlık', 'Finansal Özgürlük', 'Vizyon', 'Hikaye', 'Ürün Eğitimi',
   'Liste', 'Kazanç Planı', 'Backoffice', 'Odak', 'İtiraz Karşılama',
-  'Takip', 'Doğru Başlangıç', 'Kamp', 'Katlama',
+  'Takip', 'Doğru Başlangıç', 'Kamp', 'Katlama', 'Amare İş Sunumu',
   'Diğer',
 ];
 
