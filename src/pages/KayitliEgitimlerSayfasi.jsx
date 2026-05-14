@@ -79,7 +79,12 @@ const SIRALAMALAR = [
 ];
 
 function detectDil(video) {
-  const text = `${video.baslik || ''} ${video.aciklama || ''}`;
+  // Firestore'da kayıtlı dil varsa öncelikli (çevrilmiş başlıklar için kritik —
+  // çeviri sırasında "(English)", "/German" gibi suffix'ler temizleniyor,
+  // regex artık eşleşmiyordu)
+  if (video.baslikDili) return video.baslikDili;
+  // Eski metod fallback: baslikOrijinal'a da bak (orijinal başlıkta tag var)
+  const text = `${video.baslikOrijinal || video.baslik || ''} ${video.aciklama || ''}`;
   for (const p of DIL_PATTERNS) {
     if (p.regex.test(text)) return p.kod;
   }
@@ -102,8 +107,8 @@ function formatPlays(n) {
   return (n / 1_000_000).toFixed(1).replace('.0', '') + 'M';
 }
 
-// v4 → v5: 43 non-TR video başlığı yeniden formatlandı
-const CACHE_KEY = 'amare_kayitli_egitimler_all_v5';
+// v5 → v6: dil tespiti Firestore baslikDili alanından önceliklendirildi
+const CACHE_KEY = 'amare_kayitli_egitimler_all_v6';
 const TTL = 12 * 60 * 60 * 1000;
 const FAV_KEY = 'amare_video_favoriler';
 const HIST_KEY = 'amare_video_gecmis';
@@ -200,7 +205,7 @@ const KayitliEgitimlerSayfasi = () => {
   useEffect(() => {
     // Eski cache versiyonlarını temizle
     try {
-      ['amare_kayitli_egitimler_all_v1', 'amare_kayitli_egitimler_all_v2', 'amare_kayitli_egitimler_all_v3', 'amare_kayitli_egitimler_all_v4']
+      ['amare_kayitli_egitimler_all_v1', 'amare_kayitli_egitimler_all_v2', 'amare_kayitli_egitimler_all_v3', 'amare_kayitli_egitimler_all_v4', 'amare_kayitli_egitimler_all_v5']
         .forEach(k => localStorage.removeItem(k));
       // Eski per-category cache'leri de sil (v1 mantığından kalan)
       Object.keys(localStorage)
