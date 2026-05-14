@@ -1025,23 +1025,28 @@ const VideoKart = ({ video: v, favori, izlendi, transcriptMatch, aramaQ, onToggl
           </div>
         )}
 
-        {/* Transcript match snippets — sahneye atlama */}
+        {/* Transcript match snippets — sahneye atlama (timestamp varsa) ya da
+            sadece içerikte geçtiği bilgisi (timestamp yoksa, eski videolar) */}
         {transcriptMatch?.length > 0 && (
           <div className="mb-2 space-y-1">
-            {transcriptMatch.slice(0, 2).map((m, i) => (
-              <div key={i}
-                role="button" tabIndex={0}
-                onClick={(e) => { e.stopPropagation(); onOynat?.(m.start); }}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOynat?.(m.start); } }}
-                title={`${formatSure(m.start)} — bu sahneden başlat`}
-                className="block w-full text-left bg-amber-500/10 hover:bg-amber-500/25 border border-amber-400/30 rounded-md px-2 py-1.5 cursor-pointer transition-all">
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300">
-                  <Mic className="w-3 h-3" />{formatSure(m.start)}
-                </span>
-                <p className="text-[11px] text-white/85 line-clamp-2 mt-0.5 leading-snug"
-                   dangerouslySetInnerHTML={{ __html: highlightSnippet(m.snippet, aramaQ) }} />
-              </div>
-            ))}
+            {transcriptMatch.slice(0, 2).map((m, i) => {
+              const hasTime = m.start != null && m.start >= 0;
+              return (
+                <div key={i}
+                  role="button" tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); onOynat?.(hasTime ? m.start : null); }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onOynat?.(hasTime ? m.start : null); } }}
+                  title={hasTime ? `${formatSure(m.start)} — bu sahneden başlat` : 'Bu video konuşmasında geçiyor'}
+                  className="block w-full text-left bg-amber-500/10 hover:bg-amber-500/25 border border-amber-400/30 rounded-md px-2 py-1.5 cursor-pointer transition-all">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-300">
+                    <Mic className="w-3 h-3" />
+                    {hasTime ? formatSure(m.start) : 'Konuşmada geçiyor'}
+                  </span>
+                  <p className="text-[11px] text-white/85 line-clamp-2 mt-0.5 leading-snug"
+                     dangerouslySetInnerHTML={{ __html: highlightSnippet(m.snippet, aramaQ) }} />
+                </div>
+              );
+            })}
             {transcriptMatch.length > 2 && (
               <div className="text-[10px] text-amber-300/70 px-1">
                 +{transcriptMatch.length - 2} eşleşme daha (videoyu aç)

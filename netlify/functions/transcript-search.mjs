@@ -76,6 +76,8 @@ export default async (req) => {
 
     // Firestore documentId() in 30'lu batch
     const results = [];
+    let chunksHit = 0;
+    let textHit = 0;
     for (let i = 0; i < videoIds.length; i += 30) {
       const batch = videoIds.slice(i, i + 30);
       const snap = await db.collection('kayitli_egitimler')
@@ -84,21 +86,45 @@ export default async (req) => {
       for (const d of snap.docs) {
         const data = d.data();
         const chunks = data.transcriptChunks;
-        if (!Array.isArray(chunks) || chunks.length === 0) continue;
         const matches = [];
-        for (const c of chunks) {
-          if (!c.text) continue;
-          const nC = normalize(c.text);
-          if (nC.includes(nQ)) {
-            matches.push({
-              start: c.start,
-              end: c.end,
-              text: c.text,
-              snippet: makeSnippet(c.text, q, 140),
-            });
-            if (matches.length >= 5) break; // max 5 / video
+
+        // 1. ÖNCELİK: transcriptChunks varsa timestamp'lı eşleşme döndür
+        if (Array.isArray(chunks) && chunks.length > 0) {
+          for (const c of chunks) {
+            if (!c.text) continue;
+            const nC = normalize(c.text);
+            if (nC.includes(nQ)) {
+              matches.push({
+                start: c.start,
+                end: c.end,
+                text: c.text,
+                snippet: makeSnippet(c.text, q, 140),
+              });
+              if (matches.length >= 5) break;
+            }
           }
+          if (matches.length > 0) chunksHit++;
         }
+
+        // 2. FALLBACK: chunks yoksa plain transcript metninde ara (timestamp YOK)
+        if (matches.length === 0 && typeof data.transcript === 'string' && data.transcript.length > 0) {
+          const nText = normalize(data.transcript);
+          // Çoklu eşleşme bul (max 3 snippet)
+          let pos = 0;
+          while (matches.length < 3) {
+            const idx = nText.indexOf(nQ, pos);
+            if (idx < 0) break;
+            matches.push({
+              start: null, // timestamp yok
+              end: null,
+              text: '',
+              snippet: makeSnippet(data.transcript.slice(Math.max(0, idx - 80), idx + nQ.length + 80), q, 140),
+            });
+            pos = idx + nQ.length;
+          }
+          if (matches.length > 0) textHit++;
+        }
+
         if (matches.length > 0) {
           results.push({ id: d.id, matches });
         }
@@ -107,7 +133,13 @@ export default async (req) => {
 
     return new Response(JSON.stringify({
       results,
-      meta: { taranan: videoIds.length, eslesen: results.length, sureMs: Date.now() - t0 },
+      meta: {
+        taranan: videoIds.length,
+        eslesen: results.length,
+        chunksHit, // timestamp'lı eşleşmeler
+        textHit,   // sadece düz metin (timestamp yok)
+        sureMs: Date.now() - t0,
+      },
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
