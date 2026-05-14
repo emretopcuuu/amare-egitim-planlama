@@ -1,7 +1,9 @@
 // Vimeo iframe full-screen player overlay
 // KonusmaciFullModal ve KayitliEgitimlerSayfasi tarafından kullanılır.
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { X, Calendar, Eye, Clock, Tag, Video as VideoIcon, Play } from 'lucide-react';
+import { useVimeoTimeTracker } from '../utils/useVimeoTimeTracker';
+import { updateProgress } from '../utils/watchProgress';
 
 function formatSure(saniye) {
   if (!saniye || saniye < 1) return null;
@@ -21,6 +23,14 @@ function formatPlays(n) {
 
 const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = null }) => {
   const [aciklamaAcik, setAciklamaAcik] = useState(false);
+  const iframeRef = useRef(null);
+
+  // Watch progress tracker — Vimeo postMessage ile zamanı dinler
+  const handleTimeUpdate = useCallback((seconds, duration) => {
+    if (video?.id) updateProgress(video.id, seconds, duration);
+  }, [video?.id]);
+
+  useVimeoTimeTracker(iframeRef, video?.id, handleTimeUpdate);
 
   useEffect(() => {
     if (!video) return;
@@ -80,6 +90,7 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = n
         {/* Iframe */}
         <div className="relative w-full bg-black rounded-xl overflow-hidden shadow-2xl" style={{ paddingTop: '56.25%' }}>
           <iframe
+            ref={iframeRef}
             src={iframeSrc}
             className="absolute inset-0 w-full h-full"
             frameBorder="0"

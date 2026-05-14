@@ -16,6 +16,7 @@ import { useToast } from '../components/Toast';
 import { haptic, nativeShare } from '../utils/mobileHelpers';
 import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
+import { useWatchProgress } from '../utils/watchProgress';
 
 // ─── Sabitler ────────────────────────────────────────────────────────────
 const VARSAYILAN_KATEGORILER = [
@@ -194,6 +195,9 @@ const KayitliEgitimlerSayfasi = () => {
   const sentinelRef = useRef(null);
   const aramaInputRef = useRef(null);
 
+  // Watch progress (izlemeye devam et)
+  const watchProgress = useWatchProgress();
+
   // ─── Transcript arama (Faz: video içinde arama) ──────────────────────
   // localStorage'da hatırla (kullanıcı tercihi)
   const [transcriptAramaAcik, setTranscriptAramaAcik] = useState(() => {
@@ -343,6 +347,12 @@ const KayitliEgitimlerSayfasi = () => {
     for (const e of egitmenOpsiyonlari) m.set(e.coreId, e.ad);
     return m;
   }, [egitmenOpsiyonlari]);
+
+  // "Yarıda kaldıkların" — son izlenen ama tamamlanmamış videolar (max 8)
+  const yaridaKalanlar = useMemo(() => {
+    return watchProgress.getResumable(tumVideolar, 8);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tumVideolar, watchProgress.version]);
 
   // ─── Filtre — arama hariç (transcript-search candidate seti olarak da kullanılır) ──
   const prefiltre = useMemo(() => {
@@ -545,9 +555,17 @@ const KayitliEgitimlerSayfasi = () => {
       saveList(HIST_KEY, list);
       return new Set(list);
     });
-    setSeekTo(startSn);
+    // Otomatik devam: explicit startSn yoksa, kayıtlı progress'i kullan
+    let resumeAt = startSn;
+    if (resumeAt == null) {
+      const saved = watchProgress.get(v.id);
+      if (saved && saved.t > 10 && saved.pct < 95) {
+        resumeAt = saved.t;
+      }
+    }
+    setSeekTo(resumeAt);
     setOynatilan(v);
-  }, []);
+  }, [watchProgress]);
 
   // URL'den ?v=ID&t=SEC ile direkt oynat
   useEffect(() => {
@@ -810,6 +828,11 @@ const KayitliEgitimlerSayfasi = () => {
         </div>
       </div>
 
+      {/* Yarıda kaldıkların — sadece filtre/arama yokken göster */}
+      {!loading && yaridaKalanlar.length > 0 && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && dilKod === 'all' && (
+        <YaridaKalanRaf list={yaridaKalanlar} onOynat={(v, t) => handleOynat(v, t)} onTemizle={(id) => watchProgress.remove(id)} />
+      )}
+
       {/* Grid */}
       <div className="px-4 py-4 pb-bottom-nav">
         <div className="container mx-auto max-w-7xl">
@@ -825,6 +848,7 @@ const KayitliEgitimlerSayfasi = () => {
                   <VideoKart key={v.id} video={v}
                     favori={favoriler.has(v.id)}
                     izlendi={gecmis.has(v.id)}
+                    progress={watchProgress.get(v.id)}
                     transcriptMatch={transcriptAramaAcik ? transcriptMatches[v.id] : null}
                     aramaQ={arama}
                     onToggleFav={(e) => toggleFavori(e, v)}
@@ -1103,12 +1127,84 @@ const SheetChip = ({ active, onClick, color, children }) => (
   </button>
 );
 
+// ─── Yarıda kaldıkların rafı (horizontal carousel) ───────────────────────
+const YaridaKalanRaf = ({ list, onOynat, onTemizle }) => {
+  if (!list?.length) return null;
+  return (
+    <div className="px-4 pt-2 pb-3">
+      <div className="container mx-auto max-w-7xl">
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-white text-sm sm:text-base font-bold inline-flex items-center gap-2">
+            <History className="w-4 h-4 text-amber-300" />
+            Yarıda kaldıkların
+            <span className="text-amber-300/70 text-xs font-normal">({list.length})</span>
+          </h2>
+        </div>
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 snap-x snap-mandatory">
+          {list.map(({ video: v, progress: p }) => {
+            const kalan = Math.max(1, Math.round((p.duration - p.t) / 60));
+            return (
+              <div key={v.id}
+                className="snap-start flex-shrink-0 w-60 sm:w-64 bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-400 rounded-xl overflow-hidden transition-all hover-lift group cursor-pointer relative"
+                onClick={() => onOynat(v, p.t)}>
+                {/* Thumbnail */}
+                <div className="relative aspect-video bg-black/40">
+                  {v.thumbnailUrl ? (
+                    <img src={v.thumbnailUrl} alt={v.baslik} loading="lazy"
+                      className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                      <Video className="w-8 h-8 text-white/30" />
+                    </div>
+                  )}
+                  {/* Play overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/50 transition-all">
+                    <div className="w-12 h-12 rounded-full bg-amber-400 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                      <Play className="w-6 h-6 text-purple-900 ml-0.5" fill="currentColor" />
+                    </div>
+                  </div>
+                  {/* Resume indicator */}
+                  <div className="absolute top-2 left-2 bg-black/75 text-amber-200 text-[10px] font-bold px-2 py-0.5 rounded-full">
+                    {formatSure(p.t)} • {kalan}dk kaldı
+                  </div>
+                  {/* Sil butonu */}
+                  <button onClick={(e) => { e.stopPropagation(); onTemizle(v.id); }}
+                    title="Listeden çıkar" aria-label="Listeden çıkar"
+                    className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/60 hover:bg-red-500/80 text-white/80 hover:text-white flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                  {/* Progress bar */}
+                  <div className="absolute bottom-0 left-0 right-0 h-1.5 bg-black/40">
+                    <div className="h-full bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.8)]"
+                      style={{ width: `${p.pct}%` }} />
+                  </div>
+                </div>
+                {/* Info */}
+                <div className="p-2.5">
+                  <h4 className="font-bold text-white text-xs sm:text-sm line-clamp-2 leading-tight">{v.baslik}</h4>
+                  {v.egitmenAdlari?.length > 0 && (
+                    <div className="text-[11px] text-purple-200/80 mt-1 line-clamp-1">
+                      {v.egitmenAdlari.join(', ')}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ─── Video kartı (mobile compact + desktop grid) ─────────────────────────
-const VideoKart = ({ video: v, favori, izlendi, transcriptMatch, aramaQ, onToggleFav, onShare, onOynat, onShareSnippet }) => {
+const VideoKart = ({ video: v, favori, izlendi, progress, transcriptMatch, aramaQ, onToggleFav, onShare, onOynat, onShareSnippet }) => {
   const sureMetin = formatSure(v.sure);
   const playsMetin = formatPlays(v.plays);
   const kategori = v.kategoriler?.[0];
   const renkClass = kategori ? (KATEGORI_RENK[kategori] || 'bg-amber-400/80 text-gray-900') : '';
+  // Watch progress (yarıda kaldıkların)
+  const progressPct = progress && progress.pct >= 1 && progress.pct < 95 ? progress.pct : 0;
 
   return (
     <button onClick={() => onOynat?.()}
@@ -1152,6 +1248,14 @@ const VideoKart = ({ video: v, favori, izlendi, transcriptMatch, aramaQ, onToggl
             <Play className="w-7 h-7 text-purple-800 ml-0.5" fill="currentColor" />
           </div>
         </div>
+
+        {/* Watch progress bar — thumbnail'in en alt kenarı (Netflix tarzı) */}
+        {progressPct > 0 && (
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/40">
+            <div className="h-full bg-amber-400 shadow-[0_0_4px_rgba(251,191,36,0.7)]"
+              style={{ width: `${progressPct}%` }} />
+          </div>
+        )}
       </div>
       <div className="p-3">
         <h4 className="font-bold text-white text-sm line-clamp-2 mb-1.5">{v.baslik}</h4>
