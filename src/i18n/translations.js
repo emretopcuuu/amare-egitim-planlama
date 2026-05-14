@@ -166,6 +166,23 @@ const translations = {
     reminder_err_time: 'En az bir hatırlatma zamanı seçin.',
     reminder_err_past: 'Seçilen tüm zamanlar geçmiş. Farklı zaman seçin.',
     reminder_err_save: 'Kayıt sırasında hata: ',
+
+    // ─── EĞİTMENLER (KonusmacilarSayfasi) ─────────────────────────────────
+    trainers_title: 'Eğitmenler',
+    trainers_count_suffix: 'eğitmen',
+    trainers_trainings_suffix: 'eğitim',
+    trainers_search_placeholder: 'Eğitmen ara… ( / ile odaklan)',
+    trainers_search_placeholder_short: 'Eğitmen ara...',
+    trainers_filters: 'Filtreler',
+    trainers_sort_title: 'Sıralama',
+    trainers_sort_active: 'Eğitim sayısına göre',
+    trainers_sort_az: 'Alfabetik (A→Z)',
+    trainers_sort_za: 'Alfabetik (Z→A)',
+    trainers_only_favs: 'Sadece favorilerim',
+    trainers_not_found: 'Aradığınız eğitmen bulunamadı',
+    trainers_reset: 'Sıfırla',
+    trainers_show_count: 'eğitmeni göster',
+    trainers_count_label: 'eğitim',
   },
 
   // ─── ENGLISH ────────────────────────────────────────────────────────────────
@@ -325,6 +342,23 @@ const translations = {
     reminder_err_time: 'Please select at least one reminder time.',
     reminder_err_past: 'All selected times have passed. Please choose a different time.',
     reminder_err_save: 'Error during registration: ',
+
+    // ─── TRAINERS (KonusmacilarSayfasi) ────────────────────────────────────
+    trainers_title: 'Trainers',
+    trainers_count_suffix: 'trainers',
+    trainers_trainings_suffix: 'trainings',
+    trainers_search_placeholder: 'Search trainer… ( / to focus)',
+    trainers_search_placeholder_short: 'Search trainer...',
+    trainers_filters: 'Filters',
+    trainers_sort_title: 'Sort',
+    trainers_sort_active: 'By training count',
+    trainers_sort_az: 'Alphabetical (A→Z)',
+    trainers_sort_za: 'Alphabetical (Z→A)',
+    trainers_only_favs: 'Only my favorites',
+    trainers_not_found: 'No trainer found',
+    trainers_reset: 'Reset',
+    trainers_show_count: 'trainers',
+    trainers_count_label: 'training',
   },
 
   // ─── GERMAN ─────────────────────────────────────────────────────────────────
@@ -484,6 +518,23 @@ const translations = {
     reminder_err_time: 'Bitte wählen Sie mindestens eine Erinnerungszeit.',
     reminder_err_past: 'Alle ausgewählten Zeiten sind vergangen. Bitte wählen Sie eine andere Zeit.',
     reminder_err_save: 'Fehler bei der Registrierung: ',
+
+    // ─── TRAINER (KonusmacilarSayfasi) ─────────────────────────────────────
+    trainers_title: 'Trainer',
+    trainers_count_suffix: 'Trainer',
+    trainers_trainings_suffix: 'Schulungen',
+    trainers_search_placeholder: 'Trainer suchen… ( / zum Fokussieren)',
+    trainers_search_placeholder_short: 'Trainer suchen...',
+    trainers_filters: 'Filter',
+    trainers_sort_title: 'Sortieren',
+    trainers_sort_active: 'Nach Schulungsanzahl',
+    trainers_sort_az: 'Alphabetisch (A→Z)',
+    trainers_sort_za: 'Alphabetisch (Z→A)',
+    trainers_only_favs: 'Nur meine Favoriten',
+    trainers_not_found: 'Kein Trainer gefunden',
+    trainers_reset: 'Zurücksetzen',
+    trainers_show_count: 'Trainer anzeigen',
+    trainers_count_label: 'Schulung',
   },
 
   nl: {
@@ -642,6 +693,23 @@ const translations = {
     reminder_err_time: 'Kies minstens één herinneringstijd.',
     reminder_err_past: 'Alle geselecteerde tijden zijn verstreken. Kies een andere tijd.',
     reminder_err_save: 'Fout bij registratie: ',
+
+    // ─── TRAINERS (KonusmacilarSayfasi) ────────────────────────────────────
+    trainers_title: 'Trainers',
+    trainers_count_suffix: 'trainers',
+    trainers_trainings_suffix: 'trainingen',
+    trainers_search_placeholder: 'Trainer zoeken… ( / om te focussen)',
+    trainers_search_placeholder_short: 'Trainer zoeken...',
+    trainers_filters: 'Filters',
+    trainers_sort_title: 'Sorteren',
+    trainers_sort_active: 'Op trainingsaantal',
+    trainers_sort_az: 'Alfabetisch (A→Z)',
+    trainers_sort_za: 'Alfabetisch (Z→A)',
+    trainers_only_favs: 'Alleen favorieten',
+    trainers_not_found: 'Geen trainer gevonden',
+    trainers_reset: 'Reset',
+    trainers_show_count: 'trainers weergeven',
+    trainers_count_label: 'training',
   },
 };
 

@@ -13,10 +13,11 @@ import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
 import { haptic } from '../utils/mobileHelpers';
 
-const SIRALAMA_OPSIYONLARI = [
-  { kod: 'aktif', etiket: 'Eğitim sayısına göre' },
-  { kod: 'alfabe', etiket: 'Alfabetik (A→Z)' },
-  { kod: 'alfabe_zy', etiket: 'Alfabetik (Z→A)' },
+// Sıralama opsiyonları — etiketler t() ile dinamik dönüşür
+const SIRALAMA_KODLARI = [
+  { kod: 'aktif', tKey: 'trainers_sort_active' },
+  { kod: 'alfabe', tKey: 'trainers_sort_az' },
+  { kod: 'alfabe_zy', tKey: 'trainers_sort_za' },
 ];
 
 const splitEgitmen = (e) => {
@@ -158,14 +159,14 @@ const KonusmacilarSayfasi = () => {
             </button>
             <LanguageSwitcher />
           </div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display">Eğitmenler</h1>
-          <p className="text-purple-200 mt-1">{tumKonusmacilar.length} eğitmen, {takvim.length} eğitim</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-white font-display">{t('trainers_title')}</h1>
+          <p className="text-purple-200 mt-1">{tumKonusmacilar.length} {t('trainers_count_suffix')}, {takvim.length} {t('trainers_trainings_suffix')}</p>
           {/* Arama + mobile filtre butonu */}
           <div className="relative mt-4 flex gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />
               <input type="text" ref={aramaRef} value={arama} onChange={e => setArama(e.target.value)}
-                placeholder="Eğitmen ara… ( / ile odaklan)"
+                placeholder={t('trainers_search_placeholder')}
                 className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-12 pr-10 py-3 text-base focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
               {arama && (
                 <button onClick={() => setArama('')} aria-label="Aramayı temizle"
@@ -174,7 +175,7 @@ const KonusmacilarSayfasi = () => {
                 </button>
               )}
             </div>
-            <button onClick={() => { haptic(8); setSheetOpen(true); }} aria-label="Filtreler"
+            <button onClick={() => { haptic(8); setSheetOpen(true); }} aria-label={t('trainers_filters')}
               className="md:hidden relative bg-white/15 hover:bg-white/25 border-2 border-white/20 text-white rounded-xl px-3 py-3 spring-tap inline-flex items-center gap-1.5 text-sm font-semibold">
               <SlidersHorizontal className="w-5 h-5" />
               {aktifFiltreSayisi > 0 && (
@@ -191,8 +192,8 @@ const KonusmacilarSayfasi = () => {
               <ArrowDownUp className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-300 pointer-events-none" />
               <select value={siralama} onChange={e => setSiralama(e.target.value)}
                 className="bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white rounded-xl pl-9 pr-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-400/30 appearance-none cursor-pointer">
-                {SIRALAMA_OPSIYONLARI.map(s => (
-                  <option key={s.kod} value={s.kod} className="bg-purple-900">{s.etiket}</option>
+                {SIRALAMA_KODLARI.map(s => (
+                  <option key={s.kod} value={s.kod} className="bg-purple-900">{t(s.tKey)}</option>
                 ))}
               </select>
             </div>
@@ -202,7 +203,7 @@ const KonusmacilarSayfasi = () => {
                   sadeceFav ? 'bg-yellow-400 text-gray-900' : 'bg-white/10 text-white border border-white/20 hover:bg-white/20'
                 }`}>
                 <Star className="w-3.5 h-3.5" fill={sadeceFav ? 'currentColor' : 'none'} />
-                Sadece favorilerim ({favSayisi})
+                {t('trainers_only_favs')} ({favSayisi})
               </button>
             )}
           </div>
@@ -215,7 +216,7 @@ const KonusmacilarSayfasi = () => {
           {filtrelenmis.length === 0 ? (
             <div className="text-center py-16 text-white/50">
               <User className="w-20 h-20 mx-auto mb-3 opacity-30" />
-              <p className="text-lg">Aradığınız eğitmen bulunamadı</p>
+              <p className="text-lg">{t('trainers_not_found')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
@@ -238,7 +239,7 @@ const KonusmacilarSayfasi = () => {
                     )}
                     <div className="mt-2 text-white font-semibold text-xs sm:text-sm leading-tight">{kayit?.ad || ad}</div>
                     {kayit?.unvan && <div className="text-[10px] text-amber-300 mt-0.5 line-clamp-1">{kayit.unvan}</div>}
-                    <div className="mt-1 text-[10px] text-purple-200">{egitimSayisi} eğitim</div>
+                    <div className="mt-1 text-[10px] text-purple-200">{egitimSayisi} {t('trainers_count_label')}</div>
                   </button>
                 );
               })}
@@ -252,6 +253,7 @@ const KonusmacilarSayfasi = () => {
       {/* Mobile filter bottom sheet */}
       {sheetOpen && (
         <KonusmaciFilterSheet
+          t={t}
           onClose={() => setSheetOpen(false)}
           onUygula={() => { haptic(15); setSheetOpen(false); }}
           siralama={siralama} setSiralama={setSiralama}
@@ -268,7 +270,7 @@ const KonusmacilarSayfasi = () => {
 };
 
 // ─── Mobile filter bottom sheet ────────────────────────────────────────
-const KonusmaciFilterSheet = ({ onClose, onUygula, siralama, setSiralama, sadeceFav, setSadeceFav, favSayisi, filtrelenmisSayi, sifirla }) => {
+const KonusmaciFilterSheet = ({ t, onClose, onUygula, siralama, setSiralama, sadeceFav, setSadeceFav, favSayisi, filtrelenmisSayi, sifirla }) => {
   React.useEffect(() => {
     document.body.style.overflow = 'hidden';
     return () => { document.body.style.overflow = ''; };
@@ -282,7 +284,7 @@ const KonusmaciFilterSheet = ({ onClose, onUygula, siralama, setSiralama, sadece
         {/* Header */}
         <div className="px-5 pb-3 flex items-center justify-between">
           <h3 className="text-white text-lg font-bold inline-flex items-center gap-2">
-            <SlidersHorizontal className="w-5 h-5" />Filtreler
+            <SlidersHorizontal className="w-5 h-5" />{t('trainers_filters')}
           </h3>
           <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
             <X className="w-5 h-5" />
@@ -294,15 +296,15 @@ const KonusmaciFilterSheet = ({ onClose, onUygula, siralama, setSiralama, sadece
           {/* Sıralama */}
           <div>
             <div className="text-white/80 text-xs font-bold mb-2 inline-flex items-center gap-1.5 uppercase tracking-wider">
-              <ArrowDownUp className="w-3.5 h-3.5" />Sıralama
+              <ArrowDownUp className="w-3.5 h-3.5" />{t('trainers_sort_title')}
             </div>
             <div className="flex flex-wrap gap-2">
-              {SIRALAMA_OPSIYONLARI.map(s => (
+              {SIRALAMA_KODLARI.map(s => (
                 <button key={s.kod} onClick={() => { haptic(8); setSiralama(s.kod); }}
                   className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all spring-tap min-h-[36px] ${
                     siralama === s.kod ? 'bg-amber-400 text-gray-900 shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
                   }`}>
-                  {s.etiket}
+                  {t(s.tKey)}
                 </button>
               ))}
             </div>
@@ -312,14 +314,14 @@ const KonusmaciFilterSheet = ({ onClose, onUygula, siralama, setSiralama, sadece
           {favSayisi > 0 && (
             <div>
               <div className="text-white/80 text-xs font-bold mb-2 inline-flex items-center gap-1.5 uppercase tracking-wider">
-                <Star className="w-3.5 h-3.5" />Filtreler
+                <Star className="w-3.5 h-3.5" />{t('trainers_filters')}
               </div>
               <button onClick={() => { haptic(8); setSadeceFav(s => !s); }}
                 className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all spring-tap min-h-[36px] inline-flex items-center gap-1.5 ${
                   sadeceFav ? 'bg-yellow-400 text-gray-900 shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
                 }`}>
                 <Star className="w-3.5 h-3.5" fill={sadeceFav ? 'currentColor' : 'none'} />
-                Sadece favorilerim ({favSayisi})
+                {t('trainers_only_favs')} ({favSayisi})
               </button>
             </div>
           )}
@@ -329,11 +331,11 @@ const KonusmaciFilterSheet = ({ onClose, onUygula, siralama, setSiralama, sadece
         <div className="px-5 py-3 border-t border-white/10 flex gap-2">
           <button onClick={sifirla}
             className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl spring-tap text-sm inline-flex items-center justify-center gap-1.5">
-            <RotateCw className="w-4 h-4" />Sıfırla
+            <RotateCw className="w-4 h-4" />{t('trainers_reset')}
           </button>
           <button onClick={onUygula}
             className="flex-[2] bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold py-3 rounded-xl spring-tap text-sm">
-            {filtrelenmisSayi} eğitmeni göster
+            {filtrelenmisSayi} {t('trainers_show_count')}
           </button>
         </div>
       </div>
