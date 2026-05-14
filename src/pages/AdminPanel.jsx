@@ -23,6 +23,7 @@ import AdminKayitliEgitimlerTab from '../components/AdminKayitliEgitimlerTab';
 import YeniEgitmenModal from '../components/YeniEgitmenModal';
 import AdminKategoriSiralama from '../components/AdminKategoriSiralama';
 import { gorselOlustur } from '../utils/gorselOlustur';
+import { uploadGorsel } from '../utils/uploadGorsel';
 
 // ── Sabitler ────────────────────────────────────────────────────────────────
 const DURUM_RENKLER = {
@@ -603,7 +604,9 @@ const AdminPanel = () => {
     const s = topluIlerleme.sonuclar[idx];
     if (!s || s.bagli) return;
     try {
-      const result = await egitimGuncelle(s.egitim.id, { gorselUrl: s.dataUrl });
+      // Önce Storage'a yükle, sonra Firestore'a URL yaz (1MB doc limit'i aşmasın)
+      const url = await uploadGorsel(s.egitim.id, s.dataUrl);
+      const result = await egitimGuncelle(s.egitim.id, { gorselUrl: url });
       if (result.success) {
         setTopluIlerleme(prev => {
           const yeni = { ...prev, sonuclar: [...prev.sonuclar] };
@@ -1839,7 +1842,9 @@ const AdminPanel = () => {
           sablonlar={sablonlar}
           onClose={() => setGorselModal(null)}
           onGorselBagla={async (id, dataUrl) => {
-            const result = await egitimGuncelle(id, { gorselUrl: dataUrl });
+            // Önce Storage'a yükle, sonra Firestore'a URL yaz (1MB doc limit'i aşmasın)
+            const url = await uploadGorsel(id, dataUrl);
+            const result = await egitimGuncelle(id, { gorselUrl: url });
             if (!result.success) throw new Error(result.error);
           }}
         />
