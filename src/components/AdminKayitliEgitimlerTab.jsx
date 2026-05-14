@@ -4,9 +4,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { db, auth } from '../utils/firebase';
 import {
   collection, query, where, orderBy, limit as fbLimit,
-  getDocs, doc, updateDoc, serverTimestamp,
+  getDocs, doc, updateDoc, deleteDoc, serverTimestamp,
 } from 'firebase/firestore';
-import { Loader2, Video, Save, Search, RefreshCw, ExternalLink, Download } from 'lucide-react';
+import { Loader2, Video, Save, Search, RefreshCw, ExternalLink, Download, MoreVertical, Edit2, Trash2, Ban, Play, FileText, X } from 'lucide-react';
+import VideoOynatModal from './VideoOynatModal';
 import { useData, makeCoreId } from '../context/DataContext';
 
 const KATEGORILER = [
@@ -108,6 +109,76 @@ const AdminKayitliEgitimlerTab = () => {
   };
 
   const [vimeoSenkron, setVimeoSenkron] = useState(false);
+  const [oynatilan, setOynatilan] = useState(null);
+  const [aciklamaEdit, setAciklamaEdit] = useState(null); // { id, baslik, aciklama }
+
+  // ─── Eylem handler'ları ─────────────────────────────────────────────
+  const handleDelete = async (v) => {
+    if (!window.confirm(`"${v.baslik?.slice(0, 60)}" KALICI olarak silinsin mi?\n\nFirestore'dan tamamen kaldırılır.`)) return;
+    try {
+      await deleteDoc(doc(db, 'kayitli_egitimler', v.id));
+      setVideolar(prev => prev.filter(x => x.id !== v.id));
+      setMesaj(`✓ Silindi: ${v.baslik?.slice(0, 40)}`);
+      setTimeout(() => setMesaj(''), 3000);
+    } catch (err) {
+      setMesaj('✗ Silinemedi: ' + err.message);
+    }
+  };
+
+  const handleExclude = async (v) => {
+    if (v.kayeneFiltrelendi) {
+      // Geri al
+      if (!window.confirm(`"${v.baslik?.slice(0, 60)}" dışlamasını KALDIR?`)) return;
+      await updateDoc(doc(db, 'kayitli_egitimler', v.id), {
+        kayeneFiltrelendi: false,
+        filtreliSebep: null,
+        guncellemeTarihi: serverTimestamp(),
+      });
+      setVideolar(prev => prev.map(x => x.id === v.id ? { ...x, kayeneFiltrelendi: false, filtreliSebep: null } : x));
+      setMesaj(`✓ Dışlama kaldırıldı`);
+    } else {
+      if (!window.confirm(`"${v.baslik?.slice(0, 60)}" dışlananlara alınsın mı?`)) return;
+      await updateDoc(doc(db, 'kayitli_egitimler', v.id), {
+        kayeneFiltrelendi: true,
+        filtreliSebep: 'Manuel (admin)',
+        guncellemeTarihi: serverTimestamp(),
+      });
+      setVideolar(prev => prev.map(x => x.id === v.id ? { ...x, kayeneFiltrelendi: true, filtreliSebep: 'Manuel (admin)' } : x));
+      setMesaj(`✓ Dışlandı`);
+    }
+    setTimeout(() => setMesaj(''), 3000);
+  };
+
+  const handleEditTitle = async (v, yeniBaslik) => {
+    if (!yeniBaslik?.trim() || yeniBaslik === v.baslik) return;
+    try {
+      await updateDoc(doc(db, 'kayitli_egitimler', v.id), {
+        baslik: yeniBaslik.trim(),
+        guncellemeTarihi: serverTimestamp(),
+      });
+      setVideolar(prev => prev.map(x => x.id === v.id ? { ...x, baslik: yeniBaslik.trim() } : x));
+      setMesaj(`✓ Başlık güncellendi`);
+      setTimeout(() => setMesaj(''), 3000);
+    } catch (err) {
+      setMesaj('✗ ' + err.message);
+    }
+  };
+
+  const handleEditAciklama = async (yeniAciklama) => {
+    if (!aciklamaEdit) return;
+    try {
+      await updateDoc(doc(db, 'kayitli_egitimler', aciklamaEdit.id), {
+        aciklama: yeniAciklama,
+        guncellemeTarihi: serverTimestamp(),
+      });
+      setVideolar(prev => prev.map(x => x.id === aciklamaEdit.id ? { ...x, aciklama: yeniAciklama } : x));
+      setAciklamaEdit(null);
+      setMesaj(`✓ Açıklama güncellendi`);
+      setTimeout(() => setMesaj(''), 3000);
+    } catch (err) {
+      setMesaj('✗ ' + err.message);
+    }
+  };
   const handleVimeoSync = async () => {
     if (!auth.currentUser) {
       setMesaj('✗ Giriş gerekli');
@@ -205,18 +276,40 @@ const AdminKayitliEgitimlerTab = () => {
               kategoriler={KATEGORILER}
               kaydediliyor={kaydediliyor[v.id]}
               onKaydet={updates => kaydet(v, updates)}
+              onDelete={() => handleDelete(v)}
+              onExclude={() => handleExclude(v)}
+              onEditTitle={(yeni) => handleEditTitle(v, yeni)}
+              onEditAciklama={() => setAciklamaEdit({ id: v.id, baslik: v.baslik, aciklama: v.aciklama || '' })}
+              onPlay={() => setOynatilan(v)}
             />
           ))}
         </div>
+      )}
+
+      {oynatilan && (
+        <VideoOynatModal video={oynatilan} onClose={() => setOynatilan(null)} />
+      )}
+
+      {aciklamaEdit && (
+        <AciklamaEditModal
+          video={aciklamaEdit}
+          onClose={() => setAciklamaEdit(null)}
+          onKaydet={handleEditAciklama}
+        />
       )}
     </div>
   );
 };
 
 // Tek video satırı — kendi local state'i var
-const VideoRow = ({ video, egitmenOptions, kategoriler, kaydediliyor, onKaydet }) => {
+const VideoRow = ({ video, egitmenOptions, kategoriler, kaydediliyor,
+  onKaydet, onDelete, onExclude, onEditTitle, onEditAciklama, onPlay,
+}) => {
   const [secilenEgitmen, setSecilenEgitmen] = useState(video.egitmenler?.[0] || '');
   const [secilenKategori, setSecilenKategori] = useState(video.kategoriler?.[0] || '');
+  const [menuAcik, setMenuAcik] = useState(false);
+  const [titleEdit, setTitleEdit] = useState(false);
+  const [titleValue, setTitleValue] = useState(video.baslik || '');
 
   const handleKaydet = () => {
     const updates = {};
@@ -224,7 +317,7 @@ const VideoRow = ({ video, egitmenOptions, kategoriler, kaydediliyor, onKaydet }
       const op = egitmenOptions.find(o => o.coreId === secilenEgitmen);
       updates.egitmenler = [secilenEgitmen];
       updates.egitmenAdlari = op ? [op.ad] : [];
-      updates.eslesmemis = false; // artık eşleşti
+      updates.eslesmemis = false;
     }
     if (secilenKategori) {
       updates.kategoriler = [secilenKategori];
@@ -234,10 +327,26 @@ const VideoRow = ({ video, egitmenOptions, kategoriler, kaydediliyor, onKaydet }
     onKaydet(updates);
   };
 
+  const handleTitleSave = () => {
+    onEditTitle(titleValue);
+    setTitleEdit(false);
+  };
+
+  // Click outside menu close
+  useEffect(() => {
+    if (!menuAcik) return;
+    const close = () => setMenuAcik(false);
+    setTimeout(() => document.addEventListener('click', close, { once: true }), 0);
+    return () => document.removeEventListener('click', close);
+  }, [menuAcik]);
+
+  const menuItem = "flex items-center gap-2 w-full px-3 py-2 text-sm hover:bg-gray-100 text-left transition-colors";
+
   return (
-    <div className="bg-white rounded-lg shadow p-4 flex flex-col md:flex-row gap-4">
-      {/* Thumbnail */}
-      <div className="md:w-48 flex-shrink-0">
+    <div className="bg-white rounded-lg shadow p-4 flex flex-col md:flex-row gap-4 relative">
+      {/* Thumbnail (clickable → play) */}
+      <button onClick={onPlay}
+        className="md:w-48 flex-shrink-0 group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded-lg">
         <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
           {video.thumbnailUrl ? (
             <img src={video.thumbnailUrl} alt={video.baslik} loading="lazy"
@@ -247,19 +356,64 @@ const VideoRow = ({ video, egitmenOptions, kategoriler, kaydediliyor, onKaydet }
               <Video className="w-8 h-8 text-gray-300" />
             </div>
           )}
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 flex items-center justify-center transition-all rounded-lg">
+            <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100" fill="currentColor" />
+          </div>
         </div>
-      </div>
+      </button>
 
       {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2 mb-1">
-          <h4 className="font-bold text-gray-900 text-sm md:text-base line-clamp-2">{video.baslik}</h4>
-          {video.vimeoUrl && (
-            <a href={video.vimeoUrl} target="_blank" rel="noopener noreferrer"
-              className="text-purple-600 hover:text-purple-800 flex-shrink-0">
-              <ExternalLink className="w-4 h-4" />
-            </a>
+          {titleEdit ? (
+            <div className="flex-1 flex gap-1">
+              <input type="text" value={titleValue} onChange={e => setTitleValue(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleTitleSave(); if (e.key === 'Escape') setTitleEdit(false); }}
+                autoFocus
+                className="flex-1 px-2 py-1 border-2 border-purple-300 rounded text-sm focus:outline-none focus:border-purple-500" />
+              <button onClick={handleTitleSave} className="px-2 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-bold">OK</button>
+              <button onClick={() => { setTitleEdit(false); setTitleValue(video.baslik); }} className="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded text-xs">İptal</button>
+            </div>
+          ) : (
+            <h4 className="font-bold text-gray-900 text-sm md:text-base line-clamp-2 flex-1">{video.baslik}</h4>
           )}
+
+          {/* Kebab menu */}
+          <div className="relative flex-shrink-0">
+            <button onClick={(e) => { e.stopPropagation(); setMenuAcik(s => !s); }}
+              className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors" aria-label="İşlemler">
+              <MoreVertical className="w-5 h-5 text-gray-500" />
+            </button>
+            {menuAcik && (
+              <div onClick={e => e.stopPropagation()}
+                className="absolute right-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-20 overflow-hidden">
+                <button onClick={() => { setMenuAcik(false); onPlay(); }} className={menuItem}>
+                  <Play className="w-4 h-4 text-purple-600" />Önizle
+                </button>
+                <button onClick={() => { setMenuAcik(false); setTitleEdit(true); }} className={menuItem}>
+                  <Edit2 className="w-4 h-4 text-blue-600" />Başlığı düzenle
+                </button>
+                <button onClick={() => { setMenuAcik(false); onEditAciklama(); }} className={menuItem}>
+                  <FileText className="w-4 h-4 text-indigo-600" />Açıklama düzenle
+                </button>
+                {video.vimeoUrl && (
+                  <a href={video.vimeoUrl} target="_blank" rel="noopener noreferrer"
+                    onClick={() => setMenuAcik(false)} className={menuItem}>
+                    <ExternalLink className="w-4 h-4 text-gray-600" />Vimeo'da aç
+                  </a>
+                )}
+                <div className="border-t border-gray-100" />
+                <button onClick={() => { setMenuAcik(false); onExclude(); }} className={menuItem}>
+                  <Ban className="w-4 h-4 text-orange-600" />
+                  {video.kayeneFiltrelendi ? 'Dışlamadan çıkar' : 'Dışlananlara al'}
+                </button>
+                <button onClick={() => { setMenuAcik(false); onDelete(); }}
+                  className={menuItem + ' text-red-600 hover:bg-red-50'}>
+                  <Trash2 className="w-4 h-4" />Kalıcı sil
+                </button>
+              </div>
+            )}
+          </div>
         </div>
         <div className="text-xs text-gray-500 mb-2 flex flex-wrap gap-2">
           {video.tarih && <span>{video.tarih}</span>}
@@ -292,6 +446,62 @@ const VideoRow = ({ video, egitmenOptions, kategoriler, kaydediliyor, onKaydet }
           </select>
           <button onClick={handleKaydet} disabled={kaydediliyor || (!secilenEgitmen && !secilenKategori)}
             className="inline-flex items-center justify-center gap-1.5 bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg font-semibold text-sm disabled:opacity-50 transition-all">
+            {kaydediliyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+            Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Açıklama düzenleme modalı
+const AciklamaEditModal = ({ video, onClose, onKaydet }) => {
+  const [deger, setDeger] = useState(video.aciklama || '');
+  const [kaydediliyor, setKaydediliyor] = useState(false);
+
+  const handleSave = async () => {
+    setKaydediliyor(true);
+    await onKaydet(deger);
+    setKaydediliyor(false);
+  };
+
+  // ESC ile kapat
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div onClick={e => e.stopPropagation()}
+        className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+        <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-100">
+          <div className="min-w-0">
+            <h3 className="font-bold text-gray-900 text-base mb-0.5">Açıklamayı düzenle</h3>
+            <p className="text-xs text-gray-500 line-clamp-1">{video.baslik}</p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 flex-shrink-0">
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        <div className="flex-1 p-5 overflow-y-auto">
+          <textarea value={deger} onChange={e => setDeger(e.target.value)}
+            rows={12} autoFocus
+            placeholder="Video açıklaması..."
+            className="w-full px-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:outline-none focus:border-purple-500 resize-y font-mono" />
+          <p className="mt-2 text-xs text-gray-400">{deger.length} karakter</p>
+        </div>
+
+        <div className="px-5 py-3 border-t border-gray-100 flex justify-end gap-2">
+          <button onClick={onClose} disabled={kaydediliyor}
+            className="px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-sm font-semibold disabled:opacity-50">
+            İptal
+          </button>
+          <button onClick={handleSave} disabled={kaydediliyor}
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold disabled:opacity-50">
             {kaydediliyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             Kaydet
           </button>
