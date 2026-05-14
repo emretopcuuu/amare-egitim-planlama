@@ -21,6 +21,7 @@ import SablonTasarimModal from '../components/SablonTasarimModal';
 import RaporModal from '../components/RaporModal';
 import AdminKayitliEgitimlerTab from '../components/AdminKayitliEgitimlerTab';
 import YeniEgitmenModal from '../components/YeniEgitmenModal';
+import AdminKategoriSiralama from '../components/AdminKategoriSiralama';
 import { gorselOlustur } from '../utils/gorselOlustur';
 
 // ── Sabitler ────────────────────────────────────────────────────────────────
@@ -1433,7 +1434,10 @@ const AdminPanel = () => {
 
         {/* ===== AYARLAR ===== */}
         {activeTab === 'ayarlar' && (
-          <div>
+          <div className="space-y-6">
+            {/* Kategori Sıralaması */}
+            <AdminKategoriSiralama />
+
             <div className="bg-white rounded-lg shadow p-6 mb-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Takvim Ayarları</h2>
 

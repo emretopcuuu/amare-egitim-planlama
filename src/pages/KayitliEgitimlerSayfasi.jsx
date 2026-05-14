@@ -8,18 +8,17 @@ import {
   Share2, ChevronUp, RotateCcw,
 } from 'lucide-react';
 import { db } from '../utils/firebase';
-import { collection, query, where, orderBy, limit as fbLimit, getDocs } from 'firebase/firestore';
+import { collection, query, where, orderBy, limit as fbLimit, getDocs, doc, getDoc } from 'firebase/firestore';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import VideoOynatModal from '../components/VideoOynatModal';
 import { useToast } from '../components/Toast';
 import { haptic, nativeShare } from '../utils/mobileHelpers';
 
 // ─── Sabitler ────────────────────────────────────────────────────────────
-const KATEGORILER = [
+const VARSAYILAN_KATEGORILER = [
   'Liderlik', 'Satış', 'Motivasyon', 'Davet', 'Kapanış',
   'Sunum Teknikleri', 'Zaman Yönetimi', 'Kişisel Gelişim',
   'Sağlık', 'Finansal Özgürlük', 'Vizyon', 'Hikaye', 'Ürün Eğitimi',
-  // Yeni kategoriler
   'Liste', 'Kazanç Planı', 'Backoffice', 'Odak', 'İtiraz Karşılama',
   'Takip', 'Doğru Başlangıç', 'Kamp', 'Katlama',
 ];
@@ -130,6 +129,7 @@ const KayitliEgitimlerSayfasi = () => {
   // ─── State ─────────────────────────────────────────────────────────────
   const [tumVideolar, setTumVideolar] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [kategoriler, setKategoriler] = useState(VARSAYILAN_KATEGORILER);
   const initKategoriSet = () => new Set((searchParams.get('kat') || '').split(',').filter(Boolean));
   const [kategoriSet, setKategoriSet] = useState(initKategoriSet);
   const [dilKod, setDilKod] = useState(searchParams.get('dil') || 'all');
@@ -161,6 +161,38 @@ const KayitliEgitimlerSayfasi = () => {
     if (sadeceFav) p.fav = '1';
     setSearchParams(p, { replace: true });
   }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav, setSearchParams]);
+
+  // Kategori sıralamasını Firestore'dan yükle (cache 1h)
+  useEffect(() => {
+    const KEY = 'amare_kategori_sirasi_v1';
+    const TTL_KAT = 60 * 60 * 1000;
+    try {
+      const cached = localStorage.getItem(KEY);
+      if (cached) {
+        const { ts, sira } = JSON.parse(cached);
+        if (Date.now() - ts < TTL_KAT && Array.isArray(sira) && sira.length > 0) {
+          // Eksikleri sona ekle (yeni eklendiyse)
+          const mevcut = sira.filter(k => VARSAYILAN_KATEGORILER.includes(k));
+          const eksikler = VARSAYILAN_KATEGORILER.filter(k => !mevcut.includes(k));
+          setKategoriler([...mevcut, ...eksikler]);
+          return;
+        }
+      }
+    } catch {}
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db, 'settings', 'kategori_sirasi'));
+        if (snap.exists() && Array.isArray(snap.data().sira) && snap.data().sira.length > 0) {
+          const sira = snap.data().sira;
+          const mevcut = sira.filter(k => VARSAYILAN_KATEGORILER.includes(k));
+          const eksikler = VARSAYILAN_KATEGORILER.filter(k => !mevcut.includes(k));
+          const tam = [...mevcut, ...eksikler];
+          setKategoriler(tam);
+          try { localStorage.setItem(KEY, JSON.stringify({ ts: Date.now(), sira: tam })); } catch {}
+        }
+      } catch {}
+    })();
+  }, []);
 
   // ─── Veri çek ─────────────────────────────────────────────────────────
   useEffect(() => {
@@ -479,7 +511,7 @@ const KayitliEgitimlerSayfasi = () => {
               className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
                 kategoriSet.size === 0 ? 'bg-amber-400 text-gray-900 shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
               }`}>Tümü</button>
-            {KATEGORILER.map(k => (
+            {kategoriler.map(k => (
               <button key={k} onClick={() => toggleKategori(k)}
                 className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
                   kategoriSet.has(k) ? (KATEGORI_RENK[k] || 'bg-amber-400 text-gray-900') + ' shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
@@ -552,6 +584,7 @@ const KayitliEgitimlerSayfasi = () => {
         <FilterSheet
           onClose={() => setSheetOpen(false)}
           onUygula={onSheetUygula}
+          kategoriler={kategoriler}
           kategoriSet={kategoriSet} setKategoriSet={setKategoriSet}
           egitmenCoreId={egitmenCoreId} setEgitmenCoreId={setEgitmenCoreId} egitmenOpsiyonlari={egitmenOpsiyonlari}
           dilKod={dilKod} setDilKod={setDilKod}
@@ -616,6 +649,7 @@ const EmptyState = ({ onClear, hasFilters }) => (
 // ─── Filter Bottom Sheet ────────────────────────────────────────────────
 const FilterSheet = ({
   onClose, onUygula,
+  kategoriler,
   kategoriSet, setKategoriSet,
   egitmenCoreId, setEgitmenCoreId, egitmenOpsiyonlari,
   dilKod, setDilKod,
@@ -721,7 +755,7 @@ const FilterSheet = ({
           {/* Kategori */}
           <SheetSection icon={Tag} title={`Kategori${kategoriSet.size > 0 ? ` (${kategoriSet.size} seçili)` : ''}`}>
             <div className="flex flex-wrap gap-2">
-              {KATEGORILER.map(k => (
+              {(kategoriler || []).map(k => (
                 <SheetChip key={k} active={kategoriSet.has(k)}
                   onClick={() => toggleKat(k)}
                   color={kategoriSet.has(k) ? KATEGORI_RENK[k] : null}>
