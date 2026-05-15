@@ -7,9 +7,10 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, LogIn, LogOut, Phone, Mail, Hash, CalendarDays, Award,
   MessageCircle, Heart, Video, Bell, Clock, ChevronRight, Loader2,
-  RefreshCw, Trophy, TrendingUp, Sparkles, Edit3, User,
+  RefreshCw, Trophy, TrendingUp, Sparkles, Edit3, User, X,
   Briefcase, Cake, Flame, AlertTriangle, Users, Timer, Target, Hourglass,
-  CheckCircle2,
+  CheckCircle2, TrendingUp as TrendIcon, Zap, Medal, Crown, Star,
+  Share2, Download,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../utils/firebase';
@@ -23,7 +24,8 @@ import { egitmenFotosuBul } from '../utils/egitmenFotoMatch';
 import { maskPhone, normalizePhoneForWa } from '../utils/mask';
 import { useTakipEgitmenler } from '../utils/takip';
 import { parseFunnelAnswers, parseProfileAnswers } from '../utils/onboardingLabels';
-import { useWatchProgress } from '../utils/watchProgress';
+import { useWatchProgress, getTotalWatchedSeconds, getWeeklyWatchedSeconds, getCompletedCount } from '../utils/watchProgress';
+import { updateStreak } from '../utils/streak';
 import { webPushDestekli, webPushIzinDurumu, webPushKaydolu, webPushIptal } from '../utils/webPush';
 import BultenModal from '../components/BultenModal';
 
@@ -72,6 +74,15 @@ const Profil = () => {
   const [videoFav, setVideoFav] = useState(new Set());
   const [yarimKalan, setYarimKalan] = useState([]); // [{videoId, pct, t, baslik, thumbnailUrl}]
   const [favVideoMeta, setFavVideoMeta] = useState([]); // [{id, baslik, thumbnailUrl, egitmenAdlari}]
+  const [streak, setStreak] = useState({ current: 0, longest: 0, total: 0 });
+  const [streakAciklamaAcik, setStreakAciklamaAcik] = useState(false);
+  const [wrappedAcik, setWrappedAcik] = useState(false);
+  const [waModalAcik, setWaModalAcik] = useState(false);
+
+  // İzleme istatistikleri (re-compute on watchProgress.version change)
+  const totalWatched = useMemo(() => getTotalWatchedSeconds(), [watchProgress.version]);
+  const weeklyWatched = useMemo(() => getWeeklyWatchedSeconds(), [watchProgress.version]);
+  const completedCount = useMemo(() => getCompletedCount(), [watchProgress.version]);
 
   // Local favori eğitimler
   useEffect(() => {
@@ -80,6 +91,14 @@ const Profil = () => {
       setVideoFav(new Set(arr));
     } catch {}
   }, []);
+
+  // Streak'i güncelle — sayfa açılışında (login değilse de localStorage'a yazar)
+  useEffect(() => {
+    if (!ready || isAnonymous) return;
+    updateStreak(uid, isAnonymous)
+      .then(s => setStreak(s))
+      .catch(e => console.warn('[profil] streak:', e.message));
+  }, [ready, uid, isAnonymous]);
 
   // Yarım kalan eğitimler (watch progress) + favori video meta'sını Firestore'dan çek
   // watchProgress.version değiştiğinde tekrar fetch — kullanıcı bir video izledikten sonra geri dönerse güncel olur
@@ -292,6 +311,45 @@ const Profil = () => {
     return { bgClass: 'bg-gradient-to-br from-purple-700 via-purple-800 to-indigo-900' };
   }, [profilVerisi?.amare?.rank]);
 
+  // Achievement rozetleri — milestone bazlı, motivasyon
+  const rozetler = useMemo(() => {
+    const uyelikYil = profilVerisi?.uyelikSuresi?.yil || 0;
+    const all = [
+      { key: 'ilk_video', icon: '🎓', label: 'İlk Adım', desc: 'İlk eğitimini izledin', kazanildi: completedCount >= 1 },
+      { key: 'egitim_asigi', icon: '📚', label: 'Eğitim Aşığı', desc: '10+ eğitim tamamladı', kazanildi: completedCount >= 10 },
+      { key: 'usta', icon: '🏆', label: 'Eğitim Ustası', desc: '50+ eğitim tamamladı', kazanildi: completedCount >= 50 },
+      { key: 'sosyal', icon: '❤️', label: 'Sosyal Takipçi', desc: '5+ eğitmen takip ediyor', kazanildi: takipSet.size >= 5 },
+      { key: 'streak_3', icon: '🔥', label: 'Tutkulu', desc: '3 gün üst üste', kazanildi: (streak.longest || 0) >= 3 },
+      { key: 'streak_7', icon: '⚡', label: 'Disiplinli', desc: '7 gün üst üste', kazanildi: (streak.longest || 0) >= 7 },
+      { key: 'streak_30', icon: '🌟', label: 'Efsane', desc: '30 gün üst üste', kazanildi: (streak.longest || 0) >= 30 },
+      { key: 'yil_1', icon: '🎉', label: '1. Yıl', desc: 'One Team yolculuğun 1 yaşında', kazanildi: uyelikYil >= 1 },
+      { key: 'yil_5', icon: '💎', label: 'Sadık Üye', desc: '5+ yıl One Team üyesi', kazanildi: uyelikYil >= 5 },
+      { key: 'yil_10', icon: '👑', label: 'Veteran', desc: '10+ yıl One Team üyesi', kazanildi: uyelikYil >= 10 },
+      { key: 'saat_10', icon: '⏱️', label: 'Adanmış', desc: '10+ saat eğitim izledi', kazanildi: totalWatched >= 10 * 3600 },
+      { key: 'saat_50', icon: '🚀', label: 'Sıçrama', desc: '50+ saat eğitim izledi', kazanildi: totalWatched >= 50 * 3600 },
+    ];
+    return {
+      kazanilan: all.filter(r => r.kazanildi),
+      kazanilmamis: all.filter(r => !r.kazanildi).slice(0, 3), // sıradaki 3 hedefi göster
+      toplam: all.length,
+    };
+  }, [completedCount, takipSet.size, streak.longest, profilVerisi?.uyelikSuresi?.yil, totalWatched]);
+
+  // Profil tamamlama yüzdesi — engagement nudge için
+  const profilTamamlama = useMemo(() => {
+    const checks = [
+      { key: 'avatar', label: 'Profil fotosu', done: !!userDoc?.fotoURL, weight: 20 },
+      { key: 'bio', label: 'Tanıtım metni', done: !!profilVerisi?.member?.bio_data?.tanitim, weight: 25 },
+      { key: 'onboarding', label: 'Onboarding cevapları', done: !!profilVerisi?.onboardingTamamlandi, weight: 25 },
+      { key: 'fav_egitmen', label: 'En az 1 takip eğitmen', done: takipSet.size > 0, weight: 10 },
+      { key: 'fav_video', label: 'En az 1 favori eğitim', done: videoFav.size > 0, weight: 10 },
+      { key: 'video_izle', label: 'En az 1 video izle', done: completedCount > 0 || totalWatched > 60, weight: 10 },
+    ];
+    const pct = checks.reduce((sum, c) => sum + (c.done ? c.weight : 0), 0);
+    const eksik = checks.filter(c => !c.done);
+    return { pct, eksik, checks };
+  }, [userDoc?.fotoURL, profilVerisi, takipSet.size, videoFav.size, completedCount, totalWatched]);
+
   // Üyelik yıldönümü hesapla (Faz 4e)
   const yildonumu = useMemo(() => {
     const regDate = profilVerisi?.amare?.register_date;
@@ -430,6 +488,12 @@ const Profil = () => {
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Geri
         </button>
         <div className="flex items-center gap-2">
+          <button onClick={() => setWrappedAcik(true)}
+            className="bg-amber-400/15 hover:bg-amber-400/30 border border-amber-300/40 text-amber-200 px-3 py-2 rounded-xl transition spring-tap inline-flex items-center gap-1.5 text-xs font-bold"
+            title="Yıllık özet (Wrapped) paylaş">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Wrapped</span>
+          </button>
           <button onClick={() => profilVerisiFetch(true)} disabled={yukleniyor}
             className="bg-white/10 hover:bg-white/20 border border-white/20 text-white p-2 rounded-xl transition disabled:opacity-50 spring-tap"
             title="Yenile">
@@ -468,6 +532,18 @@ const Profil = () => {
           </p>
         )}
 
+        {/* Streak chip — hero altında, animated flame */}
+        {streak.current > 0 && (
+          <button onClick={() => setStreakAciklamaAcik(true)}
+            className="mt-4 inline-flex items-center gap-2 bg-orange-500/15 hover:bg-orange-500/25 border border-orange-400/40 px-3.5 py-1.5 rounded-full transition spring-tap group">
+            <Flame className={`w-4 h-4 text-orange-400 ${streak.current >= 3 ? 'animate-pulse' : ''} group-hover:scale-110 transition-transform`} fill={streak.current >= 7 ? '#fb923c' : 'none'} />
+            <span className="text-orange-200 text-sm font-bold">{streak.current} gün üst üste</span>
+            {streak.longest > streak.current && (
+              <span className="text-orange-300/60 text-[10px] font-semibold border-l border-orange-400/30 pl-2">rekor {streak.longest}</span>
+            )}
+          </button>
+        )}
+
         {hata && (
           <p className="text-red-300 text-xs mt-4 bg-red-500/10 border border-red-400/30 rounded-lg px-3 py-2 inline-block">
             {hata}
@@ -475,17 +551,45 @@ const Profil = () => {
         )}
       </div>
 
-      {/* STATS ROW — cam kart */}
+      {/* STATS ROW — 6 stat (cam kart) */}
       <div className="max-w-3xl mx-auto px-4 mt-2">
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl grid grid-cols-4 divide-x divide-white/10 shadow-xl">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl grid grid-cols-3 sm:grid-cols-6 divide-x divide-white/10 shadow-xl overflow-hidden">
           <StatCell label="Üye" value={u ? `${u.yil}y` : '—'} />
+          <StatCell label="Saat" value={Math.floor(totalWatched / 3600) || 0} highlight={totalWatched > 0} />
+          <StatCell label="İzlenen" value={completedCount} />
           <StatCell label="Favori" value={takipSet.size + videoFav.size} />
-          <StatCell label="İzlenen" value={yarimKalan.length > 0 ? `${yarimKalan.length}+` : '0'} />
+          <StatCell label="Streak" value={streak.current} highlight={streak.current >= 3} />
           <StatCell label="Hatırlatma" value={hatirlatmalar.length} />
         </div>
       </div>
 
       <div className="max-w-3xl mx-auto px-4 mt-8 space-y-6">
+
+        {/* Profil tamamlama banner — sadece eksik varsa göster */}
+        {profilTamamlama.pct < 100 && profilTamamlama.eksik.length > 0 && (
+          <section className="bg-gradient-to-r from-amber-400/15 via-amber-300/10 to-orange-400/15 backdrop-blur-md border border-amber-300/40 rounded-2xl p-4 shadow-xl">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                <h3 className="text-white font-bold text-sm">Profilin %{profilTamamlama.pct} tamam</h3>
+              </div>
+              <span className="text-amber-200 text-xs font-semibold">%{100 - profilTamamlama.pct} kaldı</span>
+            </div>
+            <div className="h-2 bg-white/10 rounded-full overflow-hidden mb-3">
+              <div className="h-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-500" style={{ width: `${profilTamamlama.pct}%` }} />
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {profilTamamlama.eksik.slice(0, 3).map(e => (
+                <span key={e.key} className="text-amber-100 text-[11px] bg-white/5 border border-amber-300/20 rounded-md px-2 py-1">
+                  ◯ {e.label}
+                </span>
+              ))}
+              {profilTamamlama.eksik.length > 3 && (
+                <span className="text-amber-300/60 text-[11px] px-2 py-1">+{profilTamamlama.eksik.length - 3} daha</span>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Yıldönümü banner (Faz 4e) */}
         {yildonumu && (
@@ -579,6 +683,75 @@ const Profil = () => {
           </div>
         )}
 
+        {/* ═══ HAFTALIK HEDEF (onboarding'te seçilen haftalık saat vs gerçek) ═══ */}
+        {funnelCevaplari.find(c => c.key === 'haftaSaat') && (() => {
+          const haftalikHedefRaw = funnelCevaplari.find(c => c.key === 'haftaSaat')?.cevap || '';
+          const haftalikHedefSaat = parseInt(haftalikHedefRaw.match(/\d+/)?.[0] || '5', 10);
+          const gercekSaat = weeklyWatched / 3600;
+          const yuzde = haftalikHedefSaat > 0 ? Math.min(100, (gercekSaat / haftalikHedefSaat) * 100) : 0;
+          const renkBg = yuzde >= 75 ? 'bg-green-500' : yuzde >= 40 ? 'bg-amber-400' : 'bg-rose-400';
+          return (
+            <div>
+              <SectionTitle icon={Target}>Bu Hafta</SectionTitle>
+              <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
+                <div className="flex items-baseline justify-between mb-3">
+                  <div>
+                    <div className="text-purple-200 text-xs uppercase tracking-wider">Hedefin</div>
+                    <div className="text-white font-light text-2xl mt-0.5">{haftalikHedefRaw}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-purple-200 text-xs uppercase tracking-wider">Gerçekleşen</div>
+                    <div className={`font-light text-2xl mt-0.5 ${yuzde >= 75 ? 'text-green-300' : yuzde >= 40 ? 'text-amber-300' : 'text-rose-300'}`}>
+                      {gercekSaat.toFixed(1)} saat
+                    </div>
+                  </div>
+                </div>
+                <div className="h-2.5 bg-black/30 rounded-full overflow-hidden">
+                  <div className={`h-full ${renkBg} transition-all duration-500 shadow-lg`} style={{ width: `${yuzde}%` }} />
+                </div>
+                <p className="text-purple-200/70 text-xs mt-2 text-center">
+                  {yuzde >= 100 ? '🎉 Hedefi aştın!' : yuzde >= 75 ? '🔥 Çok yakın, devam!' : yuzde >= 40 ? '💪 Yolundasın' : yuzde > 0 ? '⏱️ Başlangıç iyi, hızlan' : '🚀 Bu hafta hiç izlemedin'}
+                </p>
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* ═══ ROZETLERİM ═══ */}
+        {rozetler.kazanilan.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <SectionTitle icon={Medal}>Rozetlerim</SectionTitle>
+              <span className="text-purple-300/60 text-[10px] uppercase tracking-wider font-bold">{rozetler.kazanilan.length}/{rozetler.toplam}</span>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
+              <div className="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                {rozetler.kazanilan.map(r => (
+                  <div key={r.key} className="text-center group">
+                    <div className="text-3xl mb-1 group-hover:scale-110 transition-transform" title={r.desc}>{r.icon}</div>
+                    <div className="text-white text-[10px] font-bold truncate">{r.label}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Kazanılmamış (sıradaki) — kilitli */}
+              {rozetler.kazanilmamis.length > 0 && (
+                <>
+                  <div className="text-purple-300/60 text-[10px] uppercase tracking-[0.15em] font-bold mt-5 mb-3">Sıradaki</div>
+                  <div className="grid grid-cols-3 gap-3">
+                    {rozetler.kazanilmamis.map(r => (
+                      <div key={r.key} className="text-center opacity-40 hover:opacity-70 transition-opacity">
+                        <div className="text-2xl mb-1 grayscale">{r.icon}</div>
+                        <div className="text-purple-200/80 text-[10px] font-semibold truncate">{r.label}</div>
+                        <div className="text-purple-300/50 text-[9px] mt-0.5 line-clamp-1">{r.desc}</div>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* ═══ ÜYELİK ═══ */}
         <div>
           <SectionTitle icon={Hash}>Üyelik</SectionTitle>
@@ -607,10 +780,10 @@ const Profil = () => {
                   </div>
                 </div>
                 {sponsorWa && (
-                  <a href={`https://wa.me/${sponsorWa}`} target="_blank" rel="noopener noreferrer"
+                  <button onClick={() => setWaModalAcik(true)}
                     className="bg-green-500 hover:bg-green-400 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shrink-0 shadow-lg spring-tap">
                     <MessageCircle className="w-3.5 h-3.5" /> İletişime geç
-                  </a>
+                  </button>
                 )}
               </div>
             </div>
@@ -776,6 +949,76 @@ const Profil = () => {
 
       <UyeGirisModal acik={girisModalAcik} onClose={() => setGirisModalAcik(false)} />
       {bultenModalAcik && <BultenModal onClose={handleBultenClose} />}
+
+      {/* Streak açıklama modal */}
+      {streakAciklamaAcik && (
+        <SimpleModal onClose={() => setStreakAciklamaAcik(false)} title="Günlük Streak'in 🔥">
+          <div className="text-center py-4">
+            <Flame className="w-16 h-16 text-orange-400 mx-auto mb-3" fill="#fb923c" />
+            <div className="text-white text-3xl font-light mb-1">{streak.current} gün</div>
+            <p className="text-purple-200 text-sm">Üst üste site açtın</p>
+            <div className="mt-6 grid grid-cols-2 gap-3 text-left">
+              <div className="bg-white/5 rounded-lg p-3">
+                <div className="text-purple-300/70 text-[10px] uppercase">Rekor</div>
+                <div className="text-amber-300 font-bold text-lg">{streak.longest} gün</div>
+              </div>
+              <div className="bg-white/5 rounded-lg p-3">
+                <div className="text-purple-300/70 text-[10px] uppercase">Toplam Giriş</div>
+                <div className="text-white font-bold text-lg">{streak.total} gün</div>
+              </div>
+            </div>
+            <p className="text-purple-200/80 text-xs mt-5 leading-relaxed">
+              Her gün giriş yaparak streak'ini büyütebilirsin. 1 gün atlarsan sıfırlanır 😔
+              {streak.current >= 7 && (<><br/><span className="text-amber-300 font-semibold">⚡ Disiplin rozeti kazandın!</span></>)}
+            </p>
+          </div>
+        </SimpleModal>
+      )}
+
+      {/* Sponsor WhatsApp template modal */}
+      {waModalAcik && sponsorWa && (
+        <SimpleModal onClose={() => setWaModalAcik(false)} title={`${sponsorAd}'a Mesaj Yaz`}>
+          <div className="space-y-2 mt-2">
+            <p className="text-purple-200 text-sm mb-4">Hızlı bir başlangıç için bir şablon seç:</p>
+            {[
+              { ikon: '👋', baslik: 'Merhaba', mesaj: `Merhaba ${sponsorAd?.split(' ')[0] || ''}, nasılsın? Sana selam etmek istedim.` },
+              { ikon: '📞', baslik: 'Görüşme İste', mesaj: `Merhaba ${sponsorAd?.split(' ')[0] || ''}, müsait olduğun bir zaman görüşmek isterim. Ne zaman uygun olursun?` },
+              { ikon: '❓', baslik: 'Soru Sor', mesaj: `Merhaba ${sponsorAd?.split(' ')[0] || ''}, eğitimle ilgili bir sorum var. Konuşmak için müsait misin?` },
+              { ikon: '🎓', baslik: 'Eğitim Önerisi', mesaj: `Merhaba ${sponsorAd?.split(' ')[0] || ''}, başlamam için hangi eğitimleri önerirsin?` },
+              { ikon: '✍️', baslik: 'Boş Mesaj', mesaj: '' },
+            ].map(t => (
+              <a key={t.baslik}
+                href={`https://wa.me/${sponsorWa}${t.mesaj ? '?text=' + encodeURIComponent(t.mesaj) : ''}`}
+                target="_blank" rel="noopener noreferrer"
+                onClick={() => setWaModalAcik(false)}
+                className="block bg-white/5 hover:bg-white/15 border border-white/10 hover:border-green-400/40 rounded-xl px-4 py-3 transition spring-tap">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{t.ikon}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white font-bold text-sm">{t.baslik}</div>
+                    {t.mesaj && <div className="text-purple-200/70 text-xs mt-0.5 line-clamp-2">"{t.mesaj}"</div>}
+                  </div>
+                  <MessageCircle className="w-4 h-4 text-green-400" />
+                </div>
+              </a>
+            ))}
+          </div>
+        </SimpleModal>
+      )}
+
+      {/* Yıllık Wrapped kartı modal */}
+      {wrappedAcik && (
+        <WrappedKart
+          onClose={() => setWrappedAcik(false)}
+          fullName={fullName}
+          rank={a?.rank}
+          totalWatched={totalWatched}
+          completedCount={completedCount}
+          favCount={takipSet.size + videoFav.size}
+          streakLongest={streak.longest}
+          uyelikYil={profilVerisi?.uyelikSuresi?.yil || 0}
+        />
+      )}
     </div>
   );
 };
@@ -796,10 +1039,10 @@ const Stat = ({ label, value }) => (
   </div>
 );
 
-const StatCell = ({ label, value }) => (
+const StatCell = ({ label, value, highlight = false }) => (
   <div className="text-center px-2 py-4">
-    <div className="text-white font-light text-2xl leading-none tracking-tight">{value}</div>
-    <div className="text-amber-300/80 text-[10px] uppercase tracking-[0.15em] mt-2 font-semibold">{label}</div>
+    <div className={`font-light text-2xl leading-none tracking-tight ${highlight ? 'text-amber-300' : 'text-white'}`}>{value}</div>
+    <div className={`text-[10px] uppercase tracking-[0.15em] mt-2 font-semibold ${highlight ? 'text-amber-300' : 'text-amber-300/60'}`}>{label}</div>
   </div>
 );
 
@@ -808,6 +1051,83 @@ const SectionTitle = ({ children, icon: Icon }) => (
     {Icon && <Icon className="w-3 h-3 text-amber-300" />}
     <h3 className="text-amber-300 text-[11px] font-bold uppercase tracking-[0.25em]">{children}</h3>
     <div className="flex-1 h-px bg-gradient-to-r from-amber-300/30 to-transparent" />
+  </div>
+);
+
+// Brand uyumlu basit modal — overlay + glass kart
+const SimpleModal = ({ onClose, title, children }) => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+    <div className="bg-gradient-to-br from-purple-900 to-indigo-900 border border-white/20 rounded-2xl shadow-2xl w-full max-w-md p-6 relative" onClick={e => e.stopPropagation()}>
+      <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
+        <X className="w-4 h-4" />
+      </button>
+      {title && <h3 className="text-white text-lg font-bold mb-2 pr-8">{title}</h3>}
+      {children}
+    </div>
+  </div>
+);
+
+// Yıllık Wrapped paylaşılabilir kart — Spotify Wrapped tarzı
+const WrappedKart = ({ onClose, fullName, rank, totalWatched, completedCount, favCount, streakLongest, uyelikYil }) => {
+  const yil = new Date().getFullYear();
+  const saat = Math.floor(totalWatched / 3600);
+
+  const handleShare = async () => {
+    const text = `🎉 ${yil} OneTeam Wrapped\n\n${fullName}\n${rank || ''}\n\n⏱️ ${saat} saat eğitim\n📚 ${completedCount} eğitim tamamlandı\n❤️ ${favCount} favori\n🔥 ${streakLongest} gün rekor streak\n💎 ${uyelikYil}+ yıl üye\n\negitimtakvimi.oneteamglobal.ai`;
+    if (navigator.share) {
+      try { await navigator.share({ title: 'OneTeam Wrapped', text }); }
+      catch {}
+    } else {
+      navigator.clipboard.writeText(text);
+      alert('Panoya kopyalandı!');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
+      <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600 rounded-3xl shadow-2xl w-full max-w-sm p-8 relative overflow-hidden text-center" onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white transition z-10">
+          <X className="w-4 h-4" />
+        </button>
+        {/* Bg deko */}
+        <div className="absolute -top-10 -right-10 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
+
+        <div className="relative">
+          <div className="text-white/80 text-xs uppercase tracking-[0.3em] font-bold mb-1">{yil}</div>
+          <h2 className="text-white text-3xl font-extrabold mb-1">OneTeam</h2>
+          <div className="text-white/90 text-2xl font-light italic mb-6">Wrapped</div>
+
+          <div className="bg-white/15 backdrop-blur-md rounded-2xl p-5 space-y-3 text-left mb-5">
+            <div className="flex items-center justify-between border-b border-white/20 pb-2">
+              <div>
+                <div className="text-white font-bold text-base">{fullName}</div>
+                {rank && <div className="text-white/80 text-xs uppercase tracking-wider">{rank}</div>}
+              </div>
+              <Trophy className="w-6 h-6 text-white/80" />
+            </div>
+            <WrappedRow label="Toplam Saat" value={`${saat}h`} />
+            <WrappedRow label="Tamamlanan Eğitim" value={completedCount} />
+            <WrappedRow label="Favori" value={favCount} />
+            <WrappedRow label="Rekor Streak" value={`${streakLongest} gün`} />
+            <WrappedRow label="Üyelik" value={`${uyelikYil}+ yıl`} />
+          </div>
+
+          <button onClick={handleShare}
+            className="w-full bg-white hover:bg-white/95 text-orange-700 font-bold py-3 rounded-xl shadow-xl spring-tap inline-flex items-center justify-center gap-2">
+            <Share2 className="w-4 h-4" /> Paylaş
+          </button>
+          <p className="text-white/70 text-[10px] mt-3 tracking-wider">egitimtakvimi.oneteamglobal.ai</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const WrappedRow = ({ label, value }) => (
+  <div className="flex items-center justify-between">
+    <span className="text-white/80 text-sm">{label}</span>
+    <span className="text-white font-bold text-base">{value}</span>
   </div>
 );
 

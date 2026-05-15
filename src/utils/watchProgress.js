@@ -59,6 +59,42 @@ export function clearCompleted() {
   saveAll(filtered);
 }
 
+// Toplam izleme saati (saniye) — engagement metric
+// Tamamlanmış videolar için duration sayar, yarım kalanlar için t sayar
+export function getTotalWatchedSeconds() {
+  const all = loadAll();
+  let total = 0;
+  for (const p of Object.values(all)) {
+    if (!p) continue;
+    // Tamamlanmış (>= COMPLETED_PCT) → duration kadar
+    // Yarım → t (mevcut konum) kadar
+    total += (p.pct >= COMPLETED_PCT) ? (p.duration || 0) : (p.t || 0);
+  }
+  return total;
+}
+
+// Bu hafta izlenen saat (engagement loop için — hedef vs gerçek)
+export function getWeeklyWatchedSeconds() {
+  const all = loadAll();
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  let total = 0;
+  for (const p of Object.values(all)) {
+    if (!p || !p.lastSeen || p.lastSeen < sevenDaysAgo) continue;
+    total += (p.pct >= COMPLETED_PCT) ? (p.duration || 0) : (p.t || 0);
+  }
+  return total;
+}
+
+// Tamamlanmış video sayısı
+export function getCompletedCount() {
+  const all = loadAll();
+  let n = 0;
+  for (const p of Object.values(all)) {
+    if (p && p.pct >= COMPLETED_PCT) n++;
+  }
+  return n;
+}
+
 // "Yarıda kaldıkların" listesi (lastSeen desc, max N)
 export function getResumableList(allVideos, max = 12) {
   if (!allVideos?.length) return [];
