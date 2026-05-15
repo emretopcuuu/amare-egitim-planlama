@@ -75,6 +75,55 @@ export const FUNNEL_QUESTIONS = [
   // 5. soru "önce öğren" — gösterilmesi anlamsız, gizli
 ];
 
+// Verilen bio_data JSON ({ yas, meslek, heyecan, tanitim, bio_metin, v:1 })
+// → render edilebilir array: yaş, meslek, heyecan (chip'ler)
+// Tanıtım metni ayrı, free text — kullanıcı yazdıysa
+export function parseProfileAnswers(bioData) {
+  if (!bioData || typeof bioData !== 'object') return { chips: [], tanitim: null };
+  const chips = [];
+
+  // Yaş
+  if (bioData.yas !== undefined && bioData.yas !== null) {
+    const opts = PROFILE_QUESTIONS[0].opts;
+    chips.push({
+      key: 'yas',
+      soru: 'Yaş',
+      cevap: typeof bioData.yas === 'number' ? opts[bioData.yas] : 'Diğer',
+    });
+  }
+
+  // Meslek
+  if (bioData.meslek !== undefined && bioData.meslek !== null) {
+    const opts = PROFILE_QUESTIONS[1].opts;
+    chips.push({
+      key: 'meslek',
+      soru: 'Meslek',
+      cevap: typeof bioData.meslek === 'number' ? opts[bioData.meslek] : 'Diğer',
+    });
+  }
+
+  // Heyecanlandıran (multi)
+  if (bioData.heyecan !== undefined && bioData.heyecan !== null) {
+    const opts = PROFILE_QUESTIONS[2].opts;
+    let cevap;
+    if (Array.isArray(bioData.heyecan)) {
+      cevap = bioData.heyecan.map(i => opts[i]).filter(Boolean).join(', ');
+    } else if (typeof bioData.heyecan === 'number') {
+      cevap = opts[bioData.heyecan];
+    } else {
+      cevap = 'Diğer';
+    }
+    if (cevap) chips.push({ key: 'heyecan', soru: 'Heyecanlandıran', cevap });
+  }
+
+  // Tanıtım (free text)
+  const tanitim = typeof bioData.tanitim === 'string' && bioData.tanitim.trim()
+    ? bioData.tanitim.trim()
+    : null;
+
+  return { chips, tanitim };
+}
+
 // Verilen funnel_answers JSON ({0: 1, 1: 0, ...}) → render edilebilir array
 // Output: [{ key, soru, cevap }]
 export function parseFunnelAnswers(funnelAnswers) {

@@ -8,6 +8,8 @@ import {
   ArrowLeft, LogIn, LogOut, Phone, Mail, Hash, CalendarDays, Award,
   MessageCircle, Heart, Video, Bell, Clock, ChevronRight, Loader2,
   RefreshCw, Trophy, TrendingUp, Sparkles, Edit3, User,
+  Briefcase, Cake, Flame, AlertTriangle, Users, Timer, Target, Hourglass,
+  CheckCircle2,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../utils/firebase';
@@ -20,7 +22,7 @@ import ProfilAvatar from '../components/ProfilAvatar';
 import { egitmenFotosuBul } from '../utils/egitmenFotoMatch';
 import { maskPhone, normalizePhoneForWa } from '../utils/mask';
 import { useTakipEgitmenler } from '../utils/takip';
-import { parseFunnelAnswers } from '../utils/onboardingLabels';
+import { parseFunnelAnswers, parseProfileAnswers } from '../utils/onboardingLabels';
 import { useWatchProgress } from '../utils/watchProgress';
 import { webPushDestekli, webPushIzinDurumu, webPushKaydolu, webPushIptal } from '../utils/webPush';
 import BultenModal from '../components/BultenModal';
@@ -272,6 +274,12 @@ const Profil = () => {
     [profilVerisi]
   );
 
+  // Profile soruları (yaş, meslek, heyecanlandıran, tanıtım) — bio_data'dan parse
+  const profileCevaplari = useMemo(
+    () => parseProfileAnswers(profilVerisi?.member?.bio_data),
+    [profilVerisi]
+  );
+
   // Rank rengini hesapla (Faz 4c)
   const rankGradient = useMemo(() => {
     const r = (profilVerisi?.amare?.rank || '').toLowerCase();
@@ -473,33 +481,77 @@ const Profil = () => {
           </section>
         )}
 
-        {/* BLOK 0 — Hakkımda (onboarding cevapları + bio) — Faz 2 */}
-        {(m?.bio || funnelCevaplari.length > 0 || careerData) && (
+        {/* BLOK 0 — Hakkımda (onboarding cevapları + bio + kariyer) — Faz 2 (A+B paketi) */}
+        {(m?.bio || m?.bio_data || funnelCevaplari.length > 0 || careerData || profileCevaplari.chips.length > 0) && (
           <section className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
                 <User className="w-4 h-4 text-purple-300" /> Hakkımda
               </h2>
               <a href={`https://oneteamglobal.ai/?amid=${encodeURIComponent(profilVerisi?.amareId || '')}&return=${encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil')}`}
-                className="text-purple-300 hover:text-amber-300 p-1.5 rounded-lg hover:bg-white/5 transition" title="Cevapları güncelle">
-                <Edit3 className="w-3.5 h-3.5" />
+                className="text-purple-300 hover:text-amber-300 p-1.5 rounded-lg hover:bg-white/5 transition flex items-center gap-1 text-xs font-semibold" title="Cevapları yeniden doldur">
+                <Edit3 className="w-3.5 h-3.5" /> Güncelle
               </a>
             </div>
 
-            {m?.bio && (
+            {/* Tanıtım metni — kullanıcının kendi yazdığı serbest metin (en üstte, en görünür) */}
+            {profileCevaplari.tanitim ? (
+              <div className="mb-4 bg-gradient-to-br from-amber-400/10 to-orange-500/10 border border-amber-300/30 rounded-xl p-3.5">
+                <div className="text-amber-300 text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                  <Sparkles className="w-3 h-3" /> Beni şöyle tanıt
+                </div>
+                <p className="text-white/95 text-sm leading-relaxed">"{profileCevaplari.tanitim}"</p>
+              </div>
+            ) : m?.bio && (
               <blockquote className="text-purple-100/90 text-sm italic leading-relaxed mb-4 pl-3 border-l-2 border-amber-400/50 bg-white/5 py-2 pr-3 rounded-r-lg">
                 {m.bio}
               </blockquote>
             )}
 
-            {funnelCevaplari.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {funnelCevaplari.map((q) => (
-                  <div key={q.key} className="bg-white/5 rounded-lg px-3 py-2 border border-white/5">
-                    <div className="text-purple-300/70 text-[10px] uppercase tracking-wider">{q.soru}</div>
-                    <div className="text-white font-semibold text-xs mt-0.5 line-clamp-2">{q.cevap}</div>
+            {/* Tüm chip'ler: profile (yaş/meslek/heyecan) + funnel (motivasyon/endişe/çevre/saat) + kariyer (hedef/süre/saat) */}
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                // Profile cevapları (yaş, meslek, heyecan)
+                ...profileCevaplari.chips.map(c => ({
+                  ...c,
+                  ...(c.key === 'yas' && { icon: Cake, renk: 'from-pink-500/20 to-rose-500/20 border-pink-400/30', iconColor: 'text-pink-300' }),
+                  ...(c.key === 'meslek' && { icon: Briefcase, renk: 'from-slate-500/20 to-gray-500/20 border-slate-400/30', iconColor: 'text-slate-300' }),
+                  ...(c.key === 'heyecan' && { icon: Flame, renk: 'from-orange-500/20 to-red-500/20 border-orange-400/30', iconColor: 'text-orange-300' }),
+                })),
+                // Funnel cevapları (motivasyon, endişe, çevre, saat)
+                ...funnelCevaplari.map(c => ({
+                  ...c,
+                  ...(c.key === 'motivasyon' && { icon: Sparkles, renk: 'from-purple-500/20 to-indigo-500/20 border-purple-400/30', iconColor: 'text-purple-300' }),
+                  ...(c.key === 'korku' && { icon: AlertTriangle, renk: 'from-yellow-500/20 to-amber-500/20 border-yellow-400/30', iconColor: 'text-yellow-300' }),
+                  ...(c.key === 'cevre' && { icon: Users, renk: 'from-pink-500/20 to-fuchsia-500/20 border-pink-400/30', iconColor: 'text-pink-300' }),
+                  ...(c.key === 'haftaSaat' && { icon: Timer, renk: 'from-blue-500/20 to-cyan-500/20 border-blue-400/30', iconColor: 'text-blue-300' }),
+                })),
+                // Kariyer (rank, süre, günlük çalışma)
+                ...(careerData?.rank ? [{ key: 'hedef', soru: 'Hedef', cevap: careerData.rank, icon: Target, renk: 'from-amber-400/25 to-orange-500/25 border-amber-300/40', iconColor: 'text-amber-300' }] : []),
+                ...(careerData?.time ? [{ key: 'sure', soru: 'Süre', cevap: careerData.time, icon: Hourglass, renk: 'from-cyan-500/20 to-teal-500/20 border-cyan-400/30', iconColor: 'text-cyan-300' }] : []),
+                ...(careerData?.hours ? [{ key: 'gunluk', soru: 'Günlük', cevap: careerData.hours, icon: Clock, renk: 'from-emerald-500/20 to-green-500/20 border-emerald-400/30', iconColor: 'text-emerald-300' }] : []),
+              ].map((q) => {
+                const Icon = q.icon || User;
+                return (
+                  <div key={q.key} className={`bg-gradient-to-br ${q.renk || 'from-white/5 to-white/5 border-white/10'} rounded-lg px-3 py-2.5 border`}>
+                    <div className="flex items-center gap-1.5 mb-1">
+                      <Icon className={`w-3 h-3 ${q.iconColor || 'text-purple-300'}`} />
+                      <div className="text-white/70 text-[10px] uppercase tracking-wider font-semibold">{q.soru}</div>
+                    </div>
+                    <div className="text-white font-bold text-xs leading-tight line-clamp-2">{q.cevap}</div>
                   </div>
-                ))}
+                );
+              })}
+            </div>
+
+            {/* Onboarding tamamlanma badge (A3) */}
+            {m?.onboarding_completed_at && (
+              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 text-emerald-300">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span className="font-semibold">Profil tamamlandı</span>
+                </div>
+                <span className="text-purple-300/60">{formatTarih(m.onboarding_completed_at)}</span>
               </div>
             )}
           </section>
@@ -542,44 +594,7 @@ const Profil = () => {
           )}
         </section>
 
-        {/* BLOK 2 — Onboarding kariyer planı (varsa) */}
-        {(careerData || m?.onboarding_completed_at) && (
-          <section className="bg-gradient-to-br from-amber-400/10 to-orange-500/10 backdrop-blur-md border border-amber-300/30 rounded-2xl p-5">
-            <h2 className="text-white font-bold text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-amber-400" /> Kariyer Planım
-            </h2>
-            {careerData && (
-              <div className="space-y-2">
-                {careerData.rank && (
-                  <div className="bg-white/10 rounded-xl p-3 flex items-center justify-between">
-                    <div>
-                      <div className="text-purple-300/80 text-xs">Hedef</div>
-                      <div className="text-white font-bold text-lg">{careerData.rank}</div>
-                    </div>
-                    <Award className="w-8 h-8 text-amber-400" />
-                  </div>
-                )}
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  {careerData.income && <Stat label="Aylık" value={`${careerData.income} TL`} />}
-                  {careerData.time && <Stat label="Süre" value={careerData.time} />}
-                  {careerData.hours && <Stat label="Günlük" value={careerData.hours} />}
-                  {careerData.roi && <Stat label="ROI" value={`${careerData.roi} ay`} />}
-                </div>
-              </div>
-            )}
-            {m?.progress_pct != null && (
-              <div className="mt-3">
-                <div className="flex justify-between text-xs mb-1">
-                  <span className="text-purple-200">Onboarding ilerleme</span>
-                  <span className="text-amber-300 font-bold">%{m.progress_pct}</span>
-                </div>
-                <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-                  <div className="h-full bg-gradient-to-r from-amber-400 to-orange-500" style={{ width: `${m.progress_pct}%` }} />
-                </div>
-              </div>
-            )}
-          </section>
-        )}
+        {/* Kariyer Planı bloğu Hakkımda'ya entegre edildi — silindi */}
 
         {/* BLOK — Yarım kalan eğitimler (Faz 4a) */}
         {yarimKalan.length > 0 && (

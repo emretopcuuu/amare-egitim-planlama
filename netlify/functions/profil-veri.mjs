@@ -115,6 +115,23 @@ export default async (req) => {
     const amare = (amareRows && amareRows[0]) || null;
     const member = (memberRows && memberRows[0]) || null;
 
+    // members.bio: yeni format JSON { yas, meslek, heyecan, tanitim, bio_metin, v:1 }
+    // eski format: düz string. Backward-compatible parse:
+    if (member && member.bio && typeof member.bio === 'string') {
+      const trimmed = member.bio.trim();
+      if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (parsed && typeof parsed === 'object') {
+            member.bio_data = parsed; // yapılandırılmış cevaplar
+            member.bio = parsed.bio_metin || ''; // gösterim için düz metin
+          }
+        } catch {
+          // JSON değil, düz string olarak bırak
+        }
+      }
+    }
+
     // 4b. Sponsor bilgisi — enroller_amare_id veya sponsor_amare_id ile ikinci sorgu
     if (amare) {
       const sponsorId = amare.enroller_amare_id
