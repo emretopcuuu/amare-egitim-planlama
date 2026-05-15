@@ -9,6 +9,22 @@ rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
 
+    // Admin email whitelist — Firestore rules ile senkron
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email in [
+          's.emretopcu@gmail.com',
+          'onlineakademin@gmail.com',
+          'toygarsenelmis@gmail.com',
+          'alper.kirbiyik@gmail.com',
+          'vitamindestegi@gmail.com',
+          'kmaziliguney@gmail.com',
+          'ilknurakkas17@gmail.com',
+          'giray70@gmail.com',
+          'furkancite@gmail.com'
+        ];
+    }
+
     // Profil fotoları: /users-foto/{uid}.jpg
     // Herkes okur (profil avatar görünür), sadece sahibi yazar
     // Max 1MB — frontend zaten 512x512 resize yapıyor
@@ -20,6 +36,22 @@ service firebase.storage {
         && request.resource.contentType.matches('image/.*');
       allow delete: if request.auth != null
         && fileName.matches(request.auth.uid + '\\..*');
+    }
+
+    // Eğitim posterleri: /posters/*
+    // Herkes okur (poster gösterilir takvimde), sadece admin yazar/siler
+    // Max 5MB — yüksek çözünürlüklü poster
+    match /posters/{fileName} {
+      allow read: if true;
+      allow write, delete: if isAdmin()
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
+    // Eğitim ekleri / dökümanlar (varsa ileride genişletilebilir)
+    match /uploads/{fileName} {
+      allow read: if true;
+      allow write, delete: if isAdmin();
     }
 
     // Diğer her path — kapalı
