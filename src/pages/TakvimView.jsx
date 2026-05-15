@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw, LogIn, LogOut } from 'lucide-react';
+import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw, LogIn, LogOut, UserCircle } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import EventActions from '../components/EventActions';
@@ -833,10 +833,13 @@ const TakvimView = () => {
                   </button>
                 ) : (
                   <div className="flex items-center gap-1">
-                    <div className="hidden sm:flex items-center gap-1.5 bg-green-400/15 border border-green-300/30 text-green-100 px-3 py-2 rounded-xl text-xs font-semibold">
+                    <button onClick={() => navigate('/profil')}
+                      title="Profilim"
+                      className="flex items-center gap-1.5 bg-green-400/15 hover:bg-green-400/25 border border-green-300/30 text-green-100 px-3 py-2 rounded-xl text-xs font-semibold transition spring-tap">
                       <div className="w-2 h-2 rounded-full bg-green-400" />
-                      {displayName?.split(' ')[0] || email?.split('@')[0] || 'Üye'}
-                    </div>
+                      <span className="hidden sm:inline">{displayName?.split(' ')[0] || email?.split('@')[0] || 'Üye'}</span>
+                      <UserCircle className="w-4 h-4 sm:hidden" />
+                    </button>
                     <button onClick={() => signOut(auth)}
                       title="Çıkış yap"
                       className="bg-white/10 hover:bg-white/20 border border-white/20 text-white p-2 rounded-xl transition spring-tap">
