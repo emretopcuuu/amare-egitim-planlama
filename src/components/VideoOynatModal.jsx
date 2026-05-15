@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { X, Calendar, Eye, Clock, Tag, Video as VideoIcon, Play } from 'lucide-react';
 import { useVimeoTimeTracker } from '../utils/useVimeoTimeTracker';
 import { updateProgress } from '../utils/watchProgress';
+import { useAuth } from '../context/AuthContext';
 
 function formatSure(saniye) {
   if (!saniye || saniye < 1) return null;
@@ -24,6 +25,17 @@ function formatPlays(n) {
 const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = null }) => {
   const [aciklamaAcik, setAciklamaAcik] = useState(false);
   const iframeRef = useRef(null);
+  const { isAuthenticated } = useAuth();
+
+  // BYPASS koruması: programatik açma denenirse, login yoksa modal'ı kapa
+  useEffect(() => {
+    if (video && !isAuthenticated) {
+      console.warn('[video] Yetkisiz oynatma denemesi engellendi');
+      onClose?.();
+    }
+  }, [video, isAuthenticated, onClose]);
+
+  if (video && !isAuthenticated) return null;
 
   // Watch progress tracker — Vimeo postMessage ile zamanı dinler
   const handleTimeUpdate = useCallback((seconds, duration) => {

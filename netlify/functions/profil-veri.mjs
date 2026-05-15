@@ -152,7 +152,7 @@ export default async (req) => {
     if (member?.id) {
       try {
         const progressRows = await supabaseGet(
-          `progress?select=quiz_score,training_done,completion_pct,career_done,career_target,time_target,hours_daily,updated_at&` +
+          `progress?select=quiz_score,training_done,completion_pct,career_done,career_target,time_target,hours_daily,funnel_answers,profile_done,funnel_done,updated_at&` +
           `member_id=eq.${encodeURIComponent(member.id)}&limit=1`
         );
         progress = (progressRows && progressRows[0]) || null;
@@ -176,6 +176,15 @@ export default async (req) => {
       }
     }
 
+    // 7. Onboarding tamamlanma flag'i — Faz 3 gating mantığı için.
+    // member.status === 'completed' VEYA progress.training_done === true ise tamam.
+    // member kaydı yoksa = onboarding hiç başlamamış (eski üye)
+    const onboardingTamamlandi = !!(
+      member?.status === 'completed'
+      || progress?.training_done === true
+    );
+    const onboardingBaslatilmis = !!member;
+
     // 6. Üyelik süresi hesapla
     let uyelikSuresi = null;
     if (amare?.register_date) {
@@ -193,6 +202,8 @@ export default async (req) => {
       member,
       progress,
       uyelikSuresi,
+      onboardingTamamlandi,
+      onboardingBaslatilmis,
     });
 
   } catch (err) {

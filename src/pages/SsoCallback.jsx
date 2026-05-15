@@ -27,6 +27,8 @@ const SsoCallback = () => {
     const amareId = params.get('uye') || null;
     const email = params.get('e') || null;
     const fullName = params.get('n') || null;
+    // Return URL — onboarding zorunlu yönlendirmesinden geri dönen kullanıcı buraya gider
+    const returnUrl = params.get('r') || null;
 
     if (!token) {
       setDurum('hata');
@@ -53,8 +55,14 @@ const SsoCallback = () => {
         }, { merge: true });
 
         setDurum('basarili');
-        setMesaj('Hoş geldin! Takvime yönlendiriliyorsun...');
-        setTimeout(() => navigate('/takvim', { replace: true }), 1200);
+        // Return URL varsa oraya, yoksa /takvim'e dön
+        if (returnUrl && /^https?:\/\/(egitimtakvimi\.oneteamglobal\.ai|localhost)/.test(returnUrl)) {
+          setMesaj('Profiline yönlendiriliyorsun...');
+          setTimeout(() => { window.location.href = returnUrl; }, 1000);
+        } else {
+          setMesaj('Hoş geldin! Takvime yönlendiriliyorsun...');
+          setTimeout(() => navigate('/takvim', { replace: true }), 1200);
+        }
       } catch (err) {
         console.error('[sso-callback] hata:', err);
         setDurum('hata');

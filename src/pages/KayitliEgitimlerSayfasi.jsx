@@ -12,6 +12,8 @@ import { collection, query, where, orderBy, limit as fbLimit, getDocs, doc, getD
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import VideoOynatModal from '../components/VideoOynatModal';
 import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
+import UyeGirisModal from '../components/UyeGirisModal';
+import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
 import { useToast } from '../components/Toast';
 import { haptic, nativeShare } from '../utils/mobileHelpers';
@@ -191,6 +193,9 @@ const KayitliEgitimlerSayfasi = () => {
   const [oynatilan, setOynatilan] = useState(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  // Auth gating — video izleme için üye girişi gerekir
+  const { isAuthenticated } = useAuth();
+  const [girisModalAcik, setGirisModalAcik] = useState(false);
 
   const [favoriler, setFavoriler] = useState(() => loadSet(FAV_KEY));
   const [gecmis, setGecmis] = useState(() => new Set(loadList(HIST_KEY)));
@@ -559,6 +564,12 @@ const KayitliEgitimlerSayfasi = () => {
   };
 
   const handleOynat = useCallback((v, startSn = null) => {
+    // GATE: Üye olmayan video izleyemez
+    if (!isAuthenticated) {
+      haptic(8);
+      setGirisModalAcik(true);
+      return;
+    }
     haptic(5);
     setGecmis(s => {
       const list = [v.id, ...[...s].filter(x => x !== v.id)].slice(0, HIST_MAX);
@@ -575,7 +586,7 @@ const KayitliEgitimlerSayfasi = () => {
     }
     setSeekTo(resumeAt);
     setOynatilan(v);
-  }, [watchProgress]);
+  }, [watchProgress, isAuthenticated]);
 
   // URL'den ?v=ID&t=SEC ile direkt oynat
   useEffect(() => {
@@ -698,6 +709,25 @@ const KayitliEgitimlerSayfasi = () => {
               </button>
             )}
           </p>
+
+          {/* Üye girişi banner — sadece anonim kullanıcı için */}
+          {!isAuthenticated && (
+            <button onClick={() => setGirisModalAcik(true)}
+              className="mt-3 w-full bg-gradient-to-r from-amber-400/20 via-amber-300/15 to-amber-400/20 hover:from-amber-400/30 hover:via-amber-300/25 hover:to-amber-400/30 border border-amber-300/40 rounded-xl px-3 py-2 flex items-center justify-between gap-3 transition-all spring-tap group">
+              <div className="flex items-center gap-2.5 text-left min-w-0">
+                <div className="w-8 h-8 rounded-lg bg-amber-400 flex items-center justify-center flex-shrink-0 shadow-lg">
+                  <svg className="w-4 h-4 text-purple-900" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/></svg>
+                </div>
+                <div className="min-w-0">
+                  <div className="text-amber-100 text-xs sm:text-sm font-bold">📺 2000+ eğitime ücretsiz eriş</div>
+                  <div className="text-amber-200/80 text-[10px] sm:text-xs">Üye girişi yap — email/telefon/Amare ID ile saniyeler içinde</div>
+                </div>
+              </div>
+              <span className="bg-amber-400 hover:bg-amber-300 text-purple-900 text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform">
+                Giriş
+              </span>
+            </button>
+          )}
 
           {/* Arama + Filtre butonu (mobile için) */}
           <div className="mt-3 flex gap-2">
@@ -873,6 +903,7 @@ const KayitliEgitimlerSayfasi = () => {
                     progress={watchProgress.get(v.id)}
                     transcriptMatch={transcriptAramaAcik ? transcriptMatches[v.id] : null}
                     aramaQ={arama}
+                    kilitli={!isAuthenticated}
                     onToggleFav={(e) => toggleFavori(e, v)}
                     onShare={(e) => handleShare(e, v)}
                     onOynat={(startSn) => handleOynat(v, startSn ?? null)}
@@ -935,6 +966,7 @@ const KayitliEgitimlerSayfasi = () => {
       )}
 
       <KeyboardShortcutsHelp acik={yardimAcik} onClose={() => setYardimAcik(false)} />
+      <UyeGirisModal acik={girisModalAcik} onClose={() => setGirisModalAcik(false)} />
     </div>
   );
 };
@@ -1236,7 +1268,7 @@ const YaridaKalanRaf = ({ t, list, onOynat, onTemizle }) => {
 };
 
 // ─── Video kartı (mobile compact + desktop grid) ─────────────────────────
-const VideoKart = ({ video: v, t, favori, izlendi, progress, transcriptMatch, aramaQ, onToggleFav, onShare, onOynat, onShareSnippet }) => {
+const VideoKart = ({ video: v, t, favori, izlendi, progress, transcriptMatch, aramaQ, kilitli, onToggleFav, onShare, onOynat, onShareSnippet }) => {
   const sureMetin = formatSure(v.sure);
   const playsMetin = formatPlays(v.plays);
   const kategori = v.kategoriler?.[0];
@@ -1280,11 +1312,22 @@ const VideoKart = ({ video: v, t, favori, izlendi, progress, transcriptMatch, ar
             <Tag className="w-2.5 h-2.5" />{kategori}
           </div>
         )}
-        {/* Hover: play overlay */}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/50 transition-all">
-          <div className="w-14 h-14 rounded-full bg-white/95 group-hover:bg-amber-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-            <Play className="w-7 h-7 text-purple-800 ml-0.5" fill="currentColor" />
-          </div>
+        {/* Hover: play overlay (login varsa) veya kilit (login yoksa) */}
+        <div className={`absolute inset-0 flex items-center justify-center transition-all ${kilitli ? 'bg-black/40 group-hover:bg-black/60' : 'bg-black/20 group-hover:bg-black/50'}`}>
+          {kilitli ? (
+            <>
+              <div className="w-14 h-14 rounded-full bg-amber-400 flex items-center justify-center shadow-xl opacity-100 group-hover:scale-110 transition-all">
+                <svg className="w-7 h-7 text-purple-900" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/></svg>
+              </div>
+              <div className="absolute bottom-2 left-2 right-2 text-center bg-black/70 backdrop-blur-sm rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <span className="text-amber-300 text-[10px] font-bold uppercase tracking-wider">Üye girişi gerekir</span>
+              </div>
+            </>
+          ) : (
+            <div className="w-14 h-14 rounded-full bg-white/95 group-hover:bg-amber-400 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+              <Play className="w-7 h-7 text-purple-800 ml-0.5" fill="currentColor" />
+            </div>
+          )}
         </div>
 
         {/* Watch progress bar — thumbnail'in en alt kenarı (Netflix tarzı) */}

@@ -6,10 +6,12 @@ import { useTranslation } from '../context/LanguageContext';
 import { Link } from 'react-router-dom';
 import KonusmaciTakipModal from './KonusmaciTakipModal';
 import VideoOynatModal from './VideoOynatModal';
+import UyeGirisModal from './UyeGirisModal';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, limit as fbLimit, getDocs } from 'firebase/firestore';
 import { makeCoreId } from '../context/DataContext';
 import { useTakipEgitmenler } from '../utils/takip';
+import { useAuth } from '../context/AuthContext';
 
 const parseTarih = (t) => {
   if (!t) return null;
@@ -34,7 +36,14 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
   const [kayitliVideolar, setKayitliVideolar] = useState(null); // null = henüz yüklenmedi
   const [kayitliLoading, setKayitliLoading] = useState(false);
   const [oynatilanVideo, setOynatilanVideo] = useState(null);
+  const [girisModalAcik, setGirisModalAcik] = useState(false);
+  const { isAuthenticated } = useAuth();
   const { toggle: takipToggle, isTakip } = useTakipEgitmenler();
+
+  const handleKayitliOynat = (v) => {
+    if (!isAuthenticated) { setGirisModalAcik(true); return; }
+    setOynatilanVideo(v);
+  };
   const coreId = makeCoreId(ad);
   const favoriEgitmen = coreId ? isTakip(coreId) : false;
 
@@ -244,9 +253,22 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
                 </div>
               )}
               {!kayitliLoading && kayitliVideolar?.length > 0 && (
+                <>
+                  {!isAuthenticated && (
+                    <button onClick={() => setGirisModalAcik(true)}
+                      className="w-full mb-3 bg-gradient-to-r from-amber-50 to-amber-100 hover:from-amber-100 hover:to-amber-200 border border-amber-300 rounded-xl px-3 py-2.5 flex items-center justify-between gap-2 transition-all">
+                      <div className="flex items-center gap-2 text-left min-w-0">
+                        <svg className="w-5 h-5 text-amber-700 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/></svg>
+                        <div className="text-amber-900 text-xs font-semibold">
+                          Videoları izlemek için <span className="underline">üye girişi</span> yap
+                        </div>
+                      </div>
+                      <span className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1 rounded-lg flex-shrink-0">Giriş</span>
+                    </button>
+                  )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {kayitliVideolar.map(v => (
-                    <button key={v.id} onClick={() => setOynatilanVideo(v)}
+                    <button key={v.id} onClick={() => handleKayitliOynat(v)}
                       className="bg-white border border-gray-200 hover:border-purple-400 hover:shadow-md rounded-xl overflow-hidden text-left transition-all group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
                       <div className="relative aspect-video bg-gray-100">
                         {v.thumbnailUrl ? (
@@ -257,10 +279,16 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
                             <Video className="w-10 h-10 text-gray-300" />
                           </div>
                         )}
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 transition-all">
-                          <div className="w-12 h-12 rounded-full bg-white/90 group-hover:bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
-                            <Play className="w-6 h-6 text-purple-700 ml-0.5" fill="currentColor" />
-                          </div>
+                        <div className={`absolute inset-0 flex items-center justify-center transition-all ${isAuthenticated ? 'bg-black/0 group-hover:bg-black/40' : 'bg-black/30 group-hover:bg-black/50'}`}>
+                          {isAuthenticated ? (
+                            <div className="w-12 h-12 rounded-full bg-white/90 group-hover:bg-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                              <Play className="w-6 h-6 text-purple-700 ml-0.5" fill="currentColor" />
+                            </div>
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-amber-400 flex items-center justify-center shadow-xl">
+                              <svg className="w-6 h-6 text-purple-900" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/></svg>
+                            </div>
+                          )}
                         </div>
                       </div>
                       <div className="p-3">
@@ -275,6 +303,7 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
                     </button>
                   ))}
                 </div>
+                </>
               )}
             </>
           )}
@@ -288,6 +317,7 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
 
       {takipModal && <KonusmaciTakipModal konusmaciAd={displayAd} onClose={() => setTakipModal(false)} />}
       {oynatilanVideo && <VideoOynatModal video={oynatilanVideo} onClose={() => setOynatilanVideo(null)} />}
+      <UyeGirisModal acik={girisModalAcik} onClose={() => setGirisModalAcik(false)} />
     </div>
   );
 };
