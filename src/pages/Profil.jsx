@@ -488,7 +488,7 @@ const Profil = () => {
               <h2 className="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
                 <User className="w-4 h-4 text-purple-300" /> Hakkımda
               </h2>
-              <a href={`https://oneteamglobal.ai/?amid=${encodeURIComponent(profilVerisi?.amareId || '')}&return=${encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil')}`}
+              <a href={`https://oneteamglobal.ai/?amid=${encodeURIComponent(profilVerisi?.amareId || '')}&update=1&return=${encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil')}`}
                 className="text-purple-300 hover:text-amber-300 p-1.5 rounded-lg hover:bg-white/5 transition flex items-center gap-1 text-xs font-semibold" title="Cevapları yeniden doldur">
                 <Edit3 className="w-3.5 h-3.5" /> Güncelle
               </a>
