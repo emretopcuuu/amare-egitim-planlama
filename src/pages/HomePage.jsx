@@ -30,20 +30,24 @@ const HomePage = () => {
           <LanguageSwitcher />
         </div>
 
-        {/* HERO — One Team logo merkezde, premium */}
+        {/* HERO — One Team logo merkezde, premium kart içinde */}
         <div className="text-center pt-6 sm:pt-12 pb-12 sm:pb-16 animate-fade-in">
           <div className="inline-block relative">
             {/* Logo arkasına yumuşak altın aurora */}
-            <div className="absolute inset-0 bg-amber-400/20 blur-3xl scale-90 pointer-events-none" />
-            <img
-              src="/logos/oneteam logo.JPG"
-              alt="One Team"
-              className="relative w-56 h-56 sm:w-72 sm:h-72 md:w-80 md:h-80 mx-auto object-contain"
+            <div className="absolute -inset-8 bg-amber-400/15 blur-3xl pointer-events-none" />
+            {/* Logo siyah kart içinde — altın ring */}
+            <div
+              className="relative inline-block rounded-3xl bg-black p-5 sm:p-6 shadow-2xl"
               style={{
-                mixBlendMode: 'screen',
-                filter: 'drop-shadow(0 12px 40px rgba(251, 191, 36, 0.35))',
+                boxShadow: '0 0 0 1px rgba(251, 191, 36, 0.4), 0 20px 60px rgba(251, 191, 36, 0.25), 0 0 80px rgba(251, 191, 36, 0.15)',
               }}
-            />
+            >
+              <img
+                src="/logos/oneteam logo.JPG"
+                alt="One Team"
+                className="block w-40 h-40 sm:w-52 sm:h-52 md:w-60 md:h-60 object-contain rounded-2xl"
+              />
+            </div>
           </div>
 
           {/* Subtle kicker — altın çizgili */}
