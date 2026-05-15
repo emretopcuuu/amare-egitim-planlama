@@ -30,28 +30,24 @@ const HomePage = () => {
           <LanguageSwitcher />
         </div>
 
-        {/* HERO — One Team logo merkezde, dairesel premium */}
+        {/* HERO — One Team logo merkezde, çerçevesiz transparent */}
         <div className="flex flex-col items-center pt-4 sm:pt-8 pb-12 sm:pb-16 animate-fade-in">
           <div className="relative">
             {/* Logo arkasına yumuşak altın aurora */}
-            <div className="absolute -inset-6 bg-amber-400/20 blur-3xl pointer-events-none" />
-            {/* Logo dairesel kart — siyah zemin + altın ring */}
-            <div
-              className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-52 md:h-52 rounded-full bg-black flex items-center justify-center overflow-hidden"
+            <div className="absolute -inset-8 bg-amber-400/15 blur-3xl pointer-events-none" />
+            {/* Transparent PNG — direkt mor zemin üstünde altın logo */}
+            <img
+              src="/logos/oneteam-logo.png"
+              alt="One Team"
+              className="relative w-64 sm:w-80 md:w-96 h-auto"
               style={{
-                boxShadow: '0 0 0 2px rgba(251, 191, 36, 0.5), 0 0 0 6px rgba(251, 191, 36, 0.15), 0 20px 60px rgba(251, 191, 36, 0.3), 0 0 100px rgba(251, 191, 36, 0.2)',
+                filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
               }}
-            >
-              <img
-                src="/logos/oneteam logo.JPG"
-                alt="One Team"
-                className="w-full h-full object-cover scale-110"
-              />
-            </div>
+            />
           </div>
 
           {/* Kicker — altın çizgili, logonun altında */}
-          <div className="mt-7 sm:mt-8 flex items-center justify-center gap-3">
+          <div className="mt-6 sm:mt-8 flex items-center justify-center gap-3">
             <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
             <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.4em] font-semibold whitespace-nowrap">
               Eğitim Takvimi
