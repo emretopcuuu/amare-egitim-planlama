@@ -102,11 +102,11 @@ export default async (req) => {
     // 4. Supabase paralel sorgu — amare_raw_members + members
     const [amareRows, memberRows] = await Promise.all([
       supabaseGet(
-        `amare_raw_members?select=amare_id,full_name,email,phone,sponsor_id,sponsor_full_name,sponsor_phone,rank,register_date,country,city&` +
+        `amare_raw_members?select=amare_id,full_name,email,phone,country,enrollment_date,rank,enroller_amare_id,sponsor_amare_id,raw_data&` +
         `amare_id=eq.${encodeURIComponent(amareIdStr)}&limit=1`
       ),
       supabaseGet(
-        `members?select=id,full_name,current_screen,onboarding_completed_at,progress_pct,career_data,sponsor_id,created_at,last_active_at&` +
+        `members?select=id,full_name,bio,current_screen,onboarding_completed_at,progress_pct,sponsor_id,created_at,last_active_at&` +
         `amare_id=eq.${encodeURIComponent(amareIdStr)}&order=last_active_at.desc&limit=1`
       ),
     ]);
@@ -114,15 +114,56 @@ export default async (req) => {
     const amare = (amareRows && amareRows[0]) || null;
     const member = (memberRows && memberRows[0]) || null;
 
+    // 4b. Sponsor bilgisi — enroller_amare_id veya sponsor_amare_id ile ikinci sorgu
+    if (amare) {
+      const sponsorId = amare.enroller_amare_id
+        || amare.sponsor_amare_id
+        || amare.raw_data?.enroller_amare_id
+        || amare.raw_data?.sponsor_amare_id;
+      if (sponsorId) {
+        try {
+          const sponsorRows = await supabaseGet(
+            `amare_raw_members?select=amare_id,full_name,phone,raw_data&` +
+            `amare_id=eq.${encodeURIComponent(String(sponsorId))}&limit=1`
+          );
+          const sp = sponsorRows && sponsorRows[0];
+          if (sp) {
+            amare.sponsor_full_name = sp.full_name || sp.raw_data?.full_name
+              || amare.raw_data?.enroller_name
+              || amare.raw_data?.sponsor_name_text
+              || null;
+            amare.sponsor_phone = sp.phone || sp.raw_data?.phone || null;
+            amare.sponsor_amare_id = sp.amare_id;
+          } else {
+            // Sponsor amare_raw_members'ta yoksa raw_data'dan al
+            amare.sponsor_full_name = amare.raw_data?.enroller_name || amare.raw_data?.sponsor_name_text || null;
+          }
+        } catch (e) {
+          console.warn('[profil-veri] sponsor lookup err:', e.message);
+        }
+      }
+      // enrollment_date → register_date alias (frontend uyumu)
+      amare.register_date = amare.enrollment_date || amare.raw_data?.enroll_date || amare.raw_data?.enrollment_date || null;
+    }
+
     // 5. progress (varsa, member.id ile)
     let progress = null;
     if (member?.id) {
       try {
         const progressRows = await supabaseGet(
-          `progress?select=quiz_score,training_done,completion_pct,updated_at&` +
+          `progress?select=quiz_score,training_done,completion_pct,career_done,career_target,time_target,hours_daily,updated_at&` +
           `member_id=eq.${encodeURIComponent(member.id)}&limit=1`
         );
         progress = (progressRows && progressRows[0]) || null;
+
+        // progress → member.career_data synth
+        if (progress && member && progress.career_target) {
+          member.career_data = {
+            rank: progress.career_target,
+            time: progress.time_target || null,
+            hours: progress.hours_daily || null,
+          };
+        }
       } catch (e) {
         console.warn('[profil-veri] progress fetch skipped:', e.message);
       }
