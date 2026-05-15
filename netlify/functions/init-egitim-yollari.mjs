@@ -51,78 +51,80 @@ const RANK_INFO = {
 
 // Mantıklı dağılım — kariyer hiyerarşisine göre, mevcut 29 video üzerinden
 // Her rank'e 3 video, kategori uyumlu, eğitmen çeşitlilik göz önünde
-// 1879 video havuzundan akıllı dağıtım (kategori skorlama algoritması)
-// Her rank için en uygun 3 video, eğitmen çeşitliliği gözetildi
+// 907 kayene-değil video havuzundan tarih+benzersizlik ağırlıklı dağıtım
+// Kategori skor (1.tercih=1000, 2.=500, 3.=250) + tarih (en yeni +400)
+// + süre (max +80) + cross-rank uniqueness penaltısı (-800 if used)
+// Her rank'e 3 unique video, toplam 42 farklı video kullanıldı.
 const DAGILIM = {
   brand_partner: [
-    '372594649',   // 90 Günlük Oyun Planı - Emre Topçu (Liderlik/Liste)
-    '766067235',   // Ay Başında Kariyer Planlaması - Furkan Çite
-    '1077132347',  // Sıfırdan Katlamaya 15 Adım - Ziya Şakir Yılmaz
+    '1077132347',  // 2025-04-20 Sıfırdan Katlamaya 15 Adım - Ziya Yılmaz
+    '1073600310',  // 2025-04-08 Liste-Reklam-Davet - Kenan Kozanhan
+    '1022449325',  // 2024-10-23 Doğru Başlangıç - Toygar Şenelmiş
   ],
   brand_builder: [
-    '1141368933',  // Liste-Reklam-Davet - Kasım Mazılıgüney
-    '1073608704',  // Liste-Reklam-Davet Panel - Alper Kırbıyık
-    '1036627025',  // Reklam-Davet - Sibel Özdemir
+    '1141368933',  // 2025-11-28 Liste-Reklam-Davet - Kasım Mazılıgüney
+    '1073608704',  // 2025-04-08 Liste-Reklam-Davet Panel - Alper Kırbıyık
+    '1036627025',  // 2024-12-06 Reklam-Davet - Sibel Özdemir
   ],
   bronze: [
-    '1073600310',  // Liste-Reklam-Davet - Kenan Kozanhan
-    '375546683',   // Teknik Eğitim (Davet/Sunum) - Emre Topçu
-    '427627338',   // Network Marketing Akademi - Ziya Yılmaz
+    '1166594255',  // 2026-02-20 Sunuma Başlama Simülasyonu - Saide Zöngür
+    '1053161751',  // 2025-02-03 10X Promosyon Sunumu - Emre Topçu
+    '1075441844',  // 2025-04-14 Doğru Sunum Nasıl Yapılır - Yavuz Bağcı
   ],
   silver: [
-    '126725628',   // Dr Barrie Tann (Ürün/Sağlık)
-    '1118635018',  // Amare Kazanç Planı - Alper Kırbıyık
-    '1125095670',  // Amare Kazanç Planı - Arda Çakır
+    '1156971955',  // 2026-01-21 Amare Kazanç Planı - Alper Kırbıyık
+    '1156976219',  // 2026-01-21 Amare Kazanç Planı - Arda Çakır
+    '1084148153',  // 2025-05-14 Amare Backoffice Anasayfa - Ersel Arıcan
   ],
   gold: [
-    '1101014293',  // Mazeret ve İtiraz Karşılama - Ziya Yılmaz
-    '1034490116',  // Mazeretsiz Kapanış - Aytuğ Gönül
-    '352307546',   // İş Bitiricilik ve Kapanış - Emre Topçu
+    '1006616960',  // 2024-09-05 Görüşme-İhtiyaç Tespit - Emre Topçu 4.Gün
+    '1004038916',  // 2024-08-29 İtiraz Karşılama-Kapanış - Arda Çakır
+    '1179492257',  // 2026-04-02 Başarı Sırları 6 - Ziya Yılmaz
   ],
   platinum: [
-    '1099048090',  // Profesyonel Takip - Ziya Yılmaz
-    '434089068',   // Güçlü Kapanış - Nilüfer Çıragöz
-    '607713669',   // Detaylı Kazanç Planı - Emre Erkan
+    '1101014293',  // 2025-07-13 Mazeret/İtiraz Karşılama - Ziya Yılmaz
+    '1080636021',  // 2025-05-01 Kapanış İş Bitiricilik Paneli - Tülay Filtekin
+    '1034490116',  // 2024-11-29 Mazeretsiz Kapanış - Aytuğ Gönül
   ],
   leader: [
-    '660685891',   // Diamond Söyleşi - Emre Topçu
-    '127456261',   // Simon Sinek Liderler Nasıl İlham Verir
-    '495984276',   // Bir Aslanın Zihin Yapısı - Hunter King
+    '1154225309',  // 2026-01-14 Yalçın Kavlak & Kasım Söyleşi
+    '1177611464',  // 2026-03-27 Kampların Önemi - Arda Çakır
+    '1116458885',  // 2025-09-06 4 Ayda Diamond - Emre Topçu
   ],
   senior_leader: [
-    '128867839',   // How to Fix People Around You (Kişisel Gelişim)
-    '127402624',   // Networkte Problem Çözmek - Aytuğ Gönül
     '128818022',   // Potansiyeli Yüksek Kişiler ile Problem
+    '127402624',   // Networkte Problem Çözmek - Aytuğ Gönül
+    '1107146050',  // 2025-08-04 Hızlı Kariyer - Emre Topçu
   ],
   executive_leader: [
-    '910845509',   // AMARE Geçiş Stratejileri - Emre Topçu
-    '130364863',   // Steve Jobs Apple'ı Nasıl Kurtardı - Tony Robbins
-    '766067235',   // Ay Başında Kariyer Planlaması - Furkan Çite
+    '766067235',   // 2022-11-01 Ay Başı Kariyer Planlaması - Furkan Çite
+    '1108874805',  // 2025-08-10 Doğru Sorular Güçlü Sonuçlar - Ferhat Gök
+    '1040892096',  // 2024-12-19 Liderlik Sırları - Toygar Şenelmiş
   ],
   diamond: [
-    '129880718',   // Kampların Önemi - Aytuğ Gönül & Akif Bilge
-    '129041464',   // Obama İşsizlik (Vizyon)
-    '421020326',   // Pazarlama Planı 2020 - Ziya Yılmaz
+    '1133548925',  // 2025-11-04 Diamond Yolculuğu - Merve Çaloğlu & Emre
+    '1166299161',  // 2026-02-19 Nedenlerimizi Bilerek - Ersel Arıcan
+    '1105376561',  // 2025-07-29 Neden-Hedef-Hikaye SEN - Seçil Fida
   ],
   one_star_diamond: [
-    '421020326',   // Pazarlama Planı 2020 - Ziya Yılmaz
-    '430142072',   // Büyük Düşün - Furkan Çite
-    '474981685',   // Diamond Planı Nasıl Yapılır - Emre Topçu
+    '488509900',   // 2020-12-08 Online Çalışma Prensipleri - Emre Topçu
+    '1191482913',  // 2026-05-12 Doğru Planlama - Yavuz Bağcı
+    '1036643694',  // 2024-12-06 OneTeam Kamplarının Gücü - Mehmet Akif Topçu
   ],
   two_star_diamond: [
-    '372594649',   // 90 Günlük Oyun Planı - Emre Topçu (Liderlik)
-    '1082454060',  // Girişimcilik Yolculuğu Paneli - Ferhat Gök
-    '1154225309',  // Yalçın Kavlak & Kasım Mazılıgüney Söyleşi
+    '1108873256',  // 2025-08-10 Eklemeden Katlamaya Geçmek - Emre Topçu
+    '513364422',   // 2021-02-17 Zamanınızı Katlamanın Basit Yolu
+    '1173627977',  // 2026-03-14 Başarı Sırları - Ziya Yılmaz
   ],
   three_star_diamond: [
-    '910845509',   // AMARE Geçiş Stratejileri - Emre Topçu (Vizyon)
-    '421020326',   // Pazarlama Planı 2020 - Ziya Yılmaz
-    '430142072',   // Büyük Düşün - Furkan Çite
+    '1101037528',  // 2025-07-13 Diamond Yolculuğu - Ferhat Gök
+    '1088729120',  // 2025-05-29 Atakan Yaman Sector-Visie-Amare
+    '1004002999',  // 2024-08-29 Etkinlikler ve Kamplar - Ziya Yılmaz
   ],
   presidential_diamond: [
-    '433088377',   // Diamond Yolculuğum - Mekan Muhammedov
-    '231018176',   // KAMPA GELİRSEM - ASUMAN BAYRAK
-    '134824701',   // Hoşgeldiniz - Emre Topçu (Blue Diamond Dünya Birincisi)
+    '1088735353',  // 2025-05-29 Ferhat Gök Waarom-Geloof-Plan (NL)
+    '1088550350',  // 2025-05-28 Atakan Yaman Sektor-Vision-Amare
+    '995911603',   // 2024-08-07 Etkinlikler ve Kamplar - Ziya Yılmaz
   ],
 };
 
