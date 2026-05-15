@@ -311,8 +311,8 @@ const Profil = () => {
   // Loading state — auth henüz hazır değilse
   if (!ready) {
     return (
-      <div className="min-h-screen bg-[#FAFAF7] flex items-center justify-center">
-        <Loader2 className="w-10 h-10 text-amber-700 animate-spin" />
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 text-amber-400 animate-spin" />
       </div>
     );
   }
@@ -320,29 +320,27 @@ const Profil = () => {
   // Anonim placeholder
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#FAFAF7] text-stone-900 pb-24 relative">
-        <div className="absolute top-0 left-0 right-0 h-96 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.08)_0%,transparent_70%)] pointer-events-none" />
-        <div className="relative max-w-3xl mx-auto px-6 pt-6">
-          <button onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full bg-white hover:bg-stone-50 border border-stone-200 flex items-center justify-center transition shadow-sm">
-            <ArrowLeft className="w-4 h-4 text-stone-700" />
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
+        <div className="max-w-3xl mx-auto px-4 pt-6">
+          <button onClick={() => navigate(-1)} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Geri
           </button>
         </div>
-        <div className="relative max-w-md mx-auto mt-16 px-6">
-          <div className="bg-white border border-stone-200 rounded-3xl p-8 text-center shadow-md">
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 flex items-center justify-center mx-auto mb-6">
-              <LogIn className="w-9 h-9 text-amber-700" />
+        <div className="max-w-md mx-auto mt-12 px-4">
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 text-center shadow-2xl">
+            <div className="w-20 h-20 rounded-full bg-amber-400/20 border border-amber-300/40 flex items-center justify-center mx-auto mb-6">
+              <LogIn className="w-9 h-9 text-amber-300" />
             </div>
-            <h1 className="text-2xl font-light text-stone-900 mb-2 tracking-tight">Profilini gör</h1>
-            <p className="text-stone-500 text-sm mb-8 leading-relaxed">
+            <h1 className="text-2xl font-light text-white mb-2 tracking-tight">Profilini gör</h1>
+            <p className="text-purple-200 text-sm mb-8 leading-relaxed">
               Favoriler, kurduğun hatırlatmalar, onboarding ilerlemen ve üyelik bilgilerin burada görünür.
             </p>
             <button onClick={() => setGirisModalAcik(true)}
-              className="w-full bg-stone-900 hover:bg-stone-800 text-white font-semibold py-3.5 rounded-xl shadow-md spring-tap inline-flex items-center justify-center gap-2 mb-3">
+              className="w-full bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-3.5 rounded-xl shadow-lg spring-tap inline-flex items-center justify-center gap-2 mb-3">
               <LogIn className="w-5 h-5" /> Üye Girişi Yap
             </button>
-            <p className="text-stone-400 text-xs mt-4">
-              Henüz Amare üyesi değilsen <a href="https://oneteamglobal.ai" className="text-amber-700 underline font-semibold">oneteamglobal.ai</a>
+            <p className="text-purple-300/70 text-xs mt-4">
+              Henüz Amare üyesi değilsen <a href="https://oneteamglobal.ai" className="text-amber-300 hover:text-amber-200 underline font-semibold">oneteamglobal.ai</a>
             </p>
           </div>
         </div>
@@ -366,61 +364,58 @@ const Profil = () => {
     const returnUrl = encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil');
     const onboardingUrl = `https://oneteamglobal.ai/?amid=${encodeURIComponent(profilVerisi.amareId)}&return=${returnUrl}`;
     return (
-      <div className="min-h-screen bg-[#FAFAF7] text-stone-900 pb-24">
-        <div className="absolute top-0 left-0 right-0 h-96 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.08)_0%,transparent_70%)] pointer-events-none" />
-
-        <div className="relative max-w-3xl mx-auto flex items-center justify-between px-6 pt-6">
-          <button onClick={() => navigate('/takvim')}
-            className="w-10 h-10 rounded-full bg-white hover:bg-stone-50 border border-stone-200 flex items-center justify-center transition shadow-sm">
-            <ArrowLeft className="w-4 h-4 text-stone-700" />
+      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
+        <div className="max-w-3xl mx-auto flex items-center justify-between px-4 pt-6">
+          <button onClick={() => navigate('/takvim')} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Takvim
           </button>
           <button onClick={() => signOut(auth).then(() => navigate('/takvim'))}
-            className="w-10 h-10 rounded-full bg-white hover:bg-stone-50 border border-stone-200 flex items-center justify-center transition shadow-sm" title="Çıkış yap">
-            <LogOut className="w-4 h-4 text-stone-700" />
+            className="bg-white/10 hover:bg-white/20 border border-white/20 text-white p-2 rounded-xl transition spring-tap" title="Çıkış yap">
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="relative max-w-3xl mx-auto px-6 pt-12 pb-8 text-center">
+        <div className="max-w-3xl mx-auto px-4 pt-10 pb-6 text-center">
           <ProfilAvatar uid={uid} fullName={fullName} fotoURL={finalFoto} size="xl" editable={false} />
           {a?.rank && (
             <div className="mt-6 mb-2 flex items-center justify-center gap-2.5">
-              <div className="h-px w-8 bg-stone-300" />
-              <span className="text-amber-700 text-[11px] uppercase tracking-[0.3em] font-bold">{a.rank}</span>
-              <div className="h-px w-8 bg-stone-300" />
+              <div className="h-px w-8 bg-amber-400/40" />
+              <span className="text-amber-300 text-[11px] uppercase tracking-[0.3em] font-bold">{a.rank}</span>
+              <div className="h-px w-8 bg-amber-400/40" />
             </div>
           )}
-          <h1 className="text-3xl sm:text-4xl font-light text-stone-900 tracking-tight">{fullName || 'Hoş geldin'}</h1>
+          <h1 className="text-3xl sm:text-4xl font-light text-white tracking-tight">{fullName || 'Hoş geldin'}</h1>
         </div>
 
-        <div className="relative max-w-md mx-auto px-6">
-          <div className="bg-white border border-stone-200 rounded-3xl p-7 text-center shadow-md">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-amber-50 to-amber-100 border border-amber-200 mb-5">
-              <Sparkles className="w-6 h-6 text-amber-700" />
+        <div className="max-w-md mx-auto px-4">
+          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-7 text-center shadow-2xl">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-amber-400/20 border border-amber-300/40 mb-5">
+              <Sparkles className="w-6 h-6 text-amber-300" />
             </div>
-            <h2 className="text-xl font-bold text-stone-900 mb-2">Önce seni tanıyalım</h2>
-            <p className="text-stone-600 text-sm leading-relaxed mb-6">
+            <h2 className="text-xl font-bold text-white mb-2">Önce seni tanıyalım</h2>
+            <p className="text-purple-200 text-sm leading-relaxed mb-6">
               5 dakikalık bir onboarding ile profilini tamamla. Sana özel kariyer planı, eğitim önerileri ve sponsor takip sistemi açılacak.
             </p>
 
-            <div className="bg-stone-50 border border-stone-200 rounded-xl p-3 mb-6 text-left space-y-2">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-6 text-left space-y-2">
               {[
                 'Kişiselleştirilmiş eğitim takvimi',
                 'Sponsor ve ekip iletişimi',
                 'Hedef takibi + kariyer yol haritası',
                 'Yıllık ilerlemeni gör',
               ].map((line, i) => (
-                <div key={i} className="flex items-start gap-2 text-sm text-stone-700">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600 mt-0.5 flex-shrink-0" />
+                <div key={i} className="flex items-start gap-2 text-sm text-purple-100">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300 mt-0.5 flex-shrink-0" />
                   <span>{line}</span>
                 </div>
               ))}
             </div>
 
             <a href={onboardingUrl}
-              className="block w-full bg-stone-900 hover:bg-stone-800 text-white font-semibold py-3.5 rounded-xl shadow-md transition-all spring-tap text-base">
+              className="block w-full bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-3.5 rounded-xl shadow-lg transition-all spring-tap text-base">
               Profilini Tamamla →
             </a>
-            <p className="text-stone-400 text-xs mt-3">5 dakika sürer • Atlanılamaz</p>
+            <p className="text-purple-200/70 text-xs mt-3">5 dakika sürer • Atlanılamaz</p>
           </div>
         </div>
       </div>
@@ -428,65 +423,61 @@ const Profil = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAF7] text-stone-900 pb-24">
-      {/* Üstte hafif altın aurora glow — Amare brand subtle accent */}
-      <div className="absolute top-0 left-0 right-0 h-96 bg-[radial-gradient(ellipse_at_top,rgba(212,175,55,0.08)_0%,transparent_70%)] pointer-events-none" />
-
-      {/* Header — sade, premium */}
-      <div className="relative max-w-3xl mx-auto flex items-center justify-between px-6 pt-6">
-        <button onClick={() => navigate(-1)}
-          className="w-10 h-10 rounded-full bg-white hover:bg-stone-50 border border-stone-200 flex items-center justify-center transition shadow-sm">
-          <ArrowLeft className="w-4 h-4 text-stone-700" />
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
+      {/* Header — takvim sayfasıyla aynı stil */}
+      <div className="max-w-3xl mx-auto flex items-center justify-between px-4 pt-6">
+        <button onClick={() => navigate(-1)} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
+          <ArrowLeft className="w-4 h-4 mr-1.5" /> Geri
         </button>
         <div className="flex items-center gap-2">
           <button onClick={() => profilVerisiFetch(true)} disabled={yukleniyor}
-            className="w-10 h-10 rounded-full bg-white hover:bg-stone-50 border border-stone-200 flex items-center justify-center transition shadow-sm disabled:opacity-50"
+            className="bg-white/10 hover:bg-white/20 border border-white/20 text-white p-2 rounded-xl transition disabled:opacity-50 spring-tap"
             title="Yenile">
-            <RefreshCw className={`w-4 h-4 text-stone-700 ${yukleniyor ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${yukleniyor ? 'animate-spin' : ''}`} />
           </button>
           <button onClick={() => signOut(auth).then(() => navigate('/takvim'))}
-            className="w-10 h-10 rounded-full bg-white hover:bg-stone-50 border border-stone-200 flex items-center justify-center transition shadow-sm"
+            className="bg-white/10 hover:bg-white/20 border border-white/20 text-white p-2 rounded-xl transition spring-tap"
             title="Çıkış yap">
-            <LogOut className="w-4 h-4 text-stone-700" />
+            <LogOut className="w-4 h-4" />
           </button>
         </div>
       </div>
 
-      {/* HERO — dergi tarzı, sade, vurucu */}
-      <div className="relative max-w-3xl mx-auto px-6 pt-12 pb-8 text-center">
+      {/* HERO — sade, premium */}
+      <div className="max-w-3xl mx-auto px-4 pt-10 pb-8 text-center">
         <div className="inline-block">
           <ProfilAvatar uid={uid} fullName={fullName} fotoURL={finalFoto} size="xl" editable={true} />
         </div>
 
-        {/* Rank subtitle — kicker tarzı, ad'dan önce */}
+        {/* Rank — kicker tarzı, ad'dan önce */}
         {a?.rank && (
           <div className="mt-6 mb-2 flex items-center justify-center gap-2.5">
-            <div className="h-px w-8 bg-stone-300" />
-            <span className="text-amber-700 text-[11px] uppercase tracking-[0.3em] font-bold">{a.rank}</span>
-            <div className="h-px w-8 bg-stone-300" />
+            <div className="h-px w-8 bg-amber-400/40" />
+            <span className="text-amber-300 text-[11px] uppercase tracking-[0.3em] font-bold">{a.rank}</span>
+            <div className="h-px w-8 bg-amber-400/40" />
           </div>
         )}
 
-        <h1 className="text-4xl sm:text-5xl font-light text-stone-900 tracking-tight leading-tight">
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight leading-tight">
           {fullName || 'Profilim'}
         </h1>
 
         {u && (
-          <p className="mt-3 text-stone-500 text-sm font-light">
+          <p className="mt-2 text-purple-200 text-sm">
             One Team üyesi · {u.yil > 0 ? `${u.yil} yıl ${u.ay} ay` : `${u.toplamAy} ay`}
           </p>
         )}
 
         {hata && (
-          <p className="text-red-600 text-xs mt-4 bg-red-50 border border-red-200 rounded-lg px-3 py-2 inline-block">
+          <p className="text-red-300 text-xs mt-4 bg-red-500/10 border border-red-400/30 rounded-lg px-3 py-2 inline-block">
             {hata}
           </p>
         )}
       </div>
 
-      {/* STATS ROW — minimal beyaz kart, çizgili */}
-      <div className="relative max-w-3xl mx-auto px-6 mt-2">
-        <div className="bg-white border border-stone-200 rounded-2xl grid grid-cols-4 divide-x divide-stone-200 shadow-sm">
+      {/* STATS ROW — cam kart */}
+      <div className="max-w-3xl mx-auto px-4 mt-2">
+        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl grid grid-cols-4 divide-x divide-white/10 shadow-xl">
           <StatCell label="Üye" value={u ? `${u.yil}y` : '—'} />
           <StatCell label="Favori" value={takipSet.size + videoFav.size} />
           <StatCell label="İzlenen" value={yarimKalan.length > 0 ? `${yarimKalan.length}+` : '0'} />
@@ -494,13 +485,13 @@ const Profil = () => {
         </div>
       </div>
 
-      <div className="relative max-w-3xl mx-auto px-6 mt-10 space-y-8">
+      <div className="max-w-3xl mx-auto px-4 mt-8 space-y-6">
 
         {/* Yıldönümü banner (Faz 4e) */}
         {yildonumu && (
-          <section className="bg-gradient-to-r from-amber-50 via-amber-100/60 to-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+          <section className="bg-gradient-to-r from-amber-400/20 via-amber-300/15 to-amber-400/20 backdrop-blur-md border border-amber-300/40 rounded-2xl p-4 text-center">
             <div className="text-2xl mb-1">🎉</div>
-            <div className="text-amber-900 font-semibold text-sm">
+            <div className="text-amber-100 font-bold text-sm">
               {yildonumu.gunFarki === 0
                 ? `Bugün ${yildonumu.yil}. yılınız! Tebrikler!`
                 : yildonumu.gunFarki > 0
@@ -508,7 +499,7 @@ const Profil = () => {
                   : `${Math.abs(yildonumu.gunFarki)} gün önce ${yildonumu.yil}. yılınızı kutladınız 🌟`
               }
             </div>
-            <div className="text-amber-700/70 text-xs mt-1">One Team yolculuğunda harika gidiyorsunuz</div>
+            <div className="text-amber-200/80 text-xs mt-1">One Team yolculuğunda harika gidiyorsunuz</div>
           </section>
         )}
 
@@ -518,27 +509,27 @@ const Profil = () => {
             <div className="flex items-center justify-between gap-2 mb-4">
               <SectionTitle icon={User}>Hakkımda</SectionTitle>
               <a href={`https://oneteamglobal.ai/?amid=${encodeURIComponent(profilVerisi?.amareId || '')}&update=1&return=${encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil')}`}
-                className="text-stone-400 hover:text-amber-700 transition flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.15em] whitespace-nowrap" title="Cevapları yeniden doldur">
+                className="text-purple-300 hover:text-amber-300 transition flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.15em] whitespace-nowrap" title="Cevapları yeniden doldur">
                 <Edit3 className="w-3 h-3" /> Güncelle
               </a>
             </div>
 
-            {/* Tanıtım metni — büyük tırnak editorial style */}
+            {/* Tanıtım metni — büyük tırnak editorial style (glass) */}
             {profileCevaplari.tanitim ? (
-              <div className="mb-4 bg-white border border-stone-200 rounded-2xl p-6 relative overflow-hidden shadow-sm">
-                <div className="absolute top-3 left-4 text-stone-200 text-8xl font-serif leading-none select-none">"</div>
-                <p className="relative text-stone-800 text-lg leading-relaxed italic pl-8 pt-4 font-light">
+              <div className="mb-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 relative overflow-hidden shadow-xl">
+                <div className="absolute top-3 left-4 text-amber-300/30 text-8xl font-serif leading-none select-none">"</div>
+                <p className="relative text-white text-lg leading-relaxed italic pl-8 pt-4 font-light">
                   {profileCevaplari.tanitim}
                 </p>
-                <div className="text-stone-400 text-[10px] font-bold uppercase tracking-[0.2em] mt-4 text-right">— Kendinden</div>
+                <div className="text-amber-300/70 text-[10px] font-bold uppercase tracking-[0.2em] mt-4 text-right">— Kendinden</div>
               </div>
             ) : m?.bio && (
-              <div className="mb-4 bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
-                <p className="text-stone-700 text-sm italic leading-relaxed">{m.bio}</p>
+              <div className="mb-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
+                <p className="text-white/95 text-sm italic leading-relaxed">{m.bio}</p>
               </div>
             )}
 
-            {/* Premium chip grid — beyaz kart, hairline border, hover gold */}
+            {/* Glass chip grid */}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {[
                 // Profile cevapları (yaş, meslek, heyecan)
@@ -564,12 +555,12 @@ const Profil = () => {
                 const Icon = q.icon || User;
                 return (
                   <div key={q.key}
-                    className="group bg-white hover:bg-stone-50 border border-stone-200 hover:border-amber-300 rounded-xl px-3 py-3 transition-all shadow-sm">
+                    className="group bg-white/10 hover:bg-white/15 backdrop-blur border border-white/20 hover:border-amber-300/50 rounded-xl px-3 py-3 transition-all">
                     <div className="flex items-center gap-1.5 mb-1.5">
-                      <Icon className="w-3.5 h-3.5 text-amber-700 flex-shrink-0" />
-                      <div className="text-stone-400 text-[9px] uppercase tracking-[0.15em] font-bold truncate">{q.soru}</div>
+                      <Icon className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" />
+                      <div className="text-purple-200/70 text-[9px] uppercase tracking-[0.15em] font-bold truncate">{q.soru}</div>
                     </div>
-                    <div className="text-stone-900 font-semibold text-[13px] leading-tight line-clamp-2">{q.cevap}</div>
+                    <div className="text-white font-semibold text-[13px] leading-tight line-clamp-2">{q.cevap}</div>
                   </div>
                 );
               })}
@@ -578,11 +569,11 @@ const Profil = () => {
             {/* Onboarding tamamlanma badge (A3) */}
             {m?.onboarding_completed_at && (
               <div className="mt-4 flex items-center justify-between text-[11px] px-1">
-                <div className="flex items-center gap-1.5 text-emerald-700">
+                <div className="flex items-center gap-1.5 text-green-300">
                   <CheckCircle2 className="w-3 h-3" />
                   <span className="font-semibold">Profil tamamlandı</span>
                 </div>
-                <span className="text-stone-400">{formatTarih(m.onboarding_completed_at)}</span>
+                <span className="text-purple-300/60">{formatTarih(m.onboarding_completed_at)}</span>
               </div>
             )}
           </div>
@@ -591,7 +582,7 @@ const Profil = () => {
         {/* ═══ ÜYELİK ═══ */}
         <div>
           <SectionTitle icon={Hash}>Üyelik</SectionTitle>
-          <div className="mt-4 bg-white border border-stone-200 rounded-2xl p-5 divide-y divide-stone-100 shadow-sm">
+          <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 divide-y divide-white/10 shadow-xl">
             <InfoRow icon={Phone} label="Telefon" value={a?.phone || '—'} />
             <InfoRow icon={Mail} label="E-posta" value={a?.email || email || '—'} />
             <InfoRow icon={Hash} label="Amare ID" value={profilVerisi?.amareId || userDoc?.amareId || '—'} />
@@ -603,21 +594,21 @@ const Profil = () => {
         {sponsorAd && (
           <div>
             <SectionTitle icon={Users}>Bağlantılar</SectionTitle>
-            <div className="mt-4 bg-white border border-stone-200 rounded-2xl p-5 shadow-sm">
-              <div className="text-stone-400 text-[10px] uppercase tracking-[0.15em] font-bold mb-3">Sponsorum</div>
+            <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
+              <div className="text-purple-200/70 text-[10px] uppercase tracking-[0.15em] font-bold mb-3">Sponsorum</div>
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-stone-700 to-stone-900 flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-md">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-lg">
                     {(sponsorAd || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-stone-900 font-bold text-sm truncate">{sponsorAd}</div>
-                    <div className="text-stone-500 text-xs">{maskPhone(sponsorTel) || 'Telefon yok'}</div>
+                    <div className="text-white font-bold text-sm truncate">{sponsorAd}</div>
+                    <div className="text-purple-200/70 text-xs">{maskPhone(sponsorTel) || 'Telefon yok'}</div>
                   </div>
                 </div>
                 {sponsorWa && (
                   <a href={`https://wa.me/${sponsorWa}`} target="_blank" rel="noopener noreferrer"
-                    className="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shrink-0 shadow-sm">
+                    className="bg-green-500 hover:bg-green-400 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shrink-0 shadow-lg spring-tap">
                     <MessageCircle className="w-3.5 h-3.5" /> İletişime geç
                   </a>
                 )}
@@ -633,33 +624,33 @@ const Profil = () => {
 
         {/* Yarım kalan eğitimler (Faz 4a) */}
         {yarimKalan.length > 0 && (
-          <section className="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm -mt-1">
+          <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1">
             <div className="flex items-center gap-2 mb-3">
-              <Video className="w-4 h-4 text-amber-700" />
-              <h2 className="text-stone-900 font-bold text-sm">Devam Et — Yarım Kaldı</h2>
+              <Video className="w-4 h-4 text-amber-300" />
+              <h2 className="text-white font-bold text-sm">Devam Et — Yarım Kaldı</h2>
             </div>
             <div className="space-y-2">
               {yarimKalan.map(v => (
                 <button key={v.id}
                   onClick={() => navigate(`/kayitli-egitimler?v=${encodeURIComponent(v.id)}&t=${v.t}`)}
-                  className="w-full bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-xl overflow-hidden text-left transition group flex gap-3 items-stretch">
-                  <div className="relative w-28 sm:w-32 flex-shrink-0 aspect-video bg-stone-200 overflow-hidden">
+                  className="w-full bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-300/40 rounded-xl overflow-hidden text-left transition group flex gap-3 items-stretch spring-tap">
+                  <div className="relative w-28 sm:w-32 flex-shrink-0 aspect-video bg-black/30 overflow-hidden">
                     {v.thumbnailUrl ? (
                       <img src={v.thumbnailUrl} alt={v.baslik} loading="lazy" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center"><Video className="w-6 h-6 text-stone-400" /></div>
+                      <div className="w-full h-full flex items-center justify-center"><Video className="w-6 h-6 text-white/30" /></div>
                     )}
-                    <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/20 transition">
-                      <div className="w-9 h-9 rounded-full bg-white/95 group-hover:bg-white flex items-center justify-center transition opacity-0 group-hover:opacity-100"><Video className="w-4 h-4 text-stone-900" /></div>
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition">
+                      <div className="w-9 h-9 rounded-full bg-amber-400/95 group-hover:bg-amber-300 flex items-center justify-center transition opacity-0 group-hover:opacity-100"><Video className="w-4 h-4 text-purple-900" /></div>
                     </div>
-                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-stone-300">
-                      <div className="h-full bg-amber-500" style={{ width: `${v.pct}%` }} />
+                    <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/40">
+                      <div className="h-full bg-amber-400" style={{ width: `${v.pct}%` }} />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0 py-2 pr-2">
-                    <div className="text-stone-900 text-xs font-bold line-clamp-2">{v.baslik}</div>
-                    {v.egitmenAdlari?.[0] && <div className="text-stone-500 text-[10px] mt-0.5 truncate">{v.egitmenAdlari[0]}</div>}
-                    <div className="text-amber-700 text-[10px] font-bold mt-1">%{v.pct} izlendi</div>
+                    <div className="text-white text-xs font-bold line-clamp-2">{v.baslik}</div>
+                    {v.egitmenAdlari?.[0] && <div className="text-purple-200/70 text-[10px] mt-0.5 truncate">{v.egitmenAdlari[0]}</div>}
+                    <div className="text-amber-300 text-[10px] font-bold mt-1">%{v.pct} izlendi</div>
                   </div>
                 </button>
               ))}
@@ -668,33 +659,33 @@ const Profil = () => {
         )}
 
         {/* Favorilerim */}
-        <section className="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm -mt-1">
+        <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1">
           <div className="flex items-center gap-2 mb-3">
-            <Heart className="w-4 h-4 text-rose-500" />
-            <h2 className="text-stone-900 font-bold text-sm">Favorilerim</h2>
+            <Heart className="w-4 h-4 text-pink-400" />
+            <h2 className="text-white font-bold text-sm">Favorilerim</h2>
           </div>
 
           {/* Takip eğitmenleri */}
           <div className="mb-4">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-stone-600 text-sm">Takip ettiğim eğitmenler</span>
-              <span className="text-stone-900 font-bold text-sm">{takipSet.size}</span>
+              <span className="text-purple-200 text-sm">Takip ettiğim eğitmenler</span>
+              <span className="text-white font-bold text-sm">{takipSet.size}</span>
             </div>
             {takipSet.size > 0 ? (
               <button onClick={() => navigate('/konusmacilar?fav=1')}
-                className="w-full bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-xl px-3 py-2 text-stone-700 text-sm font-semibold flex items-center justify-between transition">
+                className="w-full bg-white/5 hover:bg-white/15 border border-white/10 rounded-xl px-3 py-2 text-purple-100 text-sm font-semibold flex items-center justify-between transition spring-tap">
                 <span>Tümünü gör</span> <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
-              <p className="text-stone-400 text-xs italic">Henüz takip ettiğin eğitmen yok</p>
+              <p className="text-purple-300/60 text-xs italic">Henüz takip ettiğin eğitmen yok</p>
             )}
           </div>
 
           {/* Video favorileri — preview grid (Faz 4b) */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-stone-600 text-sm">Favori kayıtlı eğitimler</span>
-              <span className="text-stone-900 font-bold text-sm">{videoFav.size}</span>
+              <span className="text-purple-200 text-sm">Favori kayıtlı eğitimler</span>
+              <span className="text-white font-bold text-sm">{videoFav.size}</span>
             </div>
             {favVideoMeta.length > 0 ? (
               <>
@@ -702,44 +693,44 @@ const Profil = () => {
                   {favVideoMeta.map(v => (
                     <button key={v.id}
                       onClick={() => navigate(`/kayitli-egitimler?v=${encodeURIComponent(v.id)}`)}
-                      className="bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-lg overflow-hidden text-left transition group">
-                      <div className="relative aspect-video bg-stone-200">
+                      className="bg-white/5 hover:bg-white/15 border border-white/10 rounded-lg overflow-hidden text-left transition group spring-tap">
+                      <div className="relative aspect-video bg-black/30">
                         {v.thumbnailUrl ? (
                           <img src={v.thumbnailUrl} alt={v.baslik} loading="lazy" className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center"><Video className="w-5 h-5 text-stone-400" /></div>
+                          <div className="w-full h-full flex items-center justify-center"><Video className="w-5 h-5 text-white/30" /></div>
                         )}
-                        <Heart className="absolute top-1.5 right-1.5 w-3.5 h-3.5 text-rose-500 fill-rose-500 drop-shadow" />
+                        <Heart className="absolute top-1.5 right-1.5 w-3.5 h-3.5 text-pink-400 fill-pink-400 drop-shadow" />
                       </div>
                       <div className="p-1.5">
-                        <div className="text-stone-900 text-[10px] font-semibold line-clamp-2 leading-snug">{v.baslik}</div>
+                        <div className="text-white text-[10px] font-semibold line-clamp-2 leading-snug">{v.baslik}</div>
                       </div>
                     </button>
                   ))}
                 </div>
                 {videoFav.size > 4 && (
                   <button onClick={() => navigate('/kayitli-egitimler?fav=1')}
-                    className="w-full bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-xl px-3 py-2 text-stone-700 text-xs font-semibold flex items-center justify-between transition">
+                    className="w-full bg-white/5 hover:bg-white/15 border border-white/10 rounded-xl px-3 py-2 text-purple-100 text-xs font-semibold flex items-center justify-between transition spring-tap">
                     <span>Tüm {videoFav.size} favoriyi gör</span> <ChevronRight className="w-4 h-4" />
                   </button>
                 )}
               </>
             ) : videoFav.size > 0 ? (
               <button onClick={() => navigate('/kayitli-egitimler?fav=1')}
-                className="w-full bg-stone-50 hover:bg-stone-100 border border-stone-200 rounded-xl px-3 py-2 text-stone-700 text-sm font-semibold flex items-center justify-between transition">
+                className="w-full bg-white/5 hover:bg-white/15 border border-white/10 rounded-xl px-3 py-2 text-purple-100 text-sm font-semibold flex items-center justify-between transition spring-tap">
                 <span>Tümünü gör</span> <ChevronRight className="w-4 h-4" />
               </button>
             ) : (
-              <p className="text-stone-400 text-xs italic">Henüz favori eğitimin yok</p>
+              <p className="text-purple-300/60 text-xs italic">Henüz favori eğitimin yok</p>
             )}
           </div>
         </section>
 
         {/* Abonelikler + hatırlatmalar */}
-        <section className="bg-white border border-stone-200 rounded-2xl p-5 shadow-sm -mt-1">
+        <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1">
           <div className="flex items-center gap-2 mb-3">
-            <Bell className="w-4 h-4 text-blue-600" />
-            <h2 className="text-stone-900 font-bold text-sm">Abonelikler & Hatırlatmalar</h2>
+            <Bell className="w-4 h-4 text-blue-300" />
+            <h2 className="text-white font-bold text-sm">Abonelikler & Hatırlatmalar</h2>
           </div>
 
           {/* Abonelikler — toggle aktif (Faz 4d) */}
@@ -756,26 +747,26 @@ const Profil = () => {
           {/* Hatırlatmalar */}
           <div className="pt-3 border-t border-white/10">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-stone-600 text-sm flex items-center gap-1.5">
+              <span className="text-purple-200 text-sm flex items-center gap-1.5">
                 <Clock className="w-3.5 h-3.5" /> Kurduğum hatırlatmalar
               </span>
-              <span className="text-stone-900 font-bold text-sm">{hatirlatmalar.length}</span>
+              <span className="text-white font-bold text-sm">{hatirlatmalar.length}</span>
             </div>
             {hatirlatmalar.length === 0 ? (
-              <p className="text-stone-400 text-xs italic">Henüz hatırlatma kurmadın</p>
+              <p className="text-purple-300/60 text-xs italic">Henüz hatırlatma kurmadın</p>
             ) : (
               <div className="space-y-1.5">
                 {hatirlatmalar.slice(0, 5).map(h => (
-                  <div key={h.id} className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2 text-xs">
-                    <div className="text-stone-900 font-semibold truncate">{h.egitimAdi || h.title || 'Eğitim'}</div>
-                    <div className="text-stone-500 mt-0.5">
+                  <div key={h.id} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs">
+                    <div className="text-white font-semibold truncate">{h.egitimAdi || h.title || 'Eğitim'}</div>
+                    <div className="text-purple-200/70 mt-0.5">
                       {h.zaman ? new Date(h.zaman).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
-                      {h.tip && <span className="ml-2 text-stone-400">• {h.tip}</span>}
+                      {h.tip && <span className="ml-2 text-purple-300/60">• {h.tip}</span>}
                     </div>
                   </div>
                 ))}
                 {hatirlatmalar.length > 5 && (
-                  <p className="text-stone-400 text-xs text-center mt-2">+{hatirlatmalar.length - 5} daha</p>
+                  <p className="text-purple-300/60 text-xs text-center mt-2">+{hatirlatmalar.length - 5} daha</p>
                 )}
               </div>
             )}
@@ -789,48 +780,50 @@ const Profil = () => {
   );
 };
 
-// Helpers — premium light mode
+// Helpers — Amare brand: purple/glass + amber accent
 const InfoRow = ({ icon: Icon, label, value }) => (
   <div className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-    <Icon className="w-4 h-4 text-stone-400 flex-shrink-0" />
-    <span className="text-stone-500 text-xs flex-shrink-0">{label}</span>
-    <span className="text-stone-900 font-semibold text-sm truncate ml-auto">{value}</span>
+    <Icon className="w-4 h-4 text-amber-300/80 flex-shrink-0" />
+    <span className="text-purple-200/80 text-xs flex-shrink-0">{label}</span>
+    <span className="text-white font-semibold text-sm truncate ml-auto">{value}</span>
   </div>
 );
 
 const Stat = ({ label, value }) => (
-  <div className="bg-stone-50 border border-stone-200 rounded-lg px-3 py-2">
-    <div className="text-stone-400 text-[10px] uppercase tracking-wider">{label}</div>
-    <div className="text-stone-900 font-bold text-sm mt-0.5">{value}</div>
+  <div className="bg-white/5 border border-white/10 rounded-lg px-3 py-2">
+    <div className="text-purple-300/70 text-[10px] uppercase tracking-wider">{label}</div>
+    <div className="text-white font-bold text-sm mt-0.5">{value}</div>
   </div>
 );
 
 const StatCell = ({ label, value }) => (
   <div className="text-center px-2 py-4">
-    <div className="text-stone-900 font-light text-2xl leading-none tracking-tight">{value}</div>
-    <div className="text-stone-400 text-[10px] uppercase tracking-[0.15em] mt-2 font-semibold">{label}</div>
+    <div className="text-white font-light text-2xl leading-none tracking-tight">{value}</div>
+    <div className="text-amber-300/80 text-[10px] uppercase tracking-[0.15em] mt-2 font-semibold">{label}</div>
   </div>
 );
 
 const SectionTitle = ({ children, icon: Icon }) => (
   <div className="flex items-center gap-2.5">
-    {Icon && <Icon className="w-3 h-3 text-amber-700" />}
-    <h3 className="text-amber-700 text-[11px] font-bold uppercase tracking-[0.25em]">{children}</h3>
-    <div className="flex-1 h-px bg-gradient-to-r from-stone-300/60 to-transparent" />
+    {Icon && <Icon className="w-3 h-3 text-amber-300" />}
+    <h3 className="text-amber-300 text-[11px] font-bold uppercase tracking-[0.25em]">{children}</h3>
+    <div className="flex-1 h-px bg-gradient-to-r from-amber-300/30 to-transparent" />
   </div>
 );
 
 const AbonelikChip = ({ aktif, label, onClick, actionLabel, busy = false }) => (
   <button onClick={onClick} disabled={busy}
-    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition ${
-      aktif ? 'bg-emerald-50 border border-emerald-200 text-emerald-900 hover:bg-emerald-100' : 'bg-stone-50 border border-stone-200 text-stone-600 hover:bg-stone-100'
+    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition spring-tap ${
+      aktif
+        ? 'bg-green-400/15 border border-green-300/30 text-green-100 hover:bg-green-400/25'
+        : 'bg-white/5 border border-white/10 text-purple-200 hover:bg-white/10'
     } ${busy ? 'opacity-50 cursor-wait' : ''}`}>
     <span className="text-sm font-medium flex items-center gap-2">
-      <div className={`w-2 h-2 rounded-full ${aktif ? 'bg-emerald-500' : 'bg-stone-400'}`} />
+      <div className={`w-2 h-2 rounded-full ${aktif ? 'bg-green-400' : 'bg-purple-400/40'}`} />
       {label}
     </span>
     <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-1 rounded-md ${
-      aktif ? 'bg-white text-emerald-700' : 'bg-amber-100 text-amber-800'
+      aktif ? 'bg-white/15 text-green-200' : 'bg-amber-400/20 text-amber-200'
     }`}>
       {busy ? '...' : actionLabel}
     </span>
