@@ -32,6 +32,7 @@ import { RotateCw } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { webPushDestekli, webPushIzinDurumu, webPushKaydolu, webPushIptal } from '../utils/webPush';
 import BultenModal from '../components/BultenModal';
+import EgitimYolumBlok from '../components/EgitimYolumBlok';
 
 const PROFIL_CACHE_KEY = 'amare_profil_v1';
 const PROFIL_CACHE_TTL = 5 * 60 * 1000; // 5dk
@@ -254,6 +255,25 @@ const Profil = () => {
     if (userDoc?.amareId) profilVerisiFetch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userDoc?.amareId]);
+
+  // Rank takip — login kullanıcı için anında kontrol (background, async)
+  // Eğer rank değişmişse Firestore'da egitim_durumu güncellenir
+  useEffect(() => {
+    if (!currentUser || isAnonymous || !userDoc?.amareId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const idToken = await currentUser.getIdToken();
+        await fetch(`/.netlify/functions/rank-takip?uid=${encodeURIComponent(uid)}`, {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        // Sessiz arka plan işlemi — hata loglanır ama UI etkilenmez
+      } catch (e) {
+        if (!cancelled) console.warn('[rank-takip] arka plan:', e.message);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentUser, isAnonymous, uid, userDoc?.amareId]);
 
   // Firestore — bülten + hatırlatmalar (email ile filtreli)
   // Web push: Notification.permission ile kontrol (browser tabanlı, email değil)
@@ -702,6 +722,21 @@ const Profil = () => {
             </div>
             <div className="text-amber-200/80 text-xs mt-1">Tıkla — kutla 🎊</div>
           </button>
+        )}
+
+        {/* ═══ EĞİTİM YOLUM — sayfanın ana bölümü ═══ */}
+        {a?.rank && (
+          <div id="section-egitim-yolum" className="stagger-fade" style={{ animationDelay: '150ms' }}>
+            <div className="flex items-center justify-between mb-3">
+              <SectionTitle icon={Trophy}>Eğitim Yolum</SectionTitle>
+              <span className="text-purple-300/60 text-[10px] uppercase tracking-wider font-bold">Sana Özel</span>
+            </div>
+            <EgitimYolumBlok
+              uid={uid}
+              isAnonymous={isAnonymous}
+              kullaniciRankString={a.rank}
+            />
+          </div>
         )}
 
         {/* ═══ HAKKIMDA ═══ */}

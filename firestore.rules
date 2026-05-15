@@ -123,6 +123,22 @@ service cloud.firestore {
     // Diğer kullanıcı profillerine erişim YOK (privacy).
     match /users/{uid} {
       allow read, write: if isSignedIn() && request.auth.uid == uid;
+
+      // Eğitim durumu subcollection — kullanıcının kendi rank progress'i
+      // İzleme durumu, hangi rank'lerin tamamlandığı, vs.
+      // Admin ve Netlify scheduled function (admin SDK ile) erişebilir.
+      match /egitim_durumu/{docId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+        allow read: if isAdmin();  // Sponsor dashboard için (Faz 4)
+      }
+    }
+
+    // Eğitim yolları — admin tarafından her rank için küratör edilmiş video listesi
+    // Herkes okur (kullanıcı kendi rank'inin curriculum'unu görür)
+    // Sadece admin yazar (kayitli_egitimler'den video seçer)
+    match /egitim_yollari/{rankKey} {
+      allow read: if true;
+      allow write: if isAdmin();
     }
 
     // Diğer her koleksiyon — varsayılan: tamamen kapalı
