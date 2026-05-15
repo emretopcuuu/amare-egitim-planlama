@@ -153,6 +153,58 @@
     box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
   }
 
+  /* ── Stagger fade-up (profil için section'lar sırayla) ──── */
+  .stagger-fade {
+    opacity: 0;
+    animation: staggerFadeUp 0.5s ease-out forwards;
+  }
+  @keyframes staggerFadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Skeleton shimmer ───────────────────────────────────── */
+  .skeleton-shimmer {
+    background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 100%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.5s ease-in-out infinite;
+  }
+  @keyframes skeletonShimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ── Chip premium hover ─────────────────────────────────── */
+  .chip-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .chip-lift:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 6px 20px rgba(251, 191, 36, 0.25);
+  }
+  .chip-lift:active {
+    transform: scale(0.96);
+  }
+
+  /* ── Avatar premium ring pulse ──────────────────────────── */
+  .avatar-aurora {
+    position: relative;
+  }
+  .avatar-aurora::before {
+    content: '';
+    position: absolute;
+    inset: -16px;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.25) 0%, transparent 70%);
+    animation: avatarAurora 3s ease-in-out infinite;
+    pointer-events: none;
+    z-index: -1;
+  }
+  @keyframes avatarAurora {
+    0%, 100% { opacity: 0.5; transform: scale(0.95); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
   /* ── Scrollbar gizle (story strip için) ──────────────────── */
   .scrollbar-hide::-webkit-scrollbar { display: none; }
   .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }

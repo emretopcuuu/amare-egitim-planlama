@@ -2,7 +2,7 @@
 // Anonim kullanıcı → "Üye Girişi" CTA placeholder
 // Login kullanıcı → Hero + Üyelik / Onboarding / Favoriler / Aktivite
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, LogIn, LogOut, Phone, Mail, Hash, CalendarDays, Award,
@@ -26,6 +26,10 @@ import { useTakipEgitmenler } from '../utils/takip';
 import { parseFunnelAnswers, parseProfileAnswers } from '../utils/onboardingLabels';
 import { useWatchProgress, getTotalWatchedSeconds, getWeeklyWatchedSeconds, getCompletedCount } from '../utils/watchProgress';
 import { updateStreak } from '../utils/streak';
+import { useCountUp } from '../utils/useCountUp';
+import { usePullToRefresh } from '../utils/usePullToRefresh';
+import { RotateCw } from 'lucide-react';
+import confetti from 'canvas-confetti';
 import { webPushDestekli, webPushIzinDurumu, webPushKaydolu, webPushIptal } from '../utils/webPush';
 import BultenModal from '../components/BultenModal';
 
@@ -84,6 +88,12 @@ const Profil = () => {
   const weeklyWatched = useMemo(() => getWeeklyWatchedSeconds(), [watchProgress.version]);
   const completedCount = useMemo(() => getCompletedCount(), [watchProgress.version]);
 
+  // Pull-to-refresh callback'i ref'te tut — profilVerisiFetch tanımı sonradan
+  const fetchRef = useRef(null);
+  const { pullY, refreshing } = usePullToRefresh(async () => {
+    if (fetchRef.current) await fetchRef.current(true);
+  });
+
   // Local favori eğitimler
   useEffect(() => {
     try {
@@ -99,6 +109,49 @@ const Profil = () => {
       .then(s => setStreak(s))
       .catch(e => console.warn('[profil] streak:', e.message));
   }, [ready, uid, isAnonymous]);
+
+  // Yıldönümü konfeti — bugün ise (gunFarki === 0) ve daha önce tetiklenmediyse
+  const yildonumuKonfetiAttiRef = useRef(false);
+  useEffect(() => {
+    if (yildonumuKonfetiAttiRef.current) return;
+    if (!profilVerisi || !profilVerisi.amare?.register_date) return;
+    const reg = new Date(profilVerisi.amare.register_date);
+    const now = new Date();
+    if (reg.getMonth() === now.getMonth() && reg.getDate() === now.getDate() && reg.getFullYear() !== now.getFullYear()) {
+      yildonumuKonfetiAttiRef.current = true;
+      setTimeout(() => {
+        const duration = 3000;
+        const end = Date.now() + duration;
+        (function frame() {
+          confetti({
+            particleCount: 4,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0 },
+            colors: ['#FBB034', '#FFDD00', '#FF6B35', '#A855F7'],
+          });
+          confetti({
+            particleCount: 4,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1 },
+            colors: ['#FBB034', '#FFDD00', '#FF6B35', '#A855F7'],
+          });
+          if (Date.now() < end) requestAnimationFrame(frame);
+        })();
+      }, 800);
+    }
+  }, [profilVerisi]);
+
+  // Yıldönümü banner'a tıklayınca da konfeti
+  const yildonumuKutla = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#FBB034', '#FFDD00', '#FF6B35', '#A855F7'],
+    });
+  };
 
   // Yarım kalan eğitimler (watch progress) + favori video meta'sını Firestore'dan çek
   // watchProgress.version değiştiğinde tekrar fetch — kullanıcı bir video izledikten sonra geri dönerse güncel olur
@@ -193,6 +246,9 @@ const Profil = () => {
       setYukleniyor(false);
     }
   };
+
+  // fetchRef'i güncel tut (pull-to-refresh'in çağıracağı son fonksiyon)
+  useEffect(() => { fetchRef.current = profilVerisiFetch; });
 
   useEffect(() => {
     if (userDoc?.amareId) profilVerisiFetch();
@@ -502,6 +558,15 @@ const Profil = () => {
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
+      {/* Pull-to-refresh göstergesi (mobile) */}
+      {pullY > 0 && (
+        <div style={{ height: `${pullY}px` }}
+          className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-end justify-center pb-2 bg-gradient-to-b from-purple-950 to-purple-900 transition-[height]">
+          <RotateCw className={`w-6 h-6 text-amber-300 ${refreshing ? 'animate-spin' : ''}`}
+            style={{ transform: refreshing ? '' : `rotate(${Math.min(pullY * 3, 360)}deg)` }} />
+        </div>
+      )}
+
       {/* Header — takvim sayfasıyla aynı stil */}
       <div className="max-w-3xl mx-auto flex items-center justify-between px-4 pt-6">
         <button onClick={() => navigate(-1)} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
@@ -571,17 +636,27 @@ const Profil = () => {
         )}
       </div>
 
-      {/* STATS ROW — 6 stat (cam kart) */}
-      <div className="max-w-3xl mx-auto px-4 mt-2">
-        <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl grid grid-cols-3 sm:grid-cols-6 divide-x divide-white/10 shadow-xl overflow-hidden">
-          <StatCell label="Üye" value={u ? `${u.yil}y` : '—'} />
-          <StatCell label="Saat" value={Math.floor(totalWatched / 3600) || 0} highlight={totalWatched > 0} />
-          <StatCell label="İzlenen" value={completedCount} />
-          <StatCell label="Favori" value={takipSet.size + videoFav.size} />
-          <StatCell label="Seri" value={streak.current} highlight={streak.current >= 3} />
-          <StatCell label="Hatırlatma" value={hatirlatmalar.length} />
+      {/* STATS ROW — 6 stat, sticky scroll'da üste yapışır, tıklanabilir */}
+      <div className="max-w-3xl mx-auto px-4 mt-2 sticky top-2 z-30">
+        <div className="bg-purple-900/80 backdrop-blur-xl border border-white/20 rounded-2xl grid grid-cols-3 sm:grid-cols-6 divide-x divide-white/10 shadow-2xl overflow-hidden">
+          <StatCell label="Üye" value={u ? `${u.yil}y` : '—'} scrollToId="section-uyelik" delay={0} />
+          <StatCell label="Saat" value={Math.floor(totalWatched / 3600) || 0} highlight={totalWatched > 0} scrollToId="section-aktivite" delay={100} />
+          <StatCell label="İzlenen" value={completedCount} scrollToId="section-aktivite" delay={200} />
+          <StatCell label="Favori" value={takipSet.size + videoFav.size} scrollToId="section-favoriler" delay={300} />
+          <StatCell label="Seri" value={streak.current} highlight={streak.current >= 3} delay={400} />
+          <StatCell label="Hatırlatma" value={hatirlatmalar.length} scrollToId="section-aktivite" delay={500} />
         </div>
       </div>
+
+      {/* Skeleton — profilVerisi henüz yokken shimmer kartlar */}
+      {!profilVerisi && (
+        <div className="max-w-3xl mx-auto px-4 mt-8 space-y-4">
+          {[120, 160, 100, 140].map((h, i) => (
+            <div key={i} className="rounded-2xl border border-white/10 skeleton-shimmer"
+              style={{ height: `${h}px`, animationDelay: `${i * 100}ms` }} />
+          ))}
+        </div>
+      )}
 
       <div className="max-w-3xl mx-auto px-4 mt-8 space-y-6">
 
@@ -612,9 +687,10 @@ const Profil = () => {
           </section>
         )}
 
-        {/* Yıldönümü banner (Faz 4e) */}
+        {/* Yıldönümü banner (Faz 4e) — tıklayınca konfeti */}
         {yildonumu && (
-          <section className="bg-gradient-to-r from-amber-400/20 via-amber-300/15 to-amber-400/20 backdrop-blur-md border border-amber-300/40 rounded-2xl p-4 text-center">
+          <button onClick={yildonumuKutla}
+            className="w-full bg-gradient-to-r from-amber-400/20 via-amber-300/15 to-amber-400/20 backdrop-blur-md border border-amber-300/40 hover:border-amber-300/70 rounded-2xl p-4 text-center transition spring-tap">
             <div className="text-2xl mb-1">🎉</div>
             <div className="text-amber-100 font-bold text-sm">
               {yildonumu.gunFarki === 0
@@ -624,13 +700,13 @@ const Profil = () => {
                   : `${Math.abs(yildonumu.gunFarki)} gün önce ${yildonumu.yil}. yılınızı kutladınız 🌟`
               }
             </div>
-            <div className="text-amber-200/80 text-xs mt-1">One Team yolculuğunda harika gidiyorsunuz</div>
-          </section>
+            <div className="text-amber-200/80 text-xs mt-1">Tıkla — kutla 🎊</div>
+          </button>
         )}
 
         {/* ═══ HAKKIMDA ═══ */}
         {(m?.bio || m?.bio_data || funnelCevaplari.length > 0 || careerData || profileCevaplari.chips.length > 0) && (
-          <div>
+          <div id="section-hakkimda" className="stagger-fade" style={{ animationDelay: '200ms' }}>
             <div className="flex items-center justify-between gap-2 mb-4">
               <SectionTitle icon={User}>Hakkımda</SectionTitle>
               <a href={`https://oneteamglobal.ai/?amid=${encodeURIComponent(profilVerisi?.amareId || '')}&update=1&return=${encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil')}`}
@@ -680,7 +756,7 @@ const Profil = () => {
                 const Icon = q.icon || User;
                 return (
                   <div key={q.key}
-                    className="group bg-white/10 hover:bg-white/15 backdrop-blur border border-white/20 hover:border-amber-300/50 rounded-xl px-3 py-3 transition-all">
+                    className="group bg-white/10 backdrop-blur border border-white/20 hover:border-amber-300/50 rounded-xl px-3 py-3 chip-lift">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <Icon className="w-3.5 h-3.5 text-amber-300 flex-shrink-0" />
                       <div className="text-purple-200/70 text-[9px] uppercase tracking-[0.15em] font-bold truncate">{q.soru}</div>
@@ -774,7 +850,7 @@ const Profil = () => {
         )}
 
         {/* ═══ ÜYELİK ═══ */}
-        <div>
+        <div id="section-uyelik" className="stagger-fade" style={{ animationDelay: '300ms' }}>
           <SectionTitle icon={Hash}>Üyelik</SectionTitle>
           <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 divide-y divide-white/10 shadow-xl">
             <InfoRow icon={Phone} label="Telefon" value={a?.phone || '—'} />
@@ -786,7 +862,7 @@ const Profil = () => {
 
         {/* ═══ BAĞLANTILAR (sponsor) ═══ */}
         {sponsorAd && (
-          <div>
+          <div id="section-baglantilar" className="stagger-fade" style={{ animationDelay: '400ms' }}>
             <SectionTitle icon={Users}>Bağlantılar</SectionTitle>
             <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
               <div className="text-purple-200/70 text-[10px] uppercase tracking-[0.15em] font-bold mb-3">Sponsorum</div>
@@ -813,12 +889,14 @@ const Profil = () => {
 
         {/* ═══ AKTİVİTE ═══ */}
         {(yarimKalan.length > 0 || takipSet.size > 0 || videoFav.size > 0 || hatirlatmalar.length > 0) && (
-          <SectionTitle icon={Bell}>Aktivite</SectionTitle>
+          <div id="section-aktivite" className="stagger-fade" style={{ animationDelay: '500ms' }}>
+            <SectionTitle icon={Bell}>Aktivite</SectionTitle>
+          </div>
         )}
 
         {/* Yarım kalan eğitimler (Faz 4a) */}
         {yarimKalan.length > 0 && (
-          <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1">
+          <section id="section-yarim-kalan" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1 stagger-fade" style={{ animationDelay: '550ms' }}>
             <div className="flex items-center gap-2 mb-3">
               <Video className="w-4 h-4 text-amber-300" />
               <h2 className="text-white font-bold text-sm">Devam Et — Yarım Kaldı</h2>
@@ -853,7 +931,7 @@ const Profil = () => {
         )}
 
         {/* Favorilerim */}
-        <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1">
+        <section id="section-favoriler" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1 stagger-fade" style={{ animationDelay: '600ms' }}>
           <div className="flex items-center gap-2 mb-3">
             <Heart className="w-4 h-4 text-pink-400" />
             <h2 className="text-white font-bold text-sm">Favorilerim</h2>
@@ -921,7 +999,7 @@ const Profil = () => {
         </section>
 
         {/* Abonelikler + hatırlatmalar */}
-        <section className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1">
+        <section id="section-abonelikler" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1 stagger-fade" style={{ animationDelay: '650ms' }}>
           <div className="flex items-center gap-2 mb-3">
             <Bell className="w-4 h-4 text-blue-300" />
             <h2 className="text-white font-bold text-sm">Abonelikler & Hatırlatmalar</h2>
@@ -1078,12 +1156,31 @@ const Stat = ({ label, value }) => (
   </div>
 );
 
-const StatCell = ({ label, value, highlight = false }) => (
-  <div className="text-center px-1.5 sm:px-2 py-3 sm:py-4">
-    <div className={`font-light text-xl sm:text-2xl leading-none tracking-tight ${highlight ? 'text-amber-300' : 'text-white'}`}>{value}</div>
-    <div className={`text-[9px] sm:text-[10px] uppercase tracking-[0.12em] sm:tracking-[0.15em] mt-1.5 sm:mt-2 font-semibold ${highlight ? 'text-amber-300' : 'text-amber-300/60'}`}>{label}</div>
-  </div>
-);
+// Count-up'lı + tıklanabilir StatCell (scroll anchor için)
+const StatCell = ({ label, value, highlight = false, scrollToId = null, delay = 0, suffix = '' }) => {
+  const numValue = typeof value === 'number' ? value : parseInt(String(value).replace(/\D/g, ''), 10) || 0;
+  const isNumeric = typeof value === 'number' || /^\d+/.test(String(value));
+  const animated = useCountUp(isNumeric ? numValue : 0, { duration: 900, delay });
+  const display = isNumeric ? `${animated}${suffix}` : value;
+
+  const handleClick = () => {
+    if (!scrollToId) return;
+    const el = document.getElementById(scrollToId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={scrollToId ? handleClick : undefined}
+      disabled={!scrollToId}
+      className={`text-center px-1.5 sm:px-2 py-3 sm:py-4 transition-all ${scrollToId ? 'hover:bg-white/5 cursor-pointer active:scale-95' : 'cursor-default'}`}
+    >
+      <div className={`font-light text-xl sm:text-2xl leading-none tracking-tight tabular-nums ${highlight ? 'text-amber-300' : 'text-white'}`}>{display}</div>
+      <div className={`text-[9px] sm:text-[10px] uppercase tracking-[0.12em] sm:tracking-[0.15em] mt-1.5 sm:mt-2 font-semibold ${highlight ? 'text-amber-300' : 'text-amber-300/60'}`}>{label}</div>
+    </button>
+  );
+};
 
 const SectionTitle = ({ children, icon: Icon }) => (
   <div className="flex items-center gap-2.5">

@@ -119,8 +119,8 @@ const ProfilAvatar = ({ uid, fullName, fotoURL, size = 'xl', editable = true, on
   const hasPhoto = !!fotoURL;
 
   return (
-    <div className={`relative inline-block ${highlight ? 'animate-pulse' : ''}`}>
-      {/* Highlight halkası */}
+    <div className={`relative inline-block avatar-aurora ${highlight ? 'animate-pulse' : ''}`}>
+      {/* Highlight halkası (chip-tıklamada) */}
       {highlight && (
         <div className="absolute -inset-2 rounded-full border-4 border-amber-400 animate-ping" />
       )}
