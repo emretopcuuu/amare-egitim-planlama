@@ -81,30 +81,6 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* Info Section */}
-        <div className="mt-16 max-w-3xl mx-auto bg-white/10 backdrop-blur-lg rounded-2xl p-8 text-white">
-          <h3 className="text-2xl font-bold mb-4 text-center">
-            {t('home_how_title')}
-          </h3>
-          <div className="space-y-4">
-            {[
-              { num: '1', title: t('home_step1_title'), desc: t('home_step1_desc') },
-              { num: '2', title: t('home_step2_title'), desc: t('home_step2_desc') },
-              { num: '3', title: t('home_step3_title'), desc: t('home_step3_desc') },
-            ].map((step) => (
-              <div key={step.num} className="flex items-start">
-                <div className="bg-white/20 rounded-full w-8 h-8 flex items-center justify-center mr-4 flex-shrink-0 mt-1">
-                  <span className="font-bold">{step.num}</span>
-                </div>
-                <div>
-                  <h4 className="font-semibold mb-1">{step.title}</h4>
-                  <p className="text-white/80">{step.desc}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Footer */}
         <div className="mt-12 text-center text-white/70">
           <p>{t('copyright')}</p>
