@@ -490,9 +490,9 @@ const Profil = () => {
         <div className="flex items-center gap-2">
           <button onClick={() => setWrappedAcik(true)}
             className="bg-amber-400/15 hover:bg-amber-400/30 border border-amber-300/40 text-amber-200 px-3 py-2 rounded-xl transition spring-tap inline-flex items-center gap-1.5 text-xs font-bold"
-            title="Yıllık özet (Wrapped) paylaş">
+            title="Yıllık özet paylaş">
             <Sparkles className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Wrapped</span>
+            <span className="hidden sm:inline">Özet</span>
           </button>
           <button onClick={() => profilVerisiFetch(true)} disabled={yukleniyor}
             className="bg-white/10 hover:bg-white/20 border border-white/20 text-white p-2 rounded-xl transition disabled:opacity-50 spring-tap"
@@ -558,7 +558,7 @@ const Profil = () => {
           <StatCell label="Saat" value={Math.floor(totalWatched / 3600) || 0} highlight={totalWatched > 0} />
           <StatCell label="İzlenen" value={completedCount} />
           <StatCell label="Favori" value={takipSet.size + videoFav.size} />
-          <StatCell label="Streak" value={streak.current} highlight={streak.current >= 3} />
+          <StatCell label="Seri" value={streak.current} highlight={streak.current >= 3} />
           <StatCell label="Hatırlatma" value={hatirlatmalar.length} />
         </div>
       </div>
@@ -953,9 +953,9 @@ const Profil = () => {
       <UyeGirisModal acik={girisModalAcik} onClose={() => setGirisModalAcik(false)} />
       {bultenModalAcik && <BultenModal onClose={handleBultenClose} />}
 
-      {/* Streak açıklama modal */}
+      {/* Seri açıklama modal */}
       {streakAciklamaAcik && (
-        <SimpleModal onClose={() => setStreakAciklamaAcik(false)} title="Günlük Streak'in 🔥">
+        <SimpleModal onClose={() => setStreakAciklamaAcik(false)} title="Günlük Serin 🔥">
           <div className="text-center py-4">
             <Flame className="w-16 h-16 text-orange-400 mx-auto mb-3" fill="#fb923c" />
             <div className="text-white text-3xl font-light mb-1">{streak.current} gün</div>
@@ -971,7 +971,7 @@ const Profil = () => {
               </div>
             </div>
             <p className="text-purple-200/80 text-xs mt-5 leading-relaxed">
-              Her gün giriş yaparak streak'ini büyütebilirsin. 1 gün atlarsan sıfırlanır 😔
+              Her gün giriş yaparak serini büyütebilirsin. 1 gün atlarsan sıfırlanır 😔
               {streak.current >= 7 && (<><br/><span className="text-amber-300 font-semibold">⚡ Disiplin rozeti kazandın!</span></>)}
             </p>
           </div>
@@ -1077,9 +1077,9 @@ const WrappedKart = ({ onClose, fullName, rank, totalWatched, completedCount, fa
   const saat = Math.floor(totalWatched / 3600);
 
   const handleShare = async () => {
-    const text = `🎉 ${yil} OneTeam Wrapped\n\n${fullName}\n${rank || ''}\n\n⏱️ ${saat} saat eğitim\n📚 ${completedCount} eğitim tamamlandı\n❤️ ${favCount} favori\n🔥 ${streakLongest} gün rekor streak\n💎 ${uyelikYil}+ yıl üye\n\negitimtakvimi.oneteamglobal.ai`;
+    const text = `🎉 ${yil} One Team Yıllık Özetim\n\n${fullName}\n${rank || ''}\n\n⏱️ ${saat} saat eğitim\n📚 ${completedCount} eğitim tamamlandı\n❤️ ${favCount} favori\n🔥 ${streakLongest} gün rekor seri\n💎 ${uyelikYil}+ yıl üye\n\negitimtakvimi.oneteamglobal.ai`;
     if (navigator.share) {
-      try { await navigator.share({ title: 'OneTeam Wrapped', text }); }
+      try { await navigator.share({ title: 'One Team Yıllık Özetim', text }); }
       catch {}
     } else {
       navigator.clipboard.writeText(text);
@@ -1099,8 +1099,8 @@ const WrappedKart = ({ onClose, fullName, rank, totalWatched, completedCount, fa
 
         <div className="relative">
           <div className="text-white/80 text-xs uppercase tracking-[0.3em] font-bold mb-1">{yil}</div>
-          <h2 className="text-white text-3xl font-extrabold mb-1">OneTeam</h2>
-          <div className="text-white/90 text-2xl font-light italic mb-6">Wrapped</div>
+          <h2 className="text-white text-3xl font-extrabold mb-1">One Team</h2>
+          <div className="text-white/90 text-2xl font-light italic mb-6">Yıllık Özetim</div>
 
           <div className="bg-white/15 backdrop-blur-md rounded-2xl p-5 space-y-3 text-left mb-5">
             <div className="flex items-center justify-between border-b border-white/20 pb-2">
@@ -1113,7 +1113,7 @@ const WrappedKart = ({ onClose, fullName, rank, totalWatched, completedCount, fa
             <WrappedRow label="Toplam Saat" value={`${saat}h`} />
             <WrappedRow label="Tamamlanan Eğitim" value={completedCount} />
             <WrappedRow label="Favori" value={favCount} />
-            <WrappedRow label="Rekor Streak" value={`${streakLongest} gün`} />
+            <WrappedRow label="Rekor Seri" value={`${streakLongest} gün`} />
             <WrappedRow label="Üyelik" value={`${uyelikYil}+ yıl`} />
           </div>
 
