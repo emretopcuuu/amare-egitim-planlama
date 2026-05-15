@@ -374,7 +374,7 @@ const Profil = () => {
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 mb-4 shadow-xl">
               <Sparkles className="w-8 h-8 text-purple-900" />
             </div>
-            <h2 className="text-xl font-bold text-white mb-2">Önce kendini tanıyalım</h2>
+            <h2 className="text-xl font-bold text-white mb-2">Önce seni tanıyalım</h2>
             <p className="text-amber-100/90 text-sm leading-relaxed mb-5">
               5 dakikalık bir onboarding ile profilini tamamla. Sana özel kariyer planı, eğitim önerileri ve sponsor takip sistemi açılacak.
             </p>
