@@ -417,45 +417,52 @@ const Profil = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
-      {/* Rank gradient banner (Faz 4c) */}
-      <div className={`absolute top-0 left-0 right-0 h-64 ${rankGradient.bgClass} opacity-40 pointer-events-none`} />
-
-      {/* Header */}
-      <div className="relative px-4 pt-4 pb-2 flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="text-white/90 hover:text-white text-sm font-semibold inline-flex items-center gap-1">
-          <ArrowLeft className="w-4 h-4" /> Geri
-        </button>
-        <div className="flex items-center gap-2">
-          <button onClick={() => profilVerisiFetch(true)} disabled={yukleniyor}
-            className="bg-white/15 hover:bg-white/25 border border-white/20 text-white p-2 rounded-xl transition disabled:opacity-50 backdrop-blur"
-            title="Yenile">
-            <RefreshCw className={`w-4 h-4 ${yukleniyor ? 'animate-spin' : ''}`} />
+    <div className="min-h-screen bg-[#0d0420] text-white pb-24">
+      {/* CINEMATIC HERO BANNER — 280px, rank renkli + radial gradient overlay */}
+      <div className="relative h-72 overflow-hidden">
+        {/* Rank rengi banner */}
+        <div className={`absolute inset-0 ${rankGradient.bgClass}`} />
+        {/* Radial soft mask — center transparent → edges dark */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center_top,transparent_0%,rgba(13,4,32,0.4)_60%,#0d0420_100%)]" />
+        {/* Top header — minimal */}
+        <div className="relative z-10 flex items-center justify-between px-4 pt-4">
+          <button onClick={() => navigate(-1)}
+            className="w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 border border-white/15 backdrop-blur-md flex items-center justify-center transition spring-tap">
+            <ArrowLeft className="w-4 h-4 text-white" />
           </button>
-          <button onClick={() => signOut(auth).then(() => navigate('/takvim'))}
-            className="bg-white/15 hover:bg-white/25 border border-white/20 text-white p-2 rounded-xl transition backdrop-blur"
-            title="Çıkış yap">
-            <LogOut className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={() => profilVerisiFetch(true)} disabled={yukleniyor}
+              className="w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 border border-white/15 backdrop-blur-md flex items-center justify-center transition disabled:opacity-50"
+              title="Yenile">
+              <RefreshCw className={`w-4 h-4 text-white ${yukleniyor ? 'animate-spin' : ''}`} />
+            </button>
+            <button onClick={() => signOut(auth).then(() => navigate('/takvim'))}
+              className="w-9 h-9 rounded-full bg-black/30 hover:bg-black/50 border border-white/15 backdrop-blur-md flex items-center justify-center transition"
+              title="Çıkış yap">
+              <LogOut className="w-4 h-4 text-white" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Hero */}
-      <div className="relative px-4 pt-6 pb-8 text-center">
-        <ProfilAvatar uid={uid} fullName={fullName} fotoURL={finalFoto} size="xl" editable={true} />
-        <h1 className="text-2xl font-bold text-white mt-4 drop-shadow">{fullName || 'Profilim'}</h1>
-        <div className="flex items-center justify-center gap-2 mt-2 flex-wrap">
-          {a?.rank && (
-            <span className={`inline-flex items-center gap-1 ${rankGradient.bgClass} text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg`}>
-              <Trophy className="w-3 h-3" /> {a.rank}
-            </span>
-          )}
-          {u && (
-            <span className="inline-flex items-center gap-1 bg-white/15 backdrop-blur border border-white/30 text-white px-3 py-1 rounded-full text-xs font-semibold">
-              <CalendarDays className="w-3 h-3" /> {u.yil > 0 ? `${u.yil} yıl ${u.ay} ay` : `${u.toplamAy} ay`} üye
-            </span>
-          )}
+      {/* AVATAR + AD + RANK — banner ile içerik arasında overlap */}
+      <div className="relative -mt-24 z-20 text-center px-4">
+        <div className="inline-block relative">
+          <ProfilAvatar uid={uid} fullName={fullName} fotoURL={finalFoto} size="xl" editable={true} />
         </div>
+        <h1 className="text-3xl font-extrabold text-white mt-4 drop-shadow-lg tracking-tight">{fullName || 'Profilim'}</h1>
+
+        {/* Rank rozeti — animated shimmer */}
+        {a?.rank && (
+          <div className="mt-3 inline-flex items-center gap-1.5 relative group">
+            <div className={`absolute inset-0 ${rankGradient.bgClass} rounded-full blur-md opacity-60 group-hover:opacity-100 transition-opacity animate-pulse`} />
+            <span className={`relative inline-flex items-center gap-1.5 ${rankGradient.bgClass} text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-2xl border border-white/20`}>
+              <Trophy className="w-3.5 h-3.5" /> {a.rank}
+              <Sparkles className="w-3 h-3 ml-0.5 animate-pulse" />
+            </span>
+          </div>
+        )}
+
         {hata && (
           <p className="text-red-300 text-xs mt-3 bg-red-500/10 border border-red-400/30 rounded-lg px-3 py-2 inline-block">
             {hata}
@@ -463,7 +470,17 @@ const Profil = () => {
         )}
       </div>
 
-      <div className="max-w-2xl mx-auto px-4 space-y-4">
+      {/* STATS ROW — yatay 4 stat */}
+      <div className="max-w-2xl mx-auto px-4 mt-6">
+        <div className="bg-white/[0.04] backdrop-blur-md border border-white/[0.08] rounded-2xl grid grid-cols-4 divide-x divide-white/[0.06]">
+          <StatCell label="Üye" value={u ? `${u.yil}y` : '—'} />
+          <StatCell label="Favori" value={takipSet.size + videoFav.size} />
+          <StatCell label="İzlenen" value={yarimKalan.length > 0 ? `${yarimKalan.length}+` : '0'} />
+          <StatCell label="Hatırlatma" value={hatirlatmalar.length} />
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 mt-6 space-y-6">
 
         {/* Yıldönümü banner (Faz 4e) */}
         {yildonumu && (
@@ -481,35 +498,34 @@ const Profil = () => {
           </section>
         )}
 
-        {/* BLOK 0 — Hakkımda (onboarding cevapları + bio + kariyer) — Faz 2 (A+B paketi) */}
+        {/* ═══ HAKKIMDA ═══ */}
         {(m?.bio || m?.bio_data || funnelCevaplari.length > 0 || careerData || profileCevaplari.chips.length > 0) && (
-          <section className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-white font-bold text-sm uppercase tracking-wide flex items-center gap-2">
-                <User className="w-4 h-4 text-purple-300" /> Hakkımda
-              </h2>
+          <div>
+            <div className="flex items-center justify-between gap-2 px-1 pt-2 mb-3">
+              <SectionTitle icon={User}>Hakkımda</SectionTitle>
               <a href={`https://oneteamglobal.ai/?amid=${encodeURIComponent(profilVerisi?.amareId || '')}&update=1&return=${encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil')}`}
-                className="text-purple-300 hover:text-amber-300 p-1.5 rounded-lg hover:bg-white/5 transition flex items-center gap-1 text-xs font-semibold" title="Cevapları yeniden doldur">
-                <Edit3 className="w-3.5 h-3.5" /> Güncelle
+                className="text-purple-300/80 hover:text-amber-300 transition flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap" title="Cevapları yeniden doldur">
+                <Edit3 className="w-3 h-3" /> Güncelle
               </a>
             </div>
 
-            {/* Tanıtım metni — kullanıcının kendi yazdığı serbest metin (en üstte, en görünür) */}
+            {/* Tanıtım metni — büyük tırnak quote stili */}
             {profileCevaplari.tanitim ? (
-              <div className="mb-4 bg-gradient-to-br from-amber-400/10 to-orange-500/10 border border-amber-300/30 rounded-xl p-3.5">
-                <div className="text-amber-300 text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                  <Sparkles className="w-3 h-3" /> Beni şöyle tanıt
-                </div>
-                <p className="text-white/95 text-sm leading-relaxed">"{profileCevaplari.tanitim}"</p>
+              <div className="mb-3 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-rose-500/10 backdrop-blur-md border border-amber-300/25 rounded-2xl p-5 relative overflow-hidden">
+                <div className="absolute top-2 left-3 text-amber-300/30 text-7xl font-serif leading-none select-none">"</div>
+                <p className="relative text-white/95 text-base leading-relaxed italic pl-6 pt-2 font-light">
+                  {profileCevaplari.tanitim}
+                </p>
+                <div className="text-amber-300/70 text-[10px] font-bold uppercase tracking-wider mt-3 text-right">— Kendinden</div>
               </div>
             ) : m?.bio && (
-              <blockquote className="text-purple-100/90 text-sm italic leading-relaxed mb-4 pl-3 border-l-2 border-amber-400/50 bg-white/5 py-2 pr-3 rounded-r-lg">
-                {m.bio}
-              </blockquote>
+              <div className="mb-3 bg-white/[0.04] backdrop-blur-md border border-white/[0.08] rounded-2xl p-4">
+                <p className="text-white/85 text-sm italic leading-relaxed">{m.bio}</p>
+              </div>
             )}
 
-            {/* Tüm chip'ler: profile (yaş/meslek/heyecan) + funnel (motivasyon/endişe/çevre/saat) + kariyer (hedef/süre/saat) */}
-            <div className="grid grid-cols-2 gap-2">
+            {/* Glass chip grid — 3 kolon mobile-friendly */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {[
                 // Profile cevapları (yaş, meslek, heyecan)
                 ...profileCevaplari.chips.map(c => ({
@@ -533,12 +549,13 @@ const Profil = () => {
               ].map((q) => {
                 const Icon = q.icon || User;
                 return (
-                  <div key={q.key} className={`bg-gradient-to-br ${q.renk || 'from-white/5 to-white/5 border-white/10'} rounded-lg px-3 py-2.5 border`}>
-                    <div className="flex items-center gap-1.5 mb-1">
-                      <Icon className={`w-3 h-3 ${q.iconColor || 'text-purple-300'}`} />
-                      <div className="text-white/70 text-[10px] uppercase tracking-wider font-semibold">{q.soru}</div>
+                  <div key={q.key}
+                    className="group bg-white/[0.04] hover:bg-white/[0.08] backdrop-blur-md border border-white/[0.08] hover:border-white/20 rounded-xl px-3 py-2.5 transition-all">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <Icon className={`w-3.5 h-3.5 ${q.iconColor || 'text-purple-300'} flex-shrink-0`} />
+                      <div className="text-white/50 text-[9px] uppercase tracking-[0.1em] font-bold truncate">{q.soru}</div>
                     </div>
-                    <div className="text-white font-bold text-xs leading-tight line-clamp-2">{q.cevap}</div>
+                    <div className="text-white font-bold text-[13px] leading-tight line-clamp-2">{q.cevap}</div>
                   </div>
                 );
               })}
@@ -546,62 +563,67 @@ const Profil = () => {
 
             {/* Onboarding tamamlanma badge (A3) */}
             {m?.onboarding_completed_at && (
-              <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1.5 text-emerald-300">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
+              <div className="mt-3 flex items-center justify-between text-[11px] px-1">
+                <div className="flex items-center gap-1.5 text-emerald-400/80">
+                  <CheckCircle2 className="w-3 h-3" />
                   <span className="font-semibold">Profil tamamlandı</span>
                 </div>
-                <span className="text-purple-300/60">{formatTarih(m.onboarding_completed_at)}</span>
+                <span className="text-white/40">{formatTarih(m.onboarding_completed_at)}</span>
               </div>
             )}
-          </section>
+          </div>
         )}
 
-        {/* BLOK 1 — Üyelik bilgileri */}
-        <section className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5">
-          <h2 className="text-white font-bold text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
-            <Hash className="w-4 h-4 text-amber-400" /> Üyelik Bilgilerim
-          </h2>
-          <div className="space-y-2.5 text-sm">
+        {/* ═══ ÜYELİK ═══ */}
+        <div>
+          <SectionTitle icon={Hash}>Üyelik</SectionTitle>
+          <div className="mt-3 bg-white/[0.04] backdrop-blur-md border border-white/[0.08] rounded-2xl p-4 divide-y divide-white/[0.06]">
             <InfoRow icon={Phone} label="Telefon" value={a?.phone || '—'} />
             <InfoRow icon={Mail} label="E-posta" value={a?.email || email || '—'} />
             <InfoRow icon={Hash} label="Amare ID" value={profilVerisi?.amareId || userDoc?.amareId || '—'} />
             <InfoRow icon={CalendarDays} label="Kayıt tarihi" value={formatTarih(a?.register_date)} />
           </div>
+        </div>
 
-          {/* Sponsor */}
-          {sponsorAd && (
-            <div className="mt-5 pt-4 border-t border-white/10">
-              <div className="text-purple-300/80 text-xs uppercase tracking-wider mb-2">Sponsorum</div>
-              <div className="flex items-center justify-between gap-3 bg-white/5 rounded-xl p-3">
+        {/* ═══ BAĞLANTILAR (sponsor) ═══ */}
+        {sponsorAd && (
+          <div>
+            <SectionTitle icon={Users}>Bağlantılar</SectionTitle>
+            <div className="mt-3 bg-white/[0.04] backdrop-blur-md border border-white/[0.08] rounded-2xl p-4">
+              <div className="text-white/40 text-[10px] uppercase tracking-[0.1em] font-bold mb-2">Sponsorum</div>
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-lg">
                     {(sponsorAd || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-white font-semibold text-sm truncate">{sponsorAd}</div>
-                    <div className="text-purple-300/70 text-xs">{maskPhone(sponsorTel) || 'Telefon yok'}</div>
+                    <div className="text-white font-bold text-sm truncate">{sponsorAd}</div>
+                    <div className="text-white/50 text-xs">{maskPhone(sponsorTel) || 'Telefon yok'}</div>
                   </div>
                 </div>
                 {sponsorWa && (
                   <a href={`https://wa.me/${sponsorWa}`} target="_blank" rel="noopener noreferrer"
-                    className="bg-green-500 hover:bg-green-400 text-white text-xs font-semibold px-3 py-2 rounded-lg flex items-center gap-1.5 shrink-0">
+                    className="bg-green-500 hover:bg-green-400 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shrink-0 shadow-lg">
                     <MessageCircle className="w-3.5 h-3.5" /> İletişime geç
                   </a>
                 )}
               </div>
             </div>
-          )}
-        </section>
+          </div>
+        )}
 
-        {/* Kariyer Planı bloğu Hakkımda'ya entegre edildi — silindi */}
+        {/* ═══ AKTİVİTE ═══ */}
+        {(yarimKalan.length > 0 || takipSet.size > 0 || videoFav.size > 0 || hatirlatmalar.length > 0) && (
+          <SectionTitle icon={Bell}>Aktivite</SectionTitle>
+        )}
 
-        {/* BLOK — Yarım kalan eğitimler (Faz 4a) */}
+        {/* Yarım kalan eğitimler (Faz 4a) */}
         {yarimKalan.length > 0 && (
-          <section className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5">
-            <h2 className="text-white font-bold text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
-              <Video className="w-4 h-4 text-amber-400" /> Devam Et — Yarım Kaldı
-            </h2>
+          <section className="bg-white/[0.04] backdrop-blur-md border border-white/[0.08] rounded-2xl p-4 -mt-1">
+            <div className="flex items-center gap-2 mb-3">
+              <Video className="w-4 h-4 text-amber-400" />
+              <h2 className="text-white font-bold text-sm">Devam Et — Yarım Kaldı</h2>
+            </div>
             <div className="space-y-2">
               {yarimKalan.map(v => (
                 <button key={v.id}
@@ -631,11 +653,12 @@ const Profil = () => {
           </section>
         )}
 
-        {/* BLOK 3 — Favorilerim */}
-        <section className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5">
-          <h2 className="text-white font-bold text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
-            <Heart className="w-4 h-4 text-pink-400" /> Favorilerim
-          </h2>
+        {/* Favorilerim */}
+        <section className="bg-white/[0.04] backdrop-blur-md border border-white/[0.08] rounded-2xl p-4 -mt-1">
+          <div className="flex items-center gap-2 mb-3">
+            <Heart className="w-4 h-4 text-pink-400" />
+            <h2 className="text-white font-bold text-sm">Favorilerim</h2>
+          </div>
 
           {/* Takip eğitmenleri */}
           <div className="mb-4">
@@ -698,11 +721,12 @@ const Profil = () => {
           </div>
         </section>
 
-        {/* BLOK 4 — Aktivitem */}
-        <section className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-5">
-          <h2 className="text-white font-bold text-sm uppercase tracking-wide mb-4 flex items-center gap-2">
-            <Bell className="w-4 h-4 text-blue-400" /> Aktivitem
-          </h2>
+        {/* Abonelikler + hatırlatmalar */}
+        <section className="bg-white/[0.04] backdrop-blur-md border border-white/[0.08] rounded-2xl p-4 -mt-1">
+          <div className="flex items-center gap-2 mb-3">
+            <Bell className="w-4 h-4 text-blue-400" />
+            <h2 className="text-white font-bold text-sm">Abonelikler & Hatırlatmalar</h2>
+          </div>
 
           {/* Abonelikler — toggle aktif (Faz 4d) */}
           <div className="space-y-2 mb-4">
@@ -753,12 +777,10 @@ const Profil = () => {
 
 // Helpers
 const InfoRow = ({ icon: Icon, label, value }) => (
-  <div className="flex items-center gap-3 py-1.5">
-    <Icon className="w-4 h-4 text-purple-300 flex-shrink-0" />
-    <div className="flex-1 min-w-0 flex items-center justify-between gap-3">
-      <span className="text-purple-300/80 text-xs">{label}</span>
-      <span className="text-white font-medium text-sm truncate">{value}</span>
-    </div>
+  <div className="flex items-center gap-3 py-2.5 first:pt-0 last:pb-0">
+    <Icon className="w-4 h-4 text-white/40 flex-shrink-0" />
+    <span className="text-white/50 text-xs flex-shrink-0">{label}</span>
+    <span className="text-white font-semibold text-sm truncate ml-auto">{value}</span>
   </div>
 );
 
@@ -766,6 +788,21 @@ const Stat = ({ label, value }) => (
   <div className="bg-white/5 rounded-lg px-3 py-2">
     <div className="text-purple-300/70 text-[10px] uppercase tracking-wider">{label}</div>
     <div className="text-white font-bold text-sm mt-0.5">{value}</div>
+  </div>
+);
+
+const StatCell = ({ label, value }) => (
+  <div className="text-center px-2 py-3">
+    <div className="text-white font-extrabold text-lg leading-none">{value}</div>
+    <div className="text-purple-300/70 text-[10px] uppercase tracking-wider mt-1">{label}</div>
+  </div>
+);
+
+const SectionTitle = ({ children, icon: Icon }) => (
+  <div className="flex items-center gap-2 px-1 pt-2">
+    {Icon && <Icon className="w-3.5 h-3.5 text-amber-400/80" />}
+    <h3 className="text-amber-400/80 text-[11px] font-bold uppercase tracking-[0.15em]">{children}</h3>
+    <div className="flex-1 h-px bg-gradient-to-r from-amber-400/20 to-transparent" />
   </div>
 );
 
