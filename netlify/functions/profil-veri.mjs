@@ -107,7 +107,7 @@ export default async (req) => {
         `amare_id=eq.${encodeURIComponent(amareIdStr)}&limit=1`
       ),
       supabaseGet(
-        `members?select=id,full_name,bio,current_screen,onboarding_completed_at,progress_pct,sponsor_id,created_at,last_active_at&` +
+        `members?select=id,full_name,bio,phone,email,status,current_screen,sponsor_id,created_at,last_active_at&` +
         `amare_id=eq.${encodeURIComponent(amareIdStr)}&order=last_active_at.desc&limit=1`
       ),
     ]);
@@ -164,6 +164,12 @@ export default async (req) => {
             time: progress.time_target || null,
             hours: progress.hours_daily || null,
           };
+        }
+        // member alias: status='completed' → onboarding_completed_at,
+        // completion_pct → progress_pct (frontend uyumu)
+        if (member) {
+          member.onboarding_completed_at = member.status === 'completed' ? member.last_active_at : null;
+          member.progress_pct = progress?.completion_pct ?? null;
         }
       } catch (e) {
         console.warn('[profil-veri] progress fetch skipped:', e.message);
