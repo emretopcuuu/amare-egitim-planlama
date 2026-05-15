@@ -51,91 +51,78 @@ const RANK_INFO = {
 
 // Mantıklı dağılım — kariyer hiyerarşisine göre, mevcut 29 video üzerinden
 // Her rank'e 3 video, kategori uyumlu, eğitmen çeşitlilik göz önünde
-// Gerçek 29 video ID'leriyle kariyer hiyerarşisi dağılımı
+// 1879 video havuzundan akıllı dağıtım (kategori skorlama algoritması)
+// Her rank için en uygun 3 video, eğitmen çeşitliliği gözetildi
 const DAGILIM = {
   brand_partner: [
-    // Başlangıç: değer + kültür + temel
-    '1004045342', // Etik Olma Kültürü - Gülay Rençber
-    '1004002999', // Etkinlikler ve Kamplar - Ziya Yılmaz (Vizyon/Kamp)
-    '1017624441', // Doğru Başlangıç - Dr. Fatih Demir
+    '372594649',   // 90 Günlük Oyun Planı - Emre Topçu (Liderlik/Liste)
+    '766067235',   // Ay Başında Kariyer Planlaması - Furkan Çite
+    '1077132347',  // Sıfırdan Katlamaya 15 Adım - Ziya Şakir Yılmaz
   ],
   brand_builder: [
-    // İlk gelişim: doğru başlangıç + davet + ürün temeli
-    '1022449325', // Doğru Başlangıç - Toygar Şenelmiş
-    '1004025235', // Liste-Reklam-Davet - Kasım Mazılıgüney (Davet/Liste)
-    '1017635292', // Ürün Eğitimi - Ufuk Memiş
+    '1141368933',  // Liste-Reklam-Davet - Kasım Mazılıgüney
+    '1073608704',  // Liste-Reklam-Davet Panel - Alper Kırbıyık
+    '1036627025',  // Reklam-Davet - Sibel Özdemir
   ],
   bronze: [
-    // Başlangıç kültürü + tanışma + davet
-    '1003999747', // Abone Ol Kazan Kültürü - Saba Bener
-    '1006614686', // Tanışma Günü - Emre Topçu 1.Gün
-    '1036627025', // Reklam-Davet - Sibel Özdemir
+    '1073600310',  // Liste-Reklam-Davet - Kenan Kozanhan
+    '375546683',   // Teknik Eğitim (Davet/Sunum) - Emre Topçu
+    '427627338',   // Network Marketing Akademi - Ziya Yılmaz
   ],
   silver: [
-    // Ürün uzmanlaşma + sağlık + sunum
-    '1031017534', // Ürün Eğitimi - Nuri Haksever
-    '1003945303', // Mahmut Yılmaz - Ürün Sunumu
-    '1003624447', // Sağlıklı Yaşam - Nuri Haksever
+    '126725628',   // Dr Barrie Tann (Ürün/Sağlık)
+    '1118635018',  // Amare Kazanç Planı - Alper Kırbıyık
+    '1125095670',  // Amare Kazanç Planı - Arda Çakır
   ],
   gold: [
-    // Görüşme + itiraz + kapanış
-    '1004038916', // İtiraz Karşılama-Kapanış - Arda Çakır
-    '1006616960', // Görüşme-İhtiyaç Tespit - Emre 4.Gün
-    '1034490116', // Mazeretsiz Kapanış - Aytuğ Gönül
+    '1101014293',  // Mazeret ve İtiraz Karşılama - Ziya Yılmaz
+    '1034490116',  // Mazeretsiz Kapanış - Aytuğ Gönül
+    '352307546',   // İş Bitiricilik ve Kapanış - Emre Topçu
   ],
   platinum: [
-    // Sunum + dijital + kariyer planı
-    '1003966904', // İş Sunumu - Furkan Çite
-    '1029917453', // Sosyal Medya - Emre Topçu
-    '1017816279', // Kariyer Kazanç - Arda Çakır
+    '1099048090',  // Profesyonel Takip - Ziya Yılmaz
+    '434089068',   // Güçlü Kapanış - Nilüfer Çıragöz
+    '607713669',   // Detaylı Kazanç Planı - Emre Erkan
   ],
   leader: [
-    // Liderlik temeli: motivasyon + girişimcilik + plan
-    '1004006229', // Neden-İnanç-Plan - Ferhat Gök
-    '1003986176', // Girişimcilik Dünyası - Emre Topçu
-    '1029164891', // Kazanç Planı - Özkan Davarcı
+    '660685891',   // Diamond Söyleşi - Emre Topçu
+    '127456261',   // Simon Sinek Liderler Nasıl İlham Verir
+    '495984276',   // Bir Aslanın Zihin Yapısı - Hunter King
   ],
   senior_leader: [
-    // İleri liderlik: hikaye + vizyon + planlama
-    '1004028104', // Promote-Hikaye-Sunum - Sibel Özdemir
-    '1004830210', // Sektör-Vizyon - Atakan Yaman
-    '1024650699', // Kariyer Kazanç - Aytuğ Gönül
+    '128867839',   // How to Fix People Around You (Kişisel Gelişim)
+    '127402624',   // Networkte Problem Çözmek - Aytuğ Gönül
+    '128818022',   // Potansiyeli Yüksek Kişiler ile Problem
   ],
   executive_leader: [
-    // Üst liderlik: finansal + motivasyon + vizyon
-    '1020236821', // Finansal Özgürlük - Ziya Yılmaz
-    '1004006229', // Neden-İnanç-Plan - Ferhat Gök
-    '1004830210', // Sektör-Vizyon - Atakan
+    '910845509',   // AMARE Geçiş Stratejileri - Emre Topçu
+    '130364863',   // Steve Jobs Apple'ı Nasıl Kurtardı - Tony Robbins
+    '766067235',   // Ay Başında Kariyer Planlaması - Furkan Çite
   ],
   diamond: [
-    // Vizyon + kültür + sağlık
-    '1004002999', // Etkinlikler ve Kamplar - Ziya
-    '1020236821', // Finansal Özgürlük - Ziya
-    '1003624447', // Sağlıklı Yaşam - Nuri
+    '129880718',   // Kampların Önemi - Aytuğ Gönül & Akif Bilge
+    '129041464',   // Obama İşsizlik (Vizyon)
+    '421020326',   // Pazarlama Planı 2020 - Ziya Yılmaz
   ],
   one_star_diamond: [
-    // Genişleme: uluslararası eğitim (3 dil)
-    '1031285942', // Business Opportunity (İngilizce) - Ziya
-    '1034102682', // Opportunité d'Affaires (Fransızca) - Ziya
-    '1031283947', // Geschäftsmöglichkeiten (Almanca) - Ziya
+    '421020326',   // Pazarlama Planı 2020 - Ziya Yılmaz
+    '430142072',   // Büyük Düşün - Furkan Çite
+    '474981685',   // Diamond Planı Nasıl Yapılır - Emre Topçu
   ],
   two_star_diamond: [
-    // Sistem + global pazar + sosyal medya
-    '1031484137', // Reunión Oportunidades (İspanyolca) - Ziya
-    '1004830210', // Sektör-Vizyon - Atakan
-    '1029917453', // Sosyal Medya - Emre
+    '372594649',   // 90 Günlük Oyun Planı - Emre Topçu (Liderlik)
+    '1082454060',  // Girişimcilik Yolculuğu Paneli - Ferhat Gök
+    '1154225309',  // Yalçın Kavlak & Kasım Mazılıgüney Söyleşi
   ],
   three_star_diamond: [
-    // Duplikasyon: hikaye + finansal + sağlık
-    '1004028104', // Promote-Hikaye-Sunum - Sibel
-    '1020236821', // Finansal Özgürlük - Ziya
-    '1003624447', // Sağlıklı Yaşam - Nuri
+    '910845509',   // AMARE Geçiş Stratejileri - Emre Topçu (Vizyon)
+    '421020326',   // Pazarlama Planı 2020 - Ziya Yılmaz
+    '430142072',   // Büyük Düşün - Furkan Çite
   ],
   presidential_diamond: [
-    // Misyon: vizyon + hikaye + değer
-    '1004830210', // Sektör-Vizyon - Atakan
-    '1004028104', // Promote-Hikaye - Sibel
-    '1004045342', // Etik Olma Kültürü - Gülay Rençber
+    '433088377',   // Diamond Yolculuğum - Mekan Muhammedov
+    '231018176',   // KAMPA GELİRSEM - ASUMAN BAYRAK
+    '134824701',   // Hoşgeldiniz - Emre Topçu (Blue Diamond Dünya Birincisi)
   ],
 };
 

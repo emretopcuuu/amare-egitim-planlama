@@ -2,10 +2,10 @@
 // Her rank için curriculum CRUD: video sırala, ekle/çıkar, zorunlu/önerilen ayır
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { db } from '../utils/firebase';
+import { db, auth } from '../utils/firebase';
 import { doc, getDoc, setDoc, collection, getDocs, query, where, limit as fbLimit, serverTimestamp } from 'firebase/firestore';
 import { RANK_SIRALAMA, getRankByKey, rankRenkClass } from '../utils/rankSchema';
-import { Award, Save, Search, Plus, X, ChevronUp, ChevronDown, Trash2, Loader2, Video, CheckCircle2 } from 'lucide-react';
+import { Award, Save, Search, Plus, X, ChevronUp, ChevronDown, Trash2, Loader2, Video, CheckCircle2, Zap } from 'lucide-react';
 
 const AdminEgitimYollariTab = () => {
   const [seciliRankKey, setSeciliRankKey] = useState('brand_partner');
@@ -14,6 +14,36 @@ const AdminEgitimYollariTab = () => {
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [aramaModal, setAramaModal] = useState(false);
   const [aramaTip, setAramaTip] = useState('zorunlu'); // 'zorunlu' veya 'onerilen'
+  const [initEdiliyor, setInitEdiliyor] = useState(false);
+  const [initSonuc, setInitSonuc] = useState(null);
+
+  // Tek tıkla 14 rank × 3 video toplu kurulum
+  const otomatikInit = async () => {
+    if (!window.confirm('Tüm 14 rank için 3\'er video atanacak. Mevcut atamalar üzerine yazılır. Devam edilsin mi?')) return;
+    setInitEdiliyor(true);
+    setInitSonuc(null);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch('/.netlify/functions/init-egitim-yollari', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Hata');
+      setInitSonuc({ basarili: true, ...data });
+      // Mevcut seçili rank'i yeniden yükle
+      getDoc(doc(db, 'egitim_yollari', seciliRankKey)).then(snap => {
+        if (snap.exists()) {
+          const d = snap.data();
+          setCurriculum({ zorunlu: d.zorunluVideolar || [], onerilen: d.onerilenVideolar || [] });
+        }
+      });
+    } catch (e) {
+      setInitSonuc({ basarili: false, hata: e.message });
+    } finally {
+      setInitEdiliyor(false);
+    }
+  };
 
   // Rank değiştiğinde curriculum'u yükle
   useEffect(() => {
@@ -87,10 +117,27 @@ const AdminEgitimYollariTab = () => {
   return (
     <div className="container mx-auto px-4 py-6">
       <div className="bg-white rounded-2xl shadow-lg p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <Award className="w-6 h-6 text-amare-purple" />
-          <h2 className="text-xl font-bold text-gray-800">Eğitim Yolları — Rank Bazlı Curriculum</h2>
+        <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+          <div className="flex items-center gap-3">
+            <Award className="w-6 h-6 text-amare-purple" />
+            <h2 className="text-xl font-bold text-gray-800">Eğitim Yolları — Rank Bazlı Curriculum</h2>
+          </div>
+          <button onClick={otomatikInit} disabled={initEdiliyor}
+            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg disabled:opacity-50 inline-flex items-center gap-2 text-sm">
+            {initEdiliyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+            {initEdiliyor ? 'Kuruluyor...' : 'Otomatik Kurulum (14 rank × 3 video)'}
+          </button>
         </div>
+
+        {initSonuc && (
+          <div className={`mb-4 rounded-xl p-3 text-sm ${initSonuc.basarili ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-red-50 border border-red-200 text-red-900'}`}>
+            {initSonuc.basarili ? (
+              <>✅ Başarılı: {initSonuc.rankSayisi} rank için video atandı. {Object.entries(initSonuc.sonuclar || {}).map(([k, v]) => `${k}=${v}`).join(', ')}</>
+            ) : (
+              <>❌ Hata: {initSonuc.hata}</>
+            )}
+          </div>
+        )}
 
         {/* Rank seçici */}
         <div className="mb-6">
