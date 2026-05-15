@@ -252,6 +252,7 @@ const Profil = () => {
     }
   };
 
+  // ─── Hook'lar her render'da AYNI SIRADA çağrılmalı — early return'lerden ÖNCE ───
   // Avatar foto kaynağı (3 fallback)
   const fullName = profilVerisi?.amare?.full_name || profilVerisi?.member?.full_name || userDoc?.displayName || displayName || '';
   const userFoto = userDoc?.fotoURL || null;
@@ -265,6 +266,39 @@ const Profil = () => {
     if (typeof cd === 'string') { try { return JSON.parse(cd); } catch { return null; } }
     return cd;
   }, [profilVerisi]);
+
+  const funnelCevaplari = useMemo(
+    () => parseFunnelAnswers(profilVerisi?.progress?.funnel_answers),
+    [profilVerisi]
+  );
+
+  // Rank rengini hesapla (Faz 4c)
+  const rankGradient = useMemo(() => {
+    const r = (profilVerisi?.amare?.rank || '').toLowerCase();
+    if (r.includes('presidential')) return { bgClass: 'bg-gradient-to-br from-amber-400 via-orange-500 to-rose-600' };
+    if (r.includes('crown'))        return { bgClass: 'bg-gradient-to-br from-purple-500 via-fuchsia-600 to-pink-600' };
+    if (r.includes('diamond'))      return { bgClass: 'bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600' };
+    if (r.includes('gold'))         return { bgClass: 'bg-gradient-to-br from-yellow-400 via-amber-500 to-yellow-600' };
+    if (r.includes('platinum'))     return { bgClass: 'bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500' };
+    if (r.includes('leader') || r.includes('executive')) return { bgClass: 'bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600' };
+    return { bgClass: 'bg-gradient-to-br from-purple-700 via-purple-800 to-indigo-900' };
+  }, [profilVerisi?.amare?.rank]);
+
+  // Üyelik yıldönümü hesapla (Faz 4e)
+  const yildonumu = useMemo(() => {
+    const regDate = profilVerisi?.amare?.register_date;
+    if (!regDate) return null;
+    const reg = new Date(regDate);
+    const now = new Date();
+    const thisYear = new Date(now.getFullYear(), reg.getMonth(), reg.getDate());
+    const diffDays = Math.round((thisYear - now) / (1000 * 60 * 60 * 24));
+    if (diffDays >= -3 && diffDays <= 7) {
+      return { gunFarki: diffDays, yil: now.getFullYear() - reg.getFullYear() };
+    }
+    return null;
+  }, [profilVerisi?.amare?.register_date]);
+
+  // ─── Bütün hook'lar bitti — şimdi conditional render'lar ───
 
   // Loading state — auth henüz hazır değilse
   if (!ready) {
@@ -311,36 +345,6 @@ const Profil = () => {
   const sponsorTel = a?.sponsor_phone;
   const sponsorWa = normalizePhoneForWa(sponsorTel);
   const onboardingTamamlandi = profilVerisi?.onboardingTamamlandi;
-  const funnelCevaplari = useMemo(
-    () => parseFunnelAnswers(profilVerisi?.progress?.funnel_answers),
-    [profilVerisi]
-  );
-
-  // Rank rengini hesapla (Faz 4c)
-  const rankGradient = useMemo(() => {
-    const r = (a?.rank || '').toLowerCase();
-    if (r.includes('presidential')) return { from: 'from-amber-400', via: 'via-orange-500', to: 'to-rose-600', bgClass: 'bg-gradient-to-br from-amber-400 via-orange-500 to-rose-600', textClass: 'text-amber-100' };
-    if (r.includes('crown')) return { from: 'from-purple-500', via: 'via-fuchsia-600', to: 'to-pink-600', bgClass: 'bg-gradient-to-br from-purple-500 via-fuchsia-600 to-pink-600', textClass: 'text-fuchsia-100' };
-    if (r.includes('diamond')) return { from: 'from-cyan-400', via: 'via-blue-500', to: 'to-indigo-600', bgClass: 'bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600', textClass: 'text-cyan-100' };
-    if (r.includes('gold')) return { from: 'from-yellow-400', via: 'via-amber-500', to: 'to-yellow-600', bgClass: 'bg-gradient-to-br from-yellow-400 via-amber-500 to-yellow-600', textClass: 'text-yellow-100' };
-    if (r.includes('platinum')) return { from: 'from-slate-300', via: 'via-slate-400', to: 'to-slate-500', bgClass: 'bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500', textClass: 'text-slate-100' };
-    if (r.includes('leader') || r.includes('executive')) return { from: 'from-emerald-400', via: 'via-emerald-500', to: 'to-teal-600', bgClass: 'bg-gradient-to-br from-emerald-400 via-emerald-500 to-teal-600', textClass: 'text-emerald-100' };
-    return { from: 'from-purple-700', via: 'via-purple-800', to: 'to-indigo-900', bgClass: 'bg-gradient-to-br from-purple-700 via-purple-800 to-indigo-900', textClass: 'text-purple-100' };
-  }, [a?.rank]);
-
-  // Üyelik yıldönümü hesapla (Faz 4e)
-  const yildonumu = useMemo(() => {
-    if (!a?.register_date) return null;
-    const reg = new Date(a.register_date);
-    const now = new Date();
-    const thisYear = new Date(now.getFullYear(), reg.getMonth(), reg.getDate());
-    const diffDays = Math.round((thisYear - now) / (1000 * 60 * 60 * 24));
-    if (diffDays >= -3 && diffDays <= 7) {
-      const yas = now.getFullYear() - reg.getFullYear() + (diffDays < 0 ? 0 : 0);
-      return { gunFarki: diffDays, yil: now.getFullYear() - reg.getFullYear() };
-    }
-    return null;
-  }, [a?.register_date]);
 
   // ─── Faz 3: Onboarding zorunlu gate ───
   // Profil verisi yüklendi VE onboarding tamamlanmadı → büyük CTA göster
