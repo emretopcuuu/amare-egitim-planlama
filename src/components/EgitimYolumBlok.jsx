@@ -16,6 +16,7 @@ import {
   Trophy, Lock, CheckCircle2, ChevronDown, ChevronUp, Video, Play,
   Sparkles, Award,
 } from 'lucide-react';
+import RankIcon from './RankIcon';
 
 const EgitimYolumBlok = ({ uid, isAnonymous, kullaniciRankString }) => {
   const navigate = useNavigate();
@@ -175,11 +176,14 @@ const RankKart = ({ rank, kilitli, otoTamamlandi, acik, durum, curriculum, tamam
     }`}>
       <button onClick={onToggle} disabled={kilitli}
         className={`w-full p-4 flex items-center gap-3 ${!kilitli ? 'cursor-pointer hover:bg-white/5' : 'cursor-not-allowed'} transition rounded-2xl`}>
-        {/* Rank icon */}
-        <div className={`w-10 h-10 rounded-full bg-gradient-to-br ${renk.bg} flex items-center justify-center shadow-md flex-shrink-0`}>
-          {kilitli ? <Lock className="w-4 h-4 text-white/70" /> :
-           otoTamamlandi ? <CheckCircle2 className="w-5 h-5 text-white" /> :
-           <Trophy className="w-4 h-4 text-white" />}
+        {/* Rank icon — logo PNG veya fallback */}
+        <div className="relative flex-shrink-0">
+          <RankIcon rank={rank} size={44} kilitli={kilitli} />
+          {otoTamamlandi && (
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-purple-900 flex items-center justify-center">
+              <CheckCircle2 className="w-3 h-3 text-white" />
+            </div>
+          )}
         </div>
 
         {/* Title + state */}

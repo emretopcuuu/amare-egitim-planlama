@@ -36,18 +36,22 @@ const RANK_SIRALAMA = [
   { key: 'senior_leader',        label: 'Senior Leader',        sira: 8 },
   { key: 'executive_leader',     label: 'Executive Leader',     sira: 9 },
   { key: 'diamond',              label: 'Diamond',              sira: 10 },
-  { key: 'one_star_diamond',     label: 'One Star Diamond',     sira: 11 },
-  { key: 'two_star_diamond',     label: 'Two Star Diamond',     sira: 12 },
-  { key: 'three_star_diamond',   label: 'Three Star Diamond',   sira: 13 },
+  { key: 'one_star_diamond',     label: '1-Star Diamond',       sira: 11 },
+  { key: 'two_star_diamond',     label: '2-Star Diamond',       sira: 12 },
+  { key: 'three_star_diamond',   label: '3-Star Diamond',       sira: 13 },
   { key: 'presidential_diamond', label: 'Presidential Diamond', sira: 14 },
 ];
 
 function rankStringToKey(s) {
   if (!s || typeof s !== 'string') return null;
-  const norm = s.toLowerCase().trim();
+  const norm = s.toLowerCase().trim().replace(/-/g, ' ').replace(/\s+/g, ' ');
+  const numToWord = { '1': 'one', '2': 'two', '3': 'three' };
+  const altNorm = norm.replace(/^(\d)(\s+star)/, (_, n, rest) => (numToWord[n] || n) + rest);
   for (const r of RANK_SIRALAMA) {
-    if (r.label.toLowerCase() === norm) return r.key;
+    const labelNorm = r.label.toLowerCase().replace(/-/g, ' ');
+    if (labelNorm === norm || labelNorm === altNorm) return r.key;
     if (r.key === norm.replace(/\s+/g, '_')) return r.key;
+    if (r.key === altNorm.replace(/\s+/g, '_')) return r.key;
   }
   return null;
 }
