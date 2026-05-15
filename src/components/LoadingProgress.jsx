@@ -48,12 +48,17 @@ const LoadingProgress = () => {
 
       {/* Centered status */}
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-16">
-        {/* Animated icon */}
+        {/* Animated One Team logo */}
         <div className="relative mb-6">
-          <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-pink-500 rounded-full blur-2xl opacity-50 animate-pulse" />
-          <div className="relative w-20 h-20 bg-white/10 backdrop-blur-md rounded-full flex items-center justify-center border-2 border-amber-400/50">
-            <Sparkles className="w-10 h-10 text-amber-300 animate-pulse" />
-          </div>
+          <div className="absolute -inset-6 bg-amber-400/25 rounded-full blur-2xl animate-pulse" />
+          <img
+            src="/logos/oneteam-logo.png"
+            alt="One Team"
+            className="relative w-32 h-auto sm:w-40 animate-pulse"
+            style={{
+              filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.4))',
+            }}
+          />
         </div>
 
         {/* Progress text */}
