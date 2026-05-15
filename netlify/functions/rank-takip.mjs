@@ -36,9 +36,10 @@ const RANK_SIRALAMA = [
   { key: 'senior_leader',        label: 'Senior Leader',        sira: 8 },
   { key: 'executive_leader',     label: 'Executive Leader',     sira: 9 },
   { key: 'diamond',              label: 'Diamond',              sira: 10 },
-  { key: 'crown_diamond',        label: 'Crown Diamond',        sira: 11 },
-  { key: 'royal_crown_diamond',  label: 'Royal Crown Diamond',  sira: 12 },
-  { key: 'presidential_diamond', label: 'Presidential Diamond', sira: 13 },
+  { key: 'one_star_diamond',     label: 'One Star Diamond',     sira: 11 },
+  { key: 'two_star_diamond',     label: 'Two Star Diamond',     sira: 12 },
+  { key: 'three_star_diamond',   label: 'Three Star Diamond',   sira: 13 },
+  { key: 'presidential_diamond', label: 'Presidential Diamond', sira: 14 },
 ];
 
 function rankStringToKey(s) {

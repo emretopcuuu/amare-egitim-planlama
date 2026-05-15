@@ -14,9 +14,10 @@ export const RANK_SIRALAMA = [
   { key: 'senior_leader',         label: 'Senior Leader',        sira: 8,  renk: 'green' },
   { key: 'executive_leader',      label: 'Executive Leader',     sira: 9,  renk: 'teal' },
   { key: 'diamond',               label: 'Diamond',              sira: 10, renk: 'cyan' },
-  { key: 'crown_diamond',         label: 'Crown Diamond',        sira: 11, renk: 'purple' },
-  { key: 'royal_crown_diamond',   label: 'Royal Crown Diamond',  sira: 12, renk: 'fuchsia' },
-  { key: 'presidential_diamond',  label: 'Presidential Diamond', sira: 13, renk: 'amber' },
+  { key: 'one_star_diamond',      label: 'One Star Diamond',     sira: 11, renk: 'sky' },
+  { key: 'two_star_diamond',      label: 'Two Star Diamond',     sira: 12, renk: 'purple' },
+  { key: 'three_star_diamond',    label: 'Three Star Diamond',   sira: 13, renk: 'fuchsia' },
+  { key: 'presidential_diamond',  label: 'Presidential Diamond', sira: 14, renk: 'amber' },
 ];
 
 // DB'den gelen rank string'ini key'e çevir
