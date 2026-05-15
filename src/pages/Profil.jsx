@@ -336,19 +336,39 @@ const Profil = () => {
   }, [completedCount, takipSet.size, streak.longest, profilVerisi?.uyelikSuresi?.yil, totalWatched]);
 
   // Profil tamamlama yüzdesi — engagement nudge için
+  // Her check'in bir action'ı var: tıklayınca ilgili akış başlar
   const profilTamamlama = useMemo(() => {
+    const amareIdStr = encodeURIComponent(profilVerisi?.amareId || '');
+    const returnUrl = encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil');
+    const onboardingUrl = `https://oneteamglobal.ai/?amid=${amareIdStr}&update=1&return=${returnUrl}`;
+
     const checks = [
-      { key: 'avatar', label: 'Profil fotosu', done: !!userDoc?.fotoURL, weight: 20 },
-      { key: 'bio', label: 'Tanıtım metni', done: !!profilVerisi?.member?.bio_data?.tanitim, weight: 25 },
-      { key: 'onboarding', label: 'Onboarding cevapları', done: !!profilVerisi?.onboardingTamamlandi, weight: 25 },
-      { key: 'fav_egitmen', label: 'En az 1 takip eğitmen', done: takipSet.size > 0, weight: 10 },
-      { key: 'fav_video', label: 'En az 1 favori eğitim', done: videoFav.size > 0, weight: 10 },
-      { key: 'video_izle', label: 'En az 1 video izle', done: completedCount > 0 || totalWatched > 60, weight: 10 },
+      { key: 'avatar', label: 'Profil fotosu', done: !!userDoc?.fotoURL, weight: 20,
+        action: () => {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          setTimeout(() => window.dispatchEvent(new Event('amare-open-avatar-picker')), 500);
+        }
+      },
+      { key: 'bio', label: 'Tanıtım metni', done: !!profilVerisi?.member?.bio_data?.tanitim, weight: 25,
+        action: () => { window.location.href = onboardingUrl; }
+      },
+      { key: 'onboarding', label: 'Onboarding cevapları', done: !!profilVerisi?.onboardingTamamlandi, weight: 25,
+        action: () => { window.location.href = onboardingUrl; }
+      },
+      { key: 'fav_egitmen', label: 'En az 1 takip eğitmen', done: takipSet.size > 0, weight: 10,
+        action: () => navigate('/konusmacilar')
+      },
+      { key: 'fav_video', label: 'En az 1 favori eğitim', done: videoFav.size > 0, weight: 10,
+        action: () => navigate('/kayitli-egitimler')
+      },
+      { key: 'video_izle', label: 'En az 1 video izle', done: completedCount > 0 || totalWatched > 60, weight: 10,
+        action: () => navigate('/kayitli-egitimler')
+      },
     ];
     const pct = checks.reduce((sum, c) => sum + (c.done ? c.weight : 0), 0);
     const eksik = checks.filter(c => !c.done);
     return { pct, eksik, checks };
-  }, [userDoc?.fotoURL, profilVerisi, takipSet.size, videoFav.size, completedCount, totalWatched]);
+  }, [userDoc?.fotoURL, profilVerisi, takipSet.size, videoFav.size, completedCount, totalWatched, navigate]);
 
   // Üyelik yıldönümü hesapla (Faz 4e)
   const yildonumu = useMemo(() => {
@@ -579,15 +599,16 @@ const Profil = () => {
               <div className="h-full bg-gradient-to-r from-amber-400 to-orange-400 transition-all duration-500" style={{ width: `${profilTamamlama.pct}%` }} />
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {profilTamamlama.eksik.slice(0, 3).map(e => (
-                <span key={e.key} className="text-amber-100 text-[11px] bg-white/5 border border-amber-300/20 rounded-md px-2 py-1">
-                  ◯ {e.label}
-                </span>
+              {profilTamamlama.eksik.map(e => (
+                <button key={e.key} onClick={e.action}
+                  className="text-amber-100 hover:text-white text-[11px] bg-white/5 hover:bg-amber-400/30 border border-amber-300/30 hover:border-amber-300/60 rounded-md px-2.5 py-1.5 transition-all spring-tap font-medium inline-flex items-center gap-1.5 group">
+                  <span className="text-amber-300 group-hover:text-white">◯</span>
+                  <span>{e.label}</span>
+                  <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                </button>
               ))}
-              {profilTamamlama.eksik.length > 3 && (
-                <span className="text-amber-300/60 text-[11px] px-2 py-1">+{profilTamamlama.eksik.length - 3} daha</span>
-              )}
             </div>
+            <p className="text-amber-200/60 text-[10px] mt-2.5">Tamamlamak için tıkla →</p>
           </section>
         )}
 

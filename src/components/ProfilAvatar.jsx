@@ -6,7 +6,7 @@
 // Avatar'a tıklayınca file picker açılır → client-side resize → Storage upload
 // → Firestore'a URL yaz.
 
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { ref as storageRef, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { doc, updateDoc } from 'firebase/firestore';
 import { storage, db } from '../utils/firebase';
@@ -66,6 +66,19 @@ const ProfilAvatar = ({ uid, fullName, fotoURL, size = 'xl', editable = true, on
   const fileRef = useRef(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [hata, setHata] = useState('');
+  const [highlight, setHighlight] = useState(false);
+
+  // Dışarıdan tetikleme — eksik chip "Profil fotosu" tıklandığında bu event fırlar
+  useEffect(() => {
+    if (!editable) return;
+    const handler = () => {
+      setHighlight(true);
+      setTimeout(() => setHighlight(false), 2000);
+      setTimeout(() => fileRef.current?.click(), 600); // scroll bitsin
+    };
+    window.addEventListener('amare-open-avatar-picker', handler);
+    return () => window.removeEventListener('amare-open-avatar-picker', handler);
+  }, [editable]);
 
   const sizeCfg = {
     sm: { w: 'w-10 h-10', text: 'text-xs', cam: 'w-3 h-3' },
@@ -106,12 +119,16 @@ const ProfilAvatar = ({ uid, fullName, fotoURL, size = 'xl', editable = true, on
   const hasPhoto = !!fotoURL;
 
   return (
-    <div className="relative inline-block">
+    <div className={`relative inline-block ${highlight ? 'animate-pulse' : ''}`}>
+      {/* Highlight halkası */}
+      {highlight && (
+        <div className="absolute -inset-2 rounded-full border-4 border-amber-400 animate-ping" />
+      )}
       <button
         type="button"
         disabled={!editable || yukleniyor}
         onClick={() => editable && fileRef.current?.click()}
-        className={`${sizeCfg.w} rounded-full overflow-hidden bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold ${sizeCfg.text} shadow-xl border-4 border-white/20 ${editable ? 'cursor-pointer hover:scale-105 transition-transform' : ''}`}
+        className={`${sizeCfg.w} rounded-full overflow-hidden bg-gradient-to-br ${gradient} flex items-center justify-center text-white font-bold ${sizeCfg.text} shadow-xl border-4 ${highlight ? 'border-amber-400' : 'border-white/20'} ${editable ? 'cursor-pointer hover:scale-105 transition-all' : ''}`}
         aria-label="Profil fotosunu değiştir"
       >
         {hasPhoto ? (
