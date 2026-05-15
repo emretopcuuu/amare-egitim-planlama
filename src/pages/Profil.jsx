@@ -369,7 +369,7 @@ const Profil = () => {
   // Loading state — auth henüz hazır değilse
   if (!ready) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 flex items-center justify-center">
         <Loader2 className="w-10 h-10 text-amber-400 animate-spin" />
       </div>
     );
@@ -378,7 +378,7 @@ const Profil = () => {
   // Anonim placeholder
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
         <div className="max-w-3xl mx-auto px-4 pt-6">
           <button onClick={() => navigate(-1)} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
             <ArrowLeft className="w-4 h-4 mr-1.5" /> Geri
@@ -422,7 +422,7 @@ const Profil = () => {
     const returnUrl = encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil');
     const onboardingUrl = `https://oneteamglobal.ai/?amid=${encodeURIComponent(profilVerisi.amareId)}&return=${returnUrl}`;
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
+      <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 pt-6">
           <button onClick={() => navigate('/takvim')} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
             <ArrowLeft className="w-4 h-4 mr-1.5" /> Takvim
@@ -481,7 +481,7 @@ const Profil = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
       {/* Header — takvim sayfasıyla aynı stil */}
       <div className="max-w-3xl mx-auto flex items-center justify-between px-4 pt-6">
         <button onClick={() => navigate(-1)} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
@@ -947,6 +947,9 @@ const Profil = () => {
         </section>
       </div>
 
+      {/* iPhone home indicator için ekstra padding */}
+      <div className="pb-[env(safe-area-inset-bottom)]" />
+
       <UyeGirisModal acik={girisModalAcik} onClose={() => setGirisModalAcik(false)} />
       {bultenModalAcik && <BultenModal onClose={handleBultenClose} />}
 
@@ -1040,9 +1043,9 @@ const Stat = ({ label, value }) => (
 );
 
 const StatCell = ({ label, value, highlight = false }) => (
-  <div className="text-center px-2 py-4">
-    <div className={`font-light text-2xl leading-none tracking-tight ${highlight ? 'text-amber-300' : 'text-white'}`}>{value}</div>
-    <div className={`text-[10px] uppercase tracking-[0.15em] mt-2 font-semibold ${highlight ? 'text-amber-300' : 'text-amber-300/60'}`}>{label}</div>
+  <div className="text-center px-1.5 sm:px-2 py-3 sm:py-4">
+    <div className={`font-light text-xl sm:text-2xl leading-none tracking-tight ${highlight ? 'text-amber-300' : 'text-white'}`}>{value}</div>
+    <div className={`text-[9px] sm:text-[10px] uppercase tracking-[0.12em] sm:tracking-[0.15em] mt-1.5 sm:mt-2 font-semibold ${highlight ? 'text-amber-300' : 'text-amber-300/60'}`}>{label}</div>
   </div>
 );
 
@@ -1055,10 +1058,11 @@ const SectionTitle = ({ children, icon: Icon }) => (
 );
 
 // Brand uyumlu basit modal — overlay + glass kart
+// Mobile uyumu: iOS Safari'de scroll çalışsın diye max-h + overflow-y-auto
 const SimpleModal = ({ onClose, title, children }) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
-    <div className="bg-gradient-to-br from-purple-900 to-indigo-900 border border-white/20 rounded-2xl shadow-2xl w-full max-w-md p-6 relative" onClick={e => e.stopPropagation()}>
-      <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
+    <div className="bg-gradient-to-br from-purple-900 to-indigo-900 border border-white/20 rounded-2xl shadow-2xl w-full max-w-md p-6 relative my-auto max-h-[90dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+      <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition z-10">
         <X className="w-4 h-4" />
       </button>
       {title && <h3 className="text-white text-lg font-bold mb-2 pr-8">{title}</h3>}
@@ -1084,8 +1088,8 @@ const WrappedKart = ({ onClose, fullName, rank, totalWatched, completedCount, fa
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" onClick={onClose}>
-      <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600 rounded-3xl shadow-2xl w-full max-w-sm p-8 relative overflow-hidden text-center" onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto" onClick={onClose}>
+      <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-rose-600 rounded-3xl shadow-2xl w-full max-w-sm p-6 sm:p-8 relative overflow-hidden text-center my-auto max-h-[90dvh] overflow-y-auto" onClick={e => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/30 hover:bg-black/50 flex items-center justify-center text-white transition z-10">
           <X className="w-4 h-4" />
         </button>
