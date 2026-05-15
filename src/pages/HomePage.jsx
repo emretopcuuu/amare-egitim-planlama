@@ -30,12 +30,6 @@ const HomePage = () => {
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-4">
             {t('home_title')}
           </h1>
-          <h2 className="text-3xl md:text-4xl font-semibold text-white/90 mb-4">
-            {t('home_subtitle')}
-          </h2>
-          <p className="text-xl text-white/80 max-w-2xl mx-auto">
-            {t('home_desc')}
-          </p>
         </div>
 
         {/* Action Cards — Eğitmen Başvurusu profile taşındı, 2 kart kaldı */}
