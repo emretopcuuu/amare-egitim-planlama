@@ -38,28 +38,8 @@ const HomePage = () => {
           </p>
         </div>
 
-        {/* Action Cards */}
-        <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          <div
-            onClick={() => navigate('/egitmen-basvuru')}
-            className="bg-white rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 cursor-pointer transform hover:scale-105"
-          >
-            <div className="flex justify-center mb-6">
-              <div className="bg-amare-purple rounded-full p-4">
-                <Users className="w-12 h-12 text-white" />
-              </div>
-            </div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-3 text-center">
-              {t('home_card1_title')}
-            </h3>
-            <p className="text-gray-600 text-center mb-6">
-              {t('home_card1_desc')}
-            </p>
-            <button className="w-full bg-amare-purple text-white py-3 rounded-lg font-semibold hover:bg-amare-dark transition-colors">
-              {t('home_card1_btn')}
-            </button>
-          </div>
-
+        {/* Action Cards — Eğitmen Başvurusu profile taşındı, 2 kart kaldı */}
+        <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
           <div
             onClick={() => navigate('/takvim')}
             className="bg-white rounded-2xl p-8 shadow-2xl hover:shadow-3xl transition-all duration-300 cursor-pointer transform hover:scale-105"

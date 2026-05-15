@@ -966,6 +966,21 @@ const Profil = () => {
             )}
           </div>
         </section>
+
+        {/* ═══ EĞİTMEN BAŞVURUSU CTA — alttaki son kart ═══ */}
+        <section className="bg-gradient-to-br from-amber-400/15 via-purple-600/10 to-amber-400/15 backdrop-blur-md border border-amber-300/30 rounded-2xl p-5 shadow-xl text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-400/20 border border-amber-300/40 mb-3">
+            <Users className="w-6 h-6 text-amber-300" />
+          </div>
+          <h3 className="text-white font-bold text-base mb-1">Eğitmen olmak ister misin?</h3>
+          <p className="text-purple-200 text-xs mb-4 leading-relaxed">
+            Bilgi birikimini paylaş, eğitim takvimimizde yer al.
+          </p>
+          <button onClick={() => navigate('/egitmen-basvuru')}
+            className="bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold px-6 py-2.5 rounded-xl text-sm shadow-lg spring-tap inline-flex items-center gap-2">
+            Başvur <ChevronRight className="w-4 h-4" />
+          </button>
+        </section>
       </div>
 
       {/* iPhone home indicator için ekstra padding */}
