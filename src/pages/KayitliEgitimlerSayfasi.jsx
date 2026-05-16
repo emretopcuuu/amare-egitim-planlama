@@ -896,7 +896,7 @@ const KayitliEgitimlerSayfasi = () => {
 
       {/* Yarıda kaldıkların — sadece filtre/arama yokken göster */}
       {!loading && yaridaKalanlar.length > 0 && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && !sadeceIzlenen && dilKod === 'all' && (
-        <YaridaKalanRaf t={t} list={yaridaKalanlar} onOynat={(v, startSn) => handleOynat(v, startSn)} onTemizle={(id) => watchProgress.remove(id)} />
+        <YaridaKalanRaf t={t} tDynamic={tDynamic} list={yaridaKalanlar} onOynat={(v, startSn) => handleOynat(v, startSn)} onTemizle={(id) => watchProgress.remove(id)} />
       )}
 
       {/* AI Öneri — sadece login user için ve filtresiz görünür */}
@@ -921,7 +921,7 @@ const KayitliEgitimlerSayfasi = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
                 {filtrelenmis.slice(0, gosterilen).map(v => (
                   <VideoKart key={v.id} video={v}
-                    t={t}
+                    t={t} tDynamic={tDynamic}
                     favori={favoriler.has(v.id)}
                     izlendi={gecmis.has(v.id)}
                     progress={watchProgress.get(v.id)}
@@ -1222,7 +1222,7 @@ const SheetChip = ({ active, onClick, color, children }) => (
 );
 
 // ─── Yarıda kaldıkların rafı (horizontal carousel) ───────────────────────
-const YaridaKalanRaf = ({ t, list, onOynat, onTemizle }) => {
+const YaridaKalanRaf = ({ t, list, onOynat, onTemizle, tDynamic = (s) => s }) => {
   if (!list?.length) return null;
   return (
     <div className="px-4 pt-2 pb-3">
@@ -1292,7 +1292,7 @@ const YaridaKalanRaf = ({ t, list, onOynat, onTemizle }) => {
 };
 
 // ─── Video kartı (mobile compact + desktop grid) ─────────────────────────
-const VideoKart = ({ video: v, t, favori, izlendi, progress, transcriptMatch, aramaQ, kilitli, onToggleFav, onShare, onOynat, onShareSnippet }) => {
+const VideoKart = ({ video: v, t, tDynamic = (s) => s, favori, izlendi, progress, transcriptMatch, aramaQ, kilitli, onToggleFav, onShare, onOynat, onShareSnippet }) => {
   const sureMetin = formatSure(v.sure);
   const playsMetin = formatPlays(v.plays);
   const kategori = v.kategoriler?.[0];
