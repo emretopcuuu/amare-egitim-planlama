@@ -11,6 +11,7 @@ const LazyImage = ({
   className = '',
   aspectRatio = null,
   loading = 'lazy',
+  fetchPriority = 'auto', // 'high' = hero, 'low' = scroll
   onLoad,
   fallback = null,
   fallbackInitials = null,
@@ -68,6 +69,7 @@ const LazyImage = ({
           alt={alt}
           loading={loading}
           decoding="async"
+          fetchpriority={fetchPriority}
           onLoad={handleLoad}
           onError={handleError}
           className={`w-full h-full object-cover img-blur-load ${yuklendi ? 'img-loaded' : ''}`}

@@ -7,6 +7,7 @@ import { ClipboardCheck, Loader2, Check, X, Sparkles, Award } from 'lucide-react
 import { db } from '../utils/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { quizBasarisi } from '../utils/milestone';
 
 const VideoQuiz = ({ video }) => {
   const { currentUser, isAnonymous } = useAuth();
@@ -60,6 +61,10 @@ const VideoQuiz = ({ video }) => {
     const skor = sorular.filter((s, i) => cevaplar[i] === s.dogruIndex).length;
     const toplam = sorular.length;
     const yuzde = Math.round((skor / toplam) * 100);
+    // %80+ → confetti
+    if (yuzde >= 80) {
+      setTimeout(() => quizBasarisi(), 200);
+    }
     // Sonucu kaydet
     if (currentUser && !isAnonymous) {
       try {

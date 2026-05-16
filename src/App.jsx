@@ -12,6 +12,7 @@ import PwaInstallBanner from './components/PwaInstallBanner';
 import OnboardingTour from './components/OnboardingTour';
 import OfflineBanner from './components/OfflineBanner';
 import { ConfirmDialogProvider } from './components/ConfirmDialog';
+import KeyboardHelpModal from './components/KeyboardHelpModal';
 
 // Code-split — public sayfalar dahil hepsi route-level lazy load
 // İlk yükleme: sadece HomePage indirilir, diğerleri kullanıcı navigasyonu ile
@@ -73,6 +74,7 @@ function PageViewTracker() {
 function AppRoutes() {
   return (
     <BrowserRouter>
+      <a href="#main-content" className="skip-link">İçeriğe atla</a>
       <PageViewTracker />
       <Suspense fallback={<LoadingProgress />}>
         <Routes>
@@ -104,6 +106,7 @@ function AppRoutes() {
       <OnboardingTour />
       <OfflineBanner />
       <ConfirmDialogProvider />
+      <KeyboardHelpModal />
     </BrowserRouter>
   );
 }

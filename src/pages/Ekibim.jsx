@@ -29,6 +29,8 @@ import EkipBildirimAyar from '../components/EkipBildirimAyar';
 import AylikRaporPdf from '../components/AylikRaporPdf';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { useCountUp } from '../utils/useCountUp';
+import { usePullToRefresh } from '../utils/usePullToRefresh';
+import { RotateCw } from 'lucide-react';
 
 const Ekibim = () => {
   useDocumentTitle('Ekibim', 'Sponsor dashboard — ekip üyelerinin curriculum, aktivite ve risk durumu');
@@ -69,6 +71,9 @@ const Ekibim = () => {
     if (ready && !isAnonymous) fetchEkip();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, isAnonymous, currentUser?.uid]);
+
+  // Pull-to-refresh — mobil
+  const { pullY, refreshing } = usePullToRefresh(async () => { await fetchEkip(); });
 
   const filtreli = useMemo(() => {
     if (!veri?.ekip) return [];
@@ -140,6 +145,15 @@ const Ekibim = () => {
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-32">
+      {/* Pull-to-refresh göstergesi (mobile) */}
+      {pullY > 0 && (
+        <div style={{ height: `${pullY}px` }}
+          className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-end justify-center pb-2 bg-gradient-to-b from-purple-950 to-purple-900 transition-[height]">
+          <RotateCw className={`w-6 h-6 text-amber-300 ${refreshing ? 'animate-spin' : ''}`}
+            style={{ transform: refreshing ? '' : `rotate(${Math.min(pullY * 3, 360)}deg)` }} />
+        </div>
+      )}
+
       {/* Header */}
       <div className="max-w-5xl mx-auto flex items-center justify-between px-4 pt-6">
         <button onClick={() => navigate('/profil')} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
@@ -408,6 +422,14 @@ const UyeKart = ({ uye, secili, onSec, onDavet }) => {
     pasif: 'Pasif',
   }[uye.risk?.etiket] || '?';
 
+  // Color blindness için her risk durumuna ek görsel işaret (sadece renk yetmez)
+  const riskIcon = {
+    aktif: '●',
+    yavasladi: '◐',
+    risk: '◑',
+    pasif: '○',
+  }[uye.risk?.etiket] || '?';
+
   const aksiyonRenk = {
     amber:   { bg: 'bg-amber-400/15 border-amber-400/40', text: 'text-amber-200', btn: 'bg-amber-400 hover:bg-amber-300 text-purple-900' },
     emerald: { bg: 'bg-emerald-500/15 border-emerald-400/40', text: 'text-emerald-200', btn: 'bg-emerald-500 hover:bg-emerald-400 text-white' },
@@ -448,7 +470,9 @@ const UyeKart = ({ uye, secili, onSec, onDavet }) => {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="text-white font-bold text-sm truncate">{uye.adSoyad}</h3>
-            <span className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${riskBadgeBg}`}>
+            <span className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded ${riskBadgeBg} inline-flex items-center gap-0.5`}
+              title={`Risk: ${riskEtiket}`}>
+              <span aria-hidden="true">{riskIcon}</span>
               {riskEtiket}
             </span>
             {uye.davet && (

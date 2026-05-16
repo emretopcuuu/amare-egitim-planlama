@@ -5,9 +5,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Trophy, Crown, Medal, Award, Users, Eye, Flame, Star,
-  Video as VideoIcon, Loader2, AlertCircle,
+  Video as VideoIcon, Loader2, AlertCircle, RotateCw,
 } from 'lucide-react';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
+import { usePullToRefresh } from '../utils/usePullToRefresh';
 
 const SIRA_ICON = {
   1: { Icon: Crown,  renk: 'text-amber-300', bg: 'bg-amber-500/20' },
@@ -29,23 +30,31 @@ const LiderlerSayfasi = () => {
   const [yukleniyor, setYukleniyor] = useState(true);
   const [hata, setHata] = useState('');
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch('/.netlify/functions/liderler-public');
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Yüklenemedi');
-        setVeri(data);
-      } catch (e) {
-        setHata(e.message);
-      } finally {
-        setYukleniyor(false);
-      }
-    })();
-  }, []);
+  async function cek() {
+    setYukleniyor(true);
+    try {
+      const res = await fetch('/.netlify/functions/liderler-public');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Yüklenemedi');
+      setVeri(data);
+    } catch (e) {
+      setHata(e.message);
+    } finally {
+      setYukleniyor(false);
+    }
+  }
+  useEffect(() => { cek(); }, []);
+  const { pullY, refreshing } = usePullToRefresh(cek);
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
+      {pullY > 0 && (
+        <div style={{ height: `${pullY}px` }}
+          className="md:hidden fixed top-0 left-0 right-0 z-50 flex items-end justify-center pb-2 bg-gradient-to-b from-purple-950 to-purple-900">
+          <RotateCw className={`w-6 h-6 text-amber-300 ${refreshing ? 'animate-spin' : ''}`}
+            style={{ transform: refreshing ? '' : `rotate(${Math.min(pullY * 3, 360)}deg)` }} />
+        </div>
+      )}
       {/* Header */}
       <div className="max-w-5xl mx-auto flex items-center justify-between px-4 pt-6">
         <button onClick={() => navigate('/takvim')}

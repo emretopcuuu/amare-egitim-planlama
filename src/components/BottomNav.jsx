@@ -2,6 +2,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { Home, Calendar, Users, Video, UserCircle } from 'lucide-react';
+import { preloadRoute } from '../utils/useRoutePreload';
 
 const ITEMS = [
   { to: '/',                  label: 'Anasayfa',  Icon: Home,        tourId: 'nav-anasayfa' },
@@ -18,6 +19,9 @@ const BottomNav = () => {
         {ITEMS.map(({ to, label, Icon, tourId }) => (
           <NavLink key={to} to={to} end={to === '/'}
             data-tour={tourId}
+            onTouchStart={() => preloadRoute(to)}
+            onMouseEnter={() => preloadRoute(to)}
+            aria-label={label}
             className={({ isActive }) =>
               `flex flex-col items-center justify-center py-2 px-1 min-h-[56px] transition-all ${
                 isActive
