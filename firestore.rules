@@ -183,6 +183,12 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Kısa davet linkleri — sadece server (kisalt function) okur/yazar
+    // Public kullanıcı redirect üzerinden, doğrudan Firestore'a değil
+    match /kisaltmalar/{kod} {
+      allow read, write: if false;
+    }
+
     // Diğer her koleksiyon — varsayılan: tamamen kapalı
     match /{document=**} {
       allow read, write: if false;

@@ -4,6 +4,12 @@
   edge_functions = "netlify/edge-functions"
   publish = "dist"
 
+# Kısa davet linkleri: /d/abc12345 → kisalt function → 302 redirect
+[[redirects]]
+  from = "/d/:kod"
+  to = "/.netlify/functions/kisalt?kod=:kod"
+  status = 200
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

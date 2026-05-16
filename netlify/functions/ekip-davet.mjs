@@ -36,29 +36,47 @@ const CORS = {
 };
 
 // 4 hazır şablon — WhatsApp text + Email subject/body için kullanılır
+// Emoji'ler sade ve evrensel tutuldu (eski WhatsApp font'larında render sorunu yaşamamak için)
 const SABLONLAR = {
   yeni: {
-    waText: (ad, link) => `Selam ${ad} 👋\n\nOne Team Eğitim Takvimi'ne seni davet ediyorum. Tüm canlı eğitimler, kayıtlı videolar ve kariyer yoluna özel içerikler tek yerde.\n\nTek tık giriş linkin:\n${link}\n\nBirlikte büyüyelim 🚀`,
-    waTextNoLink: (ad) => `Selam ${ad} 👋\n\nOne Team Eğitim Takvimi'ne seni davet ediyorum. Tüm canlı eğitimler, kayıtlı videolar ve kariyer yoluna özel içerikler tek yerde.\n\nhttps://egitimtakvimi.oneteamglobal.ai`,
+    waText: (ad, link) => `Selam ${ad},\n\nOne Team Eğitim Takvimi'ne seni davet ediyorum. Tüm canlı eğitimler, kayıtlı videolar ve kariyer yoluna özel içerikler tek yerde.\n\nTek tık giriş linkin:\n${link}\n\nBirlikte büyüyelim.`,
+    waTextNoLink: (ad) => `Selam ${ad},\n\nOne Team Eğitim Takvimi'ne seni davet ediyorum. Tüm canlı eğitimler, kayıtlı videolar ve kariyer yoluna özel içerikler tek yerde.\n\nhttps://egitimtakvimi.oneteamglobal.ai`,
     emailSubject: 'One Team Eğitim Takvimi — sana özel davet',
     emailHero: 'Eğitim takvimi seni bekliyor',
     emailBody: 'Tüm canlı eğitimler, kayıtlı videolar ve kariyer yoluna özel curriculum tek yerde. Şifre yok — bu link ile tek tık giriş yap.',
   },
   egitim: {
-    waText: (ad, link) => `${ad}, bu hafta kaçırma 🎯\n\nYeni eğitimler eklendi, takvimi göz at:\n${link}`,
-    waTextNoLink: (ad) => `${ad}, bu hafta kaçırma 🎯\n\nYeni eğitimler eklendi, takvimi göz at:\nhttps://egitimtakvimi.oneteamglobal.ai`,
+    waText: (ad, link) => `${ad}, bu hafta kaçırma!\n\nYeni eğitimler eklendi, takvimi göz at:\n${link}`,
+    waTextNoLink: (ad) => `${ad}, bu hafta kaçırma!\n\nYeni eğitimler eklendi, takvimi göz at:\nhttps://egitimtakvimi.oneteamglobal.ai`,
     emailSubject: 'Yeni eğitimler eklendi — One Team Takvimi',
     emailHero: 'Bu hafta yeni eğitimler',
     emailBody: 'Liderlik, satış, motivasyon — bu hafta katılabileceğin canlı eğitimleri ve yeni kayıtlı videoları görmek için tıkla.',
   },
   kontrol: {
-    waText: (ad, link) => `${ad}, bir süredir görüşmedik 🙏\n\nNasıl gidiyor? Ben senin için elimden geleni yapmak istiyorum. Sistemde kariyer planın seni bekliyor:\n${link}`,
-    waTextNoLink: (ad) => `${ad}, bir süredir görüşmedik 🙏\n\nNasıl gidiyor? Bugün konuşalım mı? https://egitimtakvimi.oneteamglobal.ai`,
+    waText: (ad, link) => `${ad}, bir süredir görüşmedik.\n\nNasıl gidiyor? Sistemde kariyer planın seni bekliyor:\n${link}`,
+    waTextNoLink: (ad) => `${ad}, bir süredir görüşmedik.\n\nNasıl gidiyor? Bugün konuşalım mı? https://egitimtakvimi.oneteamglobal.ai`,
     emailSubject: 'Seni özledik — One Team',
     emailHero: 'Sana bir şey hatırlatmak istedim',
     emailBody: 'Bir süredir sistemde görmüyorum seni. Kariyer planın hâlâ aktif, eğitimler güncelleniyor. Bir bakış at, beraber yola devam edelim.',
   },
 };
+
+// Magic link'i kısalt (uzun URL → /d/abc12345)
+async function kisaltUrl(tamUrl) {
+  try {
+    const res = await fetch('https://egitimtakvimi.oneteamglobal.ai/.netlify/functions/kisalt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: tamUrl }),
+    });
+    if (!res.ok) throw new Error(`kisalt ${res.status}`);
+    const data = await res.json();
+    return data.kisaUrl || tamUrl;
+  } catch (e) {
+    console.warn('[ekip-davet] kısaltma başarısız, tam URL kullanılıyor:', e.message);
+    return tamUrl;
+  }
+}
 
 // E-posta maskele
 function maskEmail(email) {
@@ -213,8 +231,9 @@ export default async (req) => {
             handleCodeInApp: true,
           };
           magicLink = await admin.auth().generateSignInWithEmailLink(hedef.email, actionCodeSettings);
-
-          const html = emailHtml({ ad: hedef.full_name, link: magicLink, sablon, sponsorAd });
+          // Email içinde de kısaltılmış link kullan (daha temiz görünüm)
+          const linkEmail = await kisaltUrl(magicLink);
+          const html = emailHtml({ ad: hedef.full_name, link: linkEmail, sablon, sponsorAd });
           await resend.emails.send({
             from: 'One Team <noreply@oneteamglobal.ai>',
             to: hedef.email,
@@ -233,18 +252,20 @@ export default async (req) => {
       if ((kanal === 'whatsapp' || kanal === 'both') && hedef.phone) {
         const wa = waPhone(hedef.phone);
         if (wa) {
-          // Magic link varsa onu mesaja ekle, yoksa sadece site URL
+          // Magic link varsa kısalt — uzun Firebase URL'i okunmaz, kısa /d/abc12345 daha temiz
+          const linkVer = magicLink ? await kisaltUrl(magicLink) : 'https://egitimtakvimi.oneteamglobal.ai';
           const text = customMesaj
             ? customMesaj.replace(/\{ad\}/gi, (hedef.full_name || '').split(' ')[0])
-                         .replace(/\{link\}/gi, magicLink || 'https://egitimtakvimi.oneteamglobal.ai')
+                         .replace(/\{link\}/gi, linkVer)
             : (magicLink ? SABLONLAR[sablon].waText : SABLONLAR[sablon].waTextNoLink)(
                 (hedef.full_name || 'merhaba').split(' ')[0],
-                magicLink || ''
+                linkVer
               );
           baslangic.kanallar.push({
             tip: 'whatsapp',
             durum: 'hazir',
             url: `https://wa.me/${wa}?text=${encodeURIComponent(text)}`,
+            kisaUrl: magicLink ? linkVer : null,
           });
         }
       }
