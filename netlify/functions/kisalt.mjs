@@ -49,7 +49,12 @@ export default async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
 
   const url = new URL(req.url);
-  const kod = url.searchParams.get('kod');
+  // kod hem ?kod=X (POST'tan dönüş) hem /d/X (rewrite path) olarak gelebilir
+  let kod = url.searchParams.get('kod');
+  if (!kod) {
+    const pathMatch = url.pathname.match(/\/d\/([A-Za-z0-9]+)$/);
+    if (pathMatch) kod = pathMatch[1];
+  }
 
   // GET /kisalt?kod=abc → redirect
   if (req.method === 'GET' && kod) {

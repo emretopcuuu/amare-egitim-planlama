@@ -8,7 +8,17 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import admin from 'firebase-admin';
-import webpush from 'web-push';
+
+// web-push lazy import — paket eksikse fonksiyon crash etmesin, içeride yakala
+let webpush = null;
+let webpushHata = null;
+try {
+  const mod = await import('web-push');
+  webpush = mod.default || mod;
+} catch (e) {
+  webpushHata = e.message;
+  console.error('[bildirim-test] web-push import hatası:', e.message);
+}
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -23,12 +33,16 @@ if (!admin.apps.length) {
 const VAPID_PUBLIC = process.env.VITE_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE = process.env.VAPID_PRIVATE_KEY;
 
-if (VAPID_PUBLIC && VAPID_PRIVATE) {
-  webpush.setVapidDetails(
-    'mailto:noreply@oneteamglobal.ai',
-    VAPID_PUBLIC,
-    VAPID_PRIVATE
-  );
+if (webpush && VAPID_PUBLIC && VAPID_PRIVATE) {
+  try {
+    webpush.setVapidDetails(
+      'mailto:noreply@oneteamglobal.ai',
+      VAPID_PUBLIC,
+      VAPID_PRIVATE
+    );
+  } catch (e) {
+    console.error('[bildirim-test] setVapidDetails:', e.message);
+  }
 }
 
 const CORS = {
@@ -44,6 +58,16 @@ export default async (req) => {
   });
 
   try {
+    if (webpushHata) {
+      return new Response(JSON.stringify({ error: 'web-push paketi yüklenemedi', detail: webpushHata }), {
+        status: 500, headers: { 'Content-Type': 'application/json', ...CORS },
+      });
+    }
+    if (!webpush) {
+      return new Response(JSON.stringify({ error: 'web-push modülü yok' }), {
+        status: 500, headers: { 'Content-Type': 'application/json', ...CORS },
+      });
+    }
     if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
       return new Response(JSON.stringify({ error: 'VAPID anahtarları yapılandırılmamış' }), {
         status: 500, headers: { 'Content-Type': 'application/json', ...CORS },
