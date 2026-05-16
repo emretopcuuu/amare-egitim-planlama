@@ -9,6 +9,7 @@ import LoadingProgress from './components/LoadingProgress';
 import BottomNav from './components/BottomNav';
 import { ToastProvider } from './components/Toast';
 import PwaInstallBanner from './components/PwaInstallBanner';
+import OnboardingTour from './components/OnboardingTour';
 
 // Code-split — public sayfalar dahil hepsi route-level lazy load
 // İlk yükleme: sadece HomePage indirilir, diğerleri kullanıcı navigasyonu ile
@@ -96,6 +97,7 @@ function AppRoutes() {
       </Suspense>
       <BottomNav />
       <PwaInstallBanner />
+      <OnboardingTour />
     </BrowserRouter>
   );
 }
