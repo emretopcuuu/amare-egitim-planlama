@@ -119,22 +119,17 @@ const EgitimYolumBlok = ({ uid, isAnonymous, kullaniciRankString }) => {
         onVideoOynat={(id, t) => navigate(`/kayitli-egitimler?v=${encodeURIComponent(id)}${t ? '&t=' + t : ''}`)}
       />
 
-      {/* ÖNCEKİ RANK'LER — kapalı başlar, açılır */}
-      {tamamlanan.slice().reverse().map(r => (
-        <RankKart
-          key={r.key}
-          rank={r}
-          kilitli={false}
-          otoTamamlandi={true}
-          acik={acikRankler.has(r.key)}
-          durum="tamamlandi"
-          curriculum={curriculums[r.key]}
-          tamamlanmaPct={100}
+      {/* ÖNCEKİ RANK'LER — accordion: tek bir özet butona basınca açılır */}
+      {tamamlanan.length > 0 && (
+        <TamamlananlarAccordion
+          tamamlanan={tamamlanan}
+          acikRankler={acikRankler}
+          curriculums={curriculums}
           watchProgress={watchProgress}
-          onToggle={() => toggleRank(r.key, false)}
+          onToggle={toggleRank}
           onVideoOynat={(id, t) => navigate(`/kayitli-egitimler?v=${encodeURIComponent(id)}${t ? '&t=' + t : ''}`)}
         />
-      ))}
+      )}
 
       {/* KİLİTLİ RANK'LER — sıralı, açılamaz */}
       {kilitli.slice(0, 3).map(r => (
@@ -155,6 +150,54 @@ const EgitimYolumBlok = ({ uid, isAnonymous, kullaniciRankString }) => {
       {kilitli.length > 3 && (
         <div className="text-center text-purple-300/60 text-xs pt-2">
           + {kilitli.length - 3} daha gelecek rank
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ─── Tamamlanan rank'ler accordion ───
+// Tek özet kutu: "X rank tamamlandı" → tıkla → genişler
+const TamamlananlarAccordion = ({ tamamlanan, acikRankler, curriculums, watchProgress, onToggle, onVideoOynat }) => {
+  const [genislemis, setGenislemis] = useState(false);
+  const sayi = tamamlanan.length;
+
+  return (
+    <div className="bg-emerald-500/8 border border-emerald-400/25 rounded-2xl overflow-hidden">
+      <button onClick={() => setGenislemis(g => !g)}
+        className="w-full p-4 flex items-center gap-3 hover:bg-emerald-500/10 transition spring-tap text-left">
+        <div className="w-11 h-11 rounded-full bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center flex-shrink-0">
+          <CheckCircle2 className="w-5 h-5 text-emerald-300" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-white font-bold text-sm">
+            ✓ {sayi} rank tamamlandı
+          </div>
+          <div className="text-emerald-200/70 text-[11px] mt-0.5">
+            {tamamlanan.slice().reverse().slice(0, 3).map(r => r.label).join(' · ')}
+            {sayi > 3 && ` +${sayi - 3} daha`}
+          </div>
+        </div>
+        <ChevronDown className={`w-4 h-4 text-emerald-300/70 transition-transform flex-shrink-0 ${genislemis ? 'rotate-180' : ''}`} />
+      </button>
+
+      {genislemis && (
+        <div className="border-t border-emerald-400/15 p-2 space-y-2">
+          {tamamlanan.slice().reverse().map(r => (
+            <RankKart
+              key={r.key}
+              rank={r}
+              kilitli={false}
+              otoTamamlandi={true}
+              acik={acikRankler.has(r.key)}
+              durum="tamamlandi"
+              curriculum={curriculums[r.key]}
+              tamamlanmaPct={100}
+              watchProgress={watchProgress}
+              onToggle={() => onToggle(r.key, false)}
+              onVideoOynat={onVideoOynat}
+            />
+          ))}
         </div>
       )}
     </div>
