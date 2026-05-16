@@ -481,8 +481,8 @@ const Profil = () => {
     return (
       <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
         <div className="max-w-3xl mx-auto px-4 pt-6">
-          <button onClick={() => navigate(-1)} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
-            <ArrowLeft className="w-4 h-4 mr-1.5" /> Geri
+          <button onClick={() => navigate('/takvim')} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Takvim
           </button>
         </div>
         <div className="max-w-md mx-auto mt-12 px-4">
@@ -594,8 +594,8 @@ const Profil = () => {
 
       {/* Header — takvim sayfasıyla aynı stil */}
       <div className="max-w-3xl mx-auto flex items-center justify-between px-4 pt-6">
-        <button onClick={() => navigate(-1)} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
-          <ArrowLeft className="w-4 h-4 mr-1.5" /> Geri
+        <button onClick={() => navigate('/takvim')} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
+          <ArrowLeft className="w-4 h-4 mr-1.5" /> Takvim
         </button>
         <div className="flex items-center gap-2">
           <button onClick={() => setWrappedAcik(true)}
