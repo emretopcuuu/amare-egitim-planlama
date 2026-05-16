@@ -42,7 +42,10 @@ const AiAsistanModal = ({ acik, ekip, onClose }) => {
         headers: { Authorization: `Bearer ${idToken}` },
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Yüklenemedi');
+      if (!res.ok) {
+        const msg = data.detail ? `${data.error || 'Hata'}: ${data.detail}` : (data.error || 'Yüklenemedi');
+        throw new Error(msg);
+      }
       setVeri(data);
     } catch (e) {
       setHata(e.message);

@@ -64,7 +64,7 @@ Rank'a çok yakın varsa onları öne çıkar.
 Risk/Pasif olanlar her zaman dikkat ister.`;
 
 async function callGemini(prompt) {
-  if (!GEMINI_KEY) throw new Error('Gemini API key eksik');
+  if (!GEMINI_KEY) throw new Error('GEMINI_API_KEY env var Netlify\'da yok — ekle ve redeploy et');
   const res = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
     {
@@ -76,18 +76,39 @@ async function callGemini(prompt) {
           temperature: 0.4,
           maxOutputTokens: 4096,
           responseMimeType: 'application/json',
+          thinkingConfig: { thinkingBudget: 0 }, // Hızlı cevap için thinking kapalı
         },
         systemInstruction: { parts: [{ text: SISTEM_PROMPT }] },
       }),
     }
   );
-  if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  if (!res.ok) {
+    const errText = (await res.text()).slice(0, 300);
+    throw new Error(`Gemini API ${res.status}: ${errText}`);
+  }
   const data = await res.json();
-  const parts = data?.candidates?.[0]?.content?.parts || [];
-  const text = parts.find(p => p.text)?.text || '';
+
+  // Cevap kontrolü — finishReason, safety blocks vb
+  const candidate = data?.candidates?.[0];
+  if (!candidate) {
+    throw new Error('Gemini cevap döndürmedi (boş candidates)');
+  }
+  if (candidate.finishReason && candidate.finishReason !== 'STOP') {
+    throw new Error(`Gemini cevabı tamamlanmadı: ${candidate.finishReason}`);
+  }
+
+  const parts = candidate.content?.parts || [];
+  const text = parts.find(p => p.text && !p.thought)?.text || parts.find(p => p.text)?.text || '';
+  if (!text) throw new Error('Gemini boş metin döndü');
+
+  // JSON çıkar
   const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error('Gemini cevabı parse edilemedi');
-  return JSON.parse(match[0]);
+  if (!match) throw new Error(`Gemini cevabı JSON değil: ${text.slice(0, 100)}`);
+  try {
+    return JSON.parse(match[0]);
+  } catch (e) {
+    throw new Error(`JSON parse hatası: ${e.message}`);
+  }
 }
 
 export default async (req) => {
