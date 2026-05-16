@@ -67,7 +67,12 @@ const Profil = () => {
   const { takipSet } = useTakipEgitmenler();
   const watchProgress = useWatchProgress();
 
-  const [girisModalAcik, setGirisModalAcik] = useState(false);
+  // URL'den ?giris=1 parametresi varsa modal otomatik açılsın (davet linkleri için)
+  const [girisModalAcik, setGirisModalAcik] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('giris') === '1';
+  });
   const [profilVerisi, setProfilVerisi] = useState(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [hata, setHata] = useState('');

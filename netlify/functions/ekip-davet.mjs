@@ -37,24 +37,29 @@ const CORS = {
 
 // 4 hazır şablon — WhatsApp text + Email subject/body için kullanılır
 // Emoji'ler sade ve evrensel tutuldu (eski WhatsApp font'larında render sorunu yaşamamak için)
+//
+// noLink şablonları → /profil?giris=1 yönlendirir → UyeGirisModal otomatik açılır
+// Üye telefon veya Amare ID girer → backend uye-giris-link function'ı magic link mail atar
+const MANUEL_GIRIS_URL = 'https://egitimtakvimi.oneteamglobal.ai/profil?giris=1';
+
 const SABLONLAR = {
   yeni: {
     waText: (ad, link) => `Selam ${ad},\n\nOne Team Eğitim Takvimi'ne seni davet ediyorum. Tüm canlı eğitimler, kayıtlı videolar ve kariyer yoluna özel içerikler tek yerde.\n\nTek tık giriş linkin:\n${link}\n\nBirlikte büyüyelim.`,
-    waTextNoLink: (ad) => `Selam ${ad},\n\nOne Team Eğitim Takvimi'ne seni davet ediyorum. Tüm canlı eğitimler, kayıtlı videolar ve kariyer yoluna özel içerikler tek yerde.\n\nhttps://egitimtakvimi.oneteamglobal.ai`,
+    waTextNoLink: (ad) => `Selam ${ad},\n\nOne Team Eğitim Takvimi'ne seni davet ediyorum. Tüm canlı eğitimler, kayıtlı videolar ve kariyer yoluna özel içerikler tek yerde.\n\nGiriş için telefon numaranı veya Amare ID'ni gir:\n${MANUEL_GIRIS_URL}`,
     emailSubject: 'One Team Eğitim Takvimi — sana özel davet',
     emailHero: 'Eğitim takvimi seni bekliyor',
     emailBody: 'Tüm canlı eğitimler, kayıtlı videolar ve kariyer yoluna özel curriculum tek yerde. Şifre yok — bu link ile tek tık giriş yap.',
   },
   egitim: {
     waText: (ad, link) => `${ad}, bu hafta kaçırma!\n\nYeni eğitimler eklendi, takvimi göz at:\n${link}`,
-    waTextNoLink: (ad) => `${ad}, bu hafta kaçırma!\n\nYeni eğitimler eklendi, takvimi göz at:\nhttps://egitimtakvimi.oneteamglobal.ai`,
+    waTextNoLink: (ad) => `${ad}, bu hafta kaçırma!\n\nYeni eğitimler eklendi, takvimi göz at:\n${MANUEL_GIRIS_URL}`,
     emailSubject: 'Yeni eğitimler eklendi — One Team Takvimi',
     emailHero: 'Bu hafta yeni eğitimler',
     emailBody: 'Liderlik, satış, motivasyon — bu hafta katılabileceğin canlı eğitimleri ve yeni kayıtlı videoları görmek için tıkla.',
   },
   kontrol: {
     waText: (ad, link) => `${ad}, bir süredir görüşmedik.\n\nNasıl gidiyor? Sistemde kariyer planın seni bekliyor:\n${link}`,
-    waTextNoLink: (ad) => `${ad}, bir süredir görüşmedik.\n\nNasıl gidiyor? Bugün konuşalım mı? https://egitimtakvimi.oneteamglobal.ai`,
+    waTextNoLink: (ad) => `${ad}, bir süredir görüşmedik.\n\nNasıl gidiyor? Sisteme telefon numaranla giriş yap, kariyer planın seni bekliyor:\n${MANUEL_GIRIS_URL}`,
     emailSubject: 'Seni özledik — One Team',
     emailHero: 'Sana bir şey hatırlatmak istedim',
     emailBody: 'Bir süredir sistemde görmüyorum seni. Kariyer planın hâlâ aktif, eğitimler güncelleniyor. Bir bakış at, beraber yola devam edelim.',
