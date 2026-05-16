@@ -23,6 +23,8 @@ import AdminKayitliEgitimlerTab from '../components/AdminKayitliEgitimlerTab';
 import AdminAnalyticsTab from '../components/AdminAnalyticsTab';
 import AdminAuditLogTab from '../components/AdminAuditLogTab';
 import AdminGlobalSearch from '../components/AdminGlobalSearch';
+import { auditLogYaz } from '../utils/auditLog';
+import { confirm } from '../components/ConfirmDialog';
 import AdminEgitimYollariTab from '../components/AdminEgitimYollariTab';
 import YeniEgitmenModal from '../components/YeniEgitmenModal';
 import AdminKategoriSiralama from '../components/AdminKategoriSiralama';
@@ -518,14 +520,31 @@ const AdminPanel = () => {
     setDuzenleKaydediliyor(true);
     const result = await egitimGuncelle(duzenleModal.id, duzenleForm);
     setDuzenleKaydediliyor(false);
-    if (result.success) setDuzenleModal(null);
-    else alert('Kaydedilemedi: ' + result.error);
+    if (result.success) {
+      auditLogYaz('takvim_guncelle', `takvim/${duzenleModal?.id}`, {
+        baslik: duzenleForm.egitim, tarih: duzenleForm.tarih,
+      });
+      setDuzenleModal(null);
+    } else {
+      alert('Kaydedilemedi: ' + result.error);
+    }
   };
 
   const handleEgitimSil = async (egitimId, egitimAdi) => {
-    if (!window.confirm(`"${egitimAdi}" eğitimini silmek istiyor musunuz?`)) return;
+    const ok = await confirm({
+      baslik: 'Eğitim silinsin mi?',
+      mesaj: `"${egitimAdi}" silindiğinde geri alınamaz.`,
+      evetEtiket: 'Sil',
+      hayirEtiket: 'Vazgeç',
+      destructive: true,
+    });
+    if (!ok) return;
     const result = await egitimSil(egitimId);
-    if (!result.success) alert('Silme başarısız: ' + result.error);
+    if (!result.success) {
+      alert('Silme başarısız: ' + result.error);
+    } else {
+      auditLogYaz('takvim_sil', `takvim/${egitimId}`, { baslik: egitimAdi });
+    }
   };
 
   const hesaplaSure = (form) => {
@@ -549,8 +568,15 @@ const AdminPanel = () => {
       slot: `${ekleForm.tarih}_${ekleForm.saat}`, kaynak: 'manuel',
     });
     setEkleKaydediliyor(false);
-    if (result.success) { setEkleModal(false); setEkleForm(BOŞ_FORM); }
-    else alert('Kaydedilemedi: ' + result.error);
+    if (result.success) {
+      auditLogYaz('takvim_yarat', `takvim/${result.id || 'auto'}`, {
+        baslik: ekleForm.egitim, tarih: ekleForm.tarih, saat: ekleForm.saat, kategori: ekleForm.kategori,
+      });
+      setEkleModal(false);
+      setEkleForm(BOŞ_FORM);
+    } else {
+      alert('Kaydedilemedi: ' + result.error);
+    }
   };
 
   const handleTopluSecToggle = (egitimId) => {
@@ -652,9 +678,19 @@ const AdminPanel = () => {
   };
 
   const handleBasvuruSil = async (basvuruId, ad) => {
-    if (!window.confirm(`"${ad}" başvurusunu silmek istiyor musunuz?`)) return;
+    const ok = await confirm({
+      baslik: 'Başvuru silinsin mi?',
+      mesaj: `"${ad}" başvurusu silindiğinde geri alınamaz.`,
+      evetEtiket: 'Sil',
+      destructive: true,
+    });
+    if (!ok) return;
     const result = await basvuruSil(basvuruId);
-    if (!result.success) alert('Silme başarısız: ' + result.error);
+    if (!result.success) {
+      alert('Silme başarısız: ' + result.error);
+    } else {
+      auditLogYaz('egitmen_sil', `egitmenler/${basvuruId}`, { ad });
+    }
   };
 
   const handleBasvuruLinkKopyala = () => {
@@ -958,7 +994,13 @@ const AdminPanel = () => {
                       <div className="flex items-center gap-2 flex-shrink-0">
                         <select
                           value={egitmen.durum || 'beklemede'}
-                          onChange={e => basvuruDurumGuncelle(egitmen.id, e.target.value)}
+                          onChange={e => {
+                            const yeniDurum = e.target.value;
+                            basvuruDurumGuncelle(egitmen.id, yeniDurum);
+                            auditLogYaz(yeniDurum === 'onaylandi' ? 'egitmen_onay' : 'egitmen_durumdegis',
+                              `egitmenler/${egitmen.id}`,
+                              { ad: egitmen.adSoyad, yeniDurum, eskiDurum: egitmen.durum });
+                          }}
                           className={`text-xs font-semibold px-2 py-1 rounded-lg border-0 cursor-pointer ${DURUM_RENKLER[egitmen.durum || 'beklemede']}`}>
                           <option value="beklemede">⏳ Beklemede</option>
                           <option value="onaylandi">✅ Onaylandı</option>
