@@ -961,7 +961,7 @@ const Profil = () => {
             <SectionTitle icon={Sparkles}>AI Asistanların</SectionTitle>
 
             {/* Davet Asistanı — yeşil */}
-            <a href={`https://oneteamglobal.ai/davet-asistani?amid=${encodeURIComponent(profilVerisi.amareId)}`}
+            <a href="https://davet.projepd101.com/"
               target="_blank" rel="noopener noreferrer"
               className="block w-full bg-gradient-to-br from-emerald-500/20 via-emerald-400/15 to-teal-500/20 backdrop-blur-md border border-emerald-300/40 hover:border-emerald-300/70 rounded-2xl p-5 shadow-xl transition group spring-tap mt-4">
               <div className="flex items-center gap-4">
@@ -977,7 +977,7 @@ const Profil = () => {
             </a>
 
             {/* AI Asistan — mor */}
-            <a href={`https://oneteamglobal.ai/ai-asistan?amid=${encodeURIComponent(profilVerisi.amareId)}`}
+            <a href="https://asistan.oneteamglobal.ai"
               target="_blank" rel="noopener noreferrer"
               className="block w-full bg-gradient-to-br from-purple-500/20 via-violet-400/15 to-indigo-500/20 backdrop-blur-md border border-purple-300/40 hover:border-purple-300/70 rounded-2xl p-5 shadow-xl transition group spring-tap">
               <div className="flex items-center gap-4">
