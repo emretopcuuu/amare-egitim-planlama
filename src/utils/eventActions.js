@@ -11,20 +11,34 @@ const parseTarih = (t) => {
 };
 
 // Tarih + saat → Date objesi
+// NaN/Invalid Date durumlarını koru — toISOString'in RangeError atmasını engelle
 const egitimZamani = (egitim) => {
-  const d = parseTarih(egitim.tarih);
+  const d = parseTarih(egitim?.tarih);
   if (!d) return null;
-  const [saat = 0, dk = 0] = (egitim.saat || '0:0').split(':').map(Number);
+
+  // Saat parse — geçersizse 0 al
+  const saatStr = (egitim?.saat || '0:0').toString();
+  const [saatRaw = 0, dkRaw = 0] = saatStr.split(':').map(n => parseInt(n, 10));
+  const saat = Number.isFinite(saatRaw) ? saatRaw : 0;
+  const dk = Number.isFinite(dkRaw) ? dkRaw : 0;
+
   const baslangic = new Date(d);
   baslangic.setHours(saat, dk, 0, 0);
+  if (isNaN(baslangic.getTime())) return null;
+
   let bitis;
-  if (egitim.bitisSaati) {
-    const [bSaat, bDk] = egitim.bitisSaati.split(':').map(Number);
+  if (egitim?.bitisSaati) {
+    const [bSaatRaw, bDkRaw] = String(egitim.bitisSaati).split(':').map(n => parseInt(n, 10));
+    const bSaat = Number.isFinite(bSaatRaw) ? bSaatRaw : saat + 1;
+    const bDk = Number.isFinite(bDkRaw) ? bDkRaw : dk;
     bitis = new Date(d);
     bitis.setHours(bSaat, bDk, 0, 0);
+    if (isNaN(bitis.getTime())) bitis = new Date(baslangic.getTime() + 60 * 60000);
   } else {
     bitis = new Date(baslangic.getTime() + 60 * 60000); // 1 saat default
   }
+  if (isNaN(bitis.getTime())) return null;
+
   return { baslangic, bitis };
 };
 
@@ -134,6 +148,14 @@ export const googleCalendarUrl = (egitim) => {
 export const outlookCalendarUrl = (egitim) => {
   const zaman = egitimZamani(egitim);
   if (!zaman) return null;
+  // Defensive: toISOString throw etmesin
+  let startdt, enddt;
+  try {
+    startdt = zaman.baslangic.toISOString();
+    enddt = zaman.bitis.toISOString();
+  } catch {
+    return null;
+  }
   const zoomUrl = extractZoomUrl(egitim.yer);
   const body = [
     egitim.egitmen ? `Eğitmen: ${egitim.egitmen}` : '',
@@ -144,8 +166,8 @@ export const outlookCalendarUrl = (egitim) => {
     path: '/calendar/action/compose',
     rru: 'addevent',
     subject: egitim.egitim || 'Eğitim',
-    startdt: zaman.baslangic.toISOString(),
-    enddt: zaman.bitis.toISOString(),
+    startdt,
+    enddt,
     body,
     location: zoomUrl || egitim.yer || '',
   });
