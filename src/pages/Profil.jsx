@@ -426,14 +426,29 @@ const Profil = () => {
     const returnUrl = encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil');
     const onboardingUrl = `https://oneteamglobal.ai/?amid=${amareIdStr}&update=1&return=${returnUrl}`;
 
+    // Fotoğraf kontrolü — birden çok kaynaktan kabul
+    const fotoVar = !!(
+      userDoc?.fotoURL ||
+      profilVerisi?.amare?.foto_url ||
+      profilVerisi?.amare?.fotoURL ||
+      profilVerisi?.member?.foto_url ||
+      currentUser?.photoURL
+    );
+    // Bio/tanıtım kontrolü — birden çok kaynaktan kabul
+    const bioVar = !!(
+      profilVerisi?.member?.bio_data?.tanitim ||
+      (profilVerisi?.member?.bio && profilVerisi.member.bio.trim().length > 10) ||
+      userDoc?.tanitim
+    );
+
     const checks = [
-      { key: 'avatar', label: 'Profil fotosu', done: !!userDoc?.fotoURL, weight: 20,
+      { key: 'avatar', label: 'Profil fotosu', done: fotoVar, weight: 20,
         action: () => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
           setTimeout(() => window.dispatchEvent(new Event('amare-open-avatar-picker')), 500);
         }
       },
-      { key: 'bio', label: 'Tanıtım metni', done: !!profilVerisi?.member?.bio_data?.tanitim, weight: 25,
+      { key: 'bio', label: 'Tanıtım metni', done: bioVar, weight: 25,
         action: () => { window.location.href = onboardingUrl; }
       },
       { key: 'onboarding', label: 'Onboarding cevapları', done: !!profilVerisi?.onboardingTamamlandi, weight: 25,
