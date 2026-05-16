@@ -716,6 +716,17 @@ const Profil = () => {
 
       <div className="max-w-3xl mx-auto px-4 mt-8 space-y-6">
 
+        {/* ═══ ÜYELİK — en üstte, tek bakışta bilgilere erişim ═══ */}
+        <div id="section-uyelik" className="stagger-fade">
+          <SectionTitle icon={Hash}>Üyelik</SectionTitle>
+          <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 divide-y divide-white/10 shadow-xl">
+            <InfoRow icon={Phone} label="Telefon" value={a?.phone || '—'} />
+            <InfoRow icon={Mail} label="E-posta" value={a?.email || email || '—'} />
+            <InfoRow icon={Hash} label="Amare ID" value={profilVerisi?.amareId || userDoc?.amareId || '—'} />
+            <InfoRow icon={CalendarDays} label="Kayıt tarihi" value={formatTarih(a?.register_date)} />
+          </div>
+        </div>
+
         {/* Profil tamamlama banner — sadece eksik varsa göster */}
         {profilTamamlama.pct < 100 && profilTamamlama.eksik.length > 0 && (
           <section className="bg-gradient-to-r from-amber-400/15 via-amber-300/10 to-orange-400/15 backdrop-blur-md border border-amber-300/40 rounded-2xl p-4 shadow-xl">
@@ -926,17 +937,6 @@ const Profil = () => {
             </div>
           </div>
         )}
-
-        {/* ═══ ÜYELİK ═══ */}
-        <div id="section-uyelik" className="stagger-fade" style={{ animationDelay: '300ms' }}>
-          <SectionTitle icon={Hash}>Üyelik</SectionTitle>
-          <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 divide-y divide-white/10 shadow-xl">
-            <InfoRow icon={Phone} label="Telefon" value={a?.phone || '—'} />
-            <InfoRow icon={Mail} label="E-posta" value={a?.email || email || '—'} />
-            <InfoRow icon={Hash} label="Amare ID" value={profilVerisi?.amareId || userDoc?.amareId || '—'} />
-            <InfoRow icon={CalendarDays} label="Kayıt tarihi" value={formatTarih(a?.register_date)} />
-          </div>
-        </div>
 
         {/* ═══ EKİBİM CTA ═══ */}
         {profilVerisi?.amareId && (
