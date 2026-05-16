@@ -682,12 +682,25 @@ const Profil = () => {
       {/* STATS ROW — 6 stat, sticky scroll'da üste yapışır, tıklanabilir */}
       <div className="max-w-3xl mx-auto px-4 mt-2 sticky top-2 z-30">
         <div className="bg-purple-900/80 backdrop-blur-xl border border-white/20 rounded-2xl grid grid-cols-3 sm:grid-cols-6 divide-x divide-white/10 shadow-2xl overflow-hidden">
-          <StatCell label="Üye" value={u ? `${u.yil}y` : '—'} scrollToId="section-uyelik" delay={0} />
-          <StatCell label="Saat" value={Math.floor(totalWatched / 3600) || 0} highlight={totalWatched > 0} scrollToId="section-aktivite" delay={100} />
-          <StatCell label="İzlenen" value={completedCount} scrollToId="section-aktivite" delay={200} />
-          <StatCell label="Favori" value={takipSet.size + videoFav.size} scrollToId="section-favoriler" delay={300} />
-          <StatCell label="Seri" value={streak.current} highlight={streak.current >= 3} delay={400} />
-          <StatCell label="Hatırlatma" value={hatirlatmalar.length} scrollToId="section-aktivite" delay={500} />
+          <StatCell label="Üyelik" suffix="y" value={u ? u.yil : '—'} delay={0}
+            tooltip={u ? `${u.yil} yıl ${u.ay > 0 ? u.ay + ' ay ' : ''}One Team üyesisin` : 'Üyelik süresi'}
+            scrollToId="section-uyelik" />
+          <StatCell label="İzleme" suffix="sa" value={Math.floor(totalWatched / 3600) || 0}
+            highlight={totalWatched > 0} delay={100}
+            tooltip="Toplam izlediğin video saati"
+            scrollToId="section-aktivite" />
+          <StatCell label="Bitirdiğin" value={completedCount} delay={200}
+            tooltip="Tamamen izlediğin video sayısı"
+            scrollToId="section-aktivite" />
+          <StatCell label="Favori" value={takipSet.size + videoFav.size} delay={300}
+            tooltip={`${takipSet.size} eğitmen + ${videoFav.size} video takipte`}
+            scrollToId="section-favoriler" />
+          <StatCell label="Günlük Seri" suffix="g" value={streak.current}
+            highlight={streak.current >= 3} delay={400}
+            tooltip={streak.current > 0 ? `${streak.current} gündür üst üste site açıyorsun (en uzun: ${streak.longest || 0}g)` : 'Streak yok — bugün başlat'} />
+          <StatCell label="Hatırlatma" value={hatirlatmalar.length} delay={500}
+            tooltip="Kurduğun eğitim hatırlatmaları"
+            scrollToId="section-aktivite" />
         </div>
       </div>
 
@@ -1239,11 +1252,10 @@ const Stat = ({ label, value }) => (
 );
 
 // Count-up'lı + tıklanabilir StatCell (scroll anchor için)
-const StatCell = ({ label, value, highlight = false, scrollToId = null, delay = 0, suffix = '' }) => {
+const StatCell = ({ label, value, highlight = false, scrollToId = null, delay = 0, suffix = '', tooltip = null }) => {
   const numValue = typeof value === 'number' ? value : parseInt(String(value).replace(/\D/g, ''), 10) || 0;
   const isNumeric = typeof value === 'number' || /^\d+/.test(String(value));
   const animated = useCountUp(isNumeric ? numValue : 0, { duration: 900, delay });
-  const display = isNumeric ? `${animated}${suffix}` : value;
 
   const handleClick = () => {
     if (!scrollToId) return;
@@ -1256,10 +1268,23 @@ const StatCell = ({ label, value, highlight = false, scrollToId = null, delay = 
       type="button"
       onClick={scrollToId ? handleClick : undefined}
       disabled={!scrollToId}
-      className={`text-center px-1.5 sm:px-2 py-3 sm:py-4 transition-all ${scrollToId ? 'hover:bg-white/5 cursor-pointer active:scale-95' : 'cursor-default'}`}
+      title={tooltip || label}
+      aria-label={tooltip ? `${label}: ${tooltip}` : label}
+      className={`group text-center px-1.5 sm:px-2 py-3 sm:py-4 transition-all ${scrollToId ? 'hover:bg-white/5 cursor-pointer active:scale-95' : 'cursor-default'}`}
     >
-      <div className={`font-light text-xl sm:text-2xl leading-none tracking-tight tabular-nums ${highlight ? 'text-amber-300' : 'text-white'}`}>{display}</div>
-      <div className={`text-[9px] sm:text-[10px] uppercase tracking-[0.12em] sm:tracking-[0.15em] mt-1.5 sm:mt-2 font-semibold ${highlight ? 'text-amber-300' : 'text-amber-300/60'}`}>{label}</div>
+      <div className={`font-light leading-none tracking-tight tabular-nums ${highlight ? 'text-amber-300' : 'text-white'}`}>
+        {isNumeric ? (
+          <>
+            <span className="text-xl sm:text-2xl">{animated}</span>
+            {suffix && <span className="text-[10px] sm:text-xs ml-0.5 opacity-70">{suffix}</span>}
+          </>
+        ) : (
+          <span className="text-xl sm:text-2xl">{value}</span>
+        )}
+      </div>
+      <div className={`text-[9px] sm:text-[10px] uppercase tracking-[0.08em] sm:tracking-[0.1em] mt-1.5 sm:mt-2 font-semibold ${highlight ? 'text-amber-300' : 'text-amber-300/60'} line-clamp-1`}>
+        {label}
+      </div>
     </button>
   );
 };
