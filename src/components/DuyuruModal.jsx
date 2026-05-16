@@ -1,38 +1,46 @@
 import React, { useState } from 'react';
 import { X, Copy, Check, Loader2, MessageCircle, RefreshCw } from 'lucide-react';
+import { auth } from '../utils/firebase';
 
-const DuyuruModal = ({ egitim, apiKey, onClose }) => {
+const DuyuruModal = ({ egitim, onClose }) => {
   const [metin, setMetin] = useState('');
   const [yukleniyor, setYukleniyor] = useState(false);
   const [kopyalandi, setKopyalandi] = useState(false);
   const [hata, setHata] = useState(null);
 
   const handleOlustur = async () => {
-    if (!apiKey) { setHata('API anahtarı eksik. Ayarlar sekmesinden ekleyin.'); return; }
     setYukleniyor(true);
     setHata(null);
 
-    const prompt = `Aşağıdaki eğitim etkinliği için WhatsApp ve sosyal medya paylaşımına uygun, Türkçe, etkileyici bir duyuru metni yaz.
-Emoji kullan, heyecan verici ve motive edici bir dil kullan. ONE TEAM ruhunu yansıt.
-3-4 kısa paragraf olsun. Sadece duyuru metnini yaz, başka açıklama ekleme.
-
-ETKİNLİK BİLGİLERİ:
-- Eğitim Adı: ${egitim.egitim}
-- Tarih: ${egitim.tarih} ${egitim.gun || ''}
-- Saat: ${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}
-- Platform/Yer: ${egitim.yer || 'ZOOM'}${egitim.egitmen ? '\n- Eğitmen: ' + egitim.egitmen : ''}${egitim.kategori ? '\n- Kategori: ' + egitim.kategori : ''}${egitim.aciklama ? '\n- Açıklama: ' + egitim.aciklama : ''}`;
-
     try {
-      const body = {
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.9 },
-      };
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error?.message || `API Hatası: ${res.status}`); }
+      const user = auth.currentUser;
+      if (!user) throw new Error('Admin oturumu gerekli');
+      const idToken = await user.getIdToken();
+
+      const res = await fetch('/.netlify/functions/metin-uret', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          tip: 'duyuru',
+          baglam: {
+            baslik: egitim.egitim,
+            tarih: `${egitim.tarih} ${egitim.gun || ''}`.trim(),
+            saat: `${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}`,
+            yer: egitim.yer,
+            egitmen: egitim.egitmen,
+            kategori: egitim.kategori,
+            aciklama: egitim.aciklama,
+            link: egitim.link,
+          },
+        }),
+      });
       const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      if (!text) throw new Error('API metin döndürmedi.');
-      setMetin(text);
+      if (!res.ok) throw new Error(data.detail || data.error || `API Hatası: ${res.status}`);
+      if (!data.metin) throw new Error('Boş cevap');
+      setMetin(data.metin);
     } catch (err) {
       setHata(err.message);
     } finally {

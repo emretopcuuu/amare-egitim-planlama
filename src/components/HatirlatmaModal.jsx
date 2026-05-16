@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Bell, Phone, Mail, MessageCircle, Loader2, RefreshCw, Copy, Check } from 'lucide-react';
+import { auth } from '../utils/firebase';
 
 const temizleTelefon = (telefon) => {
   if (!telefon) return null;
@@ -20,7 +21,7 @@ const bugununYarini = () => {
   return `${gun}.${ay}.${yil}`;
 };
 
-const HatirlatmaModal = ({ takvim, egitmenler, apiKey, onClose }) => {
+const HatirlatmaModal = ({ takvim, egitmenler, onClose }) => {
   const [secilenTarih, setSecilenTarih] = useState(bugununYarini());
   const [mesajlar, setMesajlar] = useState({});
   const [yukleniyor, setYukleniyor] = useState({});
@@ -44,34 +45,37 @@ const HatirlatmaModal = ({ takvim, egitmenler, apiKey, onClose }) => {
   };
 
   const handleMesajUret = async (egitim) => {
-    if (!apiKey) {
-      setHatalar(h => ({ ...h, [egitim.id]: 'API anahtarı eksik. Ayarlardan ekleyin.' }));
-      return;
-    }
     setYukleniyor(y => ({ ...y, [egitim.id]: true }));
     setHatalar(h => ({ ...h, [egitim.id]: null }));
 
-    const prompt = `Yarın gerçekleşecek bir eğitim etkinliği için katılımcılara WhatsApp üzerinden gönderilecek Türkçe bir hatırlatma mesajı yaz.
-Samimi, sıcak ve motive edici bir dil kullan. Kısa olsun (2-3 cümle). Emoji kullan. ONE TEAM ruhunu yansıt.
-Sadece mesaj metnini yaz, başka açıklama ekleme.
-
-ETKİNLİK:
-- Eğitim: ${egitim.egitim}
-- Tarih: ${egitim.tarih} ${egitim.gun || ''}
-- Saat: ${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}
-- Platform: ${egitim.yer || 'ZOOM'}${egitim.egitmen ? '\n- Eğitmen: ' + egitim.egitmen : ''}${egitim.kategori ? '\n- Kategori: ' + egitim.kategori : ''}`;
-
     try {
-      const body = {
-        contents: [{ role: 'user', parts: [{ text: prompt }] }],
-        generationConfig: { temperature: 0.8 },
-      };
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      if (!res.ok) { const err = await res.json().catch(() => ({})); throw new Error(err?.error?.message || `API Hatası: ${res.status}`); }
+      const user = auth.currentUser;
+      if (!user) throw new Error('Admin oturumu gerekli');
+      const idToken = await user.getIdToken();
+
+      const res = await fetch('/.netlify/functions/metin-uret', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
+        },
+        body: JSON.stringify({
+          tip: 'hatirlatma',
+          baglam: {
+            baslik: egitim.egitim,
+            tarih: `${egitim.tarih} ${egitim.gun || ''}`.trim(),
+            saat: `${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}`,
+            yer: egitim.yer,
+            egitmen: egitim.egitmen,
+            kategori: egitim.kategori,
+            link: egitim.link,
+          },
+        }),
+      });
       const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-      if (!text) throw new Error('API metin döndürmedi.');
-      setMesajlar(m => ({ ...m, [egitim.id]: text }));
+      if (!res.ok) throw new Error(data.detail || data.error || `API Hatası: ${res.status}`);
+      if (!data.metin) throw new Error('Boş cevap');
+      setMesajlar(m => ({ ...m, [egitim.id]: data.metin }));
     } catch (err) {
       setHatalar(h => ({ ...h, [egitim.id]: err.message }));
     } finally {

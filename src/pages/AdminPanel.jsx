@@ -24,6 +24,7 @@ import AdminEgitimYollariTab from '../components/AdminEgitimYollariTab';
 import YeniEgitmenModal from '../components/YeniEgitmenModal';
 import AdminKategoriSiralama from '../components/AdminKategoriSiralama';
 import { gorselOlustur } from '../utils/gorselOlustur';
+import { gorselOlusturOpenAIPro } from '../utils/gorselOlusturOpenAIPro';
 import { uploadGorsel } from '../utils/uploadGorsel';
 
 // ── Sabitler ────────────────────────────────────────────────────────────────
@@ -559,7 +560,9 @@ const AdminPanel = () => {
 
   const handleTopluGorselOlustur = async () => {
     if (topluSecili.size === 0) { alert('Lütfen en az bir eğitim seçin.'); return; }
-    if (!geminiApiKey) { alert('API anahtarı eksik. Ayarlar sekmesinden ekleyin.'); return; }
+    // Gemini suspended → OpenAI gpt-image-2 kullan (admin'in kendi key'i)
+    const aktifKey = openaiApiKey || geminiApiKey;
+    if (!aktifKey) { alert('API anahtarı eksik. Ayarlar sekmesinden OpenAI veya Gemini anahtarı ekleyin.'); return; }
     if (sablonlar.length === 0) { alert('Şablon bulunamadı. Ayarlar sekmesinden şablon ekleyin.'); return; }
     const sablon = sablonlar[0];
     const seciliEgitimler = takvim.filter(e => topluSecili.has(e.id));
@@ -580,7 +583,10 @@ const AdminPanel = () => {
           });
           if (k?.fotoURL) fotoURLs.push(k.fotoURL);
         }
-        const result = await gorselOlustur({ apiKey: geminiApiKey, egitim, egitmenler, egitmenFotoURLs: fotoURLs, sablonFile: sablon.url });
+        // OpenAI varsa gpt-image-2, yoksa fallback Gemini nano-banana (suspended olabilir)
+        const result = openaiApiKey
+          ? await gorselOlusturOpenAIPro({ apiKey: openaiApiKey, egitim, egitmenler, sablonFile: sablon.url, format: 'square', quality: 'medium' })
+          : await gorselOlustur({ apiKey: geminiApiKey, egitim, egitmenler, egitmenFotoURLs: fotoURLs, sablonFile: sablon.url });
         const standardB64 = result.base64.replace(/-/g, '+').replace(/_/g, '/');
         const byteChars = atob(standardB64);
         const byteArr = new Uint8Array(byteChars.length);
@@ -1796,7 +1802,6 @@ const AdminPanel = () => {
       {duyuruModal && (
         <DuyuruModal
           egitim={duyuruModal}
-          apiKey={geminiApiKey}
           onClose={() => setDuyuruModal(null)}
         />
       )}
@@ -1858,7 +1863,6 @@ const AdminPanel = () => {
         <HatirlatmaModal
           takvim={takvim}
           egitmenler={egitmenler}
-          apiKey={geminiApiKey}
           onClose={() => setHatirlatmaModal(false)}
         />
       )}
@@ -1872,6 +1876,7 @@ const AdminPanel = () => {
       {sablonTasarimModal && (
         <SablonTasarimModal
           geminiApiKey={geminiApiKey}
+          openaiApiKey={openaiApiKey}
           onKaydet={async (ad, file) => {
             const result = await sablonEkle(ad, file);
             if (!result.success) throw new Error(result.error);

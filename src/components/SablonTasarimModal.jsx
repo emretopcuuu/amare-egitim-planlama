@@ -262,48 +262,54 @@ const RENDER_FUNCS = {
   minimal: renderMinimal,
 };
 
-// ── nano-banana-pro-preview ile gerçek görsel üretimi ─────────────────────────
+// ── OpenAI gpt-image-2 ile görsel üretimi (eski nano-banana yerine) ─────────
+// Gemini projesi suspend olunca admin'in OpenAI key'ine geçildi.
 async function aiGorselUret(apiKey, prompt) {
-  const fullPrompt = `Profesyonel bir 1080x1080 px kare sosyal medya etkinlik tanıtım şablonu tasarla. Amare Global - OneTeam10x markası için eğitim duyuru görseli olacak. ${prompt}. Tasarımda şunlar için yer bırak: etkinlik başlığı, konuşmacı adı ve fotoğrafı, tarih/saat, yer bilgisi. "AMARE GLOBAL" ve "ONE TEAM" markalarını sadece metin olarak ekle. ÖNEMLİ: Asla sahte logo, amblem veya sembol uydurmayacaksın. Logo çizmeyeceksin. Sadece metin olarak marka isimlerini yaz. Profesyonel, çekici, Instagram'a uygun bir tasarım olsun.`;
+  const fullPrompt = `Profesyonel bir 1024x1024 px kare sosyal medya etkinlik tanıtım şablonu tasarla. Amare Global - OneTeam10x markası için eğitim duyuru görseli olacak. ${prompt}. Tasarımda şunlar için yer bırak: etkinlik başlığı, konuşmacı adı ve fotoğrafı, tarih/saat, yer bilgisi. "AMARE GLOBAL" ve "ONE TEAM" markalarını sadece metin olarak ekle. ÖNEMLİ: Asla sahte logo, amblem veya sembol uydurmayacaksın. Logo çizmeyeceksin. Sadece metin olarak marka isimlerini yaz. Profesyonel, çekici, Instagram'a uygun bir tasarım olsun.`;
 
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 60000);
+  const timeout = setTimeout(() => controller.abort(), 90000);
 
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/nano-banana-pro-preview:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: fullPrompt }] }],
-          generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
-        }),
-        signal: controller.signal,
-      }
-    );
+    const res = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-image-2',
+        prompt: fullPrompt,
+        size: '1024x1024',
+        quality: 'medium',
+        n: 1,
+      }),
+      signal: controller.signal,
+    });
     clearTimeout(timeout);
 
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error?.message || `API hatası: ${res.status}`);
+      throw new Error(err?.error?.message || `OpenAI API hatası: ${res.status}`);
     }
 
     const data = await res.json();
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    const imgPart = parts.find(p => p.inlineData?.mimeType?.startsWith('image/'));
-    if (!imgPart) throw new Error('AI görsel üretemedi. Lütfen tekrar deneyin.');
+    const b64 = data?.data?.[0]?.b64_json;
+    if (!b64) throw new Error('OpenAI görsel döndürmedi.');
 
-    return `data:${imgPart.inlineData.mimeType};base64,${imgPart.inlineData.data}`;
+    return `data:image/png;base64,${b64}`;
   } catch (err) {
     clearTimeout(timeout);
-    if (err.name === 'AbortError') throw new Error('İstek zaman aşımına uğradı (60s). Tekrar deneyin.');
+    if (err.name === 'AbortError') throw new Error('İstek zaman aşımına uğradı (90s). Tekrar deneyin.');
     throw err;
   }
 }
 
 // ── Ana bileşen ───────────────────────────────────────────────────────────────
-const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
+// Eski: geminiApiKey ile nano-banana çağırırdı (suspend oldu).
+// Yeni: openaiApiKey ile gpt-image-2 çağırır (admin'in OpenAI key'i).
+const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey, openaiApiKey }) => {
+  const aktifApiKey = openaiApiKey || geminiApiKey;
   const [preset, setPreset] = useState('klasik');
   const [primaryColor, setPrimaryColor] = useState('#6B46C1');
   const [sablonAd, setSablonAd] = useState('Yeni Şablon');
@@ -330,12 +336,12 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
   useEffect(() => { if (mod === 'canvas') renderCanvas(); }, [renderCanvas, mod]);
 
   const handleAiUret = async () => {
-    if (!geminiApiKey) { setAiHata('Gemini API anahtarı eksik. Ayarlar > API Anahtarları bölümünden ekleyin.'); return; }
+    if (!aktifApiKey) { setAiHata('OpenAI veya Gemini API anahtarı eksik. Ayarlar > API Anahtarları bölümünden ekleyin.'); return; }
     if (!aiPrompt.trim()) { setAiHata('Lütfen bir tasarım açıklaması girin.'); return; }
     setAiYukleniyor(true);
     setAiHata(null);
     try {
-      const url = await aiGorselUret(geminiApiKey, aiPrompt.trim());
+      const url = await aiGorselUret(aktifApiKey, aiPrompt.trim());
       setAiGorsel(url);
     } catch (err) {
       setAiHata(err.message);
@@ -497,9 +503,9 @@ const SablonTasarimModal = ({ onKaydet, onClose, geminiApiKey }) => {
                     ? <><Loader2 className="w-4 h-4 animate-spin" />Oluşturuluyor...</>
                     : <><Sparkles className="w-4 h-4" />Görsel Hazırla</>}
                 </button>
-                {!geminiApiKey && (
+                {!aktifApiKey && (
                   <p className="text-xs text-red-500 text-center">
-                    API anahtarı gerekli. Ayarlar sekmesinden ekleyin.
+                    OpenAI veya Gemini API anahtarı gerekli. Ayarlar sekmesinden ekleyin.
                   </p>
                 )}
                 {aiHata && (
