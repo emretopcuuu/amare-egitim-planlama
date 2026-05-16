@@ -131,6 +131,41 @@ service cloud.firestore {
         allow read, write: if isSignedIn() && request.auth.uid == uid;
         allow read: if isAdmin();  // Sponsor dashboard için (Faz 4)
       }
+
+      // Davet log'u — sponsor'un kendi ekibine gönderdiği davetler
+      // Sadece sahibi okur/yazar. Netlify Function admin SDK ile yazar.
+      match /davetler/{amareId} {
+        allow read: if isSignedIn() && request.auth.uid == uid;
+        allow write: if false; // Sadece server (Function) yazabilir
+      }
+
+      // Karne log'u — haftalık lider karnesi snapshot'ları
+      // ekibim Function her açılışta o haftanın snapshot'ını günceller
+      match /karne_log/{weekKey} {
+        allow read: if isSignedIn() && request.auth.uid == uid;
+        allow write: if false; // Sadece server (Function) yazabilir
+      }
+
+      // AI asistan cache — Gemini önerisi 6 saatlik cache
+      match /ai_cache/{docId} {
+        allow read: if isSignedIn() && request.auth.uid == uid;
+        allow write: if false; // Sadece server (Function) yazabilir
+      }
+
+      // Notlar — sponsor'un ekip üyelerine düştüğü notlar
+      match /notlar/{amareId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
+
+      // Onboarding checklist — sponsor'un her yeni üye için ilerleme takibi
+      match /onboarding/{amareId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
+
+      // Notification subscriptions — sponsor'un push abone olduğu olaylar
+      match /push_aboneleri/{docId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
     }
 
     // Eğitim yolları — admin tarafından her rank için küratör edilmiş video listesi
@@ -139,6 +174,13 @@ service cloud.firestore {
     match /egitim_yollari/{rankKey} {
       allow read: if true;
       allow write: if isAdmin();
+    }
+
+    // Leaderboard cache — global, 1 saatlik
+    // Server tarafından yazılır, signed-in kullanıcılar okur
+    match /leaderboard_cache/{week} {
+      allow read: if isSignedIn();
+      allow write: if false;
     }
 
     // Diğer her koleksiyon — varsayılan: tamamen kapalı
