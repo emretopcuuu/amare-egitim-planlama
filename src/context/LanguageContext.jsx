@@ -80,52 +80,31 @@ export const LanguageProvider = ({ children }) => {
 
   // ─── DİNAMİK ÇEVİRİ ───────────────────────────────────────────────────────
 
-  // Gemini API — tek parça çeviri (retry mekanizmalı)
-  const callGeminiTranslate = useCallback(async (texts, targetLang, retryCount = 0) => {
-    const apiKey = localStorage.getItem('geminiApiKey') || import.meta.env.VITE_GEMINI_API_KEY || '';
-    if (!apiKey || targetLang === 'tr') return null;
+  // Backend çeviri proxy'si — OpenRouter Netlify Function üzerinden
+  // Eski: Gemini API key bundle'a gömülüyordu (SIZINTI riski) → key suspend oldu
+  // Yeni: Backend Function çağırır, key asla bundle'a girmez
+  const callTranslate = useCallback(async (texts, targetLang, retryCount = 0) => {
+    if (targetLang === 'tr') return null;
 
-    const langName = targetLang === 'en' ? 'English' : targetLang === 'nl' ? 'Dutch' : 'German';
-    const prompt = `Translate the following Turkish texts to ${langName}. Return ONLY a JSON array of translated strings in the same order. Keep proper nouns, brand names (Amare, One Team, Diamond), city names, and technical terms as-is. Do not add explanations.
+    const res = await fetch('/.netlify/functions/dil-cevir', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texts, targetLang }),
+    });
 
-Input: ${JSON.stringify(texts)}`;
-
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.1,
-            maxOutputTokens: 4096,
-            thinkingConfig: { thinkingBudget: 256 },
-          },
-        }),
-      }
-    );
-
-    // 503 rate limit → retry (max 3 kez, artan bekleme)
-    if (res.status === 503 && retryCount < 3) {
-      const delay = (retryCount + 1) * 2000; // 2s, 4s, 6s
-      console.warn(`[i18n] API 503, ${delay/1000}s sonra tekrar denenecek...`);
+    // 502/503 backend hatası → retry (max 3 kez, artan bekleme)
+    if ((res.status === 502 || res.status === 503) && retryCount < 3) {
+      const delay = (retryCount + 1) * 2000;
+      console.warn(`[i18n] Çeviri ${res.status}, ${delay/1000}s sonra tekrar denenecek...`);
       await wait(delay);
-      return callGeminiTranslate(texts, targetLang, retryCount + 1);
+      return callTranslate(texts, targetLang, retryCount + 1);
     }
 
-    if (!res.ok) throw new Error(`API ${res.status}`);
+    if (!res.ok) throw new Error(`Çeviri API ${res.status}`);
 
     const data = await res.json();
-    // Gemini thinking modelde ilk part "thought" olabilir, text part'ı bul
-    const parts = data?.candidates?.[0]?.content?.parts || [];
-    const textPart = parts.find(p => p.text && !p.thought) || parts.find(p => p.text) || {};
-    const responseText = textPart.text || '';
-    const match = responseText.match(/\[[\s\S]*\]/);
-    if (match) {
-      const parsed = JSON.parse(match[0]);
-      if (Array.isArray(parsed) && parsed.length === texts.length) return parsed;
-    }
+    const arr = data?.translations;
+    if (Array.isArray(arr) && arr.length === texts.length) return arr;
     throw new Error('Invalid response format');
   }, []);
 
@@ -136,12 +115,6 @@ Input: ${JSON.stringify(texts)}`;
   // Parçalara böl, sırayla gönder, başarısızları cache'leme
   const translateBatch = useCallback(async (texts) => {
     if (!texts?.length || lang === 'tr') return texts;
-
-    const apiKey = localStorage.getItem('geminiApiKey') || import.meta.env.VITE_GEMINI_API_KEY || '';
-    if (!apiKey) {
-      console.warn('[i18n] Çeviri yapılamadı: API anahtarı yok! localStorage veya VITE_GEMINI_API_KEY boş.');
-      return texts;
-    }
 
     // Zaten çalışıyorsa atla
     if (translatingRef.current) {
@@ -170,7 +143,7 @@ Input: ${JSON.stringify(texts)}`;
         const batch = chunks[i];
 
         try {
-          const translated = await callGeminiTranslate(batch, lang);
+          const translated = await callTranslate(batch, lang);
 
           if (translated) {
             batch.forEach((text, j) => {
@@ -201,7 +174,7 @@ Input: ${JSON.stringify(texts)}`;
     }
 
     return texts;
-  }, [lang, callGeminiTranslate]);
+  }, [lang, callTranslate]);
 
   // Senkron dinamik çeviri — SADECE cache'den oku
   const tDynamic = useCallback((text) => {

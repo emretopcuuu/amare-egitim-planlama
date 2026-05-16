@@ -12,7 +12,8 @@
 // Header: x-admin-secret (manuel tetik için)
 //
 // Env vars:
-//   GEMINI_API_KEY            — Gemini 2.5 Flash
+//   OPENROUTER_API_KEY        — OpenRouter (default model: google/gemini-2.5-flash)
+//   OPENROUTER_MODEL          — opsiyonel, başka modele geçmek için
 //   FIREBASE_*                — admin SDK
 //   INGEST_ADMIN_SECRET       — manuel tetik korumalı
 // ─────────────────────────────────────────────────────────────────────────
@@ -41,35 +42,34 @@ const KATEGORILER = [
   'Ürün Eğitimi', 'Diğer',
 ];
 
-async function callGemini(prompt) {
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error('GEMINI_API_KEY missing');
+async function callLLM(prompt) {
+  const key = process.env.OPENROUTER_API_KEY;
+  if (!key) throw new Error('OPENROUTER_API_KEY missing');
+  const model = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash';
 
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.2,
-          maxOutputTokens: 256,
-          thinkingConfig: { thinkingBudget: 256 },
-        },
-      }),
-    }
-  );
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${key}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': 'https://egitimtakvimi.oneteamglobal.ai',
+      'X-Title': 'One Team Education',
+    },
+    body: JSON.stringify({
+      model,
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.2,
+      max_tokens: 256,
+    }),
+  });
 
   if (!res.ok) {
     const txt = await res.text().catch(() => '');
-    throw new Error(`Gemini ${res.status}: ${txt.slice(0, 200)}`);
+    throw new Error(`OpenRouter ${res.status}: ${txt.slice(0, 200)}`);
   }
 
   const data = await res.json();
-  const parts = data?.candidates?.[0]?.content?.parts || [];
-  const textPart = parts.find(p => p.text && !p.thought) || parts.find(p => p.text) || {};
-  return (textPart.text || '').trim();
+  return (data?.choices?.[0]?.message?.content || '').trim();
 }
 
 function buildPrompt({ baslik, aciklama, transcript }) {
@@ -161,7 +161,7 @@ export default async (req) => {
       const promptShort = buildPrompt({
         baslik: d.baslik, aciklama: d.aciklama, transcript: null,
       });
-      const respShort = await callGemini(promptShort);
+      const respShort = await callLLM(promptShort);
       let kategoriler = parseKategoriler(respShort);
       let kaynak = 'ai_baslik';
 
@@ -170,7 +170,7 @@ export default async (req) => {
         const promptFull = buildPrompt({
           baslik: d.baslik, aciklama: d.aciklama, transcript: d.transcript,
         });
-        const respFull = await callGemini(promptFull);
+        const respFull = await callLLM(promptFull);
         const kategorilerFull = parseKategoriler(respFull);
         if (!(kategorilerFull.length === 1 && kategorilerFull[0] === 'Diğer')) {
           kategoriler = kategorilerFull;

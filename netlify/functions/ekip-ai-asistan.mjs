@@ -22,7 +22,9 @@ if (!admin.apps.length) {
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
-const GEMINI_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY;
+const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
+const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash';
+const SITE_URL = 'https://egitimtakvimi.oneteamglobal.ai';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -63,47 +65,39 @@ Yeni üye (kayıt < 14g) varsa onlar önce.
 Rank'a çok yakın varsa onları öne çıkar.
 Risk/Pasif olanlar her zaman dikkat ister.`;
 
-async function callGemini(prompt) {
-  if (!GEMINI_KEY) throw new Error('GEMINI_API_KEY env var Netlify\'da yok — ekle ve redeploy et');
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 4096,
-          responseMimeType: 'application/json',
-          thinkingConfig: { thinkingBudget: 0 }, // Hızlı cevap için thinking kapalı
-        },
-        systemInstruction: { parts: [{ text: SISTEM_PROMPT }] },
-      }),
-    }
-  );
+// OpenRouter ile LLM çağrısı (OpenAI uyumlu format)
+async function callLLM(prompt) {
+  if (!OPENROUTER_KEY) throw new Error('OPENROUTER_API_KEY env var Netlify\'da yok');
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPENROUTER_KEY}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': SITE_URL,
+      'X-Title': 'One Team Education',
+    },
+    body: JSON.stringify({
+      model: OPENROUTER_MODEL,
+      messages: [
+        { role: 'system', content: SISTEM_PROMPT },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.4,
+      max_tokens: 4096,
+      response_format: { type: 'json_object' },
+    }),
+  });
   if (!res.ok) {
     const errText = (await res.text()).slice(0, 300);
-    throw new Error(`Gemini API ${res.status}: ${errText}`);
+    throw new Error(`OpenRouter ${res.status}: ${errText}`);
   }
   const data = await res.json();
-
-  // Cevap kontrolü — finishReason, safety blocks vb
-  const candidate = data?.candidates?.[0];
-  if (!candidate) {
-    throw new Error('Gemini cevap döndürmedi (boş candidates)');
-  }
-  if (candidate.finishReason && candidate.finishReason !== 'STOP') {
-    throw new Error(`Gemini cevabı tamamlanmadı: ${candidate.finishReason}`);
-  }
-
-  const parts = candidate.content?.parts || [];
-  const text = parts.find(p => p.text && !p.thought)?.text || parts.find(p => p.text)?.text || '';
-  if (!text) throw new Error('Gemini boş metin döndü');
+  const text = data?.choices?.[0]?.message?.content || '';
+  if (!text) throw new Error('OpenRouter boş cevap döndürdü');
 
   // JSON çıkar
   const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error(`Gemini cevabı JSON değil: ${text.slice(0, 100)}`);
+  if (!match) throw new Error(`Cevap JSON değil: ${text.slice(0, 100)}`);
   try {
     return JSON.parse(match[0]);
   } catch (e) {
@@ -228,7 +222,7 @@ ${JSON.stringify({ sponsorAmareId, ekip: ekipOzet }, null, 2)}
 
 Bu veriyi analiz et ve sponsor'un BU HAFTA yapması gereken 3-5 öncelikli eylemi öner.`;
 
-    const sonuc = await callGemini(prompt);
+    const sonuc = await callLLM(prompt);
 
     // Cache'le
     try {
