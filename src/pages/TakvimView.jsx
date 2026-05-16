@@ -79,6 +79,58 @@ const YURTDISI_ULKELER = {
   'LONDON': { bayrak: '🇬🇧', kisa: 'UK', renk: 'from-blue-700 to-red-700' },
   'AVRUPA': { bayrak: '🇪🇺', kisa: 'EU', renk: 'from-blue-600 to-amber-500' },
   'EUROPE': { bayrak: '🇪🇺', kisa: 'EU', renk: 'from-blue-600 to-amber-500' },
+  // USA / Amerika
+  'ABD': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'AMERİKA': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'AMERIKA': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'USA': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'UNITED STATES': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'DALLAS': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'TEXAS': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'NEW YORK': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'MIAMI': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'LAS VEGAS': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'LOS ANGELES': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'CHICAGO': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'ORLANDO': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'HOUSTON': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  'PHOENIX': { bayrak: '🇺🇸', kisa: 'US', renk: 'from-blue-700 to-red-600' },
+  // South Africa
+  'GÜNEY AFRİKA': { bayrak: '🇿🇦', kisa: 'ZA', renk: 'from-emerald-600 to-amber-600' },
+  'GUNEY AFRIKA': { bayrak: '🇿🇦', kisa: 'ZA', renk: 'from-emerald-600 to-amber-600' },
+  'SOUTH AFRICA': { bayrak: '🇿🇦', kisa: 'ZA', renk: 'from-emerald-600 to-amber-600' },
+  'CAPE TOWN': { bayrak: '🇿🇦', kisa: 'ZA', renk: 'from-emerald-600 to-amber-600' },
+  'CAPETOWN': { bayrak: '🇿🇦', kisa: 'ZA', renk: 'from-emerald-600 to-amber-600' },
+  'JOHANNESBURG': { bayrak: '🇿🇦', kisa: 'ZA', renk: 'from-emerald-600 to-amber-600' },
+  // UAE / BAE
+  'BAE': { bayrak: '🇦🇪', kisa: 'AE', renk: 'from-emerald-700 to-red-700' },
+  'DUBAI': { bayrak: '🇦🇪', kisa: 'AE', renk: 'from-emerald-700 to-red-700' },
+  'ABU DHABI': { bayrak: '🇦🇪', kisa: 'AE', renk: 'from-emerald-700 to-red-700' },
+  // Asya / Pasifik
+  'BALİ': { bayrak: '🇮🇩', kisa: 'ID', renk: 'from-red-600 to-white' },
+  'BALI': { bayrak: '🇮🇩', kisa: 'ID', renk: 'from-red-600 to-white' },
+  'ENDONEZYA': { bayrak: '🇮🇩', kisa: 'ID', renk: 'from-red-600 to-white' },
+  'INDONESIA': { bayrak: '🇮🇩', kisa: 'ID', renk: 'from-red-600 to-white' },
+  'TAYLAND': { bayrak: '🇹🇭', kisa: 'TH', renk: 'from-blue-700 to-red-700' },
+  'THAILAND': { bayrak: '🇹🇭', kisa: 'TH', renk: 'from-blue-700 to-red-700' },
+  'BANGKOK': { bayrak: '🇹🇭', kisa: 'TH', renk: 'from-blue-700 to-red-700' },
+  'SINGAPUR': { bayrak: '🇸🇬', kisa: 'SG', renk: 'from-red-700 to-white' },
+  'SINGAPORE': { bayrak: '🇸🇬', kisa: 'SG', renk: 'from-red-700 to-white' },
+  'JAPONYA': { bayrak: '🇯🇵', kisa: 'JP', renk: 'from-white to-red-700' },
+  'JAPAN': { bayrak: '🇯🇵', kisa: 'JP', renk: 'from-white to-red-700' },
+  'TOKYO': { bayrak: '🇯🇵', kisa: 'JP', renk: 'from-white to-red-700' },
+  'AVUSTRALYA': { bayrak: '🇦🇺', kisa: 'AU', renk: 'from-blue-700 to-red-700' },
+  'AUSTRALIA': { bayrak: '🇦🇺', kisa: 'AU', renk: 'from-blue-700 to-red-700' },
+  'SYDNEY': { bayrak: '🇦🇺', kisa: 'AU', renk: 'from-blue-700 to-red-700' },
+  // Kanada
+  'KANADA': { bayrak: '🇨🇦', kisa: 'CA', renk: 'from-red-600 to-red-700' },
+  'CANADA': { bayrak: '🇨🇦', kisa: 'CA', renk: 'from-red-600 to-red-700' },
+  'TORONTO': { bayrak: '🇨🇦', kisa: 'CA', renk: 'from-red-600 to-red-700' },
+  'VANCOUVER': { bayrak: '🇨🇦', kisa: 'CA', renk: 'from-red-600 to-red-700' },
+  // Global event markers (başlıkta geçerse uluslararası say)
+  'GLOBAL CONVENTION': { bayrak: '🌍', kisa: 'GLOBAL', renk: 'from-amber-500 to-purple-700' },
+  'WORLD CONVENTION': { bayrak: '🌍', kisa: 'GLOBAL', renk: 'from-amber-500 to-purple-700' },
+  'INTERNATIONAL CONVENTION': { bayrak: '🌍', kisa: 'INTL', renk: 'from-amber-500 to-purple-700' },
 };
 
 // Yurtdışı tespit — yer veya başlıkta ülke/şehir adı
@@ -504,10 +556,10 @@ const TakvimView = () => {
 
   const aktifFiltreSayisi = (filtre !== 'tumu' ? 1 : 0) + (sehirFiltre ? 1 : 0) + (kategoriFiltre ? 1 : 0) + (konusmaciFiltre ? 1 : 0) + (zamanFiltre ? 1 : 0) + (arama.trim() ? 1 : 0);
 
-  // Yurtdışı yaklaşan eğitimler (gelecek 30 gün)
+  // Yurtdışı yaklaşan eğitimler (gelecek 12 ay — büyük convention'lar erken planlanır)
   const yurtdisiYaklasan = useMemo(() => {
     const bugun = new Date(); bugun.setHours(0,0,0,0);
-    const limit = new Date(bugun); limit.setDate(bugun.getDate() + 60);
+    const limit = new Date(bugun); limit.setDate(bugun.getDate() + 365);
     return takvim
       .map(e => ({ ...e, _yd: getYurtdisi(e), _d: parseTarih(e.tarih) }))
       .filter(e => e._yd && e._d && e._d >= bugun && e._d <= limit)
