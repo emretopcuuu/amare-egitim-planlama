@@ -66,13 +66,14 @@ const SABLONLAR = {
   },
 };
 
-// Magic link'i kısalt (uzun URL → /d/abc12345)
-async function kisaltUrl(tamUrl) {
+// Magic link'i kısalt — opsiyonel meta (sponsorUid, hedefAmareId) attach edilir
+// Tıklanınca kisalt function bunları davetler/{amareId}'ye yazar (acildi:true)
+async function kisaltUrl(tamUrl, meta = {}) {
   try {
     const res = await fetch('https://egitimtakvimi.oneteamglobal.ai/.netlify/functions/kisalt', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: tamUrl }),
+      body: JSON.stringify({ url: tamUrl, meta }),
     });
     if (!res.ok) throw new Error(`kisalt ${res.status}`);
     const data = await res.json();
@@ -237,7 +238,7 @@ export default async (req) => {
           };
           magicLink = await admin.auth().generateSignInWithEmailLink(hedef.email, actionCodeSettings);
           // Email içinde de kısaltılmış link kullan (daha temiz görünüm)
-          const linkEmail = await kisaltUrl(magicLink);
+          const linkEmail = await kisaltUrl(magicLink, { sponsorUid, hedefAmareId: aId });
           const html = emailHtml({ ad: hedef.full_name, link: linkEmail, sablon, sponsorAd });
           await resend.emails.send({
             from: 'One Team <noreply@oneteamglobal.ai>',
@@ -258,7 +259,7 @@ export default async (req) => {
         const wa = waPhone(hedef.phone);
         if (wa) {
           // Magic link varsa kısalt — uzun Firebase URL'i okunmaz, kısa /d/abc12345 daha temiz
-          const linkVer = magicLink ? await kisaltUrl(magicLink) : 'https://egitimtakvimi.oneteamglobal.ai';
+          const linkVer = magicLink ? await kisaltUrl(magicLink, { sponsorUid, hedefAmareId: aId }) : 'https://egitimtakvimi.oneteamglobal.ai';
           const text = customMesaj
             ? customMesaj.replace(/\{ad\}/gi, (hedef.full_name || '').split(' ')[0])
                          .replace(/\{link\}/gi, linkVer)

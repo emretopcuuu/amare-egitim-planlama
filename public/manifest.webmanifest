@@ -36,6 +36,24 @@
       "short_name": "Takvim",
       "url": "/takvim",
       "description": "Tüm eğitimleri görüntüle"
+    },
+    {
+      "name": "Kayıtlı Eğitimler",
+      "short_name": "Kayıtlı",
+      "url": "/kayitli-egitimler",
+      "description": "Video kütüphanesi"
+    },
+    {
+      "name": "Profilim",
+      "short_name": "Profil",
+      "url": "/profil",
+      "description": "Eğitim yolum ve ilerlemem"
+    },
+    {
+      "name": "Ekibim",
+      "short_name": "Ekibim",
+      "url": "/ekibim",
+      "description": "Sponsor dashboard"
     }
   ]
 }

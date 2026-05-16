@@ -116,6 +116,29 @@ service cloud.firestore {
     match /kayitli_egitimler/{docId} {
       allow read: if true;
       allow write: if isAdmin();
+      // Yıldız oylama ve puan güncellemesi — herhangi bir signed-in kullanıcı
+      // oy verince transaction ile aggregate puanOrt/puanSayisi günceller
+      allow update: if isSignedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['puanOrt', 'puanSayisi']);
+
+      // Oylar subcollection — kullanıcı sadece kendi oyunu yazar/okur
+      match /oylar/{uid} {
+        allow read: if true;
+        allow write: if isSignedIn() && request.auth.uid == uid;
+      }
+
+      // Yorumlar subcollection — herkes okur, signed-in kullanıcı yazar/siler kendi
+      match /yorumlar/{yorumId} {
+        allow read: if true;
+        allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+        allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+      }
+
+      // Quiz cache — sadece server (Function) yazabilir, herkes okur
+      match /quiz/{quizId} {
+        allow read: if true;
+        allow write: if false;
+      }
     }
 
     // Üye profilleri — kendi profil doc'una okuma/yazma izni
@@ -164,6 +187,16 @@ service cloud.firestore {
 
       // Notification subscriptions — sponsor'un push abone olduğu olaylar
       match /push_aboneleri/{docId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
+
+      // Video bookmark'lar — kullanıcının zaman damgalı işaretleri
+      match /bookmarks/{docId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
+
+      // Quiz sonuçları — kullanıcının quiz skorları
+      match /quiz_sonuclari/{vimeoId} {
         allow read, write: if isSignedIn() && request.auth.uid == uid;
       }
     }

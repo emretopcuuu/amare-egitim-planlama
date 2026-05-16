@@ -12,7 +12,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Users, MessageCircle, RefreshCw, Loader2, Send,
   CheckSquare, Square, AlertCircle, Sparkles, LogOut, Network,
-  Trophy, TrendingUp, TrendingDown, Award,
+  Trophy, TrendingUp, TrendingDown, Award, ChevronRight,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { auth } from '../utils/firebase';
@@ -182,10 +182,27 @@ const Ekibim = () => {
         )}
       </div>
 
+      {/* Bu hafta sponsor istatistiği */}
+      {veri?.sponsorIstatistik && (veri.sponsorIstatistik.buHaftaDavet > 0 || veri.sponsorIstatistik.buHaftaYeniUye > 0) && (
+        <div className="max-w-5xl mx-auto px-4 mb-3">
+          <SponsorIstatistikSerit istatistik={veri.sponsorIstatistik} />
+        </div>
+      )}
+
       {/* Lider karnesi */}
       {veri?.karne && (
         <div className="max-w-5xl mx-auto px-4 mb-5">
           <LiderKarne karne={veri.karne} ekipSayisi={veri.toplam} onLeaderboard={() => setLeaderboardAcik(true)} />
+        </div>
+      )}
+
+      {/* Top 3 dikkat isteyen üye */}
+      {veri?.ekip && veri.ekip.length > 3 && (
+        <div className="max-w-5xl mx-auto px-4 mb-5">
+          <DikkatGerekenler ekip={veri.ekip} onSec={(amareId) => {
+            setArama(amareId);
+            setFilter('hepsi');
+          }} />
         </div>
       )}
 
@@ -213,10 +230,19 @@ const Ekibim = () => {
             <OzetKart label="⚫ Pasif" sayi={veri.ozet.pasif} renk="slate" aktif={filter === 'pasif'} onClick={() => setFilter('pasif')} />
             <OzetKart label="📩 Davet" sayi={veri.toplam - (veri.ozet.siteyiKullanan || 0)} renk="sky" aktif={filter === 'davet'} onClick={() => setFilter('davet')} />
           </div>
-          <div className="mt-3 flex items-center justify-center gap-3 text-purple-200/70 text-[11px]">
+          <div className="mt-3 flex items-center justify-center gap-3 text-purple-200/70 text-[11px] flex-wrap">
             <span><strong className="text-emerald-300">{veri.ozet.siteyiKullanan}</strong> / {veri.toplam} site kullanıyor</span>
             <span className="text-white/30">·</span>
-            <span><strong className="text-sky-300">{veri.ozet.davetEdilen}</strong> davet gönderildi</span>
+            <span><strong className="text-sky-300">{veri.ozet.davetEdilen}</strong> davet</span>
+            {veri.ozet.davetAcilan > 0 && (
+              <>
+                <span className="text-white/30">·</span>
+                <span>
+                  <strong className="text-amber-300">{veri.ozet.davetAcilan}</strong> açıldı
+                  <span className="opacity-60 ml-1">({Math.round((veri.ozet.davetAcilan / Math.max(1, veri.ozet.davetEdilen)) * 100)}%)</span>
+                </span>
+              </>
+            )}
             {veri.ozet.eksikVeri > 0 && (
               <>
                 <span className="text-white/30">·</span>
@@ -401,8 +427,12 @@ const UyeKart = ({ uye, secili, onSec, onDavet }) => {
               {riskEtiket}
             </span>
             {uye.davet && (
-              <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-sky-500/30 text-sky-100 border border-sky-400/30">
-                📩 {uye.davet.gunFarki === 0 ? 'Bugün' : `${uye.davet.gunFarki}g`}
+              <span className={`text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded border ${
+                uye.davet.acildi
+                  ? 'bg-emerald-500/30 text-emerald-100 border-emerald-400/40'
+                  : 'bg-sky-500/30 text-sky-100 border-sky-400/30'
+              }`}>
+                {uye.davet.acildi ? '✓ Açtı' : '📩'} {uye.davet.gunFarki === 0 ? 'Bugün' : `${uye.davet.gunFarki}g`}
               </span>
             )}
           </div>
@@ -529,6 +559,91 @@ const AksiyonBtn = ({ uye, renk, onDavet, sponsorWa }) => {
     );
   }
   return null;
+};
+
+// ─── Top 3 Dikkat Gereken Üye ───────────────────────────────────────────
+const DikkatGerekenler = ({ ekip, onSec }) => {
+  // Skor hesabı: risk(40) + uzunsiparis(30) + curriculum0(20) + yenidavetbekleyen(10)
+  const skorlu = (ekip || []).map(u => {
+    let skor = 0;
+    if (u.risk?.etiket === 'risk') skor += 40;
+    else if (u.risk?.etiket === 'yavasladi') skor += 25;
+    else if (u.risk?.etiket === 'pasif') skor += 15;
+    if (u.amare?.sonSiparisGun !== null && u.amare?.sonSiparisGun > 60) skor += 30;
+    if (u.curriculumPct === 0 && u.siteSet) skor += 20;
+    if (!u.siteSet && (!u.davet || (u.davet.gunFarki !== null && u.davet.gunFarki > 14))) skor += 10;
+    if (u.amare?.sonrakiRank?.gvYuzde >= 80) skor += 25; // Rank'a yakın da öne çıkar
+    return { uye: u, skor };
+  }).filter(s => s.skor > 0).sort((a, b) => b.skor - a.skor).slice(0, 3);
+
+  if (skorlu.length === 0) return null;
+
+  return (
+    <div className="bg-rose-500/10 border border-rose-400/30 rounded-2xl p-4">
+      <div className="flex items-center gap-2 mb-3">
+        <AlertCircle className="w-5 h-5 text-rose-300" />
+        <div>
+          <h3 className="text-white font-extrabold text-sm">Bu Hafta Dikkat İstiyor</h3>
+          <p className="text-rose-200/70 text-[11px]">En öncelikli {skorlu.length} üye — önce buradan başla</p>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {skorlu.map(({ uye, skor }, i) => {
+          const initials = (uye.adSoyad || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase();
+          return (
+            <button key={uye.amareId} onClick={() => onSec?.(uye.amareId)}
+              className="w-full flex items-center gap-3 p-2.5 rounded-xl bg-black/20 hover:bg-black/30 transition spring-tap text-left">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-600 to-indigo-700 flex items-center justify-center text-white font-bold text-[11px] flex-shrink-0">
+                {initials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-white font-bold text-sm truncate">{uye.adSoyad}</span>
+                  <span className="text-amber-300 text-[10px] font-bold">P{i + 1}</span>
+                </div>
+                <div className="text-rose-200/70 text-[11px] truncate">{uye.aksiyon?.detay || uye.risk?.etiket}</div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-white/40 flex-shrink-0" />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ─── Bu hafta sponsor istatistiği şeridi ────────────────────────────────
+const SponsorIstatistikSerit = ({ istatistik }) => {
+  const items = [
+    { sayi: istatistik.buHaftaDavet,        label: 'davet attın',         icon: '📩', renk: 'sky' },
+    { sayi: istatistik.buHaftaAcilan,       label: 'davet açıldı',        icon: '✓', renk: 'amber' },
+    { sayi: istatistik.buHaftaYeniUye,      label: 'yeni Amare üyesi',    icon: '🌱', renk: 'emerald' },
+    { sayi: istatistik.buHaftaYeniSiteUye,  label: 'siteye geldi',        icon: '🚀', renk: 'purple' },
+  ].filter(i => i.sayi > 0);
+
+  if (items.length === 0) return null;
+
+  const renkMap = {
+    sky:     'text-sky-200',
+    amber:   'text-amber-200',
+    emerald: 'text-emerald-200',
+    purple:  'text-purple-200',
+  };
+
+  return (
+    <div className="bg-white/5 backdrop-blur border border-white/10 rounded-2xl px-4 py-2.5">
+      <div className="text-purple-200/60 text-[10px] uppercase tracking-wider font-bold mb-1.5 text-center">Bu hafta</div>
+      <div className="flex items-center justify-center gap-4 sm:gap-6 flex-wrap text-xs">
+        {items.map((i, idx) => (
+          <span key={idx} className="inline-flex items-center gap-1.5">
+            <span>{i.icon}</span>
+            <strong className={`${renkMap[i.renk]} text-base`}>{i.sayi}</strong>
+            <span className="text-white/70">{i.label}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 // ─── Lider karnesi (skor + sparkline) ───────────────────────────────────

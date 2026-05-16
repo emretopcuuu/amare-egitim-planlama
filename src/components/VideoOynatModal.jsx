@@ -5,6 +5,10 @@ import { X, Calendar, Eye, Clock, Tag, Video as VideoIcon, Play } from 'lucide-r
 import { useVimeoTimeTracker } from '../utils/useVimeoTimeTracker';
 import { updateProgress } from '../utils/watchProgress';
 import { useAuth } from '../context/AuthContext';
+import VideoYildiz from './VideoYildiz';
+import VideoBookmarklar from './VideoBookmarklar';
+import VideoYorumlar from './VideoYorumlar';
+import VideoQuiz from './VideoQuiz';
 
 function formatSure(saniye) {
   if (!saniye || saniye < 1) return null;
@@ -147,6 +151,21 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = n
             </div>
           )}
 
+          {/* Yıldız oylama */}
+          <div className="bg-white/5 rounded-lg p-3 border border-white/10 flex items-center justify-between gap-3 flex-wrap">
+            <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">Bu eğitimi puanla</span>
+            <VideoYildiz vimeoId={video.vimeoId || video.id} />
+          </div>
+
+          {/* Bookmark + zaman damgalı kayıt */}
+          <VideoBookmarklar vimeoId={video.vimeoId || video.id} iframeRef={iframeRef} onSeek={(s) => {
+            // Vimeo iframe'i seek için yeniden yükle
+            if (iframeRef.current) {
+              const baseSrc = iframeRef.current.src.replace(/#t=\d+s$/, '');
+              iframeRef.current.src = `${baseSrc}#t=${Math.floor(s)}s`;
+            }
+          }} />
+
           {/* Açıklama (collapsible) */}
           {aciklama && (
             <div className="text-white/80 text-xs sm:text-sm bg-white/5 rounded-lg p-3 border border-white/10">
@@ -161,6 +180,12 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = n
               )}
             </div>
           )}
+
+          {/* Quiz */}
+          <VideoQuiz video={video} />
+
+          {/* Yorumlar */}
+          <VideoYorumlar vimeoId={video.vimeoId || video.id} />
 
           {/* Aynı eğitmenden ilgili videolar */}
           {ilgiliVideolar.length > 0 && (

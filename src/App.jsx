@@ -8,6 +8,7 @@ import { trackPageView } from './utils/analytics';
 import LoadingProgress from './components/LoadingProgress';
 import BottomNav from './components/BottomNav';
 import { ToastProvider } from './components/Toast';
+import PwaInstallBanner from './components/PwaInstallBanner';
 
 // Code-split — public sayfalar dahil hepsi route-level lazy load
 // İlk yükleme: sadece HomePage indirilir, diğerleri kullanıcı navigasyonu ile
@@ -94,6 +95,7 @@ function AppRoutes() {
         </Routes>
       </Suspense>
       <BottomNav />
+      <PwaInstallBanner />
     </BrowserRouter>
   );
 }

@@ -111,13 +111,16 @@ const AiAsistanModal = ({ acik, ekip, onClose }) => {
             </div>
           )}
           {oneriler.length > 0 && (
-            <div className="space-y-3">
-              {oneriler
-                .sort((a, b) => (a.oncelik || 5) - (b.oncelik || 5))
-                .map((o, i) => (
-                  <OneriKart key={i} oneri={o} ekip={ekip} sira={i + 1} />
-                ))}
-            </div>
+            <>
+              <TopluWaButonu oneriler={oneriler} ekip={ekip} />
+              <div className="space-y-3">
+                {oneriler
+                  .sort((a, b) => (a.oncelik || 5) - (b.oncelik || 5))
+                  .map((o, i) => (
+                    <OneriKart key={i} oneri={o} ekip={ekip} sira={i + 1} />
+                  ))}
+              </div>
+            </>
           )}
         </div>
 
@@ -129,6 +132,48 @@ const AiAsistanModal = ({ acik, ekip, onClose }) => {
         </div>
       </div>
     </div>
+  );
+};
+
+// Tüm AI önerilerini WhatsApp linkleri olarak tek tek aç (popup blocker'dan kaçar)
+const TopluWaButonu = ({ oneriler, ekip }) => {
+  const [aciliyor, setAciliyor] = useState(false);
+  const [acilan, setAcilan] = useState(0);
+
+  // WhatsApp linki olabilenleri filtrele
+  const waliOneriler = (oneriler || [])
+    .filter(o => o.mesaj && (ekip || []).find(u => u.amareId === o.amareId)?.phone);
+
+  if (waliOneriler.length < 2) return null;
+
+  function hepsiniAc() {
+    setAciliyor(true);
+    setAcilan(0);
+    waliOneriler.forEach((o, i) => {
+      setTimeout(() => {
+        const uye = (ekip || []).find(u => u.amareId === o.amareId);
+        if (!uye) return;
+        let wa = String(uye.phone || '').replace(/\D/g, '');
+        if (wa.length === 11 && wa[0] === '0') wa = '90' + wa.slice(1);
+        else if (wa.length === 10) wa = '90' + wa;
+        const url = `https://wa.me/${wa}?text=${encodeURIComponent(o.mesaj)}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+        setAcilan(i + 1);
+        if (i === waliOneriler.length - 1) {
+          setTimeout(() => { setAciliyor(false); setAcilan(0); }, 1000);
+        }
+      }, i * 500); // 500ms gecikme — popup blocker'a karşı
+    });
+  }
+
+  return (
+    <button onClick={hepsiniAc} disabled={aciliyor}
+      className="w-full mb-3 bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 text-white font-bold py-3 rounded-xl spring-tap text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50">
+      <MessageCircle className="w-4 h-4" />
+      {aciliyor
+        ? `WhatsApp açılıyor... (${acilan}/${waliOneriler.length})`
+        : `${waliOneriler.length} mesajı sırayla WhatsApp'ta aç`}
+    </button>
   );
 };
 

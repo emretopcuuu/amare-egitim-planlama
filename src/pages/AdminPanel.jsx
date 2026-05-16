@@ -12,7 +12,7 @@ import {
   MessageCircle, QrCode, Check, Copy, Tag, Filter,
   CheckCircle2, Circle, BarChart2, FileText, Bell, Palette,
   Users2, TrendingUp, ExternalLink as CanvaIcon, Bell as BellIcon,
-  Video, Play, Award, ChevronUp, ChevronDown,
+  Video, Play, Award, ChevronUp, ChevronDown, BarChart3,
 } from 'lucide-react';
 import GorselOlusturModal from '../components/GorselOlusturModal';
 import DuyuruModal from '../components/DuyuruModal';
@@ -20,6 +20,7 @@ import HatirlatmaModal from '../components/HatirlatmaModal';
 import SablonTasarimModal from '../components/SablonTasarimModal';
 import RaporModal from '../components/RaporModal';
 import AdminKayitliEgitimlerTab from '../components/AdminKayitliEgitimlerTab';
+import AdminAnalyticsTab from '../components/AdminAnalyticsTab';
 import AdminEgitimYollariTab from '../components/AdminEgitimYollariTab';
 import YeniEgitmenModal from '../components/YeniEgitmenModal';
 import AdminKategoriSiralama from '../components/AdminKategoriSiralama';
@@ -919,6 +920,7 @@ const AdminPanel = () => {
               { key: 'konusmacilar', label: `Eğitmenler (${benzersizKonusmacilar.length})`, Icon: UserCircle },
               { key: 'kayitli', label: 'Kayıtlı Eğitimler', Icon: Video },
               { key: 'egitim_yollari', label: 'Eğitim Yolları', Icon: Award },
+              { key: 'analytics', label: 'Sistem Karnesi', Icon: BarChart3 },
               { key: 'ayarlar', label: 'Ayarlar', Icon: Settings },
             ].map(({ key, label, Icon }) => (
               <button key={key} onClick={() => setActiveTab(key)}
@@ -1443,6 +1445,7 @@ const AdminPanel = () => {
         {/* ===== KAYITLI EĞİTİMLER (Vimeo videoları) ===== */}
         {activeTab === 'kayitli' && <AdminKayitliEgitimlerTab />}
         {activeTab === 'egitim_yollari' && <AdminEgitimYollariTab />}
+        {activeTab === 'analytics' && <AdminAnalyticsTab />}
 
         {/* ===== AYARLAR ===== */}
         {activeTab === 'ayarlar' && (

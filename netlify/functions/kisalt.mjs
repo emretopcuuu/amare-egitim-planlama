@@ -74,7 +74,7 @@ export default async (req) => {
 
       // Tek kullanımlık değilse direkt redirect; kullanıldıysa yine yönlendir
       // (Firebase magic link zaten kendi sınırlamasını yapıyor)
-      // Sadece log et
+      const ilkAcilis = !d.kullanildi;
       try {
         await ref.update({
           kullanildi: true,
@@ -83,6 +83,20 @@ export default async (req) => {
           son_user_agent: (req.headers.get('user-agent') || '').slice(0, 200),
         });
       } catch {}
+
+      // Davet açılma takibi — meta varsa sponsor'un davet log'unu güncelle
+      if (ilkAcilis && d.meta?.sponsorUid && d.meta?.hedefAmareId) {
+        try {
+          await admin.firestore()
+            .doc(`users/${d.meta.sponsorUid}/davetler/${d.meta.hedefAmareId}`)
+            .set({
+              acildi: true,
+              ilkAcilis: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true });
+        } catch (e) {
+          console.warn('[kisalt] davet acildi update err:', e.message);
+        }
+      }
 
       return new Response(null, {
         status: 302,
@@ -125,10 +139,14 @@ export default async (req) => {
         kod = rastgeleKod();
       }
 
+      // Meta — davet takibi için (sponsorUid + hedefAmareId)
+      const meta = body.meta && typeof body.meta === 'object' ? body.meta : {};
+
       // Kaydet — 60dk TTL (Firebase magic link 1sa)
       const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
       await admin.firestore().doc(`kisaltmalar/${kod}`).set({
         url: tamUrl,
+        meta,
         olusturuldu: admin.firestore.FieldValue.serverTimestamp(),
         expires: admin.firestore.Timestamp.fromDate(expiresAt),
         kullanildi: false,

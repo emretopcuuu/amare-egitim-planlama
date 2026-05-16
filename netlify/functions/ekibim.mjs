@@ -241,7 +241,7 @@ export default async (req) => {
     }
 
     // 5b. Sponsor'un davet log'unu çek (users/{sponsorUid}/davetler)
-    const davetMap = {}; // amareId -> { sonGonderim, sablon, sayaclar }
+    const davetMap = {}; // amareId -> { sonGonderim, sablon, acildi, ... }
     try {
       const davetSnap = await admin.firestore().collection(`users/${uid}/davetler`).get();
       davetSnap.forEach(doc => {
@@ -251,6 +251,8 @@ export default async (req) => {
           sablon: d.sablon || null,
           kanal: d.kanal || null,
           sayaclar: d.sayaclar || 1,
+          acildi: !!d.acildi,
+          ilkAcilis: d.ilkAcilis?._seconds ? new Date(d.ilkAcilis._seconds * 1000).toISOString() : null,
         };
       });
     } catch (e) {
@@ -361,6 +363,8 @@ export default async (req) => {
           kanal: davet.kanal,
           sayaclar: davet.sayaclar,
           gunFarki: davetGunFarki,
+          acildi: davet.acildi,
+          ilkAcilis: davet.ilkAcilis,
         } : null,
         // Amare metrikleri
         amare: {
@@ -393,6 +397,18 @@ export default async (req) => {
       if (aP !== bP) return aP - bP;
       return (a.curriculumPct ?? 0) - (b.curriculumPct ?? 0);
     });
+
+    // 6b. Bu hafta sponsor istatistikleri
+    const haftaBasi = new Date();
+    haftaBasi.setHours(0, 0, 0, 0);
+    haftaBasi.setDate(haftaBasi.getDate() - haftaBasi.getDay() + (haftaBasi.getDay() === 0 ? -6 : 1)); // Pazartesi
+    const haftaBasiMs = haftaBasi.getTime();
+    const sponsorIstatistik = {
+      buHaftaDavet: ekip.filter(e => e.davet?.sonGonderim && new Date(e.davet.sonGonderim).getTime() >= haftaBasiMs).length,
+      buHaftaAcilan: ekip.filter(e => e.davet?.ilkAcilis && new Date(e.davet.ilkAcilis).getTime() >= haftaBasiMs).length,
+      buHaftaYeniUye: ekip.filter(e => e.kayitGunFarki !== null && e.kayitGunFarki <= 7).length,
+      buHaftaYeniSiteUye: ekip.filter(e => e.siteSet && e.kayitGunFarki !== null && e.kayitGunFarki <= 7).length,
+    };
 
     // 7. Lider karnesi — bu haftanın skoru + son 12 haftanın geçmişi
     const aktifSayisi = ekip.filter(e => e.risk.etiket === 'aktif').length;
@@ -463,6 +479,8 @@ export default async (req) => {
         pasif: ekip.filter(e => e.risk.etiket === 'pasif').length,
         siteyiKullanan: siteKullananSayisi,
         davetEdilen: ekip.filter(e => !!e.davet).length,
+        davetAcilan: ekip.filter(e => e.davet?.acildi).length,
+        davetKayit: ekip.filter(e => e.davet?.acildi && e.siteSet).length, // açıldı + sonra kayıt oldu
         davetEdilebilir: ekip.filter(e => !e.siteSet && e.emailVar).length,
         whatsappBekleyen: ekip.filter(e => !e.siteSet && e.phoneVar && !e.emailVar).length,
         eksikVeri: ekip.filter(e => !e.emailVar && !e.phoneVar).length,
@@ -478,6 +496,7 @@ export default async (req) => {
         son30gDavet,
         gecmis: karneGecmis,
       },
+      sponsorIstatistik,
       ekip,
     }), { headers: {
       'Content-Type': 'application/json',

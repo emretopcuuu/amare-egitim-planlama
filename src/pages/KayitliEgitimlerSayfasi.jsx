@@ -173,7 +173,7 @@ function saveList(key, list) {
 const KayitliEgitimlerSayfasi = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t } = useTranslation();
+  const { t, tDynamic, translateBatch, lang } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // ─── State ─────────────────────────────────────────────────────────────
@@ -327,6 +327,18 @@ const KayitliEgitimlerSayfasi = () => {
       }
     })();
   }, []);
+
+  // Dinamik metadata çevirisi — dil değiştiğinde başlıkları çevir
+  useEffect(() => {
+    if (lang === 'tr' || tumVideolar.length === 0) return;
+    const baslangic = tumVideolar
+      .filter(v => v.dil === 'tr' || !v.dil) // Türkçe başlıkları çevir
+      .slice(0, 100) // İlk 100 — rate limit dostu
+      .flatMap(v => [v.baslik].filter(Boolean));
+    if (baslangic.length > 0) {
+      translateBatch(baslangic).catch(() => {});
+    }
+  }, [lang, tumVideolar.length, translateBatch]);
 
   // ─── Türevler ─────────────────────────────────────────────────────────
   const yilOpsiyonlari = useMemo(() => {
@@ -1251,7 +1263,7 @@ const YaridaKalanRaf = ({ t, list, onOynat, onTemizle }) => {
                 </div>
                 {/* Info */}
                 <div className="p-2.5">
-                  <h4 className="font-bold text-white text-xs sm:text-sm line-clamp-2 leading-tight">{v.baslik}</h4>
+                  <h4 className="font-bold text-white text-xs sm:text-sm line-clamp-2 leading-tight">{tDynamic(v.baslik)}</h4>
                   {v.egitmenAdlari?.length > 0 && (
                     <div className="text-[11px] text-purple-200/80 mt-1 line-clamp-1">
                       {v.egitmenAdlari.join(', ')}
@@ -1339,7 +1351,7 @@ const VideoKart = ({ video: v, t, favori, izlendi, progress, transcriptMatch, ar
         )}
       </div>
       <div className="p-3">
-        <h4 className="font-bold text-white text-sm line-clamp-2 mb-1.5">{v.baslik}</h4>
+        <h4 className="font-bold text-white text-sm line-clamp-2 mb-1.5">{tDynamic(v.baslik)}</h4>
         {v.egitmenAdlari?.length > 0 && (
           <div className="text-xs text-purple-200 mb-1.5 line-clamp-1">
             {v.egitmenAdlari.join(', ')}

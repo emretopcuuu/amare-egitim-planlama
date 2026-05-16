@@ -19,6 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import UyeGirisModal from '../components/UyeGirisModal';
+import EgitmenAnalyticsKart from '../components/EgitmenAnalyticsKart';
 import ProfilAvatar from '../components/ProfilAvatar';
 import { egitmenFotosuBul } from '../utils/egitmenFotoMatch';
 import { maskPhone, normalizePhoneForWa } from '../utils/mask';
@@ -741,6 +742,13 @@ const Profil = () => {
               isAnonymous={isAnonymous}
               kullaniciRankString={a.rank}
             />
+          </div>
+        )}
+
+        {/* ═══ EĞİTMEN ANALYTİCS ═══ (sadece eğitmenler için) */}
+        {userDoc?.egitmenCoreId && (
+          <div className="stagger-fade" style={{ animationDelay: '180ms' }}>
+            <EgitmenAnalyticsKart coreId={userDoc.egitmenCoreId} />
           </div>
         )}
 
