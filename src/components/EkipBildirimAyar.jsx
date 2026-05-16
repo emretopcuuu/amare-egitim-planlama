@@ -64,8 +64,12 @@ const EkipBildirimAyar = () => {
   }, [currentUser]);
 
   async function aboneOl() {
-    if (!destekli || !VAPID_KEY) {
-      setHata('Bildirim bu tarayıcıda desteklenmiyor veya yapılandırma eksik');
+    if (!destekli) {
+      setHata('Bu tarayıcı push desteklemiyor — Chrome/Edge/Firefox ile dene');
+      return;
+    }
+    if (!VAPID_KEY) {
+      setHata('Push anahtarı eksik — Netlify env vars\'a VITE_VAPID_PUBLIC_KEY ekle ve "Clear cache and deploy" yap');
       return;
     }
     setYukleniyor(true);
