@@ -14,6 +14,7 @@ import { usePullToRefresh } from '../utils/usePullToRefresh';
 import { haptic } from '../utils/mobileHelpers';
 import { useInfiniteScroll } from '../utils/useInfiniteScroll';
 import LazyImage from '../components/LazyImage';
+import { useDocumentTitle } from '../utils/useDocumentTitle';
 
 // Sıralama opsiyonları — etiketler t() ile dinamik dönüşür
 const SIRALAMA_KODLARI = [
@@ -30,6 +31,7 @@ const splitEgitmen = (e) => {
 };
 
 const KonusmacilarSayfasi = () => {
+  useDocumentTitle('Eğitmenler', 'Tüm eğitmenler · uzmanlık alanları');
   const navigate = useNavigate();
   const { takvim, konusmacilar, loading } = useData();
   const { t } = useTranslation();

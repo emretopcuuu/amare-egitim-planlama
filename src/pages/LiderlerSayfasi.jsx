@@ -7,6 +7,7 @@ import {
   ArrowLeft, Trophy, Crown, Medal, Award, Users, Eye, Flame, Star,
   Video as VideoIcon, Loader2, AlertCircle,
 } from 'lucide-react';
+import { useDocumentTitle } from '../utils/useDocumentTitle';
 
 const SIRA_ICON = {
   1: { Icon: Crown,  renk: 'text-amber-300', bg: 'bg-amber-500/20' },
@@ -21,6 +22,7 @@ const KATEGORILER = [
 ];
 
 const LiderlerSayfasi = () => {
+  useDocumentTitle('Liderler', 'En aktif sponsorlar, izleyiciler ve videolar');
   const navigate = useNavigate();
   const [veri, setVeri] = useState(null);
   const [aktifKat, setAktifKat] = useState('sponsor');

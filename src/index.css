@@ -163,6 +163,34 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* ── Slide-down animasyon (offline banner için) ──────────── */
+  @keyframes slideDown {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+  }
+  .animate-slide-down { animation: slideDown 0.3s ease-out; }
+
+  /* ── Reduced motion — kullanıcı OS'ta animasyon kapatmışsa ─ */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+    .skeleton-shimmer,
+    .skeleton-shimmer-light {
+      animation: none !important;
+      background: rgba(255,255,255,0.08);
+    }
+    .img-blur-load {
+      filter: none !important;
+      opacity: 1 !important;
+    }
+  }
+
   /* ── Skeleton shimmer ───────────────────────────────────── */
   .skeleton-shimmer {
     background: linear-gradient(90deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 100%);

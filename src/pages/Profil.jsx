@@ -20,6 +20,7 @@ import { useData } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import UyeGirisModal from '../components/UyeGirisModal';
 import EgitmenAnalyticsKart from '../components/EgitmenAnalyticsKart';
+import { useDocumentTitle } from '../utils/useDocumentTitle';
 import ProfilAvatar from '../components/ProfilAvatar';
 import { egitmenFotosuBul } from '../utils/egitmenFotoMatch';
 import { maskPhone, normalizePhoneForWa } from '../utils/mask';
@@ -61,6 +62,7 @@ function formatTarih(iso) {
 }
 
 const Profil = () => {
+  useDocumentTitle('Profilim', 'Eğitim yolun, ilerlemen, üyelik bilgilerin');
   const navigate = useNavigate();
   const { currentUser, uid, isAnonymous, isAuthenticated, displayName, email, ready } = useAuth();
   const { konusmacilar } = useData();

@@ -27,8 +27,11 @@ import AiAsistanModal from '../components/AiAsistanModal';
 import LeaderboardModal from '../components/LeaderboardModal';
 import EkipBildirimAyar from '../components/EkipBildirimAyar';
 import AylikRaporPdf from '../components/AylikRaporPdf';
+import { useDocumentTitle } from '../utils/useDocumentTitle';
+import { useCountUp } from '../utils/useCountUp';
 
 const Ekibim = () => {
+  useDocumentTitle('Ekibim', 'Sponsor dashboard — ekip üyelerinin curriculum, aktivite ve risk durumu');
   const navigate = useNavigate();
   const { currentUser, isAnonymous, ready } = useAuth();
   const [veri, setVeri] = useState(null);
@@ -293,13 +296,34 @@ const Ekibim = () => {
 
       {/* Üye kartları */}
       {filtreli.length === 0 && veri && !yukleniyor && (
-        <div className="max-w-5xl mx-auto px-4 text-center py-16">
-          <Users className="w-12 h-12 text-purple-300/50 mx-auto mb-3" />
-          <p className="text-purple-300/70 text-sm">
-            {arama || filter !== 'hepsi'
-              ? 'Filtreye uyan üye yok'
-              : 'Henüz altında ekip üyen yok. Davet ettiğinde burada görünecek.'}
-          </p>
+        <div className="max-w-md mx-auto px-4 text-center py-16">
+          <div className="w-20 h-20 rounded-2xl bg-purple-500/10 border border-purple-400/30 flex items-center justify-center mx-auto mb-4">
+            <Users className="w-10 h-10 text-purple-300/70" />
+          </div>
+          {arama || filter !== 'hepsi' ? (
+            <>
+              <h3 className="text-white font-bold text-base mb-2">Filtreye uyan üye yok</h3>
+              <p className="text-purple-200/70 text-sm mb-4">
+                Aramayı temizleyip tekrar dene.
+              </p>
+              <button onClick={() => { setArama(''); setFilter('hepsi'); }}
+                className="bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold px-4 py-2.5 rounded-xl text-sm spring-tap">
+                Filtreyi temizle
+              </button>
+            </>
+          ) : (
+            <>
+              <h3 className="text-white font-bold text-base mb-2">Henüz altında ekip yok</h3>
+              <p className="text-purple-200/70 text-sm mb-4 leading-relaxed">
+                Birini sponsorluğun altına eklediğinde burada görünür.
+                Amare üyelerini davet etmeye başla.
+              </p>
+              <a href="https://oneteamglobal.ai" target="_blank" rel="noopener noreferrer"
+                className="bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold px-4 py-2.5 rounded-xl text-sm spring-tap inline-block">
+                Amare'de yeni üye kaydet →
+              </a>
+            </>
+          )}
         </div>
       )}
 
@@ -336,8 +360,9 @@ const Ekibim = () => {
   );
 };
 
-// ─── Özet kartı (filter chip) ───
+// ─── Özet kartı (filter chip) — sayı animasyonlu ───
 const OzetKart = ({ label, sayi, renk, aktif, onClick }) => {
+  const animated = useCountUp(sayi, { duration: 800 });
   const renkMap = {
     white:   { bg: 'bg-white/15', border: 'border-white/30', text: 'text-white' },
     emerald: { bg: 'bg-emerald-500/15', border: 'border-emerald-400/30', text: 'text-emerald-100' },
@@ -349,7 +374,7 @@ const OzetKart = ({ label, sayi, renk, aktif, onClick }) => {
   return (
     <button onClick={onClick}
       className={`${renkMap.bg} backdrop-blur-md border-2 ${aktif ? renkMap.border : 'border-transparent'} rounded-xl p-2.5 text-center transition spring-tap hover:scale-[1.03]`}>
-      <div className={`${renkMap.text} font-extrabold text-xl leading-none`}>{sayi}</div>
+      <div className={`${renkMap.text} font-extrabold text-xl leading-none tabular-nums`}>{animated}</div>
       <div className={`${renkMap.text} text-[9px] uppercase tracking-wider mt-1 font-semibold opacity-80`}>{label}</div>
     </button>
   );

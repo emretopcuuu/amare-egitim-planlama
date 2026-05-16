@@ -15,6 +15,7 @@ import UyeGirisModal from '../components/UyeGirisModal';
 import { DayMotif } from '../utils/dayIcon.jsx';
 import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
+import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { useAuth } from '../context/AuthContext';
 import { signOut } from 'firebase/auth';
 import { auth } from '../utils/firebase';
@@ -333,6 +334,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
 // ANA BİLEŞEN
 // ═══════════════════════════════════════════════════════════════════════════════
 const TakvimView = () => {
+  useDocumentTitle('Eğitim Takvimi', 'Bu hafta ve gelecekteki canlı eğitimler');
   const navigate = useNavigate();
   const { takvim, takvimYayinlandi, loading, konusmacilar, hatirlatmaSayilari } = useData();
   const { t, locale, tDynamic, translateBatch, lang } = useTranslation();

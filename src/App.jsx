@@ -10,6 +10,8 @@ import BottomNav from './components/BottomNav';
 import { ToastProvider } from './components/Toast';
 import PwaInstallBanner from './components/PwaInstallBanner';
 import OnboardingTour from './components/OnboardingTour';
+import OfflineBanner from './components/OfflineBanner';
+import { ConfirmDialogProvider } from './components/ConfirmDialog';
 
 // Code-split — public sayfalar dahil hepsi route-level lazy load
 // İlk yükleme: sadece HomePage indirilir, diğerleri kullanıcı navigasyonu ile
@@ -100,6 +102,8 @@ function AppRoutes() {
       <BottomNav />
       <PwaInstallBanner />
       <OnboardingTour />
+      <OfflineBanner />
+      <ConfirmDialogProvider />
     </BrowserRouter>
   );
 }

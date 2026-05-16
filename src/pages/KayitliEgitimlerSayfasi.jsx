@@ -14,6 +14,7 @@ import VideoOynatModal from '../components/VideoOynatModal';
 import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
 import UyeGirisModal from '../components/UyeGirisModal';
 import AiOneriKart from '../components/AiOneriKart';
+import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
 import { useToast } from '../components/Toast';
@@ -172,6 +173,7 @@ function saveList(key, list) {
 }
 
 const KayitliEgitimlerSayfasi = () => {
+  useDocumentTitle('Kayıtlı Eğitimler', '900+ video kütüphanesi · 14 kategori');
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t, tDynamic, translateBatch, lang } = useTranslation();
