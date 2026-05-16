@@ -895,6 +895,23 @@ const Profil = () => {
           </div>
         </div>
 
+        {/* ═══ EKİBİM CTA ═══ */}
+        {profilVerisi?.amareId && (
+          <div className="stagger-fade" style={{ animationDelay: '350ms' }}>
+            <button onClick={() => navigate('/ekibim')}
+              className="w-full bg-gradient-to-br from-emerald-500/20 via-teal-500/15 to-emerald-500/20 backdrop-blur-md border border-emerald-300/40 hover:border-emerald-300/70 rounded-2xl p-5 shadow-xl transition group spring-tap text-left flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-400/20 border border-emerald-300/40 flex items-center justify-center flex-shrink-0">
+                <Users className="w-6 h-6 text-emerald-300" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-white font-bold text-base">Ekibimi Gör</div>
+                <div className="text-emerald-200/80 text-xs mt-0.5">Altındaki üyelerin progress, risk ve aktivite özeti</div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-emerald-300 group-hover:translate-x-1 transition" />
+            </button>
+          </div>
+        )}
+
         {/* ═══ BAĞLANTILAR (sponsor) ═══ */}
         {sponsorAd && (
           <div id="section-baglantilar" className="stagger-fade" style={{ animationDelay: '400ms' }}>
