@@ -9,6 +9,8 @@ import VideoYildiz from './VideoYildiz';
 import VideoBookmarklar from './VideoBookmarklar';
 import VideoYorumlar from './VideoYorumlar';
 import VideoQuiz from './VideoQuiz';
+import VideoReactions from './VideoReactions';
+import VideoEkler from './VideoEkler';
 
 function formatSure(saniye) {
   if (!saniye || saniye < 1) return null;
@@ -156,6 +158,12 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = n
             <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">Bu eğitimi puanla</span>
             <VideoYildiz vimeoId={video.vimeoId || video.id} />
           </div>
+
+          {/* Reactions */}
+          <VideoReactions vimeoId={video.vimeoId || video.id} />
+
+          {/* PDF/Slide ekleri */}
+          <VideoEkler vimeoId={video.vimeoId || video.id} />
 
           {/* Bookmark + zaman damgalı kayıt */}
           <VideoBookmarklar vimeoId={video.vimeoId || video.id} iframeRef={iframeRef} onSeek={(s) => {

@@ -119,12 +119,24 @@ service cloud.firestore {
       // Yıldız oylama ve puan güncellemesi — herhangi bir signed-in kullanıcı
       // oy verince transaction ile aggregate puanOrt/puanSayisi günceller
       allow update: if isSignedIn()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['puanOrt', 'puanSayisi']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['puanOrt', 'puanSayisi', 'reactions']);
 
       // Oylar subcollection — kullanıcı sadece kendi oyunu yazar/okur
       match /oylar/{uid} {
         allow read: if true;
         allow write: if isSignedIn() && request.auth.uid == uid;
+      }
+
+      // Reactions — emoji tepkileri (sadece kendi)
+      match /reactions/{uid} {
+        allow read: if true;
+        allow write: if isSignedIn() && request.auth.uid == uid;
+      }
+
+      // Ekler — PDF/slide eki (admin yazar, herkes okur)
+      match /ekler/{ekId} {
+        allow read: if true;
+        allow write: if isAdmin();
       }
 
       // Yorumlar subcollection — herkes okur, signed-in kullanıcı yazar/siler kendi
@@ -214,6 +226,20 @@ service cloud.firestore {
     match /leaderboard_cache/{week} {
       allow read: if isSignedIn();
       allow write: if false;
+    }
+
+    // Public liderler cache — herkes okur (anonim ziyaretçi dahil)
+    // İçerik maskeli isimlerle kaydedilir
+    match /liderler_cache/{week} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Audit log — sadece admin okur, signed-in yazar (kendi action'ını)
+    match /audit_log/{logId} {
+      allow read: if isAdmin();
+      allow create: if isSignedIn() && request.resource.data.kim == request.auth.uid;
+      allow update, delete: if false;
     }
 
     // Kısa davet linkleri — sadece server (kisalt function) okur/yazar

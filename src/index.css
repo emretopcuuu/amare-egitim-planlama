@@ -169,9 +169,28 @@
     background-size: 200% 100%;
     animation: skeletonShimmer 1.5s ease-in-out infinite;
   }
+  /* Light mode skeleton (admin paneli için) */
+  .skeleton-shimmer-light {
+    background: linear-gradient(90deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.04) 100%);
+    background-size: 200% 100%;
+    animation: skeletonShimmer 1.5s ease-in-out infinite;
+    border-radius: 8px;
+  }
   @keyframes skeletonShimmer {
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
+  }
+
+  /* ── Image blur-up placeholder ──────────────────────────── */
+  .img-blur-load {
+    background: linear-gradient(135deg, rgba(124,58,237,0.15), rgba(58,23,114,0.25));
+    transition: filter 0.4s ease-out, opacity 0.4s ease-out;
+    filter: blur(8px);
+    opacity: 0.6;
+  }
+  .img-blur-load.img-loaded {
+    filter: blur(0);
+    opacity: 1;
   }
 
   /* ── Chip premium hover ─────────────────────────────────── */

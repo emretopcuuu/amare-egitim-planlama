@@ -12,6 +12,8 @@ import { useTakipEgitmenler } from '../utils/takip';
 import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
 import { haptic } from '../utils/mobileHelpers';
+import { useInfiniteScroll } from '../utils/useInfiniteScroll';
+import LazyImage from '../components/LazyImage';
 
 // Sıralama opsiyonları — etiketler t() ile dinamik dönüşür
 const SIRALAMA_KODLARI = [
@@ -135,6 +137,9 @@ const KonusmacilarSayfasi = () => {
 
   const aktifFiltreSayisi = (sadeceFav ? 1 : 0) + (siralama !== 'aktif' ? 1 : 0) + (arama.trim() ? 1 : 0);
 
+  // Infinite scroll — 30'ar batch
+  const { visibleItems: gorunenler, sentinelRef, hasMore } = useInfiniteScroll(filtrelenmis, 30);
+
   if (loading) return <LoadingProgress />;
 
   return (
@@ -219,31 +224,38 @@ const KonusmacilarSayfasi = () => {
               <p className="text-lg">{t('trainers_not_found')}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
-              {filtrelenmis.map(({ ad, kayit, egitimSayisi }) => {
-                const cid = makeCoreId(ad);
-                const isFav = cid && takipSet.has(cid);
-                return (
-                  <button key={ad} onClick={() => setSecili({ ad, kayit })}
-                    className="relative bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-400 rounded-xl p-3 transition-all hover-lift spring-tap text-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
-                    {isFav && (
-                      <Star className="absolute top-2 right-2 w-4 h-4 text-yellow-400 drop-shadow" fill="currentColor" />
-                    )}
-                    {kayit?.fotoURL ? (
-                      <img src={kayit.fotoURL} alt={kayit.ad || ad} loading="lazy" decoding="async"
-                        className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full object-cover object-top border-2 border-purple-300/40 shadow-sm group-hover:border-amber-400 group-hover:scale-105 transition-all" />
-                    ) : (
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-white/10 flex items-center justify-center border-2 border-purple-300/40 group-hover:border-amber-400 group-hover:scale-105 transition-all" aria-hidden="true">
-                        <User className="w-10 h-10 text-white/40" />
-                      </div>
-                    )}
-                    <div className="mt-2 text-white font-semibold text-xs sm:text-sm leading-tight">{kayit?.ad || ad}</div>
-                    {kayit?.unvan && <div className="text-[10px] text-amber-300 mt-0.5 line-clamp-1">{kayit.unvan}</div>}
-                    <div className="mt-1 text-[10px] text-purple-200">{egitimSayisi} {t('trainers_count_label')}</div>
-                  </button>
-                );
-              })}
-            </div>
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+                {gorunenler.map(({ ad, kayit, egitimSayisi }) => {
+                  const cid = makeCoreId(ad);
+                  const isFav = cid && takipSet.has(cid);
+                  return (
+                    <button key={ad} onClick={() => setSecili({ ad, kayit })}
+                      className="relative bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-400 rounded-xl p-3 transition-all hover-lift spring-tap text-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+                      {isFav && (
+                        <Star className="absolute top-2 right-2 w-4 h-4 text-yellow-400 drop-shadow" fill="currentColor" />
+                      )}
+                      {kayit?.fotoURL ? (
+                        <LazyImage src={kayit.fotoURL} alt={kayit.ad || ad}
+                          className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full object-top border-2 border-purple-300/40 shadow-sm group-hover:border-amber-400 group-hover:scale-105 transition-all" />
+                      ) : (
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full bg-white/10 flex items-center justify-center border-2 border-purple-300/40 group-hover:border-amber-400 group-hover:scale-105 transition-all" aria-hidden="true">
+                          <User className="w-10 h-10 text-white/40" />
+                        </div>
+                      )}
+                      <div className="mt-2 text-white font-semibold text-xs sm:text-sm leading-tight">{kayit?.ad || ad}</div>
+                      {kayit?.unvan && <div className="text-[10px] text-amber-300 mt-0.5 line-clamp-1">{kayit.unvan}</div>}
+                      <div className="mt-1 text-[10px] text-purple-200">{egitimSayisi} {t('trainers_count_label')}</div>
+                    </button>
+                  );
+                })}
+              </div>
+              {hasMore && (
+                <div ref={sentinelRef} className="py-8 text-center text-white/40 text-xs">
+                  ({gorunenler.length} / {filtrelenmis.length})
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

@@ -21,6 +21,8 @@ import SablonTasarimModal from '../components/SablonTasarimModal';
 import RaporModal from '../components/RaporModal';
 import AdminKayitliEgitimlerTab from '../components/AdminKayitliEgitimlerTab';
 import AdminAnalyticsTab from '../components/AdminAnalyticsTab';
+import AdminAuditLogTab from '../components/AdminAuditLogTab';
+import AdminGlobalSearch from '../components/AdminGlobalSearch';
 import AdminEgitimYollariTab from '../components/AdminEgitimYollariTab';
 import YeniEgitmenModal from '../components/YeniEgitmenModal';
 import AdminKategoriSiralama from '../components/AdminKategoriSiralama';
@@ -921,6 +923,7 @@ const AdminPanel = () => {
               { key: 'kayitli', label: 'Kayıtlı Eğitimler', Icon: Video },
               { key: 'egitim_yollari', label: 'Eğitim Yolları', Icon: Award },
               { key: 'analytics', label: 'Sistem Karnesi', Icon: BarChart3 },
+              { key: 'audit', label: 'Audit Log', Icon: FileText },
               { key: 'ayarlar', label: 'Ayarlar', Icon: Settings },
             ].map(({ key, label, Icon }) => (
               <button key={key} onClick={() => setActiveTab(key)}
@@ -1446,6 +1449,7 @@ const AdminPanel = () => {
         {activeTab === 'kayitli' && <AdminKayitliEgitimlerTab />}
         {activeTab === 'egitim_yollari' && <AdminEgitimYollariTab />}
         {activeTab === 'analytics' && <AdminAnalyticsTab />}
+        {activeTab === 'audit' && <AdminAuditLogTab />}
 
         {/* ===== AYARLAR ===== */}
         {activeTab === 'ayarlar' && (
@@ -1898,6 +1902,9 @@ const AdminPanel = () => {
           }}
         />
       )}
+
+      {/* Global search — Cmd+K ile aç, floating button */}
+      <AdminGlobalSearch />
     </div>
   );
 };

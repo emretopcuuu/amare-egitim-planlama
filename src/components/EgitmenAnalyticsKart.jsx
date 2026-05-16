@@ -2,14 +2,16 @@
 // Sadece eğitmen kendisi veya admin görebilir
 
 import React, { useEffect, useState } from 'react';
-import { BarChart3, Eye, Star, MessageSquare, Clock, Tag, Loader2, Award } from 'lucide-react';
+import { BarChart3, Eye, Star, MessageSquare, Clock, Tag, Loader2, Award, Edit3 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import EgitmenProfilDuzenleyici from './EgitmenProfilDuzenleyici';
 
 const EgitmenAnalyticsKart = ({ coreId }) => {
   const { currentUser, isAnonymous } = useAuth();
   const [veri, setVeri] = useState(null);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [hata, setHata] = useState('');
+  const [duzenleyiciAcik, setDuzenleyiciAcik] = useState(false);
 
   useEffect(() => {
     if (!currentUser || isAnonymous || !coreId) {
@@ -45,10 +47,14 @@ const EgitmenAnalyticsKart = ({ coreId }) => {
     <div className="bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-400/30 rounded-2xl p-4 sm:p-5">
       <div className="flex items-center gap-2 mb-3">
         <BarChart3 className="w-5 h-5 text-indigo-300" />
-        <div>
+        <div className="flex-1">
           <h3 className="text-white font-extrabold text-base">Eğitim İstatistiklerin</h3>
           <p className="text-indigo-200/70 text-[11px]">Sadece sen ve admin görebilir</p>
         </div>
+        <button onClick={() => setDuzenleyiciAcik(true)}
+          className="bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-lg spring-tap inline-flex items-center gap-1.5">
+          <Edit3 className="w-3.5 h-3.5" />Profili düzenle
+        </button>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
@@ -105,6 +111,11 @@ const EgitmenAnalyticsKart = ({ coreId }) => {
             ))}
           </div>
         </div>
+      )}
+
+      {/* Düzenleyici modal */}
+      {duzenleyiciAcik && (
+        <EgitmenProfilDuzenleyici coreId={coreId} onClose={() => setDuzenleyiciAcik(false)} />
       )}
     </div>
   );

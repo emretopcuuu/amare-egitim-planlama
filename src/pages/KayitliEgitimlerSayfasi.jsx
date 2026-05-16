@@ -13,6 +13,7 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 import VideoOynatModal from '../components/VideoOynatModal';
 import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
 import UyeGirisModal from '../components/UyeGirisModal';
+import AiOneriKart from '../components/AiOneriKart';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
 import { useToast } from '../components/Toast';
@@ -894,6 +895,15 @@ const KayitliEgitimlerSayfasi = () => {
       {/* Yarıda kaldıkların — sadece filtre/arama yokken göster */}
       {!loading && yaridaKalanlar.length > 0 && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && !sadeceIzlenen && dilKod === 'all' && (
         <YaridaKalanRaf t={t} list={yaridaKalanlar} onOynat={(v, startSn) => handleOynat(v, startSn)} onTemizle={(id) => watchProgress.remove(id)} />
+      )}
+
+      {/* AI Öneri — sadece login user için ve filtresiz görünür */}
+      {!loading && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && !sadeceIzlenen && dilKod === 'all' && (
+        <div className="px-4 mb-4">
+          <div className="container mx-auto max-w-7xl">
+            <AiOneriKart />
+          </div>
+        </div>
       )}
 
       {/* Grid */}
