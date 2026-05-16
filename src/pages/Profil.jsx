@@ -10,7 +10,7 @@ import {
   RefreshCw, Trophy, TrendingUp, Sparkles, Edit3, User, X,
   Briefcase, Cake, Flame, AlertTriangle, Users, Timer, Target, Hourglass,
   CheckCircle2, TrendingUp as TrendIcon, Zap, Medal, Crown, Star,
-  Share2, Download,
+  Share2, Download, Layers,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../utils/firebase';
@@ -952,6 +952,45 @@ const Profil = () => {
               </div>
               <ChevronRight className="w-5 h-5 text-emerald-300 group-hover:translate-x-1 transition" />
             </button>
+          </div>
+        )}
+
+        {/* ═══ AI ASİSTAN KARTLARI (onboarding sayfasından taşındı) ═══ */}
+        {profilVerisi?.amareId && (
+          <div className="stagger-fade space-y-2" style={{ animationDelay: '360ms' }}>
+            <SectionTitle icon={Sparkles}>AI Asistanların</SectionTitle>
+
+            {/* Davet Asistanı — yeşil */}
+            <a href={`https://oneteamglobal.ai/davet-asistani?amid=${encodeURIComponent(profilVerisi.amareId)}`}
+              target="_blank" rel="noopener noreferrer"
+              className="block w-full bg-gradient-to-br from-emerald-500/20 via-emerald-400/15 to-teal-500/20 backdrop-blur-md border border-emerald-300/40 hover:border-emerald-300/70 rounded-2xl p-5 shadow-xl transition group spring-tap mt-4">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-400/25 border border-emerald-300/50 flex items-center justify-center flex-shrink-0">
+                  <Layers className="w-6 h-6 text-emerald-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-white font-bold text-base">One Team Yapay Zeka Davet Asistanı</div>
+                  <div className="text-emerald-200/80 text-xs mt-0.5">Kilidi açıldı — hemen başla</div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-emerald-300 group-hover:translate-x-1 transition" />
+              </div>
+            </a>
+
+            {/* AI Asistan — mor */}
+            <a href={`https://oneteamglobal.ai/ai-asistan?amid=${encodeURIComponent(profilVerisi.amareId)}`}
+              target="_blank" rel="noopener noreferrer"
+              className="block w-full bg-gradient-to-br from-purple-500/20 via-violet-400/15 to-indigo-500/20 backdrop-blur-md border border-purple-300/40 hover:border-purple-300/70 rounded-2xl p-5 shadow-xl transition group spring-tap">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-purple-400/25 border border-purple-300/50 flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="w-6 h-6 text-purple-300" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-white font-bold text-base">One Team Yapay Zeka Asistanı</div>
+                  <div className="text-purple-200/80 text-xs mt-0.5">7/24 AI koçun — hemen sor</div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-purple-300 group-hover:translate-x-1 transition" />
+              </div>
+            </a>
           </div>
         )}
 
