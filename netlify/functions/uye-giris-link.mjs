@@ -63,57 +63,135 @@ async function supabaseRpc(fnName, params) {
   return res.json();
 }
 
-// One Team brand uyumlu email HTML (mor tema)
+// One Team brand uyumlu email HTML — premium mor tasarım + logo
 function emailHtml({ ad, link, lookup }) {
+  const onAd = ad ? escapeHtml(ad.split(' ')[0]) : 'Sevgili Üye';
   return `<!doctype html>
-<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
-<title>One Team Giriş Linki</title></head>
-<body style="margin:0;padding:0;background:#1a103d;font-family:system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;color:#fff;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:linear-gradient(135deg,#3b1772 0%,#1a103d 100%);min-height:100vh;">
-    <tr><td align="center" style="padding:40px 20px;">
-      <table role="presentation" width="100%" style="max-width:560px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:40px 32px;">
-        <tr><td align="center">
-          <div style="display:inline-block;width:60px;height:60px;background:linear-gradient(135deg,#fbbf24,#f59e0b);border-radius:14px;line-height:60px;font-size:28px;font-weight:bold;color:#1a103d;margin-bottom:16px;">✨</div>
-          <h1 style="margin:0 0 8px;font-size:24px;font-weight:800;color:#fff;letter-spacing:-0.3px;">One Team</h1>
-          <p style="margin:0;color:#c4b5fd;font-size:13px;">Eğitim Planlama Sistemi</p>
-        </td></tr>
+<html lang="tr"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="supported-color-schemes" content="dark">
+<title>One Team — Giriş Linkin</title>
+<style>
+  @media (prefers-color-scheme: light) {
+    .force-dark-bg { background:#1a103d !important; }
+  }
+  .btn:hover { filter:brightness(1.08); }
+</style>
+</head>
+<body style="margin:0;padding:0;background:#0F0823;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;color:#fff;-webkit-text-size-adjust:100%;">
+  <!-- Preheader (inbox preview) -->
+  <div style="display:none;font-size:1px;color:#0F0823;line-height:1px;max-height:0;max-width:0;opacity:0;overflow:hidden;">
+    ${onAd}, One Team Eğitim Takvimi'ne tek tık giriş linkin hazır. 1 saat geçerli.
+  </div>
 
-        <tr><td style="padding:32px 0 16px;">
-          <h2 style="margin:0 0 12px;font-size:20px;font-weight:700;color:#fff;">Merhaba ${ad ? escapeHtml(ad.split(' ')[0]) : 'Sevgili Üye'} 👋</h2>
-          <p style="margin:0;color:#d1d5db;font-size:15px;line-height:1.6;">
-            Eğitim Takvimi'ne giriş için tıkla — şifre yok, sadece tek seferlik link.
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="force-dark-bg" style="background:#0F0823;background-image:linear-gradient(180deg,#1a103d 0%,#0F0823 100%);min-height:100vh;">
+    <tr><td align="center" style="padding:32px 16px;">
+
+      <!-- Logo header (üst, branded) -->
+      <table role="presentation" width="100%" style="max-width:560px;margin-bottom:24px;">
+        <tr><td align="center">
+          <img src="https://egitimtakvimi.oneteamglobal.ai/logos/oneteam-logo.png"
+            alt="One Team"
+            width="72" height="72"
+            style="display:block;margin:0 auto 12px;border-radius:16px;background:rgba(255,255,255,0.05);padding:6px;" />
+          <div style="font-size:11px;color:#A78BFA;letter-spacing:0.18em;text-transform:uppercase;font-weight:700;">
+            Eğitim Takvimi
+          </div>
+        </td></tr>
+      </table>
+
+      <!-- Ana kart -->
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:linear-gradient(180deg,rgba(255,255,255,0.07) 0%,rgba(255,255,255,0.03) 100%);border:1px solid rgba(255,255,255,0.12);border-radius:24px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.45);">
+
+        <!-- Üst altın bant -->
+        <tr><td style="height:4px;background:linear-gradient(90deg,#FBBF24 0%,#F59E0B 50%,#FBBF24 100%);"></td></tr>
+
+        <!-- Hero başlık -->
+        <tr><td style="padding:40px 36px 24px;">
+          <div style="font-size:28px;line-height:1.2;font-weight:800;color:#fff;letter-spacing:-0.5px;margin:0 0 12px;">
+            Merhaba ${onAd} <span style="display:inline-block;">👋</span>
+          </div>
+          <p style="margin:0;color:#D1D5DB;font-size:16px;line-height:1.6;">
+            Eğitim Takvimi'ne tek tık giriş yapabilirsin.<br>
+            <span style="color:#A78BFA;font-weight:600;">Şifre yok. Sadece tıkla.</span>
           </p>
         </td></tr>
 
-        <tr><td align="center" style="padding:16px 0 24px;">
-          <a href="${link}" style="display:inline-block;background:#fbbf24;color:#1a103d;text-decoration:none;padding:14px 36px;border-radius:12px;font-weight:700;font-size:16px;box-shadow:0 4px 12px rgba(251,191,36,0.3);">
+        <!-- CTA buton -->
+        <tr><td align="center" style="padding:8px 36px 32px;">
+          <a href="${link}" class="btn"
+            style="display:inline-block;background:linear-gradient(135deg,#FBBF24 0%,#F59E0B 100%);color:#0F0823;text-decoration:none;padding:16px 48px;border-radius:14px;font-weight:800;font-size:17px;letter-spacing:0.3px;box-shadow:0 8px 24px rgba(251,191,36,0.35),inset 0 1px 0 rgba(255,255,255,0.3);">
             Giriş Yap →
           </a>
-        </td></tr>
-
-        <tr><td style="padding:16px 0;border-top:1px solid rgba(255,255,255,0.08);">
-          <p style="margin:0 0 6px;color:#9ca3af;font-size:12px;">
-            🔒 Bu link <strong style="color:#fbbf24;">1 saat geçerli</strong> ve tek kullanımlık.
-          </p>
-          <p style="margin:0 0 6px;color:#9ca3af;font-size:12px;">
-            👤 Aradığın bilgi: <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px;font-size:11px;">${escapeHtml(lookup)}</code>
-          </p>
-          <p style="margin:0;color:#9ca3af;font-size:12px;">
-            ⚠️ Bu isteği sen yapmadıysan görmezden gel — kimse hesabına giremez.
+          <p style="margin:14px 0 0;color:#6B7280;font-size:12px;">
+            Butona tıkla, anında giriş yapacaksın
           </p>
         </td></tr>
 
-        <tr><td align="center" style="padding-top:24px;">
-          <p style="margin:0;color:#6b7280;font-size:11px;">
-            Bağlantı çalışmıyorsa şunu tarayıcına kopyala:<br>
-            <span style="color:#a78bfa;word-break:break-all;font-size:10px;">${link}</span>
+        <!-- Bilgi şeridi -->
+        <tr><td style="padding:24px 36px;border-top:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.15);">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding:8px 0;color:#D1D5DB;font-size:13px;">
+                <span style="color:#FBBF24;font-weight:700;">🔒 Güvenli</span> &nbsp;·&nbsp;
+                <span style="color:#A78BFA;">1 saat geçerli</span> &nbsp;·&nbsp;
+                <span style="color:#9CA3AF;">Tek kullanımlık</span>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 0;color:#9CA3AF;font-size:12px;">
+                <span style="opacity:0.7;">Aradığın bilgi:</span>
+                <code style="background:rgba(255,255,255,0.08);padding:3px 8px;border-radius:6px;font-size:11px;color:#FBBF24;font-family:'SF Mono',Monaco,monospace;">${escapeHtml(lookup)}</code>
+              </td>
+            </tr>
+          </table>
+        </td></tr>
+
+        <!-- Uyarı -->
+        <tr><td style="padding:20px 36px 32px;">
+          <div style="background:rgba(251,191,36,0.08);border-left:3px solid #F59E0B;border-radius:6px;padding:12px 14px;">
+            <p style="margin:0;color:#FBBF24;font-size:12px;font-weight:600;">⚠️ Sen istemedin mi?</p>
+            <p style="margin:4px 0 0;color:#D1D5DB;font-size:12px;line-height:1.5;">
+              Bu mail'i sen tetiklemediysen görmezden gel — kimse senin hesabına giremez. Email + link birlikte gerekir.
+            </p>
+          </div>
+        </td></tr>
+
+        <!-- Backup link -->
+        <tr><td style="padding:0 36px 28px;">
+          <p style="margin:0 0 6px;color:#6B7280;font-size:11px;text-align:center;">
+            Bağlantı çalışmıyorsa şunu tarayıcına kopyala:
+          </p>
+          <p style="margin:0;padding:8px;background:rgba(0,0,0,0.3);border-radius:6px;text-align:center;">
+            <a href="${link}" style="color:#A78BFA;word-break:break-all;font-size:10px;font-family:'SF Mono',Monaco,monospace;text-decoration:none;">${link}</a>
           </p>
         </td></tr>
       </table>
 
-      <p style="margin:24px 0 0;color:#6b7280;font-size:11px;">
-        One Team Eğitim Sistemi · <a href="https://egitimtakvimi.oneteamglobal.ai" style="color:#a78bfa;text-decoration:none;">egitimtakvimi.oneteamglobal.ai</a>
-      </p>
+      <!-- Footer -->
+      <table role="presentation" width="100%" style="max-width:560px;margin-top:24px;">
+        <tr><td align="center" style="padding:16px 0;">
+          <p style="margin:0 0 6px;color:#6B7280;font-size:12px;font-weight:600;">
+            One Team Eğitim Sistemi
+          </p>
+          <p style="margin:0 0 14px;color:#4B5563;font-size:11px;">
+            900+ kayıtlı eğitim · Kişisel kariyer yolu · Sponsor dashboard
+          </p>
+          <p style="margin:0;">
+            <a href="https://egitimtakvimi.oneteamglobal.ai" style="color:#A78BFA;text-decoration:none;font-size:11px;font-weight:600;">
+              egitimtakvimi.oneteamglobal.ai
+            </a>
+          </p>
+        </td></tr>
+        <tr><td align="center" style="padding-top:8px;">
+          <p style="margin:0;color:#374151;font-size:10px;">
+            © ${new Date().getFullYear()} Amare Global / One Team
+          </p>
+        </td></tr>
+      </table>
+
     </td></tr>
   </table>
 </body></html>`;
