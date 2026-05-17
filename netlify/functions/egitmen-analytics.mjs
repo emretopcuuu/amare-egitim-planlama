@@ -14,6 +14,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import admin from 'firebase-admin';
+import { isAdminToken } from './_adminEmails.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -25,11 +26,7 @@ if (!admin.apps.length) {
   });
 }
 
-const ADMIN_EMAILS = [
-  's.emretopcu@gmail.com', 'onlineakademin@gmail.com', 'toygarsenelmis@gmail.com',
-  'alper.kirbiyik@gmail.com', 'vitamindestegi@gmail.com', 'kmaziliguney@gmail.com',
-  'ilknurakkas17@gmail.com', 'giray70@gmail.com', 'furkancite@gmail.com',
-];
+// ADMIN_EMAILS artık _adminEmails.mjs'den
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -59,7 +56,7 @@ export default async (req) => {
     });
 
     // Yetki: admin VEYA users/{uid}.egitmenCoreId eşleşmesi
-    const isAdmin = ADMIN_EMAILS.includes(decoded.email);
+    const isAdmin = isAdminToken(decoded);
     if (!isAdmin) {
       const userDoc = await admin.firestore().doc(`users/${decoded.uid}`).get();
       const benimCoreId = userDoc.data()?.egitmenCoreId;

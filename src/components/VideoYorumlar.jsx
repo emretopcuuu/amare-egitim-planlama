@@ -2,11 +2,13 @@
 // Firestore: kayitli_egitimler/{vimeoId}/yorumlar/{yorumId}
 //   { uid, ad, fotoURL, metin, tarih, parentId? }
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { MessageSquare, Send, Loader2, Trash2, CornerDownRight, X } from 'lucide-react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { MessageSquare, Send, Loader2, Trash2, CornerDownRight, X, Clock } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, query, orderBy, getDocs, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+
+const COOLDOWN_MS = 5000; // 5 saniye yorumlar arası min süre — spam koruma
 
 function timeAgo(ts) {
   if (!ts) return '';
@@ -26,6 +28,8 @@ const VideoYorumlar = ({ vimeoId }) => {
   const [yeniMetin, setYeniMetin] = useState('');
   const [yanitVeren, setYanitVeren] = useState(null); // parentId
   const [gonderiliyor, setGonderiliyor] = useState(false);
+  const [cooldownKalan, setCooldownKalan] = useState(0);
+  const sonGonderimRef = useRef(0);
 
   const load = useCallback(async () => {
     if (!vimeoId) { setYukleniyor(false); return; }
@@ -44,6 +48,12 @@ const VideoYorumlar = ({ vimeoId }) => {
 
   async function gonder() {
     if (!currentUser || isAnonymous || !yeniMetin.trim()) return;
+    // Cooldown kontrolü — 5sn arası min süre
+    const kalan = COOLDOWN_MS - (Date.now() - sonGonderimRef.current);
+    if (kalan > 0) {
+      setCooldownKalan(Math.ceil(kalan / 1000));
+      return;
+    }
     setGonderiliyor(true);
     try {
       await addDoc(collection(db, `kayitli_egitimler/${vimeoId}/yorumlar`), {
@@ -54,8 +64,20 @@ const VideoYorumlar = ({ vimeoId }) => {
         parentId: yanitVeren || null,
         tarih: serverTimestamp(),
       });
+      sonGonderimRef.current = Date.now();
       setYeniMetin('');
       setYanitVeren(null);
+      // Cooldown sayacı başlat (UI feedback)
+      setCooldownKalan(Math.ceil(COOLDOWN_MS / 1000));
+      const interval = setInterval(() => {
+        const k = COOLDOWN_MS - (Date.now() - sonGonderimRef.current);
+        if (k <= 0) {
+          setCooldownKalan(0);
+          clearInterval(interval);
+        } else {
+          setCooldownKalan(Math.ceil(k / 1000));
+        }
+      }, 500);
       await load();
     } catch (e) {
       console.warn('[yorum] gonder err:', e.message);
@@ -108,9 +130,13 @@ const VideoYorumlar = ({ vimeoId }) => {
               placeholder={yanitVeren ? 'Yanıtın...' : 'Bir yorum yaz...'}
               maxLength={1000} rows={2}
               className="flex-1 bg-black/30 text-white text-sm px-3 py-2 rounded-lg placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-amber-400/50 resize-none" />
-            <button onClick={gonder} disabled={gonderiliyor || !yeniMetin.trim()}
+            <button onClick={gonder}
+              disabled={gonderiliyor || !yeniMetin.trim() || cooldownKalan > 0}
+              title={cooldownKalan > 0 ? `${cooldownKalan}sn bekle` : 'Gönder'}
               className="bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold px-3 rounded-lg spring-tap disabled:opacity-50 self-end h-9 inline-flex items-center gap-1">
-              {gonderiliyor ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+              {gonderiliyor ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                : cooldownKalan > 0 ? <><Clock className="w-3.5 h-3.5" /><span className="text-xs">{cooldownKalan}</span></>
+                : <Send className="w-3.5 h-3.5" />}
             </button>
           </div>
         </div>

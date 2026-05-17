@@ -139,10 +139,16 @@ service cloud.firestore {
         allow write: if isAdmin();
       }
 
-      // Yorumlar subcollection — herkes okur, signed-in kullanıcı yazar/siler kendi
+      // Yorumlar subcollection — spam koruma + size limit + zaman validasyonu
       match /yorumlar/{yorumId} {
         allow read: if true;
-        allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+        allow create: if isSignedIn()
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.metin is string
+          && request.resource.data.metin.size() > 0
+          && request.resource.data.metin.size() <= 1000
+          // tarih server-side gelmiş olmalı (clock skew önleme)
+          && request.resource.data.tarih == request.time;
         allow update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
       }
 
