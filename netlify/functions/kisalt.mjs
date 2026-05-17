@@ -16,6 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import admin from 'firebase-admin';
+import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -111,6 +112,10 @@ export default async (req) => {
   // POST /kisalt → kısalt
   if (req.method === 'POST') {
     try {
+      // Rate limit: 20/dk, 100/sa per IP — bot spam koruması
+      const limit = await rateLimitCheck(req, 'kisalt', { perMinute: 20, perHour: 100 });
+      if (!limit.ok) return rateLimitResponse(limit, CORS);
+
       const body = await req.json();
       const tamUrl = String(body.url || '').trim();
       if (!tamUrl || !tamUrl.startsWith('http')) {

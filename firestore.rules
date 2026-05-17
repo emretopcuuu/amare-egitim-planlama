@@ -248,6 +248,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Rate limit kayıtları — sadece server (Functions) okur/yazar
+    // IP hash'leri burada saklı, kimse direkt erişemez
+    match /rate_limits/{docId} {
+      allow read, write: if false;
+    }
+
     // Diğer her koleksiyon — varsayılan: tamamen kapalı
     match /{document=**} {
       allow read, write: if false;

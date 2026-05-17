@@ -15,6 +15,7 @@
 
 import admin from 'firebase-admin';
 import { Resend } from 'resend';
+import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -130,6 +131,10 @@ export default async (req) => {
   }
 
   try {
+    // Rate limit: 5/dk, 20/sa per IP — email spam saldırısı koruması
+    const limit = await rateLimitCheck(req, 'uye-giris-link', { perMinute: 5, perHour: 20 });
+    if (!limit.ok) return rateLimitResponse(limit);
+
     const body = await req.json();
     const lookup = String(body.lookup || '').trim();
 

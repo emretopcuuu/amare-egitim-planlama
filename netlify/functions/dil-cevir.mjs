@@ -9,6 +9,8 @@
 // Yeni: OpenRouter backend tarafından çağrılır, key asla bundle'a girmez.
 // ─────────────────────────────────────────────────────────────────────────
 
+import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
+
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash';
 const SITE_URL = 'https://egitimtakvimi.oneteamglobal.ai';
@@ -37,6 +39,10 @@ export default async (req) => {
         status: 500, headers: { 'Content-Type': 'application/json', ...CORS },
       });
     }
+
+    // Rate limit: 30 req/dk, 200 req/sa per IP (OpenRouter bakiye korumalı)
+    const limit = await rateLimitCheck(req, 'dil-cevir', { perMinute: 30, perHour: 200 });
+    if (!limit.ok) return rateLimitResponse(limit, CORS);
 
     const body = await req.json();
     const texts = Array.isArray(body.texts) ? body.texts.filter(t => typeof t === 'string' && t.trim()).slice(0, 50) : [];
