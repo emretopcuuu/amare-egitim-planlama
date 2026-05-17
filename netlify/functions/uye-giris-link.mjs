@@ -45,6 +45,23 @@ function maskEmail(email) {
   return `${localMasked}@${domainMasked}${tld}`;
 }
 
+// Magic link'i kısalt — uzun Firebase URL'ini /d/abc12345'a dönüştür
+async function kisaltUrl(tamUrl) {
+  try {
+    const res = await fetch('https://egitimtakvimi.oneteamglobal.ai/.netlify/functions/kisalt', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: tamUrl }),
+    });
+    if (!res.ok) throw new Error(`kisalt ${res.status}`);
+    const data = await res.json();
+    return data.kisaUrl || tamUrl;
+  } catch (e) {
+    console.warn('[uye-giris-link] kısaltma başarısız:', e.message);
+    return tamUrl;
+  }
+}
+
 // Supabase RPC çağrısı (REST API ile — paket gerek yok)
 async function supabaseRpc(fnName, params) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fnName}`, {
@@ -163,14 +180,14 @@ function emailHtml({ ad, link, lookup }) {
         </td></tr>
       </table>
 
-      <!-- Backup link -->
+      <!-- Backup link — kısa, okunabilir -->
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin-top:24px;">
         <tr><td style="padding:0 16px;text-align:center;">
-          <p style="margin:0 0 8px;color:#9CA3AF;font-size:11px;">
-            Bağlantı çalışmıyorsa şunu tarayıcına kopyala:
+          <p style="margin:0 0 10px;color:#A78BFA;font-size:11px;opacity:0.8;">
+            Buton açılmıyor mu? Bu kısa linki tarayıcına yapıştır:
           </p>
-          <p style="margin:0;padding:12px;background:rgba(0,0,0,0.35);border-radius:10px;">
-            <a href="${link}" style="color:#A78BFA;word-break:break-all;font-size:10px;font-family:'SF Mono',Monaco,monospace;text-decoration:none;line-height:1.5;">${link}</a>
+          <p style="margin:0;">
+            <a href="${link}" style="display:inline-block;padding:10px 18px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3);border-radius:10px;color:#fcd34d;font-size:14px;font-weight:600;font-family:'SF Mono',Monaco,monospace;text-decoration:none;letter-spacing:0.3px;">${link}</a>
           </p>
         </td></tr>
       </table>
@@ -243,7 +260,9 @@ export default async (req) => {
       url: `https://egitimtakvimi.oneteamglobal.ai/giris-tamamla?uye=${encodeURIComponent(uye.amare_id || '')}`,
       handleCodeInApp: true,
     };
-    const link = await admin.auth().generateSignInWithEmailLink(uye.email, actionCodeSettings);
+    const tamLink = await admin.auth().generateSignInWithEmailLink(uye.email, actionCodeSettings);
+    // Uzun Firebase URL'ini kısalt — kullanıcıya temiz görünüm
+    const link = await kisaltUrl(tamLink);
 
     // 3. Resend ile email yolla
     const html = emailHtml({ ad: uye.full_name, link, lookup });

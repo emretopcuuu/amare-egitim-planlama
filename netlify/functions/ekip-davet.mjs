@@ -179,12 +179,12 @@ ${sponsorAd ? `<p style="margin:20px 0 0;padding:14px 16px;background:rgba(167,1
 </td></tr>
 </table>
 
-<!-- Backup link -->
+<!-- Backup link — kısa, okunabilir -->
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin-top:24px;">
 <tr><td style="padding:0 16px;text-align:center;">
-<p style="margin:0 0 8px;color:#9CA3AF;font-size:11px;">Bağlantı çalışmıyorsa şunu tarayıcına kopyala:</p>
-<p style="margin:0;padding:12px;background:rgba(0,0,0,0.35);border-radius:10px;">
-<a href="${link}" style="color:#A78BFA;word-break:break-all;font-size:10px;font-family:'SF Mono',Monaco,monospace;text-decoration:none;line-height:1.5;">${link}</a>
+<p style="margin:0 0 10px;color:#A78BFA;font-size:11px;opacity:0.8;">Buton açılmıyor mu? Bu kısa linki tarayıcına yapıştır:</p>
+<p style="margin:0;">
+<a href="${link}" style="display:inline-block;padding:10px 18px;background:rgba(251,191,36,0.12);border:1px solid rgba(251,191,36,0.3);border-radius:10px;color:#fcd34d;font-size:14px;font-weight:600;font-family:'SF Mono',Monaco,monospace;text-decoration:none;letter-spacing:0.3px;">${link}</a>
 </p>
 </td></tr>
 </table>
