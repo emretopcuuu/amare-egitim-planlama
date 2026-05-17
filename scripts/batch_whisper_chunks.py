@@ -46,7 +46,12 @@ parser.add_argument('--limit', type=int, default=0, help='İşlenecek video say�
 parser.add_argument('--model', default='base', choices=['tiny', 'base', 'small', 'medium', 'large'])
 parser.add_argument('--dry-run', action='store_true', help='Firestore\'a yazma')
 parser.add_argument('--audio-dir', default=None, help='Audio download klasörü')
+parser.add_argument('--only-vimeo-ids', default=None,
+    help='Sadece bu vimeo ID\'leri işle (virgül ile ayır, ör: 1048363062,1179495967)')
+parser.add_argument('--force', action='store_true',
+    help='transcriptChunks zaten varsa bile YENİDEN üret')
 args = parser.parse_args()
+ONLY_IDS = set(args.only_vimeo_ids.split(',')) if args.only_vimeo_ids else None
 
 SCRIPT_DIR = Path(__file__).parent.resolve()
 AUDIO_DIR = Path(args.audio_dir) if args.audio_dir else SCRIPT_DIR / 'whisper_audio'
@@ -114,15 +119,19 @@ def get_candidates():
     docs = db.collection('kayitli_egitimler') \
         .where(filter=firestore.FieldFilter('kayeneFiltrelendi', '==', False)) \
         .stream()
-    cands, skipped_have_chunks, skipped_no_vimeo = [], 0, 0
+    cands, skipped_have_chunks, skipped_no_vimeo, skipped_filter = [], 0, 0, 0
     for d in docs:
         data = d.to_dict()
-        # Zaten chunks varsa atla (IDEMPOTENT)
+        vimeo_id = data.get('vimeoId')
+        # ONLY filter (sadece bu ID'leri al, gerisini atla)
+        if ONLY_IDS is not None and str(vimeo_id) not in ONLY_IDS:
+            skipped_filter += 1
+            continue
+        # Zaten chunks varsa atla (IDEMPOTENT) — --force ile bypass
         chunks_existing = data.get('transcriptChunks')
-        if isinstance(chunks_existing, list) and len(chunks_existing) > 0:
+        if not args.force and isinstance(chunks_existing, list) and len(chunks_existing) > 0:
             skipped_have_chunks += 1
             continue
-        vimeo_id = data.get('vimeoId')
         if not vimeo_id:
             skipped_no_vimeo += 1
             continue

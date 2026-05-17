@@ -1,0 +1,85 @@
+{
+  "toplam": 908,
+  "transcriptliVar": 906,
+  "chunksliVar": 897,
+  "eksikChunks": [
+    {
+      "id": "1048363062",
+      "vimeoId": "1048363062",
+      "baslik": "Amare Global Ürün Eğitimi - Prof. Dr. Mahmut İlker Yılmaz / 17.01.2025",
+      "sure": 3588,
+      "hasTranscript": true
+    },
+    {
+      "id": "1179495967",
+      "vimeoId": "1179495967",
+      "baslik": "Sağlıklı Yaşam ve Girişimcilik Sunumu -Güncel- Murat Zorluoğlu / 2.04.2026",
+      "sure": 1521,
+      "hasTranscript": true
+    },
+    {
+      "id": "1186197619",
+      "vimeoId": "1186197619",
+      "baslik": "One Team Yardım Eli 2026 -23 Nisan Çocuk Bayramı Etkinliği",
+      "sure": 7442,
+      "hasTranscript": true
+    },
+    {
+      "id": "134590789",
+      "vimeoId": "134590789",
+      "baslik": "Ya Gerçekse? Başaranların Sosyal Kanıtı",
+      "sure": 189,
+      "hasTranscript": true
+    },
+    {
+      "id": "142376222",
+      "vimeoId": "142376222",
+      "baslik": "zel",
+      "sure": 159,
+      "hasTranscript": true
+    },
+    {
+      "id": "146153126",
+      "vimeoId": "146153126",
+      "baslik": "ÜRÜNLER GİRİŞ SON",
+      "sure": 291,
+      "hasTranscript": true
+    },
+    {
+      "id": "256186430",
+      "vimeoId": "256186430",
+      "baslik": "İşini Severek Yapmak, Geleceği İnşa etmektir...",
+      "sure": 171,
+      "hasTranscript": true
+    },
+    {
+      "id": "325064818",
+      "vimeoId": "325064818",
+      "baslik": "Pirinç Üzerinde Yapılan İlginç Deney İnanamıyacaksınız (1)",
+      "sure": 91,
+      "hasTranscript": true
+    },
+    {
+      "id": "383276598",
+      "vimeoId": "383276598",
+      "baslik": "Emre Topçu - 2020 Doğru Başlangıç Planı ve Önemi",
+      "sure": 2624,
+      "hasTranscript": true
+    },
+    {
+      "id": "467031291",
+      "vimeoId": "467031291",
+      "baslik": "Her Zaman Yola Devam Et",
+      "sure": 150,
+      "hasTranscript": true
+    },
+    {
+      "id": "529333954",
+      "vimeoId": "529333954",
+      "baslik": "Bir İşi Takdir Etmek.mp4",
+      "sure": 137,
+      "hasTranscript": true
+    }
+  ],
+  "hicTranscriptYok": []
+}
