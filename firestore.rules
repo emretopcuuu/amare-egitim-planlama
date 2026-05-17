@@ -260,6 +260,12 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Magic link gönderim log'u — idempotency için (60sn cooldown)
+    // Sadece server yazar, kimse okumaz (PII korumalı)
+    match /giris_link_log/{amareId} {
+      allow read, write: if false;
+    }
+
     // Diğer her koleksiyon — varsayılan: tamamen kapalı
     match /{document=**} {
       allow read, write: if false;

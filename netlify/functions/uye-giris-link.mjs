@@ -224,8 +224,8 @@ export default async (req) => {
   }
 
   try {
-    // Rate limit: 5/dk, 20/sa per IP — email spam saldırısı koruması
-    const limit = await rateLimitCheck(req, 'uye-giris-link', { perMinute: 5, perHour: 20 });
+    // Rate limit: 10/dk, 30/sa per IP — email spam koruması (idempotency 60sn cooldown ayrı)
+    const limit = await rateLimitCheck(req, 'uye-giris-link', { perMinute: 10, perHour: 30 });
     if (!limit.ok) return rateLimitResponse(limit);
 
     const body = await req.json();
@@ -255,6 +255,31 @@ export default async (req) => {
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
+    // 1b. Idempotency — aynı email'a son 60sn içinde link gönderildiyse tekrar gönderme
+    // (Resend cooldown + Gmail spam koruma + kullanıcı yanlışlıkla tekrar tıklarsa)
+    try {
+      const idemRef = admin.firestore().doc(`giris_link_log/${uye.amare_id}`);
+      const idemSnap = await idemRef.get();
+      if (idemSnap.exists) {
+        const sonGonderim = idemSnap.data().sonGonderim?._seconds || 0;
+        const gecen = Math.floor(Date.now() / 1000) - sonGonderim;
+        if (gecen < 60) {
+          return new Response(JSON.stringify({
+            found: true,
+            sent: true,
+            cached: true,
+            emailMask: maskEmail(uye.email),
+            emailReal: uye.email,
+            adKisa: (uye.full_name || '').split(' ')[0] || null,
+            mesaj: `Geçen ${gecen} sn önce gönderdik. Spam'i kontrol et.`,
+            kalanSn: 60 - gecen,
+          }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+        }
+      }
+    } catch (e) {
+      console.warn('[uye-giris-link] idempotency check err:', e.message);
+    }
+
     // 2. Firebase magic link üret
     const actionCodeSettings = {
       url: `https://egitimtakvimi.oneteamglobal.ai/giris-tamamla?uye=${encodeURIComponent(uye.amare_id || '')}`,
@@ -273,6 +298,15 @@ export default async (req) => {
       subject,
       html,
     });
+
+    // Idempotency log — sonGonderim kaydet (60sn cooldown için)
+    try {
+      await admin.firestore().doc(`giris_link_log/${uye.amare_id}`).set({
+        sonGonderim: admin.firestore.FieldValue.serverTimestamp(),
+        emailMask: maskEmail(uye.email),
+        sayaclar: admin.firestore.FieldValue.increment(1),
+      }, { merge: true });
+    } catch (e) { console.warn('[uye-giris-link] log err:', e.message); }
 
     return new Response(JSON.stringify({
       found: true,
