@@ -176,14 +176,30 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = n
               </div>
             )}
 
-            {/* Yıldız oylama */}
-            <div className="bg-white/5 rounded-lg p-3 border border-white/10 flex items-center justify-between gap-3 flex-wrap">
-              <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">Bu eğitimi puanla</span>
-              <VideoYildiz vimeoId={video.vimeoId || video.id} />
-            </div>
+            {/* Etkileşim alanı — Yıldız + Reactions — daha belirgin CTA */}
+            <div className="bg-gradient-to-br from-amber-400/15 via-orange-500/10 to-amber-400/15 border-2 border-amber-300/40 rounded-2xl p-4 sm:p-5 shadow-lg shadow-amber-500/10">
+              <div className="text-center mb-3">
+                <h4 className="text-white font-extrabold text-sm sm:text-base">
+                  ✨ Bu eğitim sana ne kattı?
+                </h4>
+                <p className="text-amber-200/80 text-[11px] sm:text-xs mt-0.5">
+                  Birkaç saniyeni ayır — yıldız ver, emoji bırak, eğitmen görür
+                </p>
+              </div>
 
-            {/* Reactions */}
-            <VideoReactions vimeoId={video.vimeoId || video.id} />
+              {/* Yıldız oylama — büyük + ortalı */}
+              <div className="bg-black/20 rounded-xl p-3 mb-2.5 flex items-center justify-between gap-3 flex-wrap">
+                <span className="text-amber-300 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5">
+                  ⭐ Puanla
+                </span>
+                <VideoYildiz vimeoId={video.vimeoId || video.id} />
+              </div>
+
+              {/* Reactions — emoji */}
+              <div className="bg-black/20 rounded-xl p-3">
+                <VideoReactions vimeoId={video.vimeoId || video.id} />
+              </div>
+            </div>
 
             {/* PDF/Slide ekleri */}
             <VideoEkler vimeoId={video.vimeoId || video.id} />

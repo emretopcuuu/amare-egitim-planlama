@@ -1,12 +1,20 @@
-// Watch progress — localStorage tabanlı.
+// Watch progress — localStorage tabanlı + Firestore cross-device sync.
 // Her video için { t, duration, pct, lastSeen } saklar.
-// Cross-device sync YOK — sadece o tarayıcıda kalıcı.
+//
+// SYNC STRATEJİ:
+//   - Yazma: localStorage anında + Firestore debounced (10sn)
+//   - Okuma: ilk login'de Firestore'dan localStorage'a merge (newer-wins)
+//   - Cross-device: kullanıcı başka cihazdan girer, kalan izlemeleri görür
 
 import { useEffect, useState } from 'react';
+import { db, auth } from './firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 const KEY = 'amare_watch_progress_v1';
 const COMPLETED_PCT = 95;  // % bu üstündeyse "tamamlandı" sayılır, devam etme listesinden çıkar
 const MIN_TRACK_SEC = 8;   // çok kısa izlemeleri sayma (tıklamış kapatmış vs.)
+const FIRESTORE_DEBOUNCE_MS = 10_000; // 10sn — yazma frequency
+const FIRESTORE_MERGE_KEY = 'amare_watch_progress_merged_v1'; // ilk merge yapildi mi?
 
 function loadAll() {
   try { return JSON.parse(localStorage.getItem(KEY) || '{}'); }
@@ -39,6 +47,70 @@ export function updateProgress(videoId, t, duration) {
     lastSeen: Date.now(),
   };
   saveAll(all);
+  // Debounced Firestore sync
+  firestoreSyncDebounced();
+}
+
+// ─── FIRESTORE SYNC (cross-device + analytics) ────────────────────────────
+let firestoreSyncTimer = null;
+function firestoreSyncDebounced() {
+  if (firestoreSyncTimer) clearTimeout(firestoreSyncTimer);
+  firestoreSyncTimer = setTimeout(syncToFirestore, FIRESTORE_DEBOUNCE_MS);
+}
+
+async function syncToFirestore() {
+  try {
+    const user = auth?.currentUser;
+    if (!user || user.isAnonymous) return;
+    const all = loadAll();
+    if (Object.keys(all).length === 0) return;
+    // Compact format: sadece son izleme + kompakt obj
+    // users/{uid}/meta/watch_progress doc'una topluca yaz
+    const ref = doc(db, `users/${user.uid}/meta/watch_progress`);
+    await setDoc(ref, {
+      data: all,
+      guncellemeTarihi: serverTimestamp(),
+      videoSayisi: Object.keys(all).length,
+    }, { merge: true });
+  } catch (e) {
+    console.warn('[watchProgress] firestore sync hata:', e.message);
+  }
+}
+
+// İlk login'de Firestore'dan localStorage'a merge (cross-device load)
+export async function syncFromFirestoreOnce() {
+  try {
+    const user = auth?.currentUser;
+    if (!user || user.isAnonymous) return;
+    // Bu user için ilk merge yapıldı mı?
+    const mergeKey = `${FIRESTORE_MERGE_KEY}_${user.uid}`;
+    if (localStorage.getItem(mergeKey)) return;
+
+    const ref = doc(db, `users/${user.uid}/meta/watch_progress`);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) {
+      localStorage.setItem(mergeKey, '1');
+      return;
+    }
+    const remote = snap.data().data || {};
+    const local = loadAll();
+    // Newer-wins merge — lastSeen üzerinden
+    const merged = { ...remote };
+    for (const [id, p] of Object.entries(local)) {
+      const r = remote[id];
+      if (!r || (p.lastSeen || 0) > (r.lastSeen || 0)) merged[id] = p;
+    }
+    saveAll(merged);
+    localStorage.setItem(mergeKey, '1');
+    window.dispatchEvent(new Event('amare-watch-progress-changed'));
+  } catch (e) {
+    console.warn('[watchProgress] firestore merge hata:', e.message);
+  }
+}
+
+// Logout'ta sync flag temizle — bir dahaki login'de yeniden merge etsin
+export function resetFirestoreSyncFlag(uid) {
+  if (uid) localStorage.removeItem(`${FIRESTORE_MERGE_KEY}_${uid}`);
 }
 
 export function removeProgress(videoId) {
@@ -130,6 +202,16 @@ export function useWatchProgress() {
     const onUpdate = () => setVersion(v => v + 1);
     window.addEventListener('amare-watch-progress-changed', onUpdate);
     return () => window.removeEventListener('amare-watch-progress-changed', onUpdate);
+  }, []);
+
+  // Login olduğunda Firestore'dan ilk merge (cross-device)
+  useEffect(() => {
+    const unsub = auth.onAuthStateChanged((u) => {
+      if (u && !u.isAnonymous) {
+        syncFromFirestoreOnce();
+      }
+    });
+    return () => unsub();
   }, []);
 
   return {

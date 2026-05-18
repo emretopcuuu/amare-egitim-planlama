@@ -227,6 +227,11 @@ service cloud.firestore {
         allow read, write: if isSignedIn() && request.auth.uid == uid;
       }
 
+      // Meta — watch_progress sync, cihazlar arası senkron
+      match /meta/{docId} {
+        allow read, write: if isSignedIn() && request.auth.uid == uid;
+      }
+
       // Quiz sonuçları — kullanıcının quiz skorları
       match /quiz_sonuclari/{vimeoId} {
         allow read, write: if isSignedIn() && request.auth.uid == uid;

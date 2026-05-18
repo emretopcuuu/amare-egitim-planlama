@@ -107,12 +107,20 @@ const VideoYorumlar = ({ vimeoId }) => {
   });
 
   return (
-    <div className="bg-white/5 rounded-lg p-3 border border-white/10">
-      <div className="flex items-center gap-2 mb-3">
-        <MessageSquare className="w-4 h-4 text-white/70" />
-        <span className="text-white/70 text-xs font-semibold uppercase tracking-wider">
-          Yorumlar {yorumlar.length > 0 && `(${yorumlar.length})`}
-        </span>
+    <div className="bg-gradient-to-br from-emerald-500/10 via-teal-500/10 to-emerald-500/10 rounded-2xl p-4 sm:p-5 border-2 border-emerald-300/30 shadow-lg">
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <div className="flex items-center gap-2">
+          <MessageSquare className="w-5 h-5 text-emerald-300" />
+          <span className="text-white font-extrabold text-sm sm:text-base">
+            💬 Yorumlar
+            {yorumlar.length > 0 && (
+              <span className="text-emerald-300 text-xs font-normal ml-1.5">({yorumlar.length})</span>
+            )}
+          </span>
+        </div>
+        {yorumlar.length === 0 && currentUser && !isAnonymous && (
+          <span className="text-emerald-200/70 text-[10px] italic">İlk yorumu sen yaz! 👇</span>
+        )}
       </div>
 
       {/* Yorum yazma */}
@@ -127,9 +135,9 @@ const VideoYorumlar = ({ vimeoId }) => {
           )}
           <div className="flex gap-2">
             <textarea value={yeniMetin} onChange={(e) => setYeniMetin(e.target.value)}
-              placeholder={yanitVeren ? 'Yanıtın...' : 'Bir yorum yaz...'}
+              placeholder={yanitVeren ? 'Yanıtın...' : 'Düşünceni paylaş, kaçırdıkların görenler için not bırak...'}
               maxLength={1000} rows={2}
-              className="flex-1 bg-black/30 text-white text-sm px-3 py-2 rounded-lg placeholder-white/40 focus:outline-none focus:ring-1 focus:ring-amber-400/50 resize-none" />
+              className="flex-1 bg-black/30 text-white text-sm px-3 py-2 rounded-lg placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-emerald-400/50 resize-none border border-white/10 focus:border-emerald-400/50" />
             <button onClick={gonder}
               disabled={gonderiliyor || !yeniMetin.trim() || cooldownKalan > 0}
               title={cooldownKalan > 0 ? `${cooldownKalan}sn bekle` : 'Gönder'}
