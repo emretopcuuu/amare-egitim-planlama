@@ -940,7 +940,7 @@ const KayitliEgitimlerSayfasi = () => {
       {!loading && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && !sadeceIzlenen && dilKod === 'all' && (
         <div className="px-4 mb-4">
           <div className="container mx-auto max-w-7xl">
-            <AiOneriKart />
+            <AiOneriKart onOynat={(v) => handleOynat(v, null)} />
           </div>
         </div>
       )}

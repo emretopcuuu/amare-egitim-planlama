@@ -6,6 +6,8 @@ import { useNavigate } from 'react-router-dom';
 import { Sparkles, Play, Loader2, RefreshCw, Star, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { metinTemizleDeep } from '../utils/metinTemizle';
+import { db } from '../utils/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 function formatSure(s) {
   if (!s) return '';
@@ -13,9 +15,31 @@ function formatSure(s) {
   return m < 60 ? `${m}dk` : `${Math.floor(m / 60)}sa ${m % 60}dk`;
 }
 
-const AiOneriKart = () => {
+const AiOneriKart = ({ onOynat }) => {
   const { currentUser, isAnonymous } = useAuth();
   const navigate = useNavigate();
+
+  // Tıklama: parent onOynat verdiyse onu kullan (aynı sayfada modal aç),
+  // yoksa navigate fallback (başka sayfadan çağrılırsa).
+  async function aciklama(o) {
+    if (onOynat) {
+      // Video kartı obj'yi tam çekmek için Firestore'dan al
+      try {
+        const snap = await getDoc(doc(db, `kayitli_egitimler/${o.vimeoId}`));
+        if (snap.exists()) {
+          const data = snap.data();
+          onOynat({ id: snap.id, ...data });
+          return;
+        }
+      } catch (e) {
+        console.warn('[ai-oneri click] doc read err:', e.message);
+      }
+      // Fallback minimal obj
+      onOynat({ id: o.vimeoId, vimeoId: o.vimeoId, baslik: o.baslik, thumbnailUrl: o.thumbnailUrl });
+    } else {
+      navigate(`/kayitli-egitimler?v=${encodeURIComponent(o.vimeoId)}`);
+    }
+  }
   const [veri, setVeri] = useState(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [hata, setHata] = useState('');
@@ -68,7 +92,7 @@ const AiOneriKart = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {veri.oneriler.slice(0, 3).map(o => (
           <button key={o.vimeoId}
-            onClick={() => navigate(`/kayitli-egitimler?v=${encodeURIComponent(o.vimeoId)}`)}
+            onClick={() => aciklama(o)}
             className="bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-400/60 rounded-xl overflow-hidden text-left transition-all group">
             <div className="relative aspect-video bg-black/30">
               {o.thumbnailUrl && (
