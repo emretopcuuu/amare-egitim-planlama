@@ -217,6 +217,9 @@ const KayitliEgitimlerSayfasi = () => {
   // null = hepsi kapalı, 'yarida' | 'sana_ozel' | 'populer'
   const [kesfetSekme, setKesfetSekme] = useState(null);
 
+  // Desktop filtre paneli - collapsed default
+  const [filtrelerAcik, setFiltrelerAcik] = useState(false);
+
   const [transcriptAramaAcik, setTranscriptAramaAcik] = useState(() => {
     try { return localStorage.getItem('amare_transcript_search') === '1'; } catch { return false; }
   });
@@ -842,77 +845,126 @@ const KayitliEgitimlerSayfasi = () => {
             </div>
           )}
 
-          {/* Desktop'ta inline filtre dropdownları */}
-          <div className="hidden md:grid mt-3 grid-cols-3 lg:grid-cols-5 gap-2">
-            <DropdownField icon={User} value={egitmenCoreId} onChange={v => { haptic(5); setEgitmenCoreId(v); }}>
-              <option value="" className="bg-purple-900">{t('rec_all_trainers')} ({egitmenOpsiyonlari.length})</option>
-              {egitmenOpsiyonlari.map(o => (
-                <option key={o.coreId} value={o.coreId} className="bg-purple-900">{o.ad} ({o.count})</option>
-              ))}
-            </DropdownField>
-            <DropdownField icon={Globe} value={dilKod} onChange={v => { haptic(5); setDilKod(v); }}>
-              {DILLER.map(d => <option key={d.kod} value={d.kod} className="bg-purple-900">{t(d.tKey)}</option>)}
-            </DropdownField>
-            <DropdownField icon={Calendar} value={yil} onChange={v => { haptic(5); setYil(v); }}>
-              <option value="all" className="bg-purple-900">{t('rec_all_years')}</option>
-              {yilOpsiyonlari.map(([y, c]) => (
-                <option key={y} value={y} className="bg-purple-900">{y} ({c})</option>
-              ))}
-            </DropdownField>
-            <DropdownField icon={Clock} value={sureKod} onChange={v => { haptic(5); setSureKod(v); }}>
-              {SURE_FILTRELERI.map(s => <option key={s.kod} value={s.kod} className="bg-purple-900">{t(s.tKey)}</option>)}
-            </DropdownField>
-            <DropdownField icon={ArrowDownUp} value={siralama} onChange={v => { haptic(5); setSiralama(v); }}>
-              {SIRALAMALAR.map(s => <option key={s.kod} value={s.kod} className="bg-purple-900">{t(s.tKey)}</option>)}
-            </DropdownField>
-          </div>
+          {/* Desktop: Filtreler toggle + Sıralama + Aktif chip'ler */}
+          <div className="hidden md:flex mt-3 items-center gap-2 flex-wrap">
+            {/* Filtreler aç/kapa chip — badge ile aktif sayısı */}
+            <button onClick={() => { haptic(5); setFiltrelerAcik(s => !s); }}
+              className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-full text-sm font-bold border transition spring-tap ${
+                filtrelerAcik
+                  ? 'bg-amber-400 text-purple-900 border-amber-300 shadow-md'
+                  : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+              }`}>
+              <SlidersHorizontal className="w-4 h-4" />
+              Filtreler
+              {aktifFiltreler.length > 0 && (
+                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-extrabold ${
+                  filtrelerAcik ? 'bg-purple-900/30 text-purple-900' : 'bg-amber-400 text-purple-900'
+                }`}>{aktifFiltreler.length}</span>
+              )}
+              {filtrelerAcik ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            </button>
 
-          {/* Desktop: favoriler + izlediklerim hızlı toggle */}
-          {(favoriler.size > 0 || gecmis.size > 0) && (
-            <div className="hidden md:flex mt-2 gap-2">
-              {favoriler.size > 0 && (
-                <button onClick={() => { haptic(8); setSadeceFav(s => !s); }}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-all spring-tap ${
-                    sadeceFav ? 'bg-pink-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                  }`}>
-                  <Heart className="w-3.5 h-3.5" fill={sadeceFav ? 'currentColor' : 'none'} />
-                  {t('rec_only_favs')} ({favoriler.size})
-                </button>
-              )}
-              {gecmis.size > 0 && (
-                <button onClick={() => { haptic(8); setSadeceIzlenen(s => !s); }}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-all spring-tap ${
-                    sadeceIzlenen ? 'bg-blue-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                  }`}>
-                  <Eye className="w-3.5 h-3.5" />
-                  {t('rec_only_watched')} ({gecmis.size})
-                </button>
-              )}
+            {/* Sıralama küçük dropdown — hep görünür, en sık kullanılır */}
+            <div className="relative inline-flex items-center">
+              <ArrowDownUp className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/70 pointer-events-none" />
+              <select value={siralama} onChange={e => { haptic(5); setSiralama(e.target.value); }}
+                className="bg-white/10 border border-white/20 text-white text-xs sm:text-sm font-semibold rounded-full pl-9 pr-7 py-2 outline-none focus:border-amber-400 hover:bg-white/15 appearance-none cursor-pointer">
+                {SIRALAMALAR.map(s => <option key={s.kod} value={s.kod} className="bg-purple-900">{t(s.tKey)}</option>)}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-white/70 pointer-events-none" />
             </div>
-          )}
 
-          {/* Desktop: kategori chip'leri */}
-          <div className="hidden md:flex mt-3 flex-wrap gap-2 items-center">
-            <button onClick={() => { haptic(8); setKategoriSet(new Set()); }}
-              className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
-                kategoriSet.size === 0 ? 'bg-amber-400 text-gray-900 shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-              }`}>{t('rec_all')}</button>
-            {kategoriler.map(k => (
-              <button key={k} onClick={() => toggleKategori(k)}
-                className={`px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all spring-tap ${
-                  kategoriSet.has(k) ? (KATEGORI_RENK[k] || 'bg-amber-400 text-gray-900') + ' shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
-                }`}>
-                {k}
-              </button>
-            ))}
+            {/* Aktif filtre chip'leri — her zaman görünür (kullanıcı ne uyguladığını görsün) */}
             {aktifFiltreler.length > 0 && (
-              <button onClick={filtreleriTemizle}
-                className="ml-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap bg-red-500/30 hover:bg-red-500/50 text-red-100 border border-red-400/40 spring-tap transition-all">
-                <RotateCcw className="w-3.5 h-3.5" />
-                {t('rec_clear_all_filters')} ({aktifFiltreler.length})
-              </button>
+              <>
+                <span className="text-white/30 mx-1">|</span>
+                <div className="inline-flex items-center gap-1.5 flex-wrap">
+                  {aktifFiltreler.map(f => (
+                    <button key={f.kod} onClick={f.kaldir}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold ${f.renk} hover:opacity-80 transition-opacity spring-tap`}>
+                      <X className="w-3 h-3" />
+                      <span className="line-clamp-1 max-w-[140px]">{f.etiket}</span>
+                    </button>
+                  ))}
+                  <button onClick={filtreleriTemizle}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-500/30 hover:bg-red-500/50 text-red-100 border border-red-400/40 spring-tap transition-all">
+                    <RotateCcw className="w-3 h-3" />
+                    Temizle
+                  </button>
+                </div>
+              </>
             )}
           </div>
+
+          {/* Desktop: Filtreler paneli (collapsed by default) */}
+          {filtrelerAcik && (
+            <div className="hidden md:block mt-3 bg-black/20 border border-white/10 rounded-2xl p-4 space-y-3 animate-fade-in">
+              {/* Dropdownlar */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-2">
+                <DropdownField icon={User} value={egitmenCoreId} onChange={v => { haptic(5); setEgitmenCoreId(v); }}>
+                  <option value="" className="bg-purple-900">{t('rec_all_trainers')} ({egitmenOpsiyonlari.length})</option>
+                  {egitmenOpsiyonlari.map(o => (
+                    <option key={o.coreId} value={o.coreId} className="bg-purple-900">{o.ad} ({o.count})</option>
+                  ))}
+                </DropdownField>
+                <DropdownField icon={Globe} value={dilKod} onChange={v => { haptic(5); setDilKod(v); }}>
+                  {DILLER.map(d => <option key={d.kod} value={d.kod} className="bg-purple-900">{t(d.tKey)}</option>)}
+                </DropdownField>
+                <DropdownField icon={Calendar} value={yil} onChange={v => { haptic(5); setYil(v); }}>
+                  <option value="all" className="bg-purple-900">{t('rec_all_years')}</option>
+                  {yilOpsiyonlari.map(([y, c]) => (
+                    <option key={y} value={y} className="bg-purple-900">{y} ({c})</option>
+                  ))}
+                </DropdownField>
+                <DropdownField icon={Clock} value={sureKod} onChange={v => { haptic(5); setSureKod(v); }}>
+                  {SURE_FILTRELERI.map(s => <option key={s.kod} value={s.kod} className="bg-purple-900">{t(s.tKey)}</option>)}
+                </DropdownField>
+              </div>
+
+              {/* Favoriler / izlediklerim toggles */}
+              {(favoriler.size > 0 || gecmis.size > 0) && (
+                <div className="flex gap-2 flex-wrap">
+                  {favoriler.size > 0 && (
+                    <button onClick={() => { haptic(8); setSadeceFav(s => !s); }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-all spring-tap ${
+                        sadeceFav ? 'bg-pink-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                      }`}>
+                      <Heart className="w-3.5 h-3.5" fill={sadeceFav ? 'currentColor' : 'none'} />
+                      {t('rec_only_favs')} ({favoriler.size})
+                    </button>
+                  )}
+                  {gecmis.size > 0 && (
+                    <button onClick={() => { haptic(8); setSadeceIzlenen(s => !s); }}
+                      className={`px-3 py-1.5 rounded-full text-xs font-semibold inline-flex items-center gap-1.5 transition-all spring-tap ${
+                        sadeceIzlenen ? 'bg-blue-500 text-white' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                      }`}>
+                      <Eye className="w-3.5 h-3.5" />
+                      {t('rec_only_watched')} ({gecmis.size})
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Kategoriler */}
+              <div>
+                <div className="text-white/60 text-[10px] uppercase tracking-wider font-bold mb-2">Kategoriler</div>
+                <div className="flex flex-wrap gap-1.5">
+                  <button onClick={() => { haptic(8); setKategoriSet(new Set()); }}
+                    className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all spring-tap ${
+                      kategoriSet.size === 0 ? 'bg-amber-400 text-gray-900 shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                    }`}>{t('rec_all')}</button>
+                  {kategoriler.map(k => (
+                    <button key={k} onClick={() => toggleKategori(k)}
+                      className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all spring-tap ${
+                        kategoriSet.has(k) ? (KATEGORI_RENK[k] || 'bg-amber-400 text-gray-900') + ' shadow-md' : 'bg-white/10 text-white hover:bg-white/20 border border-white/20'
+                      }`}>
+                      {k}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Aktif filtre chip bar — sadece mobile (desktop'ta zaten görünüyor) */}
           {aktifFiltreler.length > 0 && (
