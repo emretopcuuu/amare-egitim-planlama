@@ -5,9 +5,10 @@
 // Format: [{ start: 0.0, end: 5.2, text: "..." }, ...]
 
 import React, { useEffect, useState, useMemo } from 'react';
-import { FileText, Play, Search, X, ChevronDown, Loader2, Sparkles, Clock } from 'lucide-react';
-import { db } from '../utils/firebase';
+import { FileText, Play, Search, X, ChevronDown, Loader2, Sparkles, Clock, BookOpen, Quote, List } from 'lucide-react';
+import { db, auth } from '../utils/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { trackAnTikla } from '../utils/anlarTrack';
 
 function formatSure(s) {
   if (s == null || s < 0) return '';
@@ -28,6 +29,8 @@ function highlight(text, q) {
 
 const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
   const [chunks, setChunks] = useState(null); // null=loading, []=yok, [items]=var
+  const [aiAnaliz, setAiAnaliz] = useState(null); // { ahaMoments, chapters, ozet }
+  const [aiYukleniyor, setAiYukleniyor] = useState(false);
   const [acik, setAcik] = useState(false);
   const [arama, setArama] = useState('');
 
@@ -45,6 +48,11 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
         } else {
           setChunks([]);
         }
+        // Cache'lenmiş AI analizi varsa direkt al
+        const aiSnap = await getDoc(doc(db, `kayitli_egitimler/${vimeoId}/ai_analiz/main`));
+        if (!iptal && aiSnap.exists()) {
+          setAiAnaliz(aiSnap.data());
+        }
       } catch (e) {
         console.warn('[chunks] read err:', e.message);
         setChunks([]);
@@ -53,6 +61,28 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
     return () => { iptal = true; };
   }, [vimeoId]);
 
+  // AI analiz tetikle (yoksa)
+  async function aiAnalizTetikle() {
+    if (aiAnaliz || aiYukleniyor) return;
+    setAiYukleniyor(true);
+    try {
+      const user = auth.currentUser;
+      const headers = { 'Content-Type': 'application/json' };
+      if (user) headers.Authorization = `Bearer ${await user.getIdToken()}`;
+      const res = await fetch('/.netlify/functions/ai-transcript-analiz', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ vimeoId }),
+      });
+      const data = await res.json();
+      if (res.ok) setAiAnaliz(data);
+    } catch (e) {
+      console.warn('[ai-analiz] err:', e.message);
+    } finally {
+      setAiYukleniyor(false);
+    }
+  }
+
   const filtreli = useMemo(() => {
     if (!chunks) return [];
     if (!arama.trim()) return chunks;
@@ -60,19 +90,22 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
     return chunks.filter(c => (c.text || '').toLowerCase().includes(q));
   }, [chunks, arama]);
 
-  // Aha! moments — yüksek değerli paragraflar (uzun + alıntı-vari)
+  // Aha! moments — AI varsa onu kullan, yoksa heuristic
   const ahaMoments = useMemo(() => {
+    if (aiAnaliz?.ahaMoments?.length > 0) {
+      // AI çıktısı (start + text + sebep)
+      return aiAnaliz.ahaMoments;
+    }
+    // Heuristic fallback
     if (!chunks || chunks.length < 5) return [];
-    // Heuristic: 8-25 sn arası + 50+ karakter + soru işareti/ünlem yok
     const aha = chunks.filter(c => {
       const dur = (c.end || 0) - (c.start || 0);
       const len = (c.text || '').length;
-      const isAlinti = /["""'']/.test(c.text || '');
       const sorulu = (c.text || '').includes('?');
       return dur >= 4 && dur <= 25 && len >= 60 && len <= 250 && !sorulu;
     }).slice(0, 5);
     return aha;
-  }, [chunks]);
+  }, [chunks, aiAnaliz]);
 
   // Henüz yüklenmedi
   if (chunks === null) {
@@ -102,20 +135,87 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
 
       {acik && (
         <div className="border-t border-white/10 p-3 space-y-3">
-          {/* Aha! moments — eğitici alıntılar */}
+          {/* AI özet — varsa en üstte */}
+          {aiAnaliz?.ozet && !arama && (
+            <div className="bg-gradient-to-br from-purple-500/10 to-indigo-500/10 border border-purple-400/30 rounded-lg p-3">
+              <div className="text-purple-200/80 text-[10px] uppercase tracking-wider font-bold mb-1.5 inline-flex items-center gap-1">
+                <BookOpen className="w-3 h-3" /> 3 Cümlede Bu Video
+              </div>
+              <p className="text-white text-xs leading-relaxed">{aiAnaliz.ozet.kisa}</p>
+              {aiAnaliz.ozet.uzun && aiAnaliz.ozet.uzun.length > aiAnaliz.ozet.kisa?.length && (
+                <details className="mt-2">
+                  <summary className="text-purple-300/80 text-[10px] cursor-pointer hover:text-purple-200">
+                    Detaylı özet
+                  </summary>
+                  <p className="text-white/80 text-xs leading-relaxed mt-1">{aiAnaliz.ozet.uzun}</p>
+                </details>
+              )}
+              {aiAnaliz.ozet.anaTema && (
+                <div className="mt-2 inline-block bg-purple-500/20 text-purple-200 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded">
+                  {aiAnaliz.ozet.anaTema}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Chapters — YouTube tarzı bölüm bar */}
+          {aiAnaliz?.chapters?.length > 0 && !arama && (
+            <div>
+              <div className="text-sky-300/80 text-[10px] uppercase tracking-wider font-bold mb-2 inline-flex items-center gap-1">
+                <List className="w-3 h-3" /> Bölümler ({aiAnaliz.chapters.length})
+              </div>
+              <div className="space-y-1">
+                {aiAnaliz.chapters.map((ch, i) => (
+                  <button key={i} onClick={() => { trackAnTikla(vimeoId, ch.start, 'chapter'); onSeek?.(ch.start); }}
+                    className="w-full text-left bg-sky-500/5 hover:bg-sky-500/15 border border-sky-400/20 hover:border-sky-400/50 rounded-md px-2.5 py-1.5 flex items-center gap-2 transition spring-tap">
+                    <span className="bg-sky-500/30 text-sky-100 text-[10px] font-bold font-mono px-1.5 py-0.5 rounded flex-shrink-0 min-w-[44px] text-center">
+                      {formatSure(ch.start)}
+                    </span>
+                    <span className="text-white text-xs flex-1">{ch.baslik}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* AI tetikleyici — analiz yoksa */}
+          {!aiAnaliz && !aiYukleniyor && (
+            <button onClick={aiAnalizTetikle}
+              className="w-full bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 border border-purple-400/30 rounded-lg p-2.5 text-xs text-purple-200 font-semibold inline-flex items-center justify-center gap-2 spring-tap">
+              <Sparkles className="w-3.5 h-3.5" />
+              AI ile analiz et (Aha moments + Bölümler + Özet)
+            </button>
+          )}
+          {aiYukleniyor && (
+            <div className="bg-purple-500/10 border border-purple-400/30 rounded-lg p-2.5 text-xs text-purple-200 inline-flex items-center justify-center gap-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              AI analiz ediyor (~10sn)...
+            </div>
+          )}
+
+          {/* Aha! moments — AI veya heuristic */}
           {ahaMoments.length > 0 && !arama && (
             <div>
               <div className="text-amber-300/80 text-[10px] uppercase tracking-wider font-bold mb-2 inline-flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Aha! Anlar
+                <Sparkles className="w-3 h-3" />
+                Aha! Anlar
+                {aiAnaliz?.ahaMoments?.length > 0 && (
+                  <span className="text-amber-400/60 text-[9px] font-normal normal-case ml-1">(AI küratör)</span>
+                )}
               </div>
               <div className="space-y-1.5">
                 {ahaMoments.map((c, i) => (
-                  <button key={i} onClick={() => onSeek?.(c.start)}
+                  <button key={i} onClick={() => { trackAnTikla(vimeoId, c.start, 'aha'); onSeek?.(c.start); }}
                     className="w-full text-left bg-amber-400/10 hover:bg-amber-400/20 border border-amber-400/30 rounded-lg p-2.5 flex items-start gap-2 transition spring-tap">
                     <span className="bg-amber-400 text-purple-900 text-[10px] font-bold px-1.5 py-0.5 rounded inline-flex items-center gap-1 flex-shrink-0 mt-0.5">
                       <Play className="w-2.5 h-2.5" fill="currentColor" />{formatSure(c.start)}
                     </span>
-                    <p className="text-white/85 text-xs leading-relaxed flex-1">{c.text}</p>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white/85 text-xs leading-relaxed">{c.text}</p>
+                      {c.sebep && (
+                        <p className="text-amber-200/70 text-[10px] mt-1 italic">{c.sebep}</p>
+                      )}
+                    </div>
                   </button>
                 ))}
               </div>
@@ -150,7 +250,7 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
           {filtreli.length > 0 && (
             <div className="space-y-1 max-h-80 overflow-y-auto pr-1">
               {filtreli.slice(0, arama ? 50 : 100).map((c, i) => (
-                <button key={`${c.start}_${i}`} onClick={() => onSeek?.(c.start)}
+                <button key={`${c.start}_${i}`} onClick={() => { trackAnTikla(vimeoId, c.start, 'chunk'); onSeek?.(c.start); }}
                   className="w-full text-left bg-black/20 hover:bg-amber-500/15 border border-transparent hover:border-amber-400/30 rounded p-2 flex items-start gap-2 transition spring-tap group">
                   <span className="bg-white/10 group-hover:bg-amber-400 group-hover:text-purple-900 text-white/70 text-[10px] font-bold font-mono px-1.5 py-0.5 rounded inline-flex items-center gap-0.5 flex-shrink-0 mt-0.5 min-w-[44px] justify-center">
                     <Clock className="w-2.5 h-2.5" />{formatSure(c.start)}

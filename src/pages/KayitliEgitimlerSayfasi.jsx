@@ -14,6 +14,7 @@ import VideoOynatModal from '../components/VideoOynatModal';
 import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
 import UyeGirisModal from '../components/UyeGirisModal';
 import AiOneriKart from '../components/AiOneriKart';
+import PopulerAnlar from '../components/PopulerAnlar';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -215,8 +216,13 @@ const KayitliEgitimlerSayfasi = () => {
   const [transcriptAramaAcik, setTranscriptAramaAcik] = useState(() => {
     try { return localStorage.getItem('amare_transcript_search') === '1'; } catch { return false; }
   });
+  const [synonimAcik, setSynonimAcik] = useState(() => {
+    try { return localStorage.getItem('amare_transcript_synonim') === '1'; } catch { return false; }
+  });
   const [transcriptMatches, setTranscriptMatches] = useState({}); // { videoId: [{start, snippet, text}] }
   const [transcriptAraniyor, setTranscriptAraniyor] = useState(false);
+  const [synonimGenisletildi, setSynonimGenisletildi] = useState(false);
+  const [kullanilanTerimler, setKullanilanTerimler] = useState([]);
   const [seekTo, setSeekTo] = useState(null); // VideoOynatModal'a iletilen başlangıç saniyesi
 
   // Bookmark/share: URL'den gelen ?v=ID&t=SEC ile direkt oynatma için bekleyen
@@ -229,6 +235,10 @@ const KayitliEgitimlerSayfasi = () => {
   useEffect(() => {
     try { localStorage.setItem('amare_transcript_search', transcriptAramaAcik ? '1' : '0'); } catch {}
   }, [transcriptAramaAcik]);
+
+  useEffect(() => {
+    try { localStorage.setItem('amare_transcript_synonim', synonimAcik ? '1' : '0'); } catch {}
+  }, [synonimAcik]);
 
   // ─── URL persistence ──────────────────────────────────────────────────
   useEffect(() => {
@@ -468,12 +478,14 @@ const KayitliEgitimlerSayfasi = () => {
         const res = await fetch('/.netlify/functions/transcript-search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ q: arama.trim(), videoIds: ids }),
+          body: JSON.stringify({ q: arama.trim(), videoIds: ids, synonimGenislet: synonimAcik }),
         });
         const data = await res.json();
         const map = {};
         for (const r of data.results || []) map[r.id] = r.matches;
         setTranscriptMatches(map);
+        setSynonimGenisletildi(!!data.meta?.synonimGenisletildi);
+        setKullanilanTerimler(Array.isArray(data.meta?.kullanilanTerimler) ? data.meta.kullanilanTerimler : []);
       } catch (err) {
         console.warn('[transcript-search]', err.message);
       } finally {
@@ -481,7 +493,7 @@ const KayitliEgitimlerSayfasi = () => {
       }
     }, 500);
     return () => clearTimeout(t);
-  }, [transcriptAramaAcik, arama, prefiltre]);
+  }, [transcriptAramaAcik, arama, prefiltre, synonimAcik]);
 
   useEffect(() => { setGosterilen(PAGE_SIZE); }, [kategoriSet, dilKod, egitmenCoreId, yil, sureKod, siralama, arama, sadeceFav, sadeceIzlenen]);
 
@@ -785,6 +797,18 @@ const KayitliEgitimlerSayfasi = () => {
                 <Loader2 className="w-3 h-3 animate-spin" />
               )}
             </button>
+            {transcriptAramaAcik && (
+              <button onClick={() => { haptic(8); setSynonimAcik(s => !s); }}
+                title="Eş anlamlı kelimeleri de ara (örn: lider → önder, liderlik)"
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold spring-tap transition-all border ${
+                  synonimAcik
+                    ? 'bg-sky-400 text-gray-900 border-sky-300 shadow-md'
+                    : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                }`}>
+                <Sparkles className="w-3.5 h-3.5" />
+                Eş anlamlılar
+              </button>
+            )}
             <p className="text-[11px] sm:text-xs text-purple-200/90 flex items-center gap-1">
               <Sparkles className="w-3 h-3 text-amber-300" />
               {transcriptAramaAcik
@@ -798,6 +822,19 @@ const KayitliEgitimlerSayfasi = () => {
             <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-400/15 border border-amber-300/40 text-amber-100 text-[11px] sm:text-xs animate-fade-in">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span><strong className="text-amber-200">{timestampMatchSayisi}</strong> {t('rec_timestamp_banner_pre')}</span>
+            </div>
+          )}
+
+          {/* Banner: synonyms genişletildi */}
+          {transcriptAramaAcik && synonimGenisletildi && kullanilanTerimler.length > 1 && (
+            <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-sky-400/15 border border-sky-300/40 text-sky-100 text-[11px] sm:text-xs animate-fade-in flex-wrap">
+              <Sparkles className="w-3.5 h-3.5 text-sky-300 flex-shrink-0" />
+              <span>Eş anlamlılarla arandı:</span>
+              {kullanilanTerimler.slice(0, 6).map(term => (
+                <span key={term} className="px-1.5 py-0.5 rounded-full bg-sky-300/20 text-sky-100 font-semibold">
+                  {term}
+                </span>
+              ))}
             </div>
           )}
 
@@ -904,6 +941,15 @@ const KayitliEgitimlerSayfasi = () => {
         <div className="px-4 mb-4">
           <div className="container mx-auto max-w-7xl">
             <AiOneriKart />
+          </div>
+        </div>
+      )}
+
+      {/* Topluluğun Favorileri — popüler anlar widget (filtresiz görünür) */}
+      {!loading && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && !sadeceIzlenen && dilKod === 'all' && (
+        <div className="px-4 mb-4">
+          <div className="container mx-auto max-w-7xl">
+            <PopulerAnlar limit={5} />
           </div>
         </div>
       )}

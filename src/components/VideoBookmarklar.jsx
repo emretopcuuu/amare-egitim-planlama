@@ -6,6 +6,7 @@ import { Bookmark, BookmarkPlus, Loader2, Trash2, Play, X } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
+import { trackAnTikla } from '../utils/anlarTrack';
 
 function formatSure(s) {
   const m = Math.floor(s / 60);
@@ -166,7 +167,7 @@ const VideoBookmarklar = ({ vimeoId, iframeRef, onSeek }) => {
         <div className="space-y-1">
           {bookmarks.map(b => (
             <div key={b.id} className="flex items-center gap-2 p-2 bg-black/20 rounded text-xs hover:bg-black/30">
-              <button onClick={() => onSeek?.(b.saniye)}
+              <button onClick={() => { trackAnTikla(vimeoId, b.saniye, 'bookmark'); onSeek?.(b.saniye); }}
                 className="bg-amber-400/20 hover:bg-amber-400/40 text-amber-200 font-bold px-2 py-1 rounded inline-flex items-center gap-1 spring-tap">
                 <Play className="w-3 h-3" fill="currentColor" />{formatSure(b.saniye)}
               </button>

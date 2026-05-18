@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import KonusmaciTakipModal from './KonusmaciTakipModal';
 import VideoOynatModal from './VideoOynatModal';
 import UyeGirisModal from './UyeGirisModal';
+import EgitmenSozleri from './EgitmenSozleri';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, limit as fbLimit, getDocs } from 'firebase/firestore';
 import { makeCoreId } from '../context/DataContext';
@@ -36,12 +37,24 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
   const [kayitliVideolar, setKayitliVideolar] = useState(null); // null = henüz yüklenmedi
   const [kayitliLoading, setKayitliLoading] = useState(false);
   const [oynatilanVideo, setOynatilanVideo] = useState(null);
+  const [oynatSeekTo, setOynatSeekTo] = useState(null);
   const [girisModalAcik, setGirisModalAcik] = useState(false);
   const { isAuthenticated } = useAuth();
   const { toggle: takipToggle, isTakip } = useTakipEgitmenler();
 
   const handleKayitliOynat = (v) => {
     if (!isAuthenticated) { setGirisModalAcik(true); return; }
+    setOynatSeekTo(null);
+    setOynatilanVideo(v);
+  };
+
+  // Söz tıklanınca: ilgili videoyu kayıtlı listesinden bul → start ile aç
+  const handleSozTikla = (soz) => {
+    if (!isAuthenticated) { setGirisModalAcik(true); return; }
+    const liste = kayitliVideolar || [];
+    const v = liste.find(x => (x.vimeoId || x.id) === soz.vimeoId)
+      || { id: soz.vimeoId, vimeoId: soz.vimeoId, baslik: soz.baslik, thumbnailUrl: soz.thumbnailUrl };
+    setOynatSeekTo(Math.floor(soz.start || 0));
     setOynatilanVideo(v);
   };
   const coreId = makeCoreId(ad);
@@ -212,6 +225,7 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
             { key: 'gelecek', label: `Gelecek (${gelecek.length})`, show: true },
             { key: 'gecmis', label: `Geçmiş (${gecmis.length})`, show: gecmis.length > 0 },
             { key: 'kayitli', label: 'Kayıtlı Eğitimler', show: true },
+            { key: 'sozler', label: 'İlham Sözleri', show: true },
             { key: 'bio', label: 'Biyografi', show: !!kayit?.biyografi },
           ].filter(x => x.show).map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
@@ -307,6 +321,9 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
               )}
             </>
           )}
+          {tab === 'sozler' && (
+            <EgitmenSozleri coreId={egitmenCoreId} onSozTikla={handleSozTikla} />
+          )}
           {tab === 'bio' && kayit?.biyografi && (
             <div className="prose max-w-none">
               <p className="text-gray-700 leading-relaxed whitespace-pre-line">{kayit.biyografi}</p>
@@ -316,7 +333,15 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
       </div>
 
       {takipModal && <KonusmaciTakipModal konusmaciAd={displayAd} onClose={() => setTakipModal(false)} />}
-      {oynatilanVideo && <VideoOynatModal video={oynatilanVideo} onClose={() => setOynatilanVideo(null)} />}
+      {oynatilanVideo && (
+        <VideoOynatModal
+          video={oynatilanVideo}
+          seekTo={oynatSeekTo}
+          tumVideolar={kayitliVideolar || []}
+          onOynat={(v) => { setOynatSeekTo(null); setOynatilanVideo(v); }}
+          onClose={() => { setOynatilanVideo(null); setOynatSeekTo(null); }}
+        />
+      )}
       <UyeGirisModal acik={girisModalAcik} onClose={() => setGirisModalAcik(false)} />
     </div>
   );

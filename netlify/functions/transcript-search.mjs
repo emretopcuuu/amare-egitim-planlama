@@ -19,6 +19,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import admin from 'firebase-admin';
+import { expandSynonyms, hasSynonyms } from './_synonyms.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -77,7 +78,8 @@ function makeSnippet(text, q, maxLen = 140) {
 }
 
 // ─── Tek doc için match çıkar ─────────────────────────────────────────────
-function findMatches(data, q, nQ) {
+// nQTerms: normalize edilmiş bir veya birden çok arama terimi (synonyms)
+function findMatches(data, q, nQTerms) {
   const chunks = data.transcriptChunks;
   const matches = [];
 
@@ -86,12 +88,15 @@ function findMatches(data, q, nQ) {
     for (const c of chunks) {
       if (!c.text) continue;
       const nC = normalize(c.text);
-      if (nC.includes(nQ)) {
+      // Herhangi bir terim eşleşiyorsa kabul
+      const eslesenTerim = nQTerms.find(t => nC.includes(t));
+      if (eslesenTerim) {
         matches.push({
           start: c.start,
           end: c.end,
           text: c.text,
-          snippet: makeSnippet(c.text, q, 140),
+          snippet: makeSnippet(c.text, eslesenTerim, 140),
+          matchedTerm: eslesenTerim,
         });
         if (matches.length >= 5) break;
       }
@@ -102,20 +107,24 @@ function findMatches(data, q, nQ) {
   // 2. FALLBACK: plain transcript metninde ara (timestamp yok)
   if (typeof data.transcript === 'string' && data.transcript.length > 0) {
     const nText = normalize(data.transcript);
-    let pos = 0;
-    while (matches.length < 3) {
-      const idx = nText.indexOf(nQ, pos);
-      if (idx < 0) break;
-      matches.push({
-        start: null,
-        end: null,
-        text: '',
-        snippet: makeSnippet(
-          data.transcript.slice(Math.max(0, idx - 80), idx + nQ.length + 80),
-          q, 140
-        ),
-      });
-      pos = idx + nQ.length;
+    for (const term of nQTerms) {
+      let pos = 0;
+      while (matches.length < 3) {
+        const idx = nText.indexOf(term, pos);
+        if (idx < 0) break;
+        matches.push({
+          start: null,
+          end: null,
+          text: '',
+          snippet: makeSnippet(
+            data.transcript.slice(Math.max(0, idx - 80), idx + term.length + 80),
+            term, 140
+          ),
+          matchedTerm: term,
+        });
+        pos = idx + term.length;
+      }
+      if (matches.length >= 3) break;
     }
     if (matches.length > 0) return { matches, type: 'text' };
   }
@@ -124,7 +133,7 @@ function findMatches(data, q, nQ) {
 }
 
 // ─── Tek batch'i çek (paralel için Promise döndürür) ──────────────────────
-async function fetchBatch(batch, q, nQ) {
+async function fetchBatch(batch, q, nQTerms) {
   const snap = await db.collection('kayitli_egitimler')
     .where(admin.firestore.FieldPath.documentId(), 'in', batch)
     .where('transcriptVar', '==', true)
@@ -133,7 +142,7 @@ async function fetchBatch(batch, q, nQ) {
   const out = [];
   let chunks = 0, text = 0;
   for (const d of snap.docs) {
-    const { matches, type } = findMatches(d.data(), q, nQ);
+    const { matches, type } = findMatches(d.data(), q, nQTerms);
     if (matches.length === 0) continue;
     out.push({ id: d.id, matches });
     if (type === 'chunks') chunks++;
@@ -154,6 +163,7 @@ export default async (req) => {
     const body = await req.json();
     const q = (body.q || '').trim();
     const videoIds = Array.isArray(body.videoIds) ? body.videoIds.slice(0, 1500) : [];
+    const synonimGenislet = body.synonimGenislet === true;
 
     if (!q || q.length < 2) {
       return new Response(JSON.stringify({ results: [], hint: 'Sorgu en az 2 karakter olmalı' }), {
@@ -168,11 +178,16 @@ export default async (req) => {
 
     const t0 = Date.now();
 
+    // Synonyms — opt-in, tam sözlük eşleşmesi varsa genişlet
+    const synonimVar = synonimGenislet && hasSynonyms(q);
+    const synonyms = synonimVar ? expandSynonyms(q) : [q];
+    const nQTerms = Array.from(new Set(synonyms.map(s => normalize(s)).filter(Boolean)));
+
     // Cache kontrolü — aynı sorgu + aynı ID seti son 60sn'de geldi mi
     const idsKey = videoIds.length > 100
       ? `${videoIds.length}-${videoIds[0]}-${videoIds[videoIds.length - 1]}`
       : videoIds.slice().sort().join(',');
-    const cacheKey = `${normalize(q)}|${idsKey}`;
+    const cacheKey = `${nQTerms.join('+')}|${idsKey}`;
     const cached = cacheGet(cacheKey);
     if (cached) {
       return new Response(JSON.stringify({
@@ -184,14 +199,12 @@ export default async (req) => {
       });
     }
 
-    const nQ = normalize(q);
-
     // PARALEL batch'ler — Firestore documentId() in [...] 30'lu, transcriptVar pre-filter
     const batches = [];
     for (let i = 0; i < videoIds.length; i += 30) {
       batches.push(videoIds.slice(i, i + 30));
     }
-    const batchResults = await Promise.all(batches.map(b => fetchBatch(b, q, nQ)));
+    const batchResults = await Promise.all(batches.map(b => fetchBatch(b, q, nQTerms)));
 
     const results = [];
     let chunksHit = 0, textHit = 0;
@@ -211,6 +224,8 @@ export default async (req) => {
         cacheHit: false,
         sureMs: Date.now() - t0,
         batchSayisi: batches.length,
+        synonimGenisletildi: synonimVar,
+        kullanilanTerimler: nQTerms,
       },
     };
     cacheSet(cacheKey, payload);

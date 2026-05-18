@@ -157,6 +157,20 @@ service cloud.firestore {
         allow read: if true;
         allow write: if false;
       }
+
+      // AI analiz — ahaMoments + chapters + ozet (Function yazar, herkes okur)
+      // collectionGroup query'ler için collectionGroup ayrıca açılır altta
+      match /ai_analiz/{docId} {
+        allow read: if true;
+        allow write: if false;
+      }
+    }
+
+    // collectionGroup query izni — bugunun-ilhami + bana-ozel-aha
+    // backend'leri tüm ai_analiz alt-doc'larını tek query'de okuyor
+    match /{path=**}/ai_analiz/{docId} {
+      allow read: if true;
+      allow write: if false;
     }
 
     // Üye profilleri — kendi profil doc'una okuma/yazma izni
@@ -264,6 +278,30 @@ service cloud.firestore {
     // Sadece server yazar, kimse okumaz (PII korumalı)
     match /giris_link_log/{amareId} {
       allow read, write: if false;
+    }
+
+    // Popüler anlar — topluluk tıklama sayacı
+    // Sadece server (anlar-popularla Function) yazar
+    // Public okuma — widget herkese görünür
+    match /popular_anlar/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /popular_anlar_cache/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Eğitmen quotes cache — public okuma, sadece server yazar
+    match /egitmen_quotes_cache/{coreId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Günlük ilham cache — public okuma, sadece server yazar
+    match /gunluk_ilham_cache/{day} {
+      allow read: if true;
+      allow write: if false;
     }
 
     // Diğer her koleksiyon — varsayılan: tamamen kapalı

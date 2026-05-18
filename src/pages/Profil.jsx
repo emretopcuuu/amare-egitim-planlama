@@ -35,6 +35,8 @@ import confetti from 'canvas-confetti';
 import { webPushDestekli, webPushIzinDurumu, webPushKaydolu, webPushIptal } from '../utils/webPush';
 import BultenModal from '../components/BultenModal';
 import EgitimYolumBlok from '../components/EgitimYolumBlok';
+import BugununIlhami from '../components/BugununIlhami';
+import BanaOzelAha from '../components/BanaOzelAha';
 
 const PROFIL_CACHE_KEY = 'amare_profil_v1';
 const PROFIL_CACHE_TTL = 5 * 60 * 1000; // 5dk
@@ -785,6 +787,12 @@ const Profil = () => {
             />
           </div>
         )}
+
+        {/* ═══ İLHAM WIDGETLERİ — Bugünün İlhamı + Sana Özel ═══ */}
+        <div className="stagger-fade grid sm:grid-cols-2 gap-3" style={{ animationDelay: '160ms' }}>
+          <BugununIlhami />
+          {!isAnonymous && <BanaOzelAha />}
+        </div>
 
         {/* ═══ EĞİTMEN ANALYTİCS ═══ (sadece eğitmenler için) */}
         {userDoc?.egitmenCoreId && (
