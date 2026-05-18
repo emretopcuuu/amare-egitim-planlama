@@ -11,6 +11,7 @@ import VideoYorumlar from './VideoYorumlar';
 import VideoQuiz from './VideoQuiz';
 import VideoReactions from './VideoReactions';
 import VideoEkler from './VideoEkler';
+import VideoTranscriptChunks from './VideoTranscriptChunks';
 
 function formatSure(saniye) {
   if (!saniye || saniye < 1) return null;
@@ -173,6 +174,15 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = n
               iframeRef.current.src = `${baseSrc}#t=${Math.floor(s)}s`;
             }
           }} />
+
+          {/* Transcript chunks — Aha! moments + arama + zaman damgalı navigation */}
+          <VideoTranscriptChunks vimeoId={video.vimeoId || video.id} sure={video.sure}
+            onSeek={(s) => {
+              if (iframeRef.current) {
+                const baseSrc = iframeRef.current.src.replace(/#t=\d+s$/, '');
+                iframeRef.current.src = `${baseSrc}#t=${Math.floor(s)}s`;
+              }
+            }} />
 
           {/* Açıklama (collapsible) */}
           {aciklama && (
