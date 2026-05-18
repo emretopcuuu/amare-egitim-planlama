@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { X, Calendar, Eye, Clock, Tag, Video as VideoIcon, Play } from 'lucide-react';
 import { useVimeoTimeTracker } from '../utils/useVimeoTimeTracker';
 import { updateProgress } from '../utils/watchProgress';
+import { vimeoSeekAndPlay } from '../utils/vimeoSeek';
 import { useAuth } from '../context/AuthContext';
 import VideoYildiz from './VideoYildiz';
 import VideoBookmarklar from './VideoBookmarklar';
@@ -167,22 +168,12 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = n
           <VideoEkler vimeoId={video.vimeoId || video.id} />
 
           {/* Bookmark + zaman damgalı kayıt */}
-          <VideoBookmarklar vimeoId={video.vimeoId || video.id} iframeRef={iframeRef} onSeek={(s) => {
-            // Vimeo iframe'i seek için yeniden yükle
-            if (iframeRef.current) {
-              const baseSrc = iframeRef.current.src.replace(/#t=\d+s$/, '');
-              iframeRef.current.src = `${baseSrc}#t=${Math.floor(s)}s`;
-            }
-          }} />
+          <VideoBookmarklar vimeoId={video.vimeoId || video.id} iframeRef={iframeRef}
+            onSeek={(s) => vimeoSeekAndPlay(iframeRef.current, s)} />
 
           {/* Transcript chunks — Aha! moments + arama + zaman damgalı navigation */}
           <VideoTranscriptChunks vimeoId={video.vimeoId || video.id} sure={video.sure}
-            onSeek={(s) => {
-              if (iframeRef.current) {
-                const baseSrc = iframeRef.current.src.replace(/#t=\d+s$/, '');
-                iframeRef.current.src = `${baseSrc}#t=${Math.floor(s)}s`;
-              }
-            }} />
+            onSeek={(s) => vimeoSeekAndPlay(iframeRef.current, s)} />
 
           {/* Açıklama (collapsible) */}
           {aciklama && (
