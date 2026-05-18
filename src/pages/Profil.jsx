@@ -268,9 +268,14 @@ const Profil = () => {
   useEffect(() => { fetchRef.current = profilVerisiFetch; });
 
   useEffect(() => {
-    if (userDoc?.amareId) profilVerisiFetch();
+    if (userDoc?.amareId) {
+      profilVerisiFetch();
+    } else if (userDoc !== null && !isAnonymous) {
+      // userDoc yüklendi ama amareId yok → açık hata göster
+      setHata('Amare ID bağlı değil. Çıkış yapıp magic link ile tekrar gir, sponsorundan kontrol iste.');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [userDoc?.amareId]);
+  }, [userDoc?.amareId, userDoc, isAnonymous]);
 
   // Rank takip — login kullanıcı için anında kontrol (background, async)
   // Eğer rank değişmişse Firestore'da egitim_durumu güncellenir
