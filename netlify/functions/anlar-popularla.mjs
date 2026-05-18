@@ -145,15 +145,19 @@ export default async (req) => {
         let alintiText = null;
         let alintiSebep = null;
 
-        // 1. öncelik: AI küratörlü aha moment (±15sn)
+        // 1. öncelik: AI küratörlü aha moment (önce sıkı ±15sn, sonra geniş ±60sn)
         if (ai && Array.isArray(ai.ahaMoments)) {
-          const near = ai.ahaMoments.find(a => Math.abs((a.start || 0) - r.start) < 15);
+          let near = ai.ahaMoments.find(a => Math.abs((a.start || 0) - r.start) < 15);
+          if (!near) {
+            // Geniş arama — AI temizlemiş metni tercih et, transcript chunk'ta hata olabilir
+            near = ai.ahaMoments.find(a => Math.abs((a.start || 0) - r.start) < 60);
+          }
           if (near) {
             alintiText = near.text;
             alintiSebep = near.sebep;
           }
         }
-        // 2. fallback: transcript chunk metni (en yakın chunk, ±10sn)
+        // 2. fallback: AI yoksa transcript chunk metni (Whisper hatalı olabilir, son çare)
         if (!alintiText && chunks.length > 0) {
           const near = chunks.find(c => Math.abs((c.start || 0) - r.start) < 10);
           if (near?.text && near.text.length >= 20) {

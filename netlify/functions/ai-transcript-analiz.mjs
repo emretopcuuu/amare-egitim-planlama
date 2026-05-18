@@ -31,7 +31,8 @@ const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flas
 // Cache invalidation — bu numarayı bump'la, eski cache'ler atılır.
 // v1 → original (18K char truncation bug, chapters yarıda)
 // v2 → 200K char limit + chapter coverage uyarısı
-const PROMPT_VERSION = 2;
+// v3 → ahaMoments Whisper hatası düzeltme + Doğrudan Satış sözlüğü
+const PROMPT_VERSION = 3;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -59,6 +60,17 @@ Türkçe transcript verilir, 3 ÇIKTI üretirsin (sadece JSON):
 KURALLAR:
 - ahaMoments: 3-5 adet, gerçekten düşündürücü/güçlü alıntılar. Soru cümlesi değil, ifade.
   ahaMoments TÜM VİDEO BOYUNCA dağılmalı (başı, ortası, sonu). Hepsi videonun başında olmasın.
+
+- ÖNEMLİ — TRANSCRIPT TEMİZLİĞİ:
+  Transcript Whisper (otomatik konuşma tanıma) ile üretildi. Türkçede yaygın hatalar yapıyor:
+  "sitres" → "stres", "ciharet" → "ticaret", "mademleri" → "maddemiz", "baspılıyor" → "başlıyor",
+  "Burken" → "Buradan", "dürüdü" → "tüyo", "menüm" → "benim", "ki şı" → "kişi" vb.
+  ahaMoments[].text alanını yazarken:
+  - Anlamı koruyarak Whisper hatalarını DÜZELT (yazım, kelime hataları)
+  - Konuşmacının üslubunu BOZMA (orijinal cümle yapısı kalsın)
+  - Belirgin yanlış kelimeyi düzelt, şüpheliyi bırak
+  - Sonuç DOĞRU Türkçe akıcı bir alıntı olmalı
+
 - chapters: 5-10 adet, videoyu mantıksal parçalara böl. Her chapter min 60sn olmalı.
   ÇOK ÖNEMLİ: chapters TÜM VİDEO SÜRESİNİ KAPSAMALI. Son chapter videonun son %15'i içinde olmalı.
   Örnek: 33dk video → son chapter en geç 28dk civarında başlamalı. Yarıda bitirme.
