@@ -2,8 +2,8 @@
 // AI ile analiz edilmiş videolarındaki aha moment'leri toplar.
 // Tıklayınca ilgili videoyu o saniyeden açar (callback ile)
 
-import React, { useEffect, useState } from 'react';
-import { Quote, Loader2, Play, Sparkles, Tag, Calendar } from 'lucide-react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { Quote, Loader2, Play, Sparkles, Tag, Calendar, AlertCircle, RotateCw } from 'lucide-react';
 import { metinTemizleDeep } from '../utils/metinTemizle';
 
 const EgitmenSozleri = ({ coreId, onSozTikla }) => {
@@ -11,26 +11,24 @@ const EgitmenSozleri = ({ coreId, onSozTikla }) => {
   const [yukleniyor, setYukleniyor] = useState(true);
   const [hata, setHata] = useState(null);
 
-  useEffect(() => {
+  const fetchSozler = useCallback(async () => {
     if (!coreId) return;
-    let aktif = true;
     setYukleniyor(true);
     setHata(null);
-    (async () => {
-      try {
-        const res = await fetch(`/.netlify/functions/egitmen-quotes?coreId=${encodeURIComponent(coreId)}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        if (!aktif) return;
-        setVeri(metinTemizleDeep(data));
-      } catch (e) {
-        if (aktif) setHata(e.message);
-      } finally {
-        if (aktif) setYukleniyor(false);
-      }
-    })();
-    return () => { aktif = false; };
+    try {
+      const res = await fetch(`/.netlify/functions/egitmen-quotes?coreId=${encodeURIComponent(coreId)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setVeri(metinTemizleDeep(data));
+    } catch (e) {
+      setHata(e.message || 'Yüklenemedi');
+      console.warn('[egitmen-quotes] err:', e.message);
+    } finally {
+      setYukleniyor(false);
+    }
   }, [coreId]);
+
+  useEffect(() => { fetchSozler(); }, [fetchSozler]);
 
   if (yukleniyor) {
     return (
@@ -41,7 +39,19 @@ const EgitmenSozleri = ({ coreId, onSozTikla }) => {
     );
   }
 
-  if (hata) return null;
+  if (hata) {
+    return (
+      <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-rose-700 text-sm text-center">
+        <AlertCircle className="w-5 h-5 mx-auto mb-2 opacity-60" />
+        İlham sözleri yüklenemedi.
+        <div className="text-xs mt-1 opacity-70">{hata}</div>
+        <button onClick={fetchSozler}
+          className="mt-3 bg-rose-500 hover:bg-rose-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5">
+          <RotateCw className="w-3 h-3" /> Yenile
+        </button>
+      </div>
+    );
+  }
 
   const sozler = veri?.sozler || [];
   if (sozler.length === 0) {
