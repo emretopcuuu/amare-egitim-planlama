@@ -27,6 +27,7 @@ import AiAsistanModal from '../components/AiAsistanModal';
 import LeaderboardModal from '../components/LeaderboardModal';
 import EkipBildirimAyar from '../components/EkipBildirimAyar';
 import AylikRaporPdf from '../components/AylikRaporPdf';
+import TestAsamaBanner from '../components/TestAsamaBanner';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { useCountUp } from '../utils/useCountUp';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
@@ -145,6 +146,8 @@ const Ekibim = () => {
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-32">
+      <TestAsamaBanner aciklama="Ekibim sayfası henüz tamamlanmadı, geliştirme devam ediyor" />
+
       {/* Pull-to-refresh göstergesi (mobile) */}
       {pullY > 0 && (
         <div style={{ height: `${pullY}px` }}

@@ -37,6 +37,7 @@ import BultenModal from '../components/BultenModal';
 import EgitimYolumBlok from '../components/EgitimYolumBlok';
 import BugununIlhami from '../components/BugununIlhami';
 import BanaOzelAha from '../components/BanaOzelAha';
+import TestAsamaBanner from '../components/TestAsamaBanner';
 
 const PROFIL_CACHE_KEY = 'amare_profil_v1';
 const PROFIL_CACHE_TTL = 5 * 60 * 1000; // 5dk
@@ -614,6 +615,8 @@ const Profil = () => {
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
+      <TestAsamaBanner aciklama="Profil sayfası henüz tamamlanmadı, geliştirme devam ediyor" />
+
       {/* Pull-to-refresh göstergesi (mobile) */}
       {pullY > 0 && (
         <div style={{ height: `${pullY}px` }}
