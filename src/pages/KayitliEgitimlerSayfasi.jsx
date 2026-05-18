@@ -5,7 +5,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft, Search, X, Video, Play, Calendar, Tag, Loader2, User, Globe,
   Clock, Eye, Heart, History, ArrowDownUp, ChevronDown, SlidersHorizontal,
-  Share2, ChevronUp, RotateCcw, FileText, Sparkles, RotateCw,
+  Share2, ChevronUp, RotateCcw, FileText, Sparkles, RotateCw, Flame,
 } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, limit as fbLimit, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -213,6 +213,10 @@ const KayitliEgitimlerSayfasi = () => {
 
   // ─── Transcript arama (Faz: video içinde arama) ──────────────────────
   // localStorage'da hatırla (kullanıcı tercihi)
+  // 3'lü AI/keşif sekmesi (Yarıda / Sana Özel / Topluluğun Favorileri)
+  // null = hepsi kapalı, 'yarida' | 'sana_ozel' | 'populer'
+  const [kesfetSekme, setKesfetSekme] = useState(null);
+
   const [transcriptAramaAcik, setTranscriptAramaAcik] = useState(() => {
     try { return localStorage.getItem('amare_transcript_search') === '1'; } catch { return false; }
   });
@@ -931,25 +935,71 @@ const KayitliEgitimlerSayfasi = () => {
         </div>
       </div>
 
-      {/* Yarıda kaldıkların — sadece filtre/arama yokken göster */}
-      {!loading && yaridaKalanlar.length > 0 && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && !sadeceIzlenen && dilKod === 'all' && (
-        <YaridaKalanRaf t={t} tDynamic={tDynamic} list={yaridaKalanlar} onOynat={(v, startSn) => handleOynat(v, startSn)} onTemizle={(id) => watchProgress.remove(id)} />
-      )}
-
-      {/* AI Öneri — sadece login user için ve filtresiz görünür */}
+      {/* 3'lü Keşfet sekme — Yarıda / Sana Özel / Topluluğun Favorileri */}
+      {/* Filtresizken görünür, hepsi kapalı başlar, tek tıkla aç/kapa */}
       {!loading && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && !sadeceIzlenen && dilKod === 'all' && (
         <div className="px-4 mb-4">
-          <div className="container mx-auto max-w-7xl">
-            <AiOneriKart onOynat={(v) => handleOynat(v, null)} />
-          </div>
-        </div>
-      )}
+          <div className="container mx-auto max-w-7xl space-y-3">
+            {/* Sekme butonları */}
+            <div className="flex flex-wrap gap-2">
+              {yaridaKalanlar.length > 0 && (
+                <button onClick={() => { haptic(5); setKesfetSekme(s => s === 'yarida' ? null : 'yarida'); }}
+                  className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold border transition spring-tap ${
+                    kesfetSekme === 'yarida'
+                      ? 'bg-amber-400 text-purple-900 border-amber-300 shadow-lg shadow-amber-500/30'
+                      : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                  }`}>
+                  <History className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Yarıda Kaldıkların
+                  <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                    kesfetSekme === 'yarida' ? 'bg-purple-900/30 text-purple-900' : 'bg-amber-400/30 text-amber-200'
+                  }`}>{yaridaKalanlar.length}</span>
+                  {kesfetSekme === 'yarida' ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+              )}
+              {isAuthenticated && (
+                <button onClick={() => { haptic(5); setKesfetSekme(s => s === 'sana_ozel' ? null : 'sana_ozel'); }}
+                  className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold border transition spring-tap ${
+                    kesfetSekme === 'sana_ozel'
+                      ? 'bg-purple-400 text-purple-900 border-purple-300 shadow-lg shadow-purple-500/30'
+                      : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                  }`}>
+                  <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                  Sana Özel
+                  {kesfetSekme === 'sana_ozel' ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                </button>
+              )}
+              <button onClick={() => { haptic(5); setKesfetSekme(s => s === 'populer' ? null : 'populer'); }}
+                className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-bold border transition spring-tap ${
+                  kesfetSekme === 'populer'
+                    ? 'bg-rose-400 text-purple-900 border-rose-300 shadow-lg shadow-rose-500/30'
+                    : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                }`}>
+                <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                Topluluğun Favorileri
+                {kesfetSekme === 'populer' ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </button>
+            </div>
 
-      {/* Topluluğun Favorileri — popüler anlar widget (filtresiz görünür) */}
-      {!loading && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && !sadeceIzlenen && dilKod === 'all' && (
-        <div className="px-4 mb-4">
-          <div className="container mx-auto max-w-7xl">
-            <PopulerAnlar limit={5} onOynat={(v, startSn) => handleOynat(v, startSn)} />
+            {/* Aktif sekme içeriği — animate-fade-in ile akıcı */}
+            {kesfetSekme === 'yarida' && (
+              <div className="animate-fade-in">
+                <YaridaKalanRaf t={t} tDynamic={tDynamic} list={yaridaKalanlar}
+                  onOynat={(v, startSn) => handleOynat(v, startSn)}
+                  onTemizle={(id) => watchProgress.remove(id)}
+                  inline />
+              </div>
+            )}
+            {kesfetSekme === 'sana_ozel' && (
+              <div className="animate-fade-in">
+                <AiOneriKart onOynat={(v) => handleOynat(v, null)} />
+              </div>
+            )}
+            {kesfetSekme === 'populer' && (
+              <div className="animate-fade-in">
+                <PopulerAnlar limit={5} onOynat={(v, startSn) => handleOynat(v, startSn)} />
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1268,18 +1318,25 @@ const SheetChip = ({ active, onClick, color, children }) => (
 );
 
 // ─── Yarıda kaldıkların rafı (horizontal carousel) ───────────────────────
-const YaridaKalanRaf = ({ t, list, onOynat, onTemizle, tDynamic = (s) => s }) => {
+const YaridaKalanRaf = ({ t, list, onOynat, onTemizle, tDynamic = (s) => s, inline = false }) => {
   if (!list?.length) return null;
+  // inline=true ise (sekme içinde) dış padding/container yok, sade carousel
+  const WrapTag = inline ? React.Fragment : 'div';
+  const wrapProps = inline ? {} : { className: 'px-4 pt-2 pb-3' };
+  const InnerTag = inline ? React.Fragment : 'div';
+  const innerProps = inline ? {} : { className: 'container mx-auto max-w-7xl' };
   return (
-    <div className="px-4 pt-2 pb-3">
-      <div className="container mx-auto max-w-7xl">
-        <div className="flex items-center justify-between mb-2">
-          <h2 className="text-white text-sm sm:text-base font-bold inline-flex items-center gap-2">
-            <History className="w-4 h-4 text-amber-300" />
-            {t('rec_resume_title')}
-            <span className="text-amber-300/70 text-xs font-normal">({list.length})</span>
-          </h2>
-        </div>
+    <WrapTag {...wrapProps}>
+      <InnerTag {...innerProps}>
+        {!inline && (
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-white text-sm sm:text-base font-bold inline-flex items-center gap-2">
+              <History className="w-4 h-4 text-amber-300" />
+              {t('rec_resume_title')}
+              <span className="text-amber-300/70 text-xs font-normal">({list.length})</span>
+            </h2>
+          </div>
+        )}
         <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4 snap-x snap-mandatory">
           {list.map(({ video: v, progress: p }) => {
             const kalan = Math.max(1, Math.round((p.duration - p.t) / 60));
@@ -1332,8 +1389,8 @@ const YaridaKalanRaf = ({ t, list, onOynat, onTemizle, tDynamic = (s) => s }) =>
             );
           })}
         </div>
-      </div>
-    </div>
+      </InnerTag>
+    </WrapTag>
   );
 };
 
