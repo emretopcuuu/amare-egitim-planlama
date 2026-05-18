@@ -789,39 +789,59 @@ const KayitliEgitimlerSayfasi = () => {
             </button>
           </div>
 
-          {/* Transcript arama toggle + mini açıklama */}
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <button onClick={() => { haptic(8); setTranscriptAramaAcik(s => !s); }}
-              title={t('rec_search_in_video_desc_on')}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold spring-tap transition-all border ${
-                transcriptAramaAcik
-                  ? 'bg-amber-400 text-gray-900 border-amber-300 shadow-md'
-                  : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-              }`}>
-              <FileText className="w-3.5 h-3.5" />
-              {t('rec_search_in_video')}
-              {transcriptAramaAcik && transcriptAraniyor && (
-                <Loader2 className="w-3 h-3 animate-spin" />
-              )}
-            </button>
+          {/* Arama tipi — Segmented control + açıklama */}
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <span className="text-purple-200/70 text-[10px] sm:text-xs uppercase tracking-wider font-bold inline-flex items-center gap-1">
+              <Search className="w-3 h-3" />Arama tipi
+            </span>
+
+            {/* Segmented control: 2 seçenek tek kapsülde */}
+            <div className="inline-flex rounded-full bg-black/30 border border-white/15 p-0.5 shadow-inner">
+              <button onClick={() => { haptic(5); setTranscriptAramaAcik(false); }}
+                title="Sadece video başlığı + eğitmen adında arar"
+                className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold spring-tap transition-all ${
+                  !transcriptAramaAcik
+                    ? 'bg-white text-purple-900 shadow-md'
+                    : 'text-white/70 hover:text-white'
+                }`}>
+                Başlık
+              </button>
+              <button onClick={() => { haptic(8); setTranscriptAramaAcik(true); }}
+                title="Eğitimde söylenen tüm konuşmalarda derin arama yapar"
+                className={`inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-full text-xs font-bold spring-tap transition-all ${
+                  transcriptAramaAcik
+                    ? 'bg-amber-400 text-purple-900 shadow-md ring-2 ring-amber-300/50'
+                    : 'text-white/70 hover:text-white'
+                }`}>
+                <Sparkles className="w-3.5 h-3.5" />
+                İçerikte de
+                {transcriptAramaAcik && transcriptAraniyor && (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                )}
+              </button>
+            </div>
+
+            {/* Eş anlamlılar — sadece içerik aramada görünür */}
             {transcriptAramaAcik && (
               <button onClick={() => { haptic(8); setSynonimAcik(s => !s); }}
                 title="Eş anlamlı kelimeleri de ara (örn: lider → önder, liderlik)"
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] sm:text-xs font-semibold spring-tap transition-all border ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold spring-tap transition-all border ${
                   synonimAcik
-                    ? 'bg-sky-400 text-gray-900 border-sky-300 shadow-md'
-                    : 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                    ? 'bg-sky-400 text-purple-900 border-sky-300 shadow-md'
+                    : 'bg-white/10 text-white/80 border-white/20 hover:bg-white/20'
                 }`}>
                 <Sparkles className="w-3.5 h-3.5" />
-                Eş anlamlılar
+                + Eş anlamlılar
               </button>
             )}
-            <p className="text-[11px] sm:text-xs text-purple-200/90 flex items-center gap-1">
-              <Sparkles className="w-3 h-3 text-amber-300" />
-              {transcriptAramaAcik
-                ? t('rec_search_in_video_desc_on')
-                : t('rec_search_in_video_desc_off')}
-            </p>
+
+            {/* Mini açıklama — sadece pasifken ipucu */}
+            {!transcriptAramaAcik && (
+              <span className="text-amber-200/80 text-[11px] sm:text-xs inline-flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-amber-300" />
+                "İçerikte de" ile eğitim içindeki konuşmalardan arar
+              </span>
+            )}
           </div>
 
           {/* Banner: zaman damgalı (Whisper chunks) eşleşme sayısı */}
