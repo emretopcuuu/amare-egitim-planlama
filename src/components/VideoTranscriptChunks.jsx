@@ -97,15 +97,41 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
       // AI çıktısı (start + text + sebep)
       return aiAnaliz.ahaMoments;
     }
-    // Heuristic fallback
+    // Heuristic fallback — TÜM VİDEO boyunca dağıtılmış 5 aday
     if (!chunks || chunks.length < 5) return [];
-    const aha = chunks.filter(c => {
+
+    // 1) Kriterleri sağlayan aday havuz (cümle dolu, soru değil, yeterince uzun)
+    const adaylar = chunks.filter(c => {
       const dur = (c.end || 0) - (c.start || 0);
       const len = (c.text || '').length;
       const sorulu = (c.text || '').includes('?');
       return dur >= 4 && dur <= 25 && len >= 60 && len <= 250 && !sorulu;
-    }).slice(0, 5);
-    return aha;
+    });
+    if (adaylar.length === 0) return [];
+
+    // 2) Video toplam süresi → 5 eşit dilime böl, her dilimden 1 aday seç
+    const son = adaylar[adaylar.length - 1];
+    const toplamSn = Math.max(sure || 0, son.end || son.start || 0);
+    if (toplamSn < 60) return adaylar.slice(0, 5); // çok kısa video — eskisi gibi
+
+    const HEDEF = 5;
+    const dilim = toplamSn / HEDEF;
+    const secilen = [];
+    for (let i = 0; i < HEDEF; i++) {
+      const dilimBas = i * dilim;
+      const dilimSon = (i + 1) * dilim;
+      // Bu dilimdeki adaylar
+      const dilimAdaylar = adaylar.filter(c =>
+        (c.start || 0) >= dilimBas && (c.start || 0) < dilimSon
+      );
+      if (dilimAdaylar.length === 0) continue;
+      // Bu dilimden EN UZUN metni seç (genelde daha içerikli)
+      const enIyi = dilimAdaylar.reduce((a, b) =>
+        (b.text?.length || 0) > (a.text?.length || 0) ? b : a
+      );
+      secilen.push(enIyi);
+    }
+    return secilen;
   }, [chunks, aiAnaliz]);
 
   // Henüz yüklenmedi
@@ -197,11 +223,15 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
           {/* Aha! moments — AI veya heuristic */}
           {ahaMoments.length > 0 && !arama && (
             <div>
-              <div className="text-amber-300/80 text-[10px] uppercase tracking-wider font-bold mb-2 inline-flex items-center gap-1">
+              <div className="text-amber-300/80 text-[10px] uppercase tracking-wider font-bold mb-2 inline-flex items-center gap-1 flex-wrap">
                 <Sparkles className="w-3 h-3" />
                 Aha! Anlar
-                {aiAnaliz?.ahaMoments?.length > 0 && (
+                {aiAnaliz?.ahaMoments?.length > 0 ? (
                   <span className="text-amber-400/60 text-[9px] font-normal normal-case ml-1">(AI küratör)</span>
+                ) : (
+                  <span className="text-amber-400/50 text-[9px] font-normal normal-case ml-1">
+                    (basit önizleme — gerçek aha'lar için yukarıdan AI analiz et)
+                  </span>
                 )}
               </div>
               <div className="space-y-1.5">
