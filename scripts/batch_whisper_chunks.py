@@ -132,6 +132,10 @@ def get_candidates():
         if not args.force and isinstance(chunks_existing, list) and len(chunks_existing) > 0:
             skipped_have_chunks += 1
             continue
+        # Manuel olarak "transcript yok" işaretliyse atla (vimeo 404, sessiz, vb)
+        if not args.force and data.get('transcriptYok') is True:
+            skipped_have_chunks += 1
+            continue
         if not vimeo_id:
             skipped_no_vimeo += 1
             continue
