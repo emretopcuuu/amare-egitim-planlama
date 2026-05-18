@@ -3,6 +3,7 @@
 
 import admin from 'firebase-admin';
 import { Resend } from 'resend';
+import { metinTemizle } from './_metinTemizle.mjs';
 
 function initFirebase() {
   if (admin.apps.length) return admin.firestore();
@@ -134,12 +135,12 @@ export default async () => {
     let basarili = 0, hata = 0;
     for (const abone of aboneler) {
       try {
-        const html = renderEmailHtml(egitimler, abone.ad);
+        const htmlRaw = renderEmailHtml(egitimler, abone.ad);
         await resend.emails.send({
           from: 'One Team Eğitim <bulten@egitimtakvimi.oneteamglobal.ai>',
           to: abone.email,
-          subject: `📅 Bu hafta ${egitimler.length} One Team eğitimi`,
-          html,
+          subject: metinTemizle(`📅 Bu hafta ${egitimler.length} One Team eğitimi`),
+          html: metinTemizle(htmlRaw),
         });
         basarili++;
       } catch (err) {

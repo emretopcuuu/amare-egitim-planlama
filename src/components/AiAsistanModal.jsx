@@ -128,7 +128,7 @@ const AiAsistanModal = ({ acik, ekip, onClose }) => {
         {/* Footer */}
         <div className="p-4 border-t border-white/10 flex-shrink-0">
           <p className="text-purple-300/50 text-[10px] text-center">
-            AI önerileri kişiselleşmiş analizdir — kararı sen ver. Veri kullanan üye sayın artıkça öneriler daha keskinleşir.
+            AI önerileri kişiselleşmiş analizdir — kararı sen ver. Veri kullanan Marka Ortağı sayın artıkça öneriler daha keskinleşir.
           </p>
         </div>
       </div>

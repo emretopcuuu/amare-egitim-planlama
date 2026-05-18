@@ -53,7 +53,7 @@ const EkipAgaciModal = ({ acik, onClose }) => {
               Ekip Ağacı
             </h2>
             <p className="text-purple-200/70 text-xs mt-0.5">
-              {veri ? `${veri.toplamUye} üye · ${maxNesil} nesil derinlik` : 'Yükleniyor...'}
+              {veri ? `${veri.toplamUye} Marka Ortağı · ${maxNesil} nesil derinlik` : 'Yükleniyor...'}
             </p>
           </div>
           <button onClick={onClose} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white">
@@ -114,7 +114,7 @@ const EkipAgaciModal = ({ acik, onClose }) => {
               ) : (
                 <div className="text-center py-12 text-purple-300/70 text-sm">
                   <Users className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  Altında üye yok
+                  Altında Marka Ortağı yok
                 </div>
               )}
             </div>

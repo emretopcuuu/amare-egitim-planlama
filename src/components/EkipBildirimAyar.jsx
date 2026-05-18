@@ -11,8 +11,8 @@ import { webPushDestekli, webPushIzinDurumu } from '../utils/webPush';
 const VAPID_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || '';
 
 const OLAY_TURLERI = [
-  { kod: 'yeni_uye',     baslik: 'Yeni üye katıldı',     ipucu: 'Ekibin altına yeni biri eklendiğinde', varsayilan: true },
-  { kod: 'pasif_uyari',  baslik: 'Pasif üye uyarısı',    ipucu: '14g+ aktif değil', varsayilan: true },
+  { kod: 'yeni_uye',     baslik: 'Yeni Marka Ortağı katıldı', ipucu: 'Ekibin altına yeni biri eklendiğinde', varsayilan: true },
+  { kod: 'pasif_uyari',  baslik: 'Pasif Marka Ortağı uyarısı', ipucu: '14g+ aktif değil', varsayilan: true },
   { kod: 'rank_yukseldi', baslik: 'Rank yükseldi',       ipucu: 'Ekibinden biri rank atladığında', varsayilan: true },
   { kod: 'davet_acildi', baslik: 'Davet açıldı',         ipucu: 'Gönderdiğin magic link kullanıldığında', varsayilan: false },
 ];
@@ -189,7 +189,7 @@ const EkipBildirimAyar = () => {
           <div className="text-purple-200/70 text-[11px]">
             {abone
               ? 'Ekipteki önemli olaylardan anında haberdar olursun'
-              : 'Yeni üye, pasif uyarı, rank yükselmesi — anlık bildirim'}
+              : 'Yeni Marka Ortağı, pasif uyarı, rank yükselmesi — anlık bildirim'}
           </div>
         </div>
         {abone ? (

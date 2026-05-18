@@ -156,7 +156,7 @@ const LeaderSatir = ({ item }) => {
           )}
         </div>
         <div className="text-purple-200/60 text-[10px] mt-0.5">
-          {item.toplam} üye · {item.aktif} aktif · {item.siteKullanan} kullanıyor
+          {item.toplam} Marka Ortağı · {item.aktif} aktif · {item.siteKullanan} kullanıyor
         </div>
       </div>
 

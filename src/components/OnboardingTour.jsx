@@ -54,7 +54,7 @@ const ADIMLAR = [
     renk: 'rose',
     baslik: 'Ekibim',
     ozet: 'Sponsor isen kontrol paneli',
-    metin: 'Altındaki üyelerin curriculum yüzdesi, son aktivitesi, risk durumu. Toplu davet, AI sponsor asistanı, lider karnesi tek ekranda.',
+    metin: 'Altındaki Marka Ortaklarının curriculum yüzdesi, son aktivitesi, risk durumu. Toplu davet, AI sponsor asistanı, lider karnesi tek ekranda.',
     cta: { label: 'Ekibimi gör', path: '/ekibim' },
   },
   {

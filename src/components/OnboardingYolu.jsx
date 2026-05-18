@@ -29,7 +29,7 @@ const OnboardingYolu = ({ uyeler }) => {
       <div className="flex items-center gap-2 mb-3">
         <Sprout className="w-5 h-5 text-emerald-300" />
         <div>
-          <h3 className="text-white font-extrabold text-base">Yeni Üyeler ({yeni.length})</h3>
+          <h3 className="text-white font-extrabold text-base">Yeni Marka Ortakları ({yeni.length})</h3>
           <p className="text-emerald-200/70 text-[11px]">30 gün içinde katılanlar — onboarding hızla bitmeli</p>
         </div>
       </div>

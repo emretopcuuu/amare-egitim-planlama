@@ -112,7 +112,7 @@ const SsoCallback = () => {
                 Takvime devam et <ArrowRight className="w-4 h-4" />
               </button>
               <p className="text-purple-200/70 text-xs mt-2">
-                💡 Takvimi anonim olarak gezebilirsin. Hesabını sonra "Üye Girişi" ile bağlayabilirsin.
+                💡 Takvimi anonim olarak gezebilirsin. Hesabını sonra "Marka Ortağı Girişi" ile bağlayabilirsin.
               </p>
             </div>
           </>

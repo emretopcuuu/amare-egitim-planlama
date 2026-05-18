@@ -144,7 +144,7 @@ const SponsorListesi = ({ liste }) => {
           <SiraRozeti sira={i + 1} />
           <div className="flex-1 min-w-0">
             <div className="text-white font-bold text-sm truncate">{s.ad}</div>
-            <div className="text-purple-200/60 text-[11px]">{s.ekipSayisi} üye · {s.aktif} aktif</div>
+            <div className="text-purple-200/60 text-[11px]">{s.ekipSayisi} Marka Ortağı · {s.aktif} aktif</div>
           </div>
           <div className="text-right flex-shrink-0">
             <div className="text-amber-300 font-extrabold text-lg leading-none">{s.skor}</div>

@@ -16,6 +16,7 @@
 import admin from 'firebase-admin';
 import { Resend } from 'resend';
 import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
+import { metinTemizle } from './_metinTemizle.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -83,7 +84,7 @@ async function supabaseRpc(fnName, params) {
 // One Team brand uyumlu email — egitimtakvimi.oneteamglobal.ai ile aynı görsel dil
 // Büyük logo + altın aurora + kicker pattern + cam morfizm
 function emailHtml({ ad, link, lookup }) {
-  const onAd = ad ? escapeHtml(ad.split(' ')[0]) : 'Sevgili Üye';
+  const onAd = ad ? escapeHtml(ad.split(' ')[0]) : 'Sevgili Marka Ortağı';
   return `<!doctype html>
 <html lang="tr"><head>
 <meta charset="utf-8">
@@ -243,7 +244,7 @@ export default async (req) => {
     if (!rows || rows.length === 0) {
       return new Response(JSON.stringify({
         found: false,
-        message: 'Bu bilgi ile kayıtlı üye bulunamadı. Sponsorundan doğrula veya başka bir bilgini dene.',
+        message: 'Bu bilgi ile kayıtlı Marka Ortağı bulunamadı. Sponsorundan doğrula veya başka bir bilgini dene.',
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
@@ -251,7 +252,7 @@ export default async (req) => {
     if (!uye.email) {
       return new Response(JSON.stringify({
         found: false,
-        message: 'Üye bulundu ama kayıtlı email yok. Sponsorundan email güncelle.',
+        message: 'Marka Ortağı bulundu ama kayıtlı email yok. Sponsorundan email güncelle.',
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
@@ -290,8 +291,11 @@ export default async (req) => {
     const link = await kisaltUrl(tamLink);
 
     // 3. Resend ile email yolla
-    const html = emailHtml({ ad: uye.full_name, link, lookup });
-    const subject = `One Team Giriş Linki — ${uye.full_name?.split(' ')[0] || 'Hoş geldin'}`;
+    const htmlRaw = emailHtml({ ad: uye.full_name, link, lookup });
+    const subjectRaw = `One Team Giriş Linki — ${uye.full_name?.split(' ')[0] || 'Hoş geldin'}`;
+    // MARKA TEMİZLİĞİ — "üye" → "Marka Ortağı", "network marketing" → "Doğrudan Satış"
+    const html = metinTemizle(htmlRaw);
+    const subject = metinTemizle(subjectRaw);
     await resend.emails.send({
       from: 'One Team <noreply@oneteamglobal.ai>',
       to: uye.email,

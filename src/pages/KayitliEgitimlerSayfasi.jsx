@@ -747,7 +747,7 @@ const KayitliEgitimlerSayfasi = () => {
                 </div>
                 <div className="min-w-0">
                   <div className="text-amber-100 text-xs sm:text-sm font-bold">📺 2000+ eğitime ücretsiz eriş</div>
-                  <div className="text-amber-200/80 text-[10px] sm:text-xs">Üye girişi yap — email/telefon/Amare ID ile saniyeler içinde</div>
+                  <div className="text-amber-200/80 text-[10px] sm:text-xs">Marka Ortağı girişi yap — email/telefon/Amare ID ile saniyeler içinde</div>
                 </div>
               </div>
               <span className="bg-amber-400 hover:bg-amber-300 text-purple-900 text-xs font-bold px-3 py-1.5 rounded-lg flex-shrink-0 group-hover:scale-105 transition-transform">
@@ -1390,7 +1390,7 @@ const VideoKart = ({ video: v, t, tDynamic = (s) => s, favori, izlendi, progress
                 <svg className="w-7 h-7 text-purple-900" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd"/></svg>
               </div>
               <div className="absolute bottom-2 left-2 right-2 text-center bg-black/70 backdrop-blur-sm rounded-md px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <span className="text-amber-300 text-[10px] font-bold uppercase tracking-wider">Üye girişi gerekir</span>
+                <span className="text-amber-300 text-[10px] font-bold uppercase tracking-wider">Marka Ortağı girişi gerekir</span>
               </div>
             </>
           ) : (

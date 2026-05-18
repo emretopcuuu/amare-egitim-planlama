@@ -87,7 +87,7 @@ const AylikRaporPdf = ({ veri, sponsorAd = 'Sponsor' }) => {
         doc.text('Ekip Özeti', 15, y);
         y += 6;
         const ozetData = [
-          ['Toplam üye', veri.toplam],
+          ['Toplam Marka Ortağı', veri.toplam],
           ['Aktif', veri.ozet.aktif],
           ['Yavaşladı', veri.ozet.yavasladi],
           ['Risk', veri.ozet.risk],
@@ -110,7 +110,7 @@ const AylikRaporPdf = ({ veri, sponsorAd = 'Sponsor' }) => {
       doc.setTextColor(58, 23, 114);
       doc.setFontSize(13);
       doc.setFont('helvetica', 'bold');
-      doc.text('Ekip Üyeleri', 15, y);
+      doc.text('Ekip Marka Ortakları', 15, y);
       y += 5;
       const uyeData = veri.ekip.map(u => [
         u.adSoyad,

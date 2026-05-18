@@ -72,7 +72,7 @@ const AdminAnalyticsTab = () => {
 
       {/* Ana KPI'lar */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <Kpi icon={<Users />} label="Toplam Üye" value={o.toplamUye} renk="purple" />
+        <Kpi icon={<Users />} label="Toplam Marka Ortağı" value={o.toplamUye} renk="purple" />
         <Kpi icon={<Eye />} label="DAU (24sa)" value={o.dau} renk="emerald" />
         <Kpi icon={<Users />} label="WAU (7g)" value={o.wau} delta={o.wauDelta} renk="sky" />
         <Kpi icon={<Users />} label="MAU (30g)" value={o.mau} renk="amber" />
@@ -115,7 +115,7 @@ const AdminAnalyticsTab = () => {
                 <div key={i} className="flex items-center gap-2 p-2 bg-gray-50 rounded text-xs">
                   <span className="text-amber-600 font-bold w-5 text-center">{i + 1}</span>
                   <span className="text-gray-800 flex-1 truncate">{s.ad}</span>
-                  <span className="text-gray-500">{s.ekipSayisi} üye</span>
+                  <span className="text-gray-500">{s.ekipSayisi} Marka Ortağı</span>
                   <span className="text-amber-600 font-bold">{s.skor}</span>
                 </div>
               ))}

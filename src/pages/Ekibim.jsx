@@ -33,7 +33,7 @@ import { usePullToRefresh } from '../utils/usePullToRefresh';
 import { RotateCw } from 'lucide-react';
 
 const Ekibim = () => {
-  useDocumentTitle('Ekibim', 'Sponsor dashboard — ekip üyelerinin curriculum, aktivite ve risk durumu');
+  useDocumentTitle('Ekibim', 'Sponsor dashboard — Marka Ortaklarının curriculum, aktivite ve risk durumu');
   const navigate = useNavigate();
   const { currentUser, isAnonymous, ready } = useAuth();
   const [veri, setVeri] = useState(null);
@@ -132,7 +132,7 @@ const Ekibim = () => {
       <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 p-4 flex items-center justify-center">
         <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-8 text-center max-w-md">
           <Users className="w-12 h-12 text-amber-300 mx-auto mb-3" />
-          <h1 className="text-white font-bold text-xl mb-2">Üye girişi gerekir</h1>
+          <h1 className="text-white font-bold text-xl mb-2">Marka Ortağı girişi gerekir</h1>
           <p className="text-purple-200 text-sm mb-4">Ekibini görmek için önce giriş yap.</p>
           <button onClick={() => navigate('/profil')}
             className="bg-amber-400 text-purple-900 font-bold px-5 py-2.5 rounded-xl">
@@ -191,7 +191,7 @@ const Ekibim = () => {
           <Users className="w-8 h-8 text-amber-300" />
         </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">Ekibim</h1>
-        {veri && <p className="text-purple-200 mt-2 text-sm">{veri.toplam} üye altındasında</p>}
+        {veri && <p className="text-purple-200 mt-2 text-sm">{veri.toplam} Marka Ortağı altındasında</p>}
         {hata && (
           <p className="text-red-300 text-xs mt-3 bg-red-500/10 border border-red-400/30 rounded-lg px-3 py-2 inline-block">
             {hata}
@@ -316,7 +316,7 @@ const Ekibim = () => {
           </div>
           {arama || filter !== 'hepsi' ? (
             <>
-              <h3 className="text-white font-bold text-base mb-2">Filtreye uyan üye yok</h3>
+              <h3 className="text-white font-bold text-base mb-2">Filtreye uyan Marka Ortağı yok</h3>
               <p className="text-purple-200/70 text-sm mb-4">
                 Aramayı temizleyip tekrar dene.
               </p>
@@ -330,11 +330,11 @@ const Ekibim = () => {
               <h3 className="text-white font-bold text-base mb-2">Henüz altında ekip yok</h3>
               <p className="text-purple-200/70 text-sm mb-4 leading-relaxed">
                 Birini sponsorluğun altına eklediğinde burada görünür.
-                Amare üyelerini davet etmeye başla.
+                Amare Marka Ortaklarını davet etmeye başla.
               </p>
               <a href="https://oneteamglobal.ai" target="_blank" rel="noopener noreferrer"
                 className="bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold px-4 py-2.5 rounded-xl text-sm spring-tap inline-block">
-                Amare'de yeni üye kaydet →
+                Amare'de yeni Marka Ortağı kaydet →
               </a>
             </>
           )}
@@ -633,7 +633,7 @@ const DikkatGerekenler = ({ ekip, onSec }) => {
         <AlertCircle className="w-5 h-5 text-rose-300" />
         <div>
           <h3 className="text-white font-extrabold text-sm">Bu Hafta Dikkat İstiyor</h3>
-          <p className="text-rose-200/70 text-[11px]">En öncelikli {skorlu.length} üye — önce buradan başla</p>
+          <p className="text-rose-200/70 text-[11px]">En öncelikli {skorlu.length} Marka Ortağı — önce buradan başla</p>
         </div>
       </div>
       <div className="space-y-2">
@@ -666,7 +666,7 @@ const SponsorIstatistikSerit = ({ istatistik }) => {
   const items = [
     { sayi: istatistik.buHaftaDavet,        label: 'davet attın',         icon: '📩', renk: 'sky' },
     { sayi: istatistik.buHaftaAcilan,       label: 'davet açıldı',        icon: '✓', renk: 'amber' },
-    { sayi: istatistik.buHaftaYeniUye,      label: 'yeni Amare üyesi',    icon: '🌱', renk: 'emerald' },
+    { sayi: istatistik.buHaftaYeniUye,      label: 'yeni Amare Marka Ortağı',    icon: '🌱', renk: 'emerald' },
     { sayi: istatistik.buHaftaYeniSiteUye,  label: 'siteye geldi',        icon: '🚀', renk: 'purple' },
   ].filter(i => i.sayi > 0);
 

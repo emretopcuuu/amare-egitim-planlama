@@ -879,10 +879,10 @@ const TakvimView = () => {
                 {/* Üye Girişi — pasif buton, isteyen tıklar */}
                 {!isAuthenticated ? (
                   <button onClick={() => setGirisModalAcik(true)}
-                    title="Üye girişi yap (email/telefon/Amare ID)"
+                    title="Marka Ortağı girişi yap (email/telefon/Amare ID)"
                     className="flex items-center gap-1.5 bg-amber-400/20 hover:bg-amber-400/40 border border-amber-300/40 text-amber-100 px-3 sm:px-4 py-2 rounded-xl font-semibold transition text-xs sm:text-sm spring-tap">
                     <LogIn className="w-4 h-4" />
-                    <span className="hidden sm:inline">Üye Girişi</span>
+                    <span className="hidden sm:inline">Marka Ortağı Girişi</span>
                     <span className="sm:hidden">Giriş</span>
                   </button>
                 ) : (
@@ -891,7 +891,7 @@ const TakvimView = () => {
                       title="Profilim"
                       className="flex items-center gap-1.5 bg-green-400/15 hover:bg-green-400/25 border border-green-300/30 text-green-100 px-3 py-2 rounded-xl text-xs font-semibold transition spring-tap">
                       <div className="w-2 h-2 rounded-full bg-green-400" />
-                      <span className="hidden sm:inline">{displayName?.split(' ')[0] || email?.split('@')[0] || 'Üye'}</span>
+                      <span className="hidden sm:inline">{displayName?.split(' ')[0] || email?.split('@')[0] || 'Marka Ortağı'}</span>
                       <UserCircle className="w-4 h-4 sm:hidden" />
                     </button>
                     <button onClick={() => signOut(auth)}

@@ -58,7 +58,7 @@ const VideoYorumlar = ({ vimeoId }) => {
     try {
       await addDoc(collection(db, `kayitli_egitimler/${vimeoId}/yorumlar`), {
         uid: currentUser.uid,
-        ad: currentUser.displayName || 'Üye',
+        ad: currentUser.displayName || 'Marka Ortağı',
         fotoURL: currentUser.photoURL || null,
         metin: yeniMetin.trim().slice(0, 1000),
         parentId: yanitVeren || null,
@@ -141,7 +141,7 @@ const VideoYorumlar = ({ vimeoId }) => {
           </div>
         </div>
       ) : (
-        <p className="text-white/40 text-[11px] mb-3 text-center">Yorum yazmak için <span className="text-amber-300">üye girişi</span> yap.</p>
+        <p className="text-white/40 text-[11px] mb-3 text-center">Yorum yazmak için <span className="text-amber-300">Marka Ortağı girişi</span> yap.</p>
       )}
 
       {yukleniyor && <Loader2 className="w-5 h-5 animate-spin text-white/40 mx-auto" />}

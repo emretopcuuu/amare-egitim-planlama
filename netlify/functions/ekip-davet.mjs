@@ -14,6 +14,7 @@
 
 import admin from 'firebase-admin';
 import { Resend } from 'resend';
+import { metinTemizle } from './_metinTemizle.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -112,7 +113,7 @@ async function supabaseGet(path) {
 
 function emailHtml({ ad, link, sablon, sponsorAd }) {
   const s = SABLONLAR[sablon] || SABLONLAR.yeni;
-  const onAd = escapeHtml((ad || 'Sevgili üye').split(' ')[0]);
+  const onAd = escapeHtml((ad || 'Sevgili Marka Ortağı').split(' ')[0]);
   return `<!doctype html>
 <html lang="tr"><head>
 <meta charset="utf-8">
@@ -272,7 +273,7 @@ export default async (req) => {
     for (const aId of amareIds) {
       const hedef = hedefMap[aId];
       if (!hedef) {
-        sonuc.push({ amareId: aId, durum: 'skip', sebep: 'Bu üye senin ekibinde değil' });
+        sonuc.push({ amareId: aId, durum: 'skip', sebep: 'Bu Marka Ortağı senin ekibinde değil' });
         continue;
       }
 
@@ -301,11 +302,14 @@ export default async (req) => {
           magicLink = await admin.auth().generateSignInWithEmailLink(hedef.email, actionCodeSettings);
           // Email içinde de kısaltılmış link kullan (daha temiz görünüm)
           const linkEmail = await kisaltUrl(magicLink, { sponsorUid, hedefAmareId: aId });
-          const html = emailHtml({ ad: hedef.full_name, link: linkEmail, sablon, sponsorAd });
+          const htmlRaw = emailHtml({ ad: hedef.full_name, link: linkEmail, sablon, sponsorAd });
+          // MARKA TEMİZLİĞİ
+          const html = metinTemizle(htmlRaw);
+          const subject = metinTemizle(SABLONLAR[sablon].emailSubject);
           await resend.emails.send({
             from: 'One Team <noreply@oneteamglobal.ai>',
             to: hedef.email,
-            subject: SABLONLAR[sablon].emailSubject,
+            subject,
             html,
           });
           baslangic.kanallar.push({ tip: 'email', durum: 'gonderildi', emailMask: maskEmail(hedef.email) });
@@ -322,13 +326,15 @@ export default async (req) => {
         if (wa) {
           // Magic link varsa kısalt — uzun Firebase URL'i okunmaz, kısa /d/abc12345 daha temiz
           const linkVer = magicLink ? await kisaltUrl(magicLink, { sponsorUid, hedefAmareId: aId }) : 'https://egitimtakvimi.oneteamglobal.ai';
-          const text = customMesaj
+          const textRaw = customMesaj
             ? customMesaj.replace(/\{ad\}/gi, (hedef.full_name || '').split(' ')[0])
                          .replace(/\{link\}/gi, linkVer)
             : (magicLink ? SABLONLAR[sablon].waText : SABLONLAR[sablon].waTextNoLink)(
                 (hedef.full_name || 'merhaba').split(' ')[0],
                 linkVer
               );
+          // MARKA TEMİZLİĞİ
+          const text = metinTemizle(textRaw);
           baslangic.kanallar.push({
             tip: 'whatsapp',
             durum: 'hazir',

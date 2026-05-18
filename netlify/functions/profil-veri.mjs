@@ -94,7 +94,7 @@ export default async (req) => {
     if (!amareId) {
       return jsonResponse({
         error: 'Amare ID bağlı değil',
-        hint: 'Üye Girişi yap veya onboarding\'den gel.',
+        hint: 'Marka Ortağı Girişi yap veya onboarding\'den gel.',
       }, 404);
     }
 

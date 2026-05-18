@@ -56,7 +56,7 @@ const UyeGirisModal = ({ acik, onClose }) => {
         return;
       }
       if (!data.found) {
-        setMesaj(data.message || 'Bu bilgi ile kayıtlı üye bulunamadı.');
+        setMesaj(data.message || 'Bu bilgi ile kayıtlı Marka Ortağı bulunamadı.');
         return;
       }
       // Başarılı — email gönderildi
@@ -100,8 +100,8 @@ const UyeGirisModal = ({ acik, onClose }) => {
               <div className="inline-block w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-400 rounded-2xl flex items-center justify-center mb-3 shadow-lg">
                 <Mail className="w-7 h-7 text-purple-900" />
               </div>
-              <h2 className="text-white text-2xl font-extrabold mb-1">Üye Girişi</h2>
-              <p className="text-purple-200 text-sm">Amare üyeysen kişisel deneyim aç</p>
+              <h2 className="text-white text-2xl font-extrabold mb-1">Marka Ortağı Girişi</h2>
+              <p className="text-purple-200 text-sm">Amare Marka Ortağıysan kişisel deneyim aç</p>
             </div>
 
             <form onSubmit={handleSubmit}>

@@ -86,7 +86,7 @@ export default async (req) => {
     if (!memberRows || memberRows.length === 0) {
       return jsonResponse({
         error: 'Aktif onboarding bulunamadı. Onboarding yarıda mı kaldı?',
-        hint: 'Yeniden giriş için Üye Girişi butonunu kullan.',
+        hint: 'Yeniden giriş için Marka Ortağı Girişi butonunu kullan.',
       }, 404);
     }
 

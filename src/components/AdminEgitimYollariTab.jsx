@@ -167,7 +167,7 @@ const AdminEgitimYollariTab = () => {
             {/* Zorunlu videolar */}
             <VideoListesi
               baslik="Zorunlu Videolar"
-              aciklama="Bu rank'teki üyeler için sırayla izlenmesi önerilen ana video listesi."
+              aciklama="Bu rank'teki Marka Ortakları için sırayla izlenmesi önerilen ana video listesi."
               videolar={curriculum.zorunlu}
               tip="zorunlu"
               onEkle={() => { setAramaTip('zorunlu'); setAramaModal(true); }}

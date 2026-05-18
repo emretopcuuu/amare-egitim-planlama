@@ -64,7 +64,7 @@ function formatTarih(iso) {
 }
 
 const Profil = () => {
-  useDocumentTitle('Profilim', 'Eğitim yolun, ilerlemen, üyelik bilgilerin');
+  useDocumentTitle('Profilim', 'Eğitim yolun, ilerlemen, Marka Ortaklığı bilgilerin');
   const navigate = useNavigate();
   const { currentUser, uid, isAnonymous, isAuthenticated, displayName, email, ready } = useAuth();
   const { konusmacilar } = useData();
@@ -409,8 +409,8 @@ const Profil = () => {
       { key: 'streak_7', icon: '⚡', label: 'Disiplinli', desc: '7 gün üst üste', kazanildi: (streak.longest || 0) >= 7 },
       { key: 'streak_30', icon: '🌟', label: 'Efsane', desc: '30 gün üst üste', kazanildi: (streak.longest || 0) >= 30 },
       { key: 'yil_1', icon: '🎉', label: '1. Yıl', desc: 'One Team yolculuğun 1 yaşında', kazanildi: uyelikYil >= 1 },
-      { key: 'yil_5', icon: '💎', label: 'Sadık Üye', desc: '5+ yıl One Team üyesi', kazanildi: uyelikYil >= 5 },
-      { key: 'yil_10', icon: '👑', label: 'Veteran', desc: '10+ yıl One Team üyesi', kazanildi: uyelikYil >= 10 },
+      { key: 'yil_5', icon: '💎', label: 'Sadık Marka Ortağı', desc: '5+ yıl One Team Marka Ortağı', kazanildi: uyelikYil >= 5 },
+      { key: 'yil_10', icon: '👑', label: 'Veteran', desc: '10+ yıl One Team Marka Ortağı', kazanildi: uyelikYil >= 10 },
       { key: 'saat_10', icon: '⏱️', label: 'Adanmış', desc: '10+ saat eğitim izledi', kazanildi: totalWatched >= 10 * 3600 },
       { key: 'saat_50', icon: '🚀', label: 'Sıçrama', desc: '50+ saat eğitim izledi', kazanildi: totalWatched >= 50 * 3600 },
     ];
@@ -512,14 +512,14 @@ const Profil = () => {
             </div>
             <h1 className="text-2xl font-light text-white mb-2 tracking-tight">Profilini gör</h1>
             <p className="text-purple-200 text-sm mb-8 leading-relaxed">
-              Favoriler, kurduğun hatırlatmalar, onboarding ilerlemen ve üyelik bilgilerin burada görünür.
+              Favoriler, kurduğun hatırlatmalar, onboarding ilerlemen ve Marka Ortaklığı bilgilerin burada görünür.
             </p>
             <button onClick={() => setGirisModalAcik(true)}
               className="w-full bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-3.5 rounded-xl shadow-lg spring-tap inline-flex items-center justify-center gap-2 mb-3">
-              <LogIn className="w-5 h-5" /> Üye Girişi Yap
+              <LogIn className="w-5 h-5" /> Marka Ortağı Girişi Yap
             </button>
             <p className="text-purple-300/70 text-xs mt-4">
-              Henüz Amare üyesi değilsen <a href="https://oneteamglobal.ai" className="text-amber-300 hover:text-amber-200 underline font-semibold">oneteamglobal.ai</a>
+              Henüz Amare Marka Ortağı değilsen <a href="https://oneteamglobal.ai" className="text-amber-300 hover:text-amber-200 underline font-semibold">oneteamglobal.ai</a>
             </p>
           </div>
         </div>
@@ -658,7 +658,7 @@ const Profil = () => {
 
         {u && (
           <p className="mt-2 text-purple-200 text-sm">
-            One Team üyesi · {u.yil > 0 ? `${u.yil} yıl ${u.ay} ay` : `${u.toplamAy} ay`}
+            One Team Marka Ortağı · {u.yil > 0 ? `${u.yil} yıl ${u.ay} ay` : `${u.toplamAy} ay`}
           </p>
         )}
 
@@ -684,8 +684,8 @@ const Profil = () => {
       {/* STATS ROW — 6 stat, sticky scroll'da üste yapışır, tıklanabilir */}
       <div className="max-w-3xl mx-auto px-4 mt-2 sticky top-2 z-30">
         <div className="bg-purple-900/80 backdrop-blur-xl border border-white/20 rounded-2xl grid grid-cols-3 sm:grid-cols-6 divide-x divide-white/10 shadow-2xl overflow-hidden">
-          <StatCell label="Üyelik" suffix="y" value={u ? u.yil : '—'} delay={0}
-            tooltip={u ? `${u.yil} yıl ${u.ay > 0 ? u.ay + ' ay ' : ''}One Team üyesisin` : 'Üyelik süresi'}
+          <StatCell label="Marka Ortaklığı" suffix="y" value={u ? u.yil : '—'} delay={0}
+            tooltip={u ? `${u.yil} yıl ${u.ay > 0 ? u.ay + ' ay ' : ''}One Team Marka Ortağısın` : 'Marka Ortaklığı süresi'}
             scrollToId="section-uyelik" />
           <StatCell label="İzleme" suffix="sa" value={Math.floor(totalWatched / 3600) || 0}
             highlight={totalWatched > 0} delay={100}
@@ -720,7 +720,7 @@ const Profil = () => {
 
         {/* ═══ ÜYELİK — en üstte, tek bakışta bilgilere erişim ═══ */}
         <div id="section-uyelik" className="stagger-fade">
-          <SectionTitle icon={Hash}>Üyelik</SectionTitle>
+          <SectionTitle icon={Hash}>Marka Ortaklığı</SectionTitle>
           <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 divide-y divide-white/10 shadow-xl">
             <InfoRow icon={Phone} label="Telefon" value={a?.phone || '—'} />
             <InfoRow icon={Mail} label="E-posta" value={a?.email || email || '—'} />
@@ -956,7 +956,7 @@ const Profil = () => {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="text-white font-bold text-base">Ekibimi Gör</div>
-                <div className="text-emerald-200/80 text-xs mt-0.5">Altındaki üyelerin progress, risk ve aktivite özeti</div>
+                <div className="text-emerald-200/80 text-xs mt-0.5">Altındaki Marka Ortaklarının progress, risk ve aktivite özeti</div>
               </div>
               <ChevronRight className="w-5 h-5 text-emerald-300 group-hover:translate-x-1 transition" />
             </button>
@@ -1364,7 +1364,7 @@ const WrappedKart = ({ onClose, fullName, rank, totalWatched, completedCount, fa
   const saat = Math.floor(totalWatched / 3600);
 
   const handleShare = async () => {
-    const text = `🎉 ${yil} One Team Yıllık Özetim\n\n${fullName}\n${rank || ''}\n\n⏱️ ${saat} saat eğitim\n📚 ${completedCount} eğitim tamamlandı\n❤️ ${favCount} favori\n🔥 ${streakLongest} gün rekor seri\n💎 ${uyelikYil}+ yıl üye\n\negitimtakvimi.oneteamglobal.ai`;
+    const text = `🎉 ${yil} One Team Yıllık Özetim\n\n${fullName}\n${rank || ''}\n\n⏱️ ${saat} saat eğitim\n📚 ${completedCount} eğitim tamamlandı\n❤️ ${favCount} favori\n🔥 ${streakLongest} gün rekor seri\n💎 ${uyelikYil}+ yıl Marka Ortağı\n\negitimtakvimi.oneteamglobal.ai`;
     if (navigator.share) {
       try { await navigator.share({ title: 'One Team Yıllık Özetim', text }); }
       catch {}
@@ -1401,7 +1401,7 @@ const WrappedKart = ({ onClose, fullName, rank, totalWatched, completedCount, fa
             <WrappedRow label="Tamamlanan Eğitim" value={completedCount} />
             <WrappedRow label="Favori" value={favCount} />
             <WrappedRow label="Rekor Seri" value={`${streakLongest} gün`} />
-            <WrappedRow label="Üyelik" value={`${uyelikYil}+ yıl`} />
+            <WrappedRow label="Marka Ortaklığı" value={`${uyelikYil}+ yıl`} />
           </div>
 
           <button onClick={handleShare}

@@ -20,7 +20,7 @@ const VideoQuiz = ({ video }) => {
 
   async function quizYukle() {
     if (!currentUser || isAnonymous) {
-      setHata('Quiz için üye girişi yap');
+      setHata('Quiz için Marka Ortağı girişi yap');
       return;
     }
     setYukleniyor(true);

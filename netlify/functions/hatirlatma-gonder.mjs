@@ -1,5 +1,6 @@
 import admin from 'firebase-admin';
 import { Resend } from 'resend';
+import { metinTemizle } from './_metinTemizle.mjs';
 
 // Netlify scheduled function — her 5 dakikada çalışır
 export const config = { schedule: "*/5 * * * *" };
@@ -121,8 +122,8 @@ export default async () => {
         await resend.emails.send({
           from: 'One Team Eğitim <noreply@oneteamglobal.ai>',
           to: data.email,
-          subject: txt.subject(data.egitimAdi, data.tarih, data.saat),
-          html,
+          subject: metinTemizle(txt.subject(data.egitimAdi, data.tarih, data.saat)),
+          html: metinTemizle(html),
         });
 
         await doc.ref.update({

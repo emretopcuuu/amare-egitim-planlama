@@ -42,8 +42,10 @@ async function supabaseGet(path) {
 }
 
 const SISTEM_PROMPT = `Sen bir Doğrudan Satış eğitim sistemi yapay zekâ asistanısın.
-Görevin: sponsor'un (lider) bu hafta hangi 3-5 üyesine ne yapması gerektiğini önermek.
-MARKA KURALI: "network marketing" yazma — her zaman "Doğrudan Satış" kullan.
+Görevin: sponsor'un (lider) bu hafta hangi 3-5 Marka Ortağına ne yapması gerektiğini önermek.
+MARKA KURALLARI:
+  - "network marketing" yazma — her zaman "Doğrudan Satış" kullan
+  - "üye" yazma — her zaman "Marka Ortağı" kullan
 
 Veri tabanlı, bold, direkt yaz. Klişe yok, "harika!" gibi tatlandırma yok.
 
@@ -55,15 +57,15 @@ Veri tabanlı, bold, direkt yaz. Klişe yok, "harika!" gibi tatlandırma yok.
       "ad": "...",
       "eylem": "wp_mesaj | davet | tebrik | egitim_oner | rank_itki | kontrol",
       "oncelik": 1-5,
-      "sebep": "20 kelimeyi geçmesin — neden bu üye, neden bu eylem",
+      "sebep": "20 kelimeyi geçmesin — neden bu Marka Ortağı, neden bu eylem",
       "mesaj": "Yapay 2-3 cümlelik WhatsApp mesajı taslağı, doğal Türkçe, samimi"
     }
   ]
 }
 
 Öncelik 1 = bu hafta MUTLAKA, 5 = nice-to-have.
-Maks 5 öneri. Her üyeden sadece 1 öneri.
-Yeni üye (kayıt < 14g) varsa onlar önce.
+Maks 5 öneri. Her Marka Ortağından sadece 1 öneri.
+Yeni Marka Ortağı (kayıt < 14g) varsa onlar önce.
 Rank'a çok yakın varsa onları öne çıkar.
 Risk/Pasif olanlar her zaman dikkat ister.`;
 
@@ -160,7 +162,7 @@ export default async (req) => {
     );
 
     if (!ekipRows || ekipRows.length === 0) {
-      return new Response(JSON.stringify({ oneriler: [], sebep: 'Henüz ekip üyesi yok' }), {
+      return new Response(JSON.stringify({ oneriler: [], sebep: 'Henüz ekip Marka Ortağı yok' }), {
         headers: { 'Content-Type': 'application/json', ...CORS },
       });
     }
