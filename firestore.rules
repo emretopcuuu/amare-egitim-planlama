@@ -246,6 +246,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // AI rank önerileri — her rank için Gemini puanladığı top videolar
+    // Admin görür (henüz onaylanmamış öneriler), admin onaylayıp egitim_yollari'a kopyalar
+    match /rank_oneriler/{rankKey} {
+      allow read: if isAdmin();
+      allow write: if false; // Sadece backend (Function) yazar
+    }
+
     // Leaderboard cache — global, 1 saatlik
     // Server tarafından yazılır, signed-in kullanıcılar okur
     match /leaderboard_cache/{week} {

@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { db, auth } from '../utils/firebase';
 import { doc, getDoc, setDoc, collection, getDocs, query, where, limit as fbLimit, serverTimestamp } from 'firebase/firestore';
 import { RANK_SIRALAMA, getRankByKey, rankRenkClass } from '../utils/rankSchema';
-import { Award, Save, Search, Plus, X, ChevronUp, ChevronDown, Trash2, Loader2, Video, CheckCircle2, Zap } from 'lucide-react';
+import { Award, Save, Search, Plus, X, ChevronUp, ChevronDown, Trash2, Loader2, Video, CheckCircle2, Zap, Sparkles, RotateCw, Check, ChevronRight } from 'lucide-react';
 
 const AdminEgitimYollariTab = () => {
   const [seciliRankKey, setSeciliRankKey] = useState('brand_partner');
@@ -16,6 +16,90 @@ const AdminEgitimYollariTab = () => {
   const [aramaTip, setAramaTip] = useState('zorunlu'); // 'zorunlu' veya 'onerilen'
   const [initEdiliyor, setInitEdiliyor] = useState(false);
   const [initSonuc, setInitSonuc] = useState(null);
+
+  // AI rank skorlama
+  const [aiSkorluyor, setAiSkorluyor] = useState(false);
+  const [aiOneriler, setAiOneriler] = useState(null); // {top:[...], cached, ai_analizli, ...}
+  const [aiSecili, setAiSecili] = useState(new Set()); // vimeoId set
+  const [aiHata, setAiHata] = useState('');
+
+  // ── AI ile rank için video skorla ─────────────────────────────────────
+  const aiIleSkorla = async (force = false) => {
+    if (!auth.currentUser) { setAiHata('Giriş gerekli'); return; }
+    setAiSkorluyor(true);
+    setAiHata('');
+    setAiOneriler(null);
+    setAiSecili(new Set());
+    try {
+      const token = await auth.currentUser.getIdToken();
+      // 90sn timeout — AI scoring uzun sürer (5-15 sn beklenir)
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 90_000);
+      const res = await fetch('/.netlify/functions/ai-rank-puanla', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ rankKey: seciliRankKey, force }),
+        signal: ctrl.signal,
+      });
+      clearTimeout(tid);
+      const text = await res.text();
+      let data;
+      try { data = text ? JSON.parse(text) : {}; }
+      catch { throw new Error('Function timeout veya hata'); }
+      if (!res.ok) throw new Error(data.error || data.detail || `Hata ${res.status}`);
+      setAiOneriler(data);
+    } catch (e) {
+      if (e.name === 'AbortError') setAiHata('İşlem 90sn\'yi aştı — tekrar dene');
+      else setAiHata(e.message);
+    } finally {
+      setAiSkorluyor(false);
+    }
+  };
+
+  // ── AI önerileri seç/at + curriculum'a uygula ──────────────────────────
+  const aiOneriToggle = (vimeoId) => {
+    setAiSecili(prev => {
+      const next = new Set(prev);
+      if (next.has(vimeoId)) next.delete(vimeoId);
+      else next.add(vimeoId);
+      return next;
+    });
+  };
+
+  const aiOnerileriUygula = async () => {
+    if (aiSecili.size === 0) { setAiHata('En az 1 video seç'); return; }
+    if (!aiOneriler?.top) return;
+    try {
+      const eklenecekler = aiOneriler.top
+        .filter(v => aiSecili.has(v.vimeoId))
+        .map((v, i) => ({
+          vimeoId: v.vimeoId,
+          baslik: v.baslik || 'Başlıksız',
+          sira: i + 1,
+          thumbnailUrl: v.thumbnailUrl || null,
+          egitmenAdlari: v.egitmenAdlari || [],
+          kategoriler: v.kategoriler || [],
+          tarih: v.tarih || null,
+          sure: v.sure || 0,
+        }));
+      // Curriculum.zorunlu'ya ekle (mevcut listenin sonuna)
+      const yeni = {
+        zorunlu: [...curriculum.zorunlu, ...eklenecekler].slice(0, 50),
+        onerilen: curriculum.onerilen,
+      };
+      setCurriculum(yeni);
+      setAiOneriler(null);
+      setAiSecili(new Set());
+      // Otomatik kaydet
+      await setDoc(doc(db, 'egitim_yollari', seciliRankKey), {
+        zorunluVideolar: yeni.zorunlu,
+        onerilenVideolar: yeni.onerilen,
+        guncellemeTarihi: serverTimestamp(),
+      }, { merge: true });
+    } catch (e) {
+      setAiHata(`Uygulama hatasi: ${e.message}`);
+    }
+  };
 
   // Tek tıkla 14 rank × 3 video toplu kurulum
   const otomatikInit = async () => {
@@ -45,8 +129,11 @@ const AdminEgitimYollariTab = () => {
     }
   };
 
-  // Rank değiştiğinde curriculum'u yükle
+  // Rank değiştiğinde curriculum'u yükle + AI önerileri temizle
   useEffect(() => {
+    setAiOneriler(null);
+    setAiSecili(new Set());
+    setAiHata('');
     let cancelled = false;
     setYukleniyor(true);
     getDoc(doc(db, 'egitim_yollari', seciliRankKey))
@@ -122,12 +209,111 @@ const AdminEgitimYollariTab = () => {
             <Award className="w-6 h-6 text-amare-purple" />
             <h2 className="text-xl font-bold text-gray-800">Eğitim Yolları — Rank Bazlı Curriculum</h2>
           </div>
-          <button onClick={otomatikInit} disabled={initEdiliyor}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg disabled:opacity-50 inline-flex items-center gap-2 text-sm">
-            {initEdiliyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
-            {initEdiliyor ? 'Kuruluyor...' : 'Otomatik Kurulum (14 rank × 3 video)'}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => aiIleSkorla(false)} disabled={aiSkorluyor || yukleniyor}
+              className="bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg disabled:opacity-50 inline-flex items-center gap-2 text-sm">
+              {aiSkorluyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+              {aiSkorluyor ? 'AI puanlıyor (~15sn)...' : 'AI ile Bu Rank için Öner'}
+            </button>
+            <button onClick={otomatikInit} disabled={initEdiliyor}
+              className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold px-4 py-2.5 rounded-xl shadow-lg disabled:opacity-50 inline-flex items-center gap-2 text-sm">
+              {initEdiliyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              {initEdiliyor ? 'Kuruluyor...' : 'Otomatik Kurulum (14 × 3)'}
+            </button>
+          </div>
         </div>
+
+        {/* AI öneriler paneli */}
+        {(aiSkorluyor || aiOneriler || aiHata) && (
+          <div className="mb-6 bg-gradient-to-br from-purple-50 via-indigo-50 to-purple-50 border-2 border-purple-200 rounded-2xl p-4 sm:p-5">
+            {aiSkorluyor && (
+              <div className="flex items-center justify-center gap-3 py-6 text-purple-700">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <div>
+                  <div className="font-bold">AI bu rank için en uygun videoları seçiyor...</div>
+                  <div className="text-xs opacity-70">Havuz tarama + Gemini batch scoring · ~10-30sn</div>
+                </div>
+              </div>
+            )}
+            {aiHata && (
+              <div className="bg-rose-50 border border-rose-200 rounded-xl p-3 text-rose-800 text-sm flex items-center justify-between gap-2">
+                <span>⚠️ {aiHata}</span>
+                <button onClick={() => aiIleSkorla(true)} className="text-rose-700 hover:text-rose-900 font-bold text-xs inline-flex items-center gap-1">
+                  <RotateCw className="w-3 h-3" /> Tekrar dene
+                </button>
+              </div>
+            )}
+            {aiOneriler && (
+              <div>
+                <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                  <div>
+                    <h3 className="font-bold text-purple-900 inline-flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-purple-600" />
+                      AI Önerileri — {aiOneriler.rankLabel}
+                    </h3>
+                    <div className="text-xs text-purple-700/70 mt-0.5">
+                      {aiOneriler.havuz} videodan {aiOneriler.skorlanan} skorlandı · Top 20 gösteriliyor
+                      {aiOneriler.cached && <span className="ml-2 bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded">cache</span>}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button onClick={() => aiIleSkorla(true)}
+                      className="bg-white hover:bg-purple-100 text-purple-700 border border-purple-300 px-3 py-1.5 rounded-lg font-bold text-xs inline-flex items-center gap-1">
+                      <RotateCw className="w-3 h-3" /> Yeniden Skorla
+                    </button>
+                    <button onClick={aiOnerileriUygula} disabled={aiSecili.size === 0}
+                      className="bg-emerald-500 hover:bg-emerald-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold px-3 py-1.5 rounded-lg text-xs inline-flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5" />
+                      Seçilenleri Uygula ({aiSecili.size})
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+                  {aiOneriler.top?.map((v, i) => {
+                    const seciliMi = aiSecili.has(v.vimeoId);
+                    const puanRenk = v.puan >= 80 ? 'bg-emerald-500' : v.puan >= 60 ? 'bg-amber-500' : 'bg-gray-400';
+                    return (
+                      <button key={v.vimeoId} onClick={() => aiOneriToggle(v.vimeoId)}
+                        className={`w-full text-left rounded-xl p-3 flex items-start gap-3 border-2 transition-all ${
+                          seciliMi
+                            ? 'bg-emerald-50 border-emerald-400 shadow-md'
+                            : 'bg-white border-purple-200 hover:border-purple-400'
+                        }`}>
+                        <div className="flex-shrink-0">
+                          {seciliMi ? (
+                            <div className="w-6 h-6 rounded-full bg-emerald-500 text-white flex items-center justify-center">
+                              <Check className="w-4 h-4" />
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 rounded-full border-2 border-purple-300" />
+                          )}
+                        </div>
+                        <div className={`${puanRenk} text-white text-xs font-extrabold px-2 py-1 rounded inline-flex items-center justify-center flex-shrink-0 min-w-[48px]`}>
+                          {v.puan}
+                        </div>
+                        {v.thumbnailUrl && (
+                          <img src={v.thumbnailUrl} alt="" className="w-16 h-10 rounded object-cover flex-shrink-0" />
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-bold text-gray-900 text-sm line-clamp-1">{v.baslik}</h4>
+                          {v.sebep && (
+                            <p className="text-purple-700 text-xs italic mt-0.5 line-clamp-2">— {v.sebep}</p>
+                          )}
+                          <div className="flex items-center gap-2 mt-1 text-[11px] text-gray-500 flex-wrap">
+                            {v.egitmenAdlari?.[0] && <span className="font-semibold">{v.egitmenAdlari[0]}</span>}
+                            {v.anaTema && <span className="text-purple-600">{v.anaTema}</span>}
+                            {v.tarih && <span>{v.tarih}</span>}
+                          </div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {initSonuc && (
           <div className={`mb-4 rounded-xl p-3 text-sm ${initSonuc.basarili ? 'bg-emerald-50 border border-emerald-200 text-emerald-900' : 'bg-red-50 border border-red-200 text-red-900'}`}>
