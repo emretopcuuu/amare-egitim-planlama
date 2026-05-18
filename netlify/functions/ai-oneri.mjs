@@ -38,11 +38,11 @@ const CORS = {
 };
 
 const SISTEM_PROMPT = `Sen Doğrudan Satış eğitim platformu için içerik öneri motorusun.
-Kullanıcının izleme geçmişi, favorileri ve kariyer rank'ına bakarak SONRAKI 5 videoyu öner.
+Kullanıcının izleme geçmişi, favorileri ve kariyer rank'ına bakarak SONRAKI 3 videoyu öner.
 
 Kurallar:
 - Her öneri için: vimeoId, başlık, neden (1 kısa Türkçe cümle)
-- Çeşitlilik: aynı eğitmen/konuda 5 öneri olmasın
+- Çeşitlilik: aynı eğitmen/konuda 3 öneri olmasın
 - Kullanıcı izlediği şeyleri öneri listesine KOYMA
 - Rank'a uygun ya da 1 üstüne yönlendirici olsun
 - MARKA: "network marketing" yazma — her zaman "Doğrudan Satış" kullan
@@ -187,7 +187,7 @@ Bu kullanıcıya SONRAKI 5 video önerisi yap.`;
     vSnap.docs.forEach(d => { oneriMap[d.data().vimeoId] = { id: d.id, ...d.data() }; });
     const zenginOneriler = (sonuc.oneriler || [])
       .filter(o => oneriMap[o.vimeoId])
-      .slice(0, 5)
+      .slice(0, 3)
       .map(o => ({
         vimeoId: o.vimeoId,
         sebep: o.sebep,

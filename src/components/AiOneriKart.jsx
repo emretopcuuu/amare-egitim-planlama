@@ -1,5 +1,5 @@
 // AI Öneri Kartı — Profil ya da Kayıtlı Eğitimler hero altında
-// Kullanıcıya kişisel 5 video önerir, 12 saat cache
+// Kullanıcıya kişisel 3 video önerir, 12 saat cache
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -66,7 +66,7 @@ const AiOneriKart = () => {
         </button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-        {veri.oneriler.map(o => (
+        {veri.oneriler.slice(0, 3).map(o => (
           <button key={o.vimeoId}
             onClick={() => navigate(`/kayitli-egitimler?v=${encodeURIComponent(o.vimeoId)}`)}
             className="bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-400/60 rounded-xl overflow-hidden text-left transition-all group">
