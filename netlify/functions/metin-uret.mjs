@@ -12,6 +12,7 @@
 
 import admin from 'firebase-admin';
 import { isAdminToken } from './_adminEmails.mjs';
+import { metinTemizle } from './_metinTemizle.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -107,7 +108,7 @@ export default async (req) => {
 
     const body = await req.json();
     const tip = ['duyuru', 'hatirlatma', 'ozel'].includes(body.tip) ? body.tip : 'ozel';
-    const sistemPrompt = body.sistemPrompt || 'You are a helpful Turkish content writer for a network marketing education platform.';
+    const sistemPrompt = body.sistemPrompt || 'You are a helpful Turkish content writer for a Doğrudan Satış (direct selling) education platform. BRAND RULE: never write "network marketing" — always use "Doğrudan Satış".';
     const userPrompt = buildPrompt(tip, body.baglam);
     const model = body.model || OPENROUTER_MODEL;
 
@@ -151,7 +152,10 @@ export default async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ metin }), {
+    // MARKA TEMİZLİĞİ
+    const metinTemiz = metinTemizle(metin);
+
+    return new Response(JSON.stringify({ metin: metinTemiz }), {
       headers: { 'Content-Type': 'application/json', ...CORS },
     });
 

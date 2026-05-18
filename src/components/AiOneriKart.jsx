@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Play, Loader2, RefreshCw, Star, Clock } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { metinTemizleDeep } from '../utils/metinTemizle';
 
 function formatSure(s) {
   if (!s) return '';
@@ -30,7 +31,7 @@ const AiOneriKart = () => {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Yüklenemedi');
-      setVeri(data);
+      setVeri(metinTemizleDeep(data));
     } catch (e) {
       setHata(e.message);
     } finally {

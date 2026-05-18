@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, Play, Loader2, Quote, ArrowRight, Sparkles } from 'lucide-react';
 import { auth } from '../utils/firebase';
+import { metinTemizleDeep } from '../utils/metinTemizle';
 
 const BanaOzelAha = ({ kompakt = false }) => {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ const BanaOzelAha = ({ kompakt = false }) => {
         const data = await res.json();
         if (!aktif) return;
         if (!data.ilham?.text) { setHata(true); return; }
-        setVeri(data);
+        setVeri(metinTemizleDeep(data));
       } catch {
         if (aktif) setHata(true);
       } finally {

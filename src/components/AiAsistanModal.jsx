@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { X, Sparkles, Loader2, MessageCircle, Send, ExternalLink, RefreshCw, AlertCircle, Copy, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { metinTemizleDeep } from '../utils/metinTemizle';
 
 const EYLEM_META = {
   wp_mesaj:    { renk: 'emerald', etiket: '💬 WhatsApp', icon: MessageCircle },
@@ -46,7 +47,7 @@ const AiAsistanModal = ({ acik, ekip, onClose }) => {
         const msg = data.detail ? `${data.error || 'Hata'}: ${data.detail}` : (data.error || 'Yüklenemedi');
         throw new Error(msg);
       }
-      setVeri(data);
+      setVeri(metinTemizleDeep(data));
     } catch (e) {
       setHata(e.message);
     } finally {

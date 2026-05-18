@@ -13,6 +13,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import admin from 'firebase-admin';
+import { metinTemizleDeep } from './_metinTemizle.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -33,7 +34,7 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-const SISTEM_PROMPT = `Sen network marketing/leadership eğitim videolarını analiz eden bir uzmansin.
+const SISTEM_PROMPT = `Sen Doğrudan Satış / liderlik eğitim videolarını analiz eden bir uzmansin.
 Türkçe transcript verilir, 3 ÇIKTI üretirsin (sadece JSON):
 
 {
@@ -55,6 +56,7 @@ KURALLAR:
 - chapters: 3-10 adet, videoyu mantıksal parçalara böl. Her chapter min 60sn olmalı.
 - chapters[0].start her zaman 0
 - ozet.anaTema: liderlik, satış, motivasyon, kişisel gelişim, vizyon, sağlık, ürün, vb
+- MARKA: "network marketing" terimini ASLA kullanma. Her zaman "Doğrudan Satış" yaz.
 - Sadece JSON yaz, hiçbir açıklama EKLEME.`;
 
 async function callLLM(prompt) {
@@ -163,11 +165,14 @@ ${transcript}
 
 3 ÇIKTI üret: ahaMoments + chapters + ozet (sistem prompt'taki format).`;
 
-    const sonuc = await callLLM(prompt);
+    const sonucRaw = await callLLM(prompt);
 
     // Validate
-    if (!Array.isArray(sonuc.ahaMoments)) sonuc.ahaMoments = [];
-    if (!Array.isArray(sonuc.chapters)) sonuc.chapters = [];
+    if (!Array.isArray(sonucRaw.ahaMoments)) sonucRaw.ahaMoments = [];
+    if (!Array.isArray(sonucRaw.chapters)) sonucRaw.chapters = [];
+
+    // MARKA TEMİZLİĞİ — "network marketing" → "Doğrudan Satış"
+    const sonuc = metinTemizleDeep(sonucRaw);
 
     // Cache yaz
     try {

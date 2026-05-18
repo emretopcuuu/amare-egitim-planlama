@@ -16,6 +16,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import admin from 'firebase-admin';
+import { metinTemizleDeep } from './_metinTemizle.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -36,7 +37,7 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-const SISTEM_PROMPT = `Sen network marketing eğitim platformu için içerik öneri motorusun.
+const SISTEM_PROMPT = `Sen Doğrudan Satış eğitim platformu için içerik öneri motorusun.
 Kullanıcının izleme geçmişi, favorileri ve kariyer rank'ına bakarak SONRAKI 5 videoyu öner.
 
 Kurallar:
@@ -44,6 +45,7 @@ Kurallar:
 - Çeşitlilik: aynı eğitmen/konuda 5 öneri olmasın
 - Kullanıcı izlediği şeyleri öneri listesine KOYMA
 - Rank'a uygun ya da 1 üstüne yönlendirici olsun
+- MARKA: "network marketing" yazma — her zaman "Doğrudan Satış" kullan
 - Sadece JSON çıktı
 
 ÇIKTI FORMATI:
@@ -197,7 +199,7 @@ Bu kullanıcıya SONRAKI 5 video önerisi yap.`;
         sure: oneriMap[o.vimeoId].sure || null,
       }));
 
-    const cikti = { oneriler: zenginOneriler };
+    const cikti = metinTemizleDeep({ oneriler: zenginOneriler });
 
     // Cache
     try {

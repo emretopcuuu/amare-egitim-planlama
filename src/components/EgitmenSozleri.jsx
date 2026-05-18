@@ -4,6 +4,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Quote, Loader2, Play, Sparkles, Tag, Calendar } from 'lucide-react';
+import { metinTemizleDeep } from '../utils/metinTemizle';
 
 const EgitmenSozleri = ({ coreId, onSozTikla }) => {
   const [veri, setVeri] = useState(null);
@@ -21,7 +22,7 @@ const EgitmenSozleri = ({ coreId, onSozTikla }) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!aktif) return;
-        setVeri(data);
+        setVeri(metinTemizleDeep(data));
       } catch (e) {
         if (aktif) setHata(e.message);
       } finally {

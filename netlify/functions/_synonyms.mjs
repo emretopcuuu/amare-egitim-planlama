@@ -1,6 +1,6 @@
 // netlify/functions/_synonyms.mjs
 // ─────────────────────────────────────────────────────────────────────────
-// Türkçe network marketing / leadership eğitimleri için sabit eş anlamlı
+// Türkçe Doğrudan Satış / liderlik eğitimleri için sabit eş anlamlı
 // kelime sözlüğü. transcript-search.mjs içinde opt-in `synonimGenislet`
 // flag'i ile kullanılır.
 //

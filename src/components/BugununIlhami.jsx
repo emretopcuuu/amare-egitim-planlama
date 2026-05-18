@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Play, Loader2, Quote, ArrowRight, Calendar } from 'lucide-react';
+import { metinTemizleDeep } from '../utils/metinTemizle';
 
 const STORAGE_KEY = 'amare_ilham_gun';
 
@@ -21,7 +22,7 @@ const BugununIlhami = ({ kompakt = false }) => {
         if (!res.ok) throw new Error();
         const data = await res.json();
         if (!data.ilham?.text) throw new Error('Ilham yok');
-        setVeri(data);
+        setVeri(metinTemizleDeep(data));
       } catch {
         setHata(true);
       } finally {

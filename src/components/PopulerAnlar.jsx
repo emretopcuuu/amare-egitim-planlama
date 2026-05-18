@@ -4,6 +4,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Loader2, Play, Flame, ArrowRight } from 'lucide-react';
+import { metinTemizleDeep } from '../utils/metinTemizle';
 
 const PopulerAnlar = ({ limit = 5, kompakt = false }) => {
   const navigate = useNavigate();
@@ -18,7 +19,7 @@ const PopulerAnlar = ({ limit = 5, kompakt = false }) => {
         if (!res.ok) throw new Error();
         const data = await res.json();
         if (!aktif) return;
-        setAnlar(Array.isArray(data.anlar) ? data.anlar : []);
+        setAnlar(metinTemizleDeep(Array.isArray(data.anlar) ? data.anlar : []));
       } catch {
         if (aktif) setHata(true);
       }

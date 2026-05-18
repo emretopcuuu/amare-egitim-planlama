@@ -9,6 +9,7 @@ import { FileText, Play, Search, X, ChevronDown, Loader2, Sparkles, Clock, BookO
 import { db, auth } from '../utils/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { trackAnTikla } from '../utils/anlarTrack';
+import { metinTemizleDeep } from '../utils/metinTemizle';
 
 function formatSure(s) {
   if (s == null || s < 0) return '';
@@ -44,14 +45,14 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
         if (snap.exists()) {
           const data = snap.data();
           const ch = Array.isArray(data.transcriptChunks) ? data.transcriptChunks : [];
-          setChunks(ch);
+          setChunks(metinTemizleDeep(ch));
         } else {
           setChunks([]);
         }
         // Cache'lenmiş AI analizi varsa direkt al
         const aiSnap = await getDoc(doc(db, `kayitli_egitimler/${vimeoId}/ai_analiz/main`));
         if (!iptal && aiSnap.exists()) {
-          setAiAnaliz(aiSnap.data());
+          setAiAnaliz(metinTemizleDeep(aiSnap.data()));
         }
       } catch (e) {
         console.warn('[chunks] read err:', e.message);
@@ -75,7 +76,7 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
         body: JSON.stringify({ vimeoId }),
       });
       const data = await res.json();
-      if (res.ok) setAiAnaliz(data);
+      if (res.ok) setAiAnaliz(metinTemizleDeep(data));
     } catch (e) {
       console.warn('[ai-analiz] err:', e.message);
     } finally {

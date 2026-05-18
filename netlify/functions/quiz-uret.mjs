@@ -10,6 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import admin from 'firebase-admin';
+import { metinTemizleDeep } from './_metinTemizle.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -128,23 +129,25 @@ ${body.transcript ? '\nTranskript (kısaltılmış):\n' + String(body.transcript
 
 Bu video için 3-5 soruluk eğitici quiz üret.`;
 
-    const sonuc = await callLLM(prompt);
-    if (!sonuc.sorular || !Array.isArray(sonuc.sorular)) {
+    const sonucRaw = await callLLM(prompt);
+    if (!sonucRaw.sorular || !Array.isArray(sonucRaw.sorular)) {
       throw new Error('Quiz üretimi başarısız — sorular array yok');
     }
+    // MARKA TEMİZLİĞİ
+    const sorular = metinTemizleDeep(sonucRaw.sorular);
 
     // Cache'le
     try {
       await cacheRef.set({
         vimeoId,
-        sorular: sonuc.sorular,
+        sorular,
         olusturuldu: admin.firestore.FieldValue.serverTimestamp(),
       });
     } catch (e) {
       console.warn('[quiz-uret] cache write err:', e.message);
     }
 
-    return new Response(JSON.stringify({ sorular: sonuc.sorular, cached: false }), {
+    return new Response(JSON.stringify({ sorular, cached: false }), {
       headers: { 'Content-Type': 'application/json', ...CORS },
     });
 

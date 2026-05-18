@@ -9,6 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import admin from 'firebase-admin';
+import { metinTemizleDeep } from './_metinTemizle.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -40,8 +41,9 @@ async function supabaseGet(path) {
   return res.json();
 }
 
-const SISTEM_PROMPT = `Sen bir network marketing eğitim sistemi yapay zekâ asistanısın.
+const SISTEM_PROMPT = `Sen bir Doğrudan Satış eğitim sistemi yapay zekâ asistanısın.
 Görevin: sponsor'un (lider) bu hafta hangi 3-5 üyesine ne yapması gerektiğini önermek.
+MARKA KURALI: "network marketing" yazma — her zaman "Doğrudan Satış" kullan.
 
 Veri tabanlı, bold, direkt yaz. Klişe yok, "harika!" gibi tatlandırma yok.
 
@@ -222,7 +224,8 @@ ${JSON.stringify({ sponsorAmareId, ekip: ekipOzet }, null, 2)}
 
 Bu veriyi analiz et ve sponsor'un BU HAFTA yapması gereken 3-5 öncelikli eylemi öner.`;
 
-    const sonuc = await callLLM(prompt);
+    const sonucRaw = await callLLM(prompt);
+    const sonuc = metinTemizleDeep(sonucRaw); // MARKA TEMİZLİĞİ
 
     // Cache'le
     try {
