@@ -89,17 +89,28 @@ export default async (req) => {
         }
       }
 
-      // Top N
+      // Top N — daha fazla çek, sonra dedupe + filter sonra slice
       const snap = await db.collection('popular_anlar')
         .orderBy('sayac', 'desc')
-        .limit(Math.max(limit, 20))
+        .limit(Math.max(limit * 4, 40))
         .get();
 
-      const raw = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      let raw = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // Video metadata + AI sebep enrichment (her video için tek call)
+      // 1) Anlamsız entry'leri at: ilk 5sn (video başlangıcı, istemsiz click)
+      raw = raw.filter(r => (r.start || 0) >= 5);
+
+      // 2) Aynı videodan max 2 popüler an (çeşitlilik)
+      const perVideo = {};
+      raw = raw.filter(r => {
+        perVideo[r.vimeoId] = (perVideo[r.vimeoId] || 0) + 1;
+        return perVideo[r.vimeoId] <= 2;
+      });
+
+      // Video metadata + transcript chunks + AI fetch (paralel)
       const vimeoIds = Array.from(new Set(raw.map(r => r.vimeoId).filter(Boolean)));
       const videoMeta = {};
+      const chunksMap = {};
       for (let i = 0; i < vimeoIds.length; i += 10) {
         const batch = vimeoIds.slice(i, i + 10);
         const docs = await Promise.all(batch.map(vid =>
@@ -113,24 +124,28 @@ export default async (req) => {
               egitmenAdlari: data.egitmenAdlari || [],
               thumbnailUrl: data.thumbnailUrl,
             };
+            chunksMap[batch[idx]] = Array.isArray(data.transcriptChunks) ? data.transcriptChunks : [];
           }
         });
       }
 
-      // AI analiz'lerden bu noktaya yakın metni bul (tolerans ±15sn)
+      // AI analiz cache (paralel)
       const aiCache = {};
-      for (const vid of vimeoIds) {
-        try {
-          const ai = await db.doc(`kayitli_egitimler/${vid}/ai_analiz/main`).get();
-          if (ai.exists) aiCache[vid] = ai.data();
-        } catch {}
-      }
+      const aiPromises = vimeoIds.map(vid =>
+        db.doc(`kayitli_egitimler/${vid}/ai_analiz/main`).get()
+          .then(s => { if (s.exists) aiCache[vid] = s.data(); })
+          .catch(() => {})
+      );
+      await Promise.all(aiPromises);
 
       const anlar = raw.map(r => {
         const meta = videoMeta[r.vimeoId] || {};
         const ai = aiCache[r.vimeoId];
+        const chunks = chunksMap[r.vimeoId] || [];
         let alintiText = null;
         let alintiSebep = null;
+
+        // 1. öncelik: AI küratörlü aha moment (±15sn)
         if (ai && Array.isArray(ai.ahaMoments)) {
           const near = ai.ahaMoments.find(a => Math.abs((a.start || 0) - r.start) < 15);
           if (near) {
@@ -138,6 +153,14 @@ export default async (req) => {
             alintiSebep = near.sebep;
           }
         }
+        // 2. fallback: transcript chunk metni (en yakın chunk, ±10sn)
+        if (!alintiText && chunks.length > 0) {
+          const near = chunks.find(c => Math.abs((c.start || 0) - r.start) < 10);
+          if (near?.text && near.text.length >= 20) {
+            alintiText = near.text;
+          }
+        }
+
         return {
           vimeoId: r.vimeoId,
           start: r.start,
@@ -149,7 +172,9 @@ export default async (req) => {
           alintiText,
           alintiSebep,
         };
-      });
+      })
+      // 3) Hiç alıntı bulamadıklarımızı at — anlamsız "Popüler an" göstermesin
+      .filter(a => a.alintiText);
 
       try {
         await cacheRef.set({

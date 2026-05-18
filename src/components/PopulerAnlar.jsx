@@ -70,16 +70,14 @@ const PopulerAnlar = ({ limit = 5, kompakt = false }) => {
             }`}>{i + 1}</div>
 
             <div className="flex-1 min-w-0">
-              {an.alintiText ? (
-                <p className="text-white text-xs sm:text-sm line-clamp-2 italic">"{an.alintiText}"</p>
-              ) : (
-                <p className="text-white/70 text-xs sm:text-sm">
-                  Popüler an — {Math.floor((an.start || 0) / 60)}:{String(Math.floor((an.start || 0) % 60)).padStart(2, '0')}
-                </p>
+              <p className="text-white text-xs sm:text-sm line-clamp-2 italic">"{an.alintiText}"</p>
+              {an.alintiSebep && (
+                <p className="text-rose-200/70 text-[10px] sm:text-[11px] mt-1 italic line-clamp-1">— {an.alintiSebep}</p>
               )}
               <div className="flex items-center gap-2 mt-1.5 text-[10px] sm:text-[11px] text-rose-200/80 flex-wrap">
                 {an.baslik && <span className="font-semibold truncate max-w-[50%]">{an.baslik}</span>}
                 {an.egitmenAdlari?.[0] && <span>— {an.egitmenAdlari[0]}</span>}
+                <span className="text-rose-300/60">@ {Math.floor((an.start || 0) / 60)}:{String(Math.floor((an.start || 0) % 60)).padStart(2, '0')}</span>
                 <span className="ml-auto inline-flex items-center gap-1 bg-rose-500/20 px-1.5 py-0.5 rounded">
                   <Flame className="w-2.5 h-2.5" />
                   {an.sayac}
