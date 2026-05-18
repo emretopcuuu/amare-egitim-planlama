@@ -949,7 +949,7 @@ const KayitliEgitimlerSayfasi = () => {
       {!loading && !arama.trim() && kategoriSet.size === 0 && !egitmenCoreId && yil === 'all' && sureKod === 'all' && !sadeceFav && !sadeceIzlenen && dilKod === 'all' && (
         <div className="px-4 mb-4">
           <div className="container mx-auto max-w-7xl">
-            <PopulerAnlar limit={5} />
+            <PopulerAnlar limit={5} onOynat={(v, startSn) => handleOynat(v, startSn)} />
           </div>
         </div>
       )}

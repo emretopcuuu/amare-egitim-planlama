@@ -5,8 +5,10 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { TrendingUp, Loader2, Play, Flame, ArrowRight } from 'lucide-react';
 import { metinTemizleDeep } from '../utils/metinTemizle';
+import { db } from '../utils/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
-const PopulerAnlar = ({ limit = 5, kompakt = false }) => {
+const PopulerAnlar = ({ limit = 5, kompakt = false, onOynat }) => {
   const navigate = useNavigate();
   const [anlar, setAnlar] = useState(null);
   const [hata, setHata] = useState(false);
@@ -27,9 +29,26 @@ const PopulerAnlar = ({ limit = 5, kompakt = false }) => {
     return () => { aktif = false; };
   }, [limit]);
 
-  function git(an) {
+  async function git(an) {
     if (!an?.vimeoId) return;
-    navigate(`/kayitli-egitimler?v=${encodeURIComponent(an.vimeoId)}&t=${Math.floor(an.start || 0)}`);
+    const startSn = Math.floor(an.start || 0);
+    // Eğer parent onOynat verdiyse (aynı sayfada modal aç), full video doc çek
+    if (onOynat) {
+      try {
+        const snap = await getDoc(doc(db, `kayitli_egitimler/${an.vimeoId}`));
+        if (snap.exists()) {
+          onOynat({ id: snap.id, ...snap.data() }, startSn);
+          return;
+        }
+      } catch (e) {
+        console.warn('[populer click] doc read err:', e.message);
+      }
+      // Fallback minimal obj
+      onOynat({ id: an.vimeoId, vimeoId: an.vimeoId, baslik: an.baslik, thumbnailUrl: an.thumbnailUrl }, startSn);
+    } else {
+      // Başka sayfadan kullanılırsa navigate fallback
+      navigate(`/kayitli-egitimler?v=${encodeURIComponent(an.vimeoId)}&t=${startSn}`);
+    }
   }
 
   if (hata) return null;
