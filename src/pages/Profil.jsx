@@ -227,7 +227,13 @@ const Profil = () => {
   const profilVerisiFetch = async (force = false) => {
     if (!currentUser || isAnonymous) return;
     const amareId = userDoc?.amareId;
-    if (!amareId) return;
+    if (!amareId) {
+      // userDoc henüz yüklenmediyse sessizce bekle, ama uzun bekleme için hata göster
+      if (userDoc !== null) {
+        setHata('Amare ID bağlı değil. Yeniden giriş yap veya sponsorundan kontrol iste.');
+      }
+      return;
+    }
 
     // Cache
     if (!force) {
@@ -244,7 +250,7 @@ const Profil = () => {
       });
       const data = await res.json();
       if (!res.ok) {
-        setHata(data.error || 'Profil verisi yüklenemedi');
+        setHata(data.error || data.hint || `Profil verisi yüklenemedi (${res.status})`);
         setProfilVerisi(null);
       } else {
         setProfilVerisi(data);
@@ -707,12 +713,43 @@ const Profil = () => {
       </div>
 
       {/* Skeleton — profilVerisi henüz yokken shimmer kartlar */}
-      {!profilVerisi && (
+      {!profilVerisi && !hata && (
         <div className="max-w-3xl mx-auto px-4 mt-8 space-y-4">
           {[120, 160, 100, 140].map((h, i) => (
             <div key={i} className="rounded-2xl border border-white/10 skeleton-shimmer"
               style={{ height: `${h}px`, animationDelay: `${i * 100}ms` }} />
           ))}
+          {/* 5sn sonra hâlâ veri yoksa "Sorun mu var?" diyalogu */}
+          <div className="text-center pt-4">
+            <p className="text-purple-200/60 text-xs">Profil verisi yükleniyor…</p>
+            <button onClick={() => profilVerisiFetch(true)}
+              className="mt-3 inline-flex items-center gap-1 text-amber-300 hover:text-amber-200 text-xs font-bold underline">
+              <RotateCw className="w-3 h-3" /> 10sn'den uzun sürerse — yenile
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Profil veri çekme HATA göster — kullanıcı sessiz başarısızlıktan kurtulsun */}
+      {hata && !profilVerisi && (
+        <div className="max-w-3xl mx-auto px-4 mt-8">
+          <div className="bg-rose-500/15 border border-rose-400/40 rounded-2xl p-5 text-center">
+            <div className="text-rose-200 text-sm font-semibold mb-2">⚠️ Profil verisi yüklenemedi</div>
+            <p className="text-white/80 text-xs leading-relaxed mb-3">{hata}</p>
+            <p className="text-white/50 text-[11px] mb-3">
+              Yardım: önce sayfayı yenile. Çözülmezse çıkış yapıp tekrar gir.
+            </p>
+            <div className="flex gap-2 justify-center">
+              <button onClick={() => profilVerisiFetch(true)}
+                className="bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold text-xs px-4 py-2 rounded-lg spring-tap inline-flex items-center gap-1.5">
+                <RotateCw className="w-3 h-3" /> Yenile
+              </button>
+              <button onClick={() => window.location.reload()}
+                className="bg-white/10 hover:bg-white/20 text-white text-xs px-4 py-2 rounded-lg spring-tap">
+                Sayfayı yenile
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
