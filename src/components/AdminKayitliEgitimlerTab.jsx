@@ -185,14 +185,28 @@ const AdminKayitliEgitimlerTab = () => {
       return;
     }
     setVimeoSenkron(true);
-    setMesaj('Vimeo taranıyor...');
+    setMesaj('Vimeo taranıyor… 20+ sayfa, 30sn-2dk sürebilir, bekleyin');
     try {
       const idToken = await auth.currentUser.getIdToken();
+      // 90sn timeout — Vimeo scan uzun sürer
+      const ctrl = new AbortController();
+      const tid = setTimeout(() => ctrl.abort(), 90_000);
       const res = await fetch('/.netlify/functions/vimeo-yeni-cek', {
         headers: { 'Authorization': 'Bearer ' + idToken },
+        signal: ctrl.signal,
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || res.statusText);
+      clearTimeout(tid);
+
+      // Defensive parse: önce text al, sonra JSON dene
+      const text = await res.text();
+      let data;
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        // JSON değil — büyük ihtimal function timeout (Netlify 26sn limit)
+        throw new Error(`Function timeout veya hata (status ${res.status}). Vimeo scan 26sn'yi aştı — daha az video çekmek için backend'i optimize etmek gerekir.`);
+      }
+      if (!res.ok) throw new Error(data.error || data.detail || `Hata ${res.status}: ${res.statusText}`);
       setMesaj(`✓ ${data.yeni} yeni · ${data.excludedYeni} dışlandı · ${data.mevcut} mevcut · ${data.sureSn}s`);
       setTimeout(() => setMesaj(''), 8000);
       if (data.yeni > 0) {
@@ -200,7 +214,11 @@ const AdminKayitliEgitimlerTab = () => {
         fetchVideolar();
       }
     } catch (err) {
-      setMesaj('✗ ' + err.message);
+      if (err.name === 'AbortError') {
+        setMesaj('✗ İşlem 90sn\'yi aştı — daha sonra dene veya backend optimize et');
+      } else {
+        setMesaj('✗ ' + err.message);
+      }
     } finally {
       setVimeoSenkron(false);
     }

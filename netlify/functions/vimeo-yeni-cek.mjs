@@ -230,19 +230,32 @@ export default async (req) => {
   const videos = data?.data || [];
   console.log(`[vimeo] ${videos.length} son video alındı`);
 
-  // 3. Her video için Firestore'da var mı kontrol
+  // 3. Toplu varlık kontrolü — paralel getAll (100 sequential -> 1 batch)
+  const validVideos = videos.filter(v => v.uri).map(v => ({
+    ...v,
+    vimeoId: String(v.uri).split('/').pop(),
+  }));
+  const refs = validVideos.map(v => db.collection('kayitli_egitimler').doc(v.vimeoId));
+  let existingSnaps = [];
+  try {
+    existingSnaps = await db.getAll(...refs);
+  } catch (e) {
+    console.warn('[vimeo-yeni-cek] getAll hatası, fallback:', e.message);
+    existingSnaps = await Promise.all(refs.map(r => r.get().catch(() => null)));
+  }
+  const existsMap = {};
+  existingSnaps.forEach((s, i) => { existsMap[validVideos[i].vimeoId] = !!(s && s.exists); });
+
   let yeniSayisi = 0;
   let mevcutSayisi = 0;
   let excludedSayisi = 0;
   const yeniler = [];
 
-  for (const v of videos) {
-    const vimeoId = String(v.uri || '').split('/').pop();
-    if (!vimeoId) continue;
+  for (const v of validVideos) {
+    const vimeoId = v.vimeoId;
 
     const ref = db.collection('kayitli_egitimler').doc(vimeoId);
-    const existing = await ref.get();
-    if (existing.exists) {
+    if (existsMap[vimeoId]) {
       mevcutSayisi++;
       continue;
     }
