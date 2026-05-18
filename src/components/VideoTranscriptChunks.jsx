@@ -35,34 +35,7 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
   const [acik, setAcik] = useState(false);
   const [arama, setArama] = useState('');
 
-  useEffect(() => {
-    if (!vimeoId) { setChunks([]); return; }
-    let iptal = false;
-    (async () => {
-      try {
-        const snap = await getDoc(doc(db, `kayitli_egitimler/${vimeoId}`));
-        if (iptal) return;
-        if (snap.exists()) {
-          const data = snap.data();
-          const ch = Array.isArray(data.transcriptChunks) ? data.transcriptChunks : [];
-          setChunks(metinTemizleDeep(ch));
-        } else {
-          setChunks([]);
-        }
-        // Cache'lenmiş AI analizi varsa direkt al
-        const aiSnap = await getDoc(doc(db, `kayitli_egitimler/${vimeoId}/ai_analiz/main`));
-        if (!iptal && aiSnap.exists()) {
-          setAiAnaliz(metinTemizleDeep(aiSnap.data()));
-        }
-      } catch (e) {
-        console.warn('[chunks] read err:', e.message);
-        setChunks([]);
-      }
-    })();
-    return () => { iptal = true; };
-  }, [vimeoId]);
-
-  // AI analiz tetikle (yoksa)
+  // AI analiz tetikle (idempotent — zaten varsa atlar)
   async function aiAnalizTetikle() {
     if (aiAnaliz || aiYukleniyor) return;
     setAiYukleniyor(true);
@@ -84,6 +57,41 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
     }
   }
 
+  useEffect(() => {
+    if (!vimeoId) { setChunks([]); return; }
+    let iptal = false;
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db, `kayitli_egitimler/${vimeoId}`));
+        if (iptal) return;
+        let chunkVar = false;
+        if (snap.exists()) {
+          const data = snap.data();
+          const ch = Array.isArray(data.transcriptChunks) ? data.transcriptChunks : [];
+          chunkVar = ch.length > 0;
+          setChunks(metinTemizleDeep(ch));
+        } else {
+          setChunks([]);
+        }
+        // Cache'lenmiş AI analizi varsa direkt al
+        const aiSnap = await getDoc(doc(db, `kayitli_egitimler/${vimeoId}/ai_analiz/main`));
+        if (iptal) return;
+        if (aiSnap.exists()) {
+          setAiAnaliz(metinTemizleDeep(aiSnap.data()));
+        } else if (chunkVar && auth.currentUser) {
+          // ✨ Otomatik AI analiz — transcript var, kullanıcı login, cache yok
+          // 10sn LLM çağrısı arka planda, sonuç gelince UI güncellenir
+          aiAnalizTetikle();
+        }
+      } catch (e) {
+        console.warn('[chunks] read err:', e.message);
+        setChunks([]);
+      }
+    })();
+    return () => { iptal = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vimeoId]);
+
   const filtreli = useMemo(() => {
     if (!chunks) return [];
     if (!arama.trim()) return chunks;
@@ -91,47 +99,9 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
     return chunks.filter(c => (c.text || '').toLowerCase().includes(q));
   }, [chunks, arama]);
 
-  // Aha! moments — AI varsa onu kullan, yoksa heuristic
+  // Aha! moments — SADECE AI küratörlü liste (heuristic fallback yok)
   const ahaMoments = useMemo(() => {
-    if (aiAnaliz?.ahaMoments?.length > 0) {
-      // AI çıktısı (start + text + sebep)
-      return aiAnaliz.ahaMoments;
-    }
-    // Heuristic fallback — TÜM VİDEO boyunca dağıtılmış 5 aday
-    if (!chunks || chunks.length < 5) return [];
-
-    // 1) Kriterleri sağlayan aday havuz (cümle dolu, soru değil, yeterince uzun)
-    const adaylar = chunks.filter(c => {
-      const dur = (c.end || 0) - (c.start || 0);
-      const len = (c.text || '').length;
-      const sorulu = (c.text || '').includes('?');
-      return dur >= 4 && dur <= 25 && len >= 60 && len <= 250 && !sorulu;
-    });
-    if (adaylar.length === 0) return [];
-
-    // 2) Video toplam süresi → 5 eşit dilime böl, her dilimden 1 aday seç
-    const son = adaylar[adaylar.length - 1];
-    const toplamSn = Math.max(sure || 0, son.end || son.start || 0);
-    if (toplamSn < 60) return adaylar.slice(0, 5); // çok kısa video — eskisi gibi
-
-    const HEDEF = 5;
-    const dilim = toplamSn / HEDEF;
-    const secilen = [];
-    for (let i = 0; i < HEDEF; i++) {
-      const dilimBas = i * dilim;
-      const dilimSon = (i + 1) * dilim;
-      // Bu dilimdeki adaylar
-      const dilimAdaylar = adaylar.filter(c =>
-        (c.start || 0) >= dilimBas && (c.start || 0) < dilimSon
-      );
-      if (dilimAdaylar.length === 0) continue;
-      // Bu dilimden EN UZUN metni seç (genelde daha içerikli)
-      const enIyi = dilimAdaylar.reduce((a, b) =>
-        (b.text?.length || 0) > (a.text?.length || 0) ? b : a
-      );
-      secilen.push(enIyi);
-    }
-    return secilen;
+    return aiAnaliz?.ahaMoments?.length > 0 ? aiAnaliz.ahaMoments : [];
   }, [chunks, aiAnaliz]);
 
   // Henüz yüklenmedi
@@ -205,34 +175,28 @@ const VideoTranscriptChunks = ({ vimeoId, sure, onSeek }) => {
             </div>
           )}
 
-          {/* AI tetikleyici — analiz yoksa */}
-          {!aiAnaliz && !aiYukleniyor && (
+          {/* AI loading — otomatik tetiklendi (login ise) ya da manuel buton (anon ise) */}
+          {!aiAnaliz && aiYukleniyor && (
+            <div className="bg-gradient-to-r from-purple-500/20 to-indigo-500/20 border border-purple-400/30 rounded-lg p-3 text-xs text-purple-100 flex items-center justify-center gap-2 font-semibold">
+              <Loader2 className="w-4 h-4 animate-spin text-amber-300" />
+              <span>AI bu videoyu analiz ediyor… <span className="text-purple-300/70 font-normal">(~10sn — Aha! anlar + bölümler + özet)</span></span>
+            </div>
+          )}
+          {!aiAnaliz && !aiYukleniyor && chunks?.length > 0 && (
             <button onClick={aiAnalizTetikle}
               className="w-full bg-gradient-to-r from-purple-500/20 to-indigo-500/20 hover:from-purple-500/30 hover:to-indigo-500/30 border border-purple-400/30 rounded-lg p-2.5 text-xs text-purple-200 font-semibold inline-flex items-center justify-center gap-2 spring-tap">
               <Sparkles className="w-3.5 h-3.5" />
               AI ile analiz et (Aha moments + Bölümler + Özet)
             </button>
           )}
-          {aiYukleniyor && (
-            <div className="bg-purple-500/10 border border-purple-400/30 rounded-lg p-2.5 text-xs text-purple-200 inline-flex items-center justify-center gap-2">
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-              AI analiz ediyor (~10sn)...
-            </div>
-          )}
 
           {/* Aha! moments — AI veya heuristic */}
           {ahaMoments.length > 0 && !arama && (
             <div>
-              <div className="text-amber-300/80 text-[10px] uppercase tracking-wider font-bold mb-2 inline-flex items-center gap-1 flex-wrap">
+              <div className="text-amber-300/80 text-[10px] uppercase tracking-wider font-bold mb-2 inline-flex items-center gap-1">
                 <Sparkles className="w-3 h-3" />
                 Aha! Anlar
-                {aiAnaliz?.ahaMoments?.length > 0 ? (
-                  <span className="text-amber-400/60 text-[9px] font-normal normal-case ml-1">(AI küratör)</span>
-                ) : (
-                  <span className="text-amber-400/50 text-[9px] font-normal normal-case ml-1">
-                    (basit önizleme — gerçek aha'lar için yukarıdan AI analiz et)
-                  </span>
-                )}
+                <span className="text-amber-400/60 text-[9px] font-normal normal-case ml-1">(AI küratör)</span>
               </div>
               <div className="space-y-1.5">
                 {ahaMoments.map((c, i) => (
