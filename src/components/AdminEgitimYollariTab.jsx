@@ -70,21 +70,28 @@ const AdminEgitimYollariTab = () => {
     if (aiSecili.size === 0) { setAiHata('En az 1 video seç'); return; }
     if (!aiOneriler?.top) return;
     try {
+      // Mevcut zorunlu video vimeoId set'i — duplicate ekleme
+      const mevcutIds = new Set((curriculum.zorunlu || []).map(v => v.vimeoId));
       const eklenecekler = aiOneriler.top
         .filter(v => aiSecili.has(v.vimeoId))
-        .map((v, i) => ({
+        .filter(v => !mevcutIds.has(v.vimeoId)) // duplicate filtre
+        .map(v => ({
           vimeoId: v.vimeoId,
           baslik: v.baslik || 'Başlıksız',
-          sira: i + 1,
           thumbnailUrl: v.thumbnailUrl || null,
           egitmenAdlari: v.egitmenAdlari || [],
           kategoriler: v.kategoriler || [],
           tarih: v.tarih || null,
           sure: v.sure || 0,
         }));
-      // Curriculum.zorunlu'ya ekle (mevcut listenin sonuna)
+      if (eklenecekler.length === 0) {
+        setAiHata('Seçtiklerin zaten listede var');
+        return;
+      }
+      // Curriculum.zorunlu'ya ekle (sira otomatik index ile hesaplanir)
+      const birlesik = [...curriculum.zorunlu, ...eklenecekler].slice(0, 50);
       const yeni = {
-        zorunlu: [...curriculum.zorunlu, ...eklenecekler].slice(0, 50),
+        zorunlu: birlesik.map((v, i) => ({ ...v, sira: i + 1 })),
         onerilen: curriculum.onerilen,
       };
       setCurriculum(yeni);
@@ -179,22 +186,43 @@ const AdminEgitimYollariTab = () => {
     });
   };
 
-  const videoSil = (vimeoId, tip) => {
-    setCurriculum(prev => ({
-      ...prev,
-      [tip]: prev[tip].filter(v => v.vimeoId !== vimeoId),
-    }));
+  // Array index ile sil — duplicate'lar olsa bile tek tek silinebilir
+  const videoSil = (index, tip) => {
+    setCurriculum(prev => {
+      const yeni = [...(prev[tip] || [])];
+      yeni.splice(index, 1);
+      // Sıraları yeniden numarala
+      return { ...prev, [tip]: yeni.map((v, i) => ({ ...v, sira: i + 1 })) };
+    });
   };
 
-  const sirala = (vimeoId, yon, tip) => {
+  // Array index ile sırala
+  const sirala = (index, yon, tip) => {
     setCurriculum(prev => {
-      const liste = [...prev[tip]];
-      const i = liste.findIndex(v => v.vimeoId === vimeoId);
-      if (i < 0) return prev;
-      const yeni = yon === 'up' ? i - 1 : i + 1;
-      if (yeni < 0 || yeni >= liste.length) return prev;
-      [liste[i], liste[yeni]] = [liste[yeni], liste[i]];
-      return { ...prev, [tip]: liste };
+      const liste = [...(prev[tip] || [])];
+      const yeniIdx = yon === 'up' ? index - 1 : index + 1;
+      if (yeniIdx < 0 || yeniIdx >= liste.length) return prev;
+      [liste[index], liste[yeniIdx]] = [liste[yeniIdx], liste[index]];
+      return { ...prev, [tip]: liste.map((v, i) => ({ ...v, sira: i + 1 })) };
+    });
+  };
+
+  // Mevcut listede duplicate var mı? Temizle butonu için
+  const duplicateSayisi = useMemo(() => {
+    const ids = (curriculum.zorunlu || []).map(v => v.vimeoId);
+    return ids.length - new Set(ids).size;
+  }, [curriculum.zorunlu]);
+
+  const duplicatesTemizle = () => {
+    setCurriculum(prev => {
+      const seen = new Set();
+      const benzersiz = [];
+      for (const v of (prev.zorunlu || [])) {
+        if (seen.has(v.vimeoId)) continue;
+        seen.add(v.vimeoId);
+        benzersiz.push(v);
+      }
+      return { ...prev, zorunlu: benzersiz.map((v, i) => ({ ...v, sira: i + 1 })) };
     });
   };
 
@@ -350,6 +378,20 @@ const AdminEgitimYollariTab = () => {
 
         {!yukleniyor && (
           <>
+            {/* Duplicate uyarısı + temizle butonu */}
+            {duplicateSayisi > 0 && (
+              <div className="mb-3 bg-amber-50 border border-amber-300 rounded-xl p-3 flex items-center justify-between gap-3 flex-wrap">
+                <div className="text-amber-900 text-sm">
+                  ⚠️ <strong>{duplicateSayisi}</strong> mükerrer video bulundu (aynı videodan birden fazla)
+                </div>
+                <button onClick={duplicatesTemizle}
+                  className="bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs px-3 py-1.5 rounded-lg inline-flex items-center gap-1">
+                  <Trash2 className="w-3 h-3" />
+                  Mükerrerleri Temizle
+                </button>
+              </div>
+            )}
+
             {/* Zorunlu videolar */}
             <VideoListesi
               baslik="Zorunlu Videolar"
@@ -357,8 +399,8 @@ const AdminEgitimYollariTab = () => {
               videolar={curriculum.zorunlu}
               tip="zorunlu"
               onEkle={() => { setAramaTip('zorunlu'); setAramaModal(true); }}
-              onSil={(id) => videoSil(id, 'zorunlu')}
-              onSirala={(id, yon) => sirala(id, yon, 'zorunlu')}
+              onSil={(i) => videoSil(i, 'zorunlu')}
+              onSirala={(i, yon) => sirala(i, yon, 'zorunlu')}
               renk="purple"
             />
 
@@ -371,8 +413,8 @@ const AdminEgitimYollariTab = () => {
               videolar={curriculum.onerilen}
               tip="onerilen"
               onEkle={() => { setAramaTip('onerilen'); setAramaModal(true); }}
-              onSil={(id) => videoSil(id, 'onerilen')}
-              onSirala={(id, yon) => sirala(id, yon, 'onerilen')}
+              onSil={(i) => videoSil(i, 'onerilen')}
+              onSirala={(i, yon) => sirala(i, yon, 'onerilen')}
               renk="amber"
             />
 
@@ -422,7 +464,7 @@ const VideoListesi = ({ baslik, aciklama, videolar, tip, onEkle, onSil, onSirala
       ) : (
         <div className="space-y-2">
           {videolar.map((v, i) => (
-            <div key={v.vimeoId} className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex items-center gap-3 group">
+            <div key={`${v.vimeoId}-${i}`} className="bg-gray-50 border border-gray-200 rounded-xl p-3 flex items-center gap-3 group">
               <div className="text-xs font-bold text-gray-400 w-6 text-center">{i + 1}</div>
               {v.thumbnailUrl ? (
                 <img src={v.thumbnailUrl} alt="" className="w-20 h-12 rounded object-cover flex-shrink-0" />
@@ -438,15 +480,15 @@ const VideoListesi = ({ baslik, aciklama, videolar, tip, onEkle, onSil, onSirala
                 </div>
               </div>
               <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition">
-                <button onClick={() => onSirala(v.vimeoId, 'up')} disabled={i === 0}
+                <button onClick={() => onSirala(i, 'up')} disabled={i === 0}
                   className="p-1.5 hover:bg-gray-200 rounded disabled:opacity-30">
                   <ChevronUp className="w-4 h-4" />
                 </button>
-                <button onClick={() => onSirala(v.vimeoId, 'down')} disabled={i === videolar.length - 1}
+                <button onClick={() => onSirala(i, 'down')} disabled={i === videolar.length - 1}
                   className="p-1.5 hover:bg-gray-200 rounded disabled:opacity-30">
                   <ChevronDown className="w-4 h-4" />
                 </button>
-                <button onClick={() => onSil(v.vimeoId)}
+                <button onClick={() => onSil(i)}
                   className="p-1.5 hover:bg-red-100 text-red-500 rounded">
                   <Trash2 className="w-4 h-4" />
                 </button>
