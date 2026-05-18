@@ -28,6 +28,11 @@ if (!admin.apps.length) {
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash';
 
+// Cache invalidation — bu numarayı bump'la, eski cache'ler atılır.
+// v1 → original (18K char truncation bug, chapters yarıda)
+// v2 → 200K char limit + chapter coverage uyarısı
+const PROMPT_VERSION = 2;
+
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -53,7 +58,10 @@ Türkçe transcript verilir, 3 ÇIKTI üretirsin (sadece JSON):
 
 KURALLAR:
 - ahaMoments: 3-5 adet, gerçekten düşündürücü/güçlü alıntılar. Soru cümlesi değil, ifade.
-- chapters: 3-10 adet, videoyu mantıksal parçalara böl. Her chapter min 60sn olmalı.
+  ahaMoments TÜM VİDEO BOYUNCA dağılmalı (başı, ortası, sonu). Hepsi videonun başında olmasın.
+- chapters: 5-10 adet, videoyu mantıksal parçalara böl. Her chapter min 60sn olmalı.
+  ÇOK ÖNEMLİ: chapters TÜM VİDEO SÜRESİNİ KAPSAMALI. Son chapter videonun son %15'i içinde olmalı.
+  Örnek: 33dk video → son chapter en geç 28dk civarında başlamalı. Yarıda bitirme.
 - chapters[0].start her zaman 0
 - ozet.anaTema: liderlik, satış, motivasyon, kişisel gelişim, vizyon, sağlık, ürün, vb
 - MARKA: "network marketing" terimini ASLA kullanma. Her zaman "Doğrudan Satış" yaz.
@@ -75,7 +83,7 @@ async function callLLM(prompt) {
         { role: 'user', content: prompt },
       ],
       temperature: 0.3,
-      max_tokens: 3000,
+      max_tokens: 4000,
       response_format: { type: 'json_object' },
     }),
   });
@@ -109,17 +117,22 @@ export default async (req) => {
       status: 400, headers: { 'Content-Type': 'application/json', ...CORS },
     });
 
-    // Cache kontrolü (30 gün TTL — içerik değişmez)
+    // Cache kontrolü (30 gün TTL + prompt versiyon)
+    // ?force=1 → cache'i atla, yeniden üret (tek video için)
+    const url = new URL(req.url);
+    const force = url.searchParams.get('force') === '1';
     const cacheRef = admin.firestore().doc(`kayitli_egitimler/${vimeoId}/ai_analiz/main`);
     const cacheSnap = await cacheRef.get();
-    if (cacheSnap.exists) {
+    if (!force && cacheSnap.exists) {
       const c = cacheSnap.data();
       const ts = c.timestamp?._seconds * 1000 || 0;
-      if (Date.now() - ts < 30 * 24 * 60 * 60 * 1000) {
+      const versionOk = (c.promptVersion || 1) >= PROMPT_VERSION;
+      if (versionOk && Date.now() - ts < 30 * 24 * 60 * 60 * 1000) {
         return new Response(JSON.stringify({ ...c, cached: true }), {
           headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=3600', ...CORS },
         });
       }
+      // Versiyon uyumsuz → re-generate (eski cache yarıda kalmış chapter'lar içeriyor)
     }
 
     // Auth check (cache değilse signed-in gerek)
@@ -150,20 +163,46 @@ export default async (req) => {
       }), { status: 200, headers: { 'Content-Type': 'application/json', ...CORS } });
     }
 
-    // Transcript'i LLM'e hazırla — kısaltılmış, sadece [start] text format
-    const transcript = chunks.map(c =>
+    // Transcript'i LLM'e hazırla — [start] text format
+    // Gemini 2.5 Flash 1M token context destekler → 200K char limiti tamamen güvenli.
+    // Eski 18K char limiti uzun videolarda chapter'ları yarıda kesiyordu.
+    const FULL_LIMIT = 200000; // ~50K token, son chunk dahil
+    let transcript = chunks.map(c =>
       `[${Math.floor(c.start || 0)}s] ${c.text || ''}`
-    ).join('\n').slice(0, 18000); // ~18K char max
+    ).join('\n');
+
+    // Eğer 200K'dan büyükse (çok nadir, 3+ saatlik videolar), smart sample:
+    // başı tam tut, ortayı seyrelt, sonu tam tut → chapter'lar baş+son'u görebilsin
+    if (transcript.length > FULL_LIMIT) {
+      const bas = transcript.slice(0, FULL_LIMIT * 0.4);
+      const son = transcript.slice(-FULL_LIMIT * 0.4);
+      const orta = transcript.slice(FULL_LIMIT * 0.4, transcript.length - FULL_LIMIT * 0.4);
+      // Orta'dan her N. satırı al
+      const ortaSatirlar = orta.split('\n');
+      const adim = Math.ceil(ortaSatirlar.length / (FULL_LIMIT * 0.2 / 50));
+      const ortaSampled = ortaSatirlar.filter((_, i) => i % adim === 0).join('\n');
+      transcript = bas + '\n[... transcript orta kısmı seyreltildi ...]\n' + ortaSampled + '\n' + son;
+    }
+
+    const sureSn = Math.floor(videoData.sure || 0);
+    const sureMin = Math.floor(sureSn / 60);
+    const sureMinSn = sureSn % 60;
+    const sonChunkSn = Math.floor(chunks[chunks.length - 1]?.start || sureSn);
+    const sonChapterMin = Math.floor(sonChunkSn * 0.85 / 60); // %85'ten sonra başlamalı
 
     const prompt = `Video: ${videoData.baslik || ''}
 Egitmenler: ${(videoData.egitmenAdlari || []).join(', ')}
 Kategoriler: ${(videoData.kategoriler || []).join(', ')}
-Süre: ${Math.floor((videoData.sure || 0) / 60)}dk
+TOPLAM SÜRE: ${sureMin} dakika ${sureMinSn} saniye (${sureSn} saniye)
+Son transcript chunk: ${Math.floor(sonChunkSn/60)}:${String(sonChunkSn%60).padStart(2,'0')}
+
+UYARI: Chapters TÜM VİDEOYU kapsamalı. Son chapter en geç ${sonChapterMin}. dakikada başlamalı.
 
 Transcript ([saniye] text formatinda):
 ${transcript}
 
-3 ÇIKTI üret: ahaMoments + chapters + ozet (sistem prompt'taki format).`;
+3 ÇIKTI üret: ahaMoments + chapters + ozet (sistem prompt'taki format).
+HATIRLAT: chapters videonun BAŞINDAN SONUNA kadar dağılmalı, yarıda kesme.`;
 
     const sonucRaw = await callLLM(prompt);
 
@@ -181,6 +220,7 @@ ${transcript}
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
         model: OPENROUTER_MODEL,
         chunksCount: chunks.length,
+        promptVersion: PROMPT_VERSION,
       });
     } catch (e) {
       console.warn('[ai-transcript-analiz] cache write err:', e.message);
