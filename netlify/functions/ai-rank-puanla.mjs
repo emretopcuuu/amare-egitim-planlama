@@ -41,10 +41,11 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
-const BATCH_SIZE = 20;        // her LLM call'da kaç video skorlanır
-const POOL_MAX = 200;          // toplam taranan video sayısı
+const BATCH_SIZE = 25;        // her LLM call'da kaç video skorlanır
+const POOL_MAX = 60;           // toplam taranan video sayısı (Netlify 10sn timeout)
 const TOP_N_DEFAULT = 10;      // her rank için döndürülen top
 const CACHE_TTL_MS = 14 * 24 * 60 * 60 * 1000; // 14 gün
+const MAX_PARALLEL_BATCHES = 3; // paralel LLM call sayısı
 
 const SISTEM_PROMPT = `Sen Doğrudan Satış kariyer eğitim sistemi için video küratörüsün.
 Sana bir RANK PROFİLİ ve VIDEO LİSTESİ verilir.
@@ -66,31 +67,39 @@ MARKA: "network marketing" yazma, "Doğrudan Satış" kullan.
 }`;
 
 async function llmCall(prompt) {
-  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${OPENROUTER_KEY}`,
-      'Content-Type': 'application/json',
-      'HTTP-Referer': 'https://egitimtakvimi.oneteamglobal.ai',
-      'X-Title': 'One Team Education',
-    },
-    body: JSON.stringify({
-      model: OPENROUTER_MODEL,
-      messages: [
-        { role: 'system', content: SISTEM_PROMPT },
-        { role: 'user', content: prompt },
-      ],
-      temperature: 0.2,
-      max_tokens: 2000,
-      response_format: { type: 'json_object' },
-    }),
-  });
-  if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const data = await res.json();
-  const text = data?.choices?.[0]?.message?.content || '';
-  const match = text.match(/\{[\s\S]*\}/);
-  if (!match) throw new Error('JSON parse hatasi');
-  return JSON.parse(match[0]);
+  // 12sn timeout — Netlify 26sn limit, paralelde 3 batch x 12sn = ~12sn total
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), 12_000);
+  try {
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      signal: ctrl.signal,
+      headers: {
+        'Authorization': `Bearer ${OPENROUTER_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://egitimtakvimi.oneteamglobal.ai',
+        'X-Title': 'One Team Education',
+      },
+      body: JSON.stringify({
+        model: OPENROUTER_MODEL,
+        messages: [
+          { role: 'system', content: SISTEM_PROMPT },
+          { role: 'user', content: prompt },
+        ],
+        temperature: 0.2,
+        max_tokens: 1500,
+        response_format: { type: 'json_object' },
+      }),
+    });
+    if (!res.ok) throw new Error(`OpenRouter ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    const data = await res.json();
+    const text = data?.choices?.[0]?.message?.content || '';
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error('JSON parse hatasi');
+    return JSON.parse(match[0]);
+  } finally {
+    clearTimeout(tid);
+  }
 }
 
 function jsonRes(body, status = 200) {
@@ -170,28 +179,34 @@ ${profil.hedefler.map((h, i) => `${i+1}. ${h}`).join('\n')}
 TEMALAR: ${profil.temalar.join(', ')}
 KATEGORİLER (tercih): ${(profil.kategoriler || []).join(', ')}`;
 
-  const skorlar = {};
+  // Batch'leri PARALEL gönder (Promise.all, max 3 parallel)
+  const batches = [];
   for (let i = 0; i < aiAnalizli.length; i += BATCH_SIZE) {
-    const batch = aiAnalizli.slice(i, i + BATCH_SIZE);
+    batches.push(aiAnalizli.slice(i, i + BATCH_SIZE));
+  }
+
+  const batchToPrompt = (batch) => {
     const videoStr = batch.map(p => {
       const ai = aiMap[p.id];
       const ozet = ai.ozet?.kisa || '';
       const tema = ai.ozet?.anaTema || '';
       const kats = (p.kategoriler || []).join(', ');
       return `vimeoId: ${p.id} | baslik: ${(p.baslik || '').slice(0, 80)} | anaTema: ${tema} | kategoriler: ${kats}
-ozet: ${ozet.slice(0, 200)}`;
+ozet: ${ozet.slice(0, 180)}`;
     }).join('\n\n');
-
-    const prompt = `${profilStr}
+    return `${profilStr}
 
 VIDEO LISTESI (${batch.length} adet):
 
 ${videoStr}
 
 Her video için 0-100 arası uygunluk puanı + 1 cümle sebep döndür. Sıralama önemli değil, sadece skor + sebep.`;
+  };
 
+  const skorlar = {};
+  const promises = batches.map(async (batch, idx) => {
     try {
-      const cikti = await llmCall(prompt);
+      const cikti = await llmCall(batchToPrompt(batch));
       (cikti.skorlar || []).forEach(s => {
         if (s.vimeoId && typeof s.puan === 'number') {
           skorlar[String(s.vimeoId)] = {
@@ -201,9 +216,10 @@ Her video için 0-100 arası uygunluk puanı + 1 cümle sebep döndür. Sıralam
         }
       });
     } catch (e) {
-      console.warn(`[ai-rank-puanla] ${rankKey} batch ${i} hata:`, e.message);
+      console.warn(`[ai-rank-puanla] ${rankKey} batch ${idx} hata:`, e.message);
     }
-  }
+  });
+  await Promise.all(promises);
 
   // 4. Top N seç (skor + meta)
   const enriched = aiAnalizli
