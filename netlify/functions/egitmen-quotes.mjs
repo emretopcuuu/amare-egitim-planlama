@@ -35,14 +35,17 @@ export default async (req) => {
   try {
     const url = new URL(req.url);
     const coreId = (url.searchParams.get('coreId') || '').trim();
+    // dil filtresi: TR, RU, EN, DE, NL veya 'all' (default tüm diller)
+    const dil = (url.searchParams.get('dil') || 'all').toUpperCase();
     if (!coreId) return new Response(JSON.stringify({ error: 'coreId gerekli' }), {
       status: 400, headers: { 'Content-Type': 'application/json', ...CORS },
     });
 
     const db = admin.firestore();
 
-    // 7 gün cache
-    const cacheRef = db.doc(`egitmen_quotes_cache/${coreId}`);
+    // 7 gün cache — dil farkı cache key'inde
+    const cacheKey = dil === 'ALL' ? coreId : `${coreId}__${dil.toLowerCase()}`;
+    const cacheRef = db.doc(`egitmen_quotes_cache/${cacheKey}`);
     const cacheSnap = await cacheRef.get();
     if (cacheSnap.exists) {
       const c = cacheSnap.data();
@@ -54,11 +57,12 @@ export default async (req) => {
       }
     }
 
-    // 1. Eğitmenin videolarını çek (max 100)
+    // 1. Eğitmenin videolarını çek (max 100). Dil filtresi in-memory yapılır
+    // çünkü "dil yoksa TR varsay" mantığı Firestore where ile yapılamaz.
     const videoSnap = await db.collection('kayitli_egitimler')
       .where('egitmenler', 'array-contains', coreId)
       .where('kayeneFiltrelendi', '==', false)
-      .select('baslik', 'tarih', 'thumbnailUrl', 'sure', 'kategoriler')
+      .select('baslik', 'tarih', 'thumbnailUrl', 'sure', 'kategoriler', 'dil')
       .limit(100)
       .get();
 
@@ -70,8 +74,27 @@ export default async (req) => {
     }
 
     const videoMeta = {};
-    videoSnap.docs.forEach(d => { videoMeta[d.id] = d.data(); });
+    videoSnap.docs.forEach(d => {
+      const data = d.data();
+      // Dil filtresi: dil eksikse TR varsay (Türkçe varsayılan)
+      if (dil !== 'ALL') {
+        const vDil = (data.dil || 'TR').toUpperCase();
+        if (vDil !== dil) return;
+      }
+      videoMeta[d.id] = data;
+    });
     const vimeoIds = Object.keys(videoMeta);
+    const toplamVideo = videoSnap.size;
+
+    if (vimeoIds.length === 0) {
+      return new Response(JSON.stringify({
+        coreId, dil, sozler: [], videoSayisi: 0, toplamVideo,
+        mesaj: dil === 'ALL'
+          ? 'Bu eğitmenin kayıtlı eğitimi yok.'
+          : `Bu eğitmenin ${dil} dilinde kayıtlı eğitimi yok (toplam ${toplamVideo} video başka dilde).`,
+        cached: false,
+      }), { headers: { 'Content-Type': 'application/json', ...CORS } });
+    }
 
     // 2. Her video için ai_analiz/main alt-doc'unu çek (batch 30)
     const sozler = [];
@@ -120,6 +143,7 @@ export default async (req) => {
 
     const sonuc = {
       coreId,
+      dil,
       sozler: finalSozler,
       toplamSoz: sozler.length,
       videoSayisi: vimeoIds.length,

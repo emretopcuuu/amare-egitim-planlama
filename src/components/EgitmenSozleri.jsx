@@ -6,7 +6,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Quote, Loader2, Play, Sparkles, Tag, Calendar, AlertCircle, RotateCw } from 'lucide-react';
 import { metinTemizleDeep } from '../utils/metinTemizle';
 
-const EgitmenSozleri = ({ coreId, onSozTikla }) => {
+const EgitmenSozleri = ({ coreId, onSozTikla, dil = 'all' }) => {
   const [veri, setVeri] = useState(null);
   const [yukleniyor, setYukleniyor] = useState(true);
   const [hata, setHata] = useState(null);
@@ -16,7 +16,9 @@ const EgitmenSozleri = ({ coreId, onSozTikla }) => {
     setYukleniyor(true);
     setHata(null);
     try {
-      const res = await fetch(`/.netlify/functions/egitmen-quotes?coreId=${encodeURIComponent(coreId)}`);
+      const params = new URLSearchParams({ coreId });
+      if (dil && dil !== 'all') params.set('dil', dil);
+      const res = await fetch(`/.netlify/functions/egitmen-quotes?${params}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setVeri(metinTemizleDeep(data));
@@ -26,7 +28,7 @@ const EgitmenSozleri = ({ coreId, onSozTikla }) => {
     } finally {
       setYukleniyor(false);
     }
-  }, [coreId]);
+  }, [coreId, dil]);
 
   useEffect(() => { fetchSozler(); }, [fetchSozler]);
 
@@ -55,10 +57,13 @@ const EgitmenSozleri = ({ coreId, onSozTikla }) => {
 
   const sozler = veri?.sozler || [];
   if (sozler.length === 0) {
+    const dilNote = veri?.dil && veri.dil !== 'ALL'
+      ? ` (${veri.dil} dilinde)`
+      : '';
     return (
       <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-gray-500 text-sm text-center">
         <Sparkles className="w-5 h-5 mx-auto mb-2 opacity-50" />
-        Henüz AI ile analiz edilmiş ilham veren söz yok.
+        Henüz AI ile analiz edilmiş ilham veren söz yok{dilNote}.
         <div className="text-xs mt-1 opacity-70">
           {veri?.videoSayisi || 0} videodan {veri?.analiziOlanVideoSayisi || 0}'i analiz edildi.
         </div>

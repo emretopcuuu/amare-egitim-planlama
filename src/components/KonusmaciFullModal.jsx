@@ -31,7 +31,7 @@ const splitEgitmen = (e) => {
 };
 
 const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) => {
-  const { t, locale, tDynamic } = useTranslation();
+  const { t, locale, tDynamic, lang } = useTranslation();
   const [tab, setTab] = useState('gelecek'); // 'gelecek' | 'gecmis' | 'kayitli' | 'bio'
   const [takipModal, setTakipModal] = useState(false);
   const [kayitliVideolar, setKayitliVideolar] = useState(null); // null = henüz yüklenmedi
@@ -322,7 +322,7 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
             </>
           )}
           {tab === 'sozler' && (
-            <EgitmenSozleri coreId={egitmenCoreId} onSozTikla={handleSozTikla} />
+            <EgitmenSozleri coreId={egitmenCoreId} onSozTikla={handleSozTikla} dil={(lang || 'tr').toUpperCase()} />
           )}
           {tab === 'bio' && kayit?.biyografi && (
             <div className="prose max-w-none">
