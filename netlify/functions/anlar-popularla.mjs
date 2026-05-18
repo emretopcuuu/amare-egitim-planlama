@@ -145,19 +145,18 @@ export default async (req) => {
         let alintiText = null;
         let alintiSebep = null;
 
-        // 1. öncelik: AI küratörlü aha moment (önce sıkı ±15sn, sonra geniş ±60sn)
-        if (ai && Array.isArray(ai.ahaMoments)) {
-          let near = ai.ahaMoments.find(a => Math.abs((a.start || 0) - r.start) < 15);
-          if (!near) {
-            // Geniş arama — AI temizlemiş metni tercih et, transcript chunk'ta hata olabilir
-            near = ai.ahaMoments.find(a => Math.abs((a.start || 0) - r.start) < 60);
-          }
-          if (near) {
-            alintiText = near.text;
-            alintiSebep = near.sebep;
-          }
+        // 1. öncelik: AI küratörlü aha moment — EN YAKINI seç (mesafe sınırı yok)
+        // AI text Whisper hataları düzeltilmiş halde, transcript chunk ham Whisper.
+        // Bu yüzden video için AI analizi varsa MUTLAKA AI'dan oku.
+        if (ai && Array.isArray(ai.ahaMoments) && ai.ahaMoments.length > 0) {
+          const en_yakin = ai.ahaMoments.reduce((min, a) => {
+            const d = Math.abs((a.start || 0) - r.start);
+            return d < Math.abs((min.start || 0) - r.start) ? a : min;
+          });
+          alintiText = en_yakin.text;
+          alintiSebep = en_yakin.sebep;
         }
-        // 2. fallback: AI yoksa transcript chunk metni (Whisper hatalı olabilir, son çare)
+        // 2. fallback: AI analizi HİÇ YOKSA transcript chunk (Whisper hatalı olabilir)
         if (!alintiText && chunks.length > 0) {
           const near = chunks.find(c => Math.abs((c.start || 0) - r.start) < 10);
           if (near?.text && near.text.length >= 20) {
