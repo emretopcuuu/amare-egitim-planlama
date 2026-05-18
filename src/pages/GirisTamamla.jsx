@@ -130,13 +130,22 @@ const GirisTamamla = () => {
         const profilRef = doc(db, 'users', uid);
         const mevcutProfil = await getDoc(profilRef);
         const params = new URLSearchParams(window.location.search);
-        const amareIdParam = params.get('uye') || null;
-        await setDoc(profilRef, {
+        const amareIdParam = params.get('uye') || '';
+
+        const guncelleme = {
           email: emailIcin,
-          amareId: amareIdParam,
           sonGiris: serverTimestamp(),
-          ...(mevcutProfil.exists() ? {} : { ilkGiris: serverTimestamp() }),
-        }, { merge: true });
+        };
+        // Sadece URL'de uye=X varsa amareId set/overwrite et
+        // (yoksa mevcut amareId KORUNUR — null'la silmeyiz!)
+        if (amareIdParam) {
+          guncelleme.amareId = amareIdParam;
+        }
+        if (!mevcutProfil.exists()) {
+          guncelleme.ilkGiris = serverTimestamp();
+        }
+
+        await setDoc(profilRef, guncelleme, { merge: true });
       } catch (e) {
         // Sessizce log, kullanıcı yine giriş yapmış sayılır
         console.warn('[giris-tamamla] Firestore profil yazılamadı (giriş başarılı):', e.message);
