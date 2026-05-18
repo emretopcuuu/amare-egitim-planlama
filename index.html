@@ -35,22 +35,135 @@
     <meta property="og:image" content="https://egitimtakvimi.oneteamglobal.ai/logos/oneteam%20logo.JPG" />
     <meta property="og:image:width" content="1080" />
     <meta property="og:image:height" content="1080" />
-    <!-- 13 May 2026: Visit tracking beacon — monitor.oneteamglobal.ai anasayfada gozukur. -->
+    <!-- 13 May 2026: Visit tracking + 18 May 2026: Detayli event tracking
+         (click, route change, form submit, scroll depth). PII yakalamaz —
+         sadece structural metadata. -->
     <script>
       (function () {
-        try {
-          var body = JSON.stringify({
-            site: 'egitimtakvimi',
+        var SITE = 'egitimtakvimi';
+        var TRACK_VISIT = 'https://monitor.oneteamglobal.ai/.netlify/functions/track-visit';
+        var TRACK_EVENT = 'https://monitor.oneteamglobal.ai/.netlify/functions/track-event';
+
+        // === 1. PAGEVIEW (mevcut) ===
+        function sendVisit(path) {
+          try {
+            fetch(TRACK_VISIT, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ site: SITE, path: path || location.pathname || '/', referrer: document.referrer || null }),
+              keepalive: true
+            }).catch(function () {});
+          } catch (e) {}
+        }
+        sendVisit();
+
+        // === 2. EVENT BATCHING ===
+        var eventQueue = [];
+        var flushTimer = null;
+        function queueEvent(type, target, meta) {
+          eventQueue.push({
+            site: SITE,
             path: location.pathname || '/',
-            referrer: document.referrer || null
+            event_type: type,
+            event_target: target ? String(target).slice(0, 200) : null,
+            event_meta: meta || null
           });
-          fetch('https://monitor.oneteamglobal.ai/.netlify/functions/track-visit', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: body,
-            keepalive: true
-          }).catch(function () { /* sessizce gec */ });
-        } catch (e) { /* sessizce gec */ }
+          if (flushTimer) clearTimeout(flushTimer);
+          flushTimer = setTimeout(flushEvents, 1500);  // 1.5 sn debounce
+          if (eventQueue.length >= 20) flushEvents();  // batch tam dolunca hemen
+        }
+        function flushEvents() {
+          if (eventQueue.length === 0) return;
+          var batch = eventQueue.splice(0);
+          flushTimer = null;
+          try {
+            fetch(TRACK_EVENT, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ events: batch }),
+              keepalive: true
+            }).catch(function () {});
+          } catch (e) {}
+        }
+        // Sayfa kapanmadan once flush
+        window.addEventListener('beforeunload', flushEvents);
+        window.addEventListener('pagehide', flushEvents);
+
+        // === 3. SPA ROUTE CHANGE (history pushState/replaceState) ===
+        var _push = history.pushState;
+        var _replace = history.replaceState;
+        var _lastPath = location.pathname;
+        function _onRouteChange() {
+          var newPath = location.pathname;
+          if (newPath !== _lastPath) {
+            queueEvent('route_change', newPath, { from: _lastPath });
+            sendVisit(newPath);  // her route'u pageview olarak da say
+            _lastPath = newPath;
+          }
+        }
+        history.pushState = function() { var r = _push.apply(this, arguments); _onRouteChange(); return r; };
+        history.replaceState = function() { var r = _replace.apply(this, arguments); _onRouteChange(); return r; };
+        window.addEventListener('popstate', _onRouteChange);
+
+        // === 4. CLICK TRACKING ===
+        document.addEventListener('click', function(e) {
+          try {
+            var t = e.target;
+            if (!t || t.nodeType !== 1) return;
+            // En yakin etkilesimli element: button, a, input[type=button/submit], [role=button]
+            var btn = t.closest('button, a, [role="button"], input[type="button"], input[type="submit"]');
+            if (!btn) return;
+            // Target identifier: text icerigi (max 80 char) veya selector
+            var text = (btn.innerText || btn.textContent || btn.getAttribute('aria-label') || btn.getAttribute('title') || '').trim().slice(0, 80);
+            var tag = btn.tagName.toLowerCase();
+            var label = text || (btn.id ? '#' + btn.id : null) || ('.' + (btn.className || 'no-class').split(' ')[0]) || tag;
+            queueEvent('click', label, {
+              tag: tag,
+              href: btn.tagName === 'A' ? (btn.getAttribute('href') || null) : null,
+              id: btn.id || null
+            });
+          } catch (e) {}
+        }, true);
+
+        // === 5. FORM SUBMIT ===
+        document.addEventListener('submit', function(e) {
+          try {
+            var f = e.target;
+            if (!f || f.tagName !== 'FORM') return;
+            var fields = f.querySelectorAll('input,select,textarea').length;
+            var label = f.id || f.getAttribute('name') || f.getAttribute('action') || 'form';
+            queueEvent('form_submit', label.slice(0, 80), { fields: fields });
+            // PII KORUMA: form value'larini ASLA gondermiyoruz, sadece struktur
+          } catch (e) {}
+        }, true);
+
+        // === 6. SCROLL DEPTH (milestone'lar: 25%, 50%, 75%, 100%) ===
+        var scrollMarks = { 25: false, 50: false, 75: false, 100: false };
+        var scrollTimeout;
+        function checkScroll() {
+          var sh = document.documentElement.scrollHeight || 0;
+          var ch = window.innerHeight || 0;
+          var st = window.scrollY || document.documentElement.scrollTop || 0;
+          var max = sh - ch;
+          if (max <= 0) return;
+          var pct = Math.round((st / max) * 100);
+          [25, 50, 75, 100].forEach(function(m) {
+            if (!scrollMarks[m] && pct >= m) {
+              scrollMarks[m] = true;
+              queueEvent('scroll_depth', String(m) + '%', { pct: pct });
+            }
+          });
+        }
+        window.addEventListener('scroll', function() {
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(checkScroll, 300);
+        }, { passive: true });
+        // Route change'de scroll mark'lari sifirla
+        var _origRouteFn = _onRouteChange;
+        _onRouteChange = function() {
+          scrollMarks = { 25: false, 50: false, 75: false, 100: false };
+          _origRouteFn();
+        };
       })();
     </script>
   </head>
