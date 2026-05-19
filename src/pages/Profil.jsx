@@ -761,10 +761,10 @@ const Profil = () => {
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto px-4 mt-8 space-y-6">
+      <div className="max-w-6xl mx-auto px-4 mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 auto-rows-min">
 
-        {/* ═══ ÜYELİK — en üstte, tek bakışta bilgilere erişim ═══ */}
-        <div id="section-uyelik" className="stagger-fade">
+        {/* ═══ ÜYELİK — kompakt info, 1 col ═══ */}
+        <div id="section-uyelik" className="stagger-fade md:col-span-1">
           <SectionTitle icon={Hash}>Marka Ortaklığı</SectionTitle>
           <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 divide-y divide-white/10 shadow-xl">
             <InfoRow icon={Phone} label="Telefon" value={a?.phone || '—'} />
@@ -774,9 +774,9 @@ const Profil = () => {
           </div>
         </div>
 
-        {/* Profil tamamlama banner — sadece eksik varsa göster */}
+        {/* Profil tamamlama banner — full row */}
         {profilTamamlama.pct < 100 && profilTamamlama.eksik.length > 0 && (
-          <section className="bg-gradient-to-r from-amber-400/15 via-amber-300/10 to-orange-400/15 backdrop-blur-md border border-amber-300/40 rounded-2xl p-4 shadow-xl">
+          <section className="md:col-span-2 lg:col-span-3 bg-gradient-to-r from-amber-400/15 via-amber-300/10 to-orange-400/15 backdrop-blur-md border border-amber-300/40 rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-300" />
@@ -818,9 +818,9 @@ const Profil = () => {
           </button>
         )}
 
-        {/* ═══ EĞİTİM YOLUM — sayfanın ana bölümü ═══ */}
+        {/* ═══ EĞİTİM YOLUM — sayfanın ana bölümü, 2 col geniş ═══ */}
         {a?.rank && (
-          <div id="section-egitim-yolum" className="stagger-fade" style={{ animationDelay: '150ms' }}>
+          <div id="section-egitim-yolum" className="stagger-fade md:col-span-2 lg:col-span-2 lg:row-span-2" style={{ animationDelay: '150ms' }}>
             <div className="flex items-center justify-between mb-3">
               <SectionTitle icon={Trophy}>Eğitim Yolum</SectionTitle>
               <span className="text-purple-300/60 text-[10px] uppercase tracking-wider font-bold">Sana Özel</span>
@@ -833,22 +833,26 @@ const Profil = () => {
           </div>
         )}
 
-        {/* ═══ İLHAM WIDGETLERİ — Bugünün İlhamı + Sana Özel ═══ */}
-        <div className="stagger-fade grid sm:grid-cols-2 gap-3" style={{ animationDelay: '160ms' }}>
+        {/* ═══ İLHAM WIDGETLERİ — Bugünün İlhamı (1 col) ═══ */}
+        <div className="stagger-fade md:col-span-1" style={{ animationDelay: '160ms' }}>
           <BugununIlhami />
-          {!isAnonymous && <BanaOzelAha />}
         </div>
+        {!isAnonymous && (
+          <div className="stagger-fade md:col-span-1" style={{ animationDelay: '170ms' }}>
+            <BanaOzelAha />
+          </div>
+        )}
 
-        {/* ═══ EĞİTMEN ANALYTİCS ═══ (sadece eğitmenler için) */}
+        {/* ═══ EĞİTMEN ANALYTİCS ═══ (sadece eğitmenler için, full row) */}
         {userDoc?.egitmenCoreId && (
-          <div className="stagger-fade" style={{ animationDelay: '180ms' }}>
+          <div className="stagger-fade md:col-span-2 lg:col-span-3" style={{ animationDelay: '180ms' }}>
             <EgitmenAnalyticsKart coreId={userDoc.egitmenCoreId} />
           </div>
         )}
 
-        {/* ═══ HAKKIMDA ═══ */}
+        {/* ═══ HAKKIMDA ═══ (2 col geniş) */}
         {(m?.bio || m?.bio_data || funnelCevaplari.length > 0 || careerData || profileCevaplari.chips.length > 0) && (
-          <div id="section-hakkimda" className="stagger-fade" style={{ animationDelay: '200ms' }}>
+          <div id="section-hakkimda" className="stagger-fade md:col-span-2 lg:col-span-2" style={{ animationDelay: '200ms' }}>
             <div className="flex items-center justify-between gap-2 mb-4">
               <SectionTitle icon={User}>Hakkımda</SectionTitle>
               <a href={`https://oneteamglobal.ai/?amid=${encodeURIComponent(profilVerisi?.amareId || '')}&update=1&return=${encodeURIComponent('https://egitimtakvimi.oneteamglobal.ai/profil')}`}
@@ -930,7 +934,7 @@ const Profil = () => {
           const yuzde = haftalikHedefSaat > 0 ? Math.min(100, (gercekSaat / haftalikHedefSaat) * 100) : 0;
           const renkBg = yuzde >= 75 ? 'bg-green-500' : yuzde >= 40 ? 'bg-amber-400' : 'bg-rose-400';
           return (
-            <div>
+            <div className="md:col-span-1">
               <SectionTitle icon={Target}>Bu Hafta</SectionTitle>
               <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
                 <div className="flex items-baseline justify-between mb-3">
@@ -958,7 +962,7 @@ const Profil = () => {
 
         {/* ═══ ROZETLERİM ═══ */}
         {rozetler.kazanilan.length > 0 && (
-          <div>
+          <div className="md:col-span-1">
             <div className="flex items-center justify-between mb-4">
               <SectionTitle icon={Medal}>Rozetlerim</SectionTitle>
               <span className="text-purple-300/60 text-[10px] uppercase tracking-wider font-bold">{rozetler.kazanilan.length}/{rozetler.toplam}</span>
@@ -991,9 +995,9 @@ const Profil = () => {
           </div>
         )}
 
-        {/* ═══ EKİBİM CTA ═══ */}
+        {/* ═══ EKİBİM CTA ═══ (1 col) */}
         {profilVerisi?.amareId && (
-          <div className="stagger-fade" style={{ animationDelay: '350ms' }}>
+          <div className="stagger-fade md:col-span-1" style={{ animationDelay: '350ms' }}>
             <button onClick={() => navigate('/ekibim')}
               className="w-full bg-gradient-to-br from-emerald-500/20 via-teal-500/15 to-emerald-500/20 backdrop-blur-md border border-emerald-300/40 hover:border-emerald-300/70 rounded-2xl p-5 shadow-xl transition group spring-tap text-left flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-emerald-400/20 border border-emerald-300/40 flex items-center justify-center flex-shrink-0">
@@ -1008,9 +1012,9 @@ const Profil = () => {
           </div>
         )}
 
-        {/* ═══ AI ASİSTAN KARTLARI (onboarding sayfasından taşındı) ═══ */}
+        {/* ═══ AI ASİSTAN KARTLARI (onboarding sayfasından taşındı) — 2 col */}
         {profilVerisi?.amareId && (
-          <div className="stagger-fade space-y-2" style={{ animationDelay: '360ms' }}>
+          <div className="stagger-fade space-y-2 md:col-span-2" style={{ animationDelay: '360ms' }}>
             <SectionTitle icon={Sparkles}>AI Asistanların</SectionTitle>
 
             {/* Davet Asistanı — yeşil */}
@@ -1047,9 +1051,9 @@ const Profil = () => {
           </div>
         )}
 
-        {/* ═══ BAĞLANTILAR (sponsor) ═══ */}
+        {/* ═══ BAĞLANTILAR (sponsor) — 1 col ═══ */}
         {sponsorAd && (
-          <div id="section-baglantilar" className="stagger-fade" style={{ animationDelay: '400ms' }}>
+          <div id="section-baglantilar" className="stagger-fade md:col-span-1" style={{ animationDelay: '400ms' }}>
             <SectionTitle icon={Users}>Bağlantılar</SectionTitle>
             <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
               <div className="text-purple-200/70 text-[10px] uppercase tracking-[0.15em] font-bold mb-3">Sponsorum</div>
@@ -1074,16 +1078,16 @@ const Profil = () => {
           </div>
         )}
 
-        {/* ═══ AKTİVİTE ═══ */}
+        {/* ═══ AKTİVİTE ═══ (full row başlığı + alt-grid) */}
         {(yarimKalan.length > 0 || takipSet.size > 0 || videoFav.size > 0 || hatirlatmalar.length > 0) && (
-          <div id="section-aktivite" className="stagger-fade" style={{ animationDelay: '500ms' }}>
+          <div id="section-aktivite" className="stagger-fade md:col-span-2 lg:col-span-3" style={{ animationDelay: '500ms' }}>
             <SectionTitle icon={Bell}>Aktivite</SectionTitle>
           </div>
         )}
 
-        {/* Yarım kalan eğitimler (Faz 4a) */}
+        {/* Yarım kalan eğitimler (Faz 4a) — 2 col geniş */}
         {yarimKalan.length > 0 && (
-          <section id="section-yarim-kalan" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1 stagger-fade" style={{ animationDelay: '550ms' }}>
+          <section id="section-yarim-kalan" className="md:col-span-2 lg:col-span-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1 stagger-fade" style={{ animationDelay: '550ms' }}>
             <div className="flex items-center gap-2 mb-3">
               <Video className="w-4 h-4 text-amber-300" />
               <h2 className="text-white font-bold text-sm">Devam Et — Yarım Kaldı</h2>
@@ -1117,8 +1121,8 @@ const Profil = () => {
           </section>
         )}
 
-        {/* Favorilerim */}
-        <section id="section-favoriler" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1 stagger-fade" style={{ animationDelay: '600ms' }}>
+        {/* Favorilerim — 1 col */}
+        <section id="section-favoriler" className="md:col-span-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1 stagger-fade" style={{ animationDelay: '600ms' }}>
           <div className="flex items-center gap-2 mb-3">
             <Heart className="w-4 h-4 text-pink-400" />
             <h2 className="text-white font-bold text-sm">Favorilerim</h2>
@@ -1185,8 +1189,8 @@ const Profil = () => {
           </div>
         </section>
 
-        {/* Abonelikler + hatırlatmalar */}
-        <section id="section-abonelikler" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1 stagger-fade" style={{ animationDelay: '650ms' }}>
+        {/* Abonelikler + hatırlatmalar — 1 col */}
+        <section id="section-abonelikler" className="md:col-span-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl -mt-1 stagger-fade" style={{ animationDelay: '650ms' }}>
           <div className="flex items-center gap-2 mb-3">
             <Bell className="w-4 h-4 text-blue-300" />
             <h2 className="text-white font-bold text-sm">Abonelikler & Hatırlatmalar</h2>
@@ -1232,8 +1236,8 @@ const Profil = () => {
           </div>
         </section>
 
-        {/* ═══ EĞİTMEN BAŞVURUSU CTA — alttaki son kart ═══ */}
-        <section className="bg-gradient-to-br from-amber-400/15 via-purple-600/10 to-amber-400/15 backdrop-blur-md border border-amber-300/30 rounded-2xl p-5 shadow-xl text-center">
+        {/* ═══ EĞİTMEN BAŞVURUSU CTA — alttaki son kart, full row ═══ */}
+        <section className="md:col-span-2 lg:col-span-3 bg-gradient-to-br from-amber-400/15 via-purple-600/10 to-amber-400/15 backdrop-blur-md border border-amber-300/30 rounded-2xl p-5 shadow-xl text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-400/20 border border-amber-300/40 mb-3">
             <Users className="w-6 h-6 text-amber-300" />
           </div>
