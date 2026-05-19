@@ -116,35 +116,6 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   ctx.fillRect(60, 22, W - 120, 3);
   ctx.fillRect(60, H - 25, W - 120, 3);
 
-  // ─── LOGOLAR (üst köşeler, subtle, tasarımı bozmaz) ───
-  // OneTeam (sol) + Amare (sağ) — public/logos klasöründen
-  // Mor zemine uyumlu: OneTeam gold, Amare White
-  try {
-    const logoY = 40;
-    const logoH = Math.floor(H * 0.07); // 1080 için ~75px
-
-    // SOL: OneTeam logo (gold renk, mor zeminde iyi okunur)
-    const oneTeamLogo = await urlToImage('/logos/oneteam-logo.png');
-    const oneTeamRatio = oneTeamLogo.width / oneTeamLogo.height;
-    const oneTeamW = logoH * oneTeamRatio;
-    ctx.save();
-    ctx.globalAlpha = 0.92;
-    ctx.drawImage(oneTeamLogo, 50, logoY, oneTeamW, logoH);
-    ctx.restore();
-
-    // SAĞ: Amare White logo (mor zeminde okunur)
-    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
-    const amareRatio = amareLogo.width / amareLogo.height;
-    const amareW = logoH * amareRatio;
-    ctx.save();
-    ctx.globalAlpha = 0.92;
-    ctx.drawImage(amareLogo, W - 50 - amareW, logoY, amareW, logoH);
-    ctx.restore();
-  } catch (e) {
-    console.warn('[gorsel-uret] logo yuklenemedi:', e.message);
-    // Logosuz devam, hata yutulur
-  }
-
   // ─── BAŞLIK ───
   ctx.textAlign = 'center';
   ctx.fillStyle = '#FFFFFF';
@@ -273,9 +244,48 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   ctx.shadowColor = 'rgba(0,0,0,0.5)';
   ctx.shadowBlur = 6;
   if (egitim.yer) {
-    ctx.fillText(egitim.yer.length > 50 ? egitim.yer.slice(0, 50) + '...' : egitim.yer, W / 2, H - 90);
+    ctx.fillText(egitim.yer.length > 50 ? egitim.yer.slice(0, 50) + '...' : egitim.yer, W / 2, H - 130);
   }
   ctx.shadowBlur = 0;
+
+  // ─── KÜÇÜK LOGOLAR (alt orta, URL üstü) ───
+  // OneTeam (sol) + Amare (sağ) — subtle, küçük, tasarımı bozmaz
+  try {
+    const logoH = Math.floor(H * 0.038); // 1080 için ~41px
+    const logoY = H - 90;
+
+    const oneTeamLogo = await urlToImage('/logos/oneteam-logo.png');
+    const oneTeamRatio = oneTeamLogo.width / oneTeamLogo.height;
+    const oneTeamW = logoH * oneTeamRatio;
+
+    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
+    const amareRatio = amareLogo.width / amareLogo.height;
+    const amareW = logoH * amareRatio;
+
+    // Logolar arası ayraç + boşluk
+    const gap = 30;
+    const toplamW = oneTeamW + gap + amareW;
+    const startX = (W - toplamW) / 2;
+
+    ctx.save();
+    ctx.globalAlpha = 0.88;
+    ctx.drawImage(oneTeamLogo, startX, logoY, oneTeamW, logoH);
+    ctx.drawImage(amareLogo, startX + oneTeamW + gap, logoY, amareW, logoH);
+    ctx.restore();
+
+    // Ayraç: ince dikey çizgi logolar arası
+    ctx.save();
+    ctx.strokeStyle = 'rgba(245, 215, 122, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(startX + oneTeamW + gap / 2, logoY + 8);
+    ctx.lineTo(startX + oneTeamW + gap / 2, logoY + logoH - 8);
+    ctx.stroke();
+    ctx.restore();
+  } catch (e) {
+    console.warn('[gorsel-uret] logo yuklenemedi:', e.message);
+  }
+
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.font = '20px Arial';
   ctx.fillText('egitimtakvimi.oneteamglobal.ai', W / 2, H - 40);
