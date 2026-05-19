@@ -1260,15 +1260,48 @@ const Profil = () => {
               <p className="text-purple-300/60 text-xs italic">Henüz hatırlatma kurmadın</p>
             ) : (
               <div className="space-y-1.5">
-                {hatirlatmalar.slice(0, 5).map(h => (
-                  <div key={h.id} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs">
-                    <div className="text-white font-semibold truncate">{h.egitimAdi || h.title || 'Eğitim'}</div>
-                    <div className="text-purple-200/70 mt-0.5">
-                      {h.zaman ? new Date(h.zaman).toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'}
-                      {h.tip && <span className="ml-2 text-purple-300/60">• {h.tip}</span>}
+                {hatirlatmalar
+                  .slice()
+                  .sort((a, b) => {
+                    // En yakın gelecek tarih önce
+                    const ta = a.gonderilecekZaman?.seconds || 0;
+                    const tb = b.gonderilecekZaman?.seconds || 0;
+                    return tb - ta;
+                  })
+                  .slice(0, 5).map(h => {
+                  // Tarih+saat formatla
+                  let zamanStr = '';
+                  if (h.tarih) {
+                    zamanStr = h.tarih + (h.saat ? ' · ' + h.saat : '');
+                  } else if (h.gonderilecekZaman?.seconds) {
+                    zamanStr = new Date(h.gonderilecekZaman.seconds * 1000)
+                      .toLocaleString('tr-TR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+                  } else {
+                    zamanStr = '—';
+                  }
+                  const gonderildi = h.gonderildi === true;
+                  return (
+                    <div key={h.id} className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-xs">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="text-white font-semibold flex-1 line-clamp-1">{h.egitimAdi || h.title || 'Eğitim'}</div>
+                        {gonderildi && (
+                          <span className="text-emerald-300 text-[10px] font-bold flex-shrink-0">✓ Gönderildi</span>
+                        )}
+                      </div>
+                      <div className="text-purple-200/70 mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                        <span className="inline-flex items-center gap-1">
+                          <Clock className="w-3 h-3" />{zamanStr}
+                        </span>
+                        {h.hatirlatmaZamani && (
+                          <span className="text-amber-300/80 text-[10px]">• {h.hatirlatmaZamani} öncesi</span>
+                        )}
+                        {h.egitmen && (
+                          <span className="text-purple-300/60 text-[10px] truncate max-w-[160px]">• {h.egitmen}</span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {hatirlatmalar.length > 5 && (
                   <p className="text-purple-300/60 text-xs text-center mt-2">+{hatirlatmalar.length - 5} daha</p>
                 )}
