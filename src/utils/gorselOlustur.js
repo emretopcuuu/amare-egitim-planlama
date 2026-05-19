@@ -312,7 +312,8 @@ Bu yüzü başka bir konuşmacıyla DEĞİŞTİRME, isim/unvan KARIŞTIRMA.`,
 
   // 90s timeout — donmaması için (cap dolu/yavaş olduğunda fail-fast)
   const ctrl = new AbortController();
-  const timeoutId = setTimeout(() => ctrl.abort(), 90000);
+  // 150sn timeout - Gemini bazı durumlarda yavaş (yoğun saatler), 90sn yetmiyor
+  const timeoutId = setTimeout(() => ctrl.abort(), 150000);
   let res;
   try {
     res = await fetch(url, {
@@ -322,7 +323,7 @@ Bu yüzü başka bir konuşmacıyla DEĞİŞTİRME, isim/unvan KARIŞTIRMA.`,
       signal: ctrl.signal,
     });
   } catch (e) {
-    if (e.name === 'AbortError') throw new Error('Gemini API zaman aşımı (90s). Spending cap dolu olabilir veya API yavaş.');
+    if (e.name === 'AbortError') throw new Error('Gemini API zaman aşımı (150sn). API yoğun olabilir — "Fallback otomatik denensin"i açıp tekrar dene veya Hibrit/OpenAI Pro\'ya geç.');
     throw e;
   } finally {
     clearTimeout(timeoutId);

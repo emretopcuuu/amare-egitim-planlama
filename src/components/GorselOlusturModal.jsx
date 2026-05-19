@@ -414,8 +414,45 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
               </div>
 
               {error && (
-                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" /><span>{error}</span>
+                <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>{error}</span>
+                  </div>
+                  {/* Gemini/timeout hatasında hızlı aksiyon butonları */}
+                  {(error.includes('Gemini') || error.includes('zaman aşımı') || error.includes('timeout')) && (
+                    <div className="flex flex-wrap gap-2 pt-1 border-t border-red-200">
+                      {!fallbackOn && (
+                        <button
+                          onClick={() => {
+                            setFallbackOn(true);
+                            localStorage.setItem('aiFallback', 'on');
+                            setError(null);
+                          }}
+                          className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
+                          ⚡ Fallback'i Aç + Tekrar Dene
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          setAiModel('hibrit');
+                          localStorage.setItem('aiModel', 'hibrit');
+                          setError(null);
+                        }}
+                        className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
+                        🎯 Hibrit'e Geç (Önerilen)
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAiModel('canvas');
+                          localStorage.setItem('aiModel', 'canvas');
+                          setError(null);
+                        }}
+                        className="bg-purple-500 hover:bg-purple-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
+                        🎨 Canvas'a Geç (Ücretsiz)
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
