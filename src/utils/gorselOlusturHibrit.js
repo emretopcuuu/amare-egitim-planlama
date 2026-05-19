@@ -369,14 +369,14 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.shadowBlur = 8;
   if (egitim.yer) {
     const yer = egitim.yer.length > 55 ? egitim.yer.slice(0, 55) + '...' : egitim.yer;
-    ctx.fillText(yer, W / 2, H - 170);
+    ctx.fillText(yer, W / 2, H - 205);
   }
   ctx.shadowBlur = 0;
 
   // ─── KÜÇÜK LOGOLAR (alt orta, URL üstü) ───
   try {
     const logoH = Math.floor(H * 0.038); // ~41px for 1080
-    const logoY = H - 100;
+    const logoY = H - 125; // URL ile arasına 40px boşluk
 
     const oneTeamLogo = await urlToImage('/logos/oneteam-logo.png');
     const oneTeamRatio = oneTeamLogo.width / oneTeamLogo.height;

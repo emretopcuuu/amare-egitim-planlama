@@ -244,7 +244,7 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   ctx.shadowColor = 'rgba(0,0,0,0.5)';
   ctx.shadowBlur = 6;
   if (egitim.yer) {
-    ctx.fillText(egitim.yer.length > 50 ? egitim.yer.slice(0, 50) + '...' : egitim.yer, W / 2, H - 130);
+    ctx.fillText(egitim.yer.length > 50 ? egitim.yer.slice(0, 50) + '...' : egitim.yer, W / 2, H - 165);
   }
   ctx.shadowBlur = 0;
 
@@ -252,7 +252,7 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   // OneTeam (sol) + Amare (sağ) — subtle, küçük, tasarımı bozmaz
   try {
     const logoH = Math.floor(H * 0.038); // 1080 için ~41px
-    const logoY = H - 90;
+    const logoY = H - 120; // URL ile arasına 40px boşluk
 
     const oneTeamLogo = await urlToImage('/logos/oneteam-logo.png');
     const oneTeamRatio = oneTeamLogo.width / oneTeamLogo.height;
