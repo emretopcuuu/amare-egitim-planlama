@@ -158,8 +158,14 @@ const getSehir = (e) => { if (e.sehir && e.sehir !== 'Online') return e.sehir; i
 const getCountdown = (egitim) => {
   const d = parseTarih(egitim.tarih);
   if (!d) return null;
-  // Saat girilmemişse countdown gösterme
-  if (!egitim.saat || !egitim.saat.includes(':')) return null;
+  // Saat girilmemişse: günü kıyasla — geçmiş gün ise 'gecmis' döner, bugün/gelecek için null
+  if (!egitim.saat || !egitim.saat.includes(':')) {
+    const simdi = new Date();
+    const bugun = new Date(simdi.getFullYear(), simdi.getMonth(), simdi.getDate());
+    const egitimGunu = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    if (egitimGunu < bugun) return { durum: 'gecmis', ms: -1, gun: 0, sa: 0, dakika: 0 };
+    return null; // bugün veya gelecek — saatsiz countdown gösterme
+  }
   const [saat = 0, dk = 0] = (egitim.saat || '0:0').split(':').map(Number);
   const [bSaat = 0, bDk = 0] = (egitim.bitisSaati || '').split(':').map(Number);
   const baslangic = new Date(d); baslangic.setHours(saat, dk, 0, 0);
