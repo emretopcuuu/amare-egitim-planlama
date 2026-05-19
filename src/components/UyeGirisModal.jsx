@@ -118,9 +118,25 @@ const UyeGirisModal = ({ acik, onClose }) => {
                 className="w-full bg-white/10 border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300/60 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all"
               />
               {mesaj && (
-                <div className="mt-3 flex items-start gap-2 text-red-300 text-xs bg-red-500/15 border border-red-400/30 rounded-lg px-3 py-2">
-                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                  <span>{mesaj}</span>
+                <div className="mt-3 bg-red-500/15 border border-red-400/30 rounded-lg px-3 py-2.5 space-y-2">
+                  <div className="flex items-start gap-2 text-red-300 text-xs">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                    <span>{mesaj}</span>
+                  </div>
+                  {/* Bulunamadı durumunda alternatif giriş ipucu */}
+                  {mesaj.includes('bulunamadı') && (
+                    <div className="text-purple-200/80 text-[11px] pl-6 leading-relaxed">
+                      💡 <strong>Diğer yöntemleri dene:</strong>
+                      <ul className="mt-1 ml-3 space-y-0.5 list-disc list-inside">
+                        <li>Farklı bir email (Amare kaydındaki)</li>
+                        <li>Telefon numarası (örn 0532...)</li>
+                        <li>Amare ID (örn 2198057)</li>
+                      </ul>
+                      <p className="mt-2 text-amber-200/80">
+                        Hâlâ olmazsa <a href="https://oneteamglobal.ai" className="underline font-semibold hover:text-amber-200" target="_blank" rel="noopener">oneteamglobal.ai</a>'den Amare üye olabilir veya sponsorundan kontrol isteyebilirsin.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 
