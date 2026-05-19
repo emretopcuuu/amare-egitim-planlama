@@ -239,7 +239,8 @@ const EgitimDetay = () => {
                         className="flex items-center gap-3 bg-gray-50 hover:bg-purple-50 border border-gray-200 hover:border-purple-300 rounded-xl p-3 transition-all spring-tap focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
                         {kayit?.fotoURL ? (
                           <img src={kayit.fotoURL} alt={kayit.ad || ad} loading="lazy" decoding="async"
-                            className="w-14 h-14 rounded-full object-cover object-top border-2 border-purple-200 shadow-sm" />
+                            className="w-14 h-14 rounded-full object-cover border-2 border-purple-200 shadow-sm"
+                            style={{ objectPosition: 'center 25%' }} />
                         ) : (
                           <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200" aria-hidden="true">
                             <User className="w-7 h-7 text-purple-400" />

@@ -179,7 +179,8 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
           <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6">
             {kayit?.fotoURL ? (
               <img src={kayit.fotoURL} alt={displayAd}
-                className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover object-top border-4 border-white/30 shadow-2xl flex-shrink-0" />
+                className="w-28 h-28 sm:w-32 sm:h-32 rounded-full object-cover border-4 border-white/30 shadow-2xl flex-shrink-0"
+                style={{ objectPosition: 'center 25%' }} />
             ) : (
               <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-full bg-white/15 flex items-center justify-center border-4 border-white/30 flex-shrink-0" aria-hidden="true">
                 <User className="w-14 h-14 text-white/70" />

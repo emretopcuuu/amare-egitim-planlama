@@ -140,7 +140,7 @@ const YeniEgitmenModal = ({ onClose, onSaved }) => {
           <div className="flex items-center gap-4">
             <div className="relative w-24 h-24 rounded-full overflow-hidden bg-gray-100 border-2 border-gray-200 flex-shrink-0">
               {fotoBase64 ? (
-                <img src={fotoBase64} alt="Önizleme" className="w-full h-full object-cover object-top" />
+                <img src={fotoBase64} alt="Önizleme" className="w-full h-full object-cover" style={{ objectPosition: 'center 25%' }} />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
                   <User className="w-10 h-10 text-gray-300" />

@@ -220,7 +220,8 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
                   <div className="w-full h-full rounded-full overflow-hidden bg-purple-900 border-2 border-purple-900">
                     {kayit?.fotoURL ? (
                       <img src={kayit.fotoURL} alt={kayit.ad || ad} loading="lazy" decoding="async"
-                        className="w-full h-full object-cover object-top" />
+                        className="w-full h-full object-cover"
+                        style={{ objectPosition: 'center 25%' }} />
                     ) : (
                       <div className="w-full h-full bg-purple-800 flex items-center justify-center" aria-hidden="true">
                         <User className="w-7 h-7 text-purple-300" />
