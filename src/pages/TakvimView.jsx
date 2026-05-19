@@ -565,6 +565,22 @@ const TakvimView = () => {
       .filter(e => e._yd && e._d && e._d >= bugun && e._d <= limit)
       .sort((a, b) => a._d - b._d);
   }, [takvim]);
+
+  // Yurtiçi FİZİKİ yaklaşan eğitimler (gelecek 6 ay — şehir ön planda)
+  // Yurtdışı değil + Online değil + Şehir var
+  const yurticiFizikiYaklasan = useMemo(() => {
+    const bugun = new Date(); bugun.setHours(0,0,0,0);
+    const limit = new Date(bugun); limit.setDate(bugun.getDate() + 180);
+    return takvim
+      .map(e => ({ ...e, _d: parseTarih(e.tarih), _sehir: getSehir(e) }))
+      .filter(e =>
+        e._d && e._d >= bugun && e._d <= limit &&
+        !getYurtdisi(e) &&         // yurtdışı değil
+        !isOnline(e) &&            // online değil
+        e._sehir && e._sehir !== 'Diğer'  // belirgin şehir var
+      )
+      .sort((a, b) => a._d - b._d);
+  }, [takvim]);
   const filtreyiSifirla = () => { setFiltre('tumu'); setSehirFiltre(null); setKategoriFiltre(null); setKonusmaciFiltre(null); setZamanFiltre(null); setArama(''); };
 
   // Bugün özel — bugün gerçekleşen tüm eğitimleri ayır
@@ -961,6 +977,39 @@ const TakvimView = () => {
                       <div className="text-white font-bold text-sm leading-tight line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
                       <div className="text-purple-200 text-xs">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
                       {e.yer && <div className="text-amber-300/70 text-[11px] mt-0.5 line-clamp-1">📍 {e.yer.slice(0, 45)}</div>}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Yurtiçi FİZİKİ yaklaşan etkinlikler — şehir ön planda, emerald bant */}
+        {yurticiFizikiYaklasan.length > 0 && (
+          <div className="px-4 pt-2">
+            <div className="container mx-auto max-w-7xl">
+              <div className="bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-emerald-500/15 border-2 border-emerald-400/40 rounded-2xl p-4 backdrop-blur-sm overflow-hidden">
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  <span className="bg-gradient-to-r from-emerald-400 to-teal-500 text-gray-900 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-emerald-500/30">
+                    📍 Türkiye Fiziki
+                  </span>
+                  <span className="text-emerald-200 text-sm font-semibold">
+                    {yurticiFizikiYaklasan.length} şehirde fiziki etkinlik
+                  </span>
+                </div>
+                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+                  {yurticiFizikiYaklasan.slice(0, 8).map(e => (
+                    <a key={e.id} href={`/e/${e.id}`}
+                      className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-emerald-400/30 hover:border-emerald-400 rounded-xl p-3 transition-all hover-lift spring-tap">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-base leading-none">📍</span>
+                        <span className="bg-emerald-400 text-gray-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">{e._sehir}</span>
+                        <span className="text-emerald-200 text-[10px] font-semibold uppercase ml-auto">TR</span>
+                      </div>
+                      <div className="text-white font-bold text-sm leading-tight line-clamp-2 mb-1">{tDynamic(e.egitim)}</div>
+                      <div className="text-purple-200 text-xs">{e.tarih} {trGun(e.gun, t)}{e.saat ? ` • ${e.saat}` : ''}</div>
+                      {e.yer && <div className="text-emerald-300/70 text-[11px] mt-0.5 line-clamp-1">{e.yer.slice(0, 45)}</div>}
                     </a>
                   ))}
                 </div>
