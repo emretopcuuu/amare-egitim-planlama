@@ -48,7 +48,21 @@ const KATEGORILER = [
   'Kişisel Gelişim', 'Vizyon Günü', 'Panel', 'Diğer',
 ];
 
-const SEHIRLER_LISTESI = ['İstanbul', 'Ankara', 'İzmir', 'Bursa', 'Kayseri', 'Antalya', 'Konya', 'Nevşehir', 'Eskişehir', 'Trabzon', 'Adana', 'Mersin', 'Gaziantep', 'Diyarbakır', 'Samsun', 'Denizli', 'Muğla', 'Çorlu', 'Tekirdağ'];
+// Türkiye 81 il + Çorlu (büyük etkinlik merkezi) — Türkçe alfabetik sıralı
+const SEHIRLER_LISTESI = [
+  'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara',
+  'Antalya', 'Ardahan', 'Artvin', 'Aydın', 'Balıkesir', 'Bartın', 'Batman',
+  'Bayburt', 'Bilecik', 'Bingöl', 'Bitlis', 'Bolu', 'Burdur', 'Bursa',
+  'Çanakkale', 'Çankırı', 'Çorlu', 'Çorum', 'Denizli', 'Diyarbakır', 'Düzce',
+  'Edirne', 'Elazığ', 'Erzincan', 'Erzurum', 'Eskişehir', 'Gaziantep', 'Giresun',
+  'Gümüşhane', 'Hakkari', 'Hatay', 'Iğdır', 'Isparta', 'İstanbul', 'İzmir',
+  'Kahramanmaraş', 'Karabük', 'Karaman', 'Kars', 'Kastamonu', 'Kayseri', 'Kilis',
+  'Kırıkkale', 'Kırklareli', 'Kırşehir', 'Kocaeli', 'Konya', 'Kütahya', 'Malatya',
+  'Manisa', 'Mardin', 'Mersin', 'Muğla', 'Muş', 'Nevşehir', 'Niğde', 'Ordu',
+  'Osmaniye', 'Rize', 'Sakarya', 'Samsun', 'Siirt', 'Sinop', 'Sivas', 'Şanlıurfa',
+  'Şırnak', 'Tekirdağ', 'Tokat', 'Trabzon', 'Tunceli', 'Uşak', 'Van', 'Yalova',
+  'Yozgat', 'Zonguldak',
+];
 
 const BOŞ_FORM = {
   egitim: '', gun: 'Pazartesi', tarih: '', saat: '',
