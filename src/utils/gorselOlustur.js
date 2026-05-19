@@ -1,5 +1,5 @@
-// applyLogos artık çağırılmıyor - kullanıcı isteği üzerine köşe maskeleri kaldırıldı
-// Gemini çıktısı temiz prompt sayesinde sahte logo basmıyor, maske gerekmez
+// AI çıktısına OneTeam + Amare logoları post-process ile eklenir
+import { logolariEkle } from './gorselLogoEkle';
 
 // Resmi base64'e çevirir (URL veya File)
 const resmiBase64Yap = async (kaynak) => {
@@ -344,6 +344,6 @@ Bu yüzü başka bir konuşmacıyla DEĞİŞTİRME, isim/unvan KARIŞTIRMA.`,
   }
 
   const { data: imgBase64, mimeType: imgMime } = imgPart.inlineData;
-  // Köşe maskeleri kaldırıldı - Gemini çıktısı doğrudan döndürülür
-  return { base64: imgBase64, mimeType: imgMime };
+  // Post-process: AI çıktısının alt orta kısmına OneTeam + Amare logoları
+  return await logolariEkle({ base64: imgBase64, mimeType: imgMime });
 };

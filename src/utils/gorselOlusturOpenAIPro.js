@@ -2,7 +2,10 @@
 // - Şablon + speaker fotoları pre-composite edilir referans olarak
 // - gpt-image-2 /v1/images/edits ile başlık/tarih/yer dahil her şeyi AI çizer
 // - gpt-image-2 multilingual text rendering Türkçe karakterleri doğru basar
+// - Post-process: OneTeam + Amare logoları alta bindir
 // Hibrit-style'a göre: daha şık görünüm, AI yaratıcılığı; risk: rare text hataları
+
+import { logolariEkle } from './gorselLogoEkle';
 
 const urlToImage = (src) => new Promise((resolve, reject) => {
   const img = new Image();
@@ -250,7 +253,8 @@ Hata varsa düzelt, sonra finalize et.`;
       const data = await res.json();
       const b64 = data?.data?.[0]?.b64_json;
       if (!b64) throw new Error('OpenAI görsel döndürmedi.');
-      return { base64: b64, mimeType: 'image/png' };
+      // Post-process: AI çıktısının alt orta kısmına OneTeam + Amare logoları
+      return await logolariEkle({ base64: b64, mimeType: 'image/png' });
     } catch (e) {
       clearTimeout(tid);
       // AbortError veya network hatası → retry
