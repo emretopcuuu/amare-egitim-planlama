@@ -116,7 +116,34 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   ctx.fillRect(60, 22, W - 120, 3);
   ctx.fillRect(60, H - 25, W - 120, 3);
 
-  // Üst logolar kaldırıldı — kullanıcı isteği: temiz çıktı, hiç logo yok
+  // ─── LOGOLAR (üst köşeler, subtle, tasarımı bozmaz) ───
+  // OneTeam (sol) + Amare (sağ) — public/logos klasöründen
+  // Mor zemine uyumlu: OneTeam gold, Amare White
+  try {
+    const logoY = 40;
+    const logoH = Math.floor(H * 0.07); // 1080 için ~75px
+
+    // SOL: OneTeam logo (gold renk, mor zeminde iyi okunur)
+    const oneTeamLogo = await urlToImage('/logos/oneteam-logo.png');
+    const oneTeamRatio = oneTeamLogo.width / oneTeamLogo.height;
+    const oneTeamW = logoH * oneTeamRatio;
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.drawImage(oneTeamLogo, 50, logoY, oneTeamW, logoH);
+    ctx.restore();
+
+    // SAĞ: Amare White logo (mor zeminde okunur)
+    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
+    const amareRatio = amareLogo.width / amareLogo.height;
+    const amareW = logoH * amareRatio;
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.drawImage(amareLogo, W - 50 - amareW, logoY, amareW, logoH);
+    ctx.restore();
+  } catch (e) {
+    console.warn('[gorsel-uret] logo yuklenemedi:', e.message);
+    // Logosuz devam, hata yutulur
+  }
 
   // ─── BAŞLIK ───
   ctx.textAlign = 'center';

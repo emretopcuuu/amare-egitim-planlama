@@ -216,8 +216,34 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.fillStyle = botGrad;
   ctx.fillRect(0, H - 200, W, 200);
 
-  // Köşe maskeleri kaldırıldı - kullanıcı isteği
-  // Gemini'nin temiz prompt'la üreteceği arka plan dokunulmaz
+  // ─── LOGOLAR (üst köşeler, subtle) ───
+  // OneTeam (sol) + Amare (sağ) — public/logos
+  try {
+    const logoY = 40;
+    const logoH = Math.floor(H * 0.07); // ~75px for 1080
+
+    const oneTeamLogo = await urlToImage('/logos/oneteam-logo.png');
+    const oneTeamRatio = oneTeamLogo.width / oneTeamLogo.height;
+    const oneTeamW = logoH * oneTeamRatio;
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 8;
+    ctx.drawImage(oneTeamLogo, 50, logoY, oneTeamW, logoH);
+    ctx.restore();
+
+    const amareLogo = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
+    const amareRatio = amareLogo.width / amareLogo.height;
+    const amareW = logoH * amareRatio;
+    ctx.save();
+    ctx.globalAlpha = 0.92;
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 8;
+    ctx.drawImage(amareLogo, W - 50 - amareW, logoY, amareW, logoH);
+    ctx.restore();
+  } catch (e) {
+    console.warn('[hibrit] logo yuklenemedi:', e.message);
+  }
 
   // ─── BAŞLIK ───
   // Üst overlay olmadığı için başlığa daha güçlü shadow + double-stroke
