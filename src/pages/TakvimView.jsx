@@ -1013,7 +1013,7 @@ const TakvimView = () => {
               <div className="bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-emerald-500/15 border-2 border-emerald-400/40 rounded-2xl p-4 backdrop-blur-sm overflow-hidden">
                 <div className="flex items-center gap-2 mb-3 flex-wrap">
                   <span className="bg-gradient-to-r from-emerald-400 to-teal-500 text-gray-900 px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider shadow-lg shadow-emerald-500/30">
-                    📍 Türkiye Fiziki
+                    📍 Türkiye
                   </span>
                   <span className="text-emerald-200 text-sm font-semibold">
                     {yurticiFizikiYaklasan.length} şehirde fiziki etkinlik
