@@ -99,6 +99,10 @@ const Profil = () => {
   // 'ozet' | 'egitim' | 'aktivite' | 'hakkimda' | 'baglantilar'
   const [aktifTab, setAktifTab] = useState('ozet');
 
+  // Onboarding bypass — gate'i manuel atlatma (FERDİ vakası fix)
+  const [bypassBusy, setBypassBusy] = useState(false);
+  const [bypassHata, setBypassHata] = useState('');
+
   // İzleme istatistikleri (re-compute on watchProgress.version change)
   const totalWatched = useMemo(() => getTotalWatchedSeconds(), [watchProgress.version]);
   const weeklyWatched = useMemo(() => getWeeklyWatchedSeconds(), [watchProgress.version]);
@@ -610,7 +614,39 @@ const Profil = () => {
               className="block w-full bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-3.5 rounded-xl shadow-lg transition-all spring-tap text-base">
               Profilini Tamamla →
             </a>
-            <p className="text-purple-200/70 text-xs mt-3">5 dakika sürer • Atlanılamaz</p>
+            <p className="text-purple-200/70 text-xs mt-3">5 dakika sürer</p>
+
+            {/* Bypass: zaten tamamladıysan devam et */}
+            <div className="mt-6 pt-5 border-t border-white/10">
+              <p className="text-purple-200/80 text-xs mb-2">Onboarding'i zaten tamamladıysan:</p>
+              <button
+                disabled={bypassBusy}
+                onClick={async () => {
+                  setBypassBusy(true);
+                  setBypassHata('');
+                  try {
+                    const token = await auth.currentUser.getIdToken();
+                    const res = await fetch('/.netlify/functions/profil-bypass-onboarding', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                    });
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Bypass başarısız');
+                    // Cache temizle + sayfayı yenile
+                    try { localStorage.removeItem(PROFIL_CACHE_KEY + '_' + profilVerisi.amareId); } catch {}
+                    window.location.reload();
+                  } catch (e) {
+                    setBypassHata(e.message);
+                    setBypassBusy(false);
+                  }
+                }}
+                className="block w-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-semibold py-2.5 rounded-xl transition-all spring-tap text-sm disabled:opacity-50">
+                {bypassBusy ? 'Açılıyor...' : 'Profili Tamamladım, Devam Et'}
+              </button>
+              {bypassHata && (
+                <p className="text-rose-300 text-xs mt-2">✗ {bypassHata}</p>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -194,11 +194,22 @@ export default async (req) => {
     }
 
     // 7. Onboarding tamamlanma flag'i — Faz 3 gating mantığı için.
-    // member.status === 'completed' VEYA progress.training_done === true ise tamam.
+    // GENİŞLETİLMİŞ kriterler (FERDİ KIMIŞ vakası sonrası):
+    //   - member.status === 'completed' VEYA
+    //   - progress.training_done === true VEYA
+    //   - progress.profile_done === true VEYA
+    //   - progress.funnel_done === true VEYA
+    //   - progress.completion_pct >= 80 VEYA
+    //   - users/{uid}.onboardingBypass === true (manuel bypass, frontend self-serve)
     // member kaydı yoksa = onboarding hiç başlamamış (eski üye)
+    const bypassFlag = userData.onboardingBypass === true;
     const onboardingTamamlandi = !!(
-      member?.status === 'completed'
+      bypassFlag
+      || member?.status === 'completed'
       || progress?.training_done === true
+      || progress?.profile_done === true
+      || progress?.funnel_done === true
+      || (typeof progress?.completion_pct === 'number' && progress.completion_pct >= 80)
     );
     const onboardingBaslatilmis = !!member;
 
