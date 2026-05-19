@@ -249,10 +249,17 @@ export default async (req) => {
     }
 
     const uye = rows[0];
-    if (!uye.email) {
+    // Email normalize: trim + lowercase + simple sanity check
+    if (uye.email) {
+      uye.email = String(uye.email).trim().toLowerCase().replace(/\s+/g, '');
+    }
+    const EMAIL_REGEX = /^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i;
+    if (!uye.email || !EMAIL_REGEX.test(uye.email)) {
       return new Response(JSON.stringify({
         found: false,
-        message: 'Marka Ortağı bulundu ama kayıtlı email yok. Sponsorundan email güncelle.',
+        message: uye.email
+          ? `Bu Marka Ortağı'nın kayıtlı email adresi geçersiz formatlı (${uye.email.slice(0, 30)}...). Sponsorundan veya Amare Backoffice'tan düzelt.`
+          : 'Marka Ortağı bulundu ama kayıtlı email yok. Sponsorundan email güncelle.',
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
