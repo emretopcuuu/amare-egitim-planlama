@@ -43,6 +43,32 @@ const KATEGORILER = [
   'Diğer',
 ];
 
+const KATEGORI_TANIMLARI = {
+  'Liderlik': 'Liderlik becerileri, ekip yönetimi',
+  'Satış': 'Satış teknikleri, müşteri ikna',
+  'Motivasyon': 'Motivasyon, ilham, çıkış hikayeleri',
+  'Davet': 'Davet sistemi, ilk temas',
+  'Kapanış': 'Kapanış teknikleri, karar verdirme',
+  'Sunum Teknikleri': 'Sunum becerisi, topluluk önünde konuşma',
+  'Zaman Yönetimi': 'Zaman planlama, verimlilik',
+  'Kişisel Gelişim': 'Mindset, alışkanlık, kendini iyileştirme',
+  'Sağlık': 'Sağlık, beslenme, doktor anlatımı',
+  'Finansal Özgürlük': 'Para yönetimi, yatırım, pasif gelir',
+  'Vizyon': 'Vizyon kurma, büyük hedefler',
+  'Hikaye': 'Kişisel hikaye, başarı öyküsü',
+  'Ürün Eğitimi': 'AMARE FİZİKİ ÜRÜNLERİ (vitamin, takviye, cilt bakım). KAZANÇ PLANI DEĞİL!',
+  'Liste': 'Aday listesi, isim listesi',
+  'Kazanç Planı': 'AMARE KOMPENZASYON PLANI — komisyon, rütbe, bonus, gelir hesaplaması. ÜRÜN EĞİTİMİ DEĞİL!',
+  'Backoffice': 'Backoffice kullanımı, sistem panelleri',
+  'Odak': 'Odaklanma, konsantrasyon',
+  'İtiraz Karşılama': 'Olumsuz cevapları çevirme',
+  'Takip': 'Aday takibi, follow-up',
+  'Doğru Başlangıç': 'Yeni başlayan için ilk 30/60/90 gün',
+  'Kamp': 'Eğitim kampı, intensive program',
+  'Katlama': 'Ekip büyütme, duplikasyon, downline',
+  'Amare İş Sunumu': 'Amare iş fırsatı genel sunumu',
+};
+
 async function callGemini(prompt) {
   const key = process.env.GEMINI_API_KEY;
   if (!key) throw new Error('GEMINI_API_KEY missing');
@@ -73,10 +99,17 @@ async function callGemini(prompt) {
 
 function buildPrompt({ baslik, aciklama, transcript }) {
   const t = transcript ? `\nTRANSKRIPT (ilk 3500 karakter):\n${transcript.slice(0, 3500)}` : '';
-  return `Aşağıdaki Türkçe eğitim videosu için EN UYGUN 1-2 kategori seç.
+  const kategoriListesi = KATEGORILER.map(k => `- ${k}: ${KATEGORI_TANIMLARI[k] || ''}`).join('\n');
+  return `Sen bir Amare Global eğitim videosu kategorizasyon uzmanısın. EN UYGUN 1-2 kategori seç.
 
-İZİN VERİLEN KATEGORİLER:
-${KATEGORILER.join(', ')}
+İZİN VERİLEN KATEGORİLER (NET TANIM ile):
+${kategoriListesi}
+
+ÖNEMLİ AYRIMLAR:
+- "Kazanç Planı" başlıklı/içerikli video → SADECE "Kazanç Planı" (Ürün Eğitimi DEĞİL!)
+- "Ürün Eğitimi" → SADECE fiziki ürün (vitamin, krem, takviye) anlatımları
+- Hukuki/yasal → "Diğer"
+- Genel iş fırsatı sunumu → "Amare İş Sunumu"
 
 KURALLAR:
 - Maksimum 2 kategori, virgülle ayır.

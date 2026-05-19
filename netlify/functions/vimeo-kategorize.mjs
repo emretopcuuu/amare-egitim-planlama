@@ -34,13 +34,42 @@ if (!admin.apps.length) {
 
 const db = admin.firestore();
 
-// 13 kategori + Diğer (plan'a göre)
+// 23 kategori + Diğer — AdminKayitliEgitimlerTab.jsx ile SENKRON
 const KATEGORILER = [
   'Liderlik', 'Satış', 'Motivasyon', 'Davet', 'Kapanış',
   'Sunum Teknikleri', 'Zaman Yönetimi', 'Kişisel Gelişim',
-  'Sağlık', 'Finansal Özgürlük', 'Vizyon', 'Hikaye',
-  'Ürün Eğitimi', 'Diğer',
+  'Sağlık', 'Finansal Özgürlük', 'Vizyon', 'Hikaye', 'Ürün Eğitimi',
+  'Liste', 'Kazanç Planı', 'Backoffice', 'Odak', 'İtiraz Karşılama',
+  'Takip', 'Doğru Başlangıç', 'Kamp', 'Katlama', 'Amare İş Sunumu',
+  'Diğer',
 ];
+
+// Her kategori için NET TANIM — AI'nın karıştırmaması için
+const KATEGORI_TANIMLARI = {
+  'Liderlik': 'Liderlik becerileri, ekip yönetimi, lider olma yolu',
+  'Satış': 'Satış teknikleri, müşteri ikna, kapanış öncesi',
+  'Motivasyon': 'Motivasyon konuşması, ilham veren içerik, çıkış hikayeleri',
+  'Davet': 'Davet sistemi, kişiyi sisteme dahil etme, ilk temas',
+  'Kapanış': 'Kapanış teknikleri, satış sonu, karar verdirme',
+  'Sunum Teknikleri': 'Sunum yapma becerisi, topluluk önünde konuşma',
+  'Zaman Yönetimi': 'Zaman planlama, verimlilik, prioritization',
+  'Kişisel Gelişim': 'Mindset, alışkanlık geliştirme, kendini iyileştirme',
+  'Sağlık': 'Sağlık bilgisi, beslenme, hastalık, doktor anlatımı',
+  'Finansal Özgürlük': 'Para yönetimi, yatırım, finansal hedefler, pasif gelir kavramı',
+  'Vizyon': 'Vizyon kurma, büyük hedefler, gelecek tasarımı',
+  'Hikaye': 'Kişisel hikaye, başarı öyküsü, deneyim aktarımı',
+  'Ürün Eğitimi': 'AMARE FİZİKİ ÜRÜNLERİ hakkında — vitamin, takviye, cilt bakımı, içerik, formül, kullanım. KAZANÇ PLANI DEĞİL.',
+  'Liste': 'Aday listesi oluşturma, isim listesi, hedef kişiler',
+  'Kazanç Planı': 'AMARE KOMPENZASYON PLANI — komisyon yapısı, rütbe geçişleri, bonuslar, rank ilerlemesi, gelir hesaplaması. ÜRÜN EĞİTİMİ DEĞİL.',
+  'Backoffice': 'Backoffice kullanımı, sistem panelleri, üyelik yönetimi araçları',
+  'Odak': 'Odaklanma, dikkat dağınıklığı, konsantrasyon',
+  'İtiraz Karşılama': 'Olumsuz cevapları çevirme, "vaktim yok" "param yok" gibi itirazlar',
+  'Takip': 'Aday takibi, follow-up, ikinci/üçüncü görüşme',
+  'Doğru Başlangıç': 'Yeni başlayan için ilk 30/60/90 gün, başlangıç eğitimi',
+  'Kamp': 'Eğitim kampı, intensive program, kamp etkinliği',
+  'Katlama': 'Ekip büyütme, çoğalma, duplikasyon, downline gelişimi',
+  'Amare İş Sunumu': 'Amare iş fırsatı sunumu, opportunity sunum şablonu',
+};
 
 async function callLLM(prompt) {
   const key = process.env.OPENROUTER_API_KEY;
@@ -76,10 +105,22 @@ function buildPrompt({ baslik, aciklama, transcript }) {
   const transcriptKismi = transcript
     ? `\nVİDEO TRANSKRİPTİ (kısaltılmış):\n${transcript.slice(0, 3500)}`
     : '';
-  return `Sen bir eğitim videosu kategorizasyon uzmanısın. Aşağıdaki video için EN UYGUN 1 veya 2 kategori seç.
 
-İZİN VERİLEN KATEGORİLER (sadece bu listeden):
-${KATEGORILER.join(', ')}
+  // Kategori listesi + tanım — her kategorinin NE OLDUĞUNU AI açıkça bilsin
+  const kategoriListesi = KATEGORILER
+    .map(k => `- ${k}: ${KATEGORI_TANIMLARI[k] || ''}`)
+    .join('\n');
+
+  return `Sen bir Amare Global eğitim videosu kategorizasyon uzmanısın. Aşağıdaki video için EN UYGUN 1 veya 2 kategori seç.
+
+İZİN VERİLEN KATEGORİLER (her birinin NET TANIMI ile birlikte):
+${kategoriListesi}
+
+ÖNEMLİ AYRIMLAR:
+- "Kazanç Planı" başlıklı video → SADECE "Kazanç Planı" kategorisi (Ürün Eğitimi DEĞİL!)
+- "Ürün Eğitimi" → SADECE fiziki ürün (vitamin, krem, takviye) anlatımları
+- Hukuki/yasal konular → "Diğer" (Ürün Eğitimi DEĞİL)
+- "Amare İş Sunumu" → genel opportunity sunumu, sadece kazanç planı veya sadece ürün değil
 
 KURALLAR:
 - Maksimum 2 kategori, virgülle ayır. (örn: "Liderlik, Motivasyon")
