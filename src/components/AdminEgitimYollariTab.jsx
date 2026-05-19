@@ -12,6 +12,10 @@ const AdminEgitimYollariTab = () => {
   const [curriculum, setCurriculum] = useState({ zorunlu: [], onerilen: [] });
   const [yukleniyor, setYukleniyor] = useState(false);
   const [kaydediliyor, setKaydediliyor] = useState(false);
+  // Auto-save: kullanıcı değişiklik yapınca 1.5sn sonra otomatik Firestore'a yaz
+  const [otoKaydetDurum, setOtoKaydetDurum] = useState(null); // null | 'yaziliyor' | 'tamam' | 'hata'
+  const otoKaydetTimerRef = React.useRef(null);
+  const ilkYuklemeRef = React.useRef(true);
   const [aramaModal, setAramaModal] = useState(false);
   const [aramaTip, setAramaTip] = useState('zorunlu'); // 'zorunlu' veya 'onerilen'
   const [initEdiliyor, setInitEdiliyor] = useState(false);
@@ -141,6 +145,8 @@ const AdminEgitimYollariTab = () => {
     setAiOneriler(null);
     setAiSecili(new Set());
     setAiHata('');
+    setOtoKaydetDurum(null);
+    ilkYuklemeRef.current = true; // yeni rank: ilk yükleme sayılır, auto-save tetiklemesin
     let cancelled = false;
     setYukleniyor(true);
     getDoc(doc(db, 'egitim_yollari', seciliRankKey))
@@ -157,6 +163,32 @@ const AdminEgitimYollariTab = () => {
       .finally(() => !cancelled && setYukleniyor(false));
     return () => { cancelled = true; };
   }, [seciliRankKey]);
+
+  // Auto-save: curriculum her değişiklikte 1.5sn sonra Firestore'a yaz
+  useEffect(() => {
+    if (yukleniyor || ilkYuklemeRef.current) {
+      ilkYuklemeRef.current = false;
+      return;
+    }
+    if (otoKaydetTimerRef.current) clearTimeout(otoKaydetTimerRef.current);
+    setOtoKaydetDurum('yaziliyor');
+    otoKaydetTimerRef.current = setTimeout(async () => {
+      try {
+        await setDoc(doc(db, 'egitim_yollari', seciliRankKey), {
+          zorunluVideolar: curriculum.zorunlu,
+          onerilenVideolar: curriculum.onerilen,
+          guncellemeTarihi: serverTimestamp(),
+        }, { merge: true });
+        setOtoKaydetDurum('tamam');
+        setTimeout(() => setOtoKaydetDurum(null), 2500);
+      } catch (e) {
+        console.warn('[oto-kaydet] hata:', e.message);
+        setOtoKaydetDurum('hata');
+      }
+    }, 1500);
+    return () => otoKaydetTimerRef.current && clearTimeout(otoKaydetTimerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [curriculum]);
 
   const kaydet = async () => {
     setKaydediliyor(true);
@@ -418,12 +450,36 @@ const AdminEgitimYollariTab = () => {
               renk="amber"
             />
 
-            {/* Kaydet button */}
-            <div className="sticky bottom-4 mt-8 flex justify-end">
+            {/* Auto-save göstergesi + manuel Kaydet yedek */}
+            <div className="sticky bottom-4 mt-8 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 text-xs">
+                {otoKaydetDurum === 'yaziliyor' && (
+                  <span className="bg-white text-amber-700 border border-amber-300 px-3 py-2 rounded-lg shadow inline-flex items-center gap-1.5 font-bold">
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    Otomatik kaydediliyor…
+                  </span>
+                )}
+                {otoKaydetDurum === 'tamam' && (
+                  <span className="bg-emerald-500 text-white px-3 py-2 rounded-lg shadow inline-flex items-center gap-1.5 font-bold animate-fade-in">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    Kaydedildi ✓
+                  </span>
+                )}
+                {otoKaydetDurum === 'hata' && (
+                  <span className="bg-rose-500 text-white px-3 py-2 rounded-lg shadow inline-flex items-center gap-1.5 font-bold">
+                    ⚠️ Kaydedilemedi — manuel kaydet'i dene
+                  </span>
+                )}
+                {!otoKaydetDurum && (
+                  <span className="text-gray-400 text-xs italic">
+                    Her değişiklik 1.5sn sonra otomatik kaydedilir
+                  </span>
+                )}
+              </div>
               <button onClick={kaydet} disabled={kaydediliyor}
-                className="bg-amare-purple hover:bg-amare-dark text-white font-bold px-6 py-3 rounded-xl shadow-xl disabled:opacity-50 inline-flex items-center gap-2">
-                {kaydediliyor ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                {seciliRankKey} için Kaydet
+                className="bg-amare-purple hover:bg-amare-dark text-white font-bold px-5 py-2.5 rounded-xl shadow-xl disabled:opacity-50 inline-flex items-center gap-2 text-sm">
+                {kaydediliyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Manuel Kaydet
               </button>
             </div>
           </>
