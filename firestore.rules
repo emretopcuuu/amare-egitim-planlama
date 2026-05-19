@@ -173,6 +173,14 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Silinen eğitimler kara listesi — vimeo-ingest tekrar eklemesin diye
+    // Sadece admin yazabilir; admin SDK (CLI script) bypass eder
+    // Public read kapalı (gizli liste, başkaları silinmiş içeriği görmesin)
+    match /silinen_egitimler/{vimeoId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+
     // Üye profilleri — kendi profil doc'una okuma/yazma izni
     // Tier 1 üye girişi sonrası kullanıcı profili oluşturmak/güncellemek için.
     // Diğer kullanıcı profillerine erişim YOK (privacy).

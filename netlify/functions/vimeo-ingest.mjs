@@ -225,6 +225,13 @@ export default async (req) => {
   });
   console.log(`[vimeo-ingest] ${knownCoreIds.size} known coreId loaded`);
 
+  // 1b. Kara liste — admin tarafından kalıcı silinen videolar
+  // silinen_egitimler/{vimeoId} doc varsa ingest atlar (Vimeo'da hala duruyor olsa bile)
+  const silinenSnap = await db.collection('silinen_egitimler').get();
+  const blacklist = new Set();
+  silinenSnap.forEach(d => blacklist.add(d.id));
+  console.log(`[vimeo-ingest] ${blacklist.size} video kara listede`);
+
   // 2. Vimeo'dan paginate çek
   let nextUrl = `/me/videos?per_page=100&page=${startPage}&fields=uri,name,description,link,player_embed_url,duration,release_time,created_time,pictures.sizes`;
   let totalIngested = 0;
@@ -249,6 +256,14 @@ export default async (req) => {
       if (totalIngested >= limit) break;
       const vimeoId = String(video.uri || '').split('/').pop();
       if (!vimeoId) continue;
+
+      // Kara liste kontrolü — admin manuel sildiyse skip
+      if (blacklist.has(vimeoId)) {
+        if (dryRun && sampleOutput.length < 10) {
+          sampleOutput.push({ vimeoId, name: video.name, status: 'BLACKLIST' });
+        }
+        continue;
+      }
 
       // Dışlama filtresi (Kayene / Kyani / Tolga Camsoy / Hakan Dalkılıç)
       const excludeReason = checkExclude(video);
