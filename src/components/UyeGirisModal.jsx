@@ -3,15 +3,20 @@
 // Backend doğrularsa: emaile magic link gönderildi → kullanıcı bekleme ekranı.
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Loader2, CheckCircle2, AlertCircle, ArrowRight, Mail, Lock } from 'lucide-react';
+import { X, Loader2, CheckCircle2, AlertCircle, ArrowRight, Mail, Lock, HelpCircle, Send } from 'lucide-react';
 
 const UyeGirisModal = ({ acik, onClose }) => {
   const [lookup, setLookup] = useState('');
-  const [durum, setDurum] = useState('giris'); // giris | gonderildi
+  const [durum, setDurum] = useState('giris'); // giris | gonderildi | talepFormu | talepGonderildi
   const [mesaj, setMesaj] = useState('');
   const [emailMask, setEmailMask] = useState('');
   const [adKisa, setAdKisa] = useState('');
   const [yukleniyor, setYukleniyor] = useState(false);
+  // Email düzeltme talep formu state
+  const [talepAd, setTalepAd] = useState('');
+  const [talepEmail, setTalepEmail] = useState('');
+  const [talepSebep, setTalepSebep] = useState('');
+  const [talepTel, setTalepTel] = useState('');
   const inputRef = useRef(null);
 
   // Modal açılınca input focus
@@ -137,6 +142,17 @@ const UyeGirisModal = ({ acik, onClose }) => {
                       </p>
                     </div>
                   )}
+                  {/* Email bozuk / yok → düzeltme talebi */}
+                  {(mesaj.includes('email') || mesaj.includes('Email') || mesaj.includes('geçersiz formatlı')) && (
+                    <div className="border-t border-red-400/20 pt-2 mt-2">
+                      <button onClick={() => { setDurum('talepFormu'); setTalepAd(''); setTalepEmail(''); setTalepSebep(''); setTalepTel(''); }}
+                        className="w-full bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-100 text-xs font-bold py-2 rounded-lg inline-flex items-center justify-center gap-1.5 spring-tap">
+                        <HelpCircle className="w-3.5 h-3.5" />
+                        Email Düzeltme Talebi Gönder
+                      </button>
+                      <p className="text-amber-200/60 text-[10px] mt-1 text-center">Admin 24sa içinde email'ini günceller, sonra giriş yapabilirsin.</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -157,6 +173,117 @@ const UyeGirisModal = ({ acik, onClose }) => {
                 Amare'de kayıtlı email/telefon kontrol edilir. Sahte kayıt yapılamaz.
               </p>
             </div>
+          </>
+        )}
+
+        {durum === 'talepFormu' && (
+          <>
+            <div className="text-center mb-5">
+              <div className="inline-block w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-400 rounded-2xl flex items-center justify-center mb-3 shadow-lg">
+                <HelpCircle className="w-7 h-7 text-purple-900" />
+              </div>
+              <h2 className="text-white text-xl font-extrabold mb-1">Email Düzeltme Talebi</h2>
+              <p className="text-purple-200 text-xs">Admin email'ini güncelleyecek (24sa içinde)</p>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (!talepAd || talepAd.length < 3) { setMesaj('Ad/soyad gerekli'); return; }
+              if (!talepEmail || !/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(talepEmail)) {
+                setMesaj('Geçerli email gerekli'); return;
+              }
+              setYukleniyor(true);
+              setMesaj('');
+              try {
+                const res = await fetch('/.netlify/functions/email-duzelt-talep', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    lookup,
+                    ad: talepAd,
+                    yeniEmail: talepEmail,
+                    sebep: talepSebep,
+                    telefon: talepTel,
+                  }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Talep gönderilemedi');
+                setDurum('talepGonderildi');
+              } catch (err) {
+                setMesaj(err.message);
+              } finally {
+                setYukleniyor(false);
+              }
+            }}>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-purple-200 text-[11px] font-semibold mb-1 uppercase tracking-wider">Ad Soyad</label>
+                  <input type="text" value={talepAd} onChange={e => setTalepAd(e.target.value)}
+                    placeholder="Ferdi Kımış" disabled={yukleniyor}
+                    className="w-full bg-white/10 border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300/60 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-purple-200 text-[11px] font-semibold mb-1 uppercase tracking-wider">Doğru Email</label>
+                  <input type="email" value={talepEmail} onChange={e => setTalepEmail(e.target.value)}
+                    placeholder="ornek@gmail.com" disabled={yukleniyor}
+                    className="w-full bg-white/10 border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300/60 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-purple-200 text-[11px] font-semibold mb-1 uppercase tracking-wider">Telefon (opsiyonel)</label>
+                  <input type="tel" value={talepTel} onChange={e => setTalepTel(e.target.value)}
+                    placeholder="0532..." disabled={yukleniyor}
+                    className="w-full bg-white/10 border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300/60 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
+                </div>
+                <div>
+                  <label className="block text-purple-200 text-[11px] font-semibold mb-1 uppercase tracking-wider">Not (opsiyonel)</label>
+                  <textarea value={talepSebep} onChange={e => setTalepSebep(e.target.value)}
+                    placeholder="Sponsorum kim, hangi şehirden, vs..." maxLength={500} rows={2} disabled={yukleniyor}
+                    className="w-full bg-white/10 border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300/60 rounded-xl px-3 py-2.5 text-sm focus:outline-none resize-none" />
+                </div>
+              </div>
+
+              {mesaj && (
+                <div className="mt-3 flex items-start gap-2 text-red-300 text-xs bg-red-500/15 border border-red-400/30 rounded-lg px-3 py-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <span>{mesaj}</span>
+                </div>
+              )}
+
+              <div className="flex gap-2 mt-4">
+                <button type="button" onClick={() => { setDurum('giris'); setMesaj(''); }}
+                  className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-2.5 rounded-xl text-sm spring-tap">
+                  Geri
+                </button>
+                <button type="submit" disabled={yukleniyor}
+                  className="flex-1 bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-2.5 rounded-xl text-sm spring-tap inline-flex items-center justify-center gap-2 disabled:opacity-50">
+                  {yukleniyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                  Talep Gönder
+                </button>
+              </div>
+            </form>
+          </>
+        )}
+
+        {durum === 'talepGonderildi' && (
+          <>
+            <div className="text-center mb-5">
+              <div className="inline-block w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mb-3 shadow-lg">
+                <CheckCircle2 className="w-9 h-9 text-white" />
+              </div>
+              <h2 className="text-white text-2xl font-extrabold mb-2">Talep Alındı ✓</h2>
+              <p className="text-purple-100 text-sm">
+                Admin 24 saat içinde email'ini günceller.<br />
+                Güncellendikten sonra <strong>{talepEmail}</strong> ile giriş yapabilirsin.
+              </p>
+            </div>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-3 mb-4 text-purple-100 text-xs">
+              📧 Onaylandığında email'ine bilgilendirme gelir (opsiyonel)<br />
+              💬 Sorun olursa sponsorundan kontrol iste
+            </div>
+            <button onClick={onClose}
+              className="w-full bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-3 rounded-xl text-sm spring-tap">
+              Tamam
+            </button>
           </>
         )}
 

@@ -292,6 +292,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Email düzeltme talepleri — kullanıcı talep yazar (server)
+    // Admin okur ve onaylar/reddeder
+    match /email_duzeltme_talepleri/{talepId} {
+      allow read: if isAdmin();
+      allow write: if false; // Sadece backend (email-duzelt-talep) yazar
+    }
+
     // Popüler anlar — topluluk tıklama sayacı
     // Sadece server (anlar-popularla Function) yazar
     // Public okuma — widget herkese görünür
