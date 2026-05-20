@@ -35,26 +35,32 @@ const HomePage = () => {
           <div className="relative">
             {/* Logo arkasına yumuşak altın aurora */}
             <div className="absolute -inset-8 bg-amber-400/15 blur-3xl pointer-events-none" />
-            {/* Animasyonlu logo — autoplay, sessiz, loop */}
-            <video
-              src="/videos/oneteam-logo-anim.mp4"
-              autoPlay
-              muted
-              loop
-              playsInline
-              preload="auto"
-              poster="/logos/oneteam-logo.png"
-              className="relative w-64 sm:w-80 md:w-96 h-auto"
-              style={{
-                filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
-                // mix-blend-mode: mor zemin üstünde video'nun siyah arkaplanını yumuşat
-                mixBlendMode: 'screen',
-              }}
-              aria-label="One Team"
+            {/* Video wrapper — çerçeve ve sağ-alt watermark'ı kırpmak için overflow-hidden */}
+            <div
+              className="relative w-64 sm:w-80 md:w-96 overflow-hidden"
+              style={{ aspectRatio: '1 / 1' }}
             >
-              {/* Fallback: video çalışmazsa statik logo */}
-              <img src="/logos/oneteam-logo.png" alt="One Team" />
-            </video>
+              <video
+                src="/videos/oneteam-logo-anim.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="auto"
+                poster="/logos/oneteam-logo.png"
+                className="absolute inset-0 w-full h-full object-cover"
+                style={{
+                  // Video'nun gömülü çerçevesini ve sağ-alt Gemini watermark'ını kırp:
+                  // scale ile büyüt, translate ile sağ-alt'ı kapsam dışına ittir
+                  transform: 'scale(1.32) translate(-2%, -3%)',
+                  transformOrigin: 'center center',
+                  filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
+                  // mix-blend-mode: videonun siyah arkaplanını mor zeminle harmanla
+                  mixBlendMode: 'screen',
+                }}
+                aria-label="One Team"
+              />
+            </div>
           </div>
 
           {/* Kicker — altın çizgili, logonun altında */}
