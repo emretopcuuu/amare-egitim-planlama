@@ -89,24 +89,34 @@ const KomisyonlarSayfasi = () => {
   const { lang } = useTranslation();
   const tr = I18N[lang] || I18N.tr;
 
-  // Firestore'dan tüm komisyon doc'larını çek — başkan bilgisi için
+  // Firestore'dan tüm komisyon doc'larını çek — başkan + üye sayısı + özet için
   const [baskanlar, setBaskanlar] = useState({}); // { komisyonId: { ad, fotoURL, coreId } }
+  const [icerikler, setIcerikler] = useState({}); // { komisyonId: { ozet, uyeSayisi } }
   // Konuşmacılar collection'ından güncel fotoğraflar (coreId → fotoURL)
   // Konuşmacı tarafında foto değişince burada da otomatik güncellenir
   const [freshFotolar, setFreshFotolar] = useState({});
+  // Skeleton loading state — başkan kartları yüklenirken pulse placeholder göster
+  const [yukleniyor, setYukleniyor] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
         const snap = await getDocs(collection(db, 'komisyonlar'));
         const map = {};
+        const icerikMap = {};
         snap.forEach(d => {
           const data = d.data();
           const uyeler = Array.isArray(data.uyeler) ? data.uyeler : [];
           const baskan = uyeler.find(u => u.unvan === 'Komisyon Başkanı');
           if (baskan) map[d.id] = baskan;
+          icerikMap[d.id] = {
+            ozet: data.ozet || '',
+            uyeSayisi: uyeler.length,
+          };
         });
         setBaskanlar(map);
+        setIcerikler(icerikMap);
+        setYukleniyor(false);
 
         // Başkanların coreId'lerini topla (yoksa ad'dan üret), konuşmacılar'dan güncel foto çek
         const coreIds = [...new Set(
@@ -127,6 +137,7 @@ const KomisyonlarSayfasi = () => {
         }
       } catch (e) {
         console.warn('[komisyonlar] baskan yuklenemedi:', e.message);
+        setYukleniyor(false);
       }
     })();
   }, []);
@@ -157,31 +168,32 @@ const KomisyonlarSayfasi = () => {
           <LanguageSwitcher />
         </div>
 
-        {/* Hero — anasayfadaki logo + kicker stili */}
-        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12 animate-fade-in">
-          {/* OneTeam logo — anasayfadaki gibi transparent + drop-shadow + halo */}
-          <div className="relative inline-block mb-6">
-            <div className="absolute -inset-8 bg-amber-400/15 blur-3xl pointer-events-none" />
+        {/* Hero — kompakt versiyon */}
+        <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-8 animate-fade-in">
+          {/* OneTeam logo — küçültüldü, hafif glow */}
+          <div className="relative inline-block mb-3">
+            <div className="absolute -inset-4 bg-amber-400/15 blur-2xl pointer-events-none" />
             <img
               src="/logos/oneteam-logo.png"
               alt="OneTeam"
-              className="relative w-40 sm:w-48 md:w-56 h-auto"
+              className="relative w-20 sm:w-24 md:w-28 h-auto"
               style={{
-                filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
+                filter: 'drop-shadow(0 4px 12px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 20px rgba(251, 191, 36, 0.15))',
               }}
             />
           </div>
 
-          {/* Kicker — anasayfa stilinde altın çizgili */}
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
-            <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.4em] font-semibold whitespace-nowrap">
+          {/* Kicker — altın çizgili */}
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="h-px w-8 sm:w-12 bg-amber-400/50" />
+            <span className="text-amber-300 text-[10px] sm:text-xs uppercase tracking-[0.4em] font-semibold whitespace-nowrap">
               {tr.kicker}
             </span>
-            <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
+            <div className="h-px w-8 sm:w-12 bg-amber-400/50" />
           </div>
 
-          <p className="text-purple-100/90 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+          {/* Kompakt açıklama — tek satıra düşürüldü, anahtar kelimeler altın */}
+          <p className="text-purple-100/85 text-xs sm:text-sm leading-relaxed max-w-xl mx-auto mb-4">
             {tr.aciklamaBasi}{' '}
             <span className="text-amber-300 font-semibold">{tr.gelisim}</span>,{' '}
             <span className="text-amber-300 font-semibold">{tr.dayanisma}</span>
@@ -189,20 +201,22 @@ const KomisyonlarSayfasi = () => {
             <span className="text-amber-300 font-semibold">{tr.basari}</span> {tr.hizmetEder}
           </p>
 
-          {/* İstatistik rozetleri */}
-          <div className="flex flex-wrap items-center justify-center gap-3 mt-7">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2">
-              <Building2 className="w-4 h-4 text-amber-300" />
-              <span className="text-white text-sm font-semibold">{KOMISYONLAR.length} {tr.komisyon}</span>
-            </div>
-            <div className="inline-flex items-center gap-2 bg-emerald-500/15 backdrop-blur-md border border-emerald-400/30 rounded-full px-4 py-2">
-              <Sparkles className="w-4 h-4 text-emerald-300" />
-              <span className="text-emerald-100 text-sm font-semibold">{aktifSayisi} {tr.aktif}</span>
-            </div>
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2">
-              <Users2 className="w-4 h-4 text-purple-200" />
-              <span className="text-white text-sm font-semibold">{tr.liderGorevliler}</span>
-            </div>
+          {/* Tek bant istatistik — kompakt inline */}
+          <div className="inline-flex items-center gap-3 sm:gap-4 bg-white/5 backdrop-blur-md border border-white/15 rounded-full px-4 sm:px-5 py-1.5 text-xs">
+            <span className="inline-flex items-center gap-1.5 text-white">
+              <Building2 className="w-3.5 h-3.5 text-amber-300" />
+              <strong className="font-bold">{KOMISYONLAR.length}</strong> {tr.komisyon}
+            </span>
+            <span className="w-px h-3 bg-white/20" />
+            <span className="inline-flex items-center gap-1.5 text-emerald-200">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <strong className="font-bold">{aktifSayisi}</strong> {tr.aktif}
+            </span>
+            <span className="w-px h-3 bg-white/20" />
+            <span className="inline-flex items-center gap-1.5 text-purple-200">
+              <Users2 className="w-3.5 h-3.5 text-purple-300" />
+              {tr.liderGorevliler}
+            </span>
           </div>
         </div>
 
@@ -256,34 +270,60 @@ const KomisyonlarSayfasi = () => {
                 <h3 className="text-white font-bold text-base sm:text-lg mb-1 leading-tight">
                   {k.kisaAd}
                 </h3>
-                <p className="text-purple-200/80 text-xs leading-snug line-clamp-2 mb-3">
+                <p className="text-purple-200/80 text-xs leading-snug line-clamp-2 mb-3 min-h-[2.25rem]">
                   {k.tagline}
                 </p>
 
-                {/* Komisyon Başkanı kartı */}
-                {baskan && (
-                  <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/10">
-                    <div className="relative w-9 h-9 flex-shrink-0">
+                {/* Hover preview — Firestore özeti varsa hover'da görünür */}
+                {icerikler[k.id]?.ozet && (
+                  <div className="hidden group-hover:block absolute left-3 right-3 bottom-[5.5rem] z-10 bg-purple-950/95 backdrop-blur-md border border-amber-300/30 rounded-xl p-3 shadow-2xl pointer-events-none">
+                    <div className="text-[9px] uppercase tracking-wider text-amber-300/80 font-bold mb-1">Özet</div>
+                    <p className="text-purple-100 text-xs leading-snug line-clamp-3">{icerikler[k.id].ozet}</p>
+                  </div>
+                )}
+
+                {/* Komisyon Başkanı kartı — BÜYÜTÜLDÜ */}
+                {yukleniyor && !baskan ? (
+                  /* Skeleton placeholder */
+                  <div className="flex items-center gap-3 mb-3 pb-3 border-b border-white/10 animate-pulse">
+                    <div className="w-14 h-14 rounded-full bg-white/10 flex-shrink-0" />
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <div className="h-2 bg-white/10 rounded w-12" />
+                      <div className="h-3 bg-white/15 rounded w-3/4" />
+                      <div className="h-2 bg-white/5 rounded w-1/2" />
+                    </div>
+                  </div>
+                ) : baskan ? (
+                  <div className="flex items-center gap-3 mb-3 pb-3 border-b border-white/10">
+                    <div className="relative w-14 h-14 flex-shrink-0">
                       {getBaskanFoto(baskan) ? (
                         <img src={getBaskanFoto(baskan)} alt={baskan.ad}
                           loading="lazy" decoding="async"
-                          className="w-9 h-9 rounded-full object-cover border border-amber-300/40"
+                          className="w-14 h-14 rounded-full object-cover border-2 border-amber-300/50 shadow-lg"
                           style={{ objectPosition: 'center 25%' }} />
                       ) : (
-                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400/30 to-amber-600/20 border border-amber-300/30 flex items-center justify-center">
-                          <span className="text-amber-200 font-bold text-[10px]">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400/30 to-amber-600/20 border-2 border-amber-300/40 flex items-center justify-center shadow-lg">
+                          <span className="text-amber-200 font-bold text-sm">
                             {(baskan.ad || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
                           </span>
                         </div>
                       )}
-                      <Award className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 text-amber-300 bg-purple-900 rounded-full p-0.5 border border-purple-800" />
+                      {/* Award rozeti — büyütüldü */}
+                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-400 border-2 border-purple-900 flex items-center justify-center shadow">
+                        <Award className="w-3 h-3 text-purple-900" />
+                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[9px] uppercase tracking-wider text-amber-300/80 font-bold">{tr.baskan}</div>
-                      <div className="text-white text-xs font-semibold truncate">{baskan.ad}</div>
+                      <div className="text-[9px] uppercase tracking-wider text-amber-300/90 font-bold mb-0.5">{tr.baskan}</div>
+                      <div className="text-white text-sm font-bold truncate leading-tight">{baskan.ad}</div>
+                      {icerikler[k.id]?.uyeSayisi > 0 && (
+                        <div className="text-purple-200/70 text-[10px] mt-0.5">
+                          <Users2 className="w-2.5 h-2.5 inline -mt-0.5" /> {icerikler[k.id].uyeSayisi} üye
+                        </div>
+                      )}
                     </div>
                   </div>
-                )}
+                ) : null}
 
                 {/* Alt CTA */}
                 <div className="flex items-center justify-between pt-1">
