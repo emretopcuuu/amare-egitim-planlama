@@ -1016,7 +1016,7 @@ const TakvimView = () => {
                     📍 Türkiye
                   </span>
                   <span className="text-emerald-200 text-sm font-semibold">
-                    {yurticiFizikiYaklasan.length} şehirde fiziki etkinlik
+                    {yurticiFizikiYaklasan.length} şehirde fiziki etkinlik yaklaşıyor
                   </span>
                 </div>
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
