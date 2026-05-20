@@ -54,29 +54,29 @@ const KomisyonlarSayfasi = () => {
           <LanguageSwitcher />
         </div>
 
-        {/* Hero — Ekosistem hissi */}
+        {/* Hero — anasayfadaki logo + kicker stili */}
         <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12 animate-fade-in">
-          {/* OneTeam logo glow ile */}
+          {/* OneTeam logo — anasayfadaki gibi transparent + drop-shadow + halo */}
           <div className="relative inline-block mb-6">
-            <div className="absolute -inset-6 bg-amber-400/30 blur-3xl pointer-events-none" />
-            <div className="relative inline-flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-amber-400/30 to-amber-600/20 border-2 border-amber-300/40 backdrop-blur-md shadow-2xl">
-              <img src="/logos/oneteam-logo.png" alt="OneTeam" className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-lg" />
-            </div>
+            <div className="absolute -inset-8 bg-amber-400/15 blur-3xl pointer-events-none" />
+            <img
+              src="/logos/oneteam-logo.png"
+              alt="OneTeam"
+              className="relative w-56 sm:w-72 md:w-80 h-auto"
+              style={{
+                filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
+              }}
+            />
           </div>
 
-          {/* Kicker */}
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="h-px w-12 bg-amber-400/50" />
+          {/* Kicker — anasayfa stilinde altın çizgili */}
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
             <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.4em] font-semibold whitespace-nowrap">
-              OneTeam
+              One Team Komisyonlar
             </span>
-            <div className="h-px w-12 bg-amber-400/50" />
+            <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
           </div>
-
-          {/* Başlık */}
-          <h1 className="text-3xl sm:text-5xl font-light text-white tracking-tight mb-4 leading-tight">
-            Girişimcilik <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-amber-300 bg-clip-text text-transparent font-bold">Ekosistemi</span>
-          </h1>
 
           <p className="text-purple-100/90 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
             OneTeam liderleri tarafından kurulan komisyonlar, üyelerimizin
