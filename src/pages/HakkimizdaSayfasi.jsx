@@ -53,7 +53,7 @@ const HakkimizdaSayfasi = () => {
           </h1>
 
           <p className="text-purple-100/90 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-            Sağlık, varlık ve özgürlük için yola çıkan, bireyleri ve toplulukları büyüten bir aile.
+            Sağlık, varlık ve özgürlük için yola çıkan, girişimci adaylarına destek olan aile.
           </p>
         </div>
 
@@ -131,8 +131,7 @@ const HakkimizdaSayfasi = () => {
             <div className="h-px w-10 bg-amber-400/40" />
           </div>
           <p className="text-purple-200/70 text-sm max-w-2xl mx-auto leading-relaxed">
-            One Team, liderlerin kurduğu komisyonlar ve milyonlarca üyenin oluşturduğu
-            dünyanın en büyük dayanışma topluluklarından biridir.
+            One Team, Amare liderlerin kurduğu dünyanın en başarılı girişimci dayanışma topluluklarından biridir.
           </p>
         </div>
 
