@@ -236,21 +236,6 @@ const KomisyonlarSayfasi = () => {
                 }`}
                 style={{ animationDelay: `${idx * 40}ms` }}
               >
-                {/* Aktif/Kurulum rozeti */}
-                <div className="absolute top-3 right-3">
-                  {k.aktif ? (
-                    <span className="inline-flex items-center gap-1 bg-emerald-500/90 text-white text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md border border-emerald-300/40">
-                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                      {tr.aktifBadge}
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 bg-white/10 text-purple-200 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/15">
-                      <Lock className="w-2.5 h-2.5" />
-                      {tr.kuruluyorBadge}
-                    </span>
-                  )}
-                </div>
-
                 {/* İkon + OneTeam mini rozeti */}
                 <div className="relative w-16 h-16 mb-4">
                   <div className={`absolute inset-0 rounded-2xl ${
