@@ -9,6 +9,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, ArrowRight, Sparkles, Users, Edit3, Save, X, Plus, Trash2,
   Loader2, Phone, Lock, AlertCircle, CheckCircle2, Pencil, Hammer, ExternalLink, Award,
+  ChevronUp, ChevronDown,
 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useData, makeCoreId } from '../context/DataContext';
@@ -327,6 +328,19 @@ const KomisyonDetay = () => {
       return yeni;
     }),
   }));
+  // Üye sırasını değiştir (swap)
+  const uyeYukari = (i) => setIcerik(p => {
+    if (i === 0) return p;
+    const yeni = [...p.uyeler];
+    [yeni[i - 1], yeni[i]] = [yeni[i], yeni[i - 1]];
+    return { ...p, uyeler: yeni };
+  });
+  const uyeAsagi = (i) => setIcerik(p => {
+    if (i === p.uyeler.length - 1) return p;
+    const yeni = [...p.uyeler];
+    [yeni[i + 1], yeni[i]] = [yeni[i], yeni[i + 1]];
+    return { ...p, uyeler: yeni };
+  });
 
   const renkSinifi = {
     amber: 'from-amber-400/30 to-amber-600/15 border-amber-300/50',
@@ -571,10 +585,24 @@ const KomisyonDetay = () => {
                               placeholder={tr.fotoUrlPlaceholder}
                               className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-purple-200 text-xs placeholder-purple-300/40 outline-none focus:border-amber-400/60"
                             />
-                            <button onClick={() => uyeSil(i)}
-                              className="inline-flex items-center gap-1 text-rose-300 hover:text-rose-200 text-xs mt-1">
-                              <Trash2 className="w-3 h-3" /> {tr.uyeySil}
-                            </button>
+                            <div className="flex items-center justify-between gap-2 mt-1">
+                              <button onClick={() => uyeSil(i)}
+                                className="inline-flex items-center gap-1 text-rose-300 hover:text-rose-200 text-xs">
+                                <Trash2 className="w-3 h-3" /> {tr.uyeySil}
+                              </button>
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => uyeYukari(i)} disabled={i === 0}
+                                  title="Yukarı"
+                                  className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed border border-white/15">
+                                  <ChevronUp className="w-3.5 h-3.5" />
+                                </button>
+                                <button onClick={() => uyeAsagi(i)} disabled={i === icerik.uyeler.length - 1}
+                                  title="Aşağı"
+                                  className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 text-white flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed border border-white/15">
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
                           </div>
                         ) : (
                           <>
