@@ -29,6 +29,7 @@ import { auditLogYaz } from '../utils/auditLog';
 import { confirm } from '../components/ConfirmDialog';
 import AdminEgitimYollariTab from '../components/AdminEgitimYollariTab';
 import YeniEgitmenModal from '../components/YeniEgitmenModal';
+import FotoKirpModal from '../components/FotoKirpModal';
 import AdminKategoriSiralama from '../components/AdminKategoriSiralama';
 import { gorselOlustur } from '../utils/gorselOlustur';
 import { gorselOlusturOpenAIPro } from '../utils/gorselOlusturOpenAIPro';
@@ -219,6 +220,7 @@ const AdminPanel = () => {
 
   // Konuşmacı
   const [fotoUploadingId, setFotoUploadingId] = useState(null);
+  const [kirpmaState, setKirpmaState] = useState(null); // { konusmaciAdi, file } | null
   const [bilgiModal, setBilgiModal] = useState(null);
   const [bilgiForm, setBilgiForm] = useState({ unvan: '', biyografi: '', linkedin: '' });
   const [konusmaciArama, setKonusmaciArama] = useState('');
@@ -428,6 +430,13 @@ const AdminPanel = () => {
     if (!result.success) alert('İşlem başarısız: ' + result.error);
   };
 
+  // Eski direkt upload yerine kırpma modali açar
+  const handleFotoSec = (konusmaciAdi, file) => {
+    if (!file) return;
+    setKirpmaState({ konusmaciAdi, file });
+  };
+
+  // Kırpma modal'ından kırpılmış File döner — gerçek upload burada
   const handleFotoYukle = async (konusmaciAdi, file) => {
     if (!file) return;
     const safeId = makeSafeId(konusmaciAdi);
@@ -1488,7 +1497,7 @@ const AdminPanel = () => {
                           <label className="flex-1 cursor-pointer flex items-center justify-center gap-1 text-xs bg-amare-purple text-white px-2 py-1.5 rounded-lg hover:bg-amare-dark">
                             <Camera className="w-3 h-3" />{kayitliK?.fotoURL ? 'Değiştir' : 'Foto'}
                             <input type="file" accept="image/*" className="hidden" disabled={isUploading}
-                              onChange={e => { if (e.target.files[0]) handleFotoYukle(ad, e.target.files[0]); e.target.value = ''; }} />
+                              onChange={e => { if (e.target.files[0]) handleFotoSec(ad, e.target.files[0]); e.target.value = ''; }} />
                           </label>
                           <button onClick={() => handleBilgiAc(ad)}
                             className="flex-1 flex items-center justify-center gap-1 text-xs bg-gray-100 text-gray-700 px-2 py-1.5 rounded-lg hover:bg-gray-200">
@@ -1959,6 +1968,19 @@ const AdminPanel = () => {
           onSaved={({ ad }) => {
             // Sayfayı yenile ki yeni eğitmen kart olarak görünsün
             window.location.reload();
+          }}
+        />
+      )}
+
+      {/* Foto Kırpma Modal — eğitmen fotoğrafı yükleme öncesi crop + zoom */}
+      {kirpmaState && (
+        <FotoKirpModal
+          file={kirpmaState.file}
+          onCancel={() => setKirpmaState(null)}
+          onSave={async (croppedFile) => {
+            const adi = kirpmaState.konusmaciAdi;
+            setKirpmaState(null);
+            await handleFotoYukle(adi, croppedFile);
           }}
         />
       )}
