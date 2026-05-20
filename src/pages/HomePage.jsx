@@ -51,7 +51,7 @@ const HomePage = () => {
           <div className="mt-6 sm:mt-8 flex items-center justify-center gap-3">
             <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
             <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.4em] font-semibold whitespace-nowrap">
-              Eğitim Takvimi
+              Girişimcilik Ekosistemi
             </span>
             <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
           </div>
