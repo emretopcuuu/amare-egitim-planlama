@@ -30,37 +30,20 @@ const HomePage = () => {
           <LanguageSwitcher />
         </div>
 
-        {/* HERO — One Team animasyonlu logo videosu */}
+        {/* HERO — One Team logo merkezde, çerçevesiz transparent */}
         <div className="flex flex-col items-center pt-4 sm:pt-8 pb-12 sm:pb-16 animate-fade-in">
           <div className="relative">
             {/* Logo arkasına yumuşak altın aurora */}
             <div className="absolute -inset-8 bg-amber-400/15 blur-3xl pointer-events-none" />
-            {/* Video wrapper — çerçeve ve sağ-alt watermark'ı kırpmak için overflow-hidden */}
-            <div
-              className="relative w-64 sm:w-80 md:w-96 overflow-hidden"
-              style={{ aspectRatio: '1 / 1' }}
-            >
-              <video
-                src="/videos/oneteam-logo-anim.mp4"
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="auto"
-                poster="/logos/oneteam-logo.png"
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{
-                  // Video'nun gömülü çerçevesini ve sağ-alt Gemini watermark'ını kırp:
-                  // transform-origin'i sol-üste kaydırarak büyütürken sağ-alt'ı kapsam dışı bırak
-                  transform: 'scale(1.4)',
-                  transformOrigin: '40% 35%',
-                  filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
-                  // mix-blend-mode: videonun siyah arkaplanını mor zeminle harmanla
-                  mixBlendMode: 'screen',
-                }}
-                aria-label="One Team"
-              />
-            </div>
+            {/* Transparent PNG — direkt mor zemin üstünde altın logo */}
+            <img
+              src="/logos/oneteam-logo.png"
+              alt="One Team"
+              className="relative w-64 sm:w-80 md:w-96 h-auto"
+              style={{
+                filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
+              }}
+            />
           </div>
 
           {/* Kicker — altın çizgili, logonun altında */}
