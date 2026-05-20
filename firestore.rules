@@ -181,12 +181,18 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // OneTeam Komisyonlar — public read, admin write
-    // Her komisyon için içerik (ozet, yaptigiIsler, uyeler) sakland.
-    // Detay sayfası herkese açık; sadece admin (Emre) düzenleyebilir.
+    // OneTeam Komisyonlar — public read, komisyon yetkili user'ları write
+    // Yetki: ADMIN_EMAILS (genel admin) VEYA komisyon doc'undaki adminEmails listesinde olmak
+    // adminEmails: KomisyonDetay save sırasında uyeler.email'lerinden + 3 global admin'den türetilir
     match /komisyonlar/{komisyonId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isAdmin()
+        || (isSignedIn()
+            && resource != null
+            && resource.data.adminEmails is list
+            && request.auth.token.email in resource.data.adminEmails);
+      // İlk oluşturma: sadece isAdmin (resource null olduğunda yukarıdaki kontrol bypass olur)
+      allow create: if isAdmin();
     }
 
     // Komisyon iletişim/öneri talepleri — anonim create (form), admin read

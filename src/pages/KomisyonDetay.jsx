@@ -15,9 +15,10 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 import KomisyonSoruFormu from '../components/KomisyonSoruFormu';
 import { useData, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
-import { db, auth } from '../utils/firebase';
+import { db, auth, googleProvider } from '../utils/firebase';
+import { signInWithPopup } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { getKomisyon, canEditKomisyon } from '../utils/komisyonlar';
+import { getKomisyon, canEditKomisyon, turetAdminEmails } from '../utils/komisyonlar';
 
 const I18N = {
   tr: {
@@ -44,11 +45,20 @@ const I18N = {
     adPlaceholder: 'Ad Soyad',
     unvanPlaceholder: 'Unvan / Görev',
     telefonPlaceholder: 'Telefon (opsiyonel)',
+    emailPlaceholder: 'E-posta (admin yetkisi için)',
     fotoUrlPlaceholder: 'Foto URL (opsiyonel)',
     uyeySil: 'Üyeyi sil',
     adminPaneli: 'Komisyon Admin Paneli',
     adminAciklama: 'Komisyon görevlileri için yönetim',
     adminGirisi: 'Admin Girişi',
+    egitimAdminPaneli: 'Eğitim Takvimi Admin Paneli',
+    egitimAdminAciklama: 'Eğitim takvimi ve eğitmen yönetimi',
+    egitimAdminAc: 'Paneli Aç',
+    uyeMi: 'Komisyon Üyesi misin?',
+    uyeAciklama: 'Bu komisyonun üyesiysen Google hesabınla giriş yap, içerikleri düzenleyebilirsin.',
+    googleGiris: 'Google ile Giriş Yap',
+    yetkiYokBaslik: 'Yetkili olduğunuz komisyon değil',
+    yetkiYokMetin: 'Bu komisyonun üyesi değilsin. Üyeyseniz başkanınızdan email kaydınızı talep edebilirsin.',
     kurulumBaslik: 'Bu Komisyon Kurulum Aşamasında',
     kurulumMetin: 'Komisyonun admin paneli ve detayları yakında aktif olacak.',
     duzenlemeModunda: 'Düzenleme modunda — değişiklikleri kaydet',
@@ -82,11 +92,20 @@ const I18N = {
     adPlaceholder: 'Full Name',
     unvanPlaceholder: 'Title / Role',
     telefonPlaceholder: 'Phone (optional)',
+    emailPlaceholder: 'Email (for admin access)',
     fotoUrlPlaceholder: 'Photo URL (optional)',
     uyeySil: 'Remove member',
     adminPaneli: 'Committee Admin Panel',
     adminAciklama: 'Management for committee officers',
     adminGirisi: 'Admin Login',
+    egitimAdminPaneli: 'Training Calendar Admin Panel',
+    egitimAdminAciklama: 'Training calendar and trainer management',
+    egitimAdminAc: 'Open Panel',
+    uyeMi: 'Are you a committee member?',
+    uyeAciklama: 'If you are a member of this committee, sign in with your Google account to edit content.',
+    googleGiris: 'Sign in with Google',
+    yetkiYokBaslik: 'Not authorized for this committee',
+    yetkiYokMetin: 'You are not a member of this committee. If you are, please ask the chair to add your email.',
     kurulumBaslik: 'This Committee Is Being Established',
     kurulumMetin: 'The admin panel and details for this committee will be active soon.',
     duzenlemeModunda: 'Edit mode — save changes',
@@ -120,11 +139,20 @@ const I18N = {
     adPlaceholder: 'Vor- und Nachname',
     unvanPlaceholder: 'Titel / Rolle',
     telefonPlaceholder: 'Telefon (optional)',
+    emailPlaceholder: 'E-Mail (für Admin-Zugriff)',
     fotoUrlPlaceholder: 'Foto-URL (optional)',
     uyeySil: 'Mitglied entfernen',
     adminPaneli: 'Ausschuss-Admin-Panel',
     adminAciklama: 'Verwaltung für Ausschussverantwortliche',
     adminGirisi: 'Admin-Anmeldung',
+    egitimAdminPaneli: 'Schulungskalender Admin-Panel',
+    egitimAdminAciklama: 'Verwaltung von Schulungskalender und Trainern',
+    egitimAdminAc: 'Panel öffnen',
+    uyeMi: 'Sind Sie Ausschussmitglied?',
+    uyeAciklama: 'Wenn Sie Mitglied dieses Ausschusses sind, melden Sie sich mit Google an, um Inhalte zu bearbeiten.',
+    googleGiris: 'Mit Google anmelden',
+    yetkiYokBaslik: 'Nicht autorisiert für diesen Ausschuss',
+    yetkiYokMetin: 'Sie sind kein Mitglied dieses Ausschusses. Bitten Sie ggf. den Vorsitz, Ihre E-Mail einzutragen.',
     kurulumBaslik: 'Dieser Ausschuss befindet sich im Aufbau',
     kurulumMetin: 'Das Admin-Panel und die Details sind bald verfügbar.',
     duzenlemeModunda: 'Bearbeitungsmodus — Änderungen speichern',
@@ -158,11 +186,20 @@ const I18N = {
     adPlaceholder: 'Volledige naam',
     unvanPlaceholder: 'Titel / Functie',
     telefonPlaceholder: 'Telefoon (optioneel)',
+    emailPlaceholder: 'E-mail (voor admin-toegang)',
     fotoUrlPlaceholder: 'Foto-URL (optioneel)',
     uyeySil: 'Lid verwijderen',
     adminPaneli: 'Commissie Admin Paneel',
     adminAciklama: 'Beheer voor commissiebeheerders',
     adminGirisi: 'Admin Inloggen',
+    egitimAdminPaneli: 'Trainingsagenda Admin Paneel',
+    egitimAdminAciklama: 'Trainingsagenda en trainersbeheer',
+    egitimAdminAc: 'Paneel openen',
+    uyeMi: 'Bent u commissielid?',
+    uyeAciklama: 'Als u lid bent van deze commissie, log in met Google om de inhoud te bewerken.',
+    googleGiris: 'Inloggen met Google',
+    yetkiYokBaslik: 'Niet bevoegd voor deze commissie',
+    yetkiYokMetin: 'U bent geen lid van deze commissie. Indien wel, vraag de voorzitter om uw e-mailadres toe te voegen.',
     kurulumBaslik: 'Deze Commissie is in Opbouw',
     kurulumMetin: 'Het admin paneel en de details zijn binnenkort beschikbaar.',
     duzenlemeModunda: 'Bewerkmodus — wijzigingen opslaan',
@@ -177,7 +214,8 @@ const I18N = {
 const BOS_ICERIK = {
   ozet: '',
   yaptigiIsler: [],
-  uyeler: [], // [{ ad, unvan, telefon? }]
+  uyeler: [], // [{ ad, unvan, telefon?, email?, fotoURL?, coreId? }]
+  adminEmails: [], // Firestore rules için türetilmiş email listesi
 };
 
 const KomisyonDetay = () => {
@@ -199,7 +237,8 @@ const KomisyonDetay = () => {
   // Komisyon doc'unda saklanan snapshot foto'yu override eder
   const [freshFotolar, setFreshFotolar] = useState({});
 
-  const duzenleyebilir = canEditKomisyon(user?.email);
+  // Yetki kontrolü artık komisyon içeriğine de bakar (uyeler.email)
+  const duzenleyebilir = canEditKomisyon(user?.email, icerik);
 
   // Firestore'dan içerik yükle
   useEffect(() => {
@@ -214,6 +253,7 @@ const KomisyonDetay = () => {
           ozet: data.ozet || '',
           yaptigiIsler: Array.isArray(data.yaptigiIsler) ? data.yaptigiIsler : [],
           uyeler: Array.isArray(data.uyeler) ? data.uyeler : [],
+          adminEmails: Array.isArray(data.adminEmails) ? data.adminEmails : [],
         };
         if (!iptal) {
           setIcerik(normalize);
@@ -285,12 +325,16 @@ const KomisyonDetay = () => {
     setKaydediliyor(true);
     setMesaj(null);
     try {
+      // adminEmails'i uyeler.email'lerinden otomatik türet (Firestore rules için)
+      const adminEmails = turetAdminEmails(icerik.uyeler);
+      const yeniIcerik = { ...icerik, adminEmails };
       await setDoc(doc(db, 'komisyonlar', id), {
-        ...icerik,
+        ...yeniIcerik,
         guncellemeTarihi: serverTimestamp(),
         guncelleyenEmail: user?.email,
       }, { merge: true });
-      setOrijinalIcerik(icerik);
+      setOrijinalIcerik(yeniIcerik);
+      setIcerik(yeniIcerik);
       setDuzenleme(false);
       setMesaj({ tip: 'ok', metin: tr.kaydedildi });
       setTimeout(() => setMesaj(null), 3000);
@@ -306,6 +350,17 @@ const KomisyonDetay = () => {
     setIcerik(orijinalIcerik);
     setDuzenleme(false);
     setMesaj(null);
+  };
+
+  // Google ile giriş — komisyon admin paneli için
+  const komisyonGiris = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+      // currentUser otomatik güncellenir; duzenleyebilir useEffect ile yenilenir
+    } catch (e) {
+      console.error('[komisyon-giris]:', e);
+      setMesaj({ tip: 'hata', metin: 'Giriş başarısız: ' + (e.message || '').slice(0, 80) });
+    }
   };
 
   // Yaptığı işler listesi yardımcıları
@@ -581,6 +636,13 @@ const KomisyonDetay = () => {
                               className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-purple-200 text-xs placeholder-purple-300/40 outline-none focus:border-amber-400/60"
                             />
                             <input
+                              type="email"
+                              value={u.email || ''}
+                              onChange={(e) => uyeGuncelle(i, 'email', e.target.value)}
+                              placeholder={tr.emailPlaceholder}
+                              className="w-full bg-white/5 border border-amber-300/30 rounded px-2 py-1 text-amber-100 text-xs placeholder-amber-300/40 outline-none focus:border-amber-400/80"
+                            />
+                            <input
                               value={u.fotoURL || ''}
                               onChange={(e) => uyeGuncelle(i, 'fotoURL', e.target.value)}
                               placeholder={tr.fotoUrlPlaceholder}
@@ -630,28 +692,60 @@ const KomisyonDetay = () => {
             {/* İletişim / Soru Formu — düşük eşik etkileşim */}
             <KomisyonSoruFormu komisyonId={id} komisyonAd={k.ad} />
 
-            {/* Admin Paneli CTA — sadece aktif komisyonlar için */}
-            {k.aktif && k.adminRota && (
+            {/* Komisyon Admin Girişi — TÜM komisyonlar için, 3 duruma göre */}
+            {!duzenleyebilir && (
               <section className="mb-8 bg-gradient-to-br from-amber-400/15 to-amber-600/5 border border-amber-300/30 rounded-2xl p-6 shadow-xl">
+                <div className="flex items-start gap-4 flex-wrap">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center flex-shrink-0">
+                    <Lock className="w-5 h-5 text-amber-300" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {!user ? (
+                      <>
+                        <h3 className="text-white font-bold text-base mb-1">{tr.uyeMi}</h3>
+                        <p className="text-purple-200/80 text-xs mb-3">{tr.uyeAciklama}</p>
+                        <button onClick={komisyonGiris}
+                          className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2.5 rounded-xl text-sm font-bold transition shadow-lg spring-tap">
+                          {tr.googleGiris} <ArrowRight className="w-4 h-4" />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <h3 className="text-white font-bold text-base mb-1">{tr.yetkiYokBaslik}</h3>
+                        <p className="text-purple-200/80 text-xs">{tr.yetkiYokMetin}</p>
+                        <p className="text-amber-300/70 text-[11px] mt-2 font-mono">
+                          {user.email}
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </section>
+            )}
+
+            {/* Eğitim Takvimi Admin Paneli — sadece Eğitim Komisyonu, yetkili user için */}
+            {duzenleyebilir && k.aktif && k.adminRota && (
+              <section className="mb-8 bg-gradient-to-br from-emerald-400/15 to-teal-600/5 border border-emerald-300/30 rounded-2xl p-6 shadow-xl">
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                   <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center">
-                      <Lock className="w-5 h-5 text-amber-300" />
+                    <div className="w-12 h-12 rounded-2xl bg-emerald-400/20 border border-emerald-300/40 flex items-center justify-center">
+                      <ArrowRight className="w-5 h-5 text-emerald-300" />
                     </div>
                     <div>
-                      <h3 className="text-white font-bold text-base">{tr.adminPaneli}</h3>
-                      <p className="text-purple-200/80 text-xs">{tr.adminAciklama}</p>
+                      <h3 className="text-white font-bold text-base">{tr.egitimAdminPaneli}</h3>
+                      <p className="text-purple-200/80 text-xs">{tr.egitimAdminAciklama}</p>
                     </div>
                   </div>
                   <button onClick={() => navigate(k.adminRota)}
-                    className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2.5 rounded-xl text-sm font-bold transition shadow-lg spring-tap">
-                    {tr.adminGirisi} <ArrowRight className="w-4 h-4" />
+                    className="inline-flex items-center gap-2 bg-emerald-400 hover:bg-emerald-300 text-purple-900 px-4 py-2.5 rounded-xl text-sm font-bold transition shadow-lg spring-tap">
+                    {tr.egitimAdminAc} <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </section>
             )}
 
-            {!k.aktif && (
+            {/* Kurulum aşamasında bilgi — sadece pasif + yetkisiz user için */}
+            {!k.aktif && !duzenleyebilir && !user && (
               <section className="mb-8 bg-white/5 border border-white/15 rounded-2xl p-6 text-center">
                 <Hammer className="w-10 h-10 text-amber-300 mx-auto mb-3 opacity-70" />
                 <h3 className="text-white font-bold text-lg mb-1">{tr.kurulumBaslik}</h3>

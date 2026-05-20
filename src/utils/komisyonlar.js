@@ -124,7 +124,42 @@ export const KOMISYONLAR = [
 // id'den komisyon bulma
 export const getKomisyon = (id) => KOMISYONLAR.find(k => k.id === id) || null;
 
-// Sadece Emre düzenleyebilir (komisyon admin)
-export const COMISSION_EDITOR_EMAIL = 's.emretopcu@gmail.com';
-export const canEditKomisyon = (email) =>
-  !!email && String(email).toLowerCase().trim() === COMISSION_EDITOR_EMAIL;
+// ─── Yetki sistemi ──────────────────────────────────────────────────────
+// 3 global komisyon admini → tüm komisyonlara giriş hakkı vardır
+export const GLOBAL_KOMISYON_ADMINS = [
+  's.emretopcu@gmail.com',
+  'onlineakademin@gmail.com',
+  'furkancite@gmail.com',
+];
+
+const normEmail = (e) => String(e || '').toLowerCase().trim();
+
+export const isGlobalKomisyonAdmin = (email) =>
+  GLOBAL_KOMISYON_ADMINS.includes(normEmail(email));
+
+// Bir kullanıcı bu komisyonu düzenleyebilir mi?
+// - Global admin: tüm komisyonlara YES
+// - Komisyon üyesi (icerik.uyeler içinde email eşleşiyorsa): YES
+// - Diğer: NO
+export const canEditKomisyon = (email, icerik) => {
+  const e = normEmail(email);
+  if (!e) return false;
+  if (isGlobalKomisyonAdmin(e)) return true;
+  if (icerik?.uyeler && Array.isArray(icerik.uyeler)) {
+    return icerik.uyeler.some(u => normEmail(u.email) === e);
+  }
+  if (icerik?.adminEmails && Array.isArray(icerik.adminEmails)) {
+    return icerik.adminEmails.some(em => normEmail(em) === e);
+  }
+  return false;
+};
+
+// uyeler array'inden adminEmails listesi türet (Firestore rules için)
+export const turetAdminEmails = (uyeler) => {
+  const set = new Set(GLOBAL_KOMISYON_ADMINS.map(normEmail));
+  (uyeler || []).forEach(u => {
+    const e = normEmail(u.email);
+    if (e) set.add(e);
+  });
+  return [...set];
+};
