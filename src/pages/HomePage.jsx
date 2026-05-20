@@ -69,7 +69,7 @@ const HomePage = () => {
               </div>
               <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-amber-300 group-hover:translate-x-1 transition-all ml-auto mt-2" />
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 uppercase tracking-wide">
               Eğitim Takvimi
             </h3>
             <p className="text-purple-200/80 text-sm leading-relaxed">
@@ -87,7 +87,7 @@ const HomePage = () => {
               </div>
               <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-amber-300 group-hover:translate-x-1 transition-all ml-auto mt-2" />
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 uppercase tracking-wide">
               Komisyonlar
             </h3>
             <p className="text-purple-200/80 text-sm leading-relaxed">
@@ -112,7 +112,7 @@ const HomePage = () => {
               </div>
               <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-amber-300 group-hover:translate-x-1 transition-all ml-auto mt-2" />
             </div>
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 uppercase tracking-wide">
               Ekip Yönetim Paneli
             </h3>
             <p className="text-purple-200/80 text-sm leading-relaxed">
