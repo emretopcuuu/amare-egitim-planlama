@@ -274,14 +274,6 @@ const KomisyonlarSayfasi = () => {
                   {k.tagline}
                 </p>
 
-                {/* Hover preview — Firestore özeti varsa hover'da görünür */}
-                {icerikler[k.id]?.ozet && (
-                  <div className="hidden group-hover:block absolute left-3 right-3 bottom-[5.5rem] z-10 bg-purple-950/95 backdrop-blur-md border border-amber-300/30 rounded-xl p-3 shadow-2xl pointer-events-none">
-                    <div className="text-[9px] uppercase tracking-wider text-amber-300/80 font-bold mb-1">Özet</div>
-                    <p className="text-purple-100 text-xs leading-snug line-clamp-3">{icerikler[k.id].ozet}</p>
-                  </div>
-                )}
-
                 {/* Komisyon Başkanı kartı — BÜYÜTÜLDÜ */}
                 {yukleniyor && !baskan ? (
                   /* Skeleton placeholder */
