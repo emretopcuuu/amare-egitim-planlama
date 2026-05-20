@@ -25,31 +25,18 @@ const HomePage = () => {
           <LanguageSwitcher />
         </div>
 
-        {/* HERO — One Team animasyonlu logo videosu (siyah BG ile bütünleşik) */}
+        {/* HERO — One Team animasyonlu logo videosu, doğal boyut + aspect */}
         <div className="flex flex-col items-center pt-4 sm:pt-8 pb-12 sm:pb-16 animate-fade-in">
-          <div className="relative">
-            {/* Video wrapper — küçük + halo yok, doğal siyah blend */}
-            <div
-              className="relative w-56 sm:w-64 md:w-72 overflow-hidden"
-              style={{ aspectRatio: '1 / 1' }}
-            >
-              <video
-                src="/videos/oneteam-logo-anim.mp4"
-                autoPlay
-                muted
-                playsInline
-                preload="auto"
-                poster="/logos/oneteam-logo.png"
-                className="absolute inset-0 w-full h-full object-cover"
-                style={{
-                  // Hafif büyütme + sol-yukarı kaydırma: sağ-alt Gemini watermark dışarı düşer
-                  transform: 'scale(1.25) translate(-3%, -3%)',
-                  transformOrigin: 'center center',
-                }}
-                aria-label="One Team"
-              />
-            </div>
-          </div>
+          <video
+            src="/videos/oneteam-logo-anim.mp4"
+            autoPlay
+            muted
+            playsInline
+            preload="auto"
+            poster="/logos/oneteam-logo.png"
+            className="w-56 sm:w-64 md:w-72 h-auto block"
+            aria-label="One Team"
+          />
 
           {/* Kicker — altın çizgili, logonun altında */}
           <div className="mt-6 sm:mt-8 flex items-center justify-center gap-3">
