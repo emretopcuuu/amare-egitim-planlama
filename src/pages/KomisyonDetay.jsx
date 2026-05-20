@@ -8,7 +8,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, ArrowRight, Sparkles, Users, Edit3, Save, X, Plus, Trash2,
-  Loader2, Phone, Lock, AlertCircle, CheckCircle2, Pencil, Hammer, ExternalLink,
+  Loader2, Phone, Lock, AlertCircle, CheckCircle2, Pencil, Hammer, ExternalLink, Award,
 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useData } from '../context/DataContext';
@@ -317,13 +317,32 @@ const KomisyonDetay = () => {
 
               {icerik.uyeler.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {icerik.uyeler.map((u, i) => (
-                    <div key={i} className="bg-white/5 border border-white/15 rounded-xl p-4 flex items-start gap-3">
-                      {/* Avatar */}
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400/30 to-amber-600/20 border border-amber-300/30 flex items-center justify-center flex-shrink-0">
-                        <span className="text-amber-200 font-bold text-base">
-                          {(u.ad || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
-                        </span>
+                  {icerik.uyeler.map((u, i) => {
+                    const baskanMi = u.unvan === 'Komisyon Başkanı';
+                    return (
+                    <div key={i} className={`bg-white/5 border rounded-xl p-4 flex items-start gap-3 ${
+                      baskanMi ? 'border-amber-300/40 bg-gradient-to-br from-amber-400/10 to-transparent' : 'border-white/15'
+                    }`}>
+                      {/* Avatar — fotoğraf varsa göster, yoksa initial */}
+                      <div className="relative w-14 h-14 flex-shrink-0">
+                        {u.fotoURL ? (
+                          <img src={u.fotoURL} alt={u.ad}
+                            loading="lazy" decoding="async"
+                            className="w-14 h-14 rounded-full object-cover border-2 border-amber-300/40 shadow-md"
+                            style={{ objectPosition: 'center 25%' }} />
+                        ) : (
+                          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400/30 to-amber-600/20 border-2 border-amber-300/30 flex items-center justify-center">
+                            <span className="text-amber-200 font-bold text-base">
+                              {(u.ad || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        {/* Başkan rozeti */}
+                        {baskanMi && (
+                          <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-amber-400 border-2 border-purple-900 flex items-center justify-center shadow-md">
+                            <Award className="w-3 h-3 text-purple-900" />
+                          </div>
+                        )}
                       </div>
                       <div className="flex-1 min-w-0">
                         {duzenleme ? (
@@ -346,6 +365,12 @@ const KomisyonDetay = () => {
                               placeholder="Telefon (opsiyonel)"
                               className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-purple-200 text-xs placeholder-purple-300/40 outline-none focus:border-amber-400/60"
                             />
+                            <input
+                              value={u.fotoURL || ''}
+                              onChange={(e) => uyeGuncelle(i, 'fotoURL', e.target.value)}
+                              placeholder="Foto URL (opsiyonel)"
+                              className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-purple-200 text-xs placeholder-purple-300/40 outline-none focus:border-amber-400/60"
+                            />
                             <button onClick={() => uyeSil(i)}
                               className="inline-flex items-center gap-1 text-rose-300 hover:text-rose-200 text-xs mt-1">
                               <Trash2 className="w-3 h-3" /> Üyeyi sil
@@ -354,7 +379,7 @@ const KomisyonDetay = () => {
                         ) : (
                           <>
                             <div className="text-white font-bold text-sm truncate">{u.ad || '—'}</div>
-                            {u.unvan && <div className="text-amber-300 text-xs truncate">{u.unvan}</div>}
+                            {u.unvan && <div className={`text-xs truncate font-semibold ${baskanMi ? 'text-amber-300' : 'text-amber-300/80'}`}>{u.unvan}</div>}
                             {u.telefon && (
                               <a href={`tel:${u.telefon}`} className="inline-flex items-center gap-1 text-purple-200 text-xs hover:text-amber-300 mt-1">
                                 <Phone className="w-3 h-3" /> {u.telefon}
@@ -364,7 +389,7 @@ const KomisyonDetay = () => {
                         )}
                       </div>
                     </div>
-                  ))}
+                  );})}
                 </div>
               ) : (
                 <p className="text-purple-300/50 text-sm italic">

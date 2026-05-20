@@ -2,14 +2,37 @@
 // 11 komisyonu hisset, her birine tıklayıp ne yaptıklarını gör.
 // Admin (Emre) içeriği düzenleyebilir.
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Sparkles, Users2, Building2, Lock } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles, Users2, Building2, Lock, Award } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { KOMISYONLAR } from '../utils/komisyonlar';
+import { db } from '../utils/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 
 const KomisyonlarSayfasi = () => {
   const navigate = useNavigate();
+
+  // Firestore'dan tüm komisyon doc'larını çek — başkan bilgisi için
+  const [baskanlar, setBaskanlar] = useState({}); // { komisyonId: { ad, fotoURL } }
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const snap = await getDocs(collection(db, 'komisyonlar'));
+        const map = {};
+        snap.forEach(doc => {
+          const data = doc.data();
+          const uyeler = Array.isArray(data.uyeler) ? data.uyeler : [];
+          const baskan = uyeler.find(u => u.unvan === 'Komisyon Başkanı');
+          if (baskan) map[doc.id] = baskan;
+        });
+        setBaskanlar(map);
+      } catch (e) {
+        console.warn('[komisyonlar] baskan yuklenemedi:', e.message);
+      }
+    })();
+  }, []);
 
   const aktifSayisi = KOMISYONLAR.filter(k => k.aktif).length;
 
@@ -83,6 +106,7 @@ const KomisyonlarSayfasi = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 max-w-6xl mx-auto">
           {KOMISYONLAR.map((k, idx) => {
             const Icon = k.icon;
+            const baskan = baskanlar[k.id];
             return (
               <button
                 key={k.id}
@@ -128,12 +152,37 @@ const KomisyonlarSayfasi = () => {
                 <h3 className="text-white font-bold text-base sm:text-lg mb-1 leading-tight">
                   {k.kisaAd}
                 </h3>
-                <p className="text-purple-200/80 text-xs sm:text-sm leading-snug line-clamp-2 mb-3">
+                <p className="text-purple-200/80 text-xs leading-snug line-clamp-2 mb-3">
                   {k.tagline}
                 </p>
 
+                {/* Komisyon Başkanı kartı */}
+                {baskan && (
+                  <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/10">
+                    <div className="relative w-9 h-9 flex-shrink-0">
+                      {baskan.fotoURL ? (
+                        <img src={baskan.fotoURL} alt={baskan.ad}
+                          loading="lazy" decoding="async"
+                          className="w-9 h-9 rounded-full object-cover border border-amber-300/40"
+                          style={{ objectPosition: 'center 25%' }} />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-amber-400/30 to-amber-600/20 border border-amber-300/30 flex items-center justify-center">
+                          <span className="text-amber-200 font-bold text-[10px]">
+                            {(baskan.ad || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
+                      <Award className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 text-amber-300 bg-purple-900 rounded-full p-0.5 border border-purple-800" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[9px] uppercase tracking-wider text-amber-300/80 font-bold">Başkan</div>
+                      <div className="text-white text-xs font-semibold truncate">{baskan.ad}</div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Alt CTA */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                <div className="flex items-center justify-between pt-1">
                   <span className={`text-[11px] uppercase tracking-wider font-bold ${k.aktif ? 'text-amber-300' : 'text-purple-200/60'}`}>
                     Detayları Gör
                   </span>
