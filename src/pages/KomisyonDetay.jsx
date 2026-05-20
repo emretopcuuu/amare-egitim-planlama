@@ -35,6 +35,9 @@ const KomisyonDetay = () => {
   const [duzenleme, setDuzenleme] = useState(false);
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [mesaj, setMesaj] = useState(null);
+  // Konuşmacılar collection'ından güncel fotoğraflar (coreId → fotoURL)
+  // Komisyon doc'unda saklanan snapshot foto'yu override eder
+  const [freshFotolar, setFreshFotolar] = useState({});
 
   const duzenleyebilir = canEditKomisyon(user?.email);
 
@@ -64,6 +67,33 @@ const KomisyonDetay = () => {
     })();
     return () => { iptal = true; };
   }, [id]);
+
+  // Üyelerin güncel fotoğraflarını konuşmacılar collection'ından çek
+  // (komisyon doc'undaki fotoURL eski olabilir — konuşmacı tarafı güncellenince burası da güncellensin)
+  useEffect(() => {
+    const coreIds = [...new Set(
+      (icerik.uyeler || []).map(u => u.coreId).filter(Boolean)
+    )];
+    if (coreIds.length === 0) return;
+    let iptal = false;
+    (async () => {
+      const map = {};
+      await Promise.all(coreIds.map(async (cid) => {
+        try {
+          const snap = await getDoc(doc(db, 'konusmacilar', cid));
+          if (snap.exists()) {
+            const k = snap.data();
+            if (k.fotoURL) map[cid] = { fotoURL: k.fotoURL, ad: k.ad };
+          }
+        } catch {}
+      }));
+      if (!iptal) setFreshFotolar(map);
+    })();
+    return () => { iptal = true; };
+  }, [icerik.uyeler?.length, icerik.uyeler?.map(u => u.coreId).join(',')]);
+
+  // Üyenin güncel fotoğrafı (varsa konuşmacılar'dan, yoksa snapshot)
+  const getUyeFoto = (u) => freshFotolar[u?.coreId]?.fotoURL || u?.fotoURL || null;
 
   // Komisyon bulunamadıysa
   if (!k) {
@@ -323,10 +353,10 @@ const KomisyonDetay = () => {
                     <div key={i} className={`bg-white/5 border rounded-xl p-4 flex items-start gap-3 ${
                       baskanMi ? 'border-amber-300/40 bg-gradient-to-br from-amber-400/10 to-transparent' : 'border-white/15'
                     }`}>
-                      {/* Avatar — fotoğraf varsa göster, yoksa initial */}
+                      {/* Avatar — güncel fotoğraf (konuşmacılar'dan) varsa göster, yoksa initial */}
                       <div className="relative w-14 h-14 flex-shrink-0">
-                        {u.fotoURL ? (
-                          <img src={u.fotoURL} alt={u.ad}
+                        {getUyeFoto(u) ? (
+                          <img src={getUyeFoto(u)} alt={u.ad}
                             loading="lazy" decoding="async"
                             className="w-14 h-14 rounded-full object-cover border-2 border-amber-300/40 shadow-md"
                             style={{ objectPosition: 'center 25%' }} />

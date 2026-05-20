@@ -8,31 +8,55 @@ import { ArrowLeft, ArrowRight, Sparkles, Users2, Building2, Lock, Award } from 
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { KOMISYONLAR } from '../utils/komisyonlar';
 import { db } from '../utils/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
 const KomisyonlarSayfasi = () => {
   const navigate = useNavigate();
 
   // Firestore'dan tüm komisyon doc'larını çek — başkan bilgisi için
-  const [baskanlar, setBaskanlar] = useState({}); // { komisyonId: { ad, fotoURL } }
+  const [baskanlar, setBaskanlar] = useState({}); // { komisyonId: { ad, fotoURL, coreId } }
+  // Konuşmacılar collection'ından güncel fotoğraflar (coreId → fotoURL)
+  // Konuşmacı tarafında foto değişince burada da otomatik güncellenir
+  const [freshFotolar, setFreshFotolar] = useState({});
 
   useEffect(() => {
     (async () => {
       try {
         const snap = await getDocs(collection(db, 'komisyonlar'));
         const map = {};
-        snap.forEach(doc => {
-          const data = doc.data();
+        snap.forEach(d => {
+          const data = d.data();
           const uyeler = Array.isArray(data.uyeler) ? data.uyeler : [];
           const baskan = uyeler.find(u => u.unvan === 'Komisyon Başkanı');
-          if (baskan) map[doc.id] = baskan;
+          if (baskan) map[d.id] = baskan;
         });
         setBaskanlar(map);
+
+        // Başkanların coreId'lerini topla, konuşmacılar'dan güncel foto çek
+        const coreIds = [...new Set(
+          Object.values(map).map(b => b.coreId).filter(Boolean)
+        )];
+        if (coreIds.length > 0) {
+          const freshMap = {};
+          await Promise.all(coreIds.map(async (cid) => {
+            try {
+              const ksnap = await getDoc(doc(db, 'konusmacilar', cid));
+              if (ksnap.exists()) {
+                const k = ksnap.data();
+                if (k.fotoURL) freshMap[cid] = { fotoURL: k.fotoURL, ad: k.ad };
+              }
+            } catch {}
+          }));
+          setFreshFotolar(freshMap);
+        }
       } catch (e) {
         console.warn('[komisyonlar] baskan yuklenemedi:', e.message);
       }
     })();
   }, []);
+
+  // Başkanın güncel fotoğrafı (konuşmacılar'dan), yoksa snapshot
+  const getBaskanFoto = (b) => freshFotolar[b?.coreId]?.fotoURL || b?.fotoURL || null;
 
   const aktifSayisi = KOMISYONLAR.filter(k => k.aktif).length;
 
@@ -62,7 +86,7 @@ const KomisyonlarSayfasi = () => {
             <img
               src="/logos/oneteam-logo.png"
               alt="OneTeam"
-              className="relative w-56 sm:w-72 md:w-80 h-auto"
+              className="relative w-40 sm:w-48 md:w-56 h-auto"
               style={{
                 filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
               }}
@@ -160,8 +184,8 @@ const KomisyonlarSayfasi = () => {
                 {baskan && (
                   <div className="flex items-center gap-2 mb-3 pb-3 border-b border-white/10">
                     <div className="relative w-9 h-9 flex-shrink-0">
-                      {baskan.fotoURL ? (
-                        <img src={baskan.fotoURL} alt={baskan.ad}
+                      {getBaskanFoto(baskan) ? (
+                        <img src={getBaskanFoto(baskan)} alt={baskan.ad}
                           loading="lazy" decoding="async"
                           className="w-9 h-9 rounded-full object-cover border border-amber-300/40"
                           style={{ objectPosition: 'center 25%' }} />
