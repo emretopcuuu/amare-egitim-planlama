@@ -51,11 +51,9 @@ const HomePage = () => {
                 className="absolute inset-0 w-full h-full object-cover"
                 style={{
                   // Video'nun gömülü çerçevesini ve sağ-alt Gemini watermark'ını kırp:
-                  // clip-path ile sert kesim (çerçeve + watermark görünmez)
-                  // sonra scale ile geriye doğru büyüt, görüntüyü container'a sığdır
-                  clipPath: 'inset(10% 13% 15% 10%)',
-                  transform: 'scale(1.35) translate(-1%, -2%)',
-                  transformOrigin: 'center center',
+                  // transform-origin'i sol-üste kaydırarak büyütürken sağ-alt'ı kapsam dışı bırak
+                  transform: 'scale(1.4)',
+                  transformOrigin: '40% 35%',
                   filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
                   // mix-blend-mode: videonun siyah arkaplanını mor zeminle harmanla
                   mixBlendMode: 'screen',
