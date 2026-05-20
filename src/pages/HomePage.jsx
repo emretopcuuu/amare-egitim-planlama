@@ -70,10 +70,10 @@ const HomePage = () => {
               <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-amber-300 group-hover:translate-x-1 transition-all ml-auto mt-2" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
-              {t('home_card2_title')}
+              Eğitim Takvimi
             </h3>
             <p className="text-purple-200/80 text-sm leading-relaxed">
-              {t('home_card2_desc')}
+              Güncel eğitim takvimi
             </p>
           </button>
 
@@ -88,10 +88,10 @@ const HomePage = () => {
               <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-amber-300 group-hover:translate-x-1 transition-all ml-auto mt-2" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
-              Komisyonlar Admin Paneli
+              Komisyonlar
             </h3>
             <p className="text-purple-200/80 text-sm leading-relaxed">
-              OneTeam'in tüm komisyonlarını yönetin
+              OneTeam'in tüm komisyonları
             </p>
           </button>
 
@@ -116,7 +116,7 @@ const HomePage = () => {
               Ekip Yönetim Paneli
             </h3>
             <p className="text-purple-200/80 text-sm leading-relaxed">
-              Ekip yapısı ve hiyerarşi yönetimi
+              Ekip yapısı ve saha yönetimi
             </p>
           </button>
         </div>
