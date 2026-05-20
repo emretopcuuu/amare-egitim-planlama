@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Award, Users2, ChevronDown } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Award, Users2 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { KOMISYONLAR } from '../utils/komisyonlar';
@@ -166,48 +166,32 @@ const KomisyonlarSayfasi = () => {
           <LanguageSwitcher />
         </div>
 
-        {/* Hero — Full-bleed devasa tipografi */}
-        <section className="relative min-h-[85vh] sm:min-h-[100dvh] -mx-4 px-4 flex flex-col items-center justify-center text-center mb-12 sm:mb-16 animate-fade-in">
-          {/* OneTeam logo — küçük accent */}
-          <div className="relative inline-block mb-6 sm:mb-8">
-            <div className="absolute -inset-6 bg-amber-400/20 blur-3xl pointer-events-none" />
+        {/* Hero — kompakt versiyon */}
+        <div className="text-center max-w-3xl mx-auto mb-6 sm:mb-8 animate-fade-in">
+          {/* OneTeam logo — küçültüldü, hafif glow */}
+          <div className="relative inline-block mb-3">
+            <div className="absolute -inset-4 bg-amber-400/15 blur-2xl pointer-events-none" />
             <img
               src="/logos/oneteam-logo.png"
               alt="OneTeam"
-              className="relative w-16 sm:w-20 md:w-24 h-auto"
+              className="relative w-20 sm:w-24 md:w-28 h-auto"
               style={{
                 filter: 'drop-shadow(0 4px 12px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 20px rgba(251, 191, 36, 0.15))',
               }}
             />
           </div>
 
-          {/* MEGA Başlık — clamp ile responsive devasa */}
-          <h1
-            className="font-black text-white tracking-tight leading-[0.88] uppercase mb-6"
-            style={{
-              fontSize: 'clamp(48px, 13vw, 200px)',
-              letterSpacing: '-0.04em',
-              textShadow: '0 4px 60px rgba(251, 191, 36, 0.15)',
-            }}
-          >
-            {tr.baslikSol || (lang === 'tr' ? 'Girişimcilik' : lang === 'en' ? 'Entrepreneurship' : lang === 'de' ? 'Unternehmer' : 'Ondernemers')}
-            <br />
-            <span className="bg-gradient-to-r from-amber-200 via-amber-400 to-amber-300 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(251,191,36,0.4)]">
-              {tr.baslikSag || (lang === 'tr' ? 'Ekosistemi' : lang === 'en' ? 'Ecosystem' : lang === 'de' ? 'Ökosystem' : 'Ecosysteem')}
-            </span>
-          </h1>
-
           {/* Kicker — altın çizgili */}
-          <div className="flex items-center justify-center gap-3 mb-6 sm:mb-8 mt-2">
-            <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
-            <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.5em] font-bold whitespace-nowrap">
+          <div className="flex items-center justify-center gap-3 mb-3">
+            <div className="h-px w-8 sm:w-12 bg-amber-400/50" />
+            <span className="text-amber-300 text-[10px] sm:text-xs uppercase tracking-[0.4em] font-semibold whitespace-nowrap">
               {tr.kicker}
             </span>
-            <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
+            <div className="h-px w-8 sm:w-12 bg-amber-400/50" />
           </div>
 
-          {/* Açıklama */}
-          <p className="text-purple-100/85 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto mb-8">
+          {/* Kompakt açıklama — tek satıra düşürüldü, anahtar kelimeler altın */}
+          <p className="text-purple-100/85 text-xs sm:text-sm leading-relaxed max-w-xl mx-auto mb-4">
             {tr.aciklamaBasi}{' '}
             <span className="text-amber-300 font-semibold">{tr.gelisim}</span>,{' '}
             <span className="text-amber-300 font-semibold">{tr.dayanisma}</span>
@@ -215,14 +199,7 @@ const KomisyonlarSayfasi = () => {
             <span className="text-amber-300 font-semibold">{tr.basari}</span> {tr.hizmetEder}
           </p>
 
-          {/* Scroll cue — aşağı ok */}
-          <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-amber-300/70 animate-bounce">
-            <span className="text-[10px] sm:text-xs uppercase tracking-[0.4em] font-semibold whitespace-nowrap">
-              {lang === 'tr' ? 'Aşağı kaydır' : lang === 'en' ? 'Scroll' : lang === 'de' ? 'Scrollen' : 'Scroll'}
-            </span>
-            <ChevronDown className="w-5 h-5" />
-          </div>
-        </section>
+        </div>
 
         {/* Komisyonlar grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 max-w-6xl mx-auto">
