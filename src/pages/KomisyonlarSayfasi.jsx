@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Sparkles, Users2, Building2, Lock, Award } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Award, Users2 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { KOMISYONLAR } from '../utils/komisyonlar';
@@ -148,8 +148,6 @@ const KomisyonlarSayfasi = () => {
     return (cid && freshFotolar[cid]?.fotoURL) || b?.fotoURL || null;
   };
 
-  const aktifSayisi = KOMISYONLAR.filter(k => k.aktif).length;
-
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950 relative">
       {/* Üstte altın aurora */}
@@ -201,18 +199,6 @@ const KomisyonlarSayfasi = () => {
             <span className="text-amber-300 font-semibold">{tr.basari}</span> {tr.hizmetEder}
           </p>
 
-          {/* Tek bant istatistik — kompakt inline */}
-          <div className="inline-flex items-center gap-3 sm:gap-4 bg-white/5 backdrop-blur-md border border-white/15 rounded-full px-4 sm:px-5 py-1.5 text-xs">
-            <span className="inline-flex items-center gap-1.5 text-white">
-              <Building2 className="w-3.5 h-3.5 text-amber-300" />
-              <strong className="font-bold">{KOMISYONLAR.length}</strong> {tr.komisyon}
-            </span>
-            <span className="w-px h-3 bg-white/20" />
-            <span className="inline-flex items-center gap-1.5 text-purple-200">
-              <Users2 className="w-3.5 h-3.5 text-purple-300" />
-              {tr.liderGorevliler}
-            </span>
-          </div>
         </div>
 
         {/* Komisyonlar grid */}
