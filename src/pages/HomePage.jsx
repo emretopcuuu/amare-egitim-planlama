@@ -11,13 +11,18 @@ const HomePage = () => {
   const [bultenModal, setBultenModal] = useState(false);
 
   return (
-    <div className="min-h-[100dvh] overflow-x-hidden bg-black relative">
+    <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 relative">
+      {/* Üstte yumuşak altın aurora glow */}
+      <div className="absolute top-0 left-0 right-0 h-[600px] bg-[radial-gradient(ellipse_at_center_top,rgba(251,191,36,0.15)_0%,transparent_70%)] pointer-events-none" />
+      {/* Köşelerde dekor blur'lar */}
+      <div className="absolute top-20 -left-32 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-20 -right-32 w-96 h-96 rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
 
       <div className="relative container mx-auto px-4 py-6 sm:py-10">
         {/* Top bar — Bülten + Dil */}
         <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
           <button onClick={() => setBultenModal(true)}
-            className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-black px-4 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-amber-500/30 spring-tap">
+            className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-amber-500/30 spring-tap">
             <Newspaper className="w-4 h-4" />
             <span className="hidden sm:inline">Haftalık Bülten</span>
             <span className="sm:hidden">Bülten</span>
@@ -25,18 +30,21 @@ const HomePage = () => {
           <LanguageSwitcher />
         </div>
 
-        {/* HERO — One Team animasyonlu logo videosu, doğal boyut + aspect */}
+        {/* HERO — One Team logo merkezde, çerçevesiz transparent */}
         <div className="flex flex-col items-center pt-4 sm:pt-8 pb-12 sm:pb-16 animate-fade-in">
-          <video
-            src="/videos/oneteam-logo-anim.mp4"
-            autoPlay
-            muted
-            playsInline
-            preload="auto"
-            poster="/logos/oneteam-logo.png"
-            className="w-56 sm:w-64 md:w-72 h-auto block"
-            aria-label="One Team"
-          />
+          <div className="relative">
+            {/* Logo arkasına yumuşak altın aurora */}
+            <div className="absolute -inset-8 bg-amber-400/15 blur-3xl pointer-events-none" />
+            {/* Transparent PNG — direkt mor zemin üstünde altın logo */}
+            <img
+              src="/logos/oneteam-logo.png"
+              alt="One Team"
+              className="relative w-64 sm:w-80 md:w-96 h-auto"
+              style={{
+                filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
+              }}
+            />
+          </div>
 
           {/* Kicker — altın çizgili, logonun altında */}
           <div className="mt-6 sm:mt-8 flex items-center justify-center gap-3">
@@ -63,7 +71,7 @@ const HomePage = () => {
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
               {t('home_card2_title')}
             </h3>
-            <p className="text-zinc-300/80 text-sm leading-relaxed">
+            <p className="text-purple-200/80 text-sm leading-relaxed">
               {t('home_card2_desc')}
             </p>
           </button>
@@ -81,7 +89,7 @@ const HomePage = () => {
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
               {t('home_card3_title')}
             </h3>
-            <p className="text-zinc-300/80 text-sm leading-relaxed">
+            <p className="text-purple-200/80 text-sm leading-relaxed">
               {t('home_card3_desc')}
             </p>
           </button>
@@ -89,7 +97,7 @@ const HomePage = () => {
 
         {/* Footer */}
         <div className="mt-16 sm:mt-24 text-center">
-          <p className="text-zinc-500/80 text-xs tracking-wider">
+          <p className="text-purple-300/60 text-xs tracking-wider">
             {t('copyright')}
           </p>
         </div>
