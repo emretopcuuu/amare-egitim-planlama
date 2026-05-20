@@ -11,7 +11,7 @@ import {
   Loader2, Phone, Lock, AlertCircle, CheckCircle2, Pencil, Hammer, ExternalLink, Award,
 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-import { useData } from '../context/DataContext';
+import { useData, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { db, auth } from '../utils/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
@@ -226,11 +226,14 @@ const KomisyonDetay = () => {
     return () => { iptal = true; };
   }, [id]);
 
+  // Üyenin etkili coreId'si — kaydedilmiş yoksa ad'dan üret
+  const getEffectiveCoreId = (u) => u?.coreId || makeCoreId(u?.ad) || null;
+
   // Üyelerin güncel fotoğraflarını konuşmacılar collection'ından çek
   // (komisyon doc'undaki fotoURL eski olabilir — konuşmacı tarafı güncellenince burası da güncellensin)
   useEffect(() => {
     const coreIds = [...new Set(
-      (icerik.uyeler || []).map(u => u.coreId).filter(Boolean)
+      (icerik.uyeler || []).map(u => getEffectiveCoreId(u)).filter(Boolean)
     )];
     if (coreIds.length === 0) return;
     let iptal = false;
@@ -248,10 +251,13 @@ const KomisyonDetay = () => {
       if (!iptal) setFreshFotolar(map);
     })();
     return () => { iptal = true; };
-  }, [icerik.uyeler?.length, icerik.uyeler?.map(u => u.coreId).join(',')]);
+  }, [icerik.uyeler?.length, (icerik.uyeler || []).map(u => getEffectiveCoreId(u)).join(',')]);
 
   // Üyenin güncel fotoğrafı (varsa konuşmacılar'dan, yoksa snapshot)
-  const getUyeFoto = (u) => freshFotolar[u?.coreId]?.fotoURL || u?.fotoURL || null;
+  const getUyeFoto = (u) => {
+    const cid = getEffectiveCoreId(u);
+    return (cid && freshFotolar[cid]?.fotoURL) || u?.fotoURL || null;
+  };
 
   // Komisyon bulunamadıysa
   if (!k) {
@@ -313,7 +319,13 @@ const KomisyonDetay = () => {
   const uyeSil = (i) => setIcerik(p => ({ ...p, uyeler: p.uyeler.filter((_, idx) => idx !== i) }));
   const uyeGuncelle = (i, alan, v) => setIcerik(p => ({
     ...p,
-    uyeler: p.uyeler.map((u, idx) => idx === i ? { ...u, [alan]: v } : u),
+    uyeler: p.uyeler.map((u, idx) => {
+      if (idx !== i) return u;
+      const yeni = { ...u, [alan]: v };
+      // Ad değişince coreId otomatik üret — fotoğraf eşlemesi için
+      if (alan === 'ad') yeni.coreId = makeCoreId(v) || null;
+      return yeni;
+    }),
   }));
 
   const renkSinifi = {

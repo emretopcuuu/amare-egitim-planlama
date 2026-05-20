@@ -10,6 +10,7 @@ import { useTranslation } from '../context/LanguageContext';
 import { KOMISYONLAR } from '../utils/komisyonlar';
 import { db } from '../utils/firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { makeCoreId } from '../context/DataContext';
 
 // Çok dilli statik metinler — translations.js'e taşımak yerine inline
 const I18N = {
@@ -107,9 +108,9 @@ const KomisyonlarSayfasi = () => {
         });
         setBaskanlar(map);
 
-        // Başkanların coreId'lerini topla, konuşmacılar'dan güncel foto çek
+        // Başkanların coreId'lerini topla (yoksa ad'dan üret), konuşmacılar'dan güncel foto çek
         const coreIds = [...new Set(
-          Object.values(map).map(b => b.coreId).filter(Boolean)
+          Object.values(map).map(b => b.coreId || makeCoreId(b.ad)).filter(Boolean)
         )];
         if (coreIds.length > 0) {
           const freshMap = {};
@@ -131,7 +132,10 @@ const KomisyonlarSayfasi = () => {
   }, []);
 
   // Başkanın güncel fotoğrafı (konuşmacılar'dan), yoksa snapshot
-  const getBaskanFoto = (b) => freshFotolar[b?.coreId]?.fotoURL || b?.fotoURL || null;
+  const getBaskanFoto = (b) => {
+    const cid = b?.coreId || makeCoreId(b?.ad);
+    return (cid && freshFotolar[cid]?.fotoURL) || b?.fotoURL || null;
+  };
 
   const aktifSayisi = KOMISYONLAR.filter(k => k.aktif).length;
 
