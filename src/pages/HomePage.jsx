@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Shield, Newspaper, ArrowRight, Users, Hammer, X } from 'lucide-react';
+import { Calendar, Shield, Newspaper, ArrowRight, Users, Hammer, X, Target, Compass } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import BultenModal from '../components/BultenModal';
@@ -120,6 +120,74 @@ const HomePage = () => {
             </p>
           </button>
         </div>
+
+        {/* MİSYON & VİZYON — Ekosistemin ruhu */}
+        <section className="mt-16 sm:mt-24 max-w-5xl mx-auto">
+          {/* Section kicker */}
+          <div className="flex items-center justify-center gap-3 mb-8 sm:mb-10">
+            <div className="h-px w-10 sm:w-16 bg-amber-400/40" />
+            <span className="text-amber-300/90 text-[10px] sm:text-xs uppercase tracking-[0.5em] font-bold whitespace-nowrap">
+              One Team Manifestosu
+            </span>
+            <div className="h-px w-10 sm:w-16 bg-amber-400/40" />
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-5 sm:gap-6">
+            {/* MİSYON */}
+            <div className="relative bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-md border border-amber-300/20 rounded-2xl p-7 sm:p-9 overflow-hidden group hover:border-amber-300/40 transition-all duration-300 shadow-xl">
+              {/* Köşe glow */}
+              <div className="absolute -top-16 -left-16 w-44 h-44 rounded-full bg-amber-400/15 blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 right-0 w-32 h-32 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
+
+              <div className="relative">
+                {/* İkon */}
+                <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-400/20 to-amber-600/10 border border-amber-300/40 mb-5 shadow-lg">
+                  <Target className="w-6 h-6 sm:w-7 sm:h-7 text-amber-300" />
+                </div>
+                {/* Başlık + altın çizgi */}
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.4em] font-bold">
+                    Misyon
+                  </span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-amber-400/60 via-amber-400/20 to-transparent" />
+                </div>
+                {/* Metin */}
+                <p className="text-white/95 text-base sm:text-lg leading-relaxed font-light">
+                  Sağlık, varlık ve özgürlük dolu bir yaşamın
+                  <span className="text-amber-300 font-medium"> herkes için </span>
+                  mümkün olduğuna inanıyoruz. One Team ailesi olarak hep birlikte bunun için çalışıyoruz.
+                </p>
+              </div>
+            </div>
+
+            {/* VİZYON */}
+            <div className="relative bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-md border border-amber-300/20 rounded-2xl p-7 sm:p-9 overflow-hidden group hover:border-amber-300/40 transition-all duration-300 shadow-xl">
+              {/* Köşe glow */}
+              <div className="absolute -top-16 -right-16 w-44 h-44 rounded-full bg-amber-400/15 blur-3xl pointer-events-none" />
+              <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
+
+              <div className="relative">
+                {/* İkon */}
+                <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-400/20 to-amber-600/10 border border-amber-300/40 mb-5 shadow-lg">
+                  <Compass className="w-6 h-6 sm:w-7 sm:h-7 text-amber-300" />
+                </div>
+                {/* Başlık + altın çizgi */}
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.4em] font-bold">
+                    Vizyon
+                  </span>
+                  <div className="h-px flex-1 bg-gradient-to-r from-amber-400/60 via-amber-400/20 to-transparent" />
+                </div>
+                {/* Metin */}
+                <p className="text-white/95 text-base sm:text-lg leading-relaxed font-light">
+                  Bireylerin ve toplulukların yaşamını iyileştiren,
+                  <span className="text-amber-300 font-medium"> dünyanın en büyük ve en etkili </span>
+                  girişimcilik ekosistemi olmak.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Footer */}
         <div className="mt-16 sm:mt-24 text-center">
