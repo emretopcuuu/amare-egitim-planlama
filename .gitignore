@@ -17,3 +17,6 @@ scripts/whisper_audio
 *.mp4
 *.opus
 *.webm
+
+# Ama public/videos altındaki asset'ler deploy'a dahil
+!public/videos/*.mp4

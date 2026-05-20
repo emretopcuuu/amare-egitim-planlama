@@ -30,20 +30,31 @@ const HomePage = () => {
           <LanguageSwitcher />
         </div>
 
-        {/* HERO — One Team logo merkezde, çerçevesiz transparent */}
+        {/* HERO — One Team animasyonlu logo videosu */}
         <div className="flex flex-col items-center pt-4 sm:pt-8 pb-12 sm:pb-16 animate-fade-in">
           <div className="relative">
             {/* Logo arkasına yumuşak altın aurora */}
             <div className="absolute -inset-8 bg-amber-400/15 blur-3xl pointer-events-none" />
-            {/* Transparent PNG — direkt mor zemin üstünde altın logo */}
-            <img
-              src="/logos/oneteam-logo.png"
-              alt="One Team"
+            {/* Animasyonlu logo — autoplay, sessiz, loop */}
+            <video
+              src="/videos/oneteam-logo-anim.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="auto"
+              poster="/logos/oneteam-logo.png"
               className="relative w-64 sm:w-80 md:w-96 h-auto"
               style={{
                 filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
+                // mix-blend-mode: mor zemin üstünde video'nun siyah arkaplanını yumuşat
+                mixBlendMode: 'screen',
               }}
-            />
+              aria-label="One Team"
+            >
+              {/* Fallback: video çalışmazsa statik logo */}
+              <img src="/logos/oneteam-logo.png" alt="One Team" />
+            </video>
           </div>
 
           {/* Kicker — altın çizgili, logonun altında */}
