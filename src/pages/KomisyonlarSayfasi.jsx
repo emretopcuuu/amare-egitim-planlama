@@ -208,11 +208,6 @@ const KomisyonlarSayfasi = () => {
               <strong className="font-bold">{KOMISYONLAR.length}</strong> {tr.komisyon}
             </span>
             <span className="w-px h-3 bg-white/20" />
-            <span className="inline-flex items-center gap-1.5 text-emerald-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-              <strong className="font-bold">{aktifSayisi}</strong> {tr.aktif}
-            </span>
-            <span className="w-px h-3 bg-white/20" />
             <span className="inline-flex items-center gap-1.5 text-purple-200">
               <Users2 className="w-3.5 h-3.5 text-purple-300" />
               {tr.liderGorevliler}
