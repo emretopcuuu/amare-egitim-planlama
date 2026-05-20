@@ -10,7 +10,7 @@ import {
   RefreshCw, Trophy, TrendingUp, Sparkles, Edit3, User, X,
   Briefcase, Cake, Flame, AlertTriangle, Users, Timer, Target, Hourglass,
   CheckCircle2, TrendingUp as TrendIcon, Zap, Medal, Crown, Star,
-  Share2, Download, Layers,
+  Share2, Download, Layers, Calculator, ExternalLink,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../utils/firebase';
@@ -1125,29 +1125,51 @@ const Profil = () => {
           </div>
         )}
 
-        {/* ═══ BAĞLANTILAR (sponsor) — Bağlantılar tab'ında ═══ */}
-        {aktifTab === 'baglantilar' && sponsorAd && (
-          <div id="section-baglantilar" className="stagger-fade" style={{ animationDelay: '400ms' }}>
+        {/* ═══ BAĞLANTILAR (sponsor + araçlar) — Bağlantılar tab'ında ═══ */}
+        {aktifTab === 'baglantilar' && (sponsorAd || true) && (
+          <div id="section-baglantilar" className="stagger-fade space-y-4" style={{ animationDelay: '400ms' }}>
             <SectionTitle icon={Users}>Bağlantılar</SectionTitle>
-            <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
-              <div className="text-purple-200/70 text-[10px] uppercase tracking-[0.15em] font-bold mb-3">Sponsorum</div>
-              <div className="flex items-center justify-between gap-3">
+
+            {/* Sponsor kartı */}
+            {sponsorAd && (
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
+                <div className="text-purple-200/70 text-[10px] uppercase tracking-[0.15em] font-bold mb-3">Sponsorum</div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-lg">
+                      {(sponsorAd || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-white font-bold text-sm truncate">{sponsorAd}</div>
+                      <div className="text-purple-200/70 text-xs">{maskPhone(sponsorTel) || 'Telefon yok'}</div>
+                    </div>
+                  </div>
+                  {sponsorWa && (
+                    <button onClick={() => setWaModalAcik(true)}
+                      className="bg-green-500 hover:bg-green-400 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shrink-0 shadow-lg spring-tap">
+                      <MessageCircle className="w-3.5 h-3.5" /> İletişime geç
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Faydalı bağlantılar kartı */}
+            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
+              <div className="text-purple-200/70 text-[10px] uppercase tracking-[0.15em] font-bold mb-3">Faydalı Bağlantılar</div>
+              <a href="https://hesaplayici.oneteamglobal.ai/" target="_blank" rel="noopener noreferrer"
+                className="flex items-center justify-between gap-3 bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-300/40 rounded-xl p-3 transition-all spring-tap group">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-base flex-shrink-0 shadow-lg">
-                    {(sponsorAd || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
+                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg">
+                    <Calculator className="w-5 h-5 text-purple-900" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-white font-bold text-sm truncate">{sponsorAd}</div>
-                    <div className="text-purple-200/70 text-xs">{maskPhone(sponsorTel) || 'Telefon yok'}</div>
+                    <div className="text-white font-bold text-sm truncate">One Team Hesaplayıcı</div>
+                    <div className="text-purple-200/70 text-xs truncate">Gelir ve kariyer hesaplama aracı</div>
                   </div>
                 </div>
-                {sponsorWa && (
-                  <button onClick={() => setWaModalAcik(true)}
-                    className="bg-green-500 hover:bg-green-400 text-white text-xs font-bold px-3 py-2 rounded-xl flex items-center gap-1.5 shrink-0 shadow-lg spring-tap">
-                    <MessageCircle className="w-3.5 h-3.5" /> İletişime geç
-                  </button>
-                )}
-              </div>
+                <ExternalLink className="w-4 h-4 text-white/40 group-hover:text-amber-300 transition flex-shrink-0" />
+              </a>
             </div>
           </div>
         )}
