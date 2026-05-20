@@ -189,6 +189,27 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Komisyon iletişim/öneri talepleri — anonim create (form), admin read
+    // Spam koruması: maksimum mesaj boyutu + gerekli alanlar
+    match /komisyon_iletisim_talepleri/{talepId} {
+      allow read: if isAdmin();
+      allow create: if
+        request.resource.data.komisyonId is string
+        && request.resource.data.komisyonId.size() > 0
+        && request.resource.data.komisyonId.size() <= 50
+        && request.resource.data.ad is string
+        && request.resource.data.ad.size() > 0
+        && request.resource.data.ad.size() <= 100
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 0
+        && request.resource.data.email.size() <= 200
+        && request.resource.data.mesaj is string
+        && request.resource.data.mesaj.size() > 0
+        && request.resource.data.mesaj.size() <= 2000
+        && request.resource.data.olusturulmaTarihi == request.time;
+      allow update, delete: if isAdmin();
+    }
+
     // Üye profilleri — kendi profil doc'una okuma/yazma izni
     // Tier 1 üye girişi sonrası kullanıcı profili oluşturmak/güncellemek için.
     // Diğer kullanıcı profillerine erişim YOK (privacy).

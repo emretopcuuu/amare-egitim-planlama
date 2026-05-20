@@ -12,6 +12,7 @@ import {
   ChevronUp, ChevronDown,
 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import KomisyonSoruFormu from '../components/KomisyonSoruFormu';
 import { useData, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { db, auth } from '../utils/firebase';
@@ -625,6 +626,9 @@ const KomisyonDetay = () => {
                 </p>
               )}
             </section>
+
+            {/* İletişim / Soru Formu — düşük eşik etkileşim */}
+            <KomisyonSoruFormu komisyonId={id} komisyonAd={k.ad} />
 
             {/* Admin Paneli CTA — sadece aktif komisyonlar için */}
             {k.aktif && k.adminRota && (
