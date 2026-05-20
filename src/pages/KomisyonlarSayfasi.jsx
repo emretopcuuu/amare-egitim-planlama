@@ -79,7 +79,7 @@ const KomisyonlarSayfasi = () => {
           </div>
 
           <p className="text-purple-100/90 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-            OneTeam liderleri tarafından kurulan komisyonlar, üyelerimizin
+            OneTeam Yürütme Kurulu tarafından kurulan komisyonlar, iş ortaklarımızın
             <span className="text-amber-300 font-semibold"> gelişimine</span>,
             <span className="text-amber-300 font-semibold"> dayanışmasına</span> ve
             <span className="text-amber-300 font-semibold"> başarısına</span> hizmet eder.
