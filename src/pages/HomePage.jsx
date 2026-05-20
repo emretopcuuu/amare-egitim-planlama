@@ -77,7 +77,7 @@ const HomePage = () => {
           </button>
 
           <button
-            onClick={() => navigate('/admin-giris')}
+            onClick={() => navigate('/komisyonlar')}
             className="group bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/20 hover:border-amber-300/40 rounded-3xl p-7 sm:p-8 transition-all duration-300 spring-tap text-left shadow-2xl"
           >
             <div className="flex items-start gap-4 mb-4">
@@ -87,10 +87,10 @@ const HomePage = () => {
               <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-amber-300 group-hover:translate-x-1 transition-all ml-auto mt-2" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
-              {t('home_card3_title')}
+              Komisyonlar Admin Paneli
             </h3>
             <p className="text-purple-200/80 text-sm leading-relaxed">
-              {t('home_card3_desc')}
+              OneTeam'in tüm komisyonlarını yönetin
             </p>
           </button>
         </div>
