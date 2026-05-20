@@ -8,7 +8,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft, ArrowRight, Sparkles, Users, Edit3, Save, X, Plus, Trash2,
-  Loader2, Phone, Lock, AlertCircle, CheckCircle2, Pencil, Hammer, ExternalLink, Award,
+  Loader2, Phone, Lock, AlertCircle, CheckCircle2, Pencil, Award,
   ChevronUp, ChevronDown,
 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -744,16 +744,6 @@ const KomisyonDetay = () => {
               </section>
             )}
 
-            {/* Kurulum aşamasında bilgi — sadece pasif + yetkisiz user için */}
-            {!k.aktif && !duzenleyebilir && !user && (
-              <section className="mb-8 bg-white/5 border border-white/15 rounded-2xl p-6 text-center">
-                <Hammer className="w-10 h-10 text-amber-300 mx-auto mb-3 opacity-70" />
-                <h3 className="text-white font-bold text-lg mb-1">{tr.kurulumBaslik}</h3>
-                <p className="text-purple-200/70 text-sm">
-                  {tr.kurulumMetin}
-                </p>
-              </section>
-            )}
           </>
         )}
 
