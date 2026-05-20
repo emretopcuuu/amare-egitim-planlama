@@ -16,7 +16,7 @@ import KomisyonSoruFormu from '../components/KomisyonSoruFormu';
 import { useData, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { db, auth, googleProvider } from '../utils/firebase';
-import { signInWithPopup } from 'firebase/auth';
+import { signInWithPopup, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getKomisyon, canEditKomisyon, turetAdminEmails } from '../utils/komisyonlar';
 
@@ -59,6 +59,7 @@ const I18N = {
     googleGiris: 'Google ile Giriş Yap',
     yetkiYokBaslik: 'Yetkili olduğunuz komisyon değil',
     yetkiYokMetin: 'Bu komisyonun üyesi değilsin. Üyeyseniz başkanınızdan email kaydınızı talep edebilirsin.',
+    hesapDegistir: 'Farklı Hesapla Giriş Yap',
     kurulumBaslik: 'Bu Komisyon Kurulum Aşamasında',
     kurulumMetin: 'Komisyonun admin paneli ve detayları yakında aktif olacak.',
     duzenlemeModunda: 'Düzenleme modunda — değişiklikleri kaydet',
@@ -106,6 +107,7 @@ const I18N = {
     googleGiris: 'Sign in with Google',
     yetkiYokBaslik: 'Not authorized for this committee',
     yetkiYokMetin: 'You are not a member of this committee. If you are, please ask the chair to add your email.',
+    hesapDegistir: 'Sign in with Different Account',
     kurulumBaslik: 'This Committee Is Being Established',
     kurulumMetin: 'The admin panel and details for this committee will be active soon.',
     duzenlemeModunda: 'Edit mode — save changes',
@@ -153,6 +155,7 @@ const I18N = {
     googleGiris: 'Mit Google anmelden',
     yetkiYokBaslik: 'Nicht autorisiert für diesen Ausschuss',
     yetkiYokMetin: 'Sie sind kein Mitglied dieses Ausschusses. Bitten Sie ggf. den Vorsitz, Ihre E-Mail einzutragen.',
+    hesapDegistir: 'Mit anderem Konto anmelden',
     kurulumBaslik: 'Dieser Ausschuss befindet sich im Aufbau',
     kurulumMetin: 'Das Admin-Panel und die Details sind bald verfügbar.',
     duzenlemeModunda: 'Bearbeitungsmodus — Änderungen speichern',
@@ -200,6 +203,7 @@ const I18N = {
     googleGiris: 'Inloggen met Google',
     yetkiYokBaslik: 'Niet bevoegd voor deze commissie',
     yetkiYokMetin: 'U bent geen lid van deze commissie. Indien wel, vraag de voorzitter om uw e-mailadres toe te voegen.',
+    hesapDegistir: 'Inloggen met ander account',
     kurulumBaslik: 'Deze Commissie is in Opbouw',
     kurulumMetin: 'Het admin paneel en de details zijn binnenkort beschikbaar.',
     duzenlemeModunda: 'Bewerkmodus — wijzigingen opslaan',
@@ -359,6 +363,17 @@ const KomisyonDetay = () => {
       // currentUser otomatik güncellenir; duzenleyebilir useEffect ile yenilenir
     } catch (e) {
       console.error('[komisyon-giris]:', e);
+      setMesaj({ tip: 'hata', metin: 'Giriş başarısız: ' + (e.message || '').slice(0, 80) });
+    }
+  };
+
+  // Farklı hesapla giriş — mevcut user'ı çıkar, yeni signIn
+  const hesapDegistir = async () => {
+    try {
+      await signOut(auth);
+      await signInWithPopup(auth, googleProvider);
+    } catch (e) {
+      console.error('[hesap-degistir]:', e);
       setMesaj({ tip: 'hata', metin: 'Giriş başarısız: ' + (e.message || '').slice(0, 80) });
     }
   };
@@ -713,9 +728,13 @@ const KomisyonDetay = () => {
                       <>
                         <h3 className="text-white font-bold text-base mb-1">{tr.yetkiYokBaslik}</h3>
                         <p className="text-purple-200/80 text-xs">{tr.yetkiYokMetin}</p>
-                        <p className="text-amber-300/70 text-[11px] mt-2 font-mono">
+                        <p className="text-amber-300/70 text-[11px] mt-2 mb-3 font-mono">
                           {user.email}
                         </p>
+                        <button onClick={hesapDegistir}
+                          className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2.5 rounded-xl text-sm font-bold transition shadow-lg spring-tap">
+                          {tr.hesapDegistir} <ArrowRight className="w-4 h-4" />
+                        </button>
                       </>
                     )}
                   </div>
