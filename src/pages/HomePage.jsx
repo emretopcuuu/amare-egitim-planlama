@@ -50,9 +50,11 @@ const HomePage = () => {
                 poster="/logos/oneteam-logo.png"
                 className="absolute inset-0 w-full h-full object-cover"
                 style={{
-                  // Video'nun gömülü çerçevesini ve sağ-alt Gemini watermark'ını agresif kırp:
-                  // scale ile %70 büyüt + sol-yukarı kaydır (sağ-alt watermark dışarı düşer)
-                  transform: 'scale(1.7) translate(-4%, -5%)',
+                  // Video'nun gömülü çerçevesini ve sağ-alt Gemini watermark'ını kırp:
+                  // clip-path ile sert kesim (çerçeve + watermark görünmez)
+                  // sonra scale ile geriye doğru büyüt, görüntüyü container'a sığdır
+                  clipPath: 'inset(10% 13% 15% 10%)',
+                  transform: 'scale(1.35) translate(-1%, -2%)',
                   transformOrigin: 'center center',
                   filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
                   // mix-blend-mode: videonun siyah arkaplanını mor zeminle harmanla
