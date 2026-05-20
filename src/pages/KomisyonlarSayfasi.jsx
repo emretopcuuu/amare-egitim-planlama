@@ -6,12 +6,87 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Sparkles, Users2, Building2, Lock, Award } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useTranslation } from '../context/LanguageContext';
 import { KOMISYONLAR } from '../utils/komisyonlar';
 import { db } from '../utils/firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 
+// Çok dilli statik metinler — translations.js'e taşımak yerine inline
+const I18N = {
+  tr: {
+    anasayfa: 'Anasayfa',
+    kicker: 'One Team Komisyonlar',
+    aciklamaBasi: 'OneTeam Yürütme Kurulu tarafından kurulan komisyonlar, iş ortaklarımızın',
+    gelisim: 'gelişimine',
+    dayanisma: 'dayanışmasına',
+    basari: 'başarısına',
+    hizmetEder: 'hizmet eder.',
+    komisyon: 'Komisyon',
+    aktif: 'Aktif',
+    aktifBadge: 'Aktif',
+    kuruluyorBadge: 'Kuruluyor',
+    liderGorevliler: 'Lider Görevliler',
+    detaylariGor: 'Detayları Gör',
+    baskan: 'Başkan',
+    altMetin: 'Her komisyon kendi alanında uzmanlaşmış liderlerden oluşur. Birlikte OneTeam ekosistemini büyütürüz.',
+  },
+  en: {
+    anasayfa: 'Home',
+    kicker: 'One Team Committees',
+    aciklamaBasi: 'Committees established by the OneTeam Executive Board serve our partners’',
+    gelisim: 'development',
+    dayanisma: 'solidarity',
+    basari: 'success',
+    hizmetEder: '.',
+    komisyon: 'Committee',
+    aktif: 'Active',
+    aktifBadge: 'Active',
+    kuruluyorBadge: 'Building',
+    liderGorevliler: 'Leadership',
+    detaylariGor: 'View Details',
+    baskan: 'Chair',
+    altMetin: 'Each committee consists of leaders specialized in their field. Together we grow the OneTeam ecosystem.',
+  },
+  de: {
+    anasayfa: 'Startseite',
+    kicker: 'One Team Ausschüsse',
+    aciklamaBasi: 'Die vom OneTeam-Exekutivausschuss eingerichteten Komitees dienen der',
+    gelisim: 'Entwicklung',
+    dayanisma: 'Solidarität',
+    basari: 'dem Erfolg',
+    hizmetEder: 'unserer Partner.',
+    komisyon: 'Ausschuss',
+    aktif: 'Aktiv',
+    aktifBadge: 'Aktiv',
+    kuruluyorBadge: 'Im Aufbau',
+    liderGorevliler: 'Führungsteam',
+    detaylariGor: 'Details ansehen',
+    baskan: 'Vorsitz',
+    altMetin: 'Jeder Ausschuss besteht aus Experten ihres Fachgebiets. Gemeinsam wachsen wir.',
+  },
+  nl: {
+    anasayfa: 'Home',
+    kicker: 'One Team Commissies',
+    aciklamaBasi: 'Door het OneTeam Uitvoerend Bestuur opgerichte commissies dienen de',
+    gelisim: 'ontwikkeling',
+    dayanisma: 'solidariteit',
+    basari: 'succes',
+    hizmetEder: 'van onze partners.',
+    komisyon: 'Commissie',
+    aktif: 'Actief',
+    aktifBadge: 'Actief',
+    kuruluyorBadge: 'In opbouw',
+    liderGorevliler: 'Leiderschap',
+    detaylariGor: 'Details bekijken',
+    baskan: 'Voorzitter',
+    altMetin: 'Elke commissie bestaat uit leiders die gespecialiseerd zijn in hun vakgebied. Samen laten we het OneTeam-ecosysteem groeien.',
+  },
+};
+
 const KomisyonlarSayfasi = () => {
   const navigate = useNavigate();
+  const { lang } = useTranslation();
+  const tr = I18N[lang] || I18N.tr;
 
   // Firestore'dan tüm komisyon doc'larını çek — başkan bilgisi için
   const [baskanlar, setBaskanlar] = useState({}); // { komisyonId: { ad, fotoURL, coreId } }
@@ -73,7 +148,7 @@ const KomisyonlarSayfasi = () => {
         <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
           <button onClick={() => navigate('/')}
             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap">
-            <ArrowLeft className="w-4 h-4" /> Anasayfa
+            <ArrowLeft className="w-4 h-4" /> {tr.anasayfa}
           </button>
           <LanguageSwitcher />
         </div>
@@ -97,31 +172,32 @@ const KomisyonlarSayfasi = () => {
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
             <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.4em] font-semibold whitespace-nowrap">
-              One Team Komisyonlar
+              {tr.kicker}
             </span>
             <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
           </div>
 
           <p className="text-purple-100/90 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-            OneTeam Yürütme Kurulu tarafından kurulan komisyonlar, iş ortaklarımızın
-            <span className="text-amber-300 font-semibold"> gelişimine</span>,
-            <span className="text-amber-300 font-semibold"> dayanışmasına</span> ve
-            <span className="text-amber-300 font-semibold"> başarısına</span> hizmet eder.
+            {tr.aciklamaBasi}{' '}
+            <span className="text-amber-300 font-semibold">{tr.gelisim}</span>,{' '}
+            <span className="text-amber-300 font-semibold">{tr.dayanisma}</span>
+            {lang === 'tr' ? ' ve ' : lang === 'en' ? ' and ' : lang === 'de' ? ' und ' : ' en '}
+            <span className="text-amber-300 font-semibold">{tr.basari}</span> {tr.hizmetEder}
           </p>
 
           {/* İstatistik rozetleri */}
           <div className="flex flex-wrap items-center justify-center gap-3 mt-7">
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2">
               <Building2 className="w-4 h-4 text-amber-300" />
-              <span className="text-white text-sm font-semibold">{KOMISYONLAR.length} Komisyon</span>
+              <span className="text-white text-sm font-semibold">{KOMISYONLAR.length} {tr.komisyon}</span>
             </div>
             <div className="inline-flex items-center gap-2 bg-emerald-500/15 backdrop-blur-md border border-emerald-400/30 rounded-full px-4 py-2">
               <Sparkles className="w-4 h-4 text-emerald-300" />
-              <span className="text-emerald-100 text-sm font-semibold">{aktifSayisi} Aktif</span>
+              <span className="text-emerald-100 text-sm font-semibold">{aktifSayisi} {tr.aktif}</span>
             </div>
             <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2">
               <Users2 className="w-4 h-4 text-purple-200" />
-              <span className="text-white text-sm font-semibold">Lider Görevliler</span>
+              <span className="text-white text-sm font-semibold">{tr.liderGorevliler}</span>
             </div>
           </div>
         </div>
@@ -147,12 +223,12 @@ const KomisyonlarSayfasi = () => {
                   {k.aktif ? (
                     <span className="inline-flex items-center gap-1 bg-emerald-500/90 text-white text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md border border-emerald-300/40">
                       <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                      Aktif
+                      {tr.aktifBadge}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 bg-white/10 text-purple-200 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/15">
                       <Lock className="w-2.5 h-2.5" />
-                      Kuruluyor
+                      {tr.kuruluyorBadge}
                     </span>
                   )}
                 </div>
@@ -199,7 +275,7 @@ const KomisyonlarSayfasi = () => {
                       <Award className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 text-amber-300 bg-purple-900 rounded-full p-0.5 border border-purple-800" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-[9px] uppercase tracking-wider text-amber-300/80 font-bold">Başkan</div>
+                      <div className="text-[9px] uppercase tracking-wider text-amber-300/80 font-bold">{tr.baskan}</div>
                       <div className="text-white text-xs font-semibold truncate">{baskan.ad}</div>
                     </div>
                   </div>
@@ -208,7 +284,7 @@ const KomisyonlarSayfasi = () => {
                 {/* Alt CTA */}
                 <div className="flex items-center justify-between pt-1">
                   <span className={`text-[11px] uppercase tracking-wider font-bold ${k.aktif ? 'text-amber-300' : 'text-purple-200/60'}`}>
-                    Detayları Gör
+                    {tr.detaylariGor}
                   </span>
                   <ArrowRight className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${k.aktif ? 'text-amber-300' : 'text-white/40'}`} />
                 </div>
@@ -225,8 +301,7 @@ const KomisyonlarSayfasi = () => {
         {/* Alt bilgi */}
         <div className="mt-14 text-center max-w-2xl mx-auto">
           <p className="text-purple-200/70 text-sm leading-relaxed">
-            Her komisyon kendi alanında uzmanlaşmış liderlerden oluşur.
-            Birlikte OneTeam ekosistemini büyütürüz.
+            {tr.altMetin}
           </p>
         </div>
       </div>

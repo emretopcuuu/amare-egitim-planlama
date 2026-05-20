@@ -12,9 +12,165 @@ import {
 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useData } from '../context/DataContext';
+import { useTranslation } from '../context/LanguageContext';
 import { db, auth } from '../utils/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getKomisyon, canEditKomisyon } from '../utils/komisyonlar';
+
+const I18N = {
+  tr: {
+    komisyonlar: 'Komisyonlar',
+    duzenle: 'Düzenle',
+    aktifKomisyon: 'Aktif Komisyon',
+    kurulumAsamasinda: 'Kurulum Aşamasında',
+    bulunamadiBaslik: 'Komisyon bulunamadı',
+    bulunamadiMetin: 'Aradığınız komisyon mevcut değil.',
+    geriDon: 'Komisyonlara Dön',
+    iceriYukleniyor: 'İçerik yükleniyor...',
+    neYapar: 'Bu Komisyon Ne Yapar?',
+    ozetPlaceholder: 'Komisyonun genel açıklamasını yaz...',
+    iceriYok: 'Henüz içerik eklenmemiş.',
+    sorumluluk: 'Sorumluluk Alanları',
+    maddeEkle: 'Madde Ekle',
+    maddePlaceholder: 'Sorumluluk maddesi...',
+    maddeYokDuzenle: '"Madde Ekle" ile sorumluluk alanları ekleyebilirsin.',
+    maddeYok: 'Henüz madde eklenmemiş.',
+    uyeler: 'Komisyon Üyeleri',
+    uyeEkle: 'Üye Ekle',
+    uyeYokDuzenle: '"Üye Ekle" ile komisyon üyelerini ekleyebilirsin.',
+    uyeYok: 'Henüz üye eklenmemiş.',
+    adPlaceholder: 'Ad Soyad',
+    unvanPlaceholder: 'Unvan / Görev',
+    telefonPlaceholder: 'Telefon (opsiyonel)',
+    fotoUrlPlaceholder: 'Foto URL (opsiyonel)',
+    uyeySil: 'Üyeyi sil',
+    adminPaneli: 'Komisyon Admin Paneli',
+    adminAciklama: 'Komisyon görevlileri için yönetim',
+    adminGirisi: 'Admin Girişi',
+    kurulumBaslik: 'Bu Komisyon Kurulum Aşamasında',
+    kurulumMetin: 'Komisyonun admin paneli ve detayları yakında aktif olacak.',
+    duzenlemeModunda: 'Düzenleme modunda — değişiklikleri kaydet',
+    iptal: 'İptal',
+    kaydet: 'Kaydet',
+    kaydediliyor: 'Kaydediliyor',
+    kaydedildi: 'Kaydedildi',
+    kayitHata: 'Kayıt başarısız: ',
+  },
+  en: {
+    komisyonlar: 'Committees',
+    duzenle: 'Edit',
+    aktifKomisyon: 'Active Committee',
+    kurulumAsamasinda: 'Being Established',
+    bulunamadiBaslik: 'Committee not found',
+    bulunamadiMetin: 'The committee you are looking for does not exist.',
+    geriDon: 'Back to Committees',
+    iceriYukleniyor: 'Loading content...',
+    neYapar: 'What Does This Committee Do?',
+    ozetPlaceholder: 'Write a general description of the committee...',
+    iceriYok: 'No content yet.',
+    sorumluluk: 'Areas of Responsibility',
+    maddeEkle: 'Add Item',
+    maddePlaceholder: 'Responsibility item...',
+    maddeYokDuzenle: 'Add areas of responsibility with "Add Item".',
+    maddeYok: 'No items yet.',
+    uyeler: 'Committee Members',
+    uyeEkle: 'Add Member',
+    uyeYokDuzenle: 'Add committee members with "Add Member".',
+    uyeYok: 'No members yet.',
+    adPlaceholder: 'Full Name',
+    unvanPlaceholder: 'Title / Role',
+    telefonPlaceholder: 'Phone (optional)',
+    fotoUrlPlaceholder: 'Photo URL (optional)',
+    uyeySil: 'Remove member',
+    adminPaneli: 'Committee Admin Panel',
+    adminAciklama: 'Management for committee officers',
+    adminGirisi: 'Admin Login',
+    kurulumBaslik: 'This Committee Is Being Established',
+    kurulumMetin: 'The admin panel and details for this committee will be active soon.',
+    duzenlemeModunda: 'Edit mode — save changes',
+    iptal: 'Cancel',
+    kaydet: 'Save',
+    kaydediliyor: 'Saving',
+    kaydedildi: 'Saved',
+    kayitHata: 'Save failed: ',
+  },
+  de: {
+    komisyonlar: 'Ausschüsse',
+    duzenle: 'Bearbeiten',
+    aktifKomisyon: 'Aktiver Ausschuss',
+    kurulumAsamasinda: 'Im Aufbau',
+    bulunamadiBaslik: 'Ausschuss nicht gefunden',
+    bulunamadiMetin: 'Der gesuchte Ausschuss existiert nicht.',
+    geriDon: 'Zurück zu Ausschüssen',
+    iceriYukleniyor: 'Inhalt wird geladen...',
+    neYapar: 'Was macht dieser Ausschuss?',
+    ozetPlaceholder: 'Allgemeine Beschreibung des Ausschusses...',
+    iceriYok: 'Noch kein Inhalt.',
+    sorumluluk: 'Verantwortungsbereiche',
+    maddeEkle: 'Eintrag hinzufügen',
+    maddePlaceholder: 'Verantwortungseintrag...',
+    maddeYokDuzenle: 'Mit "Eintrag hinzufügen" können Sie Bereiche hinzufügen.',
+    maddeYok: 'Noch keine Einträge.',
+    uyeler: 'Ausschussmitglieder',
+    uyeEkle: 'Mitglied hinzufügen',
+    uyeYokDuzenle: 'Mit "Mitglied hinzufügen" können Sie Mitglieder hinzufügen.',
+    uyeYok: 'Noch keine Mitglieder.',
+    adPlaceholder: 'Vor- und Nachname',
+    unvanPlaceholder: 'Titel / Rolle',
+    telefonPlaceholder: 'Telefon (optional)',
+    fotoUrlPlaceholder: 'Foto-URL (optional)',
+    uyeySil: 'Mitglied entfernen',
+    adminPaneli: 'Ausschuss-Admin-Panel',
+    adminAciklama: 'Verwaltung für Ausschussverantwortliche',
+    adminGirisi: 'Admin-Anmeldung',
+    kurulumBaslik: 'Dieser Ausschuss befindet sich im Aufbau',
+    kurulumMetin: 'Das Admin-Panel und die Details sind bald verfügbar.',
+    duzenlemeModunda: 'Bearbeitungsmodus — Änderungen speichern',
+    iptal: 'Abbrechen',
+    kaydet: 'Speichern',
+    kaydediliyor: 'Wird gespeichert',
+    kaydedildi: 'Gespeichert',
+    kayitHata: 'Speichern fehlgeschlagen: ',
+  },
+  nl: {
+    komisyonlar: 'Commissies',
+    duzenle: 'Bewerken',
+    aktifKomisyon: 'Actieve Commissie',
+    kurulumAsamasinda: 'In Opbouw',
+    bulunamadiBaslik: 'Commissie niet gevonden',
+    bulunamadiMetin: 'De gezochte commissie bestaat niet.',
+    geriDon: 'Terug naar Commissies',
+    iceriYukleniyor: 'Inhoud wordt geladen...',
+    neYapar: 'Wat doet deze commissie?',
+    ozetPlaceholder: 'Algemene beschrijving van de commissie...',
+    iceriYok: 'Nog geen inhoud.',
+    sorumluluk: 'Verantwoordelijkheidsgebieden',
+    maddeEkle: 'Item toevoegen',
+    maddePlaceholder: 'Verantwoordelijkheidsitem...',
+    maddeYokDuzenle: 'Voeg gebieden toe met "Item toevoegen".',
+    maddeYok: 'Nog geen items.',
+    uyeler: 'Commissieleden',
+    uyeEkle: 'Lid toevoegen',
+    uyeYokDuzenle: 'Voeg leden toe met "Lid toevoegen".',
+    uyeYok: 'Nog geen leden.',
+    adPlaceholder: 'Volledige naam',
+    unvanPlaceholder: 'Titel / Functie',
+    telefonPlaceholder: 'Telefoon (optioneel)',
+    fotoUrlPlaceholder: 'Foto-URL (optioneel)',
+    uyeySil: 'Lid verwijderen',
+    adminPaneli: 'Commissie Admin Paneel',
+    adminAciklama: 'Beheer voor commissiebeheerders',
+    adminGirisi: 'Admin Inloggen',
+    kurulumBaslik: 'Deze Commissie is in Opbouw',
+    kurulumMetin: 'Het admin paneel en de details zijn binnenkort beschikbaar.',
+    duzenlemeModunda: 'Bewerkmodus — wijzigingen opslaan',
+    iptal: 'Annuleren',
+    kaydet: 'Opslaan',
+    kaydediliyor: 'Opslaan...',
+    kaydedildi: 'Opgeslagen',
+    kayitHata: 'Opslaan mislukt: ',
+  },
+};
 
 const BOS_ICERIK = {
   ozet: '',
@@ -26,6 +182,8 @@ const KomisyonDetay = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { currentUser } = useData();
+  const { lang } = useTranslation();
+  const tr = I18N[lang] || I18N.tr;
   const user = currentUser;
   const k = useMemo(() => getKomisyon(id), [id]);
 
@@ -101,11 +259,11 @@ const KomisyonDetay = () => {
       <div className="min-h-[100dvh] bg-purple-900 flex items-center justify-center px-4">
         <div className="text-center max-w-md">
           <AlertCircle className="w-16 h-16 text-amber-300 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">Komisyon bulunamadı</h2>
-          <p className="text-purple-200 mb-6">Aradığınız komisyon mevcut değil.</p>
+          <h2 className="text-2xl font-bold text-white mb-2">{tr.bulunamadiBaslik}</h2>
+          <p className="text-purple-200 mb-6">{tr.bulunamadiMetin}</p>
           <button onClick={() => navigate('/komisyonlar')}
             className="bg-amber-400 hover:bg-amber-300 text-purple-900 px-5 py-2.5 rounded-xl font-bold spring-tap">
-            Komisyonlara Dön
+            {tr.geriDon}
           </button>
         </div>
       </div>
@@ -126,11 +284,11 @@ const KomisyonDetay = () => {
       }, { merge: true });
       setOrijinalIcerik(icerik);
       setDuzenleme(false);
-      setMesaj({ tip: 'ok', metin: 'Kaydedildi' });
+      setMesaj({ tip: 'ok', metin: tr.kaydedildi });
       setTimeout(() => setMesaj(null), 3000);
     } catch (e) {
       console.error('[komisyon-detay] kaydet:', e);
-      setMesaj({ tip: 'hata', metin: 'Kayıt başarısız: ' + e.message });
+      setMesaj({ tip: 'hata', metin: tr.kayitHata + e.message });
     } finally {
       setKaydediliyor(false);
     }
@@ -183,14 +341,14 @@ const KomisyonDetay = () => {
         <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
           <button onClick={() => navigate('/komisyonlar')}
             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap">
-            <ArrowLeft className="w-4 h-4" /> Komisyonlar
+            <ArrowLeft className="w-4 h-4" /> {tr.komisyonlar}
           </button>
           <div className="flex items-center gap-2">
             {/* Düzenle butonu — sadece Emre görür */}
             {duzenleyebilir && !duzenleme && (
               <button onClick={() => setDuzenleme(true)}
                 className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-purple-900 px-3 py-2 rounded-full text-xs font-bold transition spring-tap shadow-lg">
-                <Pencil className="w-3.5 h-3.5" /> Düzenle
+                <Pencil className="w-3.5 h-3.5" /> {tr.duzenle}
               </button>
             )}
             <LanguageSwitcher />
@@ -215,12 +373,12 @@ const KomisyonDetay = () => {
           {k.aktif ? (
             <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/40 rounded-full px-3 py-1 mb-4">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
-              <span className="text-emerald-200 text-[11px] uppercase tracking-wider font-bold">Aktif Komisyon</span>
+              <span className="text-emerald-200 text-[11px] uppercase tracking-wider font-bold">{tr.aktifKomisyon}</span>
             </div>
           ) : (
             <div className="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-full px-3 py-1 mb-4">
               <Lock className="w-3 h-3 text-purple-200" />
-              <span className="text-purple-200 text-[11px] uppercase tracking-wider font-bold">Kurulum Aşamasında</span>
+              <span className="text-purple-200 text-[11px] uppercase tracking-wider font-bold">{tr.kurulumAsamasinda}</span>
             </div>
           )}
 
@@ -249,7 +407,7 @@ const KomisyonDetay = () => {
         {yukleniyor ? (
           <div className="text-center py-12 text-purple-200">
             <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
-            İçerik yükleniyor...
+            {tr.iceriYukleniyor}
           </div>
         ) : (
           <>
@@ -257,14 +415,14 @@ const KomisyonDetay = () => {
             <section className="mb-8 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 sm:p-8 shadow-xl">
               <div className="flex items-center gap-3 mb-4">
                 <Sparkles className="w-5 h-5 text-amber-300" />
-                <h2 className="text-white font-bold text-lg sm:text-xl">Bu Komisyon Ne Yapar?</h2>
+                <h2 className="text-white font-bold text-lg sm:text-xl">{tr.neYapar}</h2>
               </div>
               {duzenleme ? (
                 <textarea
                   value={icerik.ozet}
                   onChange={(e) => setIcerik(p => ({ ...p, ozet: e.target.value }))}
                   rows={5}
-                  placeholder="Komisyonun genel açıklamasını yaz..."
+                  placeholder={tr.ozetPlaceholder}
                   className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm leading-relaxed placeholder-purple-300/40 focus:border-amber-400/60 outline-none resize-y"
                 />
               ) : icerik.ozet ? (
@@ -273,7 +431,7 @@ const KomisyonDetay = () => {
                 </p>
               ) : (
                 <p className="text-purple-300/50 text-sm italic">
-                  Henüz içerik eklenmemiş.
+                  {tr.iceriYok}
                 </p>
               )}
             </section>
@@ -283,12 +441,12 @@ const KomisyonDetay = () => {
               <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                 <div className="flex items-center gap-3">
                   <CheckCircle2 className="w-5 h-5 text-emerald-300" />
-                  <h2 className="text-white font-bold text-lg sm:text-xl">Sorumluluk Alanları</h2>
+                  <h2 className="text-white font-bold text-lg sm:text-xl">{tr.sorumluluk}</h2>
                 </div>
                 {duzenleme && (
                   <button onClick={isEkle}
                     className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full border border-white/20 spring-tap">
-                    <Plus className="w-3 h-3" /> Madde Ekle
+                    <Plus className="w-3 h-3" /> {tr.maddeEkle}
                   </button>
                 )}
               </div>
@@ -304,7 +462,7 @@ const KomisyonDetay = () => {
                           <input
                             value={is}
                             onChange={(e) => isGuncelle(i, e.target.value)}
-                            placeholder="Sorumluluk maddesi..."
+                            placeholder={tr.maddePlaceholder}
                             className="flex-1 bg-white/5 border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm placeholder-purple-300/40 focus:border-amber-400/60 outline-none"
                           />
                           <button onClick={() => isSil(i)}
@@ -320,7 +478,7 @@ const KomisyonDetay = () => {
                 </ul>
               ) : (
                 <p className="text-purple-300/50 text-sm italic">
-                  {duzenleme ? '"Madde Ekle" ile sorumluluk alanları ekleyebilirsin.' : 'Henüz madde eklenmemiş.'}
+                  {duzenleme ? tr.maddeYokDuzenle : tr.maddeYok}
                 </p>
               )}
             </section>
@@ -330,7 +488,7 @@ const KomisyonDetay = () => {
               <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
                 <div className="flex items-center gap-3">
                   <Users className="w-5 h-5 text-purple-200" />
-                  <h2 className="text-white font-bold text-lg sm:text-xl">Komisyon Üyeleri</h2>
+                  <h2 className="text-white font-bold text-lg sm:text-xl">{tr.uyeler}</h2>
                   {icerik.uyeler.length > 0 && (
                     <span className="bg-white/10 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
                       {icerik.uyeler.length}
@@ -340,7 +498,7 @@ const KomisyonDetay = () => {
                 {duzenleme && (
                   <button onClick={uyeEkle}
                     className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full border border-white/20 spring-tap">
-                    <Plus className="w-3 h-3" /> Üye Ekle
+                    <Plus className="w-3 h-3" /> {tr.uyeEkle}
                   </button>
                 )}
               </div>
@@ -380,30 +538,30 @@ const KomisyonDetay = () => {
                             <input
                               value={u.ad}
                               onChange={(e) => uyeGuncelle(i, 'ad', e.target.value)}
-                              placeholder="Ad Soyad"
+                              placeholder={tr.adPlaceholder}
                               className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-white text-sm placeholder-purple-300/40 outline-none focus:border-amber-400/60"
                             />
                             <input
                               value={u.unvan || ''}
                               onChange={(e) => uyeGuncelle(i, 'unvan', e.target.value)}
-                              placeholder="Unvan / Görev"
+                              placeholder={tr.unvanPlaceholder}
                               className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-purple-200 text-xs placeholder-purple-300/40 outline-none focus:border-amber-400/60"
                             />
                             <input
                               value={u.telefon || ''}
                               onChange={(e) => uyeGuncelle(i, 'telefon', e.target.value)}
-                              placeholder="Telefon (opsiyonel)"
+                              placeholder={tr.telefonPlaceholder}
                               className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-purple-200 text-xs placeholder-purple-300/40 outline-none focus:border-amber-400/60"
                             />
                             <input
                               value={u.fotoURL || ''}
                               onChange={(e) => uyeGuncelle(i, 'fotoURL', e.target.value)}
-                              placeholder="Foto URL (opsiyonel)"
+                              placeholder={tr.fotoUrlPlaceholder}
                               className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-purple-200 text-xs placeholder-purple-300/40 outline-none focus:border-amber-400/60"
                             />
                             <button onClick={() => uyeSil(i)}
                               className="inline-flex items-center gap-1 text-rose-300 hover:text-rose-200 text-xs mt-1">
-                              <Trash2 className="w-3 h-3" /> Üyeyi sil
+                              <Trash2 className="w-3 h-3" /> {tr.uyeySil}
                             </button>
                           </div>
                         ) : (
@@ -423,7 +581,7 @@ const KomisyonDetay = () => {
                 </div>
               ) : (
                 <p className="text-purple-300/50 text-sm italic">
-                  {duzenleme ? '"Üye Ekle" ile komisyon üyelerini ekleyebilirsin.' : 'Henüz üye eklenmemiş.'}
+                  {duzenleme ? tr.uyeYokDuzenle : tr.uyeYok}
                 </p>
               )}
             </section>
@@ -437,13 +595,13 @@ const KomisyonDetay = () => {
                       <Lock className="w-5 h-5 text-amber-300" />
                     </div>
                     <div>
-                      <h3 className="text-white font-bold text-base">Komisyon Admin Paneli</h3>
-                      <p className="text-purple-200/80 text-xs">Komisyon görevlileri için yönetim</p>
+                      <h3 className="text-white font-bold text-base">{tr.adminPaneli}</h3>
+                      <p className="text-purple-200/80 text-xs">{tr.adminAciklama}</p>
                     </div>
                   </div>
                   <button onClick={() => navigate(k.adminRota)}
                     className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2.5 rounded-xl text-sm font-bold transition shadow-lg spring-tap">
-                    Admin Girişi <ArrowRight className="w-4 h-4" />
+                    {tr.adminGirisi} <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </section>
@@ -452,9 +610,9 @@ const KomisyonDetay = () => {
             {!k.aktif && (
               <section className="mb-8 bg-white/5 border border-white/15 rounded-2xl p-6 text-center">
                 <Hammer className="w-10 h-10 text-amber-300 mx-auto mb-3 opacity-70" />
-                <h3 className="text-white font-bold text-lg mb-1">Bu Komisyon Kurulum Aşamasında</h3>
+                <h3 className="text-white font-bold text-lg mb-1">{tr.kurulumBaslik}</h3>
                 <p className="text-purple-200/70 text-sm">
-                  Komisyonun admin paneli ve detayları yakında aktif olacak.
+                  {tr.kurulumMetin}
                 </p>
               </section>
             )}
@@ -467,17 +625,17 @@ const KomisyonDetay = () => {
             <div className="container mx-auto px-4 py-3 max-w-4xl flex items-center justify-between gap-3 flex-wrap">
               <div className="flex items-center gap-2 text-amber-300 text-xs sm:text-sm font-semibold">
                 <Edit3 className="w-4 h-4" />
-                Düzenleme modunda — değişiklikleri kaydet
+                {tr.duzenlemeModunda}
               </div>
               <div className="flex items-center gap-2">
                 <button onClick={iptal} disabled={kaydediliyor}
                   className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-semibold border border-white/20 spring-tap disabled:opacity-50">
-                  <X className="w-4 h-4" /> İptal
+                  <X className="w-4 h-4" /> {tr.iptal}
                 </button>
                 <button onClick={kaydet} disabled={kaydediliyor}
                   className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-purple-900 px-5 py-2 rounded-xl text-sm font-bold spring-tap shadow-lg disabled:opacity-50">
                   {kaydediliyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  Kaydet
+                  {kaydediliyor ? tr.kaydediliyor : tr.kaydet}
                 </button>
               </div>
             </div>

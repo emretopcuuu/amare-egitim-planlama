@@ -6,9 +6,87 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Target, Compass } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useTranslation } from '../context/LanguageContext';
+
+const I18N = {
+  tr: {
+    anasayfa: 'Anasayfa',
+    kicker: 'One Team',
+    baslikSol: 'Girişimcilik',
+    baslikSag: 'Ekosistemi',
+    intro: 'Sağlık, varlık ve özgürlük için yola çıkan, girişimci adaylarına destek olan aile.',
+    misyon: 'Misyon',
+    misyonMetin1: 'Sağlık, varlık ve özgürlük dolu bir yaşamın',
+    misyonVurgu: ' herkes için ',
+    misyonMetin2: 'mümkün olduğuna inanıyoruz. One Team ailesi olarak hep birlikte bunun için çalışıyoruz.',
+    vizyon: 'Vizyon',
+    vizyonMetin1: 'Bireylerin ve toplulukların yaşamını iyileştiren,',
+    vizyonVurgu: ' dünyanın en büyük ve en etkili ',
+    vizyonMetin2: 'girişimcilik ekosistemi olmak.',
+    altKicker: 'Birlikte Daha Güçlü',
+    altMetin: 'One Team, Amare liderlerin kurduğu dünyanın en başarılı girişimci dayanışma topluluklarından biridir.',
+    copyright: '© 2026 Powered by OneTeam',
+  },
+  en: {
+    anasayfa: 'Home',
+    kicker: 'One Team',
+    baslikSol: 'Entrepreneurship',
+    baslikSag: 'Ecosystem',
+    intro: 'A family setting out for health, prosperity and freedom, supporting aspiring entrepreneurs.',
+    misyon: 'Mission',
+    misyonMetin1: 'We believe a life full of health, prosperity and freedom is',
+    misyonVurgu: ' possible for everyone',
+    misyonMetin2: '. As the One Team family, we work together for this.',
+    vizyon: 'Vision',
+    vizyonMetin1: 'To become',
+    vizyonVurgu: ' the world\'s largest and most influential ',
+    vizyonMetin2: 'entrepreneurship ecosystem improving the lives of individuals and communities.',
+    altKicker: 'Stronger Together',
+    altMetin: 'One Team is one of the world’s most successful entrepreneur solidarity communities, founded by Amare leaders.',
+    copyright: '© 2026 Powered by OneTeam',
+  },
+  de: {
+    anasayfa: 'Startseite',
+    kicker: 'One Team',
+    baslikSol: 'Unternehmer',
+    baslikSag: 'Ökosystem',
+    intro: 'Eine Familie auf dem Weg zu Gesundheit, Wohlstand und Freiheit – mit Unterstützung für angehende Unternehmer.',
+    misyon: 'Mission',
+    misyonMetin1: 'Wir glauben, ein Leben voller Gesundheit, Wohlstand und Freiheit ist',
+    misyonVurgu: ' für jeden ',
+    misyonMetin2: 'möglich. Als One Team-Familie arbeiten wir gemeinsam dafür.',
+    vizyon: 'Vision',
+    vizyonMetin1: 'Das',
+    vizyonVurgu: ' weltweit größte und einflussreichste ',
+    vizyonMetin2: 'Unternehmer-Ökosystem zu werden, das das Leben von Menschen und Gemeinschaften verbessert.',
+    altKicker: 'Gemeinsam Stärker',
+    altMetin: 'One Team ist eine der erfolgreichsten Unternehmer-Solidargemeinschaften der Welt, gegründet von Amare-Führungskräften.',
+    copyright: '© 2026 Powered by OneTeam',
+  },
+  nl: {
+    anasayfa: 'Home',
+    kicker: 'One Team',
+    baslikSol: 'Ondernemers',
+    baslikSag: 'Ecosysteem',
+    intro: 'Een familie op weg naar gezondheid, welvaart en vrijheid — met steun voor aspirant-ondernemers.',
+    misyon: 'Missie',
+    misyonMetin1: 'Wij geloven dat een leven vol gezondheid, welvaart en vrijheid',
+    misyonVurgu: ' voor iedereen ',
+    misyonMetin2: 'mogelijk is. Als One Team-familie werken we hier samen aan.',
+    vizyon: 'Visie',
+    vizyonMetin1: 'Het',
+    vizyonVurgu: ' grootste en meest invloedrijke ',
+    vizyonMetin2: 'ondernemersecosysteem ter wereld worden dat het leven van individuen en gemeenschappen verbetert.',
+    altKicker: 'Samen Sterker',
+    altMetin: 'One Team is een van \'s werelds meest succesvolle ondernemers-solidariteitsgemeenschappen, opgericht door Amare-leiders.',
+    copyright: '© 2026 Powered by OneTeam',
+  },
+};
 
 const HakkimizdaSayfasi = () => {
   const navigate = useNavigate();
+  const { lang } = useTranslation();
+  const tr = I18N[lang] || I18N.tr;
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950 relative">
@@ -23,7 +101,7 @@ const HakkimizdaSayfasi = () => {
         <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
           <button onClick={() => navigate('/')}
             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap">
-            <ArrowLeft className="w-4 h-4" /> Anasayfa
+            <ArrowLeft className="w-4 h-4" /> {tr.anasayfa}
           </button>
           <LanguageSwitcher />
         </div>
@@ -42,18 +120,18 @@ const HakkimizdaSayfasi = () => {
           <div className="flex items-center justify-center gap-3 mb-4">
             <div className="h-px w-12 bg-amber-400/50" />
             <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.4em] font-semibold whitespace-nowrap">
-              One Team
+              {tr.kicker}
             </span>
             <div className="h-px w-12 bg-amber-400/50" />
           </div>
 
           {/* Başlık */}
           <h1 className="text-3xl sm:text-5xl font-light text-white tracking-tight mb-4 leading-tight">
-            Girişimcilik <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-amber-300 bg-clip-text text-transparent font-bold">Ekosistemi</span>
+            {tr.baslikSol} <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-amber-300 bg-clip-text text-transparent font-bold">{tr.baslikSag}</span>
           </h1>
 
           <p className="text-purple-100/90 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-            Sağlık, varlık ve özgürlük için yola çıkan, girişimci adaylarına destek olan aile.
+            {tr.intro}
           </p>
         </div>
 
@@ -74,15 +152,15 @@ const HakkimizdaSayfasi = () => {
                 {/* Başlık + çizgi */}
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.5em] font-bold">
-                    Misyon
+                    {tr.misyon}
                   </span>
                   <div className="h-px flex-1 bg-gradient-to-r from-amber-400/60 via-amber-400/20 to-transparent" />
                 </div>
                 {/* Metin */}
                 <p className="text-white/95 text-base sm:text-lg leading-relaxed font-light">
-                  Sağlık, varlık ve özgürlük dolu bir yaşamın
-                  <span className="text-amber-300 font-medium"> herkes için </span>
-                  mümkün olduğuna inanıyoruz. One Team ailesi olarak hep birlikte bunun için çalışıyoruz.
+                  {tr.misyonMetin1}
+                  <span className="text-amber-300 font-medium">{tr.misyonVurgu}</span>
+                  {tr.misyonMetin2}
                 </p>
               </div>
             </div>
@@ -106,15 +184,15 @@ const HakkimizdaSayfasi = () => {
                 {/* Başlık + çizgi */}
                 <div className="flex items-center gap-3 mb-4">
                   <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.5em] font-bold">
-                    Vizyon
+                    {tr.vizyon}
                   </span>
                   <div className="h-px flex-1 bg-gradient-to-r from-amber-400/60 via-amber-400/20 to-transparent" />
                 </div>
                 {/* Metin */}
                 <p className="text-white/95 text-base sm:text-lg leading-relaxed font-light">
-                  Bireylerin ve toplulukların yaşamını iyileştiren,
-                  <span className="text-amber-300 font-medium"> dünyanın en büyük ve en etkili </span>
-                  girişimcilik ekosistemi olmak.
+                  {tr.vizyonMetin1}
+                  <span className="text-amber-300 font-medium">{tr.vizyonVurgu}</span>
+                  {tr.vizyonMetin2}
                 </p>
               </div>
             </div>
@@ -126,19 +204,19 @@ const HakkimizdaSayfasi = () => {
           <div className="flex items-center justify-center gap-3 mb-3">
             <div className="h-px w-10 bg-amber-400/40" />
             <span className="text-amber-300/90 text-[10px] sm:text-xs uppercase tracking-[0.5em] font-bold whitespace-nowrap">
-              Birlikte Daha Güçlü
+              {tr.altKicker}
             </span>
             <div className="h-px w-10 bg-amber-400/40" />
           </div>
           <p className="text-purple-200/70 text-sm max-w-2xl mx-auto leading-relaxed">
-            One Team, Amare liderlerin kurduğu dünyanın en başarılı girişimci dayanışma topluluklarından biridir.
+            {tr.altMetin}
           </p>
         </div>
 
         {/* Footer */}
         <div className="text-center pt-8 border-t border-white/10">
           <p className="text-purple-300/60 text-xs tracking-wider">
-            © 2026 Powered by OneTeam
+            {tr.copyright}
           </p>
         </div>
       </div>
