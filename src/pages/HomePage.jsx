@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Shield, Newspaper, ArrowRight } from 'lucide-react';
+import { Calendar, Shield, Newspaper, ArrowRight, Users, Hammer, X } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import BultenModal from '../components/BultenModal';
@@ -9,6 +9,7 @@ const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [bultenModal, setBultenModal] = useState(false);
+  const [yapimAsamasinda, setYapimAsamasinda] = useState(false);
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 relative">
@@ -57,7 +58,7 @@ const HomePage = () => {
         </div>
 
         {/* Action Cards — cam morfizm, brand uyumlu */}
-        <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 max-w-3xl mx-auto">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-5xl mx-auto">
           <button
             onClick={() => navigate('/takvim')}
             className="group bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/20 hover:border-amber-300/40 rounded-3xl p-7 sm:p-8 transition-all duration-300 spring-tap text-left shadow-2xl"
@@ -93,6 +94,31 @@ const HomePage = () => {
               OneTeam'in tüm komisyonlarını yönetin
             </p>
           </button>
+
+          {/* Ekip Yönetim Paneli — Yapım aşamasında */}
+          <button
+            onClick={() => setYapimAsamasinda(true)}
+            className="group relative bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/20 hover:border-amber-300/40 rounded-3xl p-7 sm:p-8 transition-all duration-300 spring-tap text-left shadow-2xl"
+          >
+            {/* Yapım Aşamasında rozeti — sağ üst köşe */}
+            <span className="absolute top-3 right-3 inline-flex items-center gap-1 bg-amber-400/90 text-purple-900 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md border border-amber-300">
+              <Hammer className="w-3 h-3" />
+              Yapım Aşamasında
+            </span>
+
+            <div className="flex items-start gap-4 mb-4">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                <Users className="w-6 h-6 sm:w-7 sm:h-7 text-white/80" />
+              </div>
+              <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-amber-300 group-hover:translate-x-1 transition-all ml-auto mt-2" />
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+              Ekip Yönetim Paneli
+            </h3>
+            <p className="text-purple-200/80 text-sm leading-relaxed">
+              Ekip yapısı ve hiyerarşi yönetimi
+            </p>
+          </button>
         </div>
 
         {/* Footer */}
@@ -104,6 +130,39 @@ const HomePage = () => {
       </div>
 
       {bultenModal && <BultenModal onClose={() => setBultenModal(false)} />}
+
+      {/* Yapım Aşamasında Modal — Ekip Yönetim Paneli için */}
+      {yapimAsamasinda && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+          onClick={() => setYapimAsamasinda(false)}>
+          <div className="bg-gradient-to-br from-purple-900 to-purple-800 border border-amber-300/30 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 text-center relative"
+            onClick={(e) => e.stopPropagation()}>
+            <button onClick={() => setYapimAsamasinda(false)}
+              className="absolute top-3 right-3 text-white/50 hover:text-white">
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-400/20 border border-amber-300/40 mb-4">
+              <Hammer className="w-8 h-8 text-amber-300" />
+            </div>
+
+            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
+              Yapım Aşamasında
+            </h3>
+            <p className="text-amber-300 text-sm font-semibold tracking-wide uppercase mb-4">
+              Ekip Yönetim Paneli
+            </p>
+            <p className="text-purple-200/70 text-sm mb-6">
+              Ekip yapısı, hiyerarşi ve performans yönetim modülü yakında hazır olacak.
+            </p>
+
+            <button onClick={() => setYapimAsamasinda(false)}
+              className="w-full bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-3 rounded-xl shadow-lg transition spring-tap">
+              Tamam
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
