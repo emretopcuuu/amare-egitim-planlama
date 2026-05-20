@@ -1,0 +1,436 @@
+// Komisyon Detay Sayfası — /komisyonlar/:id
+//
+// Public görünüm: komisyonun ne yaptığı, üyeler, iletişim.
+// Admin (Emre s.emretopcu@gmail.com) için inline edit modu.
+// İçerik Firestore'da komisyonlar/{id} doc'unda saklanır.
+
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import {
+  ArrowLeft, ArrowRight, Sparkles, Users, Edit3, Save, X, Plus, Trash2,
+  Loader2, Phone, Lock, AlertCircle, CheckCircle2, Pencil, Hammer, ExternalLink,
+} from 'lucide-react';
+import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useData } from '../context/DataContext';
+import { db, auth } from '../utils/firebase';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { getKomisyon, canEditKomisyon } from '../utils/komisyonlar';
+
+const BOS_ICERIK = {
+  ozet: '',
+  yaptigiIsler: [],
+  uyeler: [], // [{ ad, unvan, telefon? }]
+};
+
+const KomisyonDetay = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const { currentUser } = useData();
+  const user = currentUser;
+  const k = useMemo(() => getKomisyon(id), [id]);
+
+  const [icerik, setIcerik] = useState(BOS_ICERIK);
+  const [orijinalIcerik, setOrijinalIcerik] = useState(BOS_ICERIK);
+  const [yukleniyor, setYukleniyor] = useState(true);
+  const [duzenleme, setDuzenleme] = useState(false);
+  const [kaydediliyor, setKaydediliyor] = useState(false);
+  const [mesaj, setMesaj] = useState(null);
+
+  const duzenleyebilir = canEditKomisyon(user?.email);
+
+  // Firestore'dan içerik yükle
+  useEffect(() => {
+    if (!id) return;
+    let iptal = false;
+    (async () => {
+      setYukleniyor(true);
+      try {
+        const snap = await getDoc(doc(db, 'komisyonlar', id));
+        const data = snap.exists() ? snap.data() : BOS_ICERIK;
+        const normalize = {
+          ozet: data.ozet || '',
+          yaptigiIsler: Array.isArray(data.yaptigiIsler) ? data.yaptigiIsler : [],
+          uyeler: Array.isArray(data.uyeler) ? data.uyeler : [],
+        };
+        if (!iptal) {
+          setIcerik(normalize);
+          setOrijinalIcerik(normalize);
+        }
+      } catch (e) {
+        console.warn('[komisyon-detay] icerik yuklenemedi:', e.message);
+      } finally {
+        if (!iptal) setYukleniyor(false);
+      }
+    })();
+    return () => { iptal = true; };
+  }, [id]);
+
+  // Komisyon bulunamadıysa
+  if (!k) {
+    return (
+      <div className="min-h-[100dvh] bg-purple-900 flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <AlertCircle className="w-16 h-16 text-amber-300 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Komisyon bulunamadı</h2>
+          <p className="text-purple-200 mb-6">Aradığınız komisyon mevcut değil.</p>
+          <button onClick={() => navigate('/komisyonlar')}
+            className="bg-amber-400 hover:bg-amber-300 text-purple-900 px-5 py-2.5 rounded-xl font-bold spring-tap">
+            Komisyonlara Dön
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const Icon = k.icon;
+
+  const kaydet = async () => {
+    if (!duzenleyebilir) return;
+    setKaydediliyor(true);
+    setMesaj(null);
+    try {
+      await setDoc(doc(db, 'komisyonlar', id), {
+        ...icerik,
+        guncellemeTarihi: serverTimestamp(),
+        guncelleyenEmail: user?.email,
+      }, { merge: true });
+      setOrijinalIcerik(icerik);
+      setDuzenleme(false);
+      setMesaj({ tip: 'ok', metin: 'Kaydedildi' });
+      setTimeout(() => setMesaj(null), 3000);
+    } catch (e) {
+      console.error('[komisyon-detay] kaydet:', e);
+      setMesaj({ tip: 'hata', metin: 'Kayıt başarısız: ' + e.message });
+    } finally {
+      setKaydediliyor(false);
+    }
+  };
+
+  const iptal = () => {
+    setIcerik(orijinalIcerik);
+    setDuzenleme(false);
+    setMesaj(null);
+  };
+
+  // Yaptığı işler listesi yardımcıları
+  const isEkle = () => setIcerik(p => ({ ...p, yaptigiIsler: [...p.yaptigiIsler, ''] }));
+  const isSil = (i) => setIcerik(p => ({ ...p, yaptigiIsler: p.yaptigiIsler.filter((_, idx) => idx !== i) }));
+  const isGuncelle = (i, v) => setIcerik(p => ({
+    ...p,
+    yaptigiIsler: p.yaptigiIsler.map((s, idx) => idx === i ? v : s),
+  }));
+
+  // Üye yardımcıları
+  const uyeEkle = () => setIcerik(p => ({ ...p, uyeler: [...p.uyeler, { ad: '', unvan: '', telefon: '' }] }));
+  const uyeSil = (i) => setIcerik(p => ({ ...p, uyeler: p.uyeler.filter((_, idx) => idx !== i) }));
+  const uyeGuncelle = (i, alan, v) => setIcerik(p => ({
+    ...p,
+    uyeler: p.uyeler.map((u, idx) => idx === i ? { ...u, [alan]: v } : u),
+  }));
+
+  const renkSinifi = {
+    amber: 'from-amber-400/30 to-amber-600/15 border-amber-300/50',
+    blue: 'from-blue-400/30 to-blue-600/15 border-blue-300/50',
+    emerald: 'from-emerald-400/30 to-emerald-600/15 border-emerald-300/50',
+    cyan: 'from-cyan-400/30 to-cyan-600/15 border-cyan-300/50',
+    rose: 'from-rose-400/30 to-rose-600/15 border-rose-300/50',
+    indigo: 'from-indigo-400/30 to-indigo-600/15 border-indigo-300/50',
+    purple: 'from-purple-400/30 to-purple-600/15 border-purple-300/50',
+    green: 'from-green-400/30 to-green-600/15 border-green-300/50',
+    slate: 'from-slate-400/30 to-slate-600/15 border-slate-300/50',
+    orange: 'from-orange-400/30 to-orange-600/15 border-orange-300/50',
+  }[k.renk] || 'from-amber-400/30 to-amber-600/15 border-amber-300/50';
+
+  return (
+    <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950 relative">
+      {/* Dekor */}
+      <div className="absolute top-0 left-0 right-0 h-[700px] bg-[radial-gradient(ellipse_at_center_top,rgba(251,191,36,0.15)_0%,transparent_70%)] pointer-events-none" />
+      <div className="absolute top-40 -left-32 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+      <div className="absolute top-40 -right-32 w-96 h-96 rounded-full bg-purple-500/15 blur-3xl pointer-events-none" />
+
+      <div className="relative container mx-auto px-4 py-6 sm:py-10 max-w-4xl">
+        {/* Top bar */}
+        <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
+          <button onClick={() => navigate('/komisyonlar')}
+            className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap">
+            <ArrowLeft className="w-4 h-4" /> Komisyonlar
+          </button>
+          <div className="flex items-center gap-2">
+            {/* Düzenle butonu — sadece Emre görür */}
+            {duzenleyebilir && !duzenleme && (
+              <button onClick={() => setDuzenleme(true)}
+                className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-purple-900 px-3 py-2 rounded-full text-xs font-bold transition spring-tap shadow-lg">
+                <Pencil className="w-3.5 h-3.5" /> Düzenle
+              </button>
+            )}
+            <LanguageSwitcher />
+          </div>
+        </div>
+
+        {/* HERO */}
+        <div className="text-center mb-10 sm:mb-14 animate-fade-in">
+          {/* Komisyon iconu + OneTeam rozeti */}
+          <div className="relative inline-block mb-6">
+            <div className="absolute -inset-6 bg-amber-400/25 blur-3xl pointer-events-none" />
+            <div className={`relative inline-flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br ${renkSinifi} border-2 backdrop-blur-md shadow-2xl`}>
+              <Icon className="w-12 h-12 sm:w-14 sm:h-14 text-white drop-shadow-lg" />
+            </div>
+            {/* OneTeam mini rozet */}
+            <div className="absolute -bottom-1 -right-1 w-10 h-10 rounded-full bg-purple-900 border-2 border-purple-700 overflow-hidden flex items-center justify-center shadow-xl">
+              <img src="/logos/oneteam-logo.png" alt="OneTeam" className="w-7 h-7 object-contain" />
+            </div>
+          </div>
+
+          {/* Aktif rozeti */}
+          {k.aktif ? (
+            <div className="inline-flex items-center gap-1.5 bg-emerald-500/20 border border-emerald-400/40 rounded-full px-3 py-1 mb-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-300 animate-pulse" />
+              <span className="text-emerald-200 text-[11px] uppercase tracking-wider font-bold">Aktif Komisyon</span>
+            </div>
+          ) : (
+            <div className="inline-flex items-center gap-1.5 bg-white/10 border border-white/20 rounded-full px-3 py-1 mb-4">
+              <Lock className="w-3 h-3 text-purple-200" />
+              <span className="text-purple-200 text-[11px] uppercase tracking-wider font-bold">Kurulum Aşamasında</span>
+            </div>
+          )}
+
+          {/* Başlık */}
+          <h1 className="text-2xl sm:text-4xl font-light text-white tracking-tight mb-3 leading-tight">
+            {k.ad}
+          </h1>
+
+          <p className="text-purple-100/90 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+            {k.tagline}
+          </p>
+        </div>
+
+        {/* Mesaj banner */}
+        {mesaj && (
+          <div className={`mb-6 px-4 py-3 rounded-xl text-sm flex items-center gap-2 ${
+            mesaj.tip === 'ok'
+              ? 'bg-emerald-500/15 border border-emerald-400/40 text-emerald-200'
+              : 'bg-rose-500/15 border border-rose-400/40 text-rose-200'
+          }`}>
+            {mesaj.tip === 'ok' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+            {mesaj.metin}
+          </div>
+        )}
+
+        {yukleniyor ? (
+          <div className="text-center py-12 text-purple-200">
+            <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
+            İçerik yükleniyor...
+          </div>
+        ) : (
+          <>
+            {/* Bu Komisyon Ne Yapar */}
+            <section className="mb-8 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 sm:p-8 shadow-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <Sparkles className="w-5 h-5 text-amber-300" />
+                <h2 className="text-white font-bold text-lg sm:text-xl">Bu Komisyon Ne Yapar?</h2>
+              </div>
+              {duzenleme ? (
+                <textarea
+                  value={icerik.ozet}
+                  onChange={(e) => setIcerik(p => ({ ...p, ozet: e.target.value }))}
+                  rows={5}
+                  placeholder="Komisyonun genel açıklamasını yaz..."
+                  className="w-full bg-white/5 border border-white/20 rounded-xl px-4 py-3 text-white text-sm leading-relaxed placeholder-purple-300/40 focus:border-amber-400/60 outline-none resize-y"
+                />
+              ) : icerik.ozet ? (
+                <p className="text-purple-100/90 text-sm sm:text-base leading-relaxed whitespace-pre-line">
+                  {icerik.ozet}
+                </p>
+              ) : (
+                <p className="text-purple-300/50 text-sm italic">
+                  Henüz içerik eklenmemiş.
+                </p>
+              )}
+            </section>
+
+            {/* Sorumluluk Alanları */}
+            <section className="mb-8 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 sm:p-8 shadow-xl">
+              <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-300" />
+                  <h2 className="text-white font-bold text-lg sm:text-xl">Sorumluluk Alanları</h2>
+                </div>
+                {duzenleme && (
+                  <button onClick={isEkle}
+                    className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full border border-white/20 spring-tap">
+                    <Plus className="w-3 h-3" /> Madde Ekle
+                  </button>
+                )}
+              </div>
+              {icerik.yaptigiIsler.length > 0 ? (
+                <ul className="space-y-2">
+                  {icerik.yaptigiIsler.map((is, i) => (
+                    <li key={i} className="flex items-start gap-3 group">
+                      <div className="w-6 h-6 rounded-full bg-amber-400/20 border border-amber-300/40 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <span className="text-amber-300 text-xs font-bold">{i + 1}</span>
+                      </div>
+                      {duzenleme ? (
+                        <>
+                          <input
+                            value={is}
+                            onChange={(e) => isGuncelle(i, e.target.value)}
+                            placeholder="Sorumluluk maddesi..."
+                            className="flex-1 bg-white/5 border border-white/20 rounded-lg px-3 py-1.5 text-white text-sm placeholder-purple-300/40 focus:border-amber-400/60 outline-none"
+                          />
+                          <button onClick={() => isSil(i)}
+                            className="text-rose-300 hover:text-rose-200 p-1">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-purple-100/90 text-sm sm:text-base leading-relaxed flex-1">{is}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-purple-300/50 text-sm italic">
+                  {duzenleme ? '"Madde Ekle" ile sorumluluk alanları ekleyebilirsin.' : 'Henüz madde eklenmemiş.'}
+                </p>
+              )}
+            </section>
+
+            {/* Komisyon Üyeleri */}
+            <section className="mb-8 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 sm:p-8 shadow-xl">
+              <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+                <div className="flex items-center gap-3">
+                  <Users className="w-5 h-5 text-purple-200" />
+                  <h2 className="text-white font-bold text-lg sm:text-xl">Komisyon Üyeleri</h2>
+                  {icerik.uyeler.length > 0 && (
+                    <span className="bg-white/10 text-white text-xs font-semibold px-2 py-0.5 rounded-full">
+                      {icerik.uyeler.length}
+                    </span>
+                  )}
+                </div>
+                {duzenleme && (
+                  <button onClick={uyeEkle}
+                    className="inline-flex items-center gap-1 bg-white/10 hover:bg-white/20 text-white text-xs font-semibold px-3 py-1.5 rounded-full border border-white/20 spring-tap">
+                    <Plus className="w-3 h-3" /> Üye Ekle
+                  </button>
+                )}
+              </div>
+
+              {icerik.uyeler.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {icerik.uyeler.map((u, i) => (
+                    <div key={i} className="bg-white/5 border border-white/15 rounded-xl p-4 flex items-start gap-3">
+                      {/* Avatar */}
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400/30 to-amber-600/20 border border-amber-300/30 flex items-center justify-center flex-shrink-0">
+                        <span className="text-amber-200 font-bold text-base">
+                          {(u.ad || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        {duzenleme ? (
+                          <div className="space-y-1.5">
+                            <input
+                              value={u.ad}
+                              onChange={(e) => uyeGuncelle(i, 'ad', e.target.value)}
+                              placeholder="Ad Soyad"
+                              className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-white text-sm placeholder-purple-300/40 outline-none focus:border-amber-400/60"
+                            />
+                            <input
+                              value={u.unvan || ''}
+                              onChange={(e) => uyeGuncelle(i, 'unvan', e.target.value)}
+                              placeholder="Unvan / Görev"
+                              className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-purple-200 text-xs placeholder-purple-300/40 outline-none focus:border-amber-400/60"
+                            />
+                            <input
+                              value={u.telefon || ''}
+                              onChange={(e) => uyeGuncelle(i, 'telefon', e.target.value)}
+                              placeholder="Telefon (opsiyonel)"
+                              className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-purple-200 text-xs placeholder-purple-300/40 outline-none focus:border-amber-400/60"
+                            />
+                            <button onClick={() => uyeSil(i)}
+                              className="inline-flex items-center gap-1 text-rose-300 hover:text-rose-200 text-xs mt-1">
+                              <Trash2 className="w-3 h-3" /> Üyeyi sil
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="text-white font-bold text-sm truncate">{u.ad || '—'}</div>
+                            {u.unvan && <div className="text-amber-300 text-xs truncate">{u.unvan}</div>}
+                            {u.telefon && (
+                              <a href={`tel:${u.telefon}`} className="inline-flex items-center gap-1 text-purple-200 text-xs hover:text-amber-300 mt-1">
+                                <Phone className="w-3 h-3" /> {u.telefon}
+                              </a>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-purple-300/50 text-sm italic">
+                  {duzenleme ? '"Üye Ekle" ile komisyon üyelerini ekleyebilirsin.' : 'Henüz üye eklenmemiş.'}
+                </p>
+              )}
+            </section>
+
+            {/* Admin Paneli CTA — sadece aktif komisyonlar için */}
+            {k.aktif && k.adminRota && (
+              <section className="mb-8 bg-gradient-to-br from-amber-400/15 to-amber-600/5 border border-amber-300/30 rounded-2xl p-6 shadow-xl">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 rounded-2xl bg-amber-400/20 border border-amber-300/40 flex items-center justify-center">
+                      <Lock className="w-5 h-5 text-amber-300" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-base">Komisyon Admin Paneli</h3>
+                      <p className="text-purple-200/80 text-xs">Komisyon görevlileri için yönetim</p>
+                    </div>
+                  </div>
+                  <button onClick={() => navigate(k.adminRota)}
+                    className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2.5 rounded-xl text-sm font-bold transition shadow-lg spring-tap">
+                    Admin Girişi <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {!k.aktif && (
+              <section className="mb-8 bg-white/5 border border-white/15 rounded-2xl p-6 text-center">
+                <Hammer className="w-10 h-10 text-amber-300 mx-auto mb-3 opacity-70" />
+                <h3 className="text-white font-bold text-lg mb-1">Bu Komisyon Kurulum Aşamasında</h3>
+                <p className="text-purple-200/70 text-sm">
+                  Komisyonun admin paneli ve detayları yakında aktif olacak.
+                </p>
+              </section>
+            )}
+          </>
+        )}
+
+        {/* Düzenle modu — sticky alt bar */}
+        {duzenleme && (
+          <div className="fixed bottom-0 left-0 right-0 z-40 bg-purple-950/95 backdrop-blur-md border-t border-amber-400/30 shadow-2xl">
+            <div className="container mx-auto px-4 py-3 max-w-4xl flex items-center justify-between gap-3 flex-wrap">
+              <div className="flex items-center gap-2 text-amber-300 text-xs sm:text-sm font-semibold">
+                <Edit3 className="w-4 h-4" />
+                Düzenleme modunda — değişiklikleri kaydet
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={iptal} disabled={kaydediliyor}
+                  className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-xl text-sm font-semibold border border-white/20 spring-tap disabled:opacity-50">
+                  <X className="w-4 h-4" /> İptal
+                </button>
+                <button onClick={kaydet} disabled={kaydediliyor}
+                  className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-purple-900 px-5 py-2 rounded-xl text-sm font-bold spring-tap shadow-lg disabled:opacity-50">
+                  {kaydediliyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  Kaydet
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default KomisyonDetay;

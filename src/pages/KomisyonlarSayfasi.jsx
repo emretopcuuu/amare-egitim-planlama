@@ -1,134 +1,28 @@
-// Komisyonlar Admin Paneli — OneTeam'in tüm komisyonlarının grid'i
-// Her komisyon altın renkli ikon + cam morfizm kart. Tıklayınca:
-//   - Eğitim Komisyonu → /admin-giris (mevcut admin akışı)
-//   - Diğerleri → "Yapım Aşamasında" modali
-//
-// Logolar: OneTeam logosu (alttaki rozet) + komisyona özel altın ikon.
-//          Lucide-react ikonları altın renkte komisyon konusunu temsil eder.
+// Komisyonlar — OneTeam Girişimcilik Ekosistemi
+// 11 komisyonu hisset, her birine tıklayıp ne yaptıklarını gör.
+// Admin (Emre) içeriği düzenleyebilir.
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  ArrowLeft, ArrowRight, GraduationCap, Settings2, Package, Smartphone,
-  HeartHandshake, Award, Globe2, UsersRound, LineChart, Scale, Tent,
-  Hammer, X, Lock,
-} from 'lucide-react';
+import { ArrowLeft, ArrowRight, Sparkles, Users2, Building2, Lock } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-
-// Komisyon meta veri — sıra ve ikon eşlemesi
-const KOMISYONLAR = [
-  {
-    id: 'egitim',
-    ad: 'OneTeam Eğitim Komisyonu',
-    kisaAd: 'Eğitim',
-    aciklama: 'Eğitim takvimi, eğitmenler, kayıtlı eğitimler',
-    icon: GraduationCap,
-    aktif: true,
-    rota: '/admin-giris',
-  },
-  {
-    id: 'sistem',
-    ad: 'OneTeam Sistem Komisyonu',
-    kisaAd: 'Sistem',
-    aciklama: 'Yapı, süreç ve standartlar',
-    icon: Settings2,
-    aktif: false,
-  },
-  {
-    id: 'urun',
-    ad: 'OneTeam Ürün Komisyonu',
-    kisaAd: 'Ürün',
-    aciklama: 'Ürün bilgisi, eğitim ve içerik',
-    icon: Package,
-    aktif: false,
-  },
-  {
-    id: 'teknoloji',
-    ad: 'OneTeam Teknoloji ve Sosyal Medya Komisyonu',
-    kisaAd: 'Teknoloji & Sosyal Medya',
-    aciklama: 'Dijital platformlar ve içerik üretimi',
-    icon: Smartphone,
-    aktif: false,
-  },
-  {
-    id: 'yardim-eli',
-    ad: 'OneTeam Yardım Eli Komisyonu',
-    kisaAd: 'Yardım Eli',
-    aciklama: 'Yardımlaşma ve dayanışma faaliyetleri',
-    icon: HeartHandshake,
-    aktif: false,
-  },
-  {
-    id: 'takdir',
-    ad: 'OneTeam Takdir Komisyonu',
-    kisaAd: 'Takdir',
-    aciklama: 'Başarı ödülleri ve takdir programları',
-    icon: Award,
-    aktif: false,
-  },
-  {
-    id: 'dis-isleri',
-    ad: 'OneTeam Dış İşleri ve Stratejik İletişim Komisyonu',
-    kisaAd: 'Dış İşleri & İletişim',
-    aciklama: 'Kurumsal ilişkiler ve stratejik iletişim',
-    icon: Globe2,
-    aktif: false,
-  },
-  {
-    id: 'sosyal-kulupler',
-    ad: 'OneTeam Sosyal Kulüpler Komisyonu',
-    kisaAd: 'Sosyal Kulüpler',
-    aciklama: 'İlgi alanı bazlı topluluk yönetimi',
-    icon: UsersRound,
-    aktif: false,
-  },
-  {
-    id: 'butce',
-    ad: 'OneTeam Bütçe Denetim ve Yatırım Komisyonu',
-    kisaAd: 'Bütçe & Yatırım',
-    aciklama: 'Finansal denetim ve yatırım planlaması',
-    icon: LineChart,
-    aktif: false,
-  },
-  {
-    id: 'hukuk',
-    ad: 'OneTeam Hukuk Komisyonu',
-    kisaAd: 'Hukuk',
-    aciklama: 'Yasal süreçler ve uyumluluk',
-    icon: Scale,
-    aktif: false,
-  },
-  {
-    id: 'kamp',
-    ad: 'OneTeam Kamp Komisyonu',
-    kisaAd: 'Kamp',
-    aciklama: 'Eğitim kampları ve etkinlikler',
-    icon: Tent,
-    aktif: false,
-  },
-];
+import { KOMISYONLAR } from '../utils/komisyonlar';
 
 const KomisyonlarSayfasi = () => {
   const navigate = useNavigate();
-  const [yapimAsamasindaModal, setYapimAsamasindaModal] = useState(null);
 
-  const handleKomisyonTik = (k) => {
-    if (k.aktif && k.rota) {
-      navigate(k.rota);
-    } else {
-      setYapimAsamasindaModal(k);
-    }
-  };
+  const aktifSayisi = KOMISYONLAR.filter(k => k.aktif).length;
 
   return (
-    <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 relative">
-      {/* Üstte yumuşak altın aurora glow */}
-      <div className="absolute top-0 left-0 right-0 h-[600px] bg-[radial-gradient(ellipse_at_center_top,rgba(251,191,36,0.15)_0%,transparent_70%)] pointer-events-none" />
-      <div className="absolute top-20 -left-32 w-96 h-96 rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
-      <div className="absolute bottom-20 -right-32 w-96 h-96 rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
+    <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950 relative">
+      {/* Üstte altın aurora */}
+      <div className="absolute top-0 left-0 right-0 h-[700px] bg-[radial-gradient(ellipse_at_center_top,rgba(251,191,36,0.18)_0%,transparent_75%)] pointer-events-none" />
+      <div className="absolute top-40 -left-32 w-[28rem] h-[28rem] rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
+      <div className="absolute top-80 -right-32 w-[28rem] h-[28rem] rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[40rem] h-[20rem] rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
 
       <div className="relative container mx-auto px-4 py-6 sm:py-10">
-        {/* Top bar — Geri + Dil */}
+        {/* Top bar */}
         <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
           <button onClick={() => navigate('/')}
             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap">
@@ -137,134 +31,132 @@ const KomisyonlarSayfasi = () => {
           <LanguageSwitcher />
         </div>
 
-        {/* Başlık */}
-        <div className="text-center mb-10 sm:mb-14 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-amber-400/15 border border-amber-300/30 mb-4 backdrop-blur-md shadow-2xl">
-            <img src="/logos/oneteam-logo.png" alt="OneTeam" className="w-12 h-12 sm:w-14 sm:h-14 object-contain" />
+        {/* Hero — Ekosistem hissi */}
+        <div className="text-center max-w-3xl mx-auto mb-8 sm:mb-12 animate-fade-in">
+          {/* OneTeam logo glow ile */}
+          <div className="relative inline-block mb-6">
+            <div className="absolute -inset-6 bg-amber-400/30 blur-3xl pointer-events-none" />
+            <div className="relative inline-flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-amber-400/30 to-amber-600/20 border-2 border-amber-300/40 backdrop-blur-md shadow-2xl">
+              <img src="/logos/oneteam-logo.png" alt="OneTeam" className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-lg" />
+            </div>
           </div>
-          <h1 className="text-3xl sm:text-4xl font-light text-white tracking-tight mb-2">
-            Komisyonlar Admin Paneli
-          </h1>
-          <div className="flex items-center justify-center gap-3 mt-3">
-            <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
+
+          {/* Kicker */}
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <div className="h-px w-12 bg-amber-400/50" />
             <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.4em] font-semibold whitespace-nowrap">
               OneTeam
             </span>
-            <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
+            <div className="h-px w-12 bg-amber-400/50" />
           </div>
-          <p className="text-purple-200/70 text-sm mt-4 max-w-md mx-auto">
-            Yönetmek istediğin komisyonu seç
+
+          {/* Başlık */}
+          <h1 className="text-3xl sm:text-5xl font-light text-white tracking-tight mb-4 leading-tight">
+            Girişimcilik <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-amber-300 bg-clip-text text-transparent font-bold">Ekosistemi</span>
+          </h1>
+
+          <p className="text-purple-100/90 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+            OneTeam liderleri tarafından kurulan komisyonlar, üyelerimizin
+            <span className="text-amber-300 font-semibold"> gelişimine</span>,
+            <span className="text-amber-300 font-semibold"> dayanışmasına</span> ve
+            <span className="text-amber-300 font-semibold"> başarısına</span> hizmet eder.
           </p>
+
+          {/* İstatistik rozetleri */}
+          <div className="flex flex-wrap items-center justify-center gap-3 mt-7">
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2">
+              <Building2 className="w-4 h-4 text-amber-300" />
+              <span className="text-white text-sm font-semibold">{KOMISYONLAR.length} Komisyon</span>
+            </div>
+            <div className="inline-flex items-center gap-2 bg-emerald-500/15 backdrop-blur-md border border-emerald-400/30 rounded-full px-4 py-2">
+              <Sparkles className="w-4 h-4 text-emerald-300" />
+              <span className="text-emerald-100 text-sm font-semibold">{aktifSayisi} Aktif</span>
+            </div>
+            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-4 py-2">
+              <Users2 className="w-4 h-4 text-purple-200" />
+              <span className="text-white text-sm font-semibold">Lider Görevliler</span>
+            </div>
+          </div>
         </div>
 
         {/* Komisyonlar grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 max-w-6xl mx-auto">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 max-w-6xl mx-auto">
           {KOMISYONLAR.map((k, idx) => {
             const Icon = k.icon;
             return (
               <button
                 key={k.id}
-                onClick={() => handleKomisyonTik(k)}
-                className={`group relative bg-white/10 hover:bg-white/15 backdrop-blur-md border rounded-2xl p-4 sm:p-5 transition-all duration-300 spring-tap text-left shadow-xl ${
+                onClick={() => navigate(`/komisyonlar/${k.id}`)}
+                className={`group relative overflow-hidden bg-white/10 hover:bg-white/15 backdrop-blur-md border rounded-2xl p-6 transition-all duration-300 spring-tap text-left shadow-xl ${
                   k.aktif
                     ? 'border-amber-300/40 hover:border-amber-300/70 hover:shadow-amber-500/20'
-                    : 'border-white/20 hover:border-white/40'
+                    : 'border-white/15 hover:border-white/30'
                 }`}
-                style={{ animationDelay: `${idx * 30}ms` }}
+                style={{ animationDelay: `${idx * 40}ms` }}
               >
-                {/* Kilit rozeti (pasif komisyonlar) */}
-                {!k.aktif && (
-                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-purple-900/70 border border-white/20 flex items-center justify-center">
-                    <Lock className="w-3 h-3 text-purple-200" />
-                  </div>
-                )}
+                {/* Aktif/Kurulum rozeti */}
+                <div className="absolute top-3 right-3">
+                  {k.aktif ? (
+                    <span className="inline-flex items-center gap-1 bg-emerald-500/90 text-white text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full shadow-md border border-emerald-300/40">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                      Aktif
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 bg-white/10 text-purple-200 text-[10px] font-extrabold uppercase tracking-wider px-2.5 py-1 rounded-full border border-white/15">
+                      <Lock className="w-2.5 h-2.5" />
+                      Kuruluyor
+                    </span>
+                  )}
+                </div>
 
-                {/* Logo + icon kompoziti */}
-                <div className="relative w-14 h-14 sm:w-16 sm:h-16 mb-3 mx-auto">
-                  {/* Daire BG — altın halo */}
+                {/* İkon + OneTeam mini rozeti */}
+                <div className="relative w-16 h-16 mb-4">
                   <div className={`absolute inset-0 rounded-2xl ${
                     k.aktif
-                      ? 'bg-gradient-to-br from-amber-400/30 to-amber-600/20 border border-amber-300/50'
+                      ? 'bg-gradient-to-br from-amber-400/30 to-amber-600/15 border border-amber-300/50'
                       : 'bg-white/10 border border-white/20'
                   } shadow-lg`} />
-                  {/* Komisyon iconu */}
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Icon className={`w-7 h-7 sm:w-8 sm:h-8 ${k.aktif ? 'text-amber-300' : 'text-purple-200/80'}`} />
+                    <Icon className={`w-8 h-8 ${k.aktif ? 'text-amber-300' : 'text-purple-100/80'}`} />
                   </div>
-                  {/* OneTeam mini rozet (sol-alt) */}
-                  <div className="absolute -bottom-1 -left-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-purple-900 border-2 border-purple-800 overflow-hidden flex items-center justify-center shadow-md">
-                    <img src="/logos/oneteam-logo.png" alt="OneTeam" className="w-4 h-4 sm:w-5 sm:h-5 object-contain" />
+                  <div className="absolute -bottom-1 -left-1 w-6 h-6 rounded-full bg-purple-900 border-2 border-purple-800 overflow-hidden flex items-center justify-center shadow-md">
+                    <img src="/logos/oneteam-logo.png" alt="OneTeam" className="w-4 h-4 object-contain" />
                   </div>
                 </div>
 
-                {/* Komisyon adı (kısa) */}
-                <h3 className="text-white font-bold text-sm sm:text-base text-center mb-1 leading-tight">
+                {/* Komisyon adı */}
+                <h3 className="text-white font-bold text-base sm:text-lg mb-1 leading-tight">
                   {k.kisaAd}
                 </h3>
-                <p className="text-purple-200/70 text-xs text-center line-clamp-2 leading-snug">
-                  {k.aciklama}
+                <p className="text-purple-200/80 text-xs sm:text-sm leading-snug line-clamp-2 mb-3">
+                  {k.tagline}
                 </p>
 
-                {/* Hover arrow */}
-                <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition">
-                  <ArrowRight className={`w-4 h-4 ${k.aktif ? 'text-amber-300' : 'text-white/40'}`} />
+                {/* Alt CTA */}
+                <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                  <span className={`text-[11px] uppercase tracking-wider font-bold ${k.aktif ? 'text-amber-300' : 'text-purple-200/60'}`}>
+                    Detayları Gör
+                  </span>
+                  <ArrowRight className={`w-4 h-4 transition-transform group-hover:translate-x-1 ${k.aktif ? 'text-amber-300' : 'text-white/40'}`} />
                 </div>
+
+                {/* Dekor gradient overlay (hover'da daha belirgin) */}
+                {k.aktif && (
+                  <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-amber-400/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none rounded-2xl" />
+                )}
               </button>
             );
           })}
         </div>
 
         {/* Alt bilgi */}
-        <div className="mt-12 text-center">
-          <p className="text-purple-200/60 text-xs">
-            <Lock className="w-3 h-3 inline mr-1" />
-            Kilitli komisyonlar yakında aktif olacak
+        <div className="mt-14 text-center max-w-2xl mx-auto">
+          <p className="text-purple-200/70 text-sm leading-relaxed">
+            Her komisyon kendi alanında uzmanlaşmış liderlerden oluşur.
+            Birlikte OneTeam ekosistemini büyütürüz.
           </p>
         </div>
       </div>
-
-      {/* Yapım Aşamasında Modal */}
-      {yapimAsamasindaModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-          onClick={() => setYapimAsamasindaModal(null)}>
-          <div className="bg-gradient-to-br from-purple-900 to-purple-800 border border-amber-300/30 rounded-2xl shadow-2xl max-w-md w-full p-6 sm:p-8 text-center relative"
-            onClick={(e) => e.stopPropagation()}>
-            <button onClick={() => setYapimAsamasindaModal(null)}
-              className="absolute top-3 right-3 text-white/50 hover:text-white">
-              <X className="w-5 h-5" />
-            </button>
-
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-400/20 border border-amber-300/40 mb-4">
-              <Hammer className="w-8 h-8 text-amber-300" />
-            </div>
-
-            <h3 className="text-xl sm:text-2xl font-bold text-white mb-2">
-              Yapım Aşamasında
-            </h3>
-            <p className="text-amber-300 text-sm font-semibold tracking-wide uppercase mb-4">
-              {yapimAsamasindaModal.kisaAd}
-            </p>
-            <p className="text-purple-200/80 text-sm mb-1">
-              {yapimAsamasindaModal.ad}
-            </p>
-            <p className="text-purple-200/60 text-xs mb-6">
-              {yapimAsamasindaModal.aciklama}
-            </p>
-
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
-              <p className="text-purple-100 text-sm leading-relaxed">
-                Bu komisyonun admin paneli yakında hazır olacak.
-                Çalışmalar devam ediyor.
-              </p>
-            </div>
-
-            <button onClick={() => setYapimAsamasindaModal(null)}
-              className="w-full bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-3 rounded-xl shadow-lg transition spring-tap">
-              Tamam
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

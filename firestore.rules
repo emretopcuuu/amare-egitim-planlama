@@ -181,6 +181,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // OneTeam Komisyonlar — public read, admin write
+    // Her komisyon için içerik (ozet, yaptigiIsler, uyeler) sakland.
+    // Detay sayfası herkese açık; sadece admin (Emre) düzenleyebilir.
+    match /komisyonlar/{komisyonId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Üye profilleri — kendi profil doc'una okuma/yazma izni
     // Tier 1 üye girişi sonrası kullanıcı profili oluşturmak/güncellemek için.
     // Diğer kullanıcı profillerine erişim YOK (privacy).
