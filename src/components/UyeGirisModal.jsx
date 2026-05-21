@@ -207,7 +207,10 @@ const UyeGirisModal = ({ acik, onClose }) => {
                   }),
                 });
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Talep gönderilemedi');
+                if (!res.ok) {
+                  const detayli = data.detail ? `${data.error || 'Hata'} — ${data.detail}` : (data.error || 'Talep gönderilemedi');
+                  throw new Error(detayli);
+                }
                 setDurum('talepGonderildi');
               } catch (err) {
                 setMesaj(err.message);

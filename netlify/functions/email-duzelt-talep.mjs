@@ -40,10 +40,10 @@ export default async (req) => {
   if (req.method !== 'POST') return jsonRes({ error: 'POST only' }, 405);
 
   try {
-    // Rate limit — spam koruması
+    // Rate limit — spam koruması (rateLimitCheck signature: req, endpoint, opts)
+    const rl = await rateLimitCheck(req, 'email-duzelt-talep', { perMinute: 5, perHour: 20 });
+    if (!rl.ok) return rateLimitResponse(rl, CORS);
     const ip = req.headers.get('x-nf-client-connection-ip') || req.headers.get('x-forwarded-for') || 'anonymous';
-    const rl = await rateLimitCheck('email-duzelt-talep', ip, { perMinute: 5, perHour: 20 });
-    if (!rl.ok) return rateLimitResponse(rl);
 
     const body = await req.json();
     const lookup = String(body.lookup || '').trim();
