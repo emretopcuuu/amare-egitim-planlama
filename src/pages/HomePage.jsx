@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Shield, Newspaper, ArrowRight, Users, Hammer, X } from 'lucide-react';
+import { Calendar, Shield, Newspaper, ArrowRight, Users, Hammer, X, LogIn } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import BultenModal from '../components/BultenModal';
+import UyeGirisModal from '../components/UyeGirisModal';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [bultenModal, setBultenModal] = useState(false);
   const [yapimAsamasinda, setYapimAsamasinda] = useState(false);
+  const [girisModal, setGirisModal] = useState(false);
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 relative">
@@ -20,7 +22,7 @@ const HomePage = () => {
       <div className="absolute bottom-20 -right-32 w-96 h-96 rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
 
       <div className="relative container mx-auto px-4 py-6 sm:py-10">
-        {/* Top bar — Bülten + Dil */}
+        {/* Top bar — Bülten + Marka Ortağı Girişi + Dil */}
         <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
           <button onClick={() => setBultenModal(true)}
             className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-amber-500/30 spring-tap">
@@ -28,7 +30,15 @@ const HomePage = () => {
             <span className="hidden sm:inline">Haftalık Bülten</span>
             <span className="sm:hidden">Bülten</span>
           </button>
-          <LanguageSwitcher />
+          <div className="flex items-center gap-2">
+            <button onClick={() => setGirisModal(true)}
+              className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-amber-500/30 spring-tap">
+              <LogIn className="w-4 h-4" />
+              <span className="hidden sm:inline">Marka Ortağı Girişi</span>
+              <span className="sm:hidden">Giriş</span>
+            </button>
+            <LanguageSwitcher />
+          </div>
         </div>
 
         {/* HERO — One Team logo merkezde, çerçevesiz transparent */}
@@ -134,6 +144,7 @@ const HomePage = () => {
       </div>
 
       {bultenModal && <BultenModal onClose={() => setBultenModal(false)} />}
+      <UyeGirisModal acik={girisModal} onClose={() => setGirisModal(false)} />
 
       {/* Yapım Aşamasında Modal — Ekip Yönetim Paneli için */}
       {yapimAsamasinda && (
