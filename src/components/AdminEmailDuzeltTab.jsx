@@ -61,6 +61,32 @@ const AdminEmailDuzeltTab = () => {
     return () => { iptal = true; };
   }, [talepler]);
 
+  // Geçmiş onaylanan taleplere bilgilendirme maili (tek seferlik backfill)
+  const [backfillBusy, setBackfillBusy] = useState(false);
+  const backfill = async () => {
+    if (!confirm('Daha önce onaylanmış (mail gönderilmemiş) tüm taleplere bilgilendirme maili gönderilecek. Devam edilsin mi?')) return;
+    setBackfillBusy(true);
+    setSonIslem(null);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch('/.netlify/functions/admin-onay-mail-backfill', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Backfill hatası');
+      setSonIslem({
+        ok: true,
+        msg: `📧 Backfill bitti — ${data.gonderilen}/${data.hedef} mail gönderildi${data.hatali > 0 ? ` · ${data.hatali} hata` : ''}`,
+      });
+    } catch (e) {
+      setSonIslem({ ok: false, msg: '✗ ' + e.message });
+    } finally {
+      setBackfillBusy(false);
+      setTimeout(() => setSonIslem(null), 8000);
+    }
+  };
+
   const islem = async (talepId, aksiyon) => {
     if (!confirm(`Bu talep ${aksiyon === 'onayla' ? 'ONAYLANACAK ve Supabase güncellenecek' : 'REDDEDİLECEK'}. Emin misin?`)) return;
     setIslemTalepId(talepId);
@@ -152,6 +178,14 @@ const AdminEmailDuzeltTab = () => {
               </button>
             );
           })}
+          {/* Backfill butonu — Onaylanan tab'da görünür */}
+          {filtre === 'onaylandi' && istatistik.onaylandi > 0 && (
+            <button onClick={backfill} disabled={backfillBusy}
+              className="ml-auto inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md transition disabled:opacity-50">
+              {backfillBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+              Eski Onaylananlara Bildirim Yolla
+            </button>
+          )}
         </div>
 
         {/* Son işlem mesajı */}
