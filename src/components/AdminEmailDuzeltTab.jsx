@@ -5,7 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { db, auth } from '../utils/firebase';
 import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
-import { Mail, Loader2, Check, X as XIcon, RotateCw, Phone, User, AlertCircle, CheckCircle2, Clock, Hash } from 'lucide-react';
+import { Mail, Loader2, Check, X as XIcon, RotateCw, Phone, User, AlertCircle, CheckCircle2, Clock, Hash, ShieldCheck, ShieldAlert } from 'lucide-react';
 
 const AdminEmailDuzeltTab = () => {
   const [talepler, setTalepler] = useState([]);
@@ -13,6 +13,9 @@ const AdminEmailDuzeltTab = () => {
   const [filtre, setFiltre] = useState('beklemede'); // beklemede | onaylandi | reddedildi | tumu
   const [islemTalepId, setIslemTalepId] = useState(null);
   const [sonIslem, setSonIslem] = useState(null);
+  // Talep id → { bulundu, ad, amareId, email, phone, tip }
+  const [dogrulamalar, setDogrulamalar] = useState({});
+  const [dogrulaniyor, setDogrulaniyor] = useState(false);
 
   useEffect(() => {
     const q = query(collection(db, 'email_duzeltme_talepleri'), orderBy('olusturulmaTarihi', 'desc'));
@@ -25,6 +28,38 @@ const AdminEmailDuzeltTab = () => {
     });
     return () => unsub();
   }, []);
+
+  // Talepler değişince Supabase doğrulama isteği at (sadece beklemede olanlar için)
+  useEffect(() => {
+    if (talepler.length === 0) return;
+    const beklemedeOlanlar = talepler.filter(t => t.durum === 'beklemede' && t.lookup);
+    if (beklemedeOlanlar.length === 0) return;
+    let iptal = false;
+    (async () => {
+      setDogrulaniyor(true);
+      try {
+        const token = await auth.currentUser.getIdToken();
+        const res = await fetch('/.netlify/functions/admin-talep-dogrula', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({
+            lookups: beklemedeOlanlar.map(t => ({ id: t.id, lookup: t.lookup, telefon: t.telefon })),
+          }),
+        });
+        if (!res.ok) throw new Error('Doğrulama başarısız');
+        const data = await res.json();
+        if (iptal) return;
+        const map = {};
+        (data.results || []).forEach(r => { map[r.id] = r; });
+        setDogrulamalar(map);
+      } catch (e) {
+        console.warn('[email-duzelt-dogrula]:', e.message);
+      } finally {
+        if (!iptal) setDogrulaniyor(false);
+      }
+    })();
+    return () => { iptal = true; };
+  }, [talepler]);
 
   const islem = async (talepId, aksiyon) => {
     if (!confirm(`Bu talep ${aksiyon === 'onayla' ? 'ONAYLANACAK ve Supabase güncellenecek' : 'REDDEDİLECEK'}. Emin misin?`)) return;
@@ -178,6 +213,65 @@ const AdminEmailDuzeltTab = () => {
                           <Mail className="w-3.5 h-3.5" />
                           {t.yeniEmail}
                         </div>
+                        {/* Supabase doğrulama bandı — sadece beklemedeki talepler için */}
+                        {t.durum === 'beklemede' && (() => {
+                          const d = dogrulamalar[t.id];
+                          if (!d) {
+                            return (
+                              <div className="mt-1 inline-flex items-center gap-1.5 text-gray-400 text-[11px]">
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                Supabase doğrulanıyor...
+                              </div>
+                            );
+                          }
+                          if (d.bulundu) {
+                            // Talep eden ad ile Supabase ad eşleşiyor mu? Basit kontrol
+                            const talepAd = (t.ad || '').toLocaleUpperCase('tr-TR').trim();
+                            const supaAd = (d.ad || '').toLocaleUpperCase('tr-TR').trim();
+                            const adEsleşiyor = talepAd && supaAd && (
+                              supaAd.includes(talepAd.split(' ')[0]) ||
+                              talepAd.includes(supaAd.split(' ')[0])
+                            );
+                            return (
+                              <div className={`mt-2 rounded-lg border p-2 text-[11px] ${
+                                adEsleşiyor ? 'bg-emerald-50 border-emerald-200' : 'bg-amber-50 border-amber-300'
+                              }`}>
+                                <div className="flex items-start gap-1.5">
+                                  {adEsleşiyor ? (
+                                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                                  ) : (
+                                    <ShieldAlert className="w-3.5 h-3.5 text-amber-600 flex-shrink-0 mt-0.5" />
+                                  )}
+                                  <div className="flex-1 min-w-0">
+                                    <div className={`font-bold ${adEsleşiyor ? 'text-emerald-800' : 'text-amber-800'}`}>
+                                      {adEsleşiyor ? 'Supabase kaydı eşleşti' : 'Ad farklı — kontrol et'}
+                                    </div>
+                                    <div className="text-gray-700 mt-0.5 grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-0.5">
+                                      <span><strong>Ad:</strong> {d.ad}</span>
+                                      <span><strong>ID:</strong> <span className="font-mono">{d.amareId}</span></span>
+                                      {d.email && <span className="truncate"><strong>Email:</strong> {d.email}</span>}
+                                      {d.phone && <span><strong>Tel:</strong> <span className="font-mono">{d.phone}</span></span>}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          }
+                          return (
+                            <div className="mt-2 rounded-lg border border-rose-300 bg-rose-50 p-2 text-[11px]">
+                              <div className="flex items-start gap-1.5">
+                                <ShieldAlert className="w-3.5 h-3.5 text-rose-600 flex-shrink-0 mt-0.5" />
+                                <div>
+                                  <div className="font-bold text-rose-800">Supabase'de bulunamadı</div>
+                                  <div className="text-rose-700 mt-0.5">
+                                    Bu {d.tip === 'amareId' ? 'AmareID' : d.tip === 'phone' ? 'telefon' : d.tip === 'email' ? 'email' : 'bilgi'} amare_raw_members'ta kayıtlı değil. Onaylama Supabase'de hiçbir kayıt güncellemez.
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })()}
+
                         {t.sebep && (
                           <div className="text-gray-600 text-xs italic pl-5 pt-1 border-l-2 border-gray-300">
                             "{t.sebep}"
