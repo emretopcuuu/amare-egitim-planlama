@@ -61,29 +61,35 @@ const AdminEmailDuzeltTab = () => {
     return () => { iptal = true; };
   }, [talepler]);
 
-  // Geçmiş onaylanan taleplere bilgilendirme maili (tek seferlik backfill)
-  const [backfillBusy, setBackfillBusy] = useState(false);
-  const backfill = async () => {
-    if (!confirm('Daha önce onaylanmış (mail gönderilmemiş) tüm taleplere bilgilendirme maili gönderilecek. Devam edilsin mi?')) return;
-    setBackfillBusy(true);
+  // Onaylanan talebine bildirim maili (tekil veya toplu)
+  const [mailGonderiliyor, setMailGonderiliyor] = useState(null); // talepId | 'bulk' | null
+  const mailGonder = async (talepId = null, tekrarGonder = false) => {
+    const aciklama = talepId
+      ? 'Bu talebe bilgilendirme maili gönderilecek. Devam edilsin mi?'
+      : 'TÜM onaylanmış (mail gönderilmemiş) taleplere bilgilendirme maili gönderilecek. Devam edilsin mi?';
+    if (!confirm(aciklama)) return;
+    setMailGonderiliyor(talepId || 'bulk');
     setSonIslem(null);
     try {
       const token = await auth.currentUser.getIdToken();
       const res = await fetch('/.netlify/functions/admin-onay-mail-backfill', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ talepId, tekrarGonder }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Backfill hatası');
+      if (!res.ok) throw new Error(data.error || 'Mail gönderim hatası');
       setSonIslem({
         ok: true,
-        msg: `📧 Backfill bitti — ${data.gonderilen}/${data.hedef} mail gönderildi${data.hatali > 0 ? ` · ${data.hatali} hata` : ''}`,
+        msg: talepId
+          ? `📧 Mail gönderildi (${data.gonderilen}/${data.hedef})`
+          : `📧 Toplu mail bitti — ${data.gonderilen}/${data.hedef} gönderildi${data.hatali > 0 ? ` · ${data.hatali} hata` : ''}`,
       });
     } catch (e) {
       setSonIslem({ ok: false, msg: '✗ ' + e.message });
     } finally {
-      setBackfillBusy(false);
-      setTimeout(() => setSonIslem(null), 8000);
+      setMailGonderiliyor(null);
+      setTimeout(() => setSonIslem(null), 6000);
     }
   };
 
@@ -178,12 +184,12 @@ const AdminEmailDuzeltTab = () => {
               </button>
             );
           })}
-          {/* Backfill butonu — Onaylanan tab'da görünür */}
+          {/* Toplu mail butonu — Onaylanan tab'da görünür */}
           {filtre === 'onaylandi' && istatistik.onaylandi > 0 && (
-            <button onClick={backfill} disabled={backfillBusy}
+            <button onClick={() => mailGonder(null)} disabled={mailGonderiliyor === 'bulk'}
               className="ml-auto inline-flex items-center gap-1.5 bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-md transition disabled:opacity-50">
-              {backfillBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
-              Eski Onaylananlara Bildirim Yolla
+              {mailGonderiliyor === 'bulk' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+              Tümüne Toplu Bildirim
             </button>
           )}
         </div>
@@ -315,10 +321,30 @@ const AdminEmailDuzeltTab = () => {
                           <div className="text-gray-500 text-[11px] pl-5 pt-1">
                             İşlem: {t.islemYapan}
                             {t.guncellenenKayitSayisi != null && ` · ${t.guncellenenKayitSayisi} Supabase kaydı güncellendi`}
+                            {t.onayMailGonderildi === true && ` · 📧 Bildirim maili gönderildi`}
                           </div>
                         )}
                       </div>
                     </div>
+                    {/* Aksiyon butonları */}
+                    {t.durum === 'onaylandi' && (
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {t.onayMailGonderildi === true ? (
+                          <button onClick={() => mailGonder(t.id, true)} disabled={mailGonderiliyor === t.id}
+                            className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold px-3 py-2 rounded-lg inline-flex items-center gap-1 disabled:opacity-50 border border-gray-300"
+                            title="Tekrar gönder">
+                            {mailGonderiliyor === t.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RotateCw className="w-3.5 h-3.5" />}
+                            Tekrar Yolla
+                          </button>
+                        ) : (
+                          <button onClick={() => mailGonder(t.id, false)} disabled={mailGonderiliyor === t.id}
+                            className="bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold px-3 py-2 rounded-lg inline-flex items-center gap-1 disabled:opacity-50">
+                            {mailGonderiliyor === t.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+                            Mail Yolla
+                          </button>
+                        )}
+                      </div>
+                    )}
                     {t.durum === 'beklemede' && (
                       <div className="flex items-center gap-2">
                         <button onClick={() => islem(t.id, 'reddet')} disabled={islemTalepId === t.id}

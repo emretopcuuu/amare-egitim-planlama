@@ -104,19 +104,42 @@ export default async (req) => {
 
     if (!resend) return jsonRes({ error: 'RESEND_API_KEY eksik' }, 500);
 
-    // Onaylanmış ama mail gönderilmemiş talepleri çek
-    const snap = await admin.firestore()
-      .collection('email_duzeltme_talepleri')
-      .where('durum', '==', 'onaylandi')
-      .get();
+    // Body'den talepId al — varsa sadece o talebi gönder, yoksa hepsi
+    let body = {};
+    try { body = await req.json(); } catch {}
+    const talepId = body.talepId ? String(body.talepId).trim() : null;
+    const tekrarGonder = !!body.tekrarGonder; // true ise onayMailGonderildi olsa bile gönder
 
     const hedefler = [];
-    snap.forEach(d => {
-      const data = d.data();
-      if (data.onayMailGonderildi === true) return; // zaten gönderildi
-      if (!data.yeniEmail || !data.yeniEmail.includes('@')) return; // geçersiz email
-      hedefler.push({ id: d.id, ref: d.ref, ...data });
-    });
+    let toplamSayi = 0;
+
+    if (talepId) {
+      // Tekil mod
+      const docRef = admin.firestore().collection('email_duzeltme_talepleri').doc(talepId);
+      const docSnap = await docRef.get();
+      if (!docSnap.exists) return jsonRes({ error: 'Talep bulunamadı' }, 404);
+      const data = docSnap.data();
+      toplamSayi = 1;
+      if (data.durum !== 'onaylandi') return jsonRes({ error: 'Talep henüz onaylanmamış' }, 400);
+      if (!data.yeniEmail || !data.yeniEmail.includes('@')) return jsonRes({ error: 'Geçersiz email' }, 400);
+      if (data.onayMailGonderildi === true && !tekrarGonder) {
+        return jsonRes({ error: 'Bu talebe zaten mail gönderildi. Tekrar göndermek için tekrarGonder:true ekle.' }, 400);
+      }
+      hedefler.push({ id: docSnap.id, ref: docRef, ...data });
+    } else {
+      // Bulk mod — tüm onaylanmış ama mail gönderilmemiş
+      const snap = await admin.firestore()
+        .collection('email_duzeltme_talepleri')
+        .where('durum', '==', 'onaylandi')
+        .get();
+      toplamSayi = snap.size;
+      snap.forEach(d => {
+        const data = d.data();
+        if (data.onayMailGonderildi === true) return;
+        if (!data.yeniEmail || !data.yeniEmail.includes('@')) return;
+        hedefler.push({ id: d.id, ref: d.ref, ...data });
+      });
+    }
 
     let gonderilen = 0;
     let hatali = 0;
@@ -150,11 +173,11 @@ export default async (req) => {
 
     return jsonRes({
       ok: true,
-      toplam: snap.size,
+      toplam: toplamSayi,
       hedef: hedefler.length,
       gonderilen,
       hatali,
-      atlanan: snap.size - hedefler.length,
+      atlanan: toplamSayi - hedefler.length,
       detay,
     });
   } catch (err) {
