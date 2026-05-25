@@ -77,7 +77,7 @@ const AdminEmailDuzeltTab = () => {
       setSonIslem({
         ok: true,
         msg: aksiyon === 'onayla'
-          ? `✓ Onaylandı — ${data.guncellenenler} Supabase kaydı güncellendi`
+          ? `✓ Onaylandı — ${data.guncellenenler} Supabase kaydı güncellendi${data.mailGonderildi ? ' · Bildirim emaili gönderildi 📧' : ''}`
           : '✓ Reddedildi',
       });
     } catch (e) {
