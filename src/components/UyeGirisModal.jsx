@@ -142,16 +142,32 @@ const UyeGirisModal = ({ acik, onClose }) => {
                       </p>
                     </div>
                   )}
-                  {/* Email bozuk / yok → düzeltme talebi */}
-                  {(mesaj.includes('email') || mesaj.includes('Email') || mesaj.includes('geçersiz formatlı')) && (
+                  {/* Email bozuk VEYA bilgi bulunamadı → destek talebi (her iki durumda da göster) */}
+                  {(mesaj.includes('email') || mesaj.includes('Email') || mesaj.includes('geçersiz formatlı') || mesaj.includes('bulunamadı')) && (
                     <div className="border-t border-red-400/20 pt-2 mt-2">
-                      <button onClick={() => { setDurum('talepFormu'); setTalepAd(''); setTalepEmail(''); setTalepSebep(''); setTalepTel(''); }}
+                      <button onClick={() => {
+                        setDurum('talepFormu');
+                        setTalepAd('');
+                        // Email girilmişse pre-fill, telefon ya da ID girilmişse boş bırak
+                        const isEmail = lookup.includes('@');
+                        setTalepEmail(isEmail ? lookup : '');
+                        setTalepTel(!isEmail && /^\+?\d/.test(lookup) ? lookup : '');
+                        // Sebep otomatik bilgi
+                        const aranan = lookup ? `"${lookup}"` : 'bilgi';
+                        setTalepSebep(mesaj.includes('bulunamadı')
+                          ? `${aranan} ile sisteme giriş yapamıyorum. Lütfen Amare kaydımı kontrol edip email'imi güncelleyin.`
+                          : '');
+                      }}
                         className="w-full bg-amber-400 hover:bg-amber-300 text-purple-900 text-sm font-extrabold py-3 px-4 rounded-xl inline-flex items-center justify-center gap-2 shadow-lg shadow-amber-500/40 hover:shadow-amber-500/60 spring-tap ring-2 ring-amber-300/50 hover:ring-amber-300/80 transition-all">
                         <Send className="w-4 h-4" />
-                        Email Düzeltme Talebi Gönder
+                        {mesaj.includes('bulunamadı') ? 'Destek Talebi Gönder' : 'Email Düzeltme Talebi Gönder'}
                         <ArrowRight className="w-4 h-4" />
                       </button>
-                      <p className="text-amber-200/70 text-[11px] mt-2 text-center">Admin 24sa içinde email'ini günceller, sonra giriş yapabilirsin.</p>
+                      <p className="text-amber-200/70 text-[11px] mt-2 text-center">
+                        {mesaj.includes('bulunamadı')
+                          ? 'Admin bilgilerini kontrol edip 24sa içinde dönüş yapacak.'
+                          : "Admin 24sa içinde email'ini günceller, sonra giriş yapabilirsin."}
+                      </p>
                     </div>
                   )}
                 </div>
