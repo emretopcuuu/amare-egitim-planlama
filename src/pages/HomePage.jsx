@@ -1,17 +1,68 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Shield, Newspaper, ArrowRight, Users, Hammer, X, LogIn } from 'lucide-react';
+import { Calendar, Shield, Newspaper, ArrowRight, Users, Hammer, X, LogIn, User } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import BultenModal from '../components/BultenModal';
 import UyeGirisModal from '../components/UyeGirisModal';
+import { useData } from '../context/DataContext';
+import { db } from '../utils/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { currentUser } = useData();
   const [bultenModal, setBultenModal] = useState(false);
   const [yapimAsamasinda, setYapimAsamasinda] = useState(false);
   const [girisModal, setGirisModal] = useState(false);
+  const [profilAdi, setProfilAdi] = useState('');
+
+  // Login user için profil adını çek (users/{uid}.amareId → profil cache → full_name)
+  useEffect(() => {
+    if (!currentUser?.uid) { setProfilAdi(''); return; }
+    // 1. Hızlı: localStorage cache'te varsa kullan
+    const tryLocalCache = () => {
+      try {
+        // amare_profil_v1_{amareId} keylerini tara
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('amare_profil_v1_')) {
+            const raw = localStorage.getItem(k);
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              const ad = parsed?.data?.amare?.full_name || parsed?.data?.member?.full_name;
+              if (ad) return ad;
+            }
+          }
+        }
+      } catch {}
+      return null;
+    };
+    const cacheAd = tryLocalCache();
+    if (cacheAd) {
+      setProfilAdi(cacheAd);
+      return;
+    }
+    // 2. Fallback: Firestore users/{uid}.fullName
+    (async () => {
+      try {
+        const snap = await getDoc(doc(db, 'users', currentUser.uid));
+        if (snap.exists()) {
+          const data = snap.data();
+          const ad = data.fullName || data.ad || data.displayName;
+          if (ad) {
+            setProfilAdi(ad);
+            return;
+          }
+        }
+        // 3. Son çare: displayName veya email
+        setProfilAdi(currentUser.displayName || currentUser.email?.split('@')[0] || 'Profilim');
+      } catch {
+        setProfilAdi(currentUser.displayName || currentUser.email?.split('@')[0] || 'Profilim');
+      }
+    })();
+  }, [currentUser?.uid]);
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 relative">
@@ -31,12 +82,23 @@ const HomePage = () => {
             <span className="sm:hidden">Bülten</span>
           </button>
           <div className="flex items-center gap-2">
-            <button onClick={() => setGirisModal(true)}
-              className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-amber-500/30 spring-tap">
-              <LogIn className="w-4 h-4" />
-              <span className="hidden sm:inline">Marka Ortağı Girişi</span>
-              <span className="sm:hidden">Giriş</span>
-            </button>
+            {currentUser ? (
+              <button onClick={() => navigate('/profil')}
+                className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-amber-500/30 spring-tap max-w-[200px] sm:max-w-[260px]"
+                title="Profilime git">
+                <User className="w-4 h-4 flex-shrink-0" />
+                <span className="truncate">
+                  {profilAdi || 'Profilim'}
+                </span>
+              </button>
+            ) : (
+              <button onClick={() => setGirisModal(true)}
+                className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 px-4 py-2 rounded-full text-sm font-bold transition-all shadow-lg shadow-amber-500/30 spring-tap">
+                <LogIn className="w-4 h-4" />
+                <span className="hidden sm:inline">Marka Ortağı Girişi</span>
+                <span className="sm:hidden">Giriş</span>
+              </button>
+            )}
             <LanguageSwitcher />
           </div>
         </div>
