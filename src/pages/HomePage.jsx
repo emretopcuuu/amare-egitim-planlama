@@ -105,9 +105,9 @@ const HomePage = () => {
             </p>
           </button>
 
-          {/* Ekip Yönetim Paneli — Yapım aşamasında */}
+          {/* Ekip Yönetim Paneli — yeni sayfaya yönlendiriyor */}
           <button
-            onClick={() => setYapimAsamasinda(true)}
+            onClick={() => navigate('/ekip-yonetim')}
             className="group relative bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/20 hover:border-amber-300/40 rounded-3xl p-7 sm:p-8 transition-all duration-300 spring-tap text-left shadow-2xl"
           >
             {/* Yapım Aşamasında rozeti — sağ üst köşe */}
