@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Target, Compass } from 'lucide-react';
+import { ArrowLeft, Target, Compass, GraduationCap, Building2, Crown, ArrowRight } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 
@@ -25,6 +25,14 @@ const I18N = {
     vizyonMetin2: 'girişimcilik ekosistemi olmak.',
     altKicker: 'Birlikte Daha Güçlü',
     altMetin: 'One Team, Amare liderlerin kurduğu dünyanın en başarılı girişimci dayanışma topluluklarından biridir.',
+    sekmelerKicker: 'Ekosistemi Keşfet',
+    egitmenlerBaslik: 'Eğitmenler',
+    egitmenlerAciklama: 'Aramıza katılıp bilgi ve deneyimlerini paylaşan uzmanlar',
+    komisyonlarBaslik: 'Komisyonlar',
+    komisyonlarAciklama: 'Yürütme Kurulu’nun kurduğu 11 görev komisyonu',
+    yurutmeBaslik: 'Yürütme Kurulu',
+    yurutmeAciklama: 'OneTeam ekosistemini yönlendiren liderler',
+    ke: 'Keşfet',
     copyright: '© 2026 Powered by OneTeam',
   },
   en: {
@@ -43,6 +51,14 @@ const I18N = {
     vizyonMetin2: 'entrepreneurship ecosystem improving the lives of individuals and communities.',
     altKicker: 'Stronger Together',
     altMetin: 'One Team is one of the world’s most successful entrepreneur solidarity communities, founded by Amare leaders.',
+    sekmelerKicker: 'Explore the Ecosystem',
+    egitmenlerBaslik: 'Trainers',
+    egitmenlerAciklama: 'Experts who join us to share their knowledge and experience',
+    komisyonlarBaslik: 'Committees',
+    komisyonlarAciklama: '11 task committees established by the Executive Board',
+    yurutmeBaslik: 'Executive Board',
+    yurutmeAciklama: 'The leaders guiding the OneTeam ecosystem',
+    ke: 'Explore',
     copyright: '© 2026 Powered by OneTeam',
   },
   de: {
@@ -61,6 +77,14 @@ const I18N = {
     vizyonMetin2: 'Unternehmer-Ökosystem zu werden, das das Leben von Menschen und Gemeinschaften verbessert.',
     altKicker: 'Gemeinsam Stärker',
     altMetin: 'One Team ist eine der erfolgreichsten Unternehmer-Solidargemeinschaften der Welt, gegründet von Amare-Führungskräften.',
+    sekmelerKicker: 'Erkunde das Ökosystem',
+    egitmenlerBaslik: 'Trainer',
+    egitmenlerAciklama: 'Experten, die ihr Wissen und ihre Erfahrung mit uns teilen',
+    komisyonlarBaslik: 'Ausschüsse',
+    komisyonlarAciklama: '11 Arbeitsausschüsse, die vom Exekutivausschuss eingerichtet wurden',
+    yurutmeBaslik: 'Exekutivausschuss',
+    yurutmeAciklama: 'Die Führungskräfte des OneTeam-Ökosystems',
+    ke: 'Erkunden',
     copyright: '© 2026 Powered by OneTeam',
   },
   nl: {
@@ -79,6 +103,14 @@ const I18N = {
     vizyonMetin2: 'ondernemersecosysteem ter wereld worden dat het leven van individuen en gemeenschappen verbetert.',
     altKicker: 'Samen Sterker',
     altMetin: 'One Team is een van \'s werelds meest succesvolle ondernemers-solidariteitsgemeenschappen, opgericht door Amare-leiders.',
+    sekmelerKicker: 'Ontdek het Ecosysteem',
+    egitmenlerBaslik: 'Trainers',
+    egitmenlerAciklama: 'Experts die hun kennis en ervaring delen',
+    komisyonlarBaslik: 'Commissies',
+    komisyonlarAciklama: '11 werkcommissies opgericht door het Uitvoerend Bestuur',
+    yurutmeBaslik: 'Uitvoerend Bestuur',
+    yurutmeAciklama: 'De leiders die het OneTeam-ecosysteem aansturen',
+    ke: 'Verkennen',
     copyright: '© 2026 Powered by OneTeam',
   },
 };
@@ -201,6 +233,80 @@ const HakkimizdaSayfasi = () => {
                 </p>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Ekosistem Sekmeleri — Eğitmenler / Komisyonlar / Yürütme Kurulu */}
+        <section className="mb-12">
+          {/* Kicker */}
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="h-px w-10 bg-amber-400/40" />
+            <span className="text-amber-300/90 text-[10px] sm:text-xs uppercase tracking-[0.5em] font-bold whitespace-nowrap">
+              {tr.sekmelerKicker}
+            </span>
+            <div className="h-px w-10 bg-amber-400/40" />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {[
+              {
+                key: 'egitmenler',
+                href: '/konusmacilar',
+                external: false,
+                icon: GraduationCap,
+                baslik: tr.egitmenlerBaslik,
+                aciklama: tr.egitmenlerAciklama,
+              },
+              {
+                key: 'komisyonlar',
+                href: '/komisyonlar',
+                external: false,
+                icon: Building2,
+                baslik: tr.komisyonlarBaslik,
+                aciklama: tr.komisyonlarAciklama,
+              },
+              {
+                key: 'yurutme',
+                href: '/yurutmekurulu',
+                external: false,
+                icon: Crown,
+                baslik: tr.yurutmeBaslik,
+                aciklama: tr.yurutmeAciklama,
+              },
+            ].map((s, idx) => {
+              const Icon = s.icon;
+              return (
+                <button
+                  key={s.key}
+                  onClick={() => navigate(s.href)}
+                  className="group relative bg-gradient-to-br from-white/[0.08] to-white/[0.02] hover:from-white/[0.12] hover:to-white/[0.04] backdrop-blur-md border border-amber-300/25 hover:border-amber-300/60 rounded-2xl p-5 sm:p-6 transition-all duration-300 spring-tap text-left shadow-xl hover:shadow-amber-500/20 overflow-hidden"
+                  style={{ animationDelay: `${idx * 60}ms` }}
+                >
+                  {/* Hover'da köşe glow */}
+                  <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-amber-400/0 group-hover:bg-amber-400/15 blur-3xl transition-colors pointer-events-none" />
+                  <div className="relative">
+                    {/* İkon */}
+                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400/25 to-amber-600/10 border border-amber-300/40 shadow-lg mb-4">
+                      <Icon className="w-6 h-6 text-amber-300" />
+                    </div>
+                    {/* Başlık */}
+                    <h3 className="text-white font-bold text-base sm:text-lg mb-1.5 leading-tight">
+                      {s.baslik}
+                    </h3>
+                    <p className="text-purple-200/75 text-xs leading-snug line-clamp-2 mb-3 min-h-[2.25rem]">
+                      {s.aciklama}
+                    </p>
+                    {/* CTA */}
+                    <div className="flex items-center justify-between pt-3 border-t border-white/10">
+                      <span className="text-[11px] uppercase tracking-wider font-bold text-amber-300">
+                        {tr.ke}
+                      </span>
+                      <ArrowRight className="w-4 h-4 text-amber-300 transition-transform group-hover:translate-x-1" />
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
         </section>
 

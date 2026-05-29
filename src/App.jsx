@@ -31,6 +31,7 @@ const KomisyonlarSayfasi = lazy(() => import('./pages/KomisyonlarSayfasi'));
 const KomisyonDetay = lazy(() => import('./pages/KomisyonDetay'));
 const HakkimizdaSayfasi = lazy(() => import('./pages/HakkimizdaSayfasi'));
 const EkipYonetimSayfasi = lazy(() => import('./pages/EkipYonetimSayfasi'));
+const YurutmekuruluSayfasi = lazy(() => import('./pages/YurutmekuruluSayfasi'));
 // Admin sayfaları — public kullanıcı hiç indirmez (en büyük kazanç)
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
@@ -98,6 +99,7 @@ function AppRoutes() {
           <Route path="/komisyonlar/:id" element={<KomisyonDetay />} />
           <Route path="/hakkimizda" element={<HakkimizdaSayfasi />} />
           <Route path="/ekip-yonetim" element={<EkipYonetimSayfasi />} />
+          <Route path="/yurutmekurulu" element={<YurutmekuruluSayfasi />} />
           <Route path="/admin-giris" element={<AdminLogin />} />
           <Route
             path="/admin"
