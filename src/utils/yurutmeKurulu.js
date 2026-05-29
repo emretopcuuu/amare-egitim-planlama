@@ -18,14 +18,12 @@ export const YURUTME_KURULU = [
   { ad: 'Aytuğ Gönül' },
   { ad: 'Fatih Mehmet Adıyaman' },
 
-  // 2-Star Diamond (4)
+  // 2-Star Diamond (3)
   { ad: 'Ali Koçoğlu' },
   { ad: 'Furkan Çite' },
   { ad: 'İbrahim Düzenli' },
-  { ad: 'Yunus Emre Yinanç' },
 
-  // 1-Star Diamond + eklemeler (15)
-  { ad: 'Alper Tunga Araman' },
+  // 1-Star Diamond + eklemeler (14)
   { ad: 'Arda Çakır' },
   { ad: 'Barış Diker' },           // EKLENDİ
   { ad: 'Filiz Beyazıt' },
@@ -46,5 +44,7 @@ export const YURUTME_KURULU = [
   // - Nuri Haksever
   // - Yakup Güngör
   // - Yalçın Kavlak
+  // - Yunus Emre Yinanç
+  // - Alper Tunga Araman
   // - ZEYNEP & EMRE ERKAN (çift hesap)
 ];
