@@ -80,40 +80,71 @@ const EgitmenSozleri = ({ coreId, onSozTikla, dil = 'all' }) => {
       </div>
 
       <div className="space-y-3">
-        {sozler.map((s, i) => (
-          <button key={`${s.vimeoId}-${i}`}
-            onClick={() => onSozTikla?.(s)}
-            className="w-full text-left bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 hover:from-amber-100 hover:via-orange-100 hover:to-amber-100 border border-amber-200 hover:border-amber-400 rounded-xl p-4 transition-all group">
-            <div className="flex items-start gap-3">
-              <Quote className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <p className="text-gray-900 text-sm leading-relaxed italic">"{s.text}"</p>
-                {s.sebep && (
-                  <p className="text-amber-700 text-xs mt-2 italic">— {s.sebep}</p>
-                )}
-                <div className="flex items-center gap-3 mt-2 text-[11px] text-gray-500 flex-wrap">
-                  {s.baslik && (
-                    <span className="font-semibold text-gray-700 truncate max-w-[60%]">{s.baslik}</span>
+        {sozler.map((s, i) => {
+          // Eğitim başlığı — Türkçe parantez içi öncelik (örn. "Produkt-Präsentation (Ürün Sunumu)")
+          let baslik = s.baslik || '';
+          const trMatch = baslik.match(/\(([^)]+)\)$/);
+          if (trMatch && /[ğüşöçıİĞÜŞÖÇ]/.test(trMatch[1])) baslik = trMatch[1].trim();
+          // Kategori — "Diğer" / "Diger" gizle, bilgi yok demek
+          const kategori = s.kategori && !/^(di[ğg]er|other)$/i.test(s.kategori) ? s.kategori : null;
+          // Etki / sebep — etki tercih
+          const etki = s.etki || s.sebep;
+          // Tarih — "1 yıl önce" gibi relative format
+          let tarihText = s.tarih;
+          if (s.tarih) {
+            const t = new Date(s.tarih);
+            if (!isNaN(t)) {
+              const diffGun = Math.floor((Date.now() - t.getTime()) / (1000 * 60 * 60 * 24));
+              if (diffGun < 30) tarihText = `${diffGun} gün önce`;
+              else if (diffGun < 365) tarihText = `${Math.floor(diffGun / 30)} ay önce`;
+              else tarihText = `${Math.floor(diffGun / 365)} yıl önce`;
+            }
+          }
+          return (
+            <button key={`${s.vimeoId}-${i}`}
+              onClick={() => onSozTikla?.(s)}
+              className="w-full text-left bg-gradient-to-br from-amber-50 via-orange-50 to-amber-50 hover:from-amber-100 hover:via-orange-100 hover:to-amber-100 border border-amber-200 hover:border-amber-400 rounded-xl p-4 transition-all group shadow-sm hover:shadow-md">
+              <div className="flex items-start gap-3">
+                <Quote className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  {/* Quote text */}
+                  <p className="text-gray-900 text-sm leading-relaxed italic">"{s.text}"</p>
+
+                  {/* Etki / Etkisi */}
+                  {etki && (
+                    <div className="mt-3 pl-3 border-l-2 border-amber-400/60 bg-amber-100/40 rounded-r-md py-1.5">
+                      <div className="text-[10px] uppercase tracking-wider text-amber-700 font-bold mb-0.5">
+                        Etkisi
+                      </div>
+                      <p className="text-amber-900 text-xs leading-snug">{etki}</p>
+                    </div>
                   )}
-                  {s.tarih && (
-                    <span className="inline-flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />{s.tarih}
+
+                  {/* Metadata bandı */}
+                  <div className="flex items-center gap-3 mt-3 text-[11px] text-gray-500 flex-wrap">
+                    {baslik && (
+                      <span className="font-semibold text-gray-700 truncate max-w-[60%]">{baslik}</span>
+                    )}
+                    {tarihText && (
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />{tarihText}
+                      </span>
+                    )}
+                    {kategori && (
+                      <span className="inline-flex items-center gap-1 text-purple-600">
+                        <Tag className="w-3 h-3" />{kategori}
+                      </span>
+                    )}
+                    <span className="ml-auto inline-flex items-center gap-1 text-purple-600 font-bold opacity-60 group-hover:opacity-100 transition">
+                      <Play className="w-3 h-3" fill="currentColor" />
+                      {Math.floor((s.start || 0) / 60)}:{String(Math.floor((s.start || 0) % 60)).padStart(2, '0')}
                     </span>
-                  )}
-                  {s.kategori && (
-                    <span className="inline-flex items-center gap-1 text-purple-600">
-                      <Tag className="w-3 h-3" />{s.kategori}
-                    </span>
-                  )}
-                  <span className="ml-auto inline-flex items-center gap-1 text-purple-600 font-bold opacity-0 group-hover:opacity-100 transition">
-                    <Play className="w-3 h-3" fill="currentColor" />
-                    {Math.floor((s.start || 0) / 60)}:{String(Math.floor((s.start || 0) % 60)).padStart(2, '0')}
-                  </span>
+                  </div>
                 </div>
               </div>
-            </div>
-          </button>
-        ))}
+            </button>
+          );
+        })}
       </div>
     </div>
   );

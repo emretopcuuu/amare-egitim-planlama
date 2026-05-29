@@ -115,9 +115,12 @@ export default async (req) => {
         if (Array.isArray(ai.ahaMoments)) {
           ai.ahaMoments.forEach(a => {
             if (a.text && a.text.length >= 30 && a.text.length <= 400) {
+              // prompt v4'te "etki", v3'te "sebep" — ikisini de destekle
+              const etkiYaSebep = a.etki || a.sebep || null;
               sozler.push({
                 text: a.text,
-                sebep: a.sebep || null,
+                etki: etkiYaSebep,
+                sebep: etkiYaSebep, // backward compat (frontend hala s.sebep okuyor olabilir)
                 start: a.start || 0,
                 vimeoId: vid,
                 baslik: meta.baslik,

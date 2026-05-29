@@ -32,7 +32,7 @@ const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flas
 // v1 → original (18K char truncation bug, chapters yarıda)
 // v2 → 200K char limit + chapter coverage uyarısı
 // v3 → ahaMoments Whisper hatası düzeltme + Doğrudan Satış sözlüğü
-const PROMPT_VERSION = 3;
+const PROMPT_VERSION = 4;
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -45,7 +45,7 @@ Türkçe transcript verilir, 3 ÇIKTI üretirsin (sadece JSON):
 
 {
   "ahaMoments": [
-    { "start": 142.5, "text": "Tam alıntı 50-200 char", "sebep": "Neden onemli (10-25 kelime)" }
+    { "start": 142.5, "text": "Tam alıntı 50-200 char", "etki": "Bu söz dinleyene şunu öğretir/hissettirir: ... (10-25 kelime, AKTİF cümle)" }
   ],
   "chapters": [
     { "start": 0, "baslik": "5-12 kelime bölüm başlığı" }
@@ -57,23 +57,63 @@ Türkçe transcript verilir, 3 ÇIKTI üretirsin (sadece JSON):
   }
 }
 
-KURALLAR:
-- ahaMoments: 3-5 adet, gerçekten düşündürücü/güçlü alıntılar. Soru cümlesi değil, ifade.
-  ahaMoments TÜM VİDEO BOYUNCA dağılmalı (başı, ortası, sonu). Hepsi videonun başında olmasın.
+═══ ahaMoments KALİTE KURALLARI (EN ÖNEMLİ) ═══
 
-- ÖNEMLİ — TRANSCRIPT TEMİZLİĞİ:
-  Transcript Whisper (otomatik konuşma tanıma) ile üretildi. Türkçede yaygın hatalar yapıyor:
-  "sitres" → "stres", "ciharet" → "ticaret", "mademleri" → "maddemiz", "baspılıyor" → "başlıyor",
-  "Burken" → "Buradan", "dürüdü" → "tüyo", "menüm" → "benim", "ki şı" → "kişi" vb.
-  ahaMoments[].text alanını yazarken:
-  - Anlamı koruyarak Whisper hatalarını DÜZELT (yazım, kelime hataları)
-  - Konuşmacının üslubunu BOZMA (orijinal cümle yapısı kalsın)
+ahaMoments: 3-5 adet GERÇEKTEN GÜÇLÜ alıntı.
+TÜM VİDEO BOYUNCA dağıt (başı, ortası, sonu). Hepsi başta olmasın.
+
+✓ KABUL — Quote şu kriterlere uymalı:
+  1. SELF-CONTAINED: Önceki cümle gerekmesin. Kendi başına anlam taşısın.
+     Yanlış: "Bunların yanında sıvı olması çok büyük fark yaratıyor."
+     Doğru: "Kolajen takviyesinde sıvı form emilim açısından çok büyük fark yaratır."
+
+  2. MANTIK KONTROLÜ: Rakam/oran/mantık tutarlı olmalı.
+     Konuşmacı sürçtüyse veya Whisper rakamları karıştırmışsa DÜZELT.
+     Yanlış: "8 insandan 10'u hastalıktan ölüyor" (matematiksel imkansız)
+     Doğru: "10 insandan 8'i hastalıktan ölüyor" veya "İnsanların %80'i hastalıktan ölüyor"
+
+  3. ETKİ TAŞISIN: Düşündürücü, sarsıcı, ders verici olmalı.
+     Sıradan "biliyorsunuz", "şöyle düşünün" başlangıçlı muğlak ifadeleri ALMA.
+
+  4. KONUŞMACI UZMANLIĞINA SAYGI: Konuşmacının kim olduğu prompt'ta verilirse
+     (örn. "Dr. → doktor"), o alana özel quote'lar öncelikli olsun.
+     Doktor sağlık/bilim quote'larını öne çıkar, satış cümlesini değil.
+
+  5. SORU DEĞİL İFADE: "... değil mi?" gibi bitmesin. Net ifade olsun.
+
+  6. UYGUN UZUNLUK: 60-200 karakter. Çok kısaysa havada kalır, çok uzunsa sıkıcı.
+
+✗ RED — Şunları KESİNLİKLE ekleme:
+  - Önceki/sonraki cümleye bağımlı kopuk alıntılar
+  - "İşte böyle", "Şimdi anladık ki" tarzı geçiş cümleleri
+  - Mantık/rakam hatası içeren (düzeltilemeyen) alıntılar
+  - Konuşmacı uzmanlığı dışı genel cümleler
+  - Marka adı (Amare, OneTeam, HL5, kolajen vb) içeren — bu reklam izlenimi verir
+
+"etki" alanı yazımı:
+  - "Vurguluyor" / "anlatıyor" / "bahsediyor" KULLANMA — pasif ve içeriksiz
+  - Aktif tonda yaz: "X'i öğretir / hatırlatır / sarsar / değiştirir"
+  - Dinleyicinin hayatına ne katacağına odaklan
+  - 10-25 kelime arası
+
+═══ TRANSCRIPT TEMİZLİĞİ ═══
+
+Transcript Whisper (otomatik konuşma tanıma) ile üretildi. Türkçede yaygın hatalar:
+  "sitres" → "stres", "ciharet" → "ticaret", "mademleri" → "maddemiz",
+  "baspılıyor" → "başlıyor", "Burken" → "Buradan", "dürüdü" → "tüyo",
+  "menüm" → "benim", "ki şı" → "kişi" vb.
+
+ahaMoments[].text alanını yazarken:
+  - Whisper hatalarını DÜZELT (yazım, kelime, rakam)
+  - Konuşmacının üslubunu BOZMA (cümle yapısı kalsın)
   - Belirgin yanlış kelimeyi düzelt, şüpheliyi bırak
-  - Sonuç DOĞRU Türkçe akıcı bir alıntı olmalı
+  - Sonuç DOĞRU Türkçe AKICI bir alıntı olmalı
 
-- chapters: 5-10 adet, videoyu mantıksal parçalara böl. Her chapter min 60sn olmalı.
-  ÇOK ÖNEMLİ: chapters TÜM VİDEO SÜRESİNİ KAPSAMALI. Son chapter videonun son %15'i içinde olmalı.
-  Örnek: 33dk video → son chapter en geç 28dk civarında başlamalı. Yarıda bitirme.
+═══ chapters KURALLARI ═══
+
+- 5-10 adet, videoyu mantıksal parçalara böl. Her chapter min 60sn.
+- chapters TÜM VİDEO SÜRESİNİ KAPSAMALI. Son chapter videonun son %15'i içinde olmalı.
+  Örnek: 33dk video → son chapter en geç 28dk civarında başlamalı.
 - chapters[0].start her zaman 0
 - ozet.anaTema: liderlik, satış, motivasyon, kişisel gelişim, vizyon, sağlık, ürün, vb
 - MARKA: "network marketing" terimini ASLA kullanma. Her zaman "Doğrudan Satış" yaz.
