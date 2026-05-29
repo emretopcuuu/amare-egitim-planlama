@@ -195,10 +195,6 @@ const HomePage = () => {
 
         {/* Footer */}
         <div className="mt-16 sm:mt-24 text-center">
-          <button onClick={() => navigate('/hakkimizda')}
-            className="text-purple-200/80 hover:text-amber-300 text-sm font-medium transition mb-3 spring-tap">
-            Hakkımızda
-          </button>
           <p className="text-purple-300/60 text-xs tracking-wider">
             {t('copyright')}
           </p>
