@@ -172,141 +172,102 @@ const HakkimizdaSayfasi = () => {
           </p>
         </div>
 
-        {/* MİSYON */}
-        <section className="mb-6 relative bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-md border border-amber-300/25 rounded-2xl p-7 sm:p-10 overflow-hidden shadow-2xl">
-          {/* Köşe glow */}
-          <div className="absolute -top-20 -left-20 w-52 h-52 rounded-full bg-amber-400/15 blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 right-0 w-40 h-40 rounded-full bg-purple-500/10 blur-3xl pointer-events-none" />
-
-          <div className="relative">
-            <div className="flex items-start gap-5 sm:gap-7 flex-wrap sm:flex-nowrap">
-              {/* İkon */}
-              <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-400/25 to-amber-600/10 border border-amber-300/40 shadow-lg flex-shrink-0">
-                <Target className="w-7 h-7 sm:w-8 sm:h-8 text-amber-300" />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                {/* Başlık + çizgi */}
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.5em] font-bold">
-                    {tr.misyon}
-                  </span>
-                  <div className="h-px flex-1 bg-gradient-to-r from-amber-400/60 via-amber-400/20 to-transparent" />
-                </div>
-                {/* Metin */}
-                <p className="text-white/95 text-base sm:text-lg leading-relaxed font-light">
-                  {tr.misyonMetin1}
-                  <span className="text-amber-300 font-medium">{tr.misyonVurgu}</span>
-                  {tr.misyonMetin2}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* VİZYON */}
-        <section className="mb-12 relative bg-gradient-to-br from-white/[0.08] to-white/[0.02] backdrop-blur-md border border-amber-300/25 rounded-2xl p-7 sm:p-10 overflow-hidden shadow-2xl">
-          {/* Köşe glow */}
-          <div className="absolute -top-20 -right-20 w-52 h-52 rounded-full bg-amber-400/15 blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-40 h-40 rounded-full bg-indigo-500/10 blur-3xl pointer-events-none" />
-
-          <div className="relative">
-            <div className="flex items-start gap-5 sm:gap-7 flex-wrap sm:flex-nowrap">
-              {/* İkon */}
-              <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-400/25 to-amber-600/10 border border-amber-300/40 shadow-lg flex-shrink-0">
-                <Compass className="w-7 h-7 sm:w-8 sm:h-8 text-amber-300" />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                {/* Başlık + çizgi */}
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.5em] font-bold">
-                    {tr.vizyon}
-                  </span>
-                  <div className="h-px flex-1 bg-gradient-to-r from-amber-400/60 via-amber-400/20 to-transparent" />
-                </div>
-                {/* Metin */}
-                <p className="text-white/95 text-base sm:text-lg leading-relaxed font-light">
-                  {tr.vizyonMetin1}
-                  <span className="text-amber-300 font-medium">{tr.vizyonVurgu}</span>
-                  {tr.vizyonMetin2}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Ekosistem Sekmeleri — Eğitmenler / Komisyonlar / Yürütme Kurulu */}
-        <section className="mb-12">
+        {/* Ekosistem Sekmeleri — Eğitmenler / Komisyonlar / Yürütme Kurulu (ÖNE ÇIKARILDI — BÜYÜK) */}
+        <section className="mb-10 sm:mb-14">
           {/* Kicker */}
           <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="h-px w-10 bg-amber-400/40" />
-            <span className="text-amber-300/90 text-[10px] sm:text-xs uppercase tracking-[0.5em] font-bold whitespace-nowrap">
+            <div className="h-px w-12 sm:w-16 bg-amber-400/50" />
+            <span className="text-amber-300 text-[11px] sm:text-sm uppercase tracking-[0.5em] font-bold whitespace-nowrap">
               {tr.sekmelerKicker}
             </span>
-            <div className="h-px w-10 bg-amber-400/40" />
+            <div className="h-px w-12 sm:w-16 bg-amber-400/50" />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
             {[
-              {
-                key: 'egitmenler',
-                href: '/konusmacilar',
-                external: false,
-                icon: GraduationCap,
-                baslik: tr.egitmenlerBaslik,
-                aciklama: tr.egitmenlerAciklama,
-              },
-              {
-                key: 'komisyonlar',
-                href: '/komisyonlar',
-                external: false,
-                icon: Building2,
-                baslik: tr.komisyonlarBaslik,
-                aciklama: tr.komisyonlarAciklama,
-              },
-              {
-                key: 'yurutme',
-                href: '/yurutmekurulu',
-                external: false,
-                icon: Crown,
-                baslik: tr.yurutmeBaslik,
-                aciklama: tr.yurutmeAciklama,
-              },
+              { key: 'egitmenler', href: '/konusmacilar', icon: GraduationCap, baslik: tr.egitmenlerBaslik, aciklama: tr.egitmenlerAciklama },
+              { key: 'komisyonlar', href: '/komisyonlar', icon: Building2, baslik: tr.komisyonlarBaslik, aciklama: tr.komisyonlarAciklama },
+              { key: 'yurutme', href: '/yurutmekurulu', icon: Crown, baslik: tr.yurutmeBaslik, aciklama: tr.yurutmeAciklama },
             ].map((s, idx) => {
               const Icon = s.icon;
               return (
                 <button
                   key={s.key}
                   onClick={() => navigate(s.href)}
-                  className="group relative bg-gradient-to-br from-white/[0.08] to-white/[0.02] hover:from-white/[0.12] hover:to-white/[0.04] backdrop-blur-md border border-amber-300/25 hover:border-amber-300/60 rounded-2xl p-5 sm:p-6 transition-all duration-300 spring-tap text-left shadow-xl hover:shadow-amber-500/20 overflow-hidden"
+                  className="group relative bg-gradient-to-br from-white/[0.10] to-white/[0.03] hover:from-white/[0.15] hover:to-white/[0.05] backdrop-blur-md border-2 border-amber-300/30 hover:border-amber-300/70 rounded-3xl p-7 sm:p-9 transition-all duration-300 spring-tap text-left shadow-2xl hover:shadow-amber-500/30 overflow-hidden hover:-translate-y-1"
                   style={{ animationDelay: `${idx * 60}ms` }}
                 >
-                  {/* Hover'da köşe glow */}
-                  <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-amber-400/0 group-hover:bg-amber-400/15 blur-3xl transition-colors pointer-events-none" />
+                  {/* Köşe glow */}
+                  <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-amber-400/10 group-hover:bg-amber-400/25 blur-3xl transition-colors pointer-events-none" />
+                  <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-purple-500/10 group-hover:bg-purple-500/20 blur-3xl transition-colors pointer-events-none" />
                   <div className="relative">
-                    {/* İkon */}
-                    <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400/25 to-amber-600/10 border border-amber-300/40 shadow-lg mb-4">
-                      <Icon className="w-6 h-6 text-amber-300" />
+                    {/* İkon — BÜYÜK */}
+                    <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-amber-400/35 to-amber-600/15 border border-amber-300/50 shadow-lg mb-5 group-hover:scale-105 transition-transform">
+                      <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-amber-300" />
                     </div>
-                    {/* Başlık */}
-                    <h3 className="text-white font-bold text-base sm:text-lg mb-1.5 leading-tight">
+                    {/* Başlık — BÜYÜK */}
+                    <h3 className="text-white font-bold text-xl sm:text-2xl mb-2 leading-tight">
                       {s.baslik}
                     </h3>
-                    <p className="text-purple-200/75 text-xs leading-snug line-clamp-2 mb-3 min-h-[2.25rem]">
+                    <p className="text-purple-100/85 text-sm leading-relaxed mb-5 min-h-[2.75rem]">
                       {s.aciklama}
                     </p>
                     {/* CTA */}
-                    <div className="flex items-center justify-between pt-3 border-t border-white/10">
-                      <span className="text-[11px] uppercase tracking-wider font-bold text-amber-300">
+                    <div className="flex items-center justify-between pt-4 border-t border-amber-300/20">
+                      <span className="text-xs uppercase tracking-wider font-extrabold text-amber-300">
                         {tr.ke}
                       </span>
-                      <ArrowRight className="w-4 h-4 text-amber-300 transition-transform group-hover:translate-x-1" />
+                      <ArrowRight className="w-5 h-5 text-amber-300 transition-transform group-hover:translate-x-1.5" />
                     </div>
                   </div>
                 </button>
               );
             })}
+          </div>
+        </section>
+
+        {/* MİSYON + VİZYON — KOMPAKT yan yana */}
+        <section className="mb-10 sm:mb-12 grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* MİSYON */}
+          <div className="relative bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-md border border-amber-300/20 rounded-2xl p-5 sm:p-6 overflow-hidden shadow-lg">
+            <div className="absolute -top-12 -left-12 w-32 h-32 rounded-full bg-amber-400/10 blur-3xl pointer-events-none" />
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400/25 to-amber-600/10 border border-amber-300/40 flex-shrink-0">
+                  <Target className="w-5 h-5 text-amber-300" />
+                </div>
+                <span className="text-amber-300 text-xs uppercase tracking-[0.4em] font-bold">
+                  {tr.misyon}
+                </span>
+                <div className="h-px flex-1 bg-gradient-to-r from-amber-400/40 to-transparent" />
+              </div>
+              <p className="text-white/90 text-sm leading-relaxed">
+                {tr.misyonMetin1}
+                <span className="text-amber-300 font-medium">{tr.misyonVurgu}</span>
+                {tr.misyonMetin2}
+              </p>
+            </div>
+          </div>
+
+          {/* VİZYON */}
+          <div className="relative bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-md border border-amber-300/20 rounded-2xl p-5 sm:p-6 overflow-hidden shadow-lg">
+            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-amber-400/10 blur-3xl pointer-events-none" />
+            <div className="relative">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400/25 to-amber-600/10 border border-amber-300/40 flex-shrink-0">
+                  <Compass className="w-5 h-5 text-amber-300" />
+                </div>
+                <span className="text-amber-300 text-xs uppercase tracking-[0.4em] font-bold">
+                  {tr.vizyon}
+                </span>
+                <div className="h-px flex-1 bg-gradient-to-r from-amber-400/40 to-transparent" />
+              </div>
+              <p className="text-white/90 text-sm leading-relaxed">
+                {tr.vizyonMetin1}
+                <span className="text-amber-300 font-medium">{tr.vizyonVurgu}</span>
+                {tr.vizyonMetin2}
+              </p>
+            </div>
           </div>
         </section>
 
