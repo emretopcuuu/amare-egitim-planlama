@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Shield, Newspaper, ArrowRight, Users, Hammer, X, LogIn, User } from 'lucide-react';
+import { Calendar, Sparkles, Newspaper, ArrowRight, Users, Hammer, X, LogIn, User } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import BultenModal from '../components/BultenModal';
@@ -150,20 +150,20 @@ const HomePage = () => {
           </button>
 
           <button
-            onClick={() => navigate('/komisyonlar')}
+            onClick={() => navigate('/hakkimizda')}
             className="group bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/20 hover:border-amber-300/40 rounded-3xl p-7 sm:p-8 transition-all duration-300 spring-tap text-left shadow-2xl"
           >
             <div className="flex items-start gap-4 mb-4">
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                <Shield className="w-6 h-6 sm:w-7 sm:h-7 text-white/80" />
+                <Sparkles className="w-6 h-6 sm:w-7 sm:h-7 text-white/80" />
               </div>
               <ArrowRight className="w-5 h-5 text-white/40 group-hover:text-amber-300 group-hover:translate-x-1 transition-all ml-auto mt-2" />
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-white mb-2 uppercase tracking-wide">
-              Komisyonlar
+              Hakkımızda
             </h3>
             <p className="text-purple-200/80 text-sm leading-relaxed">
-              OneTeam'in tüm komisyonları
+              Misyon, vizyon, eğitmenler, komisyonlar ve liderler
             </p>
           </button>
 
