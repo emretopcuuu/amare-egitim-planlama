@@ -1,48 +1,50 @@
 // OneTeam Yürütme Kurulu
-// Manuel kürasyon — Supabase'den çekilmiş ham liste başlangıç noktası,
-// kullanıcı (Emre) bazı kişileri çıkarır/ekler.
-//
+// Tek liste, kariyerler/rütbeler görünmez — sadece üye adları.
 // Foto: konuşmacılar collection'ından coreId match ile otomatik gelir
 // (YurutmekuruluSayfasi.jsx → makeCoreId(ad) → konusmacilar[cid].fotoURL)
 //
-// Yapı: { presidential, '3star', '2star', '1star': [{ ad, unvan?, coreId? }] }
+// Sıralama: Mevcut hiyerarşi (Presidential → 3-Star → 2-Star → 1-Star)
+//           ama UI'da rütbe başlığı/etiketi gösterilmez.
 
-export const YURUTME_KURULU = {
-  presidential: [
-    { ad: 'Emre Topçu' },
-    { ad: 'Ferhat Gök' },
-    { ad: 'Kenan Kozanhan' },
-    { ad: 'Murat Karaman' },
-    { ad: 'Ziya Şakir Yılmaz' },
-  ],
-  '3star': [
-    { ad: 'Aytuğ Gönül' },
-    { ad: 'Fatih Mehmet Adıyaman' },
-  ],
-  '2star': [
-    { ad: 'Ali Koçoğlu' },
-    { ad: 'Furkan Çite' },
-    { ad: 'İbrahim Düzenli' },
-    { ad: 'Yunus Emre Yinanç' },
-    // 'GENESİS E-TİCARET' — şirket hesabı, çıkarıldı
-  ],
-  '1star': [
-    { ad: 'Alper Tunga Araman' },
-    { ad: 'Arda Çakır' },
-    { ad: 'Filiz Beyazıt' },
-    { ad: 'Gülay Rençber' },
-    { ad: 'İhsan Çomak' },
-    { ad: 'Kasım Mazılıgüney' },
-    { ad: 'Mahmut İlker Yılmaz' },
-    { ad: 'Nuri Haksever' },
-    { ad: 'Özgür Akkaş' },
-    { ad: 'Özkan Davarcı' },
-    { ad: 'Seçil Fida' },
-    { ad: 'Sibel Özdemir' },
-    { ad: 'Yakup Güngör' },
-    { ad: 'Yalçın Kavlak' },
-    { ad: 'Zeynep Demir' },
-    // 'BAĞCI AKADEMİ' — şirket hesabı, çıkarıldı
-    // 'ZEYNEP & EMRE ERKAN' — çift hesap, çıkarıldı (Emre Erkan olarak ekle?)
-  ],
-};
+export const YURUTME_KURULU = [
+  // Presidential Diamond (5)
+  { ad: 'Emre Topçu' },
+  { ad: 'Ferhat Gök' },
+  { ad: 'Kenan Kozanhan' },
+  { ad: 'Murat Karaman' },
+  { ad: 'Ziya Şakir Yılmaz' },
+
+  // 3-Star Diamond (2)
+  { ad: 'Aytuğ Gönül' },
+  { ad: 'Fatih Mehmet Adıyaman' },
+
+  // 2-Star Diamond (4)
+  { ad: 'Ali Koçoğlu' },
+  { ad: 'Furkan Çite' },
+  { ad: 'İbrahim Düzenli' },
+  { ad: 'Yunus Emre Yinanç' },
+
+  // 1-Star Diamond + eklemeler (15)
+  { ad: 'Alper Tunga Araman' },
+  { ad: 'Arda Çakır' },
+  { ad: 'Barış Diker' },           // EKLENDİ
+  { ad: 'Filiz Beyazıt' },
+  { ad: 'Gülay Rençber' },
+  { ad: 'İlknur Akkaş' },           // EKLENDİ (Özgür Akkaş maili altında)
+  { ad: 'Kasım Mazılıgüney' },
+  { ad: 'Mahmut İlker Yılmaz' },
+  { ad: 'Özgür Akkaş' },
+  { ad: 'Özkan Davarcı' },
+  { ad: 'Seçil Fida' },
+  { ad: 'Sibel Özdemir' },
+  { ad: 'Şule Bağcı' },             // EKLENDİ (BAĞCI AKADEMİ maili altında)
+  { ad: 'Yavuz Bağcı' },            // EKLENDİ (BAĞCI AKADEMİ maili altında)
+  { ad: 'Zeynep Demir' },
+
+  // ÇIKARILDI:
+  // - İhsan Çomak
+  // - Nuri Haksever
+  // - Yakup Güngör
+  // - Yalçın Kavlak
+  // - ZEYNEP & EMRE ERKAN (çift hesap)
+];

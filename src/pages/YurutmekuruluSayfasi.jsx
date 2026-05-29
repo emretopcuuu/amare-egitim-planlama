@@ -1,10 +1,10 @@
-// Yürütme Kurulu sayfası — Presidential / 3-Star / 2-Star / 1-Star Diamond
-// İçerik: src/utils/yurutmeKurulu.js'den çekilir (manuel kürasyon)
+// Yürütme Kurulu sayfası — Tek liste (rütbe/kariyer görünmez)
+// İçerik: src/utils/yurutmeKurulu.js
 // Foto: konuşmacılar collection'ından coreId match
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Crown, Star, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, Crown, User as UserIcon } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { YURUTME_KURULU } from '../utils/yurutmeKurulu';
@@ -14,71 +14,37 @@ import { makeCoreId } from '../context/DataContext';
 
 const I18N = {
   tr: {
-    anasayfa: 'Anasayfa',
+    anasayfa: 'Hakkımızda',
     kicker: 'OneTeam Liderleri',
     baslik: 'Yürütme Kurulu',
     aciklama: 'OneTeam ekosistemini yönlendiren, vizyonu hayata geçiren liderler.',
-    rutbeler: {
-      'presidential': 'Presidential Diamond',
-      '3star': '3 Star Diamond',
-      '2star': '2 Star Diamond',
-      '1star': '1 Star Diamond',
-    },
     altMetin: 'Bu liderler komisyonları kurar, eğitim politikalarını belirler ve OneTeam ailesini büyütür.',
+    uye: 'üye',
   },
   en: {
-    anasayfa: 'Home',
+    anasayfa: 'About',
     kicker: 'OneTeam Leaders',
     baslik: 'Executive Board',
     aciklama: 'The leaders shaping the OneTeam ecosystem and bringing the vision to life.',
-    rutbeler: {
-      'presidential': 'Presidential Diamond',
-      '3star': '3 Star Diamond',
-      '2star': '2 Star Diamond',
-      '1star': '1 Star Diamond',
-    },
     altMetin: 'These leaders form the committees, set training policies, and grow the OneTeam family.',
+    uye: 'members',
   },
   de: {
-    anasayfa: 'Startseite',
+    anasayfa: 'Über uns',
     kicker: 'OneTeam-Führung',
     baslik: 'Exekutivausschuss',
     aciklama: 'Die Führungskräfte, die das OneTeam-Ökosystem gestalten und die Vision zum Leben erwecken.',
-    rutbeler: {
-      'presidential': 'Presidential Diamond',
-      '3star': '3 Star Diamond',
-      '2star': '2 Star Diamond',
-      '1star': '1 Star Diamond',
-    },
     altMetin: 'Diese Führungskräfte bilden die Ausschüsse, legen die Bildungsrichtlinien fest und vergrößern die OneTeam-Familie.',
+    uye: 'Mitglieder',
   },
   nl: {
-    anasayfa: 'Home',
+    anasayfa: 'Over ons',
     kicker: 'OneTeam Leiders',
     baslik: 'Uitvoerend Bestuur',
     aciklama: 'De leiders die het OneTeam-ecosysteem vormgeven en de visie tot leven brengen.',
-    rutbeler: {
-      'presidential': 'Presidential Diamond',
-      '3star': '3 Star Diamond',
-      '2star': '2 Star Diamond',
-      '1star': '1 Star Diamond',
-    },
     altMetin: 'Deze leiders vormen de commissies, bepalen het opleidingsbeleid en laten de OneTeam-familie groeien.',
+    uye: 'leden',
   },
-};
-
-const RUTBE_SIRA = ['presidential', '3star', '2star', '1star'];
-const RUTBE_RENK = {
-  'presidential': 'from-amber-300 via-amber-400 to-amber-200',
-  '3star': 'from-amber-400/80 to-amber-500/60',
-  '2star': 'from-purple-300/80 to-purple-400/60',
-  '1star': 'from-purple-200/70 to-purple-300/50',
-};
-const RUTBE_YILDIZ = {
-  'presidential': 5,
-  '3star': 3,
-  '2star': 2,
-  '1star': 1,
 };
 
 const YurutmekuruluSayfasi = () => {
@@ -116,7 +82,7 @@ const YurutmekuruluSayfasi = () => {
       <div className="absolute top-40 -left-32 w-[28rem] h-[28rem] rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
       <div className="absolute top-80 -right-32 w-[28rem] h-[28rem] rounded-full bg-purple-500/20 blur-3xl pointer-events-none" />
 
-      <div className="relative container mx-auto px-4 py-6 sm:py-10 max-w-5xl">
+      <div className="relative container mx-auto px-4 py-6 sm:py-10 max-w-6xl">
         {/* Top bar */}
         <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
           <button onClick={() => navigate('/hakkimizda')}
@@ -127,7 +93,7 @@ const YurutmekuruluSayfasi = () => {
         </div>
 
         {/* Hero — kompakt */}
-        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-12 animate-fade-in">
+        <div className="text-center max-w-3xl mx-auto mb-10 sm:mb-14 animate-fade-in">
           {/* Crown ikonu */}
           <div className="relative inline-block mb-4">
             <div className="absolute -inset-4 bg-amber-400/20 blur-2xl pointer-events-none" />
@@ -151,78 +117,51 @@ const YurutmekuruluSayfasi = () => {
           </h1>
 
           {/* Açıklama */}
-          <p className="text-purple-100/85 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+          <p className="text-purple-100/85 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto mb-4">
             {tr.aciklama}
           </p>
+
+          {/* Üye sayısı rozeti */}
+          <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/15 rounded-full px-4 py-1.5 text-xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            <span className="text-white font-semibold">
+              <strong className="font-bold">{YURUTME_KURULU.length}</strong> {tr.uye}
+            </span>
+          </div>
         </div>
 
-        {/* Rütbe grupları */}
-        {RUTBE_SIRA.map(rkod => {
-          const list = YURUTME_KURULU[rkod] || [];
-          if (list.length === 0) return null;
-          const yildizSayisi = RUTBE_YILDIZ[rkod];
-          return (
-            <section key={rkod} className="mb-12">
-              {/* Rütbe başlığı */}
-              <div className="flex items-center gap-3 mb-5">
-                <div className="flex items-center gap-0.5">
-                  {[...Array(yildizSayisi)].map((_, i) => (
-                    <Star key={i} className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
-                  ))}
+        {/* Tek liste — rütbe başlığı yok */}
+        {YURUTME_KURULU.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
+            {YURUTME_KURULU.map((u, idx) => {
+              const foto = getFoto(u);
+              return (
+                <div key={u.ad + idx}
+                  className="bg-white/10 backdrop-blur-md border border-white/20 hover:border-amber-300/40 rounded-xl p-4 transition-all duration-300 text-center shadow-lg group hover:shadow-amber-500/15 hover:bg-white/15">
+                  {/* Avatar */}
+                  <div className="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3">
+                    {foto ? (
+                      <img src={foto} alt={u.ad}
+                        loading="lazy" decoding="async"
+                        className="w-full h-full rounded-full object-cover border-2 border-amber-300/50 shadow-md group-hover:border-amber-300 transition-colors"
+                        style={{ objectPosition: 'center 25%' }} />
+                    ) : (
+                      <div className="w-full h-full rounded-full bg-gradient-to-br from-amber-400/30 to-amber-600/15 border-2 border-amber-300/40 flex items-center justify-center">
+                        <span className="text-amber-200 font-bold text-base">
+                          {(u.ad || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  {/* Ad */}
+                  <div className="text-white font-bold text-xs sm:text-sm leading-tight">
+                    {u.ad}
+                  </div>
                 </div>
-                <h2 className={`text-base sm:text-lg font-bold uppercase tracking-wider bg-gradient-to-r ${RUTBE_RENK[rkod]} bg-clip-text text-transparent`}>
-                  {tr.rutbeler[rkod]}
-                </h2>
-                <div className="h-px flex-1 bg-gradient-to-r from-amber-400/40 to-transparent" />
-                <span className="text-purple-200/60 text-xs font-mono">{list.length}</span>
-              </div>
-
-              {/* Üye grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-                {list.map((u, idx) => {
-                  const foto = getFoto(u);
-                  return (
-                    <div key={u.ad + idx}
-                      className="bg-white/10 backdrop-blur-md border border-white/20 hover:border-amber-300/40 rounded-xl p-4 transition-all duration-300 text-center shadow-lg group hover:shadow-amber-500/15">
-                      {/* Avatar */}
-                      <div className="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3">
-                        {foto ? (
-                          <img src={foto} alt={u.ad}
-                            loading="lazy" decoding="async"
-                            className="w-full h-full rounded-full object-cover border-2 border-amber-300/50 shadow-md group-hover:border-amber-300 transition-colors"
-                            style={{ objectPosition: 'center 25%' }} />
-                        ) : (
-                          <div className="w-full h-full rounded-full bg-gradient-to-br from-amber-400/30 to-amber-600/15 border-2 border-amber-300/40 flex items-center justify-center">
-                            <span className="text-amber-200 font-bold text-base">
-                              {(u.ad || '?').split(' ').map(p => p[0]).join('').slice(0, 2).toUpperCase()}
-                            </span>
-                          </div>
-                        )}
-                        {rkod === 'presidential' && (
-                          <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-amber-400 border-2 border-purple-900 flex items-center justify-center shadow">
-                            <Crown className="w-3.5 h-3.5 text-purple-900" />
-                          </div>
-                        )}
-                      </div>
-                      {/* Ad */}
-                      <div className="text-white font-bold text-xs sm:text-sm leading-tight">
-                        {u.ad}
-                      </div>
-                      {u.unvan && (
-                        <div className="text-amber-300/80 text-[10px] mt-0.5 leading-tight">
-                          {u.unvan}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </section>
-          );
-        })}
-
-        {/* Boş durumda placeholder */}
-        {RUTBE_SIRA.every(r => (YURUTME_KURULU[r] || []).length === 0) && (
+              );
+            })}
+          </div>
+        ) : (
           <div className="text-center py-12">
             <UserIcon className="w-12 h-12 text-purple-400/40 mx-auto mb-3" />
             <p className="text-purple-200/70">Yürütme Kurulu listesi hazırlanıyor.</p>
@@ -230,7 +169,7 @@ const YurutmekuruluSayfasi = () => {
         )}
 
         {/* Alt manifesto */}
-        <div className="text-center mt-8 mb-12">
+        <div className="text-center mt-12 mb-12">
           <p className="text-purple-200/60 text-xs max-w-2xl mx-auto leading-relaxed">
             {tr.altMetin}
           </p>
