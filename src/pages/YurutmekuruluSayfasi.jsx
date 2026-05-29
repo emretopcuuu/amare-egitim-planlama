@@ -10,7 +10,8 @@ import { useTranslation } from '../context/LanguageContext';
 import { YURUTME_KURULU } from '../utils/yurutmeKurulu';
 import { db } from '../utils/firebase';
 import { collection, getDocs } from 'firebase/firestore';
-import { makeCoreId } from '../context/DataContext';
+import { makeCoreId, useData } from '../context/DataContext';
+import KonusmaciFullModal from '../components/KonusmaciFullModal';
 
 const I18N = {
   tr: {
@@ -51,28 +52,40 @@ const YurutmekuruluSayfasi = () => {
   const navigate = useNavigate();
   const { lang } = useTranslation();
   const tr = I18N[lang] || I18N.tr;
+  const { takvim } = useData();
 
-  // Konuşmacılar collection'ından coreId → fotoURL map'i
-  const [fotolar, setFotolar] = useState({});
+  // Konuşmacılar collection — coreId → tüm kayıt
+  const [konusmacilar, setKonusmacilar] = useState({}); // { coreId: { ad, fotoURL, biyografi, ... } }
+  // Seçili üye → KonusmaciFullModal açar
+  const [seciliUye, setSeciliUye] = useState(null);
+
   useEffect(() => {
     (async () => {
       try {
         const snap = await getDocs(collection(db, 'konusmacilar'));
         const map = {};
         snap.forEach(d => {
-          const data = d.data();
-          if (data.fotoURL) map[d.id] = data.fotoURL;
+          map[d.id] = { id: d.id, ...d.data() };
         });
-        setFotolar(map);
+        setKonusmacilar(map);
       } catch (e) {
-        console.warn('[yurutme] foto yüklenemedi:', e.message);
+        console.warn('[yurutme] konuşmacılar yüklenemedi:', e.message);
       }
     })();
   }, []);
 
-  const getFoto = (uye) => {
+  const getKayit = (uye) => {
     const cid = uye.coreId || makeCoreId(uye.ad);
-    return cid && fotolar[cid] ? fotolar[cid] : null;
+    return cid && konusmacilar[cid] ? konusmacilar[cid] : null;
+  };
+  const getFoto = (uye) => {
+    const k = getKayit(uye);
+    return k?.fotoURL || null;
+  };
+
+  const acModal = (uye) => {
+    const kayit = getKayit(uye);
+    setSeciliUye({ ad: uye.ad, kayit });
   };
 
   return (
@@ -136,8 +149,9 @@ const YurutmekuruluSayfasi = () => {
             {YURUTME_KURULU.map((u, idx) => {
               const foto = getFoto(u);
               return (
-                <div key={u.ad + idx}
-                  className="bg-white/10 backdrop-blur-md border border-white/20 hover:border-amber-300/40 rounded-xl p-4 transition-all duration-300 text-center shadow-lg group hover:shadow-amber-500/15 hover:bg-white/15">
+                <button key={u.ad + idx}
+                  onClick={() => acModal(u)}
+                  className="bg-white/10 backdrop-blur-md border border-white/20 hover:border-amber-300/60 rounded-xl p-4 transition-all duration-300 text-center shadow-lg group hover:shadow-amber-500/20 hover:bg-white/15 hover:-translate-y-0.5 spring-tap focus:outline-none focus:ring-2 focus:ring-amber-400/50">
                   {/* Avatar */}
                   <div className="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3">
                     {foto ? (
@@ -157,7 +171,7 @@ const YurutmekuruluSayfasi = () => {
                   <div className="text-white font-bold text-xs sm:text-sm leading-tight">
                     {u.ad}
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
@@ -175,6 +189,16 @@ const YurutmekuruluSayfasi = () => {
           </p>
         </div>
       </div>
+
+      {/* Konuşmacı modal — gelecek/geçmiş eğitimler + kayıtlı + ilham veren sözler */}
+      {seciliUye && (
+        <KonusmaciFullModal
+          ad={seciliUye.ad}
+          kayit={seciliUye.kayit}
+          takvim={takvim}
+          onClose={() => setSeciliUye(null)}
+        />
+      )}
     </div>
   );
 };
