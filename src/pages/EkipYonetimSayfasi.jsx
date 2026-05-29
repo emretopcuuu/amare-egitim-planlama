@@ -8,11 +8,13 @@ import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot } fro
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
+import { useSmartBack } from '../utils/navigation';
 
 // Çok dilli metinler
 const I18N = {
   tr: {
     anasayfa: 'Anasayfa',
+    geri: 'Geri',
     kicker: 'Saha Yönetim Araçları',
     baslik: 'Ekip Yönetim Paneli',
     aciklama: 'OneTeam iş ortaklarının organizasyon yönetimi için merkezi araç paneli.',
@@ -23,6 +25,7 @@ const I18N = {
   },
   en: {
     anasayfa: 'Home',
+    geri: 'Back',
     kicker: 'Field Management Tools',
     baslik: 'Team Management Panel',
     aciklama: 'Central tools panel for OneTeam partners to manage their organization.',
@@ -33,6 +36,7 @@ const I18N = {
   },
   de: {
     anasayfa: 'Startseite',
+    geri: 'Zurück',
     kicker: 'Feldmanagement-Tools',
     baslik: 'Team Management Panel',
     aciklama: 'Zentrales Tool-Panel für OneTeam-Partner zur Verwaltung ihrer Organisation.',
@@ -43,6 +47,7 @@ const I18N = {
   },
   nl: {
     anasayfa: 'Home',
+    geri: 'Terug',
     kicker: 'Veldbeheer Tools',
     baslik: 'Team Management Paneel',
     aciklama: 'Centraal toolspaneel voor OneTeam-partners om hun organisatie te beheren.',
@@ -101,6 +106,7 @@ const MODULLER = [
 
 const EkipYonetimSayfasi = () => {
   const navigate = useNavigate();
+  const geri = useSmartBack('/');
   const { lang } = useTranslation();
   const { currentUser } = useData();
   const tr = I18N[lang] || I18N.tr;
@@ -134,9 +140,9 @@ const EkipYonetimSayfasi = () => {
       <div className="relative container mx-auto px-4 py-6 sm:py-10">
         {/* Top bar */}
         <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
-          <button onClick={() => navigate('/')}
+          <button onClick={geri}
             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap">
-            <ArrowLeft className="w-4 h-4" /> {tr.anasayfa}
+            <ArrowLeft className="w-4 h-4" /> {tr.geri || tr.anasayfa}
           </button>
           <LanguageSwitcher />
         </div>

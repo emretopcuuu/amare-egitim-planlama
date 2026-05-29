@@ -13,6 +13,7 @@ import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
 import { haptic } from '../utils/mobileHelpers';
 import { useInfiniteScroll } from '../utils/useInfiniteScroll';
+import { useSmartBack } from '../utils/navigation';
 import LazyImage from '../components/LazyImage';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
 
@@ -33,6 +34,7 @@ const splitEgitmen = (e) => {
 const KonusmacilarSayfasi = () => {
   useDocumentTitle('Eğitmenler', 'Tüm eğitmenler · uzmanlık alanları');
   const navigate = useNavigate();
+  const geri = useSmartBack('/takvim');
   const { takvim, konusmacilar, loading } = useData();
   const { t } = useTranslation();
   const [arama, setArama] = useState('');
@@ -160,9 +162,9 @@ const KonusmacilarSayfasi = () => {
         style={{ transform: `translateY(${pullY * 0.5}px)` }}>
         <div className="container mx-auto max-w-7xl">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
-            <button onClick={() => navigate('/takvim')} aria-label="Takvime dön"
+            <button onClick={geri} aria-label="Geri"
               className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
-              <ArrowLeft className="w-4 h-4 mr-1.5" />Takvim
+              <ArrowLeft className="w-4 h-4 mr-1.5" />Geri
             </button>
             <LanguageSwitcher />
           </div>

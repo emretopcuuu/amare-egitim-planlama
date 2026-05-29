@@ -12,10 +12,12 @@ import { db } from '../utils/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { makeCoreId, useData } from '../context/DataContext';
 import KonusmaciFullModal from '../components/KonusmaciFullModal';
+import { useSmartBack } from '../utils/navigation';
 
 const I18N = {
   tr: {
     anasayfa: 'Hakkımızda',
+    geri: 'Geri',
     kicker: 'OneTeam Liderleri',
     baslik: 'Yürütme Kurulu',
     aciklama: 'OneTeam ekosistemini yönlendiren, vizyonu hayata geçiren liderler.',
@@ -24,6 +26,7 @@ const I18N = {
   },
   en: {
     anasayfa: 'About',
+    geri: 'Back',
     kicker: 'OneTeam Leaders',
     baslik: 'Executive Board',
     aciklama: 'The leaders shaping the OneTeam ecosystem and bringing the vision to life.',
@@ -32,6 +35,7 @@ const I18N = {
   },
   de: {
     anasayfa: 'Über uns',
+    geri: 'Zurück',
     kicker: 'OneTeam-Führung',
     baslik: 'Exekutivausschuss',
     aciklama: 'Die Führungskräfte, die das OneTeam-Ökosystem gestalten und die Vision zum Leben erwecken.',
@@ -40,6 +44,7 @@ const I18N = {
   },
   nl: {
     anasayfa: 'Over ons',
+    geri: 'Terug',
     kicker: 'OneTeam Leiders',
     baslik: 'Uitvoerend Bestuur',
     aciklama: 'De leiders die het OneTeam-ecosysteem vormgeven en de visie tot leven brengen.',
@@ -50,6 +55,7 @@ const I18N = {
 
 const YurutmekuruluSayfasi = () => {
   const navigate = useNavigate();
+  const geri = useSmartBack('/hakkimizda');
   const { lang } = useTranslation();
   const tr = I18N[lang] || I18N.tr;
   const { takvim } = useData();
@@ -98,9 +104,9 @@ const YurutmekuruluSayfasi = () => {
       <div className="relative container mx-auto px-4 py-6 sm:py-10 max-w-6xl">
         {/* Top bar */}
         <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
-          <button onClick={() => navigate('/hakkimizda')}
+          <button onClick={geri}
             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap">
-            <ArrowLeft className="w-4 h-4" /> {tr.anasayfa}
+            <ArrowLeft className="w-4 h-4" /> {tr.geri || tr.anasayfa}
           </button>
           <LanguageSwitcher />
         </div>

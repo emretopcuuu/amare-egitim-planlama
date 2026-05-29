@@ -18,6 +18,7 @@ import { collection, query, where, getDocs, doc, getDoc, deleteDoc, onSnapshot }
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
+import { useSmartBack } from '../utils/navigation';
 import UyeGirisModal from '../components/UyeGirisModal';
 import EgitmenAnalyticsKart from '../components/EgitmenAnalyticsKart';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
@@ -67,6 +68,7 @@ function formatTarih(iso) {
 const Profil = () => {
   useDocumentTitle('Profilim', 'Eğitim yolun, ilerlemen, Marka Ortaklığı bilgilerin');
   const navigate = useNavigate();
+  const geri = useSmartBack('/takvim');
   const { currentUser, uid, isAnonymous, isAuthenticated, displayName, email, ready } = useAuth();
   const { konusmacilar } = useData();
   const { t } = useTranslation();
@@ -521,8 +523,8 @@ const Profil = () => {
     return (
       <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
         <div className="max-w-3xl mx-auto px-4 pt-6">
-          <button onClick={() => navigate('/takvim')} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
-            <ArrowLeft className="w-4 h-4 mr-1.5" /> Takvim
+          <button onClick={geri} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Geri
           </button>
         </div>
         <div className="max-w-md mx-auto mt-12 px-4">
@@ -565,8 +567,8 @@ const Profil = () => {
     return (
       <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
         <div className="max-w-3xl mx-auto flex items-center justify-between px-4 pt-6">
-          <button onClick={() => navigate('/takvim')} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
-            <ArrowLeft className="w-4 h-4 mr-1.5" /> Takvim
+          <button onClick={geri} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Geri
           </button>
           <button onClick={() => signOut(auth).then(() => navigate('/takvim'))}
             className="bg-white/10 hover:bg-white/20 border border-white/20 text-white p-2 rounded-xl transition spring-tap" title="Çıkış yap">
@@ -668,8 +670,8 @@ const Profil = () => {
 
       {/* Header — takvim sayfasıyla aynı stil */}
       <div className="max-w-3xl mx-auto flex items-center justify-between px-4 pt-6">
-        <button onClick={() => navigate('/takvim')} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
-          <ArrowLeft className="w-4 h-4 mr-1.5" /> Takvim
+        <button onClick={geri} className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
+          <ArrowLeft className="w-4 h-4 mr-1.5" /> Geri
         </button>
         <div className="flex items-center gap-2">
           <button onClick={() => setWrappedAcik(true)}

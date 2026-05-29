@@ -19,10 +19,12 @@ import { db, auth, googleProvider } from '../utils/firebase';
 import { signInWithPopup, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { getKomisyon, canEditKomisyon, turetAdminEmails } from '../utils/komisyonlar';
+import { useSmartBack } from '../utils/navigation';
 
 const I18N = {
   tr: {
     komisyonlar: 'Komisyonlar',
+    geri: 'Geri',
     duzenle: 'Düzenle',
     aktifKomisyon: 'Aktif Komisyon',
     kurulumAsamasinda: 'Kurulum Aşamasında',
@@ -71,6 +73,7 @@ const I18N = {
   },
   en: {
     komisyonlar: 'Committees',
+    geri: 'Back',
     duzenle: 'Edit',
     aktifKomisyon: 'Active Committee',
     kurulumAsamasinda: 'Being Established',
@@ -119,6 +122,7 @@ const I18N = {
   },
   de: {
     komisyonlar: 'Ausschüsse',
+    geri: 'Zurück',
     duzenle: 'Bearbeiten',
     aktifKomisyon: 'Aktiver Ausschuss',
     kurulumAsamasinda: 'Im Aufbau',
@@ -167,6 +171,7 @@ const I18N = {
   },
   nl: {
     komisyonlar: 'Commissies',
+    geri: 'Terug',
     duzenle: 'Bewerken',
     aktifKomisyon: 'Actieve Commissie',
     kurulumAsamasinda: 'In Opbouw',
@@ -225,6 +230,7 @@ const BOS_ICERIK = {
 const KomisyonDetay = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const geri = useSmartBack('/komisyonlar');
   const { currentUser } = useData();
   const { lang } = useTranslation();
   const tr = I18N[lang] || I18N.tr;
@@ -436,9 +442,9 @@ const KomisyonDetay = () => {
       <div className="relative container mx-auto px-4 py-6 sm:py-10 max-w-4xl">
         {/* Top bar */}
         <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
-          <button onClick={() => navigate('/komisyonlar')}
+          <button onClick={geri}
             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap">
-            <ArrowLeft className="w-4 h-4" /> {tr.komisyonlar}
+            <ArrowLeft className="w-4 h-4" /> {tr.geri || tr.komisyonlar}
           </button>
           <div className="flex items-center gap-2">
             {/* Düzenle butonu — sadece Emre görür */}

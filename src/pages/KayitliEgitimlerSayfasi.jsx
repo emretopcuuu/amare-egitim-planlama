@@ -18,6 +18,7 @@ import PopulerAnlar from '../components/PopulerAnlar';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from '../context/LanguageContext';
+import { useSmartBack } from '../utils/navigation';
 import { useToast } from '../components/Toast';
 import { haptic, nativeShare } from '../utils/mobileHelpers';
 import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
@@ -176,6 +177,7 @@ function saveList(key, list) {
 const KayitliEgitimlerSayfasi = () => {
   useDocumentTitle('Kayıtlı Eğitimler', '900+ video kütüphanesi · 14 kategori');
   const navigate = useNavigate();
+  const geri = useSmartBack('/takvim');
   const { toast } = useToast();
   const { t, tDynamic, translateBatch, lang } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -727,9 +729,9 @@ const KayitliEgitimlerSayfasi = () => {
       <div className="pt-6 pb-3 px-4 sticky top-0 z-30 bg-gradient-to-b from-purple-900/95 to-purple-900/85 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto max-w-7xl">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-            <button onClick={() => navigate('/takvim')} aria-label="Takvime dön"
+            <button onClick={geri} aria-label="Geri"
               className="flex items-center text-white/70 hover:text-white text-sm spring-tap p-1">
-              <ArrowLeft className="w-4 h-4 mr-1.5" />Takvim
+              <ArrowLeft className="w-4 h-4 mr-1.5" />Geri
             </button>
             <LanguageSwitcher />
           </div>

@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
+import { useSmartBack } from '../utils/navigation';
 
 const SIRA_ICON = {
   1: { Icon: Crown,  renk: 'text-amber-300', bg: 'bg-amber-500/20' },
@@ -25,6 +26,7 @@ const KATEGORILER = [
 const LiderlerSayfasi = () => {
   useDocumentTitle('Liderler', 'En aktif sponsorlar, izleyiciler ve videolar');
   const navigate = useNavigate();
+  const geri = useSmartBack('/takvim');
   const [veri, setVeri] = useState(null);
   const [aktifKat, setAktifKat] = useState('sponsor');
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -57,9 +59,9 @@ const LiderlerSayfasi = () => {
       )}
       {/* Header */}
       <div className="max-w-5xl mx-auto flex items-center justify-between px-4 pt-6">
-        <button onClick={() => navigate('/takvim')}
+        <button onClick={geri}
           className="flex items-center text-white/70 hover:text-white text-sm spring-tap">
-          <ArrowLeft className="w-4 h-4 mr-1.5" /> Takvim
+          <ArrowLeft className="w-4 h-4 mr-1.5" /> Geri
         </button>
       </div>
 

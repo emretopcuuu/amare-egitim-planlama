@@ -7,10 +7,12 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Target, Compass, GraduationCap, Building2, Crown, ArrowRight } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
+import { useSmartBack } from '../utils/navigation';
 
 const I18N = {
   tr: {
     anasayfa: 'Anasayfa',
+    geri: 'Geri',
     kicker: 'One Team',
     baslikSol: 'Girişimcilik',
     baslikSag: 'Ekosistemi',
@@ -37,6 +39,7 @@ const I18N = {
   },
   en: {
     anasayfa: 'Home',
+    geri: 'Back',
     kicker: 'One Team',
     baslikSol: 'Entrepreneurship',
     baslikSag: 'Ecosystem',
@@ -63,6 +66,7 @@ const I18N = {
   },
   de: {
     anasayfa: 'Startseite',
+    geri: 'Zurück',
     kicker: 'One Team',
     baslikSol: 'Unternehmer',
     baslikSag: 'Ökosystem',
@@ -89,6 +93,7 @@ const I18N = {
   },
   nl: {
     anasayfa: 'Home',
+    geri: 'Terug',
     kicker: 'One Team',
     baslikSol: 'Ondernemers',
     baslikSag: 'Ecosysteem',
@@ -117,6 +122,7 @@ const I18N = {
 
 const HakkimizdaSayfasi = () => {
   const navigate = useNavigate();
+  const geri = useSmartBack('/');
   const { lang } = useTranslation();
   const tr = I18N[lang] || I18N.tr;
 
@@ -131,9 +137,9 @@ const HakkimizdaSayfasi = () => {
       <div className="relative container mx-auto px-4 py-6 sm:py-10 max-w-4xl">
         {/* Top bar */}
         <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
-          <button onClick={() => navigate('/')}
+          <button onClick={geri}
             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap">
-            <ArrowLeft className="w-4 h-4" /> {tr.anasayfa}
+            <ArrowLeft className="w-4 h-4" /> {tr.geri || tr.anasayfa}
           </button>
           <LanguageSwitcher />
         </div>

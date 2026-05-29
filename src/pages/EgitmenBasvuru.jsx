@@ -4,6 +4,7 @@ import { useData } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useSmartBack } from '../utils/navigation';
 
 const TRAINING_KEYS = [
   'training_beginner', 'training_product', 'training_objection',
@@ -27,6 +28,7 @@ const DAYS_TR = ['Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma'];
 
 const EgitmenBasvuru = () => {
   const navigate = useNavigate();
+  const geri = useSmartBack('/');
   const { egitmenEkle } = useData();
   const { t } = useTranslation();
   const [submitted, setSubmitted] = useState(false);
@@ -121,7 +123,7 @@ const EgitmenBasvuru = () => {
         <div className="bg-white rounded-2xl shadow-2xl p-8 mb-8">
           <div className="flex items-center justify-between mb-6">
             <button
-              onClick={() => navigate('/')}
+              onClick={geri}
               className="flex items-center text-amare-purple hover:text-amare-dark"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />

@@ -4,6 +4,7 @@ import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw, LogIn, LogOut, UserCircle } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
+import { useSmartBack } from '../utils/navigation';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import EventActions from '../components/EventActions';
 import KonusmaciFullModal from '../components/KonusmaciFullModal';
@@ -409,6 +410,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
 const TakvimView = () => {
   useDocumentTitle('Eğitim Takvimi', 'Bu hafta ve gelecekteki canlı eğitimler');
   const navigate = useNavigate();
+  const geri = useSmartBack('/');
   const { takvim, takvimYayinlandi, loading, konusmacilar, hatirlatmaSayilari } = useData();
   const { t, locale, tDynamic, translateBatch, lang } = useTranslation();
   const contentRef = useRef(null); // sayfa scroll ref
@@ -898,7 +900,7 @@ const TakvimView = () => {
         <div className="pt-6 pb-2 px-4">
           <div className="container mx-auto max-w-7xl">
             <div className="flex flex-wrap items-center justify-between gap-2" data-no-pdf>
-              <button onClick={()=>navigate('/')} className="flex items-center text-white/70 hover:text-white text-sm"><ArrowLeft className="w-4 h-4 mr-1.5" />{t('back')}</button>
+              <button onClick={geri} className="flex items-center text-white/70 hover:text-white text-sm"><ArrowLeft className="w-4 h-4 mr-1.5" />{t('back')}</button>
               <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 <LanguageSwitcher />
                 {/* Bu butonlar mobile'da bottom nav ile duplicate — sadece md+ ekranlarda göster */}

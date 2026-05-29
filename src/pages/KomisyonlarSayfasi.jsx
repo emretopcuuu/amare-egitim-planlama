@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, Award, Users2 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
+import { useSmartBack } from '../utils/navigation';
 import { KOMISYONLAR } from '../utils/komisyonlar';
 import { db } from '../utils/firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
@@ -16,6 +17,7 @@ import { makeCoreId } from '../context/DataContext';
 const I18N = {
   tr: {
     anasayfa: 'Anasayfa',
+    geri: 'Geri',
     kicker: 'One Team Komisyonlar',
     aciklamaBasi: 'OneTeam Yürütme Kurulu tarafından kurulan komisyonlar, iş ortaklarımızın',
     gelisim: 'gelişimine',
@@ -33,6 +35,7 @@ const I18N = {
   },
   en: {
     anasayfa: 'Home',
+    geri: 'Back',
     kicker: 'One Team Committees',
     aciklamaBasi: 'Committees established by the OneTeam Executive Board serve our partners’',
     gelisim: 'development',
@@ -50,6 +53,7 @@ const I18N = {
   },
   de: {
     anasayfa: 'Startseite',
+    geri: 'Zurück',
     kicker: 'One Team Ausschüsse',
     aciklamaBasi: 'Die vom OneTeam-Exekutivausschuss eingerichteten Komitees dienen der',
     gelisim: 'Entwicklung',
@@ -67,6 +71,7 @@ const I18N = {
   },
   nl: {
     anasayfa: 'Home',
+    geri: 'Terug',
     kicker: 'One Team Commissies',
     aciklamaBasi: 'Door het OneTeam Uitvoerend Bestuur opgerichte commissies dienen de',
     gelisim: 'ontwikkeling',
@@ -86,6 +91,7 @@ const I18N = {
 
 const KomisyonlarSayfasi = () => {
   const navigate = useNavigate();
+  const geri = useSmartBack('/');
   const { lang } = useTranslation();
   const tr = I18N[lang] || I18N.tr;
 
@@ -159,9 +165,9 @@ const KomisyonlarSayfasi = () => {
       <div className="relative container mx-auto px-4 py-6 sm:py-10">
         {/* Top bar */}
         <div className="flex justify-between items-center mb-8 flex-wrap gap-2">
-          <button onClick={() => navigate('/')}
+          <button onClick={geri}
             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap">
-            <ArrowLeft className="w-4 h-4" /> {tr.anasayfa}
+            <ArrowLeft className="w-4 h-4" /> {tr.geri || tr.anasayfa}
           </button>
           <LanguageSwitcher />
         </div>
