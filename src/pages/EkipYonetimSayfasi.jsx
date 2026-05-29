@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator, Video } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
@@ -121,6 +121,27 @@ const MODULLER = [
     link: 'https://hesaplayici.oneteamglobal.ai/',
     renk: 'amber',
   },
+  {
+    id: 'kayitli-egitimler',
+    ad: {
+      tr: 'Kayıtlı Eğitimler',
+      en: 'Recorded Trainings',
+      de: 'Aufgezeichnete Schulungen',
+      nl: 'Opgenomen Trainingen',
+    },
+    kisaltma: 'KE',
+    aciklama: {
+      tr: 'Geçmiş eğitimlerin video arşivi ve AI destekli arama.',
+      en: 'Archive of past training videos with AI-assisted search.',
+      de: 'Archiv vergangener Schulungsvideos mit KI-gestützter Suche.',
+      nl: 'Archief van eerdere trainingsvideo\'s met AI-ondersteund zoeken.',
+    },
+    icon: Video,
+    aktif: true,
+    link: '/kayitli-egitimler',
+    internal: true, // SPA içi sayfa — aynı sekmede aç
+    renk: 'amber',
+  },
   // İleride buraya yeni modüller eklenecek
 ];
 
@@ -212,9 +233,12 @@ const EkipYonetimSayfasi = () => {
               <a
                 key={m.id}
                 href={m.aktif ? linkOlustur(m) : '#'}
-                target={m.aktif ? '_blank' : undefined}
-                rel={m.aktif ? 'noopener noreferrer' : undefined}
-                onClick={(e) => { if (!m.aktif) e.preventDefault(); }}
+                target={m.aktif && !m.internal ? '_blank' : undefined}
+                rel={m.aktif && !m.internal ? 'noopener noreferrer' : undefined}
+                onClick={(e) => {
+                  if (!m.aktif) { e.preventDefault(); return; }
+                  if (m.internal) { e.preventDefault(); navigate(m.link); }
+                }}
                 className={`group relative overflow-hidden bg-white/10 backdrop-blur-md border rounded-2xl p-6 transition-all duration-300 spring-tap text-left shadow-xl ${
                   m.aktif
                     ? 'hover:bg-white/15 border-amber-300/40 hover:border-amber-300/70 hover:shadow-amber-500/20 cursor-pointer'
@@ -258,7 +282,7 @@ const EkipYonetimSayfasi = () => {
                     m.aktif ? 'text-amber-300' : 'text-purple-200/60'
                   }`}>
                     {m.aktif ? tr.detaylariGor : tr.kuruluyorBadge}
-                    {m.aktif && <ExternalLink className="w-3 h-3" />}
+                    {m.aktif && !m.internal && <ExternalLink className="w-3 h-3" />}
                   </span>
                   {m.aktif ? (
                     <ArrowRight className="w-4 h-4 text-amber-300 transition-transform group-hover:translate-x-1" />
