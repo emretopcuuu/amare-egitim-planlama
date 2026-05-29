@@ -4,9 +4,10 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
+import { useData } from '../context/DataContext';
 
 // Çok dilli metinler
 const I18N = {
@@ -74,15 +75,53 @@ const MODULLER = [
     link: 'https://hbb.oneteamglobal.ai/',
     renk: 'amber',
   },
+  {
+    id: 'asistan',
+    ad: {
+      tr: 'OneTeam Asistan',
+      en: 'OneTeam Assistant',
+      de: 'OneTeam Assistent',
+      nl: 'OneTeam Assistent',
+    },
+    kisaltma: 'AI',
+    aciklama: {
+      tr: 'Eğitim ve organizasyon süreçlerinde AI destekli kişisel asistan.',
+      en: 'AI-powered personal assistant for training and organization tasks.',
+      de: 'KI-gestützter Assistent für Schulungs- und Organisationsaufgaben.',
+      nl: 'AI-aangedreven assistent voor training en organisatietaken.',
+    },
+    icon: Bot,
+    aktif: true,
+    link: 'https://asistan.oneteamglobal.ai/',
+    renk: 'amber',
+    sso: true, // giriş yapmış kullanıcının emaili query param olarak iletilir
+  },
   // İleride buraya yeni modüller eklenecek
 ];
 
 const EkipYonetimSayfasi = () => {
   const navigate = useNavigate();
   const { lang } = useTranslation();
+  const { currentUser } = useData();
   const tr = I18N[lang] || I18N.tr;
 
   const aktifSayisi = MODULLER.filter(m => m.aktif).length;
+
+  // SSO destekli modüller için kullanıcının emailini URL'e ekle.
+  // Asistan tarafı bu parametreyi okuyup otomatik oturum açar — böylece
+  // kullanıcı her seferinde manuel giriş yapmadan geçmişine devam eder.
+  const linkOlustur = (m) => {
+    if (!m.sso || !currentUser?.email) return m.link;
+    try {
+      const u = new URL(m.link);
+      u.searchParams.set('email', currentUser.email);
+      // Kaynak izleme: hangi sistemden geldiğini asistan tarafı bilsin
+      u.searchParams.set('source', 'egitim-takvimi');
+      return u.toString();
+    } catch {
+      return m.link;
+    }
+  };
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950 relative">
@@ -146,7 +185,7 @@ const EkipYonetimSayfasi = () => {
             return (
               <a
                 key={m.id}
-                href={m.aktif ? m.link : '#'}
+                href={m.aktif ? linkOlustur(m) : '#'}
                 target={m.aktif ? '_blank' : undefined}
                 rel={m.aktif ? 'noopener noreferrer' : undefined}
                 onClick={(e) => { if (!m.aktif) e.preventDefault(); }}
