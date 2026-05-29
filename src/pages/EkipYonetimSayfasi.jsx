@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
@@ -100,6 +100,26 @@ const MODULLER = [
     link: 'https://asistan.oneteamglobal.ai/',
     renk: 'amber',
     sso: true, // giriş yapmış kullanıcının emaili query param olarak iletilir
+  },
+  {
+    id: 'hesaplayici',
+    ad: {
+      tr: 'OneTeam Hesaplayıcı',
+      en: 'OneTeam Calculator',
+      de: 'OneTeam Rechner',
+      nl: 'OneTeam Rekenmachine',
+    },
+    kisaltma: 'CALC',
+    aciklama: {
+      tr: 'Kazanç, prim ve performans hesaplamaları için araç.',
+      en: 'Tool for earnings, bonus and performance calculations.',
+      de: 'Tool für Verdienst-, Bonus- und Leistungsberechnungen.',
+      nl: 'Tool voor verdiensten-, bonus- en prestatieberekeningen.',
+    },
+    icon: Calculator,
+    aktif: true,
+    link: 'https://hesaplayici.oneteamglobal.ai/',
+    renk: 'amber',
   },
   // İleride buraya yeni modüller eklenecek
 ];
