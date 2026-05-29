@@ -108,12 +108,17 @@ const HakkimizdaSayfasi = () => {
 
         {/* HERO */}
         <div className="text-center mb-12 sm:mb-16 animate-fade-in">
-          {/* OneTeam logo + halo */}
+          {/* OneTeam logo — transparent + halo glow */}
           <div className="relative inline-block mb-6">
-            <div className="absolute -inset-6 bg-amber-400/30 blur-3xl pointer-events-none" />
-            <div className="relative inline-flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-amber-400/30 to-amber-600/20 border-2 border-amber-300/40 backdrop-blur-md shadow-2xl">
-              <img src="/logos/oneteam-logo.png" alt="OneTeam" className="w-14 h-14 sm:w-16 sm:h-16 object-contain drop-shadow-lg" />
-            </div>
+            <div className="absolute -inset-6 bg-amber-400/20 blur-3xl pointer-events-none" />
+            <img
+              src="/logos/oneteam-logo.png"
+              alt="OneTeam"
+              className="relative w-24 sm:w-28 md:w-32 h-auto"
+              style={{
+                filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
+              }}
+            />
           </div>
 
           {/* Kicker */}
