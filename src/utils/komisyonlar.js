@@ -41,12 +41,12 @@ export const KOMISYONLAR = [
   },
   {
     id: 'teknoloji',
-    ad: 'OneTeam Teknoloji ve Sosyal Medya Komisyonu',
-    kisaAd: 'Teknoloji & Sosyal Medya',
+    ad: 'OneTeam Teknoloji Komisyonu',
+    kisaAd: 'Teknoloji',
     aciklama: 'Dijital platformlar ve içerik üretimi',
     icon: Smartphone,
     aktif: false,
-    tagline: 'Dijital varlığımızı güçlendirir, sosyal medya stratejileri üretir',
+    tagline: 'Dijital varlığımızı güçlendirir, teknolojik altyapı kurar',
     renk: 'cyan',
   },
   {
