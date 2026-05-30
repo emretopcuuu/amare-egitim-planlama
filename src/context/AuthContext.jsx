@@ -23,6 +23,14 @@ export function AuthProvider({ children }) {
         // Mevcut kullanıcı var — anonim veya email
         setCurrentUser(user);
         setReady(true);
+        // SSO köprüsü: gerçek (anonim olmayan, email'li) kullanıcı → .oneteamglobal.ai
+        // ortak Supabase oturumu kur (HBB/90gün/CRM/Presidential otomatik girişli olsun).
+        // Lazy import: supabase-js sadece gerçek giriş olunca yüklenir, anonim yolu etkilenmez.
+        if (!user.isAnonymous && user.email) {
+          import('../utils/ssoBridge')
+            .then((m) => m.bridgeToSupabase(user))
+            .catch(() => {});
+        }
       } else {
         // Hiçbir kullanıcı yok → otomatik anonim signIn
         try {
