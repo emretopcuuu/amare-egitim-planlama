@@ -104,7 +104,23 @@ const KomisyonlarSayfasi = () => {
   // Skeleton loading state — başkan kartları yüklenirken pulse placeholder göster
   const [yukleniyor, setYukleniyor] = useState(true);
 
+  // localStorage cache (SWR pattern) — sadece listing için gerekli olanlar
+  const CACHE_KEY = 'amare_komisyonlar_listing_v1';
+  const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 gün
+
   useEffect(() => {
+    // 1. Cache'den anında göster
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (cached?.baskanlar && Date.now() - (cached.ts || 0) < CACHE_TTL) {
+        setBaskanlar(cached.baskanlar);
+        setIcerikler(cached.icerikler || {});
+        setFreshFotolar(cached.freshFotolar || {});
+        setYukleniyor(false);
+      }
+    } catch { /* yok say */ }
+
+    // 2. Fresh fetch arka planda — sessizce güncelle
     (async () => {
       try {
         const snap = await getDocs(collection(db, 'komisyonlar'));
@@ -114,7 +130,10 @@ const KomisyonlarSayfasi = () => {
           const data = d.data();
           const uyeler = Array.isArray(data.uyeler) ? data.uyeler : [];
           const baskan = uyeler.find(u => u.unvan === 'Komisyon Başkanı');
-          if (baskan) map[d.id] = baskan;
+          if (baskan) {
+            // Sadece listing için gerekli alanları sakla (fotoURL büyük, ayrıca freshFotolar'dan gelir)
+            map[d.id] = { ad: baskan.ad, coreId: baskan.coreId, unvan: baskan.unvan, fotoURL: baskan.fotoURL };
+          }
           icerikMap[d.id] = {
             ozet: data.ozet || '',
             uyeSayisi: uyeler.length,
@@ -128,8 +147,8 @@ const KomisyonlarSayfasi = () => {
         const coreIds = [...new Set(
           Object.values(map).map(b => b.coreId || makeCoreId(b.ad)).filter(Boolean)
         )];
+        let freshMap = {};
         if (coreIds.length > 0) {
-          const freshMap = {};
           await Promise.all(coreIds.map(async (cid) => {
             try {
               const ksnap = await getDoc(doc(db, 'konusmacilar', cid));
@@ -140,6 +159,16 @@ const KomisyonlarSayfasi = () => {
             } catch {}
           }));
           setFreshFotolar(freshMap);
+        }
+
+        // Cache yaz (sadece listing için gerekli alanlar — kompakt)
+        try {
+          const json = JSON.stringify({
+            baskanlar: map, icerikler: icerikMap, freshFotolar: freshMap, ts: Date.now(),
+          });
+          if (json.length < 4.5 * 1024 * 1024) localStorage.setItem(CACHE_KEY, json);
+        } catch (e) {
+          console.warn('[komisyonlar cache]', e.message);
         }
       } catch (e) {
         console.warn('[komisyonlar] baskan yuklenemedi:', e.message);

@@ -9,7 +9,7 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useSmartBack } from '../utils/navigation';
 import { db } from '../utils/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
 import { YURUTME_KURULU } from '../utils/yurutmeKurulu';
 import { makeCoreId } from '../context/DataContext';
 
@@ -130,32 +130,69 @@ const HakkimizdaSayfasi = () => {
   const { lang } = useTranslation();
   const tr = I18N[lang] || I18N.tr;
 
-  // Yürütme Kurulu fotoğraflarını prefetch — kullanıcı YK'ya tıklarsa cache hazır
+  // Yürütme Kurulu + Komisyonlar verilerini prefetch — kullanıcı tıklarsa cache hazır
   // Sadece cache yoksa veya eskidiyse fetch et; idle-time'da çalıştır.
   useEffect(() => {
-    const CACHE_KEY = 'amare_yurutme_konusmacilar_v1';
-    const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
-    try {
-      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-      if (cached?.data && Date.now() - (cached.ts || 0) < CACHE_TTL) return; // taze, atla
-    } catch { /* yok say */ }
+    const TTL = 7 * 24 * 60 * 60 * 1000;
+    const YK_KEY = 'amare_yurutme_konusmacilar_v1';
+    const KOM_KEY = 'amare_komisyonlar_listing_v1';
 
-    const prefetch = async () => {
+    const isCacheTaze = (key) => {
+      try {
+        const c = JSON.parse(localStorage.getItem(key) || 'null');
+        return c && Date.now() - (c.ts || 0) < TTL;
+      } catch { return false; }
+    };
+
+    const prefetchYK = async () => {
+      if (isCacheTaze(YK_KEY)) return;
       try {
         const snap = await getDocs(collection(db, 'konusmacilar'));
         const ykIds = new Set(YURUTME_KURULU.map(u => u.coreId || makeCoreId(u.ad)));
         const slim = {};
         snap.forEach(d => { if (ykIds.has(d.id)) slim[d.id] = { id: d.id, ...d.data() }; });
         const json = JSON.stringify({ data: slim, ts: Date.now() });
-        if (json.length < 4.5 * 1024 * 1024) localStorage.setItem(CACHE_KEY, json);
-      } catch { /* sessiz başarısız */ }
+        if (json.length < 4.5 * 1024 * 1024) localStorage.setItem(YK_KEY, json);
+      } catch { /* sessiz */ }
     };
-    // Idle callback varsa kullan, yoksa setTimeout fallback
+
+    const prefetchKomisyonlar = async () => {
+      if (isCacheTaze(KOM_KEY)) return;
+      try {
+        const snap = await getDocs(collection(db, 'komisyonlar'));
+        const baskanlar = {};
+        const icerikler = {};
+        snap.forEach(d => {
+          const data = d.data();
+          const uyeler = Array.isArray(data.uyeler) ? data.uyeler : [];
+          const b = uyeler.find(u => u.unvan === 'Komisyon Başkanı');
+          if (b) baskanlar[d.id] = { ad: b.ad, coreId: b.coreId, unvan: b.unvan, fotoURL: b.fotoURL };
+          icerikler[d.id] = { ozet: data.ozet || '', uyeSayisi: uyeler.length };
+        });
+        // Başkanların fresh fotosunu çek
+        const coreIds = [...new Set(Object.values(baskanlar).map(b => b.coreId || makeCoreId(b.ad)).filter(Boolean))];
+        const freshFotolar = {};
+        await Promise.all(coreIds.map(async cid => {
+          try {
+            const ks = await getDoc(doc(db, 'konusmacilar', cid));
+            if (ks.exists()) {
+              const k = ks.data();
+              if (k.fotoURL) freshFotolar[cid] = { fotoURL: k.fotoURL, ad: k.ad };
+            }
+          } catch {}
+        }));
+        const json = JSON.stringify({ baskanlar, icerikler, freshFotolar, ts: Date.now() });
+        if (json.length < 4.5 * 1024 * 1024) localStorage.setItem(KOM_KEY, json);
+      } catch { /* sessiz */ }
+    };
+
+    const runAll = () => { prefetchYK(); prefetchKomisyonlar(); };
+
     if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(prefetch, { timeout: 3000 });
+      const id = window.requestIdleCallback(runAll, { timeout: 3000 });
       return () => window.cancelIdleCallback?.(id);
     }
-    const t = setTimeout(prefetch, 1500);
+    const t = setTimeout(runAll, 1500);
     return () => clearTimeout(t);
   }, []);
 
