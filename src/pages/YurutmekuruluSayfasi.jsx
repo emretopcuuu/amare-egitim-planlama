@@ -65,15 +65,43 @@ const YurutmekuruluSayfasi = () => {
   // Seçili üye → KonusmaciFullModal açar
   const [seciliUye, setSeciliUye] = useState(null);
 
+  // localStorage cache — sadece YK üyelerinin foto+biyografisi (24 üye)
+  // Stale-while-revalidate: cache anında göster, arkada fresh fetch
+  const CACHE_KEY = 'amare_yurutme_konusmacilar_v1';
+  const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 gün
+
   useEffect(() => {
+    // 1. Cache'den oku — anında render
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (cached?.data && Date.now() - (cached.ts || 0) < CACHE_TTL) {
+        setKonusmacilar(cached.data);
+      }
+    } catch { /* yok say */ }
+
+    // 2. Fresh fetch arka planda — sessizce güncelle + cache yenile
     (async () => {
       try {
         const snap = await getDocs(collection(db, 'konusmacilar'));
+        const ykIds = new Set(YURUTME_KURULU.map(u => u.coreId || makeCoreId(u.ad)));
         const map = {};
         snap.forEach(d => {
           map[d.id] = { id: d.id, ...d.data() };
         });
         setKonusmacilar(map);
+        // Cache'e SADECE YK üyeleri (24 kişi) yaz — localStorage 5MB sınırı var
+        try {
+          const slim = {};
+          Object.entries(map).forEach(([cid, k]) => {
+            if (ykIds.has(cid)) slim[cid] = k;
+          });
+          const json = JSON.stringify({ data: slim, ts: Date.now() });
+          if (json.length < 4.5 * 1024 * 1024) {
+            localStorage.setItem(CACHE_KEY, json);
+          }
+        } catch (e) {
+          console.warn('[yurutme cache]', e.message);
+        }
       } catch (e) {
         console.warn('[yurutme] konuşmacılar yüklenemedi:', e.message);
       }

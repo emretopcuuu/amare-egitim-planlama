@@ -2,12 +2,16 @@
 // Misyon + Vizyon + ileride Değerler/Liderler/İletişim için geniş.
 // İçerik şimdilik hard-coded; ileride Firestore'a alınabilir.
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Target, Compass, GraduationCap, Building2, Crown, ArrowRight } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useSmartBack } from '../utils/navigation';
+import { db } from '../utils/firebase';
+import { collection, getDocs } from 'firebase/firestore';
+import { YURUTME_KURULU } from '../utils/yurutmeKurulu';
+import { makeCoreId } from '../context/DataContext';
 
 const I18N = {
   tr: {
@@ -125,6 +129,35 @@ const HakkimizdaSayfasi = () => {
   const geri = useSmartBack('/');
   const { lang } = useTranslation();
   const tr = I18N[lang] || I18N.tr;
+
+  // Yürütme Kurulu fotoğraflarını prefetch — kullanıcı YK'ya tıklarsa cache hazır
+  // Sadece cache yoksa veya eskidiyse fetch et; idle-time'da çalıştır.
+  useEffect(() => {
+    const CACHE_KEY = 'amare_yurutme_konusmacilar_v1';
+    const CACHE_TTL = 7 * 24 * 60 * 60 * 1000;
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (cached?.data && Date.now() - (cached.ts || 0) < CACHE_TTL) return; // taze, atla
+    } catch { /* yok say */ }
+
+    const prefetch = async () => {
+      try {
+        const snap = await getDocs(collection(db, 'konusmacilar'));
+        const ykIds = new Set(YURUTME_KURULU.map(u => u.coreId || makeCoreId(u.ad)));
+        const slim = {};
+        snap.forEach(d => { if (ykIds.has(d.id)) slim[d.id] = { id: d.id, ...d.data() }; });
+        const json = JSON.stringify({ data: slim, ts: Date.now() });
+        if (json.length < 4.5 * 1024 * 1024) localStorage.setItem(CACHE_KEY, json);
+      } catch { /* sessiz başarısız */ }
+    };
+    // Idle callback varsa kullan, yoksa setTimeout fallback
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(prefetch, { timeout: 3000 });
+      return () => window.cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(prefetch, 1500);
+    return () => clearTimeout(t);
+  }, []);
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950 relative">
