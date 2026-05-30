@@ -104,10 +104,10 @@ const MODULLER = [
   {
     id: 'hesaplayici',
     ad: {
-      tr: 'OneTeam Hesaplayıcı',
-      en: 'OneTeam Calculator',
-      de: 'OneTeam Rechner',
-      nl: 'OneTeam Rekenmachine',
+      tr: 'Müşteri Kazanç Hesaplayıcı',
+      en: 'Customer Earnings Calculator',
+      de: 'Kunden-Verdienstrechner',
+      nl: 'Klant Verdienstencalculator',
     },
     kisaltma: 'CALC',
     aciklama: {
