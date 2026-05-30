@@ -21,19 +21,26 @@ const HomePage = () => {
   // Login user için profil adını çek (users/{uid}.amareId → profil cache → full_name)
   useEffect(() => {
     if (!currentUser?.uid) { setProfilAdi(''); return; }
-    // 1. Hızlı: localStorage cache'te varsa kullan
+    const currentEmail = (currentUser.email || '').toLowerCase();
+    // 1. Hızlı: localStorage cache'te varsa kullan — AMA mutlaka email eşleşmeli
+    // Aksi halde bu cihazda önceki giriş yapmış başka birinin ismi görünür.
     const tryLocalCache = () => {
       try {
-        // amare_profil_v1_{amareId} keylerini tara
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
           if (k && k.startsWith('amare_profil_v1_')) {
             const raw = localStorage.getItem(k);
-            if (raw) {
-              const parsed = JSON.parse(raw);
-              const ad = parsed?.data?.amare?.full_name || parsed?.data?.member?.full_name;
-              if (ad) return ad;
-            }
+            if (!raw) continue;
+            const parsed = JSON.parse(raw);
+            // Email eşleşmesi zorunlu — yanlış kullanıcı cache'i alınmasın
+            const cacheEmail = (
+              parsed?.data?.amare?.email ||
+              parsed?.data?.member?.email ||
+              parsed?.data?.email || ''
+            ).toLowerCase();
+            if (!currentEmail || cacheEmail !== currentEmail) continue;
+            const ad = parsed?.data?.amare?.full_name || parsed?.data?.member?.full_name;
+            if (ad) return ad;
           }
         }
       } catch {}
@@ -62,7 +69,7 @@ const HomePage = () => {
         setProfilAdi(currentUser.displayName || currentUser.email?.split('@')[0] || 'Profilim');
       }
     })();
-  }, [currentUser?.uid]);
+  }, [currentUser?.uid, currentUser?.email]);
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 relative">
