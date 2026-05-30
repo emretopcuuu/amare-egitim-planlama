@@ -191,9 +191,9 @@ const HakkimizdaSayfasi = () => {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
             {[
-              { key: 'egitmenler', href: '/konusmacilar', icon: GraduationCap, baslik: tr.egitmenlerBaslik, aciklama: tr.egitmenlerAciklama },
-              { key: 'komisyonlar', href: '/komisyonlar', icon: Building2, baslik: tr.komisyonlarBaslik, aciklama: tr.komisyonlarAciklama },
               { key: 'yurutme', href: '/yurutmekurulu', icon: Crown, baslik: tr.yurutmeBaslik, aciklama: tr.yurutmeAciklama },
+              { key: 'komisyonlar', href: '/komisyonlar', icon: Building2, baslik: tr.komisyonlarBaslik, aciklama: tr.komisyonlarAciklama },
+              { key: 'egitmenler', href: '/konusmacilar', icon: GraduationCap, baslik: tr.egitmenlerBaslik, aciklama: tr.egitmenlerAciklama },
             ].map((s, idx) => {
               const Icon = s.icon;
               return (
