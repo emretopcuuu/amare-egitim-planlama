@@ -55,6 +55,15 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* ── Page-in (route transition) — kısa, hızlı, native hissi ── */
+  .animate-page-in {
+    animation: pageIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes pageIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
   /* ── Hero animated gradient mesh ──────────────────────── */
   /* Yavaş döner mor→altın gradient — premium atmosfer */
   .hero-mesh {

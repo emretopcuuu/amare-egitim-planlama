@@ -6,6 +6,8 @@ import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react'
 import { X, Calendar, Eye, Clock, Tag, Video as VideoIcon, Play } from 'lucide-react';
 import { useVimeoTimeTracker } from '../utils/useVimeoTimeTracker';
 import { updateProgress } from '../utils/watchProgress';
+import { confetti } from './Konfeti';
+import { useToast } from './Toast';
 import { vimeoSeekAndPlay } from '../utils/vimeoSeek';
 import { useAuth } from '../context/AuthContext';
 import VideoYildiz from './VideoYildiz';
@@ -52,6 +54,18 @@ const VideoOynatModal = ({ video, onClose, tumVideolar = [], onOynat, seekTo = n
     if (video?.id) updateProgress(video.id, seconds, duration);
   }, [video?.id]);
   useVimeoTimeTracker(iframeRef, video?.id, handleTimeUpdate);
+
+  // Video tamamlandı kutlaması — ilk kez %95+ olunca konfeti + toast
+  const { toast } = useToast();
+  useEffect(() => {
+    const onTamam = (e) => {
+      if (!video?.id || e.detail?.videoId !== video.id) return;
+      confetti({ count: 80, origin: { x: 0.5, y: 0.7 } });
+      toast('Tamamlandı! Bir adım daha 🌟', { type: 'success' });
+    };
+    window.addEventListener('video:tamamlandi', onTamam);
+    return () => window.removeEventListener('video:tamamlandi', onTamam);
+  }, [video?.id, toast]);
 
   // Hızlı currentTime — transcript highlight için (1sn throttle)
   useEffect(() => {

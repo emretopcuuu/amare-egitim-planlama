@@ -77,12 +77,19 @@ function PageViewTracker() {
   return null;
 }
 
+function PageTransitionWrapper({ children }) {
+  const location = useLocation();
+  // key değişince component yeniden mount olur, animate-page-in tetiklenir
+  return <div key={location.pathname} className="animate-page-in">{children}</div>;
+}
+
 function AppRoutes() {
   return (
     <BrowserRouter>
       <a href="#main-content" className="skip-link">İçeriğe atla</a>
       <PageViewTracker />
       <Suspense fallback={<LoadingProgress />}>
+        <PageTransitionWrapper>
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/egitmen-basvuru" element={<EgitmenBasvuru />} />
@@ -111,6 +118,7 @@ function AppRoutes() {
           />
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
+        </PageTransitionWrapper>
       </Suspense>
       <BottomNav />
       <PwaInstallBanner />

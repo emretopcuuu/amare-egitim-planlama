@@ -15,6 +15,8 @@ import KonusmaciFullModal from '../components/KonusmaciFullModal';
 import { useSmartBack } from '../utils/navigation';
 import { getSiteIcerik, saveSiteIcerik, isSiteAdmin } from '../utils/siteIcerik';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/Toast';
+import BosListe from '../components/BosListe';
 
 const I18N = {
   tr: {
@@ -63,6 +65,7 @@ const YurutmekuruluSayfasi = () => {
   const { takvim } = useData();
   const { user } = useAuth();
   const duzenleyebilir = isSiteAdmin(user?.email);
+  const { toast } = useToast();
 
   // Üye listesi — önce hard-coded default, sonra Firestore override
   const [uyeler, setUyeler] = useState(YURUTME_DEFAULT);
@@ -119,8 +122,9 @@ const YurutmekuruluSayfasi = () => {
       setEditMode(false);
       setDraftUyeler([]);
       setYeniUyeAd('');
+      toast('Liste güncellendi', { type: 'success' });
     } catch (e) {
-      alert('Kaydetme hatası: ' + e.message);
+      toast('Kaydedemedik, tekrar dener misin?', { type: 'error' });
     } finally {
       setKaydediliyor(false);
     }
@@ -344,10 +348,12 @@ const YurutmekuruluSayfasi = () => {
             })}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <UserIcon className="w-12 h-12 text-purple-400/40 mx-auto mb-3" />
-            <p className="text-purple-200/70">Yürütme Kurulu listesi hazırlanıyor.</p>
-          </div>
+          <BosListe
+            icon={Crown}
+            varyant="altın"
+            baslik="Liderler az sonra burada"
+            mesaj="Yürütme Kurulu listesi az sonra burada parıldayacak. Birkaç saniye dur."
+          />
         )}
 
         {/* Alt manifesto */}

@@ -19,6 +19,7 @@ import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { useSmartBack } from '../utils/navigation';
+import { useToast } from '../components/Toast';
 import UyeGirisModal from '../components/UyeGirisModal';
 import EgitmenAnalyticsKart from '../components/EgitmenAnalyticsKart';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
@@ -69,6 +70,7 @@ const Profil = () => {
   useDocumentTitle('Profilim', 'Eğitim yolun, ilerlemen, Marka Ortaklığı bilgilerin');
   const navigate = useNavigate();
   const geri = useSmartBack('/takvim');
+  const { toast } = useToast();
   const { currentUser, uid, isAnonymous, isAuthenticated, displayName, email, ready } = useAuth();
   const { konusmacilar } = useData();
   const { t } = useTranslation();
@@ -341,7 +343,7 @@ const Profil = () => {
         await deleteDoc(doc(db, 'bulten_aboneleri', abonelikler.bultenDocId));
         setAbonelikler(prev => ({ ...prev, bulten: false, bultenDocId: null }));
       } catch (e) {
-        alert('İptal başarısız: ' + e.message);
+        toast('Aboneliği kapatamadık, tekrar dener misin?', { type: 'error' });
       }
     } else {
       setBultenModalAcik(true);
@@ -361,7 +363,7 @@ const Profil = () => {
         setAbonelikler(prev => ({ ...prev, push: true }));
       }
     } catch (e) {
-      alert(e.message || 'İşlem başarısız');
+      toast(e.message || 'Bir terslik var, biraz sonra dene', { type: 'error' });
     } finally {
       setPushBusy(false);
     }
@@ -1556,7 +1558,7 @@ const WrappedKart = ({ onClose, fullName, rank, totalWatched, completedCount, fa
       catch {}
     } else {
       navigator.clipboard.writeText(text);
-      alert('Panoya kopyalandı!');
+      toast('Panoya kopyalandı', { type: 'success' });
     }
   };
 

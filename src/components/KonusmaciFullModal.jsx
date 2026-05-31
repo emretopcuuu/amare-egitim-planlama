@@ -10,6 +10,7 @@ import UyeGirisModal from './UyeGirisModal';
 import EgitmenSozleri from './EgitmenSozleri';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, limit as fbLimit, getDocs } from 'firebase/firestore';
+import { useSwipeToDismiss } from '../utils/useSwipeToDismiss';
 import { makeCoreId } from '../context/DataContext';
 import { useTakipEgitmenler } from '../utils/takip';
 import { useAuth } from '../context/AuthContext';
@@ -31,6 +32,7 @@ const splitEgitmen = (e) => {
 };
 
 const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) => {
+  const swipe = useSwipeToDismiss(onClose);
   const { t, locale, tDynamic, lang } = useTranslation();
   const [tab, setTab] = useState('gelecek'); // 'gelecek' | 'gecmis' | 'kayitli' | 'bio'
   const [takipModal, setTakipModal] = useState(false);
@@ -169,7 +171,14 @@ const KonusmaciFullModal = ({ ad, kayit, takvim = [], onClose, onEgitimClick }) 
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/70 backdrop-blur-sm sm:p-4 animate-fade-in" onClick={onClose}>
-      <div className="bg-white w-full max-w-3xl sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn" onClick={e => e.stopPropagation()}>
+      <div className="bg-white w-full max-w-3xl sm:rounded-2xl rounded-t-3xl shadow-2xl max-h-[95vh] sm:max-h-[90vh] overflow-hidden flex flex-col animate-scaleIn"
+        onClick={e => e.stopPropagation()}
+        style={swipe.style}
+        {...swipe.handlers}>
+        {/* Drag handle — sadece mobilde, swipe ipucu */}
+        <div className="sm:hidden flex justify-center pt-2 pb-1 flex-shrink-0">
+          <div className="w-10 h-1 bg-white/30 rounded-full" />
+        </div>
         {/* Header: foto + isim */}
         <div className="relative bg-gradient-to-br from-purple-700 via-indigo-700 to-purple-900 p-6 sm:p-8 text-white flex-shrink-0">
           <button onClick={onClose} aria-label="Kapat"

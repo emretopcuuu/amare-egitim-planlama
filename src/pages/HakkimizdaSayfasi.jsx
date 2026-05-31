@@ -14,6 +14,7 @@ import { YURUTME_KURULU } from '../utils/yurutmeKurulu';
 import { makeCoreId } from '../context/DataContext';
 import { getSiteIcerik, saveSiteIcerik, isSiteAdmin } from '../utils/siteIcerik';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../components/Toast';
 
 const I18N = {
   tr: {
@@ -132,6 +133,7 @@ const HakkimizdaSayfasi = () => {
   const { lang } = useTranslation();
   const { user } = useAuth();
   const duzenleyebilir = isSiteAdmin(user?.email);
+  const { toast } = useToast();
 
   // Firestore'dan override içeriği oku — tek seferlik
   const [icerikOverride, setIcerikOverride] = useState(null);
@@ -173,8 +175,9 @@ const HakkimizdaSayfasi = () => {
       setIcerikOverride(prev => ({ ...(prev || {}), tr: { ...(prev?.tr || {}), ...draft } }));
       setEditMode(false);
       setDraft({});
+      toast('Misyon & vizyon güncellendi', { type: 'success' });
     } catch (e) {
-      alert('Kaydetme hatası: ' + e.message);
+      toast('Kaydedemedik, tekrar dener misin?', { type: 'error' });
     } finally {
       setKaydediliyor(false);
     }

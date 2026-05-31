@@ -40,13 +40,23 @@ export function getProgress(videoId) {
 export function updateProgress(videoId, t, duration) {
   if (!videoId || !duration || duration < 5) return;
   const all = loadAll();
+  const eskiPct = all[videoId]?.pct || 0;
+  const yeniPct = Math.min(100, Math.round((t / duration) * 100));
   all[videoId] = {
     t: Math.round(t),
     duration: Math.round(duration),
-    pct: Math.min(100, Math.round((t / duration) * 100)),
+    pct: yeniPct,
     lastSeen: Date.now(),
   };
   saveAll(all);
+
+  // Kutlama tetikleyici: video ilk kez %95+ olunca
+  if (eskiPct < 95 && yeniPct >= 95) {
+    try {
+      window.dispatchEvent(new CustomEvent('video:tamamlandi', { detail: { videoId, duration } }));
+    } catch {}
+  }
+
   // Debounced Firestore sync
   firestoreSyncDebounced();
 }

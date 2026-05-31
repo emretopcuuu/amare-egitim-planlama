@@ -9,8 +9,10 @@ import React, { useEffect, useState } from 'react';
 import { X, Save, Loader2, Edit3, Instagram, Linkedin, Globe, Quote, Plus, Trash2 } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useToast } from './Toast';
 
 const EgitmenProfilDuzenleyici = ({ coreId, onClose }) => {
+  const { toast } = useToast();
   const [veri, setVeri] = useState({
     bio: '',
     kisaTanitim: '',
@@ -62,7 +64,7 @@ const EgitmenProfilDuzenleyici = ({ coreId, onClose }) => {
       setBasari(true);
       setTimeout(() => setBasari(false), 2000);
     } catch (e) {
-      alert('Kaydetme hatası: ' + e.message);
+      toast('Kaydedemedik, tekrar dener misin?', { type: 'error' });
     } finally {
       setKaydediliyor(false);
     }
