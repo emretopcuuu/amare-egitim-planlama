@@ -2,6 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ═══════════════════════════════════════════════════════════════════════
+   PREMIUM DETAYLAR — sadelikten ödün vermeden lüks his
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* #7a — Custom text selection (altın highlight + mor metin) */
+::selection {
+  background: rgba(251, 191, 36, 0.85);
+  color: #581c87;
+}
+::-moz-selection {
+  background: rgba(251, 191, 36, 0.85);
+  color: #581c87;
+}
+
+/* #7b — Custom scrollbar (altın çubuk, mor track) */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(251, 191, 36, 0.4) rgba(88, 28, 135, 0.1);
+}
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: rgba(88, 28, 135, 0.05);
+}
+*::-webkit-scrollbar-thumb {
+  background: rgba(251, 191, 36, 0.4);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 0.2s;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(251, 191, 36, 0.7);
+  background-clip: padding-box;
+}
+
+/* #10 — Smooth scroll (anchor link'ler ve programmatic) */
+html {
+  scroll-behavior: smooth;
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
+
 @layer base {
   /* Klavye erişilebilirliği — tutarlı focus ring tüm interaktif elementlerde */
   button:focus-visible,
@@ -61,6 +107,76 @@
   }
   @keyframes pageIn {
     from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── #1 Sinematik Logo Açılışı ──────────────────────────── */
+  .animate-logo-cinema {
+    animation: logoCinema 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  @keyframes logoCinema {
+    0% { opacity: 0; transform: scale(1.4); filter: drop-shadow(0 0 80px rgba(251, 191, 36, 0)) blur(8px); }
+    40% { opacity: 1; filter: drop-shadow(0 0 60px rgba(251, 191, 36, 0.8)) blur(0); }
+    100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2)); }
+  }
+  /* Halo'nun nefes alması — logo yerleştikten sonra slow pulse */
+  .animate-halo-breath {
+    animation: haloBreath 4s ease-in-out infinite;
+  }
+  @keyframes haloBreath {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
+  /* ── #2 Akan Altın Gradient Başlık ──────────────────────── */
+  .text-gold-shimmer {
+    background: linear-gradient(
+      90deg,
+      #fbbf24 0%,
+      #fde68a 20%,
+      #ffffff 35%,
+      #fde68a 50%,
+      #fbbf24 65%,
+      #f59e0b 80%,
+      #fbbf24 100%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    animation: goldShimmer 8s linear infinite;
+  }
+  @keyframes goldShimmer {
+    0% { background-position: 200% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* ── #6 Aşağı Scroll Davetkar İkon ──────────────────────── */
+  .animate-scroll-hint {
+    animation: scrollHint 2s ease-in-out infinite;
+  }
+  @keyframes scrollHint {
+    0%, 100% { transform: translateY(0); opacity: 0.5; }
+    50% { transform: translateY(8px); opacity: 1; }
+  }
+
+  /* ── #9 Etkinlik Şeridi — yumuşak kayan ────────────────── */
+  .animate-strip-in {
+    animation: stripIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+  }
+  @keyframes stripIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Live Counter — rakam ticker fade ─────────────────── */
+  .counter-row {
+    opacity: 0;
+    animation: counterFade 0.8s ease-out 1.4s forwards;
+  }
+  @keyframes counterFade {
+    from { opacity: 0; transform: translateY(8px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
