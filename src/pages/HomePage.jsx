@@ -6,7 +6,6 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 import BultenModal from '../components/BultenModal';
 import UyeGirisModal from '../components/UyeGirisModal';
 import LiveCounter from '../components/LiveCounter';
-import YaklasanEtkinlikSerit from '../components/YaklasanEtkinlikSerit';
 import { useData } from '../context/DataContext';
 import { db } from '../utils/firebase';
 import { doc, getDoc, collection, getCountFromServer } from 'firebase/firestore';
@@ -315,13 +314,8 @@ const HomePage = () => {
           </button>
         </div>
 
-        {/* #9 — Yaklaşan etkinlik şeridi (footer üstü, tek satır canlı bilgi) */}
-        <div className="mt-16 sm:mt-20 max-w-5xl mx-auto">
-          <YaklasanEtkinlikSerit />
-        </div>
-
         {/* Footer */}
-        <div className="mt-8 sm:mt-10 text-center">
+        <div className="mt-16 sm:mt-24 text-center">
           <p className="text-purple-300/60 text-xs tracking-wider">
             {t('copyright')}
           </p>
