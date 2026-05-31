@@ -5,7 +5,6 @@ import { useTranslation } from '../context/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import BultenModal from '../components/BultenModal';
 import UyeGirisModal from '../components/UyeGirisModal';
-import CursorSpotlight from '../components/CursorSpotlight';
 import LiveCounter from '../components/LiveCounter';
 import YaklasanEtkinlikSerit from '../components/YaklasanEtkinlikSerit';
 import { useData } from '../context/DataContext';
@@ -170,9 +169,6 @@ const HomePage = () => {
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 relative">
-      {/* #5 — Cursor follow spotlight (sadece desktop) */}
-      <CursorSpotlight enabled={true} color={renkler.main} size={500} />
-
       {/* Üstte yumuşak altın aurora glow — günün saatine göre değişen renkler */}
       <div className="absolute top-0 left-0 right-0 h-[600px] pointer-events-none"
         style={{ background: `radial-gradient(ellipse at center top, ${renkler.from} 0%, transparent 70%)` }} />
