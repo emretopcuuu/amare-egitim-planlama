@@ -54,6 +54,16 @@ service firebase.storage {
       allow write, delete: if isAdmin();
     }
 
+    // Konuşmacı / komisyon üye fotoğrafları
+    // Public read (avatar gösterimi). Admin yazar.
+    // 2 MB sınır — frontend resize edip kırpıyor.
+    match /konusmaci-fotolari/{fileName} {
+      allow read: if true;
+      allow write, delete: if isAdmin()
+        && request.resource.size < 2 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+
     // Diğer her path — kapalı
     match /{allPaths=**} {
       allow read, write: if false;
