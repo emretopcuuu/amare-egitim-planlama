@@ -90,40 +90,53 @@ const AiOneriKart = ({ onOynat }) => {
         </button>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
-        {veri.oneriler.slice(0, 3).map(o => (
-          <button key={o.vimeoId}
-            onClick={() => aciklama(o)}
-            className="bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-400/60 rounded-xl overflow-hidden text-left transition-all group">
-            <div className="relative aspect-video bg-black/30">
-              {o.thumbnailUrl && (
-                <img src={o.thumbnailUrl} alt={o.baslik} loading="lazy"
-                  className="w-full h-full object-cover" />
-              )}
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/50 flex items-center justify-center transition">
-                <Play className="w-7 h-7 text-white/0 group-hover:text-white" fill="currentColor" />
-              </div>
-              {o.sure && (
-                <span className="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">
-                  <Clock className="w-2.5 h-2.5" />{formatSure(o.sure)}
+        {veri.oneriler.slice(0, 5).map(o => {
+          // Kategori etiketi renkleri
+          const etiketStili = {
+            devam: { bg: 'bg-emerald-500/90', text: 'DEVAM ET' },
+            ilgi: { bg: 'bg-amber-500/90', text: 'İLGİ ALANIN' },
+            kesif: { bg: 'bg-purple-500/90', text: 'YENİ KEŞİF' },
+          };
+          const et = etiketStili[o.kategoriEtiket] || etiketStili.kesif;
+          return (
+            <button key={o.vimeoId}
+              onClick={() => aciklama(o)}
+              className="bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-400/60 rounded-xl overflow-hidden text-left transition-all group">
+              <div className="relative aspect-video bg-black/30">
+                {o.thumbnailUrl && (
+                  <img src={o.thumbnailUrl} alt={o.baslik} loading="lazy"
+                    className="w-full h-full object-cover" />
+                )}
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/50 flex items-center justify-center transition">
+                  <Play className="w-7 h-7 text-white/0 group-hover:text-white" fill="currentColor" />
+                </div>
+                {/* Kategori etiketi sol-üst */}
+                <span className={`absolute top-1.5 left-1.5 ${et.bg} text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded tracking-wide shadow-md`}>
+                  {et.text}
                 </span>
-              )}
-            </div>
-            <div className="p-2.5">
-              <h4 className="text-white text-xs font-bold line-clamp-2 leading-tight">{o.baslik}</h4>
-              <p className="text-amber-300/90 text-[10px] mt-1 line-clamp-2 italic">
-                <Sparkles className="w-2.5 h-2.5 inline mr-0.5" />{o.sebep}
-              </p>
-              <div className="flex items-center justify-between mt-1.5 text-[10px]">
-                <span className="text-purple-200/60 truncate">{o.egitmenAdlari?.[0] || ''}</span>
-                {o.puanOrt && (
-                  <span className="inline-flex items-center gap-0.5 text-amber-300">
-                    <Star className="w-2.5 h-2.5" fill="currentColor" />{o.puanOrt}
+                {o.sure && (
+                  <span className="absolute bottom-1.5 right-1.5 bg-black/70 text-white text-[9px] px-1.5 py-0.5 rounded inline-flex items-center gap-0.5">
+                    <Clock className="w-2.5 h-2.5" />{formatSure(o.sure)}
                   </span>
                 )}
               </div>
-            </div>
-          </button>
-        ))}
+              <div className="p-2.5">
+                <h4 className="text-white text-xs font-bold line-clamp-2 leading-tight">{o.baslik}</h4>
+                <p className="text-amber-300/90 text-[10px] mt-1 line-clamp-2 italic">
+                  <Sparkles className="w-2.5 h-2.5 inline mr-0.5" />{o.sebep}
+                </p>
+                <div className="flex items-center justify-between mt-1.5 text-[10px]">
+                  <span className="text-purple-200/60 truncate">{o.egitmenAdlari?.[0] || ''}</span>
+                  {o.puanOrt && (
+                    <span className="inline-flex items-center gap-0.5 text-amber-300">
+                      <Star className="w-2.5 h-2.5" fill="currentColor" />{o.puanOrt}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -38,20 +38,35 @@ const CORS = {
 };
 
 const SISTEM_PROMPT = `Sen Doğrudan Satış eğitim platformu için içerik öneri motorusun.
-Kullanıcının izleme geçmişi, favorileri ve kariyer rank'ına bakarak SONRAKI 3 videoyu öner.
+Kullanıcının: izleme geçmişi, yarım kalan videolar, takip ettiği eğitmenler,
+favorileri ve kariyer rank'ına bakarak SONRAKI 5 videoyu öner.
+
+ÖNERİ STRATEJİSİ (3 kategori, dengeli karışım):
+
+1. KATEGORI: "devam" — Yarım kalan video'ya benzer içerik veya seri devamı
+   (kullanıcı %30-80 ilerlemişse o eğitmenin başka videosu / aynı kategoride başka)
+2. KATEGORI: "ilgi" — Sık izlediği KATEGORİ veya takip ettiği EĞİTMEN'den yeni
+3. KATEGORI: "kesif" — Hiç izlemediği ama rank'ına uygun, yüksek puanlı (puanOrt 4+)
 
 Kurallar:
-- Her öneri için: vimeoId, başlık, neden (1 kısa Türkçe cümle)
-- Çeşitlilik: aynı eğitmen/konuda 3 öneri olmasın
-- Kullanıcı izlediği şeyleri öneri listesine KOYMA
-- Rank'a uygun ya da 1 üstüne yönlendirici olsun
-- MARKA: "network marketing" yazma — her zaman "Doğrudan Satış" kullan
-- Sadece JSON çıktı
+- Toplam 5 öneri: ~2 "ilgi" + ~2 "kesif" + ~1 "devam" (varsa)
+- Her öneri: vimeoId, kategoriEtiket (devam/ilgi/kesif), sebep (1 etkili cümle)
+- Çeşitlilik: aynı eğitmen 2'den fazla olmasın, aynı KATEGORİ 3'ten fazla olmasın
+- Kullanıcı tam izlediği videoları ÖNERME (zaten katalogtan çıkarıldı)
+- "sebep" konuya ÖZGÜ olsun ("X eğitimini izledin" / "Y eğitmenini takip ediyorsun")
+- Rank'a uygun ya da 1 üst seviyeye yönlendirici (Diamond hedefi varsa Diamond stratejisi)
+- MARKA: "network marketing" yazma — her zaman "Doğrudan Satış"
+- "vurguluyor", "anlatıyor" gibi pasif kelimeler KULLANMA — aktif "sana X öğretir/gösterir"
+- Sadece JSON çıktı, açıklama eklemeden
 
 ÇIKTI FORMATI:
 {
   "oneriler": [
-    { "vimeoId": "...", "sebep": "..." }
+    {
+      "vimeoId": "...",
+      "kategoriEtiket": "devam" | "ilgi" | "kesif",
+      "sebep": "Aktif tonlu, kullanıcıya özel 1 cümle (max 100 char)"
+    }
   ]
 }`;
 
@@ -108,40 +123,58 @@ export default async (req) => {
     }); }
     const uid = decoded.uid;
 
-    // Cache (12 saat)
+    // Cache (6 saat — eskiden 12, kullanıcı geçmişi değiştikçe daha taze)
     const cacheRef = admin.firestore().doc(`users/${uid}/ai_cache/oneri`);
     const cacheSnap = await cacheRef.get();
     if (cacheSnap.exists) {
       const c = cacheSnap.data();
       const ts = c.timestamp?._seconds * 1000 || 0;
-      if (Date.now() - ts < 12 * 60 * 60 * 1000) {
+      if (Date.now() - ts < 6 * 60 * 60 * 1000) {
         return new Response(JSON.stringify({ ...c.sonuc, cached: true }), {
           headers: { 'Content-Type': 'application/json', ...CORS },
         });
       }
     }
 
-    // 1. Kullanıcının izleme geçmişi (users/{uid}/watch_progress)
+    // 1. İzleme geçmişi + yarım kalan videolar (watch_progress)
     let izlenenler = [];
+    let yarimKalanlar = []; // %30-80 arası — devam ettirmeye uygun
     try {
       const wpSnap = await admin.firestore().collection(`users/${uid}/watch_progress`)
-        .orderBy('updatedAt', 'desc').limit(20).get();
-      izlenenler = wpSnap.docs.map(d => d.id);
+        .orderBy('updatedAt', 'desc').limit(30).get();
+      wpSnap.docs.forEach(d => {
+        const data = d.data();
+        const ilerleme = data.ilerleme || data.percent || 0;
+        izlenenler.push(d.id);
+        if (ilerleme >= 30 && ilerleme < 80) {
+          yarimKalanlar.push({ vimeoId: d.id, ilerleme });
+        }
+      });
     } catch {}
 
-    // 2. Favoriler — eğer varsa
+    // 2. Takip ettiği eğitmenler (yüksek sinyal — kişi aktif tercih bildirmiş)
+    let takipEgitmenler = [];
+    try {
+      const teSnap = await admin.firestore().collection(`users/${uid}/takip_egitmen`).limit(20).get();
+      takipEgitmenler = teSnap.docs.map(d => d.id);
+    } catch {}
+
+    // 3. Favori videolar (kalp atılanlar)
     let favoriler = [];
     try {
       const ufSnap = await admin.firestore().collection(`users/${uid}/takip`).limit(20).get();
       favoriler = ufSnap.docs.map(d => d.id);
     } catch {}
 
-    // 3. Rank
+    // 4. Rank + onboarding ile öğrendiklerimiz (ilgi alanı)
     let kullaniciRank = null;
+    let ilgiAlanlari = [];
     try {
       const userSnap = await admin.firestore().doc(`users/${uid}`).get();
       if (userSnap.exists) {
-        kullaniciRank = userSnap.data().rank || null;
+        const ud = userSnap.data();
+        kullaniciRank = ud.rank || null;
+        ilgiAlanlari = ud.ilgiAlanlari || ud.onboarding?.ilgiAlanlari || [];
       }
     } catch {}
 
@@ -151,14 +184,24 @@ export default async (req) => {
       .where('kayeneFiltrelendi', '==', false)
       .limit(200)
       .get();
+    // Tam izlediklerini çıkar (ilerlemesi 90+ olanları)
+    const tamIzlenenSet = new Set();
+    try {
+      const wpSnap2 = await admin.firestore().collection(`users/${uid}/watch_progress`)
+        .where('ilerleme', '>=', 90).get();
+      wpSnap2.docs.forEach(d => tamIzlenenSet.add(d.id));
+    } catch {}
+
     const katalog = vSnap.docs
-      .filter(d => !izlenenler.includes(d.data().vimeoId))
+      .filter(d => !tamIzlenenSet.has(d.data().vimeoId))
       .map(d => {
         const data = d.data();
         return {
           vimeoId: data.vimeoId,
           baslik: (data.baslik || '').slice(0, 100),
           kategoriler: (data.kategoriler || []).slice(0, 2),
+          egitmenAdlari: (data.egitmenAdlari || []).slice(0, 2),
+          puanOrt: data.puanOrt || null,
         };
       })
       .slice(0, 150);
@@ -169,16 +212,30 @@ export default async (req) => {
       });
     }
 
-    // 5. LLM'e prompt
-    const prompt = `Kullanıcı Profili:
+    // 5. LLM'e zengin prompt — tüm sinyaller
+    const prompt = `KULLANICI PROFİLİ:
 Rank: ${kullaniciRank || 'Belirsiz'}
-Son izledikleri (vimeoId): ${izlenenler.slice(0, 10).join(', ') || 'yok'}
-Favorileri: ${favoriler.slice(0, 5).join(', ') || 'yok'}
+${ilgiAlanlari.length > 0 ? `İlgi alanları: ${ilgiAlanlari.join(', ')}` : ''}
 
-Eğitim Kataloğu (vimeoId · başlık · kategori):
-${katalog.map(k => `${k.vimeoId} · ${k.baslik} · ${k.kategoriler.join('/')}`).join('\n')}
+İZLEME GEÇMİŞİ (son izlediği vimeoId'ler):
+${izlenenler.slice(0, 15).join(', ') || 'henüz yok'}
 
-Bu kullanıcıya SONRAKI 5 video önerisi yap.`;
+YARIM KALAN VİDEOLAR (%30-80 ilerlemiş, devam etmeye uygun):
+${yarimKalanlar.length > 0
+    ? yarimKalanlar.slice(0, 5).map(y => `${y.vimeoId} (%${Math.round(y.ilerleme)})`).join(', ')
+    : 'yok'}
+
+TAKİP ETTİĞİ EĞİTMENLER (kişi aktif olarak seçmiş — yüksek sinyal):
+${takipEgitmenler.slice(0, 10).join(', ') || 'henüz takip yok'}
+
+FAVORİ VİDEOLARI (kalp attı):
+${favoriler.slice(0, 5).join(', ') || 'henüz yok'}
+
+EĞİTİM KATALOĞU (vimeoId · başlık · kategori · eğitmenler · puan):
+${katalog.map(k => `${k.vimeoId} · ${k.baslik} · ${k.kategoriler.join('/')} · ${(k.egitmenAdlari || []).slice(0,2).join(',')} · ${k.puanOrt ? k.puanOrt.toFixed(1) : '-'}`).join('\n')}
+
+Bu kullanıcıya 5 öneri yap. Stratejide ~1 devam + ~2 ilgi + ~2 keşif karışımı tut.
+"sebep" alanında kullanıcının VERİSİNE özel atıf yap (örn. "Tunç Tuncer'i takip ediyorsun, bu da onun" / "X eğitimini %60 izledin, devamı niteliğinde").`;
 
     const sonuc = await callLLM(prompt);
 
@@ -187,10 +244,11 @@ Bu kullanıcıya SONRAKI 5 video önerisi yap.`;
     vSnap.docs.forEach(d => { oneriMap[d.data().vimeoId] = { id: d.id, ...d.data() }; });
     const zenginOneriler = (sonuc.oneriler || [])
       .filter(o => oneriMap[o.vimeoId])
-      .slice(0, 3)
+      .slice(0, 5)
       .map(o => ({
         vimeoId: o.vimeoId,
         sebep: o.sebep,
+        kategoriEtiket: o.kategoriEtiket || 'kesif', // devam | ilgi | kesif
         baslik: oneriMap[o.vimeoId].baslik,
         thumbnailUrl: oneriMap[o.vimeoId].thumbnailUrl,
         egitmenAdlari: oneriMap[o.vimeoId].egitmenAdlari || [],
