@@ -18,14 +18,20 @@ const tween = (from, to, duration, onUpdate, onDone) => {
 
 const TekRakam = ({ deger, sonek = '', gecikme = 0 }) => {
   const [val, setVal] = useState(0);
-  const triggered = useRef(false);
+  const oncekiDeger = useRef(0);
+  const ilkMi = useRef(true);
 
   useEffect(() => {
-    if (triggered.current) return;
-    triggered.current = true;
+    // İlk render — gecikme ile 0'dan deger'e
+    // Sonraki güncellemeler — anlık (önceki değerden yeniye, hızlı tween)
+    const baslangic = oncekiDeger.current;
+    const sure = ilkMi.current ? 1500 : 600;
+    const tetikGecikme = ilkMi.current ? gecikme : 0;
+    ilkMi.current = false;
     const timer = setTimeout(() => {
-      tween(0, deger, 1500, (v) => setVal(v));
-    }, gecikme);
+      tween(baslangic, deger, sure, (v) => setVal(v));
+      oncekiDeger.current = deger;
+    }, tetikGecikme);
     return () => clearTimeout(timer);
   }, [deger, gecikme]);
 

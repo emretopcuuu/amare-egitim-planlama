@@ -49,15 +49,15 @@ function gunRengi() {
 const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { currentUser, takvim } = useData();
+  const { currentUser, takvim, konusmacilar } = useData();
   const [bultenModal, setBultenModal] = useState(false);
   const [yapimAsamasinda, setYapimAsamasinda] = useState(false);
   const [girisModal, setGirisModal] = useState(false);
   const [profilAdi, setProfilAdi] = useState('');
-  // #4 — Canlı rakam sayacı için toplamlar
+  // #4 — Canlı rakam sayacı için toplamlar (default fallback değerlerle başla)
   const [istatistik, setIstatistik] = useState({
-    egitmen: takvim?.length ? new Set(takvim.flatMap(e => e.egitmenler || [])).size : 0,
-    eğitim: takvim?.length || 0,
+    egitmen: 26,
+    eğitim: 65,
     komisyon: 11,
   });
   // #8 — Günün saatine göre halo rengi
@@ -68,17 +68,16 @@ const HomePage = () => {
   const kart2Ref = useMagnetic(0.08);
   const kart3Ref = useMagnetic(0.08);
 
-  // #4 — İstatistikleri güncelle (takvim yüklendikçe)
+  // #4 — İstatistikleri güncelle (data yüklendikçe)
+  // Eğitmen sayısı: konuşmacılar koleksiyonu (doğrudan kaynak)
+  // Eğitim sayısı: takvim listesi
   useEffect(() => {
-    if (takvim?.length) {
-      const egitmenSet = new Set(takvim.flatMap(e => e.egitmenler || []).filter(Boolean));
-      setIstatistik(prev => ({
-        ...prev,
-        egitmen: egitmenSet.size || 26,
-        eğitim: takvim.length || 65,
-      }));
-    }
-  }, [takvim]);
+    setIstatistik(prev => ({
+      ...prev,
+      egitmen: konusmacilar?.length || prev.egitmen,
+      eğitim: takvim?.length || prev.eğitim,
+    }));
+  }, [takvim?.length, konusmacilar?.length]);
 
   // Logo click — easter egg konfeti
   const logoClick = useCallback(() => {
