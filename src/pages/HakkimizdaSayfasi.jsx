@@ -2,9 +2,9 @@
 // Misyon + Vizyon + ileride Değerler/Liderler/İletişim için geniş.
 // İçerik şimdilik hard-coded; ileride Firestore'a alınabilir.
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Target, Compass, GraduationCap, Building2, Crown, ArrowRight } from 'lucide-react';
+import { ArrowLeft, Target, Compass, GraduationCap, Building2, Crown, ArrowRight, Edit3, Save, X, Loader2 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useSmartBack } from '../utils/navigation';
@@ -12,6 +12,8 @@ import { db } from '../utils/firebase';
 import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
 import { YURUTME_KURULU } from '../utils/yurutmeKurulu';
 import { makeCoreId } from '../context/DataContext';
+import { getSiteIcerik, saveSiteIcerik, isSiteAdmin } from '../utils/siteIcerik';
+import { useAuth } from '../context/AuthContext';
 
 const I18N = {
   tr: {
@@ -128,7 +130,55 @@ const HakkimizdaSayfasi = () => {
   const navigate = useNavigate();
   const geri = useSmartBack('/');
   const { lang } = useTranslation();
-  const tr = I18N[lang] || I18N.tr;
+  const { user } = useAuth();
+  const duzenleyebilir = isSiteAdmin(user?.email);
+
+  // Firestore'dan override içeriği oku — tek seferlik
+  const [icerikOverride, setIcerikOverride] = useState(null);
+  useEffect(() => {
+    (async () => {
+      const d = await getSiteIcerik('hakkimizda');
+      if (d) setIcerikOverride(d);
+    })();
+  }, []);
+  // Birleştir: Firestore TR alanları varsa onu kullan, yoksa I18N default
+  const trBase = I18N.tr;
+  const trMerged = icerikOverride?.tr ? { ...trBase, ...icerikOverride.tr } : trBase;
+  const I18N_MERGED = { ...I18N, tr: trMerged };
+  const tr = I18N_MERGED[lang] || I18N_MERGED.tr;
+
+  // Edit state
+  const [editMode, setEditMode] = useState(false);
+  const [draft, setDraft] = useState({});
+  const [kaydediliyor, setKaydediliyor] = useState(false);
+
+  const editeBasla = () => {
+    setDraft({
+      misyon: trMerged.misyon,
+      misyonMetin1: trMerged.misyonMetin1,
+      misyonVurgu: trMerged.misyonVurgu,
+      misyonMetin2: trMerged.misyonMetin2,
+      vizyon: trMerged.vizyon,
+      vizyonMetin1: trMerged.vizyonMetin1,
+      vizyonVurgu: trMerged.vizyonVurgu,
+      vizyonMetin2: trMerged.vizyonMetin2,
+    });
+    setEditMode(true);
+  };
+  const iptal = () => { setEditMode(false); setDraft({}); };
+  const kaydet = async () => {
+    setKaydediliyor(true);
+    try {
+      await saveSiteIcerik('hakkimizda', { tr: draft }, user?.email);
+      setIcerikOverride(prev => ({ ...(prev || {}), tr: { ...(prev?.tr || {}), ...draft } }));
+      setEditMode(false);
+      setDraft({});
+    } catch (e) {
+      alert('Kaydetme hatası: ' + e.message);
+    } finally {
+      setKaydediliyor(false);
+    }
+  };
 
   // Yürütme Kurulu + Komisyonlar verilerini prefetch — kullanıcı tıklarsa cache hazır
   // Sadece cache yoksa veya eskidiyse fetch et; idle-time'da çalıştır.
@@ -211,8 +261,100 @@ const HakkimizdaSayfasi = () => {
             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap">
             <ArrowLeft className="w-4 h-4" /> {tr.geri || tr.anasayfa}
           </button>
-          <LanguageSwitcher />
+          <div className="flex items-center gap-2">
+            {duzenleyebilir && !editMode && (
+              <button onClick={editeBasla}
+                className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-purple-900 px-3 py-2 rounded-full text-xs font-bold transition-all shadow-md">
+                <Edit3 className="w-3.5 h-3.5" /> Düzenle
+              </button>
+            )}
+            <LanguageSwitcher />
+          </div>
         </div>
+
+        {/* Hakkımızda Edit Modal */}
+        {editMode && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="sticky top-0 bg-gradient-to-r from-amber-400 to-orange-400 text-purple-900 px-6 py-4 rounded-t-2xl flex items-center justify-between z-10">
+                <h3 className="font-bold text-lg flex items-center gap-2">
+                  <Edit3 className="w-5 h-5" /> Misyon & Vizyon Düzenleme (TR)
+                </h3>
+                <button onClick={iptal} className="hover:bg-purple-900/10 rounded-full p-1">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="p-6 space-y-5">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Misyon başlığı</label>
+                  <input type="text" value={draft.misyon || ''}
+                    onChange={(e) => setDraft(d => ({ ...d, misyon: e.target.value }))}
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-400" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Misyon — başlangıç metni</label>
+                  <textarea value={draft.misyonMetin1 || ''}
+                    onChange={(e) => setDraft(d => ({ ...d, misyonMetin1: e.target.value }))}
+                    rows={2}
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-400" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Misyon — altın vurgu</label>
+                  <input type="text" value={draft.misyonVurgu || ''}
+                    onChange={(e) => setDraft(d => ({ ...d, misyonVurgu: e.target.value }))}
+                    className="w-full bg-amber-50 border border-amber-200 text-amber-900 font-bold rounded-lg px-3 py-2 focus:outline-none focus:border-amber-400" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Misyon — devam metni</label>
+                  <textarea value={draft.misyonMetin2 || ''}
+                    onChange={(e) => setDraft(d => ({ ...d, misyonMetin2: e.target.value }))}
+                    rows={2}
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-400" />
+                </div>
+                <div className="border-t border-gray-200 pt-5">
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Vizyon başlığı</label>
+                  <input type="text" value={draft.vizyon || ''}
+                    onChange={(e) => setDraft(d => ({ ...d, vizyon: e.target.value }))}
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-400" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Vizyon — başlangıç metni</label>
+                  <textarea value={draft.vizyonMetin1 || ''}
+                    onChange={(e) => setDraft(d => ({ ...d, vizyonMetin1: e.target.value }))}
+                    rows={2}
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-400" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Vizyon — altın vurgu</label>
+                  <input type="text" value={draft.vizyonVurgu || ''}
+                    onChange={(e) => setDraft(d => ({ ...d, vizyonVurgu: e.target.value }))}
+                    className="w-full bg-amber-50 border border-amber-200 text-amber-900 font-bold rounded-lg px-3 py-2 focus:outline-none focus:border-amber-400" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Vizyon — devam metni</label>
+                  <textarea value={draft.vizyonMetin2 || ''}
+                    onChange={(e) => setDraft(d => ({ ...d, vizyonMetin2: e.target.value }))}
+                    rows={2}
+                    className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-lg px-3 py-2 focus:outline-none focus:border-amber-400" />
+                </div>
+                <p className="text-xs text-gray-500 italic">
+                  Not: Sadece TR (Türkçe) içerik düzenlenir. Diğer diller (EN/DE/NL) varsayılan metni kullanmaya devam eder.
+                </p>
+              </div>
+              <div className="sticky bottom-0 bg-white border-t border-gray-200 px-6 py-3 flex justify-end gap-2 rounded-b-2xl">
+                <button onClick={iptal} disabled={kaydediliyor}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold bg-gray-100 hover:bg-gray-200 text-gray-700">
+                  İptal
+                </button>
+                <button onClick={kaydet} disabled={kaydediliyor}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold bg-emerald-500 hover:bg-emerald-600 text-white shadow-md disabled:opacity-60">
+                  {kaydediliyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  Kaydet
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* HERO */}
         <div className="text-center mb-12 sm:mb-16 animate-fade-in">

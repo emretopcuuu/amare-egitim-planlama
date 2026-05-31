@@ -4,15 +4,17 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Crown, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, Crown, User as UserIcon, Edit3, Save, X, Plus, Trash2, ChevronUp, ChevronDown, Loader2 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
-import { YURUTME_KURULU } from '../utils/yurutmeKurulu';
+import { YURUTME_KURULU as YURUTME_DEFAULT } from '../utils/yurutmeKurulu';
 import { db } from '../utils/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { makeCoreId, useData } from '../context/DataContext';
 import KonusmaciFullModal from '../components/KonusmaciFullModal';
 import { useSmartBack } from '../utils/navigation';
+import { getSiteIcerik, saveSiteIcerik, isSiteAdmin } from '../utils/siteIcerik';
+import { useAuth } from '../context/AuthContext';
 
 const I18N = {
   tr: {
@@ -59,11 +61,70 @@ const YurutmekuruluSayfasi = () => {
   const { lang } = useTranslation();
   const tr = I18N[lang] || I18N.tr;
   const { takvim } = useData();
+  const { user } = useAuth();
+  const duzenleyebilir = isSiteAdmin(user?.email);
 
+  // Üye listesi — önce hard-coded default, sonra Firestore override
+  const [uyeler, setUyeler] = useState(YURUTME_DEFAULT);
   // Konuşmacılar collection — coreId → tüm kayıt
   const [konusmacilar, setKonusmacilar] = useState({}); // { coreId: { ad, fotoURL, biyografi, ... } }
   // Seçili üye → KonusmaciFullModal açar
   const [seciliUye, setSeciliUye] = useState(null);
+  // Edit state
+  const [editMode, setEditMode] = useState(false);
+  const [draftUyeler, setDraftUyeler] = useState([]);
+  const [yeniUyeAd, setYeniUyeAd] = useState('');
+  const [kaydediliyor, setKaydediliyor] = useState(false);
+
+  // Firestore'dan üye listesini çek (varsa)
+  useEffect(() => {
+    (async () => {
+      const d = await getSiteIcerik('yurutmekurulu');
+      if (d?.uyeler && Array.isArray(d.uyeler) && d.uyeler.length > 0) {
+        setUyeler(d.uyeler);
+      }
+    })();
+  }, []);
+
+  const aciliEditeBasla = () => {
+    setDraftUyeler(uyeler.map(u => ({ ...u })));
+    setEditMode(true);
+  };
+  const iptal = () => {
+    setEditMode(false);
+    setDraftUyeler([]);
+    setYeniUyeAd('');
+  };
+  const uyeEkle = () => {
+    const ad = yeniUyeAd.trim();
+    if (!ad) return;
+    setDraftUyeler(prev => [...prev, { ad, coreId: makeCoreId(ad) }]);
+    setYeniUyeAd('');
+  };
+  const uyeSil = (idx) => setDraftUyeler(prev => prev.filter((_, i) => i !== idx));
+  const uyeTasi = (idx, yon) => {
+    const yeni = idx + yon;
+    if (yeni < 0 || yeni >= draftUyeler.length) return;
+    setDraftUyeler(prev => {
+      const arr = [...prev];
+      [arr[idx], arr[yeni]] = [arr[yeni], arr[idx]];
+      return arr;
+    });
+  };
+  const kaydet = async () => {
+    setKaydediliyor(true);
+    try {
+      await saveSiteIcerik('yurutmekurulu', { uyeler: draftUyeler }, user?.email);
+      setUyeler(draftUyeler);
+      setEditMode(false);
+      setDraftUyeler([]);
+      setYeniUyeAd('');
+    } catch (e) {
+      alert('Kaydetme hatası: ' + e.message);
+    } finally {
+      setKaydediliyor(false);
+    }
+  };
 
   // localStorage cache — sadece YK üyelerinin foto+biyografisi (24 üye)
   // Stale-while-revalidate: cache anında göster, arkada fresh fetch
@@ -136,7 +197,15 @@ const YurutmekuruluSayfasi = () => {
             className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white px-4 py-2 rounded-full text-sm font-semibold transition-all spring-tap">
             <ArrowLeft className="w-4 h-4" /> {tr.geri || tr.anasayfa}
           </button>
-          <LanguageSwitcher />
+          <div className="flex items-center gap-2">
+            {duzenleyebilir && !editMode && (
+              <button onClick={aciliEditeBasla}
+                className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-purple-900 px-3 py-2 rounded-full text-xs font-bold transition-all shadow-md">
+                <Edit3 className="w-3.5 h-3.5" /> Düzenle
+              </button>
+            )}
+            <LanguageSwitcher />
+          </div>
         </div>
 
         {/* Hero — kompakt */}
@@ -172,15 +241,80 @@ const YurutmekuruluSayfasi = () => {
           <div className="inline-flex items-center gap-2 bg-white/5 backdrop-blur-md border border-white/15 rounded-full px-4 py-1.5 text-xs">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
             <span className="text-white font-semibold">
-              <strong className="font-bold">{YURUTME_KURULU.length}</strong> {tr.uye}
+              <strong className="font-bold">{uyeler.length}</strong> {tr.uye}
             </span>
           </div>
         </div>
 
+        {/* Edit Mode — admin için inline editör */}
+        {editMode && (
+          <div className="bg-white/10 backdrop-blur-md border border-amber-300/40 rounded-2xl p-5 mb-8 shadow-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                <Edit3 className="w-5 h-5 text-amber-300" /> Üye Listesi Düzenleme
+              </h3>
+              <div className="flex items-center gap-2">
+                <button onClick={iptal} disabled={kaydediliyor}
+                  className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
+                  <X className="w-3.5 h-3.5" /> İptal
+                </button>
+                <button onClick={kaydet} disabled={kaydediliyor}
+                  className="inline-flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-400 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-60">
+                  {kaydediliyor ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                  Kaydet
+                </button>
+              </div>
+            </div>
+
+            {/* Üye listesi (drag yerine yukarı/aşağı butonları) */}
+            <div className="space-y-2 mb-4 max-h-[400px] overflow-y-auto pr-1">
+              {draftUyeler.map((u, idx) => (
+                <div key={idx} className="flex items-center gap-2 bg-purple-900/30 border border-white/10 rounded-lg p-2">
+                  <span className="text-purple-200/60 text-xs w-6 text-center">{idx + 1}</span>
+                  <input type="text" value={u.ad}
+                    onChange={(e) => {
+                      const yeni = e.target.value;
+                      setDraftUyeler(prev => prev.map((it, i) => i === idx ? { ...it, ad: yeni, coreId: makeCoreId(yeni) } : it));
+                    }}
+                    className="flex-1 bg-purple-950/50 border border-white/10 text-white text-sm rounded px-3 py-1.5 focus:outline-none focus:border-amber-300/50" />
+                  <button onClick={() => uyeTasi(idx, -1)} disabled={idx === 0}
+                    className="text-white/60 hover:text-amber-300 disabled:opacity-30 p-1">
+                    <ChevronUp className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => uyeTasi(idx, 1)} disabled={idx === draftUyeler.length - 1}
+                    className="text-white/60 hover:text-amber-300 disabled:opacity-30 p-1">
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => uyeSil(idx)} title="Sil"
+                    className="text-rose-400 hover:text-rose-300 p-1">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Yeni üye ekle */}
+            <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+              <input type="text" value={yeniUyeAd}
+                onChange={(e) => setYeniUyeAd(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') uyeEkle(); }}
+                placeholder="Yeni üye adı..."
+                className="flex-1 bg-purple-950/50 border border-white/10 text-white text-sm rounded px-3 py-2 focus:outline-none focus:border-amber-300/50" />
+              <button onClick={uyeEkle} disabled={!yeniUyeAd.trim()}
+                className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-purple-900 px-3 py-2 rounded text-xs font-bold transition-all disabled:opacity-50">
+                <Plus className="w-3.5 h-3.5" /> Ekle
+              </button>
+            </div>
+            <p className="text-purple-200/60 text-xs mt-3">
+              {draftUyeler.length} üye · Değişikliği kaydedince herkese yansır.
+            </p>
+          </div>
+        )}
+
         {/* Tek liste — rütbe başlığı yok */}
-        {YURUTME_KURULU.length > 0 ? (
+        {uyeler.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 sm:gap-4">
-            {YURUTME_KURULU.map((u, idx) => {
+            {uyeler.map((u, idx) => {
               const foto = getFoto(u);
               return (
                 <button key={u.ad + idx}

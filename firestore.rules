@@ -195,6 +195,13 @@ service cloud.firestore {
       allow create: if isAdmin();
     }
 
+    // Site içerik (hakkimizda misyon/vizyon, yurutmekurulu üye listesi vb.)
+    // Public read, sadece global admin yazar
+    match /site_icerik/{key} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Komisyon iletişim/öneri talepleri — anonim create (form), admin read
     // Spam koruması: maksimum mesaj boyutu + gerekli alanlar
     match /komisyon_iletisim_talepleri/{talepId} {
