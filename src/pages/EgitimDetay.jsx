@@ -8,6 +8,7 @@ import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, Clock, MapPin, Wifi, Tag, User, Bell, Share2, Loader2, Calendar as CalendarIcon, Timer } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import EventActions from '../components/EventActions';
+import AddToCalendarButton from '../components/AddToCalendarButton';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import KonusmaciFullModal from '../components/KonusmaciFullModal';
 import LoadingProgress from '../components/LoadingProgress';
@@ -276,6 +277,7 @@ const EgitimDetay = () => {
                   className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all spring-tap">
                   <Bell className="w-4 h-4" />Hatırlatma Al
                 </button>
+                <AddToCalendarButton egitim={egitim} />
                 <EventActions egitim={egitim} />
               </div>
             </div>
