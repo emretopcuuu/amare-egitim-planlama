@@ -184,8 +184,38 @@ ortada büyük boş alan kalsın ki Canvas başlık/foto'ları yerleştirebilsin
   return imgPart.inlineData;
 };
 
+// Modal'da kullanıcı düzenlemesini ekPrompt'tan parse et
+const parseEkPromptEgitmenler = (ekPrompt, fallback = []) => {
+  if (!ekPrompt || typeof ekPrompt !== 'string') return fallback;
+  const lines = ekPrompt.split('\n').map(l => l.replace(/ /g, ' '));
+  const out = [];
+  let i = 0;
+  while (i < lines.length) {
+    const m = lines[i].match(/^\s*(\d+)\.\s*(.+?)\s*$/);
+    if (m) {
+      const ad = m[2].trim();
+      let unvan = '';
+      const ny = (lines[i + 1] || '').trim();
+      if (ny && !/^\d+\./.test(ny) && !/\(unvan girilmemiş/i.test(ny) && !/\(boş\)/i.test(ny)) {
+        unvan = ny;
+      }
+      const eski = fallback[out.length] || fallback.find(x => x?.ad && x.ad.toLocaleUpperCase('tr-TR') === ad.toLocaleUpperCase('tr-TR'));
+      out.push({
+        ad,
+        unvan,
+        fotoURL: eski?.fotoURL || null,
+        biyografi: eski?.biyografi || '',
+      });
+    }
+    i++;
+  }
+  return out.length > 0 ? out : fallback;
+};
+
 export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sablonFile, ekPrompt = '', width = 1080, height = 1080 }) => {
   if (!apiKey) throw new Error('Gemini API anahtarı yok.');
+  // Modal düzenlemesini uygula
+  egitmenler = parseEkPromptEgitmenler(ekPrompt, egitmenler);
 
   // 1. AŞAMA: Gemini'den dekoratif arka plan al
   const arkaPlan = await arkaPlanUret(apiKey, sablonFile, egitim);
@@ -266,19 +296,22 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   if (liste.length > 0) {
     const cols = Math.min(liste.length, 4);
     const rows = Math.ceil(liste.length / 4);
-    const gap = 18;                   // daha küçük yatay boşluk
-    const sidePad = 50;                // daha küçük yan boşluk
+    const gap = 18;
+    const sidePad = 50;
     const maxCardW = (W - sidePad * 2 - gap * (cols - 1)) / cols;
-    // Yükseklik: card = foto + 90px (isim+unvan)
-    const maxCardH = cardsAreaH / rows - 30;
-    const cardSize = Math.min(maxCardW, maxCardH - 90);
-    const cardW = cardSize;
-    const fotoSize = cardSize * 0.92; // foto card'ın daha büyük kısmı
+    // text alanı: 3 satır isim (~95px) + 2 satır unvan (~50px) + boşluk = ~155px
+    const textAreaH = 155;
+    const rowGap = 30;
+    const availableHPerRow = (cardsAreaH - rowGap * (rows - 1)) / rows;
+    const maxFotoFromH = availableHPerRow - textAreaH;
+    // Foto: width VEYA height limit'in min'i, en az 150 en çok 320
+    const fotoSize = Math.max(150, Math.min(maxCardW * 0.95, maxFotoFromH, 320));
+    const cardW = Math.max(fotoSize, maxCardW * 0.98);
+    const cardH = fotoSize + textAreaH;
     const totalW = cardW * cols + gap * (cols - 1);
     const startX = (W - totalW) / 2;
-    const rowH = cardSize + 100;
-    const totalH = rowH * rows - 30;
-    // Dikey olarak alanın ortasına yerleştir
+    const rowH = cardH + rowGap;
+    const totalH = rowH * rows - rowGap;
     const cardsStartY = cardsAreaTop + (cardsAreaH - totalH) / 2;
 
     for (let i = 0; i < liste.length; i++) {
@@ -332,22 +365,26 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
         ctx.fill();
       }
 
-      // İsim
+      // İsim — fotoSize'a göre, min 18 max 28
       const ad = (e.ad || '').toUpperCase();
-      const nameSize = Math.max(15, Math.min(24, cardSize * 0.095));
+      const nameSize = Math.max(18, Math.min(28, fotoSize * 0.13));
+      const nameLineHeight = nameSize + 4;
       ctx.fillStyle = '#FFFFFF';
       ctx.font = `bold ${nameSize}px Arial`;
       ctx.textAlign = 'center';
       ctx.shadowColor = 'rgba(0,0,0,0.8)';
       ctx.shadowBlur = 8;
-      const lastY = drawWrappedText(ctx, ad, x + cardW / 2, fotoY + fotoSize + 32, cardW + 30, nameSize + 4, 2);
+      const lastY = drawWrappedText(ctx, ad, x + cardW / 2, fotoY + fotoSize + 30, cardW * 0.95, nameLineHeight, 2);
 
-      // Unvan
+      // Unvan — isim'in bittiği Y'den itibaren (overlap yok)
       if (e.unvan) {
-        const unvanSize = nameSize - 4;
+        const unvanSize = Math.max(14, nameSize - 6);
+        const unvanLineHeight = unvanSize + 2;
         ctx.fillStyle = '#F5D77A';
         ctx.font = `${unvanSize}px Arial`;
-        drawWrappedText(ctx, e.unvan, x + cardW / 2, lastY + 4, cardW + 35, unvanSize + 2, 2);
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 5;
+        drawWrappedText(ctx, e.unvan, x + cardW / 2, lastY + 6, cardW * 0.95, unvanLineHeight, 2);
       }
       ctx.shadowBlur = 0;
     }

@@ -38,9 +38,10 @@ const trToEU = (saat, tarih) => {
   return `${String(euH).padStart(2, '0')}:${String(mn).padStart(2, '0')}`;
 };
 
-// Çok satırlı metin çiz (kelime kelime sar)
-const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight) => {
-  const words = text.split(' ');
+// Çok satırlı metin çiz (kelime kelime sar) — kaç satır çizdiğini döner
+const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) => {
+  if (!text) return 0;
+  const words = String(text).split(' ');
   let line = '';
   let lineY = y;
   const lines = [];
@@ -55,6 +56,16 @@ const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight) => {
     }
   }
   if (line) lines.push(line);
+  // Max satır sayısını aş (sonuncuda "..." ekle)
+  if (lines.length > maxLines) {
+    const lastLine = lines[maxLines - 1];
+    let trimmed = lastLine;
+    while (ctx.measureText(trimmed + '…').width > maxWidth && trimmed.length > 1) {
+      trimmed = trimmed.slice(0, -1);
+    }
+    lines.length = maxLines;
+    lines[maxLines - 1] = trimmed + '…';
+  }
   for (const l of lines) {
     ctx.fillText(l, x, lineY);
     lineY += lineHeight;
@@ -62,7 +73,46 @@ const drawWrappedText = (ctx, text, x, y, maxWidth, lineHeight) => {
   return lineY;
 };
 
+// ekPrompt'tan isim + unvan blokları çıkar — modal'da kullanıcı edit ettiyse onu kullan
+// Beklenen format:
+//   1. AD SOYAD
+//      Unvan
+//
+//   2. AD2
+//      Unvan2
+const parseEkPromptEgitmenler = (ekPrompt, fallback = []) => {
+  if (!ekPrompt || typeof ekPrompt !== 'string') return fallback;
+  const lines = ekPrompt.split('\n').map(l => l.replace(/ /g, ' '));
+  const out = [];
+  let i = 0;
+  while (i < lines.length) {
+    // "1. AD" satırını yakala
+    const m = lines[i].match(/^\s*(\d+)\.\s*(.+?)\s*$/);
+    if (m) {
+      const ad = m[2].trim();
+      // Sonraki satır → unvan (eğer "(boş)" veya "—" değilse)
+      let unvan = '';
+      const ny = (lines[i + 1] || '').trim();
+      if (ny && !/^\d+\./.test(ny) && !/^\s*$/.test(ny) && !/\(unvan girilmemiş/i.test(ny) && !/\(boş\)/i.test(ny)) {
+        unvan = ny;
+      }
+      // Eski egitmenler array'inden fotoyu eşleştir (sıra + ad yakınlığı)
+      const eski = fallback[out.length] || fallback.find(x => x?.ad && x.ad.toLocaleUpperCase('tr-TR') === ad.toLocaleUpperCase('tr-TR'));
+      out.push({
+        ad,
+        unvan,
+        fotoURL: eski?.fotoURL || null,
+        biyografi: eski?.biyografi || '',
+      });
+    }
+    i++;
+  }
+  return out.length > 0 ? out : fallback;
+};
+
 export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile, ekPrompt = '', width = 1080, height = 1080 }) => {
+  // ekPrompt'taki düzenleme varsa egitmenleri ondan al
+  egitmenler = parseEkPromptEgitmenler(ekPrompt, egitmenler);
   const W = width;
   const H = height;
   const canvas = document.createElement('canvas');
@@ -157,13 +207,19 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
     const cols = Math.min(fotoluListe.length, 4);
     const rows = Math.ceil(fotoluListe.length / 4);
     const gap = 25;
+    // Metin alanı: 3 satır isim + 2 satır unvan + boşluklar ≈ 130-150px
+    const textAreaH = 150;
+    const rowGap = 30;
+    const availableHPerRow = (cardsAreaH - rowGap * (rows - 1)) / rows;
+    const maxFotoFromH = availableHPerRow - textAreaH;
     const maxCardW = (W - 80 - gap * (cols - 1)) / cols;
-    const cardSize = Math.min(maxCardW, cardsAreaH / rows - 80);
-    const cardW = cardSize;
-    const fotoSize = cardSize * 0.9;
+    // Foto çapı: width-limit VEYA height-limit'den küçük olanı
+    const fotoSize = Math.max(140, Math.min(maxCardW * 0.95, maxFotoFromH, 280));
+    const cardW = Math.max(fotoSize, maxCardW); // text alan'ı için kart en az foto kadar genis
+    const cardH = fotoSize + textAreaH;
     const totalW = cardW * cols + gap * (cols - 1);
     const startX = (W - totalW) / 2;
-    const rowH = cardSize + 80;
+    const rowH = cardH + rowGap;
 
     for (let i = 0; i < fotoluListe.length; i++) {
       const e = fotoluListe[i];
@@ -217,22 +273,29 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
       // İsim
       const textY = fotoY + fotoSize + 30;
       const ad = (e.ad || '').toUpperCase();
-      const nameSize = Math.max(16, Math.min(26, cardSize * 0.1));
+      // İsim font boyutu — fotoSize'a orantılı, min 18 max 30
+      const nameSize = Math.max(18, Math.min(30, fotoSize * 0.13));
+      const nameLineHeight = nameSize + 4;
       ctx.fillStyle = '#FFFFFF';
       ctx.font = `bold ${nameSize}px Arial`;
       ctx.textAlign = 'center';
       ctx.shadowColor = 'rgba(0,0,0,0.7)';
       ctx.shadowBlur = 6;
-      drawWrappedText(ctx, ad, x + cardW / 2, textY, cardW + 10, nameSize + 4);
+      // drawWrappedText artık sonraki Y'i döner — overlap yok
+      const adSonY = drawWrappedText(ctx, ad, x + cardW / 2, textY, cardW * 0.95, nameLineHeight, 2);
       ctx.shadowBlur = 0;
 
-      // Unvan
+      // Unvan — isim'den hemen sonra (lineY return'ı kullan)
       if (e.unvan) {
-        const unvanSize = nameSize - 4;
-        const unvanY = textY + (ad.split(' ').length > 2 ? (nameSize + 4) * 2 : nameSize + 8);
+        const unvanSize = Math.max(14, nameSize - 6);
+        const unvanLineHeight = unvanSize + 2;
+        const unvanY = adSonY + 6; // isim bitince 6px boşluk
         ctx.fillStyle = '#F5D77A';
         ctx.font = `${unvanSize}px Arial`;
-        drawWrappedText(ctx, e.unvan, x + cardW / 2, unvanY, cardW + 20, unvanSize + 2);
+        ctx.shadowColor = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur = 4;
+        drawWrappedText(ctx, e.unvan, x + cardW / 2, unvanY, cardW * 0.95, unvanLineHeight, 2);
+        ctx.shadowBlur = 0;
       }
     }
   }
