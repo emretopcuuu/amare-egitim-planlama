@@ -40,15 +40,8 @@ const urlToImage = (src) => new Promise((resolve, reject) => {
     reader.onload = () => { img.src = reader.result; };
     reader.onerror = reject;
     reader.readAsDataURL(src);
-  } else if (src.startsWith?.('data:')) {
-    img.src = src;
   } else {
-    // Storage URL'lerinde cache-bust ekle — eski CORS-yok cache atlansın
-    let finalSrc = src;
-    if (typeof src === 'string' && src.startsWith('http') && src.includes('storage.googleapis.com')) {
-      finalSrc = src + (src.includes('?') ? '&' : '?') + 'cb=v2';
-    }
-    img.src = finalSrc;
+    img.src = src;
   }
 });
 
