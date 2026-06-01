@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Target, Compass, GraduationCap, Building2, Crown, ArrowRight, Edit3, Save, X, Loader2, Sparkles, LogIn } from 'lucide-react';
+import { ArrowLeft, Target, Compass, GraduationCap, Building2, Crown, ArrowRight, Edit3, Save, X, Loader2, Sparkles } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useSmartBack } from '../utils/navigation';
@@ -18,8 +18,6 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
 import LiveCounter from '../components/LiveCounter';
 import AvatarOverlap from '../components/AvatarOverlap';
-import UyeGirisModal from '../components/UyeGirisModal';
-import { useScrollReveal } from '../utils/useScrollReveal';
 
 const I18N = {
   tr: {
@@ -146,10 +144,9 @@ const HakkimizdaSayfasi = () => {
   const geri = useSmartBack('/');
   const { lang } = useTranslation();
   const { user } = useAuth();
-  const { currentUser, takvim, konusmacilar } = useData();
+  const { takvim, konusmacilar } = useData();
   const duzenleyebilir = isSiteAdmin(user?.email);
   const { toast } = useToast();
-  const [girisModal, setGirisModal] = useState(false);
 
   // #3 — İstatistikler (KonusmacilarSayfasi ile aynı mantık)
   const egitmenSayisi = useMemo(() => {
@@ -190,14 +187,6 @@ const HakkimizdaSayfasi = () => {
 
   // #5 — Komisyon ikonları (önizleme için)
   const komisyonIkonlar = KOMISYONLAR.slice(0, 6);
-
-  // #10 — Scroll reveal refs
-  const sayilarRef = useScrollReveal();
-  const misyonRef = useScrollReveal();
-  const vizyonRef = useScrollReveal();
-  const sekmelerRef = useScrollReveal();
-  const sozRef = useScrollReveal();
-  const ctaRef = useScrollReveal();
 
   // Firestore'dan override içeriği oku — tek seferlik
   const [icerikOverride, setIcerikOverride] = useState(null);
@@ -469,8 +458,8 @@ const HakkimizdaSayfasi = () => {
           />
         </div>
 
-        {/* #4 + #5 + #10 — ASIMETRIK BENTO: Yürütme büyük, Komisyon orta, Eğitmen küçük + avatar önizleme */}
-        <section ref={sekmelerRef} className="scroll-reveal mb-10 sm:mb-14">
+        {/* Ekosistem Sekmeleri — 3 EŞIT kart + avatar/ikon önizleme korunur */}
+        <section className="mb-10 sm:mb-14">
           {/* Kicker */}
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="h-px w-12 sm:w-16 bg-amber-400/50" />
@@ -480,111 +469,84 @@ const HakkimizdaSayfasi = () => {
             <div className="h-px w-12 sm:w-16 bg-amber-400/50" />
           </div>
 
-          {/* Bento layout: 6 kolonluk grid — Yürütme 4 kolon (büyük), Komisyon 4 (orta), Eğitmen 2-4 (küçük) */}
-          <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 sm:gap-5">
-            {/* YÜRÜTME KURULU — En büyük, sol üst (mobilde tam, sm+'da 6/6 üst satır, lg+'da 4/6 sol) */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+            {/* YÜRÜTME KURULU */}
             <button
               onClick={() => navigate('/yurutmekurulu')}
-              className="group relative col-span-1 sm:col-span-6 lg:col-span-4 bg-gradient-to-br from-amber-500/15 to-purple-900/30 hover:from-amber-500/20 hover:to-purple-900/40 backdrop-blur-md border-2 border-amber-300/40 hover:border-amber-300/80 rounded-3xl p-7 sm:p-9 transition-all duration-300 spring-tap text-left shadow-2xl hover:shadow-amber-500/30 overflow-hidden hover:-translate-y-1 min-h-[280px] sm:min-h-[320px] flex flex-col justify-between"
+              className="group relative bg-gradient-to-br from-white/[0.10] to-white/[0.03] hover:from-white/[0.15] hover:to-white/[0.05] backdrop-blur-md border-2 border-amber-300/30 hover:border-amber-300/70 rounded-3xl p-6 sm:p-7 transition-all duration-300 spring-tap text-left shadow-2xl hover:shadow-amber-500/25 overflow-hidden hover:-translate-y-1 flex flex-col"
             >
-              <div className="absolute -top-20 -right-20 w-56 h-56 rounded-full bg-amber-400/15 group-hover:bg-amber-400/30 blur-3xl transition-colors pointer-events-none" />
-              <div className="relative flex flex-col justify-between h-full">
-                <div>
-                  {/* İkon */}
-                  <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-amber-400/40 to-amber-600/20 border border-amber-300/60 shadow-xl mb-5 group-hover:scale-105 transition-transform">
-                    <Crown className="w-10 h-10 sm:w-12 sm:h-12 text-amber-300" />
-                  </div>
-                  <h3 className="text-white font-bold text-2xl sm:text-3xl mb-2 leading-tight">
-                    {tr.yurutmeBaslik}
-                  </h3>
-                  <p className="text-purple-100/85 text-sm sm:text-base leading-relaxed">
-                    {tr.yurutmeAciklama}
-                  </p>
+              <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-amber-400/10 group-hover:bg-amber-400/25 blur-3xl transition-colors pointer-events-none" />
+              <div className="relative flex flex-col flex-1">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-amber-400/35 to-amber-600/15 border border-amber-300/50 shadow-lg mb-4 group-hover:scale-105 transition-transform">
+                  <Crown className="w-8 h-8 sm:w-9 sm:h-9 text-amber-300" />
                 </div>
-
-                {/* Lider avatar önizleme — büyük kartta görünür */}
-                <div className="mt-5 flex items-center justify-between pt-4 border-t border-amber-300/30">
-                  <div className="flex items-center gap-3">
-                    <AvatarOverlap items={liderAvatarlar} max={5} size="w-10 h-10 sm:w-11 sm:h-11" />
-                    <div>
-                      <div className="text-amber-300 text-xs uppercase tracking-wider font-extrabold">
-                        {tr.ke}
-                      </div>
-                      <div className="text-purple-200/70 text-[11px]">
-                        {YURUTME_KURULU.length} lider yönlendiriyor
-                      </div>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-6 h-6 text-amber-300 transition-transform group-hover:translate-x-1.5" />
+                <h3 className="text-white font-bold text-xl sm:text-2xl mb-2 leading-tight">
+                  {tr.yurutmeBaslik}
+                </h3>
+                <p className="text-purple-100/85 text-sm leading-relaxed mb-4 flex-1">
+                  {tr.yurutmeAciklama}
+                </p>
+                {/* Lider yüzleri önizleme */}
+                <div className="flex items-center justify-between pt-3 border-t border-amber-300/20">
+                  <AvatarOverlap items={liderAvatarlar} max={4} size="w-8 h-8 sm:w-9 sm:h-9" />
+                  <ArrowRight className="w-5 h-5 text-amber-300 transition-transform group-hover:translate-x-1.5" />
                 </div>
               </div>
             </button>
 
-            {/* KOMISYONLAR — Orta, sağ üst (lg+'da 2/6 sağ) */}
+            {/* KOMISYONLAR */}
             <button
               onClick={() => navigate('/komisyonlar')}
-              className="group relative col-span-1 sm:col-span-3 lg:col-span-2 bg-gradient-to-br from-white/[0.10] to-white/[0.03] hover:from-white/[0.15] hover:to-white/[0.05] backdrop-blur-md border-2 border-amber-300/25 hover:border-amber-300/60 rounded-3xl p-6 sm:p-7 transition-all duration-300 spring-tap text-left shadow-2xl hover:shadow-amber-500/20 overflow-hidden hover:-translate-y-1 min-h-[280px] sm:min-h-[320px] flex flex-col justify-between"
+              className="group relative bg-gradient-to-br from-white/[0.10] to-white/[0.03] hover:from-white/[0.15] hover:to-white/[0.05] backdrop-blur-md border-2 border-amber-300/30 hover:border-amber-300/70 rounded-3xl p-6 sm:p-7 transition-all duration-300 spring-tap text-left shadow-2xl hover:shadow-amber-500/25 overflow-hidden hover:-translate-y-1 flex flex-col"
             >
-              <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-amber-400/10 group-hover:bg-amber-400/20 blur-3xl transition-colors pointer-events-none" />
-              <div className="relative flex flex-col justify-between h-full">
-                <div>
-                  <div className="inline-flex items-center justify-center w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-amber-400/35 to-amber-600/15 border border-amber-300/50 shadow-lg mb-4 group-hover:scale-105 transition-transform">
-                    <Building2 className="w-8 h-8 sm:w-9 sm:h-9 text-amber-300" />
-                  </div>
-                  <h3 className="text-white font-bold text-xl sm:text-2xl mb-2 leading-tight">
-                    {tr.komisyonlarBaslik}
-                  </h3>
-                  <p className="text-purple-100/80 text-sm leading-relaxed">
-                    {tr.komisyonlarAciklama}
-                  </p>
+              <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-amber-400/10 group-hover:bg-amber-400/25 blur-3xl transition-colors pointer-events-none" />
+              <div className="relative flex flex-col flex-1">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-amber-400/35 to-amber-600/15 border border-amber-300/50 shadow-lg mb-4 group-hover:scale-105 transition-transform">
+                  <Building2 className="w-8 h-8 sm:w-9 sm:h-9 text-amber-300" />
                 </div>
-
-                {/* Komisyon ikonları mini grid */}
-                <div className="mt-4 pt-3 border-t border-amber-300/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    {komisyonIkonlar.map((k, i) => {
+                <h3 className="text-white font-bold text-xl sm:text-2xl mb-2 leading-tight">
+                  {tr.komisyonlarBaslik}
+                </h3>
+                <p className="text-purple-100/85 text-sm leading-relaxed mb-4 flex-1">
+                  {tr.komisyonlarAciklama}
+                </p>
+                {/* Komisyon ikonları önizleme */}
+                <div className="flex items-center justify-between pt-3 border-t border-amber-300/20">
+                  <div className="flex items-center gap-1.5">
+                    {komisyonIkonlar.slice(0, 4).map((k, i) => {
                       const Icon = k.icon;
                       return (
-                        <div key={k.id} className="w-7 h-7 rounded-lg bg-amber-400/15 border border-amber-300/30 flex items-center justify-center"
-                          style={{ opacity: 0.5 + (i * 0.08) }}>
+                        <div key={k.id} className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-400/15 border border-amber-300/30 flex items-center justify-center"
+                          style={{ opacity: 0.55 + (i * 0.1) }}>
                           <Icon className="w-3.5 h-3.5 text-amber-300" />
                         </div>
                       );
                     })}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-amber-300 text-[11px] uppercase tracking-wider font-bold">{tr.ke}</span>
-                    <ArrowRight className="w-5 h-5 text-amber-300 transition-transform group-hover:translate-x-1" />
-                  </div>
+                  <ArrowRight className="w-5 h-5 text-amber-300 transition-transform group-hover:translate-x-1.5" />
                 </div>
               </div>
             </button>
 
-            {/* EGITMENLER — Küçük ama görsel zengin (yüzler) */}
+            {/* EGITMENLER */}
             <button
               onClick={() => navigate('/konusmacilar')}
-              className="group relative col-span-1 sm:col-span-3 lg:col-span-6 bg-gradient-to-br from-white/[0.08] to-white/[0.02] hover:from-white/[0.12] hover:to-white/[0.04] backdrop-blur-md border-2 border-amber-300/20 hover:border-amber-300/50 rounded-3xl p-6 sm:p-7 transition-all duration-300 spring-tap text-left shadow-xl hover:shadow-amber-500/15 overflow-hidden hover:-translate-y-1"
+              className="group relative bg-gradient-to-br from-white/[0.10] to-white/[0.03] hover:from-white/[0.15] hover:to-white/[0.05] backdrop-blur-md border-2 border-amber-300/30 hover:border-amber-300/70 rounded-3xl p-6 sm:p-7 transition-all duration-300 spring-tap text-left shadow-2xl hover:shadow-amber-500/25 overflow-hidden hover:-translate-y-1 flex flex-col"
             >
-              <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
-                {/* İkon küçük */}
-                <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-400/30 to-amber-600/15 border border-amber-300/40 shadow-md flex-shrink-0">
-                  <GraduationCap className="w-7 h-7 sm:w-8 sm:h-8 text-amber-300" />
+              <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-amber-400/10 group-hover:bg-amber-400/25 blur-3xl transition-colors pointer-events-none" />
+              <div className="relative flex flex-col flex-1">
+                <div className="inline-flex items-center justify-center w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-amber-400/35 to-amber-600/15 border border-amber-300/50 shadow-lg mb-4 group-hover:scale-105 transition-transform">
+                  <GraduationCap className="w-8 h-8 sm:w-9 sm:h-9 text-amber-300" />
                 </div>
-                {/* İçerik */}
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-bold text-xl sm:text-2xl mb-1 leading-tight">
-                    {tr.egitmenlerBaslik}
-                  </h3>
-                  <p className="text-purple-100/80 text-sm leading-snug">
-                    {tr.egitmenlerAciklama}
-                  </p>
-                </div>
-                {/* Yüzler ve CTA */}
-                <div className="flex items-center gap-4 flex-shrink-0">
-                  <AvatarOverlap items={egitmenAvatarlar} max={5} size="w-9 h-9 sm:w-10 sm:h-10" />
-                  <span className="text-purple-200/70 text-xs hidden sm:inline">
-                    {egitmenSayisi} eğitmen
-                  </span>
+                <h3 className="text-white font-bold text-xl sm:text-2xl mb-2 leading-tight">
+                  {tr.egitmenlerBaslik}
+                </h3>
+                <p className="text-purple-100/85 text-sm leading-relaxed mb-4 flex-1">
+                  {tr.egitmenlerAciklama}
+                </p>
+                {/* Eğitmen yüzleri önizleme */}
+                <div className="flex items-center justify-between pt-3 border-t border-amber-300/20">
+                  <AvatarOverlap items={egitmenAvatarlar} max={4} size="w-8 h-8 sm:w-9 sm:h-9" />
                   <ArrowRight className="w-5 h-5 text-amber-300 transition-transform group-hover:translate-x-1.5" />
                 </div>
               </div>
@@ -593,7 +555,7 @@ const HakkimizdaSayfasi = () => {
         </section>
 
         {/* #2 — MİSYON: sayfanın kalbi, tam genişlik editorial */}
-        <section ref={misyonRef} className="scroll-reveal mb-10 sm:mb-14">
+        <section className="mb-10 sm:mb-14">
           <div className="relative bg-gradient-to-br from-amber-500/[0.08] via-purple-900/30 to-white/[0.02] backdrop-blur-md border border-amber-300/30 rounded-3xl p-7 sm:p-10 overflow-hidden shadow-2xl">
             <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-amber-400/12 blur-3xl pointer-events-none" />
             <div className="relative decorative-quote">
@@ -620,7 +582,7 @@ const HakkimizdaSayfasi = () => {
         </section>
 
         {/* #2 — VİZYON: sayfanın kalbi, tam genişlik editorial */}
-        <section ref={vizyonRef} className="scroll-reveal mb-10 sm:mb-14">
+        <section className="mb-10 sm:mb-14">
           <div className="relative bg-gradient-to-br from-purple-700/30 via-purple-900/30 to-amber-500/[0.06] backdrop-blur-md border border-amber-300/30 rounded-3xl p-7 sm:p-10 overflow-hidden shadow-2xl">
             <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-amber-400/12 blur-3xl pointer-events-none" />
             <div className="relative decorative-quote">
@@ -647,7 +609,7 @@ const HakkimizdaSayfasi = () => {
         </section>
 
         {/* Bonus: Liderlerden Bir Söz / Manifesto */}
-        <section ref={sozRef} className="scroll-reveal mb-10 sm:mb-14">
+        <section className="mb-10 sm:mb-14">
           <div className="text-center max-w-3xl mx-auto">
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="h-px w-10 bg-amber-400/40" />
@@ -663,43 +625,6 @@ const HakkimizdaSayfasi = () => {
           </div>
         </section>
 
-        {/* #9 — Sayfa Sonu CTA: Aramıza Katıl (anonim için), Profile git (login için) */}
-        <section ref={ctaRef} className="scroll-reveal mb-10 sm:mb-14">
-          <div className="relative bg-gradient-to-br from-amber-500/20 via-amber-400/15 to-purple-700/20 border-2 border-amber-300/50 rounded-3xl p-7 sm:p-10 text-center overflow-hidden shadow-2xl">
-            <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-amber-400/15 blur-3xl pointer-events-none" />
-            <div className="relative">
-              <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-400/50 to-amber-600/30 border border-amber-300/60 shadow-xl mb-4">
-                <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-amber-200" />
-              </div>
-              <h3 className="text-white font-bold text-2xl sm:text-3xl md:text-4xl mb-3 tracking-tight">
-                {tr.katilCagriBaslik}
-              </h3>
-              <p className="text-purple-100/90 text-sm sm:text-base max-w-lg mx-auto mb-6 leading-relaxed">
-                {tr.katilCagriMetin}
-              </p>
-              {currentUser ? (
-                <button onClick={() => navigate('/profil')}
-                  className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 font-extrabold text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-xl shadow-amber-500/30 transition-all spring-tap">
-                  {tr.girisliKatilButon}
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-              ) : (
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <button onClick={() => setGirisModal(true)}
-                    className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 font-extrabold text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-xl shadow-amber-500/30 transition-all spring-tap">
-                    <LogIn className="w-5 h-5" />
-                    {tr.katilButon}
-                  </button>
-                  <button onClick={() => navigate('/takvim')}
-                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/40 text-sm sm:text-base px-5 sm:px-6 py-3 sm:py-3.5 rounded-full transition-all spring-tap">
-                    Eğitim Takvimi
-                    <ArrowRight className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        </section>
 
         {/* Footer */}
         <div className="text-center pt-8 border-t border-white/10">
@@ -708,9 +633,6 @@ const HakkimizdaSayfasi = () => {
           </p>
         </div>
       </div>
-
-      {/* Üye giriş modal */}
-      <UyeGirisModal acik={girisModal} onClose={() => setGirisModal(false)} />
     </div>
   );
 };
