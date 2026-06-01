@@ -261,6 +261,7 @@ const AdminPanel = () => {
   const [kategoriFiltre, setKategoriFiltre] = useState('');
   const [sadeceBekleyen, setSadeceBekleyen] = useState(false);
   const [gorunum, setGorunum] = useState('liste'); // 'liste' | 'kompakt' | 'takvim'
+  const [adminGecmisGoster, setAdminGecmisGoster] = useState(false); // tamamen geçmiş haftalar default gizli
 
   // Toplu görsel
   const [topluMod, setTopluMod] = useState(false);
@@ -1294,6 +1295,36 @@ const AdminPanel = () => {
               </div>
             ) : (
               <div className="space-y-6">
+                {/* Tamamen geçmiş hafta sayacı + toggle */}
+                {(() => {
+                  const haftalik = {};
+                  filtreliTakvim.forEach(e => {
+                    const key = getHaftaKey(e.tarih) || 'unknown';
+                    if (!haftalik[key]) haftalik[key] = [];
+                    haftalik[key].push(e);
+                  });
+                  const simdi = new Date();
+                  const tamGecmisSayisi = Object.values(haftalik).filter(arr => arr.every(e => {
+                    const d = parseTarih(e.tarih);
+                    if (!d) return false;
+                    const [bs=0, bd=0] = (e.bitisSaati || e.saat || '23:59').split(':').map(Number);
+                    const bitis = new Date(d); bitis.setHours(bs, bd, 0, 0);
+                    return simdi > bitis;
+                  })).length;
+                  if (tamGecmisSayisi === 0) return null;
+                  return (
+                    <button onClick={() => setAdminGecmisGoster(s => !s)}
+                      className="w-full inline-flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-600 hover:text-gray-800 text-sm font-semibold rounded-xl px-4 py-2.5 transition-all">
+                      <svg className={`w-4 h-4 transition-transform ${adminGecmisGoster ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                      {adminGecmisGoster
+                        ? `Geçmiş ${tamGecmisSayisi} haftayı gizle`
+                        : `Geçmiş ${tamGecmisSayisi} haftayı göster`}
+                    </button>
+                  );
+                })()}
+
                 {(() => {
                   const haftalik = {};
                   filtreliTakvim.forEach(e => {
@@ -1336,6 +1367,9 @@ const AdminPanel = () => {
                       };
                       const gecmisler = haftaEgitimleri.filter(isGecmis);
                       const gelecekler = haftaEgitimleri.filter(e => !isGecmis(e));
+
+                      // Tamamen geçmiş hafta + toggle kapalı → gizle (yer kaplamasın)
+                      if (gelecekler.length === 0 && gecmisler.length > 0 && !adminGecmisGoster) return null;
 
                       const renderGrupAdmin = (egitimler) => {
                         if (gorunum === 'kompakt') return <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">{egitimler.map(e => <EgitimKarti key={e.id} egitim={e} kompakt />)}</div>;
