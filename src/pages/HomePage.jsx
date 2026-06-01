@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Sparkles, Newspaper, ArrowRight, Users, Hammer, X, LogIn, User, ChevronDown } from 'lucide-react';
 import { useTranslation } from '../context/LanguageContext';
@@ -6,7 +6,7 @@ import LanguageSwitcher from '../components/LanguageSwitcher';
 import BultenModal from '../components/BultenModal';
 import UyeGirisModal from '../components/UyeGirisModal';
 import LiveCounter from '../components/LiveCounter';
-import { useData } from '../context/DataContext';
+import { useData, makeCoreId } from '../context/DataContext';
 import { db } from '../utils/firebase';
 import { doc, getDoc, collection, getCountFromServer } from 'firebase/firestore';
 import { confetti } from '../components/Konfeti';
@@ -53,9 +53,27 @@ const HomePage = () => {
   const [yapimAsamasinda, setYapimAsamasinda] = useState(false);
   const [girisModal, setGirisModal] = useState(false);
   const [profilAdi, setProfilAdi] = useState('');
-  // #4 — Canlı rakam sayacı için toplamlar (default fallback değerlerle başla)
+  // #4 — Canlı rakam sayacı için toplamlar
+  // Eğitmen sayısı: KonusmacilarSayfasi ile AYNI mantık — takvim'deki tüm
+  // eğitmen isimleri + konusmacilar koleksiyonu, coreId ile dedupe.
+  const egitmenSayisi = useMemo(() => {
+    const set = new Set();
+    (konusmacilar || []).forEach(k => {
+      const cid = makeCoreId(k.ad || k.id);
+      if (cid) set.add(cid);
+    });
+    (takvim || []).forEach(e => {
+      if (!e?.egitmen) return;
+      String(e.egitmen).split(/[\/,&]/).map(s => s.trim()).filter(s => s.length > 1).forEach(ad => {
+        const cid = makeCoreId(ad);
+        if (cid) set.add(cid);
+      });
+    });
+    return set.size;
+  }, [konusmacilar, takvim]);
+
   const [istatistik, setIstatistik] = useState({
-    egitmen: 26,
+    egitmen: 115,
     eğitim: 65,
     komisyon: 11,
   });
@@ -68,15 +86,13 @@ const HomePage = () => {
   const kart3Ref = useMagnetic(0.08);
 
   // #4 — İstatistikleri güncelle (data yüklendikçe)
-  // Eğitmen sayısı: konuşmacılar koleksiyonu (doğrudan kaynak)
-  // Eğitim sayısı: takvim listesi
   useEffect(() => {
     setIstatistik(prev => ({
       ...prev,
-      egitmen: konusmacilar?.length || prev.egitmen,
+      egitmen: egitmenSayisi || prev.egitmen,
       eğitim: takvim?.length || prev.eğitim,
     }));
-  }, [takvim?.length, konusmacilar?.length]);
+  }, [takvim?.length, egitmenSayisi]);
 
   // Logo click — easter egg konfeti
   const logoClick = useCallback(() => {
