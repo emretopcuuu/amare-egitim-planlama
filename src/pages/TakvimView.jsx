@@ -624,12 +624,30 @@ const TakvimView = () => {
   const sehirler = [...new Set(takvim.filter(e=>!isOnline(e)).map(e=>getSehir(e)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr-TR'));
 
   // Haftalık grupla
-  const { haftalikTakvim, haftaKeys } = useMemo(() => {
+  const { haftalikTakvim, haftaKeys, ayIciHaftaNo } = useMemo(() => {
     const ht = {};
     filtrelenmis.forEach(e => { const k=getHaftaKey(e.tarih); if(!k) return; if(!ht[k]) ht[k]=[]; ht[k].push(e); });
     const keys = Object.keys(ht).sort();
     keys.forEach(k => ht[k].sort((a,b) => { const ta=parseTarih(a.tarih),tb=parseTarih(b.tarih); if(ta&&tb&&ta.getTime()!==tb.getTime()) return ta-tb; return (a.saat||'').localeCompare(b.saat||''); }));
-    return { haftalikTakvim: ht, haftaKeys: keys };
+    // Ay-içi hafta sayacı — her ay 1'den başlar
+    // Haftanın ait olduğu ay = ilk eğitimin ayı (Pazartesi dahil olduğu ay)
+    const ayIciMap = {};
+    let oncekiAyKey = null;
+    let sayac = 0;
+    keys.forEach(haftaKey => {
+      const ilk = ht[haftaKey]?.[0];
+      const d = ilk ? parseTarih(ilk.tarih) : null;
+      if (!d) return;
+      const ayKey = `${d.getFullYear()}-${d.getMonth()}`;
+      if (ayKey !== oncekiAyKey) {
+        oncekiAyKey = ayKey;
+        sayac = 1;
+      } else {
+        sayac++;
+      }
+      ayIciMap[haftaKey] = sayac;
+    });
+    return { haftalikTakvim: ht, haftaKeys: keys, ayIciHaftaNo: ayIciMap };
   }, [filtrelenmis]);
 
   const haftaAralik = (egitimler) => { const tt=egitimler.map(e=>parseTarih(e.tarih)).filter(Boolean).sort((a,b)=>a-b); if(!tt.length)return''; const f=d=>d.toLocaleDateString(locale,{day:'numeric',month:'long'}); return tt.length===1?f(tt[0]):`${f(tt[0])} – ${f(tt[tt.length-1])}`; };
@@ -1195,7 +1213,7 @@ const TakvimView = () => {
                   <div className="absolute left-0 top-12 bottom-4 w-1 rounded-full bg-gradient-to-b from-amber-400/40 via-purple-400/30 to-transparent hidden lg:block" />
 
                   <div className="flex items-center gap-3 mb-4 lg:pl-6">
-                    <div className="bg-white text-purple-800 rounded-xl px-4 py-2 font-extrabold text-lg shadow gold-glow font-display">{t('cal_week')} {idx+1}</div>
+                    <div className="bg-white text-purple-800 rounded-xl px-4 py-2 font-extrabold text-lg shadow gold-glow font-display">{t('cal_week')} {ayIciHaftaNo[haftaKey] || idx+1}</div>
                     <div className="text-amber-200 text-sm font-medium">{aralik}</div>
                     <div className="flex-1 h-px bg-gradient-to-r from-white/20 via-amber-400/30 to-transparent" />
                     <div className="text-purple-300 text-sm">{haftaEgitimleri.length} {t('cal_trainings')}</div>
