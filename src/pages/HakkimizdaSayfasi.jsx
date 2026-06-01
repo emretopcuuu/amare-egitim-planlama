@@ -450,7 +450,6 @@ const HakkimizdaSayfasi = () => {
           <LiveCounter
             className="mt-6 sm:mt-8"
             items={[
-              { deger: YURUTME_KURULU.length, etiket: 'Lider' },
               { deger: KOMISYONLAR.length, etiket: 'Komisyon' },
               { deger: egitmenSayisi, etiket: 'Eğitmen' },
               { deger: takvim?.length || 65, etiket: 'Eğitim', sonek: '+' },
