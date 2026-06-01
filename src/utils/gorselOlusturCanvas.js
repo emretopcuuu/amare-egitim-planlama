@@ -232,6 +232,36 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
       const fotoX = x + (cardW - fotoSize) / 2;
       const fotoY = y;
 
+      // Initial harfleri (foto yüklenmezse fallback için)
+      const initials = (e.ad || '?').trim().split(/\s+/).filter(Boolean)
+        .map(p => p[0]).join('').slice(0, 2).toUpperCase();
+
+      // Premium fallback placeholder — altın gradient + initials
+      const placeholderCiz = () => {
+        const cx = fotoX + fotoSize / 2;
+        const cy = fotoY + fotoSize / 2;
+        // Altın gradient daire
+        const grad = ctx.createRadialGradient(cx, cy - fotoSize * 0.2, fotoSize * 0.1, cx, cy, fotoSize / 2);
+        grad.addColorStop(0, 'rgba(251, 215, 122, 0.95)');
+        grad.addColorStop(0.6, 'rgba(245, 158, 11, 0.85)');
+        grad.addColorStop(1, 'rgba(124, 58, 237, 0.5)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, fotoSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        // Initials
+        const fs = Math.floor(fotoSize * 0.4);
+        ctx.fillStyle = '#3F1D6B';
+        ctx.font = `bold ${fs}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(255,255,255,0.4)';
+        ctx.shadowBlur = 4;
+        ctx.fillText(initials, cx, cy + 2);
+        ctx.shadowBlur = 0;
+        ctx.textBaseline = 'alphabetic';
+      };
+
       if (e.fotoURL) {
         try {
           const img = await urlToImage(e.fotoURL);
@@ -255,20 +285,23 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
           ctx.shadowBlur = 8;
           ctx.stroke();
           ctx.shadowBlur = 0;
-        } catch {
-          // foto yüklenemezse placeholder
-          ctx.fillStyle = 'rgba(255,255,255,0.15)';
-          ctx.beginPath();
-          ctx.arc(fotoX + fotoSize / 2, fotoY + fotoSize / 2, fotoSize / 2, 0, Math.PI * 2);
-          ctx.fill();
+        } catch (err) {
+          console.warn(`[gorselCanvas] Foto yüklenemedi: ${e.ad} (${e.fotoURL?.slice(0, 80)}) — ${err.message}`);
+          placeholderCiz();
         }
       } else {
-        // foto yok — silüet
-        ctx.fillStyle = 'rgba(255,255,255,0.15)';
-        ctx.beginPath();
-        ctx.arc(fotoX + fotoSize / 2, fotoY + fotoSize / 2, fotoSize / 2, 0, Math.PI * 2);
-        ctx.fill();
+        placeholderCiz();
       }
+
+      // Beyaz çerçeve (foto/placeholder farketmez)
+      ctx.beginPath();
+      ctx.arc(fotoX + fotoSize / 2, fotoY + fotoSize / 2, fotoSize / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 4;
+      ctx.shadowColor = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur = 8;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
 
       // İsim
       const textY = fotoY + fotoSize + 30;

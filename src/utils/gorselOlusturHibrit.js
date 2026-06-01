@@ -324,6 +324,34 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
       const fotoX = x + (cardW - fotoSize) / 2;
       const fotoY = y;
 
+      // Initials (foto fallback için)
+      const initials = (e.ad || '?').trim().split(/\s+/).filter(Boolean)
+        .map(p => p[0]).join('').slice(0, 2).toUpperCase();
+
+      // Premium altın gradient + initials placeholder
+      const placeholderCiz = () => {
+        const cx = fotoX + fotoSize / 2;
+        const cy = fotoY + fotoSize / 2;
+        const grad = ctx.createRadialGradient(cx, cy - fotoSize * 0.2, fotoSize * 0.1, cx, cy, fotoSize / 2);
+        grad.addColorStop(0, 'rgba(251, 215, 122, 0.95)');
+        grad.addColorStop(0.6, 'rgba(245, 158, 11, 0.85)');
+        grad.addColorStop(1, 'rgba(124, 58, 237, 0.5)');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, fotoSize / 2, 0, Math.PI * 2);
+        ctx.fill();
+        const fs = Math.floor(fotoSize * 0.4);
+        ctx.fillStyle = '#3F1D6B';
+        ctx.font = `bold ${fs}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = 'rgba(255,255,255,0.4)';
+        ctx.shadowBlur = 4;
+        ctx.fillText(initials, cx, cy + 2);
+        ctx.shadowBlur = 0;
+        ctx.textBaseline = 'alphabetic';
+      };
+
       // Yuvarlak foto
       if (e.fotoURL) {
         try {
@@ -338,32 +366,28 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
           const sy = (img.height - minDim) / 2;
           ctx.drawImage(img, sx, sy, minDim, minDim, fotoX, fotoY, fotoSize, fotoSize);
           ctx.restore();
-          // Çift çerçeve — beyaz dış + altın iç
-          ctx.beginPath();
-          ctx.arc(fotoX + fotoSize / 2, fotoY + fotoSize / 2, fotoSize / 2 + 4, 0, Math.PI * 2);
-          ctx.strokeStyle = '#F5D77A';
-          ctx.lineWidth = 4;
-          ctx.shadowColor = 'rgba(0,0,0,0.6)';
-          ctx.shadowBlur = 12;
-          ctx.stroke();
-          ctx.beginPath();
-          ctx.arc(fotoX + fotoSize / 2, fotoY + fotoSize / 2, fotoSize / 2, 0, Math.PI * 2);
-          ctx.strokeStyle = '#FFFFFF';
-          ctx.lineWidth = 3;
-          ctx.shadowBlur = 0;
-          ctx.stroke();
-        } catch {
-          ctx.fillStyle = 'rgba(255,255,255,0.18)';
-          ctx.beginPath();
-          ctx.arc(fotoX + fotoSize / 2, fotoY + fotoSize / 2, fotoSize / 2, 0, Math.PI * 2);
-          ctx.fill();
+        } catch (err) {
+          console.warn(`[gorselHibrit] Foto yüklenemedi: ${e.ad} (${e.fotoURL?.slice(0, 80)}) — ${err.message}`);
+          placeholderCiz();
         }
       } else {
-        ctx.fillStyle = 'rgba(255,255,255,0.18)';
-        ctx.beginPath();
-        ctx.arc(fotoX + fotoSize / 2, fotoY + fotoSize / 2, fotoSize / 2, 0, Math.PI * 2);
-        ctx.fill();
+        placeholderCiz();
       }
+
+      // Çift çerçeve — beyaz dış + altın iç (foto/placeholder farketmez)
+      ctx.beginPath();
+      ctx.arc(fotoX + fotoSize / 2, fotoY + fotoSize / 2, fotoSize / 2 + 4, 0, Math.PI * 2);
+      ctx.strokeStyle = '#F5D77A';
+      ctx.lineWidth = 4;
+      ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.shadowBlur = 12;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(fotoX + fotoSize / 2, fotoY + fotoSize / 2, fotoSize / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 3;
+      ctx.shadowBlur = 0;
+      ctx.stroke();
 
       // İsim — fotoSize'a göre, min 18 max 28
       const ad = (e.ad || '').toUpperCase();
