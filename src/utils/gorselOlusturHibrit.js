@@ -43,7 +43,12 @@ const urlToImage = (src) => new Promise((resolve, reject) => {
   } else if (src.startsWith?.('data:')) {
     img.src = src;
   } else {
-    img.src = src;
+    // Storage URL'lerinde cache-bust ekle — eski CORS-yok cache atlansın
+    let finalSrc = src;
+    if (typeof src === 'string' && src.startsWith('http') && src.includes('storage.googleapis.com')) {
+      finalSrc = src + (src.includes('?') ? '&' : '?') + 'cb=v2';
+    }
+    img.src = finalSrc;
   }
 });
 
