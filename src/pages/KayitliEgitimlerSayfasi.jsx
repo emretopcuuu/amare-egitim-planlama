@@ -177,7 +177,8 @@ function saveList(key, list) {
 const KayitliEgitimlerSayfasi = () => {
   useDocumentTitle('Kayıtlı Eğitimler', '900+ video kütüphanesi · 14 kategori');
   const navigate = useNavigate();
-  const geri = useSmartBack('/takvim');
+  // Geri butonu: smartBack yerine HER ZAMAN /takvim (kullanıcı tercihi)
+  const geri = () => navigate('/takvim');
   const { toast } = useToast();
   const { t, tDynamic, translateBatch, lang } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
