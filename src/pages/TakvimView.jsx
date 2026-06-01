@@ -420,6 +420,7 @@ const TakvimView = () => {
   const [zamanFiltre, setZamanFiltre] = useState(null); // 'bu-hafta' | 'gelecek-7' | 'gelecek-30' | null
   const [arama, setArama] = useState('');
   const [gorunum, setGorunum] = useState(() => window.innerWidth < 768 ? 'kart' : 'liste'); // mobilde kart, masaüstünde liste
+  const [gecmisAylariGoster, setGecmisAylariGoster] = useState(false); // tamamen geçmiş aylar default gizli
   const [konusmaciModal, setKonusmaciModal] = useState(null);
   const [posterModal, setPosterModal] = useState(null);
   const [hatirlatmaModal, setHatirlatmaModal] = useState(null);
@@ -622,6 +623,9 @@ const TakvimView = () => {
   const bugunGecmis = bugunEgitimleri.filter(e => getCountdown(e)?.durum === 'gecmis').length;
 
   const sehirler = [...new Set(takvim.filter(e=>!isOnline(e)).map(e=>getSehir(e)).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'tr-TR'));
+
+  // Tamamen geçmiş haftaları belirle (tüm eğitimler geçmiş → hafta tamamen geçmiş)
+  const tamGecmisHaftaCheck = (egitimler) => egitimler.every(e => getCountdown(e)?.durum === 'gecmis');
 
   // Haftalık grupla
   const { haftalikTakvim, haftaKeys, ayIciHaftaNo } = useMemo(() => {
@@ -1185,9 +1189,28 @@ const TakvimView = () => {
                 : <EmptyCompleted />
             )}
 
+            {/* Tamamen geçmiş haftaları say + toggle */}
+            {(() => {
+              const tamGecmisSayisi = haftaKeys.filter(k => tamGecmisHaftaCheck(haftalikTakvim[k])).length;
+              if (tamGecmisSayisi === 0) return null;
+              return (
+                <button onClick={() => setGecmisAylariGoster(s => !s)}
+                  className="w-full inline-flex items-center justify-center gap-2 bg-white/[0.06] hover:bg-white/[0.10] border border-white/15 text-purple-200/80 hover:text-white text-xs sm:text-sm font-semibold rounded-xl px-4 py-2.5 transition-all spring-tap">
+                  <svg className={`w-4 h-4 transition-transform ${gecmisAylariGoster ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                  {gecmisAylariGoster
+                    ? `Geçmiş ${tamGecmisSayisi} haftayı gizle`
+                    : `Geçmiş ${tamGecmisSayisi} haftayı göster`}
+                </button>
+              );
+            })()}
+
             {haftaKeys.map((haftaKey,idx) => {
               const haftaEgitimleri = haftalikTakvim[haftaKey];
               if (!haftaEgitimleri?.length) return null;
+              // Tamamen geçmiş hafta + toggle kapalı → gizle
+              if (!gecmisAylariGoster && tamGecmisHaftaCheck(haftaEgitimleri)) return null;
               const aralik = haftaAralik(haftaEgitimleri);
               const gelecekler = haftaEgitimleri.filter(e => getCountdown(e)?.durum !== 'gecmis');
               const gecmisler = haftaEgitimleri.filter(e => getCountdown(e)?.durum === 'gecmis');
