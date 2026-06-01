@@ -180,6 +180,53 @@ html {
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* ── #10 Scroll Reveal (intersection observer) ──────────── */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+    will-change: opacity, transform;
+  }
+  .scroll-reveal.is-visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── #8 Yıldız / Nokta Arka Plan Deseni (çok ince) ────── */
+  .bg-stars {
+    background-image:
+      radial-gradient(1px 1px at 20% 20%, rgba(251, 191, 36, 0.4) 0%, transparent 50%),
+      radial-gradient(1px 1px at 60% 50%, rgba(251, 191, 36, 0.3) 0%, transparent 50%),
+      radial-gradient(1px 1px at 80% 80%, rgba(251, 191, 36, 0.35) 0%, transparent 50%),
+      radial-gradient(1px 1px at 30% 70%, rgba(251, 191, 36, 0.25) 0%, transparent 50%),
+      radial-gradient(1px 1px at 90% 30%, rgba(251, 191, 36, 0.3) 0%, transparent 50%),
+      radial-gradient(1.5px 1.5px at 15% 85%, rgba(251, 191, 36, 0.4) 0%, transparent 50%),
+      radial-gradient(1px 1px at 50% 10%, rgba(251, 191, 36, 0.3) 0%, transparent 50%);
+    background-size: 400px 400px;
+    background-repeat: repeat;
+  }
+
+  /* ── Bonus: Misyon/Vizyon dekoratif tırnak ─────────────── */
+  .decorative-quote::before {
+    content: '"';
+    position: absolute;
+    top: -1rem;
+    left: -0.5rem;
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 5rem;
+    line-height: 1;
+    color: rgba(251, 191, 36, 0.35);
+    pointer-events: none;
+    user-select: none;
+  }
+  @media (min-width: 640px) {
+    .decorative-quote::before {
+      font-size: 7rem;
+      top: -1.5rem;
+      left: -1rem;
+    }
+  }
+
   /* ── Hero animated gradient mesh ──────────────────────── */
   /* Yavaş döner mor→altın gradient — premium atmosfer */
   .hero-mesh {

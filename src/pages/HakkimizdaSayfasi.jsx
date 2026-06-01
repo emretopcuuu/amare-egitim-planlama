@@ -2,19 +2,24 @@
 // Misyon + Vizyon + ileride Değerler/Liderler/İletişim için geniş.
 // İçerik şimdilik hard-coded; ileride Firestore'a alınabilir.
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Target, Compass, GraduationCap, Building2, Crown, ArrowRight, Edit3, Save, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Target, Compass, GraduationCap, Building2, Crown, ArrowRight, Edit3, Save, X, Loader2, Sparkles, LogIn } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useSmartBack } from '../utils/navigation';
 import { db } from '../utils/firebase';
 import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
 import { YURUTME_KURULU } from '../utils/yurutmeKurulu';
-import { makeCoreId } from '../context/DataContext';
+import { KOMISYONLAR } from '../utils/komisyonlar';
+import { makeCoreId, useData } from '../context/DataContext';
 import { getSiteIcerik, saveSiteIcerik, isSiteAdmin } from '../utils/siteIcerik';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/Toast';
+import LiveCounter from '../components/LiveCounter';
+import AvatarOverlap from '../components/AvatarOverlap';
+import UyeGirisModal from '../components/UyeGirisModal';
+import { useScrollReveal } from '../utils/useScrollReveal';
 
 const I18N = {
   tr: {
@@ -23,7 +28,16 @@ const I18N = {
     kicker: 'One Team',
     baslikSol: 'Girişimcilik',
     baslikSag: 'Ekosistemi',
-    intro: 'Sağlık, varlık ve özgürlük için yola çıkan, girişimci adaylarına destek olan aile.',
+    intro: 'Bireylerin hayatını değiştiren, dünyanın en güçlü girişimcilik ekosistemini birlikte kuruyoruz.',
+    sayilarKicker: 'Birlikte',
+    sayilarBaslik: 'Çoğalan bir aile',
+    katilCagriBaslik: 'OneTeam Ailesine Katıl',
+    katilCagriMetin: 'Marka Ortağı ol, sağlık + varlık + özgürlük yolculuğuna bizimle başla.',
+    katilButon: 'Aramıza Katıl',
+    girisliKatilButon: 'Profilime Git',
+    sozBaslik: 'Liderlerden',
+    sozMetin: 'Bir kişinin başarısı için değil, herkesin hayatını iyileştirmek için buradayız. OneTeam ailesi olarak hep birlikte büyüyoruz.',
+    sozAd: 'OneTeam Manifesto',
     misyon: 'Misyon',
     misyonMetin1: 'Sağlık, varlık ve özgürlük dolu bir yaşamın',
     misyonVurgu: ' herkes için ',
@@ -132,8 +146,58 @@ const HakkimizdaSayfasi = () => {
   const geri = useSmartBack('/');
   const { lang } = useTranslation();
   const { user } = useAuth();
+  const { currentUser, takvim, konusmacilar } = useData();
   const duzenleyebilir = isSiteAdmin(user?.email);
   const { toast } = useToast();
+  const [girisModal, setGirisModal] = useState(false);
+
+  // #3 — İstatistikler (KonusmacilarSayfasi ile aynı mantık)
+  const egitmenSayisi = useMemo(() => {
+    const set = new Set();
+    (konusmacilar || []).forEach(k => {
+      const cid = makeCoreId(k.ad || k.id);
+      if (cid) set.add(cid);
+    });
+    (takvim || []).forEach(e => {
+      if (!e?.egitmen) return;
+      String(e.egitmen).split(/[\/,&]/).map(s => s.trim()).filter(s => s.length > 1).forEach(ad => {
+        const cid = makeCoreId(ad);
+        if (cid) set.add(cid);
+      });
+    });
+    return set.size || 115;
+  }, [konusmacilar, takvim]);
+
+  // #5 — Yürütme Kurulu lider yüzleri (önizleme için)
+  const liderAvatarlar = useMemo(() => {
+    const konusmacilarMap = {};
+    (konusmacilar || []).forEach(k => { konusmacilarMap[k.id] = k; });
+    return YURUTME_KURULU.slice(0, 6).map(u => {
+      const cid = u.coreId || makeCoreId(u.ad);
+      const k = konusmacilarMap[cid];
+      return { ad: u.ad, coreId: cid, fotoURL: k?.fotoURL || null };
+    });
+  }, [konusmacilar]);
+
+  // #5 — Eğitmen yüzleri (önizleme için)
+  const egitmenAvatarlar = useMemo(() => {
+    return (konusmacilar || []).slice(0, 6).map(k => ({
+      ad: k.ad,
+      coreId: k.id,
+      fotoURL: k.fotoURL || null,
+    }));
+  }, [konusmacilar]);
+
+  // #5 — Komisyon ikonları (önizleme için)
+  const komisyonIkonlar = KOMISYONLAR.slice(0, 6);
+
+  // #10 — Scroll reveal refs
+  const sayilarRef = useScrollReveal();
+  const misyonRef = useScrollReveal();
+  const vizyonRef = useScrollReveal();
+  const sekmelerRef = useScrollReveal();
+  const sozRef = useScrollReveal();
+  const ctaRef = useScrollReveal();
 
   // Firestore'dan override içeriği oku — tek seferlik
   const [icerikOverride, setIcerikOverride] = useState(null);
@@ -251,6 +315,9 @@ const HakkimizdaSayfasi = () => {
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950 relative">
+      {/* #8 Yıldız desen — çok ince, tüm sayfaya yayılı */}
+      <div className="absolute inset-0 bg-stars opacity-25 pointer-events-none" />
+
       {/* Dekoratif altın aurora */}
       <div className="absolute top-0 left-0 right-0 h-[700px] bg-[radial-gradient(ellipse_at_center_top,rgba(251,191,36,0.18)_0%,transparent_75%)] pointer-events-none" />
       <div className="absolute top-40 -left-32 w-[28rem] h-[28rem] rounded-full bg-amber-500/10 blur-3xl pointer-events-none" />
@@ -359,23 +426,20 @@ const HakkimizdaSayfasi = () => {
           </div>
         )}
 
-        {/* HERO */}
-        <div className="text-center mb-12 sm:mb-16 animate-fade-in">
-          {/* OneTeam logo — transparent + halo glow */}
+        {/* #1 + #6 HERO — Sinematik logo, manifesto-tonu intro */}
+        <div className="text-center mb-12 sm:mb-16">
+          {/* OneTeam logo — sinematik intro + halo nefes */}
           <div className="relative inline-block mb-6">
-            <div className="absolute -inset-6 bg-amber-400/20 blur-3xl pointer-events-none" />
+            <div className="absolute -inset-6 bg-amber-400/20 blur-3xl pointer-events-none animate-halo-breath" />
             <img
               src="/logos/oneteam-logo.png"
               alt="OneTeam"
-              className="relative w-24 sm:w-28 md:w-32 h-auto"
-              style={{
-                filter: 'drop-shadow(0 8px 24px rgba(251, 191, 36, 0.35)) drop-shadow(0 0 40px rgba(251, 191, 36, 0.2))',
-              }}
+              className="relative w-24 sm:w-28 md:w-32 h-auto animate-logo-cinema"
             />
           </div>
 
           {/* Kicker */}
-          <div className="flex items-center justify-center gap-3 mb-4">
+          <div className="flex items-center justify-center gap-3 mb-4 animate-fade-in">
             <div className="h-px w-12 bg-amber-400/50" />
             <span className="text-amber-300 text-xs sm:text-sm uppercase tracking-[0.4em] font-semibold whitespace-nowrap">
               {tr.kicker}
@@ -384,17 +448,29 @@ const HakkimizdaSayfasi = () => {
           </div>
 
           {/* Başlık */}
-          <h1 className="text-3xl sm:text-5xl font-light text-white tracking-tight mb-4 leading-tight">
-            {tr.baslikSol} <span className="bg-gradient-to-r from-amber-300 via-amber-400 to-amber-300 bg-clip-text text-transparent font-bold">{tr.baslikSag}</span>
+          <h1 className="text-3xl sm:text-5xl font-light text-white tracking-tight mb-5 leading-tight animate-fade-in">
+            {tr.baslikSol} <span className="text-gold-shimmer font-bold">{tr.baslikSag}</span>
           </h1>
 
-          <p className="text-purple-100/90 text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
+          {/* #1 — Manifesto tonlu intro */}
+          <p className="text-purple-100/90 text-base sm:text-lg leading-relaxed max-w-2xl mx-auto animate-fade-in italic">
             {tr.intro}
           </p>
+
+          {/* #3 — Canlı sayılar */}
+          <LiveCounter
+            className="mt-6 sm:mt-8"
+            items={[
+              { deger: YURUTME_KURULU.length, etiket: 'Lider' },
+              { deger: KOMISYONLAR.length, etiket: 'Komisyon' },
+              { deger: egitmenSayisi, etiket: 'Eğitmen' },
+              { deger: takvim?.length || 65, etiket: 'Eğitim', sonek: '+' },
+            ]}
+          />
         </div>
 
-        {/* Ekosistem Sekmeleri — Eğitmenler / Komisyonlar / Yürütme Kurulu (ÖNE ÇIKARILDI — BÜYÜK) */}
-        <section className="mb-10 sm:mb-14">
+        {/* #4 + #5 + #10 — ASIMETRIK BENTO: Yürütme büyük, Komisyon orta, Eğitmen küçük + avatar önizleme */}
+        <section ref={sekmelerRef} className="scroll-reveal mb-10 sm:mb-14">
           {/* Kicker */}
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="h-px w-12 sm:w-16 bg-amber-400/50" />
@@ -404,107 +480,226 @@ const HakkimizdaSayfasi = () => {
             <div className="h-px w-12 sm:w-16 bg-amber-400/50" />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
-            {[
-              { key: 'yurutme', href: '/yurutmekurulu', icon: Crown, baslik: tr.yurutmeBaslik, aciklama: tr.yurutmeAciklama },
-              { key: 'komisyonlar', href: '/komisyonlar', icon: Building2, baslik: tr.komisyonlarBaslik, aciklama: tr.komisyonlarAciklama },
-              { key: 'egitmenler', href: '/konusmacilar', icon: GraduationCap, baslik: tr.egitmenlerBaslik, aciklama: tr.egitmenlerAciklama },
-            ].map((s, idx) => {
-              const Icon = s.icon;
-              return (
-                <button
-                  key={s.key}
-                  onClick={() => navigate(s.href)}
-                  className="group relative bg-gradient-to-br from-white/[0.10] to-white/[0.03] hover:from-white/[0.15] hover:to-white/[0.05] backdrop-blur-md border-2 border-amber-300/30 hover:border-amber-300/70 rounded-3xl p-7 sm:p-9 transition-all duration-300 spring-tap text-left shadow-2xl hover:shadow-amber-500/30 overflow-hidden hover:-translate-y-1"
-                  style={{ animationDelay: `${idx * 60}ms` }}
-                >
-                  {/* Köşe glow */}
-                  <div className="absolute -top-16 -right-16 w-40 h-40 rounded-full bg-amber-400/10 group-hover:bg-amber-400/25 blur-3xl transition-colors pointer-events-none" />
-                  <div className="absolute -bottom-12 -left-12 w-32 h-32 rounded-full bg-purple-500/10 group-hover:bg-purple-500/20 blur-3xl transition-colors pointer-events-none" />
-                  <div className="relative">
-                    {/* İkon — BÜYÜK */}
-                    <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-amber-400/35 to-amber-600/15 border border-amber-300/50 shadow-lg mb-5 group-hover:scale-105 transition-transform">
-                      <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-amber-300" />
-                    </div>
-                    {/* Başlık — BÜYÜK */}
-                    <h3 className="text-white font-bold text-xl sm:text-2xl mb-2 leading-tight">
-                      {s.baslik}
-                    </h3>
-                    <p className="text-purple-100/85 text-sm leading-relaxed mb-5 min-h-[2.75rem]">
-                      {s.aciklama}
-                    </p>
-                    {/* CTA */}
-                    <div className="flex items-center justify-between pt-4 border-t border-amber-300/20">
-                      <span className="text-xs uppercase tracking-wider font-extrabold text-amber-300">
+          {/* Bento layout: 6 kolonluk grid — Yürütme 4 kolon (büyük), Komisyon 4 (orta), Eğitmen 2-4 (küçük) */}
+          <div className="grid grid-cols-1 sm:grid-cols-6 gap-4 sm:gap-5">
+            {/* YÜRÜTME KURULU — En büyük, sol üst (mobilde tam, sm+'da 6/6 üst satır, lg+'da 4/6 sol) */}
+            <button
+              onClick={() => navigate('/yurutmekurulu')}
+              className="group relative col-span-1 sm:col-span-6 lg:col-span-4 bg-gradient-to-br from-amber-500/15 to-purple-900/30 hover:from-amber-500/20 hover:to-purple-900/40 backdrop-blur-md border-2 border-amber-300/40 hover:border-amber-300/80 rounded-3xl p-7 sm:p-9 transition-all duration-300 spring-tap text-left shadow-2xl hover:shadow-amber-500/30 overflow-hidden hover:-translate-y-1 min-h-[280px] sm:min-h-[320px] flex flex-col justify-between"
+            >
+              <div className="absolute -top-20 -right-20 w-56 h-56 rounded-full bg-amber-400/15 group-hover:bg-amber-400/30 blur-3xl transition-colors pointer-events-none" />
+              <div className="relative flex flex-col justify-between h-full">
+                <div>
+                  {/* İkon */}
+                  <div className="inline-flex items-center justify-center w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-amber-400/40 to-amber-600/20 border border-amber-300/60 shadow-xl mb-5 group-hover:scale-105 transition-transform">
+                    <Crown className="w-10 h-10 sm:w-12 sm:h-12 text-amber-300" />
+                  </div>
+                  <h3 className="text-white font-bold text-2xl sm:text-3xl mb-2 leading-tight">
+                    {tr.yurutmeBaslik}
+                  </h3>
+                  <p className="text-purple-100/85 text-sm sm:text-base leading-relaxed">
+                    {tr.yurutmeAciklama}
+                  </p>
+                </div>
+
+                {/* Lider avatar önizleme — büyük kartta görünür */}
+                <div className="mt-5 flex items-center justify-between pt-4 border-t border-amber-300/30">
+                  <div className="flex items-center gap-3">
+                    <AvatarOverlap items={liderAvatarlar} max={5} size="w-10 h-10 sm:w-11 sm:h-11" />
+                    <div>
+                      <div className="text-amber-300 text-xs uppercase tracking-wider font-extrabold">
                         {tr.ke}
-                      </span>
-                      <ArrowRight className="w-5 h-5 text-amber-300 transition-transform group-hover:translate-x-1.5" />
+                      </div>
+                      <div className="text-purple-200/70 text-[11px]">
+                        {YURUTME_KURULU.length} lider yönlendiriyor
+                      </div>
                     </div>
                   </div>
-                </button>
-              );
-            })}
+                  <ArrowRight className="w-6 h-6 text-amber-300 transition-transform group-hover:translate-x-1.5" />
+                </div>
+              </div>
+            </button>
+
+            {/* KOMISYONLAR — Orta, sağ üst (lg+'da 2/6 sağ) */}
+            <button
+              onClick={() => navigate('/komisyonlar')}
+              className="group relative col-span-1 sm:col-span-3 lg:col-span-2 bg-gradient-to-br from-white/[0.10] to-white/[0.03] hover:from-white/[0.15] hover:to-white/[0.05] backdrop-blur-md border-2 border-amber-300/25 hover:border-amber-300/60 rounded-3xl p-6 sm:p-7 transition-all duration-300 spring-tap text-left shadow-2xl hover:shadow-amber-500/20 overflow-hidden hover:-translate-y-1 min-h-[280px] sm:min-h-[320px] flex flex-col justify-between"
+            >
+              <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-amber-400/10 group-hover:bg-amber-400/20 blur-3xl transition-colors pointer-events-none" />
+              <div className="relative flex flex-col justify-between h-full">
+                <div>
+                  <div className="inline-flex items-center justify-center w-16 h-16 sm:w-18 sm:h-18 rounded-2xl bg-gradient-to-br from-amber-400/35 to-amber-600/15 border border-amber-300/50 shadow-lg mb-4 group-hover:scale-105 transition-transform">
+                    <Building2 className="w-8 h-8 sm:w-9 sm:h-9 text-amber-300" />
+                  </div>
+                  <h3 className="text-white font-bold text-xl sm:text-2xl mb-2 leading-tight">
+                    {tr.komisyonlarBaslik}
+                  </h3>
+                  <p className="text-purple-100/80 text-sm leading-relaxed">
+                    {tr.komisyonlarAciklama}
+                  </p>
+                </div>
+
+                {/* Komisyon ikonları mini grid */}
+                <div className="mt-4 pt-3 border-t border-amber-300/20">
+                  <div className="flex items-center gap-2 mb-2">
+                    {komisyonIkonlar.map((k, i) => {
+                      const Icon = k.icon;
+                      return (
+                        <div key={k.id} className="w-7 h-7 rounded-lg bg-amber-400/15 border border-amber-300/30 flex items-center justify-center"
+                          style={{ opacity: 0.5 + (i * 0.08) }}>
+                          <Icon className="w-3.5 h-3.5 text-amber-300" />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-amber-300 text-[11px] uppercase tracking-wider font-bold">{tr.ke}</span>
+                    <ArrowRight className="w-5 h-5 text-amber-300 transition-transform group-hover:translate-x-1" />
+                  </div>
+                </div>
+              </div>
+            </button>
+
+            {/* EGITMENLER — Küçük ama görsel zengin (yüzler) */}
+            <button
+              onClick={() => navigate('/konusmacilar')}
+              className="group relative col-span-1 sm:col-span-3 lg:col-span-6 bg-gradient-to-br from-white/[0.08] to-white/[0.02] hover:from-white/[0.12] hover:to-white/[0.04] backdrop-blur-md border-2 border-amber-300/20 hover:border-amber-300/50 rounded-3xl p-6 sm:p-7 transition-all duration-300 spring-tap text-left shadow-xl hover:shadow-amber-500/15 overflow-hidden hover:-translate-y-1"
+            >
+              <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                {/* İkon küçük */}
+                <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-400/30 to-amber-600/15 border border-amber-300/40 shadow-md flex-shrink-0">
+                  <GraduationCap className="w-7 h-7 sm:w-8 sm:h-8 text-amber-300" />
+                </div>
+                {/* İçerik */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-white font-bold text-xl sm:text-2xl mb-1 leading-tight">
+                    {tr.egitmenlerBaslik}
+                  </h3>
+                  <p className="text-purple-100/80 text-sm leading-snug">
+                    {tr.egitmenlerAciklama}
+                  </p>
+                </div>
+                {/* Yüzler ve CTA */}
+                <div className="flex items-center gap-4 flex-shrink-0">
+                  <AvatarOverlap items={egitmenAvatarlar} max={5} size="w-9 h-9 sm:w-10 sm:h-10" />
+                  <span className="text-purple-200/70 text-xs hidden sm:inline">
+                    {egitmenSayisi} eğitmen
+                  </span>
+                  <ArrowRight className="w-5 h-5 text-amber-300 transition-transform group-hover:translate-x-1.5" />
+                </div>
+              </div>
+            </button>
           </div>
         </section>
 
-        {/* MİSYON + VİZYON — KOMPAKT yan yana */}
-        <section className="mb-10 sm:mb-12 grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* MİSYON */}
-          <div className="relative bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-md border border-amber-300/20 rounded-2xl p-5 sm:p-6 overflow-hidden shadow-lg">
-            <div className="absolute -top-12 -left-12 w-32 h-32 rounded-full bg-amber-400/10 blur-3xl pointer-events-none" />
-            <div className="relative">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400/25 to-amber-600/10 border border-amber-300/40 flex-shrink-0">
-                  <Target className="w-5 h-5 text-amber-300" />
+        {/* #2 — MİSYON: sayfanın kalbi, tam genişlik editorial */}
+        <section ref={misyonRef} className="scroll-reveal mb-10 sm:mb-14">
+          <div className="relative bg-gradient-to-br from-amber-500/[0.08] via-purple-900/30 to-white/[0.02] backdrop-blur-md border border-amber-300/30 rounded-3xl p-7 sm:p-10 overflow-hidden shadow-2xl">
+            <div className="absolute -top-20 -left-20 w-64 h-64 rounded-full bg-amber-400/12 blur-3xl pointer-events-none" />
+            <div className="relative decorative-quote">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-400/35 to-amber-600/15 border border-amber-300/50 shadow-lg">
+                  <Target className="w-6 h-6 sm:w-7 sm:h-7 text-amber-300" />
                 </div>
-                <span className="text-amber-300 text-xs uppercase tracking-[0.4em] font-bold">
-                  {tr.misyon}
-                </span>
-                <div className="h-px flex-1 bg-gradient-to-r from-amber-400/40 to-transparent" />
+                <div>
+                  <div className="text-amber-300 text-[10px] sm:text-xs uppercase tracking-[0.5em] font-bold mb-1">
+                    Misyon
+                  </div>
+                  <div className="h-px w-16 bg-gradient-to-r from-amber-400/60 to-transparent" />
+                </div>
               </div>
-              <p className="text-white/90 text-sm leading-relaxed">
+              <p className="text-white text-xl sm:text-2xl md:text-3xl font-light leading-tight tracking-tight">
                 {tr.misyonMetin1}
-                <span className="text-amber-300 font-medium">{tr.misyonVurgu}</span>
+                <span className="text-gold-shimmer font-bold text-2xl sm:text-3xl md:text-4xl">
+                  {tr.misyonVurgu}
+                </span>
                 {tr.misyonMetin2}
               </p>
             </div>
           </div>
+        </section>
 
-          {/* VİZYON */}
-          <div className="relative bg-gradient-to-br from-white/[0.06] to-white/[0.02] backdrop-blur-md border border-amber-300/20 rounded-2xl p-5 sm:p-6 overflow-hidden shadow-lg">
-            <div className="absolute -top-12 -right-12 w-32 h-32 rounded-full bg-amber-400/10 blur-3xl pointer-events-none" />
-            <div className="relative">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400/25 to-amber-600/10 border border-amber-300/40 flex-shrink-0">
-                  <Compass className="w-5 h-5 text-amber-300" />
+        {/* #2 — VİZYON: sayfanın kalbi, tam genişlik editorial */}
+        <section ref={vizyonRef} className="scroll-reveal mb-10 sm:mb-14">
+          <div className="relative bg-gradient-to-br from-purple-700/30 via-purple-900/30 to-amber-500/[0.06] backdrop-blur-md border border-amber-300/30 rounded-3xl p-7 sm:p-10 overflow-hidden shadow-2xl">
+            <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-amber-400/12 blur-3xl pointer-events-none" />
+            <div className="relative decorative-quote">
+              <div className="flex items-center gap-3 mb-5">
+                <div className="inline-flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-amber-400/35 to-amber-600/15 border border-amber-300/50 shadow-lg">
+                  <Compass className="w-6 h-6 sm:w-7 sm:h-7 text-amber-300" />
                 </div>
-                <span className="text-amber-300 text-xs uppercase tracking-[0.4em] font-bold">
-                  {tr.vizyon}
-                </span>
-                <div className="h-px flex-1 bg-gradient-to-r from-amber-400/40 to-transparent" />
+                <div>
+                  <div className="text-amber-300 text-[10px] sm:text-xs uppercase tracking-[0.5em] font-bold mb-1">
+                    Vizyon
+                  </div>
+                  <div className="h-px w-16 bg-gradient-to-r from-amber-400/60 to-transparent" />
+                </div>
               </div>
-              <p className="text-white/90 text-sm leading-relaxed">
+              <p className="text-white text-xl sm:text-2xl md:text-3xl font-light leading-tight tracking-tight">
                 {tr.vizyonMetin1}
-                <span className="text-amber-300 font-medium">{tr.vizyonVurgu}</span>
+                <span className="text-gold-shimmer font-bold text-2xl sm:text-3xl md:text-4xl">
+                  {tr.vizyonVurgu}
+                </span>
                 {tr.vizyonMetin2}
               </p>
             </div>
           </div>
         </section>
 
-        {/* Alt manifesto bandı */}
-        <div className="text-center mb-8 sm:mb-12">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <div className="h-px w-10 bg-amber-400/40" />
-            <span className="text-amber-300/90 text-[10px] sm:text-xs uppercase tracking-[0.5em] font-bold whitespace-nowrap">
-              {tr.altKicker}
-            </span>
-            <div className="h-px w-10 bg-amber-400/40" />
+        {/* Bonus: Liderlerden Bir Söz / Manifesto */}
+        <section ref={sozRef} className="scroll-reveal mb-10 sm:mb-14">
+          <div className="text-center max-w-3xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-4">
+              <div className="h-px w-10 bg-amber-400/40" />
+              <span className="text-amber-300/90 text-[10px] sm:text-xs uppercase tracking-[0.5em] font-bold whitespace-nowrap inline-flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5" />
+                {tr.altKicker}
+              </span>
+              <div className="h-px w-10 bg-amber-400/40" />
+            </div>
+            <p className="text-purple-100/90 text-base sm:text-lg leading-relaxed italic">
+              {tr.altMetin}
+            </p>
           </div>
-          <p className="text-purple-200/70 text-sm max-w-2xl mx-auto leading-relaxed">
-            {tr.altMetin}
-          </p>
-        </div>
+        </section>
+
+        {/* #9 — Sayfa Sonu CTA: Aramıza Katıl (anonim için), Profile git (login için) */}
+        <section ref={ctaRef} className="scroll-reveal mb-10 sm:mb-14">
+          <div className="relative bg-gradient-to-br from-amber-500/20 via-amber-400/15 to-purple-700/20 border-2 border-amber-300/50 rounded-3xl p-7 sm:p-10 text-center overflow-hidden shadow-2xl">
+            <div className="absolute -top-20 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full bg-amber-400/15 blur-3xl pointer-events-none" />
+            <div className="relative">
+              <div className="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-amber-400/50 to-amber-600/30 border border-amber-300/60 shadow-xl mb-4">
+                <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-amber-200" />
+              </div>
+              <h3 className="text-white font-bold text-2xl sm:text-3xl md:text-4xl mb-3 tracking-tight">
+                {tr.katilCagriBaslik}
+              </h3>
+              <p className="text-purple-100/90 text-sm sm:text-base max-w-lg mx-auto mb-6 leading-relaxed">
+                {tr.katilCagriMetin}
+              </p>
+              {currentUser ? (
+                <button onClick={() => navigate('/profil')}
+                  className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 font-extrabold text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-xl shadow-amber-500/30 transition-all spring-tap">
+                  {tr.girisliKatilButon}
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+              ) : (
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <button onClick={() => setGirisModal(true)}
+                    className="inline-flex items-center gap-2 bg-amber-400 hover:bg-amber-300 text-purple-900 font-extrabold text-sm sm:text-base px-6 sm:px-8 py-3 sm:py-3.5 rounded-full shadow-xl shadow-amber-500/30 transition-all spring-tap">
+                    <LogIn className="w-5 h-5" />
+                    {tr.katilButon}
+                  </button>
+                  <button onClick={() => navigate('/takvim')}
+                    className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 text-white border border-white/20 hover:border-white/40 text-sm sm:text-base px-5 sm:px-6 py-3 sm:py-3.5 rounded-full transition-all spring-tap">
+                    Eğitim Takvimi
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
 
         {/* Footer */}
         <div className="text-center pt-8 border-t border-white/10">
@@ -513,6 +708,9 @@ const HakkimizdaSayfasi = () => {
           </p>
         </div>
       </div>
+
+      {/* Üye giriş modal */}
+      <UyeGirisModal acik={girisModal} onClose={() => setGirisModal(false)} />
     </div>
   );
 };
