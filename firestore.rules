@@ -202,6 +202,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Giriş OTP kodları — sadece backend (Netlify function) yazar/okur
+    // Frontend asla doğrudan okumamalı (kod sızıntısı)
+    match /giris_otp/{docId} {
+      allow read, write: if false; // backend admin SDK kullanır, rules atlanır
+    }
+
     // Komisyon iletişim/öneri talepleri — anonim create (form), admin read
     // Spam koruması: maksimum mesaj boyutu + gerekli alanlar
     match /komisyon_iletisim_talepleri/{talepId} {

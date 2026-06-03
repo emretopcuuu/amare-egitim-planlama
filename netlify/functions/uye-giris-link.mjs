@@ -83,8 +83,10 @@ async function supabaseRpc(fnName, params) {
 
 // One Team brand uyumlu email — egitimtakvimi.oneteamglobal.ai ile aynı görsel dil
 // Büyük logo + altın aurora + kicker pattern + cam morfizm
-function emailHtml({ ad, link, lookup }) {
+function emailHtml({ ad, link, lookup, kod }) {
   const onAd = ad ? escapeHtml(ad.split(' ')[0]) : 'Sevgili Marka Ortağı';
+  // 6 haneli kodu 3-3 grupla — okuması ve girmesi kolay (483 729)
+  const kodFormatted = kod ? `${kod.slice(0, 3)} ${kod.slice(3)}` : '';
   return `<!doctype html>
 <html lang="tr"><head>
 <meta charset="utf-8">
@@ -132,26 +134,55 @@ function emailHtml({ ad, link, lookup }) {
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:24px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,0.5);">
 
         <!-- Hero metin -->
-        <tr><td style="padding:48px 40px 24px;">
-          <h1 style="margin:0 0 16px;font-size:32px;line-height:1.15;font-weight:800;color:#fff;letter-spacing:-0.8px;">
+        <tr><td style="padding:48px 40px 16px;">
+          <h1 style="margin:0 0 12px;font-size:32px;line-height:1.15;font-weight:800;color:#fff;letter-spacing:-0.8px;">
             Merhaba ${onAd} 👋
           </h1>
-          <p style="margin:0 0 8px;color:#E9D5FF;font-size:17px;line-height:1.5;">
-            Eğitim Takvimi'ne tek tık giriş yapabilirsin.
-          </p>
-          <p style="margin:0;color:#fcd34d;font-size:15px;font-weight:600;">
-            Şifre yok. Sadece tıkla.
+          <p style="margin:0;color:#E9D5FF;font-size:16px;line-height:1.5;">
+            Giriş için <strong style="color:#fcd34d;">iki yol</strong> da çalışır. Hangisi kolayına gelirse onu kullan.
           </p>
         </td></tr>
 
-        <!-- CTA buton -->
-        <tr><td align="center" style="padding:8px 40px 40px;">
+        ${kod ? `
+        <!-- SECENEK 1: 6 haneli kod -->
+        <tr><td style="padding:8px 40px 16px;">
+          <div style="background:rgba(251,191,36,0.10);border:2px dashed rgba(251,191,36,0.4);border-radius:18px;padding:24px 20px;text-align:center;">
+            <p style="margin:0 0 10px;color:#fcd34d;font-size:11px;font-weight:800;letter-spacing:0.3em;text-transform:uppercase;">
+              ① Giriş Kodun
+            </p>
+            <div style="font-family:'SF Mono','Courier New',Monaco,monospace;font-size:42px;font-weight:900;color:#ffffff;letter-spacing:0.15em;line-height:1;padding:8px 0;text-shadow:0 0 24px rgba(251,191,36,0.4);">
+              ${kodFormatted}
+            </div>
+            <p style="margin:12px 0 0;color:#C4B5FD;font-size:12px;line-height:1.5;">
+              Bu kodu giriş ekranındaki kutucuklara yaz<br>
+              <span style="color:#fcd34d;opacity:0.85;">24 saat geçerli · tek kullanımlık</span>
+            </p>
+          </div>
+        </td></tr>
+
+        <!-- VEYA ayracı -->
+        <tr><td style="padding:8px 40px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="height:1px;background:rgba(255,255,255,0.12);"></td>
+              <td style="padding:0 14px;color:#A78BFA;font-size:11px;font-weight:700;letter-spacing:0.25em;text-transform:uppercase;white-space:nowrap;">
+                veya
+              </td>
+              <td style="height:1px;background:rgba(255,255,255,0.12);"></td>
+            </tr>
+          </table>
+        </td></tr>
+        ` : ''}
+
+        <!-- SECENEK 2: Magic link butonu -->
+        <tr><td align="center" style="padding:16px 40px 36px;">
+          ${kod ? `<p style="margin:0 0 14px;color:#fcd34d;font-size:11px;font-weight:800;letter-spacing:0.3em;text-transform:uppercase;">② Tek Tık Giriş</p>` : ''}
           <a href="${link}" class="btn"
             style="display:inline-block;background:#fbbf24;color:#3b1772;text-decoration:none;padding:18px 56px;border-radius:16px;font-weight:800;font-size:18px;letter-spacing:0.3px;box-shadow:0 10px 28px rgba(251,191,36,0.4),0 4px 12px rgba(251,191,36,0.25);">
             Giriş Yap →
           </a>
-          <p style="margin:16px 0 0;color:#C4B5FD;font-size:13px;">
-            Butona tıkla, anında giriş yapacaksın
+          <p style="margin:14px 0 0;color:#C4B5FD;font-size:13px;">
+            Bu butona tıkla, doğrudan giriş yap
           </p>
         </td></tr>
 
@@ -160,7 +191,7 @@ function emailHtml({ ad, link, lookup }) {
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td align="center" style="padding:6px;color:#fcd34d;font-size:13px;font-weight:700;">🔒 Güvenli</td>
-              <td align="center" style="padding:6px;color:#E9D5FF;font-size:13px;">1 saat geçerli</td>
+              <td align="center" style="padding:6px;color:#E9D5FF;font-size:13px;">24 saat geçerli</td>
               <td align="center" style="padding:6px;color:#A78BFA;font-size:13px;">Tek kullanımlık</td>
             </tr>
           </table>
@@ -297,8 +328,27 @@ export default async (req) => {
     // Uzun Firebase URL'ini kısalt — kullanıcıya temiz görünüm
     const link = await kisaltUrl(tamLink);
 
-    // 3. Resend ile email yolla
-    const htmlRaw = emailHtml({ ad: uye.full_name, link, lookup });
+    // 2b. 6 haneli giriş kodu üret + Firestore'a kaydet (24 saat geçerli)
+    // Kullanıcı magic link'i başka cihazdan açtıysa kodu bu ekranda yazar
+    const kod = Math.floor(100000 + Math.random() * 900000).toString(); // 100000-999999
+    const otpDocId = `${uye.amare_id}_${Date.now()}`;
+    const sonGeçerlilik = Date.now() + 24 * 60 * 60 * 1000;
+    try {
+      await admin.firestore().doc(`giris_otp/${otpDocId}`).set({
+        email: uye.email,
+        amareId: uye.amare_id,
+        kod, // raw — single-use, kısa süreli, sec by Firestore rules (backend-only)
+        olusturulma: admin.firestore.FieldValue.serverTimestamp(),
+        sonGecerlilik: admin.firestore.Timestamp.fromMillis(sonGeçerlilik),
+        denemeSayisi: 0,
+        kullanildi: false,
+      });
+    } catch (e) {
+      console.warn('[uye-giris-link] OTP kaydetme hatası:', e.message);
+    }
+
+    // 3. Resend ile email yolla (hem kod hem link)
+    const htmlRaw = emailHtml({ ad: uye.full_name, link, lookup, kod });
     const subjectRaw = `One Team Giriş Linki — ${uye.full_name?.split(' ')[0] || 'Hoş geldin'}`;
     // MARKA TEMİZLİĞİ — "üye" → "Marka Ortağı", "network marketing" → "Doğrudan Satış"
     const html = metinTemizle(htmlRaw);
@@ -325,6 +375,7 @@ export default async (req) => {
       emailMask: maskEmail(uye.email),
       emailReal: uye.email,  // Tam email — frontend localStorage'a yazar (signInWithEmailLink gerektirir)
       adKisa: (uye.full_name || '').split(' ')[0] || null,
+      otpAktif: true,  // Frontend OTP input ekranı göstersin
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 
   } catch (err) {

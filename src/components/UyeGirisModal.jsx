@@ -3,15 +3,23 @@
 // Backend doğrularsa: emaile magic link gönderildi → kullanıcı bekleme ekranı.
 
 import React, { useState, useEffect, useRef } from 'react';
-import { X, Loader2, CheckCircle2, AlertCircle, ArrowRight, Mail, Lock, HelpCircle, Send } from 'lucide-react';
+import { X, Loader2, CheckCircle2, AlertCircle, ArrowRight, Mail, Lock, HelpCircle, Send, KeyRound } from 'lucide-react';
+import { signInWithCustomToken } from 'firebase/auth';
+import { auth } from '../utils/firebase';
 
 const UyeGirisModal = ({ acik, onClose }) => {
   const [lookup, setLookup] = useState('');
   const [durum, setDurum] = useState('giris'); // giris | gonderildi | talepFormu | talepGonderildi
   const [mesaj, setMesaj] = useState('');
   const [emailMask, setEmailMask] = useState('');
+  const [emailReal, setEmailReal] = useState(''); // OTP doğrulama için gerekli
   const [adKisa, setAdKisa] = useState('');
   const [yukleniyor, setYukleniyor] = useState(false);
+  // OTP state
+  const [otpKod, setOtpKod] = useState(['', '', '', '', '', '']);
+  const [otpHata, setOtpHata] = useState('');
+  const [otpKontrol, setOtpKontrol] = useState(false);
+  const otpRefs = useRef([]);
   // Email düzeltme talep formu state
   const [talepAd, setTalepAd] = useState('');
   const [talepEmail, setTalepEmail] = useState('');
@@ -69,10 +77,15 @@ const UyeGirisModal = ({ acik, onClose }) => {
       // localStorage same-origin only, aynı tarayıcıda güvenli
       if (data.emailReal) {
         try { window.localStorage.setItem('amare_giris_email', data.emailReal); } catch {}
+        setEmailReal(data.emailReal);
       }
       setEmailMask(data.emailMask || '');
       setAdKisa(data.adKisa || '');
+      setOtpKod(['', '', '', '', '', '']);
+      setOtpHata('');
       setDurum('gonderildi');
+      // OTP ilk kutusuna otomatik focus (300ms sonra — render bitsin)
+      setTimeout(() => otpRefs.current[0]?.focus(), 300);
     } catch (err) {
       setMesaj('Bağlantı hatası: ' + (err?.message || 'bilinmeyen') + '. İnternet bağlantını kontrol et.');
     } finally {
@@ -85,7 +98,88 @@ const UyeGirisModal = ({ acik, onClose }) => {
     setDurum('giris');
     setMesaj('');
     setEmailMask('');
+    setEmailReal('');
     setAdKisa('');
+    setOtpKod(['', '', '', '', '', '']);
+    setOtpHata('');
+  };
+
+  // OTP input — tek hane gir
+  const otpHaneDegistir = (idx, val) => {
+    const yeni = [...otpKod];
+    // Sadece sayı kabul et
+    yeni[idx] = (val || '').replace(/\D/g, '').slice(0, 1);
+    setOtpKod(yeni);
+    setOtpHata('');
+    // Dolu ise sonraki kutuya focus
+    if (yeni[idx] && idx < 5) {
+      otpRefs.current[idx + 1]?.focus();
+    }
+    // Hepsi dolduysa otomatik gönder
+    if (yeni.every(k => k.length === 1)) {
+      otpGonder(yeni.join(''));
+    }
+  };
+
+  // OTP Backspace ile önceki kutuya
+  const otpTuse = (idx, e) => {
+    if (e.key === 'Backspace' && !otpKod[idx] && idx > 0) {
+      otpRefs.current[idx - 1]?.focus();
+    } else if (e.key === 'ArrowLeft' && idx > 0) {
+      otpRefs.current[idx - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && idx < 5) {
+      otpRefs.current[idx + 1]?.focus();
+    }
+  };
+
+  // OTP paste — "483 729" gibi tam 6 hane yapıştırılınca dağıt
+  const otpYapistir = (e) => {
+    e.preventDefault();
+    const text = (e.clipboardData?.getData('text') || '').replace(/\D/g, '').slice(0, 6);
+    if (text.length === 6) {
+      const yeni = text.split('');
+      setOtpKod(yeni);
+      otpRefs.current[5]?.focus();
+      otpGonder(text);
+    }
+  };
+
+  // OTP doğrula → Firebase signInWithCustomToken
+  const otpGonder = async (kodStr) => {
+    const kod = kodStr || otpKod.join('');
+    if (kod.length !== 6) {
+      setOtpHata('6 hane gir');
+      return;
+    }
+    if (!emailReal) {
+      setOtpHata('Email bilgisi kayıp. Yeniden başla.');
+      return;
+    }
+    setOtpKontrol(true);
+    setOtpHata('');
+    try {
+      const res = await fetch('/.netlify/functions/uye-giris-kod-dogrula', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailReal, kod }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        setOtpHata(data.error || `Kod doğrulanamadı (${res.status})`);
+        // Hata durumunda kodu temizle
+        setOtpKod(['', '', '', '', '', '']);
+        setTimeout(() => otpRefs.current[0]?.focus(), 100);
+        return;
+      }
+      // Custom token ile login
+      await signInWithCustomToken(auth, data.customToken);
+      // Modal'ı kapat, sayfa kendi kendine güncellenecek (auth listener)
+      onClose();
+    } catch (err) {
+      setOtpHata('Bağlantı hatası: ' + (err?.message || 'bilinmeyen'));
+    } finally {
+      setOtpKontrol(false);
+    }
   };
 
   return (
@@ -309,36 +403,86 @@ const UyeGirisModal = ({ acik, onClose }) => {
 
         {durum === 'gonderildi' && (
           <>
-            <div className="text-center mb-6">
-              <div className="inline-block w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mb-3 shadow-lg">
-                <CheckCircle2 className="w-9 h-9 text-white" />
+            <div className="text-center mb-5">
+              <div className="inline-flex w-14 h-14 bg-gradient-to-br from-amber-400 to-amber-500 rounded-2xl items-center justify-center mb-3 shadow-lg shadow-amber-500/30">
+                <KeyRound className="w-7 h-7 text-purple-900" />
               </div>
-              <h2 className="text-white text-2xl font-extrabold mb-2">
-                {adKisa ? `Selam ${adKisa}` : 'Email gönderildi'} 👋
+              <h2 className="text-white text-xl font-extrabold mb-1">
+                {adKisa ? `Selam ${adKisa}` : 'Mail gönderildi'} 👋
               </h2>
-              <p className="text-purple-100 text-sm">Giriş linki e-postana yollandı:</p>
-              <p className="text-amber-300 text-lg font-bold mt-2 font-mono">{emailMask}</p>
+              <p className="text-purple-200 text-xs mb-1">Mail yollandı:</p>
+              <p className="text-amber-300 text-sm font-bold font-mono">{emailMask}</p>
             </div>
 
-            <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-4 text-purple-100 text-sm space-y-2">
-              <p>📧 <strong>Email kutunu aç</strong>, gelen kutusu veya spam klasöründe One Team mailini bul</p>
-              <p>👆 <strong>"Giriş Yap"</strong> butonuna tıkla</p>
-              <p>✅ Sayfa otomatik açılır, giriş tamamdır</p>
+            {/* OTP input — 6 kutucuk */}
+            <div className="mb-5">
+              <label className="block text-xs font-bold text-amber-300/90 uppercase tracking-wider mb-3 text-center">
+                Mailde Gelen 6 Haneli Kodu Yaz
+              </label>
+              <div className="flex gap-2 justify-center mb-2" onPaste={otpYapistir}>
+                {otpKod.map((d, i) => (
+                  <React.Fragment key={i}>
+                    <input
+                      ref={(el) => (otpRefs.current[i] = el)}
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete={i === 0 ? 'one-time-code' : 'off'}
+                      maxLength={1}
+                      value={d}
+                      onChange={(e) => otpHaneDegistir(i, e.target.value)}
+                      onKeyDown={(e) => otpTuse(i, e)}
+                      disabled={otpKontrol}
+                      className={`w-11 h-14 sm:w-12 sm:h-16 text-center text-2xl sm:text-3xl font-bold rounded-xl bg-white/10 border-2 ${
+                        otpHata ? 'border-rose-400/70' : d ? 'border-amber-400' : 'border-white/15'
+                      } text-white focus:outline-none focus:border-amber-400 focus:bg-white/15 transition-all`}
+                    />
+                    {i === 2 && <span className="self-center text-amber-300/40 text-2xl font-light">·</span>}
+                  </React.Fragment>
+                ))}
+              </div>
+              {otpHata && (
+                <p className="text-rose-300 text-xs text-center mt-2 flex items-center justify-center gap-1.5">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  {otpHata}
+                </p>
+              )}
+              {otpKontrol && (
+                <p className="text-purple-200 text-xs text-center mt-2 flex items-center justify-center gap-1.5">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  Kod doğrulanıyor...
+                </p>
+              )}
             </div>
 
-            <div className="text-purple-200/60 text-[11px] mb-4 space-y-1">
-              <p>🔒 Link 1 saat geçerli ve tek kullanımlık</p>
+            {/* Veya ayracı */}
+            <div className="flex items-center gap-3 my-4">
+              <div className="flex-1 h-px bg-white/15" />
+              <span className="text-purple-300/60 text-[10px] uppercase tracking-[0.3em] font-bold">veya</span>
+              <div className="flex-1 h-px bg-white/15" />
+            </div>
+
+            {/* Magic link açıklama */}
+            <div className="bg-amber-400/8 border border-amber-300/20 rounded-xl p-3.5 mb-4">
+              <p className="text-amber-200 text-xs leading-relaxed text-center">
+                Maildeki <strong className="text-amber-300">"Giriş Yap"</strong> butonuna tıklarsan da olur.
+                Aynı sonuç, iki yol.
+              </p>
+            </div>
+
+            <div className="text-purple-200/60 text-[11px] mb-4 text-center space-y-0.5">
+              <p>🔒 Kod ve link 24 saat geçerli, tek kullanımlık</p>
               <p>📬 Mail gelmezse spam klasörünü kontrol et</p>
             </div>
 
             <div className="flex gap-2">
-              <button onClick={reset}
-                className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-2.5 rounded-xl text-sm spring-tap">
-                Başka bilgi dene
+              <button onClick={reset} disabled={otpKontrol}
+                className="flex-1 bg-white/10 hover:bg-white/20 text-white font-semibold py-2.5 rounded-xl text-sm spring-tap disabled:opacity-50">
+                Yeniden Başla
               </button>
-              <button onClick={onClose}
-                className="flex-1 bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-2.5 rounded-xl text-sm spring-tap">
-                Tamam
+              <button onClick={() => otpGonder()} disabled={otpKontrol || otpKod.some(k => !k)}
+                className="flex-1 bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-2.5 rounded-xl text-sm spring-tap disabled:opacity-50 inline-flex items-center justify-center gap-1.5">
+                {otpKontrol ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
+                Giriş Yap
               </button>
             </div>
           </>
