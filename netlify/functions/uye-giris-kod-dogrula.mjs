@@ -132,13 +132,29 @@ export default async (req) => {
       user = await admin.auth().createUser({
         email,
         emailVerified: true,
-        displayName: dogruDoc.data.amareId || undefined,
       });
+    }
+
+    // users/{uid} doc'una amareId + giriş bilgisi yaz (magic link callback ile uyumlu)
+    // Bu olmadan profil sayfası 'Amare ID bağlı değil' der
+    const amareId = dogruDoc.data.amareId || null;
+    try {
+      const profilRef = db.doc(`users/${user.uid}`);
+      const mevcut = await profilRef.get();
+      const guncelleme = {
+        email,
+        sonGiris: admin.firestore.FieldValue.serverTimestamp(),
+      };
+      if (amareId) guncelleme.amareId = amareId;
+      if (!mevcut.exists) guncelleme.ilkGiris = admin.firestore.FieldValue.serverTimestamp();
+      await profilRef.set(guncelleme, { merge: true });
+    } catch (e) {
+      console.warn('[uye-giris-kod-dogrula] users doc yazma hatası:', e.message);
     }
 
     // Custom token üret — frontend signInWithCustomToken ile login yapar
     const customToken = await admin.auth().createCustomToken(user.uid, {
-      amareId: dogruDoc.data.amareId || null,
+      amareId,
       girisYolu: 'otp',
     });
 
