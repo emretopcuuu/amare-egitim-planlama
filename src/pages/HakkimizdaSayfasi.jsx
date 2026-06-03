@@ -240,7 +240,7 @@ const HakkimizdaSayfasi = () => {
   // Sadece cache yoksa veya eskidiyse fetch et; idle-time'da çalıştır.
   useEffect(() => {
     const TTL = 7 * 24 * 60 * 60 * 1000;
-    const YK_KEY = 'amare_yurutme_konusmacilar_v1';
+    const YK_KEY = 'amare_yurutme_konusmacilar_v2'; // v2: Filiz Bayazıt fix
     const KOM_KEY = 'amare_komisyonlar_listing_v1';
 
     const isCacheTaze = (key) => {

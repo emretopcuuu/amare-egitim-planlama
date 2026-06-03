@@ -132,7 +132,7 @@ const YurutmekuruluSayfasi = () => {
 
   // localStorage cache — sadece YK üyelerinin foto+biyografisi (24 üye)
   // Stale-while-revalidate: cache anında göster, arkada fresh fetch
-  const CACHE_KEY = 'amare_yurutme_konusmacilar_v1';
+  const CACHE_KEY = 'amare_yurutme_konusmacilar_v2'; // v2: Filiz Bayazıt fix
   const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 gün
 
   useEffect(() => {
