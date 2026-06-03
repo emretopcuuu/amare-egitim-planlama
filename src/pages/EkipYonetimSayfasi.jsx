@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator, Video } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator, Video, Users2 } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
@@ -119,6 +119,26 @@ const MODULLER = [
     icon: Calculator,
     aktif: true,
     link: 'https://hesaplayici.oneteamglobal.ai/',
+    renk: 'amber',
+  },
+  {
+    id: 'crm',
+    ad: {
+      tr: 'OneTeam CRM',
+      en: 'OneTeam CRM',
+      de: 'OneTeam CRM',
+      nl: 'OneTeam CRM',
+    },
+    kisaltma: 'CRM',
+    aciklama: {
+      tr: 'Müşteri ve aday ilişkilerini takip etme paneli.',
+      en: 'Customer and lead relationship tracking panel.',
+      de: 'Panel zur Verfolgung von Kunden- und Lead-Beziehungen.',
+      nl: 'Paneel voor het volgen van klant- en leadrelaties.',
+    },
+    icon: Users2,
+    aktif: true,
+    link: 'https://crm.oneteamglobal.ai/',
     renk: 'amber',
   },
   {
