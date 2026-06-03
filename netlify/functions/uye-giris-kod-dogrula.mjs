@@ -56,15 +56,20 @@ export default async (req) => {
 
     const db = admin.firestore();
 
-    // Email'e ait, kullanılmamış, geçerlilik süresi geçmemiş OTP doc'larını ara
-    // En son oluşturulmuş olanı al (kullanıcı birden fazla istemiş olabilir)
-    const simdi = admin.firestore.Timestamp.now();
+    // Email'e ait, kullanılmamış OTP doc'larını ara — composite index'siz çalışır
+    // (where eşitlikleri otomatik index'lenir; orderBy eklemiyoruz, server-side sıralarız)
     const snap = await db.collection('giris_otp')
       .where('email', '==', email)
       .where('kullanildi', '==', false)
-      .orderBy('olusturulma', 'desc')
-      .limit(5)
+      .limit(20)
       .get();
+
+    // En yeniden eskiye sırala (client/server tarafı)
+    snap.docs.sort((a, b) => {
+      const at = a.data().olusturulma?._seconds || a.data().olusturulma?.seconds || 0;
+      const bt = b.data().olusturulma?._seconds || b.data().olusturulma?.seconds || 0;
+      return bt - at;
+    });
 
     if (snap.empty) {
       return new Response(JSON.stringify({
