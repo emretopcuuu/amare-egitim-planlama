@@ -26,7 +26,7 @@ export const YURUTME_KURULU = [
   // 1-Star Diamond + eklemeler (14)
   { ad: 'Arda Çakır' },
   { ad: 'Barış Diker' },           // EKLENDİ
-  { ad: 'Filiz Beyazıt' },
+  { ad: 'Filiz Bayazıt' },
   { ad: 'Gülay Rençber' },
   { ad: 'İlknur Akkaş' },           // EKLENDİ (Özgür Akkaş maili altında)
   { ad: 'Kasım Mazılıgüney' },
