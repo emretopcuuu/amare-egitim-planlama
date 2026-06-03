@@ -129,7 +129,7 @@ const MODULLER = [
       de: 'Lead-Tracking-System',
       nl: 'Leadtracking Systeem',
     },
-    kisaltma: 'ATS',
+    kisaltma: 'CRM',
     aciklama: {
       tr: 'Aday ve potansiyel iş ortağı ilişkilerini takip et.',
       en: 'Track candidate and potential partner relationships.',
