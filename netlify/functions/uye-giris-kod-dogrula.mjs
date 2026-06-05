@@ -14,6 +14,7 @@
 
 import admin from 'firebase-admin';
 import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
+import { hashOtp, safeEqual } from './_otpHash.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -78,6 +79,9 @@ export default async (req) => {
       }), { status: 404, headers: { 'Content-Type': 'application/json' } });
     }
 
+    // Gelen kodu hash'le, doc'taki hash ile constant-time karşılaştır
+    const gelenHash = hashOtp(kod, email);
+
     // Doğru kod hangi doc'ta?
     let dogruDoc = null;
     let kontrolEdilenler = [];
@@ -91,7 +95,9 @@ export default async (req) => {
         continue;
       }
       kontrolEdilenler.push({ id: d.id, durum: 'aktif', ref: d.ref, data });
-      if (data.kod === kod) {
+      // Hash karşılaştırma — backward-compat: eski "kod" plain text doc'ları için fallback
+      const storedHash = data.kodHash || (data.kod ? hashOtp(data.kod, email) : null);
+      if (storedHash && safeEqual(gelenHash, storedHash)) {
         dogruDoc = { ref: d.ref, data };
         break;
       }

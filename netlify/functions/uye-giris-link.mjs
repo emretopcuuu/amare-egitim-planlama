@@ -17,6 +17,7 @@ import admin from 'firebase-admin';
 import { Resend } from 'resend';
 import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
 import { metinTemizle } from './_metinTemizle.mjs';
+import { hashOtp } from './_otpHash.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -328,16 +329,17 @@ export default async (req) => {
     // Uzun Firebase URL'ini kısalt — kullanıcıya temiz görünüm
     const link = await kisaltUrl(tamLink);
 
-    // 2b. 6 haneli giriş kodu üret + Firestore'a kaydet (24 saat geçerli)
-    // Kullanıcı magic link'i başka cihazdan açtıysa kodu bu ekranda yazar
+    // 2b. 6 haneli giriş kodu üret + Firestore'a HASH'lenmiş olarak kaydet
+    // (24 saat geçerli, plain text saklanmaz — DB ele geçirilirse kod görünmez)
     const kod = Math.floor(100000 + Math.random() * 900000).toString(); // 100000-999999
+    const kodHash = hashOtp(kod, uye.email);
     const otpDocId = `${uye.amare_id}_${Date.now()}`;
     const sonGeçerlilik = Date.now() + 24 * 60 * 60 * 1000;
     try {
       await admin.firestore().doc(`giris_otp/${otpDocId}`).set({
         email: uye.email,
         amareId: uye.amare_id,
-        kod, // raw — single-use, kısa süreli, sec by Firestore rules (backend-only)
+        kodHash, // HMAC-SHA256, plain kod hiç saklanmaz
         olusturulma: admin.firestore.FieldValue.serverTimestamp(),
         sonGecerlilik: admin.firestore.Timestamp.fromMillis(sonGeçerlilik),
         denemeSayisi: 0,

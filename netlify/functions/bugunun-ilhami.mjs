@@ -8,6 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import admin from 'firebase-admin';
+import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -32,6 +33,10 @@ function dateKey() {
 
 export default async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+
+  // Rate limit: cache ile 24sa TTL ama yine de DB sorgusu spamlanmasın
+  const limit = await rateLimitCheck(req, 'bugunun-ilhami', { perMinute: 30, perHour: 200 });
+  if (!limit.ok) return rateLimitResponse(limit, CORS);
 
   try {
     const bugun = dateKey();

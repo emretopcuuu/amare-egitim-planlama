@@ -20,6 +20,7 @@
 
 import admin from 'firebase-admin';
 import { expandSynonyms, hasSynonyms } from './_synonyms.mjs';
+import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -158,6 +159,10 @@ export default async (req) => {
       status: 405, headers: { 'Content-Type': 'application/json' },
     });
   }
+
+  // Rate limit: ağır DB sorgusu, batch fetch — agresif limit
+  const limit = await rateLimitCheck(req, 'transcript-search', { perMinute: 20, perHour: 150 });
+  if (!limit.ok) return rateLimitResponse(limit);
 
   try {
     const body = await req.json();

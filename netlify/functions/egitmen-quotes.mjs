@@ -10,6 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import admin from 'firebase-admin';
+import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -31,6 +32,10 @@ const CACHE_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 gün
 
 export default async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+
+  // Rate limit: cache 7gün ama farklı coreId'lerle spam → cache miss = pahalı DB query
+  const limit = await rateLimitCheck(req, 'egitmen-quotes', { perMinute: 30, perHour: 200 });
+  if (!limit.ok) return rateLimitResponse(limit, CORS);
 
   try {
     const url = new URL(req.url);
