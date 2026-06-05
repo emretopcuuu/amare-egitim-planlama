@@ -1,5 +1,10 @@
 // Pazartesi 09:00 Europe/Istanbul'da bu haftaki eğitim özetini abonelere email gönderir
 // Schedule: "0 6 * * 1" UTC = 09:00 Istanbul (Pazartesi)
+//
+// GÜVENLİK: Endpoint HTTP'den çağrılabilir → spam/Resend kota hırsızlığı riski
+//   - Schedule pattern (POST + body.next_run): bypass, cron'dur
+//   - Manuel HTTP: BULTEN_TRIGGER_SECRET header'da zorunlu
+//   - Hiçbiri yoksa: 403
 
 import admin from 'firebase-admin';
 import { Resend } from 'resend';
@@ -99,7 +104,36 @@ const renderEmailHtml = (egitimler, aboneAd) => {
 </body></html>`;
 };
 
-export default async () => {
+// ─── Trigger guard ────────────────────────────────────────────────────────
+// Schedule'dan tetiklenince req objesi POST + body.next_run gelir.
+// Manuel HTTP'den tetiklenince zorunlu secret header'ı bekle.
+async function triggerYetkiliMi(req) {
+  if (!req) return true; // legacy: req yoksa direct invoke, kabul
+  const ct = req.headers?.get?.('content-type') || '';
+  if (req.method === 'POST' && ct.includes('application/json')) {
+    try {
+      const clone = req.clone ? req.clone() : req;
+      const body = await clone.json().catch(() => ({}));
+      if (body && (body.next_run || body.last_run)) return true; // Netlify cron payload
+    } catch {}
+  }
+  const beklenen = process.env.BULTEN_TRIGGER_SECRET;
+  if (!beklenen) return false; // env yoksa: kapalı (fail-closed)
+  const headerSecret = req.headers?.get?.('x-bulten-secret');
+  const url = (() => { try { return new URL(req.url); } catch { return null; } })();
+  const querySecret = url?.searchParams?.get('secret');
+  return headerSecret === beklenen || querySecret === beklenen;
+}
+
+export default async (req) => {
+  // Yetki check ÖNCE — DB/Resend init etmeden önce reddet
+  const yetkili = await triggerYetkiliMi(req);
+  if (!yetkili) {
+    return new Response(JSON.stringify({ ok: false, error: 'Forbidden' }), {
+      status: 403, headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   try {
     const db = initFirebase();
     const resend = new Resend(process.env.RESEND_API_KEY);
