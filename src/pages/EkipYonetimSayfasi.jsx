@@ -174,21 +174,42 @@ const EkipYonetimSayfasi = () => {
 
   const aktifSayisi = MODULLER.filter(m => m.aktif).length;
 
-  // SSO destekli modüller için kullanıcının emailini URL'e ekle.
-  // Asistan tarafı bu parametreyi okuyup otomatik oturum açar — böylece
-  // kullanıcı her seferinde manuel giriş yapmadan geçmişine devam eder.
-  const linkOlustur = (m) => {
-    if (!m.sso || !currentUser?.email) return m.link;
+  // SSO destekli modüller: HMAC-imzalı kısa süreli (5dk) token üretip URL'e ekle.
+  // Önceden ?email= imzasız gidiyordu — saldırgan başkasının emailini elle
+  // yazıp asistana o kişi olarak girebiliyordu. Artık imzasız kabul edilmez.
+  const [ssoYukleniyor, setSsoYukleniyor] = React.useState(null); // m.id
+  const ssoLinkAc = async (m, e) => {
+    e.preventDefault();
+    if (!m.aktif) return;
+    if (m.internal) { navigate(m.link); return; }
+    if (!m.sso || !currentUser?.email) {
+      window.open(m.link, '_blank', 'noopener,noreferrer');
+      return;
+    }
+    setSsoYukleniyor(m.id);
     try {
+      const idToken = await currentUser.getIdToken();
+      const res = await fetch('/.netlify/functions/asistan-sso-token', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ src: 'egitim-takvimi' }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data?.token) throw new Error(data?.error || 'token-alinamadi');
       const u = new URL(m.link);
-      u.searchParams.set('email', currentUser.email);
-      // Kaynak izleme: hangi sistemden geldiğini asistan tarafı bilsin
+      u.searchParams.set('ssoToken', data.token);
       u.searchParams.set('source', 'egitim-takvimi');
-      return u.toString();
-    } catch {
-      return m.link;
+      window.open(u.toString(), '_blank', 'noopener,noreferrer');
+    } catch (err) {
+      console.error('[SSO]', err.message);
+      // Fallback: imzasız link yerine HİÇ açma — kullanıcı yeniden dener
+      alert('Bağlantı oluşturulamadı. Lütfen tekrar dene.');
+    } finally {
+      setSsoYukleniyor(null);
     }
   };
+  // Görsel href: SSO için # (gerçek URL onClick'te üretilir)
+  const linkOlustur = (m) => (m.sso ? '#' : m.link);
 
   return (
     <div className="min-h-[100dvh] overflow-x-hidden bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-950 relative">
@@ -253,12 +274,14 @@ const EkipYonetimSayfasi = () => {
               <a
                 key={m.id}
                 href={m.aktif ? linkOlustur(m) : '#'}
-                target={m.aktif && !m.internal ? '_blank' : undefined}
-                rel={m.aktif && !m.internal ? 'noopener noreferrer' : undefined}
+                target={m.aktif && !m.internal && !m.sso ? '_blank' : undefined}
+                rel={m.aktif && !m.internal && !m.sso ? 'noopener noreferrer' : undefined}
                 onClick={(e) => {
                   if (!m.aktif) { e.preventDefault(); return; }
-                  if (m.internal) { e.preventDefault(); navigate(m.link); }
+                  if (m.internal) { e.preventDefault(); navigate(m.link); return; }
+                  if (m.sso) { ssoLinkAc(m, e); return; }
                 }}
+                aria-busy={ssoYukleniyor === m.id}
                 className={`group relative overflow-hidden bg-white/10 backdrop-blur-md border rounded-2xl p-6 transition-all duration-300 spring-tap text-left shadow-xl ${
                   m.aktif
                     ? 'hover:bg-white/15 border-amber-300/40 hover:border-amber-300/70 hover:shadow-amber-500/20 cursor-pointer'

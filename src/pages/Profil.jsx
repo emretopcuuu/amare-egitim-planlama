@@ -1111,10 +1111,30 @@ const Profil = () => {
               </div>
             </a>
 
-            {/* AI Asistan — mor */}
-            <a href="https://asistan.oneteamglobal.ai"
-              target="_blank" rel="noopener noreferrer"
-              className="block w-full bg-gradient-to-br from-purple-500/20 via-violet-400/15 to-indigo-500/20 backdrop-blur-md border border-purple-300/40 hover:border-purple-300/70 rounded-2xl p-5 shadow-xl transition group spring-tap">
+            {/* AI Asistan — mor (HMAC-imzalı SSO ile açar) */}
+            <button
+              type="button"
+              onClick={async (e) => {
+                e.preventDefault();
+                try {
+                  const idToken = await currentUser.getIdToken();
+                  const res = await fetch('/.netlify/functions/asistan-sso-token', {
+                    method: 'POST',
+                    headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ src: 'profil' }),
+                  });
+                  const data = await res.json();
+                  if (!res.ok || !data?.token) throw new Error(data?.error || 'token-alinamadi');
+                  const u = new URL('https://asistan.oneteamglobal.ai');
+                  u.searchParams.set('ssoToken', data.token);
+                  u.searchParams.set('source', 'profil');
+                  window.open(u.toString(), '_blank', 'noopener,noreferrer');
+                } catch (err) {
+                  console.error('[SSO]', err.message);
+                  alert('Bağlantı oluşturulamadı. Lütfen tekrar dene.');
+                }
+              }}
+              className="block w-full text-left bg-gradient-to-br from-purple-500/20 via-violet-400/15 to-indigo-500/20 backdrop-blur-md border border-purple-300/40 hover:border-purple-300/70 rounded-2xl p-5 shadow-xl transition group spring-tap">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-purple-400/25 border border-purple-300/50 flex items-center justify-center flex-shrink-0">
                   <MessageCircle className="w-6 h-6 text-purple-300" />
@@ -1125,7 +1145,7 @@ const Profil = () => {
                 </div>
                 <ChevronRight className="w-5 h-5 text-purple-300 group-hover:translate-x-1 transition" />
               </div>
-            </a>
+            </button>
           </div>
         )}
 
