@@ -14,9 +14,19 @@ admin.initializeApp({
 
 const bucket = admin.storage().bucket();
 
+// CORS sıkıştırıldı: sadece OneTeam ekosistemi domain'leri + localhost dev
+// Hot-linking koruması, bandwidth hırsızlığı engelleme
 const corsConfig = [
   {
-    origin: ['*'],
+    origin: [
+      'https://egitimtakvimi.oneteamglobal.ai',
+      'https://asistan.oneteamglobal.ai',
+      'https://crm.oneteamglobal.ai',
+      'https://hbb.oneteamglobal.ai',
+      'https://hesaplayici.oneteamglobal.ai',
+      'http://localhost:5173', // Vite dev
+      'http://localhost:3000', // alternatif dev
+    ],
     method: ['GET', 'HEAD'],
     maxAgeSeconds: 3600,
     responseHeader: ['Content-Type', 'Access-Control-Allow-Origin', 'Cache-Control'],

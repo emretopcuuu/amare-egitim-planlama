@@ -80,7 +80,8 @@ const UyeGirisModal = ({ acik, onClose }) => {
         setEmailReal(data.emailReal);
       }
       setEmailMask(data.emailMask || '');
-      setAdKisa(data.adKisa || '');
+      // adKisa artık backend'den dönmüyor (security: isim sızıntısı engellendi)
+      setAdKisa('');
       setOtpKod(['', '', '', '', '', '']);
       setOtpHata('');
       setDurum('gonderildi');
@@ -470,7 +471,7 @@ const UyeGirisModal = ({ acik, onClose }) => {
             </div>
 
             <div className="text-purple-200/60 text-[11px] mb-4 text-center space-y-0.5">
-              <p>🔒 Kod ve link 24 saat geçerli, tek kullanımlık</p>
+              <p>🔒 Kod 24 saat geçerli · Link 1 saat geçerli · Tek kullanımlık</p>
               <p>📬 Mail gelmezse spam klasörünü kontrol et</p>
             </div>
 

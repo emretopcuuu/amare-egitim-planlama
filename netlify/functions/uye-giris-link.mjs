@@ -192,7 +192,7 @@ function emailHtml({ ad, link, lookup, kod }) {
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
             <tr>
               <td align="center" style="padding:6px;color:#fcd34d;font-size:13px;font-weight:700;">🔒 Güvenli</td>
-              <td align="center" style="padding:6px;color:#E9D5FF;font-size:13px;">24 saat geçerli</td>
+              <td align="center" style="padding:6px;color:#E9D5FF;font-size:13px;">Kod 24sa · Link 1sa</td>
               <td align="center" style="padding:6px;color:#A78BFA;font-size:13px;">Tek kullanımlık</td>
             </tr>
           </table>
@@ -310,7 +310,9 @@ export default async (req) => {
             cached: true,
             emailMask: maskEmail(uye.email),
             emailReal: uye.email,
-            adKisa: (uye.full_name || '').split(' ')[0] || null,
+            // adKisa response'ta DÖNDÜRÜLMEZ — isim sızıntısı engellenir (saldırgan
+      // Amare ID dener, response'tan kişinin adını öğrenemez). Frontend
+      // generic "Selam!" gösterir.
             mesaj: `Geçen ${gecen} sn önce gönderdik. Spam'i kontrol et.`,
             kalanSn: 60 - gecen,
           }), { status: 200, headers: { 'Content-Type': 'application/json' } });
@@ -331,6 +333,28 @@ export default async (req) => {
 
     // 2b. 6 haneli giriş kodu üret + Firestore'a HASH'lenmiş olarak kaydet
     // (24 saat geçerli, plain text saklanmaz — DB ele geçirilirse kod görünmez)
+
+    // ÖNCE: aynı email'in önceki aktif OTP'lerini invalidate et
+    // (brute-force koruması: kullanıcı 3 kez kod istedi → 3 × 5 deneme = 15 değil, sadece son 5)
+    try {
+      const eskiSnap = await admin.firestore().collection('giris_otp')
+        .where('email', '==', uye.email)
+        .where('kullanildi', '==', false)
+        .limit(20)
+        .get();
+      const batch = admin.firestore().batch();
+      eskiSnap.docs.forEach(d => {
+        batch.update(d.ref, {
+          kullanildi: true,
+          invalidatedAt: admin.firestore.FieldValue.serverTimestamp(),
+          invalidationSebep: 'yeni_kod_uretildi',
+        });
+      });
+      if (eskiSnap.size > 0) await batch.commit();
+    } catch (e) {
+      console.warn('[uye-giris-link] eski OTP invalidate hatası:', e.message);
+    }
+
     const kod = Math.floor(100000 + Math.random() * 900000).toString(); // 100000-999999
     const kodHash = hashOtp(kod, uye.email);
     const otpDocId = `${uye.amare_id}_${Date.now()}`;
@@ -376,7 +400,9 @@ export default async (req) => {
       sent: true,
       emailMask: maskEmail(uye.email),
       emailReal: uye.email,  // Tam email — frontend localStorage'a yazar (signInWithEmailLink gerektirir)
-      adKisa: (uye.full_name || '').split(' ')[0] || null,
+      // adKisa response'ta DÖNDÜRÜLMEZ — isim sızıntısı engellenir (saldırgan
+      // Amare ID dener, response'tan kişinin adını öğrenemez). Frontend
+      // generic "Selam!" gösterir.
       otpAktif: true,  // Frontend OTP input ekranı göstersin
     }), { status: 200, headers: { 'Content-Type': 'application/json' } });
 

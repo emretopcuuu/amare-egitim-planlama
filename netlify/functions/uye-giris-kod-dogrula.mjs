@@ -72,11 +72,13 @@ export default async (req) => {
       return bt - at;
     });
 
+    // Email enumeration koruması: "kod yok" demeyiz — sızıntı yapar
+    // Aynı generic hata mesajı, attacker email'in sistemde olup olmadığını anlayamaz
     if (snap.empty) {
       return new Response(JSON.stringify({
         ok: false,
-        error: 'Bu email için geçerli kod yok. Önce giriş kodu iste.',
-      }), { status: 404, headers: { 'Content-Type': 'application/json' } });
+        error: 'Kod yanlış veya süresi dolmuş. Yeniden iste.',
+      }), { status: 401, headers: { 'Content-Type': 'application/json' } });
     }
 
     // Gelen kodu hash'le, doc'taki hash ile constant-time karşılaştır
@@ -113,13 +115,11 @@ export default async (req) => {
           });
         }
       }
-      const aktifKalan = kontrolEdilenler.filter(k => k.durum === 'aktif').length;
+      // Email enumeration koruması: "kilit" durumu da sızıntı yapar
+      // ("bu email var ve kilitli" diye attacker anlar). Hep aynı mesaj.
       return new Response(JSON.stringify({
         ok: false,
-        error: aktifKalan > 0
-          ? 'Kod yanlış. Tekrar dene.'
-          : 'Kod 5 kez yanlış girildi. Yeni kod iste.',
-        kilit: aktifKalan === 0,
+        error: 'Kod yanlış veya süresi dolmuş. Yeniden iste.',
       }), { status: 401, headers: { 'Content-Type': 'application/json' } });
     }
 
