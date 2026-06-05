@@ -14,7 +14,7 @@ import {
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { takvimOlustur } from '../utils/takvimAlgoritma';
-import { isAdminEmail } from '../constants';
+import { isAdminEmail, userIsAdmin } from '../constants';
 
 // Türkçe karakterleri ASCII'ye çevirip güvenli ID oluştur
 export const makeSafeId = (ad) => {
@@ -944,7 +944,10 @@ export const DataProvider = ({ children }) => {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const email = result.user?.email;
-      if (!isAdminEmail(email)) {
+      // 2026-06-05 audit (#2): Önce Custom Claim, sonra email whitelist fallback
+      const idTokenResult = await result.user.getIdTokenResult();
+      const isAdminUser = userIsAdmin({ email, claims: idTokenResult.claims });
+      if (!isAdminUser) {
         await signOut(auth);
         return { success: false, error: `Bu hesap (${email}) admin yetkisine sahip değil.` };
       }
@@ -967,9 +970,25 @@ export const DataProvider = ({ children }) => {
 
   // Firebase Auth state listener — currentUser ve isAdmin'i otomatik günceller
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
+    const unsub = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
-      setIsAdmin(isAdminEmail(user?.email));
+      if (!user) {
+        setIsAdmin(false);
+        setAuthLoading(false);
+        return;
+      }
+      // 2026-06-05 audit (#2): Custom Claim de oku — admin: true varsa öncelik
+      // Email whitelist fallback migration tamamlanana kadar destek
+      try {
+        const idTokenResult = await user.getIdTokenResult();
+        setIsAdmin(userIsAdmin({
+          email: user.email,
+          claims: idTokenResult.claims,
+        }));
+      } catch (e) {
+        // Token sorunsa eski email kontrolüne düş
+        setIsAdmin(isAdminEmail(user?.email));
+      }
       setAuthLoading(false);
       // Eski localStorage isAdmin flag'ini bypass için artık güvenmiyoruz; sil
       localStorage.removeItem('isAdmin');

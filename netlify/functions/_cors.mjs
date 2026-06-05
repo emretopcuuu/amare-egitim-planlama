@@ -11,8 +11,14 @@ const IZINLI_ORIGINS = [
   'https://egitimtakvimi.oneteamglobal.ai',
   'https://oneteamglobal.ai',
   'https://www.oneteamglobal.ai',
+  // OneTeam ekosistemi (2026-06-05: dil-cevir + diğer public endpoint'ler için genişletildi)
+  'https://asistan.oneteamglobal.ai',
+  'https://crm.oneteamglobal.ai',
+  'https://hbb.oneteamglobal.ai',
+  'https://hesaplayici.oneteamglobal.ai',
   // Development
   'http://localhost:5173',
+  'http://localhost:3000',
   'http://localhost:8888',
 ];
 

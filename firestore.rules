@@ -22,20 +22,25 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      // email_verified Google sign-in için her zaman true olmalı ama bazı edge case'lerde false dönebiliyor.
-      // Email whitelist + signed in kontrolü güvenli — Google sign-in zaten email'i doğrulanmış kabul eder.
+      // 2026-06-05 audit (#2): Custom Claims migrasyonu — transition mode
+      // Yeni yöntem: request.auth.token.admin == true (claim)
+      // Eski yöntem: email whitelist (migration tamamlanana kadar destek)
+      // Migration tamam olunca eski liste kaldırılacak (bundle phishing target)
       return isSignedIn()
-        && request.auth.token.email in [
-          's.emretopcu@gmail.com',
-          'onlineakademin@gmail.com',
-          'toygarsenelmis@gmail.com',
-          'alper.kirbiyik@gmail.com',
-          'vitamindestegi@gmail.com',
-          'kmaziliguney@gmail.com',
-          'ilknurakkas17@gmail.com',
-          'giray70@gmail.com',
-          'furkancite@gmail.com'
-        ];
+        && (
+          request.auth.token.admin == true
+          || request.auth.token.email in [
+            's.emretopcu@gmail.com',
+            'onlineakademin@gmail.com',
+            'toygarsenelmis@gmail.com',
+            'alper.kirbiyik@gmail.com',
+            'vitamindestegi@gmail.com',
+            'kmaziliguney@gmail.com',
+            'ilknurakkas17@gmail.com',
+            'giray70@gmail.com',
+            'furkancite@gmail.com'
+          ]
+        );
     }
 
     // ─── KOLEKSİYONLAR ───
@@ -70,40 +75,87 @@ service cloud.firestore {
     }
 
     // Eğitmen başvuruları — anonim KAYIT yapabilir, sadece admin OKUR/günceller/siler
-    // (PII koruması: ad-soyad, telefon, e-posta okunamaz)
+    // 2026-06-05 audit: Şema validasyonu — Firestore quota spam koruması
     match /egitmenler/{docId} {
-      allow create: if true;
+      allow create: if
+        request.resource.data.size() <= 30
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 0
+        && request.resource.data.email.size() <= 200
+        && (!('ad' in request.resource.data) || (request.resource.data.ad is string && request.resource.data.ad.size() <= 100))
+        && (!('soyad' in request.resource.data) || (request.resource.data.soyad is string && request.resource.data.soyad.size() <= 100))
+        && (!('telefon' in request.resource.data) || (request.resource.data.telefon is string && request.resource.data.telefon.size() <= 30))
+        && (!('mesaj' in request.resource.data) || (request.resource.data.mesaj is string && request.resource.data.mesaj.size() <= 3000));
       allow read, update, delete: if isAdmin();
     }
 
     // Hatırlatma kayıtları — anonim KAYIT yapabilir, sadece admin OKUR
-    // (e-posta + Zoom link sızıntısını engeller)
+    // 2026-06-05 audit: Boyut + alan tipi validasyonu (quota saldırı koruma)
     match /hatirlatmalar/{docId} {
-      allow create: if true;
+      allow create: if
+        request.resource.data.size() <= 20
+        && request.resource.data.egitimId is string
+        && request.resource.data.egitimId.size() > 0
+        && request.resource.data.egitimId.size() <= 100
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 0
+        && request.resource.data.email.size() <= 200
+        && request.resource.data.hatirlatmaZamani is string
+        && request.resource.data.hatirlatmaZamani.size() <= 10
+        && request.resource.data.gonderildi == false
+        && (!('egitimAdi' in request.resource.data) || (request.resource.data.egitimAdi is string && request.resource.data.egitimAdi.size() <= 300))
+        && (!('egitmen' in request.resource.data) || (request.resource.data.egitmen is string && request.resource.data.egitmen.size() <= 200))
+        && (!('yer' in request.resource.data) || (request.resource.data.yer is string && request.resource.data.yer.size() <= 500))
+        && (!('zoomLink' in request.resource.data) || (request.resource.data.zoomLink is string && request.resource.data.zoomLink.size() <= 500));
       allow read, list, update, delete: if isAdmin();
     }
 
     // Analytics event'leri — anonim YAZAR (pageview, lang_change vb), sadece admin OKUR
+    // 2026-06-05 audit: Event payload boyut sınırı (spam koruma)
     match /egitim_analytics/{docId} {
-      allow create: if true;
+      allow create: if
+        request.resource.data.size() <= 15
+        && request.resource.data.event is string
+        && request.resource.data.event.size() <= 50
+        && (!('path' in request.resource.data) || (request.resource.data.path is string && request.resource.data.path.size() <= 200))
+        && (!('lang' in request.resource.data) || (request.resource.data.lang is string && request.resource.data.lang.size() <= 10))
+        && (!('referrer' in request.resource.data) || (request.resource.data.referrer is string && request.resource.data.referrer.size() <= 500))
+        && (!('userAgent' in request.resource.data) || (request.resource.data.userAgent is string && request.resource.data.userAgent.size() <= 500));
       allow read, list, update, delete: if isAdmin();
     }
 
     // Haftalık bülten aboneleri — anonim KAYIT olur, sadece admin OKUR
+    // 2026-06-05 audit: email + ad boyut sınırı
     match /bulten_aboneleri/{docId} {
-      allow create: if true;
+      allow create: if
+        request.resource.data.size() <= 10
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 0
+        && request.resource.data.email.size() <= 200
+        && (!('ad' in request.resource.data) || (request.resource.data.ad is string && request.resource.data.ad.size() <= 100))
+        && request.resource.data.aktif is bool;
       allow read, list, update, delete: if isAdmin();
     }
 
     // Konuşmacı takip aboneleri — anonim KAYIT olur, sadece admin OKUR
+    // 2026-06-05 audit: email + konuşmacı coreId sınırı
     match /konusmaci_aboneleri/{docId} {
-      allow create: if true;
+      allow create: if
+        request.resource.data.size() <= 10
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 0
+        && request.resource.data.email.size() <= 200
+        && (!('konusmaciCoreId' in request.resource.data) || (request.resource.data.konusmaciCoreId is string && request.resource.data.konusmaciCoreId.size() <= 100));
       allow read, list, update, delete: if isAdmin();
     }
 
     // Web Push aboneleri — anonim KAYIT olur, sadece admin OKUR
+    // 2026-06-05 audit: Push subscription endpoint/keys boyut sınırı
     match /web_push_aboneleri/{docId} {
-      allow create: if true;
+      allow create: if
+        request.resource.data.size() <= 15
+        && (!('endpoint' in request.resource.data) || (request.resource.data.endpoint is string && request.resource.data.endpoint.size() <= 1000))
+        && (!('keys' in request.resource.data) || request.resource.data.keys is map);
       allow read, list, update, delete: if isAdmin();
     }
 
@@ -116,10 +168,12 @@ service cloud.firestore {
     match /kayitli_egitimler/{docId} {
       allow read: if true;
       allow write: if isAdmin();
-      // Yıldız oylama ve puan güncellemesi — herhangi bir signed-in kullanıcı
-      // oy verince transaction ile aggregate puanOrt/puanSayisi günceller
+      // 2026-06-05 audit fix (#3): puanOrt/puanSayisi artık client'tan YAZILAMAZ.
+      // Eski rule: kullanıcı `puanOrt: 9999` yazabiliyordu (vote manipülasyon).
+      // Yeni akış: client → /.netlify/functions/puan-oy-ver → admin SDK transaction
+      // Sadece reactions hala client tarafından yazılabilir (low-risk emoji)
       allow update: if isSignedIn()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['puanOrt', 'puanSayisi', 'reactions']);
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reactions']);
 
       // Oylar subcollection — kullanıcı sadece kendi oyunu yazar/okur
       match /oylar/{uid} {
@@ -324,9 +378,18 @@ service cloud.firestore {
     }
 
     // Audit log — sadece admin okur, signed-in yazar (kendi action'ını)
+    // 2026-06-05 audit: action/target/ts validasyonu eklendi (sahte log entry koruma)
     match /audit_log/{logId} {
       allow read: if isAdmin();
-      allow create: if isSignedIn() && request.resource.data.kim == request.auth.uid;
+      allow create: if isSignedIn()
+        && request.resource.data.kim == request.auth.uid
+        && request.resource.data.size() <= 15
+        && request.resource.data.action is string
+        && request.resource.data.action.size() > 0
+        && request.resource.data.action.size() <= 64
+        && (!('target' in request.resource.data) || (request.resource.data.target is string && request.resource.data.target.size() <= 200))
+        && (!('meta' in request.resource.data) || (request.resource.data.meta is map))
+        && (!('ts' in request.resource.data) || (request.resource.data.ts == request.time));
       allow update, delete: if false;
     }
 

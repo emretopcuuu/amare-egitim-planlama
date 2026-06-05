@@ -10,17 +10,13 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
+import { corsPrivate, corsPreflight } from './_cors.mjs';
 
 const OPENROUTER_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'google/gemini-2.5-flash';
 const SITE_URL = 'https://egitimtakvimi.oneteamglobal.ai';
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
-
+// 2026-06-05 audit fix: wildcard CORS → ekosistem allowlist (OpenRouter cost theft koruma)
 const LANG_NAMES = {
   en: 'English',
   de: 'German',
@@ -28,7 +24,9 @@ const LANG_NAMES = {
 };
 
 export default async (req) => {
-  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
+  const CORS = corsPrivate(req);
+
+  if (req.method === 'OPTIONS') return corsPreflight(req, true);
   if (req.method !== 'POST') return new Response(JSON.stringify({ error: 'POST only' }), {
     status: 405, headers: { 'Content-Type': 'application/json', ...CORS },
   });

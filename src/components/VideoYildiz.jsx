@@ -1,11 +1,17 @@
 // Video yıldız oylama — kullanıcı 1-5 yıldız verir
 // Firestore: kayitli_egitimler/{vimeoId}/oylar/{uid} = { yildiz, tarih }
 // Aggregate: kayitli_egitimler/{vimeoId} doc'unda { puanOrt, puanSayisi }
+//
+// 2026-06-05 audit fix (#3): Aggregate güncelleme artık server-side (Netlify
+// function /puan-oy-ver) admin SDK transaction ile. Önceden client transaction
+// kullanıyorduk ama rules client'a puanOrt yazmaya izin veriyordu → manipülasyon
+// mümkündü. Artık client sadece kendi oyu için POST eder, function aggregate
+// yapar ve geri döner.
 
 import React, { useEffect, useState } from 'react';
 import { Star, Loader2 } from 'lucide-react';
 import { db } from '../utils/firebase';
-import { doc, getDoc, setDoc, serverTimestamp, runTransaction } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 
 const VideoYildiz = ({ vimeoId, kompakt = false }) => {
@@ -49,47 +55,25 @@ const VideoYildiz = ({ vimeoId, kompakt = false }) => {
     if (!currentUser || isAnonymous || gonderiliyor) return;
     setGonderiliyor(true);
     try {
-      const oyRef = doc(db, `kayitli_egitimler/${vimeoId}/oylar/${currentUser.uid}`);
-      const videoRef = doc(db, `kayitli_egitimler/${vimeoId}`);
-
-      await runTransaction(db, async (tx) => {
-        const oySnap = await tx.get(oyRef);
-        const videoSnap = await tx.get(videoRef);
-        const eskiYildiz = oySnap.exists() ? (oySnap.data().yildiz || 0) : 0;
-        const eskiOrt = videoSnap.exists() ? (videoSnap.data().puanOrt || 0) : 0;
-        const eskiSayisi = videoSnap.exists() ? (videoSnap.data().puanSayisi || 0) : 0;
-
-        // Yeni ortalama hesabı
-        let yeniSayisi, yeniToplamPuan;
-        if (eskiYildiz > 0) {
-          // Kullanıcı zaten oy vermişti — değiştir
-          yeniSayisi = eskiSayisi;
-          yeniToplamPuan = eskiOrt * eskiSayisi - eskiYildiz + yildiz;
-        } else {
-          // İlk oy
-          yeniSayisi = eskiSayisi + 1;
-          yeniToplamPuan = eskiOrt * eskiSayisi + yildiz;
-        }
-        const yeniOrt = yeniSayisi > 0 ? yeniToplamPuan / yeniSayisi : 0;
-
-        tx.set(oyRef, {
-          yildiz,
-          tarih: serverTimestamp(),
-          uid: currentUser.uid,
-        }, { merge: true });
-        tx.set(videoRef, {
-          puanOrt: Math.round(yeniOrt * 10) / 10,
-          puanSayisi: yeniSayisi,
-        }, { merge: true });
+      // Server-side function — admin SDK transaction ile aggregate günceller
+      // Client'tan puanOrt/puanSayisi yazma rules tarafından engelleniyor
+      const idToken = await currentUser.getIdToken();
+      const res = await fetch('/.netlify/functions/puan-oy-ver', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${idToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ vimeoId: String(vimeoId), yildiz }),
       });
-
-      setBenimPuan(yildiz);
-      // UI'ı yenile (transaction içinde okunan değerler güvenilir değil)
-      const refreshed = await getDoc(videoRef);
-      if (refreshed.exists()) {
-        setPuanOrt(refreshed.data().puanOrt ?? null);
-        setPuanSayisi(refreshed.data().puanSayisi ?? 0);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ok) {
+        console.warn('[yildiz] oyla reddedildi:', data.error || res.status);
+        return;
       }
+      setBenimPuan(yildiz);
+      setPuanOrt(data.puanOrt ?? null);
+      setPuanSayisi(data.puanSayisi ?? 0);
     } catch (e) {
       console.warn('[yildiz] oyla err:', e.message);
     } finally {

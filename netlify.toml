@@ -18,6 +18,35 @@
 [build.environment]
   NODE_VERSION = "18"
 
+# Sensitive path catch-all — /.env, /.git/*, /swagger.json, /metrics, /debug
+# Bu dosyalar gerçek yoktan SPA fallback ile 200 HTML donüyordu → 404 zorla
+# Audit (2026-06-05): security tarayıcı false-positive temizliği + saldırı yüzeyi azaltma
+[[redirects]]
+  from = "/.env"
+  to = "/404.html"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/.git/*"
+  to = "/404.html"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/swagger.json"
+  to = "/404.html"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/metrics"
+  to = "/404.html"
+  status = 404
+  force = true
+[[redirects]]
+  from = "/debug"
+  to = "/404.html"
+  status = 404
+  force = true
+
 # Hashed bundle dosyaları → bir yıl immutable (içerik hash'ten geliyor, asla değişmez)
 [[headers]]
   for = "/assets/*"
@@ -30,11 +59,50 @@
   [headers.values]
     Cache-Control = "public, max-age=3600"
 
-# TÜM diğer route'lar (SPA rewrite ile index.html dönenler dahil) — ASLA cache'lenmesin
-# Bu /takvim, /admin, /, /index.html vs hepsini kapsar
+# ─── Security headers (2026-06-05 audit) ──────────────────────────────────
+# Tüm route'lara uygulanır. CSP Report-Only modunda — 48 saat gözlem sonrası
+# Content-Security-Policy-Report-Only → Content-Security-Policy'ye çevrilecek.
+# Plan: dist/csp-report.html sayfasıyla raporları izle, eksik domain'i whitelist'e ekle.
+#
+# CSP whitelist'i:
+#   default-src 'self'           → varsayılan: sadece kendi domain
+#   script-src 'self' 'unsafe-inline'  → index.html'de inline analytics + stale-bundle (geçici, hash'leme planı sonra)
+#   style-src   'self' 'unsafe-inline' https://fonts.googleapis.com  → Google Fonts + Tailwind inline
+#   font-src    'self' https://fonts.gstatic.com data:
+#   img-src     'self' data: https: blob:  → Firebase Storage, Vimeo, Sentry favicons
+#   connect-src 'self'
+#               https://*.googleapis.com           → Firebase Auth/Firestore/Storage
+#               https://*.firebaseio.com
+#               https://identitytoolkit.googleapis.com
+#               https://firestore.googleapis.com
+#               https://firebasestorage.googleapis.com
+#               https://*.ingest.de.sentry.io      → Sentry DSN (EU region)
+#               https://challenges.cloudflare.com  → Turnstile
+#               https://openrouter.ai              → çeviri/AI
+#               https://monitor.oneteamglobal.ai   → analytics
+#               https://egitimtakvimi.oneteamglobal.ai
+#               https://yvpstkbwglefxukfpgyd.supabase.co  → üye lookup
+#               https://vimeo.com https://player.vimeo.com https://*.vimeocdn.com
+#   frame-src   'self' https://player.vimeo.com https://challenges.cloudflare.com
+#   frame-ancestors 'none'  → iframe ile gömülemez (XFO ile aynı işi yapar)
+#   form-action 'self'
+#   base-uri 'self'
+#   object-src 'none'
 [[headers]]
   for = "/*"
   [headers.values]
     Cache-Control = "no-cache, no-store, must-revalidate"
     Pragma = "no-cache"
     Expires = "0"
+    # HSTS — subdomain + preload eklendi
+    Strict-Transport-Security = "max-age=63072000; includeSubDomains; preload"
+    # Clickjacking koruması (CSP frame-ancestors da aynı işi yapar, defense in depth)
+    X-Frame-Options = "DENY"
+    # MIME sniffing koruması
+    X-Content-Type-Options = "nosniff"
+    # Referrer minimizasyon (dış sitelere giderken sadece origin gönderir)
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    # Browser API'leri default kapalı (kamera/mikrofon/konum vb. izin istemez)
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=(), gyroscope=(), magnetometer=(), accelerometer=()"
+    # CSP — Report-Only modunda başla (48 saat gözlem)
+    Content-Security-Policy-Report-Only = "default-src 'self'; script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://identitytoolkit.googleapis.com https://firestore.googleapis.com https://firebasestorage.googleapis.com https://*.ingest.de.sentry.io https://challenges.cloudflare.com https://openrouter.ai https://monitor.oneteamglobal.ai https://egitimtakvimi.oneteamglobal.ai https://yvpstkbwglefxukfpgyd.supabase.co https://vimeo.com https://player.vimeo.com https://*.vimeocdn.com; frame-src 'self' https://player.vimeo.com https://challenges.cloudflare.com; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'"
