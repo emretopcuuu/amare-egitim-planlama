@@ -1,11 +1,24 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
+
+// Sentry source map upload — sadece auth token + org + project varsa devreye girer.
+// Yoksa plugin no-op çalışır, build kırılmaz.
+const sentryPlugins = (process.env.SENTRY_AUTH_TOKEN && process.env.SENTRY_ORG && process.env.SENTRY_PROJECT)
+  ? [sentryVitePlugin({
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      release: { name: process.env.COMMIT_REF?.slice(0, 7) || 'dev' },
+      telemetry: false,
+    })]
+  : []
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), ...sentryPlugins],
   build: {
     outDir: 'dist',
-    sourcemap: false,
+    sourcemap: sentryPlugins.length > 0, // Sentry varsa source map üret + upload et
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
