@@ -7,6 +7,11 @@ import { X, Loader2, CheckCircle2, AlertCircle, ArrowRight, Mail, Lock, HelpCirc
 import { signInWithCustomToken } from 'firebase/auth';
 import { auth } from '../utils/firebase';
 
+// Cloudflare Turnstile site key (public — env'den okur)
+// VITE_TURNSTILE_SITE_KEY yoksa widget render edilmez, backend de bypass eder
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '';
+const TURNSTILE_SCRIPT_SRC = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileReady&render=explicit';
+
 const UyeGirisModal = ({ acik, onClose }) => {
   const [lookup, setLookup] = useState('');
   const [durum, setDurum] = useState('giris'); // giris | gonderildi | talepFormu | talepGonderildi
@@ -15,6 +20,10 @@ const UyeGirisModal = ({ acik, onClose }) => {
   const [emailReal, setEmailReal] = useState(''); // OTP doğrulama için gerekli
   const [adKisa, setAdKisa] = useState('');
   const [yukleniyor, setYukleniyor] = useState(false);
+  // Turnstile state
+  const [cfToken, setCfToken] = useState('');
+  const turnstileEl = useRef(null);
+  const turnstileWidgetId = useRef(null);
   // OTP state
   const [otpKod, setOtpKod] = useState(['', '', '', '', '', '']);
   const [otpHata, setOtpHata] = useState('');
@@ -46,6 +55,56 @@ const UyeGirisModal = ({ acik, onClose }) => {
     };
   }, [acik, onClose]);
 
+  // Cloudflare Turnstile: script yükle + widget mount (sadece site key varsa)
+  useEffect(() => {
+    if (!acik || durum !== 'giris' || !TURNSTILE_SITE_KEY) return;
+
+    const mountWidget = () => {
+      if (!window.turnstile || !turnstileEl.current) return;
+      // Eski widget varsa temizle (modal yeniden açılıyorsa)
+      if (turnstileWidgetId.current !== null) {
+        try { window.turnstile.remove(turnstileWidgetId.current); } catch {}
+        turnstileWidgetId.current = null;
+      }
+      try {
+        turnstileWidgetId.current = window.turnstile.render(turnstileEl.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme: 'dark',
+          size: 'flexible',
+          callback: (token) => setCfToken(token),
+          'expired-callback': () => setCfToken(''),
+          'error-callback': () => setCfToken(''),
+        });
+      } catch (e) {
+        console.warn('[Turnstile] mount hata:', e.message);
+      }
+    };
+
+    if (window.turnstile) {
+      // Script zaten yüklü
+      setTimeout(mountWidget, 50);
+    } else if (!document.querySelector(`script[src*="turnstile/v0/api.js"]`)) {
+      // İlk yükleme: global callback'i tanımla, script ekle
+      window.onTurnstileReady = mountWidget;
+      const s = document.createElement('script');
+      s.src = TURNSTILE_SCRIPT_SRC;
+      s.async = true;
+      s.defer = true;
+      document.head.appendChild(s);
+    } else {
+      // Script gönderildi ama henüz yüklenmedi, callback'i değiştir
+      window.onTurnstileReady = mountWidget;
+    }
+
+    return () => {
+      if (turnstileWidgetId.current !== null) {
+        try { window.turnstile?.remove(turnstileWidgetId.current); } catch {}
+        turnstileWidgetId.current = null;
+      }
+      setCfToken('');
+    };
+  }, [acik, durum]);
+
   if (!acik) return null;
 
   const handleSubmit = async (e) => {
@@ -61,7 +120,7 @@ const UyeGirisModal = ({ acik, onClose }) => {
       const res = await fetch('/.netlify/functions/uye-giris-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lookup: v }),
+        body: JSON.stringify({ lookup: v, cfToken }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -268,11 +327,26 @@ const UyeGirisModal = ({ acik, onClose }) => {
                 </div>
               )}
 
-              <button type="submit" disabled={yukleniyor || lookup.trim().length < 3}
+              {/* Cloudflare Turnstile — bot brute-force koruma (site key set ise) */}
+              {TURNSTILE_SITE_KEY && (
+                <div className="mt-4 flex justify-center">
+                  <div ref={turnstileEl} />
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={
+                  yukleniyor
+                  || lookup.trim().length < 3
+                  || (TURNSTILE_SITE_KEY && !cfToken)
+                }
                 className="w-full mt-4 bg-amber-400 hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed text-purple-900 font-bold py-3 rounded-xl transition-all spring-tap inline-flex items-center justify-center gap-2">
                 {yukleniyor
                   ? <><Loader2 className="w-5 h-5 animate-spin" />Doğrulanıyor...</>
-                  : <>Devam et<ArrowRight className="w-5 h-5" /></>}
+                  : (TURNSTILE_SITE_KEY && !cfToken)
+                    ? <>Doğrulama bekleniyor...</>
+                    : <>Devam et<ArrowRight className="w-5 h-5" /></>}
               </button>
             </form>
 

@@ -18,6 +18,7 @@ import { Resend } from 'resend';
 import { rateLimitCheck, rateLimitResponse } from './_rateLimit.mjs';
 import { metinTemizle } from './_metinTemizle.mjs';
 import { hashOtp } from './_otpHash.mjs';
+import { turnstileVerify } from './_turnstileVerify.mjs';
 
 if (!admin.apps.length) {
   admin.initializeApp({
@@ -263,12 +264,25 @@ export default async (req) => {
 
     const body = await req.json();
     const lookup = String(body.lookup || '').trim();
+    const cfToken = String(body.cfToken || '');
 
     if (!lookup || lookup.length < 3) {
       return new Response(JSON.stringify({
         found: false,
         message: 'Geçersiz giriş. Email, telefon veya Amare ID gir.',
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+
+    // Cloudflare Turnstile — bot brute-force korumasi
+    // TURNSTILE_SECRET env set ise zorunlu, yoksa bypass (dev mode)
+    const ip = req.headers.get('x-nf-client-connection-ip') || '';
+    const ts = await turnstileVerify(cfToken, ip);
+    if (!ts.ok) {
+      return new Response(JSON.stringify({
+        found: false,
+        message: 'Doğrulama başarısız. Lütfen sayfayı yenileyip tekrar dene.',
+        cfHata: ts.hata,
+      }), { status: ts.status || 401, headers: { 'Content-Type': 'application/json' } });
     }
 
     // 1. Supabase RPC ile üye bul
