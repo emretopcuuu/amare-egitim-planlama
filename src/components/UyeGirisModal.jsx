@@ -22,6 +22,9 @@ const UyeGirisModal = ({ acik, onClose }) => {
   const [yukleniyor, setYukleniyor] = useState(false);
   // Turnstile state
   const [cfToken, setCfToken] = useState('');
+  // 2026-06-06: Widget yüklenmediğinde fallback (ad blocker, VPN, in-app browser, eski cache)
+  const [turnstileFallback, setTurnstileFallback] = useState(false);
+  const [turnstileDurum, setTurnstileDurum] = useState('bekleniyor'); // bekleniyor | yuklu | hata
   const turnstileEl = useRef(null);
   const turnstileWidgetId = useRef(null);
   // OTP state
@@ -56,8 +59,12 @@ const UyeGirisModal = ({ acik, onClose }) => {
   }, [acik, onClose]);
 
   // Cloudflare Turnstile: script yükle + widget mount (sadece site key varsa)
+  // 2026-06-06: 6sn içinde yüklenmezse fallback UI — kullanıcı kilitlenmesin
   useEffect(() => {
     if (!acik || durum !== 'giris' || !TURNSTILE_SITE_KEY) return;
+
+    setTurnstileDurum('bekleniyor');
+    setTurnstileFallback(false);
 
     const mountWidget = () => {
       if (!window.turnstile || !turnstileEl.current) return;
@@ -71,12 +78,14 @@ const UyeGirisModal = ({ acik, onClose }) => {
           sitekey: TURNSTILE_SITE_KEY,
           theme: 'dark',
           size: 'flexible',
-          callback: (token) => setCfToken(token),
+          callback: (token) => { setCfToken(token); setTurnstileDurum('yuklu'); },
           'expired-callback': () => setCfToken(''),
-          'error-callback': () => setCfToken(''),
+          'error-callback': () => { setCfToken(''); setTurnstileDurum('hata'); },
         });
+        setTurnstileDurum('yuklu');
       } catch (e) {
         console.warn('[Turnstile] mount hata:', e.message);
+        setTurnstileDurum('hata');
       }
     };
 
@@ -90,13 +99,26 @@ const UyeGirisModal = ({ acik, onClose }) => {
       s.src = TURNSTILE_SCRIPT_SRC;
       s.async = true;
       s.defer = true;
+      s.onerror = () => setTurnstileDurum('hata'); // script yüklenemedi (ad blocker, CSP, network)
       document.head.appendChild(s);
     } else {
       // Script gönderildi ama henüz yüklenmedi, callback'i değiştir
       window.onTurnstileReady = mountWidget;
     }
 
+    // 6sn timeout — widget hala token vermemiş ve durum 'bekleniyor' ise fallback aç
+    const timeoutId = setTimeout(() => {
+      // setState ref'leri stale; closure'da yeni değerlere bakamayız → direct check
+      // Eğer 6sn'de widget render olduysa veya token geldiyse durum 'yuklu' olur
+      // Aksi takdirde 'bekleniyor' veya 'hata' kalır → fallback aç
+      setTurnstileDurum((d) => {
+        if (d !== 'yuklu') setTurnstileFallback(true);
+        return d;
+      });
+    }, 6000);
+
     return () => {
+      clearTimeout(timeoutId);
       if (turnstileWidgetId.current !== null) {
         try { window.turnstile?.remove(turnstileWidgetId.current); } catch {}
         turnstileWidgetId.current = null;
@@ -120,7 +142,9 @@ const UyeGirisModal = ({ acik, onClose }) => {
       const res = await fetch('/.netlify/functions/uye-giris-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lookup: v, cfToken }),
+        // turnstileFallback=true ise widget yüklenmedi demektir; backend cfToken
+        // beklemez ama sıkı rate-limit uygular (ad blocker/VPN/eski cache kullanıcıları)
+        body: JSON.stringify({ lookup: v, cfToken, turnstileFallback }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -328,9 +352,43 @@ const UyeGirisModal = ({ acik, onClose }) => {
               )}
 
               {/* Cloudflare Turnstile — bot brute-force koruma (site key set ise) */}
-              {TURNSTILE_SITE_KEY && (
-                <div className="mt-4 flex justify-center">
+              {/* 6sn içinde yüklenmezse fallback gösterilir (ad blocker, VPN, in-app browser) */}
+              {TURNSTILE_SITE_KEY && !turnstileFallback && (
+                <div className="mt-4 flex justify-center min-h-[68px] items-center">
                   <div ref={turnstileEl} />
+                  {turnstileDurum === 'bekleniyor' && (
+                    <span className="text-purple-200/60 text-xs ml-2 flex items-center gap-2">
+                      <Loader2 className="w-3 h-3 animate-spin" />
+                      Güvenlik doğrulaması yükleniyor...
+                    </span>
+                  )}
+                </div>
+              )}
+
+              {/* Fallback UI — widget yüklenemedi (Cloudflare engellenmiş, eski cache, vs) */}
+              {TURNSTILE_SITE_KEY && turnstileFallback && (
+                <div className="mt-4 bg-amber-500/10 border border-amber-400/30 rounded-xl p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 text-amber-300 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <p className="text-amber-100 text-xs font-semibold mb-1">
+                        Güvenlik doğrulaması yüklenmedi
+                      </p>
+                      <p className="text-amber-200/80 text-[11px] leading-relaxed">
+                        Reklam engelleyici, kurumsal ağ veya eski sürüm olabilir. Yine de devam edebilirsin —
+                        ek koruma için biraz daha sıkı kontrol uygulanacak.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          // Sayfayı yenilemeyi dene — stale bundle cache ise çözer
+                          window.location.reload();
+                        }}
+                        className="mt-2 text-amber-200 hover:text-amber-100 text-[11px] font-semibold underline underline-offset-2">
+                        Önce sayfayı yenilemeyi dene
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -339,12 +397,12 @@ const UyeGirisModal = ({ acik, onClose }) => {
                 disabled={
                   yukleniyor
                   || lookup.trim().length < 3
-                  || (TURNSTILE_SITE_KEY && !cfToken)
+                  || (TURNSTILE_SITE_KEY && !cfToken && !turnstileFallback)
                 }
                 className="w-full mt-4 bg-amber-400 hover:bg-amber-300 disabled:opacity-50 disabled:cursor-not-allowed text-purple-900 font-bold py-3 rounded-xl transition-all spring-tap inline-flex items-center justify-center gap-2">
                 {yukleniyor
                   ? <><Loader2 className="w-5 h-5 animate-spin" />Doğrulanıyor...</>
-                  : (TURNSTILE_SITE_KEY && !cfToken)
+                  : (TURNSTILE_SITE_KEY && !cfToken && !turnstileFallback)
                     ? <>Doğrulama bekleniyor...</>
                     : <>Devam et<ArrowRight className="w-5 h-5" /></>}
               </button>

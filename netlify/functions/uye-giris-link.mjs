@@ -258,13 +258,21 @@ export default async (req) => {
   }
 
   try {
-    // Rate limit: 10/dk, 30/sa per IP — email spam koruması (idempotency 60sn cooldown ayrı)
-    const limit = await rateLimitCheck(req, 'uye-giris-link', { perMinute: 10, perHour: 30 });
-    if (!limit.ok) return rateLimitResponse(limit);
-
     const body = await req.json();
     const lookup = String(body.lookup || '').trim();
     const cfToken = String(body.cfToken || '');
+    // 2026-06-06: Frontend widget yüklenmediyse fallback flag gönderir
+    // (ad blocker, kurumsal firewall, in-app browser, eski cache).
+    // Bu durumda sıkı rate-limit ile soft-allow → kullanıcı kilitlenmez.
+    const turnstileFallback = body.turnstileFallback === true;
+
+    // Rate limit: Normal kullanıcı 10/dk + 30/sa, fallback kullanıcı 3/dk + 5/sa
+    // Bot fallback'i exploit edemesin (idempotency 60sn cooldown ayrı katman)
+    const rlOpts = (turnstileFallback && !cfToken)
+      ? { perMinute: 3, perHour: 5 }   // soft-allow agresif limit
+      : { perMinute: 10, perHour: 30 }; // normal
+    const limit = await rateLimitCheck(req, 'uye-giris-link', rlOpts);
+    if (!limit.ok) return rateLimitResponse(limit);
 
     if (!lookup || lookup.length < 3) {
       return new Response(JSON.stringify({
@@ -274,15 +282,22 @@ export default async (req) => {
     }
 
     // Cloudflare Turnstile — bot brute-force korumasi
-    // TURNSTILE_SECRET env set ise zorunlu, yoksa bypass (dev mode)
+    // TURNSTILE_SECRET env set + cfToken VAR → doğrula
+    // Eğer fallback flag VAR ama cfToken YOK → bypass (kullanıcı widget yükleyemedi)
+    // Aksi durumda token zorunlu
     const ip = req.headers.get('x-nf-client-connection-ip') || '';
-    const ts = await turnstileVerify(cfToken, ip);
-    if (!ts.ok) {
-      return new Response(JSON.stringify({
-        found: false,
-        message: 'Doğrulama başarısız. Lütfen sayfayı yenileyip tekrar dene.',
-        cfHata: ts.hata,
-      }), { status: ts.status || 401, headers: { 'Content-Type': 'application/json' } });
+    let cfBypassedFallback = false;
+    if (turnstileFallback && !cfToken) {
+      cfBypassedFallback = true; // log için işaretle
+    } else {
+      const ts = await turnstileVerify(cfToken, ip);
+      if (!ts.ok) {
+        return new Response(JSON.stringify({
+          found: false,
+          message: 'Doğrulama başarısız. Lütfen sayfayı yenileyip tekrar dene.',
+          cfHata: ts.hata,
+        }), { status: ts.status || 401, headers: { 'Content-Type': 'application/json' } });
+      }
     }
 
     // 1. Supabase RPC ile üye bul
