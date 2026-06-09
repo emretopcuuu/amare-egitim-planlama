@@ -47,11 +47,16 @@ export default async (req) => {
 
     const body = await req.json();
     const lookup = String(body.lookup || '').trim();
+    // 2026-06-09: Amare ID zorunlu (admin onayı bunsuz çalışmıyordu — DB match için ID şart)
+    const amareId = String(body.amareId || '').trim();
     const ad = String(body.ad || '').trim();
     const yeniEmail = String(body.yeniEmail || '').trim().toLowerCase();
     const sebep = String(body.sebep || '').trim().slice(0, 500);
     const telefon = String(body.telefon || '').trim();
 
+    if (!amareId || !/^\d{6,10}$/.test(amareId)) {
+      return jsonRes({ error: 'Amare ID gerekli (6-10 rakam). Sponsorundan öğren.' }, 400);
+    }
     if (!yeniEmail) return jsonRes({ error: 'Yeni email gerekli' }, 400);
     if (!EMAIL_REGEX.test(yeniEmail)) return jsonRes({ error: 'Email formatı geçersiz' }, 400);
     if (!ad || ad.length < 3) return jsonRes({ error: 'Ad/soyad gerekli (min 3 karakter)' }, 400);
@@ -59,7 +64,8 @@ export default async (req) => {
     // Firestore'a kaydet
     const docRef = admin.firestore().collection('email_duzeltme_talepleri').doc();
     await docRef.set({
-      lookup,           // amareId veya phone (kullanıcı ne ile login'i denedi)
+      amareId,          // 2026-06-09: PRIMARY match key — admin onayı bununla DB update eder
+      lookup,           // kullanıcı login'de ne yazdı (debug/eski)
       ad,
       yeniEmail,
       sebep,

@@ -57,10 +57,15 @@ export default async (req) => {
     const body = await req.json();
     const talepId = String(body.talepId || '').trim();
     const aksiyon = String(body.aksiyon || '').trim();
+    // 2026-06-09: Eski taleplerde amareId yoksa admin elle girebilsin (override)
+    const manuelAmareId = String(body.manuelAmareId || '').trim();
 
     if (!talepId) return jsonRes({ error: 'talepId gerekli' }, 400);
     if (!['onayla', 'reddet'].includes(aksiyon)) {
       return jsonRes({ error: 'aksiyon "onayla" veya "reddet" olmalı' }, 400);
+    }
+    if (manuelAmareId && !/^\d{6,10}$/.test(manuelAmareId)) {
+      return jsonRes({ error: 'manuelAmareId 6-10 rakam olmalı' }, 400);
     }
 
     const talepRef = admin.firestore().doc(`email_duzeltme_talepleri/${talepId}`);
@@ -87,23 +92,34 @@ export default async (req) => {
       }, 500);
     }
 
-    // lookup amareId veya phone olabilir. amareId numerik string ise direkt kullan
+    // 2026-06-09 fix: ID-öncelikli match. Öncelik sırası:
+    //   1. body.manuelAmareId (admin elle girdi — eski taleplerin onayı için)
+    //   2. talep.amareId (yeni form bunu kaydeder)
+    //   3. talep.lookup (eski form, ID/telefon/email karışık olabilir)
     const lookup = String(talep.lookup || '').trim();
     let amareId = null;
     let updateField = null;
 
-    if (/^\d{6,10}$/.test(lookup)) {
-      // Amare ID format (6-10 rakam)
+    if (manuelAmareId) {
+      amareId = manuelAmareId;
+      updateField = `amare_id=eq.${amareId}`;
+    } else if (talep.amareId && /^\d{6,10}$/.test(talep.amareId)) {
+      amareId = talep.amareId;
+      updateField = `amare_id=eq.${amareId}`;
+    } else if (/^\d{6,10}$/.test(lookup)) {
+      // Eski talep — lookup field'ı Amare ID
       amareId = lookup;
       updateField = `amare_id=eq.${amareId}`;
     } else if (/^\+?\d[\d\s-]{6,}\d$/.test(lookup)) {
-      // Telefon format
+      // Eski talep — telefon format
       const phoneNorm = lookup.replace(/[\s-]/g, '');
-      // Birden fazla format dene
       updateField = `phone=in.(${phoneNorm},${phoneNorm.replace(/^\+?90/, '0')},${phoneNorm.replace(/^0/, '+90')})`;
     } else {
-      // Email lookup'i (eski/bozuk)
-      updateField = `email=eq.${encodeURIComponent(lookup)}`;
+      // Eski talep — email lookup (büyük olasılıkla Amare'de yok, onay başarısız olacak)
+      return jsonRes({
+        error: 'Bu talepte Amare ID yok. Lütfen "Manuel ID Girip Onayla" butonunu kullanın.',
+        eksikField: 'amareId',
+      }, 400);
     }
 
     // Supabase PATCH (service_role bypass RLS)
@@ -131,7 +147,21 @@ export default async (req) => {
       islemYapan: decoded.email,
       guncellenenKayitSayisi: guncellenenler.length,
       guncellenenAmareIds: guncellenenler.map(g => g.amare_id),
+      // 2026-06-09: hangi ID ile match edildi (audit için)
+      kullanilanAmareId: amareId,
+      manuelAmareIdGirildi: !!manuelAmareId,
     });
+
+    // ID match etmediyse uyar (Supabase 0 satır update edebilir)
+    if (guncellenenler.length === 0) {
+      return jsonRes({
+        ok: false,
+        durum: 'onaylandi-ama-eslesme-yok',
+        kullanilanAmareId: amareId,
+        uyari: `Amare ID ${amareId} Supabase'de bulunamadı. Backoffice'te kayıt var mı kontrol et.`,
+        guncellenenler: 0,
+      }, 200);
+    }
 
     // Onay bildirim emaili — kullanıcının yeni email'ine gönder
     let mailGonderildi = false;

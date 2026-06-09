@@ -93,19 +93,43 @@ const AdminEmailDuzeltTab = () => {
     }
   };
 
-  const islem = async (talepId, aksiyon) => {
-    if (!confirm(`Bu talep ${aksiyon === 'onayla' ? 'ONAYLANACAK ve Supabase güncellenecek' : 'REDDEDİLECEK'}. Emin misin?`)) return;
+  const islem = async (talepId, aksiyon, manuelAmareId = null) => {
+    if (!manuelAmareId && !confirm(`Bu talep ${aksiyon === 'onayla' ? 'ONAYLANACAK ve Supabase güncellenecek' : 'REDDEDİLECEK'}. Emin misin?`)) return;
     setIslemTalepId(talepId);
     setSonIslem(null);
     try {
       const token = await auth.currentUser.getIdToken();
+      const body = { talepId, aksiyon };
+      if (manuelAmareId) body.manuelAmareId = manuelAmareId;
       const res = await fetch('/.netlify/functions/admin-email-duzelt', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ talepId, aksiyon }),
+        body: JSON.stringify(body),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || data.detail || 'İşlem hatası');
+      if (!res.ok) {
+        // 2026-06-09: Backend "ID yok, manuel gir" derse: kullanıcıya prompt
+        if (data.eksikField === 'amareId') {
+          const elle = window.prompt(
+            'Bu talepte Amare ID kayıtlı değil (eski form). Lütfen kullanıcının doğru Amare ID\'sini gir (6-10 rakam):',
+            ''
+          );
+          if (elle && /^\d{6,10}$/.test(elle.trim())) {
+            return islem(talepId, aksiyon, elle.trim()); // recurse — manuel ID ile yeniden dene
+          }
+          setSonIslem({ ok: false, msg: '✗ Geçerli ID girilmedi, işlem iptal' });
+          return;
+        }
+        throw new Error(data.error || data.detail || 'İşlem hatası');
+      }
+      // 2026-06-09: Onaylandı ama Supabase'de 0 kayıt → ID yanlış olabilir
+      if (data.durum === 'onaylandi-ama-eslesme-yok') {
+        setSonIslem({
+          ok: false,
+          msg: `⚠ ${data.uyari} (kullanılan ID: ${data.kullanilanAmareId})`,
+        });
+        return;
+      }
       setSonIslem({
         ok: true,
         msg: aksiyon === 'onayla'
@@ -116,7 +140,7 @@ const AdminEmailDuzeltTab = () => {
       setSonIslem({ ok: false, msg: '✗ ' + e.message });
     } finally {
       setIslemTalepId(null);
-      setTimeout(() => setSonIslem(null), 5000);
+      setTimeout(() => setSonIslem(null), 6000);
     }
   };
 

@@ -33,6 +33,7 @@ const UyeGirisModal = ({ acik, onClose }) => {
   const [otpKontrol, setOtpKontrol] = useState(false);
   const otpRefs = useRef([]);
   // Email düzeltme talep formu state
+  const [talepAmareId, setTalepAmareId] = useState('');
   const [talepAd, setTalepAd] = useState('');
   const [talepEmail, setTalepEmail] = useState('');
   const [talepSebep, setTalepSebep] = useState('');
@@ -432,6 +433,12 @@ const UyeGirisModal = ({ acik, onClose }) => {
 
             <form onSubmit={async (e) => {
               e.preventDefault();
+              // 2026-06-09 fix: Amare ID zorunlu — Bu olmadan admin onayı işe yaramıyor
+              // (backend ID ile Amare DB'de match edip email update edebilsin diye)
+              if (!talepAmareId || !/^\d{6,10}$/.test(talepAmareId.trim())) {
+                setMesaj('Amare ID gerekli (6-10 rakam). Sponsorundan veya Amare backoffice\'ten öğren.');
+                return;
+              }
               if (!talepAd || talepAd.length < 3) { setMesaj('Ad/soyad gerekli'); return; }
               if (!talepEmail || !/^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$/i.test(talepEmail)) {
                 setMesaj('Geçerli email gerekli'); return;
@@ -444,6 +451,7 @@ const UyeGirisModal = ({ acik, onClose }) => {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     lookup,
+                    amareId: talepAmareId.trim(), // 2026-06-09: backend bu field ile match eder
                     ad: talepAd,
                     yeniEmail: talepEmail,
                     sebep: talepSebep,
@@ -463,6 +471,20 @@ const UyeGirisModal = ({ acik, onClose }) => {
               }
             }}>
               <div className="space-y-3">
+                {/* 2026-06-09: Amare ID zorunlu — bu olmadan admin DB'de match edemez */}
+                <div>
+                  <label className="block text-amber-300 text-[11px] font-bold mb-1 uppercase tracking-wider flex items-center gap-1">
+                    Amare ID
+                    <span className="text-amber-200/80 text-[10px] font-normal normal-case lowercase">(zorunlu — 6-10 rakam)</span>
+                  </label>
+                  <input type="text" inputMode="numeric" value={talepAmareId}
+                    onChange={e => setTalepAmareId(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                    placeholder="2183081" disabled={yukleniyor}
+                    className="w-full bg-amber-500/10 border-2 border-amber-400/40 focus:border-amber-400 text-white placeholder-amber-200/50 rounded-xl px-3 py-2.5 text-sm focus:outline-none font-mono tracking-wider" />
+                  <p className="text-amber-200/60 text-[10px] mt-1">
+                    💡 Bilmiyorsan: Amare backoffice → Profil → "Üye No" alanından bak
+                  </p>
+                </div>
                 <div>
                   <label className="block text-purple-200 text-[11px] font-semibold mb-1 uppercase tracking-wider">Ad Soyad</label>
                   <input type="text" value={talepAd} onChange={e => setTalepAd(e.target.value)}
@@ -470,7 +492,7 @@ const UyeGirisModal = ({ acik, onClose }) => {
                     className="w-full bg-white/10 border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300/60 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
                 </div>
                 <div>
-                  <label className="block text-purple-200 text-[11px] font-semibold mb-1 uppercase tracking-wider">Doğru Email</label>
+                  <label className="block text-purple-200 text-[11px] font-semibold mb-1 uppercase tracking-wider">Yeni Email (kullanmak istediğin)</label>
                   <input type="email" value={talepEmail} onChange={e => setTalepEmail(e.target.value)}
                     placeholder="ornek@gmail.com" disabled={yukleniyor}
                     className="w-full bg-white/10 border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300/60 rounded-xl px-3 py-2.5 text-sm focus:outline-none" />
