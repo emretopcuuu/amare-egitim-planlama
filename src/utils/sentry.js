@@ -128,6 +128,12 @@ export function sentryBaslat() {
       // Browser extension content scripts (ad blocker, password manager vs)
       /^safari-extension:\/\//i,
       /^edge-extension:\/\//i,
+      // 2026-06-09: Google reCAPTCHA script internal hataları (AppCheck reCAPTCHA v3)
+      // recaptcha__en.js içinde 'Wv'/'Vi'/'Yo' gibi minify edilmiş field'lar undefined kalıyor
+      // (ad blocker yarım yükleme, eski tarayıcı, network kesme senaryolarında)
+      /\/recaptcha\/(releases|api)\//i,
+      /www\.google\.com\/recaptcha/i,
+      /www\.gstatic\.com\/recaptcha/i,
     ],
   });
 }
