@@ -86,18 +86,48 @@ export function sentryBaslat() {
     ],
     // Production değilse hata yutma
     enabled: ENVIRONMENT === 'production',
-    // 3rd-party noise filter
+    // 3rd-party noise filter — kullanıcı ortamı sorunları (bizim kod değil)
     ignoreErrors: [
+      // ResizeObserver: tarayıcı internal, harmless
       'ResizeObserver loop limit exceeded',
       'ResizeObserver loop completed with undelivered notifications',
+      // Sentry SDK kendi gürültüsü
       'Non-Error promise rejection captured',
-      /^Loading chunk \d+ failed/, // Eski sekme yeniden deploy sonrası
+      // Eski sekme yeniden deploy sonrası chunk fail (zaten stale-bundle reload yapıyoruz)
+      /^Loading chunk \d+ failed/,
       /^Failed to fetch dynamically imported module/,
+      // ─── 2026-06-09 audit: Sentry log analizi sonrası eklenen noise filtreleri ───
+      // IndexedDB connection lost — iOS Safari private mode, disk dolu, Firefox locked
+      // Firebase Auth/Firestore IndexedDB kullanır, kopunca bu hata. Refresh çözer.
+      /Indexed Database/i,
+      /UnknownError.*Connection/i,
+      // reCAPTCHA Timeout — script yüklenirken yavaş bağlantı / ad blocker
+      // AppCheck reCAPTCHA v3 ya da Turnstile widget kaynaklı, kullanıcı etkisi yok
+      /reCAPTCHA Timeout/i,
+      /Could not load reCAPTCHA/i,
+      // Android in-app browser WebView bridge hatası (WhatsApp, Instagram, Facebook)
+      // Kullanıcının uygulamasının iç tarayıcı problemi, bizim site değil
+      /Java bridge method/i,
+      /Error invoking callWebView/i,
+      // iOS Safari network değişimi (3G→WiFi geçiş) — generic load fail
+      // Sıfır context veriyor, hiçbir teşhise yardımcı olmuyor
+      /^TypeError: Load failed$/,
+      /^TypeError: cancelled$/,
+      // Network/Abort — kullanıcı sayfayı kapattı (interaction iptal)
+      'AbortError',
+      'NetworkError',
+      /Network request failed/i,
+      // Firebase Auth — kullanıcı popup'ı manuel kapadı, normal davranış
+      /auth\/popup-closed-by-user/i,
+      /auth\/cancelled-popup-request/i,
     ],
     denyUrls: [
       /extensions?\//i,
       /^chrome:\/\//i,
       /^moz-extension:\/\//i,
+      // Browser extension content scripts (ad blocker, password manager vs)
+      /^safari-extension:\/\//i,
+      /^edge-extension:\/\//i,
     ],
   });
 }
