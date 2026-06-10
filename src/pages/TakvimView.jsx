@@ -311,7 +311,9 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
           {/* Poster — 1. için tam kare, 2-3 için daha kısa (4:3) */}
           <button onClick={()=>onPoster?.({url:egitim.gorselUrl,baslik:egitim.egitim})}
             className={`block w-full ${isFirst ? 'aspect-square' : 'aspect-[4/3]'} overflow-hidden bg-black/20`}>
-            <img src={egitim.gorselUrl} alt={egitim.egitim} className="w-full h-full object-cover" />
+            <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              className="w-full h-full object-cover" />
           </button>
           {/* Üst overlay — label + rozetler */}
           <div className="absolute top-0 left-0 right-0 p-3 flex items-center gap-2 flex-wrap bg-gradient-to-b from-black/60 to-transparent">
@@ -386,7 +388,9 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
           {/* DESKTOP poster — sağda (mobilde üstte gösterildi) */}
           {egitim.gorselUrl && (
             <button onClick={()=>onPoster?.({url:egitim.gorselUrl,baslik:egitim.egitim})} className="hidden md:block flex-shrink-0 hover:scale-105 transition-transform">
-              <img src={egitim.gorselUrl} alt="Poster" className={`${posterSize} rounded-xl shadow-2xl border-2 border-white/20`} />
+              <img src={egitim.gorselUrl} alt="Poster" loading="lazy"
+                onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
+                className={`${posterSize} rounded-xl shadow-2xl border-2 border-white/20`} />
             </button>
           )}
         </div>
@@ -767,6 +771,7 @@ const TakvimView = () => {
             <button onClick={()=>setPosterModal({url:egitim.gorselUrl,baslik:egitim.egitim})}
               className="relative w-full aspect-square overflow-hidden group bg-gray-100">
               <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
               {/* Üst sağ: countdown overlay */}
               <div className="absolute top-2 left-2 z-10 flex items-center gap-1.5 flex-wrap">
@@ -897,7 +902,9 @@ const TakvimView = () => {
           </div>
           {egitim.gorselUrl && (
             <button onClick={()=>setPosterModal({url:egitim.gorselUrl,baslik:egitim.egitim})} className="hidden sm:flex w-14 flex-shrink-0 border-l border-gray-100 hover:opacity-80 transition cursor-pointer items-center justify-center p-1">
-              <img src={egitim.gorselUrl} alt="Afiş" className="w-full rounded shadow-sm object-cover" />
+              <img src={egitim.gorselUrl} alt="Afiş" loading="lazy"
+                onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
+                className="w-full rounded shadow-sm object-cover" />
             </button>
           )}
         </div>
