@@ -18,7 +18,6 @@ import { collection, query, where, getDocs, doc, getDoc, deleteDoc, onSnapshot }
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
-import { useSmartBack } from '../utils/navigation';
 import { useToast } from '../components/Toast';
 import UyeGirisModal from '../components/UyeGirisModal';
 import EgitmenAnalyticsKart from '../components/EgitmenAnalyticsKart';
@@ -73,7 +72,9 @@ function formatTarih(iso) {
 const Profil = () => {
   useDocumentTitle('Profilim', 'Eğitim yolun, ilerlemen, Marka Ortaklığı bilgilerin');
   const navigate = useNavigate();
-  const geri = useSmartBack('/takvim');
+  // 2026-06-09: Geri butonu daima ana takvime — navigate(-1) bazen yanlış/beklenmedik
+  // sayfaya gidiyordu (login redirect, dış sekme). Sabit hedef = öngörülebilir.
+  const geri = () => navigate('/takvim');
   const { toast } = useToast();
   const { currentUser, uid, isAnonymous, isAuthenticated, displayName, email, ready } = useAuth();
   const { konusmacilar } = useData();
