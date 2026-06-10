@@ -442,6 +442,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // Kolektif istatistik (2026 epic hedef) — public okuma, sadece server (scheduled) yazar
+    // McGonigal FIX #6: topluluk hedefi herkese görünür
+    match /global_stats/{yil} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Diğer her koleksiyon — varsayılan: tamamen kapalı
     match /{document=**} {
       allow read, write: if false;

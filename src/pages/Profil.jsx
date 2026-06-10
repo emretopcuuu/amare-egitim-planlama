@@ -30,6 +30,11 @@ import { useTakipEgitmenler } from '../utils/takip';
 import { parseFunnelAnswers, parseProfileAnswers } from '../utils/onboardingLabels';
 import { useWatchProgress, getTotalWatchedSeconds, getWeeklyWatchedSeconds, getCompletedCount } from '../utils/watchProgress';
 import { updateStreak } from '../utils/streak';
+import { hesaplaXP, seviyeHesapla } from '../utils/xp';
+import XPHalka from '../components/XPHalka';
+import XPBar from '../components/XPBar';
+import HaftalikGorevler from '../components/HaftalikGorevler';
+import KolektifHedef from '../components/KolektifHedef';
 import { useCountUp } from '../utils/useCountUp';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
 import { RotateCw } from 'lucide-react';
@@ -39,7 +44,6 @@ import BultenModal from '../components/BultenModal';
 import EgitimYolumBlok from '../components/EgitimYolumBlok';
 import BugununIlhami from '../components/BugununIlhami';
 import BanaOzelAha from '../components/BanaOzelAha';
-import TestAsamaBanner from '../components/TestAsamaBanner';
 
 const PROFIL_CACHE_KEY = 'amare_profil_v1';
 const PROFIL_CACHE_TTL = 5 * 60 * 1000; // 5dk
@@ -99,9 +103,9 @@ const Profil = () => {
   const [wrappedAcik, setWrappedAcik] = useState(false);
   const [waModalAcik, setWaModalAcik] = useState(false);
 
-  // Sekmeli dashboard — aktif tab
-  // 'ozet' | 'egitim' | 'aktivite' | 'hakkimda' | 'baglantilar'
-  const [aktifTab, setAktifTab] = useState('ozet');
+  // Sekmeli dashboard — aktif tab (3 sekme: Yolculuk / Eğitim / Profil)
+  // 'yolculuk' | 'egitim' | 'profil'
+  const [aktifTab, setAktifTab] = useState('yolculuk');
 
   // Onboarding bypass — gate'i manuel atlatma (FERDİ vakası fix)
   const [bypassBusy, setBypassBusy] = useState(false);
@@ -445,6 +449,18 @@ const Profil = () => {
     };
   }, [completedCount, takipSet.size, streak.longest, profilVerisi?.uyelikSuresi?.yil, totalWatched]);
 
+  // ─── XP + Seviye (mevcut verilerden deterministik) — McGonigal FIX #2/#8 ───
+  const xpToplam = useMemo(() => hesaplaXP({
+    tamamlanan: completedCount,
+    izlemeSaniye: totalWatched,
+    streakRekoru: streak.longest || 0,
+    davetAktif: profilVerisi?.davetAktifSayisi || 0, // backend verirse; yoksa 0
+    uyelikYili: profilVerisi?.uyelikSuresi?.yil || 0,
+    rozetSayisi: rozetler.kazanilan.length,
+    takipSayisi: takipSet.size,
+  }), [completedCount, totalWatched, streak.longest, profilVerisi?.davetAktifSayisi, profilVerisi?.uyelikSuresi?.yil, rozetler.kazanilan.length, takipSet.size]);
+  const seviyeBilgi = useMemo(() => seviyeHesapla(xpToplam), [xpToplam]);
+
   // Profil tamamlama yüzdesi — engagement nudge için
   // Her check'in bir action'ı var: tıklayınca ilgili akış başlar
   const profilTamamlama = useMemo(() => {
@@ -659,7 +675,6 @@ const Profil = () => {
 
   return (
     <div className="min-h-[100dvh] bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 pb-24">
-      <TestAsamaBanner aciklama="Profil sayfası henüz tamamlanmadı, geliştirme devam ediyor" />
 
       {/* Pull-to-refresh göstergesi (mobile) */}
       {pullY > 0 && (
@@ -697,9 +712,9 @@ const Profil = () => {
 
       {/* HERO — sade, premium */}
       <div className="max-w-3xl mx-auto px-4 pt-10 pb-8 text-center">
-        <div className="inline-block">
+        <XPHalka xp={xpToplam} boyut={148}>
           <ProfilAvatar uid={uid} fullName={fullName} fotoURL={finalFoto} size="xl" editable={true} />
-        </div>
+        </XPHalka>
 
         {/* Rank — kicker tarzı, ad'dan önce */}
         {a?.rank && (
@@ -720,6 +735,9 @@ const Profil = () => {
           </p>
         )}
 
+        {/* XP ilerleme çubuğu — seviye + sonraki seviyeye kalan */}
+        <XPBar xp={xpToplam} />
+
         {/* Streak chip — hero altında, animated flame */}
         {streak.current > 0 && (
           <button onClick={() => setStreakAciklamaAcik(true)}
@@ -739,28 +757,22 @@ const Profil = () => {
         )}
       </div>
 
-      {/* STATS ROW — 6 stat, sticky scroll'da üste yapışır, tıklanabilir */}
+      {/* STATS ROW — oyunlaşma odaklı 4 stat (XP/saat/tamamlanan/rozet), sticky */}
       <div className="max-w-3xl mx-auto px-4 mt-2 sticky top-2 z-30">
-        <div className="bg-purple-900/80 backdrop-blur-xl border border-white/20 rounded-2xl grid grid-cols-3 sm:grid-cols-6 divide-x divide-white/10 shadow-2xl overflow-hidden">
-          <StatCell label="Marka Ortaklığı" suffix="y" value={u ? u.yil : '—'} delay={0}
-            tooltip={u ? `${u.yil} yıl ${u.ay > 0 ? u.ay + ' ay ' : ''}One Team Marka Ortağısın` : 'Marka Ortaklığı süresi'}
-            scrollToId="section-uyelik" />
+        <div className="bg-purple-900/80 backdrop-blur-xl border border-white/20 rounded-2xl grid grid-cols-4 divide-x divide-white/10 shadow-2xl overflow-hidden">
+          <StatCell label="Toplam XP" value={xpToplam} highlight={xpToplam > 0} delay={0}
+            tooltip={`Seviye ${seviyeBilgi.seviye} · ${seviyeBilgi.kusak} — eğitim, izleme, streak ve üyelikten kazandığın XP`} />
           <StatCell label="İzleme" suffix="sa" value={Math.floor(totalWatched / 3600) || 0}
             highlight={totalWatched > 0} delay={100}
             tooltip="Toplam izlediğin video saati"
             scrollToId="section-aktivite" />
-          <StatCell label="Bitirdiğin" value={completedCount} delay={200}
+          <StatCell label="Tamamlanan" value={completedCount} delay={200}
             tooltip="Tamamen izlediğin video sayısı"
             scrollToId="section-aktivite" />
-          <StatCell label="Favori" value={takipSet.size + videoFav.size} delay={300}
-            tooltip={`${takipSet.size} eğitmen + ${videoFav.size} video takipte`}
-            scrollToId="section-favoriler" />
-          <StatCell label="Günlük Seri" suffix="g" value={streak.current}
-            highlight={streak.current >= 3} delay={400}
-            tooltip={streak.current > 0 ? `${streak.current} gündür üst üste site açıyorsun (en uzun: ${streak.longest || 0}g)` : 'Streak yok — bugün başlat'} />
-          <StatCell label="Hatırlatma" value={hatirlatmalar.length} delay={500}
-            tooltip="Kurduğun eğitim hatırlatmaları"
-            scrollToId="section-aktivite" />
+          <StatCell label="Rozet" value={rozetler.kazanilan.length} delay={300}
+            highlight={rozetler.kazanilan.length > 0}
+            tooltip={`${rozetler.kazanilan.length}/${rozetler.toplam} rozet kazandın`}
+            scrollToId="section-rozetler" />
         </div>
       </div>
 
@@ -810,11 +822,9 @@ const Profil = () => {
         <div className="bg-purple-900/70 backdrop-blur-xl border border-white/15 rounded-2xl p-1.5 shadow-2xl">
           <div className="flex gap-1 overflow-x-auto scrollbar-none">
             {[
-              { kod: 'ozet', label: 'Özet', icon: Sparkles, renk: 'amber' },
+              { kod: 'yolculuk', label: 'Yolculuk', icon: Sparkles, renk: 'amber' },
               { kod: 'egitim', label: 'Eğitim', icon: Trophy, renk: 'purple' },
-              { kod: 'aktivite', label: 'Aktivite', icon: Bell, renk: 'sky' },
-              { kod: 'hakkimda', label: 'Hakkımda', icon: User, renk: 'emerald' },
-              { kod: 'baglantilar', label: 'Bağlantılar', icon: Users, renk: 'rose' },
+              { kod: 'profil', label: 'Profil', icon: User, renk: 'emerald' },
             ].map(t => {
               const aktif = aktifTab === t.kod;
               const Icon = t.icon;
@@ -842,7 +852,7 @@ const Profil = () => {
       <div className="max-w-4xl mx-auto px-4 space-y-6">
 
         {/* ═══ ÜYELİK — Hakkımda tab'ında ═══ */}
-        {aktifTab === 'hakkimda' && (
+        {aktifTab === 'profil' && (
         <div id="section-uyelik" className="stagger-fade">
           <SectionTitle icon={Hash}>Marka Ortaklığı</SectionTitle>
           <div className="mt-4 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 divide-y divide-white/10 shadow-xl">
@@ -854,9 +864,30 @@ const Profil = () => {
         </div>
         )}
 
-        {/* Profil tamamlama banner — Özet tab'ında */}
-        {aktifTab === 'ozet' && profilTamamlama.pct < 100 && profilTamamlama.eksik.length > 0 && (
-          <section className="bg-gradient-to-r from-amber-400/15 via-amber-300/10 to-orange-400/15 backdrop-blur-md border border-amber-300/40 rounded-2xl p-4 shadow-xl">
+        {/* ═══ YOLCULUK: Haftalık görevler — McGonigal FIX #1 ═══ */}
+        {aktifTab === 'yolculuk' && (
+          <HaftalikGorevler
+            veri={{
+              haftalikSaat: weeklyWatched / 3600,
+              haftalikEgitmenSayisi: 0, // ileride watchProgress eğitmen takibi eklenince
+              streakGun: streak.current || 0,
+              profilTamamlama: profilTamamlama.pct || 0,
+            }}
+            onProfilTamamla={() => {
+              const el = document.getElementById('section-profil-tamamla');
+              if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }}
+          />
+        )}
+
+        {/* ═══ YOLCULUK: Kolektif epic hedef — McGonigal FIX #6 ═══ */}
+        {aktifTab === 'yolculuk' && (
+          <KolektifHedef kullaniciSaat={Math.floor(totalWatched / 3600)} />
+        )}
+
+        {/* Profil tamamlama banner — Yolculuk tab'ında */}
+        {aktifTab === 'yolculuk' && profilTamamlama.pct < 100 && profilTamamlama.eksik.length > 0 && (
+          <section id="section-profil-tamamla" className="bg-gradient-to-r from-amber-400/15 via-amber-300/10 to-orange-400/15 backdrop-blur-md border border-amber-300/40 rounded-2xl p-4 shadow-xl">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-300" />
@@ -914,7 +945,7 @@ const Profil = () => {
         )}
 
         {/* ═══ İLHAM WIDGETLERİ — Özet tab'ında (2 col grid) ═══ */}
-        {aktifTab === 'ozet' && (
+        {aktifTab === 'yolculuk' && (
           <div className="stagger-fade grid sm:grid-cols-2 gap-3" style={{ animationDelay: '160ms' }}>
             <BugununIlhami />
             {!isAnonymous && <BanaOzelAha />}
@@ -922,14 +953,14 @@ const Profil = () => {
         )}
 
         {/* ═══ EĞİTMEN ANALYTİCS ═══ — Aktivite tab'ında, eğitmenler için */}
-        {aktifTab === 'aktivite' && userDoc?.egitmenCoreId && (
+        {aktifTab === 'yolculuk' && userDoc?.egitmenCoreId && (
           <div className="stagger-fade" style={{ animationDelay: '180ms' }}>
             <EgitmenAnalyticsKart coreId={userDoc.egitmenCoreId} />
           </div>
         )}
 
         {/* ═══ HAKKIMDA ═══ — Hakkımda tab'ında */}
-        {aktifTab === 'hakkimda' && (m?.bio || m?.bio_data || funnelCevaplari.length > 0 || careerData || profileCevaplari.chips.length > 0) && (
+        {aktifTab === 'profil' && (m?.bio || m?.bio_data || funnelCevaplari.length > 0 || careerData || profileCevaplari.chips.length > 0) && (
           <div id="section-hakkimda" className="stagger-fade" style={{ animationDelay: '200ms' }}>
             <div className="flex items-center justify-between gap-2 mb-4">
               <SectionTitle icon={User}>Hakkımda</SectionTitle>
@@ -1005,7 +1036,7 @@ const Profil = () => {
         )}
 
         {/* ═══ HAFTALIK HEDEF — Aktivite tab'ında ═══ */}
-        {aktifTab === 'aktivite' && funnelCevaplari.find(c => c.key === 'haftaSaat') && (() => {
+        {aktifTab === 'yolculuk' && funnelCevaplari.find(c => c.key === 'haftaSaat') && (() => {
           const haftalikHedefRaw = funnelCevaplari.find(c => c.key === 'haftaSaat')?.cevap || '';
           const haftalikHedefSaat = parseInt(haftalikHedefRaw.match(/\d+/)?.[0] || '5', 10);
           const gercekSaat = weeklyWatched / 3600;
@@ -1038,9 +1069,9 @@ const Profil = () => {
           );
         })()}
 
-        {/* ═══ ROZETLERİM ═══ — Aktivite tab'ında */}
-        {aktifTab === 'aktivite' && rozetler.kazanilan.length > 0 && (
-          <div>
+        {/* ═══ ROZETLERİM ═══ — Yolculuk tab'ında */}
+        {aktifTab === 'yolculuk' && rozetler.kazanilan.length > 0 && (
+          <div id="section-rozetler">
             <div className="flex items-center justify-between mb-4">
               <SectionTitle icon={Medal}>Rozetlerim</SectionTitle>
               <span className="text-purple-300/60 text-[10px] uppercase tracking-wider font-bold">{rozetler.kazanilan.length}/{rozetler.toplam}</span>
@@ -1074,7 +1105,7 @@ const Profil = () => {
         )}
 
         {/* ═══ EKİBİM CTA ═══ — Bağlantılar tab'ında */}
-        {aktifTab === 'baglantilar' && profilVerisi?.amareId && (
+        {aktifTab === 'profil' && profilVerisi?.amareId && (
           <div className="stagger-fade" style={{ animationDelay: '350ms' }}>
             <button onClick={() => navigate('/ekibim')}
               className="w-full bg-gradient-to-br from-emerald-500/20 via-teal-500/15 to-emerald-500/20 backdrop-blur-md border border-emerald-300/40 hover:border-emerald-300/70 rounded-2xl p-5 shadow-xl transition group spring-tap text-left flex items-center gap-4">
@@ -1091,7 +1122,7 @@ const Profil = () => {
         )}
 
         {/* ═══ AI ASİSTAN KARTLARI — Bağlantılar tab'ında */}
-        {aktifTab === 'baglantilar' && profilVerisi?.amareId && (
+        {aktifTab === 'profil' && profilVerisi?.amareId && (
           <div className="stagger-fade space-y-2" style={{ animationDelay: '360ms' }}>
             <SectionTitle icon={Sparkles}>AI Asistanların</SectionTitle>
 
@@ -1150,7 +1181,7 @@ const Profil = () => {
         )}
 
         {/* ═══ BAĞLANTILAR (sponsor + araçlar) — Bağlantılar tab'ında ═══ */}
-        {aktifTab === 'baglantilar' && (sponsorAd || true) && (
+        {aktifTab === 'profil' && (sponsorAd || true) && (
           <div id="section-baglantilar" className="stagger-fade space-y-4" style={{ animationDelay: '400ms' }}>
             <SectionTitle icon={Users}>Bağlantılar</SectionTitle>
 
@@ -1199,7 +1230,7 @@ const Profil = () => {
         )}
 
         {/* ═══ AKTİVİTE ═══ — Eğitim tab'ında yarım kalan + aktivite tab'ında diğer */}
-        {aktifTab === 'aktivite' && (yarimKalan.length > 0 || takipSet.size > 0 || videoFav.size > 0 || hatirlatmalar.length > 0) && (
+        {aktifTab === 'yolculuk' && (yarimKalan.length > 0 || takipSet.size > 0 || videoFav.size > 0 || hatirlatmalar.length > 0) && (
           <div id="section-aktivite" className="stagger-fade" style={{ animationDelay: '500ms' }}>
             <SectionTitle icon={Bell}>Aktivite</SectionTitle>
           </div>
@@ -1312,7 +1343,7 @@ const Profil = () => {
         )}
 
         {/* Abonelikler + hatırlatmalar — Aktivite tab'ında */}
-        {aktifTab === 'aktivite' && (
+        {aktifTab === 'yolculuk' && (
         <section id="section-abonelikler" className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl stagger-fade" style={{ animationDelay: '650ms' }}>
           <div className="flex items-center gap-2 mb-3">
             <Bell className="w-4 h-4 text-blue-300" />
@@ -1394,7 +1425,7 @@ const Profil = () => {
         )}
 
         {/* ═══ EĞİTMEN BAŞVURUSU CTA — Hakkımda tab'ında, son kart ═══ */}
-        {aktifTab === 'hakkimda' && (
+        {aktifTab === 'profil' && (
         <section className="bg-gradient-to-br from-amber-400/15 via-purple-600/10 to-amber-400/15 backdrop-blur-md border border-amber-300/30 rounded-2xl p-5 shadow-xl text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-400/20 border border-amber-300/40 mb-3">
             <Users className="w-6 h-6 text-amber-300" />
