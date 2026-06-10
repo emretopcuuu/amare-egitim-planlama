@@ -2,6 +2,7 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
+import { coreIdFuzzyEslesir } from '../utils/egitmenFotoMatch';
 import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, User, Search, X, Loader2, Star, RotateCw, SlidersHorizontal, ArrowDownUp, LayoutGrid, List, Sparkles, ArrowRight, Calendar, Eye } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -73,8 +74,16 @@ const KonusmacilarSayfasi = () => {
     const map = new Map(); // coreId → { ad, kayit (en bilgili), egitimSayisi, allNames }
 
     const addOrMerge = (ad, kayit) => {
-      const cid = makeCoreId(ad) || ad.toLocaleUpperCase('tr-TR').trim();
+      let cid = makeCoreId(ad) || ad.toLocaleUpperCase('tr-TR').trim();
       if (!cid || cid.length < 2) return null;
+      // 2026-06-09: Fuzzy birleştirme — "M.İLKER YILMAZ" eklenirken "MAHMUT İLKER YILMAZ"
+      // zaten map'te varsa onunla birleş (kısaltma yüzünden ayrı kart oluşmasın).
+      // Konuşmacılar önce eklendiği için fotolu/tam isim kayıt map'te hazır olur.
+      if (!map.has(cid)) {
+        for (const mevcutCid of map.keys()) {
+          if (coreIdFuzzyEslesir(cid, mevcutCid)) { cid = mevcutCid; break; }
+        }
+      }
       if (!map.has(cid)) {
         map.set(cid, { ad: kayit?.ad || ad, kayit: kayit || null, egitimSayisi: 0, allNames: new Set([ad]) });
       } else {
