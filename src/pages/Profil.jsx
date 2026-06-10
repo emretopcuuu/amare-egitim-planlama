@@ -1121,69 +1121,10 @@ const Profil = () => {
           </div>
         )}
 
-        {/* ═══ AI ASİSTAN KARTLARI — Bağlantılar tab'ında */}
-        {aktifTab === 'profil' && profilVerisi?.amareId && (
-          <div className="stagger-fade space-y-2" style={{ animationDelay: '360ms' }}>
-            <SectionTitle icon={Sparkles}>AI Asistanların</SectionTitle>
-
-            {/* Davet Asistanı — yeşil */}
-            <a href="https://davet.oneteamglobal.ai/"
-              target="_blank" rel="noopener noreferrer"
-              className="block w-full bg-gradient-to-br from-emerald-500/20 via-emerald-400/15 to-teal-500/20 backdrop-blur-md border border-emerald-300/40 hover:border-emerald-300/70 rounded-2xl p-5 shadow-xl transition group spring-tap mt-4">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-400/25 border border-emerald-300/50 flex items-center justify-center flex-shrink-0">
-                  <Layers className="w-6 h-6 text-emerald-300" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-white font-bold text-base">One Team Yapay Zeka Davet Asistanı</div>
-                  <div className="text-emerald-200/80 text-xs mt-0.5">Kilidi açıldı — hemen başla</div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-emerald-300 group-hover:translate-x-1 transition" />
-              </div>
-            </a>
-
-            {/* AI Asistan — mor (HMAC-imzalı SSO ile açar) */}
-            <button
-              type="button"
-              onClick={async (e) => {
-                e.preventDefault();
-                try {
-                  const idToken = await currentUser.getIdToken();
-                  const res = await fetch('/.netlify/functions/asistan-sso-token', {
-                    method: 'POST',
-                    headers: { Authorization: `Bearer ${idToken}`, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ src: 'profil' }),
-                  });
-                  const data = await res.json();
-                  if (!res.ok || !data?.token) throw new Error(data?.error || 'token-alinamadi');
-                  const u = new URL('https://asistan.oneteamglobal.ai');
-                  u.searchParams.set('ssoToken', data.token);
-                  u.searchParams.set('source', 'profil');
-                  window.open(u.toString(), '_blank', 'noopener,noreferrer');
-                } catch (err) {
-                  console.error('[SSO]', err.message);
-                  alert('Bağlantı oluşturulamadı. Lütfen tekrar dene.');
-                }
-              }}
-              className="block w-full text-left bg-gradient-to-br from-purple-500/20 via-violet-400/15 to-indigo-500/20 backdrop-blur-md border border-purple-300/40 hover:border-purple-300/70 rounded-2xl p-5 shadow-xl transition group spring-tap">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-purple-400/25 border border-purple-300/50 flex items-center justify-center flex-shrink-0">
-                  <MessageCircle className="w-6 h-6 text-purple-300" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-white font-bold text-base">One Team Yapay Zeka Asistanı</div>
-                  <div className="text-purple-200/80 text-xs mt-0.5">7/24 AI koçun — hemen sor</div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-purple-300 group-hover:translate-x-1 transition" />
-              </div>
-            </button>
-          </div>
-        )}
-
-        {/* ═══ BAĞLANTILAR (sponsor + araçlar) — Bağlantılar tab'ında ═══ */}
-        {aktifTab === 'profil' && (sponsorAd || true) && (
+        {/* ═══ SPONSOR — Profil tab'ında ═══ */}
+        {aktifTab === 'profil' && sponsorAd && (
           <div id="section-baglantilar" className="stagger-fade space-y-4" style={{ animationDelay: '400ms' }}>
-            <SectionTitle icon={Users}>Bağlantılar</SectionTitle>
+            <SectionTitle icon={Users}>Sponsorum</SectionTitle>
 
             {/* Sponsor kartı */}
             {sponsorAd && (
@@ -1208,24 +1149,6 @@ const Profil = () => {
                 </div>
               </div>
             )}
-
-            {/* Faydalı bağlantılar kartı */}
-            <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-5 shadow-xl">
-              <div className="text-purple-200/70 text-[10px] uppercase tracking-[0.15em] font-bold mb-3">Faydalı Bağlantılar</div>
-              <a href="https://hesaplayici.oneteamglobal.ai/" target="_blank" rel="noopener noreferrer"
-                className="flex items-center justify-between gap-3 bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-300/40 rounded-xl p-3 transition-all spring-tap group">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center flex-shrink-0 shadow-lg">
-                    <Calculator className="w-5 h-5 text-purple-900" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-white font-bold text-sm truncate">One Team Hesaplayıcı</div>
-                    <div className="text-purple-200/70 text-xs truncate">Gelir ve kariyer hesaplama aracı</div>
-                  </div>
-                </div>
-                <ExternalLink className="w-4 h-4 text-white/40 group-hover:text-amber-300 transition flex-shrink-0" />
-              </a>
-            </div>
           </div>
         )}
 
