@@ -7,6 +7,22 @@
 // Tum subdomain'lerle ayni Supabase projesi + ayni cookie anahtari (sb-<ref>-auth-token).
 
 import { createClient } from '@supabase/supabase-js';
+import { Sentry } from './sentry';
+
+// 2026-06-10: Köprü sessizce fail ediyordu (kör uçuş). Her adımı Sentry'e logla
+// — sahada "ayrı giriş" şikayeti gelmeden hangi adımda kırıldığını görelim.
+function ssoLog(adim, detay) {
+  try {
+    Sentry.addBreadcrumb({ category: 'sso-bridge', level: 'info', message: adim, data: detay || {} });
+  } catch {}
+  try { console.warn('[sso-bridge]', adim, detay || ''); } catch {}
+}
+function ssoHata(adim, detay) {
+  try {
+    Sentry.captureMessage(`SSO köprü fail: ${adim}`, { level: 'warning', extra: detay || {} });
+  } catch {}
+  try { console.warn('[sso-bridge] FAIL:', adim, detay || ''); } catch {}
+}
 
 const SUPA_URL = 'https://yvpstkbwglefxukfpgyd.supabase.co';
 // Public anon key (RLS ile korunur — istemci tarafinda guvenli)
@@ -72,17 +88,24 @@ let _bridged = false;
 export async function bridgeToSupabase(firebaseUser) {
   try {
     if (_bridged) return;
-    if (!firebaseUser || firebaseUser.isAnonymous || !firebaseUser.email) return;
-    if (getCookie(COOKIE_KEY)) { _bridged = true; return; } // zaten ortak oturum var
+    if (!firebaseUser || firebaseUser.isAnonymous || !firebaseUser.email) {
+      ssoLog('atlandı: anonim/email-yok'); return;
+    }
+    if (getCookie(COOKIE_KEY)) { _bridged = true; ssoLog('zaten-oturum-var'); return; } // ortak oturum mevcut
 
+    ssoLog('başladı', { email: firebaseUser.email });
     const idToken = await firebaseUser.getIdToken();
     const r = await fetch(HBB_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken }),
     });
-    const j = await r.json();
-    if (!j.ok || !j.token_hash) return;
+    const j = await r.json().catch(() => ({}));
+    if (!j.ok || !j.token_hash) {
+      ssoHata('hbb-endpoint', { status: r.status, error: j.error || 'token_hash yok' });
+      return;
+    }
+    ssoLog('token_hash-alındı');
 
     const sb = createClient(SUPA_URL, SUPA_ANON, {
       auth: { storage: ssoStorage, persistSession: true, autoRefreshToken: false },
@@ -90,11 +113,22 @@ export async function bridgeToSupabase(firebaseUser) {
     // Surum farki: once 'email', olmazsa 'magiclink' tipiyle dene
     let res = await sb.auth.verifyOtp({ token_hash: j.token_hash, type: 'email' });
     if (res && res.error) {
+      ssoLog('verifyOtp-email-fail, magiclink deneniyor', { error: res.error.message });
       res = await sb.auth.verifyOtp({ token_hash: j.token_hash, type: 'magiclink' });
     }
-    if (res && !res.error) _bridged = true;
+    if (res && !res.error) {
+      _bridged = true;
+      // Doğrulama: cookie gerçekten yazıldı mı?
+      const cookieYazildi = !!getCookie(COOKIE_KEY);
+      ssoLog('başarılı', { cookieYazildi });
+      if (!cookieYazildi) {
+        ssoHata('cookie-yazilmadi', { not: 'verifyOtp OK ama .oneteamglobal.ai çerezi yok — Safari ITP / samesite olabilir' });
+      }
+    } else {
+      ssoHata('verifyOtp', { error: res && res.error && res.error.message });
+    }
     // basarili -> .oneteamglobal.ai cookie set; diger subdomain'ler otomatik girisli
   } catch (e) {
-    console.warn('[sso-bridge]', e && e.message);
+    ssoHata('exception', { message: e && e.message });
   }
 }
