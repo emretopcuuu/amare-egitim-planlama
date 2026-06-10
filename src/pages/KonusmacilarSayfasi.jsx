@@ -2,7 +2,7 @@
 import React, { useMemo, useState, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
-import { coreIdFuzzyEslesir } from '../utils/egitmenFotoMatch';
+import { coreIdFuzzyEslesir, gecerliEgitmenMi } from '../utils/egitmenFotoMatch';
 import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, User, Search, X, Loader2, Star, RotateCw, SlidersHorizontal, ArrowDownUp, LayoutGrid, List, Sparkles, ArrowRight, Calendar, Eye } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -106,14 +106,15 @@ const KonusmacilarSayfasi = () => {
       return cid;
     };
 
-    // Firestore kayıtlarını ekle
+    // Firestore kayıtlarını ekle (placeholder/marka kayıtları hariç)
     (konusmacilar || []).forEach(k => {
-      if (k.ad) addOrMerge(k.ad, k);
+      if (k.ad && gecerliEgitmenMi(k.ad)) addOrMerge(k.ad, k);
     });
 
     // Takvimde geçen isimleri ekle + eğitim sayar
+    // 2026-06-09: "Eğitmenler belirlenecek", "AMARE" vb. placeholder'ları filtrele
     takvim.forEach(e => {
-      splitEgitmen(e.egitmen).forEach(ad => {
+      splitEgitmen(e.egitmen).filter(gecerliEgitmenMi).forEach(ad => {
         const cid = addOrMerge(ad, null);
         if (cid && map.has(cid)) map.get(cid).egitimSayisi += 1;
       });

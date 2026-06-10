@@ -34,6 +34,35 @@ export function coreIdFuzzyEslesir(a, b) {
 }
 
 /**
+ * 2026-06-09: Bu bir gerçek eğitmen adı mı, yoksa placeholder/marka/genel ifade mi?
+ * Takvimdeki egitmen alanında "Eğitmenler belirlenecek", "AMARE", "Online" gibi
+ * gerçek kişi olmayan değerler eğitmen kartı oluşturmamalı.
+ */
+// Türkçe-güvenli normalize (İ/I sorunu için): ASCII lowercase
+function _trNorm(s) {
+  return String(s || '').normalize('NFC')
+    .replace(/[İIıi]/g, 'i').replace(/[Ğğ]/g, 'g').replace(/[Şş]/g, 's')
+    .replace(/[Üü]/g, 'u').replace(/[Öö]/g, 'o').replace(/[Çç]/g, 'c')
+    .toLowerCase().trim();
+}
+// Tam eşleşme kara listesi (normalize edilmiş)
+const GECERSIZ_TAM = new Set([
+  'amare', 'oneteam', 'one team', 'online', 'zoom', 'ekip', 'tbd',
+  'egitmen', 'egitmenler', 'konusmaci', 'konusmacilar', 'misafir',
+]);
+// İçerik (substring) kara listesi
+const GECERSIZ_ICERIK = ['belirlenece', 'yakinda', 'aciklanacak', 'duyurulacak', 'surpriz'];
+
+export function gecerliEgitmenMi(ad) {
+  if (!ad || typeof ad !== 'string') return false;
+  const n = _trNorm(ad);
+  if (n.length < 3) return false;
+  if (GECERSIZ_TAM.has(n)) return false;
+  if (GECERSIZ_ICERIK.some(p => n.includes(p))) return false;
+  return true;
+}
+
+/**
  * Verilen tam ad ile konuşmacılar listesinde match arar.
  * Önce tam coreId, bulamazsa fuzzy (kısaltma toleranslı) dener.
  * @param {string} fullName — "Murat Kaya", "Dr. Ahmet Yılmaz" vb.

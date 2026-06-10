@@ -3,6 +3,7 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { useTranslation } from '../context/LanguageContext';
 import { makeSafeId, makeCoreId } from '../context/DataContext';
+import { coreIdFuzzyEslesir, gecerliEgitmenMi } from '../utils/egitmenFotoMatch';
 import KonusmaciFullModal from './KonusmaciFullModal';
 import { User, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -109,6 +110,13 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
         if (makeCoreId(k.id || '') === coreId) return k;
       }
 
+      // 2026-06-09: Fuzzy eşleşme — "M.İLKER YILMAZ" ↔ "MAHMUT İLKER YILMAZ" (kısaltma)
+      // sadece fotolu kayıtlarda, yanlış eşleşme korumalı (coreIdFuzzyEslesir)
+      for (const k of konusmacilar) {
+        if (!(k.fotoURL || k.gorselUrl)) continue;
+        if (coreIdFuzzyEslesir(makeCoreId(k.ad || k.id || ''), coreId)) return k;
+      }
+
       // Strateji 5: Ad+soyad substring match (unvan'sız parça)
       const adsiz = adNorm.replace(/^(Yrd\.?\s*Doç\.?\s*Dr\.?\s*|Prof\.?\s*Dr\.?\s*|Doç\.?\s*Dr\.?\s*|Uzm\.?\s*Dr\.?\s*|Op\.?\s*Dr\.?\s*|Dr\.?\s*Öğr\.?\s*Üyesi\.?\s*|Dr\.?\s*|Dt\.?\s*|Dyt\.?\s*|Psik\.?\s*|Psk\.?\s*|Ecz\.?\s*|Av\.?\s*|Öğr\.?\s*Gör\.?\s*|Arş\.?\s*Gör\.?\s*)/gi, '').trim();
       const parcalar = adsiz.split(/\s+/).filter(p => p.length > 1);
@@ -139,7 +147,8 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
     takvim.forEach(e => {
       const d = parseTarih(e.tarih);
       if (!d || d < bugun) return;
-      const adlar = splitEgitmen(e.egitmen);
+      // 2026-06-09: Placeholder/marka filtrele ("Eğitmenler belirlenecek", "AMARE" vb.)
+      const adlar = splitEgitmen(e.egitmen).filter(gecerliEgitmenMi);
       adlar.forEach(ad => {
         // CoreId üzerinden grupla — "Dr. TUNÇ TUNCER" ile "TUNÇ TUNCER" aynı kişi
         const key = makeCoreId(ad) || ad.normalize('NFC').toLocaleUpperCase('tr-TR').trim();
