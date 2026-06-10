@@ -32,7 +32,10 @@ if (!admin.apps.length) {
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_KEY;
+// 2026-06-09 fix: anon key amare_uye_lookup RPC'sinde "permission denied" almaya başladı
+// (Supabase tarafı anon GRANT değişikliği). service_role öncelikli → RPC her zaman çalışır.
+// Backend-only, güvenli — uye-email-lookup ile aynı kanıtlanmış pattern.
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
 
 // E-posta maskele: "ahmet@gmail.com" → "ah***@g***.com"
 function maskEmail(email) {
