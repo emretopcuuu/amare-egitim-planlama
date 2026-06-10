@@ -109,10 +109,12 @@ export function sentryBaslat() {
       // Kullanıcının uygulamasının iç tarayıcı problemi, bizim site değil
       /Java bridge method/i,
       /Error invoking callWebView/i,
-      // iOS Safari network değişimi (3G→WiFi geçiş) — generic load fail
-      // Sıfır context veriyor, hiçbir teşhise yardımcı olmuyor
-      /^TypeError: Load failed$/,
-      /^TypeError: cancelled$/,
+      // iOS Safari / Chrome network kesintisi (3G↔WiFi geçiş, sekme kapatma, ağ kopması)
+      // Mesaj URL ekiyle gelebilir ("Load failed (egitimtakvimi...)") — gevşek eşleşme
+      // Sıfır context veriyor, hiçbir teşhise yardımcı olmuyor, 0 kullanıcı etkisi
+      /Load failed/i,
+      /Failed to fetch/i,
+      /cancelled/i,
       // Network/Abort — kullanıcı sayfayı kapattı (interaction iptal)
       'AbortError',
       'NetworkError',
