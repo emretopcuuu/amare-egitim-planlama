@@ -15,6 +15,7 @@ const IZINLI_ORIGINS = [
   'https://asistan.oneteamglobal.ai',
   'https://crm.oneteamglobal.ai',
   'https://hbb.oneteamglobal.ai',
+  'https://mentorluk.oneteamglobal.ai',
   'https://hesaplayici.oneteamglobal.ai',
   // Development
   'http://localhost:5173',
