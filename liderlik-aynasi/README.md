@@ -66,7 +66,14 @@ Yönetici: `/admin/giris` + `ADMIN_PASSWORD` (kod `999999` katılımcı girişin
 - Dalga numarasını istemci değil **sunucu** belirler (`waves.is_open`); kapalı dalgaya yazma 409 döner.
 - `/tahmin` — 🎯 tek seferlik tahmin: en yüksek/en düşük dış puan alınacak özellik. Gönderildikten sonra kilitlenir, Faz 4 raporunda gerçekle karşılaştırılır.
 
-Test için dalga açma (admin paneli Faz 3'te): `update waves set is_open = true, opened_at = now() where id = 1;`
+## Admin Paneli (Faz 3)
+
+- `/admin` — **dalga kontrolü** (birini açmak diğerlerini kapatır) + **canlı ilerleme**: öz değerlendirme tamamlama, kişi başına verdiği/aldığı tam değerlendirme sayıları.
+- `/admin/katilimcilar` — **CSV import**: sütunlar `ad` (zorunlu), `takim`, `sehir`, `telefon`, `eposta`; virgül veya noktalı virgül ayraç, Türkçe başlık varyasyonları tanınır. Her kişiye benzersiz 6 haneli kod üretilir (`crypto.randomInt`). Tehlikeli bölge: tüm katılımcıları silme ("SİL" yazarak onay).
+- `/admin/eslestirme` — **eşleştirme algoritması**: kişi başı N gizli + M açık hedef; kendine/tekrar atama yok, farklı takım tercihli, gelen gözlem yükü dengeli. Çalıştırmak mevcut atamaları değiştirir (onay kutusu).
+- `/admin/qr` — **QR giriş kartları**: `/giris?kod=` linkli SVG QR + kod; tarayıcının yazdır penceresinden PDF alınır (print CSS hazır).
+- `/admin/moderasyon` — başkalarına yazılan yorumları listeler; gizlenen yorum (`is_hidden`) raporda görünmez, puan korunur.
+- `/api/admin/*` rotalarının tamamı oturum üstüne **admin rol kontrolü** yapar (proxy yalnızca oturum doğrular).
 
 ## Vercel Deploy
 
@@ -76,7 +83,7 @@ Yeni Vercel projesi → bu repo → **Root Directory: `liderlik-aynasi`** → yu
 
 - [x] **Faz 1** — Şema + RLS + seed + kod ile giriş akışı
 - [x] **Faz 2** — Puanlama akışı (öz-puan kapısı, atanan kişiler, serbest puanlama, <6 puana zorunlu yorum, offline taslak) + 🎯 *"Kendini ne kadar tanıyorsun?" tahmin oyunu*
-- [ ] **Faz 3** — Admin paneli (CSV import, QR PDF, eşleştirme algoritması, dalga kontrolü, moderasyon)
+- [x] **Faz 3** — Admin paneli (CSV import, QR PDF, eşleştirme algoritması, dalga kontrolü, moderasyon)
 - [ ] **Faz 4** — Ayna Raporu + 🪞 *Senkronize "Ayna Anı" finali* + 🖼️ *paylaşılabilir Kelime Kartı* + 🤖 *AI Ayna Mektubu (Claude API)* + 📖 *Dalga yolculuğu hikâye modu*
 - [ ] **Faz 5** — Büyük ekran (canlı) + 🕸️ *takım kimyası ağ haritası slaytı* + Vercel deploy
 - [ ] **Faz 6** — 📬 *"90 gün sonra aynaya tekrar bak"* (Dalga 4 + e-posta daveti; şema hazır)

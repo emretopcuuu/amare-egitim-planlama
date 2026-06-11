@@ -1,0 +1,76 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { tr } from "@/lib/i18n/tr";
+
+type Dalga = { id: number; ad: string; acik: boolean };
+
+export default function DalgaKontrol({ dalgalar }: { dalgalar: Dalga[] }) {
+  const router = useRouter();
+  const [bekleyen, setBekleyen] = useState<number | null>(null);
+  const [hata, setHata] = useState<string | null>(null);
+
+  async function degistir(dalgaId: number, acik: boolean) {
+    setBekleyen(dalgaId);
+    setHata(null);
+    try {
+      const res = await fetch("/api/admin/dalga", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ dalgaId, acik }),
+      });
+      if (!res.ok) {
+        const veri = await res.json().catch(() => null);
+        setHata(veri?.hata ?? tr.admin.dalga.hata);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setHata(tr.admin.dalga.hata);
+    } finally {
+      setBekleyen(null);
+    }
+  }
+
+  return (
+    <div className="mt-4">
+      {hata && (
+        <p role="alert" className="mb-3 text-sm font-medium text-red-400">
+          {hata}
+        </p>
+      )}
+      <ul className="divide-y divide-royal/20">
+        {dalgalar.map((d) => (
+          <li key={d.id} className="flex items-center justify-between gap-4 py-3">
+            <div>
+              <p className="font-medium text-slate-100">{d.ad}</p>
+              <p
+                className={`mt-0.5 text-xs font-medium ${
+                  d.acik ? "text-emerald-400" : "text-slate-500"
+                }`}
+              >
+                {d.acik ? `● ${tr.admin.dalga.acik}` : `○ ${tr.admin.dalga.kapali}`}
+              </p>
+            </div>
+            <button
+              onClick={() => degistir(d.id, !d.acik)}
+              disabled={bekleyen !== null}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
+                d.acik
+                  ? "border border-royal-light/40 text-slate-300 hover:bg-midnight-soft"
+                  : "bg-gold text-midnight hover:bg-gold-light"
+              }`}
+            >
+              {bekleyen === d.id
+                ? "…"
+                : d.acik
+                  ? tr.admin.dalga.kapat
+                  : tr.admin.dalga.ac}
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}

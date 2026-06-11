@@ -19,3 +19,11 @@ body {
   color: #f1f5f9;
   font-family: var(--font-sans), system-ui, sans-serif;
 }
+
+/* QR kart sayfası yazdırılırken koyu tema mürekkep yutmasın */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+}
