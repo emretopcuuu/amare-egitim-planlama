@@ -226,7 +226,7 @@ export default function PuanlamaFormu({
                   disabled={gonderiliyor}
                   onChange={(e) => guncelle(o.id, { yorum: e.target.value })}
                   placeholder={tr.puanlama.yorumPlaceholder}
-                  className="mt-1 w-full rounded-xl border border-amber-400/40 bg-midnight-soft p-3 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
+                  className="mt-1 w-full rounded-xl border border-amber-400/40 bg-midnight-soft p-3 text-base text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
                 />
               </div>
             )}
