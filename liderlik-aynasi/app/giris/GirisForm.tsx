@@ -4,6 +4,7 @@ import { useCallback, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import CodeInput from "@/components/ui/CodeInput";
+import EgilenKart from "@/components/EgilenKart";
 import { tr } from "@/lib/i18n/tr";
 
 export default function GirisForm() {
@@ -56,10 +57,11 @@ export default function GirisForm() {
   );
 
   return (
-    <div className="relative w-full max-w-sm overflow-hidden rounded-2xl bg-midnight-card/60 p-8 shadow-[0_0_70px_-20px_rgba(212,175,55,0.45)] ring-1 ring-royal/30 backdrop-blur">
+    <EgilenKart className="w-full max-w-sm rounded-2xl">
+    <div className="relative w-full overflow-hidden kart-3d rounded-2xl bg-midnight-card/60 p-8 shadow-[0_0_70px_-20px_rgba(212,175,55,0.45)] ring-1 ring-royal/30 backdrop-blur">
       <span className="altin-tel" />
       <p className="text-center text-3xl">✨</p>
-      <h1 className="font-display mt-2 text-center text-3xl font-bold tracking-tight text-gold">
+      <h1 className="font-display altin-metin mt-2 text-center text-3xl font-bold tracking-tight text-gold">
         {tr.giris.baslik}
       </h1>
       <p className="mt-3 text-center text-sm text-slate-300">
@@ -93,7 +95,7 @@ export default function GirisForm() {
         <button
           type="submit"
           disabled={kod.length !== 6 || yukleniyor}
-          className="h-12 w-full rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-12 w-full btn-3d rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
         >
           {yukleniyor ? tr.giris.girisYapiliyor : tr.giris.girisYap}
         </button>
@@ -108,5 +110,6 @@ export default function GirisForm() {
         </Link>
       </p>
     </div>
+    </EgilenKart>
   );
 }

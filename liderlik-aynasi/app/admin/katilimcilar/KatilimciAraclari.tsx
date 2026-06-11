@@ -69,7 +69,7 @@ export default function KatilimciAraclari() {
 
   return (
     <div className="space-y-6">
-      <section className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="text-lg font-semibold text-gold-light">{t.importBaslik}</h2>
         <p className="mt-1 text-sm text-slate-400">{t.importAciklama}</p>
 

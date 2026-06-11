@@ -24,7 +24,7 @@ export default async function DegerlendirPage() {
   if (!dalga) {
     return (
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center p-6">
-        <div className="rounded-2xl bg-midnight-card/60 p-8 text-center shadow-2xl ring-1 ring-royal/30 backdrop-blur">
+        <div className="kart-3d rounded-2xl bg-midnight-card/60 p-8 text-center shadow-2xl ring-1 ring-royal/30 backdrop-blur">
           <p className="text-4xl">🌊</p>
           <h1 className="mt-4 text-2xl font-bold text-gold">
             {tr.degerlendir.dalgaKapaliBaslik}
@@ -90,7 +90,7 @@ export default async function DegerlendirPage() {
           <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
             {tr.degerlendir.baslik}
           </p>
-          <h1 className="font-display mt-1 text-2xl font-bold text-gold">{dalga.name}</h1>
+          <h1 className="font-display altin-metin mt-1 text-2xl font-bold text-gold">{dalga.name}</h1>
         </div>
         <Link
           href="/"
@@ -101,7 +101,7 @@ export default async function DegerlendirPage() {
       </header>
 
       {/* Öz-puan kapısı */}
-      <section className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="text-lg font-semibold text-gold-light">
           {ozTamam ? tr.degerlendir.ozTamamlandi : tr.degerlendir.ozBaslik}
         </h2>
@@ -119,7 +119,7 @@ export default async function DegerlendirPage() {
       </section>
 
       {/* Atanan kişiler */}
-      <section className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="text-lg font-semibold text-gold-light">
           {tr.degerlendir.atananBaslik}
         </h2>
@@ -168,7 +168,7 @@ export default async function DegerlendirPage() {
             <p className="mt-2 text-sm text-slate-300">{tr.tahmin.kartAciklama}</p>
             <Link
               href="/tahmin"
-              className="mt-4 inline-block rounded-xl bg-gold px-5 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light"
+              className="mt-4 inline-block btn-3d rounded-xl bg-gold px-5 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light"
             >
               {tr.tahmin.tahminYap}
             </Link>
@@ -177,7 +177,7 @@ export default async function DegerlendirPage() {
       </section>
 
       {/* Serbest puanlama */}
-      <section className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="text-lg font-semibold text-gold-light">
           {tr.degerlendir.serbestBaslik}
         </h2>

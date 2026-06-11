@@ -176,7 +176,7 @@ export default function PuanlamaFormu({
         return (
           <section
             key={o.id}
-            className="rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur"
+            className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur"
           >
             <h2 className="font-semibold text-slate-100">
               <span className="mr-2 text-xs text-slate-500">
@@ -254,7 +254,7 @@ export default function PuanlamaFormu({
           type="button"
           onClick={gonder}
           disabled={!gonderilebilir}
-          className="h-12 w-full rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-12 w-full btn-3d rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
         >
           {gonderiliyor ? tr.puanlama.gonderiliyor : tr.puanlama.gonder}
         </button>

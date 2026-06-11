@@ -106,7 +106,7 @@ export default function KelimeKarti({
   }
 
   return (
-    <section className="rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
+    <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
       <h2 className="font-semibold text-gold-light">{t.baslik}</h2>
       <p className="mt-1 text-xs text-slate-400">{t.aciklama}</p>
 
@@ -120,7 +120,7 @@ export default function KelimeKarti({
       <div className="mt-4 flex gap-3">
         <button
           onClick={indir}
-          className="flex-1 rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light"
+          className="flex-1 btn-3d rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light"
         >
           ⬇ {t.indir}
         </button>

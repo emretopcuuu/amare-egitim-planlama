@@ -38,7 +38,7 @@ export default async function ModerasyonPage() {
           {yorumlar.map((y) => (
             <li
               key={y.id}
-              className={`rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 backdrop-blur ${
+              className={`kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 backdrop-blur ${
                 y.is_hidden ? "opacity-60 ring-red-500/30" : "ring-royal/30"
               }`}
             >

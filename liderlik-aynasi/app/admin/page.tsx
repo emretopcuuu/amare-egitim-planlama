@@ -106,7 +106,7 @@ export default async function AdminPanel() {
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
       <h1 className="text-2xl font-bold text-gold">{tr.admin.baslik}</h1>
 
-      <section className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="text-lg font-semibold text-gold-light">
           {tr.admin.dalga.baslik}
         </h2>
@@ -121,7 +121,7 @@ export default async function AdminPanel() {
       </section>
 
       <section
-        className={`rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 backdrop-blur ${
+        className={`kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 backdrop-blur ${
           raporlarAcik ? "ring-emerald-400/40" : "ring-gold/40"
         }`}
       >
@@ -136,7 +136,7 @@ export default async function AdminPanel() {
         />
       </section>
 
-      <section className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="text-lg font-semibold text-gold-light">
           {tr.admin.doksanGun.baslik}
         </h2>
@@ -148,7 +148,7 @@ export default async function AdminPanel() {
         />
       </section>
 
-      <section className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="text-lg font-semibold text-gold-light">
           {tr.admin.ilerleme.baslik}
           {acikDalga && (

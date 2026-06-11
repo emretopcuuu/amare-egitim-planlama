@@ -47,7 +47,7 @@ export default async function AynaPage() {
         <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
           {t.baslik}
         </p>
-        <h1 className="font-display mt-2 text-3xl font-bold text-gold">
+        <h1 className="font-display altin-metin mt-2 text-3xl font-bold text-gold">
           {t.acilis(session.ad)}
         </h1>
         <p className="mt-2 text-sm text-slate-300">{t.acilisAlt}</p>
@@ -55,7 +55,7 @@ export default async function AynaPage() {
 
       {/* Güçlü yanlar / gelişim alanları */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
+        <div className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
           <h2 className="font-semibold text-gold-light">{t.gucluBaslik}</h2>
           {rapor.guclu.length === 0 ? (
             <p className="mt-2 text-sm text-slate-400">{t.veriYok}</p>
@@ -74,7 +74,7 @@ export default async function AynaPage() {
             </ol>
           )}
         </div>
-        <div className="rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+        <div className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
           <h2 className="font-semibold text-gold-light">{t.gelisimBaslik}</h2>
           {rapor.gelisim.length === 0 ? (
             <p className="mt-2 text-sm text-slate-400">{t.veriYok}</p>
@@ -112,7 +112,7 @@ export default async function AynaPage() {
       )}
 
       {/* Tahmin vs gerçek */}
-      <section className="rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
         <h2 className="font-semibold text-gold-light">{t.tahminBaslik}</h2>
         {!rapor.tahmin ? (
           <p className="mt-2 text-sm text-slate-400">{t.tahminYok}</p>
@@ -157,7 +157,7 @@ export default async function AynaPage() {
       </section>
 
       {/* Dalga yolculuğu — hikâye modu */}
-      <section className="rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="font-semibold text-gold-light">{t.hikayeBaslik}</h2>
         <p className="mt-1 text-xs text-slate-400">{t.hikayeAciklama}</p>
         {rapor.dalgalar.length === 0 ? (
@@ -191,7 +191,7 @@ export default async function AynaPage() {
       </section>
 
       {/* Özellik özellik öz vs dış */}
-      <section className="rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="font-semibold text-gold-light">{t.tabloBaslik}</h2>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
           <span>
@@ -255,7 +255,7 @@ export default async function AynaPage() {
       </section>
 
       {/* Yorumlar */}
-      <section className="rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="font-semibold text-gold-light">{t.yorumlarBaslik}</h2>
         <p className="mt-1 text-xs text-slate-400">{t.yorumlarAciklama}</p>
         {rapor.yorumlar.length === 0 ? (

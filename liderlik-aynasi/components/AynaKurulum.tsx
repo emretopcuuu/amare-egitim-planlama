@@ -86,7 +86,7 @@ export default function AynaKurulum() {
   }
 
   return (
-    <div className="rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30 backdrop-blur">
+    <div className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30 backdrop-blur">
       {durum === "ios-kurulum" ? (
         <>
           <p className="font-semibold text-gold-light">{t.kurBaslik}</p>
@@ -105,7 +105,7 @@ export default function AynaKurulum() {
           )}
           <button
             onClick={izinVer}
-            className="mt-4 w-full rounded-xl bg-gold px-4 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light"
+            className="mt-4 w-full btn-3d rounded-xl bg-gold px-4 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light"
           >
             {t.izinVer}
           </button>

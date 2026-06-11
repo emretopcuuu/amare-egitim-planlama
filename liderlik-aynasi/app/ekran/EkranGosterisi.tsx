@@ -114,7 +114,7 @@ export default function EkranGosterisi() {
           <p className="text-lg font-medium uppercase tracking-[0.3em] text-royal-light">
             {t.altBaslik}
           </p>
-          <h1 className="font-display mt-1 text-5xl font-bold text-gold">{t.baslik}</h1>
+          <h1 className="font-display altin-metin mt-1 text-5xl font-bold text-gold">{t.baslik}</h1>
         </div>
         <p className="text-xl text-slate-400">{veri?.dalgaAdi ?? t.dalgaYok}</p>
       </header>
@@ -142,7 +142,7 @@ export default function EkranGosterisi() {
               ).map(([deger, etiket]) => (
                 <div
                   key={etiket}
-                  className="rounded-3xl bg-midnight-card/60 p-10 text-center shadow-2xl ring-1 ring-royal/30 backdrop-blur"
+                  className="kart-3d rounded-3xl bg-midnight-card/60 p-10 text-center shadow-2xl ring-1 ring-royal/30 backdrop-blur"
                 >
                   <p className="font-mono text-8xl font-bold text-gold">{deger}</p>
                   <p className="mt-3 text-2xl text-slate-300">{etiket}</p>
@@ -283,7 +283,7 @@ export default function EkranGosterisi() {
                     {veri.lig.map((k, i) => (
                       <li
                         key={k.ad}
-                        className="flex items-center gap-4 rounded-2xl bg-midnight-card/60 p-4 ring-1 ring-gold/20"
+                        className="flex items-center gap-4 kart-3d rounded-2xl bg-midnight-card/60 p-4 ring-1 ring-gold/20"
                       >
                         <span className="w-10 text-center text-3xl">
                           {["🥇", "🥈", "🥉"][i] ?? `${i + 1}.`}

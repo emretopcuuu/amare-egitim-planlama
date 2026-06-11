@@ -28,7 +28,7 @@ export default async function TahminPage() {
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center p-6">
-      <div className="rounded-2xl bg-midnight-card/60 p-8 shadow-2xl ring-1 ring-gold/30 backdrop-blur">
+      <div className="kart-3d rounded-2xl bg-midnight-card/60 p-8 shadow-2xl ring-1 ring-gold/30 backdrop-blur">
         <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
           {tr.tahmin.kartBaslik}
         </p>

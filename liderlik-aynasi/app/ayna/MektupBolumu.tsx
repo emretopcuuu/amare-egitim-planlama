@@ -54,7 +54,7 @@ export default function MektupBolumu({
           <button
             onClick={olustur}
             disabled={yukleniyor}
-            className="rounded-xl bg-gold px-5 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn-3d rounded-xl bg-gold px-5 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-50"
           >
             {yukleniyor ? t.hazirlaniyor : t.olustur}
           </button>

@@ -44,7 +44,7 @@ export default async function AynaDirektorPage() {
         <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>
       </div>
 
-      <section className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-gold/40 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-gold/40 backdrop-blur">
         <AynaDirektorKontrol
           aktif={ayar.get("ayna_aktif") === "true"}
           tempo={ayar.get("ayna_tempo") ?? "surpriz"}
@@ -53,7 +53,7 @@ export default async function AynaDirektorPage() {
         />
       </section>
 
-      <section className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="text-lg font-semibold text-gold-light">{t.akisBaslik}</h2>
         {(sonGorevler ?? []).length === 0 ? (
           <p className="mt-3 text-sm text-slate-400">{t.akisYok}</p>
