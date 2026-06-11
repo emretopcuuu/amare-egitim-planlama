@@ -223,6 +223,14 @@ export default async (req) => {
   const knownList = [...knownMap.values()];
   console.log(`[known] ${knownList.length} eğitmen`);
 
+  // 1b. Kara liste — admin tarafından kalıcı silinen videolar (vimeo-ingest ile aynı).
+  // Bu kontrol olmadan: panelden silinen video doc'u yok olduğu için "yeni" sanılıp
+  // 6 saatlik cron'da GERİ GELİYORDU.
+  const silinenSnap = await db.collection('silinen_egitimler').get();
+  const blacklist = new Set();
+  silinenSnap.forEach(d => blacklist.add(d.id));
+  console.log(`[kara-liste] ${blacklist.size} video atlanacak`);
+
   // 2. Vimeo'dan son video'ları çek (1 sayfa = 100 video yeter for incremental)
   const data = await vimeoFetch(
     '/me/videos?per_page=100&page=1&sort=date&direction=desc&fields=uri,name,description,link,player_embed_url,duration,release_time,created_time,pictures.sizes'
@@ -249,10 +257,16 @@ export default async (req) => {
   let yeniSayisi = 0;
   let mevcutSayisi = 0;
   let excludedSayisi = 0;
+  let karaListeSayisi = 0;
   const yeniler = [];
 
   for (const v of validVideos) {
     const vimeoId = v.vimeoId;
+
+    if (blacklist.has(vimeoId)) {
+      karaListeSayisi++;
+      continue; // admin kalıcı sildi — geri getirme
+    }
 
     const ref = db.collection('kayitli_egitimler').doc(vimeoId);
     if (existsMap[vimeoId]) {
@@ -317,6 +331,7 @@ export default async (req) => {
     yeni: yeniSayisi,
     excludedYeni: excludedSayisi,
     mevcut: mevcutSayisi,
+    karaListe: karaListeSayisi,
     yeniler,
   };
   console.log('[vimeo-yeni-cek] done:', JSON.stringify(summary));

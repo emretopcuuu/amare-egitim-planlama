@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { db, auth } from '../utils/firebase';
 import {
   collection, query, where, orderBy, limit as fbLimit,
-  getDocs, doc, updateDoc, deleteDoc, serverTimestamp,
+  getDocs, doc, updateDoc, deleteDoc, setDoc, serverTimestamp,
 } from 'firebase/firestore';
 import { Loader2, Video, Save, Search, RefreshCw, ExternalLink, Download, MoreVertical, Edit2, Trash2, Ban, Play, FileText, X } from 'lucide-react';
 import VideoOynatModal from './VideoOynatModal';
@@ -114,11 +114,18 @@ const AdminKayitliEgitimlerTab = () => {
 
   // ─── Eylem handler'ları ─────────────────────────────────────────────
   const handleDelete = async (v) => {
-    if (!window.confirm(`"${v.baslik?.slice(0, 60)}" KALICI olarak silinsin mi?\n\nFirestore'dan tamamen kaldırılır.`)) return;
+    if (!window.confirm(`"${v.baslik?.slice(0, 60)}" KALICI olarak silinsin mi?\n\nFirestore'dan tamamen kaldırılır ve kara listeye eklenir (Vimeo senkronu geri getirmez).`)) return;
     try {
+      // ÖNCE kara liste — yoksa 6 saatlik vimeo cron'u videoyu geri getirir.
+      // Sıra önemli: kara liste yazılamadan silinirse video hayalet gibi geri döner.
+      await setDoc(doc(db, 'silinen_egitimler', v.id), {
+        baslik: v.baslik || '',
+        silinmeTarihi: serverTimestamp(),
+        silen: auth.currentUser?.email || 'admin-panel',
+      });
       await deleteDoc(doc(db, 'kayitli_egitimler', v.id));
       setVideolar(prev => prev.filter(x => x.id !== v.id));
-      setMesaj(`✓ Silindi: ${v.baslik?.slice(0, 40)}`);
+      setMesaj(`✓ Silindi + kara listede: ${v.baslik?.slice(0, 40)}`);
       setTimeout(() => setMesaj(''), 3000);
     } catch (err) {
       setMesaj('✗ Silinemedi: ' + err.message);
