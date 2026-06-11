@@ -38,7 +38,7 @@ export default function AynaBekleme() {
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center p-6 text-center">
       <div className="rounded-2xl bg-midnight-card/60 p-10 shadow-2xl ring-1 ring-gold/30 backdrop-blur">
-        <p className="animate-pulse text-6xl">🪞</p>
+        <p className="animate-pulse text-6xl">🔮</p>
         <h1 className="mt-6 text-2xl font-bold text-gold">
           {tr.ayna.bekleBaslik}
         </h1>

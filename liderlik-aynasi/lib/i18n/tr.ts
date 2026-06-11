@@ -30,7 +30,7 @@ export const tr = {
     degerlendirmeyeBasla: "Değerlendirmeye Başla",
     dalgaAcik: (dalga: string) => `${dalga} şu anda açık`,
     dalgaKapali: "Şu anda açık dalga yok",
-    aynaniGor: "🪞 Aynan Açıldı — Raporunu Gör",
+    aynaniGor: "✨ Aynan Açıldı — Raporunu Gör",
     cikisYap: "Çıkış Yap",
   },
   degerlendir: {
@@ -199,7 +199,7 @@ export const tr = {
       hata: "Güncellenemedi. Lütfen tekrar dene.",
     },
     aynaAni: {
-      baslik: "🪞 Ayna Anı",
+      baslik: "✨ Ayna Anı",
       aciklama:
         "Gün 3 kapanışında tek düğme: raporlar herkesin telefonunda aynı anda açılır. Açmadan önce mektupları üretmen önerilir.",
       durumAcik: "Aynalar AÇIK — herkes raporunu görebilir",
@@ -221,7 +221,7 @@ export const tr = {
   },
   ayna: {
     baslik: "Ayna Raporun",
-    bekleBaslik: "Aynan henüz örtülü 🪞",
+    bekleBaslik: "Aynan henüz örtülü 🔮",
     bekleAciklama:
       "Gün 3 kapanışında herkesin aynası aynı anda açılacak. Bu sayfayı açık tut — an geldiğinde kendiliğinden aydınlanacak.",
     acilis: (ad: string) => `${ad}, işte aynan`,
@@ -272,7 +272,21 @@ export const tr = {
   },
   ekran: {
     baslik: "Kampın Nabzı",
-    yakinda: "Canlı ekran 5. fazda yayında olacak.",
+    altBaslik: "Liderlik Aynası · canlı",
+    dalgaYok: "Şu anda açık dalga yok",
+    veriYok: "Puanlar gelmeye başlayınca burası canlanacak…",
+    nabiz: {
+      katilimci: "katılımcı",
+      puan: "puan verildi",
+      oz: "öz aynasını tamamladı",
+      degerlendirme: "tam değerlendirme yapıldı",
+    },
+    agBaslik: "🕸️ Takım Kimyası",
+    agAciklama:
+      "Her nokta bir katılımcı, her çizgi bir gözlem bağı. Altın çizgiler takımlar arası köprüler.",
+    agCapraz: (oran: number) => `Gözlem bağlarının %${oran}'i takımlar arası`,
+    ozellikBaslik: "Kampın Kasları",
+    ozellikAciklama: "Birbirinize verdiğiniz puanların kamp geneli ortalaması",
   },
   ortak: {
     oturumGerekli: "Oturum gerekli.",
