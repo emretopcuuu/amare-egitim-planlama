@@ -150,9 +150,9 @@ function GolYuzeyi({ hareketli }: { hareketli: boolean }) {
   }, [hareketli, uniforms]);
 
   useFrame((_, dt) => {
-    if (hareketli) uniforms.uZaman.value += dt;
     // three uniform'ları tasarım gereği mutasyonla güncellenir (her karede)
     // eslint-disable-next-line react-hooks/immutability
+    if (hareketli) uniforms.uZaman.value += dt;
     uniforms.uOran.value = size.width / Math.max(size.height, 1);
   });
 
