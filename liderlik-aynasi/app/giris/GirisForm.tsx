@@ -62,7 +62,7 @@ export default function GirisForm() {
       <p className="prizma-serif text-center text-xs uppercase tracking-[0.45em] text-slate-400">
         Liderlik
       </p>
-      <h1 className="prizma-serif tayf-metin mt-1 text-center text-5xl font-semibold tracking-tight">
+      <h1 className="prizma-serif ay-metin mt-1 text-center text-5xl font-semibold tracking-tight">
         AYNA
       </h1>
       <p className="mt-4 text-center text-sm leading-relaxed text-slate-300">
@@ -96,7 +96,7 @@ export default function GirisForm() {
         <button
           type="submit"
           disabled={kod.length !== 6 || yukleniyor}
-          className="btn-cam h-12 w-full rounded-xl font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-kor h-12 w-full rounded-xl font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
         >
           {yukleniyor ? tr.giris.girisYapiliyor : tr.giris.girisYap}
         </button>

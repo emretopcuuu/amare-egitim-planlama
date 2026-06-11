@@ -3,13 +3,13 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
-import PrizmaArkaplan from "@/components/prizma/PrizmaArkaplan";
+import GolArkaplan from "@/components/gol/GolArkaplan";
 
 const YOKLAMA_MS = 5000;
 
 // Senkronize "Ayna Anı": admin reports_visible'ı açtığında salondaki tüm
-// telefonlar bir sonraki yoklamada aynı anda rapora geçer. PRİZMA evreninde
-// bekleyiş, kırıkların en yoğun süzüldüğü sahnedir — birleşme anını bekler.
+// telefonlar bir sonraki yoklamada aynı anda rapora geçer. GECE GÖLÜ
+// evreninde bekleyiş, suyun durulmasını izlemektir — ayna olmasını bekler.
 export default function AynaBekleme() {
   const router = useRouter();
   const durdu = useRef(false);
@@ -38,13 +38,13 @@ export default function AynaBekleme() {
   }, [router]);
 
   return (
-    <main className="evren-prizma flex min-h-screen flex-1 flex-col items-center justify-center overflow-hidden p-6 text-center">
-      <PrizmaArkaplan adet={28} />
+    <main className="evren-gol flex min-h-screen flex-1 flex-col items-center justify-center overflow-hidden p-6 text-center">
+      <GolArkaplan />
       <div className="kart-cam relative overflow-hidden rounded-3xl p-10">
         <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
           Ayna Anı
         </p>
-        <h1 className="prizma-serif tayf-metin mt-3 text-3xl font-semibold">
+        <h1 className="prizma-serif ay-metin mt-3 text-3xl font-semibold">
           {tr.ayna.bekleBaslik.replace(" 🔮", "")}
         </h1>
         <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-slate-300">
