@@ -98,14 +98,28 @@ export async function bridgeToSupabase(firebaseUser) {
     const r = await fetch(HBB_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      credentials: 'include', // server-set cookie'yi sakla — iOS WebKit JS cookie'yi paylaşmıyor
       body: JSON.stringify({ idToken }),
     });
     const j = await r.json().catch(() => ({}));
-    if (!j.ok || !j.token_hash) {
-      ssoHata('hbb-endpoint', { status: r.status, error: j.error || 'token_hash yok' });
+    if (!j.ok) {
+      ssoHata('hbb-endpoint', { status: r.status, error: j.error || 'ok değil' });
       return;
     }
-    ssoLog('token_hash-alındı');
+
+    // iOS dahil: server Set-Cookie ile ortak oturum zaten yazıldıysa bittik (client verifyOtp gereksiz).
+    if (getCookie(COOKIE_KEY)) {
+      _bridged = true;
+      ssoLog('başarılı-server-cookie', { cookie_set: !!j.cookie_set });
+      return;
+    }
+
+    // Fallback (masaüstü/Android eski yol, ya da server cookie yazılmadıysa): client verifyOtp
+    if (!j.token_hash) {
+      ssoHata('token_hash-yok-cookie-de-yok', { cookie_set: !!j.cookie_set });
+      return;
+    }
+    ssoLog('token_hash-alındı (fallback)');
 
     const sb = createClient(SUPA_URL, SUPA_ANON, {
       auth: { storage: ssoStorage, persistSession: true, autoRefreshToken: false },
