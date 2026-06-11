@@ -3,11 +3,13 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import PrizmaArkaplan from "@/components/prizma/PrizmaArkaplan";
 
 const YOKLAMA_MS = 5000;
 
 // Senkronize "Ayna Anı": admin reports_visible'ı açtığında salondaki tüm
-// telefonlar bir sonraki yoklamada aynı anda rapora geçer.
+// telefonlar bir sonraki yoklamada aynı anda rapora geçer. PRİZMA evreninde
+// bekleyiş, kırıkların en yoğun süzüldüğü sahnedir — birleşme anını bekler.
 export default function AynaBekleme() {
   const router = useRouter();
   const durdu = useRef(false);
@@ -36,24 +38,23 @@ export default function AynaBekleme() {
   }, [router]);
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center p-6 text-center">
-      <div className="relative overflow-hidden kart-3d rounded-2xl bg-midnight-card/60 p-10 shadow-2xl ring-1 ring-gold/30 backdrop-blur">
-        <span className="altin-tel" />
-        <div className="relative mx-auto h-28 w-28">
-          <div className="ayna-halka absolute inset-0" />
-          <p className="absolute inset-0 flex animate-pulse items-center justify-center text-6xl">
-            🔮
-          </p>
-        </div>
-        <h1 className="font-display altin-metin mt-6 text-2xl font-bold text-gold">
-          {tr.ayna.bekleBaslik}
+    <main className="evren-prizma flex min-h-screen flex-1 flex-col items-center justify-center overflow-hidden p-6 text-center">
+      <PrizmaArkaplan adet={28} />
+      <div className="kart-cam relative overflow-hidden rounded-3xl p-10">
+        <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
+          Ayna Anı
+        </p>
+        <h1 className="prizma-serif tayf-metin mt-3 text-3xl font-semibold">
+          {tr.ayna.bekleBaslik.replace(" 🔮", "")}
         </h1>
-        <p className="mt-3 text-slate-300">{tr.ayna.bekleAciklama}</p>
+        <p className="mx-auto mt-4 max-w-xs text-sm leading-relaxed text-slate-300">
+          {tr.ayna.bekleAciklama}
+        </p>
         <div className="mt-8 flex justify-center gap-1.5">
           {[0, 1, 2].map((i) => (
             <span
               key={i}
-              className="h-2 w-2 animate-pulse rounded-full bg-gold/60"
+              className="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-200/70"
               style={{ animationDelay: `${i * 300}ms` }}
             />
           ))}

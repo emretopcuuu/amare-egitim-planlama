@@ -6,6 +6,7 @@ import { raporHesapla, raporlarGorunurMu } from "@/lib/rapor";
 import { unvanBul } from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
 import AynaBekleme from "./AynaBekleme";
+import PrizmaArkaplan from "@/components/prizma/PrizmaArkaplan";
 import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
 
@@ -42,12 +43,14 @@ export default async function AynaPage() {
     rapor.tahmin.topId === rapor.gercekTopId;
 
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 space-y-6 p-6">
+    <main className="evren-prizma min-h-screen flex-1 overflow-hidden">
+      <PrizmaArkaplan adet={12} />
+      <div className="mx-auto w-full max-w-lg space-y-6 p-6">
       <header className="ayna-acilis text-center">
-        <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
+        <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
           {t.baslik}
         </p>
-        <h1 className="font-display altin-metin mt-2 text-3xl font-bold text-gold">
+        <h1 className="prizma-serif tayf-metin mt-2 text-3xl font-semibold">
           {t.acilis(session.ad)}
         </h1>
         <p className="mt-2 text-sm text-slate-300">{t.acilisAlt}</p>
@@ -55,7 +58,7 @@ export default async function AynaPage() {
 
       {/* Güçlü yanlar / gelişim alanları */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
+        <div className="kart-cam rounded-2xl p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
           <h2 className="font-semibold text-gold-light">{t.gucluBaslik}</h2>
           {rapor.guclu.length === 0 ? (
             <p className="mt-2 text-sm text-slate-400">{t.veriYok}</p>
@@ -74,7 +77,7 @@ export default async function AynaPage() {
             </ol>
           )}
         </div>
-        <div className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+        <div className="kart-cam rounded-2xl p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
           <h2 className="font-semibold text-gold-light">{t.gelisimBaslik}</h2>
           {rapor.gelisim.length === 0 ? (
             <p className="mt-2 text-sm text-slate-400">{t.veriYok}</p>
@@ -95,7 +98,7 @@ export default async function AynaPage() {
 
       {/* Johari: gizli güç / kör nokta */}
       {rapor.gizliGuc && (
-        <section className="kart-cerceve rounded-2xl bg-gradient-to-br from-emerald-500/15 to-midnight-card/60 p-5 shadow-xl ring-1 ring-emerald-400/30 backdrop-blur">
+        <section className="kart-cam rounded-2xl bg-gradient-to-br from-emerald-500/15 to-midnight-card/60 p-5 shadow-xl ring-1 ring-emerald-400/30 backdrop-blur">
           <h2 className="font-semibold text-emerald-400">{t.gizliGucBaslik}</h2>
           <p className="mt-2 text-sm text-slate-200">
             {t.gizliGucAciklama(rapor.gizliGuc.ad)}
@@ -103,7 +106,7 @@ export default async function AynaPage() {
         </section>
       )}
       {rapor.korNokta && (
-        <section className="kart-cerceve rounded-2xl bg-gradient-to-br from-amber-500/15 to-midnight-card/60 p-5 shadow-xl ring-1 ring-amber-400/30 backdrop-blur">
+        <section className="kart-cam rounded-2xl bg-gradient-to-br from-amber-500/15 to-midnight-card/60 p-5 shadow-xl ring-1 ring-amber-400/30 backdrop-blur">
           <h2 className="font-semibold text-amber-400">{t.korNoktaBaslik}</h2>
           <p className="mt-2 text-sm text-slate-200">
             {t.korNoktaAciklama(rapor.korNokta.ad)}
@@ -112,7 +115,7 @@ export default async function AynaPage() {
       )}
 
       {/* Tahmin vs gerçek */}
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
+      <section className="kart-cam rounded-2xl p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
         <h2 className="font-semibold text-gold-light">{t.tahminBaslik}</h2>
         {!rapor.tahmin ? (
           <p className="mt-2 text-sm text-slate-400">{t.tahminYok}</p>
@@ -157,7 +160,7 @@ export default async function AynaPage() {
       </section>
 
       {/* Dalga yolculuğu — hikâye modu */}
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-cam rounded-2xl p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="font-semibold text-gold-light">{t.hikayeBaslik}</h2>
         <p className="mt-1 text-xs text-slate-400">{t.hikayeAciklama}</p>
         {rapor.dalgalar.length === 0 ? (
@@ -191,7 +194,7 @@ export default async function AynaPage() {
       </section>
 
       {/* Özellik özellik öz vs dış */}
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-cam rounded-2xl p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="font-semibold text-gold-light">{t.tabloBaslik}</h2>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
           <span>
@@ -255,7 +258,7 @@ export default async function AynaPage() {
       </section>
 
       {/* Yorumlar */}
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-cam rounded-2xl p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="font-semibold text-gold-light">{t.yorumlarBaslik}</h2>
         <p className="mt-1 text-xs text-slate-400">{t.yorumlarAciklama}</p>
         {rapor.yorumlar.length === 0 ? (
@@ -276,7 +279,7 @@ export default async function AynaPage() {
 
       {/* AYNA'nın görev özeti */}
       {rapor.gorev.tamamlanan > 0 && (
-        <section className="kart-cerceve rounded-2xl bg-gradient-to-br from-emerald-500/10 to-midnight-card/60 p-5 shadow-xl ring-1 ring-emerald-400/30 backdrop-blur">
+        <section className="kart-cam rounded-2xl bg-gradient-to-br from-emerald-500/10 to-midnight-card/60 p-5 shadow-xl ring-1 ring-emerald-400/30 backdrop-blur">
           <h2 className="font-semibold text-emerald-400">{t.aynaBaslik}</h2>
           <p className="mt-2 text-sm text-slate-200">
             {t.aynaOzeti(
@@ -304,6 +307,7 @@ export default async function AynaPage() {
           ← {tr.degerlendir.anaSayfayaDon}
         </Link>
       </p>
+      </div>
     </main>
   );
 }
