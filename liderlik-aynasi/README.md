@@ -31,6 +31,8 @@ npm run dev
 | `SESSION_SECRET` | `openssl rand -base64 32` |
 | `ADMIN_PASSWORD` | Yönetici paneli şifresi |
 | `ANTHROPIC_API_KEY` | platform.claude.com — AI Ayna Mektubu için (yoksa uygulama çalışır, yalnızca mektup üretimi kapalı kalır) |
+| `POSTMARK_SERVER_TOKEN` | Postmark → Server → API Tokens — 90 gün sonrası davet e-postaları için |
+| `EMAIL_FROM` | Postmark'ta doğrulanmış gönderici adresi (örn. `ayna@alanadi.com`) |
 
 ## Veritabanı
 
@@ -92,6 +94,13 @@ Yönetici: `/admin/giris` + `ADMIN_PASSWORD` (kod `999999` katılımcı girişin
   3. **Kampın Kasları** — 10 özelliğin kamp geneli dış puan ortalaması (lider özellik 👑)
 - `/api/ekran` herkese açıktır ve **yalnızca isimsiz agregalar** döner — isim, kod veya kişi bazlı veri asla çıkmaz.
 
+## 90 Gün Sonra (Faz 6)
+
+- `0007_wave4.sql` — **Dalga 4 — 90 Gün Sonra** kaydı (kapalı başlar; admin panel Dalga Kontrolü'nde otomatik listelenir).
+- Admin panelde **📬 90 Gün Sonra** bölümü: e-postası kayıtlı katılımcı sayısı + **davet gönderimi**. Davetler Postmark ile parti parti (çağrı başına 10) gönderilir, ilerleme canlı görünür; tamamlanınca gönderim zamanı `settings.wave4_davet_gonderildi`e yazılır ve yeniden gönderim onay kutusu ister.
+- Davet e-postası kişiye özel `/giris?kod=XXXXXX` linki taşır — herkes kamptaki koduyla geri döner; Dalga 4 puanları rapora ve dalga yolculuğuna kendiliğinden eklenir.
+- Akış: Dalga 4'ü aç → davetleri gönder. `POSTMARK_SERVER_TOKEN`/`EMAIL_FROM` yoksa yalnızca bu bölüm devre dışı kalır.
+
 ## Vercel Deploy
 
 Yeni Vercel projesi → bu repo → **Root Directory: `liderlik-aynasi`** → yukarıdaki env değişkenlerini tanımla. Ana uygulamanın Netlify deploy'u etkilenmez.
@@ -103,4 +112,4 @@ Yeni Vercel projesi → bu repo → **Root Directory: `liderlik-aynasi`** → yu
 - [x] **Faz 3** — Admin paneli (CSV import, QR PDF, eşleştirme algoritması, dalga kontrolü, moderasyon)
 - [x] **Faz 4** — Ayna Raporu + 🪞 *Senkronize "Ayna Anı" finali* + 🖼️ *paylaşılabilir Kelime Kartı* + 🤖 *AI Ayna Mektubu (Claude API)* + 📖 *Dalga yolculuğu hikâye modu*
 - [x] **Faz 5** — Büyük ekran (canlı) + 🕸️ *takım kimyası ağ haritası slaytı* + Vercel deploy
-- [ ] **Faz 6** — 📬 *"90 gün sonra aynaya tekrar bak"* (Dalga 4 + e-posta daveti; şema hazır)
+- [x] **Faz 6** — 📬 *"90 gün sonra aynaya tekrar bak"* (Dalga 4 + e-posta daveti)
