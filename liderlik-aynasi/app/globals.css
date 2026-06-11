@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --color-midnight: #1e1233;
+  --color-midnight-soft: #2d1b4e;
+  --color-midnight-card: #3a2563;
+  --color-royal: #7c3aed;
+  --color-royal-light: #a78bfa;
+  --color-gold: #d4af37;
+  --color-gold-light: #f0c75e;
+  --color-gold-dim: #9c7e1b;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: linear-gradient(170deg, var(--color-midnight) 0%, var(--color-midnight-soft) 100%);
+  min-height: 100vh;
+  color: #f1f5f9;
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+/* QR kart sayfası yazdırılırken koyu tema mürekkep yutmasın */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+}
