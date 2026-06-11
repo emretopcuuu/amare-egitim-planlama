@@ -33,6 +33,9 @@ npm run dev
 | `ANTHROPIC_API_KEY` | platform.claude.com — AI Ayna Mektubu için (yoksa uygulama çalışır, yalnızca mektup üretimi kapalı kalır) |
 | `POSTMARK_SERVER_TOKEN` | Postmark → Server → API Tokens — 90 gün sonrası davet e-postaları için |
 | `EMAIL_FROM` | Postmark'ta doğrulanmış gönderici adresi (örn. `ayna@alanadi.com`) |
+| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | PWA push anahtarı (public) — `npx web-push generate-vapid-keys` |
+| `VAPID_PRIVATE_KEY` | PWA push anahtarı (private) — aynı komuttan |
+| `AYNA_TIK_SECRET` | AYNA tik ucunun gizli anahtarı — `openssl rand -hex 24`; Supabase cron aynı değerle çağırır |
 
 ## Veritabanı
 
@@ -100,6 +103,37 @@ Yönetici: `/admin/giris` + `ADMIN_PASSWORD` (kod `999999` katılımcı girişin
 - Admin panelde **📬 90 Gün Sonra** bölümü: e-postası kayıtlı katılımcı sayısı + **davet gönderimi**. Davetler Postmark ile parti parti (çağrı başına 10) gönderilir, ilerleme canlı görünür; tamamlanınca gönderim zamanı `settings.wave4_davet_gonderildi`e yazılır ve yeniden gönderim onay kutusu ister.
 - Davet e-postası kişiye özel `/giris?kod=XXXXXX` linki taşır — herkes kamptaki koduyla geri döner; Dalga 4 puanları rapora ve dalga yolculuğuna kendiliğinden eklenir.
 - Akış: Dalga 4'ü aç → davetleri gönder. `POSTMARK_SERVER_TOKEN`/`EMAIL_FROM` yoksa yalnızca bu bölüm devre dışı kalır.
+- Davet, katılımcının kampın son gecesi AYNA'ya yazdığı **SÖZ'ü** de geri getirir: *"90 gün önce kendine şunu söz vermiştin…"*
+
+## AYNA — Yapay Zekâ Kamp Direktörü (Faz 7)
+
+Kampı "yapay zekâ yönetiyor" deneyiminin tamamı. AYNA birinci tekil şahıs konuşan bir personadır: görev verir, izler, puanlar, programı parça parça açıklar.
+
+- **Görev motoru** — `claude-opus-4-8` her görevi kişinin verisine göre üretir (öz puanlar, hakkında biriken dış puanlar, önceki görevler). 5 tür: gözlem, cesaret, yansıma, gizli, tahmin. Gün 1 tanışma odaklı; Gün 2-3 veriye yaslanır (düşük öz puanlı / öz-dış farkı büyük özellikler hedeflenir).
+- **Anında AI puanlama** — yanıt gönderilince AYNA 1-10 puan + yapıcı yorum verir; düşerse `submitted` kalır, tik kurtarır. **AI puanları insan puanlarına asla karışmaz** — raporda üçüncü mercek: Öz / Başkaları / **AYNA'nın Gözü** (yeşil çubuk). Ayna Mektubu iki kaynağı sentezler.
+- **⚡ Kıvılcım** — görev başına taban 10 + AYNA puanı + zamanında bonus 5. Unvanlar: Çırak → Kaşif (50) → Alev (120) → Kor (220) → Efsane (350). Büyük ekranda 4. slayt: isimli Top 5 + takım yarışı.
+- **Gizemli program** — `/program`: geçmiş ve açıklanmış maddeler görünür, gelecektekiler 🔒 kilitli kart (ipucu + açıklanma saati). AYNA her maddeyi `reveal_minutes` önce push ile duyurur.
+- **Bildirimler (PWA)** — uygulama ana ekrana kurulur (manifest + service worker + ikonlar); `web-push`/VAPID ile gerçek push. iOS'ta ana ekrana ekleme şart — `AynaKurulum` bileşeni cihaza göre yönerge gösterir. Sessiz saatler: **22:30–07:30**.
+- **Kalp atışı** (`/api/tik`, 5 dk'da bir, `x-ayna-anahtar` gizli başlığıyla): süre dolanları kapatır → gecikmiş puanlama (≤2) → görev dağıtımı (≤3, tempo: sürpriz 60-180 dk / sabit 2s / 3s; kişi başı günde ≤7) → teslim hatırlatması (son 30 dk) → program duyuruları → günlük fısıltılar ("bugün N göz seni puanladı", 13 ve 20 sularında).
+- **AYNA Kontrol Odası** (`/admin/ayna-direktoru`) — uyandır/durdur, tempo, abone sayısı, manuel "Şimdi Tik Çalıştır", **SÖZ finali** düğmesi (herkese tek seferlik "kendine 90 günlük söz yaz" görevi — yanıt puanlanmaz, saklanır, Dalga 4 davetiyle geri döner), son 20 görevin canlı akışı.
+- **Maliyet** — 60 kişilik kampta 3 gün ≈ $20-25 Claude kullanımı (görev üretimi + puanlama + mektuplar).
+
+### Zamanlayıcı kurulumu (tek seferlik)
+
+AYNA'nın kendiliğinden uyanması için Supabase SQL Editor'de (placeholder'ı Vercel'deki `AYNA_TIK_SECRET` değeriyle değiştir):
+
+```sql
+create extension if not exists pg_cron;
+create extension if not exists pg_net;
+select cron.schedule('ayna-tik', '*/5 * * * *', $$
+  select net.http_post(
+    url     := 'https://liderlik-aynasi.vercel.app/api/tik',
+    headers := jsonb_build_object('x-ayna-anahtar', '<AYNA_TIK_SECRET>')
+  )
+$$);
+```
+
+AYNA `ayna_aktif=false` ile başlar — cron kurulu olsa bile panelden "Uyandır" denene dek hiçbir şey yapmaz. Kaldırmak için: `select cron.unschedule('ayna-tik');`
 
 ## Vercel Deploy
 
@@ -113,3 +147,4 @@ Yeni Vercel projesi → bu repo → **Root Directory: `liderlik-aynasi`** → yu
 - [x] **Faz 4** — Ayna Raporu + 🪞 *Senkronize "Ayna Anı" finali* + 🖼️ *paylaşılabilir Kelime Kartı* + 🤖 *AI Ayna Mektubu (Claude API)* + 📖 *Dalga yolculuğu hikâye modu*
 - [x] **Faz 5** — Büyük ekran (canlı) + 🕸️ *takım kimyası ağ haritası slaytı* + Vercel deploy
 - [x] **Faz 6** — 📬 *"90 gün sonra aynaya tekrar bak"* (Dalga 4 + e-posta daveti)
+- [x] **Faz 7** — 🤖 *AYNA: yapay zekâ kamp direktörü* (kişiye özel görev motoru + AI puanlama üçüncü merceği + ⚡ Kıvılcım ligi + gizemli program + PWA push + SÖZ finali)

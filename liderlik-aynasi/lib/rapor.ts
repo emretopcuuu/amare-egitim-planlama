@@ -12,6 +12,7 @@ export type RaporSatiri = {
   oz: number | null; // öz puan ortalaması (tüm dalgalar)
   dis: number | null; // dış puan ortalaması (tüm dalgalar)
   disSayi: number; // bu özelliğe dış puan veren değerlendirme sayısı
+  ayna: number | null; // AYNA'nın görev puanlarından üçüncü mercek
 };
 
 export type DalgaOzeti = {
@@ -40,6 +41,8 @@ export type Rapor = {
   tahmin: { topId: number; bottomId: number } | null;
   gercekTopId: number | null;
   gercekBottomId: number | null;
+  gorev: { tamamlanan: number; kivilcim: number };
+  aynaYorumlari: string[]; // AYNA'nın görev yorumları (mektup sentezi için)
 };
 
 const JOHARI_ESIK = 1.5;
@@ -49,7 +52,7 @@ function ortalama(toplam: number, adet: number): number | null {
 }
 
 export async function raporHesapla(db: Db, katilimciId: string): Promise<Rapor> {
-  const [ozellikler, puanlarSonuc, dalgalarSonuc, tahminSonuc] =
+  const [ozellikler, puanlarSonuc, dalgalarSonuc, tahminSonuc, gorevSonuc] =
     await Promise.all([
       aktifOzellikler(db),
       db
@@ -62,10 +65,28 @@ export async function raporHesapla(db: Db, katilimciId: string): Promise<Rapor> 
         .select("top_trait_id, bottom_trait_id")
         .eq("participant_id", katilimciId)
         .maybeSingle(),
+      db
+        .from("missions")
+        .select("trait_id, ai_score, ai_comment, spark_points")
+        .eq("participant_id", katilimciId)
+        .eq("status", "scored"),
     ]);
   if (puanlarSonuc.error) throw puanlarSonuc.error;
   if (dalgalarSonuc.error) throw dalgalarSonuc.error;
   if (tahminSonuc.error) throw tahminSonuc.error;
+  if (gorevSonuc.error) throw gorevSonuc.error;
+
+  // AYNA merceği: görev puanlarının özellik bazında ortalaması.
+  // İnsan puanlarına asla karıştırılmaz — ayrı sütun olarak taşınır.
+  const gorevler = gorevSonuc.data;
+  const aynaToplam = new Map<number, { t: number; n: number }>();
+  for (const g of gorevler) {
+    if (g.trait_id === null || g.ai_score === null) continue;
+    const k = aynaToplam.get(g.trait_id) ?? { t: 0, n: 0 };
+    k.t += g.ai_score;
+    k.n += 1;
+    aynaToplam.set(g.trait_id, k);
+  }
 
   const puanlar = puanlarSonuc.data;
   const ozellikAd = new Map(ozellikler.map((o) => [o.id, o.name]));
@@ -95,12 +116,14 @@ export async function raporHesapla(db: Db, katilimciId: string): Promise<Rapor> 
   const satirlar: RaporSatiri[] = ozellikler.map((o) => {
     const oz = ozToplam.get(o.id);
     const dis = disToplam.get(o.id);
+    const ayna = aynaToplam.get(o.id);
     return {
       ozellikId: o.id,
       ad: o.name,
       oz: oz ? ortalama(oz.t, oz.n) : null,
       dis: dis ? ortalama(dis.t, dis.n) : null,
       disSayi: dis?.n ?? 0,
+      ayna: ayna ? ortalama(ayna.t, ayna.n) : null,
     };
   });
 
@@ -177,6 +200,14 @@ export async function raporHesapla(db: Db, katilimciId: string): Promise<Rapor> 
       : null,
     gercekTopId: siralanmis[0]?.ozellikId ?? null,
     gercekBottomId: siralanmis[siralanmis.length - 1]?.ozellikId ?? null,
+    gorev: {
+      tamamlanan: gorevler.length,
+      kivilcim: gorevler.reduce((t, g) => t + g.spark_points, 0),
+    },
+    aynaYorumlari: gorevler
+      .map((g) => g.ai_comment)
+      .filter((y): y is string => !!y)
+      .slice(0, 8),
   };
 }
 

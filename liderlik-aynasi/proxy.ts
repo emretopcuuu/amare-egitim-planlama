@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = [
   /^\/api\/giris$/,
   /^\/api\/admin\/giris$/,
   /^\/api\/ekran$/, // büyük ekran verisi: isimsiz agregalar, oturumsuz erişilir
+  /^\/api\/tik$/, // AYNA kalp atışı: cron çağırır, kendi gizli başlığıyla korunur
 ];
 
 export async function proxy(req: NextRequest) {

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { raporHesapla, raporlarGorunurMu } from "@/lib/rapor";
+import { unvanBul } from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
 import AynaBekleme from "./AynaBekleme";
 import KelimeKarti from "./KelimeKarti";
@@ -192,7 +193,7 @@ export default async function AynaPage() {
       {/* Özellik özellik öz vs dış */}
       <section className="rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="font-semibold text-gold-light">{t.tabloBaslik}</h2>
-        <div className="mt-2 flex gap-4 text-xs text-slate-400">
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
           <span>
             <span className="mr-1 inline-block h-2 w-4 rounded-sm bg-royal-light" />
             {t.ozEtiket}
@@ -201,6 +202,12 @@ export default async function AynaPage() {
             <span className="mr-1 inline-block h-2 w-4 rounded-sm bg-gold" />
             {t.disEtiket}
           </span>
+          {rapor.satirlar.some((s) => s.ayna !== null) && (
+            <span>
+              <span className="mr-1 inline-block h-2 w-4 rounded-sm bg-emerald-400" />
+              {t.aynaEtiket}
+            </span>
+          )}
         </div>
         <ul className="mt-4 space-y-4">
           {rapor.satirlar.map((s) => (
@@ -224,10 +231,23 @@ export default async function AynaPage() {
                     style={{ width: `${((s.dis ?? 0) / 10) * 100}%` }}
                   />
                 </div>
+                {s.ayna !== null && (
+                  <div className="h-2 w-full overflow-hidden rounded-full bg-midnight-soft">
+                    <div
+                      className="h-full rounded-full bg-emerald-400"
+                      style={{ width: `${(s.ayna / 10) * 100}%` }}
+                    />
+                  </div>
+                )}
               </div>
               <div className="mt-1 flex justify-between font-mono text-xs text-slate-400">
                 <span>{puanYaz(s.oz)}</span>
-                <span>{puanYaz(s.dis)}</span>
+                <span>
+                  {puanYaz(s.dis)}
+                  {s.ayna !== null && (
+                    <span className="ml-2 text-emerald-400">{puanYaz(s.ayna)}</span>
+                  )}
+                </span>
               </div>
             </li>
           ))}
@@ -253,6 +273,20 @@ export default async function AynaPage() {
           </ul>
         )}
       </section>
+
+      {/* AYNA'nın görev özeti */}
+      {rapor.gorev.tamamlanan > 0 && (
+        <section className="rounded-2xl bg-gradient-to-br from-emerald-500/10 to-midnight-card/60 p-5 shadow-xl ring-1 ring-emerald-400/30 backdrop-blur">
+          <h2 className="font-semibold text-emerald-400">{t.aynaBaslik}</h2>
+          <p className="mt-2 text-sm text-slate-200">
+            {t.aynaOzeti(
+              rapor.gorev.tamamlanan,
+              rapor.gorev.kivilcim,
+              unvanBul(rapor.gorev.kivilcim).mevcut.ad
+            )}
+          </p>
+        </section>
+      )}
 
       {/* Kelime kartı */}
       {rapor.guclu[0] && (

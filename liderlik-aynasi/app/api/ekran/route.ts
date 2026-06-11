@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga, aktifOzellikler } from "@/lib/degerlendirme";
+import { unvanBul } from "@/lib/kivilcim";
 
 // Büyük ekran verisi — bu uç HERKESE AÇIK (sahne bilgisayarı giriş yapmaz).
 // Bu yüzden yalnızca isimsiz agregalar döner: sayılar, özellik ortalamaları
@@ -17,17 +18,29 @@ export type EkranVerisi = {
   dugumler: { t: number }[]; // t: takım indeksi (-1 = takımsız)
   baglar: { a: number; b: number; capraz: boolean }[];
   caprazOran: number | null;
+  // Kıvılcım Ligi: oyunlaştırma sıralaması isimlidir (puan/yorum değil,
+  // görev puanı — sahne alkışı için bilinçli olarak açık).
+  lig: { ad: string; kivilcim: number; unvan: string }[];
+  takimLigi: { takim: string; kivilcim: number }[];
 };
 
 export async function GET() {
   const db = supabaseAdmin();
-  const [dalga, ozellikler, kisilerSonuc, puanlarSonuc] = await Promise.all([
-    acikDalga(db),
-    aktifOzellikler(db),
-    db.from("participants").select("id, team").eq("role", "participant"),
-    db.from("ratings").select("rater_id, target_id, trait_id, score, is_self"),
-  ]);
-  if (kisilerSonuc.error || puanlarSonuc.error) {
+  const [dalga, ozellikler, kisilerSonuc, puanlarSonuc, gorevSonuc] =
+    await Promise.all([
+      acikDalga(db),
+      aktifOzellikler(db),
+      db
+        .from("participants")
+        .select("id, full_name, team")
+        .eq("role", "participant"),
+      db.from("ratings").select("rater_id, target_id, trait_id, score, is_self"),
+      db
+        .from("missions")
+        .select("participant_id, spark_points")
+        .eq("status", "scored"),
+    ]);
+  if (kisilerSonuc.error || puanlarSonuc.error || gorevSonuc.error) {
     return Response.json({ hata: "Veri alınamadı." }, { status: 500 });
   }
 
@@ -80,6 +93,28 @@ export async function GET() {
     (n) => n >= ozellikSayisi
   ).length;
 
+  // Kıvılcım Ligi
+  const kivilcimlar = new Map<string, number>();
+  for (const g of gorevSonuc.data) {
+    kivilcimlar.set(
+      g.participant_id,
+      (kivilcimlar.get(g.participant_id) ?? 0) + g.spark_points
+    );
+  }
+  const lig = kisiler
+    .map((k) => ({
+      ad: k.full_name,
+      takim: k.team,
+      kivilcim: kivilcimlar.get(k.id) ?? 0,
+    }))
+    .filter((k) => k.kivilcim > 0)
+    .sort((a, b) => b.kivilcim - a.kivilcim);
+  const takimToplam = new Map<string, number>();
+  for (const k of lig) {
+    if (!k.takim) continue;
+    takimToplam.set(k.takim, (takimToplam.get(k.takim) ?? 0) + k.kivilcim);
+  }
+
   const veri: EkranVerisi = {
     dalgaAdi: dalga?.name ?? null,
     katilimci: kisiler.length,
@@ -95,6 +130,14 @@ export async function GET() {
     baglar,
     caprazOran:
       baglar.length > 0 ? Math.round((caprazSayisi / baglar.length) * 100) : null,
+    lig: lig.slice(0, 5).map((k) => ({
+      ad: k.ad,
+      kivilcim: k.kivilcim,
+      unvan: unvanBul(k.kivilcim).mevcut.ad,
+    })),
+    takimLigi: [...takimToplam.entries()]
+      .map(([takim, kivilcim]) => ({ takim, kivilcim }))
+      .sort((a, b) => b.kivilcim - a.kivilcim),
   };
 
   return Response.json(veri);

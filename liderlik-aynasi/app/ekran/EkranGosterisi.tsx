@@ -7,7 +7,7 @@ import type { EkranVerisi } from "@/app/api/ekran/route";
 const t = tr.ekran;
 const VERI_YOKLAMA_MS = 10_000;
 const SLAYT_MS = 14_000;
-const SLAYT_SAYISI = 3;
+const SLAYT_SAYISI = 4;
 
 // Takım renk paleti — projeksiyonda ayırt edilebilir, koyu zemine uygun
 const TAKIM_RENKLERI = [
@@ -261,6 +261,77 @@ export default function EkranGosterisi() {
                   </li>
                 ))}
               </ul>
+            </section>
+            {/* Slayt 4 — Kıvılcım Ligi */}
+            <section
+              className={`absolute inset-0 flex flex-col transition-opacity duration-1000 ${
+                slayt === 3 ? "opacity-100" : "pointer-events-none opacity-0"
+              }`}
+            >
+              <h2 className="text-3xl font-semibold text-gold-light">
+                {t.ligBaslik}
+              </h2>
+              <p className="mt-1 text-lg text-slate-400">{t.ligAciklama}</p>
+
+              {veri.lig.length === 0 ? (
+                <p className="flex flex-1 items-center justify-center text-xl text-slate-400">
+                  {t.ligBos}
+                </p>
+              ) : (
+                <div className="mt-6 grid min-h-0 flex-1 grid-cols-1 gap-8 lg:grid-cols-2">
+                  <ol className="space-y-3">
+                    {veri.lig.map((k, i) => (
+                      <li
+                        key={k.ad}
+                        className="flex items-center gap-4 rounded-2xl bg-midnight-card/60 p-4 ring-1 ring-gold/20"
+                      >
+                        <span className="w-10 text-center text-3xl">
+                          {["🥇", "🥈", "🥉"][i] ?? `${i + 1}.`}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-2xl font-semibold text-slate-100">
+                          {k.ad}
+                        </span>
+                        <span className="text-lg text-royal-light">{k.unvan}</span>
+                        <span className="font-mono text-2xl font-bold text-gold">
+                          {k.kivilcim} ⚡
+                        </span>
+                      </li>
+                    ))}
+                  </ol>
+                  <div>
+                    <h3 className="text-xl font-semibold text-slate-300">
+                      {t.ligTakimlar}
+                    </h3>
+                    <ul className="mt-4 space-y-4">
+                      {veri.takimLigi.map((tk, i) => {
+                        const enYuksek = veri.takimLigi[0]?.kivilcim ?? 1;
+                        return (
+                          <li key={tk.takim}>
+                            <div className="flex items-baseline justify-between">
+                              <span className="text-xl font-medium text-slate-100">
+                                {tk.takim} {i === 0 && "👑"}
+                              </span>
+                              <span className="font-mono text-xl font-bold text-gold-light">
+                                {tk.kivilcim} ⚡
+                              </span>
+                            </div>
+                            <div className="mt-1.5 h-4 w-full overflow-hidden rounded-full bg-midnight-card/80">
+                              <div
+                                className="h-full rounded-full transition-all duration-1000"
+                                style={{
+                                  width: `${(tk.kivilcim / enYuksek) * 100}%`,
+                                  background:
+                                    "linear-gradient(90deg, #d4af37, #f0c75e)",
+                                }}
+                              />
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                </div>
+              )}
             </section>
           </>
         )}

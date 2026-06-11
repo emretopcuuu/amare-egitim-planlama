@@ -100,6 +100,78 @@ export type Database = {
           },
         ]
       }
+      missions: {
+        Row: {
+          ai_comment: string | null
+          ai_score: number | null
+          body: string
+          due_at: string
+          id: string
+          issued_at: string
+          kind: string
+          participant_id: string
+          reminded_at: string | null
+          responded_at: string | null
+          response_text: string | null
+          scored_at: string | null
+          spark_points: number
+          status: string
+          title: string
+          trait_id: number | null
+        }
+        Insert: {
+          ai_comment?: string | null
+          ai_score?: number | null
+          body: string
+          due_at: string
+          id?: string
+          issued_at?: string
+          kind: string
+          participant_id: string
+          reminded_at?: string | null
+          responded_at?: string | null
+          response_text?: string | null
+          scored_at?: string | null
+          spark_points?: number
+          status?: string
+          title: string
+          trait_id?: number | null
+        }
+        Update: {
+          ai_comment?: string | null
+          ai_score?: number | null
+          body?: string
+          due_at?: string
+          id?: string
+          issued_at?: string
+          kind?: string
+          participant_id?: string
+          reminded_at?: string | null
+          responded_at?: string | null
+          response_text?: string | null
+          scored_at?: string | null
+          spark_points?: number
+          status?: string
+          title?: string
+          trait_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missions_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "missions_trait_id_fkey"
+            columns: ["trait_id"]
+            isOneToOne: false
+            referencedRelation: "traits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       participants: {
         Row: {
           city: string | null
@@ -179,6 +251,41 @@ export type Database = {
           },
         ]
       }
+      push_subscriptions: {
+        Row: {
+          auth: string
+          created_at: string
+          endpoint: string
+          id: string
+          p256dh: string
+          participant_id: string
+        }
+        Insert: {
+          auth: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          p256dh: string
+          participant_id: string
+        }
+        Update: {
+          auth?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          p256dh?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "push_subscriptions_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ratings: {
         Row: {
           comment: string | null
@@ -246,6 +353,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      schedule_items: {
+        Row: {
+          created_at: string
+          id: string
+          location: string | null
+          reveal_minutes: number
+          revealed: boolean
+          starts_at: string
+          teaser: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          reveal_minutes?: number
+          revealed?: boolean
+          starts_at: string
+          teaser?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string | null
+          reveal_minutes?: number
+          revealed?: boolean
+          starts_at?: string
+          teaser?: string | null
+          title?: string
+        }
+        Relationships: []
       }
       settings: {
         Row: {
