@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 const t = tr.gorevler;
 
@@ -102,20 +103,28 @@ export default function GorevYanitFormu({ gorevId }: { gorevId: string }) {
         maxLength={1500}
         disabled={gonderiliyor}
         placeholder={t.yanitPlaceholder}
-        className="mt-1 w-full rounded-xl border border-royal-light/30 bg-midnight-soft p-3 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
+        className="mt-1 w-full rounded-xl border border-royal-light/30 bg-midnight-soft p-3 text-base text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
       />
       {hata && (
         <p role="alert" className="mt-1 text-sm font-medium text-red-400">
           {t.hata}
         </p>
       )}
-      <button
-        type="submit"
-        disabled={yanit.trim().length < 2 || gonderiliyor}
-        className="mt-2 h-11 w-full rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        {gonderiliyor ? t.gonderiliyor : t.gonder}
-      </button>
+      <div className="mt-2 flex gap-2">
+        <MikrofonButonu
+          disabled={gonderiliyor}
+          onMetin={(parca) =>
+            setYanit((y) => (y.trim() ? `${y.trim()} ${parca}` : parca))
+          }
+        />
+        <button
+          type="submit"
+          disabled={yanit.trim().length < 2 || gonderiliyor}
+          className="h-11 flex-1 rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {gonderiliyor ? t.gonderiliyor : t.gonder}
+        </button>
+      </div>
     </form>
   );
 }

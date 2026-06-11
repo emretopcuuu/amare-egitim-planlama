@@ -23,6 +23,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  // iOS, 16px altı inputa odaklanınca sayfayı yakınlaştırıp yatay kaydırma
+  // yaratıyor; kamp uygulamasında zoom kapalı — ekran sabit kalsın.
+  maximumScale: 1,
+  userScalable: false,
   themeColor: "#1e1233",
 };
 

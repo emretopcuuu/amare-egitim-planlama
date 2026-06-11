@@ -18,6 +18,8 @@ body {
   min-height: 100vh;
   color: #f1f5f9;
   font-family: var(--font-sans), system-ui, sans-serif;
+  /* mobilde taşan öğe yatay kaydırma yaratmasın */
+  overflow-x: hidden;
 }
 
 /* Ayna Anı açılışı: rapor başlığı yumuşakça belirir */

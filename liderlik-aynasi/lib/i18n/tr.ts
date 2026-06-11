@@ -349,6 +349,10 @@ export const tr = {
     desteklenmiyor: "Bu tarayıcı bildirimleri desteklemiyor — görevlerin uygulamada görünecek.",
     hata: "Abonelik kurulamadı. Tekrar dene.",
   },
+  ses: {
+    baslat: "Sesle Yaz",
+    dinliyor: "Dinliyorum… durdurmak için dokun",
+  },
   eposta: {
     davetKonu: "Aynaya tekrar bakma zamanı ✨ — Liderlik Aynası",
     davetBaslik: "90 gün geçti. Ayna seni bekliyor.",
