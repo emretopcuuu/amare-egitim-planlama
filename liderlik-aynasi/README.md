@@ -30,6 +30,7 @@ npm run dev
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Dashboard → API Keys → publishable key |
 | `SESSION_SECRET` | `openssl rand -base64 32` |
 | `ADMIN_PASSWORD` | Yönetici paneli şifresi |
+| `ANTHROPIC_API_KEY` | platform.claude.com — AI Ayna Mektubu için (yoksa uygulama çalışır, yalnızca mektup üretimi kapalı kalır) |
 
 ## Veritabanı
 
@@ -75,6 +76,14 @@ Yönetici: `/admin/giris` + `ADMIN_PASSWORD` (kod `999999` katılımcı girişin
 - `/admin/moderasyon` — başkalarına yazılan yorumları listeler; gizlenen yorum (`is_hidden`) raporda görünmez, puan korunur.
 - `/api/admin/*` rotalarının tamamı oturum üstüne **admin rol kontrolü** yapar (proxy yalnızca oturum doğrular).
 
+## Ayna Raporu (Faz 4)
+
+- `/ayna` — kişiye özel **Ayna Raporu**: en güçlü 3 / gelişime açık 3 özellik, **Johari vurguları** (gizli güç: dış − öz ≥ 1.5; kör nokta: tersi), 🎯 tahmin vs gerçek, 📖 **dalga yolculuğu** (dalga bazlı dış ortalamalar + en çok yükselen özellik), özellik özellik öz/dış çubukları, isimsiz yorumlar (`is_hidden=false`).
+- 🪞 **Senkronize Ayna Anı**: `reports_visible=false` iken `/ayna` bekleme ekranı gösterir ve 5 sn'de bir `/api/ayna-durumu`nu yoklar; admin paneldeki "Aynaları Aç" düğmesi ayarı çevirince salondaki tüm telefonlar aynı anda rapora geçer.
+- 🖼️ **Kelime Kartı**: en güçlü özellikten canvas ile üretilen 1080×1350 PNG; indirme + Web Share API ile paylaşım (ek kütüphane yok).
+- 🤖 **AI Ayna Mektubu**: `@anthropic-ai/sdk` + `claude-opus-4-8` ile rapor verisinden 150-220 kelimelik kişisel mektup; `mirror_letters`a bir kez yazılır (PK yarışında önce yazan kazanır). Yorumlar modele isimsiz gider ve mektupta birebir alıntı yasak. Admin panelden **toplu ön-üretim** (çağrı başına 1 mektup, istemci döngüsü ilerlemeyi gösterir) + raporu açan katılımcı için tembel üretim. `ANTHROPIC_API_KEY` yoksa bu bölüm devre dışı, gerisi çalışır.
+- Rapor hesaplama tek modülde (`lib/rapor.ts`) — sayfa ve mektup üretimi aynı sayıları kullanır.
+
 ## Vercel Deploy
 
 Yeni Vercel projesi → bu repo → **Root Directory: `liderlik-aynasi`** → yukarıdaki env değişkenlerini tanımla. Ana uygulamanın Netlify deploy'u etkilenmez.
@@ -84,6 +93,6 @@ Yeni Vercel projesi → bu repo → **Root Directory: `liderlik-aynasi`** → yu
 - [x] **Faz 1** — Şema + RLS + seed + kod ile giriş akışı
 - [x] **Faz 2** — Puanlama akışı (öz-puan kapısı, atanan kişiler, serbest puanlama, <6 puana zorunlu yorum, offline taslak) + 🎯 *"Kendini ne kadar tanıyorsun?" tahmin oyunu*
 - [x] **Faz 3** — Admin paneli (CSV import, QR PDF, eşleştirme algoritması, dalga kontrolü, moderasyon)
-- [ ] **Faz 4** — Ayna Raporu + 🪞 *Senkronize "Ayna Anı" finali* + 🖼️ *paylaşılabilir Kelime Kartı* + 🤖 *AI Ayna Mektubu (Claude API)* + 📖 *Dalga yolculuğu hikâye modu*
+- [x] **Faz 4** — Ayna Raporu + 🪞 *Senkronize "Ayna Anı" finali* + 🖼️ *paylaşılabilir Kelime Kartı* + 🤖 *AI Ayna Mektubu (Claude API)* + 📖 *Dalga yolculuğu hikâye modu*
 - [ ] **Faz 5** — Büyük ekran (canlı) + 🕸️ *takım kimyası ağ haritası slaytı* + Vercel deploy
 - [ ] **Faz 6** — 📬 *"90 gün sonra aynaya tekrar bak"* (Dalga 4 + e-posta daveti; şema hazır)
