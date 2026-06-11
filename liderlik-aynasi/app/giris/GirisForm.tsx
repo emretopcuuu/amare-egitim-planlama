@@ -57,14 +57,15 @@ export default function GirisForm() {
   );
 
   return (
-    <EgilenKart className="w-full max-w-sm rounded-2xl">
-    <div className="relative w-full overflow-hidden kart-3d rounded-2xl bg-midnight-card/60 p-8 shadow-[0_0_70px_-20px_rgba(212,175,55,0.45)] ring-1 ring-royal/30 backdrop-blur">
-      <span className="altin-tel" />
-      <p className="text-center text-3xl">✨</p>
-      <h1 className="font-display altin-metin mt-2 text-center text-3xl font-bold tracking-tight text-gold">
-        {tr.giris.baslik}
+    <EgilenKart className="w-full max-w-sm rounded-3xl">
+    <div className="kart-cam relative w-full overflow-hidden rounded-3xl p-8">
+      <p className="prizma-serif text-center text-xs uppercase tracking-[0.45em] text-slate-400">
+        Liderlik
+      </p>
+      <h1 className="prizma-serif tayf-metin mt-1 text-center text-5xl font-semibold tracking-tight">
+        AYNA
       </h1>
-      <p className="mt-3 text-center text-sm text-slate-300">
+      <p className="mt-4 text-center text-sm leading-relaxed text-slate-300">
         {tr.giris.altBaslik}
       </p>
 
@@ -95,7 +96,7 @@ export default function GirisForm() {
         <button
           type="submit"
           disabled={kod.length !== 6 || yukleniyor}
-          className="h-12 w-full btn-3d rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+          className="btn-cam h-12 w-full rounded-xl font-semibold transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
         >
           {yukleniyor ? tr.giris.girisYapiliyor : tr.giris.girisYap}
         </button>

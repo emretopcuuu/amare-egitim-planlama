@@ -8,6 +8,7 @@ import { tr } from "@/lib/i18n/tr";
 import CikisButonu from "@/components/CikisButonu";
 import AynaKurulum from "@/components/AynaKurulum";
 import EgilenKart from "@/components/EgilenKart";
+import PrizmaArkaplan from "@/components/prizma/PrizmaArkaplan";
 
 export default async function AnaSayfa() {
   const session = await getSession();
@@ -25,75 +26,79 @@ export default async function AnaSayfa() {
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-5 p-6">
-      <EgilenKart className="rounded-2xl">
-      <div className="relative overflow-hidden kart-3d rounded-2xl bg-midnight-card/60 p-8 shadow-2xl ring-1 ring-royal/30 backdrop-blur">
-        <span className="altin-tel" />
-        <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
-          {tr.app.name}
-        </p>
-        <h1 className="font-display altin-metin mt-2 text-3xl font-bold text-gold">
-          {tr.anaSayfa.hosGeldin(session.ad)}
-        </h1>
-        <p className="mt-4 text-slate-300">{tr.anaSayfa.aciklama}</p>
+    <main className="evren-prizma flex min-h-screen flex-1 flex-col overflow-hidden">
+      <PrizmaArkaplan adet={16} />
+      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-5 p-6">
+        <EgilenKart className="rounded-3xl">
+          <div className="kart-cam relative overflow-hidden rounded-3xl p-8">
+            <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
+              {tr.app.name}
+            </p>
+            <h1 className="prizma-serif tayf-metin mt-2 text-3xl font-semibold">
+              {tr.anaSayfa.hosGeldin(session.ad)}
+            </h1>
+            <p className="mt-4 text-sm leading-relaxed text-slate-300">
+              {tr.anaSayfa.aciklama}
+            </p>
 
-        <p className="mt-6 text-sm">
-          {dalga ? (
-            <span className="rounded-full bg-emerald-400/15 px-3 py-1 font-medium text-emerald-400">
-              ● {tr.anaSayfa.dalgaAcik(dalga.name)}
-            </span>
-          ) : (
-            <span className="rounded-full bg-slate-500/15 px-3 py-1 font-medium text-slate-400">
-              ○ {tr.anaSayfa.dalgaKapali}
-            </span>
-          )}
-        </p>
+            <p className="mt-6 text-sm">
+              {dalga ? (
+                <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 font-medium text-emerald-300">
+                  ● {tr.anaSayfa.dalgaAcik(dalga.name)}
+                </span>
+              ) : (
+                <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 font-medium text-slate-400">
+                  ○ {tr.anaSayfa.dalgaKapali}
+                </span>
+              )}
+            </p>
 
-        {raporlarAcik && (
-          <Link
-            href="/ayna"
-            className="parilti mt-6 flex h-14 w-full items-center justify-center rounded-xl bg-gradient-to-r from-gold to-gold-light font-bold text-midnight shadow-lg shadow-gold/25 transition-transform hover:scale-[1.02]"
-          >
-            {tr.anaSayfa.aynaniGor}
-          </Link>
-        )}
+            {raporlarAcik && (
+              <Link
+                href="/ayna"
+                className="parilti btn-cam mt-6 flex h-14 w-full items-center justify-center rounded-xl font-bold transition-transform hover:scale-[1.01]"
+              >
+                {tr.anaSayfa.aynaniGor}
+              </Link>
+            )}
 
-        <Link
-          href="/gorevler"
-          className={`${raporlarAcik ? "mt-3" : "mt-6"} flex h-12 w-full items-center justify-between rounded-xl px-4 font-semibold transition-colors ${
-            (aktifGorev ?? 0) > 0
-              ? "bg-gold text-midnight hover:bg-gold-light"
-              : "border border-royal-light/40 text-slate-200 hover:bg-midnight-soft"
-          }`}
-        >
-          <span>{tr.anaSayfa.gorevler}</span>
-          {(aktifGorev ?? 0) > 0 && (
-            <span className="rounded-full bg-midnight px-2.5 py-0.5 text-xs font-bold text-gold">
-              {tr.anaSayfa.aktifGorev(aktifGorev ?? 0)}
-            </span>
-          )}
-        </Link>
+            <Link
+              href="/gorevler"
+              className={`${raporlarAcik ? "mt-3" : "mt-6"} flex h-12 w-full items-center justify-between rounded-xl px-4 font-semibold transition-colors ${
+                (aktifGorev ?? 0) > 0
+                  ? "btn-cam"
+                  : "border border-white/15 text-slate-200 hover:bg-white/[0.06]"
+              }`}
+            >
+              <span>{tr.anaSayfa.gorevler}</span>
+              {(aktifGorev ?? 0) > 0 && (
+                <span className="rounded-full bg-grafit px-2.5 py-0.5 text-xs font-bold text-sky-200">
+                  {tr.anaSayfa.aktifGorev(aktifGorev ?? 0)}
+                </span>
+              )}
+            </Link>
 
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          <Link
-            href="/degerlendir"
-            className="flex h-12 items-center justify-center rounded-xl border border-royal-light/40 text-sm font-semibold text-slate-200 transition-colors hover:bg-midnight-soft"
-          >
-            {tr.anaSayfa.degerlendirmeyeBasla}
-          </Link>
-          <Link
-            href="/program"
-            className="flex h-12 items-center justify-center rounded-xl border border-royal-light/40 text-sm font-semibold text-slate-200 transition-colors hover:bg-midnight-soft"
-          >
-            {tr.anaSayfa.program}
-          </Link>
-        </div>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <Link
+                href="/degerlendir"
+                className="flex h-12 items-center justify-center rounded-xl border border-white/15 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/[0.06]"
+              >
+                {tr.anaSayfa.degerlendirmeyeBasla}
+              </Link>
+              <Link
+                href="/program"
+                className="flex h-12 items-center justify-center rounded-xl border border-white/15 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/[0.06]"
+              >
+                {tr.anaSayfa.program}
+              </Link>
+            </div>
+          </div>
+        </EgilenKart>
+
+        <AynaKurulum />
+
+        <CikisButonu />
       </div>
-      </EgilenKart>
-
-      <AynaKurulum />
-
-      <CikisButonu />
     </main>
   );
 }

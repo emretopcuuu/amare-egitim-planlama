@@ -69,7 +69,7 @@ export default function CodeInput({ value, onChange, onComplete, disabled }: Pro
           onKeyDown={(e) => handleKeyDown(i, e)}
           onFocus={(e) => e.target.select()}
           aria-label={`Kod hanesi ${i + 1}`}
-          className="h-14 w-11 rounded-xl border-2 border-royal-light/40 bg-midnight-soft text-center text-2xl font-bold text-gold-light outline-none transition-all focus:border-gold focus:shadow-[0_0_0_4px_rgba(212,175,55,0.15)] disabled:opacity-50 sm:h-16 sm:w-12"
+          className="h-14 w-11 rounded-xl border border-white/15 bg-white/[0.06] text-center text-2xl font-semibold text-slate-100 shadow-[inset_0_2px_8px_rgba(0,0,0,0.35)] outline-none transition-all focus:border-sky-200/70 focus:shadow-[0_0_0_4px_rgba(155,231,255,0.12),inset_0_2px_8px_rgba(0,0,0,0.35)] disabled:opacity-50 sm:h-16 sm:w-12"
         />
       ))}
     </div>
