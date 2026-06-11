@@ -15,7 +15,15 @@ const LINKLER = [
   { href: "/admin/moderasyon", etiket: tr.admin.nav.moderasyon },
 ];
 
-export default function AdminNav({ ad }: { ad: string }) {
+export default function AdminNav({
+  ad,
+  dalgaAdi,
+  aynaUyanik,
+}: {
+  ad: string;
+  dalgaAdi: string | null;
+  aynaUyanik: boolean;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [cikiliyor, setCikiliyor] = useState(false);
@@ -32,7 +40,7 @@ export default function AdminNav({ ad }: { ad: string }) {
 
   return (
     <nav className="sticky top-0 z-10 border-b border-royal/30 bg-midnight/90 backdrop-blur print:hidden">
-      <div className="mx-auto flex w-full max-w-4xl items-center gap-1 overflow-x-auto p-3">
+      <div className="scrollbar-gizle mx-auto flex w-full max-w-4xl items-center gap-1 overflow-x-auto p-3">
         <span className="mr-2 hidden shrink-0 text-sm font-bold text-gold sm:block">
           {tr.app.name}
         </span>
@@ -49,7 +57,26 @@ export default function AdminNav({ ad }: { ad: string }) {
             {l.etiket}
           </Link>
         ))}
-        <span className="ml-auto hidden shrink-0 text-xs text-slate-400 sm:block">
+        {/* Canlı durum rozetleri: hangi sekmede olursan ol kokpit görünür */}
+        <span
+          className={`ml-auto shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
+            dalgaAdi
+              ? "bg-emerald-400/15 text-emerald-400"
+              : "bg-slate-500/15 text-slate-400"
+          }`}
+        >
+          🌊 {dalgaAdi ?? "Dalga kapalı"}
+        </span>
+        <span
+          className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
+            aynaUyanik
+              ? "bg-gold/15 text-gold-light"
+              : "bg-slate-500/15 text-slate-400"
+          }`}
+        >
+          🤖 {aynaUyanik ? "uyanık" : "uyuyor"}
+        </span>
+        <span className="hidden shrink-0 text-xs text-slate-400 sm:block">
           {ad}
         </span>
         <button

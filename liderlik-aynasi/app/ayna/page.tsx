@@ -95,7 +95,7 @@ export default async function AynaPage() {
 
       {/* Johari: gizli güç / kör nokta */}
       {rapor.gizliGuc && (
-        <section className="rounded-2xl bg-gradient-to-br from-emerald-500/15 to-midnight-card/60 p-5 shadow-xl ring-1 ring-emerald-400/30 backdrop-blur">
+        <section className="kart-cerceve rounded-2xl bg-gradient-to-br from-emerald-500/15 to-midnight-card/60 p-5 shadow-xl ring-1 ring-emerald-400/30 backdrop-blur">
           <h2 className="font-semibold text-emerald-400">{t.gizliGucBaslik}</h2>
           <p className="mt-2 text-sm text-slate-200">
             {t.gizliGucAciklama(rapor.gizliGuc.ad)}
@@ -103,7 +103,7 @@ export default async function AynaPage() {
         </section>
       )}
       {rapor.korNokta && (
-        <section className="rounded-2xl bg-gradient-to-br from-amber-500/15 to-midnight-card/60 p-5 shadow-xl ring-1 ring-amber-400/30 backdrop-blur">
+        <section className="kart-cerceve rounded-2xl bg-gradient-to-br from-amber-500/15 to-midnight-card/60 p-5 shadow-xl ring-1 ring-amber-400/30 backdrop-blur">
           <h2 className="font-semibold text-amber-400">{t.korNoktaBaslik}</h2>
           <p className="mt-2 text-sm text-slate-200">
             {t.korNoktaAciklama(rapor.korNokta.ad)}
@@ -276,7 +276,7 @@ export default async function AynaPage() {
 
       {/* AYNA'nın görev özeti */}
       {rapor.gorev.tamamlanan > 0 && (
-        <section className="rounded-2xl bg-gradient-to-br from-emerald-500/10 to-midnight-card/60 p-5 shadow-xl ring-1 ring-emerald-400/30 backdrop-blur">
+        <section className="kart-cerceve rounded-2xl bg-gradient-to-br from-emerald-500/10 to-midnight-card/60 p-5 shadow-xl ring-1 ring-emerald-400/30 backdrop-blur">
           <h2 className="font-semibold text-emerald-400">{t.aynaBaslik}</h2>
           <p className="mt-2 text-sm text-slate-200">
             {t.aynaOzeti(

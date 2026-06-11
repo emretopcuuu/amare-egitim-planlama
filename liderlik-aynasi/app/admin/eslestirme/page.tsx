@@ -53,7 +53,7 @@ export default async function EslestirmePage() {
           <p className="mt-3 text-sm text-slate-400">{t.atamaYok}</p>
         ) : (
           <div className="mt-4 overflow-x-auto">
-            <table className="w-full text-left text-sm">
+            <table className="cizgili w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-royal/30 text-xs uppercase tracking-wide text-slate-400">
                   <th className="py-2 pr-3">{tr.admin.ilerleme.kisi}</th>
