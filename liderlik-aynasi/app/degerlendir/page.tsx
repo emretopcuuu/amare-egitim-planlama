@@ -90,7 +90,7 @@ export default async function DegerlendirPage() {
           <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
             {tr.degerlendir.baslik}
           </p>
-          <h1 className="mt-1 text-2xl font-bold text-gold">{dalga.name}</h1>
+          <h1 className="font-display mt-1 text-2xl font-bold text-gold">{dalga.name}</h1>
         </div>
         <Link
           href="/"

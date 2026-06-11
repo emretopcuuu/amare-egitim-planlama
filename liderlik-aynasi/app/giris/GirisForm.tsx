@@ -56,8 +56,10 @@ export default function GirisForm() {
   );
 
   return (
-    <div className="w-full max-w-sm rounded-2xl bg-midnight-card/60 p-8 shadow-2xl ring-1 ring-royal/30 backdrop-blur">
-      <h1 className="text-center text-3xl font-bold tracking-tight text-gold">
+    <div className="relative w-full max-w-sm overflow-hidden rounded-2xl bg-midnight-card/60 p-8 shadow-[0_0_70px_-20px_rgba(212,175,55,0.45)] ring-1 ring-royal/30 backdrop-blur">
+      <span className="altin-tel" />
+      <p className="text-center text-3xl">✨</p>
+      <h1 className="font-display mt-2 text-center text-3xl font-bold tracking-tight text-gold">
         {tr.giris.baslik}
       </h1>
       <p className="mt-3 text-center text-sm text-slate-300">

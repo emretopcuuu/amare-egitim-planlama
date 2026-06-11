@@ -114,7 +114,7 @@ export default function EkranGosterisi() {
           <p className="text-lg font-medium uppercase tracking-[0.3em] text-royal-light">
             {t.altBaslik}
           </p>
-          <h1 className="mt-1 text-5xl font-bold text-gold">{t.baslik}</h1>
+          <h1 className="font-display mt-1 text-5xl font-bold text-gold">{t.baslik}</h1>
         </div>
         <p className="text-xl text-slate-400">{veri?.dalgaAdi ?? t.dalgaYok}</p>
       </header>

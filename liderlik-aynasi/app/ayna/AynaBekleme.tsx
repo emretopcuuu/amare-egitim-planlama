@@ -37,9 +37,15 @@ export default function AynaBekleme() {
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center p-6 text-center">
-      <div className="rounded-2xl bg-midnight-card/60 p-10 shadow-2xl ring-1 ring-gold/30 backdrop-blur">
-        <p className="animate-pulse text-6xl">🔮</p>
-        <h1 className="mt-6 text-2xl font-bold text-gold">
+      <div className="relative overflow-hidden rounded-2xl bg-midnight-card/60 p-10 shadow-2xl ring-1 ring-gold/30 backdrop-blur">
+        <span className="altin-tel" />
+        <div className="relative mx-auto h-28 w-28">
+          <div className="ayna-halka absolute inset-0" />
+          <p className="absolute inset-0 flex animate-pulse items-center justify-center text-6xl">
+            🔮
+          </p>
+        </div>
+        <h1 className="font-display mt-6 text-2xl font-bold text-gold">
           {tr.ayna.bekleBaslik}
         </h1>
         <p className="mt-3 text-slate-300">{tr.ayna.bekleAciklama}</p>

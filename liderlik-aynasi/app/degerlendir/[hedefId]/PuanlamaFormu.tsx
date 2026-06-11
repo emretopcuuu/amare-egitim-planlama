@@ -199,10 +199,10 @@ export default function PuanlamaFormu({
                   aria-checked={g.puan === p}
                   disabled={gonderiliyor}
                   onClick={() => guncelle(o.id, { puan: p })}
-                  className={`h-11 rounded-lg text-sm font-bold transition-colors ${
+                  className={`h-11 rounded-lg text-sm font-bold transition-all ${
                     g.puan === p
-                      ? "bg-gold text-midnight"
-                      : "border border-royal-light/30 text-slate-300 hover:border-gold/60"
+                      ? "scale-105 bg-gradient-to-br from-gold-light to-gold text-midnight shadow-lg shadow-gold/30"
+                      : "border border-royal-light/30 text-slate-300 hover:border-gold/60 hover:text-gold-light"
                   }`}
                 >
                   {p}

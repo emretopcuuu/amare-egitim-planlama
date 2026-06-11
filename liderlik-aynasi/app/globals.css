@@ -11,6 +11,7 @@
   --color-gold-dim: #9c7e1b;
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-playfair), Georgia, serif;
 }
 
 body {
@@ -20,6 +21,74 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
   /* mobilde taşan öğe yatay kaydırma yaratmasın */
   overflow-x: hidden;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Aurora: sahne ışığı hissi veren sabit, tıklanamaz ışıltı katmanı */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(640px 420px at 12% -6%, rgba(124, 58, 237, 0.28), transparent 70%),
+    radial-gradient(520px 360px at 92% -2%, rgba(212, 175, 55, 0.12), transparent 70%),
+    radial-gradient(760px 540px at 50% 112%, rgba(124, 58, 237, 0.16), transparent 70%);
+}
+
+::selection {
+  background: rgba(212, 175, 55, 0.35);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
+}
+
+/* Mobilde dokunuş geri bildirimi: butonlar basılınca hafifçe çöker */
+button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* Bekleme ekranı: kürenin etrafında dönen altın halka */
+.ayna-halka {
+  border: 2px solid transparent;
+  border-top-color: var(--color-gold);
+  border-right-color: rgba(212, 175, 55, 0.35);
+  border-radius: 9999px;
+  animation: ayna-don 2.4s linear infinite;
+  box-shadow: 0 0 24px rgba(212, 175, 55, 0.25);
+}
+
+@keyframes ayna-don {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Aktif görev kartı: AYNA'nın bakışı — yumuşak altın nabız */
+.altin-nabiz {
+  animation: altin-nabiz 3.2s ease-in-out infinite;
+}
+
+@keyframes altin-nabiz {
+  0%,
+  100% {
+    box-shadow: 0 0 26px -6px rgba(212, 175, 55, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 40px -4px rgba(212, 175, 55, 0.5);
+  }
+}
+
+/* Kart üst kenarındaki incecik altın tel */
+.altin-tel {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.65), transparent);
 }
 
 /* Ayna Anı açılışı: rapor başlığı yumuşakça belirir */
