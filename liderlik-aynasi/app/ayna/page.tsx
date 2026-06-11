@@ -145,9 +145,12 @@ export default async function AynaPage() {
                 </p>
               </div>
             </div>
-            <p className="mt-3 text-center text-sm font-medium text-gold-light">
-              {tahminTuttu ? t.tahminTuttu : t.tahminTutmadi}
-            </p>
+            {/* Dış puan yokken "gerçek" oluşmaz; hüküm verme */}
+            {rapor.gercekTopId !== null && (
+              <p className="mt-3 text-center text-sm font-medium text-gold-light">
+                {tahminTuttu ? t.tahminTuttu : t.tahminTutmadi}
+              </p>
+            )}
           </>
         )}
       </section>

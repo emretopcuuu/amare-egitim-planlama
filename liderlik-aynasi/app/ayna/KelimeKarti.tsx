@@ -50,7 +50,7 @@ function kartiCiz(canvas: HTMLCanvasElement, ad: string, ozellik: string) {
 
   // ayna simgesi
   ctx.font = "120px system-ui";
-  ctx.fillText("🪞", W / 2, 1080);
+  ctx.fillText("✨", W / 2, 1080);
 
   ctx.fillStyle = "rgba(241, 245, 249, 0.5)";
   ctx.font = "400 30px system-ui, sans-serif";

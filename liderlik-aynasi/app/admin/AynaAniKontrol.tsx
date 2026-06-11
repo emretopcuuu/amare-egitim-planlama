@@ -122,7 +122,7 @@ export default function AynaAniKontrol({ acik, mektupHazir, mektupToplam }: Prop
               : "bg-gold text-midnight shadow-lg shadow-gold/20 hover:bg-gold-light"
           }`}
         >
-          {bekliyor ? "…" : acik ? t.kapat : `🪞 ${t.ac}`}
+          {bekliyor ? "…" : acik ? t.kapat : `✨ ${t.ac}`}
         </button>
       </div>
 

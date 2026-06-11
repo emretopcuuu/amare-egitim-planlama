@@ -84,6 +84,14 @@ Yönetici: `/admin/giris` + `ADMIN_PASSWORD` (kod `999999` katılımcı girişin
 - 🤖 **AI Ayna Mektubu**: `@anthropic-ai/sdk` + `claude-opus-4-8` ile rapor verisinden 150-220 kelimelik kişisel mektup; `mirror_letters`a bir kez yazılır (PK yarışında önce yazan kazanır). Yorumlar modele isimsiz gider ve mektupta birebir alıntı yasak. Admin panelden **toplu ön-üretim** (çağrı başına 1 mektup, istemci döngüsü ilerlemeyi gösterir) + raporu açan katılımcı için tembel üretim. `ANTHROPIC_API_KEY` yoksa bu bölüm devre dışı, gerisi çalışır.
 - Rapor hesaplama tek modülde (`lib/rapor.ts`) — sayfa ve mektup üretimi aynı sayıları kullanır.
 
+## Büyük Ekran (Faz 5)
+
+- `/ekran` — sahneye yansıtılan, **oturum gerektirmeyen** canlı gösterim. 14 sn'de bir dönen 3 slayt, 10 sn'de bir veri yenileme:
+  1. **Kampın Nabzı** — katılımcı / verilen puan / öz ayna tamamlama / tam değerlendirme sayaçları
+  2. **🕸️ Takım Kimyası** — gözlem ağı haritası: takım renkli **isimsiz** noktalar (gizli gözlem atamaları ele verilmesin), yönsüz bağlar, takımlar arası bağlar altın renkte + çapraz takım oranı
+  3. **Kampın Kasları** — 10 özelliğin kamp geneli dış puan ortalaması (lider özellik 👑)
+- `/api/ekran` herkese açıktır ve **yalnızca isimsiz agregalar** döner — isim, kod veya kişi bazlı veri asla çıkmaz.
+
 ## Vercel Deploy
 
 Yeni Vercel projesi → bu repo → **Root Directory: `liderlik-aynasi`** → yukarıdaki env değişkenlerini tanımla. Ana uygulamanın Netlify deploy'u etkilenmez.
@@ -94,5 +102,5 @@ Yeni Vercel projesi → bu repo → **Root Directory: `liderlik-aynasi`** → yu
 - [x] **Faz 2** — Puanlama akışı (öz-puan kapısı, atanan kişiler, serbest puanlama, <6 puana zorunlu yorum, offline taslak) + 🎯 *"Kendini ne kadar tanıyorsun?" tahmin oyunu*
 - [x] **Faz 3** — Admin paneli (CSV import, QR PDF, eşleştirme algoritması, dalga kontrolü, moderasyon)
 - [x] **Faz 4** — Ayna Raporu + 🪞 *Senkronize "Ayna Anı" finali* + 🖼️ *paylaşılabilir Kelime Kartı* + 🤖 *AI Ayna Mektubu (Claude API)* + 📖 *Dalga yolculuğu hikâye modu*
-- [ ] **Faz 5** — Büyük ekran (canlı) + 🕸️ *takım kimyası ağ haritası slaytı* + Vercel deploy
+- [x] **Faz 5** — Büyük ekran (canlı) + 🕸️ *takım kimyası ağ haritası slaytı* + Vercel deploy
 - [ ] **Faz 6** — 📬 *"90 gün sonra aynaya tekrar bak"* (Dalga 4 + e-posta daveti; şema hazır)
