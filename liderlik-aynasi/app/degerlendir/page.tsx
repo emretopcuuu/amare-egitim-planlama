@@ -157,7 +157,7 @@ export default async function DegerlendirPage() {
       </section>
 
       {/* Tahmin oyunu */}
-      <section className="rounded-2xl bg-gradient-to-br from-royal/30 to-midnight-card/60 p-6 shadow-xl ring-1 ring-gold/30 backdrop-blur">
+      <section className="kart-cerceve rounded-2xl bg-gradient-to-br from-royal/30 to-midnight-card/60 p-6 shadow-xl ring-1 ring-gold/30 backdrop-blur">
         <h2 className="text-lg font-semibold text-gold-light">
           {tr.tahmin.kartBaslik}
         </h2>

@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import KatilimciAraclari from "./KatilimciAraclari";
+import KodKopyala from "./KodKopyala";
 
 export const metadata = { title: "Katılımcılar — Liderlik Aynası" };
 
@@ -30,7 +31,7 @@ export default async function KatilimcilarPage() {
           {t.toplam(kisiler.length)}
         </h2>
         <div className="mt-4 overflow-x-auto">
-          <table className="w-full text-left text-sm">
+          <table className="cizgili w-full text-left text-sm">
             <thead>
               <tr className="border-b border-royal/30 text-xs uppercase tracking-wide text-slate-400">
                 <th className="py-2 pr-3">{t.tablo.ad}</th>
@@ -49,8 +50,8 @@ export default async function KatilimcilarPage() {
                   <td className="py-2 pr-3 text-slate-400">{k.team ?? "—"}</td>
                   <td className="py-2 pr-3 text-slate-400">{k.city ?? "—"}</td>
                   <td className="py-2 pr-3 text-slate-400">{k.phone ?? "—"}</td>
-                  <td className="py-2 font-mono font-semibold text-gold-light">
-                    {k.login_code}
+                  <td className="py-2">
+                    <KodKopyala kod={k.login_code} />
                   </td>
                 </tr>
               ))}

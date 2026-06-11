@@ -69,7 +69,7 @@ export default async function GorevlerPage() {
       </header>
 
       {/* Kıvılcım durumu */}
-      <section className="parilti kart-3d rounded-2xl bg-gradient-to-br from-gold/15 to-midnight-card/60 p-5 ring-1 ring-gold/30 backdrop-blur">
+      <section className="parilti kart-cerceve rounded-2xl bg-gradient-to-br from-gold/15 to-midnight-card/60 p-5 ring-1 ring-gold/30 backdrop-blur">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-3xl font-bold text-gold">

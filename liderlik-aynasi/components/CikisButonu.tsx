@@ -22,7 +22,7 @@ export default function CikisButonu() {
     <button
       onClick={cikis}
       disabled={yukleniyor}
-      className="h-12 rounded-xl border border-royal-light/40 font-medium text-slate-300 transition-colors hover:bg-midnight-card disabled:opacity-50"
+      className="mx-auto text-sm text-slate-500 underline-offset-4 transition-colors hover:text-slate-300 hover:underline disabled:opacity-50"
     >
       {tr.anaSayfa.cikisYap}
     </button>

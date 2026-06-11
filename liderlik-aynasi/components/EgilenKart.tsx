@@ -13,10 +13,12 @@ export default function EgilenKart({
   className?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const odakli = useRef(false); // form alanı odaktayken zemin oynamasın
 
   function hareket(e: React.PointerEvent<HTMLDivElement>) {
     const el = ref.current;
-    if (!el) return;
+    if (!el || odakli.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const r = el.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width - 0.5;
     const y = (e.clientY - r.top) / r.height - 0.5;
@@ -37,6 +39,13 @@ export default function EgilenKart({
       onPointerLeave={birak}
       onPointerCancel={birak}
       onPointerUp={birak}
+      onFocusCapture={() => {
+        odakli.current = true;
+        birak();
+      }}
+      onBlurCapture={() => {
+        odakli.current = false;
+      }}
       className={`egilen ${className}`}
     >
       {children}

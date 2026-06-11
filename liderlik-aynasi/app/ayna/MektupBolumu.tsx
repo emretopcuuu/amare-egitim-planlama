@@ -36,7 +36,7 @@ export default function MektupBolumu({
   }
 
   return (
-    <section className="rounded-2xl bg-gradient-to-br from-royal/25 to-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/40 backdrop-blur">
+    <section className="kart-cerceve rounded-2xl bg-gradient-to-br from-royal/25 to-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/40 backdrop-blur">
       <h2 className="font-semibold text-gold-light">{t.baslik}</h2>
       <p className="mt-1 text-xs text-slate-400">{t.aciklama}</p>
 
