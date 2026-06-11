@@ -29,25 +29,42 @@ export async function POST(req: Request) {
   }
 
   const db = supabaseAdmin();
-  const { data: alicilar, error } = await db
-    .from("participants")
-    .select("full_name, email, login_code")
-    .eq("role", "participant")
-    .not("email", "is", null)
-    .order("created_at");
+  const [{ data: alicilar, error }, { data: sozler }] = await Promise.all([
+    db
+      .from("participants")
+      .select("id, full_name, email, login_code")
+      .eq("role", "participant")
+      .not("email", "is", null)
+      .order("created_at"),
+    db
+      .from("missions")
+      .select("participant_id, response_text")
+      .eq("kind", "soz")
+      .not("response_text", "is", null),
+  ]);
   if (error) {
     return Response.json({ hata: tr.admin.doksanGun.hata }, { status: 500 });
   }
+  // Kampın son gecesi verilen SÖZ'ler davetle sahibine geri döner
+  const sozHaritasi = new Map(
+    (sozler ?? []).map((s) => [s.participant_id, s.response_text])
+  );
 
   const istekBasliklari = await headers();
   const host = istekBasliklari.get("host") ?? "localhost:3000";
   const proto = istekBasliklari.get("x-forwarded-proto") ?? "https";
   const origin = `${proto}://${host}`;
 
-  const dilim = alicilar.slice(offset, offset + PARTI);
+  const dilim = (alicilar ?? []).slice(offset, offset + PARTI);
   let basarisiz = 0;
   for (const a of dilim) {
-    const oldu = await davetGonder(a.email!, a.full_name, a.login_code, origin);
+    const oldu = await davetGonder(
+      a.email!,
+      a.full_name,
+      a.login_code,
+      origin,
+      sozHaritasi.get(a.id) ?? null
+    );
     if (!oldu) basarisiz++;
   }
 

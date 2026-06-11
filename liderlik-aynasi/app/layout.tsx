@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Liderlik Aynası",
   description: "360° liderlik değerlendirme — kampta kendini başkalarının gözünden gör.",
+  // PWA: iOS ana ekran kurulumu (push bildirimleri için şart)
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "AYNA" },
+  icons: { apple: "/apple-touch-icon.png" },
 };
 
 export const viewport: Viewport = {

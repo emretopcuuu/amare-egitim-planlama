@@ -13,21 +13,32 @@ export async function davetGonder(
   alici: string,
   ad: string,
   kod: string,
-  origin: string
+  origin: string,
+  soz?: string | null
 ): Promise<boolean> {
   const link = `${origin}/giris?kod=${kod}`;
   const t = tr.eposta;
+
+  // Kampın son gecesi AYNA'ya yazılan SÖZ, 90 gün sonra sahibine geri döner.
+  const sozHtml = soz
+    ? `<div style="margin:24px 0;padding:18px;border-left:3px solid #d4af37;background:#2d1b4e;border-radius:0 12px 12px 0">
+        <p style="color:#f0c75e;font-weight:bold;margin:0">${t.davetSozBaslik}</p>
+        <p style="color:#cbd5e1;font-style:italic;line-height:1.6;margin:10px 0 0;white-space:pre-wrap">${t.davetSozMetin(soz)}</p>
+      </div>`
+    : "";
+  const sozMetin = soz ? `\n\n${t.davetSozBaslik}\n${t.davetSozMetin(soz)}` : "";
 
   const govde = {
     From: process.env.EMAIL_FROM!,
     To: alici,
     Subject: t.davetKonu,
-    TextBody: t.davetMetin(ad, link, kod),
+    TextBody: t.davetMetin(ad, link, kod) + sozMetin,
     HtmlBody: `
       <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;padding:32px;background:#1e1233;color:#f1f5f9;border-radius:16px">
         <p style="color:#a78bfa;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin:0">Liderlik Aynası</p>
         <h1 style="color:#d4af37;font-size:26px;margin:12px 0 0">${t.davetBaslik}</h1>
         <p style="line-height:1.6;margin-top:16px">${t.davetParagraf(ad)}</p>
+        ${sozHtml}
         <p style="text-align:center;margin:28px 0">
           <a href="${link}" style="background:#d4af37;color:#1e1233;font-weight:bold;padding:14px 28px;border-radius:12px;text-decoration:none">${t.davetButon}</a>
         </p>

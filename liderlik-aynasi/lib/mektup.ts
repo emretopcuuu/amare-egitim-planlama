@@ -7,9 +7,9 @@ import { raporHesapla } from "@/lib/rapor";
 // Üretim maliyetli olduğu için sonuç mirror_letters'a yazılır; PK çakışması
 // eşzamanlı üretim yarışında "zaten var" anlamına gelir ve mevcut döndürülür.
 
-const SISTEM = `Sen, 3 günlük bir liderlik kampının kapanışında her katılımcıya verilen kişisel "Ayna Mektubu"nu yazan sıcak ama yapmacıksız bir mentorsun.
+const SISTEM = `Sen AYNA'sın — bu 3 günlük liderlik kampını yöneten, görevler verip katılımcıları üç gün boyunca izleyen yapay zekâ. Kapanışta her katılımcıya kişisel "Ayna Mektubu"nu sen yazarsın: sıcak ama yapmacıksız.
 
-Sana katılımcının 360° değerlendirme verisi JSON olarak verilecek: 10 liderlik özelliğinde kendi puanları, arkadaşlarının ortalama puanları, dalga dalga değişim ve arkadaşlarının isimsiz gözlem yorumları.
+Sana katılımcının verisi JSON olarak verilecek: 10 liderlik özelliğinde kendi puanları, arkadaşlarının ortalama puanları, SENİN görev puanlamaların (aynaMercegi) ve görevlerine düştüğün yorumlar, dalga değişimi ve arkadaşlarının isimsiz gözlemleri. İki kaynağı sentezle: "arkadaşların şunu gördü, ben görevlerinde şunu gördüm" — örtüştükleri yer en güçlü mesajındır, ayrıştıkları yer en ilginç soru.
 
 Mektup kuralları:
 - Türkçe yaz, "Sevgili {ad}," diye başla, 150-220 kelime tut.
@@ -58,6 +58,11 @@ export async function mektupGetirVeyaUret(
       ozellik: y.ozellikAd,
       yorum: y.yorum,
     })),
+    aynaMercegi: rapor.satirlar
+      .filter((s) => s.ayna !== null)
+      .map((s) => ({ ozellik: s.ad, aynaPuani: Number(s.ayna!.toFixed(1)) })),
+    aynaGorevYorumlari: rapor.aynaYorumlari,
+    gorevIstatistigi: rapor.gorev,
   };
 
   try {

@@ -31,6 +31,9 @@ export const tr = {
     dalgaAcik: (dalga: string) => `${dalga} şu anda açık`,
     dalgaKapali: "Şu anda açık dalga yok",
     aynaniGor: "✨ Aynan Açıldı — Raporunu Gör",
+    gorevler: "🤖 AYNA'nın Görevleri",
+    aktifGorev: (n: number) => `${n} aktif görev`,
+    program: "📅 Program",
     cikisYap: "Çıkış Yap",
   },
   degerlendir: {
@@ -107,6 +110,8 @@ export const tr = {
     baslik: "Yönetim Paneli",
     nav: {
       panel: "Panel",
+      ayna: "AYNA",
+      program: "Program",
       katilimcilar: "Katılımcılar",
       eslestirme: "Eşleştirme",
       qr: "QR Kartlar",
@@ -218,6 +223,50 @@ export const tr = {
         "ANTHROPIC_API_KEY tanımlı değil — mektuplar üretilemez (Vercel ortam değişkenlerine ekle).",
     },
     yetkisiz: "Bu işlem için yönetici oturumu gerekir.",
+    aynaDirektor: {
+      baslik: "🤖 AYNA Kontrol Odası",
+      aciklama:
+        "Kampı yöneten yapay zekâ. Aktifken 5 dakikada bir uyanır: görev dağıtır, yanıtları puanlar, programı açıklar, dürtmeler gönderir. Gece 22:30–07:30 arası susar.",
+      durumAktif: "AYNA UYANIK — kampı yönetiyor",
+      durumPasif: "AYNA uyuyor",
+      uyandir: "AYNA'yı Uyandır",
+      durdur: "AYNA'yı Durdur",
+      tempoEtiket: "Görev temposu",
+      tempolar: {
+        surpriz: "Sürpriz (1-3 saat)",
+        "2": "Sabit 2 saat",
+        "3": "Sabit 3 saat",
+      },
+      aboneSayisi: (n: number, toplam: number) =>
+        `${toplam} katılımcının ${n} tanesi bildirime abone`,
+      tikCalistir: "Şimdi Tik Çalıştır (test)",
+      tikSonuc: (ozet: string) => `Tik tamam: ${ozet}`,
+      sozGonder: "🤝 Son Görevi Gönder: SÖZ",
+      sozOnay:
+        "Herkese 'kendine 90 günlük söz yaz' görevi gider (Gün 3 finali). Onaylıyor musun?",
+      sozGonderildi: (n: number) => `SÖZ görevi ${n} kişiye gönderildi.`,
+      akisBaslik: "Son Görevler",
+      akisYok: "Henüz görev üretilmedi.",
+      hata: "İşlem başarısız. Tekrar dene.",
+      kurulumUyari:
+        "Zamanlayıcı kurulu değilse AYNA kendiliğinden uyanmaz — README'deki cron SQL'ini Supabase'de çalıştır ya da test için 'Şimdi Tik Çalıştır'ı kullan.",
+    },
+    program: {
+      baslik: "Program Yönetimi",
+      aciklama:
+        "Kamp programını buraya gir; AYNA her maddeyi başlamadan önce ayarladığın dakika kadar erken duyurur. O ana dek katılımcılar yalnızca kilitli kart ve ipucu görür.",
+      zaman: "Başlangıç",
+      etkinlik: "Etkinlik adı",
+      yer: "Yer (opsiyonel)",
+      ipucu: "Gizem ipucu (opsiyonel — açıklanmadan önce görünür)",
+      acilmaDk: "Kaç dk önce duyurulsun",
+      ekle: "Programa Ekle",
+      ekleniyor: "Ekleniyor…",
+      sil: "Sil",
+      bos: "Henüz program maddesi yok.",
+      aciklandi: "duyuruldu",
+      hata: "Kaydedilemedi. Tekrar dene.",
+    },
     doksanGun: {
       baslik: "📬 90 Gün Sonra",
       aciklama:
@@ -238,6 +287,68 @@ export const tr = {
         "POSTMARK_SERVER_TOKEN ve EMAIL_FROM tanımlı değil — Vercel ortam değişkenlerine ekle.",
     },
   },
+  gorevler: {
+    baslik: "AYNA'nın Görevleri",
+    altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
+    aktifYok: "Şu an aktif görevin yok. AYNA seni izliyor — yenisi her an gelebilir. 👁",
+    sonTarih: (saat: string) => `Son: ${saat}`,
+    suresiGecti: "Süresi geçti",
+    yanitEtiket: "Yanıtın",
+    yanitPlaceholder: "Ne yaptın, ne gözlemledin, ne hissettin? Birkaç cümle yeter.",
+    gonder: "AYNA'ya Gönder",
+    gonderiliyor: "AYNA okuyor…",
+    puanin: (puan: number) => `AYNA puanın: ${puan}/10`,
+    kivilcimKazandin: (n: number) => `+${n} Kıvılcım ⚡`,
+    hata: "Gönderilemedi. Lütfen tekrar dene.",
+    gecmisBaslik: "Görev Geçmişin",
+    gecmisYok: "Henüz tamamlanmış görevin yok.",
+    durumlar: {
+      pending: "Bekliyor",
+      submitted: "AYNA okuyor",
+      scored: "Puanlandı",
+      expired: "Kaçtı",
+    },
+    turler: {
+      gozlem: "👁 Gözlem",
+      cesaret: "🔥 Cesaret",
+      yansima: "🪞 Yansıma",
+      gizli: "🤫 Gizli Görev",
+      tahmin: "🎲 Tahmin",
+      soz: "🤝 Söz",
+    },
+    sozTesekkur:
+      "Sözünü sakladım. 90 gün sonra sana hatırlatacağım. — AYNA",
+  },
+  kivilcim: {
+    ad: "Kıvılcım",
+    toplam: (n: number) => `${n} ⚡`,
+    unvanin: "Unvanın",
+    sonrakiUnvan: (unvan: string, kalan: number) =>
+      `${unvan} unvanına ${kalan} Kıvılcım kaldı`,
+    zirve: "Zirvedesin — Efsane! 🏆",
+  },
+  program: {
+    baslik: "Kamp Programı",
+    altBaslik: "AYNA programı parça parça açıklıyor. Sırada ne var, yalnızca o biliyor.",
+    kilitli: "???",
+    acilma: (saat: string) => `${saat}'te açıklanacak`,
+    bos: "Program henüz yüklenmedi.",
+    gecmis: "tamamlandı",
+  },
+  bildirim: {
+    kurBaslik: "📲 AYNA'yı telefonuna kur",
+    kurAciklamaIos:
+      "Safari'de paylaş düğmesine bas → \"Ana Ekrana Ekle\". Sonra uygulamayı ana ekrandan açıp bildirimlere izin ver — görevlerin cebine düşsün.",
+    izinBaslik: "🔔 AYNA seni dürtebilsin mi?",
+    izinAciklama:
+      "Görevler, program duyuruları ve fısıltılar bildirim olarak gelir. İzin vermezsen görevleri uygulamadan takip etmen gerekir.",
+    izinVer: "Bildirimlere İzin Ver",
+    izinVerildi: "🔔 AYNA seninle — bildirimler açık.",
+    izinReddedildi:
+      "Bildirimler kapalı. Tarayıcı ayarlarından izin verebilirsin; o zamana dek görevlerin burada görünecek.",
+    desteklenmiyor: "Bu tarayıcı bildirimleri desteklemiyor — görevlerin uygulamada görünecek.",
+    hata: "Abonelik kurulamadı. Tekrar dene.",
+  },
   eposta: {
     davetKonu: "Aynaya tekrar bakma zamanı ✨ — Liderlik Aynası",
     davetBaslik: "90 gün geçti. Ayna seni bekliyor.",
@@ -248,6 +359,9 @@ export const tr = {
       `Buton çalışmazsa giriş kodunla girebilirsin: ${kod}`,
     davetMetin: (ad: string, link: string, kod: string) =>
       `Merhaba ${ad},\n\nKamptan bu yana 90 gün geçti. Dalga 4 açıldı: arkadaşlarını bugünkü gözünle yeniden puanla, kendi aynanda neyin değiştiğini gör.\n\nGiriş: ${link}\nKodun: ${kod}\n\n— Liderlik Aynası`,
+    davetSozBaslik: "Bana bir söz vermiştin. Hatırlıyor musun?",
+    davetSozMetin: (soz: string) =>
+      `Kampın son gecesi kendine şunu yazmıştın:\n\n"${soz}"\n\nTuttun mu? — AYNA`,
   },
   ayna: {
     baslik: "Ayna Raporun",
@@ -267,6 +381,10 @@ export const tr = {
     tabloBaslik: "Özellik Özellik Aynan",
     ozEtiket: "Senin puanın",
     disEtiket: "Başkalarının ortalaması",
+    aynaEtiket: "AYNA'nın gözü",
+    aynaBaslik: "🤖 AYNA'nın Üç Günü",
+    aynaOzeti: (gorev: number, kivilcim: number, unvan: string) =>
+      `Üç gün boyunca ${gorev} görevini izledim, ${kivilcim} Kıvılcım topladın. Unvanın: ${unvan}. Görevlerinde gördüklerim yukarıdaki yeşil çubuklarda — insanların gözüyle örtüşen yerlere dikkat et.`,
     kisiSayisi: (n: number) => `${n} kişi puanladı`,
     veriYok: "Henüz yeterli dış puan yok.",
     hikayeBaslik: "📖 Dalga Yolculuğun",
@@ -317,6 +435,10 @@ export const tr = {
     agCapraz: (oran: number) => `Gözlem bağlarının %${oran}'i takımlar arası`,
     ozellikBaslik: "Kampın Kasları",
     ozellikAciklama: "Birbirinize verdiğiniz puanların kamp geneli ortalaması",
+    ligBaslik: "⚡ Kıvılcım Ligi",
+    ligAciklama: "AYNA'nın görevlerinde en çok Kıvılcım toplayanlar",
+    ligTakimlar: "Takım Yarışı",
+    ligBos: "İlk Kıvılcımlar yakında — AYNA görev dağıtmaya başladığında burası alevlenecek.",
   },
   ortak: {
     oturumGerekli: "Oturum gerekli.",

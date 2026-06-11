@@ -6,19 +6,25 @@ import { acikDalga } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { tr } from "@/lib/i18n/tr";
 import CikisButonu from "@/components/CikisButonu";
+import AynaKurulum from "@/components/AynaKurulum";
 
 export default async function AnaSayfa() {
   const session = await getSession();
   if (!session) redirect("/giris");
 
   const db = supabaseAdmin();
-  const [dalga, raporlarAcik] = await Promise.all([
+  const [dalga, raporlarAcik, { count: aktifGorev }] = await Promise.all([
     acikDalga(db),
     raporlarGorunurMu(db),
+    db
+      .from("missions")
+      .select("id", { count: "exact", head: true })
+      .eq("participant_id", session.sub)
+      .eq("status", "pending"),
   ]);
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-6 p-6">
+    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-5 p-6">
       <div className="rounded-2xl bg-midnight-card/60 p-8 shadow-2xl ring-1 ring-royal/30 backdrop-blur">
         <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
           {tr.app.name}
@@ -50,16 +56,38 @@ export default async function AnaSayfa() {
         )}
 
         <Link
-          href="/degerlendir"
-          className={`flex h-12 w-full items-center justify-center rounded-xl font-semibold transition-colors ${
-            raporlarAcik
-              ? "mt-3 border border-royal-light/40 text-slate-300 hover:bg-midnight-soft"
-              : "mt-6 bg-gold text-midnight hover:bg-gold-light"
+          href="/gorevler"
+          className={`${raporlarAcik ? "mt-3" : "mt-6"} flex h-12 w-full items-center justify-between rounded-xl px-4 font-semibold transition-colors ${
+            (aktifGorev ?? 0) > 0
+              ? "bg-gold text-midnight hover:bg-gold-light"
+              : "border border-royal-light/40 text-slate-200 hover:bg-midnight-soft"
           }`}
         >
-          {tr.anaSayfa.degerlendirmeyeBasla}
+          <span>{tr.anaSayfa.gorevler}</span>
+          {(aktifGorev ?? 0) > 0 && (
+            <span className="rounded-full bg-midnight px-2.5 py-0.5 text-xs font-bold text-gold">
+              {tr.anaSayfa.aktifGorev(aktifGorev ?? 0)}
+            </span>
+          )}
         </Link>
+
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <Link
+            href="/degerlendir"
+            className="flex h-12 items-center justify-center rounded-xl border border-royal-light/40 text-sm font-semibold text-slate-200 transition-colors hover:bg-midnight-soft"
+          >
+            {tr.anaSayfa.degerlendirmeyeBasla}
+          </Link>
+          <Link
+            href="/program"
+            className="flex h-12 items-center justify-center rounded-xl border border-royal-light/40 text-sm font-semibold text-slate-200 transition-colors hover:bg-midnight-soft"
+          >
+            {tr.anaSayfa.program}
+          </Link>
+        </div>
       </div>
+
+      <AynaKurulum />
 
       <CikisButonu />
     </main>
