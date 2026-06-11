@@ -8,7 +8,7 @@ import { tr } from "@/lib/i18n/tr";
 import CikisButonu from "@/components/CikisButonu";
 import AynaKurulum from "@/components/AynaKurulum";
 import EgilenKart from "@/components/EgilenKart";
-import PrizmaArkaplan from "@/components/prizma/PrizmaArkaplan";
+import GolArkaplan from "@/components/gol/GolArkaplan";
 
 export default async function AnaSayfa() {
   const session = await getSession();
@@ -26,15 +26,15 @@ export default async function AnaSayfa() {
   ]);
 
   return (
-    <main className="evren-prizma flex min-h-screen flex-1 flex-col overflow-hidden">
-      <PrizmaArkaplan adet={16} />
+    <main className="evren-gol flex min-h-screen flex-1 flex-col overflow-hidden">
+      <GolArkaplan />
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-5 p-6">
         <EgilenKart className="rounded-3xl">
           <div className="kart-cam relative overflow-hidden rounded-3xl p-8">
             <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
               {tr.app.name}
             </p>
-            <h1 className="prizma-serif tayf-metin mt-2 text-3xl font-semibold">
+            <h1 className="prizma-serif ay-metin mt-2 text-3xl font-semibold">
               {tr.anaSayfa.hosGeldin(session.ad)}
             </h1>
             <p className="mt-4 text-sm leading-relaxed text-slate-300">
@@ -56,7 +56,7 @@ export default async function AnaSayfa() {
             {raporlarAcik && (
               <Link
                 href="/ayna"
-                className="parilti btn-cam mt-6 flex h-14 w-full items-center justify-center rounded-xl font-bold transition-transform hover:scale-[1.01]"
+                className="parilti btn-kor mt-6 flex h-14 w-full items-center justify-center rounded-xl font-bold transition-transform hover:scale-[1.01]"
               >
                 {tr.anaSayfa.aynaniGor}
               </Link>
@@ -66,7 +66,7 @@ export default async function AnaSayfa() {
               href="/gorevler"
               className={`${raporlarAcik ? "mt-3" : "mt-6"} flex h-12 w-full items-center justify-between rounded-xl px-4 font-semibold transition-colors ${
                 (aktifGorev ?? 0) > 0
-                  ? "btn-cam"
+                  ? "btn-kor"
                   : "border border-white/15 text-slate-200 hover:bg-white/[0.06]"
               }`}
             >

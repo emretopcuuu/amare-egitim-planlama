@@ -6,7 +6,7 @@ import { raporHesapla, raporlarGorunurMu } from "@/lib/rapor";
 import { unvanBul } from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
 import AynaBekleme from "./AynaBekleme";
-import PrizmaArkaplan from "@/components/prizma/PrizmaArkaplan";
+import GolArkaplan from "@/components/gol/GolArkaplan";
 import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
 
@@ -43,14 +43,14 @@ export default async function AynaPage() {
     rapor.tahmin.topId === rapor.gercekTopId;
 
   return (
-    <main className="evren-prizma min-h-screen flex-1 overflow-hidden">
-      <PrizmaArkaplan adet={12} />
+    <main className="evren-gol min-h-screen flex-1 overflow-hidden">
+      <GolArkaplan />
       <div className="mx-auto w-full max-w-lg space-y-6 p-6">
       <header className="ayna-acilis text-center">
         <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
           {t.baslik}
         </p>
-        <h1 className="prizma-serif tayf-metin mt-2 text-3xl font-semibold">
+        <h1 className="prizma-serif ay-metin mt-2 text-3xl font-semibold">
           {t.acilis(session.ad)}
         </h1>
         <p className="mt-2 text-sm text-slate-300">{t.acilisAlt}</p>
