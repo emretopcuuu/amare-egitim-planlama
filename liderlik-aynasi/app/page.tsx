@@ -25,11 +25,12 @@ export default async function AnaSayfa() {
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-5 p-6">
-      <div className="rounded-2xl bg-midnight-card/60 p-8 shadow-2xl ring-1 ring-royal/30 backdrop-blur">
+      <div className="relative overflow-hidden rounded-2xl bg-midnight-card/60 p-8 shadow-2xl ring-1 ring-royal/30 backdrop-blur">
+        <span className="altin-tel" />
         <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
           {tr.app.name}
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-gold">
+        <h1 className="font-display mt-2 text-3xl font-bold text-gold">
           {tr.anaSayfa.hosGeldin(session.ad)}
         </h1>
         <p className="mt-4 text-slate-300">{tr.anaSayfa.aciklama}</p>

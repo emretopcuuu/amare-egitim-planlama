@@ -10,6 +10,16 @@ export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
 const t = tr.gorevler;
 
+// Tür rozetleri: her görev türünün kendi rengi var — listede tarayınca ayırt edilir
+const TUR_RENK: Record<string, string> = {
+  gozlem: "bg-royal/30 text-royal-light",
+  cesaret: "bg-orange-500/20 text-orange-300",
+  yansima: "bg-emerald-500/20 text-emerald-300",
+  gizli: "bg-fuchsia-500/20 text-fuchsia-300",
+  tahmin: "bg-sky-500/20 text-sky-300",
+  soz: "bg-gold/20 text-gold-light",
+};
+
 function saatYaz(iso: string): string {
   return new Intl.DateTimeFormat("tr-TR", {
     timeZone: "Europe/Istanbul",
@@ -47,7 +57,7 @@ export default async function GorevlerPage() {
           <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
             🤖 AYNA
           </p>
-          <h1 className="mt-1 text-2xl font-bold text-gold">{t.baslik}</h1>
+          <h1 className="font-display mt-1 text-2xl font-bold text-gold">{t.baslik}</h1>
           <p className="mt-1 text-sm text-slate-400">{t.altBaslik}</p>
         </div>
         <Link
@@ -97,10 +107,13 @@ export default async function GorevlerPage() {
         aktif.map((g) => (
           <section
             key={g.id}
-            className="rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/40 backdrop-blur"
+            className="altin-nabiz relative overflow-hidden rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/40 backdrop-blur"
           >
+            <span className="altin-tel" />
             <div className="flex items-center justify-between text-xs">
-              <span className="rounded-md bg-royal/30 px-2 py-0.5 font-medium text-royal-light">
+              <span
+                className={`rounded-md px-2 py-0.5 font-medium ${TUR_RENK[g.kind] ?? "bg-royal/30 text-royal-light"}`}
+              >
                 {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
               </span>
               <span className="font-medium text-amber-400">
@@ -131,7 +144,9 @@ export default async function GorevlerPage() {
                 }`}
               >
                 <div className="flex items-center justify-between gap-3 text-xs">
-                  <span className="text-slate-400">
+                  <span
+                    className={`rounded-md px-2 py-0.5 font-medium ${TUR_RENK[g.kind] ?? "text-slate-400"}`}
+                  >
                     {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
                   </span>
                   {g.status === "scored" && g.ai_score !== null ? (

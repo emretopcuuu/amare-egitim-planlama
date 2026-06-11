@@ -47,7 +47,7 @@ export default async function AynaPage() {
         <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
           {t.baslik}
         </p>
-        <h1 className="mt-2 text-3xl font-bold text-gold">
+        <h1 className="font-display mt-2 text-3xl font-bold text-gold">
           {t.acilis(session.ad)}
         </h1>
         <p className="mt-2 text-sm text-slate-300">{t.acilisAlt}</p>
