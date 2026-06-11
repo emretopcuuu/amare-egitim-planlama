@@ -6,6 +6,7 @@ import { raporlarGorunurMu } from "@/lib/rapor";
 import { tr } from "@/lib/i18n/tr";
 import DalgaKontrol from "./DalgaKontrol";
 import AynaAniKontrol from "./AynaAniKontrol";
+import DavetKontrol from "./DavetKontrol";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -20,6 +21,8 @@ export default async function AdminPanel() {
     raporlarAcik,
     { count: katilimciSayisi },
     { count: mektupSayisi },
+    { count: epostaliSayisi },
+    { data: davetAyari },
   ] = await Promise.all([
     db.from("waves").select("id, name, is_open, opened_at").order("id"),
     aktifOzellikler(db),
@@ -29,6 +32,16 @@ export default async function AdminPanel() {
       .select("id", { count: "exact", head: true })
       .eq("role", "participant"),
     db.from("mirror_letters").select("participant_id", { count: "exact", head: true }),
+    db
+      .from("participants")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "participant")
+      .not("email", "is", null),
+    db
+      .from("settings")
+      .select("value")
+      .eq("key", "wave4_davet_gonderildi")
+      .maybeSingle(),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
 
@@ -120,6 +133,18 @@ export default async function AdminPanel() {
           acik={raporlarAcik}
           mektupHazir={mektupSayisi ?? 0}
           mektupToplam={katilimciSayisi ?? 0}
+        />
+      </section>
+
+      <section className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+        <h2 className="text-lg font-semibold text-gold-light">
+          {tr.admin.doksanGun.baslik}
+        </h2>
+        <p className="mt-1 text-sm text-slate-400">{tr.admin.doksanGun.aciklama}</p>
+        <DavetKontrol
+          epostali={epostaliSayisi ?? 0}
+          toplam={katilimciSayisi ?? 0}
+          sonGonderim={davetAyari?.value ?? null}
         />
       </section>
 

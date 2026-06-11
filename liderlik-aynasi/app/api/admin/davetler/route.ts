@@ -1,0 +1,72 @@
+import { headers } from "next/headers";
+import { adminOturumu } from "@/lib/auth/admin";
+import { supabaseAdmin } from "@/lib/supabase/server";
+import { davetGonder, epostaYapilandirildiMi } from "@/lib/eposta";
+import { tr } from "@/lib/i18n/tr";
+
+export const maxDuration = 60;
+
+const PARTI = 10;
+
+// Dalga 4 davetleri: her çağrı en fazla PARTI e-posta gönderir; istemci
+// offset ile döngüler (mektup üretimiyle aynı desen — süre sınırına takılmaz,
+// ilerleme görünür). Son partide gönderim zamanı settings'e yazılır.
+export async function POST(req: Request) {
+  if (!(await adminOturumu())) {
+    return Response.json({ hata: tr.admin.yetkisiz }, { status: 403 });
+  }
+
+  if (!epostaYapilandirildiMi()) {
+    return Response.json({ hata: tr.admin.doksanGun.anahtarYok }, { status: 503 });
+  }
+
+  let offset = 0;
+  try {
+    const govde = await req.json();
+    if (Number.isInteger(govde?.offset) && govde.offset >= 0) offset = govde.offset;
+  } catch {
+    // gövdesiz çağrı: baştan başla
+  }
+
+  const db = supabaseAdmin();
+  const { data: alicilar, error } = await db
+    .from("participants")
+    .select("full_name, email, login_code")
+    .eq("role", "participant")
+    .not("email", "is", null)
+    .order("created_at");
+  if (error) {
+    return Response.json({ hata: tr.admin.doksanGun.hata }, { status: 500 });
+  }
+
+  const istekBasliklari = await headers();
+  const host = istekBasliklari.get("host") ?? "localhost:3000";
+  const proto = istekBasliklari.get("x-forwarded-proto") ?? "https";
+  const origin = `${proto}://${host}`;
+
+  const dilim = alicilar.slice(offset, offset + PARTI);
+  let basarisiz = 0;
+  for (const a of dilim) {
+    const oldu = await davetGonder(a.email!, a.full_name, a.login_code, origin);
+    if (!oldu) basarisiz++;
+  }
+
+  const sonraki = offset + dilim.length;
+  const bitti = sonraki >= alicilar.length;
+
+  if (bitti && alicilar.length > 0) {
+    await db.from("settings").upsert({
+      key: "wave4_davet_gonderildi",
+      value: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    });
+  }
+
+  return Response.json({
+    gonderilen: dilim.length - basarisiz,
+    basarisiz,
+    sonraki,
+    toplam: alicilar.length,
+    bitti,
+  });
+}

@@ -218,6 +218,36 @@ export const tr = {
         "ANTHROPIC_API_KEY tanımlı değil — mektuplar üretilemez (Vercel ortam değişkenlerine ekle).",
     },
     yetkisiz: "Bu işlem için yönetici oturumu gerekir.",
+    doksanGun: {
+      baslik: "📬 90 Gün Sonra",
+      aciklama:
+        "Kamptan ~90 gün sonra: yukarıdan Dalga 4'ü aç, sonra davet e-postalarını gönder. Herkes kendi koduyla geri döner; rapor ve dalga yolculuğu yeni puanlarla kendiliğinden güncellenir.",
+      epostali: (n: number, toplam: number) =>
+        `${toplam} katılımcının ${n} tanesinde e-posta adresi kayıtlı`,
+      epostaYok:
+        "Hiçbir katılımcıda e-posta adresi yok — CSV'ye 'eposta' sütunu ekleyip yeniden içe aktarabilirsin.",
+      gonder: "Davet E-postalarını Gönder",
+      gonderiliyor: (g: number, t: number) => `Gönderiliyor… ${g}/${t}`,
+      sonGonderim: (zaman: string) => `Son gönderim: ${zaman}`,
+      tekrarOnay: "Davetler daha önce gönderildi — yeniden göndermeyi onaylıyorum",
+      basarili: (n: number) => `${n} davet gönderildi.`,
+      kismiHata: (n: number) =>
+        `${n} e-posta gönderilemedi — adresleri kontrol et.`,
+      hata: "Gönderim durdu. Tekrar deneyebilirsin.",
+      anahtarYok:
+        "POSTMARK_SERVER_TOKEN ve EMAIL_FROM tanımlı değil — Vercel ortam değişkenlerine ekle.",
+    },
+  },
+  eposta: {
+    davetKonu: "Aynaya tekrar bakma zamanı ✨ — Liderlik Aynası",
+    davetBaslik: "90 gün geçti. Ayna seni bekliyor.",
+    davetParagraf: (ad: string) =>
+      `Merhaba ${ad}, kamptan bu yana 90 gün geçti. Dalga 4 açıldı: arkadaşlarını bugünkü gözünle yeniden puanla, kendi aynanda neyin değiştiğini gör.`,
+    davetButon: "Aynaya Tekrar Bak",
+    davetKodNotu: (kod: string) =>
+      `Buton çalışmazsa giriş kodunla girebilirsin: ${kod}`,
+    davetMetin: (ad: string, link: string, kod: string) =>
+      `Merhaba ${ad},\n\nKamptan bu yana 90 gün geçti. Dalga 4 açıldı: arkadaşlarını bugünkü gözünle yeniden puanla, kendi aynanda neyin değiştiğini gör.\n\nGiriş: ${link}\nKodun: ${kod}\n\n— Liderlik Aynası`,
   },
   ayna: {
     baslik: "Ayna Raporun",
