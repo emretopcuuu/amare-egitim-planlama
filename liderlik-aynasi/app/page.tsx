@@ -1,11 +1,16 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
+import { supabaseAdmin } from "@/lib/supabase/server";
+import { acikDalga } from "@/lib/degerlendirme";
 import { tr } from "@/lib/i18n/tr";
 import CikisButonu from "@/components/CikisButonu";
 
 export default async function AnaSayfa() {
   const session = await getSession();
   if (!session) redirect("/giris");
+
+  const dalga = await acikDalga(supabaseAdmin());
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-6 p-6">
@@ -18,16 +23,24 @@ export default async function AnaSayfa() {
         </h1>
         <p className="mt-4 text-slate-300">{tr.anaSayfa.aciklama}</p>
 
-        <button
-          disabled
-          title={tr.anaSayfa.yakindaFaz2}
-          className="mt-8 h-12 w-full cursor-not-allowed rounded-xl bg-gold/40 font-semibold text-midnight"
+        <p className="mt-6 text-sm">
+          {dalga ? (
+            <span className="rounded-full bg-emerald-400/15 px-3 py-1 font-medium text-emerald-400">
+              ● {tr.anaSayfa.dalgaAcik(dalga.name)}
+            </span>
+          ) : (
+            <span className="rounded-full bg-slate-500/15 px-3 py-1 font-medium text-slate-400">
+              ○ {tr.anaSayfa.dalgaKapali}
+            </span>
+          )}
+        </p>
+
+        <Link
+          href="/degerlendir"
+          className="mt-6 flex h-12 w-full items-center justify-center rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light"
         >
           {tr.anaSayfa.degerlendirmeyeBasla}
-        </button>
-        <p className="mt-2 text-center text-xs text-slate-400">
-          {tr.anaSayfa.yakindaFaz2}
-        </p>
+        </Link>
       </div>
 
       <CikisButonu />

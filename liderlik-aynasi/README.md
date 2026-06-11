@@ -40,6 +40,7 @@ npm run dev
 - `0003_seed_core.sql` — 10 özellik, 3 dalga, `reports_visible=false`
 - `0004_seed_dev_participants.sql` — test verisi (gerçek CSV import öncesi silinecek)
 - `0005_future_features.sql` — Dalga 4 desteği, `participants.email`, `predictions`, `mirror_letters`
+- `0006_seed_dev_assignments.sql` — test atamaları: kişi başı 2 gizli + 1 açık gözlem (CSV import öncesi silinecek)
 
 ### Test giriş kodları (geliştirme seed'i)
 
@@ -56,6 +57,17 @@ npm run dev
 
 Yönetici: `/admin/giris` + `ADMIN_PASSWORD` (kod `999999` katılımcı girişinden bilinçli olarak reddedilir).
 
+## Puanlama Akışı (Faz 2)
+
+- `/degerlendir` — değerlendirme merkezi: öz değerlendirme, gözlem listesi (atamalar), 🎯 tahmin oyunu kartı ve serbest puanlama (isim arama).
+- **Öz-puan kapısı**: katılımcı, açık dalgada önce kendini (10 özellik) puanlamadan başkasını puanlayamaz. Kural hem UI'da (kilit), hem sayfada (redirect), hem API'de (403) uygulanır.
+- `/degerlendir/[hedefId]` — 10 özellik × 1-10 puan. Başkasına verilen **6'nın altındaki her puan kısa bir yorum gerektirir** (API de doğrular, 500 karakter sınırı).
+- **Offline taslak**: her değişiklik `localStorage`'a yazılır (`la_taslak_v1:{dalga}:{hedef}`); gönderim başarısız olursa taslak cihazda kalır, başarılı olursa silinir. Dalga açıkken puanlar yeniden düzenlenebilir (upsert).
+- Dalga numarasını istemci değil **sunucu** belirler (`waves.is_open`); kapalı dalgaya yazma 409 döner.
+- `/tahmin` — 🎯 tek seferlik tahmin: en yüksek/en düşük dış puan alınacak özellik. Gönderildikten sonra kilitlenir, Faz 4 raporunda gerçekle karşılaştırılır.
+
+Test için dalga açma (admin paneli Faz 3'te): `update waves set is_open = true, opened_at = now() where id = 1;`
+
 ## Vercel Deploy
 
 Yeni Vercel projesi → bu repo → **Root Directory: `liderlik-aynasi`** → yukarıdaki env değişkenlerini tanımla. Ana uygulamanın Netlify deploy'u etkilenmez.
@@ -63,7 +75,7 @@ Yeni Vercel projesi → bu repo → **Root Directory: `liderlik-aynasi`** → yu
 ## Yol Haritası
 
 - [x] **Faz 1** — Şema + RLS + seed + kod ile giriş akışı
-- [ ] **Faz 2** — Puanlama akışı (öz-puan kapısı, atanan kişiler, serbest puanlama, <6 puana zorunlu yorum, offline taslak) + 🎯 *"Kendini ne kadar tanıyorsun?" tahmin oyunu*
+- [x] **Faz 2** — Puanlama akışı (öz-puan kapısı, atanan kişiler, serbest puanlama, <6 puana zorunlu yorum, offline taslak) + 🎯 *"Kendini ne kadar tanıyorsun?" tahmin oyunu*
 - [ ] **Faz 3** — Admin paneli (CSV import, QR PDF, eşleştirme algoritması, dalga kontrolü, moderasyon)
 - [ ] **Faz 4** — Ayna Raporu + 🪞 *Senkronize "Ayna Anı" finali* + 🖼️ *paylaşılabilir Kelime Kartı* + 🤖 *AI Ayna Mektubu (Claude API)* + 📖 *Dalga yolculuğu hikâye modu*
 - [ ] **Faz 5** — Büyük ekran (canlı) + 🕸️ *takım kimyası ağ haritası slaytı* + Vercel deploy
