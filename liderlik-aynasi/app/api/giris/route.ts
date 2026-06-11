@@ -1,0 +1,49 @@
+import { supabaseAdmin } from "@/lib/supabase/server";
+import { createSession } from "@/lib/auth/session";
+import { clientIp, isRateLimited, recordAttempt } from "@/lib/auth/rate-limit";
+import { tr } from "@/lib/i18n/tr";
+
+export async function POST(req: Request) {
+  const ip = clientIp(req);
+
+  let kod: unknown;
+  try {
+    ({ kod } = await req.json());
+  } catch {
+    return Response.json({ hata: tr.giris.hataGecersizBicim }, { status: 400 });
+  }
+
+  if (typeof kod !== "string" || !/^[0-9]{6}$/.test(kod)) {
+    return Response.json({ hata: tr.giris.hataGecersizBicim }, { status: 400 });
+  }
+
+  if (await isRateLimited(ip)) {
+    return Response.json({ hata: tr.giris.hataCokFazlaDeneme }, { status: 429 });
+  }
+
+  const db = supabaseAdmin();
+  const { data: katilimci, error } = await db
+    .from("participants")
+    .select("id, full_name, role")
+    .eq("login_code", kod)
+    .maybeSingle();
+
+  if (error) {
+    return Response.json({ hata: tr.giris.hataSunucu }, { status: 500 });
+  }
+
+  // Admin rolündeki kayıtlar kodla giremez; admin /admin/giris kullanır.
+  const basarili = !!katilimci && katilimci.role === "participant";
+  await recordAttempt(ip, basarili);
+
+  if (!basarili) {
+    return Response.json({ hata: tr.giris.hataKodHatali }, { status: 401 });
+  }
+
+  await createSession({
+    sub: katilimci.id,
+    ad: katilimci.full_name,
+    rol: "participant",
+  });
+  return Response.json({ ad: katilimci.full_name });
+}
