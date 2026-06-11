@@ -249,7 +249,7 @@ export const tr = {
       akisYok: "Henüz görev üretilmedi.",
       hata: "İşlem başarısız. Tekrar dene.",
       kurulumUyari:
-        "Zamanlayıcı kurulu değilse AYNA kendiliğinden uyanmaz — README'deki cron SQL'ini Supabase'de çalıştır ya da test için 'Şimdi Tik Çalıştır'ı kullan.",
+        "Zamanlayıcı kurulu değilse AYNA kendiliğinden uyanmaz — README'deki cron SQL'ini Supabase'de çalıştır ya da test için 'Şimdi Tik Çalıştır'ı kullan (test tiki sessiz saati yok sayar).",
     },
     program: {
       baslik: "Program Yönetimi",

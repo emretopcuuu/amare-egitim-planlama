@@ -33,8 +33,13 @@ export async function POST(req: Request) {
     return Response.json({ hata: "Yetkisiz." }, { status: 401 });
   }
 
+  // Admin'in elle bastığı test tiki sessiz saati yok sayar (gece prova yapılabilsin);
+  // cron'dan gelen olağan tikler kurala uyar.
+  const testModu = req.headers.get("x-ayna-test") === "1";
+
   const db = supabaseAdmin();
   const simdi = new Date();
+  const sessiz = sessizSaatMi(simdi) && !testModu;
   const ozet = { uretilen: 0, puanlanan: 0, hatirlatilan: 0, acilan: 0, fisilti: 0 };
 
   // 1) Süresi dolan görevleri kapat (her durumda, sessiz saatte bile)
@@ -78,7 +83,7 @@ export async function POST(req: Request) {
       })
       .eq("id", g.id);
     ozet.puanlanan++;
-    if (!sessizSaatMi(simdi)) {
+    if (!sessiz) {
       await katilimciyaBildir(
         db,
         g.participant_id,
@@ -88,7 +93,7 @@ export async function POST(req: Request) {
     }
   }
 
-  if (sessizSaatMi(simdi)) {
+  if (sessiz) {
     return Response.json({ ozet: "Sessiz saat — AYNA fısıldamıyor", ...ozet });
   }
 
