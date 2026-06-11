@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { aktifOzellikler } from "@/lib/degerlendirme";
+import { raporlarGorunurMu } from "@/lib/rapor";
 import { tr } from "@/lib/i18n/tr";
 import DalgaKontrol from "./DalgaKontrol";
+import AynaAniKontrol from "./AynaAniKontrol";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -12,9 +14,21 @@ export default async function AdminPanel() {
   if (!session || session.rol !== "admin") redirect("/admin/giris");
 
   const db = supabaseAdmin();
-  const [{ data: dalgalar, error: dalgaHatasi }, ozellikler] = await Promise.all([
+  const [
+    { data: dalgalar, error: dalgaHatasi },
+    ozellikler,
+    raporlarAcik,
+    { count: katilimciSayisi },
+    { count: mektupSayisi },
+  ] = await Promise.all([
     db.from("waves").select("id, name, is_open, opened_at").order("id"),
     aktifOzellikler(db),
+    raporlarGorunurMu(db),
+    db
+      .from("participants")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "participant"),
+    db.from("mirror_letters").select("participant_id", { count: "exact", head: true }),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
 
@@ -90,6 +104,22 @@ export default async function AdminPanel() {
             ad: d.name,
             acik: d.is_open,
           }))}
+        />
+      </section>
+
+      <section
+        className={`rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 backdrop-blur ${
+          raporlarAcik ? "ring-emerald-400/40" : "ring-gold/40"
+        }`}
+      >
+        <h2 className="text-lg font-semibold text-gold-light">
+          {tr.admin.aynaAni.baslik}
+        </h2>
+        <p className="mt-1 text-sm text-slate-400">{tr.admin.aynaAni.aciklama}</p>
+        <AynaAniKontrol
+          acik={raporlarAcik}
+          mektupHazir={mektupSayisi ?? 0}
+          mektupToplam={katilimciSayisi ?? 0}
         />
       </section>
 

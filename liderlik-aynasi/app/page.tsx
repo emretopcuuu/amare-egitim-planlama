@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga } from "@/lib/degerlendirme";
+import { raporlarGorunurMu } from "@/lib/rapor";
 import { tr } from "@/lib/i18n/tr";
 import CikisButonu from "@/components/CikisButonu";
 
@@ -10,7 +11,11 @@ export default async function AnaSayfa() {
   const session = await getSession();
   if (!session) redirect("/giris");
 
-  const dalga = await acikDalga(supabaseAdmin());
+  const db = supabaseAdmin();
+  const [dalga, raporlarAcik] = await Promise.all([
+    acikDalga(db),
+    raporlarGorunurMu(db),
+  ]);
 
   return (
     <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-6 p-6">
@@ -35,9 +40,22 @@ export default async function AnaSayfa() {
           )}
         </p>
 
+        {raporlarAcik && (
+          <Link
+            href="/ayna"
+            className="mt-6 flex h-14 w-full items-center justify-center rounded-xl bg-gradient-to-r from-gold to-gold-light font-bold text-midnight shadow-lg shadow-gold/25 transition-transform hover:scale-[1.02]"
+          >
+            {tr.anaSayfa.aynaniGor}
+          </Link>
+        )}
+
         <Link
           href="/degerlendir"
-          className="mt-6 flex h-12 w-full items-center justify-center rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light"
+          className={`flex h-12 w-full items-center justify-center rounded-xl font-semibold transition-colors ${
+            raporlarAcik
+              ? "mt-3 border border-royal-light/40 text-slate-300 hover:bg-midnight-soft"
+              : "mt-6 bg-gold text-midnight hover:bg-gold-light"
+          }`}
         >
           {tr.anaSayfa.degerlendirmeyeBasla}
         </Link>

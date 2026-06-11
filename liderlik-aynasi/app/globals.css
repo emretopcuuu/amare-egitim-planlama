@@ -20,6 +20,24 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
 }
 
+/* Ayna Anı açılışı: rapor başlığı yumuşakça belirir */
+@keyframes ayna-belir {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.97);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+.ayna-acilis {
+  animation: ayna-belir 1.2s ease-out both;
+}
+
 /* QR kart sayfası yazdırılırken koyu tema mürekkep yutmasın */
 @media print {
   body {
