@@ -67,7 +67,8 @@ export async function POST(req: Request) {
     const proto = h.get("x-forwarded-proto") ?? "https";
     const res = await fetch(`${proto}://${host}/api/tik`, {
       method: "POST",
-      headers: { "x-ayna-anahtar": gizli },
+      // Test tiki sessiz saati yok sayar — admin gece de prova yapabilsin
+      headers: { "x-ayna-anahtar": gizli, "x-ayna-test": "1" },
     });
     const veri = await res.json().catch(() => null);
     if (!res.ok) {
