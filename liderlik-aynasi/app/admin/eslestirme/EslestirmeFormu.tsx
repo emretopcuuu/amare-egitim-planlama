@@ -48,7 +48,7 @@ export default function EslestirmeFormu() {
   return (
     <form
       onSubmit={calistir}
-      className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur"
+      className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur"
     >
       <p className="text-sm text-slate-400">{t.aciklama}</p>
 

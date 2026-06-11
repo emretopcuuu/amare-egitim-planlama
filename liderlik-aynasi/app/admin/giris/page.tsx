@@ -37,7 +37,7 @@ export default function AdminGirisPage() {
 
   return (
     <main className="flex flex-1 items-center justify-center p-6">
-      <div className="w-full max-w-sm rounded-2xl bg-midnight-card/60 p-8 shadow-2xl ring-1 ring-royal/30 backdrop-blur">
+      <div className="w-full max-w-sm kart-3d rounded-2xl bg-midnight-card/60 p-8 shadow-2xl ring-1 ring-royal/30 backdrop-blur">
         <h1 className="text-center text-2xl font-bold tracking-tight text-gold">
           {tr.adminGiris.baslik}
         </h1>
@@ -68,7 +68,7 @@ export default function AdminGirisPage() {
           <button
             type="submit"
             disabled={!sifre || yukleniyor}
-            className="h-12 w-full rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+            className="h-12 w-full btn-3d rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
           >
             {yukleniyor ? tr.giris.girisYapiliyor : tr.adminGiris.girisYap}
           </button>

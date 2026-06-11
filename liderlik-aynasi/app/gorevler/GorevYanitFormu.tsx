@@ -120,7 +120,7 @@ export default function GorevYanitFormu({ gorevId }: { gorevId: string }) {
         <button
           type="submit"
           disabled={yanit.trim().length < 2 || gonderiliyor}
-          className="h-11 flex-1 rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-11 flex-1 btn-3d rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
         >
           {gonderiliyor ? t.gonderiliyor : t.gonder}
         </button>

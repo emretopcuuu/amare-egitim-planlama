@@ -41,7 +41,7 @@ export default async function ProgramPage() {
           <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
             🤖 AYNA
           </p>
-          <h1 className="font-display mt-1 text-2xl font-bold text-gold">{t.baslik}</h1>
+          <h1 className="font-display altin-metin mt-1 text-2xl font-bold text-gold">{t.baslik}</h1>
           <p className="mt-1 text-sm text-slate-400">{t.altBaslik}</p>
         </div>
         <Link

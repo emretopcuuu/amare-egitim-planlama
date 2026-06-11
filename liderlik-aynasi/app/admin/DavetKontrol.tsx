@@ -96,7 +96,7 @@ export default function DavetKontrol({ epostali, toplam, sonGonderim }: Props) {
       <button
         onClick={gonder}
         disabled={!hazir}
-        className="rounded-xl bg-gold px-5 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn-3d rounded-xl bg-gold px-5 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
       >
         {gonderiliyor ? t.gonderiliyor(ilerleme, epostali) : `📬 ${t.gonder}`}
       </button>

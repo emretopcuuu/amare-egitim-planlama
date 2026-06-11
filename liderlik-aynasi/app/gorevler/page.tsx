@@ -57,7 +57,7 @@ export default async function GorevlerPage() {
           <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
             🤖 AYNA
           </p>
-          <h1 className="font-display mt-1 text-2xl font-bold text-gold">{t.baslik}</h1>
+          <h1 className="font-display altin-metin mt-1 text-2xl font-bold text-gold">{t.baslik}</h1>
           <p className="mt-1 text-sm text-slate-400">{t.altBaslik}</p>
         </div>
         <Link
@@ -69,7 +69,7 @@ export default async function GorevlerPage() {
       </header>
 
       {/* Kıvılcım durumu */}
-      <section className="rounded-2xl bg-gradient-to-br from-gold/15 to-midnight-card/60 p-5 ring-1 ring-gold/30 backdrop-blur">
+      <section className="parilti kart-3d rounded-2xl bg-gradient-to-br from-gold/15 to-midnight-card/60 p-5 ring-1 ring-gold/30 backdrop-blur">
         <div className="flex items-center justify-between">
           <div>
             <p className="text-3xl font-bold text-gold">
@@ -100,14 +100,14 @@ export default async function GorevlerPage() {
 
       {/* Aktif görev(ler) */}
       {aktif.length === 0 ? (
-        <section className="rounded-2xl bg-midnight-card/60 p-6 text-center ring-1 ring-royal/30 backdrop-blur">
+        <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 text-center ring-1 ring-royal/30 backdrop-blur">
           <p className="text-sm text-slate-300">{t.aktifYok}</p>
         </section>
       ) : (
         aktif.map((g) => (
           <section
             key={g.id}
-            className="altin-nabiz relative overflow-hidden rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/40 backdrop-blur"
+            className="altin-nabiz relative overflow-hidden kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/40 backdrop-blur"
           >
             <span className="altin-tel" />
             <div className="flex items-center justify-between text-xs">
@@ -139,7 +139,7 @@ export default async function GorevlerPage() {
             {gecmis.map((g) => (
               <li
                 key={g.id}
-                className={`rounded-2xl bg-midnight-card/60 p-4 ring-1 backdrop-blur ${
+                className={`kart-3d rounded-2xl bg-midnight-card/60 p-4 ring-1 backdrop-blur ${
                   g.status === "expired" ? "opacity-60 ring-royal/20" : "ring-royal/30"
                 }`}
               >

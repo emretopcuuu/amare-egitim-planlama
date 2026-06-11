@@ -88,7 +88,7 @@ export default function ProgramYonetimi({ maddeler }: { maddeler: Madde[] }) {
     <div className="space-y-6">
       <form
         onSubmit={ekle}
-        className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur"
+        className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur"
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <label className="block">
@@ -161,13 +161,13 @@ export default function ProgramYonetimi({ maddeler }: { maddeler: Madde[] }) {
         <button
           type="submit"
           disabled={bekliyor || !baslangic || !baslik.trim()}
-          className="mt-4 rounded-xl bg-gold px-5 py-2.5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+          className="mt-4 btn-3d rounded-xl bg-gold px-5 py-2.5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
         >
           {bekliyor ? t.ekleniyor : t.ekle}
         </button>
       </form>
 
-      <section className="rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         {maddeler.length === 0 ? (
           <p className="text-sm text-slate-400">{t.bos}</p>
         ) : (
