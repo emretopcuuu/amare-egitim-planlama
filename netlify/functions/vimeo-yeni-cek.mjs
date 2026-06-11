@@ -324,6 +324,39 @@ export default async (req) => {
     }
   }
 
+  // 4. TRANSCRIPT BACKFILL — yeni yüklenen videoların Vimeo altyazısı ingest anında
+  // çoğu zaman HENÜZ HAZIR DEĞİL (otomatik altyazı dakikalar/saatler sonra üretiliyor).
+  // Eskiden tek deneme yapılıp bırakılıyordu → video sonsuza dek transcriptsiz kalıyordu.
+  // Her çalışmada: transcriptsiz son videoları yeniden dene (altyazı hazırsa doldur).
+  let txBackfillSayisi = 0;
+  try {
+    const txSnap = await db.collection('kayitli_egitimler')
+      .where('transcriptVar', '==', false)
+      .limit(200)
+      .get();
+    const adaylar = txSnap.docs
+      .map(d => ({ id: d.id, ...d.data() }))
+      .filter(x => !x.kayeneFiltrelendi)
+      .sort((a, b) => (b.tarih || '').localeCompare(a.tarih || ''))
+      .slice(0, 15); // en yeni 15 — eski arşivde altyazı hiç gelmeyecekleri sürekli yoklamayalım
+    for (const aday of adaylar) {
+      const tx = await fetchTranscript(aday.id);
+      if (tx?.text) {
+        await db.collection('kayitli_egitimler').doc(aday.id).set({
+          transcript: tx.text,
+          transcriptChunks: tx.chunks,
+          transcriptVar: true,
+          guncellemeTarihi: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        txBackfillSayisi++;
+        console.log(`[tx-backfill] ✓ ${aday.id} | ${(aday.baslik || '').slice(0, 50)}`);
+      }
+    }
+    console.log(`[tx-backfill] ${adaylar.length} denendi, ${txBackfillSayisi} dolduruldu`);
+  } catch (e) {
+    console.warn('[tx-backfill] hata (yeni video akışını etkilemez):', e.message);
+  }
+
   const sure = ((Date.now() - startTime) / 1000).toFixed(1);
   const summary = {
     sureSn: parseFloat(sure),
@@ -332,6 +365,7 @@ export default async (req) => {
     excludedYeni: excludedSayisi,
     mevcut: mevcutSayisi,
     karaListe: karaListeSayisi,
+    transcriptBackfill: txBackfillSayisi,
     yeniler,
   };
   console.log('[vimeo-yeni-cek] done:', JSON.stringify(summary));
