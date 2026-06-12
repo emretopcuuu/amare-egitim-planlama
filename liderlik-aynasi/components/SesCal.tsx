@@ -5,7 +5,13 @@ import { tr } from "@/lib/i18n/tr";
 
 // YANSIMAN oynatıcısı: imzalı URL'deki mp3'ü çalar. Mobil tarayıcılar sesi
 // ancak kullanıcı dokunuşuyla başlatır — buton tam da o ritüel dokunuştur.
-export default function SesCal({ url }: { url: string }) {
+export default function SesCal({
+  url,
+  etiket,
+}: {
+  url: string;
+  etiket?: string;
+}) {
   const ses = useRef<HTMLAudioElement | null>(null);
   const [caliyor, setCaliyor] = useState(false);
 
@@ -39,7 +45,7 @@ export default function SesCal({ url }: { url: string }) {
           : "border-white/15 text-slate-200 hover:bg-white/[0.06]"
       }`}
     >
-      {caliyor ? tr.gorevler.durdur : tr.gorevler.dinle}
+      {caliyor ? tr.gorevler.durdur : (etiket ?? tr.gorevler.dinle)}
     </button>
   );
 }

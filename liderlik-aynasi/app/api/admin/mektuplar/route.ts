@@ -1,6 +1,7 @@
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { mektupGetirVeyaUret } from "@/lib/mektup";
+import { mektupSeslendir } from "@/lib/yansima";
 import { tr } from "@/lib/i18n/tr";
 
 export const maxDuration = 60;
@@ -42,6 +43,8 @@ export async function POST() {
   if (sonuc.durum !== "hazir") {
     return Response.json({ hata: tr.admin.aynaAni.mektupHata }, { status: 503 });
   }
+  // YANSIMAN: klonu hazırsa mektup katılımcının kendi sesinden de dinlenir
+  await mektupSeslendir(db, sirada.id, sonuc.icerik);
 
   return Response.json({
     uretilen: sirada.full_name,

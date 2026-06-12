@@ -5,6 +5,7 @@ import { SESSION_COOKIE, type Session } from "@/lib/auth/session-types";
 const PUBLIC_ROUTES = [
   /^\/giris/,
   /^\/ekran/,
+  /^\/sahne/, // projektör sayfası: bekleme döngüsü + Ayna Anı açılış filmi
   /^\/admin\/giris$/,
   /^\/api\/giris$/,
   /^\/api\/admin\/giris$/,

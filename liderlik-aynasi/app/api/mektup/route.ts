@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { mektupGetirVeyaUret } from "@/lib/mektup";
+import { mektupSeslendir } from "@/lib/yansima";
 import { tr } from "@/lib/i18n/tr";
 
 // Mektup üretimi dakikalar değil ama saniyeler sürer; Vercel varsayılan
@@ -25,5 +26,7 @@ export async function POST() {
   if (sonuc.durum !== "hazir") {
     return Response.json({ hata: tr.mektup.hata }, { status: 503 });
   }
+  // YANSIMAN: klonu hazırsa mektup kendi sesinden de dinlenir (idempotent)
+  await mektupSeslendir(db, session.sub, sonuc.icerik);
   return Response.json({ mektup: sonuc.icerik });
 }

@@ -417,7 +417,16 @@ export const tr = {
     indir: "Kartı İndir",
     paylas: "Paylaş",
   },
+  sahne: {
+    ipucu: "Ayna Anı'nı başlatmak için tıkla",
+  },
+  soz: {
+    baslik: "📜 Sözün",
+    aciklama: "Kampın son gecesi aynaya verdiğin söz — kendi sesinden.",
+    dinle: "🎧 Sözünü dinle",
+  },
   mektup: {
+    dinle: "🎧 Mektubunu aynandan dinle",
     baslik: "🤖 Ayna Mektubun",
     aciklama: "Puanlarından ve sana yazılanlardan, yalnızca senin için yazıldı.",
     hazirlaniyor: "Mektubun kaleme alınıyor…",

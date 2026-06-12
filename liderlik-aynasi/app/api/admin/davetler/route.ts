@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { davetGonder, epostaYapilandirildiMi } from "@/lib/eposta";
+import { sozSeslendir } from "@/lib/yansima";
 import { tr } from "@/lib/i18n/tr";
 
 export const maxDuration = 60;
@@ -55,9 +56,20 @@ export async function POST(req: Request) {
   const proto = istekBasliklari.get("x-forwarded-proto") ?? "https";
   const origin = `${proto}://${host}`;
 
+  // SÖZ'ü olan ve klonu hazır alıcılar için sesli SÖZ (idempotent: varsa atla)
+  const { data: sesliler } = await db
+    .from("voice_profiles")
+    .select("participant_id, soz_path")
+    .eq("status", "klonlandi");
+  const sozSesi = new Map((sesliler ?? []).map((s) => [s.participant_id, s.soz_path]));
+
   const dilim = (alicilar ?? []).slice(offset, offset + PARTI);
   let basarisiz = 0;
   for (const a of dilim) {
+    const soz = sozHaritasi.get(a.id);
+    if (soz && sozSesi.has(a.id) && !sozSesi.get(a.id)) {
+      await sozSeslendir(db, a.id, soz);
+    }
     const oldu = await davetGonder(
       a.email!,
       a.full_name,
