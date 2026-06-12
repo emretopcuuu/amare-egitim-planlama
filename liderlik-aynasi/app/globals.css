@@ -20,6 +20,11 @@
   --color-cam: #f4f4f6;
 }
 
+/* Yaşı ne olursa olsun herkes okuyabilsin: tüm rem ölçeği ~%9 büyür */
+html {
+  font-size: 17.5px;
+}
+
 body {
   background: linear-gradient(180deg, #081726 0%, #06121e 55%, #040e18 100%);
   min-height: 100vh;

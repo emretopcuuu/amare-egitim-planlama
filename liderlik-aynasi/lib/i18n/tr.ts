@@ -457,9 +457,10 @@ export const tr = {
   },
   rituel: {
     baslik: "Aynaya kendini tanıt",
-    aciklama:
-      "Sesin, aynanın sesi olacak. Kısa bir okuma yap — kamp boyunca yansıman seninle kendi sesinle konuşsun.",
-    onay: "Sesimin ve fotoğrafımın yalnızca bana özel kamp deneyimi için kullanılmasına (ses klonu + sudaki silüet) onay veriyorum. Tüm kayıtlar kamp bittiğinde silinecek.",
+    aciklama: "Aynan seninle kendi sesinle konuşacak.",
+    onayBaslik: "İzin veriyor musun?",
+    onay: "Sesin ve fotoğrafın sadece SANA özel deneyim için kullanılır. Kamp bitince hepsi silinir.",
+    onayla: "Onaylıyorum, başla",
     basla: "Ritüeli başlat",
     fotoBaslik: "Aynaya yüzünü göster",
     fotoAciklama:
@@ -473,7 +474,7 @@ export const tr = {
     yemin:
       "Ben, bu üç gün boyunca kendime dürüst olmaya söz veriyorum. Gördüğümü açıkça söyleyeceğim, duyduğumu adil tartacağım. Arkadaşlarımı yargılamak için değil, anlamak için izleyeceğim. Zor anlarda kolay olanı değil, doğru olanı seçeceğim. Suya baktığımda yalnızca yüzümü değil, yönümü de göreceğim. Bugün burada başlayan yolculuk, kamptan sonra da benimle gelecek. Hazırım: aynanın karşısına çıkıyorum ve yansımamdan saklanmıyorum.",
     soru: "Tek cümleyle: bu kamptan ne alıp döneceksin?",
-    soruNot: "Sesli söyle — yazıya dökülür; istersen elle düzelt.",
+    soruNot: "Sesli söyle — yazıya dökülür",
     devam: "Devam",
     bitir: "Bitir ve aynaya ver",
     uyaniyor: "Aynan uyanıyor…",

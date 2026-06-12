@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 
@@ -13,15 +13,22 @@ export default function SahnePage() {
   const [film, setFilm] = useState(false);
 
   function filmiBaslat() {
-    if (!film) setFilm(true);
+    setFilm(true);
   }
+
+  // klavye, sayfa odağı olmadan da çalışsın (sunum kumandaları boşluk yollar)
+  useEffect(() => {
+    function tusla(e: KeyboardEvent) {
+      if (e.key === " " || e.key === "Enter") setFilm(true);
+    }
+    window.addEventListener("keydown", tusla);
+    return () => window.removeEventListener("keydown", tusla);
+  }, []);
 
   return (
     <main
       className="fixed inset-0 cursor-pointer bg-black"
       onClick={filmiBaslat}
-      onKeyDown={(e) => e.key === " " && filmiBaslat()}
-      tabIndex={0}
     >
       {!film ? (
         <>
