@@ -3,7 +3,6 @@
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
-import GolArkaplan from "@/components/gol/GolArkaplan";
 
 const YOKLAMA_MS = 5000;
 
@@ -38,8 +37,7 @@ export default function AynaBekleme() {
   }, [router]);
 
   return (
-    <main className="evren-gol flex min-h-screen flex-1 flex-col items-center justify-center overflow-hidden p-6 text-center">
-      <GolArkaplan />
+    <main className="flex min-h-screen flex-1 flex-col items-center justify-center overflow-hidden p-6 text-center">
       <div className="kart-cam relative overflow-hidden rounded-3xl p-10">
         <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
           Ayna Anı

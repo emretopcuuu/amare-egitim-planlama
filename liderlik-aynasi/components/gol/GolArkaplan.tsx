@@ -29,12 +29,14 @@ export default function GolArkaplan() {
   }, []);
 
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 print:hidden">
       {hazir && webgl ? (
         <GolSahne hareketli={hareketli} />
       ) : (
         <div className="gol-zemin absolute inset-0" />
       )}
+      {/* okunabilirlik perdesi: gündüz parlak suda bile metin net kalır */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#06121e]/20 to-[#06121e]/50" />
     </div>
   );
 }

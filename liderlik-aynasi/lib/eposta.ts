@@ -21,8 +21,8 @@ export async function davetGonder(
 
   // Kampın son gecesi AYNA'ya yazılan SÖZ, 90 gün sonra sahibine geri döner.
   const sozHtml = soz
-    ? `<div style="margin:24px 0;padding:18px;border-left:3px solid #d4af37;background:#2d1b4e;border-radius:0 12px 12px 0">
-        <p style="color:#f0c75e;font-weight:bold;margin:0">${t.davetSozBaslik}</p>
+    ? `<div style="margin:24px 0;padding:18px;border-left:3px solid #f59e0b;background:#0a1c2e;border-radius:0 12px 12px 0">
+        <p style="color:#fbbf24;font-weight:bold;margin:0">${t.davetSozBaslik}</p>
         <p style="color:#cbd5e1;font-style:italic;line-height:1.6;margin:10px 0 0;white-space:pre-wrap">${t.davetSozMetin(soz)}</p>
       </div>`
     : "";
@@ -34,13 +34,13 @@ export async function davetGonder(
     Subject: t.davetKonu,
     TextBody: t.davetMetin(ad, link, kod) + sozMetin,
     HtmlBody: `
-      <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;padding:32px;background:#1e1233;color:#f1f5f9;border-radius:16px">
-        <p style="color:#a78bfa;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin:0">Liderlik Aynası</p>
-        <h1 style="color:#d4af37;font-size:26px;margin:12px 0 0">${t.davetBaslik}</h1>
+      <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;padding:32px;background:#06121e;color:#f1f5f9;border-radius:16px">
+        <p style="color:#9cc3e0;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin:0">Liderlik Aynası</p>
+        <h1 style="color:#f59e0b;font-size:26px;margin:12px 0 0">${t.davetBaslik}</h1>
         <p style="line-height:1.6;margin-top:16px">${t.davetParagraf(ad)}</p>
         ${sozHtml}
         <p style="text-align:center;margin:28px 0">
-          <a href="${link}" style="background:#d4af37;color:#1e1233;font-weight:bold;padding:14px 28px;border-radius:12px;text-decoration:none">${t.davetButon}</a>
+          <a href="${link}" style="background:#f59e0b;color:#06121e;font-weight:bold;padding:14px 28px;border-radius:12px;text-decoration:none">${t.davetButon}</a>
         </p>
         <p style="color:#94a3b8;font-size:13px;line-height:1.6">${t.davetKodNotu(kod)}</p>
       </div>`,

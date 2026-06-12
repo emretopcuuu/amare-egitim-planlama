@@ -11,8 +11,8 @@ const SLAYT_SAYISI = 4;
 
 // Takım renk paleti — projeksiyonda ayırt edilebilir, koyu zemine uygun
 const TAKIM_RENKLERI = [
-  "#f0c75e", // altın
-  "#a78bfa", // mor
+  "#fbbf24", // kor amber
+  "#9cc3e0", // buz mavisi
   "#34d399", // zümrüt
   "#f472b6", // pembe
   "#60a5fa", // mavi
@@ -182,7 +182,7 @@ export default function EkranGosterisi() {
                         y1={k1.y}
                         x2={k2.x}
                         y2={k2.y}
-                        stroke={b.capraz ? "#d4af37" : "#7c3aed"}
+                        stroke={b.capraz ? "#f59e0b" : "#4e7ca6"}
                         strokeOpacity={b.capraz ? 0.55 : 0.3}
                         strokeWidth={b.capraz ? 2 : 1.2}
                       />
@@ -198,7 +198,7 @@ export default function EkranGosterisi() {
                         cy={k.y}
                         r={9}
                         fill={takimRengi(d.t)}
-                        stroke="#1e1233"
+                        stroke="#06121e"
                         strokeWidth={2}
                       />
                     );
@@ -247,8 +247,8 @@ export default function EkranGosterisi() {
                           width: `${((o.ort ?? 0) / 10) * 100}%`,
                           background:
                             i === 0
-                              ? "linear-gradient(90deg, #d4af37, #f0c75e)"
-                              : "linear-gradient(90deg, #7c3aed, #a78bfa)",
+                              ? "linear-gradient(90deg, #f59e0b, #fbbf24)"
+                              : "linear-gradient(90deg, #4e7ca6, #9cc3e0)",
                         }}
                       />
                     </div>
@@ -321,7 +321,7 @@ export default function EkranGosterisi() {
                                 style={{
                                   width: `${(tk.kivilcim / enYuksek) * 100}%`,
                                   background:
-                                    "linear-gradient(90deg, #d4af37, #f0c75e)",
+                                    "linear-gradient(90deg, #f59e0b, #fbbf24)",
                                 }}
                               />
                             </div>

@@ -14,19 +14,19 @@ function kartiCiz(canvas: HTMLCanvasElement, ad: string, ozellik: string) {
   if (!ctx) return;
 
   const arkaPlan = ctx.createLinearGradient(0, 0, W * 0.4, H);
-  arkaPlan.addColorStop(0, "#1e1233");
-  arkaPlan.addColorStop(1, "#2d1b4e");
+  arkaPlan.addColorStop(0, "#06121e");
+  arkaPlan.addColorStop(1, "#0a1c2e");
   ctx.fillStyle = arkaPlan;
   ctx.fillRect(0, 0, W, H);
 
   // çerçeve
-  ctx.strokeStyle = "rgba(212, 175, 55, 0.6)";
+  ctx.strokeStyle = "rgba(245, 158, 11, 0.6)";
   ctx.lineWidth = 6;
   ctx.strokeRect(40, 40, W - 80, H - 80);
 
   ctx.textAlign = "center";
 
-  ctx.fillStyle = "#a78bfa";
+  ctx.fillStyle = "#9cc3e0";
   ctx.font = "600 38px system-ui, sans-serif";
   ctx.fillText(tr.app.name.toLocaleUpperCase("tr-TR"), W / 2, 170);
 
@@ -35,7 +35,7 @@ function kartiCiz(canvas: HTMLCanvasElement, ad: string, ozellik: string) {
   ctx.fillText(ad, W / 2, 560);
 
   // Özellik — kartın yıldızı. Uzun adlarda ölçü küçültülür.
-  ctx.fillStyle = "#d4af37";
+  ctx.fillStyle = "#f59e0b";
   let boyut = 130;
   ctx.font = `800 ${boyut}px Georgia, serif`;
   while (ctx.measureText(ozellik).width > W - 160 && boyut > 60) {
