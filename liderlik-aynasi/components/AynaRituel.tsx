@@ -246,7 +246,9 @@ export default function AynaRituel() {
 
   return (
     // TAM EKRAN: o an yapılan iş dışında hiçbir şey görünmez
-    <div className="evren-gol fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[#04101c]/95 p-6 backdrop-blur-md">
+    // not: evren-gol sınıfı position:relative tanımladığı için fixed'i
+    // eziyordu — overlay'de KULLANILMAZ; zemin/metin rengi elle verilir
+    <div className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[#04101c]/95 p-6 text-[#e6edf4] backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-8">
         {asama === "giris" && (
           <div className="text-center">
