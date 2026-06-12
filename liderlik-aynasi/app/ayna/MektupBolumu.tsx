@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import SesCal from "@/components/SesCal";
 
 const t = tr.mektup;
 
@@ -9,8 +10,10 @@ const t = tr.mektup;
 // üretilir (admin toplu üretimi atlamışsa bile kimse mektupsuz kalmaz).
 export default function MektupBolumu({
   mevcutMektup,
+  sesUrl,
 }: {
   mevcutMektup: string | null;
+  sesUrl: string | null;
 }) {
   const [mektup, setMektup] = useState<string | null>(mevcutMektup);
   const [yukleniyor, setYukleniyor] = useState(false);
@@ -41,9 +44,12 @@ export default function MektupBolumu({
       <p className="mt-1 text-xs text-slate-400">{t.aciklama}</p>
 
       {mektup ? (
-        <div className="mt-4 whitespace-pre-wrap rounded-xl bg-midnight-soft/80 p-4 font-serif text-sm leading-relaxed text-slate-100">
-          {mektup}
-        </div>
+        <>
+          <div className="mt-4 whitespace-pre-wrap rounded-xl bg-midnight-soft/80 p-4 font-serif text-sm leading-relaxed text-slate-100">
+            {mektup}
+          </div>
+          {sesUrl && <SesCal url={sesUrl} etiket={t.dinle} />}
+        </>
       ) : (
         <div className="mt-4 text-center">
           {hata && (

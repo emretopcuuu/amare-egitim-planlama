@@ -34,7 +34,9 @@ export async function davetGonder(
     Subject: t.davetKonu,
     TextBody: t.davetMetin(ad, link, kod) + sozMetin,
     HtmlBody: `
-      <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;padding:32px;background:#06121e;color:#f1f5f9;border-radius:16px">
+      <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;background:#06121e;color:#f1f5f9;border-radius:16px;overflow:hidden">
+        <img src="${origin}/og.jpg" alt="Gece Gölü" width="520" style="display:block;width:100%;height:auto" />
+        <div style="padding:32px">
         <p style="color:#9cc3e0;font-size:13px;letter-spacing:3px;text-transform:uppercase;margin:0">Liderlik Aynası</p>
         <h1 style="color:#f59e0b;font-size:26px;margin:12px 0 0">${t.davetBaslik}</h1>
         <p style="line-height:1.6;margin-top:16px">${t.davetParagraf(ad)}</p>
@@ -43,6 +45,7 @@ export async function davetGonder(
           <a href="${link}" style="background:#f59e0b;color:#06121e;font-weight:bold;padding:14px 28px;border-radius:12px;text-decoration:none">${t.davetButon}</a>
         </p>
         <p style="color:#94a3b8;font-size:13px;line-height:1.6">${t.davetKodNotu(kod)}</p>
+        </div>
       </div>`,
     MessageStream: "outbound",
   };

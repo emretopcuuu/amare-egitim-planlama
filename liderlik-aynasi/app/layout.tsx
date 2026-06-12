@@ -26,8 +26,15 @@ const fraunces = Fraunces({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://liderlik-aynasi.vercel.app"),
   title: "Liderlik Aynası",
   description: "360° liderlik değerlendirme — kampta kendini başkalarının gözünden gör.",
+  // Link paylaşım kartı: gölün tan vakti karesi
+  openGraph: {
+    title: "Liderlik Aynası",
+    description: "Kendini başkalarının gözünden gör.",
+    images: [{ url: "/og.jpg", width: 1200, height: 630 }],
+  },
   // PWA: iOS ana ekran kurulumu (push bildirimleri için şart)
   appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "AYNA" },
   icons: { apple: "/apple-touch-icon.png" },

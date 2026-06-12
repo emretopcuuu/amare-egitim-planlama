@@ -107,3 +107,65 @@ export async function gorevSeslendir(
     // sessiz kal: fısıltı yoksa görev metin olarak yaşamaya devam eder
   }
 }
+
+// Klonu hazır katılımcı için metni seslendirip storage'a yazar; yolu döner.
+async function klonluSeslendirVeYukle(
+  db: Db,
+  katilimciId: string,
+  dosya: string,
+  metin: string
+): Promise<string | null> {
+  if (!sesYapilandirildiMi()) return null;
+  const { data: profil } = await db
+    .from("voice_profiles")
+    .select("voice_id, status")
+    .eq("participant_id", katilimciId)
+    .maybeSingle();
+  if (!profil?.voice_id || profil.status !== "klonlandi") return null;
+
+  const mp3 = await seslendir(profil.voice_id, metin.slice(0, 3000));
+  const yolu = `${katilimciId}/${dosya}`;
+  const yukleme = await db.storage
+    .from("sesler")
+    .upload(yolu, Buffer.from(mp3), { contentType: "audio/mpeg", upsert: true });
+  return yukleme.error ? null : yolu;
+}
+
+/** Ayna Mektubu'nu katılımcının kendi sesiyle seslendirir (kurgunun zirvesi). */
+export async function mektupSeslendir(
+  db: Db,
+  katilimciId: string,
+  mektup: string
+): Promise<void> {
+  try {
+    const yolu = await klonluSeslendirVeYukle(db, katilimciId, "mektup.mp3", mektup);
+    if (yolu) {
+      await db
+        .from("mirror_letters")
+        .update({ voice_path: yolu })
+        .eq("participant_id", katilimciId);
+    }
+  } catch {
+    // ses süstür: mektup metin olarak her zaman var
+  }
+}
+
+/** Kampta verilen SÖZ'ü, sahibinin kendi sesiyle ona geri döndürür. */
+export async function sozSeslendir(
+  db: Db,
+  katilimciId: string,
+  soz: string
+): Promise<void> {
+  try {
+    const metin = `Bana söz vermiştin. Sözün şuydu: ${soz}`;
+    const yolu = await klonluSeslendirVeYukle(db, katilimciId, "soz.mp3", metin);
+    if (yolu) {
+      await db
+        .from("voice_profiles")
+        .update({ soz_path: yolu })
+        .eq("participant_id", katilimciId);
+    }
+  } catch {
+    // ses süstür: SÖZ e-postada metin olarak zaten dönüyor
+  }
+}

@@ -79,16 +79,19 @@ export type Database = {
           content: string
           created_at: string
           participant_id: string
+          voice_path: string | null
         }
         Insert: {
           content: string
           created_at?: string
           participant_id: string
+          voice_path?: string | null
         }
         Update: {
           content?: string
           created_at?: string
           participant_id?: string
+          voice_path?: string | null
         }
         Relationships: [
           {
@@ -440,6 +443,7 @@ export type Database = {
           greeting_path: string | null
           participant_id: string
           sample_path: string | null
+          soz_path: string | null
           status: string
           updated_at: string
           voice_id: string | null
@@ -451,6 +455,7 @@ export type Database = {
           greeting_path?: string | null
           participant_id: string
           sample_path?: string | null
+          soz_path?: string | null
           status?: string
           updated_at?: string
           voice_id?: string | null
@@ -462,6 +467,7 @@ export type Database = {
           greeting_path?: string | null
           participant_id?: string
           sample_path?: string | null
+          soz_path?: string | null
           status?: string
           updated_at?: string
           voice_id?: string | null

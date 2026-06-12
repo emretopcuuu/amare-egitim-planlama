@@ -8,6 +8,7 @@ import { tr } from "@/lib/i18n/tr";
 import AynaBekleme from "./AynaBekleme";
 import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
+import SesCal from "@/components/SesCal";
 
 export const metadata = { title: "Ayna Raporun — Liderlik Aynası" };
 
@@ -30,11 +31,34 @@ export default async function AynaPage() {
   const t = tr.ayna;
   const ozellikAd = new Map(rapor.satirlar.map((s) => [s.ozellikId, s.ad]));
 
-  const { data: mevcutMektup } = await db
-    .from("mirror_letters")
-    .select("content")
-    .eq("participant_id", session.sub)
-    .maybeSingle();
+  const [{ data: mevcutMektup }, { data: sesProfili }] = await Promise.all([
+    db
+      .from("mirror_letters")
+      .select("content, voice_path")
+      .eq("participant_id", session.sub)
+      .maybeSingle(),
+    db
+      .from("voice_profiles")
+      .select("soz_path")
+      .eq("participant_id", session.sub)
+      .maybeSingle(),
+  ]);
+
+  // YANSIMAN sesleri: kısa ömürlü imzalı URL'ler (özel bucket)
+  let mektupSesUrl: string | null = null;
+  if (mevcutMektup?.voice_path) {
+    const { data: imzali } = await db.storage
+      .from("sesler")
+      .createSignedUrl(mevcutMektup.voice_path, 3600);
+    mektupSesUrl = imzali?.signedUrl ?? null;
+  }
+  let sozSesUrl: string | null = null;
+  if (sesProfili?.soz_path) {
+    const { data: imzali } = await db.storage
+      .from("sesler")
+      .createSignedUrl(sesProfili.soz_path, 3600);
+    sozSesUrl = imzali?.signedUrl ?? null;
+  }
 
   const tahminTuttu =
     rapor.tahmin &&
@@ -295,7 +319,18 @@ export default async function AynaPage() {
       )}
 
       {/* AI Ayna Mektubu */}
-      <MektupBolumu mevcutMektup={mevcutMektup?.content ?? null} />
+      <MektupBolumu
+        mevcutMektup={mevcutMektup?.content ?? null}
+        sesUrl={mektupSesUrl}
+      />
+
+      {sozSesUrl && (
+        <section className="kart-cam relative overflow-hidden rounded-2xl p-5">
+          <h2 className="font-semibold text-gold-light">{tr.soz.baslik}</h2>
+          <p className="mt-1 text-xs text-slate-400">{tr.soz.aciklama}</p>
+          <SesCal url={sozSesUrl} etiket={tr.soz.dinle} />
+        </section>
+      )}
 
       <p className="pb-4 text-center">
         <Link
