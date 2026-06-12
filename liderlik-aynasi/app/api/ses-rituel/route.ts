@@ -59,6 +59,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ hata: "depolama" }, { status: 500 });
   }
 
+  // 1b) Fotoğraf (isteğe bağlı): hayalet silüete çevir — sudaki yansıma
+  let facePath: string | null = null;
+  const foto = form.get("foto");
+  if (foto instanceof File && foto.size > 0 && foto.size <= AZAMI_BAYT) {
+    try {
+      const { hayaletSiluet } = await import("@/lib/siluet");
+      const png = await hayaletSiluet(Buffer.from(await foto.arrayBuffer()));
+      const siluetYolu = `${session.sub}/siluet.png`;
+      const siluetYukleme = await db.storage
+        .from("sesler")
+        .upload(siluetYolu, png, { contentType: "image/png", upsert: true });
+      if (!siluetYukleme.error) facePath = siluetYolu;
+    } catch {
+      // silüet süstür: fotoğraf işlenemezse prosedürel silüet kalır
+    }
+  }
+
   // Anahtar yoksa: kayıt + onay durdu, klon sonraya
   if (!sesYapilandirildiMi()) {
     await db.from("voice_profiles").upsert({
@@ -67,6 +84,7 @@ export async function POST(req: Request) {
       status: "kayitli",
       sample_path: ornekYolu,
       beklenti,
+      face_path: facePath,
       updated_at: new Date().toISOString(),
     });
     return NextResponse.json({ durum: "sonra" });
@@ -99,6 +117,7 @@ export async function POST(req: Request) {
       sample_path: ornekYolu,
       beklenti,
       greeting_path: selamYolu,
+      face_path: facePath,
       updated_at: new Date().toISOString(),
     });
 
@@ -114,6 +133,7 @@ export async function POST(req: Request) {
       status: "kayitli",
       sample_path: ornekYolu,
       beklenti,
+      face_path: facePath,
       updated_at: new Date().toISOString(),
     });
     return NextResponse.json({ durum: "sonra" });

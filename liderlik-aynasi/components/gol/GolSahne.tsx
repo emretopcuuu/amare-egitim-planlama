@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
@@ -73,6 +73,46 @@ float ormanHatti(float az) {
        + 0.008 * sin(az * 29.0 + 5.0);
 }
 
+float deger(vec2 p) {
+  vec2 g = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(kar(g), kar(g + vec2(1.0, 0.0)), u.x),
+             mix(kar(g + vec2(0.0, 1.0)), kar(g + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+float bulutlar(vec2 p) {
+  float n = deger(p) * 0.6 + deger(p * 2.3 + 17.0) * 0.4;
+  return smoothstep(0.52, 0.78, n);
+}
+
+float tekKus(vec2 q, float cirpis) {
+  // tek kuş: iki kanat — "dağ işareti"; cirpis kanat açısını oynatır
+  q.x = abs(q.x);
+  float kanat = q.y + cirpis * q.x * 1.7;
+  return smoothstep(0.010, 0.003, abs(kanat)) * smoothstep(0.040, 0.018, q.x);
+}
+
+float kuslar(vec2 p) {
+  // gündüz: ~17 sn'de bir, 5 kuşluk bir sürü gökten süzülür (suda da yansır)
+  float faz = uZaman + 8.0;
+  float devir = floor(faz / 17.0);
+  float t = fract(faz / 17.0);
+  if (t > 0.55) return 0.0;
+  float h1 = kar(vec2(devir, 5.3));
+  float h2 = kar(vec2(devir, 11.7));
+  float yon = h1 > 0.5 ? 1.0 : -1.0;
+  vec2 merkez = vec2(yon * -1.7, mix(0.55, 0.95, h2)) + vec2(yon * 3.4, 0.22) * t;
+  float top = 0.0;
+  for (int i = 0; i < 5; i++) {
+    float fi = float(i);
+    vec2 ofs = vec2(-yon * fi * 0.075, -fi * 0.024 + mod(fi, 2.0) * 0.012);
+    float cirpis = sin(uZaman * 8.0 + fi * 1.3) * 0.55 + 0.25;
+    top += tekKus(p - merkez - ofs, cirpis);
+  }
+  return min(top, 1.0);
+}
+
 vec3 gokyuzu(vec3 yon) {
   float el = yon.y;
   float az = atan(yon.x, -yon.z);
@@ -81,9 +121,9 @@ vec3 gokyuzu(vec3 yon) {
   // not: "tan" GLSL yerleşik fonksiyonu olduğundan değişken adı farklı
   float tanKizil = exp(-uGunes * uGunes * 22.0);
 
-  // gece derin petrol ↔ gündüz berrak mavi
-  vec3 ust = mix(vec3(0.010, 0.030, 0.058), vec3(0.13, 0.36, 0.70), gunduz);
-  vec3 alt = mix(vec3(0.035, 0.085, 0.135), vec3(0.47, 0.65, 0.84), gunduz);
+  // gece derin petrol ↔ gündüz berrak, güneşli mavi
+  vec3 ust = mix(vec3(0.010, 0.030, 0.058), vec3(0.16, 0.42, 0.78), gunduz);
+  vec3 alt = mix(vec3(0.035, 0.085, 0.135), vec3(0.60, 0.76, 0.90), gunduz);
   vec3 renk = mix(alt, ust, clamp(el * 2.2, 0.0, 1.0));
 
   // tan kızıllığı ufukta toplanır
@@ -96,16 +136,31 @@ vec3 gokyuzu(vec3 yon) {
   renk += vec3(0.85, 0.93, 1.0) * kayanYildiz(yildizP)
         * smoothstep(0.05, 0.2, el) * (1.0 - gunduz);
 
-  // gök cismi: gece gümüş ay, gündüz sıcak güneş (disk + halo)
+  // gök cismi: gece gümüş ay, gündüz sıcak güneş (disk + halo + pus)
   float d = distance(yon, AY_YONU);
   vec3 cisim = mix(vec3(0.95, 0.97, 1.0), vec3(1.0, 0.93, 0.78), gunduz);
   renk += cisim * smoothstep(0.030, 0.024, d) * (1.0 + gunduz * 2.5);
   renk += mix(vec3(0.55, 0.68, 0.85), vec3(1.0, 0.85, 0.55), gunduz)
         * exp(-d * 6.0) * (0.5 + gunduz * 0.45);
+  // güneşli gün pusu: güneşin etrafında geniş sıcak parlama
+  renk += vec3(1.0, 0.95, 0.80) * exp(-d * 2.2) * gunduz * 0.25;
 
-  // ufuktaki orman silüeti: gece kömür, gündüz çam yeşili
-  vec3 orman = mix(vec3(0.008, 0.020, 0.016), vec3(0.07, 0.16, 0.10), gunduz);
-  renk = mix(orman, renk, smoothstep(-0.006, 0.006, el - ormanHatti(az)));
+  // gündüz: ağır ağır süzülen pamuk bulutlar + süzülen kuş sürüleri
+  if (gunduz > 0.01) {
+    float bulut = bulutlar(vec2(az * 2.2 + uZaman * 0.008, el * 4.5 + 3.0))
+                * smoothstep(0.04, 0.22, el) * gunduz;
+    renk = mix(renk, vec3(0.97, 0.985, 1.0), bulut * 0.75);
+    // kuşlar gökyüzünde koyu görünür; suda yansımaları kendiliğinden düşer
+    renk = mix(renk, vec3(0.09, 0.11, 0.13),
+               kuslar(yildizP) * smoothstep(0.08, 0.2, el) * gunduz * 0.9);
+  }
+
+  // ufuktaki orman: gece kömür, gündüz iki katmanlı canlı yeşillik
+  vec3 ormanArka = mix(vec3(0.008, 0.020, 0.016), vec3(0.11, 0.24, 0.13), gunduz);
+  vec3 ormanOn = mix(vec3(0.006, 0.016, 0.013), vec3(0.05, 0.15, 0.08), gunduz);
+  renk = mix(ormanArka, renk, smoothstep(-0.006, 0.006, el - ormanHatti(az)));
+  float onHat = 0.026 + 0.55 * ormanHatti(az * 1.7 + 2.3);
+  renk = mix(ormanOn, renk, smoothstep(-0.005, 0.005, el - onHat));
   return renk;
 }
 `;
@@ -133,6 +188,8 @@ varying vec3 vDunya;
 uniform float uZaman;
 uniform float uGunes;
 uniform vec3 uHalka[${MAX_HALKA}];
+uniform sampler2D uSiluet;
+uniform float uSiluetVar;
 ${GOK_GLSL}
 
 void main() {
@@ -173,7 +230,7 @@ void main() {
   // Fresnel: dik bakışta derin su, yatık bakışta ayna — taban yansıtma
   // yüksek tutuldu ki göl "ayna" kimliğini her açıdan korusun
   float fres = 0.30 + 0.70 * pow(1.0 - max(dot(-bakis, n), 0.0), 2.5);
-  vec3 derin = mix(vec3(0.006, 0.020, 0.034), vec3(0.035, 0.110, 0.140), gunduz);
+  vec3 derin = mix(vec3(0.006, 0.020, 0.034), vec3(0.06, 0.16, 0.20), gunduz);
   vec3 renk = mix(derin, yansima * 1.1, fres);
 
   // gök cismi parıltısı: yansıma ışını aya/güneşe yaklaştıkça keskin glint
@@ -195,9 +252,26 @@ void main() {
               * smoothstep(-0.8, 1.2, derinZ);
   vec2 basFark = vec2(sx * 1.6, (derinZ - 0.1) * 0.85);
   float bas = exp(-dot(basFark, basFark) * 2.4);
-  renk += vec3(0.72, 0.84, 0.96) * (govde * 0.5 + bas * 0.95)
-        * 0.13 * sukunet * (1.0 - gunduz * 0.35)
-        * (0.82 + 0.18 * sin(t * 0.7)); // nefes alır
+  float siluetIzi;
+  if (uSiluetVar > 0.5) {
+    // FOTO SİLÜETİ: ritüelde verilen fotoğrafın hayalet izi suda.
+    // Yansıma ters durur (baş ufka doğru); dalga ve halkalar imgeyi büker.
+    vec2 uvS = vec2(
+      sx / 1.6 + 0.5,
+      1.0 - (derinZ + 0.6) / 5.2 + egim.y * 2.0
+    );
+    vec4 doku = (uvS.x > 0.001 && uvS.x < 0.999 && uvS.y > 0.001 && uvS.y < 0.999)
+      ? texture2D(uSiluet, uvS)
+      : vec4(0.0);
+    siluetIzi = doku.r * doku.a * 1.25 * sukunet
+              * (0.82 + 0.18 * sin(t * 0.7));
+  } else {
+    siluetIzi = (govde * 0.5 + bas * 0.95) * sukunet
+              * (0.82 + 0.18 * sin(t * 0.7)); // nefes alır
+  }
+  // gece: ışıktan silüet; gündüz: parlak suda KOYU yansıma — gerçek ayna gibi
+  renk += mix(vec3(0.72, 0.84, 0.96) * 0.13,
+              vec3(-0.11, -0.14, -0.16), gunduz) * siluetIzi;
 
   // kamp ateşinin amber yansıması (sol kıyı) — gündüz söner
   float kor = exp(-length(p - vec2(-4.0, -7.0)) * 0.22);
@@ -268,15 +342,47 @@ function SuYuzeyi({
   uZaman,
   uGunes,
   uHalka,
+  siluetUrl,
 }: {
   uZaman: ZamanU;
   uGunes: ZamanU;
   uHalka: HalkaU;
+  siluetUrl: string | null;
 }) {
+  const [doku, setDoku] = useState<THREE.Texture | null>(null);
+
+  useEffect(() => {
+    if (!siluetUrl) return;
+    let iptal = false;
+    new THREE.TextureLoader().load(siluetUrl, (yeni) => {
+      if (iptal) {
+        yeni.dispose();
+        return;
+      }
+      setDoku(yeni);
+    });
+    return () => {
+      iptal = true;
+    };
+  }, [siluetUrl]);
+
   const uniforms = useMemo(
-    () => ({ uZaman, uGunes, uHalka }),
+    () => ({
+      uZaman,
+      uGunes,
+      uHalka,
+      uSiluet: { value: null as THREE.Texture | null },
+      uSiluetVar: { value: 0 },
+    }),
     [uZaman, uGunes, uHalka]
   );
+
+  useEffect(() => {
+    // three doku uniformu mutasyonla bağlanır (her karede değil, doku gelince)
+    // eslint-disable-next-line react-hooks/immutability
+    uniforms.uSiluet.value = doku;
+    uniforms.uSiluetVar.value = doku ? 1 : 0;
+  }, [doku, uniforms]);
   return (
     <mesh rotation-x={-Math.PI / 2} frustumCulled={false}>
       <planeGeometry args={[240, 240]} />
@@ -336,7 +442,13 @@ function AtesBocekleri({ uZaman, uGunes }: { uZaman: ZamanU; uGunes: ZamanU }) {
   );
 }
 
-function GolDunyasi({ hareketli }: { hareketli: boolean }) {
+function GolDunyasi({
+  hareketli,
+  siluetUrl,
+}: {
+  hareketli: boolean;
+  siluetUrl: string | null;
+}) {
   const { camera, invalidate } = useThree();
   const sira = useRef(0);
   const fare = useRef({ x: 0, y: 0 });
@@ -429,13 +541,19 @@ function GolDunyasi({ hareketli }: { hareketli: boolean }) {
   return (
     <>
       <GokKubbesi uZaman={uZaman} uGunes={uGunes} />
-      <SuYuzeyi uZaman={uZaman} uGunes={uGunes} uHalka={uHalka} />
+      <SuYuzeyi uZaman={uZaman} uGunes={uGunes} uHalka={uHalka} siluetUrl={siluetUrl} />
       <AtesBocekleri uZaman={uZaman} uGunes={uGunes} />
     </>
   );
 }
 
-export default function GolSahne({ hareketli = true }: { hareketli?: boolean }) {
+export default function GolSahne({
+  hareketli = true,
+  siluetUrl = null,
+}: {
+  hareketli?: boolean;
+  siluetUrl?: string | null;
+}) {
   return (
     <Canvas
       dpr={[1, 1.5]}
@@ -444,7 +562,7 @@ export default function GolSahne({ hareketli = true }: { hareketli?: boolean }) 
       style={{ pointerEvents: "none" }}
       frameloop={hareketli ? "always" : "demand"}
     >
-      <GolDunyasi hareketli={hareketli} />
+      <GolDunyasi hareketli={hareketli} siluetUrl={siluetUrl} />
     </Canvas>
   );
 }

@@ -12,7 +12,19 @@ const GolSahne = dynamic(() => import("./GolSahne"), {
 
 export default function GolArkaplan() {
   const [durum, setDurum] = useState({ hazir: false, hareketli: true, webgl: true });
+  const [siluetUrl, setSiluetUrl] = useState<string | null>(null);
   const { hazir, hareketli, webgl } = durum;
+
+  // Giriş yapan katılımcının hayalet silüeti: varsa sudaki yansıma o olur.
+  // Oturum yoksa 401 döner ve sessizce prosedürel silüet kullanılır.
+  useEffect(() => {
+    fetch("/api/siluet")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((veri: { url?: string | null } | null) => {
+        if (veri?.url) setSiluetUrl(veri.url);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const azalt = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -31,12 +43,12 @@ export default function GolArkaplan() {
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 print:hidden">
       {hazir && webgl ? (
-        <GolSahne hareketli={hareketli} />
+        <GolSahne hareketli={hareketli} siluetUrl={siluetUrl} />
       ) : (
         <div className="gol-zemin absolute inset-0" />
       )}
       {/* okunabilirlik perdesi: gündüz parlak suda bile metin net kalır */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#06121e]/20 to-[#06121e]/50" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#06121e]/15 to-[#06121e]/40" />
     </div>
   );
 }

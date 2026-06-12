@@ -459,8 +459,15 @@ export const tr = {
     baslik: "Aynaya kendini tanıt",
     aciklama:
       "Sesin, aynanın sesi olacak. Kısa bir okuma yap — kamp boyunca yansıman seninle kendi sesinle konuşsun.",
-    onay: "Sesimin yalnızca bana özel kamp deneyimi için klonlanmasına onay veriyorum. Kayıt ve klon, kamp bittiğinde silinecek.",
+    onay: "Sesimin ve fotoğrafımın yalnızca bana özel kamp deneyimi için kullanılmasına (ses klonu + sudaki silüet) onay veriyorum. Tüm kayıtlar kamp bittiğinde silinecek.",
     basla: "Ritüeli başlat",
+    fotoBaslik: "Aynaya yüzünü göster",
+    fotoAciklama:
+      "Bir fotoğraf çek — aynan onu suya yansıyan hayalet bir silüete çevirecek. Yüzün tanınmaz; sadece izin kalır.",
+    fotoCek: "📷 Fotoğraf çek",
+    fotoYeniden: "Yeniden çek",
+    fotoDevam: "Devam",
+    fotoAtla: "Fotoğrafsız devam et",
     sessiz: "Sessiz ayna istiyorum",
     yeminYonerge: "Aşağıdaki yemini doğal bir sesle, acele etmeden oku:",
     yemin:
