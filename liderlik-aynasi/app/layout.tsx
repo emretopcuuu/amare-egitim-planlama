@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Playfair_Display, Fraunces } from "next/font/google";
+import GolArkaplan from "@/components/gol/GolArkaplan";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -39,7 +40,7 @@ export const viewport: Viewport = {
   // yaratıyor; kamp uygulamasında zoom kapalı — ekran sabit kalsın.
   maximumScale: 1,
   userScalable: false,
-  themeColor: "#1e1233",
+  themeColor: "#06121e",
 };
 
 export default function RootLayout({
@@ -52,7 +53,11 @@ export default function RootLayout({
       lang="tr"
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${fraunces.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* GECE GÖLÜ tüm evrenin zemini: her ekran canlı gölün üstünde yaşar */}
+        <GolArkaplan />
+        {children}
+      </body>
     </html>
   );
 }

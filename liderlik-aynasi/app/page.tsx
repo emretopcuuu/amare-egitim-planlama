@@ -8,7 +8,6 @@ import { tr } from "@/lib/i18n/tr";
 import CikisButonu from "@/components/CikisButonu";
 import AynaKurulum from "@/components/AynaKurulum";
 import EgilenKart from "@/components/EgilenKart";
-import GolArkaplan from "@/components/gol/GolArkaplan";
 
 export default async function AnaSayfa() {
   const session = await getSession();
@@ -26,8 +25,7 @@ export default async function AnaSayfa() {
   ]);
 
   return (
-    <main className="evren-gol flex min-h-screen flex-1 flex-col overflow-hidden">
-      <GolArkaplan />
+    <main className="flex min-h-screen flex-1 flex-col overflow-hidden">
       <div className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center gap-5 p-6">
         <EgilenKart className="rounded-3xl">
           <div className="kart-cam relative overflow-hidden rounded-3xl p-8">

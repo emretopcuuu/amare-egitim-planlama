@@ -18,11 +18,17 @@ type HalkaU = { value: THREE.Vector3[] };
 // Yön (birim vektör) → gökyüzü rengi. Hem kubbe hem suyun yansıması bu
 // fonksiyonu kullanır; orman silüeti yönde yaşadığı için suda kendiliğinden
 // yansır. AY_YONU portre telefonda da görünsün diye merkeze yakın seçildi.
+// uGunes (-1 gece yarısı … +1 öğle) gerçek saatten gelir: geceleri gece,
+// gündüzleri gündüz — tan vakti ufuk kızıllaşır, gök cismi ay↔güneş dönüşür.
 const GOK_GLSL = /* glsl */ `
 const vec3 AY_YONU = vec3(0.147, 0.342, -0.928);
 
 float kar(vec2 p) {
   return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+float gunduzOrani() {
+  return smoothstep(-0.08, 0.3, uGunes);
 }
 
 float yildizlar(vec2 p) {
@@ -43,18 +49,32 @@ float ormanHatti(float az) {
 vec3 gokyuzu(vec3 yon) {
   float el = yon.y;
   float az = atan(yon.x, -yon.z);
-  // ufka doğru hafifçe aydınlanan derin petrol gece
-  vec3 renk = mix(vec3(0.035, 0.085, 0.135), vec3(0.010, 0.030, 0.058),
-                  clamp(el * 2.2, 0.0, 1.0));
+  float gunduz = gunduzOrani();
+  // tan kuşağı: güneş ufka yakınken (doğum/batım) ufuk kızıllaşır
+  float tan = exp(-uGunes * uGunes * 22.0);
+
+  // gece derin petrol ↔ gündüz berrak mavi
+  vec3 ust = mix(vec3(0.010, 0.030, 0.058), vec3(0.13, 0.36, 0.70), gunduz);
+  vec3 alt = mix(vec3(0.035, 0.085, 0.135), vec3(0.47, 0.65, 0.84), gunduz);
+  vec3 renk = mix(alt, ust, clamp(el * 2.2, 0.0, 1.0));
+
+  // tan kızıllığı ufukta toplanır
+  renk += vec3(0.98, 0.42, 0.16) * tan * exp(-max(el, 0.0) * 7.0) * 0.55;
+
+  // yıldızlar yalnız gece görünür
   renk += vec3(1.0, 0.97, 0.92) * yildizlar(vec2(az * 1.6, el * 2.4))
-        * smoothstep(0.02, 0.12, el);
-  // ay: disk + halo
+        * smoothstep(0.02, 0.12, el) * (1.0 - gunduz);
+
+  // gök cismi: gece gümüş ay, gündüz sıcak güneş (disk + halo)
   float d = distance(yon, AY_YONU);
-  renk += vec3(0.95, 0.97, 1.0) * smoothstep(0.030, 0.024, d);
-  renk += vec3(0.55, 0.68, 0.85) * exp(-d * 6.0) * 0.5;
-  // ufuktaki orman silüeti
-  renk = mix(vec3(0.008, 0.020, 0.016), renk,
-             smoothstep(-0.006, 0.006, el - ormanHatti(az)));
+  vec3 cisim = mix(vec3(0.95, 0.97, 1.0), vec3(1.0, 0.93, 0.78), gunduz);
+  renk += cisim * smoothstep(0.030, 0.024, d) * (1.0 + gunduz * 2.5);
+  renk += mix(vec3(0.55, 0.68, 0.85), vec3(1.0, 0.85, 0.55), gunduz)
+        * exp(-d * 6.0) * (0.5 + gunduz * 0.45);
+
+  // ufuktaki orman silüeti: gece kömür, gündüz çam yeşili
+  vec3 orman = mix(vec3(0.008, 0.020, 0.016), vec3(0.07, 0.16, 0.10), gunduz);
+  renk = mix(orman, renk, smoothstep(-0.006, 0.006, el - ormanHatti(az)));
   return renk;
 }
 `;
@@ -70,6 +90,7 @@ void main() {
 const GOK_PARCA = /* glsl */ `
 varying vec3 vDunya;
 uniform float uZaman;
+uniform float uGunes;
 ${GOK_GLSL}
 void main() {
   gl_FragColor = vec4(gokyuzu(normalize(vDunya - cameraPosition)), 1.0);
@@ -79,6 +100,7 @@ void main() {
 const SU_PARCA = /* glsl */ `
 varying vec3 vDunya;
 uniform float uZaman;
+uniform float uGunes;
 uniform vec3 uHalka[${MAX_HALKA}];
 ${GOK_GLSL}
 
@@ -112,20 +134,25 @@ void main() {
   r.y = max(r.y, -0.03); // ufkun hemen altı: orman karanlığı yansısın
   vec3 yansima = gokyuzu(normalize(r));
 
+  float gunduz = gunduzOrani();
+
   // Fresnel: dik bakışta derin su, yatık bakışta ayna
   float fres = 0.16 + 0.84 * pow(1.0 - max(dot(-bakis, n), 0.0), 3.0);
-  vec3 renk = mix(vec3(0.006, 0.020, 0.034), yansima, fres);
+  vec3 derin = mix(vec3(0.006, 0.020, 0.034), vec3(0.035, 0.110, 0.140), gunduz);
+  vec3 renk = mix(derin, yansima, fres);
 
-  // ay parıltısı: yansıma ışını aya yaklaştıkça keskinleşen glint yolu
+  // gök cismi parıltısı: yansıma ışını aya/güneşe yaklaştıkça keskin glint
   float parilti = pow(max(dot(r, AY_YONU), 0.0), 700.0);
-  renk += vec3(1.0, 0.98, 0.9) * parilti * 0.55;
+  renk += mix(vec3(1.0, 0.98, 0.9), vec3(1.0, 0.9, 0.65), gunduz)
+        * parilti * (0.55 + gunduz * 0.4);
 
   // halkaların gümüş izi
   renk += vec3(0.45, 0.65, 0.85) * abs(halkaIz) * 0.10;
 
-  // kamp ateşinin amber yansıması (sol kıyı)
+  // kamp ateşinin amber yansıması (sol kıyı) — gündüz söner
   float kor = exp(-length(p - vec2(-4.0, -7.0)) * 0.22);
-  renk += vec3(0.96, 0.55, 0.08) * kor * 0.20 * (0.85 + 0.15 * sin(t * 3.1));
+  renk += vec3(0.96, 0.55, 0.08) * kor * 0.20
+        * (0.85 + 0.15 * sin(t * 3.1)) * (1.0 - gunduz);
 
   // uzakta su, karşı kıyının karanlığına karışır
   float uzak = length(vDunya.xz - cameraPosition.xz);
@@ -154,9 +181,12 @@ void main() {
 
 const BOCEK_PARCA = /* glsl */ `
 varying float vParlak;
+uniform float uGunes;
 void main() {
+  // ateş böcekleri gün ışığında görünmez
+  float gunduz = smoothstep(-0.08, 0.3, uGunes);
   float d = length(gl_PointCoord - 0.5);
-  float a = smoothstep(0.5, 0.05, d) * vParlak;
+  float a = smoothstep(0.5, 0.05, d) * vParlak * (1.0 - gunduz);
   gl_FragColor = vec4(vec3(1.0, 0.74, 0.34) * a, a * 0.85);
 }
 `;
@@ -168,8 +198,8 @@ function rasgele(i: number, tuz: number) {
   return x - Math.floor(x);
 }
 
-function GokKubbesi({ uZaman }: { uZaman: ZamanU }) {
-  const uniforms = useMemo(() => ({ uZaman }), [uZaman]);
+function GokKubbesi({ uZaman, uGunes }: { uZaman: ZamanU; uGunes: ZamanU }) {
+  const uniforms = useMemo(() => ({ uZaman, uGunes }), [uZaman, uGunes]);
   return (
     <mesh frustumCulled={false} renderOrder={-1}>
       <sphereGeometry args={[90, 32, 20]} />
@@ -184,8 +214,19 @@ function GokKubbesi({ uZaman }: { uZaman: ZamanU }) {
   );
 }
 
-function SuYuzeyi({ uZaman, uHalka }: { uZaman: ZamanU; uHalka: HalkaU }) {
-  const uniforms = useMemo(() => ({ uZaman, uHalka }), [uZaman, uHalka]);
+function SuYuzeyi({
+  uZaman,
+  uGunes,
+  uHalka,
+}: {
+  uZaman: ZamanU;
+  uGunes: ZamanU;
+  uHalka: HalkaU;
+}) {
+  const uniforms = useMemo(
+    () => ({ uZaman, uGunes, uHalka }),
+    [uZaman, uGunes, uHalka]
+  );
   return (
     <mesh rotation-x={-Math.PI / 2} frustumCulled={false}>
       <planeGeometry args={[240, 240]} />
@@ -200,7 +241,7 @@ function SuYuzeyi({ uZaman, uHalka }: { uZaman: ZamanU; uHalka: HalkaU }) {
 
 // Kamp ateşinden savrulan korlar + su üstünde süzülen ateş böcekleri:
 // yakındakiler büyük, uzaktakiler küçük — derinliği en çok satan katman.
-function AtesBocekleri({ uZaman }: { uZaman: ZamanU }) {
+function AtesBocekleri({ uZaman, uGunes }: { uZaman: ZamanU; uGunes: ZamanU }) {
   const { konumlar, tohumlar } = useMemo(() => {
     const adet = 26;
     const konumlar = new Float32Array(adet * 3);
@@ -225,7 +266,7 @@ function AtesBocekleri({ uZaman }: { uZaman: ZamanU }) {
     return { konumlar, tohumlar };
   }, []);
 
-  const uniforms = useMemo(() => ({ uZaman }), [uZaman]);
+  const uniforms = useMemo(() => ({ uZaman, uGunes }), [uZaman, uGunes]);
 
   return (
     <points frustumCulled={false} renderOrder={1}>
@@ -251,6 +292,7 @@ function GolDunyasi({ hareketli }: { hareketli: boolean }) {
   const fare = useRef({ x: 0, y: 0 });
 
   const uZaman = useMemo<ZamanU>(() => ({ value: 10 }), []);
+  const uGunes = useMemo<ZamanU>(() => ({ value: -1 }), []);
   const uHalka = useMemo<HalkaU>(
     () => ({
       value: Array.from(
@@ -303,6 +345,11 @@ function GolDunyasi({ hareketli }: { hareketli: boolean }) {
     // eslint-disable-next-line react-hooks/immutability
     if (hareketli) uZaman.value += dt;
     const t = uZaman.value;
+    // gerçek saat → güneş yüksekliği: 06:00 doğum, 12:00 öğle, 18:00 batım
+    const simdi = new Date();
+    const saat = simdi.getHours() + simdi.getMinutes() / 60;
+    // eslint-disable-next-line react-hooks/immutability
+    uGunes.value = Math.sin((Math.PI * 2 * (saat - 6)) / 24);
     // kendiliğinden süzülen + parmağa/fareye hafifçe eğilen kamera
     // eslint-disable-next-line react-hooks/immutability
     camera.position.x = Math.sin(t * 0.1) * 0.3 + fare.current.x * 0.45;
@@ -313,9 +360,9 @@ function GolDunyasi({ hareketli }: { hareketli: boolean }) {
 
   return (
     <>
-      <GokKubbesi uZaman={uZaman} />
-      <SuYuzeyi uZaman={uZaman} uHalka={uHalka} />
-      <AtesBocekleri uZaman={uZaman} />
+      <GokKubbesi uZaman={uZaman} uGunes={uGunes} />
+      <SuYuzeyi uZaman={uZaman} uGunes={uGunes} uHalka={uHalka} />
+      <AtesBocekleri uZaman={uZaman} uGunes={uGunes} />
     </>
   );
 }

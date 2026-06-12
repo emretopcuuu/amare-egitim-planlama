@@ -6,7 +6,6 @@ import { raporHesapla, raporlarGorunurMu } from "@/lib/rapor";
 import { unvanBul } from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
 import AynaBekleme from "./AynaBekleme";
-import GolArkaplan from "@/components/gol/GolArkaplan";
 import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
 
@@ -43,8 +42,7 @@ export default async function AynaPage() {
     rapor.tahmin.topId === rapor.gercekTopId;
 
   return (
-    <main className="evren-gol min-h-screen flex-1 overflow-hidden">
-      <GolArkaplan />
+    <main className="min-h-screen flex-1 overflow-hidden">
       <div className="mx-auto w-full max-w-lg space-y-6 p-6">
       <header className="ayna-acilis text-center">
         <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
