@@ -43,9 +43,12 @@ float yildizlar(vec2 p) {
 }
 
 float kayanYildiz(vec2 p) {
-  // ~18 saniyede bir kısa ömürlü kayan yıldız — gökte ve suyun aynasında
-  float devir = floor(uZaman / 18.0);
-  float t = fract(uZaman / 18.0) * 5.5;
+  // ~18 saniyede bir kısa ömürlü kayan yıldız — gökte ve suyun aynasında.
+  // Faz kayması: ilk yıldız sahne açıldıktan ~3 sn sonra geçer (uZaman 10'dan
+  // başlar; 10+5=15 → 3 sn sonra 18'e ulaşıp ilk deviri başlatır).
+  float faz = uZaman + 5.0;
+  float devir = floor(faz / 18.0);
+  float t = fract(faz / 18.0) * 5.5;
   if (t > 1.0) return 0.0;
   float h1 = kar(vec2(devir, 3.7));
   float h2 = kar(vec2(devir, 9.1));
@@ -140,6 +143,7 @@ void main() {
 
   // dokunma halkaları: dünya uzayında sönümlenerek yayılan dairesel dalgalar
   float halkaIz = 0.0;
+  float aktivite = 0.0; // su ne kadar hareketli? (silüet bununla dağılır)
   for (int i = 0; i < ${MAX_HALKA}; i++) {
     vec3 h = uHalka[i];
     float yas = t - h.z;
@@ -149,6 +153,7 @@ void main() {
       float dalga = cos(d * 7.0 - yas * 6.0) * exp(-d * 0.5) * exp(-yas * 1.2);
       egim += (fark / d) * dalga * 0.35;
       halkaIz += dalga;
+      aktivite += exp(-yas * 1.1);
     }
   }
 
@@ -172,6 +177,21 @@ void main() {
 
   // halkaların gümüş izi
   renk += vec3(0.45, 0.65, 0.85) * abs(halkaIz) * 0.10;
+
+  // SUDAKİ SİLÜET: tam karşında, ışıktan bir yansıma — suda kendini görmeye
+  // çalışmak gibi. Su durgunken belirir, dokununca halkalarla dağılır,
+  // durulunca yeniden toplanır. Kamerayla (parmağınla) birlikte kayar.
+  float sukunet = clamp(1.0 - aktivite, 0.0, 1.0);
+  float sx = p.x - cameraPosition.x + egim.x * 6.0 + halkaIz * 3.0;
+  float derinZ = p.y; // dünya z'si: kıyıdan (5) ufka (-) doğru
+  float govde = exp(-sx * sx * 2.6)
+              * smoothstep(4.6, 3.6, derinZ)
+              * smoothstep(-0.8, 1.2, derinZ);
+  vec2 basFark = vec2(sx * 1.6, (derinZ - 0.1) * 0.85);
+  float bas = exp(-dot(basFark, basFark) * 2.4);
+  renk += vec3(0.72, 0.84, 0.96) * (govde * 0.5 + bas * 0.95)
+        * 0.13 * sukunet * (1.0 - gunduz * 0.35)
+        * (0.82 + 0.18 * sin(t * 0.7)); // nefes alır
 
   // kamp ateşinin amber yansıması (sol kıyı) — gündüz söner
   float kor = exp(-length(p - vec2(-4.0, -7.0)) * 0.22);
