@@ -7,6 +7,7 @@ import {
   sessizSaatMi,
 } from "@/lib/ayna";
 import { kivilcimHesapla } from "@/lib/kivilcim";
+import { gorevSeslendir } from "@/lib/yansima";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
 
 export const maxDuration = 60;
@@ -147,15 +148,19 @@ export async function POST(req: Request) {
     const gorev = await gorevUret(db, k, gun, saat);
     if (!gorev) continue;
     const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
-    const { error } = await db.from("missions").insert({
-      participant_id: k.id,
-      trait_id: gorev.trait_id,
-      kind: gorev.kind,
-      title: gorev.title,
-      body: gorev.body,
-      due_at: dueAt.toISOString(),
-    });
-    if (error) continue;
+    const { data: yeniGorev, error } = await db
+      .from("missions")
+      .insert({
+        participant_id: k.id,
+        trait_id: gorev.trait_id,
+        kind: gorev.kind,
+        title: gorev.title,
+        body: gorev.body,
+        due_at: dueAt.toISOString(),
+      })
+      .select("id")
+      .single();
+    if (error || !yeniGorev) continue;
     ozet.uretilen++;
     await katilimciyaBildir(
       db,
@@ -163,6 +168,8 @@ export async function POST(req: Request) {
       `🤖 AYNA'dan yeni görev: ${gorev.title}`,
       gorev.body.length > 120 ? gorev.body.slice(0, 117) + "…" : gorev.body
     );
+    // YANSIMAN fısıltısı: klonu hazırsa görev kendi sesinden de dinlenebilir
+    await gorevSeslendir(db, k.id, yeniGorev.id, gorev.title, gorev.body);
   }
 
   // 4) Teslim hatırlatması (son 30 dk, bir kez)

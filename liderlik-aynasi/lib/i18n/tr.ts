@@ -289,6 +289,8 @@ export const tr = {
   },
   gorevler: {
     baslik: "AYNA'nın Görevleri",
+    dinle: "🔊 Yansımandan dinle",
+    durdur: "■ Durdur",
     altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
     aktifYok: "Şu an aktif görevin yok. AYNA seni izliyor — yenisi her an gelebilir. 👁",
     sonTarih: (saat: string) => `Son: ${saat}`,

@@ -1,5 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import type { Db } from "@/lib/degerlendirme";
+import { seslendir, sesYapilandirildiMi } from "@/lib/eleven";
 
 // YANSIMAN'ın ilk selamlaması: katılımcının kendi sesiyle, kendi
 // beklentisini ona geri fısıldayan 2-3 cümle. AYNA kampı yönetir;
@@ -53,5 +55,39 @@ export async function selamUret(ad: string, beklenti: string | null): Promise<st
     return metin.length > 10 ? metin.slice(0, 400) : selamVarsayilan(ad);
   } catch {
     return selamVarsayilan(ad);
+  }
+}
+
+/**
+ * Görev fısıltısı: AYNA'nın yeni görevini, klonu hazır katılımcının kendi
+ * sesiyle mp3'e çevirip storage'a yazar ve missions.voice_path'i günceller.
+ * Fısıltı süstür — hangi adımda düşerse düşsün görev akışını asla kırmaz.
+ */
+export async function gorevSeslendir(
+  db: Db,
+  katilimciId: string,
+  gorevId: string,
+  baslik: string,
+  govde: string
+): Promise<void> {
+  if (!sesYapilandirildiMi()) return;
+  try {
+    const { data: profil } = await db
+      .from("voice_profiles")
+      .select("voice_id, status")
+      .eq("participant_id", katilimciId)
+      .maybeSingle();
+    if (!profil?.voice_id || profil.status !== "klonlandi") return;
+
+    const metin = `${baslik}. ${govde}`.slice(0, 450);
+    const mp3 = await seslendir(profil.voice_id, metin);
+    const yolu = `${katilimciId}/gorev-${gorevId}.mp3`;
+    const yukleme = await db.storage
+      .from("sesler")
+      .upload(yolu, Buffer.from(mp3), { contentType: "audio/mpeg", upsert: true });
+    if (yukleme.error) return;
+    await db.from("missions").update({ voice_path: yolu }).eq("id", gorevId);
+  } catch {
+    // sessiz kal: fısıltı yoksa görev metin olarak yaşamaya devam eder
   }
 }
