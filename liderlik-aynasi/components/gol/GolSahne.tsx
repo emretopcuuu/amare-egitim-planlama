@@ -56,11 +56,14 @@ float kayanYildiz(vec2 p) {
   vec2 dogrultu = normalize(vec2(0.87, -0.30));
   vec2 uc = bas + dogrultu * t * 1.9;
   vec2 q = p - uc;
-  float s = clamp(dot(q, -dogrultu), 0.0, 0.7);
+  float s = clamp(dot(q, -dogrultu), 0.0, 0.9);
   float d = length(q + dogrultu * s);
-  float kuyruk = exp(-d * 150.0) * (1.0 - s / 0.7);
-  float kafa = exp(-dot(q, q) * 1800.0) * 1.6;
-  return (kuyruk + kafa) * sin(3.14159 * t) * 2.4;
+  // kaçırmak imkansız ama zarif: göz alan beyaz çekirdek, yumuşak hale,
+  // uzun incecik kuyruk — havai fişek değil, gökten düşen tek damla ışık
+  float kuyruk = exp(-d * 110.0) * (1.0 - s / 0.9);
+  float kafa = exp(-dot(q, q) * 1200.0) * 2.2;
+  float hale = exp(-dot(q, q) * 90.0) * 0.35;
+  return (kuyruk + kafa + hale) * sin(3.14159 * t) * 4.2;
 }
 
 float ormanHatti(float az) {
