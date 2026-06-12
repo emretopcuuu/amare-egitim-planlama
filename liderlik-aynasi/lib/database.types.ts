@@ -429,6 +429,50 @@ export type Database = {
         }
         Relationships: []
       }
+      voice_profiles: {
+        Row: {
+          beklenti: string | null
+          consent: boolean
+          created_at: string
+          greeting_path: string | null
+          participant_id: string
+          sample_path: string | null
+          status: string
+          updated_at: string
+          voice_id: string | null
+        }
+        Insert: {
+          beklenti?: string | null
+          consent?: boolean
+          created_at?: string
+          greeting_path?: string | null
+          participant_id: string
+          sample_path?: string | null
+          status?: string
+          updated_at?: string
+          voice_id?: string | null
+        }
+        Update: {
+          beklenti?: string | null
+          consent?: boolean
+          created_at?: string
+          greeting_path?: string | null
+          participant_id?: string
+          sample_path?: string | null
+          status?: string
+          updated_at?: string
+          voice_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_profiles_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       waves: {
         Row: {
           closed_at: string | null
