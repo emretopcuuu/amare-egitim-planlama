@@ -64,6 +64,11 @@ export const tr = {
     ilerleme: (yapilan: number, toplam: number) => `${yapilan}/${toplam} özellik`,
   },
   puanlama: {
+    geri: "Geri",
+    devam: "Devam",
+    ozetBaslik: "Kontrol et ve gönder",
+    dusukUc: "1 = hiç",
+    yuksekUc: "10 = tam",
     ozBaslik: "Kendini Puanla",
     baslikKisi: (ad: string) => `${ad} kişisini puanla`,
     ozAciklama:

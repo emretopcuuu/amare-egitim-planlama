@@ -27,6 +27,8 @@ function taslakAnahtari(dalgaId: number, hedefId: string) {
   return `la_taslak_v1:${dalgaId}:${hedefId}`;
 }
 
+// SİHİRBAZ: her ekranda TEK özellik, dev puan butonları, otomatik ilerleme.
+// UX ilkesi: az yazı, büyük yazı, o an yapılan iş dışında hiçbir şey yok.
 export default function PuanlamaFormu({
   dalgaId,
   dalgaAdi,
@@ -45,10 +47,24 @@ export default function PuanlamaFormu({
     for (const m of mevcut) ilk[m.ozellikId] = { puan: m.puan, yorum: m.yorum };
     return ilk;
   });
+  // kaldığın yerden devam: ilk puansız özellikten başla
+  const [adim, setAdim] = useState(() => {
+    const dolu = new Set(mevcut.map((m) => m.ozellikId));
+    const i = ozellikler.findIndex((o) => !dolu.has(o.id));
+    return i === -1 ? ozellikler.length : i;
+  });
   const [taslakGeldi, setTaslakGeldi] = useState(false);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
+  const [yorumUyari, setYorumUyari] = useState(false);
   const yuklendi = useRef(false);
+  const ilerleZamanlayici = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (ilerleZamanlayici.current) clearTimeout(ilerleZamanlayici.current);
+    };
+  }, []);
 
   // Taslağı yalnızca ilk yüklemede geri al (hydration sonrası, SSR uyumsuzluğu olmasın).
   useEffect(() => {
@@ -58,18 +74,20 @@ export default function PuanlamaFormu({
       const ham = localStorage.getItem(taslakAnahtari(dalgaId, hedefId));
       if (!ham) return;
       const taslak = JSON.parse(ham) as Record<number, Girdi>;
+      const temel: Record<number, Girdi> = {};
+      for (const o of ozellikler) temel[o.id] = { puan: null, yorum: "" };
+      for (const m of mevcut) temel[m.ozellikId] = { puan: m.puan, yorum: m.yorum };
+      for (const o of ozellikler) {
+        const t = taslak[o.id];
+        if (t && (t.puan !== null || t.yorum)) temel[o.id] = t;
+      }
       // localStorage SSR'da okunamaz; taslak ancak hydration sonrası tek seferlik
-      // geri yüklenebilir. Bilinçli istisna — kascading render yok, tek setState.
+      // geri yüklenebilir. Bilinçli istisna — kascading render yok.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setGirdiler((eski) => {
-        const yeni = { ...eski };
-        for (const o of ozellikler) {
-          const t = taslak[o.id];
-          if (t && (t.puan !== null || t.yorum)) yeni[o.id] = t;
-        }
-        return yeni;
-      });
+      setGirdiler(temel);
       setTaslakGeldi(true);
+      const i = ozellikler.findIndex((o) => temel[o.id].puan === null);
+      setAdim(i === -1 ? ozellikler.length : i);
     } catch {
       // bozuk taslak yok sayılır
     }
@@ -89,6 +107,27 @@ export default function PuanlamaFormu({
     });
   }
 
+  function ileri() {
+    setYorumUyari(false);
+    setAdim((a) => Math.min(a + 1, ozellikler.length));
+  }
+
+  function geri() {
+    setYorumUyari(false);
+    setAdim((a) => Math.max(a - 1, 0));
+  }
+
+  function puanSec(o: Ozellik, p: number) {
+    guncelle(o.id, { puan: p });
+    setYorumUyari(false);
+    const yorumGerekli = !kendisi && p < 6;
+    if (!yorumGerekli) {
+      // seçim hissedilsin, sonra kendiliğinden sıradaki özelliğe geç
+      if (ilerleZamanlayici.current) clearTimeout(ilerleZamanlayici.current);
+      ilerleZamanlayici.current = setTimeout(ileri, 300);
+    }
+  }
+
   const puansizlar = ozellikler.filter((o) => girdiler[o.id].puan === null);
   const eksikYorumlar = kendisi
     ? []
@@ -96,11 +135,19 @@ export default function PuanlamaFormu({
         const g = girdiler[o.id];
         return g.puan !== null && g.puan < 6 && !g.yorum.trim();
       });
-  const gonderilebilir =
-    puansizlar.length === 0 && eksikYorumlar.length === 0 && !gonderiliyor;
 
   async function gonder() {
-    if (!gonderilebilir) return;
+    if (gonderiliyor) return;
+    // eksik varsa pasif buton yerine doğrudan o ekrana götür
+    if (puansizlar.length > 0) {
+      setAdim(ozellikler.findIndex((o) => o.id === puansizlar[0].id));
+      return;
+    }
+    if (eksikYorumlar.length > 0) {
+      setYorumUyari(true);
+      setAdim(ozellikler.findIndex((o) => o.id === eksikYorumlar[0].id));
+      return;
+    }
     setGonderiliyor(true);
     setHata(null);
     try {
@@ -136,129 +183,161 @@ export default function PuanlamaFormu({
     }
   }
 
+  const sonEkran = adim >= ozellikler.length;
+  const o = sonEkran ? null : ozellikler[adim];
+  const g = o ? girdiler[o.id] : null;
+  const yorumGerekli = !!(o && g && !kendisi && g.puan !== null && g.puan < 6);
+
   return (
-    <div className="space-y-5">
+    <div className="flex min-h-[82vh] flex-col">
+      {/* üst çubuk: geri + kim + ilerleme */}
       <header>
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
-            {dalgaAdi}
-          </p>
-          <Link
-            href="/degerlendir"
-            className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
-          >
-            ← {tr.puanlama.geriDon}
-          </Link>
+          {adim === 0 ? (
+            <Link
+              href="/degerlendir"
+              className="text-base text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
+            >
+              ← {tr.puanlama.geriDon}
+            </Link>
+          ) : (
+            <button
+              onClick={geri}
+              className="text-base text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
+            >
+              ← {tr.puanlama.geri}
+            </button>
+          )}
+          <span className="font-mono text-lg font-bold text-slate-300">
+            {Math.min(adim + 1, ozellikler.length)} / {ozellikler.length}
+          </span>
         </div>
-        <h1 className="mt-1 text-2xl font-bold text-gold">
-          {kendisi ? tr.puanlama.ozBaslik : tr.puanlama.baslikKisi(hedefAd)}
-        </h1>
-        <p className="mt-2 text-sm text-slate-300">
+        <p className="prizma-serif ay-metin mt-3 truncate text-xl font-semibold">
+          {kendisi ? tr.puanlama.ozBaslik : hedefAd}
           {hedefTakim && !kendisi && (
-            <span className="mr-2 rounded-md bg-royal/30 px-2 py-0.5 text-xs text-royal-light">
+            <span className="ml-2 align-middle rounded-md bg-royal/30 px-2 py-0.5 text-xs text-royal-light">
               {hedefTakim}
             </span>
           )}
-          {kendisi ? tr.puanlama.ozAciklama : tr.puanlama.kisiAciklama}
         </p>
-        <p className="mt-2 text-xs text-slate-400">{tr.puanlama.taslakNotu}</p>
-        {taslakGeldi && (
-          <p className="mt-1 text-xs font-medium text-amber-400">
+        <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-300"
+            style={{ width: `${(Math.min(adim, ozellikler.length) / ozellikler.length) * 100}%` }}
+          />
+        </div>
+        {taslakGeldi && adim < ozellikler.length && (
+          <p className="mt-2 text-sm font-medium text-amber-400">
             {tr.puanlama.taslakGeriYuklendi}
           </p>
         )}
       </header>
 
-      {ozellikler.map((o, sira) => {
-        const g = girdiler[o.id];
-        const yorumGerekli =
-          !kendisi && g.puan !== null && g.puan < 6;
-        return (
-          <section
-            key={o.id}
-            className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur"
-          >
-            <h2 className="font-semibold text-slate-100">
-              <span className="mr-2 text-xs text-slate-500">
-                {sira + 1}/{ozellikler.length}
-              </span>
-              {o.name}
-            </h2>
-            <p className="mt-1 text-xs text-slate-400">{o.observation_hint}</p>
+      {/* TEK ÖZELLİK ekranı */}
+      {o && g && (
+        <div className="flex flex-1 flex-col justify-center py-8">
+          <h1 className="prizma-serif ay-metin text-4xl font-semibold leading-tight">
+            {o.name}
+          </h1>
+          <p className="mt-4 text-lg leading-relaxed text-slate-300">
+            {o.observation_hint}
+          </p>
 
-            <div
-              role="radiogroup"
-              aria-label={o.name}
-              className="mt-4 grid grid-cols-5 gap-1.5 sm:grid-cols-10"
-            >
-              {Array.from({ length: 10 }, (_, i) => i + 1).map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  role="radio"
-                  aria-checked={g.puan === p}
-                  disabled={gonderiliyor}
-                  onClick={() => guncelle(o.id, { puan: p })}
-                  className={`h-11 rounded-lg text-sm font-bold transition-all ${
-                    g.puan === p
-                      ? "scale-105 bg-gradient-to-br from-gold-light to-gold text-midnight shadow-lg shadow-gold/30"
-                      : "border border-royal-light/30 text-slate-300 hover:border-gold/60 hover:text-gold-light"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
+          <div role="radiogroup" aria-label={o.name} className="mt-8 grid grid-cols-5 gap-2.5">
+            {Array.from({ length: 10 }, (_, i) => i + 1).map((p) => (
+              <button
+                key={p}
+                type="button"
+                role="radio"
+                aria-checked={g.puan === p}
+                onClick={() => puanSec(o, p)}
+                className={`h-16 rounded-2xl text-2xl font-bold transition-all ${
+                  g.puan === p
+                    ? "btn-kor scale-105"
+                    : "border-2 border-white/20 text-slate-200 hover:border-gold/60"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+          </div>
+          <div className="mt-2 flex justify-between text-sm text-slate-500">
+            <span>{tr.puanlama.dusukUc}</span>
+            <span>{tr.puanlama.yuksekUc}</span>
+          </div>
+
+          {yorumGerekli && (
+            <div className="mt-6">
+              <label htmlFor="yorum" className="text-lg font-semibold text-amber-300">
+                {tr.puanlama.yorumEtiket}
+              </label>
+              <textarea
+                id="yorum"
+                value={g.yorum}
+                maxLength={YORUM_MAX}
+                rows={3}
+                onChange={(e) => guncelle(o.id, { yorum: e.target.value })}
+                placeholder={tr.puanlama.yorumPlaceholder}
+                className="mt-2 w-full rounded-2xl border-2 border-amber-400/40 bg-midnight-soft p-4 text-lg text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
+              />
+              {yorumUyari && !g.yorum.trim() && (
+                <p role="alert" className="mt-1 text-base font-medium text-red-400">
+                  {tr.puanlama.yorumZorunlu}
+                </p>
+              )}
+              <button
+                onClick={() => (g.yorum.trim() ? ileri() : setYorumUyari(true))}
+                className="btn-kor mt-4 flex h-16 w-full items-center justify-center rounded-2xl text-xl font-bold"
+              >
+                {tr.puanlama.devam} →
+              </button>
             </div>
+          )}
+        </div>
+      )}
 
-            {yorumGerekli && (
-              <div className="mt-3">
-                <label
-                  htmlFor={`yorum-${o.id}`}
-                  className="text-xs font-medium text-amber-400"
+      {/* SON EKRAN: kontrol et ve gönder */}
+      {sonEkran && (
+        <div className="flex flex-1 flex-col justify-center py-8">
+          <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
+            {tr.puanlama.ozetBaslik}
+          </h1>
+          <ul className="mt-6 space-y-2">
+            {ozellikler.map((oz, i) => (
+              <li key={oz.id}>
+                <button
+                  onClick={() => setAdim(i)}
+                  className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left hover:bg-white/[0.08]"
                 >
-                  {tr.puanlama.yorumEtiket}
-                </label>
-                <textarea
-                  id={`yorum-${o.id}`}
-                  value={g.yorum}
-                  maxLength={YORUM_MAX}
-                  rows={2}
-                  disabled={gonderiliyor}
-                  onChange={(e) => guncelle(o.id, { yorum: e.target.value })}
-                  placeholder={tr.puanlama.yorumPlaceholder}
-                  className="mt-1 w-full rounded-xl border border-amber-400/40 bg-midnight-soft p-3 text-base text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
-                />
-              </div>
-            )}
-          </section>
-        );
-      })}
+                  <span className="text-base text-slate-200">{oz.name}</span>
+                  <span
+                    className={`text-xl font-bold ${
+                      girdiler[oz.id].puan === null ? "text-red-400" : "text-gold"
+                    }`}
+                  >
+                    {girdiler[oz.id].puan ?? "—"}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {hata && (
+            <p role="alert" className="mt-4 text-center text-base font-medium text-red-400">
+              {hata}
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={gonder}
+            disabled={gonderiliyor}
+            className="btn-kor parilti mt-6 flex h-16 w-full items-center justify-center rounded-2xl text-xl font-bold disabled:opacity-50"
+          >
+            {gonderiliyor ? tr.puanlama.gonderiliyor : tr.puanlama.gonder}
+          </button>
+        </div>
+      )}
 
-      <div className="sticky bottom-0 -mx-6 bg-gradient-to-t from-midnight via-midnight/95 to-transparent p-6 pt-8">
-        {hata && (
-          <p role="alert" className="mb-3 text-center text-sm font-medium text-red-400">
-            {hata}
-          </p>
-        )}
-        {!hata && puansizlar.length > 0 && (
-          <p className="mb-3 text-center text-xs text-slate-400">
-            {tr.puanlama.eksikPuan(puansizlar.length)}
-          </p>
-        )}
-        {!hata && puansizlar.length === 0 && eksikYorumlar.length > 0 && (
-          <p className="mb-3 text-center text-xs font-medium text-amber-400">
-            {tr.puanlama.yorumZorunlu}
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={gonder}
-          disabled={!gonderilebilir}
-          className="h-12 w-full btn-3d rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          {gonderiliyor ? tr.puanlama.gonderiliyor : tr.puanlama.gonder}
-        </button>
-      </div>
+      <p className="pb-2 text-center text-xs text-slate-500">{dalgaAdi} · {tr.puanlama.taslakNotu}</p>
     </div>
   );
 }
