@@ -16,7 +16,13 @@ import {
   type SistemModu,
 } from "@/lib/davranis";
 import { momentumHesaplaVeYaz } from "@/lib/momentum";
-import { gorevSeslendir } from "@/lib/yansima";
+import {
+  gorevSeslendir,
+  itirazSesi,
+  kaymaSesi,
+  sabahSesi,
+  markaAnons,
+} from "@/lib/yansima";
 import {
   higgsYapilandirildiMi,
   yansimaVideosuBaslat,
@@ -120,6 +126,21 @@ export async function POST(req: Request) {
         `AYNA puanladı: ${sonuc.puan}/10 ⚡`,
         sonuc.yorum
       );
+      // FIERO: 10/10 — büyük ekran AYNA'nın sesiyle alkışlar
+      if (sonuc.puan === 10) {
+        const { data: kisi } = await db
+          .from("participants")
+          .select("full_name")
+          .eq("id", g.participant_id)
+          .maybeSingle();
+        if (kisi) {
+          await markaAnons(
+            db,
+            `anons/fiero-${g.id}.mp3`,
+            `${kisi.full_name.split(" ")[0]}, az önce aynayı parlattı. On üzerinden on.`
+          );
+        }
+      }
     }
   }
 
@@ -210,8 +231,11 @@ export async function POST(req: Request) {
       `🤖 AYNA'dan yeni görev: ${gorev.title}`,
       gorev.body.length > 120 ? gorev.body.slice(0, 117) + "…" : gorev.body
     );
-    // YANSIMAN fısıltısı: kredi bütçesi için yalnız özel görevler seslendirilir
-    if (gorev.kind === "gizli" || gorev.kind === "cesaret") {
+    // Ses katmanı: simülasyonda İTİRAZCI konuşur (stok ses, herkese);
+    // gizli/cesarette YANSIMAN fısıldar (klon, bütçeli)
+    if (gorev.kind === "simulasyon" && gorev.itiraz) {
+      await itirazSesi(db, k.id, yeniGorev.id, gorev.itiraz);
+    } else if (gorev.kind === "gizli" || gorev.kind === "cesaret") {
       await gorevSeslendir(db, k.id, yeniGorev.id, gorev.title, gorev.body);
     }
   }
@@ -294,6 +318,58 @@ export async function POST(req: Request) {
         .from("voice_profiles")
         .update({ video_notified_at: simdi.toISOString() })
         .eq("participant_id", h.participant_id);
+    }
+  }
+
+  // 3b2) SABAH YOKLAMASI: kamp Gün 2+ sabahları 07:35-09:00 — kendi sesinden
+  // günaydın. Tik başına ≤8 üretim; morning_date tekrarları engeller.
+  if (mod === "kamp" && gun >= 2) {
+    const { dakika: sabahDakika } = istanbulSaati(simdi);
+    const sabahPenceresi =
+      (saat === 7 && sabahDakika >= 35) || saat === 8;
+    if (sabahPenceresi) {
+      const { data: sabahBekleyen } = await db
+        .from("voice_profiles")
+        .select("participant_id")
+        .eq("status", "klonlandi")
+        .or(`morning_date.is.null,morning_date.neq.${bugun}`)
+        .limit(8);
+      if ((sabahBekleyen ?? []).length > 0) {
+        const dunBasi = new Date(
+          new Date(`${bugun}T00:00:00+03:00`).getTime() - 86_400_000
+        ).toISOString();
+        const { data: dunPuanlar } = await db
+          .from("ratings")
+          .select("target_id, is_self")
+          .gte("created_at", dunBasi)
+          .lt("created_at", new Date(`${bugun}T00:00:00+03:00`).toISOString());
+        const gozlemler = new Map<string, number>();
+        for (const p of dunPuanlar ?? []) {
+          if (p.is_self) continue;
+          gozlemler.set(p.target_id, (gozlemler.get(p.target_id) ?? 0) + 1);
+        }
+        const adlar = new Map((kisiler ?? []).map((k) => [k.id, k.full_name]));
+        for (const s of sabahBekleyen ?? []) {
+          const ad = adlar.get(s.participant_id);
+          if (!ad) continue;
+          const oldu = await sabahSesi(
+            db,
+            s.participant_id,
+            ad,
+            gozlemler.get(s.participant_id) ?? 0,
+            bugun
+          );
+          if (oldu) {
+            await katilimciyaBildir(
+              db,
+              s.participant_id,
+              "🌅 Aynan günaydın diyor",
+              "Güne kendi sesinle başla — kısa bir mesajın var.",
+              "/"
+            );
+          }
+        }
+      }
     }
   }
 
@@ -393,16 +469,6 @@ export async function POST(req: Request) {
           iz?.nudged_at ? new Date(iz.nudged_at).getTime() : null,
           iz?.admin_alerted_at ? new Date(iz.admin_alerted_at).getTime() : null
         );
-        if (karar.nudge) {
-          await katilimciyaBildir(
-            db,
-            k.id,
-            "🌊 Su seni özledi",
-            "Bir süredir sessizsin. Bu bir azar değil, bir el uzatma: küçücük bir adım bile suyu halkalandırır. Aynana bir bak.",
-            "/"
-          );
-          ozet.durtulen += 1;
-        }
         if (karar.nudge || karar.alert) {
           await db.from("churn_radar").upsert({
             participant_id: k.id,
@@ -410,6 +476,20 @@ export async function POST(req: Request) {
             ...(karar.alert ? { admin_alerted_at: simdi.toISOString() } : {}),
             updated_at: simdi.toISOString(),
           });
+        }
+        if (karar.nudge) {
+          // Önce kendi sesinden mektup üretmeyi dene; sonra bildir
+          const sesli = await kaymaSesi(db, k.id, k.full_name);
+          await katilimciyaBildir(
+            db,
+            k.id,
+            sesli ? "🌊 Yansımandan sesli mesaj var" : "🌊 Su seni özledi",
+            sesli
+              ? "Kendi sesinden bir şey söylemek istiyor. Aç ve dinle."
+              : "Bir süredir sessizsin. Bu bir azar değil, bir el uzatma: küçücük bir adım bile suyu halkalandırır.",
+            "/"
+          );
+          ozet.durtulen += 1;
         }
       }
     }
@@ -481,6 +561,17 @@ export async function POST(req: Request) {
       `${saatYazi}${m.location ? ` · ${m.location}` : ""} — Nedenini orada anlayacaksın.`
     );
     await db.from("schedule_items").update({ revealed: true }).eq("id", m.id);
+    // Sahne anonsu: AYNA'nın marka sesi perdeden duyurur
+    await markaAnons(
+      db,
+      `anons/program-${m.id}.mp3`,
+      `Saat ${saatYazi}. ${m.title}.${m.location ? ` Yer: ${m.location}.` : ""} Nedenini orada anlayacaksınız.`
+    );
+    await db.from("settings").upsert({
+      key: "sahne_anons",
+      value: `${m.id}:${simdi.toISOString()}`,
+      updated_at: simdi.toISOString(),
+    });
     ozet.acilan++;
   }
 

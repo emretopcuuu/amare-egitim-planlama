@@ -61,3 +61,15 @@ export async function sesSil(voiceId: string): Promise<void> {
     // temizlik çağrısı; başarısızlığı akışı durdurmasın
   }
 }
+
+/** AYNA'nın marka sesi: katılımcı klonu değil, kampın imza sesi.
+ * Varsayılan, ElevenLabs'in derin/nötr hazır sesi; AYNA_SES_ID env'iyle
+ * (örn. Voice Design'da tasarlanmış özel sesle) değiştirilebilir. */
+export function aynaSesId(): string {
+  return process.env.AYNA_SES_ID || "pNInz6obpgDQGcFmaJgB";
+}
+
+/** Direnç Simülatörü itirazcısının sesi (stok karakter; klon değil). */
+export function itirazciSesId(): string {
+  return process.env.ITIRAZCI_SES_ID || "VR6AewLTigWG4xSOukaG";
+}

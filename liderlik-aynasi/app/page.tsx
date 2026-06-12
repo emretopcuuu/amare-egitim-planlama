@@ -10,6 +10,7 @@ import CikisButonu from "@/components/CikisButonu";
 import AynaKurulum from "@/components/AynaKurulum";
 import AynaRituel from "@/components/AynaRituel";
 import EgilenKart from "@/components/EgilenKart";
+import SesCal from "@/components/SesCal";
 
 export default async function AnaSayfa() {
   const session = await getSession();
@@ -21,6 +22,7 @@ export default async function AnaSayfa() {
     raporlarAcik,
     { count: aktifGorev },
     { data: sesProfili },
+    { data: kayma },
     { data: modAyarlari },
   ] = await Promise.all([
     acikDalga(db),
@@ -32,7 +34,12 @@ export default async function AnaSayfa() {
       .eq("status", "pending"),
     db
       .from("voice_profiles")
-      .select("status, video_status")
+      .select("status, video_status, morning_date")
+      .eq("participant_id", session.sub)
+      .maybeSingle(),
+    db
+      .from("churn_radar")
+      .select("nudged_at, voice_path")
       .eq("participant_id", session.sub)
       .maybeSingle(),
     db
@@ -47,6 +54,29 @@ export default async function AnaSayfa() {
     ayar.get("sistem_modu") === "yolculuk" && yolculukBaslangic
       ? Math.min(90, yolculukGunuHesapla(yolculukBaslangic, new Date()))
       : null;
+
+  // Kişisel sesli mesaj kartları: sabah yoklaması (bugünse) + kayma mektubu (24s)
+  const db2 = db.storage.from("sesler");
+  const bugunIst = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Istanbul",
+  }).format(new Date());
+  let sabahSesUrl: string | null = null;
+  if (sesProfili?.morning_date === bugunIst) {
+    const { data } = await db2.createSignedUrl(`${session.sub}/sabah.mp3`, 3600);
+    sabahSesUrl = data?.signedUrl ?? null;
+  }
+  let kaymaSesUrl: string | null = null;
+  // istek anı: sunucu bileşeni her istekte çalışır, tazelik kontrolü bilinçli
+  // eslint-disable-next-line react-hooks/purity
+  const istekAni = Date.now();
+  if (
+    kayma?.voice_path &&
+    kayma.nudged_at &&
+    istekAni - new Date(kayma.nudged_at).getTime() < 24 * 3_600_000
+  ) {
+    const { data } = await db2.createSignedUrl(kayma.voice_path, 3600);
+    kaymaSesUrl = data?.signedUrl ?? null;
+  }
 
   return (
     <main className="flex min-h-screen flex-1 flex-col overflow-hidden">
@@ -136,6 +166,24 @@ export default async function AnaSayfa() {
             </div>
           </div>
         </EgilenKart>
+
+        {/* Kişisel sesli mesajlar: önce kayma mektubu, sonra sabah yoklaması */}
+        {kaymaSesUrl && (
+          <div className="kart-cam relative overflow-hidden rounded-2xl p-5">
+            <p className="text-lg font-bold text-sky-200">
+              {tr.anaSayfa.kaymaBaslik}
+            </p>
+            <SesCal url={kaymaSesUrl} etiket={tr.anaSayfa.mesajDinle} />
+          </div>
+        )}
+        {sabahSesUrl && !kaymaSesUrl && (
+          <div className="kart-cam relative overflow-hidden rounded-2xl p-5">
+            <p className="text-lg font-bold text-amber-300">
+              {tr.anaSayfa.sabahBaslik}
+            </p>
+            <SesCal url={sabahSesUrl} etiket={tr.anaSayfa.mesajDinle} />
+          </div>
+        )}
 
         {/* YANSIMAN doğmadıysa önce Ses Ritüeli — ilk dakikanın wow anı */}
         {!sesProfili && <AynaRituel />}

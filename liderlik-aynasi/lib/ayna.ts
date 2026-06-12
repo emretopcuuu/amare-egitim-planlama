@@ -59,8 +59,13 @@ const GOREV_SEMASI = {
       enum: [1, 2, 3],
       description: "Görevin teslim süresi (saat)",
     },
+    itiraz: {
+      type: "string" as const,
+      description:
+        "YALNIZ simulasyon türünde: itirazcının ağzından, tırnaksız ham konuşma cümleleri (sese çevrilecek). Diğer türlerde boş string.",
+    },
   },
-  required: ["baslik", "govde", "ozellik_id", "sure_saat"],
+  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz"],
   additionalProperties: false,
 };
 
@@ -102,6 +107,8 @@ export type UretilenGorev = {
   trait_id: number | null;
   sure_saat: number;
   difficulty: Zorluk;
+  /** simulasyon: itirazcının söylediği cümle(ler) — sese çevrilir */
+  itiraz: string | null;
 };
 
 
@@ -203,6 +210,7 @@ export async function gorevUret(
       govde: string;
       ozellik_id: number;
       sure_saat: number;
+      itiraz?: string;
     }>(yanit);
     if (!veri?.baslik || !veri.govde) return null;
 
@@ -214,6 +222,10 @@ export async function gorevUret(
       trait_id: gecerliIdler.has(veri.ozellik_id) ? veri.ozellik_id : null,
       sure_saat: Math.min(3, Math.max(1, veri.sure_saat)),
       difficulty: zorluk,
+      itiraz:
+        tur === "simulasyon" && veri.itiraz && veri.itiraz.trim().length > 3
+          ? veri.itiraz.trim().slice(0, 400)
+          : null,
     };
   } catch {
     return null;

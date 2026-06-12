@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { gorevPuanla } from "@/lib/ayna";
+import { markaAnons } from "@/lib/yansima";
 import {
   kivilcimHesapla,
   SOZ_KIVILCIMI,
@@ -125,6 +126,15 @@ export async function POST(req: Request) {
       spark_points: kivilcim,
     })
     .eq("id", gorev.id);
+
+  // FIERO: 10/10 anında büyük ekran AYNA'nın sesiyle alkışlar
+  if (sonuc.puan === 10) {
+    await markaAnons(
+      db,
+      `anons/fiero-${gorev.id}.mp3`,
+      `${session.ad.split(" ")[0]}, az önce aynayı parlattı. On üzerinden on.`
+    );
+  }
 
   const toplam = await toplamKivilcim(db, session.sub);
   return Response.json({

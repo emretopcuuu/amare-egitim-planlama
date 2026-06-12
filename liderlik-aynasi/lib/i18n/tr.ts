@@ -26,6 +26,9 @@ export const tr = {
   anaSayfa: {
     yolculukRozeti: (gun: number, faz: string) =>
       `🗺 Yolculuk · Gün ${gun}/90 · ${faz}`,
+    sabahBaslik: "🌅 Aynan günaydın diyor",
+    kaymaBaslik: "🌊 Yansımandan sesli mesaj",
+    mesajDinle: "▶ Dinle",
     hosGeldin: (ad: string) => `Hoş geldin, ${ad}`,
     aciklama:
       "3 gün boyunca hem kendini hem kampta tanıdığın kişileri puanlayacaksın. Gün 3'te aynan açılacak.",
@@ -325,6 +328,7 @@ export const tr = {
   gorevler: {
     baslik: "AYNA'nın Görevleri",
     dinle: "🔊 Yansımandan dinle",
+    dinleItiraz: "🗣 İtirazı dinle",
     durdur: "■ Durdur",
     senkronTesekkur:
       "Tam zamanında. Şu anda onlarca kişi seninle aynı şeyi yaptı — kolektif enerji böyle kurulur. +8 ⚡",
@@ -500,6 +504,9 @@ export const tr = {
     ligTakimlar: "Takım Yarışı",
     ligBos: "İlk Kıvılcımlar yakında — AYNA görev dağıtmaya başladığında burası alevlenecek.",
     yildizSatiri: (n: number) => `Bu salon ${n} yıldız yaktı`,
+    sesiAc: "🔊 Sesi Aç",
+    sesAcikEtiket: "🔊 Ses açık",
+    fiero: (ad: string) => `${ad} AYNAYI PARLATTI`,
     senkronBaslik: "SENKRON AN",
   },
   rituel: {

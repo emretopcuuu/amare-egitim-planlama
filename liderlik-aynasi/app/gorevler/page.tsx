@@ -154,7 +154,12 @@ export default async function GorevlerPage() {
             <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
               {g.body}
             </p>
-            {sesUrller.has(g.id) && <SesCal url={sesUrller.get(g.id)!} />}
+            {sesUrller.has(g.id) && (
+              <SesCal
+                url={sesUrller.get(g.id)!}
+                etiket={g.kind === "simulasyon" ? t.dinleItiraz : t.dinle}
+              />
+            )}
             <GorevYanitFormu gorevId={g.id} />
           </section>
         ))
