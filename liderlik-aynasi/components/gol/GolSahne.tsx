@@ -43,22 +43,24 @@ float yildizlar(vec2 p) {
 }
 
 float kayanYildiz(vec2 p) {
-  // ~18 saniyede bir kısa ömürlü kayan yıldız — gökte ve suyun aynasında.
-  // Faz kayması: ilk yıldız sahne açıldıktan ~3 sn sonra geçer (uZaman 10'dan
-  // başlar; 10+5=15 → 3 sn sonra 18'e ulaşıp ilk deviri başlatır).
-  float faz = uZaman + 5.0;
-  float devir = floor(faz / 18.0);
-  float t = fract(faz / 18.0) * 5.5;
+  // ~14 sn'de bir, görüş alanının İÇİNDEN geçen belirgin kayan yıldız:
+  // parlak baş + uzun kuyruk; suda da yansır. İlki sahne açıldıktan ~3 sn
+  // sonra (uZaman 10'dan başlar; 10+1=11 → 3 sn sonra 14'e ulaşır).
+  float faz = uZaman + 1.0;
+  float devir = floor(faz / 14.0);
+  float t = fract(faz / 14.0) * 4.5;
   if (t > 1.0) return 0.0;
   float h1 = kar(vec2(devir, 3.7));
   float h2 = kar(vec2(devir, 9.1));
-  vec2 bas = vec2(mix(-2.5, 1.2, h1), mix(1.4, 2.1, h2));
-  vec2 dogrultu = normalize(vec2(0.82, -0.40));
-  vec2 uc = bas + dogrultu * t * 2.4;
+  vec2 bas = vec2(mix(-1.3, 0.1, h1), mix(0.72, 1.05, h2));
+  vec2 dogrultu = normalize(vec2(0.87, -0.30));
+  vec2 uc = bas + dogrultu * t * 1.9;
   vec2 q = p - uc;
-  float s = clamp(dot(q, -dogrultu), 0.0, 0.5);
+  float s = clamp(dot(q, -dogrultu), 0.0, 0.7);
   float d = length(q + dogrultu * s);
-  return exp(-d * 240.0) * (1.0 - s * 2.0) * sin(3.14159 * t) * 1.6;
+  float kuyruk = exp(-d * 150.0) * (1.0 - s / 0.7);
+  float kafa = exp(-dot(q, q) * 1800.0) * 1.6;
+  return (kuyruk + kafa) * sin(3.14159 * t) * 2.4;
 }
 
 float ormanHatti(float az) {
