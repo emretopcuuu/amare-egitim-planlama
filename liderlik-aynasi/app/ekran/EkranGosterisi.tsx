@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import type { EkranVerisi } from "@/app/api/ekran/route";
 import EpicYildizlar from "./EpicYildizlar";
@@ -72,6 +72,13 @@ function agYerlesimi(veri: EkranVerisi) {
 export default function EkranGosterisi() {
   const [veri, setVeri] = useState<EkranVerisi | null>(null);
   const [slayt, setSlayt] = useState(0);
+  // SAHNE: tarayıcı sesli oynatmayı kullanıcı dokunuşuna bağlar — kurulumda
+  // bir kez "Sesi Aç"a tıklanır, sonrası otomatik. Olaylar bir kez oynar.
+  const [sesAcik, setSesAcik] = useState(false);
+  const [fieroGoster, setFieroGoster] = useState<{ ad: string } | null>(null);
+  const [dalgaVideo, setDalgaVideo] = useState<number | null>(null);
+  const sesAcikRef = useRef(false);
+  const oynanan = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     let iptal = false;
@@ -80,7 +87,33 @@ export default function EkranGosterisi() {
         const res = await fetch("/api/ekran");
         if (!res.ok) return;
         const yeni = (await res.json()) as EkranVerisi;
-        if (!iptal) setVeri(yeni);
+        if (iptal) return;
+        setVeri(yeni);
+
+        // Sahne olayları: her sinyal yalnızca bir kez oynatılır
+        const s = yeni.sahne;
+        if (s?.fiero && !oynanan.current.has(`f${s.fiero.id}`)) {
+          oynanan.current.add(`f${s.fiero.id}`);
+          setFieroGoster({ ad: s.fiero.ad });
+          setTimeout(() => setFieroGoster(null), 9000);
+          if (sesAcikRef.current && s.fiero.sesUrl) {
+            void new Audio(s.fiero.sesUrl).play().catch(() => {});
+          }
+        }
+        if (
+          s?.dalga &&
+          s.dalga.id <= 3 &&
+          !oynanan.current.has(`d${s.dalga.olayId}`)
+        ) {
+          oynanan.current.add(`d${s.dalga.olayId}`);
+          setDalgaVideo(s.dalga.id);
+        }
+        if (s?.anons && !oynanan.current.has(`a${s.anons.id}`)) {
+          oynanan.current.add(`a${s.anons.id}`);
+          if (sesAcikRef.current && s.anons.sesUrl) {
+            void new Audio(s.anons.sesUrl).play().catch(() => {});
+          }
+        }
       } catch {
         // sahne wifi'ı takıldı: eski veri ekranda kalır, sonraki tur dener
       }
@@ -110,6 +143,57 @@ export default function EkranGosterisi() {
 
   return (
     <main className="flex h-screen w-screen flex-col overflow-hidden p-10">
+      {/* Ses kapısı: kurulumda tek tıklama, sonrası otomatik anonslar */}
+      <button
+        onClick={() => {
+          sesAcikRef.current = true;
+          setSesAcik(true);
+        }}
+        className={`absolute right-4 top-4 z-30 rounded-lg px-3 py-1.5 text-sm font-semibold ${
+          sesAcik
+            ? "border border-emerald-400/40 text-emerald-300"
+            : "btn-kor"
+        }`}
+      >
+        {sesAcik ? t.sesAcikEtiket : t.sesiAc}
+      </button>
+
+      {/* FIERO: 10/10 anı — yıldız patlaması + isim */}
+      {fieroGoster && (
+        <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center">
+          {Array.from({ length: 16 }, (_, i) => (
+            <span
+              key={i}
+              className="yildiz-dogus absolute text-5xl text-gold-light"
+              style={{
+                left: `${20 + ((i * 37) % 60)}%`,
+                top: `${15 + ((i * 23) % 55)}%`,
+                animationDelay: `${i * 110}ms`,
+              }}
+            >
+              ✦
+            </span>
+          ))}
+          <p className="parilti rounded-3xl border-2 border-gold/60 bg-[#06121e]/90 px-12 py-8 text-center font-display text-6xl font-bold text-gold-light">
+            ✨ {t.fiero(fieroGoster.ad)}
+          </p>
+        </div>
+      )}
+
+      {/* DALGA SİNEMASI: dalga açıldığında perdede tören filmi */}
+      {dalgaVideo !== null && (
+        <div className="fixed inset-0 z-50 bg-black">
+          <video
+            src={`/dalga/dalga-${dalgaVideo}.mp4`}
+            autoPlay
+            playsInline
+            muted={!sesAcik}
+            onEnded={() => setDalgaVideo(null)}
+            onError={() => setDalgaVideo(null)}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
       <header className="flex items-end justify-between">
         <div>
           <p className="text-lg font-medium uppercase tracking-[0.3em] text-royal-light">

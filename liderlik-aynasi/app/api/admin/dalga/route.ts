@@ -1,5 +1,6 @@
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { herkeseBildir } from "@/lib/push";
 import { tr } from "@/lib/i18n/tr";
 
 // Dalga aç/kapat. Aynı anda tek dalga açık kuralı burada uygulanır:
@@ -43,11 +44,26 @@ export async function POST(req: Request) {
         : { is_open: false, closed_at: simdi }
     )
     .eq("id", dalgaId)
-    .select("id")
+    .select("id, name")
     .maybeSingle();
 
   if (error || !data) {
     return Response.json({ hata: tr.admin.dalga.hata }, { status: error ? 500 : 404 });
+  }
+
+  if (acik) {
+    // Sahne sinyali: /ekran önümüzdeki dakikalarda dalga sinematiğini oynatır
+    await db.from("settings").upsert({
+      key: "sahne_dalga",
+      value: `${dalgaId}:${simdi}`,
+      updated_at: simdi,
+    });
+    await herkeseBildir(
+      db,
+      `🌊 ${data.name} açıldı`,
+      "Telefonu kap — gözlemlerini aynaya bırak.",
+      "/degerlendir"
+    );
   }
 
   return Response.json({ ok: true });

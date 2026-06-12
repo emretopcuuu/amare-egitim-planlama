@@ -24,13 +24,27 @@ export type EkranVerisi = {
   takimLigi: { takim: string; kivilcim: number }[];
   // Senkron An canlı katılımı (aktif pencere yoksa null)
   senkron: { baslik: string; yanit: number; toplam: number; kalanSn: number } | null;
+  // Sahne olayları: /ekran'ın bir kez oynatacağı taze sinyaller (≤4 dk)
+  sahne: {
+    fiero: { id: string; ad: string; sesUrl: string | null } | null;
+    dalga: { id: number; olayId: string } | null;
+    anons: { id: string; sesUrl: string | null } | null;
+  };
 };
 
 export async function GET() {
   const db = supabaseAdmin();
   const simdi = new Date();
-  const [dalga, ozellikler, kisilerSonuc, puanlarSonuc, gorevSonuc, senkronSonuc] =
-    await Promise.all([
+  const [
+    dalga,
+    ozellikler,
+    kisilerSonuc,
+    puanlarSonuc,
+    gorevSonuc,
+    senkronSonuc,
+    fieroSonuc,
+    sahneAyarSonuc,
+  ] = await Promise.all([
       acikDalga(db),
       aktifOzellikler(db),
       db
@@ -49,6 +63,17 @@ export async function GET() {
         .gt("due_at", simdi.toISOString())
         .order("issued_at", { ascending: false })
         .limit(300),
+      db
+        .from("missions")
+        .select("id, participant_id, scored_at")
+        .eq("ai_score", 10)
+        .gte("scored_at", new Date(simdi.getTime() - 4 * 60_000).toISOString())
+        .order("scored_at", { ascending: false })
+        .limit(1),
+      db
+        .from("settings")
+        .select("key, value")
+        .in("key", ["sahne_dalga", "sahne_anons"]),
     ]);
   if (kisilerSonuc.error || puanlarSonuc.error || gorevSonuc.error) {
     return Response.json({ hata: "Veri alınamadı." }, { status: 500 });
@@ -148,6 +173,46 @@ export async function GET() {
     takimLigi: [...takimToplam.entries()]
       .map(([takim, kivilcim]) => ({ takim, kivilcim }))
       .sort((a, b) => b.kivilcim - a.kivilcim),
+    sahne: await (async () => {
+      const ayar = new Map((sahneAyarSonuc.data ?? []).map((a) => [a.key, a.value]));
+      const taze = (deger: string | undefined, dakika: number) => {
+        if (!deger) return null;
+        const ayrac = deger.indexOf(":");
+        const id = deger.slice(0, ayrac);
+        const ts = new Date(deger.slice(ayrac + 1)).getTime();
+        return simdi.getTime() - ts <= dakika * 60_000 ? { id, deger } : null;
+      };
+      const imzali = async (yol: string) => {
+        const { data } = await db.storage.from("sesler").createSignedUrl(yol, 600);
+        return data?.signedUrl ?? null;
+      };
+
+      const fieroHam = (fieroSonuc.data ?? [])[0];
+      const fiero = fieroHam
+        ? {
+            id: fieroHam.id,
+            ad:
+              kisiler.find((k) => k.id === fieroHam.participant_id)?.full_name ??
+              "Bir katılımcı",
+            sesUrl: await imzali(`anons/fiero-${fieroHam.id}.mp3`),
+          }
+        : null;
+
+      const dalgaTaze = taze(ayar.get("sahne_dalga"), 4);
+      const anonsTaze = taze(ayar.get("sahne_anons"), 4);
+      return {
+        fiero,
+        dalga: dalgaTaze
+          ? { id: Number(dalgaTaze.id), olayId: dalgaTaze.deger }
+          : null,
+        anons: anonsTaze
+          ? {
+              id: anonsTaze.deger,
+              sesUrl: await imzali(`anons/program-${anonsTaze.id}.mp3`),
+            }
+          : null,
+      };
+    })(),
     senkron: (() => {
       const aktifler = senkronSonuc.data ?? [];
       if (aktifler.length === 0) return null;

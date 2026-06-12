@@ -59,18 +59,21 @@ export type Database = {
           nudged_at: string | null
           participant_id: string
           updated_at: string
+          voice_path: string | null
         }
         Insert: {
           admin_alerted_at?: string | null
           nudged_at?: string | null
           participant_id: string
           updated_at?: string
+          voice_path?: string | null
         }
         Update: {
           admin_alerted_at?: string | null
           nudged_at?: string | null
           participant_id?: string
           updated_at?: string
+          voice_path?: string | null
         }
         Relationships: [
           {
@@ -506,6 +509,7 @@ export type Database = {
           created_at: string
           face_path: string | null
           greeting_path: string | null
+          morning_date: string | null
           participant_id: string
           photo_path: string | null
           sample_path: string | null
@@ -524,6 +528,7 @@ export type Database = {
           created_at?: string
           face_path?: string | null
           greeting_path?: string | null
+          morning_date?: string | null
           participant_id: string
           photo_path?: string | null
           sample_path?: string | null
@@ -542,6 +547,7 @@ export type Database = {
           created_at?: string
           face_path?: string | null
           greeting_path?: string | null
+          morning_date?: string | null
           participant_id?: string
           photo_path?: string | null
           sample_path?: string | null
