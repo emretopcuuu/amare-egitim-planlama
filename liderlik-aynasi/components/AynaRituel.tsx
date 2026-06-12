@@ -12,6 +12,7 @@ const t = tr.rituel;
 
 type Asama =
   | "giris"
+  | "foto"
   | "kayit"
   | "soru"
   | "gonderiliyor"
@@ -53,6 +54,9 @@ export default function AynaRituel() {
   const [hataMesaji, setHataMesaji] = useState<string | null>(null);
 
   const kayitci = useRef<MediaRecorder | null>(null);
+  const fotoDosya = useRef<File | null>(null);
+  const dosyaGirisi = useRef<HTMLInputElement | null>(null);
+  const [fotoOnizleme, setFotoOnizleme] = useState<string | null>(null);
   const parcalar = useRef<Blob[]>([]);
   const akis = useRef<MediaStream | null>(null);
   const taniyici = useRef<Taniyici | null>(null);
@@ -85,7 +89,21 @@ export default function AynaRituel() {
     zamanlayici.current = id;
   }
 
-  async function basla() {
+  function basla() {
+    // önce ayna yüzü görür, sonra sesi duyar
+    setAsama("foto");
+  }
+
+  function fotoSecildi(dosya: File | null) {
+    if (!dosya) return;
+    fotoDosya.current = dosya;
+    setFotoOnizleme((eski) => {
+      if (eski) URL.revokeObjectURL(eski);
+      return URL.createObjectURL(dosya);
+    });
+  }
+
+  async function sesBasla() {
     setHataMesaji(null);
     if (typeof MediaRecorder === "undefined") {
       setHataMesaji(t.mikrofonYok);
@@ -172,6 +190,7 @@ export default function AynaRituel() {
         "ses",
         new File([blob], tip.includes("mp4") ? "ornek.mp4" : "ornek.webm", { type: tip })
       );
+      if (fotoDosya.current) form.append("foto", fotoDosya.current);
       const res = await fetch("/api/ses-rituel", { method: "POST", body: form });
       if (!res.ok) throw new Error();
       const veri = (await res.json()) as { durum: string; url?: string | null };
@@ -241,6 +260,63 @@ export default function AynaRituel() {
             className="mt-3 w-full text-center text-xs text-slate-500 underline-offset-4 hover:underline"
           >
             {t.sessiz}
+          </button>
+        </>
+      )}
+
+      {asama === "foto" && (
+        <>
+          <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
+            Ses Ritüeli · 1/2
+          </p>
+          <h2 className="prizma-serif ay-metin mt-2 text-2xl font-semibold">
+            🪞 {t.fotoBaslik}
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-slate-300">{t.fotoAciklama}</p>
+          <input
+            ref={dosyaGirisi}
+            type="file"
+            accept="image/*"
+            capture="user"
+            className="hidden"
+            onChange={(e) => fotoSecildi(e.target.files?.[0] ?? null)}
+          />
+          {fotoOnizleme ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={fotoOnizleme}
+                alt=""
+                className="mx-auto mt-4 h-40 w-32 rounded-2xl object-cover opacity-80"
+              />
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => dosyaGirisi.current?.click()}
+                  className="flex h-11 items-center justify-center rounded-xl border border-white/15 text-sm font-semibold text-slate-200 hover:bg-white/[0.06]"
+                >
+                  {t.fotoYeniden}
+                </button>
+                <button
+                  onClick={sesBasla}
+                  className="btn-kor flex h-11 items-center justify-center rounded-xl text-sm font-bold"
+                >
+                  {t.fotoDevam} →
+                </button>
+              </div>
+            </>
+          ) : (
+            <button
+              onClick={() => dosyaGirisi.current?.click()}
+              className="btn-kor parilti mt-5 flex h-12 w-full items-center justify-center rounded-xl font-bold"
+            >
+              {t.fotoCek}
+            </button>
+          )}
+          <button
+            onClick={sesBasla}
+            className="mt-3 w-full text-center text-xs text-slate-500 underline-offset-4 hover:underline"
+          >
+            {t.fotoAtla}
           </button>
         </>
       )}
@@ -347,7 +423,7 @@ export default function AynaRituel() {
         <div className="py-4 text-center">
           <p className="text-sm text-red-300">{hataMesaji ?? t.hata}</p>
           <button
-            onClick={basla}
+            onClick={sesBasla}
             className="btn-kor mx-auto mt-4 flex h-11 w-full items-center justify-center rounded-xl font-bold"
           >
             {t.tekrar}

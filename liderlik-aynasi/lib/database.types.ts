@@ -440,6 +440,7 @@ export type Database = {
           beklenti: string | null
           consent: boolean
           created_at: string
+          face_path: string | null
           greeting_path: string | null
           participant_id: string
           sample_path: string | null
@@ -452,6 +453,7 @@ export type Database = {
           beklenti?: string | null
           consent?: boolean
           created_at?: string
+          face_path?: string | null
           greeting_path?: string | null
           participant_id: string
           sample_path?: string | null
@@ -464,6 +466,7 @@ export type Database = {
           beklenti?: string | null
           consent?: boolean
           created_at?: string
+          face_path?: string | null
           greeting_path?: string | null
           participant_id?: string
           sample_path?: string | null
