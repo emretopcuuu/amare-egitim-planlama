@@ -2,20 +2,23 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { aktifOzellikler } from "@/lib/degerlendirme";
+import {
+  fazBul,
+  zorlukSec,
+  turSec,
+  GOREV_TURLERI,
+  ZORLUK_YONERGESI,
+  type GorevTuru,
+  type SistemModu,
+  type Zorluk,
+} from "@/lib/davranis";
+
+export { turSec, GOREV_TURLERI, type GorevTuru };
 
 // AYNA — kampı yöneten yapay zekâ direktörün beyni.
 // Görevler kişinin VERİSİNE göre üretilir: öz puanları, hakkında biriken dış
 // puanlar, önceki görevleri. Puanlama yapıcıdır; kırıcı dil persona kuralıyla
 // yasaktır. Tüm çıktılar structured output ile şemaya bağlanır.
-
-export const GOREV_TURLERI = [
-  "gozlem",
-  "cesaret",
-  "yansima",
-  "gizli",
-  "tahmin",
-] as const;
-export type GorevTuru = (typeof GOREV_TURLERI)[number];
 
 const PERSONA = `Sen AYNA'sın — bu 3 günlük liderlik kampını yöneten yapay zekâ direktör. Katılımcılar seni hiç görmez ama hep hisseder: görevler verirsin, izlersin, puanlarsın.
 
@@ -25,7 +28,14 @@ Sarsılmaz kuralların:
 - Görevler 15-30 dakikada, kamp alanında, güvenle yapılabilir olmalı. Fiziksel risk, utandırma, mahremiyet ihlali ASLA.
 - Bir katılımcıya başka bir katılımcının puanını/yorumunu asla söyleme.
 - Asla kırıcı olma; en düşük puanda bile bir güçlü yan + bir somut adım söyle.
-- Kamp ortamı: doğa, takım etkinlikleri, yemekler, ateş başı, parkurlar, sahne anları.`;
+- Kamp ortamı: doğa, takım etkinlikleri, yemekler, ateş başı, parkurlar, sahne anları.
+
+Davranışsal dilin (her metinde bu kalıplarla konuş):
+- FUN FAILURE: "Hayır" ve başarısızlık asla kayıp değil, VERİDİR. Reddedilen kişiye: "Bugün aldığın 'Hayır', senin hedeflerinden uzaklaşması; doğru strateji bulmak için değerli bir veri."
+- EUSTRESS: Zorluğu oyuna çevir: "Zorlandığını biliyorum. Ama unutma, oynamaya değer hiçbir oyun başlangıçta kolay değildir."
+- EPIC MEANING: Bireysel çabayı kolektif anlama bağla: "Biz sadece ürün satmıyoruz; mental zindelik üzerine inşa edilmiş bir hareketin parçasıyız."
+- GÖRÜNÜR İLERLEME: Sonuç yoksa eğilimi göster: "Sonuçları hemen göremeyebilirsin ama ben gösterdiğin çabanın ivmesini ölçüyorum. İlerliyorsun."
+- AMBIENT: Yalnız hissettirme: "Kendi başına başarılı olabilirsin, ancak büyük zaferler sadece çalışan ekiplerin enerjisiyle gelir."`;
 
 const GOREV_SEMASI = {
   type: "object" as const,
@@ -91,38 +101,22 @@ export type UretilenGorev = {
   body: string;
   trait_id: number | null;
   sure_saat: number;
+  difficulty: Zorluk;
 };
 
-/** Gün ve saate göre görev türü seçimi kodda yapılır — çeşitlilik garantisi. */
-export function turSec(gun: number, saat: number, oncekiTurler: string[]): GorevTuru {
-  const bugunGizliVar = oncekiTurler.includes("gizli");
-  const agirliklar: [GorevTuru, number][] = [
-    ["gozlem", 3],
-    ["cesaret", gun >= 2 ? 3 : 2],
-    ["yansima", saat >= 19 ? 3 : 1], // akşamları iç bakış
-    ["gizli", bugunGizliVar || saat < 10 ? 0 : 1],
-    ["tahmin", 1],
-  ];
-  const toplam = agirliklar.reduce((t, [, a]) => t + a, 0);
-  let zar = Math.random() * toplam;
-  for (const [tur, agirlik] of agirliklar) {
-    zar -= agirlik;
-    if (zar <= 0) return tur;
-  }
-  return "gozlem";
-}
 
 export async function gorevUret(
   db: Db,
   katilimci: { id: string; full_name: string; team: string | null },
   gun: number,
-  saat: number
+  saat: number,
+  mod: SistemModu = "kamp"
 ): Promise<UretilenGorev | null> {
   const [ozellikler, oncekilerSonuc, puanlarSonuc] = await Promise.all([
     aktifOzellikler(db),
     db
       .from("missions")
-      .select("kind, title, issued_at")
+      .select("kind, title, issued_at, status, ai_score")
       .eq("participant_id", katilimci.id)
       .order("issued_at", { ascending: false })
       .limit(6),
@@ -146,7 +140,24 @@ export async function gorevUret(
   const bugunTurleri = onceki
     .filter((o) => Date.now() - new Date(o.issued_at).getTime() < 86_400_000)
     .map((o) => o.kind);
-  const tur = turSec(gun, saat, bugunTurleri);
+  const tur = turSec(gun, saat, bugunTurleri, mod);
+
+  // EUSTRESS: son görev formundan akış-kanalı zorluğu
+  const kapananlar = onceki.filter(
+    (o) => o.status === "scored" || o.status === "expired"
+  );
+  const puanlilar = kapananlar.filter((o) => o.ai_score !== null);
+  const zorluk = zorlukSec({
+    puanOrt: puanlilar.length
+      ? puanlilar.reduce((t, o) => t + (o.ai_score ?? 0), 0) / puanlilar.length
+      : null,
+    teslimOrani: kapananlar.length
+      ? kapananlar.filter((o) => o.status === "scored").length /
+        kapananlar.length
+      : 1,
+    sonSuresiDoldu: kapananlar[0]?.status === "expired",
+  });
+  const faz = mod === "yolculuk" ? fazBul(gun) : null;
 
   const baglam = {
     ad: katilimci.full_name.split(" ")[0],
@@ -154,6 +165,12 @@ export async function gorevUret(
     kampGunu: gun,
     saat,
     istenenGorevTuru: tur,
+    zorlukSeviyesi: zorluk,
+    zorlukYonergesi: ZORLUK_YONERGESI[zorluk],
+    mod,
+    yolculukFazi: faz
+      ? { ad: faz.ad, odak: faz.odak, yonerge: faz.yonerge }
+      : null,
     ozellikler: ozellikler.map((o) => ({
       id: o.id,
       ad: o.name,
@@ -177,7 +194,7 @@ export async function gorevUret(
         effort: "low",
         format: { type: "json_schema", schema: GOREV_SEMASI },
       },
-      system: `${PERSONA}\n\nGörevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""}`,
+      system: `${PERSONA}\n\nGörevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Zorluk yönergesine MUTLAKA uy. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""} ${tur === "simulasyon" ? 'SİMÜLASYON görevi: bir aday/müşteri rolünde KISA bir sahne kur; gövdede adayın itirazını tırnak içinde söyle (ör. "Bunlara vaktim yok", "Bu işler bana göre değil") ve katılımcıdan cevabını sana yazmasını/söylemesini iste. İtirazın sertliğini zorluk seviyesine göre ayarla.' : ""} ${mod === "yolculuk" ? "Bu görev KAMPTA DEĞİL, kamp sonrası 90 günlük sahada (günlük hayat ve iş ortamı) yapılacak — kamp alanı varsayma." : ""}`,
       messages: [{ role: "user", content: JSON.stringify(baglam) }],
     });
 
@@ -196,6 +213,7 @@ export async function gorevUret(
       body: veri.govde.slice(0, 1000),
       trait_id: gecerliIdler.has(veri.ozellik_id) ? veri.ozellik_id : null,
       sure_saat: Math.min(3, Math.max(1, veri.sure_saat)),
+      difficulty: zorluk,
     };
   } catch {
     return null;
@@ -216,7 +234,7 @@ export async function gorevPuanla(
         effort: "low",
         format: { type: "json_schema", schema: PUAN_SEMASI },
       },
-      system: `${PERSONA}\n\nGörevin: verdiğin görevin yanıtını puanla. Çabayı, samimiyeti ve somutluğu ödüllendir; boş/alaycı yanıta düşük puan ver ama yine de yapıcı kal. Yorum 1-2 cümle, AYNA'nın ağzından.`,
+      system: `${PERSONA}\n\n${gorev.kind === "simulasyon" ? "Görevin: SİMÜLASYON değerlendirmesi. Önce görevdeki müşteri/aday rolüne gir ve katılımcının cevabına o karakterin ağzından 1 cümlelik gerçekçi tepki ver (ikna olduysa yumuşa, olmadıysa nazikçe diren). Ardından AYNA olarak 1 cümle koçluk ekle: neyi iyi yaptı + bir sonraki denemede tek somut iyileştirme. İkisini birlikte 'yorum' alanına yaz. Puanı itirazı karşılama becerisine göre ver." : "Görevin: verdiğin görevin yanıtını puanla. Çabayı, samimiyeti ve somutluğu ödüllendir; boş/alaycı yanıta düşük puan ver ama yine de yapıcı kal. Yorum 1-2 cümle, AYNA'nın ağzından."}`,
       messages: [
         {
           role: "user",
@@ -275,3 +293,47 @@ export const SOZ_GOREVI = {
   body:
     "Üç gündür seni izliyorum. Şimdi son görevin — en önemlisi: Kendine, 90 gün sonraki haline bir söz yaz. Bu kamptan ne götürüyorsun, neyi değiştireceksin? Sözünü saklayacağım. Ve günü geldiğinde... sana hatırlatacağım. — AYNA",
 };
+
+// ---- SENKRON AN: herkese aynı anda aynı mikro görev (ambient sociability) ----
+
+const SENKRON_SEMASI = {
+  type: "object" as const,
+  properties: {
+    baslik: {
+      type: "string" as const,
+      description: "Mikro görevin adı (en fazla 4 kelime)",
+    },
+    govde: {
+      type: "string" as const,
+      description:
+        "Herkesin AYNI ANDA yapacağı 1-2 dakikalık mikro görev + bana ne yazacağı. 1-2 cümle, 'şu anda herkes' duygusuyla.",
+    },
+  },
+  required: ["baslik", "govde"],
+  additionalProperties: false,
+};
+
+export async function senkronGorevUret(
+  mod: SistemModu
+): Promise<{ baslik: string; govde: string } | null> {
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+  try {
+    const client = new Anthropic();
+    const yanit = await client.messages.create({
+      model: "claude-opus-4-8",
+      max_tokens: 1024,
+      thinking: { type: "adaptive" },
+      output_config: {
+        effort: "low",
+        format: { type: "json_schema", schema: SENKRON_SEMASI },
+      },
+      system: `${PERSONA}\n\nGörevin: SENKRON AN görevi üret. Şu anda TÜM katılımcılar aynı mikro görevi AYNI ANDA yapacak (1-2 dakika). "Şu anda herkes bunu yapıyor" kolektif enerjisini metne işle. ${mod === "yolculuk" ? "Katılımcılar sahada/günlük hayatta — kamp alanı varsayma." : "Kamp alanındalar."}`,
+      messages: [{ role: "user", content: JSON.stringify({ mod }) }],
+    });
+    const veri = jsonCoz<{ baslik: string; govde: string }>(yanit);
+    if (!veri?.baslik || !veri.govde) return null;
+    return { baslik: veri.baslik.slice(0, 80), govde: veri.govde.slice(0, 500) };
+  } catch {
+    return null;
+  }
+}

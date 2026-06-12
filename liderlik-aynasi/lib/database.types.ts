@@ -53,6 +53,35 @@ export type Database = {
           },
         ]
       }
+      churn_radar: {
+        Row: {
+          admin_alerted_at: string | null
+          nudged_at: string | null
+          participant_id: string
+          updated_at: string
+        }
+        Insert: {
+          admin_alerted_at?: string | null
+          nudged_at?: string | null
+          participant_id: string
+          updated_at?: string
+        }
+        Update: {
+          admin_alerted_at?: string | null
+          nudged_at?: string | null
+          participant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "churn_radar_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       login_attempts: {
         Row: {
           created_at: string
@@ -108,6 +137,7 @@ export type Database = {
           ai_comment: string | null
           ai_score: number | null
           body: string
+          difficulty: number
           due_at: string
           id: string
           issued_at: string
@@ -127,6 +157,7 @@ export type Database = {
           ai_comment?: string | null
           ai_score?: number | null
           body: string
+          difficulty?: number
           due_at: string
           id?: string
           issued_at?: string
@@ -146,6 +177,7 @@ export type Database = {
           ai_comment?: string | null
           ai_score?: number | null
           body?: string
+          difficulty?: number
           due_at?: string
           id?: string
           issued_at?: string
@@ -174,6 +206,38 @@ export type Database = {
             columns: ["trait_id"]
             isOneToOne: false
             referencedRelation: "traits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      momentum_scores: {
+        Row: {
+          created_at: string
+          detail: Json | null
+          participant_id: string
+          score: number
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: Json | null
+          participant_id: string
+          score: number
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          detail?: Json | null
+          participant_id?: string
+          score?: number
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "momentum_scores_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
             referencedColumns: ["id"]
           },
         ]

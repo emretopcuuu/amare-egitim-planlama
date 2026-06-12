@@ -24,3 +24,6 @@ export function kivilcimHesapla(aiPuan: number, zamaninda: boolean): number {
 }
 
 export const SOZ_KIVILCIMI = 25;
+
+/** Senkron An: kolektif ana katılmanın kendisi ödüldür — AI puanlaması yok. */
+export const SENKRON_KIVILCIMI = 8;

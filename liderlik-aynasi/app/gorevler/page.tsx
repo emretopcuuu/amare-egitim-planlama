@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { unvanBul } from "@/lib/kivilcim";
+import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
+import { haftaBaslangici } from "@/lib/momentum";
 import { tr } from "@/lib/i18n/tr";
 import GorevYanitFormu from "./GorevYanitFormu";
 import SesCal from "@/components/SesCal";
@@ -38,7 +40,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, due_at, response_text, ai_score, ai_comment, spark_points, voice_path"
+      "id, kind, title, body, status, due_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -57,6 +59,14 @@ export default async function GorevlerPage() {
       .createSignedUrl(g.voice_path, 3600);
     if (imzali) sesUrller.set(g.id, imzali.signedUrl);
   }
+  // Haftalık Momentum (varsa) — davranış eğilimi katılımcıya da görünür
+  const { data: momentum } = await db
+    .from("momentum_scores")
+    .select("score")
+    .eq("participant_id", session.sub)
+    .eq("week_start", haftaBaslangici(new Date()))
+    .maybeSingle();
+
   const toplamKivilcim = (gorevler ?? [])
     .filter((g) => g.status === "scored")
     .reduce((top, g) => top + g.spark_points, 0);
@@ -91,6 +101,11 @@ export default async function GorevlerPage() {
               {tr.kivilcim.unvanin}:{" "}
               <span className="font-semibold text-gold-light">{unvan.mevcut.ad}</span>
             </p>
+            {momentum && (
+              <p className="mt-1 text-sm font-semibold text-emerald-300">
+                {t.momentumSatiri(momentum.score)}
+              </p>
+            )}
           </div>
           <p className="max-w-[10rem] text-right text-xs text-slate-400">
             {unvan.sonraki
@@ -132,7 +147,10 @@ export default async function GorevlerPage() {
                 ⏳ {t.sonTarih(saatYaz(g.due_at))}
               </span>
             </div>
-            <h2 className="mt-3 text-2xl font-bold leading-snug text-gold-light">{g.title}</h2>
+            <p className="mt-2 text-sm font-semibold text-sky-200">
+              {ZORLUK_ETIKETI[(g.difficulty as Zorluk) ?? 2]}
+            </p>
+            <h2 className="mt-2 text-2xl font-bold leading-snug text-gold-light">{g.title}</h2>
             <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
               {g.body}
             </p>

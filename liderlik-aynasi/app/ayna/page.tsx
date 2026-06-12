@@ -31,6 +31,11 @@ export default async function AynaPage() {
   const t = tr.ayna;
   const ozellikAd = new Map(rapor.satirlar.map((s) => [s.ozellikId, s.ad]));
 
+  const { count: verdigiPuan } = await db
+    .from("ratings")
+    .select("id", { count: "exact", head: true })
+    .eq("rater_id", session.sub);
+
   const [{ data: mevcutMektup }, { data: sesProfili }] = await Promise.all([
     db
       .from("mirror_letters")
@@ -76,6 +81,9 @@ export default async function AynaPage() {
           {t.acilis(session.ad)}
         </h1>
         <p className="mt-2 text-sm text-slate-300">{t.acilisAlt}</p>
+        <p className="mt-2 text-sm font-semibold text-gold-light">
+          {t.epikKatki(verdigiPuan ?? 0)}
+        </p>
       </header>
 
       {/* Güçlü yanlar / gelişim alanları */}

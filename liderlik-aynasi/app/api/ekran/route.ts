@@ -22,11 +22,14 @@ export type EkranVerisi = {
   // görev puanı — sahne alkışı için bilinçli olarak açık).
   lig: { ad: string; kivilcim: number; unvan: string }[];
   takimLigi: { takim: string; kivilcim: number }[];
+  // Senkron An canlı katılımı (aktif pencere yoksa null)
+  senkron: { baslik: string; yanit: number; toplam: number; kalanSn: number } | null;
 };
 
 export async function GET() {
   const db = supabaseAdmin();
-  const [dalga, ozellikler, kisilerSonuc, puanlarSonuc, gorevSonuc] =
+  const simdi = new Date();
+  const [dalga, ozellikler, kisilerSonuc, puanlarSonuc, gorevSonuc, senkronSonuc] =
     await Promise.all([
       acikDalga(db),
       aktifOzellikler(db),
@@ -39,6 +42,13 @@ export async function GET() {
         .from("missions")
         .select("participant_id, spark_points")
         .eq("status", "scored"),
+      db
+        .from("missions")
+        .select("title, status, due_at")
+        .eq("kind", "senkron")
+        .gt("due_at", simdi.toISOString())
+        .order("issued_at", { ascending: false })
+        .limit(300),
     ]);
   if (kisilerSonuc.error || puanlarSonuc.error || gorevSonuc.error) {
     return Response.json({ hata: "Veri alınamadı." }, { status: 500 });
@@ -138,6 +148,23 @@ export async function GET() {
     takimLigi: [...takimToplam.entries()]
       .map(([takim, kivilcim]) => ({ takim, kivilcim }))
       .sort((a, b) => b.kivilcim - a.kivilcim),
+    senkron: (() => {
+      const aktifler = senkronSonuc.data ?? [];
+      if (aktifler.length === 0) return null;
+      const baslik = aktifler[0].title;
+      const ayni = aktifler.filter((s) => s.title === baslik);
+      return {
+        baslik,
+        yanit: ayni.filter((s) => s.status !== "pending").length,
+        toplam: ayni.length,
+        kalanSn: Math.max(
+          0,
+          Math.round(
+            (new Date(ayni[0].due_at).getTime() - simdi.getTime()) / 1000
+          )
+        ),
+      };
+    })(),
   };
 
   return Response.json(veri);

@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.admin.yetkisiz }, { status: 403 });
   }
 
-  let govde: { islem?: unknown; aktif?: unknown; tempo?: unknown };
+  let govde: { islem?: unknown; aktif?: unknown; tempo?: unknown; mod?: unknown };
   try {
     govde = await req.json();
   } catch {
@@ -53,6 +53,23 @@ export async function POST(req: Request) {
       .from("settings")
       .upsert({ key: "ayna_tempo", value: govde.tempo, updated_at: simdi });
     return Response.json({ ok: true });
+  }
+
+  if (
+    govde.islem === "mod" &&
+    typeof govde.mod === "string" &&
+    ["kamp", "yolculuk"].includes(govde.mod)
+  ) {
+    await db
+      .from("settings")
+      .upsert({ key: "sistem_modu", value: govde.mod, updated_at: simdi });
+    if (govde.mod === "yolculuk") {
+      // Yolculuk başlangıcı bir kez yazılır; tekrar başlatmak sayacı sıfırlar
+      await db
+        .from("settings")
+        .upsert({ key: "yolculuk_baslangic", value: simdi, updated_at: simdi });
+    }
+    return Response.json({ ok: true, mod: govde.mod });
   }
 
   if (govde.islem === "tik") {
