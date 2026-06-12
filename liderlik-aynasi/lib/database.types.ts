@@ -443,10 +443,15 @@ export type Database = {
           face_path: string | null
           greeting_path: string | null
           participant_id: string
+          photo_path: string | null
           sample_path: string | null
           soz_path: string | null
           status: string
           updated_at: string
+          video_notified_at: string | null
+          video_path: string | null
+          video_request_id: string | null
+          video_status: string
           voice_id: string | null
         }
         Insert: {
@@ -456,10 +461,15 @@ export type Database = {
           face_path?: string | null
           greeting_path?: string | null
           participant_id: string
+          photo_path?: string | null
           sample_path?: string | null
           soz_path?: string | null
           status?: string
           updated_at?: string
+          video_notified_at?: string | null
+          video_path?: string | null
+          video_request_id?: string | null
+          video_status?: string
           voice_id?: string | null
         }
         Update: {
@@ -469,10 +479,15 @@ export type Database = {
           face_path?: string | null
           greeting_path?: string | null
           participant_id?: string
+          photo_path?: string | null
           sample_path?: string | null
           soz_path?: string | null
           status?: string
           updated_at?: string
+          video_notified_at?: string | null
+          video_path?: string | null
+          video_request_id?: string | null
+          video_status?: string
           voice_id?: string | null
         }
         Relationships: [

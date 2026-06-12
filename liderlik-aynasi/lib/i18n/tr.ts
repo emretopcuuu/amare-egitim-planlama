@@ -422,6 +422,11 @@ export const tr = {
     indir: "Kartı İndir",
     paylas: "Paylaş",
   },
+  yansiman: {
+    baslik: "Aynan seni gördü",
+    izle: "▶ Suya bak",
+    anaSayfa: "🌊 Yansımanı izle",
+  },
   sahne: {
     ipucu: "Ayna Anı'nı başlatmak için tıkla",
   },

@@ -59,10 +59,21 @@ export async function POST(req: Request) {
     return NextResponse.json({ hata: "depolama" }, { status: 500 });
   }
 
-  // 1b) Fotoğraf (isteğe bağlı): hayalet silüete çevir — sudaki yansıma
+  // 1b) Fotoğraf (isteğe bağlı): orijinal saklanır (yansıma videosu hammaddesi)
+  // ve hayalet silüete çevrilir (sudaki yansıma)
   let facePath: string | null = null;
+  let fotoPath: string | null = null;
   const foto = form.get("foto");
   if (foto instanceof File && foto.size > 0 && foto.size <= AZAMI_BAYT) {
+    const fotoUzanti = foto.type.includes("png") ? "png" : "jpg";
+    const orijinalYol = `${session.sub}/foto.${fotoUzanti}`;
+    const fotoYukleme = await db.storage
+      .from("sesler")
+      .upload(orijinalYol, foto, {
+        contentType: foto.type || "image/jpeg",
+        upsert: true,
+      });
+    if (!fotoYukleme.error) fotoPath = orijinalYol;
     try {
       const { hayaletSiluet } = await import("@/lib/siluet");
       const png = await hayaletSiluet(Buffer.from(await foto.arrayBuffer()));
@@ -85,6 +96,8 @@ export async function POST(req: Request) {
       sample_path: ornekYolu,
       beklenti,
       face_path: facePath,
+      photo_path: fotoPath,
+      video_status: fotoPath ? "bekliyor" : "yok",
       updated_at: new Date().toISOString(),
     });
     return NextResponse.json({ durum: "sonra" });
@@ -118,6 +131,8 @@ export async function POST(req: Request) {
       beklenti,
       greeting_path: selamYolu,
       face_path: facePath,
+      photo_path: fotoPath,
+      video_status: fotoPath ? "bekliyor" : "yok",
       updated_at: new Date().toISOString(),
     });
 
@@ -134,6 +149,8 @@ export async function POST(req: Request) {
       sample_path: ornekYolu,
       beklenti,
       face_path: facePath,
+      photo_path: fotoPath,
+      video_status: fotoPath ? "bekliyor" : "yok",
       updated_at: new Date().toISOString(),
     });
     return NextResponse.json({ durum: "sonra" });

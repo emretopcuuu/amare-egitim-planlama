@@ -8,6 +8,11 @@ import {
 } from "@/lib/ayna";
 import { kivilcimHesapla } from "@/lib/kivilcim";
 import { gorevSeslendir } from "@/lib/yansima";
+import {
+  higgsYapilandirildiMi,
+  yansimaVideosuBaslat,
+  yansimaDurumu,
+} from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
 
 export const maxDuration = 60;
@@ -171,6 +176,87 @@ export async function POST(req: Request) {
     // YANSIMAN fısıltısı: kredi bütçesi için yalnız özel görevler seslendirilir
     if (gorev.kind === "gizli" || gorev.kind === "cesaret") {
       await gorevSeslendir(db, k.id, yeniGorev.id, gorev.title, gorev.body);
+    }
+  }
+
+  // 3b) YANSIMA VİDEOLARI: ritüelde foto veren katılımcılar için Higgsfield
+  // hattı — başlat (≤2), süreni kontrol et (≤3), hazır olanı fısılda (≤5).
+  if (higgsYapilandirildiMi()) {
+    const { data: bekleyenler } = await db
+      .from("voice_profiles")
+      .select("participant_id, photo_path")
+      .eq("video_status", "bekliyor")
+      .not("photo_path", "is", null)
+      .limit(2);
+    for (const b of bekleyenler ?? []) {
+      const { data: imzali } = await db.storage
+        .from("sesler")
+        .createSignedUrl(b.photo_path!, 3600);
+      const istek = imzali
+        ? await yansimaVideosuBaslat(imzali.signedUrl)
+        : null;
+      await db
+        .from("voice_profiles")
+        .update(
+          istek
+            ? { video_status: "uretiliyor", video_request_id: istek }
+            : { video_status: "hata" }
+        )
+        .eq("participant_id", b.participant_id);
+    }
+
+    const { data: surenler } = await db
+      .from("voice_profiles")
+      .select("participant_id, video_request_id")
+      .eq("video_status", "uretiliyor")
+      .not("video_request_id", "is", null)
+      .limit(3);
+    for (const s of surenler ?? []) {
+      const d = await yansimaDurumu(s.video_request_id!);
+      if (d.durum === "bekliyor") continue;
+      if (d.durum === "hata") {
+        await db
+          .from("voice_profiles")
+          .update({ video_status: "hata" })
+          .eq("participant_id", s.participant_id);
+        continue;
+      }
+      try {
+        const yanit = await fetch(d.videoUrl);
+        if (!yanit.ok) continue; // geçici: sonraki tikte yeniden dene
+        const bayt = Buffer.from(await yanit.arrayBuffer());
+        const yolu = `${s.participant_id}/yansima.mp4`;
+        const yukleme = await db.storage
+          .from("sesler")
+          .upload(yolu, bayt, { contentType: "video/mp4", upsert: true });
+        if (yukleme.error) continue;
+        await db
+          .from("voice_profiles")
+          .update({ video_status: "hazir", video_path: yolu })
+          .eq("participant_id", s.participant_id);
+      } catch {
+        // indirme takıldı: durum değişmez, sonraki tik dener
+      }
+    }
+
+    const { data: hazirlar } = await db
+      .from("voice_profiles")
+      .select("participant_id")
+      .eq("video_status", "hazir")
+      .is("video_notified_at", null)
+      .limit(5);
+    for (const h of hazirlar ?? []) {
+      await katilimciyaBildir(
+        db,
+        h.participant_id,
+        "👁 Aynan seni gördü",
+        "Suya bak — yansıman seni bekliyor.",
+        "/yansiman"
+      );
+      await db
+        .from("voice_profiles")
+        .update({ video_notified_at: simdi.toISOString() })
+        .eq("participant_id", h.participant_id);
     }
   }
 

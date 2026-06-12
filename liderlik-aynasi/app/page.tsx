@@ -26,7 +26,7 @@ export default async function AnaSayfa() {
         .eq("status", "pending"),
       db
         .from("voice_profiles")
-        .select("status")
+        .select("status, video_status")
         .eq("participant_id", session.sub)
         .maybeSingle(),
     ]);
@@ -82,6 +82,15 @@ export default async function AnaSayfa() {
                 </span>
               )}
             </Link>
+
+            {sesProfili?.video_status === "hazir" && (
+              <Link
+                href="/yansiman"
+                className="parilti mt-3 flex h-14 w-full items-center justify-center rounded-2xl border-2 border-sky-200/40 text-lg font-bold text-sky-100 transition-colors hover:bg-white/[0.06]"
+              >
+                {tr.yansiman.anaSayfa}
+              </Link>
+            )}
 
             <div className="mt-3 grid grid-cols-2 gap-3">
               <Link
