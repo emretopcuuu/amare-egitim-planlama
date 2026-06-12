@@ -29,11 +29,11 @@ export default function KisiSatiri({
   return (
     <div className="flex items-center justify-between gap-4 py-4">
       <div className="min-w-0">
-        <p className="truncate font-medium text-slate-100">
+        <p className="truncate text-lg font-semibold text-slate-100">
           {tamam && <span className="mr-1 text-emerald-400">✓</span>}
           {ad}
         </p>
-        <p className="mt-0.5 text-xs text-slate-400">
+        <p className="mt-0.5 text-sm text-slate-400">
           {altYazi ? `${altYazi} · ` : ""}
           {tr.degerlendir.ilerleme(yapilan, toplam)}
         </p>
@@ -41,17 +41,17 @@ export default function KisiSatiri({
       {kilitli ? (
         <span
           title={tr.degerlendir.kilitliIpucu}
-          className="shrink-0 rounded-lg border border-royal-light/30 px-4 py-2 text-sm text-slate-500"
+          className="shrink-0 rounded-xl border border-royal-light/30 px-5 py-3 text-base text-slate-500"
         >
           🔒
         </span>
       ) : (
         <Link
           href={`/degerlendir/${hedefId}`}
-          className={`shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+          className={`shrink-0 rounded-xl px-5 py-3 text-base font-bold transition-colors ${
             tamam
               ? "border border-royal-light/40 text-slate-300 hover:bg-midnight-soft"
-              : "bg-gold text-midnight hover:bg-gold-light"
+              : "btn-kor"
           }`}
         >
           {etiket}

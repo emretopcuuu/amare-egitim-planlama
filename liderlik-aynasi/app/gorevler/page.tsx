@@ -69,7 +69,7 @@ export default async function GorevlerPage() {
           <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
             🤖 AYNA
           </p>
-          <h1 className="font-display altin-metin mt-1 text-2xl font-bold text-gold">{t.baslik}</h1>
+          <h1 className="font-display altin-metin mt-1 text-3xl font-bold leading-tight">{t.baslik}</h1>
           <p className="mt-1 text-sm text-slate-400">{t.altBaslik}</p>
         </div>
         <Link
@@ -132,8 +132,8 @@ export default async function GorevlerPage() {
                 ⏳ {t.sonTarih(saatYaz(g.due_at))}
               </span>
             </div>
-            <h2 className="mt-3 text-lg font-bold text-gold-light">{g.title}</h2>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
+            <h2 className="mt-3 text-2xl font-bold leading-snug text-gold-light">{g.title}</h2>
+            <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
               {g.body}
             </p>
             {sesUrller.has(g.id) && <SesCal url={sesUrller.get(g.id)!} />}
