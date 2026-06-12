@@ -12,6 +12,7 @@ import {
   type SistemModu,
   type Zorluk,
 } from "@/lib/davranis";
+import type { ProgramMaddesi } from "@/lib/kampProgrami";
 
 export { turSec, GOREV_TURLERI, type GorevTuru };
 
@@ -117,7 +118,8 @@ export async function gorevUret(
   katilimci: { id: string; full_name: string; team: string | null },
   gun: number,
   saat: number,
-  mod: SistemModu = "kamp"
+  mod: SistemModu = "kamp",
+  etkinlik: ProgramMaddesi | null = null
 ): Promise<UretilenGorev | null> {
   const [ozellikler, oncekilerSonuc, puanlarSonuc] = await Promise.all([
     aktifOzellikler(db),
@@ -147,7 +149,7 @@ export async function gorevUret(
   const bugunTurleri = onceki
     .filter((o) => Date.now() - new Date(o.issued_at).getTime() < 86_400_000)
     .map((o) => o.kind);
-  const tur = turSec(gun, saat, bugunTurleri, mod);
+  const tur = turSec(gun, saat, bugunTurleri, mod, undefined, etkinlik?.tur);
 
   // EUSTRESS: son görev formundan akış-kanalı zorluğu
   const kapananlar = onceki.filter(
@@ -175,6 +177,13 @@ export async function gorevUret(
     zorlukSeviyesi: zorluk,
     zorlukYonergesi: ZORLUK_YONERGESI[zorluk],
     mod,
+    suankiKampEtkinligi: etkinlik
+      ? {
+          baslik: etkinlik.baslik,
+          bitisSaati: etkinlik.bitis,
+          not: "Görevi mümkünse bu etkinliğin içine dik — kampın o anki gerçek akışına otursun, etkinlikle yarışmasın.",
+        }
+      : null,
     yolculukFazi: faz
       ? { ad: faz.ad, odak: faz.odak, yonerge: faz.yonerge }
       : null,
@@ -282,10 +291,15 @@ export function istanbulSaati(simdi = new Date()): { saat: number; dakika: numbe
   return { saat: al("hour"), dakika: al("minute") };
 }
 
-/** Sessiz saatler: 22:30 – 07:30 (AYNA da uyur). */
-export function sessizSaatMi(simdi = new Date()): boolean {
+/** Sessiz saatler (AYNA da uyur). Kamp programı 23:35'e dek sürer ve
+ * Gün 2 trekking 07:00'de başlar → kampta 00:00–06:30; yolculukta 22:30–07:30. */
+export function sessizSaatMi(
+  simdi = new Date(),
+  mod: SistemModu = "kamp"
+): boolean {
   const { saat, dakika } = istanbulSaati(simdi);
   const dk = saat * 60 + dakika;
+  if (mod === "kamp") return dk < 6 * 60 + 30;
   return dk >= 22 * 60 + 30 || dk < 7 * 60 + 30;
 }
 

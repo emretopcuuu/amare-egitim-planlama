@@ -153,7 +153,7 @@ export const tr = {
     dalga: {
       baslik: "Dalga Kontrolü",
       aciklama:
-        "Aynı anda yalnızca bir dalga açık olur; birini açmak diğerlerini kapatır.",
+        "Aynı anda yalnızca bir dalga açık olur; birini açmak diğerlerini kapatır. Kamp planı: Dalga 1 → Gün 1 · 18:00 (serbest zaman) · Dalga 2 → Gün 2 · 09:00 (kahvaltı) · Dalga 3 → Gün 3 · 07:15 (kahvaltı & oda boşaltma).",
       acik: "Açık",
       kapali: "Kapalı",
       ac: "Aç",
@@ -264,7 +264,7 @@ export const tr = {
       kampaDon: "🏕 Kamp Moduna Dön",
       baslik: "🤖 AYNA Kontrol Odası",
       aciklama:
-        "Kampı yöneten yapay zekâ. Aktifken 5 dakikada bir uyanır: görev dağıtır, yanıtları puanlar, programı açıklar, dürtmeler gönderir. Gece 22:30–07:30 arası susar.",
+        "Kampı yöneten yapay zekâ. Aktifken 5 dakikada bir uyanır: görev dağıtır, yanıtları puanlar, programı açıklar, dürtmeler gönderir. Kampta gece 00:00–06:30 susar; sahnede konuşmacı varken de telefonları titretmez (sahne sessizliği).",
       durumAktif: "AYNA UYANIK — kampı yönetiyor",
       durumPasif: "AYNA uyuyor",
       uyandir: "AYNA'yı Uyandır",
@@ -285,14 +285,32 @@ export const tr = {
       sozGonderildi: (n: number) => `SÖZ görevi ${n} kişiye gönderildi.`,
       akisBaslik: "Son Görevler",
       akisYok: "Henüz görev üretilmedi.",
+      sahneBaslik: "Sahne Anları",
+      sahneAciklama:
+        "Bas → projeksiyondaki /ekran sayfası AYNA'nın marka sesiyle salona konuşur (ekranda '🔊 Sesi Aç' açık olmalı).",
+      acilisDugme: "🎬 Açılış Anonsu (Gün 1 · 21:00)",
+      acilisOnay:
+        "AYNA marka sesiyle kampı açar — perdedeki ekrandan anons çalınır. Sahne hazır mı?",
+      acilisGonderildi: "Açılış anonsu sahneye gönderildi — ekran 4 dk içinde çalar.",
+      aynaAniDugme: "🪞 Ayna Anı (Gün 2 · 23:20)",
+      aynaAniOnay:
+        "Günün sayıları (gözlem, görev, fiero) AYNA'nın sesiyle salona okunur. Onaylıyor musun?",
+      aynaAniGonderildi: (gozlem: number, teslim: number) =>
+        `Ayna Anı sahneye gönderildi: ${gozlem} gözlem, ${teslim} görev anons edildi.`,
+      sesYok:
+        "ELEVENLABS_API_KEY tanımlı değil ya da ses üretimi başarısız — anons çıkmadı.",
       hata: "İşlem başarısız. Tekrar dene.",
       kurulumUyari:
         "Zamanlayıcı kurulu değilse AYNA kendiliğinden uyanmaz — README'deki cron SQL'ini Supabase'de çalıştır ya da test için 'Şimdi Tik Çalıştır'ı kullan (test tiki sessiz saati yok sayar).",
     },
     program: {
-      baslik: "Program Yönetimi",
+      baslik: "Kamp Programı & AYNA Planı",
       aciklama:
-        "Kamp programını buraya gir; AYNA her maddeyi başlamadan önce ayarladığın dakika kadar erken duyurur. O ana dek katılımcılar yalnızca kilitli kart ve ipucu görür.",
+        "Resmî kamp akışı ve AYNA'nın her saat ne yapacağı. Katılımcılar programı kendi panellerinde görür; AYNA planı yalnız burada.",
+      aynaPlani: "🤖 AYNA",
+      surprizBaslik: "Sürpriz Duyurular",
+      surprizAciklama:
+        "Programa ek sürpriz madde gir; AYNA başlamadan önce ayarladığın dakika kadar erken push + sahne anonsuyla duyurur. O ana dek katılımcılar yalnızca kilitli kart ve ipucu görür.",
       zaman: "Başlangıç",
       etkinlik: "Etkinlik adı",
       yer: "Yer (opsiyonel)",
@@ -373,7 +391,9 @@ export const tr = {
   },
   program: {
     baslik: "Kamp Programı",
-    altBaslik: "AYNA programı parça parça açıklıyor. Sırada ne var, yalnızca o biliyor.",
+    altBaslik: "Üç günün tamamı burada. AYNA'nın sürprizleri ise programda yazmaz.",
+    gunBaslik: (gun: number, tarihYazi: string) => `GÜN ${gun} — ${tarihYazi}`,
+    suAn: "ŞU AN",
     kilitli: "???",
     acilma: (saat: string) => `${saat}'te açıklanacak`,
     bos: "Program henüz yüklenmedi.",

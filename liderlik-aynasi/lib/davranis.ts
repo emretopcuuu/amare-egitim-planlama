@@ -3,6 +3,9 @@
 // hem de simülasyon koşum dosyası aynı kuralları kullanır. Buradaki her
 // fonksiyon deterministiktir (rastgelelik çağırana bırakılır).
 
+// Göreli import bilinçli: simülasyon (tsx) takma ad çözmeden de koşabilsin
+import { kampGunu, kampSenkronAnahtari, type EtkinlikTuru } from "./kampProgrami";
+
 // ---------- 1) EUSTRESS MOTORU: akış kanalında kalmak ----------
 
 export type Zorluk = 1 | 2 | 3;
@@ -276,14 +279,20 @@ export type SenkronBaglam = {
 /**
  * Pencere açıksa benzersiz anahtar döner (settings kilidi bu anahtarla
  * kurulur — aynı pencere iki kez ateşlenemez); kapalıysa null.
- * Kamp: her gün 12:00-12:09 ve 17:00-17:09. Yolculuk: Çarşamba 20:00-20:09.
+ * Kamp: gerçek kamp tarihlerinde günün programına dikilmiş pencereler
+ * (Gün 1 20:15 yemek · Gün 2 13:30 öğle · Gün 3 09:55 ara); kamp tarihi
+ * dışında (prova) eski 12:00 ve 17:00 pencereleri. Yolculuk: Çarşamba 20:00-20:09.
  */
 export function senkronAnahtari(b: SenkronBaglam): string | null {
-  if (b.dakika >= 10) return null;
-  if (b.mod === "kamp" && (b.saat === 12 || b.saat === 17)) {
-    return `senkron_${b.tarih}_${b.saat}`;
+  if (b.mod === "kamp") {
+    // Kamp tarihindeyse YALNIZ programa dikilmiş pencere geçerli
+    if (kampGunu(b.tarih)) return kampSenkronAnahtari(b.tarih, b.saat, b.dakika);
+    if (b.dakika < 10 && (b.saat === 12 || b.saat === 17)) {
+      return `senkron_${b.tarih}_${b.saat}`;
+    }
+    return null;
   }
-  if (b.mod === "yolculuk" && b.haftaninGunu === 3 && b.saat === 20) {
+  if (b.mod === "yolculuk" && b.haftaninGunu === 3 && b.saat === 20 && b.dakika < 10) {
     return `senkron_${b.tarih}_${b.saat}`;
   }
   return null;
@@ -370,14 +379,16 @@ export const GOREV_TURLERI = [
 export type GorevTuru = (typeof GOREV_TURLERI)[number];
 
 /** Gün/saat/moda göre görev türü seçimi kodda yapılır — çeşitlilik garantisi.
- * Yolculuk modunda ağırlıkları aktif faz belirler. zarDeger verilirse
- * deterministiktir (test/simülasyon); verilmezse Math.random kullanılır. */
+ * Yolculuk modunda ağırlıkları aktif faz belirler; kampta o anki program
+ * etkinliği (oyun/yemek/serbest/doğa) ağırlıkları kaydırır. zarDeger
+ * verilirse deterministiktir (test/simülasyon); verilmezse Math.random. */
 export function turSec(
   gun: number,
   saat: number,
   oncekiTurler: string[],
   mod: SistemModu = "kamp",
-  zarDeger?: number
+  zarDeger?: number,
+  etkinlikTur?: EtkinlikTuru
 ): GorevTuru {
   const bugunGizliVar = oncekiTurler.includes("gizli");
   let agirliklar: [GorevTuru, number][];
@@ -387,14 +398,27 @@ export function turSec(
       (GOREV_TURLERI as readonly string[]).includes(t)
     ) as [GorevTuru, number][];
   } else {
-    agirliklar = [
-      ["gozlem", 3],
-      ["cesaret", gun >= 2 ? 3 : 2],
-      ["yansima", saat >= 19 ? 3 : 1], // akşamları iç bakış
-      ["gizli", bugunGizliVar || saat < 10 ? 0 : 1],
-      ["tahmin", 1],
-      ["simulasyon", gun >= 2 ? 1 : 0], // direnç provası 2. günden itibaren
-    ];
+    const taban: Record<GorevTuru, number> = {
+      gozlem: 3,
+      cesaret: gun >= 2 ? 3 : 2,
+      yansima: saat >= 19 ? 3 : 1, // akşamları iç bakış
+      gizli: bugunGizliVar || saat < 10 ? 0 : 1,
+      tahmin: 1,
+      simulasyon: gun >= 2 ? 1 : 0, // direnç provası 2. günden itibaren
+    };
+    // Program bağlamı: oyun saatinde gözlem/gizli, molada yansıma,
+    // yemekte tahmin, doğada cesaret öne çıkar
+    if (etkinlikTur === "oyun") {
+      taban.gozlem += 2;
+      if (taban.gizli > 0) taban.gizli += 1;
+    } else if (etkinlikTur === "serbest") {
+      taban.yansima += 2;
+    } else if (etkinlikTur === "yemek" || etkinlikTur === "ara") {
+      taban.tahmin += 2;
+    } else if (etkinlikTur === "doga") {
+      taban.cesaret += 2;
+    }
+    agirliklar = GOREV_TURLERI.map((t) => [t, taban[t]]);
   }
   const toplam = agirliklar.reduce((t, [, a]) => t + a, 0);
   let zar = (zarDeger ?? Math.random()) * toplam;

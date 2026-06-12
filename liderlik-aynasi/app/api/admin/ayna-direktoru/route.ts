@@ -2,7 +2,8 @@ import { headers } from "next/headers";
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { SOZ_GOREVI } from "@/lib/ayna";
-import { gorevSeslendir } from "@/lib/yansima";
+import { gorevSeslendir, markaAnons } from "@/lib/yansima";
+import { ACILIS_ANONSU, aynaAniMetni } from "@/lib/kampProgrami";
 import { katilimciyaBildir } from "@/lib/push";
 import { tr } from "@/lib/i18n/tr";
 
@@ -93,6 +94,82 @@ export async function POST(req: Request) {
       return Response.json({ hata: tr.admin.aynaDirektor.hata }, { status: 502 });
     }
     return Response.json(veri);
+  }
+
+  // Gün 1 · 21:00 — AYNA marka sesiyle kampı açar; /ekran 4 dk içinde çalar
+  if (govde.islem === "acilis") {
+    const oldu = await markaAnons(db, "anons/program-acilis.mp3", ACILIS_ANONSU);
+    if (!oldu) {
+      return Response.json(
+        { hata: tr.admin.aynaDirektor.sesYok },
+        { status: 503 }
+      );
+    }
+    await db.from("settings").upsert({
+      key: "sahne_anons",
+      value: `acilis:${simdi}`,
+      updated_at: simdi,
+    });
+    return Response.json({ ok: true });
+  }
+
+  // Gün 2 · 23:20 — Ayna Anı: günün sayıları AYNA'nın sesiyle salona
+  if (govde.islem === "aynaAni") {
+    const bugun = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Istanbul",
+    }).format(new Date());
+    const gunBasi = new Date(`${bugun}T00:00:00+03:00`).toISOString();
+    const [gozlemSonuc, teslimSonuc, fieroSonuc] = await Promise.all([
+      db
+        .from("ratings")
+        .select("id", { count: "exact", head: true })
+        .eq("is_self", false)
+        .gte("created_at", gunBasi),
+      db
+        .from("missions")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "scored")
+        .gte("scored_at", gunBasi),
+      db
+        .from("missions")
+        .select("participant_id")
+        .eq("ai_score", 10)
+        .gte("scored_at", gunBasi)
+        .limit(20),
+    ]);
+    const fieroIdler = [
+      ...new Set((fieroSonuc.data ?? []).map((m) => m.participant_id)),
+    ].slice(0, 3);
+    let fieroAdlari: string[] = [];
+    if (fieroIdler.length > 0) {
+      const { data: kisiler } = await db
+        .from("participants")
+        .select("id, full_name")
+        .in("id", fieroIdler);
+      fieroAdlari = (kisiler ?? []).map((k) => k.full_name.split(" ")[0]);
+    }
+    const metin = aynaAniMetni({
+      gozlemSayisi: gozlemSonuc.count ?? 0,
+      teslimSayisi: teslimSonuc.count ?? 0,
+      fieroAdlari,
+    });
+    const oldu = await markaAnons(db, "anons/program-ayna-ani.mp3", metin);
+    if (!oldu) {
+      return Response.json(
+        { hata: tr.admin.aynaDirektor.sesYok },
+        { status: 503 }
+      );
+    }
+    await db.from("settings").upsert({
+      key: "sahne_anons",
+      value: `ayna-ani:${simdi}`,
+      updated_at: simdi,
+    });
+    return Response.json({
+      ok: true,
+      gozlem: gozlemSonuc.count ?? 0,
+      teslim: teslimSonuc.count ?? 0,
+    });
   }
 
   if (govde.islem === "soz") {

@@ -17,6 +17,13 @@ import {
 } from "@/lib/davranis";
 import { momentumHesaplaVeYaz } from "@/lib/momentum";
 import {
+  kampGunu,
+  suankiMadde,
+  sahneSessizMi,
+  sabahPenceresiMi,
+  GECE_FISILTILARI,
+} from "@/lib/kampProgrami";
+import {
   gorevSeslendir,
   itirazSesi,
   kaymaSesi,
@@ -60,7 +67,6 @@ export async function POST(req: Request) {
 
   const db = supabaseAdmin();
   const simdi = new Date();
-  const sessiz = sessizSaatMi(simdi) && !testModu;
   const ozet = {
     uretilen: 0,
     puanlanan: 0,
@@ -95,6 +101,22 @@ export async function POST(req: Request) {
     return Response.json({ ozet: "AYNA uyuyor (pasif)", ...ozet });
   }
 
+  const mod: SistemModu =
+    ayar.get("sistem_modu") === "yolculuk" ? "yolculuk" : "kamp";
+  const sessiz = sessizSaatMi(simdi, mod) && !testModu;
+  // SAHNE SESSİZLİĞİ: kürsüde biri varken AYNA telefon titretmez —
+  // görev, hatırlatma, fısıltı ve dürtmeler bir sonraki pencereye sarkar.
+  const bugun = istanbulTarihi(simdi);
+  const { saat, dakika } = istanbulSaati(simdi);
+  const kampGunuBugun = mod === "kamp" ? kampGunu(bugun) : null;
+  const sahneSessiz =
+    kampGunuBugun !== null &&
+    sahneSessizMi(kampGunuBugun, saat * 60 + dakika) &&
+    !testModu;
+  const etkinlik = kampGunuBugun
+    ? suankiMadde(kampGunuBugun, saat * 60 + dakika)
+    : null;
+
   // 2) Gecikmiş puanlama — normalde yanıt anında puanlanır; bu, kurtarma hattı
   const { data: bekleyenler } = await db
     .from("missions")
@@ -119,7 +141,7 @@ export async function POST(req: Request) {
       })
       .eq("id", g.id);
     ozet.puanlanan++;
-    if (!sessiz) {
+    if (!sessiz && !sahneSessiz) {
       await katilimciyaBildir(
         db,
         g.participant_id,
@@ -148,24 +170,22 @@ export async function POST(req: Request) {
     return Response.json({ ozet: "Sessiz saat — AYNA fısıldamıyor", ...ozet });
   }
 
-  // 3) Görev dağıtımı
-  const bugun = istanbulTarihi(simdi);
-  const { saat } = istanbulSaati(simdi);
-  const mod: SistemModu =
-    ayar.get("sistem_modu") === "yolculuk" ? "yolculuk" : "kamp";
+  // 3) Görev dağıtımı — kamp günü önce gerçek kamp tarihlerinden, yoksa
+  // (prova) AYNA'nın ilk uyandırılma anından hesaplanır.
   const yolculukBaslangic = ayar.get("yolculuk_baslangic");
   const baslangic = ayar.get("ayna_baslangic");
   const gun =
     mod === "yolculuk" && yolculukBaslangic
       ? Math.min(90, yolculukGunuHesapla(yolculukBaslangic, simdi))
-      : baslangic
-        ? Math.min(
-            4,
-            Math.floor(
-              (simdi.getTime() - new Date(baslangic).getTime()) / 86_400_000
-            ) + 1
-          )
-        : 1;
+      : (kampGunuBugun ??
+        (baslangic
+          ? Math.min(
+              4,
+              Math.floor(
+                (simdi.getTime() - new Date(baslangic).getTime()) / 86_400_000
+              ) + 1
+            )
+          : 1));
 
   const [{ data: kisiler }, { data: sonGorevler }] = await Promise.all([
     db.from("participants").select("id, full_name, team").eq("role", "participant"),
@@ -193,7 +213,7 @@ export async function POST(req: Request) {
   const yolculukPenceresi = mod !== "yolculuk" || (saat >= 9 && saat < 11);
   const uygunlar = (kisiler ?? [])
     .filter((k) => {
-      if (!yolculukPenceresi) return false;
+      if (!yolculukPenceresi || sahneSessiz) return false;
       const d = durumlar.get(k.id);
       if (!d) return true; // hiç görev almamış
       if (d.bekleyen || d.bugunSayisi >= gunlukUst) return false;
@@ -207,7 +227,7 @@ export async function POST(req: Request) {
     .slice(0, 3);
 
   for (const k of uygunlar) {
-    const gorev = await gorevUret(db, k, gun, saat, mod);
+    const gorev = await gorevUret(db, k, gun, saat, mod, etkinlik);
     if (!gorev) continue;
     const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
     const { data: yeniGorev, error } = await db
@@ -300,12 +320,14 @@ export async function POST(req: Request) {
       }
     }
 
-    const { data: hazirlar } = await db
-      .from("voice_profiles")
-      .select("participant_id")
-      .eq("video_status", "hazir")
-      .is("video_notified_at", null)
-      .limit(5);
+    const { data: hazirlar } = sahneSessiz
+      ? { data: [] }
+      : await db
+          .from("voice_profiles")
+          .select("participant_id")
+          .eq("video_status", "hazir")
+          .is("video_notified_at", null)
+          .limit(5);
     for (const h of hazirlar ?? []) {
       await katilimciyaBildir(
         db,
@@ -321,12 +343,14 @@ export async function POST(req: Request) {
     }
   }
 
-  // 3b2) SABAH YOKLAMASI: kamp Gün 2+ sabahları 07:35-09:00 — kendi sesinden
-  // günaydın. Tik başına ≤8 üretim; morning_date tekrarları engeller.
+  // 3b2) SABAH YOKLAMASI: kamp Gün 2+ sabahları kendi sesinden günaydın.
+  // Pencereler programa dikili: Gün 2 trekking öncesi 06:40-08:00,
+  // Gün 3 kahvaltı boyunca 07:00-08:45; kamp tarihi dışında (prova)
+  // 07:35-09:00. Tik başına ≤8 üretim; morning_date tekrarları engeller.
   if (mod === "kamp" && gun >= 2) {
-    const { dakika: sabahDakika } = istanbulSaati(simdi);
-    const sabahPenceresi =
-      (saat === 7 && sabahDakika >= 35) || saat === 8;
+    const sabahPenceresi = kampGunuBugun
+      ? sabahPenceresiMi(kampGunuBugun, saat, dakika)
+      : (saat === 7 && dakika >= 35) || saat === 8;
     if (sabahPenceresi) {
       const { data: sabahBekleyen } = await db
         .from("voice_profiles")
@@ -387,7 +411,6 @@ export async function POST(req: Request) {
     const haftaninGunu = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(
       tarihParcalari.find((p) => p.type === "weekday")?.value ?? ""
     );
-    const { dakika } = istanbulSaati(simdi);
     const anahtar = senkronAnahtari({
       mod,
       haftaninGunu,
@@ -469,15 +492,18 @@ export async function POST(req: Request) {
           iz?.nudged_at ? new Date(iz.nudged_at).getTime() : null,
           iz?.admin_alerted_at ? new Date(iz.admin_alerted_at).getTime() : null
         );
-        if (karar.nudge || karar.alert) {
+        // Sahne sessizliğinde kişiye dürtme ertelenir (sonraki saate sarkar);
+        // lider uyarısı sessiz kayıttır, sahnede de işlenebilir.
+        const durtulebilir = karar.nudge && !sahneSessiz;
+        if (durtulebilir || karar.alert) {
           await db.from("churn_radar").upsert({
             participant_id: k.id,
-            ...(karar.nudge ? { nudged_at: simdi.toISOString() } : {}),
+            ...(durtulebilir ? { nudged_at: simdi.toISOString() } : {}),
             ...(karar.alert ? { admin_alerted_at: simdi.toISOString() } : {}),
             updated_at: simdi.toISOString(),
           });
         }
-        if (karar.nudge) {
+        if (durtulebilir) {
           // Önce kendi sesinden mektup üretmeyi dene; sonra bildir
           const sesli = await kaymaSesi(db, k.id, k.full_name);
           await katilimciyaBildir(
@@ -503,7 +529,6 @@ export async function POST(req: Request) {
         timeZone: "Europe/Istanbul",
         weekday: "short",
       }).format(simdi) === "Fri";
-    const { dakika } = istanbulSaati(simdi);
     if (cumaMi && saat === 17 && dakika < 10) {
       const momentumAnahtari = `momentum_${bugun}`;
       const { error: momentumKilit } = await db
@@ -516,15 +541,17 @@ export async function POST(req: Request) {
     }
   }
 
-  // 4) Teslim hatırlatması (son 30 dk, bir kez)
-  const { data: yaklasanlar } = await db
-    .from("missions")
-    .select("id, participant_id, title")
-    .eq("status", "pending")
-    .is("reminded_at", null)
-    .gt("due_at", simdi.toISOString())
-    .lt("due_at", new Date(simdi.getTime() + 30 * 60_000).toISOString())
-    .limit(10);
+  // 4) Teslim hatırlatması (son 30 dk, bir kez) — sahnedeyken susar
+  const { data: yaklasanlar } = sahneSessiz
+    ? { data: [] }
+    : await db
+        .from("missions")
+        .select("id, participant_id, title")
+        .eq("status", "pending")
+        .is("reminded_at", null)
+        .gt("due_at", simdi.toISOString())
+        .lt("due_at", new Date(simdi.getTime() + 30 * 60_000).toISOString())
+        .limit(10);
   for (const g of yaklasanlar ?? []) {
     await katilimciyaBildir(
       db,
@@ -576,7 +603,7 @@ export async function POST(req: Request) {
   }
 
   // 6) Günlük fısıltı (13-14 ve 20-21 aralığında birer kez): "bugün N göz seni puanladı"
-  if (saat === 13 || saat === 20) {
+  if ((saat === 13 || saat === 20) && !sahneSessiz) {
     const dilim = saat === 13 ? "ogle" : "aksam";
     const anahtar = `fisilti_${bugun}_${dilim}`;
     const { data: gonderilmis } = await db
@@ -607,6 +634,24 @@ export async function POST(req: Request) {
         );
         ozet.fisilti++;
       }
+    }
+  }
+
+  // 7) GECE FISILTISI: sahne kapanınca (23:40+) günün tek kapanış cümlesi —
+  // Gün 1 ve 2'de, settings kilidiyle günde bir kez. Sonra sessizlik (00:00).
+  if (
+    kampGunuBugun &&
+    GECE_FISILTILARI[kampGunuBugun] &&
+    saat === 23 &&
+    dakika >= 40
+  ) {
+    const geceAnahtari = `gece_${bugun}`;
+    const { error: geceKilit } = await db
+      .from("settings")
+      .insert({ key: geceAnahtari, value: "1" });
+    if (!geceKilit) {
+      await herkeseBildir(db, "🌙 AYNA", GECE_FISILTILARI[kampGunuBugun]);
+      ozet.fisilti++;
     }
   }
 
