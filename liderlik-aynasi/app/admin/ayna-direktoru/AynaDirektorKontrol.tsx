@@ -77,6 +77,21 @@ export default function AynaDirektorKontrol({
     if (veri?.gonderilen !== undefined) setMesaj(t.sozGonderildi(veri.gonderilen));
   }
 
+  async function acilisAnonsu() {
+    if (!window.confirm(t.acilisOnay)) return;
+    const veri = await istek({ islem: "acilis" }, "acilis");
+    if (veri) setMesaj(t.acilisGonderildi);
+  }
+
+  async function aynaAni() {
+    if (!window.confirm(t.aynaAniOnay)) return;
+    const veri = (await istek({ islem: "aynaAni" }, "aynaAni")) as {
+      gozlem?: number;
+      teslim?: number;
+    } | null;
+    if (veri) setMesaj(t.aynaAniGonderildi(veri.gozlem ?? 0, veri.teslim ?? 0));
+  }
+
   return (
     <div className="space-y-5">
       {/* Uyandır / durdur */}
@@ -149,6 +164,28 @@ export default function AynaDirektorKontrol({
             }`}
           >
             {t.yolculukBaslat}
+          </button>
+        </div>
+      </div>
+
+      {/* Sahne anları: AYNA'nın marka sesi /ekran'dan salona konuşur */}
+      <div className="border-t border-royal/20 pt-4">
+        <p className="text-sm font-medium text-slate-300">{t.sahneBaslik}</p>
+        <p className="mt-1 text-xs text-slate-500">{t.sahneAciklama}</p>
+        <div className="mt-2 flex flex-wrap gap-3">
+          <button
+            onClick={acilisAnonsu}
+            disabled={bekliyor !== null}
+            className="rounded-lg border border-gold/50 px-4 py-2 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-50"
+          >
+            {bekliyor === "acilis" ? "…" : t.acilisDugme}
+          </button>
+          <button
+            onClick={aynaAni}
+            disabled={bekliyor !== null}
+            className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-semibold text-slate-200 transition-colors hover:bg-midnight-soft disabled:opacity-50"
+          >
+            {bekliyor === "aynaAni" ? "…" : t.aynaAniDugme}
           </button>
         </div>
       </div>

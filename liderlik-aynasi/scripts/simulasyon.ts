@@ -20,6 +20,20 @@ import {
   GOREV_TURLERI,
   type Zorluk,
 } from "../lib/davranis";
+import {
+  KAMP_GUNLERI,
+  KAMP_PROGRAMI,
+  kampGunu,
+  gunProgrami,
+  dakikaCevir,
+  suankiMadde,
+  sahneSessizMi,
+  sabahPenceresiMi,
+  kampSenkronAnahtari,
+  GECE_FISILTILARI,
+  ACILIS_ANONSU,
+  aynaAniMetni,
+} from "../lib/kampProgrami";
 
 
 let basarili = 0;
@@ -417,6 +431,151 @@ console.log("\n■ 7) KOMUTAN RADARI — uç değerler");
   });
   iddia(yarim.katilim === 37 && yarim.gorevMomentumu === 50 && yarim.aidiyet === 25 && yarim.tamamlama === 25 && yarim.retDirenci === 70,
     `ara değerler doğru (${JSON.stringify(yarim)})`);
+}
+
+// ---------------------------------------------------------------
+console.log("\n■ 8) KAMP PROGRAMI — Sapanca akışı ve zaman pencereleri");
+// ---------------------------------------------------------------
+
+{
+  // Tarih → kamp günü eşlemesi
+  iddia(kampGunu("2026-07-17") === 1, "17 Temmuz → Gün 1");
+  iddia(kampGunu("2026-07-18") === 2, "18 Temmuz → Gün 2");
+  iddia(kampGunu("2026-07-19") === 3, "19 Temmuz → Gün 3");
+  iddia(kampGunu("2026-07-16") === null, "16 Temmuz kamp dışı");
+
+  // Program bütünlüğü: her gün kronolojik ve çakışmasız
+  for (const gun of [1, 2, 3] as const) {
+    const m = gunProgrami(gun);
+    iddia(m.length >= 8, `Gün ${gun} en az 8 madde içerir (bulundu: ${m.length})`);
+    for (let i = 0; i < m.length; i++) {
+      iddia(
+        dakikaCevir(m[i].bitis) > dakikaCevir(m[i].baslangic),
+        `Gün ${gun} '${m[i].baslik}': bitiş başlangıçtan sonra`
+      );
+      if (i > 0) {
+        iddia(
+          dakikaCevir(m[i].baslangic) >= dakikaCevir(m[i - 1].bitis),
+          `Gün ${gun} '${m[i].baslik}': önceki maddeyle çakışmaz`
+        );
+      }
+    }
+  }
+  iddia(KAMP_PROGRAMI.length === 28, `programda 28 madde (bulundu: ${KAMP_PROGRAMI.length})`);
+
+  // O anki madde: sınırlar dahil/hariç doğru
+  iddia(suankiMadde(1, dakikaCevir("12:59"))?.baslik.includes("Otel") === true, "Gün 1 12:59 → Otel Giriş");
+  iddia(suankiMadde(1, dakikaCevir("13:00"))?.baslik.includes("Öğle") === true, "Gün 1 13:00 → Öğle Yemeği (başlangıç dahil)");
+  iddia(suankiMadde(2, dakikaCevir("11:00"))?.tur === "oyun", "Gün 2 11:00 → Oyun I");
+  iddia(suankiMadde(1, dakikaCevir("23:50")) === null, "Gün 1 23:50 → boşluk (program bitti)");
+
+  // Sahne sessizliği: kürsü açıkken sus, aralarda konuş
+  iddia(sahneSessizMi(1, dakikaCevir("21:30")), "Gün 1 21:30 (David Chung) sessiz");
+  iddia(!sahneSessizMi(1, dakikaCevir("22:15")), "Gün 1 22:15 (ara) sessiz DEĞİL");
+  iddia(sahneSessizMi(1, dakikaCevir("22:40")), "Gün 1 22:40 (panel) sessiz");
+  iddia(!sahneSessizMi(1, dakikaCevir("20:00")), "Gün 1 20:00 (yemek) sessiz değil");
+  iddia(sahneSessizMi(2, dakikaCevir("22:00")), "Gün 2 22:00 (tecrübe paylaşımı) sessiz");
+  iddia(sahneSessizMi(3, dakikaCevir("09:30")), "Gün 3 09:30 (eğitim) sessiz");
+  iddia(!sahneSessizMi(3, dakikaCevir("10:00")), "Gün 3 10:00 (ara) sessiz değil");
+  iddia(!sahneSessizMi(3, dakikaCevir("10:30")), "Gün 3 10:30 (Aynanı Gör oturumu) sessiz DEĞİL — telefonlar elde");
+  iddia(sahneSessizMi(3, dakikaCevir("12:00")), "Gün 3 12:00 (kamp analiz) sessiz");
+
+  // Senkron: kamp tarihlerinde 5 dk'lık tik süpürmesi — günde tam 1 pencere
+  const kampSenkronlar = new Set<string>();
+  for (const tarih of KAMP_GUNLERI) {
+    for (let dk = 0; dk < 24 * 60; dk += 5) {
+      const a = senkronAnahtari({
+        mod: "kamp",
+        haftaninGunu: 5,
+        saat: Math.floor(dk / 60),
+        dakika: dk % 60,
+        tarih,
+      });
+      if (a) kampSenkronlar.add(a);
+    }
+  }
+  console.log(`  kamp senkron pencereleri: ${[...kampSenkronlar].join(", ")}`);
+  iddia(kampSenkronlar.size === 3, `kamp 3 günde tam 3 senkron penceresi (bulundu: ${kampSenkronlar.size})`);
+  iddia(
+    kampSenkronlar.has("senkron_2026-07-17_g1") &&
+      kampSenkronlar.has("senkron_2026-07-18_g2") &&
+      kampSenkronlar.has("senkron_2026-07-19_g3"),
+    "pencere anahtarları gün bazlı"
+  );
+  iddia(
+    senkronAnahtari({ mod: "kamp", haftaninGunu: 5, saat: 12, dakika: 0, tarih: "2026-07-18" }) === null,
+    "kamp tarihinde eski 12:00 penceresi ateşlenmez"
+  );
+  iddia(
+    kampSenkronAnahtari("2026-07-17", 20, 14) === null &&
+      kampSenkronAnahtari("2026-07-17", 20, 15) !== null &&
+      kampSenkronAnahtari("2026-07-17", 20, 25) === null,
+    "Gün 1 penceresi tam 20:15-20:24"
+  );
+  iddia(
+    kampSenkronAnahtari("2026-07-19", 10, 4) !== null,
+    "Gün 3 penceresi saat sınırını aşar (09:55 → 10:04)"
+  );
+
+  // Senkron anları sahne sessizliğine denk gelmez
+  for (const tarih of KAMP_GUNLERI) {
+    const gun = kampGunu(tarih)!;
+    for (let dk = 0; dk < 24 * 60; dk++) {
+      const a = kampSenkronAnahtari(tarih, Math.floor(dk / 60), dk % 60);
+      if (a) {
+        iddia(!sahneSessizMi(gun, dk), `senkron penceresi sahneye çakışmaz (gün ${gun}, dk ${dk})`);
+      }
+    }
+  }
+
+  // Sabah yoklaması pencereleri
+  iddia(!sabahPenceresiMi(2, 6, 39) && sabahPenceresiMi(2, 6, 40), "Gün 2 sabah penceresi 06:40'ta açılır");
+  iddia(sabahPenceresiMi(2, 7, 59) && !sabahPenceresiMi(2, 8, 0), "Gün 2 penceresi 08:00'de kapanır");
+  iddia(sabahPenceresiMi(3, 7, 0) && sabahPenceresiMi(3, 8, 44) && !sabahPenceresiMi(3, 8, 45), "Gün 3 penceresi 07:00-08:44");
+  iddia(!sabahPenceresiMi(1, 7, 30), "Gün 1 sabah yoklaması yok");
+
+  // Görev türü etkinlik yanlılığı: oyun saatinde gözlem, molada yansıma artar
+  function turSay(etkinlik: Parameters<typeof turSec>[5]): Map<string, number> {
+    const sayilar = new Map<string, number>();
+    for (let z = 0; z < 1; z += 0.005) {
+      const t = turSec(2, 15, [], "kamp", z, etkinlik);
+      sayilar.set(t, (sayilar.get(t) ?? 0) + 1);
+    }
+    return sayilar;
+  }
+  const duz = turSay(undefined);
+  const oyunda = turSay("oyun");
+  const molada = turSay("serbest");
+  const yemekte = turSay("yemek");
+  iddia((oyunda.get("gozlem") ?? 0) > (duz.get("gozlem") ?? 0), "oyun saatinde gözlem ağırlığı artar");
+  iddia((molada.get("yansima") ?? 0) > (duz.get("yansima") ?? 0), "molada yansıma ağırlığı artar");
+  iddia((yemekte.get("tahmin") ?? 0) > (duz.get("tahmin") ?? 0), "yemekte tahmin ağırlığı artar");
+  const dogada = (() => {
+    const sayilar = new Map<string, number>();
+    for (let z = 0; z < 1; z += 0.005) {
+      const t = turSec(2, 7, [], "kamp", z, "doga");
+      sayilar.set(t, (sayilar.get(t) ?? 0) + 1);
+    }
+    return sayilar;
+  })();
+  const dogasiz = (() => {
+    const sayilar = new Map<string, number>();
+    for (let z = 0; z < 1; z += 0.005) {
+      const t = turSec(2, 7, [], "kamp", z);
+      sayilar.set(t, (sayilar.get(t) ?? 0) + 1);
+    }
+    return sayilar;
+  })();
+  iddia((dogada.get("cesaret") ?? 0) > (dogasiz.get("cesaret") ?? 0), "trekking'de cesaret ağırlığı artar");
+
+  // Sahne metinleri ve gece fısıltıları dolu
+  iddia(ACILIS_ANONSU.length > 100, "açılış anonsu dolu");
+  iddia(!!GECE_FISILTILARI[1] && !!GECE_FISILTILARI[2] && !GECE_FISILTILARI[3], "gece fısıltısı yalnız Gün 1 ve 2");
+  const aynaAni = aynaAniMetni({ gozlemSayisi: 412, teslimSayisi: 96, fieroAdlari: ["Ali", "Ayşe"] });
+  iddia(aynaAni.includes("412") && aynaAni.includes("96") && aynaAni.includes("Ali"), "Ayna Anı metni günün sayılarını içerir");
+  const aynaAniBos = aynaAniMetni({ gozlemSayisi: 0, teslimSayisi: 0, fieroAdlari: [] });
+  iddia(!aynaAniBos.includes("undefined") && aynaAniBos.length > 50, "Ayna Anı fiero'suz da düzgün");
+  console.log("  Sapanca akışı: 28 madde, sahne sessizliği, senkron ve sabah pencereleri doğrulandı");
 }
 
 // ---------------------------------------------------------------
