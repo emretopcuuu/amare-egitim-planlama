@@ -7,6 +7,7 @@ import { raporlarGorunurMu } from "@/lib/rapor";
 import { tr } from "@/lib/i18n/tr";
 import CikisButonu from "@/components/CikisButonu";
 import AynaKurulum from "@/components/AynaKurulum";
+import AynaRituel from "@/components/AynaRituel";
 import EgilenKart from "@/components/EgilenKart";
 
 export default async function AnaSayfa() {
@@ -14,15 +15,21 @@ export default async function AnaSayfa() {
   if (!session) redirect("/giris");
 
   const db = supabaseAdmin();
-  const [dalga, raporlarAcik, { count: aktifGorev }] = await Promise.all([
-    acikDalga(db),
-    raporlarGorunurMu(db),
-    db
-      .from("missions")
-      .select("id", { count: "exact", head: true })
-      .eq("participant_id", session.sub)
-      .eq("status", "pending"),
-  ]);
+  const [dalga, raporlarAcik, { count: aktifGorev }, { data: sesProfili }] =
+    await Promise.all([
+      acikDalga(db),
+      raporlarGorunurMu(db),
+      db
+        .from("missions")
+        .select("id", { count: "exact", head: true })
+        .eq("participant_id", session.sub)
+        .eq("status", "pending"),
+      db
+        .from("voice_profiles")
+        .select("status")
+        .eq("participant_id", session.sub)
+        .maybeSingle(),
+    ]);
 
   return (
     <main className="flex min-h-screen flex-1 flex-col overflow-hidden">
@@ -92,6 +99,9 @@ export default async function AnaSayfa() {
             </div>
           </div>
         </EgilenKart>
+
+        {/* YANSIMAN doğmadıysa önce Ses Ritüeli — ilk dakikanın wow anı */}
+        {!sesProfili && <AynaRituel />}
 
         <AynaKurulum />
 
