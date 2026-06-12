@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 // DAVRANIŞ MİMARİSİ SİMÜLASYONU
 // 90 günlük, çok-ajanlı sentetik koşum: lib/davranis.ts'teki saf çekirdeğin
 // (eustress, momentum, kayma, fazlar, senkron, radar) davranışını iddialarla
