@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { SOZ_GOREVI } from "@/lib/ayna";
+import { gorevSeslendir } from "@/lib/yansima";
 import { katilimciyaBildir } from "@/lib/push";
 import { tr } from "@/lib/i18n/tr";
 
@@ -87,15 +88,28 @@ export async function POST(req: Request) {
     const dueAt = new Date(Date.now() + 12 * 3_600_000).toISOString();
 
     for (const k of hedefler) {
-      const { error } = await db.from("missions").insert({
-        participant_id: k.id,
-        kind: SOZ_GOREVI.kind,
-        title: SOZ_GOREVI.title,
-        body: SOZ_GOREVI.body,
-        due_at: dueAt,
-      });
-      if (!error) {
+      const { data: yeniGorev, error } = await db
+        .from("missions")
+        .insert({
+          participant_id: k.id,
+          kind: SOZ_GOREVI.kind,
+          title: SOZ_GOREVI.title,
+          body: SOZ_GOREVI.body,
+          due_at: dueAt,
+        })
+        .select("id")
+        .single();
+      if (!error && yeniGorev) {
         await katilimciyaBildir(db, k.id, `🤝 ${SOZ_GOREVI.title}`, SOZ_GOREVI.body);
+        // SÖZ kampın tek seferlik anı: günlük fısıltı tavanından muaf
+        await gorevSeslendir(
+          db,
+          k.id,
+          yeniGorev.id,
+          SOZ_GOREVI.title,
+          SOZ_GOREVI.body,
+          true
+        );
       }
     }
     return Response.json({ gonderilen: hedefler.length });

@@ -68,10 +68,26 @@ export async function gorevSeslendir(
   katilimciId: string,
   gorevId: string,
   baslik: string,
-  govde: string
+  govde: string,
+  oncelikli = false
 ): Promise<void> {
   if (!sesYapilandirildiMi()) return;
   try {
+    // Kredi bütçesi: kişi başı son 24 saatte en çok 2 fısıltı.
+    // SÖZ gibi tek seferlik anlar 'oncelikli' ile tavanı aşar.
+    if (!oncelikli) {
+      const { count } = await db
+        .from("missions")
+        .select("id", { count: "exact", head: true })
+        .eq("participant_id", katilimciId)
+        .not("voice_path", "is", null)
+        .gt(
+          "issued_at",
+          new Date(Date.now() - 24 * 3_600_000).toISOString()
+        );
+      if ((count ?? 0) >= 2) return;
+    }
+
     const { data: profil } = await db
       .from("voice_profiles")
       .select("voice_id, status")
