@@ -5,13 +5,13 @@ import { tr } from "@/lib/i18n/tr";
 
 const t = tr.rituel;
 
-// SES RİTÜELİ — YANSIMAN'ın doğum anı.
-// Katılımcı ayna yeminini okur (klon malzemesi), tek cümlelik beklentisini
-// söyler (Web Speech ile yazıya döner), kayıt aynaya verilir ve ~20 saniye
-// sonra telefondan KENDİ SESİ konuşur. Onay vermeyen "sessiz ayna" seçer.
+// SES RİTÜELİ — YANSIMAN'ın doğum anı, TAM EKRAN sihirbaz.
+// UX ilkesi: her ekranda TEK iş, az yazı, BÜYÜK yazı, tek ana buton.
+// Akış: davet → onay (iki dev buton) → fotoğraf → yemin → soru → uyanış → ses.
 
 type Asama =
   | "giris"
+  | "onay"
   | "foto"
   | "kayit"
   | "soru"
@@ -44,19 +44,42 @@ function taniyiciKur(): Taniyici | null {
   return Sinif ? new Sinif() : null;
 }
 
+// Dev birincil buton: yaşlı gözler ve kalın parmaklar için
+function DevButon({
+  onClick,
+  children,
+  ikincil = false,
+}: {
+  onClick: () => void;
+  children: React.ReactNode;
+  ikincil?: boolean;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={
+        ikincil
+          ? "flex h-16 w-full items-center justify-center rounded-2xl border-2 border-white/25 text-xl font-bold text-slate-100 hover:bg-white/[0.08]"
+          : "btn-kor parilti flex h-16 w-full items-center justify-center rounded-2xl text-xl font-bold"
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function AynaRituel() {
   const [asama, setAsama] = useState<Asama>("giris");
-  const [onayli, setOnayli] = useState(false);
   const [sayac, setSayac] = useState(0);
   const [beklenti, setBeklenti] = useState("");
   const [sesUrl, setSesUrl] = useState<string | null>(null);
   const [calindi, setCalindi] = useState(false);
   const [hataMesaji, setHataMesaji] = useState<string | null>(null);
+  const [fotoOnizleme, setFotoOnizleme] = useState<string | null>(null);
 
   const kayitci = useRef<MediaRecorder | null>(null);
   const fotoDosya = useRef<File | null>(null);
   const dosyaGirisi = useRef<HTMLInputElement | null>(null);
-  const [fotoOnizleme, setFotoOnizleme] = useState<string | null>(null);
   const parcalar = useRef<Blob[]>([]);
   const akis = useRef<MediaStream | null>(null);
   const taniyici = useRef<Taniyici | null>(null);
@@ -87,11 +110,6 @@ export default function AynaRituel() {
       }
     }, 1000);
     zamanlayici.current = id;
-  }
-
-  function basla() {
-    // önce ayna yüzü görür, sonra sesi duyar
-    setAsama("foto");
   }
 
   function fotoSecildi(dosya: File | null) {
@@ -227,215 +245,188 @@ export default function AynaRituel() {
   if (asama === "kapandi") return null;
 
   return (
-    <div className="kart-cam relative overflow-hidden rounded-3xl p-6">
-      <span className="altin-tel" />
-
-      {asama === "giris" && (
-        <>
-          <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
-            Ses Ritüeli
-          </p>
-          <h2 className="prizma-serif ay-metin mt-2 text-2xl font-semibold">
-            🌊 {t.baslik}
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">{t.aciklama}</p>
-          <label className="mt-4 flex items-start gap-3 text-xs leading-relaxed text-slate-400">
-            <input
-              type="checkbox"
-              checked={onayli}
-              onChange={(e) => setOnayli(e.target.checked)}
-              className="mt-0.5 h-4 w-4 shrink-0 accent-gold"
-            />
-            {t.onay}
-          </label>
-          <button
-            onClick={basla}
-            disabled={!onayli}
-            className="btn-kor parilti mt-5 flex h-12 w-full items-center justify-center rounded-xl font-bold disabled:opacity-40"
-          >
-            {t.basla}
-          </button>
-          <button
-            onClick={sessizSec}
-            className="mt-3 w-full text-center text-xs text-slate-500 underline-offset-4 hover:underline"
-          >
-            {t.sessiz}
-          </button>
-        </>
-      )}
-
-      {asama === "foto" && (
-        <>
-          <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
-            Ses Ritüeli · 1/2
-          </p>
-          <h2 className="prizma-serif ay-metin mt-2 text-2xl font-semibold">
-            🪞 {t.fotoBaslik}
-          </h2>
-          <p className="mt-3 text-sm leading-relaxed text-slate-300">{t.fotoAciklama}</p>
-          <input
-            ref={dosyaGirisi}
-            type="file"
-            accept="image/*"
-            capture="user"
-            className="hidden"
-            onChange={(e) => fotoSecildi(e.target.files?.[0] ?? null)}
-          />
-          {fotoOnizleme ? (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={fotoOnizleme}
-                alt=""
-                className="mx-auto mt-4 h-40 w-32 rounded-2xl object-cover opacity-80"
-              />
-              <div className="mt-4 grid grid-cols-2 gap-3">
-                <button
-                  onClick={() => dosyaGirisi.current?.click()}
-                  className="flex h-11 items-center justify-center rounded-xl border border-white/15 text-sm font-semibold text-slate-200 hover:bg-white/[0.06]"
-                >
-                  {t.fotoYeniden}
-                </button>
-                <button
-                  onClick={sesBasla}
-                  className="btn-kor flex h-11 items-center justify-center rounded-xl text-sm font-bold"
-                >
-                  {t.fotoDevam} →
-                </button>
-              </div>
-            </>
-          ) : (
+    // TAM EKRAN: o an yapılan iş dışında hiçbir şey görünmez
+    <div className="evren-gol fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[#04101c]/95 p-6 backdrop-blur-md">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-8">
+        {asama === "giris" && (
+          <div className="text-center">
+            <p className="prizma-serif text-sm uppercase tracking-[0.4em] text-slate-400">
+              Ses Ritüeli
+            </p>
+            <h1 className="prizma-serif ay-metin mt-4 text-4xl font-semibold leading-tight">
+              🌊 {t.baslik}
+            </h1>
+            <p className="mt-6 text-xl leading-relaxed text-slate-200">{t.aciklama}</p>
+            <div className="mt-10">
+              <DevButon onClick={() => setAsama("onay")}>{t.basla}</DevButon>
+            </div>
             <button
-              onClick={() => dosyaGirisi.current?.click()}
-              className="btn-kor parilti mt-5 flex h-12 w-full items-center justify-center rounded-xl font-bold"
+              onClick={sessizSec}
+              className="mt-6 text-base text-slate-500 underline-offset-4 hover:underline"
             >
-              {t.fotoCek}
+              {t.sessiz}
             </button>
-          )}
-          <button
-            onClick={sesBasla}
-            className="mt-3 w-full text-center text-xs text-slate-500 underline-offset-4 hover:underline"
-          >
-            {t.fotoAtla}
-          </button>
-        </>
-      )}
-
-      {asama === "kayit" && (
-        <>
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-sm font-semibold text-red-300">
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-400" />
-              REC
-            </span>
-            <span className="font-mono text-sm text-slate-400">{sayac}s</span>
           </div>
-          <p className="mt-3 text-xs uppercase tracking-widest text-slate-400">
-            {t.yeminYonerge}
-          </p>
-          <p className="prizma-serif mt-3 text-base leading-relaxed text-slate-100">
-            “{t.yemin}”
-          </p>
-          <button
-            onClick={soruyaGec}
-            className="mt-5 flex h-11 w-full items-center justify-center rounded-xl border border-white/15 text-sm font-semibold text-slate-200 hover:bg-white/[0.06]"
-          >
-            {t.devam} →
-          </button>
-        </>
-      )}
+        )}
 
-      {asama === "soru" && (
-        <>
-          <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-sm font-semibold text-red-300">
-              <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-400" />
-              REC
-            </span>
-            <span className="font-mono text-sm text-slate-400">{sayac}s</span>
+        {asama === "onay" && (
+          <div className="text-center">
+            <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
+              {t.onayBaslik}
+            </h1>
+            <p className="mt-6 text-xl leading-relaxed text-slate-200">{t.onay}</p>
+            <div className="mt-10 space-y-4">
+              <DevButon onClick={() => setAsama("foto")}>{t.onayla}</DevButon>
+              <DevButon onClick={sessizSec} ikincil>
+                {t.sessiz}
+              </DevButon>
+            </div>
           </div>
-          <h3 className="prizma-serif ay-metin mt-3 text-xl font-semibold">{t.soru}</h3>
-          <p className="mt-1 text-xs text-slate-500">{t.soruNot}</p>
-          <textarea
-            value={beklenti}
-            onChange={(e) => setBeklenti(e.target.value.slice(0, 300))}
-            rows={2}
-            className="mt-3 w-full rounded-xl border border-white/15 bg-white/[0.06] p-3 text-base text-slate-100 placeholder:text-slate-500 focus:border-sky-200/70 focus:outline-none"
-            placeholder="…"
-          />
-          <button
-            onClick={bitir}
-            className="btn-kor mt-4 flex h-12 w-full items-center justify-center rounded-xl font-bold"
-          >
-            {t.bitir}
-          </button>
-        </>
-      )}
+        )}
 
-      {asama === "gonderiliyor" && (
-        <div className="py-8 text-center">
-          <div className="ayna-halka mx-auto h-14 w-14" />
-          <p className="prizma-serif ay-metin mt-5 text-xl font-semibold">{t.uyaniyor}</p>
-        </div>
-      )}
+        {asama === "foto" && (
+          <div className="text-center">
+            <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
+              🪞 {t.fotoBaslik}
+            </h1>
+            <p className="mt-5 text-xl leading-relaxed text-slate-200">{t.fotoAciklama}</p>
+            <input
+              ref={dosyaGirisi}
+              type="file"
+              accept="image/*"
+              capture="user"
+              className="hidden"
+              onChange={(e) => fotoSecildi(e.target.files?.[0] ?? null)}
+            />
+            {fotoOnizleme ? (
+              <>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={fotoOnizleme}
+                  alt=""
+                  className="mx-auto mt-6 h-48 w-40 rounded-3xl object-cover opacity-85"
+                />
+                <div className="mt-8 space-y-4">
+                  <DevButon onClick={sesBasla}>{t.fotoDevam} →</DevButon>
+                  <DevButon onClick={() => dosyaGirisi.current?.click()} ikincil>
+                    {t.fotoYeniden}
+                  </DevButon>
+                </div>
+              </>
+            ) : (
+              <div className="mt-10">
+                <DevButon onClick={() => dosyaGirisi.current?.click()}>
+                  {t.fotoCek}
+                </DevButon>
+              </div>
+            )}
+            <button
+              onClick={sesBasla}
+              className="mt-6 text-base text-slate-500 underline-offset-4 hover:underline"
+            >
+              {t.fotoAtla}
+            </button>
+          </div>
+        )}
 
-      {asama === "hazir" && (
-        <div className="py-4 text-center">
-          {!calindi ? (
-            <>
-              <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
-                Yansıman hazır
-              </p>
-              <button
-                onClick={dinle}
-                className="btn-kor parilti mx-auto mt-5 flex h-14 w-full items-center justify-center rounded-xl text-lg font-bold"
-              >
-                {t.dinle}
-              </button>
-            </>
-          ) : (
-            <>
-              <p className="prizma-serif ay-metin text-xl font-semibold">{t.seninle}</p>
-              <button
-                onClick={() => setAsama("kapandi")}
-                className="mt-4 text-xs text-slate-500 underline-offset-4 hover:underline"
-              >
-                {t.kapat}
-              </button>
-            </>
-          )}
-        </div>
-      )}
+        {asama === "kayit" && (
+          <div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-lg font-bold text-red-300">
+                <span className="h-3 w-3 animate-pulse rounded-full bg-red-400" />
+                REC
+              </span>
+              <span className="font-mono text-2xl font-bold text-slate-200">{sayac}</span>
+            </div>
+            <p className="mt-5 text-base uppercase tracking-widest text-slate-400">
+              {t.yeminYonerge}
+            </p>
+            <p className="prizma-serif mt-5 text-2xl leading-relaxed text-slate-50">
+              “{t.yemin}”
+            </p>
+            <div className="mt-8">
+              <DevButon onClick={soruyaGec}>{t.devam} →</DevButon>
+            </div>
+          </div>
+        )}
 
-      {asama === "sonra" && (
-        <div className="py-4 text-center">
-          <p className="text-sm leading-relaxed text-slate-300">{t.sonra}</p>
-          <button
-            onClick={() => setAsama("kapandi")}
-            className="mt-4 text-xs text-slate-500 underline-offset-4 hover:underline"
-          >
-            {t.kapat}
-          </button>
-        </div>
-      )}
+        {asama === "soru" && (
+          <div className="text-center">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-lg font-bold text-red-300">
+                <span className="h-3 w-3 animate-pulse rounded-full bg-red-400" />
+                REC
+              </span>
+              <span className="font-mono text-2xl font-bold text-slate-200">{sayac}</span>
+            </div>
+            <h1 className="prizma-serif ay-metin mt-6 text-3xl font-semibold leading-tight">
+              {t.soru}
+            </h1>
+            <textarea
+              value={beklenti}
+              onChange={(e) => setBeklenti(e.target.value.slice(0, 300))}
+              rows={3}
+              className="mt-6 w-full rounded-2xl border-2 border-white/20 bg-white/[0.06] p-4 text-xl text-slate-100 placeholder:text-slate-500 focus:border-sky-200/70 focus:outline-none"
+              placeholder={t.soruNot}
+            />
+            <div className="mt-8">
+              <DevButon onClick={bitir}>{t.bitir}</DevButon>
+            </div>
+          </div>
+        )}
 
-      {asama === "hata" && (
-        <div className="py-4 text-center">
-          <p className="text-sm text-red-300">{hataMesaji ?? t.hata}</p>
-          <button
-            onClick={sesBasla}
-            className="btn-kor mx-auto mt-4 flex h-11 w-full items-center justify-center rounded-xl font-bold"
-          >
-            {t.tekrar}
-          </button>
-          <button
-            onClick={sessizSec}
-            className="mt-3 w-full text-center text-xs text-slate-500 underline-offset-4 hover:underline"
-          >
-            {t.sessiz}
-          </button>
-        </div>
-      )}
+        {asama === "gonderiliyor" && (
+          <div className="text-center">
+            <div className="ayna-halka mx-auto h-20 w-20" />
+            <p className="prizma-serif ay-metin mt-8 text-3xl font-semibold">{t.uyaniyor}</p>
+          </div>
+        )}
+
+        {asama === "hazir" && (
+          <div className="text-center">
+            {!calindi ? (
+              <>
+                <p className="prizma-serif text-sm uppercase tracking-[0.4em] text-slate-400">
+                  Yansıman hazır
+                </p>
+                <div className="mt-8">
+                  <DevButon onClick={dinle}>{t.dinle}</DevButon>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="prizma-serif ay-metin text-3xl font-semibold leading-snug">
+                  {t.seninle}
+                </p>
+                <div className="mt-10">
+                  <DevButon onClick={() => setAsama("kapandi")}>{t.kapat}</DevButon>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {asama === "sonra" && (
+          <div className="text-center">
+            <p className="text-2xl leading-relaxed text-slate-100">{t.sonra}</p>
+            <div className="mt-10">
+              <DevButon onClick={() => setAsama("kapandi")}>{t.kapat}</DevButon>
+            </div>
+          </div>
+        )}
+
+        {asama === "hata" && (
+          <div className="text-center">
+            <p className="text-2xl font-semibold text-red-300">{hataMesaji ?? t.hata}</p>
+            <div className="mt-10 space-y-4">
+              <DevButon onClick={sesBasla}>{t.tekrar}</DevButon>
+              <DevButon onClick={sessizSec} ikincil>
+                {t.sessiz}
+              </DevButon>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

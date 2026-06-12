@@ -39,10 +39,10 @@ export default async function AnaSayfa() {
             <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
               {tr.app.name}
             </p>
-            <h1 className="prizma-serif ay-metin mt-2 text-3xl font-semibold">
+            <h1 className="prizma-serif ay-metin mt-2 text-4xl font-semibold leading-tight">
               {tr.anaSayfa.hosGeldin(session.ad)}
             </h1>
-            <p className="mt-4 text-sm leading-relaxed text-slate-300">
+            <p className="mt-4 text-base leading-relaxed text-slate-300">
               {tr.anaSayfa.aciklama}
             </p>
 
@@ -61,7 +61,7 @@ export default async function AnaSayfa() {
             {raporlarAcik && (
               <Link
                 href="/ayna"
-                className="parilti btn-kor mt-6 flex h-14 w-full items-center justify-center rounded-xl font-bold transition-transform hover:scale-[1.01]"
+                className="parilti btn-kor mt-6 flex h-16 w-full items-center justify-center rounded-2xl text-xl font-bold transition-transform hover:scale-[1.01]"
               >
                 {tr.anaSayfa.aynaniGor}
               </Link>
