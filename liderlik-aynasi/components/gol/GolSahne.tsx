@@ -77,8 +77,9 @@ vec3 gokyuzu(vec3 yon) {
   float el = yon.y;
   float az = atan(yon.x, -yon.z);
   float gunduz = gunduzOrani();
-  // tan kuşağı: güneş ufka yakınken (doğum/batım) ufuk kızıllaşır
-  float tan = exp(-uGunes * uGunes * 22.0);
+  // tan kuşağı: güneş ufka yakınken (doğum/batım) ufuk kızıllaşır.
+  // not: "tan" GLSL yerleşik fonksiyonu olduğundan değişken adı farklı
+  float tanKizil = exp(-uGunes * uGunes * 22.0);
 
   // gece derin petrol ↔ gündüz berrak mavi
   vec3 ust = mix(vec3(0.010, 0.030, 0.058), vec3(0.13, 0.36, 0.70), gunduz);
@@ -86,7 +87,7 @@ vec3 gokyuzu(vec3 yon) {
   vec3 renk = mix(alt, ust, clamp(el * 2.2, 0.0, 1.0));
 
   // tan kızıllığı ufukta toplanır
-  renk += vec3(0.98, 0.42, 0.16) * tan * exp(-max(el, 0.0) * 7.0) * 0.55;
+  renk += vec3(0.98, 0.42, 0.16) * tanKizil * exp(-max(el, 0.0) * 7.0) * 0.55;
 
   // yıldızlar ve kayan yıldız yalnız gece görünür
   vec2 yildizP = vec2(az * 1.6, el * 2.4);
@@ -336,9 +337,11 @@ function AtesBocekleri({ uZaman, uGunes }: { uZaman: ZamanU; uGunes: ZamanU }) {
 }
 
 function GolDunyasi({ hareketli }: { hareketli: boolean }) {
-  const { camera } = useThree();
+  const { camera, invalidate } = useThree();
   const sira = useRef(0);
   const fare = useRef({ x: 0, y: 0 });
+  // test anahtarı: ?gece=1 sahneyi geceye, ?gunduz=1 gündüze zorlar
+  const zorla = useRef<0 | 1 | -1>(0);
 
   const uZaman = useMemo<ZamanU>(() => ({ value: 10 }), []);
   const uGunes = useMemo<ZamanU>(() => ({ value: -1 }), []);
@@ -351,6 +354,19 @@ function GolDunyasi({ hareketli }: { hareketli: boolean }) {
     }),
     []
   );
+
+  useEffect(() => {
+    const arama = new URLSearchParams(window.location.search);
+    zorla.current = arama.has("gece") ? -1 : arama.has("gunduz") ? 1 : 0;
+  }, []);
+
+  // Hareket-azalt modunda sahne tek kare çizilir ve donar; ışığın gerçek
+  // saati takip etmesi için dakikada bir kare tazelenir.
+  useEffect(() => {
+    if (hareketli) return;
+    const id = setInterval(() => invalidate(), 60_000);
+    return () => clearInterval(id);
+  }, [hareketli, invalidate]);
 
   useEffect(() => {
     if (!hareketli) return;
@@ -398,7 +414,10 @@ function GolDunyasi({ hareketli }: { hareketli: boolean }) {
     const simdi = new Date();
     const saat = simdi.getHours() + simdi.getMinutes() / 60;
     // eslint-disable-next-line react-hooks/immutability
-    uGunes.value = Math.sin((Math.PI * 2 * (saat - 6)) / 24);
+    uGunes.value =
+      zorla.current !== 0
+        ? zorla.current
+        : Math.sin((Math.PI * 2 * (saat - 6)) / 24);
     // kendiliğinden süzülen + parmağa/fareye hafifçe eğilen kamera
     // eslint-disable-next-line react-hooks/immutability
     camera.position.x = Math.sin(t * 0.1) * 0.45 + fare.current.x * 0.45;
