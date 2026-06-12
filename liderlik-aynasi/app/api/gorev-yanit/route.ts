@@ -1,7 +1,12 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { gorevPuanla } from "@/lib/ayna";
-import { kivilcimHesapla, SOZ_KIVILCIMI, unvanBul } from "@/lib/kivilcim";
+import {
+  kivilcimHesapla,
+  SOZ_KIVILCIMI,
+  SENKRON_KIVILCIMI,
+  unvanBul,
+} from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
 
 export const maxDuration = 60;
@@ -64,6 +69,30 @@ export async function POST(req: Request) {
       soz: true,
       yorum: tr.gorevler.sozTesekkur,
       kivilcim: SOZ_KIVILCIMI,
+      toplam,
+      unvan: unvanBul(toplam).mevcut.ad,
+    });
+  }
+
+  // SENKRON AN: kolektif ana katılım anında sabit Kıvılcım'la mühürlenir —
+  // 150 eşzamanlı yanıt için AI puanlaması bilinçli olarak yok.
+  if (gorev.kind === "senkron") {
+    await db
+      .from("missions")
+      .update({
+        status: "scored",
+        response_text: yanitMetni,
+        responded_at: simdi.toISOString(),
+        scored_at: simdi.toISOString(),
+        ai_comment: tr.gorevler.senkronTesekkur,
+        spark_points: SENKRON_KIVILCIMI,
+      })
+      .eq("id", gorev.id);
+    const toplam = await toplamKivilcim(db, session.sub);
+    return Response.json({
+      senkron: true,
+      yorum: tr.gorevler.senkronTesekkur,
+      kivilcim: SENKRON_KIVILCIMI,
       toplam,
       unvan: unvanBul(toplam).mevcut.ad,
     });

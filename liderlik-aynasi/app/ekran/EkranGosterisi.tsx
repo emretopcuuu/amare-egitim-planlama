@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import type { EkranVerisi } from "@/app/api/ekran/route";
+import EpicYildizlar from "./EpicYildizlar";
 
 const t = tr.ekran;
 const VERI_YOKLAMA_MS = 10_000;
@@ -116,8 +117,27 @@ export default function EkranGosterisi() {
           </p>
           <h1 className="font-display altin-metin mt-1 text-5xl font-bold text-gold">{t.baslik}</h1>
         </div>
-        <p className="text-xl text-slate-400">{veri?.dalgaAdi ?? t.dalgaYok}</p>
+        <div className="text-right">
+          <p className="text-xl text-slate-400">{veri?.dalgaAdi ?? t.dalgaYok}</p>
+          {veri && <EpicYildizlar toplam={veri.toplamPuan} />}
+        </div>
       </header>
+
+      {/* SENKRON AN canlı katılım bandı */}
+      {veri?.senkron && (
+        <div className="parilti mt-4 flex items-center justify-between rounded-2xl border-2 border-gold/50 bg-gold/15 px-8 py-4">
+          <p className="text-3xl font-bold text-gold-light">
+            ⏰ {t.senkronBaslik}: {veri.senkron.baslik}
+          </p>
+          <p className="text-3xl font-bold text-slate-100">
+            {veri.senkron.yanit}/{veri.senkron.toplam}
+            <span className="ml-4 font-mono text-2xl text-amber-300">
+              {Math.floor(veri.senkron.kalanSn / 60)}:
+              {String(veri.senkron.kalanSn % 60).padStart(2, "0")}
+            </span>
+          </p>
+        </div>
+      )}
 
       <div className="relative mt-8 flex-1">
         {!veri ? (

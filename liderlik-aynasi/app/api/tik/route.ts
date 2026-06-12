@@ -2,11 +2,20 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import {
   gorevUret,
   gorevPuanla,
+  senkronGorevUret,
   gorevAraligiDk,
   istanbulSaati,
   sessizSaatMi,
 } from "@/lib/ayna";
 import { kivilcimHesapla } from "@/lib/kivilcim";
+import {
+  kaymaKarari,
+  senkronAnahtari,
+  senkronYedekSec,
+  yolculukGunuHesapla,
+  type SistemModu,
+} from "@/lib/davranis";
+import { momentumHesaplaVeYaz } from "@/lib/momentum";
 import { gorevSeslendir } from "@/lib/yansima";
 import {
   higgsYapilandirildiMi,
@@ -46,7 +55,16 @@ export async function POST(req: Request) {
   const db = supabaseAdmin();
   const simdi = new Date();
   const sessiz = sessizSaatMi(simdi) && !testModu;
-  const ozet = { uretilen: 0, puanlanan: 0, hatirlatilan: 0, acilan: 0, fisilti: 0 };
+  const ozet = {
+    uretilen: 0,
+    puanlanan: 0,
+    hatirlatilan: 0,
+    acilan: 0,
+    fisilti: 0,
+    senkron: 0,
+    durtulen: 0,
+    momentum: 0,
+  };
 
   // 1) Süresi dolan görevleri kapat (her durumda, sessiz saatte bile)
   await db
@@ -58,7 +76,13 @@ export async function POST(req: Request) {
   const { data: ayarlar } = await db
     .from("settings")
     .select("key, value")
-    .in("key", ["ayna_aktif", "ayna_tempo", "ayna_baslangic"]);
+    .in("key", [
+      "ayna_aktif",
+      "ayna_tempo",
+      "ayna_baslangic",
+      "sistem_modu",
+      "yolculuk_baslangic",
+    ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
 
   if (ayar.get("ayna_aktif") !== "true") {
@@ -106,13 +130,21 @@ export async function POST(req: Request) {
   // 3) Görev dağıtımı
   const bugun = istanbulTarihi(simdi);
   const { saat } = istanbulSaati(simdi);
+  const mod: SistemModu =
+    ayar.get("sistem_modu") === "yolculuk" ? "yolculuk" : "kamp";
+  const yolculukBaslangic = ayar.get("yolculuk_baslangic");
   const baslangic = ayar.get("ayna_baslangic");
-  const gun = baslangic
-    ? Math.min(
-        4,
-        Math.floor((simdi.getTime() - new Date(baslangic).getTime()) / 86_400_000) + 1
-      )
-    : 1;
+  const gun =
+    mod === "yolculuk" && yolculukBaslangic
+      ? Math.min(90, yolculukGunuHesapla(yolculukBaslangic, simdi))
+      : baslangic
+        ? Math.min(
+            4,
+            Math.floor(
+              (simdi.getTime() - new Date(baslangic).getTime()) / 86_400_000
+            ) + 1
+          )
+        : 1;
 
   const [{ data: kisiler }, { data: sonGorevler }] = await Promise.all([
     db.from("participants").select("id, full_name, team").eq("role", "participant"),
@@ -135,11 +167,15 @@ export async function POST(req: Request) {
   }
 
   const tempo = ayar.get("ayna_tempo") ?? "surpriz";
+  // Yolculuk modunda ritim sakindir: günde TEK görev, 09-11 sabah penceresi
+  const gunlukUst = mod === "yolculuk" ? 1 : 7;
+  const yolculukPenceresi = mod !== "yolculuk" || (saat >= 9 && saat < 11);
   const uygunlar = (kisiler ?? [])
     .filter((k) => {
+      if (!yolculukPenceresi) return false;
       const d = durumlar.get(k.id);
       if (!d) return true; // hiç görev almamış
-      if (d.bekleyen || d.bugunSayisi >= 7) return false;
+      if (d.bekleyen || d.bugunSayisi >= gunlukUst) return false;
       const aralikDk = gorevAraligiDk(tempo, k.id, d.bugunSayisi);
       return simdi.getTime() - d.sonVerilis >= aralikDk * 60_000;
     })
@@ -150,7 +186,7 @@ export async function POST(req: Request) {
     .slice(0, 3);
 
   for (const k of uygunlar) {
-    const gorev = await gorevUret(db, k, gun, saat);
+    const gorev = await gorevUret(db, k, gun, saat, mod);
     if (!gorev) continue;
     const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
     const { data: yeniGorev, error } = await db
@@ -161,6 +197,7 @@ export async function POST(req: Request) {
         kind: gorev.kind,
         title: gorev.title,
         body: gorev.body,
+        difficulty: gorev.difficulty,
         due_at: dueAt.toISOString(),
       })
       .select("id")
@@ -257,6 +294,145 @@ export async function POST(req: Request) {
         .from("voice_profiles")
         .update({ video_notified_at: simdi.toISOString() })
         .eq("participant_id", h.participant_id);
+    }
+  }
+
+  // 3c) SENKRON AN: herkese aynı anda aynı mikro görev (ambient sociability).
+  // Pencere anahtarı settings kilidiyle tek seferliktir; üretim düşerse
+  // deterministik yedek görev devreye girer — an asla boş geçmez.
+  {
+    const tarihParcalari = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Istanbul",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      weekday: "short",
+    }).formatToParts(simdi);
+    const haftaninGunu = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(
+      tarihParcalari.find((p) => p.type === "weekday")?.value ?? ""
+    );
+    const { dakika } = istanbulSaati(simdi);
+    const anahtar = senkronAnahtari({
+      mod,
+      haftaninGunu,
+      saat,
+      dakika,
+      tarih: bugun,
+    });
+    if (anahtar) {
+      const { error: kilitHatasi } = await db
+        .from("settings")
+        .insert({ key: anahtar, value: "1" });
+      // kilit alınamadıysa (zaten var) bu pencere işlenmiştir
+      if (!kilitHatasi) {
+        const uretilen =
+          (await senkronGorevUret(mod)) ?? senkronYedekSec(anahtar);
+        const dueAt = new Date(simdi.getTime() + 20 * 60_000).toISOString();
+        const satirlar = (kisiler ?? []).map((k) => ({
+          participant_id: k.id,
+          kind: "senkron",
+          title: uretilen.baslik,
+          body: uretilen.govde,
+          difficulty: 1,
+          due_at: dueAt,
+        }));
+        if (satirlar.length > 0) {
+          const { error: senkronHata } = await db.from("missions").insert(satirlar);
+          if (!senkronHata) {
+            ozet.senkron = satirlar.length;
+            await herkeseBildir(
+              db,
+              "⏰ SENKRON AN",
+              `${uretilen.baslik} — şu anda herkes bunu yapıyor. 20 dakikan var.`,
+              "/gorevler"
+            );
+          }
+        }
+      }
+    }
+  }
+
+  // 3d) KAYMA (CHURN) RADARI: sessizleşeni önce nazikçe dürt, eşik aşılırsa
+  // lidere işaretle. Saat başı bir kez çalışır (settings kilidi).
+  {
+    const kaymaAnahtari = `kayma_${bugun}_${saat}`;
+    const { error: kaymaKilit } = await db
+      .from("settings")
+      .insert({ key: kaymaAnahtari, value: "1" });
+    if (!kaymaKilit) {
+      const yedi = new Date(simdi.getTime() - 7 * 86_400_000).toISOString();
+      const [{ data: sonYanitlar }, { data: sonPuanlar }, { data: radar }] =
+        await Promise.all([
+          db
+            .from("missions")
+            .select("participant_id, responded_at")
+            .gte("responded_at", yedi),
+          db.from("ratings").select("rater_id, created_at").gte("created_at", yedi),
+          db.from("churn_radar").select("participant_id, nudged_at, admin_alerted_at"),
+        ]);
+      const sonEtkinlik = new Map<string, number>();
+      for (const y of sonYanitlar ?? []) {
+        if (!y.responded_at) continue;
+        const t = new Date(y.responded_at).getTime();
+        if (t > (sonEtkinlik.get(y.participant_id) ?? 0))
+          sonEtkinlik.set(y.participant_id, t);
+      }
+      for (const p of sonPuanlar ?? []) {
+        const t = new Date(p.created_at).getTime();
+        if (t > (sonEtkinlik.get(p.rater_id) ?? 0)) sonEtkinlik.set(p.rater_id, t);
+      }
+      const radarHarita = new Map(
+        (radar ?? []).map((r) => [r.participant_id, r])
+      );
+      for (const k of kisiler ?? []) {
+        const iz = radarHarita.get(k.id);
+        const karar = kaymaKarari(
+          sonEtkinlik.get(k.id) ?? null,
+          simdi.getTime(),
+          mod,
+          iz?.nudged_at ? new Date(iz.nudged_at).getTime() : null,
+          iz?.admin_alerted_at ? new Date(iz.admin_alerted_at).getTime() : null
+        );
+        if (karar.nudge) {
+          await katilimciyaBildir(
+            db,
+            k.id,
+            "🌊 Su seni özledi",
+            "Bir süredir sessizsin. Bu bir azar değil, bir el uzatma: küçücük bir adım bile suyu halkalandırır. Aynana bir bak.",
+            "/"
+          );
+          ozet.durtulen += 1;
+        }
+        if (karar.nudge || karar.alert) {
+          await db.from("churn_radar").upsert({
+            participant_id: k.id,
+            ...(karar.nudge ? { nudged_at: simdi.toISOString() } : {}),
+            ...(karar.alert ? { admin_alerted_at: simdi.toISOString() } : {}),
+            updated_at: simdi.toISOString(),
+          });
+        }
+      }
+    }
+  }
+
+  // 3e) HAFTALIK MOMENTUM: Cuma 17:00-17:09 penceresinde bir kez — herkese
+  // davranış-eğilim skoru yazılır ve kişisel push gider.
+  {
+    const cumaMi =
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "Europe/Istanbul",
+        weekday: "short",
+      }).format(simdi) === "Fri";
+    const { dakika } = istanbulSaati(simdi);
+    if (cumaMi && saat === 17 && dakika < 10) {
+      const momentumAnahtari = `momentum_${bugun}`;
+      const { error: momentumKilit } = await db
+        .from("settings")
+        .insert({ key: momentumAnahtari, value: "1" });
+      if (!momentumKilit) {
+        const sonuc = await momentumHesaplaVeYaz(db, simdi);
+        ozet.momentum = sonuc.yazilan;
+      }
     }
   }
 

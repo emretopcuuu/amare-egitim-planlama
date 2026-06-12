@@ -354,6 +354,28 @@ body {
     linear-gradient(180deg, #081726 0%, #06121e 58%, #040e18 100%);
 }
 
+/* Epic Meaning: büyük ekranda doğan yıldız parçacığı */
+.yildiz-dogus {
+  opacity: 0;
+  animation: yildiz-dogus 1.6s ease-out forwards;
+  text-shadow: 0 0 18px rgba(251, 191, 36, 0.9);
+}
+
+@keyframes yildiz-dogus {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-30deg);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.6) rotate(10deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.8) rotate(25deg) translateY(-24px);
+  }
+}
+
 /* Hareket hassasiyeti: sistem tercihi her efekti susturur */
 @media (prefers-reduced-motion: reduce) {
   *,

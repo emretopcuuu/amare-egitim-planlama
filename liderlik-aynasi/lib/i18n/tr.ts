@@ -24,6 +24,8 @@ export const tr = {
     katilimciGirisi: "Katılımcı girişine dön",
   },
   anaSayfa: {
+    yolculukRozeti: (gun: number, faz: string) =>
+      `🗺 Yolculuk · Gün ${gun}/90 · ${faz}`,
     hosGeldin: (ad: string) => `Hoş geldin, ${ad}`,
     aciklama:
       "3 gün boyunca hem kendini hem kampta tanıdığın kişileri puanlayacaksın. Gün 3'te aynan açılacak.",
@@ -112,6 +114,28 @@ export const tr = {
     tahminYap: "Tahmin Yap",
   },
   admin: {
+    komutan: {
+      baslik: "Komutan Paneli",
+      aciklama:
+        "Sistemi oyunlaştıran mimarın radarı: beş eksende ekibin canlı durumu. Mikro-yönetim değil, sistem tasarımı.",
+      eksenler: {
+        katilim: "Katılım Akışı",
+        gorevMomentumu: "Görev Momentumu",
+        aidiyet: "Aidiyet",
+        tamamlama: "Tamamlama",
+        retDirenci: "Ret Direnci",
+      },
+      momentumBaslik: "📈 Haftalık Momentum",
+      momentumYok: "İlk momentum skoru Cuma akşamı yazılır.",
+      ekipOrt: (n: number) => `Ekip ortalaması: ${n}/100`,
+      kaymaBaslik: "📡 Kayma Radarı",
+      kaymaYok: "Kimse kaymıyor — su durgun. 🌊",
+      kaymaSatiri: (saat: number) => `${saat} saattir sessiz`,
+      modBaslik: "Sistem Modu",
+      modKamp: "🏕 Kamp Modu",
+      modYolculuk: "🗺 90 Günlük Yolculuk",
+      yolculukGunu: (gun: number, faz: string) => `Gün ${gun}/90 · Faz: ${faz}`,
+    },
     baslik: "Yönetim Paneli",
     nav: {
       panel: "Panel",
@@ -121,6 +145,7 @@ export const tr = {
       eslestirme: "Eşleştirme",
       qr: "QR Kartlar",
       moderasyon: "Moderasyon",
+      komutan: "Komutan",
     },
     dalga: {
       baslik: "Dalga Kontrolü",
@@ -229,6 +254,11 @@ export const tr = {
     },
     yetkisiz: "Bu işlem için yönetici oturumu gerekir.",
     aynaDirektor: {
+      modBaslik: "Sistem Modu",
+      modAciklama:
+        "Kamp bitince Yolculuğu başlat: AYNA 90 gün boyunca günde tek görevle, fazlara göre rehberlik eder.",
+      yolculukBaslat: "🗺 Yolculuğu Başlat (90 gün)",
+      kampaDon: "🏕 Kamp Moduna Dön",
       baslik: "🤖 AYNA Kontrol Odası",
       aciklama:
         "Kampı yöneten yapay zekâ. Aktifken 5 dakikada bir uyanır: görev dağıtır, yanıtları puanlar, programı açıklar, dürtmeler gönderir. Gece 22:30–07:30 arası susar.",
@@ -296,6 +326,9 @@ export const tr = {
     baslik: "AYNA'nın Görevleri",
     dinle: "🔊 Yansımandan dinle",
     durdur: "■ Durdur",
+    senkronTesekkur:
+      "Tam zamanında. Şu anda onlarca kişi seninle aynı şeyi yaptı — kolektif enerji böyle kurulur. +8 ⚡",
+    momentumSatiri: (skor: number) => `📈 Momentum: ${skor}/100`,
     altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
     aktifYok: "Şu an aktif görevin yok. AYNA seni izliyor — yenisi her an gelebilir. 👁",
     sonTarih: (saat: string) => `Son: ${saat}`,
@@ -375,6 +408,8 @@ export const tr = {
       `Kampın son gecesi kendine şunu yazmıştın:\n\n"${soz}"\n\nTuttun mu? — AYNA`,
   },
   ayna: {
+    epikKatki: (n: number) =>
+      `🌌 Kampın gökyüzüne ${n} yıldız kattın — her gözlemin bir başkasının aynasını parlattı.`,
     baslik: "Ayna Raporun",
     bekleBaslik: "Aynan henüz örtülü 🔮",
     bekleAciklama:
@@ -464,6 +499,8 @@ export const tr = {
     ligAciklama: "AYNA'nın görevlerinde en çok Kıvılcım toplayanlar",
     ligTakimlar: "Takım Yarışı",
     ligBos: "İlk Kıvılcımlar yakında — AYNA görev dağıtmaya başladığında burası alevlenecek.",
+    yildizSatiri: (n: number) => `Bu salon ${n} yıldız yaktı`,
+    senkronBaslik: "SENKRON AN",
   },
   rituel: {
     baslik: "Aynaya kendini tanıt",

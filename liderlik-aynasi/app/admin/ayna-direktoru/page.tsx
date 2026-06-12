@@ -19,7 +19,10 @@ export default async function AynaDirektorPage() {
     { count: katilimciSayisi },
     { data: sonGorevler, error },
   ] = await Promise.all([
-    db.from("settings").select("key, value").in("key", ["ayna_aktif", "ayna_tempo"]),
+    db
+      .from("settings")
+      .select("key, value")
+      .in("key", ["ayna_aktif", "ayna_tempo", "sistem_modu"]),
     db.from("push_subscriptions").select("id", { count: "exact", head: true }),
     db
       .from("participants")
@@ -48,6 +51,7 @@ export default async function AynaDirektorPage() {
         <AynaDirektorKontrol
           aktif={ayar.get("ayna_aktif") === "true"}
           tempo={ayar.get("ayna_tempo") ?? "surpriz"}
+          mod={ayar.get("sistem_modu") === "yolculuk" ? "yolculuk" : "kamp"}
           aboneSayisi={aboneSayisi ?? 0}
           katilimciSayisi={katilimciSayisi ?? 0}
         />

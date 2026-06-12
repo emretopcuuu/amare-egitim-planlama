@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
+import { fazBul, yolculukGunuHesapla } from "@/lib/davranis";
 import { tr } from "@/lib/i18n/tr";
 import CikisButonu from "@/components/CikisButonu";
 import AynaKurulum from "@/components/AynaKurulum";
@@ -15,21 +16,37 @@ export default async function AnaSayfa() {
   if (!session) redirect("/giris");
 
   const db = supabaseAdmin();
-  const [dalga, raporlarAcik, { count: aktifGorev }, { data: sesProfili }] =
-    await Promise.all([
-      acikDalga(db),
-      raporlarGorunurMu(db),
-      db
-        .from("missions")
-        .select("id", { count: "exact", head: true })
-        .eq("participant_id", session.sub)
-        .eq("status", "pending"),
-      db
-        .from("voice_profiles")
-        .select("status, video_status")
-        .eq("participant_id", session.sub)
-        .maybeSingle(),
-    ]);
+  const [
+    dalga,
+    raporlarAcik,
+    { count: aktifGorev },
+    { data: sesProfili },
+    { data: modAyarlari },
+  ] = await Promise.all([
+    acikDalga(db),
+    raporlarGorunurMu(db),
+    db
+      .from("missions")
+      .select("id", { count: "exact", head: true })
+      .eq("participant_id", session.sub)
+      .eq("status", "pending"),
+    db
+      .from("voice_profiles")
+      .select("status, video_status")
+      .eq("participant_id", session.sub)
+      .maybeSingle(),
+    db
+      .from("settings")
+      .select("key, value")
+      .in("key", ["sistem_modu", "yolculuk_baslangic"]),
+  ]);
+
+  const ayar = new Map((modAyarlari ?? []).map((a) => [a.key, a.value]));
+  const yolculukBaslangic = ayar.get("yolculuk_baslangic");
+  const yolculukGunu =
+    ayar.get("sistem_modu") === "yolculuk" && yolculukBaslangic
+      ? Math.min(90, yolculukGunuHesapla(yolculukBaslangic, new Date()))
+      : null;
 
   return (
     <main className="flex min-h-screen flex-1 flex-col overflow-hidden">
@@ -45,6 +62,17 @@ export default async function AnaSayfa() {
             <p className="mt-4 text-base leading-relaxed text-slate-300">
               {tr.anaSayfa.aciklama}
             </p>
+
+            {yolculukGunu !== null && (
+              <p className="mt-4 text-sm">
+                <span className="rounded-full border border-sky-300/30 bg-sky-300/10 px-3 py-1 font-semibold text-sky-200">
+                  {tr.anaSayfa.yolculukRozeti(
+                    yolculukGunu,
+                    fazBul(yolculukGunu).ad
+                  )}
+                </span>
+              </p>
+            )}
 
             <p className="mt-6 text-sm">
               {dalga ? (
