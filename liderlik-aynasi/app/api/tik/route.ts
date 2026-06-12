@@ -168,8 +168,10 @@ export async function POST(req: Request) {
       `🤖 AYNA'dan yeni görev: ${gorev.title}`,
       gorev.body.length > 120 ? gorev.body.slice(0, 117) + "…" : gorev.body
     );
-    // YANSIMAN fısıltısı: klonu hazırsa görev kendi sesinden de dinlenebilir
-    await gorevSeslendir(db, k.id, yeniGorev.id, gorev.title, gorev.body);
+    // YANSIMAN fısıltısı: kredi bütçesi için yalnız özel görevler seslendirilir
+    if (gorev.kind === "gizli" || gorev.kind === "cesaret") {
+      await gorevSeslendir(db, k.id, yeniGorev.id, gorev.title, gorev.body);
+    }
   }
 
   // 4) Teslim hatırlatması (son 30 dk, bir kez)
