@@ -36,7 +36,26 @@ float yildizlar(vec2 p) {
   vec2 f = fract(p * 90.0);
   float h = kar(g);
   float y = step(0.985, h) * smoothstep(0.45, 0.0, length(f - 0.5));
-  return y * (0.55 + 0.45 * sin(uZaman * 1.4 + h * 43.0));
+  float titreme = 0.55 + 0.45 * sin(uZaman * 1.4 + h * 43.0);
+  // ara ara: her yıldızın kendi nadir, kısa elmas ışıltısı anı
+  float isilti = pow(0.5 + 0.5 * sin(uZaman * 0.6 + h * 271.0), 18.0) * 2.6;
+  return y * (titreme + isilti);
+}
+
+float kayanYildiz(vec2 p) {
+  // ~18 saniyede bir kısa ömürlü kayan yıldız — gökte ve suyun aynasında
+  float devir = floor(uZaman / 18.0);
+  float t = fract(uZaman / 18.0) * 5.5;
+  if (t > 1.0) return 0.0;
+  float h1 = kar(vec2(devir, 3.7));
+  float h2 = kar(vec2(devir, 9.1));
+  vec2 bas = vec2(mix(-2.5, 1.2, h1), mix(1.4, 2.1, h2));
+  vec2 dogrultu = normalize(vec2(0.82, -0.40));
+  vec2 uc = bas + dogrultu * t * 2.4;
+  vec2 q = p - uc;
+  float s = clamp(dot(q, -dogrultu), 0.0, 0.5);
+  float d = length(q + dogrultu * s);
+  return exp(-d * 240.0) * (1.0 - s * 2.0) * sin(3.14159 * t) * 1.6;
 }
 
 float ormanHatti(float az) {
@@ -61,9 +80,12 @@ vec3 gokyuzu(vec3 yon) {
   // tan kızıllığı ufukta toplanır
   renk += vec3(0.98, 0.42, 0.16) * tan * exp(-max(el, 0.0) * 7.0) * 0.55;
 
-  // yıldızlar yalnız gece görünür
-  renk += vec3(1.0, 0.97, 0.92) * yildizlar(vec2(az * 1.6, el * 2.4))
+  // yıldızlar ve kayan yıldız yalnız gece görünür
+  vec2 yildizP = vec2(az * 1.6, el * 2.4);
+  renk += vec3(1.0, 0.97, 0.92) * yildizlar(yildizP)
         * smoothstep(0.02, 0.12, el) * (1.0 - gunduz);
+  renk += vec3(0.85, 0.93, 1.0) * kayanYildiz(yildizP)
+        * smoothstep(0.05, 0.2, el) * (1.0 - gunduz);
 
   // gök cismi: gece gümüş ay, gündüz sıcak güneş (disk + halo)
   float d = distance(yon, AY_YONU);
@@ -109,11 +131,12 @@ void main() {
   vec2 p = vDunya.xz;
   float t = uZaman;
 
-  // sakin göl dalgaları: yüzey eğimi (normal pertürbasyonu) analitik
+  // sakin göl dalgaları: yüzey eğimi (normal pertürbasyonu) analitik.
+  // Genlikler bilinçli düşük — su durulunca ayna netleşir.
   vec2 egim = vec2(0.0);
-  egim.x += 0.031 * cos(p.x * 1.7 + t * 0.9);
-  egim.y += 0.032 * cos(p.y * 2.3 - t * 0.7);
-  egim += 0.014 * cos(dot(p, vec2(0.8, 1.4)) + t * 1.3) * vec2(0.8, 1.4);
+  egim.x += 0.021 * cos(p.x * 1.7 + t * 0.9);
+  egim.y += 0.022 * cos(p.y * 2.3 - t * 0.7);
+  egim += 0.010 * cos(dot(p, vec2(0.8, 1.4)) + t * 1.3) * vec2(0.8, 1.4);
 
   // dokunma halkaları: dünya uzayında sönümlenerek yayılan dairesel dalgalar
   float halkaIz = 0.0;
@@ -136,10 +159,11 @@ void main() {
 
   float gunduz = gunduzOrani();
 
-  // Fresnel: dik bakışta derin su, yatık bakışta ayna
-  float fres = 0.16 + 0.84 * pow(1.0 - max(dot(-bakis, n), 0.0), 3.0);
+  // Fresnel: dik bakışta derin su, yatık bakışta ayna — taban yansıtma
+  // yüksek tutuldu ki göl "ayna" kimliğini her açıdan korusun
+  float fres = 0.30 + 0.70 * pow(1.0 - max(dot(-bakis, n), 0.0), 2.5);
   vec3 derin = mix(vec3(0.006, 0.020, 0.034), vec3(0.035, 0.110, 0.140), gunduz);
-  vec3 renk = mix(derin, yansima, fres);
+  vec3 renk = mix(derin, yansima * 1.1, fres);
 
   // gök cismi parıltısı: yansıma ışını aya/güneşe yaklaştıkça keskin glint
   float parilti = pow(max(dot(r, AY_YONU), 0.0), 700.0);
@@ -352,8 +376,8 @@ function GolDunyasi({ hareketli }: { hareketli: boolean }) {
     uGunes.value = Math.sin((Math.PI * 2 * (saat - 6)) / 24);
     // kendiliğinden süzülen + parmağa/fareye hafifçe eğilen kamera
     // eslint-disable-next-line react-hooks/immutability
-    camera.position.x = Math.sin(t * 0.1) * 0.3 + fare.current.x * 0.45;
-    camera.position.y = 1.1 + Math.sin(t * 0.23) * 0.06 + fare.current.y * 0.2;
+    camera.position.x = Math.sin(t * 0.1) * 0.45 + fare.current.x * 0.45;
+    camera.position.y = 1.1 + Math.sin(t * 0.23) * 0.09 + fare.current.y * 0.2;
     camera.position.z = 5.2;
     camera.lookAt(0, 1.05, -14);
   });
