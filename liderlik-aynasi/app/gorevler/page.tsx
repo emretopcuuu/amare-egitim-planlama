@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { unvanBul } from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
 import GorevYanitFormu from "./GorevYanitFormu";
+import SesCal from "@/components/SesCal";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -33,10 +34,11 @@ export default async function GorevlerPage() {
   if (!session) redirect("/giris");
   if (session.rol !== "participant") redirect("/admin");
 
-  const { data: gorevler, error } = await supabaseAdmin()
+  const db = supabaseAdmin();
+  const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, due_at, response_text, ai_score, ai_comment, spark_points"
+      "id, kind, title, body, status, due_at, response_text, ai_score, ai_comment, spark_points, voice_path"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -45,6 +47,16 @@ export default async function GorevlerPage() {
 
   const aktif = (gorevler ?? []).filter((g) => g.status === "pending");
   const gecmis = (gorevler ?? []).filter((g) => g.status !== "pending");
+
+  // YANSIMAN fısıltıları: aktif görevlerin ses dosyalarına kısa ömürlü imzalı URL
+  const sesUrller = new Map<string, string>();
+  for (const g of aktif) {
+    if (!g.voice_path) continue;
+    const { data: imzali } = await db.storage
+      .from("sesler")
+      .createSignedUrl(g.voice_path, 3600);
+    if (imzali) sesUrller.set(g.id, imzali.signedUrl);
+  }
   const toplamKivilcim = (gorevler ?? [])
     .filter((g) => g.status === "scored")
     .reduce((top, g) => top + g.spark_points, 0);
@@ -124,6 +136,7 @@ export default async function GorevlerPage() {
             <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
               {g.body}
             </p>
+            {sesUrller.has(g.id) && <SesCal url={sesUrller.get(g.id)!} />}
             <GorevYanitFormu gorevId={g.id} />
           </section>
         ))

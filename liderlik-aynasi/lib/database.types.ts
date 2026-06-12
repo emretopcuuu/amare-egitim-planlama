@@ -118,6 +118,7 @@ export type Database = {
           status: string
           title: string
           trait_id: number | null
+          voice_path: string | null
         }
         Insert: {
           ai_comment?: string | null
@@ -136,6 +137,7 @@ export type Database = {
           status?: string
           title: string
           trait_id?: number | null
+          voice_path?: string | null
         }
         Update: {
           ai_comment?: string | null
@@ -154,6 +156,7 @@ export type Database = {
           status?: string
           title?: string
           trait_id?: number | null
+          voice_path?: string | null
         }
         Relationships: [
           {
