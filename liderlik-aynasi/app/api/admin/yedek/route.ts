@@ -20,6 +20,8 @@ const TABLOLAR = [
   "momentum_scores",
   "kudos",
   "photos",
+  "pairs",
+  "pair_messages",
   "settings",
 ] as const;
 

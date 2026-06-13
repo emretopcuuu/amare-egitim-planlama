@@ -329,6 +329,81 @@ export type Database = {
         }
         Relationships: []
       }
+      pair_messages: {
+        Row: {
+          created_at: string
+          from_id: string
+          id: string
+          message: string
+          pair_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_id: string
+          id?: string
+          message: string
+          pair_id: string
+        }
+        Update: {
+          created_at?: string
+          from_id?: string
+          id?: string
+          message?: string
+          pair_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pair_messages_from_id_fkey"
+            columns: ["from_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pair_messages_pair_id_fkey"
+            columns: ["pair_id"]
+            isOneToOne: false
+            referencedRelation: "pairs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pairs: {
+        Row: {
+          a_id: string
+          b_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          a_id: string
+          b_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          a_id?: string
+          b_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pairs_a_id_fkey"
+            columns: ["a_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pairs_b_id_fkey"
+            columns: ["b_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       photos: {
         Row: {
           caption: string | null
