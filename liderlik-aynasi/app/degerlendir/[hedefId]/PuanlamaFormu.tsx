@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
-import { titret } from "@/lib/his";
+import { titret, suDalgasi } from "@/lib/his";
 
 type Ozellik = { id: number; name: string; observation_hint: string };
 type Girdi = { puan: number | null; yorum: string };
@@ -193,6 +193,7 @@ export default function PuanlamaFormu({
         // taslak silinemezse sorun değil: sunucu kaydı esas
       }
       titret([12, 40, 12]);
+      suDalgasi();
       // İlk öz puanlamadan sonra kutlama + kamp bilgilendirmesi; sonra hub
       router.push(ilkOzPuan.current ? "/hosgeldin" : "/degerlendir");
       router.refresh();

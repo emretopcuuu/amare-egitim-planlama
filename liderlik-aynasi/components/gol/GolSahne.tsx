@@ -483,15 +483,8 @@ function GolDunyasi({
   useEffect(() => {
     if (!hareketli) return;
     let sonEkleme = 0;
-    function ekle(e: PointerEvent) {
-      const nx = (e.clientX / window.innerWidth) * 2 - 1;
-      const ny = -((e.clientY / window.innerHeight) * 2 - 1);
-      fare.current.x = nx;
-      fare.current.y = ny;
-      const simdi = performance.now();
-      if (e.type === "pointermove" && simdi - sonEkleme < 300) return;
-      sonEkleme = simdi;
-      // ekran noktasını ışınla y=0 su düzlemine indir
+    // Ekran noktasını (nx,ny ∈ [-1,1]) ışınla su düzlemine indirip halka bırak
+    function halkaEkle(nx: number, ny: number) {
       const yon = new THREE.Vector3(nx, ny, 0.5)
         .unproject(camera)
         .sub(camera.position)
@@ -500,18 +493,32 @@ function GolDunyasi({
       const t = -camera.position.y / yon.y;
       if (t > 60) return; // ufka çok yakın: halka zaten görünmez
       const nokta = camera.position.clone().addScaledVector(yon, t);
-      uHalka.value[sira.current % MAX_HALKA].set(
-        nokta.x,
-        nokta.z,
-        uZaman.value
-      );
+      uHalka.value[sira.current % MAX_HALKA].set(nokta.x, nokta.z, uZaman.value);
       sira.current++;
+    }
+    function ekle(e: PointerEvent) {
+      const nx = (e.clientX / window.innerWidth) * 2 - 1;
+      const ny = -((e.clientY / window.innerHeight) * 2 - 1);
+      fare.current.x = nx;
+      fare.current.y = ny;
+      const simdi = performance.now();
+      if (e.type === "pointermove" && simdi - sonEkleme < 300) return;
+      sonEkleme = simdi;
+      halkaEkle(nx, ny);
+    }
+    // Uygulama anları suyu canlandırır: puan/görev/kutlama → ekran ortasında
+    // (su yüzeyine denk gelen ny) halka. detail.x/y verilirse oradan.
+    function olayHalka(e: Event) {
+      const d = (e as CustomEvent<{ x?: number; y?: number }>).detail ?? {};
+      halkaEkle(d.x ?? 0, d.y ?? -0.35);
     }
     window.addEventListener("pointerdown", ekle, { passive: true });
     window.addEventListener("pointermove", ekle, { passive: true });
+    window.addEventListener("ayna-su-dalga", olayHalka);
     return () => {
       window.removeEventListener("pointerdown", ekle);
       window.removeEventListener("pointermove", ekle);
+      window.removeEventListener("ayna-su-dalga", olayHalka);
     };
   }, [hareketli, camera, uZaman, uHalka]);
 
