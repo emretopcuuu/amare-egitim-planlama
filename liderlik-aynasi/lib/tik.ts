@@ -536,6 +536,38 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     }
   }
 
+  // 3f) HAFTALIK AKRAN CHECK-IN: yolculuk modunda Pazartesi 10:00-10:09'da
+  // ikilisi olan herkese "ortağına yaz" dürtüsü (settings kilidiyle bir kez).
+  if (mod === "yolculuk") {
+    const pazartesiMi =
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "Europe/Istanbul",
+        weekday: "short",
+      }).format(simdi) === "Mon";
+    if (pazartesiMi && saat === 10 && dakika < 10) {
+      const { error: ortakKilit } = await db
+        .from("settings")
+        .insert({ key: `ortak_hatirlatma_${bugun}`, value: "1" });
+      if (!ortakKilit) {
+        const { data: ikililer } = await db.from("pairs").select("a_id, b_id");
+        const idler = new Set<string>();
+        for (const ik of ikililer ?? []) {
+          idler.add(ik.a_id);
+          idler.add(ik.b_id);
+        }
+        for (const pid of idler) {
+          await katilimciyaBildir(
+            db,
+            pid,
+            "🤝 Ortağına bu hafta yaz",
+            "Bu haftaki adımını ortağınla paylaş — birbirinizi ayakta tutun.",
+            "/ortak"
+          );
+        }
+      }
+    }
+  }
+
   // 4) Teslim hatırlatması (son 30 dk, bir kez) — sahnedeyken susar
   const { data: yaklasanlar } = sahneSessiz
     ? { data: [] }

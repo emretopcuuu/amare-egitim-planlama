@@ -103,6 +103,7 @@ export const tr = {
     menuTurnuva: "Takım Turnuvası",
     menuTakdir: "Takdir Duvarı",
     menuDuvar: "Anı Duvarı",
+    menuOrtak: "Ortağın",
     menuGizlilik: "Gizlilik ve KVKK",
     menuKapat: "Kapat",
   },
@@ -469,6 +470,17 @@ export const tr = {
       indir: "Yedeği İndir (JSON)",
       indiriliyor: "Hazırlanıyor…",
       hata: "Yedek alınamadı. Tekrar dene.",
+    },
+    // Akran ikilileri: 90 günlük yolculuk için sorumluluk ortakları
+    ikili: {
+      baslik: "Akran İkilileri",
+      aciklama:
+        "Katılımcıları 90 günlük yolculuk için ikişerli sorumluluk ortağına eşle. Yeniden çalıştırmak eski ikilileri sıfırlar.",
+      mevcut: (n: number) => `Şu an ${n} ikili oluşturulmuş.`,
+      olustur: "İkilileri Oluştur",
+      olusturuluyor: "Eşleştiriliyor…",
+      olusturuldu: (n: number) => `${n} ikili oluşturuldu ✓`,
+      hata: "Eşleştirme başarısız. Tekrar dene.",
     },
     // Sahne kumandası: host'un telefonundan canlı kontrol (büyük butonlar)
     sahne: {
@@ -977,5 +989,19 @@ export const tr = {
   },
   ortak: {
     oturumGerekli: "Oturum gerekli.",
+    // Akran ikilisi (sorumluluk ortağı) sayfası
+    baslik: "🤝 Ortağın",
+    altBaslik:
+      "90 günlük yolculukta yalnız değilsin. Sorumluluk ortağınla birbirinizi ayakta tutun.",
+    eslesmeYokBaslik: "Henüz ortağın atanmadı",
+    eslesmeYokMetin: "Yönetici ikilileri oluşturduğunda ortağın burada belirir.",
+    ortaginEtiket: "Ortağın",
+    sen: "Sen",
+    mesajYer: "Ortağına bir şey yaz…",
+    gonder: "Gönder",
+    gonderiliyor: "Gönderiliyor…",
+    bosSohbet: "Henüz mesaj yok. İlk adımı sen at — bir merhaba bile yeter.",
+    geriDon: "← Ana sayfaya dön",
+    hata: "Gönderilemedi. Tekrar dene.",
   },
 } as const;

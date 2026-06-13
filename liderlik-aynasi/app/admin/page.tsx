@@ -9,6 +9,7 @@ import AynaAniKontrol from "./AynaAniKontrol";
 import DavetKontrol from "./DavetKontrol";
 import YedekButonu from "./YedekButonu";
 import SilmeTalepleri from "./SilmeTalepleri";
+import IkiliKontrol from "./IkiliKontrol";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -26,6 +27,7 @@ export default async function AdminPanel() {
     { count: epostaliSayisi },
     { data: davetAyari },
     { data: silmeTalepleri },
+    { count: ikiliSayisi },
   ] = await Promise.all([
     db.from("waves").select("id, name, is_open, opened_at").order("id"),
     aktifOzellikler(db),
@@ -50,6 +52,7 @@ export default async function AdminPanel() {
       .select("id, full_name, team, deletion_requested_at")
       .not("deletion_requested_at", "is", null)
       .order("deletion_requested_at"),
+    db.from("pairs").select("id", { count: "exact", head: true }),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
 
@@ -243,6 +246,12 @@ export default async function AdminPanel() {
         <h2 className="text-lg font-semibold text-gold-light">{tr.admin.yedek.baslik}</h2>
         <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.yedek.aciklama}</p>
         <YedekButonu />
+      </section>
+
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+        <h2 className="text-lg font-semibold text-gold-light">{tr.admin.ikili.baslik}</h2>
+        <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.ikili.aciklama}</p>
+        <IkiliKontrol mevcut={ikiliSayisi ?? 0} />
       </section>
 
       <section
