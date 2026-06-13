@@ -55,6 +55,8 @@ export default function PuanlamaFormu({
   });
   // İlk kez kendini puanlayan için programı anlatan giriş ekranı (tek seferlik).
   const [giris, setGiris] = useState(kendisi && mevcut.length === 0);
+  // İlk öz puanlamadan sonra kutlama/bilgilendirme ekranına gidilir (mount'ta sabit)
+  const ilkOzPuan = useRef(kendisi && mevcut.length === 0);
   const [taslakGeldi, setTaslakGeldi] = useState(false);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
@@ -175,7 +177,8 @@ export default function PuanlamaFormu({
       } catch {
         // taslak silinemezse sorun değil: sunucu kaydı esas
       }
-      router.push("/degerlendir");
+      // İlk öz puanlamadan sonra kutlama + kamp bilgilendirmesi; sonra hub
+      router.push(ilkOzPuan.current ? "/hosgeldin" : "/degerlendir");
       router.refresh();
     } catch {
       // Ağ hatası: taslak zaten cihazda, kullanıcıyı bilgilendir.

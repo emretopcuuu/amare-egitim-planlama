@@ -67,6 +67,23 @@ export const tr = {
     menuRapor: "Ayna Raporum",
     menuKapat: "Kapat",
   },
+  // Kendini puanladıktan sonra gösterilen kutlama + kamp deneyimi bilgilendirmesi
+  hosgeldin: {
+    rozet: "İlk adım tamam",
+    baslik: (ad: string) => `Tebrikler, ${ad}!`,
+    altBaslik: "Kendini dürüstçe puanladın. Aynaya ilk bakışı sen attın.",
+    paragraf1:
+      "Önümüzdeki 3 gün boyunca AYNA seninle. Zaman zaman sana küçük görevler ve ödevler vereceğim — kampta yaşadıklarını derinleştiren, seni harekete geçiren anlar.",
+    paragraf2:
+      "Kampta tanıdığın kişileri sen gözlemleyip puanlayacaksın; onlar da seni. Ne kadar çok göz, o kadar net ayna.",
+    paragraf3:
+      "3. günün sonunda herkes kişisel Ayna Raporunu alacak: kendi gözünle başkalarının gözü, ilk kez yan yana.",
+    nelerBaslik: "Bu uygulamada seni neler bekliyor:",
+    madde1: "🎯 AYNA'dan kişiye özel görevler",
+    madde2: "👁 Kampta tanıdığın kişileri puanlama",
+    madde3: "🪞 Gün 3'te kişisel Ayna Raporun",
+    basla: "Hadi başlayalım →",
+  },
   degerlendir: {
     baslik: "Değerlendirme",
     dalgaKapaliBaslik: "Dalga henüz açık değil",

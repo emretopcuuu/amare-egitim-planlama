@@ -22,12 +22,18 @@ function Sayfa({
   children: React.ReactNode;
   kurulum?: boolean;
 }) {
+  // Mobil öncelikli: üstten hizalı + kaydırılabilir. Ortada yüzen düzen
+  // başlık ile kartı ayırıp "yarım ekrana sığmama" hissi yaratıyordu.
   return (
-    <main className="flex min-h-screen flex-1 flex-col overflow-hidden">
-      <div className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 p-6">
+    <main className="min-h-screen flex-1 overflow-y-auto">
+      <div className="mx-auto w-full max-w-lg p-6">
         {ust}
-        <div className="flex flex-1 flex-col justify-center gap-5">{children}</div>
-        {kurulum && <AynaKurulum />}
+        <div className="mt-7 space-y-5">{children}</div>
+        {kurulum && (
+          <div className="mt-7">
+            <AynaKurulum />
+          </div>
+        )}
       </div>
     </main>
   );
