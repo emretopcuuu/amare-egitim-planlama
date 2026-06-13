@@ -8,7 +8,7 @@ import EpicYildizlar from "./EpicYildizlar";
 const t = tr.ekran;
 const VERI_YOKLAMA_MS = 10_000;
 const SLAYT_MS = 14_000;
-const SLAYT_SAYISI = 4;
+const SLAYT_SAYISI = 5;
 
 // Takım renk paleti — projeksiyonda ayırt edilebilir, koyu zemine uygun
 const TAKIM_RENKLERI = [
@@ -444,6 +444,31 @@ export default function EkranGosterisi() {
                       })}
                     </ul>
                   </div>
+                </div>
+              )}
+            </section>
+            {/* Slayt 5 — Anı Duvarı */}
+            <section
+              className={`absolute inset-0 flex flex-col transition-opacity duration-1000 ${
+                slayt === 4 ? "opacity-100" : "pointer-events-none opacity-0"
+              }`}
+            >
+              <h2 className="text-3xl font-semibold text-gold-light">{t.duvarBaslik}</h2>
+              {veri.anilar.length === 0 ? (
+                <p className="flex flex-1 items-center justify-center text-xl text-slate-400">
+                  {t.duvarBos}
+                </p>
+              ) : (
+                <div className="mt-6 grid grid-cols-3 gap-4 lg:grid-cols-4">
+                  {veri.anilar.map((url, i) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={i}
+                      src={url}
+                      alt=""
+                      className="aspect-square w-full rounded-2xl object-cover ring-1 ring-white/10"
+                    />
+                  ))}
                 </div>
               )}
             </section>

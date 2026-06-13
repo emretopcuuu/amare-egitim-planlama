@@ -24,6 +24,8 @@ export type EkranVerisi = {
   takimLigi: { takim: string; kivilcim: number }[];
   // Senkron An canlı katılımı (aktif pencere yoksa null)
   senkron: { baslik: string; yanit: number; toplam: number; kalanSn: number } | null;
+  // Onaylı anı duvarı fotoğraflarının imzalı URL'leri (en yeni)
+  anilar: string[];
   // Sahne olayları: /ekran'ın bir kez oynatacağı taze sinyaller (≤4 dk)
   sahne: {
     fiero: { id: string; ad: string; sesUrl: string | null } | null;
@@ -46,6 +48,7 @@ export async function GET() {
     senkronSonuc,
     fieroSonuc,
     sahneAyarSonuc,
+    fotoSonuc,
   ] = await Promise.all([
       acikDalga(db),
       aktifOzellikler(db),
@@ -76,10 +79,26 @@ export async function GET() {
         .from("settings")
         .select("key, value")
         .in("key", ["sahne_dalga", "sahne_anons", "sahne_duyuru"]),
+      db
+        .from("photos")
+        .select("path")
+        .eq("status", "approved")
+        .order("created_at", { ascending: false })
+        .limit(12),
     ]);
   if (kisilerSonuc.error || puanlarSonuc.error || gorevSonuc.error) {
     return Response.json({ hata: "Veri alınamadı." }, { status: 500 });
   }
+
+  // Onaylı anı duvarı fotoğrafları — büyük ekran slaytı için imzalı URL'ler
+  const anilar = (
+    await Promise.all(
+      (fotoSonuc.data ?? []).map(async (f) => {
+        const { data } = await db.storage.from("sesler").createSignedUrl(f.path, 600);
+        return data?.signedUrl ?? null;
+      })
+    )
+  ).filter((u): u is string => u !== null);
 
   const kisiler = kisilerSonuc.data;
   const puanlar = puanlarSonuc.data;
@@ -244,6 +263,7 @@ export async function GET() {
         ),
       };
     })(),
+    anilar,
   };
 
   return Response.json(veri);

@@ -16,6 +16,7 @@ const LINKLER = [
   { href: "/admin/qr", etiket: tr.admin.nav.qr },
   { href: "/admin/kiosk", etiket: tr.admin.nav.kiosk },
   { href: "/admin/moderasyon", etiket: tr.admin.nav.moderasyon },
+  { href: "/admin/foto", etiket: tr.admin.nav.foto },
   { href: "/admin/test", etiket: tr.admin.nav.test },
 ];
 
