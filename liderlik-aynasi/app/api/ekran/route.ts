@@ -29,6 +29,8 @@ export type EkranVerisi = {
     fiero: { id: string; ad: string; sesUrl: string | null } | null;
     dalga: { id: number; olayId: string } | null;
     anons: { id: string; sesUrl: string | null } | null;
+    // Host'un sahne kumandasından gönderdiği anlık serbest duyuru (≤3 dk taze)
+    duyuru: { metin: string } | null;
   };
 };
 
@@ -73,7 +75,7 @@ export async function GET() {
       db
         .from("settings")
         .select("key, value")
-        .in("key", ["sahne_dalga", "sahne_anons"]),
+        .in("key", ["sahne_dalga", "sahne_anons", "sahne_duyuru"]),
     ]);
   if (kisilerSonuc.error || puanlarSonuc.error || gorevSonuc.error) {
     return Response.json({ hata: "Veri alınamadı." }, { status: 500 });
@@ -200,6 +202,17 @@ export async function GET() {
 
       const dalgaTaze = taze(ayar.get("sahne_dalga"), 4);
       const anonsTaze = taze(ayar.get("sahne_anons"), 4);
+      // Anlık duyuru "ts|metin" biçiminde saklanır (metin iki nokta içerebilir
+      // diye taze() değil; ts ilk borudan önce). 3 dk taze kalır.
+      let duyuru: { metin: string } | null = null;
+      const duyuruHam = ayar.get("sahne_duyuru");
+      if (duyuruHam) {
+        const ayrac = duyuruHam.indexOf("|");
+        const ts = new Date(duyuruHam.slice(0, ayrac)).getTime();
+        if (ayrac > 0 && simdi.getTime() - ts <= 3 * 60_000) {
+          duyuru = { metin: duyuruHam.slice(ayrac + 1) };
+        }
+      }
       return {
         fiero,
         dalga: dalgaTaze
@@ -211,6 +224,7 @@ export async function GET() {
               sesUrl: await imzali(`anons/program-${anonsTaze.id}.mp3`),
             }
           : null,
+        duyuru,
       };
     })(),
     senkron: (() => {

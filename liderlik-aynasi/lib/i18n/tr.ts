@@ -295,7 +295,42 @@ export const tr = {
       qr: "QR Kartlar",
       moderasyon: "Moderasyon",
       komutan: "Komutan",
+      sahne: "Sahne",
       test: "Prova",
+    },
+    // Sahne kumandası: host'un telefonundan canlı kontrol (büyük butonlar)
+    sahne: {
+      baslik: "🎛 Sahne Kumandası",
+      aciklama:
+        "Sahnedeyken her şey burada. Büyük butonlar, tek dokunuş — telefondan yönet.",
+      duyuruBaslik: "📣 Anlık Duyuru",
+      duyuruAciklama:
+        "Herkesin telefonuna anında push + büyük ekranda 3 dakika bant olarak çıkar.",
+      duyuruYer: "Örn: Herkes salona, başlıyoruz!",
+      duyuruGonder: "Herkese Gönder",
+      duyuruGonderiliyor: "Gönderiliyor…",
+      duyuruGitti: "Duyuru gönderildi ✓",
+      onerilenler: "Hazır mesajlar",
+      hazir1: "Herkes salona, başlıyoruz! 📣",
+      hazir2: "10 dakika mola ☕",
+      hazir3: "Telefonları cebe, gözler sahnede 📵",
+      aynaBaslik: "🤖 AYNA",
+      aynaAktif: "AYNA uyanık — görev/ses üretiyor",
+      aynaPasif: "AYNA uykuda — sessiz",
+      aynaDuraklat: "AYNA'yı Duraklat",
+      aynaSurdur: "AYNA'yı Sürdür",
+      dalgaBaslik: "🌊 Dalgalar",
+      dalgaAc: "Aç",
+      dalgaKapat: "Kapat",
+      dalgaAcik: "açık",
+      acilBaslik: "🛑 Acil Durdur",
+      acilAciklama:
+        "AYNA'yı duraklatır VE açık tüm dalgaları kapatır. Bir şeyler ters gittiğinde tek dokunuş.",
+      acilDugme: "ACİL DURDUR",
+      acilOnay: "Emin misin? Tekrar bas",
+      acilOldu: "Durduruldu ✓",
+      calisiyor: "Çalışıyor…",
+      hata: "İşlem başarısız. Tekrar dene.",
     },
     // Güvenli prova kutusu: kampa girmeden tüm akışı dene (canlıyı etkilemez)
     test: {

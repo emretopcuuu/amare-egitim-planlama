@@ -9,6 +9,7 @@ const LINKLER = [
   { href: "/admin", etiket: tr.admin.nav.panel },
   { href: "/admin/ayna-direktoru", etiket: tr.admin.nav.ayna },
   { href: "/admin/komutan", etiket: tr.admin.nav.komutan },
+  { href: "/admin/sahne-kumanda", etiket: tr.admin.nav.sahne },
   { href: "/admin/program", etiket: tr.admin.nav.program },
   { href: "/admin/katilimcilar", etiket: tr.admin.nav.katilimcilar },
   { href: "/admin/eslestirme", etiket: tr.admin.nav.eslestirme },
