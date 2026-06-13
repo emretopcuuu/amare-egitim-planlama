@@ -508,6 +508,10 @@ export const tr = {
     puanin: (puan: number) => `AYNA puanın: ${puan}/10`,
     kivilcimKazandin: (n: number) => `+${n} Kıvılcım ⚡`,
     hata: "Gönderilemedi. Lütfen tekrar dene.",
+    // Çevrimdışı dayanıklılık: yanıt cihazda saklanır, internet gelince gider
+    cevrimdisiBekliyor:
+      "⏳ Bağlantı bekleniyor — yanıtın bu cihazda güvende. İnternet gelince otomatik gönderilecek.",
+    cevrimdisiTekrar: "Şimdi tekrar dene",
     gecmisBaslik: "Görev Geçmişin",
     gecmisYok: "Henüz tamamlanmış görevin yok.",
     durumlar: {
@@ -710,6 +714,11 @@ export const tr = {
     sonra: "Kaydın aynada saklandı. Yansıman kamp başlarken uyanacak.",
     hata: "Bir şey ters gitti. Tekrar dene.",
     tekrar: "Tekrar dene",
+    // Çevrimdışı dayanıklılık: kaydı kaybetme, bağlantı gelince otomatik gönder
+    baglantiBekliyorBaslik: "🔌 Bağlantı bekleniyor",
+    baglantiBekliyorMetin:
+      "Kaydın güvende — kaybolmadı. İnternet gelir gelmez aynaya kendim göndereceğim.",
+    baglantiTekrar: "Şimdi tekrar dene",
     mikrofonYok: "Mikrofona erişilemedi. Tarayıcı izinlerini kontrol et.",
     kapat: "Kapat",
   },

@@ -1,11 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import MikrofonButonu from "@/components/MikrofonButonu";
 
 const t = tr.gorevler;
+
+// Kamp wifi'ı güvenilmez (captive portal): gönderilemeyen yanıt cihazda
+// saklanır, internet gelince (online olayı) otomatik gönderilir.
+function kuyrukAnahtari(gorevId: string) {
+  return `la_gorev_yanit_v1:${gorevId}`;
+}
 
 type Sonuc = {
   puan?: number;
@@ -25,33 +31,101 @@ export default function GorevYanitFormu({ gorevId }: { gorevId: string }) {
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [sonuc, setSonuc] = useState<Sonuc | null>(null);
   const [hata, setHata] = useState(false);
+  // Bağlantı yokken yanıt cihazda kuyrukta bekliyor
+  const [cevrimdisi, setCevrimdisi] = useState(false);
+  const gonderiliyorRef = useRef(false);
+
+  // Sunucuya gönder; ağ hatasında yanıtı cihazda sakla (kaybetme).
+  const sunucuyaGonder = useCallback(
+    async (metin: string) => {
+      if (gonderiliyorRef.current) return;
+      gonderiliyorRef.current = true;
+      setGonderiliyor(true);
+      setHata(false);
+      try {
+        const res = await fetch("/api/gorev-yanit", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ gorevId, yanit: metin }),
+        });
+        const veri = await res.json().catch(() => null);
+        if (res.status === 202) {
+          try {
+            localStorage.removeItem(kuyrukAnahtari(gorevId));
+          } catch {}
+          setCevrimdisi(false);
+          setSonuc({ bekliyor: true });
+          return;
+        }
+        if (!res.ok) {
+          setHata(true);
+          return;
+        }
+        try {
+          localStorage.removeItem(kuyrukAnahtari(gorevId));
+        } catch {}
+        setCevrimdisi(false);
+        setSonuc(veri);
+      } catch {
+        // Ağ hatası: yanıtı cihazda sakla, bağlantı gelince otomatik gider
+        try {
+          localStorage.setItem(kuyrukAnahtari(gorevId), JSON.stringify({ yanit: metin }));
+        } catch {}
+        setCevrimdisi(true);
+      } finally {
+        gonderiliyorRef.current = false;
+        setGonderiliyor(false);
+      }
+    },
+    [gorevId]
+  );
+
+  // Mount'ta bekleyen yanıt varsa geri yükle ve göndermeyi dene; ayrıca
+  // "online" olayında otomatik dene.
+  useEffect(() => {
+    let bekleyen: string | null = null;
+    try {
+      const ham = localStorage.getItem(kuyrukAnahtari(gorevId));
+      if (ham) bekleyen = (JSON.parse(ham) as { yanit: string }).yanit;
+    } catch {}
+    if (bekleyen) {
+      // localStorage yalnızca istemcide okunur; mount'ta tek seferlik geri yükleme.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setYanit(bekleyen);
+      setCevrimdisi(true);
+      void sunucuyaGonder(bekleyen);
+    }
+    function tekrarDene() {
+      try {
+        const ham = localStorage.getItem(kuyrukAnahtari(gorevId));
+        if (ham) void sunucuyaGonder((JSON.parse(ham) as { yanit: string }).yanit);
+      } catch {}
+    }
+    window.addEventListener("online", tekrarDene);
+    return () => window.removeEventListener("online", tekrarDene);
+  }, [gorevId, sunucuyaGonder]);
 
   async function gonder(e: React.FormEvent) {
     e.preventDefault();
     if (gonderiliyor || yanit.trim().length < 2) return;
-    setGonderiliyor(true);
-    setHata(false);
-    try {
-      const res = await fetch("/api/gorev-yanit", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ gorevId, yanit }),
-      });
-      const veri = await res.json().catch(() => null);
-      if (res.status === 202) {
-        setSonuc({ bekliyor: true });
-        return;
-      }
-      if (!res.ok) {
-        setHata(true);
-        return;
-      }
-      setSonuc(veri);
-    } catch {
-      setHata(true);
-    } finally {
-      setGonderiliyor(false);
-    }
+    await sunucuyaGonder(yanit);
+  }
+
+  if (cevrimdisi && !sonuc) {
+    return (
+      <div className="mt-4 rounded-xl border border-amber-400/30 bg-midnight-soft p-4 text-center">
+        <p className="text-sm font-medium leading-relaxed text-amber-300">
+          {t.cevrimdisiBekliyor}
+        </p>
+        <button
+          onClick={() => void sunucuyaGonder(yanit)}
+          disabled={gonderiliyor}
+          className="mt-3 text-sm text-royal-light underline-offset-4 hover:underline disabled:opacity-50"
+        >
+          {gonderiliyor ? t.gonderiliyor : t.cevrimdisiTekrar}
+        </button>
+      </div>
+    );
   }
 
   if (sonuc) {
