@@ -745,6 +745,18 @@ export const tr = {
     indir: "Kartı İndir",
     paylas: "Paylaş",
   },
+  // Liderlik arketibi: 10 özelliğin profilinden çıkan kimlik + paylaşılabilir kart
+  arketip: {
+    raporBaslik: "🧭 Liderlik Arketibin",
+    raporAciklama: "Kampta seni gözleyenlerin gözünde sen en çok şusun:",
+    superGucEtiket: "Süper gücün",
+    buyurkenEtiket: "Büyürken",
+    kartBaslik: "🪪 Arketip Kartın",
+    kartAciklama: "Seni en iyi anlatan kart — sosyalde paylaşmaya hazır.",
+    kartUstYazi: "Liderlik Arketibi",
+    indir: "Kartı İndir",
+    paylas: "Paylaş",
+  },
   yansiman: {
     baslik: "Aynan seni gördü",
     izle: "▶ Suya bak",

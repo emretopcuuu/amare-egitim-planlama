@@ -3,10 +3,12 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { raporHesapla, raporlarGorunurMu } from "@/lib/rapor";
+import { arketipBul } from "@/lib/arketip";
 import { unvanBul } from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
 import RaporKaydet from "./RaporKaydet";
 import AynaBekleme from "./AynaBekleme";
+import ArketipKarti from "./ArketipKarti";
 import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
 import SesCal from "@/components/SesCal";
@@ -30,6 +32,7 @@ export default async function AynaPage() {
 
   const rapor = await raporHesapla(db, session.sub);
   const t = tr.ayna;
+  const arketip = arketipBul(rapor.satirlar);
   const ozellikAd = new Map(rapor.satirlar.map((s) => [s.ozellikId, s.ad]));
 
   const { count: verdigiPuan } = await db
@@ -135,6 +138,44 @@ export default async function AynaPage() {
               ))}
             </ol>
           )}
+        </div>
+      </section>
+
+      {/* Liderlik Arketibi: 10 özellikten kimlik + paylaşılabilir kart */}
+      <section className="kart-cam relative overflow-hidden rounded-2xl bg-gradient-to-br from-gold/10 to-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
+        <h2 className="font-semibold text-gold-light">{tr.arketip.raporBaslik}</h2>
+        <p className="mt-1 text-xs text-slate-400">{tr.arketip.raporAciklama}</p>
+        <div className="mt-3 text-center">
+          <p className="text-6xl">{arketip.simge}</p>
+          <p className="prizma-serif ay-metin mt-2 text-3xl font-semibold leading-tight">
+            {arketip.ad}
+          </p>
+          <p className="mx-auto mt-3 max-w-sm text-base leading-relaxed text-slate-200">
+            {arketip.ozet}
+          </p>
+        </div>
+        <dl className="mt-4 space-y-2 text-sm">
+          <div className="rounded-xl bg-white/[0.04] p-3">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-emerald-300">
+              {tr.arketip.superGucEtiket}
+            </dt>
+            <dd className="mt-0.5 text-slate-100">{arketip.superGuc}</dd>
+          </div>
+          <div className="rounded-xl bg-white/[0.04] p-3">
+            <dt className="text-xs font-semibold uppercase tracking-wide text-amber-300">
+              {tr.arketip.buyurkenEtiket}
+            </dt>
+            <dd className="mt-0.5 text-slate-100">{arketip.buyurken}</dd>
+          </div>
+        </dl>
+        <div className="yazdir-gizle mt-4">
+          <p className="text-xs text-slate-400">{tr.arketip.kartAciklama}</p>
+          <ArketipKarti
+            ad={session.ad}
+            arketipAd={arketip.ad}
+            simge={arketip.simge}
+            ozet={arketip.ozet}
+          />
         </div>
       </section>
 
