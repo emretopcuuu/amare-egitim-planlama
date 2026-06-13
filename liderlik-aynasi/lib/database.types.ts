@@ -85,6 +85,48 @@ export type Database = {
           },
         ]
       }
+      kudos: {
+        Row: {
+          created_at: string
+          from_id: string
+          id: string
+          is_hidden: boolean
+          message: string
+          to_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_id: string
+          id?: string
+          is_hidden?: boolean
+          message: string
+          to_id: string
+        }
+        Update: {
+          created_at?: string
+          from_id?: string
+          id?: string
+          is_hidden?: boolean
+          message?: string
+          to_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kudos_from_id_fkey"
+            columns: ["from_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kudos_to_id_fkey"
+            columns: ["to_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       login_attempts: {
         Row: {
           created_at: string

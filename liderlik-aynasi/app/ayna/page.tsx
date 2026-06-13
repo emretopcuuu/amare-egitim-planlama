@@ -40,18 +40,25 @@ export default async function AynaPage() {
     .select("id", { count: "exact", head: true })
     .eq("rater_id", session.sub);
 
-  const [{ data: mevcutMektup }, { data: sesProfili }] = await Promise.all([
-    db
-      .from("mirror_letters")
-      .select("content, voice_path")
-      .eq("participant_id", session.sub)
-      .maybeSingle(),
-    db
-      .from("voice_profiles")
-      .select("soz_path, video_status, video_path")
-      .eq("participant_id", session.sub)
-      .maybeSingle(),
-  ]);
+  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }] =
+    await Promise.all([
+      db
+        .from("mirror_letters")
+        .select("content, voice_path")
+        .eq("participant_id", session.sub)
+        .maybeSingle(),
+      db
+        .from("voice_profiles")
+        .select("soz_path, video_status, video_path")
+        .eq("participant_id", session.sub)
+        .maybeSingle(),
+      db
+        .from("kudos")
+        .select("id, message, gonderen:participants!kudos_from_id_fkey(full_name)")
+        .eq("to_id", session.sub)
+        .eq("is_hidden", false)
+        .order("created_at", { ascending: false }),
+    ]);
 
   // YANSIMAN sesleri: kısa ömürlü imzalı URL'ler (özel bucket)
   let mektupSesUrl: string | null = null;
@@ -359,6 +366,23 @@ export default async function AynaPage() {
           </ul>
         )}
       </section>
+
+      {/* Sana gelen takdirler — isimli, olumlu notlar */}
+      {(takdirler ?? []).length > 0 && (
+        <section className="kart-cam rounded-2xl bg-gradient-to-br from-gold/10 to-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
+          <h2 className="font-semibold text-gold-light">{tr.takdir.gelenlerBaslik}</h2>
+          <ul className="mt-3 space-y-3">
+            {(takdirler ?? []).map((g) => (
+              <li key={g.id} className="rounded-xl bg-white/[0.04] p-3">
+                <p className="text-sm leading-relaxed text-slate-100">“{g.message}”</p>
+                <p className="mt-1.5 text-xs font-semibold text-gold-light">
+                  {tr.takdir.kimden(g.gonderen?.full_name ?? "Bir arkadaşın")}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* AYNA'nın görev özeti */}
       {rapor.gorev.tamamlanan > 0 && (

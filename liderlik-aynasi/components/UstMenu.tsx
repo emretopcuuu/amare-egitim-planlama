@@ -38,6 +38,7 @@ export default function UstMenu({
   if (yansimanHazir) baglantilar.push({ href: "/yansiman", etiket: t.menuYansiman });
   baglantilar.push({ href: "/anlar", etiket: t.menuAnlar });
   baglantilar.push({ href: "/turnuva", etiket: t.menuTurnuva });
+  baglantilar.push({ href: "/takdir", etiket: t.menuTakdir });
   baglantilar.push({ href: "/program", etiket: t.menuProgram });
 
   async function cikis() {
