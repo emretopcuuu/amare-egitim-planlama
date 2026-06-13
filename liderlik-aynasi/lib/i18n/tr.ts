@@ -101,7 +101,26 @@ export const tr = {
     menuRapor: "Ayna Raporum",
     menuAnlar: "Anların (Zaman Tüneli)",
     menuTurnuva: "Takım Turnuvası",
+    menuTakdir: "Takdir Duvarı",
     menuKapat: "Kapat",
+  },
+  // Takdir Duvarı: puandan farklı, daima isimli ve olumlu — insana kısa not
+  takdir: {
+    baslik: "💛 Takdir Duvarı",
+    altBaslik:
+      "Birinin bir davranışı seni etkilediyse, ona kısa bir not bırak. İsmin görünür — bu güzel.",
+    gonderBaslik: "Takdir Gönder",
+    kimEtiket: "Kime?",
+    kimSec: "Kişi seç…",
+    mesajYer: "Örn: Bugünkü cesaretin bana ilham verdi.",
+    gonder: "Takdiri Gönder",
+    gonderiliyor: "Gönderiliyor…",
+    gitti: "Takdirin gönderildi 💛",
+    gelenlerBaslik: "💛 Sana Gelen Takdirler",
+    gelenYok: "Henüz takdir almadın. Sen başlat — vermek de güzeldir.",
+    kimden: (ad: string) => `— ${ad}`,
+    geriDon: "← Ana sayfaya dön",
+    hata: "Gönderilemedi. Tekrar dene.",
   },
   // Takım turnuvası: takımların kıvılcım sıralaması, kendi telefonunda canlı
   turnuva: {
