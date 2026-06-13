@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import { titret } from "@/lib/his";
 import MikrofonButonu from "@/components/MikrofonButonu";
 
 const t = tr.gorevler;
@@ -65,6 +66,7 @@ export default function GorevYanitFormu({ gorevId }: { gorevId: string }) {
           localStorage.removeItem(kuyrukAnahtari(gorevId));
         } catch {}
         setCevrimdisi(false);
+        titret([12, 40, 12]);
         setSonuc(veri);
       } catch {
         // Ağ hatası: yanıtı cihazda sakla, bağlantı gelince otomatik gider

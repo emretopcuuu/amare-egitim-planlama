@@ -6,6 +6,7 @@ import { raporHesapla, raporlarGorunurMu } from "@/lib/rapor";
 import { arketipBul } from "@/lib/arketip";
 import { unvanBul } from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
+import Konfeti from "@/components/Konfeti";
 import RaporKaydet from "./RaporKaydet";
 import AynaBekleme from "./AynaBekleme";
 import ArketipKarti from "./ArketipKarti";
@@ -91,6 +92,7 @@ export default async function AynaPage() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-x-hidden overflow-y-auto">
+      <Konfeti anahtar="kutlama-ayna" />
       <div className="yazdirilabilir mx-auto my-auto w-full max-w-md space-y-6 p-5">
       <header className="ayna-acilis text-center">
         <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
