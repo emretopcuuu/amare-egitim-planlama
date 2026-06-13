@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
+import { titret } from "@/lib/his";
 
 type Ozellik = { id: number; name: string; observation_hint: string };
 type Girdi = { puan: number | null; yorum: string };
@@ -135,6 +136,7 @@ export default function PuanlamaFormu({
   }
 
   function puanSec(o: Ozellik, p: number) {
+    titret(10);
     guncelle(o.id, { puan: p });
     setYorumUyari(false);
     const yorumGerekli = !kendisi && p < 6;
@@ -190,6 +192,7 @@ export default function PuanlamaFormu({
       } catch {
         // taslak silinemezse sorun değil: sunucu kaydı esas
       }
+      titret([12, 40, 12]);
       // İlk öz puanlamadan sonra kutlama + kamp bilgilendirmesi; sonra hub
       router.push(ilkOzPuan.current ? "/hosgeldin" : "/degerlendir");
       router.refresh();

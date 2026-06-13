@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { tr } from "@/lib/i18n/tr";
+import Konfeti from "@/components/Konfeti";
 
 export const metadata = { title: "Hoş geldin — Liderlik Aynası" };
 
@@ -17,6 +18,7 @@ export default async function HosGeldinPage() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <Konfeti anahtar="kutlama-hosgeldin" />
       <div className="mx-auto my-auto w-full max-w-md px-5 py-5">
         <div className="kart-cam relative overflow-hidden rounded-3xl p-6">
           <div className="text-center">
