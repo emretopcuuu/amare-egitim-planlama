@@ -510,6 +510,7 @@ export type Database = {
           face_path: string | null
           greeting_path: string | null
           morning_date: string | null
+          night_date: string | null
           participant_id: string
           photo_path: string | null
           sample_path: string | null
@@ -529,6 +530,7 @@ export type Database = {
           face_path?: string | null
           greeting_path?: string | null
           morning_date?: string | null
+          night_date?: string | null
           participant_id: string
           photo_path?: string | null
           sample_path?: string | null
@@ -548,6 +550,7 @@ export type Database = {
           face_path?: string | null
           greeting_path?: string | null
           morning_date?: string | null
+          night_date?: string | null
           participant_id?: string
           photo_path?: string | null
           sample_path?: string | null

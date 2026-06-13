@@ -1,7 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { gorevPuanla } from "@/lib/ayna";
-import { markaAnons } from "@/lib/yansima";
+import { markaAnons, fieroSesi } from "@/lib/yansima";
 import {
   kivilcimHesapla,
   SOZ_KIVILCIMI,
@@ -127,13 +127,15 @@ export async function POST(req: Request) {
     })
     .eq("id", gorev.id);
 
-  // FIERO: 10/10 anında büyük ekran AYNA'nın sesiyle alkışlar
+  // FIERO: 10/10 anında büyük ekran AYNA'nın sesiyle alkışlar; yansıması
+  // da kişiye kendi sesiyle konuşur (ana sayfadaki Konuşan Yansıma kartı)
   if (sonuc.puan === 10) {
     await markaAnons(
       db,
       `anons/fiero-${gorev.id}.mp3`,
       `${session.ad.split(" ")[0]}, az önce aynayı parlattı. On üzerinden on.`
     );
+    await fieroSesi(db, session.sub, session.ad);
   }
 
   const toplam = await toplamKivilcim(db, session.sub);

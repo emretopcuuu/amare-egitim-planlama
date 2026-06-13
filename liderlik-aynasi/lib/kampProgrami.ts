@@ -299,6 +299,18 @@ export const GECE_FISILTILARI: Record<number, string> = {
   2: "Bugün suya çok şey yansıdı. Yarın aynaya bakacaksın. İyi uykular.",
 };
 
+/** Gece fısıltısının KENDİ SESİNDEN hâli (Konuşan Yansıma kartı).
+ * AYNA'nın push metninden ayrıdır: yansıma birinci tekil konuşur. */
+export function geceYansimaMetni(gun: number, ilkAd: string): string | null {
+  if (gun === 1) {
+    return `${ilkAd}. Benim — yansıman. Bugün ilk kez suya baktın; ben hep buradaydım. Yarın oyunlarda yanındayım. İyi uykular.`;
+  }
+  if (gun === 2) {
+    return `${ilkAd}. Bugün suya çok şey yansıdı; hepsini gördüm. Yarın aynaya bakacaksın. Korkma — hazırsın. İyi uykular.`;
+  }
+  return null;
+}
+
 // ---- AYNA'NIN SAHNE METİNLERİ (marka sesiyle salona okunur) ----
 
 /** Gün 1 · 21:00 — kampı AYNA açar (programdaki 5 dk'lık açılış slotu). */

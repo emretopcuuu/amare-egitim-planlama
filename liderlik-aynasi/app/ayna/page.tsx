@@ -44,7 +44,7 @@ export default async function AynaPage() {
       .maybeSingle(),
     db
       .from("voice_profiles")
-      .select("soz_path")
+      .select("soz_path, video_status, video_path")
       .eq("participant_id", session.sub)
       .maybeSingle(),
   ]);
@@ -63,6 +63,14 @@ export default async function AynaPage() {
       .from("sesler")
       .createSignedUrl(sesProfili.soz_path, 3600);
     sozSesUrl = imzali?.signedUrl ?? null;
+  }
+  // Mektup Filmi: mektup kendi sesinden okunurken suda beliren yansıma oynar
+  let yansimaVideoUrl: string | null = null;
+  if (sesProfili?.video_status === "hazir" && sesProfili.video_path) {
+    const { data: imzali } = await db.storage
+      .from("sesler")
+      .createSignedUrl(sesProfili.video_path, 3600);
+    yansimaVideoUrl = imzali?.signedUrl ?? null;
   }
 
   const tahminTuttu =
@@ -326,10 +334,11 @@ export default async function AynaPage() {
         <KelimeKarti ad={session.ad} ozellik={rapor.guclu[0].ad} />
       )}
 
-      {/* AI Ayna Mektubu */}
+      {/* AI Ayna Mektubu — varsa Mektup Filmi olarak (video + kendi sesi) */}
       <MektupBolumu
         mevcutMektup={mevcutMektup?.content ?? null}
         sesUrl={mektupSesUrl}
+        videoUrl={yansimaVideoUrl}
       />
 
       {sozSesUrl && (

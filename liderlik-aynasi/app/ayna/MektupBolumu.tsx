@@ -2,18 +2,21 @@
 
 import { useState } from "react";
 import { tr } from "@/lib/i18n/tr";
-import SesCal from "@/components/SesCal";
+import KonusanYansima from "@/components/KonusanYansima";
 
 const t = tr.mektup;
 
 // Mektup sayfa yüklenirken hazırsa doğrudan gösterilir; değilse istek üzerine
 // üretilir (admin toplu üretimi atlamışsa bile kimse mektupsuz kalmaz).
+// videoUrl varsa mektup bir FİLME dönüşür: suda beliren yansıma + kendi sesi.
 export default function MektupBolumu({
   mevcutMektup,
   sesUrl,
+  videoUrl = null,
 }: {
   mevcutMektup: string | null;
   sesUrl: string | null;
+  videoUrl?: string | null;
 }) {
   const [mektup, setMektup] = useState<string | null>(mevcutMektup);
   const [yukleniyor, setYukleniyor] = useState(false);
@@ -48,7 +51,13 @@ export default function MektupBolumu({
           <div className="mt-4 whitespace-pre-wrap rounded-xl bg-midnight-soft/80 p-4 font-serif text-sm leading-relaxed text-slate-100">
             {mektup}
           </div>
-          {sesUrl && <SesCal url={sesUrl} etiket={t.dinle} />}
+          {sesUrl && (
+            <KonusanYansima
+              videoUrl={videoUrl}
+              sesUrl={sesUrl}
+              etiket={videoUrl ? t.izle : t.dinle}
+            />
+          )}
         </>
       ) : (
         <div className="mt-4 text-center">

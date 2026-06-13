@@ -266,3 +266,46 @@ export async function sabahSesi(
     return false;
   }
 }
+
+// ---------- KONUŞAN YANSIMA: kalıp video + senaryo anında taze ses ----------
+// Kişinin yansıma videosu (yansima.mp4) sessiz kalıptır; senaryonun sesi
+// üstüne biner. Aşağıdaki üreticiler yalnız mp3 üretir — ucuz ve anlıktır.
+
+/** FIERO kişisel kutlama: 10/10 anında yansıman SANA konuşur (sahnedeki
+ * marka anonsundan ayrı). Dosya kişi başı tektir; her zafer üstüne yazar. */
+export async function fieroSesi(
+  db: Db,
+  katilimciId: string,
+  ad: string
+): Promise<boolean> {
+  try {
+    const ilkAd = ad.split(" ")[0];
+    const metin = `İşte bu, ${ilkAd}! On üzerinden on. Bunu ben yapmadım — sen yaptın; ben sadece suya yansıttım. Bu hissi unutma. Sakın durma.`;
+    const yolu = await klonluSeslendirVeYukle(db, katilimciId, "fiero.mp3", metin);
+    return yolu !== null;
+  } catch {
+    return false;
+  }
+}
+
+/** Gece fısıltısının kişisel hâli: kendi sesinden, günde bir kez.
+ * Üretim akşam erken saatte yapılır (push değildir, sahneyi bozmaz);
+ * night_date hem tekrar kilidi hem ana sayfa kartının tazelik işaretidir. */
+export async function geceSesi(
+  db: Db,
+  katilimciId: string,
+  metin: string,
+  bugun: string
+): Promise<boolean> {
+  try {
+    const yolu = await klonluSeslendirVeYukle(db, katilimciId, "gece.mp3", metin);
+    if (!yolu) return false;
+    await db
+      .from("voice_profiles")
+      .update({ night_date: bugun })
+      .eq("participant_id", katilimciId);
+    return true;
+  } catch {
+    return false;
+  }
+}

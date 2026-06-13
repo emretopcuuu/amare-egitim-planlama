@@ -28,6 +28,8 @@ export const tr = {
       `🗺 Yolculuk · Gün ${gun}/90 · ${faz}`,
     sabahBaslik: "🌅 Aynan günaydın diyor",
     kaymaBaslik: "🌊 Yansımandan sesli mesaj",
+    fieroBaslik: "🏆 Yansıman seni kutluyor",
+    geceBaslik: "🌙 Yansımandan gece fısıltısı",
     mesajDinle: "▶ Dinle",
     hosGeldin: (ad: string) => `Hoş geldin, ${ad}`,
     aciklama:
@@ -496,6 +498,7 @@ export const tr = {
   },
   mektup: {
     dinle: "🎧 Mektubunu aynandan dinle",
+    izle: "🌊 Mektup Filmi'ni izle — yansıman okuyor",
     baslik: "🤖 Ayna Mektubun",
     aciklama: "Puanlarından ve sana yazılanlardan, yalnızca senin için yazıldı.",
     hazirlaniyor: "Mektubun kaleme alınıyor…",

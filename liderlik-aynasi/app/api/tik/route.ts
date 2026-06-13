@@ -22,12 +22,15 @@ import {
   sahneSessizMi,
   sabahPenceresiMi,
   GECE_FISILTILARI,
+  geceYansimaMetni,
 } from "@/lib/kampProgrami";
 import {
   gorevSeslendir,
   itirazSesi,
   kaymaSesi,
   sabahSesi,
+  fieroSesi,
+  geceSesi,
   markaAnons,
 } from "@/lib/yansima";
 import {
@@ -148,7 +151,8 @@ export async function POST(req: Request) {
         `AYNA puanladı: ${sonuc.puan}/10 ⚡`,
         sonuc.yorum
       );
-      // FIERO: 10/10 — büyük ekran AYNA'nın sesiyle alkışlar
+      // FIERO: 10/10 — büyük ekran AYNA'nın sesiyle alkışlar,
+      // yansıması da kişiye kendi sesiyle konuşur (Konuşan Yansıma kartı)
       if (sonuc.puan === 10) {
         const { data: kisi } = await db
           .from("participants")
@@ -161,6 +165,7 @@ export async function POST(req: Request) {
             `anons/fiero-${g.id}.mp3`,
             `${kisi.full_name.split(" ")[0]}, az önce aynayı parlattı. On üzerinden on.`
           );
+          await fieroSesi(db, g.participant_id, kisi.full_name);
         }
       }
     }
@@ -637,8 +642,32 @@ export async function POST(req: Request) {
     }
   }
 
-  // 7) GECE FISILTISI: sahne kapanınca (23:40+) günün tek kapanış cümlesi —
-  // Gün 1 ve 2'de, settings kilidiyle günde bir kez. Sonra sessizlik (00:00).
+  // 6b) GECE YANSIMASI ÜRETİMİ: kendi sesinden gece mesajı, akşam erken
+  // saatten itibaren sessizce hazırlanır (üretim push değildir — sahneyi
+  // bozmaz). night_date tekrarları engeller; tik başına ≤8 üretim.
+  if (kampGunuBugun && GECE_FISILTILARI[kampGunuBugun] && saat >= 21) {
+    const { data: geceBekleyen } = await db
+      .from("voice_profiles")
+      .select("participant_id")
+      .eq("status", "klonlandi")
+      .or(`night_date.is.null,night_date.neq.${bugun}`)
+      .limit(8);
+    if ((geceBekleyen ?? []).length > 0) {
+      const adlar = new Map((kisiler ?? []).map((k) => [k.id, k.full_name]));
+      for (const g of geceBekleyen ?? []) {
+        const ad = adlar.get(g.participant_id);
+        const metin = ad
+          ? geceYansimaMetni(kampGunuBugun, ad.split(" ")[0])
+          : null;
+        if (!metin) continue;
+        await geceSesi(db, g.participant_id, metin, bugun);
+      }
+    }
+  }
+
+  // 7) GECE FISILTISI: sahne kapanınca (23:40+) günün tek kapanış push'u —
+  // Gün 1 ve 2'de, settings kilidiyle günde bir kez. Ana sayfadaki Konuşan
+  // Yansıma kartına çağırır; sonra sessizlik (00:00).
   if (
     kampGunuBugun &&
     GECE_FISILTILARI[kampGunuBugun] &&
@@ -650,7 +679,7 @@ export async function POST(req: Request) {
       .from("settings")
       .insert({ key: geceAnahtari, value: "1" });
     if (!geceKilit) {
-      await herkeseBildir(db, "🌙 AYNA", GECE_FISILTILARI[kampGunuBugun]);
+      await herkeseBildir(db, "🌙 AYNA", GECE_FISILTILARI[kampGunuBugun], "/");
       ozet.fisilti++;
     }
   }
