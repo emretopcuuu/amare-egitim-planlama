@@ -102,7 +102,66 @@ export const tr = {
     menuAnlar: "Anların (Zaman Tüneli)",
     menuTurnuva: "Takım Turnuvası",
     menuTakdir: "Takdir Duvarı",
+    menuGizlilik: "Gizlilik ve KVKK",
     menuKapat: "Kapat",
+  },
+  // KVKK aydınlatma + açık rıza + veri silme talebi
+  kvkk: {
+    baslik: "Gizlilik ve KVKK Aydınlatması",
+    girisNot:
+      "Giriş yaparak Gizlilik ve KVKK Aydınlatma Metni'ni okuduğunu ve kabul ettiğini onaylarsın.",
+    girisLink: "Gizlilik ve KVKK Metni",
+    bolumler: [
+      {
+        baslik: "Hangi verileri işliyoruz?",
+        metin:
+          "Ad-soyad ve (varsa) takım, şehir, telefon, e-posta; uygulama içinde verdiğin puanlar, yorumlar, görev yanıtların; isteğe bağlı sağladığın fotoğraf ve ses kaydı. Ses kaydından kısa süreli kişisel bir ses (YANSIMAN) üretilir — bu biyometrik niteliklidir.",
+      },
+      {
+        baslik: "Neden işliyoruz?",
+        metin:
+          "Yalnızca bu kamp deneyimi için: kendini başkalarının gözünden gördüğün kişisel Ayna Raporu, AYNA'nın görevleri ve kamp sonrası 90 günlük gelişim yolculuğu. Bunun dışında bir amaçla kullanılmaz.",
+      },
+      {
+        baslik: "Açık rıza (ses ve fotoğraf)",
+        metin:
+          "Ses ve fotoğrafın biyometrik veri olduğundan, bunlar yalnızca ses ritüelinde verdiğin AÇIK RIZA ile işlenir. Rıza vermeyebilir ya da 'sessiz ayna'yı seçebilirsin; uygulamanın geri kalanı yine çalışır.",
+      },
+      {
+        baslik: "Kimlerle paylaşılır?",
+        metin:
+          "Verilerin üçüncü kişilere SATILMAZ. Puan ve yorumların raporlarda hiçbir zaman isminle gösterilmez. Ses/video üretimi için yalnızca bu işi yapan teknik hizmet sağlayıcılar (ör. ses ve video üretim servisleri) kullanılır; ses kaydın işleniş sonrası silinir.",
+      },
+      {
+        baslik: "Ne kadar saklanır?",
+        metin:
+          "Veriler kamp ve 90 günlük yolculuk boyunca saklanır; sonrasında silinir veya kimliğinden arındırılır. Ses örneği ve üretilen klon, kullanımın ardından silinir.",
+      },
+      {
+        baslik: "Haklarsın (KVKK m.11)",
+        metin:
+          "Verilerine erişme, düzeltme, silme ve işlenmesine itiraz etme hakkın vardır. Aşağıdaki düğmeyle verilerinin silinmesini talep edebilirsin; talebin yöneticiye iletilir.",
+      },
+    ],
+    rizaVar: (tarih: string) => `✓ Ses ritüeli için açık rızanı ${tarih} tarihinde verdin.`,
+    rizaYok: "Henüz ses ritüeli için açık rıza vermedin.",
+    silBaslik: "Verilerimin silinmesini istiyorum",
+    silAciklama:
+      "Talebin yöneticiye iletilir; ad, puan, ses ve tüm verilerin en kısa sürede silinir. Bu işlem geri alınamaz.",
+    silDugme: "Silme Talebi Gönder",
+    silGonderiliyor: "Gönderiliyor…",
+    silAlindi: "Talebin alındı. Yönetici verilerini en kısa sürede silecek.",
+    silMevcut: (tarih: string) =>
+      `Silme talebin ${tarih} tarihinde alındı. Yönetici işleme alacak.`,
+    geriDon: "← Ana sayfaya dön",
+    hata: "İşlem başarısız. Tekrar dene.",
+    // Admin: bekleyen silme talepleri
+    adminBaslik: "Veri Silme Talepleri",
+    adminAciklama:
+      "Aşağıdaki kişiler verilerinin silinmesini istedi. Silme; kişiyi ve tüm puan/görev/ses verisini kalıcı olarak kaldırır.",
+    adminYok: "Bekleyen silme talebi yok.",
+    adminSil: "Kalıcı Sil",
+    adminSiliniyor: "Siliniyor…",
   },
   // Takdir Duvarı: puandan farklı, daima isimli ve olumlu — insana kısa not
   takdir: {

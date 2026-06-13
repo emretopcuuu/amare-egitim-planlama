@@ -49,6 +49,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ hata: "ses-buyuk" }, { status: 413 });
   }
 
+  // KVKK: ses/foto (biyometrik) işlenmeden önce açık rıza zamanını kaydet
+  await db
+    .from("participants")
+    .update({ consent_at: new Date().toISOString() })
+    .eq("id", session.sub)
+    .is("consent_at", null);
+
   // 1) Ham kaydı sakla (uzantı gerçek formata göre)
   const uzanti = ses.type.includes("mp4") ? "mp4" : "webm";
   const ornekYolu = `${session.sub}/ornek.${uzanti}`;

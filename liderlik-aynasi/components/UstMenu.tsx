@@ -40,6 +40,7 @@ export default function UstMenu({
   baglantilar.push({ href: "/turnuva", etiket: t.menuTurnuva });
   baglantilar.push({ href: "/takdir", etiket: t.menuTakdir });
   baglantilar.push({ href: "/program", etiket: t.menuProgram });
+  baglantilar.push({ href: "/gizlilik", etiket: t.menuGizlilik });
 
   async function cikis() {
     await fetch("/api/cikis", { method: "POST" });
