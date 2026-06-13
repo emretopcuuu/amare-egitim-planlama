@@ -14,6 +14,7 @@ const LINKLER = [
   { href: "/admin/eslestirme", etiket: tr.admin.nav.eslestirme },
   { href: "/admin/qr", etiket: tr.admin.nav.qr },
   { href: "/admin/moderasyon", etiket: tr.admin.nav.moderasyon },
+  { href: "/admin/test", etiket: tr.admin.nav.test },
 ];
 
 export default function AdminNav({

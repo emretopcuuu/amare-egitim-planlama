@@ -295,6 +295,36 @@ export const tr = {
       qr: "QR Kartlar",
       moderasyon: "Moderasyon",
       komutan: "Komutan",
+      test: "Prova",
+    },
+    // Güvenli prova kutusu: kampa girmeden tüm akışı dene (canlıyı etkilemez)
+    test: {
+      baslik: "🧪 Prova / Test Kutusu",
+      aciklama:
+        "Kampa girmeden her şeyi dene. Buradaki hiçbir işlem canlı kampı veya gerçek saati etkilemez — gerçek cron tik her zaman gerçek zamanı kullanır.",
+      saatBaslik: "Saat Yolculuğu",
+      saatAciklama:
+        "Bir an seç ve AYNA'nın o anda ne yapacağını (görev, ses, fısıltı) gerçek zamanı değiştirmeden çalıştır.",
+      saatEtiket: "Prova anı (İstanbul saati)",
+      tikCalistir: "Bu anın tik'ini çalıştır",
+      tikCalisiyor: "AYNA çalışıyor…",
+      onerilenler: "Hızlı seçimler",
+      demoBaslik: "Demo Katılımcı",
+      demoAciklama:
+        "Sahte bir kişi oluştur, kodunu başka bir telefonda/gizli sekmede gir ve tüm yolculuğu (giriş → öz-puan → ritüel → görev → rapor) prova et.",
+      demoOlustur: "Demo katılımcı oluştur",
+      demoKod: (kod: string) => `Yeni demo kodu: ${kod} — bu kodla giriş yap.`,
+      demoListeBaslik: "Mevcut demo katılımcılar",
+      demoYok: "Henüz demo katılımcı yok.",
+      demoSil: "Tüm demo katılımcıları sil",
+      kilitBaslik: "Pencereleri Sıfırla",
+      kilitAciklama:
+        "Senkron an, fısıltı, gece ve momentum pencereleri günde bir kez tetiklenir. Provada yeniden tetiklensinler diye bu kilitleri temizle.",
+      kilitTemizle: "Zaman kilitlerini temizle",
+      calisiyor: "Çalışıyor…",
+      tamam: "Tamam ✓",
+      hata: "İşlem başarısız. Tekrar dene.",
+      sonucBaslik: "Sonuç",
     },
     dalga: {
       baslik: "Dalga Kontrolü",
