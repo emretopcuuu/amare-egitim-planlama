@@ -321,7 +321,29 @@ export const tr = {
       moderasyon: "Moderasyon",
       komutan: "Komutan",
       sahne: "Sahne",
+      kiosk: "Kayıt",
       test: "Prova",
+    },
+    // Kayıt masası kiosk ekranı: canlı katılım + QR + kod bulma
+    kiosk: {
+      baslik: "Kayıt Masası",
+      katildi: "katıldı",
+      toplam: (n: number) => `${n} kayıtlı`,
+      qrBaslik: "Uygulamayı aç",
+      qrAciklama: "Telefon kamerası ile okut veya yaka kartındaki QR'ı kullan.",
+      bulBaslik: "Kodunu kaybedeni bul",
+      bulYer: "İsim yaz…",
+      bulYok: "Eşleşme yok.",
+      bulKod: "Kod",
+    },
+    // Felaket sigortası: tüm verinin tek dosyada yedeği
+    yedek: {
+      baslik: "Veri Yedeği",
+      aciklama:
+        "Tüm katılımcı, puan, görev ve rapor verisini tek JSON dosyası olarak indir. Bir şey ters giderse buradan geri yüklenir.",
+      indir: "Yedeği İndir (JSON)",
+      indiriliyor: "Hazırlanıyor…",
+      hata: "Yedek alınamadı. Tekrar dene.",
     },
     // Sahne kumandası: host'un telefonundan canlı kontrol (büyük butonlar)
     sahne: {
@@ -680,6 +702,8 @@ export const tr = {
       "Gün 3 kapanışında herkesin aynası aynı anda açılacak. Bu sayfayı açık tut — an geldiğinde kendiliğinden aydınlanacak.",
     acilis: (ad: string) => `${ad}, işte aynan`,
     acilisAlt: "Kampta seni gözlemleyen arkadaşlarının gözünden sen.",
+    // Hatıra: raporu PDF olarak sakla (tarayıcı yazdır → PDF'e kaydet)
+    raporKaydet: "🖨 Raporu Kaydet (PDF)",
     gucluBaslik: "✨ En Güçlü Yanların",
     gelisimBaslik: "🌱 Gelişim Alanların",
     gizliGucBaslik: "💎 Gizli Gücün",

@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { raporHesapla, raporlarGorunurMu } from "@/lib/rapor";
 import { unvanBul } from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
+import RaporKaydet from "./RaporKaydet";
 import AynaBekleme from "./AynaBekleme";
 import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
@@ -80,7 +81,7 @@ export default async function AynaPage() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-x-hidden overflow-y-auto">
-      <div className="mx-auto my-auto w-full max-w-md space-y-6 p-5">
+      <div className="yazdirilabilir mx-auto my-auto w-full max-w-md space-y-6 p-5">
       <header className="ayna-acilis text-center">
         <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
           {t.baslik}
@@ -92,6 +93,9 @@ export default async function AynaPage() {
         <p className="mt-2 text-sm font-semibold text-gold-light">
           {t.epikKatki(verdigiPuan ?? 0)}
         </p>
+        <div className="mt-4">
+          <RaporKaydet />
+        </div>
       </header>
 
       {/* Güçlü yanlar / gelişim alanları */}
@@ -349,7 +353,7 @@ export default async function AynaPage() {
         </section>
       )}
 
-      <p className="pb-4 text-center">
+      <p className="yazdir-gizle pb-4 text-center">
         <Link
           href="/"
           className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"

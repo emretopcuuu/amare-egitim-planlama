@@ -7,6 +7,7 @@ import { tr } from "@/lib/i18n/tr";
 import DalgaKontrol from "./DalgaKontrol";
 import AynaAniKontrol from "./AynaAniKontrol";
 import DavetKontrol from "./DavetKontrol";
+import YedekButonu from "./YedekButonu";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -229,6 +230,12 @@ export default async function AdminPanel() {
             </div>
           </>
         )}
+      </section>
+
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+        <h2 className="text-lg font-semibold text-gold-light">{tr.admin.yedek.baslik}</h2>
+        <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.yedek.aciklama}</p>
+        <YedekButonu />
       </section>
     </main>
   );
