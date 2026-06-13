@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -197,6 +198,24 @@ const getCountdown = (egitim) => {
   return { durum: 'yakin', ms: fark, gun, sa, dakika };
 };
 
+// Görsel test kancası: ?katilTest=yakin|canli — 1. hero + yapışkan barın durumunu
+// gerçek tarihten bağımsız zorlar (deploy sonrası göz testi için, zararsız).
+const KATIL_TEST = (() => {
+  try { return new URLSearchParams(window.location.search).get('katilTest'); } catch { return null; }
+})();
+const cdZorla = (c, aktif) => {
+  if (!aktif || !KATIL_TEST) return c;
+  if (KATIL_TEST === 'canli') return { durum: 'canli', ms: 0, gun: 0, sa: 0, dakika: 0 };
+  if (KATIL_TEST === 'yakin') return { durum: 'yakin', ms: 54 * 60000 + 23000, gun: 0, sa: 0, dakika: 54 };
+  return c;
+};
+
+// Zoom toplantı ID'si — yer alanındaki uzun sayı dizisi (hero ile aynı parse)
+const zoomIdBul = (egitim) => {
+  const m = (egitim?.yer || '').match(/(\d[\d\s]{6,})/);
+  return m ? m[1].replace(/\s/g, '') : null;
+};
+
 // ── Konuşmacı Avatar ─────────────────────────────────────────────────────────
 const KonusmaciAvatar = ({ ad, konusmacilar, onClick, size = 'md', dark = false }) => {
   const safeId = makeSafeId(ad);
@@ -268,8 +287,8 @@ const CountdownBadge = ({ egitim }) => {
 // ── Hero: Bir Sonraki Eğitim ─────────────────────────────────────────────────
 const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, sira = 1 }) => {
   const { t, locale, tDynamic } = useTranslation();
-  const [cd, setCd] = useState(() => getCountdown(egitim));
-  useEffect(() => { const iv = setInterval(() => setCd(getCountdown(egitim)), 1000); return () => clearInterval(iv); }, [egitim]);
+  const [cd, setCd] = useState(() => cdZorla(getCountdown(egitim), sira === 1));
+  useEffect(() => { const iv = setInterval(() => setCd(cdZorla(getCountdown(egitim), sira === 1)), 1000); return () => clearInterval(iv); }, [egitim, sira]);
   const konusmacilar2 = splitEgitmen(egitim.egitmen);
   const tarih = parseTarih(egitim.tarih);
   const online = isOnline(egitim);
@@ -295,8 +314,13 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
   const avatarSizeDesktop = isFirst ? 'xxl' : 'lg';
 
   const yurtdisi = getYurtdisi(egitim);
-  const zoomMatch = (egitim.yer || '').match(/(\d[\d\s]{6,})/);
-  const zoomId = zoomMatch ? zoomMatch[1].replace(/\s/g, '') : null;
+  const zoomId = zoomIdBul(egitim);
+
+  // Yaşlı-dostu dev katıl modu: SADECE 1. hero + online + zoomId varken,
+  // son 1 saat ('yakin') veya canlı yayında. Geri sayım küçülür, buton devleşir.
+  const devKatil = isFirst && online && zoomId && (cd?.durum === 'yakin' || cd?.durum === 'canli');
+  const sonSaatDev = devKatil && cd?.durum === 'yakin';
+  const canliDev = devKatil && cd?.durum === 'canli';
 
   // MOBIL: poster üstte tam, içerik altta sıkı
   // DESKTOP (md+): yan yana — content sol, poster sağ
@@ -341,8 +365,8 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
               <span className="flex items-center gap-1.5">{online?<Wifi className="w-3.5 h-3.5 text-amber-300" />:<MapPin className="w-3.5 h-3.5 text-amber-300" />}{online?'Zoom':egitim.yer}</span>
             </div>
 
-            {/* Geri sayım — mobil compact, desktop büyük */}
-            {cd?.durum !== 'gecmis' && cd?.durum !== 'canli' && (
+            {/* Geri sayım — mobil compact, desktop büyük. Son saatte (dev buton modu) yerini kompakt pile bırakır */}
+            {cd?.durum !== 'gecmis' && cd?.durum !== 'canli' && !sonSaatDev && (
               <div className="flex gap-1.5 md:gap-2 mt-3">
                 {[{v:gun,l:t('cd_day'),k:'g'},{v:saat,l:t('cd_hour'),k:'s'},{v:dakika,l:t('cd_min'),k:'d'},{v:saniye,l:t('cd_sec'),k:'sn'}].map(({v,l,k})=>(
                   <div key={l} className={`flex-1 md:flex-none bg-white/10 backdrop-blur rounded-xl ${isFirst ? 'py-2 md:py-4 px-2 md:px-5 lg:px-6' : 'py-1 px-1.5 md:px-2'} text-center border border-white/10`}>
@@ -352,9 +376,38 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
                 ))}
               </div>
             )}
+            {sonSaatDev && (
+              <div className="inline-flex items-center gap-2 mt-3 bg-white/10 backdrop-blur rounded-xl px-3.5 py-2 border border-white/10">
+                <Timer className="w-4 h-4 md:w-5 md:h-5 text-amber-300" />
+                <span className="text-sm md:text-base text-purple-100">
+                  {t('cd_starting_in')}{' '}
+                  <b className="text-white font-extrabold tabular-nums">
+                    <span key={`pd-${dakika}`} className="cd-digit">{dakika}</span> {t('cd_min').toLowerCase()}{' '}
+                    <span key={`ps-${saniye}`} className="cd-digit">{String(saniye).padStart(2,'0')}</span> {t('cd_sec').toLowerCase()}
+                  </b>
+                </span>
+              </div>
+            )}
 
-            {/* Aksiyon butonları — mobilde yan yana full width, desktop'ta sade */}
-            {cd?.durum !== 'gecmis' && (
+            {/* Aksiyon butonları. DEV KATIL modu (son 1 saat / canlı, sadece 1. hero):
+                yaşlı kullanıcı butonu ARAMASIN — tam genişlik, nabız, ezici hiyerarşi */}
+            {cd?.durum !== 'gecmis' && (devKatil ? (
+              <div className="mt-3">
+                <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer"
+                  className={`w-full flex flex-col items-center justify-center gap-0.5 px-4 ${canliDev
+                    ? 'min-h-[72px] md:min-h-[80px] bg-green-500 hover:bg-green-600 ring-2 ring-green-300/60'
+                    : 'min-h-[64px] md:min-h-[72px] bg-blue-500 hover:bg-blue-600 ring-2 ring-blue-300/60'} text-white font-extrabold rounded-2xl shadow-2xl transition-all spring-tap imminent-pulse`}>
+                  <span className="flex items-center gap-2.5 text-xl md:text-2xl tracking-wide">
+                    <Video className="w-6 h-6 md:w-7 md:h-7" />{t('cal_join_meeting').toLocaleUpperCase(locale)}
+                  </span>
+                  {canliDev && <span className="text-xs md:text-sm font-medium text-green-100">{t('cd_started_help')}</span>}
+                </a>
+                <button onClick={()=>onHatirlatma?.(egitim)}
+                  className="mt-2 w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs md:text-sm bg-white/10 hover:bg-white/20 text-white/90 font-bold rounded-xl border border-white/15 transition-all spring-tap">
+                  <Bell className="w-3.5 h-3.5" />{t('cal_get_reminder')}
+                </button>
+              </div>
+            ) : (
               <div className="flex gap-2 mt-3">
                 {online && zoomId && (
                   <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer"
@@ -367,7 +420,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
                   <Bell className={`${isFirst ? 'w-4 h-4' : 'w-3.5 h-3.5'}`} />{t('cal_get_reminder')}
                 </button>
               </div>
-            )}
+            ))}
 
             {/* Konuşmacılar — alt satır (mobil + desktop) */}
             {konusmacilar2.length > 0 && (
@@ -407,6 +460,49 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
   );
 };
 
+// ── Yapışkan Katıl Barı ──────────────────────────────────────────────────────
+// Son 1 saat + canlı yayında ekranın altına sabitlenir: kullanıcı sayfanın
+// neresinde olursa olsun katıl butonu görünür (yaşlı kullanıcı butonu aramaz).
+const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
+  const { t, tDynamic } = useTranslation();
+  const [cd, setCd] = useState(() => cdZorla(getCountdown(egitim), true));
+  const [kapatildi, setKapatildi] = useState(false);
+  useEffect(() => { const iv = setInterval(() => setCd(cdZorla(getCountdown(egitim), true)), 1000); return () => clearInterval(iv); }, [egitim]);
+
+  const online = egitim ? isOnline(egitim) : false;
+  const zoomId = zoomIdBul(egitim);
+  const aktif = !kapatildi && online && !!zoomId && (cd?.durum === 'yakin' || cd?.durum === 'canli');
+  useEffect(() => { onAktifDegisti?.(aktif); }, [aktif, onAktifDegisti]);
+  if (!aktif) return null;
+
+  const canli = cd.durum === 'canli';
+  // Portal: ata elemanlardaki transform (pull-to-refresh) fixed konumlamayı bozuyor —
+  // body'ye render edince bar her zaman viewport'a göre sabitlenir.
+  // Mobilde alt navigasyonun (57px + safe-area) ÜSTÜNE oturur, masaüstünde en altta.
+  return createPortal(
+    <div className={`fixed bottom-[calc(57px+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 z-40 ${canli ? 'bg-green-700 border-green-400' : 'bg-blue-700 border-blue-400'} border-t-2 shadow-2xl`} data-no-pdf>
+      <div className="container mx-auto max-w-7xl px-3 py-2.5 md:py-3 flex items-center gap-3">
+        <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse flex-shrink-0" aria-hidden="true" />
+        <div className="flex-1 min-w-0">
+          <div className={`text-[10px] md:text-xs font-bold uppercase tracking-wide ${canli ? 'text-green-200' : 'text-blue-200'}`}>
+            {canli ? t('bar_live') : t('bar_starting').replace('{dk}', String(cd.dakika))}
+          </div>
+          <div className="text-xs md:text-sm font-bold text-white truncate">{tDynamic(egitim.egitim)}</div>
+        </div>
+        <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer"
+          className={`flex-shrink-0 inline-flex items-center gap-2 bg-white ${canli ? 'text-green-700' : 'text-blue-700'} font-extrabold text-sm md:text-base px-4 md:px-6 py-3 rounded-xl shadow-lg spring-tap`}>
+          <Video className="w-4 h-4 md:w-5 md:h-5" />{t('cal_join_meeting')}
+        </a>
+        <button onClick={() => setKapatildi(true)} aria-label="Kapat"
+          className="flex-shrink-0 text-white/60 hover:text-white p-1.5 -mr-1">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // ANA BİLEŞEN
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -427,6 +523,7 @@ const TakvimView = () => {
   const [gecmisAylariGoster, setGecmisAylariGoster] = useState(false); // tamamen geçmiş aylar default gizli
   const [konusmaciModal, setKonusmaciModal] = useState(null);
   const [posterModal, setPosterModal] = useState(null);
+  const [katilBarAktif, setKatilBarAktif] = useState(false); // yapışkan bar görünürken içeriğe alt boşluk
   const [hatirlatmaModal, setHatirlatmaModal] = useState(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [yardimAcik, setYardimAcik] = useState(false);
@@ -913,7 +1010,11 @@ const TakvimView = () => {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900">
+    <div className={`min-h-screen overflow-x-hidden bg-gradient-to-br from-purple-900 via-purple-800 to-indigo-900 ${katilBarAktif ? 'pb-32 md:pb-20' : ''}`}>
+      {/* Yapışkan katıl barı — son 1 saat + canlı (en yakın online eğitim) */}
+      {enYakinEgitimler.length > 0 && (
+        <YapiskanKatilBar egitim={enYakinEgitimler[0]} onAktifDegisti={setKatilBarAktif} />
+      )}
       {/* Pull-to-refresh göstergesi (mobile) */}
       {pullY > 0 && (
         <div style={{ height: `${pullY}px` }}

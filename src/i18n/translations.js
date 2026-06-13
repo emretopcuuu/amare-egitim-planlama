@@ -134,6 +134,10 @@ const translations = {
     cd_hours: 'saat',
     cd_minutes: 'dakika sonra',
     cd_next: 'Sıradaki Eğitim',
+    cd_starting_in: 'Başlamasına',
+    cd_started_help: 'Eğitim başladı — dokun ve katıl',
+    bar_starting: '{dk} dk sonra başlıyor',
+    bar_live: 'CANLI YAYINDA',
     cd_2nd: '2. Sıradaki Eğitim',
     cd_3rd: '3. Sıradaki Eğitim',
 
@@ -365,6 +369,10 @@ const translations = {
     cd_hours: 'hours',
     cd_minutes: 'minutes left',
     cd_next: 'Next Training',
+    cd_starting_in: 'Starting in',
+    cd_started_help: 'Training has started — tap to join',
+    bar_starting: 'Starts in {dk} min',
+    bar_live: 'LIVE NOW',
     cd_2nd: '2nd Upcoming',
     cd_3rd: '3rd Upcoming',
 
@@ -594,6 +602,10 @@ const translations = {
     cd_hours: 'Stunden',
     cd_minutes: 'Minuten verbleibend',
     cd_next: 'Nächste Schulung',
+    cd_starting_in: 'Beginn in',
+    cd_started_help: 'Schulung hat begonnen — tippen und teilnehmen',
+    bar_starting: 'Beginnt in {dk} Min.',
+    bar_live: 'JETZT LIVE',
     cd_2nd: '2. Nächste Schulung',
     cd_3rd: '3. Nächste Schulung',
 
@@ -822,6 +834,10 @@ const translations = {
     cd_hours: 'uur',
     cd_minutes: 'minuten resterend',
     cd_next: 'Volgende Training',
+    cd_starting_in: 'Begint over',
+    cd_started_help: 'Training is begonnen — tik om deel te nemen',
+    bar_starting: 'Begint over {dk} min',
+    bar_live: 'NU LIVE',
     cd_2nd: '2e Volgende Training',
     cd_3rd: '3e Volgende Training',
 

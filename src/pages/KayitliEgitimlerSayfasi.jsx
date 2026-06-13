@@ -316,7 +316,9 @@ const KayitliEgitimlerSayfasi = () => {
       const cached = localStorage.getItem(CACHE_KEY);
       if (cached) {
         const { ts, data } = JSON.parse(cached);
-        if (Date.now() - ts < TTL && Array.isArray(data)) {
+        // data.length > 0 şartı kritik: geçici bir boş sonuç cache'lenirse sayfa
+        // 12 saat "0 eğitim" gösterir (2026-06-11 yaşandı). Boş cache'e güvenme.
+        if (Date.now() - ts < TTL && Array.isArray(data) && data.length > 0) {
           setTumVideolar(data.map(v => v.dil ? v : { ...v, dil: detectDil(v) }));
           setLoading(false);
           return;
@@ -341,7 +343,10 @@ const KayitliEgitimlerSayfasi = () => {
           return v;
         });
         setTumVideolar(data);
-        try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+        // Boş sonucu CACHE'LEME — geçici glitch 12 saatlik "0 eğitim" ekranına dönüşür
+        if (data.length > 0) {
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+        }
       } catch (err) {
         console.warn('[kayitli_egitimler] fetch hatası:', err.message);
         setTumVideolar([]);
