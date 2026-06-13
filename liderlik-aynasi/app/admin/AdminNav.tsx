@@ -14,6 +14,7 @@ const LINKLER = [
   { href: "/admin/katilimcilar", etiket: tr.admin.nav.katilimcilar },
   { href: "/admin/eslestirme", etiket: tr.admin.nav.eslestirme },
   { href: "/admin/qr", etiket: tr.admin.nav.qr },
+  { href: "/admin/kiosk", etiket: tr.admin.nav.kiosk },
   { href: "/admin/moderasyon", etiket: tr.admin.nav.moderasyon },
   { href: "/admin/test", etiket: tr.admin.nav.test },
 ];
