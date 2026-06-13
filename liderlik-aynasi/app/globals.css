@@ -63,6 +63,32 @@ body.alt-nav-acik main {
   animation-delay: 0.3s;
 }
 
+/* İSKELET YÜKLEME: sayfa sunucudan gelene dek shimmer'lı yer tutucu. Algılanan
+   hız için boş/zıplayan ekran yerine. Hareket-azaltta shimmer durur. */
+.iskelet {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+}
+.iskelet::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  animation: iskelet-parla 1.4s ease-in-out infinite;
+}
+@keyframes iskelet-parla {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 body {
   background: linear-gradient(180deg, #081726 0%, #06121e 55%, #040e18 100%);
   min-height: 100vh;
