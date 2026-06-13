@@ -4,6 +4,13 @@ export const tr = {
     name: "Liderlik Aynası",
     tagline: "Kendini başkalarının gözünden gör.",
   },
+  // Alt navigasyon çubuğu: en sık kullanılan 4 hedef, başparmak erişiminde
+  altNav: {
+    ana: "Ana sayfa",
+    degerlendir: "Değerlendir",
+    gorevler: "Görevler",
+    duvar: "Duvar",
+  },
   // Erişilebilirlik: yazı boyutu kontrolü (yaşı ne olursa olsun rahat okusun)
   yaziBoyu: {
     baslik: "Yazı Boyutu",

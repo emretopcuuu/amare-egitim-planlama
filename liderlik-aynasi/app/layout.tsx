@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Playfair_Display, Fraunces } from "next/font/google";
 import GolArkaplan from "@/components/gol/GolArkaplan";
+import AltNav from "@/components/AltNav";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -72,6 +73,7 @@ export default function RootLayout({
         {/* GECE GÖLÜ tüm evrenin zemini: her ekran canlı gölün üstünde yaşar */}
         <GolArkaplan />
         {children}
+        <AltNav />
       </body>
     </html>
   );
