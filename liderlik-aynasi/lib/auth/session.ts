@@ -5,7 +5,9 @@ import { SESSION_COOKIE, type Session } from "@/lib/auth/session-types";
 
 export { SESSION_COOKIE, type Session };
 
-const MAX_AGE_SECONDS = 60 * 60 * 24 * 4; // kamp 3 gün; 4 gün yeterli
+// Kamp 3 gün + 90 günlük yolculuk + tampon: aday tüm program boyunca tek kez
+// giriş yapsın, bir daha kod sormasın. ~120 gün.
+const MAX_AGE_SECONDS = 60 * 60 * 24 * 120;
 
 function secret() {
   return new TextEncoder().encode(process.env.SESSION_SECRET!);

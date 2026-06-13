@@ -1,12 +1,26 @@
 import { Suspense } from "react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/auth/session";
 import GirisForm from "./GirisForm";
 import YaziBoyu from "@/components/YaziBoyu";
 import { tr } from "@/lib/i18n/tr";
 
 export const metadata = { title: "Giriş — Liderlik Aynası" };
 
-export default function GirisPage() {
+// Aday tekrar kod girmesin: oturum hâlâ geçerliyse (ve QR'dan yeni bir kod
+// gelmiyorsa) doğruca içeri al. Yalnız farklı bir kod paylaşımı formu açar.
+export default async function GirisPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kod?: string }>;
+}) {
+  const { kod } = await searchParams;
+  if (!kod) {
+    const session = await getSession();
+    if (session) redirect(session.rol === "admin" ? "/admin" : "/");
+  }
+
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="mx-auto my-auto flex w-full max-w-sm flex-col items-center p-5">
