@@ -53,6 +53,8 @@ export default function PuanlamaFormu({
     const i = ozellikler.findIndex((o) => !dolu.has(o.id));
     return i === -1 ? ozellikler.length : i;
   });
+  // İlk kez kendini puanlayan için programı anlatan giriş ekranı (tek seferlik).
+  const [giris, setGiris] = useState(kendisi && mevcut.length === 0);
   const [taslakGeldi, setTaslakGeldi] = useState(false);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
@@ -187,6 +189,29 @@ export default function PuanlamaFormu({
   const o = sonEkran ? null : ozellikler[adim];
   const g = o ? girdiler[o.id] : null;
   const yorumGerekli = !!(o && g && !kendisi && g.puan !== null && g.puan < 6);
+  // Öz değerlendirmede özelliğe kendine hitap eden rehber + 1/10 anlamı göster
+  const rehber = o && kendisi ? tr.ozellikRehberi[o.name] : null;
+
+  // GİRİŞ EKRANI: ilk kez kendini puanlayan kişiye programı anlat (tek seferlik)
+  if (giris) {
+    return (
+      <div className="flex min-h-[82vh] flex-col justify-center py-8 text-center">
+        <p className="text-5xl">🪞</p>
+        <h1 className="prizma-serif ay-metin mt-5 text-3xl font-semibold leading-tight">
+          {tr.puanlama.girisBaslik}
+        </h1>
+        <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-slate-300">
+          {tr.puanlama.girisMetin}
+        </p>
+        <button
+          onClick={() => setGiris(false)}
+          className="parilti btn-kor mx-auto mt-10 flex h-16 w-full max-w-md items-center justify-center rounded-2xl text-xl font-bold"
+        >
+          {tr.puanlama.girisDevam}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-[82vh] flex-col">
@@ -240,10 +265,23 @@ export default function PuanlamaFormu({
             {o.name}
           </h1>
           <p className="mt-4 text-lg leading-relaxed text-slate-300">
-            {o.observation_hint}
+            {rehber ? rehber.kendine : o.observation_hint}
           </p>
 
-          <div role="radiogroup" aria-label={o.name} className="mt-8 grid grid-cols-5 gap-2.5">
+          {rehber && (
+            <div className="mt-4 space-y-1.5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-base">
+              <p className="text-slate-400">{tr.puanlama.olcekDusuk(rehber.dusuk)}</p>
+              <p className="text-slate-200">{tr.puanlama.olcekYuksek(rehber.yuksek)}</p>
+            </div>
+          )}
+
+          {kendisi && (
+            <p className="mt-6 text-base font-semibold text-gold-light">
+              {tr.puanlama.neredesin}
+            </p>
+          )}
+
+          <div role="radiogroup" aria-label={o.name} className={`${kendisi ? "mt-3" : "mt-8"} grid grid-cols-5 gap-2.5`}>
             {Array.from({ length: 10 }, (_, i) => i + 1).map((p) => (
               <button
                 key={p}

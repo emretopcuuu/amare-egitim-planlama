@@ -42,6 +42,30 @@ export const tr = {
     aktifGorev: (n: number) => `${n} aktif görev`,
     program: "📅 Program",
     cikisYap: "Çıkış Yap",
+    // Durum makinesi: açılış ekranı kişinin yolculuğuna göre TEK kart gösterir
+    ozGerekBaslik: "Önce kendine bak",
+    ozGerekMetin:
+      "Aynaya ilk bakış senden başlar. Kendini 10 liderlik özelliğinde puanlamadan kamp sana açılmaz.",
+    ozGerekDugme: "✨ Kendini Puanla",
+    raporBaslik: "Aynan açıldı",
+    raporMetin: "Üç günün sonu geldi. Kendi gözünle başkalarının gözü, şimdi yan yana.",
+    dalgaDevamBaslik: (dalga: string) => `${dalga} açık`,
+    dalgaDevamMetin: "Şimdi gözlemlediğin kişileri puanlama zamanı.",
+    dalgaDevamDugme: "Değerlendirmeye Devam Et",
+    gorevTekBaslik: "AYNA'dan görevin var",
+    gorevTekMetin: "Seni izliyorum. Sıradaki adımın hazır.",
+    gorevTekDugme: (n: number) => (n > 1 ? `${n} Görevi Aç` : "Görevi Aç"),
+    bekleBaslik: "AYNA seni izliyor",
+    bekleMetin: "Şu an yapman gereken bir şey yok. Sıradaki an geldiğinde seni dürteceğim. 👁",
+    // Üst menü (ayarlar): ikincil işler buradan
+    menuBaslik: "Menü",
+    menuOzDuzenle: "Kendi puanlarımı düzenle",
+    menuDegerlendir: "Değerlendirme",
+    menuGorevler: "AYNA'nın Görevleri",
+    menuProgram: "Kamp Programı",
+    menuYansiman: "Yansımanı izle",
+    menuRapor: "Ayna Raporum",
+    menuKapat: "Kapat",
   },
   degerlendir: {
     baslik: "Değerlendirme",
@@ -95,7 +119,70 @@ export const tr = {
     hataSunucu: "Kaydedilemedi. Lütfen tekrar dene.",
     hataDalgaKapandi: "Bu dalga kapandı; puanlar artık kaydedilemiyor.",
     geriDon: "Değerlendirmeye dön",
+    // İlk kez kullananlar için: programın genel açıklaması (giriş ekranı)
+    girisBaslik: "Liderlik Aynası'na hoş geldin",
+    girisMetin:
+      "Önümüzdeki 3 gün boyunca hem sen kendini, hem de seni gözlemleyen arkadaşların seni 10 liderlik özelliğinde puanlayacak. İlk adım senin: kendini dürüstçe puanla. 3. günün sonunda, kendi gözünle başkalarının gözünü yan yana koyan kişisel Ayna Raporun açılacak.",
+    girisDevam: "Anladım, başlayalım →",
+    // Öz değerlendirmede her özellik ekranında: 1 ve 10 ne demek + soru
+    olcekDusuk: (metin: string) => `1 demek: ${metin}`,
+    olcekYuksek: (metin: string) => `10 demek: ${metin}`,
+    neredesin: "Sen kendini nerede görüyorsun?",
   },
+  // Öz değerlendirme rehberi: her özelliğin ne demek olduğu + 1/10 çapaları.
+  // İlk kez kullananlar için; özellik adına göre eşlenir.
+  ozellikRehberi: {
+    "Örnek Olmak": {
+      kendine: "Söylediklerini önce kendin yaşıyor musun? Zor anlarda duruşunu koruyor musun?",
+      dusuk: "Sözümle davranışım çoğu zaman ayrı düşer.",
+      yuksek: "İnsanlar beni örnek alır; zorda bile dik dururum.",
+    },
+    "Çalışkanlık": {
+      kendine: "İşe ne kadar emek ve istikrar koyuyorsun?",
+      dusuk: "Çabuk yorulur, çoğu şeyi ertelerim.",
+      yuksek: "Yorulmadan, istikrarla çalışırım.",
+    },
+    "Dürüstlük": {
+      kendine: "Sözün ve davranışın tutarlı mı? Hatanı açıkça kabul eder misin?",
+      dusuk: "Bazen gerçeği eğip bükebilirim.",
+      yuksek: "Her zaman dürüstüm; hatamı açıkça kabul ederim.",
+    },
+    "Vizyonerlik": {
+      kendine: "Büyük resmi görüp anlatabiliyor musun? Geleceğe dair net bir ufkun var mı?",
+      dusuk: "Daha çok günü kurtarmaya odaklanırım.",
+      yuksek: "Net bir gelecek vizyonum var; başkalarına da gösteririm.",
+    },
+    "Mütevazılık": {
+      kendine: "Başarıyı paylaşır mısın? Konuşmaktan çok dinler misin?",
+      dusuk: "Çok konuşur, övgüyü kendime alırım.",
+      yuksek: "Dinlerim; başarıyı ekiple paylaşırım.",
+    },
+    "Takım Ruhu": {
+      kendine: "Zorlanan arkadaşına destek olur, ortak işe katkı verir misin?",
+      dusuk: "Daha çok kendi işime bakarım.",
+      yuksek: "Ekip için elimi taşın altına koyarım.",
+    },
+    "İletişim Gücü": {
+      kendine: "Derdini açık ve sade anlatabiliyor musun? Karşındakine göre dilini ayarlar mısın?",
+      dusuk: "Anlatırken zorlanır, yanlış anlaşılabilirim.",
+      yuksek: "Herkesle net ve etkili iletişim kurarım.",
+    },
+    "Cesaret": {
+      kendine: "Riskli anlarda öne çıkar, ilk adımı atar mısın?",
+      dusuk: "Geride durmayı tercih ederim.",
+      yuksek: "İlk adımı atan, riski göze alan ben olurum.",
+    },
+    "Sorumluluk Alma": {
+      kendine: "Beklemeden harekete geçer, işi sonuna kadar götürür müsün?",
+      dusuk: "Sorumluluktan kaçabilirim.",
+      yuksek: "İşi sahiplenir, sonuna kadar götürürüm.",
+    },
+    "Pozitif Enerji": {
+      kendine: "Ortama enerji katar mısın? Yorgunken bile çevreni ayağa kaldırır mısın?",
+      dusuk: "Enerjim çabuk düşer.",
+      yuksek: "Bulunduğum yere enerji ve moral katarım.",
+    },
+  } as Record<string, { kendine: string; dusuk: string; yuksek: string }>,
   tahmin: {
     baslik: "Kendini Ne Kadar Tanıyorsun?",
     aciklama:
