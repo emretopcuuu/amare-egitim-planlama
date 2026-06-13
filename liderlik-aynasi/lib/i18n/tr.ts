@@ -100,7 +100,20 @@ export const tr = {
     menuYansiman: "Yansımanı izle",
     menuRapor: "Ayna Raporum",
     menuAnlar: "Anların (Zaman Tüneli)",
+    menuTurnuva: "Takım Turnuvası",
     menuKapat: "Kapat",
+  },
+  // Takım turnuvası: takımların kıvılcım sıralaması, kendi telefonunda canlı
+  turnuva: {
+    baslik: "🏆 Takım Turnuvası",
+    altBaslik: "Her görevin takımına kıvılcım katar. Sıralama canlı.",
+    seninTakimin: "Senin takımın",
+    katkin: (n: number) => `Senin katkın: ${n} ⚡`,
+    takimsiz: "Henüz bir takıma atanmadın.",
+    bosBaslik: "Turnuva henüz başlamadı",
+    bosMetin: "İlk görevler tamamlandıkça takımların kıvılcımı burada yarışacak.",
+    kivilcim: (n: number) => `${n} ⚡`,
+    geriDon: "← Ana sayfaya dön",
   },
   // Kaçırılan anlar zaman tüneli: bildirim gelmese bile tüm sesli/görüntülü
   // anlar burada birikir, istediğin zaman dinle.
