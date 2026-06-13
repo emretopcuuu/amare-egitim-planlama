@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
+import BosDurum from "@/components/BosDurum";
 import OrtakSohbet from "./OrtakSohbet";
 
 export const metadata = { title: "Ortağın — Liderlik Aynası" };
@@ -52,15 +53,7 @@ export default async function OrtakPage() {
         </header>
 
         {!ikili || !ortakAd ? (
-          <div className="kart-cam rounded-3xl p-8 text-center">
-            <p className="text-5xl">🧭</p>
-            <h2 className="prizma-serif ay-metin mt-4 text-2xl font-semibold">
-              {t.eslesmeYokBaslik}
-            </h2>
-            <p className="mt-3 text-base leading-relaxed text-slate-300">
-              {t.eslesmeYokMetin}
-            </p>
-          </div>
+          <BosDurum simge="🧭" baslik={t.eslesmeYokBaslik} metin={t.eslesmeYokMetin} />
         ) : (
           <>
             <div className="kart-cam rounded-3xl p-5 text-center">
