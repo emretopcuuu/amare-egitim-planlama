@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import SesCal from "@/components/SesCal";
+import BosDurum from "@/components/BosDurum";
 
 export const metadata = { title: "Anların — Liderlik Aynası" };
 
@@ -198,13 +199,7 @@ export default async function AnlarPage() {
         </header>
 
         {anlar.length === 0 ? (
-          <div className="kart-cam rounded-3xl p-8 text-center">
-            <p className="text-5xl">🪞</p>
-            <h2 className="prizma-serif ay-metin mt-4 text-2xl font-semibold">
-              {t.bosBaslik}
-            </h2>
-            <p className="mt-3 text-base leading-relaxed text-slate-300">{t.bosMetin}</p>
-          </div>
+          <BosDurum simge="🪞" baslik={t.bosBaslik} metin={t.bosMetin} />
         ) : (
           <ul className="space-y-4">
             {anlar.map((an) => (
