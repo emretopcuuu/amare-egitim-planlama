@@ -102,8 +102,30 @@ export const tr = {
     menuAnlar: "Anların (Zaman Tüneli)",
     menuTurnuva: "Takım Turnuvası",
     menuTakdir: "Takdir Duvarı",
+    menuDuvar: "Anı Duvarı",
     menuGizlilik: "Gizlilik ve KVKK",
     menuKapat: "Kapat",
+  },
+  // Fotoğraf anı duvarı: an yakala → moderasyon → ortak duvar + büyük ekran
+  duvar: {
+    baslik: "📸 Anı Duvarı",
+    altBaslik:
+      "Kamptan bir an yakala, paylaş. Onaylandıktan sonra duvarda ve büyük ekranda belirir.",
+    yukle: "📷 Fotoğraf Çek / Seç",
+    yeniden: "↺ Başka foto",
+    altYaziYer: "Bir not ekle (isteğe bağlı)",
+    gonder: "Duvara Gönder",
+    gonderiliyor: "Yükleniyor…",
+    gonderildi: "Gönderildi! Moderasyondan sonra duvarda belirecek 💛",
+    seninkilerBaslik: "Senin gönderdiklerin",
+    beklemede: "Onay bekliyor",
+    onaylandi: "Duvarda ✓",
+    gizlendi: "Yayınlanmadı",
+    duvarBaslik: "Duvar",
+    bosDuvar: "Duvar henüz boş. İlk anı sen yakala!",
+    geriDon: "← Ana sayfaya dön",
+    hata: "İşlem başarısız. Tekrar dene.",
+    hataBoyut: "Fotoğraf çok büyük (en fazla 8MB) veya geçersiz tür.",
   },
   // KVKK aydınlatma + açık rıza + veri silme talebi
   kvkk: {
@@ -413,7 +435,19 @@ export const tr = {
       komutan: "Komutan",
       sahne: "Sahne",
       kiosk: "Kayıt",
+      foto: "Fotoğraf",
       test: "Prova",
+    },
+    // Fotoğraf anı duvarı moderasyonu (büyük ekran herkese açık → onay şart)
+    fotoModerasyon: {
+      baslik: "Fotoğraf Moderasyonu",
+      aciklama:
+        "Onaylanan fotoğraflar ortak Anı Duvarı'nda ve büyük ekranda görünür.",
+      yok: "Onay bekleyen fotoğraf yok.",
+      onayla: "Onayla",
+      gizle: "Gizle",
+      calisiyor: "…",
+      hata: "İşlem başarısız. Tekrar dene.",
     },
     // Kayıt masası kiosk ekranı: canlı katılım + QR + kod bulma
     kiosk: {
@@ -891,6 +925,8 @@ export const tr = {
     ligAciklama: "AYNA'nın görevlerinde en çok Kıvılcım toplayanlar",
     ligTakimlar: "Takım Yarışı",
     ligBos: "İlk Kıvılcımlar yakında — AYNA görev dağıtmaya başladığında burası alevlenecek.",
+    duvarBaslik: "📸 Anı Duvarı",
+    duvarBos: "Anılar yakında — katılımcılar fotoğraf paylaştıkça burası dolacak.",
     yildizSatiri: (n: number) => `Bu salon ${n} yıldız yaktı`,
     sesiAc: "🔊 Sesi Aç",
     sesAcikEtiket: "🔊 Ses açık",

@@ -18,6 +18,8 @@ const TABLOLAR = [
   "voice_profiles",
   "churn_radar",
   "momentum_scores",
+  "kudos",
+  "photos",
   "settings",
 ] as const;
 

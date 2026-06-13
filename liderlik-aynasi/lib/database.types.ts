@@ -329,6 +329,41 @@ export type Database = {
         }
         Relationships: []
       }
+      photos: {
+        Row: {
+          caption: string | null
+          created_at: string
+          id: string
+          participant_id: string
+          path: string
+          status: string
+        }
+        Insert: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          participant_id: string
+          path: string
+          status?: string
+        }
+        Update: {
+          caption?: string | null
+          created_at?: string
+          id?: string
+          participant_id?: string
+          path?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "photos_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       predictions: {
         Row: {
           bottom_trait_id: number

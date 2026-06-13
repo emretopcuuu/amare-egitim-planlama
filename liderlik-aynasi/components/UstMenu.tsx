@@ -39,6 +39,7 @@ export default function UstMenu({
   baglantilar.push({ href: "/anlar", etiket: t.menuAnlar });
   baglantilar.push({ href: "/turnuva", etiket: t.menuTurnuva });
   baglantilar.push({ href: "/takdir", etiket: t.menuTakdir });
+  baglantilar.push({ href: "/duvar", etiket: t.menuDuvar });
   baglantilar.push({ href: "/program", etiket: t.menuProgram });
   baglantilar.push({ href: "/gizlilik", etiket: t.menuGizlilik });
 
