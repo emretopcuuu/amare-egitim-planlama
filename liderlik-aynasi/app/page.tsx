@@ -201,7 +201,6 @@ export default async function AnaSayfa() {
         ozTamam={ozTamam}
         dalgaAcik={!!dalga}
         raporlarAcik={raporlarAcik}
-        gorevSayisi={gorevSayisi}
         yansimanHazir={yansimanHazir}
         ozHedefId={session.sub}
       />

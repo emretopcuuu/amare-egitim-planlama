@@ -108,6 +108,8 @@ export const tr = {
     sozTakipDugme: "İlerlememi Gör",
     // Üst menü (ayarlar): ikincil işler buradan
     menuBaslik: "Menü",
+    menuBirincilBaslik: "Senin için",
+    menuEkstraBaslik: "Sosyal & Daha fazla",
     menuOzDuzenle: "Kendi puanlarımı düzenle",
     menuDegerlendir: "Değerlendirme",
     menuGorevler: "AYNA'nın Görevleri",
