@@ -129,7 +129,8 @@ export default async function ProgramPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 space-y-8 p-6">
+    <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <div className="mx-auto my-auto w-full max-w-md space-y-8 p-5">
       <header className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
@@ -226,6 +227,7 @@ export default async function ProgramPage() {
           </ul>
         </section>
       ))}
+      </div>
     </main>
   );
 }

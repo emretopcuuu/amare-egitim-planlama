@@ -79,8 +79,8 @@ export default async function AynaPage() {
     rapor.tahmin.topId === rapor.gercekTopId;
 
   return (
-    <main className="min-h-screen flex-1 overflow-hidden">
-      <div className="mx-auto w-full max-w-lg space-y-6 p-6">
+    <main className="flex min-h-dvh flex-col overflow-x-hidden overflow-y-auto">
+      <div className="mx-auto my-auto w-full max-w-md space-y-6 p-5">
       <header className="ayna-acilis text-center">
         <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
           {t.baslik}

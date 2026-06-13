@@ -55,7 +55,8 @@ export default async function PuanlaPage({
   if (mevcutHata) throw mevcutHata;
 
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 p-6">
+    <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <div className="mx-auto my-auto w-full max-w-md p-5">
       <PuanlamaFormu
         dalgaId={dalga.id}
         dalgaAdi={dalga.name}
@@ -70,6 +71,7 @@ export default async function PuanlaPage({
           yorum: m.comment ?? "",
         }))}
       />
+      </div>
     </main>
   );
 }
