@@ -8,6 +8,7 @@ import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
 import AynaRituel from "@/components/AynaRituel";
 import EgilenKart from "@/components/EgilenKart";
+import IlkTanitim from "@/components/IlkTanitim";
 import KonusanYansima from "@/components/KonusanYansima";
 import UstMenu from "@/components/UstMenu";
 
@@ -27,6 +28,7 @@ function Sayfa({
   // ortalar; çok içerik olursa kırpmadan kayar (asla yarım ekran hissi yok).
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <IlkTanitim />
       <div className="mx-auto w-full max-w-md shrink-0 px-5 pt-5">{ust}</div>
       <div className="mx-auto my-auto w-full max-w-md px-5 py-5">
         <div className="space-y-5">{children}</div>

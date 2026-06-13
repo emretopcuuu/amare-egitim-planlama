@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import GirisForm from "./GirisForm";
+import YaziBoyu from "@/components/YaziBoyu";
 
 export const metadata = { title: "Giriş — Liderlik Aynası" };
 
@@ -10,6 +11,9 @@ export default function GirisPage() {
         <Suspense>
           <GirisForm />
         </Suspense>
+        <div className="mt-6 w-full">
+          <YaziBoyu />
+        </div>
       </div>
     </main>
   );
