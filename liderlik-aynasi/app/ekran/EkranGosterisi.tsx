@@ -158,6 +158,16 @@ export default function EkranGosterisi() {
         {sesAcik ? t.sesAcikEtiket : t.sesiAc}
       </button>
 
+      {/* ANLIK DUYURU: host'un sahne kumandasından gönderdiği bant (3 dk) —
+          push ölse bile herkesin gördüğü güvenilir kanal. */}
+      {veri?.sahne?.duyuru && (
+        <div className="fixed inset-x-0 top-0 z-40 bg-gold/95 px-10 py-5 text-center shadow-2xl">
+          <p className="font-display text-4xl font-bold text-midnight">
+            📣 {veri.sahne.duyuru.metin}
+          </p>
+        </div>
+      )}
+
       {/* FIERO: 10/10 anı — yıldız patlaması + isim */}
       {fieroGoster && (
         <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center">
