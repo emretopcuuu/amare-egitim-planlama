@@ -43,7 +43,7 @@ export default async function OrtakPage() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
-      <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
+      <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-5 p-5">
         <header className="text-center">
           <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
             {t.baslik}

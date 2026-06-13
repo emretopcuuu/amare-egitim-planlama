@@ -93,7 +93,7 @@ export default async function AynaPage() {
   return (
     <main className="flex min-h-dvh flex-col overflow-x-hidden overflow-y-auto">
       <Konfeti anahtar="kutlama-ayna" />
-      <div className="yazdirilabilir mx-auto my-auto w-full max-w-md space-y-6 p-5">
+      <div className="yazdirilabilir sahne-giris mx-auto my-auto w-full max-w-md space-y-6 p-5">
       <header className="ayna-acilis text-center">
         <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
           {t.baslik}

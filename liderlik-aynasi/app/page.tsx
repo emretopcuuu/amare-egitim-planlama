@@ -31,7 +31,7 @@ function Sayfa({
       <IlkTanitim />
       <div className="mx-auto w-full max-w-md shrink-0 px-5 pt-5">{ust}</div>
       <div className="mx-auto my-auto w-full max-w-md px-5 py-5">
-        <div className="space-y-5">{children}</div>
+        <div className="sahne-giris space-y-5">{children}</div>
       </div>
       {kurulum && (
         <div className="mx-auto w-full max-w-md shrink-0 px-5 pb-5">
