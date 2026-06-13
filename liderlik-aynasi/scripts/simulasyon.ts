@@ -31,6 +31,7 @@ import {
   sabahPenceresiMi,
   kampSenkronAnahtari,
   GECE_FISILTILARI,
+  geceYansimaMetni,
   ACILIS_ANONSU,
   aynaAniMetni,
 } from "../lib/kampProgrami";
@@ -571,6 +572,12 @@ console.log("\n■ 8) KAMP PROGRAMI — Sapanca akışı ve zaman pencereleri");
   // Sahne metinleri ve gece fısıltıları dolu
   iddia(ACILIS_ANONSU.length > 100, "açılış anonsu dolu");
   iddia(!!GECE_FISILTILARI[1] && !!GECE_FISILTILARI[2] && !GECE_FISILTILARI[3], "gece fısıltısı yalnız Gün 1 ve 2");
+  iddia(
+    geceYansimaMetni(1, "Emre")?.includes("Emre") === true &&
+      geceYansimaMetni(2, "Emre") !== null &&
+      geceYansimaMetni(3, "Emre") === null,
+    "gece yansıma metni Gün 1-2'de kişisel, Gün 3'te yok"
+  );
   const aynaAni = aynaAniMetni({ gozlemSayisi: 412, teslimSayisi: 96, fieroAdlari: ["Ali", "Ayşe"] });
   iddia(aynaAni.includes("412") && aynaAni.includes("96") && aynaAni.includes("Ali"), "Ayna Anı metni günün sayılarını içerir");
   const aynaAniBos = aynaAniMetni({ gozlemSayisi: 0, teslimSayisi: 0, fieroAdlari: [] });
