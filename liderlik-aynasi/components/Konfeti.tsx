@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { suDalgasi } from "@/lib/his";
 
 // Bağımsız konfeti kutlaması: harici kütüphane yok, tam ekran canvas'a çizilir.
 // Mount'ta bir kez patlar, ~2.2 sn sonra kendini temizler. Hareket-azalt
@@ -19,6 +20,7 @@ export default function Konfeti({ anahtar }: { anahtar?: string }) {
         // depolama kapalı: yine de bir kez göster
       }
     }
+    suDalgasi(); // kutlama anında arka plandaki göl de halkalanır
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext("2d");
     if (!canvas || !ctx) return;

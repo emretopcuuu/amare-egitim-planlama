@@ -11,3 +11,14 @@ export function titret(desen: number | number[] = 12) {
     // bazı tarayıcılar vibrate'i güvenlik gerekçesiyle reddedebilir — yok say
   }
 }
+
+// Yaşayan su: arka plandaki göl, kullanıcının eylemine halkayla karşılık verir.
+// x,y ekran koordinatı (-1..1); verilmezse su yüzeyine denk gelen merkez.
+export function suDalgasi(x?: number, y?: number) {
+  try {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new CustomEvent("ayna-su-dalga", { detail: { x, y } }));
+  } catch {
+    // CustomEvent desteklenmiyorsa sessizce yok say
+  }
+}
