@@ -10,6 +10,7 @@ import AynaRituel from "@/components/AynaRituel";
 import EgilenKart from "@/components/EgilenKart";
 import IlkTanitim from "@/components/IlkTanitim";
 import KonusanYansima from "@/components/KonusanYansima";
+import SicakAdim from "@/components/SicakAdim";
 import UstMenu from "@/components/UstMenu";
 
 const t = tr.anaSayfa;
@@ -305,7 +306,8 @@ export default async function AnaSayfa() {
     );
   }
 
-  // 7) BEKLEME — sıradaki an için sakin durum
+  // 7) BEKLEME — sıradaki an için sakin durum. Çıkmaz olmasın: yapacak iş
+  // yokken bile sıcak bir sonraki adım (birine takdir bırakmak) sun.
   return (
     <Sayfa ust={ust}>
       <div className="kart-cam relative overflow-hidden rounded-3xl p-10 text-center">
@@ -314,6 +316,9 @@ export default async function AnaSayfa() {
           {t.bekleBaslik}
         </h2>
         <p className="mt-3 text-base leading-relaxed text-slate-300">{t.bekleMetin}</p>
+        <div className="mt-6">
+          <SicakAdim href="/takdir" etiket={t.bekleEylem} vurgu />
+        </div>
       </div>
     </Sayfa>
   );

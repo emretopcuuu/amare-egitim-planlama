@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import BosDurum from "@/components/BosDurum";
+import SicakAdim from "@/components/SicakAdim";
 
 export const metadata = { title: "Takım Turnuvası — Liderlik Aynası" };
 
@@ -75,7 +76,12 @@ export default async function TurnuvaPage() {
         </div>
 
         {!toplamVar ? (
-          <BosDurum simge="🏁" baslik={t.bosBaslik} metin={t.bosMetin} />
+          <BosDurum
+            simge="🏁"
+            baslik={t.bosBaslik}
+            metin={t.bosMetin}
+            eylem={<SicakAdim href="/" etiket={tr.anaSayfa.sicakAnaSayfa} />}
+          />
         ) : (
           <ul className="space-y-3">
             {siralama.map((s, i) => {

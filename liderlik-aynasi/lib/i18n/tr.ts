@@ -98,6 +98,10 @@ export const tr = {
     gorevTekDugme: (n: number) => (n > 1 ? `${n} Görevi Aç` : "Görevi Aç"),
     bekleBaslik: "AYNA seni izliyor",
     bekleMetin: "Şu an yapman gereken bir şey yok. Sıradaki an geldiğinde seni dürteceğim. 👁",
+    // Çıkmaz yok: boş anda bile sıcak bir sonraki adım — birine takdir bırak.
+    bekleEylem: "Birine takdir bırak ✨",
+    // Boş ekranlarda net sonraki adım butonu (çıkmaz hissi olmasın).
+    sicakAnaSayfa: "Ana sayfaya dön",
     // Kapanış sözü kartı (kamp sonunda açılır)
     sozGerekBaslik: "🤝 Kapanış Sözün",
     sozGerekMetin:

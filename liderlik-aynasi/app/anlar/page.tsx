@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import SesCal from "@/components/SesCal";
 import BosDurum from "@/components/BosDurum";
+import SicakAdim from "@/components/SicakAdim";
 
 export const metadata = { title: "Anların — Liderlik Aynası" };
 
@@ -199,7 +200,12 @@ export default async function AnlarPage() {
         </header>
 
         {anlar.length === 0 ? (
-          <BosDurum simge="🪞" baslik={t.bosBaslik} metin={t.bosMetin} />
+          <BosDurum
+            simge="🪞"
+            baslik={t.bosBaslik}
+            metin={t.bosMetin}
+            eylem={<SicakAdim href="/" etiket={tr.anaSayfa.sicakAnaSayfa} />}
+          />
         ) : (
           <ul className="space-y-4">
             {anlar.map((an) => (
