@@ -22,19 +22,20 @@ function Sayfa({
   children: React.ReactNode;
   kurulum?: boolean;
 }) {
-  // Mobil öncelikli: üstten hizalı + kaydırılabilir. Ortada yüzen düzen
-  // başlık ile kartı ayırıp "yarım ekrana sığmama" hissi yaratıyordu.
+  // Mobil öncelikli düzen kuralı: başlık üstte sabit, tek kart kalan boşlukta
+  // DİKEY ORTALANIR, kurulum ipucu altta. `my-auto` az içerikte ekranı
+  // ortalar; çok içerik olursa kırpmadan kayar (asla yarım ekran hissi yok).
   return (
-    <main className="min-h-screen flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-lg p-6">
-        {ust}
-        <div className="mt-7 space-y-5">{children}</div>
-        {kurulum && (
-          <div className="mt-7">
-            <AynaKurulum />
-          </div>
-        )}
+    <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <div className="mx-auto w-full max-w-md shrink-0 px-5 pt-5">{ust}</div>
+      <div className="mx-auto my-auto w-full max-w-md px-5 py-5">
+        <div className="space-y-5">{children}</div>
       </div>
+      {kurulum && (
+        <div className="mx-auto w-full max-w-md shrink-0 px-5 pb-5">
+          <AynaKurulum />
+        </div>
+      )}
     </main>
   );
 }
@@ -168,12 +169,13 @@ export default async function AnaSayfa() {
   }
 
   const ust = (
-    <header className="flex items-center justify-between gap-3">
+    <header className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <p className="prizma-serif text-xs uppercase tracking-[0.4em] text-slate-400">
+        <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
           {tr.app.name}
         </p>
-        <h1 className="prizma-serif ay-metin mt-1 truncate text-2xl font-semibold">
+        {/* İsim ASLA kesilmesin: truncate yerine sığmazsa alt satıra sarsın */}
+        <h1 className="prizma-serif ay-metin mt-1 text-xl font-semibold leading-tight break-words">
           {t.hosGeldin(session.ad)}
         </h1>
       </div>
