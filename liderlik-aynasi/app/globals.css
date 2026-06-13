@@ -31,6 +31,38 @@ body.alt-nav-acik main {
   padding-bottom: 5rem;
 }
 
+/* HAREKET DİLİ: kartlar sahneye yumuşakça, kademeli (stagger) belirir.
+   prefers-reduced-motion kuralı bunu otomatik susturur (aşağıdaki blok). */
+@keyframes belir-yukari {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.sahne-giris > * {
+  animation: belir-yukari 0.5s ease-out both;
+}
+.sahne-giris > *:nth-child(2) {
+  animation-delay: 0.06s;
+}
+.sahne-giris > *:nth-child(3) {
+  animation-delay: 0.12s;
+}
+.sahne-giris > *:nth-child(4) {
+  animation-delay: 0.18s;
+}
+.sahne-giris > *:nth-child(5) {
+  animation-delay: 0.24s;
+}
+.sahne-giris > *:nth-child(n + 6) {
+  animation-delay: 0.3s;
+}
+
 body {
   background: linear-gradient(180deg, #081726 0%, #06121e 55%, #040e18 100%);
   min-height: 100vh;
