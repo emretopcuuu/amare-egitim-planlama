@@ -61,6 +61,14 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* Kayıtlı yazı boyutunu boyamadan önce uygula — büyütülmüş yazıda
+            sayfa "küçükten büyüğe" zıplamasın (FOUC önleme). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var s=localStorage.getItem('la_yazi_boyu');var m={normal:'17.5px',buyuk:'19.5px',cokBuyuk:'22px'};if(s&&m[s])document.documentElement.style.fontSize=m[s];}catch(e){}",
+          }}
+        />
         {/* GECE GÖLÜ tüm evrenin zemini: her ekran canlı gölün üstünde yaşar */}
         <GolArkaplan />
         {children}

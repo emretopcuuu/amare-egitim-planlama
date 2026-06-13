@@ -19,6 +19,8 @@ type Props = {
 };
 
 const YORUM_MAX = 500;
+// Gizlilik güvencesini ilk kez başkasını puanlarken bir kez göster (cihazda işaretli).
+const GIZLILIK_ACK = "la_gizlilik_ack_v1";
 
 // Kamp wifi'ı güvenilmez: her değişiklik localStorage'a taslak yazılır,
 // başarılı gönderimde silinir. Taslak, sunucudaki kayıtlı puanlardan
@@ -55,6 +57,8 @@ export default function PuanlamaFormu({
   });
   // İlk kez kendini puanlayan için programı anlatan giriş ekranı (tek seferlik).
   const [giris, setGiris] = useState(kendisi && mevcut.length === 0);
+  // İlk kez BİRİNİ puanlayan için gizlilik güvencesi (mount'ta localStorage'a bakılır).
+  const [gizlilik, setGizlilik] = useState(false);
   // İlk öz puanlamadan sonra kutlama/bilgilendirme ekranına gidilir (mount'ta sabit)
   const ilkOzPuan = useRef(kendisi && mevcut.length === 0);
   const [taslakGeldi, setTaslakGeldi] = useState(false);
@@ -74,6 +78,16 @@ export default function PuanlamaFormu({
   useEffect(() => {
     if (yuklendi.current) return;
     yuklendi.current = true;
+    // İlk kez birini puanlıyorsa ve daha önce güvence görmediyse göster.
+    try {
+      if (!kendisi && mevcut.length === 0 && !localStorage.getItem(GIZLILIK_ACK)) {
+        // localStorage yalnızca istemcide okunur; mount'ta tek seferlik karar.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setGizlilik(true);
+      }
+    } catch {
+      // depolama kapalı: güvenceyi atla
+    }
     try {
       const ham = localStorage.getItem(taslakAnahtari(dalgaId, hedefId));
       if (!ham) return;
@@ -87,7 +101,6 @@ export default function PuanlamaFormu({
       }
       // localStorage SSR'da okunamaz; taslak ancak hydration sonrası tek seferlik
       // geri yüklenebilir. Bilinçli istisna — kascading render yok.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGirdiler(temel);
       setTaslakGeldi(true);
       const i = ozellikler.findIndex((o) => temel[o.id].puan === null);
@@ -216,6 +229,34 @@ export default function PuanlamaFormu({
     );
   }
 
+  // GİZLİLİK KAPISI: birini ilk kez puanlamadan önce "puanların isimsiz" güvencesi
+  if (gizlilik) {
+    return (
+      <div className="flex min-h-[82vh] flex-col justify-center py-8 text-center">
+        <p className="text-6xl">🔒</p>
+        <h1 className="prizma-serif ay-metin mt-5 text-3xl font-semibold leading-tight">
+          {tr.puanlama.gizlilikBaslik}
+        </h1>
+        <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-slate-300">
+          {tr.puanlama.gizlilikMetin}
+        </p>
+        <button
+          onClick={() => {
+            try {
+              localStorage.setItem(GIZLILIK_ACK, "1");
+            } catch {
+              // depolama kapalı: yine de devam et
+            }
+            setGizlilik(false);
+          }}
+          className="parilti btn-kor mx-auto mt-10 flex h-16 w-full max-w-md items-center justify-center rounded-2xl text-xl font-bold"
+        >
+          {tr.puanlama.gizlilikDevam}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-[82vh] flex-col">
       {/* üst çubuk: geri + kim + ilerleme */}
@@ -248,6 +289,11 @@ export default function PuanlamaFormu({
             </span>
           )}
         </p>
+        {!kendisi && (
+          <p className="mt-1 text-xs font-medium text-emerald-300/90">
+            {tr.puanlama.gizlilikRozet}
+          </p>
+        )}
         <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-300"

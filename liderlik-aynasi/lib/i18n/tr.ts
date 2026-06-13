@@ -4,6 +4,40 @@ export const tr = {
     name: "Liderlik Aynası",
     tagline: "Kendini başkalarının gözünden gör.",
   },
+  // Erişilebilirlik: yazı boyutu kontrolü (yaşı ne olursa olsun rahat okusun)
+  yaziBoyu: {
+    baslik: "Yazı Boyutu",
+    normal: "Normal",
+    buyuk: "Büyük",
+    cokBuyuk: "En Büyük",
+    kisaEtiket: "Yazı",
+  },
+  // İlk girişte tek seferlik 30 saniyelik mini tanıtım (büyük yazı, az yazı)
+  tanitim: {
+    gec: "Geç",
+    ileri: "İleri →",
+    basla: "Hadi başlayalım →",
+    kartlar: [
+      {
+        simge: "👁",
+        baslik: "Bu, senin Liderlik Aynan",
+        metin:
+          "3 gün boyunca hem kendini hem de kampta tanıdığın arkadaşlarını 10 liderlik özelliğinde puanlayacaksın.",
+      },
+      {
+        simge: "🎤",
+        baslik: "Sesin sana geri dönecek",
+        metin:
+          "Kısa bir ritüelle kendi sesini kaydedeceksin. Kamp boyunca doğru anlarda sana kendi sesinle sesleneceğim.",
+      },
+      {
+        simge: "🪞",
+        baslik: "3. günde aynan açılır",
+        metin:
+          "Kendi gözünle başkalarının gözü yan yana gelecek. Sana özel Ayna Raporun seni bekliyor.",
+      },
+    ],
+  },
   giris: {
     baslik: "Liderlik Aynası",
     altBaslik: "Yaka kartındaki QR kodu okut veya 6 haneli giriş kodunu yaz.",
@@ -145,6 +179,12 @@ export const tr = {
     olcekDusuk: (metin: string) => `1 demek: ${metin}`,
     olcekYuksek: (metin: string) => `10 demek: ${metin}`,
     neredesin: "Sen kendini nerede görüyorsun?",
+    // Başkalarını puanlamadan önce: gizlilik güvencesi (dürüstlüğün ön şartı)
+    gizlilikBaslik: "Puanların gizli kalır",
+    gizlilikMetin:
+      "Verdiğin puanlar ve yazdığın yorumlar ASLA isminle görünmez. Puanladığın kişi kimin ne verdiğini göremez. Bunlar yalnızca o kişinin kendi Ayna Raporunu oluşturmak için kullanılır. O yüzden gönül rahatlığıyla dürüst ol.",
+    gizlilikDevam: "Söz verdim, başlayalım →",
+    gizlilikRozet: "🔒 İsimsiz — kimin verdiği kimseye görünmez",
   },
   // Öz değerlendirme rehberi: her özelliğin ne demek olduğu + 1/10 çapaları.
   // İlk kez kullananlar için; özellik adına göre eşlenir.

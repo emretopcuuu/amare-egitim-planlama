@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
+import YaziBoyu from "@/components/YaziBoyu";
 
 const t = tr.anaSayfa;
 
@@ -82,6 +83,9 @@ export default function UstMenu({
                 {t.cikisYap}
               </button>
             </nav>
+            <div className="mt-4">
+              <YaziBoyu />
+            </div>
             <button
               onClick={() => setAcik(false)}
               className="mt-5 flex h-12 w-full items-center justify-center text-base text-slate-400 hover:text-slate-200"
