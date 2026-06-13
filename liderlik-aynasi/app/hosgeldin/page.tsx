@@ -16,33 +16,33 @@ export default async function HosGeldinPage() {
   if (session.rol !== "participant") redirect("/admin");
 
   return (
-    <main className="min-h-screen flex-1 overflow-y-auto">
-      <div className="mx-auto w-full max-w-lg p-6">
-        <div className="kart-cam relative overflow-hidden rounded-3xl p-7">
+    <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <div className="mx-auto my-auto w-full max-w-md px-5 py-5">
+        <div className="kart-cam relative overflow-hidden rounded-3xl p-6">
           <div className="text-center">
-            <p className="text-5xl">🎉</p>
-            <p className="prizma-serif mt-3 text-xs uppercase tracking-[0.4em] text-emerald-300">
+            <p className="text-4xl">🎉</p>
+            <p className="prizma-serif mt-2 text-xs uppercase tracking-[0.4em] text-emerald-300">
               {t.rozet}
             </p>
-            <h1 className="prizma-serif ay-metin mt-2 text-3xl font-semibold leading-tight">
+            <h1 className="prizma-serif ay-metin mt-2 text-2xl font-semibold leading-tight">
               {t.baslik(session.ad)}
             </h1>
-            <p className="mt-3 text-lg leading-relaxed text-slate-200">
+            <p className="mt-2 text-base leading-relaxed text-slate-200">
               {t.altBaslik}
             </p>
           </div>
 
-          <div className="mt-7 space-y-4 text-base leading-relaxed text-slate-300">
+          <div className="mt-5 space-y-3 text-[0.95rem] leading-relaxed text-slate-300">
             <p>{t.paragraf1}</p>
             <p>{t.paragraf2}</p>
             <p>{t.paragraf3}</p>
           </div>
 
-          <div className="mt-7 rounded-2xl border border-white/10 bg-white/[0.03] p-5">
+          <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.03] p-4">
             <p className="text-sm font-semibold uppercase tracking-wide text-royal-light">
               {t.nelerBaslik}
             </p>
-            <ul className="mt-3 space-y-2.5 text-base text-slate-100">
+            <ul className="mt-2 space-y-2 text-[0.95rem] text-slate-100">
               <li>{t.madde1}</li>
               <li>{t.madde2}</li>
               <li>{t.madde3}</li>
@@ -51,7 +51,7 @@ export default async function HosGeldinPage() {
 
           <Link
             href="/degerlendir"
-            className="parilti btn-kor mt-8 flex h-16 w-full items-center justify-center rounded-2xl text-xl font-bold transition-transform hover:scale-[1.01]"
+            className="parilti btn-kor mt-6 flex h-16 w-full items-center justify-center rounded-2xl text-xl font-bold transition-transform hover:scale-[1.01]"
           >
             {t.basla}
           </Link>

@@ -47,8 +47,11 @@ export default function GolArkaplan() {
       ) : (
         <div className="gol-zemin absolute inset-0" />
       )}
-      {/* okunabilirlik perdesi: gündüz parlak suda bile metin net kalır */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#06121e]/15 to-[#06121e]/40" />
+      {/* Sakinleştirme perdesi: göl sahnesi geri çekilir, içerik öne çıkar.
+          Radyal vinyet kenarları, alt gradyan ise sudaki silüet parıltısını
+          ("ayak izi") koyulaştırır — zemin huzurlu ve elit kalır. */}
+      <div className="absolute inset-0 bg-[radial-gradient(125%_95%_at_50%_28%,transparent_0%,rgba(5,16,28,0.45)_62%,rgba(3,10,18,0.82)_100%)]" />
+      <div className="absolute inset-0 bg-gradient-to-b from-[#06121e]/30 via-[#06121e]/20 to-[#040e18]/80" />
     </div>
   );
 }
