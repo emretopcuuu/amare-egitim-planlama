@@ -99,7 +99,32 @@ export const tr = {
     menuProgram: "Kamp Programı",
     menuYansiman: "Yansımanı izle",
     menuRapor: "Ayna Raporum",
+    menuAnlar: "Anların (Zaman Tüneli)",
     menuKapat: "Kapat",
+  },
+  // Kaçırılan anlar zaman tüneli: bildirim gelmese bile tüm sesli/görüntülü
+  // anlar burada birikir, istediğin zaman dinle.
+  anlar: {
+    baslik: "Anların",
+    altBaslik:
+      "Bir bildirimi kaçırdıysan merak etme — yansımandan gelen her ses ve görüntü burada. İstediğin zaman dinle.",
+    bosBaslik: "Henüz bir anın yok",
+    bosMetin: "Kamp başlayınca yansıman seninle konuşmaya başlayacak. Anların burada birikecek.",
+    dinle: "▶ Dinle",
+    izle: "👁 İzle",
+    geriDon: "← Ana sayfaya dön",
+    yansima: "Yansıman seni gördü",
+    yansimaAlt: "Sudaki yansımanın canlandı.",
+    mektup: "Ayna Mektubun",
+    mektupAlt: "AYNA'nın sana yazdığı mektup, kendi sesinle.",
+    soz: "SÖZ'ün",
+    sozAlt: "Kendine verdiğin söz.",
+    sabah: "Günaydın mesajı",
+    gece: "Gece fısıltısı",
+    fiero: "Zafer kutlaması",
+    fieroAlt: "Aynayı parlattığın an.",
+    kayma: "Yansımandan bir mesaj",
+    kaymaAlt: "Su seni özlediğinde söyledikleri.",
   },
   // Kendini puanladıktan sonra gösterilen kutlama + kamp deneyimi bilgilendirmesi
   hosgeldin: {

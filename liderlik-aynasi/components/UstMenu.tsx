@@ -36,6 +36,7 @@ export default function UstMenu({
   if (raporlarAcik) baglantilar.push({ href: "/ayna", etiket: t.menuRapor });
   if (gorevSayisi > 0) baglantilar.push({ href: "/gorevler", etiket: t.menuGorevler });
   if (yansimanHazir) baglantilar.push({ href: "/yansiman", etiket: t.menuYansiman });
+  baglantilar.push({ href: "/anlar", etiket: t.menuAnlar });
   baglantilar.push({ href: "/program", etiket: t.menuProgram });
 
   async function cikis() {
