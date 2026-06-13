@@ -848,6 +848,9 @@ export const tr = {
     acilisAlt: "Kampta seni gözlemleyen arkadaşlarının gözünden sen.",
     // Hatıra: raporu PDF olarak sakla (tarayıcı yazdır → PDF'e kaydet)
     raporKaydet: "🖨 Raporu Kaydet (PDF)",
+    // 3B veri portresi: döndürülebilir kristal
+    kristalBaslik: "💎 Liderlik Kristalin",
+    kristalAciklama: "10 özelliğin bir kristale dönüştü. Parmağınla çevir.",
     gucluBaslik: "✨ En Güçlü Yanların",
     gelisimBaslik: "🌱 Gelişim Alanların",
     gizliGucBaslik: "💎 Gizli Gücün",

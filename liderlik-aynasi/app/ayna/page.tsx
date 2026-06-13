@@ -7,6 +7,7 @@ import { arketipBul } from "@/lib/arketip";
 import { unvanBul } from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
 import Konfeti from "@/components/Konfeti";
+import KristalPortre from "./KristalPortre";
 import RaporKaydet from "./RaporKaydet";
 import AynaBekleme from "./AynaBekleme";
 import ArketipKarti from "./ArketipKarti";
@@ -35,6 +36,10 @@ export default async function AynaPage() {
   const t = tr.ayna;
   const arketip = arketipBul(rapor.satirlar);
   const ozellikAd = new Map(rapor.satirlar.map((s) => [s.ozellikId, s.ad]));
+  // 3B kristal için 10 özellik dış puanı (yoksa öz), özellik sırasına göre
+  const kristalDegerler = [...rapor.satirlar]
+    .sort((a, b) => a.ozellikId - b.ozellikId)
+    .map((s) => s.dis ?? s.oz ?? 0);
 
   const { count: verdigiPuan } = await db
     .from("ratings")
@@ -185,6 +190,15 @@ export default async function AynaPage() {
             simge={arketip.simge}
             ozet={arketip.ozet}
           />
+        </div>
+      </section>
+
+      {/* 3B veri portresi: döndürülebilir liderlik kristali */}
+      <section className="kart-cam relative overflow-hidden rounded-2xl bg-gradient-to-br from-royal/15 to-midnight-card/60 p-5 shadow-xl ring-1 ring-royal-light/30 backdrop-blur">
+        <h2 className="font-semibold text-gold-light">{t.kristalBaslik}</h2>
+        <p className="mt-1 text-xs text-slate-400">{t.kristalAciklama}</p>
+        <div className="mt-3">
+          <KristalPortre degerler={kristalDegerler} />
         </div>
       </section>
 
