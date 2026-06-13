@@ -23,19 +23,21 @@ export default async function DegerlendirPage() {
 
   if (!dalga) {
     return (
-      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center p-6">
-        <div className="kart-3d rounded-2xl bg-midnight-card/60 p-8 text-center shadow-2xl ring-1 ring-royal/30 backdrop-blur">
-          <p className="text-4xl">🌊</p>
-          <h1 className="mt-4 text-2xl font-bold text-gold">
-            {tr.degerlendir.dalgaKapaliBaslik}
-          </h1>
-          <p className="mt-3 text-slate-300">{tr.degerlendir.dalgaKapaliAciklama}</p>
-          <Link
-            href="/"
-            className="mt-6 inline-block text-sm text-royal-light underline-offset-4 hover:underline"
-          >
-            {tr.degerlendir.anaSayfayaDon}
-          </Link>
+      <main className="flex min-h-dvh flex-col overflow-y-auto">
+        <div className="mx-auto my-auto w-full max-w-md p-5">
+          <div className="kart-3d rounded-2xl bg-midnight-card/60 p-8 text-center shadow-2xl ring-1 ring-royal/30 backdrop-blur">
+            <p className="text-4xl">🌊</p>
+            <h1 className="mt-4 text-2xl font-bold text-gold">
+              {tr.degerlendir.dalgaKapaliBaslik}
+            </h1>
+            <p className="mt-3 text-slate-300">{tr.degerlendir.dalgaKapaliAciklama}</p>
+            <Link
+              href="/"
+              className="mt-6 inline-block text-sm text-royal-light underline-offset-4 hover:underline"
+            >
+              {tr.degerlendir.anaSayfayaDon}
+            </Link>
+          </div>
         </div>
       </main>
     );
@@ -84,7 +86,8 @@ export default async function DegerlendirPage() {
   const serbestler = katilimcilar.filter((k) => !atananIdler.has(k.id));
 
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 space-y-6 p-6">
+    <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <div className="mx-auto my-auto w-full max-w-md space-y-6 p-5">
       <header className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
@@ -193,6 +196,7 @@ export default async function DegerlendirPage() {
           kilitli={!ozTamam}
         />
       </section>
+      </div>
     </main>
   );
 }

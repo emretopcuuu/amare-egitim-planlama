@@ -27,7 +27,8 @@ export default async function TahminPage() {
   const adBul = (id: number) => ozellikler.find((o) => o.id === id)?.name ?? "—";
 
   return (
-    <main className="mx-auto flex w-full max-w-lg flex-1 flex-col justify-center p-6">
+    <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <div className="mx-auto my-auto w-full max-w-md p-5">
       <div className="kart-3d rounded-2xl bg-midnight-card/60 p-8 shadow-2xl ring-1 ring-gold/30 backdrop-blur">
         <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
           {tr.tahmin.kartBaslik}
@@ -72,6 +73,7 @@ export default async function TahminPage() {
             ← {tr.puanlama.geriDon}
           </Link>
         </p>
+      </div>
       </div>
     </main>
   );

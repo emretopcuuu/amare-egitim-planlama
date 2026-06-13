@@ -73,7 +73,8 @@ export default async function GorevlerPage() {
   const unvan = unvanBul(toplamKivilcim);
 
   return (
-    <main className="mx-auto w-full max-w-lg flex-1 space-y-6 p-6">
+    <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <div className="mx-auto my-auto w-full max-w-md space-y-6 p-5">
       <header className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
@@ -208,6 +209,7 @@ export default async function GorevlerPage() {
           </ul>
         )}
       </section>
+      </div>
     </main>
   );
 }

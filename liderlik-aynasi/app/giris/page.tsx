@@ -5,10 +5,12 @@ export const metadata = { title: "Giriş — Liderlik Aynası" };
 
 export default function GirisPage() {
   return (
-    <main className="flex min-h-screen flex-1 items-center justify-center overflow-hidden p-6">
-      <Suspense>
-        <GirisForm />
-      </Suspense>
+    <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <div className="mx-auto my-auto flex w-full max-w-sm flex-col items-center p-5">
+        <Suspense>
+          <GirisForm />
+        </Suspense>
+      </div>
     </main>
   );
 }

@@ -37,7 +37,8 @@ export default function AynaBekleme() {
   }, [router]);
 
   return (
-    <main className="flex min-h-screen flex-1 flex-col items-center justify-center overflow-hidden p-6 text-center">
+    <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <div className="mx-auto my-auto flex w-full max-w-md flex-col items-center p-5 text-center">
       <div className="kart-cam relative overflow-hidden rounded-3xl p-10">
         <p className="prizma-serif text-xs uppercase tracking-[0.45em] text-slate-400">
           Ayna Anı
@@ -57,6 +58,7 @@ export default function AynaBekleme() {
             />
           ))}
         </div>
+      </div>
       </div>
     </main>
   );
