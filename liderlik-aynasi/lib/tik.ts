@@ -568,6 +568,37 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     }
   }
 
+  // 3g) HAFTALIK SÖZ HATIRLATMA: yolculuk modunda Çarşamba 10:00-10:09'da
+  // hedefine ulaşmamış söz sahiplerine kendi sözünü hatırlat (haftada bir).
+  if (mod === "yolculuk") {
+    const carsambaMi =
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "Europe/Istanbul",
+        weekday: "short",
+      }).format(simdi) === "Wed";
+    if (carsambaMi && saat === 10 && dakika < 10) {
+      const { error: sozKilit } = await db
+        .from("settings")
+        .insert({ key: `soz_hatirlatma_${bugun}`, value: "1" });
+      if (!sozKilit) {
+        const { data: sozler } = await db
+          .from("pledges")
+          .select("participant_id, agustos_gorusme, gorusme_yapilan");
+        for (const s of sozler ?? []) {
+          if (s.gorusme_yapilan >= s.agustos_gorusme) continue;
+          const kalan = s.agustos_gorusme - s.gorusme_yapilan;
+          await katilimciyaBildir(
+            db,
+            s.participant_id,
+            "🤝 Sözünü hatırla",
+            `Ağustos görüşme sözüne ${kalan} kaldı. İlerlemeni gir, hedefe yürü.`,
+            "/soz"
+          );
+        }
+      }
+    }
+  }
+
   // 4) Teslim hatırlatması (son 30 dk, bir kez) — sahnedeyken susar
   const { data: yaklasanlar } = sahneSessiz
     ? { data: [] }

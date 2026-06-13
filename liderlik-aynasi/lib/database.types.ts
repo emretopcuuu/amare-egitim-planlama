@@ -439,6 +439,47 @@ export type Database = {
           },
         ]
       }
+      pledges: {
+        Row: {
+          agustos_gorusme: number
+          created_at: string
+          gorusme_yapilan: number
+          kayit_yapilan: number
+          participant_id: string
+          temmuz_kayit: number
+          updated_at: string
+          voice_path: string | null
+        }
+        Insert: {
+          agustos_gorusme: number
+          created_at?: string
+          gorusme_yapilan?: number
+          kayit_yapilan?: number
+          participant_id: string
+          temmuz_kayit: number
+          updated_at?: string
+          voice_path?: string | null
+        }
+        Update: {
+          agustos_gorusme?: number
+          created_at?: string
+          gorusme_yapilan?: number
+          kayit_yapilan?: number
+          participant_id?: string
+          temmuz_kayit?: number
+          updated_at?: string
+          voice_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pledges_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       predictions: {
         Row: {
           bottom_trait_id: number

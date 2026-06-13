@@ -22,6 +22,7 @@ const TABLOLAR = [
   "photos",
   "pairs",
   "pair_messages",
+  "pledges",
   "settings",
 ] as const;
 

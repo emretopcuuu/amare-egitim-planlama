@@ -84,8 +84,16 @@ export default async function AnaSayfa() {
   if (!session) redirect("/giris");
 
   const db = supabaseAdmin();
-  const [dalga, raporlarAcik, ozellikler, { count: aktifGorev }, { data: sesProfili }, { data: kayma }] =
-    await Promise.all([
+  const [
+    dalga,
+    raporlarAcik,
+    ozellikler,
+    { count: aktifGorev },
+    { data: sesProfili },
+    { data: kayma },
+    { data: sozAyar },
+    { data: soz },
+  ] = await Promise.all([
       acikDalga(db),
       raporlarGorunurMu(db),
       aktifOzellikler(db),
@@ -104,7 +112,15 @@ export default async function AnaSayfa() {
         .select("nudged_at, voice_path")
         .eq("participant_id", session.sub)
         .maybeSingle(),
+      db.from("settings").select("value").eq("key", "kapanis_soz_acik").maybeSingle(),
+      db
+        .from("pledges")
+        .select("participant_id")
+        .eq("participant_id", session.sub)
+        .maybeSingle(),
     ]);
+  const sozAcik = sozAyar?.value === "true";
+  const sozVar = !!soz;
 
   const ozTamam = dalga
     ? await ozPuanTamamMi(db, session.sub, dalga.id, ozellikler.length)
@@ -212,6 +228,21 @@ export default async function AnaSayfa() {
     return (
       <Sayfa ust={ust} kurulum={false}>
         <AynaRituel />
+      </Sayfa>
+    );
+  }
+
+  // 2b) KAPANIŞ SÖZÜ — kamp kapanışında açıldı ve henüz söz verilmedi
+  if (sozAcik && !sozVar) {
+    return (
+      <Sayfa ust={ust}>
+        <BuyukKart
+          baslik={t.sozGerekBaslik}
+          metin={t.sozGerekMetin}
+          href="/soz"
+          dugme={t.sozGerekDugme}
+          vurgu
+        />
       </Sayfa>
     );
   }
