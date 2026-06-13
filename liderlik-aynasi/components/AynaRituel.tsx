@@ -17,6 +17,7 @@ type Asama =
   | "soru"
   | "inceleme"
   | "gonderiliyor"
+  | "baglantiBekliyor"
   | "hazir"
   | "sonra"
   | "hata"
@@ -241,6 +242,28 @@ export default function AynaRituel() {
     void gonder(v.blob, v.tip);
   }
 
+  // Bağlantı geri gelince elde tutulan kaydı yeniden göndermeyi dene
+  function tekrarGonder() {
+    const v = kayitVerisi.current;
+    if (!v) {
+      setAsama("hata");
+      return;
+    }
+    setAsama("gonderiliyor");
+    void gonder(v.blob, v.tip);
+  }
+
+  // "baglantiBekliyor" aşamasındayken internet gelince otomatik tekrar dene
+  useEffect(() => {
+    if (asama !== "baglantiBekliyor") return;
+    function denele() {
+      if (kayitVerisi.current) tekrarGonder();
+    }
+    window.addEventListener("online", denele);
+    return () => window.removeEventListener("online", denele);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asama]);
+
   // Beğenmedi: baştan (40 sn yeminden) yeniden kaydet
   function tekrarKaydet() {
     onizlemeSes.current?.pause();
@@ -274,8 +297,13 @@ export default function AynaRituel() {
         setAsama("sonra");
       }
     } catch {
-      setHataMesaji(t.hata);
-      setAsama("hata");
+      // Ağ hatası: kaydı KAYBETME — bellekte tut, bağlantı gelince tekrar dene.
+      if (kayitVerisi.current) {
+        setAsama("baglantiBekliyor");
+      } else {
+        setHataMesaji(t.hata);
+        setAsama("hata");
+      }
     }
   }
 
@@ -458,6 +486,21 @@ export default function AynaRituel() {
           <div className="text-center">
             <div className="ayna-halka mx-auto h-20 w-20" />
             <p className="prizma-serif ay-metin mt-8 text-3xl font-semibold">{t.uyaniyor}</p>
+          </div>
+        )}
+
+        {asama === "baglantiBekliyor" && (
+          <div className="text-center">
+            <p className="text-6xl">🔌</p>
+            <h1 className="prizma-serif ay-metin mt-5 text-3xl font-semibold leading-tight">
+              {t.baglantiBekliyorBaslik}
+            </h1>
+            <p className="mt-5 text-lg leading-relaxed text-slate-200">
+              {t.baglantiBekliyorMetin}
+            </p>
+            <div className="mt-10">
+              <DevButon onClick={tekrarGonder}>{t.baglantiTekrar}</DevButon>
+            </div>
           </div>
         )}
 
