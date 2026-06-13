@@ -25,6 +25,12 @@ html {
   font-size: 17.5px;
 }
 
+/* Alt navigasyon çubuğu görünürken içerik altına nefes payı (sabit çubuk
+   içeriği örtmesin). Yalnız katılımcı ekranlarında gövdeye sınıf eklenir. */
+body.alt-nav-acik main {
+  padding-bottom: 5rem;
+}
+
 body {
   background: linear-gradient(180deg, #081726 0%, #06121e 55%, #040e18 100%);
   min-height: 100vh;
