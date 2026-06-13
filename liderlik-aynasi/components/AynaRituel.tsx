@@ -15,6 +15,7 @@ type Asama =
   | "foto"
   | "kayit"
   | "soru"
+  | "inceleme"
   | "gonderiliyor"
   | "hazir"
   | "sonra"
@@ -76,11 +77,15 @@ export default function AynaRituel() {
   const [calindi, setCalindi] = useState(false);
   const [hataMesaji, setHataMesaji] = useState<string | null>(null);
   const [fotoOnizleme, setFotoOnizleme] = useState<string | null>(null);
+  const [kayitOnizleme, setKayitOnizleme] = useState<string | null>(null);
+  const [kayitCaliyor, setKayitCaliyor] = useState(false);
 
   const kayitci = useRef<MediaRecorder | null>(null);
   const fotoDosya = useRef<File | null>(null);
   const dosyaGirisi = useRef<HTMLInputElement | null>(null);
   const parcalar = useRef<Blob[]>([]);
+  const kayitVerisi = useRef<{ blob: Blob; tip: string } | null>(null);
+  const onizlemeSes = useRef<HTMLAudioElement | null>(null);
   const akis = useRef<MediaStream | null>(null);
   const taniyici = useRef<Taniyici | null>(null);
   const zamanlayici = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -92,6 +97,7 @@ export default function AynaRituel() {
     return () => {
       if (zamanlayici.current) clearInterval(zamanlayici.current);
       taniyici.current?.stop();
+      onizlemeSes.current?.pause();
       if (kayitci.current?.state === "recording") kayitci.current.stop();
       akis.current?.getTracks().forEach((iz) => iz.stop());
     };
@@ -178,6 +184,7 @@ export default function AynaRituel() {
     }
   }
 
+  // Kaydı bitir: GÖNDERME — önce dinleme/inceleme ekranına götür.
   function bitir() {
     if (bitiriliyor.current) return;
     bitiriliyor.current = true;
@@ -189,14 +196,62 @@ export default function AynaRituel() {
       setAsama("hata");
       return;
     }
-    setAsama("gonderiliyor");
     kaydedici.onstop = () => {
       akis.current?.getTracks().forEach((iz) => iz.stop());
       const tip = kaydedici.mimeType.includes("mp4") ? "audio/mp4" : "audio/webm";
       const blob = new Blob(parcalar.current, { type: tip });
-      void gonder(blob, tip);
+      kayitVerisi.current = { blob, tip };
+      setKayitOnizleme((eski) => {
+        if (eski) URL.revokeObjectURL(eski);
+        return URL.createObjectURL(blob);
+      });
+      setKayitCaliyor(false);
+      setAsama("inceleme");
     };
     if (kaydedici.state !== "inactive") kaydedici.stop();
+  }
+
+  // İnceleme ekranı: kaydı çal/durdur
+  function kaydiDinle() {
+    if (!kayitOnizleme) return;
+    if (kayitCaliyor) {
+      onizlemeSes.current?.pause();
+      if (onizlemeSes.current) onizlemeSes.current.currentTime = 0;
+      setKayitCaliyor(false);
+      return;
+    }
+    const ses = new Audio(kayitOnizleme);
+    onizlemeSes.current = ses;
+    ses.onended = () => setKayitCaliyor(false);
+    void ses
+      .play()
+      .then(() => setKayitCaliyor(true))
+      .catch(() => setKayitCaliyor(false));
+  }
+
+  // Beğendi: kaydı aynaya gönder
+  function kaydiGonder() {
+    const v = kayitVerisi.current;
+    if (!v) {
+      setAsama("hata");
+      return;
+    }
+    onizlemeSes.current?.pause();
+    setAsama("gonderiliyor");
+    void gonder(v.blob, v.tip);
+  }
+
+  // Beğenmedi: baştan (40 sn yeminden) yeniden kaydet
+  function tekrarKaydet() {
+    onizlemeSes.current?.pause();
+    setKayitCaliyor(false);
+    setKayitOnizleme((eski) => {
+      if (eski) URL.revokeObjectURL(eski);
+      return null;
+    });
+    kayitVerisi.current = null;
+    setBeklenti("");
+    void sesBasla();
   }
 
   async function gonder(blob: Blob, tip: string) {
@@ -373,6 +428,28 @@ export default function AynaRituel() {
             />
             <div className="mt-8">
               <DevButon onClick={bitir}>{t.bitir}</DevButon>
+            </div>
+          </div>
+        )}
+
+        {asama === "inceleme" && (
+          <div className="text-center">
+            <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
+              🎧 {t.inceleBaslik}
+            </h1>
+            <p className="mt-5 text-lg leading-relaxed text-slate-200">
+              {t.inceleAciklama}
+            </p>
+            <div className="mt-8">
+              <DevButon onClick={kaydiDinle} ikincil>
+                {kayitCaliyor ? t.inceleDurdur : t.inceleDinle}
+              </DevButon>
+            </div>
+            <div className="mt-8 space-y-4">
+              <DevButon onClick={kaydiGonder}>{t.inceleGonder} →</DevButon>
+              <DevButon onClick={tekrarKaydet} ikincil>
+                {t.inceleTekrar}
+              </DevButon>
             </div>
           </div>
         )}
