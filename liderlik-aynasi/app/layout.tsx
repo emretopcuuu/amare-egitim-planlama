@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Playfair_Display, Fraunces } from "next/font/google";
 import GolArkaplan from "@/components/gol/GolArkaplan";
 import AltNav from "@/components/AltNav";
+import AtlaBaglantisi from "@/components/AtlaBaglantisi";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -70,6 +71,7 @@ export default function RootLayout({
               "try{var s=localStorage.getItem('la_yazi_boyu');var m={normal:'17.5px',buyuk:'19.5px',cokBuyuk:'22px'};if(s&&m[s])document.documentElement.style.fontSize=m[s];}catch(e){}",
           }}
         />
+        <AtlaBaglantisi />
         {/* GECE GÖLÜ tüm evrenin zemini: her ekran canlı gölün üstünde yaşar */}
         <GolArkaplan />
         {children}

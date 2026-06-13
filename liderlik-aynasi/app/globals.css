@@ -483,6 +483,23 @@ body {
 :focus-visible {
   outline: 2px solid var(--color-gold);
   outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Yüksek kontrast tercihi: cam kartların kenarları ve odak halkası belirginleşir,
+   az kontrastlı yardımcı metinler okunaklılaşır. */
+@media (prefers-contrast: more) {
+  .kart-cam,
+  .kart-3d,
+  .kart-cerceve {
+    border: 1px solid rgba(255, 255, 255, 0.55);
+  }
+  :focus-visible {
+    outline-width: 3px;
+  }
+  a {
+    text-decoration-thickness: 2px;
+  }
 }
 
 /* Mobilde dokunuş geri bildirimi: butonlar basılınca hafifçe çöker */
