@@ -7,8 +7,13 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Liderlik Aynası",
     short_name: "AYNA",
     description: "Kampı yöneten yapay zekâ — kendini başkalarının gözünden gör.",
+    lang: "tr",
+    dir: "ltr",
     start_url: "/",
+    scope: "/",
     display: "standalone",
+    orientation: "portrait",
+    categories: ["lifestyle", "education", "productivity"],
     background_color: "#06121e",
     theme_color: "#06121e",
     icons: [
