@@ -711,6 +711,7 @@ export const tr = {
       test: "Prova",
       kurulum: "Kurulum",
       analiz: "Analiz",
+      sunum: "Sunum",
     },
     // #3 Nav kategorileri: 14 düz sekme yerine 4 grup + Panel
     navGrup: {
@@ -872,6 +873,24 @@ export const tr = {
       yedek: "Tüm kamp verisinin (puanlar, sözler, ayarlar) yedeğini indirir.",
       ikili: "Sohbet/ortak eşleştirmelerini oluşturur. Genelde kamp öncesi bir kez.",
       kvkk: "Katılımcının veri silme taleplerini buradan onaylayıp işlersin.",
+    },
+    // Yönetim sunumu (demo): bir adayın 6 aylık yolculuğunu adım adım göster
+    sunum: {
+      baslik: "Yönetim Sunumu — Aday Yolculuğu",
+      aciklama:
+        "Bir adayın kamp öncesinden 6 aya uzanan 360° yolculuğu. İleri/Geri ya da → ← ok tuşlarıyla ilerle.",
+      cik: "Panele dön",
+      karistir: "Yeniden karıştır",
+      sunumNotu: "Sunum notu",
+      geri: "Geri",
+      ileri: "İleri",
+      bastan: "Baştan",
+      ozEtiket: "Kendi gözünden",
+      disEtiket: "Başkalarının gözünden",
+      ayna: "AYNA",
+      momentumEtiket: "Momentum",
+      yanitEtiket: "Yanıtı",
+      gizliAdim: "kim olduğu gizli",
     },
     // Admin yardım metinleri (her bölümün "?" içeriği). Yerine bakan görevli
     // soru sormadan işi yürütebilsin diye detaylı yazılır. Her entry { baslik,
@@ -1191,6 +1210,14 @@ export const tr = {
         metin: [
           "Güvenli deneme alanı: DEMO takımındaki sahte katılımcılarla ve kamp günlerini simüle ederek her şeyi gerçek veriye dokunmadan provalarsın.",
           "Canlıya geçmeden akışı buradan test et; gerçek katılımcıları etkilemez.",
+        ],
+      },
+      sunum: {
+        baslik: "Yönetim Sunumu (Demo)",
+        metin: [
+          "Bir adayın kamp öncesinden başlayıp 6 aya uzanan 360° yolculuğunu yönetim kuruluna/ekiplere göstermek için hazır sunum modu — sistemi satarken en güçlü kozun.",
+          "'İleri' (ya da → / boşluk) ile adım adım ilerle; her ekranda adayın o an gördüğü şey + yüksek sesle okuyabileceğin bir 'sunum notu' var. 'Yeniden karıştır' farklı bir aday/varyasyon getirir.",
+          "İçerik önceden hazırlanmıştır: internetsiz, anında, hatasız çalışır ve gerçek katılımcı verisine dokunmaz.",
         ],
       },
     },
