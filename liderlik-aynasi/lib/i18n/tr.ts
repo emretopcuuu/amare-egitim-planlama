@@ -577,6 +577,21 @@ export const tr = {
       banner:
         "👀 Yardımcı görevli — yalnız izleme ve hatırlatma yapabilirsin. Kritik anahtarlar (dalga, rapor, veri) yöneticiye özeldir.",
     },
+    // #5 "Kampa hazır mısın?" tek bakışta hazırlık kontrol listesi
+    hazirlik: {
+      baslik: "Kampa hazır mısın?",
+      hepsiTamam: "Her şey hazır — kampa hazırsın! 🎉",
+      eksikVar: "Birkaç adım eksik — aşağıdakileri tamamla.",
+      katilimci: "Katılımcılar yüklü",
+      katilimciIpucu: "Liste boş — CSV yükle",
+      eslestirme: "Eşleştirme yapıldı",
+      eslestirmeIpucu: "Henüz eşleştirme yok",
+      ayna: "AYNA uyanık",
+      aynaIpucu: "AYNA uyuyor — uyandır",
+      bildirim: "Bildirimler çalışıyor",
+      bildirimIpucu: "Push abonesi/anahtarı yok",
+      duzelt: "Düzelt →",
+    },
     // #9 Eksikleri tek dokunuşla dürt: öz-puanını bitirmeyenlere hatırlatma push'u
     durt: {
       bildirimBaslik: "🪞 Kendini puanla",
