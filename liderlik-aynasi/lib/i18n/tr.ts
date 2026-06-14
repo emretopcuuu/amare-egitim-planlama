@@ -577,6 +577,22 @@ export const tr = {
       banner:
         "👀 Yardımcı görevli — yalnız izleme ve hatırlatma yapabilirsin. Kritik anahtarlar (dalga, rapor, veri) yöneticiye özeldir.",
     },
+    // #7 Tek bakış canlı özet (büyük rakamlar)
+    ozet: {
+      katilimci: "Katılımcı",
+      ozPuan: "Öz-puan",
+      gorus: "Puanlama",
+      dalga: "Açık dalga",
+      dalgaYok: "—",
+    },
+    // #6 Hızlı kişi/kod bulma
+    kodBul: {
+      baslik: "Hızlı Kod Bulma",
+      aciklama: "Kodunu unutan katılımcıyı isimle bul.",
+      yer: "İsim yaz (en az 2 harf)…",
+      sonucYok: "Eşleşme yok.",
+      araniyor: "Aranıyor…",
+    },
     // #5 "Kampa hazır mısın?" tek bakışta hazırlık kontrol listesi
     hazirlik: {
       baslik: "Kampa hazır mısın?",
