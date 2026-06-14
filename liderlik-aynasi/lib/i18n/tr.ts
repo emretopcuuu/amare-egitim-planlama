@@ -158,6 +158,7 @@ export const tr = {
     gonder: "Sözümü Mühürle",
     gonderiliyor: "Mühürleniyor…",
     verildiBaslik: "Sözün mühürlendi 🤝",
+    kutlamaMesaj: "Sözün mühürlendi 🤝",
     sozunBaslik: "Senin Sözün",
     temmuzKart: "Temmuz kayıt",
     agustosKart: "Ağustos görüşme",

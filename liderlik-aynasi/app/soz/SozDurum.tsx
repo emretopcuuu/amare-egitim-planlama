@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import SesCal from "@/components/SesCal";
-import Konfeti from "@/components/Konfeti";
+import KutlamaSeridi from "@/components/KutlamaSeridi";
 
 const t = tr.kapanisSoz;
 
@@ -42,12 +42,14 @@ function Cubuk({
 }
 
 export default function SozDurum({
+  ad,
   temmuz,
   agustos,
   kayitYapilan,
   gorusmeYapilan,
   sesUrl,
 }: {
+  ad: string;
   temmuz: number;
   agustos: number;
   kayitYapilan: number;
@@ -92,7 +94,7 @@ export default function SozDurum({
 
   return (
     <>
-      <Konfeti anahtar="kapanis-soz-muhur" />
+      <KutlamaSeridi ad={ad} mesaj={t.kutlamaMesaj} anahtar="kapanis-soz-muhur" />
 
       {/* Sözün */}
       <section className="kart-cam relative overflow-hidden rounded-3xl bg-gradient-to-br from-gold/10 to-midnight-card/60 p-5 text-center ring-1 ring-gold/30">

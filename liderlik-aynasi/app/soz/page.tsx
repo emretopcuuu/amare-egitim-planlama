@@ -47,6 +47,7 @@ export default async function SozPage() {
 
         {soz ? (
           <SozDurum
+            ad={session.ad}
             temmuz={soz.temmuz_kayit}
             agustos={soz.agustos_gorusme}
             kayitYapilan={soz.kayit_yapilan}
