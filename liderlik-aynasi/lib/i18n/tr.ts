@@ -544,6 +544,8 @@ export const tr = {
     listeAzUyari: (n: number) => `En az ${n} madde yaz.`,
     girisYer: "Yanıtını buraya yaz…",
     gonder: "Gönder",
+    sesYaz: "Sesle yaz",
+    sesDurdur: "Dinlemeyi durdur",
     listeHatirlat: "Öncelik listen — seçmek için dokun",
     dusunuyor: "AYNA düşünüyor…",
     yukleniyor: "Yükleniyor…",

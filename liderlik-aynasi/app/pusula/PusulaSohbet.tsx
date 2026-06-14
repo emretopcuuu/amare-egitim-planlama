@@ -11,6 +11,80 @@ const MIN_MADDE = 3;
 type Mesaj = { rol: string; icerik: string };
 type Faz = "riza" | "liste" | "sohbet" | "bitti";
 
+// Web Speech API — sesle yazma (Türkçe). Desteklenmiyorsa buton görünmez.
+type SesTaniyici = {
+  lang: string;
+  interimResults: boolean;
+  continuous: boolean;
+  onresult:
+    | ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void)
+    | null;
+  onerror: (() => void) | null;
+  onend: (() => void) | null;
+  start: () => void;
+  stop: () => void;
+};
+function sesTaniyiciKur(): SesTaniyici | null {
+  if (typeof window === "undefined") return null;
+  const w = window as unknown as {
+    webkitSpeechRecognition?: new () => SesTaniyici;
+    SpeechRecognition?: new () => SesTaniyici;
+  };
+  const Sinif = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+  return Sinif ? new Sinif() : null;
+}
+
+// Mikrofon: konuşulanı Türkçe metne çevirip hedef alana ekler (yazmak yerine konuş).
+function SesButonu({ onSonuc }: { onSonuc: (metin: string) => void }) {
+  const [dinliyor, setDinliyor] = useState(false);
+  const [sesVar, setSesVar] = useState(false);
+  const taniyiciRef = useRef<SesTaniyici | null>(null);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (sesTaniyiciKur()) setSesVar(true);
+  }, []);
+  function topla() {
+    if (dinliyor) {
+      taniyiciRef.current?.stop();
+      return;
+    }
+    const tan = sesTaniyiciKur();
+    if (!tan) return;
+    tan.lang = "tr-TR";
+    tan.interimResults = false;
+    tan.continuous = false;
+    tan.onresult = (e) => {
+      const son = e.results[e.results.length - 1];
+      const m = son?.[0]?.transcript ?? "";
+      if (m.trim()) onSonuc(m.trim());
+    };
+    tan.onerror = () => setDinliyor(false);
+    tan.onend = () => setDinliyor(false);
+    taniyiciRef.current = tan;
+    setDinliyor(true);
+    try {
+      tan.start();
+    } catch {
+      setDinliyor(false);
+    }
+  }
+  if (!sesVar) return null;
+  return (
+    <button
+      type="button"
+      onClick={topla}
+      aria-label={dinliyor ? t.sesDurdur : t.sesYaz}
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl transition-colors ${
+        dinliyor
+          ? "animate-pulse bg-red-500/30 text-red-200"
+          : "bg-midnight-soft text-slate-300 hover:text-slate-100"
+      }`}
+    >
+      🎤
+    </button>
+  );
+}
+
 // FAZ 0 akışı: rıza → 10 öncelik FORM'u (madde madde) → AI derinleşme sohbeti.
 export default function PusulaSohbet({
   baslangic,
@@ -211,6 +285,9 @@ export default function PusulaSohbet({
                 placeholder={t.listeTekYer}
                 className="flex-1 rounded-xl border border-royal-light/30 bg-midnight-soft px-3 py-2.5 text-base text-slate-100 outline-none focus:border-gold"
               />
+              <SesButonu
+                onSonuc={(m) => setMaddeGirdi((g) => (g ? `${g} ${m}` : m))}
+              />
               <button
                 onClick={maddeEkle}
                 disabled={!maddeGirdi.trim()}
@@ -317,6 +394,7 @@ export default function PusulaSohbet({
           placeholder={t.girisYer}
           className="max-h-32 min-h-[3rem] flex-1 resize-none rounded-2xl border border-royal-light/30 bg-midnight-soft px-4 py-3 text-base text-slate-100 outline-none focus:border-gold"
         />
+        <SesButonu onSonuc={(m) => setGirdi((g) => (g ? `${g} ${m}` : m))} />
         <button
           onClick={gonder}
           disabled={mesgul || !girdi.trim()}
