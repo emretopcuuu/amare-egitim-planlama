@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import AynaDirektorKontrol from "./AynaDirektorKontrol";
+import Ipucu from "../Ipucu";
 
 export const metadata = { title: "AYNA Kontrol Odası — Liderlik Aynası" };
 
@@ -43,7 +44,10 @@ export default async function AynaDirektorPage() {
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
+          <Ipucu {...tr.admin.yardim.aynaDirektor} />
+        </div>
         <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>
       </div>
 

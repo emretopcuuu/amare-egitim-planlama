@@ -5,6 +5,7 @@ import { aktifOzellikler } from "@/lib/degerlendirme";
 import { radarHesapla, fazBul, yolculukGunuHesapla } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
 import { tr } from "@/lib/i18n/tr";
+import Ipucu from "../Ipucu";
 
 export const metadata = { title: "Komutan Paneli — Liderlik Aynası" };
 
@@ -211,9 +212,12 @@ export default async function KomutanPage() {
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
       <div>
-        <h1 className="font-display altin-metin text-3xl font-bold leading-tight">
-          🎛 {t.baslik}
-        </h1>
+        <div className="flex items-center gap-2">
+          <h1 className="font-display altin-metin text-3xl font-bold leading-tight">
+            🎛 {t.baslik}
+          </h1>
+          <Ipucu {...tr.admin.yardim.komutan} />
+        </div>
         <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>
         <p className="mt-2 text-sm font-semibold text-gold-light">
           {t.modBaslik}:{" "}
@@ -223,13 +227,19 @@ export default async function KomutanPage() {
         </p>
       </div>
 
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 ring-1 ring-gold/30 backdrop-blur">
+      <section className="kart-3d relative rounded-2xl bg-midnight-card/60 p-6 ring-1 ring-gold/30 backdrop-blur">
+        <span className="absolute right-3 top-3">
+          <Ipucu {...tr.admin.yardim.komutanRadar} />
+        </span>
         <RadarSVG degerler={eksenler} />
       </section>
 
       <div className="grid gap-6 md:grid-cols-2">
         <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30 backdrop-blur">
-          <h2 className="text-lg font-semibold text-gold-light">{t.momentumBaslik}</h2>
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+            {t.momentumBaslik}
+            <Ipucu {...tr.admin.yardim.komutanMomentum} />
+          </h2>
           {momentumListe.length === 0 ? (
             <p className="mt-3 text-sm text-slate-400">{t.momentumYok}</p>
           ) : (
@@ -258,7 +268,10 @@ export default async function KomutanPage() {
         </section>
 
         <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30 backdrop-blur">
-          <h2 className="text-lg font-semibold text-gold-light">{t.kaymaBaslik}</h2>
+          <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+            {t.kaymaBaslik}
+            <Ipucu {...tr.admin.yardim.komutanKayma} />
+          </h2>
           {kaymaListe.length === 0 ? (
             <p className="mt-3 text-sm text-slate-400">{t.kaymaYok}</p>
           ) : (

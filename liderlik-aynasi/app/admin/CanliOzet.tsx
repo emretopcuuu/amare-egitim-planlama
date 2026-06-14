@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
+import Ipucu from "./Ipucu";
 
 const t = tr.admin.ozet;
 
@@ -26,8 +27,12 @@ export default function CanliOzet({
     { buyuk: dalgaAd ?? t.dalgaYok, kucuk: t.dalga, href: "#dalga" },
   ];
   return (
-    <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      {kutular.map((k) => (
+    <section className="space-y-2">
+      <div className="flex justify-end">
+        <Ipucu {...tr.admin.yardim.panelOzet} />
+      </div>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {kutular.map((k) => (
         <Link
           key={k.kucuk}
           href={k.href}
@@ -36,7 +41,8 @@ export default function CanliOzet({
           <p className="truncate text-2xl font-bold text-gold">{k.buyuk}</p>
           <p className="mt-1 text-xs text-slate-400">{k.kucuk}</p>
         </Link>
-      ))}
+        ))}
+      </div>
     </section>
   );
 }

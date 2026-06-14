@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
+import Ipucu from "../Ipucu";
 
 export const metadata = { title: "Analiz — Liderlik Aynası" };
 
@@ -77,18 +78,21 @@ export default async function AnalizSayfa() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-6">
-      <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
+        <Ipucu {...tr.admin.yardim.analiz} />
+      </div>
       <p className="-mt-4 text-sm text-slate-400">{t.aciklama}</p>
 
       {/* Eksen 1 — Kimlik */}
-      <Eksen baslik={t.kimlikBaslik} aciklama={t.kimlikAciklama}>
+      <Eksen baslik={t.kimlikBaslik} aciklama={t.kimlikAciklama} yardim={tr.admin.yardim.analizKimlik}>
         <Kutu buyuk={`${pusulaTamam}/${toplam}`} kucuk={t.pusula} />
         <Kutu buyuk={`${boslukTamam}/${toplam}`} kucuk={t.bosluk} />
         <Kutu buyuk={String(kanitsiz)} kucuk={t.kanitsiz} uyari={kanitsiz > 0} />
       </Eksen>
 
       {/* Eksen 2 — Davranış */}
-      <Eksen baslik={t.davranisBaslik} aciklama={t.davranisAciklama}>
+      <Eksen baslik={t.davranisBaslik} aciklama={t.davranisAciklama} yardim={tr.admin.yardim.analizDavranis}>
         <Kutu buyuk={`%${gorevOran}`} kucuk={t.gorevOran} />
         <Kutu buyuk={String(churnRiskte)} kucuk={t.churn} uyari={churnRiskte > 0} />
         <Kutu buyuk={String(redToplam)} kucuk={t.red} />
@@ -96,7 +100,7 @@ export default async function AnalizSayfa() {
       </Eksen>
 
       {/* Eksen 3 — İş (dış) */}
-      <Eksen baslik={t.isBaslik} aciklama={t.isAciklama}>
+      <Eksen baslik={t.isBaslik} aciklama={t.isAciklama} yardim={tr.admin.yardim.analizIs}>
         <p className="col-span-full rounded-xl border border-white/5 bg-white/[0.02] px-4 py-3 text-sm text-slate-500">
           {t.isNot}
         </p>
@@ -104,7 +108,10 @@ export default async function AnalizSayfa() {
 
       {/* Takım kırılımı — FAZ 5 cascade */}
       <section>
-        <h2 className="mb-1 text-lg font-semibold text-gold-light">{t.takimBaslik}</h2>
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold text-gold-light">
+          {t.takimBaslik}
+          <Ipucu {...tr.admin.yardim.analizTakim} />
+        </h2>
         <p className="mb-3 text-sm text-slate-400">{t.takimAciklama}</p>
         <div className="overflow-x-auto rounded-2xl ring-1 ring-royal/30">
           <table className="w-full text-sm">
@@ -142,15 +149,20 @@ export default async function AnalizSayfa() {
 function Eksen({
   baslik,
   aciklama,
+  yardim,
   children,
 }: {
   baslik: string;
   aciklama: string;
+  yardim: { baslik: string; metin: readonly string[] };
   children: React.ReactNode;
 }) {
   return (
     <section>
-      <h2 className="text-lg font-semibold text-gold-light">{baslik}</h2>
+      <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+        {baslik}
+        <Ipucu {...yardim} />
+      </h2>
       <p className="mb-3 text-sm text-slate-400">{aciklama}</p>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">{children}</div>
     </section>

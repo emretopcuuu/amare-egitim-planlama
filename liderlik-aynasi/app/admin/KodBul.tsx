@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import Ipucu from "./Ipucu";
 
 const t = tr.admin.kodBul;
 
@@ -39,7 +40,10 @@ export default function KodBul() {
 
   return (
     <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-      <h2 className="text-lg font-semibold text-gold-light">{t.baslik}</h2>
+      <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+        {t.baslik}
+        <Ipucu {...tr.admin.yardim.kodBul} />
+      </h2>
       <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>
       <input
         type="search"

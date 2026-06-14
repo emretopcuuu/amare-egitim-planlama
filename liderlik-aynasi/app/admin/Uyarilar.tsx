@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Uyari } from "@/lib/adminUyarilar";
 import { tr } from "@/lib/i18n/tr";
+import Ipucu from "./Ipucu";
 
 const STIL: Record<Uyari["tip"], string> = {
   uyari: "border-gold/40 bg-gold/10",
@@ -13,8 +14,9 @@ export default function Uyarilar({ uyarilar }: { uyarilar: Uyari[] }) {
   if (uyarilar.length === 0) return null;
   return (
     <section className="space-y-2">
-      <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+      <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
         {tr.admin.uyarilar.baslik}
+        <Ipucu {...tr.admin.yardim.panelUyari} />
       </p>
       {uyarilar.map((u, i) => (
         <Link

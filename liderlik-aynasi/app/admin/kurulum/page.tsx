@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import KurulumSihirbazi from "./KurulumSihirbazi";
+import Ipucu from "../Ipucu";
 
 export const metadata = { title: "Kurulum Sihirbazı — Liderlik Aynası" };
 
@@ -20,7 +21,10 @@ export default async function KurulumPage() {
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-gold">{tr.admin.kurulum.baslik}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gold">{tr.admin.kurulum.baslik}</h1>
+          <Ipucu {...tr.admin.yardim.kurulum} />
+        </div>
         <p className="mt-1 text-sm text-slate-400">{tr.admin.kurulum.aciklama}</p>
       </div>
       <KurulumSihirbazi katilimciSayisi={count ?? 0} />

@@ -182,7 +182,10 @@ export default async function AdminPanel() {
     // #8 Mobilde alt sabit aksiyon çubuğu içeriği örtmesin: alt nefes payı.
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6 pb-28 sm:pb-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold text-gold">{tr.admin.baslik}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gold">{tr.admin.baslik}</h1>
+          <Ipucu {...tr.admin.yardim.panel} />
+        </div>
         <OtoYenile />
       </div>
 
@@ -202,8 +205,9 @@ export default async function AdminPanel() {
             : "bg-midnight-card/60 ring-royal/30"
         }`}
       >
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+        <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
           {tr.admin.asistan.baslik}
+          <Ipucu {...tr.admin.yardim.panelAsistan} />
         </p>
         <div className="mt-2 flex items-start gap-4">
           <span className="text-4xl" aria-hidden>
@@ -248,6 +252,7 @@ export default async function AdminPanel() {
               · {acikDalga.name}
             </span>
           )}
+          <Ipucu {...tr.admin.yardim.panelIlerleme} />
         </h2>
 
         {!ilerleme ? (
@@ -320,8 +325,9 @@ export default async function AdminPanel() {
               ⚠️
             </span>
             <div>
-              <h2 className="text-lg font-bold text-red-200">
+              <h2 className="flex items-center gap-2 text-lg font-bold text-red-200">
                 {tr.admin.tehlike.baslik}
+                <Ipucu {...tr.admin.yardim.tehlike} />
               </h2>
               <p className="mt-0.5 text-xs text-slate-400">{tr.admin.tehlike.aciklama}</p>
             </div>
@@ -334,7 +340,7 @@ export default async function AdminPanel() {
           >
             <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.admin.dalga.baslik}
-              <Ipucu metin={tr.admin.ipucu.dalga} />
+              <Ipucu {...tr.admin.yardim.dalga} />
             </h3>
             <p className="mt-1 text-sm text-slate-400">{tr.admin.dalga.aciklama}</p>
             <DalgaKontrol
@@ -353,7 +359,7 @@ export default async function AdminPanel() {
           >
             <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.admin.aynaAni.baslik}
-              <Ipucu metin={tr.admin.ipucu.rapor} />
+              <Ipucu {...tr.admin.yardim.rapor} />
             </h3>
             <p className="mt-1 text-sm text-slate-400">{tr.admin.aynaAni.aciklama}</p>
             <AynaAniKontrol
@@ -365,24 +371,27 @@ export default async function AdminPanel() {
 
           {/* #9 Prova Modu — canlı/test ayrımı kritik bir anahtar */}
           <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h3 className="mb-3 text-base font-semibold text-slate-100">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.provaModu.baslikKapali}
+              <Ipucu {...tr.admin.yardim.prova} />
             </h3>
             <ProvaModuKontrol acik={provaAcik} />
           </div>
 
           {/* FAZ 0 — Pusula penceresi + oda QR kodu (kampa giriş kilidi) */}
           <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h3 className="mb-3 text-base font-semibold text-slate-100">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.admin.fazSifir.baslik}
+              <Ipucu {...tr.admin.yardim.fazSifir} />
             </h3>
             <FazSifirKontrol />
           </div>
 
           {/* FAZ 1 — Boşluk Anı penceresi + derinlik panosu */}
           <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h3 className="mb-3 text-base font-semibold text-slate-100">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.admin.fazBir.baslik}
+              <Ipucu {...tr.admin.yardim.fazBir} />
             </h3>
             <BoslukKontrol />
           </div>
@@ -398,7 +407,7 @@ export default async function AdminPanel() {
         >
           <h2 className="flex items-center gap-2 text-lg font-semibold text-red-200">
             {tr.kvkk.adminBaslik}
-            <Ipucu metin={tr.admin.ipucu.kvkk} />
+            <Ipucu {...tr.admin.yardim.kvkk} />
           </h2>
           <p className="mt-1 text-sm text-slate-400">{tr.kvkk.adminAciklama}</p>
           <SilmeTalepleri
@@ -421,14 +430,17 @@ export default async function AdminPanel() {
       {/* #1 TÜM ARAÇLAR — faz dışı ikincil her şey tek katlanır bölümde.
           Varsayılan kapalı: panel açılınca yalnız o anki işe odaklanılır. */}
       {tamYetki && (
-        <Katlanir baslik={tr.admin.araclar.baslik} aciklama={tr.admin.araclar.aciklama}>
+        <Katlanir baslik={tr.admin.araclar.baslik} aciklama={tr.admin.araclar.aciklama} yardim={tr.admin.yardim.araclar}>
           <HazirlikPaneli />
           <KodBul />
           <DuyuruSablonlari />
 
           {/* FAZ 2 — Ödev paketi (kamp sonrası 10/15 gün, Ağustos) */}
           <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-            <h2 className="text-lg font-semibold text-gold-light">{tr.admin.odev.baslik}</h2>
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+              {tr.admin.odev.baslik}
+              <Ipucu {...tr.admin.yardim.odev} />
+            </h2>
             <div className="mt-3">
               <OdevPaketi />
             </div>
@@ -440,7 +452,7 @@ export default async function AdminPanel() {
           >
             <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
               {tr.admin.doksanGun.baslik}
-              <Ipucu metin={tr.admin.ipucu.davet} />
+              <Ipucu {...tr.admin.yardim.davet} />
             </h2>
             <p className="mt-1 text-sm text-slate-400">{tr.admin.doksanGun.aciklama}</p>
             <DavetKontrol
@@ -453,7 +465,7 @@ export default async function AdminPanel() {
           <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
               {tr.admin.ikili.baslik}
-              <Ipucu metin={tr.admin.ipucu.ikili} />
+              <Ipucu {...tr.admin.yardim.ikili} />
             </h2>
             <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.ikili.aciklama}</p>
             <IkiliKontrol mevcut={ikiliSayisi ?? 0} />
@@ -462,15 +474,16 @@ export default async function AdminPanel() {
           <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
               {tr.admin.yedek.baslik}
-              <Ipucu metin={tr.admin.ipucu.yedek} />
+              <Ipucu {...tr.admin.yardim.yedek} />
             </h2>
             <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.yedek.aciklama}</p>
             <YedekButonu />
           </section>
 
           <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-            <h2 className="text-lg font-semibold text-gold-light">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
               {tr.zamanlama.baslik}
+              <Ipucu {...tr.admin.yardim.zamanlama} />
             </h2>
             <p className="mt-1 mb-4 text-sm text-slate-400">{tr.zamanlama.aciklama}</p>
             <OtomatikZamanlama
