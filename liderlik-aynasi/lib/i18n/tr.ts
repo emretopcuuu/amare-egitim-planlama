@@ -35,6 +35,19 @@ export const tr = {
     cokBuyuk: "En Büyük",
     kisaEtiket: "Yazı",
   },
+  // #8 Güneş modu: açık alanda/güneş altında okunabilirlik için yüksek kontrast
+  gunesModu: {
+    baslik: "Güneş Modu",
+    aciklama: "Güneş altında daha net okuma",
+    acik: "Açık",
+    kapali: "Kapalı",
+  },
+  // #5 "Sen neredesin" yolculuk şeridi: kampın neresindeyiz?
+  yolculuk: {
+    hazirlik: "Kamp yaklaşıyor",
+    gun: (n: number) => `Kamp · Gün ${n}/3`,
+    sonrasi: "90 günlük yolculuk",
+  },
   // İlk girişte tek seferlik 30 saniyelik mini tanıtım (büyük yazı, az yazı)
   tanitim: {
     gec: "Geç",

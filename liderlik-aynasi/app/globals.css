@@ -81,6 +81,27 @@ body.alt-nav-acik .baglanti-serit {
   animation: rehber-zipla 1.1s ease-in-out infinite;
 }
 
+/* #8 Güneş modu: açık alanda/güneş altında okunabilirlik. Soluk metinleri
+   parlatır, yarı saydam kartları katılaştırır. (filter kullanmaz — sabit
+   konumlu öğeleri bozmaz.) Karanlık tema korunur, sadece kontrast yükselir. */
+body.gunes-modu {
+  color: #ffffff;
+}
+body.gunes-modu .text-slate-300 {
+  color: #eef3f9 !important;
+}
+body.gunes-modu .text-slate-400 {
+  color: #dbe4ee !important;
+}
+body.gunes-modu .text-slate-500 {
+  color: #c2cedb !important;
+}
+body.gunes-modu .kart-cam,
+body.gunes-modu .kart-3d,
+body.gunes-modu .kart-cerceve {
+  background-color: rgba(8, 20, 33, 0.94) !important;
+}
+
 /* #7 Kutlama şeridi yukarıdan yumuşakça iner. */
 @keyframes kutlama-in {
   from {

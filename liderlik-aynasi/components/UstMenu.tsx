@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import YaziBoyu from "@/components/YaziBoyu";
+import GunesModu from "@/components/GunesModu";
 
 const t = tr.anaSayfa;
 
@@ -112,8 +113,9 @@ export default function UstMenu({
               ))}
             </nav>
 
-            <div className="mt-4">
+            <div className="mt-4 space-y-3">
               <YaziBoyu />
+              <GunesModu />
             </div>
             <button
               onClick={cikis}
