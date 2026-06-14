@@ -573,6 +573,21 @@ export const tr = {
     adimTamam: "Tamamlandı",
     hazirlikBekle:
       "Hazırsın. Kampın geri kalanı, oraya gelip odandaki kodu okuttuğunda açılacak. O ana dek dinlen.",
+    // Hub zenginleştirme: ilerleme, sosyal kanıt, kilitli sürprizler, rozet, geri sayım
+    kampaKalan: "Kampa kalan",
+    hazirYuzde: (n: number) => `%${n} hazırsın`,
+    hazirRozet: "Hazır Lider 🏅",
+    hazirRozetMetin:
+      "Tüm hazırlığını tamamladın — kampa bir adım önde geliyorsun.",
+    sosyalKanit: (n: number) =>
+      n > 0
+        ? `${n} lider pusulasını çoktan kurdu — sen de aralarındasın.`
+        : "İlk pusulayı kuranlardansın.",
+    kilitBaslik: "Kampta seni neler bekliyor",
+    kilitNot: "Kampta açılacak",
+    kilit1: "Kendi sesinle bir sürpriz",
+    kilit2: "3. günde aynan açılır",
+    kilit3: "Sana özel AYNA görevleri",
   },
   // Kamp öncesi profil fotoğrafı
   profilFoto: {

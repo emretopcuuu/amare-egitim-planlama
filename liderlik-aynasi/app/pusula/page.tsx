@@ -7,6 +7,7 @@ import { aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { tr } from "@/lib/i18n/tr";
 import PusulaSohbet from "./PusulaSohbet";
 import ProfilFoto from "@/components/ProfilFoto";
+import GeriSayim from "@/components/GeriSayim";
 
 const t = tr.pusula;
 
@@ -37,9 +38,21 @@ export default async function PusulaSayfa() {
     .map((o) => o.metin);
 
   if (durum.tamam) {
-    const ozellikler = await aktifOzellikler(db);
+    const [ozellikler, { count: kuranSayi }, { data: kampAyar }] = await Promise.all([
+      aktifOzellikler(db),
+      db
+        .from("pusula")
+        .select("id", { count: "exact", head: true })
+        .not("tamamlandi_at", "is", null),
+      db.from("settings").select("value").eq("key", "kamp_tarihi").maybeSingle(),
+    ]);
     const ozTamam = await ozPuanTamamMi(db, session.sub, 1, ozellikler.length);
     const fotoVar = !!kisi?.profil_foto_path;
+    // İlerleme: pusula (zaten ✓) + öz-puan + foto = 3 adım.
+    const tamamlanan = 1 + (ozTamam ? 1 : 0) + (fotoVar ? 1 : 0);
+    const yuzde = Math.round((tamamlanan / 3) * 100);
+    const hepsiTamam = ozTamam && fotoVar;
+    const kampTarihi = kampAyar?.value ?? null;
 
     return (
       <main className="flex min-h-dvh flex-col overflow-y-auto">
@@ -54,7 +67,30 @@ export default async function PusulaSayfa() {
             <p className="mt-2 text-sm leading-relaxed text-slate-400">
               {t.hazirlikAltBaslik}
             </p>
+            {kampTarihi && <GeriSayim hedefZaman={kampTarihi} etiket={t.kampaKalan} />}
           </div>
+
+          {/* İlerleme çubuğu + erken-kuş rozeti */}
+          <div className="kart-cam rounded-2xl p-5 ring-1 ring-royal/30">
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-gold-light">{t.hazirYuzde(yuzde)}</p>
+              {hepsiTamam && (
+                <span className="parilti shrink-0 rounded-full bg-gold/15 px-2.5 py-0.5 text-xs font-bold text-gold-light">
+                  {t.hazirRozet}
+                </span>
+              )}
+            </div>
+            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
+              <div
+                className="h-full rounded-full bg-gold transition-all"
+                style={{ width: `${yuzde}%` }}
+              />
+            </div>
+            {hepsiTamam && <p className="mt-2 text-xs text-slate-400">{t.hazirRozetMetin}</p>}
+          </div>
+
+          {/* Sosyal kanıt */}
+          <p className="text-center text-xs text-slate-500">👥 {t.sosyalKanit(kuranSayi ?? 0)}</p>
 
           <HazirlikKart ikon="⭐" baslik={t.adimPuanBaslik} metin={t.adimPuanMetin} tamam={ozTamam}>
             {!ozTamam && (
@@ -79,6 +115,29 @@ export default async function PusulaSayfa() {
           <HazirlikKart ikon="📸" baslik={t.adimFotoBaslik} metin={t.adimFotoMetin} tamam={fotoVar}>
             <ProfilFoto varMi={fotoVar} />
           </HazirlikKart>
+
+          {/* Kilitli sürprizler — merak tohumu */}
+          <div className="pt-1">
+            <p className="mb-2 text-center text-[0.7rem] font-semibold uppercase tracking-wide text-slate-500">
+              {t.kilitBaslik}
+            </p>
+            <div className="space-y-2">
+              {[t.kilit1, t.kilit2, t.kilit3].map((m) => (
+                <div
+                  key={m}
+                  className="flex items-center gap-3 rounded-xl border border-white/5 bg-white/[0.02] px-4 py-2.5"
+                >
+                  <span className="text-base" aria-hidden>
+                    🔒
+                  </span>
+                  <span className="flex-1 text-sm text-slate-400">{m}</span>
+                  <span className="shrink-0 text-[0.65rem] uppercase tracking-wide text-slate-600">
+                    {t.kilitNot}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <p className="px-2 pt-2 text-center text-sm leading-relaxed text-slate-400">
             {t.hazirlikBekle}

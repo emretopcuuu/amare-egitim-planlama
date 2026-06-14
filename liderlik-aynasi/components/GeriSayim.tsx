@@ -38,9 +38,15 @@ function formatBekleme(hedef: Date): string {
   return `${t.gun(sure.gun)} ${t.saat(sure.saat)} ${t.sonra}`;
 }
 
-// Sıradaki dalgayı ne zaman açacağının geri sayımını gösterir.
-// hedefZaman: ISO 8601 string (adminin ayarladığı otomatik açılış saati).
-export default function GeriSayim({ hedefZaman }: { hedefZaman: string }) {
+// Sıradaki dalgayı (ya da etiket verilirse başka bir hedefi) geri sayar.
+// hedefZaman: ISO 8601 string. etiket: başlık (varsayılan: dalga başlığı).
+export default function GeriSayim({
+  hedefZaman,
+  etiket,
+}: {
+  hedefZaman: string;
+  etiket?: string;
+}) {
   const hedef = new Date(hedefZaman);
   const [metin, setMetin] = useState(() => formatBekleme(hedef));
 
@@ -52,7 +58,7 @@ export default function GeriSayim({ hedefZaman }: { hedefZaman: string }) {
   return (
     <div className="mt-4 rounded-2xl border border-royal-light/30 bg-midnight-soft/60 px-5 py-4 text-center">
       <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
-        {t.baslik}
+        {etiket ?? t.baslik}
       </p>
       <p className="mt-1 text-lg font-bold text-gold-light">{metin}</p>
     </div>
