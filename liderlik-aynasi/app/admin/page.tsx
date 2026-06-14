@@ -30,6 +30,7 @@ import Katlanir from "./Katlanir";
 import AltAksiyonCubugu from "./AltAksiyonCubugu";
 import FazSifirKontrol from "./FazSifirKontrol";
 import BoslukKontrol from "./BoslukKontrol";
+import OdevPaketi from "./OdevPaketi";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -424,6 +425,14 @@ export default async function AdminPanel() {
           <HazirlikPaneli />
           <KodBul />
           <DuyuruSablonlari />
+
+          {/* FAZ 2 — Ödev paketi (kamp sonrası 10/15 gün, Ağustos) */}
+          <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+            <h2 className="text-lg font-semibold text-gold-light">{tr.admin.odev.baslik}</h2>
+            <div className="mt-3">
+              <OdevPaketi />
+            </div>
+          </section>
 
           <section
             id="davet"

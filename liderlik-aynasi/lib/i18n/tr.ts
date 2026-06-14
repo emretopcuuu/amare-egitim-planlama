@@ -655,6 +655,22 @@ export const tr = {
           : "✓ Herkesin yeterli kanıtı var",
       hata: "İşlem başarısız, tekrar dene.",
     },
+    // FAZ 2 — Ödev paketi (kamp sonrası 10/15 gün, Ağustos ödevleri)
+    odev: {
+      baslik: "Ödev Gönder",
+      aciklama:
+        "Tüm katılımcılara yapılandırılmış bir ödev gönder (10 gün, 15 gün, Ağustos…). Görev olarak düşer; yanıtlarlar, AYNA puanlar.",
+      baslikYer: "Ödev başlığı (ör. '10 Gün: İlk 5 Görüşme')",
+      govdeYer: "Ödev metni — ne yapacaklar ve sana ne yazacaklar?",
+      gunEtiket: "Teslim süresi",
+      gun: (n: number) => `${n} gün`,
+      gonder: "Herkese Gönder",
+      onay: (e: string) => `"${e}" tüm katılımcılara ödev olarak gönderilsin mi?`,
+      gonderiliyor: "Gönderiliyor…",
+      gonderildi: (n: number) => `${n} katılımcıya ödev gönderildi ✓`,
+      bosUyari: "Başlık ve metin gerekli.",
+      hata: "Gönderilemedi, tekrar dene.",
+    },
     // #8 Tek akışlı kurulum sihirbazı: CSV → kod → QR, adım adım
     kurulum: {
       baslik: "Kurulum Sihirbazı",
@@ -1432,6 +1448,7 @@ export const tr = {
       kamp_kilit_kodu_ayarlandi: "Kamp kilit kodu ayarlandı",
       bosluk_acildi: "Boşluk Anı açıldı",
       bosluk_kapatildi: "Boşluk Anı kapatıldı",
+      odev_gonderildi: "Ödev gönderildi",
     } as Record<string, string>,
   },
 } as const;
