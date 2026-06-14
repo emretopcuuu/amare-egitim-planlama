@@ -5,6 +5,7 @@ import GolArkaplan from "@/components/gol/GolArkaplan";
 import AltNav from "@/components/AltNav";
 import BaglantiDurumu from "@/components/BaglantiDurumu";
 import AcilisSplash from "@/components/AcilisSplash";
+import IlkKarsilama from "@/components/IlkKarsilama";
 import AtlaBaglantisi from "@/components/AtlaBaglantisi";
 import ProvaModuBayragi from "@/components/ProvaModuBayragi";
 import "./globals.css";
@@ -99,6 +100,7 @@ export default async function RootLayout({
         <GolArkaplan />
         {children}
         <AltNav />
+        <IlkKarsilama />
         <BaglantiDurumu />
       </body>
     </html>

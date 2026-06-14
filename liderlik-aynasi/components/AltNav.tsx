@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
@@ -21,15 +21,39 @@ const SEKMELER = [
 // kamp açılmadan görev/değerlendirme sekmeleri görünmesin.
 const GIZLI = ["/giris", "/admin", "/ekran", "/sahne", "/yansiman", "/pusula"];
 
+type Kivilcim = {
+  toplam: number;
+  unvan: string;
+  sonraki: string | null;
+  kalan: number;
+  yuzde: number;
+};
+
 export default function AltNav() {
   const pathname = usePathname();
   const gizli = GIZLI.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  const [kiv, setKiv] = useState<Kivilcim | null>(null);
 
   // Çubuk görünürken içerik altına nefes payı bırak (sabit çubuk içeriği örtmesin)
   useEffect(() => {
     document.body.classList.toggle("alt-nav-acik", !gizli);
     return () => document.body.classList.remove("alt-nav-acik");
   }, [gizli]);
+
+  // #2 Kalıcı Kıvılcım şeridi: her ekranda ilerleme görünür kalsın.
+  useEffect(() => {
+    if (gizli) return;
+    let iptal = false;
+    fetch("/api/kivilcim")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!iptal && d) setKiv(d);
+      })
+      .catch(() => {});
+    return () => {
+      iptal = true;
+    };
+  }, [gizli, pathname]);
 
   if (gizli) return null;
 
@@ -39,6 +63,24 @@ export default function AltNav() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-midnight/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md print:hidden">
+      {/* #2 Kıvılcım ilerleme şeridi — toplam + unvan + sonraki rozete kalan */}
+      {kiv && (
+        <Link href="/gorevler" className="block border-b border-white/5 px-4 pb-1 pt-1.5">
+          <div className="mx-auto flex w-full max-w-md items-center gap-2 text-[0.7rem]">
+            <span className="font-bold text-gold">⚡ {kiv.toplam}</span>
+            <span className="text-slate-400">{kiv.unvan}</span>
+            <span className="ml-auto text-slate-500">
+              {kiv.sonraki ? t.kivilcimSonraki(kiv.kalan, kiv.sonraki) : t.kivilcimZirve}
+            </span>
+          </div>
+          <div className="mx-auto mt-1 h-1 w-full max-w-md overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-700"
+              style={{ width: `${kiv.yuzde}%` }}
+            />
+          </div>
+        </Link>
+      )}
       <div className="mx-auto flex w-full max-w-md items-stretch justify-around">
         {SEKMELER.map((s) => {
           const aktif = aktifMi(s.href);

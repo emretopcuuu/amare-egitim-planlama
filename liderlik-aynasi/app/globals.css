@@ -41,14 +41,15 @@ p {
 /* Alt navigasyon çubuğu görünürken içerik altına nefes payı (sabit çubuk
    içeriği örtmesin). Yalnız katılımcı ekranlarında gövdeye sınıf eklenir. */
 body.alt-nav-acik main {
-  /* Alt çubuk + iOS ana çubuğu (safe-area) için nefes payı; başparmak
-     bölgesindeki birincil butonlar çubuğun arkasında kalmasın (#2). */
-  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+  /* Alt çubuk (kıvılcım şeridi + sekmeler) + iOS ana çubuğu (safe-area) için
+     nefes payı; başparmak bölgesindeki birincil butonlar çubuğun arkasında
+     kalmasın. */
+  padding-bottom: calc(6.75rem + env(safe-area-inset-bottom));
 }
 
 /* Bağlantı durumu şeridi, alt çubuk açıkken onun üstüne otursun (örtmesin). */
 body.alt-nav-acik .baglanti-serit {
-  bottom: 4.25rem;
+  bottom: 5.75rem;
 }
 
 /* "✓ Kaydedildi" güvencesi yumuşakça belirir (ani sıçrama olmasın). */

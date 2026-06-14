@@ -26,6 +26,34 @@ export const tr = {
     degerlendir: "Değerlendir",
     gorevler: "Görevler",
     duvar: "Duvar",
+    kivilcimSonraki: (kalan: number, ad: string) => `${kalan} ⚡ → ${ad}`,
+    kivilcimZirve: "🏆 Zirve",
+  },
+  // #1 İlk açılış mikro-turu (AYNA kendini tanıtır)
+  karsilama: {
+    atla: "Geç",
+    ileri: "İleri",
+    basla: "Başlayalım",
+    adimlar: [
+      {
+        ikon: "🪞",
+        baslik: "Ben AYNA",
+        metin:
+          "Bu yolculuk boyunca seni izleyeceğim. Görünmez olacağım ama hep buradayım — sana özel görevler vereceğim, çabanı ölçeceğim.",
+      },
+      {
+        ikon: "👁",
+        baslik: "Sen, başkalarının gözünden",
+        metin:
+          "Kendini nasıl gördüğünle başkalarının seni nasıl gördüğünü yan yana koyacağız. Kapanışta aynan açılacak — çoğu kişi orada kendini ilk kez görüyor.",
+      },
+      {
+        ikon: "✨",
+        baslik: "Tek kuralım var",
+        metin:
+          "Kendine dürüst ol. Gerisini bana bırak. Her görev, her puan seni bir adım yaklaştırıyor. Hazır mısın?",
+      },
+    ],
   },
   // Erişilebilirlik: yazı boyutu kontrolü (yaşı ne olursa olsun rahat okusun)
   yaziBoyu: {
