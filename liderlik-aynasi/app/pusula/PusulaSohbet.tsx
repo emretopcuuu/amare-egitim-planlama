@@ -16,10 +16,12 @@ export default function PusulaSohbet({
   baslangic,
   rizaVar,
   onceliklerVar,
+  oncelikler = [],
 }: {
   baslangic: Mesaj[];
   rizaVar: boolean;
   onceliklerVar: boolean;
+  oncelikler?: string[];
 }) {
   const router = useRouter();
   const ilkFaz: Faz =
@@ -233,14 +235,36 @@ export default function PusulaSohbet({
   }
 
   // ---- Sohbet ----
+  // Sunucudan gelen liste (dönen kullanıcı) yoksa oturum içi girilen maddeler.
+  const gosterListe = oncelikler.length ? oncelikler : maddeler;
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
-      <header className="shrink-0 pb-4 text-center">
+      <header className="shrink-0 pb-3 text-center">
         <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
           {tr.app.name}
         </p>
         <h1 className="prizma-serif ay-metin mt-1 text-xl font-semibold">{t.baslik}</h1>
       </header>
+
+      {/* Önceliğini görüp seçebilesin diye liste sohbet boyunca görünür; dokun → yanıta yaz */}
+      {gosterListe.length > 0 && (
+        <div className="shrink-0 pb-3">
+          <p className="mb-1.5 text-center text-[0.65rem] uppercase tracking-wide text-slate-500">
+            {t.listeHatirlat}
+          </p>
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {gosterListe.map((m, i) => (
+              <button
+                key={i}
+                onClick={() => setGirdi(m)}
+                className="rounded-full border border-royal-light/30 bg-midnight-soft px-3 py-1 text-sm text-slate-200 transition-colors hover:border-gold"
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 space-y-3 overflow-y-auto pb-3">
         {mesajlar.map((m, i) => (

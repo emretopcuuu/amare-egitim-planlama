@@ -15,11 +15,18 @@ export default async function PusulaSayfa() {
   if (session.rol !== "participant") redirect("/");
 
   const db = supabaseAdmin();
-  const [durum, gecmis, { data: kisi }] = await Promise.all([
+  const [durum, gecmis, { data: kisi }, { data: pus }] = await Promise.all([
     pusulaDurum(db, session.sub),
     pusulaGecmis(db, session.sub),
     db.from("participants").select("consent_at").eq("id", session.sub).maybeSingle(),
+    db.from("pusula").select("oncelikler").eq("participant_id", session.sub).maybeSingle(),
   ]);
+
+  // Sohbet sırasında kişi listesini görüp seçebilsin diye öncelikleri taşı.
+  const oncelikler = ((pus?.oncelikler as { sira: number; metin: string }[]) ?? [])
+    .slice()
+    .sort((a, b) => a.sira - b.sira)
+    .map((o) => o.metin);
 
   if (durum.tamam) {
     return (
@@ -44,6 +51,7 @@ export default async function PusulaSayfa() {
       baslangic={gecmis}
       rizaVar={!!kisi?.consent_at}
       onceliklerVar={durum.onceliklerVar}
+      oncelikler={oncelikler}
     />
   );
 }
