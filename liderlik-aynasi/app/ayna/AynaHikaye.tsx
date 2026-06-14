@@ -25,7 +25,13 @@ const TEMA: Record<string, string> = {
 
 // #3 Ayna Raporu "story" katmanı: kişinin en kritik içgörülerini tam-ekran,
 // kaydırmalı/otomatik akan slaytlar olarak gösterir — kör nokta doruk noktası.
-export default function AynaHikaye({ slaytlar }: { slaytlar: Slayt[] }) {
+export default function AynaHikaye({
+  slaytlar,
+  etiket,
+}: {
+  slaytlar: Slayt[];
+  etiket?: string;
+}) {
   const [acik, setAcik] = useState(false);
   const [i, setI] = useState(0);
 
@@ -55,7 +61,7 @@ export default function AynaHikaye({ slaytlar }: { slaytlar: Slayt[] }) {
         }}
         className="btn-kor parilti flex h-12 w-full items-center justify-center rounded-2xl text-base font-bold"
       >
-        ▶ {t.hikayeIzle}
+        {etiket ?? `▶ ${t.hikayeIzle}`}
       </button>
 
       {acik &&
