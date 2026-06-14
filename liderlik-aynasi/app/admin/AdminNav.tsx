@@ -28,6 +28,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
     ad: g.canli,
     ikon: "🎛",
     linkler: [
+      { href: "/admin/analiz", etiket: n.analiz },
       { href: "/admin/ayna-direktoru", etiket: n.ayna },
       { href: "/admin/komutan", etiket: n.komutan },
       { href: "/admin/sahne-kumanda", etiket: n.sahne },

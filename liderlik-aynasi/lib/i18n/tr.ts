@@ -614,6 +614,7 @@ export const tr = {
       sozler: "Sözler",
       test: "Prova",
       kurulum: "Kurulum",
+      analiz: "Analiz",
     },
     // #3 Nav kategorileri: 14 düz sekme yerine 4 grup + Panel
     navGrup: {
@@ -693,6 +694,29 @@ export const tr = {
       gonderildi: (n: number) => `${n} katılımcıya ödev gönderildi ✓`,
       bosUyari: "Başlık ve metin gerekli.",
       hata: "Gönderilemedi, tekrar dene.",
+    },
+    // FAZ 4 (Eylül kapısı) + FAZ 5 (cascade) — ölçüm/analiz panosu
+    analiz: {
+      baslik: "Analiz",
+      aciklama:
+        "Eylül kapısı: üç ekseni AYRI ölç. İş sayısı tek başına dönüşümü doğrulamaz — kimlik, davranış ve sonucu birbirine karıştırma.",
+      kimlikBaslik: "1 · Kimlik dayanıklılığı",
+      kimlikAciklama: "Pusula + yeni cümle ayakta mı? (dönüşümün gerçek sinyali)",
+      pusula: "Pusula",
+      bosluk: "Yeni cümle",
+      kanitsiz: "Kanıtsız",
+      davranisBaslik: "2 · Davranış / aktivite",
+      davranisAciklama: "Motor dönüyor mu? Görev ritmi, churn, ret, momentum.",
+      gorevOran: "Görev tamamlama",
+      churn: "Kayma (risk)",
+      red: "Reddi Kutla",
+      momentum: "Momentum ort.",
+      isBaslik: "3 · İş sonucu",
+      isAciklama: "Lagging gösterge — geç gelir, dış kaynaktan.",
+      isNot: "İş metrikleri (ciro, kayıt, ekip büyümesi) dış sistemden gelir; burada manuel/entegrasyonla eklenir. Tek başına dönüşümü doğrulamaz.",
+      takimBaslik: "Takım kırılımı (cascade)",
+      takimAciklama: "Her takım liderinin kendi ekibinin durumu — tüm Türkiye ölçeğinin provası.",
+      takim: "Takım",
     },
     // #8 Tek akışlı kurulum sihirbazı: CSV → kod → QR, adım adım
     kurulum: {
