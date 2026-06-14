@@ -314,6 +314,8 @@ export const tr = {
   // Takdir Duvarı: puandan farklı, daima isimli ve olumlu — insana kısa not
   takdir: {
     baslik: "💛 Takdir Duvarı",
+    bildirimBaslik: "💛 Yeni bir takdir",
+    bildirimMetin: (ad: string) => `${ad} sana güzel bir şey yazdı — Takdir Duvarı'na bak.`,
     altBaslik:
       "Birinin bir davranışı seni etkilediyse, ona kısa bir not bırak. İsmin görünür — bu güzel.",
     gonderBaslik: "Takdir Gönder",

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import TakdirGonder from "./TakdirGonder";
+import Avatar from "@/components/Avatar";
 
 export const metadata = { title: "Takdir Duvarı — Liderlik Aynası" };
 
@@ -24,11 +25,29 @@ export default async function TakdirPage() {
       .order("full_name"),
     db
       .from("kudos")
-      .select("id, message, created_at, gonderen:participants!kudos_from_id_fkey(full_name)")
+      .select(
+        "id, message, created_at, gonderen:participants!kudos_from_id_fkey(full_name, profil_foto_path)"
+      )
       .eq("to_id", session.sub)
       .eq("is_hidden", false)
       .order("created_at", { ascending: false }),
   ]);
+
+  // Gönderen avatarları için imzalı URL'ler
+  const gonderenYollar = [
+    ...new Set(
+      (gelenler ?? [])
+        .map((g) => g.gonderen?.profil_foto_path)
+        .filter((p): p is string => !!p)
+    ),
+  ];
+  const fotoUrl = new Map<string, string>();
+  if (gonderenYollar.length > 0) {
+    const { data: imzali } = await db.storage
+      .from("sesler")
+      .createSignedUrls(gonderenYollar, 3600);
+    for (const im of imzali ?? []) if (im.path && im.signedUrl) fotoUrl.set(im.path, im.signedUrl);
+  }
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
@@ -59,9 +78,20 @@ export default async function TakdirPage() {
                   <p className="text-base leading-relaxed text-slate-100">
                     “{g.message}”
                   </p>
-                  <p className="mt-2 text-sm font-semibold text-gold-light">
-                    {t.kimden(g.gonderen?.full_name ?? "Bir arkadaşın")}
-                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <Avatar
+                      ad={g.gonderen?.full_name ?? "?"}
+                      url={
+                        g.gonderen?.profil_foto_path
+                          ? fotoUrl.get(g.gonderen.profil_foto_path) ?? null
+                          : null
+                      }
+                      boyut="sm"
+                    />
+                    <p className="text-sm font-semibold text-gold-light">
+                      {t.kimden(g.gonderen?.full_name ?? "Bir arkadaşın")}
+                    </p>
+                  </div>
                 </li>
               ))}
             </ul>
