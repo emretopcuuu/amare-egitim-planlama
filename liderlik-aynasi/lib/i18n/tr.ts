@@ -514,8 +514,32 @@ export const tr = {
     rizaKabul: "Anladım, başlayalım",
     listeBaslik: "Hayatındaki öncelikler",
     listeAciklama:
-      "Olmazsa olmaz dediğin, en çok önemsediğin ya da gelecekte sahip olmak istediğin şeyler. Deneyim gibi düşün — 'aileyle vakit', 'kendi işim', 'sağlık' gibi. En az 3, en çok 10 madde yaz.",
+      "Olmazsa olmaz dediğin, en çok önemsediğin ya da gelecekte sahip olmak istediğin şeyler. Deneyim gibi düşün — 'aileyle vakit', 'kendi işim', 'sağlık' gibi. Her seferinde bir tane yaz; en az 3, en çok 10 madde.",
     listeYer: (n: number) => `${n}. öncelik`,
+    // Madde madde (tek tek) akış
+    listeTekYer: "Tek bir şey yaz…",
+    listeEkle: "Ekle",
+    listeYazdiklarin: "Yazdıkların",
+    // Her eklemeden sonra teşvik edici bir sonraki soru (n = şu ana dek eklenen sayı)
+    listeTesvik: (n: number) => {
+      if (n === 0)
+        return "Hayatta en çok değer verdiğin, en önemsediğin şey nedir?";
+      const ord = [
+        "Birincisini",
+        "İkincisini",
+        "Üçüncüsünü",
+        "Dördüncüsünü",
+        "Beşincisini",
+        "Altıncısını",
+        "Yedincisini",
+        "Sekizincisini",
+        "Dokuzuncusunu",
+        "Onuncusunu",
+      ];
+      const etiket = ord[n - 1] ?? `${n}.`;
+      return `${etiket} yazdın 🌟 Bir tane daha — hayatta değer verdiğin, önemsediğin başka ne var?`;
+    },
+    listeSonHatirlatma: "Onuncuyu da yazdın. Hazırsan tamamla.",
     listeDevam: "Listeyi tamamla",
     listeAzUyari: (n: number) => `En az ${n} madde yaz.`,
     girisYer: "Yanıtını buraya yaz…",

@@ -27,11 +27,13 @@ export default function PusulaSohbet({
 
   const [faz, setFaz] = useState<Faz>(ilkFaz);
   const [mesajlar, setMesajlar] = useState<Mesaj[]>(baslangic);
-  const [liste, setListe] = useState<string[]>(Array(BLANK_SAYISI).fill(""));
+  const [maddeler, setMaddeler] = useState<string[]>([]); // tek tek eklenen öncelikler
+  const [maddeGirdi, setMaddeGirdi] = useState("");
   const [girdi, setGirdi] = useState("");
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const altRef = useRef<HTMLDivElement>(null);
+  const maddeRef = useRef<HTMLInputElement>(null);
   const acilisRef = useRef(false);
 
   useEffect(() => {
@@ -72,8 +74,19 @@ export default function PusulaSohbet({
     setFaz("liste");
   }
 
+  // Tek bir maddeyi listeye ekle, girişi temizle, odağı koru (tek tek akış).
+  function maddeEkle() {
+    const m = maddeGirdi.trim();
+    if (!m || maddeler.length >= BLANK_SAYISI) return;
+    setMaddeler((l) => [...l, m]);
+    setMaddeGirdi("");
+    setHata(null);
+    maddeRef.current?.focus();
+  }
+
   async function listeyiTamamla() {
-    const dolu = liste.map((s) => s.trim()).filter(Boolean);
+    const bekleyen = maddeGirdi.trim();
+    const dolu = bekleyen ? [...maddeler, bekleyen].slice(0, BLANK_SAYISI) : maddeler;
     if (dolu.length < MIN_MADDE) {
       setHata(t.listeAzUyari(MIN_MADDE));
       return;
@@ -128,34 +141,80 @@ export default function PusulaSohbet({
     );
   }
 
-  // ---- Liste formu (madde madde) ----
+  // ---- Liste (tek tek / madde madde) ----
   if (faz === "liste") {
-    const doluSayi = liste.filter((s) => s.trim()).length;
+    const tamam = maddeler.length >= BLANK_SAYISI;
+    const yeterli = maddeler.length >= MIN_MADDE;
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
         <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.listeBaslik}</h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-400">{t.listeAciklama}</p>
-        <div className="mt-5 flex-1 space-y-2">
-          {liste.map((deger, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <span className="w-6 shrink-0 text-right text-sm font-bold text-gold-light">
-                {i + 1}
-              </span>
+
+        {/* Yazdıkça öncekiler görünür kalsın */}
+        {maddeler.length > 0 && (
+          <div className="mt-5">
+            <p className="text-xs uppercase tracking-wide text-slate-500">
+              {t.listeYazdiklarin} ({maddeler.length}/{BLANK_SAYISI})
+            </p>
+            <ol className="mt-2 space-y-1.5">
+              {maddeler.map((m, i) => (
+                <li
+                  key={i}
+                  className="flex items-center gap-3 rounded-xl border border-royal-light/20 bg-midnight-soft/60 px-3 py-2"
+                >
+                  <span className="w-5 shrink-0 text-right text-sm font-bold text-gold-light">
+                    {i + 1}
+                  </span>
+                  <span className="flex-1 text-base text-slate-100">{m}</span>
+                  <button
+                    onClick={() => setMaddeler((l) => l.filter((_, j) => j !== i))}
+                    aria-label="Sil"
+                    className="shrink-0 px-1 text-slate-500 hover:text-red-400"
+                  >
+                    ✕
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {/* Teşvik eden tek soru + tek giriş */}
+        <div className="mt-6 flex-1">
+          <p className="text-base font-medium leading-relaxed text-slate-200">
+            {tamam ? t.listeSonHatirlatma : t.listeTesvik(maddeler.length)}
+          </p>
+          {!tamam && (
+            <div className="mt-3 flex items-center gap-2">
               <input
-                value={deger}
-                onChange={(e) =>
-                  setListe((l) => l.map((v, j) => (j === i ? e.target.value : v)))
-                }
-                placeholder={t.listeYer(i + 1)}
+                ref={maddeRef}
+                value={maddeGirdi}
+                onChange={(e) => setMaddeGirdi(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    maddeEkle();
+                  }
+                }}
+                autoFocus
+                placeholder={t.listeTekYer}
                 className="flex-1 rounded-xl border border-royal-light/30 bg-midnight-soft px-3 py-2.5 text-base text-slate-100 outline-none focus:border-gold"
               />
+              <button
+                onClick={maddeEkle}
+                disabled={!maddeGirdi.trim()}
+                className="btn-kor flex h-11 shrink-0 items-center justify-center rounded-xl px-5 text-base font-bold disabled:opacity-40"
+              >
+                {t.listeEkle}
+              </button>
             </div>
-          ))}
+          )}
         </div>
+
         {hata && <p className="mt-3 text-center text-sm text-red-400">{hata}</p>}
         <button
           onClick={listeyiTamamla}
-          disabled={mesgul || doluSayi < MIN_MADDE}
+          disabled={mesgul || !yeterli}
           className="btn-kor parilti mt-5 flex h-14 w-full shrink-0 items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
         >
           {mesgul ? t.dusunuyor : t.listeDevam}
