@@ -10,6 +10,7 @@ import AynaRituel from "@/components/AynaRituel";
 import EgilenKart from "@/components/EgilenKart";
 import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
+import YolculukSeridi from "@/components/YolculukSeridi";
 import KonusanYansima from "@/components/KonusanYansima";
 import SicakAdim from "@/components/SicakAdim";
 import UstMenu from "@/components/UstMenu";
@@ -189,24 +190,28 @@ export default async function AnaSayfa() {
   }
 
   const ust = (
-    <header className="flex items-start justify-between gap-3">
-      <div className="min-w-0">
-        <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
-          {tr.app.name}
-        </p>
-        {/* İsim ASLA kesilmesin: truncate yerine sığmazsa alt satıra sarsın */}
-        <h1 className="prizma-serif ay-metin mt-1 text-xl font-semibold leading-tight break-words">
-          {t.hosGeldin(session.ad)}
-        </h1>
-      </div>
-      <UstMenu
-        ozTamam={ozTamam}
-        dalgaAcik={!!dalga}
-        raporlarAcik={raporlarAcik}
-        yansimanHazir={yansimanHazir}
-        ozHedefId={session.sub}
-      />
-    </header>
+    <div>
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
+            {tr.app.name}
+          </p>
+          {/* İsim ASLA kesilmesin: truncate yerine sığmazsa alt satıra sarsın */}
+          <h1 className="prizma-serif ay-metin mt-1 text-xl font-semibold leading-tight break-words">
+            {t.hosGeldin(session.ad)}
+          </h1>
+        </div>
+        <UstMenu
+          ozTamam={ozTamam}
+          dalgaAcik={!!dalga}
+          raporlarAcik={raporlarAcik}
+          yansimanHazir={yansimanHazir}
+          ozHedefId={session.sub}
+        />
+      </header>
+      {/* #5 "Sen neredesin" — kampın neresindeyiz şeridi */}
+      <YolculukSeridi bugun={bugunIst} />
+    </div>
   );
 
   // 1) ÖZ-PUAN KAPISI — dalga açıkken kendini puanlamadan başka hiçbir şey yok.
