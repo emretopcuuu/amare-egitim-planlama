@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { kampKilitliMi } from "@/lib/pusula";
 import { tr } from "@/lib/i18n/tr";
 import FotoYukle from "./FotoYukle";
+import DuvarIzgara from "./DuvarIzgara";
 
 export const metadata = { title: "Anı Duvarı — Liderlik Aynası" };
 
@@ -39,11 +40,32 @@ export default async function DuvarPage() {
     return data?.signedUrl ?? null;
   }
 
+  // Beğeni + yorum sayıları
+  const onayIdler = (onayli ?? []).map((f) => f.id);
+  const begeniHarita = new Map<string, number>();
+  const benimBegeni = new Set<string>();
+  const yorumHarita = new Map<string, number>();
+  if (onayIdler.length > 0) {
+    const [{ data: begeniler }, { data: yorumlar }] = await Promise.all([
+      db.from("foto_begeni").select("photo_id, participant_id").in("photo_id", onayIdler),
+      db.from("foto_yorum").select("photo_id").eq("is_hidden", false).in("photo_id", onayIdler),
+    ]);
+    for (const b of begeniler ?? []) {
+      begeniHarita.set(b.photo_id, (begeniHarita.get(b.photo_id) ?? 0) + 1);
+      if (b.participant_id === session.sub) benimBegeni.add(b.photo_id);
+    }
+    for (const y of yorumlar ?? [])
+      yorumHarita.set(y.photo_id, (yorumHarita.get(y.photo_id) ?? 0) + 1);
+  }
+
   const duvar = await Promise.all(
     (onayli ?? []).map(async (f) => ({
       id: f.id,
       url: await imzala(f.path),
       caption: f.caption,
+      begeniSayi: begeniHarita.get(f.id) ?? 0,
+      begendim: benimBegeni.has(f.id),
+      yorumSayi: yorumHarita.get(f.id) ?? 0,
     }))
   );
   const benim = await Promise.all(
@@ -100,22 +122,7 @@ export default async function DuvarPage() {
           {duvar.length === 0 ? (
             <p className="mt-3 text-base leading-relaxed text-slate-300">{t.bosDuvar}</p>
           ) : (
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {duvar.map(
-                (f) =>
-                  f.url && (
-                    <figure key={f.id} className="overflow-hidden rounded-xl">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={f.url} alt="" className="aspect-square w-full object-cover" />
-                      {f.caption && (
-                        <figcaption className="bg-black/40 px-2 py-1 text-xs text-slate-200">
-                          {f.caption}
-                        </figcaption>
-                      )}
-                    </figure>
-                  )
-              )}
-            </div>
+            <DuvarIzgara fotolar={duvar} />
           )}
         </section>
 

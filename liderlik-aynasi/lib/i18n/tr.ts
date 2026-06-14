@@ -235,6 +235,9 @@ export const tr = {
   // Fotoğraf anı duvarı: an yakala → moderasyon → ortak duvar + büyük ekran
   duvar: {
     baslik: "📸 Anı Duvarı",
+    yorumYok: "İlk yorumu sen yaz.",
+    yorumYer: "Bir yorum yaz…",
+    yorumGonder: "Gönder",
     altBaslik:
       "Kamptan bir an yakala, paylaş. Onaylandıktan sonra duvarda ve büyük ekranda belirir.",
     yukle: "📷 Fotoğraf Çek / Seç",
