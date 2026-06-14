@@ -55,7 +55,7 @@ export default function AdminNav({
           <Link
             key={l.href}
             href={l.href}
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`shrink-0 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
               pathname === l.href
                 ? "bg-royal/40 text-gold-light"
                 : "text-slate-300 hover:bg-midnight-card"
@@ -89,7 +89,7 @@ export default function AdminNav({
         <button
           onClick={cikis}
           disabled={cikiliyor}
-          className="shrink-0 rounded-lg px-3 py-1.5 text-sm text-slate-400 transition-colors hover:bg-midnight-card hover:text-slate-200 disabled:opacity-50"
+          className="shrink-0 rounded-lg px-3 py-2 text-sm text-slate-400 transition-colors hover:bg-midnight-card hover:text-slate-200 disabled:opacity-50"
         >
           {tr.anaSayfa.cikisYap}
         </button>

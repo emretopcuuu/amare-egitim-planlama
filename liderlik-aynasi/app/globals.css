@@ -102,6 +102,19 @@ body.gunes-modu .kart-cerceve {
   background-color: rgba(8, 20, 33, 0.94) !important;
 }
 
+/* #1 Admin telefon-öncelikli: içerik (nav hariç) butonları rahat dokunma
+   hedefi (≥44px). Nav sticky çubuk kasıtlı kompakt kalır. */
+.admin-kok main button,
+.admin-kok main a[role="button"],
+.admin-kok main label.cursor-pointer {
+  min-height: 44px;
+}
+.admin-kok main input[type="text"],
+.admin-kok main input[type="number"],
+.admin-kok main input[type="search"] {
+  min-height: 44px;
+}
+
 /* #7 Kutlama şeridi yukarıdan yumuşakça iner. */
 @keyframes kutlama-in {
   from {
