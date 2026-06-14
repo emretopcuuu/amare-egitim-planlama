@@ -22,21 +22,26 @@ export default function AynaAniKontrol({ acik, mektupHazir, mektupToplam }: Prop
   const [uretimDurumu, setUretimDurumu] = useState<string | null>(null);
   const [hazirSayisi, setHazirSayisi] = useState(mektupHazir);
 
-  async function degistir() {
+  async function degistir(hedef: boolean, geriAlinabilir = true) {
     setBekliyor(true);
     setHata(null);
     try {
       const res = await fetch("/api/admin/ayna", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ acik: !acik }),
+        body: JSON.stringify({ acik: hedef }),
       });
       if (!res.ok) {
         const veri = await res.json().catch(() => null);
         setHata(veri?.hata ?? t.hata);
         return;
       }
-      tost(!acik ? tr.admin.tost.raporAcildi : tr.admin.tost.raporGizlendi, "basari");
+      // Geri-al: hedefin tersine çevirir (zincir olmasın diye geriAlinabilir=false).
+      tost(
+        hedef ? tr.admin.tost.raporAcildi : tr.admin.tost.raporGizlendi,
+        "basari",
+        geriAlinabilir ? () => degistir(!hedef, false) : undefined
+      );
       router.refresh();
     } catch {
       setHata(t.hata);
@@ -119,7 +124,7 @@ export default function AynaAniKontrol({ acik, mektupHazir, mektupToplam }: Prop
         </p>
         <OnayliDugme
           onayMetni={acik ? tr.admin.onay.raporKapat : tr.admin.onay.raporAc}
-          onaylandi={degistir}
+          onaylandi={() => degistir(!acik)}
           disabled={bekliyor}
           className={`rounded-xl px-6 py-3 font-bold transition-colors disabled:opacity-50 ${
             acik

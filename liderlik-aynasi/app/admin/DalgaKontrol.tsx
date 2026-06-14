@@ -13,7 +13,7 @@ export default function DalgaKontrol({ dalgalar }: { dalgalar: Dalga[] }) {
   const [bekleyen, setBekleyen] = useState<number | null>(null);
   const [hata, setHata] = useState<string | null>(null);
 
-  async function degistir(dalgaId: number, acik: boolean) {
+  async function degistir(dalgaId: number, acik: boolean, geriAlinabilir = true) {
     setBekleyen(dalgaId);
     setHata(null);
     try {
@@ -27,7 +27,12 @@ export default function DalgaKontrol({ dalgalar }: { dalgalar: Dalga[] }) {
         setHata(veri?.hata ?? tr.admin.dalga.hata);
         return;
       }
-      tost(acik ? tr.admin.tost.dalgaAcildi : tr.admin.tost.dalgaKapatildi, "basari");
+      // Geri-al: aynı dalgayı tersine çevirir (zincir olmasın diye geriAlinabilir=false).
+      tost(
+        acik ? tr.admin.tost.dalgaAcildi : tr.admin.tost.dalgaKapatildi,
+        "basari",
+        geriAlinabilir ? () => degistir(dalgaId, !acik, false) : undefined
+      );
       router.refresh();
     } catch {
       setHata(tr.admin.dalga.hata);

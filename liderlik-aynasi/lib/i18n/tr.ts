@@ -583,11 +583,14 @@ export const tr = {
       hata: "Gönderilemedi, tekrar dene.",
     },
     // #10 Eylem tostu mesajları (köşede "✓ yapıldı" geri bildirimi)
+    // #3 geriAl: tostta tek dokunuşla son eylemi geri alma
     tost: {
       dalgaAcildi: "Dalga açıldı ✓",
       dalgaKapatildi: "Dalga kapatıldı",
       raporAcildi: "Ayna Raporları açıldı ✓",
       raporGizlendi: "Raporlar yeniden gizlendi",
+      geriAl: "↩ Geri al",
+      geriAlindi: "Geri alındı",
     },
     // #10 Güvenli geri-alma: kritik anahtarlarda yanlış dokunuş akışı bozmasın
     onay: {
