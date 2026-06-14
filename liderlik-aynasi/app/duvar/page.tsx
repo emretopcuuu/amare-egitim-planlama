@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { kampKilitliMi } from "@/lib/pusula";
 import { tr } from "@/lib/i18n/tr";
 import FotoYukle from "./FotoYukle";
 
@@ -15,6 +16,8 @@ export default async function DuvarPage() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
+  // FAZ 0: kamp açılmadan anı duvarı kilitli — bekleme ekranına dön.
+  if (await kampKilitliMi(db, session.sub)) redirect("/pusula");
   const kova = db.storage.from("sesler");
 
   const [{ data: onayli }, { data: benimkiler }] = await Promise.all([

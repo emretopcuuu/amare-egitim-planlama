@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { kampKilitliMi } from "@/lib/pusula";
 import {
   acikDalga,
   aktifOzellikler,
@@ -19,6 +20,8 @@ export default async function DegerlendirPage() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
+  // FAZ 0: kamp açılmadan değerlendirme kilitli — bekleme ekranına dön.
+  if (await kampKilitliMi(db, session.sub)) redirect("/pusula");
   const dalga = await acikDalga(db);
 
   if (!dalga) {

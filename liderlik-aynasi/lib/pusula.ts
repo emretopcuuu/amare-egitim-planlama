@@ -368,6 +368,17 @@ export async function pusulaCekirdek(
   };
 }
 
+// FAZ 0 kapısı: Pusula penceresi açık ve kişi kampı (oda QR) henüz açmadıysa
+// kamp özellikleri (görevler, değerlendirme, duvar...) kilitlidir — kişi
+// bekleme/Pusula ekranına yönlendirilir. Pencere kapalıyken hep false.
+export async function kampKilitliMi(db: Db, pid: string): Promise<boolean> {
+  const [{ data: kisi }, { data: ayar }] = await Promise.all([
+    db.from("participants").select("camp_unlocked_at").eq("id", pid).maybeSingle(),
+    db.from("settings").select("value").eq("key", "pusula_acik").maybeSingle(),
+  ]);
+  return ayar?.value === "true" && !kisi?.camp_unlocked_at;
+}
+
 // Gate/UI için durum: aşama, tamamlandı mı, öncelik listesi girilmiş mi.
 export async function pusulaDurum(
   db: Db,
