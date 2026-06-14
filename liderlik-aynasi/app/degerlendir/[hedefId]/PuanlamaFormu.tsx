@@ -6,6 +6,7 @@ import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import { titret, suDalgasi } from "@/lib/his";
 import Avatar from "@/components/Avatar";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 type Ozellik = { id: number; name: string; observation_hint: string };
 type Girdi = { puan: number | null; yorum: string };
@@ -425,6 +426,15 @@ export default function PuanlamaFormu({
                   {tr.puanlama.yorumZorunlu}
                 </p>
               )}
+              <div className="mt-2">
+                <MikrofonButonu
+                  onMetin={(p) =>
+                    guncelle(o.id, {
+                      yorum: (g.yorum.trim() ? `${g.yorum.trim()} ` : "") + p,
+                    })
+                  }
+                />
+              </div>
               <button
                 onClick={() => (g.yorum.trim() ? ileri() : setYorumUyari(true))}
                 className="btn-kor mt-4 flex h-16 w-full items-center justify-center rounded-2xl text-xl font-bold"

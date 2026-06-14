@@ -193,7 +193,8 @@ export default function GorevYanitFormu({ gorevId }: { gorevId: string }) {
           {t.hata}
         </p>
       )}
-      <div className="mt-2 flex gap-2">
+      <p className="mt-2 text-xs text-slate-500">{t.sesliIpucu}</p>
+      <div className="mt-1 flex gap-2">
         <MikrofonButonu
           disabled={gonderiliyor}
           onMetin={(parca) =>

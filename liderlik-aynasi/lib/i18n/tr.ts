@@ -1748,6 +1748,7 @@ export const tr = {
     dinleItiraz: "🗣 İtirazı dinle",
     oku: "AYNA'dan dinle",
     okumaDurdur: "Durdur",
+    sesliIpucu: "🎤 Yazmak istemiyorsan dokun ve AYNA'ya anlat.",
     durdur: "■ Durdur",
     senkronTesekkur:
       "Tam zamanında. Şu anda onlarca kişi seninle aynı şeyi yaptı — kolektif enerji böyle kurulur. +8 ⚡",
