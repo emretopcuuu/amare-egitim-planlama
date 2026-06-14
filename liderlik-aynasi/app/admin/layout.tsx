@@ -12,7 +12,8 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const session = await getSession();
-  if (!session || session.rol !== "admin") return <>{children}</>;
+  const yetkili = session?.rol === "admin" || session?.rol === "yardimci";
+  if (!session || !yetkili) return <>{children}</>;
 
   const db = supabaseAdmin();
   const [dalga, { data: aynaAyari }] = await Promise.all([
@@ -26,6 +27,7 @@ export default async function AdminLayout({
         ad={session.ad}
         dalgaAdi={dalga?.name ?? null}
         aynaUyanik={aynaAyari?.value === "true"}
+        tamYetki={session.rol === "admin"}
       />
       {children}
       <AdminTost />

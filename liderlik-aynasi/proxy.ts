@@ -41,7 +41,15 @@ export async function proxy(req: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (pathname.startsWith("/admin") && session.rol !== "admin") {
+  if (pathname.startsWith("/admin")) {
+    if (session.rol === "admin") return NextResponse.next();
+    // Yardımcı görevli yalnız ana paneli (izleme) görür; diğer admin sayfaları
+    // yöneticiye özel — kenarda (proxy) engellenir, sayfa guard'larına gerek yok.
+    if (session.rol === "yardimci") {
+      return pathname === "/admin"
+        ? NextResponse.next()
+        : NextResponse.redirect(new URL("/admin", req.url));
+    }
     return NextResponse.redirect(new URL("/", req.url));
   }
 

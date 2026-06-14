@@ -32,8 +32,12 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.giris.hataCokFazlaDeneme }, { status: 429 });
   }
 
-  const beklenen = process.env.ADMIN_PASSWORD;
-  const basarili = !!beklenen && safeEqual(sifre, beklenen);
+  // Tam admin mi, yoksa sınırlı yardımcı görevli mi? İki ayrı parola.
+  const adminSifre = process.env.ADMIN_PASSWORD;
+  const yardimciSifre = process.env.YARDIMCI_PASSWORD;
+  const adminMi = !!adminSifre && safeEqual(sifre, adminSifre);
+  const yardimciMi = !adminMi && !!yardimciSifre && safeEqual(sifre, yardimciSifre);
+  const basarili = adminMi || yardimciMi;
   await recordAttempt(ip, basarili);
 
   if (!basarili) {
@@ -51,6 +55,7 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.giris.hataSunucu }, { status: 500 });
   }
 
-  await createSession({ sub: admin.id, ad: admin.full_name, rol: "admin" });
+  const rol = adminMi ? "admin" : "yardimci";
+  await createSession({ sub: admin.id, ad: admin.full_name, rol });
   return Response.json({ ad: admin.full_name });
 }
