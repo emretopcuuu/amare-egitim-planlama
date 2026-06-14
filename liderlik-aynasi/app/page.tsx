@@ -90,7 +90,11 @@ function BuyukKart({
 // göre TEK bir kart gösterir. İkincil her şey üstteki menüden açılır.
 // Öncelik: öz-puan kapısı → ses ritüeli → rapor → kişisel ses → değerlendirme →
 // görev → bekleme. "Kendini puanlamadan kamp sana açılmaz."
-export default async function AnaSayfa() {
+export default async function AnaSayfa({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/giris");
 
@@ -105,7 +109,9 @@ export default async function AnaSayfa() {
     db.from("settings").select("value").eq("key", "pusula_acik").maybeSingle(),
   ]);
   if (pusulaAyar?.value === "true" && !kisi?.camp_unlocked_at) {
-    redirect("/pusula");
+    // ?intro=1 (tanıtım testi) yönlendirmede kaybolmasın diye taşı.
+    const intro = (await searchParams).intro !== undefined;
+    redirect(intro ? "/pusula?intro=1" : "/pusula");
   }
 
   const [
