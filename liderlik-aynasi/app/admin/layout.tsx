@@ -21,7 +21,7 @@ export default async function AdminLayout({
   ]);
 
   return (
-    <div className="flex min-h-screen flex-1 flex-col">
+    <div className="admin-kok flex min-h-screen flex-1 flex-col">
       <AdminNav
         ad={session.ad}
         dalgaAdi={dalga?.name ?? null}
