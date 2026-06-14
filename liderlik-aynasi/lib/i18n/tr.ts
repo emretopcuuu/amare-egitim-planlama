@@ -1664,6 +1664,8 @@ export const tr = {
     baslik: "AYNA'nın Görevleri",
     dinle: "🔊 Yansımandan dinle",
     dinleItiraz: "🗣 İtirazı dinle",
+    oku: "AYNA'dan dinle",
+    okumaDurdur: "Durdur",
     durdur: "■ Durdur",
     senkronTesekkur:
       "Tam zamanında. Şu anda onlarca kişi seninle aynı şeyi yaptı — kolektif enerji böyle kurulur. +8 ⚡",

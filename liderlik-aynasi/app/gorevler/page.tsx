@@ -9,6 +9,7 @@ import { haftaBaslangici } from "@/lib/momentum";
 import { tr } from "@/lib/i18n/tr";
 import GorevYanitFormu from "./GorevYanitFormu";
 import SesCal from "@/components/SesCal";
+import OkuButonu from "@/components/OkuButonu";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -158,11 +159,13 @@ export default async function GorevlerPage() {
             <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
               {g.body}
             </p>
-            {sesUrller.has(g.id) && (
+            {sesUrller.has(g.id) ? (
               <SesCal
                 url={sesUrller.get(g.id)!}
                 etiket={g.kind === "simulasyon" ? t.dinleItiraz : t.dinle}
               />
+            ) : (
+              <OkuButonu metin={`${g.title}. ${g.body}`} />
             )}
             <GorevYanitFormu gorevId={g.id} />
           </section>
