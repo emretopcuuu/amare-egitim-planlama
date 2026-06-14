@@ -9,6 +9,17 @@ export const tr = {
     cevrimdisi: "İnternet yok — verilerin cihazında güvende. Bağlanınca kendiliğinden gönderilir.",
     geriGeldi: "İnternet geri geldi ✓",
   },
+  // İnsanca hata & boş durumlar: asla teknik metin / boş ekran (#6)
+  hata: {
+    simge: "🪞",
+    baslik: "Bir şey ters gitti",
+    aciklama: "Endişelenme — verilerin güvende. Birlikte tekrar deneyelim.",
+    tekrar: "Tekrar dene",
+    anaSayfa: "Ana sayfaya dön",
+    bulunamadiSimge: "🧭",
+    bulunamadiBaslik: "Burada bir şey yok",
+    bulunamadiAciklama: "Aradığın sayfa taşınmış ya da hiç var olmamış olabilir.",
+  },
   // Alt navigasyon çubuğu: en sık kullanılan 4 hedef, başparmak erişiminde
   altNav: {
     ana: "Ana sayfa",
