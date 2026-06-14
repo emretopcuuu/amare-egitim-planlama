@@ -61,9 +61,19 @@ export default async function QrPage() {
           {kartlar.map((k) => (
             <div
               key={k.id}
-              className="break-inside-avoid rounded-xl bg-white p-4 text-center text-black shadow print:rounded-none print:border print:border-gray-300 print:shadow-none"
+              className="break-inside-avoid overflow-hidden rounded-xl bg-white text-center text-black shadow print:rounded-none print:border print:border-gray-300 print:shadow-none"
             >
-              <p className="truncate text-sm font-bold">{k.full_name}</p>
+              {/* ONE TEAM marka bandı */}
+              <div className="bg-black px-3 py-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/oneteam-logo.jpg"
+                  alt="ONE TEAM"
+                  className="mx-auto h-12 w-auto object-contain"
+                />
+              </div>
+              <div className="p-4">
+              <p className="break-words text-base font-bold leading-tight">{k.full_name}</p>
               {k.team && <p className="text-xs text-gray-600">{k.team}</p>}
               <div
                 className="mx-auto mt-2 w-full max-w-40 [&>svg]:h-auto [&>svg]:w-full"
@@ -73,6 +83,7 @@ export default async function QrPage() {
                 {k.login_code}
               </p>
               <p className="text-[10px] text-gray-500">{t.kartAltyazi}</p>
+              </div>
             </div>
           ))}
         </div>
