@@ -104,3 +104,8 @@ Kod değil **ölçek kararı**:
   168 kişilik niyet anketinden, anonim engel haritası). Çalışan özet
   `lib/katilimciEvreni.ts`'te (`KATILIMCI_EVRENI`) Pusula, Boşluk Anı ve görev
   üretimine enjekte edilir — her soru/görev bu insanların kendi dilinde konuşur.
+- **`BASARI_STRATEJISI.md`** — "İlk 72 Saat" el kitabından damıtılan, markadan
+  bağımsız saha tekniği (momentum döngüsü, 72 saat yasası, eşikler, davet/ısınma/
+  kapanış/takip, go-for-no, 5 saniye kuralı). Çalışan özet `lib/basariStratejisi.ts`'te
+  (`BASARI_STRATEJISI`) görev üretimi, koçluk puanlama ve Pusula'ya enjekte edilir.
+  Problem katmanı (evren) + çözüm katmanı (strateji) + kişisel neden (Pusula) birlikte.

@@ -78,7 +78,7 @@ tükenmişlik.
 ## Dışsal gerçek: stok/ürün krizi
 
 Tekrar eden ve **kişisel kusur olmayan** bir tema: ürün/stok krizleri
-("Sunrise/Sunset krizi", "ürün gelmiyor", "itibar kaybı") birçok kişinin
+("ürün gelmiyor", tedarik sıkıntısı, "itibar kaybı") birçok kişinin
 ticaretini ve motivasyonunu gerçekten sarstı. AYNA bunu bir karakter zayıflığı
 gibi çerçevelemez; **gerçek bir koşul** olarak tanır ve kişinin buna **rağmen**
 attığı adımı değerli kılar. (Boşluk Anı'nda bu, kişiye karşı "kanıt" olarak

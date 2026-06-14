@@ -2,6 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
+import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
 
 // FAZ 0 — PUSULA (Nedenler & Çekirdek Profil).
 // Kamp ÖNCESİ kişiselleştirme omurgası. 10 öncelik bir FORM ile (madde madde)
@@ -215,6 +216,8 @@ export async function pusulaTuru(
       system: `${PERSONA}
 
 ${KATILIMCI_EVRENI}
+
+${BASARI_STRATEJISI}
 
 Kişinin adı: ${ad}.
 Kişinin yazdığı öncelikler:
