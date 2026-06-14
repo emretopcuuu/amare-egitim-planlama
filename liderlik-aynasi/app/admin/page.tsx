@@ -15,6 +15,7 @@ import IkiliKontrol from "./IkiliKontrol";
 import EksikDurt from "./EksikDurt";
 import OtoYenile from "./OtoYenile";
 import GununAkisi from "./GununAkisi";
+import HazirlikPaneli from "./HazirlikPaneli";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -184,6 +185,9 @@ export default async function AdminPanel() {
 
       {/* #2 Bugünün Akışı — kamp günündeyse o günün adımları */}
       <GununAkisi bugun={bugun} />
+
+      {/* #5 "Kampa hazır mısın?" — yalnız tam yetkili admin */}
+      {tamYetki && <HazirlikPaneli />}
 
       {/* #4 Kritik (kamp akışını değiştiren) anahtarlar yalnız tam yetkili admin'e */}
       {tamYetki && (
