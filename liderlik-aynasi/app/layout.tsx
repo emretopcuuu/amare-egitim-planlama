@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Playfair_Display, Fraunces } from "next/font/google"
 import GolArkaplan from "@/components/gol/GolArkaplan";
 import AltNav from "@/components/AltNav";
 import BaglantiDurumu from "@/components/BaglantiDurumu";
+import AcilisSplash from "@/components/AcilisSplash";
 import AtlaBaglantisi from "@/components/AtlaBaglantisi";
 import "./globals.css";
 
@@ -76,6 +77,8 @@ export default function RootLayout({
           }}
         />
         <AtlaBaglantisi />
+        {/* İlk açılışta tek seferlik ONE TEAM marka videosu */}
+        <AcilisSplash />
         {/* GECE GÖLÜ tüm evrenin zemini: her ekran canlı gölün üstünde yaşar */}
         <GolArkaplan />
         {children}

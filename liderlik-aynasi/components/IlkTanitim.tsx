@@ -50,7 +50,20 @@ export default function IlkTanitim() {
       </div>
 
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 pb-8 text-center">
-        <p className="text-7xl">{kart.simge}</p>
+        {adim === 0 ? (
+          // İlk kart ONE TEAM marka videosuyla açılır (sessiz, döngüsüz).
+          <video
+            autoPlay
+            muted
+            playsInline
+            poster="/marka-poster.jpg"
+            className="mx-auto w-full max-w-xs rounded-2xl"
+          >
+            <source src="/marka.mp4" type="video/mp4" />
+          </video>
+        ) : (
+          <p className="text-7xl">{kart.simge}</p>
+        )}
         <h1 className="prizma-serif ay-metin mt-6 text-3xl font-semibold leading-tight">
           {kart.baslik}
         </h1>
