@@ -1890,6 +1890,19 @@ export const tr = {
     hikayeGelisen: (ozellik: string, fark: string) =>
       `En çok yükselen özelliğin: ${ozellik} (+${fark} puan). Kamp seni değiştirdi — ve insanlar bunu fark etti.`,
     hikayeDalgaOzet: (ort: string) => `Genel ortalama: ${ort}`,
+    // #3 Story katmanı
+    hikayeIzle: "Hikâye olarak izle",
+    hikayeUstAcilis: "AYNA RAPORU",
+    hikayeAcilis: (ad: string) => `${ad}, aynan hazır`,
+    hikayeAcilisMetin: (n: number) =>
+      `Üç gün seni izledik; sen de ${n} kez başkalarını gözledin. İşte gerçek yansıman.`,
+    hikayeGucluMetin: "Başkalarının gözünde en parlak yanın bu.",
+    hikayeGizliMetin:
+      "Kendine az verdin ama başkaları çok gördü — sandığından güçlüsün.",
+    hikayeYolculukBaslik: "Nereden nereye",
+    hikayeTakdirBaslik: (n: number) => `${n} kişi sana güzel şeyler yazdı`,
+    hikayeKapanis: "İşte sen.",
+    hikayeKapanisMetin: "Bu yansıma senin. Aşağıda her detayı seni bekliyor.",
     yorumlarBaslik: "💬 Sana Yazılanlar",
     yorumlarAciklama: "Düşük puanların yanına bırakılan isimsiz gözlemler.",
     yorumYok: "Sana yazılmış yorum yok — puanların konuşuyor.",

@@ -9,6 +9,7 @@ import { tr } from "@/lib/i18n/tr";
 import Konfeti from "@/components/Konfeti";
 import KristalPortre from "./KristalPortre";
 import RaporKaydet from "./RaporKaydet";
+import AynaHikaye, { type Slayt } from "./AynaHikaye";
 import AynaBekleme from "./AynaBekleme";
 import ArketipKarti from "./ArketipKarti";
 import KelimeKarti from "./KelimeKarti";
@@ -95,6 +96,72 @@ export default async function AynaPage() {
     rapor.gercekTopId !== null &&
     rapor.tahmin.topId === rapor.gercekTopId;
 
+  // #3 Story slaytları — en kritik içgörüler (kör nokta doruk noktası)
+  const slaytlar: Slayt[] = [
+    {
+      ikon: "🪞",
+      ust: t.hikayeUstAcilis,
+      baslik: t.hikayeAcilis(session.ad),
+      metin: t.hikayeAcilisMetin(verdigiPuan ?? 0),
+      tema: "gold",
+    },
+  ];
+  if (rapor.guclu[0])
+    slaytlar.push({
+      ikon: "✨",
+      ust: t.gucluBaslik,
+      baslik: rapor.guclu[0].ad,
+      metin: t.hikayeGucluMetin,
+      liste: rapor.guclu.slice(0, 3).map((s) => s.ad),
+      tema: "emerald",
+    });
+  if (rapor.gizliGuc)
+    slaytlar.push({
+      ikon: "💎",
+      ust: t.gizliGucBaslik,
+      baslik: rapor.gizliGuc.ad,
+      metin: t.hikayeGizliMetin,
+      tema: "emerald",
+    });
+  if (rapor.korNokta)
+    slaytlar.push({
+      ikon: "👁",
+      ust: t.korNoktaBaslik,
+      baslik: rapor.korNokta.ad,
+      metin: t.korNoktaAciklama(rapor.korNokta.ad),
+      tema: "amber",
+    });
+  slaytlar.push({
+    ikon: arketip.simge,
+    ust: tr.arketip.raporBaslik,
+    baslik: arketip.ad,
+    metin: arketip.ozet,
+    tema: "gold",
+  });
+  if (rapor.enGelisen)
+    slaytlar.push({
+      ikon: "🚀",
+      ust: t.hikayeBaslik,
+      baslik: t.hikayeYolculukBaslik,
+      metin: t.hikayeGelisen(rapor.enGelisen.ad, rapor.enGelisen.fark.toFixed(1)),
+      tema: "royal",
+    });
+  if ((takdirler ?? []).length > 0)
+    slaytlar.push({
+      ikon: "💛",
+      ust: tr.takdir.gelenlerBaslik,
+      baslik: t.hikayeTakdirBaslik((takdirler ?? []).length),
+      metin: `“${takdirler![0].message}”`,
+      tema: "gold",
+    });
+  slaytlar.push({
+    ikon: "🌟",
+    ust: "",
+    baslik: t.hikayeKapanis,
+    metin: t.hikayeKapanisMetin,
+    tema: "gold",
+  });
+
   return (
     <main className="flex min-h-dvh flex-col overflow-x-hidden overflow-y-auto">
       <Konfeti anahtar="kutlama-ayna" />
@@ -112,6 +179,9 @@ export default async function AynaPage() {
         </p>
         <div className="mt-4">
           <RaporKaydet />
+        </div>
+        <div className="yazdir-gizle mt-3">
+          <AynaHikaye slaytlar={slaytlar} />
         </div>
       </header>
 
