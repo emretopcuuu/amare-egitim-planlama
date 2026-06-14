@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga } from "@/lib/degerlendirme";
 import AdminNav from "./AdminNav";
+import AdminTost from "./AdminTost";
 
 // /admin/giris da bu layout'tan geçer: nav yalnızca admin oturumunda görünür.
 // Nav'daki durum rozetleri her eylem sonrası router.refresh ile tazelenir.
@@ -27,6 +28,7 @@ export default async function AdminLayout({
         aynaUyanik={aynaAyari?.value === "true"}
       />
       {children}
+      <AdminTost />
     </div>
   );
 }

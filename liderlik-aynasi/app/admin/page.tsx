@@ -13,6 +13,7 @@ import YedekButonu from "./YedekButonu";
 import SilmeTalepleri from "./SilmeTalepleri";
 import IkiliKontrol from "./IkiliKontrol";
 import EksikDurt from "./EksikDurt";
+import OtoYenile from "./OtoYenile";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -136,7 +137,10 @@ export default async function AdminPanel() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
-      <h1 className="text-2xl font-bold text-gold">{tr.admin.baslik}</h1>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-2xl font-bold text-gold">{tr.admin.baslik}</h1>
+        <OtoYenile />
+      </div>
 
       {/* #7 "Şimdi ne yapmalıyım?" — adminin o an basması gereken tek adım */}
       <section

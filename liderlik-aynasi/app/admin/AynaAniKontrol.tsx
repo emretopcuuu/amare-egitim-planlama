@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import { tost } from "@/lib/tost";
 import OnayliDugme from "./OnayliDugme";
 
 const t = tr.admin.aynaAni;
@@ -35,9 +36,11 @@ export default function AynaAniKontrol({ acik, mektupHazir, mektupToplam }: Prop
         setHata(veri?.hata ?? t.hata);
         return;
       }
+      tost(!acik ? tr.admin.tost.raporAcildi : tr.admin.tost.raporGizlendi, "basari");
       router.refresh();
     } catch {
       setHata(t.hata);
+      tost(t.hata, "hata");
     } finally {
       setBekliyor(false);
     }

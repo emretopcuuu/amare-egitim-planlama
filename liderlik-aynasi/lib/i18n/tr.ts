@@ -577,6 +577,13 @@ export const tr = {
       sonuc: (n: number) => `${n} kişiye hatırlatma gönderildi ✓`,
       hata: "Gönderilemedi, tekrar dene.",
     },
+    // #10 Eylem tostu mesajları (köşede "✓ yapıldı" geri bildirimi)
+    tost: {
+      dalgaAcildi: "Dalga açıldı ✓",
+      dalgaKapatildi: "Dalga kapatıldı",
+      raporAcildi: "Ayna Raporları açıldı ✓",
+      raporGizlendi: "Raporlar yeniden gizlendi",
+    },
     // #10 Güvenli geri-alma: kritik anahtarlarda yanlış dokunuş akışı bozmasın
     onay: {
       evet: "Evet, yap",
