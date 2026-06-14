@@ -233,6 +233,12 @@ export const tr = {
     hataSayi: "Lütfen geçerli sayılar gir — Ağustos görüşme en az 100 olmalı.",
   },
   // Fotoğraf anı duvarı: an yakala → moderasyon → ortak duvar + büyük ekran
+  // #5 Topluluk nabzı (ambient kolektif aktivite)
+  nabiz: {
+    gorevde: (n: number) => `👁 Şu an ${n} kişi görev başında`,
+    red: (n: number) => `🎉 Bugün ${n} 'Hayır' kutlandı`,
+    takdir: (n: number) => `💛 Bugün ${n} takdir paylaşıldı`,
+  },
   duvar: {
     baslik: "📸 Anı Duvarı",
     yorumYok: "İlk yorumu sen yaz.",
