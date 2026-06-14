@@ -4,6 +4,11 @@ export const tr = {
     name: "Liderlik Aynası",
     tagline: "Kendini başkalarının gözünden gör.",
   },
+  // Görünür internet kalkanı: aday "verim kayboldu mu?" korkusu yaşamasın
+  baglanti: {
+    cevrimdisi: "İnternet yok — verilerin cihazında güvende. Bağlanınca kendiliğinden gönderilir.",
+    geriGeldi: "İnternet geri geldi ✓",
+  },
   // Alt navigasyon çubuğu: en sık kullanılan 4 hedef, başparmak erişiminde
   altNav: {
     ana: "Ana sayfa",
@@ -366,6 +371,11 @@ export const tr = {
     taslakGeriYuklendi: "Kaydedilmemiş taslağın geri yüklendi.",
     hataCevrimdisi:
       "Bağlantı sorunu — puanların bu cihazda saklandı. İnternet gelince tekrar Gönder'e bas.",
+    // Çevrimdışıyken gönderim: aday beklesin, bağlanınca kendiliğinden göndereceğiz
+    cevrimdisiBekliyor: "📶 Bağlantı bekleniyor — internet gelince puanların kendiliğinden gönderilecek.",
+    // Her dokunuşta görünür güvence (#4) ve özet ekranında huzur cümlesi
+    kaydedildi: "✓ Kaydedildi",
+    hepsiKaydedildi: "Hepsi cihazına kaydedildi — istediğini değiştirebilirsin.",
     hataSunucu: "Kaydedilemedi. Lütfen tekrar dene.",
     hataDalgaKapandi: "Bu dalga kapandı; puanlar artık kaydedilemiyor.",
     geriDon: "Değerlendirmeye dön",

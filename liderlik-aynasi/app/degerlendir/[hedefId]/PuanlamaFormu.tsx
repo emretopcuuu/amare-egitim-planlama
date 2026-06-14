@@ -66,14 +66,37 @@ export default function PuanlamaFormu({
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const [yorumUyari, setYorumUyari] = useState(false);
+  // #4: her dokunuşta kısa "✓ Kaydedildi" güvencesi (yaşlı kullanıcı huzuru).
+  const [kayitGoster, setKayitGoster] = useState(false);
+  // #5: çevrimdışı gönderim başarısızsa, bağlantı gelince kendiliğinden gönder.
+  const [cevrimdisiBekleniyor, setCevrimdisiBekleniyor] = useState(false);
   const yuklendi = useRef(false);
   const ilerleZamanlayici = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const kayitZaman = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gonderRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     return () => {
       if (ilerleZamanlayici.current) clearTimeout(ilerleZamanlayici.current);
+      if (kayitZaman.current) clearTimeout(kayitZaman.current);
     };
   }, []);
+
+  // gonderRef her render'da en güncel gonder'a bağlı kalsın (kapanış tazeliği).
+  useEffect(() => {
+    gonderRef.current = gonder;
+  });
+
+  // Çevrimdışı bekleme: internet geri gelince taslağı kendiliğinden gönder.
+  useEffect(() => {
+    if (!cevrimdisiBekleniyor) return;
+    function tekrar() {
+      setCevrimdisiBekleniyor(false);
+      gonderRef.current();
+    }
+    window.addEventListener("online", tekrar);
+    return () => window.removeEventListener("online", tekrar);
+  }, [cevrimdisiBekleniyor]);
 
   // Taslağı yalnızca ilk yüklemede geri al (hydration sonrası, SSR uyumsuzluğu olmasın).
   useEffect(() => {
@@ -123,6 +146,10 @@ export default function PuanlamaFormu({
       }
       return yeni;
     });
+    // #4: anında kaydedildi — kısa görünür güvence (sonra kendiliğinden solar).
+    setKayitGoster(true);
+    if (kayitZaman.current) clearTimeout(kayitZaman.current);
+    kayitZaman.current = setTimeout(() => setKayitGoster(false), 1400);
   }
 
   function ileri() {
@@ -167,6 +194,12 @@ export default function PuanlamaFormu({
       setAdim(ozellikler.findIndex((o) => o.id === eksikYorumlar[0].id));
       return;
     }
+    // Çevrimdışıyken hiç deneme: doğrudan beklemeye al, bağlanınca otomatik gönder.
+    if (typeof navigator !== "undefined" && navigator.onLine === false) {
+      setHata(null);
+      setCevrimdisiBekleniyor(true);
+      return;
+    }
     setGonderiliyor(true);
     setHata(null);
     try {
@@ -198,8 +231,8 @@ export default function PuanlamaFormu({
       router.push(ilkOzPuan.current ? "/hosgeldin" : "/degerlendir");
       router.refresh();
     } catch {
-      // Ağ hatası: taslak zaten cihazda, kullanıcıyı bilgilendir.
-      setHata(tr.puanlama.hataCevrimdisi);
+      // Ağ hatası: taslak cihazda güvende. Beklemeye al, bağlanınca otomatik gönder.
+      setCevrimdisiBekleniyor(true);
     } finally {
       setGonderiliyor(false);
     }
@@ -309,6 +342,14 @@ export default function PuanlamaFormu({
             {tr.puanlama.taslakGeriYuklendi}
           </p>
         )}
+        {kayitGoster && (
+          <p
+            aria-live="polite"
+            className="kayit-belir mt-2 text-sm font-semibold text-emerald-300"
+          >
+            {tr.puanlama.kaydedildi}
+          </p>
+        )}
       </header>
 
       {/* TEK ÖZELLİK ekranı */}
@@ -393,6 +434,9 @@ export default function PuanlamaFormu({
           <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
             {tr.puanlama.ozetBaslik}
           </h1>
+          <p className="mt-2 text-sm text-emerald-300/90">
+            {tr.puanlama.hepsiKaydedildi}
+          </p>
           <ul className="mt-6 space-y-2">
             {ozellikler.map((oz, i) => (
               <li key={oz.id}>
@@ -415,6 +459,14 @@ export default function PuanlamaFormu({
           {hata && (
             <p role="alert" className="mt-4 text-center text-base font-medium text-red-400">
               {hata}
+            </p>
+          )}
+          {cevrimdisiBekleniyor && (
+            <p
+              aria-live="polite"
+              className="mt-4 rounded-2xl border border-amber-400/40 bg-amber-400/10 p-3 text-center text-base font-medium text-amber-300"
+            >
+              {tr.puanlama.cevrimdisiBekliyor}
             </p>
           )}
           <button
