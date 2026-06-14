@@ -28,6 +28,7 @@ import OtomatikZamanlama from "./OtomatikZamanlama";
 import IslemGunlugu from "./IslemGunlugu";
 import Katlanir from "./Katlanir";
 import AltAksiyonCubugu from "./AltAksiyonCubugu";
+import FazSifirKontrol from "./FazSifirKontrol";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -366,6 +367,14 @@ export default async function AdminPanel() {
               {tr.provaModu.baslikKapali}
             </h3>
             <ProvaModuKontrol acik={provaAcik} />
+          </div>
+
+          {/* FAZ 0 — Pusula penceresi + oda QR kodu (kampa giriş kilidi) */}
+          <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+            <h3 className="mb-3 text-base font-semibold text-slate-100">
+              {tr.admin.fazSifir.baslik}
+            </h3>
+            <FazSifirKontrol />
           </div>
         </section>
       )}

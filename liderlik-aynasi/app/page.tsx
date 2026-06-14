@@ -95,6 +95,19 @@ export default async function AnaSayfa() {
   if (!session) redirect("/giris");
 
   const db = supabaseAdmin();
+
+  // FAZ 0 kapısı: Pusula penceresi açıkken, kampa fiziksel giriş yapmamış
+  // (oda QR'ını okutmamış) katılımcı önce Pusula'sını kurar ve oraya gelene
+  // dek bekler. Pencere kapalıyken (varsayılan) bu kapı hiç çalışmaz —
+  // mevcut davranış birebir korunur.
+  const [{ data: kisi }, { data: pusulaAyar }] = await Promise.all([
+    db.from("participants").select("camp_unlocked_at").eq("id", session.sub).maybeSingle(),
+    db.from("settings").select("value").eq("key", "pusula_acik").maybeSingle(),
+  ]);
+  if (pusulaAyar?.value === "true" && !kisi?.camp_unlocked_at) {
+    redirect("/pusula");
+  }
+
   const [
     dalga,
     raporlarAcik,

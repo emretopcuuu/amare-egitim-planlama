@@ -399,6 +399,7 @@ export type Database = {
       }
       participants: {
         Row: {
+          camp_unlocked_at: string | null
           city: string | null
           consent_at: string | null
           created_at: string
@@ -412,6 +413,7 @@ export type Database = {
           team: string | null
         }
         Insert: {
+          camp_unlocked_at?: string | null
           city?: string | null
           consent_at?: string | null
           created_at?: string
@@ -425,6 +427,7 @@ export type Database = {
           team?: string | null
         }
         Update: {
+          camp_unlocked_at?: string | null
           city?: string | null
           consent_at?: string | null
           created_at?: string
@@ -586,6 +589,91 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "push_subscriptions_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pusula: {
+        Row: {
+          asama: string
+          baz_guven: number | null
+          cekirdek_neden: Json
+          created_at: string
+          ic_engel: string | null
+          ic_engel_kat: string | null
+          mevcut_bosluk: string | null
+          oncelikler: Json
+          ozet: string | null
+          participant_id: string
+          tamamlandi_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          asama?: string
+          baz_guven?: number | null
+          cekirdek_neden?: Json
+          created_at?: string
+          ic_engel?: string | null
+          ic_engel_kat?: string | null
+          mevcut_bosluk?: string | null
+          oncelikler?: Json
+          ozet?: string | null
+          participant_id: string
+          tamamlandi_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asama?: string
+          baz_guven?: number | null
+          cekirdek_neden?: Json
+          created_at?: string
+          ic_engel?: string | null
+          ic_engel_kat?: string | null
+          mevcut_bosluk?: string | null
+          oncelikler?: Json
+          ozet?: string | null
+          participant_id?: string
+          tamamlandi_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pusula_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pusula_mesajlar: {
+        Row: {
+          created_at: string
+          icerik: string
+          id: number
+          participant_id: string
+          rol: string
+        }
+        Insert: {
+          created_at?: string
+          icerik: string
+          id?: never
+          participant_id: string
+          rol: string
+        }
+        Update: {
+          created_at?: string
+          icerik?: string
+          id?: never
+          participant_id?: string
+          rol?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pusula_mesajlar_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
             referencedRelation: "participants"

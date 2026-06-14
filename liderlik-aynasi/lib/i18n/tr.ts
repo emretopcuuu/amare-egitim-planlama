@@ -498,6 +498,30 @@ export const tr = {
     kartTamam: "Tahminin kilitli — Gün 3'ü bekle.",
     tahminYap: "Tahmin Yap",
   },
+  // FAZ 0 — Pusula (Nedenler çalışması), kamp öncesi
+  pusula: {
+    baslik: "Pusulan",
+    // Rıza ekranı — psikolojik veri saklama onayı
+    rizaBaslik: "Başlamadan önce",
+    rizaMetin:
+      "Birazdan birlikte hayattaki gerçek nedenlerini bulacağız. Yazdıkların yalnızca senin için saklanır ve kampta sana daha iyi eşlik etmek için kullanılır. Kimse ham cevaplarını görmez — yalnızca paylaşmayı seçtiklerin.",
+    rizaNot: "Dilediğin an verilerini silebilirsin.",
+    rizaKabul: "Anladım, başlayalım",
+    girisYer: "Yanıtını buraya yaz…",
+    gonder: "Gönder",
+    dusunuyor: "AYNA düşünüyor…",
+    yukleniyor: "Yükleniyor…",
+    tamamBaslik: "Pusulan kuruldu 🧭",
+    tamamMetin:
+      "Nedenlerini buldun. Bunu kampta hatırlayacağım. Şimdi kampa gelmen yeterli — kapıda görüşürüz.",
+    kampBekleBaslik: "Kampta görüşürüz",
+    kampBekleMetin:
+      "Pusulan hazır. Kampın geri kalanı, oraya gelip odandaki kodu okuttuğunda açılacak. O ana dek dinlen — yolculuk başlıyor.",
+    hata: "Bir şeyler ters gitti.",
+    aiHata: "Şu an yanıt veremedim, az sonra tekrar dene.",
+    acHataBaslik: "Kod geçersiz",
+    acHataMetin: "Bu kod kampı açmıyor. Lütfen görevliyle iletişime geç.",
+  },
   admin: {
     komutan: {
       baslik: "Komutan Paneli",
@@ -566,6 +590,24 @@ export const tr = {
     // #8 Mobilde alt-sabit birincil aksiyon çubuğu
     altAksiyon: {
       etiket: "Önerilen adım",
+    },
+    // FAZ 0 — Pusula (Nedenler) penceresi + oda QR kodu + tamamlanma
+    fazSifir: {
+      baslik: "FAZ 0 — Pusula (Nedenler)",
+      aciklama:
+        "Kamp öncesi pencere. Açıkken kampa girmemiş katılımcı önce Pusula'sını (nedenlerini) kurar; oda QR kodu kilidi açar.",
+      pencereAcik: "● Pencere açık — katılımcılar Pusula'ya yönlendiriliyor",
+      pencereKapali: "○ Pencere kapalı — normal akış",
+      pencereAc: "Pencereyi Aç",
+      pencereKapat: "Pencereyi Kapat",
+      kodEtiket: "Oda QR kodu (kampa giriş kilidi)",
+      kodYer: "ör. SAPANCA2026",
+      kodKaydet: "Kodu Kaydet",
+      kodKaydedildi: "Kod kaydedildi ✓",
+      kodBos: "Kod boş — kilit devre dışı (kimse kampı açamaz)",
+      qrIpucu: (url: string) => `Oda QR'ı şu adrese gitmeli: ${url}`,
+      tamamlanma: (n: number, t: number) => `${n}/${t} katılımcı pusulasını kurdu`,
+      hata: "İşlem başarısız, tekrar dene.",
     },
     // #8 Tek akışlı kurulum sihirbazı: CSV → kod → QR, adım adım
     kurulum: {
@@ -1339,6 +1381,9 @@ export const tr = {
       zamanlama_eklendi: "Zamanlama eklendi",
       zamanlama_iptal: "Zamanlama iptal edildi",
       toplu_durt: "Toplu dürtme gönderildi",
+      pusula_acildi: "Pusula penceresi açıldı",
+      pusula_kapatildi: "Pusula penceresi kapatıldı",
+      kamp_kilit_kodu_ayarlandi: "Kamp kilit kodu ayarlandı",
     } as Record<string, string>,
   },
 } as const;
