@@ -8,6 +8,7 @@ import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
 import AynaRituel from "@/components/AynaRituel";
 import EgilenKart from "@/components/EgilenKart";
+import GeriSayim from "@/components/GeriSayim";
 import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
 import YolculukSeridi from "@/components/YolculukSeridi";
@@ -51,23 +52,30 @@ function BuyukKart({
   href,
   dugme,
   vurgu = false,
+  ikon,
 }: {
   baslik: string;
   metin: string;
   href: string;
   dugme: string;
   vurgu?: boolean;
+  ikon?: string;
 }) {
   return (
     <EgilenKart className="rounded-3xl">
       <div className="kart-cam relative overflow-hidden rounded-3xl p-8 text-center">
+        {ikon && (
+          <p className="mb-4 text-5xl leading-none" aria-hidden>
+            {ikon}
+          </p>
+        )}
         <h2 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
           {baslik}
         </h2>
         <p className="mt-4 text-lg leading-relaxed text-slate-300">{metin}</p>
         <Link
           href={href}
-          className={`mt-8 flex h-16 w-full items-center justify-center rounded-2xl text-xl font-bold transition-transform hover:scale-[1.01] ${
+          className={`mt-8 flex h-16 w-full items-center justify-center gap-2 rounded-2xl text-xl font-bold transition-transform hover:scale-[1.01] ${
             vurgu ? "parilti btn-kor" : "btn-kor"
           }`}
         >
@@ -82,11 +90,30 @@ function BuyukKart({
 // göre TEK bir kart gösterir. İkincil her şey üstteki menüden açılır.
 // Öncelik: öz-puan kapısı → ses ritüeli → rapor → kişisel ses → değerlendirme →
 // görev → bekleme. "Kendini puanlamadan kamp sana açılmaz."
-export default async function AnaSayfa() {
+export default async function AnaSayfa({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   const session = await getSession();
   if (!session) redirect("/giris");
 
   const db = supabaseAdmin();
+
+  // FAZ 0 kapısı: Pusula penceresi açıkken, kampa fiziksel giriş yapmamış
+  // (oda QR'ını okutmamış) katılımcı önce Pusula'sını kurar ve oraya gelene
+  // dek bekler. Pencere kapalıyken (varsayılan) bu kapı hiç çalışmaz —
+  // mevcut davranış birebir korunur.
+  const [{ data: kisi }, { data: pusulaAyar }] = await Promise.all([
+    db.from("participants").select("camp_unlocked_at").eq("id", session.sub).maybeSingle(),
+    db.from("settings").select("value").eq("key", "pusula_acik").maybeSingle(),
+  ]);
+  if (pusulaAyar?.value === "true" && !kisi?.camp_unlocked_at) {
+    // ?intro=1 (tanıtım testi) yönlendirmede kaybolmasın diye taşı.
+    const intro = (await searchParams).intro !== undefined;
+    redirect(intro ? "/pusula?intro=1" : "/pusula");
+  }
+
   const [
     dalga,
     raporlarAcik,
@@ -96,6 +123,10 @@ export default async function AnaSayfa() {
     { data: kayma },
     { data: sozAyar },
     { data: soz },
+    { data: dalgaZamanAyar },
+    { data: boslukAyar },
+    { data: pusulaKisi },
+    { data: boslukKisi },
   ] = await Promise.all([
       acikDalga(db),
       raporlarGorunurMu(db),
@@ -121,9 +152,21 @@ export default async function AnaSayfa() {
         .select("participant_id")
         .eq("participant_id", session.sub)
         .maybeSingle(),
+      db.from("settings").select("value").eq("key", "sonraki_dalga_zamani").maybeSingle(),
+      // FAZ 1 Boşluk Anı (Gün 3 zirvesi) — yalnız pencere açıkken devreye girer
+      db.from("settings").select("value").eq("key", "bosluk_acik").maybeSingle(),
+      db.from("pusula").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+      db.from("bosluk_ani").select("yeni_cumle").eq("participant_id", session.sub).maybeSingle(),
     ]);
   const sozAcik = sozAyar?.value === "true";
   const sozVar = !!soz;
+  // FAZ 1: pusulasını kuran kişi, pencere açıkken iç engeliyle yüzleşir.
+  const boslukGoster =
+    boslukAyar?.value === "true" &&
+    !!pusulaKisi?.tamamlandi_at &&
+    !boslukKisi?.yeni_cumle;
+  // #4 Sıradaki dalgaya geri sayım: yalnızca dalga kapalıyken ve zaman ayarlıysa göster
+  const sonrakiDalgaZamani = !dalga && dalgaZamanAyar?.value ? dalgaZamanAyar.value : null;
 
   const ozTamam = dalga
     ? await ozPuanTamamMi(db, session.sub, dalga.id, ozellikler.length)
@@ -224,6 +267,7 @@ export default async function AnaSayfa() {
           metin={t.ozGerekMetin}
           href={`/degerlendir/${session.sub}`}
           dugme={t.ozGerekDugme}
+          ikon="✨"
           vurgu
         />
         <IlkAdimIpucu etiket={t.ilkAdimIpucu} />
@@ -249,6 +293,24 @@ export default async function AnaSayfa() {
           metin={t.sozGerekMetin}
           href="/soz"
           dugme={t.sozGerekDugme}
+          ikon="🤝"
+          vurgu
+        />
+      </Sayfa>
+    );
+  }
+
+  // 2c) BOŞLUK ANI — Gün 3 zirvesi: iç engeli kamptaki kanıtla çürütme.
+  // Pusulasını kuran kişiyi, pencere açıkken rapordan ÖNCE yüzleşmeye davet eder.
+  if (boslukGoster) {
+    return (
+      <Sayfa ust={ust}>
+        <BuyukKart
+          baslik={t.boslukBaslik}
+          metin={t.boslukMetin}
+          href="/bosluk"
+          dugme={t.boslukDugme}
+          ikon="🪞"
           vurgu
         />
       </Sayfa>
@@ -264,6 +326,7 @@ export default async function AnaSayfa() {
           metin={t.raporMetin}
           href="/ayna"
           dugme={t.aynaniGor}
+          ikon="🪞"
           vurgu
         />
       </Sayfa>
@@ -295,6 +358,7 @@ export default async function AnaSayfa() {
           metin={t.dalgaDevamMetin}
           href="/degerlendir"
           dugme={t.dalgaDevamDugme}
+          ikon="👁"
         />
       </Sayfa>
     );
@@ -309,6 +373,7 @@ export default async function AnaSayfa() {
           metin={t.gorevTekMetin}
           href="/gorevler"
           dugme={t.gorevTekDugme(gorevSayisi)}
+          ikon="🤖"
         />
       </Sayfa>
     );
@@ -324,8 +389,12 @@ export default async function AnaSayfa() {
           {t.bekleBaslik}
         </h2>
         <p className="mt-3 text-base leading-relaxed text-slate-300">{t.bekleMetin}</p>
-        <div className="mt-6">
+        {/* #4 Sıradaki dalgaya geri sayım: yalnızca zamanlama ayarlıysa */}
+        {sonrakiDalgaZamani && <GeriSayim hedefZaman={sonrakiDalgaZamani} />}
+        <div className="mt-6 space-y-3">
           <SicakAdim href="/takdir" etiket={t.bekleEylem} vurgu />
+          {/* FAZ 3 Go-for-No: boş anda reddi veriye çevir */}
+          <SicakAdim href="/red" etiket={t.bekleRed} />
         </div>
       </div>
     </Sayfa>

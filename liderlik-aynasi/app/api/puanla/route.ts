@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga, aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
+import { kampKilitliMi } from "@/lib/pusula";
 import { tr } from "@/lib/i18n/tr";
 
 const YORUM_MAX = 500;
@@ -33,7 +34,15 @@ export async function POST(req: Request) {
 
   const db = supabaseAdmin();
   const [dalga, ozellikler] = await Promise.all([acikDalga(db), aktifOzellikler(db)]);
-  if (!dalga) {
+  const kendisi = hedefId === session.sub;
+  // Dalga açıksa onun numarası; değilse kamp öncesi (FAZ 0) yalnız ÖZ-PUAN
+  // Dalga 1'e (İlk İzlenim) yazılır — başkasını puanlama kapalı kalır.
+  let waveId: number;
+  if (dalga) {
+    waveId = dalga.id;
+  } else if (kendisi && (await kampKilitliMi(db, session.sub))) {
+    waveId = 1;
+  } else {
     return Response.json({ hata: tr.puanlama.hataDalgaKapandi }, { status: 409 });
   }
 
@@ -65,7 +74,6 @@ export async function POST(req: Request) {
     );
   }
 
-  const kendisi = hedefId === session.sub;
   if (!kendisi) {
     const { data: hedef, error } = await db
       .from("participants")
@@ -78,7 +86,7 @@ export async function POST(req: Request) {
     }
 
     // Öz-puan kapısı: kendini bitirmeden başkasına puan yazılamaz.
-    if (!(await ozPuanTamamMi(db, session.sub, dalga.id, ozellikler.length))) {
+    if (!(await ozPuanTamamMi(db, session.sub, waveId, ozellikler.length))) {
       return Response.json({ hata: tr.degerlendir.kilitliIpucu }, { status: 403 });
     }
 
@@ -92,7 +100,7 @@ export async function POST(req: Request) {
     rater_id: session.sub,
     target_id: hedefId,
     trait_id: p.ozellikId,
-    wave: dalga.id,
+    wave: waveId,
     score: p.puan,
     comment: p.yorum,
   }));

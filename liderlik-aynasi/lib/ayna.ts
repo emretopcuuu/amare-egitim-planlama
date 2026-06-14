@@ -2,6 +2,10 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { aktifOzellikler } from "@/lib/degerlendirme";
+import { pusulaOzeti } from "@/lib/pusula";
+import { yeniCumleOku } from "@/lib/bosluk";
+import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
+import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
 import {
   fazBul,
   zorlukSec,
@@ -121,7 +125,7 @@ export async function gorevUret(
   mod: SistemModu = "kamp",
   etkinlik: ProgramMaddesi | null = null
 ): Promise<UretilenGorev | null> {
-  const [ozellikler, oncekilerSonuc, puanlarSonuc] = await Promise.all([
+  const [ozellikler, oncekilerSonuc, puanlarSonuc, pusula] = await Promise.all([
     aktifOzellikler(db),
     db
       .from("missions")
@@ -133,9 +137,13 @@ export async function gorevUret(
       .from("ratings")
       .select("trait_id, score, is_self")
       .eq("target_id", katilimci.id),
+    // FAZ 0 Pusula: kişinin nedeni/iç engeli — görevi buna göre kişiselleştir.
+    pusulaOzeti(db, katilimci.id),
   ]);
   const onceki = oncekilerSonuc.data ?? [];
   const puanlar = puanlarSonuc.data ?? [];
+  // FAZ 2 re-entry: yolculukta kamp sonrası görev, kişinin yeni cümlesini savunur.
+  const yeniCumle = mod === "yolculuk" ? await yeniCumleOku(db, katilimci.id) : null;
 
   const ozet = new Map<number, { oz: number[]; dis: number[] }>();
   for (const p of puanlar) {
@@ -171,6 +179,10 @@ export async function gorevUret(
   const baglam = {
     ad: katilimci.full_name.split(" ")[0],
     takim: katilimci.team,
+    // FAZ 0 Pusula: kişinin kamp öncesi damıtılmış nedeni + iç engeli (varsa).
+    pusula: pusula ?? null,
+    // FAZ 2: kişinin kampta yazdığı yeni cümle (yolculukta savunulacak çapa).
+    yeniCumle: yeniCumle ?? null,
     kampGunu: gun,
     saat,
     istenenGorevTuru: tur,
@@ -210,7 +222,7 @@ export async function gorevUret(
         effort: "low",
         format: { type: "json_schema", schema: GOREV_SEMASI },
       },
-      system: `${PERSONA}\n\nGörevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Zorluk yönergesine MUTLAKA uy. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""} ${tur === "simulasyon" ? 'SİMÜLASYON görevi: bir aday/müşteri rolünde KISA bir sahne kur; gövdede adayın itirazını tırnak içinde söyle (ör. "Bunlara vaktim yok", "Bu işler bana göre değil") ve katılımcıdan cevabını sana yazmasını/söylemesini iste. İtirazın sertliğini zorluk seviyesine göre ayarla.' : ""} ${mod === "yolculuk" ? "Bu görev KAMPTA DEĞİL, kamp sonrası 90 günlük sahada (günlük hayat ve iş ortamı) yapılacak — kamp alanı varsayma." : ""}`,
+      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\n${BASARI_STRATEJISI}\n\nGörevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa (kişinin nedeni + iç engeli), görevi ona göre kişiselleştir: nedenine sessizce dokun ve iç engelini nazikçe zorlayan bir görev seç — ama iç engeli açıkça yüzüne vurma. Zorluk yönergesine MUTLAKA uy. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""} ${tur === "simulasyon" ? 'SİMÜLASYON görevi: bir aday/müşteri rolünde KISA bir sahne kur; gövdede adayın itirazını tırnak içinde söyle (ör. "Bunlara vaktim yok", "Bu işler bana göre değil") ve katılımcıdan cevabını sana yazmasını/söylemesini iste. İtirazın sertliğini zorluk seviyesine göre ayarla.' : ""} ${mod === "yolculuk" ? "Bu görev KAMPTA DEĞİL, kamp sonrası 90 günlük sahada (günlük hayat ve iş ortamı) yapılacak — kamp alanı varsayma. Bağlamda 'yeniCumle' doluysa: görevi, kişinin kampta yazdığı o yeni cümleyi BUGÜN somut bir adımla YAŞATAN/doğrulayan bir saha eylemi olarak kur — cümleyi açıkça tekrarlama, ama görev onu çalışsın." : ""}`,
       messages: [{ role: "user", content: JSON.stringify(baglam) }],
     });
 
@@ -255,7 +267,7 @@ export async function gorevPuanla(
         effort: "low",
         format: { type: "json_schema", schema: PUAN_SEMASI },
       },
-      system: `${PERSONA}\n\n${gorev.kind === "simulasyon" ? "Görevin: SİMÜLASYON değerlendirmesi. Önce görevdeki müşteri/aday rolüne gir ve katılımcının cevabına o karakterin ağzından 1 cümlelik gerçekçi tepki ver (ikna olduysa yumuşa, olmadıysa nazikçe diren). Ardından AYNA olarak 1 cümle koçluk ekle: neyi iyi yaptı + bir sonraki denemede tek somut iyileştirme. İkisini birlikte 'yorum' alanına yaz. Puanı itirazı karşılama becerisine göre ver." : "Görevin: verdiğin görevin yanıtını puanla. Çabayı, samimiyeti ve somutluğu ödüllendir; boş/alaycı yanıta düşük puan ver ama yine de yapıcı kal. Yorum 1-2 cümle, AYNA'nın ağzından."}`,
+      system: `${PERSONA}\n\n${BASARI_STRATEJISI}\n\n${gorev.kind === "simulasyon" ? "Görevin: SİMÜLASYON değerlendirmesi. Önce görevdeki müşteri/aday rolüne gir ve katılımcının cevabına o karakterin ağzından 1 cümlelik gerçekçi tepki ver (ikna olduysa yumuşa, olmadıysa nazikçe diren). Ardından AYNA olarak 1 cümle koçluk ekle: neyi iyi yaptı + bir sonraki denemede tek somut iyileştirme; koçluğu yukarıdaki saha tekniğine (feel-felt-found, ısınma, tempo, 1–10, ısrar=taciz) dayandır. İkisini birlikte 'yorum' alanına yaz. Puanı itirazı karşılama becerisine göre ver." : "Görevin: verdiğin görevin yanıtını puanla. Çabayı, samimiyeti ve somutluğu ödüllendir; boş/alaycı yanıta düşük puan ver ama yine de yapıcı kal. Yorum 1-2 cümle, AYNA'nın ağzından."}`,
       messages: [
         {
           role: "user",

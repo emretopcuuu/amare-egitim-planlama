@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { kampKilitliMi } from "@/lib/pusula";
 import { unvanBul } from "@/lib/kivilcim";
 import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
@@ -37,6 +38,8 @@ export default async function GorevlerPage() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
+  // FAZ 0: kamp açılmadan görev sistemi kilitli — bekleme ekranına dön.
+  if (await kampKilitliMi(db, session.sub)) redirect("/pusula");
   const { data: gorevler, error } = await db
     .from("missions")
     .select(

@@ -1,0 +1,165 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { tr } from "@/lib/i18n/tr";
+
+const t = tr.canliAyna;
+
+const ADIMLAR = [
+  { aci: "duz", yonerge: t.duz },
+  { aci: "sag", yonerge: t.sag },
+  { aci: "sol", yonerge: t.sol },
+] as const;
+
+// Selfie sonrası "Canlı Ayna": çemberde düz/sağ/sol yüz kareleri (KYC hissi).
+// Video üretiminde mimik malzemesi için. Kamera tam ekran sihirbaz.
+export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
+  const router = useRouter();
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const akisRef = useRef<MediaStream | null>(null);
+  const [acik, setAcik] = useState(false);
+  const [adim, setAdim] = useState(0);
+  const [kareler, setKareler] = useState<{ aci: string; blob: Blob }[]>([]);
+  const [mesgul, setMesgul] = useState(false);
+  const [hata, setHata] = useState<string | null>(null);
+  const [bitti, setBitti] = useState(varMi);
+
+  function durdur() {
+    akisRef.current?.getTracks().forEach((iz) => iz.stop());
+    akisRef.current = null;
+  }
+  useEffect(() => () => durdur(), []);
+
+  async function baslat() {
+    setHata(null);
+    try {
+      const akis = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user", width: 720, height: 720 },
+      });
+      akisRef.current = akis;
+      setAcik(true);
+      setAdim(0);
+      setKareler([]);
+      // video elemanı render olunca bağla
+      requestAnimationFrame(async () => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = akis;
+          await videoRef.current.play().catch(() => {});
+        }
+      });
+    } catch {
+      setHata(t.izinHata);
+    }
+  }
+
+  async function cek() {
+    const v = videoRef.current;
+    if (!v || mesgul) return;
+    const boyut = Math.min(v.videoWidth, v.videoHeight) || 720;
+    const c = document.createElement("canvas");
+    c.width = boyut;
+    c.height = boyut;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    const sx = (v.videoWidth - boyut) / 2;
+    const sy = (v.videoHeight - boyut) / 2;
+    ctx.drawImage(v, sx, sy, boyut, boyut, 0, 0, boyut, boyut);
+    const blob = await new Promise<Blob | null>((res) =>
+      c.toBlob(res, "image/jpeg", 0.9)
+    );
+    if (!blob) return;
+    const yeni = [...kareler, { aci: ADIMLAR[adim].aci, blob }];
+    setKareler(yeni);
+    if (adim < ADIMLAR.length - 1) {
+      setAdim(adim + 1);
+    } else {
+      await gonder(yeni);
+    }
+  }
+
+  async function gonder(hepsi: { aci: string; blob: Blob }[]) {
+    setMesgul(true);
+    setHata(null);
+    try {
+      const form = new FormData();
+      for (const k of hepsi) form.append(k.aci, k.blob, `${k.aci}.jpg`);
+      const res = await fetch("/api/yuz-yakala", { method: "POST", body: form });
+      if (!res.ok) throw new Error();
+      durdur();
+      setAcik(false);
+      setBitti(true);
+      router.refresh();
+    } catch {
+      setHata(t.hata);
+    } finally {
+      setMesgul(false);
+    }
+  }
+
+  if (bitti && !acik) {
+    return <p className="text-sm font-medium text-emerald-400">{t.tamam}</p>;
+  }
+
+  if (!acik) {
+    return (
+      <button
+        onClick={baslat}
+        className="btn-kor flex h-11 w-full items-center justify-center rounded-xl text-sm font-bold"
+      >
+        {t.basla}
+      </button>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-black px-6 py-8">
+      <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
+        {t.ust}
+      </p>
+      <p className="prizma-serif ay-metin mt-1 text-2xl font-semibold">{t.ustBaslik}</p>
+      <p className="mt-3 min-h-[1.5rem] text-center text-base text-slate-200">
+        {ADIMLAR[adim].yonerge}
+      </p>
+
+      <div className="relative my-6 h-72 w-72 overflow-hidden rounded-full ring-4 ring-gold/60">
+        <video
+          ref={videoRef}
+          muted
+          playsInline
+          className="h-full w-full -scale-x-100 object-cover"
+        />
+      </div>
+
+      <div className="flex gap-1.5">
+        {ADIMLAR.map((_, i) => (
+          <span
+            key={i}
+            className={`h-2 rounded-full transition-all ${
+              i <= adim ? "w-6 bg-gold" : "w-2 bg-white/25"
+            }`}
+          />
+        ))}
+      </div>
+
+      {hata && <p className="mt-3 text-sm text-red-400">{hata}</p>}
+
+      <button
+        onClick={cek}
+        disabled={mesgul}
+        className="btn-kor parilti mt-6 flex h-14 w-full max-w-xs items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
+      >
+        {mesgul ? t.gonderiliyor : t.cek}
+      </button>
+      <button
+        onClick={() => {
+          durdur();
+          setAcik(false);
+        }}
+        className="mt-3 text-sm text-slate-400 hover:text-slate-200"
+      >
+        {t.vazgec}
+      </button>
+    </div>
+  );
+}

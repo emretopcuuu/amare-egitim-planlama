@@ -16,8 +16,10 @@ const SEKMELER = [
   { href: "/duvar", simge: "📸", etiket: t.duvar },
 ];
 
-// Bu önekler katılımcı deneyimi değil (admin/büyük ekran/tam ekran) — çubuk yok
-const GIZLI = ["/giris", "/admin", "/ekran", "/sahne", "/yansiman"];
+// Bu önekler katılımcı deneyimi değil (admin/büyük ekran/tam ekran) — çubuk yok.
+// /pusula tam ekran FAZ 0 akışıdır (Nedenler + "kampta görüşürüz" beklemesi);
+// kamp açılmadan görev/değerlendirme sekmeleri görünmesin.
+const GIZLI = ["/giris", "/admin", "/ekran", "/sahne", "/yansiman", "/pusula"];
 
 export default function AltNav() {
   const pathname = usePathname();

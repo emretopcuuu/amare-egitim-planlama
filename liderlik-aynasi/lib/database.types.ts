@@ -53,6 +53,73 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          detay: Json | null
+          eylem: string
+          id: number
+          ip: string | null
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          detay?: Json | null
+          eylem: string
+          id?: never
+          ip?: string | null
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          detay?: Json | null
+          eylem?: string
+          id?: never
+          ip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bosluk_ani: {
+        Row: {
+          created_at: string
+          demolisyon: Json | null
+          participant_id: string
+          yeni_cumle: string | null
+          yeni_cumle_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          demolisyon?: Json | null
+          participant_id: string
+          yeni_cumle?: string | null
+          yeni_cumle_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          demolisyon?: Json | null
+          participant_id?: string
+          yeni_cumle?: string | null
+          yeni_cumle_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bosluk_ani_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       churn_radar: {
         Row: {
           admin_alerted_at: string | null
@@ -287,48 +354,6 @@ export type Database = {
           },
         ]
       }
-      participants: {
-        Row: {
-          city: string | null
-          consent_at: string | null
-          created_at: string
-          deletion_requested_at: string | null
-          email: string | null
-          full_name: string
-          id: string
-          login_code: string
-          phone: string | null
-          role: string
-          team: string | null
-        }
-        Insert: {
-          city?: string | null
-          consent_at?: string | null
-          created_at?: string
-          deletion_requested_at?: string | null
-          email?: string | null
-          full_name: string
-          id?: string
-          login_code: string
-          phone?: string | null
-          role?: string
-          team?: string | null
-        }
-        Update: {
-          city?: string | null
-          consent_at?: string | null
-          created_at?: string
-          deletion_requested_at?: string | null
-          email?: string | null
-          full_name?: string
-          id?: string
-          login_code?: string
-          phone?: string | null
-          role?: string
-          team?: string | null
-        }
-        Relationships: []
-      }
       pair_messages: {
         Row: {
           created_at: string
@@ -403,6 +428,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      participants: {
+        Row: {
+          camp_unlocked_at: string | null
+          city: string | null
+          consent_at: string | null
+          created_at: string
+          deletion_requested_at: string | null
+          email: string | null
+          full_name: string
+          id: string
+          login_code: string
+          phone: string | null
+          profil_foto_path: string | null
+          role: string
+          team: string | null
+          yuz_fotolari: Json
+        }
+        Insert: {
+          camp_unlocked_at?: string | null
+          city?: string | null
+          consent_at?: string | null
+          created_at?: string
+          deletion_requested_at?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          login_code: string
+          phone?: string | null
+          profil_foto_path?: string | null
+          role?: string
+          team?: string | null
+          yuz_fotolari?: Json
+        }
+        Update: {
+          camp_unlocked_at?: string | null
+          city?: string | null
+          consent_at?: string | null
+          created_at?: string
+          deletion_requested_at?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          login_code?: string
+          phone?: string | null
+          profil_foto_path?: string | null
+          role?: string
+          team?: string | null
+          yuz_fotolari?: Json
+        }
+        Relationships: []
       }
       photos: {
         Row: {
@@ -558,6 +634,91 @@ export type Database = {
           },
         ]
       }
+      pusula: {
+        Row: {
+          asama: string
+          baz_guven: number | null
+          cekirdek_neden: Json
+          created_at: string
+          ic_engel: string | null
+          ic_engel_kat: string | null
+          mevcut_bosluk: string | null
+          oncelikler: Json
+          ozet: string | null
+          participant_id: string
+          tamamlandi_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          asama?: string
+          baz_guven?: number | null
+          cekirdek_neden?: Json
+          created_at?: string
+          ic_engel?: string | null
+          ic_engel_kat?: string | null
+          mevcut_bosluk?: string | null
+          oncelikler?: Json
+          ozet?: string | null
+          participant_id: string
+          tamamlandi_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asama?: string
+          baz_guven?: number | null
+          cekirdek_neden?: Json
+          created_at?: string
+          ic_engel?: string | null
+          ic_engel_kat?: string | null
+          mevcut_bosluk?: string | null
+          oncelikler?: Json
+          ozet?: string | null
+          participant_id?: string
+          tamamlandi_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pusula_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pusula_mesajlar: {
+        Row: {
+          created_at: string
+          icerik: string
+          id: number
+          participant_id: string
+          rol: string
+        }
+        Insert: {
+          created_at?: string
+          icerik: string
+          id?: never
+          participant_id: string
+          rol: string
+        }
+        Update: {
+          created_at?: string
+          icerik?: string
+          id?: never
+          participant_id?: string
+          rol?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pusula_mesajlar_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ratings: {
         Row: {
           comment: string | null
@@ -626,6 +787,35 @@ export type Database = {
           },
         ]
       }
+      redler: {
+        Row: {
+          aciklama: string | null
+          created_at: string
+          id: number
+          participant_id: string
+        }
+        Insert: {
+          aciklama?: string | null
+          created_at?: string
+          id?: never
+          participant_id: string
+        }
+        Update: {
+          aciklama?: string | null
+          created_at?: string
+          id?: never
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redler_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedule_items: {
         Row: {
           created_at: string
@@ -658,6 +848,47 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      scheduled_events: {
+        Row: {
+          cancelled: boolean
+          created_at: string
+          event_type: string
+          fire_at: string
+          fired: boolean
+          fired_at: string | null
+          id: number
+          wave_id: number | null
+        }
+        Insert: {
+          cancelled?: boolean
+          created_at?: string
+          event_type: string
+          fire_at: string
+          fired?: boolean
+          fired_at?: string | null
+          id?: never
+          wave_id?: number | null
+        }
+        Update: {
+          cancelled?: boolean
+          created_at?: string
+          event_type?: string
+          fire_at?: string
+          fired?: boolean
+          fired_at?: string | null
+          id?: never
+          wave_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_events_wave_id_fkey"
+            columns: ["wave_id"]
+            isOneToOne: false
+            referencedRelation: "waves"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       settings: {
         Row: {

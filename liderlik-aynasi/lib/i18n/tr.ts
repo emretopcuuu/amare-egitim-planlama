@@ -117,6 +117,10 @@ export const tr = {
     ozGerekMetin:
       "Aynaya ilk bakış senden başlar. Kendini 10 liderlik özelliğinde puanlamadan kamp sana açılmaz.",
     ozGerekDugme: "✨ Kendini Puanla",
+    boslukBaslik: "Aynaya bakma vakti",
+    boslukMetin:
+      "Kampa gelmeden önce kendine bir şey söylemiştin. Üç gün boyunca onu izledim. Şimdi yüzleşme zamanı.",
+    boslukDugme: "🪞 Hazırım",
     raporBaslik: "Aynan açıldı",
     raporMetin: "Üç günün sonu geldi. Kendi gözünle başkalarının gözü, şimdi yan yana.",
     dalgaDevamBaslik: (dalga: string) => `${dalga} açık`,
@@ -131,6 +135,7 @@ export const tr = {
     ilkAdimIpucu: "İlk adımın bu — başla",
     // Çıkmaz yok: boş anda bile sıcak bir sonraki adım — birine takdir bırak.
     bekleEylem: "Birine takdir bırak ✨",
+    bekleRed: "Bir 'Hayır' mı aldın? Kutla 🎯",
     // Boş ekranlarda net sonraki adım butonu (çıkmaz hissi olmasın).
     sicakAnaSayfa: "Ana sayfaya dön",
     // Kapanış sözü kartı (kamp sonunda açılır)
@@ -498,6 +503,168 @@ export const tr = {
     kartTamam: "Tahminin kilitli — Gün 3'ü bekle.",
     tahminYap: "Tahmin Yap",
   },
+  // FAZ 0 — Pusula (Nedenler çalışması), kamp öncesi
+  pusula: {
+    baslik: "Pusulan",
+    // Rıza ekranı — psikolojik veri saklama onayı
+    rizaBaslik: "Başlamadan önce",
+    rizaMetin:
+      "Birazdan birlikte hayattaki gerçek nedenlerini bulacağız. Yazdıkların yalnızca senin için saklanır ve kampta sana daha iyi eşlik etmek için kullanılır. Kimse ham cevaplarını görmez — yalnızca paylaşmayı seçtiklerin.",
+    rizaNot: "Dilediğin an verilerini silebilirsin.",
+    rizaKabul: "Anladım, başlayalım",
+    listeBaslik: "Hayatındaki öncelikler",
+    listeAciklama:
+      "Olmazsa olmaz dediğin, en çok önemsediğin ya da gelecekte sahip olmak istediğin şeyler. Deneyim gibi düşün — 'aileyle vakit', 'kendi işim', 'sağlık' gibi. Her seferinde bir tane yaz; en az 3, en çok 10 madde.",
+    listeYer: (n: number) => `${n}. öncelik`,
+    // Madde madde (tek tek) akış
+    listeTekYer: "Tek bir şey yaz…",
+    listeEkle: "Ekle",
+    listeYazdiklarin: "Yazdıkların",
+    // Her eklemeden sonra teşvik edici bir sonraki soru (n = şu ana dek eklenen sayı)
+    listeTesvik: (n: number) => {
+      if (n === 0)
+        return "Hayatta en çok değer verdiğin, en önemsediğin şey nedir?";
+      const ord = [
+        "Birincisini",
+        "İkincisini",
+        "Üçüncüsünü",
+        "Dördüncüsünü",
+        "Beşincisini",
+        "Altıncısını",
+        "Yedincisini",
+        "Sekizincisini",
+        "Dokuzuncusunu",
+        "Onuncusunu",
+      ];
+      const etiket = ord[n - 1] ?? `${n}.`;
+      return `${etiket} yazdın 🌟 Bir tane daha — hayatta değer verdiğin, önemsediğin başka ne var?`;
+    },
+    listeSonHatirlatma: "Onuncuyu da yazdın. Hazırsan tamamla.",
+    listeDevam: "Listeyi tamamla",
+    listeAzUyari: (n: number) => `En az ${n} madde yaz.`,
+    girisYer: "Yanıtını buraya yaz…",
+    gonder: "Gönder",
+    sesYaz: "Sesle yaz",
+    sesDurdur: "Dinlemeyi durdur",
+    listeHatirlat: "Öncelik listen — seçmek için dokun",
+    dusunuyor: "AYNA düşünüyor…",
+    yukleniyor: "Yükleniyor…",
+    tamamBaslik: "Pusulan kuruldu 🧭",
+    tamamMetin:
+      "Nedenlerini buldun. Bunu kampta hatırlayacağım. Şimdi kampa gelmen yeterli — kapıda görüşürüz.",
+    kampBekleBaslik: "Kampta görüşürüz",
+    kampBekleMetin:
+      "Pusulan hazır. Kampın geri kalanı, oraya gelip odandaki kodu okuttuğunda açılacak. O ana dek dinlen — yolculuk başlıyor.",
+    hata: "Bir şeyler ters gitti.",
+    aiHata: "Şu an yanıt veremedim, az sonra tekrar dene.",
+    acHataBaslik: "Kod geçersiz",
+    acHataMetin: "Bu kod kampı açmıyor. Lütfen görevliyle iletişime geç.",
+    // FAZ 0 hazırlık hub'ı (Pusula bitince, kampa gelmeden)
+    hazirlikBaslik: "Pusulan kuruldu 🧭",
+    hazirlikAltBaslik:
+      "Kampa gelmeden bunları da hazırlarsan ilk gün doğrudan yaşamaya başlarsın. İstersen hepsini kampta da yapabilirsin — hiçbiri zorunlu değil.",
+    adimPuanBaslik: "Kendini bir tanı",
+    adimPuanMetin:
+      "10 liderlik özelliğinde kendini değerlendir. Kampta başkalarının gözünden göreceğin halinle karşılaştıracağın başlangıç karen.",
+    adimPuanDugme: "Başla",
+    adimPuanSure: "~2 dk",
+    adimRehberBaslik: "Kamp rehberi",
+    adimRehberMetin: "3 gün boyunca seni neler bekliyor, kısaca bak.",
+    adimRehberDugme: "Göz at",
+    adimFotoBaslik: "Bir kare — seninle tanışalım",
+    adimFotoMetin: "Tanışma ve eşleştirme için kendi fotoğrafın.",
+    adimFotoSure: "~30 sn",
+    adimYuzBaslik: "Canlı Aynan",
+    adimYuzMetin:
+      "Sana özel sahneler için canlı Aynana ihtiyacımız var — birkaç saniyelik yakın çekim. Gerisi kampta…",
+    adimYuzSure: "~1 dk",
+    adimTamam: "Tamamlandı",
+    siradaki: "Sıradaki",
+    bildirimBaslik: "Hatırlatmaları aç",
+    hazirlikBekle:
+      "Hazırsın. Kampın geri kalanı, oraya gelip odandaki kodu okuttuğunda açılacak. O ana dek dinlen.",
+    // Hub zenginleştirme: ilerleme, sosyal kanıt, kilitli sürprizler, rozet, geri sayım
+    kampaKalan: "Kampa kalan",
+    hazirYuzde: (n: number) => `%${n} hazırsın`,
+    hazirRozet: "Hazır Lider 🏅",
+    hazirRozetMetin:
+      "Tüm hazırlığını tamamladın — kampa bir adım önde geliyorsun.",
+    sosyalKanit: (n: number) =>
+      n > 0
+        ? `${n} lider pusulasını çoktan kurdu — sen de aralarındasın.`
+        : "İlk pusulayı kuranlardansın.",
+    kilitBaslik: "Kampta seni neler bekliyor",
+    kilitNot: "Kampta açılacak",
+    kilit1: "Kendi sesinle bir sürpriz",
+    kilit2: "3. günde aynan açılır",
+    kilit3: "Sana özel AYNA görevleri",
+  },
+  // Kamp öncesi profil fotoğrafı
+  profilFoto: {
+    sec: "📸 Fotoğraf seç / çek",
+    kaydet: "Kaydet",
+    vazgec: "Vazgeç",
+    degistir: "Fotoğrafı değiştir",
+    yukleniyor: "Yükleniyor…",
+    hata: "Yüklenemedi, tekrar dene.",
+  },
+  // "Canlı Ayna" — selfie sonrası çoklu açılı yüz yakalama (KYC hissi)
+  canliAyna: {
+    basla: "🔮 Canlı Aynanı oluştur",
+    tamam: "✓ Canlı Aynan hazır",
+    ust: "Son bir şey",
+    ustBaslik: "Canlı Aynan",
+    duz: "Yüzünü çembere yerleştir — düz bak",
+    sag: "Başını yavaşça sağa çevir",
+    sol: "Şimdi yavaşça sola çevir",
+    cek: "Çek",
+    gonderiliyor: "Yansın diye gönderiliyor…",
+    vazgec: "Vazgeç",
+    izinHata: "Kameraya erişilemedi — izni kontrol et.",
+    hata: "Gönderilemedi, tekrar dene.",
+  },
+  // FAZ 3 — Reddi Kutla (Go-for-No / Fun Failure)
+  red: {
+    baslik: "Reddi Kutla",
+    aciklama:
+      "'Hayır' bir kayıp değil — veri. Her hayır, doğru 'evet'e bir adım. Aldığın reddi buraya düş, sayacın yürüsün.",
+    dugme: "Bir 'Hayır' aldım",
+    aciklamaYer: "Ne oldu? (isteğe bağlı)",
+    kaydet: "Kasaya Ekle",
+    vazgec: "Vazgeç",
+    toplamEtiket: "Tecrübe Puanı",
+    haftaEtiket: (n: number) => `Bu hafta: ${n}`,
+    kaydediliyor: "Kaydediliyor…",
+    hata: "Kaydedilemedi, tekrar dene.",
+    reframeler: [
+      "İlk verin kasada. Çoğu kişi bir 'Hayır'da durur — sen saymaya başladın.",
+      "Bu 'Hayır' senin hakkında değildi. Sadece 'evet'in orada olmadığını gösterdi.",
+      "Hayır, kapı değil — pusula. Bir sonraki kapıya yönlendirdi seni.",
+      "Sayacın işliyor. İstatistik senden yana: ne kadar çok hayır, o kadar yakın evet.",
+      "Cesaret bu. Çoğu kişi soramadığı için hayır bile alamaz. Sen sordun.",
+      "Bir veri daha. Strateji burada şekilleniyor — devam.",
+    ] as string[],
+  },
+  // FAZ 1 — Boşluk Anı (kamp zirvesi)
+  bosluk: {
+    baslik: "Boşluk",
+    yukleniyor: "Hazırlanıyor…",
+    basla: "Hazırım",
+    ileri: "Devam et",
+    kanitBaslik: "Ama ben başka bir şey gördüm",
+    cumleYer: "Geriye kalan cümleyi kendi kelimelerinle yaz…",
+    cumleKaydet: "Mühürle",
+    cumleBosUyari: "Bir cümle yaz.",
+    tamamBaslik: "Mühürlendi 🔒",
+    tamamMetin:
+      "Bu cümle artık senin. Yola çıktığında — eski cümle kıpırdadığında — onu sana hatırlatacağım.",
+    pusulaYokBaslik: "Önce pusulan",
+    pusulaYokMetin: "Boşluk Anı için önce Nedenler çalışmanı (Pusula) tamamlaman gerek.",
+    kanitYokBaslik: "Henüz erken",
+    kanitYokMetin:
+      "Seni izlemeye yeni başladım. Kanıtlar kamp ilerledikçe birikiyor — birazdan burada olacaklar.",
+    hata: "Bir şeyler ters gitti, tekrar dene.",
+  },
   admin: {
     komutan: {
       baslik: "Komutan Paneli",
@@ -537,6 +704,112 @@ export const tr = {
       sozler: "Sözler",
       test: "Prova",
       kurulum: "Kurulum",
+      analiz: "Analiz",
+    },
+    // #3 Nav kategorileri: 14 düz sekme yerine 4 grup + Panel
+    navGrup: {
+      kurulum: "Kurulum",
+      canli: "Canlı",
+      icerik: "İçerik",
+      ayarlar: "Ayarlar",
+      prova: "PROVA",
+    },
+    // #5 Tehlike bölgesi: tüm katılımcıları etkileyen kritik anahtarlar
+    tehlike: {
+      baslik: "Kritik Kontroller",
+      aciklama:
+        "Bu anahtarlar tüm katılımcıların telefonunu anında etkiler. Her birinin onayı ve geri-al penceresi var.",
+    },
+    // #1 İkincil araçlar: faz dışı her şey burada katlanık durur
+    araclar: {
+      baslik: "Tüm araçlar",
+      aciklama: "Kurulum, yedek, eşleştirme, zamanlama ve işlem günlüğü.",
+    },
+    // #6 Bağlamsal boş/sakin durum
+    bosDurum: {
+      ikon: "🌙",
+      baslik: "Şu an her şey yolunda",
+      aciklama: "Aktif dalga yok. Sıradaki adım yukarıdaki öneri kartında.",
+    },
+    // #8 Mobilde alt-sabit birincil aksiyon çubuğu
+    altAksiyon: {
+      etiket: "Önerilen adım",
+    },
+    // FAZ 0 — Pusula (Nedenler) penceresi + oda QR kodu + tamamlanma
+    fazSifir: {
+      baslik: "FAZ 0 — Pusula (Nedenler)",
+      aciklama:
+        "Kamp öncesi pencere. Açıkken kampa girmemiş katılımcı önce Pusula'sını (nedenlerini) kurar; oda QR kodu kilidi açar.",
+      pencereAcik: "● Pencere açık — katılımcılar Pusula'ya yönlendiriliyor",
+      pencereKapali: "○ Pencere kapalı — normal akış",
+      pencereAc: "Pencereyi Aç",
+      pencereKapat: "Pencereyi Kapat",
+      kodEtiket: "Oda QR kodu (kampa giriş kilidi)",
+      kodYer: "ör. SAPANCA2026",
+      kodKaydet: "Kodu Kaydet",
+      kodKaydedildi: "Kod kaydedildi ✓",
+      kodBos: "Kod boş — kilit devre dışı (kimse kampı açamaz)",
+      qrIpucu: (url: string) => `Oda QR'ı şu adrese gitmeli: ${url}`,
+      tamamlanma: (n: number, t: number) => `${n}/${t} katılımcı pusulasını kurdu`,
+      hatirlatDugme: "🔔 Hazırlığı eksik olanlara hatırlat",
+      hatirlatSonuc: (n: number) =>
+        n > 0 ? `${n} kişiye hatırlatma gönderildi` : "Herkesin hazırlığı tam 🎉",
+      hata: "İşlem başarısız, tekrar dene.",
+    },
+    // FAZ 1 — Boşluk Anı penceresi + derinlik panosu
+    fazBir: {
+      baslik: "FAZ 1 — Boşluk Anı",
+      aciklama:
+        "Gün 3 zirvesi. Açıkken pusulasını kuran katılımcılar iç engellerini kamptaki kanıtla yüzleşmeye davet edilir.",
+      pencereAcik: "● Pencere açık — Boşluk Anı erişimde",
+      pencereKapali: "○ Pencere kapalı",
+      pencereAc: "Boşluk Anı'nı Aç",
+      pencereKapat: "Pencereyi Kapat",
+      tamamlanma: (n: number, t: number) => `${n}/${t} Boşluk Anı'nı tamamladı`,
+      kanitsizUyari: (n: number) =>
+        n > 0
+          ? `⚠️ ${n} kişi kanıtsız — açmadan önce onlara gözlem/görev yönlendir`
+          : "✓ Herkesin yeterli kanıtı var",
+      hata: "İşlem başarısız, tekrar dene.",
+    },
+    // FAZ 2 — Ödev paketi (kamp sonrası 10/15 gün, Ağustos ödevleri)
+    odev: {
+      baslik: "Ödev Gönder",
+      aciklama:
+        "Tüm katılımcılara yapılandırılmış bir ödev gönder (10 gün, 15 gün, Ağustos…). Görev olarak düşer; yanıtlarlar, AYNA puanlar.",
+      baslikYer: "Ödev başlığı (ör. '10 Gün: İlk 5 Görüşme')",
+      govdeYer: "Ödev metni — ne yapacaklar ve sana ne yazacaklar?",
+      gunEtiket: "Teslim süresi",
+      gun: (n: number) => `${n} gün`,
+      gonder: "Herkese Gönder",
+      onay: (e: string) => `"${e}" tüm katılımcılara ödev olarak gönderilsin mi?`,
+      gonderiliyor: "Gönderiliyor…",
+      gonderildi: (n: number) => `${n} katılımcıya ödev gönderildi ✓`,
+      bosUyari: "Başlık ve metin gerekli.",
+      hata: "Gönderilemedi, tekrar dene.",
+    },
+    // FAZ 4 (Eylül kapısı) + FAZ 5 (cascade) — ölçüm/analiz panosu
+    analiz: {
+      baslik: "Analiz",
+      aciklama:
+        "Eylül kapısı: üç ekseni AYRI ölç. İş sayısı tek başına dönüşümü doğrulamaz — kimlik, davranış ve sonucu birbirine karıştırma.",
+      kimlikBaslik: "1 · Kimlik dayanıklılığı",
+      kimlikAciklama: "Pusula + yeni cümle ayakta mı? (dönüşümün gerçek sinyali)",
+      pusula: "Pusula",
+      bosluk: "Yeni cümle",
+      kanitsiz: "Kanıtsız",
+      davranisBaslik: "2 · Davranış / aktivite",
+      davranisAciklama: "Motor dönüyor mu? Görev ritmi, churn, ret, momentum.",
+      gorevOran: "Görev tamamlama",
+      churn: "Kayma (risk)",
+      red: "Reddi Kutla",
+      momentum: "Momentum ort.",
+      isBaslik: "3 · İş sonucu",
+      isAciklama: "Lagging gösterge — geç gelir, dış kaynaktan.",
+      isNot: "İş metrikleri (ciro, kayıt, ekip büyümesi) dış sistemden gelir; burada manuel/entegrasyonla eklenir. Tek başına dönüşümü doğrulamaz.",
+      takimBaslik: "Takım kırılımı (cascade)",
+      takimAciklama: "Her takım liderinin kendi ekibinin durumu — tüm Türkiye ölçeğinin provası.",
+      takim: "Takım",
     },
     // #8 Tek akışlı kurulum sihirbazı: CSV → kod → QR, adım adım
     kurulum: {
@@ -1231,5 +1504,91 @@ export const tr = {
     bosSohbet: "Henüz mesaj yok. İlk adımı sen at — bir merhaba bile yeter.",
     geriDon: "← Ana sayfaya dön",
     hata: "Gönderilemedi. Tekrar dene.",
+  },
+  // #8 PROVA MODU: admin açarsa tüm sayfalarda kırmızı şerit + admin toggle
+  provaModu: {
+    baslikAcik: "⚠️ PROVA MODU AÇIK",
+    baslikKapali: "Prova Modu",
+    aciklamaAcik: "Tüm sayfalarda kırmızı şerit görünüyor. Gerçek kamp öncesi kapat.",
+    aciklamaKapali: "Açarsan herkes 'test ortamı' uyarısını görür.",
+    ac: "Prova Modunu Aç",
+    kapat: "Prova Modunu Kapat",
+    acildi: "⚠️ PROVA MODU açıldı — tüm sayfalarda kırmızı şerit görünür",
+    kapatildi: "Prova modu kapatıldı ✓",
+    hata: "Güncellenemedi. Tekrar dene.",
+  },
+  // #4 Sonraki dalga geri sayımı: bekleme ekranında "14 saat sonra açılıyor"
+  geriSayim: {
+    baslik: "Sıradaki dalga",
+    gun: (n: number) => `${n} gün`,
+    saat: (n: number) => `${n} saat`,
+    dakika: (n: number) => `${n} dakika`,
+    sonra: "sonra açılıyor",
+    bugun: (saat: string) => `bugün saat ${saat}'de açılıyor`,
+    gecti: "açılması planlanıyor",
+    adminEtiket: "Açılış zamanı ayarla",
+    adminKaydet: "Zamanı Kaydet",
+    adminTemizle: "Zamanlamayı Kaldır",
+    adminKaydedildi: "Zamanlama kaydedildi ✓",
+    adminHata: "Kaydedilemedi. Tekrar dene.",
+  },
+  // #6 Toplu seçim & eylem: ilerleme tablosunda çoklu seçim + tek tık dürt
+  topluEylem: {
+    tumunuSec: "Tümünü Seç",
+    hicbiriniSec: "Seçimi Kaldır",
+    secilenDurt: (n: number) => `${n} Kişiyi Dürt 🔔`,
+    durtSonuc: (n: number) => `${n} kişiye hatırlatma gönderildi ✓`,
+    hata: "İşlem başarısız. Tekrar dene.",
+  },
+  // #7 Otomatik zamanlama: admin belirlediği saatte dalga/rapor açılsın
+  zamanlama: {
+    baslik: "Otomatik Zamanlama",
+    aciklama: "Bir eylem için saat belirle — sistem tam o anda gerçekleştirir.",
+    ekle: "Zamanlama Ekle",
+    ekleniyor: "Kaydediliyor…",
+    eklendi: "Zamanlama eklendi ✓",
+    iptal: "İptal Et",
+    iptalOnay: "Bu zamanlama iptal edilsin mi?",
+    iptalEdildi: "Zamanlama iptal edildi",
+    planlanmis: "Planlanmış",
+    ateslenecek: (zaman: string) => `${zaman}'de çalışacak`,
+    ateslendi: "Gerçekleşti ✓",
+    iptalEdilmis: "İptal edildi",
+    eventTipler: {
+      wave_open: (ad: string) => `${ad} Aç`,
+      wave_close: (ad: string) => `${ad} Kapat`,
+      report_open: "Raporları Aç",
+      report_close: "Raporları Kapat",
+      prova_off: "Prova Modunu Kapat",
+    },
+    hata: "Kaydedilemedi. Tekrar dene.",
+    bosYok: "Planlanmış eylem yok.",
+    manuelTetikle: "Şimdi Tetikle",
+    manuelTetikleniyor: "Tetikleniyor…",
+    manuelTetiklendi: "Zamanlanmış eylemler tetiklendi ✓",
+    manuelBilgi: "Cron günde bir çalışır — bekleyen eylemleri hemen tetiklemek için bu butonu kullan.",
+  },
+  // #10 İşlem günlüğü: kritik admin eylemleri zaman damgasıyla
+  islemGunlugu: {
+    baslik: "İşlem Günlüğü",
+    aciklama: "Son kritik admin eylemleri. Kim, ne zaman, ne yaptı.",
+    bos: "Henüz kayıtlı işlem yok.",
+    eylemler: {
+      dalga_acildi: "Dalga açıldı",
+      dalga_kapatildi: "Dalga kapatıldı",
+      rapor_acildi: "Raporlar açıldı",
+      rapor_kapatildi: "Raporlar kapatıldı",
+      prova_acildi: "Prova modu açıldı",
+      prova_kapatildi: "Prova modu kapatıldı",
+      zamanlama_eklendi: "Zamanlama eklendi",
+      zamanlama_iptal: "Zamanlama iptal edildi",
+      toplu_durt: "Toplu dürtme gönderildi",
+      pusula_acildi: "Pusula penceresi açıldı",
+      pusula_kapatildi: "Pusula penceresi kapatıldı",
+      kamp_kilit_kodu_ayarlandi: "Kamp kilit kodu ayarlandı",
+      bosluk_acildi: "Boşluk Anı açıldı",
+      bosluk_kapatildi: "Boşluk Anı kapatıldı",
+      odev_gonderildi: "Ödev gönderildi",
+    } as Record<string, string>,
   },
 } as const;
