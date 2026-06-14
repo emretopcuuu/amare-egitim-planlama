@@ -180,6 +180,17 @@ export async function boslukGetirVeyaUret(db: Db, pid: string): Promise<BoslukSo
   }
 }
 
+// FAZ 2 re-entry: kişinin Boşluk Anı'nda yazdığı yeni cümle (kimlik çapası).
+// Kamp sonrası görevler bunu savunur; nüks anında geri çalınır.
+export async function yeniCumleOku(db: Db, pid: string): Promise<string | null> {
+  const { data } = await db
+    .from("bosluk_ani")
+    .select("yeni_cumle")
+    .eq("participant_id", pid)
+    .maybeSingle();
+  return data?.yeni_cumle ?? null;
+}
+
 // Kişinin kendi yazdığı yeni cümleyi mühürle (kimlik çapası).
 export async function yeniCumleKaydet(
   db: Db,

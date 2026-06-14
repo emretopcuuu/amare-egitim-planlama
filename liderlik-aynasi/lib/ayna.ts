@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { pusulaOzeti } from "@/lib/pusula";
+import { yeniCumleOku } from "@/lib/bosluk";
 import {
   fazBul,
   zorlukSec,
@@ -139,6 +140,8 @@ export async function gorevUret(
   ]);
   const onceki = oncekilerSonuc.data ?? [];
   const puanlar = puanlarSonuc.data ?? [];
+  // FAZ 2 re-entry: yolculukta kamp sonrası görev, kişinin yeni cümlesini savunur.
+  const yeniCumle = mod === "yolculuk" ? await yeniCumleOku(db, katilimci.id) : null;
 
   const ozet = new Map<number, { oz: number[]; dis: number[] }>();
   for (const p of puanlar) {
@@ -176,6 +179,8 @@ export async function gorevUret(
     takim: katilimci.team,
     // FAZ 0 Pusula: kişinin kamp öncesi damıtılmış nedeni + iç engeli (varsa).
     pusula: pusula ?? null,
+    // FAZ 2: kişinin kampta yazdığı yeni cümle (yolculukta savunulacak çapa).
+    yeniCumle: yeniCumle ?? null,
     kampGunu: gun,
     saat,
     istenenGorevTuru: tur,
@@ -215,7 +220,7 @@ export async function gorevUret(
         effort: "low",
         format: { type: "json_schema", schema: GOREV_SEMASI },
       },
-      system: `${PERSONA}\n\nGörevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa (kişinin nedeni + iç engeli), görevi ona göre kişiselleştir: nedenine sessizce dokun ve iç engelini nazikçe zorlayan bir görev seç — ama iç engeli açıkça yüzüne vurma. Zorluk yönergesine MUTLAKA uy. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""} ${tur === "simulasyon" ? 'SİMÜLASYON görevi: bir aday/müşteri rolünde KISA bir sahne kur; gövdede adayın itirazını tırnak içinde söyle (ör. "Bunlara vaktim yok", "Bu işler bana göre değil") ve katılımcıdan cevabını sana yazmasını/söylemesini iste. İtirazın sertliğini zorluk seviyesine göre ayarla.' : ""} ${mod === "yolculuk" ? "Bu görev KAMPTA DEĞİL, kamp sonrası 90 günlük sahada (günlük hayat ve iş ortamı) yapılacak — kamp alanı varsayma." : ""}`,
+      system: `${PERSONA}\n\nGörevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa (kişinin nedeni + iç engeli), görevi ona göre kişiselleştir: nedenine sessizce dokun ve iç engelini nazikçe zorlayan bir görev seç — ama iç engeli açıkça yüzüne vurma. Zorluk yönergesine MUTLAKA uy. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""} ${tur === "simulasyon" ? 'SİMÜLASYON görevi: bir aday/müşteri rolünde KISA bir sahne kur; gövdede adayın itirazını tırnak içinde söyle (ör. "Bunlara vaktim yok", "Bu işler bana göre değil") ve katılımcıdan cevabını sana yazmasını/söylemesini iste. İtirazın sertliğini zorluk seviyesine göre ayarla.' : ""} ${mod === "yolculuk" ? "Bu görev KAMPTA DEĞİL, kamp sonrası 90 günlük sahada (günlük hayat ve iş ortamı) yapılacak — kamp alanı varsayma. Bağlamda 'yeniCumle' doluysa: görevi, kişinin kampta yazdığı o yeni cümleyi BUGÜN somut bir adımla YAŞATAN/doğrulayan bir saha eylemi olarak kur — cümleyi açıkça tekrarlama, ama görev onu çalışsın." : ""}`,
       messages: [{ role: "user", content: JSON.stringify(baglam) }],
     });
 

@@ -455,15 +455,24 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       .insert({ key: kaymaAnahtari, value: "1" });
     if (!kaymaKilit) {
       const yedi = new Date(simdi.getTime() - 7 * 86_400_000).toISOString();
-      const [{ data: sonYanitlar }, { data: sonPuanlar }, { data: radar }] =
-        await Promise.all([
-          db
-            .from("missions")
-            .select("participant_id, responded_at")
-            .gte("responded_at", yedi),
-          db.from("ratings").select("rater_id, created_at").gte("created_at", yedi),
-          db.from("churn_radar").select("participant_id, nudged_at, admin_alerted_at"),
-        ]);
+      const [
+        { data: sonYanitlar },
+        { data: sonPuanlar },
+        { data: radar },
+        { data: cumleler },
+      ] = await Promise.all([
+        db
+          .from("missions")
+          .select("participant_id, responded_at")
+          .gte("responded_at", yedi),
+        db.from("ratings").select("rater_id, created_at").gte("created_at", yedi),
+        db.from("churn_radar").select("participant_id, nudged_at, admin_alerted_at"),
+        // FAZ 2 re-entry: nüks anında geri çalınacak yeni cümleler
+        db.from("bosluk_ani").select("participant_id, yeni_cumle").not("yeni_cumle", "is", null),
+      ]);
+      const cumleHarita = new Map(
+        (cumleler ?? []).map((c) => [c.participant_id, c.yeni_cumle as string])
+      );
       const sonEtkinlik = new Map<string, number>();
       for (const y of sonYanitlar ?? []) {
         if (!y.responded_at) continue;
@@ -501,13 +510,22 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         if (durtulebilir) {
           // Önce kendi sesinden mektup üretmeyi dene; sonra bildir
           const sesli = await kaymaSesi(db, k.id, k.full_name);
+          // FAZ 2 reconsolidation bakımı: yeni cümle varsa onu geri çal —
+          // nüks tam burada olur, çelişkiyi (yeni kimliği) o anda yeniden teslim et.
+          const cumle = cumleHarita.get(k.id);
           await katilimciyaBildir(
             db,
             k.id,
-            sesli ? "🌊 Yansımandan sesli mesaj var" : "🌊 Su seni özledi",
-            sesli
-              ? "Kendi sesinden bir şey söylemek istiyor. Aç ve dinle."
-              : "Bir süredir sessizsin. Bu bir azar değil, bir el uzatma: küçücük bir adım bile suyu halkalandırır.",
+            cumle
+              ? "🪞 Cümleni hatırla"
+              : sesli
+                ? "🌊 Yansımandan sesli mesaj var"
+                : "🌊 Su seni özledi",
+            cumle
+              ? `Kampta kendine şunu yazmıştın: "${cumle}". Eski cümle şu an kıpırdıyor olabilir — bugün küçücük bir adım yenisini yeniden doğrular.`
+              : sesli
+                ? "Kendi sesinden bir şey söylemek istiyor. Aç ve dinle."
+                : "Bir süredir sessizsin. Bu bir azar değil, bir el uzatma: küçücük bir adım bile suyu halkalandırır.",
             "/"
           );
           ozet.durtulen += 1;
