@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import OnayliDugme from "./OnayliDugme";
 
 const t = tr.admin.aynaAni;
 
@@ -113,8 +114,9 @@ export default function AynaAniKontrol({ acik, mektupHazir, mektupToplam }: Prop
         >
           {acik ? `● ${t.durumAcik}` : `○ ${t.durumKapali}`}
         </p>
-        <button
-          onClick={degistir}
+        <OnayliDugme
+          onayMetni={acik ? tr.admin.onay.raporKapat : tr.admin.onay.raporAc}
+          onaylandi={degistir}
           disabled={bekliyor}
           className={`rounded-xl px-6 py-3 font-bold transition-colors disabled:opacity-50 ${
             acik
@@ -123,7 +125,7 @@ export default function AynaAniKontrol({ acik, mektupHazir, mektupToplam }: Prop
           }`}
         >
           {bekliyor ? "…" : acik ? t.kapat : `✨ ${t.ac}`}
-        </button>
+        </OnayliDugme>
       </div>
 
       {hata && (
