@@ -12,7 +12,19 @@ const DEPO = "la_marka_splash_v1";
 export default function AcilisSplash() {
   const [goster, setGoster] = useState(false);
   const [kapaniyor, setKapaniyor] = useState(false);
+  const [sesli, setSesli] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Tarayıcı kuralı: otomatik oynatma yalnızca SESSİZ izinli; sesi açmak için
+  // kullanıcı dokunuşu gerekir. Bu yüzden video sessiz başlar, dokununca açılır.
+  function sesAc() {
+    setSesli(true);
+    const v = videoRef.current;
+    if (v) {
+      v.muted = false;
+      v.play().catch(() => {});
+    }
+  }
 
   useEffect(() => {
     let acildi = false;
@@ -61,17 +73,24 @@ export default function AcilisSplash() {
       <video
         ref={videoRef}
         autoPlay
-        muted
+        muted={!sesli}
         playsInline
         preload="auto"
         onEnded={kapat}
         onError={kapat}
-        onClick={() => videoRef.current?.play().catch(() => {})}
+        onClick={() => (sesli ? videoRef.current?.play().catch(() => {}) : sesAc())}
         poster="/marka-poster.jpg"
-        className="h-full w-full object-contain"
+        className="h-full w-full cursor-pointer object-contain"
       >
         <source src="/marka.mp4" type="video/mp4" />
       </video>
+      {/* Sesi aç (otomatik oynatma sessiz başlar; dokununca ses gelir) */}
+      <button
+        onClick={() => (sesli ? setSesli(false) : sesAc())}
+        className="absolute left-4 top-4 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium text-slate-200 backdrop-blur transition-colors hover:bg-white/20"
+      >
+        {sesli ? "🔊 Ses açık" : "🔇 Sesi aç"}
+      </button>
       <button
         onClick={kapat}
         className="absolute right-4 top-4 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium text-slate-200 backdrop-blur transition-colors hover:bg-white/20"

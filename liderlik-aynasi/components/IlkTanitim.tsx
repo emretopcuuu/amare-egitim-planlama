@@ -75,9 +75,16 @@ export default function IlkTanitim() {
               preload="auto"
               poster="/marka-poster.jpg"
               onError={() => setVideoOk(false)}
-              onClick={() => videoRef.current?.play().catch(() => {})}
+              onClick={() => {
+                // Dokununca sesi aç (autoplay sessiz başlar — tarayıcı kuralı).
+                const v = videoRef.current;
+                if (v) {
+                  v.muted = false;
+                  v.play().catch(() => {});
+                }
+              }}
               style={{ aspectRatio: "16 / 9" }}
-              className="mx-auto w-full max-w-xs rounded-2xl object-cover"
+              className="mx-auto w-full max-w-xs cursor-pointer rounded-2xl object-cover"
             >
               <source src="/marka.mp4" type="video/mp4" />
             </video>
