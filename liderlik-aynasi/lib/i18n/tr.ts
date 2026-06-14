@@ -742,6 +742,7 @@ export const tr = {
       kurulum: "Kurulum",
       analiz: "Analiz",
       sunum: "Sunum",
+      gorevTuru: "Görev Türleri",
     },
     // #3 Nav kategorileri: 14 düz sekme yerine 4 grup + Panel
     navGrup: {
@@ -921,6 +922,49 @@ export const tr = {
       momentumEtiket: "Momentum",
       yanitEtiket: "Yanıtı",
       gizliAdim: "kim olduğu gizli",
+    },
+    // Görev Türü Stüdyosu: admin türleri açıp kapatır
+    gorevTuru: {
+      baslik: "Görev Türü Stüdyosu",
+      aciklama:
+        "AYNA görevleri bu türlerde her kişiye özel canlı üretir. Beğenmediğin bir türü kapatırsan AYNA program boyunca o türde görev üretmez. En az bir tür açık kalmalı.",
+      kaydet: "Kaydet",
+      kaydediliyor: "Kaydediliyor…",
+      kayitli: "✓ Kaydedildi",
+      enAzBir: "En az bir tür açık kalmalı.",
+      hata: "Kaydedilemedi, tekrar dene.",
+      turler: {
+        gozlem: {
+          ad: "👁 Gözlem",
+          aciklama: "Çevreyi ve başkalarını fark etme görevleri.",
+          ornek: "Kimse fark etmeden en çok kime destek olduğunu gözlemle, bana yaz.",
+        },
+        cesaret: {
+          ad: "🔥 Cesaret",
+          aciklama: "Konfor alanını zorlayan küçük cesur adımlar.",
+          ornek: "Hiç tanımadığın birinin yanına otur ve tek soru sor.",
+        },
+        yansima: {
+          ad: "🪞 Yansıma",
+          aciklama: "İç bakış / kendini sorgulama (genelde akşamları).",
+          ornek: "Bugün seni en çok zorlayan an neydi? Ondan ne öğrendin?",
+        },
+        gizli: {
+          ad: "🤫 Gizli Görev",
+          aciklama: "'Bunu kimseye söyleme' ruhuyla özel görevler.",
+          ornek: "Bunu kimseye söyleme: bugün birine gizlice bir iyilik yap.",
+        },
+        tahmin: {
+          ad: "🎲 Tahmin",
+          aciklama: "Akşam sonuçlarda karşılaştırılacak öngörü oyunları.",
+          ornek: "Bu akşamki etkinlikte ilk kimin öne çıkacağını tahmin et.",
+        },
+        simulasyon: {
+          ad: "🎭 Simülasyon",
+          aciklama: "İtiraz karşılama / saha provası (sesli).",
+          ornek: "Bir aday 'Bu işler bana göre değil' diyor — sen ne dersin?",
+        },
+      },
     },
     // Admin yardım metinleri (her bölümün "?" içeriği). Yerine bakan görevli
     // soru sormadan işi yürütebilsin diye detaylı yazılır. Her entry { baslik,
@@ -1287,6 +1331,14 @@ export const tr = {
           "Bir adayın kamp öncesinden başlayıp 6 aya uzanan 360° yolculuğunu yönetim kuruluna/ekiplere göstermek için hazır sunum modu — sistemi satarken en güçlü kozun.",
           "'İleri' (ya da → / boşluk) ile adım adım ilerle; her ekranda adayın o an gördüğü şey + yüksek sesle okuyabileceğin bir 'sunum notu' var. 'Yeniden karıştır' farklı bir aday/varyasyon getirir.",
           "İçerik önceden hazırlanmıştır: internetsiz, anında, hatasız çalışır ve gerçek katılımcı verisine dokunmaz.",
+        ],
+      },
+      gorevTuru: {
+        baslik: "Görev Türü Stüdyosu",
+        metin: [
+          "NE: AYNA görevleri sabit listeden değil, 6 türde (gözlem, cesaret, yansıma, gizli, tahmin, simülasyon) her kişiye özel canlı üretir.",
+          "KAPATINCA NE OLUR: Bir türün anahtarını kapatıp 'Kaydet' dersen AYNA program boyunca o türde görev ÜRETMEZ (ör. simülasyon istemiyorsan kapat).",
+          "NE ZAMAN: Program öncesi bir kez ayarla. En az bir tür açık kalmalı (hepsi kapatılamaz). Her türün altında örnek görev metni var.",
         ],
       },
     },

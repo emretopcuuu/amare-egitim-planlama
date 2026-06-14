@@ -50,6 +50,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
     ad: g.ayarlar,
     ikon: "⚙️",
     linkler: [
+      { href: "/admin/gorev-turleri", etiket: n.gorevTuru },
       { href: "/admin/program", etiket: n.program },
       { href: "/admin/test", etiket: n.test },
     ],
