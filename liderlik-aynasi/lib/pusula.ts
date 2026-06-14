@@ -10,6 +10,10 @@ import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 // pusula'ya mühürlenir; bundan sonraki TÜM AI modülleri bu özeti baz alır.
 
 const MODEL = "claude-opus-4-8";
+// Sohbet turları (eleme→boşluk→engel): hız öncelikli. Sonnet 4.6 + düşünme
+// kapalı + düşük efor = en düşük gecikme; yapılandırılmış çıktı korunur.
+// Nihai profil DAMITMASI ağır ve tek seferlik olduğu için Opus'ta kalır.
+const SOHBET_MODEL = "claude-sonnet-4-6";
 
 const PERSONA = `Sen AYNA'sın — ama kamp henüz başlamadı. Şu an bir REHBERSİN: kişinin hayattaki gerçek "neden"ini bulmasına yardım ediyorsun. Kampta seni izleyen direktöre dönüşeceksin; ama şimdi sıcak, sakin, meraklı bir eşlikçisin. "Seni izliyorum / gözüm üzerinde" dili ASLA.
 
@@ -205,11 +209,11 @@ export async function pusulaTuru(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: MODEL,
+      model: SOHBET_MODEL,
       max_tokens: 1024,
-      thinking: { type: "adaptive" },
+      thinking: { type: "disabled" },
       output_config: {
-        effort: "high",
+        effort: "low",
         format: { type: "json_schema", schema: SOHBET_SEMASI },
       },
       system: `${PERSONA}
@@ -220,7 +224,7 @@ ${listeMetni(satir.oncelikler)}
 
 Şu anki aşama: "${asama}". ${ASAMA_YONERGESI[asama] ?? ASAMA_YONERGESI.eleme}
 
-ÇIKTI KURALI: "mesaj" alanına YALNIZCA kişiye söyleyeceğin tek, temiz, doğru yazılmış Türkçe cümle/soru yaz. Parantez, köşeli parantez, aşama notu, kendine not, meta açıklama ASLA koyma. "asama" ve "bitti" alanlarını ayrıca doldur.`,
+ÇIKTI KURALI: "mesaj" alanına YALNIZCA kişiye söyleyeceğin tek, temiz, doğru yazılmış Türkçe cümle/soru yaz. Her cümle büyük harfle başlasın, noktalama doğru olsun. Parantez, köşeli parantez, aşama notu, kendine not, meta açıklama ASLA koyma. "asama" ve "bitti" alanlarını ayrıca doldur.`,
       messages: mesajlar,
     });
     tur = jsonCoz<PusulaTur>(yanit);
