@@ -557,6 +557,31 @@ export const tr = {
     aiHata: "Şu an yanıt veremedim, az sonra tekrar dene.",
     acHataBaslik: "Kod geçersiz",
     acHataMetin: "Bu kod kampı açmıyor. Lütfen görevliyle iletişime geç.",
+    // FAZ 0 hazırlık hub'ı (Pusula bitince, kampa gelmeden)
+    hazirlikBaslik: "Pusulan kuruldu 🧭",
+    hazirlikAltBaslik:
+      "Kampa gelmeden bunları da hazırlarsan ilk gün doğrudan yaşamaya başlarsın. İstersen hepsini kampta da yapabilirsin — hiçbiri zorunlu değil.",
+    adimPuanBaslik: "Kendini puanla",
+    adimPuanMetin:
+      "10 liderlik özelliğinde kendini değerlendir. Bu, kampta başkalarının gözünden göreceğin halinle karşılaştırılacak başlangıç fotoğrafın.",
+    adimPuanDugme: "Başla",
+    adimRehberBaslik: "Kamp rehberi",
+    adimRehberMetin: "3 gün boyunca seni neler bekliyor, kısaca bak.",
+    adimRehberDugme: "Göz at",
+    adimFotoBaslik: "Fotoğrafını ekle",
+    adimFotoMetin: "Tanışma ve eşleştirme için kendi fotoğrafın.",
+    adimTamam: "Tamamlandı",
+    hazirlikBekle:
+      "Hazırsın. Kampın geri kalanı, oraya gelip odandaki kodu okuttuğunda açılacak. O ana dek dinlen.",
+  },
+  // Kamp öncesi profil fotoğrafı
+  profilFoto: {
+    sec: "📸 Fotoğraf seç / çek",
+    kaydet: "Kaydet",
+    vazgec: "Vazgeç",
+    degistir: "Fotoğrafı değiştir",
+    yukleniyor: "Yükleniyor…",
+    hata: "Yüklenemedi, tekrar dene.",
   },
   // FAZ 3 — Reddi Kutla (Go-for-No / Fun Failure)
   red: {

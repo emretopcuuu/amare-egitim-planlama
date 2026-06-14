@@ -441,6 +441,7 @@ export type Database = {
           id: string
           login_code: string
           phone: string | null
+          profil_foto_path: string | null
           role: string
           team: string | null
         }
@@ -455,6 +456,7 @@ export type Database = {
           id?: string
           login_code: string
           phone?: string | null
+          profil_foto_path?: string | null
           role?: string
           team?: string | null
         }
@@ -469,6 +471,7 @@ export type Database = {
           id?: string
           login_code?: string
           phone?: string | null
+          profil_foto_path?: string | null
           role?: string
           team?: string | null
         }

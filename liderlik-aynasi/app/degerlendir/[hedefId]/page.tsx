@@ -6,6 +6,7 @@ import {
   aktifOzellikler,
   ozPuanTamamMi,
 } from "@/lib/degerlendirme";
+import { kampKilitliMi } from "@/lib/pusula";
 import PuanlamaFormu from "./PuanlamaFormu";
 
 export const metadata = { title: "Puanla — Liderlik Aynası" };
@@ -27,13 +28,25 @@ export default async function PuanlaPage({
 
   const db = supabaseAdmin();
   const dalga = await acikDalga(db);
-  if (!dalga) redirect("/degerlendir");
-
   const ozellikler = await aktifOzellikler(db);
   const kendisi = hedefId === session.sub;
 
-  // Öz-puan kapısı sunucuda da uygulanır: URL'i bilen biri kapıyı atlayamaz.
-  if (!kendisi && !(await ozPuanTamamMi(db, session.sub, dalga.id, ozellikler.length))) {
+  // Hangi dalgaya yazılıyor: dalga açıksa o; kapalıysa kamp öncesi (FAZ 0)
+  // yalnız öz-puan Dalga 1'e (İlk İzlenim). Başkasını puanlama kampta açılır.
+  let dalgaId: number;
+  let dalgaAdi: string;
+  if (dalga) {
+    dalgaId = dalga.id;
+    dalgaAdi = dalga.name;
+    // Öz-puan kapısı sunucuda da uygulanır: URL'i bilen biri kapıyı atlayamaz.
+    if (!kendisi && !(await ozPuanTamamMi(db, session.sub, dalga.id, ozellikler.length))) {
+      redirect("/degerlendir");
+    }
+  } else if (kendisi && (await kampKilitliMi(db, session.sub))) {
+    dalgaId = 1;
+    const { data: d1 } = await db.from("waves").select("name").eq("id", 1).maybeSingle();
+    dalgaAdi = d1?.name ?? "İlk İzlenim";
+  } else {
     redirect("/degerlendir");
   }
 
@@ -51,15 +64,15 @@ export default async function PuanlaPage({
     .select("trait_id, score, comment")
     .eq("rater_id", session.sub)
     .eq("target_id", hedefId)
-    .eq("wave", dalga.id);
+    .eq("wave", dalgaId);
   if (mevcutHata) throw mevcutHata;
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="mx-auto my-auto w-full max-w-md p-5">
       <PuanlamaFormu
-        dalgaId={dalga.id}
-        dalgaAdi={dalga.name}
+        dalgaId={dalgaId}
+        dalgaAdi={dalgaAdi}
         hedefId={hedef.id}
         hedefAd={hedef.full_name}
         hedefTakim={hedef.team}
