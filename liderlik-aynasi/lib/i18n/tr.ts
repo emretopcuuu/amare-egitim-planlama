@@ -135,6 +135,7 @@ export const tr = {
     ilkAdimIpucu: "İlk adımın bu — başla",
     // Çıkmaz yok: boş anda bile sıcak bir sonraki adım — birine takdir bırak.
     bekleEylem: "Birine takdir bırak ✨",
+    bekleRed: "Bir 'Hayır' mı aldın? Kutla 🎯",
     // Boş ekranlarda net sonraki adım butonu (çıkmaz hissi olmasın).
     sicakAnaSayfa: "Ana sayfaya dön",
     // Kapanış sözü kartı (kamp sonunda açılır)
@@ -531,6 +532,28 @@ export const tr = {
     aiHata: "Şu an yanıt veremedim, az sonra tekrar dene.",
     acHataBaslik: "Kod geçersiz",
     acHataMetin: "Bu kod kampı açmıyor. Lütfen görevliyle iletişime geç.",
+  },
+  // FAZ 3 — Reddi Kutla (Go-for-No / Fun Failure)
+  red: {
+    baslik: "Reddi Kutla",
+    aciklama:
+      "'Hayır' bir kayıp değil — veri. Her hayır, doğru 'evet'e bir adım. Aldığın reddi buraya düş, sayacın yürüsün.",
+    dugme: "Bir 'Hayır' aldım",
+    aciklamaYer: "Ne oldu? (isteğe bağlı)",
+    kaydet: "Kasaya Ekle",
+    vazgec: "Vazgeç",
+    toplamEtiket: "Tecrübe Puanı",
+    haftaEtiket: (n: number) => `Bu hafta: ${n}`,
+    kaydediliyor: "Kaydediliyor…",
+    hata: "Kaydedilemedi, tekrar dene.",
+    reframeler: [
+      "İlk verin kasada. Çoğu kişi bir 'Hayır'da durur — sen saymaya başladın.",
+      "Bu 'Hayır' senin hakkında değildi. Sadece 'evet'in orada olmadığını gösterdi.",
+      "Hayır, kapı değil — pusula. Bir sonraki kapıya yönlendirdi seni.",
+      "Sayacın işliyor. İstatistik senden yana: ne kadar çok hayır, o kadar yakın evet.",
+      "Cesaret bu. Çoğu kişi soramadığı için hayır bile alamaz. Sen sordun.",
+      "Bir veri daha. Strateji burada şekilleniyor — devam.",
+    ] as string[],
   },
   // FAZ 1 — Boşluk Anı (kamp zirvesi)
   bosluk: {

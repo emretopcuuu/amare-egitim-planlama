@@ -385,8 +385,10 @@ export default async function AnaSayfa() {
         <p className="mt-3 text-base leading-relaxed text-slate-300">{t.bekleMetin}</p>
         {/* #4 Sıradaki dalgaya geri sayım: yalnızca zamanlama ayarlıysa */}
         {sonrakiDalgaZamani && <GeriSayim hedefZaman={sonrakiDalgaZamani} />}
-        <div className="mt-6">
+        <div className="mt-6 space-y-3">
           <SicakAdim href="/takdir" etiket={t.bekleEylem} vurgu />
+          {/* FAZ 3 Go-for-No: boş anda reddi veriye çevir */}
+          <SicakAdim href="/red" etiket={t.bekleRed} />
         </div>
       </div>
     </Sayfa>

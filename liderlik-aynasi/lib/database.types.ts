@@ -781,6 +781,35 @@ export type Database = {
           },
         ]
       }
+      redler: {
+        Row: {
+          aciklama: string | null
+          created_at: string
+          id: number
+          participant_id: string
+        }
+        Insert: {
+          aciklama?: string | null
+          created_at?: string
+          id?: never
+          participant_id: string
+        }
+        Update: {
+          aciklama?: string | null
+          created_at?: string
+          id?: never
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redler_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedule_items: {
         Row: {
           created_at: string
