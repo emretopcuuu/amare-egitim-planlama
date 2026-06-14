@@ -6,5 +6,6 @@ export const SESSION_COOKIE = "la_oturum";
 export type Session = {
   sub: string; // participants.id
   ad: string; // full_name
-  rol: "participant" | "admin";
+  // yardimci: sınırlı görevli — yalnız izleme + hatırlatma (kritik anahtarlar yok)
+  rol: "participant" | "admin" | "yardimci";
 };

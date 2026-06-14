@@ -19,7 +19,7 @@ export default async function GirisPage({
   const { kod } = await searchParams;
   if (!kod) {
     const session = await getSession();
-    if (session) redirect(session.rol === "admin" ? "/admin" : "/");
+    if (session) redirect(session.rol === "participant" ? "/" : "/admin");
   }
 
   return (

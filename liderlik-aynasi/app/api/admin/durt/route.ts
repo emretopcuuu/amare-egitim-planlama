@@ -1,4 +1,4 @@
-import { adminOturumu } from "@/lib/auth/admin";
+import { yetkiliOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga, aktifOzellikler } from "@/lib/degerlendirme";
 import { katilimciyaBildir } from "@/lib/push";
@@ -8,7 +8,8 @@ import { tr } from "@/lib/i18n/tr";
 // katılımcılara "kendini puanla" hatırlatma push'u gönderir. Eksik listesi
 // sunucuda taze hesaplanır (istemciye güvenilmez).
 export async function POST() {
-  if (!(await adminOturumu())) {
+  // Güvenli eylem: yardımcı görevli de eksikleri dürtebilir.
+  if (!(await yetkiliOturumu())) {
     return Response.json({ hata: tr.admin.yetkisiz }, { status: 403 });
   }
   const db = supabaseAdmin();

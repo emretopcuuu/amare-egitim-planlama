@@ -572,6 +572,11 @@ export const tr = {
       baslik: "Bugünün Akışı",
       aciklama: "Bugün sırayla yapılacaklar — her adım ilgili kontrole götürür.",
     },
+    // #4 Yardımcı görevli: sınırlı yetki bilgilendirmesi
+    yardimci: {
+      banner:
+        "👀 Yardımcı görevli — yalnız izleme ve hatırlatma yapabilirsin. Kritik anahtarlar (dalga, rapor, veri) yöneticiye özeldir.",
+    },
     // #9 Eksikleri tek dokunuşla dürt: öz-puanını bitirmeyenlere hatırlatma push'u
     durt: {
       bildirimBaslik: "🪞 Kendini puanla",

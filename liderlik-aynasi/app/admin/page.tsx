@@ -20,7 +20,12 @@ export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
 export default async function AdminPanel() {
   const session = await getSession();
-  if (!session || session.rol !== "admin") redirect("/admin/giris");
+  if (!session || (session.rol !== "admin" && session.rol !== "yardimci")) {
+    redirect("/admin/giris");
+  }
+  // Yardımcı görevli: yalnız izleme + hatırlatma. Kritik anahtarlar gizli +
+  // ilgili API'ler reddeder (derinlemesine savunma).
+  const tamYetki = session.rol === "admin";
 
   const db = supabaseAdmin();
   const [
@@ -143,6 +148,12 @@ export default async function AdminPanel() {
         <OtoYenile />
       </div>
 
+      {!tamYetki && (
+        <p className="rounded-xl border border-royal-light/40 bg-royal/15 px-4 py-3 text-sm font-medium text-slate-100">
+          {tr.admin.yardimci.banner}
+        </p>
+      )}
+
       {/* #7 "Şimdi ne yapmalıyım?" — adminin o an basması gereken tek adım */}
       <section
         className={`kart-3d rounded-2xl p-6 shadow-xl ring-1 backdrop-blur ${
@@ -174,6 +185,9 @@ export default async function AdminPanel() {
       {/* #2 Bugünün Akışı — kamp günündeyse o günün adımları */}
       <GununAkisi bugun={bugun} />
 
+      {/* #4 Kritik (kamp akışını değiştiren) anahtarlar yalnız tam yetkili admin'e */}
+      {tamYetki && (
+        <>
       <section
         id="dalga"
         className="kart-3d scroll-mt-20 rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur"
@@ -219,6 +233,8 @@ export default async function AdminPanel() {
           sonGonderim={davetAyari?.value ?? null}
         />
       </section>
+        </>
+      )}
 
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 id="ilerleme" className="scroll-mt-20 text-lg font-semibold text-gold-light">
@@ -308,6 +324,8 @@ export default async function AdminPanel() {
         )}
       </section>
 
+      {tamYetki && (
+        <>
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="text-lg font-semibold text-gold-light">{tr.admin.yedek.baslik}</h2>
         <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.yedek.aciklama}</p>
@@ -342,6 +360,8 @@ export default async function AdminPanel() {
           }))}
         />
       </section>
+        </>
+      )}
     </main>
   );
 }

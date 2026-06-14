@@ -26,14 +26,18 @@ export default function AdminNav({
   ad,
   dalgaAdi,
   aynaUyanik,
+  tamYetki = true,
 }: {
   ad: string;
   dalgaAdi: string | null;
   aynaUyanik: boolean;
+  tamYetki?: boolean;
 }) {
   const pathname = usePathname();
   const router = useRouter();
   const [cikiliyor, setCikiliyor] = useState(false);
+  // Yardımcı görevli yalnız ana paneli (izleme) görür; diğer sayfalar admin'e özel.
+  const linkler = tamYetki ? LINKLER : LINKLER.filter((l) => l.href === "/admin");
 
   async function cikis() {
     setCikiliyor(true);
@@ -51,7 +55,7 @@ export default function AdminNav({
         <span className="mr-2 hidden shrink-0 text-sm font-bold text-gold sm:block">
           {tr.app.name}
         </span>
-        {LINKLER.map((l) => (
+        {linkler.map((l) => (
           <Link
             key={l.href}
             href={l.href}
