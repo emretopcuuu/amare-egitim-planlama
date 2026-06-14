@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { tr } from "@/lib/i18n/tr";
 
 const n = tr.admin.nav;
@@ -70,6 +71,38 @@ export default function AdminNav({
   const router = useRouter();
   const [cikiliyor, setCikiliyor] = useState(false);
   const [acikGrup, setAcikGrup] = useState<string | null>(null);
+  const [acikKonum, setAcikKonum] = useState<{ left: number; top: number } | null>(null);
+
+  // Açık menü, butonun ölçülen konumuna sabitlenir ve gövdeye portallanır —
+  // böylece yatay kaydırma kabının (overflow-x) altında kırpılmaz. Kaydırma /
+  // yeniden boyutlandırmada konum kaymasın diye menüyü kapatırız.
+  const grupKapat = () => {
+    setAcikGrup(null);
+    setAcikKonum(null);
+  };
+  useEffect(() => {
+    if (!acikGrup) return;
+    const kapat = () => {
+      setAcikGrup(null);
+      setAcikKonum(null);
+    };
+    window.addEventListener("resize", kapat);
+    window.addEventListener("scroll", kapat, true);
+    return () => {
+      window.removeEventListener("resize", kapat);
+      window.removeEventListener("scroll", kapat, true);
+    };
+  }, [acikGrup]);
+
+  function grupAc(ad: string, el: HTMLElement) {
+    if (acikGrup === ad) return grupKapat();
+    const r = el.getBoundingClientRect();
+    // Menü 11rem (~176px) genişlikte; sağ kenardan taşmasın diye left'i kısıtla.
+    const genislik = 176;
+    const left = Math.max(8, Math.min(r.left, window.innerWidth - genislik - 8));
+    setAcikKonum({ left, top: r.bottom + 4 });
+    setAcikGrup(ad);
+  }
 
   async function cikis() {
     setCikiliyor(true);
@@ -85,15 +118,41 @@ export default function AdminNav({
 
   return (
     <nav className="sticky top-0 z-30 border-b border-royal/30 bg-midnight/90 backdrop-blur print:hidden">
-      {/* Dışarı tıklayınca açık menü kapanır */}
-      {acikGrup && (
-        <button
-          aria-hidden
-          tabIndex={-1}
-          onClick={() => setAcikGrup(null)}
-          className="fixed inset-0 z-0 cursor-default"
-        />
-      )}
+      {/* Açık menü gövdeye portallanır (overflow-x kabının altında kırpılmasın).
+          acikGrup yalnız tıklamayla (hidrasyon sonrası) dolar → SSR'da portal yok. */}
+      {acikGrup &&
+        acikKonum &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <>
+            <button
+              aria-hidden
+              tabIndex={-1}
+              onClick={grupKapat}
+              className="fixed inset-0 z-40 cursor-default"
+            />
+            <div
+              style={{ position: "fixed", left: acikKonum.left, top: acikKonum.top }}
+              className="z-50 min-w-[11rem] overflow-hidden rounded-xl border border-royal/40 bg-midnight-card shadow-2xl"
+            >
+              {GRUPLAR.find((grup) => grup.ad === acikGrup)?.linkler.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={grupKapat}
+                  className={`block px-4 py-2.5 text-sm transition-colors ${
+                    pathname === l.href
+                      ? "bg-royal/40 text-gold-light"
+                      : "text-slate-300 hover:bg-royal/20"
+                  }`}
+                >
+                  {l.etiket}
+                </Link>
+              ))}
+            </div>
+          </>,
+          document.body
+        )}
       <div className="scrollbar-gizle relative z-10 mx-auto flex w-full max-w-4xl items-center gap-1 overflow-x-auto p-3">
         <span className="mr-1 hidden shrink-0 text-sm font-bold text-gold sm:block">
           {tr.app.name}
@@ -116,40 +175,21 @@ export default function AdminNav({
             const acik = acikGrup === grup.ad;
             const grupAktif = grup.linkler.some((l) => pathname === l.href);
             return (
-              <div key={grup.ad} className="relative shrink-0">
-                <button
-                  onClick={() => setAcikGrup(acik ? null : grup.ad)}
-                  className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                    grupAktif || acik
-                      ? "bg-royal/40 text-gold-light"
-                      : "text-slate-300 hover:bg-midnight-card"
-                  }`}
-                >
-                  <span aria-hidden>{grup.ikon}</span>
-                  {grup.ad}
-                  <span className="text-[0.6rem] text-slate-500" aria-hidden>
-                    ▾
-                  </span>
-                </button>
-                {acik && (
-                  <div className="absolute left-0 top-full z-20 mt-1 min-w-[11rem] overflow-hidden rounded-xl border border-royal/40 bg-midnight-card shadow-2xl">
-                    {grup.linkler.map((l) => (
-                      <Link
-                        key={l.href}
-                        href={l.href}
-                        onClick={() => setAcikGrup(null)}
-                        className={`block px-4 py-2.5 text-sm transition-colors ${
-                          pathname === l.href
-                            ? "bg-royal/40 text-gold-light"
-                            : "text-slate-300 hover:bg-royal/20"
-                        }`}
-                      >
-                        {l.etiket}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <button
+                key={grup.ad}
+                onClick={(e) => grupAc(grup.ad, e.currentTarget)}
+                className={`flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  grupAktif || acik
+                    ? "bg-royal/40 text-gold-light"
+                    : "text-slate-300 hover:bg-midnight-card"
+                }`}
+              >
+                <span aria-hidden>{grup.ikon}</span>
+                {grup.ad}
+                <span className="text-[0.6rem] text-slate-500" aria-hidden>
+                  ▾
+                </span>
+              </button>
             );
           })}
 
