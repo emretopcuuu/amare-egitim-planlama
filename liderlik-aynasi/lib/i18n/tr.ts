@@ -511,6 +511,31 @@ export const tr = {
       foto: "Fotoğraf",
       sozler: "Sözler",
       test: "Prova",
+      kurulum: "Kurulum",
+    },
+    // #8 Tek akışlı kurulum sihirbazı: CSV → kod → QR, adım adım
+    kurulum: {
+      baslik: "Kurulum Sihirbazı",
+      aciklama: "Kamp öncesi 3 adımda hazır ol.",
+      adimEtiket: (n: number) => `Adım ${n}`,
+      adim1Baslik: "Katılımcı listesini yükle",
+      adim1Aciklama:
+        "CSV dosyasını yükle; her kişi için 6 haneli giriş kodu otomatik üretilir.",
+      dosyaSec: "CSV dosyası seç",
+      yukle: "Yükle ve Kod Üret",
+      yukleniyor: "Yükleniyor…",
+      adim1Tamam: (n: number) => `${n} katılımcı yüklendi, kodlar üretildi`,
+      adim2Baslik: "Kodlar hazır",
+      adim2Aciklama: (n: number) =>
+        `${n} katılımcı için 6 haneli giriş kodları otomatik üretildi.`,
+      listeyiGor: "Katılımcı Listesini Gör",
+      adim3Baslik: "QR kartlarını yazdır",
+      adim3Aciklama:
+        "Yaka kartı QR kodlarını yazdır; katılımcılar okutup tek dokunuşla girsin.",
+      qrYazdir: "QR Kartlarını Aç",
+      hata: "Bir şeyler ters gitti, tekrar dene.",
+      tamamBaslik: "Hazırsın! 🎉",
+      tamamAciklama: "Tüm adımlar tamam. Kamp gününe hazırsın — iyi kamplar!",
     },
     // #7 "Şimdi ne yapmalıyım?" — adminin o an basması gereken tek adım
     asistan: {
