@@ -20,6 +20,7 @@ import HazirlikPaneli from "./HazirlikPaneli";
 import CanliOzet from "./CanliOzet";
 import KodBul from "./KodBul";
 import Uyarilar from "./Uyarilar";
+import DuyuruSablonlari from "./DuyuruSablonlari";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -223,6 +224,9 @@ export default async function AdminPanel() {
 
       {/* #6 Hızlı kod bulma — yalnız tam yetkili admin (kodlar gizli) */}
       {tamYetki && <KodBul />}
+
+      {/* #9 Hazır duyuru şablonları — yalnız tam yetkili admin (herkese push) */}
+      {tamYetki && <DuyuruSablonlari />}
 
       {/* #4 Kritik (kamp akışını değiştiren) anahtarlar yalnız tam yetkili admin'e */}
       {tamYetki && (
