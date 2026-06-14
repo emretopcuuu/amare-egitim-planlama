@@ -12,6 +12,7 @@ import DavetKontrol from "./DavetKontrol";
 import YedekButonu from "./YedekButonu";
 import SilmeTalepleri from "./SilmeTalepleri";
 import IkiliKontrol from "./IkiliKontrol";
+import EksikDurt from "./EksikDurt";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -290,6 +291,11 @@ export default async function AdminPanel() {
                 </tbody>
               </table>
             </div>
+            {ilerleme.katilimcilar.length - ilerleme.ozTamamlar.size > 0 && (
+              <EksikDurt
+                eksikSayisi={ilerleme.katilimcilar.length - ilerleme.ozTamamlar.size}
+              />
+            )}
           </>
         )}
       </section>
