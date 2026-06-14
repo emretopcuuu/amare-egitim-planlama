@@ -32,11 +32,16 @@ export default function PusulaSohbet({
   const [maddeler, setMaddeler] = useState<string[]>([]); // tek tek eklenen öncelikler
   const [maddeGirdi, setMaddeGirdi] = useState("");
   const [girdi, setGirdi] = useState("");
+  const [elenenler, setElenenler] = useState<string[]>([]); // eleme: gönderilen maddeler
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const altRef = useRef<HTMLDivElement>(null);
   const maddeRef = useRef<HTMLInputElement>(null);
   const acilisRef = useRef(false);
+
+  // Sohbet sırasında gösterilecek liste: sunucudan (dönen kullanıcı) ya da
+  // oturum içi girilen maddeler. Eleme aşamasında seçilenler eksilir.
+  const tumListe = oncelikler.length ? oncelikler : maddeler;
 
   useEffect(() => {
     altRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -111,6 +116,10 @@ export default function PusulaSohbet({
     if (!metin || mesgul) return;
     setMesajlar((m) => [...m, { rol: "kullanici", icerik: metin }]);
     setGirdi("");
+    // Gönderilen madde listede varsa eleme olarak işaretle (chip'lerden düşsün).
+    if (tumListe.includes(metin)) {
+      setElenenler((e) => (e.includes(metin) ? e : [...e, metin]));
+    }
     setMesgul(true);
     setHata(null);
     const v = await istek({ mesaj: metin });
@@ -235,8 +244,8 @@ export default function PusulaSohbet({
   }
 
   // ---- Sohbet ----
-  // Sunucudan gelen liste (dönen kullanıcı) yoksa oturum içi girilen maddeler.
-  const gosterListe = oncelikler.length ? oncelikler : maddeler;
+  // Seçilip elenenler düştükten sonra kalan öncelikler chip olarak görünür.
+  const gosterListe = tumListe.filter((m) => !elenenler.includes(m));
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
       <header className="shrink-0 pb-3 text-center">
