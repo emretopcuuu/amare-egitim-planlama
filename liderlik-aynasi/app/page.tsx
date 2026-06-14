@@ -8,6 +8,7 @@ import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
 import AynaRituel from "@/components/AynaRituel";
 import EgilenKart from "@/components/EgilenKart";
+import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
 import KonusanYansima from "@/components/KonusanYansima";
 import SicakAdim from "@/components/SicakAdim";
@@ -208,7 +209,8 @@ export default async function AnaSayfa() {
     </header>
   );
 
-  // 1) ÖZ-PUAN KAPISI — dalga açıkken kendini puanlamadan başka hiçbir şey yok
+  // 1) ÖZ-PUAN KAPISI — dalga açıkken kendini puanlamadan başka hiçbir şey yok.
+  // İlk kez gelen adaya birincil eyleme doğru canlı "👆 buradan başla" işareti.
   if (dalga && !ozTamam) {
     return (
       <Sayfa ust={ust} kurulum={false}>
@@ -219,6 +221,7 @@ export default async function AnaSayfa() {
           dugme={t.ozGerekDugme}
           vurgu
         />
+        <IlkAdimIpucu etiket={t.ilkAdimIpucu} />
       </Sayfa>
     );
   }

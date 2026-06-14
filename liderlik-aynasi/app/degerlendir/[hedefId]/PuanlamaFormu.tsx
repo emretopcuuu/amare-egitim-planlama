@@ -222,6 +222,8 @@ export default function PuanlamaFormu({
       }
       try {
         localStorage.removeItem(taslakAnahtari(dalgaId, hedefId));
+        // İlk öz-puan tamamlandı: ana ekrandaki "ilk adım" işareti bir daha çıkmasın.
+        if (ilkOzPuan.current) localStorage.setItem("la_oz_puan_verildi", "1");
       } catch {
         // taslak silinemezse sorun değil: sunucu kaydı esas
       }
