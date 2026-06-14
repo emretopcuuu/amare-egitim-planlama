@@ -522,6 +522,26 @@ export const tr = {
     acHataBaslik: "Kod geçersiz",
     acHataMetin: "Bu kod kampı açmıyor. Lütfen görevliyle iletişime geç.",
   },
+  // FAZ 1 — Boşluk Anı (kamp zirvesi)
+  bosluk: {
+    baslik: "Boşluk",
+    yukleniyor: "Hazırlanıyor…",
+    basla: "Hazırım",
+    ileri: "Devam et",
+    kanitBaslik: "Ama ben başka bir şey gördüm",
+    cumleYer: "Geriye kalan cümleyi kendi kelimelerinle yaz…",
+    cumleKaydet: "Mühürle",
+    cumleBosUyari: "Bir cümle yaz.",
+    tamamBaslik: "Mühürlendi 🔒",
+    tamamMetin:
+      "Bu cümle artık senin. Yola çıktığında — eski cümle kıpırdadığında — onu sana hatırlatacağım.",
+    pusulaYokBaslik: "Önce pusulan",
+    pusulaYokMetin: "Boşluk Anı için önce Nedenler çalışmanı (Pusula) tamamlaman gerek.",
+    kanitYokBaslik: "Henüz erken",
+    kanitYokMetin:
+      "Seni izlemeye yeni başladım. Kanıtlar kamp ilerledikçe birikiyor — birazdan burada olacaklar.",
+    hata: "Bir şeyler ters gitti, tekrar dene.",
+  },
   admin: {
     komutan: {
       baslik: "Komutan Paneli",

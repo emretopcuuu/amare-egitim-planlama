@@ -300,6 +300,33 @@ export async function pusulaOzeti(db: Db, pid: string): Promise<string | null> {
   return data?.tamamlandi_at && data.ozet ? data.ozet : null;
 }
 
+// Boşluk Anı motoru için yapılandırılmış çekirdek (iç engel dahil).
+export type PusulaCekirdek = {
+  cekirdek_neden: string[];
+  mevcut_bosluk: string | null;
+  ic_engel: string | null;
+  ic_engel_kat: string | null;
+  ozet: string | null;
+};
+export async function pusulaCekirdek(
+  db: Db,
+  pid: string
+): Promise<PusulaCekirdek | null> {
+  const { data } = await db
+    .from("pusula")
+    .select("cekirdek_neden, mevcut_bosluk, ic_engel, ic_engel_kat, ozet, tamamlandi_at")
+    .eq("participant_id", pid)
+    .maybeSingle();
+  if (!data?.tamamlandi_at) return null;
+  return {
+    cekirdek_neden: (data.cekirdek_neden as string[]) ?? [],
+    mevcut_bosluk: data.mevcut_bosluk,
+    ic_engel: data.ic_engel,
+    ic_engel_kat: data.ic_engel_kat,
+    ozet: data.ozet,
+  };
+}
+
 // Gate/UI için durum: pusula hangi aşamada, tamamlandı mı.
 export async function pusulaDurum(
   db: Db,

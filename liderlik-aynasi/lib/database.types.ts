@@ -88,6 +88,38 @@ export type Database = {
           },
         ]
       }
+      bosluk_ani: {
+        Row: {
+          created_at: string
+          demolisyon: Json | null
+          participant_id: string
+          yeni_cumle: string | null
+          yeni_cumle_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          demolisyon?: Json | null
+          participant_id: string
+          yeni_cumle?: string | null
+          yeni_cumle_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          demolisyon?: Json | null
+          participant_id?: string
+          yeni_cumle?: string | null
+          yeni_cumle_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bosluk_ani_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       churn_radar: {
         Row: {
           admin_alerted_at: string | null
