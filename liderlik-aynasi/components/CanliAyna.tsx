@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 
@@ -31,25 +32,35 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
   }
   useEffect(() => () => durdur(), []);
 
+  // Akışı video elemanına, eleman DOM'a girdikten SONRA bağla (rAF yarışı yok).
+  useEffect(() => {
+    const v = videoRef.current;
+    if (acik && v && akisRef.current) {
+      v.srcObject = akisRef.current;
+      v.play().catch(() => {});
+    }
+  }, [acik]);
+
   async function baslat() {
     setHata(null);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setHata(t.desteklenmiyor);
+      return;
+    }
     try {
       const akis = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user", width: 720, height: 720 },
       });
       akisRef.current = akis;
-      setAcik(true);
       setAdim(0);
       setKareler([]);
-      // video elemanı render olunca bağla
-      requestAnimationFrame(async () => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = akis;
-          await videoRef.current.play().catch(() => {});
-        }
-      });
-    } catch {
-      setHata(t.izinHata);
+      setAcik(true); // effect akışı bağlar
+    } catch (e) {
+      const ad = (e as { name?: string })?.name ?? "";
+      if (ad === "NotAllowedError" || ad === "SecurityError") setHata(t.izinRet);
+      else if (ad === "NotFoundError" || ad === "OverconstrainedError") setHata(t.kameraYok);
+      else if (ad === "NotReadableError") setHata(t.kameraMesgul);
+      else setHata(t.izinHata);
     }
   }
 
@@ -97,22 +108,31 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
     }
   }
 
+  function kapat() {
+    durdur();
+    setAcik(false);
+  }
+
   if (bitti && !acik) {
     return <p className="text-sm font-medium text-emerald-400">{t.tamam}</p>;
   }
 
   if (!acik) {
     return (
-      <button
-        onClick={baslat}
-        className="btn-kor flex h-11 w-full items-center justify-center rounded-xl text-sm font-bold"
-      >
-        {t.basla}
-      </button>
+      <div className="space-y-2">
+        <button
+          onClick={baslat}
+          className="btn-kor flex h-11 w-full items-center justify-center rounded-xl text-sm font-bold"
+        >
+          {t.basla}
+        </button>
+        {hata && <p className="text-sm text-red-400">{hata}</p>}
+      </div>
     );
   }
 
-  return (
+  // Tam ekran kamera — transform'lu ata `fixed`'i hapsetmesin diye portal ile body'ye.
+  const katman = (
     <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-black px-6 py-8">
       <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
         {t.ust}
@@ -127,6 +147,7 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
           ref={videoRef}
           muted
           playsInline
+          autoPlay
           className="h-full w-full -scale-x-100 object-cover"
         />
       </div>
@@ -151,15 +172,11 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
       >
         {mesgul ? t.gonderiliyor : t.cek}
       </button>
-      <button
-        onClick={() => {
-          durdur();
-          setAcik(false);
-        }}
-        className="mt-3 text-sm text-slate-400 hover:text-slate-200"
-      >
+      <button onClick={kapat} className="mt-3 text-sm text-slate-400 hover:text-slate-200">
         {t.vazgec}
       </button>
     </div>
   );
+
+  return typeof document !== "undefined" ? createPortal(katman, document.body) : null;
 }

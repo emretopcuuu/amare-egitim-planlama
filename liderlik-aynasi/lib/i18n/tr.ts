@@ -621,6 +621,11 @@ export const tr = {
     gonderiliyor: "Yansın diye gönderiliyor…",
     vazgec: "Vazgeç",
     izinHata: "Kameraya erişilemedi — izni kontrol et.",
+    izinRet: "Kamera izni verilmedi. Tarayıcı ayarlarından izin verip tekrar dene.",
+    kameraYok: "Ön kamera bulunamadı.",
+    kameraMesgul: "Kamera başka bir uygulama tarafından kullanılıyor. Onu kapatıp tekrar dene.",
+    desteklenmiyor:
+      "Bu tarayıcıda kamera açılamıyor. Linki Safari ya da Chrome'da aç (uygulama içi tarayıcı kamerayı engeller).",
     hata: "Gönderilemedi, tekrar dene.",
   },
   // FAZ 3 — Reddi Kutla (Go-for-No / Fun Failure)
