@@ -581,6 +581,19 @@ export const tr = {
     uyarilar: {
       baslik: "Dikkat",
     },
+    // #10 Yardım/ipucu katmanı: her kontrolün yanında kısa açıklama
+    ipucu: {
+      ac: "Yardım",
+      dalga:
+        "Dalgayı açınca katılımcılar o turda puanlama yapabilir. Her güne bir dalga (Gün 1→Dalga 1). Çoğu kişi bitirince kapat.",
+      rapor:
+        "Açınca herkes kişisel Ayna Raporunu görür — kapanışın 'wow' anı. Yalnız 3. günün sonunda, mektuplar hazırken aç.",
+      davet:
+        "Kamp sonrası 90 günlük yolculuk için katılımcılara e-posta davetini gönderir. Bir kez, kamp bitince.",
+      yedek: "Tüm kamp verisinin (puanlar, sözler, ayarlar) yedeğini indirir.",
+      ikili: "Sohbet/ortak eşleştirmelerini oluşturur. Genelde kamp öncesi bir kez.",
+      kvkk: "Katılımcının veri silme taleplerini buradan onaylayıp işlersin.",
+    },
     // #9 Hazır duyuru şablonları (tek dokunuşla herkese push)
     duyuru: {
       baslik: "Hızlı Duyuru",

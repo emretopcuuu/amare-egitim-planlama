@@ -21,6 +21,7 @@ import CanliOzet from "./CanliOzet";
 import KodBul from "./KodBul";
 import Uyarilar from "./Uyarilar";
 import DuyuruSablonlari from "./DuyuruSablonlari";
+import Ipucu from "./Ipucu";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -235,8 +236,9 @@ export default async function AdminPanel() {
         id="dalga"
         className="kart-3d scroll-mt-20 rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur"
       >
-        <h2 className="text-lg font-semibold text-gold-light">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
           {tr.admin.dalga.baslik}
+          <Ipucu metin={tr.admin.ipucu.dalga} />
         </h2>
         <p className="mt-1 text-sm text-slate-400">{tr.admin.dalga.aciklama}</p>
         <DalgaKontrol
@@ -254,8 +256,9 @@ export default async function AdminPanel() {
           raporlarAcik ? "ring-emerald-400/40" : "ring-gold/40"
         }`}
       >
-        <h2 className="text-lg font-semibold text-gold-light">
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
           {tr.admin.aynaAni.baslik}
+          <Ipucu metin={tr.admin.ipucu.rapor} />
         </h2>
         <p className="mt-1 text-sm text-slate-400">{tr.admin.aynaAni.aciklama}</p>
         <AynaAniKontrol
@@ -266,8 +269,12 @@ export default async function AdminPanel() {
       </section>
 
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-        <h2 id="davet" className="scroll-mt-20 text-lg font-semibold text-gold-light">
+        <h2
+          id="davet"
+          className="flex scroll-mt-20 items-center gap-2 text-lg font-semibold text-gold-light"
+        >
           {tr.admin.doksanGun.baslik}
+          <Ipucu metin={tr.admin.ipucu.davet} />
         </h2>
         <p className="mt-1 text-sm text-slate-400">{tr.admin.doksanGun.aciklama}</p>
         <DavetKontrol
@@ -370,13 +377,19 @@ export default async function AdminPanel() {
       {tamYetki && (
         <>
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-        <h2 className="text-lg font-semibold text-gold-light">{tr.admin.yedek.baslik}</h2>
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+          {tr.admin.yedek.baslik}
+          <Ipucu metin={tr.admin.ipucu.yedek} />
+        </h2>
         <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.yedek.aciklama}</p>
         <YedekButonu />
       </section>
 
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-        <h2 className="text-lg font-semibold text-gold-light">{tr.admin.ikili.baslik}</h2>
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+          {tr.admin.ikili.baslik}
+          <Ipucu metin={tr.admin.ipucu.ikili} />
+        </h2>
         <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.ikili.aciklama}</p>
         <IkiliKontrol mevcut={ikiliSayisi ?? 0} />
       </section>
@@ -387,7 +400,10 @@ export default async function AdminPanel() {
           (silmeTalepleri ?? []).length > 0 ? "ring-red-400/40" : "ring-royal/30"
         }`}
       >
-        <h2 className="text-lg font-semibold text-gold-light">{tr.kvkk.adminBaslik}</h2>
+        <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+          {tr.kvkk.adminBaslik}
+          <Ipucu metin={tr.admin.ipucu.kvkk} />
+        </h2>
         <p className="mt-1 text-sm text-slate-400">{tr.kvkk.adminAciklama}</p>
         <SilmeTalepleri
           talepler={(silmeTalepleri ?? []).map((k) => ({
