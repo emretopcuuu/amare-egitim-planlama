@@ -36,7 +36,7 @@ export default function AltNav() {
   }
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-midnight/90 backdrop-blur-md print:hidden">
+    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-midnight/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md print:hidden">
       <div className="mx-auto flex w-full max-w-md items-stretch justify-around">
         {SEKMELER.map((s) => {
           const aktif = aktifMi(s.href);

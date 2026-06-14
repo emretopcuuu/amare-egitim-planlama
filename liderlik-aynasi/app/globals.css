@@ -41,7 +41,9 @@ p {
 /* Alt navigasyon çubuğu görünürken içerik altına nefes payı (sabit çubuk
    içeriği örtmesin). Yalnız katılımcı ekranlarında gövdeye sınıf eklenir. */
 body.alt-nav-acik main {
-  padding-bottom: 5rem;
+  /* Alt çubuk + iOS ana çubuğu (safe-area) için nefes payı; başparmak
+     bölgesindeki birincil butonlar çubuğun arkasında kalmasın (#2). */
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
 }
 
 /* Bağlantı durumu şeridi, alt çubuk açıkken onun üstüne otursun (örtmesin). */
