@@ -16,6 +16,8 @@ import EksikDurt from "./EksikDurt";
 import OtoYenile from "./OtoYenile";
 import GununAkisi from "./GununAkisi";
 import HazirlikPaneli from "./HazirlikPaneli";
+import CanliOzet from "./CanliOzet";
+import KodBul from "./KodBul";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -155,6 +157,15 @@ export default async function AdminPanel() {
         </p>
       )}
 
+      {/* #7 Tek bakış canlı özet — büyük rakamlar (her iki rol) */}
+      <CanliOzet
+        katilimci={katilimciSayisi ?? 0}
+        ozTamam={ilerleme?.ozTamamlar.size ?? 0}
+        ozToplam={ilerleme?.katilimcilar.length ?? katilimciSayisi ?? 0}
+        gorus={ilerleme?.toplamPuan ?? 0}
+        dalgaAd={acikDalga?.name ?? null}
+      />
+
       {/* #7 "Şimdi ne yapmalıyım?" — adminin o an basması gereken tek adım */}
       <section
         className={`kart-3d rounded-2xl p-6 shadow-xl ring-1 backdrop-blur ${
@@ -188,6 +199,9 @@ export default async function AdminPanel() {
 
       {/* #5 "Kampa hazır mısın?" — yalnız tam yetkili admin */}
       {tamYetki && <HazirlikPaneli />}
+
+      {/* #6 Hızlı kod bulma — yalnız tam yetkili admin (kodlar gizli) */}
+      {tamYetki && <KodBul />}
 
       {/* #4 Kritik (kamp akışını değiştiren) anahtarlar yalnız tam yetkili admin'e */}
       {tamYetki && (
