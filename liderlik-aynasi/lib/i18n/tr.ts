@@ -512,6 +512,11 @@ export const tr = {
       sozler: "Sözler",
       test: "Prova",
     },
+    // #7 "Şimdi ne yapmalıyım?" — adminin o an basması gereken tek adım
+    asistan: {
+      baslik: "Şimdi ne yapmalıyım?",
+      etiket: "Önerilen adım",
+    },
     // Fotoğraf anı duvarı moderasyonu (büyük ekran herkese açık → onay şart)
     fotoModerasyon: {
       baslik: "Fotoğraf Moderasyonu",

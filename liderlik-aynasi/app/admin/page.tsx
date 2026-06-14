@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
+import { adminOnerisi } from "@/lib/adminAsistan";
 import { tr } from "@/lib/i18n/tr";
 import DalgaKontrol from "./DalgaKontrol";
 import AynaAniKontrol from "./AynaAniKontrol";
@@ -28,6 +30,7 @@ export default async function AdminPanel() {
     { data: davetAyari },
     { data: silmeTalepleri },
     { count: ikiliSayisi },
+    { data: sozAyar },
   ] = await Promise.all([
     db.from("waves").select("id, name, is_open, opened_at").order("id"),
     aktifOzellikler(db),
@@ -53,8 +56,11 @@ export default async function AdminPanel() {
       .not("deletion_requested_at", "is", null)
       .order("deletion_requested_at"),
     db.from("pairs").select("id", { count: "exact", head: true }),
+    db.from("settings").select("value").eq("key", "kapanis_soz_acik").maybeSingle(),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
+
+  const sozAcik = sozAyar?.value === "true";
 
   const acikDalga = dalgalar.find((d) => d.is_open) ?? null;
 
@@ -113,11 +119,56 @@ export default async function AdminPanel() {
     };
   }
 
+  // #7 Asistan: kampın takvimi + sistemin durumundan tek önerilen adımı çıkar.
+  const bugun = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Istanbul",
+  }).format(new Date());
+  const oneri = adminOnerisi({
+    bugun,
+    katilimciSayisi: katilimciSayisi ?? 0,
+    acikDalgaId: acikDalga?.id ?? null,
+    ozTamam: ilerleme?.ozTamamlar.size ?? 0,
+    ozToplam: ilerleme?.katilimcilar.length ?? katilimciSayisi ?? 0,
+    raporlarAcik,
+    sozAcik,
+  });
+
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
       <h1 className="text-2xl font-bold text-gold">{tr.admin.baslik}</h1>
 
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      {/* #7 "Şimdi ne yapmalıyım?" — adminin o an basması gereken tek adım */}
+      <section
+        className={`kart-3d rounded-2xl p-6 shadow-xl ring-1 backdrop-blur ${
+          oneri.vurgu ? "bg-gold/10 ring-gold/50" : "bg-midnight-card/60 ring-royal/30"
+        }`}
+      >
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+          {tr.admin.asistan.baslik}
+        </p>
+        <div className="mt-2 flex items-start gap-4">
+          <span className="text-4xl" aria-hidden>
+            {oneri.ikon}
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-xl font-bold text-gold-light">{oneri.baslik}</h2>
+            <p className="mt-1 text-sm leading-relaxed text-slate-300">
+              {oneri.aciklama}
+            </p>
+          </div>
+        </div>
+        <Link
+          href={oneri.href}
+          className="btn-kor parilti mt-4 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold transition-transform hover:scale-[1.01]"
+        >
+          {oneri.butonEtiket}
+        </Link>
+      </section>
+
+      <section
+        id="dalga"
+        className="kart-3d scroll-mt-20 rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur"
+      >
         <h2 className="text-lg font-semibold text-gold-light">
           {tr.admin.dalga.baslik}
         </h2>
@@ -132,7 +183,8 @@ export default async function AdminPanel() {
       </section>
 
       <section
-        className={`kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 backdrop-blur ${
+        id="ayna-ani"
+        className={`kart-3d scroll-mt-20 rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 backdrop-blur ${
           raporlarAcik ? "ring-emerald-400/40" : "ring-gold/40"
         }`}
       >
@@ -148,7 +200,7 @@ export default async function AdminPanel() {
       </section>
 
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-        <h2 className="text-lg font-semibold text-gold-light">
+        <h2 id="davet" className="scroll-mt-20 text-lg font-semibold text-gold-light">
           {tr.admin.doksanGun.baslik}
         </h2>
         <p className="mt-1 text-sm text-slate-400">{tr.admin.doksanGun.aciklama}</p>
@@ -160,7 +212,7 @@ export default async function AdminPanel() {
       </section>
 
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-        <h2 className="text-lg font-semibold text-gold-light">
+        <h2 id="ilerleme" className="scroll-mt-20 text-lg font-semibold text-gold-light">
           {tr.admin.ilerleme.baslik}
           {acikDalga && (
             <span className="ml-2 text-sm font-normal text-slate-400">
