@@ -54,6 +54,7 @@ export default function SozVer() {
         <input
           type="number"
           inputMode="numeric"
+          enterKeyHint="done"
           min={0}
           value={temmuz}
           onChange={(e) => setTemmuz(e.target.value)}
@@ -67,6 +68,7 @@ export default function SozVer() {
         <input
           type="number"
           inputMode="numeric"
+          enterKeyHint="done"
           min={100}
           value={agustos}
           onChange={(e) => setAgustos(e.target.value)}

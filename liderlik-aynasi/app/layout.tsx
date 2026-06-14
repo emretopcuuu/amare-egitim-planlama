@@ -50,6 +50,9 @@ export const viewport: Viewport = {
   // yaratıyor; kamp uygulamasında zoom kapalı — ekran sabit kalsın.
   maximumScale: 1,
   userScalable: false,
+  // #3 Klavye açılınca içerik küçülsün: alttaki buton/aksiyon klavyenin
+  // arkasında kaybolmasın, başparmak erişiminde kalsın.
+  interactiveWidget: "resizes-content",
   themeColor: "#06121e",
 };
 
