@@ -13,6 +13,8 @@ export default function IlkTanitim() {
   // Sunucuda ve ilk render'da gösterme (hydration uyumu); mount'ta karar ver.
   const [goster, setGoster] = useState(false);
   const [adim, setAdim] = useState(0);
+  // Video yüklenmez/oynamazsa ilk kart yine de anlamlı görünsün (simgeye düş).
+  const [videoOk, setVideoOk] = useState(true);
 
   useEffect(() => {
     try {
@@ -49,43 +51,48 @@ export default function IlkTanitim() {
         </button>
       </div>
 
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 pb-8 text-center">
-        {adim === 0 ? (
-          // İlk kart ONE TEAM marka videosuyla açılır (sessiz, döngüsüz).
-          <video
-            autoPlay
-            muted
-            playsInline
-            poster="/marka-poster.jpg"
-            className="mx-auto w-full max-w-xs rounded-2xl"
+      <div className="flex w-full flex-1 flex-col overflow-y-auto px-6 pb-8">
+        <div className="mx-auto my-auto w-full max-w-md text-center">
+          {adim === 0 && videoOk ? (
+            // İlk kart ONE TEAM marka videosuyla açılır (sessiz, döngüsüz).
+            // Sabit en-boy + object-cover: yavaş/uzun videoda bile düzeni bozmaz.
+            <video
+              autoPlay
+              muted
+              playsInline
+              poster="/marka-poster.jpg"
+              onError={() => setVideoOk(false)}
+              style={{ aspectRatio: "16 / 9" }}
+              className="mx-auto w-full max-w-xs rounded-2xl object-cover"
+            >
+              <source src="/marka.mp4" type="video/mp4" />
+            </video>
+          ) : (
+            <p className="text-7xl">{kart.simge}</p>
+          )}
+          <h1 className="prizma-serif ay-metin mt-6 text-3xl font-semibold leading-tight">
+            {kart.baslik}
+          </h1>
+          <p className="mt-4 text-lg leading-relaxed text-slate-300">{kart.metin}</p>
+
+          <div className="mt-8 flex justify-center gap-2">
+            {t.kartlar.map((_, i) => (
+              <span
+                key={i}
+                className={`h-2 rounded-full transition-all ${
+                  i === adim ? "w-6 bg-gold" : "w-2 bg-white/25"
+                }`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => (sonuncu ? kapat() : setAdim((a) => a + 1))}
+            className="parilti btn-kor mt-8 flex h-16 w-full items-center justify-center rounded-2xl text-xl font-bold"
           >
-            <source src="/marka.mp4" type="video/mp4" />
-          </video>
-        ) : (
-          <p className="text-7xl">{kart.simge}</p>
-        )}
-        <h1 className="prizma-serif ay-metin mt-6 text-3xl font-semibold leading-tight">
-          {kart.baslik}
-        </h1>
-        <p className="mt-4 text-lg leading-relaxed text-slate-300">{kart.metin}</p>
-
-        <div className="mt-8 flex justify-center gap-2">
-          {t.kartlar.map((_, i) => (
-            <span
-              key={i}
-              className={`h-2 rounded-full transition-all ${
-                i === adim ? "w-6 bg-gold" : "w-2 bg-white/25"
-              }`}
-            />
-          ))}
+            {sonuncu ? t.basla : t.ileri}
+          </button>
         </div>
-
-        <button
-          onClick={() => (sonuncu ? kapat() : setAdim((a) => a + 1))}
-          className="parilti btn-kor mt-8 flex h-16 w-full items-center justify-center rounded-2xl text-xl font-bold"
-        >
-          {sonuncu ? t.basla : t.ileri}
-        </button>
       </div>
     </div>
   );

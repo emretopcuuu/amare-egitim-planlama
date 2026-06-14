@@ -18,5 +18,6 @@ scripts/whisper_audio
 *.opus
 *.webm
 
-# Ama public/videos altındaki asset'ler deploy'a dahil
-!public/videos/*.mp4
+# Ama uygulamanın public/ altındaki video asset'leri deploy'a dahil olmalı
+!liderlik-aynasi/public/*.mp4
+!liderlik-aynasi/public/**/*.mp4
