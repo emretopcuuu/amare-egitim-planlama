@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import OnayliDugme from "./OnayliDugme";
 
 type Dalga = { id: number; ad: string; acik: boolean };
 
@@ -53,21 +54,25 @@ export default function DalgaKontrol({ dalgalar }: { dalgalar: Dalga[] }) {
                 {d.acik ? `● ${tr.admin.dalga.acik}` : `○ ${tr.admin.dalga.kapali}`}
               </p>
             </div>
-            <button
-              onClick={() => degistir(d.id, !d.acik)}
-              disabled={bekleyen !== null}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
-                d.acik
-                  ? "border border-royal-light/40 text-slate-300 hover:bg-midnight-soft"
-                  : "bg-gold text-midnight hover:bg-gold-light"
-              }`}
-            >
-              {bekleyen === d.id
-                ? "…"
-                : d.acik
-                  ? tr.admin.dalga.kapat
-                  : tr.admin.dalga.ac}
-            </button>
+            {d.acik ? (
+              // Dalgayı kapatmak akışı durdurur → güvenli geri-alma onayı
+              <OnayliDugme
+                onayMetni={tr.admin.onay.dalgaKapat}
+                onaylandi={() => degistir(d.id, false)}
+                disabled={bekleyen !== null}
+                className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-semibold text-slate-300 transition-colors hover:bg-midnight-soft disabled:opacity-50"
+              >
+                {bekleyen === d.id ? "…" : tr.admin.dalga.kapat}
+              </OnayliDugme>
+            ) : (
+              <button
+                onClick={() => degistir(d.id, true)}
+                disabled={bekleyen !== null}
+                className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+              >
+                {bekleyen === d.id ? "…" : tr.admin.dalga.ac}
+              </button>
+            )}
           </li>
         ))}
       </ul>

@@ -527,6 +527,14 @@ export const tr = {
       sonuc: (n: number) => `${n} kişiye hatırlatma gönderildi ✓`,
       hata: "Gönderilemedi, tekrar dene.",
     },
+    // #10 Güvenli geri-alma: kritik anahtarlarda yanlış dokunuş akışı bozmasın
+    onay: {
+      evet: "Evet, yap",
+      vazgec: "Vazgeç",
+      dalgaKapat: "Dalgayı kapatınca katılımcılar artık puanlayamaz. Emin misin?",
+      raporAc: "Raporları açınca herkes aynasını görür — bu, kapanışın geri alınamaz anı. Emin misin?",
+      raporKapat: "Raporları yeniden gizlemek istediğine emin misin?",
+    },
     // Fotoğraf anı duvarı moderasyonu (büyük ekran herkese açık → onay şart)
     fotoModerasyon: {
       baslik: "Fotoğraf Moderasyonu",
