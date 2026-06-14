@@ -47,6 +47,37 @@ export async function yansimaVideosuBaslat(fotoUrl: string): Promise<string | nu
   }
 }
 
+// Çoklu referans (Canlı Ayna: düz/sağ/sol + selfie) → kimliği çok daha tutarlı
+// kuran "karakter" videosu. Platform çoklu-görsel modelleri images_list dizisi
+// alır (Seedance / Vidu Q1 Reference / Wan2.1 vb.). Model slug'ı canlı kredi
+// testinde doğrulanıp HIGGSFIELD_KARAKTER_MODEL env'ine yazılır; env yoksa
+// fonksiyon null döner ve çağıran taraf tek-görselli hatta zarifçe düşer.
+export async function karakterVideosuBaslat(
+  fotoUrllari: string[]
+): Promise<string | null> {
+  const model = process.env.HIGGSFIELD_KARAKTER_MODEL;
+  if (!model || fotoUrllari.length === 0) return null;
+  try {
+    const res = await fetch(`${TABAN}/${model}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Key ${kimlik()}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        images_list: fotoUrllari,
+        prompt: YANSIMA_PROMPT,
+        duration: 5,
+      }),
+    });
+    if (!res.ok) return null;
+    const veri = (await res.json()) as { request_id?: string };
+    return veri.request_id ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export type HiggsDurum =
   | { durum: "bekliyor" }
   | { durum: "hazir"; videoUrl: string }

@@ -706,6 +706,7 @@ export const tr = {
       sahne: "Sahne",
       kiosk: "Kayıt",
       foto: "Fotoğraf",
+      canliAyna: "Canlı Ayna",
       sozler: "Sözler",
       test: "Prova",
       kurulum: "Kurulum",
@@ -951,6 +952,29 @@ export const tr = {
       onayla: "Onayla",
       gizle: "Gizle",
       calisiyor: "…",
+      hata: "İşlem başarısız. Tekrar dene.",
+    },
+    // Canlı Ayna karakter referansları: kalite kontrol + toplu video üretimi
+    canliAyna: {
+      baslik: "Canlı Ayna — Karakter Referansları",
+      aciklama:
+        "Katılımcıların Canlı Ayna yüz kareleri (düz/sağ/sol) + selfie. Bulanık/eksik olanları gözden geçir; tam olanlar için video üretimini buradan başlat.",
+      yok: "Henüz Canlı Ayna karesi yükleyen katılımcı yok.",
+      tamRozet: "Tam set",
+      eksikRozet: "Eksik",
+      selfie: "Selfie",
+      durumYok: "—",
+      durumBekliyor: "Sırada",
+      durumUretiliyor: "Üretiliyor…",
+      durumHazir: "✓ Video hazır",
+      durumHata: "Hata",
+      sec: "Seç",
+      secilenler: (n: number) => `${n} kişi seçili`,
+      uret: "Seçilenler için video üret",
+      uretiliyor: "Başlatılıyor…",
+      sonuc: (b: number, h: number, g: number) =>
+        `${b} üretim başladı${h ? `, ${h} hata` : ""}${g ? `, ${g} girdisiz` : ""}.`,
+      higgsKapali: "Higgsfield yapılandırılmadı (HIGGSFIELD_CREDENTIALS yok) — üretim devre dışı.",
       hata: "İşlem başarısız. Tekrar dene.",
     },
     // Kayıt masası kiosk ekranı: canlı katılım + QR + kod bulma

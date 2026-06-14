@@ -34,11 +34,8 @@ import {
   geceSesi,
   markaAnons,
 } from "@/lib/yansima";
-import {
-  higgsYapilandirildiMi,
-  yansimaVideosuBaslat,
-  yansimaDurumu,
-} from "@/lib/higgs";
+import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
+import { karakterUretimBaslat } from "@/lib/karakter";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
 
 type Db = ReturnType<typeof supabaseAdmin>;
@@ -255,30 +252,17 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     }
   }
 
-  // 3b) YANSIMA VİDEOLARI: ritüelde foto veren katılımcılar için Higgsfield
-  // hattı — başlat (≤2), süreni kontrol et (≤3), hazır olanı fısılda (≤5).
+  // 3b) YANSIMA VİDEOLARI: Higgsfield hattı — başlat (≤2), süreni kontrol et
+  // (≤3), hazır olanı fısılda (≤5). Başlatma karakterUretimBaslat'a devredildi:
+  // Canlı Ayna çoklu referansı (yenisi asıl) varsa onu, yoksa tek-foto (eski yedek).
   if (higgsYapilandirildiMi()) {
     const { data: bekleyenler } = await db
       .from("voice_profiles")
-      .select("participant_id, photo_path")
+      .select("participant_id")
       .eq("video_status", "bekliyor")
-      .not("photo_path", "is", null)
       .limit(2);
     for (const b of bekleyenler ?? []) {
-      const { data: imzali } = await db.storage
-        .from("sesler")
-        .createSignedUrl(b.photo_path!, 3600);
-      const istek = imzali
-        ? await yansimaVideosuBaslat(imzali.signedUrl)
-        : null;
-      await db
-        .from("voice_profiles")
-        .update(
-          istek
-            ? { video_status: "uretiliyor", video_request_id: istek }
-            : { video_status: "hata" }
-        )
-        .eq("participant_id", b.participant_id);
+      await karakterUretimBaslat(db, b.participant_id);
     }
 
     const { data: surenler } = await db
