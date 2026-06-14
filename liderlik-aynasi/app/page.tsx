@@ -118,6 +118,9 @@ export default async function AnaSayfa() {
     { data: sozAyar },
     { data: soz },
     { data: dalgaZamanAyar },
+    { data: boslukAyar },
+    { data: pusulaKisi },
+    { data: boslukKisi },
   ] = await Promise.all([
       acikDalga(db),
       raporlarGorunurMu(db),
@@ -144,9 +147,18 @@ export default async function AnaSayfa() {
         .eq("participant_id", session.sub)
         .maybeSingle(),
       db.from("settings").select("value").eq("key", "sonraki_dalga_zamani").maybeSingle(),
+      // FAZ 1 Boşluk Anı (Gün 3 zirvesi) — yalnız pencere açıkken devreye girer
+      db.from("settings").select("value").eq("key", "bosluk_acik").maybeSingle(),
+      db.from("pusula").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+      db.from("bosluk_ani").select("yeni_cumle").eq("participant_id", session.sub).maybeSingle(),
     ]);
   const sozAcik = sozAyar?.value === "true";
   const sozVar = !!soz;
+  // FAZ 1: pusulasını kuran kişi, pencere açıkken iç engeliyle yüzleşir.
+  const boslukGoster =
+    boslukAyar?.value === "true" &&
+    !!pusulaKisi?.tamamlandi_at &&
+    !boslukKisi?.yeni_cumle;
   // #4 Sıradaki dalgaya geri sayım: yalnızca dalga kapalıyken ve zaman ayarlıysa göster
   const sonrakiDalgaZamani = !dalga && dalgaZamanAyar?.value ? dalgaZamanAyar.value : null;
 
@@ -276,6 +288,23 @@ export default async function AnaSayfa() {
           href="/soz"
           dugme={t.sozGerekDugme}
           ikon="🤝"
+          vurgu
+        />
+      </Sayfa>
+    );
+  }
+
+  // 2c) BOŞLUK ANI — Gün 3 zirvesi: iç engeli kamptaki kanıtla çürütme.
+  // Pusulasını kuran kişiyi, pencere açıkken rapordan ÖNCE yüzleşmeye davet eder.
+  if (boslukGoster) {
+    return (
+      <Sayfa ust={ust}>
+        <BuyukKart
+          baslik={t.boslukBaslik}
+          metin={t.boslukMetin}
+          href="/bosluk"
+          dugme={t.boslukDugme}
+          ikon="🪞"
           vurgu
         />
       </Sayfa>

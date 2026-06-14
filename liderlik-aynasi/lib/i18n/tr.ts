@@ -117,6 +117,10 @@ export const tr = {
     ozGerekMetin:
       "Aynaya ilk bakış senden başlar. Kendini 10 liderlik özelliğinde puanlamadan kamp sana açılmaz.",
     ozGerekDugme: "✨ Kendini Puanla",
+    boslukBaslik: "Aynaya bakma vakti",
+    boslukMetin:
+      "Kampa gelmeden önce kendine bir şey söylemiştin. Üç gün boyunca onu izledim. Şimdi yüzleşme zamanı.",
+    boslukDugme: "🪞 Hazırım",
     raporBaslik: "Aynan açıldı",
     raporMetin: "Üç günün sonu geldi. Kendi gözünle başkalarının gözü, şimdi yan yana.",
     dalgaDevamBaslik: (dalga: string) => `${dalga} açık`,
@@ -633,6 +637,22 @@ export const tr = {
       kodBos: "Kod boş — kilit devre dışı (kimse kampı açamaz)",
       qrIpucu: (url: string) => `Oda QR'ı şu adrese gitmeli: ${url}`,
       tamamlanma: (n: number, t: number) => `${n}/${t} katılımcı pusulasını kurdu`,
+      hata: "İşlem başarısız, tekrar dene.",
+    },
+    // FAZ 1 — Boşluk Anı penceresi + derinlik panosu
+    fazBir: {
+      baslik: "FAZ 1 — Boşluk Anı",
+      aciklama:
+        "Gün 3 zirvesi. Açıkken pusulasını kuran katılımcılar iç engellerini kamptaki kanıtla yüzleşmeye davet edilir.",
+      pencereAcik: "● Pencere açık — Boşluk Anı erişimde",
+      pencereKapali: "○ Pencere kapalı",
+      pencereAc: "Boşluk Anı'nı Aç",
+      pencereKapat: "Pencereyi Kapat",
+      tamamlanma: (n: number, t: number) => `${n}/${t} Boşluk Anı'nı tamamladı`,
+      kanitsizUyari: (n: number) =>
+        n > 0
+          ? `⚠️ ${n} kişi kanıtsız — açmadan önce onlara gözlem/görev yönlendir`
+          : "✓ Herkesin yeterli kanıtı var",
       hata: "İşlem başarısız, tekrar dene.",
     },
     // #8 Tek akışlı kurulum sihirbazı: CSV → kod → QR, adım adım
@@ -1410,6 +1430,8 @@ export const tr = {
       pusula_acildi: "Pusula penceresi açıldı",
       pusula_kapatildi: "Pusula penceresi kapatıldı",
       kamp_kilit_kodu_ayarlandi: "Kamp kilit kodu ayarlandı",
+      bosluk_acildi: "Boşluk Anı açıldı",
+      bosluk_kapatildi: "Boşluk Anı kapatıldı",
     } as Record<string, string>,
   },
 } as const;
