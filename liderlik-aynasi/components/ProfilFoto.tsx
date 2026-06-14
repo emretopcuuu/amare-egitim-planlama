@@ -57,11 +57,11 @@ export default function ProfilFoto({ varMi = false }: { varMi?: boolean }) {
 
   return (
     <div className="space-y-3">
+      {/* capture yok: kullanıcı galeriden seçebilir ya da kamerayı açabilir */}
       <input
         ref={girisRef}
         type="file"
         accept="image/*"
-        capture="user"
         onChange={(e) => secildi(e.target.files?.[0] ?? null)}
         className="hidden"
       />

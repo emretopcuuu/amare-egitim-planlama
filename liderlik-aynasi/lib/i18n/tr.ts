@@ -563,16 +563,24 @@ export const tr = {
     hazirlikBaslik: "Pusulan kuruldu 🧭",
     hazirlikAltBaslik:
       "Kampa gelmeden bunları da hazırlarsan ilk gün doğrudan yaşamaya başlarsın. İstersen hepsini kampta da yapabilirsin — hiçbiri zorunlu değil.",
-    adimPuanBaslik: "Kendini puanla",
+    adimPuanBaslik: "Kendini bir tanı",
     adimPuanMetin:
-      "10 liderlik özelliğinde kendini değerlendir. Bu, kampta başkalarının gözünden göreceğin halinle karşılaştırılacak başlangıç fotoğrafın.",
+      "10 liderlik özelliğinde kendini değerlendir. Kampta başkalarının gözünden göreceğin halinle karşılaştıracağın başlangıç karen.",
     adimPuanDugme: "Başla",
+    adimPuanSure: "~2 dk",
     adimRehberBaslik: "Kamp rehberi",
     adimRehberMetin: "3 gün boyunca seni neler bekliyor, kısaca bak.",
     adimRehberDugme: "Göz at",
-    adimFotoBaslik: "Fotoğrafını ekle",
+    adimFotoBaslik: "Bir kare — seninle tanışalım",
     adimFotoMetin: "Tanışma ve eşleştirme için kendi fotoğrafın.",
+    adimFotoSure: "~30 sn",
+    adimYuzBaslik: "Canlı Aynan",
+    adimYuzMetin:
+      "Sana özel sahneler için canlı Aynana ihtiyacımız var — birkaç saniyelik yakın çekim. Gerisi kampta…",
+    adimYuzSure: "~1 dk",
     adimTamam: "Tamamlandı",
+    siradaki: "Sıradaki",
+    bildirimBaslik: "Hatırlatmaları aç",
     hazirlikBekle:
       "Hazırsın. Kampın geri kalanı, oraya gelip odandaki kodu okuttuğunda açılacak. O ana dek dinlen.",
     // Hub zenginleştirme: ilerleme, sosyal kanıt, kilitli sürprizler, rozet, geri sayım
@@ -599,6 +607,21 @@ export const tr = {
     degistir: "Fotoğrafı değiştir",
     yukleniyor: "Yükleniyor…",
     hata: "Yüklenemedi, tekrar dene.",
+  },
+  // "Canlı Ayna" — selfie sonrası çoklu açılı yüz yakalama (KYC hissi)
+  canliAyna: {
+    basla: "🔮 Canlı Aynanı oluştur",
+    tamam: "✓ Canlı Aynan hazır",
+    ust: "Son bir şey",
+    ustBaslik: "Canlı Aynan",
+    duz: "Yüzünü çembere yerleştir — düz bak",
+    sag: "Başını yavaşça sağa çevir",
+    sol: "Şimdi yavaşça sola çevir",
+    cek: "Çek",
+    gonderiliyor: "Yansın diye gönderiliyor…",
+    vazgec: "Vazgeç",
+    izinHata: "Kameraya erişilemedi — izni kontrol et.",
+    hata: "Gönderilemedi, tekrar dene.",
   },
   // FAZ 3 — Reddi Kutla (Go-for-No / Fun Failure)
   red: {

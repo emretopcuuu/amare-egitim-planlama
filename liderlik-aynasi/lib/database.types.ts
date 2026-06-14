@@ -444,6 +444,7 @@ export type Database = {
           profil_foto_path: string | null
           role: string
           team: string | null
+          yuz_fotolari: Json
         }
         Insert: {
           camp_unlocked_at?: string | null
@@ -459,6 +460,7 @@ export type Database = {
           profil_foto_path?: string | null
           role?: string
           team?: string | null
+          yuz_fotolari?: Json
         }
         Update: {
           camp_unlocked_at?: string | null
@@ -474,6 +476,7 @@ export type Database = {
           profil_foto_path?: string | null
           role?: string
           team?: string | null
+          yuz_fotolari?: Json
         }
         Relationships: []
       }
