@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Playfair_Display, Fraunces } from "next/font/google";
 import GolArkaplan from "@/components/gol/GolArkaplan";
 import AltNav from "@/components/AltNav";
+import BaglantiDurumu from "@/components/BaglantiDurumu";
 import AtlaBaglantisi from "@/components/AtlaBaglantisi";
 import "./globals.css";
 
@@ -76,6 +77,7 @@ export default function RootLayout({
         <GolArkaplan />
         {children}
         <AltNav />
+        <BaglantiDurumu />
       </body>
     </html>
   );

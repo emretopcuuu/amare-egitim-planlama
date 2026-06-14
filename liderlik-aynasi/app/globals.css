@@ -44,6 +44,26 @@ body.alt-nav-acik main {
   padding-bottom: 5rem;
 }
 
+/* Bağlantı durumu şeridi, alt çubuk açıkken onun üstüne otursun (örtmesin). */
+body.alt-nav-acik .baglanti-serit {
+  bottom: 4.25rem;
+}
+
+/* "✓ Kaydedildi" güvencesi yumuşakça belirir (ani sıçrama olmasın). */
+@keyframes kayit-belir-an {
+  from {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.kayit-belir {
+  animation: kayit-belir-an 0.18s ease-out;
+}
+
 /* HAREKET DİLİ: kartlar sahneye yumuşakça, kademeli (stagger) belirir.
    prefers-reduced-motion kuralı bunu otomatik susturur (aşağıdaki blok). */
 @keyframes belir-yukari {
