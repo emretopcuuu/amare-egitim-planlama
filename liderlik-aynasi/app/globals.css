@@ -64,6 +64,21 @@ body.alt-nav-acik .baglanti-serit {
   animation: kayit-belir-an 0.18s ease-out;
 }
 
+/* #3 İlk-adım rehber eli: yumuşak yukarı-aşağı zıplama, dikkat çeker. */
+@keyframes rehber-zipla {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+.rehber-el {
+  display: inline-block;
+  animation: rehber-zipla 1.1s ease-in-out infinite;
+}
+
 /* HAREKET DİLİ: kartlar sahneye yumuşakça, kademeli (stagger) belirir.
    prefers-reduced-motion kuralı bunu otomatik susturur (aşağıdaki blok). */
 @keyframes belir-yukari {
