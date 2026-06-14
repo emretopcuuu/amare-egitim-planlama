@@ -538,6 +538,35 @@ export const tr = {
       test: "Prova",
       kurulum: "Kurulum",
     },
+    // #3 Nav kategorileri: 14 düz sekme yerine 4 grup + Panel
+    navGrup: {
+      kurulum: "Kurulum",
+      canli: "Canlı",
+      icerik: "İçerik",
+      ayarlar: "Ayarlar",
+      prova: "PROVA",
+    },
+    // #5 Tehlike bölgesi: tüm katılımcıları etkileyen kritik anahtarlar
+    tehlike: {
+      baslik: "Kritik Kontroller",
+      aciklama:
+        "Bu anahtarlar tüm katılımcıların telefonunu anında etkiler. Her birinin onayı ve geri-al penceresi var.",
+    },
+    // #1 İkincil araçlar: faz dışı her şey burada katlanık durur
+    araclar: {
+      baslik: "Tüm araçlar",
+      aciklama: "Kurulum, yedek, eşleştirme, zamanlama ve işlem günlüğü.",
+    },
+    // #6 Bağlamsal boş/sakin durum
+    bosDurum: {
+      ikon: "🌙",
+      baslik: "Şu an her şey yolunda",
+      aciklama: "Aktif dalga yok. Sıradaki adım yukarıdaki öneri kartında.",
+    },
+    // #8 Mobilde alt-sabit birincil aksiyon çubuğu
+    altAksiyon: {
+      etiket: "Önerilen adım",
+    },
     // #8 Tek akışlı kurulum sihirbazı: CSV → kod → QR, adım adım
     kurulum: {
       baslik: "Kurulum Sihirbazı",

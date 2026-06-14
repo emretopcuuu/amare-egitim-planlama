@@ -16,18 +16,27 @@ export default async function AdminLayout({
   if (!session || !yetkili) return <>{children}</>;
 
   const db = supabaseAdmin();
-  const [dalga, { data: aynaAyari }] = await Promise.all([
+  const [dalga, { data: aynaAyari }, { data: provaAyari }] = await Promise.all([
     acikDalga(db),
     db.from("settings").select("value").eq("key", "ayna_aktif").maybeSingle(),
+    db.from("settings").select("value").eq("key", "prova_modu").maybeSingle(),
   ]);
+  const provaAcik = provaAyari?.value === "true";
 
   return (
-    <div className="admin-kok flex min-h-screen flex-1 flex-col">
+    // #9 Prova modunda admin kromu kırmızı çerçeveyle uyarır: yönetici "bu
+    // gerçek mi, test mi?" tereddüdü yaşamasın, yanlışlıkla canlı bildirim atmasın.
+    <div
+      className={`admin-kok flex min-h-screen flex-1 flex-col ${
+        provaAcik ? "ring-2 ring-inset ring-red-600/60" : ""
+      }`}
+    >
       <AdminNav
         ad={session.ad}
         dalgaAdi={dalga?.name ?? null}
         aynaUyanik={aynaAyari?.value === "true"}
         tamYetki={session.rol === "admin"}
+        provaAcik={provaAcik}
       />
       {children}
       <AdminTost />
