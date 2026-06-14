@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { adminOnerisi } from "@/lib/adminAsistan";
+import { adminUyarilari } from "@/lib/adminUyarilar";
 import { tr } from "@/lib/i18n/tr";
 import DalgaKontrol from "./DalgaKontrol";
 import AynaAniKontrol from "./AynaAniKontrol";
@@ -18,6 +19,7 @@ import GununAkisi from "./GununAkisi";
 import HazirlikPaneli from "./HazirlikPaneli";
 import CanliOzet from "./CanliOzet";
 import KodBul from "./KodBul";
+import Uyarilar from "./Uyarilar";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -42,6 +44,7 @@ export default async function AdminPanel() {
     { data: silmeTalepleri },
     { count: ikiliSayisi },
     { data: sozAyar },
+    { count: bekleyenFoto },
   ] = await Promise.all([
     db.from("waves").select("id, name, is_open, opened_at").order("id"),
     aktifOzellikler(db),
@@ -68,6 +71,10 @@ export default async function AdminPanel() {
       .order("deletion_requested_at"),
     db.from("pairs").select("id", { count: "exact", head: true }),
     db.from("settings").select("value").eq("key", "kapanis_soz_acik").maybeSingle(),
+    db
+      .from("photos")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "pending"),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
 
@@ -144,6 +151,17 @@ export default async function AdminPanel() {
     sozAcik,
   });
 
+  // #8 Proaktif uyarılar (yalnız tam yetkiliye gösterilir).
+  const uyarilar = tamYetki
+    ? adminUyarilari({
+        acikDalgaAd: acikDalga?.name ?? null,
+        ozTamam: ilerleme?.ozTamamlar.size ?? 0,
+        ozToplam: ilerleme?.katilimcilar.length ?? katilimciSayisi ?? 0,
+        moderasyonBekleyen: bekleyenFoto ?? 0,
+        silmeTalebi: (silmeTalepleri ?? []).length,
+      })
+    : [];
+
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -165,6 +183,9 @@ export default async function AdminPanel() {
         gorus={ilerleme?.toplamPuan ?? 0}
         dalgaAd={acikDalga?.name ?? null}
       />
+
+      {/* #8 Proaktif uyarılar — dikkat isteyen durumlar */}
+      <Uyarilar uyarilar={uyarilar} />
 
       {/* #7 "Şimdi ne yapmalıyım?" — adminin o an basması gereken tek adım */}
       <section
@@ -357,7 +378,8 @@ export default async function AdminPanel() {
       </section>
 
       <section
-        className={`kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 backdrop-blur ${
+        id="kvkk"
+        className={`kart-3d scroll-mt-20 rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 backdrop-blur ${
           (silmeTalepleri ?? []).length > 0 ? "ring-red-400/40" : "ring-royal/30"
         }`}
       >
