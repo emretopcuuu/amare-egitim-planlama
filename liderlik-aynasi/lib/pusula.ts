@@ -111,6 +111,23 @@ function jsonCoz<T>(yanit: Anthropic.Message): T | null {
   }
 }
 
+// Hızlı model nadiren Türkçe sözcüklere fonetik eşi KİRİL harf sızdırıyor
+// (ör. "ettin" → "ettин"). Türkçe çıktıda Kiril meşru değildir; fonetik Latin
+// karşılığına çevir (eşi yoksa düşür). Deterministik güvenlik ağı.
+const KIRIL_LATIN: Record<string, string> = {
+  а: "a", б: "b", в: "v", г: "g", д: "d", е: "e", ё: "e", ж: "j", з: "z",
+  и: "i", й: "y", к: "k", л: "l", м: "m", н: "n", о: "o", п: "p", р: "r",
+  с: "s", т: "t", у: "u", ф: "f", х: "h", ц: "ts", ч: "ç", ш: "ş", щ: "ş",
+  ъ: "", ы: "ı", ь: "", э: "e", ю: "yu", я: "ya",
+  А: "A", Б: "B", В: "V", Г: "G", Д: "D", Е: "E", Ж: "J", З: "Z", И: "İ",
+  Й: "Y", К: "K", Л: "L", М: "M", Н: "N", О: "O", П: "P", Р: "R", С: "S",
+  Т: "T", У: "U", Ф: "F", Х: "H", Ц: "Ts", Ч: "Ç", Ш: "Ş", Щ: "Ş",
+  Ъ: "", Ы: "I", Ь: "", Э: "E", Ю: "Yu", Я: "Ya",
+};
+function temizMetin(s: string): string {
+  return s.replace(/[Ѐ-ӿ]/g, (ch) => KIRIL_LATIN[ch] ?? "");
+}
+
 export type PusulaTur = { mesaj: string; asama: string; bitti: boolean };
 type Mesaj = { rol: string; icerik: string };
 type Oncelik = { sira: number; metin: string };
@@ -213,7 +230,7 @@ export async function pusulaTuru(
       max_tokens: 1024,
       thinking: { type: "disabled" },
       output_config: {
-        effort: "low",
+        effort: "medium",
         format: { type: "json_schema", schema: SOHBET_SEMASI },
       },
       system: `${PERSONA}
@@ -232,6 +249,7 @@ ${listeMetni(satir.oncelikler)}
     return null;
   }
   if (!tur?.mesaj) return null;
+  tur.mesaj = temizMetin(tur.mesaj); // Kiril homoglif glitch'ini temizle
 
   await db.from("pusula_mesajlar").insert({
     participant_id: katilimci.id,
@@ -289,6 +307,11 @@ async function damitVeMuhurle(
       ozet: string;
     }>(yanit);
     if (!veri?.ozet) return;
+    // Kiril homoglif glitch'ini damıtılan metinlerde de temizle.
+    veri.ozet = temizMetin(veri.ozet);
+    if (veri.ic_engel) veri.ic_engel = temizMetin(veri.ic_engel);
+    if (veri.mevcut_bosluk) veri.mevcut_bosluk = temizMetin(veri.mevcut_bosluk);
+    veri.cekirdek_neden = (veri.cekirdek_neden ?? []).map(temizMetin);
 
     await db
       .from("pusula")
