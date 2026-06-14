@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import { tost } from "@/lib/tost";
 import OnayliDugme from "./OnayliDugme";
 
 type Dalga = { id: number; ad: string; acik: boolean };
@@ -26,9 +27,11 @@ export default function DalgaKontrol({ dalgalar }: { dalgalar: Dalga[] }) {
         setHata(veri?.hata ?? tr.admin.dalga.hata);
         return;
       }
+      tost(acik ? tr.admin.tost.dalgaAcildi : tr.admin.tost.dalgaKapatildi, "basari");
       router.refresh();
     } catch {
       setHata(tr.admin.dalga.hata);
+      tost(tr.admin.dalga.hata, "hata");
     } finally {
       setBekleyen(null);
     }
