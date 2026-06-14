@@ -1103,6 +1103,14 @@ export const tr = {
           "Her takımın hazırlık durumu yan yana: Pusula tamamlama, Boşluk tamamlama ve kanıtsız kişi sayısı. Liderler kendi ekibinin nabzını tek bakışta görür.",
         ],
       },
+      aynaAkis: {
+        baslik: "Son Görevler",
+        metin: [
+          "AYNA'nın canlı ürettiği son 20 görev. Görevler sabit bir listeden değil, her kişiye özel (öz/dış puanları, Pusula nedeni, önceki görevleri) AYNA tarafından canlı ve benzersiz üretilir.",
+          "Bir satıra dokununca o kişiye giden TAM mesajı, kişinin yanıtını ve AYNA'nın puan + yorumunu görürsün — kimin ne aldığından haberdar olursun.",
+          "Görev türlerini (cesaret, simülasyon, gözlem…) program öncesi 'Olası Görevler' ekranından açıp kapatabilirsin.",
+        ],
+      },
       aynaDirektor: {
         baslik: "AYNA Kontrol Odası",
         metin: [
@@ -1520,6 +1528,14 @@ export const tr = {
       sozGonderildi: (n: number) => `SÖZ görevi ${n} kişiye gönderildi.`,
       akisBaslik: "Son Görevler",
       akisYok: "Henüz görev üretilmedi.",
+      detayIpucu: "Detay için dokun",
+      detayMesaj: "AYNA'nın gönderdiği mesaj",
+      detayYanit: "Katılımcının yanıtı",
+      detayYanitYok: "Henüz yanıt yok.",
+      detayYorum: "AYNA puanlaması",
+      detayZorluk: "Zorluk",
+      detayOzellik: "Hedef özellik",
+      detayKapat: "Kapat",
       sahneBaslik: "Sahne Anları",
       sahneAciklama:
         "Bas → projeksiyondaki /ekran sayfası AYNA'nın marka sesiyle salona konuşur (ekranda '🔊 Sesi Aç' açık olmalı).",
@@ -1615,6 +1631,8 @@ export const tr = {
       yansima: "🪞 Yansıma",
       gizli: "🤫 Gizli Görev",
       tahmin: "🎲 Tahmin",
+      simulasyon: "🎭 Simülasyon",
+      senkron: "⏱ Senkron An",
       soz: "🤝 Söz",
     },
     sozTesekkur:
