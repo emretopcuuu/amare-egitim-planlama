@@ -7,6 +7,7 @@ import { tr } from "@/lib/i18n/tr";
 
 const LINKLER = [
   { href: "/admin", etiket: tr.admin.nav.panel },
+  { href: "/admin/kurulum", etiket: tr.admin.nav.kurulum },
   { href: "/admin/ayna-direktoru", etiket: tr.admin.nav.ayna },
   { href: "/admin/komutan", etiket: tr.admin.nav.komutan },
   { href: "/admin/sahne-kumanda", etiket: tr.admin.nav.sahne },

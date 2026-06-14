@@ -38,9 +38,9 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
         ikon: "📋",
         baslik: "Önce katılımcıları yükle",
         aciklama:
-          "Kamp başlamadan katılımcı listesini (CSV) yükle; 6 haneli giriş kodları otomatik üretilir.",
-        butonEtiket: "Katılımcıları Yükle",
-        href: "/admin/katilimcilar",
+          "Kamp başlamadan katılımcı listesini (CSV) yükle; 6 haneli giriş kodları otomatik üretilir. Kurulum sihirbazı seni adım adım götürür.",
+        butonEtiket: "Kurulum Sihirbazını Aç",
+        href: "/admin/kurulum",
         vurgu: true,
       };
     }
@@ -49,7 +49,7 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
       baslik: "QR kartlarını yazdır",
       aciklama: `${d.katilimciSayisi} katılımcı hazır. Yaka kartı QR'larını yazdır, kamp gününe hazır ol.`,
       butonEtiket: "QR'ları Yazdır",
-      href: "/admin/qr",
+      href: "/admin/kurulum",
       vurgu: false,
     };
   }
