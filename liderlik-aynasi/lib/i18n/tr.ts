@@ -567,6 +567,11 @@ export const tr = {
       baslik: "Şimdi ne yapmalıyım?",
       etiket: "Önerilen adım",
     },
+    // #2 Bugünün Akışı: o günün admin adımları (checklist)
+    akis: {
+      baslik: "Bugünün Akışı",
+      aciklama: "Bugün sırayla yapılacaklar — her adım ilgili kontrole götürür.",
+    },
     // #9 Eksikleri tek dokunuşla dürt: öz-puanını bitirmeyenlere hatırlatma push'u
     durt: {
       bildirimBaslik: "🪞 Kendini puanla",
