@@ -944,6 +944,16 @@ export const tr = {
       yanitEtiket: "Yanıtı",
       gizliAdim: "kim olduğu gizli",
     },
+    // #6 Kamp zaman tüneli (panel tepesi)
+    zamanTuneli: {
+      baslik: "Kamp Zaman Tüneli",
+      hazirlik: "Hazırlık",
+      gun1: "Gün 1",
+      gun2: "Gün 2",
+      gun3: "Gün 3",
+      kapanis: "Kapanış",
+      saha: "Saha",
+    },
     // Görev Türü Stüdyosu: admin türleri açıp kapatır
     gorevTuru: {
       baslik: "Görev Türü Stüdyosu",
@@ -1360,6 +1370,13 @@ export const tr = {
           "NE: AYNA görevleri sabit listeden değil, 6 türde (gözlem, cesaret, yansıma, gizli, tahmin, simülasyon) her kişiye özel canlı üretir.",
           "KAPATINCA NE OLUR: Bir türün anahtarını kapatıp 'Kaydet' dersen AYNA program boyunca o türde görev ÜRETMEZ (ör. simülasyon istemiyorsan kapat).",
           "NE ZAMAN: Program öncesi bir kez ayarla. En az bir tür açık kalmalı (hepsi kapatılamaz). Her türün altında örnek görev metni var.",
+        ],
+      },
+      zamanTuneli: {
+        baslik: "Kamp Zaman Tüneli",
+        metin: [
+          "NE: Panelin tepesinde 'şu an neredeyiz' çizgisi — Hazırlık → Gün 1/2/3 → Kapanış → Saha. Altın yanan adım o anki konum, yeşil ✓ geçilenler.",
+          "NASIL: Raporlar açıksa Kapanış; bir dalga açıksa o gün; değilse takvim gününe göre belirlenir. Dalga açma / rapor açma gibi hamlelerde otomatik ilerler.",
         ],
       },
     },
