@@ -728,6 +728,9 @@ export const tr = {
       kodBos: "Kod boş — kilit devre dışı (kimse kampı açamaz)",
       qrIpucu: (url: string) => `Oda QR'ı şu adrese gitmeli: ${url}`,
       tamamlanma: (n: number, t: number) => `${n}/${t} katılımcı pusulasını kurdu`,
+      hatirlatDugme: "🔔 Hazırlığı eksik olanlara hatırlat",
+      hatirlatSonuc: (n: number) =>
+        n > 0 ? `${n} kişiye hatırlatma gönderildi` : "Herkesin hazırlığı tam 🎉",
       hata: "İşlem başarısız, tekrar dene.",
     },
     // FAZ 1 — Boşluk Anı penceresi + derinlik panosu

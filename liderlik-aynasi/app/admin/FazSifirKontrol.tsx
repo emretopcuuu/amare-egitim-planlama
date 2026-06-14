@@ -56,6 +56,20 @@ export default function FazSifirKontrol() {
     }
   }
 
+  async function hatirlat() {
+    setMesgul(true);
+    try {
+      const res = await fetch("/api/admin/hazirlik-hatirlat", { method: "POST" });
+      const v = await res.json().catch(() => null);
+      if (res.ok && v) tost(t.hatirlatSonuc(v.gonderildi ?? 0), "basari");
+      else tost(t.hata, "hata");
+    } catch {
+      tost(t.hata, "hata");
+    } finally {
+      setMesgul(false);
+    }
+  }
+
   const qrUrl =
     typeof window !== "undefined" && kod.trim()
       ? `${window.location.origin}/ac?k=${encodeURIComponent(kod.trim())}`
@@ -96,6 +110,15 @@ export default function FazSifirKontrol() {
         </p>
         <p className="mt-1 text-xs text-slate-400">{t.tamamlanma(tamam, toplam)}</p>
       </div>
+
+      {/* Akıllı hatırlatma: hazırlığı eksik olanlara kişiselleştirilmiş push */}
+      <button
+        onClick={() => void hatirlat()}
+        disabled={mesgul}
+        className="w-full rounded-xl border border-royal-light/40 px-4 py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-midnight-soft disabled:opacity-50"
+      >
+        {t.hatirlatDugme}
+      </button>
 
       {/* Oda QR kodu */}
       <div>
