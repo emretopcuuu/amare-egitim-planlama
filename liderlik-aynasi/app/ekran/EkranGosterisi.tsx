@@ -242,8 +242,8 @@ export default function EkranGosterisi() {
           <>
             {/* Slayt 1 — Nabız sayaçları */}
             <section
-              className={`absolute inset-0 grid grid-cols-2 content-center gap-8 transition-opacity duration-1000 ${
-                slayt === 0 ? "opacity-100" : "pointer-events-none opacity-0"
+              className={`absolute inset-0 grid grid-cols-2 content-center gap-8 transition-all duration-1000 ${
+                slayt === 0 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
               {(
@@ -266,8 +266,8 @@ export default function EkranGosterisi() {
 
             {/* Slayt 2 — Takım kimyası ağ haritası */}
             <section
-              className={`absolute inset-0 flex flex-col transition-opacity duration-1000 ${
-                slayt === 1 ? "opacity-100" : "pointer-events-none opacity-0"
+              className={`absolute inset-0 flex flex-col transition-all duration-1000 ${
+                slayt === 1 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
               <div className="flex items-baseline justify-between">
@@ -340,8 +340,8 @@ export default function EkranGosterisi() {
 
             {/* Slayt 3 — Özellik ortalamaları */}
             <section
-              className={`absolute inset-0 flex flex-col transition-opacity duration-1000 ${
-                slayt === 2 ? "opacity-100" : "pointer-events-none opacity-0"
+              className={`absolute inset-0 flex flex-col transition-all duration-1000 ${
+                slayt === 2 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
               <h2 className="text-3xl font-semibold text-gold-light">
@@ -378,8 +378,8 @@ export default function EkranGosterisi() {
             </section>
             {/* Slayt 4 — Kıvılcım Ligi */}
             <section
-              className={`absolute inset-0 flex flex-col transition-opacity duration-1000 ${
-                slayt === 3 ? "opacity-100" : "pointer-events-none opacity-0"
+              className={`absolute inset-0 flex flex-col transition-all duration-1000 ${
+                slayt === 3 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
               <h2 className="text-3xl font-semibold text-gold-light">
@@ -449,8 +449,8 @@ export default function EkranGosterisi() {
             </section>
             {/* Slayt 5 — Anı Duvarı */}
             <section
-              className={`absolute inset-0 flex flex-col transition-opacity duration-1000 ${
-                slayt === 4 ? "opacity-100" : "pointer-events-none opacity-0"
+              className={`absolute inset-0 flex flex-col transition-all duration-1000 ${
+                slayt === 4 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
               <h2 className="text-3xl font-semibold text-gold-light">{t.duvarBaslik}</h2>
