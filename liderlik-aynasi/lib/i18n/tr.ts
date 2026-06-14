@@ -581,6 +581,17 @@ export const tr = {
     uyarilar: {
       baslik: "Dikkat",
     },
+    // #9 Hazır duyuru şablonları (tek dokunuşla herkese push)
+    duyuru: {
+      baslik: "Hızlı Duyuru",
+      aciklama: "Tek dokunuşla herkese bildirim gönder.",
+      onaySoru: (e: string) => `"${e}" herkese gönderilsin mi?`,
+      gonder: "Evet, gönder",
+      vazgec: "Vazgeç",
+      gonderiliyor: "Gönderiliyor…",
+      gonderildi: (e: string) => `"${e}" herkese gönderildi ✓`,
+      hata: "Gönderilemedi, tekrar dene.",
+    },
     // #7 Tek bakış canlı özet (büyük rakamlar)
     ozet: {
       katilimci: "Katılımcı",
