@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import { titret, suDalgasi } from "@/lib/his";
+import Avatar from "@/components/Avatar";
 
 type Ozellik = { id: number; name: string; observation_hint: string };
 type Girdi = { puan: number | null; yorum: string };
@@ -14,6 +15,7 @@ type Props = {
   hedefId: string;
   hedefAd: string;
   hedefTakim: string | null;
+  hedefFotoUrl?: string | null;
   kendisi: boolean;
   ozellikler: Ozellik[];
   mevcut: { ozellikId: number; puan: number; yorum: string }[];
@@ -38,6 +40,7 @@ export default function PuanlamaFormu({
   hedefId,
   hedefAd,
   hedefTakim,
+  hedefFotoUrl,
   kendisi,
   ozellikler,
   mevcut,
@@ -320,14 +323,17 @@ export default function PuanlamaFormu({
             {Math.min(adim + 1, ozellikler.length)} / {ozellikler.length}
           </span>
         </div>
-        <p className="prizma-serif ay-metin mt-3 truncate text-xl font-semibold">
-          {kendisi ? tr.puanlama.ozBaslik : hedefAd}
-          {hedefTakim && !kendisi && (
-            <span className="ml-2 align-middle rounded-md bg-royal/30 px-2 py-0.5 text-xs text-royal-light">
-              {hedefTakim}
-            </span>
-          )}
-        </p>
+        <div className="mt-3 flex items-center gap-3">
+          {!kendisi && <Avatar ad={hedefAd} url={hedefFotoUrl} boyut="md" />}
+          <p className="prizma-serif ay-metin min-w-0 truncate text-xl font-semibold">
+            {kendisi ? tr.puanlama.ozBaslik : hedefAd}
+            {hedefTakim && !kendisi && (
+              <span className="ml-2 align-middle rounded-md bg-royal/30 px-2 py-0.5 text-xs text-royal-light">
+                {hedefTakim}
+              </span>
+            )}
+          </p>
+        </div>
         {!kendisi && (
           <p className="mt-1 text-xs font-medium text-emerald-300/90">
             {tr.puanlama.gizlilikRozet}

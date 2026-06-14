@@ -46,14 +46,14 @@ export default async function DegerlendirPage() {
     );
   }
 
-  const [ozellikler, puanSayilari, atamalar, katilimcilar, tahmin] =
+  const [ozellikler, puanSayilari, atamalar, katilimcilar, tahmin, kendiFoto] =
     await Promise.all([
       aktifOzellikler(db),
       hedefBasinaPuanSayisi(db, session.sub, dalga.id),
       db
         .from("assignments")
         .select(
-          "type, target:participants!assignments_target_id_fkey(id, full_name, team)"
+          "type, target:participants!assignments_target_id_fkey(id, full_name, team, profil_foto_path)"
         )
         .eq("observer_id", session.sub)
         .then(({ data, error }) => {
@@ -62,7 +62,7 @@ export default async function DegerlendirPage() {
         }),
       db
         .from("participants")
-        .select("id, full_name, team")
+        .select("id, full_name, team, profil_foto_path")
         .eq("role", "participant")
         .neq("id", session.sub)
         .order("full_name")
@@ -79,6 +79,12 @@ export default async function DegerlendirPage() {
           if (error) throw error;
           return data;
         }),
+      db
+        .from("participants")
+        .select("profil_foto_path")
+        .eq("id", session.sub)
+        .maybeSingle()
+        .then(({ data }) => data),
     ]);
 
   const toplam = ozellikler.length;
@@ -87,6 +93,28 @@ export default async function DegerlendirPage() {
 
   const atananIdler = new Set(atamalar.map((a) => a.target.id));
   const serbestler = katilimcilar.filter((k) => !atananIdler.has(k.id));
+
+  // Avatar fotoğrafları: tüm hedeflerin profil_foto_path'lerini tek seferde imzala.
+  const fotoKayit: { id: string; path: string }[] = [];
+  if (kendiFoto?.profil_foto_path)
+    fotoKayit.push({ id: session.sub, path: kendiFoto.profil_foto_path });
+  for (const a of atamalar)
+    if (a.target.profil_foto_path)
+      fotoKayit.push({ id: a.target.id, path: a.target.profil_foto_path });
+  for (const k of katilimcilar)
+    if (k.profil_foto_path) fotoKayit.push({ id: k.id, path: k.profil_foto_path });
+
+  const fotoHarita = new Map<string, string>();
+  if (fotoKayit.length > 0) {
+    const yollar = [...new Set(fotoKayit.map((f) => f.path))];
+    const { data: imzalilar } = await db.storage.from("sesler").createSignedUrls(yollar, 3600);
+    const yolUrl = new Map<string, string>();
+    for (const im of imzalilar ?? []) if (im.path && im.signedUrl) yolUrl.set(im.path, im.signedUrl);
+    for (const f of fotoKayit) {
+      const u = yolUrl.get(f.path);
+      if (u && !fotoHarita.has(f.id)) fotoHarita.set(f.id, u);
+    }
+  }
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
@@ -121,6 +149,7 @@ export default async function DegerlendirPage() {
           yapilan={ozSayi}
           toplam={toplam}
           kilitli={false}
+          fotoUrl={fotoHarita.get(session.sub) ?? null}
         />
       </section>
 
@@ -155,6 +184,7 @@ export default async function DegerlendirPage() {
                   yapilan={puanSayilari.get(a.target.id) ?? 0}
                   toplam={toplam}
                   kilitli={!ozTamam}
+                  fotoUrl={fotoHarita.get(a.target.id) ?? null}
                 />
               </li>
             ))}
@@ -194,6 +224,7 @@ export default async function DegerlendirPage() {
             ad: k.full_name,
             takim: k.team,
             yapilan: puanSayilari.get(k.id) ?? 0,
+            foto: fotoHarita.get(k.id) ?? null,
           }))}
           toplam={toplam}
           kilitli={!ozTamam}

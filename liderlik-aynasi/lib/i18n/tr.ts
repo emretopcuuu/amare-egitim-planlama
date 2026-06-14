@@ -635,6 +635,8 @@ export const tr = {
     degistir: "Fotoğrafı değiştir",
     yukleniyor: "Yükleniyor…",
     hata: "Yüklenemedi, tekrar dene.",
+    kirpIpucu: "Sürükle ve yakınlaştırarak yüzünü çemberin içine getir.",
+    yakinlastir: "Yakınlaştır",
   },
   // "Canlı Ayna" — selfie sonrası çoklu açılı yüz yakalama (KYC hissi)
   canliAyna: {

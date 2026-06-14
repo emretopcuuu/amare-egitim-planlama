@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
+import Avatar from "@/components/Avatar";
 
 type Props = {
   hedefId: string;
@@ -8,6 +9,7 @@ type Props = {
   yapilan: number;
   toplam: number;
   kilitli: boolean;
+  fotoUrl?: string | null;
 };
 
 // Değerlendirme merkezindeki tek kişi satırı: ilerleme + duruma göre eylem.
@@ -18,6 +20,7 @@ export default function KisiSatiri({
   yapilan,
   toplam,
   kilitli,
+  fotoUrl,
 }: Props) {
   const tamam = yapilan >= toplam;
   const etiket = tamam
@@ -27,16 +30,19 @@ export default function KisiSatiri({
       : tr.degerlendir.basla;
 
   return (
-    <div className="flex items-center justify-between gap-4 py-4">
-      <div className="min-w-0">
-        <p className="truncate text-lg font-semibold text-slate-100">
-          {tamam && <span className="mr-1 text-emerald-400">✓</span>}
-          {ad}
-        </p>
-        <p className="mt-0.5 text-sm text-slate-400">
-          {altYazi ? `${altYazi} · ` : ""}
-          {tr.degerlendir.ilerleme(yapilan, toplam)}
-        </p>
+    <div className="flex items-center justify-between gap-3 py-4">
+      <div className="flex min-w-0 items-center gap-3">
+        <Avatar ad={ad} url={fotoUrl} boyut="md" />
+        <div className="min-w-0">
+          <p className="truncate text-lg font-semibold text-slate-100">
+            {tamam && <span className="mr-1 text-emerald-400">✓</span>}
+            {ad}
+          </p>
+          <p className="mt-0.5 text-sm text-slate-400">
+            {altYazi ? `${altYazi} · ` : ""}
+            {tr.degerlendir.ilerleme(yapilan, toplam)}
+          </p>
+        </div>
       </div>
       {kilitli ? (
         <span
