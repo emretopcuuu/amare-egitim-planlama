@@ -638,6 +638,16 @@ export const tr = {
     kirpIpucu: "Sürükle ve yakınlaştırarak yüzünü çemberin içine getir.",
     yakinlastir: "Yakınlaştır",
   },
+  // #5 Günün Aynası — günlük mikro check-in
+  gunluk: {
+    ust: "Günün Aynası",
+    soru: "Bugün hangi liderlik özelliğini yaşadın?",
+    notYer: "İstersen bir cümle ekle — nasıl oldu?",
+    gonder: "Kaydet",
+    gonderiliyor: "Kaydediliyor…",
+    tamamMetin: "Bugünkü check-in'ini yaptın. Yarın yine buradayım. — AYNA",
+    hata: "Kaydedilemedi, tekrar dene.",
+  },
   // "Canlı Ayna" — selfie sonrası çoklu açılı yüz yakalama (KYC hissi)
   canliAyna: {
     basla: "🔮 Canlı Aynanı oluştur",

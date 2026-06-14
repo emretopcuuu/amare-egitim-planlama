@@ -120,6 +120,33 @@ export type Database = {
           },
         ]
       }
+      gunluk_checkin: {
+        Row: {
+          created_at: string
+          id: string
+          notu: string | null
+          participant_id: string
+          tarih: string
+          trait_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          notu?: string | null
+          participant_id: string
+          tarih: string
+          trait_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          notu?: string | null
+          participant_id?: string
+          tarih?: string
+          trait_id?: number | null
+        }
+        Relationships: []
+      }
       churn_radar: {
         Row: {
           admin_alerted_at: string | null
