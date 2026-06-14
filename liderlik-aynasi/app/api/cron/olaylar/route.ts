@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
 // Vercel Cron: her dakika çalışır, ateşlenecek scheduled_events'i işler.
@@ -40,6 +41,12 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({ islem });
+}
+
+// Admin panelinden manuel tetikleme — cron secret olmadan, admin oturumuyla
+export async function POST() {
+  if (!(await adminOturumu())) return NextResponse.json({ hata: "Yetkisiz" }, { status: 403 });
+  return GET(new NextRequest("http://localhost/api/cron/olaylar"));
 }
 
 type Olay = { id: number; event_type: string; wave_id: number | null };

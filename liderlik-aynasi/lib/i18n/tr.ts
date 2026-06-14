@@ -1290,6 +1290,10 @@ export const tr = {
     },
     hata: "Kaydedilemedi. Tekrar dene.",
     bosYok: "Planlanmış eylem yok.",
+    manuelTetikle: "Şimdi Tetikle",
+    manuelTetikleniyor: "Tetikleniyor…",
+    manuelTetiklendi: "Zamanlanmış eylemler tetiklendi ✓",
+    manuelBilgi: "Cron günde bir çalışır — bekleyen eylemleri hemen tetiklemek için bu butonu kullan.",
   },
   // #10 İşlem günlüğü: kritik admin eylemleri zaman damgasıyla
   islemGunlugu: {

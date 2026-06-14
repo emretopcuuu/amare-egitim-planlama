@@ -49,6 +49,7 @@ export default function OtomatikZamanlama({ dalgalar }: { dalgalar: Dalga[] }) {
   const [dalgaId, setDalgaId] = useState<string>(String(dalgalar[0]?.id ?? ""));
   const [zaman, setZaman] = useState("");
   const [eklemeMesgul, setEklemeMesgul] = useState(false);
+  const [tetikleniyor, setTetikleniyor] = useState(false);
 
   const yukle = useCallback(async () => {
     try {
@@ -88,6 +89,22 @@ export default function OtomatikZamanlama({ dalgalar }: { dalgalar: Dalga[] }) {
     }
   }
 
+  async function manuelTetikle() {
+    setTetikleniyor(true);
+    try {
+      const res = await fetch("/api/cron/olaylar", { method: "POST" });
+      if (!res.ok) { tost(t.hata, "hata"); return; }
+      const veri = await res.json().catch(() => null) as { islem?: number } | null;
+      tost(`${t.manuelTetiklendi} (${veri?.islem ?? 0} işlem)`, "basari");
+      await yukle();
+      router.refresh();
+    } catch {
+      tost(t.hata, "hata");
+    } finally {
+      setTetikleniyor(false);
+    }
+  }
+
   async function iptal(id: number) {
     if (!confirm(t.iptalOnay)) return;
     const res = await fetch(`/api/admin/zamanlama?id=${id}`, { method: "DELETE" });
@@ -99,6 +116,18 @@ export default function OtomatikZamanlama({ dalgalar }: { dalgalar: Dalga[] }) {
 
   return (
     <div className="space-y-4">
+      {/* Manuel tetikle */}
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-900/20 px-4 py-3">
+        <p className="text-xs text-amber-300">{t.manuelBilgi}</p>
+        <button
+          onClick={() => void manuelTetikle()}
+          disabled={tetikleniyor}
+          className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-midnight transition-colors hover:bg-amber-400 disabled:opacity-50"
+        >
+          {tetikleniyor ? t.manuelTetikleniyor : t.manuelTetikle}
+        </button>
+      </div>
+
       {/* Yeni zamanlama formu */}
       <div className="rounded-xl border border-royal-light/30 bg-midnight-soft/50 p-4">
         <p className="mb-3 text-sm font-medium text-slate-300">{t.ekle}</p>

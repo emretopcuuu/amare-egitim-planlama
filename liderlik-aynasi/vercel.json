@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/cron/olaylar",
-      "schedule": "* * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
