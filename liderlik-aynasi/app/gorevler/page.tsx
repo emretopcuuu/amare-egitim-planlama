@@ -3,12 +3,15 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { kampKilitliMi } from "@/lib/pusula";
+import { aktifOzellikler } from "@/lib/degerlendirme";
 import { unvanBul } from "@/lib/kivilcim";
 import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
 import { tr } from "@/lib/i18n/tr";
 import GorevYanitFormu from "./GorevYanitFormu";
 import SesCal from "@/components/SesCal";
+import OkuButonu from "@/components/OkuButonu";
+import GunlukCheckin from "@/components/GunlukCheckin";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -75,6 +78,20 @@ export default async function GorevlerPage() {
     .reduce((top, g) => top + g.spark_points, 0);
   const unvan = unvanBul(toplamKivilcim);
 
+  // #5 Günlük check-in: bugün yapıldı mı + özellik seçenekleri
+  const bugun = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Istanbul",
+  }).format(new Date());
+  const [ozellikler, { data: checkin }] = await Promise.all([
+    aktifOzellikler(db),
+    db
+      .from("gunluk_checkin")
+      .select("id")
+      .eq("participant_id", session.sub)
+      .eq("tarih", bugun)
+      .maybeSingle(),
+  ]);
+
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-6 p-5">
@@ -129,6 +146,12 @@ export default async function GorevlerPage() {
         )}
       </section>
 
+      {/* #5 Günün Aynası — günlük mikro check-in */}
+      <GunlukCheckin
+        ozellikler={ozellikler.map((o) => ({ id: o.id, ad: o.name }))}
+        yapildi={!!checkin}
+      />
+
       {/* Aktif görev(ler) */}
       {aktif.length === 0 ? (
         <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 text-center ring-1 ring-royal/30 backdrop-blur">
@@ -158,11 +181,13 @@ export default async function GorevlerPage() {
             <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
               {g.body}
             </p>
-            {sesUrller.has(g.id) && (
+            {sesUrller.has(g.id) ? (
               <SesCal
                 url={sesUrller.get(g.id)!}
                 etiket={g.kind === "simulasyon" ? t.dinleItiraz : t.dinle}
               />
+            ) : (
+              <OkuButonu metin={`${g.title}. ${g.body}`} />
             )}
             <GorevYanitFormu gorevId={g.id} />
           </section>

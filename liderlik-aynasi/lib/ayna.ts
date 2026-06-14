@@ -125,21 +125,30 @@ export async function gorevUret(
   mod: SistemModu = "kamp",
   etkinlik: ProgramMaddesi | null = null
 ): Promise<UretilenGorev | null> {
-  const [ozellikler, oncekilerSonuc, puanlarSonuc, pusula] = await Promise.all([
-    aktifOzellikler(db),
-    db
-      .from("missions")
-      .select("kind, title, issued_at, status, ai_score")
-      .eq("participant_id", katilimci.id)
-      .order("issued_at", { ascending: false })
-      .limit(6),
-    db
-      .from("ratings")
-      .select("trait_id, score, is_self")
-      .eq("target_id", katilimci.id),
-    // FAZ 0 Pusula: kişinin nedeni/iç engeli — görevi buna göre kişiselleştir.
-    pusulaOzeti(db, katilimci.id),
-  ]);
+  const [ozellikler, oncekilerSonuc, puanlarSonuc, pusula, kapaliAyar] =
+    await Promise.all([
+      aktifOzellikler(db),
+      db
+        .from("missions")
+        .select("kind, title, issued_at, status, ai_score")
+        .eq("participant_id", katilimci.id)
+        .order("issued_at", { ascending: false })
+        .limit(6),
+      db
+        .from("ratings")
+        .select("trait_id, score, is_self")
+        .eq("target_id", katilimci.id),
+      // FAZ 0 Pusula: kişinin nedeni/iç engeli — görevi buna göre kişiselleştir.
+      pusulaOzeti(db, katilimci.id),
+      // Admin'in kapattığı görev türleri (Görev Türü Stüdyosu).
+      db.from("settings").select("value").eq("key", "kapali_gorev_turleri").maybeSingle(),
+    ]);
+  let kapaliTurler: string[] = [];
+  try {
+    if (kapaliAyar?.data?.value) kapaliTurler = JSON.parse(kapaliAyar.data.value);
+  } catch {
+    kapaliTurler = [];
+  }
   const onceki = oncekilerSonuc.data ?? [];
   const puanlar = puanlarSonuc.data ?? [];
   // FAZ 2 re-entry: yolculukta kamp sonrası görev, kişinin yeni cümlesini savunur.
@@ -157,7 +166,7 @@ export async function gorevUret(
   const bugunTurleri = onceki
     .filter((o) => Date.now() - new Date(o.issued_at).getTime() < 86_400_000)
     .map((o) => o.kind);
-  const tur = turSec(gun, saat, bugunTurleri, mod, undefined, etkinlik?.tur);
+  const tur = turSec(gun, saat, bugunTurleri, mod, undefined, etkinlik?.tur, kapaliTurler);
 
   // EUSTRESS: son görev formundan akış-kanalı zorluğu
   const kapananlar = onceki.filter(

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { titret, suDalgasi } from "@/lib/his";
 import MikrofonButonu from "@/components/MikrofonButonu";
+import Konfeti from "@/components/Konfeti";
 
 const t = tr.gorevler;
 
@@ -66,7 +67,8 @@ export default function GorevYanitFormu({ gorevId }: { gorevId: string }) {
           localStorage.removeItem(kuyrukAnahtari(gorevId));
         } catch {}
         setCevrimdisi(false);
-        titret([12, 40, 12]);
+        const buyuk = (veri?.puan ?? 0) >= 8 || !!veri?.soz;
+        titret(buyuk ? [15, 40, 15, 40, 30] : [12, 40, 12]);
         suDalgasi();
         setSonuc(veri);
       } catch {
@@ -132,8 +134,11 @@ export default function GorevYanitFormu({ gorevId }: { gorevId: string }) {
   }
 
   if (sonuc) {
+    const buyukKazanim = !sonuc.bekliyor && ((sonuc.puan ?? 0) >= 8 || !!sonuc.soz);
     return (
-      <div className="mt-4 rounded-xl bg-midnight-soft p-4 text-center">
+      <>
+        {buyukKazanim && <Konfeti />}
+        <div className="mt-4 rounded-xl bg-midnight-soft p-4 text-center">
         {sonuc.bekliyor ? (
           <p className="text-sm text-slate-300">{t.durumlar.submitted}…</p>
         ) : (
@@ -163,7 +168,8 @@ export default function GorevYanitFormu({ gorevId }: { gorevId: string }) {
         >
           {tr.degerlendir.devamEt} →
         </button>
-      </div>
+        </div>
+      </>
     );
   }
 
@@ -187,7 +193,8 @@ export default function GorevYanitFormu({ gorevId }: { gorevId: string }) {
           {t.hata}
         </p>
       )}
-      <div className="mt-2 flex gap-2">
+      <p className="mt-2 text-xs text-slate-500">{t.sesliIpucu}</p>
+      <div className="mt-1 flex gap-2">
         <MikrofonButonu
           disabled={gonderiliyor}
           onMetin={(parca) =>

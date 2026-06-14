@@ -388,7 +388,8 @@ export function turSec(
   oncekiTurler: string[],
   mod: SistemModu = "kamp",
   zarDeger?: number,
-  etkinlikTur?: EtkinlikTuru
+  etkinlikTur?: EtkinlikTuru,
+  kapaliTurler?: readonly string[]
 ): GorevTuru {
   const bugunGizliVar = oncekiTurler.includes("gizli");
   let agirliklar: [GorevTuru, number][];
@@ -419,6 +420,13 @@ export function turSec(
       taban.cesaret += 2;
     }
     agirliklar = GOREV_TURLERI.map((t) => [t, taban[t]]);
+  }
+  // Admin kapattığı türler: ağırlığı sıfırla (hepsi kapalı kalırsa yok say).
+  if (kapaliTurler && kapaliTurler.length) {
+    const suzulmus = agirliklar.map(
+      ([t, a]) => [t, kapaliTurler.includes(t) ? 0 : a] as [GorevTuru, number]
+    );
+    if (suzulmus.some(([, a]) => a > 0)) agirliklar = suzulmus;
   }
   const toplam = agirliklar.reduce((t, [, a]) => t + a, 0);
   let zar = (zarDeger ?? Math.random()) * toplam;

@@ -52,12 +52,20 @@ export default async function PuanlaPage({
 
   const { data: hedef, error } = await db
     .from("participants")
-    .select("id, full_name, team")
+    .select("id, full_name, team, profil_foto_path")
     .eq("id", hedefId)
     .eq("role", "participant")
     .maybeSingle();
   if (error) throw error;
   if (!hedef) notFound();
+
+  let hedefFotoUrl: string | null = null;
+  if (hedef.profil_foto_path) {
+    const { data: imzali } = await db.storage
+      .from("sesler")
+      .createSignedUrl(hedef.profil_foto_path, 3600);
+    hedefFotoUrl = imzali?.signedUrl ?? null;
+  }
 
   const { data: mevcut, error: mevcutHata } = await db
     .from("ratings")
@@ -76,6 +84,7 @@ export default async function PuanlaPage({
         hedefId={hedef.id}
         hedefAd={hedef.full_name}
         hedefTakim={hedef.team}
+        hedefFotoUrl={hedefFotoUrl}
         kendisi={kendisi}
         ozellikler={ozellikler}
         mevcut={mevcut.map((m) => ({

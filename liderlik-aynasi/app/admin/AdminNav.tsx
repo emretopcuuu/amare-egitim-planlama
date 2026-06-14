@@ -33,6 +33,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
       { href: "/admin/ayna-direktoru", etiket: n.ayna },
       { href: "/admin/komutan", etiket: n.komutan },
       { href: "/admin/sahne-kumanda", etiket: n.sahne },
+      { href: "/admin/sunum", etiket: n.sunum },
     ],
   },
   {
@@ -49,6 +50,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
     ad: g.ayarlar,
     ikon: "⚙️",
     linkler: [
+      { href: "/admin/gorev-turleri", etiket: n.gorevTuru },
       { href: "/admin/program", etiket: n.program },
       { href: "/admin/test", etiket: n.test },
     ],

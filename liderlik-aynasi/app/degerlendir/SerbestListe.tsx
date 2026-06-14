@@ -4,7 +4,13 @@ import { useState } from "react";
 import KisiSatiri from "./KisiSatiri";
 import { tr } from "@/lib/i18n/tr";
 
-type Kisi = { id: string; ad: string; takim: string | null; yapilan: number };
+type Kisi = {
+  id: string;
+  ad: string;
+  takim: string | null;
+  yapilan: number;
+  foto?: string | null;
+};
 
 // İstemci tarafı isim filtresi: kamp ölçeğinde (≤ ~60 kişi) tüm liste
 // sunucudan gelir, arama yalnızca görünümü daraltır.
@@ -46,6 +52,7 @@ export default function SerbestListe({
                 yapilan={k.yapilan}
                 toplam={toplam}
                 kilitli={kilitli}
+                fotoUrl={k.foto}
               />
             </li>
           ))}
