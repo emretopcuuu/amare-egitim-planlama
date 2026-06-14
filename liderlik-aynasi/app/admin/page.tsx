@@ -14,6 +14,7 @@ import SilmeTalepleri from "./SilmeTalepleri";
 import IkiliKontrol from "./IkiliKontrol";
 import EksikDurt from "./EksikDurt";
 import OtoYenile from "./OtoYenile";
+import GununAkisi from "./GununAkisi";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -169,6 +170,9 @@ export default async function AdminPanel() {
           {oneri.butonEtiket}
         </Link>
       </section>
+
+      {/* #2 Bugünün Akışı — kamp günündeyse o günün adımları */}
+      <GununAkisi bugun={bugun} />
 
       <section
         id="dalga"
