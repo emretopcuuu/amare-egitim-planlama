@@ -332,26 +332,6 @@ export default function PusulaSohbet({
         <h1 className="prizma-serif ay-metin mt-1 text-xl font-semibold">{t.baslik}</h1>
       </header>
 
-      {/* Önceliğini görüp seçebilesin diye liste sohbet boyunca görünür; dokun → yanıta yaz */}
-      {gosterListe.length > 0 && (
-        <div className="shrink-0 pb-3">
-          <p className="mb-1.5 text-center text-[0.65rem] uppercase tracking-wide text-slate-500">
-            {t.listeHatirlat}
-          </p>
-          <div className="flex flex-wrap justify-center gap-1.5">
-            {gosterListe.map((m, i) => (
-              <button
-                key={i}
-                onClick={() => setGirdi(m)}
-                className="rounded-full border border-royal-light/30 bg-midnight-soft px-3 py-1 text-sm text-slate-200 transition-colors hover:border-gold"
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       <div className="flex-1 space-y-3 overflow-y-auto pb-3">
         {mesajlar.map((m, i) => (
           <div key={i} className={`flex ${m.rol === "ayna" ? "justify-start" : "justify-end"}`}>
@@ -378,6 +358,26 @@ export default function PusulaSohbet({
         <p role="alert" className="pb-2 text-center text-sm font-medium text-red-400">
           {hata}
         </p>
+      )}
+
+      {/* Öncelik listesi yanıt kutusunun HEMEN ÜSTÜNDE; dokun → yanıta yaz */}
+      {gosterListe.length > 0 && (
+        <div className="shrink-0 pb-3">
+          <p className="mb-1.5 text-center text-[0.65rem] uppercase tracking-wide text-slate-500">
+            {t.listeHatirlat}
+          </p>
+          <div className="flex flex-wrap justify-center gap-1.5">
+            {gosterListe.map((m, i) => (
+              <button
+                key={i}
+                onClick={() => setGirdi(m)}
+                className="rounded-full border border-royal-light/30 bg-midnight-soft px-3 py-1 text-sm text-slate-200 transition-colors hover:border-gold"
+              >
+                {m}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="flex shrink-0 items-end gap-2">
