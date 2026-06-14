@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Playfair_Display, Fraunces } from "next/font/google";
+import { supabaseAdmin } from "@/lib/supabase/server";
 import GolArkaplan from "@/components/gol/GolArkaplan";
 import AltNav from "@/components/AltNav";
 import BaglantiDurumu from "@/components/BaglantiDurumu";
 import AcilisSplash from "@/components/AcilisSplash";
 import AtlaBaglantisi from "@/components/AtlaBaglantisi";
+import ProvaModuBayragi from "@/components/ProvaModuBayragi";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -57,11 +59,23 @@ export const viewport: Viewport = {
   themeColor: "#06121e",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  let provaAcik = false;
+  try {
+    const { data: prova } = await supabaseAdmin()
+      .from("settings")
+      .select("value")
+      .eq("key", "prova_modu")
+      .maybeSingle();
+    provaAcik = prova?.value === "true";
+  } catch {
+    // Build-time prerendering may run without env vars — safe default
+  }
+
   return (
     <html
       lang="tr"
@@ -76,6 +90,8 @@ export default function RootLayout({
               "try{var s=localStorage.getItem('la_yazi_boyu');var m={normal:'17.5px',buyuk:'19.5px',cokBuyuk:'22px'};if(s&&m[s])document.documentElement.style.fontSize=m[s];if(localStorage.getItem('la_gunes_modu')==='1')document.body.classList.add('gunes-modu');}catch(e){}",
           }}
         />
+        {/* #8 PROVA MODU: admin açarsa tüm sayfalarda kırmızı şerit çıkar */}
+        {provaAcik && <ProvaModuBayragi />}
         <AtlaBaglantisi />
         {/* İlk açılışta tek seferlik ONE TEAM marka videosu */}
         <AcilisSplash />

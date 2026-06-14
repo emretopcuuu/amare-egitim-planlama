@@ -22,6 +22,10 @@ import KodBul from "./KodBul";
 import Uyarilar from "./Uyarilar";
 import DuyuruSablonlari from "./DuyuruSablonlari";
 import Ipucu from "./Ipucu";
+import ProvaModuKontrol from "./ProvaModuKontrol";
+import TopluEylem from "./TopluEylem";
+import OtomatikZamanlama from "./OtomatikZamanlama";
+import IslemGunlugu from "./IslemGunlugu";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -47,6 +51,7 @@ export default async function AdminPanel() {
     { count: ikiliSayisi },
     { data: sozAyar },
     { count: bekleyenFoto },
+    { data: provaAyar },
   ] = await Promise.all([
     db.from("waves").select("id, name, is_open, opened_at").order("id"),
     aktifOzellikler(db),
@@ -77,8 +82,10 @@ export default async function AdminPanel() {
       .from("photos")
       .select("id", { count: "exact", head: true })
       .eq("status", "pending"),
+    db.from("settings").select("value").eq("key", "prova_modu").maybeSingle(),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
+  const provaAcik = provaAyar?.value === "true";
 
   const sozAcik = sozAyar?.value === "true";
 
@@ -175,6 +182,16 @@ export default async function AdminPanel() {
         <p className="rounded-xl border border-royal-light/40 bg-royal/15 px-4 py-3 text-sm font-medium text-slate-100">
           {tr.admin.yardimci.banner}
         </p>
+      )}
+
+      {/* #8 PROVA MODU toggle — yalnız tam yetkili admin */}
+      {tamYetki && (
+        <section className="kart-3d rounded-2xl bg-midnight-card/60 p-4 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+          <h2 className="mb-3 text-sm font-semibold text-gold-light">
+            {tr.provaModu.baslikKapali}
+          </h2>
+          <ProvaModuKontrol acik={provaAcik} />
+        </section>
       )}
 
       {/* #7 Tek bakış canlı özet — büyük rakamlar (her iki rol) */}
@@ -327,43 +344,19 @@ export default async function AdminPanel() {
               </div>
             </dl>
 
-            <div className="mt-4 overflow-x-auto">
-              <table className="cizgili w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-royal/30 text-xs uppercase tracking-wide text-slate-400">
-                    <th className="py-2 pr-3">{tr.admin.ilerleme.kisi}</th>
-                    <th className="py-2 pr-3">{tr.admin.ilerleme.takim}</th>
-                    <th className="py-2 pr-3 text-center">{tr.admin.ilerleme.oz}</th>
-                    <th className="py-2 pr-3 text-center">
-                      {tr.admin.ilerleme.puanladigi}
-                    </th>
-                    <th className="py-2 text-center">
-                      {tr.admin.ilerleme.onuPuanlayan}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-royal/20">
-                  {ilerleme.katilimcilar.map((k) => (
-                    <tr key={k.id}>
-                      <td className="py-2 pr-3 font-medium text-slate-100">{k.ad}</td>
-                      <td className="py-2 pr-3 text-slate-400">{k.takim ?? "—"}</td>
-                      <td className="py-2 pr-3 text-center">
-                        {ilerleme.ozTamamlar.has(k.id) ? (
-                          <span className="text-emerald-400">✓</span>
-                        ) : (
-                          <span className="text-slate-500">—</span>
-                        )}
-                      </td>
-                      <td className="py-2 pr-3 text-center text-slate-300">
-                        {ilerleme.puanladigi.get(k.id) ?? 0}
-                      </td>
-                      <td className="py-2 text-center text-slate-300">
-                        {ilerleme.onuPuanlayan.get(k.id) ?? 0}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* #6 Toplu seçim + tek tık dürt: checkboxlarla çoklu seçim */}
+            <div className="mt-4">
+              <TopluEylem
+                katilimcilar={ilerleme.katilimcilar.map((k) => ({
+                  id: k.id,
+                  ad: k.ad,
+                  takim: k.takim,
+                  ozTamam: ilerleme.ozTamamlar.has(k.id),
+                  puanladigi: ilerleme.puanladigi.get(k.id) ?? 0,
+                  onuPuanlayan: ilerleme.onuPuanlayan.get(k.id) ?? 0,
+                }))}
+                ozellikSayisi={ozellikler.length}
+              />
             </div>
             {ilerleme.katilimcilar.length - ilerleme.ozTamamlar.size > 0 && (
               <EksikDurt
@@ -422,6 +415,22 @@ export default async function AdminPanel() {
       </section>
         </>
       )}
+
+      {/* #7 Otomatik zamanlama — yalnız tam yetkili admin */}
+      {tamYetki && (
+        <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+          <h2 className="text-lg font-semibold text-gold-light">
+            {tr.zamanlama.baslik}
+          </h2>
+          <p className="mt-1 mb-4 text-sm text-slate-400">{tr.zamanlama.aciklama}</p>
+          <OtomatikZamanlama
+            dalgalar={dalgalar.map((d) => ({ id: d.id, ad: d.name }))}
+          />
+        </section>
+      )}
+
+      {/* #10 İşlem günlüğü — yalnız tam yetkili admin */}
+      {tamYetki && <IslemGunlugu />}
     </main>
   );
 }

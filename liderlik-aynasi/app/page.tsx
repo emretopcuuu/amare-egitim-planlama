@@ -8,6 +8,7 @@ import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
 import AynaRituel from "@/components/AynaRituel";
 import EgilenKart from "@/components/EgilenKart";
+import GeriSayim from "@/components/GeriSayim";
 import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
 import YolculukSeridi from "@/components/YolculukSeridi";
@@ -51,23 +52,30 @@ function BuyukKart({
   href,
   dugme,
   vurgu = false,
+  ikon,
 }: {
   baslik: string;
   metin: string;
   href: string;
   dugme: string;
   vurgu?: boolean;
+  ikon?: string;
 }) {
   return (
     <EgilenKart className="rounded-3xl">
       <div className="kart-cam relative overflow-hidden rounded-3xl p-8 text-center">
+        {ikon && (
+          <p className="mb-4 text-5xl leading-none" aria-hidden>
+            {ikon}
+          </p>
+        )}
         <h2 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
           {baslik}
         </h2>
         <p className="mt-4 text-lg leading-relaxed text-slate-300">{metin}</p>
         <Link
           href={href}
-          className={`mt-8 flex h-16 w-full items-center justify-center rounded-2xl text-xl font-bold transition-transform hover:scale-[1.01] ${
+          className={`mt-8 flex h-16 w-full items-center justify-center gap-2 rounded-2xl text-xl font-bold transition-transform hover:scale-[1.01] ${
             vurgu ? "parilti btn-kor" : "btn-kor"
           }`}
         >
@@ -96,6 +104,7 @@ export default async function AnaSayfa() {
     { data: kayma },
     { data: sozAyar },
     { data: soz },
+    { data: dalgaZamanAyar },
   ] = await Promise.all([
       acikDalga(db),
       raporlarGorunurMu(db),
@@ -121,9 +130,12 @@ export default async function AnaSayfa() {
         .select("participant_id")
         .eq("participant_id", session.sub)
         .maybeSingle(),
+      db.from("settings").select("value").eq("key", "sonraki_dalga_zamani").maybeSingle(),
     ]);
   const sozAcik = sozAyar?.value === "true";
   const sozVar = !!soz;
+  // #4 Sıradaki dalgaya geri sayım: yalnızca dalga kapalıyken ve zaman ayarlıysa göster
+  const sonrakiDalgaZamani = !dalga && dalgaZamanAyar?.value ? dalgaZamanAyar.value : null;
 
   const ozTamam = dalga
     ? await ozPuanTamamMi(db, session.sub, dalga.id, ozellikler.length)
@@ -224,6 +236,7 @@ export default async function AnaSayfa() {
           metin={t.ozGerekMetin}
           href={`/degerlendir/${session.sub}`}
           dugme={t.ozGerekDugme}
+          ikon="✨"
           vurgu
         />
         <IlkAdimIpucu etiket={t.ilkAdimIpucu} />
@@ -249,6 +262,7 @@ export default async function AnaSayfa() {
           metin={t.sozGerekMetin}
           href="/soz"
           dugme={t.sozGerekDugme}
+          ikon="🤝"
           vurgu
         />
       </Sayfa>
@@ -264,6 +278,7 @@ export default async function AnaSayfa() {
           metin={t.raporMetin}
           href="/ayna"
           dugme={t.aynaniGor}
+          ikon="🪞"
           vurgu
         />
       </Sayfa>
@@ -295,6 +310,7 @@ export default async function AnaSayfa() {
           metin={t.dalgaDevamMetin}
           href="/degerlendir"
           dugme={t.dalgaDevamDugme}
+          ikon="👁"
         />
       </Sayfa>
     );
@@ -309,6 +325,7 @@ export default async function AnaSayfa() {
           metin={t.gorevTekMetin}
           href="/gorevler"
           dugme={t.gorevTekDugme(gorevSayisi)}
+          ikon="🤖"
         />
       </Sayfa>
     );
@@ -324,6 +341,8 @@ export default async function AnaSayfa() {
           {t.bekleBaslik}
         </h2>
         <p className="mt-3 text-base leading-relaxed text-slate-300">{t.bekleMetin}</p>
+        {/* #4 Sıradaki dalgaya geri sayım: yalnızca zamanlama ayarlıysa */}
+        {sonrakiDalgaZamani && <GeriSayim hedefZaman={sonrakiDalgaZamani} />}
         <div className="mt-6">
           <SicakAdim href="/takdir" etiket={t.bekleEylem} vurgu />
         </div>

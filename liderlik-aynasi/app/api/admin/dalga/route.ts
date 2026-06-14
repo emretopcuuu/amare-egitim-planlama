@@ -1,12 +1,14 @@
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { herkeseBildir } from "@/lib/push";
+import { yazAuditLog } from "@/lib/auditLog";
 import { tr } from "@/lib/i18n/tr";
 
 // Dalga aç/kapat. Aynı anda tek dalga açık kuralı burada uygulanır:
 // bir dalgayı açmak, açık olan diğerlerini kapatır.
 export async function POST(req: Request) {
-  if (!(await adminOturumu())) {
+  const session = await adminOturumu();
+  if (!session) {
     return Response.json({ hata: tr.admin.yetkisiz }, { status: 403 });
   }
 
@@ -65,6 +67,14 @@ export async function POST(req: Request) {
       "/degerlendir"
     );
   }
+
+  await yazAuditLog(
+    db,
+    session.sub,
+    acik ? "dalga_acildi" : "dalga_kapatildi",
+    { dalga_id: dalgaId, dalga_adi: data.name },
+    req as import("next/server").NextRequest
+  );
 
   return Response.json({ ok: true });
 }

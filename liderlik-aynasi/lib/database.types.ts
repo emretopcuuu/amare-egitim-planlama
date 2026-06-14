@@ -53,6 +53,41 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          admin_id: string | null
+          created_at: string
+          detay: Json | null
+          eylem: string
+          id: number
+          ip: string | null
+        }
+        Insert: {
+          admin_id?: string | null
+          created_at?: string
+          detay?: Json | null
+          eylem: string
+          id?: never
+          ip?: string | null
+        }
+        Update: {
+          admin_id?: string | null
+          created_at?: string
+          detay?: Json | null
+          eylem?: string
+          id?: never
+          ip?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       churn_radar: {
         Row: {
           admin_alerted_at: string | null
@@ -287,48 +322,6 @@ export type Database = {
           },
         ]
       }
-      participants: {
-        Row: {
-          city: string | null
-          consent_at: string | null
-          created_at: string
-          deletion_requested_at: string | null
-          email: string | null
-          full_name: string
-          id: string
-          login_code: string
-          phone: string | null
-          role: string
-          team: string | null
-        }
-        Insert: {
-          city?: string | null
-          consent_at?: string | null
-          created_at?: string
-          deletion_requested_at?: string | null
-          email?: string | null
-          full_name: string
-          id?: string
-          login_code: string
-          phone?: string | null
-          role?: string
-          team?: string | null
-        }
-        Update: {
-          city?: string | null
-          consent_at?: string | null
-          created_at?: string
-          deletion_requested_at?: string | null
-          email?: string | null
-          full_name?: string
-          id?: string
-          login_code?: string
-          phone?: string | null
-          role?: string
-          team?: string | null
-        }
-        Relationships: []
-      }
       pair_messages: {
         Row: {
           created_at: string
@@ -403,6 +396,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      participants: {
+        Row: {
+          city: string | null
+          consent_at: string | null
+          created_at: string
+          deletion_requested_at: string | null
+          email: string | null
+          full_name: string
+          id: string
+          login_code: string
+          phone: string | null
+          role: string
+          team: string | null
+        }
+        Insert: {
+          city?: string | null
+          consent_at?: string | null
+          created_at?: string
+          deletion_requested_at?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          login_code: string
+          phone?: string | null
+          role?: string
+          team?: string | null
+        }
+        Update: {
+          city?: string | null
+          consent_at?: string | null
+          created_at?: string
+          deletion_requested_at?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          login_code?: string
+          phone?: string | null
+          role?: string
+          team?: string | null
+        }
+        Relationships: []
       }
       photos: {
         Row: {
@@ -658,6 +693,47 @@ export type Database = {
           title?: string
         }
         Relationships: []
+      }
+      scheduled_events: {
+        Row: {
+          cancelled: boolean
+          created_at: string
+          event_type: string
+          fire_at: string
+          fired: boolean
+          fired_at: string | null
+          id: number
+          wave_id: number | null
+        }
+        Insert: {
+          cancelled?: boolean
+          created_at?: string
+          event_type: string
+          fire_at: string
+          fired?: boolean
+          fired_at?: string | null
+          id?: never
+          wave_id?: number | null
+        }
+        Update: {
+          cancelled?: boolean
+          created_at?: string
+          event_type?: string
+          fire_at?: string
+          fired?: boolean
+          fired_at?: string | null
+          id?: never
+          wave_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_events_wave_id_fkey"
+            columns: ["wave_id"]
+            isOneToOne: false
+            referencedRelation: "waves"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       settings: {
         Row: {
