@@ -900,226 +900,253 @@ export const tr = {
       panel: {
         baslik: "Yönetim Paneli nasıl çalışır?",
         metin: [
-          "Burası kampın komuta merkezi. Yukarıdan aşağı okunacak şekilde tasarlandı: en üstte 'Şimdi ne yapmalıyım?' tek önerilen adımı, altında canlı rakamlar, dikkat isteyen uyarılar ve o günün akışı yer alır.",
-          "Ortada 'Canlı Çalışma Alanı' açık dalganın ilerlemesini gösterir. Daha aşağıda kırmızı çerçeveli 'Kritik Kontroller' bölgesi tüm katılımcıyı etkileyen anahtarları (dalga, raporlar, prova modu, faz pencereleri) toplar.",
-          "En altta 'Tüm Araçlar' katlanır bölümü, günlük olmayan ikincil araçları gizler. İşin %90'ı için yalnızca üstteki öneriyi takip etmen yeterli.",
-          "Yardımcı görevli rolüyle girersen yalnızca izleme ve hatırlatma görürsün; kritik anahtarlar gizlenir.",
+          "NE: Kampın komuta merkezi — tüm kampı buradan yönetirsin. Sayfa yukarıdan aşağı 'önce en acil' mantığıyla dizildi.",
+          "EN ÜSTTE: 'Şimdi ne yapmalıyım?' kartı o an yapman gereken TEK adımı söyler; programı bilmiyorsan bile sadece onun düğmesine bas, doğru yere gider. Altında canlı rakamlar (katılımcı, öz-puan, değerlendirme), dikkat isteyen uyarılar ve (kamp günündeyse) o günün saat saat akışı gelir.",
+          "ORTADA: 'Canlı Çalışma Alanı' açık dalgada kimin ilerlediğini gösterir. Hemen altında KIRMIZI çerçeveli 'Kritik Kontroller' — tüm telefonları anında etkileyen anahtarları (dalga aç/kapa, raporları aç, prova modu, faz pencereleri) toplar. Kamp boyunca en çok burayı kullanırsın.",
+          "EN ALTTA: 'Tüm Araçlar' katlanır bölümü kurulum/sonrası gibi günlük olmayan araçları gizler. Her kartın yanındaki '?' o kartın ne işe yaradığını ve ne zaman basılacağını anlatır.",
+          "ROL: 'yardımcı' görevli yalnız izleme + hatırlatma görür; kritik anahtarlar gizlidir. Tam yetkili admin her şeyi görür.",
         ],
       },
       panelAsistan: {
-        baslik: "Şimdi ne yapmalıyım?",
+        baslik: "Şimdi ne yapmalıyım? (asistan kartı)",
         metin: [
-          "Sistem, kamp takvimini ve uygulamanın o anki durumunu okuyup yapman gereken TEK en önemli adımı buraya yazar. Emin değilsen sadece bu kartın düğmesine bas.",
-          "Kart altın renkli ve parıldıyorsa adım acildir (örn. dalga açma vakti, rapor açma anı). Nötr griyse acil bir şey yok demektir.",
+          "NE: Sistem, kamp takvimini ve uygulamanın o anki durumunu okuyup yapman gereken TEK en önemli adımı buraya yazar.",
+          "NASIL KULLANILIR: Programı hiç bilmiyorsan bile kartın düğmesine bas — seni doğru kontrole götürür (ör. 'Dalga 1'i aç', 'Raporları açma vakti').",
+          "RENK = ACİLİYET: Kart altın renkli ve parıldıyorsa adım ACİL, hemen yap. Nötr griyse acil bir şey yok, izlemeye devam et.",
+          "NE ZAMAN: Gün boyu birkaç dakikada bir buraya bak; kart değiştikçe bir sonraki hamleni söyler.",
         ],
       },
       panelOzet: {
         baslik: "Canlı özet rakamları",
         metin: [
-          "Kampın nabzı: kayıtlı katılımcı sayısı, kendini puanlamayı bitirenler ve toplam girilen değerlendirme sayısı.",
-          "Bir rakama dokununca ilgili bölüme (örn. ilerleme tablosu) atlar. Sayfa kendini periyodik tazeler.",
+          "NE: Kampın canlı nabzı — kaç katılımcı kayıtlı, kaçı kendini puanlamayı bitirdi, toplam kaç değerlendirme girildi, hangi dalga açık.",
+          "DOKUN: Bir rakama dokununca ilgili bölüme atlar (öz-puana dokun → eksik kişiler; dalgaya dokun → dalga kontrolü).",
+          "Rakamlar kendi kendine tazelenir; bir işlem yaptıktan sonra etkisini burada anında görürsün.",
         ],
       },
       panelUyari: {
         baslik: "Proaktif uyarılar",
         metin: [
-          "Dikkat isteyen durumlar buraya düşer: bekleyen fotoğraf moderasyonu, KVKK silme talebi, öz-puanı geç kalanlar gibi.",
-          "Uyarı yoksa bu alan görünmez — yani boşsa her şey yolunda demektir. Yalnız tam yetkili admin görür.",
+          "NE: Dikkat isteyen durumları öne çıkarır — onay bekleyen fotoğraf, KVKK silme talebi, öz-puanı geç kalan çok kişi gibi.",
+          "DOKUN: Bir uyarıya dokununca seni çözüleceği yere götürür.",
+          "Hiç uyarı yoksa bu alan GÖRÜNMEZ — yani burası boşsa her şey yolunda demektir. Yalnız tam yetkili admin görür.",
         ],
       },
       panelGun: {
         baslik: "Bugünün akışı",
         metin: [
-          "Bugün bir kamp günüyse (17–19 Temmuz), o günün adım adım planını gösterir: hangi oturumda neyin açılacağı, AYNA'nın ne zaman push göndereceği.",
-          "Kamp günü değilse sade kalır. Detaylı saat planı için Program sayfasına bak.",
+          "NE: Bugün bir kamp günüyse (17–19 Temmuz) o günün admin checklist'ini sırayla verir: hangi saatte hangi dalgayı açacağın, ne zaman duyuru/rapor yapacağın.",
+          "DOKUN: Her adım tıklanır, seni ilgili kontrole götürür. Sırayla yukarıdan aşağı ilerle.",
+          "Kamp günü değilse görünmez. Saat saat tüm plan için 'Program' sayfasına bak.",
         ],
       },
       panelIlerleme: {
         baslik: "Canlı çalışma alanı (ilerleme)",
         metin: [
-          "Yalnızca AÇIK dalga için hesaplanır (kamp anlık tek dalga yaşar). Kim kendini puanladı, kim kimi değerlendirdi tablodan görünür.",
-          "Toplu eylem: listeden kişileri seç → tek seferde hatırlatma push'u gönder. Geç kalanları nazikçe dürtmek için kullan.",
-          "Açık dalga yoksa sakin bir 'boş durum' kartı çıkar — bu bir hata değil, sadece o an puanlama turu kapalı demektir.",
+          "NE: Yalnız AÇIK dalga için hesaplanır (kamp aynı anda tek dalga yaşar). Tablo: kim kendini puanladı, kim kaç kişiyi değerlendirdi, onu kaç kişi değerlendirdi.",
+          "TOPLU HATIRLAT: Geç kalanları seç → 'Toplu hatırlat' ile tek seferde nazik bir push gönder ('değerlendirmeni bekliyoruz' gibi).",
+          "Açık dalga yoksa sade bir 'boş durum' kartı çıkar; bu HATA DEĞİL, sadece o an puanlama turu kapalı demektir. Bir dalga açınca tablo dolar.",
         ],
       },
       // ---- Kritik Kontroller (tehlike bölgesi) ----
       tehlike: {
         baslik: "Kritik Kontroller bölgesi",
         metin: [
-          "Buradaki anahtarlar tüm katılımcıların telefonunu ANINDA etkiler. O yüzden kırmızı çerçeveyle ayrıldı.",
-          "Her kritik işlemin bir onay adımı ve kısa bir 'geri al' penceresi vardır. Yanlışlıkla bastıysan açılan bildirimden geri alabilirsin. Yalnız tam yetkili admin erişir.",
+          "NE: Buradaki anahtarlar TÜM katılımcıların telefonunu ANINDA etkiler — o yüzden kırmızı çerçeveyle ayrıldı ve en dikkatli kullanılacak bölge burası.",
+          "GÜVENLİK: Her kritik işlem önce bir onay sorar; bastıktan sonra kısa bir 'Geri Al' penceresi açılır — yanlışlıkla bastıysan oradan geri alırsın.",
+          "İÇİNDE: Dalga aç/kapa, Ayna Raporlarını aç, Prova modu, FAZ 0 ve FAZ 1 pencereleri. Yalnız tam yetkili admin erişir.",
         ],
       },
       dalga: {
         baslik: "Dalga (puanlama turu) yönetimi",
         metin: [
-          "Dalga = bir değerlendirme turu. Dalgayı açınca katılımcılar o turda kendini ve atandığı kişileri 1–10 puanlayabilir.",
-          "Kural: aynı anda yalnızca BİR dalga açık olur. Genelde her güne bir dalga (Gün 1 → Dalga 1, Gün 2 → Dalga 2, Gün 3 → Dalga 3).",
-          "İşleyiş: günün başında ilgili dalgayı aç, çoğu kişi bitirince kapat. Dalgayı kapatmak o turu kilitler; artık o tura puan girilemez.",
+          "NE: Dalga = bir değerlendirme (puanlama) turu. Üç dalga var: Dalga 1 (İlk İzlenim), Dalga 2 (Gözlem), Dalga 3 (Gerçek Algı).",
+          "AÇINCA NE OLUR: O dalgaya dahil herkesin telefonunda 'değerlendir' ekranı açılır; kendini ve kendisine atanmış kişileri 1–10 puanlar (6'nın altına yorum zorunlu). KAPATINCA o tur KİLİTLENİR; artık o dalgaya puan girilemez.",
+          "KURAL: Aynı anda yalnız BİR dalga açık olabilir. Sıralı git: Gün 1 → Dalga 1, Gün 2 → Dalga 2, Gün 3 → Dalga 3.",
+          "ADIM ADIM: Günün ilgili oturumunda dalgayı 'Aç' → 'Canlı Çalışma Alanı'ndan ilerlemeyi izle → çoğu kişi bitince 'Kapat'. Geç kalan varsa kapatmadan önce 'Toplu hatırlat' gönder.",
+          "DİKKAT: Erken kapatırsan girmeyenler o turu kaçırır; açık unutursan (tek dalga kuralı yüzünden) sonraki dalgayı açamazsın.",
         ],
       },
       rapor: {
-        baslik: "Ayna Anı (raporları açma)",
+        baslik: "Ayna Anı — raporları açma",
         metin: [
-          "Bunu açınca herkes kişiye özel 'Ayna Raporu'nu görür — kampın kapanıştaki 'wow' anı.",
-          "YALNIZCA 3. günün sonunda, mektuplar hazırken aç. Erken açarsan sürpriz bozulur. Mektup hazırlık sayacı dolmadan açma.",
-          "Açma kararı geri alınabilir bir tost penceresiyle korunur, ama doğru zamanı beklemek esastır.",
+          "NE: 'Ayna Anı' = herkesin kişiye özel 'Ayna Raporu'nu görmesi. Kampın kapanıştaki en güçlü 'vav' anı: kişi kendini ilk kez başkalarının gözünden görür (öz-algı vs dış-algı + kör nokta).",
+          "AÇINCA NE OLUR: Tüm katılımcıların telefonunda rapor kilidi açılır, anında görebilirler. Geri alınamaz bir etkidir — zamanlama kritiktir.",
+          "NE ZAMAN: YALNIZCA 3. günün kapanışında, sahnede o ana geldiğinde aç. Erken açarsan tüm sürpriz ve kapanış etkisi kaybolur.",
+          "ADIM ADIM: 3 dalganın da kapandığından ve 'mektup hazır' sayacının dolduğundan emin ol → kapanış anına gel → 'Raporları Aç' → onayla. Yanlış an bastıysan açılan 'Geri Al' ile hemen kapat.",
         ],
       },
       prova: {
-        baslik: "Prova (rehearsal) modu",
+        baslik: "Prova (test) modu",
         metin: [
-          "Açıkken tüm ekranlarda kırmızı bir 'PROVA' şeridi belirir; ortamın test olduğunu herkese gösterir.",
-          "Gerçek katılımcılarla canlıya geçmeden ÖNCE mutlaka KAPAT. Açık kalırsa kafa karışıklığı yaratır.",
+          "NE: 'Bu bir testtir' işareti. Açıkken HERKESİN ekranının tepesinde kırmızı 'PROVA MODU' şeridi belirir.",
+          "NEDEN: Kamp öncesi denemelerde gönderdiğin bildirim/görevlerin gerçek sanılmasını önler.",
+          "NE ZAMAN: Hazırlık/deneme yaparken AÇIK tut. Gerçek katılımcılarla canlıya geçmeden HEMEN ÖNCE mutlaka KAPAT — açık kalırsa katılımcılar her şeyi 'prova' sanıp ciddiye almaz.",
         ],
       },
       fazSifir: {
-        baslik: "FAZ 0 — Pusula penceresi",
+        baslik: "FAZ 0 — Pusula penceresi + kamp kilidi",
         metin: [
-          "FAZ 0, kamp öncesi hazırlık dönemidir. Katılımcı önce 'Pusula' (nedenler) çalışmasını yapar, sonra öz-puan + selfie + Canlı Ayna ekler.",
-          "Buradan Pusula penceresini açıp kapatır, kampa giriş kilidini (oda QR kodu / kamp_kilit_kodu) yönetirsin. Katılımcılar kamp açılana dek FAZ 0'da kilitli kalır; kamp sayfalarını göremez.",
+          "NE: FAZ 0 = kamp öncesi hazırlık dönemi. Katılımcı kampa gelmeden Pusula'yı (nedenler) doldurur, sonra kendini puanlar, selfie + Canlı Ayna ekler.",
+          "İKİ ANAHTAR: (1) Pusula penceresini aç/kapa — açıkken katılımcılar FAZ 0 hazırlığını yapabilir. (2) Kamp giriş kilidi: kamp başlayınca girilecek oda QR'ı / kilit kodu (kamp_kilit_kodu).",
+          "ETKİSİ: Kamp 'açılana' kadar katılımcılar FAZ 0'da KİLİTLİ kalır — görevler/duvar gibi kamp sayfalarını göremez, yalnız hazırlık ekranını görür. Kampı açtığında herkes kamp akışına geçer.",
+          "NE ZAMAN: Pencereyi kamptan ~1–2 hafta önce aç; kamp günü gelince kilidi açıp katılımcıları kampa al.",
         ],
       },
       fazBir: {
         baslik: "FAZ 1 — Boşluk Anı penceresi",
         metin: [
-          "FAZ 1, kamp içi 'Boşluk Anı' çalışmasının penceresini ve derinlik panosunu yönetir.",
-          "Pencereyi ilgili oturumda aç; katılımcılar eski cümlelerini yeni cümleyle değiştirir.",
+          "NE: FAZ 1 = kamp içindeki 'Boşluk Anı' çalışması. Katılımcı eski/sınırlayıcı bir cümlesini yeni bir cümleyle değiştirir; derinlik panosunda bunlar birikir.",
+          "AÇINCA NE OLUR: Katılımcıların telefonunda Boşluk Anı ekranı çalışır.",
+          "NE ZAMAN: Programda bu çalışmaya ayrılan oturumda aç; oturum bitince kapat.",
         ],
       },
       kvkk: {
         baslik: "KVKK — veri silme talepleri",
         metin: [
-          "Bir katılımcı verisinin silinmesini istediğinde talebi buradan görür, onaylayıp işlersin. Yasal bir yükümlülüktür.",
-          "Bu bölüm yalnızca bekleyen talep varken görünür; boşsa hiç çıkmaz.",
+          "NE: Bir katılımcı 'verilerimi silin' derse talebi buraya düşer. Yasal (KVKK) bir yükümlülüktür, işlenmesi zorunludur.",
+          "ADIM ADIM: Talebi gör → kişiyi doğrula → 'Onayla/Sil' ile işle. İşlenince kişinin verisi sistemden kaldırılır.",
+          "Bu bölüm yalnız BEKLEYEN talep varken görünür; boşsa hiç çıkmaz — yani görünüyorsa ilgilenmen gereken bir şey var demektir.",
         ],
       },
       // ---- Tüm Araçlar ----
       araclar: {
         baslik: "Tüm Araçlar",
         metin: [
-          "Günlük akışta gerekmeyen ikincil araçlar burada toplanır; panel sade kalsın diye varsayılan kapalı.",
-          "İçinde: hazırlık hatırlatma, kod bulma, duyuru şablonları, ödev paketi, davet, ikili eşleştirme, yedek, otomatik zamanlama ve işlem günlüğü var.",
+          "NE: Günlük kamp akışında gerekmeyen ikincil araçların toplandığı katlanır bölüm; panel sade kalsın diye varsayılan KAPALI. Başlığa basınca açılır.",
+          "İÇİNDE: hazırlık hatırlatma, kod bulma, hızlı duyuru, ödev paketi, 90 gün daveti, ikili eşleştirme, veri yedeği, otomatik zamanlama ve işlem günlüğü. Her birinin kendi '?' açıklaması var.",
         ],
       },
       hazirlik: {
         baslik: "Hazırlık hatırlatma",
         metin: [
-          "Kamp öncesi (FAZ 0) eksik adımı olan katılımcılara hatırlatma push'u gönderir — Pusula'yı, öz-puanı veya fotoğrafı tamamlamamış olanlara.",
-          "Mesaj kişinin eksiğine göre otomatik uyarlanır. Birkaç günde bir tekrar gönderebilirsin.",
+          "NE: Kamp öncesi (FAZ 0) hazırlığını tamamlamamış katılımcılara hatırlatma push'u gönderir.",
+          "BASINCA NE OLUR: Eksiği olan herkese, eksiğine göre uyarlanmış bir bildirim gider ('Pusula'nı doldur' / 'kendini puanla' / 'fotoğrafını ekle').",
+          "NE ZAMAN: Kamptan önceki günlerde, hazırlık oranı düşükse birkaç günde bir bas. Kimlerin eksik olduğunu panel özetinden görürsün.",
         ],
       },
       kodBul: {
         baslik: "Kod bul",
         metin: [
-          "Kayıt masasında kodunu kaybeden birini isimden arayıp 6 haneli giriş kodunu bulursun.",
+          "NE: Kodunu unutan/kaybeden katılımcıyı İSİMLE arayıp 6 haneli giriş kodunu anında bulursun — özellikle kayıt masasında işe yarar.",
+          "ADIM ADIM: İsim yaz → çıkan sonuçtan kodu oku/söyle. Aynı işi kayıt masası ekranında (Kiosk) da yapabilirsin.",
         ],
       },
       odev: {
         baslik: "Ödev paketi",
         metin: [
-          "Kamp sonrası (Ağustos, 10/15 günlük) ödev/uygulama paketini katılımcılara açar. Kamp bittikten sonra kullanılır.",
+          "NE: Kamp sonrası (Ağustos, 10/15 günlük) ödev/uygulama paketini katılımcılara açar.",
+          "BASINCA NE OLUR: Katılımcılara kamp sonrası görev seti tanımlanır.",
+          "NE ZAMAN: Yalnız kamp bittikten sonra, ilgili dönemde kullan.",
         ],
       },
       davet: {
         baslik: "90 günlük yolculuk daveti",
         metin: [
-          "Kamp sonrası 90 günlük yolculuk için katılımcılara e-posta davetini gönderir.",
-          "Bir kez, kamp bitince gönderilir. E-postası olan katılımcı sayısı kartta görünür.",
+          "NE: Kamp sonrası 90 günlük sahada yolculuk için katılımcılara e-posta daveti gönderir (yolculuk modunun başlangıç tetiği).",
+          "BASINCA NE OLUR: E-postası olan TÜM katılımcılara davet maili gider. Kartta kaç kişinin e-postası olduğu yazar.",
+          "NE ZAMAN: Yalnız BİR kez, kamp bittikten sonra. İki kez gönderme — tekrar daveti spam olur.",
         ],
       },
       ikili: {
         baslik: "İkili eşleştirme",
         metin: [
-          "Sohbet/ortak eşleştirmelerini (ikili) oluşturur. Genelde kamp öncesi bir kez çalıştırılır.",
+          "NE: Sohbet/ortak (ikili) eşleştirmelerini oluşturur — kimin kiminle eşleşeceğini sistem belirler.",
+          "NE ZAMAN: Genelde kamp öncesi bir kez. Mevcut eşleşme sayısı kartta görünür; tekrar çalıştırmadan önce mevcut olanı kontrol et.",
         ],
       },
       yedek: {
         baslik: "Veri yedeği",
         metin: [
-          "Tüm kamp verisinin (puanlar, sözler, ayarlar) yedeğini tek dosya olarak indirir. Önemli adımlardan önce yedek almak güvenlidir.",
+          "NE: Tüm kamp verisinin (katılımcılar, puanlar, görevler, sözler, ayarlar) yedeğini tek dosya olarak indirir.",
+          "NE ZAMAN: Geri alınamaz bir işlemden ÖNCE (ör. test verisini sıfırlamadan, toplu import'tan önce) ve kamp sonunda arşiv için bir kez al. Dosyayı güvenli bir yerde sakla.",
         ],
       },
       zamanlama: {
         baslik: "Otomatik zamanlama",
         metin: [
-          "Dalga açma/kapama gibi olayları ileri bir saate planlarsın; sistem zamanı gelince otomatik çalıştırır.",
-          "'Şimdi Tetikle' düğmesi, zamanı gelmiş bekleyen olayları beklemeden hemen işletir (cron'u beklemeden test için kullanışlı).",
+          "NE: Dalga açma/kapama gibi olayları İLERİ bir saate planlarsın; sistem zamanı gelince otomatik çalıştırır — gece/oturum sırasında elle basmana gerek kalmaz.",
+          "ADIM ADIM: Olayı + saatini seç → kaydet. 'Şimdi Tetikle' düğmesi, vakti gelmiş bekleyen olayları beklemeden hemen çalıştırır (provada test için kullanışlı).",
+          "DİKKAT: Otomatik zamanlama kursan bile kritik anlarda panelden gözle doğrula; tek başına ona bağımlı kalma.",
         ],
       },
       islemGunlugu: {
         baslik: "İşlem günlüğü",
         metin: [
-          "Son 20 kritik admin eylemini (kim, ne zaman, ne yaptı) listeler. Bir şeyin ne zaman değiştiğini buradan denetlersin.",
+          "NE: Son 20 kritik admin eylemini listeler — kim, ne zaman, neyi değiştirdi (dalga açtı, rapor açtı vb.).",
+          "NEDEN: 'Bunu kim/ne zaman yaptı?' sorusunu yanıtlamak, değişiklikleri denetlemek için bak. Salt okunur.",
         ],
       },
       // ---- Diğer sayfalar ----
       kurulum: {
         baslik: "Kurulum Sihirbazı",
         metin: [
-          "Kamp öncesi hazırlığı tek ekrandan, adım adım tamamlarsın: katılımcı listesini (CSV) yükle → 6 haneli giriş kodları üret → QR kartları çıkar.",
-          "Genelde kamptan önce bir kez yapılır. Kayıtlı katılımcı sayısı üstte görünür.",
+          "NE: Kamp öncesi hazırlığı tek ekrandan adım adım yaptıran sihirbaz: (1) katılımcı listesini CSV ile yükle → (2) herkese 6 haneli giriş kodu üret → (3) yazdırılabilir QR kartları çıkar.",
+          "NE ZAMAN: Kamptan önce bir kez. Üstte kaç katılımcı kayıtlı görünür; tamamlayınca Katılımcılar ve QR sayfaları dolar.",
         ],
       },
       katilimcilar: {
         baslik: "Katılımcılar",
         metin: [
-          "Tüm katılımcıların listesi: ad, takım, şehir, telefon ve 6 haneli giriş kodu. Bir kodun yanındaki düğmeyle kopyalarsın.",
-          "Üstteki araçlardan toplu içe aktarma / ekleme yapılır. Liste isme göre sıralıdır.",
+          "NE: Tüm katılımcıların ana listesi — ad, takım, şehir, telefon ve 6 haneli giriş kodu. Bir kodun yanındaki düğmeyle panoya kopyalarsın.",
+          "Üstteki araçlardan toplu içe aktarma/ekleme yaparsın. Liste isme göre sıralı; birini ararken tarayıcı bul (Ctrl/Cmd+F) işe yarar.",
         ],
       },
       eslestirme: {
-        baslik: "Gözlem eşleştirmesi",
+        baslik: "Gözlem eşleştirmesi (360°)",
         metin: [
-          "Kim kimi gözlemleyip puanlayacak onu belirler. Her kişiye 2 gizli (🕶 shadow) + 2 açık (👁) hedef atanır; sistem dengeli ve mümkünse farklı takım/şehirden seçer.",
-          "Üstteki form atamaları üretir; alttaki tablo her gözlemcinin mevcut hedeflerini gösterir. Genelde kamp öncesi bir kez çalıştırılır.",
+          "NE: Kim kimi gözlemleyip puanlayacak (360°) onu belirler. Her kişiye 2 GİZLİ (🕶 — kişi onu izlediğini bilmez) + 2 AÇIK (👁) hedef atanır; sistem dengeli ve mümkünse farklı takım/şehirden seçer.",
+          "ADIM ADIM: Üstteki formdan 'Eşleştir'e bas → sistem atamaları üretir → alttaki tabloda her gözlemcinin hedeflerini gör.",
+          "NE ZAMAN: Kamp öncesi bir kez, katılımcı listesi kesinleştikten SONRA. Liste değişirse tekrar çalıştır.",
         ],
       },
       qr: {
         baslik: "QR kartlar",
         metin: [
-          "Her katılımcı için yazdırılabilir QR kart üretir (giriş linki + kod gömülü). QR, kartın basıldığı ortamın adresini taşır.",
-          "'Yazdır' ile çıktı alıp yaka kartı olarak dağıtırsın; katılımcı kamerayla okutunca otomatik giriş yapar.",
+          "NE: Her katılımcı için yazdırılabilir QR kart üretir (giriş linki + kodu gömülü). QR, kartın açıldığı ortamın adresini taşır.",
+          "NASIL: 'Yazdır' ile çıktı al, yaka kartı olarak dağıt; katılımcı telefon kamerasıyla okutunca otomatik giriş yapar — kod yazmaya gerek kalmaz.",
+          "NE ZAMAN: Kodlar üretildikten sonra, kamp/kayıt öncesi bas ve yazdır.",
         ],
       },
       kiosk: {
         baslik: "Kayıt masası ekranı",
         metin: [
-          "Kayıt masasındaki bir ekranda gösterilir: canlı katılım sayısı, uygulamayı açan büyük QR ve kodunu kaybedeni isimle bulma.",
-          "Katılımcı QR'ı okutup kendi koduyla girer; sayaç anlık ilerler.",
+          "NE: Kayıt masasındaki bir ekranda (laptop/tablet) açık tutulur — canlı katılım sayacı, uygulamayı açan büyük QR ve kodunu kaybedeni isimle bulma.",
+          "NASIL: Katılımcı QR'ı okutur, kendi koduyla girer; sayaç anlık ilerler — masada 'kaç kişi girdi' bir bakışta görünür.",
+          "NE ZAMAN: Kayıt/karşılama sırasında masadaki ekrana koy.",
         ],
       },
       analiz: {
         baslik: "Analiz panosu",
         metin: [
-          "Kampın ölçüm panosu. Üç ekseni AYRI ölçer: kimlik dayanıklılığı, davranış/aktivite ve iş sonucu. Karar almak için; katılımcıya gösterilmez.",
-          "Altta takım kırılımı vardır: her takımın Pusula/Boşluk tamamlama ve 'kanıtsız' (içi boş an riski) sayıları.",
+          "NE: Kampın ölçüm/karar panosu — katılımcıya GÖSTERİLMEZ, yöneticiye özeldir. Üç ekseni AYRI ölçer: kimlik dayanıklılığı, davranış/aktivite, iş sonucu.",
+          "Altta takım kırılımı vardır. NE ZAMAN: Kamp boyunca/sonrası gidişatı değerlendirmek, zayıf noktaları yakalamak için bak.",
         ],
       },
       analizKimlik: {
         baslik: "Eksen 1 — Kimlik",
         metin: [
-          "Kimlik dönüşümünün izi: Pusula'yı ve Boşluk Anı'nı tamamlayanlar, bir de 'kanıtsız' kişiler.",
-          "'Kanıtsız' = hakkında yeterli somut geri bildirim (yorum/takdir) birikmemiş kişi; içi boş bir kapanış riski taşır. Sayı sarıysa o kişilere kanıt biriktirmeye odaklan.",
+          "NE: Kimlik dönüşümünün izi — Pusula'yı ve Boşluk Anı'nı tamamlayanlar, bir de 'kanıtsız' kişiler.",
+          "'KANITSIZ' = hakkında yeterli somut geri bildirim (yorum/takdir) birikmemiş kişi; içi boş bir kapanış riski taşır. Sayı SARIYSA o kişilere kanıt biriktirmeye (görev/takdir) odaklan.",
         ],
       },
       analizDavranis: {
         baslik: "Eksen 2 — Davranış",
         metin: [
-          "Hareket/aktivite ölçüsü: görev tamamlama oranı, kayma (churn) riskindekiler, toplam 'reddi kutla' kaydı ve ortalama haftalık momentum.",
-          "Churn ya da düşük momentum yükselirse müdahale (hatırlatma, birebir) zamanı demektir.",
+          "NE: Hareket/aktivite ölçüsü — görev tamamlama oranı, kayma (churn) riskindekiler, toplam 'reddi kutla' kaydı ve ortalama haftalık momentum.",
+          "NE YAPARSIN: Churn ya da düşük momentum yükselirse müdahale (hatırlatma, birebir) zamanı demektir.",
         ],
       },
       analizIs: {
         baslik: "Eksen 3 — İş sonucu",
         metin: [
-          "Dış/iş sonucu ekseni. Bu metrikler kamp dışı gerçek aktivitelere bağlıdır; ilgili veri akışı bağlandığında dolar.",
+          "NE: Dış/iş sonucu ekseni. Bu metrikler kamp dışı gerçek aktivitelere bağlıdır; ilgili veri akışı bağlandığında dolar. Şimdilik bilgi amaçlı.",
         ],
       },
       analizTakim: {
         baslik: "Takım kırılımı",
         metin: [
-          "Her takımın hazırlık durumu yan yana: Pusula tamamlama, Boşluk tamamlama ve kanıtsız kişi sayısı. Liderler kendi ekibinin nabzını tek bakışta görür.",
+          "NE: Her takımın hazırlık durumu yan yana — Pusula tamamlama, Boşluk tamamlama ve kanıtsız kişi sayısı. Liderler kendi ekibinin nabzını tek bakışta görür; en geride kalan takıma odaklanırsın.",
         ],
       },
       aynaAkis: {
@@ -1133,54 +1160,63 @@ export const tr = {
       aynaDirektor: {
         baslik: "AYNA Kontrol Odası",
         metin: [
-          "Yapay zekâ 'AYNA'nın canlı kumandası. Buradan AYNA'yı uyandırır/uyutur, temposunu ve sistem modunu ayarlarsın.",
-          "Alttaki akış, son üretilen görevleri ve puanları canlı gösterir — AYNA'nın o an ne yaptığını izlersin.",
+          "NE: Kampı yöneten yapay zekâ AYNA'nın kumandası.",
+          "UYANDIR/DURDUR: 'AYNA'yı Uyandır' dersen AYNA aktifleşir — 5 dakikada bir uyanıp kişiye özel görevler dağıtır, yanıtları puanlar, programı açıklar, sessizleşeni dürter. 'Durdur' dersen susar.",
+          "TEMPO + MOD: Tempo görevlerin sıklığını ayarlar (sürpriz 1–3 saat / sabit 2 / sabit 3). Sistem modu 'Kamp' (3 gün) veya 'Yolculuk' (90 gün saha) — kamp bitince Yolculuğa geçirirsin.",
+          "OTOMATİK SESSİZLİK: Kampta gece 00:00–06:30 ve sahnede konuşmacı varken AYNA kendi kendine susar, telefonları rahatsız etmez.",
+          "İZLE: Alttaki 'Son Görevler' akışında AYNA'nın o an ne ürettiğini canlı görür, bir satıra basıp detayına bakarsın.",
+          "NE ZAMAN: Kamp başlarken 'Uyandır'; kamp biterken 'Durdur' ya da 'Yolculuğu Başlat'. 'Şimdi Tik Çalıştır' provada AYNA'yı elle bir tur döndürür.",
         ],
       },
       komutan: {
         baslik: "Komutan Paneli",
         metin: [
-          "Liderin beş eksenli canlı radarı: katılım, görev momentumu, aidiyet, tamamlama ve ret direnci. Sistemin nabzını tek bakışta verir; her açılışta taze hesaplanır.",
-          "Yanında haftalık momentum sıralaması ve son 24 saatte sessizleşenleri (kayma) gösteren listeler vardır.",
+          "NE: Liderin beş eksenli canlı radarı — katılım, görev momentumu, aidiyet, tamamlama ve ret direnci. Topluluğun nabzını tek bakışta verir; her açılışta taze hesaplanır.",
+          "Yanında haftalık momentum sıralaması ve son 24 saatte sessizleşenleri (kayma) gösteren listeler vardır. NE ZAMAN: Genel gidişatı görmek ve kime müdahale edeceğine karar vermek için bak.",
         ],
       },
       komutanRadar: {
         baslik: "Beş eksenli radar",
         metin: [
-          "Beş davranış ekseninin 0–100 değeri. Geniş ve dengeli şekil = sağlıklı topluluk; bir köşe içe çökmüşse orada zayıflık var.",
+          "NE: Beş davranış ekseninin 0–100 değeri. GENİŞ ve dengeli şekil = sağlıklı topluluk; bir köşe içe çökmüşse orada zayıflık var — o ekseni güçlendiren aksiyon al.",
         ],
       },
       komutanMomentum: {
         baslik: "Haftalık momentum",
         metin: [
-          "Kişi başına haftalık momentum skoru (yüksek=yeşil, orta=altın, düşük=kırmızı) ve ekip ortalaması. Düşük skorlular desteğe ihtiyaç duyuyor olabilir.",
+          "NE: Kişi başına haftalık momentum skoru (yüksek=yeşil, orta=altın, düşük=kırmızı) ve ekip ortalaması.",
+          "NE YAPARSIN: Kırmızı/düşük skorlular desteğe ihtiyaç duyuyor olabilir — onlara öncelik ver.",
         ],
       },
       komutanKayma: {
         baslik: "Kayma radarı",
         metin: [
-          "Son 24 saatte sessizleşen / etkinliği düşen kişiler ve kaç saattir sessiz oldukları. Erken müdahale (birebir mesaj) için kullan.",
+          "NE: Son 24 saatte sessizleşen / etkinliği düşen kişiler ve kaç saattir sessiz oldukları.",
+          "NE YAPARSIN: Listedekilere erken müdahale et (birebir mesaj/arama) — birini kaybetmeden önce yakalamak için.",
         ],
       },
       sahne: {
         baslik: "Sahne Kumandası",
         metin: [
-          "Canlı etkinlikte büyük ekranın (/sahne) ne göstereceğini buradan yönetirsin: AYNA'yı aktif et, hangi sahnenin/dalganın gösterileceğini seç.",
-          "Sahne sessizliği gereken oturumlarda AYNA'nın push göndermemesini de buradan kontrol edersin.",
+          "NE: Canlı etkinlikte salondaki büyük ekranın (/sahne, projeksiyon) NE göstereceğini buradan yönetirsin.",
+          "NASIL: Buradan AYNA'yı sahnede aktif edersin, hangi sahne anı/dalganın gösterileceğini seçersin, 'Açılış Anonsu' gibi sahne anlarını tetiklersin. (Projeksiyondaki ekranda '🔊 Sesi Aç' açık olmalı ki AYNA salona sesli konuşsun.)",
+          "NE ZAMAN: Sahne/sunum anlarında, projeksiyon açıkken kullan. Sessizlik gereken oturumda AYNA'nın push göndermemesini de buradan kontrol edersin.",
         ],
       },
       moderasyon: {
         baslik: "Yorum moderasyonu",
         metin: [
-          "Yalnızca başkalarına yazılan değerlendirme yorumları buraya düşer (öz-yorumlar kişiye özeldir, görünmez).",
-          "Uygunsuz bir yorumu 'Gizle' ile saklarsın; gizlenen yorum raporlarda ve ekranda görünmez. Karar verirken kim→kime ve hangi özellik bilgisine bakabilirsin.",
+          "NE: Katılımcıların BAŞKALARINA yazdığı değerlendirme yorumları buraya düşer (kişinin kendine yazdığı öz-yorumlar kişiye özeldir, burada görünmez).",
+          "BASINCA NE OLUR: Uygunsuz/kırıcı bir yorumu 'Gizle' → o yorum raporlarda ve büyük ekranda görünmez olur. İstersen geri gösterirsin. Karar verirken kim→kime ve hangi özellik bilgisine bakabilirsin.",
+          "NE ZAMAN: Dalga puanlamaları geldikçe ara ara tara; özellikle raporları açmadan ÖNCE bir kez gözden geçir.",
         ],
       },
       foto: {
         baslik: "Fotoğraf moderasyonu",
         metin: [
-          "Katılımcıların yüklediği fotoğraflar ortak Anı Duvarı'na ve büyük ekrana çıkmadan önce burada onay bekler.",
-          "Uygun olanı 'Onayla', uygunsuzu 'Gizle'. Onaylanan anında herkese görünür olur.",
+          "NE: Katılımcıların yüklediği fotoğraflar ortak Anı Duvarı'na ve büyük ekrana çıkmadan ÖNCE burada onay bekler — yani filtre sensin.",
+          "BASINCA NE OLUR: 'Onayla' → fotoğraf anında herkese görünür olur. 'Gizle' → görünmez kalır.",
+          "NE ZAMAN: Kamp boyunca, özellikle duvarı/ekranı yansıtmadan önce bekleyenleri temizle.",
         ],
       },
       canliAyna: {
@@ -1194,22 +1230,25 @@ export const tr = {
       sozler: {
         baslik: "Kapanış Sözleri",
         metin: [
-          "Kamp kapanışında alınan kişisel sözler: Temmuz kayıt ve Ağustos görüşme hedefleri ile ilerlemeleri.",
-          "'Söz ekranı'nı kapanış anında aç; katılımcılar sözlerini girer. Tablo toplamları ve kişi bazında ilerlemeyi gösterir.",
+          "NE: Kamp kapanışında alınan kişisel sözler — 'Temmuz'da kayıt', 'Ağustos'ta görüşme' gibi hedefler ve sonradan gerçekleşen ilerleme.",
+          "AÇINCA NE OLUR: 'Söz ekranını AÇ' dersen katılımcıların telefonunda söz verme ekranı açılır; girdikleri sözler tabloya düşer, toplamları ve kişi bazında ilerleme görünür.",
+          "NE ZAMAN: Yalnız kamp KAPANIŞ anında aç. Erken açma.",
         ],
       },
       program: {
         baslik: "Kamp Programı",
         metin: [
-          "Resmî kamp akışı (3 gün, saat saat) ve AYNA'nın her oturumdaki planı — bu plan yalnız adminde görünür.",
-          "Altta 'Sürpriz duyurular': AYNA'nın push + sahne anonsuyla açıklayacağı ek etkinlikleri buradan zamanlar/yönetirsin. 'Sahne sessizliği' işaretli oturumlarda AYNA bildirim göndermez.",
+          "NE: Resmî kamp akışı (3 gün, saat saat) + AYNA'nın her oturumdaki planı — bu plan yalnız adminde görünür, katılımcı görmez.",
+          "SÜRPRİZ DUYURULAR: Altta, programda yazmayan ve AYNA'nın push + sahne anonsuyla açıklayacağı ek etkinlikleri zamanlar/açıklarsın. 'Açıkla' dediğinde katılımcılara duyuru gider. 'Sahne sessizliği' işaretli oturumlarda AYNA hiç bildirim göndermez.",
+          "NE ZAMAN: Planı kamptan önce gözden geçir; sürpriz duyuruyu açıklamak istediğin an tetikle.",
         ],
       },
       test: {
         baslik: "Prova / Test paneli",
         metin: [
-          "Güvenli deneme alanı: DEMO takımındaki sahte katılımcılarla ve kamp günlerini simüle ederek her şeyi gerçek veriye dokunmadan provalarsın.",
-          "Canlıya geçmeden akışı buradan test et; gerçek katılımcıları etkilemez.",
+          "NE: Güvenli deneme alanı — DEMO takımındaki sahte katılımcılarla ve kamp günlerini simüle ederek her şeyi GERÇEK veriye dokunmadan provarsın.",
+          "NASIL: Demo kişilerle giriş yapar, görev/dalga akışını test eder, kamp gününü ileri alırsın.",
+          "NE ZAMAN: Canlıya geçmeden, akışı öğrenmek/denemek için. Gerçek katılımcıları etkilemez.",
         ],
       },
       sunum: {
