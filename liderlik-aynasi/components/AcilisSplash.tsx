@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 
 const DEPO = "la_marka_splash_v1";
@@ -8,14 +8,17 @@ const DEPO = "la_marka_splash_v1";
 // Tek seferlik marka açılışı: ilk açılışta ONE TEAM logo reveal'i tam ekran
 // oynar, sonra bir daha çıkmaz. Sessiz + atlanabilir; otomatik oynatma
 // engellenirse poster gösterilir ve güvenlik zamanlayıcısı kapatır.
+// Test için: URL'ye ?intro=1 eklenirse localStorage'a bakmadan yeniden gösterir.
 export default function AcilisSplash() {
   const [goster, setGoster] = useState(false);
   const [kapaniyor, setKapaniyor] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     let acildi = false;
     try {
-      if (!localStorage.getItem(DEPO)) {
+      const zorla = new URLSearchParams(window.location.search).has("intro");
+      if (zorla || !localStorage.getItem(DEPO)) {
         acildi = true;
         // eslint-disable-next-line react-hooks/set-state-in-effect
         setGoster(true);
@@ -28,6 +31,14 @@ export default function AcilisSplash() {
     const z = setTimeout(kapat, 11000);
     return () => clearTimeout(z);
   }, []);
+
+  // autoplay'i garantiye al: splash açılınca açıkça play() dene (iOS bazen ister).
+  useEffect(() => {
+    if (!goster) return;
+    videoRef.current?.play().catch(() => {
+      /* engellendiyse poster (logo) kalır; dokununca oynar, güvenlik zamanı kapatır */
+    });
+  }, [goster]);
 
   function kapat() {
     try {
@@ -43,15 +54,19 @@ export default function AcilisSplash() {
 
   return (
     <div
-      className={`fixed inset-0 z-[70] flex items-center justify-center bg-[#040e18] transition-opacity duration-300 ${
+      className={`fixed inset-0 z-[70] flex items-center justify-center bg-black transition-opacity duration-300 ${
         kapaniyor ? "opacity-0" : "opacity-100"
       }`}
     >
       <video
+        ref={videoRef}
         autoPlay
         muted
         playsInline
+        preload="auto"
         onEnded={kapat}
+        onError={kapat}
+        onClick={() => videoRef.current?.play().catch(() => {})}
         poster="/marka-poster.jpg"
         className="h-full w-full object-contain"
       >

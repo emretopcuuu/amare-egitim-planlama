@@ -28,8 +28,10 @@ export default function IlkTanitim() {
   useEffect(() => {
     try {
       // localStorage yalnızca istemcide okunur; mount'ta tek seferlik karar.
+      // Test için ?intro=1 ile localStorage'a bakmadan yeniden gösterilir.
+      const zorla = new URLSearchParams(window.location.search).has("intro");
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (!localStorage.getItem(DEPO)) setGoster(true);
+      if (zorla || !localStorage.getItem(DEPO)) setGoster(true);
     } catch {
       // depolama kapalı: tanıtımı atla
     }
