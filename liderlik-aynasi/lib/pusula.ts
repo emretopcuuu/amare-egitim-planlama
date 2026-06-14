@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
+import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 
 // FAZ 0 — PUSULA (Nedenler & Çekirdek Profil).
 // Kamp ÖNCESİ kişiselleştirme omurgası. 10 öncelik bir FORM ile (madde madde)
@@ -213,6 +214,8 @@ export async function pusulaTuru(
       },
       system: `${PERSONA}
 
+${KATILIMCI_EVRENI}
+
 Kişinin adı: ${ad}.
 Kişinin yazdığı öncelikler:
 ${listeMetni(satir.oncelikler)}
@@ -273,7 +276,7 @@ async function damitVeMuhurle(
         effort: "high",
         format: { type: "json_schema", schema: DAMITMA_SEMASI },
       },
-      system: `${PERSONA}\n\nGörevin: aşağıdaki öncelik listesi + Nedenler sohbetini yapılandırılmış profile damıt. Kişinin KENDİ kelimelerine sadık kal, uydurma. "ozet" alanı en kritik: bundan sonra bu kişiye üretilecek her görev/tavsiye onu okuyacak.`,
+      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\nGörevin: aşağıdaki öncelik listesi + Nedenler sohbetini yapılandırılmış profile damıt. Kişinin KENDİ kelimelerine sadık kal, uydurma. "ic_engel_kat" için yukarıdaki kategori eşlemesini sezgi olarak kullan. "ozet" alanı en kritik: bundan sonra bu kişiye üretilecek her görev/tavsiye onu okuyacak.`,
       messages: [{ role: "user", content: girdi }],
     });
     const veri = jsonCoz<{

@@ -97,3 +97,10 @@ Kod değil **ölçek kararı**:
 - `redler` — Go-for-No sayacı.
 - `audit_log` — kritik admin eylemleri.
 - Analiz: `/admin/analiz` (Eylül kapısı + cascade).
+
+## Alan bağlamı
+
+- **`KATILIMCI_EVRENI.md`** — kampa gelen liderlerin gerçek dünyası (kamp öncesi
+  168 kişilik niyet anketinden, anonim engel haritası). Çalışan özet
+  `lib/katilimciEvreni.ts`'te (`KATILIMCI_EVRENI`) Pusula, Boşluk Anı ve görev
+  üretimine enjekte edilir — her soru/görev bu insanların kendi dilinde konuşur.
