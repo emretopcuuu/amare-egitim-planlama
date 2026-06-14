@@ -507,6 +507,12 @@ export const tr = {
       "Birazdan birlikte hayattaki gerçek nedenlerini bulacağız. Yazdıkların yalnızca senin için saklanır ve kampta sana daha iyi eşlik etmek için kullanılır. Kimse ham cevaplarını görmez — yalnızca paylaşmayı seçtiklerin.",
     rizaNot: "Dilediğin an verilerini silebilirsin.",
     rizaKabul: "Anladım, başlayalım",
+    listeBaslik: "Hayatındaki öncelikler",
+    listeAciklama:
+      "Olmazsa olmaz dediğin, en çok önemsediğin ya da gelecekte sahip olmak istediğin şeyler. Deneyim gibi düşün — 'aileyle vakit', 'kendi işim', 'sağlık' gibi. En az 3, en çok 10 madde yaz.",
+    listeYer: (n: number) => `${n}. öncelik`,
+    listeDevam: "Listeyi tamamla",
+    listeAzUyari: (n: number) => `En az ${n} madde yaz.`,
     girisYer: "Yanıtını buraya yaz…",
     gonder: "Gönder",
     dusunuyor: "AYNA düşünüyor…",

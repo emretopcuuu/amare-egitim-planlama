@@ -1,10 +1,9 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { pusulaTuru, pusulaDurum, pusulaGecmis } from "@/lib/pusula";
+import { pusulaTuru, pusulaDurum, pusulaGecmis, onceliklerKaydet } from "@/lib/pusula";
 import { tr } from "@/lib/i18n/tr";
 
-// FAZ 0 Nedenler çalışması — çok-turlu sohbet uç noktası.
-// GET: devam ettirme (geçmiş + durum). POST: bir tur (rıza + AYNA repliği).
+// FAZ 0 Nedenler — GET: devam (durum + geçmiş + rıza). POST: rıza / liste / tur.
 
 export async function GET() {
   const session = await getSession();
@@ -12,11 +11,12 @@ export async function GET() {
     return Response.json({ hata: tr.pusula.hata }, { status: 401 });
   }
   const db = supabaseAdmin();
-  const [durum, gecmis] = await Promise.all([
+  const [durum, gecmis, { data: kisi }] = await Promise.all([
     pusulaDurum(db, session.sub),
     pusulaGecmis(db, session.sub),
+    db.from("participants").select("consent_at").eq("id", session.sub).maybeSingle(),
   ]);
-  return Response.json({ durum, gecmis });
+  return Response.json({ durum, gecmis, rizaVar: !!kisi?.consent_at });
 }
 
 export async function POST(req: Request) {
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.pusula.hata }, { status: 401 });
   }
 
-  let govde: { mesaj?: unknown; basla?: unknown };
+  let govde: { mesaj?: unknown; basla?: unknown; oncelikler?: unknown };
   try {
     govde = await req.json();
   } catch {
@@ -34,21 +34,30 @@ export async function POST(req: Request) {
 
   const db = supabaseAdmin();
 
-  // Açık rıza: çalışma başlatılırken psikolojik veri saklama onayı verilir.
+  // 1) Rıza: çalışma başlatılırken psikolojik veri saklama onayı.
   if (govde.basla === true) {
     await db
       .from("participants")
       .update({ consent_at: new Date().toISOString() })
       .eq("id", session.sub)
       .is("consent_at", null);
+    return Response.json({ ok: true });
   }
 
+  // 2) Öncelik listesi (madde madde form) → kaydet ve sohbeti aç.
+  if (Array.isArray(govde.oncelikler)) {
+    const liste = govde.oncelikler.filter((x): x is string => typeof x === "string");
+    const ok = await onceliklerKaydet(db, session.sub, liste);
+    if (!ok) return Response.json({ hata: tr.pusula.listeAzUyari(3) }, { status: 400 });
+    const tur = await pusulaTuru(db, { id: session.sub, full_name: session.ad }, null);
+    if (!tur) return Response.json({ hata: tr.pusula.aiHata }, { status: 503 });
+    return Response.json(tur);
+  }
+
+  // 3) Sohbet turu (eleme → boşluk → engel).
   const mesaj =
     typeof govde.mesaj === "string" && govde.mesaj.trim() ? govde.mesaj : null;
-
   const tur = await pusulaTuru(db, { id: session.sub, full_name: session.ad }, mesaj);
-  if (!tur) {
-    return Response.json({ hata: tr.pusula.aiHata }, { status: 503 });
-  }
+  if (!tur) return Response.json({ hata: tr.pusula.aiHata }, { status: 503 });
   return Response.json(tur);
 }

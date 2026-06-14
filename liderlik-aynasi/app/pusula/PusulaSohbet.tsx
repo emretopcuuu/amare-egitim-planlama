@@ -5,103 +5,171 @@ import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 
 const t = tr.pusula;
+const BLANK_SAYISI = 10;
+const MIN_MADDE = 3;
 
 type Mesaj = { rol: string; icerik: string };
+type Faz = "riza" | "liste" | "sohbet" | "bitti";
 
-// Nedenler çalışmasının sohbet arayüzü. Geçmiş boşsa önce rıza ekranı; rıza
-// sonrası AYNA açılışı (basla). Akış bitince (bitti) "pusulan kuruldu" ekranı.
-export default function PusulaSohbet({ baslangic }: { baslangic: Mesaj[] }) {
+// FAZ 0 akışı: rıza → 10 öncelik FORM'u (madde madde) → AI derinleşme sohbeti.
+export default function PusulaSohbet({
+  baslangic,
+  rizaVar,
+  onceliklerVar,
+}: {
+  baslangic: Mesaj[];
+  rizaVar: boolean;
+  onceliklerVar: boolean;
+}) {
   const router = useRouter();
+  const ilkFaz: Faz =
+    baslangic.length > 0 || onceliklerVar ? "sohbet" : rizaVar ? "liste" : "riza";
+
+  const [faz, setFaz] = useState<Faz>(ilkFaz);
   const [mesajlar, setMesajlar] = useState<Mesaj[]>(baslangic);
+  const [liste, setListe] = useState<string[]>(Array(BLANK_SAYISI).fill(""));
   const [girdi, setGirdi] = useState("");
   const [mesgul, setMesgul] = useState(false);
-  const [bitti, setBitti] = useState(false);
-  const [basladi, setBasladi] = useState(baslangic.length > 0);
   const [hata, setHata] = useState<string | null>(null);
   const altRef = useRef<HTMLDivElement>(null);
+  const acilisRef = useRef(false);
 
   useEffect(() => {
     altRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mesajlar, mesgul]);
 
-  async function turYap(govde: { mesaj?: string; basla?: boolean }) {
+  async function istek(govde: Record<string, unknown>): Promise<{
+    mesaj?: string;
+    bitti?: boolean;
+    hata?: string;
+    ok?: boolean;
+  } | null> {
+    const res = await fetch("/api/pusula", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(govde),
+    });
+    return res.json().catch(() => null);
+  }
+
+  // Sohbette listeden geldiyse (mesaj yoksa) açılış repliğini getir.
+  useEffect(() => {
+    if (faz !== "sohbet" || mesajlar.length > 0 || acilisRef.current) return;
+    acilisRef.current = true;
+    (async () => {
+      setMesgul(true);
+      const v = await istek({});
+      if (v?.mesaj) setMesajlar([{ rol: "ayna", icerik: v.mesaj }]);
+      else setHata(t.aiHata);
+      setMesgul(false);
+    })();
+  }, [faz, mesajlar.length]);
+
+  async function rizaKabul() {
+    setMesgul(true);
+    await istek({ basla: true });
+    setMesgul(false);
+    setFaz("liste");
+  }
+
+  async function listeyiTamamla() {
+    const dolu = liste.map((s) => s.trim()).filter(Boolean);
+    if (dolu.length < MIN_MADDE) {
+      setHata(t.listeAzUyari(MIN_MADDE));
+      return;
+    }
     setMesgul(true);
     setHata(null);
-    try {
-      const res = await fetch("/api/pusula", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(govde),
-      });
-      const veri = await res.json().catch(() => null);
-      if (!res.ok || !veri?.mesaj) {
-        setHata(veri?.hata ?? t.aiHata);
-        return;
-      }
-      setMesajlar((m) => [...m, { rol: "ayna", icerik: veri.mesaj }]);
-      if (veri.bitti) {
-        setBitti(true);
-        // Bekleme ekranını sunucudan getirmek için kısa süre sonra tazele.
-        setTimeout(() => router.refresh(), 2500);
-      }
-    } catch {
-      setHata(t.aiHata);
-    } finally {
-      setMesgul(false);
+    const v = await istek({ oncelikler: dolu });
+    setMesgul(false);
+    if (!v?.mesaj) {
+      setHata(v?.hata ?? t.aiHata);
+      return;
     }
+    acilisRef.current = true; // açılış zaten geldi
+    setMesajlar([{ rol: "ayna", icerik: v.mesaj }]);
+    setFaz("sohbet");
   }
 
-  function basla() {
-    setBasladi(true);
-    void turYap({ basla: true });
-  }
-
-  function gonder() {
+  async function gonder() {
     const metin = girdi.trim();
     if (!metin || mesgul) return;
     setMesajlar((m) => [...m, { rol: "kullanici", icerik: metin }]);
     setGirdi("");
-    void turYap({ mesaj: metin });
+    setMesgul(true);
+    setHata(null);
+    const v = await istek({ mesaj: metin });
+    setMesgul(false);
+    if (!v?.mesaj) {
+      setHata(v?.hata ?? t.aiHata);
+      return;
+    }
+    setMesajlar((m) => [...m, { rol: "ayna", icerik: v.mesaj! }]);
+    if (v.bitti) {
+      setFaz("bitti");
+      setTimeout(() => router.refresh(), 2500);
+    }
   }
 
-  // ---- Rıza ekranı (henüz başlamadıysa) ----
-  if (!basladi) {
+  // ---- Rıza ----
+  if (faz === "riza") {
     return (
-      <main className="flex min-h-dvh flex-col items-center justify-center px-6">
-        <div className="kart-cam max-w-md rounded-3xl p-8 text-center">
-          <p className="text-5xl" aria-hidden>
-            🧭
-          </p>
-          <h1 className="prizma-serif ay-metin mt-4 text-2xl font-semibold">
-            {t.rizaBaslik}
-          </h1>
-          <p className="mt-3 text-base leading-relaxed text-slate-300">{t.rizaMetin}</p>
-          <p className="mt-3 text-xs text-slate-500">{t.rizaNot}</p>
-          <button
-            onClick={basla}
-            className="btn-kor parilti mt-7 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold"
-          >
-            {t.rizaKabul}
-          </button>
+      <Kapak ikon="🧭" baslik={t.rizaBaslik}>
+        <p className="mt-3 text-base leading-relaxed text-slate-300">{t.rizaMetin}</p>
+        <p className="mt-3 text-xs text-slate-500">{t.rizaNot}</p>
+        <button
+          onClick={rizaKabul}
+          disabled={mesgul}
+          className="btn-kor parilti mt-7 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
+        >
+          {t.rizaKabul}
+        </button>
+      </Kapak>
+    );
+  }
+
+  // ---- Liste formu (madde madde) ----
+  if (faz === "liste") {
+    const doluSayi = liste.filter((s) => s.trim()).length;
+    return (
+      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
+        <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.listeBaslik}</h1>
+        <p className="mt-2 text-sm leading-relaxed text-slate-400">{t.listeAciklama}</p>
+        <div className="mt-5 flex-1 space-y-2">
+          {liste.map((deger, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="w-6 shrink-0 text-right text-sm font-bold text-gold-light">
+                {i + 1}
+              </span>
+              <input
+                value={deger}
+                onChange={(e) =>
+                  setListe((l) => l.map((v, j) => (j === i ? e.target.value : v)))
+                }
+                placeholder={t.listeYer(i + 1)}
+                className="flex-1 rounded-xl border border-royal-light/30 bg-midnight-soft px-3 py-2.5 text-base text-slate-100 outline-none focus:border-gold"
+              />
+            </div>
+          ))}
         </div>
+        {hata && <p className="mt-3 text-center text-sm text-red-400">{hata}</p>}
+        <button
+          onClick={listeyiTamamla}
+          disabled={mesgul || doluSayi < MIN_MADDE}
+          className="btn-kor parilti mt-5 flex h-14 w-full shrink-0 items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
+        >
+          {mesgul ? t.dusunuyor : t.listeDevam}
+        </button>
       </main>
     );
   }
 
-  // ---- Tamamlandı ekranı ----
-  if (bitti) {
+  // ---- Bitti ----
+  if (faz === "bitti") {
     return (
-      <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
-        <div className="kart-cam max-w-md rounded-3xl p-10">
-          <p className="text-5xl" aria-hidden>
-            🧭
-          </p>
-          <h1 className="prizma-serif ay-metin mt-4 text-2xl font-semibold">
-            {t.tamamBaslik}
-          </h1>
-          <p className="mt-3 text-base leading-relaxed text-slate-300">{t.tamamMetin}</p>
-        </div>
-      </main>
+      <Kapak ikon="🧭" baslik={t.tamamBaslik}>
+        <p className="mt-3 text-base leading-relaxed text-slate-300">{t.tamamMetin}</p>
+      </Kapak>
     );
   }
 
@@ -117,15 +185,10 @@ export default function PusulaSohbet({ baslangic }: { baslangic: Mesaj[] }) {
 
       <div className="flex-1 space-y-3 overflow-y-auto pb-3">
         {mesajlar.map((m, i) => (
-          <div
-            key={i}
-            className={`flex ${m.rol === "ayna" ? "justify-start" : "justify-end"}`}
-          >
+          <div key={i} className={`flex ${m.rol === "ayna" ? "justify-start" : "justify-end"}`}>
             <p
               className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-base leading-relaxed ${
-                m.rol === "ayna"
-                  ? "kart-cam text-slate-100"
-                  : "bg-royal/40 text-slate-100"
+                m.rol === "ayna" ? "kart-cam text-slate-100" : "bg-royal/40 text-slate-100"
               }`}
             >
               {m.icerik}
@@ -169,6 +232,28 @@ export default function PusulaSohbet({ baslangic }: { baslangic: Mesaj[] }) {
         >
           {t.gonder}
         </button>
+      </div>
+    </main>
+  );
+}
+
+function Kapak({
+  ikon,
+  baslik,
+  children,
+}: {
+  ikon: string;
+  baslik: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <main className="flex min-h-dvh flex-col items-center justify-center px-6">
+      <div className="kart-cam max-w-md rounded-3xl p-8 text-center">
+        <p className="text-5xl" aria-hidden>
+          {ikon}
+        </p>
+        <h1 className="prizma-serif ay-metin mt-4 text-2xl font-semibold">{baslik}</h1>
+        {children}
       </div>
     </main>
   );

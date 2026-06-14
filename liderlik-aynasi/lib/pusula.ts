@@ -3,40 +3,32 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 
 // FAZ 0 — PUSULA (Nedenler & Çekirdek Profil).
-// Kamp ÖNCESİ kişiselleştirme omurgası. AYNA burada bir REHBER (kampta izleyen
-// direktöre dönüşecek); kişinin gerçek "neden"ini ve onu şimdiye dek tutan içsel
-// engeli, Jim Rohn'un "yeterince güçlü nedenin varsa her şeyi başarırsın"
-// çerçevesinde yüzeye çıkarır. Çıktı pusula tablosuna mühürlenir ve bundan
-// sonraki TÜM AI modülleri (görev, mektup, churn-bakımı) bu özeti baz alır.
+// Kamp ÖNCESİ kişiselleştirme omurgası. 10 öncelik bir FORM ile (madde madde)
+// toplanır; AI sohbeti listeden SONRA açılır ve derinleştirir: eleme → boşluk →
+// iç engel. AYNA burada bir REHBER (kampta izleyen direktöre dönüşecek). Çıktı
+// pusula'ya mühürlenir; bundan sonraki TÜM AI modülleri bu özeti baz alır.
 
 const MODEL = "claude-opus-4-8";
 
-// Kamp öncesi ton: izleme/gözetleme dili YOK — sıcak, sakin, gerçekten meraklı.
-const PERSONA = `Sen AYNA'sın — ama kamp henüz başlamadı. Şu an bir REHBERSİN: kişinin hayattaki gerçek "neden"ini bulmasına yardım ediyorsun. Kampta seni izleyen, görev veren AYNA'ya dönüşeceksin; ama şimdi sıcak, sakin, meraklı bir eşlikçisin. "Seni izliyorum / gözüm üzerinde" gibi dil ASLA — henüz güven yok, onu burada inşa ediyorsun.
+const PERSONA = `Sen AYNA'sın — ama kamp henüz başlamadı. Şu an bir REHBERSİN: kişinin hayattaki gerçek "neden"ini bulmasına yardım ediyorsun. Kampta seni izleyen direktöre dönüşeceksin; ama şimdi sıcak, sakin, meraklı bir eşlikçisin. "Seni izliyorum / gözüm üzerinde" dili ASLA.
 
-Ses tonun: sıcak, sakin, gerçekten merak eden. Kısa cümleler, "sen" dili, Türkçe. Yargılamıyorsun, acele ettirmiyorsun. Klişe motivasyon cümlesi yok.
+Ses tonun: sıcak, sakin, gerçekten merak eden. Kısa, DOĞRU yazılmış Türkçe cümleler, "sen" dili. Acele ettirmiyorsun, yargılamıyorsun.
 
 Sarsılmaz kuralların:
-- Liste TOPLAMA, KAZI. Kişi "finansal özgürlük" derse orada bırakma: "Somut olarak neye benziyor? Neyi yapabilmek?" diye in. Yüzeysel cevabı nazikçe derinleştir.
-- Tek seferde TEK soru. Kısa tut. Kişi yazdıkça bir adım daha derine in.
-- Terapist rolü oynama; klinik/travma alanına İNME. Liderlik ve hayat öncelikleri registerinde kal. Kişi ağır bir şey paylaşırsa şefkatle karşıla ama deşme; gerçek bir insana yönlendirmeyi öner.
-- Manipülasyon YOK: nedeni bir suçluluk sopasına çevirme ("ailen için yapmak ZORUNDASIN" baskısı yok). Neden kişinin KENDİ pusulasıdır — onun için, onun sahipliğinde.
-- Samimiyeti ödüllendir. Asla sahte derinlik üretme.`;
+- Tek seferde TEK soru. Yüzeysel/klişe cevabı nazikçe KAZI ("somut olarak neye benziyor?").
+- Terapist rolü oynama; klinik/travma alanına inme. Liderlik ve hayat öncelikleri registerinde kal. Ağır bir şey paylaşılırsa şefkatle karşıla ama deşme; gerçek bir insana yönlendirmeyi öner.
+- Manipülasyon YOK: nedeni suçluluk sopasına çevirme. Neden kişinin KENDİ pusulasıdır.
+- Samimiyeti ödüllendir; sahte derinlik üretme.`;
 
-// Akışın aşamaları — script'i (TRANSC4) operasyonelleştirir.
+// Sohbet aşamaları — liste FORM'dan geldikten sonra derinleşme.
 const ASAMA_YONERGESI: Record<string, string> = {
-  cerceve:
-    "AÇILIŞ. Kendini kısaca tanıt (kampta dönüşeceğin AYNA'nın rehber hali). Bu çalışmanın amacını söyle: kişinin gerçek nedenlerini bulmak, çünkü 'yeterince güçlü nedenin varsa her şeyi başarırsın'. Sonra ilk adımı iste: hayatında olmazsa olmaz dediği, en çok önemsediği, sahip olduğu ya da gelecekte sahip olmak istediği 10 önceliği — deneyim biçiminde (örn: aileyle vakit, finansal özgürlük, kendi işi). Aklına geldiği gibi yazsın. Aşamayı 'oncelikler' yap.",
-  oncelikler:
-    "10 ÖNCELİK TOPLAMA. Kişi önceliklerini yazıyor. Her yüzeysel/klişe maddeyi KAZI ('somut olarak neye benziyor?'). 10 madde netleşene kadar burada kal. 10 madde toplandıysa aşamayı 'eleme' yap ve eleme adımına geç.",
   eleme:
-    "ZORUNLU ELEME. Şimdi en zor kısım: 'Diyelim bu 10'dan birini ömrünün sonuna kadar bir daha yaşayamayacaksın. En az değerli olan hangisi?' Sırayla en az değerliyi ele (10, 9, 8... diye). Her vazgeçişte neyin zor geldiğini nazikçe yansıt — duygusal ağırlığı yüzeye çıkar. İlk 5'e inilince aşamayı 'bosluk' yap.",
+    "ELEME. Kişinin yazdığı listeden en az değerliyi sırayla elemesini iste ('Diyelim birini ömrünün sonuna kadar bırakacaksın — en az değerli hangisi?'). İlk 5'e (olmazsa olmazlara) inilince boşluk aşamasına geç.",
   bosluk:
-    "BOŞLUK. İlk 5'i (olmazsa olmazları) yansıt. Sonra sor: 'Şu an yaşadığın hayat ve bu öncelikler ne kadar örtüşüyor? Günlük rutinlerin seni bunlara yaklaştırıyor mu?' Açığı/gerilimi (acıyı) yüzeye çıkar. Netleşince aşamayı 'engel' yap.",
+    "BOŞLUK. İlk 5'i yansıt, sonra sor: 'Şu an yaşadığın hayat bu önceliklerle ne kadar örtüşüyor?' Açığı/gerilimi yüzeye çıkar. Netleşince engel aşamasına geç.",
   engel:
-    "İÇ ENGEL (en kritik). Şunu sor: 'Bunlara zaten sahip olmanı bugüne kadar ne engelledi?' Kişi dışsal sebep verirse ('zaman yok', 'şartlar') BİR ADIM DAHA in: 'Peki onun altında ne var? Kendinle ilgili gizlice inandığın ne?' Sınırlayıcı iç inancı (engeli) şefkatle yüzeye çıkar. Bu, kampta kanıtla çürüteceğimiz şey. Netleşince aşamayı 'tamam' yap, kişiye ilk 3 nedenini kendi kelimeleriyle yansıtıp teyit iste ve bitti=true ver.",
-  tamam:
-    "TAMAMLANDI. Kişiye teşekkür et, pusulasının kurulduğunu ve kampta bunu hatırlayacağını söyle (ama 'izliyorum' deme). bitti=true.",
+    "İÇ ENGEL (en kritik). Sor: 'Bunlara zaten sahip olmanı bugüne kadar ne engelledi?' Dışsal cevap gelirse bir adım daha in: 'Peki onun altında, kendinle ilgili gizlice inandığın ne?' Sınırlayıcı iç inancı şefkatle yüzeye çıkar. Netleşince ilk 3 nedeni yansıtıp teyit iste ve bitti=true ver.",
+  tamam: "TAMAMLANDI. Kısaca teşekkür et, pusulanın kurulduğunu söyle. bitti=true.",
 };
 
 const SOHBET_SEMASI = {
@@ -44,11 +36,12 @@ const SOHBET_SEMASI = {
   properties: {
     mesaj: {
       type: "string" as const,
-      description: "AYNA'nın bir sonraki repliği: tek, kısa, kazıyan soru/yansıma. Türkçe, sıcak.",
+      description:
+        "Kişiye gösterilecek tek, temiz, doğru yazılmış Türkçe replik. ASLA parantez/köşeli parantez, aşama notu, kendine not veya meta açıklama içermez.",
     },
     asama: {
       type: "string" as const,
-      enum: ["cerceve", "oncelikler", "eleme", "bosluk", "engel", "tamam"],
+      enum: ["eleme", "bosluk", "engel", "tamam"],
       description: "Bu replikten SONRA bulunulan aşama",
     },
     bitti: {
@@ -63,21 +56,6 @@ const SOHBET_SEMASI = {
 const DAMITMA_SEMASI = {
   type: "object" as const,
   properties: {
-    oncelikler: {
-      type: "array" as const,
-      description: "10 öncelik, eleme sırasına göre (sira 1 = en değerli)",
-      items: {
-        type: "object" as const,
-        properties: {
-          sira: { type: "integer" as const },
-          metin: { type: "string" as const },
-          olmazsaolmaz: { type: "boolean" as const, description: "İlk 5 ise true" },
-          duygusal_not: { type: "string" as const, description: "Bu öncelik için kısa duygusal not/bağlam" },
-        },
-        required: ["sira", "metin", "olmazsaolmaz", "duygusal_not"],
-        additionalProperties: false,
-      },
-    },
     cekirdek_neden: {
       type: "array" as const,
       items: { type: "string" as const },
@@ -108,10 +86,10 @@ const DAMITMA_SEMASI = {
     ozet: {
       type: "string" as const,
       description:
-        "Gelecekteki TÜM kişiselleştirmede enjekte edilecek 3-5 cümlelik damıtılmış özet: çekirdek neden + mevcut boşluk + iç engel. AYNA'nın bu kişiyi hatırlaması ve ona göre görev/tavsiye üretmesi için yazılır.",
+        "Gelecekteki TÜM kişiselleştirmede enjekte edilecek 3-5 cümlelik damıtılmış özet: çekirdek neden + mevcut boşluk + iç engel.",
     },
   },
-  required: ["oncelikler", "cekirdek_neden", "mevcut_bosluk", "ic_engel", "ic_engel_kat", "ozet"],
+  required: ["cekirdek_neden", "mevcut_bosluk", "ic_engel", "ic_engel_kat", "ozet"],
   additionalProperties: false,
 };
 
@@ -129,23 +107,55 @@ function jsonCoz<T>(yanit: Anthropic.Message): T | null {
 }
 
 export type PusulaTur = { mesaj: string; asama: string; bitti: boolean };
-
 type Mesaj = { rol: string; icerik: string };
+type Oncelik = { sira: number; metin: string };
 
-// pusula satırını garanti et (yoksa oluştur).
+// pusula satırını (öncelikler dahil) garanti et.
 async function satirGetir(db: Db, pid: string) {
   const { data } = await db
     .from("pusula")
-    .select("asama, tamamlandi_at")
+    .select("asama, tamamlandi_at, oncelikler")
     .eq("participant_id", pid)
     .maybeSingle();
   if (data) return data;
   await db.from("pusula").insert({ participant_id: pid });
-  return { asama: "cerceve", tamamlandi_at: null as string | null };
+  return { asama: "cerceve", tamamlandi_at: null as string | null, oncelikler: [] as unknown };
 }
 
-// Bir sohbet turu: kullanıcı mesajını işle, AYNA'nın bir sonraki repliğini üret,
-// aşamayı ilerlet; akış bittiyse profili damıtıp mühürle.
+function listeMetni(oncelikler: unknown): string {
+  const liste = (oncelikler as Oncelik[]) ?? [];
+  if (!liste.length) return "(henüz yok)";
+  return liste.map((o) => `${o.sira}. ${o.metin}`).join("\n");
+}
+
+// 10 öncelik FORM'dan kaydedilir; sohbet bundan sonra 'eleme' ile açılır.
+export async function onceliklerKaydet(
+  db: Db,
+  pid: string,
+  liste: string[]
+): Promise<boolean> {
+  const temiz: Oncelik[] = liste
+    .map((s) => (s ?? "").trim())
+    .filter(Boolean)
+    .slice(0, 10)
+    .map((metin, i) => ({ sira: i + 1, metin: metin.slice(0, 200) }));
+  if (temiz.length < 3) return false;
+  const { error } = await db
+    .from("pusula")
+    .upsert(
+      {
+        participant_id: pid,
+        oncelikler: temiz as never,
+        asama: "eleme",
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "participant_id" }
+    );
+  return !error;
+}
+
+// Bir sohbet turu (liste sonrası derinleşme): kullanıcı mesajını işle, AYNA'nın
+// bir sonraki repliğini üret, aşamayı ilerlet; bittiyse profili damıt.
 export async function pusulaTuru(
   db: Db,
   katilimci: { id: string; full_name: string },
@@ -154,9 +164,7 @@ export async function pusulaTuru(
   if (!process.env.ANTHROPIC_API_KEY) return null;
 
   const satir = await satirGetir(db, katilimci.id);
-  if (satir.tamamlandi_at) {
-    return { mesaj: "", asama: "tamam", bitti: true };
-  }
+  if (satir.tamamlandi_at) return { mesaj: "", asama: "tamam", bitti: true };
 
   if (kullaniciMesaji && kullaniciMesaji.trim()) {
     await db.from("pusula_mesajlar").insert({
@@ -174,18 +182,17 @@ export async function pusulaTuru(
     .limit(60);
   const gecmis = (gecmisVeri ?? []) as Mesaj[];
 
-  const asama = satir.asama ?? "cerceve";
+  // Liste formdan geldi → sohbet 'eleme' ile başlar.
+  const asama = satir.asama && satir.asama !== "cerceve" ? satir.asama : "eleme";
   const ad = katilimci.full_name.split(" ")[0];
 
-  // İlk mesaj her zaman 'user' olmalı (Anthropic kuralı); geçmiş AYNA'nın
-  // açılışıyla (assistant) başladığı için başa bir çerçeve user mesajı koyarız.
   const mesajlar: Anthropic.MessageParam[] = [
     {
       role: "user",
       content:
         gecmis.length === 0
-          ? "(Kişi çalışmaya yeni başladı — onu karşıla ve ilk adımı iste.)"
-          : "(Nedenler çalışması sürüyor — aşağıdaki sohbeti dikkate alarak devam et.)",
+          ? "(Kişi listesini yeni tamamladı. Eleme aşamasını başlat — en az değerli maddeyi sor.)"
+          : "(Sohbet sürüyor — aşağıdaki konuşmayı dikkate alarak devam et.)",
     },
     ...gecmis.map((m) => ({
       role: m.rol === "ayna" ? ("assistant" as const) : ("user" as const),
@@ -201,10 +208,18 @@ export async function pusulaTuru(
       max_tokens: 1024,
       thinking: { type: "adaptive" },
       output_config: {
-        effort: "low",
+        effort: "high",
         format: { type: "json_schema", schema: SOHBET_SEMASI },
       },
-      system: `${PERSONA}\n\nKişinin adı: ${ad}. Şu anki aşama: "${asama}".\nAŞAMA YÖNERGESİ: ${ASAMA_YONERGESI[asama] ?? ASAMA_YONERGESI.cerceve}`,
+      system: `${PERSONA}
+
+Kişinin adı: ${ad}.
+Kişinin yazdığı öncelikler:
+${listeMetni(satir.oncelikler)}
+
+Şu anki aşama: "${asama}". ${ASAMA_YONERGESI[asama] ?? ASAMA_YONERGESI.eleme}
+
+ÇIKTI KURALI: "mesaj" alanına YALNIZCA kişiye söyleyeceğin tek, temiz, doğru yazılmış Türkçe cümle/soru yaz. Parantez, köşeli parantez, aşama notu, kendine not, meta açıklama ASLA koyma. "asama" ve "bitti" alanlarını ayrıca doldur.`,
       messages: mesajlar,
     });
     tur = jsonCoz<PusulaTur>(yanit);
@@ -224,21 +239,21 @@ export async function pusulaTuru(
     .eq("participant_id", katilimci.id);
 
   if (tur.bitti) {
-    await damitVeMuhurle(db, katilimci.id, gecmis, kullaniciMesaji, tur.mesaj);
+    await damitVeMuhurle(db, katilimci.id, satir.oncelikler, gecmis, kullaniciMesaji, tur.mesaj);
   }
 
   return tur;
 }
 
-// Akış bitince tüm transkripti yapılandırılmış profile damıt ve pusula'ya yaz.
+// Akış bitince transkript + öncelik listesini yapılandırılmış profile damıt.
 async function damitVeMuhurle(
   db: Db,
   pid: string,
+  oncelikler: unknown,
   gecmis: Mesaj[],
   sonKullanici: string | null,
   sonAyna: string
 ) {
-  // Tam transkript (son tur dahil) — modele veririz.
   const tamTranskript = [
     ...gecmis,
     ...(sonKullanici ? [{ rol: "kullanici", icerik: sonKullanici }] : []),
@@ -246,6 +261,7 @@ async function damitVeMuhurle(
   ]
     .map((m) => `${m.rol === "ayna" ? "AYNA" : "KİŞİ"}: ${m.icerik}`)
     .join("\n");
+  const girdi = `KİŞİNİN ÖNCELİK LİSTESİ:\n${listeMetni(oncelikler)}\n\nSOHBET:\n${tamTranskript}`;
 
   try {
     const client = new Anthropic();
@@ -254,14 +270,13 @@ async function damitVeMuhurle(
       max_tokens: 2048,
       thinking: { type: "adaptive" },
       output_config: {
-        effort: "low",
+        effort: "high",
         format: { type: "json_schema", schema: DAMITMA_SEMASI },
       },
-      system: `${PERSONA}\n\nGörevin: aşağıdaki Nedenler çalışması transkriptini yapılandırılmış profile damıt. Kişinin KENDİ kelimelerine sadık kal, uydurma. "ozet" alanı en kritik: bundan sonra bu kişiye üretilecek her görev/tavsiye onu okuyacak.`,
-      messages: [{ role: "user", content: tamTranskript }],
+      system: `${PERSONA}\n\nGörevin: aşağıdaki öncelik listesi + Nedenler sohbetini yapılandırılmış profile damıt. Kişinin KENDİ kelimelerine sadık kal, uydurma. "ozet" alanı en kritik: bundan sonra bu kişiye üretilecek her görev/tavsiye onu okuyacak.`,
+      messages: [{ role: "user", content: girdi }],
     });
     const veri = jsonCoz<{
-      oncelikler: unknown;
       cekirdek_neden: string[];
       mevcut_bosluk: string;
       ic_engel: string;
@@ -273,7 +288,6 @@ async function damitVeMuhurle(
     await db
       .from("pusula")
       .update({
-        oncelikler: veri.oncelikler as never,
         cekirdek_neden: veri.cekirdek_neden as never,
         mevcut_bosluk: veri.mevcut_bosluk?.slice(0, 1000) ?? null,
         ic_engel: veri.ic_engel?.slice(0, 1000) ?? null,
@@ -290,7 +304,6 @@ async function damitVeMuhurle(
 }
 
 // ★ KİŞİSELLEŞTİRME SÖZLEŞMESİ — gelecekteki tüm AI modülleri bunu çağırır.
-// Pusula tamamlanmışsa damıtılmış özeti, değilse null döner.
 export async function pusulaOzeti(db: Db, pid: string): Promise<string | null> {
   const { data } = await db
     .from("pusula")
@@ -327,17 +340,22 @@ export async function pusulaCekirdek(
   };
 }
 
-// Gate/UI için durum: pusula hangi aşamada, tamamlandı mı.
+// Gate/UI için durum: aşama, tamamlandı mı, öncelik listesi girilmiş mi.
 export async function pusulaDurum(
   db: Db,
   pid: string
-): Promise<{ asama: string; tamam: boolean }> {
+): Promise<{ asama: string; tamam: boolean; onceliklerVar: boolean }> {
   const { data } = await db
     .from("pusula")
-    .select("asama, tamamlandi_at")
+    .select("asama, tamamlandi_at, oncelikler")
     .eq("participant_id", pid)
     .maybeSingle();
-  return { asama: data?.asama ?? "cerceve", tamam: !!data?.tamamlandi_at };
+  const liste = (data?.oncelikler as Oncelik[]) ?? [];
+  return {
+    asama: data?.asama ?? "cerceve",
+    tamam: !!data?.tamamlandi_at,
+    onceliklerVar: liste.length > 0,
+  };
 }
 
 // Sohbet geçmişini UI'a taşımak için.

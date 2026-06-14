@@ -15,9 +15,10 @@ export default async function PusulaSayfa() {
   if (session.rol !== "participant") redirect("/");
 
   const db = supabaseAdmin();
-  const [durum, gecmis] = await Promise.all([
+  const [durum, gecmis, { data: kisi }] = await Promise.all([
     pusulaDurum(db, session.sub),
     pusulaGecmis(db, session.sub),
+    db.from("participants").select("consent_at").eq("id", session.sub).maybeSingle(),
   ]);
 
   if (durum.tamam) {
@@ -38,5 +39,11 @@ export default async function PusulaSayfa() {
     );
   }
 
-  return <PusulaSohbet baslangic={gecmis} />;
+  return (
+    <PusulaSohbet
+      baslangic={gecmis}
+      rizaVar={!!kisi?.consent_at}
+      onceliklerVar={durum.onceliklerVar}
+    />
+  );
 }
