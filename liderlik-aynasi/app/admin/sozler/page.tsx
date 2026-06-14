@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import SozAcKapat from "./SozAcKapat";
+import { tr } from "@/lib/i18n/tr";
+import Ipucu from "../Ipucu";
 
 export const metadata = { title: "Kapanış Sözleri — Liderlik Aynası" };
 
@@ -28,7 +30,7 @@ export default async function SozlerPage() {
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-gold">🤝 Kapanış Sözleri</h1>
+        <h1 className="text-2xl font-bold text-gold">🤝 Kapanış Sözleri <Ipucu {...tr.admin.yardim.sozler} /></h1>
         <p className="mt-1 text-sm text-slate-400">
           Kamp kapanışında alınan kişisel kayıt + Ağustos görüşme sözleri ve ilerleme.
         </p>

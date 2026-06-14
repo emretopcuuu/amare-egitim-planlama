@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Ipucu from "./Ipucu";
 
 // #1 Progresif açığa çıkarma: faz dışı ikincil araçları tek bir katlanır
 // bölümde toplar. Varsayılan KAPALI — panel açıldığında yalnız o anki işe
@@ -9,12 +10,14 @@ export default function Katlanir({
   aciklama,
   ikon = "🧰",
   varsayilanAcik = false,
+  yardim,
   children,
 }: {
   baslik: string;
   aciklama?: string;
   ikon?: string;
   varsayilanAcik?: boolean;
+  yardim?: { baslik: string; metin: readonly string[] };
   children: ReactNode;
 }) {
   return (
@@ -32,6 +35,7 @@ export default function Katlanir({
             <span className="mt-0.5 block text-sm text-slate-500">{aciklama}</span>
           )}
         </span>
+        {yardim && <Ipucu {...yardim} />}
         <span
           className="ok shrink-0 text-slate-500 transition-transform duration-200"
           aria-hidden

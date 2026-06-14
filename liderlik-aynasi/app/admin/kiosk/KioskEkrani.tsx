@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import Ipucu from "../Ipucu";
 
 const t = tr.admin.kiosk;
 
@@ -54,6 +55,9 @@ export default function KioskEkrani({
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 p-6">
+      <div className="mb-4 flex justify-end">
+        <Ipucu {...tr.admin.yardim.kiosk} />
+      </div>
       <div className="grid gap-6 sm:grid-cols-2">
         {/* Canlı katılım sayacı */}
         <section className="kart-3d flex flex-col items-center justify-center rounded-3xl bg-midnight-card/60 p-8 text-center ring-1 ring-gold/40 backdrop-blur">

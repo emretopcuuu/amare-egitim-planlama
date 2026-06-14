@@ -2,6 +2,7 @@ import Link from "next/link";
 import { kampGunu } from "@/lib/kampProgrami";
 import { KAMP_ADMIN_AKISI } from "@/lib/kampAdminAkisi";
 import { tr } from "@/lib/i18n/tr";
+import Ipucu from "./Ipucu";
 
 const t = tr.admin.akis;
 
@@ -17,6 +18,7 @@ export default function GununAkisi({ bugun }: { bugun: string }) {
       <h2 className="text-lg font-semibold text-gold-light">
         {t.baslik}
         <span className="ml-2 text-sm font-normal text-slate-400">· Gün {gun}/3</span>
+        <Ipucu {...tr.admin.yardim.panelGun} />
       </h2>
       <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>
       <ol className="mt-4 space-y-2">

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
+import Ipucu from "./Ipucu";
 
 const t = tr.admin.hazirlik;
 
@@ -33,7 +34,10 @@ export default async function HazirlikPaneli() {
         hepsi ? "bg-emerald-500/5 ring-emerald-400/40" : "bg-midnight-card/60 ring-gold/40"
       }`}
     >
-      <h2 className="text-lg font-semibold text-gold-light">{t.baslik}</h2>
+      <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+        {t.baslik}
+        <Ipucu {...tr.admin.yardim.hazirlik} />
+      </h2>
       <p className={`mt-1 text-sm ${hepsi ? "text-emerald-300" : "text-slate-400"}`}>
         {hepsi ? t.hepsiTamam : t.eksikVar}
       </p>

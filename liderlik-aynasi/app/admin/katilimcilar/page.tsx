@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import KatilimciAraclari from "./KatilimciAraclari";
 import KodKopyala from "./KodKopyala";
+import Ipucu from "../Ipucu";
 
 export const metadata = { title: "Katılımcılar — Liderlik Aynası" };
 
@@ -22,7 +23,10 @@ export default async function KatilimcilarPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
-      <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
+        <Ipucu {...tr.admin.yardim.katilimcilar} />
+      </div>
 
       <KatilimciAraclari />
 

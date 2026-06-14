@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import EslestirmeFormu from "./EslestirmeFormu";
+import Ipucu from "../Ipucu";
 
 export const metadata = { title: "Eşleştirme — Liderlik Aynası" };
 
@@ -43,7 +44,10 @@ export default async function EslestirmePage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
-      <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
+      <div className="flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
+        <Ipucu {...tr.admin.yardim.eslestirme} />
+      </div>
 
       <EslestirmeFormu />
 
