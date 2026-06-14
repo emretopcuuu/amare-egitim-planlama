@@ -11,6 +11,9 @@ import { tr } from "@/lib/i18n/tr";
 export default function SahnePage() {
   const router = useRouter();
   const [film, setFilm] = useState(false);
+  // Açılışta ONE TEAM marka videosu bir kez oynar; bitince göl döngüsüne geçer.
+  // Sunucu tıklarsa/space'e basarsa doğruca Ayna Anı filmine atlar (akış korunur).
+  const [marka, setMarka] = useState(true);
 
   function filmiBaslat() {
     setFilm(true);
@@ -30,7 +33,17 @@ export default function SahnePage() {
       className="fixed inset-0 cursor-pointer bg-black"
       onClick={filmiBaslat}
     >
-      {!film ? (
+      {marka && !film ? (
+        <video
+          src="/marka.mp4"
+          autoPlay
+          muted
+          playsInline
+          onEnded={() => setMarka(false)}
+          poster="/marka-poster.jpg"
+          className="h-full w-full object-contain"
+        />
+      ) : !film ? (
         <>
           <video
             src="/sahne-loop.mp4"
