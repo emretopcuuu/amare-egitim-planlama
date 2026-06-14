@@ -577,6 +577,10 @@ export const tr = {
       banner:
         "👀 Yardımcı görevli — yalnız izleme ve hatırlatma yapabilirsin. Kritik anahtarlar (dalga, rapor, veri) yöneticiye özeldir.",
     },
+    // #8 Proaktif uyarı kartları
+    uyarilar: {
+      baslik: "Dikkat",
+    },
     // #7 Tek bakış canlı özet (büyük rakamlar)
     ozet: {
       katilimci: "Katılımcı",
