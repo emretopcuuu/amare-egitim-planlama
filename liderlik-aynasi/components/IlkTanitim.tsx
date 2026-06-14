@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 
 const t = tr.tanitim;
@@ -15,6 +15,15 @@ export default function IlkTanitim() {
   const [adim, setAdim] = useState(0);
   // Video yüklenmez/oynamazsa ilk kart yine de anlamlı görünsün (simgeye düş).
   const [videoOk, setVideoOk] = useState(true);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // autoplay'i garantiye al: kart açılınca açıkça play() dene (iOS bazen ister).
+  useEffect(() => {
+    if (adim !== 0 || !videoOk || !goster) return;
+    videoRef.current?.play().catch(() => {
+      /* autoplay engellendiyse poster (logo) kalır; dokununca oynar */
+    });
+  }, [adim, videoOk, goster]);
 
   useEffect(() => {
     try {
@@ -41,7 +50,7 @@ export default function IlkTanitim() {
   const sonuncu = adim === t.kartlar.length - 1;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-[#040e18]/95 backdrop-blur-md">
+    <div className="fixed inset-0 z-[60] flex flex-col bg-black">
       <div className="flex justify-end p-5">
         <button
           onClick={kapat}
@@ -57,11 +66,14 @@ export default function IlkTanitim() {
             // İlk kart ONE TEAM marka videosuyla açılır (sessiz, döngüsüz).
             // Sabit en-boy + object-cover: yavaş/uzun videoda bile düzeni bozmaz.
             <video
+              ref={videoRef}
               autoPlay
               muted
               playsInline
+              preload="auto"
               poster="/marka-poster.jpg"
               onError={() => setVideoOk(false)}
+              onClick={() => videoRef.current?.play().catch(() => {})}
               style={{ aspectRatio: "16 / 9" }}
               className="mx-auto w-full max-w-xs rounded-2xl object-cover"
             >
