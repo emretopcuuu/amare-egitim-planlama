@@ -517,6 +517,16 @@ export const tr = {
       baslik: "Şimdi ne yapmalıyım?",
       etiket: "Önerilen adım",
     },
+    // #9 Eksikleri tek dokunuşla dürt: öz-puanını bitirmeyenlere hatırlatma push'u
+    durt: {
+      bildirimBaslik: "🪞 Kendini puanla",
+      bildirimGovde: "Kampın ilk adımı seni bekliyor — kendini dürüstçe puanla.",
+      dalgaYok: "Şu an açık dalga yok.",
+      dugme: (n: number) => `Eksik ${n} kişiyi dürt 🔔`,
+      gonderiliyor: "Gönderiliyor…",
+      sonuc: (n: number) => `${n} kişiye hatırlatma gönderildi ✓`,
+      hata: "Gönderilemedi, tekrar dene.",
+    },
     // Fotoğraf anı duvarı moderasyonu (büyük ekran herkese açık → onay şart)
     fotoModerasyon: {
       baslik: "Fotoğraf Moderasyonu",
