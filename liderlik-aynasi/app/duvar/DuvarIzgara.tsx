@@ -51,19 +51,31 @@ export default function DuvarIzgara({ fotolar }: { fotolar: Foto[] }) {
 
   async function begen(id: string) {
     titret(10);
+    // Optimistik: anında çevir; sunucu yanıtıyla uzlaş, hata olursa geri al.
+    const onceki = durum[id];
+    setDurum((d) => ({
+      ...d,
+      [id]: {
+        ...d[id],
+        begendim: !d[id].begendim,
+        begeniSayi: d[id].begeniSayi + (d[id].begendim ? -1 : 1),
+      },
+    }));
     try {
       const res = await fetch("/api/duvar-begeni", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ fotoId: id }),
       });
+      if (!res.ok) throw new Error();
       const v = await res.json();
-      if (res.ok)
-        setDurum((d) => ({
-          ...d,
-          [id]: { ...d[id], begeniSayi: v.sayi, begendim: v.begenildi },
-        }));
-    } catch {}
+      setDurum((d) => ({
+        ...d,
+        [id]: { ...d[id], begeniSayi: v.sayi, begendim: v.begenildi },
+      }));
+    } catch {
+      setDurum((d) => ({ ...d, [id]: onceki }));
+    }
   }
 
   async function yorumGonder() {

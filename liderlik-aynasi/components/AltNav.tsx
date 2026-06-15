@@ -65,7 +65,7 @@ export default function AltNav() {
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-midnight/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md print:hidden">
       {/* #2 Kıvılcım ilerleme şeridi — toplam + unvan + sonraki rozete kalan */}
       {kiv && (
-        <Link href="/gorevler" className="block border-b border-white/5 px-4 pb-1 pt-1.5">
+        <Link href="/ben" className="block border-b border-white/5 px-4 pb-1 pt-1.5">
           <div className="mx-auto flex w-full max-w-md items-center gap-2 text-[0.7rem]">
             <span className="font-bold text-gold">⚡ {kiv.toplam}</span>
             <span className="text-slate-400">{kiv.unvan}</span>
