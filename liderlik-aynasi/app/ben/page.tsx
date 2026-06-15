@@ -6,6 +6,7 @@ import { unvanBul } from "@/lib/kivilcim";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { tr } from "@/lib/i18n/tr";
 import Avatar from "@/components/Avatar";
+import BenKarti from "./BenKarti";
 
 export const metadata = { title: "Ben — Liderlik Aynası" };
 
@@ -183,6 +184,18 @@ export default async function BenPage() {
               {t.tumTakdirler(takdir)} →
             </Link>
           )}
+        </section>
+
+        {/* #5 Paylaşılabilir profil kartı */}
+        <section className="kart-cam rounded-2xl p-5 ring-1 ring-royal/30">
+          <h2 className="text-sm font-semibold text-gold-light">{t.kartBaslik}</h2>
+          <p className="mt-1 text-xs text-slate-400">{t.kartAciklama}</p>
+          <BenKarti
+            ad={kisi?.full_name ?? session.ad}
+            takim={kisi?.team ?? ""}
+            unvan={unvan.mevcut.ad}
+            kivilcim={toplamKivilcim}
+          />
         </section>
 
         {/* Hızlı erişim */}
