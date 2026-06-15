@@ -103,6 +103,16 @@ body.gunes-modu .kart-cerceve {
   background-color: rgba(8, 20, 33, 0.94) !important;
 }
 
+/* #3 Ayna Raporu story: üst ilerleme çubuğunun doluş animasyonu */
+@keyframes hikayeIlerle {
+  from {
+    width: 0%;
+  }
+  to {
+    width: 100%;
+  }
+}
+
 /* #1 Admin telefon-öncelikli: içerik (nav hariç) butonları rahat dokunma
    hedefi (≥44px). Nav sticky çubuk kasıtlı kompakt kalır. */
 .admin-kok main button,

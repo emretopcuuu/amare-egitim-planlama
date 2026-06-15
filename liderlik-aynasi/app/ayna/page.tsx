@@ -9,6 +9,7 @@ import { tr } from "@/lib/i18n/tr";
 import Konfeti from "@/components/Konfeti";
 import KristalPortre from "./KristalPortre";
 import RaporKaydet from "./RaporKaydet";
+import AynaHikaye, { type Slayt } from "./AynaHikaye";
 import AynaBekleme from "./AynaBekleme";
 import ArketipKarti from "./ArketipKarti";
 import KelimeKarti from "./KelimeKarti";
@@ -95,6 +96,120 @@ export default async function AynaPage() {
     rapor.gercekTopId !== null &&
     rapor.tahmin.topId === rapor.gercekTopId;
 
+  // #3 Story slaytları — en kritik içgörüler (kör nokta doruk noktası)
+  const slaytlar: Slayt[] = [
+    {
+      ikon: "🪞",
+      ust: t.hikayeUstAcilis,
+      baslik: t.hikayeAcilis(session.ad),
+      metin: t.hikayeAcilisMetin(verdigiPuan ?? 0),
+      tema: "gold",
+    },
+  ];
+  if (rapor.guclu[0])
+    slaytlar.push({
+      ikon: "✨",
+      ust: t.gucluBaslik,
+      baslik: rapor.guclu[0].ad,
+      metin: t.hikayeGucluMetin,
+      liste: rapor.guclu.slice(0, 3).map((s) => s.ad),
+      tema: "emerald",
+    });
+  if (rapor.gizliGuc)
+    slaytlar.push({
+      ikon: "💎",
+      ust: t.gizliGucBaslik,
+      baslik: rapor.gizliGuc.ad,
+      metin: t.hikayeGizliMetin,
+      tema: "emerald",
+    });
+  if (rapor.korNokta)
+    slaytlar.push({
+      ikon: "👁",
+      ust: t.korNoktaBaslik,
+      baslik: rapor.korNokta.ad,
+      metin: t.korNoktaAciklama(rapor.korNokta.ad),
+      tema: "amber",
+    });
+  slaytlar.push({
+    ikon: arketip.simge,
+    ust: tr.arketip.raporBaslik,
+    baslik: arketip.ad,
+    metin: arketip.ozet,
+    tema: "gold",
+  });
+  if (rapor.enGelisen)
+    slaytlar.push({
+      ikon: "🚀",
+      ust: t.hikayeBaslik,
+      baslik: t.hikayeYolculukBaslik,
+      metin: t.hikayeGelisen(rapor.enGelisen.ad, rapor.enGelisen.fark.toFixed(1)),
+      tema: "royal",
+    });
+  if ((takdirler ?? []).length > 0)
+    slaytlar.push({
+      ikon: "💛",
+      ust: tr.takdir.gelenlerBaslik,
+      baslik: t.hikayeTakdirBaslik((takdirler ?? []).length),
+      metin: `“${takdirler![0].message}”`,
+      tema: "gold",
+    });
+  slaytlar.push({
+    ikon: "🌟",
+    ust: "",
+    baslik: t.hikayeKapanis,
+    metin: t.hikayeKapanisMetin,
+    tema: "gold",
+  });
+
+  // #4 Ayna Filmi — kutlama/yolculuk odaklı (başarı), paylaşılabilir kapanış
+  const filmSlaytlar: Slayt[] = [
+    {
+      ikon: "🎬",
+      ust: t.filmUst,
+      baslik: t.filmAcilis(session.ad),
+      metin: t.filmAcilisMetin,
+      tema: "gold",
+    },
+  ];
+  if (rapor.gorev.tamamlanan > 0)
+    filmSlaytlar.push({
+      ikon: "🎯",
+      ust: t.filmGorevUst,
+      baslik: t.filmGorev(rapor.gorev.tamamlanan),
+      metin: t.filmGorevMetin,
+      tema: "emerald",
+    });
+  filmSlaytlar.push({
+    ikon: "⚡",
+    ust: t.filmKivilcimUst,
+    baslik: t.filmKivilcim(rapor.gorev.kivilcim),
+    metin: t.filmKivilcimMetin(unvanBul(rapor.gorev.kivilcim).mevcut.ad),
+    tema: "gold",
+  });
+  if ((takdirler ?? []).length > 0)
+    filmSlaytlar.push({
+      ikon: "💛",
+      ust: t.filmTakdirUst,
+      baslik: t.filmTakdir((takdirler ?? []).length),
+      metin: t.filmTakdirMetin,
+      tema: "gold",
+    });
+  filmSlaytlar.push({
+    ikon: arketip.simge,
+    ust: t.filmKimlikUst,
+    baslik: arketip.ad,
+    metin: t.filmKimlikMetin,
+    tema: "royal",
+  });
+  filmSlaytlar.push({
+    ikon: "🌟",
+    ust: "",
+    baslik: t.filmKapanis,
+    metin: t.filmKapanisMetin,
+    tema: "gold",
+  });
+
   return (
     <main className="flex min-h-dvh flex-col overflow-x-hidden overflow-y-auto">
       <Konfeti anahtar="kutlama-ayna" />
@@ -112,6 +227,9 @@ export default async function AynaPage() {
         </p>
         <div className="mt-4">
           <RaporKaydet />
+        </div>
+        <div className="yazdir-gizle mt-3">
+          <AynaHikaye slaytlar={slaytlar} />
         </div>
       </header>
 
@@ -433,6 +551,15 @@ export default async function AynaPage() {
           <SesCal url={sozSesUrl} etiket={tr.soz.dinle} />
         </section>
       )}
+
+      {/* #4 Ayna Filmi — kutlama kapanışı */}
+      <section className="yazdir-gizle kart-cam rounded-2xl bg-gradient-to-br from-gold/10 to-midnight-card/60 p-5 text-center shadow-xl ring-1 ring-gold/30 backdrop-blur">
+        <h2 className="font-semibold text-gold-light">{t.filmBaslik}</h2>
+        <p className="mt-1 text-xs text-slate-400">{t.filmAciklama}</p>
+        <div className="mt-3">
+          <AynaHikaye slaytlar={filmSlaytlar} etiket={`🎬 ${t.filmIzle}`} />
+        </div>
+      </section>
 
       <p className="yazdir-gizle pb-4 text-center">
         <Link

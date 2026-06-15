@@ -15,6 +15,7 @@ import YolculukSeridi from "@/components/YolculukSeridi";
 import KonusanYansima from "@/components/KonusanYansima";
 import SicakAdim from "@/components/SicakAdim";
 import UstMenu from "@/components/UstMenu";
+import ToplulukNabzi from "@/components/ToplulukNabzi";
 
 const t = tr.anaSayfa;
 
@@ -254,6 +255,8 @@ export default async function AnaSayfa({
       </header>
       {/* #5 "Sen neredesin" — kampın neresindeyiz şeridi */}
       <YolculukSeridi bugun={bugunIst} />
+      {/* Topluluk nabzı — yalnız değilsin hissi */}
+      <ToplulukNabzi />
     </div>
   );
 

@@ -1,5 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { katilimciyaBildir } from "@/lib/push";
 import { tr } from "@/lib/i18n/tr";
 
 const MESAJ_MAX = 280;
@@ -46,6 +47,18 @@ export async function POST(req: Request) {
   });
   if (error) {
     return Response.json({ hata: tr.takdir.hata }, { status: 500 });
+  }
+  // Takdir alan kişiye bildirim — geri gelmesi + "vav" için.
+  try {
+    await katilimciyaBildir(
+      db,
+      hedefId,
+      tr.takdir.bildirimBaslik,
+      tr.takdir.bildirimMetin(session.ad),
+      "/takdir"
+    );
+  } catch {
+    // push yapılandırılmamış olabilir — takdir yine de kaydedildi
   }
   return Response.json({ ok: true });
 }

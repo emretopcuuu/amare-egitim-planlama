@@ -7,6 +7,8 @@ import { raporlarGorunurMu } from "@/lib/rapor";
 import { adminOnerisi } from "@/lib/adminAsistan";
 import { adminUyarilari } from "@/lib/adminUyarilar";
 import { tr } from "@/lib/i18n/tr";
+import { kampGunu, KAMP_GUNLERI } from "@/lib/kampProgrami";
+import GunZamanTuneli from "./GunZamanTuneli";
 import DalgaKontrol from "./DalgaKontrol";
 import AynaAniKontrol from "./AynaAniKontrol";
 import DavetKontrol from "./DavetKontrol";
@@ -155,6 +157,19 @@ export default async function AdminPanel() {
   const bugun = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
   }).format(new Date());
+
+  // #6 Zaman tüneli aktif konumu: rapor > açık dalga > kamp günü > tarih
+  const kampGun = kampGunu(bugun);
+  const sonKampGun = KAMP_GUNLERI[KAMP_GUNLERI.length - 1];
+  const zamanIndex = raporlarAcik
+    ? 4
+    : acikDalga
+      ? acikDalga.id
+      : kampGun
+        ? kampGun
+        : bugun > sonKampGun
+          ? 5
+          : 0;
   const oneri = adminOnerisi({
     bugun,
     katilimciSayisi: katilimciSayisi ?? 0,
@@ -188,6 +203,8 @@ export default async function AdminPanel() {
         </div>
         <OtoYenile />
       </div>
+
+      <GunZamanTuneli aktifIndex={zamanIndex} />
 
       {!tamYetki && (
         <p className="rounded-xl border border-royal-light/40 bg-royal/15 px-4 py-3 text-sm font-medium text-slate-100">

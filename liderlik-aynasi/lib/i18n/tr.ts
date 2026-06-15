@@ -233,8 +233,17 @@ export const tr = {
     hataSayi: "Lütfen geçerli sayılar gir — Ağustos görüşme en az 100 olmalı.",
   },
   // Fotoğraf anı duvarı: an yakala → moderasyon → ortak duvar + büyük ekran
+  // #5 Topluluk nabzı (ambient kolektif aktivite)
+  nabiz: {
+    gorevde: (n: number) => `👁 Şu an ${n} kişi görev başında`,
+    red: (n: number) => `🎉 Bugün ${n} 'Hayır' kutlandı`,
+    takdir: (n: number) => `💛 Bugün ${n} takdir paylaşıldı`,
+  },
   duvar: {
     baslik: "📸 Anı Duvarı",
+    yorumYok: "İlk yorumu sen yaz.",
+    yorumYer: "Bir yorum yaz…",
+    yorumGonder: "Gönder",
     altBaslik:
       "Kamptan bir an yakala, paylaş. Onaylandıktan sonra duvarda ve büyük ekranda belirir.",
     yukle: "📷 Fotoğraf Çek / Seç",
@@ -314,6 +323,8 @@ export const tr = {
   // Takdir Duvarı: puandan farklı, daima isimli ve olumlu — insana kısa not
   takdir: {
     baslik: "💛 Takdir Duvarı",
+    bildirimBaslik: "💛 Yeni bir takdir",
+    bildirimMetin: (ad: string) => `${ad} sana güzel bir şey yazdı — Takdir Duvarı'na bak.`,
     altBaslik:
       "Birinin bir davranışı seni etkilediyse, ona kısa bir not bırak. İsmin görünür — bu güzel.",
     gonderBaslik: "Takdir Gönder",
@@ -933,6 +944,16 @@ export const tr = {
       yanitEtiket: "Yanıtı",
       gizliAdim: "kim olduğu gizli",
     },
+    // #6 Kamp zaman tüneli (panel tepesi)
+    zamanTuneli: {
+      baslik: "Kamp Zaman Tüneli",
+      hazirlik: "Hazırlık",
+      gun1: "Gün 1",
+      gun2: "Gün 2",
+      gun3: "Gün 3",
+      kapanis: "Kapanış",
+      saha: "Saha",
+    },
     // Görev Türü Stüdyosu: admin türleri açıp kapatır
     gorevTuru: {
       baslik: "Görev Türü Stüdyosu",
@@ -1349,6 +1370,13 @@ export const tr = {
           "NE: AYNA görevleri sabit listeden değil, 6 türde (gözlem, cesaret, yansıma, gizli, tahmin, simülasyon) her kişiye özel canlı üretir.",
           "KAPATINCA NE OLUR: Bir türün anahtarını kapatıp 'Kaydet' dersen AYNA program boyunca o türde görev ÜRETMEZ (ör. simülasyon istemiyorsan kapat).",
           "NE ZAMAN: Program öncesi bir kez ayarla. En az bir tür açık kalmalı (hepsi kapatılamaz). Her türün altında örnek görev metni var.",
+        ],
+      },
+      zamanTuneli: {
+        baslik: "Kamp Zaman Tüneli",
+        metin: [
+          "NE: Panelin tepesinde 'şu an neredeyiz' çizgisi — Hazırlık → Gün 1/2/3 → Kapanış → Saha. Altın yanan adım o anki konum, yeşil ✓ geçilenler.",
+          "NASIL: Raporlar açıksa Kapanış; bir dalga açıksa o gün; değilse takvim gününe göre belirlenir. Dalga açma / rapor açma gibi hamlelerde otomatik ilerler.",
         ],
       },
     },
@@ -1885,6 +1913,39 @@ export const tr = {
     hikayeGelisen: (ozellik: string, fark: string) =>
       `En çok yükselen özelliğin: ${ozellik} (+${fark} puan). Kamp seni değiştirdi — ve insanlar bunu fark etti.`,
     hikayeDalgaOzet: (ort: string) => `Genel ortalama: ${ort}`,
+    // #3 Story katmanı
+    hikayeIzle: "Hikâye olarak izle",
+    hikayeUstAcilis: "AYNA RAPORU",
+    hikayeAcilis: (ad: string) => `${ad}, aynan hazır`,
+    hikayeAcilisMetin: (n: number) =>
+      `Üç gün seni izledik; sen de ${n} kez başkalarını gözledin. İşte gerçek yansıman.`,
+    hikayeGucluMetin: "Başkalarının gözünde en parlak yanın bu.",
+    hikayeGizliMetin:
+      "Kendine az verdin ama başkaları çok gördü — sandığından güçlüsün.",
+    hikayeYolculukBaslik: "Nereden nereye",
+    hikayeTakdirBaslik: (n: number) => `${n} kişi sana güzel şeyler yazdı`,
+    hikayeKapanis: "İşte sen.",
+    hikayeKapanisMetin: "Bu yansıma senin. Aşağıda her detayı seni bekliyor.",
+    // #4 Ayna Filmi (kutlama/yolculuk)
+    filmBaslik: "🎬 Ayna Filmin",
+    filmAciklama: "Yolculuğunun kısa filmi — izle, ekran kaydı al, paylaş.",
+    filmIzle: "Ayna Filmini izle",
+    filmUst: "AYNA FİLMİ",
+    filmAcilis: (ad: string) => `${ad}'in yolculuğu`,
+    filmAcilisMetin: "Üç gün. Bir dönüşüm. İşte filmi.",
+    filmGorevUst: "GÖREVLER",
+    filmGorev: (n: number) => `${n} görev tamamladın`,
+    filmGorevMetin: "AYNA ile birlikte, adım adım.",
+    filmKivilcimUst: "KIVILCIM",
+    filmKivilcim: (n: number) => `${n} ⚡`,
+    filmKivilcimMetin: (unvan: string) => `Unvanın: ${unvan}`,
+    filmTakdirUst: "TAKDİR",
+    filmTakdir: (n: number) => `${n} kişi seni takdir etti`,
+    filmTakdirMetin: "İnsanlar seni gördü ve sevdi.",
+    filmKimlikUst: "KİMLİĞİN",
+    filmKimlikMetin: "Senin liderlik arketibin bu.",
+    filmKapanis: "Yolculuğun devam ediyor.",
+    filmKapanisMetin: "Bu film senin. Ekran kaydı al, paylaş, hatırla.",
     yorumlarBaslik: "💬 Sana Yazılanlar",
     yorumlarAciklama: "Düşük puanların yanına bırakılan isimsiz gözlemler.",
     yorumYok: "Sana yazılmış yorum yok — puanların konuşuyor.",

@@ -147,6 +147,62 @@ export type Database = {
         }
         Relationships: []
       }
+      foto_begeni: {
+        Row: {
+          created_at: string
+          id: string
+          participant_id: string
+          photo_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          participant_id: string
+          photo_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          participant_id?: string
+          photo_id?: string
+        }
+        Relationships: []
+      }
+      foto_yorum: {
+        Row: {
+          created_at: string
+          id: string
+          is_hidden: boolean
+          participant_id: string
+          photo_id: string
+          yorum: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_hidden?: boolean
+          participant_id: string
+          photo_id: string
+          yorum: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_hidden?: boolean
+          participant_id?: string
+          photo_id?: string
+          yorum?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "foto_yorum_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       churn_radar: {
         Row: {
           admin_alerted_at: string | null
