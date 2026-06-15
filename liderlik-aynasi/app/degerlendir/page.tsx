@@ -95,6 +95,14 @@ export default async function DegerlendirPage() {
   const atananIdler = new Set(atamalar.map((a) => a.target.id));
   const serbestler = katilimcilar.filter((k) => !atananIdler.has(k.id));
 
+  // #8 Birincil eylem hiyerarşisi: o an yapılacak TEK kart vurgulanır.
+  // Sıra: öz-puan eksik → öz; tamamsa ve atananlar eksik → atananlar.
+  const atananEksik = atamalar.some(
+    (a) => (puanSayilari.get(a.target.id) ?? 0) < toplam
+  );
+  const ozBirincil = !ozTamam;
+  const atananBirincil = ozTamam && atananEksik;
+
   // Avatar fotoğrafları: tüm hedeflerin profil_foto_path'lerini tek seferde imzala.
   const fotoKayit: { id: string; path: string }[] = [];
   if (kendiFoto?.profil_foto_path)
@@ -136,7 +144,16 @@ export default async function DegerlendirPage() {
       </header>
 
       {/* Öz-puan kapısı */}
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section
+        className={`kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl backdrop-blur ${
+          ozBirincil ? "parilti ring-2 ring-gold/60" : "ring-1 ring-royal/30"
+        }`}
+      >
+        {ozBirincil && (
+          <p className="mb-2 inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-bold tracking-wide text-gold-light">
+            {tr.degerlendir.simdiSira}
+          </p>
+        )}
         <h2 className="text-lg font-semibold text-gold-light">
           {ozTamam ? tr.degerlendir.ozTamamlandi : tr.degerlendir.ozBaslik}
         </h2>
@@ -155,7 +172,16 @@ export default async function DegerlendirPage() {
       </section>
 
       {/* Atanan kişiler */}
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section
+        className={`kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl backdrop-blur ${
+          atananBirincil ? "parilti ring-2 ring-gold/60" : "ring-1 ring-royal/30"
+        }`}
+      >
+        {atananBirincil && (
+          <p className="mb-2 inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-bold tracking-wide text-gold-light">
+            {tr.degerlendir.simdiSira}
+          </p>
+        )}
         <h2 className="text-lg font-semibold text-gold-light">
           {tr.degerlendir.atananBaslik}
         </h2>
