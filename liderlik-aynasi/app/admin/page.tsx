@@ -32,6 +32,7 @@ import Katlanir from "./Katlanir";
 import AltAksiyonCubugu from "./AltAksiyonCubugu";
 import FazSifirKontrol from "./FazSifirKontrol";
 import BoslukKontrol from "./BoslukKontrol";
+import MuhurKontrol from "./MuhurKontrol";
 import OdevPaketi from "./OdevPaketi";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
@@ -411,6 +412,15 @@ export default async function AdminPanel() {
               <Ipucu {...tr.admin.yardim.fazBir} />
             </h3>
             <BoslukKontrol />
+          </div>
+
+          {/* A2 — Mühür Açılışı (kamp sonu before/after sesli reveal) */}
+          <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+              {tr.admin.muhur.baslik}
+              <Ipucu {...tr.admin.yardim.muhur} />
+            </h3>
+            <MuhurKontrol />
           </div>
         </section>
       )}

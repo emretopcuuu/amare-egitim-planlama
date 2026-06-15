@@ -4,9 +4,11 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { raporHesapla, raporlarGorunurMu } from "@/lib/rapor";
 import { arketipBul } from "@/lib/arketip";
+import { muhurAcikMi, donusumAdlandir } from "@/lib/muhur";
 import { unvanBul } from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
 import Konfeti from "@/components/Konfeti";
+import MuhurAcilis from "@/components/MuhurAcilis";
 import KristalPortre from "./KristalPortre";
 import RaporKaydet from "./RaporKaydet";
 import AynaHikaye, { type Slayt } from "./AynaHikaye";
@@ -47,7 +49,7 @@ export default async function AynaPage() {
     .select("id", { count: "exact", head: true })
     .eq("rater_id", session.sub);
 
-  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }] =
+  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik] =
     await Promise.all([
       db
         .from("mirror_letters")
@@ -56,7 +58,7 @@ export default async function AynaPage() {
         .maybeSingle(),
       db
         .from("voice_profiles")
-        .select("soz_path, video_status, video_path")
+        .select("soz_path, video_status, video_path, sample_path, beklenti")
         .eq("participant_id", session.sub)
         .maybeSingle(),
       db
@@ -65,7 +67,19 @@ export default async function AynaPage() {
         .eq("to_id", session.sub)
         .eq("is_hidden", false)
         .order("created_at", { ascending: false }),
+      muhurAcikMi(db),
     ]);
+
+  // A2 Mühür Açılışı: kamp sonu before/after. Onboarding'de mühürlenen söz
+  // (kendi sesi + yazısı) açılır; "kampa ___ geldin, ___ dönüyorsun" adlandırması.
+  const donusum = donusumAdlandir(rapor.satirlar);
+  let muhurSesUrl: string | null = null;
+  if (muhurAcik && sesProfili?.sample_path) {
+    const { data: imzali } = await db.storage
+      .from("sesler")
+      .createSignedUrl(sesProfili.sample_path, 3600);
+    muhurSesUrl = imzali?.signedUrl ?? null;
+  }
 
   // YANSIMAN sesleri: kısa ömürlü imzalı URL'ler (özel bucket)
   let mektupSesUrl: string | null = null;
@@ -212,6 +226,14 @@ export default async function AynaPage() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-x-hidden overflow-y-auto">
+      <MuhurAcilis
+        aktif={muhurAcik}
+        sesUrl={muhurSesUrl}
+        beklenti={sesProfili?.beklenti ?? null}
+        gelis={donusum.gelis.ad}
+        donus={donusum.donus.ad}
+        ayni={donusum.ayni}
+      />
       <Konfeti anahtar="kutlama-ayna" />
       <div className="yazdirilabilir sahne-giris mx-auto my-auto w-full max-w-md space-y-6 p-5">
       <header className="ayna-acilis text-center">

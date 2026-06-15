@@ -70,6 +70,19 @@ function DevButon({
   );
 }
 
+// A1 Mühür rozeti: ritüel kapanışında, kişinin beklenti sözünün "kampın sonunda
+// açılmak üzere" mühürlendiğini hissettiren küçük, kutsal teyit.
+function MuhurRozet() {
+  return (
+    <div className="mt-8 rounded-2xl border border-gold/30 bg-gold/[0.06] px-5 py-4 text-center">
+      <p className="text-xs font-bold uppercase tracking-[0.25em] text-gold-light">
+        {t.muhurUst}
+      </p>
+      <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.muhurMetin}</p>
+    </div>
+  );
+}
+
 export default function AynaRituel() {
   const [asama, setAsama] = useState<Asama>("giris");
   const [sayac, setSayac] = useState(0);
@@ -447,6 +460,7 @@ export default function AynaRituel() {
             <h1 className="prizma-serif ay-metin mt-6 text-3xl font-semibold leading-tight">
               {t.soru}
             </h1>
+            <p className="mt-3 text-base leading-relaxed text-slate-300">{t.soruAlt}</p>
             <textarea
               value={beklenti}
               onChange={(e) => setBeklenti(e.target.value.slice(0, 300))}
@@ -520,6 +534,7 @@ export default function AynaRituel() {
                 <p className="prizma-serif ay-metin text-3xl font-semibold leading-snug">
                   {t.seninle}
                 </p>
+                <MuhurRozet />
                 <div className="mt-10">
                   <DevButon onClick={() => setAsama("kapandi")}>{t.kapat}</DevButon>
                 </div>
@@ -531,6 +546,7 @@ export default function AynaRituel() {
         {asama === "sonra" && (
           <div className="text-center">
             <p className="text-2xl leading-relaxed text-slate-100">{t.sonra}</p>
+            <MuhurRozet />
             <div className="mt-10">
               <DevButon onClick={() => setAsama("kapandi")}>{t.kapat}</DevButon>
             </div>
