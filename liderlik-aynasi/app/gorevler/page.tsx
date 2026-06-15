@@ -12,6 +12,7 @@ import GorevYanitFormu from "./GorevYanitFormu";
 import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
 import GunlukCheckin from "@/components/GunlukCheckin";
+import BosDurum from "@/components/BosDurum";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -154,9 +155,7 @@ export default async function GorevlerPage() {
 
       {/* Aktif görev(ler) */}
       {aktif.length === 0 ? (
-        <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 text-center ring-1 ring-royal/30 backdrop-blur">
-          <p className="text-sm text-slate-300">{t.aktifYok}</p>
-        </section>
+        <BosDurum simge="👁" baslik={t.aktifYokBaslik} metin={t.aktifYok} />
       ) : (
         aktif.map((g) => (
           <section

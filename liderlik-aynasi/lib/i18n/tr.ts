@@ -257,6 +257,8 @@ export const tr = {
     linkRapor: "Ayna Raporum",
     linkGorevler: "Görevler",
     linkTakdir: "Takdir Duvarı",
+    kartBaslik: "📤 Profil Kartın",
+    kartAciklama: "İndir ya da paylaş — kıvılcımını göster.",
   },
   duvar: {
     baslik: "📸 Anı Duvarı",
@@ -1811,7 +1813,8 @@ export const tr = {
       "Tam zamanında. Şu anda onlarca kişi seninle aynı şeyi yaptı — kolektif enerji böyle kurulur. +8 ⚡",
     momentumSatiri: (skor: number) => `📈 Momentum: ${skor}/100`,
     altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
-    aktifYok: "Şu an aktif görevin yok. AYNA seni izliyor — yenisi her an gelebilir. 👁",
+    aktifYokBaslik: "Şu an görevin yok",
+    aktifYok: "AYNA seni izliyor — yeni bir görev her an gelebilir.",
     sonTarih: (saat: string) => `Son: ${saat}`,
     suresiGecti: "Süresi geçti",
     yanitEtiket: "Yanıtın",
