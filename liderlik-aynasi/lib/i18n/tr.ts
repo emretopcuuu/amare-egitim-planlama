@@ -6,7 +6,7 @@ export const tr = {
   },
   // Görünür internet kalkanı: aday "verim kayboldu mu?" korkusu yaşamasın
   baglanti: {
-    cevrimdisi: "İnternet yok — verilerin cihazında güvende. Bağlanınca kendiliğinden gönderilir.",
+    cevrimdisi: "İnternet yok — verilerin bu cihazda güvende. Bağlanınca otomatik gönderilecek.",
     geriGeldi: "İnternet geri geldi ✓",
   },
   // İnsanca hata & boş durumlar: asla teknik metin / boş ekran (#6)
@@ -260,11 +260,19 @@ export const tr = {
     kartBaslik: "📤 Profil Kartın",
     kartAciklama: "İndir ya da paylaş — kıvılcımını göster.",
   },
+  // #6 Milestone kutlamaları
+  kutlama: {
+    terfiUst: "YENİ UNVAN",
+    terfi: (u: string) => `${u} oldun!`,
+    terfiMetin: "Kıvılcımların seni yükseltti. Yoluna devam et.",
+    devam: "Devam",
+  },
   duvar: {
     baslik: "📸 Anı Duvarı",
     yorumYok: "İlk yorumu sen yaz.",
     yorumYer: "Bir yorum yaz…",
     yorumGonder: "Gönder",
+    ipucuDuvar: "Bir fotoğrafa dokun → beğen ve yorum yap.",
     altBaslik:
       "Kamptan bir an yakala, paylaş. Onaylandıktan sonra duvarda ve büyük ekranda belirir.",
     yukle: "📷 Fotoğraf Çek / Seç",
@@ -440,6 +448,8 @@ export const tr = {
     basla: "Başla",
     duzenle: "Düzenle",
     ilerleme: (yapilan: number, toplam: number) => `${yapilan}/${toplam} özellik`,
+    // #8 Birincil eylem hiyerarşisi: o an yapılacak tek şeyi vurgula
+    simdiSira: "👉 ŞİMDİ SIRADA",
   },
   puanlama: {
     geri: "Geri",
@@ -464,7 +474,8 @@ export const tr = {
     hataCevrimdisi:
       "Bağlantı sorunu — puanların bu cihazda saklandı. İnternet gelince tekrar Gönder'e bas.",
     // Çevrimdışıyken gönderim: aday beklesin, bağlanınca kendiliğinden göndereceğiz
-    cevrimdisiBekliyor: "📶 Bağlantı bekleniyor — internet gelince puanların kendiliğinden gönderilecek.",
+    cevrimdisiBekliyor:
+      "📶 Bağlantı bekleniyor — puanların bu cihazda güvende. İnternet gelince otomatik gönderilecek.",
     // Her dokunuşta görünür güvence (#4) ve özet ekranında huzur cümlesi
     kaydedildi: "✓ Kaydedildi",
     hepsiKaydedildi: "Hepsi cihazına kaydedildi — istediğini değiştirebilirsin.",
@@ -1815,6 +1826,12 @@ export const tr = {
     altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
     aktifYokBaslik: "Şu an görevin yok",
     aktifYok: "AYNA seni izliyor — yeni bir görev her an gelebilir.",
+    // #4 Günün özeti: gün sonu kapanış kartı
+    bugunBaslik: "🌅 Bugünün Özeti",
+    bugunOzet: (gorev: number, kivilcim: number, takdir: number) =>
+      `🎯 ${gorev} görev tamamladın · +${kivilcim} ⚡${
+        takdir > 0 ? ` · 💛 ${takdir} takdir aldın` : ""
+      }`,
     sonTarih: (saat: string) => `Son: ${saat}`,
     suresiGecti: "Süresi geçti",
     yanitEtiket: "Yanıtın",
@@ -2087,7 +2104,7 @@ export const tr = {
     // Çevrimdışı dayanıklılık: kaydı kaybetme, bağlantı gelince otomatik gönder
     baglantiBekliyorBaslik: "🔌 Bağlantı bekleniyor",
     baglantiBekliyorMetin:
-      "Kaydın güvende — kaybolmadı. İnternet gelir gelmez aynaya kendim göndereceğim.",
+      "Kaydın bu cihazda güvende — kaybolmadı. İnternet gelince otomatik gönderilecek.",
     baglantiTekrar: "Şimdi tekrar dene",
     mikrofonYok: "Mikrofona erişilemedi. Tarayıcı izinlerini kontrol et.",
     kapat: "Kapat",

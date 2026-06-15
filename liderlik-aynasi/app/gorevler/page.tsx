@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { kampKilitliMi } from "@/lib/pusula";
 import { aktifOzellikler } from "@/lib/degerlendirme";
-import { unvanBul } from "@/lib/kivilcim";
+import { unvanBul, UNVANLAR } from "@/lib/kivilcim";
 import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
 import { tr } from "@/lib/i18n/tr";
@@ -13,6 +13,8 @@ import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
 import GunlukCheckin from "@/components/GunlukCheckin";
 import BosDurum from "@/components/BosDurum";
+import GorevSayac from "./GorevSayac";
+import UnvanKutlama from "@/components/UnvanKutlama";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -28,14 +30,6 @@ const TUR_RENK: Record<string, string> = {
   soz: "bg-gold/20 text-gold-light",
 };
 
-function saatYaz(iso: string): string {
-  return new Intl.DateTimeFormat("tr-TR", {
-    timeZone: "Europe/Istanbul",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(iso));
-}
-
 export default async function GorevlerPage() {
   const session = await getSession();
   if (!session) redirect("/giris");
@@ -47,7 +41,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, due_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -78,12 +72,14 @@ export default async function GorevlerPage() {
     .filter((g) => g.status === "scored")
     .reduce((top, g) => top + g.spark_points, 0);
   const unvan = unvanBul(toplamKivilcim);
+  const unvanSeviye = UNVANLAR.findIndex((u) => u.ad === unvan.mevcut.ad);
 
   // #5 Günlük check-in: bugün yapıldı mı + özellik seçenekleri
   const bugun = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
   }).format(new Date());
-  const [ozellikler, { data: checkin }] = await Promise.all([
+  const bugunBas = new Date(`${bugun}T00:00:00+03:00`).toISOString();
+  const [ozellikler, { data: checkin }, { count: bugunTakdir }] = await Promise.all([
     aktifOzellikler(db),
     db
       .from("gunluk_checkin")
@@ -91,11 +87,26 @@ export default async function GorevlerPage() {
       .eq("participant_id", session.sub)
       .eq("tarih", bugun)
       .maybeSingle(),
+    db
+      .from("kudos")
+      .select("id", { count: "exact", head: true })
+      .eq("to_id", session.sub)
+      .gte("created_at", bugunBas),
   ]);
+
+  // #4 Bugünün özeti
+  const bugunScored = (gorevler ?? []).filter(
+    (g) => g.status === "scored" && g.scored_at && g.scored_at >= bugunBas
+  );
+  const bugunGorev = bugunScored.length;
+  const bugunKivilcim = bugunScored.reduce((t, g) => t + (g.spark_points ?? 0), 0);
+  const bugunTakdirSayi = bugunTakdir ?? 0;
+  const ozetVar = bugunGorev > 0 || bugunTakdirSayi > 0;
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-6 p-5">
+      <UnvanKutlama unvan={unvan.mevcut.ad} seviye={unvanSeviye} />
       <header className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
@@ -147,6 +158,18 @@ export default async function GorevlerPage() {
         )}
       </section>
 
+      {/* #4 Bugünün özeti — gün sonu kapanış kartı */}
+      {ozetVar && (
+        <section className="rounded-2xl bg-gradient-to-r from-emerald-500/10 to-midnight-card/60 p-4 ring-1 ring-emerald-400/20">
+          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">
+            {t.bugunBaslik}
+          </p>
+          <p className="mt-1 text-sm text-slate-200">
+            {t.bugunOzet(bugunGorev, bugunKivilcim, bugunTakdirSayi)}
+          </p>
+        </section>
+      )}
+
       {/* #5 Günün Aynası — günlük mikro check-in */}
       <GunlukCheckin
         ozellikler={ozellikler.map((o) => ({ id: o.id, ad: o.name }))}
@@ -157,21 +180,24 @@ export default async function GorevlerPage() {
       {aktif.length === 0 ? (
         <BosDurum simge="👁" baslik={t.aktifYokBaslik} metin={t.aktifYok} />
       ) : (
-        aktif.map((g) => (
+        aktif.map((g, i) => (
           <section
             key={g.id}
             className="altin-nabiz relative overflow-hidden kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/40 backdrop-blur"
           >
             <span className="altin-tel" />
+            {i === 0 && (
+              <p className="mb-2 inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-bold tracking-wide text-gold-light">
+                {tr.degerlendir.simdiSira}
+              </p>
+            )}
             <div className="flex items-center justify-between text-xs">
               <span
                 className={`rounded-md px-2 py-0.5 font-medium ${TUR_RENK[g.kind] ?? "bg-royal/30 text-royal-light"}`}
               >
                 {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
               </span>
-              <span className="font-medium text-amber-400">
-                ⏳ {t.sonTarih(saatYaz(g.due_at))}
-              </span>
+              <GorevSayac baslangic={g.issued_at} bitis={g.due_at} />
             </div>
             <p className="mt-2 text-sm font-semibold text-sky-200">
               {ZORLUK_ETIKETI[(g.difficulty as Zorluk) ?? 2]}

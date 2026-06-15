@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { tr } from "@/lib/i18n/tr";
+import { useEsc } from "@/lib/useEsc";
 
 const t = tr.ayna;
 const SURE = 6000;
@@ -34,6 +35,7 @@ export default function AynaHikaye({
 }) {
   const [acik, setAcik] = useState(false);
   const [i, setI] = useState(0);
+  useEsc(acik, () => setAcik(false));
 
   useEffect(() => {
     if (!acik || i >= slaytlar.length - 1) return;
@@ -67,7 +69,11 @@ export default function AynaHikaye({
       {acik &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-[80] flex flex-col bg-midnight">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-[80] flex flex-col bg-midnight"
+          >
             {/* İlerleme çubukları */}
             <div className="flex gap-1 p-3">
               {slaytlar.map((_, k) => (

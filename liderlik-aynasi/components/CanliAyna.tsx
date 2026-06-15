@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import { useEsc } from "@/lib/useEsc";
 
 const t = tr.canliAyna;
 
@@ -25,6 +26,7 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const [bitti, setBitti] = useState(varMi);
+  useEsc(acik, () => kapat());
 
   function durdur() {
     akisRef.current?.getTracks().forEach((iz) => iz.stop());
@@ -133,7 +135,11 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
 
   // Tam ekran kamera — transform'lu ata `fixed`'i hapsetmesin diye portal ile body'ye.
   const katman = (
-    <div className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-black px-6 py-8">
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-black px-6 py-8"
+    >
       <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
         {t.ust}
       </p>
