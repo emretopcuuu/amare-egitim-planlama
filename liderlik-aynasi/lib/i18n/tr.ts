@@ -2085,10 +2085,12 @@ export const tr = {
     yeminYonerge: "Aşağıdaki yemini doğal bir sesle, acele etmeden oku:",
     yemin:
       "Ben, bu üç gün boyunca kendime dürüst olmaya söz veriyorum. Gördüğümü açıkça söyleyeceğim, duyduğumu adil tartacağım. Arkadaşlarımı yargılamak için değil, anlamak için izleyeceğim. Zor anlarda kolay olanı değil, doğru olanı seçeceğim. Suya baktığımda yalnızca yüzümü değil, yönümü de göreceğim. Bugün burada başlayan yolculuk, kamptan sonra da benimle gelecek. Hazırım: aynanın karşısına çıkıyorum ve yansımamdan saklanmıyorum.",
-    soru: "Tek cümleyle: bu kamptan ne alıp döneceksin?",
+    soru: "Son bir mühür: geleceğine söz bırak",
+    soruAlt:
+      "Bu kamptan kim olarak döneceksin? Söyleyeceğin sözü bu aynaya mühürleyeceğiz — kampın son anında, bugünü birlikte açacağız.",
     soruNot: "Sesli söyle — yazıya dökülür",
     devam: "Devam",
-    bitir: "Bitir ve dinle",
+    bitir: "Sözümü mühürle",
     inceleBaslik: "Kaydını dinle",
     inceleAciklama: "Sesini beğendin mi? Beğenmediysen tekrar kaydedebilirsin.",
     inceleDinle: "▶ Kaydımı dinle",
@@ -2099,6 +2101,10 @@ export const tr = {
     dinle: "▶ Yansımanı dinle",
     seninle: "Yansıman artık seninle. Su her durulduğunda burada.",
     sonra: "Kaydın aynada saklandı. Yansıman kamp başlarken uyanacak.",
+    // A1 Mühür: beklenti sözü "geleceğe mühürlü mesaj" olarak kapanışta onaylanır
+    muhurUst: "🔒 SÖZÜN MÜHÜRLENDİ",
+    muhurMetin:
+      "Bugün kendine verdiğin sözü bu aynaya kilitledik. Kampın son anında, onu birlikte açacağız — ve ne kadar yol aldığını göreceksin.",
     hata: "Bir şey ters gitti. Tekrar dene.",
     tekrar: "Tekrar dene",
     // Çevrimdışı dayanıklılık: kaydı kaybetme, bağlantı gelince otomatik gönder

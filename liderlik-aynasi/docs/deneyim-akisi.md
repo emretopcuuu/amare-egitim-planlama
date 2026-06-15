@@ -29,7 +29,7 @@ Antropolojide her dönüşüm ritüelinin üç perdesi vardır (van Gennep / Tur
 | Pusula "Nedenler" sohbeti (AI) | Anlam yatırımı: *neden buradayım* | ✅ Mevcut | — |
 | Hazırlık hub: öz-puan · profil foto · Canlı Ayna · bildirim izni | Yatırım + before verisi (öz-skor = "önceki ben") | ✅ Mevcut | — |
 | Geri sayım · kilitli sürprizler · sosyal kanıt · erken-kuş rozeti | Beklenti = mutluluk; merak tohumu | ✅ Mevcut | — |
-| **Ses Ritüeli → "MÜHÜR"**: beklenti kaydını *geleceğe mühürlü mesaj*a çevir | "Bu sesi kampın sonunda birlikte açacağız" → sözleşme + before-self kapsülü | 🆕 **Yeni** | **A** |
+| **Ses Ritüeli → "MÜHÜR"**: beklenti kaydını *geleceğe mühürlü mesaj*a çevir | "Bu sesi kampın sonunda birlikte açacağız" → sözleşme + before-self kapsülü | ✅ **A1 yapıldı** | **A** |
 | Baseline snapshot (öz-skor + tek kelime + foto + ses) tek artefakt | Final before/after reveal'in *sol tarafı* | 🆕 Yeni | **A** |
 | Kamp öncesi "tohum" damlaları (AYNA'dan 1-2 mesaj) | Anticipation drip, kimlik yatırımını besle | 🆕 Opsiyonel | A |
 
@@ -72,6 +72,10 @@ kullanılıp **bir daha geri açılmıyor**. Döngü kapanmıyor — sistemin en
 1. **Hat A — Mühür & Dönüş omurgası** *(önce)*
    En yüksek kaldıraç; altyapısı (ses örneği + beklenti) hazır. Onboarding'i ve dönüşü
    *birlikte* yükseltir. Bitince "vav" anı yerine oturur.
+   - ✅ **A1 — Onboarding mührü:** Ses Ritüeli'nde beklenti adımı "geleceğe mühürlü söz"e
+     çevrildi (DB'siz, geri alınabilir); kapanışta "🔒 SÖZÜN MÜHÜRLENDİ" teyidi.
+   - ⏳ **A2 — Kamp sonu açılışı:** sesli before/after reveal + adlandırma + son ekran
+     (admin bayrağı `muhur_acik`'a bağlı).
 2. **Hat C — Kamp-içi ritüel ritmi**
    Eşik perdesine duygusal yay giydirir; dönüşümü kamp boyunca hissettirir.
 3. **Hat B — Kamp sonrası köprü**
