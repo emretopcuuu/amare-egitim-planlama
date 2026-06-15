@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { useEsc } from "@/lib/useEsc";
 
 // Kişi avatarı: fotoğraf varsa fotoğraf, yoksa ad-soyad baş harfleri (deterministik
 // renk). Üzerine basınca büyük halini açar. Puanlama/seçim ekranlarında kimin kim
@@ -47,6 +48,7 @@ export default function Avatar({
   buyutulebilir?: boolean;
 }) {
   const [acik, setAcik] = useState(false);
+  useEsc(acik, () => setAcik(false));
 
   const ic = url ? (
     // eslint-disable-next-line @next/next/no-img-element

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
+import { useEsc } from "@/lib/useEsc";
 
 const ANAHTAR = "la_karsilama_v1";
 const t = tr.karsilama;
@@ -15,6 +16,7 @@ export default function IlkKarsilama() {
   const pathname = usePathname();
   const [acik, setAcik] = useState(false);
   const [i, setI] = useState(0);
+  useEsc(acik, () => kapat());
 
   useEffect(() => {
     if (pathname !== "/") return;
@@ -37,7 +39,11 @@ export default function IlkKarsilama() {
   const adim = t.adimlar[i];
   const son = i === t.adimlar.length - 1;
   return (
-    <div className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-midnight/95 px-6 text-center backdrop-blur-md">
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-[70] flex flex-col items-center justify-center bg-midnight/95 px-6 text-center backdrop-blur-md"
+    >
       <button
         onClick={kapat}
         className="absolute right-5 top-5 text-sm text-slate-500 hover:text-slate-300"

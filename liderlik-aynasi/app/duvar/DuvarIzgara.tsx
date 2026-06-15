@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
+import { useEsc } from "@/lib/useEsc";
 import Avatar from "@/components/Avatar";
 
 const t = tr.duvar;
@@ -35,6 +36,7 @@ export default function DuvarIzgara({ fotolar }: { fotolar: Foto[] }) {
   const [yukleniyor, setYukleniyor] = useState(false);
 
   const sec = fotolar.find((f) => f.id === secili) ?? null;
+  useEsc(!!secili, () => setSecili(null));
 
   async function ac(id: string) {
     setSecili(id);
@@ -131,7 +133,11 @@ export default function DuvarIzgara({ fotolar }: { fotolar: Foto[] }) {
         sec.url &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-[80] flex flex-col bg-black/90 backdrop-blur">
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-[80] flex flex-col bg-black/90 backdrop-blur"
+          >
             <button
               onClick={() => setSecili(null)}
               className="self-end p-4 text-2xl text-slate-300"
