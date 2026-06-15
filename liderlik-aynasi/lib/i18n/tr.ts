@@ -863,6 +863,21 @@ export const tr = {
           : "✓ Herkesin yeterli kanıtı var",
       hata: "İşlem başarısız, tekrar dene.",
     },
+    // A2 — Mühür Açılışı penceresi (kamp sonu, before/after sesli reveal)
+    muhur: {
+      baslik: "Mühür Açılışı",
+      aciklama:
+        "Kamp sonu zirvesi. Açıkken, raporuna giren katılımcı önce onboarding'de mühürlediği sözü açar: 3 gün önceki kendi sesini dinler ve 'kampa ___ geldin, ___ dönüyorsun' adlandırmasını görür.",
+      pencereAcik: "● Pencere açık — Mühür Açılışı erişimde",
+      pencereKapali: "○ Pencere kapalı",
+      pencereAc: "Mühür Açılışı'nı Aç",
+      pencereKapat: "Pencereyi Kapat",
+      muhurluUyari: (n: number, t: number) =>
+        n < t
+          ? `🔒 ${n}/${t} kişi söz mühürledi — mührü olmayanlar bu anı atlar`
+          : `✓ ${t}/${t} kişinin mühürlü sözü var`,
+      hata: "İşlem başarısız, tekrar dene.",
+    },
     // FAZ 2 — Ödev paketi (kamp sonrası 10/15 gün, Ağustos ödevleri)
     odev: {
       baslik: "Ödev Gönder",
@@ -1136,6 +1151,15 @@ export const tr = {
           "NE: FAZ 1 = kamp içindeki 'Boşluk Anı' çalışması. Katılımcı eski/sınırlayıcı bir cümlesini yeni bir cümleyle değiştirir; derinlik panosunda bunlar birikir.",
           "AÇINCA NE OLUR: Katılımcıların telefonunda Boşluk Anı ekranı çalışır.",
           "NE ZAMAN: Programda bu çalışmaya ayrılan oturumda aç; oturum bitince kapat.",
+        ],
+      },
+      muhur: {
+        baslik: "Mühür Açılışı — kamp sonu before/after",
+        metin: [
+          "NE: Onboarding'de katılımcı kendi sesiyle 'kamptan nasıl döneceğim?' sözünü mühürler. Mühür Açılışı, kamp sonunda o sözü geri açar: kişi 3 gün önceki kendi sesini dinler, yazdığı sözü görür ve 'kampa ___ olarak geldin, ___ olarak dönüyorsun' adlandırmasını alır.",
+          "AÇINCA NE OLUR: Katılımcı Ayna Raporu'na girdiğinde, rapordan ÖNCE tam-ekran Mühür Açılışı çalışır (bir kez). Adlandırma kişinin öz-puanından (geliş) ve başkalarının dış-puanından (dönüş) kural-tabanlı üretilir — vav anı budur.",
+          "ÖN KOŞUL: En güçlü etki için Mühür'ü, raporları (reports_visible) açtığın anda ya da hemen öncesinde aç. Sözünü mühürlememiş (sessiz ayna seçen) kişiler bu anı sorunsuz atlar.",
+          "NE ZAMAN: Kamp kapanışında, Ayna Raporu açılışıyla birlikte aç. Kapatınca yeni girenler için tekrar gizlenir.",
         ],
       },
       kvkk: {
@@ -2066,6 +2090,30 @@ export const tr = {
     sesAcikEtiket: "🔊 Ses açık",
     fiero: (ad: string) => `${ad} AYNAYI PARLATTI`,
     senkronBaslik: "SENKRON AN",
+  },
+  // A2 — Mühür Açılışı: kamp sonunda onboarding'de mühürlenen söz açılır
+  muhur: {
+    kapaliUst: "MÜHÜRLÜ SÖZ",
+    kapaliBaslik: "Üç gün önce buraya bir söz bıraktın",
+    kapaliMetin:
+      "Kampa gelirken, kendi sesinle geleceğine bir söz mühürledin. Onu birlikte açmanın vakti geldi.",
+    ac: "🔒 Mührü aç",
+    sesUst: "ÜÇ GÜN ÖNCE — KENDİ SESİN",
+    sesBaslik: "İşte o an",
+    sesMetin:
+      "Bu, kampa gelirken kendine verdiğin sözdü. Dinle — ve ne kadar yol aldığını hisset.",
+    sozDinle: "▶ Sözünü dinle",
+    sozDurdur: "■ Durdur",
+    yaziUst: "MÜHÜRLEDİĞİN SÖZ",
+    devam: "Devam",
+    adUst: "DÖNÜŞÜMÜN",
+    adGeldin: (a: string) => `Kampa “${a}” olarak geldin.`,
+    adDonuyorsun: (a: string) => `“${a}” olarak dönüyorsun.`,
+    adAyni: (a: string) =>
+      `Kampa “${a}” olarak geldin — ve daha derin, daha sağlam bir “${a}” olarak dönüyorsun.`,
+    adAciklama:
+      "Bu, başkalarının gözünde bıraktığın izdir. Sen baştan beri buydun — kamp onu görünür kıldı.",
+    bak: "Aynama bak →",
   },
   rituel: {
     baslik: "Aynaya kendini tanıt",

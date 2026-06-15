@@ -60,8 +60,8 @@ kullanılıp **bir daha geri açılmıyor**. Döngü kapanmıyor — sistemin en
 |---|---|---|---|
 | Boşluk Anı (Gün 3) · Kapanış Sözü | İç engelle yüzleşme; niyet beyanı | ✅ Mevcut | — |
 | Ayna Raporu (insight story) · Ayna Filmi · Arketip Kartı · Ben | Zirve: kör nokta + arketip + takdir reveal | ✅ Mevcut | — |
-| **MÜHRÜN AÇILIŞI**: before/after *sesli* reveal | Geçmiş sesin bugünkü kişiyle buluşur → en büyük vav | 🆕 **Yeni** | **A** |
-| **ADLANDIRMA**: "Kampa ___ geldin, ___ dönüyorsun" | İsimlendirilmiş kimlik geçişi | 🆕 Yeni | **A** |
+| **MÜHRÜN AÇILIŞI**: before/after *sesli* reveal | Geçmiş sesin bugünkü kişiyle buluşur → en büyük vav | ✅ **A2 yapıldı** | **A** |
+| **ADLANDIRMA**: "Kampa ___ geldin, ___ dönüyorsun" | İsimlendirilmiş kimlik geçişi | ✅ **A2 yapıldı** | **A** |
 | **Son ekran** (otobüsteki son an) | Peak-end: en son hissedilen şeyi tasarla | 🆕 Yeni | **A** |
 | **Kamp sonrası köprü — 30 gün**: +3/+7/+21/+30 YANSIMAN check-in + söz takibi + +30 mühür açılışı | Dönüş çöküşünü önle; etkiyi kalıcı kıl | 🆕 **Yeni** | **B** |
 
@@ -74,8 +74,11 @@ kullanılıp **bir daha geri açılmıyor**. Döngü kapanmıyor — sistemin en
    *birlikte* yükseltir. Bitince "vav" anı yerine oturur.
    - ✅ **A1 — Onboarding mührü:** Ses Ritüeli'nde beklenti adımı "geleceğe mühürlü söz"e
      çevrildi (DB'siz, geri alınabilir); kapanışta "🔒 SÖZÜN MÜHÜRLENDİ" teyidi.
-   - ⏳ **A2 — Kamp sonu açılışı:** sesli before/after reveal + adlandırma + son ekran
-     (admin bayrağı `muhur_acik`'a bağlı).
+   - ✅ **A2 — Kamp sonu açılışı:** Ayna Raporu'na girişte, rapordan önce tam-ekran
+     Mühür Açılışı — 3 gün önceki kendi sesi + yazdığı söz + "kampa ___ geldin,
+     ___ dönüyorsun" adlandırması (öz-puan→geliş, dış-puan→dönüş, kural-tabanlı).
+     Admin bayrağı `muhur_acik` (varsayılan kapalı). DB migration yok.
+   - ⏳ **A3 — Son ekran:** otobüsteki son an (peak-end) — opsiyonel cila.
 2. **Hat C — Kamp-içi ritüel ritmi**
    Eşik perdesine duygusal yay giydirir; dönüşümü kamp boyunca hissettirir.
 3. **Hat B — Kamp sonrası köprü**
