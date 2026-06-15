@@ -11,6 +11,7 @@ import {
 import { tr } from "@/lib/i18n/tr";
 import KisiSatiri from "./KisiSatiri";
 import SerbestListe from "./SerbestListe";
+import BosDurum from "@/components/BosDurum";
 
 export const metadata = { title: "Değerlendirme — Liderlik Aynası" };
 
@@ -28,19 +29,19 @@ export default async function DegerlendirPage() {
     return (
       <main className="flex min-h-dvh flex-col overflow-y-auto">
         <div className="mx-auto my-auto w-full max-w-md p-5">
-          <div className="kart-3d rounded-2xl bg-midnight-card/60 p-8 text-center shadow-2xl ring-1 ring-royal/30 backdrop-blur">
-            <p className="text-4xl">🌊</p>
-            <h1 className="mt-4 text-2xl font-bold text-gold">
-              {tr.degerlendir.dalgaKapaliBaslik}
-            </h1>
-            <p className="mt-3 text-slate-300">{tr.degerlendir.dalgaKapaliAciklama}</p>
-            <Link
-              href="/"
-              className="mt-6 inline-block text-sm text-royal-light underline-offset-4 hover:underline"
-            >
-              {tr.degerlendir.anaSayfayaDon}
-            </Link>
-          </div>
+          <BosDurum
+            simge="🌊"
+            baslik={tr.degerlendir.dalgaKapaliBaslik}
+            metin={tr.degerlendir.dalgaKapaliAciklama}
+            eylem={
+              <Link
+                href="/"
+                className="text-sm text-royal-light underline-offset-4 hover:underline"
+              >
+                {tr.degerlendir.anaSayfayaDon}
+              </Link>
+            }
+          />
         </div>
       </main>
     );
