@@ -13,6 +13,7 @@ import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
 import GunlukCheckin from "@/components/GunlukCheckin";
 import BosDurum from "@/components/BosDurum";
+import GorevSayac from "./GorevSayac";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -28,14 +29,6 @@ const TUR_RENK: Record<string, string> = {
   soz: "bg-gold/20 text-gold-light",
 };
 
-function saatYaz(iso: string): string {
-  return new Intl.DateTimeFormat("tr-TR", {
-    timeZone: "Europe/Istanbul",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(iso));
-}
-
 export default async function GorevlerPage() {
   const session = await getSession();
   if (!session) redirect("/giris");
@@ -47,7 +40,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, due_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty"
+      "id, kind, title, body, status, issued_at, due_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -169,9 +162,7 @@ export default async function GorevlerPage() {
               >
                 {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
               </span>
-              <span className="font-medium text-amber-400">
-                ⏳ {t.sonTarih(saatYaz(g.due_at))}
-              </span>
+              <GorevSayac baslangic={g.issued_at} bitis={g.due_at} />
             </div>
             <p className="mt-2 text-sm font-semibold text-sky-200">
               {ZORLUK_ETIKETI[(g.difficulty as Zorluk) ?? 2]}
