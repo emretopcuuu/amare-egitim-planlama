@@ -6,6 +6,7 @@ import { kampKilitliMi } from "@/lib/pusula";
 import { tr } from "@/lib/i18n/tr";
 import FotoYukle from "./FotoYukle";
 import DuvarIzgara from "./DuvarIzgara";
+import IlkIpucu from "@/components/IlkIpucu";
 
 export const metadata = { title: "Anı Duvarı — Liderlik Aynası" };
 
@@ -122,7 +123,12 @@ export default async function DuvarPage() {
           {duvar.length === 0 ? (
             <p className="mt-3 text-base leading-relaxed text-slate-300">{t.bosDuvar}</p>
           ) : (
-            <DuvarIzgara fotolar={duvar} />
+            <>
+              <div className="mt-3">
+                <IlkIpucu anahtar="la_ipucu_duvar_v1" etiket={t.ipucuDuvar} />
+              </div>
+              <DuvarIzgara fotolar={duvar} />
+            </>
           )}
         </section>
 

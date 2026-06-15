@@ -260,11 +260,19 @@ export const tr = {
     kartBaslik: "📤 Profil Kartın",
     kartAciklama: "İndir ya da paylaş — kıvılcımını göster.",
   },
+  // #6 Milestone kutlamaları
+  kutlama: {
+    terfiUst: "YENİ UNVAN",
+    terfi: (u: string) => `${u} oldun!`,
+    terfiMetin: "Kıvılcımların seni yükseltti. Yoluna devam et.",
+    devam: "Devam",
+  },
   duvar: {
     baslik: "📸 Anı Duvarı",
     yorumYok: "İlk yorumu sen yaz.",
     yorumYer: "Bir yorum yaz…",
     yorumGonder: "Gönder",
+    ipucuDuvar: "Bir fotoğrafa dokun → beğen ve yorum yap.",
     altBaslik:
       "Kamptan bir an yakala, paylaş. Onaylandıktan sonra duvarda ve büyük ekranda belirir.",
     yukle: "📷 Fotoğraf Çek / Seç",

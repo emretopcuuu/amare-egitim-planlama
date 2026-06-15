@@ -4,7 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { kampKilitliMi } from "@/lib/pusula";
 import { aktifOzellikler } from "@/lib/degerlendirme";
-import { unvanBul } from "@/lib/kivilcim";
+import { unvanBul, UNVANLAR } from "@/lib/kivilcim";
 import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
 import { tr } from "@/lib/i18n/tr";
@@ -14,6 +14,7 @@ import OkuButonu from "@/components/OkuButonu";
 import GunlukCheckin from "@/components/GunlukCheckin";
 import BosDurum from "@/components/BosDurum";
 import GorevSayac from "./GorevSayac";
+import UnvanKutlama from "@/components/UnvanKutlama";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -71,6 +72,7 @@ export default async function GorevlerPage() {
     .filter((g) => g.status === "scored")
     .reduce((top, g) => top + g.spark_points, 0);
   const unvan = unvanBul(toplamKivilcim);
+  const unvanSeviye = UNVANLAR.findIndex((u) => u.ad === unvan.mevcut.ad);
 
   // #5 Günlük check-in: bugün yapıldı mı + özellik seçenekleri
   const bugun = new Intl.DateTimeFormat("en-CA", {
@@ -89,6 +91,7 @@ export default async function GorevlerPage() {
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-6 p-5">
+      <UnvanKutlama unvan={unvan.mevcut.ad} seviye={unvanSeviye} />
       <header className="flex items-start justify-between">
         <div>
           <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
