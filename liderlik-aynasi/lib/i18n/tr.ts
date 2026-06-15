@@ -867,7 +867,7 @@ export const tr = {
     muhur: {
       baslik: "Mühür Açılışı",
       aciklama:
-        "Kamp sonu zirvesi. Açıkken, raporuna giren katılımcı önce onboarding'de mühürlediği sözü açar: 3 gün önceki kendi sesini dinler ve 'kampa ___ geldin, ___ dönüyorsun' adlandırmasını görür.",
+        "Kamp sonu zirvesi. Açıkken, raporuna giren katılımcı önce onboarding'de mühürlediği sözü açar: yolculuğun başındaki kendi sesini dinler ve 'kampa ___ geldin, ___ dönüyorsun' adlandırmasını görür.",
       pencereAcik: "● Pencere açık — Mühür Açılışı erişimde",
       pencereKapali: "○ Pencere kapalı",
       pencereAc: "Mühür Açılışı'nı Aç",
@@ -1156,7 +1156,7 @@ export const tr = {
       muhur: {
         baslik: "Mühür Açılışı — kamp sonu before/after",
         metin: [
-          "NE: Onboarding'de katılımcı kendi sesiyle 'kamptan nasıl döneceğim?' sözünü mühürler. Mühür Açılışı, kamp sonunda o sözü geri açar: kişi 3 gün önceki kendi sesini dinler, yazdığı sözü görür ve 'kampa ___ olarak geldin, ___ olarak dönüyorsun' adlandırmasını alır.",
+          "NE: Onboarding'de katılımcı kendi sesiyle 'kamptan nasıl döneceğim?' sözünü mühürler. Mühür Açılışı, kamp sonunda o sözü geri açar: kişi yolculuğun başındaki kendi sesini dinler, yazdığı sözü görür ve 'kampa ___ olarak geldin, ___ olarak dönüyorsun' adlandırmasını alır.",
           "AÇINCA NE OLUR: Katılımcı Ayna Raporu'na girdiğinde, rapordan ÖNCE tam-ekran Mühür Açılışı çalışır (bir kez). Adlandırma kişinin öz-puanından (geliş) ve başkalarının dış-puanından (dönüş) kural-tabanlı üretilir — vav anı budur.",
           "ÖN KOŞUL: En güçlü etki için Mühür'ü, raporları (reports_visible) açtığın anda ya da hemen öncesinde aç. Sözünü mühürlememiş (sessiz ayna seçen) kişiler bu anı sorunsuz atlar.",
           "NE ZAMAN: Kamp kapanışında, Ayna Raporu açılışıyla birlikte aç. Kapatınca yeni girenler için tekrar gizlenir.",
@@ -2094,14 +2094,14 @@ export const tr = {
   // A2 — Mühür Açılışı: kamp sonunda onboarding'de mühürlenen söz açılır
   muhur: {
     kapaliUst: "MÜHÜRLÜ SÖZ",
-    kapaliBaslik: "Üç gün önce buraya bir söz bıraktın",
+    kapaliBaslik: "Bu yolculuğun başında, buraya bir söz bıraktın",
     kapaliMetin:
-      "Kampa gelirken, kendi sesinle geleceğine bir söz mühürledin. Onu birlikte açmanın vakti geldi.",
+      "Daha en başta, kendi sesinle geleceğine bir söz mühürledin. Onu birlikte açmanın vakti geldi.",
     ac: "🔒 Mührü aç",
-    sesUst: "ÜÇ GÜN ÖNCE — KENDİ SESİN",
+    sesUst: "EN BAŞTAN — KENDİ SESİN",
     sesBaslik: "İşte o an",
     sesMetin:
-      "Bu, kampa gelirken kendine verdiğin sözdü. Dinle — ve ne kadar yol aldığını hisset.",
+      "Bu, bu yolculuğa çıkarken kendine verdiğin sözdü. Dinle — ve ne kadar yol aldığını hisset.",
     sozDinle: "▶ Sözünü dinle",
     sozDurdur: "■ Durdur",
     yaziUst: "MÜHÜRLEDİĞİN SÖZ",
