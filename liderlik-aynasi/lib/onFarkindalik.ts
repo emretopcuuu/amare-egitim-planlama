@@ -116,3 +116,138 @@ export function katman1Hesapla(
     : null;
   return { bloklar, enZayif, tamamMi };
 }
+
+// ============================================================================
+// KATMAN 2 — Liderlik Açık Analizi: her başlık için "Önem" (1-10) ve "Son 30
+// günde gerçekte" (1-10). Açık = Önem − Gerçek. En büyük iki açık = kampta
+// üzerine gidilecek alanlar.
+// ============================================================================
+
+export type Katman2Baslik = { kod: string; ad: string; anlam: string };
+
+export const KATMAN2_BASLIKLAR: Katman2Baslik[] = [
+  { kod: "takip", ad: "Takip", anlam: "Bağ kurduğun kişiyi bırakmadan, değer vererek izlemek." },
+  { kod: "yeni_lider", ad: "Yeni lider geliştirme", anlam: "Kendi yerine geçecek, bağımsız üreten lider yetiştirmek." },
+  { kod: "zor_konusma", ad: "Zor konuşmalar", anlam: "Ertelemeden, net ama şefkatli yüzleşmek." },
+  { kod: "ekip_kocluk", ad: "Ekip koçluğu", anlam: "İnsanın önündeki engeli görüp birebir geliştirmek." },
+  { kod: "hedef", ad: "Hedef koydurma", anlam: "Ekibe net, ölçülebilir hedef koyup takip etmek." },
+  { kod: "gunluk_aktivite", ad: "Günlük aktivite", anlam: "Her gün sahada görünür ve üretken olmak." },
+  { kod: "ornek_olma", ad: "Örnek olma", anlam: "Ekibinden beklediğin davranışı önce kendin göstermek." },
+];
+
+export type AcikSonuc = { kod: string; ad: string; onem: number; gercek: number; acik: number };
+
+export function katman2Hesapla(
+  yanitlar: Record<string, number>
+): { acikar: AcikSonuc[]; enBuyukIki: AcikSonuc[]; tamamMi: boolean } {
+  const acikar: AcikSonuc[] = KATMAN2_BASLIKLAR.map((b) => {
+    const onem = yanitlar[`k2.${b.kod}.onem`] ?? 0;
+    const gercek = yanitlar[`k2.${b.kod}.gercek`] ?? 0;
+    return { kod: b.kod, ad: b.ad, onem, gercek, acik: onem - gercek };
+  });
+  const tamamMi = KATMAN2_BASLIKLAR.every(
+    (b) => yanitlar[`k2.${b.kod}.onem`] && yanitlar[`k2.${b.kod}.gercek`]
+  );
+  const enBuyukIki = [...acikar].sort((a, b) => b.acik - a.acik).slice(0, 2);
+  return { acikar, enBuyukIki, tamamMi };
+}
+
+// ============================================================================
+// KATMAN 3 — Liderlik Gerçeklik Kontrolü: görüş değil, sadece rakam (arka
+// ofisten doğrulanabilir). Aktivite sayıları + ritim. Algıyı değil davranışı ölçer.
+// ============================================================================
+
+export type Katman3Soru = { kod: string; metin: string; max: number };
+
+export const KATMAN3_AKTIVITE: Katman3Soru[] = [
+  { kod: "k3.ilk_gorusme", metin: "Son 30 günde kaç yeni kişiyle ilk görüşme yaptın?", max: 999 },
+  { kod: "k3.takip_gorusme", metin: "Kaç takip görüşmesi yaptın?", max: 999 },
+  { kod: "k3.birebir_kocluk", metin: "Kaç kişiyle birebir (koçluk) çalıştın?", max: 999 },
+  { kod: "k3.lider_gelistirme", metin: "Kaç birebir lider geliştirme görüşmesi yaptın?", max: 999 },
+  { kod: "k3.hedef_koydurma", metin: "Kaç kişiye net hedef koydurdun?", max: 999 },
+  { kod: "k3.etkinlige_tasima", metin: "Kaç kişiyi etkinliğe ya da sunuma taşıdın?", max: 999 },
+  { kod: "k3.yeni_ortak", metin: "Kaç yeni ortak kaydı oldu?", max: 999 },
+  { kod: "k3.silver", metin: "Ekibinden kaç kişi Silver oldu?", max: 999 },
+  { kod: "k3.gold", metin: "Ekibinden kaç kişi Gold oldu?", max: 999 },
+];
+
+export const KATMAN3_RITIM: Katman3Soru[] = [
+  { kod: "k3.gelir_gun", metin: "Son 30 günün kaçında gelir getirici bir aktivite yaptın? (0-30)", max: 30 },
+  { kod: "k3.gelisim_gun", metin: "Kaç gününde bireysel gelişim için planlı zaman ayırdın? Okuma, eğitim, çalışma. (0-30)", max: 30 },
+  { kod: "k3.uzak_gun", metin: "En uzun kaç gün üst üste sahadan tamamen uzak kaldın?", max: 30 },
+];
+
+export const KATMAN3_SORULAR: Katman3Soru[] = [...KATMAN3_AKTIVITE, ...KATMAN3_RITIM];
+
+export function katman3Hesapla(yanitlar: Record<string, number>): {
+  ritim: "duzenli" | "patlayan" | "belirsiz";
+  tamamMi: boolean;
+} {
+  const tamamMi = KATMAN3_SORULAR.every((s) => yanitlar[s.kod] !== undefined);
+  const gelirGun = yanitlar["k3.gelir_gun"] ?? 0;
+  const uzakGun = yanitlar["k3.uzak_gun"] ?? 0;
+  // Ritim: çok gün aktif + kısa kopuş = düzenli; az gün + uzun kopuş = patlayıp sönen.
+  let ritim: "duzenli" | "patlayan" | "belirsiz" = "belirsiz";
+  if (tamamMi) ritim = gelirGun >= 15 && uzakGun <= 5 ? "duzenli" : "patlayan";
+  return { ritim, tamamMi };
+}
+
+// ============================================================================
+// BİRLEŞİK AKIŞ — sihirbazın adım adım gezdiği liste (Faz A+B: Katman 1→2→3).
+// ============================================================================
+
+export type Adim =
+  | { tip: "likert5"; kod: string; grup: string; metin: string }
+  | { tip: "ikili10"; grup: string; ad: string; anlam: string; onemKod: string; gercekKod: string }
+  | { tip: "sayi"; kod: string; grup: string; metin: string; max: number };
+
+export const ADIMLAR: Adim[] = [
+  ...KATMAN1_BLOKLAR.flatMap((b) =>
+    b.maddeler.map((m): Adim => ({ tip: "likert5", kod: m.kod, grup: b.ad, metin: m.metin }))
+  ),
+  ...KATMAN2_BASLIKLAR.map(
+    (b): Adim => ({
+      tip: "ikili10",
+      grup: "Liderlik Açığı",
+      ad: b.ad,
+      anlam: b.anlam,
+      onemKod: `k2.${b.kod}.onem`,
+      gercekKod: `k2.${b.kod}.gercek`,
+    })
+  ),
+  ...KATMAN3_SORULAR.map(
+    (s): Adim => ({ tip: "sayi", kod: s.kod, grup: "Gerçeklik", metin: s.metin, max: s.max })
+  ),
+];
+
+// Bir adım tamamlandı mı (ikili10 iki kodu birden ister).
+export function adimDolu(a: Adim, y: Record<string, number>): boolean {
+  if (a.tip === "ikili10") return y[a.onemKod] !== undefined && y[a.gercekKod] !== undefined;
+  return y[a.kod] !== undefined;
+}
+
+// Yanıt değeri geçerli mi (kod'a göre aralık).
+export function gecerliYanit(kod: string, deger: number): boolean {
+  if (!Number.isInteger(deger)) return false;
+  if (kod.startsWith("k1.")) return deger >= 1 && deger <= 5;
+  if (kod.startsWith("k2.")) return deger >= 1 && deger <= 10;
+  if (kod.startsWith("k3.")) {
+    const soru = KATMAN3_SORULAR.find((s) => s.kod === kod);
+    return deger >= 0 && deger <= (soru?.max ?? 999);
+  }
+  return false;
+}
+
+// Tüm katmanları profile damıtır (kişiye özel görev motorunun yakıtı).
+export function profilHesapla(yanitlar: Record<string, number>) {
+  const k1 = katman1Hesapla(yanitlar);
+  const k2 = katman2Hesapla(yanitlar);
+  const k3 = katman3Hesapla(yanitlar);
+  return {
+    katman1: { bloklar: k1.bloklar, enZayif: k1.enZayif },
+    katman2: { acikar: k2.acikar, enBuyukIki: k2.enBuyukIki },
+    katman3: { ritim: k3.ritim, sayilar: Object.fromEntries(KATMAN3_SORULAR.map((s) => [s.kod, yanitlar[s.kod] ?? null])) },
+    tamamMi: k1.tamamMi && k2.tamamMi && k3.tamamMi,
+  };
+}
+
