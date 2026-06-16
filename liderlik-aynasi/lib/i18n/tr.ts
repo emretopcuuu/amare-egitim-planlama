@@ -1784,6 +1784,13 @@ export const tr = {
       sil: "Tüm Katılımcıları Sil",
       siliniyor: "Siliniyor…",
       silBasarili: (n: number) => `${n} katılımcı silindi.`,
+      // Satır düzenleme modalı
+      duzenleBaslik: "Kişiyi Düzenle",
+      duzenleKaydet: "Kaydet",
+      duzenleVazgec: "Vazgeç",
+      duzenleBasarili: (ad: string) => `✓ ${ad} güncellendi.`,
+      duzenleHata: "Güncelleme başarısız. Lütfen tekrar dene.",
+      duzenleKodHata: "Bu kod zaten kullanımda veya geçersiz (6 rakam olmalı).",
     },
     eslestirme: {
       baslik: "Eşleştirme",
