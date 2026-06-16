@@ -120,32 +120,37 @@ export type Database = {
           },
         ]
       }
-      gunluk_checkin: {
+      churn_radar: {
         Row: {
-          created_at: string
-          id: string
-          notu: string | null
+          admin_alerted_at: string | null
+          nudged_at: string | null
           participant_id: string
-          tarih: string
-          trait_id: number | null
+          updated_at: string
+          voice_path: string | null
         }
         Insert: {
-          created_at?: string
-          id?: string
-          notu?: string | null
+          admin_alerted_at?: string | null
+          nudged_at?: string | null
           participant_id: string
-          tarih: string
-          trait_id?: number | null
+          updated_at?: string
+          voice_path?: string | null
         }
         Update: {
-          created_at?: string
-          id?: string
-          notu?: string | null
+          admin_alerted_at?: string | null
+          nudged_at?: string | null
           participant_id?: string
-          tarih?: string
-          trait_id?: number | null
+          updated_at?: string
+          voice_path?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "churn_radar_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       foto_begeni: {
         Row: {
@@ -166,7 +171,22 @@ export type Database = {
           participant_id?: string
           photo_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "foto_begeni_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "foto_begeni_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       foto_yorum: {
         Row: {
@@ -201,36 +221,53 @@ export type Database = {
             referencedRelation: "participants"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "foto_yorum_photo_id_fkey"
+            columns: ["photo_id"]
+            isOneToOne: false
+            referencedRelation: "photos"
+            referencedColumns: ["id"]
+          },
         ]
       }
-      churn_radar: {
+      gunluk_checkin: {
         Row: {
-          admin_alerted_at: string | null
-          nudged_at: string | null
+          created_at: string
+          id: string
+          notu: string | null
           participant_id: string
-          updated_at: string
-          voice_path: string | null
+          tarih: string
+          trait_id: number | null
         }
         Insert: {
-          admin_alerted_at?: string | null
-          nudged_at?: string | null
+          created_at?: string
+          id?: string
+          notu?: string | null
           participant_id: string
-          updated_at?: string
-          voice_path?: string | null
+          tarih: string
+          trait_id?: number | null
         }
         Update: {
-          admin_alerted_at?: string | null
-          nudged_at?: string | null
+          created_at?: string
+          id?: string
+          notu?: string | null
           participant_id?: string
-          updated_at?: string
-          voice_path?: string | null
+          tarih?: string
+          trait_id?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "churn_radar_participant_id_fkey"
+            foreignKeyName: "gunluk_checkin_participant_id_fkey"
             columns: ["participant_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gunluk_checkin_trait_id_fkey"
+            columns: ["trait_id"]
+            isOneToOne: false
+            referencedRelation: "traits"
             referencedColumns: ["id"]
           },
         ]
@@ -430,6 +467,76 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "momentum_scores_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      on_farkindalik: {
+        Row: {
+          asama: string
+          basladi_at: string | null
+          created_at: string
+          participant_id: string
+          profil: Json
+          tamamlandi_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          asama?: string
+          basladi_at?: string | null
+          created_at?: string
+          participant_id: string
+          profil?: Json
+          tamamlandi_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asama?: string
+          basladi_at?: string | null
+          created_at?: string
+          participant_id?: string
+          profil?: Json
+          tamamlandi_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "on_farkindalik_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      on_farkindalik_yanit: {
+        Row: {
+          deger_metin: string | null
+          deger_sayi: number | null
+          madde_kod: string
+          participant_id: string
+          updated_at: string
+        }
+        Insert: {
+          deger_metin?: string | null
+          deger_sayi?: number | null
+          madde_kod: string
+          participant_id: string
+          updated_at?: string
+        }
+        Update: {
+          deger_metin?: string | null
+          deger_sayi?: number | null
+          madde_kod?: string
+          participant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "on_farkindalik_yanit_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
             referencedRelation: "participants"
