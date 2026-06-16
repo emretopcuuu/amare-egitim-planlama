@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import KodKopyala from "./KodKopyala";
@@ -34,20 +35,42 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
 
   // ---- satır düzenleme ----
   const [duzenle, setDuzenle] = useState<Kisi | null>(null);
-  const [duzenleDeger, setDuzenleDeger] = useState({ takim: "", sehir: "", telefon: "", login_code: "" });
+  const [duzenleDeger, setDuzenleDeger] = useState({ ad: "", takim: "", sehir: "", telefon: "", login_code: "" });
   const [duzenleYukleniyor, setDuzenleYukleniyor] = useState(false);
   const [duzenleMesaj, setDuzenleMesaj] = useState<string | null>(null);
   const [duzenleHataMsg, setDuzenleHataMsg] = useState<string | null>(null);
+  const [silOnayMod, setSilOnayMod] = useState(false);
 
   function duzenleAc(k: Kisi) {
     setDuzenle(k);
-    setDuzenleDeger({ takim: k.team ?? "", sehir: k.city ?? "", telefon: k.phone ?? "", login_code: k.login_code });
+    setDuzenleDeger({ ad: k.full_name, takim: k.team ?? "", sehir: k.city ?? "", telefon: k.phone ?? "", login_code: k.login_code });
     setDuzenleMesaj(null);
     setDuzenleHataMsg(null);
+    setSilOnayMod(false);
   }
+  function duzenleKapat() {
+    setDuzenle(null);
+    setSilOnayMod(false);
+  }
+
+  // Modal açıkken arka plan kaydırmasını kilitle + Esc ile kapat.
+  useEffect(() => {
+    if (!duzenle) return;
+    const onceki = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") duzenleKapat();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = onceki;
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [duzenle]);
 
   async function kaydetDuzenle() {
     if (!duzenle || duzenleYukleniyor) return;
+    if (!duzenleDeger.ad.trim()) return setDuzenleHataMsg(t.hataAdEksik);
     setDuzenleYukleniyor(true);
     setDuzenleMesaj(null);
     setDuzenleHataMsg(null);
@@ -59,9 +82,27 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
       });
       const v = await res.json().catch(() => null);
       if (!res.ok) return setDuzenleHataMsg(v?.hata ?? t.duzenleHata);
-      setDuzenleMesaj(t.duzenleBasarili(duzenle.full_name));
+      setDuzenleMesaj(t.duzenleBasarili(duzenleDeger.ad.trim()));
       router.refresh();
-      setTimeout(() => setDuzenle(null), 1000);
+      setTimeout(() => duzenleKapat(), 1000);
+    } catch {
+      setDuzenleHataMsg(t.duzenleHata);
+    } finally {
+      setDuzenleYukleniyor(false);
+    }
+  }
+
+  async function kisiyiSil() {
+    if (!duzenle || duzenleYukleniyor) return;
+    setDuzenleYukleniyor(true);
+    setDuzenleMesaj(null);
+    setDuzenleHataMsg(null);
+    try {
+      const res = await fetch(`/api/admin/katilimcilar/${duzenle.id}`, { method: "DELETE" });
+      const v = await res.json().catch(() => null);
+      if (!res.ok) return setDuzenleHataMsg(v?.hata ?? t.duzenleHata);
+      router.refresh();
+      duzenleKapat();
     } catch {
       setDuzenleHataMsg(t.duzenleHata);
     } finally {
@@ -448,66 +489,125 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
         {silHata && <p role="alert" className="mt-3 text-sm font-medium text-red-400">{silHata}</p>}
       </Katlanir>
 
-      {/* Düzenleme Modalı */}
-      {duzenle && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
-          onClick={(e) => { if (e.target === e.currentTarget) setDuzenle(null); }}
-        >
-          <div className="kart-3d w-full max-w-sm rounded-2xl bg-midnight-card p-6 shadow-2xl ring-1 ring-gold/30">
-            <h3 className="text-lg font-semibold text-gold-light">{t.duzenleBaslik}</h3>
-            <p className="mt-1 text-sm font-semibold text-slate-200">{duzenle.full_name}</p>
-            <div className="mt-4 space-y-3">
-              <input
-                value={duzenleDeger.takim}
-                onChange={(e) => setDuzenleDeger({ ...duzenleDeger, takim: e.target.value })}
-                placeholder={t.alanTakim}
-                className={`${giris} w-full`}
-              />
-              <input
-                value={duzenleDeger.sehir}
-                onChange={(e) => setDuzenleDeger({ ...duzenleDeger, sehir: e.target.value })}
-                placeholder={t.alanSehir}
-                className={`${giris} w-full`}
-              />
-              <input
-                value={duzenleDeger.telefon}
-                onChange={(e) => setDuzenleDeger({ ...duzenleDeger, telefon: e.target.value })}
-                placeholder={t.alanTelefon}
-                inputMode="tel"
-                className={`${giris} w-full`}
-              />
-              <input
-                value={duzenleDeger.login_code}
-                onChange={(e) => setDuzenleDeger({ ...duzenleDeger, login_code: e.target.value })}
-                placeholder="Giriş kodu (6 rakam)"
-                maxLength={6}
-                inputMode="numeric"
-                className={`${giris} w-full font-mono tracking-widest`}
-              />
-            </div>
-            {duzenleMesaj && <p className="mt-3 text-sm font-medium text-emerald-400">{duzenleMesaj}</p>}
-            {duzenleHataMsg && <p role="alert" className="mt-3 text-sm font-medium text-red-400">{duzenleHataMsg}</p>}
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                onClick={() => setDuzenle(null)}
-                className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-midnight-soft"
-              >
-                {t.duzenleVazgec}
-              </button>
-              <button
-                onClick={kaydetDuzenle}
-                disabled={duzenleYukleniyor}
-                className="rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
-              >
-                {duzenleYukleniyor ? "Kaydediliyor…" : t.duzenleKaydet}
-              </button>
+      {/* Düzenleme Modalı — portal ile body'ye taşınır, böylece transform'lu
+          atalardan etkilenmeden her zaman ekranın ortasında açılır. */}
+      <DuzenleModal acik={!!duzenle}>
+        {duzenle && (
+          <div
+            className="fixed inset-0 z-[100] flex items-start justify-center overflow-y-auto bg-black/60 p-4 backdrop-blur-sm sm:items-center"
+            onClick={(e) => { if (e.target === e.currentTarget) duzenleKapat(); }}
+          >
+            <div className="my-auto w-full max-w-sm rounded-2xl bg-midnight-card p-6 shadow-2xl ring-1 ring-gold/30">
+              <h3 className="text-lg font-semibold text-gold-light">{t.duzenleBaslik}</h3>
+              <div className="mt-4 space-y-3">
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-slate-400">{t.tablo.ad}</span>
+                  <input
+                    value={duzenleDeger.ad}
+                    onChange={(e) => setDuzenleDeger({ ...duzenleDeger, ad: e.target.value })}
+                    placeholder={t.alanAd}
+                    className={`${giris} w-full`}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-slate-400">{t.tablo.takim}</span>
+                  <input
+                    value={duzenleDeger.takim}
+                    onChange={(e) => setDuzenleDeger({ ...duzenleDeger, takim: e.target.value })}
+                    placeholder={t.alanTakim}
+                    className={`${giris} w-full`}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-slate-400">{t.tablo.sehir}</span>
+                  <input
+                    value={duzenleDeger.sehir}
+                    onChange={(e) => setDuzenleDeger({ ...duzenleDeger, sehir: e.target.value })}
+                    placeholder={t.alanSehir}
+                    className={`${giris} w-full`}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-slate-400">{t.tablo.telefon}</span>
+                  <input
+                    value={duzenleDeger.telefon}
+                    onChange={(e) => setDuzenleDeger({ ...duzenleDeger, telefon: e.target.value })}
+                    placeholder={t.alanTelefon}
+                    inputMode="tel"
+                    className={`${giris} w-full`}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-slate-400">{t.tablo.kod}</span>
+                  <input
+                    value={duzenleDeger.login_code}
+                    onChange={(e) => setDuzenleDeger({ ...duzenleDeger, login_code: e.target.value })}
+                    placeholder={t.duzenleKodYer}
+                    maxLength={6}
+                    inputMode="numeric"
+                    className={`${giris} w-full font-mono tracking-widest`}
+                  />
+                </label>
+              </div>
+              {duzenleMesaj && <p className="mt-3 text-sm font-medium text-emerald-400">{duzenleMesaj}</p>}
+              {duzenleHataMsg && <p role="alert" className="mt-3 text-sm font-medium text-red-400">{duzenleHataMsg}</p>}
+              <div className="mt-5 flex items-center justify-between gap-3">
+                {silOnayMod ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={kisiyiSil}
+                      disabled={duzenleYukleniyor}
+                      className="rounded-lg bg-red-500/80 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-500 disabled:opacity-40"
+                    >
+                      {t.duzenleSilOnay}
+                    </button>
+                    <button
+                      onClick={() => setSilOnayMod(false)}
+                      className="text-sm text-slate-400 hover:text-slate-200"
+                    >
+                      {t.duzenleVazgec}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setSilOnayMod(true)}
+                    disabled={duzenleYukleniyor}
+                    className="rounded-lg border border-red-500/40 px-3 py-2 text-sm font-medium text-red-300 transition-colors hover:bg-red-500/10 disabled:opacity-40"
+                  >
+                    {t.duzenleSil}
+                  </button>
+                )}
+                <div className="flex gap-3">
+                  <button
+                    onClick={duzenleKapat}
+                    className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-midnight-soft"
+                  >
+                    {t.duzenleVazgec}
+                  </button>
+                  <button
+                    onClick={kaydetDuzenle}
+                    disabled={duzenleYukleniyor}
+                    className="rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
+                  >
+                    {duzenleYukleniyor ? t.duzenleKaydediliyor : t.duzenleKaydet}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </DuzenleModal>
     </div>
   );
+}
+
+// Portal sarmalayıcı: çocuğu document.body'ye render eder (transform'lu
+// atalardan kaçar). Sunucuda/ilk render'da boş döner — hidrasyon güvenli.
+function DuzenleModal({ acik, children }: { acik: boolean; children: React.ReactNode }) {
+  const [yerlesti, setYerlesti] = useState(false);
+  useEffect(() => setYerlesti(true), []);
+  if (!yerlesti || !acik) return null;
+  return createPortal(children, document.body);
 }
 
 // Native katlanır bölüm — varsayılan kapalı, başlığa basınca açılır.
