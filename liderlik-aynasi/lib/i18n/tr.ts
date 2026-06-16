@@ -765,6 +765,7 @@ export const tr = {
         tamamlama: "Tamamlama",
         retDirenci: "Ret Direnci",
       },
+      detayBaslik: "📊 Momentum & Kayma Radarı",
       momentumBaslik: "📈 Haftalık Momentum",
       momentumYok: "İlk momentum skoru Cuma akşamı yazılır.",
       ekipOrt: (n: number) => `Ekip ortalaması: ${n}/100`,
