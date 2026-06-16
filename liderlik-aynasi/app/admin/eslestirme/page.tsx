@@ -1,23 +1,34 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
 import EslestirmeFormu from "./EslestirmeFormu";
 import Ipucu from "../Ipucu";
 
 export const metadata = { title: "Eşleştirme — Liderlik Aynası" };
 
+type AtamaSatir = {
+  type: string;
+  observer: { id: string; full_name: string; team: string | null };
+  target: { full_name: string; team: string | null };
+};
+
 export default async function EslestirmePage() {
   const session = await getSession();
   if (!session || session.rol !== "admin") redirect("/admin/giris");
 
-  const { data: atamalar, error } = await supabaseAdmin()
-    .from("assignments")
-    .select(
-      "id, type, observer:participants!assignments_observer_id_fkey(id, full_name, team), target:participants!assignments_target_id_fkey(full_name, team)"
-    )
-    .order("type");
-  if (error) throw error;
+  // Sayfa sayfa çek: tek istekte ~1000 satır sınırı atamaları (1600+) kırpıyordu.
+  const db = supabaseAdmin();
+  const atamalar = await tumKayitlar<AtamaSatir>((bas, son) =>
+    db
+      .from("assignments")
+      .select(
+        "id, type, observer:participants!assignments_observer_id_fkey(id, full_name, team), target:participants!assignments_target_id_fkey(full_name, team)"
+      )
+      .order("observer_id")
+      .range(bas, son)
+  );
 
   const t = tr.admin.eslestirme;
 

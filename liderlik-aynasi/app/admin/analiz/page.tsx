@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
 import Ipucu from "../Ipucu";
 import Katlanir from "../Katlanir";
@@ -18,15 +19,24 @@ export default async function AnalizSayfa() {
   if (!session || session.rol !== "admin") redirect("/admin");
 
   const db = supabaseAdmin();
+  // rcmt/mcmt/kud/miss kamp boyunca ~1000 satır sınırını aşar → sayfa sayfa çek.
   const [parts, pus, bos, rcmt, mcmt, kud, miss, churn, redSay, mom] =
     await Promise.all([
       db.from("participants").select("id, team").eq("role", "participant"),
       db.from("pusula").select("participant_id, tamamlandi_at"),
       db.from("bosluk_ani").select("participant_id, yeni_cumle"),
-      db.from("ratings").select("target_id").eq("is_hidden", false).not("comment", "is", null),
-      db.from("missions").select("participant_id").not("ai_comment", "is", null),
-      db.from("kudos").select("to_id").eq("is_hidden", false),
-      db.from("missions").select("status"),
+      tumKayitlar<{ target_id: string }>((bas, son) =>
+        db.from("ratings").select("target_id").eq("is_hidden", false).not("comment", "is", null).order("target_id").range(bas, son)
+      ),
+      tumKayitlar<{ participant_id: string }>((bas, son) =>
+        db.from("missions").select("participant_id").not("ai_comment", "is", null).order("participant_id").range(bas, son)
+      ),
+      tumKayitlar<{ to_id: string }>((bas, son) =>
+        db.from("kudos").select("to_id").eq("is_hidden", false).order("to_id").range(bas, son)
+      ),
+      tumKayitlar<{ status: string }>((bas, son) =>
+        db.from("missions").select("status").order("status").range(bas, son)
+      ),
       db.from("churn_radar").select("participant_id, admin_alerted_at"),
       db.from("redler").select("id", { count: "exact", head: true }),
       db.from("momentum_scores").select("participant_id, score, week_start").order("week_start", { ascending: false }),
@@ -43,13 +53,13 @@ export default async function AnalizSayfa() {
   // Kanıt sayımı (kanıtsız = içi boş an riski)
   const kanit = new Map<string, number>();
   const ekle = (id: string) => kanit.set(id, (kanit.get(id) ?? 0) + 1);
-  (rcmt.data ?? []).forEach((r) => ekle(r.target_id));
-  (mcmt.data ?? []).forEach((m) => ekle(m.participant_id));
-  (kud.data ?? []).forEach((k) => ekle(k.to_id));
+  rcmt.forEach((r) => ekle(r.target_id));
+  mcmt.forEach((m) => ekle(m.participant_id));
+  kud.forEach((k) => ekle(k.to_id));
   const kanitsiz = kisiler.filter((k) => (kanit.get(k.id) ?? 0) < KANIT_ESIK).length;
 
   // ---- Davranış ekseni (motor) ----
-  const gorevler = miss.data ?? [];
+  const gorevler = miss;
   const gorevPuanli = gorevler.filter((g) => g.status === "scored").length;
   const gorevKapanan = gorevler.filter((g) => g.status === "scored" || g.status === "expired").length;
   const gorevOran = gorevKapanan ? Math.round((gorevPuanli / gorevKapanan) * 100) : 0;

@@ -1,5 +1,6 @@
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
 
 export const maxDuration = 60;
@@ -36,15 +37,20 @@ export async function GET() {
     olusturulma: new Date().toISOString(),
     surum: 1,
   };
+  // Sayfa sayfa çek: ~1000 satır sınırı büyük tabloları (atama/puan) eksik
+  // yedeklerdi — felaket sigortasında kabul edilemez.
   for (const tablo of TABLOLAR) {
-    const { data, error } = await db.from(tablo).select("*");
-    if (error) {
+    try {
+      yedek[tablo] = await tumKayitlar<unknown>((bas, son) =>
+        db.from(tablo).select("*").range(bas, son)
+      );
+    } catch (e) {
+      const mesaj = e instanceof Error ? e.message : "bilinmeyen hata";
       return Response.json(
-        { hata: `${tablo} yedeklenemedi: ${error.message}` },
+        { hata: `${tablo} yedeklenemedi: ${mesaj}` },
         { status: 500 }
       );
     }
-    yedek[tablo] = data ?? [];
   }
 
   const tarih = new Date().toISOString().slice(0, 16).replace(/[:T]/g, "-");
