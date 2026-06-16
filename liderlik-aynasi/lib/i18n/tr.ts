@@ -662,6 +662,7 @@ export const tr = {
     adimPuanMetin:
       "10 liderlik özelliğinde kendini değerlendir. Kampta başkalarının gözünden göreceğin halinle karşılaştıracağın başlangıç karen.",
     adimPuanDugme: "Başla",
+    adimPuanDuzelt: "Puanlarını düzelt",
     adimPuanSure: "~2 dk",
     adimRehberBaslik: "Kamp rehberi",
     adimRehberMetin: "3 gün boyunca seni neler bekliyor, kısaca bak.",
@@ -2059,7 +2060,16 @@ export const tr = {
     izinVer: "Bildirimlere İzin Ver",
     izinVerildi: "🔔 AYNA seninle — bildirimler açık.",
     izinReddedildi:
-      "Bildirimler kapalı. Tarayıcı ayarlarından izin verebilirsin; o zamana dek görevlerin burada görünecek.",
+      "Bildirimler şu an kapalı. Yanlışlıkla kapattıysan tekrar açabilirsin — görevlerin ve fısıltıların cebine düşsün.",
+    izinTekrarBaslik: "🔕 Bildirimler kapalı",
+    izinAcmaAdimlar: [
+      "Adres çubuğundaki kilit 🔒 (veya site ayarları) simgesine dokun.",
+      "“Bildirimler”i bul ve “İzin ver” yap.",
+      "Sonra aşağıdaki “Tekrar dene” düğmesine bas.",
+    ] as const,
+    izinTekrarDene: "Tekrar dene",
+    izinHalaKapali:
+      "Bildirimler hâlâ kapalı görünüyor. Tarayıcı ayarından izni açıp tekrar dene.",
     desteklenmiyor: "Bu tarayıcı bildirimleri desteklemiyor — görevlerin uygulamada görünecek.",
     hata: "Abonelik kurulamadı. Tekrar dene.",
   },
