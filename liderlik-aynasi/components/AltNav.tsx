@@ -19,7 +19,7 @@ const SEKMELER = [
 // Bu önekler katılımcı deneyimi değil (admin/büyük ekran/tam ekran) — çubuk yok.
 // /pusula tam ekran FAZ 0 akışıdır (Nedenler + "kampta görüşürüz" beklemesi);
 // kamp açılmadan görev/değerlendirme sekmeleri görünmesin.
-const GIZLI = ["/giris", "/admin", "/ekran", "/sahne", "/yansiman", "/pusula", "/on-farkindalik"];
+const GIZLI = ["/giris", "/admin", "/ekran", "/sahne", "/yansiman", "/pusula", "/on-farkindalik", "/mini360"];
 
 type Kivilcim = {
   toplam: number;

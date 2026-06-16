@@ -12,6 +12,8 @@ const PUBLIC_ROUTES = [
   /^\/api\/ekran$/, // büyük ekran verisi: isimsiz agregalar, oturumsuz erişilir
   /^\/api\/tik$/, // AYNA kalp atışı: cron çağırır, kendi gizli başlığıyla korunur
   /^\/api\/saglik$/, // healthcheck: oturumsuz, veri yok — Railway/yük dengeleyici probu
+  /^\/mini360\/d\//, // Mini 360 anonim dış değerlendirme — girişsiz akran linki
+  /^\/api\/mini360\/dis$/, // anonim dış puan gönderimi
 ];
 
 export async function proxy(req: NextRequest) {

@@ -244,6 +244,22 @@ export const SONUC_KARTI: MetinSoru[] = [
   { kod: "sonuc.kamp_gorevi", metin: "Kamp Görevin — bu kamp boyunca iki somut, gözlenebilir aksiyon.", zorunlu: true },
 ];
 
+// ============================================================================
+// MINI 360 — Ekip Aynası (opt-in). Aynı 6 ifade: kişi kendine, 3 ekip üyesi
+// anonim puanlar (1-5). Sen-ekip farkı = ölçülmüş kör nokta.
+// ============================================================================
+
+export type Mini360Ifade = { kod: "m1" | "m2" | "m3" | "m4" | "m5" | "m6"; oz: string; dis: string };
+
+export const MINI360_IFADELER: Mini360Ifade[] = [
+  { kod: "m1", oz: "Güvenilirimdir, söz verdiğimi yaparım.", dis: "Güvenilirdir, söz verdiğini yapar." },
+  { kod: "m2", oz: "Sorumluluğu üstlenirim, suçu dışarı atmam.", dis: "Sorumluluğu üstlenir, suçu dışarı atmaz." },
+  { kod: "m3", oz: "Zor konuşmaları ertelemem, yüzleşirim.", dis: "Zor konuşmaları ertelemez, yüzleşir." },
+  { kod: "m4", oz: "İnsan yetiştiririm, kendi yerime lider bırakırım.", dis: "İnsan yetiştirir, kendi yerine lider bırakır." },
+  { kod: "m5", oz: "Davranışımla örnek olurum.", dis: "Davranışıyla örnek olur." },
+  { kod: "m6", oz: "Çevremdekileri daha iyi versiyonu olmaya teşvik ederim.", dis: "Çevresindekileri daha iyi versiyonu olmaya teşvik eder." },
+];
+
 const METIN_KODLAR = new Set<string>([
   ...KATMAN4_SORULAR.map((s) => s.kod),
   ...KATMAN5C_SORULAR.map((s) => s.kod),

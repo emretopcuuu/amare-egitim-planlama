@@ -186,6 +186,7 @@ export const tr = {
     menuRapor: "Ayna Raporum",
     menuBen: "👤 Profilim",
     menuGrup: "👥 Grup Ödevi",
+    menuMini360: "🪞 Ekip Aynası",
     menuAnlar: "Anların (Zaman Tüneli)",
     menuTurnuva: "Takım Turnuvası",
     menuTakdir: "Takdir Duvarı",
@@ -711,6 +712,41 @@ export const tr = {
     grupBirlikte: "🔗 Grup-birlikte",
     hedefEtiket: "Odak",
     takimsiz: "Henüz bir gruba atanmadın.",
+  },
+  // MINI 360 — Ekip Aynası (opt-in akran puanlaması)
+  mini360: {
+    baslik: "Ekip Aynası",
+    aciklama:
+      "Kör nokta tek başına görülemez — onu başkasının aynasında görürsün. Önce kendini puanla, sonra ekibinden 3 kişiye anonim linkini gönder. Sen-ekip farkı, göremediğin yeri ölçer.",
+    olcek: { 1: "Hiç katılmıyorum", 2: "Az", 3: "Kısmen", 4: "Çoğunlukla", 5: "Tamamen katılıyorum" } as Record<number, string>,
+    ozBaslik: "Önce sen — kendini puanla",
+    gonder: "Kaydet",
+    gonderiliyor: "Kaydediliyor…",
+    kaydedildi: "✓ Kaydedildi",
+    // Paylaşım
+    paylasBaslik: "Ekibinden 3 kişiye gönder",
+    paylasMetin: "Onlara şunu söyle: beni değil, gelişimimi düşün, dürüst ol. Link anonimdir — kimin ne dediği sana görünmez.",
+    linkKopyala: "🔗 Anonim linki kopyala",
+    kopyalandi: "✓ Kopyalandı",
+    // Sonuç
+    sonucBaslik: "Sen vs Ekip",
+    senPuani: "Sen",
+    ekipOrt: "Ekip",
+    fark: "Fark",
+    disSayi: (n: number) => `${n} anonim yanıt`,
+    disYok: "Henüz dış yanıt yok — linki paylaş, birikince burada görünür.",
+    enBuyukFark: (ifade: string) => `En büyük fark: “${ifade}” — kampta ilk buraya bak.`,
+    disDolu: "Bu kişi için yeterli yanıt toplandı, teşekkürler.",
+    hata: "İşlem başarısız. Lütfen tekrar dene.",
+    kapaliBaslik: "Ekip Aynası kapalı",
+    kapaliMetin: "Bu çalışma Diamond adayları için açılır. Sıran gelince burada olacak.",
+    // Dış (anonim) sayfa
+    disBaslik: (ad: string) => `${ad} için Ekip Aynası`,
+    disAciklama: "Anonim. Onu değil, gelişimini düşün — dürüst ol. Her ifadeye 1-5 ver.",
+    disGonder: "Gönder",
+    disTesekkurBaslik: "Teşekkürler 🙏",
+    disTesekkurMetin: "Yanıtın anonim olarak kaydedildi. Bu, onun göremediği yeri görmesine yardım edecek.",
+    disGecersiz: "Bu link geçersiz.",
   },
   // ÖN FARKINDALIK — kamp öncesi Ayna/Kalibrasyon çalışması (Faz A: Katman 1)
   onFarkindalik: {
