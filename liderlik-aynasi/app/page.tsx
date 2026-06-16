@@ -104,15 +104,20 @@ export default async function AnaSayfa({
 
   const db = supabaseAdmin();
 
-  // FAZ 0 kapısı: Pusula penceresi açıkken, kampa fiziksel giriş yapmamış
-  // (oda QR'ını okutmamış) katılımcı önce Pusula'sını kurar ve oraya gelene
-  // dek bekler. Pencere kapalıyken (varsayılan) bu kapı hiç çalışmaz —
-  // mevcut davranış birebir korunur.
-  const [{ data: kisi }, { data: pusulaAyar }] = await Promise.all([
+  // FAZ 0 kapısı (HARMAN): Pusula penceresi açıkken, kampa fiziksel giriş
+  // yapmamış katılımcı kamp öncesi yolculuğu yapar. Sıra: önce ÖN FARKINDALIK
+  // (ayna katmanları — bayrak açıksa ve bitmediyse), sonra PUSULA (derin neden +
+  // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
+  const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }] = await Promise.all([
     db.from("participants").select("camp_unlocked_at").eq("id", session.sub).maybeSingle(),
-    db.from("settings").select("value").eq("key", "pusula_acik").maybeSingle(),
+    db.from("settings").select("key, value").in("key", ["pusula_acik", "on_farkindalik_acik"]),
+    db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
   ]);
-  if (pusulaAyar?.value === "true" && !kisi?.camp_unlocked_at) {
+  const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
+  if (ayar.get("pusula_acik") === "true" && !kisi?.camp_unlocked_at) {
+    if (ayar.get("on_farkindalik_acik") === "true" && !ofDurum?.tamamlandi_at) {
+      redirect("/on-farkindalik");
+    }
     // ?intro=1 (tanıtım testi) yönlendirmede kaybolmasın diye taşı.
     const intro = (await searchParams).intro !== undefined;
     redirect(intro ? "/pusula?intro=1" : "/pusula");
