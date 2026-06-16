@@ -14,28 +14,30 @@ export default async function EslestirmePage() {
   const { data: atamalar, error } = await supabaseAdmin()
     .from("assignments")
     .select(
-      "id, type, observer:participants!assignments_observer_id_fkey(id, full_name), target:participants!assignments_target_id_fkey(full_name, team)"
+      "id, type, observer:participants!assignments_observer_id_fkey(id, full_name, team), target:participants!assignments_target_id_fkey(full_name, team)"
     )
     .order("type");
   if (error) throw error;
 
   const t = tr.admin.eslestirme;
 
-  // Gözlemciye göre grupla: tek satırda kişinin tüm hedefleri okunur.
+  // Gözlemciye göre grupla; hedefleri grup-içi (aynı takım) / grup-dışı olarak ayır.
   const gruplar = new Map<
     string,
-    { ad: string; gizli: string[]; acik: string[] }
+    { ad: string; ici: string[]; disi: string[] }
   >();
   for (const a of atamalar) {
     const grup = gruplar.get(a.observer.id) ?? {
       ad: a.observer.full_name,
-      gizli: [],
-      acik: [],
+      ici: [],
+      disi: [],
     };
     const hedefAd = a.target.team
       ? `${a.target.full_name} (${a.target.team})`
       : a.target.full_name;
-    (a.type === "shadow" ? grup.gizli : grup.acik).push(hedefAd);
+    const ayniTakim =
+      !!a.observer.team && !!a.target.team && a.observer.team === a.target.team;
+    (ayniTakim ? grup.ici : grup.disi).push(hedefAd);
     gruplar.set(a.observer.id, grup);
   }
   const satirlar = [...gruplar.values()].sort((a, b) =>
@@ -61,8 +63,8 @@ export default async function EslestirmePage() {
               <thead>
                 <tr className="border-b border-royal/30 text-xs uppercase tracking-wide text-slate-400">
                   <th className="py-2 pr-3">{tr.admin.ilerleme.kisi}</th>
-                  <th className="py-2 pr-3">🕶 {t.gizli}</th>
-                  <th className="py-2">👁 {t.acik}</th>
+                  <th className="py-2 pr-3">🤝 {t.grupIci}</th>
+                  <th className="py-2">🌍 {t.grupDisi}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-royal/20">
@@ -70,10 +72,10 @@ export default async function EslestirmePage() {
                   <tr key={s.ad} className="align-top">
                     <td className="py-2 pr-3 font-medium text-slate-100">{s.ad}</td>
                     <td className="py-2 pr-3 text-slate-300">
-                      {s.gizli.join(", ") || "—"}
+                      {s.ici.join(", ") || "—"}
                     </td>
                     <td className="py-2 text-slate-300">
-                      {s.acik.join(", ") || "—"}
+                      {s.disi.join(", ") || "—"}
                     </td>
                   </tr>
                 ))}

@@ -8,8 +8,8 @@ const t = tr.admin.eslestirme;
 
 export default function EslestirmeFormu() {
   const router = useRouter();
-  const [gizli, setGizli] = useState(2);
-  const [acik, setAcik] = useState(1);
+  const [grupIci, setGrupIci] = useState(5);
+  const [grupDisi, setGrupDisi] = useState(3);
   const [onay, setOnay] = useState(false);
   const [mesaj, setMesaj] = useState<string | null>(null);
   const [hata, setHata] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export default function EslestirmeFormu() {
       const res = await fetch("/api/admin/eslestirme", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ gizli, acik }),
+        body: JSON.stringify({ grupIci, grupDisi }),
       });
       const veri = await res.json().catch(() => null);
       if (!res.ok) {
@@ -55,27 +55,27 @@ export default function EslestirmeFormu() {
       <div className="mt-4 flex flex-wrap items-end gap-4">
         <label className="block">
           <span className="mb-1 block text-xs font-medium text-slate-300">
-            🕶 {t.gizliEtiket}
+            🤝 {t.grupIciEtiket}
           </span>
           <input
             type="number"
             min={0}
-            max={5}
-            value={gizli}
-            onChange={(e) => setGizli(Number(e.target.value))}
+            max={15}
+            value={grupIci}
+            onChange={(e) => setGrupIci(Number(e.target.value))}
             className={sayiSinif}
           />
         </label>
         <label className="block">
           <span className="mb-1 block text-xs font-medium text-slate-300">
-            👁 {t.acikEtiket}
+            🌍 {t.grupDisiEtiket}
           </span>
           <input
             type="number"
             min={0}
-            max={5}
-            value={acik}
-            onChange={(e) => setAcik(Number(e.target.value))}
+            max={15}
+            value={grupDisi}
+            onChange={(e) => setGrupDisi(Number(e.target.value))}
             className={sayiSinif}
           />
         </label>
@@ -103,7 +103,7 @@ export default function EslestirmeFormu() {
 
       <button
         type="submit"
-        disabled={!onay || calisiyor || gizli + acik < 1}
+        disabled={!onay || calisiyor || grupIci + grupDisi < 1}
         className="mt-4 rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
       >
         {calisiyor ? t.calisiyor : t.calistir}
