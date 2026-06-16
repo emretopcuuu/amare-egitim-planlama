@@ -61,12 +61,13 @@ export default async function PusulaSayfa() {
         metin: t.adimPuanMetin,
         sure: t.adimPuanSure,
         tamam: ozTamam,
+        tekrar: true, // puanlarını sonradan da düzeltebilsin
         aksiyon: (
           <Link
             href={`/degerlendir/${session.sub}`}
             className="btn-kor flex h-12 w-full items-center justify-center rounded-xl text-sm font-bold"
           >
-            {t.adimPuanDugme}
+            {ozTamam ? t.adimPuanDuzelt : t.adimPuanDugme}
           </Link>
         ),
       },
@@ -77,6 +78,7 @@ export default async function PusulaSayfa() {
         metin: t.adimFotoMetin,
         sure: t.adimFotoSure,
         tamam: selfieVar,
+        tekrar: true, // tamamlandıktan sonra da "değiştir" görünsün
         aksiyon: <ProfilFoto varMi={selfieVar} />,
       },
       {
@@ -86,6 +88,7 @@ export default async function PusulaSayfa() {
         metin: t.adimYuzMetin,
         sure: t.adimYuzSure,
         tamam: yuzVar,
+        tekrar: true, // tamamlandıktan sonra da yeniden çekilebilsin
         aksiyon: <CanliAyna varMi={yuzVar} />,
       },
     ];
@@ -141,7 +144,7 @@ export default async function PusulaSayfa() {
               tamam={a.tamam}
               vurgu={a.k === sonrakiK}
             >
-              {!a.tamam && a.aksiyon}
+              {(!a.tamam || a.tekrar) && a.aksiyon}
             </Adim>
           ))}
 
