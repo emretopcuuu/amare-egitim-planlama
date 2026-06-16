@@ -1787,10 +1787,14 @@ export const tr = {
       // Satır düzenleme modalı
       duzenleBaslik: "Kişiyi Düzenle",
       duzenleKaydet: "Kaydet",
+      duzenleKaydediliyor: "Kaydediliyor…",
       duzenleVazgec: "Vazgeç",
+      duzenleKodYer: "Giriş kodu (6 rakam)",
       duzenleBasarili: (ad: string) => `✓ ${ad} güncellendi.`,
       duzenleHata: "Güncelleme başarısız. Lütfen tekrar dene.",
       duzenleKodHata: "Bu kod zaten kullanımda veya geçersiz (6 rakam olmalı).",
+      duzenleSil: "🗑 Bu kişiyi sil",
+      duzenleSilOnay: "Eminim, sil",
     },
     eslestirme: {
       baslik: "Eşleştirme",

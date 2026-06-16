@@ -28,6 +28,7 @@ export async function PATCH(
     typeof v === "string" && v.trim() ? v.trim() : null;
 
   type Guncelleme = {
+    full_name?: string;
     team?: string | null;
     city?: string | null;
     phone?: string | null;
@@ -35,6 +36,13 @@ export async function PATCH(
   };
   const guncelleme: Guncelleme = {};
 
+  if ("ad" in body) {
+    const v = temiz(body.ad);
+    if (v === null) {
+      return Response.json({ hata: t.hataAdEksik }, { status: 400 });
+    }
+    guncelleme.full_name = v.slice(0, 120);
+  }
   if ("takim" in body) {
     const v = temiz(body.takim);
     guncelleme.team = v ? v.slice(0, 60) : null;
@@ -84,4 +92,34 @@ export async function PATCH(
   }
 
   return Response.json({ guncellendi: 1 });
+}
+
+// Tek katılımcıyı siler — puanları ve atamaları cascade ile gider.
+// Admin hesabı bu uçtan silinemez (yalnız role=participant).
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!(await adminOturumu())) {
+    return Response.json({ hata: tr.admin.yetkisiz }, { status: 403 });
+  }
+
+  const { id } = await params;
+  if (!id) {
+    return Response.json({ hata: t.hataSunucu }, { status: 400 });
+  }
+
+  const db = supabaseAdmin();
+  const { data, error } = await db
+    .from("participants")
+    .delete()
+    .eq("id", id)
+    .eq("role", "participant")
+    .select("id");
+
+  if (error) {
+    return Response.json({ hata: t.hataSunucu }, { status: 500 });
+  }
+
+  return Response.json({ silinen: data.length });
 }
