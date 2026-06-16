@@ -1746,12 +1746,13 @@ export const tr = {
       ekleniyor: "Ekleniyor…",
       ekleBasarili: (ad: string, kod: string) => `✓ ${ad} eklendi — giriş kodu: ${kod}`,
       excelOkunamadi: "Excel dosyası okunamadı. CSV olarak da deneyebilirsin.",
-      // Toplu takım dağıtımı
+      // Toplu takım dağıtımı (otomatik, kişi/takım sayısına göre)
       takimDagitBaslik: "Takımlara Dağıt",
       takimDagitAciklama:
-        "Takım adlarını yaz, listeyi rastgele ve dengeli böl. Kimse seçili değilse herkese uygulanır; seçersen yalnız seçilenlere.",
-      takimAdlariYer: "Takım adları (virgülle): Aslanlar, Kartallar, Şahinler",
-      rastgeleDagit: "🎲 Rastgele Dağıt",
+        "Takım başına kişi sayısını seç; gruplar otomatik 'Grup Bir, İki, Üç…' oluşur ve rastgele, dengeli dağılır. Adları sonra değiştirebilirsin. Kimse seçili değilse herkese uygulanır.",
+      kisiBasiEtiket: "Takım başına kişi",
+      otomatikDagit: "🎲 Otomatik Dağıt",
+      dagitOnizleme: (kisi: number, takim: number) => `${kisi} kişi → ${takim} takım`,
       dagitiliyor: "Dağıtılıyor…",
       seciliereAtaYer: "Takım adı",
       seciliereAta: "Seçilenleri ata",
@@ -1759,8 +1760,13 @@ export const tr = {
       tumunuSec: "Tümünü seç",
       seciliSayi: (n: number) => `${n} seçili`,
       dagitBasarili: (n: number) => `✓ ${n} kişi takımlara dağıtıldı.`,
-      takimGerekli: "Önce en az bir takım adı yaz.",
       kimseYok: "Dağıtılacak kişi yok.",
+      // Atama sonrası yeniden adlandırma
+      adlandirBaslik: "Takımları Yeniden Adlandır",
+      adlandirAciklama: "Atamadan sonra grup adlarını değiştir (örn. Grup Bir → Aslanlar).",
+      yeniAd: "Yeni ad",
+      kaydet: "Kaydet",
+      takimKisi: (n: number) => `${n} kişi`,
       hataBosDosya: "Dosya boş veya okunamadı.",
       hataSatir: (satir: number, neden: string) => `Satır ${satir}: ${neden}`,
       hataAdEksik: "ad alanı boş",

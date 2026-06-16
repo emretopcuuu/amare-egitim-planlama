@@ -7,6 +7,15 @@ import KodKopyala from "./KodKopyala";
 
 const t = tr.admin.katilimcilar;
 
+// Türkçe sayı adları (takım otomatik adlandırma için): "Grup Bir", "Grup İki"…
+const SAYI = [
+  "", "Bir", "İki", "Üç", "Dört", "Beş", "Altı", "Yedi", "Sekiz", "Dokuz", "On",
+  "On Bir", "On İki", "On Üç", "On Dört", "On Beş", "On Altı", "On Yedi",
+  "On Sekiz", "On Dokuz", "Yirmi",
+];
+const sayiAd = (n: number) => SAYI[n] ?? String(n);
+const takimAdi = (i: number) => `Grup ${sayiAd(i)}`;
+
 type Kisi = {
   id: string;
   full_name: string;
@@ -16,13 +25,10 @@ type Kisi = {
   login_code: string;
 };
 
-// Toplu seçim + takımlara rastgele dağıtım. Takım kişi eklenirken değil,
-// tüm liste üzerinden seçilip rastgele/dengeli atanır.
 export default function KatilimciListe({ kisiler }: { kisiler: Kisi[] }) {
   const router = useRouter();
   const [secili, setSecili] = useState<Set<string>>(new Set());
-  // Varsayılan takım adları — admin kutudan değiştirebilir
-  const [takimMetni, setTakimMetni] = useState("Grup Bir, Grup İki, Grup Üç");
+  const [kisiBasi, setKisiBasi] = useState(4); // takım başına hedef kişi
   const [atamaTakim, setAtamaTakim] = useState("");
   const [mesgul, setMesgul] = useState(false);
   const [mesaj, setMesaj] = useState<string | null>(null);
@@ -48,7 +54,27 @@ export default function KatilimciListe({ kisiler }: { kisiler: Kisi[] }) {
     [secili, kisiler]
   );
 
+  // Mevcut takımlar (yeniden adlandırma için): ad → kişi sayısı
+  const mevcutTakimlar = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const k of kisiler) if (k.team) m.set(k.team, (m.get(k.team) ?? 0) + 1);
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], "tr"));
+  }, [kisiler]);
+
+  // Önizleme: kaç takım + adları
+  const takimSayisi = Math.max(1, Math.ceil(hedefIdler.length / Math.max(2, kisiBasi || 2)));
+  const onizleme = useMemo(() => {
+    const n = hedefIdler.length;
+    if (n === 0) return "";
+    const adlar = Array.from({ length: Math.min(takimSayisi, 4) }, (_, i) => takimAdi(i + 1));
+    return (
+      t.dagitOnizleme(n, takimSayisi) +
+      ` · ${adlar.join(", ")}${takimSayisi > 4 ? "…" : ""}`
+    );
+  }, [hedefIdler.length, takimSayisi]);
+
   async function uygula(updates: { id: string; team: string | null }[], basariMesaj: string) {
+    if (updates.length === 0) return;
     setMesgul(true);
     setMesaj(null);
     setHata(null);
@@ -73,40 +99,41 @@ export default function KatilimciListe({ kisiler }: { kisiler: Kisi[] }) {
     }
   }
 
-  function rastgeleDagit() {
-    const takimlar = takimMetni
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (takimlar.length === 0) return setHata(t.takimGerekli);
-    if (hedefIdler.length === 0) return setHata(t.kimseYok);
-
-    // Fisher-Yates karıştır, sonra sırayla (round-robin) dengeli dağıt
+  // Otomatik: kişi/takım sayısına göre Grup Bir/İki/Üç… oluştur, rastgele dengeli dağıt
+  function otomatikDagit() {
     const idler = [...hedefIdler];
+    if (idler.length === 0) return setHata(t.kimseYok);
     for (let i = idler.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [idler[i], idler[j]] = [idler[j], idler[i]];
     }
-    const updates = idler.map((id, i) => ({ id, team: takimlar[i % takimlar.length] }));
+    const updates = idler.map((id, i) => ({ id, team: takimAdi((i % takimSayisi) + 1) }));
     void uygula(updates, t.dagitBasarili(updates.length));
   }
 
   function seciliereAta() {
     const takim = atamaTakim.trim();
-    if (!takim) return setHata(t.takimGerekli);
-    if (secili.size === 0) return setHata(t.kimseYok);
-    const updates = [...secili].map((id) => ({ id, team: takim }));
-    void uygula(updates, t.dagitBasarili(updates.length));
+    if (!takim || secili.size === 0) return setHata(t.kimseYok);
+    void uygula(
+      [...secili].map((id) => ({ id, team: takim })),
+      t.dagitBasarili(secili.size)
+    );
   }
 
   function temizle() {
     if (hedefIdler.length === 0) return setHata(t.kimseYok);
-    const updates = hedefIdler.map((id) => ({ id, team: null }));
+    void uygula(hedefIdler.map((id) => ({ id, team: null })), t.dagitBasarili(hedefIdler.length));
+  }
+
+  function yenidenAdlandir(eski: string, yeni: string) {
+    const ad = yeni.trim();
+    if (!ad || ad === eski) return;
+    const updates = kisiler.filter((k) => k.team === eski).map((k) => ({ id: k.id, team: ad }));
     void uygula(updates, t.dagitBasarili(updates.length));
   }
 
   const girisStil =
-    "h-10 flex-1 rounded-lg border border-royal-light/30 bg-midnight-soft px-3 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold";
+    "h-10 rounded-lg border border-royal-light/30 bg-midnight-soft px-3 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold";
 
   return (
     <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
@@ -119,34 +146,41 @@ export default function KatilimciListe({ kisiler }: { kisiler: Kisi[] }) {
         )}
       </div>
 
-      {/* Takımlara dağıtım aracı */}
+      {/* Otomatik takım dağıtımı */}
       {kisiler.length > 0 && (
         <div className="mt-4 rounded-xl border border-gold/20 bg-gold/[0.04] p-4">
           <p className="text-sm font-semibold text-gold-light">🎲 {t.takimDagitBaslik}</p>
           <p className="mt-1 text-xs text-slate-400">{t.takimDagitAciklama}</p>
 
-          <div className="mt-3 flex flex-wrap gap-2">
-            <input
-              value={takimMetni}
-              onChange={(e) => setTakimMetni(e.target.value)}
-              placeholder={t.takimAdlariYer}
-              className={`${girisStil} min-w-[16rem]`}
-            />
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-sm text-slate-300">
+              {t.kisiBasiEtiket}
+              <input
+                type="number"
+                min={2}
+                max={kisiler.length}
+                value={kisiBasi}
+                onChange={(e) => setKisiBasi(Math.max(2, Number(e.target.value) || 2))}
+                className={`${girisStil} w-20 text-center`}
+              />
+            </label>
+            <span className="text-xs font-medium text-gold-light/80">{onizleme}</span>
             <button
-              onClick={rastgeleDagit}
+              onClick={otomatikDagit}
               disabled={mesgul}
               className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
             >
-              {mesgul ? t.dagitiliyor : t.rastgeleDagit}
+              {mesgul ? t.dagitiliyor : t.otomatikDagit}
             </button>
           </div>
 
+          {/* Manuel: seçilenleri belirli takıma ata + temizle */}
           <div className="mt-2 flex flex-wrap gap-2">
             <input
               value={atamaTakim}
               onChange={(e) => setAtamaTakim(e.target.value)}
               placeholder={t.seciliereAtaYer}
-              className={`${girisStil} min-w-[10rem]`}
+              className={`${girisStil} min-w-[10rem] flex-1`}
             />
             <button
               onClick={seciliereAta}
@@ -170,6 +204,25 @@ export default function KatilimciListe({ kisiler }: { kisiler: Kisi[] }) {
               {hata}
             </p>
           )}
+        </div>
+      )}
+
+      {/* Atama sonrası yeniden adlandırma */}
+      {mevcutTakimlar.length > 0 && (
+        <div className="mt-3 rounded-xl border border-royal/20 bg-midnight-soft/40 p-4">
+          <p className="text-sm font-semibold text-slate-200">✏️ {t.adlandirBaslik}</p>
+          <p className="mt-1 text-xs text-slate-400">{t.adlandirAciklama}</p>
+          <div className="mt-3 space-y-2">
+            {mevcutTakimlar.map(([ad, sayi]) => (
+              <AdlandirSatir
+                key={ad}
+                ad={ad}
+                sayi={sayi}
+                mesgul={mesgul}
+                onKaydet={(yeni) => yenidenAdlandir(ad, yeni)}
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -247,5 +300,42 @@ export default function KatilimciListe({ kisiler }: { kisiler: Kisi[] }) {
         ))}
       </ul>
     </section>
+  );
+}
+
+// Tek takım yeniden-adlandırma satırı (kendi giriş durumunu tutar)
+function AdlandirSatir({
+  ad,
+  sayi,
+  mesgul,
+  onKaydet,
+}: {
+  ad: string;
+  sayi: number;
+  mesgul: boolean;
+  onKaydet: (yeni: string) => void;
+}) {
+  const [yeni, setYeni] = useState(ad);
+  const degisti = yeni.trim() !== "" && yeni.trim() !== ad;
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="min-w-[7rem] text-sm text-slate-300">
+        {ad} <span className="text-xs text-slate-500">({t.takimKisi(sayi)})</span>
+      </span>
+      <input
+        value={yeni}
+        onChange={(e) => setYeni(e.target.value)}
+        onKeyDown={(e) => e.key === "Enter" && degisti && onKaydet(yeni)}
+        placeholder={t.yeniAd}
+        className="h-9 flex-1 rounded-lg border border-royal-light/30 bg-midnight-soft px-3 text-sm text-slate-100 outline-none focus:border-gold"
+      />
+      <button
+        onClick={() => onKaydet(yeni)}
+        disabled={mesgul || !degisti}
+        className="rounded-lg border border-royal-light/40 px-3 py-1.5 text-sm font-medium text-slate-200 transition-colors hover:bg-midnight-soft disabled:opacity-40"
+      >
+        {t.kaydet}
+      </button>
+    </div>
   );
 }
