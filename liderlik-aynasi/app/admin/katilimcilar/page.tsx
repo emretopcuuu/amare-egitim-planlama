@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
+import KisiEkle from "./KisiEkle";
 import KatilimciAraclari from "./KatilimciAraclari";
 import KatilimciListe from "./KatilimciListe";
 import Ipucu from "../Ipucu";
@@ -28,9 +29,12 @@ export default async function KatilimcilarPage() {
         <Ipucu {...tr.admin.yardim.katilimcilar} />
       </div>
 
-      <KatilimciAraclari />
+      {/* Üst: tek kişi ekle → orta: liste + takım dağıtımı → alt: toplu import + tehlikeli */}
+      <KisiEkle />
 
       <KatilimciListe kisiler={kisiler} />
+
+      <KatilimciAraclari />
     </main>
   );
 }
