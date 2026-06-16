@@ -260,30 +260,34 @@ export default async function AnaSayfa({
     </div>
   );
 
-  // 1) ÖZ-PUAN KAPISI — dalga açıkken kendini puanlamadan başka hiçbir şey yok.
-  // İlk kez gelen adaya birincil eyleme doğru canlı "👆 buradan başla" işareti.
-  if (dalga && !ozTamam) {
-    return (
-      <Sayfa ust={ust} kurulum={false}>
-        <BuyukKart
-          baslik={t.ozGerekBaslik}
-          metin={t.ozGerekMetin}
-          href={`/degerlendir/${session.sub}`}
-          dugme={t.ozGerekDugme}
-          ikon="✨"
-          vurgu
-        />
-        <IlkAdimIpucu etiket={t.ilkAdimIpucu} />
-      </Sayfa>
-    );
-  }
-
-  // 2) SES RİTÜELİ — YANSIMAN doğmadıysa (öz-puandan sonra) ilk wow anı
+  // 1) SES RİTÜELİ — kampa girişten sonraki İLK adım: Yansıman'ın doğuşu.
+  // Tam ekran, kademeli; tamamlanmadan (ya da "sessiz" seçilmeden) başka
+  // hiçbir şey görünmez — kişi dolaşamaz, doğrudan ritüel akışına girer.
   if (!sesProfili) {
     return (
       <Sayfa ust={ust} kurulum={false}>
         <AynaRituel />
       </Sayfa>
+    );
+  }
+
+  // 2) ÖZ-PUAN KAPISI — kendini puanlamadan başkasını puanlayamazsın.
+  // Tam ekran odak (üst menü + alt çubuk gizli): tek iş, dolaşma yok.
+  if (dalga && !ozTamam) {
+    return (
+      <main className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[#04101c] p-6">
+        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
+          <BuyukKart
+            baslik={t.ozGerekBaslik}
+            metin={t.ozGerekMetin}
+            href={`/degerlendir/${session.sub}`}
+            dugme={t.ozGerekDugme}
+            ikon="✨"
+            vurgu
+          />
+          <IlkAdimIpucu etiket={t.ilkAdimIpucu} />
+        </div>
+      </main>
     );
   }
 

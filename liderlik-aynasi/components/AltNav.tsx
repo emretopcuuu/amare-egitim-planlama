@@ -31,7 +31,11 @@ type Kivilcim = {
 
 export default function AltNav() {
   const pathname = usePathname();
-  const gizli = GIZLI.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+  // Tam ekran odak rotalar + tek kişi puanlama sihirbazı (/degerlendir/<id>):
+  // çubuk gizli, dolaşma yok. Liste (/degerlendir) çubuğu korur.
+  const gizli =
+    GIZLI.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
+    /^\/degerlendir\/[^/]+$/.test(pathname);
   const [kiv, setKiv] = useState<Kivilcim | null>(null);
 
   // Çubuk görünürken içerik altına nefes payı bırak (sabit çubuk içeriği örtmesin)
