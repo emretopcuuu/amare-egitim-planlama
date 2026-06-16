@@ -37,8 +37,13 @@ export async function proxy(req: NextRequest) {
       return NextResponse.json({ hata: "Oturum gerekli." }, { status: 401 });
     }
     const url = req.nextUrl.clone();
-    url.pathname = pathname.startsWith("/admin") ? "/admin/giris" : "/giris";
-    url.search = "";
+    const adminMi = pathname.startsWith("/admin");
+    url.pathname = adminMi ? "/admin/giris" : "/giris";
+    // Hedefi koru: giriş sonrası kişi geldiği yere dönsün (örn. oda QR'ı
+    // /ac?k=… — eskiden parametre silinip kamp açılmıyordu). Yalnız katılımcı
+    // girişinde ve hedef anlamlıysa ekle.
+    const hedef = pathname + (req.nextUrl.search || "");
+    url.search = !adminMi && hedef !== "/" ? `?next=${encodeURIComponent(hedef)}` : "";
     return NextResponse.redirect(url);
   }
 
