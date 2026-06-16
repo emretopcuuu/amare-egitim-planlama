@@ -1754,6 +1754,10 @@ export const tr = {
       bosListe: "Henüz katılımcı yok. Aşağıdaki 'Kişi Ekle' ya da 'Dosyadan İçe Aktar' ile başla.",
       takimYok: "Henüz takım atanmamış. Önce 'Takımlara Dağıt' ile dağıt.",
       tablo: { ad: "Ad Soyad", takim: "Takım", sehir: "Şehir", telefon: "Telefon", kod: "Kod" },
+      sayfaGeri: "← Geri",
+      sayfaIleri: "İleri →",
+      sayfaBilgi: (sayfa: number, toplam: number, bas: number, son: number, hepsi: number) =>
+        `${bas}–${son} / ${hepsi} · Sayfa ${sayfa}/${toplam}`,
       importBaslik: "Dosyadan İçe Aktar (CSV / Excel)",
       importAciklama:
         "Sütunlar: ad (zorunlu), takim, sehir, telefon, eposta. İlk satır başlık olmalı. CSV veya Excel (.xlsx) yükleyebilirsin; her kişiye benzersiz 6 haneli giriş kodu otomatik üretilir.",
