@@ -165,6 +165,7 @@ export default function OnFarkindalikAkis({
   }
 
   const a = ADIMLAR[adim];
+  const yuzde = Math.round((Math.min(adim + 1, TOPLAM) / TOPLAM) * 100);
 
   return (
     <div className="flex min-h-[82vh] flex-col">
@@ -183,9 +184,7 @@ export default function OnFarkindalikAkis({
             </button>
           )}
           <div className="flex items-center gap-3">
-            <span className="font-mono text-lg font-bold text-slate-300">
-              {Math.min(adim + 1, TOPLAM)} / {TOPLAM}
-            </span>
+            <span className="font-mono text-lg font-bold text-slate-300">%{yuzde}</span>
             <button
               type="button"
               onClick={kaydetVeCik}
@@ -200,7 +199,7 @@ export default function OnFarkindalikAkis({
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-300"
-            style={{ width: `${(Math.min(adim, TOPLAM) / TOPLAM) * 100}%` }}
+            style={{ width: `${yuzde}%` }}
           />
         </div>
       </header>

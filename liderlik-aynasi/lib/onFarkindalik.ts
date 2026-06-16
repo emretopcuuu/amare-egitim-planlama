@@ -1,9 +1,13 @@
 // ÖN FARKINDALIK — Kamp öncesi "Ayna/Kalibrasyon" çalışması (Pusula'nın kardeşi).
-// Bu dosya YALNIZCA Katman 1'i (Liderlik Pusulası: Öz Saygı / Öz Güven /
-// Öz Yeterlilik) tanımlar. Sonraki katmanlar (2-5, Mini 360) ayrı fazlarda eklenir.
+// 5 katman + Sonuç Kartı. Algı (kendini nasıl görüyorsun) ile gerçeği (davranış/
+// veri) yan yana koyar; kişiye özel görev motorunun yakıtıdır.
 //
-// İlke: her ekranda TEK ifade, büyük 1-5 buton, kademe kademe, kısmi kayıt.
+// İlke: her ekranda TEK ifade, büyük dokunma hedefi, kademe kademe, kısmi kayıt.
 // Ters maddeler kişiye gösterilmez; puanlama SUNUCUDA yapılır (düz-çizgi cevabı kırar).
+//
+// NOT: Soru seti bilinçli olarak kısa tutulur (tekrar eden / aynı amaca hizmet
+// eden maddeler ayıklanmıştır). Eşikler madde sayısından türetilir — set
+// değişse bile skorlama bozulmaz.
 
 export type Olcek = 1 | 2 | 3 | 4 | 5;
 
@@ -20,7 +24,7 @@ export type Blok = {
   maddeler: Madde[];
 };
 
-// Katman 1 — Liderlik Pusulası. Üç blok × on madde. Metinler birebir ölçekten.
+// Katman 1 — Liderlik Pusulası. Üç blok × beş madde (3 düz + 2 ters). Metinler ölçekten.
 export const KATMAN1_BLOKLAR: Blok[] = [
   {
     kod: "oz_saygi",
@@ -29,15 +33,10 @@ export const KATMAN1_BLOKLAR: Blok[] = [
       "Son birkaç ayını düşün. İçinden geçeni değil, gerçekten yaptığını işaretle.",
     maddeler: [
       { kod: "k1.oz_saygi.1", metin: "Kendi koyduğum standardın altına düştüğümde fark eder, düzeltirim." },
-      { kod: "k1.oz_saygi.2", metin: "İnsanları kaybetmemek için bazen sınırlarımı esnetirim.", ters: true },
-      { kod: "k1.oz_saygi.3", metin: "Bana saygısız davranıldığında sessizce geçiştirmem." },
       { kod: "k1.oz_saygi.4", metin: "Değerimin, başkalarının onayına bağlı olmadığını hissederim." },
       { kod: "k1.oz_saygi.5", metin: "Onaylanmadığımda kendimi sorgulamaya başlarım.", ters: true },
-      { kod: "k1.oz_saygi.6", metin: "Sözümü tutmadığımda kılıf uydurmam, kendimle yüzleşirim." },
       { kod: "k1.oz_saygi.7", metin: "Net sınır koyarım ve sınırlarıma sahip çıkarım." },
-      { kod: "k1.oz_saygi.8", metin: "Hayır demem gerektiğinde suçluluk duymadan hayır derim." },
       { kod: "k1.oz_saygi.9", metin: "İnsanları kırmamak için kendi hedefimden vazgeçtiğim olur.", ters: true },
-      { kod: "k1.oz_saygi.10", metin: "Başarımı abartmadan, küçümsemeden sahiplenebilirim." },
     ],
   },
   {
@@ -48,13 +47,8 @@ export const KATMAN1_BLOKLAR: Blok[] = [
       { kod: "k1.oz_guven.1", metin: "Benden güçlü insanların yanında küçülmeden durabilirim." },
       { kod: "k1.oz_guven.2", metin: "Başarısız görünmemek için bazı fırsatlara hiç girmem.", ters: true },
       { kod: "k1.oz_guven.3", metin: "Büyük bir hedefi yüksek sesle söylemekten çekinmem." },
-      { kod: "k1.oz_guven.4", metin: "Reddedildiğimde geri çekilmem, ertesi gün yine sahadayım." },
-      { kod: "k1.oz_guven.5", metin: "Eleştiri aldığımda önce savunmaya geçerim.", ters: true },
-      { kod: "k1.oz_guven.6", metin: "Başarılı insanlara ulaşmayı gözümde büyütmem." },
       { kod: "k1.oz_guven.7", metin: "Bir işi ilk kez yapacak olsam bile başlayabilirim." },
       { kod: "k1.oz_guven.8", metin: "Hata yapma ihtimali beni harekete geçmekten alıkoyar.", ters: true },
-      { kod: "k1.oz_guven.9", metin: "Kalabalık önünde fikrimi net savunabilirim." },
-      { kod: "k1.oz_guven.10", metin: "Ekibimdeki güçlü birinin beni geçmesinden rahatsız olmam." },
     ],
   },
   {
@@ -63,21 +57,18 @@ export const KATMAN1_BLOKLAR: Blok[] = [
     aciklama: "Bir işi sonuca götürme gücüne dair gerçek davranışını düşün.",
     maddeler: [
       { kod: "k1.oz_yeterlilik.1", metin: "Gerekeni yaparsam sonucu üretebileceğime inanırım." },
-      { kod: "k1.oz_yeterlilik.2", metin: "Plan bozulduğunda bazen tamamen bırakırım.", ters: true },
       { kod: "k1.oz_yeterlilik.3", metin: "Zorlandığım bir beceriyi öğrenene kadar üzerinde dururum." },
-      { kod: "k1.oz_yeterlilik.4", metin: "Bir hedefi küçük adımlara bölüp ilerleyebilirim." },
       { kod: "k1.oz_yeterlilik.5", metin: "İşler kötü gittiğinde “elimden bir şey gelmez” hissine kapılırım.", ters: true },
-      { kod: "k1.oz_yeterlilik.6", metin: "Yeni bir duruma hızla uyum sağlayabilirim." },
       { kod: "k1.oz_yeterlilik.7", metin: "Başladığım işi, motivasyonum düşse bile bitiririm." },
       { kod: "k1.oz_yeterlilik.8", metin: "Yeni ve zor bir görev verildiğinde önce yapamayacağımı düşünürüm.", ters: true },
-      { kod: "k1.oz_yeterlilik.9", metin: "Bana bağlı sonuçların sorumluluğunu alırım." },
-      { kod: "k1.oz_yeterlilik.10", metin: "Plan tutmadığında yeni bir yol bulup devam ederim." },
     ],
   },
 ];
 
 export const KATMAN1_MADDELER: Madde[] = KATMAN1_BLOKLAR.flatMap((b) => b.maddeler);
 export const KATMAN1_KODLAR = new Set(KATMAN1_MADDELER.map((m) => m.kod));
+// Madde sayısı (eşik/normalizasyon bundan türetilir — set değişince kendiliğinden uyar).
+export const KATMAN1_MADDE_SAYISI = KATMAN1_MADDELER.length;
 const TERS_KODLAR = new Set(KATMAN1_MADDELER.filter((m) => m.ters).map((m) => m.kod));
 
 // Tek maddenin etkin puanı (ters maddede 6 - değer).
@@ -88,13 +79,14 @@ export function maddePuani(kod: string, deger: Olcek): number {
 export type BlokSonuc = {
   kod: Blok["kod"];
   ad: string;
-  puan: number; // 10-50
+  puan: number; // blok toplamı (madde sayısı × 1..5)
   bant: "guclu" | "orta" | "kirilgan";
 };
 
-function bant(puan: number): BlokSonuc["bant"] {
-  if (puan >= 40) return "guclu";
-  if (puan >= 30) return "orta";
+// Bant eşikleri blok azamisinden türetilir: %80+ güçlü, %60+ orta, altı kırılgan.
+function bant(puan: number, azami: number): BlokSonuc["bant"] {
+  if (puan >= azami * 0.8) return "guclu";
+  if (puan >= azami * 0.6) return "orta";
   return "kirilgan";
 }
 
@@ -108,7 +100,7 @@ export function katman1Hesapla(
       const d = yanitlar[m.kod];
       return t + (d ? maddePuani(m.kod, d as Olcek) : 0);
     }, 0);
-    return { kod: b.kod, ad: b.ad, puan, bant: bant(puan) };
+    return { kod: b.kod, ad: b.ad, puan, bant: bant(puan, b.maddeler.length * 5) };
   });
   const tamamMi = KATMAN1_MADDELER.every((m) => yanitlar[m.kod]);
   const enZayif = tamamMi
@@ -120,7 +112,7 @@ export function katman1Hesapla(
 // ============================================================================
 // KATMAN 2 — Liderlik Açık Analizi: her başlık için "Önem" (1-10) ve "Son 30
 // günde gerçekte" (1-10). Açık = Önem − Gerçek. En büyük iki açık = kampta
-// üzerine gidilecek alanlar.
+// üzerine gidilecek alanlar. (Katman 3 sayımlarıyla örtüşen başlıklar elendi.)
 // ============================================================================
 
 export type Katman2Baslik = { kod: string; ad: string; anlam: string };
@@ -130,9 +122,6 @@ export const KATMAN2_BASLIKLAR: Katman2Baslik[] = [
   { kod: "yeni_lider", ad: "Yeni lider geliştirme", anlam: "Kendi yerine geçecek, bağımsız üreten lider yetiştirmek." },
   { kod: "zor_konusma", ad: "Zor konuşmalar", anlam: "Ertelemeden, net ama şefkatli yüzleşmek." },
   { kod: "ekip_kocluk", ad: "Ekip koçluğu", anlam: "İnsanın önündeki engeli görüp birebir geliştirmek." },
-  { kod: "hedef", ad: "Hedef koydurma", anlam: "Ekibe net, ölçülebilir hedef koyup takip etmek." },
-  { kod: "gunluk_aktivite", ad: "Günlük aktivite", anlam: "Her gün sahada görünür ve üretken olmak." },
-  { kod: "ornek_olma", ad: "Örnek olma", anlam: "Ekibinden beklediğin davranışı önce kendin göstermek." },
 ];
 
 export type AcikSonuc = { kod: string; ad: string; onem: number; gercek: number; acik: number };
@@ -154,26 +143,21 @@ export function katman2Hesapla(
 
 // ============================================================================
 // KATMAN 3 — Liderlik Gerçeklik Kontrolü: görüş değil, sadece rakam (arka
-// ofisten doğrulanabilir). Aktivite sayıları + ritim. Algıyı değil davranışı ölçer.
+// ofisten doğrulanabilir). Aktivite sayıları + ritim. Algıyı değil davranışı
+// ölçer. (Birbiriyle örtüşen sayımlar elendi: huni + gelişim + sonuç + ritim.)
 // ============================================================================
 
 export type Katman3Soru = { kod: string; metin: string; max: number };
 
 export const KATMAN3_AKTIVITE: Katman3Soru[] = [
   { kod: "k3.ilk_gorusme", metin: "Son 30 günde kaç yeni kişiyle ilk görüşme yaptın?", max: 999 },
-  { kod: "k3.takip_gorusme", metin: "Kaç takip görüşmesi yaptın?", max: 999 },
   { kod: "k3.birebir_kocluk", metin: "Kaç kişiyle birebir (koçluk) çalıştın?", max: 999 },
-  { kod: "k3.lider_gelistirme", metin: "Kaç birebir lider geliştirme görüşmesi yaptın?", max: 999 },
-  { kod: "k3.hedef_koydurma", metin: "Kaç kişiye net hedef koydurdun?", max: 999 },
-  { kod: "k3.etkinlige_tasima", metin: "Kaç kişiyi etkinliğe ya da sunuma taşıdın?", max: 999 },
   { kod: "k3.yeni_ortak", metin: "Kaç yeni ortak kaydı oldu?", max: 999 },
   { kod: "k3.silver", metin: "Ekibinden kaç kişi Silver oldu?", max: 999 },
-  { kod: "k3.gold", metin: "Ekibinden kaç kişi Gold oldu?", max: 999 },
 ];
 
 export const KATMAN3_RITIM: Katman3Soru[] = [
   { kod: "k3.gelir_gun", metin: "Son 30 günün kaçında gelir getirici bir aktivite yaptın? (0-30)", max: 30 },
-  { kod: "k3.gelisim_gun", metin: "Kaç gününde bireysel gelişim için planlı zaman ayırdın? Okuma, eğitim, çalışma. (0-30)", max: 30 },
   { kod: "k3.uzak_gun", metin: "En uzun kaç gün üst üste sahadan tamamen uzak kaldın?", max: 30 },
 ];
 
@@ -194,7 +178,7 @@ export function katman3Hesapla(yanitlar: Record<string, number>): {
 
 // ============================================================================
 // KATMAN 4 — Kör Nokta Haritası: puan yok, yazılı. Seni sabote eden görünmez
-// inanç + Acı Gerçek soruları. İlk 4 zorunlu, Acı Gerçek 4'ü teşvik edilir.
+// inanç. Dört madde de zorunlu (hedef → ters davranış → kalkan → varsayım).
 // ============================================================================
 
 export type MetinSoru = { kod: string; metin: string; zorunlu: boolean };
@@ -204,10 +188,6 @@ export const KATMAN4_SORULAR: MetinSoru[] = [
   { kod: "k4.ters_davranis", metin: "Bu hedefe ters çalışan, yapman gerekirken yapmadığın davranış nedir?", zorunlu: true },
   { kod: "k4.kalkan", metin: "Bu davranışı sürdürmek seni neyden koruyor? Senin kalkanın ne?", zorunlu: true },
   { kod: "k4.varsayim", metin: "Büyük varsayımın: “Eğer ___ yaparsam, ___ olur.” — kendi cümlenle yaz.", zorunlu: true },
-  { kod: "k4.ag1", metin: "Bugün hâlâ hedeflediğin yerde değilsen, en dürüst sebep ne?", zorunlu: false },
-  { kod: "k4.ag2", metin: "Hangi bahaneyi yıllardır daha kibar cümlelerle söylüyorsun?", zorunlu: false },
-  { kod: "k4.ag3", metin: "Sen iki hafta görünmez olsan, ekibin ne kadar sürede dağılır?", zorunlu: false },
-  { kod: "k4.ag4", metin: "Bu kamptan sonra hiçbir şeyini değiştirmezsen, bir yıl sonra ne kaybetmiş olursun?", zorunlu: false },
 ];
 
 // ============================================================================
@@ -217,21 +197,16 @@ export const KATMAN4_SORULAR: MetinSoru[] = [
 
 export const KATMAN5A_SORULAR: Katman3Soru[] = [
   { kod: "k5a.beceri", metin: "Son 12 ayda kaç yeni beceri öğrendin ya da geliştirdin?", max: 999 },
-  { kod: "k5a.kitap", metin: "Kaç kitap bitirdin?", max: 999 },
   { kod: "k5a.egitim", metin: "Kaç eğitim, seminer ya da kursu tamamladın?", max: 999 },
 ];
 
 export const KATMAN5B_MADDELER: Madde[] = [
   { kod: "k5b.1", metin: "Geri bildirimi savunmaya geçmeden dinleyebilirim." },
-  { kod: "k5b.2", metin: "Eleştiriyi alınganlık değil, değişim fırsatı olarak görürüm." },
-  { kod: "k5b.3", metin: "Bilmediğimi kabul edip yardım isteyebilirim." },
   { kod: "k5b.4", metin: "Beni zorlayan bir geri bildirimi davranışıma dönüştürürüm." },
 ];
 
 export const KATMAN5C_SORULAR: MetinSoru[] = [
-  { kod: "k5c.1", metin: "Son 6 ayda seni en çok zorlayan geri bildirim neydi, ne yaptın?", zorunlu: false },
   { kod: "k5c.2", metin: "Son bir yılda değiştirdiğin bir davranış var mı? Yaz.", zorunlu: false },
-  { kod: "k5c.3", metin: "Bir mentorun “hemen bırakman gereken bir alışkanlığın ne?” dese, ne söylerdi?", zorunlu: false },
 ];
 
 // ============================================================================
@@ -245,7 +220,7 @@ export const SONUC_KARTI: MetinSoru[] = [
 ];
 
 // ============================================================================
-// MINI 360 — Ekip Aynası (opt-in). Aynı 6 ifade: kişi kendine, 3 ekip üyesi
+// MINI 360 — Ekip Aynası (opt-in). Aynı 6 ifade: kişi kendine, ekip üyeleri
 // anonim puanlar (1-5). Sen-ekip farkı = ölçülmüş kör nokta.
 // ============================================================================
 
@@ -348,7 +323,6 @@ function katman5Hesapla(sayilar: Record<string, number>) {
   return {
     ogrenme: {
       beceri: sayilar["k5a.beceri"] ?? null,
-      kitap: sayilar["k5a.kitap"] ?? null,
       egitim: sayilar["k5a.egitim"] ?? null,
     },
     aciklik, // 1-5 ortalama
@@ -403,4 +377,3 @@ export function sonucOnerileri(sayilar: Record<string, number>): Record<string, 
     "sonuc.kamp_gorevi": "",
   };
 }
-
