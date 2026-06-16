@@ -176,6 +176,14 @@ export async function onceliklerKaydet(
   return !error;
 }
 
+// Pusula'yı en baştan başlat: sohbet, öncelikler ve rızayı temizler. Kişi
+// yanlış bir şey yaptıysa (yanlış liste, yanlış eleme) sıfırdan başlayabilsin.
+export async function pusulaSifirla(db: Db, pid: string): Promise<void> {
+  await db.from("pusula_mesajlar").delete().eq("participant_id", pid);
+  await db.from("pusula").delete().eq("participant_id", pid);
+  await db.from("participants").update({ consent_at: null }).eq("id", pid);
+}
+
 // Bir sohbet turu (liste sonrası derinleşme): kullanıcı mesajını işle, AYNA'nın
 // bir sonraki repliğini üret, aşamayı ilerlet; bittiyse profili damıt.
 export async function pusulaTuru(
@@ -207,6 +215,7 @@ export async function pusulaTuru(
   // Liste formdan geldi → sohbet 'eleme' ile başlar.
   const asama = satir.asama && satir.asama !== "cerceve" ? satir.asama : "eleme";
   const ad = katilimci.full_name.split(" ")[0];
+  const kullaniciTur = gecmis.filter((m) => m.rol === "kullanici").length;
 
   const mesajlar: Anthropic.MessageParam[] = [
     {
@@ -240,6 +249,8 @@ Kişinin yazdığı öncelikler:
 ${listeMetni(satir.oncelikler)}
 
 Şu anki aşama: "${asama}". ${ASAMA_YONERGESI[asama] ?? ASAMA_YONERGESI.eleme}
+
+TEMPO: Bu kişiden şu ana dek ${kullaniciTur} yanıt aldın. Sohbeti gereksiz uzatma — toplam 5-6 turda bitir. ${kullaniciTur >= 4 ? "Artık toparla: hızla engel aşamasına gel, ilk 3 nedeni şefkatle yansıt, teyit alıp bitti=true ver." : "Her turda bir adım ilerlet; aynı noktada dönüp durma."}
 
 ÇIKTI KURALI: "mesaj" alanına YALNIZCA kişiye söyleyeceğin tek, temiz, doğru yazılmış Türkçe cümle/soru yaz. Her cümle büyük harfle başlasın, noktalama doğru olsun. Parantez, köşeli parantez, aşama notu, kendine not, meta açıklama ASLA koyma. "asama" ve "bitti" alanlarını ayrıca doldur.`,
       messages: mesajlar,

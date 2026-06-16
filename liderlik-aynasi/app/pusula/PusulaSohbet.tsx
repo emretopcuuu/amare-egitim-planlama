@@ -9,7 +9,16 @@ const BLANK_SAYISI = 10;
 const MIN_MADDE = 3;
 
 type Mesaj = { rol: string; icerik: string };
-type Faz = "riza" | "liste" | "sohbet" | "bitti";
+type Faz = "riza" | "liste" | "kopru" | "sohbet" | "bitti";
+
+// Sohbet ilerlemesi — aşamadan yüzdeye. Her AYNA yanıtı aşamayı döndürür,
+// böylece kişi her soruda sona ne kadar kaldığını görür.
+const ILERLEME: Record<string, number> = {
+  eleme: 25,
+  bosluk: 55,
+  engel: 82,
+  tamam: 100,
+};
 
 // Web Speech API — sesle yazma (Türkçe). Desteklenmiyorsa buton görünmez.
 type TanimaSonuc = ArrayLike<{ transcript: string }> & { isFinal: boolean };
@@ -218,11 +227,13 @@ export default function PusulaSohbet({
   rizaVar,
   onceliklerVar,
   oncelikler = [],
+  asamaBaslangic = "eleme",
 }: {
   baslangic: Mesaj[];
   rizaVar: boolean;
   onceliklerVar: boolean;
   oncelikler?: string[];
+  asamaBaslangic?: string;
 }) {
   const router = useRouter();
   const ilkFaz: Faz =
@@ -235,7 +246,21 @@ export default function PusulaSohbet({
   const [girdi, setGirdi] = useState("");
   const [listeDinliyor, setListeDinliyor] = useState(false);
   const [sohbetDinliyor, setSohbetDinliyor] = useState(false);
-  const [elenenler, setElenenler] = useState<string[]>([]); // eleme: gönderilen maddeler
+  // Elenenleri sunucudaki geçmişten yeniden kur: kişinin önceliklerden seçtiği
+  // (yazdığı) maddeler. Böylece sayfa yenilenince elenenler geri gelmez.
+  const [elenenler, setElenenler] = useState<string[]>(() => {
+    const set = new Set(oncelikler);
+    return [
+      ...new Set(
+        baslangic
+          .filter((m) => m.rol === "kullanici" && set.has(m.icerik.trim()))
+          .map((m) => m.icerik.trim())
+      ),
+    ];
+  });
+  const [asama, setAsama] = useState<string>(asamaBaslangic);
+  const [sifirlaSor, setSifirlaSor] = useState(false);
+  const [sifirliyor, setSifirliyor] = useState(false);
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const altRef = useRef<HTMLDivElement>(null);
@@ -245,6 +270,29 @@ export default function PusulaSohbet({
   // Sohbet sırasında gösterilecek liste: sunucudan (dönen kullanıcı) ya da
   // oturum içi girilen maddeler. Eleme aşamasında seçilenler eksilir.
   const tumListe = oncelikler.length ? oncelikler : maddeler;
+  const ilerleme = ILERLEME[asama] ?? 25;
+
+  // Baştan başla: sunucudaki sohbet+öncelik+rızayı temizle, en başa dön.
+  async function sifirla() {
+    if (sifirliyor) return;
+    setSifirliyor(true);
+    try {
+      await istek({ sifirla: true });
+      setMesajlar([]);
+      setMaddeler([]);
+      setMaddeGirdi("");
+      setGirdi("");
+      setElenenler([]);
+      setAsama("eleme");
+      setHata(null);
+      acilisRef.current = false;
+      setSifirlaSor(false);
+      setFaz("riza");
+      router.refresh();
+    } finally {
+      setSifirliyor(false);
+    }
+  }
 
   useEffect(() => {
     altRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -252,6 +300,7 @@ export default function PusulaSohbet({
 
   async function istek(govde: Record<string, unknown>): Promise<{
     mesaj?: string;
+    asama?: string;
     bitti?: boolean;
     hata?: string;
     ok?: boolean;
@@ -311,7 +360,14 @@ export default function PusulaSohbet({
     }
     acilisRef.current = true; // açılış zaten geldi
     setMesajlar([{ rol: "ayna", icerik: v.mesaj }]);
+    if (v.asama) setAsama(v.asama);
+    // Doğrudan sohbete atlamak yerine önce köprü ekranı: ne olacağını net anlat.
+    setFaz("kopru");
+  }
+
+  function sohbeteBasla() {
     setFaz("sohbet");
+    setTimeout(() => altRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   }
 
   async function gonder() {
@@ -332,9 +388,11 @@ export default function PusulaSohbet({
       return;
     }
     setMesajlar((m) => [...m, { rol: "ayna", icerik: v.mesaj! }]);
+    if (v.asama) setAsama(v.asama);
     if (v.bitti) {
+      setAsama("tamam");
+      // Otomatik atlama yok — kişi yazıyı okuyup "Devam et" ile geçsin.
       setFaz("bitti");
-      setTimeout(() => router.refresh(), 2500);
     }
   }
 
@@ -361,7 +419,10 @@ export default function PusulaSohbet({
     const yeterli = maddeler.length >= MIN_MADDE;
     return (
       <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
-        <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.listeBaslik}</h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.listeBaslik}</h1>
+          <SifirlaButon sor={sifirlaSor} setSor={setSifirlaSor} sifirla={sifirla} mesgul={sifirliyor} />
+        </div>
         <p className="mt-2 text-sm leading-relaxed text-slate-400">{t.listeAciklama}</p>
 
         {/* Yazdıkça öncekiler görünür kalsın */}
@@ -446,11 +507,60 @@ export default function PusulaSohbet({
     );
   }
 
+  // ---- Köprü (liste → sohbet geçişi net anlatılır) ----
+  if (faz === "kopru") {
+    return (
+      <Kapak ikon="💬" baslik={t.kopruBaslik}>
+        <p className="mt-3 text-base leading-relaxed text-slate-300">{t.kopruMetin}</p>
+        <ol className="mt-4 space-y-2 text-left">
+          {t.kopruAdimlar.map((adim, i) => (
+            <li key={i} className="flex gap-3 text-sm text-slate-300">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gold/15 text-xs font-bold text-gold-light">
+                {i + 1}
+              </span>
+              <span className="leading-relaxed">{adim}</span>
+            </li>
+          ))}
+        </ol>
+        <button
+          onClick={sohbeteBasla}
+          className="btn-kor parilti mt-7 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold"
+        >
+          {t.kopruBasla}
+        </button>
+        <button
+          onClick={() => setSifirlaSor(true)}
+          className="mt-3 text-sm text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+        >
+          {t.sifirlaDugme}
+        </button>
+        {sifirlaSor && (
+          <SifirlaOnay sifirla={sifirla} vazgec={() => setSifirlaSor(false)} mesgul={sifirliyor} />
+        )}
+      </Kapak>
+    );
+  }
+
   // ---- Bitti ----
   if (faz === "bitti") {
     return (
       <Kapak ikon="🧭" baslik={t.tamamBaslik}>
         <p className="mt-3 text-base leading-relaxed text-slate-300">{t.tamamMetin}</p>
+        <button
+          onClick={() => router.refresh()}
+          className="btn-kor parilti mt-7 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold"
+        >
+          {t.bittiDevam}
+        </button>
+        <button
+          onClick={() => setSifirlaSor(true)}
+          className="mt-3 text-sm text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+        >
+          {t.sifirlaDugme}
+        </button>
+        {sifirlaSor && (
+          <SifirlaOnay sifirla={sifirla} vazgec={() => setSifirlaSor(false)} mesgul={sifirliyor} />
+        )}
       </Kapak>
     );
   }
@@ -460,11 +570,32 @@ export default function PusulaSohbet({
   const gosterListe = tumListe.filter((m) => !elenenler.includes(m));
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
-      <header className="shrink-0 pb-3 text-center">
-        <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
-          {tr.app.name}
-        </p>
-        <h1 className="prizma-serif ay-metin mt-1 text-xl font-semibold">{t.baslik}</h1>
+      <header className="shrink-0 pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1 text-center">
+            <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
+              {tr.app.name}
+            </p>
+            <h1 className="prizma-serif ay-metin mt-1 text-xl font-semibold">{t.baslik}</h1>
+          </div>
+          <SifirlaButon sor={sifirlaSor} setSor={setSifirlaSor} sifirla={sifirla} mesgul={sifirliyor} />
+        </div>
+        {/* İlerleme — kişi sona ne kadar kaldığını her soruda görür */}
+        <div className="mt-3">
+          <div className="flex items-center justify-between text-[0.7rem] font-medium text-slate-400">
+            <span>{t.ilerlemeEtiket}</span>
+            <span className="text-gold-light">%{ilerleme}</span>
+          </div>
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-royal-light to-gold transition-all duration-700"
+              style={{ width: `${ilerleme}%` }}
+            />
+          </div>
+          {asama === "engel" && (
+            <p className="mt-1.5 text-center text-[0.7rem] text-gold-light/80">{t.ilerlemeSonuna}</p>
+          )}
+        </div>
       </header>
 
       <div className="flex-1 space-y-3 overflow-y-auto pb-3">
@@ -545,6 +676,82 @@ export default function PusulaSohbet({
         </button>
       </div>
     </main>
+  );
+}
+
+// Köşedeki "↺ Baştan başla" — basınca yerinde onay açar (yanlışlıkla sıfırlama olmasın).
+function SifirlaButon({
+  sor,
+  setSor,
+  sifirla,
+  mesgul,
+}: {
+  sor: boolean;
+  setSor: (v: boolean) => void;
+  sifirla: () => void;
+  mesgul: boolean;
+}) {
+  if (sor) {
+    return (
+      <div className="shrink-0 rounded-xl border border-royal-light/30 bg-midnight-card/90 p-2 text-right">
+        <p className="px-1 pb-1.5 text-xs text-slate-300">{t.sifirlaOnayMetin}</p>
+        <div className="flex items-center justify-end gap-1.5">
+          <button
+            onClick={() => setSor(false)}
+            className="rounded-lg px-2.5 py-1 text-xs font-medium text-slate-400 hover:text-slate-200"
+          >
+            {t.sifirlaVazgec}
+          </button>
+          <button
+            onClick={sifirla}
+            disabled={mesgul}
+            className="rounded-lg bg-red-500/80 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-40"
+          >
+            {mesgul ? t.sifirlaniyor : t.sifirlaEvet}
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <button
+      onClick={() => setSor(true)}
+      className="shrink-0 rounded-xl border border-royal-light/30 px-2.5 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:border-gold hover:text-slate-200"
+    >
+      {t.sifirlaDugme}
+    </button>
+  );
+}
+
+// Kapak ekranlarında (köprü/bitti) açılan onay satırı.
+function SifirlaOnay({
+  sifirla,
+  vazgec,
+  mesgul,
+}: {
+  sifirla: () => void;
+  vazgec: () => void;
+  mesgul: boolean;
+}) {
+  return (
+    <div className="mt-4 rounded-2xl border border-red-400/30 bg-red-500/5 p-3">
+      <p className="text-sm text-slate-300">{t.sifirlaOnayMetin}</p>
+      <div className="mt-2 flex justify-center gap-3">
+        <button
+          onClick={vazgec}
+          className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-medium text-slate-300 hover:bg-midnight-soft"
+        >
+          {t.sifirlaVazgec}
+        </button>
+        <button
+          onClick={sifirla}
+          disabled={mesgul}
+          className="rounded-lg bg-red-500/80 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-40"
+        >
+          {mesgul ? t.sifirlaniyor : t.sifirlaEvet}
+        </button>
+      </div>
+    </div>
   );
 }
 
