@@ -723,6 +723,9 @@ export const tr = {
     gercekSoru: "Son 30 günde gerçekte ne kadar yaşadın? (1 = hiç · 10 = tam)",
     // Katman 3 (gerçeklik rakamları)
     sayiAlt: "Görüş değil, rakam. Son 30 günü düşün ve gerçek sayıyı yaz.",
+    // Katman 4/5 yazılı yanıtlar
+    metinYer: "Kısa ve dürüst yaz — bu cevap sana ait.",
+    metinAtla: "Şimdilik geç →",
     ilerleme: (yapilan: number, toplam: number) => `${yapilan} / ${toplam}`,
     kaydet: "Kaydet",
     kaydediliyor: "Kaydediliyor…",

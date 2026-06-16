@@ -1,27 +1,43 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
-import { ADIMLAR, adimDolu } from "@/lib/onFarkindalik";
+import MikrofonButonu from "@/components/MikrofonButonu";
+import { ADIMLAR, adimDolu, SONUC_KARTI } from "@/lib/onFarkindalik";
 
 const t = tr.onFarkindalik;
 const TOPLAM = ADIMLAR.length;
+const SONUC_KODLAR = new Set(SONUC_KARTI.map((s) => s.kod));
 
-// SİHİRBAZ: her ekranda TEK iş. Üç girdi tipi: 1-5 ifade, ikili 1-10 (önem/gerçek),
-// sayı. Kademe kademe, otomatik ilerleme (likert), kısmi kayıt. Öz-puanın kardeşi.
+// SİHİRBAZ: her ekranda TEK iş. Girdi tipleri: 1-5 ifade, ikili 1-10, sayı,
+// yazılı (sesle de). Kademeli, otomatik ilerleme (likert), kısmi kayıt.
 export default function OnFarkindalikAkis({
-  baslangic,
+  baslangicSayi,
+  baslangicMetin,
+  oneri,
 }: {
-  baslangic: Record<string, number>;
+  baslangicSayi: Record<string, number>;
+  baslangicMetin: Record<string, string>;
+  oneri: Record<string, string>;
 }) {
   const router = useRouter();
-  const [yanitlar, setYanitlar] = useState<Record<string, number>>({ ...baslangic });
-  const [giris, setGiris] = useState(Object.keys(baslangic).length === 0);
+  const [yanitlar, setYanitlar] = useState<Record<string, number>>({ ...baslangicSayi });
+  // Sonuç Kartı'nı profil önerisiyle pre-fill et (boşsa) — düzenlenebilir.
+  const [metinler, setMetinler] = useState<Record<string, string>>(() => {
+    const m = { ...baslangicMetin };
+    for (const kod of SONUC_KODLAR) {
+      if (!(m[kod] ?? "").trim() && (oneri[kod] ?? "").trim()) m[kod] = oneri[kod];
+    }
+    return m;
+  });
+  const [giris, setGiris] = useState(
+    Object.keys(baslangicSayi).length === 0 && Object.keys(baslangicMetin).length === 0
+  );
   const [adim, setAdim] = useState(() => {
-    const i = ADIMLAR.findIndex((a) => !adimDolu(a, baslangic));
+    const i = ADIMLAR.findIndex((a) => !adimDolu(a, baslangicSayi, baslangicMetin));
     return i === -1 ? TOPLAM : i;
   });
   const [sayiGirdi, setSayiGirdi] = useState("");
@@ -29,7 +45,10 @@ export default function OnFarkindalikAkis({
   const [hata, setHata] = useState<string | null>(null);
   const ilerleZam = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const yapilan = useMemo(() => ADIMLAR.filter((a) => adimDolu(a, yanitlar)).length, [yanitlar]);
+  const yapilan = useMemo(
+    () => ADIMLAR.filter((a) => adimDolu(a, yanitlar, metinler)).length,
+    [yanitlar, metinler]
+  );
 
   function ilerle() {
     setSayiGirdi("");
@@ -38,7 +57,12 @@ export default function OnFarkindalikAkis({
   }
 
   async function kaydet(): Promise<boolean> {
-    const gonderilecek = Object.entries(yanitlar).map(([kod, deger]) => ({ kod, deger }));
+    const gonderilecek: { kod: string; deger?: number; metin?: string }[] = [
+      ...Object.entries(yanitlar).map(([kod, deger]) => ({ kod, deger })),
+      ...Object.entries(metinler)
+        .filter(([, m]) => (m ?? "").trim())
+        .map(([kod, metin]) => ({ kod, metin })),
+    ];
     if (gonderilecek.length === 0) {
       setHata(t.enAzBir);
       return false;
@@ -72,14 +96,18 @@ export default function OnFarkindalikAkis({
     }
   }
 
-  function setDeger(kod: string, deger: number) {
+  function setSayi(kod: string, deger: number) {
     setYanitlar((e) => ({ ...e, [kod]: deger }));
+    setHata(null);
+  }
+  function setMetin(kod: string, deger: string) {
+    setMetinler((e) => ({ ...e, [kod]: deger }));
     setHata(null);
   }
 
   function likertSec(kod: string, deger: number) {
     titret(10);
-    setDeger(kod, deger);
+    setSayi(kod, deger);
     if (ilerleZam.current) clearTimeout(ilerleZam.current);
     ilerleZam.current = setTimeout(ilerle, 260);
   }
@@ -89,9 +117,7 @@ export default function OnFarkindalikAkis({
     return (
       <div className="flex min-h-[82vh] flex-col justify-center py-8 text-center">
         <p className="text-5xl">🪞</p>
-        <h1 className="prizma-serif ay-metin mt-5 text-3xl font-semibold leading-tight">
-          {t.girisBaslik}
-        </h1>
+        <h1 className="prizma-serif ay-metin mt-5 text-3xl font-semibold leading-tight">{t.girisBaslik}</h1>
         <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-slate-300">{t.girisMetin}</p>
         <button
           onClick={() => setGiris(false)}
@@ -127,7 +153,7 @@ export default function OnFarkindalikAkis({
           </button>
           {!tamamMi && (
             <button
-              onClick={() => setAdim(ADIMLAR.findIndex((a) => !adimDolu(a, yanitlar)))}
+              onClick={() => setAdim(ADIMLAR.findIndex((a) => !adimDolu(a, yanitlar, metinler)))}
               className="flex h-12 w-full items-center justify-center text-base text-slate-400 hover:text-slate-200"
             >
               {t.devam}
@@ -208,10 +234,8 @@ export default function OnFarkindalikAkis({
           <>
             <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">{a.ad}</h1>
             <p className="mt-2 text-base leading-relaxed text-slate-300">{a.anlam}</p>
-
-            <Olcek10 etiket={t.onemSoru} secili={yanitlar[a.onemKod]} onSec={(p) => setDeger(a.onemKod, p)} />
-            <Olcek10 etiket={t.gercekSoru} secili={yanitlar[a.gercekKod]} onSec={(p) => setDeger(a.gercekKod, p)} />
-
+            <Olcek10 etiket={t.onemSoru} secili={yanitlar[a.onemKod]} onSec={(p) => setSayi(a.onemKod, p)} />
+            <Olcek10 etiket={t.gercekSoru} secili={yanitlar[a.gercekKod]} onSec={(p) => setSayi(a.gercekKod, p)} />
             <button
               onClick={ilerle}
               disabled={!yanitlar[a.onemKod] || !yanitlar[a.gercekKod]}
@@ -236,7 +260,7 @@ export default function OnFarkindalikAkis({
                 setSayiGirdi(e.target.value);
                 const n = Number(e.target.value);
                 if (e.target.value !== "" && Number.isInteger(n) && n >= 0 && n <= a.max) {
-                  setDeger(a.kod, n);
+                  setSayi(a.kod, n);
                 } else {
                   setYanitlar((y) => {
                     const k = { ...y };
@@ -258,11 +282,70 @@ export default function OnFarkindalikAkis({
           </>
         )}
 
+        {a.tip === "metin" && (
+          <MetinAdim
+            kod={a.kod}
+            metin={a.metin}
+            zorunlu={a.zorunlu}
+            deger={metinler[a.kod] ?? ""}
+            onDegis={(v) => setMetin(a.kod, v)}
+            onDevam={ilerle}
+          />
+        )}
+
         {hata && <p role="alert" className="mt-4 text-center text-sm font-medium text-red-400">{hata}</p>}
       </div>
 
       <p className="pb-2 text-center text-xs text-slate-500">{t.kismiNot}</p>
     </div>
+  );
+}
+
+// Yazılı adım: soru + büyüyen textarea + sesle yaz + Devam (zorunluysa boş geçilmez).
+function MetinAdim({
+  kod,
+  metin,
+  zorunlu,
+  deger,
+  onDegis,
+  onDevam,
+}: {
+  kod: string;
+  metin: string;
+  zorunlu: boolean;
+  deger: string;
+  onDegis: (v: string) => void;
+  onDevam: () => void;
+}) {
+  const ref = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 220)}px`;
+  }, [deger, kod]);
+  return (
+    <>
+      <h1 className="prizma-serif text-2xl font-semibold leading-snug text-slate-50">{metin}</h1>
+      <textarea
+        ref={ref}
+        value={deger}
+        onChange={(e) => onDegis(e.target.value)}
+        rows={3}
+        placeholder={t.metinYer}
+        className="mt-6 max-h-[220px] min-h-[5rem] w-full resize-none rounded-2xl border-2 border-white/20 bg-white/[0.04] p-4 text-lg leading-relaxed text-slate-100 outline-none placeholder:text-slate-500 focus:border-gold"
+      />
+      <div className="mt-3">
+        <MikrofonButonu onMetin={(p) => onDegis(deger.trim() ? `${deger.trim()} ${p}` : p)} />
+      </div>
+      <button
+        onClick={onDevam}
+        disabled={zorunlu && !deger.trim()}
+        className="btn-kor mt-6 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-40"
+      >
+        {deger.trim() || zorunlu ? `${t.devam} →` : t.metinAtla}
+      </button>
+    </>
   );
 }
 
