@@ -184,11 +184,19 @@ const getCountdown = (egitim) => {
   const [saat = 0, dk = 0] = (egitim.saat || '0:0').split(':').map(Number);
   const [bSaat = 0, bDk = 0] = (egitim.bitisSaati || '').split(':').map(Number);
   const baslangic = new Date(d); baslangic.setHours(saat, dk, 0, 0);
-  const bitis = egitim.bitisSaati ? new Date(d) : new Date(baslangic.getTime() + 60*60000);
-  if (egitim.bitisSaati) bitis.setHours(bSaat, bDk, 0, 0);
+  // Bitiş saati yoksa varsayılan süre. Zoom toplantıları planlanan saati çoğu zaman
+  // AŞAR — programlı bitişten sonra GEC_TAMPON kadar daha "katıl" göster (geç katıl).
+  const VARSAYILAN_SURE_DK = 90;
+  const GEC_TAMPON_DK = 60;
+  const programBitis = egitim.bitisSaati ? new Date(d) : new Date(baslangic.getTime() + VARSAYILAN_SURE_DK * 60000);
+  if (egitim.bitisSaati) programBitis.setHours(bSaat, bDk, 0, 0);
+  const gecBitis = new Date(programBitis.getTime() + GEC_TAMPON_DK * 60000);
   const simdi = new Date();
-  if (simdi >= baslangic && simdi <= bitis) return { durum: 'canli', ms: 0, gun: 0, sa: 0, dakika: 0 };
-  if (simdi > bitis) return { durum: 'gecmis', ms: -1, gun: 0, sa: 0, dakika: 0 };
+  // Planlanan pencere içinde → gerçek canlı
+  if (simdi >= baslangic && simdi <= programBitis) return { durum: 'canli', gec: false, ms: 0, gun: 0, sa: 0, dakika: 0 };
+  // Planlanan bitişten sonra ama tampon içinde → toplantı hâlâ sürüyor olabilir, "geç katıl"
+  if (simdi > programBitis && simdi <= gecBitis) return { durum: 'canli', gec: true, ms: 0, gun: 0, sa: 0, dakika: 0 };
+  if (simdi > gecBitis) return { durum: 'gecmis', ms: -1, gun: 0, sa: 0, dakika: 0 };
   const fark = baslangic - simdi;
   const gun = Math.floor(fark / 86400000);
   const sa = Math.floor((fark % 86400000) / 3600000);
@@ -205,7 +213,8 @@ const KATIL_TEST = (() => {
 })();
 const cdZorla = (c, aktif) => {
   if (!aktif || !KATIL_TEST) return c;
-  if (KATIL_TEST === 'canli') return { durum: 'canli', ms: 0, gun: 0, sa: 0, dakika: 0 };
+  if (KATIL_TEST === 'canli') return { durum: 'canli', gec: false, ms: 0, gun: 0, sa: 0, dakika: 0 };
+  if (KATIL_TEST === 'gec') return { durum: 'canli', gec: true, ms: 0, gun: 0, sa: 0, dakika: 0 };
   if (KATIL_TEST === 'yakin') return { durum: 'yakin', ms: 54 * 60000 + 23000, gun: 0, sa: 0, dakika: 54 };
   return c;
 };
@@ -271,7 +280,9 @@ const CountdownBadge = ({ egitim }) => {
     if (c.sa > 0) return `${c.sa} ${t('cd_hours')} ${c.dakika} ${t('cd_min').toLowerCase()}`;
     return `${c.dakika} ${t('cd_minutes')}`;
   };
-  if (cd.durum === 'canli') return <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-red-500 text-white animate-pulse ring-4 ring-red-300/40"><span className="w-2 h-2 bg-white rounded-full animate-ping" />ŞİMDİ CANLI</span>;
+  if (cd.durum === 'canli') return cd.gec
+    ? <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-amber-500 text-white ring-4 ring-amber-300/40"><Timer className="w-3.5 h-3.5" />{t('badge_ongoing')}</span>
+    : <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-sm font-bold bg-red-500 text-white animate-pulse ring-4 ring-red-300/40"><span className="w-2 h-2 bg-white rounded-full animate-ping" />ŞİMDİ CANLI</span>;
   if (cd.durum === 'gecmis') return <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-200 text-gray-500">{t('cd_completed')}</span>;
   // 1 dakika kala — dev rozet + altın halka
   const oneMinuteAway = cd.durum === 'yakin' && cd.gun === 0 && cd.sa === 0 && cd.dakika <= 1;
@@ -321,6 +332,7 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
   const devKatil = isFirst && online && zoomId && (cd?.durum === 'yakin' || cd?.durum === 'canli');
   const sonSaatDev = devKatil && cd?.durum === 'yakin';
   const canliDev = devKatil && cd?.durum === 'canli';
+  const gecKatil = canliDev && cd?.gec === true; // planlanan bitiş geçti ama toplantı sürebilir
 
   // MOBIL: poster üstte tam, içerik altta sıkı
   // DESKTOP (md+): yan yana — content sol, poster sağ
@@ -343,7 +355,9 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
           <div className="absolute top-0 left-0 right-0 p-3 flex items-center gap-2 flex-wrap bg-gradient-to-b from-black/60 to-transparent">
             <span className={`${isFirst ? 'text-xs' : 'text-[10px]'} font-extrabold uppercase tracking-wider text-amber-300 gold-text-glow`}>{labels[sira-1]}</span>
             {yurtdisi && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-400 text-gray-900 shadow"><span>{yurtdisi.bayrak}</span>{yurtdisi.kisa}</span>}
-            {cd?.durum === 'canli' && <span className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />ŞİMDİ CANLI</span>}
+            {cd?.durum === 'canli' && (cd.gec
+              ? <span className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white inline-flex items-center gap-1.5"><Timer className="w-3 h-3" />{t('badge_ongoing')}</span>
+              : <span className="ml-auto px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />ŞİMDİ CANLI</span>)}
           </div>
         </div>
       )}
@@ -355,7 +369,9 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
             <div className={`flex items-center gap-2 mb-2 flex-wrap ${egitim.gorselUrl ? 'hidden md:flex' : ''}`}>
               <span className={`${isFirst?'text-sm':'text-[10px]'} font-bold uppercase tracking-wider text-amber-300 gold-text-glow`}>{labels[sira-1]}</span>
               {yurtdisi && isFirst && <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-white/15 text-white border border-white/20">{yurtdisi.bayrak} {yurtdisi.anahtar}</span>}
-              {cd?.durum === 'canli' && <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />ŞİMDİ CANLI</span>}
+              {cd?.durum === 'canli' && (cd.gec
+                ? <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-500 text-white inline-flex items-center gap-1.5"><Timer className="w-3 h-3" />{t('badge_ongoing')}</span>
+                : <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-red-500 text-white animate-pulse inline-flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />ŞİMDİ CANLI</span>)}
             </div>
 
             <h2 className={`${titleSize} font-extrabold text-white leading-tight font-display`}>{tDynamic(egitim.egitim)}</h2>
@@ -394,13 +410,15 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
             {cd?.durum !== 'gecmis' && (devKatil ? (
               <div className="mt-3">
                 <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer"
-                  className={`w-full flex flex-col items-center justify-center gap-0.5 px-4 ${canliDev
+                  className={`w-full flex flex-col items-center justify-center gap-0.5 px-4 ${gecKatil
+                    ? 'min-h-[72px] md:min-h-[80px] bg-amber-500 hover:bg-amber-600 ring-2 ring-amber-300/60'
+                    : canliDev
                     ? 'min-h-[72px] md:min-h-[80px] bg-green-500 hover:bg-green-600 ring-2 ring-green-300/60'
                     : 'min-h-[64px] md:min-h-[72px] bg-blue-500 hover:bg-blue-600 ring-2 ring-blue-300/60'} text-white font-extrabold rounded-2xl shadow-2xl transition-all spring-tap imminent-pulse`}>
                   <span className="flex items-center gap-2.5 text-xl md:text-2xl tracking-wide">
                     <Video className="w-6 h-6 md:w-7 md:h-7" />{t('cal_join_meeting').toLocaleUpperCase(locale)}
                   </span>
-                  {canliDev && <span className="text-xs md:text-sm font-medium text-green-100">{t('cd_started_help')}</span>}
+                  {canliDev && <span className={`text-xs md:text-sm font-medium ${gecKatil ? 'text-amber-50' : 'text-green-100'}`}>{gecKatil ? t('cd_late_help') : t('cd_started_help')}</span>}
                 </a>
                 <button onClick={()=>onHatirlatma?.(egitim)}
                   className="mt-2 w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 text-xs md:text-sm bg-white/10 hover:bg-white/20 text-white/90 font-bold rounded-xl border border-white/15 transition-all spring-tap">
@@ -476,21 +494,27 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
   if (!aktif) return null;
 
   const canli = cd.durum === 'canli';
+  const gec = canli && cd.gec === true; // planlanan bitiş geçti — toplantı sürebilir, "geç katıl"
+  // 3 durum rengi: yakın=mavi, canlı=yeşil, geç katıl=amber
+  const barBg = gec ? 'bg-amber-600 border-amber-400' : canli ? 'bg-green-700 border-green-400' : 'bg-blue-700 border-blue-400';
+  const etiketRenk = gec ? 'text-amber-100' : canli ? 'text-green-200' : 'text-blue-200';
+  const butonRenk = gec ? 'text-amber-700' : canli ? 'text-green-700' : 'text-blue-700';
+  const etiketMetin = gec ? t('bar_ongoing') : canli ? t('bar_live') : t('bar_starting').replace('{dk}', String(cd.dakika));
   // Portal: ata elemanlardaki transform (pull-to-refresh) fixed konumlamayı bozuyor —
   // body'ye render edince bar her zaman viewport'a göre sabitlenir.
   // Mobilde alt navigasyonun (57px + safe-area) ÜSTÜNE oturur, masaüstünde en altta.
   return createPortal(
-    <div className={`fixed bottom-[calc(57px+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 z-40 ${canli ? 'bg-green-700 border-green-400' : 'bg-blue-700 border-blue-400'} border-t-2 shadow-2xl`} data-no-pdf>
+    <div className={`fixed bottom-[calc(57px+env(safe-area-inset-bottom))] md:bottom-0 left-0 right-0 z-40 ${barBg} border-t-2 shadow-2xl`} data-no-pdf>
       <div className="container mx-auto max-w-7xl px-3 py-2.5 md:py-3 flex items-center gap-3">
         <span className="w-2.5 h-2.5 rounded-full bg-white animate-pulse flex-shrink-0" aria-hidden="true" />
         <div className="flex-1 min-w-0">
-          <div className={`text-[10px] md:text-xs font-bold uppercase tracking-wide ${canli ? 'text-green-200' : 'text-blue-200'}`}>
-            {canli ? t('bar_live') : t('bar_starting').replace('{dk}', String(cd.dakika))}
+          <div className={`text-[10px] md:text-xs font-bold uppercase tracking-wide ${etiketRenk}`}>
+            {etiketMetin}
           </div>
           <div className="text-xs md:text-sm font-bold text-white truncate">{tDynamic(egitim.egitim)}</div>
         </div>
         <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer"
-          className={`flex-shrink-0 inline-flex items-center gap-2 bg-white ${canli ? 'text-green-700' : 'text-blue-700'} font-extrabold text-sm md:text-base px-4 md:px-6 py-3 rounded-xl shadow-lg spring-tap`}>
+          className={`flex-shrink-0 inline-flex items-center gap-2 bg-white ${butonRenk} font-extrabold text-sm md:text-base px-4 md:px-6 py-3 rounded-xl shadow-lg spring-tap`}>
           <Video className="w-4 h-4 md:w-5 md:h-5" />{t('cal_join_meeting')}
         </a>
         <button onClick={() => setKapatildi(true)} aria-label="Kapat"
@@ -759,11 +783,17 @@ const TakvimView = () => {
 
   // En yakın 3 gelecek eğitim (hero için)
   const enYakinEgitimler = useMemo(() => {
-    return takvim
+    let liste = takvim
       .map(e => ({ ...e, cd: getCountdown(e) }))
       .filter(e => e.cd && (e.cd.durum === 'gelecek' || e.cd.durum === 'yakin' || e.cd.durum === 'canli'))
-      .sort((a, b) => (a.cd.ms || 0) - (b.cd.ms || 0))
-      .slice(0, 3);
+      .sort((a, b) => (a.cd.ms || 0) - (b.cd.ms || 0));
+    // Görsel test (?katilTest=...): online bir eğitimi 1. sıraya al ki dev buton/bar görünsün.
+    // KATIL_TEST yalnız test parametresiyle dolu — production'da etkisiz.
+    if (KATIL_TEST) {
+      const onl = liste.find(e => isOnline(e) && zoomIdBul(e));
+      if (onl) liste = [onl, ...liste.filter(e => e !== onl)];
+    }
+    return liste.slice(0, 3);
   }, [takvim]);
 
   // PDF — sayfayı masaüstü genişliğinde yakala

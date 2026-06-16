@@ -138,6 +138,9 @@ const translations = {
     cd_started_help: 'Eğitim başladı — dokun ve katıl',
     bar_starting: '{dk} dk sonra başlıyor',
     bar_live: 'CANLI YAYINDA',
+    bar_ongoing: 'DEVAM EDİYOR',
+    badge_ongoing: 'DEVAM EDİYOR',
+    cd_late_help: 'Geç kaldıysan da katılabilirsin — toplantı sürüyor',
     cd_2nd: '2. Sıradaki Eğitim',
     cd_3rd: '3. Sıradaki Eğitim',
 
@@ -373,6 +376,9 @@ const translations = {
     cd_started_help: 'Training has started — tap to join',
     bar_starting: 'Starts in {dk} min',
     bar_live: 'LIVE NOW',
+    bar_ongoing: 'IN PROGRESS',
+    badge_ongoing: 'IN PROGRESS',
+    cd_late_help: 'Joining late is fine — the meeting is still on',
     cd_2nd: '2nd Upcoming',
     cd_3rd: '3rd Upcoming',
 
@@ -606,6 +612,9 @@ const translations = {
     cd_started_help: 'Schulung hat begonnen — tippen und teilnehmen',
     bar_starting: 'Beginnt in {dk} Min.',
     bar_live: 'JETZT LIVE',
+    bar_ongoing: 'LÄUFT GERADE',
+    badge_ongoing: 'LÄUFT',
+    cd_late_help: 'Auch spät kannst du beitreten — läuft noch',
     cd_2nd: '2. Nächste Schulung',
     cd_3rd: '3. Nächste Schulung',
 
@@ -838,6 +847,9 @@ const translations = {
     cd_started_help: 'Training is begonnen — tik om deel te nemen',
     bar_starting: 'Begint over {dk} min',
     bar_live: 'NU LIVE',
+    bar_ongoing: 'NU BEZIG',
+    badge_ongoing: 'BEZIG',
+    cd_late_help: 'Te laat deelnemen kan ook — nog bezig',
     cd_2nd: '2e Volgende Training',
     cd_3rd: '3e Volgende Training',
 
