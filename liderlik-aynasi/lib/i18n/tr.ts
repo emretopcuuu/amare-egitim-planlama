@@ -479,6 +479,12 @@ export const tr = {
     // Her dokunuşta görünür güvence (#4) ve özet ekranında huzur cümlesi
     kaydedildi: "✓ Kaydedildi",
     hepsiKaydedildi: "Hepsi cihazına kaydedildi — istediğini değiştirebilirsin.",
+    // Kısmi/aşamalı kayıt: o an aklına geleni gir, sonra dönüp ekle/düzelt
+    kaydetCik: "Kaydet",
+    hataEnAzBir: "En az bir özellik puanla.",
+    enAzBirUyari: "Kaydetmek için en az bir özellik puanla.",
+    kismiNot: "İstediğin kadarını şimdi kaydet — kalanını kamp boyunca ekleyip düzeltebilirsin.",
+    kismiOzet: (dolu: number, toplam: number) => `${dolu}/${toplam} özellik puanlandı — gerisini sonra ekleyebilirsin.`,
     hataSunucu: "Kaydedilemedi. Lütfen tekrar dene.",
     hataDalgaKapandi: "Bu dalga kapandı; puanlar artık kaydedilemiyor.",
     geriDon: "Değerlendirmeye dön",

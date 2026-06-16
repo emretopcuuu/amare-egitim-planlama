@@ -186,17 +186,28 @@ export default function PuanlamaFormu({
         return g.puan !== null && g.puan < 6 && !g.yorum.trim();
       });
 
+  // Kaydedilecek (puanlanmış) özellikler — kısmi kayıtta yalnız bunlar gider.
+  const puanlananlar = ozellikler.filter((o) => girdiler[o.id].puan !== null);
+
   async function gonder() {
     if (gonderiliyor) return;
-    // eksik varsa pasif buton yerine doğrudan o ekrana götür
-    if (puansizlar.length > 0) {
-      setAdim(ozellikler.findIndex((o) => o.id === puansizlar[0].id));
-      return;
-    }
-    if (eksikYorumlar.length > 0) {
-      setYorumUyari(true);
-      setAdim(ozellikler.findIndex((o) => o.id === eksikYorumlar[0].id));
-      return;
+    if (kendisi) {
+      // ÖZ-PUAN kapısı: kamp bunu açmak için hepsinin dolmasını şart koşar.
+      if (puansizlar.length > 0) {
+        setAdim(ozellikler.findIndex((o) => o.id === puansizlar[0].id));
+        return;
+      }
+    } else {
+      // BAŞKASI: kısmi serbest — en az 1 puan + <6 olanlara yorum yeter.
+      if (puanlananlar.length === 0) {
+        setHata(tr.puanlama.enAzBirUyari);
+        return;
+      }
+      if (eksikYorumlar.length > 0) {
+        setYorumUyari(true);
+        setAdim(ozellikler.findIndex((o) => o.id === eksikYorumlar[0].id));
+        return;
+      }
     }
     // Çevrimdışıyken hiç deneme: doğrudan beklemeye al, bağlanınca otomatik gönder.
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
@@ -212,7 +223,7 @@ export default function PuanlamaFormu({
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           hedefId,
-          puanlar: ozellikler.map((o) => ({
+          puanlar: puanlananlar.map((o) => ({
             ozellikId: o.id,
             puan: girdiler[o.id].puan,
             yorum: girdiler[o.id].yorum.trim() || undefined,
@@ -320,9 +331,22 @@ export default function PuanlamaFormu({
               ← {tr.puanlama.geri}
             </button>
           )}
-          <span className="font-mono text-lg font-bold text-slate-300">
-            {Math.min(adim + 1, ozellikler.length)} / {ozellikler.length}
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-lg font-bold text-slate-300">
+              {Math.min(adim + 1, ozellikler.length)} / {ozellikler.length}
+            </span>
+            {/* Kısmi kayıt: başkasını puanlarken istediğin an kaydedip çıkabilirsin */}
+            {!kendisi && (
+              <button
+                type="button"
+                onClick={gonder}
+                disabled={gonderiliyor || puanlananlar.length === 0}
+                className="rounded-lg bg-gold px-3 py-1.5 text-sm font-bold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
+              >
+                {gonderiliyor ? "…" : `💾 ${tr.puanlama.kaydetCik}`}
+              </button>
+            )}
+          </div>
         </div>
         <div className="mt-3 flex items-center gap-3">
           {!kendisi && <Avatar ad={hedefAd} url={hedefFotoUrl} boyut="md" />}
@@ -453,26 +477,35 @@ export default function PuanlamaFormu({
             {tr.puanlama.ozetBaslik}
           </h1>
           <p className="mt-2 text-sm text-emerald-300/90">
-            {tr.puanlama.hepsiKaydedildi}
+            {kendisi
+              ? tr.puanlama.hepsiKaydedildi
+              : tr.puanlama.kismiOzet(puanlananlar.length, ozellikler.length)}
           </p>
           <ul className="mt-6 space-y-2">
-            {ozellikler.map((oz, i) => (
-              <li key={oz.id}>
-                <button
-                  onClick={() => setAdim(i)}
-                  className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left hover:bg-white/[0.08]"
-                >
-                  <span className="text-base text-slate-200">{oz.name}</span>
-                  <span
-                    className={`text-xl font-bold ${
-                      girdiler[oz.id].puan === null ? "text-red-400" : "text-gold"
-                    }`}
+            {ozellikler.map((oz, i) => {
+              const puansiz = girdiler[oz.id].puan === null;
+              return (
+                <li key={oz.id}>
+                  <button
+                    onClick={() => setAdim(i)}
+                    className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3 text-left hover:bg-white/[0.08]"
                   >
-                    {girdiler[oz.id].puan ?? "—"}
-                  </span>
-                </button>
-              </li>
-            ))}
+                    <span className="text-base text-slate-200">{oz.name}</span>
+                    <span
+                      className={`text-xl font-bold ${
+                        puansiz
+                          ? kendisi
+                            ? "text-red-400"
+                            : "text-slate-500"
+                          : "text-gold"
+                      }`}
+                    >
+                      {girdiler[oz.id].puan ?? "—"}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
           {hata && (
             <p role="alert" className="mt-4 text-center text-base font-medium text-red-400">
@@ -493,8 +526,15 @@ export default function PuanlamaFormu({
             disabled={gonderiliyor}
             className="btn-kor parilti mt-6 flex h-16 w-full items-center justify-center rounded-2xl text-xl font-bold disabled:opacity-50"
           >
-            {gonderiliyor ? tr.puanlama.gonderiliyor : tr.puanlama.gonder}
+            {gonderiliyor
+              ? tr.puanlama.gonderiliyor
+              : kendisi
+                ? tr.puanlama.gonder
+                : tr.puanlama.kaydetCik}
           </button>
+          {!kendisi && (
+            <p className="mt-3 text-center text-sm text-slate-400">{tr.puanlama.kismiNot}</p>
+          )}
         </div>
       )}
 
