@@ -701,6 +701,41 @@ export const tr = {
     kilit2: "3. günde aynan açılır",
     kilit3: "Sana özel AYNA görevleri",
   },
+  // ÖN FARKINDALIK — kamp öncesi Ayna/Kalibrasyon çalışması (Faz A: Katman 1)
+  onFarkindalik: {
+    baslik: "Liderlik Aynası",
+    girisBaslik: "Ne düşündüğünü değil, ne yaptığını gösterir",
+    girisMetin:
+      "Bu bir kişilik testi değil — bir ayna. Amacı seni etiketlemek değil, kampa gelmeden nerede tıkandığını sana göstermek. Gücü tek şeye bağlı: dürüstlüğüne. Acelesi yok; günde birkaç madde yeter.",
+    girisDevam: "Başla",
+    olcek: {
+      1: "Hiçbir zaman",
+      2: "Nadiren",
+      3: "Bazen",
+      4: "Sık sık",
+      5: "Her zaman",
+    } as Record<number, string>,
+    blokGiris: (ad: string) => `${ad}`,
+    blokAlt:
+      "Son birkaç ayını düşün. İçinden geçeni değil, gerçekten yaptığını işaretle.",
+    ilerleme: (yapilan: number, toplam: number) => `${yapilan} / ${toplam}`,
+    kaydet: "Kaydet",
+    kaydediliyor: "Kaydediliyor…",
+    devam: "Devam",
+    geri: "Geri",
+    geriDon: "Ana sayfaya dön",
+    kismiNot: "İstediğin kadarını şimdi yap — kalanını sonra ekleyebilirsin.",
+    enAzBir: "Kaydetmek için en az bir madde işaretle.",
+    hata: "Kaydedilemedi. Lütfen tekrar dene.",
+    // Tamam ekranı
+    tamamBaslik: "Bu bölümü tamamladın 🪞",
+    tamamMetin:
+      "İlk katmanı bitirdin. Kalan adımlar kamp yaklaştıkça açılacak — her gün küçük bir parça.",
+    devamBaslik: "Kaldığın yerden devam",
+    devamMetin: "Birkaç madde daha işaretle; acelesi yok.",
+    kapaliBaslik: "Henüz başlamadı",
+    kapaliMetin: "Ön farkındalık çalışması yakında açılacak. Hazır olduğunda burada olacak.",
+  },
   // Kamp öncesi profil fotoğrafı
   profilFoto: {
     sec: "📸 Fotoğraf seç / çek",
