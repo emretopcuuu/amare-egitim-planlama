@@ -187,7 +187,7 @@ const getCountdown = (egitim) => {
   // Bitiş saati yoksa varsayılan süre. Zoom toplantıları planlanan saati çoğu zaman
   // AŞAR — programlı bitişten sonra GEC_TAMPON kadar daha "katıl" göster (geç katıl).
   const VARSAYILAN_SURE_DK = 90;
-  const GEC_TAMPON_DK = 60;
+  const GEC_TAMPON_DK = 15;
   const programBitis = egitim.bitisSaati ? new Date(d) : new Date(baslangic.getTime() + VARSAYILAN_SURE_DK * 60000);
   if (egitim.bitisSaati) programBitis.setHours(bSaat, bDk, 0, 0);
   const gecBitis = new Date(programBitis.getTime() + GEC_TAMPON_DK * 60000);
