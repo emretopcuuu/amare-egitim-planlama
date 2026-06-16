@@ -11,13 +11,11 @@ FROM base AS deps
 COPY package.json package-lock.json ./
 RUN npm ci
 
-# 2) Derleme — NEXT_PUBLIC_* derleme anında client paketine gömülür, ARG ile geçilir
+# 2) Derleme — NEXT_PUBLIC_* derleme anında client paketine gömülür, ARG ile geçilir.
+# Uygulama tamamen sunucu-taraflı (Supabase anon client yok); tek public değişken
+# VAPID push anahtarı.
 FROM base AS build
-ARG NEXT_PUBLIC_SUPABASE_URL
-ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_VAPID_PUBLIC_KEY
-ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
-ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_VAPID_PUBLIC_KEY=$NEXT_PUBLIC_VAPID_PUBLIC_KEY
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
