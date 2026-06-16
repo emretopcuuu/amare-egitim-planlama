@@ -113,7 +113,8 @@ export default async function AnalizSayfa() {
           <Ipucu {...tr.admin.yardim.analizTakim} />
         </h2>
         <p className="mb-3 text-sm text-slate-400">{t.takimAciklama}</p>
-        <div className="overflow-x-auto rounded-2xl ring-1 ring-royal/30">
+        {/* #8 Masaüstü: tablo. Mobil: yığılı kartlar. */}
+        <div className="hidden overflow-x-auto rounded-2xl ring-1 ring-royal/30 sm:block">
           <table className="w-full text-sm">
             <thead className="bg-midnight-card/60 text-slate-400">
               <tr>
@@ -141,6 +142,32 @@ export default async function AnalizSayfa() {
             </tbody>
           </table>
         </div>
+        <ul className="space-y-2.5 sm:hidden">
+          {takimSatir.map(([ad, v]) => (
+            <li
+              key={ad}
+              className="rounded-xl border border-royal/20 bg-midnight-card/30 p-3"
+            >
+              <p className="font-medium text-slate-100">{ad}</p>
+              <dl className="mt-2 grid grid-cols-3 gap-2 text-center text-xs">
+                <div>
+                  <dt className="text-slate-500">{t.pusula}</dt>
+                  <dd className="mt-0.5 text-slate-200">{v.pusula}/{v.toplam}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">{t.bosluk}</dt>
+                  <dd className="mt-0.5 text-slate-200">{v.bosluk}/{v.toplam}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">{t.kanitsiz}</dt>
+                  <dd className={`mt-0.5 ${v.kanitsiz > 0 ? "text-amber-400" : "text-slate-200"}`}>
+                    {v.kanitsiz}
+                  </dd>
+                </div>
+              </dl>
+            </li>
+          ))}
+        </ul>
       </section>
     </main>
   );
