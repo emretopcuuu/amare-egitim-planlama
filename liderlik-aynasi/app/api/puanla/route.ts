@@ -9,8 +9,10 @@ const YORUM_MAX = 500;
 type GelenPuan = { ozellikId: number; puan: number; yorum?: string };
 type TemizPuan = { ozellikId: number; puan: number; yorum: string | null };
 
-// Tüm özellikler tek istekte gelir; dalga numarasını istemci değil sunucu belirler
-// (kapanmış dalgaya gecikmiş yazma olmaz). Upsert sayesinde dalga açıkken düzenleme serbest.
+// Puanlar tek istekte gelir; dalga numarasını istemci değil sunucu belirler
+// (kapanmış dalgaya gecikmiş yazma olmaz). KISMİ kayıt serbest: kişi o an
+// aklına gelen özellikleri girer, kaydeder, kamp boyunca dönüp ekler/düzeltir.
+// Upsert: gönderilen özellikler güncellenir, gönderilmeyenlere dokunulmaz.
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session) {
@@ -46,7 +48,7 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.puanlama.hataDalgaKapandi }, { status: 409 });
   }
 
-  // Gelen puanlar aktif özellik kümesini eksiksiz ve fazlasız kapsamalı.
+  // Gelen puanlar geçerli özelliklerden olmalı; KISMİ küme kabul (en az 1).
   const gecerliIdler = new Set(ozellikler.map((o) => o.id));
   const gorulen = new Set<number>();
   const temiz: TemizPuan[] = [];
@@ -67,11 +69,8 @@ export async function POST(req: Request) {
     gorulen.add(p.ozellikId);
     temiz.push({ ozellikId: p.ozellikId, puan: p.puan, yorum: yorum || null });
   }
-  if (gorulen.size !== gecerliIdler.size) {
-    return Response.json(
-      { hata: tr.degerlendir.ilerleme(gorulen.size, gecerliIdler.size) },
-      { status: 400 }
-    );
+  if (temiz.length === 0) {
+    return Response.json({ hata: tr.puanlama.hataEnAzBir }, { status: 400 });
   }
 
   if (!kendisi) {
