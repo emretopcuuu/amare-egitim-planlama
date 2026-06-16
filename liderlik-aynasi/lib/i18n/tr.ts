@@ -718,6 +718,11 @@ export const tr = {
     blokGiris: (ad: string) => `${ad}`,
     blokAlt:
       "Son birkaç ayını düşün. İçinden geçeni değil, gerçekten yaptığını işaretle.",
+    // Katman 2 (açık analizi) — ikili 1-10
+    onemSoru: "Bu senin için ne kadar değerli? (1 = az · 10 = çok)",
+    gercekSoru: "Son 30 günde gerçekte ne kadar yaşadın? (1 = hiç · 10 = tam)",
+    // Katman 3 (gerçeklik rakamları)
+    sayiAlt: "Görüş değil, rakam. Son 30 günü düşün ve gerçek sayıyı yaz.",
     ilerleme: (yapilan: number, toplam: number) => `${yapilan} / ${toplam}`,
     kaydet: "Kaydet",
     kaydediliyor: "Kaydediliyor…",
