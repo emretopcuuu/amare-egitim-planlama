@@ -442,6 +442,7 @@ export default async function AdminPanel() {
 
           {/* A2 — Mühür Açılışı (kamp sonu before/after sesli reveal) */}
           <div id="muhur" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+
             <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.admin.muhur.baslik}
               <Ipucu {...tr.admin.yardim.muhur} />
