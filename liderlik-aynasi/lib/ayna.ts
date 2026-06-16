@@ -117,6 +117,51 @@ export type UretilenGorev = {
 };
 
 
+// Ön Farkındalık profilini görev üretimi için sıkıştırır: yalnız hedefe yön
+// veren sinyaller (en zayıf alan, en büyük 2 açık, kör nokta, ritim, açıklık).
+// Profil yoksa null — görev eski davranışa (Pusula + puanlar) düşer.
+const OZ_ALAN_AD: Record<string, string> = {
+  oz_saygi: "Öz Saygı",
+  oz_guven: "Öz Güven",
+  oz_yeterlilik: "Öz Yeterlilik",
+};
+async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | null> {
+  const { data } = await db
+    .from("on_farkindalik")
+    .select("profil")
+    .eq("participant_id", pid)
+    .maybeSingle();
+  const p = data?.profil as {
+    katman1?: { enZayif?: string | null };
+    katman2?: { enBuyukIki?: { ad: string; acik: number }[] };
+    katman3?: { ritim?: string };
+    katman4?: Record<string, string | null>;
+    katman5?: { aciklik?: number | null };
+  } | null;
+  if (!p || !p.katman1) return null;
+  const k4 = p.katman4 ?? {};
+  const korNokta = {
+    tersDavranis: k4["k4.ters_davranis"] ?? null,
+    kalkan: k4["k4.kalkan"] ?? null,
+    varsayim: k4["k4.varsayim"] ?? null,
+  };
+  const dolu =
+    p.katman1.enZayif ||
+    (p.katman2?.enBuyukIki?.length ?? 0) > 0 ||
+    korNokta.tersDavranis ||
+    korNokta.kalkan;
+  if (!dolu) return null;
+  return {
+    enZayifAlan: p.katman1.enZayif ? OZ_ALAN_AD[p.katman1.enZayif] ?? p.katman1.enZayif : null,
+    enBuyukAciklar: (p.katman2?.enBuyukIki ?? [])
+      .filter((a) => a.acik > 0)
+      .map((a) => ({ baslik: a.ad, acik: a.acik })),
+    korNokta,
+    ritim: p.katman3?.ritim ?? null,
+    geriBildirimAcikligi: p.katman5?.aciklik ?? null,
+  };
+}
+
 export async function gorevUret(
   db: Db,
   katilimci: { id: string; full_name: string; team: string | null },
@@ -125,7 +170,7 @@ export async function gorevUret(
   mod: SistemModu = "kamp",
   etkinlik: ProgramMaddesi | null = null
 ): Promise<UretilenGorev | null> {
-  const [ozellikler, oncekilerSonuc, puanlarSonuc, pusula, kapaliAyar] =
+  const [ozellikler, oncekilerSonuc, puanlarSonuc, pusula, onFarkindalik, kapaliAyar] =
     await Promise.all([
       aktifOzellikler(db),
       db
@@ -140,6 +185,9 @@ export async function gorevUret(
         .eq("target_id", katilimci.id),
       // FAZ 0 Pusula: kişinin nedeni/iç engeli — görevi buna göre kişiselleştir.
       pusulaOzeti(db, katilimci.id),
+      // ÖN FARKINDALIK: kamp öncesi ayna profili — en zayıf alan, en büyük açık,
+      // kör nokta (koruyucu inanç), ritim. Görevi bunlara göre hedefle.
+      onFarkindalikOzeti(db, katilimci.id),
       // Admin'in kapattığı görev türleri (Görev Türü Stüdyosu).
       db.from("settings").select("value").eq("key", "kapali_gorev_turleri").maybeSingle(),
     ]);
@@ -190,6 +238,8 @@ export async function gorevUret(
     takim: katilimci.team,
     // FAZ 0 Pusula: kişinin kamp öncesi damıtılmış nedeni + iç engeli (varsa).
     pusula: pusula ?? null,
+    // Ön Farkındalık: ayna profilinin görev için sıkıştırılmış özeti (varsa).
+    onFarkindalik: onFarkindalik ?? null,
     // FAZ 2: kişinin kampta yazdığı yeni cümle (yolculukta savunulacak çapa).
     yeniCumle: yeniCumle ?? null,
     kampGunu: gun,
@@ -231,7 +281,7 @@ export async function gorevUret(
         effort: "low",
         format: { type: "json_schema", schema: GOREV_SEMASI },
       },
-      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\n${BASARI_STRATEJISI}\n\nGörevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa (kişinin nedeni + iç engeli), görevi ona göre kişiselleştir: nedenine sessizce dokun ve iç engelini nazikçe zorlayan bir görev seç — ama iç engeli açıkça yüzüne vurma. Zorluk yönergesine MUTLAKA uy. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""} ${tur === "simulasyon" ? 'SİMÜLASYON görevi: bir aday/müşteri rolünde KISA bir sahne kur; gövdede adayın itirazını tırnak içinde söyle (ör. "Bunlara vaktim yok", "Bu işler bana göre değil") ve katılımcıdan cevabını sana yazmasını/söylemesini iste. İtirazın sertliğini zorluk seviyesine göre ayarla.' : ""} ${mod === "yolculuk" ? "Bu görev KAMPTA DEĞİL, kamp sonrası 90 günlük sahada (günlük hayat ve iş ortamı) yapılacak — kamp alanı varsayma. Bağlamda 'yeniCumle' doluysa: görevi, kişinin kampta yazdığı o yeni cümleyi BUGÜN somut bir adımla YAŞATAN/doğrulayan bir saha eylemi olarak kur — cümleyi açıkça tekrarlama, ama görev onu çalışsın." : ""}`,
+      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\n${BASARI_STRATEJISI}\n\nGörevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa (kişinin nedeni + iç engeli), görevi ona göre kişiselleştir: nedenine sessizce dokun ve iç engelini nazikçe zorlayan bir görev seç — ama iç engeli açıkça yüzüne vurma. Bağlamda "onFarkindalik" doluysa (kamp öncesi ayna profili), görevi şuna göre hedefle: "enZayifAlan" kırılgansa o kası çalıştıran, "enBuyukAciklar"daki başlıkta söylediğiyle yaptığı arasını kapatan, "korNokta"daki koruyucu inancı/kalkanı nazikçe sınayan bir görev seç. Ritim "patlayan" ise sürekliliği, geri bildirim açıklığı düşükse geri bildirim almayı/işlemeyi çalıştır. Kör noktayı/açığı ASLA açıkça yüzüne vurma — görev onu sessizce çalışsın. Zorluk yönergesine MUTLAKA uy. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""} ${tur === "simulasyon" ? 'SİMÜLASYON görevi: bir aday/müşteri rolünde KISA bir sahne kur; gövdede adayın itirazını tırnak içinde söyle (ör. "Bunlara vaktim yok", "Bu işler bana göre değil") ve katılımcıdan cevabını sana yazmasını/söylemesini iste. İtirazın sertliğini zorluk seviyesine göre ayarla.' : ""} ${mod === "yolculuk" ? "Bu görev KAMPTA DEĞİL, kamp sonrası 90 günlük sahada (günlük hayat ve iş ortamı) yapılacak — kamp alanı varsayma. Bağlamda 'yeniCumle' doluysa: görevi, kişinin kampta yazdığı o yeni cümleyi BUGÜN somut bir adımla YAŞATAN/doğrulayan bir saha eylemi olarak kur — cümleyi açıkça tekrarlama, ama görev onu çalışsın." : ""}`,
       messages: [{ role: "user", content: JSON.stringify(baglam) }],
     });
 
