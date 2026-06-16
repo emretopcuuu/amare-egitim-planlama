@@ -8,12 +8,7 @@ import KodKopyala from "./KodKopyala";
 
 const t = tr.admin.katilimcilar;
 
-const SAYI = [
-  "", "Bir", "İki", "Üç", "Dört", "Beş", "Altı", "Yedi", "Sekiz", "Dokuz", "On",
-  "On Bir", "On İki", "On Üç", "On Dört", "On Beş", "On Altı", "On Yedi",
-  "On Sekiz", "On Dokuz", "Yirmi",
-];
-const takimAdi = (i: number) => `Grup ${SAYI[i] ?? String(i)}`;
+const takimAdi = (i: number) => `Grup ${i}`;
 const BOS_KISI = { ad: "", takim: "", sehir: "", telefon: "", eposta: "" };
 const SAYFA_BOYU = 10;
 
