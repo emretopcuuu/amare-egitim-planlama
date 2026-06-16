@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { sonucOnerileri } from "@/lib/onFarkindalik";
 import { tr } from "@/lib/i18n/tr";
 import OnFarkindalikAkis from "./OnFarkindalikAkis";
 
@@ -20,7 +21,7 @@ export default async function OnFarkindalikSayfa() {
     db.from("settings").select("value").eq("key", "on_farkindalik_acik").maybeSingle(),
     db
       .from("on_farkindalik_yanit")
-      .select("madde_kod, deger_sayi")
+      .select("madde_kod, deger_sayi, deger_metin")
       .eq("participant_id", session.sub),
   ]);
 
@@ -38,15 +39,21 @@ export default async function OnFarkindalikSayfa() {
     );
   }
 
-  const yanitlar: Record<string, number> = {};
+  const sayilar: Record<string, number> = {};
+  const metinler: Record<string, string> = {};
   for (const r of yanitVeri ?? []) {
-    if (r.deger_sayi !== null) yanitlar[r.madde_kod] = r.deger_sayi;
+    if (r.deger_sayi !== null) sayilar[r.madde_kod] = r.deger_sayi;
+    if (r.deger_metin !== null) metinler[r.madde_kod] = r.deger_metin;
   }
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="mx-auto my-auto w-full max-w-md p-5">
-        <OnFarkindalikAkis baslangic={yanitlar} />
+        <OnFarkindalikAkis
+          baslangicSayi={sayilar}
+          baslangicMetin={metinler}
+          oneri={sonucOnerileri(sayilar)}
+        />
       </div>
     </main>
   );
