@@ -32,6 +32,43 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
   const giris =
     "h-10 rounded-lg border border-royal-light/30 bg-midnight-soft px-3 text-sm text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold";
 
+  // ---- satır düzenleme ----
+  const [duzenle, setDuzenle] = useState<Kisi | null>(null);
+  const [duzenleDeger, setDuzenleDeger] = useState({ takim: "", sehir: "", telefon: "", login_code: "" });
+  const [duzenleYukleniyor, setDuzenleYukleniyor] = useState(false);
+  const [duzenleMesaj, setDuzenleMesaj] = useState<string | null>(null);
+  const [duzenleHataMsg, setDuzenleHataMsg] = useState<string | null>(null);
+
+  function duzenleAc(k: Kisi) {
+    setDuzenle(k);
+    setDuzenleDeger({ takim: k.team ?? "", sehir: k.city ?? "", telefon: k.phone ?? "", login_code: k.login_code });
+    setDuzenleMesaj(null);
+    setDuzenleHataMsg(null);
+  }
+
+  async function kaydetDuzenle() {
+    if (!duzenle || duzenleYukleniyor) return;
+    setDuzenleYukleniyor(true);
+    setDuzenleMesaj(null);
+    setDuzenleHataMsg(null);
+    try {
+      const res = await fetch(`/api/admin/katilimcilar/${duzenle.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(duzenleDeger),
+      });
+      const v = await res.json().catch(() => null);
+      if (!res.ok) return setDuzenleHataMsg(v?.hata ?? t.duzenleHata);
+      setDuzenleMesaj(t.duzenleBasarili(duzenle.full_name));
+      router.refresh();
+      setTimeout(() => setDuzenle(null), 1000);
+    } catch {
+      setDuzenleHataMsg(t.duzenleHata);
+    } finally {
+      setDuzenleYukleniyor(false);
+    }
+  }
+
   // ---- seçim ----
   const [secili, setSecili] = useState<Set<string>>(new Set());
   const tumSecili = kisiler.length > 0 && secili.size === kisiler.length;
@@ -251,7 +288,8 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
                     <th className="py-2 pr-3">{t.tablo.takim}</th>
                     <th className="py-2 pr-3">{t.tablo.sehir}</th>
                     <th className="py-2 pr-3">{t.tablo.telefon}</th>
-                    <th className="py-2">{t.tablo.kod}</th>
+                    <th className="py-2 pr-3">{t.tablo.kod}</th>
+                    <th className="py-2 w-8" />
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-royal/20">
@@ -270,8 +308,17 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
                       <td className="py-2 pr-3 text-slate-400">{k.team ?? "—"}</td>
                       <td className="py-2 pr-3 text-slate-400">{k.city ?? "—"}</td>
                       <td className="py-2 pr-3 text-slate-400">{k.phone ?? "—"}</td>
-                      <td className="py-2">
+                      <td className="py-2 pr-3">
                         <KodKopyala kod={k.login_code} />
+                      </td>
+                      <td className="py-2">
+                        <button
+                          onClick={() => duzenleAc(k)}
+                          aria-label={`${k.full_name} düzenle`}
+                          className="rounded p-1 text-slate-500 transition-colors hover:text-gold-light"
+                        >
+                          ✏️
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -303,6 +350,13 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
                     </p>
                   </div>
                   <KodKopyala kod={k.login_code} />
+                  <button
+                    onClick={() => duzenleAc(k)}
+                    aria-label={`${k.full_name} düzenle`}
+                    className="ml-1 rounded p-1 text-slate-500 transition-colors hover:text-gold-light"
+                  >
+                    ✏️
+                  </button>
                 </li>
               ))}
             </ul>
@@ -393,6 +447,65 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
         {silMesaj && <p className="mt-3 text-sm font-medium text-emerald-400">{silMesaj}</p>}
         {silHata && <p role="alert" className="mt-3 text-sm font-medium text-red-400">{silHata}</p>}
       </Katlanir>
+
+      {/* Düzenleme Modalı */}
+      {duzenle && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+          onClick={(e) => { if (e.target === e.currentTarget) setDuzenle(null); }}
+        >
+          <div className="kart-3d w-full max-w-sm rounded-2xl bg-midnight-card p-6 shadow-2xl ring-1 ring-gold/30">
+            <h3 className="text-lg font-semibold text-gold-light">{t.duzenleBaslik}</h3>
+            <p className="mt-1 text-sm font-semibold text-slate-200">{duzenle.full_name}</p>
+            <div className="mt-4 space-y-3">
+              <input
+                value={duzenleDeger.takim}
+                onChange={(e) => setDuzenleDeger({ ...duzenleDeger, takim: e.target.value })}
+                placeholder={t.alanTakim}
+                className={`${giris} w-full`}
+              />
+              <input
+                value={duzenleDeger.sehir}
+                onChange={(e) => setDuzenleDeger({ ...duzenleDeger, sehir: e.target.value })}
+                placeholder={t.alanSehir}
+                className={`${giris} w-full`}
+              />
+              <input
+                value={duzenleDeger.telefon}
+                onChange={(e) => setDuzenleDeger({ ...duzenleDeger, telefon: e.target.value })}
+                placeholder={t.alanTelefon}
+                inputMode="tel"
+                className={`${giris} w-full`}
+              />
+              <input
+                value={duzenleDeger.login_code}
+                onChange={(e) => setDuzenleDeger({ ...duzenleDeger, login_code: e.target.value })}
+                placeholder="Giriş kodu (6 rakam)"
+                maxLength={6}
+                inputMode="numeric"
+                className={`${giris} w-full font-mono tracking-widest`}
+              />
+            </div>
+            {duzenleMesaj && <p className="mt-3 text-sm font-medium text-emerald-400">{duzenleMesaj}</p>}
+            {duzenleHataMsg && <p role="alert" className="mt-3 text-sm font-medium text-red-400">{duzenleHataMsg}</p>}
+            <div className="mt-5 flex justify-end gap-3">
+              <button
+                onClick={() => setDuzenle(null)}
+                className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-medium text-slate-300 transition-colors hover:bg-midnight-soft"
+              >
+                {t.duzenleVazgec}
+              </button>
+              <button
+                onClick={kaydetDuzenle}
+                disabled={duzenleYukleniyor}
+                className="rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
+              >
+                {duzenleYukleniyor ? "Kaydediliyor…" : t.duzenleKaydet}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
