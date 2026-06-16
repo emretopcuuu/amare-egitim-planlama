@@ -198,6 +198,7 @@ export default async function PusulaSayfa() {
       rizaVar={!!kisi?.consent_at}
       onceliklerVar={durum.onceliklerVar}
       oncelikler={oncelikler}
+      asamaBaslangic={durum.asama}
     />
   );
 }

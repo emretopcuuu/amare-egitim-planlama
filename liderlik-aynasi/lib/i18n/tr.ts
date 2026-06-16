@@ -613,6 +613,27 @@ export const tr = {
     listeSonHatirlatma: "Onuncuyu da yazdın. Hazırsan tamamla.",
     listeDevam: "Listeyi tamamla",
     listeAzUyari: (n: number) => `En az ${n} madde yaz.`,
+    // Liste → sohbet köprüsü (geçiş net anlatılsın, ani atlama olmasın)
+    kopruBaslik: "Sıra sohbette",
+    kopruMetin:
+      "Önceliklerini aldım. Şimdi AYNA seninle bu seçimler üzerine kısa bir sohbet edecek — acelesi yok, içinden geldiği gibi yanıtla.",
+    kopruAdimlar: [
+      "Önce listeni birlikte eleyeceğiz: en az değerliyi tek tek bırakacaksın.",
+      "Sonra bu önceliklerin bugünkü hayatınla ne kadar örtüştüğüne bakacağız.",
+      "En sonda, önündeki gerçek engeli birlikte yüzeye çıkaracağız.",
+    ] as const,
+    kopruBasla: "Sohbete başla",
+    // Sohbet ilerleme göstergesi
+    ilerlemeEtiket: "Sohbet ilerlemesi",
+    ilerlemeSonuna: "Neredeyse bitti — son birkaç soru.",
+    // Bitiş ekranı — otomatik atlamaz, kişi okuyup devam eder
+    bittiDevam: "Devam et →",
+    // Baştan başlatma
+    sifirlaDugme: "↺ Baştan başla",
+    sifirlaOnayMetin: "Tüm cevapların silinip en baştan başlanacak. Emin misin?",
+    sifirlaEvet: "Evet, baştan başla",
+    sifirlaVazgec: "Vazgeç",
+    sifirlaniyor: "Sıfırlanıyor…",
     girisYer: "Yanıtını buraya yaz…",
     gonder: "Gönder",
     sesYaz: "Sesle yaz",

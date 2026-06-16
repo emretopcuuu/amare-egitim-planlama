@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { pusulaTuru, pusulaDurum, pusulaGecmis, onceliklerKaydet } from "@/lib/pusula";
+import { pusulaTuru, pusulaDurum, pusulaGecmis, onceliklerKaydet, pusulaSifirla } from "@/lib/pusula";
 import { tr } from "@/lib/i18n/tr";
 
 // FAZ 0 Nedenler — GET: devam (durum + geçmiş + rıza). POST: rıza / liste / tur.
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.pusula.hata }, { status: 401 });
   }
 
-  let govde: { mesaj?: unknown; basla?: unknown; oncelikler?: unknown };
+  let govde: { mesaj?: unknown; basla?: unknown; oncelikler?: unknown; sifirla?: unknown };
   try {
     govde = await req.json();
   } catch {
@@ -33,6 +33,12 @@ export async function POST(req: Request) {
   }
 
   const db = supabaseAdmin();
+
+  // 0) Sıfırla: kişi baştan başlamak isterse sohbet+öncelik+rızayı temizle.
+  if (govde.sifirla === true) {
+    await pusulaSifirla(db, session.sub);
+    return Response.json({ ok: true });
+  }
 
   // 1) Rıza: çalışma başlatılırken psikolojik veri saklama onayı.
   if (govde.basla === true) {
