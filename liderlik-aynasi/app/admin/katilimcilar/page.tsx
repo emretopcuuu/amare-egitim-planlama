@@ -2,9 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
-import KisiEkle from "./KisiEkle";
-import KatilimciAraclari from "./KatilimciAraclari";
-import KatilimciListe from "./KatilimciListe";
+import KatilimciYonetim from "./KatilimciYonetim";
 import Ipucu from "../Ipucu";
 
 export const metadata = { title: "Katılımcılar — Liderlik Aynası" };
@@ -29,12 +27,9 @@ export default async function KatilimcilarPage() {
         <Ipucu {...tr.admin.yardim.katilimcilar} />
       </div>
 
-      {/* Üst: tek kişi ekle → orta: liste + takım dağıtımı → alt: toplu import + tehlikeli */}
-      <KisiEkle />
-
-      <KatilimciListe kisiler={kisiler} />
-
-      <KatilimciAraclari />
+      {/* Liste en üstte ve açık; diğer her şey (ekle, dağıt, adlandır, import,
+          tehlikeli) katlanır ve varsayılan kapalı — KatilimciYonetim içinde. */}
+      <KatilimciYonetim kisiler={kisiler} />
     </main>
   );
 }
