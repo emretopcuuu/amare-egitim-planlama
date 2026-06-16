@@ -272,6 +272,39 @@ export type Database = {
           },
         ]
       }
+      grup_odev: {
+        Row: {
+          aktif: boolean
+          baslik: string
+          created_at: string
+          govde: string
+          hedef: string | null
+          id: string
+          takim: string
+          tip: string
+        }
+        Insert: {
+          aktif?: boolean
+          baslik: string
+          created_at?: string
+          govde: string
+          hedef?: string | null
+          id?: string
+          takim: string
+          tip?: string
+        }
+        Update: {
+          aktif?: boolean
+          baslik?: string
+          created_at?: string
+          govde?: string
+          hedef?: string | null
+          id?: string
+          takim?: string
+          tip?: string
+        }
+        Relationships: []
+      }
       kudos: {
         Row: {
           created_at: string

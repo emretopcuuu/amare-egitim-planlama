@@ -185,6 +185,7 @@ export const tr = {
     menuYansiman: "Yansımanı izle",
     menuRapor: "Ayna Raporum",
     menuBen: "👤 Profilim",
+    menuGrup: "👥 Grup Ödevi",
     menuAnlar: "Anların (Zaman Tüneli)",
     menuTurnuva: "Takım Turnuvası",
     menuTakdir: "Takdir Duvarı",
@@ -701,6 +702,16 @@ export const tr = {
     kilit2: "3. günde aynan açılır",
     kilit3: "Sana özel AYNA görevleri",
   },
+  // Grup ödevi (katılımcı görünümü)
+  grup: {
+    baslik: "Grubunun Ödevi",
+    altBaslik: (takim: string) => `${takim} · birlikte çalışın`,
+    yok: "Henüz grup ödevin yok. AYNA hazırladığında burada görünecek.",
+    grupIci: "🤝 Grup-içi",
+    grupBirlikte: "🔗 Grup-birlikte",
+    hedefEtiket: "Odak",
+    takimsiz: "Henüz bir gruba atanmadın.",
+  },
   // ÖN FARKINDALIK — kamp öncesi Ayna/Kalibrasyon çalışması (Faz A: Katman 1)
   onFarkindalik: {
     baslik: "Liderlik Aynası",
@@ -859,6 +870,7 @@ export const tr = {
       katilimcilar: "Katılımcılar",
       eslestirme: "Eşleştirme",
       qr: "QR Kartlar",
+      grupOdev: "Grup Ödevleri",
       moderasyon: "Moderasyon",
       komutan: "Komutan",
       sahne: "Sahne",
@@ -1891,6 +1903,25 @@ export const tr = {
       atamaYok: "Henüz atama yok.",
       grupIci: "Grup-içi",
       grupDisi: "Grup-dışı",
+    },
+    grupOdev: {
+      baslik: "Grup Ödevleri",
+      aciklama:
+        "AYNA, her grubun Ön Farkındalık profillerini toplayıp ortak açığa göre ödev üretir. Grup-içi: üyeler birlikte ortak açığı çalışır. Grup-birlikte: tamamlayıcı profiller (güçlü zayıfa koçluk) eşleşir.",
+      uyeEtiket: (profilli: number, toplam: number) => `${profilli}/${toplam} üye profilini doldurdu`,
+      zayifEtiket: "Baskın zayıf alan",
+      acikEtiket: "Ortak en büyük açık",
+      ritimEtiket: (duzenli: number, patlayan: number) => `Ritim: ${duzenli} düzenli · ${patlayan} patlayan`,
+      yok: "—",
+      grupIci: "🤝 Grup-içi ödev üret",
+      grupBirlikte: "🔗 Grup-birlikte ödev üret",
+      uretiliyor: "AYNA üretiyor…",
+      mevcut: "Aktif ödev",
+      mevcutYok: "Henüz ödev üretilmedi.",
+      profilYok: "Bu grupta henüz Ön Farkındalık dolduran kimse yok — önce çalışma tamamlanmalı.",
+      hata: "Geçersiz istek.",
+      uretilemedi: "Ödev üretilemedi (profil yok ya da AI yanıt vermedi). Tekrar dene.",
+      basarili: "✓ Grup ödevi üretildi.",
     },
     qr: {
       baslik: "QR Giriş Kartları",
