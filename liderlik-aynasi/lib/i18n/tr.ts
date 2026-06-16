@@ -1348,9 +1348,9 @@ export const tr = {
       eslestirme: {
         baslik: "Gözlem eşleştirmesi (360°)",
         metin: [
-          "NE: Kim kimi gözlemleyip puanlayacak (360°) onu belirler. Her kişiye 2 GİZLİ (🕶 — kişi onu izlediğini bilmez) + 2 AÇIK (👁) hedef atanır; sistem dengeli ve mümkünse farklı takım/şehirden seçer.",
-          "ADIM ADIM: Üstteki formdan 'Eşleştir'e bas → sistem atamaları üretir → alttaki tabloda her gözlemcinin hedeflerini gör.",
-          "NE ZAMAN: Kamp öncesi bir kez, katılımcı listesi kesinleştikten SONRA. Liste değişirse tekrar çalıştır.",
+          "NE: Kim kimi gözlemleyip puanlayacak (360°) onu belirler. Her kişiye iki katman atanır: GRUP-İÇİ (🤝 kendi takımından — seni en çok görenler) ve GRUP-DIŞI (🌍 farklı takımlardan — taze, objektif bakış). Tüm gözlemler gizlidir (kişi onu kimin izlediğini bilmez); yük dengeli dağıtılır.",
+          "ADIM ADIM: Üstteki formdan grup-içi/grup-dışı sayılarını seç → 'Eşleştir'e bas → sistem atamaları üretir → alttaki tabloda her gözlemcinin hedeflerini gör.",
+          "NE ZAMAN: Kamp öncesi bir kez, katılımcı listesi ve takımlar kesinleştikten SONRA. Liste/takım değişirse tekrar çalıştır.",
         ],
       },
       qr: {
@@ -1828,9 +1828,9 @@ export const tr = {
     eslestirme: {
       baslik: "Eşleştirme",
       aciklama:
-        "Her katılımcıya gizli ve açık gözlem hedefleri atar. Farklı takımdan kişiler tercih edilir; herkesin eşit sayıda gözlemlenmesi hedeflenir.",
-      gizliEtiket: "Kişi başı gizli gözlem",
-      acikEtiket: "Kişi başı açık gözlem",
+        "Her katılımcıya iki katman gözlem hedefi atar: kendi grubundan (yakın ayna — seni en çok görenler) ve dış gruplardan (uzak ayna — taze, objektif bakış). Tüm gözlemler gizlidir; herkesin eşit sayıda gözlemlenmesi hedeflenir.",
+      grupIciEtiket: "Kişi başı grup-içi gözlem",
+      grupDisiEtiket: "Kişi başı grup-dışı gözlem",
       uyari: "Çalıştırmak mevcut TÜM atamaları siler ve yeniden oluşturur.",
       onayEtiket: "Mevcut atamaların silineceğini anladım",
       calistir: "Eşleştirmeyi Çalıştır",
@@ -1840,8 +1840,8 @@ export const tr = {
       hataSunucu: "Eşleştirme başarısız. Lütfen tekrar dene.",
       mevcutBaslik: "Mevcut Atamalar",
       atamaYok: "Henüz atama yok.",
-      gizli: "Gizli",
-      acik: "Açık",
+      grupIci: "Grup-içi",
+      grupDisi: "Grup-dışı",
     },
     qr: {
       baslik: "QR Giriş Kartları",

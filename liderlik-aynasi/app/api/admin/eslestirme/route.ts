@@ -11,18 +11,18 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.admin.yetkisiz }, { status: 403 });
   }
 
-  let govde: { gizli?: unknown; acik?: unknown };
+  let govde: { grupIci?: unknown; grupDisi?: unknown };
   try {
     govde = await req.json();
   } catch {
     return Response.json({ hata: tr.admin.eslestirme.hataSunucu }, { status: 400 });
   }
 
-  const { gizli, acik } = govde;
+  const { grupIci, grupDisi } = govde;
   if (
-    typeof gizli !== "number" || typeof acik !== "number" ||
-    !Number.isInteger(gizli) || !Number.isInteger(acik) ||
-    gizli < 0 || gizli > 5 || acik < 0 || acik > 5 || gizli + acik < 1
+    typeof grupIci !== "number" || typeof grupDisi !== "number" ||
+    !Number.isInteger(grupIci) || !Number.isInteger(grupDisi) ||
+    grupIci < 0 || grupIci > 15 || grupDisi < 0 || grupDisi > 15 || grupIci + grupDisi < 1
   ) {
     return Response.json({ hata: tr.admin.eslestirme.hataSunucu }, { status: 400 });
   }
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.admin.eslestirme.hataAzKisi }, { status: 400 });
   }
 
-  const atamalar = eslestir(kisiler, gizli, acik);
+  const atamalar = eslestir(kisiler, grupIci, grupDisi);
 
   const { error: silmeHatasi } = await db
     .from("assignments")
