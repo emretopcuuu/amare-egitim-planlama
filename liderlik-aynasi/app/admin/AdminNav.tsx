@@ -5,9 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { tr } from "@/lib/i18n/tr";
+import KomutPaleti from "./KomutPaleti";
 
 const n = tr.admin.nav;
 const g = tr.admin.navGrup;
+const k = tr.admin.ux.kokpit;
 
 // #3 14 düz sekme yerine: Panel + 4 kategori (açılır menü). Yatay kaydırmada
 // kaybolan sekme kalmaz; yönetici aradığı aracı kategorisinden bulur.
@@ -63,12 +65,18 @@ export default function AdminNav({
   aynaUyanik,
   tamYetki = true,
   provaAcik = false,
+  raporAcik = false,
+  muhurAcik = false,
+  moderasyonBekleyen = 0,
 }: {
   ad: string;
   dalgaAdi: string | null;
   aynaUyanik: boolean;
   tamYetki?: boolean;
   provaAcik?: boolean;
+  raporAcik?: boolean;
+  muhurAcik?: boolean;
+  moderasyonBekleyen?: number;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -172,6 +180,9 @@ export default function AdminNav({
           {PANEL.etiket}
         </Link>
 
+        {/* #1/#4 Komut paleti tetikleyici — her sayfadan ⌘K ile de açılır */}
+        {tamYetki && <KomutPaleti />}
+
         {/* Kategori açılır menüleri — yalnız tam yetkili admin */}
         {tamYetki &&
           GRUPLAR.map((grup) => {
@@ -221,6 +232,25 @@ export default function AdminNav({
         >
           🤖 {aynaUyanik ? "uyanık" : "uyuyor"}
         </span>
+        {/* #6 Kokpit rozetleri: rapor + mühür durumu, bekleyen moderasyon */}
+        {raporAcik && (
+          <span className="shrink-0 rounded-full bg-emerald-400/15 px-2.5 py-1 text-xs font-medium text-emerald-400">
+            🪞 {k.raporAcik}
+          </span>
+        )}
+        {muhurAcik && (
+          <span className="shrink-0 rounded-full bg-gold/15 px-2.5 py-1 text-xs font-medium text-gold-light">
+            🔒 {k.muhurAcik}
+          </span>
+        )}
+        {moderasyonBekleyen > 0 && (
+          <Link
+            href="/admin/moderasyon"
+            className="shrink-0 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-300 transition-colors hover:bg-amber-500/30"
+          >
+            🖼 {k.moderasyon(moderasyonBekleyen)}
+          </Link>
+        )}
         <span className="hidden shrink-0 text-xs text-slate-400 sm:block">{ad}</span>
         <button
           onClick={cikis}

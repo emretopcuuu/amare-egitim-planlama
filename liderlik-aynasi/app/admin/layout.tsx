@@ -16,10 +16,21 @@ export default async function AdminLayout({
   if (!session || !yetkili) return <>{children}</>;
 
   const db = supabaseAdmin();
-  const [dalga, { data: aynaAyari }, { data: provaAyari }] = await Promise.all([
+  const tamYetki = session.rol === "admin";
+  const [
+    dalga,
+    { data: aynaAyari },
+    { data: provaAyari },
+    { data: raporAyari },
+    { data: muhurAyari },
+    { count: bekleyenFoto },
+  ] = await Promise.all([
     acikDalga(db),
     db.from("settings").select("value").eq("key", "ayna_aktif").maybeSingle(),
     db.from("settings").select("value").eq("key", "prova_modu").maybeSingle(),
+    db.from("settings").select("value").eq("key", "reports_visible").maybeSingle(),
+    db.from("settings").select("value").eq("key", "muhur_acik").maybeSingle(),
+    db.from("photos").select("id", { count: "exact", head: true }).eq("status", "pending"),
   ]);
   const provaAcik = provaAyari?.value === "true";
 
@@ -35,8 +46,11 @@ export default async function AdminLayout({
         ad={session.ad}
         dalgaAdi={dalga?.name ?? null}
         aynaUyanik={aynaAyari?.value === "true"}
-        tamYetki={session.rol === "admin"}
+        tamYetki={tamYetki}
         provaAcik={provaAcik}
+        raporAcik={raporAyari?.value === "true"}
+        muhurAcik={muhurAyari?.value === "true"}
+        moderasyonBekleyen={bekleyenFoto ?? 0}
       />
       {children}
       <AdminTost />
