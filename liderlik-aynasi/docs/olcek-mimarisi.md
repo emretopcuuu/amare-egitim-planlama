@@ -39,7 +39,10 @@
 
 ---
 
-## Faz 0 — Hazırlık (risksiz, Vercel/Netlify'ı bozmaz)
+## Faz 0 — Hazırlık (risksiz, Vercel/Netlify'ı bozmaz) ✅ YAPILDI
+
+> `output: standalone` + Dockerfile + `/api/saglik` + `railway.json` eklendi.
+> Standalone yalnız self-host build'inde açık (Vercel/Netlify kendi pipeline'ı).
 
 Kod tarafı taşınabilir hale getirilir; mevcut deploy'lar çalışmaya devam eder.
 
@@ -68,11 +71,14 @@ Bu faz bittiğinde uygulama herhangi bir Node ortamında `docker run` ile ayağa
 4. SSL "Full (strict)".
 5. Domain Railway'e işaret edince **Vercel'i emekliye ayır** (önce production alias'ı kaldır, birkaç gün sonra projeyi sil).
 
-## Faz 3 — Supabase bağlantı havuzu
+## Faz 3 — Supabase bağlantı havuzu  *(büyük ölçüde N/A — kod değişikliği yok)*
 
-1. Sunucu DB bağlantısını **pooler (transaction mode, port 6543)** üzerinden kur — `SUPABASE_DB_URL` pooler string.
-2. `supabase-js` zaten REST/PostgREST kullanıyor (HTTP, havuz derdi az); ama doğrudan SQL/uzun işler için pooler şart.
-3. Ölçekte Supabase **compute add-on**'u büyüt (Pro → daha büyük instance) — kullanıcı eğrisine göre.
+> **Doğrulandı:** Uygulama yalnız `supabase-js` (REST/PostgREST, HTTP) kullanıyor;
+> doğrudan Postgres bağlantısı (pg/Prisma) tutmuyor. Yani serverless'taki "bağlantı
+> tükenmesi" derdi burada yok ve **pooler için kod değişikliği gerekmez.**
+
+1. İleride doğrudan SQL/analitik için `pg` eklenirse pooler (transaction mode, 6543) şart.
+2. Ölçekte tek yapılacak: Supabase **compute add-on**'u büyüt (Pro → daha büyük instance) — kullanıcı eğrisine göre.
 
 ## Faz 4 — AI iş kuyruğu (en kritik ölçek adımı)
 
@@ -90,11 +96,15 @@ Bugün ağır işler (ses klonlama/seslendirme, video, LLM puanlama) istek için
 3. `lib/supabase` storage çağrıları bir **depolama soyutlamasının** arkasına alınır (R2/Supabase seçilebilir) → tek noktadan geçiş.
 4. KVKK: ses/foto biyometrik; R2 bucket private + kamp sonu **silme job'u** korunur.
 
-## Faz 6 — Cron'u taşı
+## Faz 6 — Cron'u taşı  *(route hazır; yalnız tetikleyici + env)*
 
-- Bugün: `vercel.json` → `/api/cron/olaylar` (günlük). Vercel gidince bu çalışmaz.
-- Yeni: **Railway cron servisi** aynı endpoint'i çağırır (paylaşılan gizli başlıkla korunur) — ya da Cloudflare **Cron Trigger** → `/api/cron/olaylar`.
-- Sıklığı ihtiyaca göre artır (dalga otomasyonu, bildirim pencereleri).
+> **Doğrulandı:** `/api/cron/olaylar` zaten `CRON_SECRET` Bearer korumasını destekliyor
+> (yoksa açık çalışır). Kod değişikliği gerekmez.
+
+- Bugün: `vercel.json` → `/api/cron/olaylar`. Vercel gidince bu tetikleyici çalışmaz.
+- Yeni: **Railway cron servisi** (ya da Cloudflare **Cron Trigger**) aynı endpoint'i
+  `Authorization: Bearer $CRON_SECRET` ile çağırır.
+- `CRON_SECRET` env'ini ayarla; sıklığı ihtiyaca göre belirle (dalga otomasyonu, bildirim pencereleri).
 
 ---
 
