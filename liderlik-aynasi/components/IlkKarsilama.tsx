@@ -7,7 +7,7 @@ import { titret } from "@/lib/his";
 import { useEsc } from "@/lib/useEsc";
 import AynaSahnesi from "@/components/AynaSahnesi";
 
-const ANAHTAR = "la_karsilama_v2";
+const ANAHTAR = "la_karsilama_v3";
 const t = tr.karsilama;
 
 // #1 İlk açılış mikro-turu: katılımcı ana sayfaya İLK kez geldiğinde AYNA
