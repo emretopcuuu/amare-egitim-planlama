@@ -41,6 +41,7 @@ export default function UstMenu({
   const ekstra: { href: string; etiket: string }[] = [
     { href: "/ben", etiket: t.menuBen },
     { href: "/grup", etiket: t.menuGrup },
+    { href: "/mini360", etiket: t.menuMini360 },
     { href: "/anlar", etiket: t.menuAnlar },
     { href: "/turnuva", etiket: t.menuTurnuva },
     { href: "/takdir", etiket: t.menuTakdir },

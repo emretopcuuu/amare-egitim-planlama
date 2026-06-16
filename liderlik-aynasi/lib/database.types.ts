@@ -368,6 +368,75 @@ export type Database = {
         }
         Relationships: []
       }
+      mini360_dis: {
+        Row: {
+          created_at: string
+          id: string
+          m1: number | null
+          m2: number | null
+          m3: number | null
+          m4: number | null
+          m5: number | null
+          m6: number | null
+          target_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          m1?: number | null
+          m2?: number | null
+          m3?: number | null
+          m4?: number | null
+          m5?: number | null
+          m6?: number | null
+          target_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          m1?: number | null
+          m2?: number | null
+          m3?: number | null
+          m4?: number | null
+          m5?: number | null
+          m6?: number | null
+          target_id?: string
+        }
+        Relationships: []
+      }
+      mini360_oz: {
+        Row: {
+          m1: number | null
+          m2: number | null
+          m3: number | null
+          m4: number | null
+          m5: number | null
+          m6: number | null
+          participant_id: string
+          updated_at: string
+        }
+        Insert: {
+          m1?: number | null
+          m2?: number | null
+          m3?: number | null
+          m4?: number | null
+          m5?: number | null
+          m6?: number | null
+          participant_id: string
+          updated_at?: string
+        }
+        Update: {
+          m1?: number | null
+          m2?: number | null
+          m3?: number | null
+          m4?: number | null
+          m5?: number | null
+          m6?: number | null
+          participant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       mirror_letters: {
         Row: {
           content: string
