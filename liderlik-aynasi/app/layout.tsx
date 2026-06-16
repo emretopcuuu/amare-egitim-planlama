@@ -92,6 +92,13 @@ export default async function RootLayout({
               "try{var s=localStorage.getItem('la_yazi_boyu');var m={normal:'17.5px',buyuk:'19.5px',cokBuyuk:'22px'};if(s&&m[s])document.documentElement.style.fontSize=m[s];if(localStorage.getItem('la_gunes_modu')==='1')document.body.classList.add('gunes-modu');}catch(e){}",
           }}
         />
+        {/* monitor.oneteamglobal.ai/api/track-visit beacon - One Team AI trafik takip */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var h=(location.hostname||'').toLowerCase();if(h.indexOf('localhost')>=0||h.indexOf('pages.dev')>=0||h.indexOf('railway.app')>=0)return;fetch('https://monitor.oneteamglobal.ai/api/track-visit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({site:'ayna',path:location.pathname||'/',referrer:document.referrer||null}),keepalive:true}).catch(function(){});}catch(e){}})();",
+          }}
+        />
         {/* #8 PROVA MODU: admin açarsa tüm sayfalarda kırmızı şerit çıkar */}
         {provaAcik && <ProvaModuBayragi />}
         <AtlaBaglantisi />
