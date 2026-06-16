@@ -15,6 +15,7 @@ const SAYI = [
 ];
 const takimAdi = (i: number) => `Grup ${SAYI[i] ?? String(i)}`;
 const BOS_KISI = { ad: "", takim: "", sehir: "", telefon: "", eposta: "" };
+const SAYFA_BOYU = 10;
 
 type Kisi = {
   id: string;
@@ -109,6 +110,9 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
       setDuzenleYukleniyor(false);
     }
   }
+
+  // ---- sayfalama ----
+  const [sayfa, setSayfa] = useState(0);
 
   // ---- seçim ----
   const [secili, setSecili] = useState<Set<string>>(new Set());
@@ -295,6 +299,12 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
     }
   }
 
+  // Sayfalama: liste 160+ kişiyle çok uzuyor → 10'arlı sayfalar, ileri/geri.
+  const sayfaSayisi = Math.max(1, Math.ceil(kisiler.length / SAYFA_BOYU));
+  const guvenliSayfa = Math.min(sayfa, sayfaSayisi - 1);
+  const baslangicIdx = guvenliSayfa * SAYFA_BOYU;
+  const gosterilen = kisiler.slice(baslangicIdx, baslangicIdx + SAYFA_BOYU);
+
   return (
     <div className="space-y-4">
       {/* === LİSTE — en üstte, hep açık === */}
@@ -334,7 +344,7 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-royal/20">
-                  {kisiler.map((k) => (
+                  {gosterilen.map((k) => (
                     <tr key={k.id} className={secili.has(k.id) ? "bg-gold/[0.04]" : ""}>
                       <td className="py-2 pr-3">
                         <input
@@ -367,7 +377,7 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
               </table>
             </div>
             <ul className="mt-4 space-y-2.5 sm:hidden">
-              {kisiler.map((k) => (
+              {gosterilen.map((k) => (
                 <li
                   key={k.id}
                   className={`flex items-center gap-3 rounded-xl border p-3 ${
@@ -401,6 +411,29 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
                 </li>
               ))}
             </ul>
+
+            {/* Sayfalama — 10'arlı, ileri/geri */}
+            {sayfaSayisi > 1 && (
+              <div className="mt-4 flex items-center justify-between gap-3 border-t border-royal/20 pt-4">
+                <button
+                  onClick={() => setSayfa((s) => Math.max(0, s - 1))}
+                  disabled={guvenliSayfa === 0}
+                  className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-midnight-soft disabled:opacity-30"
+                >
+                  {t.sayfaGeri}
+                </button>
+                <span className="text-xs text-slate-400">
+                  {t.sayfaBilgi(guvenliSayfa + 1, sayfaSayisi, baslangicIdx + 1, baslangicIdx + gosterilen.length, kisiler.length)}
+                </span>
+                <button
+                  onClick={() => setSayfa((s) => Math.min(sayfaSayisi - 1, s + 1))}
+                  disabled={guvenliSayfa >= sayfaSayisi - 1}
+                  className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-midnight-soft disabled:opacity-30"
+                >
+                  {t.sayfaIleri}
+                </button>
+              </div>
+            )}
           </>
         )}
       </section>
