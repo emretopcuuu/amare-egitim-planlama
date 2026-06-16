@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 
@@ -12,12 +12,13 @@ type Mesaj = { rol: string; icerik: string };
 type Faz = "riza" | "liste" | "sohbet" | "bitti";
 
 // Web Speech API — sesle yazma (Türkçe). Desteklenmiyorsa buton görünmez.
+type TanimaSonuc = ArrayLike<{ transcript: string }> & { isFinal: boolean };
 type SesTaniyici = {
   lang: string;
   interimResults: boolean;
   continuous: boolean;
   onresult:
-    | ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void)
+    | ((e: { resultIndex: number; results: ArrayLike<TanimaSonuc> }) => void)
     | null;
   onerror: (() => void) | null;
   onend: (() => void) | null;
@@ -34,53 +35,179 @@ function sesTaniyiciKur(): SesTaniyici | null {
   return Sinif ? new Sinif() : null;
 }
 
-// Mikrofon: konuşulanı Türkçe metne çevirip hedef alana ekler (yazmak yerine konuş).
-function SesButonu({ onSonuc }: { onSonuc: (metin: string) => void }) {
+// Kayıt sürerken görünen canlı ses dalgası (çubuklar farklı gecikmeyle dalgalanır).
+function SesDalga() {
+  const cubuklar = [0, 0.12, 0.24, 0.36, 0.18, 0.06, 0.3, 0.42, 0.2, 0.1, 0.34, 0.16];
+  return (
+    <div className="flex h-8 flex-1 items-center justify-center gap-[3px]" aria-hidden>
+      {cubuklar.map((g, i) => (
+        <span key={i} className="ses-cubuk" style={{ animationDelay: `${g}s` }} />
+      ))}
+    </div>
+  );
+}
+
+// Mikrofon: konuşulanı Türkçe metne çevirip hedef alana ekler. Tıkla-başlat /
+// tıkla-durdur. Duraklamalarda (sessizlik) tanıma kendiliğinden biterse, kullanıcı
+// durdurana dek otomatik yeniden başlatılır — böylece mola verince kesilmez.
+function SesButonu({
+  onParca,
+  dinleyince,
+}: {
+  onParca: (metin: string) => void;
+  dinleyince?: (aktif: boolean) => void;
+}) {
   const [dinliyor, setDinliyor] = useState(false);
   const [sesVar, setSesVar] = useState(false);
   const taniyiciRef = useRef<SesTaniyici | null>(null);
+  const isterRef = useRef(false); // kullanıcı kaydı sürdürmek istiyor mu
+  const onParcaRef = useRef(onParca);
+  const dinleyinceRef = useRef(dinleyince);
+  useEffect(() => {
+    onParcaRef.current = onParca;
+    dinleyinceRef.current = dinleyince;
+  });
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (sesTaniyiciKur()) setSesVar(true);
-  }, []);
-  function topla() {
-    if (dinliyor) {
+    return () => {
+      isterRef.current = false;
       taniyiciRef.current?.stop();
-      return;
-    }
+    };
+  }, []);
+
+  function durumGuncelle(aktif: boolean) {
+    setDinliyor(aktif);
+    dinleyinceRef.current?.(aktif);
+  }
+
+  function basla() {
     const tan = sesTaniyiciKur();
     if (!tan) return;
     tan.lang = "tr-TR";
-    tan.interimResults = false;
-    tan.continuous = false;
+    tan.interimResults = true;
+    tan.continuous = true;
     tan.onresult = (e) => {
-      const son = e.results[e.results.length - 1];
-      const m = son?.[0]?.transcript ?? "";
-      if (m.trim()) onSonuc(m.trim());
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const sonuc = e.results[i];
+        const metin = sonuc?.[0]?.transcript ?? "";
+        if (sonuc?.isFinal && metin.trim()) onParcaRef.current(metin.trim());
+      }
     };
-    tan.onerror = () => setDinliyor(false);
-    tan.onend = () => setDinliyor(false);
+    tan.onerror = () => {
+      // Sessizlik/ağ hatasında bırakma; onend zaten devreye girip yeniden başlatır.
+    };
+    tan.onend = () => {
+      if (isterRef.current) {
+        try {
+          tan.start();
+        } catch {
+          durumGuncelle(false);
+          isterRef.current = false;
+        }
+      } else {
+        durumGuncelle(false);
+      }
+    };
     taniyiciRef.current = tan;
-    setDinliyor(true);
+    isterRef.current = true;
+    durumGuncelle(true);
     try {
       tan.start();
     } catch {
-      setDinliyor(false);
+      durumGuncelle(false);
+      isterRef.current = false;
     }
   }
+
+  function durdur() {
+    isterRef.current = false;
+    taniyiciRef.current?.stop();
+    durumGuncelle(false);
+  }
+
   if (!sesVar) return null;
   return (
     <button
       type="button"
-      onClick={topla}
+      onClick={() => (dinliyor ? durdur() : basla())}
       aria-label={dinliyor ? t.sesDurdur : t.sesYaz}
+      aria-pressed={dinliyor}
       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl transition-colors ${
         dinliyor
-          ? "animate-pulse bg-red-500/30 text-red-200"
+          ? "bg-red-500/80 text-white ring-2 ring-red-400/50"
           : "bg-midnight-soft text-slate-300 hover:text-slate-100"
       }`}
     >
-      🎤
+      {dinliyor ? "■" : "🎤"}
+    </button>
+  );
+}
+
+// Otomatik büyüyen metin alanı — uzun yazınca tek satırda kaymaz, aşağı doğru
+// büyür (içeriğe göre yükseklik). Maks. yükseklikten sonra kendi içinde kayar.
+function OtoTextarea({
+  value,
+  onChange,
+  onEnter,
+  placeholder,
+  ariaLabel,
+  otoOdak,
+  disRef,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  onEnter?: () => void;
+  placeholder?: string;
+  ariaLabel?: string;
+  otoOdak?: boolean;
+  disRef?: RefObject<HTMLTextAreaElement | null>;
+}) {
+  const yerelRef = useRef<HTMLTextAreaElement>(null);
+  const ref = disRef ?? yerelRef;
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
+  }, [value, ref]);
+  return (
+    <textarea
+      ref={ref}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onKeyDown={(e) => {
+        if (onEnter && e.key === "Enter" && !e.shiftKey) {
+          e.preventDefault();
+          onEnter();
+        }
+      }}
+      rows={1}
+      autoFocus={otoOdak}
+      placeholder={placeholder}
+      aria-label={ariaLabel}
+      className="max-h-[200px] min-h-[3rem] w-full flex-1 resize-none rounded-2xl border border-royal-light/30 bg-midnight-soft px-4 py-3 text-base leading-relaxed text-slate-100 outline-none focus:border-gold"
+    />
+  );
+}
+
+// Liste maddesi — uzun metni 2 satıra kısaltır, dokununca tamamı açılır/kapanır.
+// Böylece çok uzun girişler listeyi ve sonraki diyagramları bozmaz.
+function MaddeMetni({ metin }: { metin: string }) {
+  const [acik, setAcik] = useState(false);
+  const uzun = metin.length > 60;
+  if (!uzun) return <span className="flex-1 text-base text-slate-100">{metin}</span>;
+  return (
+    <button
+      type="button"
+      onClick={() => setAcik((a) => !a)}
+      className="flex-1 text-left text-base text-slate-100"
+      aria-expanded={acik}
+    >
+      <span className={acik ? "" : "line-clamp-2"}>{metin}</span>
+      <span className="mt-0.5 block text-xs font-medium text-gold-light/80">
+        {acik ? t.maddeKapat : t.maddeAc}
+      </span>
     </button>
   );
 }
@@ -106,11 +233,13 @@ export default function PusulaSohbet({
   const [maddeler, setMaddeler] = useState<string[]>([]); // tek tek eklenen öncelikler
   const [maddeGirdi, setMaddeGirdi] = useState("");
   const [girdi, setGirdi] = useState("");
+  const [listeDinliyor, setListeDinliyor] = useState(false);
+  const [sohbetDinliyor, setSohbetDinliyor] = useState(false);
   const [elenenler, setElenenler] = useState<string[]>([]); // eleme: gönderilen maddeler
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const altRef = useRef<HTMLDivElement>(null);
-  const maddeRef = useRef<HTMLInputElement>(null);
+  const maddeRef = useRef<HTMLTextAreaElement>(null);
   const acilisRef = useRef(false);
 
   // Sohbet sırasında gösterilecek liste: sunucudan (dönen kullanıcı) ya da
@@ -245,16 +374,16 @@ export default function PusulaSohbet({
               {maddeler.map((m, i) => (
                 <li
                   key={i}
-                  className="flex items-center gap-3 rounded-xl border border-royal-light/20 bg-midnight-soft/60 px-3 py-2"
+                  className="flex items-start gap-3 rounded-xl border border-royal-light/20 bg-midnight-soft/60 px-3 py-2"
                 >
-                  <span className="w-5 shrink-0 text-right text-sm font-bold text-gold-light">
+                  <span className="mt-0.5 w-5 shrink-0 text-right text-sm font-bold text-gold-light">
                     {i + 1}
                   </span>
-                  <span className="flex-1 text-base text-slate-100">{m}</span>
+                  <MaddeMetni metin={m} />
                   <button
                     onClick={() => setMaddeler((l) => l.filter((_, j) => j !== i))}
                     aria-label="Sil"
-                    className="shrink-0 px-1 text-slate-500 hover:text-red-400"
+                    className="mt-0.5 shrink-0 px-1 text-slate-500 hover:text-red-400"
                   >
                     ✕
                   </button>
@@ -270,31 +399,37 @@ export default function PusulaSohbet({
             {tamam ? t.listeSonHatirlatma : t.listeTesvik(maddeler.length)}
           </p>
           {!tamam && (
-            <div className="mt-3 flex items-center gap-2">
-              <input
-                ref={maddeRef}
+            <div className="mt-3 space-y-2">
+              <OtoTextarea
                 value={maddeGirdi}
-                onChange={(e) => setMaddeGirdi(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    maddeEkle();
-                  }
-                }}
-                autoFocus
+                onChange={setMaddeGirdi}
+                onEnter={maddeEkle}
                 placeholder={t.listeTekYer}
-                className="flex-1 rounded-xl border border-royal-light/30 bg-midnight-soft px-3 py-2.5 text-base text-slate-100 outline-none focus:border-gold"
+                ariaLabel={t.listeTekYer}
+                otoOdak
+                disRef={maddeRef}
               />
-              <SesButonu
-                onSonuc={(m) => setMaddeGirdi((g) => (g ? `${g} ${m}` : m))}
-              />
-              <button
-                onClick={maddeEkle}
-                disabled={!maddeGirdi.trim()}
-                className="btn-kor flex h-11 shrink-0 items-center justify-center rounded-xl px-5 text-base font-bold disabled:opacity-40"
-              >
-                {t.listeEkle}
-              </button>
+              {listeDinliyor && (
+                <div className="flex items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/5 px-3 py-2">
+                  <SesDalga />
+                  <span className="shrink-0 text-xs font-medium text-red-200">
+                    {t.sesDinleniyor}
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <SesButonu
+                  onParca={(m) => setMaddeGirdi((g) => (g ? `${g} ${m}` : m))}
+                  dinleyince={setListeDinliyor}
+                />
+                <button
+                  onClick={maddeEkle}
+                  disabled={!maddeGirdi.trim()}
+                  className="btn-kor flex h-11 flex-1 items-center justify-center rounded-xl px-5 text-base font-bold disabled:opacity-40"
+                >
+                  {t.listeEkle}
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -371,7 +506,8 @@ export default function PusulaSohbet({
               <button
                 key={i}
                 onClick={() => setGirdi(m)}
-                className="rounded-full border border-royal-light/30 bg-midnight-soft px-3 py-1 text-sm text-slate-200 transition-colors hover:border-gold"
+                title={m}
+                className="max-w-[12rem] truncate rounded-full border border-royal-light/30 bg-midnight-soft px-3 py-1 text-sm text-slate-200 transition-colors hover:border-gold"
               >
                 {m}
               </button>
@@ -380,21 +516,26 @@ export default function PusulaSohbet({
         </div>
       )}
 
+      {sohbetDinliyor && (
+        <div className="mb-2 flex shrink-0 items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/5 px-3 py-2">
+          <SesDalga />
+          <span className="shrink-0 text-xs font-medium text-red-200">{t.sesDinleniyor}</span>
+        </div>
+      )}
       <div className="flex shrink-0 items-end gap-2">
-        <textarea
-          value={girdi}
-          onChange={(e) => setGirdi(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              gonder();
-            }
-          }}
-          rows={1}
-          placeholder={t.girisYer}
-          className="max-h-32 min-h-[3rem] flex-1 resize-none rounded-2xl border border-royal-light/30 bg-midnight-soft px-4 py-3 text-base text-slate-100 outline-none focus:border-gold"
+        <div className="min-w-0 flex-1">
+          <OtoTextarea
+            value={girdi}
+            onChange={setGirdi}
+            onEnter={gonder}
+            placeholder={t.girisYer}
+            ariaLabel={t.girisYer}
+          />
+        </div>
+        <SesButonu
+          onParca={(m) => setGirdi((g) => (g ? `${g} ${m}` : m))}
+          dinleyince={setSohbetDinliyor}
         />
-        <SesButonu onSonuc={(m) => setGirdi((g) => (g ? `${g} ${m}` : m))} />
         <button
           onClick={gonder}
           disabled={mesgul || !girdi.trim()}

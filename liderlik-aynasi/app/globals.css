@@ -67,6 +67,31 @@ body.alt-nav-acik .baglanti-serit {
   animation: kayit-belir-an 0.18s ease-out;
 }
 
+/* Ses kaydı dalga animasyonu — kayıt sürerken canlı çubuklar (kişi
+   kaydedildiğini görsel olarak anlasın). Her çubuk farklı gecikmeyle dalgalanır. */
+@keyframes ses-dalga {
+  0%,
+  100% {
+    transform: scaleY(0.28);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+.ses-cubuk {
+  width: 3px;
+  height: 1.5rem;
+  border-radius: 9999px;
+  transform-origin: center;
+  background: linear-gradient(180deg, #f6c453, #d4af37);
+  animation: ses-dalga 0.9s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ses-cubuk {
+    animation-duration: 1.6s;
+  }
+}
+
 /* #3 İlk-adım rehber eli: yumuşak yukarı-aşağı zıplama, dikkat çeker. */
 @keyframes rehber-zipla {
   0%,
