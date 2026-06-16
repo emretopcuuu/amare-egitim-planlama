@@ -98,6 +98,9 @@ export default async function AnaSayfa({
 }) {
   const session = await getSession();
   if (!session) redirect("/giris");
+  // Admin/yardımcı katılımcı akışına girmesin: aksi halde Pusula kapısı ile
+  // /pusula arasında sonsuz yönlendirme döngüsü oluşuyordu (camp_unlocked boş).
+  if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
 
