@@ -49,6 +49,33 @@ export default function MikrofonButonu({
   }, [onMetin]);
 
   useEffect(() => {
+    // Destek ancak istemcide bilinebilir; tek seferlik kontrol.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (tanimaOlustur()) setDestekli(true);
+    return () => {
+      const t = tanimaRef.current;
+      if (t) {
+        t.onresult = null;
+        t.onend = null;
+        t.stop();
+      }
+    };
+  }, []);
+
+  if (!destekli) return null;
+
+  function degistir() {
+    if (dinliyor) {
+      const t = tanimaRef.current;
+      if (t) {
+        t.onend = null;
+        t.stop();
+      }
+      setDinliyor(false);
+      return;
+    }
+    // Her başlatmada TAZE tanıyıcı: önceki oturumun final sonuçları yeniden
+    // eklenmesin (tekrar yazma hatasının kökü aynı örneğin yeniden kullanımı).
     const tanima = tanimaOlustur();
     if (!tanima) return;
     tanima.lang = "tr-TR";
@@ -65,31 +92,11 @@ export default function MikrofonButonu({
     tanima.onend = () => setDinliyor(false);
     tanima.onerror = () => setDinliyor(false);
     tanimaRef.current = tanima;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- destek ancak istemcide bilinebilir; tek seferlik
-    setDestekli(true);
-    return () => {
-      tanima.onresult = null;
-      tanima.onend = null;
-      tanima.stop();
-    };
-  }, []);
-
-  if (!destekli) return null;
-
-  function degistir() {
-    const tanima = tanimaRef.current;
-    if (!tanima) return;
-    if (dinliyor) {
-      tanima.stop();
+    setDinliyor(true);
+    try {
+      tanima.start();
+    } catch {
       setDinliyor(false);
-    } else {
-      try {
-        tanima.start();
-        setDinliyor(true);
-      } catch {
-        // zaten dinliyor olabilir — durumu eşitle
-        setDinliyor(false);
-      }
     }
   }
 

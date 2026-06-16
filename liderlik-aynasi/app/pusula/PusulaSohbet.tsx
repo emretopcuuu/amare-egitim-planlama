@@ -90,11 +90,14 @@ function SesButonu({
     dinleyinceRef.current?.(aktif);
   }
 
-  function basla() {
+  // Taze bir tanıyıcı kurar. Her (yeniden) başlatmada YENİ örnek kullanılır;
+  // böylece sessizlik sonrası restart'ta eski oturumun final sonuçları yeniden
+  // EKLENMEZ (Android Chrome'da kümülatif tekrar yazma hatasının kökü buydu).
+  function kur(): SesTaniyici | null {
     const tan = sesTaniyiciKur();
-    if (!tan) return;
+    if (!tan) return null;
     tan.lang = "tr-TR";
-    tan.interimResults = true;
+    tan.interimResults = false;
     tan.continuous = true;
     tan.onresult = (e) => {
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -103,29 +106,40 @@ function SesButonu({
         if (sonuc?.isFinal && metin.trim()) onParcaRef.current(metin.trim());
       }
     };
-    tan.onerror = () => {
-      // Sessizlik/ağ hatasında bırakma; onend zaten devreye girip yeniden başlatır.
-    };
+    tan.onerror = () => {};
     tan.onend = () => {
-      if (isterRef.current) {
-        try {
-          tan.start();
-        } catch {
-          durumGuncelle(false);
-          isterRef.current = false;
-        }
-      } else {
+      if (!isterRef.current) {
+        durumGuncelle(false);
+        return;
+      }
+      const yeni = kur();
+      if (!yeni) {
+        isterRef.current = false;
+        durumGuncelle(false);
+        return;
+      }
+      taniyiciRef.current = yeni;
+      try {
+        yeni.start();
+      } catch {
+        isterRef.current = false;
         durumGuncelle(false);
       }
     };
+    return tan;
+  }
+
+  function basla() {
+    const tan = kur();
+    if (!tan) return;
     taniyiciRef.current = tan;
     isterRef.current = true;
     durumGuncelle(true);
     try {
       tan.start();
     } catch {
-      durumGuncelle(false);
       isterRef.current = false;
+      durumGuncelle(false);
     }
   }
 
