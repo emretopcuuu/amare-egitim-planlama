@@ -805,6 +805,72 @@ export const tr = {
       ayarlar: "Ayarlar",
       prova: "PROVA",
     },
+    // Admin UX paketi (2026): kokpit hızı, güveni, hata payı
+    ux: {
+      // #2 Canlı tazelik göstergesi
+      tazelik: {
+        canli: "Canlı",
+        azOnce: "az önce güncellendi",
+        snOnce: (n: number) => `${n} sn önce güncellendi`,
+        dkOnce: (n: number) => `${n} dk önce güncellendi`,
+        duraklat: "Duraklat",
+        surdur: "Sürdür",
+        yenile: "Şimdi yenile",
+        duraklatildi: "Otomatik güncelleme duraklatıldı",
+      },
+      // #6 Nav kokpit rozetleri
+      kokpit: {
+        raporAcik: "Rapor açık",
+        raporKapali: "Rapor kapalı",
+        muhurAcik: "Mühür açık",
+        muhurKapali: "Mühür kapalı",
+        moderasyon: (n: number) => `${n} moderasyon`,
+      },
+      // #1 + #4 Komut paleti / hızlı eylem
+      palet: {
+        ac: "Hızlı eylem",
+        ipucu: "⌘K",
+        yer: "Ara: sayfa, kişi, kontrol…",
+        bos: "Sonuç yok",
+        sayfalar: "Sayfalar",
+        kisiler: "Kişiler",
+        kontroller: "Kontroller",
+        kopyalandi: "Kod kopyalandı ✓",
+        kapat: "Kapat",
+      },
+      // #7 Panel içi bölüm atlama
+      atla: {
+        baslik: "Bölümler",
+        ozet: "Özet",
+        ilerleme: "İlerleme",
+        tehlike: "Kritik",
+        kvkk: "KVKK",
+        araclar: "Araçlar",
+      },
+      // #5 Son kritik eylemler şeridi
+      sonEylem: {
+        baslik: "Son işlemler",
+        bos: "Henüz kritik işlem yok.",
+        tumu: "Tümü",
+      },
+      // #3 Kamp akışı sıralayıcı
+      akis: {
+        baslik: "Kamp Akışı",
+        aciklama: "Programa göre sıradaki anahtar. Üstüne basınca ilgili kontrole gider.",
+        suan: "ŞU AN",
+        siradaki: "SIRADAKİ",
+        tamam: "✓",
+        bekliyor: "Bekliyor",
+        uyariMuhur: "Mührü, raporları açtığın anda (veya hemen öncesinde) aç.",
+        adimHazirlik: "Hazırlık (FAZ 0)",
+        adimDalga: (n: number) => `Dalga ${n}`,
+        adimBosluk: "Boşluk Anı",
+        adimRapor: "Ayna Raporu",
+        adimMuhur: "Mühür Açılışı",
+      },
+      // #10 Geri-al sayacı
+      geriAlSn: (n: number) => `Geri al (${n})`,
+    },
     // #5 Tehlike bölgesi: tüm katılımcıları etkileyen kritik anahtarlar
     tehlike: {
       baslik: "Kritik Kontroller",

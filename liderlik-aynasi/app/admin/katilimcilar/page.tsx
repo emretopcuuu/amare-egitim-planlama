@@ -34,7 +34,8 @@ export default async function KatilimcilarPage() {
         <h2 className="text-lg font-semibold text-gold-light">
           {t.toplam(kisiler.length)}
         </h2>
-        <div className="mt-4 overflow-x-auto">
+        {/* #8 Masaüstü: tablo. Mobil: yatay kaydırma yerine yığılı kartlar. */}
+        <div className="mt-4 hidden overflow-x-auto sm:block">
           <table className="cizgili w-full text-left text-sm">
             <thead>
               <tr className="border-b border-royal/30 text-xs uppercase tracking-wide text-slate-400">
@@ -62,6 +63,23 @@ export default async function KatilimcilarPage() {
             </tbody>
           </table>
         </div>
+        <ul className="mt-4 space-y-2.5 sm:hidden">
+          {kisiler.map((k) => (
+            <li
+              key={k.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3"
+            >
+              <div className="min-w-0">
+                <p className="truncate font-medium text-slate-100">{k.full_name}</p>
+                <p className="mt-0.5 truncate text-xs text-slate-400">
+                  {[k.team, k.city].filter(Boolean).join(" · ") || "—"}
+                  {k.phone ? ` · ${k.phone}` : ""}
+                </p>
+              </div>
+              <KodKopyala kod={k.login_code} />
+            </li>
+          ))}
+        </ul>
       </section>
     </main>
   );

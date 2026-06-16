@@ -34,6 +34,9 @@ import FazSifirKontrol from "./FazSifirKontrol";
 import BoslukKontrol from "./BoslukKontrol";
 import MuhurKontrol from "./MuhurKontrol";
 import OdevPaketi from "./OdevPaketi";
+import SonEylemler from "./SonEylemler";
+import AkisDizisi from "./AkisDizisi";
+import BolumAtla from "./BolumAtla";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -194,6 +197,16 @@ export default async function AdminPanel() {
 
   const silmeBekleyen = (silmeTalepleri ?? []).length;
 
+  // #7 Bölüm atlama listesi — yalnız var olan bölümler
+  const atla = tr.admin.ux.atla;
+  const bolumler = [
+    { id: "ozet", etiket: atla.ozet },
+    { id: "ilerleme", etiket: atla.ilerleme },
+    ...(tamYetki ? [{ id: "tehlike", etiket: atla.tehlike }] : []),
+    ...(tamYetki && silmeBekleyen > 0 ? [{ id: "kvkk", etiket: atla.kvkk }] : []),
+    ...(tamYetki ? [{ id: "araclar", etiket: atla.araclar }] : []),
+  ];
+
   return (
     // #8 Mobilde alt sabit aksiyon çubuğu içeriği örtmesin: alt nefes payı.
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6 pb-28 sm:pb-6">
@@ -207,6 +220,9 @@ export default async function AdminPanel() {
 
       <GunZamanTuneli aktifIndex={zamanIndex} />
 
+      {/* #7 Bölüm atlama — yapışkan mini içindekiler */}
+      <BolumAtla bolumler={bolumler} />
+
       {!tamYetki && (
         <p className="rounded-xl border border-royal-light/40 bg-royal/15 px-4 py-3 text-sm font-medium text-slate-100">
           {tr.admin.yardimci.banner}
@@ -217,7 +233,8 @@ export default async function AdminPanel() {
           adım, sayfanın en üstünde. #4 Tek vurgu kuralı: altın + parıltı
           YALNIZ bu karta; gerisi nötr. Renk = öncelik sinyali. */}
       <section
-        className={`kart-3d rounded-2xl p-6 shadow-xl ring-1 backdrop-blur ${
+        id="ozet"
+        className={`kart-3d scroll-mt-24 rounded-2xl p-6 shadow-xl ring-1 backdrop-blur ${
           oneri.vurgu
             ? "parilti bg-gold/10 ring-gold/50"
             : "bg-midnight-card/60 ring-royal/30"
@@ -254,6 +271,9 @@ export default async function AdminPanel() {
         gorus={ilerleme?.toplamPuan ?? 0}
         dalgaAd={acikDalga?.name ?? null}
       />
+
+      {/* #5 Son kritik eylemler şeridi */}
+      {tamYetki && <SonEylemler />}
 
       {/* Proaktif uyarılar — dikkat isteyen durumlar */}
       <Uyarilar uyarilar={uyarilar} />
@@ -337,7 +357,10 @@ export default async function AdminPanel() {
           tek, görsel olarak ayrılmış bir bölgede toplanır. Her birinin onayı +
           geri-al penceresi var. Yalnız tam yetkili admin. */}
       {tamYetki && (
-        <section className="space-y-5 rounded-2xl border-2 border-red-500/30 bg-red-950/10 p-5">
+        <section
+          id="tehlike"
+          className="scroll-mt-24 space-y-5 rounded-2xl border-2 border-red-500/30 bg-red-950/10 p-5"
+        >
           <div className="flex items-start gap-3">
             <span className="text-xl" aria-hidden>
               ⚠️
@@ -350,6 +373,9 @@ export default async function AdminPanel() {
               <p className="mt-0.5 text-xs text-slate-400">{tr.admin.tehlike.aciklama}</p>
             </div>
           </div>
+
+          {/* #3 Kamp akışı sıralayıcı — sıradaki anahtar + bağımlılık koruması */}
+          <AkisDizisi />
 
           {/* Dalga */}
           <div
@@ -397,7 +423,7 @@ export default async function AdminPanel() {
           </div>
 
           {/* FAZ 0 — Pusula penceresi + oda QR kodu (kampa giriş kilidi) */}
-          <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+          <div id="fazsifir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
             <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.admin.fazSifir.baslik}
               <Ipucu {...tr.admin.yardim.fazSifir} />
@@ -406,7 +432,7 @@ export default async function AdminPanel() {
           </div>
 
           {/* FAZ 1 — Boşluk Anı penceresi + derinlik panosu */}
-          <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+          <div id="fazbir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
             <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.admin.fazBir.baslik}
               <Ipucu {...tr.admin.yardim.fazBir} />
@@ -415,7 +441,8 @@ export default async function AdminPanel() {
           </div>
 
           {/* A2 — Mühür Açılışı (kamp sonu before/after sesli reveal) */}
-          <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+          <div id="muhur" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+
             <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.admin.muhur.baslik}
               <Ipucu {...tr.admin.yardim.muhur} />
@@ -457,6 +484,7 @@ export default async function AdminPanel() {
       {/* #1 TÜM ARAÇLAR — faz dışı ikincil her şey tek katlanır bölümde.
           Varsayılan kapalı: panel açılınca yalnız o anki işe odaklanılır. */}
       {tamYetki && (
+        <div id="araclar" className="scroll-mt-24">
         <Katlanir baslik={tr.admin.araclar.baslik} aciklama={tr.admin.araclar.aciklama} yardim={tr.admin.yardim.araclar}>
           <HazirlikPaneli />
           <KodBul />
@@ -520,8 +548,11 @@ export default async function AdminPanel() {
 
           {/* #10 İşlem günlüğü: kritik eylemler buraya düşer; geri-al ise eylem
               anındaki tostta sunulur (dalga/rapor). Kayıt + geri-al birlikte. */}
-          <IslemGunlugu />
+          <div id="islem-gunlugu" className="scroll-mt-24">
+            <IslemGunlugu />
+          </div>
         </Katlanir>
+        </div>
       )}
 
       {/* #8 Mobil alt aksiyon çubuğu — yalnız kritik (vurgu) öneride */}
