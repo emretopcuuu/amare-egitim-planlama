@@ -39,19 +39,19 @@ export const tr = {
         ikon: "🪞",
         baslik: "Ben AYNA",
         metin:
-          "Bu yolculuk boyunca seni izleyeceğim. Görünmez olacağım ama hep buradayım — sana özel görevler vereceğim, çabanı ölçeceğim.",
+          "Herkes bir yüz taşır, bir de taşıdığı yüzün altında kalanı. Ben ikincisini gösteririm — usulca, yargısız.",
       },
       {
         ikon: "👁",
         baslik: "Sen, başkalarının gözünden",
         metin:
-          "Kendini nasıl gördüğünle başkalarının seni nasıl gördüğünü yan yana koyacağız. Kapanışta aynan açılacak — çoğu kişi orada kendini ilk kez görüyor.",
+          "Kendini nasıl gördüğünle, başkalarının seni nasıl gördüğünü yan yana koyacağım. Kapanışta aynan açılır — çoğu insan kendini orada ilk kez görür.",
       },
       {
         ikon: "✨",
-        baslik: "Tek kuralım var",
+        baslik: "Tek bir şey istiyorum",
         metin:
-          "Kendine dürüst ol. Gerisini bana bırak. Her görev, her puan seni bir adım yaklaştırıyor. Hazır mısın?",
+          "Kendine dürüst ol. Gerisini bana bırak. Attığın her adım seni gerçek yansımana yaklaştırır. Hazırsan, başlıyoruz.",
       },
     ],
   },
