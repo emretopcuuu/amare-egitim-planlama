@@ -5,12 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import CodeInput from "@/components/ui/CodeInput";
 import EgilenKart from "@/components/EgilenKart";
+import { guvenliNext } from "@/lib/guvenliNext";
 import { tr } from "@/lib/i18n/tr";
 
 export default function GirisForm() {
   const router = useRouter();
   const params = useSearchParams();
   const urlKod = params.get("kod");
+  const hedef = guvenliNext(params.get("next")) ?? "/";
   const initialKod =
     urlKod && /^[0-9]{6}$/.test(urlKod) ? urlKod : "";
 
@@ -36,14 +38,14 @@ export default function GirisForm() {
           setKod("");
           return;
         }
-        router.replace("/");
+        router.replace(hedef);
       } catch {
         setHata(tr.giris.hataSunucu);
       } finally {
         setYukleniyor(false);
       }
     },
-    [router, yukleniyor]
+    [router, yukleniyor, hedef]
   );
 
   // QR'dan gelen kod: bir kez otomatik gönder

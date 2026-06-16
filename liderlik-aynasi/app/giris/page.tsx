@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
+import { guvenliNext } from "@/lib/guvenliNext";
 import GirisForm from "./GirisForm";
 import YaziBoyu from "@/components/YaziBoyu";
 import GunesModu from "@/components/GunesModu";
@@ -14,12 +15,17 @@ export const metadata = { title: "Giriş — Liderlik Aynası" };
 export default async function GirisPage({
   searchParams,
 }: {
-  searchParams: Promise<{ kod?: string }>;
+  searchParams: Promise<{ kod?: string; next?: string }>;
 }) {
-  const { kod } = await searchParams;
+  const { kod, next } = await searchParams;
   if (!kod) {
     const session = await getSession();
-    if (session) redirect(session.rol === "participant" ? "/" : "/admin");
+    if (session) {
+      // Oturum varsa: katılımcı geldiği hedefe (next), admin paneline döner.
+      const hedef =
+        session.rol === "participant" ? guvenliNext(next) ?? "/" : "/admin";
+      redirect(hedef);
+    }
   }
 
   return (
