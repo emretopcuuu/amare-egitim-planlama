@@ -127,6 +127,47 @@ export async function PUT(req: Request) {
   return Response.json({ eklenen: 1, ad, kod });
 }
 
+// Toplu takım ataması: [{id, team}] listesini takıma göre gruplayıp tek sorguda yazar.
+// team null/boş → takımı temizler. Rastgele dağıtım istemcide hesaplanır.
+export async function PATCH(req: Request) {
+  if (!(await adminOturumu())) {
+    return Response.json({ hata: tr.admin.yetkisiz }, { status: 403 });
+  }
+  const body = await req.json().catch(() => null);
+  const ham = Array.isArray(body?.updates) ? body.updates : null;
+  if (!ham) {
+    return Response.json({ hata: tr.admin.katilimcilar.hataSunucu }, { status: 400 });
+  }
+
+  // Takıma göre grupla (distinct takım sayısı kadar sorgu → verimli)
+  const grup = new Map<string | null, string[]>();
+  for (const u of ham) {
+    if (typeof u?.id !== "string") continue;
+    const takim =
+      typeof u.team === "string" && u.team.trim() ? u.team.trim().slice(0, 60) : null;
+    if (!grup.has(takim)) grup.set(takim, []);
+    grup.get(takim)!.push(u.id);
+  }
+  if (grup.size === 0) {
+    return Response.json({ hata: tr.admin.katilimcilar.hataSunucu }, { status: 400 });
+  }
+
+  const db = supabaseAdmin();
+  let guncellenen = 0;
+  for (const [takim, idler] of grup) {
+    const { error, count } = await db
+      .from("participants")
+      .update({ team: takim }, { count: "exact" })
+      .in("id", idler)
+      .eq("role", "participant");
+    if (error) {
+      return Response.json({ hata: tr.admin.katilimcilar.hataSunucu }, { status: 500 });
+    }
+    guncellenen += count ?? idler.length;
+  }
+  return Response.json({ guncellenen });
+}
+
 // Tüm katılımcıları siler (admin kalır); puanlar ve atamalar cascade ile gider.
 // Geri dönüşü yok — onay istemci tarafında "SİL" yazdırılarak alınır.
 export async function DELETE() {

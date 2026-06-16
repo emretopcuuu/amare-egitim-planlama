@@ -3,7 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import KatilimciAraclari from "./KatilimciAraclari";
-import KodKopyala from "./KodKopyala";
+import KatilimciListe from "./KatilimciListe";
 import Ipucu from "../Ipucu";
 
 export const metadata = { title: "Katılımcılar — Liderlik Aynası" };
@@ -30,57 +30,7 @@ export default async function KatilimcilarPage() {
 
       <KatilimciAraclari />
 
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-        <h2 className="text-lg font-semibold text-gold-light">
-          {t.toplam(kisiler.length)}
-        </h2>
-        {/* #8 Masaüstü: tablo. Mobil: yatay kaydırma yerine yığılı kartlar. */}
-        <div className="mt-4 hidden overflow-x-auto sm:block">
-          <table className="cizgili w-full text-left text-sm">
-            <thead>
-              <tr className="border-b border-royal/30 text-xs uppercase tracking-wide text-slate-400">
-                <th className="py-2 pr-3">{t.tablo.ad}</th>
-                <th className="py-2 pr-3">{t.tablo.takim}</th>
-                <th className="py-2 pr-3">{t.tablo.sehir}</th>
-                <th className="py-2 pr-3">{t.tablo.telefon}</th>
-                <th className="py-2">{t.tablo.kod}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-royal/20">
-              {kisiler.map((k) => (
-                <tr key={k.id}>
-                  <td className="py-2 pr-3 font-medium text-slate-100">
-                    {k.full_name}
-                  </td>
-                  <td className="py-2 pr-3 text-slate-400">{k.team ?? "—"}</td>
-                  <td className="py-2 pr-3 text-slate-400">{k.city ?? "—"}</td>
-                  <td className="py-2 pr-3 text-slate-400">{k.phone ?? "—"}</td>
-                  <td className="py-2">
-                    <KodKopyala kod={k.login_code} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <ul className="mt-4 space-y-2.5 sm:hidden">
-          {kisiler.map((k) => (
-            <li
-              key={k.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-3"
-            >
-              <div className="min-w-0">
-                <p className="truncate font-medium text-slate-100">{k.full_name}</p>
-                <p className="mt-0.5 truncate text-xs text-slate-400">
-                  {[k.team, k.city].filter(Boolean).join(" · ") || "—"}
-                  {k.phone ? ` · ${k.phone}` : ""}
-                </p>
-              </div>
-              <KodKopyala kod={k.login_code} />
-            </li>
-          ))}
-        </ul>
-      </section>
+      <KatilimciListe kisiler={kisiler} />
     </main>
   );
 }
