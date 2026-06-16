@@ -6,6 +6,7 @@ import { radarHesapla, fazBul, yolculukGunuHesapla } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
 import { tr } from "@/lib/i18n/tr";
 import Ipucu from "../Ipucu";
+import Katlanir from "../Katlanir";
 
 export const metadata = { title: "Komutan Paneli — Liderlik Aynası" };
 
@@ -234,6 +235,7 @@ export default async function KomutanPage() {
         <RadarSVG degerler={eksenler} />
       </section>
 
+      <Katlanir baslik={t.detayBaslik} ikon="📊">
       <div className="grid gap-6 md:grid-cols-2">
         <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30 backdrop-blur">
           <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
@@ -288,6 +290,7 @@ export default async function KomutanPage() {
           )}
         </section>
       </div>
+      </Katlanir>
     </main>
   );
 }

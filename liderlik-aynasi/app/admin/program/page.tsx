@@ -11,6 +11,7 @@ import {
 import { tr } from "@/lib/i18n/tr";
 import ProgramYonetimi from "./ProgramYonetimi";
 import Ipucu from "../Ipucu";
+import Katlanir from "../Katlanir";
 
 export const metadata = { title: "Kamp Programı — Liderlik Aynası" };
 
@@ -46,13 +47,8 @@ export default async function AdminProgramPage() {
         <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>
       </div>
 
-      {/* Resmî kamp akışı + AYNA'nın saat saat planı (yalnız admin görür) */}
-      <section className="kart-cerceve rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30 backdrop-blur">
-        <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
-          {KAMP_BASLIK}
-        </p>
-        <p className="mt-1 text-xs text-slate-400">{KAMP_ALT_BASLIK}</p>
-
+      {/* Resmî kamp akışı — uzun referans, katlanır (varsayılan kapalı) */}
+      <Katlanir baslik={KAMP_BASLIK} aciklama={KAMP_ALT_BASLIK} ikon="📅" yardim={tr.admin.yardim.program}>
         {KAMP_GUNLERI.map((tarih, i) => {
           const gun = (i + 1) as 1 | 2 | 3;
           return (
@@ -94,7 +90,7 @@ export default async function AdminProgramPage() {
             </div>
           );
         })}
-      </section>
+      </Katlanir>
 
       {/* Sürpriz duyurular: AYNA'nın push + sahne anonsuyla açıkladığı ekler */}
       <section>

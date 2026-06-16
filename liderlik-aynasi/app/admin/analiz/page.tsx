@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import Ipucu from "../Ipucu";
+import Katlanir from "../Katlanir";
 
 export const metadata = { title: "Analiz — Liderlik Aynası" };
 
@@ -106,13 +107,8 @@ export default async function AnalizSayfa() {
         </p>
       </Eksen>
 
-      {/* Takım kırılımı — FAZ 5 cascade */}
-      <section>
-        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold text-gold-light">
-          {t.takimBaslik}
-          <Ipucu {...tr.admin.yardim.analizTakim} />
-        </h2>
-        <p className="mb-3 text-sm text-slate-400">{t.takimAciklama}</p>
+      {/* Takım kırılımı — FAZ 5 cascade (katlanır, varsayılan kapalı) */}
+      <Katlanir baslik={t.takimBaslik} ikon="👥" aciklama={t.takimAciklama} yardim={tr.admin.yardim.analizTakim}>
         {/* #8 Masaüstü: tablo. Mobil: yığılı kartlar. */}
         <div className="hidden overflow-x-auto rounded-2xl ring-1 ring-royal/30 sm:block">
           <table className="w-full text-sm">
@@ -168,7 +164,7 @@ export default async function AnalizSayfa() {
             </li>
           ))}
         </ul>
-      </section>
+      </Katlanir>
     </main>
   );
 }

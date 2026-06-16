@@ -5,6 +5,7 @@ import { tr } from "@/lib/i18n/tr";
 import AynaDirektorKontrol from "./AynaDirektorKontrol";
 import SonGorevler from "./SonGorevler";
 import Ipucu from "../Ipucu";
+import Katlanir from "../Katlanir";
 
 export const metadata = { title: "AYNA Kontrol Odası — Liderlik Aynası" };
 
@@ -62,11 +63,7 @@ export default async function AynaDirektorPage() {
         />
       </section>
 
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-        <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
-          {t.akisBaslik}
-          <Ipucu {...tr.admin.yardim.aynaAkis} />
-        </h2>
+      <Katlanir baslik={t.akisBaslik} ikon="📜" yardim={tr.admin.yardim.aynaAkis}>
         <SonGorevler
           gorevler={(sonGorevler ?? []).map((g) => ({
             id: g.id,
@@ -84,7 +81,7 @@ export default async function AynaDirektorPage() {
             tarih: g.issued_at,
           }))}
         />
-      </section>
+      </Katlanir>
     </main>
   );
 }

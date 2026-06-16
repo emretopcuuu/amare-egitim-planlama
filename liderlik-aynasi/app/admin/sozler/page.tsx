@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import SozAcKapat from "./SozAcKapat";
 import { tr } from "@/lib/i18n/tr";
 import Ipucu from "../Ipucu";
+import Katlanir from "../Katlanir";
 
 export const metadata = { title: "Kapanış Sözleri — Liderlik Aynası" };
 
@@ -60,11 +61,13 @@ export default async function SozlerPage() {
             <p className="mt-1 text-xs text-slate-400">Ağustos görüşme (toplam)</p>
           </div>
         </div>
+      </section>
 
+      <Katlanir baslik="📋 Söz Listesi (detay)" ikon="📋">
         {liste.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-400">Henüz söz verilmedi.</p>
+          <p className="text-sm text-slate-400">Henüz söz verilmedi.</p>
         ) : (
-          <div className="mt-4 overflow-x-auto">
+          <div className="overflow-x-auto">
             <table className="cizgili w-full text-left text-sm">
               <thead>
                 <tr className="border-b border-royal/30 text-xs uppercase tracking-wide text-slate-400">
@@ -95,7 +98,7 @@ export default async function SozlerPage() {
             </table>
           </div>
         )}
-      </section>
+      </Katlanir>
     </main>
   );
 }
