@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { radarHesapla, fazBul, yolculukGunuHesapla } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
 import Ipucu from "../Ipucu";
 import Katlanir from "../Katlanir";
@@ -87,8 +88,8 @@ export default async function KomutanPage() {
   const [
     ozellikler,
     { data: kisiler },
-    { data: atamalar },
-    { data: puanlar },
+    atamalar,
+    puanlar,
     { data: gorevler48 },
     { data: direncler },
     { data: momentumlar },
@@ -97,8 +98,13 @@ export default async function KomutanPage() {
   ] = await Promise.all([
     aktifOzellikler(db),
     db.from("participants").select("id, full_name, team").eq("role", "participant"),
-    db.from("assignments").select("observer_id, target_id"),
-    db.from("ratings").select("rater_id, target_id, is_self, created_at"),
+    // Sayfa sayfa: ~1000 satır sınırı atama/puanları kırpıp radarı bozuyordu.
+    tumKayitlar<{ observer_id: string; target_id: string }>((bas, son) =>
+      db.from("assignments").select("observer_id, target_id").order("observer_id").range(bas, son)
+    ),
+    tumKayitlar<{ rater_id: string; target_id: string; is_self: boolean; created_at: string }>((bas, son) =>
+      db.from("ratings").select("rater_id, target_id, is_self, created_at").order("created_at").range(bas, son)
+    ),
     db
       .from("missions")
       .select("participant_id, status, responded_at, issued_at")
