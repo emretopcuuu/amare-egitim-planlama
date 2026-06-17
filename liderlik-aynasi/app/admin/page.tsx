@@ -6,6 +6,7 @@ import { aktifOzellikler } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { adminOnerisi } from "@/lib/adminAsistan";
 import { adminUyarilari } from "@/lib/adminUyarilar";
+import { canliPano } from "@/lib/canliPano";
 import { tr } from "@/lib/i18n/tr";
 import { kampGunu, KAMP_GUNLERI } from "@/lib/kampProgrami";
 import GunZamanTuneli from "./GunZamanTuneli";
@@ -35,6 +36,7 @@ import BoslukKontrol from "./BoslukKontrol";
 import MuhurKontrol from "./MuhurKontrol";
 import OdevPaketi from "./OdevPaketi";
 import SonEylemler from "./SonEylemler";
+import CanliPano from "./CanliPano";
 import TriyajKart from "./TriyajKart";
 import AkisDizisi from "./AkisDizisi";
 import BolumAtla from "./BolumAtla";
@@ -164,6 +166,9 @@ export default async function AdminPanel() {
     };
   }
 
+  // Canlı pano: katılımcı ızgarası + teslim akışı + takım sıralaması (#1/#4/#10).
+  const pano = await canliPano(db);
+
   // #7 Asistan: kampın takvimi + sistemin durumundan tek önerilen adımı çıkar.
   const bugun = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
@@ -287,6 +292,14 @@ export default async function AdminPanel() {
         dalgaAd={acikDalga?.name ?? null}
       />
 
+      {/* Canlı pano: ızgara + teslim akışı + takım sıralaması (kampın nabzı) */}
+      <CanliPano
+        izgara={pano.izgara}
+        teslimler={pano.teslimler}
+        takimlar={pano.takimlar}
+        ozet={pano.ozet}
+      />
+
       {/* #5 Son kritik eylemler şeridi */}
       {tamYetki && <SonEylemler />}
 
@@ -408,6 +421,13 @@ export default async function AdminPanel() {
                 ad: d.name,
                 acik: d.is_open,
               }))}
+              puanlamayan={
+                acikDalga && ilerleme
+                  ? ilerleme.katilimcilar.filter(
+                      (k) => (ilerleme.puanladigi.get(k.id) ?? 0) === 0
+                    ).length
+                  : 0
+              }
             />
           </div>
 

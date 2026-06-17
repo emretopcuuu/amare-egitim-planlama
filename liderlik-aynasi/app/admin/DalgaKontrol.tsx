@@ -8,7 +8,13 @@ import OnayliDugme from "./OnayliDugme";
 
 type Dalga = { id: number; ad: string; acik: boolean };
 
-export default function DalgaKontrol({ dalgalar }: { dalgalar: Dalga[] }) {
+export default function DalgaKontrol({
+  dalgalar,
+  puanlamayan = 0,
+}: {
+  dalgalar: Dalga[];
+  puanlamayan?: number;
+}) {
   const router = useRouter();
   const [bekleyen, setBekleyen] = useState<number | null>(null);
   const [hata, setHata] = useState<string | null>(null);
@@ -61,11 +67,21 @@ export default function DalgaKontrol({ dalgalar }: { dalgalar: Dalga[] }) {
               >
                 {d.acik ? `● ${tr.admin.dalga.acik}` : `○ ${tr.admin.dalga.kapali}`}
               </p>
+              {/* #2 Kapanış sayacı: açık dalgada henüz puanlamamış kişi sayısı */}
+              {d.acik && puanlamayan > 0 && (
+                <p className="mt-1 text-xs font-medium text-amber-300">
+                  {tr.admin.dalga.puanlamayan(puanlamayan)}
+                </p>
+              )}
             </div>
             {d.acik ? (
               // Dalgayı kapatmak akışı durdurur → güvenli geri-alma onayı
               <OnayliDugme
-                onayMetni={tr.admin.onay.dalgaKapat}
+                onayMetni={
+                  puanlamayan > 0
+                    ? tr.admin.dalga.kapatUyari(puanlamayan)
+                    : tr.admin.onay.dalgaKapat
+                }
                 onaylandi={() => degistir(d.id, false)}
                 disabled={bekleyen !== null}
                 className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-semibold text-slate-300 transition-colors hover:bg-midnight-soft disabled:opacity-50"

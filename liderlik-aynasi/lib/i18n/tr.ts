@@ -1963,6 +1963,26 @@ export const tr = {
       ac: "Aç",
       kapat: "Kapat",
       hata: "Dalga güncellenemedi. Lütfen tekrar dene.",
+      // #2 Kapanış sayacı
+      puanlamayan: (n: number) => `${n} kişi henüz hiç puanlamadı`,
+      kapatUyari: (n: number) =>
+        `${n} kişi bu dalgada henüz hiç puanlamadı. Kapatınca artık puanlayamazlar. Yine de kapatılsın mı?`,
+    },
+    canliPano: {
+      izgaraBaslik: "Katılımcı Nabzı",
+      izgaraBos: "Henüz görev üretilmedi — kişiler aktifleşince burada belirir.",
+      durumlar: {
+        aktif: "Aktif",
+        bekliyor: "Yanıt sırada",
+        sessiz: "Sessiz (4sa+)",
+        bos: "Görev yok",
+      },
+      akisBaslik: "Canlı Teslim Akışı",
+      akisYok: "Henüz teslim yok.",
+      bekliyorRozet: "AYNA okuyor",
+      takimBaslik: "Takım Sıralaması",
+      takimBos: "Henüz puan yok — sıralama dalgalar açılınca oluşur.",
+      takimNot: "Takım bazında anonim dış puan ortalaması.",
     },
     ilerleme: {
       baslik: "Canlı İlerleme",
