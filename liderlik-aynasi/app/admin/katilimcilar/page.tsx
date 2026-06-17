@@ -11,12 +11,18 @@ export default async function KatilimcilarPage() {
   const session = await getSession();
   if (!session || session.rol !== "admin") redirect("/admin/giris");
 
-  const { data: kisiler, error } = await supabaseAdmin()
-    .from("participants")
-    .select("id, full_name, team, city, phone, login_code")
-    .eq("role", "participant")
-    .order("full_name");
+  const db = supabaseAdmin();
+  const [{ data: kisiler, error }, { data: churnlar }] = await Promise.all([
+    db
+      .from("participants")
+      .select("id, full_name, team, city, phone, login_code")
+      .eq("role", "participant")
+      .order("full_name"),
+    // UX #2: sessizleşen (dürtülmüş) adayları listede kırmızı işaretlemek için.
+    db.from("churn_radar").select("participant_id").not("nudged_at", "is", null),
+  ]);
   if (error) throw error;
+  const kayanIdler = (churnlar ?? []).map((c) => c.participant_id);
 
   const t = tr.admin.katilimcilar;
 
@@ -29,7 +35,7 @@ export default async function KatilimcilarPage() {
 
       {/* Liste en üstte ve açık; diğer her şey (ekle, dağıt, adlandır, import,
           tehlikeli) katlanır ve varsayılan kapalı — KatilimciYonetim içinde. */}
-      <KatilimciYonetim kisiler={kisiler} />
+      <KatilimciYonetim kisiler={kisiler} kayanIdler={kayanIdler} />
     </main>
   );
 }

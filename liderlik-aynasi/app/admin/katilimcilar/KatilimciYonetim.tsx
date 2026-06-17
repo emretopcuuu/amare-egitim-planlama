@@ -23,8 +23,17 @@ type Kisi = {
 };
 
 // Tek sayfa yönetimi: liste EN ÜSTTE ve açık; diğer her şey katlanır (kapalı) bölüm.
-export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
+export default function KatilimciYonetim({
+  kisiler,
+  kayanIdler,
+}: {
+  kisiler: Kisi[];
+  kayanIdler?: string[];
+}) {
   const router = useRouter();
+
+  // UX #2 (2.tur): sessizleşen (dürtülmüş) adaylar — listede kırmızı risk işareti.
+  const kayanSet = useMemo(() => new Set(kayanIdler ?? []), [kayanIdler]);
 
   // ortak
   const giris =
@@ -352,7 +361,10 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
                         />
                       </td>
                       <td className="py-2 pr-3 font-medium">
-                        <Link href={`/admin/kisi/${k.id}`} className="text-slate-100 underline-offset-4 hover:text-gold-light hover:underline">
+                        <Link href={`/admin/kisi/${k.id}`} className="inline-flex items-center gap-1.5 text-slate-100 underline-offset-4 hover:text-gold-light hover:underline">
+                          {kayanSet.has(k.id) && (
+                            <span className="h-2 w-2 shrink-0 rounded-full bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.7)]" aria-label={t.riskIsaret} title={t.riskIsaret} />
+                          )}
                           {k.full_name}
                         </Link>
                       </td>
@@ -394,7 +406,12 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
                     className="h-4 w-4 shrink-0 accent-gold"
                   />
                   <div className="min-w-0 flex-1">
-                    <Link href={`/admin/kisi/${k.id}`} className="block truncate font-medium text-slate-100 hover:text-gold-light">{k.full_name}</Link>
+                    <Link href={`/admin/kisi/${k.id}`} className="flex items-center gap-1.5 truncate font-medium text-slate-100 hover:text-gold-light">
+                      {kayanSet.has(k.id) && (
+                        <span className="h-2 w-2 shrink-0 rounded-full bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.7)]" aria-label={t.riskIsaret} title={t.riskIsaret} />
+                      )}
+                      <span className="truncate">{k.full_name}</span>
+                    </Link>
                     <p className="mt-0.5 truncate text-xs text-slate-400">
                       {[k.team, k.city].filter(Boolean).join(" · ") || "—"}
                       {k.phone ? ` · ${k.phone}` : ""}
