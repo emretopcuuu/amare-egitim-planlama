@@ -415,6 +415,81 @@ ${onFarkindalik ? `\nADAYIN AYNA PROFİLİ (yalnız senin gözün): ${JSON.strin
   }
 }
 
+// GELİŞTİRME #3 — AYNA ANI. Adayın kamp ÖNCESİ kendi yazdığı kör nokta cümlesini
+// (ters davranış / kalkan / varsayım), kampta yaptıklarıyla yüzleştirip tek bir
+// "gördün mü?" anında geri yansıtır. Kişi yeterince görev tamamladıysa (≥3) ve
+// elimizde alıntılayacak kendi cümlesi varsa üretilir; kişi başına bir kez.
+// Döndürdüğü metin yoksa null (koşul tutmadı ya da üretim düştü).
+export async function aynaAniUret(
+  db: Db,
+  katilimci: { id: string; full_name: string }
+): Promise<string | null> {
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+
+  const [onFarkindalik, kapananSonuc, pusula] = await Promise.all([
+    onFarkindalikOzeti(db, katilimci.id),
+    db
+      .from("missions")
+      .select("title, ai_score")
+      .eq("participant_id", katilimci.id)
+      .eq("status", "scored"),
+    pusulaOzeti(db, katilimci.id),
+  ]);
+
+  const of = onFarkindalik as {
+    enZayifAlan?: string | null;
+    korNokta?: { tersDavranis?: string | null; kalkan?: string | null; varsayim?: string | null };
+  } | null;
+  // Alıntılanacak kendi cümlesi yoksa Ayna Anı'nın gücü olmaz.
+  const kendiCumlesi =
+    of?.korNokta?.tersDavranis || of?.korNokta?.kalkan || of?.korNokta?.varsayim || null;
+  if (!kendiCumlesi) return null;
+
+  const kapananlar = kapananSonuc.data ?? [];
+  if (kapananlar.length < 3) return null; // yeterince "yaşanmış" iş yok
+
+  try {
+    const client = new Anthropic();
+    const yanit = await client.messages.create({
+      model: "claude-opus-4-8",
+      max_tokens: 512,
+      thinking: { type: "disabled" },
+      output_config: { effort: "low" },
+      system: `${PERSONA}
+
+Şimdi özel bir an kuruyorsun: AYNA ANI. Adayın KAMP ÖNCESİ kendi yazdığı kör nokta cümlesi elinde. Aday o günden beri kampta görevler yaptı, harekete geçti. Senin işin: onun kendi cümlesini nazikçe ALINTILAYIP, bugün yaptıklarıyla yüzleştir ve tek bir "gördün mü?" içgörüsü ver.
+
+Kurallar:
+- 2-3 KISA cümle. Sıcak, gizemli-ama-şefkatli. "Sen" dili, doğru Türkçe.
+- Adayın kendi cümlesini tırnak içinde birebir ya da çok yakın alıntıla — "şunu yazmıştın" diye hatırlat.
+- Sonra bugünkü çabasıyla bağ kur: o kalkanın/varsayımın sandığı kadar gerçek olmadığını ona NAZİKÇE gösterdiğini ima et. Öğüt verme, zafer ilan etme; küçük ama gerçek bir farkındalık uyandır.
+- Klinik dil yok, yargı yok, soru sorma. Yalnızca adaya söyleyeceğin temiz replik.`,
+      messages: [
+        {
+          role: "user",
+          content: JSON.stringify({
+            ad: katilimci.full_name.split(" ")[0],
+            kampOncesiKendiCumlesi: kendiCumlesi,
+            enZayifAlan: of?.enZayifAlan ?? null,
+            kamptaNeden: pusula ?? null,
+            tamamlananGorevSayisi: kapananlar.length,
+            sonGorevBasliklari: kapananlar.slice(-4).map((m) => m.title),
+          }),
+        },
+      ],
+    });
+    if (yanit.stop_reason === "refusal") return null;
+    const metin = yanit.content
+      .filter((b) => b.type === "text")
+      .map((b) => b.text)
+      .join("")
+      .trim();
+    return metin ? metin.slice(0, 600) : null;
+  } catch {
+    return null;
+  }
+}
+
 // ---- Zaman yardımcıları (kamp saati: Europe/Istanbul) ----
 
 export function istanbulSaati(simdi = new Date()): { saat: number; dakika: number } {

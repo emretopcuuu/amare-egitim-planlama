@@ -504,6 +504,38 @@ export type Database = {
           },
         ]
       }
+      mirror_moments: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          participant_id: string
+          seen_at: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          participant_id: string
+          seen_at?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          participant_id?: string
+          seen_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mirror_moments_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       missions: {
         Row: {
           ai_comment: string | null

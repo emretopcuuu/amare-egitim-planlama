@@ -14,6 +14,7 @@ import IlkTanitim from "@/components/IlkTanitim";
 import YolculukSeridi from "@/components/YolculukSeridi";
 import KampHud from "@/components/KampHud";
 import KonusanYansima from "@/components/KonusanYansima";
+import AynaAniKarti from "@/components/AynaAniKarti";
 import SicakAdim from "@/components/SicakAdim";
 import UstMenu from "@/components/UstMenu";
 import ToplulukNabzi from "@/components/ToplulukNabzi";
@@ -268,6 +269,8 @@ export default async function AnaSayfa({
       <KampHud />
       {/* Topluluk nabzı — yalnız değilsin hissi */}
       <ToplulukNabzi />
+      {/* #3 Ayna Anı — kamp öncesi kör nokta cümlesini bugünkü çabayla yüzleştirir */}
+      <AynaAniKarti />
     </div>
   );
 
