@@ -56,7 +56,7 @@ export const KATMAN1_BLOKLAR: Blok[] = [
     ad: "Öz Yeterlilik",
     aciklama: "Bir işi sonuca götürme gücüne dair gerçek davranışını düşün.",
     maddeler: [
-      { kod: "k1.oz_yeterlilik.1", metin: "Gerekeni yaparsam sonucu üretebileceğime inanırım." },
+      { kod: "k1.oz_yeterlilik.1", metin: "Gerekeni yaparsam istediğim sonuca ulaşabileceğime inanırım." },
       { kod: "k1.oz_yeterlilik.3", metin: "Zorlandığım bir beceriyi öğrenene kadar üzerinde dururum." },
       { kod: "k1.oz_yeterlilik.5", metin: "İşler kötü gittiğinde “elimden bir şey gelmez” hissine kapılırım.", ters: true },
       { kod: "k1.oz_yeterlilik.7", metin: "Başladığım işi, motivasyonum düşse bile bitiririm." },
@@ -136,10 +136,10 @@ export function katman1Tutarlilik(
 export type Katman2Baslik = { kod: string; ad: string; anlam: string };
 
 export const KATMAN2_BASLIKLAR: Katman2Baslik[] = [
-  { kod: "takip", ad: "Takip", anlam: "Bağ kurduğun kişiyi bırakmadan, değer vererek izlemek." },
-  { kod: "yeni_lider", ad: "Yeni lider geliştirme", anlam: "Kendi yerine geçecek, bağımsız üreten lider yetiştirmek." },
-  { kod: "zor_konusma", ad: "Zor konuşmalar", anlam: "Ertelemeden, net ama şefkatli yüzleşmek." },
-  { kod: "ekip_kocluk", ad: "Ekip koçluğu", anlam: "İnsanın önündeki engeli görüp birebir geliştirmek." },
+  { kod: "takip", ad: "Takip", anlam: "Bağ kurduğun kişiyle iletişimi koparmadan, değer vererek takipte kalmak." },
+  { kod: "yeni_lider", ad: "Yeni lider geliştirme", anlam: "Kendi yerine geçebilecek, kendi başına üreten lider yetiştirmek." },
+  { kod: "zor_konusma", ad: "Zor konuşmalar", anlam: "Zor konuyu ertelemeden, net ama kırmadan konuşmak." },
+  { kod: "ekip_kocluk", ad: "Ekip koçluğu", anlam: "Kişinin önündeki engeli görüp onunla birebir çalışıp geliştirmek." },
 ];
 
 export type AcikSonuc = { kod: string; ad: string; onem: number; gercek: number; acik: number };
@@ -203,9 +203,9 @@ export type MetinSoru = { kod: string; metin: string; zorunlu: boolean };
 
 export const KATMAN4_SORULAR: MetinSoru[] = [
   { kod: "k4.hedef", metin: "Önümüzdeki 12 ayda gerçekten ulaşmak istediğin sonuç ya da rütbe nedir?", zorunlu: true },
-  { kod: "k4.ters_davranis", metin: "Bu hedefe ters çalışan, yapman gerekirken yapmadığın davranış nedir?", zorunlu: true },
-  { kod: "k4.kalkan", metin: "Bu davranışı sürdürmek seni neyden koruyor? Senin kalkanın ne?", zorunlu: true },
-  { kod: "k4.varsayim", metin: "Büyük varsayımın: “Eğer ___ yaparsam, ___ olur.” — kendi cümlenle yaz.", zorunlu: true },
+  { kod: "k4.ters_davranis", metin: "Bu hedefe ters düşen, yapman gerektiğini bildiğin halde yapmadığın davranış nedir?", zorunlu: true },
+  { kod: "k4.kalkan", metin: "Bu davranışı sürdürmek seni neyden koruyor? Hangi korku ya da riski senden uzak tutuyor?", zorunlu: true },
+  { kod: "k4.varsayim", metin: "Seni durduran gizli inanç: “Eğer ___ yaparsam, ___ olur.” Bu cümleyi kendine göre tamamla.", zorunlu: true },
 ];
 
 // ============================================================================
@@ -215,7 +215,7 @@ export const KATMAN4_SORULAR: MetinSoru[] = [
 
 export const KATMAN5A_SORULAR: Katman3Soru[] = [
   { kod: "k5a.beceri", metin: "Son 12 ayda kaç yeni beceri öğrendin ya da geliştirdin?", max: 999 },
-  { kod: "k5a.egitim", metin: "Kaç eğitim, seminer ya da kursu tamamladın?", max: 999 },
+  { kod: "k5a.egitim", metin: "Son 12 ayda kaç eğitim, seminer ya da kursu tamamladın?", max: 999 },
 ];
 
 export const KATMAN5B_MADDELER: Madde[] = [
@@ -232,9 +232,9 @@ export const KATMAN5C_SORULAR: MetinSoru[] = [
 // ============================================================================
 
 export const SONUC_KARTI: MetinSoru[] = [
-  { kod: "sonuc.guclu", metin: "Güçlü Alanın — tek cümleyle.", zorunlu: true },
-  { kod: "sonuc.kor_nokta", metin: "Kör Noktan — en büyük açık ile en zayıf alanı birleştir, tek cümle.", zorunlu: true },
-  { kod: "sonuc.kamp_gorevi", metin: "Kamp Görevin — bu kamp boyunca iki somut, gözlenebilir aksiyon.", zorunlu: true },
+  { kod: "sonuc.guclu", metin: "Güçlü Alanın nedir? Tek cümleyle yaz.", zorunlu: true },
+  { kod: "sonuc.kor_nokta", metin: "Kör Noktan nedir? Seni en çok zorlayan, fark etmen gereken yanını tek cümleyle yaz.", zorunlu: true },
+  { kod: "sonuc.kamp_gorevi", metin: "Kamp Görevin: bu kamp boyunca atacağın, başkalarının da görebileceği iki somut adım.", zorunlu: true },
 ];
 
 // ============================================================================

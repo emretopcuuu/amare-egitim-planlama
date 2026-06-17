@@ -19,7 +19,7 @@ const METIN_IPUCLARI: Record<string, string> = {
   "sonuc.guclu": "Örn: “Baskı altında sakin kalır, dağılan ekibi toparlarım.”",
   "sonuc.kor_nokta": "Örn: “Kontrolü bırakamadığım için iş paylaşmıyor, her şeyi kendim yapıyorum.”",
   "sonuc.kamp_gorevi":
-    "Başkalarının görebileceği iki davranış yaz. Örn: “Her sabah 3 kişiye geri bildirim vereceğim; akşam paylaşımında ilk sözü ben alacağım.”",
+    "Örn: “Her sabah 3 kişiye geri bildirim vereceğim; akşam paylaşımında ilk sözü ben alacağım.”",
 };
 // UX #7: kamp wifi'si oynak — cevapları cihazda da yedekle (yenileme/çevrimdışı kayıp yok).
 const TASLAK_DEPO = "la_of_taslak_v1";

@@ -614,7 +614,7 @@ export const tr = {
     rizaKabul: "Anladım, başlayalım",
     listeBaslik: "Hayatındaki öncelikler",
     listeAciklama:
-      "Olmazsa olmaz dediğin, en çok önemsediğin ya da gelecekte sahip olmak istediğin şeyler. Deneyim gibi düşün — 'aileyle vakit', 'kendi işim', 'sağlık' gibi. Her seferinde bir tane yaz; en az 3, en çok 10 madde.",
+      "Olmazsa olmaz dediğin, en çok önemsediğin ya da gelecekte sahip olmak istediğin şeyler. Geniş düşün — 'aileyle vakit', 'kendi işim', 'sağlık' gibi. Her seferinde bir tane yaz; en az 3, en çok 10 madde.",
     listeYer: (n: number) => `${n}. öncelik`,
     // Madde madde (tek tek) akış
     listeTekYer: "Tek bir şey yaz…",
@@ -835,7 +835,7 @@ export const tr = {
       "Son birkaç ayını düşün. İçinden geçeni değil, gerçekten yaptığını işaretle.",
     // Katman 2 (açık analizi) — ikili 1-10
     onemSoru: "Bu senin için ne kadar değerli? (1 = az · 10 = çok)",
-    gercekSoru: "Son 30 günde gerçekte ne kadar yaşadın? (1 = hiç · 10 = tam)",
+    gercekSoru: "Son 30 günde bunu gerçekte ne kadar yaptın? (1 = hiç · 10 = tam)",
     // Katman 3 (gerçeklik rakamları)
     sayiAlt: "Görüş değil, rakam. Son 30 günü düşün ve gerçek sayıyı yaz.",
     // Katman 4/5 yazılı yanıtlar
@@ -879,7 +879,7 @@ export const tr = {
   // #5 Günün Aynası — günlük mikro check-in
   gunluk: {
     ust: "Günün Aynası",
-    soru: "Bugün hangi liderlik özelliğini yaşadın?",
+    soru: "Bugün hangi liderlik özelliğini gösterdin?",
     notYer: "İstersen bir cümle ekle — nasıl oldu?",
     gonder: "Kaydet",
     gonderiliyor: "Kaydediliyor…",
