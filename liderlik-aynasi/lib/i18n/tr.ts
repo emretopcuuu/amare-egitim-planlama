@@ -723,6 +723,7 @@ export const tr = {
   kocu: {
     baslik: "Ayna Koçu",
     altBaslik: "Her an buradayım",
+    sesliMod: "Sesli mod (AYNA yanıtını sesli okur)",
     yer: "AYNA'ya yaz… (takıldığın, merak ettiğin ne varsa)",
     gonder: "Gönder",
     geri: "Geri",
