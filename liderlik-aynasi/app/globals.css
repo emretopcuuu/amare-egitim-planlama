@@ -194,6 +194,11 @@ body.gunes-modu .kart-cerceve {
 .sahne-giris > * {
   animation: belir-yukari 0.5s ease-out both;
 }
+
+/* "AYNA düşünüyor" dönen satır — her satır yumuşakça belirir */
+.dusunuyor-satir {
+  animation: belir-yukari 0.45s ease-out both;
+}
 .sahne-giris > *:nth-child(2) {
   animation-delay: 0.06s;
 }
