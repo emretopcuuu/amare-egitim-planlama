@@ -184,6 +184,7 @@ export const tr = {
     menuProgram: "Kamp Programı",
     menuYansiman: "Yansımanı izle",
     menuRapor: "Ayna Raporum",
+    menuKocu: "🪞 Ayna Koçu",
     menuBen: "👤 Profilim",
     menuGrup: "👥 Grup Ödevi",
     menuMini360: "🪞 Ekip Aynası",
@@ -712,6 +713,17 @@ export const tr = {
     grupBirlikte: "🔗 Grup-birlikte",
     hedefEtiket: "Odak",
     takimsiz: "Henüz bir gruba atanmadın.",
+  },
+  // AYNA KOÇU — adayın her an danışabildiği bağlamsal sohbet
+  kocu: {
+    baslik: "Ayna Koçu",
+    altBaslik: "Her an buradayım",
+    yer: "AYNA'ya yaz… (takıldığın, merak ettiğin ne varsa)",
+    gonder: "Gönder",
+    geri: "Geri",
+    yukleniyor: "Açılıyor…",
+    hata: "Bir şey ters gitti. Tekrar dene.",
+    uretilemedi: "Şu an cevap veremedim, bir daha dener misin?",
   },
   // MINI 360 — Ekip Aynası (opt-in akran puanlaması)
   mini360: {
