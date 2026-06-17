@@ -825,6 +825,7 @@ export const tr = {
     guvenMetin:
       "Cevaplarının çoğu birbirine çok yakın çıktı. Bu ayna ancak dürüstlüğünle çalışır — istersen ilk maddelere bir kez daha, gerçekten yaptığını düşünerek bak.",
     guvenTekrar: "Maddelere tekrar bak",
+    kalanDk: (dk: number) => `~${dk} dk kaldı`,
     kapaliBaslik: "Henüz başlamadı",
     kapaliMetin: "Ön farkındalık çalışması yakında açılacak. Hazır olduğunda burada olacak.",
   },
