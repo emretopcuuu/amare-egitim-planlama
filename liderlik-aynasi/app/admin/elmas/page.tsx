@@ -77,6 +77,13 @@ export default async function ElmasPage() {
         <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.06] px-3 py-2 text-xs text-amber-300/90">
           {t.gizliUyari}
         </p>
+        {/* #6 Rapor ihracatı: tüm adaylar CSV (Excel uyumlu) */}
+        <a
+          href="/api/admin/disa-aktar"
+          className="mt-3 inline-flex h-10 items-center gap-2 rounded-xl border border-royal-light/30 px-4 text-sm font-medium text-slate-200 transition-colors hover:bg-white/5"
+        >
+          📥 {t.csvIndir}
+        </a>
       </div>
 
       <dl className="grid gap-3 sm:grid-cols-3">

@@ -2031,6 +2031,7 @@ export const tr = {
       disEtiket: (n: number) => `${n} dış puan`,
       tamlikEtiket: (yuzde: number) => `%${yuzde} veri`,
       hamEtiket: (ham: number) => `ham ${ham}`,
+      csvIndir: "Tüm raporu CSV indir",
     },
     kisi360: {
       geri: "Katılımcılar",
