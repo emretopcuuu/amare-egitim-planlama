@@ -105,6 +105,22 @@ function jsonCoz<T>(yanit: Anthropic.Message): T | null {
   }
 }
 
+// GELİŞTİRME #4 — GÖREV YAYI. Görevler kopuk değil; her aday için tek bir
+// çekirdek kör nokta etrafında derinleşen bir yay: ısınma → yüzleşme → kanıt →
+// entegrasyon. Aşama, tamamlanan görev sayısından türer; AYNA her turda bir
+// önceki aşamanın üstüne çıkar (geri gitmez).
+const ARK_ASAMALARI = [
+  { ad: "ısınma", yonerge: "İlk temas: küçük, güvenli, merak uyandıran bir adım. Çekirdek temayı sezdir ama üstüne yüklenme." },
+  { ad: "yüzleşme", yonerge: "Aday artık çekirdek kör noktasıyla DOĞRUDAN ama güvenli biçimde yüzleşsin — kaçtığı şeyi nazikçe yapsın." },
+  { ad: "kanıt", yonerge: "Yeni davranışı GERÇEK bir durumda uygulayıp somut bir kanıt/sonuç toplasın (birinin tepkisi, bir sayı, bir an)." },
+  { ad: "entegrasyon", yonerge: "Yeni davranışı kendi sözüne/kimliğine bağlasın; kamp sonrası da sürdürebileceği bir alışkanlığa dönüştürsün." },
+] as const;
+
+function arkAsamasi(tamamlananSayi: number): { ad: string; yonerge: string } {
+  const i = tamamlananSayi <= 1 ? 0 : tamamlananSayi <= 3 ? 1 : tamamlananSayi <= 5 ? 2 : 3;
+  return ARK_ASAMALARI[i];
+}
+
 export type UretilenGorev = {
   kind: GorevTuru;
   title: string;
@@ -170,7 +186,7 @@ export async function gorevUret(
   mod: SistemModu = "kamp",
   etkinlik: ProgramMaddesi | null = null
 ): Promise<UretilenGorev | null> {
-  const [ozellikler, oncekilerSonuc, puanlarSonuc, pusula, onFarkindalik, kapaliAyar, icerikAyar] =
+  const [ozellikler, oncekilerSonuc, puanlarSonuc, pusula, onFarkindalik, kapaliAyar, icerikAyar, tamamCountSonuc] =
     await Promise.all([
       aktifOzellikler(db),
       db
@@ -192,6 +208,12 @@ export async function gorevUret(
       db.from("settings").select("value").eq("key", "kapali_gorev_turleri").maybeSingle(),
       // #10 İçerik Stüdyosu: admin'in canlı ayarladığı AYNA ek-tonu + günün teması.
       db.from("settings").select("key, value").in("key", ["ayna_ek_ton", "gunun_temasi"]),
+      // GELİŞTİRME #4 Görev Yayı: toplam tamamlanan görev sayısı (yay aşaması bundan türer).
+      db
+        .from("missions")
+        .select("id", { count: "exact", head: true })
+        .eq("participant_id", katilimci.id)
+        .eq("status", "scored"),
     ]);
   const icerik = new Map((icerikAyar?.data ?? []).map((s) => [s.key, s.value]));
   const aynaEkTon = (icerik.get("ayna_ek_ton") ?? "").trim();
@@ -242,6 +264,18 @@ export async function gorevUret(
   });
   const faz = mod === "yolculuk" ? fazBul(gun) : null;
 
+  // GELİŞTİRME #4 Görev Yayı: çekirdek kör nokta + ilerleyen aşama (yalnız ÖF
+  // profili varsa anlamlı; yoksa AYNA serbest üretir).
+  const ofYay = onFarkindalik as {
+    enZayifAlan?: string | null;
+    enBuyukAciklar?: { baslik: string }[];
+  } | null;
+  const cekirdekTema =
+    ofYay?.enZayifAlan ?? ofYay?.enBuyukAciklar?.[0]?.baslik ?? null;
+  const yay = cekirdekTema
+    ? { cekirdekTema, ...arkAsamasi(tamamCountSonuc?.count ?? 0) }
+    : null;
+
   const baglam = {
     ad: katilimci.full_name.split(" ")[0],
     takim: katilimci.team,
@@ -249,6 +283,8 @@ export async function gorevUret(
     pusula: pusula ?? null,
     // Ön Farkındalık: ayna profilinin görev için sıkıştırılmış özeti (varsa).
     onFarkindalik: onFarkindalik ?? null,
+    // GELİŞTİRME #4: görev yayı — çekirdek tema + şu anki aşama (varsa).
+    gorevYayi: yay,
     // FAZ 2: kişinin kampta yazdığı yeni cümle (yolculukta savunulacak çapa).
     yeniCumle: yeniCumle ?? null,
     kampGunu: gun,
@@ -294,7 +330,7 @@ export async function gorevUret(
         effort: "low",
         format: { type: "json_schema", schema: GOREV_SEMASI },
       },
-      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\n${BASARI_STRATEJISI}\n\nGörevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa (kişinin nedeni + iç engeli), görevi ona göre kişiselleştir: nedenine sessizce dokun ve iç engelini nazikçe zorlayan bir görev seç — ama iç engeli açıkça yüzüne vurma. Bağlamda "onFarkindalik" doluysa (kamp öncesi ayna profili), görevi şuna göre hedefle: "enZayifAlan" kırılgansa o kası çalıştıran, "enBuyukAciklar"daki başlıkta söylediğiyle yaptığı arasını kapatan, "korNokta"daki koruyucu inancı/kalkanı nazikçe sınayan bir görev seç. Ritim "patlayan" ise sürekliliği, geri bildirim açıklığı düşükse geri bildirim almayı/işlemeyi çalıştır. Kör noktayı/açığı ASLA açıkça yüzüne vurma — görev onu sessizce çalışsın. Zorluk yönergesine MUTLAKA uy. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""} ${tur === "simulasyon" ? 'SİMÜLASYON görevi: bir aday/müşteri rolünde KISA bir sahne kur; gövdede adayın itirazını tırnak içinde söyle (ör. "Bunlara vaktim yok", "Bu işler bana göre değil") ve katılımcıdan cevabını sana yazmasını/söylemesini iste. İtirazın sertliğini zorluk seviyesine göre ayarla.' : ""} ${mod === "yolculuk" ? "Bu görev KAMPTA DEĞİL, kamp sonrası 90 günlük sahada (günlük hayat ve iş ortamı) yapılacak — kamp alanı varsayma. Bağlamda 'yeniCumle' doluysa: görevi, kişinin kampta yazdığı o yeni cümleyi BUGÜN somut bir adımla YAŞATAN/doğrulayan bir saha eylemi olarak kur — cümleyi açıkça tekrarlama, ama görev onu çalışsın." : ""} ${baglam.yenidenBagla ? "YENİDEN BAĞLAMA: Bu aday son görevlerde sessizleşti/takıldı. Onu YARGILAMADAN, sıcak bir dille yeniden çağır — küçük, eğlenceli, kesinlikle başarılabilir bir başlangıç ver; 'tekrar buradayım, hoş geldin' hissi uyandır. Suçluluk ya da baskı yükleme." : ""} ${gununTemasi ? `GÜNÜN TEMASI (admin belirledi — görevi mümkünse buna dik): ${gununTemasi}` : ""} ${aynaEkTon ? `ADMIN TON AYARI (üsluba uygula): ${aynaEkTon}` : ""}`,
+      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\n${BASARI_STRATEJISI}\n\nGörevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa (kişinin nedeni + iç engeli), görevi ona göre kişiselleştir: nedenine sessizce dokun ve iç engelini nazikçe zorlayan bir görev seç — ama iç engeli açıkça yüzüne vurma. Bağlamda "onFarkindalik" doluysa (kamp öncesi ayna profili), görevi şuna göre hedefle: "enZayifAlan" kırılgansa o kası çalıştıran, "enBuyukAciklar"daki başlıkta söylediğiyle yaptığı arasını kapatan, "korNokta"daki koruyucu inancı/kalkanı nazikçe sınayan bir görev seç. Ritim "patlayan" ise sürekliliği, geri bildirim açıklığı düşükse geri bildirim almayı/işlemeyi çalıştır. Kör noktayı/açığı ASLA açıkça yüzüne vurma — görev onu sessizce çalışsın. Zorluk yönergesine MUTLAKA uy. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""} ${tur === "simulasyon" ? 'SİMÜLASYON görevi: bir aday/müşteri rolünde KISA bir sahne kur; gövdede adayın itirazını tırnak içinde söyle (ör. "Bunlara vaktim yok", "Bu işler bana göre değil") ve katılımcıdan cevabını sana yazmasını/söylemesini iste. İtirazın sertliğini zorluk seviyesine göre ayarla.' : ""} ${mod === "yolculuk" ? "Bu görev KAMPTA DEĞİL, kamp sonrası 90 günlük sahada (günlük hayat ve iş ortamı) yapılacak — kamp alanı varsayma. Bağlamda 'yeniCumle' doluysa: görevi, kişinin kampta yazdığı o yeni cümleyi BUGÜN somut bir adımla YAŞATAN/doğrulayan bir saha eylemi olarak kur — cümleyi açıkça tekrarlama, ama görev onu çalışsın." : ""} ${baglam.yenidenBagla ? "YENİDEN BAĞLAMA: Bu aday son görevlerde sessizleşti/takıldı. Onu YARGILAMADAN, sıcak bir dille yeniden çağır — küçük, eğlenceli, kesinlikle başarılabilir bir başlangıç ver; 'tekrar buradayım, hoş geldin' hissi uyandır. Suçluluk ya da baskı yükleme." : ""} ${yay ? `GÖREV YAYI: Bu adayın görevleri kopuk kopuk değil — tek bir çekirdek tema ("${yay.cekirdekTema}") etrafında derinleşen bir yay. Şu anki aşama "${yay.ad}": ${yay.yonerge} Önceki aşamaların üstüne çık, geri gitme; ama çekirdek temadan da sapma. Temayı adıyla yüzüne vurma.` : ""} ${gununTemasi ? `GÜNÜN TEMASI (admin belirledi — görevi mümkünse buna dik): ${gununTemasi}` : ""} ${aynaEkTon ? `ADMIN TON AYARI (üsluba uygula): ${aynaEkTon}` : ""}`,
       messages: [{ role: "user", content: JSON.stringify(baglam) }],
     });
 
