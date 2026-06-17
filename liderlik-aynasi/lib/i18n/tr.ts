@@ -503,6 +503,7 @@ export const tr = {
     olcekDusuk: (metin: string) => `1 demek: ${metin}`,
     olcekYuksek: (metin: string) => `10 demek: ${metin}`,
     neredesin: "Sen kendini nerede görüyorsun?",
+    gozlemBaslik: "👁 Ne gözlemle?",
     // Başkalarını puanlamadan önce: gizlilik güvencesi (dürüstlüğün ön şartı)
     gizlilikBaslik: "Puanların gizli kalır",
     gizlilikMetin:

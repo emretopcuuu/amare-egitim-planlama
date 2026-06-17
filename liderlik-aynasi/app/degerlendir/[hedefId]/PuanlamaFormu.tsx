@@ -391,9 +391,20 @@ export default function PuanlamaFormu({
           <h1 className="prizma-serif ay-metin text-4xl font-semibold leading-tight">
             {o.name}
           </h1>
-          <p className="mt-4 text-lg leading-relaxed text-slate-300">
-            {rehber ? rehber.kendine : o.observation_hint}
-          </p>
+          {/* #9 Gözlem ipucu kartı: başkasını puanlarken "ne gözlemle" belirgin
+              bir koçluk ipucu olarak gelir — puanlar düşünülmüş olur, rastgele değil. */}
+          {kendisi ? (
+            <p className="mt-4 text-lg leading-relaxed text-slate-300">
+              {rehber ? rehber.kendine : o.observation_hint}
+            </p>
+          ) : (
+            <div className="mt-4 rounded-2xl border border-royal-light/30 bg-royal/10 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-royal-light">
+                {tr.puanlama.gozlemBaslik}
+              </p>
+              <p className="mt-1 text-base leading-relaxed text-slate-200">{o.observation_hint}</p>
+            </div>
+          )}
 
           {rehber && (
             <div className="mt-4 space-y-1.5 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-base">
