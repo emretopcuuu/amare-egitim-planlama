@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { unvanBul } from "@/lib/kivilcim";
 import { raporlarGorunurMu } from "@/lib/rapor";
+import { yolculukOlaylari } from "@/lib/yolculuk";
 import { tr } from "@/lib/i18n/tr";
 import Avatar from "@/components/Avatar";
 import BenKarti from "./BenKarti";
@@ -28,6 +29,7 @@ export default async function BenPage() {
     { count: checkinSayi },
     { count: redSayi },
     raporAcik,
+    olaylar,
   ] = await Promise.all([
     db
       .from("participants")
@@ -60,7 +62,17 @@ export default async function BenPage() {
       .select("id", { count: "exact", head: true })
       .eq("participant_id", session.sub),
     raporlarGorunurMu(db),
+    yolculukOlaylari(db, session.sub),
   ]);
+
+  const yolcuTarih = (ts: string) =>
+    new Intl.DateTimeFormat("tr-TR", {
+      timeZone: "Europe/Istanbul",
+      day: "numeric",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(ts));
 
   const gorevSayi = (gorevler ?? []).length;
   const toplamKivilcim = (gorevler ?? []).reduce((tpl, g) => tpl + (g.spark_points ?? 0), 0);
@@ -122,6 +134,29 @@ export default async function BenPage() {
                 style={{ width: `${Math.min(100, (toplamKivilcim / unvan.sonraki.esik) * 100)}%` }}
               />
             </div>
+          )}
+        </section>
+
+        {/* #2 Ayna Yolculuğu — kronolojik kişisel zaman çizelgesi */}
+        <section className="kart-cam rounded-2xl p-5 ring-1 ring-royal/30">
+          <h2 className="text-sm font-semibold text-gold-light">{t.yolculukBaslik}</h2>
+          {olaylar.length === 0 ? (
+            <p className="mt-3 text-sm text-slate-400">{t.yolculukYok}</p>
+          ) : (
+            <ol className="relative ml-3 mt-4 space-y-4 border-l border-white/10">
+              {olaylar.map((o, i) => (
+                <li key={i} className="relative ml-6">
+                  <span className="absolute -left-[2.05rem] flex h-7 w-7 items-center justify-center rounded-full bg-midnight-card text-sm ring-1 ring-white/10">
+                    <span aria-hidden>{o.ikon}</span>
+                  </span>
+                  <p className={`text-sm font-medium ${o.vurgu ? "text-gold-light" : "text-slate-100"}`}>
+                    {o.baslik}
+                  </p>
+                  {o.detay && <p className="mt-0.5 text-xs leading-relaxed text-slate-400">{o.detay}</p>}
+                  <p className="mt-0.5 text-[0.6rem] text-slate-500">{yolcuTarih(o.ts)}</p>
+                </li>
+              ))}
+            </ol>
           )}
         </section>
 
