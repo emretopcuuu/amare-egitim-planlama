@@ -5,6 +5,7 @@ import { tr } from "@/lib/i18n/tr";
 import KonusanYansima from "@/components/KonusanYansima";
 import AynaDusunuyor from "@/components/AynaDusunuyor";
 import OkuButonu from "@/components/OkuButonu";
+import BosDurum from "@/components/BosDurum";
 
 const t = tr.mektup;
 
@@ -68,13 +69,23 @@ export default function MektupBolumu({
       ) : yukleniyor ? (
         // UX #7: boş "Hazırlanıyor…" yerine canlı "AYNA düşünüyor" anı
         <AynaDusunuyor satirlar={tr.dusunuyor.mektup} />
+      ) : hata ? (
+        // UX #10: tutarlı hata dili — bare kırmızı metin yerine ortak durum kartı
+        <div className="mt-4">
+          <BosDurum
+            tip="hata"
+            eylem={
+              <button
+                onClick={olustur}
+                className="btn-3d rounded-xl bg-gold px-5 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light"
+              >
+                {tr.durum.tekrar}
+              </button>
+            }
+          />
+        </div>
       ) : (
         <div className="mt-4 text-center">
-          {hata && (
-            <p role="alert" className="mb-3 text-sm font-medium text-red-400">
-              {t.hata}
-            </p>
-          )}
           <button
             onClick={olustur}
             className="btn-3d rounded-xl bg-gold px-5 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-50"
