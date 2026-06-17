@@ -2421,6 +2421,14 @@ export const tr = {
   ses: {
     baslat: "Sesle Yaz",
     dinliyor: "Dinliyorum… durdurmak için dokun",
+    hata: {
+      izin: "Mikrofon izni gerekli. Adres çubuğundaki 🎙 simgesine dokunup izin ver, sonra tekrar dene.",
+      mesgul:
+        "Mikrofona ulaşılamadı. Başka bir uygulama (ör. Zoom) mikrofonu kullanıyor olabilir — onu kapatıp tekrar dene ya da elle yaz.",
+      sessiz: "Ses algılanamadı. Düğmeye dokunup konuşmaya başla.",
+      ag: "Sesle yazma için internet gerekli. Bağlantını kontrol et.",
+      genel: "Sesle yazma şu an çalışmadı. Tekrar dene ya da elle yaz.",
+    },
   },
   eposta: {
     davetKonu: "Aynaya tekrar bakma zamanı ✨ — Liderlik Aynası",

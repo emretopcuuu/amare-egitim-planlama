@@ -13,6 +13,14 @@ import { ADIMLAR, adimDolu, katman1Tutarlilik, SONUC_KARTI } from "@/lib/onFarki
 const t = tr.onFarkindalik;
 const TOPLAM = ADIMLAR.length;
 const SONUC_KODLAR = new Set(SONUC_KARTI.map((s) => s.kod));
+// Sonuç Kartı soruları soyut ("tek cümleyle özetle") — aday ne yazacağını net
+// anlasın diye her birine somut bir örnek iliştiriyoruz (boş/anlamsız giriş azalır).
+const METIN_IPUCLARI: Record<string, string> = {
+  "sonuc.guclu": "Örn: “Baskı altında sakin kalır, dağılan ekibi toparlarım.”",
+  "sonuc.kor_nokta": "Örn: “Kontrolü bırakamadığım için iş paylaşmıyor, her şeyi kendim yapıyorum.”",
+  "sonuc.kamp_gorevi":
+    "Başkalarının görebileceği iki davranış yaz. Örn: “Her sabah 3 kişiye geri bildirim vereceğim; akşam paylaşımında ilk sözü ben alacağım.”",
+};
 // UX #7: kamp wifi'si oynak — cevapları cihazda da yedekle (yenileme/çevrimdışı kayıp yok).
 const TASLAK_DEPO = "la_of_taslak_v1";
 
@@ -394,6 +402,9 @@ function MetinAdim({
   return (
     <>
       <h1 className="prizma-serif text-2xl font-semibold leading-snug text-slate-50">{metin}</h1>
+      {METIN_IPUCLARI[kod] && (
+        <p className="mt-3 text-sm leading-relaxed text-slate-400">{METIN_IPUCLARI[kod]}</p>
+      )}
       <textarea
         ref={ref}
         value={deger}
