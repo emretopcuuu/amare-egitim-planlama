@@ -18,7 +18,7 @@ export default async function PlanPage() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
-  const [{ data: kisi }, { data: of }, { data: soz }] = await Promise.all([
+  const [{ data: kisi }, { data: of }, { data: soz }, { data: tasinanlar }] = await Promise.all([
     db.from("participants").select("camp_unlocked_at").eq("id", session.sub).maybeSingle(),
     db.from("on_farkindalik").select("profil").eq("participant_id", session.sub).maybeSingle(),
     db
@@ -26,7 +26,16 @@ export default async function PlanPage() {
       .select("temmuz_kayit, agustos_gorusme, kayit_yapilan, gorusme_yapilan")
       .eq("participant_id", session.sub)
       .maybeSingle(),
+    // #9 Taahhüt köprüsü: adayın 90 güne taşıdığı görev yansımaları.
+    db
+      .from("missions")
+      .select("title, reflection_text, carried_at")
+      .eq("participant_id", session.sub)
+      .not("carried_at", "is", null)
+      .order("carried_at", { ascending: false })
+      .limit(20),
   ]);
+  const tasidiklar = (tasinanlar ?? []).filter((m) => m.reflection_text);
 
   const sonuc = (of?.profil as { sonucKarti?: Record<string, string | null> } | null)?.sonucKarti ?? {};
   const guclu = sonuc["sonuc.guclu"] ?? null;
@@ -78,6 +87,22 @@ export default async function PlanPage() {
               </div>
             )}
           </dl>
+        </section>
+      )}
+
+      {/* #9 Kamptan Taşıdıklarım — görevlerden 90 güne taşınan içgörüler */}
+      {tasidiklar.length > 0 && (
+        <section className="kart-cam rounded-2xl p-5 ring-1 ring-emerald-400/25">
+          <h2 className="text-sm font-semibold text-emerald-300">{t.tasidiklarimBaslik}</h2>
+          <p className="mt-0.5 text-xs text-slate-400">{t.tasidiklarimAlt}</p>
+          <ul className="mt-3 space-y-2.5">
+            {tasidiklar.map((m, i) => (
+              <li key={i} className="rounded-xl border border-emerald-400/15 bg-emerald-400/[0.04] p-3">
+                <p className="text-sm leading-relaxed text-slate-100">“{m.reflection_text}”</p>
+                <p className="mt-1 text-[0.65rem] text-slate-500">{m.title}</p>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 

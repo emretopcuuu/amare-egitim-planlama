@@ -240,6 +240,28 @@ function YansimaKapanisi({ gorevId }: { gorevId: string }) {
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [yansit, setYansit] = useState<string | null>(null);
   const [atlandi, setAtlandi] = useState(false);
+  // #9 Taahhüt köprüsü: yansımayı 90 günlük plana taşı
+  const [tasindi, setTasindi] = useState(false);
+  const [tasiniyor, setTasiniyor] = useState(false);
+
+  async function taşı() {
+    if (tasiniyor || tasindi) return;
+    setTasiniyor(true);
+    try {
+      const res = await fetch("/api/gorev-tasi", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ gorevId }),
+      });
+      if (res.ok) {
+        titret([10, 30, 10]);
+        setTasindi(true);
+      }
+    } catch {
+    } finally {
+      setTasiniyor(false);
+    }
+  }
 
   async function gonder() {
     if (gonderiliyor || metin.trim().length < 2) return;
@@ -269,6 +291,19 @@ function YansimaKapanisi({ gorevId }: { gorevId: string }) {
     return (
       <div className="mt-4 rounded-xl border border-royal-light/25 bg-midnight/40 p-4 text-left">
         <p className="text-sm italic leading-relaxed text-gold-light">“{yansit}”</p>
+        {/* #9 Taahhüt köprüsü: bu içgörüyü 90 günlük plana taşı */}
+        {tasindi ? (
+          <p className="mt-3 text-xs font-medium text-emerald-400">{t.tasindiNot}</p>
+        ) : (
+          <button
+            type="button"
+            onClick={taşı}
+            disabled={tasiniyor}
+            className="mt-3 flex h-10 w-full items-center justify-center rounded-xl border border-gold/40 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-50"
+          >
+            {tasiniyor ? t.tasiniyor : t.tasiButon}
+          </button>
+        )}
       </div>
     );
   }
