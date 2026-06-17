@@ -145,6 +145,15 @@ export default async function AynaPage() {
       metin: t.korNoktaAciklama(rapor.korNokta.ad),
       tema: "amber",
     });
+  // UX #1: açığın kapandığı an törensel anlatının bir beat'i olsun (#5 ile bağ)
+  if (rapor.korNoktaYolu?.kapandiMi)
+    slaytlar.push({
+      ikon: "📉",
+      ust: t.daralmaBaslik,
+      baslik: rapor.korNoktaYolu.ad,
+      metin: t.daralmaKapandi,
+      tema: "royal",
+    });
   slaytlar.push({
     ikon: arketip.simge,
     ust: tr.arketip.raporBaslik,
