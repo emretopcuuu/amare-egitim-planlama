@@ -2059,6 +2059,21 @@ export const tr = {
       durum: { pending: "bekliyor", submitted: "okunuyor", scored: "puanlandı", expired: "süre doldu" } as Record<string, string>,
       veriYok: "Veri yok.",
     },
+    mudahale: {
+      baslik: "Canlı Müdahale",
+      gorevVer: "Şimdi görev ver",
+      bekleyeniIptal: "Bekleyeni iptal et",
+      uretiliyor: "AYNA üretiyor…",
+      gonderiliyor: "Gönderiliyor…",
+      fisiltiBaslik: "Özel fısıltı (push)",
+      fisiltiYer: "Bu kişiye AYNA'nın ağzından kısa bir mesaj…",
+      fisiltiGonder: "Fısıltı gönder",
+      gorevVerildi: (baslik: string) => `✓ Görev verildi: ${baslik}`,
+      iptalEdildi: (sayi: number) => `✓ ${sayi} bekleyen görev iptal edildi.`,
+      fisiltiGonderildi: "✓ Fısıltı gönderildi.",
+      uretilemedi: "Görev üretilemedi (AYNA yanıt vermedi). Tekrar dene.",
+      hata: "İşlem başarısız. Tekrar dene.",
+    },
     qr: {
       baslik: "QR Giriş Kartları",
       aciklama:
