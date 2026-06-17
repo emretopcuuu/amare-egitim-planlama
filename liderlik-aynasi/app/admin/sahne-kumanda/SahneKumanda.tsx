@@ -10,9 +10,11 @@ type Dalga = { id: number; ad: string; acik: boolean };
 
 export default function SahneKumanda({
   aynaAktif,
+  vitrin,
   dalgalar,
 }: {
   aynaAktif: boolean;
+  vitrin: number | null;
   dalgalar: Dalga[];
 }) {
   const router = useRouter();
@@ -167,6 +169,44 @@ export default function SahneKumanda({
             </li>
           ))}
         </ul>
+      </section>
+
+      {/* 3b) SAHNE VİTRİNİ — DJ kumandası: büyük ekranı bir slayda sabitle */}
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+        <h2 className="text-lg font-semibold text-gold-light">{t.vitrinBaslik}</h2>
+        <p className="mt-1 text-sm text-slate-300">{t.vitrinAciklama}</p>
+        <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {t.vitrinSlaytlar.map((ad, i) => {
+            const aktif = vitrin === i;
+            return (
+              <button
+                key={ad}
+                onClick={() =>
+                  void istek("vitrin", "/api/admin/sahne", {
+                    eylem: "vitrin",
+                    slayt: aktif ? null : i,
+                  })
+                }
+                disabled={mesgul !== null}
+                className={`flex items-center justify-between gap-2 rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors disabled:opacity-50 ${
+                  aktif
+                    ? "btn-3d bg-gold text-midnight"
+                    : "border border-white/15 text-slate-200 hover:bg-white/[0.06]"
+                }`}
+              >
+                <span>{ad}</span>
+                {aktif && <span className="text-xs">{t.vitrinSabit} ●</span>}
+              </button>
+            );
+          })}
+        </div>
+        <button
+          onClick={() => void istek("vitrin", "/api/admin/sahne", { eylem: "vitrin", slayt: null })}
+          disabled={mesgul !== null || vitrin === null}
+          className="mt-3 w-full rounded-xl border-2 border-emerald-400/40 px-4 py-3 text-sm font-bold text-emerald-300 transition-colors hover:bg-emerald-400/10 disabled:opacity-40"
+        >
+          {mesgul === "vitrin" ? t.calisiyor : `▶ ${t.vitrinOtomatik}`}
+        </button>
       </section>
 
       {/* 4) ACİL DURDUR */}

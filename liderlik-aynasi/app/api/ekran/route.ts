@@ -24,6 +24,9 @@ export type EkranVerisi = {
   takimLigi: { takim: string; kivilcim: number }[];
   // Senkron An canlı katılımı (aktif pencere yoksa null)
   senkron: { baslik: string; yanit: number; toplam: number; kalanSn: number } | null;
+  // Sahne Vitrini (DJ): host belirli bir slaydı sabitlediyse onun indeksi,
+  // yoksa null (ekran otomatik döngüye devam eder). 30 dk taze.
+  vitrin: number | null;
   // Onaylı anı duvarı fotoğraflarının imzalı URL'leri (en yeni)
   anilar: string[];
   // Sahne olayları: /ekran'ın bir kez oynatacağı taze sinyaller (≤4 dk)
@@ -78,7 +81,7 @@ export async function GET() {
       db
         .from("settings")
         .select("key, value")
-        .in("key", ["sahne_dalga", "sahne_anons", "sahne_duyuru"]),
+        .in("key", ["sahne_dalga", "sahne_anons", "sahne_duyuru", "sahne_slayt"]),
       db
         .from("photos")
         .select("path")
@@ -171,8 +174,21 @@ export async function GET() {
     takimToplam.set(k.takim, (takimToplam.get(k.takim) ?? 0) + k.kivilcim);
   }
 
+  // Sahne Vitrini (DJ): host sabitlediği slayt indeksi (30 dk taze) ya da null
+  let vitrin: number | null = null;
+  const vitrinHam = (sahneAyarSonuc.data ?? []).find((a) => a.key === "sahne_slayt")?.value;
+  if (vitrinHam && vitrinHam !== "-") {
+    const ayrac = vitrinHam.indexOf("|");
+    const idx = Number(vitrinHam.slice(0, ayrac));
+    const ts = new Date(vitrinHam.slice(ayrac + 1)).getTime();
+    if (ayrac > 0 && Number.isInteger(idx) && simdi.getTime() - ts <= 30 * 60_000) {
+      vitrin = idx;
+    }
+  }
+
   const veri: EkranVerisi = {
     dalgaAdi: dalga?.name ?? null,
+    vitrin,
     katilimci: kisiler.length,
     ozTamam,
     toplamPuan: puanlar.length,

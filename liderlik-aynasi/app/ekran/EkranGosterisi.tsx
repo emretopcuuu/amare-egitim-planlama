@@ -79,6 +79,8 @@ export default function EkranGosterisi() {
   const [dalgaVideo, setDalgaVideo] = useState<number | null>(null);
   const sesAcikRef = useRef(false);
   const oynanan = useRef<Set<string>>(new Set());
+  // Sahne Vitrini (DJ): host bir slayt sabitlediyse otomatik döngü durur.
+  const vitrinRef = useRef<number | null>(null);
 
   useEffect(() => {
     let iptal = false;
@@ -89,6 +91,10 @@ export default function EkranGosterisi() {
         const yeni = (await res.json()) as EkranVerisi;
         if (iptal) return;
         setVeri(yeni);
+
+        // Sahne Vitrini (DJ): host bir slayt sabitlemişse ekranı oraya kilitle
+        vitrinRef.current = yeni.vitrin;
+        if (yeni.vitrin !== null) setSlayt(yeni.vitrin);
 
         // Sahne olayları: her sinyal yalnızca bir kez oynatılır
         const s = yeni.sahne;
@@ -120,10 +126,11 @@ export default function EkranGosterisi() {
     }
     void yenile();
     const veriZamanlayici = setInterval(yenile, VERI_YOKLAMA_MS);
-    const slaytZamanlayici = setInterval(
-      () => setSlayt((s) => (s + 1) % SLAYT_SAYISI),
-      SLAYT_MS
-    );
+    const slaytZamanlayici = setInterval(() => {
+      // DJ sabitlemesi varken otomatik döngüyü atla.
+      if (vitrinRef.current !== null) return;
+      setSlayt((s) => (s + 1) % SLAYT_SAYISI);
+    }, SLAYT_MS);
     return () => {
       iptal = true;
       clearInterval(veriZamanlayici);
