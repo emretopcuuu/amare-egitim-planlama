@@ -2274,6 +2274,12 @@ export const tr = {
     korNoktaBaslik: "🔍 Kör Noktan",
     korNoktaAciklama: (ozellik: string) =>
       `${ozellik} konusunda kendine, başkalarının sana verdiğinden belirgin şekilde yüksek puan vermişsin. Buraya bir daha bakmaya değer.`,
+    daralmaBaslik: "📉 Açığın Kapanıyor",
+    daralmaAciklama: (ozellik: string, oz: string) =>
+      `${ozellik} alanında kendini ${oz} gördün. Üç dalga boyunca, başkalarının gözüyle arandaki açık şöyle değişti:`,
+    daralmaAcik: (fark: string) => `açık ${fark}`,
+    daralmaKapandi: "Açık kapandı — algın gerçekle hizalanıyor. İşte aynanın işi bu.",
+    daralmaDevam: "Açık hâlâ açık. Kapatmak senin elinde — yolculuk burada bitmiyor.",
     tabloBaslik: "Özellik Özellik Aynan",
     ozEtiket: "Senin puanın",
     disEtiket: "Başkalarının ortalaması",

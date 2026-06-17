@@ -29,6 +29,15 @@ export type RaporYorumu = {
   yorum: string;
 };
 
+// #5 Kör nokta daralması: en büyük öz-dış açığına sahip özelliğin dalga-dalga
+// yolu — kampın çekirdek vaadini (algı hizalanması) görünür kılar.
+export type KorNoktaYolu = {
+  ad: string;
+  oz: number; // kişinin öz puanı (kendini nasıl gördüğü)
+  adimlar: { dalga: number; dalgaAd: string; dis: number; fark: number }[];
+  kapandiMi: boolean; // son dalgadaki açık ilk dalgadan küçükse
+};
+
 export type Rapor = {
   satirlar: RaporSatiri[];
   guclu: RaporSatiri[]; // en yüksek 3 dış ortalama
@@ -37,6 +46,7 @@ export type Rapor = {
   korNokta: RaporSatiri | null; // oz - dis >= ESIK
   dalgalar: DalgaOzeti[];
   enGelisen: { ad: string; fark: number } | null; // ilk→son dalga dış farkı
+  korNoktaYolu: KorNoktaYolu | null; // #5 açığın dalga-dalga kapanışı
   yorumlar: RaporYorumu[];
   tahmin: { topId: number; bottomId: number } | null;
   gercekTopId: number | null;
@@ -176,6 +186,44 @@ export async function raporHesapla(db: Db, katilimciId: string): Promise<Rapor> 
     }
   }
 
+  // #5 Kör nokta daralması: en büyük öz-dış açığına sahip özelliğin (kör nokta
+  // yoksa mutlak farkı en büyük olanın) dalga-dalga açık yolu.
+  let korNoktaYolu: KorNoktaYolu | null = null;
+  let adayKor = korNokta;
+  if (!adayKor) {
+    let enFark = 0;
+    for (const s of satirlar) {
+      if (s.oz === null || s.dis === null) continue;
+      const f = Math.abs(s.oz - s.dis);
+      if (f > enFark) {
+        enFark = f;
+        adayKor = s;
+      }
+    }
+  }
+  if (adayKor && adayKor.oz !== null) {
+    const oz = adayKor.oz;
+    const adimlar = dalgalar
+      .filter((d) => d.ozellikOrtalama.has(adayKor!.ozellikId))
+      .map((d) => {
+        const dis = d.ozellikOrtalama.get(adayKor!.ozellikId)!;
+        return {
+          dalga: d.dalgaId,
+          dalgaAd: d.ad,
+          dis: Number(dis.toFixed(1)),
+          fark: Number(Math.abs(oz - dis).toFixed(1)),
+        };
+      });
+    if (adimlar.length >= 1) {
+      korNoktaYolu = {
+        ad: adayKor.ad,
+        oz: Number(oz.toFixed(1)),
+        adimlar,
+        kapandiMi: adimlar.length >= 2 && adimlar[adimlar.length - 1].fark < adimlar[0].fark,
+      };
+    }
+  }
+
   const yorumlar: RaporYorumu[] = puanlar
     .filter((p) => !p.is_self && !p.is_hidden && p.comment)
     .map((p) => ({
@@ -194,6 +242,7 @@ export async function raporHesapla(db: Db, katilimciId: string): Promise<Rapor> 
     korNokta,
     dalgalar,
     enGelisen,
+    korNoktaYolu,
     yorumlar,
     tahmin: tahminSonuc.data
       ? { topId: tahminSonuc.data.top_trait_id, bottomId: tahminSonuc.data.bottom_trait_id }
