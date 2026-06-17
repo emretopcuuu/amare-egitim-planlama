@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import FotoModerasyon from "./FotoModerasyon";
 import Ipucu from "../Ipucu";
+import OtoYenile from "../OtoYenile";
 
 export const metadata = { title: "Fotoğraf Moderasyonu — Liderlik Aynası" };
 
@@ -35,12 +36,15 @@ export default async function FotoModerasyonPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
-      <div>
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
-          <Ipucu {...tr.admin.yardim.foto} />
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
+            <Ipucu {...tr.admin.yardim.foto} />
+          </div>
+          <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>
         </div>
-        <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>
+        <OtoYenile saniye={20} />
       </div>
       <FotoModerasyon fotolar={fotolar} />
     </main>

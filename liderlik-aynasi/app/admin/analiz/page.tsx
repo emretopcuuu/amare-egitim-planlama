@@ -5,6 +5,7 @@ import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
 import Ipucu from "../Ipucu";
 import Katlanir from "../Katlanir";
+import OtoYenile from "../OtoYenile";
 
 export const metadata = { title: "Analiz — Liderlik Aynası" };
 
@@ -89,9 +90,12 @@ export default async function AnalizSayfa() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-8 p-6">
-      <div className="flex items-center gap-2">
-        <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
-        <Ipucu {...tr.admin.yardim.analiz} />
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
+          <Ipucu {...tr.admin.yardim.analiz} />
+        </div>
+        <OtoYenile saniye={30} />
       </div>
       <p className="-mt-4 text-sm text-slate-400">{t.aciklama}</p>
 

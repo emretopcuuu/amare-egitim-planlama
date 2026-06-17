@@ -8,6 +8,7 @@ import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
 import Ipucu from "../Ipucu";
 import Katlanir from "../Katlanir";
+import OtoYenile from "../OtoYenile";
 
 export const metadata = { title: "Komutan Paneli — Liderlik Aynası" };
 
@@ -218,6 +219,9 @@ export default async function KomutanPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
+      <div className="flex justify-end">
+        <OtoYenile saniye={20} />
+      </div>
       <div>
         <div className="flex items-center gap-2">
           <h1 className="font-display altin-metin text-3xl font-bold leading-tight">
