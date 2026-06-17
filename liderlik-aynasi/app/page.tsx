@@ -12,6 +12,7 @@ import GeriSayim from "@/components/GeriSayim";
 import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
 import YolculukSeridi from "@/components/YolculukSeridi";
+import KampHud from "@/components/KampHud";
 import KonusanYansima from "@/components/KonusanYansima";
 import SicakAdim from "@/components/SicakAdim";
 import UstMenu from "@/components/UstMenu";
@@ -263,6 +264,8 @@ export default async function AnaSayfa({
       </header>
       {/* #5 "Sen neredesin" — kampın neresindeyiz şeridi */}
       <YolculukSeridi bugun={bugunIst} />
+      {/* UX #9 (2.tur): Kamp HUD'u — o anki blok + kalan süre + sırada ne var */}
+      <KampHud />
       {/* Topluluk nabzı — yalnız değilsin hissi */}
       <ToplulukNabzi />
     </div>
