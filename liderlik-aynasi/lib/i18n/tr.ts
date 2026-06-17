@@ -186,6 +186,7 @@ export const tr = {
     menuYansiman: "Yansımanı izle",
     menuRapor: "Ayna Raporum",
     menuKocu: "🪞 Ayna Koçu",
+    menuGunluk: "✍️ Tek Cümle",
     menuPlan: "🧭 90 Günlük Yolculuk",
     menuBen: "👤 Profilim",
     menuGrup: "👥 Grup Ödevi",
@@ -730,6 +731,18 @@ export const tr = {
     yukleniyor: "Açılıyor…",
     hata: "Bir şey ters gitti. Tekrar dene.",
     uretilemedi: "Şu an cevap veremedim, bir daha dener misin?",
+  },
+  // Günlük "Tek Cümle" — her gün bir mikro-yansıma + seri
+  gunlukCumle: {
+    baslik: "Bugünün Tek Cümlesi",
+    seriEtiket: (n: number) => `${n} gün üst üste`,
+    yukleniyor: "Açılıyor…",
+    yer: "Tek cümle yeter — içinden geçeni yaz.",
+    kaydet: "Mühürle",
+    guncelle: "Güncelle",
+    kaydediliyor: "Mühürleniyor…",
+    bugunTamam: "✓ Bugünü mühürledin. Yarın yine buradayım.",
+    hata: "Bir şey ters gitti. Tekrar dene.",
   },
   // 90 GÜNLÜK YOLCULUK — kamp sonrası taahhüt planı (adaya görünen)
   plan: {
