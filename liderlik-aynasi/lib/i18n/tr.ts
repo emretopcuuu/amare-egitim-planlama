@@ -747,6 +747,7 @@ export const tr = {
   kocu: {
     baslik: "Ayna Koçu",
     altBaslik: "Her an buradayım",
+    hafizaBaslik: "Seni hatırlıyorum:",
     sesliMod: "Sesli mod (AYNA yanıtını sesli okur)",
     yer: "AYNA'ya yaz… (takıldığın, merak ettiğin ne varsa)",
     gonder: "Gönder",
@@ -2367,6 +2368,11 @@ export const tr = {
     senkronTesekkur:
       "Tam zamanında. Şu anda onlarca kişi seninle aynı şeyi yaptı — kolektif enerji böyle kurulur. +8 ⚡",
     momentumSatiri: (skor: number) => `📈 Momentum: ${skor}/100`,
+    // #6 Seri ateşi: kesintisiz tamamlanan görev serisi
+    seriAtesi: (n: number) => `${n} görev üst üste — momentum sende. Bırakma!`,
+    // #9 Akıllı yazı ipuçları: yanıtın uzunluğuna göre nazik yönlendirme
+    ipucuKisa: "Biraz daha açabilir misin? Tek satır AYNA'ya az gelir.",
+    ipucuYeterli: "Güçlü — AYNA'nın görmesi için yeterince derin. Dilersen gönder.",
     altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
     aktifYokBaslik: "Şu an görevin yok",
     aktifYok: "AYNA seni izliyor — yeni bir görev her an gelebilir.",

@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
-import { titret, suDalgasi } from "@/lib/his";
+import { titret, suDalgasi, cal } from "@/lib/his";
 import MikrofonButonu from "@/components/MikrofonButonu";
 import Konfeti from "@/components/Konfeti";
+import PuanAcilisi from "@/components/PuanAcilisi";
 
 const t = tr.gorevler;
 
@@ -79,6 +80,7 @@ export default function GorevYanitFormu({
         const buyuk = (veri?.puan ?? 0) >= 8 || !!veri?.soz;
         titret(buyuk ? [15, 40, 15, 40, 30] : [12, 40, 12]);
         suDalgasi();
+        cal(buyuk ? "kazanim" : "teslim");
         setSonuc(veri);
       } catch {
         // Ağ hatası: yanıtı cihazda sakla, bağlantı gelince otomatik gider
@@ -152,9 +154,7 @@ export default function GorevYanitFormu({
           <p className="text-sm text-slate-300">{t.durumlar.submitted}…</p>
         ) : (
           <>
-            {sonuc.puan !== undefined && (
-              <p className="text-2xl font-bold text-gold">{t.puanin(sonuc.puan)}</p>
-            )}
+            {sonuc.puan !== undefined && <PuanAcilisi puan={sonuc.puan} />}
             {sonuc.kivilcim !== undefined && (
               <p className="mt-1 font-semibold text-gold-light">
                 {t.kivilcimKazandin(sonuc.kivilcim)}
@@ -212,6 +212,15 @@ export default function GorevYanitFormu({
           {t.hata}
         </p>
       )}
+      {/* #9 Akıllı ipucu: yazının uzunluğuna göre nazik yönlendirme */}
+      {(() => {
+        const n = yanit.trim().length;
+        if (n >= 2 && n < 25)
+          return <p className="mt-2 text-xs text-amber-300/90">{t.ipucuKisa}</p>;
+        if (n >= 60)
+          return <p className="mt-2 text-xs text-emerald-300/90">{t.ipucuYeterli}</p>;
+        return null;
+      })()}
       <p className="mt-2 text-xs text-slate-500">{t.sesliIpucu}</p>
       <div className="mt-1 flex gap-2">
         <MikrofonButonu
@@ -275,6 +284,7 @@ function YansimaKapanisi({ gorevId }: { gorevId: string }) {
       const veri = await res.json().catch(() => null);
       if (res.ok && veri?.yansit) {
         titret([12, 40, 12]);
+        suDalgasi();
         setYansit(veri.yansit);
       } else {
         setYansit(t.yansimaTesekkur);
@@ -289,7 +299,7 @@ function YansimaKapanisi({ gorevId }: { gorevId: string }) {
   if (atlandi) return null;
   if (yansit) {
     return (
-      <div className="mt-4 rounded-xl border border-royal-light/25 bg-midnight/40 p-4 text-left">
+      <div className="yansima-dalga relative mt-4 rounded-xl border border-royal-light/25 bg-midnight/40 p-4 text-left">
         <p className="text-sm italic leading-relaxed text-gold-light">“{yansit}”</p>
         {/* #9 Taahhüt köprüsü: bu içgörüyü 90 günlük plana taşı */}
         {tasindi ? (
