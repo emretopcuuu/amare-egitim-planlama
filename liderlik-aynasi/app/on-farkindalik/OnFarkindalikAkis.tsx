@@ -126,6 +126,15 @@ export default function OnFarkindalikAkis({
         <p className="text-5xl">🪞</p>
         <h1 className="prizma-serif ay-metin mt-5 text-3xl font-semibold leading-tight">{t.girisBaslik}</h1>
         <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-slate-300">{t.girisMetin}</p>
+        {/* UX #4: sonunda ne kazanacağın — "neden buradayım" çerçevesi + ödül önizlemesi */}
+        <ul className="mx-auto mt-6 max-w-md space-y-2 text-left">
+          {t.girisKazanimlar.map((k, i) => (
+            <li key={i} className="flex items-start gap-2.5 text-base text-slate-200">
+              <span className="mt-0.5 text-gold-light" aria-hidden>✦</span>
+              <span>{k}</span>
+            </li>
+          ))}
+        </ul>
         <button
           onClick={() => setGiris(false)}
           className="parilti btn-kor mx-auto mt-10 flex h-16 w-full max-w-md items-center justify-center rounded-2xl text-xl font-bold"
