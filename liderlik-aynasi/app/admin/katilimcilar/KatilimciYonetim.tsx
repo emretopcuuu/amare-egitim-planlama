@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import KodKopyala from "./KodKopyala";
@@ -350,7 +351,11 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
                           className="h-4 w-4 accent-gold"
                         />
                       </td>
-                      <td className="py-2 pr-3 font-medium text-slate-100">{k.full_name}</td>
+                      <td className="py-2 pr-3 font-medium">
+                        <Link href={`/admin/kisi/${k.id}`} className="text-slate-100 underline-offset-4 hover:text-gold-light hover:underline">
+                          {k.full_name}
+                        </Link>
+                      </td>
                       <td className="py-2 pr-3 text-slate-400">{k.team ?? "—"}</td>
                       <td className="py-2 pr-3 text-slate-400">{k.city ?? "—"}</td>
                       <td className="py-2 pr-3 text-slate-400">{k.phone ?? "—"}</td>
@@ -389,7 +394,7 @@ export default function KatilimciYonetim({ kisiler }: { kisiler: Kisi[] }) {
                     className="h-4 w-4 shrink-0 accent-gold"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate font-medium text-slate-100">{k.full_name}</p>
+                    <Link href={`/admin/kisi/${k.id}`} className="block truncate font-medium text-slate-100 hover:text-gold-light">{k.full_name}</Link>
                     <p className="mt-0.5 truncate text-xs text-slate-400">
                       {[k.team, k.city].filter(Boolean).join(" · ") || "—"}
                       {k.phone ? ` · ${k.phone}` : ""}
