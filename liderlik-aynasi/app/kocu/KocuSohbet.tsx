@@ -16,6 +16,7 @@ export default function KocuSohbet() {
   const [yukleniyor, setYukleniyor] = useState(true);
   const [yaziyor, setYaziyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
+  const [sesli, setSesli] = useState(false);
   const altRef = useRef<HTMLDivElement>(null);
   const alanRef = useRef<HTMLTextAreaElement>(null);
   const baslatildi = useRef(false);
@@ -55,6 +56,20 @@ export default function KocuSohbet() {
     el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
   }, [girdi]);
 
+  // GELİŞTİRME #7: AYNA yanıtını sesli oku (tarayıcı TTS, tr-TR) — hands-free koç.
+  function seslendir(metin: string) {
+    try {
+      const ss = window.speechSynthesis;
+      if (!ss) return;
+      ss.cancel();
+      const u = new SpeechSynthesisUtterance(metin);
+      u.lang = "tr-TR";
+      const trSes = ss.getVoices().find((v) => v.lang?.toLowerCase().startsWith("tr"));
+      if (trSes) u.voice = trSes;
+      ss.speak(u);
+    } catch {}
+  }
+
   async function karsila() {
     setYaziyor(true);
     setHata(null);
@@ -65,8 +80,10 @@ export default function KocuSohbet() {
         body: JSON.stringify({ mesaj: null }),
       });
       const d = r.ok ? await r.json() : null;
-      if (d?.mesaj) setMesajlar((m) => [...m, { rol: "ayna", icerik: d.mesaj }]);
-      else setHata(t.uretilemedi);
+      if (d?.mesaj) {
+        setMesajlar((m) => [...m, { rol: "ayna", icerik: d.mesaj }]);
+        if (sesli) seslendir(d.mesaj);
+      } else setHata(t.uretilemedi);
     } catch {
       setHata(t.hata);
     } finally {
@@ -89,8 +106,10 @@ export default function KocuSohbet() {
         body: JSON.stringify({ mesaj: metin }),
       });
       const d = r.ok ? await r.json() : null;
-      if (d?.mesaj) setMesajlar((m) => [...m, { rol: "ayna", icerik: d.mesaj }]);
-      else setHata(t.uretilemedi);
+      if (d?.mesaj) {
+        setMesajlar((m) => [...m, { rol: "ayna", icerik: d.mesaj }]);
+        if (sesli) seslendir(d.mesaj);
+      } else setHata(t.uretilemedi);
     } catch {
       setHata(t.hata);
     } finally {
@@ -111,6 +130,22 @@ export default function KocuSohbet() {
             <p className="mt-0.5 text-[0.7rem] text-slate-500">{t.altBaslik}</p>
           </div>
         </div>
+        {/* #7 Sesli mod: AYNA yanıtlarını sesli oku */}
+        <button
+          onClick={() => {
+            setSesli((s) => {
+              if (s) try { window.speechSynthesis?.cancel(); } catch {}
+              return !s;
+            });
+          }}
+          aria-pressed={sesli}
+          aria-label={t.sesliMod}
+          className={`ml-auto flex h-10 w-10 items-center justify-center rounded-xl text-lg transition-colors ${
+            sesli ? "bg-gold/20 text-gold-light" : "text-slate-400 hover:text-slate-200"
+          }`}
+        >
+          {sesli ? "🔊" : "🔇"}
+        </button>
       </header>
 
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-5">
