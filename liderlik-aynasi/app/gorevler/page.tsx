@@ -9,6 +9,7 @@ import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
 import { tr } from "@/lib/i18n/tr";
 import GorevYanitFormu from "./GorevYanitFormu";
+import TanikOnay from "./TanikOnay";
 import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
 import GunlukCheckin from "@/components/GunlukCheckin";
@@ -94,6 +95,42 @@ export default async function GorevlerPage() {
       .gte("created_at", bugunBas),
   ]);
 
+  // #5 Tanıklı görevler: ekip arkadaşları (tanık seçimi için), bana gelen
+  // tanıklık çağrıları ve tamamladığım görevlere gelen anonim gözlemler.
+  const { data: ben } = await db
+    .from("participants")
+    .select("team")
+    .eq("id", session.sub)
+    .maybeSingle();
+  const [{ data: ekipHam }, { data: bekleyenHam }, { data: gelenHam }] = await Promise.all([
+    db
+      .from("participants")
+      .select("id, full_name")
+      .eq("role", "participant")
+      .eq("team", ben?.team ?? "__yok__")
+      .neq("id", session.sub)
+      .order("full_name"),
+    db
+      .from("gorev_tanik")
+      .select("id, doer:participants!gorev_tanik_doer_id_fkey(full_name)")
+      .eq("witness_id", session.sub)
+      .is("confirmed_at", null),
+    db
+      .from("gorev_tanik")
+      .select("mission_id, observation")
+      .eq("doer_id", session.sub)
+      .not("confirmed_at", "is", null),
+  ]);
+  const ekip = (ekipHam ?? []).map((k) => ({ id: k.id, ad: k.full_name }));
+  const bekleyenler = (bekleyenHam ?? [])
+    .filter((b) => b.doer)
+    .map((b) => ({
+      id: b.id,
+      doerAd: (b.doer as unknown as { full_name: string }).full_name.split(" ")[0],
+    }));
+  const gelenGozlem = new Map<string, string>();
+  for (const g of gelenHam ?? []) if (g.observation) gelenGozlem.set(g.mission_id, g.observation);
+
   // #4 Bugünün özeti
   const bugunScored = (gorevler ?? []).filter(
     (g) => g.status === "scored" && g.scored_at && g.scored_at >= bugunBas
@@ -170,6 +207,20 @@ export default async function GorevlerPage() {
         </section>
       )}
 
+      {/* #5 Tanıklık bekleyenler — sana gelen tanık çağrıları */}
+      {bekleyenler.length > 0 && (
+        <section className="rounded-2xl border border-royal-light/30 bg-midnight-card/60 p-4 backdrop-blur">
+          <p className="text-sm font-semibold text-gold-light">{t.tanikBekleyenBaslik}</p>
+          <ul className="mt-3 space-y-4">
+            {bekleyenler.map((b) => (
+              <li key={b.id}>
+                <TanikOnay tanikId={b.id} doerAd={b.doerAd} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* #5 Günün Aynası — günlük mikro check-in */}
       <GunlukCheckin
         ozellikler={ozellikler.map((o) => ({ id: o.id, ad: o.name }))}
@@ -231,7 +282,7 @@ export default async function GorevlerPage() {
             ) : (
               <OkuButonu metin={`${g.title}. ${g.body}`} />
             )}
-            <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
+            <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} ekip={ekip} />
           </section>
         ))
       )}
@@ -272,6 +323,14 @@ export default async function GorevlerPage() {
                 {g.ai_comment && (
                   <p className="mt-2 rounded-xl bg-midnight-soft p-3 text-sm italic text-slate-300">
                     “{g.ai_comment}”
+                  </p>
+                )}
+                {gelenGozlem.has(g.id) && (
+                  <p className="mt-2 rounded-xl border border-royal-light/25 bg-midnight/40 p-3 text-sm text-slate-200">
+                    <span className="mr-1 text-xs font-semibold text-royal-light">
+                      {t.tanikGelenEtiket}
+                    </span>
+                    “{gelenGozlem.get(g.id)}”
                   </p>
                 )}
               </li>
