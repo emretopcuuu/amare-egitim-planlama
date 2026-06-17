@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { MINI360_IFADELER } from "@/lib/onFarkindalik";
 import { tr } from "@/lib/i18n/tr";
 import Mini360Oz from "./Mini360Oz";
+import AynaLogo from "@/components/AynaLogo";
 
 export const metadata = { title: "Ekip Aynası — Liderlik Aynası" };
 
