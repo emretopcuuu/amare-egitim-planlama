@@ -185,6 +185,7 @@ export const tr = {
     menuYansiman: "Yansımanı izle",
     menuRapor: "Ayna Raporum",
     menuKocu: "🪞 Ayna Koçu",
+    menuPlan: "🧭 90 Günlük Yolculuk",
     menuBen: "👤 Profilim",
     menuGrup: "👥 Grup Ödevi",
     menuMini360: "🪞 Ekip Aynası",
@@ -726,6 +727,23 @@ export const tr = {
     yukleniyor: "Açılıyor…",
     hata: "Bir şey ters gitti. Tekrar dene.",
     uretilemedi: "Şu an cevap veremedim, bir daha dener misin?",
+  },
+  // 90 GÜNLÜK YOLCULUK — kamp sonrası taahhüt planı (adaya görünen)
+  plan: {
+    baslik: "90 Günlük Yolculuğun",
+    altBaslik: "Kamp burada bitmiyor — asıl yolculuk şimdi başlıyor.",
+    taahhutBaslik: "Kendine verdiğin söz (Sonuç Kartı)",
+    gucluEtiket: "Güçlü alanın",
+    korNoktaEtiket: "Kör noktan",
+    gorevEtiket: "Kamp görevin",
+    sozBaslik: "Hedeflerin",
+    kayitHedef: "Kayıt",
+    gorusmeHedef: "Görüşme",
+    fazBaslik: "Yol haritan",
+    fazSimdi: (gun: number, ad: string) => `Gün ${gun} · şu an: ${ad}`,
+    fazGun: (bas: number, son: number) => `Gün ${bas}–${son}`,
+    checkinMetin: "Bu hafta nerede tıkandın, nerede ilerledin? AYNA'ya anlat — yolunu birlikte açalım.",
+    checkinDugme: "Koçunla konuş",
   },
   // MINI 360 — Ekip Aynası (opt-in akran puanlaması)
   mini360: {
