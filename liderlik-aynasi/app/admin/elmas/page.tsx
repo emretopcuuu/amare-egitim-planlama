@@ -6,6 +6,7 @@ import { elmasSkorla, type ElmasGirdi, type OFProfil } from "@/lib/elmasSkoru";
 import { tr } from "@/lib/i18n/tr";
 import ElmasListe from "./ElmasListe";
 import Mini360TurBaslat from "./Mini360TurBaslat";
+import OtoYenile from "../OtoYenile";
 
 export const metadata = { title: "Elmas Seçimi — Liderlik Aynası" };
 
@@ -75,6 +76,9 @@ export default async function ElmasPage() {
 
   return (
     <main className="mx-auto w-full max-w-5xl flex-1 space-y-6 p-6">
+      <div className="flex justify-end">
+        <OtoYenile saniye={20} />
+      </div>
       <div>
         <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
         <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>

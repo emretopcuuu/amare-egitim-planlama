@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
+import OtoYenile from "../OtoYenile";
 
 export const metadata = { title: "Takım Sağlığı — Liderlik Aynası" };
 
@@ -97,9 +98,12 @@ export default async function TakimSagligiPage() {
 
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 space-y-5 p-6">
-      <div>
-        <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
-        <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
+          <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>
+        </div>
+        <OtoYenile saniye={20} />
       </div>
 
       {takimlar.length === 0 ? (

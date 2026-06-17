@@ -6,6 +6,7 @@ import { pusulaCekirdek } from "@/lib/pusula";
 import { raporHesapla } from "@/lib/rapor";
 import { tr } from "@/lib/i18n/tr";
 import MudahaleKonsolu from "./MudahaleKonsolu";
+import OtoYenile from "../../OtoYenile";
 
 export const metadata = { title: "Katılımcı 360° — Liderlik Aynası" };
 
@@ -83,6 +84,9 @@ export default async function Kisi360Page({ params }: { params: Promise<{ id: st
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-5 p-6">
+      <div className="flex justify-end">
+        <OtoYenile saniye={20} />
+      </div>
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <Link href="/admin/katilimcilar" className="text-xs text-slate-400 hover:text-slate-200">← {t.geri}</Link>
