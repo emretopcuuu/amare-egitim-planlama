@@ -241,6 +241,35 @@ export async function kaymaSesi(
   }
 }
 
+// GELİŞTİRME #6: Sesli Yansıman'ı Ön Farkındalık + Pusula'dan kişiselleştir.
+// Templated (ek AI çağrısı yok) — kişinin en zayıf alanı + çekirdek nedeni.
+const OZ_ALAN_AD: Record<string, string> = {
+  oz_saygi: "Öz Saygı",
+  oz_guven: "Öz Güven",
+  oz_yeterlilik: "Öz Yeterlilik",
+};
+async function kisiselDokunus(
+  db: Db,
+  pid: string
+): Promise<{ alan: string | null; neden: string | null }> {
+  try {
+    const [ofR, pusulaR] = await Promise.all([
+      db.from("on_farkindalik").select("profil").eq("participant_id", pid).maybeSingle(),
+      db.from("pusula").select("cekirdek_neden, tamamlandi_at").eq("participant_id", pid).maybeSingle(),
+    ]);
+    const p = ofR.data?.profil as { katman1?: { enZayif?: string | null } } | null;
+    const alan = p?.katman1?.enZayif ? OZ_ALAN_AD[p.katman1.enZayif] ?? null : null;
+    let neden: string | null = null;
+    if (pusulaR.data?.tamamlandi_at) {
+      const arr = (pusulaR.data.cekirdek_neden as string[]) ?? [];
+      neden = (arr[0] ?? "").trim().slice(0, 120) || null;
+    }
+    return { alan, neden };
+  } catch {
+    return { alan: null, neden: null };
+  }
+}
+
 /** Sabah yoklaması: Gün 2+ sabahlarında kendi sesinden kısa günaydın. */
 export async function sabahSesi(
   db: Db,
@@ -251,10 +280,15 @@ export async function sabahSesi(
 ): Promise<boolean> {
   try {
     const ilkAd = ad.split(" ")[0];
-    const metin =
+    const { alan } = await kisiselDokunus(db, katilimciId);
+    const acilis =
       dunkuGozlem > 0
-        ? `Günaydın ${ilkAd}. Dün hakkında ${dunkuGozlem} gözlem yazıldı — görülüyorsun. Bugün gözüm üzerinde. Beni şaşırt.`
-        : `Günaydın ${ilkAd}. Yeni bir gün, temiz bir su. Bugün gözüm üzerinde. Beni şaşırt.`;
+        ? `Günaydın ${ilkAd}. Dün hakkında ${dunkuGozlem} gözlem yazıldı — görülüyorsun.`
+        : `Günaydın ${ilkAd}. Yeni bir gün, temiz bir su.`;
+    const kapanis = alan
+      ? `Bugün ${alan} kasını çalıştır; küçük bir kanıt yeter. Gözüm üzerinde.`
+      : "Bugün gözüm üzerinde. Beni şaşırt.";
+    const metin = `${acilis} ${kapanis}`;
     const yolu = await klonluSeslendirVeYukle(db, katilimciId, "sabah.mp3", metin);
     if (!yolu) return false;
     await db
@@ -280,7 +314,11 @@ export async function fieroSesi(
 ): Promise<boolean> {
   try {
     const ilkAd = ad.split(" ")[0];
-    const metin = `İşte bu, ${ilkAd}! On üzerinden on. Bunu ben yapmadım — sen yaptın; ben sadece suya yansıttım. Bu hissi unutma. Sakın durma.`;
+    const { neden } = await kisiselDokunus(db, katilimciId);
+    const orta = neden
+      ? `Bunu ben yapmadım — sen yaptın. ${neden} için buradasın; işte tam da bu yüzden.`
+      : "Bunu ben yapmadım — sen yaptın; ben sadece suya yansıttım.";
+    const metin = `İşte bu, ${ilkAd}! On üzerinden on. ${orta} Bu hissi unutma. Sakın durma.`;
     const yolu = await klonluSeslendirVeYukle(db, katilimciId, "fiero.mp3", metin);
     return yolu !== null;
   } catch {
@@ -298,7 +336,15 @@ export async function geceSesi(
   bugun: string
 ): Promise<boolean> {
   try {
-    const yolu = await klonluSeslendirVeYukle(db, katilimciId, "gece.mp3", metin);
+    // #6 Kişisel dokunuş: gece fısıltısını kişinin nedeni/zayıf alanıyla mühürle.
+    const { alan, neden } = await kisiselDokunus(db, katilimciId);
+    const ek = neden
+      ? ` Neden buradasın, hatırla: ${neden}`
+      : alan
+        ? ` ${alan} alanın yarın seni bekliyor.`
+        : "";
+    const tamMetin = `${metin}${ek}`.slice(0, 600);
+    const yolu = await klonluSeslendirVeYukle(db, katilimciId, "gece.mp3", tamMetin);
     if (!yolu) return false;
     await db
       .from("voice_profiles")
