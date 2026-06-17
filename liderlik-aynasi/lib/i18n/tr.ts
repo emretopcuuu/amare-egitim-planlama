@@ -2355,6 +2355,11 @@ export const tr = {
     yansimaGonderiliyor: "AYNA bakıyor…",
     yansimaTesekkur: "Bunu görmen bile bir adım. Aklımda tutuyorum. — AYNA",
     yansimaAtla: "Şimdilik geç →",
+    // #6 Seçilen zorluk: adayın görevi kendi isteğiyle zorlaştırması
+    zorlastir: "⬆ Daha ileri git",
+    zorlastiriliyor: "AYNA zoru kuruyor…",
+    zorlastirIpucu: "Hazır hissediyorsan AYNA bu görevi senin için cesurlaştırsın.",
+    zorlastirOlmaz: "Bu görev daha fazla zorlaştırılamaz.",
     // #5 Tanıklı görev: adayın tanık gösterme + tanığın onay/gözlem akışı
     tanikGosterBaslik: "Bunu biri gördü mü?",
     tanikGosterAciklama: "Görevi yanında yapan bir ekip arkadaşını tanık göster — sana bir cümle gözlem bırakır (anonim).",

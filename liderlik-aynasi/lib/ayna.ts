@@ -526,6 +526,53 @@ Kurallar:
   }
 }
 
+// GELİŞTİRME #6 — SEÇİLEN ZORLUK ("daha ileri git"). Aday aktif bir görevi
+// kendi isteğiyle zorlaştırabilir. Dayatılan değil SEÇİLEN meydan okuma çok daha
+// fazla sahiplik ve farkındalık üretir. Aynı tema/tür korunur; ask cesurlaşır.
+export async function gorevZorlastir(
+  gorev: { title: string; body: string; kind: string },
+  yeniZorluk: Zorluk
+): Promise<{ title: string; body: string } | null> {
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+  try {
+    const client = new Anthropic();
+    const yanit = await client.messages.create({
+      model: "claude-opus-4-8",
+      max_tokens: 1024,
+      thinking: { type: "disabled" },
+      output_config: {
+        effort: "low",
+        format: {
+          type: "json_schema",
+          schema: {
+            type: "object",
+            properties: {
+              baslik: { type: "string", description: "Daha cesur görevin kısa başlığı" },
+              govde: { type: "string", description: "Daha cesur görev metni, AYNA'nın ağzından" },
+            },
+            required: ["baslik", "govde"],
+            additionalProperties: false,
+          },
+        },
+      },
+      system: `${PERSONA}\n\n${BASARI_STRATEJISI}\n\nAday bu görevi KENDİ İSTEĞİYLE zorlaştırmak istedi — bu cesareti onurlandır. Aynı temayı ve türü ("${gorev.kind}") koru ama ASK'i belirgin biçimde cesurlaştır: daha yüksek risk, daha görünür, daha çok temas. Yeni zorluk yönergesi: ${ZORLUK_YONERGESI[yeniZorluk]} Görev hâlâ 1-3 saatte yapılabilir ve net olmalı. Gövdeye küçük bir "seçtiğin için" takdiri kat ama abartma.`,
+      messages: [
+        {
+          role: "user",
+          content: JSON.stringify({
+            mevcutGorev: { baslik: gorev.title, metin: gorev.body, tur: gorev.kind },
+          }),
+        },
+      ],
+    });
+    const veri = jsonCoz<{ baslik: string; govde: string }>(yanit);
+    if (!veri?.baslik || !veri.govde) return null;
+    return { title: veri.baslik.slice(0, 120), body: veri.govde.slice(0, 1000) };
+  } catch {
+    return null;
+  }
+}
+
 // ---- Zaman yardımcıları (kamp saati: Europe/Istanbul) ----
 
 export function istanbulSaati(simdi = new Date()): { saat: number; dakika: number } {
