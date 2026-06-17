@@ -2541,6 +2541,17 @@ export const tr = {
     aciklama: "Kampın son gecesi aynaya verdiğin söz — kendi sesinden.",
     dinle: "🎧 Sözünü dinle",
   },
+  hud: {
+    gun: (g: number) => `GÜN ${g}/3`,
+    serbest: "Serbest zaman",
+    kalan: (dk: number) =>
+      dk >= 60 ? `${Math.floor(dk / 60)} sa ${dk % 60} dk` : `${Math.max(0, dk)} dk`,
+    sonra: (dk: number) =>
+      dk >= 60 ? `${Math.floor(dk / 60)} sa sonra` : `${Math.max(0, dk)} dk sonra`,
+    sirada: (ad: string) => `Sırada: ${ad}`,
+    kampaKalan: (g: number) => `Kampa ${g} gün kaldı`,
+    bugunBasliyor: "Kamp bugün başlıyor! 🎉",
+  },
   dusunuyor: {
     baslik: "AYNA düşünüyor…",
     satirlar: [
