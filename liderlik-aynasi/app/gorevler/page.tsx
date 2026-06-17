@@ -10,6 +10,7 @@ import { haftaBaslangici } from "@/lib/momentum";
 import { tr } from "@/lib/i18n/tr";
 import GorevYanitFormu from "./GorevYanitFormu";
 import TanikOnay from "./TanikOnay";
+import ZorlastirButonu from "./ZorlastirButonu";
 import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
 import GunlukCheckin from "@/components/GunlukCheckin";
@@ -281,6 +282,10 @@ export default async function GorevlerPage() {
               />
             ) : (
               <OkuButonu metin={`${g.title}. ${g.body}`} />
+            )}
+            {/* #6 Seçilen zorluk: zorlaştırılabilir türlerde ve üst kademede değilse */}
+            {g.kind !== "soz" && g.kind !== "senkron" && (g.difficulty ?? 2) < 3 && (
+              <ZorlastirButonu gorevId={g.id} />
             )}
             <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} ekip={ekip} />
           </section>
