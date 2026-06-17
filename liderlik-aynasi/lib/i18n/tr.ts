@@ -787,6 +787,11 @@ export const tr = {
     girisBaslik: "Ne düşündüğünü değil, ne yaptığını gösterir",
     girisMetin:
       "Bu bir kişilik testi değil — bir ayna. Amacı seni etiketlemek değil, kampa gelmeden nerede tıkandığını sana göstermek. Gücü tek şeye bağlı: dürüstlüğüne. Acelesi yok; günde birkaç madde yeter.",
+    girisKazanimlar: [
+      "Güçlü alanını ve kör noktanı net göreceksin.",
+      "Kampta sana özel görevler bu cevaplara göre şekillenecek.",
+      "Üç gün sonra ne kadar yol aldığını sayılarla göreceksin.",
+    ],
     girisDevam: "Başla",
     olcek: {
       1: "Hiçbir zaman",
