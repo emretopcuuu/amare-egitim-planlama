@@ -360,6 +360,38 @@ export default async function AynaPage() {
         </section>
       )}
 
+      {/* #5 Kör nokta daralması: açığın dalga-dalga kapanışı */}
+      {rapor.korNoktaYolu && rapor.korNoktaYolu.adimlar.length >= 2 && (
+        <section className="kart-cam rounded-2xl bg-gradient-to-br from-royal/15 to-midnight-card/60 p-5 shadow-xl ring-1 ring-royal-light/30 backdrop-blur">
+          <h2 className="font-semibold text-royal-light">{t.daralmaBaslik}</h2>
+          <p className="mt-1 text-sm text-slate-300">
+            {t.daralmaAciklama(rapor.korNoktaYolu.ad, rapor.korNoktaYolu.oz.toFixed(1))}
+          </p>
+          <ul className="mt-4 space-y-2.5">
+            {rapor.korNoktaYolu.adimlar.map((a) => {
+              const yuzde = Math.min(100, (a.fark / 9) * 100);
+              return (
+                <li key={a.dalga} className="flex items-center gap-3">
+                  <span className="w-20 shrink-0 text-xs text-slate-400">{a.dalgaAd}</span>
+                  <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-amber-400/70 to-royal-light/70"
+                      style={{ width: `${Math.max(4, yuzde)}%` }}
+                    />
+                  </div>
+                  <span className="w-16 shrink-0 text-right text-xs font-semibold text-slate-200">
+                    {t.daralmaAcik(a.fark.toFixed(1))}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-3 text-sm font-medium text-royal-light">
+            {rapor.korNoktaYolu.kapandiMi ? t.daralmaKapandi : t.daralmaDevam}
+          </p>
+        </section>
+      )}
+
       {/* Tahmin vs gerçek */}
       <section className="kart-cam rounded-2xl p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
         <h2 className="font-semibold text-gold-light">{t.tahminBaslik}</h2>
