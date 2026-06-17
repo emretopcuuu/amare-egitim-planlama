@@ -2138,6 +2138,11 @@ export const tr = {
       kaydedildi: "✓ Kaydedildi — AYNA artık buna göre üretir.",
       hata: "Kaydedilemedi. Tekrar dene.",
     },
+    triyaj: {
+      baslik: "Şu an ilgilen",
+      aciklama: "En çok sessizleşen adaylar — birine dokun, 360° kartını aç ve yeniden bağla.",
+      saatOnce: (s: number) => `${s} sa sessiz`,
+    },
     qr: {
       baslik: "QR Giriş Kartları",
       aciklama:
