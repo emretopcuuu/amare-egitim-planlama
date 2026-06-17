@@ -821,6 +821,10 @@ export const tr = {
       "İlk katmanı bitirdin. Kalan adımlar kamp yaklaştıkça açılacak — her gün küçük bir parça.",
     devamBaslik: "Kaldığın yerden devam",
     devamMetin: "Birkaç madde daha işaretle; acelesi yok.",
+    guvenBaslik: "Bir an dur 🪞",
+    guvenMetin:
+      "Cevaplarının çoğu birbirine çok yakın çıktı. Bu ayna ancak dürüstlüğünle çalışır — istersen ilk maddelere bir kez daha, gerçekten yaptığını düşünerek bak.",
+    guvenTekrar: "Maddelere tekrar bak",
     kapaliBaslik: "Henüz başlamadı",
     kapaliMetin: "Ön farkındalık çalışması yakında açılacak. Hazır olduğunda burada olacak.",
   },

@@ -6,7 +6,7 @@ import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import MikrofonButonu from "@/components/MikrofonButonu";
-import { ADIMLAR, adimDolu, SONUC_KARTI } from "@/lib/onFarkindalik";
+import { ADIMLAR, adimDolu, katman1Tutarlilik, SONUC_KARTI } from "@/lib/onFarkindalik";
 
 const t = tr.onFarkindalik;
 const TOPLAM = ADIMLAR.length;
@@ -142,6 +142,19 @@ export default function OnFarkindalikAkis({
           {tamamMi ? t.tamamMetin : t.devamMetin}
         </p>
         <p className="mt-4 text-sm text-slate-400">{t.ilerleme(yapilan, TOPLAM)}</p>
+        {/* #10 Veri dürüstlüğü: düz-çizgi cevap sezilirse nazik, özel bir yansıma */}
+        {katman1Tutarlilik(yanitlar).dusukVaryans && (
+          <div className="mx-auto mt-5 max-w-md rounded-2xl border border-amber-400/30 bg-amber-500/[0.06] p-4 text-left">
+            <p className="text-sm font-semibold text-amber-300">{t.guvenBaslik}</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-300">{t.guvenMetin}</p>
+            <button
+              onClick={() => setAdim(0)}
+              className="mt-3 text-sm font-medium text-amber-300 underline-offset-4 hover:underline"
+            >
+              {t.guvenTekrar} →
+            </button>
+          </div>
+        )}
         {hata && <p role="alert" className="mt-3 text-sm font-medium text-red-400">{hata}</p>}
         <div className="mt-8 space-y-3">
           <button

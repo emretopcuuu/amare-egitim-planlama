@@ -109,6 +109,24 @@ export function katman1Hesapla(
   return { bloklar, enZayif, tamamMi };
 }
 
+// #10 Veri dürüstlüğü: Katman 1 HAM yanıtlarının varyansı. Ters maddeler
+// sayesinde düz-çizgi cevap (hep aynı şık) DÜŞÜK varyans verir — düşünmeden
+// doldurma sinyali. Düşünülmüş, ayrıştırılmış cevap yüksek varyans üretir.
+export function katman1Tutarlilik(
+  yanitlar: Record<string, number>
+): { dolu: number; stdev: number; dusukVaryans: boolean } {
+  const degerler = KATMAN1_MADDELER.map((m) => yanitlar[m.kod]).filter(
+    (v): v is number => v !== undefined
+  );
+  if (degerler.length < KATMAN1_MADDELER.length) {
+    return { dolu: degerler.length, stdev: 1, dusukVaryans: false };
+  }
+  const ort = degerler.reduce((a, b) => a + b, 0) / degerler.length;
+  const varyans = degerler.reduce((a, b) => a + (b - ort) ** 2, 0) / degerler.length;
+  const stdev = Math.sqrt(varyans);
+  return { dolu: degerler.length, stdev: Math.round(stdev * 100) / 100, dusukVaryans: stdev < 0.6 };
+}
+
 // ============================================================================
 // KATMAN 2 — Liderlik Açık Analizi: her başlık için "Önem" (1-10) ve "Son 30
 // günde gerçekte" (1-10). Açık = Önem − Gerçek. En büyük iki açık = kampta
@@ -349,6 +367,8 @@ export function profilHesapla(
 
   return {
     katman1: { bloklar: k1.bloklar, enZayif: k1.enZayif },
+    // #10 Veri dürüstlüğü sinyali (admin/şeffaflık için profile mühürlenir).
+    guven: katman1Tutarlilik(sayilar),
     katman2: { acikar: k2.acikar, enBuyukIki: k2.enBuyukIki },
     katman3: {
       ritim: k3.ritim,
