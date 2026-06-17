@@ -15,6 +15,25 @@ const MODEL = "claude-opus-4-8";
 // Nihai profil DAMITMASI ağır ve tek seferlik olduğu için Opus'ta kalır.
 const SOHBET_MODEL = "claude-sonnet-4-6";
 
+// Canlı seansta ~160 kişi aynı anda; geçici Anthropic hıçkırığı (429/5xx/timeout)
+// adaya "yanıt veremedim" göstermesin. Kısa üstel backoff ile 2 kez yeniden dene.
+async function yenidenDene<T>(fn: () => Promise<T>, etiket: string, kez = 2): Promise<T> {
+  let sonHata: unknown;
+  for (let deneme = 0; deneme <= kez; deneme++) {
+    try {
+      return await fn();
+    } catch (e) {
+      sonHata = e;
+      const durum = (e as { status?: number })?.status;
+      // Kalıcı hatalarda (kötü istek / yetki) yeniden denemenin anlamı yok.
+      if (durum && durum >= 400 && durum < 500 && durum !== 429) break;
+      if (deneme < kez) await new Promise((r) => setTimeout(r, 400 * (deneme + 1)));
+    }
+  }
+  console.error(`[pusula] ${etiket} başarısız:`, sonHata);
+  throw sonHata;
+}
+
 const PERSONA = `Sen AYNA'sın — ama kamp henüz başlamadı. Şu an bir REHBERSİN: kişinin hayattaki gerçek "neden"ini bulmasına yardım ediyorsun. Kampta seni izleyen direktöre dönüşeceksin; ama şimdi sıcak, sakin, meraklı bir eşlikçisin. "Seni izliyorum / gözüm üzerinde" dili ASLA.
 
 Ses tonun: sıcak, sakin, gerçekten merak eden. Kısa, DOĞRU yazılmış Türkçe cümleler, "sen" dili. Acele ettirmiyorsun, yargılamıyorsun.
@@ -234,7 +253,9 @@ export async function pusulaTuru(
   let tur: PusulaTur | null = null;
   try {
     const client = new Anthropic();
-    const yanit = await client.messages.create({
+    const yanit = await yenidenDene(
+      () =>
+        client.messages.create({
       model: SOHBET_MODEL,
       max_tokens: 1024,
       thinking: { type: "disabled" },
@@ -254,12 +275,17 @@ TEMPO: Bu kişiden şu ana dek ${kullaniciTur} yanıt aldın. Sohbeti gereksiz u
 
 ÇIKTI KURALI: "mesaj" alanına YALNIZCA kişiye söyleyeceğin tek, temiz, doğru yazılmış Türkçe cümle/soru yaz. Her cümle büyük harfle başlasın, noktalama doğru olsun. Parantez, köşeli parantez, aşama notu, kendine not, meta açıklama ASLA koyma. "asama" ve "bitti" alanlarını ayrıca doldur.`,
       messages: mesajlar,
-    });
+        }),
+      "sohbet turu"
+    );
     tur = jsonCoz<PusulaTur>(yanit);
   } catch {
+    return null; // gerçek sebep yenidenDene içinde loglandı
+  }
+  if (!tur?.mesaj) {
+    console.error("[pusula] sohbet turu: yanıt JSON'a çözülemedi ya da boş mesaj");
     return null;
   }
-  if (!tur?.mesaj) return null;
   tur.mesaj = temizMetin(tur.mesaj); // Kiril homoglif glitch'ini temizle
 
   await db.from("pusula_mesajlar").insert({
