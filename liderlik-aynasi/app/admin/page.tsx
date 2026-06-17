@@ -35,6 +35,7 @@ import BoslukKontrol from "./BoslukKontrol";
 import MuhurKontrol from "./MuhurKontrol";
 import OdevPaketi from "./OdevPaketi";
 import SonEylemler from "./SonEylemler";
+import TriyajKart from "./TriyajKart";
 import AkisDizisi from "./AkisDizisi";
 import BolumAtla from "./BolumAtla";
 
@@ -269,6 +270,9 @@ export default async function AdminPanel() {
           {oneri.butonEtiket}
         </Link>
       </section>
+
+      {/* UX #1 (2.tur): Komuta triyajı — şu an ilgilenilmesi gereken adaylar */}
+      {tamYetki && <TriyajKart />}
 
       {/* #7 Tıklanır canlı özet — büyük rakamlar (her iki rol) */}
       <CanliOzet
