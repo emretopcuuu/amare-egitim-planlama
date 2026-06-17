@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { pusulaCekirdek } from "@/lib/pusula";
 import { raporHesapla } from "@/lib/rapor";
 import { tr } from "@/lib/i18n/tr";
+import MudahaleKonsolu from "./MudahaleKonsolu";
 
 export const metadata = { title: "Katılımcı 360° — Liderlik Aynası" };
 
@@ -105,6 +106,11 @@ export default async function Kisi360Page({ params }: { params: Promise<{ id: st
         <Metrik etiket={t.takdir} deger={`${takdirSayi ?? 0}`} />
         <Metrik etiket={t.sonHareket} deger={saatGec === null ? "—" : t.saatOnce(saatGec)} vurgu={saatGec !== null && saatGec >= 12} />
       </dl>
+
+      {/* #2 Canlı müdahale konsolu */}
+      <Bolum baslik={tr.admin.mudahale.baslik}>
+        <MudahaleKonsolu hedefId={id} />
+      </Bolum>
 
       {/* Pusula */}
       <Bolum baslik={t.pusulaBaslik}>
