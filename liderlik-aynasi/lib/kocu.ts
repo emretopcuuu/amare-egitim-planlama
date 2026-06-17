@@ -120,11 +120,13 @@ export async function kocuTuru(
     });
   }
 
-  const [gecmis, baglam] = await Promise.all([
+  const [gecmis, baglam, tonAyar] = await Promise.all([
     kocuGecmis(db, katilimci.id),
     kocuBaglam(db, katilimci.id),
+    db.from("settings").select("value").eq("key", "ayna_ek_ton").maybeSingle(),
   ]);
   const ad = katilimci.full_name.split(" ")[0];
+  const ekTon = (tonAyar.data?.value ?? "").trim(); // #10 İçerik Stüdyosu: admin ton ayarı
 
   const mesajlar: Anthropic.MessageParam[] =
     gecmis.length === 0
@@ -155,7 +157,7 @@ Adayın adı: ${ad}.
 ADAY BAĞLAMI (yalnız senin gözün; sessizce kullan, kişinin yüzüne vurma):
 ${JSON.stringify(baglam)}
 
-Yanıtın YALNIZCA adaya söyleyeceğin temiz, doğru yazılmış Türkçe replik olsun. Parantez içi not, aşama etiketi, meta açıklama ASLA koyma.`,
+Yanıtın YALNIZCA adaya söyleyeceğin temiz, doğru yazılmış Türkçe replik olsun. Parantez içi not, aşama etiketi, meta açıklama ASLA koyma.${ekTon ? `\n\nADMIN TON AYARI (üsluba uygula): ${ekTon}` : ""}`,
       messages: mesajlar,
     });
     if (yanit.stop_reason === "refusal") return null;
