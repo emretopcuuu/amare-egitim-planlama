@@ -230,6 +230,58 @@ export type Database = {
           },
         ]
       }
+      gorev_tanik: {
+        Row: {
+          confirmed_at: string | null
+          created_at: string
+          doer_id: string
+          id: string
+          mission_id: string
+          observation: string | null
+          witness_id: string
+        }
+        Insert: {
+          confirmed_at?: string | null
+          created_at?: string
+          doer_id: string
+          id?: string
+          mission_id: string
+          observation?: string | null
+          witness_id: string
+        }
+        Update: {
+          confirmed_at?: string | null
+          created_at?: string
+          doer_id?: string
+          id?: string
+          mission_id?: string
+          observation?: string | null
+          witness_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gorev_tanik_doer_id_fkey"
+            columns: ["doer_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gorev_tanik_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: true
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gorev_tanik_witness_id_fkey"
+            columns: ["witness_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gunluk_checkin: {
         Row: {
           created_at: string

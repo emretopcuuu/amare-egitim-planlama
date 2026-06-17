@@ -31,9 +31,11 @@ type Sonuc = {
 export default function GorevYanitFormu({
   gorevId,
   gorevBaslik,
+  ekip = [],
 }: {
   gorevId: string;
   gorevBaslik?: string;
+  ekip?: { id: string; ad: string }[];
 }) {
   const router = useRouter();
   const [yanit, setYanit] = useState("");
@@ -173,6 +175,10 @@ export default function GorevYanitFormu({
         {!sonuc.bekliyor && !sonuc.soz && !sonuc.senkron && (
           <YansimaKapanisi gorevId={gorevId} />
         )}
+        {/* #5 Tanık göster: görevi yanında gören ekip arkadaşını çağır */}
+        {!sonuc.bekliyor && !sonuc.soz && !sonuc.senkron && ekip.length > 0 && (
+          <TanikGoster gorevId={gorevId} ekip={ekip} />
+        )}
         {/* #4 Kanıt Duvarı: görevi foto kanıtıyla kapat → duvara taşı */}
         {!sonuc.bekliyor && !sonuc.soz && <KanitEkle gorevBaslik={gorevBaslik} />}
         <button
@@ -300,6 +306,72 @@ function YansimaKapanisi({ gorevId }: { gorevId: string }) {
       >
         {t.yansimaAtla}
       </button>
+    </div>
+  );
+}
+
+// #5 Tanık göster: görevi yanında gören bir ekip arkadaşını seç → ona bildirim
+// gider, tek cümlelik gözlemini bırakır (adaya anonim görünür).
+function TanikGoster({
+  gorevId,
+  ekip,
+}: {
+  gorevId: string;
+  ekip: { id: string; ad: string }[];
+}) {
+  const [secili, setSecili] = useState("");
+  const [gonderiliyor, setGonderiliyor] = useState(false);
+  const [bitti, setBitti] = useState(false);
+
+  async function gonder() {
+    if (!secili || gonderiliyor) return;
+    setGonderiliyor(true);
+    try {
+      const res = await fetch("/api/gorev-tanik", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ gorevId, tanikId: secili }),
+      });
+      if (res.ok) {
+        titret([10, 30, 10]);
+        setBitti(true);
+      }
+    } catch {
+    } finally {
+      setGonderiliyor(false);
+    }
+  }
+
+  if (bitti) {
+    return <p className="mt-3 text-xs font-medium text-emerald-400">{t.tanikGonderildi}</p>;
+  }
+  return (
+    <div className="mt-3 rounded-xl border border-royal-light/25 bg-midnight/40 p-3 text-left">
+      <p className="text-sm font-semibold text-slate-100">{t.tanikGosterBaslik}</p>
+      <p className="mt-0.5 text-xs leading-relaxed text-slate-400">{t.tanikGosterAciklama}</p>
+      <div className="mt-2 flex gap-2">
+        <select
+          value={secili}
+          onChange={(e) => setSecili(e.target.value)}
+          disabled={gonderiliyor}
+          className="h-11 flex-1 rounded-xl border border-royal-light/30 bg-midnight-soft px-3 text-sm text-slate-100 outline-none focus:border-gold"
+        >
+          <option value="">{t.tanikSec}</option>
+          {ekip.map((k) => (
+            <option key={k.id} value={k.id}>
+              {k.ad}
+            </option>
+          ))}
+        </select>
+        <button
+          type="button"
+          onClick={gonder}
+          disabled={!secili || gonderiliyor}
+          className="h-11 shrink-0 rounded-xl border border-gold/40 px-4 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-40"
+        >
+          {gonderiliyor ? t.tanikGonderiliyor : t.tanikGonder}
+        </button>
+      </div>
     </div>
   );
 }
