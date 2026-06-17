@@ -15,9 +15,11 @@ const MODEL = "claude-opus-4-8";
 // Nihai profil DAMITMASI ağır ve tek seferlik olduğu için Opus'ta kalır.
 const SOHBET_MODEL = "claude-sonnet-4-6";
 
-// Canlı seansta ~160 kişi aynı anda; geçici Anthropic hıçkırığı (429/5xx/timeout)
-// adaya "yanıt veremedim" göstermesin. Kısa üstel backoff ile 2 kez yeniden dene.
-async function yenidenDene<T>(fn: () => Promise<T>, etiket: string, kez = 2): Promise<T> {
+// Canlı seansta ~160 kişi aynı anda; geçici Anthropic hıçkırığı (429/5xx/529
+// overloaded/timeout) adaya "yanıt veremedim" göstermesin. Üstel backoff ile 3
+// kez yeniden dene; varsa Retry-After başlığına uy. Kalıcı hata (4xx, 429 hariç)
+// yeniden denenmez.
+async function yenidenDene<T>(fn: () => Promise<T>, etiket: string, kez = 3): Promise<T> {
   let sonHata: unknown;
   for (let deneme = 0; deneme <= kez; deneme++) {
     try {
@@ -25,13 +27,40 @@ async function yenidenDene<T>(fn: () => Promise<T>, etiket: string, kez = 2): Pr
     } catch (e) {
       sonHata = e;
       const durum = (e as { status?: number })?.status;
-      // Kalıcı hatalarda (kötü istek / yetki) yeniden denemenin anlamı yok.
       if (durum && durum >= 400 && durum < 500 && durum !== 429) break;
-      if (deneme < kez) await new Promise((r) => setTimeout(r, 400 * (deneme + 1)));
+      if (deneme < kez) {
+        const baz = Math.min(8000, 700 * 2 ** deneme);
+        const ra =
+          Number((e as { headers?: Record<string, string> })?.headers?.["retry-after"]) * 1000;
+        await new Promise((r) => setTimeout(r, ra > 0 ? Math.min(ra, 10000) : baz));
+      }
     }
   }
   console.error(`[pusula] ${etiket} başarısız:`, sonHata);
   throw sonHata;
+}
+
+// Hata ayrıntısını okunabilir + saklanabilir hale getir (KVKK: yalnız teknik bilgi).
+function hataDetay(e: unknown): Record<string, unknown> {
+  const x = e as {
+    status?: number;
+    name?: string;
+    message?: string;
+    error?: { type?: string; message?: string };
+  };
+  return {
+    status: x?.status ?? null,
+    name: x?.name ?? null,
+    type: x?.error?.type ?? null,
+    message: (x?.error?.message ?? x?.message ?? String(e)).slice(0, 300),
+  };
+}
+
+// Gerçek sebebi audit_log'a yaz (Railway loglarına erişmeden teşhis için).
+async function pusulaHataKaydet(db: Db, asama: string, detay: Record<string, unknown>) {
+  try {
+    await db.from("audit_log").insert({ eylem: "pusula_ai_hata", detay: { asama, ...detay } });
+  } catch {}
 }
 
 const PERSONA = `Sen AYNA'sın — ama kamp henüz başlamadı. Şu an bir REHBERSİN: kişinin hayattaki gerçek "neden"ini bulmasına yardım ediyorsun. Kampta seni izleyen direktöre dönüşeceksin; ama şimdi sıcak, sakin, meraklı bir eşlikçisin. "Seni izliyorum / gözüm üzerinde" dili ASLA.
@@ -279,11 +308,19 @@ TEMPO: Bu kişiden şu ana dek ${kullaniciTur} yanıt aldın. Sohbeti gereksiz u
       "sohbet turu"
     );
     tur = jsonCoz<PusulaTur>(yanit);
-  } catch {
-    return null; // gerçek sebep yenidenDene içinde loglandı
-  }
-  if (!tur?.mesaj) {
-    console.error("[pusula] sohbet turu: yanıt JSON'a çözülemedi ya da boş mesaj");
+    if (!tur?.mesaj) {
+      await pusulaHataKaydet(db, "json", {
+        stop_reason: yanit.stop_reason,
+        ham: yanit.content
+          .filter((b) => b.type === "text")
+          .map((b) => b.text)
+          .join("")
+          .slice(0, 300),
+      });
+      return null;
+    }
+  } catch (e) {
+    await pusulaHataKaydet(db, "cagri", hataDetay(e));
     return null;
   }
   tur.mesaj = temizMetin(tur.mesaj); // Kiril homoglif glitch'ini temizle

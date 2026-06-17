@@ -844,13 +844,15 @@ export const tr = {
     onemSoru: "Bu senin için ne kadar değerli? (1 = az · 10 = çok)",
     gercekSoru: "Son 30 günde bunu gerçekte ne kadar yaptın? (1 = hiç · 10 = tam)",
     // Katman 3 (gerçeklik rakamları)
-    sayiAlt: "Görüş değil, rakam. Son 30 günü düşün ve gerçek sayıyı yaz.",
+    sayiAlt: "Görüş değil, rakam — düşün ve gerçek sayıyı yaz.",
     // Katman 4/5 yazılı yanıtlar
     metinYer: "Kısa ve dürüst yaz — bu cevap sana ait.",
     metinAtla: "Şimdilik geç →",
     ilerleme: (yapilan: number, toplam: number) => `${yapilan} / ${toplam}`,
     kaydet: "Kaydet",
     kaydediliyor: "Kaydediliyor…",
+    // Yüzen kaydet düğmesi: kaydedip çıkar, sonra kaldığın yerden devam edersin
+    kaydetDevam: "Kaydet, sonra devam et",
     devam: "Devam",
     geri: "Geri",
     geriDon: "Ana sayfaya dön",
@@ -868,6 +870,15 @@ export const tr = {
       "Cevaplarının çoğu birbirine çok yakın çıktı. Bu ayna ancak dürüstlüğünle çalışır — istersen ilk maddelere bir kez daha, gerçekten yaptığını düşünerek bak.",
     guvenTekrar: "Maddelere tekrar bak",
     gozdenGecir: "← Cevaplarımı gözden geçir",
+    // Gözden geçirme modunda tek tuşla bitiş ekranına dönüş
+    sonaDon: "Sona dön",
+    // Dürüstlük telkinleri — ilerleme eşik geçtiğinde beliren hatırlatma
+    durustlukBaslik: "Bir hatırlatma",
+    durustlukTelkinler: {
+      25: "Çeyreğini geçtin. Unutma: bu ayna ancak sen dürüst oldukça doğruyu gösterir.",
+      50: "Yarı yoldasın. Aynaya değil, kendine dürüst ol — bütün mesele bu.",
+      75: "Az kaldı. Bu çalışmanın değeri, aynada kendine ne kadar dürüst baktığında saklı.",
+    } as Record<number, string>,
     kalanDk: (dk: number) => `~${dk} dk kaldı`,
     kapaliBaslik: "Henüz başlamadı",
     kapaliMetin: "Ön farkındalık çalışması yakında açılacak. Hazır olduğunda burada olacak.",

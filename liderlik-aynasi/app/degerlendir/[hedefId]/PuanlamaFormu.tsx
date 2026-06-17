@@ -6,6 +6,7 @@ import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import { titret, suDalgasi } from "@/lib/his";
 import Avatar from "@/components/Avatar";
+import AynaLogo from "@/components/AynaLogo";
 import MikrofonButonu from "@/components/MikrofonButonu";
 
 type Ozellik = { id: number; name: string; observation_hint: string };
@@ -266,7 +267,7 @@ export default function PuanlamaFormu({
   if (giris) {
     return (
       <div className="flex min-h-[82vh] flex-col justify-center py-8 text-center">
-        <p className="text-5xl">🪞</p>
+        <AynaLogo className="text-4xl" />
         <h1 className="prizma-serif ay-metin mt-5 text-3xl font-semibold leading-tight">
           {tr.puanlama.girisBaslik}
         </h1>

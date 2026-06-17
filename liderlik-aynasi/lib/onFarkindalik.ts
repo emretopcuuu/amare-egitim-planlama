@@ -202,7 +202,7 @@ export function katman3Hesapla(yanitlar: Record<string, number>): {
 export type MetinSoru = { kod: string; metin: string; zorunlu: boolean };
 
 export const KATMAN4_SORULAR: MetinSoru[] = [
-  { kod: "k4.hedef", metin: "Önümüzdeki 12 ayda gerçekten ulaşmak istediğin sonuç ya da rütbe nedir?", zorunlu: true },
+  { kod: "k4.hedef", metin: "Önümüzdeki 12 ayda gerçekten ulaşmak istediğin sonuç ya da kariyer nedir?", zorunlu: true },
   { kod: "k4.ters_davranis", metin: "Bu hedefe ters düşen, yapman gerektiğini bildiğin halde yapmadığın davranış nedir?", zorunlu: true },
   { kod: "k4.kalkan", metin: "Bu davranışı sürdürmek seni neyden koruyor? Hangi korku ya da riski senden uzak tutuyor?", zorunlu: true },
   { kod: "k4.varsayim", metin: "Seni durduran gizli inanç: “Eğer ___ yaparsam, ___ olur.” Bu cümleyi kendine göre tamamla.", zorunlu: true },
@@ -232,7 +232,7 @@ export const KATMAN5C_SORULAR: MetinSoru[] = [
 // ============================================================================
 
 export const SONUC_KARTI: MetinSoru[] = [
-  { kod: "sonuc.guclu", metin: "Güçlü Alanın nedir? Tek cümleyle yaz.", zorunlu: true },
+  { kod: "sonuc.guclu", metin: "Kendini güçlü gördüğün yönler neler? Biraz bunlardan bahset.", zorunlu: true },
   { kod: "sonuc.kor_nokta", metin: "Kör Noktan nedir? Seni en çok zorlayan, fark etmen gereken yanını tek cümleyle yaz.", zorunlu: true },
   { kod: "sonuc.kamp_gorevi", metin: "Kamp Görevin: bu kamp boyunca atacağın, başkalarının da görebileceği iki somut adım.", zorunlu: true },
 ];
