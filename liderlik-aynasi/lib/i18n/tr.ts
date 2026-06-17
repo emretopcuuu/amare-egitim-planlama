@@ -2178,6 +2178,8 @@ export const tr = {
     altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
     aktifYokBaslik: "Şu an görevin yok",
     aktifYok: "AYNA seni izliyor — yeni bir görev her an gelebilir.",
+    bosKocu: "Ayna Koçu'na danış",
+    bosTakdir: "Birine takdir bırak",
     // #4 Günün özeti: gün sonu kapanış kartı
     bugunBaslik: "🌅 Bugünün Özeti",
     bugunOzet: (gorev: number, kivilcim: number, takdir: number) =>
