@@ -27,7 +27,13 @@ type Sonuc = {
 
 // Görev yanıtı: gönderim AYNA'nın anlık puanını bekler (5-15 sn) —
 // "canlı yapay zekâ" hissinin kalbi bu bekleyiştir.
-export default function GorevYanitFormu({ gorevId }: { gorevId: string }) {
+export default function GorevYanitFormu({
+  gorevId,
+  gorevBaslik,
+}: {
+  gorevId: string;
+  gorevBaslik?: string;
+}) {
   const router = useRouter();
   const [yanit, setYanit] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
@@ -162,6 +168,8 @@ export default function GorevYanitFormu({ gorevId }: { gorevId: string }) {
             )}
           </>
         )}
+        {/* #4 Kanıt Duvarı: görevi foto kanıtıyla kapat → duvara taşı */}
+        {!sonuc.bekliyor && !sonuc.soz && <KanitEkle gorevBaslik={gorevBaslik} />}
         <button
           onClick={() => router.refresh()}
           className="mt-4 text-xs text-royal-light underline-offset-4 hover:underline"
@@ -210,5 +218,54 @@ export default function GorevYanitFormu({ gorevId }: { gorevId: string }) {
         </button>
       </div>
     </form>
+  );
+}
+
+// #4 Kanıt Duvarı: tamamlanan görevi bir fotoğrafla kanıtla. Mevcut foto
+// pipeline'ını (moderasyon → duvar → büyük ekran) görev-etiketli altyazıyla kullanır.
+function KanitEkle({ gorevBaslik }: { gorevBaslik?: string }) {
+  const [durum, setDurum] = useState<"idle" | "yukleniyor" | "bitti" | "hata">("idle");
+  const dosyaRef = useRef<HTMLInputElement>(null);
+
+  async function sec(e: React.ChangeEvent<HTMLInputElement>) {
+    const dosya = e.target.files?.[0];
+    if (!dosya) return;
+    setDurum("yukleniyor");
+    try {
+      const fd = new FormData();
+      fd.append("foto", dosya);
+      fd.append("altYazi", gorevBaslik ? `${t.kanitAltYazi}: ${gorevBaslik}` : t.kanitAltYazi);
+      const r = await fetch("/api/foto", { method: "POST", body: fd });
+      setDurum(r.ok ? "bitti" : "hata");
+      if (r.ok) titret([10, 30, 10]);
+    } catch {
+      setDurum("hata");
+    }
+  }
+
+  if (durum === "bitti") {
+    return <p className="mt-3 text-xs font-medium text-emerald-400">{t.kanitGonderildi}</p>;
+  }
+  return (
+    <div className="mt-3">
+      <input
+        ref={dosyaRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={sec}
+      />
+      <button
+        type="button"
+        onClick={() => dosyaRef.current?.click()}
+        disabled={durum === "yukleniyor"}
+        className="mx-auto flex h-11 items-center justify-center gap-2 rounded-xl border border-gold/40 px-4 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-50"
+      >
+        {durum === "yukleniyor" ? t.kanitYukleniyor : `📸 ${t.kanitEkle}`}
+      </button>
+      {durum === "idle" && <p className="mt-1.5 text-[0.65rem] text-slate-500">{t.kanitIpucu}</p>}
+      {durum === "hata" && <p className="mt-1 text-xs text-red-400">{t.hata}</p>}
+    </div>
   );
 }

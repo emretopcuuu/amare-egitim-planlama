@@ -214,7 +214,7 @@ export default async function GorevlerPage() {
             ) : (
               <OkuButonu metin={`${g.title}. ${g.body}`} />
             )}
-            <GorevYanitFormu gorevId={g.id} />
+            <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
           </section>
         ))
       )}
