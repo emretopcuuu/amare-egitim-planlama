@@ -189,6 +189,13 @@ export default function OnFarkindalikAkis({
               {t.devam}
             </button>
           )}
+          {/* UX #5: korkusuz düzeltme — her an başa dönüp cevapları gözden geçir */}
+          <button
+            onClick={() => setAdim(0)}
+            className="flex h-11 w-full items-center justify-center text-sm text-slate-500 underline-offset-4 hover:text-slate-300 hover:underline"
+          >
+            {t.gozdenGecir}
+          </button>
         </div>
       </div>
     );
