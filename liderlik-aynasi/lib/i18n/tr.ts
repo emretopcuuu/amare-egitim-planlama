@@ -245,6 +245,8 @@ export const tr = {
   },
   // #3 Ben / Kimlik Merkezi
   ben: {
+    yolculukBaslik: "Yolculuğun",
+    yolculukYok: "Yolculuğun henüz başlıyor. İlk adımını attığında burada belirecek.",
     statGorev: "Görev",
     statTakdir: "Takdir",
     statCheckin: "Check-in",
