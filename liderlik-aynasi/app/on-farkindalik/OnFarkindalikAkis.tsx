@@ -7,6 +7,7 @@ import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import MikrofonButonu from "@/components/MikrofonButonu";
 import Konfeti from "@/components/Konfeti";
+import YaziBoyu from "@/components/YaziBoyu";
 import { ADIMLAR, adimDolu, katman1Tutarlilik, SONUC_KARTI } from "@/lib/onFarkindalik";
 
 const t = tr.onFarkindalik;
@@ -141,6 +142,10 @@ export default function OnFarkindalikAkis({
         >
           {t.girisDevam}
         </button>
+        {/* UX #6: yaş-dostu — uzun çalışmaya başlamadan yazı boyutunu ayarla */}
+        <div className="mx-auto mt-6 w-full max-w-md">
+          <YaziBoyu />
+        </div>
       </div>
     );
   }
