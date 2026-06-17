@@ -179,6 +179,8 @@ export default function OnFarkindalikAkis({
 
   const a = ADIMLAR[adim];
   const yuzde = Math.round((Math.min(adim + 1, TOPLAM) / TOPLAM) * 100);
+  // UX #2: kalan süre tahmini (~12 sn/adım) — görünür bitiş çizgisi tamamlamayı artırır.
+  const kalanDk = Math.max(1, Math.round(((TOPLAM - adim) * 12) / 60));
 
   return (
     <div className="flex min-h-[82vh] flex-col">
@@ -208,7 +210,10 @@ export default function OnFarkindalikAkis({
             </button>
           </div>
         </div>
-        <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-gold-light/80">{a.grup}</p>
+        <div className="mt-3 flex items-center justify-between">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gold-light/80">{a.grup}</p>
+          <p className="text-xs text-slate-500">{t.kalanDk(kalanDk)}</p>
+        </div>
         <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-300"
