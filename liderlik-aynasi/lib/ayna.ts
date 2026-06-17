@@ -361,6 +361,60 @@ export async function gorevPuanla(
   }
 }
 
+// GELİŞTİRME #1 — YANSIMA KAPANIŞI. Görev puanlandıktan sonra adaydan tek
+// cümlelik bir iç-yansıma alınır ("ne zorladı, ne değişti?"). AYNA bunu okuyup
+// kişinin kör noktasıyla SESSİZ bir bağ kurar ve tek, sıcak cümleyle geri
+// yansıtır — kör noktayı adıyla koymadan. Görevi "yapılan iş"ten "görülen
+// içgörü"ye çeviren adım budur. Serbest metin, hızlı model.
+export async function gorevYansit(
+  db: Db,
+  pid: string,
+  gorev: { title: string; body: string; kind: string },
+  yanitMetni: string,
+  yansimaMetni: string
+): Promise<string | null> {
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+  const onFarkindalik = await onFarkindalikOzeti(db, pid);
+
+  try {
+    const client = new Anthropic();
+    const yanit = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 256,
+      thinking: { type: "disabled" },
+      output_config: { effort: "low" },
+      system: `${PERSONA}
+
+Az önce aday bir görevi tamamladı ve ardından "bunu yaparken içinde ne zorladı, ne değişti?" sorusuna kısa bir iç-yansıma yazdı. Senin işin: bu yansımayı okuyup ona TEK bir sıcak Türkçe cümleyle ayna tut.
+
+Kurallar:
+- YALNIZCA tek bir cümle. Liste yok, soru sorma, parantez/meta not yok.
+- Aşağıdaki "korNokta/enZayifAlan" bilgisini SESSİZCE kullan: yansımasının onun örüntüsüyle bağını ima et ama kör noktayı/zayıf alanı ASLA adıyla söyleme, klinik olma, yargılama.
+- Onu küçük bir içgörüyle onurlandır: "şunu fark etmen önemli" hissi ver, öğüt verme.
+${onFarkindalik ? `\nADAYIN AYNA PROFİLİ (yalnız senin gözün): ${JSON.stringify(onFarkindalik)}` : ""}`,
+      messages: [
+        {
+          role: "user",
+          content: JSON.stringify({
+            gorev: { baslik: gorev.title, metin: gorev.body, tur: gorev.kind },
+            yaptigi: yanitMetni,
+            yansimasi: yansimaMetni,
+          }),
+        },
+      ],
+    });
+    if (yanit.stop_reason === "refusal") return null;
+    const metin = yanit.content
+      .filter((b) => b.type === "text")
+      .map((b) => b.text)
+      .join("")
+      .trim();
+    return metin ? metin.slice(0, 400) : null;
+  } catch {
+    return null;
+  }
+}
+
 // ---- Zaman yardımcıları (kamp saati: Europe/Istanbul) ----
 
 export function istanbulSaati(simdi = new Date()): { saat: number; dakika: number } {

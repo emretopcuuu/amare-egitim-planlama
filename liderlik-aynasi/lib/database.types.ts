@@ -515,6 +515,9 @@ export type Database = {
           issued_at: string
           kind: string
           participant_id: string
+          reflected_at: string | null
+          reflection_reply: string | null
+          reflection_text: string | null
           reminded_at: string | null
           responded_at: string | null
           response_text: string | null
@@ -535,6 +538,9 @@ export type Database = {
           issued_at?: string
           kind: string
           participant_id: string
+          reflected_at?: string | null
+          reflection_reply?: string | null
+          reflection_text?: string | null
           reminded_at?: string | null
           responded_at?: string | null
           response_text?: string | null
@@ -555,6 +561,9 @@ export type Database = {
           issued_at?: string
           kind?: string
           participant_id?: string
+          reflected_at?: string | null
+          reflection_reply?: string | null
+          reflection_text?: string | null
           reminded_at?: string | null
           responded_at?: string | null
           response_text?: string | null
