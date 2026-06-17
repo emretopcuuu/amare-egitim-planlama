@@ -6,6 +6,7 @@ import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import MikrofonButonu from "@/components/MikrofonButonu";
+import Konfeti from "@/components/Konfeti";
 import { ADIMLAR, adimDolu, katman1Tutarlilik, SONUC_KARTI } from "@/lib/onFarkindalik";
 
 const t = tr.onFarkindalik;
@@ -49,6 +50,12 @@ export default function OnFarkindalikAkis({
     () => ADIMLAR.filter((a) => adimDolu(a, yanitlar, metinler)).length,
     [yanitlar, metinler]
   );
+
+  // UX #3: tüm çalışma tamamlanınca mikro-kutlama (haptik) — momentum hissi.
+  const tumuBitti = adim >= TOPLAM && yapilan === TOPLAM;
+  useEffect(() => {
+    if (tumuBitti) titret([15, 40, 15, 40, 30]);
+  }, [tumuBitti]);
 
   function ilerle() {
     setSayiGirdi("");
@@ -134,6 +141,7 @@ export default function OnFarkindalikAkis({
     const tamamMi = yapilan === TOPLAM;
     return (
       <div className="flex min-h-[82vh] flex-col justify-center py-8 text-center">
+        {tamamMi && <Konfeti />}
         <p className="text-5xl">{tamamMi ? "🪞" : "💾"}</p>
         <h1 className="prizma-serif ay-metin mt-5 text-3xl font-semibold leading-tight">
           {tamamMi ? t.tamamBaslik : t.devamBaslik}
