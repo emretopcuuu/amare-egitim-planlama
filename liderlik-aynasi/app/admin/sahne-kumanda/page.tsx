@@ -14,10 +14,19 @@ export default async function SahneKumandaPage() {
   if (!session || session.rol !== "admin") redirect("/admin/giris");
 
   const db = supabaseAdmin();
-  const [{ data: aynaAyar }, { data: dalgalar }] = await Promise.all([
+  const [{ data: aynaAyar }, { data: dalgalar }, { data: vitrinAyar }] = await Promise.all([
     db.from("settings").select("value").eq("key", "ayna_aktif").maybeSingle(),
     db.from("waves").select("id, name, is_open").order("id"),
+    db.from("settings").select("value").eq("key", "sahne_slayt").maybeSingle(),
   ]);
+
+  // Sabit slayt indeksi (taze kontrolü ekran tarafında; burada sadece görsel ipucu)
+  let vitrin: number | null = null;
+  const vh = vitrinAyar?.value;
+  if (vh && vh !== "-") {
+    const idx = Number(vh.slice(0, vh.indexOf("|")));
+    if (Number.isInteger(idx)) vitrin = idx;
+  }
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
@@ -30,6 +39,7 @@ export default async function SahneKumandaPage() {
       </div>
       <SahneKumanda
         aynaAktif={aynaAyar?.value === "true"}
+        vitrin={vitrin}
         dalgalar={(dalgalar ?? []).map((d) => ({
           id: d.id,
           ad: d.name,

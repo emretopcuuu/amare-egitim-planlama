@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.admin.yetkisiz }, { status: 403 });
   }
 
-  let govde: { eylem?: string; metin?: string };
+  let govde: { eylem?: string; metin?: string; slayt?: number | null };
   try {
     govde = await req.json();
   } catch {
@@ -35,6 +35,22 @@ export async function POST(req: Request) {
       updated_at: simdi,
     });
     await herkeseBildir(db, "📣 Duyuru", metin, "/");
+    return Response.json({ ok: true });
+  }
+
+  // 1b) SAHNE VİTRİNİ (DJ): büyük ekranı belirli bir slayda sabitle ya da
+  // serbest bırak. "<index>|<ts>" sabit; "-" otomatik döngü. Ekran bunu yoklar.
+  if (govde.eylem === "vitrin") {
+    const s = govde.slayt;
+    const deger =
+      typeof s === "number" && Number.isInteger(s) && s >= 0 && s < 5
+        ? `${s}|${simdi}`
+        : "-";
+    await db.from("settings").upsert({
+      key: "sahne_slayt",
+      value: deger,
+      updated_at: simdi,
+    });
     return Response.json({ ok: true });
   }
 

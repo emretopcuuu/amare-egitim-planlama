@@ -1850,6 +1850,18 @@ export const tr = {
       dalgaAc: "Aç",
       dalgaKapat: "Kapat",
       dalgaAcik: "açık",
+      vitrinBaslik: "🎚 Sahne Vitrini (DJ)",
+      vitrinAciklama:
+        "Büyük ekran normalde slaytlar arasında döner. Bir slayda bas → ekran orada kilitlenir (örn. ödül anında Kıvılcım Ligi'nde tut). 'Otomatik'e dön ile döngü sürer.",
+      vitrinSlaytlar: [
+        "📊 Nabız (sayaçlar)",
+        "🕸️ Takım Kimyası ağı",
+        "💪 Kampın Kasları",
+        "⚡ Kıvılcım Ligi",
+        "📸 Anı Duvarı",
+      ],
+      vitrinSabit: "sabit",
+      vitrinOtomatik: "Otomatik döngüye dön",
       acilBaslik: "🛑 Acil Durdur",
       acilAciklama:
         "AYNA'yı duraklatır VE açık tüm dalgaları kapatır. Bir şeyler ters gittiğinde tek dokunuş.",
