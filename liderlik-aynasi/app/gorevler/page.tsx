@@ -11,6 +11,7 @@ import { tr } from "@/lib/i18n/tr";
 import GorevYanitFormu from "./GorevYanitFormu";
 import TanikOnay from "./TanikOnay";
 import ZorlastirButonu from "./ZorlastirButonu";
+import HafifletButonu from "./HafifletButonu";
 import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
 import GunlukCheckin from "@/components/GunlukCheckin";
@@ -286,6 +287,10 @@ export default async function GorevlerPage() {
             {/* #6 Seçilen zorluk: zorlaştırılabilir türlerde ve üst kademede değilse */}
             {g.kind !== "soz" && g.kind !== "senkron" && (g.difficulty ?? 2) < 3 && (
               <ZorlastirButonu gorevId={g.id} />
+            )}
+            {/* #8 Duygusal güvenlik: "ağır geldi" → yumuşat (söz/senkron hariç) */}
+            {g.kind !== "soz" && g.kind !== "senkron" && (
+              <HafifletButonu gorevId={g.id} />
             )}
             <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} ekip={ekip} />
           </section>

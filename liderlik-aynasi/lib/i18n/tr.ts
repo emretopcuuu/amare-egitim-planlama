@@ -2355,6 +2355,9 @@ export const tr = {
     yansimaGonderiliyor: "AYNA bakıyor…",
     yansimaTesekkur: "Bunu görmen bile bir adım. Aklımda tutuyorum. — AYNA",
     yansimaAtla: "Şimdilik geç →",
+    // #8 Duygusal güvenlik: görevi "ağır geldi" diye hafifletme
+    hafiflet: "Bu bana şu an ağır geldi",
+    hafifletiliyor: "AYNA yumuşatıyor…",
     // #6 Seçilen zorluk: adayın görevi kendi isteğiyle zorlaştırması
     zorlastir: "⬆ Daha ileri git",
     zorlastiriliyor: "AYNA zoru kuruyor…",
