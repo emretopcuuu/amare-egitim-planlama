@@ -22,6 +22,7 @@ type Sonuc = {
   toplam?: number;
   unvan?: string;
   soz?: boolean;
+  senkron?: boolean;
   bekliyor?: boolean;
 };
 
@@ -168,6 +169,10 @@ export default function GorevYanitFormu({
             )}
           </>
         )}
+        {/* #1 Yansıma Kapanışı: görülen içgörü — foto kanıtından önce gelir */}
+        {!sonuc.bekliyor && !sonuc.soz && !sonuc.senkron && (
+          <YansimaKapanisi gorevId={gorevId} />
+        )}
         {/* #4 Kanıt Duvarı: görevi foto kanıtıyla kapat → duvara taşı */}
         {!sonuc.bekliyor && !sonuc.soz && <KanitEkle gorevBaslik={gorevBaslik} />}
         <button
@@ -218,6 +223,84 @@ export default function GorevYanitFormu({
         </button>
       </div>
     </form>
+  );
+}
+
+// #1 Yansıma Kapanışı: görev puanlandıktan sonra tek cümlelik iç-yansıma.
+// AYNA bunu okuyup kör noktayla sessiz bağ kurarak tek cümleyle ayna tutar —
+// görevi "yapılan iş"ten "görülen içgörü"ye çeviren an.
+function YansimaKapanisi({ gorevId }: { gorevId: string }) {
+  const [metin, setMetin] = useState("");
+  const [gonderiliyor, setGonderiliyor] = useState(false);
+  const [yansit, setYansit] = useState<string | null>(null);
+  const [atlandi, setAtlandi] = useState(false);
+
+  async function gonder() {
+    if (gonderiliyor || metin.trim().length < 2) return;
+    setGonderiliyor(true);
+    try {
+      const res = await fetch("/api/gorev-yansima", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ gorevId, yansima: metin.trim() }),
+      });
+      const veri = await res.json().catch(() => null);
+      if (res.ok && veri?.yansit) {
+        titret([12, 40, 12]);
+        setYansit(veri.yansit);
+      } else {
+        setYansit(t.yansimaTesekkur);
+      }
+    } catch {
+      setYansit(t.yansimaTesekkur);
+    } finally {
+      setGonderiliyor(false);
+    }
+  }
+
+  if (atlandi) return null;
+  if (yansit) {
+    return (
+      <div className="mt-4 rounded-xl border border-royal-light/25 bg-midnight/40 p-4 text-left">
+        <p className="text-sm italic leading-relaxed text-gold-light">“{yansit}”</p>
+      </div>
+    );
+  }
+  return (
+    <div className="mt-4 rounded-xl border border-royal-light/25 bg-midnight/40 p-4 text-left">
+      <p className="text-sm font-semibold text-slate-100">{t.yansimaBaslik}</p>
+      <p className="mt-1 text-sm leading-relaxed text-slate-300">{t.yansimaSoru}</p>
+      <textarea
+        value={metin}
+        onChange={(e) => setMetin(e.target.value)}
+        rows={2}
+        maxLength={800}
+        disabled={gonderiliyor}
+        placeholder={t.yansimaYer}
+        className="mt-2 w-full rounded-xl border border-royal-light/30 bg-midnight-soft p-3 text-base text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
+      />
+      <div className="mt-2 flex items-center gap-2">
+        <MikrofonButonu
+          disabled={gonderiliyor}
+          onMetin={(parca) => setMetin((y) => (y.trim() ? `${y.trim()} ${parca}` : parca))}
+        />
+        <button
+          type="button"
+          onClick={gonder}
+          disabled={metin.trim().length < 2 || gonderiliyor}
+          className="h-11 flex-1 btn-3d rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {gonderiliyor ? t.yansimaGonderiliyor : t.yansimaGonder}
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={() => setAtlandi(true)}
+        className="mt-2 text-xs text-slate-500 underline-offset-4 hover:underline"
+      >
+        {t.yansimaAtla}
+      </button>
+    </div>
   );
 }
 
