@@ -593,6 +593,7 @@ export type Database = {
           ai_comment: string | null
           ai_score: number | null
           body: string
+          carried_at: string | null
           difficulty: number
           due_at: string
           id: string
@@ -617,6 +618,7 @@ export type Database = {
           ai_comment?: string | null
           ai_score?: number | null
           body: string
+          carried_at?: string | null
           difficulty?: number
           due_at: string
           id?: string
@@ -641,6 +643,7 @@ export type Database = {
           ai_comment?: string | null
           ai_score?: number | null
           body?: string
+          carried_at?: string | null
           difficulty?: number
           due_at?: string
           id?: string

@@ -767,6 +767,8 @@ export const tr = {
   plan: {
     baslik: "90 Günlük Yolculuğun",
     altBaslik: "Kamp burada bitmiyor — asıl yolculuk şimdi başlıyor.",
+    tasidiklarimBaslik: "Kamptan Taşıdıklarım",
+    tasidiklarimAlt: "Görevlerde fark ettiğin, 90 güne taşımayı seçtiğin içgörüler.",
     taahhutBaslik: "Kendine verdiğin söz (Sonuç Kartı)",
     gucluEtiket: "Güçlü alanın",
     korNoktaEtiket: "Kör noktan",
@@ -2355,6 +2357,10 @@ export const tr = {
     yansimaGonderiliyor: "AYNA bakıyor…",
     yansimaTesekkur: "Bunu görmen bile bir adım. Aklımda tutuyorum. — AYNA",
     yansimaAtla: "Şimdilik geç →",
+    // #9 Taahhüt köprüsü: yansımayı 90 günlük plana taşı
+    tasiButon: "↗ Bunu 90 güne taşı",
+    tasiniyor: "Taşınıyor…",
+    tasindiNot: "✓ Plana taşındı — kamptan sonra da yanında.",
     // #8 Duygusal güvenlik: görevi "ağır geldi" diye hafifletme
     hafiflet: "Bu bana şu an ağır geldi",
     hafifletiliyor: "AYNA yumuşatıyor…",
