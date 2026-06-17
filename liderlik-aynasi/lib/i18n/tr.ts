@@ -2247,7 +2247,7 @@ export const tr = {
       "Safari'de paylaş düğmesine bas → \"Ana Ekrana Ekle\". Sonra uygulamayı ana ekrandan açıp bildirimlere izin ver — görevlerin cebine düşsün.",
     izinBaslik: "🔔 AYNA seni dürtebilsin mi?",
     izinAciklama:
-      "Görevler, program duyuruları ve fısıltılar bildirim olarak gelir. İzin vermezsen görevleri uygulamadan takip etmen gerekir.",
+      "AYNA görevlerini, program anlarını ve sana özel fısıltıları bildirimle ulaştırır — kampta bir an bile kaçırma. Gece seni rahatsız etmez (AYNA da uyur) ve istediğin an tek dokunuşla kapatabilirsin.",
     izinVer: "Bildirimlere İzin Ver",
     izinVerildi: "🔔 AYNA seninle — bildirimler açık.",
     izinReddedildi:
