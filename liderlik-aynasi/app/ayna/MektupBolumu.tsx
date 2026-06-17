@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import KonusanYansima from "@/components/KonusanYansima";
+import AynaDusunuyor from "@/components/AynaDusunuyor";
 
 const t = tr.mektup;
 
@@ -59,6 +60,9 @@ export default function MektupBolumu({
             />
           )}
         </>
+      ) : yukleniyor ? (
+        // UX #7: boş "Hazırlanıyor…" yerine canlı "AYNA düşünüyor" anı
+        <AynaDusunuyor satirlar={tr.dusunuyor.mektup} />
       ) : (
         <div className="mt-4 text-center">
           {hata && (
@@ -68,10 +72,9 @@ export default function MektupBolumu({
           )}
           <button
             onClick={olustur}
-            disabled={yukleniyor}
             className="btn-3d rounded-xl bg-gold px-5 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {yukleniyor ? t.hazirlaniyor : t.olustur}
+            {t.olustur}
           </button>
         </div>
       )}

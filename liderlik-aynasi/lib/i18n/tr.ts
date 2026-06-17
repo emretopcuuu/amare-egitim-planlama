@@ -2541,6 +2541,22 @@ export const tr = {
     aciklama: "Kampın son gecesi aynaya verdiğin söz — kendi sesinden.",
     dinle: "🎧 Sözünü dinle",
   },
+  dusunuyor: {
+    baslik: "AYNA düşünüyor…",
+    satirlar: [
+      "Verilerini okuyorum…",
+      "Kelimeleri tartıyorum…",
+      "Sana özel bir şey hazırlıyorum…",
+      "Neredeyse oldu…",
+    ],
+    mektup: [
+      "Puanlarını okuyorum…",
+      "Sana yazılan satırları topluyorum…",
+      "Kör noktanı ışığa tutuyorum…",
+      "Mektubunu kaleme alıyorum…",
+      "Son mührü vuruyorum…",
+    ],
+  },
   mektup: {
     dinle: "🎧 Mektubunu aynandan dinle",
     izle: "🌊 Mektup Filmi'ni izle — yansıman okuyor",
