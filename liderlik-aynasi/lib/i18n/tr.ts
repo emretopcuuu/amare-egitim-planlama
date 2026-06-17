@@ -9,6 +9,20 @@ export const tr = {
     cevrimdisi: "İnternet yok — verilerin bu cihazda güvende. Bağlanınca otomatik gönderilecek.",
     geriGeldi: "İnternet geri geldi ✓",
   },
+  // Tutarlı durum dili (#10 UX): boş ve hata ekranları aynı sıcak dili konuşur.
+  durum: {
+    bos: {
+      simge: "🪞",
+      baslik: "Henüz bir şey yok",
+      metin: "Burası birazdan canlanacak — sen adımını attıkça dolacak.",
+    },
+    hata: {
+      simge: "🌫",
+      baslik: "Bir şeyler ters gitti",
+      metin: "Bağlantı ya da bizden kaynaklı küçük bir pürüz olabilir. Verilerin güvende — bir an sonra tekrar dene.",
+    },
+    tekrar: "Tekrar dene",
+  },
   // İnsanca hata & boş durumlar: asla teknik metin / boş ekran (#6)
   hata: {
     simge: "🪞",
