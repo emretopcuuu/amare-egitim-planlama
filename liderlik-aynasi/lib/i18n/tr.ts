@@ -710,6 +710,10 @@ export const tr = {
     adimYuzSure: "~1 dk",
     adimTamam: "Tamamlandı",
     siradaki: "Sıradaki",
+    // Adım adım hazırlık akışı
+    hazirlikAdimEtiket: (s: number, n: number) => `Adım ${s} / ${n}`,
+    hazirlikGec: "Şimdilik geç",
+    hazirlikGeriDon: "↺ Hazırlık adımlarına dön",
     bildirimBaslik: "Hatırlatmaları aç",
     hazirlikBekle:
       "Hazırsın. Kampın geri kalanı, oraya gelip odandaki kodu okuttuğunda açılacak. O ana dek dinlen.",
