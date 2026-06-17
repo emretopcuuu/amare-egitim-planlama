@@ -17,6 +17,9 @@ export type Form = {
   teslimOrani: number;
   /** Son görevlerden en az biri süresi dolarak mı kapandı? */
   sonSuresiDoldu: boolean;
+  /** Aday takılıyor/sessizleşiyor mu (üst üste süresi dolmuş görevler). true ise
+   * tırmanan zorluk yerine sıcak, yeniden-bağlayan hafif görev verilir. */
+  kayan?: boolean;
 };
 
 /**
@@ -24,6 +27,8 @@ export type Form = {
  * iddialı görev. Eşikler simülasyonla doğrulanır (scripts/simulasyon.ts).
  */
 export function zorlukSec(f: Form): Zorluk {
+  // Takılan adayı zorlama: yeniden bağlanması için garantili küçük bir zafer.
+  if (f.kayan) return 1;
   const dusukForm =
     f.sonSuresiDoldu ||
     f.teslimOrani < 0.5 ||
