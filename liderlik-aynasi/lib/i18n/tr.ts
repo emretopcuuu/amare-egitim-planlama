@@ -963,6 +963,7 @@ export const tr = {
       test: "Prova",
       kurulum: "Kurulum",
       analiz: "Analiz",
+      takim: "Takım Sağlığı",
       duyuru: "Duyuru",
       sunum: "Sunum",
       gorevTuru: "Görev Türleri",
@@ -2091,6 +2092,15 @@ export const tr = {
         sayi !== null ? `✓ ${hedef} (${sayi} kişi) gönderildi.` : `✓ ${hedef} gönderildi.`,
       takimBos: "Bu takımda kimse yok.",
       hata: "Gönderilemedi. Başlık ve mesaj dolu mu?",
+    },
+    takimSagligi: {
+      baslik: "🩺 Takım Sağlığı",
+      aciklama: "Her takımın tek sağlık skoru: katılım + momentum + görev teslimi + kayma. En zayıftan başlayıp müdahale et.",
+      takimYok: "Henüz takım yok.",
+      uye: "Kampta",
+      momentum: "Momentum",
+      teslim: "Teslim",
+      kayan: "Kayan",
     },
     qr: {
       baslik: "QR Giriş Kartları",
