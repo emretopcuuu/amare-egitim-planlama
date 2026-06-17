@@ -1,5 +1,4 @@
 // FAZ E — Elmas Seçim Skoru (Diamond). YALNIZCA ADMIN; katılımcıya asla gösterilmez.
-//
 // Ön Farkındalık + Mini 360 verisinden, kampta üzerine yatırım yapılacak yüksek
 // potansiyelli liderleri ("Elmas adayı") bulmak için tek bir skor üretir.
 //
@@ -12,6 +11,8 @@
 //  • Tutarlılık çarpanı: kişi kendini ekibinin gördüğünden belirgin yüksek puanlıyorsa
 //    (ölçülmüş kör nokta) skor düşer — kendini göremeyen lider seçim riskidir.
 //  • Saf fonksiyon; veri okuma çağıranda. Böylece test edilebilir, sunucu/istemci nötr.
+
+import { KATMAN1_MADDE_SAYISI } from "@/lib/onFarkindalik";
 
 export type OFProfil = {
   katman1?: { bloklar?: { kod?: string; puan?: number }[]; enZayif?: string | null };
@@ -59,14 +60,9 @@ const ADAY_TAMLIK = 0.6; // en az bu kadar alt-skor dolu olmalı
 // gerçek lider çıktısı olduğu için daha ağır.
 const URETIM_AGIRLIK: Record<string, number> = {
   "k3.ilk_gorusme": 1,
-  "k3.takip_gorusme": 1,
-  "k3.birebir_kocluk": 1,
-  "k3.lider_gelistirme": 1.5,
-  "k3.hedef_koydurma": 1,
-  "k3.etkinlige_tasima": 1.5,
+  "k3.birebir_kocluk": 1.5,
   "k3.yeni_ortak": 3,
   "k3.silver": 5,
-  "k3.gold": 8,
 };
 
 const RITIM_PUAN: Record<string, number> = { duzenli: 100, patlayan: 45, belirsiz: 25 };
@@ -123,12 +119,14 @@ function ogrenmeHam(p: OFProfil): number | null {
   return parts.length ? parts.reduce((a, b) => a + b, 0) : null;
 }
 
+// Katman 1 azamisi madde sayısından türetilir (set kısalsa eşik kendiliğinden uyar).
+const K1_MIN = KATMAN1_MADDE_SAYISI; // her madde en az 1
+const K1_MAX = KATMAN1_MADDE_SAYISI * 5; // en çok 5
 function k1Skor(p: OFProfil): number | null {
   const b = p.katman1?.bloklar;
   if (!b || b.length < 3) return null;
   const toplam = b.reduce((t, x) => t + (typeof x.puan === "number" ? x.puan : 0), 0);
-  // 3 blok × (10-50) → 30-150 aralığı 0-100'e.
-  return kelepce(((toplam - 30) / 120) * 100, 0, 100);
+  return kelepce(((toplam - K1_MIN) / (K1_MAX - K1_MIN)) * 100, 0, 100);
 }
 
 function k2Skor(p: OFProfil): number | null {
