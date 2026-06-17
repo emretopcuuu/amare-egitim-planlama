@@ -254,6 +254,30 @@ export function sahneSessizMi(gun: 1 | 2 | 3, gunDakikasi: number): boolean {
   return suankiMadde(gun, gunDakikasi)?.sessiz === true;
 }
 
+// GELİŞTİRME #7 — Ana kilitli tetikleme. Az önce BİTEN (deneyimsel) bir etkinlik
+// varsa onu yakala: sahne/oyun/doğa/ayna/gezi anlarının duygusu hâlâ sıcakken
+// göreve dönsün. Yemek/serbest/ara gibi nötr bloklar bu kapsama girmez.
+const ANA_KILITLI_TURLER = new Set<EtkinlikTuru>(["sahne", "oyun", "doga", "ayna", "gezi"]);
+
+/** Son `pencereDk` dakikada biten, deneyimsel bir program maddesi (yoksa null). */
+export function bitenMadde(
+  gun: 1 | 2 | 3,
+  gunDakikasi: number,
+  pencereDk = 12
+): ProgramMaddesi | null {
+  let enYakin: ProgramMaddesi | null = null;
+  let enYakinFark = Infinity;
+  for (const m of gunProgrami(gun)) {
+    if (!ANA_KILITLI_TURLER.has(m.tur)) continue;
+    const fark = gunDakikasi - dakikaCevir(m.bitis);
+    if (fark >= 0 && fark <= pencereDk && fark < enYakinFark) {
+      enYakin = m;
+      enYakinFark = fark;
+    }
+  }
+  return enYakin;
+}
+
 // ---- SENKRON AN: günün programına dikilmiş pencereler ----
 // Gün 1: 20:15 (akşam yemeği) · Gün 2: 13:30 (öğle) · Gün 3: 09:55 (ara)
 

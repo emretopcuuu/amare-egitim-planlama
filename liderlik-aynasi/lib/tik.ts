@@ -20,6 +20,7 @@ import { momentumHesaplaVeYaz } from "@/lib/momentum";
 import {
   kampGunu,
   suankiMadde,
+  bitenMadde,
   sahneSessizMi,
   sabahPenceresiMi,
   GECE_FISILTILARI,
@@ -105,6 +106,10 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     !testModu;
   const etkinlik = kampGunuBugun
     ? suankiMadde(kampGunuBugun, saat * 60 + dakika)
+    : null;
+  // GELİŞTİRME #7: az önce biten deneyimsel an (duygu sıcakken göreve bağla).
+  const bitenEtkinlik = kampGunuBugun
+    ? bitenMadde(kampGunuBugun, saat * 60 + dakika)
     : null;
 
   // 2) Gecikmiş puanlama — normalde yanıt anında puanlanır; bu, kurtarma hattı
@@ -219,7 +224,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     .slice(0, 3);
 
   for (const k of uygunlar) {
-    const gorev = await gorevUret(db, k, gun, saat, mod, etkinlik);
+    const gorev = await gorevUret(db, k, gun, saat, mod, etkinlik, bitenEtkinlik);
     if (!gorev) continue;
     const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
     const { data: yeniGorev, error } = await db
