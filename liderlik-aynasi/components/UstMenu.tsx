@@ -42,6 +42,7 @@ export default function UstMenu({
   // EKSTRA: sosyal ve ikincil her şey (küçük, ikişerli ızgara).
   const ekstra: { href: string; etiket: string }[] = [
     { href: "/ben", etiket: t.menuBen },
+    { href: "/plan", etiket: t.menuPlan },
     { href: "/grup", etiket: t.menuGrup },
     { href: "/mini360", etiket: t.menuMini360 },
     { href: "/anlar", etiket: t.menuAnlar },
