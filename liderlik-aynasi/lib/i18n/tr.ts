@@ -427,6 +427,11 @@ export const tr = {
     kayma: "Yansımandan bir mesaj",
     kaymaAlt: "Su seni özlediğinde söyledikleri.",
   },
+  // #3 Ayna Anı — kamp öncesi kör nokta cümlesini bugünkü çabayla yüzleştiren içgörü kartı
+  aynaAni: {
+    baslik: "Ayna Anı",
+    gordum: "Gördüm",
+  },
   // Kendini puanladıktan sonra gösterilen kutlama + kamp deneyimi bilgilendirmesi
   hosgeldin: {
     rozet: "İlk adım tamam",
