@@ -1916,6 +1916,8 @@ export const tr = {
       bosListe: "Henüz katılımcı yok. Aşağıdaki 'Kişi Ekle' ya da 'Dosyadan İçe Aktar' ile başla.",
       takimYok: "Henüz takım atanmamış. Önce 'Takımlara Dağıt' ile dağıt.",
       riskIsaret: "Sessizleşti — sistemde yavaşladı, ilgilenmen iyi olur",
+      geriAl: "Son işlemi geri al",
+      geriAlindi: "Geri alındı — önceki takım dağılımına dönüldü.",
       tablo: { ad: "Ad Soyad", takim: "Takım", sehir: "Şehir", telefon: "Telefon", kod: "Kod" },
       sayfaGeri: "← Geri",
       sayfaIleri: "İleri →",

@@ -170,6 +170,9 @@ export default function KatilimciYonetim({
   const [takimMesgul, setTakimMesgul] = useState(false);
   const [takimMesaj, setTakimMesaj] = useState<string | null>(null);
   const [takimHata, setTakimHata] = useState<string | null>(null);
+  // UX #3 (2.tur): toplu takım işlemleri geri alınamaz → her işlemden önce eski
+  // takım değerlerini sakla, sonra "geri al" sun (yanlışlıkla dağıtmaya emniyet).
+  const [geriAl, setGeriAl] = useState<{ id: string; team: string | null }[] | null>(null);
 
   const takimSayisi = Math.max(1, Math.ceil(hedefIdler.length / Math.max(2, kisiBasi || 2)));
   const onizleme = useMemo(() => {
@@ -185,8 +188,17 @@ export default function KatilimciYonetim({
     return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0], "tr"));
   }, [kisiler]);
 
-  async function takimUygula(updates: { id: string; team: string | null }[], ok: string) {
+  async function takimUygula(
+    updates: { id: string; team: string | null }[],
+    ok: string,
+    geriAlMi = false
+  ) {
     if (updates.length === 0) return;
+    // İşlemden önce mevcut takım değerlerini anlık olarak yakala — geri al için.
+    const onceki = updates.map((u) => {
+      const k = kisiler.find((x) => x.id === u.id);
+      return { id: u.id, team: k?.team ?? null };
+    });
     setTakimMesgul(true);
     setTakimMesaj(null);
     setTakimHata(null);
@@ -198,7 +210,8 @@ export default function KatilimciYonetim({
       });
       const v = await res.json().catch(() => null);
       if (!res.ok) return setTakimHata(v?.hata ?? t.hataSunucu);
-      setTakimMesaj(ok);
+      setTakimMesaj(geriAlMi ? t.geriAlindi : ok);
+      setGeriAl(onceki); // bir önceki duruma dönmek için (geri al = tekrar uygula → redo)
       setSecili(new Set());
       router.refresh();
     } catch {
@@ -206,6 +219,10 @@ export default function KatilimciYonetim({
     } finally {
       setTakimMesgul(false);
     }
+  }
+  function geriAlUygula() {
+    if (!geriAl || takimMesgul) return;
+    void takimUygula(geriAl, t.geriAlindi, true);
   }
   function otomatikDagit() {
     const idler = [...hedefIdler];
@@ -492,7 +509,20 @@ export default function KatilimciYonetim({
           <button onClick={seciliereAta} disabled={takimMesgul || secili.size === 0} className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-midnight-soft disabled:opacity-40">{t.seciliereAta}</button>
           <button onClick={temizle} disabled={takimMesgul} className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-medium text-slate-400 transition-colors hover:bg-midnight-soft disabled:opacity-40">{t.takimTemizle}</button>
         </div>
-        {takimMesaj && <p className="mt-3 text-sm font-medium text-emerald-400">{takimMesaj}</p>}
+        {takimMesaj && (
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <p className="text-sm font-medium text-emerald-400">{takimMesaj}</p>
+            {geriAl && (
+              <button
+                onClick={geriAlUygula}
+                disabled={takimMesgul}
+                className="rounded-lg border border-gold/40 px-3 py-1.5 text-xs font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-40"
+              >
+                ↶ {t.geriAl}
+              </button>
+            )}
+          </div>
+        )}
         {takimHata && <p role="alert" className="mt-3 text-sm font-medium text-red-400">{takimHata}</p>}
       </Katlanir>
 
