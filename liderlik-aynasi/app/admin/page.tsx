@@ -63,6 +63,7 @@ export default async function AdminPanel() {
     { data: sozAyar },
     { count: bekleyenFoto },
     { data: provaAyar },
+    { count: kayanSayi },
   ] = await Promise.all([
     db.from("waves").select("id, name, is_open, opened_at").order("id"),
     aktifOzellikler(db),
@@ -94,6 +95,11 @@ export default async function AdminPanel() {
       .select("id", { count: "exact", head: true })
       .eq("status", "pending"),
     db.from("settings").select("value").eq("key", "prova_modu").maybeSingle(),
+    // #4 Erken uyarı: sessizleşen (dürtülmüş) aday sayısı
+    db
+      .from("churn_radar")
+      .select("participant_id", { count: "exact", head: true })
+      .not("nudged_at", "is", null),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
   const provaAcik = provaAyar?.value === "true";
@@ -192,6 +198,7 @@ export default async function AdminPanel() {
         ozToplam: ilerleme?.katilimcilar.length ?? katilimciSayisi ?? 0,
         moderasyonBekleyen: bekleyenFoto ?? 0,
         silmeTalebi: (silmeTalepleri ?? []).length,
+        kayanSayi: kayanSayi ?? 0,
       })
     : [];
 
