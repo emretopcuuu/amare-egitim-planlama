@@ -271,6 +271,10 @@ export default async function AdminPanel() {
         </Link>
       </section>
 
+      {/* UX #5 (2.tur): İlk Kurulum Rehberi — kritik bir kurulum adımı eksikse
+          panelin tepesinde numaralı rehber belirir; kurulum bitince kaybolur. */}
+      {tamYetki && <HazirlikPaneli konum="ust" />}
+
       {/* UX #1 (2.tur): Komuta triyajı — şu an ilgilenilmesi gereken adaylar */}
       {tamYetki && <TriyajKart />}
 
@@ -497,7 +501,8 @@ export default async function AdminPanel() {
       {tamYetki && (
         <div id="araclar" className="scroll-mt-24">
         <Katlanir baslik={tr.admin.araclar.baslik} aciklama={tr.admin.araclar.aciklama} yardim={tr.admin.yardim.araclar}>
-          <HazirlikPaneli />
+          {/* Sağlık kontrol listesi — her zaman erişilebilir tam görünüm */}
+          <HazirlikPaneli konum="arac" />
           <KodBul />
           <DuyuruSablonlari />
 
