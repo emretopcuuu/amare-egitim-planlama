@@ -14,9 +14,20 @@ export function adminUyarilari(d: {
   ozToplam: number;
   moderasyonBekleyen: number;
   silmeTalebi: number;
+  kayanSayi?: number; // #4: sessizleşen (dürtülmüş) aday sayısı
 }): Uyari[] {
   const u: Uyari[] = [];
   const eksik = d.ozToplam - d.ozTamam;
+
+  // #4 Erken uyarı: aday(lar) sessizleşti → komutana yönlendir.
+  if ((d.kayanSayi ?? 0) > 0) {
+    u.push({
+      ikon: "📉",
+      mesaj: `${d.kayanSayi} aday sessizleşti — yeniden bağla`,
+      href: "/admin/komutan",
+      tip: "uyari",
+    });
+  }
 
   if (d.acikDalgaAd && d.ozToplam > 0) {
     const oran = d.ozTamam / d.ozToplam;
