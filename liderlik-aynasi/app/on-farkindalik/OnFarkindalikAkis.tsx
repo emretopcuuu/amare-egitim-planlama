@@ -13,6 +13,8 @@ import { ADIMLAR, adimDolu, katman1Tutarlilik, SONUC_KARTI } from "@/lib/onFarki
 const t = tr.onFarkindalik;
 const TOPLAM = ADIMLAR.length;
 const SONUC_KODLAR = new Set(SONUC_KARTI.map((s) => s.kod));
+// UX #7: kamp wifi'si oynak — cevapları cihazda da yedekle (yenileme/çevrimdışı kayıp yok).
+const TASLAK_DEPO = "la_of_taslak_v1";
 
 // SİHİRBAZ: her ekranda TEK iş. Girdi tipleri: 1-5 ifade, ikili 1-10, sayı,
 // yazılı (sesle de). Kademeli, otomatik ilerleme (likert), kısmi kayıt.
@@ -57,6 +59,25 @@ export default function OnFarkindalikAkis({
   useEffect(() => {
     if (tumuBitti) titret([15, 40, 15, 40, 30]);
   }, [tumuBitti]);
+
+  // UX #7: mount'ta cihaz yedeğini birleştir (sunucu yüklemesi çevrimdışı düşmüşse kurtarır).
+  useEffect(() => {
+    try {
+      const ham = localStorage.getItem(TASLAK_DEPO);
+      if (!ham) return;
+      const d = JSON.parse(ham) as { yanitlar?: Record<string, number>; metinler?: Record<string, string> };
+      if (d.yanitlar) setYanitlar((e) => ({ ...d.yanitlar, ...e }));
+      if (d.metinler) setMetinler((e) => ({ ...d.metinler, ...e }));
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // UX #7: her değişiklikte cihaza yedekle — yenileme/çevrimdışı kayıp olmaz.
+  useEffect(() => {
+    try {
+      localStorage.setItem(TASLAK_DEPO, JSON.stringify({ yanitlar, metinler }));
+    } catch {}
+  }, [yanitlar, metinler]);
 
   function ilerle() {
     setSayiGirdi("");
