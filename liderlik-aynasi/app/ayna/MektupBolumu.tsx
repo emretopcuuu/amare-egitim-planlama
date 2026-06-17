@@ -4,6 +4,7 @@ import { useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import KonusanYansima from "@/components/KonusanYansima";
 import AynaDusunuyor from "@/components/AynaDusunuyor";
+import OkuButonu from "@/components/OkuButonu";
 
 const t = tr.mektup;
 
@@ -52,12 +53,16 @@ export default function MektupBolumu({
           <div className="mt-4 whitespace-pre-wrap rounded-xl bg-midnight-soft/80 p-4 font-serif text-sm leading-relaxed text-slate-100">
             {mektup}
           </div>
-          {sesUrl && (
+          {sesUrl ? (
             <KonusanYansima
               videoUrl={videoUrl}
               sesUrl={sesUrl}
               etiket={videoUrl ? t.izle : t.dinle}
             />
+          ) : (
+            // UX #8: gerçek ses yoksa kimse mektubunu okumadan kalmasın —
+            // tarayıcı sesiyle "dinle".
+            <OkuButonu metin={mektup} />
           )}
         </>
       ) : yukleniyor ? (
