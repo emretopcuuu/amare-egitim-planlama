@@ -305,6 +305,38 @@ export type Database = {
         }
         Relationships: []
       }
+      kocu_mesajlar: {
+        Row: {
+          created_at: string
+          icerik: string
+          id: string
+          participant_id: string
+          rol: string
+        }
+        Insert: {
+          created_at?: string
+          icerik: string
+          id?: string
+          participant_id: string
+          rol: string
+        }
+        Update: {
+          created_at?: string
+          icerik?: string
+          id?: string
+          participant_id?: string
+          rol?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kocu_mesajlar_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kudos: {
         Row: {
           created_at: string

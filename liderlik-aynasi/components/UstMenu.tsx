@@ -31,6 +31,8 @@ export default function UstMenu({
   // BİRİNCİL: o an kişiye özel, en önemli işler (büyük butonlar).
   // Değerlendir / Görevler / Duvar zaten alt çubukta — menüde tekrarlanmaz.
   const birincil: { href: string; etiket: string }[] = [];
+  // GELİŞTİRME #1: Ayna Koçu her zaman erişilebilir birincil eylem.
+  birincil.push({ href: "/kocu", etiket: t.menuKocu });
   if (ozTamam && dalgaAcik)
     birincil.push({ href: `/degerlendir/${ozHedefId}`, etiket: t.menuOzDuzenle });
   if (raporlarAcik) birincil.push({ href: "/ayna", etiket: t.menuRapor });
