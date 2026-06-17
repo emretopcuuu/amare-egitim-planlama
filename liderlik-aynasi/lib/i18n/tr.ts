@@ -1302,6 +1302,13 @@ export const tr = {
       kayitli: "✓ Kaydedildi",
       enAzBir: "En az bir tür açık kalmalı.",
       hata: "Kaydedilemedi, tekrar dene.",
+      aktifBaslik: "Aktif türler",
+      pasifBaslik: "Kapalı türler",
+      surukleIpucu: "Bir türü sürükleyip diğer sütuna bırak — ya da okla taşı.",
+      aktifBos: "Hiç aktif tür yok — en az birini buraya taşı.",
+      pasifBos: "Tüm türler aktif. İstemediğin türü buraya sürükle.",
+      pasifeTasi: "Kapat",
+      aktifeTasi: "Aç",
       turler: {
         gozlem: {
           ad: "👁 Gözlem",
@@ -2262,6 +2269,14 @@ export const tr = {
         "ANTHROPIC_API_KEY tanımlı değil — mektuplar üretilemez (Vercel ortam değişkenlerine ekle).",
     },
     yetkisiz: "Bu işlem için yönetici oturumu gerekir.",
+    aynaAniTetik: {
+      bosDurum: "Şu an Ayna Anı'na hazır kimse yok — kişilerin önce birkaç görev tamamlaması gerekiyor.",
+      hazir: (n: number) => `${n} kişi Ayna Anı'na hazır.`,
+      uret: (n: number) => `${n} kişiye Ayna Anı üret`,
+      uretiliyor: (yapilan: number, toplam: number) => `Üretiliyor… ${yapilan}/${toplam}`,
+      bitti: (n: number) => `${n} Ayna Anı üretildi ✓`,
+      hata: "Üretim sırasında bir sorun oldu, tekrar dene.",
+    },
     aynaDirektor: {
       modBaslik: "Sistem Modu",
       modAciklama:
@@ -2299,6 +2314,9 @@ export const tr = {
       detayZorluk: "Zorluk",
       detayOzellik: "Hedef özellik",
       detayKapat: "Kapat",
+      aynaAniBaslik: "🪞 Ayna Anı — Gördün mü?",
+      aynaAniAciklama:
+        "Yeterince görev yapan ve kamp öncesi kör noktasını yazan kişilere, AYNA kendi cümlelerini bugünkü çabalarıyla yüzleştiren özel bir an üretir. Hazır olan herkese tek tıkla gönder.",
       sahneBaslik: "Sahne Anları",
       sahneAciklama:
         "Bas → projeksiyondaki /ekran sayfası AYNA'nın marka sesiyle salona konuşur (ekranda '🔊 Sesi Aç' açık olmalı).",
