@@ -8,6 +8,7 @@ import { titret } from "@/lib/his";
 import MikrofonButonu from "@/components/MikrofonButonu";
 import Konfeti from "@/components/Konfeti";
 import YaziBoyu from "@/components/YaziBoyu";
+import AynaLogo from "@/components/AynaLogo";
 import { ADIMLAR, adimDolu, katman1Tutarlilik, SONUC_KARTI } from "@/lib/onFarkindalik";
 
 const t = tr.onFarkindalik;
@@ -23,6 +24,30 @@ const METIN_IPUCLARI: Record<string, string> = {
 };
 // UX #7: kamp wifi'si oynak — cevapları cihazda da yedekle (yenileme/çevrimdışı kayıp yok).
 const TASLAK_DEPO = "la_of_taslak_v1";
+
+// Dürüstlük vurgusu: "gerçek…/dürüst…" sözcüklerini altın renkle öne çıkar — bu
+// çalışmanın değeri adayın ne kadar dürüst olduğuna bağlı; göz oraya gitsin.
+const DURUST_AYIR = /(gerçek[\p{L}]*|dürüst[\p{L}]*)/giu;
+const DURUST_TEK = /^(gerçek[\p{L}]*|dürüst[\p{L}]*)$/iu;
+function DurustVurgu({ metin }: { metin: string }) {
+  return (
+    <>
+      {metin.split(DURUST_AYIR).map((p, i) =>
+        DURUST_TEK.test(p) ? (
+          <span key={i} className="font-semibold text-gold-light">
+            {p}
+          </span>
+        ) : (
+          <span key={i}>{p}</span>
+        )
+      )}
+    </>
+  );
+}
+
+// Dürüstlük telkinleri: ilerleme bu eşikleri geçtiğinde bir kez beliren kısa
+// hatırlatma — aday gerçeğe yatmak zorunda hissetsin.
+const TELKIN_ESIKLERI = [25, 50, 75] as const;
 
 // SİHİRBAZ: her ekranda TEK iş. Girdi tipleri: 1-5 ifade, ikili 1-10, sayı,
 // yazılı (sesle de). Kademeli, otomatik ilerleme (likert), kısmi kayıt.
@@ -56,11 +81,41 @@ export default function OnFarkindalikAkis({
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const ilerleZam = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Dürüstlük telkini: hangi eşikler gösterildi + o anki mesaj.
+  const [telkin, setTelkin] = useState<string | null>(null);
+  const telkinRef = useRef<Set<number>>(new Set());
 
   const yapilan = useMemo(
     () => ADIMLAR.filter((a) => adimDolu(a, yanitlar, metinler)).length,
     [yanitlar, metinler]
   );
+
+  // Mount'ta geçilmiş eşikleri "gösterildi" say (geriye dönük telkin patlatma).
+  useEffect(() => {
+    const p = Math.round((Math.min(adim + 1, TOPLAM) / TOPLAM) * 100);
+    for (const e of TELKIN_ESIKLERI) if (p >= e) telkinRef.current.add(e);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // İlerleme bir eşiği YENİ geçtiğinde dürüstlük telkinini bir kez göster.
+  useEffect(() => {
+    const p = Math.round((Math.min(adim + 1, TOPLAM) / TOPLAM) * 100);
+    for (const e of TELKIN_ESIKLERI) {
+      if (p >= e && !telkinRef.current.has(e)) {
+        telkinRef.current.add(e);
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setTelkin(t.durustlukTelkinler[e]);
+        titret([10, 40, 10]);
+      }
+    }
+  }, [adim]);
+
+  // Telkin birkaç saniye sonra kendiliğinden kapansın.
+  useEffect(() => {
+    if (!telkin) return;
+    const id = setTimeout(() => setTelkin(null), 6500);
+    return () => clearTimeout(id);
+  }, [telkin]);
 
   // UX #3: tüm çalışma tamamlanınca mikro-kutlama (haptik) — momentum hissi.
   const tumuBitti = adim >= TOPLAM && yapilan === TOPLAM;
@@ -153,9 +208,9 @@ export default function OnFarkindalikAkis({
   if (giris) {
     return (
       <div className="flex min-h-[82vh] flex-col justify-center py-8 text-center">
-        <p className="text-5xl">🪞</p>
+        <AynaLogo className="text-4xl" />
         <h1 className="prizma-serif ay-metin mt-5 text-3xl font-semibold leading-tight">{t.girisBaslik}</h1>
-        <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-slate-300">{t.girisMetin}</p>
+        <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-slate-300"><DurustVurgu metin={t.girisMetin} /></p>
         {/* UX #4: sonunda ne kazanacağın — "neden buradayım" çerçevesi + ödül önizlemesi */}
         <ul className="mx-auto mt-6 max-w-md space-y-2 text-left">
           {t.girisKazanimlar.map((k, i) => (
@@ -185,7 +240,7 @@ export default function OnFarkindalikAkis({
     return (
       <div className="flex min-h-[82vh] flex-col justify-center py-8 text-center">
         {tamamMi && <Konfeti />}
-        <p className="text-5xl">{tamamMi ? "🪞" : "💾"}</p>
+        <p className="text-5xl">{tamamMi ? <AynaLogo className="text-4xl" /> : "💾"}</p>
         <h1 className="prizma-serif ay-metin mt-5 text-3xl font-semibold leading-tight">
           {tamamMi ? t.tamamBaslik : t.devamBaslik}
         </h1>
@@ -237,6 +292,9 @@ export default function OnFarkindalikAkis({
 
   const a = ADIMLAR[adim];
   const yuzde = Math.round((Math.min(adim + 1, TOPLAM) / TOPLAM) * 100);
+  // Gözden geçirme modu: her şey dolu ama aday erken bir adıma döndü → tek tuşla
+  // sona (bitiş ekranına) dönebilsin, baştan sona tıklamak zorunda kalmasın.
+  const gozdenMod = yapilan === TOPLAM && adim < TOPLAM;
   // UX #2: kalan süre tahmini (~12 sn/adım) — görünür bitiş çizgisi tamamlamayı artırır.
   const kalanDk = Math.max(1, Math.round(((TOPLAM - adim) * 12) / 60));
 
@@ -264,7 +322,7 @@ export default function OnFarkindalikAkis({
               disabled={kaydediliyor || yapilan === 0}
               className="rounded-lg bg-gold px-3 py-1.5 text-sm font-bold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
             >
-              {kaydediliyor ? "…" : `💾 ${t.kaydet}`}
+              {kaydediliyor ? "…" : t.kaydetDevam}
             </button>
           </div>
         </div>
@@ -280,11 +338,37 @@ export default function OnFarkindalikAkis({
         </div>
       </header>
 
+      {/* Gözden geçirme modunda: tek tuşla bitiş ekranına dön (sona git) */}
+      {gozdenMod && (
+        <button
+          type="button"
+          onClick={() => setAdim(TOPLAM)}
+          className="mx-auto mt-3 flex w-full items-center justify-center gap-2 rounded-xl border border-royal-light/30 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-white/5"
+        >
+          {t.sonaDon} →
+        </button>
+      )}
+
+      {/* Dürüstlük telkini — ilerleme eşik geçtiğinde beliren kısa hatırlatma */}
+      {telkin && (
+        <button
+          type="button"
+          onClick={() => setTelkin(null)}
+          aria-live="polite"
+          className="sahne-giris mx-auto mt-4 block w-full rounded-2xl border border-gold/40 bg-gold/[0.06] p-4 text-left"
+        >
+          <p className="text-xs font-semibold uppercase tracking-wide text-gold-light">
+            {t.durustlukBaslik}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-slate-100">{telkin}</p>
+        </button>
+      )}
+
       <div className="flex flex-1 flex-col justify-center py-8">
         {a.tip === "likert5" && (
           <>
             <h1 className="prizma-serif text-2xl font-semibold leading-snug text-slate-50">{a.metin}</h1>
-            <p className="mt-4 text-sm text-slate-400">{t.blokAlt}</p>
+            <p className="mt-4 text-sm text-slate-400"><DurustVurgu metin={t.blokAlt} /></p>
             <div role="radiogroup" aria-label={a.metin} className="mt-8 space-y-2.5">
               {[1, 2, 3, 4, 5].map((p) => (
                 <button
@@ -324,7 +408,7 @@ export default function OnFarkindalikAkis({
         {a.tip === "sayi" && (
           <>
             <h1 className="prizma-serif text-2xl font-semibold leading-snug text-slate-50">{a.metin}</h1>
-            <p className="mt-3 text-sm text-slate-400">{t.sayiAlt}</p>
+            <p className="mt-3 text-sm text-slate-400"><DurustVurgu metin={t.sayiAlt} /></p>
             <input
               type="number"
               inputMode="numeric"

@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { MINI360_IFADELER } from "@/lib/onFarkindalik";
 import { tr } from "@/lib/i18n/tr";
 import Mini360Oz from "./Mini360Oz";
+import AynaLogo from "@/components/AynaLogo";
 
 export const metadata = { title: "Ekip Aynası — Liderlik Aynası" };
 
@@ -31,7 +32,7 @@ export default async function Mini360Sayfa() {
     return (
       <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
         <div className="kart-cam max-w-md rounded-3xl p-10">
-          <p className="text-5xl" aria-hidden>🪞</p>
+          <AynaLogo className="text-4xl" />
           <h1 className="prizma-serif ay-metin mt-4 text-2xl font-semibold">{t.kapaliBaslik}</h1>
           <p className="mt-3 text-base leading-relaxed text-slate-300">{t.kapaliMetin}</p>
         </div>
