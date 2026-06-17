@@ -411,6 +411,7 @@ export type Database = {
           m5: number | null
           m6: number | null
           target_id: string
+          tur: number
         }
         Insert: {
           created_at?: string
@@ -422,6 +423,7 @@ export type Database = {
           m5?: number | null
           m6?: number | null
           target_id: string
+          tur?: number
         }
         Update: {
           created_at?: string
@@ -433,6 +435,7 @@ export type Database = {
           m5?: number | null
           m6?: number | null
           target_id?: string
+          tur?: number
         }
         Relationships: []
       }
@@ -445,6 +448,7 @@ export type Database = {
           m5: number | null
           m6: number | null
           participant_id: string
+          tur: number
           updated_at: string
         }
         Insert: {
@@ -455,6 +459,7 @@ export type Database = {
           m5?: number | null
           m6?: number | null
           participant_id: string
+          tur?: number
           updated_at?: string
         }
         Update: {
@@ -465,6 +470,7 @@ export type Database = {
           m5?: number | null
           m6?: number | null
           participant_id?: string
+          tur?: number
           updated_at?: string
         }
         Relationships: []

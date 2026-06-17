@@ -5,6 +5,7 @@ import { tumKayitlar } from "@/lib/tumKayitlar";
 import { elmasSkorla, type ElmasGirdi, type OFProfil } from "@/lib/elmasSkoru";
 import { tr } from "@/lib/i18n/tr";
 import ElmasListe from "./ElmasListe";
+import Mini360TurBaslat from "./Mini360TurBaslat";
 
 export const metadata = { title: "Elmas Seçimi — Liderlik Aynası" };
 
@@ -29,6 +30,9 @@ export default async function ElmasPage() {
         db.from("mini360_dis").select("target_id, m1, m2, m3, m4, m5, m6").order("id").range(bas, son)
     ),
   ]);
+
+  const { data: turAyar } = await db.from("settings").select("value").eq("key", "mini360_tur").maybeSingle();
+  const aktifTur = Math.max(1, parseInt(turAyar?.value ?? "1", 10) || 1);
 
   const profilHarita = new Map<string, OFProfil>();
   for (const o of oflar ?? []) profilHarita.set(o.participant_id, (o.profil ?? null) as OFProfil);
@@ -84,6 +88,7 @@ export default async function ElmasPage() {
         >
           📥 {t.csvIndir}
         </a>
+        <Mini360TurBaslat tur={aktifTur} />
       </div>
 
       <dl className="grid gap-3 sm:grid-cols-3">

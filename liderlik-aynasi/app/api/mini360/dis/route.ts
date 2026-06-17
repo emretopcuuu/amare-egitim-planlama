@@ -13,7 +13,12 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.mini360.hata }, { status: 400 });
   }
 
-  const satir: Record<string, number | string> = { target_id: targetId };
+  const db = supabaseAdmin();
+  // #9: aktif tur — dış puanlar tur'a etiketlenir, tavan tur başınadır.
+  const { data: turAyar } = await db.from("settings").select("value").eq("key", "mini360_tur").maybeSingle();
+  const tur = Math.max(1, parseInt(turAyar?.value ?? "1", 10) || 1);
+
+  const satir: Record<string, number | string> = { target_id: targetId, tur };
   for (const i of MINI360_IFADELER) {
     const v = Number(body?.[i.kod]);
     if (!Number.isInteger(v) || v < 1 || v > 5) {
@@ -22,11 +27,10 @@ export async function POST(req: Request) {
     satir[i.kod] = v;
   }
 
-  const db = supabaseAdmin();
-  // Hedef gerçek bir katılımcı mı + tavan kontrolü.
+  // Hedef gerçek bir katılımcı mı + bu tur için tavan kontrolü.
   const [{ data: hedef }, { count }] = await Promise.all([
     db.from("participants").select("id").eq("id", targetId).eq("role", "participant").maybeSingle(),
-    db.from("mini360_dis").select("id", { count: "exact", head: true }).eq("target_id", targetId),
+    db.from("mini360_dis").select("id", { count: "exact", head: true }).eq("target_id", targetId).eq("tur", tur),
   ]);
   if (!hedef) return Response.json({ hata: tr.mini360.hata }, { status: 404 });
   if ((count ?? 0) >= AZAMI_DIS) {

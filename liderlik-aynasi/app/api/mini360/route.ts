@@ -10,7 +10,11 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.ortak.oturumGerekli }, { status: 401 });
   }
   const body = await req.json().catch(() => null);
-  const satir: Record<string, number | string> = { participant_id: session.sub, updated_at: new Date().toISOString() };
+  const db = supabaseAdmin();
+  // #9: aktif Mini 360 turu (admin bumplar) — her tur ayrı saklanır.
+  const { data: turAyar } = await db.from("settings").select("value").eq("key", "mini360_tur").maybeSingle();
+  const tur = Math.max(1, parseInt(turAyar?.value ?? "1", 10) || 1);
+  const satir: Record<string, number | string> = { participant_id: session.sub, tur, updated_at: new Date().toISOString() };
   for (const i of MINI360_IFADELER) {
     const v = Number(body?.[i.kod]);
     if (!Number.isInteger(v) || v < 1 || v > 5) {
@@ -18,9 +22,9 @@ export async function POST(req: Request) {
     }
     satir[i.kod] = v;
   }
-  const { error } = await supabaseAdmin()
+  const { error } = await db
     .from("mini360_oz")
-    .upsert(satir as never, { onConflict: "participant_id" });
+    .upsert(satir as never, { onConflict: "participant_id,tur" });
   if (error) return Response.json({ hata: tr.mini360.hata }, { status: 500 });
   return Response.json({ ok: true });
 }
