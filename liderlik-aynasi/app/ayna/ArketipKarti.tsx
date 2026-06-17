@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import OkuButonu from "@/components/OkuButonu";
 
 const t = tr.arketip;
 const W = 1080;
@@ -138,6 +139,8 @@ export default function ArketipKarti({
         height={H}
         className="mt-4 w-full rounded-xl ring-1 ring-royal/40"
       />
+      {/* UX #8: arketip özeti kartta görsel — sesli de dinlenebilsin */}
+      <OkuButonu metin={`${arketipAd}. ${ozet}`} />
       <div className="mt-4 flex gap-3">
         <button
           onClick={indir}
