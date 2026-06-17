@@ -178,7 +178,24 @@ export default async function GorevlerPage() {
 
       {/* Aktif görev(ler) */}
       {aktif.length === 0 ? (
-        <BosDurum simge="👁" baslik={t.aktifYokBaslik} metin={t.aktifYok} />
+        <>
+          <BosDurum simge="👁" baslik={t.aktifYokBaslik} metin={t.aktifYok} />
+          {/* UX #9: boş durum ölü kalmasın — sıcak bir sonraki adım sun */}
+          <div className="mx-auto mt-4 grid w-full max-w-sm gap-2.5">
+            <Link
+              href="/kocu"
+              className="btn-kor flex h-12 items-center justify-center rounded-xl text-sm font-bold"
+            >
+              🪞 {t.bosKocu}
+            </Link>
+            <Link
+              href="/takdir"
+              className="flex h-12 items-center justify-center rounded-xl border border-royal-light/30 text-sm font-medium text-slate-200 hover:bg-white/5"
+            >
+              💛 {t.bosTakdir}
+            </Link>
+          </div>
+        </>
       ) : (
         aktif.map((g, i) => (
           <section
