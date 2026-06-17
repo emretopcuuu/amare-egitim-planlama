@@ -162,6 +162,7 @@ export const tr = {
     // İlk 60 saniye rehberi: ilk öz-puana doğru nazik canlı işaret (#3).
     ilkAdimIpucu: "İlk adımın bu — başla",
     // Çıkmaz yok: boş anda bile sıcak bir sonraki adım — birine takdir bırak.
+    bekleKocu: "🪞 AYNA'ya sor: şimdi ne yapayım?",
     bekleEylem: "Birine takdir bırak ✨",
     bekleRed: "Bir 'Hayır' mı aldın? Kutla 🎯",
     // Boş ekranlarda net sonraki adım butonu (çıkmaz hissi olmasın).

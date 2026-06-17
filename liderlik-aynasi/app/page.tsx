@@ -407,7 +407,9 @@ export default async function AnaSayfa({
         {/* #4 Sıradaki dalgaya geri sayım: yalnızca zamanlama ayarlıysa */}
         {sonrakiDalgaZamani && <GeriSayim hedefZaman={sonrakiDalgaZamani} />}
         <div className="mt-6 space-y-3">
-          <SicakAdim href="/takdir" etiket={t.bekleEylem} vurgu />
+          {/* UX #10: her durumda TEK net sonraki adım — "şimdi ne yapayım?" cevabı koçta */}
+          <SicakAdim href="/kocu" etiket={t.bekleKocu} vurgu />
+          <SicakAdim href="/takdir" etiket={t.bekleEylem} />
           {/* FAZ 3 Go-for-No: boş anda reddi veriye çevir */}
           <SicakAdim href="/red" etiket={t.bekleRed} />
         </div>
