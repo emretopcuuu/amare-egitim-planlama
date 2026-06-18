@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import TelefonaKur from "./TelefonaKur";
 
 const t = tr.bildirim;
 
@@ -24,6 +25,16 @@ function base64ToUint8(base64: string): Uint8Array {
 export default function AynaKurulum() {
   const [durum, setDurum] = useState<Durum>("yukleniyor");
   const [hata, setHata] = useState(false);
+  const [masaustu, setMasaustu] = useState(false);
+
+  // Masaüstü mü? (telefona taşıma yönergesini öne çıkarmak için)
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    const mobil =
+      /iphone|ipad|ipod|android/i.test(ua) ||
+      window.matchMedia?.("(pointer: coarse)").matches;
+    setMasaustu(!mobil);
+  }, []);
 
   async function kontrol() {
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
@@ -100,13 +111,33 @@ export default function AynaKurulum() {
     }
   }
 
-  if (durum === "yukleniyor" || durum === "desteklenmiyor") return null;
+  if (durum === "yukleniyor") return null;
+
+  // Bu tarayıcı push desteklemiyor (ör. masaüstü gizli mod). Masaüstündeyse yine
+  // de telefona taşıma yolunu göster; mobil/desteksizse sessizce gizlen.
+  if (durum === "desteklenmiyor") {
+    if (!masaustu) return null;
+    return (
+      <div className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30 backdrop-blur">
+        <p className="font-semibold text-gold-light">🔔 {t.izinBaslik}</p>
+        <p className="mt-2 text-sm text-slate-300">{t.masaustuNot}</p>
+        <TelefonaKur />
+      </div>
+    );
+  }
 
   if (durum === "abone") {
     return (
-      <p className="text-center text-xs font-medium text-emerald-400">
-        {t.izinVerildi}
-      </p>
+      <div>
+        <p className="text-center text-xs font-medium text-emerald-400">{t.izinVerildi}</p>
+        {/* Bu cihazda açık ama masaüstündeyse telefona da kurmayı öner */}
+        {masaustu && (
+          <div className="mt-3 rounded-2xl border border-royal-light/30 bg-white/[0.02] p-4">
+            <p className="text-sm text-slate-300">{t.masaustuNot}</p>
+            <TelefonaKur />
+          </div>
+        )}
+      </div>
     );
   }
 
@@ -158,6 +189,11 @@ export default function AynaKurulum() {
           </button>
         </>
       )}
+
+      {/* Masaüstünde: "telefonundan da alabilirsin" + ana ekrana ekleme yolu.
+          iOS-kurulum durumu zaten ana ekrana eklemeyi anlatıyor — orada tekrar etme. */}
+      {masaustu && <p className="mt-4 text-sm text-slate-300">{t.masaustuNot}</p>}
+      {durum !== "ios-kurulum" && <TelefonaKur />}
     </div>
   );
 }

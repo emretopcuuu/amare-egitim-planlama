@@ -86,18 +86,28 @@ export default async function PusulaSayfa() {
     const hepsiTamam = adimlar.every((a) => a.tamam);
 
     // Sakin dinlenme/bekleme ekranı — hamleler bitince (ya da geçilince) çıkar.
-    // "Kampta seni neler bekliyor + Hazırsın, dinlen" tek odak.
+    // EN BÜYÜK mesaj: "mührü kaldırmadan devam edemezsin" (kampta QR okut).
+    // Aday bundan sonra nasıl ilerleyeceğini buradan anlar; gerisi etrafında.
     const bekleIcerik = (
       <div className="space-y-5">
         {hepsiTamam && <Konfeti anahtar="hazirlik-tamam" />}
-        <div className="text-center">
-          <p className="text-5xl" aria-hidden>
-            🧭
+
+        {/* HERO — mühür kilidi: ekranın merkez, en baskın öğesi */}
+        <div className="relative overflow-hidden rounded-3xl border-2 border-gold/45 bg-gradient-to-b from-gold/12 to-midnight-card/70 p-7 text-center shadow-xl">
+          <span className="altin-tel" />
+          <p className="text-6xl leading-none" aria-hidden>
+            🔒
           </p>
-          <h1 className="prizma-serif ay-metin mt-3 text-2xl font-semibold">{t.kampBekleBaslik}</h1>
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-slate-400">
-            {t.hazirlikBekle}
+          <p className="mt-4 inline-block rounded-full bg-gold/15 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-gold-light">
+            {t.muhurRozet}
           </p>
+          <h1 className="prizma-serif ay-metin mt-3 text-2xl font-bold leading-snug">
+            {t.muhurHeroBaslik}
+          </h1>
+          <p className="mx-auto mt-3 max-w-sm text-base leading-relaxed text-slate-300">
+            {t.muhurHeroMetin}
+          </p>
+          <p className="mt-4 text-sm font-semibold text-gold-light">{t.muhurHeroNot}</p>
           {kampTarihi && <GeriSayim hedefZaman={kampTarihi} etiket={t.kampaKalan} />}
         </div>
 
