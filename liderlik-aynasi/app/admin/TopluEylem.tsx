@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tost } from "@/lib/tost";
 import { tr } from "@/lib/i18n/tr";
+import Bekle from "@/components/Bekle";
 
 const t = tr.topluEylem;
 
@@ -88,7 +89,7 @@ export default function TopluEylem({
             disabled={mesgul}
             className="rounded-lg bg-gold px-4 py-1.5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
           >
-            {mesgul ? "…" : t.secilenDurt(secili.size)}
+            {mesgul ? <Bekle /> : t.secilenDurt(secili.size)}
           </button>
         )}
       </div>

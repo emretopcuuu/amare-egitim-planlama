@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { tost } from "@/lib/tost";
 import OnayliDugme from "./OnayliDugme";
+import Bekle from "@/components/Bekle";
 
 const t = tr.admin.aynaAni;
 
@@ -101,7 +102,7 @@ export default function AynaAniKontrol({ acik, mektupHazir, mektupToplam }: Prop
               disabled={uretiliyor}
               className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-midnight-card disabled:opacity-50"
             >
-              {uretiliyor ? "…" : t.mektupUret}
+              {uretiliyor ? <Bekle /> : t.mektupUret}
             </button>
           )}
         </div>
@@ -132,7 +133,7 @@ export default function AynaAniKontrol({ acik, mektupHazir, mektupToplam }: Prop
               : "bg-gold text-midnight shadow-lg shadow-gold/20 hover:bg-gold-light"
           }`}
         >
-          {bekliyor ? "…" : acik ? t.kapat : `✨ ${t.ac}`}
+          {bekliyor ? <Bekle /> : acik ? t.kapat : `✨ ${t.ac}`}
         </OnayliDugme>
       </div>
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Bekle from "@/components/Bekle";
 
 export default function SozAcKapat({ acik }: { acik: boolean }) {
   const router = useRouter();
@@ -40,7 +41,7 @@ export default function SozAcKapat({ acik }: { acik: boolean }) {
             : "btn-3d bg-gold text-midnight hover:bg-gold-light"
         }`}
       >
-        {calisiyor ? "…" : acik ? "Kapanış Sözünü Kapat" : "Kapanış Sözünü Aç"}
+        {calisiyor ? <Bekle /> : acik ? "Kapanış Sözünü Kapat" : "Kapanış Sözünü Aç"}
       </button>
       {hata && <p className="mt-2 text-sm font-medium text-red-400">İşlem başarısız.</p>}
     </div>

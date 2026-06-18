@@ -1051,6 +1051,7 @@ export const tr = {
     },
     // Admin UX paketi (2026): kokpit hızı, güveni, hata payı
     ux: {
+      yenidenDene: "Yeniden Dene",
       // #2 Canlı tazelik göstergesi
       tazelik: {
         canli: "Canlı",

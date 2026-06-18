@@ -18,7 +18,12 @@ export default function Ipucu({
 }) {
   const [acik, setAcik] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const [konum, setKonum] = useState<{ left: number; top: number } | null>(null);
+  const [konum, setKonum] = useState<{
+    left: number;
+    top?: number;
+    bottom?: number;
+    maxH: number;
+  } | null>(null);
 
   function degis() {
     if (acik) {
@@ -29,7 +34,16 @@ export default function Ipucu({
     if (r) {
       const genislik = 320; // 20rem
       const left = Math.max(8, Math.min(r.left, window.innerWidth - genislik - 8));
-      setKonum({ left, top: r.bottom + 6 });
+      // Dikey sınır: altta yer yoksa (ekran dibindeki butonlar) üstte aç —
+      // taşmasın. Yüksekliği uygun boşluğa göre sınırla (içeride kaydırılır).
+      const altBosluk = window.innerHeight - r.bottom;
+      const ustBosluk = r.top;
+      const ustte = altBosluk < 260 && ustBosluk > altBosluk;
+      setKonum(
+        ustte
+          ? { left, bottom: window.innerHeight - r.top + 6, maxH: ustBosluk - 16 }
+          : { left, top: r.bottom + 6, maxH: altBosluk - 16 }
+      );
     }
     setAcik(true);
   }
@@ -78,8 +92,14 @@ export default function Ipucu({
             />
             <div
               role="tooltip"
-              style={{ position: "fixed", left: konum.left, top: konum.top }}
-              className="z-[61] max-h-[70vh] w-80 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-xl border border-royal-light/40 bg-midnight-card p-4 text-sm font-normal leading-relaxed text-slate-200 shadow-2xl"
+              style={{
+                position: "fixed",
+                left: konum.left,
+                top: konum.top,
+                bottom: konum.bottom,
+                maxHeight: konum.maxH,
+              }}
+              className="z-[61] w-80 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-xl border border-royal-light/40 bg-midnight-card p-4 text-sm font-normal leading-relaxed text-slate-200 shadow-2xl"
             >
               {baslik && <p className="mb-2 text-sm font-bold text-gold-light">{baslik}</p>}
               <div className="space-y-2">
