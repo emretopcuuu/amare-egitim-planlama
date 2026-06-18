@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { tost } from "@/lib/tost";
 import OnayliDugme from "./OnayliDugme";
+import Bekle from "@/components/Bekle";
 
 type Dalga = { id: number; ad: string; acik: boolean };
 
@@ -18,6 +19,8 @@ export default function DalgaKontrol({
   const router = useRouter();
   const [bekleyen, setBekleyen] = useState<number | null>(null);
   const [hata, setHata] = useState<string | null>(null);
+  // Hata sonrası "Yeniden Dene" için son denenen eylemi sakla.
+  const [sonDeneme, setSonDeneme] = useState<{ dalgaId: number; acik: boolean } | null>(null);
 
   async function degistir(dalgaId: number, acik: boolean, geriAlinabilir = true) {
     setBekleyen(dalgaId);
@@ -31,8 +34,10 @@ export default function DalgaKontrol({
       if (!res.ok) {
         const veri = await res.json().catch(() => null);
         setHata(veri?.hata ?? tr.admin.dalga.hata);
+        setSonDeneme({ dalgaId, acik });
         return;
       }
+      setSonDeneme(null);
       // Geri-al: aynı dalgayı tersine çevirir (zincir olmasın diye geriAlinabilir=false).
       tost(
         acik ? tr.admin.tost.dalgaAcildi : tr.admin.tost.dalgaKapatildi,
@@ -42,6 +47,7 @@ export default function DalgaKontrol({
       router.refresh();
     } catch {
       setHata(tr.admin.dalga.hata);
+      setSonDeneme({ dalgaId, acik });
       tost(tr.admin.dalga.hata, "hata");
     } finally {
       setBekleyen(null);
@@ -51,9 +57,21 @@ export default function DalgaKontrol({
   return (
     <div className="mt-4">
       {hata && (
-        <p role="alert" className="mb-3 text-sm font-medium text-red-400">
-          {hata}
-        </p>
+        <div
+          role="alert"
+          className="mb-3 flex items-center justify-between gap-3 rounded-lg border border-red-400/40 bg-red-500/10 px-4 py-2.5"
+        >
+          <p className="text-sm font-medium text-red-400">{hata}</p>
+          {sonDeneme && (
+            <button
+              onClick={() => degistir(sonDeneme.dalgaId, sonDeneme.acik)}
+              disabled={bekleyen !== null}
+              className="shrink-0 rounded-lg border border-red-400/40 px-3 py-1 text-xs font-bold text-red-200 transition-colors hover:bg-red-500/20 disabled:opacity-50"
+            >
+              {tr.admin.ux.yenidenDene}
+            </button>
+          )}
+        </div>
       )}
       <ul className="divide-y divide-royal/20">
         {dalgalar.map((d) => (
@@ -86,7 +104,7 @@ export default function DalgaKontrol({
                 disabled={bekleyen !== null}
                 className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-semibold text-slate-300 transition-colors hover:bg-midnight-soft disabled:opacity-50"
               >
-                {bekleyen === d.id ? "…" : tr.admin.dalga.kapat}
+                {bekleyen === d.id ? <Bekle /> : tr.admin.dalga.kapat}
               </OnayliDugme>
             ) : (
               <button
@@ -94,7 +112,7 @@ export default function DalgaKontrol({
                 disabled={bekleyen !== null}
                 className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
               >
-                {bekleyen === d.id ? "…" : tr.admin.dalga.ac}
+                {bekleyen === d.id ? <Bekle /> : tr.admin.dalga.ac}
               </button>
             )}
           </li>

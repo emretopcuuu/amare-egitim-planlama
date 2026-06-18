@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tost } from "@/lib/tost";
+import Bekle from "@/components/Bekle";
 
 export default function ProvaModuKontrol({ acik }: { acik: boolean }) {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function ProvaModuKontrol({ acik }: { acik: boolean }) {
             : "border border-royal-light/40 text-slate-300 hover:bg-midnight-soft"
         }`}
       >
-        {mesgul ? "…" : acik ? "Kapat" : "Prova Modunu Aç"}
+        {mesgul ? <Bekle /> : acik ? "Kapat" : "Prova Modunu Aç"}
       </button>
     </div>
   );

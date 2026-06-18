@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import Bekle from "@/components/Bekle";
 
 const t = tr.admin.moderasyon;
 
@@ -49,7 +50,7 @@ export default function GizleButonu({
             : "bg-red-500/80 text-white hover:bg-red-500"
         }`}
       >
-        {bekliyor ? "…" : gizli ? t.goster : t.gizle}
+        {bekliyor ? <Bekle /> : gizli ? t.goster : t.gizle}
       </button>
       {hata && <span className="text-xs text-red-400">{t.hata}</span>}
     </span>

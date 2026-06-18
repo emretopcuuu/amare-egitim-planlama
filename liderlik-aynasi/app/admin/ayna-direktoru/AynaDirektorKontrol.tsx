@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import Bekle from "@/components/Bekle";
 
 const t = tr.admin.aynaDirektor;
 
@@ -115,7 +116,7 @@ export default function AynaDirektorKontrol({
               : "bg-gold text-midnight shadow-lg shadow-gold/20 hover:bg-gold-light"
           }`}
         >
-          {bekliyor === "durum" ? "…" : aktif ? t.durdur : `🤖 ${t.uyandir}`}
+          {bekliyor === "durum" ? <Bekle /> : aktif ? t.durdur : `🤖 ${t.uyandir}`}
         </button>
       </div>
 
@@ -178,14 +179,14 @@ export default function AynaDirektorKontrol({
             disabled={bekliyor !== null}
             className="rounded-lg border border-gold/50 px-4 py-2 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-50"
           >
-            {bekliyor === "acilis" ? "…" : t.acilisDugme}
+            {bekliyor === "acilis" ? <Bekle /> : t.acilisDugme}
           </button>
           <button
             onClick={aynaAni}
             disabled={bekliyor !== null}
             className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-semibold text-slate-200 transition-colors hover:bg-midnight-soft disabled:opacity-50"
           >
-            {bekliyor === "aynaAni" ? "…" : t.aynaAniDugme}
+            {bekliyor === "aynaAni" ? <Bekle /> : t.aynaAniDugme}
           </button>
         </div>
       </div>
@@ -197,14 +198,14 @@ export default function AynaDirektorKontrol({
           disabled={bekliyor !== null}
           className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-midnight-soft disabled:opacity-50"
         >
-          {bekliyor === "tik" ? "…" : `⚙️ ${t.tikCalistir}`}
+          {bekliyor === "tik" ? <Bekle /> : `⚙️ ${t.tikCalistir}`}
         </button>
         <button
           onClick={sozGonder}
           disabled={bekliyor !== null}
           className="rounded-lg border border-gold/50 px-4 py-2 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-50"
         >
-          {bekliyor === "soz" ? "…" : t.sozGonder}
+          {bekliyor === "soz" ? <Bekle /> : t.sozGonder}
         </button>
       </div>
 

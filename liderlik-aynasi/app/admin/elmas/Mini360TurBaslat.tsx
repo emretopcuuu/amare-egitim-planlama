@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import Bekle from "@/components/Bekle";
 
 const t = tr.admin.elmas;
 
@@ -33,7 +34,7 @@ export default function Mini360TurBaslat({ tur }: { tur: number }) {
             disabled={calisan}
             className="rounded-lg bg-royal px-3 py-1.5 text-xs font-bold text-white disabled:opacity-50"
           >
-            {calisan ? "…" : t.turOnay}
+            {calisan ? <Bekle /> : t.turOnay}
           </button>
           <button onClick={() => setOnay(false)} className="text-xs text-slate-500 hover:text-slate-300">
             {t.turVazgec}
