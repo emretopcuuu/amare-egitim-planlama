@@ -1995,7 +1995,8 @@ export const tr = {
     },
     canliPano: {
       izgaraBaslik: "Katılımcı Nabzı",
-      izgaraBos: "Henüz görev üretilmedi — kişiler aktifleşince burada belirir.",
+      izgaraBos: "Henüz görev üretilmedi",
+      izgaraBosAlt: "Kişiler aktifleşince (AYNA görev üretince) burada renkli kareler belirir.",
       durumlar: {
         aktif: "Aktif",
         bekliyor: "Yanıt sırada",
@@ -2003,10 +2004,12 @@ export const tr = {
         bos: "Görev yok",
       },
       akisBaslik: "Canlı Teslim Akışı",
-      akisYok: "Henüz teslim yok.",
+      akisYok: "Henüz teslim yok",
+      akisYokAlt: "İlk yanıt geldiğinde teslimler buraya akmaya başlar.",
       bekliyorRozet: "AYNA okuyor",
       takimBaslik: "Takım Sıralaması",
-      takimBos: "Henüz puan yok — sıralama dalgalar açılınca oluşur.",
+      takimBos: "Henüz puan yok",
+      takimBosAlt: "Dış puanlar gelince takım ortalamaları burada sıralanır.",
       takimNot: "Takım bazında anonim dış puan ortalaması.",
     },
     ilerleme: {

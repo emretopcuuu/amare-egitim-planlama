@@ -32,7 +32,7 @@ export default function CanliPano({
       <div className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-slate-200">{t.izgaraBaslik}</h2>
-          <div className="flex flex-wrap gap-3 text-xs">
+          <div className="flex flex-wrap gap-3 text-xs" role="group" aria-label={t.izgaraBaslik}>
             {(["aktif", "bekliyor", "sessiz", "bos"] as const).map((d) => (
               <span key={d} className="inline-flex items-center gap-1.5 text-slate-400">
                 <span className={`h-2.5 w-2.5 rounded-sm ${DURUM_RENK[d]}`} aria-hidden />
@@ -42,15 +42,21 @@ export default function CanliPano({
           </div>
         </div>
         {izgara.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-500">{t.izgaraBos}</p>
+          <BosKutu ikon="📊" baslik={t.izgaraBos} alt={t.izgaraBosAlt} />
         ) : (
           <div className="mt-4 grid grid-cols-[repeat(auto-fill,minmax(1.4rem,1fr))] gap-1.5">
             {izgara.map((k) => (
               <span
                 key={k.id}
+                role="img"
+                aria-label={`${k.ad}${k.takim ? ` · ${k.takim}` : ""} — ${t.durumlar[k.durum]}`}
                 title={`${k.ad}${k.takim ? ` · ${k.takim}` : ""} — ${t.durumlar[k.durum]}`}
                 className={`aspect-square rounded-sm ${DURUM_RENK[k.durum]} ${
-                  k.durum === "sessiz" ? "ring-1 ring-red-300/40" : ""
+                  k.durum === "sessiz"
+                    ? "ring-1 ring-red-300/50"
+                    : k.durum === "bos"
+                      ? "opacity-50"
+                      : ""
                 }`}
               />
             ))}
@@ -63,7 +69,7 @@ export default function CanliPano({
         <div className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
           <h2 className="text-lg font-semibold text-slate-200">{t.akisBaslik}</h2>
           {teslimler.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-500">{t.akisYok}</p>
+            <BosKutu ikon="📭" baslik={t.akisYok} alt={t.akisYokAlt} />
           ) : (
             <ul className="mt-3 space-y-2">
               {teslimler.map((g) => (
@@ -94,7 +100,7 @@ export default function CanliPano({
         <div className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
           <h2 className="text-lg font-semibold text-slate-200">{t.takimBaslik}</h2>
           {takimlar.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-500">{t.takimBos}</p>
+            <BosKutu ikon="🏆" baslik={t.takimBos} alt={t.takimBosAlt} />
           ) : (
             <ul className="mt-3 space-y-2.5">
               {takimlar.map((tk, i) => (
@@ -126,5 +132,19 @@ export default function CanliPano({
         </div>
       </div>
     </section>
+  );
+}
+
+// Boş durum kutusu — donuk/boş metin yerine ikon + açıklama (panel "bozuk mu?"
+// hissi vermesin).
+function BosKutu({ ikon, baslik, alt }: { ikon: string; baslik: string; alt: string }) {
+  return (
+    <div className="mt-4 rounded-xl border border-white/5 bg-white/[0.02] px-5 py-8 text-center">
+      <p className="text-3xl" aria-hidden>
+        {ikon}
+      </p>
+      <p className="mt-2 text-sm font-medium text-slate-300">{baslik}</p>
+      <p className="mt-1 text-xs text-slate-500">{alt}</p>
+    </div>
   );
 }
