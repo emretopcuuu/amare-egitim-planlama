@@ -185,7 +185,21 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
           </div>
         )}
 
-        {hata && <p role="alert" className="text-center text-sm font-medium text-red-400">{hata}</p>}
+        {hata && (
+          <div role="alert" className="text-center">
+            <p className="text-sm font-medium text-red-400">{hata}</p>
+            <button
+              onClick={() => {
+                setHata(null);
+                void karsila();
+              }}
+              disabled={yaziyor}
+              className="mt-2 rounded-lg border border-royal-light/40 px-3 py-1.5 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/5 disabled:opacity-50"
+            >
+              {t.tekrarDene}
+            </button>
+          </div>
+        )}
         <div ref={altRef} />
       </div>
 
@@ -203,7 +217,7 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
             }}
             rows={1}
             placeholder={t.yer}
-            className="max-h-[140px] min-h-[3rem] flex-1 resize-none rounded-2xl border-2 border-white/15 bg-white/[0.04] px-4 py-3 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-gold"
+            className="max-h-[140px] min-h-[3rem] flex-1 resize-none rounded-2xl border-2 border-white/15 bg-white/[0.04] px-4 py-3 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-gold"
           />
           <MikrofonButonu onMetin={(p) => setGirdi((g) => (g.trim() ? `${g.trim()} ${p}` : p))} />
           <button
