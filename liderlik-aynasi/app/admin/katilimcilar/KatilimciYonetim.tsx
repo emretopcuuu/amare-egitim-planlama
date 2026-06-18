@@ -395,7 +395,7 @@ export default function KatilimciYonetim({
                         <button
                           onClick={() => duzenleAc(k)}
                           aria-label={`${k.full_name} düzenle`}
-                          className="rounded p-1 text-slate-500 transition-colors hover:text-gold-light"
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/5 hover:text-gold-light"
                         >
                           ✏️
                         </button>
@@ -438,7 +438,7 @@ export default function KatilimciYonetim({
                   <button
                     onClick={() => duzenleAc(k)}
                     aria-label={`${k.full_name} düzenle`}
-                    className="ml-1 rounded p-1 text-slate-500 transition-colors hover:text-gold-light"
+                    className="ml-1 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-white/5 hover:text-gold-light"
                   >
                     ✏️
                   </button>

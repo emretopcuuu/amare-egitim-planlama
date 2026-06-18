@@ -97,8 +97,8 @@ export default function GorevTuruYonetim({
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-gold-light">
-              <span className="mr-1 text-slate-500" aria-hidden>
-                ⠿
+              <span className="mr-1 tracking-tighter text-slate-500" aria-hidden>
+                ⋮⋮
               </span>
               {bilgi?.ad ?? tur}
             </p>
