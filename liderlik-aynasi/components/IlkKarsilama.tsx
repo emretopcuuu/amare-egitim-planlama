@@ -7,12 +7,16 @@ import { titret } from "@/lib/his";
 import { useEsc } from "@/lib/useEsc";
 import AynaSahnesi from "@/components/AynaSahnesi";
 
-const ANAHTAR = "la_karsilama_v3";
+const ANAHTAR = "la_karsilama_v4";
 const t = tr.karsilama;
+// Adayın kampta İLK düştüğü ekranlar: FAZ 0'da ana sayfa onu /on-farkindalik'e
+// (yoksa /pusula'ya) yönlendirir; karşılama bu yüzden yalnız "/"da tetiklenince
+// hiç görünmüyordu. Adayın gerçekten ilk gördüğü ekranlarda da çıksın.
+const KARSILAMA_ROTALARI = new Set(["/", "/on-farkindalik", "/pusula"]);
 
-// #1 İlk açılış mikro-turu: katılımcı ana sayfaya İLK kez geldiğinde AYNA
-// kendini sinematik bir "uyanan ayna" sahnesinde tanıtır (tonu ilk saniyede
-// kurar). Bir kez gösterilir (localStorage). Yalnız ana sayfada tetiklenir.
+// #1 İlk açılış mikro-turu: katılımcı sisteme İLK kez geldiğinde AYNA kendini
+// sinematik bir "uyanan ayna" sahnesinde tanıtır (tonu ilk saniyede kurar).
+// Bir kez gösterilir (localStorage); adayın ilk düştüğü ekranda tetiklenir.
 export default function IlkKarsilama() {
   const pathname = usePathname();
   const [acik, setAcik] = useState(false);
@@ -20,7 +24,7 @@ export default function IlkKarsilama() {
   useEsc(acik, () => kapat());
 
   useEffect(() => {
-    if (pathname !== "/") return;
+    if (!KARSILAMA_ROTALARI.has(pathname)) return;
     try {
       if (!localStorage.getItem(ANAHTAR)) {
         // eslint-disable-next-line react-hooks/set-state-in-effect
