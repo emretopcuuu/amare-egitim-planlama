@@ -717,6 +717,13 @@ export const tr = {
     bildirimBaslik: "Hatırlatmaları aç",
     hazirlikBekle:
       "Hazırsın. Kampın geri kalanı, oraya gelip odandaki kodu okuttuğunda açılacak. O ana dek dinlen.",
+    // Mühür kahramanı: bekleme ekranının EN BÜYÜK, merkez mesajı — aday bundan
+    // sonra nasıl ilerleyeceğini buradan anlar.
+    muhurRozet: "🔒 Mühür kapalı",
+    muhurHeroBaslik: "Mührü kaldırmadan devam edemezsin",
+    muhurHeroMetin:
+      "Kampta odana girdiğinde seni bir QR karekod karşılayacak. Onu telefonunla okut — mühür kalkar, kamp ve AYNA sana açılır.",
+    muhurHeroNot: "📍 Yalnızca kampta, odandaki karekodla açılır.",
     // Hub zenginleştirme: ilerleme, sosyal kanıt, kilitli sürprizler, rozet, geri sayım
     kampaKalan: "Kampa kalan",
     hazirYuzde: (n: number) => `%${n} hazırsın`,
