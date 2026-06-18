@@ -168,6 +168,8 @@ export const tr = {
     ozGerekMetin:
       "Aynaya ilk bakış senden başlar. Kendini 10 liderlik özelliğinde puanlamadan kamp sana açılmaz.",
     ozGerekDugme: "✨ Kendini Puanla",
+    ozSonraki: "Ekip arkadaşlarını değerlendir",
+    dalgaSonraki: "AYNA'nın sana özel görevleri",
     boslukBaslik: "Aynaya bakma vakti",
     boslukMetin:
       "Kampa gelmeden önce kendine bir şey söylemiştin. Üç gün boyunca onu izledim. Şimdi yüzleşme zamanı.",
@@ -1803,6 +1805,10 @@ export const tr = {
       bildirim: "Bildirimler çalışıyor",
       bildirimIpucu: "Push abonesi/anahtarı yok",
       duzelt: "Düzelt →",
+      zorunlu: "Zorunlu",
+      opsiyonel: "Opsiyonel",
+      zorunluBaslik: "Önce bunlar (kampı açmak için)",
+      opsiyonelBaslik: "Sonra bunlar (opsiyonel)",
     },
     // #9 Eksikleri tek dokunuşla dürt: öz-puanını bitirmeyenlere hatırlatma push'u
     durt: {
