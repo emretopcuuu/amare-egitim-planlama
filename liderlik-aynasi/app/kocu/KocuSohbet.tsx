@@ -10,7 +10,7 @@ const t = tr.kocu;
 
 type Mesaj = { rol: string; icerik: string };
 
-export default function KocuSohbet() {
+export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }) {
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
   const [girdi, setGirdi] = useState("");
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -147,6 +147,16 @@ export default function KocuSohbet() {
           {sesli ? "🔊" : "🔇"}
         </button>
       </header>
+
+      {/* #4 Hafıza şeridi: AYNA'nın kişi hakkında bildiği çekirdek — "seni hatırlıyorum" */}
+      {hafiza && (
+        <div className="border-b border-white/5 bg-gold/[0.06] px-4 py-2.5">
+          <p className="text-[0.7rem] leading-relaxed text-slate-300">
+            <span className="mr-1.5 font-semibold text-gold-light">{t.hafizaBaslik}</span>
+            {hafiza}
+          </p>
+        </div>
+      )}
 
       <div className="flex-1 space-y-3 overflow-y-auto px-4 py-5">
         {yukleniyor && <p className="text-center text-sm text-slate-500">{t.yukleniyor}</p>}

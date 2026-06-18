@@ -747,6 +747,7 @@ export const tr = {
   kocu: {
     baslik: "Ayna Koçu",
     altBaslik: "Her an buradayım",
+    hafizaBaslik: "Seni hatırlıyorum:",
     sesliMod: "Sesli mod (AYNA yanıtını sesli okur)",
     yer: "AYNA'ya yaz… (takıldığın, merak ettiğin ne varsa)",
     gonder: "Gönder",
@@ -1301,6 +1302,13 @@ export const tr = {
       kayitli: "✓ Kaydedildi",
       enAzBir: "En az bir tür açık kalmalı.",
       hata: "Kaydedilemedi, tekrar dene.",
+      aktifBaslik: "Aktif türler",
+      pasifBaslik: "Kapalı türler",
+      surukleIpucu: "Bir türü sürükleyip diğer sütuna bırak — ya da okla taşı.",
+      aktifBos: "Hiç aktif tür yok — en az birini buraya taşı.",
+      pasifBos: "Tüm türler aktif. İstemediğin türü buraya sürükle.",
+      pasifeTasi: "Kapat",
+      aktifeTasi: "Aç",
       turler: {
         gozlem: {
           ad: "👁 Gözlem",
@@ -1955,6 +1963,26 @@ export const tr = {
       ac: "Aç",
       kapat: "Kapat",
       hata: "Dalga güncellenemedi. Lütfen tekrar dene.",
+      // #2 Kapanış sayacı
+      puanlamayan: (n: number) => `${n} kişi henüz hiç puanlamadı`,
+      kapatUyari: (n: number) =>
+        `${n} kişi bu dalgada henüz hiç puanlamadı. Kapatınca artık puanlayamazlar. Yine de kapatılsın mı?`,
+    },
+    canliPano: {
+      izgaraBaslik: "Katılımcı Nabzı",
+      izgaraBos: "Henüz görev üretilmedi — kişiler aktifleşince burada belirir.",
+      durumlar: {
+        aktif: "Aktif",
+        bekliyor: "Yanıt sırada",
+        sessiz: "Sessiz (4sa+)",
+        bos: "Görev yok",
+      },
+      akisBaslik: "Canlı Teslim Akışı",
+      akisYok: "Henüz teslim yok.",
+      bekliyorRozet: "AYNA okuyor",
+      takimBaslik: "Takım Sıralaması",
+      takimBos: "Henüz puan yok — sıralama dalgalar açılınca oluşur.",
+      takimNot: "Takım bazında anonim dış puan ortalaması.",
     },
     ilerleme: {
       baslik: "Canlı İlerleme",
@@ -2261,6 +2289,14 @@ export const tr = {
         "ANTHROPIC_API_KEY tanımlı değil — mektuplar üretilemez (Vercel ortam değişkenlerine ekle).",
     },
     yetkisiz: "Bu işlem için yönetici oturumu gerekir.",
+    aynaAniTetik: {
+      bosDurum: "Şu an Ayna Anı'na hazır kimse yok — kişilerin önce birkaç görev tamamlaması gerekiyor.",
+      hazir: (n: number) => `${n} kişi Ayna Anı'na hazır.`,
+      uret: (n: number) => `${n} kişiye Ayna Anı üret`,
+      uretiliyor: (yapilan: number, toplam: number) => `Üretiliyor… ${yapilan}/${toplam}`,
+      bitti: (n: number) => `${n} Ayna Anı üretildi ✓`,
+      hata: "Üretim sırasında bir sorun oldu, tekrar dene.",
+    },
     aynaDirektor: {
       modBaslik: "Sistem Modu",
       modAciklama:
@@ -2298,6 +2334,9 @@ export const tr = {
       detayZorluk: "Zorluk",
       detayOzellik: "Hedef özellik",
       detayKapat: "Kapat",
+      aynaAniBaslik: "🪞 Ayna Anı — Gördün mü?",
+      aynaAniAciklama:
+        "Yeterince görev yapan ve kamp öncesi kör noktasını yazan kişilere, AYNA kendi cümlelerini bugünkü çabalarıyla yüzleştiren özel bir an üretir. Hazır olan herkese tek tıkla gönder.",
       sahneBaslik: "Sahne Anları",
       sahneAciklama:
         "Bas → projeksiyondaki /ekran sayfası AYNA'nın marka sesiyle salona konuşur (ekranda '🔊 Sesi Aç' açık olmalı).",
@@ -2367,6 +2406,11 @@ export const tr = {
     senkronTesekkur:
       "Tam zamanında. Şu anda onlarca kişi seninle aynı şeyi yaptı — kolektif enerji böyle kurulur. +8 ⚡",
     momentumSatiri: (skor: number) => `📈 Momentum: ${skor}/100`,
+    // #6 Seri ateşi: kesintisiz tamamlanan görev serisi
+    seriAtesi: (n: number) => `${n} görev üst üste — momentum sende. Bırakma!`,
+    // #9 Akıllı yazı ipuçları: yanıtın uzunluğuna göre nazik yönlendirme
+    ipucuKisa: "Biraz daha açabilir misin? Tek satır AYNA'ya az gelir.",
+    ipucuYeterli: "Güçlü — AYNA'nın görmesi için yeterince derin. Dilersen gönder.",
     altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
     aktifYokBaslik: "Şu an görevin yok",
     aktifYok: "AYNA seni izliyor — yeni bir görev her an gelebilir.",

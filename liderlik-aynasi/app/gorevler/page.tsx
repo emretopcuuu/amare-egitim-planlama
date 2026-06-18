@@ -142,6 +142,35 @@ export default async function GorevlerPage() {
   const bugunTakdirSayi = bugunTakdir ?? 0;
   const ozetVar = bugunGorev > 0 || bugunTakdirSayi > 0;
 
+  // #6 Seri ateşi: en son kapanan görevlerden geriye doğru kesintisiz "scored"
+  // sayısı (ilk "expired"de seri kırılır). 3+ olunca momentum banner'ı çıkar.
+  let seri = 0;
+  for (const g of gecmis) {
+    if (g.status === "scored") seri++;
+    else break;
+  }
+
+  // #10 Zaman çizelgesi: geçmiş görevleri İstanbul gününe göre grupla (her gün
+  // bir bölüm). En yeni gün üstte; gün içinde en yeni görev üstte.
+  const gunEtiket = new Intl.DateTimeFormat("tr-TR", {
+    timeZone: "Europe/Istanbul",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
+  const gunAnahtar = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" });
+  const gecmisGruplar: { anahtar: string; etiket: string; gorevler: typeof gecmis }[] = [];
+  for (const g of gecmis) {
+    const zaman = new Date(g.scored_at ?? g.issued_at);
+    const anahtar = gunAnahtar.format(zaman);
+    let grup = gecmisGruplar.find((x) => x.anahtar === anahtar);
+    if (!grup) {
+      grup = { anahtar, etiket: gunEtiket.format(zaman), gorevler: [] };
+      gecmisGruplar.push(grup);
+    }
+    grup.gorevler.push(g);
+  }
+
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-6 p-5">
@@ -206,6 +235,16 @@ export default async function GorevlerPage() {
           <p className="mt-1 text-sm text-slate-200">
             {t.bugunOzet(bugunGorev, bugunKivilcim, bugunTakdirSayi)}
           </p>
+        </section>
+      )}
+
+      {/* #6 Seri ateşi — kesintisiz tamamlanan görevler momentumu */}
+      {seri >= 3 && (
+        <section className="seri-belir flex items-center gap-3 rounded-2xl border border-orange-400/30 bg-gradient-to-r from-orange-500/15 to-midnight-card/60 px-4 py-3">
+          <span className="text-2xl" aria-hidden>
+            🔥
+          </span>
+          <p className="text-sm font-semibold text-orange-200">{t.seriAtesi(seri)}</p>
         </section>
       )}
 
@@ -297,55 +336,76 @@ export default async function GorevlerPage() {
         ))
       )}
 
-      {/* Geçmiş */}
+      {/* Geçmiş — #10 günlere bölünmüş zaman çizelgesi (kamp yolculuğun) */}
       <section>
         <h2 className="text-lg font-semibold text-gold-light">{t.gecmisBaslik}</h2>
         {gecmis.length === 0 ? (
           <p className="mt-3 text-sm text-slate-400">{t.gecmisYok}</p>
         ) : (
-          <ul className="mt-3 space-y-3">
-            {gecmis.map((g) => (
-              <li
-                key={g.id}
-                className={`kart-3d rounded-2xl bg-midnight-card/60 p-4 ring-1 backdrop-blur ${
-                  g.status === "expired" ? "opacity-60 ring-royal/20" : "ring-royal/30"
-                }`}
-              >
-                <div className="flex items-center justify-between gap-3 text-xs">
-                  <span
-                    className={`rounded-md px-2 py-0.5 font-medium ${TUR_RENK[g.kind] ?? "text-slate-400"}`}
-                  >
-                    {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
-                  </span>
-                  {g.status === "scored" && g.ai_score !== null ? (
-                    <span className="font-bold text-gold">
-                      {t.puanin(g.ai_score)} · +{g.spark_points} ⚡
-                    </span>
-                  ) : g.status === "scored" ? (
-                    <span className="font-bold text-gold">+{g.spark_points} ⚡</span>
-                  ) : (
-                    <span className="text-slate-500">
-                      {t.durumlar[g.status as keyof typeof t.durumlar]}
-                    </span>
-                  )}
-                </div>
-                <p className="mt-1.5 text-sm font-medium text-slate-100">{g.title}</p>
-                {g.ai_comment && (
-                  <p className="mt-2 rounded-xl bg-midnight-soft p-3 text-sm italic text-slate-300">
-                    “{g.ai_comment}”
-                  </p>
-                )}
-                {gelenGozlem.has(g.id) && (
-                  <p className="mt-2 rounded-xl border border-royal-light/25 bg-midnight/40 p-3 text-sm text-slate-200">
-                    <span className="mr-1 text-xs font-semibold text-royal-light">
-                      {t.tanikGelenEtiket}
-                    </span>
-                    “{gelenGozlem.get(g.id)}”
-                  </p>
-                )}
-              </li>
+          <div className="mt-4 space-y-6">
+            {gecmisGruplar.map((grup) => (
+              <div key={grup.anahtar}>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {grup.etiket}
+                </p>
+                {/* Sol rayda dikey çizgi + her görevde nokta */}
+                <ul className="relative space-y-3 border-l border-royal/25 pl-5">
+                  {grup.gorevler.map((g) => (
+                    <li key={g.id} className="relative">
+                      <span
+                        className={`absolute -left-[1.46rem] top-3 h-2.5 w-2.5 rounded-full ring-2 ring-midnight ${
+                          g.status === "expired"
+                            ? "bg-slate-600"
+                            : (g.ai_score ?? 0) >= 8
+                              ? "bg-gold"
+                              : "bg-royal-light"
+                        }`}
+                        aria-hidden
+                      />
+                      <div
+                        className={`kart-3d rounded-2xl bg-midnight-card/60 p-4 ring-1 backdrop-blur ${
+                          g.status === "expired" ? "opacity-60 ring-royal/20" : "ring-royal/30"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-3 text-xs">
+                          <span
+                            className={`rounded-md px-2 py-0.5 font-medium ${TUR_RENK[g.kind] ?? "text-slate-400"}`}
+                          >
+                            {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
+                          </span>
+                          {g.status === "scored" && g.ai_score !== null ? (
+                            <span className="font-bold text-gold">
+                              {t.puanin(g.ai_score)} · +{g.spark_points} ⚡
+                            </span>
+                          ) : g.status === "scored" ? (
+                            <span className="font-bold text-gold">+{g.spark_points} ⚡</span>
+                          ) : (
+                            <span className="text-slate-500">
+                              {t.durumlar[g.status as keyof typeof t.durumlar]}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-1.5 text-sm font-medium text-slate-100">{g.title}</p>
+                        {g.ai_comment && (
+                          <p className="mt-2 rounded-xl bg-midnight-soft p-3 text-sm italic text-slate-300">
+                            “{g.ai_comment}”
+                          </p>
+                        )}
+                        {gelenGozlem.has(g.id) && (
+                          <p className="mt-2 rounded-xl border border-royal-light/25 bg-midnight/40 p-3 text-sm text-slate-200">
+                            <span className="mr-1 text-xs font-semibold text-royal-light">
+                              {t.tanikGelenEtiket}
+                            </span>
+                            “{gelenGozlem.get(g.id)}”
+                          </p>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </section>
       </div>

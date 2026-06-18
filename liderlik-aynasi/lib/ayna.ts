@@ -342,7 +342,17 @@ export async function gorevUret(
         effort: "low",
         format: { type: "json_schema", schema: GOREV_SEMASI },
       },
-      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\n${BASARI_STRATEJISI}\n\nGörevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa (kişinin nedeni + iç engeli), görevi ona göre kişiselleştir: nedenine sessizce dokun ve iç engelini nazikçe zorlayan bir görev seç — ama iç engeli açıkça yüzüne vurma. Bağlamda "onFarkindalik" doluysa (kamp öncesi ayna profili), görevi şuna göre hedefle: "enZayifAlan" kırılgansa o kası çalıştıran, "enBuyukAciklar"daki başlıkta söylediğiyle yaptığı arasını kapatan, "korNokta"daki koruyucu inancı/kalkanı nazikçe sınayan bir görev seç. Ritim "patlayan" ise sürekliliği, geri bildirim açıklığı düşükse geri bildirim almayı/işlemeyi çalıştır. Kör noktayı/açığı ASLA açıkça yüzüne vurma — görev onu sessizce çalışsın. Zorluk yönergesine MUTLAKA uy. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""} ${tur === "simulasyon" ? 'SİMÜLASYON görevi: bir aday/müşteri rolünde KISA bir sahne kur; gövdede adayın itirazını tırnak içinde söyle (ör. "Bunlara vaktim yok", "Bu işler bana göre değil") ve katılımcıdan cevabını sana yazmasını/söylemesini iste. İtirazın sertliğini zorluk seviyesine göre ayarla.' : ""} ${mod === "yolculuk" ? "Bu görev KAMPTA DEĞİL, kamp sonrası 90 günlük sahada (günlük hayat ve iş ortamı) yapılacak — kamp alanı varsayma. Bağlamda 'yeniCumle' doluysa: görevi, kişinin kampta yazdığı o yeni cümleyi BUGÜN somut bir adımla YAŞATAN/doğrulayan bir saha eylemi olarak kur — cümleyi açıkça tekrarlama, ama görev onu çalışsın." : ""} ${baglam.yenidenBagla ? "YENİDEN BAĞLAMA: Bu aday son görevlerde sessizleşti/takıldı. Onu YARGILAMADAN, sıcak bir dille yeniden çağır — küçük, eğlenceli, kesinlikle başarılabilir bir başlangıç ver; 'tekrar buradayım, hoş geldin' hissi uyandır. Suçluluk ya da baskı yükleme." : ""} ${naziklesir ? "ŞEFKAT MODU: Bu aday yakın zamanda bir görevi 'ağır geldi' diye hafifletti. Görevi KÜÇÜK, güvenli ve baskısız tut; ona kendi hızında olduğunu hissettir. Zorlama, yüzleştirme, risk yükleme — önce güveni geri kur." : ""} ${yay ? `GÖREV YAYI: Bu adayın görevleri kopuk kopuk değil — tek bir çekirdek tema ("${yay.cekirdekTema}") etrafında derinleşen bir yay. Şu anki aşama "${yay.ad}": ${yay.yonerge} Önceki aşamaların üstüne çık, geri gitme; ama çekirdek temadan da sapma. Temayı adıyla yüzüne vurma.` : ""} ${bitenEtkinlik ? `AN'A KİLİTLİ: Az önce "${bitenEtkinlik.baslik}" anı bitti — duygusu hâlâ sıcak. Görevi bu anın enerjisine bağla; o deneyimde yaşanan şeyi BUGÜN somut bir adıma çevir. Anı doğal biçimde an, zorlama.` : ""} ${gununTemasi ? `GÜNÜN TEMASI (admin belirledi — görevi mümkünse buna dik): ${gununTemasi}` : ""} ${aynaEkTon ? `ADMIN TON AYARI (üsluba uygula): ${aynaEkTon}` : ""}`,
+      system: [
+        {
+          type: "text" as const,
+          text: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\n${BASARI_STRATEJISI}\n\n`,
+          cache_control: { type: "ephemeral" as const },
+        },
+        {
+          type: "text" as const,
+          text: `Görevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa (kişinin nedeni + iç engeli), görevi ona göre kişiselleştir: nedenine sessizce dokun ve iç engelini nazikçe zorlayan bir görev seç — ama iç engeli açıkça yüzüne vurma. Bağlamda "onFarkindalik" doluysa (kamp öncesi ayna profili), görevi şuna göre hedefle: "enZayifAlan" kırılgansa o kası çalıştıran, "enBuyukAciklar"daki başlıkta söylediğiyle yaptığı arasını kapatan, "korNokta"daki koruyucu inancı/kalkanı nazikçe sınayan bir görev seç. Ritim "patlayan" ise sürekliliği, geri bildirim açıklığı düşükse geri bildirim almayı/işlemeyi çalıştır. Kör noktayı/açığı ASLA açıkça yüzüne vurma — görev onu sessizce çalışsın. Zorluk yönergesine MUTLAKA uy. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""} ${tur === "simulasyon" ? 'SİMÜLASYON görevi: bir aday/müşteri rolünde KISA bir sahne kur; gövdede adayın itirazını tırnak içinde söyle (ör. "Bunlara vaktim yok", "Bu işler bana göre değil") ve katılımcıdan cevabını sana yazmasını/söylemesini iste. İtirazın sertliğini zorluk seviyesine göre ayarla.' : ""} ${mod === "yolculuk" ? "Bu görev KAMPTA DEĞİL, kamp sonrası 90 günlük sahada (günlük hayat ve iş ortamı) yapılacak — kamp alanı varsayma. Bağlamda 'yeniCumle' doluysa: görevi, kişinin kampta yazdığı o yeni cümleyi BUGÜN somut bir adımla YAŞATAN/doğrulayan bir saha eylemi olarak kur — cümleyi açıkça tekrarlama, ama görev onu çalışsın." : ""} ${baglam.yenidenBagla ? "YENİDEN BAĞLAMA: Bu aday son görevlerde sessizleşti/takıldı. Onu YARGILAMADAN, sıcak bir dille yeniden çağır — küçük, eğlenceli, kesinlikle başarılabilir bir başlangıç ver; 'tekrar buradayım, hoş geldin' hissi uyandır. Suçluluk ya da baskı yükleme." : ""} ${naziklesir ? "ŞEFKAT MODU: Bu aday yakın zamanda bir görevi 'ağır geldi' diye hafifletti. Görevi KÜÇÜK, güvenli ve baskısız tut; ona kendi hızında olduğunu hissettir. Zorlama, yüzleştirme, risk yükleme — önce güveni geri kur." : ""} ${yay ? `GÖREV YAYI: Bu adayın görevleri kopuk kopuk değil — tek bir çekirdek tema ("${yay.cekirdekTema}") etrafında derinleşen bir yay. Şu anki aşama "${yay.ad}": ${yay.yonerge} Önceki aşamaların üstüne çık, geri gitme; ama çekirdek temadan da sapma. Temayı adıyla yüzüne vurma.` : ""} ${bitenEtkinlik ? `AN'A KİLİTLİ: Az önce "${bitenEtkinlik.baslik}" anı bitti — duygusu hâlâ sıcak. Görevi bu anın enerjisine bağla; o deneyimde yaşanan şeyi BUGÜN somut bir adıma çevir. Anı doğal biçimde an, zorlama.` : ""} ${gununTemasi ? `GÜNÜN TEMASI (admin belirledi — görevi mümkünse buna dik): ${gununTemasi}` : ""} ${aynaEkTon ? `ADMIN TON AYARI (üsluba uygula): ${aynaEkTon}` : ""}`,
+        },
+      ],
       messages: [{ role: "user", content: JSON.stringify(baglam) }],
     });
 
@@ -387,7 +397,17 @@ export async function gorevPuanla(
         effort: "low",
         format: { type: "json_schema", schema: PUAN_SEMASI },
       },
-      system: `${PERSONA}\n\n${BASARI_STRATEJISI}\n\n${gorev.kind === "simulasyon" ? "Görevin: SİMÜLASYON değerlendirmesi. Önce görevdeki müşteri/aday rolüne gir ve katılımcının cevabına o karakterin ağzından 1 cümlelik gerçekçi tepki ver (ikna olduysa yumuşa, olmadıysa nazikçe diren). Ardından AYNA olarak 1 cümle koçluk ekle: neyi iyi yaptı + bir sonraki denemede tek somut iyileştirme; koçluğu yukarıdaki saha tekniğine (feel-felt-found, ısınma, tempo, 1–10, ısrar=taciz) dayandır. İkisini birlikte 'yorum' alanına yaz. Puanı itirazı karşılama becerisine göre ver." : "Görevin: verdiğin görevin yanıtını puanla. Çabayı, samimiyeti ve somutluğu ödüllendir; boş/alaycı yanıta düşük puan ver ama yine de yapıcı kal. Yorum 1-2 cümle, AYNA'nın ağzından."}`,
+      system: [
+        {
+          type: "text" as const,
+          text: `${PERSONA}\n\n${BASARI_STRATEJISI}\n\n`,
+          cache_control: { type: "ephemeral" as const },
+        },
+        {
+          type: "text" as const,
+          text: `${gorev.kind === "simulasyon" ? "Görevin: SİMÜLASYON değerlendirmesi. Önce görevdeki müşteri/aday rolüne gir ve katılımcının cevabına o karakterin ağzından 1 cümlelik gerçekçi tepki ver (ikna olduysa yumuşa, olmadıysa nazikçe diren). Ardından AYNA olarak 1 cümle koçluk ekle: neyi iyi yaptı + bir sonraki denemede tek somut iyileştirme; koçluğu yukarıdaki saha tekniğine (feel-felt-found, ısınma, tempo, 1–10, ısrar=taciz) dayandır. İkisini birlikte 'yorum' alanına yaz. Puanı itirazı karşılama becerisine göre ver." : "Görevin: verdiğin görevin yanıtını puanla. Çabayı, samimiyeti ve somutluğu ödüllendir; boş/alaycı yanıta düşük puan ver ama yine de yapıcı kal. Yorum 1-2 cümle, AYNA'nın ağzından."}`,
+        },
+      ],
       messages: [
         {
           role: "user",
@@ -427,7 +447,7 @@ export async function gorevYansit(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-haiku-4-5",
       max_tokens: 256,
       thinking: { type: "disabled" },
       output_config: { effort: "low" },
@@ -567,7 +587,17 @@ export async function gorevZorlastir(
           },
         },
       },
-      system: `${PERSONA}\n\n${BASARI_STRATEJISI}\n\nAday bu görevi KENDİ İSTEĞİYLE zorlaştırmak istedi — bu cesareti onurlandır. Aynı temayı ve türü ("${gorev.kind}") koru ama ASK'i belirgin biçimde cesurlaştır: daha yüksek risk, daha görünür, daha çok temas. Yeni zorluk yönergesi: ${ZORLUK_YONERGESI[yeniZorluk]} Görev hâlâ 1-3 saatte yapılabilir ve net olmalı. Gövdeye küçük bir "seçtiğin için" takdiri kat ama abartma.`,
+      system: [
+        {
+          type: "text" as const,
+          text: `${PERSONA}\n\n${BASARI_STRATEJISI}\n\n`,
+          cache_control: { type: "ephemeral" as const },
+        },
+        {
+          type: "text" as const,
+          text: `Aday bu görevi KENDİ İSTEĞİYLE zorlaştırmak istedi — bu cesareti onurlandır. Aynı temayı ve türü ("${gorev.kind}") koru ama ASK'i belirgin biçimde cesurlaştır: daha yüksek risk, daha görünür, daha çok temas. Yeni zorluk yönergesi: ${ZORLUK_YONERGESI[yeniZorluk]} Görev hâlâ 1-3 saatte yapılabilir ve net olmalı. Gövdeye küçük bir "seçtiğin için" takdiri kat ama abartma.`,
+        },
+      ],
       messages: [
         {
           role: "user",
@@ -614,7 +644,17 @@ export async function gorevHafiflet(
           },
         },
       },
-      system: `${PERSONA}\n\n${BASARI_STRATEJISI}\n\nAday bu görevi şu an FAZLA bulduğunu söyledi. Onu ASLA yargılama, suçlu hissettirme; "anladım, beraber küçültelim" tonu. Aynı temayı ve türü ("${gorev.kind}") koru ama ASK'i belirgin biçimde KÜÇÜLT: daha düşük risk, daha az görünür, tek ve çok kolay bir ilk adım. Yeni zorluk yönergesi: ${ZORLUK_YONERGESI[yeniZorluk]} Gövdeye kısa, sıcak bir güvence kat (ör. "kendi hızında, baskı yok"). 1 saatte rahatça yapılabilsin.`,
+      system: [
+        {
+          type: "text" as const,
+          text: `${PERSONA}\n\n${BASARI_STRATEJISI}\n\n`,
+          cache_control: { type: "ephemeral" as const },
+        },
+        {
+          type: "text" as const,
+          text: `Aday bu görevi şu an FAZLA bulduğunu söyledi. Onu ASLA yargılama, suçlu hissettirme; "anladım, beraber küçültelim" tonu. Aynı temayı ve türü ("${gorev.kind}") koru ama ASK'i belirgin biçimde KÜÇÜLT: daha düşük risk, daha az görünür, tek ve çok kolay bir ilk adım. Yeni zorluk yönergesi: ${ZORLUK_YONERGESI[yeniZorluk]} Gövdeye kısa, sıcak bir güvence kat (ör. "kendi hızında, baskı yok"). 1 saatte rahatça yapılabilsin.`,
+        },
+      ],
       messages: [
         {
           role: "user",
@@ -699,7 +739,7 @@ export async function senkronGorevUret(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-opus-4-8",
+      model: "claude-sonnet-4-6",
       max_tokens: 1024,
       thinking: { type: "adaptive" },
       output_config: {
