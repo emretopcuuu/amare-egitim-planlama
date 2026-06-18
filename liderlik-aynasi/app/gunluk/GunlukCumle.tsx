@@ -106,7 +106,11 @@ export default function GunlukCumle() {
           >
             {kaydediliyor ? t.kaydediliyor : bugunVar ? t.guncelle : t.kaydet}
           </button>
-          {bugunVar && <p className="mt-3 text-center text-sm text-emerald-400">{t.bugunTamam}</p>}
+          {bugunVar && (
+            <p aria-live="polite" className="mt-3 text-center text-sm text-emerald-400">
+              {t.bugunTamam}
+            </p>
+          )}
         </div>
       )}
 

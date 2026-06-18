@@ -774,6 +774,7 @@ export const tr = {
     yukleniyor: "Açılıyor…",
     hata: "Bir şey ters gitti. Tekrar dene.",
     uretilemedi: "Şu an cevap veremedim, bir daha dener misin?",
+    tekrarDene: "Tekrar dene",
   },
   // Günlük "Tek Cümle" — her gün bir mikro-yansıma + seri
   gunlukCumle: {
