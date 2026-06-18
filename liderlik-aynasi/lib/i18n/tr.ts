@@ -1,5 +1,14 @@
 // Tüm kullanıcıya görünen Türkçe metinler tek modülde toplanır.
 export const tr = {
+  // Ortak aşamalı akış parçaları (AsamaRayi + sıradaki önizleme + geri-düzelt)
+  asama: {
+    rayEtiket: "Aşamalar",
+    siradaki: "Sıradaki:",
+    kilitliNot: "şimdi kilitli",
+    geri: "← Geri",
+    geriDuzelt: "← Geri dön (düzelt)",
+    onceki: "← Önceki adım",
+  },
   app: {
     name: "Liderlik Aynası",
     tagline: "Kendini başkalarının gözünden gör.",
@@ -159,6 +168,8 @@ export const tr = {
     ozGerekMetin:
       "Aynaya ilk bakış senden başlar. Kendini 10 liderlik özelliğinde puanlamadan kamp sana açılmaz.",
     ozGerekDugme: "✨ Kendini Puanla",
+    ozSonraki: "Ekip arkadaşlarını değerlendir",
+    dalgaSonraki: "AYNA'nın sana özel görevleri",
     boslukBaslik: "Aynaya bakma vakti",
     boslukMetin:
       "Kampa gelmeden önce kendine bir şey söylemiştin. Üç gün boyunca onu izledim. Şimdi yüzleşme zamanı.",
@@ -660,6 +671,7 @@ export const tr = {
     // Sohbet ilerleme göstergesi
     ilerlemeEtiket: "Sohbet ilerlemesi",
     ilerlemeSonuna: "Neredeyse bitti — son birkaç soru.",
+    sohbetAsamalar: { eleme: "Eleme", bosluk: "Boşluk", engel: "İç engel" } as Record<string, string>,
     // Bitiş ekranı — otomatik atlamaz, kişi okuyup devam eder
     bittiDevam: "Devam et →",
     // Baştan başlatma
@@ -1227,6 +1239,8 @@ export const tr = {
       yukle: "Yükle ve Kod Üret",
       yukleniyor: "Yükleniyor…",
       adim1Tamam: (n: number) => `${n} katılımcı yüklendi, kodlar üretildi`,
+      adim1Duzelt: "← Listeyi değiştir / yeniden yükle",
+      duzeltVazgec: "Vazgeç",
       adim2Baslik: "Kodlar hazır",
       adim2Aciklama: (n: number) =>
         `${n} katılımcı için 6 haneli giriş kodları otomatik üretildi.`,
@@ -1791,6 +1805,10 @@ export const tr = {
       bildirim: "Bildirimler çalışıyor",
       bildirimIpucu: "Push abonesi/anahtarı yok",
       duzelt: "Düzelt →",
+      zorunlu: "Zorunlu",
+      opsiyonel: "Opsiyonel",
+      zorunluBaslik: "Önce bunlar (kampı açmak için)",
+      opsiyonelBaslik: "Sonra bunlar (opsiyonel)",
     },
     // #9 Eksikleri tek dokunuşla dürt: öz-puanını bitirmeyenlere hatırlatma push'u
     durt: {

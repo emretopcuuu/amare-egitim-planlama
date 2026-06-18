@@ -99,31 +99,47 @@ export default async function HazirlikPaneli({
         </span>
       </div>
 
-      <ul className="mt-4 space-y-2">
-        {maddeler.map((m, i) => (
-          <li
-            key={m.etiket}
-            className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3"
-          >
-            <span className="flex min-w-0 items-center gap-3">
-              <span className={`text-xl ${m.ok ? "text-emerald-400" : "text-slate-500"}`}>
-                {m.ok ? "✓" : `${i + 1}.`}
-              </span>
-              <span className="min-w-0 text-sm font-medium text-slate-100">
-                {m.ok ? m.etiket : m.ipucu}
-              </span>
-            </span>
-            {!m.ok && (
-              <Link
-                href={m.href}
-                className="shrink-0 rounded-lg bg-gold/15 px-3 py-1.5 text-xs font-bold text-gold-light transition-colors hover:bg-gold/25"
-              >
-                {t.duzelt}
-              </Link>
-            )}
-          </li>
-        ))}
-      </ul>
+      {/* Önce ZORUNLU (kampı açan) sonra OPSİYONEL — sıra/öncelik görünür olsun */}
+      {(["zorunlu", "opsiyonel"] as const).map((tur) => {
+        const grup = maddeler.filter((m) => (tur === "zorunlu" ? m.kritik : !m.kritik));
+        if (grup.length === 0) return null;
+        return (
+          <div key={tur} className="mt-4">
+            <p
+              className={`mb-2 text-[0.7rem] font-semibold uppercase tracking-wide ${
+                tur === "zorunlu" ? "text-amber-300/90" : "text-slate-500"
+              }`}
+            >
+              {tur === "zorunlu" ? t.zorunluBaslik : t.opsiyonelBaslik}
+            </p>
+            <ul className="space-y-2">
+              {grup.map((m, i) => (
+                <li
+                  key={m.etiket}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3"
+                >
+                  <span className="flex min-w-0 items-center gap-3">
+                    <span className={`text-xl ${m.ok ? "text-emerald-400" : "text-slate-500"}`}>
+                      {m.ok ? "✓" : `${i + 1}.`}
+                    </span>
+                    <span className="min-w-0 text-sm font-medium text-slate-100">
+                      {m.ok ? m.etiket : m.ipucu}
+                    </span>
+                  </span>
+                  {!m.ok && (
+                    <Link
+                      href={m.href}
+                      className="shrink-0 rounded-lg bg-gold/15 px-3 py-1.5 text-xs font-bold text-gold-light transition-colors hover:bg-gold/25"
+                    >
+                      {t.duzelt}
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
     </section>
   );
 }

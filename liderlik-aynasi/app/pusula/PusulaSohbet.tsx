@@ -3,10 +3,13 @@
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import AsamaRayi, { type RayAsama } from "@/components/AsamaRayi";
 
 const t = tr.pusula;
 const BLANK_SAYISI = 10;
 const MIN_MADDE = 3;
+// Sohbet aşamaları sırası — aşama rayında adlarıyla görünür.
+const SOHBET_ASAMALARI = ["eleme", "bosluk", "engel"] as const;
 
 type Mesaj = { rol: string; icerik: string };
 type Faz = "riza" | "liste" | "kopru" | "sohbet" | "bitti";
@@ -609,6 +612,19 @@ export default function PusulaSohbet({
           {asama === "engel" && (
             <p className="mt-1.5 text-center text-[0.7rem] text-gold-light/80">{t.ilerlemeSonuna}</p>
           )}
+          {/* AŞAMA RAYI — sohbetin 3 aşaması adlarıyla; sıradakini görürsün */}
+          <AsamaRayi
+            className="mt-3"
+            asamalar={SOHBET_ASAMALARI.map<RayAsama>((s) => ({
+              ad: t.sohbetAsamalar[s],
+              durum:
+                (ILERLEME[s] ?? 0) < (ILERLEME[asama] ?? 0)
+                  ? "tamam"
+                  : s === asama
+                    ? "simdi"
+                    : "bekliyor",
+            }))}
+          />
         </div>
       </header>
 

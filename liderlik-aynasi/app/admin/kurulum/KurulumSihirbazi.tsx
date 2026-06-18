@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import AsamaRayi, { type RayAsama } from "@/components/AsamaRayi";
 
 const t = tr.admin.kurulum;
 
@@ -19,9 +20,20 @@ export default function KurulumSihirbazi({
   const [dosyaAdi, setDosyaAdi] = useState<string | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
+  // Geri/düzelt: liste yüklendikten sonra bile yeniden yükleyip düzeltme.
+  const [duzeltModu, setDuzeltModu] = useState(false);
 
   const listeVar = katilimciSayisi > 0;
-  const aktif = listeVar ? 3 : 1;
+  const aktif = listeVar && !duzeltModu ? 3 : 1;
+  // Adım 1'in yükleme arayüzü: liste yoksa ya da admin düzeltmeye döndüyse açık.
+  const yuklemeAcik = !listeVar || duzeltModu;
+
+  // AŞAMA RAYI durumları — sıradaki adım hep adıyla görünür.
+  const ray: RayAsama[] = [
+    { ad: t.adim1Baslik, durum: listeVar && !duzeltModu ? "tamam" : "simdi" },
+    { ad: t.adim2Baslik, durum: listeVar ? "tamam" : "bekliyor" },
+    { ad: t.adim3Baslik, durum: listeVar && !duzeltModu ? "simdi" : "bekliyor" },
+  ];
 
   async function iceAktar() {
     const dosya = dosyaRef.current?.files?.[0];
@@ -42,6 +54,7 @@ export default function KurulumSihirbazi({
       }
       if (dosyaRef.current) dosyaRef.current.value = "";
       setDosyaAdi(null);
+      setDuzeltModu(false);
       router.refresh();
     } catch {
       setHata(t.hata);
@@ -52,32 +65,27 @@ export default function KurulumSihirbazi({
 
   return (
     <div className="space-y-4">
-      {/* Adım göstergesi */}
-      <div className="flex items-center justify-center gap-2">
-        {[1, 2, 3].map((n) => (
-          <div key={n} className="flex items-center gap-2">
-            <span
-              className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold ${
-                n < aktif || (n <= 2 && listeVar)
-                  ? "bg-emerald-500 text-white"
-                  : n === aktif
-                    ? "bg-gold text-midnight"
-                    : "bg-midnight-soft text-slate-500"
-              }`}
-            >
-              {n < aktif || (n <= 2 && listeVar) ? "✓" : n}
-            </span>
-            {n < 3 && <span className="h-0.5 w-6 bg-white/15" />}
-          </div>
-        ))}
-      </div>
+      {/* AŞAMA RAYI — adımlar adlarıyla; sıradaki hep görünür */}
+      <AsamaRayi asamalar={ray} className="px-2" />
 
-      {/* Adım 1: CSV yükle */}
-      <Adim no={1} aktif={aktif === 1} tamam={listeVar} baslik={t.adim1Baslik}>
-        {listeVar ? (
-          <p className="text-sm font-medium text-emerald-300">
-            ✓ {t.adim1Tamam(katilimciSayisi)}
-          </p>
+      {/* Adım 1: CSV yükle (liste varsa "✓" + düzelt; düzeltmede yükleme açık) */}
+      <Adim no={1} aktif={aktif === 1} tamam={listeVar && !duzeltModu} baslik={t.adim1Baslik}>
+        {listeVar && !duzeltModu ? (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-medium text-emerald-300">
+              ✓ {t.adim1Tamam(katilimciSayisi)}
+            </p>
+            {/* Geri/düzelt: listeyi değiştir / yeniden yükle */}
+            <button
+              onClick={() => {
+                setDuzeltModu(true);
+                setHata(null);
+              }}
+              className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
+            >
+              {t.adim1Duzelt}
+            </button>
+          </div>
         ) : (
           <>
             <p className="text-sm text-slate-400">{t.adim1Aciklama}</p>
@@ -102,6 +110,19 @@ export default function KurulumSihirbazi({
               >
                 {yukleniyor ? t.yukleniyor : t.yukle}
               </button>
+              {/* Düzeltmeden vazgeç (liste zaten varsa) */}
+              {listeVar && duzeltModu && (
+                <button
+                  onClick={() => {
+                    setDuzeltModu(false);
+                    setDosyaAdi(null);
+                    setHata(null);
+                  }}
+                  className="text-sm text-slate-500 underline-offset-4 hover:text-slate-300 hover:underline"
+                >
+                  {t.duzeltVazgec}
+                </button>
+              )}
             </div>
             {hata && (
               <p role="alert" className="mt-2 text-sm font-medium text-red-400">

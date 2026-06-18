@@ -18,6 +18,7 @@ import AynaAniKarti from "@/components/AynaAniKarti";
 import SicakAdim from "@/components/SicakAdim";
 import UstMenu from "@/components/UstMenu";
 import ToplulukNabzi from "@/components/ToplulukNabzi";
+import { SiradakiOnizleme } from "@/components/AsamaRayi";
 
 const t = tr.anaSayfa;
 
@@ -56,6 +57,7 @@ function BuyukKart({
   dugme,
   vurgu = false,
   ikon,
+  sonraki,
 }: {
   baslik: string;
   metin: string;
@@ -63,6 +65,8 @@ function BuyukKart({
   dugme: string;
   vurgu?: boolean;
   ikon?: string;
+  // Bu adımdan SONRA ne geleceğini önceden göster — "bilerek devam et".
+  sonraki?: { ad: string; kilitli?: boolean; not?: string };
 }) {
   return (
     <EgilenKart className="rounded-3xl">
@@ -84,6 +88,14 @@ function BuyukKart({
         >
           {dugme}
         </Link>
+        {sonraki && (
+          <SiradakiOnizleme
+            ad={sonraki.ad}
+            kilitli={sonraki.kilitli}
+            not={sonraki.not}
+            className="mt-4"
+          />
+        )}
       </div>
     </EgilenKart>
   );
@@ -298,6 +310,7 @@ export default async function AnaSayfa({
             dugme={t.ozGerekDugme}
             ikon="✨"
             vurgu
+            sonraki={{ ad: t.ozSonraki }}
           />
           <IlkAdimIpucu etiket={t.ilkAdimIpucu} />
         </div>
@@ -380,6 +393,7 @@ export default async function AnaSayfa({
           href="/degerlendir"
           dugme={t.dalgaDevamDugme}
           ikon="👁"
+          sonraki={{ ad: t.dalgaSonraki }}
         />
       </Sayfa>
     );
