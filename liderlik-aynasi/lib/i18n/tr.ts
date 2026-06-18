@@ -669,6 +669,7 @@ export const tr = {
     // Sohbet ilerleme göstergesi
     ilerlemeEtiket: "Sohbet ilerlemesi",
     ilerlemeSonuna: "Neredeyse bitti — son birkaç soru.",
+    sohbetAsamalar: { eleme: "Eleme", bosluk: "Boşluk", engel: "İç engel" } as Record<string, string>,
     // Bitiş ekranı — otomatik atlamaz, kişi okuyup devam eder
     bittiDevam: "Devam et →",
     // Baştan başlatma

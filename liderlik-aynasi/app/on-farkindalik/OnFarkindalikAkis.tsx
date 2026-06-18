@@ -9,7 +9,19 @@ import MikrofonButonu from "@/components/MikrofonButonu";
 import Konfeti from "@/components/Konfeti";
 import YaziBoyu from "@/components/YaziBoyu";
 import AynaLogo from "@/components/AynaLogo";
+import AsamaRayi, { type RayAsama } from "@/components/AsamaRayi";
 import { ADIMLAR, adimDolu, katman1Tutarlilik, SONUC_KARTI } from "@/lib/onFarkindalik";
+
+// Adımları "grup" (bölüm/katman) sırasına göre ardışık kümele — aşama rayı için.
+const BOLUMLER: { ad: string; sonIdx: number }[] = (() => {
+  const sira: { ad: string; sonIdx: number }[] = [];
+  ADIMLAR.forEach((s, i) => {
+    const son = sira[sira.length - 1];
+    if (!son || son.ad !== s.grup) sira.push({ ad: s.grup, sonIdx: i });
+    else son.sonIdx = i;
+  });
+  return sira;
+})();
 
 const t = tr.onFarkindalik;
 const TOPLAM = ADIMLAR.length;
@@ -336,6 +348,14 @@ export default function OnFarkindalikAkis({
             style={{ width: `${yuzde}%` }}
           />
         </div>
+        {/* BÖLÜM RAYI — hangi katmandasın + sıradaki bölümler adıyla görünür */}
+        <AsamaRayi
+          asamalar={BOLUMLER.map<RayAsama>((b) => ({
+            ad: b.ad,
+            durum: adim > b.sonIdx ? "tamam" : b.ad === a.grup ? "simdi" : "bekliyor",
+          }))}
+          className="mt-3"
+        />
       </header>
 
       {/* Gözden geçirme modunda: tek tuşla bitiş ekranına dön (sona git) */}
