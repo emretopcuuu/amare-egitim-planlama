@@ -1,5 +1,14 @@
 // Tüm kullanıcıya görünen Türkçe metinler tek modülde toplanır.
 export const tr = {
+  // Ortak aşamalı akış parçaları (AsamaRayi + sıradaki önizleme + geri-düzelt)
+  asama: {
+    rayEtiket: "Aşamalar",
+    siradaki: "Sıradaki:",
+    kilitliNot: "şimdi kilitli",
+    geri: "← Geri",
+    geriDuzelt: "← Geri dön (düzelt)",
+    onceki: "← Önceki adım",
+  },
   app: {
     name: "Liderlik Aynası",
     tagline: "Kendini başkalarının gözünden gör.",
@@ -1227,6 +1236,8 @@ export const tr = {
       yukle: "Yükle ve Kod Üret",
       yukleniyor: "Yükleniyor…",
       adim1Tamam: (n: number) => `${n} katılımcı yüklendi, kodlar üretildi`,
+      adim1Duzelt: "← Listeyi değiştir / yeniden yükle",
+      duzeltVazgec: "Vazgeç",
       adim2Baslik: "Kodlar hazır",
       adim2Aciklama: (n: number) =>
         `${n} katılımcı için 6 haneli giriş kodları otomatik üretildi.`,
