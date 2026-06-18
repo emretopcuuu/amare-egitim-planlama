@@ -2544,6 +2544,28 @@ export const tr = {
       "Bildirimler hâlâ kapalı görünüyor. Tarayıcı ayarından izni açıp tekrar dene.",
     desteklenmiyor: "Bu tarayıcı bildirimleri desteklemiyor — görevlerin uygulamada görünecek.",
     hata: "Abonelik kurulamadı. Tekrar dene.",
+    // Masaüstü → telefona taşı: "telefonundan da alabilirsin" + ana ekrana ekleme
+    masaustuNot:
+      "Bilgisayardasın. Bildirimleri sadece buradan değil, telefonundan da alabilirsin — kampta yanında telefonun olacağı için en iyisi onu kurman.",
+    telefonAc: "📱 Telefonuna kur — bildirimleri orada al",
+    telefonKapat: "Kapat",
+    telefonGiris:
+      "Uygulamayı telefonunun ana ekranına eklersen gerçek bir uygulama gibi açılır; görevlerin ve sana özel fısıltılar bildirimle cebine düşer.",
+    telefonQrBaslik: "📷 Telefonunla bu kareyi okut",
+    telefonQrAlt: "Uygulama telefonunda açılır — sonra aşağıdaki adımlarla ana ekrana ekle.",
+    telefonQrHazirlaniyor: "Kare hazırlanıyor…",
+    telefonIosBaslik: "iPhone · Safari",
+    telefonIosAdimlar: [
+      "Alttaki Paylaş ⬆️ düğmesine bas.",
+      "Listeden “Ana Ekrana Ekle”yi seç.",
+      "Uygulamayı ana ekrandan aç → “Bildirimlere izin ver”.",
+    ] as const,
+    telefonAndroidBaslik: "Android · Chrome",
+    telefonAndroidAdimlar: [
+      "Sağ üstteki ⋮ menüye bas.",
+      "“Ana ekrana ekle” / “Uygulamayı yükle”yi seç.",
+      "Uygulamayı ana ekrandan aç → “Bildirimlere izin ver”.",
+    ] as const,
   },
   ses: {
     baslat: "Sesle Yaz",
