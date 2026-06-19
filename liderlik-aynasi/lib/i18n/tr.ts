@@ -2133,6 +2133,13 @@ export const tr = {
       atamaYok: "Henüz atama yok.",
       grupIci: "Grup-içi",
       grupDisi: "Grup-dışı",
+      // Tek atama elle düzenleme
+      duzenleAcikla: "Beğenmediğin bir hedefi değiştirebilirsin — üstüne dokun.",
+      hedefDegistir: (ad: string) => `${ad} → değiştir`,
+      yeniHedefSec: "Yeni gözlem hedefi seç…",
+      degisVazgec: "Vazgeç",
+      degisti: "✓ Değiştirildi",
+      degisHata: "Değiştirilemedi.",
     },
     grupOdev: {
       baslik: "Grup Ödevleri",
