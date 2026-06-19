@@ -850,6 +850,33 @@ html[data-tema="gunduz"] {
   --color-gold: #e08a00;
   --color-gold-light: #a96a06;
   --color-gold-dim: #855300;
+  /* Açık-uç metin token'larını koyulaştır: gece koyu zeminde açık duran
+     sky/slate tonları (opaklık varyantları — örn. text-sky-200/90 — dahil)
+     gündüz parlak zeminde okunur hale gelsin. */
+  --color-slate-100: #122a40;
+  --color-slate-200: #16314a;
+  --color-slate-300: #1b3650;
+  --color-slate-400: #324f69;
+  --color-slate-500: #445f78;
+  --color-sky-100: #2b6791;
+  --color-sky-200: #245b86;
+  --color-sky-300: #20517a;
+  /* Semantik renkler (yeşil=başarı, sarı=uyarı, kırmızı=hata, vb.) gece koyu
+     zeminde açık tonda; gündüz beyaz/açık zeminde okunsun diye koyu+doygun
+     tonlara çekilir. Token override → metin + opaklık + arka plan varyantları
+     hep birden düzelir (bg-*-400/15 gibi örtüler nazik koyu tona döner). */
+  --color-emerald-200: #059669;
+  --color-emerald-300: #059669;
+  --color-emerald-400: #047857;
+  --color-amber-300: #b45309;
+  --color-amber-400: #b45309;
+  --color-red-200: #c0271f;
+  --color-red-300: #c0271f;
+  --color-red-400: #dc2626;
+  --color-orange-200: #c2410c;
+  --color-orange-300: #c2410c;
+  --color-indigo-300: #4338ca;
+  --color-fuchsia-300: #a21caf;
   color-scheme: light;
 }
 
