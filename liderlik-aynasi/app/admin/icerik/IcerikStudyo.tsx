@@ -2,8 +2,72 @@
 
 import { useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import { DAVRANIS_DILI } from "@/lib/davranisDili";
 
 const t = tr.admin.icerik;
+
+// #10 Davranışsal Dil: kütüphaneden "günün cümlesi" seç → adaya ana sayfada
+// görünür. Seçince settings.gunun_cumlesi'ne yazılır; "Kaldır" boşaltır.
+function GununCumlesiSecici({ baslangic }: { baslangic: string }) {
+  const [aktif, setAktif] = useState(baslangic);
+  const [mesgul, setMesgul] = useState(false);
+
+  async function ayarla(cumle: string) {
+    setMesgul(true);
+    try {
+      const r = await fetch("/api/admin/icerik", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ anahtar: "gunun_cumlesi", deger: cumle }),
+      });
+      if (r.ok) setAktif(cumle);
+    } finally {
+      setMesgul(false);
+    }
+  }
+
+  return (
+    <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-gold/30">
+      <h2 className="text-sm font-semibold text-gold-light">🗣 Günün Cümlesi (Davranışsal Dil)</h2>
+      <p className="mt-1 text-xs text-slate-400">
+        Blueprint'in 5 güçlü cümlesinden birini seç → adayların ana sayfasında görünür.
+      </p>
+      <div className="mt-3 space-y-2">
+        {DAVRANIS_DILI.map((d) => {
+          const secili = aktif === d.cumle;
+          return (
+            <button
+              key={d.kategori}
+              type="button"
+              disabled={mesgul}
+              onClick={() => ayarla(secili ? "" : d.cumle)}
+              className={`block w-full rounded-xl p-3 text-left text-sm transition-colors disabled:opacity-50 ${
+                secili
+                  ? "bg-gold/20 ring-2 ring-gold"
+                  : "bg-midnight ring-1 ring-white/10 hover:ring-royal/50"
+              }`}
+            >
+              <span className="text-xs font-semibold text-gold-light">
+                {d.simge} {d.kategori}
+              </span>
+              <span className="mt-1 block leading-relaxed text-slate-200">{d.cumle}</span>
+            </button>
+          );
+        })}
+      </div>
+      {aktif && (
+        <button
+          type="button"
+          disabled={mesgul}
+          onClick={() => ayarla("")}
+          className="mt-3 text-xs font-medium text-slate-400 underline hover:text-slate-200"
+        >
+          Günün cümlesini kaldır
+        </button>
+      )}
+    </section>
+  );
+}
 
 function Alan({
   anahtar,
@@ -71,9 +135,18 @@ function Alan({
   );
 }
 
-export default function IcerikStudyo({ ekTon, gununTemasi }: { ekTon: string; gununTemasi: string }) {
+export default function IcerikStudyo({
+  ekTon,
+  gununTemasi,
+  gununCumlesi = "",
+}: {
+  ekTon: string;
+  gununTemasi: string;
+  gununCumlesi?: string;
+}) {
   return (
     <div className="space-y-4">
+      <GununCumlesiSecici baslangic={gununCumlesi} />
       <Alan anahtar="ayna_ek_ton" etiket={t.ekTonBaslik} ipucu={t.ekTonIpucu} yer={t.ekTonYer} baslangic={ekTon} />
       <Alan anahtar="gunun_temasi" etiket={t.temaBaslik} ipucu={t.temaIpucu} yer={t.temaYer} baslangic={gununTemasi} />
     </div>

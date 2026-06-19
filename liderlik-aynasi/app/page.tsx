@@ -134,10 +134,11 @@ export default async function AnaSayfa({
     db
       .from("settings")
       .select("key, value")
-      .in("key", ["pusula_acik", "on_farkindalik_acik", "oyun_secimi_acik"]),
+      .in("key", ["pusula_acik", "on_farkindalik_acik", "oyun_secimi_acik", "gunun_cumlesi"]),
     db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
   ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
+  const gununCumlesi = (ayar.get("gunun_cumlesi") ?? "").trim();
   // OYUN SEÇİMİ KAPISI: seçim açıkken grubu olmayan kişi önce oyununu seçer
   // (Bowling herkes; diğer 3'ten 2) → uygun gruba atanır. Grup = takım mantığı
   // artık bu seçimle kurulur. En baştaki adım: pusula/kart akışından önce.
@@ -313,6 +314,15 @@ export default async function AnaSayfa({
       <ToplulukNabzi />
       {/* #3 Ayna Anı — kamp öncesi kör nokta cümlesini bugünkü çabayla yüzleştirir */}
       <AynaAniKarti />
+      {/* #10 Günün Cümlesi — admin'in seçtiği davranışsal-dil cümlesi */}
+      {gununCumlesi && (
+        <div className="mt-3 rounded-xl border border-gold/25 bg-gold/[0.06] px-4 py-2.5">
+          <p className="text-sm italic leading-relaxed text-slate-200">
+            <span className="mr-1">🗣</span>
+            {gununCumlesi}
+          </p>
+        </div>
+      )}
     </div>
   );
 
