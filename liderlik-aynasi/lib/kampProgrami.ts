@@ -10,7 +10,7 @@ export const KAMP_GUNLERI = ["2026-07-17", "2026-07-18", "2026-07-19"] as const;
 
 export const KAMP_BASLIK = "SAPANCA LEADER PLUS PD101";
 export const KAMP_ALT_BASLIK =
-  "17–19 Temmuz 2026 · Elite World Sapanca · 100 Kişi · 2 Gece 3 Gün";
+  "17–19 Temmuz 2026 · Elite World Sapanca · 150 Kişi · 2 Gece 3 Gün";
 
 export type EtkinlikTuru =
   | "sahne" // perde/kürsü anı — telefonlar cepte, AYNA susar
@@ -37,7 +37,7 @@ export type ProgramMaddesi = {
 };
 
 export const KAMP_PROGRAMI: ProgramMaddesi[] = [
-  // ---- GÜN 1 — CUMA ----
+  // ---- GÜN 1 — CUMA · 17 Temmuz ----
   {
     gun: 1, baslangic: "12:00", bitis: "13:00",
     baslik: "Otel Giriş & Karşılama", tur: "serbest",
@@ -67,140 +67,114 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
     aynaNotu:
       "20:15 SENKRON AN: bütün salonun telefonu aynı anda titrer — masaların konuşma konusu.",
   },
+  // --- PD101 akşam oturumları: sahne sessizliği, AYNA susar ---
   {
     gun: 1, baslangic: "21:00", bitis: "21:05",
-    baslik: "PD101 Açılış — AYNA Konuşuyor", konusmaci: "AYNA", tur: "ayna", sessiz: true,
-    aynaNotu:
-      "Işıklar kararır, göl perdeye düşer; AYNA marka sesiyle kampı açar (Direktör panelindeki 'Açılış Anonsu' düğmesi).",
+    baslik: "PD101 Açılış", konusmaci: "Mc Ziya Şakir Yılmaz", tur: "sahne", sessiz: true,
+    aynaNotu: "Sahne sessizliği — AYNA konuşmacıyla yarışmaz. (İstenirse Direktör panelinden 'Açılış Anonsu' bu blokta tek seferlik çalınabilir.)",
   },
   {
-    gun: 1, baslangic: "21:05", bitis: "21:45",
-    baslik: "Chairman & Chief Executive Officer", konusmaci: "Mr. David Chung",
-    tur: "sahne", sessiz: true,
-    aynaNotu: "Sahne sessizliği — AYNA konuşmacıyla yarışmaz.",
-  },
-  {
-    gun: 1, baslangic: "21:45", bitis: "22:05",
-    baslik: "Amare EU & General Manager", konusmaci: "Ersin Ansoy",
-    tur: "sahne", sessiz: true,
+    gun: 1, baslangic: "21:05", bitis: "21:35",
+    baslik: "2026 Yeni Kariyerler", konusmaci: "Mc Ziya Şakir Yılmaz", tur: "sahne", sessiz: true,
     aynaNotu: "Sahne sessizliği.",
   },
   {
-    gun: 1, baslangic: "22:05", bitis: "22:35",
+    gun: 1, baslangic: "21:35", bitis: "21:45",
+    baslik: "PD101 Kamp Planı", konusmaci: "Emre Topçu", tur: "sahne", sessiz: true,
+    aynaNotu: "Sahne sessizliği.",
+  },
+  {
+    gun: 1, baslangic: "21:45", bitis: "22:05",
+    baslik: "Amare EU & TR Genel Müdür", konusmaci: "Ersin Arısoy", tur: "sahne", sessiz: true,
+    aynaNotu: "Sahne sessizliği.",
+  },
+  {
+    gun: 1, baslangic: "22:05", bitis: "22:25",
     baslik: "Ara", tur: "ara",
     aynaNotu: "Projeksiyonda /ekran: yıldız sayacı + fiero anonsları.",
   },
   {
-    gun: 1, baslangic: "22:35", bitis: "23:35",
-    baslik: "Presidential Diamond Paneli", konusmaci: "Emre Topçu",
+    gun: 1, baslangic: "22:25", bitis: "23:55",
+    baslik: "Chairman & Chief Executive Officer — Q&A", konusmaci: "Mr. David Chung",
     tur: "sahne", sessiz: true,
     aynaNotu:
-      "Sahne sessizliği. Panel bitince (23:40) tek gece fısıltısı: 'Bugün seni izledim. Yarın oyunlarda gözüm üzerinde.'",
+      "Sahne sessizliği — AYNA konuşmacıyla yarışmaz. Oturum bitince (~00:00) tek gece fısıltısı: 'Bugün seni izledim. Yarın oyunlarda gözüm üzerinde.'",
   },
 
-  // ---- GÜN 2 — CUMARTESİ ----
+  // ---- GÜN 2 — CUMARTESİ · 18 Temmuz ----
   {
     gun: 2, baslangic: "07:00", bitis: "08:00",
-    baslik: "3 km Trekking — Tesis Etrafı Doğa Yürüyüşü", tur: "doga",
+    baslik: "Antreman · Yoga · Meditasyon", tur: "doga",
     aynaNotu:
-      "06:45 sabah yoklaması (kendi sesinden günaydın). Trekking temalı cesaret görevi: 'Hiç konuşmadığın biriyle yan yana gel.'",
+      "06:45 sabah yoklaması (kendi sesinden günaydın). Güne açılış teması: 'Hiç konuşmadığın biriyle yan yana gel.'",
   },
   {
-    gun: 2, baslangic: "08:00", bitis: "10:00",
+    gun: 2, baslangic: "08:00", bitis: "09:30",
     baslik: "Kahvaltı", tur: "yemek",
-    aynaNotu: "09:00 DALGA 2 — Gözlem açılır (sinematik + push).",
+    aynaNotu: "09:00 DALGA 2 — Gözlem açılır (sinematik + push). Görev akışı 09:30 blokta başlar.",
   },
   {
-    gun: 2, baslangic: "10:00", bitis: "13:00",
-    baslik: "Oyun I — Canlı Langırt · Rodeo–Şişme Parkur · Ahşap Oyunlar (7 adet)",
+    gun: 2, baslangic: "09:30", bitis: "19:30",
+    baslik:
+      "Oyunlar & Öğle Yemeği & AYNA Görevlendirmeleri & David'in Odasında Grup Görüşmeleri & Serbest Zaman",
     tur: "oyun",
     aynaNotu:
-      "Görevler oyunlara bağlanır: 'Langırtta hedefin kaybedince ne yaptı?' Kısa görevler, yanıt sonra.",
+      "★ AYNA GÖREV ANA PENCERESİ. Gün boyu kişiye özel görevler akar: oyunlara, grup görüşmelerine ve serbest zamana bağlı gözlem/cesaret/gizli görevler. Tüm ekiplerin programı farklı — AYNA herkese ayrı ritimde verir. 13:30 SENKRON AN + Dalga 2 puanlama hatırlatması.",
   },
   {
-    gun: 2, baslangic: "13:00", bitis: "14:30",
-    baslik: "Öğle Yemeği", tur: "yemek",
-    aynaNotu: "13:30 SENKRON AN + Dalga 2 puanlama hatırlatması.",
-  },
-  {
-    gun: 2, baslangic: "14:30", bitis: "18:00",
-    baslik: "Oyun II — Halat Çekme · Koca Ayak · Su Taşıma · Dev Satranç · Drone & Photobooth",
-    tur: "oyun",
-    aynaNotu:
-      "Gizli görevlerin altın penceresi: 'Su taşımada en çok yardım edeni izle — kimseye söyleme.'",
-  },
-  {
-    gun: 2, baslangic: "18:00", bitis: "19:30",
-    baslik: "Serbest Zaman — Oda & Duş Molası", tur: "serbest",
-    aynaNotu:
-      "Telefonun elde olduğu en uzun pencere: birikmiş görev yanıtları, Dalga 2 son çağrı, yansıma görevi.",
-  },
-  {
-    gun: 2, baslangic: "19:30", bitis: "20:30",
+    gun: 2, baslangic: "19:30", bitis: "21:00",
     baslik: "Akşam Yemeği (1 Soft İçecek Dahil)", tur: "yemek",
-    aynaNotu: "Sessiz — gün doluydu. 20:00 günlük fısıltı (kaç göz seni puanladı).",
+    aynaNotu: "Sakin — gün doluydu. 20:00 günlük fısıltı (kaç göz seni puanladı).",
   },
   {
-    gun: 2, baslangic: "21:00", bitis: "23:20",
-    baslik: "Tecrübe Paylaşımı", tur: "sahne", sessiz: true,
+    gun: 2, baslangic: "21:00", bitis: "23:00",
+    baslik: "AYNA Görevlendirmeleri & Serbest Zaman", konusmaci: "AYNA", tur: "ayna",
     aynaNotu:
-      "Sahne sessizliği. Projeksiyonda /ekran: konuşmacılar arası fiero anonsları + yıldız sayacı.",
-  },
-  {
-    gun: 2, baslangic: "23:20", bitis: "23:30",
-    baslik: "Ayna Anı", konusmaci: "AYNA", tur: "ayna", sessiz: true,
-    aynaNotu:
-      "Günün özeti AYNA'nın marka sesiyle salona (Direktör panelindeki 'Ayna Anı' düğmesi): yakılan yıldızlar, günün sayıları.",
+      "★ AYNA AKŞAM GÖREV PENCERESİ. Telefonun rahatça elde olduğu blok: birikmiş yanıtlar, yansıma görevleri, Dalga 2 son çağrı, kişiye özel akşam görevleri. İstenirse Direktör panelinden 'Ayna Anı' (günün özeti) salona okunur. Blok bitince gece fısıltısı.",
   },
 
-  // ---- GÜN 3 — PAZAR ----
+  // ---- GÜN 3 — PAZAR · 19 Temmuz ----
   {
-    gun: 3, baslangic: "07:00", bitis: "08:45",
+    gun: 3, baslangic: "07:00", bitis: "10:00",
     baslik: "Kahvaltı & Oda Boşaltma", tur: "yemek",
     aynaNotu:
-      "07:00 sabah yoklaması. 07:15 DALGA 3 — Gerçek Algı açılır; bavul telaşına karşı pencere geniş (kahvaltı + ara).",
+      "07:00 sabah yoklaması. 07:15 DALGA 3 — Gerçek Algı açılır; bavul telaşına karşı pencere geniş (kahvaltı + checkout). 09:30 SENKRON son çağrı — puanlama oturumlardan önce bitsin.",
   },
   {
-    gun: 3, baslangic: "09:00", bitis: "09:05",
-    baslik: "PD101 Açılış Toplantısı — 2. Oturum & Kapanış", konusmaci: "Mos",
+    gun: 3, baslangic: "10:00", bitis: "10:15",
+    baslik: "PD101 Açılış Toplantısı — 2. Oturum & Kapanış", konusmaci: "Mc. Aytuğ Gönül",
     tur: "sahne", sessiz: true,
     aynaNotu: "Sahne sessizliği.",
   },
   {
-    gun: 3, baslangic: "09:05", bitis: "09:20",
-    baslik: "PD101 1. Eğitim", konusmaci: "Kenan Kozanhan", tur: "sahne", sessiz: true,
+    gun: 3, baslangic: "10:15", bitis: "10:35",
+    baslik: "PD101 PD Yolculuğu", konusmaci: "Kenan Kozanhan", tur: "sahne", sessiz: true,
     aynaNotu: "Sahne sessizliği.",
   },
   {
-    gun: 3, baslangic: "09:20", bitis: "09:35",
-    baslik: "PD101 2. Eğitim", konusmaci: "Ferhat Gök", tur: "sahne", sessiz: true,
+    gun: 3, baslangic: "10:35", bitis: "10:55",
+    baslik: "PD101 PD Yolculuğu", konusmaci: "Ferhat Gök", tur: "sahne", sessiz: true,
     aynaNotu: "Sahne sessizliği.",
   },
   {
-    gun: 3, baslangic: "09:35", bitis: "09:50",
-    baslik: "PD101 3. Eğitim", konusmaci: "Ziya Şakir Yılmaz", tur: "sahne", sessiz: true,
+    gun: 3, baslangic: "10:55", bitis: "11:15",
+    baslik: "PD101 PD Yolculuğu", konusmaci: "Ziya Şakir Yılmaz", tur: "sahne", sessiz: true,
     aynaNotu: "Sahne sessizliği.",
   },
   {
-    gun: 3, baslangic: "09:50", bitis: "10:20",
+    gun: 3, baslangic: "11:15", bitis: "11:40",
     baslik: "Ara", tur: "ara",
-    aynaNotu: "09:55 SENKRON AN + Dalga 3 son çağrı push. Puanlama kapanır.",
+    aynaNotu: "Dalga 3 son çağrı / puanlama kapanır. Zirve oturumuna geçişten önce son fırsat.",
   },
   {
-    gun: 3, baslangic: "10:20", bitis: "11:50",
-    baslik: "PD101 Uygulamalı Yapay Zeka — Aynanı Gör", konusmaci: "Emre Topçu",
+    gun: 3, baslangic: "11:40", bitis: "13:10",
+    baslik: "PD101 Yapay Zeka & AYNA Kamp Analizi & PD2026", konusmaci: "Emre Topçu",
     tur: "ayna",
     aynaNotu:
-      "Kampın zirvesi: PC'ler ve telefonlar zaten ellerde. Raporlar CANLI açılır ('Ayna Anı' raporu aç), sesli mektup + 'suda beliren sen'. Ardından SÖZ ritüeli (Direktör panelinden SÖZ görevi).",
+      "★ KAMPIN ZİRVESİ. PC ve telefonlar elde. Raporlar CANLI açılır ('Ayna Anı' raporu aç), sesli mektup + 'suda beliren sen'. Ardından SÖZ ritüeli (Direktör panelinden SÖZ görevi) + Komutan paneli analiz verileri (ekip radarı, momentum top 10, istatistikler).",
   },
   {
-    gun: 3, baslangic: "11:50", bitis: "12:40",
-    baslik: "PD101 Kamp Analiz", konusmaci: "Aytuğ Gönül", tur: "sahne", sessiz: true,
-    aynaNotu:
-      "Komutan paneli verileri analiz oturumuna servis edilir: ekip radarı, momentum top 10, kamp istatistikleri.",
-  },
-  {
-    gun: 3, baslangic: "14:00", bitis: "16:00",
+    gun: 3, baslangic: "13:10", bitis: "15:10",
     baslik: "Sopeli Doğal Yaşam Köyü Gezisi (kendi araçlarla)", tur: "gezi",
     aynaNotu:
       "Kamp kapanışı. Gezi dönüşü AYNA yolculuk moduna alınır: 90 gün, günde 1 görev.",
@@ -279,12 +253,13 @@ export function bitenMadde(
 }
 
 // ---- SENKRON AN: günün programına dikilmiş pencereler ----
-// Gün 1: 20:15 (akşam yemeği) · Gün 2: 13:30 (öğle) · Gün 3: 09:55 (ara)
+// Gün 1: 20:15 (akşam yemeği) · Gün 2: 13:30 (görev bloğu içi öğle) ·
+// Gün 3: 09:30 (kahvaltı & checkout — oturumlardan önce son çağrı)
 
 export const SENKRON_SAATLERI: Record<1 | 2 | 3, [number, number]> = {
   1: [20, 15],
   2: [13, 30],
-  3: [9, 55],
+  3: [9, 30],
 };
 
 /** Kamp tarihindeyse o günün senkron penceresi (10 dk); değilse null.
@@ -303,7 +278,8 @@ export function kampSenkronAnahtari(
 }
 
 // ---- SABAH YOKLAMASI pencereleri (kendi sesinden günaydın) ----
-// Gün 2: trekking 07:00'de → 06:40-07:59. Gün 3: kahvaltı boyunca 07:00-08:44.
+// Gün 2: antreman/yoga 07:00'de → 06:40-07:59. Gün 3: kahvaltı 07:00-10:00,
+// sabah selamı erken pencerede (07:00-09:00) düşsün.
 
 export function sabahPenceresiMi(
   gun: 1 | 2 | 3,
@@ -312,7 +288,7 @@ export function sabahPenceresiMi(
 ): boolean {
   const dk = saat * 60 + dakika;
   if (gun === 2) return dk >= 6 * 60 + 40 && dk < 8 * 60;
-  if (gun === 3) return dk >= 7 * 60 && dk < 8 * 60 + 45;
+  if (gun === 3) return dk >= 7 * 60 && dk < 9 * 60;
   return false;
 }
 
