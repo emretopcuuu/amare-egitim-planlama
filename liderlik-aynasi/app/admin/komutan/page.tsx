@@ -96,6 +96,8 @@ export default async function KomutanPage() {
     { data: momentumlar },
     { data: kaymalar },
     { data: ayarlar },
+    { data: fierolar },
+    { data: zorlukGorevler },
   ] = await Promise.all([
     aktifOzellikler(db),
     db.from("participants").select("id, full_name, team").eq("role", "participant"),
@@ -128,6 +130,20 @@ export default async function KomutanPage() {
       .from("settings")
       .select("key, value")
       .in("key", ["sistem_modu", "yolculuk_baslangic"]),
+    // #2 Fiero akışı: son 7 günün 10/10'ları (canlı kutlama beslemesi).
+    db
+      .from("missions")
+      .select("participant_id, title, scored_at")
+      .eq("ai_score", 10)
+      .not("scored_at", "is", null)
+      .gte("scored_at", new Date(simdi.getTime() - 7 * 86_400_000).toISOString())
+      .order("scored_at", { ascending: false })
+      .limit(12),
+    // #1 Eustress akış haritası: son 7 günün görev zorluğu + sonucu.
+    db
+      .from("missions")
+      .select("participant_id, difficulty, status")
+      .gte("issued_at", new Date(simdi.getTime() - 7 * 86_400_000).toISOString()),
   ]);
 
   const kisiHarita = new Map((kisiler ?? []).map((k) => [k.id, k]));
@@ -208,6 +224,45 @@ export default async function KomutanPage() {
       };
     })
     .sort((a, b) => (b.saat ?? 999) - (a.saat ?? 999));
+
+  // #2 Fiero akışı
+  const fieroListe = (fierolar ?? []).map((f) => ({
+    ad: kisiHarita.get(f.participant_id)?.full_name ?? "—",
+    baslik: f.title as string,
+    saat: f.scored_at
+      ? Math.round((simdi.getTime() - new Date(f.scored_at).getTime()) / 3_600_000)
+      : null,
+  }));
+
+  // #1 Eustress akış haritası: kişiyi son 7 günün zorluk/sonuç karışımına göre
+  // SIKILIYOR (az zorluk + yüksek başarı) / AKIŞTA / ZORLANIYOR (çok zorluk veya
+  // çok süresi-doldu) olarak sınıfla → liderin görev kalibrasyonu için harita.
+  type EustressHam = { zorTop: number; n: number; tamam: number; suresi: number };
+  const eustressHam = new Map<string, EustressHam>();
+  for (const g of zorlukGorevler ?? []) {
+    if (g.status === "pending" || g.status === "submitted") continue;
+    const e = eustressHam.get(g.participant_id) ?? { zorTop: 0, n: 0, tamam: 0, suresi: 0 };
+    e.zorTop += (g.difficulty as number) ?? 2;
+    e.n++;
+    if (g.status === "scored") e.tamam++;
+    if (g.status === "expired") e.suresi++;
+    eustressHam.set(g.participant_id, e);
+  }
+  const eustress: { ad: string; durum: "sikiliyor" | "akista" | "zorlaniyor" }[] = [];
+  for (const [pid, e] of eustressHam) {
+    if (e.n < 2) continue;
+    const ortZor = e.zorTop / e.n;
+    const tamamOran = e.tamam / e.n;
+    const suresiOran = e.suresi / e.n;
+    let durum: "sikiliyor" | "akista" | "zorlaniyor";
+    if (ortZor <= 1.4 && tamamOran >= 0.6) durum = "sikiliyor";
+    else if (suresiOran >= 0.4 || (ortZor >= 2.5 && tamamOran < 0.4)) durum = "zorlaniyor";
+    else durum = "akista";
+    eustress.push({ ad: kisiHarita.get(pid)?.full_name ?? "—", durum });
+  }
+  const sikilan = eustress.filter((e) => e.durum === "sikiliyor");
+  const zorlanan = eustress.filter((e) => e.durum === "zorlaniyor");
+  const akistaSayi = eustress.filter((e) => e.durum === "akista").length;
 
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
   const mod = ayar.get("sistem_modu") === "yolculuk" ? "yolculuk" : "kamp";
@@ -297,6 +352,70 @@ export default async function KomutanPage() {
                 </li>
               ))}
             </ul>
+          )}
+        </section>
+
+        {/* #2 Fiero Akışı — son 7 günün 10/10'ları (sahneden anında kutla) */}
+        <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-gold/30 backdrop-blur">
+          <h2 className="text-lg font-semibold text-gold-light">🏆 Fiero Akışı</h2>
+          {fieroListe.length === 0 ? (
+            <p className="mt-3 text-sm text-slate-400">
+              Henüz 10/10 yok. İlk parlayanı buradan yakalayıp sahneden kutla.
+            </p>
+          ) : (
+            <ul className="mt-3 space-y-1.5">
+              {fieroListe.map((f, i) => (
+                <li key={i} className="flex items-baseline justify-between gap-2 text-sm">
+                  <span className="min-w-0">
+                    <span className="font-semibold text-slate-100">{f.ad}</span>
+                    <span className="text-slate-500"> · {f.baslik}</span>
+                  </span>
+                  <span className="shrink-0 text-xs text-gold">
+                    {f.saat !== null ? (f.saat < 1 ? "az önce" : `${f.saat} sa önce`) : ""} ✨
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* #1 Eustress Akış Haritası — kim sıkılıyor / akışta / zorlanıyor */}
+        <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30 backdrop-blur">
+          <h2 className="text-lg font-semibold text-gold-light">🎯 Akış Haritası (Eustress)</h2>
+          {eustress.length === 0 ? (
+            <p className="mt-3 text-sm text-slate-400">
+              Henüz yeterli görev verisi yok. Görevler aktıkça kimin zorluğu kalibre
+              edilmeli burada görünecek.
+            </p>
+          ) : (
+            <>
+              <div className="mt-3 flex gap-2 text-center text-xs">
+                <span className="flex-1 rounded-lg bg-sky-400/15 py-1.5 text-sky-200">
+                  😴 Sıkılıyor<br />
+                  <b className="text-base">{sikilan.length}</b>
+                </span>
+                <span className="flex-1 rounded-lg bg-emerald-400/15 py-1.5 text-emerald-200">
+                  🌊 Akışta<br />
+                  <b className="text-base">{akistaSayi}</b>
+                </span>
+                <span className="flex-1 rounded-lg bg-amber-400/15 py-1.5 text-amber-200">
+                  😰 Zorlanıyor<br />
+                  <b className="text-base">{zorlanan.length}</b>
+                </span>
+              </div>
+              {sikilan.length > 0 && (
+                <p className="mt-3 text-xs leading-relaxed text-slate-300">
+                  <span className="font-semibold text-sky-200">Zorluğu artır:</span>{" "}
+                  {sikilan.map((e) => e.ad).join(", ")}
+                </p>
+              )}
+              {zorlanan.length > 0 && (
+                <p className="mt-2 text-xs leading-relaxed text-slate-300">
+                  <span className="font-semibold text-amber-200">Nazik ol / hafiflet:</span>{" "}
+                  {zorlanan.map((e) => e.ad).join(", ")}
+                </p>
+              )}
+            </>
           )}
         </section>
       </div>
