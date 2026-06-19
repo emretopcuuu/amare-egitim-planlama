@@ -148,8 +148,8 @@ export async function kocuTuru(
     const yanit = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,
-      thinking: { type: "disabled" },
-      output_config: { effort: "low" },
+      // Sade sohbet çağrısı: thinking/output_config gibi ek parametreler
+      // sohbet için gereksiz ve bazı kombinasyonlarda 400'e yol açabiliyor.
       system: `${PERSONA}
 
 Adayın adı: ${ad}.
@@ -166,7 +166,17 @@ Yanıtın YALNIZCA adaya söyleyeceğin temiz, doğru yazılmış Türkçe repli
       .map((b) => b.text)
       .join("")
       .trim();
-  } catch {
+  } catch (e) {
+    // Teşhis: gerçek hata sebebini sessizce audit_log'a yaz (kredi/anahtar/param).
+    const sebep = e instanceof Error ? `${e.name}: ${e.message}` : String(e);
+    console.error("kocuTuru hata:", sebep);
+    try {
+      await db
+        .from("audit_log")
+        .insert({ eylem: "kocu_hata", detay: { hata: sebep.slice(0, 500) } });
+    } catch {
+      // audit yazımı da düşerse yut
+    }
     return null;
   }
   if (!metin) return null;
