@@ -777,6 +777,8 @@ export const tr = {
   kocu: {
     baslik: "Ayna Koçu",
     altBaslik: "Her an buradayım",
+    nedir:
+      "Benimle konuştukça kampın sana özelleşir: görevlerin, etkinliklerin ve sana gelen deneyim verdiğin cevaplara göre şekillenir. Ne kadar açık olursan, o kadar isabetli yönlendiririm.",
     hafizaBaslik: "Seni hatırlıyorum:",
     sesliMod: "Sesli mod (AYNA yanıtını sesli okur)",
     yer: "AYNA'ya yaz…",

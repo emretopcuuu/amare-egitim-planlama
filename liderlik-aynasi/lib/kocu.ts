@@ -134,7 +134,10 @@ export async function kocuTuru(
           {
             role: "user",
             content:
-              "(Aday koç ekranını ilk kez açtı. Onu sıcak ve KISA bir cümleyle karşıla; bağlamdan bir şey sezdiğini hafifçe ima et ve 'bugün neye ihtiyacın var?' diye sor.)",
+              "(Aday koç ekranını İLK KEZ açtı. Onu adıyla sıcak karşıla. KISA tut: en fazla 2-3 cümle. " +
+              "Şunu doğal, samimi bir dille anlat: benimle ne kadar AÇIK konuşursa, kampta ona gelen görevler, etkinlikler ve deneyim o kadar KENDİSİNE ÖZEL olur; onu tanıdıkça daha isabetli yönlendiririm. " +
+              "Sonra sohbeti başlatan TEK, davetkâr ve kişisel bir soru sor — örn. bu kamptan en çok ne beklediği, ya da kendini/duygularını anlatmanın ona kolay mı yoksa zor mu geldiği gibi öz-farkındalık açan bir soru. " +
+              "Yargılama, baskı yapma; meraklı, sıcak ve cesaretlendirici ol.)",
           },
         ]
       : gecmis.map((m) => ({
