@@ -52,7 +52,7 @@ export default function IlkTanitim() {
   const sonuncu = adim === t.kartlar.length - 1;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col bg-black">
+    <div className="gece-ada fixed inset-0 z-[60] flex flex-col bg-black">
       <div className="flex justify-end p-5">
         <button
           onClick={kapat}

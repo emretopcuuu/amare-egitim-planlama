@@ -94,7 +94,7 @@ export default function MuhurAcilis({
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[70] flex flex-col overflow-y-auto bg-[#04101c]/96 p-6 text-[#e6edf4] backdrop-blur-md"
+      className="gece-ada fixed inset-0 z-[70] flex flex-col overflow-y-auto bg-[#04101c]/96 p-6 text-[#e6edf4] backdrop-blur-md"
     >
       {asama === "ad" && <Konfeti anahtar="muhur-acilis" />}
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-8 text-center">

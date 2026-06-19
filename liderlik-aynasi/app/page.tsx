@@ -331,7 +331,7 @@ export default async function AnaSayfa({
   // Tam ekran odak (üst menü + alt çubuk gizli): tek iş, dolaşma yok.
   if (dalga && !ozTamam) {
     return (
-      <main className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[#04101c] p-6">
+      <main className="gece-ada fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[#04101c] p-6">
         <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
           <BuyukKart
             baslik={t.ozGerekBaslik}
