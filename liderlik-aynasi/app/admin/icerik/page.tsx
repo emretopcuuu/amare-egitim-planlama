@@ -15,7 +15,10 @@ export default async function IcerikPage() {
   if (!session || session.rol !== "admin") redirect("/admin/giris");
 
   const db = supabaseAdmin();
-  const { data } = await db.from("settings").select("key, value").in("key", ["ayna_ek_ton", "gunun_temasi"]);
+  const { data } = await db
+    .from("settings")
+    .select("key, value")
+    .in("key", ["ayna_ek_ton", "gunun_temasi", "gunun_cumlesi"]);
   const harita = new Map((data ?? []).map((s) => [s.key, s.value]));
 
   return (
@@ -27,6 +30,7 @@ export default async function IcerikPage() {
       <IcerikStudyo
         ekTon={harita.get("ayna_ek_ton") ?? ""}
         gununTemasi={harita.get("gunun_temasi") ?? ""}
+        gununCumlesi={harita.get("gunun_cumlesi") ?? ""}
       />
     </main>
   );
