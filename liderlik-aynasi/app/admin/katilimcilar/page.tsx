@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import KatilimciYonetim from "./KatilimciYonetim";
+import OyunSecimiPanel from "./OyunSecimiPanel";
 import Ipucu from "../Ipucu";
 
 export const metadata = { title: "Katılımcılar — Liderlik Aynası" };
@@ -35,6 +36,9 @@ export default async function KatilimcilarPage() {
 
       {/* Liste en üstte ve açık; diğer her şey (ekle, dağıt, adlandır, import,
           tehlikeli) katlanır ve varsayılan kapalı — KatilimciYonetim içinde. */}
+      {/* Oyun seçimi ile grup dağıtımı — giriş kapısı + doluluk */}
+      <OyunSecimiPanel />
+
       <KatilimciYonetim kisiler={kisiler} kayanIdler={kayanIdler} />
     </main>
   );

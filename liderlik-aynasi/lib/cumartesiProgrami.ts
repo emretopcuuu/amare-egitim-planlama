@@ -330,3 +330,73 @@ export function grupNoCozumle(takim: string | null | undefined): number | null {
   const n = Number(m[1]);
   return n >= 1 && n <= CUMARTESI_GRUP_SAYISI ? n : null;
 }
+
+// ---- OYUN SEÇİMİ → GRUP ATAMA (giriş akışı) ----
+// Cumartesi 4 oyun var: Bowling'i HERKES oynar; diğer 3'ten (Big Bubble, ATV,
+// Hazine Avı) kişi 2 seçer. Seçilen ikili, o ikiliyi (bowling + 2) oynayan
+// gruplara eşlenir; kişi o gruplardan EN BOŞ olanına atanır. Kombinasyonlar
+// CUMARTESI_PROGRAMI'ndan TÜRETİLİR — yeni Excel gelince otomatik güncellenir.
+
+export const HERKES_OYUNU: CmtTur = "bowling";
+export const SECMELI_OYUNLAR: CmtTur[] = ["big_bubble", "atv", "hazine_avi"];
+export const SECILECEK_ADET = 2;
+
+export const OYUN_BILGI: Record<string, { ad: string; simge: string; aciklama: string }> = {
+  bowling: { ad: "Bowling", simge: "🎳", aciklama: "Herkes oynayacak — klasik bowling keyfi." },
+  big_bubble: {
+    ad: "Big Bubble",
+    simge: "🫧",
+    aciklama: "Dev şişme topların içinde yüksek enerjili çarpışma oyunu.",
+  },
+  atv: { ad: "ATV", simge: "🏍", aciklama: "Arazi parkurunda ATV sürüş deneyimi." },
+  hazine_avi: {
+    ad: "Hazine Avı",
+    simge: "🗺",
+    aciklama: "Takımca ipuçlarını çözüp hazineyi bulma yarışı.",
+  },
+};
+
+function oyunAnahtar(oyunlar: CmtTur[]): string {
+  return [...oyunlar].sort().join("+");
+}
+
+/** Bir grubun oynadığı SEÇMELİ oyunlar (bowling/david/yemek hariç, tekil). */
+export function grupSecmeliOyunlari(grup: number): CmtTur[] {
+  const set = new Set<CmtTur>();
+  for (const b of grupBloklari(grup)) {
+    if (SECMELI_OYUNLAR.includes(b.tur)) set.add(b.tur);
+  }
+  return [...set];
+}
+
+/** Seçilen ikili (bowling + 2) hangi gruplarca oynanıyor? Veriden türer. */
+export function oyunlardanGruplar(secilen: CmtTur[]): number[] {
+  const hedef = oyunAnahtar(secilen);
+  const gruplar: number[] = [];
+  for (let g = 1; g <= CUMARTESI_GRUP_SAYISI; g++) {
+    if (oyunAnahtar(grupSecmeliOyunlari(g)) === hedef) gruplar.push(g);
+  }
+  return gruplar;
+}
+
+/** Geçerli oyun ikilisi kombinasyonları + grupları (admin/önizleme için). */
+export function oyunKombolari(): { oyunlar: CmtTur[]; gruplar: number[] }[] {
+  const harita = new Map<string, number[]>();
+  for (let g = 1; g <= CUMARTESI_GRUP_SAYISI; g++) {
+    const k = oyunAnahtar(grupSecmeliOyunlari(g));
+    if (k.split("+").length !== SECILECEK_ADET) continue;
+    harita.set(k, [...(harita.get(k) ?? []), g]);
+  }
+  return [...harita.entries()].map(([k, gruplar]) => ({
+    oyunlar: k.split("+") as CmtTur[],
+    gruplar,
+  }));
+}
+
+/** Seçim geçerli mi: tam SECILECEK_ADET, tekil, hepsi seçmeli oyun. */
+export function oyunSecimiGecerli(secilen: unknown): secilen is CmtTur[] {
+  if (!Array.isArray(secilen) || secilen.length !== SECILECEK_ADET) return false;
+  const tekil = new Set(secilen);
+  if (tekil.size !== SECILECEK_ADET) return false;
+  return [...tekil].every((o) => SECMELI_OYUNLAR.includes(o as CmtTur));
+}
