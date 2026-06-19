@@ -118,8 +118,8 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
   }
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-white/10 bg-midnight/90 px-4 py-3 backdrop-blur">
+    <div className="flex h-dvh flex-col">
+      <header className="sticky top-0 z-10 flex shrink-0 items-center gap-3 border-b border-white/10 bg-midnight/90 px-4 py-3 backdrop-blur">
         <Link href="/" aria-label={t.geri} className="text-slate-400 hover:text-slate-200">
           ←
         </Link>
@@ -158,7 +158,7 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
         </div>
       )}
 
-      <div className="flex-1 space-y-3 overflow-y-auto px-4 py-5">
+      <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-5">
         {yukleniyor && <p className="text-center text-sm text-slate-500">{t.yukleniyor}</p>}
 
         {mesajlar.map((m, i) => (
@@ -203,7 +203,7 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
         <div ref={altRef} />
       </div>
 
-      <div className="sticky bottom-0 border-t border-white/10 bg-midnight/95 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
+      <div className="shrink-0 border-t border-white/10 bg-midnight/95 px-3 pb-[calc(0.85rem+env(safe-area-inset-bottom))] pt-3 backdrop-blur">
         <div className="flex items-end gap-2">
           <textarea
             ref={alanRef}

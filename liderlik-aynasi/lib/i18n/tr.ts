@@ -779,7 +779,7 @@ export const tr = {
     altBaslik: "Her an buradayım",
     hafizaBaslik: "Seni hatırlıyorum:",
     sesliMod: "Sesli mod (AYNA yanıtını sesli okur)",
-    yer: "AYNA'ya yaz… (takıldığın, merak ettiğin ne varsa)",
+    yer: "AYNA'ya yaz…",
     gonder: "Gönder",
     geri: "Geri",
     yukleniyor: "Açılıyor…",
