@@ -252,6 +252,80 @@ export function grupAdi(grup: number): string {
   return `Grup ${grup}`;
 }
 
+/** Dakika → "HH:MM" (cmtDk'nın tersi). */
+export function dkCmt(dk: number): string {
+  return `${String(Math.floor(dk / 60)).padStart(2, "0")}:${String(dk % 60).padStart(2, "0")}`;
+}
+
+// ---- CUMARTESİ KATILIMCI TAM-GÜN ÇİZELGESİ ----
+// Grup üyesinin Cumartesi'yi BAŞTAN SONA gördüğü çizelge: sabah kahvaltı +
+// grup etkinlikleri (oyun/David/öğle) + akşam yemeği + akşam AYNA bloğu; arada
+// kalan boşluklar "AYNA Görevleri & Serbest Zaman" olarak işaretlenir.
+
+export type GunSatiri = {
+  bas: number; // gün-dakikası
+  bit: number;
+  basY: string; // "HH:MM"
+  bitY: string;
+  baslik: string;
+  detay?: string;
+  simge: string;
+  /** Boş pencere doldurması mı (AYNA Görevleri & Serbest Zaman)? */
+  serbest?: boolean;
+};
+
+export const SERBEST_BASLIK = "AYNA Görevleri & Serbest Zaman";
+
+// Cumartesi'nin kamp-geneli sabit blokları (Excel grup programının dışı).
+const CMT_SABIT: { bas: string; bit: string; baslik: string; simge: string; serbest?: boolean }[] = [
+  { bas: "07:00", bit: "08:00", baslik: "Antreman · Yoga · Meditasyon", simge: "🌲" },
+  { bas: "08:00", bit: "09:30", baslik: "Kahvaltı", simge: "🍽" },
+  { bas: "19:30", bit: "21:00", baslik: "Akşam Yemeği", simge: "🍽" },
+  { bas: "21:00", bit: "23:00", baslik: SERBEST_BASLIK, simge: "🪞", serbest: true },
+];
+
+/** Bir grubun Cumartesi tam-gün çizelgesi (sabit bloklar + grup + boş pencereler). */
+export function cumartesiGunTimeline(grup: number): GunSatiri[] {
+  const bloklar: GunSatiri[] = [];
+  for (const b of CMT_SABIT) {
+    bloklar.push({
+      bas: cmtDk(b.bas), bit: cmtDk(b.bit), basY: b.bas, bitY: b.bit,
+      baslik: b.baslik, simge: b.simge, serbest: b.serbest,
+    });
+  }
+  for (const b of grupBloklari(grup)) {
+    bloklar.push({
+      bas: cmtDk(b.baslangic), bit: cmtDk(b.bitis), basY: b.baslangic, bitY: b.bitis,
+      baslik: b.baslik, detay: b.detay, simge: ETKINLIK_SIMGE[b.tur],
+    });
+  }
+  bloklar.sort((a, b) => a.bas - b.bas || a.bit - b.bit);
+
+  // Kahvaltı sonu (09:30) → akşam yemeği (19:30) arası boşlukları "AYNA Görevleri
+  // & Serbest Zaman" ile doldur. Örtüşen meşgul aralıkları birleştir.
+  const kahvaltiSonu = cmtDk("09:30");
+  const aksamBas = cmtDk("19:30");
+  const mesgul = bloklar.map((b) => [b.bas, b.bit] as [number, number]).sort((a, b) => a[0] - b[0]);
+  const birlesik: [number, number][] = [];
+  for (const [s, e] of mesgul) {
+    const son = birlesik[birlesik.length - 1];
+    if (son && s <= son[1]) son[1] = Math.max(son[1], e);
+    else birlesik.push([s, e]);
+  }
+  const doldur: GunSatiri[] = [];
+  for (let i = 0; i < birlesik.length - 1; i++) {
+    const bas = Math.max(birlesik[i][1], kahvaltiSonu);
+    const bit = Math.min(birlesik[i + 1][0], aksamBas);
+    if (bit - bas >= 10) {
+      doldur.push({
+        bas, bit, basY: dkCmt(bas), bitY: dkCmt(bit),
+        baslik: SERBEST_BASLIK, simge: "🪞", serbest: true,
+      });
+    }
+  }
+  return [...bloklar, ...doldur].sort((a, b) => a.bas - b.bas || a.bit - b.bit);
+}
+
 // ---- AYNA ETKİNLİK-FARKINDALIĞI (Slice 3) ----
 // AYNA Cumartesi günü grup SESSİZ KALMAZ; tam tersine grubun O ANKİ etkinliğine
 // göre o grup+kişiye ÖZEL görev üretir. Etkinliğin içine oturan, akışı bozmayan
