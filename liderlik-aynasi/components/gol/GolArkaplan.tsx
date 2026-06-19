@@ -84,9 +84,9 @@ export default function GolArkaplan() {
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: "url(/gunduz-gol.webp)" }}
           />
-          {/* Çok hafif aydınlatma perdesi: cam kartların kenarları otursun,
-              fotoğrafı yıkamadan içerik biraz öne çıksın. */}
-          <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-white/25" />
+          {/* Çok hafif alt fade: yalnız en altta (alt nav okunsun) — göl
+              manzarası soluklaşmasın, net görünsün. */}
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20" />
         </>
       ) : (
         <>
