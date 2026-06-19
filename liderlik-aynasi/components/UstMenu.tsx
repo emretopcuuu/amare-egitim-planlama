@@ -71,11 +71,11 @@ export default function UstMenu({
 
       {acik && (
         <div
-          className="fixed inset-0 z-50 flex flex-col bg-black/70 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-black/70 backdrop-blur-sm"
           onClick={() => setAcik(false)}
         >
           <div
-            className="mx-auto mt-auto w-full max-w-lg rounded-t-3xl border-t border-white/10 bg-midnight-card p-6 pb-10"
+            className="mx-auto mt-auto w-full max-w-lg rounded-t-3xl border-t border-white/10 bg-midnight-card p-6 pb-10 sm:my-auto sm:rounded-3xl sm:border"
             onClick={(e) => e.stopPropagation()}
           >
             <p className="prizma-serif ay-metin text-center text-2xl font-semibold">
