@@ -7,6 +7,7 @@ import {
   grupBosPencereler,
   grupAdi,
 } from "@/lib/cumartesiProgrami";
+import CumartesiGorevDugmesi from "@/components/CumartesiGorevDugmesi";
 
 function dkSaat(dk: number): string {
   return `${String(Math.floor(dk / 60)).padStart(2, "0")}:${String(dk % 60).padStart(2, "0")}`;
@@ -65,15 +66,19 @@ export default function CumartesiProgram() {
                   {bos.map((p) => `${dkSaat(p.bas)}–${dkSaat(p.bit)}`).join(" · ")}
                 </p>
               )}
+              {/* Manuel tetik: grubu o anki etkinliğine göre şimdi görevlendir */}
+              <CumartesiGorevDugmesi grup={g} />
             </div>
           );
         })}
       </div>
 
       <p className="text-xs text-slate-500">
-        Toplam {CUMARTESI_PROGRAMI.length} blok · {CUMARTESI_GRUP_SAYISI} grup. AYNA grup
-        görevleri yalnız yeşil "görev penceresi" aralıklarında verilir — David/oyun/yemekle
-        çakışmaz.
+        Toplam {CUMARTESI_PROGRAMI.length} blok · {CUMARTESI_GRUP_SAYISI} grup. AYNA, her
+        grubun <span className="text-slate-400">o anki etkinliğine özel</span> görev üretir
+        (David seansında foto/soru, oyunlarda gözlem, yemekte bağ kurma) — etkinliği bölmeden
+        içine oturur. Yeşil "görev penceresi" boş aralıkları gösterir; "⚡ Şimdi görevlendir"
+        ile grubu el ile de tetikleyebilirsin.
       </p>
     </div>
   );
