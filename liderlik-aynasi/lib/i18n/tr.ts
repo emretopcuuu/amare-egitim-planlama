@@ -401,6 +401,8 @@ export const tr = {
     altBaslik:
       "Birinin bir davranışı seni etkilediyse, ona kısa bir not bırak. İsmin görünür — bu güzel.",
     gonderBaslik: "Takdir Gönder",
+    gonderNot:
+      "Bıraktığın takdir, o kişinin Takdir Duvarı'nda adınla görünür ve ona bildirim gider. İçten ve açık yaz 💛",
     kimEtiket: "Kime?",
     kimSec: "Kişi seç…",
     mesajYer: "Örn: Bugünkü cesaretin bana ilham verdi.",

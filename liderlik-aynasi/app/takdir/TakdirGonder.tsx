@@ -46,6 +46,9 @@ export default function TakdirGonder({ kisiler }: { kisiler: Kisi[] }) {
   return (
     <section className="kart-cam rounded-3xl p-5">
       <h2 className="font-semibold text-gold-light">{t.gonderBaslik}</h2>
+      <p className="mt-2 rounded-xl bg-gold/[0.08] px-3 py-2 text-[0.8rem] leading-relaxed text-slate-300">
+        {t.gonderNot}
+      </p>
 
       <label className="mt-3 block text-sm font-medium text-slate-300">
         {t.kimEtiket}
