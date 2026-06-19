@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
+import CumartesiGrupHud from "@/components/CumartesiGrupHud";
 
 export const metadata = { title: "Grubunun Ödevi — Liderlik Aynası" };
 
@@ -37,6 +38,9 @@ export default async function GrupSayfa() {
         <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.baslik}</h1>
         {kisi?.team && <p className="mt-1 text-sm text-slate-400">{t.altBaslik(kisi.team)}</p>}
       </header>
+
+      {/* Slice 5 — Cumartesi grup HUD: grubunun gün 2 akışı (canlı now/next). */}
+      <CumartesiGrupHud takim={kisi?.team ?? null} />
 
       {!kisi?.team ? (
         <p className="text-sm text-slate-400">{t.takimsiz}</p>
