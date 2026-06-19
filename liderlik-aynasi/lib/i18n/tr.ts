@@ -21,7 +21,7 @@ export const tr = {
   // Tutarlı durum dili (#10 UX): boş ve hata ekranları aynı sıcak dili konuşur.
   durum: {
     bos: {
-      simge: "🪞",
+      simge: "👁",
       baslik: "Henüz bir şey yok",
       metin: "Burası birazdan canlanacak — sen adımını attıkça dolacak.",
     },
@@ -34,7 +34,7 @@ export const tr = {
   },
   // İnsanca hata & boş durumlar: asla teknik metin / boş ekran (#6)
   hata: {
-    simge: "🪞",
+    simge: "👁",
     baslik: "Bir şey ters gitti",
     aciklama: "Endişelenme — verilerin güvende. Birlikte tekrar deneyelim.",
     tekrar: "Tekrar dene",
@@ -59,7 +59,7 @@ export const tr = {
     basla: "Başlayalım",
     adimlar: [
       {
-        ikon: "🪞",
+        ikon: "👁",
         baslik: "Ben AYNA",
         metin:
           "Herkes bir yüz taşır, bir de taşıdığı yüzün altında kalanı. Ben ikincisini gösteririm — usulca, yargısız.",
@@ -129,7 +129,7 @@ export const tr = {
           "Kısa bir ritüelle kendi sesini kaydedeceksin. Kamp boyunca doğru anlarda sana kendi sesinle sesleneceğim.",
       },
       {
-        simge: "🪞",
+        simge: "👁",
         baslik: "3. günde aynan açılır",
         metin:
           "Kendi gözünle başkalarının gözü yan yana gelecek. Sana özel Ayna Raporun seni bekliyor.",
@@ -184,7 +184,7 @@ export const tr = {
     boslukBaslik: "Aynaya bakma vakti",
     boslukMetin:
       "Kampa gelmeden önce kendine bir şey söylemiştin. Üç gün boyunca onu izledim. Şimdi yüzleşme zamanı.",
-    boslukDugme: "🪞 Hazırım",
+    boslukDugme: "👁 Hazırım",
     raporBaslik: "Aynan açıldı",
     raporMetin: "Üç günün sonu geldi. Kendi gözünle başkalarının gözü, şimdi yan yana.",
     dalgaDevamBaslik: (dalga: string) => `${dalga} açık`,
@@ -198,7 +198,7 @@ export const tr = {
     // İlk 60 saniye rehberi: ilk öz-puana doğru nazik canlı işaret (#3).
     ilkAdimIpucu: "İlk adımın bu — başla",
     // Çıkmaz yok: boş anda bile sıcak bir sonraki adım — birine takdir bırak.
-    bekleKocu: "🪞 AYNA'ya sor: şimdi ne yapayım?",
+    bekleKocu: "👁 AYNA'ya sor: şimdi ne yapayım?",
     bekleEylem: "Birine takdir bırak ✨",
     bekleRed: "Bir 'Hayır' mı aldın? Kutla 🎯",
     // Boş ekranlarda net sonraki adım butonu (çıkmaz hissi olmasın).
@@ -221,12 +221,12 @@ export const tr = {
     menuProgram: "Kamp Programı",
     menuYansiman: "Yansımanı izle",
     menuRapor: "Ayna Raporum",
-    menuKocu: "🪞 Ayna Koçu",
+    menuKocu: "👁 Ayna Koçu",
     menuGunluk: "✍️ Tek Cümle",
     menuPlan: "🧭 90 Günlük Yolculuk",
     menuBen: "👤 Profilim",
     menuGrup: "👥 Grup Ödevi",
-    menuMini360: "🪞 Ekip Aynası",
+    menuMini360: "👁 Ekip Aynası",
     menuAnlar: "Anların (Zaman Tüneli)",
     menuTurnuva: "Takım Turnuvası",
     menuTakdir: "Takdir Duvarı",
@@ -470,7 +470,7 @@ export const tr = {
     nelerBaslik: "Bu uygulamada seni neler bekliyor:",
     madde1: "🎯 AYNA'dan kişiye özel görevler",
     madde2: "👁 Kampta tanıdığın kişileri puanlama",
-    madde3: "🪞 Gün 3'te kişisel Ayna Raporun",
+    madde3: "👁 Gün 3'te kişisel Ayna Raporun",
     basla: "Hadi başlayalım →",
   },
   degerlendir: {
@@ -900,12 +900,12 @@ export const tr = {
     enAzBir: "Kaydetmek için en az bir madde işaretle.",
     hata: "Kaydedilemedi. Lütfen tekrar dene.",
     // Tamam ekranı
-    tamamBaslik: "Bu bölümü tamamladın 🪞",
+    tamamBaslik: "Bu bölümü tamamladın 👁",
     tamamMetin:
       "İlk katmanı bitirdin. Kalan adımlar kamp yaklaştıkça açılacak — her gün küçük bir parça.",
     devamBaslik: "Kaldığın yerden devam",
     devamMetin: "Birkaç madde daha işaretle; acelesi yok.",
-    guvenBaslik: "Bir an dur 🪞",
+    guvenBaslik: "Bir an dur 👁",
     guvenMetin:
       "Cevaplarının çoğu birbirine çok yakın çıktı. Bu ayna ancak dürüstlüğünle çalışır — istersen ilk maddelere bir kez daha, gerçekten yaptığını düşünerek bak.",
     guvenTekrar: "Maddelere tekrar bak",
@@ -1359,7 +1359,7 @@ export const tr = {
           ornek: "Hiç tanımadığın birinin yanına otur ve tek soru sor.",
         },
         yansima: {
-          ad: "🪞 Yansıma",
+          ad: "👁 Yansıma",
           aciklama: "İç bakış / kendini sorgulama (genelde akşamları).",
           ornek: "Bugün seni en çok zorlayan an neydi? Ondan ne öğrendin?",
         },
@@ -1829,7 +1829,7 @@ export const tr = {
     },
     // #9 Eksikleri tek dokunuşla dürt: öz-puanını bitirmeyenlere hatırlatma push'u
     durt: {
-      bildirimBaslik: "🪞 Kendini puanla",
+      bildirimBaslik: "👁 Kendini puanla",
       bildirimGovde: "Kampın ilk adımı seni bekliyor — kendini dürüstçe puanla.",
       dalgaYok: "Şu an açık dalga yok.",
       dugme: (n: number) => `Eksik ${n} kişiyi dürt 🔔`,
@@ -2391,7 +2391,7 @@ export const tr = {
       detayZorluk: "Zorluk",
       detayOzellik: "Hedef özellik",
       detayKapat: "Kapat",
-      aynaAniBaslik: "🪞 Ayna Anı — Gördün mü?",
+      aynaAniBaslik: "👁 Ayna Anı — Gördün mü?",
       aynaAniAciklama:
         "Yeterince görev yapan ve kamp öncesi kör noktasını yazan kişilere, AYNA kendi cümlelerini bugünkü çabalarıyla yüzleştiren özel bir an üretir. Hazır olan herkese tek tıkla gönder.",
       sahneBaslik: "Sahne Anları",
@@ -2401,7 +2401,7 @@ export const tr = {
       acilisOnay:
         "AYNA marka sesiyle kampı açar — perdedeki ekrandan anons çalınır. Sahne hazır mı?",
       acilisGonderildi: "Açılış anonsu sahneye gönderildi — ekran 4 dk içinde çalar.",
-      aynaAniDugme: "🪞 Ayna Anı (Gün 2 · 23:20)",
+      aynaAniDugme: "👁 Ayna Anı (Gün 2 · 23:20)",
       aynaAniOnay:
         "Günün sayıları (gözlem, görev, fiero) AYNA'nın sesiyle salona okunur. Onaylıyor musun?",
       aynaAniGonderildi: (gozlem: number, teslim: number) =>
@@ -2484,7 +2484,7 @@ export const tr = {
     yanitEtiket: "Yanıtın",
     yanitPlaceholder: "Ne yaptın, ne gözlemledin, ne hissettin? Birkaç cümle yeter.",
     // #1 Yansıma Kapanışı: görevden sonra tek cümlelik iç-yansıma → AYNA ayna tutar
-    yansimaBaslik: "Bir saniye dur 🪞",
+    yansimaBaslik: "Bir saniye dur 👁",
     yansimaSoru: "Bunu yaparken içinde ne zorladı ya da ne değişti?",
     yansimaYer: "Tek cümle yeter — gerçekten ne hissettin?",
     yansimaGonder: "Aynaya tut",
@@ -2544,7 +2544,7 @@ export const tr = {
     turler: {
       gozlem: "👁 Gözlem",
       cesaret: "🔥 Cesaret",
-      yansima: "🪞 Yansıma",
+      yansima: "👁 Yansıma",
       gizli: "🤫 Gizli Görev",
       tahmin: "🎲 Tahmin",
       simulasyon: "🎭 Simülasyon",

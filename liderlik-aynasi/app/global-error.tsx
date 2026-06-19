@@ -20,7 +20,7 @@ export default function GlobalHata({ reset }: { error: Error; reset: () => void 
         }}
       >
         <div style={{ textAlign: "center", maxWidth: "360px" }}>
-          <div style={{ fontSize: "48px" }}>🪞</div>
+          <div style={{ fontSize: "48px" }}>👁</div>
           <h1 style={{ fontSize: "24px", margin: "16px 0 8px", fontWeight: 600 }}>
             Bir şey ters gitti
           </h1>

@@ -23,7 +23,7 @@ export default async function BoslukSayfa() {
     return <Bilgi ikon="👁" baslik={t.kanitYokBaslik} metin={t.kanitYokMetin} />;
   }
   if (sonuc.durum !== "hazir") {
-    return <Bilgi ikon="🪞" baslik={tr.hata.baslik} metin={t.hata} />;
+    return <Bilgi ikon="👁" baslik={tr.hata.baslik} metin={t.hata} />;
   }
 
   return <BoslukDeneyim demolisyon={sonuc.demolisyon} yeniCumle={sonuc.yeniCumle} />;

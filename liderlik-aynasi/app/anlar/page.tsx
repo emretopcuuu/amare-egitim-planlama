@@ -201,7 +201,7 @@ export default async function AnlarPage() {
 
         {anlar.length === 0 ? (
           <BosDurum
-            simge="🪞"
+            simge="👁"
             baslik={t.bosBaslik}
             metin={t.bosMetin}
             eylem={<SicakAdim href="/" etiket={tr.anaSayfa.sicakAnaSayfa} />}

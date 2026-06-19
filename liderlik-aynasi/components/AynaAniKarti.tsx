@@ -42,7 +42,7 @@ export default function AynaAniKarti() {
   return (
     <section className="sahne-giris kart-cam relative overflow-hidden rounded-3xl border border-gold/30 p-5 text-left shadow-xl">
       <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.3em] text-gold-light">
-        🪞 {t.baslik}
+        👁 {t.baslik}
       </p>
       <p className="mt-2 text-base leading-relaxed text-slate-100">{an}</p>
       <button

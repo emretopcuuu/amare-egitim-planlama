@@ -258,7 +258,7 @@ function Ekran({ adim }: { adim: SunumAdimi }) {
 
       {(e === "rapor" || e === "final") && (
         <>
-          <Baslik ikon={e === "final" ? "🏆" : "🪞"} metin={adim.baslik} />
+          <Baslik ikon={e === "final" ? "🏆" : "👁"} metin={adim.baslik} />
           {adim.govde && <p className="text-center text-xs text-slate-400">{adim.govde}</p>}
           {adim.radar && <MiniRadar veri={adim.radar} />}
           <Lejant />

@@ -28,7 +28,7 @@ export default function AynaDusunuyor({ satirlar }: { satirlar?: readonly string
       <div className="relative h-16 w-16">
         <div className="absolute inset-0 animate-spin rounded-full border-2 border-transparent border-t-gold border-r-gold/40 [animation-duration:2.4s]" />
         <div className="absolute inset-1.5 rounded-full bg-gold/10 blur-[6px]" />
-        <div className="absolute inset-0 flex items-center justify-center text-2xl">🪞</div>
+        <div className="absolute inset-0 flex items-center justify-center text-2xl">👁</div>
       </div>
       <p className="text-sm font-semibold text-gold-light">{t.baslik}</p>
       <p key={i} className="dusunuyor-satir min-h-[1rem] text-xs text-slate-400">

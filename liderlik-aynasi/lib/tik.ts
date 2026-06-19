@@ -532,7 +532,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
             db,
             k.id,
             cumle
-              ? "🪞 Cümleni hatırla"
+              ? "👁 Cümleni hatırla"
               : sesli
                 ? "🌊 Yansımandan sesli mesaj var"
                 : "🌊 Su seni özledi",
