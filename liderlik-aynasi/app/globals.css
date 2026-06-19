@@ -833,3 +833,98 @@ textarea {
     animation: none !important;
   }
 }
+
+/* ============================================================= */
+/* GÜNDÜZ TEMASI — aydınlık palet. <html data-tema="gunduz">     */
+/* Token'ları aydınlığa çevirir → bg-midnight*, text token'ları  */
+/* otomatik döner; özel cam kartlar + ana metinler ayrıca açılır.*/
+/* Gündüz göl manzarası zemin kalır, ön plan onun üstünde "hava  */
+/* gibi" cam yüzeylerde yaşar. (v1 — ekran ekran ince ayar açık.) */
+/* ============================================================= */
+html[data-tema="gunduz"] {
+  --color-midnight: #e7f0fa;
+  --color-midnight-soft: #eef5fc;
+  --color-midnight-card: #ffffff;
+  --color-royal: #3f7cad;
+  --color-royal-light: #2c6792;
+  --color-gold: #e08a00;
+  --color-gold-light: #a96a06;
+  --color-gold-dim: #855300;
+  color-scheme: light;
+}
+
+/* Ana metin rengi koyu (gece koyu zeminde açık metinler vardı). */
+html[data-tema="gunduz"] body {
+  color: #16304a;
+}
+
+/* Metin tonlarını ters çevir: gecede açık olanlar gündüz koyulaşır. */
+html[data-tema="gunduz"] .text-slate-50,
+html[data-tema="gunduz"] .text-slate-100,
+html[data-tema="gunduz"] .text-slate-200 {
+  color: #122a40 !important;
+}
+html[data-tema="gunduz"] .text-slate-300 {
+  color: #1f3a52 !important;
+}
+html[data-tema="gunduz"] .text-slate-400 {
+  color: #41607a !important;
+}
+html[data-tema="gunduz"] .text-slate-500 {
+  color: #5d7791 !important;
+}
+html[data-tema="gunduz"] .text-white {
+  color: #122a40 !important;
+}
+
+/* İnce beyaz perdeler/çizgiler gündüzde koyu-saydam olsun (görünür kalsın). */
+html[data-tema="gunduz"] .bg-white\/\[0\.02\],
+html[data-tema="gunduz"] .bg-white\/\[0\.03\],
+html[data-tema="gunduz"] .bg-white\/\[0\.04\] {
+  background-color: rgba(16, 42, 66, 0.05) !important;
+}
+html[data-tema="gunduz"] .border-white\/5,
+html[data-tema="gunduz"] .border-white\/10,
+html[data-tema="gunduz"] .border-white\/15 {
+  border-color: rgba(16, 42, 66, 0.12) !important;
+}
+
+/* Cam kartlar: gündüzde beyaz, hafif saydam — gölün üstünde "buzlu cam". */
+html[data-tema="gunduz"] .kart-cam,
+html[data-tema="gunduz"] .kart-3d,
+html[data-tema="gunduz"] .kart-cerceve {
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.82), rgba(255, 255, 255, 0.66)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 2px 8px rgba(31, 58, 82, 0.1),
+    0 22px 44px -22px rgba(31, 58, 82, 0.28) !important;
+}
+html[data-tema="gunduz"] .kart-cam::before {
+  background: linear-gradient(
+    140deg,
+    rgba(63, 124, 173, 0.5),
+    rgba(255, 255, 255, 0.4) 35%,
+    rgba(224, 138, 0, 0.35) 70%,
+    rgba(63, 124, 173, 0.4)
+  ) !important;
+}
+
+/* "Ayna" alın yazısı: gündüzde koyu lacivert↔altın gradyan (açık zeminde görünür). */
+html[data-tema="gunduz"] .ay-metin {
+  background-image: linear-gradient(180deg, #1d3a57 0%, #2c6792 55%, #a96a06 100%);
+  filter: drop-shadow(0 1px 10px rgba(31, 58, 82, 0.12));
+}
+
+/* WebGL yoksa CSS göl zemini — gündüz açık gökyüzü/su. */
+html[data-tema="gunduz"] .gol-zemin {
+  background:
+    radial-gradient(120% 80% at 50% 8%, #cfe6fb 0%, #aacdf0 38%, #bcd9f1 64%, #d7e9f7 100%);
+}
+
+/* Gece gölü perdeleri (GolArkaplan) gündüzde "açık/havadar" olur. */
+html[data-tema="gunduz"] .gol-perde-vinyet {
+  background: radial-gradient(125% 95% at 50% 22%, transparent 0%, rgba(225, 238, 250, 0.25) 70%, rgba(210, 230, 248, 0.55) 100%) !important;
+}
+html[data-tema="gunduz"] .gol-perde-alt {
+  background: linear-gradient(to bottom, rgba(231, 240, 250, 0.12), rgba(231, 240, 250, 0.2), rgba(215, 233, 248, 0.55)) !important;
+}

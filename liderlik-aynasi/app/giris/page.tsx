@@ -5,7 +5,7 @@ import { getSession } from "@/lib/auth/session";
 import { guvenliNext } from "@/lib/guvenliNext";
 import GirisForm from "./GirisForm";
 import YaziBoyu from "@/components/YaziBoyu";
-import GunesModu from "@/components/GunesModu";
+import TemaSecimi from "@/components/TemaSecimi";
 import { tr } from "@/lib/i18n/tr";
 
 export const metadata = { title: "Giriş — Liderlik Aynası" };
@@ -45,7 +45,7 @@ export default async function GirisPage({
         </p>
         <div className="mt-6 w-full space-y-3">
           <YaziBoyu />
-          <GunesModu />
+          <TemaSecimi />
         </div>
       </div>
     </main>

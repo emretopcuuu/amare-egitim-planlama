@@ -93,6 +93,17 @@ export const tr = {
     acik: "Açık",
     kapali: "Kapalı",
   },
+  // Gece / Gündüz / Otomatik tema seçimi (Güneş Modu'nun yerine)
+  tema: {
+    baslik: "Görünüm",
+    aciklama: "Gündüz aydınlık, gece koyu — ya da otomatik.",
+    gece: "Gece",
+    gunduz: "Gündüz",
+    otomatik: "Otomatik",
+    otomatikSimdi: (etkin: string) => `Otomatik · şu an ${etkin}`,
+    geceKisa: "🌙 Gece",
+    gunduzKisa: "☀️ Gündüz",
+  },
   // #5 "Sen neredesin" yolculuk şeridi: kampın neresindeyiz?
   yolculuk: {
     hazirlik: "Kamp yaklaşıyor",
