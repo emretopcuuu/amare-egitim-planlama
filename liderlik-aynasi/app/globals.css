@@ -894,7 +894,9 @@ html[data-tema="gunduz"] {
    yarar. Gradyan alın yazısında (ay-metin) hale kapatılır. */
 html[data-tema="gunduz"] body {
   color: #16304a;
-  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.6);
+  text-shadow:
+    0 0 7px rgba(255, 255, 255, 0.85),
+    0 1px 2px rgba(255, 255, 255, 0.95);
 }
 html[data-tema="gunduz"] .ay-metin {
   text-shadow: none;
@@ -934,12 +936,15 @@ html[data-tema="gunduz"] .border-white\/15 {
   border-color: rgba(31, 58, 82, 0.18) !important;
 }
 
-/* Cam kartlar: gündüzde neredeyse opak beyaz buzlu cam — içindeki metin her
-   zaman net okunsun (göl zemini parlak/değişken olduğu için saydamlık az). */
+/* Cam kartlar: gündüzde TAM OPAK beyaz (saydamlık YOK) + backdrop-blur kapalı.
+   Parlak göl fotoğrafı kartın içinden sızıp metni/altın butonu yıkamasın diye
+   %88-95 saydam yerine düz #fff kullanılır → içerik her zaman net okunur. */
 html[data-tema="gunduz"] .kart-cam,
 html[data-tema="gunduz"] .kart-3d,
 html[data-tema="gunduz"] .kart-cerceve {
-  background: linear-gradient(160deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.88)) !important;
+  background: #ffffff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.9),
     0 2px 8px rgba(31, 58, 82, 0.1),
