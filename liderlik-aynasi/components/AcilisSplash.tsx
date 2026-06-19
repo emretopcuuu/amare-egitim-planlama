@@ -1,30 +1,17 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 
 const DEPO = "la_marka_splash_v1";
 
-// Tek seferlik marka açılışı: ilk açılışta ONE TEAM logo reveal'i tam ekran
-// oynar, sonra bir daha çıkmaz. Sessiz + atlanabilir; otomatik oynatma
-// engellenirse poster gösterilir ve güvenlik zamanlayıcısı kapatır.
+// Tek seferlik marka açılışı: ilk açılışta ONE TEAM amblemi şık bir reveal'le
+// belirir, sonra bir daha çıkmaz. Eski siyah-kutu marka videosu yerine şeffaf
+// logo (ton uyuşmazlığı yok); atlanabilir + güvenlik zamanlayıcısı kapatır.
 // Test için: URL'ye ?intro=1 eklenirse localStorage'a bakmadan yeniden gösterir.
 export default function AcilisSplash() {
   const [goster, setGoster] = useState(false);
   const [kapaniyor, setKapaniyor] = useState(false);
-  const [sesli, setSesli] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  // Tarayıcı kuralı: otomatik oynatma yalnızca SESSİZ izinli; sesi açmak için
-  // kullanıcı dokunuşu gerekir. Bu yüzden video sessiz başlar, dokununca açılır.
-  function sesAc() {
-    setSesli(true);
-    const v = videoRef.current;
-    if (v) {
-      v.muted = false;
-      v.play().catch(() => {});
-    }
-  }
 
   useEffect(() => {
     let acildi = false;
@@ -39,18 +26,9 @@ export default function AcilisSplash() {
       // depolama kapalı: splash'ı atla
     }
     if (!acildi) return;
-    // Güvenlik ağı: video oynamasa/ended ateşlemese bile ~11 sn sonra kapat.
-    const z = setTimeout(kapat, 11000);
+    const z = setTimeout(kapat, 2600);
     return () => clearTimeout(z);
   }, []);
-
-  // autoplay'i garantiye al: splash açılınca açıkça play() dene (iOS bazen ister).
-  useEffect(() => {
-    if (!goster) return;
-    videoRef.current?.play().catch(() => {
-      /* engellendiyse poster (logo) kalır; dokununca oynar, güvenlik zamanı kapatır */
-    });
-  }, [goster]);
 
   function kapat() {
     try {
@@ -66,37 +44,58 @@ export default function AcilisSplash() {
 
   return (
     <div
-      className={`fixed inset-0 z-[70] flex items-center justify-center bg-black transition-opacity duration-300 ${
+      onClick={kapat}
+      className={`gece-ada fixed inset-0 z-[70] flex items-center justify-center transition-opacity duration-300 ${
         kapaniyor ? "opacity-0" : "opacity-100"
       }`}
+      style={{ background: "radial-gradient(circle at 50% 42%, #0a2036 0%, #04101c 72%)" }}
     >
-      <video
-        ref={videoRef}
-        autoPlay
-        muted={!sesli}
-        playsInline
-        preload="auto"
-        onEnded={kapat}
-        onError={kapat}
-        onClick={() => (sesli ? videoRef.current?.play().catch(() => {}) : sesAc())}
-        poster="/marka-poster.jpg"
-        className="h-full w-full cursor-pointer object-contain"
-      >
-        <source src="/marka.mp4" type="video/mp4" />
-      </video>
-      {/* Sesi aç (otomatik oynatma sessiz başlar; dokununca ses gelir) */}
+      <img
+        src="/oneteam-logo.png"
+        alt="ONE TEAM"
+        className="marka-reveal w-60 max-w-[70%] drop-shadow-[0_12px_44px_rgba(212,175,55,0.35)]"
+      />
       <button
-        onClick={() => (sesli ? setSesli(false) : sesAc())}
-        className="absolute left-4 top-4 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium text-slate-200 backdrop-blur transition-colors hover:bg-white/20"
-      >
-        {sesli ? "🔊 Ses açık" : "🔇 Sesi aç"}
-      </button>
-      <button
-        onClick={kapat}
+        onClick={(e) => {
+          e.stopPropagation();
+          kapat();
+        }}
         className="absolute right-4 top-4 rounded-xl bg-white/10 px-4 py-2 text-sm font-medium text-slate-200 backdrop-blur transition-colors hover:bg-white/20"
       >
         {tr.tanitim.gec}
       </button>
+
+      <style jsx>{`
+        .marka-reveal {
+          animation: markaReveal 2.4s ease-out both;
+        }
+        @keyframes markaReveal {
+          0% {
+            opacity: 0;
+            transform: scale(0.82);
+            filter: brightness(1.4);
+          }
+          24% {
+            opacity: 1;
+            transform: scale(1);
+            filter: brightness(1);
+          }
+          80% {
+            opacity: 1;
+            transform: scale(1);
+          }
+          100% {
+            opacity: 0;
+            transform: scale(1.03);
+          }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .marka-reveal {
+            animation: none;
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   );
 }
