@@ -14,6 +14,7 @@ import IlkTanitim from "@/components/IlkTanitim";
 import YolculukSeridi from "@/components/YolculukSeridi";
 import KampHud from "@/components/KampHud";
 import GunProgramKarti from "@/components/GunProgramKarti";
+import MomentumGostergesi from "@/components/MomentumGostergesi";
 import KonusanYansima from "@/components/KonusanYansima";
 import AynaAniKarti from "@/components/AynaAniKarti";
 import SicakAdim from "@/components/SicakAdim";
@@ -168,6 +169,7 @@ export default async function AnaSayfa({
     { data: pusulaKisi },
     { data: boslukKisi },
     { data: siradakiGorevSatir },
+    { data: momentumSatirlar },
   ] = await Promise.all([
       acikDalga(db),
       raporlarGorunurMu(db),
@@ -207,8 +209,19 @@ export default async function AnaSayfa({
         .order("due_at", { ascending: true })
         .limit(1)
         .maybeSingle(),
+      // #5 Momentum göstergesi: son 2 haftanın skoru (mevcut + trend).
+      db
+        .from("momentum_scores")
+        .select("score, week_start")
+        .eq("participant_id", session.sub)
+        .order("week_start", { ascending: false })
+        .limit(2),
     ]);
   const takim = kisi?.team ?? null;
+  const momentumSkor =
+    typeof momentumSatirlar?.[0]?.score === "number" ? momentumSatirlar[0].score : null;
+  const momentumOnceki =
+    typeof momentumSatirlar?.[1]?.score === "number" ? momentumSatirlar[1].score : null;
   const siradakiGorevBasligi =
     typeof siradakiGorevSatir?.title === "string" ? siradakiGorevSatir.title : null;
   const sozAcik = sozAyar?.value === "true";
@@ -314,6 +327,8 @@ export default async function AnaSayfa({
       <ToplulukNabzi />
       {/* #3 Ayna Anı — kamp öncesi kör nokta cümlesini bugünkü çabayla yüzleştirir */}
       <AynaAniKarti />
+      {/* #5 Momentum göstergesi — haftalık davranış-momentum (skor varsa) */}
+      <MomentumGostergesi skor={momentumSkor} onceki={momentumOnceki} />
       {/* #10 Günün Cümlesi — admin'in seçtiği davranışsal-dil cümlesi */}
       {gununCumlesi && (
         <div className="mt-3 rounded-xl border border-gold/25 bg-gold/[0.06] px-4 py-2.5">
