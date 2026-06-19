@@ -10,6 +10,7 @@ import {
 } from "@/lib/kampProgrami";
 import { tr } from "@/lib/i18n/tr";
 import ProgramYonetimi from "./ProgramYonetimi";
+import CumartesiProgram from "./CumartesiProgram";
 import Ipucu from "../Ipucu";
 import Katlanir from "../Katlanir";
 
@@ -90,6 +91,16 @@ export default async function AdminProgramPage() {
             </div>
           );
         })}
+      </Katlanir>
+
+      {/* Cumartesi (Gün 2) grup programı — 15 grup × oyun/David + AYNA pencereleri */}
+      <Katlanir
+        baslik="Cumartesi Grup Programı (Gün 2)"
+        aciklama="150 kişi · 15 grup · oyunlar + David seansları + AYNA görev pencereleri"
+        ikon="🎲"
+        yardim={tr.admin.yardim.program}
+      >
+        <CumartesiProgram />
       </Katlanir>
 
       {/* Sürpriz duyurular: AYNA'nın push + sahne anonsuyla açıkladığı ekler */}
