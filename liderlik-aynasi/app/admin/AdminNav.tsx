@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { tr } from "@/lib/i18n/tr";
 import KomutPaleti from "./KomutPaleti";
+import TemaDugmesi from "@/components/TemaDugmesi";
 
 const n = tr.admin.nav;
 const g = tr.admin.navGrup;
@@ -258,6 +259,8 @@ export default function AdminNav({
           </Link>
         )}
         <span className="hidden shrink-0 text-xs text-slate-400 sm:block">{ad}</span>
+        {/* Gece / Gündüz / Otomatik geçişi — admin panelinden de erişilebilir */}
+        <TemaDugmesi />
         <button
           onClick={cikis}
           disabled={cikiliyor}
