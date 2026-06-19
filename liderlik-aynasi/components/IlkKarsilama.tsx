@@ -6,6 +6,7 @@ import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import { useEsc } from "@/lib/useEsc";
 import AynaSahnesi from "@/components/AynaSahnesi";
+import { ortuAc, ortuKapat } from "@/lib/ortu";
 
 const ANAHTAR = "la_karsilama_v4";
 const t = tr.karsilama;
@@ -32,6 +33,13 @@ export default function IlkKarsilama() {
       }
     } catch {}
   }, [pathname]);
+
+  // Açıkken alt menüyü gizle (tam-ekran takeover'ı dibe taşımasın/örtmesin).
+  useEffect(() => {
+    if (!acik) return;
+    ortuAc();
+    return () => ortuKapat();
+  }, [acik]);
 
   function kapat() {
     try {

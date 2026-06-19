@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import { ortuAc, ortuKapat } from "@/lib/ortu";
 
 const DEPO = "la_marka_splash_v1";
 
@@ -29,6 +30,13 @@ export default function AcilisSplash() {
     const z = setTimeout(kapat, 2600);
     return () => clearTimeout(z);
   }, []);
+
+  // Açıkken alt menüyü gizle (tam-ekran takeover'ı dibe taşımasın/örtmesin).
+  useEffect(() => {
+    if (!goster) return;
+    ortuAc();
+    return () => ortuKapat();
+  }, [goster]);
 
   function kapat() {
     try {
