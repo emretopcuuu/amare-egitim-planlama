@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
 import EslestirmeFormu from "./EslestirmeFormu";
+import AtamaDuzenle from "./AtamaDuzenle";
 import Ipucu from "../Ipucu";
 
 export const metadata = { title: "Eşleştirme — Liderlik Aynası" };
@@ -11,7 +12,7 @@ export const metadata = { title: "Eşleştirme — Liderlik Aynası" };
 type AtamaSatir = {
   type: string;
   observer: { id: string; full_name: string; team: string | null };
-  target: { full_name: string; team: string | null };
+  target: { id: string; full_name: string; team: string | null };
 };
 
 export default async function EslestirmePage() {
@@ -20,40 +21,39 @@ export default async function EslestirmePage() {
 
   // Sayfa sayfa çek: tek istekte ~1000 satır sınırı atamaları (1600+) kırpıyordu.
   const db = supabaseAdmin();
-  const atamalar = await tumKayitlar<AtamaSatir>((bas, son) =>
+  const [atamalar, { data: kisilerHam }] = await Promise.all([
+    tumKayitlar<AtamaSatir>((bas, son) =>
+      db
+        .from("assignments")
+        .select(
+          "id, type, observer:participants!assignments_observer_id_fkey(id, full_name, team), target:participants!assignments_target_id_fkey(id, full_name, team)"
+        )
+        .order("observer_id")
+        .range(bas, son)
+    ),
     db
-      .from("assignments")
-      .select(
-        "id, type, observer:participants!assignments_observer_id_fkey(id, full_name, team), target:participants!assignments_target_id_fkey(full_name, team)"
-      )
-      .order("observer_id")
-      .range(bas, son)
-  );
+      .from("participants")
+      .select("id, full_name, team")
+      .eq("role", "participant")
+      .order("full_name"),
+  ]);
 
   const t = tr.admin.eslestirme;
 
-  // Gözlemciye göre grupla; hedefleri grup-içi (aynı takım) / grup-dışı olarak ayır.
-  const gruplar = new Map<
-    string,
-    { ad: string; ici: string[]; disi: string[] }
-  >();
-  for (const a of atamalar) {
-    const grup = gruplar.get(a.observer.id) ?? {
-      ad: a.observer.full_name,
-      ici: [],
-      disi: [],
-    };
-    const hedefAd = a.target.team
-      ? `${a.target.full_name} (${a.target.team})`
-      : a.target.full_name;
-    const ayniTakim =
-      !!a.observer.team && !!a.target.team && a.observer.team === a.target.team;
-    (ayniTakim ? grup.ici : grup.disi).push(hedefAd);
-    gruplar.set(a.observer.id, grup);
-  }
-  const satirlar = [...gruplar.values()].sort((a, b) =>
-    a.ad.localeCompare(b.ad, "tr-TR")
-  );
+  // Elle düzenleme için düz atama + katılımcı listesi.
+  const duzAtamalar = atamalar.map((a) => ({
+    observerId: a.observer.id,
+    observerAd: a.observer.full_name,
+    observerTakim: a.observer.team,
+    targetId: a.target.id,
+    targetAd: a.target.full_name,
+    targetTakim: a.target.team,
+  }));
+  const kisiler = (kisilerHam ?? []).map((k) => ({
+    id: k.id,
+    ad: k.full_name,
+    takim: k.team,
+  }));
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
@@ -66,34 +66,7 @@ export default async function EslestirmePage() {
 
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="text-lg font-semibold text-gold-light">{t.mevcutBaslik}</h2>
-        {satirlar.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-400">{t.atamaYok}</p>
-        ) : (
-          <div className="mt-4 overflow-x-auto">
-            <table className="cizgili w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-royal/30 text-xs uppercase tracking-wide text-slate-400">
-                  <th className="py-2 pr-3">{tr.admin.ilerleme.kisi}</th>
-                  <th className="py-2 pr-3">🤝 {t.grupIci}</th>
-                  <th className="py-2">🌍 {t.grupDisi}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-royal/20">
-                {satirlar.map((s) => (
-                  <tr key={s.ad} className="align-top">
-                    <td className="py-2 pr-3 font-medium text-slate-100">{s.ad}</td>
-                    <td className="py-2 pr-3 text-slate-300">
-                      {s.ici.join(", ") || "—"}
-                    </td>
-                    <td className="py-2 text-slate-300">
-                      {s.disi.join(", ") || "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        <AtamaDuzenle kisiler={kisiler} atamalar={duzAtamalar} />
       </section>
     </main>
   );
