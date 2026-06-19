@@ -46,6 +46,9 @@ export default function KatilimciYonetim({
   const [duzenleMesaj, setDuzenleMesaj] = useState<string | null>(null);
   const [duzenleHataMsg, setDuzenleHataMsg] = useState<string | null>(null);
   const [silOnayMod, setSilOnayMod] = useState(false);
+  const [sesSifirlaOnayMod, setSesSifirlaOnayMod] = useState(false);
+  const [sesSifirlaYukleniyor, setSesSifirlaYukleniyor] = useState(false);
+  const [sesSifirlaMsg, setSesSifirlaMsg] = useState<string | null>(null);
 
   function duzenleAc(k: Kisi) {
     setDuzenle(k);
@@ -53,6 +56,8 @@ export default function KatilimciYonetim({
     setDuzenleMesaj(null);
     setDuzenleHataMsg(null);
     setSilOnayMod(false);
+    setSesSifirlaOnayMod(false);
+    setSesSifirlaMsg(null);
   }
   function duzenleKapat() {
     setDuzenle(null);
@@ -113,6 +118,28 @@ export default function KatilimciYonetim({
       setDuzenleHataMsg(t.duzenleHata);
     } finally {
       setDuzenleYukleniyor(false);
+    }
+  }
+
+  async function sesSifirla() {
+    if (!duzenle || sesSifirlaYukleniyor) return;
+    setSesSifirlaYukleniyor(true);
+    setSesSifirlaMsg(null);
+    try {
+      const res = await fetch(`/api/admin/katilimcilar/${duzenle.id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ sesSifirla: true }),
+      });
+      const v = await res.json().catch(() => null);
+      if (!res.ok) return setSesSifirlaMsg(v?.hata ?? t.sesSifirlaHata);
+      setSesSifirlaMsg(t.sesSifirlaBasarili);
+      setSesSifirlaOnayMod(false);
+      router.refresh();
+    } catch {
+      setSesSifirlaMsg(t.sesSifirlaHata);
+    } finally {
+      setSesSifirlaYukleniyor(false);
     }
   }
 
@@ -672,6 +699,39 @@ export default function KatilimciYonetim({
                     {duzenleYukleniyor ? t.duzenleKaydediliyor : t.duzenleKaydet}
                   </button>
                 </div>
+              </div>
+
+              {/* Ses profili sıfırlama */}
+              <div className="mt-4 border-t border-royal/20 pt-3">
+                {sesSifirlaMsg && (
+                  <p className="mb-2 text-xs font-medium text-emerald-400">{sesSifirlaMsg}</p>
+                )}
+                {sesSifirlaOnayMod ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="flex-1 text-xs text-amber-300">{t.sesSifirlaAciklama}</p>
+                    <button
+                      onClick={sesSifirla}
+                      disabled={sesSifirlaYukleniyor}
+                      className="shrink-0 rounded-lg border border-amber-400/40 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-300 transition-colors hover:bg-amber-500/25 disabled:opacity-40"
+                    >
+                      {t.sesSifirlaOnay}
+                    </button>
+                    <button
+                      onClick={() => setSesSifirlaOnayMod(false)}
+                      className="text-xs text-slate-500 hover:text-slate-300"
+                    >
+                      {t.duzenleVazgec}
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setSesSifirlaOnayMod(true)}
+                    disabled={sesSifirlaYukleniyor}
+                    className="text-xs font-medium text-slate-500 transition-colors hover:text-amber-300 disabled:opacity-40"
+                  >
+                    {t.sesSifirla}
+                  </button>
+                )}
               </div>
             </div>
           </div>

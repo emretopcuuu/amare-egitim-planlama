@@ -77,6 +77,13 @@ export async function PATCH(
     }
   }
 
+  // Ses profili sıfırlama — voice_profiles satırını sil
+  if (body?.sesSifirla === true) {
+    const { error } = await db.from("voice_profiles").delete().eq("participant_id", id);
+    if (error) return Response.json({ hata: t.sesSifirlaHata }, { status: 500 });
+    return Response.json({ sesSifirlandı: 1 });
+  }
+
   if (Object.keys(guncelleme).length === 0) {
     return Response.json({ guncellendi: 0 });
   }
