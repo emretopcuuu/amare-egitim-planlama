@@ -2119,6 +2119,11 @@ export const tr = {
       duzenleKodHata: "Bu kod zaten kullanımda veya geçersiz (6 rakam olmalı).",
       duzenleSil: "🗑 Bu kişiyi sil",
       duzenleSilOnay: "Eminim, sil",
+      sesSifirla: "🔁 Ses Profilini Sıfırla",
+      sesSifirlaAciklama: "Ses profili silinir; kişi bir sonraki girişte ritüeli yeniden yapar.",
+      sesSifirlaOnay: "Evet, sıfırla",
+      sesSifirlaBasarili: "Ses profili sıfırlandı.",
+      sesSifirlaHata: "Sıfırlama başarısız. Tekrar dene.",
     },
     eslestirme: {
       baslik: "Eşleştirme",
@@ -2893,6 +2898,11 @@ export const tr = {
     baglantiTekrar: "Şimdi tekrar dene",
     mikrofonYok: "Mikrofona erişilemedi. Tarayıcı izinlerini kontrol et.",
     kapat: "Kapat",
+    // Ses kalite kontrol — inceleme aşamasında gösterilir
+    kaliteIyi: "Ses net görünüyor — gönderebilirsin.",
+    kaliteKisa: "Kayıt çok kısa. Yemin bölümünü de sesli oku, sonra devam et.",
+    kaliteSessiz: "Ses tespit edilemedi. Mikrofon kapalı ya da çok uzakta olabilir.",
+    kaliteUyari: "Yeniden kayıt önerilir",
   },
   ortak: {
     oturumGerekli: "Oturum gerekli.",

@@ -83,6 +83,8 @@ function MuhurRozet() {
   );
 }
 
+type SesKalitesi = "iyi" | "kisa" | "sessiz" | null;
+
 export default function AynaRituel() {
   const [asama, setAsama] = useState<Asama>("giris");
   const [sayac, setSayac] = useState(0);
@@ -93,6 +95,8 @@ export default function AynaRituel() {
   const [fotoOnizleme, setFotoOnizleme] = useState<string | null>(null);
   const [kayitOnizleme, setKayitOnizleme] = useState<string | null>(null);
   const [kayitCaliyor, setKayitCaliyor] = useState(false);
+  const [sesKalitesi, setSesKalitesi] = useState<SesKalitesi>(null);
+  const [kayitSuresi, setKayitSuresi] = useState(0);
 
   const kayitci = useRef<MediaRecorder | null>(null);
   const fotoDosya = useRef<File | null>(null);
@@ -105,11 +109,18 @@ export default function AynaRituel() {
   const zamanlayici = useRef<ReturnType<typeof setInterval> | null>(null);
   const kalan = useRef(0);
   const bitiriliyor = useRef(false);
+  // Ses kalite ölçümü
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const samplerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const baslangicZamaniRef = useRef<number>(0);
+  const sesSeviyeleriRef = useRef<number[]>([]);
 
   useEffect(() => {
     // unmount temizliği: mikrofonu ve sayaçları serbest bırak
     return () => {
       if (zamanlayici.current) clearInterval(zamanlayici.current);
+      if (samplerRef.current) clearInterval(samplerRef.current);
+      void audioCtxRef.current?.close().catch(() => {});
       taniyici.current?.stop();
       onizlemeSes.current?.pause();
       if (kayitci.current?.state === "recording") kayitci.current.stop();
@@ -143,6 +154,8 @@ export default function AynaRituel() {
 
   async function sesBasla() {
     setHataMesaji(null);
+    setSesKalitesi(null);
+    setKayitSuresi(0);
     if (typeof MediaRecorder === "undefined") {
       setHataMesaji(t.mikrofonYok);
       setAsama("hata");
@@ -162,6 +175,31 @@ export default function AynaRituel() {
         if (e.data.size > 0) parcalar.current.push(e.data);
       };
       kayitci.current = kaydedici;
+
+      // Ses seviyesi ölçümü — kalite kontrolü için
+      try {
+        const AudioCtx =
+          window.AudioContext ??
+          (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+        if (AudioCtx) {
+          const ctx = new AudioCtx();
+          const analyser = ctx.createAnalyser();
+          analyser.fftSize = 256;
+          ctx.createMediaStreamSource(ses).connect(analyser);
+          const data = new Uint8Array(analyser.frequencyBinCount);
+          audioCtxRef.current = ctx;
+          sesSeviyeleriRef.current = [];
+          samplerRef.current = setInterval(() => {
+            analyser.getByteFrequencyData(data);
+            const avg = data.reduce((a, b) => a + b, 0) / data.length;
+            sesSeviyeleriRef.current.push(avg);
+          }, 300);
+        }
+      } catch {
+        /* AudioContext desteklenmiyor — kalite bilinmiyor */
+      }
+
+      baslangicZamaniRef.current = Date.now();
       kaydedici.start(1000);
       bitiriliyor.current = false;
       setAsama("kayit");
@@ -212,6 +250,24 @@ export default function AynaRituel() {
     }
     kaydedici.onstop = () => {
       akis.current?.getTracks().forEach((iz) => iz.stop());
+
+      // Kalite ölçümünü durdur ve değerlendir
+      if (samplerRef.current) {
+        clearInterval(samplerRef.current);
+        samplerRef.current = null;
+      }
+      void audioCtxRef.current?.close().catch(() => {});
+      audioCtxRef.current = null;
+      const sureSaniye = (Date.now() - baslangicZamaniRef.current) / 1000;
+      setKayitSuresi(Math.round(sureSaniye));
+      const seviyeler = sesSeviyeleriRef.current;
+      const maxSeviye = seviyeler.length > 0 ? Math.max(...seviyeler) : null;
+      let kalite: SesKalitesi;
+      if (sureSaniye < 10) kalite = "kisa";
+      else if (maxSeviye !== null && maxSeviye < 6) kalite = "sessiz";
+      else kalite = "iyi";
+      setSesKalitesi(kalite);
+
       const tip = kaydedici.mimeType.includes("mp4") ? "audio/mp4" : "audio/webm";
       const blob = new Blob(parcalar.current, { type: tip });
       kayitVerisi.current = { blob, tip };
@@ -287,6 +343,9 @@ export default function AynaRituel() {
     });
     kayitVerisi.current = null;
     setBeklenti("");
+    setSesKalitesi(null);
+    setKayitSuresi(0);
+    sesSeviyeleriRef.current = [];
     void sesBasla();
   }
 
@@ -482,16 +541,57 @@ export default function AynaRituel() {
             <p className="mt-5 text-lg leading-relaxed text-slate-200">
               {t.inceleAciklama}
             </p>
-            <div className="mt-8">
+
+            {/* Ses kalite rozeti */}
+            {sesKalitesi && (
+              <div
+                className={`mt-5 rounded-xl px-4 py-3 text-sm leading-snug ${
+                  sesKalitesi === "iyi"
+                    ? "border border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+                    : "border border-amber-400/40 bg-amber-500/10 text-amber-300"
+                }`}
+              >
+                {sesKalitesi === "iyi" && (
+                  <span>✓ {t.kaliteIyi}</span>
+                )}
+                {sesKalitesi === "kisa" && (
+                  <>
+                    <p className="font-semibold">⚠ {t.kaliteUyari}</p>
+                    <p className="mt-1">{t.kaliteKisa} ({kayitSuresi}s)</p>
+                  </>
+                )}
+                {sesKalitesi === "sessiz" && (
+                  <>
+                    <p className="font-semibold">⚠ {t.kaliteUyari}</p>
+                    <p className="mt-1">{t.kaliteSessiz}</p>
+                  </>
+                )}
+              </div>
+            )}
+
+            <div className="mt-6">
               <DevButon onClick={kaydiDinle} ikincil>
                 {kayitCaliyor ? t.inceleDurdur : t.inceleDinle}
               </DevButon>
             </div>
-            <div className="mt-8 space-y-4">
-              <DevButon onClick={kaydiGonder}>{t.inceleGonder} →</DevButon>
-              <DevButon onClick={tekrarKaydet} ikincil>
-                {t.inceleTekrar}
-              </DevButon>
+
+            {/* Kalite kötüyse tekrar kaydet birincil, gönder ikincil */}
+            <div className="mt-6 space-y-4">
+              {sesKalitesi !== "iyi" && sesKalitesi !== null ? (
+                <>
+                  <DevButon onClick={tekrarKaydet}>{t.inceleTekrar}</DevButon>
+                  <DevButon onClick={kaydiGonder} ikincil>
+                    {t.inceleGonder} →
+                  </DevButon>
+                </>
+              ) : (
+                <>
+                  <DevButon onClick={kaydiGonder}>{t.inceleGonder} →</DevButon>
+                  <DevButon onClick={tekrarKaydet} ikincil>
+                    {t.inceleTekrar}
+                  </DevButon>
+                </>
+              )}
             </div>
           </div>
         )}
