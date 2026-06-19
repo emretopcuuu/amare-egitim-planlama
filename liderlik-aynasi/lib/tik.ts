@@ -35,6 +35,11 @@ import {
   geceSesi,
   markaAnons,
 } from "@/lib/yansima";
+import {
+  grupNoCozumle,
+  cumartesiGrupEtkinligi,
+  cumartesiGrupBitenEtkinlik,
+} from "@/lib/cumartesiProgrami";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { karakterUretimBaslat } from "@/lib/karakter";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
@@ -224,7 +229,27 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     .slice(0, 3);
 
   for (const k of uygunlar) {
-    const gorev = await gorevUret(db, k, gun, saat, mod, etkinlik, bitenEtkinlik);
+    // Slice 3 — CUMARTESİ ETKİNLİK FARKINDALIĞI: Gün 2'de grup üyesine, grubunun
+    // O ANKİ etkinliğine (David seansı, bowling, hazine avı, yemek...) özel görev
+    // ver. AYNA etkinlik sırasında susmaz; göreve etkinliği katar (David'le foto/
+    // soru, oyunda gözlem). Grup yoksa/çözülemezse genel kamp etkinliğine düşer.
+    let kEtkinlik = etkinlik;
+    let kBiten = bitenEtkinlik;
+    let kIpucu: string | null = null;
+    if (mod === "kamp" && gun === 2) {
+      const grupNo = grupNoCozumle(k.team);
+      if (grupNo) {
+        const gunDk = saat * 60 + dakika;
+        const cmt = cumartesiGrupEtkinligi(grupNo, gunDk);
+        if (cmt) {
+          kEtkinlik = cmt.madde;
+          kIpucu = cmt.ipucu || null;
+        }
+        const cmtBiten = cumartesiGrupBitenEtkinlik(grupNo, gunDk);
+        if (cmtBiten) kBiten = cmtBiten;
+      }
+    }
+    const gorev = await gorevUret(db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu);
     if (!gorev) continue;
     const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
     const { data: yeniGorev, error } = await db

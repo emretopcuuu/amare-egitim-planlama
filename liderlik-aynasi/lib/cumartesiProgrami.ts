@@ -7,6 +7,8 @@
 // CUMARTESI_PROGRAMI + DAVID_SEANSLARI bloklarını yeniden üret, buraya yapıştır).
 // 'server-only' DEĞİL ve DB'siz — istemci bileşenleri de aynı kuralları kullanır.
 
+import type { EtkinlikTuru, ProgramMaddesi } from "./kampProgrami";
+
 export const CUMARTESI_GRUP_SAYISI = 15;
 export const CUMARTESI_TARIH = "2026-07-18"; // Gün 2 (KAMP_GUNLERI[1] ile aynı)
 
@@ -248,4 +250,83 @@ export function grupBostaMi(grup: number, gunDk: number): boolean {
 
 export function grupAdi(grup: number): string {
   return `Grup ${grup}`;
+}
+
+// ---- AYNA ETKİNLİK-FARKINDALIĞI (Slice 3) ----
+// AYNA Cumartesi günü grup SESSİZ KALMAZ; tam tersine grubun O ANKİ etkinliğine
+// göre o grup+kişiye ÖZEL görev üretir. Etkinliğin içine oturan, akışı bozmayan
+// ama liderliği çalıştıran küçük adımlar (David'le foto/soru, oyunda gözlem...).
+
+/** CmtTur → genel EtkinlikTuru (görev türü seçimini yönlendirir, sessizlik YOK). */
+const CMT_ETKINLIK_TURU: Record<CmtTur, EtkinlikTuru> = {
+  david_hazirlik: "ara",
+  david_toplanti: "sahne",
+  bowling: "oyun",
+  big_bubble: "oyun",
+  atv: "oyun",
+  hazine_avi: "oyun",
+  yemek: "yemek",
+  diger: "serbest",
+};
+
+/** Etkinliğe özel görev yönergesi — AYNA bunu görevin İÇİNE diker. */
+export const TUR_GOREV_IPUCU: Record<CmtTur, string> = {
+  david_hazirlik:
+    "Grup birazdan David Chung'un odasına geçecek. Kısa, sessiz bir hazırlık/niyet görevi ver: David'e soracağı tek soruyu ya da oturumdan almak istediği tek şeyi şimdi netleştirsin.",
+  david_toplanti:
+    "Grup ŞU AN David Chung ile aynı odada. Görevi bu ana dik: David'le birlikte bir an yakalasın — ona içten, kişisel bir soru sormak; oturumdan aklında kalan tek cümleyi yazmak; ya da uygun bir anda birlikte bir fotoğraf karesi. Oturumu bölmeyen, saygılı ama cesaret isteyen küçük bir adım olsun.",
+  bowling:
+    "Grup bowling oynuyor. Görevi oyunun içine dik: takımdan birinin nasıl liderlik ettiğini / nasıl destek olduğunu gözlemlesin ya da kendisi ortamın enerjisini yükselten kişi olsun.",
+  big_bubble:
+    "Grup Big Bubble'da (yüksek enerji, fiziksel oyun). Cesaret/pozitif enerji görevi: oyunun içinde küçük bir liderlik ya da takım ruhu anı yaratsın ve gözlemlesin.",
+  atv:
+    "Grup ATV parkurunda. Cesaret/sorumluluk görevi: parkurda öne çıkanı ya da geride kalanı bekleyeni gözlemlesin; kendi cesaret anını fark edip not etsin.",
+  hazine_avi:
+    "Grup Hazine Avı'nda (takım problem çözme). Takım ruhu/iletişim görevi: kimin yön verdiğini, kimin sessiz kaldığını gözlemlesin; kendisi bir köprü kursun.",
+  yemek:
+    "Grup öğle yemeğinde. Sıcak, sohbet temelli görev: henüz tanışmadığı biriyle masada gerçek bir bağ kursun ya da birine içten bir takdir iletsin.",
+  diger: "",
+};
+
+function cmtMadde(blok: CmtBlok): ProgramMaddesi {
+  return {
+    gun: 2,
+    baslangic: blok.baslangic,
+    bitis: blok.bitis,
+    baslik: blok.detay ? `${blok.baslik} (${blok.detay})` : blok.baslik,
+    tur: CMT_ETKINLIK_TURU[blok.tur],
+    aynaNotu: TUR_GOREV_IPUCU[blok.tur],
+  };
+}
+
+/** O an grubun içinde olduğu etkinlik → ProgramMaddesi + etkinliğe özel ipucu. */
+export function cumartesiGrupEtkinligi(
+  grup: number,
+  gunDk: number
+): { madde: ProgramMaddesi; ipucu: string } | null {
+  const blok = grupAktifBlok(grup, gunDk);
+  if (!blok) return null;
+  return { madde: cmtMadde(blok), ipucu: TUR_GOREV_IPUCU[blok.tur] };
+}
+
+/** Az önce biten grup etkinliği (ana-bağlı tetik) — nötr bloklar hariç. */
+export function cumartesiGrupBitenEtkinlik(
+  grup: number,
+  gunDk: number,
+  pencereDk = 12
+): ProgramMaddesi | null {
+  const blok = grupBitenBlok(grup, gunDk, pencereDk);
+  if (!blok) return null;
+  // Yemek/hazırlık nötrdür — duygusal sıcaklık taşımaz, ana-bağlı tetiklemez.
+  if (blok.tur === "yemek" || blok.tur === "david_hazirlik") return null;
+  return cmtMadde(blok);
+}
+
+/** "Grup N" takım adından grup numarasını çöz (1..15) — yoksa null. */
+export function grupNoCozumle(takim: string | null | undefined): number | null {
+  if (!takim) return null;
+  const m = takim.match(/(\d+)/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return n >= 1 && n <= CUMARTESI_GRUP_SAYISI ? n : null;
 }
