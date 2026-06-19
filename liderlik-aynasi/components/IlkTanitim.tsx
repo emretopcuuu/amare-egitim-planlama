@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 
 const t = tr.tanitim;
@@ -13,17 +13,6 @@ export default function IlkTanitim() {
   // Sunucuda ve ilk render'da gösterme (hydration uyumu); mount'ta karar ver.
   const [goster, setGoster] = useState(false);
   const [adim, setAdim] = useState(0);
-  // Video yüklenmez/oynamazsa ilk kart yine de anlamlı görünsün (simgeye düş).
-  const [videoOk, setVideoOk] = useState(true);
-  const videoRef = useRef<HTMLVideoElement>(null);
-
-  // autoplay'i garantiye al: kart açılınca açıkça play() dene (iOS bazen ister).
-  useEffect(() => {
-    if (adim !== 0 || !videoOk || !goster) return;
-    videoRef.current?.play().catch(() => {
-      /* autoplay engellendiyse poster (logo) kalır; dokununca oynar */
-    });
-  }, [adim, videoOk, goster]);
 
   useEffect(() => {
     try {
@@ -64,30 +53,14 @@ export default function IlkTanitim() {
 
       <div className="flex w-full flex-1 flex-col overflow-y-auto px-6 pb-8">
         <div className="mx-auto my-auto w-full max-w-md text-center">
-          {adim === 0 && videoOk ? (
-            // İlk kart ONE TEAM marka videosuyla açılır (sessiz, döngüsüz).
-            // Sabit en-boy + object-cover: yavaş/uzun videoda bile düzeni bozmaz.
-            <video
-              ref={videoRef}
-              autoPlay
-              muted
-              playsInline
-              preload="auto"
-              poster="/marka-poster.jpg"
-              onError={() => setVideoOk(false)}
-              onClick={() => {
-                // Dokununca sesi aç (autoplay sessiz başlar — tarayıcı kuralı).
-                const v = videoRef.current;
-                if (v) {
-                  v.muted = false;
-                  v.play().catch(() => {});
-                }
-              }}
-              style={{ aspectRatio: "16 / 9" }}
-              className="mx-auto w-full max-w-xs cursor-pointer rounded-2xl object-cover"
-            >
-              <source src="/marka.mp4" type="video/mp4" />
-            </video>
+          {adim === 0 ? (
+            // İlk kart: ONE TEAM amblemi — şeffaf zeminli, zemine karışır
+            // (eski siyah-kutu marka videosu yerine; ton uyuşmazlığı yok).
+            <img
+              src="/oneteam-logo.png"
+              alt="ONE TEAM"
+              className="mx-auto w-52 max-w-[68%] drop-shadow-[0_10px_34px_rgba(212,175,55,0.3)]"
+            />
           ) : (
             <p className="text-7xl">{kart.simge}</p>
           )}
