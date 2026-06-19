@@ -66,7 +66,7 @@ export default function AltNav() {
   }
 
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-midnight/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md print:hidden">
+    <nav className="alt-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-midnight/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md print:hidden">
       {/* #2 Kıvılcım ilerleme şeridi — toplam + unvan + sonraki rozete kalan */}
       {kiv && (
         <Link href="/ben" className="block border-b border-white/5 px-4 pb-1 pt-1.5">

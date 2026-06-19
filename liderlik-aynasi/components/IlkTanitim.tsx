@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import { ortuAc, ortuKapat } from "@/lib/ortu";
 
 const t = tr.tanitim;
 const DEPO = "la_tanitim_v1";
@@ -25,6 +26,13 @@ export default function IlkTanitim() {
       // depolama kapalı: tanıtımı atla
     }
   }, []);
+
+  // Açıkken alt menüyü gizle (tam-ekran takeover'ı dibe taşımasın/örtmesin).
+  useEffect(() => {
+    if (!goster) return;
+    ortuAc();
+    return () => ortuKapat();
+  }, [goster]);
 
   function kapat() {
     try {

@@ -52,6 +52,13 @@ body.alt-nav-acik .baglanti-serit {
   bottom: 5.75rem;
 }
 
+/* Tam-ekran ilk-açılış katmanı (marka splash'ı / tanıtım / karşılama) açıkken
+   alt menü TAMAMEN gizlenir — takeover ekranını dibe taşırmasın / üstüne sızmasın
+   (iOS'ta z-index örtüşmesi garanti değil; bu, düzeni kesin korur). */
+body.ortu-acik .alt-nav {
+  display: none !important;
+}
+
 /* "✓ Kaydedildi" güvencesi yumuşakça belirir (ani sıçrama olmasın). */
 @keyframes kayit-belir-an {
   from {
