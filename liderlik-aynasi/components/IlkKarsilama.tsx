@@ -48,7 +48,7 @@ export default function IlkKarsilama() {
       role="dialog"
       aria-modal="true"
       aria-label={t.adimlar[0].baslik}
-      className="fixed inset-0 z-[70] overflow-hidden bg-[#04101c]"
+      className="gece-ada fixed inset-0 z-[70] overflow-hidden bg-[#04101c]"
     >
       {/* Sinematik ayna — tüm ekranı kaplayan canlı zemin */}
       <AynaSahnesi />
