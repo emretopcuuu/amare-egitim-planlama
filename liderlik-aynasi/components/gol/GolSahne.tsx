@@ -445,15 +445,25 @@ function AtesBocekleri({ uZaman, uGunes }: { uZaman: ZamanU; uGunes: ZamanU }) {
 function GolDunyasi({
   hareketli,
   siluetUrl,
+  temaMod = "otomatik",
+  etkinTema = "gece",
 }: {
   hareketli: boolean;
   siluetUrl: string | null;
+  temaMod?: "gece" | "gunduz" | "otomatik";
+  etkinTema?: "gece" | "gunduz";
 }) {
   const { camera, invalidate } = useThree();
   const sira = useRef(0);
   const fare = useRef({ x: 0, y: 0 });
   // test anahtarı: ?gece=1 sahneyi geceye, ?gunduz=1 gündüze zorlar
   const zorla = useRef<0 | 1 | -1>(0);
+  // Tema modu: manuel gece/gündüzde göl göğü o yöne zorlanır; otomatikte
+  // gerçek saati izler. useFrame en güncel değeri ref'ten okur.
+  const temaRef = useRef({ mod: temaMod, etkin: etkinTema });
+  useEffect(() => {
+    temaRef.current = { mod: temaMod, etkin: etkinTema };
+  }, [temaMod, etkinTema]);
 
   const uZaman = useMemo<ZamanU>(() => ({ value: 10 }), []);
   const uGunes = useMemo<ZamanU>(() => ({ value: -1 }), []);
@@ -536,7 +546,11 @@ function GolDunyasi({
     uGunes.value =
       zorla.current !== 0
         ? zorla.current
-        : Math.sin((Math.PI * 2 * (saat - 6)) / 24);
+        : temaRef.current.mod !== "otomatik"
+          ? temaRef.current.etkin === "gunduz"
+            ? 0.9
+            : -0.9
+          : Math.sin((Math.PI * 2 * (saat - 6)) / 24);
     // kendiliğinden süzülen + parmağa/fareye hafifçe eğilen kamera
     // eslint-disable-next-line react-hooks/immutability
     camera.position.x = Math.sin(t * 0.1) * 0.45 + fare.current.x * 0.45;
@@ -557,9 +571,13 @@ function GolDunyasi({
 export default function GolSahne({
   hareketli = true,
   siluetUrl = null,
+  temaMod = "otomatik",
+  etkinTema = "gece",
 }: {
   hareketli?: boolean;
   siluetUrl?: string | null;
+  temaMod?: "gece" | "gunduz" | "otomatik";
+  etkinTema?: "gece" | "gunduz";
 }) {
   return (
     <Canvas
@@ -569,7 +587,12 @@ export default function GolSahne({
       style={{ pointerEvents: "none" }}
       frameloop={hareketli ? "always" : "demand"}
     >
-      <GolDunyasi hareketli={hareketli} siluetUrl={siluetUrl} />
+      <GolDunyasi
+        hareketli={hareketli}
+        siluetUrl={siluetUrl}
+        temaMod={temaMod}
+        etkinTema={etkinTema}
+      />
     </Canvas>
   );
 }

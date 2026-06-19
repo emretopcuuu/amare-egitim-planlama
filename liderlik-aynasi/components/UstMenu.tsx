@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import YaziBoyu from "@/components/YaziBoyu";
-import GunesModu from "@/components/GunesModu";
+import TemaSecimi from "@/components/TemaSecimi";
 
 const t = tr.anaSayfa;
 
@@ -122,7 +122,7 @@ export default function UstMenu({
 
             <div className="mt-4 space-y-3">
               <YaziBoyu />
-              <GunesModu />
+              <TemaSecimi />
             </div>
             <button
               onClick={cikis}
