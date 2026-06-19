@@ -131,10 +131,19 @@ export default async function AnaSayfa({
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
   const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }] = await Promise.all([
     db.from("participants").select("camp_unlocked_at, team").eq("id", session.sub).maybeSingle(),
-    db.from("settings").select("key, value").in("key", ["pusula_acik", "on_farkindalik_acik"]),
+    db
+      .from("settings")
+      .select("key, value")
+      .in("key", ["pusula_acik", "on_farkindalik_acik", "oyun_secimi_acik"]),
     db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
   ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
+  // OYUN SEÇİMİ KAPISI: seçim açıkken grubu olmayan kişi önce oyununu seçer
+  // (Bowling herkes; diğer 3'ten 2) → uygun gruba atanır. Grup = takım mantığı
+  // artık bu seçimle kurulur. En baştaki adım: pusula/kart akışından önce.
+  if (ayar.get("oyun_secimi_acik") === "true" && !kisi?.team) {
+    redirect("/oyun-secimi");
+  }
   if (ayar.get("pusula_acik") === "true" && !kisi?.camp_unlocked_at) {
     if (ayar.get("on_farkindalik_acik") === "true" && !ofDurum?.tamamlandi_at) {
       redirect("/on-farkindalik");
