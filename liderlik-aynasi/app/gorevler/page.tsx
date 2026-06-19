@@ -44,7 +44,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -315,6 +315,13 @@ export default async function GorevlerPage() {
             <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
               {g.body}
             </p>
+            {/* #8 "Bu görev neden sana özel?" — AYNA'nın kişiye özel gerekçesi */}
+            {g.neden && (
+              <p className="mt-3 rounded-xl bg-royal/15 px-3 py-2 text-sm leading-relaxed text-slate-300 ring-1 ring-royal/20">
+                <span className="font-semibold text-gold-light">✨ Sana özel: </span>
+                {g.neden}
+              </p>
+            )}
             {sesUrller.has(g.id) ? (
               <SesCal
                 url={sesUrller.get(g.id)!}
