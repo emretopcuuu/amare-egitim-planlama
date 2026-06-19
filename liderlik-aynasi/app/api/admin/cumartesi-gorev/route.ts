@@ -77,6 +77,7 @@ export async function POST(req: NextRequest) {
           title: gorev.title,
           body: gorev.body,
           difficulty: gorev.difficulty,
+          neden: gorev.neden,
           due_at: dueAt.toISOString(),
         })
         .select("id")

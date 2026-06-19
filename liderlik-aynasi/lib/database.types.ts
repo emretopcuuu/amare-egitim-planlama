@@ -600,6 +600,7 @@ export type Database = {
           issued_at: string
           kind: string
           lightened_at: string | null
+          neden: string | null
           participant_id: string
           reflected_at: string | null
           reflection_reply: string | null
@@ -625,6 +626,7 @@ export type Database = {
           issued_at?: string
           kind: string
           lightened_at?: string | null
+          neden?: string | null
           participant_id: string
           reflected_at?: string | null
           reflection_reply?: string | null
@@ -650,6 +652,7 @@ export type Database = {
           issued_at?: string
           kind?: string
           lightened_at?: string | null
+          neden?: string | null
           participant_id?: string
           reflected_at?: string | null
           reflection_reply?: string | null

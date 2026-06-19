@@ -69,8 +69,13 @@ const GOREV_SEMASI = {
       description:
         "YALNIZ simulasyon türünde: itirazcının ağzından, tırnaksız ham konuşma cümleleri (sese çevrilecek). Diğer türlerde boş string.",
     },
+    neden: {
+      type: "string" as const,
+      description:
+        "Bu görevin neden ÖZELLİKLE BU kişiye verildiğine dair TEK kısa cümle (en fazla 16 kelime), adayın göreceği sıcak bir dille. Örn: 'Son günlerde geri çekildin; bu küçük adım seni yeniden sahaya çağırıyor.' Ham veri/puan/teknik terim YOK; kör noktayı yüzüne vurma. Yoksa boş string.",
+    },
   },
-  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz"],
+  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden"],
   additionalProperties: false,
 };
 
@@ -130,6 +135,8 @@ export type UretilenGorev = {
   difficulty: Zorluk;
   /** simulasyon: itirazcının söylediği cümle(ler) — sese çevrilir */
   itiraz: string | null;
+  /** #8: "bu görev neden SANA özel" — kısa, sıcak; ham veri ifşa etmez */
+  neden: string | null;
 };
 
 
@@ -367,6 +374,7 @@ export async function gorevUret(
       ozellik_id: number;
       sure_saat: number;
       itiraz?: string;
+      neden?: string;
     }>(yanit);
     if (!veri?.baslik || !veri.govde) return null;
 
@@ -381,6 +389,10 @@ export async function gorevUret(
       itiraz:
         tur === "simulasyon" && veri.itiraz && veri.itiraz.trim().length > 3
           ? veri.itiraz.trim().slice(0, 400)
+          : null,
+      neden:
+        veri.neden && veri.neden.trim().length > 3
+          ? veri.neden.trim().slice(0, 200)
           : null,
     };
   } catch {
