@@ -13,6 +13,7 @@ import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
 import YolculukSeridi from "@/components/YolculukSeridi";
 import KampHud from "@/components/KampHud";
+import GunProgramKarti from "@/components/GunProgramKarti";
 import KonusanYansima from "@/components/KonusanYansima";
 import AynaAniKarti from "@/components/AynaAniKarti";
 import SicakAdim from "@/components/SicakAdim";
@@ -25,10 +26,13 @@ const t = tr.anaSayfa;
 function Sayfa({
   ust,
   children,
+  program,
   kurulum = true,
 }: {
   ust: React.ReactNode;
   children: React.ReactNode;
+  // "Günün Programın" kartı — ana kartın HEMEN ALTINDA, saatleri net gösterir.
+  program?: React.ReactNode;
   kurulum?: boolean;
 }) {
   // Mobil öncelikli düzen kuralı: başlık üstte sabit, tek kart kalan boşlukta
@@ -39,7 +43,10 @@ function Sayfa({
       <IlkTanitim />
       <div className="mx-auto w-full max-w-md shrink-0 px-5 pt-5">{ust}</div>
       <div className="mx-auto my-auto w-full max-w-md px-5 py-5">
-        <div className="sahne-giris space-y-5">{children}</div>
+        <div className="sahne-giris space-y-5">
+          {children}
+          {program}
+        </div>
       </div>
       {kurulum && (
         <div className="mx-auto w-full max-w-md shrink-0 px-5 pb-5">
@@ -123,7 +130,7 @@ export default async function AnaSayfa({
   // (ayna katmanları — bayrak açıksa ve bitmediyse), sonra PUSULA (derin neden +
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
   const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }] = await Promise.all([
-    db.from("participants").select("camp_unlocked_at").eq("id", session.sub).maybeSingle(),
+    db.from("participants").select("camp_unlocked_at, team").eq("id", session.sub).maybeSingle(),
     db.from("settings").select("key, value").in("key", ["pusula_acik", "on_farkindalik_acik"]),
     db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
   ]);
@@ -150,6 +157,7 @@ export default async function AnaSayfa({
     { data: boslukAyar },
     { data: pusulaKisi },
     { data: boslukKisi },
+    { data: siradakiGorevSatir },
   ] = await Promise.all([
       acikDalga(db),
       raporlarGorunurMu(db),
@@ -180,7 +188,19 @@ export default async function AnaSayfa({
       db.from("settings").select("value").eq("key", "bosluk_acik").maybeSingle(),
       db.from("pusula").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
       db.from("bosluk_ani").select("yeni_cumle").eq("participant_id", session.sub).maybeSingle(),
+      // Ana sayfada "sıradaki görev"i adıyla gösterebilmek için en yakın bekleyen görev.
+      db
+        .from("missions")
+        .select("title")
+        .eq("participant_id", session.sub)
+        .eq("status", "pending")
+        .order("due_at", { ascending: true })
+        .limit(1)
+        .maybeSingle(),
     ]);
+  const takim = kisi?.team ?? null;
+  const siradakiGorevBasligi =
+    typeof siradakiGorevSatir?.title === "string" ? siradakiGorevSatir.title : null;
   const sozAcik = sozAyar?.value === "true";
   const sozVar = !!soz;
   // FAZ 1: pusulasını kuran kişi, pencere açıkken iç engeliyle yüzleşir.
@@ -277,8 +297,9 @@ export default async function AnaSayfa({
       </header>
       {/* #5 "Sen neredesin" — kampın neresindeyiz şeridi */}
       <YolculukSeridi bugun={bugunIst} />
-      {/* UX #9 (2.tur): Kamp HUD'u — o anki blok + kalan süre + sırada ne var */}
-      <KampHud />
+      {/* UX #9 (2.tur): Kamp HUD'u — o anki blok + kalan süre + sırada ne var.
+          Cumartesi'de grup üyesine grubunun gerçek bloğu gösterilir. */}
+      <KampHud takim={takim} />
       {/* Topluluk nabzı — yalnız değilsin hissi */}
       <ToplulukNabzi />
       {/* #3 Ayna Anı — kamp öncesi kör nokta cümlesini bugünkü çabayla yüzleştirir */}
@@ -386,7 +407,7 @@ export default async function AnaSayfa({
   // 5) DEĞERLENDİRME — dalga açık ve kendini puanladın: başkalarını puanla
   if (dalga) {
     return (
-      <Sayfa ust={ust}>
+      <Sayfa ust={ust} program={<GunProgramKarti takim={takim} />}>
         <BuyukKart
           baslik={t.dalgaDevamBaslik(dalga.name)}
           metin={t.dalgaDevamMetin}
@@ -402,10 +423,10 @@ export default async function AnaSayfa({
   // 6) GÖREV — açık dalga yok ama AYNA'nın görevi var
   if (gorevSayisi > 0) {
     return (
-      <Sayfa ust={ust}>
+      <Sayfa ust={ust} program={<GunProgramKarti takim={takim} />}>
         <BuyukKart
           baslik={t.gorevTekBaslik}
-          metin={t.gorevTekMetin}
+          metin={siradakiGorevBasligi ? `“${siradakiGorevBasligi}”` : t.gorevTekMetin}
           href="/gorevler"
           dugme={t.gorevTekDugme(gorevSayisi)}
           ikon="🤖"
@@ -417,7 +438,7 @@ export default async function AnaSayfa({
   // 7) BEKLEME — sıradaki an için sakin durum. Çıkmaz olmasın: yapacak iş
   // yokken bile sıcak bir sonraki adım (birine takdir bırakmak) sun.
   return (
-    <Sayfa ust={ust}>
+    <Sayfa ust={ust} program={<GunProgramKarti takim={takim} />}>
       <div className="kart-cam relative overflow-hidden rounded-3xl p-10 text-center">
         <p className="text-5xl">👁</p>
         <h2 className="prizma-serif ay-metin mt-4 text-2xl font-semibold">

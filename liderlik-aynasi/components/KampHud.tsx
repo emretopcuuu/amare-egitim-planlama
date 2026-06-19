@@ -6,14 +6,22 @@ import {
   KAMP_GUNLERI,
   kampGunu,
   gunProgrami,
-  suankiMadde,
   dakikaCevir,
   ETKINLIK_SIMGESI,
 } from "@/lib/kampProgrami";
+import {
+  grupNoCozumle,
+  grupBloklari,
+  grupAdi,
+  cmtDk,
+  ETKINLIK_SIMGE,
+} from "@/lib/cumartesiProgrami";
 
 const t = tr.hud;
 const ILK = KAMP_GUNLERI[0];
 const SON = KAMP_GUNLERI[KAMP_GUNLERI.length - 1];
+
+type Blok = { bas: number; bit: number; baslik: string; simge: string };
 
 function istanbulTarih(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
@@ -31,8 +39,9 @@ function istanbulDakika(): number {
 
 // UX #9 (2.tur): Kamp HUD'u — aday "kampın neresindeyim?" sorusunu hiç sormasın.
 // Kamp gününde: o anki blok + kalan süre + sırada ne var. Kamp öncesi: geri sayım.
-// Tamamen istemcide, saf program kurallarından hesaplanır; 20 sn'de tazelenir.
-export default function KampHud() {
+// CUMARTESİ (Gün 2): herkesin programı farklı — grup üyesine GRUBUNUN gerçek o anki
+// bloğunu gösterir (jenerik "Oyunlar 09:30-19:30" yerine). 20 sn'de tazelenir.
+export default function KampHud({ takim }: { takim?: string | null }) {
   const [an, setAn] = useState<{ tarih: string; dk: number } | null>(null);
 
   useEffect(() => {
@@ -63,29 +72,32 @@ export default function KampHud() {
     );
   }
 
-  const aktif = suankiMadde(gun, an.dk);
-  const bloklar = gunProgrami(gun);
-  const sonraki = bloklar.find((m) => dakikaCevir(m.baslangic) > an.dk) ?? null;
-  const kalanDk = aktif
-    ? dakikaCevir(aktif.bitis) - an.dk
-    : sonraki
-      ? dakikaCevir(sonraki.baslangic) - an.dk
-      : null;
+  // Gün 2 + grup üyesi → grubun gerçek Cumartesi akışı; aksi halde jenerik program.
+  const grup = gun === 2 ? grupNoCozumle(takim) : null;
+  const bloklar: Blok[] = grup
+    ? grupBloklari(grup).map((b) => ({
+        bas: cmtDk(b.baslangic),
+        bit: cmtDk(b.bitis),
+        baslik: b.baslik,
+        simge: ETKINLIK_SIMGE[b.tur],
+      }))
+    : gunProgrami(gun).map((m) => ({
+        bas: dakikaCevir(m.baslangic),
+        bit: dakikaCevir(m.bitis),
+        baslik: m.baslik,
+        simge: ETKINLIK_SIMGESI[m.tur],
+      }));
 
-  const simge = aktif ? ETKINLIK_SIMGESI[aktif.tur] : "🌿";
+  const aktif = bloklar.find((b) => an.dk >= b.bas && an.dk < b.bit) ?? null;
+  const sonraki = bloklar.find((b) => b.bas > an.dk) ?? null;
+  const kalanDk = aktif ? aktif.bit - an.dk : sonraki ? sonraki.bas - an.dk : null;
+
+  const simge = aktif ? aktif.simge : "🌿";
   const baslik = aktif ? aktif.baslik : t.serbest;
 
   // Aktif bloğun ilerleme oranı (görsel nabız)
   const oran = aktif
-    ? Math.min(
-        100,
-        Math.max(
-          0,
-          ((an.dk - dakikaCevir(aktif.baslangic)) /
-            Math.max(1, dakikaCevir(aktif.bitis) - dakikaCevir(aktif.baslangic))) *
-            100
-        )
-      )
+    ? Math.min(100, Math.max(0, ((an.dk - aktif.bas) / Math.max(1, aktif.bit - aktif.bas)) * 100))
     : null;
 
   return (
@@ -94,6 +106,11 @@ export default function KampHud() {
         <span className="shrink-0 rounded-md bg-gold/15 px-2 py-0.5 text-[0.7rem] font-bold text-gold-light">
           {t.gun(gun)}
         </span>
+        {grup && (
+          <span className="shrink-0 rounded-md bg-royal/25 px-2 py-0.5 text-[0.7rem] font-bold text-royal-light">
+            {grupAdi(grup)}
+          </span>
+        )}
         <span className="shrink-0 text-base" aria-hidden>
           {simge}
         </span>
@@ -113,9 +130,7 @@ export default function KampHud() {
         </div>
       )}
       {aktif && sonraki && (
-        <p className="mt-1.5 truncate text-[0.7rem] text-slate-400">
-          {t.sirada(sonraki.baslik)}
-        </p>
+        <p className="mt-1.5 truncate text-[0.7rem] text-slate-400">{t.sirada(sonraki.baslik)}</p>
       )}
     </Cerceve>
   );
