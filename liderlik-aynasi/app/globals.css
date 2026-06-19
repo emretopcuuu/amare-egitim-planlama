@@ -915,16 +915,3 @@ html[data-tema="gunduz"] .ay-metin {
   filter: drop-shadow(0 1px 10px rgba(31, 58, 82, 0.12));
 }
 
-/* WebGL yoksa CSS göl zemini — gündüz açık gökyüzü/su. */
-html[data-tema="gunduz"] .gol-zemin {
-  background:
-    radial-gradient(120% 80% at 50% 8%, #cfe6fb 0%, #aacdf0 38%, #bcd9f1 64%, #d7e9f7 100%);
-}
-
-/* Gece gölü perdeleri (GolArkaplan) gündüzde "açık/havadar" olur. */
-html[data-tema="gunduz"] .gol-perde-vinyet {
-  background: radial-gradient(125% 95% at 50% 22%, transparent 0%, rgba(225, 238, 250, 0.25) 70%, rgba(210, 230, 248, 0.55) 100%) !important;
-}
-html[data-tema="gunduz"] .gol-perde-alt {
-  background: linear-gradient(to bottom, rgba(231, 240, 250, 0.12), rgba(231, 240, 250, 0.2), rgba(215, 233, 248, 0.55)) !important;
-}

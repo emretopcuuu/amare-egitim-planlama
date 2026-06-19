@@ -72,28 +72,44 @@ export default function GolArkaplan() {
     setDurum({ hazir: true, hareketli: !azalt, webgl: destek });
   }, []);
 
+  const gunduz = tema.etkin === "gunduz";
+
   return (
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 print:hidden">
-      {/* Sahne katmanı: berraklığa göre netleşen filtre (perdeler net kalır) */}
-      <div
-        className="absolute inset-0"
-        style={{ filter: sahneFiltre, transition: "filter 2.5s ease-out" }}
-      >
-        {hazir && webgl ? (
-          <GolSahne
-            hareketli={hareketli}
-            siluetUrl={siluetUrl}
-            temaMod={tema.mod}
-            etkinTema={tema.etkin}
+      {gunduz ? (
+        <>
+          {/* GÜNDÜZ: tan vakti göl manzarası (üretilmiş fotoğraf). Üstte bol
+              boş gökyüzü olduğu için içerik/kartlar net okunur. */}
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: "url(/gunduz-gol.webp)" }}
           />
-        ) : (
-          <div className="gol-zemin absolute inset-0" />
-        )}
-      </div>
-      {/* Sakinleştirme perdesi: göl sahnesi geri çekilir, içerik öne çıkar.
-          Gündüz temasında bu perdeler açılır (globals.css gol-perde-*). */}
-      <div className="gol-perde-vinyet absolute inset-0 bg-[radial-gradient(125%_95%_at_50%_28%,transparent_0%,rgba(5,16,28,0.45)_62%,rgba(3,10,18,0.82)_100%)]" />
-      <div className="gol-perde-alt absolute inset-0 bg-gradient-to-b from-[#06121e]/30 via-[#06121e]/20 to-[#040e18]/80" />
+          {/* Çok hafif aydınlatma perdesi: cam kartların kenarları otursun,
+              fotoğrafı yıkamadan içerik biraz öne çıksın. */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-white/25" />
+        </>
+      ) : (
+        <>
+          {/* GECE: canlı WebGL göl sahnesi + sakinleştirici koyu perdeler. */}
+          <div
+            className="absolute inset-0"
+            style={{ filter: sahneFiltre, transition: "filter 2.5s ease-out" }}
+          >
+            {hazir && webgl ? (
+              <GolSahne
+                hareketli={hareketli}
+                siluetUrl={siluetUrl}
+                temaMod={tema.mod}
+                etkinTema={tema.etkin}
+              />
+            ) : (
+              <div className="gol-zemin absolute inset-0" />
+            )}
+          </div>
+          <div className="absolute inset-0 bg-[radial-gradient(125%_95%_at_50%_28%,transparent_0%,rgba(5,16,28,0.45)_62%,rgba(3,10,18,0.82)_100%)]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#06121e]/30 via-[#06121e]/20 to-[#040e18]/80" />
+        </>
+      )}
     </div>
   );
 }
