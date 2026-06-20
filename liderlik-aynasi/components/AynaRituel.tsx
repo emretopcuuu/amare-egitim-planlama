@@ -130,6 +130,15 @@ export default function AynaRituel() {
     };
   }, []);
 
+  // Ritüel kapanınca (kayıt gönderildi ya da "sessiz" seçildi) artık ses profili
+  // var; sunucu akışını yeniden çalıştır ki kullanıcı boş ekranda kalmadan
+  // sıradaki adıma (oyun seçimi / ana sayfa) geçsin. Hard reload bulletproof.
+  useEffect(() => {
+    if (asama === "kapandi") {
+      window.location.href = "/";
+    }
+  }, [asama]);
+
   function geriSayim(saniye: number, bitince: () => void) {
     if (zamanlayici.current) clearInterval(zamanlayici.current);
     kalan.current = saniye;
