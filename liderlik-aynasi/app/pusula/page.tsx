@@ -159,9 +159,11 @@ export default async function PusulaSayfa() {
     );
   }
 
-  // Sinematik açılış yalnız yeni başlayana (rıza yok + öncelik yok) bir kez oynar.
+  // Sinematik açılış: henüz pusula egzersizine başlamamış (öncelik girmemiş)
+  // herkese oynar. NOT: consent_at'e BAKMAYIZ — o, ses ritüelinde (pusuladan
+  // önce) işaretlendiği için pusulaya gelen herkeste dolu olur, açılışı yutardı.
   const ad = (kisi?.full_name ?? "").trim().split(/\s+/)[0] || "";
-  const acilisGoster = !kisi?.consent_at && !durum.onceliklerVar;
+  const acilisGoster = !durum.onceliklerVar;
 
   return (
     <PusulaGiris ad={ad} goster={acilisGoster}>
