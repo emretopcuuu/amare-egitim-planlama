@@ -86,7 +86,7 @@ export default function UstMenu({
               <button
                 onClick={() => setAcik(false)}
                 aria-label={t.menuKapat}
-                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-lg text-slate-300 transition-colors hover:bg-white/[0.12]"
+                className="absolute right-3 top-3 flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-white/[0.09] text-xl text-slate-200 transition-colors hover:bg-white/[0.15] active:scale-95"
               >
                 ✕
               </button>

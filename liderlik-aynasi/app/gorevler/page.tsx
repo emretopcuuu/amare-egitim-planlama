@@ -315,12 +315,12 @@ export default async function GorevlerPage() {
             <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
               {g.body}
             </p>
-            {/* #8 "Bu görev neden sana özel?" — AYNA'nın kişiye özel gerekçesi */}
+            {/* "Bu görev neden sana özel?" — AYNA'nın kişiselleştirme gerekçesi */}
             {g.neden && (
-              <p className="mt-3 rounded-xl bg-royal/15 px-3 py-2 text-sm leading-relaxed text-slate-300 ring-1 ring-royal/20">
-                <span className="font-semibold text-gold-light">✨ Sana özel: </span>
-                {g.neden}
-              </p>
+              <div className="mt-4 rounded-2xl border border-gold/30 bg-gold/[0.07] p-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-gold">✨ Sana Özel</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-200">{g.neden}</p>
+              </div>
             )}
             {sesUrller.has(g.id) ? (
               <SesCal

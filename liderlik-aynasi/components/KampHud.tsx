@@ -56,10 +56,13 @@ export default function KampHud({ takim }: { takim?: string | null }) {
 
   const gun = kampGunu(an.tarih);
 
-  // Kamp öncesi: geri sayım
+  // Kamp öncesi: geri sayım + görsel ilerleme çubuğu
   if (!gun) {
     if (an.tarih > SON) return null; // kamp bitti — HUD kaybolur
     const kalanGun = Math.round((Date.parse(ILK) - Date.parse(an.tarih)) / 86_400_000);
+    // Son 30 gün içinde: çubuk dolmaya başlar; 0 gün kaldıysa tam dolu
+    const PENCERE = 30;
+    const doluOran = kalanGun >= PENCERE ? 0 : Math.round(((PENCERE - kalanGun) / PENCERE) * 100);
     return (
       <Cerceve>
         <div className="flex items-center gap-2">
@@ -68,6 +71,14 @@ export default function KampHud({ takim }: { takim?: string | null }) {
             {kalanGun <= 0 ? t.bugunBasliyor : t.kampaKalan(kalanGun)}
           </span>
         </div>
+        {kalanGun > 0 && kalanGun < PENCERE && (
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-gold/60 to-gold-light transition-all duration-700"
+              style={{ width: `${doluOran}%` }}
+            />
+          </div>
+        )}
       </Cerceve>
     );
   }
