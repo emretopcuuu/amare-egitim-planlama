@@ -225,18 +225,39 @@ body.gunes-modu .kart-cerceve {
 /* Sinematik sayfa geçişi: her gezinmede sayfa yumuşakça belirir. template.tsx
    her navigasyonda yeniden mount olduğu için animasyon tazelenir. */
 .sayfa-gecis {
-  animation: sayfa-belir 0.4s ease-out both;
+  animation: sayfa-belir 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 @keyframes sayfa-belir {
   from {
     opacity: 0;
-    transform: scale(0.99);
+    transform: translateY(8px) scale(0.99);
     filter: blur(2px);
   }
   to {
     opacity: 1;
     transform: none;
     filter: none;
+  }
+}
+
+/* Kıvılcım (XP) kazanım vurgusu: rakam belirirken kısa altın nabız + büyüme. */
+.kivilcim-vurgu {
+  animation: kivilcim-belir 0.7s ease-out both;
+}
+@keyframes kivilcim-belir {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+    text-shadow: 0 0 0 rgba(212, 175, 55, 0);
+  }
+  55% {
+    transform: scale(1.12);
+    text-shadow: 0 0 18px rgba(212, 175, 55, 0.55);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+    text-shadow: 0 0 6px rgba(212, 175, 55, 0.25);
   }
 }
 

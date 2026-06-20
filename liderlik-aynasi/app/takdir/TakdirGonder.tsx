@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import { titret, cal } from "@/lib/his";
 
 const t = tr.takdir;
 
@@ -18,25 +19,36 @@ export default function TakdirGonder({ kisiler }: { kisiler: Kisi[] }) {
 
   async function gonder() {
     if (gonderiliyor || !hedef || mesaj.trim().length < 2) return;
-    setGonderiliyor(true);
+    // OPTİMİSTİK UI: gönderim biter bitmez kullanıcıya "gitti" hissini hemen ver
+    // (kamp wifi'ı yavaş — bekleme hissi olmasın). Dokunsal + işitsel onay eşlik
+    // eder. Sunucu hata dönerse mesajı geri yükleyip uyarı göster.
+    const yedek = { hedef, mesaj };
+    titret([12, 30, 12]);
+    cal("kazanim");
     setHata(false);
-    setGitti(false);
+    setGonderiliyor(true);
+    setMesaj("");
+    setHedef("");
+    setGitti(true);
+    setTimeout(() => setGitti(false), 4000);
     try {
       const res = await fetch("/api/takdir", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ hedefId: hedef, mesaj: mesaj.trim() }),
+        body: JSON.stringify({ hedefId: yedek.hedef, mesaj: yedek.mesaj.trim() }),
       });
       if (!res.ok) {
+        setGitti(false);
+        setHedef(yedek.hedef);
+        setMesaj(yedek.mesaj);
         setHata(true);
         return;
       }
-      setMesaj("");
-      setHedef("");
-      setGitti(true);
-      setTimeout(() => setGitti(false), 4000);
       router.refresh();
     } catch {
+      setGitti(false);
+      setHedef(yedek.hedef);
+      setMesaj(yedek.mesaj);
       setHata(true);
     } finally {
       setGonderiliyor(false);

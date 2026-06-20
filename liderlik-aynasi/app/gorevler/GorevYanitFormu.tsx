@@ -7,6 +7,7 @@ import { titret, suDalgasi, cal } from "@/lib/his";
 import MikrofonButonu from "@/components/MikrofonButonu";
 import Konfeti from "@/components/Konfeti";
 import PuanAcilisi from "@/components/PuanAcilisi";
+import KivilcimSayac from "@/components/KivilcimSayac";
 
 const t = tr.gorevler;
 
@@ -155,11 +156,7 @@ export default function GorevYanitFormu({
         ) : (
           <>
             {sonuc.puan !== undefined && <PuanAcilisi puan={sonuc.puan} />}
-            {sonuc.kivilcim !== undefined && (
-              <p className="mt-1 font-semibold text-gold-light">
-                {t.kivilcimKazandin(sonuc.kivilcim)}
-              </p>
-            )}
+            {sonuc.kivilcim !== undefined && <KivilcimSayac kazanim={sonuc.kivilcim} />}
             {sonuc.yorum && (
               <p className="mt-3 text-sm italic text-slate-200">“{sonuc.yorum}”</p>
             )}
