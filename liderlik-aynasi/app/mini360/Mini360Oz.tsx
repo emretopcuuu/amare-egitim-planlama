@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { titret, cal } from "@/lib/his";
@@ -8,26 +9,34 @@ import { MINI360_IFADELER } from "@/lib/onFarkindalik";
 
 const t = tr.mini360;
 
+type EkipUye = { id: string; ad: string; istiyor: boolean; degerlendirdim: boolean };
+
 export default function Mini360Oz({
-  hedefId,
   ozBaslangic,
   ekipOrt,
   disSayi,
+  ozTamam,
+  oylanmaIstiyor,
+  ekip,
 }: {
-  hedefId: string;
   ozBaslangic: Record<string, number>;
   ekipOrt: Record<string, number | null>;
   disSayi: number;
+  ozTamam: boolean;
+  oylanmaIstiyor: boolean;
+  ekip: EkipUye[];
 }) {
   const router = useRouter();
   const [puanlar, setPuanlar] = useState<Record<string, number>>({ ...ozBaslangic });
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [kaydedildi, setKaydedildi] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
-  const [kopyalandi, setKopyalandi] = useState(false);
+  const [istiyor, setIstiyor] = useState(oylanmaIstiyor);
+  const [istekMesgul, setIstekMesgul] = useState(false);
 
   const tamam = MINI360_IFADELER.every((i) => puanlar[i.kod]);
-  const link = typeof window !== "undefined" ? `${window.location.origin}/mini360/d/${hedefId}` : "";
+  // Öz-puan kaydedildiyse (sunucudan ya da bu oturumda) ekip listesi açılır.
+  const kilitsiz = ozTamam || (kaydedildi && tamam);
 
   // En büyük fark (sen yüksek, ekip düşük) — kör noktanın ölçülmüş hâli.
   const enBuyukFark = useMemo(() => {
@@ -35,9 +44,9 @@ export default function Mini360Oz({
     let max: { ifade: string; fark: number } | null = null;
     for (const i of MINI360_IFADELER) {
       const sen = puanlar[i.kod] ?? ozBaslangic[i.kod];
-      const ekip = ekipOrt[i.kod];
-      if (sen === undefined || ekip === null) continue;
-      const fark = sen - ekip;
+      const ekipP = ekipOrt[i.kod];
+      if (sen === undefined || ekipP === null) continue;
+      const fark = sen - ekipP;
       if (!max || fark > max.fark) max = { ifade: i.dis, fark };
     }
     return max && max.fark > 0 ? max : null;
@@ -69,13 +78,29 @@ export default function Mini360Oz({
     }
   }
 
-  async function kopyala() {
+  async function istekDegistir() {
+    if (istekMesgul) return;
+    const yeni = !istiyor;
+    setIstekMesgul(true);
+    setIstiyor(yeni); // optimistik
+    titret(10);
     try {
-      await navigator.clipboard.writeText(link);
-      setKopyalandi(true);
-      setTimeout(() => setKopyalandi(false), 1800);
+      const res = await fetch("/api/mini360/istek", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ istiyor: yeni }),
+      });
+      if (!res.ok) {
+        setIstiyor(!yeni); // geri al
+        setHata(t.hata);
+        return;
+      }
+      router.refresh();
     } catch {
-      /* pano kapalı: kullanıcı elle kopyalar */
+      setIstiyor(!yeni);
+      setHata(t.hata);
+    } finally {
+      setIstekMesgul(false);
     }
   }
 
@@ -92,7 +117,7 @@ export default function Mini360Oz({
         <p className="mt-1 text-sm leading-relaxed text-slate-400">{t.aciklama}</p>
       </header>
 
-      {/* Öz puanlama */}
+      {/* 1) Öz puanlama — ekip değerlendirmesinin kapısı */}
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
         <h2 className="text-base font-semibold text-gold-light">{t.ozBaslik}</h2>
         <div className="mt-4 space-y-4">
@@ -128,26 +153,71 @@ export default function Mini360Oz({
         {hata && <p role="alert" className="mt-2 text-sm font-medium text-red-400">{hata}</p>}
       </section>
 
-      {/* Paylaşım */}
+      {/* 2) Ekibini değerlendir — öz-puan kapısı */}
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-        <h2 className="text-base font-semibold text-gold-light">{t.paylasBaslik}</h2>
-        <p className="mt-1 text-sm leading-relaxed text-slate-400">{t.paylasMetin}</p>
-        <div className="mt-3 flex items-center gap-2">
-          <input
-            readOnly
-            value={link}
-            className="h-10 flex-1 rounded-lg border border-royal-light/30 bg-midnight-soft px-3 text-xs text-slate-300 outline-none"
-          />
-          <button
-            onClick={kopyala}
-            className="shrink-0 rounded-lg bg-gold px-3 py-2 text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light"
-          >
-            {kopyalandi ? t.kopyalandi : t.linkKopyala}
-          </button>
-        </div>
+        <h2 className="text-base font-semibold text-gold-light">{t.ekipBaslik}</h2>
+        <p className="mt-1 text-sm leading-relaxed text-slate-400">{t.ekipMetin}</p>
+
+        {!kilitsiz ? (
+          <div className="mt-4 rounded-xl border border-gold/25 bg-gold/[0.06] px-4 py-4 text-center">
+            <p className="text-sm font-semibold text-gold-light">🔒 {t.kilitBaslik}</p>
+            <p className="mt-1.5 text-sm text-slate-300">{t.kilitMetin}</p>
+          </div>
+        ) : ekip.length === 0 ? (
+          <p className="mt-4 text-sm text-slate-400">{t.ekipBos}</p>
+        ) : (
+          <ul className="mt-4 space-y-2">
+            {ekip.map((u) => (
+              <li key={u.id}>
+                <Link
+                  href={`/mini360/d/${u.id}`}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-royal-light/25 bg-midnight-soft/60 px-4 py-3 transition-colors hover:border-gold/50"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate font-semibold text-slate-100">{u.ad}</span>
+                    {u.istiyor && !u.degerlendirdim && (
+                      <span className="mt-0.5 block text-xs font-medium text-amber-300">★ {t.istekRozet}</span>
+                    )}
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-bold ${
+                      u.degerlendirdim
+                        ? "text-emerald-300"
+                        : "bg-gold text-[#1a1206]"
+                    }`}
+                  >
+                    {u.degerlendirdim ? t.degerlendirdin : t.degerlendir}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
-      {/* Sonuç: sen vs ekip */}
+      {/* 3) Ekibinden değerlendirme iste */}
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+        <h2 className="text-base font-semibold text-gold-light">{t.istekBaslik}</h2>
+        <p className="mt-1 text-sm leading-relaxed text-slate-400">{t.istekMetin}</p>
+        {istiyor && (
+          <p className="mt-3 rounded-xl bg-emerald-400/10 px-3 py-2 text-sm font-medium text-emerald-300">
+            {t.istekAcildi}
+          </p>
+        )}
+        <button
+          onClick={istekDegistir}
+          disabled={istekMesgul}
+          className={`mt-3 flex h-12 w-full items-center justify-center rounded-xl text-base font-bold transition-colors disabled:opacity-50 ${
+            istiyor
+              ? "border-2 border-white/20 text-slate-300 hover:border-gold/60"
+              : "btn-kor"
+          }`}
+        >
+          {istiyor ? t.istekKapat : t.istekAc}
+        </button>
+      </section>
+
+      {/* 4) Sonuç: sen vs ekip */}
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
         <div className="flex items-center justify-between">
           <h2 className="text-base font-semibold text-gold-light">{t.sonucBaslik}</h2>
@@ -174,13 +244,13 @@ export default function Mini360Oz({
               <tbody className="divide-y divide-royal/20">
                 {MINI360_IFADELER.map((i) => {
                   const sen = puanlar[i.kod] ?? ozBaslangic[i.kod] ?? null;
-                  const ekip = ekipOrt[i.kod];
-                  const fark = sen !== null && ekip !== null ? Math.round((sen - ekip) * 10) / 10 : null;
+                  const ekipP = ekipOrt[i.kod];
+                  const fark = sen !== null && ekipP !== null ? Math.round((sen - ekipP) * 10) / 10 : null;
                   return (
                     <tr key={i.kod}>
                       <td className="py-2 pr-2 text-slate-300">{i.dis}</td>
                       <td className="py-2 text-right font-bold text-slate-100">{sen ?? "—"}</td>
-                      <td className="py-2 text-right text-slate-300">{ekip ?? "—"}</td>
+                      <td className="py-2 text-right text-slate-300">{ekipP ?? "—"}</td>
                       <td className={`py-2 text-right font-bold ${fark !== null && fark > 0 ? "text-amber-400" : "text-slate-400"}`}>
                         {fark === null ? "—" : fark > 0 ? `+${fark}` : fark}
                       </td>

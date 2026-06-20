@@ -833,17 +833,30 @@ export const tr = {
   mini360: {
     baslik: "Ekip Aynası",
     aciklama:
-      "Kör nokta tek başına görülemez — onu başkasının aynasında görürsün. Önce kendini puanla, sonra ekibinden 3 kişiye anonim linkini gönder. Sen-ekip farkı, göremediğin yeri ölçer.",
+      "Kör nokta tek başına görülemez — onu başkasının aynasında görürsün. Önce kendini puanla, sonra ekibini değerlendir ve ekibinden değerlendirme iste. Sen-ekip farkı, göremediğin yeri ölçer.",
     olcek: { 1: "Hiç katılmıyorum", 2: "Az", 3: "Kısmen", 4: "Çoğunlukla", 5: "Tamamen katılıyorum" } as Record<number, string>,
     ozBaslik: "Önce sen — kendini puanla",
     gonder: "Kaydet",
     gonderiliyor: "Kaydediliyor…",
     kaydedildi: "✓ Kaydedildi",
-    // Paylaşım
-    paylasBaslik: "Ekibinden 3 kişiye gönder",
-    paylasMetin: "Onlara şunu söyle: beni değil, gelişimimi düşün, dürüst ol. Link anonimdir — kimin ne dediği sana görünmez.",
-    linkKopyala: "🔗 Anonim linki kopyala",
-    kopyalandi: "✓ Kopyalandı",
+    // Ekibimden değerlendirme iste (link paylaşımının yerine geçti)
+    istekBaslik: "Ekibinden değerlendirme iste",
+    istekMetin:
+      "Ekibine “beni de değerlendirin” de. İsteğin, seni henüz değerlendirmemiş ekip arkadaşlarına hatırlatma olarak düşer. Tamamen anonimdir — kimin ne verdiğini asla göremezsin, yalnız ekip ortalamasını görürsün.",
+    istekAc: "Ekibimden değerlendirme iste",
+    istekAcildi: "✓ İsteğin ekibine düştü",
+    istekKapat: "İsteği geri çek",
+    istekRozet: "değerlendirilmek istiyor",
+    // Ekibini değerlendir (uygulama-içi anonim oylama)
+    ekipBaslik: "Ekibini değerlendir",
+    ekipMetin:
+      "Ekibinden birini seç ve dürüstçe puanla. Anonimdir — kimin ne verdiğini kimse göremez; o kişi yalnız ekip ortalamasını görür, senin verdiğin puanı asla.",
+    ekipBos: "Henüz ekibinde değerlendirebileceğin kimse yok.",
+    kilitBaslik: "Önce kendini puanla",
+    kilitMetin: "Ekip arkadaşlarını değerlendirmek için önce yukarıdaki öz-puanlamayı tamamla.",
+    degerlendir: "Değerlendir",
+    degerlendirdin: "✓ Değerlendirdin",
+    guncelle: "Güncelle",
     // Sonuç
     sonucBaslik: "Sen vs Ekip",
     senPuani: "Sen",
@@ -857,13 +870,19 @@ export const tr = {
     hata: "İşlem başarısız. Lütfen tekrar dene.",
     kapaliBaslik: "Ekip Aynası kapalı",
     kapaliMetin: "Bu çalışma Diamond adayları için açılır. Sıran gelince burada olacak.",
-    // Dış (anonim) sayfa
-    disBaslik: (ad: string) => `${ad} için Ekip Aynası`,
-    disAciklama: "Anonim. Onu değil, gelişimini düşün — dürüst ol. Her ifadeye 1-5 ver.",
+    // Birini değerlendirme sayfası (girişli, ekip-içi, anonim)
+    disBaslik: (ad: string) => `${ad}'i değerlendir`,
+    disAciklama: "Onu değil, gelişimini düşün — dürüst ol. Her ifadeye 1-5 ver.",
+    disGizlilik: (ad: string) =>
+      `${ad} senin verdiğin puanları göremez. Sonuç anonimdir — kişi yalnız ekibinin ortalamasını görür, kimin ne verdiğini asla.`,
     disGonder: "Gönder",
+    disGuncelle: "Puanı güncelle",
     disTesekkurBaslik: "Teşekkürler 🙏",
-    disTesekkurMetin: "Yanıtın anonim olarak kaydedildi. Bu, onun göremediği yeri görmesine yardım edecek.",
-    disGecersiz: "Bu link geçersiz.",
+    disTesekkurMetin: "Puanın anonim olarak kaydedildi. Bu, onun göremediği yeri görmesine yardım edecek.",
+    disGeri: "Ekibe dön",
+    disGecersiz: "Bu kişiye buradan ulaşılamıyor.",
+    disKendin: "Kendini buradan değil, öz-puanlamadan değerlendirirsin.",
+    disKilitMetin: "Önce kendini puanla — ekip arkadaşlarını ancak kendi aynanı tamamladıktan sonra değerlendirebilirsin.",
   },
   // ÖN FARKINDALIK — kamp öncesi Ayna/Kalibrasyon çalışması (Faz A: Katman 1)
   onFarkindalik: {

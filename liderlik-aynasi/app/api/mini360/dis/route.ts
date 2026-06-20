@@ -1,24 +1,39 @@
+import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { MINI360_IFADELER } from "@/lib/onFarkindalik";
 import { tr } from "@/lib/i18n/tr";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const AZAMI_DIS = 12; // hedef başına anonim puan tavanı (spam koruması)
 
-// Mini 360 — ANONİM dış puan (girişsiz, herkese açık link). Kim verdiği saklanmaz.
+// Mini 360 — bir ekip arkadaşına EKİP-İÇİ değerlendirme (GİRİŞLİ, anonim).
+// rater_id yalnız SUNUCUDA tutulur; hedefe/sonuçlara asla sızmaz. İki kapı:
+//   1) Değerlendiren önce KENDİNİ puanlamış olmalı (öz-puan tamamlanmalı).
+//   2) Hedef, değerlendirenle AYNI ekipte gerçek bir katılımcı olmalı (≠ kendisi).
+// Aynı (değerlendiren, hedef, tur) için ikinci gönderim puanı GÜNCELLER.
 export async function POST(req: Request) {
+  const session = await getSession();
+  if (!session || session.rol !== "participant") {
+    return Response.json({ hata: tr.ortak.oturumGerekli }, { status: 401 });
+  }
   const body = await req.json().catch(() => null);
   const targetId = typeof body?.targetId === "string" ? body.targetId : "";
-  if (!UUID_RE.test(targetId)) {
+  if (!UUID_RE.test(targetId) || targetId === session.sub) {
     return Response.json({ hata: tr.mini360.hata }, { status: 400 });
   }
 
   const db = supabaseAdmin();
-  // #9: aktif tur — dış puanlar tur'a etiketlenir, tavan tur başınadır.
-  const { data: turAyar } = await db.from("settings").select("value").eq("key", "mini360_tur").maybeSingle();
+  const { data: turAyar } = await db
+    .from("settings")
+    .select("value")
+    .eq("key", "mini360_tur")
+    .maybeSingle();
   const tur = Math.max(1, parseInt(turAyar?.value ?? "1", 10) || 1);
 
-  const satir: Record<string, number | string> = { target_id: targetId, tur };
+  const satir: Record<string, number | string> = {
+    rater_id: session.sub,
+    target_id: targetId,
+    tur,
+  };
   for (const i of MINI360_IFADELER) {
     const v = Number(body?.[i.kod]);
     if (!Number.isInteger(v) || v < 1 || v > 5) {
@@ -27,17 +42,36 @@ export async function POST(req: Request) {
     satir[i.kod] = v;
   }
 
-  // Hedef gerçek bir katılımcı mı + bu tur için tavan kontrolü.
-  const [{ data: hedef }, { count }] = await Promise.all([
-    db.from("participants").select("id").eq("id", targetId).eq("role", "participant").maybeSingle(),
-    db.from("mini360_dis").select("id", { count: "exact", head: true }).eq("target_id", targetId).eq("tur", tur),
+  // Değerlendiren + hedef bilgisi tek seferde: ekip eşleşmesi + öz-puan kapısı.
+  const [{ data: ben }, { data: hedef }, { data: oz }] = await Promise.all([
+    db.from("participants").select("team").eq("id", session.sub).maybeSingle(),
+    db
+      .from("participants")
+      .select("id, team")
+      .eq("id", targetId)
+      .eq("role", "participant")
+      .maybeSingle(),
+    db
+      .from("mini360_oz")
+      .select("m1, m2, m3, m4, m5, m6")
+      .eq("participant_id", session.sub)
+      .eq("tur", tur)
+      .maybeSingle(),
   ]);
-  if (!hedef) return Response.json({ hata: tr.mini360.hata }, { status: 404 });
-  if ((count ?? 0) >= AZAMI_DIS) {
-    return Response.json({ hata: tr.mini360.disDolu }, { status: 409 });
+
+  // Öz-puan kapısı: kendini puanlamadan başkasını değerlendiremez.
+  const ozTamam = !!oz && MINI360_IFADELER.every((i) => oz[i.kod] !== null);
+  if (!ozTamam) {
+    return Response.json({ hata: tr.mini360.kilitBaslik }, { status: 403 });
+  }
+  // Ekip kapısı: hedef gerçek + aynı ekipte olmalı.
+  if (!hedef || !ben?.team || hedef.team !== ben.team) {
+    return Response.json({ hata: tr.mini360.disGecersiz }, { status: 403 });
   }
 
-  const { error } = await db.from("mini360_dis").insert(satir as never);
+  const { error } = await db
+    .from("mini360_dis")
+    .upsert(satir as never, { onConflict: "rater_id,target_id,tur" });
   if (error) return Response.json({ hata: tr.mini360.hata }, { status: 500 });
   return Response.json({ ok: true });
 }
