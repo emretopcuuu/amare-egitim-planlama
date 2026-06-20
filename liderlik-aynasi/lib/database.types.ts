@@ -88,6 +88,60 @@ export type Database = {
           },
         ]
       }
+      ayna_esi: {
+        Row: {
+          a_id: string
+          a_tamam: boolean
+          a_verir: number
+          b_id: string
+          b_tamam: boolean
+          b_verir: number
+          created_at: string
+          id: string
+          slot: string
+          tur: number
+        }
+        Insert: {
+          a_id: string
+          a_tamam?: boolean
+          a_verir: number
+          b_id: string
+          b_tamam?: boolean
+          b_verir: number
+          created_at?: string
+          id?: string
+          slot: string
+          tur: number
+        }
+        Update: {
+          a_id?: string
+          a_tamam?: boolean
+          a_verir?: number
+          b_id?: string
+          b_tamam?: boolean
+          b_verir?: number
+          created_at?: string
+          id?: string
+          slot?: string
+          tur?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ayna_esi_a_id_fkey"
+            columns: ["a_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ayna_esi_b_id_fkey"
+            columns: ["b_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bosluk_ani: {
         Row: {
           created_at: string
@@ -282,6 +336,39 @@ export type Database = {
           },
         ]
       }
+      grup_odev: {
+        Row: {
+          aktif: boolean
+          baslik: string
+          created_at: string
+          govde: string
+          hedef: string | null
+          id: string
+          takim: string
+          tip: string
+        }
+        Insert: {
+          aktif?: boolean
+          baslik: string
+          created_at?: string
+          govde: string
+          hedef?: string | null
+          id?: string
+          takim: string
+          tip?: string
+        }
+        Update: {
+          aktif?: boolean
+          baslik?: string
+          created_at?: string
+          govde?: string
+          hedef?: string | null
+          id?: string
+          takim?: string
+          tip?: string
+        }
+        Relationships: []
+      }
       gunluk_checkin: {
         Row: {
           created_at: string
@@ -323,39 +410,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      grup_odev: {
-        Row: {
-          aktif: boolean
-          baslik: string
-          created_at: string
-          govde: string
-          hedef: string | null
-          id: string
-          takim: string
-          tip: string
-        }
-        Insert: {
-          aktif?: boolean
-          baslik: string
-          created_at?: string
-          govde: string
-          hedef?: string | null
-          id?: string
-          takim: string
-          tip?: string
-        }
-        Update: {
-          aktif?: boolean
-          baslik?: string
-          created_at?: string
-          govde?: string
-          hedef?: string | null
-          id?: string
-          takim?: string
-          tip?: string
-        }
-        Relationships: []
       }
       kocu_mesajlar: {
         Row: {
@@ -452,45 +506,6 @@ export type Database = {
         }
         Relationships: []
       }
-      ayna_esi: {
-        Row: {
-          a_id: string
-          a_tamam: boolean
-          a_verir: number
-          b_id: string
-          b_tamam: boolean
-          b_verir: number
-          created_at: string
-          id: string
-          slot: string
-          tur: number
-        }
-        Insert: {
-          a_id: string
-          a_tamam?: boolean
-          a_verir: number
-          b_id: string
-          b_tamam?: boolean
-          b_verir: number
-          created_at?: string
-          id?: string
-          slot: string
-          tur: number
-        }
-        Update: {
-          a_id?: string
-          a_tamam?: boolean
-          a_verir?: number
-          b_id?: string
-          b_tamam?: boolean
-          b_verir?: number
-          created_at?: string
-          id?: string
-          slot?: string
-          tur?: number
-        }
-        Relationships: []
-      }
       mini360_dis: {
         Row: {
           created_at: string
@@ -531,7 +546,22 @@ export type Database = {
           target_id?: string
           tur?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "mini360_dis_rater_id_fkey"
+            columns: ["rater_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mini360_dis_target_id_fkey"
+            columns: ["target_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mini360_oz: {
         Row: {
@@ -570,7 +600,15 @@ export type Database = {
           tur?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "mini360_oz_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mirror_letters: {
         Row: {
@@ -1123,6 +1161,8 @@ export type Database = {
           oncelikler: Json
           ozet: string | null
           participant_id: string
+          slogan: string | null
+          slogan_adaylar: Json | null
           tamamlandi_at: string | null
           updated_at: string
         }
@@ -1137,6 +1177,8 @@ export type Database = {
           oncelikler?: Json
           ozet?: string | null
           participant_id: string
+          slogan?: string | null
+          slogan_adaylar?: Json | null
           tamamlandi_at?: string | null
           updated_at?: string
         }
@@ -1151,6 +1193,8 @@ export type Database = {
           oncelikler?: Json
           ozet?: string | null
           participant_id?: string
+          slogan?: string | null
+          slogan_adaylar?: Json | null
           tamamlandi_at?: string | null
           updated_at?: string
         }

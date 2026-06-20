@@ -176,7 +176,7 @@ function temizMetin(s: string): string {
   return s.replace(/[Ѐ-ӿ]/g, (ch) => KIRIL_LATIN[ch] ?? "");
 }
 
-export type PusulaTur = { mesaj: string; asama: string; bitti: boolean };
+export type PusulaTur = { mesaj: string; asama: string; bitti: boolean; sloganAdaylar?: string[] };
 type Mesaj = { rol: string; icerik: string };
 type Oncelik = { sira: number; metin: string };
 
@@ -279,9 +279,9 @@ export async function pusulaTuru(
     })),
   ];
 
+  const client = new Anthropic();
   let tur: PusulaTur | null = null;
   try {
-    const client = new Anthropic();
     const yanit = await yenidenDene(
       () =>
         client.messages.create({
@@ -336,7 +336,15 @@ TEMPO: Bu kişiden şu ana dek ${kullaniciTur} yanıt aldın. Sohbeti gereksiz u
     .eq("participant_id", katilimci.id);
 
   if (tur.bitti) {
-    await damitVeMuhurle(db, katilimci.id, satir.oncelikler, gecmis, kullaniciMesaji, tur.mesaj);
+    await damitVeMuhurle(client, db, katilimci.id, satir.oncelikler, gecmis, kullaniciMesaji, tur.mesaj);
+    // Damıtma bitti → slogan adaylarını ekle (kullanıcı seçsin)
+    const { data: sloganVeri } = await db
+      .from("pusula")
+      .select("slogan_adaylar")
+      .eq("participant_id", katilimci.id)
+      .maybeSingle();
+    const adaylar = sloganVeri?.slogan_adaylar as string[] | undefined;
+    if (adaylar?.length) tur.sloganAdaylar = adaylar;
   }
 
   return tur;
@@ -344,6 +352,7 @@ TEMPO: Bu kişiden şu ana dek ${kullaniciTur} yanıt aldın. Sohbeti gereksiz u
 
 // Akış bitince transkript + öncelik listesini yapılandırılmış profile damıt.
 async function damitVeMuhurle(
+  client: Anthropic,
   db: Db,
   pid: string,
   oncelikler: unknown,
@@ -361,7 +370,6 @@ async function damitVeMuhurle(
   const girdi = `KİŞİNİN ÖNCELİK LİSTESİ:\n${listeMetni(oncelikler)}\n\nSOHBET:\n${tamTranskript}`;
 
   try {
-    const client = new Anthropic();
     const yanit = await client.messages.create({
       model: MODEL,
       max_tokens: 2048,
@@ -400,8 +408,65 @@ async function damitVeMuhurle(
         updated_at: new Date().toISOString(),
       })
       .eq("participant_id", pid);
+
+    // Kişisel slogan adayları: damıtılmış profili baz alarak 3 vurucu 1. tekil cümle.
+    await sloganUret(client, pid, veri, db);
   } catch {
     // Damıtma başarısız olsa da sohbet kaydı durur; tekrar denenebilir.
+  }
+}
+
+const SLOGAN_SEMASI = {
+  type: "object" as const,
+  properties: {
+    adaylar: {
+      type: "array" as const,
+      items: { type: "string" as const },
+      description: "Exactly 3 slogan candidates",
+    },
+  },
+  required: ["adaylar"],
+  additionalProperties: false,
+};
+
+async function sloganUret(
+  client: Anthropic,
+  pid: string,
+  veri: { cekirdek_neden: string[]; mevcut_bosluk: string; ic_engel: string; ozet: string },
+  db: Db
+) {
+  try {
+    const yanit = await client.messages.create({
+      model: SOHBET_MODEL,
+      max_tokens: 512,
+      thinking: { type: "disabled" },
+      output_config: { effort: "low", format: { type: "json_schema", schema: SLOGAN_SEMASI } },
+      system: `Sen bir Türkçe kopya yazarısın. Kullanıcının kişisel liderlik pusulasından 3 farklı slogan adayı üreteceksin.
+
+SLOGAN KURALLARI:
+- Maksimum 8-10 Türkçe kelime
+- Birinci tekil şahıs ("Ben…" veya eylemle başlayan)
+- Kişinin KENDİ cevaplarından gelen somut kelimeler kullan — genel klişe YOK
+- Her aday farklı bir açı: (1) ne için var olduğun, (2) kim olmakta olduğun, (3) iç engeli aşan bildirge
+- Vurucu, asla unutmayacağın, sıradan değil
+
+Kişinin profili:
+Çekirdek nedenler: ${veri.cekirdek_neden.join(" · ")}
+Mevcut boşluk: ${veri.mevcut_bosluk}
+İç engel: ${veri.ic_engel}
+
+"adaylar" alanına tam olarak 3 slogan yaz.`,
+      messages: [{ role: "user", content: "Sloganları üret." }],
+    });
+    const cikti = jsonCoz<{ adaylar: string[] }>(yanit);
+    if (!cikti?.adaylar?.length) return;
+    const temiz = cikti.adaylar.slice(0, 3).map(temizMetin);
+    await db
+      .from("pusula")
+      .update({ slogan_adaylar: temiz as never })
+      .eq("participant_id", pid);
+  } catch {
+    // Slogan üretilemezse kullanıcı elle yazar — kritik değil.
   }
 }
 

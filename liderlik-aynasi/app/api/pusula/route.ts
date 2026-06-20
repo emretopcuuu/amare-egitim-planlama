@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.pusula.hata }, { status: 401 });
   }
 
-  let govde: { mesaj?: unknown; basla?: unknown; oncelikler?: unknown; sifirla?: unknown };
+  let govde: { mesaj?: unknown; basla?: unknown; oncelikler?: unknown; sifirla?: unknown; sloganSec?: unknown };
   try {
     govde = await req.json();
   } catch {
@@ -33,6 +33,15 @@ export async function POST(req: Request) {
   }
 
   const db = supabaseAdmin();
+
+  // 0a) Slogan seç: kişi seçimini kaydet.
+  if (typeof govde.sloganSec === "string" && govde.sloganSec.trim()) {
+    await db
+      .from("pusula")
+      .update({ slogan: govde.sloganSec.trim().slice(0, 300) })
+      .eq("participant_id", session.sub);
+    return Response.json({ ok: true });
+  }
 
   // 0) Sıfırla: kişi baştan başlamak isterse sohbet+öncelik+rızayı temizle.
   if (govde.sifirla === true) {

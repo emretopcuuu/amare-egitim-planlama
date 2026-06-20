@@ -11,10 +11,12 @@ const t = tr.admin.fazSifir;
 export default function FazSifirKontrol() {
   const [acik, setAcik] = useState(false);
   const [kod, setKod] = useState("");
+  const [kayitliKod, setKayitliKod] = useState(""); // QR yalnız KAYDEDİLEN koddan üretilir
   const [tamam, setTamam] = useState(0);
   const [toplam, setToplam] = useState(0);
   const [yuklendi, setYuklendi] = useState(false);
   const [mesgul, setMesgul] = useState(false);
+  const [qrSvg, setQrSvg] = useState("");
 
   const yukle = useCallback(async () => {
     try {
@@ -23,6 +25,7 @@ export default function FazSifirKontrol() {
       if (res.ok && v) {
         setAcik(!!v.acik);
         setKod(v.kilitKodu ?? "");
+        setKayitliKod(v.kilitKodu ?? "");
         setTamam(v.tamam ?? 0);
         setToplam(v.toplam ?? 0);
       }
@@ -34,6 +37,27 @@ export default function FazSifirKontrol() {
   useEffect(() => {
     void yukle();
   }, [yukle]);
+
+  // Oda QR'ını KAYDEDİLEN koddan + bu tarayıcının origin'inden üret. Kritik:
+  // QR, admin'in panel açtığı domaini taşır → katılımcıyla AYNI domaine gider
+  // (yanlış preview domainine düşme sorununu önler). Kod boşsa QR yok.
+  useEffect(() => {
+    const k = kayitliKod.trim();
+    if (!k || typeof window === "undefined") {
+      setQrSvg("");
+      return;
+    }
+    let iptal = false;
+    const url = `${window.location.origin}/ac?k=${encodeURIComponent(k)}`;
+    void import("qrcode").then((m) =>
+      m.toString(url, { type: "svg", margin: 1, errorCorrectionLevel: "M" }).then((svg) => {
+        if (!iptal) setQrSvg(svg);
+      })
+    );
+    return () => {
+      iptal = true;
+    };
+  }, [kayitliKod]);
 
   async function gonder(govde: Record<string, unknown>, basariMesaji?: string) {
     setMesgul(true);
@@ -142,6 +166,28 @@ export default function FazSifirKontrol() {
           <p className="mt-2 break-all text-xs text-slate-500">{t.qrIpucu(qrUrl)}</p>
         ) : (
           <p className="mt-2 text-xs text-amber-400">{t.kodBos}</p>
+        )}
+
+        {/* Taranabilir oda QR'ı — kampta kapıya/odaya as. Katılımcı kendi
+            telefonunda (giriş yapmış) okutunca mührü kalkar. */}
+        {qrSvg && (
+          <div className="mt-4 flex flex-col items-center rounded-2xl border border-royal-light/20 bg-white/[0.02] p-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gold-light">
+              {t.qrGorselBaslik}
+            </p>
+            <div
+              className="w-44 rounded-xl bg-white p-3 [&>svg]:h-full [&>svg]:w-full"
+              dangerouslySetInnerHTML={{ __html: qrSvg }}
+            />
+            <p className="mt-2 text-center text-[0.7rem] leading-relaxed text-slate-500">
+              {t.qrGorselNot}
+            </p>
+            {kod.trim() !== kayitliKod.trim() && (
+              <p className="mt-1 text-center text-[0.7rem] font-medium text-amber-400">
+                {t.qrKaydedilmemis}
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>

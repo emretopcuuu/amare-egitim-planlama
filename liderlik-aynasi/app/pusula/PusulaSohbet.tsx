@@ -12,7 +12,7 @@ const MIN_MADDE = 3;
 const SOHBET_ASAMALARI = ["eleme", "bosluk", "engel"] as const;
 
 type Mesaj = { rol: string; icerik: string };
-type Faz = "riza" | "liste" | "kopru" | "sohbet" | "bitti";
+type Faz = "riza" | "liste" | "kopru" | "sohbet" | "slogan" | "bitti";
 
 // Sohbet ilerlemesi — aşamadan yüzdeye. Her AYNA yanıtı aşamayı döndürür,
 // böylece kişi her soruda sona ne kadar kaldığını görür.
@@ -276,6 +276,10 @@ export default function PusulaSohbet({
     ];
   });
   const [asama, setAsama] = useState<string>(asamaBaslangic);
+  const [sloganAdaylar, setSloganAdaylar] = useState<string[]>([]);
+  const [sloganGirdi, setSloganGirdi] = useState("");
+  const [sloganKendinYaz, setSloganKendinYaz] = useState(false);
+  const [sloganKaydediyor, setSloganKaydediyor] = useState(false);
   const [sifirlaSor, setSifirlaSor] = useState(false);
   const [sifirliyor, setSifirliyor] = useState(false);
   const [mesgul, setMesgul] = useState(false);
@@ -319,6 +323,7 @@ export default function PusulaSohbet({
     mesaj?: string;
     asama?: string;
     bitti?: boolean;
+    sloganAdaylar?: string[];
     hata?: string;
     ok?: boolean;
   } | null> {
@@ -408,9 +413,22 @@ export default function PusulaSohbet({
     if (v.asama) setAsama(v.asama);
     if (v.bitti) {
       setAsama("tamam");
-      // Otomatik atlama yok — kişi yazıyı okuyup "Devam et" ile geçsin.
-      setFaz("bitti");
+      if (v.sloganAdaylar?.length) {
+        setSloganAdaylar(v.sloganAdaylar);
+        setFaz("slogan");
+      } else {
+        setFaz("bitti");
+      }
     }
+  }
+
+  async function sloganKaydet(secilen: string) {
+    const metin = secilen.trim();
+    if (!metin) return;
+    setSloganKaydediyor(true);
+    await istek({ sloganSec: metin });
+    setSloganKaydediyor(false);
+    setFaz("bitti");
   }
 
   // ---- Rıza ----
@@ -554,6 +572,62 @@ export default function PusulaSohbet({
         {sifirlaSor && (
           <SifirlaOnay sifirla={sifirla} vazgec={() => setSifirlaSor(false)} mesgul={sifirliyor} />
         )}
+      </Kapak>
+    );
+  }
+
+  // ---- Slogan seçimi ----
+  if (faz === "slogan") {
+    return (
+      <Kapak ikon="✨" baslik={t.sloganBaslik}>
+        <p className="mt-3 text-sm leading-relaxed text-slate-400">{t.sloganAciklama}</p>
+        <div className="mt-5 space-y-2.5 text-left">
+          {sloganAdaylar.map((s, i) => (
+            <button
+              key={i}
+              onClick={() => void sloganKaydet(s)}
+              disabled={sloganKaydediyor}
+              className="w-full rounded-2xl border border-royal-light/30 bg-midnight-soft px-4 py-3.5 text-left text-base font-medium text-slate-100 transition-colors hover:border-gold hover:bg-midnight-card disabled:opacity-40"
+            >
+              <span className="mr-2 text-gold-light opacity-60">"{`${i + 1}`}"</span>
+              {s}
+            </button>
+          ))}
+        </div>
+
+        {/* Kendin yaz seçeneği */}
+        {!sloganKendinYaz ? (
+          <button
+            onClick={() => setSloganKendinYaz(true)}
+            className="mt-4 text-sm font-medium text-royal-light underline-offset-2 hover:underline"
+          >
+            {t.sloganKendinYaz}
+          </button>
+        ) : (
+          <div className="mt-4 space-y-2">
+            <OtoTextarea
+              value={sloganGirdi}
+              onChange={setSloganGirdi}
+              placeholder={t.sloganYazYer}
+              ariaLabel={t.sloganYazYer}
+              otoOdak
+            />
+            <button
+              onClick={() => void sloganKaydet(sloganGirdi)}
+              disabled={!sloganGirdi.trim() || sloganKaydediyor}
+              className="btn-kor flex h-12 w-full items-center justify-center rounded-2xl text-base font-bold disabled:opacity-40"
+            >
+              {sloganKaydediyor ? t.dusunuyor : t.sloganKaydet}
+            </button>
+          </div>
+        )}
+
+        <button
+          onClick={() => setFaz("bitti")}
+          className="mt-3 text-sm text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+        >
+          {t.sloganAtla}
+        </button>
       </Kapak>
     );
   }
