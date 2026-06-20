@@ -452,6 +452,45 @@ export type Database = {
         }
         Relationships: []
       }
+      ayna_esi: {
+        Row: {
+          a_id: string
+          a_tamam: boolean
+          a_verir: number
+          b_id: string
+          b_tamam: boolean
+          b_verir: number
+          created_at: string
+          id: string
+          slot: string
+          tur: number
+        }
+        Insert: {
+          a_id: string
+          a_tamam?: boolean
+          a_verir: number
+          b_id: string
+          b_tamam?: boolean
+          b_verir: number
+          created_at?: string
+          id?: string
+          slot: string
+          tur: number
+        }
+        Update: {
+          a_id?: string
+          a_tamam?: boolean
+          a_verir?: number
+          b_id?: string
+          b_tamam?: boolean
+          b_verir?: number
+          created_at?: string
+          id?: string
+          slot?: string
+          tur?: number
+        }
+        Relationships: []
+      }
       mini360_dis: {
         Row: {
           created_at: string
