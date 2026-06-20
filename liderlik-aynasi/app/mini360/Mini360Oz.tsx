@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
-import { titret } from "@/lib/his";
+import { titret, cal } from "@/lib/his";
 import { MINI360_IFADELER } from "@/lib/onFarkindalik";
 
 const t = tr.mini360;
@@ -59,6 +59,8 @@ export default function Mini360Oz({
         return;
       }
       setKaydedildi(true);
+      titret([12, 40, 12]);
+      cal("kazanim");
       router.refresh();
     } catch {
       setHata(t.hata);
