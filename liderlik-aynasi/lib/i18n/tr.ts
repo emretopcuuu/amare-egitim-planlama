@@ -714,6 +714,15 @@ export const tr = {
     tamamBaslik: "Pusulan kuruldu 🧭",
     tamamMetin:
       "Nedenlerini buldun. Bunu kampta hatırlayacağım. Şimdi kampa gelmen yeterli — kapıda görüşürüz.",
+    // Slogan seçim ekranı
+    sloganBaslik: "Pusulana mühür vur",
+    sloganAciklama:
+      "Nedenlerinden damıttım. Bunlardan birini seç ya da kendi kelimelinle yaz — bu cümle bundan sonra her yerde sana eşlik edecek.",
+    sloganSec: "Bunu seçiyorum",
+    sloganKendinYaz: "Kendim yaz",
+    sloganYazYer: "Kendi sloganını yaz…",
+    sloganKaydet: "Mühürle",
+    sloganAtla: "Şimdilik geç",
     kampBekleBaslik: "Kampta görüşürüz",
     kampBekleMetin:
       "Pusulan hazır. Kampın geri kalanı, oraya gelip odandaki kodu okuttuğunda açılacak. O ana dek dinlen — yolculuk başlıyor.",

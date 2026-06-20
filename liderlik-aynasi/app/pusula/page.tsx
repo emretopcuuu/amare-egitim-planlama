@@ -33,13 +33,15 @@ export default async function PusulaSayfa() {
       .select("consent_at, profil_foto_path, yuz_fotolari, full_name")
       .eq("id", session.sub)
       .maybeSingle(),
-    db.from("pusula").select("oncelikler").eq("participant_id", session.sub).maybeSingle(),
+    db.from("pusula").select("oncelikler, slogan").eq("participant_id", session.sub).maybeSingle(),
   ]);
 
   const oncelikler = ((pus?.oncelikler as { sira: number; metin: string }[]) ?? [])
     .slice()
     .sort((a, b) => a.sira - b.sira)
     .map((o) => o.metin);
+
+  const kisislogan = (pus as { slogan?: string | null } | null)?.slogan ?? null;
 
   if (durum.tamam) {
     const [ozellikler, { data: kampAyar }] = await Promise.all([
@@ -102,9 +104,20 @@ export default async function PusulaSayfa() {
           <p className="mt-4 inline-block rounded-full bg-gold/15 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-gold-light">
             {t.muhurRozet}
           </p>
-          <h1 className="prizma-serif ay-metin mt-3 text-2xl font-bold leading-snug">
-            {t.muhurHeroBaslik}
-          </h1>
+          {kisislogan ? (
+            <>
+              <p className="prizma-serif ay-metin mt-4 text-xl font-bold leading-snug italic">
+                &ldquo;{kisislogan}&rdquo;
+              </p>
+              <p className="mt-1 text-[0.7rem] font-semibold uppercase tracking-wide text-slate-500">
+                Pusulam
+              </p>
+            </>
+          ) : (
+            <h1 className="prizma-serif ay-metin mt-3 text-2xl font-bold leading-snug">
+              {t.muhurHeroBaslik}
+            </h1>
+          )}
           <p className="mx-auto mt-3 max-w-sm text-base leading-relaxed text-slate-300">
             {t.muhurHeroMetin}
           </p>
