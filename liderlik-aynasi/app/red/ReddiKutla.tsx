@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import GeriButonu from "@/components/GeriButonu";
 
 const t = tr.red;
 
@@ -38,6 +39,9 @@ export default function ReddiKutla({ toplam, hafta }: { toplam: number; hafta: n
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
       <div className="w-full max-w-md">
+        <div className="text-left">
+          <GeriButonu />
+        </div>
         <p className="text-5xl" aria-hidden>
           🎯
         </p>
