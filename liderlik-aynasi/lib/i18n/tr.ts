@@ -2976,6 +2976,25 @@ export const tr = {
     kaliteSessiz: "Ses tespit edilemedi. Mikrofon kapalı ya da çok uzakta olabilir.",
     kaliteUyari: "Yeniden kayıt önerilir",
   },
+  // PUSULA AÇILIŞI — "Nedenini Bul" sinematik giriş (ses + perde perde + mühür).
+  // replik.* metinleri HEM ekranda gösterilir HEM de /api/ayna-ses ile AYNA
+  // sesiyle seslendirilir (tek doğruluk kaynağı).
+  pusulaAcilis: {
+    gec: "Geç",
+    dokun: "Başlamak için dokun",
+    muhurYazi: "Dürüstçe yapacağım",
+    muhurIpucu: "Mührü basılı tut",
+    muhurTamam: "Mühürlendi",
+    replik: {
+      p0: "Dur. Telefonu biraz yukarı kaldır.",
+      p1: "Az önce sesini duydum. Yüzünü gördüm. Şimdi sırada en önemlisi var.",
+      p2a: "Hız, en büyük reklamdır.",
+      p2b: "Şu an etrafındaki herkes seni izliyor.",
+      p3: "Öyle bir nedenin olmalı ki, başarı bir seçenek değil, zorunluluk olsun.",
+      p4: "Sana on soru değil, tek bir ayna tutacağım. Tek şartım: kendine dürüst ol.",
+      p5: "Hazırım. Sen?",
+    } as Record<string, string>,
+  },
   ortak: {
     oturumGerekli: "Oturum gerekli.",
     // Akran ikilisi (sorumluluk ortağı) sayfası
