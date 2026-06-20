@@ -88,7 +88,7 @@ export default function CodeInput({ value, onChange, onComplete, disabled }: Pro
   }
 
   return (
-    <div className="flex justify-center gap-2 sm:gap-2.5" dir="ltr">
+    <div className="flex justify-center gap-2" dir="ltr">
       {digits.map((digit, i) => {
         const aktif = odak === i;
         return (
@@ -111,7 +111,7 @@ export default function CodeInput({ value, onChange, onComplete, disabled }: Pro
               }}
               onBlur={() => setOdak((o) => (o === i ? null : o))}
               aria-label={`Kod hanesi ${i + 1}`}
-              className={`h-14 w-12 caret-transparent rounded-2xl border bg-white/[0.06] text-center text-2xl font-semibold text-slate-100 shadow-[inset_0_2px_8px_rgba(0,0,0,0.35)] outline-none transition-[transform,border-color,box-shadow] duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)] focus:scale-105 focus:border-[#E0A458] focus:shadow-[0_0_0_4px_rgba(224,164,88,0.28),inset_0_2px_8px_rgba(0,0,0,0.35)] disabled:opacity-50 sm:h-16 sm:w-14 ${
+              className={`h-14 w-11 caret-transparent rounded-2xl border bg-white/[0.06] text-center text-2xl font-semibold text-slate-100 shadow-[inset_0_2px_8px_rgba(0,0,0,0.35)] outline-none transition-[transform,border-color,box-shadow] duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)] focus:scale-105 focus:border-[#E0A458] focus:shadow-[0_0_0_4px_rgba(224,164,88,0.28),inset_0_2px_8px_rgba(0,0,0,0.35)] disabled:opacity-50 sm:h-16 ${
                 digit ? "border-[#C8893A]/70" : "border-white/15"
               }`}
             />
