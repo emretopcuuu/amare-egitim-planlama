@@ -18,6 +18,7 @@ import GunlukCheckin from "@/components/GunlukCheckin";
 import BosDurum from "@/components/BosDurum";
 import GorevSayac from "./GorevSayac";
 import UnvanKutlama from "@/components/UnvanKutlama";
+import GeriButonu from "@/components/GeriButonu";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -175,20 +176,13 @@ export default async function GorevlerPage() {
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-6 p-5">
       <UnvanKutlama unvan={unvan.mevcut.ad} seviye={unvanSeviye} />
-      <header className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
-            🤖 AYNA
-          </p>
-          <h1 className="font-display altin-metin mt-1 text-3xl font-bold leading-tight">{t.baslik}</h1>
-          <p className="mt-1 text-sm text-slate-400">{t.altBaslik}</p>
-        </div>
-        <Link
-          href="/"
-          className="shrink-0 text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
-        >
-          {tr.degerlendir.anaSayfayaDon}
-        </Link>
+      <GeriButonu />
+      <header>
+        <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
+          🤖 AYNA
+        </p>
+        <h1 className="font-display altin-metin mt-1 text-3xl font-bold leading-tight">{t.baslik}</h1>
+        <p className="mt-1 text-sm text-slate-400">{t.altBaslik}</p>
       </header>
 
       {/* Kıvılcım durumu */}

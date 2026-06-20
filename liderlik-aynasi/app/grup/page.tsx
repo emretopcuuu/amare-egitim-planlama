@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import CumartesiGrupHud from "@/components/CumartesiGrupHud";
+import GeriButonu from "@/components/GeriButonu";
 
 export const metadata = { title: "Grubunun Ödevi — Liderlik Aynası" };
 
@@ -34,6 +35,7 @@ export default async function GrupSayfa() {
 
   return (
     <main className="mx-auto w-full max-w-md flex-1 space-y-5 p-5">
+      <GeriButonu />
       <header>
         <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.baslik}</h1>
         {kisi?.team && <p className="mt-1 text-sm text-slate-400">{t.altBaslik(kisi.team)}</p>}

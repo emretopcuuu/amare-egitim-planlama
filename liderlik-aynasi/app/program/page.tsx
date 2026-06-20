@@ -10,6 +10,7 @@ import {
   dakikaCevir,
 } from "@/lib/kampProgrami";
 import { tr } from "@/lib/i18n/tr";
+import GeriButonu from "@/components/GeriButonu";
 
 export const metadata = { title: "Program — Liderlik Aynası" };
 
@@ -131,22 +132,15 @@ export default async function ProgramPage() {
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-8 p-5">
-      <header className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
-            {KAMP_BASLIK}
-          </p>
-          <h1 className="font-display altin-metin mt-1 text-3xl font-bold text-gold">
-            {t.baslik}
-          </h1>
-          <p className="mt-1 text-base text-slate-400">{t.altBaslik}</p>
-        </div>
-        <Link
-          href="/"
-          className="shrink-0 text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
-        >
-          {tr.degerlendir.anaSayfayaDon}
-        </Link>
+      <GeriButonu />
+      <header>
+        <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
+          {KAMP_BASLIK}
+        </p>
+        <h1 className="font-display altin-metin mt-1 text-3xl font-bold text-gold">
+          {t.baslik}
+        </h1>
+        <p className="mt-1 text-base text-slate-400">{t.altBaslik}</p>
       </header>
 
       {KAMP_GUNLERI.map((tarih, i) => {

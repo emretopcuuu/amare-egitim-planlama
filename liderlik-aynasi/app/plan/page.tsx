@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { YOLCULUK_FAZLARI, fazBul, yolculukGunuHesapla } from "@/lib/davranis";
 import { tr } from "@/lib/i18n/tr";
+import GeriButonu from "@/components/GeriButonu";
 
 export const metadata = { title: "90 Günlük Yolculuğun — Liderlik Aynası" };
 
@@ -57,6 +58,7 @@ export default async function PlanPage() {
 
   return (
     <main className="mx-auto w-full max-w-md flex-1 space-y-5 p-5">
+      <GeriButonu />
       <header className="text-center">
         <p className="text-5xl" aria-hidden>🧭</p>
         <h1 className="prizma-serif ay-metin mt-3 text-2xl font-semibold">{t.baslik}</h1>
@@ -174,11 +176,6 @@ export default async function PlanPage() {
         </Link>
       </section>
 
-      <p className="pt-1 text-center">
-        <Link href="/" className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
-          ← {tr.degerlendir.anaSayfayaDon}
-        </Link>
-      </p>
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import GunlukCumle from "./GunlukCumle";
+import GeriButonu from "@/components/GeriButonu";
 
 export const metadata = { title: "Tek Cümle — Liderlik Aynası" };
 
@@ -13,6 +14,7 @@ export default async function GunlukPage() {
 
   return (
     <main className="mx-auto w-full max-w-md flex-1 p-5">
+      <GeriButonu className="mb-4" />
       <GunlukCumle />
     </main>
   );

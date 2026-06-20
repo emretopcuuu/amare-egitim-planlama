@@ -8,6 +8,7 @@ import { yolculukOlaylari } from "@/lib/yolculuk";
 import { tr } from "@/lib/i18n/tr";
 import Avatar from "@/components/Avatar";
 import BenKarti from "./BenKarti";
+import GeriButonu from "@/components/GeriButonu";
 
 export const metadata = { title: "Ben — Liderlik Aynası" };
 
@@ -105,6 +106,7 @@ export default async function BenPage() {
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-5 p-5">
+        <GeriButonu />
         {/* Kimlik başlığı */}
         <header className="flex flex-col items-center text-center">
           <Avatar ad={kisi?.full_name ?? session.ad} url={avatarUrl} boyut="lg" />
@@ -257,14 +259,6 @@ export default async function BenPage() {
           </Link>
         </section>
 
-        <p className="pt-1 text-center">
-          <Link
-            href="/"
-            className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
-          >
-            ← {tr.degerlendir.anaSayfayaDon}
-          </Link>
-        </p>
       </div>
     </main>
   );
