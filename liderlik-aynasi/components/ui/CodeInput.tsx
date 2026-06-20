@@ -35,25 +35,20 @@ export default function CodeInput({ value, onChange, onComplete, disabled }: Pro
     );
   }
 
-  // Rakam girince: kısa pop (scale) + amber glow nabzı. Tek atış, GPU, kesintiye
-  // dayanıklı. Kutu o an odağı kaybediyor (odak sıradakine geçti), bu yüzden
-  // 1.05 → 1.16 → 1 ile yumuşakça yerine oturur.
+  // Rakam girince: kısa, yumuşak pop (yalnız transform). Amber "dolu" görünümü
+  // CSS geçişiyle nazikçe gelir (kenar + altın gölge). Kutu o an odağı kaybediyor
+  // (odak sıradakine geçti) → 1.05'ten 1'e yumuşakça oturur. GPU, kesintiye dayanıklı.
   function pop(i: number) {
     if (azalt()) return;
     const el = refs.current[i];
     if (!el?.animate) return;
-    const inset = "inset 0 2px 8px rgba(0,0,0,0.35)";
     el.animate(
       [
-        { transform: "scale(1.05)", boxShadow: `0 0 0 0 rgba(224,164,88,0), ${inset}` },
-        {
-          transform: "scale(1.16)",
-          boxShadow: `0 0 0 6px rgba(224,164,88,0.35), ${inset}`,
-          offset: 0.4,
-        },
-        { transform: "scale(1)", boxShadow: `0 0 0 0 rgba(224,164,88,0), ${inset}` },
+        { transform: "scale(1.05)" },
+        { transform: "scale(1.13)", offset: 0.4 },
+        { transform: "scale(1)" },
       ],
-      { duration: 320, easing: YUMUSAK }
+      { duration: 300, easing: YUMUSAK }
     );
   }
 
@@ -111,8 +106,8 @@ export default function CodeInput({ value, onChange, onComplete, disabled }: Pro
               }}
               onBlur={() => setOdak((o) => (o === i ? null : o))}
               aria-label={`Kod hanesi ${i + 1}`}
-              className={`h-14 w-11 caret-transparent rounded-2xl border bg-white/[0.06] text-center text-2xl font-semibold text-slate-100 shadow-[inset_0_2px_8px_rgba(0,0,0,0.35)] outline-none transition-[transform,border-color,box-shadow] duration-[250ms] ease-[cubic-bezier(0.23,1,0.32,1)] focus:scale-105 focus:border-[#E0A458] focus:shadow-[0_0_0_4px_rgba(224,164,88,0.28),inset_0_2px_8px_rgba(0,0,0,0.35)] disabled:opacity-50 sm:h-16 ${
-                digit ? "border-[#C8893A]/70" : "border-white/15"
+              className={`kod-kutu h-14 w-11 text-center text-2xl font-semibold disabled:opacity-50 sm:h-16 ${
+                digit ? "kod-kutu--dolu" : ""
               }`}
             />
             {/* Aktif + boş hanede özel yanıp sönen imleç (native caret gizli) */}
