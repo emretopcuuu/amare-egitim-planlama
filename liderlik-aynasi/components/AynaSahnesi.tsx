@@ -58,7 +58,9 @@ export default function AynaSahnesi() {
           object-fit: cover;
           object-position: center 42%;
           transform-origin: center 40%;
-          animation: kenBurns 30s ease-in-out infinite alternate;
+          /* Hafif ken-burns; geniş ekranda dikey video zaten büyütüldüğü için
+             zoom düşük tutuldu (aşırı zoom bulanıklığı artırır). */
+          animation: kenBurns 32s ease-in-out infinite alternate;
         }
         /* Girdabın merkezinde nefes alan yumuşak ışıma — derinlik hissi katar */
         .isima {
@@ -90,10 +92,10 @@ export default function AynaSahnesi() {
         }
         @keyframes kenBurns {
           from {
-            transform: scale(1.04);
+            transform: scale(1.02);
           }
           to {
-            transform: scale(1.12);
+            transform: scale(1.07);
           }
         }
         @keyframes nefes {
