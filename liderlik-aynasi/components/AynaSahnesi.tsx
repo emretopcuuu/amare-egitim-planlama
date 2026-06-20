@@ -56,11 +56,9 @@ export default function AynaSahnesi() {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          object-position: center 42%;
-          transform-origin: center 40%;
-          /* Hafif ken-burns; geniş ekranda dikey video zaten büyütüldüğü için
-             zoom düşük tutuldu (aşırı zoom bulanıklığı artırır). */
-          animation: kenBurns 32s ease-in-out infinite alternate;
+          object-position: center 44%;
+          /* Çerçeve KİLİTLİ: zoom/ken-burns yok — gerçek bir tablo gibi sabit
+             durur, yalnız içindeki girdap döner (videonun kendi hareketi). */
         }
         /* Girdabın merkezinde nefes alan yumuşak ışıma — derinlik hissi katar */
         .isima {
@@ -90,14 +88,6 @@ export default function AynaSahnesi() {
             rgba(4, 16, 28, 0.55) 100%
           );
         }
-        @keyframes kenBurns {
-          from {
-            transform: scale(1.02);
-          }
-          to {
-            transform: scale(1.07);
-          }
-        }
         @keyframes nefes {
           0%,
           100% {
@@ -110,10 +100,6 @@ export default function AynaSahnesi() {
           }
         }
         @media (prefers-reduced-motion: reduce) {
-          .film {
-            animation: none;
-            transform: scale(1.04);
-          }
           .isima {
             animation: none;
           }
