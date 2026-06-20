@@ -70,72 +70,86 @@ export default function UstMenu({
       </button>
 
       {acik && (
+        // Dış katman = kaydırma kabı; iç katman = min-h-full flex ile DİKEY ORTALA.
+        // Bu ikili yapı, menü ekrandan uzun olsa bile (telefon) üstten kırpılmadan
+        // kaydırmaya izin verir; geniş ekranda tam ortada durur — asla alta yapışmaz.
         <div
-          className="fixed inset-0 z-50 flex flex-col justify-end overflow-y-auto bg-black/70 backdrop-blur-sm sm:justify-center sm:p-6"
+          className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm"
           onClick={() => setAcik(false)}
         >
-          <div
-            className="mx-auto w-full max-w-lg rounded-t-3xl border-t border-white/10 bg-midnight-card p-6 pb-10 sm:rounded-3xl sm:border"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <p className="prizma-serif ay-metin text-center text-2xl font-semibold">
-              {t.menuBaslik}
-            </p>
+          <div className="flex min-h-full items-center justify-center p-4">
+            <div
+              className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-midnight-card p-6"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Her zaman görünen kapatma çarpısı — menüyü kapatmak tek dokunuş */}
+              <button
+                onClick={() => setAcik(false)}
+                aria-label={t.menuKapat}
+                className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/[0.06] text-lg text-slate-300 transition-colors hover:bg-white/[0.12]"
+              >
+                ✕
+              </button>
 
-            {/* Birincil: büyük, dikey */}
-            {birincil.length > 0 && (
-              <>
-                <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                  {t.menuBirincilBaslik}
-                </p>
-                <nav className="mt-2 space-y-3">
-                  {birincil.map((b) => (
-                    <Link
-                      key={b.href}
-                      href={b.href}
-                      onClick={() => setAcik(false)}
-                      className="flex h-16 w-full items-center rounded-2xl border border-white/15 px-5 text-lg font-semibold text-slate-100 transition-colors hover:bg-white/[0.06]"
-                    >
-                      {b.etiket}
-                    </Link>
-                  ))}
-                </nav>
-              </>
-            )}
+              <p className="prizma-serif ay-metin text-center text-2xl font-semibold">
+                {t.menuBaslik}
+              </p>
 
-            {/* Ekstra: küçük, ikişerli ızgara */}
-            <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-              {t.menuEkstraBaslik}
-            </p>
-            <nav className="mt-2 grid grid-cols-2 gap-2.5">
-              {ekstra.map((b) => (
-                <Link
-                  key={b.href}
-                  href={b.href}
-                  onClick={() => setAcik(false)}
-                  className="flex h-14 w-full items-center justify-center rounded-2xl border border-white/15 px-3 text-center text-sm font-medium text-slate-200 transition-colors hover:bg-white/[0.06]"
-                >
-                  {b.etiket}
-                </Link>
-              ))}
-            </nav>
+              {/* Birincil: büyük, dikey */}
+              {birincil.length > 0 && (
+                <>
+                  <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                    {t.menuBirincilBaslik}
+                  </p>
+                  <nav className="mt-2 space-y-3">
+                    {birincil.map((b) => (
+                      <Link
+                        key={b.href}
+                        href={b.href}
+                        onClick={() => setAcik(false)}
+                        className="flex h-16 w-full items-center rounded-2xl border border-white/15 px-5 text-lg font-semibold text-slate-100 transition-colors hover:bg-white/[0.06]"
+                      >
+                        {b.etiket}
+                      </Link>
+                    ))}
+                  </nav>
+                </>
+              )}
 
-            <div className="mt-4 space-y-3">
-              <YaziBoyu />
-              <TemaSecimi />
+              {/* Ekstra: küçük, ikişerli ızgara */}
+              <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                {t.menuEkstraBaslik}
+              </p>
+              <nav className="mt-2 grid grid-cols-2 gap-2.5">
+                {ekstra.map((b) => (
+                  <Link
+                    key={b.href}
+                    href={b.href}
+                    onClick={() => setAcik(false)}
+                    className="flex h-14 w-full items-center justify-center rounded-2xl border border-white/15 px-3 text-center text-sm font-medium text-slate-200 transition-colors hover:bg-white/[0.06]"
+                  >
+                    {b.etiket}
+                  </Link>
+                ))}
+              </nav>
+
+              <div className="mt-4 space-y-3">
+                <YaziBoyu />
+                <TemaSecimi />
+              </div>
+              <button
+                onClick={cikis}
+                className="mt-4 flex h-14 w-full items-center justify-center rounded-2xl border border-red-400/30 px-5 text-base font-semibold text-red-300 transition-colors hover:bg-red-400/10"
+              >
+                {t.cikisYap}
+              </button>
+              <button
+                onClick={() => setAcik(false)}
+                className="mt-5 flex h-12 w-full items-center justify-center text-base text-slate-400 hover:text-slate-200"
+              >
+                {t.menuKapat}
+              </button>
             </div>
-            <button
-              onClick={cikis}
-              className="mt-4 flex h-14 w-full items-center justify-center rounded-2xl border border-red-400/30 px-5 text-base font-semibold text-red-300 transition-colors hover:bg-red-400/10"
-            >
-              {t.cikisYap}
-            </button>
-            <button
-              onClick={() => setAcik(false)}
-              className="mt-5 flex h-12 w-full items-center justify-center text-base text-slate-400 hover:text-slate-200"
-            >
-              {t.menuKapat}
-            </button>
           </div>
         </div>
       )}

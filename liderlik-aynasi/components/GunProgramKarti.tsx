@@ -66,12 +66,13 @@ export default function GunProgramKarti({ takim }: { takim: string | null }) {
     return () => clearInterval(id);
   }, []);
 
-  // Açık/kapalı günleri bir kez kur: kamp günündeysek bugünü, değilsek
-  // Cumartesi'yi aç (asıl farklılaşan plan o).
+  // Açık/kapalı günleri bir kez kur: yalnız bugün kamp günüyse o gün açık gelir;
+  // kamp dışında (önizleme) hepsi kapalı — Cumartesi "grubuna özel" rozetiyle
+  // dikkat çeker, kişi üstüne basınca açılır.
   useEffect(() => {
     if (!an || initEdildi) return;
     const bg = kampGunu(an.tarih);
-    setAcik({ 1: bg === 1, 2: bg === 2 || bg === null, 3: bg === 3 });
+    setAcik({ 1: bg === 1, 2: bg === 2, 3: bg === 3 });
     setInitEdildi(true);
   }, [an, initEdildi]);
 
@@ -172,8 +173,8 @@ export default function GunProgramKarti({ takim }: { takim: string | null }) {
                 </span>
                 <span className="text-sm font-semibold text-slate-100">{ad}</span>
                 {grupEtiket && (
-                  <span className="rounded-md bg-royal/25 px-1.5 py-0.5 text-[0.65rem] font-semibold text-royal-light">
-                    {grupEtiket}
+                  <span className="flex items-center gap-1 rounded-full bg-gradient-to-r from-gold/30 to-royal/30 px-2 py-0.5 text-[0.65rem] font-bold text-gold-light ring-1 ring-gold/40">
+                    ✨ {grupEtiket}&apos;e özel
                   </span>
                 )}
                 {bugunMu && (
