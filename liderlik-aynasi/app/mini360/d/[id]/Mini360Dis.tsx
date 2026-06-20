@@ -1,18 +1,30 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import { MINI360_IFADELER } from "@/lib/onFarkindalik";
 
 const t = tr.mini360;
 
-export default function Mini360Dis({ hedefId, ad }: { hedefId: string; ad: string }) {
-  const [puanlar, setPuanlar] = useState<Record<string, number>>({});
+export default function Mini360Dis({
+  hedefId,
+  ad,
+  mevcut,
+}: {
+  hedefId: string;
+  ad: string;
+  mevcut: Record<string, number>;
+}) {
+  const router = useRouter();
+  const [puanlar, setPuanlar] = useState<Record<string, number>>({ ...mevcut });
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [bitti, setBitti] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
 
+  const ilkVarmi = Object.keys(mevcut).length > 0;
   const tamam = MINI360_IFADELER.every((i) => puanlar[i.kod]);
 
   async function gonder() {
@@ -31,6 +43,8 @@ export default function Mini360Dis({ hedefId, ad }: { hedefId: string; ad: strin
         return;
       }
       setBitti(true);
+      titret([12, 40, 12]);
+      router.refresh();
     } catch {
       setHata(t.hata);
     } finally {
@@ -44,6 +58,9 @@ export default function Mini360Dis({ hedefId, ad }: { hedefId: string; ad: strin
         <p className="text-6xl">🙏</p>
         <h1 className="prizma-serif ay-metin mt-5 text-3xl font-semibold">{t.disTesekkurBaslik}</h1>
         <p className="mx-auto mt-4 max-w-sm text-lg leading-relaxed text-slate-300">{t.disTesekkurMetin}</p>
+        <Link href="/mini360" className="mt-8 rounded-xl bg-gold px-6 py-3 font-semibold text-[#1a1206]">
+          {t.disGeri}
+        </Link>
       </div>
     );
   }
@@ -53,6 +70,10 @@ export default function Mini360Dis({ hedefId, ad }: { hedefId: string; ad: strin
       <header>
         <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.disBaslik(ad)}</h1>
         <p className="mt-1 text-sm leading-relaxed text-slate-400">{t.disAciklama}</p>
+        {/* Gizlilik: karşı taraf senin verdiğini göremez — net söyle. */}
+        <p className="mt-3 rounded-xl bg-gold/[0.08] px-3 py-2 text-[0.8rem] leading-relaxed text-slate-300">
+          🔒 {t.disGizlilik(ad)}
+        </p>
       </header>
 
       <div className="space-y-4">
@@ -90,7 +111,7 @@ export default function Mini360Dis({ hedefId, ad }: { hedefId: string; ad: strin
         disabled={!tamam || gonderiliyor}
         className="btn-kor parilti flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-40"
       >
-        {gonderiliyor ? t.gonderiliyor : t.disGonder}
+        {gonderiliyor ? t.gonderiliyor : ilkVarmi ? t.disGuncelle : t.disGonder}
       </button>
     </div>
   );

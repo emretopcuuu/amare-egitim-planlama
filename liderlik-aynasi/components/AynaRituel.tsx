@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
+import { ortuAc, ortuKapat } from "@/lib/ortu";
 
 const t = tr.rituel;
 
@@ -116,6 +117,13 @@ export default function AynaRituel() {
   const samplerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const baslangicZamaniRef = useRef<number>(0);
   const sesSeviyeleriRef = useRef<number[]>([]);
+
+  // Ritüel TAM EKRAN sihirbaz: açıkken alt menüyü (AltNav) gizle — sihrin
+  // ortasında dolaşma çubuğu durmasın. Bitince/çıkınca menü geri gelir.
+  useEffect(() => {
+    ortuAc();
+    return () => ortuKapat();
+  }, []);
 
   useEffect(() => {
     // unmount temizliği: mikrofonu ve sayaçları serbest bırak

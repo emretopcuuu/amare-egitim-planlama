@@ -462,6 +462,7 @@ export type Database = {
           m4: number | null
           m5: number | null
           m6: number | null
+          rater_id: string | null
           target_id: string
           tur: number
         }
@@ -474,6 +475,7 @@ export type Database = {
           m4?: number | null
           m5?: number | null
           m6?: number | null
+          rater_id?: string | null
           target_id: string
           tur?: number
         }
@@ -486,6 +488,7 @@ export type Database = {
           m4?: number | null
           m5?: number | null
           m6?: number | null
+          rater_id?: string | null
           target_id?: string
           tur?: number
         }
@@ -499,6 +502,7 @@ export type Database = {
           m4: number | null
           m5: number | null
           m6: number | null
+          oylanma_istiyor: boolean
           participant_id: string
           tur: number
           updated_at: string
@@ -510,6 +514,7 @@ export type Database = {
           m4?: number | null
           m5?: number | null
           m6?: number | null
+          oylanma_istiyor?: boolean
           participant_id: string
           tur?: number
           updated_at?: string
@@ -521,6 +526,7 @@ export type Database = {
           m4?: number | null
           m5?: number | null
           m6?: number | null
+          oylanma_istiyor?: boolean
           participant_id?: string
           tur?: number
           updated_at?: string
