@@ -25,6 +25,7 @@ const PERDELER: Perde[] = [
 ];
 const SON = PERDELER.length - 1;
 const MUHUR_SURE = 1500; // basılı tutma süresi (ms)
+const NEFES_MS = 160; // ses bitince cümleler arası doğal nefes payı (ms)
 
 export default function PusulaAcilis({
   ad,
@@ -79,60 +80,55 @@ export default function PusulaAcilis({
     onBitti();
   }
 
-  // PERDE SÜRÜCÜSÜ: her perdede AYNA replisini seslendirir; oto perdelerde ses
-  // bitince VEYA minSure dolunca (hangisi geçse) sonrakine geçer. Ses yoksa
-  // yalnız minSure. Mühür perdesi (oto:false) basılı-tut ile ilerler.
+  // PERDE SÜRÜCÜSÜ: her perdede repliği kişinin sesiyle çalar. Ses AÇIKSA geçişi
+  // SES BİTİŞİ yönetir (kısa doğal nefes payıyla) — minSure beklenmez, böylece
+  // cümleler arası robotik boşluk olmaz. Ses YOKSA minSure (okuma süresi) gibi
+  // davranır. Mühür perdesi (oto:false) basılı-tutla ilerler.
   useEffect(() => {
     if (!basladi) return;
     const def = PERDELER[perde];
     let iptal = false;
-    let sesBitti = !sesAcik;
-    let sureBitti = false;
+    let gecti = false;
+    const bekleyenler: ReturnType<typeof setTimeout>[] = [];
 
     const ilerle = () => {
-      if (iptal || !def.oto || !sesBitti || !sureBitti) return;
+      if (iptal || gecti || !def.oto) return;
+      gecti = true;
       if (perde >= SON) bitir();
       else setPerde((p) => p + 1);
     };
-
-    const zaman = setTimeout(() => {
-      sureBitti = true;
-      ilerle();
-    }, def.minSure);
+    const nefesSonra = () => bekleyenler.push(setTimeout(ilerle, NEFES_MS));
+    const sessizGec = () => bekleyenler.push(setTimeout(ilerle, def.minSure));
 
     const a = sesRef.current;
     if (sesAcik && a) {
-      a.onended = () => {
-        sesBitti = true;
-        ilerle();
-      };
+      a.onended = nefesSonra; // ses bitince kısa doğal nefes, sonra geç
       a.onerror = () => {
         setSesAcik(false);
-        sesBitti = true;
-        ilerle();
+        sessizGec();
       };
       void sesUrlGetir(def.kod).then((url) => {
         if (iptal) return;
         if (!url) {
           // klon yok / anahtar yok → sessiz moda düş, akış sürsün
           setSesAcik(false);
-          sesBitti = true;
-          ilerle();
+          sessizGec();
           return;
         }
         a.src = url;
         void a.play().catch(() => {
           setSesAcik(false);
-          sesBitti = true;
-          ilerle();
+          sessizGec();
         });
       });
+    } else {
+      sessizGec();
     }
     titret(perde === 0 ? [10, 40, 10] : 12);
 
     return () => {
       iptal = true;
-      clearTimeout(zaman);
+      for (const z of bekleyenler) clearTimeout(z);
       if (a) {
         a.onended = null;
         a.onerror = null;
