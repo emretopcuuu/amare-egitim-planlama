@@ -15,13 +15,13 @@ const R = t.replik;
 type Perde = { kod: keyof typeof R | string; oto: boolean; minSure: number };
 // İndeks: 0 eşik · 1 tanıma · 2-3 bahis · 4 kıvılcım · 5 mühür · 6 geçiş
 const PERDELER: Perde[] = [
-  { kod: "p0", oto: true, minSure: 3200 },
-  { kod: "p1", oto: true, minSure: 4800 },
-  { kod: "p2a", oto: true, minSure: 2800 },
-  { kod: "p2b", oto: true, minSure: 3400 },
-  { kod: "p3", oto: true, minSure: 5200 },
-  { kod: "p4", oto: false, minSure: 4600 }, // mühür: basılı tut ilerletir
-  { kod: "p5", oto: true, minSure: 2600 },
+  { kod: "p0", oto: true, minSure: 3600 },
+  { kod: "p1", oto: true, minSure: 4600 },
+  { kod: "p2a", oto: true, minSure: 4400 },
+  { kod: "p2b", oto: true, minSure: 4800 },
+  { kod: "p3", oto: true, minSure: 4600 },
+  { kod: "p4", oto: false, minSure: 3800 }, // mühür: basılı tut ilerletir
+  { kod: "p5", oto: true, minSure: 5400 },
 ];
 const SON = PERDELER.length - 1;
 const MUHUR_SURE = 1500; // basılı tutma süresi (ms)
@@ -45,6 +45,24 @@ export default function PusulaAcilis({
   const bittiRef = useRef(false);
   const muhurZam = useRef<ReturnType<typeof setTimeout> | null>(null);
   const muhurRaf = useRef<number | null>(null);
+  // Replik kodu → blob objectURL (kişinin kendi sesi). Tek sefer çekilir, anında
+  // çalınır (perde geçişinde gecikme olmasın). Unmount'ta serbest bırakılır.
+  const sesUrlRef = useRef<Record<string, string>>({});
+
+  // Repliğin sesini (kişinin klonuyla) getir + önbelleğe al; yoksa null.
+  async function sesUrlGetir(kod: string): Promise<string | null> {
+    const m = sesUrlRef.current;
+    if (m[kod]) return m[kod];
+    try {
+      const r = await fetch(`/api/acilis-ses?k=${kod}`);
+      if (!r.ok) return null;
+      const url = URL.createObjectURL(await r.blob());
+      m[kod] = url;
+      return url;
+    } catch {
+      return null;
+    }
+  }
 
   // prefers-reduced-motion: video/parıltı yerine sade kararma, akış aynı kalır.
   useEffect(() => {
@@ -93,12 +111,21 @@ export default function PusulaAcilis({
         sesBitti = true;
         ilerle();
       };
-      a.src = `/api/ayna-ses?k=${def.kod}`;
-      void a.play().catch(() => {
-        // autoplay reddi / anahtar yok → sessiz moda düş, akış sürsün
-        setSesAcik(false);
-        sesBitti = true;
-        ilerle();
+      void sesUrlGetir(def.kod).then((url) => {
+        if (iptal) return;
+        if (!url) {
+          // klon yok / anahtar yok → sessiz moda düş, akış sürsün
+          setSesAcik(false);
+          sesBitti = true;
+          ilerle();
+          return;
+        }
+        a.src = url;
+        void a.play().catch(() => {
+          setSesAcik(false);
+          sesBitti = true;
+          ilerle();
+        });
       });
     }
     titret(perde === 0 ? [10, 40, 10] : 12);
@@ -158,6 +185,16 @@ export default function PusulaAcilis({
     []
   );
 
+  // Başlayınca tüm replikleri arka planda ısıt: kişinin sesi O AN üretilsin,
+  // perde geçişlerinde bekleme olmasın. Unmount'ta blob URL'lerini bırak.
+  useEffect(() => {
+    if (basladi) for (const p of PERDELER) void sesUrlGetir(p.kod);
+    return () => {
+      for (const u of Object.values(sesUrlRef.current)) URL.revokeObjectURL(u);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [basladi]);
+
   const def = PERDELER[perde];
 
   return (
@@ -212,15 +249,6 @@ export default function PusulaAcilis({
       {basladi && (
         <div className="relative z-10 flex h-full flex-col items-center justify-center px-8 text-center">
           <div key={perde} className="of-adim w-full max-w-md">
-            {def.kod === "p1" && (
-              <>
-                <p className="prizma-serif ay-metin text-4xl font-bold tracking-wide text-gold-light sm:text-5xl">
-                  {ad}
-                </p>
-                <p className="mt-5 text-xl leading-relaxed text-slate-200">{R.p1}</p>
-              </>
-            )}
-
             {def.kod === "p4" ? (
               <>
                 <p className="text-lg leading-relaxed text-slate-200">{R.p4}</p>
@@ -268,10 +296,18 @@ export default function PusulaAcilis({
               <p className="prizma-serif text-2xl font-semibold leading-snug text-slate-50 sm:text-3xl">
                 {def.kod === "p2a" ? R.p2a : R.p2b}
               </p>
-            ) : def.kod === "p1" ? null : (
-              <p className="prizma-serif ay-metin text-3xl font-semibold leading-snug">
-                {R[def.kod]}
-              </p>
+            ) : (
+              <>
+                {/* p0 selamında ad: "bu senin sesin" kişisel kancası */}
+                {def.kod === "p0" && ad && (
+                  <p className="mb-3 text-sm font-semibold uppercase tracking-[0.3em] text-gold-light/80">
+                    {ad}
+                  </p>
+                )}
+                <p className="prizma-serif ay-metin text-3xl font-semibold leading-snug sm:text-4xl">
+                  {R[def.kod]}
+                </p>
+              </>
             )}
           </div>
         </div>
