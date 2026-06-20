@@ -158,7 +158,7 @@ export default function KurulumSihirbazi({
           aria-disabled={!listeVar}
           className={`mt-3 inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-bold transition-colors ${
             listeVar
-              ? "bg-gold text-midnight hover:bg-gold-light"
+              ? "btn-kor"
               : "pointer-events-none bg-midnight-soft text-slate-500"
           }`}
         >
