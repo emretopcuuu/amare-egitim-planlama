@@ -167,14 +167,6 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
         </button>
       </header>
 
-      {/* Ne işe yarar: konuştukça kamp kişiselleşir — amacı her zaman görünür. */}
-      <div className="shrink-0 border-b border-white/5 bg-midnight-card/85 px-4 py-2.5 backdrop-blur-md">
-        <p className="text-[0.7rem] leading-relaxed text-slate-300">
-          <span className="mr-1.5">💡</span>
-          {t.nedir}
-        </p>
-      </div>
-
       {/* #4 Hafıza şeridi: AYNA'nın kişi hakkında bildiği çekirdek — "seni hatırlıyorum" */}
       {hafiza && (
         <div className="border-b border-white/5 bg-midnight-card/85 px-4 py-2.5 backdrop-blur-md">
