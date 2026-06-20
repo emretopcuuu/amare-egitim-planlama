@@ -242,7 +242,7 @@ export default function AdminNav({
         {/* #6 Kokpit rozetleri: rapor + mühür durumu, bekleyen moderasyon */}
         {raporAcik && (
           <span className="shrink-0 rounded-full bg-emerald-400/15 px-2.5 py-1 text-xs font-medium text-emerald-400">
-            🪞 {k.raporAcik}
+            👁 {k.raporAcik}
           </span>
         )}
         {muhurAcik && (

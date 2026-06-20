@@ -113,7 +113,7 @@ export default async function AynaPage() {
   // #3 Story slaytları — en kritik içgörüler (kör nokta doruk noktası)
   const slaytlar: Slayt[] = [
     {
-      ikon: "🪞",
+      ikon: "👁",
       ust: t.hikayeUstAcilis,
       baslik: t.hikayeAcilis(session.ad),
       metin: t.hikayeAcilisMetin(verdigiPuan ?? 0),

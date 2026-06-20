@@ -73,7 +73,7 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
     if (d.acikDalgaId === 3) {
       return cogunlukBitti
         ? {
-            ikon: "🪞",
+            ikon: "👁",
             baslik: "Kapanış vakti — Dalga 3'ü kapat",
             aciklama: `${d.ozTamam}/${d.ozToplam} son dalgayı bitirdi. Dalga 3'ü kapat, aynaları açmaya hazırlan.`,
             butonEtiket: "Dalga 3'ü Kapat",

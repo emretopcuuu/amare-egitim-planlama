@@ -170,7 +170,7 @@ export default async function PlanPage() {
           href="/kocu"
           className="btn-kor mt-3 inline-flex h-12 items-center justify-center rounded-xl px-6 text-sm font-bold"
         >
-          🪞 {t.checkinDugme}
+          👁 {t.checkinDugme}
         </Link>
       </section>
 

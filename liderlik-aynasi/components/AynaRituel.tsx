@@ -444,7 +444,7 @@ export default function AynaRituel() {
         {asama === "foto" && (
           <div className="text-center">
             <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
-              🪞 {t.fotoBaslik}
+              👁 {t.fotoBaslik}
             </h1>
             <p className="mt-5 text-xl leading-relaxed text-slate-200">{t.fotoAciklama}</p>
             <input

@@ -281,7 +281,7 @@ const CMT_SABIT: { bas: string; bit: string; baslik: string; simge: string; serb
   { bas: "07:00", bit: "08:00", baslik: "Antreman · Yoga · Meditasyon", simge: "🌲" },
   { bas: "08:00", bit: "09:30", baslik: "Kahvaltı", simge: "🍽" },
   { bas: "19:30", bit: "21:00", baslik: "Akşam Yemeği", simge: "🍽" },
-  { bas: "21:00", bit: "23:00", baslik: SERBEST_BASLIK, simge: "🪞", serbest: true },
+  { bas: "21:00", bit: "23:00", baslik: SERBEST_BASLIK, simge: "👁", serbest: true },
 ];
 
 /** Bir grubun Cumartesi tam-gün çizelgesi (sabit bloklar + grup + boş pencereler). */
@@ -319,7 +319,7 @@ export function cumartesiGunTimeline(grup: number): GunSatiri[] {
     if (bit - bas >= 10) {
       doldur.push({
         bas, bit, basY: dkCmt(bas), bitY: dkCmt(bit),
-        baslik: SERBEST_BASLIK, simge: "🪞", serbest: true,
+        baslik: SERBEST_BASLIK, simge: "👁", serbest: true,
       });
     }
   }

@@ -59,7 +59,7 @@ export async function yolculukOlaylari(db: Db, pid: string): Promise<YolcuOlay[]
   if (pusula?.tamamlandi_at)
     olaylar.push({ ts: pusula.tamamlandi_at, ikon: "🧭", baslik: "Pusulanı kurdun — nedenini buldun", vurgu: true });
   if (of?.tamamlandi_at)
-    olaylar.push({ ts: of.tamamlandi_at, ikon: "🪞", baslik: "Ön Farkındalık'ı tamamladın", vurgu: true });
+    olaylar.push({ ts: of.tamamlandi_at, ikon: "👁", baslik: "Ön Farkındalık'ı tamamladın", vurgu: true });
   if (kisi?.camp_unlocked_at)
     olaylar.push({ ts: kisi.camp_unlocked_at, ikon: "⛺", baslik: "Kampa adım attın", vurgu: true });
   if (ses?.created_at)

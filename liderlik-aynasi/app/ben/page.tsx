@@ -240,7 +240,7 @@ export default async function BenPage() {
               href="/ayna"
               className="btn-kor flex h-12 items-center justify-center rounded-xl text-sm font-bold"
             >
-              🪞 {t.linkRapor}
+              👁 {t.linkRapor}
             </Link>
           )}
           <Link

@@ -124,7 +124,7 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
           ←
         </Link>
         <div className="flex items-center gap-2">
-          <span className="text-2xl" aria-hidden>🪞</span>
+          <span className="text-2xl" aria-hidden>👁</span>
           <div>
             <p className="prizma-serif ay-metin text-base font-semibold leading-none">{t.baslik}</p>
             <p className="mt-0.5 text-[0.7rem] text-slate-500">{t.altBaslik}</p>

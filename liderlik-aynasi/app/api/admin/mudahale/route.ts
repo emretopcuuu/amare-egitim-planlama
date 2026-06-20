@@ -65,7 +65,7 @@ export async function POST(req: Request) {
   if (eylem === "fisilti") {
     const mesaj = typeof body?.mesaj === "string" ? body.mesaj.trim().slice(0, 300) : "";
     if (!mesaj) return Response.json({ hata: tr.admin.mudahale.hata }, { status: 400 });
-    await katilimciyaBildir(db, hedefId, "🪞 AYNA", mesaj);
+    await katilimciyaBildir(db, hedefId, "👁 AYNA", mesaj);
     return Response.json({ ok: true });
   }
 

@@ -399,7 +399,7 @@ export default async function AnaSayfa({
           metin={t.boslukMetin}
           href="/bosluk"
           dugme={t.boslukDugme}
-          ikon="🪞"
+          ikon="👁"
           vurgu
         />
       </Sayfa>
@@ -415,7 +415,7 @@ export default async function AnaSayfa({
           metin={t.raporMetin}
           href="/ayna"
           dugme={t.aynaniGor}
-          ikon="🪞"
+          ikon="👁"
           vurgu
         />
       </Sayfa>

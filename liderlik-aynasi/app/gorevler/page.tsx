@@ -278,7 +278,7 @@ export default async function GorevlerPage() {
               href="/kocu"
               className="btn-kor flex h-12 items-center justify-center rounded-xl text-sm font-bold"
             >
-              🪞 {t.bosKocu}
+              👁 {t.bosKocu}
             </Link>
             <Link
               href="/takdir"

@@ -59,7 +59,7 @@ export default function BoslukDeneyim({
       <div className="sahne-giris w-full max-w-md">
         {/* 0 — Giriş */}
         {adim === 0 && (
-          <Beat ikon="🪞" onIleri={() => setAdim(1)}>
+          <Beat ikon="👁" onIleri={() => setAdim(1)}>
             <p className="text-lg leading-relaxed text-slate-300">
               {tr.app.name}
             </p>

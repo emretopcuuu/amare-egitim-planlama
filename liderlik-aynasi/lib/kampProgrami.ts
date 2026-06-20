@@ -189,7 +189,7 @@ export const ETKINLIK_SIMGESI: Record<EtkinlikTuru, string> = {
   serbest: "🌿",
   ara: "☕",
   gezi: "🚗",
-  ayna: "🪞",
+  ayna: "👁",
 };
 
 // ---- Zaman yardımcıları (hepsi dakika-bazlı, saf) ----
