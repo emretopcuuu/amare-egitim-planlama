@@ -240,6 +240,23 @@ body.gunes-modu .kart-cerceve {
   }
 }
 
+/* Giriş kodu kutusu — aktif hanedeki özel yanıp sönen imleç (native caret
+   gizli; bu daha kontrollü, sakin bir blink). Hareket-azaltta global kural
+   süreyi sıfırlar → imleç sabit görünür kalır (kaybolmaz). */
+@keyframes kod-imlec-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  55%,
+  100% {
+    opacity: 0;
+  }
+}
+.kod-imlec {
+  animation: kod-imlec-blink 1.05s steps(1, end) infinite;
+}
+
 /* Kıvılcım (XP) kazanım vurgusu: rakam belirirken kısa altın nabız + büyüme. */
 .kivilcim-vurgu {
   animation: kivilcim-belir 0.7s ease-out both;
