@@ -2627,6 +2627,7 @@ export const tr = {
   ses: {
     baslat: "Sesle Yaz",
     dinliyor: "Dinliyorum… durdurmak için dokun",
+    dinliyorKisa: "Dinliyorum",
     hata: {
       izin: "Mikrofon izni gerekli. Adres çubuğundaki 🎙 simgesine dokunup izin ver, sonra tekrar dene.",
       mesgul:
