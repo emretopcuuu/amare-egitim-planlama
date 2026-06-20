@@ -6,7 +6,7 @@ import PusulaAcilis from "@/components/PusulaAcilis";
 // Pusula sinematik açılışını egzersizden ÖNCE bir kez gösterir. "goster" yalnız
 // yeni başlayanlar için açıktır (sunucu kapısı); cihaz başına localStorage ile
 // tekrar oynatılmaz. Bitince/geçilince PusulaSohbet ortaya çıkar (zaten arkada).
-const ANAHTAR = "la_pusula_acilis_v1";
+const ANAHTAR = "la_pusula_acilis_v2";
 
 export default function PusulaGiris({
   ad,
