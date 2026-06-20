@@ -91,7 +91,7 @@ export default function DuyuruGonder({ takimlar }: { takimlar: string[] }) {
         <button
           onClick={gonder}
           disabled={!gecerli || !onay || gonderiliyor}
-          className="flex h-12 w-full items-center justify-center rounded-xl bg-gold text-sm font-bold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
+          className="flex h-12 w-full items-center justify-center rounded-xl bg-gold text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-40"
         >
           {gonderiliyor ? t.gonderiliyor : `🔔 ${t.gonder}`}
         </button>

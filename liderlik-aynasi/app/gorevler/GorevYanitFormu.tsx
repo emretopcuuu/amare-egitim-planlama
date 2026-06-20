@@ -241,7 +241,7 @@ export default function GorevYanitFormu({
         <button
           type="submit"
           disabled={yanit.trim().length < 2 || gonderiliyor}
-          className="h-11 flex-1 btn-3d rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-11 flex-1 btn-3d rounded-xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
         >
           {gonderiliyor ? t.gonderiliyor : t.gonder}
         </button>
@@ -348,7 +348,7 @@ function YansimaKapanisi({ gorevId }: { gorevId: string }) {
           type="button"
           onClick={gonder}
           disabled={metin.trim().length < 2 || gonderiliyor}
-          className="h-11 flex-1 btn-3d rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+          className="h-11 flex-1 btn-3d rounded-xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
         >
           {gonderiliyor ? t.yansimaGonderiliyor : t.yansimaGonder}
         </button>

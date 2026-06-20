@@ -225,7 +225,7 @@ export default async function DegerlendirPage() {
             <p className="mt-2 text-sm text-slate-300">{tr.tahmin.kartAciklama}</p>
             <Link
               href="/tahmin"
-              className="mt-4 inline-block btn-3d rounded-xl bg-gold px-5 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light"
+              className="mt-4 inline-block btn-3d rounded-xl bg-gold px-5 py-2.5 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light"
             >
               {tr.tahmin.tahminYap}
             </Link>

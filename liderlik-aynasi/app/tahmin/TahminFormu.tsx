@@ -102,7 +102,7 @@ export default function TahminFormu({ ozellikler }: { ozellikler: Ozellik[] }) {
       <button
         type="submit"
         disabled={!hazir}
-        className="h-12 w-full btn-3d rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+        className="h-12 w-full btn-3d rounded-xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
       >
         {gonderiliyor ? tr.tahmin.gonderiliyor : tr.tahmin.gonder}
       </button>

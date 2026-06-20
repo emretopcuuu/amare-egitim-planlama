@@ -106,7 +106,7 @@ export default function KurulumSihirbazi({
               <button
                 onClick={iceAktar}
                 disabled={!dosyaAdi || yukleniyor}
-                className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {yukleniyor ? t.yukleniyor : t.yukle}
               </button>

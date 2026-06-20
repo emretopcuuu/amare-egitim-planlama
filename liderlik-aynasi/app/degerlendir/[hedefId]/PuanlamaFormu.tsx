@@ -343,7 +343,7 @@ export default function PuanlamaFormu({
                 type="button"
                 onClick={gonder}
                 disabled={gonderiliyor || puanlananlar.length === 0}
-                className="rounded-lg bg-gold px-3 py-1.5 text-sm font-bold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
+                className="rounded-lg bg-gold px-3 py-1.5 text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-40"
               >
                 {gonderiliyor ? "…" : `💾 ${tr.puanlama.kaydetCik}`}
               </button>

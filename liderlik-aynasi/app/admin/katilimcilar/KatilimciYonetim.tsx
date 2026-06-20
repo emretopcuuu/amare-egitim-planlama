@@ -511,7 +511,7 @@ export default function KatilimciYonetim({
           <input value={kisi.telefon} onChange={(e) => setKisi({ ...kisi, telefon: e.target.value })} placeholder={t.alanTelefon} aria-label={t.alanTelefon} className={giris} />
           <input value={kisi.eposta} onChange={(e) => setKisi({ ...kisi, eposta: e.target.value })} placeholder={t.alanEposta} aria-label={t.alanEposta} className={giris} />
         </div>
-        <button onClick={ekle} disabled={!kisi.ad.trim() || ekleniyor} className="mt-4 rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40">
+        <button onClick={ekle} disabled={!kisi.ad.trim() || ekleniyor} className="mt-4 rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-40">
           {ekleniyor ? t.ekleniyor : t.ekle}
         </button>
         {ekleMesaj && <p className="mt-3 text-sm font-medium text-emerald-400">{ekleMesaj}</p>}
@@ -527,7 +527,7 @@ export default function KatilimciYonetim({
             <input type="number" min={2} max={Math.max(2, kisiler.length)} value={kisiBasi} onChange={(e) => setKisiBasi(Math.max(2, Number(e.target.value) || 2))} className={`${giris} w-20 text-center`} />
           </label>
           <span className="text-xs font-medium text-gold-light/80">{onizleme}</span>
-          <button onClick={otomatikDagit} disabled={takimMesgul} className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40">
+          <button onClick={otomatikDagit} disabled={takimMesgul} className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-40">
             {takimMesgul ? t.dagitiliyor : t.otomatikDagit}
           </button>
         </div>
@@ -575,7 +575,7 @@ export default function KatilimciYonetim({
             {dosyaAdi ?? t.dosyaSec}
             <input ref={dosyaRef} type="file" accept=".csv,text/csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" className="hidden" onChange={(e) => { setDosyaAdi(e.target.files?.[0]?.name ?? null); setDosyaMesaj(null); setDosyaHata(null); }} />
           </label>
-          <button onClick={iceAktar} disabled={!dosyaAdi || yukleniyor} className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40">
+          <button onClick={iceAktar} disabled={!dosyaAdi || yukleniyor} className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-40">
             {yukleniyor ? t.iceAktariliyor : t.iceAktar}
           </button>
         </div>
@@ -694,7 +694,7 @@ export default function KatilimciYonetim({
                   <button
                     onClick={kaydetDuzenle}
                     disabled={duzenleYukleniyor}
-                    className="rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
+                    className="rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-40"
                   >
                     {duzenleYukleniyor ? t.duzenleKaydediliyor : t.duzenleKaydet}
                   </button>

@@ -70,7 +70,7 @@ export default function BoslukKontrol() {
           className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${
             acik
               ? "border border-royal-light/40 text-slate-300 hover:bg-midnight-soft"
-              : "bg-gold text-midnight hover:bg-gold-light"
+              : "bg-gold text-[#1a1206] hover:bg-gold-light"
           }`}
         >
           {acik ? t.pencereKapat : t.pencereAc}

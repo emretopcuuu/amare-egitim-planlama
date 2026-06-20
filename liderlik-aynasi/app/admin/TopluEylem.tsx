@@ -87,7 +87,7 @@ export default function TopluEylem({
           <button
             onClick={() => void topluDurt()}
             disabled={mesgul}
-            className="rounded-lg bg-gold px-4 py-1.5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+            className="rounded-lg bg-gold px-4 py-1.5 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
           >
             {mesgul ? <Bekle /> : t.secilenDurt(secili.size)}
           </button>

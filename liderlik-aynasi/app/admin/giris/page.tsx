@@ -68,7 +68,7 @@ export default function AdminGirisPage() {
           <button
             type="submit"
             disabled={!sifre || yukleniyor}
-            className="h-12 w-full btn-3d rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+            className="h-12 w-full btn-3d rounded-xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
           >
             {yukleniyor ? tr.giris.girisYapiliyor : tr.adminGiris.girisYap}
           </button>

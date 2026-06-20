@@ -72,7 +72,7 @@ export default function KonusanYansima({
           />
           {!caliyor && (
             <span className="absolute inset-0 flex items-center justify-center bg-black/40">
-              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-2xl text-midnight shadow-xl">
+              <span className="flex h-16 w-16 items-center justify-center rounded-full bg-white/90 text-2xl text-[#1a1206] shadow-xl">
                 ▶
               </span>
             </span>

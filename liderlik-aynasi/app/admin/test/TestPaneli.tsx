@@ -111,7 +111,7 @@ export default function TestPaneli({
         <button
           onClick={tikGonder}
           disabled={mesgul !== null}
-          className="mt-5 w-full btn-3d rounded-xl bg-gold px-4 py-3 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+          className="mt-5 w-full btn-3d rounded-xl bg-gold px-4 py-3 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
         >
           {mesgul === "tik" ? t.tikCalisiyor : t.tikCalistir}
         </button>
@@ -136,7 +136,7 @@ export default function TestPaneli({
         <button
           onClick={() => void eylemGonder("demo-olustur")}
           disabled={mesgul !== null}
-          className="mt-4 w-full btn-3d rounded-xl bg-gold px-4 py-3 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+          className="mt-4 w-full btn-3d rounded-xl bg-gold px-4 py-3 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
         >
           {mesgul === "demo-olustur" ? t.calisiyor : t.demoOlustur}
         </button>

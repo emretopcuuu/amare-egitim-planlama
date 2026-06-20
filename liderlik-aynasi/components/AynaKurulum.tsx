@@ -167,7 +167,7 @@ export default function AynaKurulum() {
           )}
           <button
             onClick={tekrarDene}
-            className="mt-4 w-full btn-3d rounded-xl bg-gold px-4 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light"
+            className="mt-4 w-full btn-3d rounded-xl bg-gold px-4 py-2.5 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light"
           >
             {t.izinTekrarDene}
           </button>
@@ -183,7 +183,7 @@ export default function AynaKurulum() {
           )}
           <button
             onClick={izinVer}
-            className="mt-4 w-full btn-3d rounded-xl bg-gold px-4 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light"
+            className="mt-4 w-full btn-3d rounded-xl bg-gold px-4 py-2.5 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light"
           >
             {t.izinVer}
           </button>

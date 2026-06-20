@@ -161,7 +161,7 @@ export default function ProgramYonetimi({ maddeler }: { maddeler: Madde[] }) {
         <button
           type="submit"
           disabled={bekliyor || !baslangic || !baslik.trim()}
-          className="mt-4 btn-3d rounded-xl bg-gold px-5 py-2.5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+          className="mt-4 btn-3d rounded-xl bg-gold px-5 py-2.5 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
         >
           {bekliyor ? t.ekleniyor : t.ekle}
         </button>

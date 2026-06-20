@@ -130,7 +130,7 @@ export default function AynaAniKontrol({ acik, mektupHazir, mektupToplam }: Prop
           className={`rounded-xl px-6 py-3 font-bold transition-colors disabled:opacity-50 ${
             acik
               ? "border border-royal-light/40 text-slate-300 hover:bg-midnight-soft"
-              : "bg-gold text-midnight shadow-lg shadow-gold/20 hover:bg-gold-light"
+              : "bg-gold text-[#1a1206] shadow-lg shadow-gold/20 hover:bg-gold-light"
           }`}
         >
           {bekliyor ? <Bekle /> : acik ? t.kapat : `✨ ${t.ac}`}

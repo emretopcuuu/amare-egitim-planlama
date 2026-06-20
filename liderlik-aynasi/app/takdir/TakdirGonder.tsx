@@ -90,7 +90,7 @@ export default function TakdirGonder({ kisiler }: { kisiler: Kisi[] }) {
       <button
         onClick={gonder}
         disabled={gonderiliyor || !hedef || mesaj.trim().length < 2}
-        className="mt-3 w-full btn-3d rounded-xl bg-gold px-4 py-3 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
+        className="mt-3 w-full btn-3d rounded-xl bg-gold px-4 py-3 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-40"
       >
         {gonderiliyor ? t.gonderiliyor : t.gonder}
       </button>

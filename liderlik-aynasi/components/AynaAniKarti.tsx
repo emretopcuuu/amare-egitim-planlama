@@ -48,7 +48,7 @@ export default function AynaAniKarti() {
       <button
         type="button"
         onClick={gordum}
-        className="mt-4 h-11 w-full rounded-2xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light"
+        className="mt-4 h-11 w-full rounded-2xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light"
       >
         {t.gordum}
       </button>

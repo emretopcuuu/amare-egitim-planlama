@@ -94,7 +94,7 @@ export default function FotoYukle() {
             <button
               onClick={gonder}
               disabled={gonderiliyor}
-              className="flex-1 btn-3d rounded-xl bg-gold px-4 py-3 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+              className="flex-1 btn-3d rounded-xl bg-gold px-4 py-3 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
             >
               {gonderiliyor ? t.gonderiliyor : t.gonder}
             </button>

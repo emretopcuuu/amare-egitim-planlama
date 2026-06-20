@@ -110,7 +110,7 @@ export default function DalgaKontrol({
               <button
                 onClick={() => degistir(d.id, true)}
                 disabled={bekleyen !== null}
-                className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+                className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
               >
                 {bekleyen === d.id ? <Bekle /> : tr.admin.dalga.ac}
               </button>
