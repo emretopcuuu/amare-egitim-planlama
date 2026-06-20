@@ -6,6 +6,7 @@ import { pusulaDurum, pusulaGecmis } from "@/lib/pusula";
 import { aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { tr } from "@/lib/i18n/tr";
 import PusulaSohbet from "./PusulaSohbet";
+import PusulaGiris from "./PusulaGiris";
 import HazirlikAkis from "./HazirlikAkis";
 import ProfilFoto from "@/components/ProfilFoto";
 import CanliAyna from "@/components/CanliAyna";
@@ -29,7 +30,7 @@ export default async function PusulaSayfa() {
     pusulaGecmis(db, session.sub),
     db
       .from("participants")
-      .select("consent_at, profil_foto_path, yuz_fotolari")
+      .select("consent_at, profil_foto_path, yuz_fotolari, full_name")
       .eq("id", session.sub)
       .maybeSingle(),
     db.from("pusula").select("oncelikler").eq("participant_id", session.sub).maybeSingle(),
@@ -158,13 +159,19 @@ export default async function PusulaSayfa() {
     );
   }
 
+  // Sinematik açılış yalnız yeni başlayana (rıza yok + öncelik yok) bir kez oynar.
+  const ad = (kisi?.full_name ?? "").trim().split(/\s+/)[0] || "";
+  const acilisGoster = !kisi?.consent_at && !durum.onceliklerVar;
+
   return (
-    <PusulaSohbet
-      baslangic={gecmis}
-      rizaVar={!!kisi?.consent_at}
-      onceliklerVar={durum.onceliklerVar}
-      oncelikler={oncelikler}
-      asamaBaslangic={durum.asama}
-    />
+    <PusulaGiris ad={ad} goster={acilisGoster}>
+      <PusulaSohbet
+        baslangic={gecmis}
+        rizaVar={!!kisi?.consent_at}
+        onceliklerVar={durum.onceliklerVar}
+        oncelikler={oncelikler}
+        asamaBaslangic={durum.asama}
+      />
+    </PusulaGiris>
   );
 }
