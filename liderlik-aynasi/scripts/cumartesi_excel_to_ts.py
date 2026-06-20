@@ -61,6 +61,10 @@ def main(path):
     print("// ÜRETİLDİ: scripts/cumartesi_excel_to_ts.py — elle düzenleme, Excel'den yeniden üret.")
     print("export const CUMARTESI_PROGRAMI: CmtBlok[] = [")
     for g, b, bit, tur, baslik, det in bloklar:
+        # David hazırlık bloğu kullanıcıya nazik metinle gösterilir (Excel'deki ham
+        # "Üst baş / el yüz" yerine).
+        if tur == "david_hazirlik":
+            baslik, det = "David ile toplantı öncesi hazırlık", "Dress code: Smart Casual"
         d = f', detay: {det!r}' if det else ""
         print(f'  {{ grup: {g}, baslangic: "{b}", bitis: "{bit}", tur: "{tur}", baslik: {baslik!r}{d} }},')
     print("];")
