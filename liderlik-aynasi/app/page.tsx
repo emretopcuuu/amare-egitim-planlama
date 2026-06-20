@@ -146,10 +146,17 @@ export default async function AnaSayfa({
   if (ayar.get("oyun_secimi_acik") === "true" && !kisi?.team) {
     redirect("/oyun-secimi");
   }
+  // ÖN FARKINDALIK kendi bayrağıyla BAĞIMSIZ kapı: kampa girmemiş ve henüz
+  // bitirmemiş kişi, pusula penceresi açık olsun ya da olmasın bu akışı yapar.
+  // (Önce Ön Farkındalık, sonra — açıksa — Pusula sırası korunur.)
+  if (
+    ayar.get("on_farkindalik_acik") === "true" &&
+    !kisi?.camp_unlocked_at &&
+    !ofDurum?.tamamlandi_at
+  ) {
+    redirect("/on-farkindalik");
+  }
   if (ayar.get("pusula_acik") === "true" && !kisi?.camp_unlocked_at) {
-    if (ayar.get("on_farkindalik_acik") === "true" && !ofDurum?.tamamlandi_at) {
-      redirect("/on-farkindalik");
-    }
     // ?intro=1 (tanıtım testi) yönlendirmede kaybolmasın diye taşı.
     const intro = (await searchParams).intro !== undefined;
     redirect(intro ? "/pusula?intro=1" : "/pusula");
