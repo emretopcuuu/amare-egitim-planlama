@@ -100,6 +100,9 @@ export default function AynaRituel() {
   const [kayitCaliyor, setKayitCaliyor] = useState(false);
   const [sesKalitesi, setSesKalitesi] = useState<SesKalitesi>(null);
   const [kayitSuresi, setKayitSuresi] = useState(0);
+  // Sözü yazıya dökme: ARTIK OTOMATİK DEĞİL — kişi yemini okurken textarea'ya
+  // yanlışlıkla yazılmasın diye yalnız bu açıkken (manuel) konuşma tanınır.
+  const [dinleniyor, setDinleniyor] = useState(false);
 
   const kayitci = useRef<MediaRecorder | null>(null);
   const fotoDosya = useRef<File | null>(null);
@@ -233,26 +236,38 @@ export default function AynaRituel() {
   function soruyaGec() {
     setAsama("soru");
     geriSayim(20, bitir);
-    // beklenti cümlesi konuşulurken yazıya dökülür (destekleyen tarayıcıda)
+    // NOT: konuşma tanıma (yazıya dökme) burada OTOMATİK BAŞLAMAZ — kişi soruyu/
+    // yemini okurken textarea kazara dolmasın. Aşağıdaki "🎤 Sesle yaz" düğmesiyle
+    // manuel başlatılır.
+  }
+
+  // Manuel sesli yazma anahtarı (soru ekranı): yalnız basınca konuşma yazıya döker.
+  function sesliYazAnahtar() {
+    if (dinleniyor) {
+      taniyici.current?.stop();
+      setDinleniyor(false);
+      return;
+    }
     const tan = taniyiciKur();
-    if (tan) {
-      tan.lang = "tr-TR";
-      tan.continuous = true;
-      tan.interimResults = true;
-      tan.onresult = (e) => {
-        let metin = "";
-        for (let i = 0; i < e.results.length; i++) {
-          metin += e.results[i][0]?.transcript ?? "";
-        }
-        setBeklenti(metin.trim().slice(0, 300));
-      };
-      tan.onerror = () => {};
-      try {
-        tan.start();
-        taniyici.current = tan;
-      } catch {
-        taniyici.current = null;
+    if (!tan) return;
+    tan.lang = "tr-TR";
+    tan.continuous = true;
+    tan.interimResults = true;
+    tan.onresult = (e) => {
+      let metin = "";
+      for (let i = 0; i < e.results.length; i++) {
+        metin += e.results[i][0]?.transcript ?? "";
       }
+      setBeklenti(metin.trim().slice(0, 300));
+    };
+    tan.onerror = () => setDinleniyor(false);
+    try {
+      tan.start();
+      taniyici.current = tan;
+      setDinleniyor(true);
+    } catch {
+      taniyici.current = null;
+      setDinleniyor(false);
     }
   }
 
@@ -262,6 +277,7 @@ export default function AynaRituel() {
     bitiriliyor.current = true;
     if (zamanlayici.current) clearInterval(zamanlayici.current);
     taniyici.current?.stop();
+    setDinleniyor(false);
 
     const kaydedici = kayitci.current;
     if (!kaydedici) {
@@ -514,17 +530,19 @@ export default function AynaRituel() {
             <p className="mt-4 text-center text-lg leading-relaxed text-slate-300">
               {t.yeminHazirlikAciklama}
             </p>
+            {/* Kaydı başlat YEMİNİN ÜSTÜNDE: küçük ekranda uzun yemini kaydırmadan
+                tuşa ulaşılır; hazır olunca basılır, kayıt tam o an başlar. */}
+            <div className="mt-6">
+              <DevButon onClick={sesBasla}>🎤 {t.kayitBaslat}</DevButon>
+            </div>
+            <p className="mt-2 text-center text-sm text-slate-500">
+              {t.kayitHenuzBaslamadi}
+            </p>
             <p className="mt-6 text-sm uppercase tracking-widest text-slate-400">
               {t.yeminYonerge}
             </p>
             <p className="prizma-serif mt-3 text-2xl leading-relaxed text-slate-50">
               “{t.yemin}”
-            </p>
-            <div className="mt-8">
-              <DevButon onClick={sesBasla}>🎤 {t.kayitBaslat}</DevButon>
-            </div>
-            <p className="mt-3 text-center text-sm text-slate-500">
-              {t.kayitHenuzBaslamadi}
             </p>
           </div>
         )}
@@ -559,7 +577,10 @@ export default function AynaRituel() {
               </span>
               <span className="font-mono text-2xl font-bold text-slate-100">{sayac}</span>
             </div>
-            <h1 className="prizma-serif ay-metin mt-6 text-3xl font-semibold leading-tight">
+            <p className="mt-5 text-5xl" aria-hidden>
+              🔒
+            </p>
+            <h1 className="prizma-serif ay-metin mt-3 text-3xl font-semibold leading-tight">
               {t.soru}
             </h1>
             <p className="mt-3 text-base leading-relaxed text-slate-300">{t.soruAlt}</p>
@@ -570,7 +591,26 @@ export default function AynaRituel() {
               className="mt-6 w-full rounded-2xl border-2 border-white/20 bg-white/[0.06] p-4 text-xl text-slate-100 placeholder:text-slate-500 focus:border-sky-200/70 focus:outline-none"
               placeholder={t.soruNot}
             />
-            <div className="mt-8">
+            {/* Sesle yaz: MANUEL — yalnız basınca dinler (kazara dolmayı önler) */}
+            <button
+              type="button"
+              onClick={sesliYazAnahtar}
+              className={`mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 text-base font-semibold transition-colors ${
+                dinleniyor
+                  ? "border-red-500/50 bg-red-500/10 text-red-300"
+                  : "border-white/25 text-slate-100 hover:bg-white/[0.08]"
+              }`}
+            >
+              {dinleniyor ? (
+                <>
+                  <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
+                  {t.sesliYazDurdur}
+                </>
+              ) : (
+                t.sesliYazBaslat
+              )}
+            </button>
+            <div className="mt-6">
               <DevButon onClick={bitir}>{t.bitir}</DevButon>
             </div>
           </div>

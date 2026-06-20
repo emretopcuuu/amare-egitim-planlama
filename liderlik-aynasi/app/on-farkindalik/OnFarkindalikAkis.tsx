@@ -135,24 +135,42 @@ export default function OnFarkindalikAkis({
     if (tumuBitti) titret([15, 40, 15, 40, 30]);
   }, [tumuBitti]);
 
-  // UX #7: mount'ta cihaz yedeğini birleştir (sunucu yüklemesi çevrimdışı düşmüşse kurtarır).
+  // UX #7: mount'ta cihaz yedeğini birleştir (sunucu yüklemesi çevrimdışı düşmüşse
+  // kurtarır) + KALDIĞI ADIMI geri yükle ("kaydet & çık" sonrası tam yerinden devam).
   useEffect(() => {
     try {
       const ham = localStorage.getItem(TASLAK_DEPO);
       if (!ham) return;
-      const d = JSON.parse(ham) as { yanitlar?: Record<string, number>; metinler?: Record<string, string> };
+      const d = JSON.parse(ham) as {
+        yanitlar?: Record<string, number>;
+        metinler?: Record<string, string>;
+        adim?: number;
+      };
       if (d.yanitlar) setYanitlar((e) => ({ ...d.yanitlar, ...e }));
       if (d.metinler) setMetinler((e) => ({ ...d.metinler, ...e }));
+      if (typeof d.adim === "number" && d.adim >= 0 && d.adim <= TOPLAM) {
+        // Sunucudaki ilk boşluktan daha ileriye gittiyse oraya dön (geri gidip
+        // gözden geçirebilir); intro ekranı varsa atla.
+        setAdim((cur) => Math.max(cur, d.adim!));
+        if (d.adim > 0) setGiris(false);
+      }
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // UX #7: her değişiklikte cihaza yedekle — yenileme/çevrimdışı kayıp olmaz.
+  // UX #7: her değişiklikte cihaza yedekle (cevaplar + kalınan adım) — yenileme/
+  // çevrimdışı/çıkış sonrası kayıp olmaz.
   useEffect(() => {
     try {
-      localStorage.setItem(TASLAK_DEPO, JSON.stringify({ yanitlar, metinler }));
+      localStorage.setItem(TASLAK_DEPO, JSON.stringify({ yanitlar, metinler, adim }));
     } catch {}
-  }, [yanitlar, metinler]);
+  }, [yanitlar, metinler, adim]);
+
+  // Her adım/ekran geçişinde sayfayı en tepeye al — yeni soru DAİMA en üstte
+  // başlasın (yarı kaydırılmış halde açılmasın).
+  useEffect(() => {
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "auto" });
+  }, [adim, giris]);
 
   function ilerle() {
     setSayiGirdi("");
@@ -303,6 +321,8 @@ export default function OnFarkindalikAkis({
   }
 
   const a = ADIMLAR[adim];
+  // Bu adım ileri gitmeye hazır mı? (opsiyonel metin hep "dolu" sayılır → atlanabilir)
+  const suanGecerli = adimDolu(a, yanitlar, metinler);
   const yuzde = Math.round((Math.min(adim + 1, TOPLAM) / TOPLAM) * 100);
   // Gözden geçirme modu: her şey dolu ama aday erken bir adıma döndü → tek tuşla
   // sona (bitiş ekranına) dönebilsin, baştan sona tıklamak zorunda kalmasın.
@@ -312,37 +332,30 @@ export default function OnFarkindalikAkis({
 
   return (
     <div className="flex min-h-[82vh] flex-col">
-      <header>
+      {/* SABİT BAŞLIK — ilerleme + bölüm rayı (Öz Saygı, Öz Güven…) kaydırınca da
+          hep en tepede çakılı kalır; -mx/-mt ile kenarlara taşar, üst boşluğu örter. */}
+      <header className="sticky top-0 z-20 -mx-5 -mt-5 bg-midnight/92 px-5 pb-2.5 pt-4 backdrop-blur-md">
         <div className="flex items-center justify-between">
-          {adim === 0 ? (
-            <Link href="/" className="text-base text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
-              ← {t.geriDon}
-            </Link>
-          ) : (
-            <button
-              onClick={() => setAdim((x) => Math.max(x - 1, 0))}
-              className="text-base text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
-            >
-              ← {t.geri}
-            </button>
-          )}
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-lg font-bold text-slate-300">%{yuzde}</span>
+          <Link href="/" className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
+            ← {t.geriDon}
+          </Link>
+          <div className="flex items-center gap-2.5">
+            <span className="font-mono text-base font-bold text-slate-300">%{yuzde}</span>
             <button
               type="button"
               onClick={kaydetVeCik}
               disabled={kaydediliyor || yapilan === 0}
-              className="rounded-lg bg-gold px-3 py-1.5 text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-40"
+              className="rounded-lg bg-gold px-2.5 py-1 text-xs font-bold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-40"
             >
               {kaydediliyor ? "…" : t.kaydetDevam}
             </button>
           </div>
         </div>
-        <div className="mt-3 flex items-center justify-between">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gold-light/80">{a.grup}</p>
-          <p className="text-xs text-slate-500">{t.kalanDk(kalanDk)}</p>
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-[0.7rem] font-semibold uppercase tracking-wide text-gold-light/80">{a.grup}</p>
+          <p className="text-[0.7rem] text-slate-500">{t.kalanDk(kalanDk)}</p>
         </div>
-        <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+        <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-300"
             style={{ width: `${yuzde}%` }}
@@ -354,7 +367,7 @@ export default function OnFarkindalikAkis({
             ad: b.ad,
             durum: adim > b.sonIdx ? "tamam" : b.ad === a.grup ? "simdi" : "bekliyor",
           }))}
-          className="mt-3"
+          className="mt-2"
         />
       </header>
 
@@ -384,12 +397,14 @@ export default function OnFarkindalikAkis({
         </button>
       )}
 
-      <div className="flex flex-1 flex-col justify-center py-8">
+      {/* key={adim} → her geçişte yeniden monte; .of-adim zarif giriş animasyonu
+          verir (sayfanın değiştiği net hissedilir). py daraltıldı: tek ekrana sığ. */}
+      <div key={adim} className="of-adim flex flex-1 flex-col justify-center py-4">
         {a.tip === "likert5" && (
           <>
-            <h1 className="prizma-serif text-2xl font-semibold leading-snug text-slate-50">{a.metin}</h1>
-            <p className="mt-4 text-sm text-slate-400"><DurustVurgu metin={t.blokAlt} /></p>
-            <div role="radiogroup" aria-label={a.metin} className="mt-8 space-y-2.5">
+            <h1 className="prizma-serif text-xl font-semibold leading-snug text-slate-50">{a.metin}</h1>
+            <p className="mt-1.5 text-sm text-slate-400"><DurustVurgu metin={t.blokAlt} /></p>
+            <div role="radiogroup" aria-label={a.metin} className="mt-4 space-y-2">
               {[1, 2, 3, 4, 5].map((p) => (
                 <button
                   key={p}
@@ -397,12 +412,12 @@ export default function OnFarkindalikAkis({
                   role="radio"
                   aria-checked={yanitlar[a.kod] === p}
                   onClick={() => likertSec(a.kod, p)}
-                  className={`flex h-14 w-full items-center gap-4 rounded-2xl px-5 text-left transition-all ${
+                  className={`flex h-12 w-full items-center gap-3 rounded-xl px-4 text-left transition-all ${
                     yanitlar[a.kod] === p ? "btn-kor scale-[1.01]" : "border-2 border-white/20 text-slate-200 hover:border-gold/60"
                   }`}
                 >
-                  <span className="font-mono text-2xl font-bold">{p}</span>
-                  <span className="text-base font-semibold">{t.olcek[p]}</span>
+                  <span className="font-mono text-lg font-bold">{p}</span>
+                  <span className="text-sm font-semibold">{t.olcek[p]}</span>
                 </button>
               ))}
             </div>
@@ -411,24 +426,17 @@ export default function OnFarkindalikAkis({
 
         {a.tip === "ikili10" && (
           <>
-            <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">{a.ad}</h1>
-            <p className="mt-2 text-base leading-relaxed text-slate-300">{a.anlam}</p>
+            <h1 className="prizma-serif ay-metin text-2xl font-semibold leading-tight">{a.ad}</h1>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-300">{a.anlam}</p>
             <Olcek10 etiket={t.onemSoru} secili={yanitlar[a.onemKod]} onSec={(p) => setSayi(a.onemKod, p)} />
             <Olcek10 etiket={t.gercekSoru} secili={yanitlar[a.gercekKod]} onSec={(p) => setSayi(a.gercekKod, p)} />
-            <button
-              onClick={ilerle}
-              disabled={!yanitlar[a.onemKod] || !yanitlar[a.gercekKod]}
-              className="btn-kor mt-8 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-40"
-            >
-              {t.devam} →
-            </button>
           </>
         )}
 
         {a.tip === "sayi" && (
           <>
-            <h1 className="prizma-serif text-2xl font-semibold leading-snug text-slate-50">{a.metin}</h1>
-            <p className="mt-3 text-sm text-slate-400"><DurustVurgu metin={t.sayiAlt} /></p>
+            <h1 className="prizma-serif text-xl font-semibold leading-snug text-slate-50">{a.metin}</h1>
+            <p className="mt-1.5 text-sm text-slate-400"><DurustVurgu metin={t.sayiAlt} /></p>
             <input
               type="number"
               inputMode="numeric"
@@ -449,15 +457,8 @@ export default function OnFarkindalikAkis({
                 }
               }}
               placeholder="0"
-              className="mt-6 h-20 w-full rounded-2xl border-2 border-white/20 bg-white/[0.04] text-center font-mono text-5xl font-bold text-slate-50 outline-none focus:border-gold"
+              className="mt-4 h-16 w-full rounded-2xl border-2 border-white/20 bg-white/[0.04] text-center font-mono text-4xl font-bold text-slate-50 outline-none focus:border-gold"
             />
-            <button
-              onClick={ilerle}
-              disabled={yanitlar[a.kod] === undefined}
-              className="btn-kor mt-8 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-40"
-            >
-              {t.devam} →
-            </button>
           </>
         )}
 
@@ -468,14 +469,34 @@ export default function OnFarkindalikAkis({
             zorunlu={a.zorunlu}
             deger={metinler[a.kod] ?? ""}
             onDegis={(v) => setMetin(a.kod, v)}
-            onDevam={ilerle}
           />
         )}
 
         {hata && <p role="alert" className="mt-4 text-center text-sm font-medium text-red-400">{hata}</p>}
       </div>
 
-      <p className="pb-2 text-center text-xs text-slate-500">{t.kismiNot}</p>
+      {/* SABİT İLERİ / GERİ — her adımda aynı yerde; cevaplı adımda yeniden
+          dokunmadan ileri/geri gidilir (gözden geçirme kolay). */}
+      <div className="mt-1 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => setAdim((x) => Math.max(x - 1, 0))}
+          disabled={adim === 0}
+          className="flex h-12 flex-1 items-center justify-center rounded-2xl border-2 border-white/20 text-base font-semibold text-slate-200 transition-colors hover:border-gold/60 disabled:opacity-30"
+        >
+          ← {t.geri}
+        </button>
+        <button
+          type="button"
+          onClick={ilerle}
+          disabled={!suanGecerli}
+          className="btn-kor flex h-12 flex-[2] items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-40"
+        >
+          {t.devam} →
+        </button>
+      </div>
+
+      <p className="pb-2 pt-2 text-center text-xs text-slate-500">{t.kismiNot}</p>
     </div>
   );
 }
@@ -484,30 +505,27 @@ export default function OnFarkindalikAkis({
 function MetinAdim({
   kod,
   metin,
-  zorunlu,
   deger,
   onDegis,
-  onDevam,
 }: {
   kod: string;
   metin: string;
   zorunlu: boolean;
   deger: string;
   onDegis: (v: string) => void;
-  onDevam: () => void;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, 220)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, 180)}px`;
   }, [deger, kod]);
   return (
     <>
-      <h1 className="prizma-serif text-2xl font-semibold leading-snug text-slate-50">{metin}</h1>
+      <h1 className="prizma-serif text-xl font-semibold leading-snug text-slate-50">{metin}</h1>
       {METIN_IPUCLARI[kod] && (
-        <p className="mt-3 text-sm leading-relaxed text-slate-400">{METIN_IPUCLARI[kod]}</p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-400">{METIN_IPUCLARI[kod]}</p>
       )}
       <textarea
         ref={ref}
@@ -515,18 +533,11 @@ function MetinAdim({
         onChange={(e) => onDegis(e.target.value)}
         rows={3}
         placeholder={t.metinYer}
-        className="mt-6 max-h-[220px] min-h-[5rem] w-full resize-none rounded-2xl border-2 border-white/20 bg-white/[0.04] p-4 text-lg leading-relaxed text-slate-100 outline-none placeholder:text-slate-500 focus:border-gold"
+        className="mt-4 max-h-[180px] min-h-[4.5rem] w-full resize-none rounded-2xl border-2 border-white/20 bg-white/[0.04] p-4 text-base leading-relaxed text-slate-100 outline-none placeholder:text-slate-500 focus:border-gold"
       />
       <div className="mt-3">
         <MikrofonButonu onMetin={(p) => onDegis(deger.trim() ? `${deger.trim()} ${p}` : p)} />
       </div>
-      <button
-        onClick={onDevam}
-        disabled={zorunlu && !deger.trim()}
-        className="btn-kor mt-6 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-40"
-      >
-        {deger.trim() || zorunlu ? `${t.devam} →` : t.metinAtla}
-      </button>
     </>
   );
 }
@@ -542,9 +553,9 @@ function Olcek10({
   onSec: (p: number) => void;
 }) {
   return (
-    <div className="mt-6">
-      <p className="text-base font-semibold text-gold-light">{etiket}</p>
-      <div className="mt-3 grid grid-cols-5 gap-2">
+    <div className="mt-4">
+      <p className="text-sm font-semibold text-gold-light">{etiket}</p>
+      <div className="mt-2 grid grid-cols-5 gap-2">
         {Array.from({ length: 10 }, (_, i) => i + 1).map((p) => (
           <button
             key={p}

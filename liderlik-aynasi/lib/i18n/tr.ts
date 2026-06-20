@@ -2942,7 +2942,9 @@ export const tr = {
     soru: "Son bir mühür: geleceğine söz bırak",
     soruAlt:
       "Bu kamptan kim olarak döneceksin? Söyleyeceğin sözü bu aynaya mühürleyeceğiz — kampın son anında, bugünü birlikte açacağız.",
-    soruNot: "Sesli söyle — yazıya dökülür",
+    soruNot: "Yaz ya da 🎤 ile sesli söyle",
+    sesliYazBaslat: "🎤 Sesle yaz",
+    sesliYazDurdur: "■ Sesli yazmayı durdur",
     devam: "Devam",
     bitir: "Sözümü mühürle",
     inceleBaslik: "Kaydını dinle",
