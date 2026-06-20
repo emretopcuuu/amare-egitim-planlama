@@ -69,7 +69,11 @@ export default function AltNav() {
     <nav className="alt-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-midnight/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md print:hidden">
       {/* #2 Kıvılcım ilerleme şeridi — toplam + unvan + sonraki rozete kalan */}
       {kiv && (
-        <Link href="/ben" className="block border-b border-white/5 px-4 pb-1 pt-1.5">
+        <Link
+          href="/ben"
+          title={t.kivilcimIpucu}
+          className="block border-b border-white/5 px-4 pb-1 pt-1.5"
+        >
           <div className="mx-auto flex w-full max-w-md items-center gap-2 text-[0.7rem]">
             <span className="font-bold text-gold">⚡ {kiv.toplam}</span>
             <span className="text-slate-400">{kiv.unvan}</span>
@@ -94,10 +98,14 @@ export default function AltNav() {
               href={s.href}
               aria-label={s.etiket}
               aria-current={aktif ? "page" : undefined}
-              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-[0.65rem] font-medium transition-colors ${
+              className={`relative flex min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[0.65rem] font-medium transition-colors ${
                 aktif ? "text-gold-light" : "text-slate-400 hover:text-slate-200"
               }`}
             >
+              {/* Aktif sekme üst çizgisi — "neredesin?" işareti */}
+              {aktif && (
+                <span className="absolute inset-x-3 top-0 h-[2px] rounded-full bg-gold" />
+              )}
               <span className={`text-2xl transition-transform ${aktif ? "scale-110" : ""}`}>
                 {s.simge}
               </span>

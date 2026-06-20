@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { MINI360_IFADELER } from "@/lib/onFarkindalik";
@@ -53,6 +54,12 @@ export default async function Mini360Sayfa() {
 
   return (
     <main className="mx-auto w-full max-w-md flex-1 space-y-5 p-5">
+      <Link
+        href="/"
+        className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-slate-200"
+      >
+        ← {tr.asama.geri.replace("← ", "")}
+      </Link>
       {aktifTur > 1 && (
         <p className="text-center text-xs font-semibold text-royal-light">{t.turRozet(aktifTur)}</p>
       )}

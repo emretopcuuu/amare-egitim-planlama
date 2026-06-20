@@ -51,6 +51,7 @@ export const tr = {
     duvar: "Duvar",
     kivilcimSonraki: (kalan: number, ad: string) => `${kalan} ⚡ → ${ad}`,
     kivilcimZirve: "🏆 Zirve",
+    kivilcimIpucu: "Görev tamamla +10 XP · Değerlendirme yap +5 XP · Duvar paylaşımı +3 XP",
   },
   // #1 İlk açılış mikro-turu (AYNA kendini tanıtır)
   karsilama: {
@@ -75,6 +76,12 @@ export const tr = {
         baslik: "Tek bir şey istiyorum",
         metin:
           "Kendine dürüst ol. Gerisini bana bırak. Attığın her adım seni gerçek yansımana yaklaştırır. Hazırsan, başlıyoruz.",
+      },
+      {
+        ikon: "☰",
+        baslik: "Nasıl gezinirsin?",
+        metin:
+          "Alttaki çubuktan Ana Sayfa, Değerlendirme, Görevler ve Duvar'a geçersin. Sağ üstteki ☰ butonuyla daha fazla özelliğe ulaşırsın.",
       },
     ],
   },
@@ -193,8 +200,8 @@ export const tr = {
     gorevTekBaslik: "AYNA'dan görevin var",
     gorevTekMetin: "Seni izliyorum. Sıradaki adımın hazır.",
     gorevTekDugme: (n: number) => (n > 1 ? `${n} Görevi Aç` : "Görevi Aç"),
-    bekleBaslik: "AYNA seni izliyor",
-    bekleMetin: "Şu an yapman gereken bir şey yok. Sıradaki an geldiğinde seni dürteceğim. 👁",
+    bekleBaslik: "AYNA seninle",
+    bekleMetin: "Şu an duraksama vaktin. Sıradaki adım geldiğinde yanında olacağım. 👁",
     // İlk 60 saniye rehberi: ilk öz-puana doğru nazik canlı işaret (#3).
     ilkAdimIpucu: "İlk adımın bu — başla",
     // Çıkmaz yok: boş anda bile sıcak bir sonraki adım — birine takdir bırak.
@@ -2528,7 +2535,7 @@ export const tr = {
     gonderiliyor: "AYNA okuyor…",
     puanin: (puan: number) => `AYNA puanın: ${puan}/10`,
     kivilcimKazandin: (n: number) => `+${n} Kıvılcım ⚡`,
-    hata: "Gönderilemedi. Lütfen tekrar dene.",
+    hata: "Bağlantı kopuk olabilir — yanıtın kaybolmadı. Tekrar dene 🔄",
     // Çevrimdışı dayanıklılık: yanıt cihazda saklanır, internet gelince gider
     cevrimdisiBekliyor:
       "⏳ Bağlantı bekleniyor — yanıtın bu cihazda güvende. İnternet gelince otomatik gönderilecek.",

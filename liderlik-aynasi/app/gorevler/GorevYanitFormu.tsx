@@ -208,9 +208,21 @@ export default function GorevYanitFormu({
         className="mt-1 w-full rounded-xl border border-royal-light/30 bg-midnight-soft p-3 text-base text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
       />
       {hata && (
-        <p role="alert" className="mt-1 text-sm font-medium text-red-400">
-          {t.hata}
-        </p>
+        <div
+          role="alert"
+          className="mt-2 flex items-start gap-3 rounded-xl border border-red-400/20 bg-red-500/10 p-3"
+        >
+          <span className="text-lg">⚠️</span>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-red-300">{t.hata}</p>
+            <button
+              type="submit"
+              className="mt-1.5 text-xs font-semibold text-gold underline-offset-2 hover:underline"
+            >
+              {t.cevrimdisiTekrar}
+            </button>
+          </div>
+        </div>
       )}
       {/* #9 Akıllı ipucu: yazının uzunluğuna göre nazik yönlendirme */}
       {(() => {
