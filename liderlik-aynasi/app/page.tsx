@@ -130,7 +130,7 @@ export default async function AnaSayfa({
   // yapmamış katılımcı kamp öncesi yolculuğu yapar. Sıra: önce ÖN FARKINDALIK
   // (ayna katmanları — bayrak açıksa ve bitmediyse), sonra PUSULA (derin neden +
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
-  const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }] =
+  const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }] =
     await Promise.all([
       db.from("participants").select("camp_unlocked_at, team").eq("id", session.sub).maybeSingle(),
       db
@@ -140,12 +140,13 @@ export default async function AnaSayfa({
       db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
       // Ses/foto ritüeli kapısı için erken kontrol — akışın EN BAŞINA gelir.
       db.from("voice_profiles").select("participant_id").eq("participant_id", session.sub).maybeSingle(),
+      db.from("pusula").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
     ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
   const gununCumlesi = (ayar.get("gunun_cumlesi") ?? "").trim();
 
   // SIRA (kamp öncesi onboarding): 1) FOTO+SES RİTÜELİ → 2) OYUN SEÇİMİ (grup)
-  // → 3) ÖN FARKINDALIK (sorular) → 4) PUSULA. Her kapı bir öncekini bekler.
+  // → 3) PUSULA (10 öncelik + eleme + neden) → 4) ÖN FARKINDALIK. Her kapı bir öncekini bekler.
 
   // 1) FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Tamamlanana (ya da "sessiz"
   // seçilene) dek grup ve sorular dahil başka hiçbir kapı açılmaz.
@@ -157,20 +158,20 @@ export default async function AnaSayfa({
   if (ayar.get("oyun_secimi_acik") === "true" && !kisi?.team) {
     redirect("/oyun-secimi");
   }
-  // ÖN FARKINDALIK kendi bayrağıyla BAĞIMSIZ kapı: kampa girmemiş ve henüz
-  // bitirmemiş kişi, pusula penceresi açık olsun ya da olmasın bu akışı yapar.
-  // (Önce Ön Farkındalık, sonra — açıksa — Pusula sırası korunur.)
+  // 3) PUSULA (10 öncelik → eleme → neden keşfi): tamamlanana dek bu kapıda kalır.
+  if (ayar.get("pusula_acik") === "true" && !kisi?.camp_unlocked_at && !pusulaErken?.tamamlandi_at) {
+    // ?intro=1 (tanıtım testi) yönlendirmede kaybolmasın diye taşı.
+    const intro = (await searchParams).intro !== undefined;
+    redirect(intro ? "/pusula?intro=1" : "/pusula");
+  }
+  // 4) ÖN FARKINDALIK: Pusula tamamlandıktan sonra, kampa girmemiş ve henüz
+  // bitirmemiş kişiyi yönlendir.
   if (
     ayar.get("on_farkindalik_acik") === "true" &&
     !kisi?.camp_unlocked_at &&
     !ofDurum?.tamamlandi_at
   ) {
     redirect("/on-farkindalik");
-  }
-  if (ayar.get("pusula_acik") === "true" && !kisi?.camp_unlocked_at) {
-    // ?intro=1 (tanıtım testi) yönlendirmede kaybolmasın diye taşı.
-    const intro = (await searchParams).intro !== undefined;
-    redirect(intro ? "/pusula?intro=1" : "/pusula");
   }
 
   const [
