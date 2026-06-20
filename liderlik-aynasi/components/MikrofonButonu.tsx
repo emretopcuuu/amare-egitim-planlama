@@ -133,13 +133,15 @@ export default function MikrofonButonu({
         onClick={degistir}
         disabled={disabled}
         aria-pressed={dinliyor}
-        className={`flex h-11 items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors disabled:opacity-40 ${
+        aria-label={dinliyor ? tr.ses.dinliyor : tr.ses.baslat}
+        title={dinliyor ? tr.ses.dinliyor : undefined}
+        className={`flex h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 text-sm font-semibold transition-colors disabled:opacity-40 ${
           dinliyor
             ? "animate-pulse bg-red-500/80 text-white"
             : "border border-royal-light/40 text-slate-200 hover:bg-midnight-soft"
         }`}
       >
-        {dinliyor ? `⏺ ${tr.ses.dinliyor}` : `🎙 ${tr.ses.baslat}`}
+        {dinliyor ? `⏺ ${tr.ses.dinliyorKisa}` : `🎙 ${tr.ses.baslat}`}
       </button>
       {hata && (
         <p role="status" className="max-w-xs text-xs leading-relaxed text-amber-300/90">

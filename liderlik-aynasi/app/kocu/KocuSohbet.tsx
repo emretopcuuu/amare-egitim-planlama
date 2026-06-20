@@ -244,7 +244,7 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
             }}
             rows={1}
             placeholder={t.yer}
-            className="max-h-[140px] min-h-[3rem] flex-1 resize-none rounded-2xl border-2 border-white/15 bg-midnight-soft/50 px-4 py-3 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-gold"
+            className="max-h-[140px] min-h-[3rem] min-w-0 flex-1 resize-none rounded-2xl border-2 border-white/15 bg-midnight-soft/50 px-4 py-3 text-base text-slate-100 outline-none placeholder:text-slate-400 focus:border-gold"
           />
           <MikrofonButonu onMetin={(p) => setGirdi((g) => (g.trim() ? `${g.trim()} ${p}` : p))} />
           <button
