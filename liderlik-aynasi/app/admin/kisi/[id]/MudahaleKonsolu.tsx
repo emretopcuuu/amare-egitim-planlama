@@ -6,7 +6,13 @@ import { tr } from "@/lib/i18n/tr";
 
 const t = tr.admin.mudahale;
 
-export default function MudahaleKonsolu({ hedefId }: { hedefId: string }) {
+export default function MudahaleKonsolu({
+  hedefId,
+  kampAcik = false,
+}: {
+  hedefId: string;
+  kampAcik?: boolean;
+}) {
   const router = useRouter();
   const [calisan, setCalisan] = useState<string | null>(null);
   const [fisilti, setFisilti] = useState("");
@@ -29,6 +35,8 @@ export default function MudahaleKonsolu({ hedefId }: { hedefId: string }) {
       }
       if (eylem === "gorev") setSonuc({ ok: true, metin: t.gorevVerildi(v?.baslik ?? "") });
       else if (eylem === "iptal") setSonuc({ ok: true, metin: t.iptalEdildi(v?.sayi ?? 0) });
+      else if (eylem === "ac") setSonuc({ ok: true, metin: t.kampAcildi });
+      else if (eylem === "kilitle") setSonuc({ ok: true, metin: t.kampKilitlendi });
       else setSonuc({ ok: true, metin: t.fisiltiGonderildi });
       if (eylem === "fisilti") setFisilti("");
       router.refresh();
@@ -41,6 +49,27 @@ export default function MudahaleKonsolu({ hedefId }: { hedefId: string }) {
 
   return (
     <div className="space-y-3">
+      {/* Kamp kilidi — oda QR'ı çalışmazsa görevli elle açar (etkinlik yedeği) */}
+      {kampAcik ? (
+        <button
+          onClick={() => gonder("kilitle")}
+          disabled={!!calisan}
+          className="flex h-11 w-full items-center justify-center rounded-xl border border-amber-400/30 px-4 text-sm font-semibold text-amber-300 transition-colors hover:bg-amber-400/10 disabled:opacity-50"
+        >
+          {calisan === "kilitle" ? "…" : `🔒 ${t.kampKilitle}`}
+        </button>
+      ) : (
+        <button
+          onClick={() => {
+            if (confirm(t.kampAcOnay)) void gonder("ac");
+          }}
+          disabled={!!calisan}
+          className="flex h-11 w-full items-center justify-center rounded-xl bg-emerald-500 px-4 text-sm font-bold text-[#04140c] transition-colors hover:bg-emerald-400 disabled:opacity-50"
+        >
+          {calisan === "ac" ? "…" : `🔓 ${t.kampAc}`}
+        </button>
+      )}
+
       <div className="grid gap-2 sm:grid-cols-2">
         <button
           onClick={() => gonder("gorev")}

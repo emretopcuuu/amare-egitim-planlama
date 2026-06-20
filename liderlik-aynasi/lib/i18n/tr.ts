@@ -730,6 +730,12 @@ export const tr = {
     aiHata: "Şu an yanıt veremedim, az sonra tekrar dene.",
     acHataBaslik: "Kod geçersiz",
     acHataMetin: "Bu kod kampı açmıyor. Lütfen görevliyle iletişime geç.",
+    // Oda QR'ı başarıyla okutulunca — açık onay ekranı
+    acBasariBaslik: "Mühür kalktı 🔓",
+    acBasariMetin: "Kampa hoş geldin. Aynan artık seninle — başlıyoruz.",
+    acBasariDugme: "Kampa gir →",
+    acZatenBaslik: "Kampın zaten açık 🔓",
+    acZatenMetin: "Mührün çoktan kalkmış. Devam edebilirsin.",
     // FAZ 0 hazırlık hub'ı (Pusula bitince, kampa gelmeden)
     hazirlikBaslik: "Pusulan kuruldu 🧭",
     hazirlikAltBaslik:
@@ -1240,6 +1246,10 @@ export const tr = {
       kodKaydedildi: "Kod kaydedildi ✓",
       kodBos: "Kod boş — kilit devre dışı (kimse kampı açamaz)",
       qrIpucu: (url: string) => `Oda QR'ı şu adrese gitmeli: ${url}`,
+      qrGorselBaslik: "📷 Taranabilir Oda QR'ı",
+      qrGorselNot:
+        "Bu QR'ı kampta kapıya/odaya as. Katılımcı kendi telefonunda (giriş yapmış olarak) okutunca mührü kalkar. Önemli: bu QR, panel açtığın domaini taşır — katılımcıların kullandığı adreste açtığından emin ol.",
+      qrKaydedilmemis: "⚠️ Kutudaki kodu değiştirdin — QR kayıtlı kodu gösteriyor. Önce 'Kodu Kaydet'.",
       tamamlanma: (n: number, t: number) => `${n}/${t} katılımcı pusulasını kurdu`,
       hatirlatDugme: "🔔 Hazırlığı eksik olanlara hatırlat",
       hatirlatSonuc: (n: number) =>
@@ -2315,6 +2325,12 @@ export const tr = {
       fisiltiGonderildi: "✓ Fısıltı gönderildi.",
       uretilemedi: "Görev üretilemedi (AYNA yanıt vermedi). Tekrar dene.",
       hata: "İşlem başarısız. Tekrar dene.",
+      // Manuel kamp açma (oda QR'ı çalışmazsa görevli kampı elle açar)
+      kampAc: "Kampı aç (mührü kaldır)",
+      kampKilitle: "Kampı kilitle",
+      kampAcildi: "✓ Kamp açıldı — mühür kalktı.",
+      kampKilitlendi: "✓ Kamp tekrar kilitlendi.",
+      kampAcOnay: "Bu kişinin mührünü kaldır, kampı şimdi aç?",
     },
     yayin: {
       baslik: "📣 Duyuru / Yayın",

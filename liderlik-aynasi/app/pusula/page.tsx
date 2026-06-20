@@ -30,11 +30,15 @@ export default async function PusulaSayfa() {
     pusulaGecmis(db, session.sub),
     db
       .from("participants")
-      .select("consent_at, profil_foto_path, yuz_fotolari, full_name")
+      .select("consent_at, profil_foto_path, yuz_fotolari, full_name, camp_unlocked_at")
       .eq("id", session.sub)
       .maybeSingle(),
     db.from("pusula").select("oncelikler, slogan").eq("participant_id", session.sub).maybeSingle(),
   ]);
+
+  // Kamp açıldıysa (oda QR'ı okutuldu ya da görevli elle açtı) Pusula
+  // hub'ında/mühür ekranında oyalanma — doğrudan kamp akışına gönder.
+  if (kisi?.camp_unlocked_at) redirect("/");
 
   const oncelikler = ((pus?.oncelikler as { sira: number; metin: string }[]) ?? [])
     .slice()

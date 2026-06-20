@@ -69,5 +69,26 @@ export async function POST(req: Request) {
     return Response.json({ ok: true });
   }
 
+  // Manuel kamp açma/kilitleme — oda QR'ı çalışmadığında (oturum/domain sorunu)
+  // görevli kampı tek tıkla açar. Mühür kalkar; kişi anında kamp akışına girer.
+  if (eylem === "ac") {
+    const { error } = await db
+      .from("participants")
+      .update({ camp_unlocked_at: new Date().toISOString() })
+      .eq("id", hedefId)
+      .is("camp_unlocked_at", null);
+    if (error) return Response.json({ hata: tr.admin.mudahale.hata }, { status: 500 });
+    return Response.json({ ok: true });
+  }
+
+  if (eylem === "kilitle") {
+    const { error } = await db
+      .from("participants")
+      .update({ camp_unlocked_at: null })
+      .eq("id", hedefId);
+    if (error) return Response.json({ hata: tr.admin.mudahale.hata }, { status: 500 });
+    return Response.json({ ok: true });
+  }
+
   return Response.json({ hata: tr.admin.mudahale.hata }, { status: 400 });
 }

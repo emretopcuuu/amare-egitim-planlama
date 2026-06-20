@@ -113,7 +113,7 @@ export default async function Kisi360Page({ params }: { params: Promise<{ id: st
 
       {/* #2 Canlı müdahale konsolu */}
       <Bolum baslik={tr.admin.mudahale.baslik}>
-        <MudahaleKonsolu hedefId={id} />
+        <MudahaleKonsolu hedefId={id} kampAcik={!!kisi.camp_unlocked_at} />
       </Bolum>
 
       {/* Pusula */}
