@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
-import { titret, suDalgasi } from "@/lib/his";
+import { titret, suDalgasi, cal } from "@/lib/his";
 import Avatar from "@/components/Avatar";
 import AynaLogo from "@/components/AynaLogo";
 import MikrofonButonu from "@/components/MikrofonButonu";
@@ -244,6 +244,7 @@ export default function PuanlamaFormu({
         // taslak silinemezse sorun değil: sunucu kaydı esas
       }
       titret([12, 40, 12]);
+      cal("kazanim");
       suDalgasi();
       // İlk öz puanlamadan sonra kutlama + kamp bilgilendirmesi; sonra hub
       router.push(ilkOzPuan.current ? "/hosgeldin" : "/degerlendir");

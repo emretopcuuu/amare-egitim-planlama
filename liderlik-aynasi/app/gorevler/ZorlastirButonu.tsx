@@ -15,6 +15,7 @@ export default function ZorlastirButonu({ gorevId }: { gorevId: string }) {
 
   async function zorlastir() {
     if (calisiyor) return;
+    titret(8); // dokunuş anı: AYNA üretirken bile anlık fiziksel onay
     setCalisiyor(true);
     try {
       const res = await fetch("/api/gorev-zorlastir", {

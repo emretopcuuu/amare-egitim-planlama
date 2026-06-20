@@ -15,6 +15,7 @@ export default function HafifletButonu({ gorevId }: { gorevId: string }) {
 
   async function hafiflet() {
     if (calisiyor) return;
+    titret(8); // dokunuş anı: AYNA yumuşatırken bile anlık fiziksel onay
     setCalisiyor(true);
     try {
       const res = await fetch("/api/gorev-hafiflet", {
