@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { tr } from "@/lib/i18n/tr";
 import TahminFormu from "./TahminFormu";
+import GeriButonu from "@/components/GeriButonu";
 
 export const metadata = { title: "Tahmin Oyunu — Liderlik Aynası" };
 
@@ -29,6 +30,7 @@ export default async function TahminPage() {
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="mx-auto my-auto w-full max-w-md p-5">
+      <GeriButonu href="/degerlendir" etiket={tr.puanlama.geriDon} className="mb-4" />
       <div className="kart-3d rounded-2xl bg-midnight-card/60 p-8 shadow-2xl ring-1 ring-gold/30 backdrop-blur">
         <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
           {tr.tahmin.kartBaslik}
@@ -65,14 +67,6 @@ export default async function TahminPage() {
           </>
         )}
 
-        <p className="mt-8 text-center">
-          <Link
-            href="/degerlendir"
-            className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
-          >
-            ← {tr.puanlama.geriDon}
-          </Link>
-        </p>
       </div>
       </div>
     </main>

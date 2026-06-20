@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -45,6 +46,12 @@ export default async function AcSayfa({
           {t.acHataBaslik}
         </h1>
         <p className="mt-3 text-base leading-relaxed text-slate-300">{t.acHataMetin}</p>
+        <Link
+          href="/"
+          className="btn-kor mt-6 inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold"
+        >
+          {tr.degerlendir.anaSayfayaDon}
+        </Link>
       </div>
     </main>
   );
