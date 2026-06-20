@@ -7,13 +7,61 @@ import { tr } from "@/lib/i18n/tr";
 
 const t = tr.altNav;
 
+// İnce çizgi ikon seti: emoji yerine (cihazdan cihaza değişen, kaba duran ve
+// premium koyu temayla çelişen) currentColor ile boyanan, zarif SVG'ler.
+type IkonAd = "ana" | "degerlendir" | "gorevler" | "duvar";
+function Ikon({ ad, className = "" }: { ad: IkonAd; className?: string }) {
+  const ortak = {
+    viewBox: "0 0 24 24",
+    fill: "none",
+    stroke: "currentColor",
+    strokeWidth: 1.7,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+    className,
+    "aria-hidden": true,
+  };
+  switch (ad) {
+    case "ana":
+      return (
+        <svg {...ortak}>
+          <path d="M3 10.75 12 3l9 7.75" />
+          <path d="M5.25 9.5V20a1 1 0 0 0 1 1h11.5a1 1 0 0 0 1-1V9.5" />
+          <path d="M9.75 21v-6.25h4.5V21" />
+        </svg>
+      );
+    case "degerlendir":
+      return (
+        <svg {...ortak}>
+          <path d="M12 3.5l2.6 5.27 5.82.85-4.21 4.1.99 5.8L12 16.8l-5.2 2.72.99-5.8-4.21-4.1 5.82-.85z" />
+        </svg>
+      );
+    case "gorevler":
+      return (
+        <svg {...ortak}>
+          <circle cx="12" cy="12" r="8.5" />
+          <circle cx="12" cy="12" r="4.4" />
+          <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none" />
+        </svg>
+      );
+    case "duvar":
+      return (
+        <svg {...ortak}>
+          <rect x="3.25" y="5.25" width="17.5" height="13.5" rx="2.5" />
+          <circle cx="8.5" cy="10" r="1.5" />
+          <path d="M4 16.5 9 12l3 3 3.5-3.5L20.5 16" />
+        </svg>
+      );
+  }
+}
+
 // En sık kullanılan 4 hedef için alt çubuk (başparmak erişimi). İkincil her
 // şey üstteki ☰ menüde kalır. Katılımcı dışı/tam ekran rotalarda gizlenir.
-const SEKMELER = [
-  { href: "/", simge: "🏠", etiket: t.ana },
-  { href: "/degerlendir", simge: "⭐", etiket: t.degerlendir },
-  { href: "/gorevler", simge: "🎯", etiket: t.gorevler },
-  { href: "/duvar", simge: "📸", etiket: t.duvar },
+const SEKMELER: { href: string; ikon: IkonAd; etiket: string }[] = [
+  { href: "/", ikon: "ana", etiket: t.ana },
+  { href: "/degerlendir", ikon: "degerlendir", etiket: t.degerlendir },
+  { href: "/gorevler", ikon: "gorevler", etiket: t.gorevler },
+  { href: "/duvar", ikon: "duvar", etiket: t.duvar },
 ];
 
 // Bu önekler katılımcı deneyimi değil (admin/büyük ekran/tam ekran) — çubuk yok.
@@ -104,11 +152,12 @@ export default function AltNav() {
             >
               {/* Aktif sekme üst çizgisi — "neredesin?" işareti */}
               {aktif && (
-                <span className="absolute inset-x-3 top-0 h-[2px] rounded-full bg-gold" />
+                <span className="absolute inset-x-4 top-0 h-[2px] rounded-full bg-gold" />
               )}
-              <span className={`text-2xl transition-transform ${aktif ? "scale-110" : ""}`}>
-                {s.simge}
-              </span>
+              <Ikon
+                ad={s.ikon}
+                className={`h-6 w-6 transition-transform ${aktif ? "scale-105" : ""}`}
+              />
               {s.etiket}
             </Link>
           );
