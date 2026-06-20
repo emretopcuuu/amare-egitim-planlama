@@ -30,7 +30,7 @@ export default function GunZamanTuneli({ aktifIndex }: { aktifIndex: number }) {
                 <span
                   className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                     simdi
-                      ? "parilti bg-gold text-midnight ring-2 ring-gold/50"
+                      ? "parilti bg-gold text-[#1a1206] ring-2 ring-gold/50"
                       : gecti
                         ? "bg-emerald-500/30 text-emerald-300"
                         : "bg-white/10 text-slate-500"

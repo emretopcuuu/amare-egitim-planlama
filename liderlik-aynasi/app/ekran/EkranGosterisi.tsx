@@ -169,7 +169,7 @@ export default function EkranGosterisi() {
           push ölse bile herkesin gördüğü güvenilir kanal. */}
       {veri?.sahne?.duyuru && (
         <div className="fixed inset-x-0 top-0 z-40 bg-gold/95 px-10 py-5 text-center shadow-2xl">
-          <p className="font-display text-4xl font-bold text-midnight">
+          <p className="font-display text-4xl font-bold text-[#1a1206]">
             📣 {veri.sahne.duyuru.metin}
           </p>
         </div>

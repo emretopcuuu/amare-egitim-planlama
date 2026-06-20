@@ -6,7 +6,7 @@ export default function YazdirButonu() {
   return (
     <button
       onClick={() => window.print()}
-      className="shrink-0 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light"
+      className="shrink-0 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light"
     >
       🖨 {tr.admin.qr.yazdir}
     </button>

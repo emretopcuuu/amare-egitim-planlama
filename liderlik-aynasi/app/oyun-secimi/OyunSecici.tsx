@@ -111,7 +111,7 @@ export default function OyunSecici() {
               </div>
               <span
                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
-                  sec ? "bg-gold text-midnight" : "bg-white/5 text-slate-500"
+                  sec ? "bg-gold text-[#1a1206]" : "bg-white/5 text-slate-500"
                 }`}
                 aria-hidden
               >

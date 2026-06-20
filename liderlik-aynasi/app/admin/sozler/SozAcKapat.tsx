@@ -38,7 +38,7 @@ export default function SozAcKapat({ acik }: { acik: boolean }) {
         className={`rounded-xl px-5 py-2.5 font-semibold transition-colors disabled:opacity-50 ${
           acik
             ? "border border-amber-400/50 text-amber-300 hover:bg-amber-400/10"
-            : "btn-3d bg-gold text-midnight hover:bg-gold-light"
+            : "btn-3d bg-gold text-[#1a1206] hover:bg-gold-light"
         }`}
       >
         {calisiyor ? <Bekle /> : acik ? "Kapanış Sözünü Kapat" : "Kapanış Sözünü Aç"}

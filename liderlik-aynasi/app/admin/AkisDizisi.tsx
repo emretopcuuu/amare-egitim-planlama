@@ -79,11 +79,11 @@ export default async function AkisDizisi() {
                 <span
                   className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
                     durum === "suan"
-                      ? "bg-emerald-400 text-midnight"
+                      ? "bg-emerald-400 text-[#1a1206]"
                       : durum === "tamam"
                         ? "bg-emerald-400/20 text-emerald-300"
                         : durum === "siradaki"
-                          ? "bg-gold text-midnight"
+                          ? "bg-gold text-[#1a1206]"
                           : "bg-white/5 text-slate-500"
                   }`}
                   aria-hidden

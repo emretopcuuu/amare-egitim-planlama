@@ -75,7 +75,7 @@ export default function OdevPaketi() {
       <button
         onClick={() => void gonder()}
         disabled={mesgul || !baslik.trim() || !govde.trim()}
-        className="flex h-12 w-full items-center justify-center rounded-xl bg-gold text-sm font-bold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+        className="flex h-12 w-full items-center justify-center rounded-xl bg-gold text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
       >
         {mesgul ? t.gonderiliyor : t.gonder}
       </button>

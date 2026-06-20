@@ -64,7 +64,7 @@ export default function GunlukCheckin({
             onClick={() => setSec(o.id)}
             className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
               sec === o.id
-                ? "bg-gold font-bold text-midnight"
+                ? "bg-gold font-bold text-[#1a1206]"
                 : "bg-white/5 text-slate-300 hover:bg-white/10"
             }`}
           >

@@ -124,7 +124,7 @@ export default function BenKarti({
       <div className="mt-3 flex gap-3">
         <button
           onClick={indir}
-          className="btn-3d flex-1 rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light"
+          className="btn-3d flex-1 rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light"
         >
           ⬇ {tr.arketip.indir}
         </button>

@@ -94,7 +94,7 @@ export default function SahneKumanda({
         <button
           onClick={() => duyuruGonder(metin)}
           disabled={mesgul !== null || metin.trim().length < 2}
-          className="mt-4 w-full btn-3d rounded-xl bg-gold px-4 py-4 text-lg font-bold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
+          className="mt-4 w-full btn-3d rounded-xl bg-gold px-4 py-4 text-lg font-bold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-40"
         >
           {mesgul === "duyuru" ? t.duyuruGonderiliyor : t.duyuruGonder}
         </button>
@@ -122,7 +122,7 @@ export default function SahneKumanda({
           className={`mt-4 w-full rounded-xl px-4 py-4 text-lg font-bold transition-colors disabled:opacity-50 ${
             aynaAktif
               ? "border-2 border-amber-400/50 text-amber-300 hover:bg-amber-400/10"
-              : "btn-3d bg-gold text-midnight hover:bg-gold-light"
+              : "btn-3d bg-gold text-[#1a1206] hover:bg-gold-light"
           }`}
         >
           {mesgul === "ayna" ? t.calisiyor : aynaAktif ? t.aynaDuraklat : t.aynaSurdur}
@@ -157,7 +157,7 @@ export default function SahneKumanda({
                 className={`shrink-0 rounded-lg px-4 py-2 text-sm font-bold transition-colors disabled:opacity-50 ${
                   d.acik
                     ? "border border-amber-400/50 text-amber-300 hover:bg-amber-400/10"
-                    : "btn-3d bg-gold text-midnight hover:bg-gold-light"
+                    : "btn-3d bg-gold text-[#1a1206] hover:bg-gold-light"
                 }`}
               >
                 {mesgul === `dalga-${d.id}`
@@ -190,7 +190,7 @@ export default function SahneKumanda({
                 disabled={mesgul !== null}
                 className={`flex items-center justify-between gap-2 rounded-xl px-4 py-3 text-left text-sm font-bold transition-colors disabled:opacity-50 ${
                   aktif
-                    ? "btn-3d bg-gold text-midnight"
+                    ? "btn-3d bg-gold text-[#1a1206]"
                     : "border border-white/15 text-slate-200 hover:bg-white/[0.06]"
                 }`}
               >

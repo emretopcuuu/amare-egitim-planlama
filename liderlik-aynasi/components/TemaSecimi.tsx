@@ -64,7 +64,7 @@ export default function TemaSecimi() {
               onClick={() => sec(s.mod)}
               className={`flex h-11 flex-col items-center justify-center rounded-lg text-xs font-semibold transition-colors ${
                 aktif
-                  ? "bg-gold text-midnight shadow"
+                  ? "bg-gold text-[#1a1206] shadow"
                   : "text-slate-300 hover:bg-white/5"
               }`}
             >

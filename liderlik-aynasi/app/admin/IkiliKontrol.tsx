@@ -38,7 +38,7 @@ export default function IkiliKontrol({ mevcut }: { mevcut: number }) {
       <button
         onClick={olustur}
         disabled={calisiyor}
-        className="btn-3d rounded-xl bg-gold px-5 py-2.5 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+        className="btn-3d rounded-xl bg-gold px-5 py-2.5 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
       >
         {calisiyor ? t.olusturuluyor : t.olustur}
       </button>

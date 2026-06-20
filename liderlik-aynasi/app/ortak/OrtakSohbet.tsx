@@ -50,7 +50,7 @@ export default function OrtakSohbet() {
         <button
           onClick={gonder}
           disabled={gonderiliyor || mesaj.trim().length < 1}
-          className="shrink-0 btn-3d rounded-xl bg-gold px-5 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
+          className="shrink-0 btn-3d rounded-xl bg-gold px-5 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-40"
         >
           {gonderiliyor ? "…" : t.gonder}
         </button>

@@ -159,7 +159,7 @@ export default function SozDurum({
         <button
           onClick={guncelle}
           disabled={kaydediliyor}
-          className="mt-4 w-full btn-3d rounded-xl bg-gold px-4 py-3 font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+          className="mt-4 w-full btn-3d rounded-xl bg-gold px-4 py-3 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
         >
           {kaydediliyor ? t.gonderiliyor : t.ilerlemeGuncelle}
         </button>

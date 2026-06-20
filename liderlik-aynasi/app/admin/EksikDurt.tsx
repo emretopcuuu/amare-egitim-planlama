@@ -42,7 +42,7 @@ export default function EksikDurt({ eksikSayisi }: { eksikSayisi: number }) {
       <button
         onClick={durt}
         disabled={durum === "gonderiliyor"}
-        className="flex h-12 w-full items-center justify-center rounded-xl bg-gold px-4 text-sm font-bold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+        className="flex h-12 w-full items-center justify-center rounded-xl bg-gold px-4 text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
       >
         {durum === "gonderiliyor" ? t.gonderiliyor : t.dugme(eksikSayisi)}
       </button>

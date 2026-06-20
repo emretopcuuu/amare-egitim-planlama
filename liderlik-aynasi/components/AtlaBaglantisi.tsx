@@ -15,7 +15,7 @@ export default function AtlaBaglantisi() {
           ana.scrollIntoView();
         }
       }}
-      className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-xl focus:bg-gold focus:px-4 focus:py-2 focus:text-base focus:font-bold focus:text-midnight"
+      className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-xl focus:bg-gold focus:px-4 focus:py-2 focus:text-base focus:font-bold focus:text-[#1a1206]"
     >
       Ana içeriğe atla
     </a>

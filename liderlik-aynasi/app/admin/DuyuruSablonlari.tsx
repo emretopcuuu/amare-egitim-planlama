@@ -46,7 +46,7 @@ export default function DuyuruSablonlari() {
             <button
               onClick={() => gonder(secili)}
               disabled={gonderiliyor}
-              className="rounded-lg bg-gold px-4 py-2 text-sm font-bold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+              className="rounded-lg bg-gold px-4 py-2 text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
             >
               {gonderiliyor ? t.gonderiliyor : t.gonder}
             </button>

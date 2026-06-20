@@ -122,7 +122,7 @@ export default function OtomatikZamanlama({ dalgalar }: { dalgalar: Dalga[] }) {
         <button
           onClick={() => void manuelTetikle()}
           disabled={tetikleniyor}
-          className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-midnight transition-colors hover:bg-amber-400 disabled:opacity-50"
+          className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-[#1a1206] transition-colors hover:bg-amber-400 disabled:opacity-50"
         >
           {tetikleniyor ? t.manuelTetikleniyor : t.manuelTetikle}
         </button>
@@ -166,7 +166,7 @@ export default function OtomatikZamanlama({ dalgalar }: { dalgalar: Dalga[] }) {
         <button
           onClick={() => void ekle()}
           disabled={eklemeMesgul || !zaman}
-          className="mt-3 w-full rounded-xl bg-gold py-2.5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+          className="mt-3 w-full rounded-xl bg-gold py-2.5 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
         >
           {eklemeMesgul ? t.ekleniyor : t.ekle}
         </button>

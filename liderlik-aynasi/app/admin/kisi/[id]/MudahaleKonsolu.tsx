@@ -45,7 +45,7 @@ export default function MudahaleKonsolu({ hedefId }: { hedefId: string }) {
         <button
           onClick={() => gonder("gorev")}
           disabled={!!calisan}
-          className="flex h-11 items-center justify-center rounded-xl bg-gold px-4 text-sm font-bold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+          className="flex h-11 items-center justify-center rounded-xl bg-gold px-4 text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
         >
           {calisan === "gorev" ? t.uretiliyor : `🎯 ${t.gorevVer}`}
         </button>

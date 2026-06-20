@@ -140,7 +140,7 @@ export default function Mini360Oz({
           />
           <button
             onClick={kopyala}
-            className="shrink-0 rounded-lg bg-gold px-3 py-2 text-sm font-bold text-midnight transition-colors hover:bg-gold-light"
+            className="shrink-0 rounded-lg bg-gold px-3 py-2 text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light"
           >
             {kopyalandi ? t.kopyalandi : t.linkKopyala}
           </button>

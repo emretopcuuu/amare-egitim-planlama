@@ -10,8 +10,8 @@ export type RayAsama = { ad: string; durum: RayDurum };
 const t = tr.asama;
 
 const NOKTA: Record<RayDurum, string> = {
-  tamam: "bg-emerald-500 text-midnight",
-  simdi: "bg-gold text-midnight ring-2 ring-gold/40",
+  tamam: "bg-emerald-500 text-[#1a1206]",
+  simdi: "bg-gold text-[#1a1206] ring-2 ring-gold/40",
   siradaki: "bg-gold/25 text-gold-light ring-1 ring-gold/40",
   bekliyor: "bg-midnight-soft text-slate-500",
   kilitli: "bg-midnight-soft text-slate-500",

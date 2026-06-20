@@ -96,7 +96,7 @@ export default function FazSifirKontrol() {
           className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${
             acik
               ? "border border-royal-light/40 text-slate-300 hover:bg-midnight-soft"
-              : "bg-gold text-midnight hover:bg-gold-light"
+              : "bg-gold text-[#1a1206] hover:bg-gold-light"
           }`}
         >
           {acik ? t.pencereKapat : t.pencereAc}
@@ -133,7 +133,7 @@ export default function FazSifirKontrol() {
           <button
             onClick={() => void gonder({ kilitKodu: kod }, t.kodKaydedildi)}
             disabled={mesgul}
-            className="shrink-0 rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-50"
+            className="shrink-0 rounded-xl bg-gold px-4 py-2.5 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
           >
             {t.kodKaydet}
           </button>

@@ -63,7 +63,7 @@ export default function TanikOnay({
           type="button"
           onClick={gonder}
           disabled={metin.trim().length < 2 || gonderiliyor}
-          className="h-11 flex-1 rounded-xl bg-gold font-semibold text-midnight transition-colors hover:bg-gold-light disabled:opacity-40"
+          className="h-11 flex-1 rounded-xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-40"
         >
           {gonderiliyor ? t.tanikOnaylaniyor : t.tanikOnayla}
         </button>

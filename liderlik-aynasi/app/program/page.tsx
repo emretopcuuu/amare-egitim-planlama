@@ -184,7 +184,7 @@ export default async function ProgramPage() {
                           {m.baslangic} – {m.bitis}
                         </p>
                         {suAn && (
-                          <span className="altin-nabiz rounded-full bg-gold px-3 py-0.5 text-xs font-black text-midnight">
+                          <span className="altin-nabiz rounded-full bg-gold px-3 py-0.5 text-xs font-black text-[#1a1206]">
                             {t.suAn}
                           </span>
                         )}
