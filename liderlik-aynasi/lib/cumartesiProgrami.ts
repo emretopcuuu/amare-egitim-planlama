@@ -43,7 +43,7 @@ export const ETKINLIK_SIMGE: Record<CmtTur, string> = {
   david_hazirlik: "🚪",
   david_toplanti: "👤",
   bowling: "🎳",
-  big_bubble: "🫧",
+  big_bubble: "⚽",
   atv: "🏍",
   hazine_avi: "🗺",
   yemek: "🍽",
@@ -274,7 +274,7 @@ export type GunSatiri = {
   serbest?: boolean;
 };
 
-export const SERBEST_BASLIK = "AYNA Görevleri & Serbest Zaman";
+export const SERBEST_BASLIK = "AYNA 🪞 Görevleri & Serbest Zaman";
 
 // Cumartesi'nin kamp-geneli sabit blokları (Excel grup programının dışı).
 const CMT_SABIT: { bas: string; bit: string; baslik: string; simge: string; serbest?: boolean }[] = [
@@ -419,7 +419,7 @@ export const OYUN_BILGI: Record<string, { ad: string; simge: string; aciklama: s
   bowling: { ad: "Bowling", simge: "🎳", aciklama: "Herkes oynayacak — klasik bowling keyfi." },
   big_bubble: {
     ad: "Big Bubble",
-    simge: "🫧",
+    simge: "⚽",
     aciklama: "Dev şişme topların içinde yüksek enerjili çarpışma oyunu.",
   },
   atv: { ad: "ATV", simge: "🏍", aciklama: "Arazi parkurunda ATV sürüş deneyimi." },
