@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import { titret } from "@/lib/his";
 
 const t = tr.rituel;
 
@@ -13,6 +14,7 @@ type Asama =
   | "giris"
   | "onay"
   | "foto"
+  | "yeminHazirlik"
   | "kayit"
   | "soru"
   | "inceleme"
@@ -202,6 +204,7 @@ export default function AynaRituel() {
       baslangicZamaniRef.current = Date.now();
       kaydedici.start(1000);
       bitiriliyor.current = false;
+      titret([20, 60, 20]); // kayıt başladı: net fiziksel onay
       setAsama("kayit");
       geriSayim(40, soruyaGec);
     } catch {
@@ -464,7 +467,7 @@ export default function AynaRituel() {
                   className="mx-auto mt-6 h-48 w-40 rounded-3xl object-cover opacity-85"
                 />
                 <div className="mt-8 space-y-4">
-                  <DevButon onClick={sesBasla}>{t.fotoDevam} →</DevButon>
+                  <DevButon onClick={() => setAsama("yeminHazirlik")}>{t.fotoDevam} →</DevButon>
                   <DevButon onClick={() => dosyaGirisi.current?.click()} ikincil>
                     {t.fotoYeniden}
                   </DevButon>
@@ -478,7 +481,7 @@ export default function AynaRituel() {
               </div>
             )}
             <button
-              onClick={sesBasla}
+              onClick={() => setAsama("yeminHazirlik")}
               className="mt-6 text-base text-slate-500 underline-offset-4 hover:underline"
             >
               {t.fotoAtla}
@@ -486,19 +489,42 @@ export default function AynaRituel() {
           </div>
         )}
 
+        {asama === "yeminHazirlik" && (
+          <div>
+            <h1 className="prizma-serif ay-metin text-center text-3xl font-semibold leading-tight">
+              {t.yeminHazirlikBaslik}
+            </h1>
+            <p className="mt-4 text-center text-lg leading-relaxed text-slate-300">
+              {t.yeminHazirlikAciklama}
+            </p>
+            <p className="mt-6 text-sm uppercase tracking-widest text-slate-400">
+              {t.yeminYonerge}
+            </p>
+            <p className="prizma-serif mt-3 text-2xl leading-relaxed text-slate-50">
+              “{t.yemin}”
+            </p>
+            <div className="mt-8">
+              <DevButon onClick={sesBasla}>🎤 {t.kayitBaslat}</DevButon>
+            </div>
+            <p className="mt-3 text-center text-sm text-slate-500">
+              {t.kayitHenuzBaslamadi}
+            </p>
+          </div>
+        )}
+
         {asama === "kayit" && (
           <div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-lg font-bold text-red-300">
-                <span className="h-3 w-3 animate-pulse rounded-full bg-red-400" />
-                REC
+            <div className="flex items-center justify-between rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3">
+              <span className="flex items-center gap-2.5 text-lg font-bold text-red-300">
+                <span className="h-3.5 w-3.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_10px_2px_rgba(239,68,68,0.7)]" />
+                {t.kaydediliyor}…
               </span>
-              <span className="font-mono text-2xl font-bold text-slate-200">{sayac}</span>
+              <span className="font-mono text-2xl font-bold text-slate-100">{sayac}</span>
             </div>
             <p className="mt-5 text-base uppercase tracking-widest text-slate-400">
               {t.yeminYonerge}
             </p>
-            <p className="prizma-serif mt-5 text-2xl leading-relaxed text-slate-50">
+            <p className="prizma-serif mt-4 text-2xl leading-relaxed text-slate-50">
               “{t.yemin}”
             </p>
             <div className="mt-8">
@@ -509,12 +535,12 @@ export default function AynaRituel() {
 
         {asama === "soru" && (
           <div className="text-center">
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-2 text-lg font-bold text-red-300">
-                <span className="h-3 w-3 animate-pulse rounded-full bg-red-400" />
-                REC
+            <div className="flex items-center justify-between rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-left">
+              <span className="flex items-center gap-2.5 text-lg font-bold text-red-300">
+                <span className="h-3.5 w-3.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_10px_2px_rgba(239,68,68,0.7)]" />
+                {t.kaydediliyor}…
               </span>
-              <span className="font-mono text-2xl font-bold text-slate-200">{sayac}</span>
+              <span className="font-mono text-2xl font-bold text-slate-100">{sayac}</span>
             </div>
             <h1 className="prizma-serif ay-metin mt-6 text-3xl font-semibold leading-tight">
               {t.soru}

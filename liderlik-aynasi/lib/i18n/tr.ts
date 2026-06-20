@@ -2873,6 +2873,12 @@ export const tr = {
     fotoDevam: "Beğendim, devam et",
     fotoAtla: "Fotoğrafsız devam et",
     sessiz: "Sessiz ayna istiyorum",
+    yeminHazirlikBaslik: "Birazdan sesini kaydedeceğiz",
+    yeminHazirlikAciklama:
+      "Acele yok. Önce aşağıdaki yemini bir oku. Hazır olduğunda 🎤 düğmesine bas — kayıt tam o an başlar.",
+    kayitBaslat: "Kaydı başlat",
+    kayitHenuzBaslamadi: "Kayıt henüz başlamadı — hazır olunca sen başlatırsın.",
+    kaydediliyor: "Kaydediliyor",
     yeminYonerge: "Aşağıdaki yemini doğal bir sesle, acele etmeden oku:",
     yemin:
       "Ben, bu üç gün boyunca kendime dürüst olmaya söz veriyorum. Gördüğümü açıkça söyleyeceğim, duyduğumu adil tartacağım. Arkadaşlarımı yargılamak için değil, anlamak için izleyeceğim. Zor anlarda kolay olanı değil, doğru olanı seçeceğim. Suya baktığımda yalnızca yüzümü değil, yönümü de göreceğim. Bugün burada başlayan yolculuk, kamptan sonra da benimle gelecek. Hazırım: aynanın karşısına çıkıyorum ve yansımamdan saklanmıyorum.",
