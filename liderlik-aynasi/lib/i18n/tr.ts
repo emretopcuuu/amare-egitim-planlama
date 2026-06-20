@@ -234,6 +234,7 @@ export const tr = {
     menuBen: "👤 Profilim",
     menuGrup: "👥 Grup Ödevi",
     menuMini360: "👁 Ekip Aynası",
+    menuAynaEsi: "🤝 Ayna Eşin",
     menuAnlar: "Anların (Zaman Tüneli)",
     menuTurnuva: "Takım Turnuvası",
     menuTakdir: "Takdir Duvarı",
@@ -884,6 +885,41 @@ export const tr = {
     disKendin: "Kendini buradan değil, öz-puanlamadan değerlendirirsin.",
     disKilitMetin: "Önce kendini puanla — ekip arkadaşlarını ancak kendi aynanı tamamladıktan sonra değerlendirebilirsin.",
   },
+  // AYNA EŞİ — tamamlayıcı akran eşleştirmesi (cumartesi akşamı 3 görüşme)
+  aynaEsi: {
+    hata: "İşlem başarısız. Lütfen tekrar dene.",
+    yetersizVeri: "Eşleştirme için yeterli puan toplanmamış. Birkaç dalga sonra tekrar dene.",
+    // Katılımcı
+    baslik: "Ayna Eşin",
+    aciklama:
+      "Cumartesi akşamı, en çok zorlandığın konuda en güçlü olan ekip arkadaşlarınla yarım saatlik görüşmeler. Karşılıklı — sen de onlara güçlü olduğun konuda ayna olacaksın.",
+    kapaliBaslik: "Ayna Eşi henüz açık değil",
+    kapaliMetin: "Eşleşmeler hazırlanınca burada belirecek. Sıran gelince haber vereceğiz.",
+    yokBaslik: "Bu tur için eşin yok",
+    yokMetin: "Yeterli veri toplandığında eşin burada görünecek.",
+    turEtiket: (n: number) => `${n}. Görüşme`,
+    ondanOgren: (ad: string) => `${ad}'e sor — ondan öğren`,
+    sanaSoracak: (ad: string) => `${ad} sana soracak — sen anlat`,
+    konustuk: "Konuştuk ✓",
+    konustukYap: "Konuştuk olarak işaretle",
+    yariMetin: "Her görüşme 30 dk: 15 dk sen sor, 15 dk o sorsun.",
+    farkliEkipNot: "Eşin farklı ekipten — yeni bir bağ, yeni bir bakış.",
+    // Admin
+    adminBaslik: "Ayna Eşi — Gelişim İkilileri",
+    adminAciklama:
+      "Tamamlayıcı eşleştirme: A'nın güçlüsü = B'nin zayıfı (ve tersi), farklı ekipler, 3 tur. Mevcut 360 puanlarından hesaplanır.",
+    hesapla: "Eşleştirmeleri hesapla",
+    yenidenHesapla: "Yeniden hesapla",
+    hesaplaniyor: "Hesaplanıyor…",
+    yayinla: "Katılımcılara aç",
+    kapat: "Kapat",
+    durumAcik: "Yayında — katılımcılar görüyor",
+    durumKapali: "Kapalı — yalnız sen görüyorsun",
+    ozet: (esl: number, kisi: number, acikta: number) =>
+      `${esl} görüşme · ${kisi} kişi eşleşti · ${acikta} kişi açıkta`,
+    bosListe: "Henüz eşleştirme yok. Önce hesapla.",
+    verir: (ad: string, ozellik: string) => `${ad} → ${ozellik}`,
+  },
   // ÖN FARKINDALIK — kamp öncesi Ayna/Kalibrasyon çalışması (Faz A: Katman 1)
   onFarkindalik: {
     baslik: "Liderlik Aynası",
@@ -1063,6 +1099,7 @@ export const tr = {
       program: "Program",
       katilimcilar: "Katılımcılar",
       eslestirme: "Eşleştirme",
+      aynaEsi: "Ayna Eşi",
       qr: "QR Kartlar",
       grupOdev: "Grup Ödevleri",
       elmas: "Elmas Seçimi",
