@@ -130,19 +130,30 @@ export default async function AnaSayfa({
   // yapmamış katılımcı kamp öncesi yolculuğu yapar. Sıra: önce ÖN FARKINDALIK
   // (ayna katmanları — bayrak açıksa ve bitmediyse), sonra PUSULA (derin neden +
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
-  const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }] = await Promise.all([
-    db.from("participants").select("camp_unlocked_at, team").eq("id", session.sub).maybeSingle(),
-    db
-      .from("settings")
-      .select("key, value")
-      .in("key", ["pusula_acik", "on_farkindalik_acik", "oyun_secimi_acik", "gunun_cumlesi"]),
-    db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
-  ]);
+  const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }] =
+    await Promise.all([
+      db.from("participants").select("camp_unlocked_at, team").eq("id", session.sub).maybeSingle(),
+      db
+        .from("settings")
+        .select("key, value")
+        .in("key", ["pusula_acik", "on_farkindalik_acik", "oyun_secimi_acik", "gunun_cumlesi"]),
+      db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+      // Ses/foto ritüeli kapısı için erken kontrol — akışın EN BAŞINA gelir.
+      db.from("voice_profiles").select("participant_id").eq("participant_id", session.sub).maybeSingle(),
+    ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
   const gununCumlesi = (ayar.get("gunun_cumlesi") ?? "").trim();
-  // OYUN SEÇİMİ KAPISI: seçim açıkken grubu olmayan kişi önce oyununu seçer
-  // (Bowling herkes; diğer 3'ten 2) → uygun gruba atanır. Grup = takım mantığı
-  // artık bu seçimle kurulur. En baştaki adım: pusula/kart akışından önce.
+
+  // SIRA (kamp öncesi onboarding): 1) FOTO+SES RİTÜELİ → 2) OYUN SEÇİMİ (grup)
+  // → 3) ÖN FARKINDALIK (sorular) → 4) PUSULA. Her kapı bir öncekini bekler.
+
+  // 1) FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Tamamlanana (ya da "sessiz"
+  // seçilene) dek grup ve sorular dahil başka hiçbir kapı açılmaz.
+  if (!sesVarRow) {
+    return <AynaRituel />;
+  }
+  // 2) OYUN SEÇİMİ KAPISI: seçim açıkken grubu olmayan kişi önce oyununu seçer
+  // (Bowling herkes; diğer 3'ten 2) → uygun gruba atanır.
   if (ayar.get("oyun_secimi_acik") === "true" && !kisi?.team) {
     redirect("/oyun-secimi");
   }
@@ -348,18 +359,10 @@ export default async function AnaSayfa({
     </div>
   );
 
-  // 1) SES RİTÜELİ — kampa girişten sonraki İLK adım: Yansıman'ın doğuşu.
-  // Tam ekran, kademeli; tamamlanmadan (ya da "sessiz" seçilmeden) başka
-  // hiçbir şey görünmez — kişi dolaşamaz, doğrudan ritüel akışına girer.
-  if (!sesProfili) {
-    return (
-      <Sayfa ust={ust} kurulum={false}>
-        <AynaRituel />
-      </Sayfa>
-    );
-  }
+  // (SES/FOTO RİTÜELİ kapısı akışın en başına alındı — bkz. yukarıdaki erken
+  // kontrol. Buraya gelindiğinde ses profili kesinlikle vardır.)
 
-  // 2) ÖZ-PUAN KAPISI — kendini puanlamadan başkasını puanlayamazsın.
+  // ÖZ-PUAN KAPISI — kendini puanlamadan başkasını puanlayamazsın.
   // Tam ekran odak (üst menü + alt çubuk gizli): tek iş, dolaşma yok.
   if (dalga && !ozTamam) {
     return (
