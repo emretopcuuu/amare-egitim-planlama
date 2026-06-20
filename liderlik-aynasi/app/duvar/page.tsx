@@ -7,6 +7,7 @@ import { tr } from "@/lib/i18n/tr";
 import FotoYukle from "./FotoYukle";
 import DuvarIzgara from "./DuvarIzgara";
 import IlkIpucu from "@/components/IlkIpucu";
+import GeriButonu from "@/components/GeriButonu";
 
 export const metadata = { title: "Anı Duvarı — Liderlik Aynası" };
 
@@ -86,6 +87,7 @@ export default async function DuvarPage() {
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-5 p-5">
+        <GeriButonu />
         <header className="text-center">
           <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
             {t.baslik}
@@ -132,14 +134,6 @@ export default async function DuvarPage() {
           )}
         </section>
 
-        <p className="pt-1 text-center">
-          <Link
-            href="/"
-            className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
-          >
-            {t.geriDon}
-          </Link>
-        </p>
       </div>
     </main>
   );

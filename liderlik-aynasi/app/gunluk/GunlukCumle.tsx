@@ -114,11 +114,6 @@ export default function GunlukCumle() {
         </div>
       )}
 
-      <p className="mt-8 text-center">
-        <Link href="/" className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">
-          ← {tr.degerlendir.anaSayfayaDon}
-        </Link>
-      </p>
     </div>
   );
 }

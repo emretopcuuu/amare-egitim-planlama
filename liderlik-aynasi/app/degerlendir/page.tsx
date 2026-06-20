@@ -12,6 +12,7 @@ import { tr } from "@/lib/i18n/tr";
 import KisiSatiri from "./KisiSatiri";
 import SerbestListe from "./SerbestListe";
 import BosDurum from "@/components/BosDurum";
+import GeriButonu from "@/components/GeriButonu";
 
 export const metadata = { title: "Değerlendirme — Liderlik Aynası" };
 
@@ -128,19 +129,12 @@ export default async function DegerlendirPage() {
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-6 p-5">
-      <header className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
-            {tr.degerlendir.baslik}
-          </p>
-          <h1 className="font-display altin-metin mt-1 text-3xl font-bold leading-tight">{dalga.name}</h1>
-        </div>
-        <Link
-          href="/"
-          className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
-        >
-          {tr.degerlendir.anaSayfayaDon}
-        </Link>
+      <GeriButonu />
+      <header>
+        <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
+          {tr.degerlendir.baslik}
+        </p>
+        <h1 className="font-display altin-metin mt-1 text-3xl font-bold leading-tight">{dalga.name}</h1>
       </header>
 
       {/* Öz-puan kapısı */}
