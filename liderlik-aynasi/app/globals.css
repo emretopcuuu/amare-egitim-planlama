@@ -224,19 +224,19 @@ body.gunes-modu .kart-cerceve {
 
 /* Sinematik sayfa geçişi: her gezinmede sayfa yumuşakça belirir. template.tsx
    her navigasyonda yeniden mount olduğu için animasyon tazelenir. */
+/* ÖNEMLİ: Bu sarmal SADECE opacity animasyonu kullanır — transform/filter
+   KULLANMAZ. Aksi halde transform'lu ata, içindeki `position: fixed` tam-ekran
+   overlay'lerin (ses ritüeli, öz-puan kapısı vb.) kapsayıcı bloğu olur ve onları
+   0 yüksekliğe çökertip görünmez yapardı. Yalnız opacity → kapsayıcı blok yok. */
 .sayfa-gecis {
-  animation: sayfa-belir 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: sayfa-belir 0.4s ease-out both;
 }
 @keyframes sayfa-belir {
   from {
     opacity: 0;
-    transform: translateY(8px) scale(0.99);
-    filter: blur(2px);
   }
   to {
     opacity: 1;
-    transform: none;
-    filter: none;
   }
 }
 
