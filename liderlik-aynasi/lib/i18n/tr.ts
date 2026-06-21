@@ -1111,6 +1111,7 @@ export const tr = {
     nav: {
       panel: "Panel",
       ayna: "AYNA",
+      komuta: "Kamp Komuta",
       program: "Program",
       katilimcilar: "Katılımcılar",
       eslestirme: "Eşleştirme",
@@ -1168,6 +1169,13 @@ export const tr = {
       baslik: "Katılım Hunisi",
       aciklama: "Katılımcılar hazırlıkta nereye kadar geldi — düşüşün olduğu adıma yüklen.",
       kayip: "kayıp",
+    },
+    // Kamp Komuta sekmeleri (direktör + komutan + sahne tek bölüm)
+    komuta: {
+      baslik: "Kamp Komuta",
+      direktor: "🤖 AYNA Direktörü",
+      komutan: "📡 Komutan",
+      sahne: "🎬 Sahne",
     },
     // Admin UX paketi (2026): kokpit hızı, güveni, hata payı
     ux: {
@@ -1246,6 +1254,8 @@ export const tr = {
     araclar: {
       baslik: "Tüm araçlar",
       aciklama: "Kurulum, yedek, eşleştirme, zamanlama ve işlem günlüğü.",
+      grupSonrasi: "📦 Kamp Sonrası",
+      grupSistem: "⚙️ Sistem & Kayıt",
     },
     // #6 Bağlamsal boş/sakin durum
     bosDurum: {
@@ -2439,6 +2449,10 @@ export const tr = {
       gizliEtiket: "Gizli",
       goster: "Göster",
       hata: "Güncellenemedi. Lütfen tekrar dene.",
+      // Birleşik moderasyon: yorum + fotoğraf tek sayfada sekmeli
+      birlesikBaslik: "Moderasyon",
+      sekmeYorum: "Yorumlar",
+      sekmeFoto: "Fotoğraflar",
     },
     aynaAni: {
       baslik: "✨ Ayna Anı",

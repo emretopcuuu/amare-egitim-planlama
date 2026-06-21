@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import SahneKumanda from "./SahneKumanda";
 import Ipucu from "../Ipucu";
+import KomutaSekme from "../KomutaSekme";
 
 export const metadata = { title: "Sahne Kumandası — Liderlik Aynası" };
 
@@ -30,6 +31,7 @@ export default async function SahneKumandaPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
+      <KomutaSekme />
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
