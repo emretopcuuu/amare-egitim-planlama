@@ -64,5 +64,20 @@ export async function POST(req: NextRequest) {
     await yazAuditLog(db, session.sub, "kamp_kilit_kodu_ayarlandi", {}, req);
   }
 
+  // #13 Toplu kampı aç — oda QR'ı çalışmazsa (oturum/domain) görevli kampa
+  // gelmemiş HERKESİN mührünü tek seferde kaldırır. Geri-al için kilitliyi de döner.
+  if (body?.topluAc === true) {
+    const { data, error } = await db
+      .from("participants")
+      .update({ camp_unlocked_at: simdi })
+      .eq("role", "participant")
+      .is("camp_unlocked_at", null)
+      .select("id");
+    if (error) return NextResponse.json({ hata: error.message }, { status: 500 });
+    const acilan = (data ?? []).length;
+    await yazAuditLog(db, session.sub, "kamp_toplu_acildi", { acilan }, req);
+    return NextResponse.json({ tamam: true, acilan });
+  }
+
   return NextResponse.json({ tamam: true });
 }

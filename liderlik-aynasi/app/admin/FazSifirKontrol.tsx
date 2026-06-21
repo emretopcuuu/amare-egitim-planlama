@@ -94,6 +94,26 @@ export default function FazSifirKontrol() {
     }
   }
 
+  // #13 Toplu kampı aç — oda QR'ı çalışmazsa kampa gelmemiş herkesin mührünü kaldırır.
+  async function topluAc() {
+    if (!confirm(t.topluAcOnay)) return;
+    setMesgul(true);
+    try {
+      const res = await fetch("/api/admin/pusula", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ topluAc: true }),
+      });
+      const v = await res.json().catch(() => null);
+      if (res.ok && v) tost(t.topluAcSonuc(v.acilan ?? 0), "basari");
+      else tost(t.hata, "hata");
+    } catch {
+      tost(t.hata, "hata");
+    } finally {
+      setMesgul(false);
+    }
+  }
+
   const qrUrl =
     typeof window !== "undefined" && kod.trim()
       ? `${window.location.origin}/ac?k=${encodeURIComponent(kod.trim())}`
@@ -142,6 +162,15 @@ export default function FazSifirKontrol() {
         className="w-full rounded-xl border border-royal-light/40 px-4 py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-midnight-soft disabled:opacity-50"
       >
         {t.hatirlatDugme}
+      </button>
+
+      {/* #13 Toplu kampı aç — oda QR'ı patlarsa görevli yedeği */}
+      <button
+        onClick={() => void topluAc()}
+        disabled={mesgul}
+        className="w-full rounded-xl bg-emerald-500/90 px-4 py-2.5 text-sm font-bold text-[#04140c] transition-colors hover:bg-emerald-400 disabled:opacity-50"
+      >
+        {t.topluAcDugme}
       </button>
 
       {/* Oda QR kodu */}
