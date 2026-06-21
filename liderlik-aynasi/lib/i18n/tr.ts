@@ -1235,6 +1235,9 @@ export const tr = {
         tamam: "✓",
         bekliyor: "Bekliyor",
         uyariMuhur: "Mührü, raporları açtığın anda (veya hemen öncesinde) aç.",
+        // #2 Bağımlılık kapısı — sıra atlanınca uyarır
+        uyariEslestirme: "Dalga açık ama eşleştirme yapılmamış — kimse kimseyi puanlayamaz. Önce Eşleştirme'yi tamamla.",
+        uyariKilitKodu: "Pusula penceresi açık ama oda QR kilit kodu boş — kimse kampa giremez. Faz 0'da kodu ayarla.",
         adimHazirlik: "Hazırlık (FAZ 0)",
         adimDalga: (n: number) => `Dalga ${n}`,
         adimBosluk: "Boşluk Anı",

@@ -13,12 +13,13 @@ type Adim = { etiket: string; acik: boolean; href: string };
 // uyarır. Her adım ilgili kontrole zıplar.
 export default async function AkisDizisi() {
   const db = supabaseAdmin();
-  const [{ data: dalgalar }, { data: ayarlar }] = await Promise.all([
+  const [{ data: dalgalar }, { data: ayarlar }, { count: eslestirmeSayi }] = await Promise.all([
     db.from("waves").select("id, name, is_open, opened_at").order("id"),
     db
       .from("settings")
       .select("key, value")
-      .in("key", ["pusula_acik", "bosluk_acik", "reports_visible", "muhur_acik"]),
+      .in("key", ["pusula_acik", "kamp_kilit_kodu", "bosluk_acik", "reports_visible", "muhur_acik"]),
+    db.from("assignments").select("id", { count: "exact", head: true }),
   ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
   const acikMi = (k: string) => ayar.get(k) === "true";
@@ -42,10 +43,16 @@ export default async function AkisDizisi() {
   });
   const siradaki = sonAcik + 1 < adimlar.length ? sonAcik + 1 : -1;
 
-  // Bağımlılık koruması: rapor açık ama mühür kapalıysa hatırlat
+  // #2 Bağımlılık kapısı: sıra atlanınca uyar. Her uyarı kritik bir önkoşulun
+  // eksik olduğunu söyler — operatör yanlış sırada anahtar açmasın.
   const raporAcik = acikMi("reports_visible");
   const muhurAcik = acikMi("muhur_acik");
-  const muhurUyari = raporAcik && !muhurAcik;
+  const dalgaAcikVar = (dalgalar ?? []).some((d) => d.is_open);
+  const kilitKodu = (ayar.get("kamp_kilit_kodu") ?? "").trim();
+  const uyarilar: string[] = [];
+  if (acikMi("pusula_acik") && !kilitKodu) uyarilar.push(t.uyariKilitKodu);
+  if (dalgaAcikVar && (eslestirmeSayi ?? 0) === 0) uyarilar.push(t.uyariEslestirme);
+  if (raporAcik && !muhurAcik) uyarilar.push(t.uyariMuhur);
 
   return (
     <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
@@ -113,10 +120,17 @@ export default async function AkisDizisi() {
         })}
       </ol>
 
-      {muhurUyari && (
-        <p className="mt-3 rounded-xl bg-amber-900/20 px-4 py-2.5 text-center text-sm font-medium text-amber-300">
-          ⚠️ {t.uyariMuhur}
-        </p>
+      {uyarilar.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {uyarilar.map((u) => (
+            <p
+              key={u}
+              className="rounded-xl bg-amber-900/20 px-4 py-2.5 text-sm font-medium text-amber-300"
+            >
+              ⚠️ {u}
+            </p>
+          ))}
+        </div>
       )}
     </section>
   );
