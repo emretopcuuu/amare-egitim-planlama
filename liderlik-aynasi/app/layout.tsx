@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import GolArkaplan from "@/components/gol/GolArkaplan";
 import AltNav from "@/components/AltNav";
 import BaglantiDurumu from "@/components/BaglantiDurumu";
+import CanliTazele from "@/components/CanliTazele";
 import AcilisSplash from "@/components/AcilisSplash";
 import IlkKarsilama from "@/components/IlkKarsilama";
 import AtlaBaglantisi from "@/components/AtlaBaglantisi";
@@ -110,6 +111,7 @@ export default async function RootLayout({
         <AltNav />
         <IlkKarsilama />
         <BaglantiDurumu />
+        <CanliTazele />
       </body>
     </html>
   );

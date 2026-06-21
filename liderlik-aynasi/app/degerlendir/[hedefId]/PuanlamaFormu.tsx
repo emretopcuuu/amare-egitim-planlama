@@ -381,6 +381,12 @@ export default function PuanlamaFormu({
             {tr.puanlama.gizlilikRozet}
           </p>
         )}
+        {!kendisi && (
+          <p className="mt-1 flex items-center gap-1.5 text-xs font-medium text-gold-light/90">
+            <span aria-hidden>🔄</span>
+            {tr.puanlama.dalgaHatirlatma(dalgaId)}
+          </p>
+        )}
         <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
           <div
             className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-300"

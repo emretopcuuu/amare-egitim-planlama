@@ -134,8 +134,26 @@ export default async function DegerlendirPage() {
         <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
           {tr.degerlendir.baslik}
         </p>
-        <h1 className="font-display altin-metin mt-1 text-3xl font-bold leading-tight">{dalga.name}</h1>
+        {/* ay-metin: gündüz temasında koyu lacivert→altın'a döner (parlak göl
+            zemininde okunur). altin-metin'in gündüz karşılığı yok → açık gümüş
+            harflerin üstü zemine karışıp "kesik" görünüyordu. leading-snug +
+            pb-1: Playfair'in uzun çıkıntıları (İ, ğ) kırpılmasın. */}
+        <h1 className="font-display ay-metin mt-1 pb-1 text-3xl font-bold leading-snug break-words">
+          {dalga.name}
+        </h1>
       </header>
+
+      {/* DALGA ÇERÇEVESİ: puanlar kalıcı değil — her dalga bir sonrakinde
+          güncellenir. Kullanıcı baskı hissetmeden, dürüstçe puanlasın. */}
+      <div className="rounded-2xl border border-gold/25 bg-gold/[0.06] p-4">
+        <p className="flex items-center gap-2 text-sm font-semibold text-gold-light">
+          <span aria-hidden>🔄</span>
+          {tr.degerlendir.dalgaCerceveBaslik}
+        </p>
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-300">
+          {tr.degerlendir.dalgaCerceve(dalga.id)}
+        </p>
+      </div>
 
       {/* Öz-puan kapısı */}
       <section
