@@ -35,6 +35,13 @@ import {
   ACILIS_ANONSU,
   aynaAniMetni,
 } from "../lib/kampProgrami";
+import { kampOncesiAdim, type AkisDurum } from "../lib/akis";
+import {
+  KARIYER_BASAMAKLARI,
+  GUNLUK_SAAT_SECENEKLERI,
+  SURE_SECENEKLERI,
+  kariyerPlaniHesapla,
+} from "../lib/kariyer";
 
 
 let basarili = 0;
@@ -448,7 +455,7 @@ console.log("\n■ 8) KAMP PROGRAMI — Sapanca akışı ve zaman pencereleri");
   // Program bütünlüğü: her gün kronolojik ve çakışmasız
   for (const gun of [1, 2, 3] as const) {
     const m = gunProgrami(gun);
-    iddia(m.length >= 8, `Gün ${gun} en az 8 madde içerir (bulundu: ${m.length})`);
+    iddia(m.length >= 5, `Gün ${gun} en az 5 madde içerir (bulundu: ${m.length})`);
     for (let i = 0; i < m.length; i++) {
       iddia(
         dakikaCevir(m[i].bitis) > dakikaCevir(m[i].baslangic),
@@ -462,24 +469,25 @@ console.log("\n■ 8) KAMP PROGRAMI — Sapanca akışı ve zaman pencereleri");
       }
     }
   }
-  iddia(KAMP_PROGRAMI.length === 28, `programda 28 madde (bulundu: ${KAMP_PROGRAMI.length})`);
+  iddia(KAMP_PROGRAMI.length === 23, `programda 23 madde (bulundu: ${KAMP_PROGRAMI.length})`);
 
   // O anki madde: sınırlar dahil/hariç doğru
   iddia(suankiMadde(1, dakikaCevir("12:59"))?.baslik.includes("Otel") === true, "Gün 1 12:59 → Otel Giriş");
   iddia(suankiMadde(1, dakikaCevir("13:00"))?.baslik.includes("Öğle") === true, "Gün 1 13:00 → Öğle Yemeği (başlangıç dahil)");
   iddia(suankiMadde(2, dakikaCevir("11:00"))?.tur === "oyun", "Gün 2 11:00 → Oyun I");
-  iddia(suankiMadde(1, dakikaCevir("23:50")) === null, "Gün 1 23:50 → boşluk (program bitti)");
+  iddia(suankiMadde(1, dakikaCevir("23:30"))?.tur === "sahne", "Gün 1 23:30 → David Chung Q&A (sahne)");
+  iddia(suankiMadde(1, dakikaCevir("23:55")) === null, "Gün 1 23:55 → boşluk (program bitti)");
 
   // Sahne sessizliği: kürsü açıkken sus, aralarda konuş
   iddia(sahneSessizMi(1, dakikaCevir("21:30")), "Gün 1 21:30 (David Chung) sessiz");
   iddia(!sahneSessizMi(1, dakikaCevir("22:15")), "Gün 1 22:15 (ara) sessiz DEĞİL");
   iddia(sahneSessizMi(1, dakikaCevir("22:40")), "Gün 1 22:40 (panel) sessiz");
   iddia(!sahneSessizMi(1, dakikaCevir("20:00")), "Gün 1 20:00 (yemek) sessiz değil");
-  iddia(sahneSessizMi(2, dakikaCevir("22:00")), "Gün 2 22:00 (tecrübe paylaşımı) sessiz");
-  iddia(sahneSessizMi(3, dakikaCevir("09:30")), "Gün 3 09:30 (eğitim) sessiz");
-  iddia(!sahneSessizMi(3, dakikaCevir("10:00")), "Gün 3 10:00 (ara) sessiz değil");
-  iddia(!sahneSessizMi(3, dakikaCevir("10:30")), "Gün 3 10:30 (Aynanı Gör oturumu) sessiz DEĞİL — telefonlar elde");
-  iddia(sahneSessizMi(3, dakikaCevir("12:00")), "Gün 3 12:00 (kamp analiz) sessiz");
+  iddia(!sahneSessizMi(2, dakikaCevir("22:00")), "Gün 2 22:00 (AYNA görevlendirmeleri) sessiz DEĞİL — telefonlar elde");
+  iddia(!sahneSessizMi(3, dakikaCevir("09:30")), "Gün 3 09:30 (kahvaltı & checkout) sessiz değil");
+  iddia(sahneSessizMi(3, dakikaCevir("10:00")), "Gün 3 10:00 (PD101 kapanış oturumu) sessiz");
+  iddia(sahneSessizMi(3, dakikaCevir("10:30")), "Gün 3 10:30 (PD yolculuğu kürsüde) sessiz");
+  iddia(!sahneSessizMi(3, dakikaCevir("12:00")), "Gün 3 12:00 (AYNA Kamp Analizi) sessiz DEĞİL — telefonlar elde");
 
   // Senkron: kamp tarihlerinde 5 dk'lık tik süpürmesi — günde tam 1 pencere
   const kampSenkronlar = new Set<string>();
@@ -514,8 +522,11 @@ console.log("\n■ 8) KAMP PROGRAMI — Sapanca akışı ve zaman pencereleri");
     "Gün 1 penceresi tam 20:15-20:24"
   );
   iddia(
-    kampSenkronAnahtari("2026-07-19", 10, 4) !== null,
-    "Gün 3 penceresi saat sınırını aşar (09:55 → 10:04)"
+    kampSenkronAnahtari("2026-07-19", 9, 29) === null &&
+      kampSenkronAnahtari("2026-07-19", 9, 30) !== null &&
+      kampSenkronAnahtari("2026-07-19", 9, 39) !== null &&
+      kampSenkronAnahtari("2026-07-19", 9, 40) === null,
+    "Gün 3 penceresi tam 09:30-09:39 (kahvaltı & checkout, oturumlardan önce)"
   );
 
   // Senkron anları sahne sessizliğine denk gelmez
@@ -532,7 +543,7 @@ console.log("\n■ 8) KAMP PROGRAMI — Sapanca akışı ve zaman pencereleri");
   // Sabah yoklaması pencereleri
   iddia(!sabahPenceresiMi(2, 6, 39) && sabahPenceresiMi(2, 6, 40), "Gün 2 sabah penceresi 06:40'ta açılır");
   iddia(sabahPenceresiMi(2, 7, 59) && !sabahPenceresiMi(2, 8, 0), "Gün 2 penceresi 08:00'de kapanır");
-  iddia(sabahPenceresiMi(3, 7, 0) && sabahPenceresiMi(3, 8, 44) && !sabahPenceresiMi(3, 8, 45), "Gün 3 penceresi 07:00-08:44");
+  iddia(sabahPenceresiMi(3, 7, 0) && sabahPenceresiMi(3, 8, 59) && !sabahPenceresiMi(3, 9, 0), "Gün 3 penceresi 07:00-08:59");
   iddia(!sabahPenceresiMi(1, 7, 30), "Gün 1 sabah yoklaması yok");
 
   // Görev türü etkinlik yanlılığı: oyun saatinde gözlem, molada yansıma artar
@@ -582,7 +593,195 @@ console.log("\n■ 8) KAMP PROGRAMI — Sapanca akışı ve zaman pencereleri");
   iddia(aynaAni.includes("412") && aynaAni.includes("96") && aynaAni.includes("Ali"), "Ayna Anı metni günün sayılarını içerir");
   const aynaAniBos = aynaAniMetni({ gozlemSayisi: 0, teslimSayisi: 0, fieroAdlari: [] });
   iddia(!aynaAniBos.includes("undefined") && aynaAniBos.length > 50, "Ayna Anı fiero'suz da düzgün");
-  console.log("  Sapanca akışı: 28 madde, sahne sessizliği, senkron ve sabah pencereleri doğrulandı");
+  console.log("  Sapanca akışı: 23 madde, sahne sessizliği, senkron ve sabah pencereleri doğrulandı");
+}
+
+// ---------------------------------------------------------------
+console.log("\n■ 9) FAZ A AKIŞ SIRASI — kamp öncesi onboarding kapıları");
+// ---------------------------------------------------------------
+{
+  // Tüm pencereler açık, kişi sıfırdan başlıyor: her aşamada doğru sonraki adım.
+  const taban: AkisDurum = {
+    sesVar: false,
+    team: null,
+    campUnlocked: false,
+    pusulaTamam: false,
+    hedefTamam: false,
+    ofTamam: false,
+    oyunSecimiAcik: true,
+    pusulaAcik: true,
+    onFarkindalikAcik: true,
+    kampIciHedefKapisi: false,
+  };
+
+  // 1) Ses ritüeli her şeyden önce gelir.
+  iddia(kampOncesiAdim(taban).tip === "rituel", "ses kaydı yokken ritüel gösterilir");
+
+  // 2) Ses bitti → oyun seçimi (grup yok).
+  const sesli = { ...taban, sesVar: true };
+  const a2 = kampOncesiAdim(sesli);
+  iddia(a2.tip === "yonlendir" && a2.yol === "/oyun-secimi", "ses sonrası oyun seçimine gider");
+
+  // 3) Grup atandı → pusula.
+  const gruplu = { ...sesli, team: "Kartallar" };
+  const a3 = kampOncesiAdim(gruplu);
+  iddia(a3.tip === "yonlendir" && a3.yol === "/pusula", "grup sonrası pusulaya gider");
+
+  // 3b) ★ KRİTİK: pusula (neden keşfi) biter bitmez HEDEF gelir — ön farkındalıktan ÖNCE.
+  const pusulali = { ...gruplu, pusulaTamam: true };
+  const a3b = kampOncesiAdim(pusulali);
+  iddia(
+    a3b.tip === "yonlendir" && a3b.yol === "/hedef",
+    "pusula biter bitmez hedefe gider (neden keşfinden hemen sonra)"
+  );
+
+  // 4) Hedef mühürlendi → ön farkındalık.
+  const hedefli = { ...pusulali, hedefTamam: true };
+  const a4 = kampOncesiAdim(hedefli);
+  iddia(
+    a4.tip === "yonlendir" && a4.yol === "/on-farkindalik",
+    "hedef sonrası ön farkındalığa gider"
+  );
+
+  // 5) Ön farkındalık da bitti ama fiziksel giriş yok → mühür kapısı (/pusula hub).
+  const ofBitti = { ...hedefli, ofTamam: true };
+  const a5 = kampOncesiAdim(ofBitti);
+  iddia(
+    a5.tip === "yonlendir" && a5.yol === "/pusula",
+    "her şey bitti ama kamp açılmadıysa mühür kapısında (/pusula) bekler"
+  );
+
+  // 6) Fiziksel giriş yapıldı → kamp öncesi kapılar düşer, ana akışa devam.
+  const kampta = { ...ofBitti, campUnlocked: true };
+  iddia(kampOncesiAdim(kampta).tip === "devam", "kampa girince ana akışa devam eder");
+
+  // 6b) Kamp içi hedef penceresi açıksa kampa girmiş kişi hedefe yönlenir.
+  const kamptaHedef = { ...kampta, hedefTamam: false, kampIciHedefKapisi: true };
+  const a6b = kampOncesiAdim(kamptaHedef);
+  iddia(
+    a6b.tip === "yonlendir" && a6b.yol === "/hedef",
+    "kamp içi hedef penceresi açıkken hedefe yönlenir"
+  );
+
+  // İZOLASYON: pencereler kapalıyken kamp öncesi kapılar kişiyi tutmaz.
+  const pencerelerKapali: AkisDurum = {
+    ...taban,
+    sesVar: true,
+    team: "Kartallar",
+    oyunSecimiAcik: false,
+    pusulaAcik: false,
+    onFarkindalikAcik: false,
+  };
+  iddia(
+    kampOncesiAdim(pencerelerKapali).tip === "devam",
+    "tüm pencereler kapalıyken kamp öncesi kapı yok"
+  );
+
+  // 3b bağımsızlığı: pusula tamamsa (bir önceki oturumdan) admin bayrağı kapalı
+  // olsa bile hedef bitene dek hedefe götürür — neden→hedef köprüsü kopmasın.
+  const bayraksizPusula = {
+    ...pencerelerKapali,
+    pusulaTamam: true,
+    hedefTamam: false,
+  };
+  const a3bBayraksiz = kampOncesiAdim(bayraksizPusula);
+  iddia(
+    a3bBayraksiz.tip === "yonlendir" && a3bBayraksiz.yol === "/hedef",
+    "pusula tamamsa hedef, pusula_acik bayrağından bağımsız devreye girer"
+  );
+
+  // Kamp açıldıysa pusula yarım bile olsa kamp öncesi kapı kişiyi geri çekmez.
+  const yarimAmaKampta: AkisDurum = {
+    ...taban,
+    sesVar: true,
+    team: "Kartallar",
+    campUnlocked: true,
+    pusulaTamam: false,
+  };
+  iddia(
+    kampOncesiAdim(yarimAmaKampta).tip === "devam",
+    "kamp açıldıysa yarım pusula kişiyi geri çekmez"
+  );
+
+  console.log("  Akış sırası: ses → oyun → pusula → HEDEF → ön farkındalık → mühür → kamp doğrulandı");
+}
+
+// ---------------------------------------------------------------
+console.log("\n■ 10) KARİYER PLANI MATEMATİĞİ — hedef somutlaştırma");
+// ---------------------------------------------------------------
+{
+  // Geçersiz girdiler null döner (kişiye asla bozuk plan gösterilmez).
+  iddia(kariyerPlaniHesapla(-1, 6, 5, "x") === null, "negatif rütbe indeksi → null");
+  iddia(
+    kariyerPlaniHesapla(KARIYER_BASAMAKLARI.length, 6, 5, "x") === null,
+    "aralık dışı rütbe indeksi → null"
+  );
+  iddia(kariyerPlaniHesapla(5, 0, 5, "x") === null, "sıfır süre → null");
+  iddia(kariyerPlaniHesapla(5, 6, 0, "x") === null, "sıfır günlük saat → null");
+
+  // Tüm rütbe × süre × saat kombinasyonları geçerli plan üretir + değişmezler tutar.
+  let kombinasyon = 0;
+  for (let i = 0; i < KARIYER_BASAMAKLARI.length; i++) {
+    for (const s of SURE_SECENEKLERI) {
+      for (const g of GUNLUK_SAAT_SECENEKLERI) {
+        const p = kariyerPlaniHesapla(i, s.ay, g.gunluk, g.etiket);
+        kombinasyon++;
+        if (!p) {
+          iddia(false, `plan üretilemedi: rütbe ${i}, ${s.ay} ay, ${g.gunluk} saat`);
+          continue;
+        }
+        // Hedef rütbe doğru basamak.
+        iddia(p.rutbe === KARIYER_BASAMAKLARI[i].ad, `rütbe adı eşleşir (${i})`);
+        // Son kilometre taşı her zaman hedefin kendisidir ve süresi tam sureAy.
+        const son = p.kilometreTaslari[p.kilometreTaslari.length - 1];
+        iddia(
+          son.rutbe === KARIYER_BASAMAKLARI[i].ad && son.ay === s.ay,
+          `son kilometre taşı hedef + sureAy (${i}, ${s.ay}ay)`
+        );
+        // Ara hedef sayısı: alt basamak sayısına göre (0→1, 1→2, ≥2→3).
+        const beklenenTas = Math.min(3, 1 + Math.min(2, i));
+        iddia(
+          p.kilometreTaslari.length === beklenenTas,
+          `kilometre taşı sayısı doğru (rütbe ${i}: ${p.kilometreTaslari.length}=${beklenenTas})`
+        );
+        // Kilometre taşı ayları azalmayan sırada (geriye giden hedef olmaz).
+        let monoton = true;
+        for (let k = 1; k < p.kilometreTaslari.length; k++) {
+          if (p.kilometreTaslari[k].ay < p.kilometreTaslari[k - 1].ay) monoton = false;
+        }
+        iddia(monoton, `kilometre taşı ayları azalmaz (rütbe ${i}, ${s.ay}ay)`);
+        // Türetilmiş alanlar tutarlı.
+        iddia(p.haftalikSaat === Math.round(g.gunluk * 7), `haftalık saat = günlük×7 (${i})`);
+        iddia(p.gelir === KARIYER_BASAMAKLARI[i].ortalama, `gelir ortalamadan gelir (${i})`);
+        iddia(p.toplamPara > 0 && p.saatlikKazanc > 0, `yatırım ve saatlik kazanç pozitif (${i})`);
+      }
+    }
+  }
+
+  // Bilinen değer: Diamond (index 9), 6 ay, günde 5 saat.
+  const d = kariyerPlaniHesapla(9, 6, 5, "Günde 5+ saat");
+  iddia(!!d, "Diamond planı üretilir");
+  if (d) {
+    iddia(d.haftalikSaat === 35, "Diamond: haftalık 35 saat (5×7)");
+    iddia(d.toplamSaat === Math.round(35 * 6 * 4.3), "Diamond: toplam saat = round(35×6×4.3)");
+    iddia(d.kilometreTaslari.length === 3, "Diamond: 3 kilometre taşı (iki alt basamak + hedef)");
+    iddia(
+      d.kilometreTaslari[0].rutbe === KARIYER_BASAMAKLARI[7].ad &&
+        d.kilometreTaslari[1].rutbe === KARIYER_BASAMAKLARI[8].ad,
+      "Diamond: ara hedefler hemen alttaki iki basamak"
+    );
+    iddia(d.gelirArti === false, "Diamond: gelir taban değil (kesin aralık)");
+  }
+
+  // İlk basamak (index 0): ara hedef yok, tek kilometre taşı (hedefin kendisi).
+  const ilk = kariyerPlaniHesapla(0, 3, 2, "Günde 2 saat");
+  iddia(!!ilk && ilk.kilometreTaslari.length === 1, "ilk basamak: tek kilometre taşı");
+
+  // Taban-değerli zirve (Presidential Diamond): arti bayrağı taşınır.
+  const zirve = kariyerPlaniHesapla(KARIYER_BASAMAKLARI.length - 1, 12, 5, "Günde 5+ saat");
+  iddia(!!zirve && zirve.gelirArti === true, "zirve rütbe: gelir taban değer (+) olarak işaretli");
+
+  console.log(`  Kariyer planı: ${kombinasyon} kombinasyon + sınır/bilinen değerler doğrulandı`);
 }
 
 // ---------------------------------------------------------------
