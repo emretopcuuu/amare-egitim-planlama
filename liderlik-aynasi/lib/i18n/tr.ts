@@ -1947,6 +1947,9 @@ export const tr = {
       aynaIpucu: "AYNA uyuyor — uyandır",
       bildirim: "Bildirimler çalışıyor",
       bildirimIpucu: "Push abonesi/anahtarı yok",
+      // #20 Final aşaması hazırlığı (kamp ilerleyince görünür)
+      mektup: "Ayna mektupları hazır",
+      mektupIpucu: (n: number, t: number) => `Ayna mektupları eksik (${n}/${t}) — rapor zayıf kalır`,
       duzelt: "Düzelt →",
       zorunlu: "Zorunlu",
       opsiyonel: "Opsiyonel",
@@ -2437,6 +2440,10 @@ export const tr = {
       baslik: "Şu an ilgilen",
       aciklama: "En çok sessizleşen adaylar — birine dokun, 360° kartını aç ve yeniden bağla.",
       saatOnce: (s: number) => `${s} sa sessiz`,
+      // #17 Kamp öncesi: hazırlık hunisinde takılanlar
+      hazirlikBaslik: "Hazırlıkta takılanlar",
+      hazirlikAciklama: "Başladı ama pusulasını kurmadı — bir dürtme yeniden yola sokar.",
+      pusulaEksik: "ses var · pusula eksik",
     },
     qr: {
       baslik: "QR Giriş Kartları",
