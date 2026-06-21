@@ -1163,6 +1163,12 @@ export const tr = {
       bekliyor: "sırada",
       yonet: "Yönet →",
     },
+    // Funnel dönüşüm panosu — kamp öncesi katılım hunisi
+    funnelMetrik: {
+      baslik: "Katılım Hunisi",
+      aciklama: "Katılımcılar hazırlıkta nereye kadar geldi — düşüşün olduğu adıma yüklen.",
+      kayip: "kayıp",
+    },
     // Admin UX paketi (2026): kokpit hızı, güveni, hata payı
     ux: {
       yenidenDene: "Yeniden Dene",
