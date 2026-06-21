@@ -12,13 +12,14 @@ const n = tr.admin.nav;
 const g = tr.admin.navGrup;
 const k = tr.admin.ux.kokpit;
 
-// #3 14 düz sekme yerine: Panel + 4 kategori (açılır menü). Yatay kaydırmada
-// kaybolan sekme kalmaz; yönetici aradığı aracı kategorisinden bulur.
+// FUNNEL NAVİGASYONU: Panel + kampın YOLCULUĞUNA göre 4 aşama (açılır menü).
+// Türe göre değil zamana göre: Hazırlık → Katılım → Kamp Canlı → Final & Sonrası.
+// Operatör soldan sağa okur = süreçte ilerler; aradığı aracı aşamasından bulur.
 type NavLink = { href: string; etiket: string };
 const PANEL: NavLink = { href: "/admin", etiket: n.panel };
 const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
   {
-    ad: g.kurulum,
+    ad: g.hazirlik,
     ikon: "🧰",
     linkler: [
       { href: "/admin/kurulum", etiket: n.kurulum },
@@ -26,43 +27,43 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
       { href: "/admin/eslestirme", etiket: n.eslestirme },
       { href: "/admin/qr", etiket: n.qr },
       { href: "/admin/kiosk", etiket: n.kiosk },
+      { href: "/admin/program", etiket: n.program },
+      { href: "/admin/icerik", etiket: n.icerik },
+      { href: "/admin/gorev-turleri", etiket: n.gorevTuru },
+      { href: "/admin/test", etiket: n.test },
+    ],
+  },
+  {
+    ad: g.katilim,
+    ikon: "🎯",
+    linkler: [
+      { href: "/admin/farkindalik", etiket: n.farkindalik },
+      { href: "/admin/ayna-esi", etiket: n.aynaEsi },
     ],
   },
   {
     ad: g.canli,
     ikon: "🎛",
     linkler: [
-      { href: "/admin/analiz", etiket: n.analiz },
-      { href: "/admin/farkindalik", etiket: n.farkindalik },
-      { href: "/admin/takim", etiket: n.takim },
-      { href: "/admin/duyuru", etiket: n.duyuru },
       { href: "/admin/ayna-direktoru", etiket: n.ayna },
       { href: "/admin/komutan", etiket: n.komutan },
       { href: "/admin/sahne-kumanda", etiket: n.sahne },
       { href: "/admin/sunum", etiket: n.sunum },
-    ],
-  },
-  {
-    ad: g.icerik,
-    ikon: "🖼",
-    linkler: [
-      { href: "/admin/grup-odev", etiket: n.grupOdev },
-      { href: "/admin/ayna-esi", etiket: n.aynaEsi },
-      { href: "/admin/elmas", etiket: n.elmas },
+      { href: "/admin/duyuru", etiket: n.duyuru },
       { href: "/admin/moderasyon", etiket: n.moderasyon },
       { href: "/admin/foto", etiket: n.foto },
       { href: "/admin/canli-ayna", etiket: n.canliAyna },
-      { href: "/admin/sozler", etiket: n.sozler },
+      { href: "/admin/analiz", etiket: n.analiz },
+      { href: "/admin/takim", etiket: n.takim },
+      { href: "/admin/grup-odev", etiket: n.grupOdev },
     ],
   },
   {
-    ad: g.ayarlar,
-    ikon: "⚙️",
+    ad: g.final,
+    ikon: "🪞",
     linkler: [
-      { href: "/admin/gorev-turleri", etiket: n.gorevTuru },
-      { href: "/admin/icerik", etiket: n.icerik },
-      { href: "/admin/program", etiket: n.program },
-      { href: "/admin/test", etiket: n.test },
+      { href: "/admin/sozler", etiket: n.sozler },
+      { href: "/admin/elmas", etiket: n.elmas },
     ],
   },
 ];

@@ -9,7 +9,7 @@ import { adminUyarilari } from "@/lib/adminUyarilar";
 import { canliPano } from "@/lib/canliPano";
 import { tr } from "@/lib/i18n/tr";
 import { kampGunu, KAMP_GUNLERI } from "@/lib/kampProgrami";
-import GunZamanTuneli from "./GunZamanTuneli";
+import FunnelOmurga from "./FunnelOmurga";
 import DalgaKontrol from "./DalgaKontrol";
 import AynaAniKontrol from "./AynaAniKontrol";
 import DavetKontrol from "./DavetKontrol";
@@ -67,6 +67,7 @@ export default async function AdminPanel() {
     { count: bekleyenFoto },
     { data: provaAyar },
     { count: kayanSayi },
+    { data: funnelAyarlar },
   ] = await Promise.all([
     db.from("waves").select("id, name, is_open, opened_at").order("id"),
     aktifOzellikler(db),
@@ -103,6 +104,8 @@ export default async function AdminPanel() {
       .from("churn_radar")
       .select("participant_id", { count: "exact", head: true })
       .not("nudged_at", "is", null),
+    // Funnel omurgası aşama hesabı için pencere anahtarları
+    db.from("settings").select("key, value").in("key", ["pusula_acik", "muhur_acik"]),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
   const provaAcik = provaAyar?.value === "true";
@@ -174,18 +177,24 @@ export default async function AdminPanel() {
     timeZone: "Europe/Istanbul",
   }).format(new Date());
 
-  // #6 Zaman tüneli aktif konumu: rapor > açık dalga > kamp günü > tarih
+  // FUNNEL aşaması: kampın yolculuğunda operatör NEREDE? 1 Hazırlık → 2 Katılım
+  // → 3 Kamp Canlı → 4 Final → 5 Sonrası. Pencere anahtarları + kamp takviminden
+  // çıkarılır; omurga şeridi bunu vurgular.
   const kampGun = kampGunu(bugun);
   const sonKampGun = KAMP_GUNLERI[KAMP_GUNLERI.length - 1];
-  const zamanIndex = raporlarAcik
-    ? 4
-    : acikDalga
-      ? acikDalga.id
-      : kampGun
-        ? kampGun
-        : bugun > sonKampGun
-          ? 5
-          : 0;
+  const funnelAyar = new Map((funnelAyarlar ?? []).map((a) => [a.key, a.value]));
+  const pusulaAcik = funnelAyar.get("pusula_acik") === "true";
+  const muhurAcik = funnelAyar.get("muhur_acik") === "true";
+  const aktifAsama =
+    bugun > sonKampGun
+      ? 5
+      : raporlarAcik || muhurAcik || sozAcik
+        ? 4
+        : acikDalga || kampGun != null
+          ? 3
+          : pusulaAcik
+            ? 2
+            : 1;
   const oneri = adminOnerisi({
     bugun,
     katilimciSayisi: katilimciSayisi ?? 0,
@@ -231,7 +240,8 @@ export default async function AdminPanel() {
         <OtoYenile />
       </div>
 
-      <GunZamanTuneli aktifIndex={zamanIndex} />
+      {/* FUNNEL OMURGASI — kampın 5 aşaması, şu an neredeyiz, her aşamaya atla */}
+      <FunnelOmurga aktif={aktifAsama} />
 
       {/* #7 Bölüm atlama — yapışkan mini içindekiler */}
       <BolumAtla bolumler={bolumler} />
