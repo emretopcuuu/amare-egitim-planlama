@@ -42,6 +42,13 @@ import {
   SURE_SECENEKLERI,
   kariyerPlaniHesapla,
 } from "../lib/kariyer";
+import {
+  bugunTr,
+  takipDurumHesapla,
+  eskalasyonKarar,
+  DURTME_THROTTLE_MS,
+  TANIK_THROTTLE_MS,
+} from "../lib/takipHesap";
 
 
 let basarili = 0;
@@ -782,6 +789,94 @@ console.log("\n■ 10) KARİYER PLANI MATEMATİĞİ — hedef somutlaştırma");
   iddia(!!zirve && zirve.gelirArti === true, "zirve rütbe: gelir taban değer (+) olarak işaretli");
 
   console.log(`  Kariyer planı: ${kombinasyon} kombinasyon + sınır/bilinen değerler doğrulandı`);
+}
+
+// ---------------------------------------------------------------
+console.log("\n■ 11) FAZ B — SÖZ TAKİBİ & DÜRTME ESKALASYONU");
+{
+  const sabitBugun = "2026-06-21";
+  const gunOnce = (n: number) =>
+    bugunTr(new Date(Date.parse(sabitBugun) - n * 86_400_000));
+
+  // takipDurumHesapla — boş geçmiş
+  const bos = takipDurumHesapla([], sabitBugun);
+  iddia(bos.seri === 0, "boş: seri 0");
+  iddia(bos.toplam === 0, "boş: toplam 0");
+  iddia(bos.kacirilanGun === 999, "boş: hiç adım yok → 999");
+  iddia(bos.bugunYapildi === null, "boş: bugün işaretsiz");
+  iddia(bos.son14.length === 14, "son14 her zaman 14 gün");
+  iddia(bos.son14[13].gun === sabitBugun, "son14 son elemanı bugün");
+  iddia(bos.son14[0].gun === gunOnce(13), "son14 ilk elemanı 13 gün önce");
+
+  // Kesintisiz 3 gün (bugün dahil)
+  const seri3 = takipDurumHesapla(
+    [0, 1, 2].map((n) => ({ gun: gunOnce(n), yapildi: true })),
+    sabitBugun
+  );
+  iddia(seri3.seri === 3, "kesintisiz 3 gün → seri 3");
+  iddia(seri3.kacirilanGun === 0, "bugün yapıldı → kaçırma 0");
+  iddia(seri3.bugunYapildi === true, "bugün yapıldı işareti");
+
+  // Bugün işaretsiz ama dün+evvelsi yapıldı → seri kırılmaz
+  const dunden = takipDurumHesapla(
+    [1, 2].map((n) => ({ gun: gunOnce(n), yapildi: true })),
+    sabitBugun
+  );
+  iddia(dunden.seri === 2, "bugün boş, dün+evvel yapıldı → seri 2 (kırılmaz)");
+  iddia(dunden.kacirilanGun === 1, "son adım dün → kaçırma 1");
+  iddia(dunden.bugunYapildi === null, "bugün henüz işaretsiz");
+
+  // Araya 'yapılmadı' girince seri kırılır
+  const kirik = takipDurumHesapla(
+    [
+      { gun: gunOnce(0), yapildi: true },
+      { gun: gunOnce(1), yapildi: false },
+      { gun: gunOnce(2), yapildi: true },
+    ],
+    sabitBugun
+  );
+  iddia(kirik.seri === 1, "dün 'yapılmadı' → seri bugünde durur (1)");
+  iddia(kirik.toplam === 2, "toplam yalnız yapıldı günleri sayar (2)");
+
+  // 5 gün sessizlik
+  const sessiz = takipDurumHesapla([{ gun: gunOnce(5), yapildi: true }], sabitBugun);
+  iddia(sessiz.kacirilanGun === 5, "son adım 5 gün önce → kaçırma 5");
+  iddia(sessiz.seri === 0, "5 gün sessizlik → seri 0");
+
+  // eskalasyonKarar — eşikler ve throttle
+  const simdi = Date.parse("2026-06-21T12:00:00Z");
+  const saatOnce = (h: number) => new Date(simdi - h * 3_600_000).toISOString();
+
+  iddia(
+    !eskalasyonKarar(0, null, null, simdi).kisiDurt &&
+      !eskalasyonKarar(1, null, null, simdi).kisiDurt,
+    "0-1 gün kaçırma → dürtme yok (eşik 2)"
+  );
+  const k2 = eskalasyonKarar(2, null, null, simdi);
+  iddia(k2.kisiDurt && !k2.tanikUyar, "2 gün → kişi dürt, şahit sus");
+  const k3 = eskalasyonKarar(3, null, null, simdi);
+  iddia(k3.kisiDurt && !k3.tanikUyar, "3 gün → kişi dürt, şahit hâlâ sus");
+  const k4 = eskalasyonKarar(4, null, null, simdi);
+  iddia(k4.kisiDurt && k4.tanikUyar, "4 gün → hem kişi hem şahit");
+
+  // Throttle: kişi son 20 saatte dürtüldüyse tekrar dürtülmez
+  const durtuldu = eskalasyonKarar(4, saatOnce(10), null, simdi);
+  iddia(!durtuldu.kisiDurt, "10 saat önce dürtüldü → tekrar dürtme yok");
+  iddia(durtuldu.tanikUyar, "kişi throttle'da olsa da şahit uyarısı bağımsız");
+  const tekrar = eskalasyonKarar(4, saatOnce(21), null, simdi);
+  iddia(tekrar.kisiDurt, "21 saat geçti → yeniden dürtülebilir");
+
+  // Throttle: şahitler son 44 saatte uyarıldıysa tekrar uyarılmaz
+  const tanikSessiz = eskalasyonKarar(5, null, saatOnce(30), simdi);
+  iddia(!tanikSessiz.tanikUyar, "şahitler 30 saat önce uyarıldı → tekrar yok");
+  const tanikTekrar = eskalasyonKarar(5, null, saatOnce(45), simdi);
+  iddia(tanikTekrar.tanikUyar, "45 saat geçti → şahitler yeniden uyarılır");
+
+  // Throttle sabitleri beklenen pencerelerde
+  iddia(DURTME_THROTTLE_MS === 20 * 3_600_000, "kişi throttle = 20 saat");
+  iddia(TANIK_THROTTLE_MS === 44 * 3_600_000, "şahit throttle = 44 saat");
+
+  console.log("  Faz B: takip serisi + kaçırma + eskalasyon eşik/throttle doğrulandı");
 }
 
 // ---------------------------------------------------------------
