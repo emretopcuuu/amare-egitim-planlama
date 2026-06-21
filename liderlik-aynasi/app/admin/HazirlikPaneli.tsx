@@ -12,8 +12,11 @@ const t = tr.admin.hazirlik;
 // konum="arac": "Tüm Araçlar" içinde her zaman görünür sağlık kontrol listesi.
 export default async function HazirlikPaneli({
   konum = "arac",
+  aktifAsama = 1,
 }: {
   konum?: "ust" | "arac";
+  // #20 Aşama-bilinçli sağlık: kamp ilerledikçe Final ön-koşulları da kontrol edilir.
+  aktifAsama?: number;
 }) {
   const db = supabaseAdmin();
   const [
@@ -23,6 +26,7 @@ export default async function HazirlikPaneli({
     { count: dalga },
     { data: aynaAyar },
     { count: abone },
+    { count: mektup },
   ] = await Promise.all([
     db.from("participants").select("id", { count: "exact", head: true }).eq("role", "participant"),
     db
@@ -34,6 +38,7 @@ export default async function HazirlikPaneli({
     db.from("waves").select("id", { count: "exact", head: true }),
     db.from("settings").select("value").eq("key", "ayna_aktif").maybeSingle(),
     db.from("push_subscriptions").select("id", { count: "exact", head: true }),
+    db.from("mirror_letters").select("participant_id", { count: "exact", head: true }),
   ]);
 
   const vapidVar =
@@ -58,6 +63,19 @@ export default async function HazirlikPaneli({
     { ok: zekaVar, kritik: false, etiket: t.zeka, ipucu: t.zekaIpucu, href: "/admin/kurulum" },
     { ok: aynaAyar?.value === "true", kritik: false, etiket: t.ayna, ipucu: t.aynaIpucu, href: "/admin/ayna-direktoru" },
     { ok: vapidVar && (abone ?? 0) > 0, kritik: false, etiket: t.bildirim, ipucu: t.bildirimIpucu, href: "/admin/kurulum" },
+    // #20 Final ön-koşulu: kamp canlı/sonrasındayken (aşama ≥ 3) Ayna mektupları
+    // hazır mı? Rapor anının gücü buna bağlı. Erken aşamalarda gösterilmez.
+    ...(aktifAsama >= 3
+      ? [
+          {
+            ok: (mektup ?? 0) >= Math.ceil((kisi ?? 0) * 0.8),
+            kritik: false,
+            etiket: t.mektup,
+            ipucu: t.mektupIpucu(mektup ?? 0, kisi ?? 0),
+            href: "/admin/ayna-direktoru",
+          },
+        ]
+      : []),
   ];
   const hazirSayi = maddeler.filter((m) => m.ok).length;
   const hepsi = hazirSayi === maddeler.length;

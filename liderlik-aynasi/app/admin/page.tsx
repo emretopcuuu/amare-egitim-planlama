@@ -292,10 +292,10 @@ export default async function AdminPanel() {
 
       {/* UX #5 (2.tur): İlk Kurulum Rehberi — kritik bir kurulum adımı eksikse
           panelin tepesinde numaralı rehber belirir; kurulum bitince kaybolur. */}
-      {tamYetki && <HazirlikPaneli konum="ust" />}
+      {tamYetki && <HazirlikPaneli konum="ust" aktifAsama={aktifAsama} />}
 
       {/* UX #1 (2.tur): Komuta triyajı — şu an ilgilenilmesi gereken adaylar */}
-      {tamYetki && <TriyajKart />}
+      {tamYetki && <TriyajKart aktifAsama={aktifAsama} />}
 
       {/* #7 Tıklanır canlı özet — büyük rakamlar (her iki rol) */}
       <CanliOzet
@@ -587,7 +587,7 @@ export default async function AdminPanel() {
           </p>
 
           {/* Sağlık kontrol listesi — her zaman erişilebilir tam görünüm */}
-          <HazirlikPaneli konum="arac" />
+          <HazirlikPaneli konum="arac" aktifAsama={aktifAsama} />
           <KodBul />
 
           <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
