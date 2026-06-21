@@ -15,31 +15,48 @@ const n = tr.admin.nav;
 // anında en büyük hız kazancı: 17 alt sayfa + onlarca eylem tek arama kutusunda.
 type Hedef = { tip: "sayfa" | "kontrol"; etiket: string; href: string };
 
+// Funnel sırasında sayfalar — komut paleti de yolculuğu yansıtır.
 const SAYFALAR: Hedef[] = [
   { tip: "sayfa", etiket: n.panel ?? "Panel", href: "/admin" },
+  // 1 · Hazırlık
   { tip: "sayfa", etiket: n.kurulum, href: "/admin/kurulum" },
   { tip: "sayfa", etiket: n.katilimcilar, href: "/admin/katilimcilar" },
   { tip: "sayfa", etiket: n.eslestirme, href: "/admin/eslestirme" },
   { tip: "sayfa", etiket: n.qr, href: "/admin/qr" },
   { tip: "sayfa", etiket: n.kiosk, href: "/admin/kiosk" },
-  { tip: "sayfa", etiket: n.analiz, href: "/admin/analiz" },
-  { tip: "sayfa", etiket: n.ayna, href: "/admin/ayna-direktoru" },
+  { tip: "sayfa", etiket: n.program, href: "/admin/program" },
+  { tip: "sayfa", etiket: n.icerik, href: "/admin/icerik" },
+  { tip: "sayfa", etiket: n.gorevTuru, href: "/admin/gorev-turleri" },
+  { tip: "sayfa", etiket: n.test, href: "/admin/test" },
+  // 2 · Katılım
+  { tip: "sayfa", etiket: n.farkindalik, href: "/admin/farkindalik" },
+  { tip: "sayfa", etiket: n.aynaEsi, href: "/admin/ayna-esi" },
+  // 3 · Kamp Canlı
+  { tip: "sayfa", etiket: n.komuta, href: "/admin/ayna-direktoru" },
   { tip: "sayfa", etiket: n.komutan, href: "/admin/komutan" },
   { tip: "sayfa", etiket: n.sahne, href: "/admin/sahne-kumanda" },
-  { tip: "sayfa", etiket: n.sunum, href: "/admin/sunum" },
+  { tip: "sayfa", etiket: n.duyuru, href: "/admin/duyuru" },
   { tip: "sayfa", etiket: n.moderasyon, href: "/admin/moderasyon" },
-  { tip: "sayfa", etiket: n.foto, href: "/admin/foto" },
   { tip: "sayfa", etiket: n.canliAyna, href: "/admin/canli-ayna" },
+  { tip: "sayfa", etiket: n.analiz, href: "/admin/analiz" },
+  { tip: "sayfa", etiket: n.takim, href: "/admin/takim" },
+  { tip: "sayfa", etiket: n.grupOdev, href: "/admin/grup-odev" },
+  { tip: "sayfa", etiket: n.sunum, href: "/admin/sunum" },
+  // 4 · Final
   { tip: "sayfa", etiket: n.sozler, href: "/admin/sozler" },
-  { tip: "sayfa", etiket: n.gorevTuru, href: "/admin/gorev-turleri" },
-  { tip: "sayfa", etiket: n.program, href: "/admin/program" },
+  { tip: "sayfa", etiket: n.elmas, href: "/admin/elmas" },
 ];
 
+// #11 Funnel kontrol komutları — aşama-aksiyonları doğrudan ⌘K'dan.
 const KONTROLLER: Hedef[] = [
-  { tip: "kontrol", etiket: "Dalga kontrolü", href: "/admin#dalga" },
-  { tip: "kontrol", etiket: "Ayna Anı (raporlar)", href: "/admin#ayna-ani" },
-  { tip: "kontrol", etiket: "İlerleme / toplu eylem", href: "/admin#ilerleme" },
-  { tip: "kontrol", etiket: "90 gün daveti", href: "/admin#davet" },
+  { tip: "kontrol", etiket: "🎯 Pusula penceresi / Oda QR", href: "/admin#fazsifir" },
+  { tip: "kontrol", etiket: "🔓 Toplu kampı aç", href: "/admin#fazsifir" },
+  { tip: "kontrol", etiket: "🌊 Dalga kontrolü", href: "/admin#dalga" },
+  { tip: "kontrol", etiket: "📊 İlerleme / toplu eylem", href: "/admin#ilerleme" },
+  { tip: "kontrol", etiket: "👁 Boşluk Anı penceresi", href: "/admin#fazbir" },
+  { tip: "kontrol", etiket: "✨ Ayna Anı (raporları aç)", href: "/admin#ayna-ani" },
+  { tip: "kontrol", etiket: "🔒 Mühür açılışı", href: "/admin#muhur" },
+  { tip: "kontrol", etiket: "📦 90 gün daveti", href: "/admin#davet" },
 ];
 
 type Kisi = { ad: string; takim: string | null; kod: string };
