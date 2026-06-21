@@ -41,6 +41,12 @@ import {
   GUNLUK_SAAT_SECENEKLERI,
   SURE_SECENEKLERI,
   kariyerPlaniHesapla,
+  ovSimulasyonu,
+  gerekliTempo,
+  makuSure,
+  mevcutRutbeIndex,
+  simulasyonMilestonelari,
+  OV_SENARYOLAR,
 } from "../lib/kariyer";
 import {
   bugunTr,
@@ -877,6 +883,92 @@ console.log("\n■ 11) FAZ B — SÖZ TAKİBİ & DÜRTME ESKALASYONU");
   iddia(TANIK_THROTTLE_MS === 44 * 3_600_000, "şahit throttle = 44 saat");
 
   console.log("  Faz B: takip serisi + kaçırma + eskalasyon eşik/throttle doğrulandı");
+}
+
+// ---------------------------------------------------------------
+// BÖLÜM 12 — OV BÜYÜME SİMÜLASYONU (kariyer.ts saf fonksiyonları)
+{
+  console.log("\n── Bölüm 12: OV büyüme simülasyonu ──");
+
+  // ovSimulasyonu: bileşik büyüme formülü OV(ay) = OV₀ × (1+g)^ay
+  iddia(ovSimulasyonu(1000, 0, 0.2) === 1000, "0 ay → OV değişmez");
+  iddia(ovSimulasyonu(1000, 1, 0.2) === 1200, "1 ay %20 büyüme → 1200");
+  iddia(ovSimulasyonu(1000, 2, 0.2) === 1440, "2 ay %20 büyüme → 1440");
+  iddia(ovSimulasyonu(1000, 1, 0.3) === 1300, "1 ay %30 büyüme → 1300");
+  iddia(ovSimulasyonu(1000, 1, 0.4) === 1400, "1 ay %40 büyüme → 1400");
+  iddia(ovSimulasyonu(0, 5, 0.2) === 0, "OV₀=0 → sonuç sıfır");
+  iddia(ovSimulasyonu(500, 3, 0.0) === 500, "%0 büyüme → OV sabit kalır");
+
+  // Büyük değerler — yuvarlama kontrolü
+  const ov12ay = ovSimulasyonu(2500, 12, 0.2);
+  iddia(ov12ay > 2500, "12 ay %20 büyüme ile OV artar");
+  iddia(ov12ay === Math.round(2500 * Math.pow(1.2, 12)), "12 ay %20 → bileşik formüle uygun");
+
+  // gerekliTempo: (ovHedef/ov0)^(1/ay) - 1
+  const tempo = gerekliTempo(1000, 5000, 12);
+  iddia(tempo > 0, "gerekliTempo > 0 (büyüme lazım)");
+  // Doğrulama: OV₀ × (1 + tempo)^ay ≈ ovHedef (yuvarlama var, tolerans ±5)
+  const dogrulama = Math.round(1000 * Math.pow(1 + tempo, 12));
+  iddia(Math.abs(dogrulama - 5000) <= 5, "gerekliTempo doğrulaması: hedefe ulaşır");
+  iddia(gerekliTempo(1000, 500, 12) === 0, "ovHedef <= ov0 → tempo 0");
+  iddia(gerekliTempo(0, 5000, 12) === 0, "ov0=0 → tempo 0");
+  iddia(gerekliTempo(1000, 5000, 0) === 0, "ay=0 → tempo 0");
+
+  // makuSure: ln(ovHedef/ov0) / ln(1.20), ceil
+  const sure = makuSure(1000, 5000);
+  iddia(sure > 0, "makuSure > 0");
+  // 1000 × 1.2^n ≥ 5000 → n = ceil(ln(5) / ln(1.2)) = ceil(8.83) = 9
+  iddia(sure === 9, "makuSure(1000→5000) = 9 ay");
+  iddia(makuSure(1000, 1000) === 0, "ovHedef = ov0 → 0 ay");
+  iddia(makuSure(1000, 500) === 0, "ovHedef < ov0 → 0 ay");
+  iddia(makuSure(0, 5000) === 0, "ov0=0 → 0 ay");
+  // Doğrulama: 9 ayda %20 ile 1000 → 5160 > 5000 ✓
+  iddia(ovSimulasyonu(1000, 9, 0.2) >= 5000, "makuSure(1000→5000)=9 doğrulaması");
+  iddia(ovSimulasyonu(1000, 8, 0.2) < 5000, "8 ay yetmez, 9 gerekli");
+
+  // mevcutRutbeIndex: OV'ye göre kariyer basamağı
+  iddia(mevcutRutbeIndex(0) === 0, "OV=0 → Brand Partner (index 0)");
+  iddia(mevcutRutbeIndex(99) === 0, "OV=99 → Brand Partner");
+  iddia(mevcutRutbeIndex(100) === 0, "OV=100 → Brand Partner eşiği");
+  iddia(mevcutRutbeIndex(1000) === 1, "OV=1000 → Brand Builder");
+  iddia(mevcutRutbeIndex(3000) === 2, "OV=3000 → Bronze");
+  iddia(mevcutRutbeIndex(5000) === 3, "OV=5000 → Silver");
+  iddia(mevcutRutbeIndex(10000) === 4, "OV=10000 → Gold");
+  iddia(mevcutRutbeIndex(125000) === 9, "OV=125000 → Diamond");
+  iddia(mevcutRutbeIndex(1000000) === 13, "OV=1000000 → Presidential Diamond");
+  iddia(mevcutRutbeIndex(999999) === 12, "OV=999999 → 3 Star Diamond");
+
+  // simulasyonMilestonelari: ¼, ½, ¾, tam, tekrarsız
+  const ms12 = simulasyonMilestonelari(12);
+  iddia(ms12.length === 4, "12 ay → 4 milestone");
+  iddia(ms12[ms12.length - 1] === 12, "son milestone = sureAy");
+  iddia(new Set(ms12).size === ms12.length, "milestone'lar tekrarsız");
+  const ms1 = simulasyonMilestonelari(1);
+  iddia(ms1[ms1.length - 1] === 1, "1 ay → son milestone = 1");
+
+  // OV_SENARYOLAR içeriği doğrulama
+  iddia(OV_SENARYOLAR.length === 3, "3 senaryo tanımlı");
+  iddia(OV_SENARYOLAR[0].buyume === 0.2, "1. senaryo %20");
+  iddia(OV_SENARYOLAR[1].buyume === 0.3, "2. senaryo %30");
+  iddia(OV_SENARYOLAR[2].buyume === 0.4, "3. senaryo %40");
+
+  // KARIYER_BASAMAKLARI — OV/VOLL eklendi, 14 basamak
+  iddia(KARIYER_BASAMAKLARI.length === 14, "14 kariyer basamağı var");
+  iddia(KARIYER_BASAMAKLARI[0].ov === 100, "Brand Partner OV = 100");
+  iddia(KARIYER_BASAMAKLARI[0].voll === null, "Brand Partner VOLL = null");
+  iddia(KARIYER_BASAMAKLARI[2].ov === 3000, "Bronze OV = 3000");
+  iddia(KARIYER_BASAMAKLARI[2].voll === 600, "Bronze VOLL = 600");
+  iddia(KARIYER_BASAMAKLARI[13].ov === 1000000, "Presidential Diamond OV = 1000000");
+  iddia(KARIYER_BASAMAKLARI[13].voll === 300000, "Presidential Diamond VOLL = 300000");
+  // OV değerleri sıralı büyümeli (her basamak bir öncekinden büyük)
+  for (let i = 1; i < KARIYER_BASAMAKLARI.length; i++) {
+    iddia(
+      KARIYER_BASAMAKLARI[i].ov > KARIYER_BASAMAKLARI[i - 1].ov,
+      `OV sıralı: ${KARIYER_BASAMAKLARI[i - 1].ad} < ${KARIYER_BASAMAKLARI[i].ad}`
+    );
+  }
+
+  console.log("  Bölüm 12: OV simülasyon matematiği doğrulandı");
 }
 
 // ---------------------------------------------------------------

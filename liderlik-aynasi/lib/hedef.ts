@@ -76,8 +76,8 @@ Sarsılmaz kuralların:
 
 const NOKTA_CERCEVE: Record<string, string> = {
   yeni: "Kişi bu işe YENİ başlamış (0-3 ay). İlk momentumun hayalini canlandır.",
-  baslangic: "Kişi BAŞLANGIÇ aşamasında (3-18 ay). Tutarlılık ve ilk ekibin hayalini canlandır.",
-  deneyimli: "Kişi DENEYİMLİ (18 ay+). Ölçekleme ve katlama hayalini canlandır.",
+  baslangic: "Kişi BAŞLANGIÇ aşamasında (3-12 ay). Tutarlılık ve ilk ekibin hayalini canlandır.",
+  deneyimli: "Kişi DENEYİMLİ (12 ay ve üstü). Ölçekleme ve katlama hayalini canlandır.",
   lider: "Kişi olgun bir LİDER. Çoğaltma ve liderlerin liderliği hayalini canlandır.",
 };
 
@@ -165,9 +165,11 @@ export async function baslangicKaydet(
   pid: string,
   nokta: string,
   deneyimAy: number | null,
-  detay: string | null
+  detay: string | null,
+  baslangicOv: number
 ): Promise<boolean> {
   if (!BASLANGIC_NOKTALARI.has(nokta)) return false;
+  if (baslangicOv <= 0) return false;
   const { error } = await db
     .from("hedef")
     .upsert(
@@ -176,6 +178,7 @@ export async function baslangicKaydet(
         baslangic_noktasi: nokta,
         deneyim_ay: deneyimAy != null && deneyimAy >= 0 ? Math.min(600, Math.floor(deneyimAy)) : null,
         baslangic_detay: (detay ?? "").trim().slice(0, 500) || null,
+        baslangic_ov: Math.min(10_000_000, Math.floor(baslangicOv)),
         asama: "hedef",
         updated_at: new Date().toISOString(),
       },
@@ -405,10 +408,10 @@ export async function hedefCekirdek(db: Db, pid: string): Promise<HedefCekirdek 
 export async function hedefDurum(
   db: Db,
   pid: string
-): Promise<{ asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null }> {
+): Promise<{ asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null }> {
   const { data } = await db
     .from("hedef")
-    .select("asama, tamamlandi_at, baslangic_noktasi, plan")
+    .select("asama, tamamlandi_at, baslangic_noktasi, plan, baslangic_ov")
     .eq("participant_id", pid)
     .maybeSingle();
   return {
@@ -416,6 +419,7 @@ export async function hedefDurum(
     tamam: !!data?.tamamlandi_at,
     baslangicVar: !!data?.baslangic_noktasi,
     plan: (data?.plan as KariyerPlani | null) ?? null,
+    baslangicOv: (data?.baslangic_ov as number | null) ?? null,
   };
 }
 

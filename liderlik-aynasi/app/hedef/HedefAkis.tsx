@@ -10,12 +10,17 @@ import {
   kariyerPlaniHesapla,
   tlFormat,
   type KariyerPlani,
+  ovSimulasyonu,
+  gerekliTempo,
+  makuSure,
+  OV_SENARYOLAR,
+  simulasyonMilestonelari,
 } from "@/lib/kariyer";
 
 const t = tr.hedef;
 
 type Mesaj = { rol: string; icerik: string };
-type Durum = { asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null };
+type Durum = { asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null };
 type Faz = "acilis" | "baslangic" | "sohbet" | "wizard" | "tamam";
 
 const NOKTALAR = ["yeni", "baslangic", "deneyimli", "lider"] as const;
@@ -45,6 +50,7 @@ export default function HedefAkis({
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const [plan, setPlan] = useState<KariyerPlani | null>(durum.plan);
+  const [ov0, setOv0] = useState<number | null>(durum.baslangicOv ?? null);
 
   async function istek(govde: Record<string, unknown>) {
     const res = await fetch("/api/hedef", {
@@ -84,15 +90,16 @@ export default function HedefAkis({
   if (faz === "baslangic") {
     return (
       <BaslangicFormu
-        onKaydet={async (nokta, ay, detay) => {
+        onKaydet={async (nokta, ay, detay, ov) => {
           setMesgul(true);
           setHata(null);
-          const v = await istek({ baslangic: { nokta, deneyimAy: ay, detay } });
+          const v = await istek({ baslangic: { nokta, deneyimAy: ay, detay, baslangicOv: ov } });
           setMesgul(false);
           if (!v?.ok) {
             setHata(v?.hata ?? t.hata);
             return;
           }
+          setOv0(ov);
           setFaz("sohbet");
         }}
         mesgul={mesgul}
@@ -118,6 +125,7 @@ export default function HedefAkis({
   if (faz === "wizard") {
     return (
       <Wizard
+        ov0={ov0}
         onMuhur={async (hedefIndex, sure, gunluk) => {
           setMesgul(true);
           setHata(null);
@@ -148,6 +156,9 @@ export default function HedefAkis({
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.tamamMetin}</p>
       </div>
       {plan && <PlanKarti plan={plan} />}
+      <div className="rounded-2xl border border-slate-700/60 bg-midnight-soft px-4 py-3">
+        <p className="text-xs leading-relaxed text-slate-400">{t.kampTaahhut}</p>
+      </div>
       <button
         onClick={() => router.push("/")}
         className="btn-kor parilti flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold"
@@ -171,7 +182,7 @@ function BaslangicFormu({
   hata,
   onSifirla,
 }: {
-  onKaydet: (nokta: string, ay: number | null, detay: string | null) => void;
+  onKaydet: (nokta: string, ay: number | null, detay: string | null, ov: number) => void;
   mesgul: boolean;
   hata: string | null;
   onSifirla: () => void;
@@ -179,6 +190,9 @@ function BaslangicFormu({
   const [nokta, setNokta] = useState<string | null>(null);
   const [ay, setAy] = useState("");
   const [detay, setDetay] = useState("");
+  const [ov, setOv] = useState("");
+  const ovNum = Number(ov);
+  const ovGecerli = ov.length > 0 && ovNum > 0;
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
       <header>
@@ -213,6 +227,22 @@ function BaslangicFormu({
           );
         })}
       </div>
+      {/* OV — zorunlu, tüm seviyelerde */}
+      <div className="space-y-2">
+        <label className="block text-xs font-medium text-slate-400">{t.ovEtiket}</label>
+        <input
+          inputMode="numeric"
+          value={ov}
+          onChange={(e) => setOv(e.target.value.replace(/[^0-9]/g, "").slice(0, 8))}
+          className={`w-full rounded-xl border bg-midnight-soft px-4 py-2.5 text-base text-slate-100 outline-none focus:border-gold ${
+            ov.length > 0 && !ovGecerli ? "border-red-400/60" : "border-royal-light/30"
+          }`}
+          placeholder={t.ovYer}
+        />
+        {ov.length > 0 && !ovGecerli && (
+          <p className="text-xs text-red-400">{t.ovZorunlu}</p>
+        )}
+      </div>
       <div className="space-y-2">
         <label className="block text-xs font-medium text-slate-400">{t.noktaAyEtiket}</label>
         <input
@@ -232,8 +262,8 @@ function BaslangicFormu({
       />
       {hata && <p className="text-center text-sm text-red-400">{hata}</p>}
       <button
-        onClick={() => nokta && onKaydet(nokta, ay ? Number(ay) : null, detay || null)}
-        disabled={!nokta || mesgul}
+        onClick={() => nokta && ovGecerli && onKaydet(nokta, ay ? Number(ay) : null, detay || null, ovNum)}
+        disabled={!nokta || !ovGecerli || mesgul}
         className="btn-kor parilti flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
       >
         {mesgul ? t.dusunuyor : t.noktaDevam}
@@ -357,11 +387,13 @@ function Sohbet({
 
 // ---------- Somutlaştırma wizard'ı (3 soru) ----------
 function Wizard({
+  ov0,
   onMuhur,
   mesgul,
   hata,
   onSifirla,
 }: {
+  ov0: number | null;
   onMuhur: (hedefIndex: number, sure: string, gunluk: string) => void;
   mesgul: boolean;
   hata: string | null;
@@ -441,6 +473,9 @@ function Wizard({
         <section className="space-y-4">
           <p className="text-center text-sm font-semibold text-gold-light">{t.planUstBaslik}</p>
           <PlanKarti plan={plan} />
+          {ov0 && ov0 > 0 && hedefRutbe && sureObj && (
+            <OvSimKarti ov0={ov0} ovHedef={hedefRutbe.ov} sureAy={sureObj.ay} />
+          )}
           {hata && <p className="text-center text-sm text-red-400">{hata}</p>}
           <button
             onClick={() => hedefIndex != null && sure && gunluk && onMuhur(hedefIndex, sure, gunluk)}
@@ -604,6 +639,59 @@ function PlanKarti({ plan }: { plan: KariyerPlani }) {
             tlFormat(plan.saatlikKazanc)
           )}
         </p>
+      </div>
+    </div>
+  );
+}
+
+// ---------- OV büyüme simülasyon kartı ----------
+function OvSimKarti({ ov0, ovHedef, sureAy }: { ov0: number; ovHedef: number; sureAy: number }) {
+  const milestoneAylar = simulasyonMilestonelari(sureAy);
+  const tempo = gerekliTempo(ov0, ovHedef, sureAy);
+  const tempoYuzde = tempo > 0 ? `%${(tempo * 100).toFixed(0)}` : "—";
+  const makul = makuSure(ov0, ovHedef);
+  return (
+    <div className="overflow-hidden rounded-2xl border border-royal-light/25 bg-midnight-soft">
+      <div className="border-b border-royal-light/15 px-4 py-2.5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t.simulasyonBaslik}</p>
+      </div>
+      {/* Senaryo tablosu */}
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[300px] text-xs">
+          <thead>
+            <tr className="border-b border-royal-light/10 text-slate-500">
+              <th className="px-3 py-2 text-left">Ay</th>
+              {OV_SENARYOLAR.map((s) => (
+                <th key={s.etiket} className="px-2 py-2 text-right font-semibold">{s.etiket}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-royal-light/10">
+            {milestoneAylar.map((ay) => (
+              <tr key={ay} className={ay === sureAy ? "bg-gold/5" : ""}>
+                <td className="px-3 py-2 font-medium text-slate-300">{t.simulasyonAyEtiket(ay)}</td>
+                {OV_SENARYOLAR.map((s) => {
+                  const ov = ovSimulasyonu(ov0, ay, s.buyume);
+                  const ulasmis = ov >= ovHedef;
+                  return (
+                    <td key={s.etiket} className={`px-2 py-2 text-right font-mono ${ulasmis ? "font-bold text-emerald-400" : "text-slate-300"}`}>
+                      {tlFormat(ov)}{ulasmis ? " ✓" : ""}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {/* Tempo + makul süre */}
+      <div className="space-y-1 border-t border-royal-light/15 px-4 py-2.5">
+        <p className="text-xs text-slate-400">{t.simulasyonGerekliTempo(tempoYuzde)}</p>
+        {makul > 0 && <p className="text-xs text-gold-light">{t.simulasyonMakul(makul)}</p>}
+      </div>
+      {/* Uyarı */}
+      <div className="border-t border-royal-light/15 px-4 py-2.5">
+        <p className="text-[0.65rem] leading-relaxed text-slate-500">{t.simulasyonUyari}</p>
       </div>
     </div>
   );
