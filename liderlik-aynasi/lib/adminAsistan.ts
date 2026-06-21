@@ -25,6 +25,8 @@ export type AsistanDurum = {
   // #3 Kamp öncesi funnel: Pusula penceresi açık mı + hazırlığı bitiren sayısı
   pusulaAcik: boolean;
   hazirTamam: number; // Ön Farkındalık'a kadar gelen (hazırlığı biten) sayı
+  // #1 Ön Farkındalık penceresi açık mı (açık değilse aday o aşamaya giremez)
+  onFarkAcik: boolean;
 };
 
 const ILK_GUN = KAMP_GUNLERI[0];
@@ -56,6 +58,19 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
         aciklama: `${d.katilimciSayisi} katılımcı hazır. Pusula penceresini aç ki katılımcılar kamp öncesi hazırlığa (ses, pusula, ön farkındalık) başlasın.`,
         butonEtiket: "Pusula Penceresini Aç",
         href: "#fazsifir",
+        vurgu: true,
+      };
+    }
+    // Pusula açık ama Ön Farkındalık penceresi kapalı → adaylar o aşamaya
+    // giremez. Pusulayı bitirenler birikmeye başladıysa ÖF'i açmayı öner.
+    if (!d.onFarkAcik && d.hazirTamam < d.katilimciSayisi) {
+      return {
+        ikon: "🪞",
+        baslik: "Ön Farkındalık'ı aç",
+        aciklama:
+          "Pusula penceresi açık. Sıradaki aşama Ön Farkındalık — bu pencereyi açmazsan adaylar oraya hiç giremez. Pusulayı bitirenler buraya geçsin.",
+        butonEtiket: "Ön Farkındalık'ı Aç",
+        href: "#onfark",
         vurgu: true,
       };
     }
