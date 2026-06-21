@@ -3057,6 +3057,23 @@ export const tr = {
     tahminGercek: "Gerçek",
     tahminTuttu: "Bildin! Kendini tanıyorsun. 👏",
     tahminTutmadi: "Ayna seni şaşırttı — en güzel kısmı da bu.",
+    // Rapor v2: Neden + Hedef başlığı (raporu kişinin nedenine/hedefine bağlar)
+    nedenHedefBaslik: "🧭 Nedenin ve Hedefin",
+    nedenEtiket: "Seni buraya getiren neden",
+    hedefEtiket: "90 günlük hedefin",
+    hedefBilgi: (rutbe: string, gelir: string, ay: number) =>
+      `${ay} ayda ${rutbe} — aylık ${gelir} TL`,
+    nedenHedefKopru:
+      "Aşağıdaki ayna bu hedefin neresinde güçlü, neresinde dikkat istediğini gösteriyor.",
+  },
+  // 10/40/90 gün oyun planı (Ayna Raporu kapanışı)
+  oyunPlani: {
+    baslik: "🚀 10/40/90 Gün Oyun Planın",
+    aciklama: "Hedefine, nedenine ve aynana göre kamptan sonraki ilk 90 günün.",
+    onGun: "İlk 10 gün — momentum",
+    kirkGun: "İlk 40 gün — tempo & ilk ekip",
+    doksanGun: "İlk 90 gün — hedefe varış",
+    olustur: "Oyun planımı oluştur",
   },
   kelimeKarti: {
     baslik: "🖼️ Kelime Kartın",

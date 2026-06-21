@@ -3,6 +3,11 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { raporHesapla, raporlarGorunurMu } from "@/lib/rapor";
+import { hedefCekirdek } from "@/lib/hedef";
+import { pusulaCekirdek } from "@/lib/pusula";
+import { oyunPlaniGetir } from "@/lib/oyunPlani";
+import { tlFormat } from "@/lib/kariyer";
+import OyunPlaniBolumu from "./OyunPlaniBolumu";
 import { arketipBul } from "@/lib/arketip";
 import { muhurAcikMi, donusumAdlandir } from "@/lib/muhur";
 import { unvanBul } from "@/lib/kivilcim";
@@ -49,7 +54,7 @@ export default async function AynaPage() {
     .select("id", { count: "exact", head: true })
     .eq("rater_id", session.sub);
 
-  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik] =
+  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik, hedefC, oyunP, pusC] =
     await Promise.all([
       db
         .from("mirror_letters")
@@ -68,7 +73,14 @@ export default async function AynaPage() {
         .eq("is_hidden", false)
         .order("created_at", { ascending: false }),
       muhurAcikMi(db),
+      hedefCekirdek(db, session.sub),
+      oyunPlaniGetir(db, session.sub),
+      pusulaCekirdek(db, session.sub),
     ]);
+
+  // FAZ A Rapor v2: raporu kişinin nedenine + kariyer hedefine bağla.
+  const neden = pusC?.cekirdek_neden?.[0] ?? null;
+  const hedefPlan = hedefC?.plan ?? null;
 
   // A2 Mühür Açılışı: kamp sonu before/after. Onboarding'de mühürlenen söz
   // (kendi sesi + yazısı) açılır; "kampa ___ geldin, ___ dönüyorsun" adlandırması.
@@ -263,6 +275,38 @@ export default async function AynaPage() {
           <AynaHikaye slaytlar={slaytlar} />
         </div>
       </header>
+
+      {/* FAZ A Rapor v2: NEDEN + HEDEF — aynayı kişinin nedenine ve hedefine
+          bağlar. Rapor artık "başkaları seni nasıl gördü" değil, "bu seni
+          hedefine nasıl taşır" hikâyesidir. */}
+      {(neden || hedefPlan) && (
+        <section className="kart-cam rounded-2xl bg-gradient-to-br from-gold/10 to-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
+          <h2 className="font-semibold text-gold-light">{t.nedenHedefBaslik}</h2>
+          {neden && (
+            <div className="mt-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {t.nedenEtiket}
+              </p>
+              <p className="mt-1 text-base italic leading-relaxed text-slate-100">“{neden}”</p>
+            </div>
+          )}
+          {hedefPlan && (
+            <div className="mt-4 rounded-xl bg-emerald-500/10 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300/80">
+                {t.hedefEtiket}
+              </p>
+              <p className="mt-1 text-base font-bold text-emerald-200">
+                {t.hedefBilgi(
+                  hedefPlan.rutbe,
+                  tlFormat(hedefPlan.gelir, hedefPlan.gelirArti),
+                  hedefPlan.sureAy
+                )}
+              </p>
+            </div>
+          )}
+          <p className="mt-3 text-sm leading-relaxed text-slate-400">{t.nedenHedefKopru}</p>
+        </section>
+      )}
 
       {/* Güçlü yanlar / gelişim alanları */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -599,6 +643,9 @@ export default async function AynaPage() {
       {rapor.guclu[0] && (
         <KelimeKarti ad={session.ad} ozellik={rapor.guclu[0].ad} />
       )}
+
+      {/* FAZ A Rapor v2: 10/40/90 gün oyun planı — hedefe + nedene + aynaya göre */}
+      <OyunPlaniBolumu mevcutPlan={oyunP} />
 
       {/* AI Ayna Mektubu — varsa Mektup Filmi olarak (video + kendi sesi) */}
       <MektupBolumu
