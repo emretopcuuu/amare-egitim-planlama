@@ -205,6 +205,8 @@ export default async function AdminPanel() {
     ozToplam: ilerleme?.katilimcilar.length ?? katilimciSayisi ?? 0,
     raporlarAcik,
     sozAcik,
+    pusulaAcik,
+    hazirTamam: funnel.adimlar.find((a) => a.anahtar === "onfark")?.sayi ?? 0,
   });
 
   // #8 Proaktif uyarılar (yalnız tam yetkiliye gösterilir).
