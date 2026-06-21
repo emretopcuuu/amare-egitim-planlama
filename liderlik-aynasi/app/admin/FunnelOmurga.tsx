@@ -37,7 +37,7 @@ export default function FunnelOmurga({ aktif }: { aktif: number }) {
                 className={`flex min-w-[7rem] flex-1 flex-col rounded-xl border px-3 py-2 transition-colors hover:brightness-125 ${renk}`}
               >
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
-                  <span aria-hidden>{a.ikon}</span>
+                  <span aria-hidden>{durum === "tamam" ? "✓" : a.ikon}</span>
                   <span className="truncate">{f.asamalar[a.anahtar]}</span>
                 </span>
                 <span className="mt-0.5 text-[0.65rem] font-medium uppercase tracking-wide opacity-80">

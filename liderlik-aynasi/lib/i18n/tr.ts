@@ -1291,6 +1291,11 @@ export const tr = {
       hatirlatSonuc: (n: number) =>
         n > 0 ? `${n} kişiye hatırlatma gönderildi` : "Herkesin hazırlığı tam 🎉",
       hata: "İşlem başarısız, tekrar dene.",
+      // #13 Toplu kampı aç — oda QR'ı çalışmazsa görevli yedeği
+      topluAcDugme: "🔓 Toplu kampı aç",
+      topluAcOnay: "Kampa gelmemiş HERKESİN mührü kalkacak, kamp hepsine açılacak. Emin misin?",
+      topluAcSonuc: (n: number) =>
+        n > 0 ? `✓ ${n} kişinin kampı açıldı` : "Zaten herkes kampta",
     },
     // FAZ 1 — Boşluk Anı penceresi + derinlik panosu
     fazBir: {
