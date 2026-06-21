@@ -134,7 +134,13 @@ export default async function DegerlendirPage() {
         <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
           {tr.degerlendir.baslik}
         </p>
-        <h1 className="font-display altin-metin mt-1 text-3xl font-bold leading-tight">{dalga.name}</h1>
+        {/* ay-metin: gündüz temasında koyu lacivert→altın'a döner (parlak göl
+            zemininde okunur). altin-metin'in gündüz karşılığı yok → açık gümüş
+            harflerin üstü zemine karışıp "kesik" görünüyordu. leading-snug +
+            pb-1: Playfair'in uzun çıkıntıları (İ, ğ) kırpılmasın. */}
+        <h1 className="font-display ay-metin mt-1 pb-1 text-3xl font-bold leading-snug break-words">
+          {dalga.name}
+        </h1>
       </header>
 
       {/* DALGA ÇERÇEVESİ: puanlar kalıcı değil — her dalga bir sonrakinde
