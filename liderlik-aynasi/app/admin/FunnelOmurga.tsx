@@ -15,7 +15,14 @@ const ASAMALAR: { no: number; anahtar: keyof typeof f.asamalar; ikon: string; hr
   { no: 5, anahtar: "sonrasi", ikon: "📦", href: "#araclar" },
 ];
 
-export default function FunnelOmurga({ aktif }: { aktif: number }) {
+export default function FunnelOmurga({
+  aktif,
+  zamanlar = {},
+}: {
+  aktif: number;
+  // #15/#18 Aşama no → açılış zamanı ya da ETA etiketi ("açıldı 14:32" / "kampa 12g")
+  zamanlar?: Record<number, string>;
+}) {
   return (
     <section aria-label={f.baslik} className="rounded-2xl bg-midnight-card/40 p-3 ring-1 ring-royal/20">
       <p className="mb-2 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-slate-500">
@@ -43,6 +50,11 @@ export default function FunnelOmurga({ aktif }: { aktif: number }) {
                 <span className="mt-0.5 text-[0.65rem] font-medium uppercase tracking-wide opacity-80">
                   {durum === "simdi" ? f.simdi : durum === "tamam" ? f.tamam : f.bekliyor}
                 </span>
+                {zamanlar[a.no] && (
+                  <span className="mt-0.5 text-[0.6rem] font-medium tabular-nums opacity-70">
+                    🕒 {zamanlar[a.no]}
+                  </span>
+                )}
               </Link>
               {i < ASAMALAR.length - 1 && (
                 <span className="shrink-0 text-slate-600" aria-hidden>
