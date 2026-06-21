@@ -25,6 +25,7 @@ import {
   MAX_BASARISIZ_IP,
   MAX_BASARISIZ_GLOBAL,
 } from "../lib/auth/rateLimitKural";
+import { dusukGuvenMi, MIN_DEGERLENDIREN } from "../lib/raporGuven";
 import {
   KAMP_GUNLERI,
   KAMP_PROGRAMI,
@@ -1023,6 +1024,25 @@ console.log("\n■ 11) FAZ B — SÖZ TAKİBİ & DÜRTME ESKALASYONU");
   );
 
   console.log("  Bölüm 13: hız-sınırı kuralı (NAT dayanıklılığı) doğrulandı");
+}
+
+// ---------------------------------------------------------------
+// BÖLÜM 14 — RAPOR GÜVEN EŞİĞİ (min. değerlendiren / sınırlı yansıma)
+{
+  console.log("\n── Bölüm 14: Rapor güven eşiği ──");
+
+  iddia(MIN_DEGERLENDIREN === 4, "min. değerlendiren eşiği = 4 (2 gölge + 2 açık)");
+
+  // Eşik altı → düşük güven (sınırlı yansıma uyarısı)
+  iddia(dusukGuvenMi(0) === true, "0 değerlendiren → düşük güven (yalnız öz)");
+  iddia(dusukGuvenMi(1) === true, "1 değerlendiren → düşük güven");
+  iddia(dusukGuvenMi(3) === true, "3 değerlendiren → düşük güven (eşik altı)");
+
+  // Eşik ve üstü → güvenli (tam yansıma)
+  iddia(dusukGuvenMi(4) === false, "4 değerlendiren → güven eşiği karşılandı");
+  iddia(dusukGuvenMi(8) === false, "8 değerlendiren → güvenli");
+
+  console.log("  Bölüm 14: rapor güven eşiği (zarif ele alma) doğrulandı");
 }
 
 // ---------------------------------------------------------------

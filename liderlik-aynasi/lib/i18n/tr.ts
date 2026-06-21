@@ -3025,6 +3025,11 @@ export const tr = {
       "Gün 3 kapanışında herkesin aynası aynı anda açılacak. Bu sayfayı açık tut — an geldiğinde kendiliğinden aydınlanacak.",
     acilis: (ad: string) => `${ad}, işte aynan`,
     acilisAlt: "Kampta seni gözlemleyen arkadaşlarının gözünden sen.",
+    // C1 Güven: az sayıda değerlendiren varsa sınırlı yansıma uyarısı (öz hariç)
+    dusukGuven: (n: number) =>
+      n === 0
+        ? "Bu yansıma yalnız kendi gözünden. Henüz başka kimse seni puanlamadı — dış algı oluşunca aynan derinleşecek."
+        : `Bu yansımayı ${n} kişi şekillendirdi — küçük bir grup. Az sayıda gözden geldiği için kesin bir yargı değil, bir ilk izlenim olarak oku.`,
     // Hatıra: raporu PDF olarak sakla (tarayıcı yazdır → PDF'e kaydet)
     raporKaydet: "🖨 Raporu Kaydet (PDF)",
     // 3B veri portresi: döndürülebilir kristal
