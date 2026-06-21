@@ -1626,6 +1626,9 @@ export const tr = {
     // #10 Yardım/ipucu katmanı: her kontrolün yanında kısa açıklama
     ipucu: {
       ac: "Yardım",
+      neIse: "Ne işe yarar?",
+      neZaman: "Ne zaman & nasıl kullanılır?",
+      dikkat: "Dikkat",
       dalga:
         "Dalgayı açınca katılımcılar o turda puanlama yapabilir. Her güne bir dalga (Gün 1→Dalga 1). Çoğu kişi bitirince kapat.",
       rapor:
