@@ -172,9 +172,31 @@ export default function OnFarkindalikAkis({
     if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "auto" });
   }, [adim, giris]);
 
+  // #9 Cevapları sunucuya da yaz (sessiz, fire-and-forget). localStorage cihaz
+  // başına; bu sayede tarayıcı temizlense/cihaz değişse de ilerleme kaybolmaz.
+  async function kaydetSessiz() {
+    const gonderilecek = [
+      ...Object.entries(yanitlar).map(([kod, deger]) => ({ kod, deger })),
+      ...Object.entries(metinler)
+        .filter(([, m]) => (m ?? "").trim())
+        .map(([kod, metin]) => ({ kod, metin })),
+    ];
+    if (gonderilecek.length === 0) return;
+    try {
+      await fetch("/api/on-farkindalik", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ yanitlar: gonderilecek }),
+      });
+    } catch {
+      // sessiz: localStorage yedeği zaten var, sonraki adımda yine denenir
+    }
+  }
+
   function ilerle() {
     setSayiGirdi("");
     setHata(null);
+    void kaydetSessiz(); // her adımda sunucuya sessiz yedekle
     setAdim((a) => Math.min(a + 1, TOPLAM));
   }
 
