@@ -509,6 +509,19 @@ export const tr = {
     ilerleme: (yapilan: number, toplam: number) => `${yapilan}/${toplam} özellik`,
     // #8 Birincil eylem hiyerarşisi: o an yapılacak tek şeyi vurgula
     simdiSira: "👉 ŞİMDİ SIRADA",
+    // DALGA ÇERÇEVESİ: kullanıcı puanların KALICI olmadığını, her dalganın bir
+    // sonrakinde güncelleneceğini anlasın → baskı hissetmeden, dürüstçe puanlar.
+    // "İlk izlenim" turunda yarı tanıdık birini puanlamak doğaldır; mesele o anki
+    // algıyı yakalamak, son hükmü vermek değil.
+    dalgaCerceveBaslik: "Verdiğin puanlar kalıcı değil",
+    dalgaCerceve: (dalgaId: number): string =>
+      dalgaId === 1
+        ? "Bu ilk izlenim turu. Amaç bu kişiyi şu an dışarıdan nasıl gördüğünü yakalamak. Yarın, biraz daha tanıdıktan sonra aynı kişiyi tekrar puanlayacaksın; son kararını 3. gün vereceksin. Rahat ol — dürüst ilk izlenimini ver, sonra değiştirebilirsin."
+        : dalgaId === 2
+        ? "İkinci tur. Artık bu kişiyi biraz daha tanıyorsun. İlk izlenimin değiştiyse puanını güncelle — değişmesi çok doğal. Son kararını 3. gün vereceksin."
+        : dalgaId === 3
+        ? "Son tur. Kampta gerçekten tanıdığın haliyle algını yansıt. Bu, bu kişi için son değerlendirmen."
+        : "Bu turda gözlemlerini güncelle; dalga kapanana dek puanların değiştirilebilir.",
   },
   puanlama: {
     geri: "Geri",
@@ -522,6 +535,15 @@ export const tr = {
       "Dürüst ol — öz puanların raporda başkalarının sana verdikleriyle yan yana gelecek.",
     kisiAciklama:
       "Gözlemlerine dayan, genel izlenime değil. 6'nın altındaki puanlara kısa bir neden yazman gerekir.",
+    // Sihirbaz başlığında kısa dalga hatırlatması: puan kalıcı değil, sonra güncellenir.
+    dalgaHatirlatma: (dalgaId: number): string =>
+      dalgaId === 1
+        ? "İlk izlenim turu — yarın tekrar puanlayacaksın, kalıcı değil."
+        : dalgaId === 2
+        ? "İkinci tur — fikrin değiştiyse güncelle, son karar 3. gün."
+        : dalgaId === 3
+        ? "Son tur — bu kişi için final algın."
+        : "Puanların dalga kapanana dek değiştirilebilir.",
     yorumEtiket: "Bu puanın nedeni (zorunlu)",
     yorumPlaceholder: "Kısaca yaz: hangi davranışı gözlemledin?",
     yorumZorunlu: "6'nın altındaki puanlar için kısa bir neden yazmalısın.",

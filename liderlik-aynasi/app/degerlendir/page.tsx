@@ -137,6 +137,18 @@ export default async function DegerlendirPage() {
         <h1 className="font-display altin-metin mt-1 text-3xl font-bold leading-tight">{dalga.name}</h1>
       </header>
 
+      {/* DALGA ÇERÇEVESİ: puanlar kalıcı değil — her dalga bir sonrakinde
+          güncellenir. Kullanıcı baskı hissetmeden, dürüstçe puanlasın. */}
+      <div className="rounded-2xl border border-gold/25 bg-gold/[0.06] p-4">
+        <p className="flex items-center gap-2 text-sm font-semibold text-gold-light">
+          <span aria-hidden>🔄</span>
+          {tr.degerlendir.dalgaCerceveBaslik}
+        </p>
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-300">
+          {tr.degerlendir.dalgaCerceve(dalga.id)}
+        </p>
+      </div>
+
       {/* Öz-puan kapısı */}
       <section
         className={`kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl backdrop-blur ${
