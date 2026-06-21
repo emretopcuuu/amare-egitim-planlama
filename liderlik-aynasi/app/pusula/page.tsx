@@ -40,6 +40,22 @@ export default async function PusulaSayfa() {
   // hub'ında/mühür ekranında oyalanma — doğrudan kamp akışına gönder.
   if (kisi?.camp_unlocked_at) redirect("/");
 
+  // Pusula tamamsa ama ÖN FARKINDALIK penceresi açık ve bitmemişse, hub'dan ÖNCE
+  // oraya gönder. Ana sayfa kapısı (pusula → ön farkındalık → bekleme) ile aynı
+  // sıra: aksi halde masaüstü hub'da "takılı" görünüp telefonda ÖF çıkıyor,
+  // ikisi tutarsız oluyordu.
+  if (durum.tamam) {
+    const [{ data: ofAyar }, { data: ofDurum }] = await Promise.all([
+      db.from("settings").select("value").eq("key", "on_farkindalik_acik").maybeSingle(),
+      db
+        .from("on_farkindalik")
+        .select("tamamlandi_at")
+        .eq("participant_id", session.sub)
+        .maybeSingle(),
+    ]);
+    if (ofAyar?.value === "true" && !ofDurum?.tamamlandi_at) redirect("/on-farkindalik");
+  }
+
   const oncelikler = ((pus?.oncelikler as { sira: number; metin: string }[]) ?? [])
     .slice()
     .sort((a, b) => a.sira - b.sira)
