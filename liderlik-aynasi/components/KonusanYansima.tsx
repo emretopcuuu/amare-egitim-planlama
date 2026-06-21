@@ -19,6 +19,7 @@ export default function KonusanYansima({
   const video = useRef<HTMLVideoElement | null>(null);
   const ses = useRef<HTMLAudioElement | null>(null);
   const [caliyor, setCaliyor] = useState(false);
+  const [hata, setHata] = useState(false);
 
   useEffect(() => {
     const v = video.current;
@@ -44,13 +45,22 @@ export default function KonusanYansima({
     if (!ses.current) {
       ses.current = new Audio(sesUrl);
       ses.current.onended = durdur;
+      // Dosya yüklenemezse (404/ağ) sessizce yutma — kullanıcıya bildir.
+      ses.current.onerror = () => {
+        setHata(true);
+        setCaliyor(false);
+      };
     }
+    setHata(false);
     // Ses anlatıcıdır; video onun altında sessizce döner
     void video.current?.play().catch(() => {});
     void ses.current
       .play()
       .then(() => setCaliyor(true))
-      .catch(() => setCaliyor(false));
+      .catch(() => {
+        setHata(true);
+        setCaliyor(false);
+      });
   }
 
   return (
@@ -89,6 +99,11 @@ export default function KonusanYansima({
       >
         {caliyor ? tr.gorevler.durdur : (etiket ?? tr.yansiman.izle)}
       </button>
+      {hata && (
+        <p role="alert" className="mt-2 text-center text-sm font-medium text-amber-300">
+          {tr.yansiman.sesHata}
+        </p>
+      )}
     </div>
   );
 }

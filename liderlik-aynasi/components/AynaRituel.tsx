@@ -697,7 +697,14 @@ export default function AynaRituel() {
                   {t.seninle}
                 </p>
                 <MuhurRozet />
-                <div className="mt-10">
+                {/* Yansımanı tekrar dinle — kişi sesini bir daha duymak isteyebilir */}
+                <button
+                  onClick={dinle}
+                  className="mt-8 inline-flex items-center gap-2 rounded-xl border border-white/20 px-5 py-2.5 text-base font-semibold text-slate-100 transition-colors hover:bg-white/[0.08]"
+                >
+                  {t.tekrarDinle}
+                </button>
+                <div className="mt-6">
                   <DevButon onClick={() => setAsama("kapandi")}>{t.kapat}</DevButon>
                 </div>
               </>

@@ -545,7 +545,7 @@ export const tr = {
     kismiNot: "İstediğin kadarını şimdi kaydet — kalanını kamp boyunca ekleyip düzeltebilirsin.",
     kismiOzet: (dolu: number, toplam: number) => `${dolu}/${toplam} özellik puanlandı — gerisini sonra ekleyebilirsin.`,
     hataSunucu: "Kaydedilemedi. Lütfen tekrar dene.",
-    hataDalgaKapandi: "Bu dalga kapandı; puanlar artık kaydedilemiyor.",
+    hataDalgaKapandi: "Bu dalga kapandı. Cevapların bu cihazda güvende — dalga yeniden açıldığında gönderebilirsin.",
     geriDon: "Değerlendirmeye dön",
     // İlk kez kullananlar için: programın genel açıklaması (giriş ekranı)
     girisBaslik: "Liderlik Aynası'na hoş geldin",
@@ -2974,6 +2974,7 @@ export const tr = {
     baslik: "Aynan seni gördü",
     izle: "▶ Suya bak",
     anaSayfa: "🌊 Yansımanı izle",
+    sesHata: "Ses şu an yüklenemedi — birazdan tekrar dene.",
   },
   sahne: {
     ipucu: "Ayna Anı'nı başlatmak için tıkla",
@@ -3112,6 +3113,7 @@ export const tr = {
     inceleTekrar: "↺ Tekrar kaydet",
     uyaniyor: "Aynan uyanıyor…",
     dinle: "▶ Yansımanı dinle",
+    tekrarDinle: "▶ Yansımanı tekrar dinle",
     seninle: "Yansıman artık seninle. Su her durulduğunda burada.",
     sonra: "Kaydın aynada saklandı. Yansıman kamp başlarken uyanacak.",
     // A1 Mühür: beklenti sözü "geleceğe mühürlü mesaj" olarak kapanışta onaylanır
