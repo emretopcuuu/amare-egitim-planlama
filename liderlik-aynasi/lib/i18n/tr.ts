@@ -3000,7 +3000,7 @@ export const tr = {
     baslik: "Aynaya kendini tanıt",
     aciklama: "Aynan seninle kendi sesinle konuşacak.",
     onayBaslik: "İzin veriyor musun?",
-    onay: "Sesin ve fotoğrafın sadece SANA özel deneyim için kullanılır. Kamp bitince hepsi silinir.",
+    onay: "Sesin ve fotoğrafın sadece SANA özel deneyim için kullanılır. İstediğin zaman tek tuşla sildirebilirsin.",
     onayla: "Onaylıyorum, başla",
     basla: "Ritüeli başlat",
     fotoBaslik: "Aynaya yüzünü göster",

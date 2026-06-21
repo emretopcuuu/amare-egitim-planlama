@@ -90,7 +90,6 @@ type SesKalitesi = "iyi" | "kisa" | "sessiz" | null;
 
 export default function AynaRituel() {
   const [asama, setAsama] = useState<Asama>("giris");
-  const [sayac, setSayac] = useState(0);
   const [beklenti, setBeklenti] = useState("");
   const [sesUrl, setSesUrl] = useState<string | null>(null);
   const [calindi, setCalindi] = useState(false);
@@ -113,7 +112,6 @@ export default function AynaRituel() {
   const akis = useRef<MediaStream | null>(null);
   const taniyici = useRef<Taniyici | null>(null);
   const zamanlayici = useRef<ReturnType<typeof setInterval> | null>(null);
-  const kalan = useRef(0);
   const bitiriliyor = useRef(false);
   // Ses kalite ölçümü
   const audioCtxRef = useRef<AudioContext | null>(null);
@@ -149,21 +147,6 @@ export default function AynaRituel() {
       window.location.href = "/";
     }
   }, [asama]);
-
-  function geriSayim(saniye: number, bitince: () => void) {
-    if (zamanlayici.current) clearInterval(zamanlayici.current);
-    kalan.current = saniye;
-    setSayac(saniye);
-    const id = setInterval(() => {
-      kalan.current -= 1;
-      setSayac(Math.max(0, kalan.current));
-      if (kalan.current <= 0) {
-        clearInterval(id);
-        bitince();
-      }
-    }, 1000);
-    zamanlayici.current = id;
-  }
 
   function fotoSecildi(dosya: File | null) {
     if (!dosya) return;
@@ -226,7 +209,7 @@ export default function AynaRituel() {
       bitiriliyor.current = false;
       titret([20, 60, 20]); // kayıt başladı: net fiziksel onay
       setAsama("kayit");
-      geriSayim(40, soruyaGec);
+      // Geri sayım YOK: kayıt sürer; kişi yemini bitirince "Devam →" ile geçer.
     } catch {
       setHataMesaji(t.mikrofonYok);
       setAsama("hata");
@@ -235,10 +218,8 @@ export default function AynaRituel() {
 
   function soruyaGec() {
     setAsama("soru");
-    geriSayim(20, bitir);
-    // NOT: konuşma tanıma (yazıya dökme) burada OTOMATİK BAŞLAMAZ — kişi soruyu/
-    // yemini okurken textarea kazara dolmasın. Aşağıdaki "🎤 Sesle yaz" düğmesiyle
-    // manuel başlatılır.
+    // Geri sayım YOK: kayıt sürer; kişi sözünü bırakınca "Sözümü mühürle" ile
+    // kendi mühürler. Konuşma tanıma da OTOMATİK başlamaz (manuel "🎤 Sesle yaz").
   }
 
   // Manuel sesli yazma anahtarı (soru ekranı): yalnız basınca konuşma yazıya döker.
@@ -549,12 +530,11 @@ export default function AynaRituel() {
 
         {asama === "kayit" && (
           <div>
-            <div className="flex items-center justify-between rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3">
+            <div className="flex items-center justify-center rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3">
               <span className="flex items-center gap-2.5 text-lg font-bold text-red-300">
                 <span className="h-3.5 w-3.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_10px_2px_rgba(239,68,68,0.7)]" />
                 {t.kaydediliyor}…
               </span>
-              <span className="font-mono text-2xl font-bold text-slate-100">{sayac}</span>
             </div>
             <p className="mt-5 text-base uppercase tracking-widest text-slate-400">
               {t.yeminYonerge}
@@ -570,12 +550,11 @@ export default function AynaRituel() {
 
         {asama === "soru" && (
           <div className="text-center">
-            <div className="flex items-center justify-between rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-left">
+            <div className="flex items-center justify-center rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3">
               <span className="flex items-center gap-2.5 text-lg font-bold text-red-300">
                 <span className="h-3.5 w-3.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_10px_2px_rgba(239,68,68,0.7)]" />
                 {t.kaydediliyor}…
               </span>
-              <span className="font-mono text-2xl font-bold text-slate-100">{sayac}</span>
             </div>
             <p className="mt-5 text-5xl" aria-hidden>
               🔒

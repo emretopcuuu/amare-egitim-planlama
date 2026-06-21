@@ -194,7 +194,7 @@ export default function PusulaAcilis({
   const def = PERDELER[perde];
 
   return (
-    <div className="fixed inset-0 z-[60] overflow-hidden bg-[#04060b] text-[#eef2f7]">
+    <div className="gece-ada fixed inset-0 z-[60] overflow-hidden bg-[#04060b] text-[#eef2f7]">
       {/* Sinematik arka plan (sessiz, döngü). Reduced-motion'da gösterilmez. */}
       {!azalt && (
         <video
