@@ -7,7 +7,10 @@ import AsamaRayi, { type RayAsama } from "@/components/AsamaRayi";
 
 const t = tr.pusula;
 const BLANK_SAYISI = 10;
-const MIN_MADDE = 3;
+// Artık 10 madde ZORUNLU: "on tane yazmayan devam edemesin". Örneklerden de
+// seçilebilir; eksikken "son N kaldı" uyarısı çıkar, devam butonu kilitli.
+const MIN_MADDE = 10;
+const ORNEK_GORUNUR = 6; // ilk gösterilen örnek sayısı; gerisi "daha fazla"da
 // Sohbet aşamaları sırası — aşama rayında adlarıyla görünür.
 const SOHBET_ASAMALARI = ["eleme", "bosluk", "engel"] as const;
 
@@ -260,6 +263,7 @@ export default function PusulaSohbet({
   const [mesajlar, setMesajlar] = useState<Mesaj[]>(baslangic);
   const [maddeler, setMaddeler] = useState<string[]>([]); // tek tek eklenen öncelikler
   const [maddeGirdi, setMaddeGirdi] = useState("");
+  const [ornekAcik, setOrnekAcik] = useState(false); // örnek listesi genişledi mi
   const [girdi, setGirdi] = useState("");
   const [listeDinliyor, setListeDinliyor] = useState(false);
   const [sohbetDinliyor, setSohbetDinliyor] = useState(false);
@@ -365,6 +369,14 @@ export default function PusulaSohbet({
     maddeRef.current?.focus();
   }
 
+  // Örnekten ekle: ilham için. Doluysa ya da zaten varsa eklemez (sessizce).
+  function ornekEkle(metin: string) {
+    setMaddeler((l) =>
+      l.length >= BLANK_SAYISI || l.includes(metin) ? l : [...l, metin]
+    );
+    setHata(null);
+  }
+
   async function listeyiTamamla() {
     const bekleyen = maddeGirdi.trim();
     const dolu = bekleyen ? [...maddeler, bekleyen].slice(0, BLANK_SAYISI) : maddeler;
@@ -458,7 +470,8 @@ export default function PusulaSohbet({
           <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.listeBaslik}</h1>
           <SifirlaButon sor={sifirlaSor} setSor={setSifirlaSor} sifirla={sifirla} mesgul={sifirliyor} />
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-slate-400">{t.listeAciklama}</p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.listeAciklama}</p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-400">{t.listeAciklama2}</p>
 
         {/* Yazdıkça öncekiler görünür kalsın */}
         {maddeler.length > 0 && (
@@ -526,15 +539,60 @@ export default function PusulaSohbet({
                   {t.listeEkle}
                 </button>
               </div>
+
+              {/* Örnekler — ilham için; dokun → listene eklenir. İlk birkaçı
+                  görünür, gerisi "daha fazla"da. Eklenen örnek ✓ ile işaretli. */}
+              <div className="mt-4 rounded-2xl border border-royal-light/15 bg-white/[0.02] p-3">
+                <p className="text-xs leading-relaxed text-slate-400">{t.listeOrnekBaslik}</p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  {(ornekAcik ? t.listeOrnekler : t.listeOrnekler.slice(0, ORNEK_GORUNUR)).map(
+                    (o) => {
+                      const eklendi = maddeler.includes(o);
+                      return (
+                        <button
+                          key={o}
+                          type="button"
+                          onClick={() => ornekEkle(o)}
+                          disabled={eklendi}
+                          className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                            eklendi
+                              ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300/80"
+                              : "border-royal-light/30 bg-midnight-soft text-slate-200 hover:border-gold"
+                          }`}
+                        >
+                          {eklendi ? `${o} ✓` : `+ ${o}`}
+                        </button>
+                      );
+                    }
+                  )}
+                </div>
+                {t.listeOrnekler.length > ORNEK_GORUNUR && (
+                  <button
+                    type="button"
+                    onClick={() => setOrnekAcik((a) => !a)}
+                    className="mt-2 text-xs font-semibold text-gold-light underline-offset-2 hover:underline"
+                  >
+                    {ornekAcik
+                      ? t.listeOrnekKapat
+                      : t.listeOrnekDahaFazla(t.listeOrnekler.length - ORNEK_GORUNUR)}
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
 
         {hata && <p className="mt-3 text-center text-sm text-red-400">{hata}</p>}
+        {/* Kalan madde uyarısı — 10 zorunlu; eksikken net "kaç kaldı" */}
+        {!yeterli && (
+          <p className="mt-4 text-center text-sm font-medium text-gold-light/90">
+            {t.listeKalanNot(MIN_MADDE - maddeler.length)}
+          </p>
+        )}
         <button
           onClick={listeyiTamamla}
           disabled={mesgul || !yeterli}
-          className="btn-kor parilti mt-5 flex h-14 w-full shrink-0 items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
+          className="btn-kor parilti mt-3 flex h-14 w-full shrink-0 items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
         >
           {mesgul ? t.dusunuyor : t.listeDevam}
         </button>

@@ -63,7 +63,7 @@ export async function POST(req: Request) {
   if (Array.isArray(govde.oncelikler)) {
     const liste = govde.oncelikler.filter((x): x is string => typeof x === "string");
     const ok = await onceliklerKaydet(db, session.sub, liste);
-    if (!ok) return Response.json({ hata: tr.pusula.listeAzUyari(3) }, { status: 400 });
+    if (!ok) return Response.json({ hata: tr.pusula.listeAzUyari(10) }, { status: 400 });
     const tur = await pusulaTuru(db, { id: session.sub, full_name: session.ad }, null);
     if (!tur) return Response.json({ hata: tr.pusula.aiHata }, { status: 503 });
     return Response.json(tur);

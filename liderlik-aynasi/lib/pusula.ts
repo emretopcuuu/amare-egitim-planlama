@@ -209,7 +209,8 @@ export async function onceliklerKaydet(
     .filter(Boolean)
     .slice(0, 10)
     .map((metin, i) => ({ sira: i + 1, metin: metin.slice(0, 200) }));
-  if (temiz.length < 3) return false;
+  // 10 madde ZORUNLU (istemci de kilitler; sunucu da garanti eder).
+  if (temiz.length < 10) return false;
   const { error } = await db
     .from("pusula")
     .upsert(

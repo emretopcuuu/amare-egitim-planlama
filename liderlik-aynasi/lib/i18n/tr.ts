@@ -649,18 +649,68 @@ export const tr = {
       "Birazdan birlikte hayattaki gerçek nedenlerini bulacağız. Yazdıkların yalnızca senin için saklanır ve kampta sana daha iyi eşlik etmek için kullanılır. Kimse ham cevaplarını görmez — yalnızca paylaşmayı seçtiklerin.",
     rizaNot: "Dilediğin an verilerini silebilirsin.",
     rizaKabul: "Anladım, başlayalım",
-    listeBaslik: "Hayatındaki öncelikler",
+    listeBaslik: "Hayatındaki 10 öncelik",
     listeAciklama:
-      "Olmazsa olmaz dediğin, en çok önemsediğin ya da gelecekte sahip olmak istediğin şeyler. Geniş düşün — 'aileyle vakit', 'kendi işim', 'sağlık' gibi. Her seferinde bir tane yaz; en az 3, en çok 10 madde.",
+      "Hayatta senin için olmazsa olmaz dediğin, en çok önemsediğin, yapmaktan en çok zevk aldığın, kesinlikle hayatından çıkarmak istemediğin ya da hayatına katmak istediğin 10 önceliğinin listesini yapmanı istiyoruz.",
+    // İkinci açıklama paragrafı (sıralama önemsiz + örnek tipleri)
+    listeAciklama2:
+      "Sıralaması çok önemli değil — aklına geldiği gibi yaz. Bu şeyler şu an sahip olduğun ya da gelecekte sahip olmak istediğin şeyler olabilir. Olabildiğince samimi ol: bu liste seni ifade etmeli. Önceliklerinin farkında olmak, daha net kararlar vermeni sağlar.",
     listeYer: (n: number) => `${n}. öncelik`,
     // Madde madde (tek tek) akış
-    listeTekYer: "Tek bir şey yaz…",
+    listeTekYer: "Tek bir öncelik yaz…",
     listeEkle: "Ekle",
     listeYazdiklarin: "Yazdıkların",
-    // Her eklemeden sonra teşvik edici bir sonraki soru (n = şu ana dek eklenen sayı)
+    // Örnekler — tıkla-ekle; ilham için. İlk birkaçı görünür, gerisi açılır.
+    listeOrnekBaslik: "Aklına gelmiyor mu? Örneklere bak — dokun, listene eklensin",
+    listeOrnekDahaFazla: (n: number) => `+${n} örnek daha göster`,
+    listeOrnekKapat: "Örnekleri gizle",
+    listeOrnekler: [
+      "Aile ile daha fazla vakit geçirmek",
+      "Finansal olarak özgür olmak",
+      "Sağlıklı bir bedene sahip olmak",
+      "Kendi işini kurmak",
+      "Dünyayı gezmek",
+      "Hobilerine vakit ayırmak",
+      "Müzik yapmak",
+      "Ünlü olmak",
+      "Kitap yazmak",
+      "Başkalarına yardımcı olmak",
+      "Okul yaptırmak",
+      "Âşık olmak",
+      "Çocuklarına ciddi bir miras bırakmak",
+      "Kariyer yapmak",
+      "Spor yapmak",
+      "Kitap okumak",
+      "Çocuk okutmak",
+      "Arkadaşlarla vakit geçirmek",
+      "Hayallerindeki evde yaşamak",
+      "Hayallerindeki arabaya sahip olmak",
+      "Ekibime ilham vermek",
+      "İç huzura kavuşmak",
+      "Manevi/ruhsal olarak gelişmek",
+      "Çocuklarıma iyi bir rol model olmak",
+      "Kendi markamı oluşturmak",
+      "Yeni bir dil öğrenmek",
+      "Bir hayır işine öncülük etmek",
+      "Anne-babama iyi bakmak",
+      "Ailemi finansal olarak güvene almak",
+      "Pasif gelir kaynakları kurmak",
+      "Sahnede/topluluk önünde rahat konuşmak",
+      "Zamanımın patronu olmak",
+      "Bir ev sahibi olmak",
+      "Sınır koymayı (hayır demeyi) öğrenmek",
+      "Uzun ve sağlıklı bir yaşam",
+      "Toplumda iz bırakmak",
+    ] as string[],
+    listeOrnekEklendi: "✓ eklendi",
+    // Her eklemeden sonra teşvik / kalan uyarısı (n = şu ana dek eklenen sayı; hedef 10)
     listeTesvik: (n: number) => {
+      const kalan = 10 - n;
       if (n === 0)
-        return "Hayatta en çok değer verdiğin, en önemsediğin şey nedir?";
+        return "Hayatta en çok değer verdiğin, en önemsediğin şey nedir? 10 madde yazacağız — başla.";
+      if (kalan === 3) return "Yazdın 🌟 Son 3 madde kaldı — devam et.";
+      if (kalan === 2) return "Harika 🌟 Son 2 madde kaldı.";
+      if (kalan === 1) return "Bir madde daha — sonuncu! Aklındaki son önceliği yaz.";
       const ord = [
         "Birincisini",
         "İkincisini",
@@ -674,11 +724,14 @@ export const tr = {
         "Onuncusunu",
       ];
       const etiket = ord[n - 1] ?? `${n}.`;
-      return `${etiket} yazdın 🌟 Bir tane daha — hayatta değer verdiğin, önemsediğin başka ne var?`;
+      return `${etiket} yazdın 🌟 Bir tane daha — hayatta değer verdiğin başka ne var?`;
     },
-    listeSonHatirlatma: "Onuncuyu da yazdın. Hazırsan tamamla.",
+    // Devam butonu altında kalan sayıyı net göster (10 zorunlu)
+    listeKalanNot: (kalan: number) =>
+      kalan > 0 ? `Devam etmek için ${kalan} madde daha gerek (toplam 10).` : "10 madde tamam — devam edebilirsin.",
+    listeSonHatirlatma: "Onuncuyu da yazdın. Listen tamam — hazırsan devam et.",
     listeDevam: "Listeyi tamamla",
-    listeAzUyari: (n: number) => `En az ${n} madde yaz.`,
+    listeAzUyari: (n: number) => `${n} madde yazmalısın — örneklerden de seçebilirsin.`,
     // Liste → sohbet köprüsü (geçiş net anlatılsın, ani atlama olmasın)
     kopruBaslik: "Sıra sohbette",
     kopruMetin:
