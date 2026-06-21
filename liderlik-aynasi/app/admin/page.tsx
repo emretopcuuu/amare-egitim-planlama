@@ -7,6 +7,7 @@ import { raporlarGorunurMu } from "@/lib/rapor";
 import { adminOnerisi } from "@/lib/adminAsistan";
 import { adminUyarilari } from "@/lib/adminUyarilar";
 import { canliPano } from "@/lib/canliPano";
+import { funnelMetrikleri } from "@/lib/funnel";
 import { tr } from "@/lib/i18n/tr";
 import { kampGunu, KAMP_GUNLERI } from "@/lib/kampProgrami";
 import FunnelOmurga from "./FunnelOmurga";
@@ -37,6 +38,7 @@ import MuhurKontrol from "./MuhurKontrol";
 import OdevPaketi from "./OdevPaketi";
 import SonEylemler from "./SonEylemler";
 import CanliPano from "./CanliPano";
+import FunnelMetrik from "./FunnelMetrik";
 import TriyajKart from "./TriyajKart";
 import AkisDizisi from "./AkisDizisi";
 import BolumAtla from "./BolumAtla";
@@ -170,7 +172,8 @@ export default async function AdminPanel() {
   }
 
   // Canlı pano: katılımcı ızgarası + teslim akışı + takım sıralaması (#1/#4/#10).
-  const pano = await canliPano(db);
+  // Funnel: kamp öncesi katılım hunisinin dönüşümü (kim nerede takıldı).
+  const [pano, funnel] = await Promise.all([canliPano(db), funnelMetrikleri(db)]);
 
   // #7 Asistan: kampın takvimi + sistemin durumundan tek önerilen adımı çıkar.
   const bugun = new Intl.DateTimeFormat("en-CA", {
@@ -301,6 +304,9 @@ export default async function AdminPanel() {
         gorus={ilerleme?.toplamPuan ?? 0}
         dalgaAd={acikDalga?.name ?? null}
       />
+
+      {/* Katılım hunisi: kamp öncesi dönüşüm — kim nerede takıldı (öneri #4) */}
+      <FunnelMetrik ozet={funnel} />
 
       {/* Canlı pano: ızgara + teslim akışı + takım sıralaması (kampın nabzı) */}
       <CanliPano
