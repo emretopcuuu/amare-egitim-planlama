@@ -24,7 +24,6 @@ import HazirlikPaneli from "./HazirlikPaneli";
 import CanliOzet from "./CanliOzet";
 import KodBul from "./KodBul";
 import Uyarilar from "./Uyarilar";
-import DuyuruSablonlari from "./DuyuruSablonlari";
 import Ipucu from "./Ipucu";
 import ProvaModuKontrol from "./ProvaModuKontrol";
 import TopluEylem from "./TopluEylem";
@@ -537,12 +536,14 @@ export default async function AdminPanel() {
       {tamYetki && (
         <div id="araclar" className="scroll-mt-24">
         <Katlanir baslik={tr.admin.araclar.baslik} aciklama={tr.admin.araclar.aciklama} yardim={tr.admin.yardim.araclar}>
-          {/* Sağlık kontrol listesi — her zaman erişilebilir tam görünüm */}
-          <HazirlikPaneli konum="arac" />
-          <KodBul />
-          <DuyuruSablonlari />
+          {/* #10 Araçlar artık aşamaya göre gruplu: Kamp Sonrası + Sistem. */}
 
-          {/* FAZ 2 — Ödev paketi (kamp sonrası 10/15 gün, Ağustos) */}
+          {/* 📦 KAMP SONRASI — kamp bittikten sonraki uzun soluklu araçlar */}
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+            {tr.admin.araclar.grupSonrasi}
+          </p>
+
+          {/* Ödev paketi (kamp sonrası 10/15 gün, Ağustos) */}
           <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
               {tr.admin.odev.baslik}
@@ -578,6 +579,15 @@ export default async function AdminPanel() {
             <IkiliKontrol mevcut={ikiliSayisi ?? 0} />
           </section>
 
+          {/* ⚙️ SİSTEM & KAYIT — her aşamada lazım olan genel araçlar */}
+          <p className="pt-2 text-xs font-bold uppercase tracking-wide text-slate-500">
+            {tr.admin.araclar.grupSistem}
+          </p>
+
+          {/* Sağlık kontrol listesi — her zaman erişilebilir tam görünüm */}
+          <HazirlikPaneli konum="arac" />
+          <KodBul />
+
           <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
             <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
               {tr.admin.yedek.baslik}
@@ -598,7 +608,7 @@ export default async function AdminPanel() {
             />
           </section>
 
-          {/* #10 İşlem günlüğü: kritik eylemler buraya düşer; geri-al ise eylem
+          {/* İşlem günlüğü: kritik eylemler buraya düşer; geri-al ise eylem
               anındaki tostta sunulur (dalga/rapor). Kayıt + geri-al birlikte. */}
           <div id="islem-gunlugu" className="scroll-mt-24">
             <IslemGunlugu />

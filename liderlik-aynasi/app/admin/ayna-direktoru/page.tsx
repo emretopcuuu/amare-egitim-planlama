@@ -7,6 +7,7 @@ import AynaDirektorKontrol from "./AynaDirektorKontrol";
 import AynaAniTetik from "./AynaAniTetik";
 import SonGorevler from "./SonGorevler";
 import Ipucu from "../Ipucu";
+import KomutaSekme from "../KomutaSekme";
 import Katlanir from "../Katlanir";
 
 export const metadata = { title: "AYNA Kontrol Odası — Liderlik Aynası" };
@@ -50,6 +51,7 @@ export default async function AynaDirektorPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
+      <KomutaSekme />
       <div>
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>

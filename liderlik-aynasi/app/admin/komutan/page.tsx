@@ -7,6 +7,7 @@ import { haftaBaslangici } from "@/lib/momentum";
 import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
 import Ipucu from "../Ipucu";
+import KomutaSekme from "../KomutaSekme";
 import Katlanir from "../Katlanir";
 import OtoYenile from "../OtoYenile";
 
@@ -274,6 +275,7 @@ export default async function KomutanPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
+      <KomutaSekme />
       <div className="flex justify-end">
         <OtoYenile saniye={20} />
       </div>

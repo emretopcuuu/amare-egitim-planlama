@@ -45,17 +45,15 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
     ad: g.canli,
     ikon: "🎛",
     linkler: [
-      { href: "/admin/ayna-direktoru", etiket: n.ayna },
-      { href: "/admin/komutan", etiket: n.komutan },
-      { href: "/admin/sahne-kumanda", etiket: n.sahne },
-      { href: "/admin/sunum", etiket: n.sunum },
+      // Kamp Komuta (direktör + komutan + sahne) tek girişten — alt sekmelerle gezilir
+      { href: "/admin/ayna-direktoru", etiket: n.komuta },
       { href: "/admin/duyuru", etiket: n.duyuru },
       { href: "/admin/moderasyon", etiket: n.moderasyon },
-      { href: "/admin/foto", etiket: n.foto },
       { href: "/admin/canli-ayna", etiket: n.canliAyna },
       { href: "/admin/analiz", etiket: n.analiz },
       { href: "/admin/takim", etiket: n.takim },
       { href: "/admin/grup-odev", etiket: n.grupOdev },
+      { href: "/admin/sunum", etiket: n.sunum },
     ],
   },
   {
