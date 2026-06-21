@@ -890,13 +890,27 @@ export const tr = {
       "Hedefini doğru ölçekte koyabilmek için nerede durduğunu bilmem gerekiyor. Sana en yakın olanı seç.",
     noktalar: {
       yeni: { ad: "Yeni başladım", alt: "0-3 ay · ilk adımlar" },
-      baslangic: { ad: "Başlangıç aşamasındayım", alt: "3-18 ay · tempo kuruyorum" },
-      deneyimli: { ad: "Deneyimliyim", alt: "18 ay+ · ekibim var" },
+      baslangic: { ad: "Başlangıç aşamasındayım", alt: "3-12 ay · tempo kuruyorum" },
+      deneyimli: { ad: "Deneyimliyim", alt: "12 ay ve üstü · ekibim var" },
       lider: { ad: "Olgun bir liderim", alt: "Lider yetiştiriyorum" },
     },
     noktaAyEtiket: "Ne kadardır bu işin içindesin? (ay — opsiyonel)",
     noktaDetayYer: "Eklemek istediğin bir şey var mı? (opsiyonel)",
+    // OV alanı (zorunlu, tüm seviyelerde)
+    ovEtiket: "Son 3 ayın ortalama OV'si (zorunlu)",
+    ovYer: "Örn: 2500",
+    ovZorunlu: "OV değeri gerekli — bu rakam planını kişiselleştirir.",
     noktaDevam: "Devam et",
+    // OV simülasyonu
+    simulasyonBaslik: "OV büyüme simülasyonu",
+    simulasyonUyari:
+      "Bu tablodaki rakamlar varsayımsal senaryolardır — gelir garantisi değildir. Gerçek sonuçlar kişiden kişiye önemli ölçüde farklılık gösterir.",
+    simulasyonAyEtiket: (ay: number) => `${ay}. ay`,
+    simulasyonGerekliTempo: (oran: string) => `Hedef için gereken tempo: aylık ${oran}`,
+    simulasyonMakul: (ay: number) => `%20 büyümeyle tahmini süre: ${ay} ay`,
+    // Kamp sonu taahhüt metni
+    kampTaahhut:
+      "Bu kamp sana bir gelir garantisi değil, bir yöntem ve yol haritası sunar. Buradan aldığın araçlarla kendi OV'ini büyütmek sana kalmış.",
     // Isınma sohbeti ilerleme
     ilerlemeEtiket: "Hedef netleşiyor",
     // Somutlaştırma wizard'ı

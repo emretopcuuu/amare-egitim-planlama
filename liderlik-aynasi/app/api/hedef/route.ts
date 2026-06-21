@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
   let govde: {
     mesaj?: unknown;
-    baslangic?: { nokta?: unknown; deneyimAy?: unknown; detay?: unknown };
+    baslangic?: { nokta?: unknown; deneyimAy?: unknown; detay?: unknown; baslangicOv?: unknown };
     kariyer?: { hedefIndex?: unknown; sure?: unknown; gunluk?: unknown };
     sifirla?: unknown;
   };
@@ -57,7 +57,12 @@ export async function POST(req: Request) {
     const deneyimAy =
       typeof govde.baslangic.deneyimAy === "number" ? govde.baslangic.deneyimAy : null;
     const detay = typeof govde.baslangic.detay === "string" ? govde.baslangic.detay : null;
-    const ok = await baslangicKaydet(db, session.sub, govde.baslangic.nokta, deneyimAy, detay);
+    const baslangicOv =
+      typeof govde.baslangic.baslangicOv === "number" && govde.baslangic.baslangicOv > 0
+        ? govde.baslangic.baslangicOv
+        : 0;
+    if (baslangicOv <= 0) return Response.json({ hata: tr.hedef.ovZorunlu }, { status: 400 });
+    const ok = await baslangicKaydet(db, session.sub, govde.baslangic.nokta, deneyimAy, detay, baslangicOv);
     if (!ok) return Response.json({ hata: tr.hedef.hata }, { status: 400 });
     return Response.json({ ok: true });
   }

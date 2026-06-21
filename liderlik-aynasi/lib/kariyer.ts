@@ -3,6 +3,8 @@
 // aylık gelirlerini görür, hedefini seçer; 3 soruyla kişisel kariyer planı çıkar.
 // Rakamlar aylık TL gelir. "+" işaretli ortalamalar alt/üst aralık yayınlanmadan
 // taban değerdir (ör. "625.000+").
+// OV (Omset Volume) ve VOLL (Volume of your own Line Levels) değerleri OV bazlı
+// simülasyon için eklendi; saf fonksiyonlar server-only içermez.
 
 export type KariyerRutbe = {
   ad: string;
@@ -11,23 +13,25 @@ export type KariyerRutbe = {
   enYuksek: number | null;
   ortalama: number;
   arti?: boolean; // ortalama bir taban mı ("625.000+")
+  ov: number;        // bu basamak için gereken minimum OV
+  voll: number | null; // gereken minimum VOLL (null = henüz gerekli değil)
 };
 
 export const KARIYER_BASAMAKLARI: KariyerRutbe[] = [
-  { ad: "Brand Partner", enDusuk: 126, enYuksek: 16610, ortalama: 1039 },
-  { ad: "Brand Builder", enDusuk: 86, enYuksek: 39054, ortalama: 2020 },
-  { ad: "Bronze", enDusuk: 428, enYuksek: 34061, ortalama: 6425 },
-  { ad: "Silver", rozet: "İlk aylar", enDusuk: 3251, enYuksek: 62644, ortalama: 17541 },
-  { ad: "Gold", rozet: "Popüler", enDusuk: 13486, enYuksek: 139256, ortalama: 35959 },
-  { ad: "Platinum", enDusuk: 18184, enYuksek: 136019, ortalama: 42665 },
-  { ad: "Leader", enDusuk: 38845, enYuksek: 207603, ortalama: 71894 },
-  { ad: "Senior Leader", enDusuk: 76814, enYuksek: 201838, ortalama: 101811 },
-  { ad: "Exec. Leader", enDusuk: 108418, enYuksek: 164220, ortalama: 136263 },
-  { ad: "Diamond", rozet: "3-6 ay", enDusuk: 238626, enYuksek: 362643, ortalama: 288926 },
-  { ad: "1 Star Diamond", enDusuk: 370548, enYuksek: 518500, ortalama: 421220 },
-  { ad: "2 Star Diamond", enDusuk: null, enYuksek: null, ortalama: 625000, arti: true },
-  { ad: "3 Star Diamond", enDusuk: null, enYuksek: null, ortalama: 812500, arti: true },
-  { ad: "Presidential Diamond", rozet: "Zirve", enDusuk: null, enYuksek: null, ortalama: 1125000, arti: true },
+  { ad: "Brand Partner",       enDusuk: 126,    enYuksek: 16610,  ortalama: 1039,    ov: 100,     voll: null   },
+  { ad: "Brand Builder",       enDusuk: 86,     enYuksek: 39054,  ortalama: 2020,    ov: 1000,    voll: null   },
+  { ad: "Bronze",              enDusuk: 428,    enYuksek: 34061,  ortalama: 6425,    ov: 3000,    voll: 600    },
+  { ad: "Silver",    rozet: "İlk aylar", enDusuk: 3251,  enYuksek: 62644,  ortalama: 17541, ov: 5000,    voll: 1500   },
+  { ad: "Gold",      rozet: "Popüler",   enDusuk: 13486, enYuksek: 139256, ortalama: 35959, ov: 10000,   voll: 3000   },
+  { ad: "Platinum",            enDusuk: 18184,  enYuksek: 136019, ortalama: 42665,   ov: 15000,   voll: 4500   },
+  { ad: "Leader",              enDusuk: 38845,  enYuksek: 207603, ortalama: 71894,   ov: 25000,   voll: 7500   },
+  { ad: "Senior Leader",       enDusuk: 76814,  enYuksek: 201838, ortalama: 101811,  ov: 50000,   voll: 15000  },
+  { ad: "Exec. Leader",        enDusuk: 108418, enYuksek: 164220, ortalama: 136263,  ov: 75000,   voll: 22500  },
+  { ad: "Diamond",   rozet: "3-6 ay",    enDusuk: 238626, enYuksek: 362643, ortalama: 288926, ov: 125000,  voll: 37500  },
+  { ad: "1 Star Diamond",      enDusuk: 370548, enYuksek: 518500, ortalama: 421220,  ov: 250000,  voll: 75000  },
+  { ad: "2 Star Diamond",      enDusuk: null,   enYuksek: null,   ortalama: 625000,  arti: true, ov: 500000,  voll: 150000 },
+  { ad: "3 Star Diamond",      enDusuk: null,   enYuksek: null,   ortalama: 812500,  arti: true, ov: 750000,  voll: 225000 },
+  { ad: "Presidential Diamond", rozet: "Zirve", enDusuk: null, enYuksek: null, ortalama: 1125000, arti: true, ov: 1000000, voll: 300000 },
 ];
 
 // Günlük saat seçenekleri → haftalık saat (7 gün üzerinden, ekrandaki gibi:
@@ -123,4 +127,54 @@ export function kariyerPlaniHesapla(
     geriDonusAy,
     saatlikKazanc,
   };
+}
+
+// ─── OV BAZLI BÜYÜME SİMÜLASYONU (saf, DB'siz) ───────────────────────────
+// Bileşik büyüme formülü: OV(ay) = OV₀ × (1 + g)^ay
+
+// OV₀'dan başlayarak `ay` ay sonraki OV değerini hesapla.
+export function ovSimulasyonu(ov0: number, ay: number, buyume: number): number {
+  if (ov0 <= 0 || ay < 0) return 0;
+  return Math.round(ov0 * Math.pow(1 + buyume, ay));
+}
+
+// OV₀'dan `ovHedef`'e `ay` ayda ulaşmak için gereken aylık büyüme oranı.
+export function gerekliTempo(ov0: number, ovHedef: number, ay: number): number {
+  if (ov0 <= 0 || ay <= 0 || ovHedef <= ov0) return 0;
+  return Math.pow(ovHedef / ov0, 1 / ay) - 1;
+}
+
+// OV₀'dan `ovHedef`'e %20 aylık büyüme ile kaç ayda ulaşılır.
+export function makuSure(ov0: number, ovHedef: number): number {
+  if (ov0 <= 0 || ovHedef <= ov0) return 0;
+  return Math.ceil(Math.log(ovHedef / ov0) / Math.log(1.2));
+}
+
+// OV₀'a göre mevcut kariyer basamağının indeksini döndür.
+export function mevcutRutbeIndex(ov0: number): number {
+  let idx = 0;
+  for (let i = KARIYER_BASAMAKLARI.length - 1; i >= 0; i--) {
+    if (ov0 >= KARIYER_BASAMAKLARI[i].ov) {
+      idx = i;
+      break;
+    }
+  }
+  return idx;
+}
+
+// Simülasyonda gösterilecek 3 senaryonun büyüme oranları.
+export const OV_SENARYOLAR = [
+  { etiket: "%20 / ay", buyume: 0.2 },
+  { etiket: "%30 / ay", buyume: 0.3 },
+  { etiket: "%40 / ay", buyume: 0.4 },
+] as const;
+
+// Simülasyon milestone'ları: ¼, ½, ¾ ve tam süre.
+export function simulasyonMilestonelari(ay: number): number[] {
+  return [
+    Math.max(1, Math.round(ay / 4)),
+    Math.max(1, Math.round(ay / 2)),
+    Math.max(1, Math.round((3 * ay) / 4)),
+    ay,
+  ].filter((v, i, arr) => arr.indexOf(v) === i); // tekrarsız
 }

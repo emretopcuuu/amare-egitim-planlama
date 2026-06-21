@@ -416,6 +416,7 @@ export type Database = {
           asama: string
           baslangic_detay: string | null
           baslangic_noktasi: string | null
+          baslangic_ov: number | null
           created_at: string
           deneyim_ay: number | null
           gunluk_saat: string | null
@@ -434,6 +435,7 @@ export type Database = {
           asama?: string
           baslangic_detay?: string | null
           baslangic_noktasi?: string | null
+          baslangic_ov?: number | null
           created_at?: string
           deneyim_ay?: number | null
           gunluk_saat?: string | null
@@ -452,6 +454,7 @@ export type Database = {
           asama?: string
           baslangic_detay?: string | null
           baslangic_noktasi?: string | null
+          baslangic_ov?: number | null
           created_at?: string
           deneyim_ay?: number | null
           gunluk_saat?: string | null
