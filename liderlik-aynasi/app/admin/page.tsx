@@ -130,8 +130,11 @@ export default async function AdminPanel() {
       .from("churn_radar")
       .select("participant_id", { count: "exact", head: true })
       .not("nudged_at", "is", null),
-    // Funnel omurgası aşama hesabı için pencere anahtarları
-    db.from("settings").select("key, value").in("key", ["pusula_acik", "muhur_acik"]),
+    // Funnel omurgası: aşama hesabı + aşama açılış zaman damgaları (#15)
+    db
+      .from("settings")
+      .select("key, value, updated_at")
+      .in("key", ["pusula_acik", "muhur_acik", "reports_visible"]),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
   const provaAcik = provaAyar?.value === "true";
@@ -222,6 +225,39 @@ export default async function AdminPanel() {
           : pusulaAcik
             ? 2
             : 1;
+
+  // #15 Aşama açılış zaman damgaları + #18 ETA. Her aşamanın altında "açıldı
+  // HH:MM" ya da (kamp öncesi) "kampa Xg" görünür — operatör temposunu ölçer.
+  const funnelZaman = new Map((funnelAyarlar ?? []).map((a) => [a.key, a.updated_at]));
+  const saatBicim = (iso: string | null | undefined): string | null => {
+    if (!iso) return null;
+    const g = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date(iso));
+    const sa = new Intl.DateTimeFormat("tr-TR", {
+      timeZone: "Europe/Istanbul",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(iso));
+    return g === bugun ? `açıldı ${sa}` : `açıldı ${g.slice(8)}/${g.slice(5, 7)} ${sa}`;
+  };
+  // Kampa kalan gün (ETA) — kamp öncesi 3·Canlı aşamasına bilgi olarak.
+  const ilkGun = KAMP_GUNLERI[0];
+  const kalanGun =
+    bugun < ilkGun
+      ? Math.ceil((new Date(ilkGun).getTime() - new Date(bugun).getTime()) / 86_400_000)
+      : 0;
+  const ilkDalgaAcilis = dalgalar
+    .map((d) => d.opened_at)
+    .filter((x): x is string => !!x)
+    .sort()[0];
+  const asamaZaman: Record<number, string> = {};
+  const z2 = pusulaAcik ? saatBicim(funnelZaman.get("pusula_acik")) : null;
+  if (z2) asamaZaman[2] = z2;
+  const z3 = saatBicim(ilkDalgaAcilis) ?? (kalanGun > 0 ? `kampa ${kalanGun}g` : null);
+  if (z3) asamaZaman[3] = z3;
+  const z4 =
+    saatBicim(raporlarAcik ? funnelZaman.get("reports_visible") : muhurAcik ? funnelZaman.get("muhur_acik") : null);
+  if (z4) asamaZaman[4] = z4;
+
   const oneri = adminOnerisi({
     bugun,
     katilimciSayisi: katilimciSayisi ?? 0,
@@ -269,8 +305,8 @@ export default async function AdminPanel() {
         <OtoYenile />
       </div>
 
-      {/* FUNNEL OMURGASI — kampın 5 aşaması, şu an neredeyiz, her aşamaya atla */}
-      <FunnelOmurga aktif={aktifAsama} />
+      {/* FUNNEL OMURGASI — kampın 5 aşaması, şu an neredeyiz, açılış zamanları */}
+      <FunnelOmurga aktif={aktifAsama} zamanlar={asamaZaman} />
 
       {/* #7 Bölüm atlama — yapışkan mini içindekiler */}
       <BolumAtla bolumler={bolumler} />
