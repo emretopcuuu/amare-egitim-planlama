@@ -22,6 +22,9 @@ export type AsistanDurum = {
   ozToplam: number; // toplam katılımcı (açık dalga için payda)
   raporlarAcik: boolean;
   sozAcik: boolean;
+  // #3 Kamp öncesi funnel: Pusula penceresi açık mı + hazırlığı bitiren sayısı
+  pusulaAcik: boolean;
+  hazirTamam: number; // Ön Farkındalık'a kadar gelen (hazırlığı biten) sayı
 };
 
 const ILK_GUN = KAMP_GUNLERI[0];
@@ -31,7 +34,8 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
   const gun = kampGunu(d.bugun);
   const cogunlukBitti = d.ozToplam > 0 && d.ozTamam / d.ozToplam >= 0.8;
 
-  // 1) KAMP ÖNCESİ — hazırlık
+  // 1) KAMP ÖNCESİ — hazırlık hunisi (funnel'a bağlı: yükle → pencere aç →
+  // hatırlat → QR). Operatör her aşamada tek net adımı görür.
   if (d.bugun < ILK_GUN) {
     if (d.katilimciSayisi === 0) {
       return {
@@ -44,10 +48,33 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
         vurgu: true,
       };
     }
+    // Katılımcı var ama Pusula penceresi kapalı → hazırlık hunisini başlat.
+    if (!d.pusulaAcik) {
+      return {
+        ikon: "🎯",
+        baslik: "Pusula penceresini aç",
+        aciklama: `${d.katilimciSayisi} katılımcı hazır. Pusula penceresini aç ki katılımcılar kamp öncesi hazırlığa (ses, pusula, ön farkındalık) başlasın.`,
+        butonEtiket: "Pusula Penceresini Aç",
+        href: "#fazsifir",
+        vurgu: true,
+      };
+    }
+    // Pencere açık: hazırlığı biten azsa hatırlatmaya yönlendir.
+    const hazirOran = d.katilimciSayisi > 0 ? d.hazirTamam / d.katilimciSayisi : 0;
+    if (hazirOran < 0.8) {
+      return {
+        ikon: "🔔",
+        baslik: "Hazırlığı eksik olanları dürt",
+        aciklama: `${d.hazirTamam}/${d.katilimciSayisi} kişi hazırlığını bitirdi. Eksik olanlara hatırlatma gönder — kampa hazır gelsinler.`,
+        butonEtiket: "Hazırlık Hunisine Git",
+        href: "#fazsifir",
+        vurgu: false,
+      };
+    }
     return {
       ikon: "🖨️",
       baslik: "QR kartlarını yazdır",
-      aciklama: `${d.katilimciSayisi} katılımcı hazır. Yaka kartı QR'larını yazdır, kamp gününe hazır ol.`,
+      aciklama: `${d.katilimciSayisi} katılımcı hazır, hazırlık güçlü. Yaka kartı QR'larını yazdır, kamp gününe hazır ol.`,
       butonEtiket: "QR'ları Yazdır",
       href: "/admin/kurulum",
       vurgu: false,
