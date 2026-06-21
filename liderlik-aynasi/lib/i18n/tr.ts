@@ -1426,6 +1426,12 @@ export const tr = {
       aciklama:
         "Bu anahtarlar tüm katılımcıların telefonunu anında etkiler. Her birinin onayı ve geri-al penceresi var.",
       sistemEtiket: "⚙️ Sistem (her aşamada)",
+      // Faz grupları: yalnız o anki fazın anahtarları açık gelir, gerisi katlı.
+      katilimGrup: "Katılım kontrolleri",
+      canliGrup: "Canlı kontroller",
+      finalGrup: "Final kontrolleri",
+      sistemGrup: "Sistem kontrolleri",
+      grupKapaliIpucu: "kapalı — başlığa bas, anahtarları gör",
     },
     // #1 İkincil araçlar: faz dışı her şey burada katlanık durur
     araclar: {
@@ -1433,6 +1439,10 @@ export const tr = {
       aciklama: "Kurulum, yedek, eşleştirme, zamanlama ve işlem günlüğü.",
       grupSonrasi: "📦 Kamp Sonrası",
       grupSistem: "⚙️ Sistem & Kayıt",
+      grupSonrasiBaslik: "Kamp Sonrası Araçları",
+      grupSonrasiAciklama: "Ödev paketi, 90 günlük davet, ikili eşleştirme.",
+      grupSistemBaslik: "Sistem & Kayıt",
+      grupSistemAciklama: "Sağlık kontrolü, kod bulma, yedek, zamanlama, işlem günlüğü.",
     },
     // #6 Bağlamsal boş/sakin durum
     bosDurum: {
@@ -2122,6 +2132,7 @@ export const tr = {
     },
     // #7 Tek bakış canlı özet (büyük rakamlar)
     ozet: {
+      genelBaslik: "Genel Durum",
       katilimci: "Katılımcı",
       ozPuan: "Öz-puan",
       gorus: "Puanlama",
