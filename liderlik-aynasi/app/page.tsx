@@ -173,6 +173,15 @@ export default async function AnaSayfa({
   ) {
     redirect("/on-farkindalik");
   }
+  // 5) MÜHÜR KAPISI (kök tutarlılık): kamp ritüeli açıkken (pusula penceresi)
+  // FİZİKSEL GİRİŞ yapmamış kişi — pusula/ÖF bitmiş olsa bile — kamp içeriğini
+  // GÖRMEZ. Bu, /degerlendir · /gorevler · /duvar ile BİREBİR aynı kilittir
+  // (lib/pusula → kampKilitliMi). Eksikti: ana sayfa "Dalga açık, değerlendir"
+  // diyor, alt sayfalar mührü görüp /pusula'ya tekmeliyor → kısır döngü. Artık
+  // kilitli kişi her yerde tek bir yerde durur: hazırlık hub'ı (/pusula).
+  if (ayar.get("pusula_acik") === "true" && !kisi?.camp_unlocked_at) {
+    redirect("/pusula");
+  }
 
   const [
     dalga,
