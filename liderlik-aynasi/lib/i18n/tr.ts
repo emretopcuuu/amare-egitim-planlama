@@ -194,6 +194,12 @@ export const tr = {
     boslukDugme: "👁 Hazırım",
     raporBaslik: "Aynan açıldı",
     raporMetin: "Üç günün sonu geldi. Kendi gözünle başkalarının gözü, şimdi yan yana.",
+    // FAZ B — 90 gün yolculuğu (söz mühürlüyken ana ekran)
+    takipBaslik: "90 günlük yolun",
+    takipMetin: "Sözünü verdin. Şimdi her gün bir adım — bugün adımını işaretle.",
+    takipDugme: "Bugünün adımı",
+    takipAyna: "🪞 Aynanı tekrar gör",
+    takipSahitlik: (n: number) => `🤝 Şahit olduğun ${n} lideri takip et`,
     dalgaDevamBaslik: (dalga: string) => `${dalga} açık`,
     dalgaDevamMetin: "Şimdi gözlemlediğin kişileri puanlama zamanı.",
     dalgaDevamDugme: "Değerlendirmeye Devam Et",
@@ -864,6 +870,79 @@ export const tr = {
     kilit2: "3. günde aynan açılır",
     kilit3: "Sana özel AYNA görevleri",
   },
+  // FAZ A — Hedef (Gün 2). Nedenler keşfedildikten sonra: neredesin → kısa AI
+  // sohbeti → kariyer/gelir tablosu → 3 soru → kişisel kariyer planı.
+  hedef: {
+    baslik: "Hedefin",
+    hata: "Bir şeyler ters gitti — tekrar dene.",
+    aiHata: "AYNA şu an yanıt veremedi — birazdan tekrar dene.",
+    dusunuyor: "AYNA düşünüyor…",
+    gonder: "Gönder",
+    girisYer: "Yanıtını yaz…",
+    // Açılış kapağı
+    acilisBaslik: "Nedenini bir hedefe çevirelim",
+    acilisMetin:
+      "Neden bu işte olduğunu birlikte keşfettik. Önce kısaca konuşalım, sonra bunu somut bir kariyer hedefine — senin rakamlarınla — dönüştürelim.",
+    acilisBasla: "Başlayalım",
+    // Başlangıç noktası formu
+    noktaBaslik: "Önce: bu işin neresindesin?",
+    noktaAciklama:
+      "Hedefini doğru ölçekte koyabilmek için nerede durduğunu bilmem gerekiyor. Sana en yakın olanı seç.",
+    noktalar: {
+      yeni: { ad: "Yeni başladım", alt: "0-3 ay · ilk adımlar" },
+      baslangic: { ad: "Başlangıç aşamasındayım", alt: "3-18 ay · tempo kuruyorum" },
+      deneyimli: { ad: "Deneyimliyim", alt: "18 ay+ · ekibim var" },
+      lider: { ad: "Olgun bir liderim", alt: "Lider yetiştiriyorum" },
+    },
+    noktaAyEtiket: "Ne kadardır bu işin içindesin? (ay — opsiyonel)",
+    noktaDetayYer: "Eklemek istediğin bir şey var mı? (opsiyonel)",
+    noktaDevam: "Devam et",
+    // Isınma sohbeti ilerleme
+    ilerlemeEtiket: "Hedef netleşiyor",
+    // Somutlaştırma wizard'ı
+    wizardIntro: "Sana 3 soru soracağım. Cevaplarına göre kariyer planını oluşturacağım:",
+    soruEtiket: (n: number) => `SORU ${n}/3`,
+    q1Baslik: "Minimum ne kadar kazanmak heyecan verici olurdu?",
+    tabloKariyer: "KARİYER",
+    tabloEnDusuk: "EN DÜŞÜK",
+    tabloEnYuksek: "EN YÜKSEK",
+    tabloOrtalama: "ORTALAMA",
+    q2Baslik: "En geç ne kadar sürede bu gelire ulaşmak heyecan verici olurdu?",
+    q3Baslik: "Bu gelire ulaşacağını yüzde yüz bilsen — günde maksimum kaç saat ayırabilirsin?",
+    hedefinEtiket: "Hedefin",
+    suresiEtiket: "Süresi",
+    aylikBirim: "TL/ay",
+    degistirNot: "Değiştirmek için tekrar seç",
+    geri: "Geri",
+    // Kişisel kariyer planı kartı
+    planUstBaslik: "Kişisel kariyer planın:",
+    planBaslik: (rutbe: string) => `${rutbe} kariyer planı`,
+    planOzet: (sureAy: number, saat: string, haftalik: number) =>
+      `${sureAy} ay | ${saat} | Haftalık ~${haftalik} saat`,
+    ilkHedef: (ay: number) => `İlk hedefin (${ay}. ay)`,
+    ikinciHedef: (ay: number) => `İkinci hedefin (${ay}. ay)`,
+    anaHedef: (ay: number) => `Ana hedefin (${ay}. ay)`,
+    gunlukYatirim: "Günlük yatırımın",
+    toplamYatirim: "Toplam yatırım",
+    toplamYatirimDeger: (saat: number, para: string) => `~${saat} saat + ${para} TL`,
+    geriDonus: "Geri dönüş",
+    geriDonusDeger: (ay: number) => (ay <= 0 ? "1 ay içinde" : `${ay} ay içinde`),
+    bunuDusun: (saat: string, sureAy: number, gelir: string, saatlik: string) =>
+      `Bunu düşün: ${saat} ayırarak, ${sureAy} ay sonunda aylık ${gelir} TL. Saatlik kazanç ~${saatlik} TL.`,
+    planOnayla: "Bu hedefi mühürle",
+    planDegistir: "↺ Hedefi değiştir",
+    // Bitti
+    tamamBaslik: "Hedefin mühürlendi 🎯",
+    tamamMetin:
+      "Artık bir nedenin ve ona hizmet eden somut bir kariyer planın var. Kamp boyunca görevlerin ve kapanışta aynan bu hedefe göre şekillenecek.",
+    bittiDevam: "Devam et",
+    // Sıfırla
+    sifirlaDugme: "↺ Baştan",
+    sifirlaOnayMetin: "Hedef çalışmasını baştan başlatmak istediğine emin misin?",
+    sifirlaVazgec: "Vazgeç",
+    sifirlaEvet: "Evet, baştan",
+    sifirlaniyor: "Sıfırlanıyor…",
+  },
   // Grup ödevi (katılımcı görünümü)
   grup: {
     baslik: "Grubunun Ödevi",
@@ -1318,6 +1397,7 @@ export const tr = {
         uyariMuhurRapor: "Mühür açık ama Ayna Raporları kapalı — aday raporu görmeden sesli reveal'i duyar. Önce raporları aç.",
         adimHazirlik: "Hazırlık (FAZ 0)",
         adimOnFark: "Ön Farkındalık",
+        adimHedef: "Hedef (Gün 2)",
         adimDalga: (n: number) => `Dalga ${n}`,
         adimBosluk: "Boşluk Anı",
         adimRapor: "Ayna Raporu",
@@ -1391,6 +1471,28 @@ export const tr = {
       pencereAc: "Ön Farkındalık'ı Aç",
       pencereKapat: "Pencereyi Kapat",
       tamamlanma: (n: number, t: number) => `${n}/${t} Ön Farkındalık'ı tamamladı`,
+      hata: "İşlem başarısız, tekrar dene.",
+    },
+    hedef: {
+      baslik: "Hedef (Gün 2)",
+      aciklama:
+        "Nedenler keşfinden sonra, kampa girmiş aday önce kısa bir AI sohbeti yapar, sonra tüm kariyer basamakları + ortalama gelirleri görüp hedefini seçer; 3 soruyla kişisel kariyer planı çıkar. Bu pencere açılmazsa aday bu aşamaya giremez.",
+      pencereAcik: "● Pencere açık — Hedef erişimde",
+      pencereKapali: "○ Pencere kapalı — adaylar giremez",
+      pencereAc: "Hedef'i Aç",
+      pencereKapat: "Pencereyi Kapat",
+      tamamlanma: (n: number, t: number) => `${n}/${t} hedefini belirledi`,
+      hata: "İşlem başarısız, tekrar dene.",
+    },
+    sozV2: {
+      baslik: "Söz (Kapanış)",
+      aciklama:
+        "Rapor açıldıktan SONRA aç. Katılımcı aynasını görür, AI sözünü şekillendirir, düzenler, kendi sesiyle okur ve 5 lider şahit seçer. Pencere açılmazsa söz aşamasına girilmez.",
+      pencereAcik: "● Pencere açık — Söz erişimde",
+      pencereKapali: "○ Pencere kapalı",
+      pencereAc: "Söz'ü Aç",
+      pencereKapat: "Pencereyi Kapat",
+      tamamlanma: (n: number, t: number) => `${n}/${t} sesli sözünü verdi`,
       hata: "İşlem başarısız, tekrar dene.",
     },
     fazBir: {
@@ -2972,6 +3074,103 @@ export const tr = {
     tahminGercek: "Gerçek",
     tahminTuttu: "Bildin! Kendini tanıyorsun. 👏",
     tahminTutmadi: "Ayna seni şaşırttı — en güzel kısmı da bu.",
+    // Rapor v2: Neden + Hedef başlığı (raporu kişinin nedenine/hedefine bağlar)
+    nedenHedefBaslik: "🧭 Nedenin ve Hedefin",
+    nedenEtiket: "Seni buraya getiren neden",
+    hedefEtiket: "90 günlük hedefin",
+    hedefBilgi: (rutbe: string, gelir: string, ay: number) =>
+      `${ay} ayda ${rutbe} — aylık ${gelir} TL`,
+    nedenHedefKopru:
+      "Aşağıdaki ayna bu hedefin neresinde güçlü, neresinde dikkat istediğini gösteriyor.",
+  },
+  // 10/40/90 gün oyun planı (Ayna Raporu kapanışı)
+  oyunPlani: {
+    baslik: "🚀 10/40/90 Gün Oyun Planın",
+    aciklama: "Hedefine, nedenine ve aynana göre kamptan sonraki ilk 90 günün.",
+    onGun: "İlk 10 gün — momentum",
+    kirkGun: "İlk 40 gün — tempo & ilk ekip",
+    doksanGun: "İlk 90 gün — hedefe varış",
+    olustur: "Oyun planımı oluştur",
+  },
+  // FAZ A — Söz v2 (kapanış): AI şekillendirir → kişi düzenler → kendi sesiyle
+  // okur/kaydeder → 5 lider şahit imzalar.
+  sozV2: {
+    baslik: "📜 Sözün",
+    kapali: "Söz penceresi henüz açılmadı — kapanışta açılacak.",
+    // Şekillendirme
+    sekilBaslik: "Sözünü birlikte şekillendirelim",
+    sekilMetin:
+      "Nedenini, hedefini ve kamptaki keşiflerini bir söze dönüştürüyorum. Sonra sen düzenle, dilediğin gibi yap — bu söz senin.",
+    sekillendir: "Sözümü oluştur",
+    dusunuyor: "AYNA sözünü yazıyor…",
+    // Düzenleme
+    duzenleBaslik: "Sözünü oku, dilediğin gibi düzenle",
+    duzenleMetin: "Bu söz senin ağzından çıkacak. Kelimeleri kendine ait hisset.",
+    aksiyonlarBaslik: "Sözündeki adımlar",
+    ufukEtiket: (u: string) => `${u}. gün`,
+    onayla: "Bu söz benim — devam",
+    // Ses
+    sesBaslik: "Şimdi sözünü kendi sesinle oku",
+    sesMetin:
+      "Sözünü yüksek sesle, içtenlikle oku ve kaydet. Bu kayıt 90 gün boyunca seni hatırlatacak.",
+    sesKaydet: "Sesli sözümü kaydet",
+    sesYukleniyor: "Kaydediliyor…",
+    sesTamam: "Sesin kaydedildi ✓",
+    sesAtla: "Sesi sonra eklerim",
+    // Şahitler
+    tanikBaslik: "5 lider seç — sözüne şahit olsunlar",
+    tanikMetin:
+      "Kamptan 5 lider seç. Onlar sözünü görecek, imzalayacak ve 90 gün boyunca adımlarını takip edecek — gerekirse seni dürtüp arayacaklar. Başarınızı birbirinize bağlıyoruz.",
+    tanikSecili: (n: number) => `${n}/5 şahit seçildi`,
+    tanikEkle: "Şahit yap",
+    tanikSil: "Kaldır",
+    tanikImzaBekliyor: "İmza bekleniyor",
+    tanikImzali: "İmzaladı ✓",
+    tanikDolu: "5 şahit seçtin.",
+    tanikLiderDolu: "Bu lider en fazla 5 kişiye şahit olabilir — doldu.",
+    tanikAra: "İsimle ara…",
+    tamamBaslik: "Sözün mühürlendi 🤝",
+    tamamMetin:
+      "Sözünü verdin, sesini kaydettin, liderlerin şahit oldu. 90 gün boyunca bu sözün peşinde olacağız.",
+    devam: "Bitir",
+    // Lider: imza bekleyenler
+    imzaBekleyenBaslik: "Sana güvenenler",
+    imzaBekleyenMetin: (ad: string) => `${ad} seni sözüne şahit gösterdi.`,
+    imzala: "Sözüne şahit ol (imzala)",
+    imzalandi: "İmzaladın ✓",
+  },
+  // FAZ B — 90 gün takip (söz sahibi günlük check-in)
+  takip: {
+    baslik: "90 Gün Yolun",
+    aciklama: "Sözün artık bir plan. Her gün bir adım — birlikte takip ediyoruz.",
+    bugunSoru: "Bugün sözüne / hedefine yönelik bir adım attın mı?",
+    evet: "Evet, attım ✓",
+    hayir: "Bugün atamadım",
+    notYer: "Ne yaptın? (opsiyonel)",
+    kaydet: "Kaydet",
+    seri: (n: number) => `${n} günlük seri 🔥`,
+    seriYok: "Serini bugün başlat.",
+    toplam: (n: number) => `${n} gün adım attın`,
+    bugunTamam: "Bugünün adımı işaretlendi ✓",
+    son14: "Son 14 gün",
+    aksiyonHatirlatma: "Sözündeki adımlar",
+    gecmisGun: "—",
+    anaSayfa: "← Ana sayfa",
+  },
+  // FAZ B — Şahit paneli (lider, şahit olduğu kişileri takip eder)
+  sahitlik: {
+    baslik: "Şahit Olduğun Liderler",
+    aciklama:
+      "Sözüne şahit olduğun kişiler. İlerlemelerini gör; takılan olursa dürt, teşvik et, gerekirse ara. Başarınız birbirine bağlı.",
+    bos: "Henüz kimseye şahit değilsin.",
+    seri: (n: number) => `${n} gün seri`,
+    kacirdi: (n: number) => (n >= 999 ? "Henüz adım yok" : `${n} gündür adım yok`),
+    guncel: "Güncel ✓",
+    durt: "👋 Dürt",
+    tesvik: "💪 Teşvik et",
+    ara: "📞 Ara",
+    gonderildi: "Gönderildi ✓",
+    anaSayfa: "← Ana sayfa",
   },
   kelimeKarti: {
     baslik: "🖼️ Kelime Kartın",

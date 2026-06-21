@@ -400,9 +400,12 @@ export default function AynaRituel() {
     try {
       const form = new FormData();
       form.append("onay", "0");
-      await fetch("/api/ses-rituel", { method: "POST", body: form });
+      const res = await fetch("/api/ses-rituel", { method: "POST", body: form });
+      if (!res.ok) throw new Error("api-hatasi");
     } catch {
-      // tercih sonraki girişte tekrar sorulur; akışı kesme
+      // Ağ/sunucu hatası: sessiz tercih kaydedilemedi — yine de devam et.
+      // Sayfa yenilenmeden voice_profiles yazılamasa da uygulama "kapandi"
+      // sonrası /api/cikis'e ya da "/" ye gidiyor; kötü durumda giriş tekrar sorulur.
     }
     setAsama("kapandi");
   }

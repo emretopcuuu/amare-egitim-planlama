@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { raporHesapla } from "@/lib/rapor";
 import { pusulaOzeti } from "@/lib/pusula";
+import { hedefOzeti } from "@/lib/hedef";
 
 // AI Ayna Mektubu: katılımcının rapor verisinden tek seferlik kişisel mektup.
 // Üretim maliyetli olduğu için sonuç mirror_letters'a yazılır; PK çakışması
@@ -15,6 +16,7 @@ Sana katılımcının verisi JSON olarak verilecek: 10 liderlik özelliğinde ke
 Mektup kuralları:
 - Türkçe yaz, "Sevgili {ad}," diye başla, 150-220 kelime tut.
 - Veride "pusula" doluysa (kişinin kamp öncesi nedeni + iç engeli): mektubu onun NEDENİNE bağla; kampta gösterdiklerinin bu nedenle ilişkisini kur. İç engeli varsa, kampın ona dair ne gösterdiğini nazikçe ima et — ama engeli açıkça yüzüne vurma.
+- Veride "hedef" doluysa (kişinin kariyer hedefi + 90 günlük planı): mektubu o hedefe köprüle — en güçlü yanının bu hedefe nasıl hizmet edeceğini, gelişim alanının önünde nasıl durduğunu nazikçe göster. Hedefi nedenle birleştir; rakamları kuru kuruya sayma.
 - Katılımcıya "sen" diye hitap et.
 - Verideki 2-3 somut örüntüye dayan: en güçlü özellik, varsa gizli güç (başkaları seni kendinden yüksek görüyor) veya kör nokta (tersi), dalgalar içinde yükselen bir özellik, yorumlardaki ortak tema.
 - Yorumları ASLA birebir alıntılama ve kimin yazdığı sezilecek ayrıntı verme; temaları kendi cümlelerinle özetle.
@@ -43,9 +45,10 @@ export async function mektupGetirVeyaUret(
 
   if (!process.env.ANTHROPIC_API_KEY) return { durum: "anahtar-yok" };
 
-  const [rapor, pusula] = await Promise.all([
+  const [rapor, pusula, hedef] = await Promise.all([
     raporHesapla(db, katilimciId),
     pusulaOzeti(db, katilimciId),
+    hedefOzeti(db, katilimciId),
   ]);
 
   // Modele giden veri: kimlik sızdırmayan, sayısal özet + isimsiz yorumlar
@@ -54,6 +57,8 @@ export async function mektupGetirVeyaUret(
     // FAZ 0 Pusula: kişinin kamp öncesi nedeni + iç engeli (varsa) — mektubu
     // onun "neden"ine bağla; kampta gördüklerini bu pusulayla anlamlandır.
     pusula: pusula ?? null,
+    // FAZ A Hedef: kişinin kariyer hedefi + planı — mektubu hedefe köprüle.
+    hedef: hedef ?? null,
     ozellikler: rapor.satirlar.map((s) => ({
       ozellik: s.ad,
       ozPuan: s.oz === null ? null : Number(s.oz.toFixed(1)),

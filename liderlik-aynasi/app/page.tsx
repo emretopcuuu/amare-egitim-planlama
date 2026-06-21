@@ -4,6 +4,8 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga, aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
+import { hedefKapisiAcik } from "@/lib/hedef";
+import { sozTakipAktif, sahitSayim } from "@/lib/sozTakip";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
 import AynaRituel from "@/components/AynaRituel";
@@ -130,7 +132,7 @@ export default async function AnaSayfa({
   // yapmamış katılımcı kamp öncesi yolculuğu yapar. Sıra: önce ÖN FARKINDALIK
   // (ayna katmanları — bayrak açıksa ve bitmediyse), sonra PUSULA (derin neden +
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
-  const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }] =
+  const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }, { data: hedefErken }] =
     await Promise.all([
       db.from("participants").select("camp_unlocked_at, team").eq("id", session.sub).maybeSingle(),
       db
@@ -141,12 +143,19 @@ export default async function AnaSayfa({
       // Ses/foto ritüeli kapısı için erken kontrol — akışın EN BAŞINA gelir.
       db.from("voice_profiles").select("participant_id").eq("participant_id", session.sub).maybeSingle(),
       db.from("pusula").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+      // Hedef kapısı (kamp öncesi 3b): Pusula biter bitmez devreye girer.
+      db.from("hedef").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
     ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
   const gununCumlesi = (ayar.get("gunun_cumlesi") ?? "").trim();
 
+  // Güvenlik: katılımcı DB'de silinmiş ama JWT hâlâ geçerli → sonsuz döngü yaşanır.
+  // Çerez temizle ve yeniden giriş yaptır.
+  if (!kisi) redirect("/api/cikis");
+
   // SIRA (kamp öncesi onboarding): 1) FOTO+SES RİTÜELİ → 2) OYUN SEÇİMİ (grup)
-  // → 3) PUSULA (10 öncelik + eleme + neden) → 4) ÖN FARKINDALIK. Her kapı bir öncekini bekler.
+  // → 3) PUSULA (10 öncelik + eleme + neden keşfi) → 3b) HEDEF → 4) ÖN FARKINDALIK.
+  // Her kapı bir öncekini bekler.
 
   // 1) FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Tamamlanana (ya da "sessiz"
   // seçilene) dek grup ve sorular dahil başka hiçbir kapı açılmaz.
@@ -164,8 +173,15 @@ export default async function AnaSayfa({
     const intro = (await searchParams).intro !== undefined;
     redirect(intro ? "/pusula?intro=1" : "/pusula");
   }
-  // 4) ÖN FARKINDALIK: Pusula tamamlandıktan sonra, kampa girmemiş ve henüz
-  // bitirmemiş kişiyi yönlendir.
+  // 3b) HEDEF (kamp öncesi, otomatik): Pusula nedenler keşfi biter bitmez
+  // ayrı admin bayrağı gerekmeksizin devreye girer. Bitene dek bu kapıda kalır;
+  // sonra ön farkındalık/bekleme hub'ına geçilir.
+  const hedefTamam = !!hedefErken?.tamamlandi_at;
+  if (pusulaErken?.tamamlandi_at && !kisi?.camp_unlocked_at && !hedefTamam) {
+    redirect("/hedef");
+  }
+  // 4) ÖN FARKINDALIK: Pusula + Hedef tamamlandıktan sonra, kampa girmemiş ve
+  // henüz bitirmemiş kişiyi yönlendir.
   if (
     ayar.get("on_farkindalik_acik") === "true" &&
     !kisi?.camp_unlocked_at &&
@@ -181,6 +197,11 @@ export default async function AnaSayfa({
   // kilitli kişi her yerde tek bir yerde durur: hazırlık hub'ı (/pusula).
   if (ayar.get("pusula_acik") === "true" && !kisi?.camp_unlocked_at) {
     redirect("/pusula");
+  }
+  // 6) HEDEF KAPISI (kamp içi): kampa girmiş kişi, admin hedef_acik bayrağı
+  // açıkken ve henüz hedef belirlemediyse yönlendirilir.
+  if (kisi?.camp_unlocked_at && (await hedefKapisiAcik(db, session.sub))) {
+    redirect("/hedef");
   }
 
   const [
@@ -245,6 +266,12 @@ export default async function AnaSayfa({
         .order("week_start", { ascending: false })
         .limit(2),
     ]);
+  // FAZ B: söz mühürlüyse (sesli) ana ekran 90-gün yolculuğuna geçer; ayrıca
+  // kişi başkalarına şahitse şahit paneline erişir.
+  const [takipAktif, sahitSayisi] = await Promise.all([
+    sozTakipAktif(db, session.sub),
+    sahitSayim(db, session.sub),
+  ]);
   const takim = kisi?.team ?? null;
   const momentumSkor =
     typeof momentumSatirlar?.[0]?.score === "number" ? momentumSatirlar[0].score : null;
@@ -422,6 +449,29 @@ export default async function AnaSayfa({
           ikon="👁"
           vurgu
         />
+      </Sayfa>
+    );
+  }
+
+  // 2d) 90 GÜN YOLCULUĞU — söz mühürlüyse (sesli) ana ekran takibe geçer.
+  // Rapor hâlâ üst menüden + buradaki linkten erişilir.
+  if (takipAktif) {
+    return (
+      <Sayfa ust={ust}>
+        <BuyukKart
+          baslik={t.takipBaslik}
+          metin={t.takipMetin}
+          href="/takip"
+          dugme={t.takipDugme}
+          ikon="🧭"
+          vurgu
+        />
+        <div className="mt-4 space-y-3">
+          {sahitSayisi > 0 && (
+            <SicakAdim href="/sahitlik" etiket={t.takipSahitlik(sahitSayisi)} vurgu />
+          )}
+          <SicakAdim href="/ayna" etiket={t.takipAyna} />
+        </div>
       </Sayfa>
     );
   }

@@ -32,12 +32,16 @@ export async function POST(req: Request) {
 
   // Sessiz ayna tercihi: yalnız tercihi yaz, çık
   if (!onay) {
-    await db.from("voice_profiles").upsert({
+    const { error: sessizHata } = await db.from("voice_profiles").upsert({
       participant_id: session.sub,
       consent: false,
       status: "yok",
       updated_at: new Date().toISOString(),
     });
+    if (sessizHata) {
+      console.error("[ses-rituel] sessiz upsert error:", sessizHata.message);
+      return NextResponse.json({ hata: "kayit" }, { status: 500 });
+    }
     return NextResponse.json({ durum: "sessiz" });
   }
 
@@ -62,8 +66,11 @@ export async function POST(req: Request) {
   const yukleme = await db.storage
     .from("sesler")
     .upload(ornekYolu, ses, { contentType: ses.type || "audio/webm", upsert: true });
+  // Depolama hatası döngüyü tetiklemez: ses kaydı olmasa bile ritüelin
+  // tamamlandığını işaretleriz (sonra admin arayüzünden manuel yüklenebilir).
+  const kayitYolu = yukleme.error ? null : ornekYolu;
   if (yukleme.error) {
-    return NextResponse.json({ hata: "depolama" }, { status: 500 });
+    console.error("[ses-rituel] storage upload error:", yukleme.error.message);
   }
 
   // 1b) Fotoğraf (isteğe bağlı): orijinal saklanır (yansıma videosu hammaddesi)
@@ -96,22 +103,27 @@ export async function POST(req: Request) {
 
   // Anahtar yoksa: kayıt + onay durdu, klon sonraya
   if (!sesYapilandirildiMi()) {
-    await db.from("voice_profiles").upsert({
+    const { error: upsertHata } = await db.from("voice_profiles").upsert({
       participant_id: session.sub,
       consent: true,
       status: "kayitli",
-      sample_path: ornekYolu,
+      sample_path: kayitYolu,
       beklenti,
       face_path: facePath,
       photo_path: fotoPath,
       video_status: fotoPath ? "bekliyor" : "yok",
       updated_at: new Date().toISOString(),
     });
+    if (upsertHata) {
+      console.error("[ses-rituel] voice_profiles upsert error:", upsertHata.message);
+      return NextResponse.json({ hata: "kayit" }, { status: 500 });
+    }
     return NextResponse.json({ durum: "sonra" });
   }
 
   // 2) Klonla + ilk selamlamayı üret ve seslendir
   try {
+    if (!kayitYolu) throw new Error("ses-yuklenemedi");
     const voiceId = await sesKlonla(
       `ayna-${session.sub.slice(0, 8)}`,
       ses,
@@ -129,12 +141,12 @@ export async function POST(req: Request) {
       });
     if (selamYukleme.error) throw new Error("selam depolama");
 
-    await db.from("voice_profiles").upsert({
+    const { error: klonHata } = await db.from("voice_profiles").upsert({
       participant_id: session.sub,
       consent: true,
       status: "klonlandi",
       voice_id: voiceId,
-      sample_path: ornekYolu,
+      sample_path: kayitYolu,
       beklenti,
       greeting_path: selamYolu,
       face_path: facePath,
@@ -142,24 +154,30 @@ export async function POST(req: Request) {
       video_status: fotoPath ? "bekliyor" : "yok",
       updated_at: new Date().toISOString(),
     });
+    if (klonHata) throw new Error("voice_profiles: " + klonHata.message);
 
     const { data: imzali } = await db.storage
       .from("sesler")
       .createSignedUrl(selamYolu, 3600);
     return NextResponse.json({ durum: "hazir", url: imzali?.signedUrl ?? null });
-  } catch {
+  } catch (hata) {
     // Klon/seslendirme düştü: kayıt elde, sonra tekrar denenir
-    await db.from("voice_profiles").upsert({
+    console.error("[ses-rituel] klonlama hatası:", hata);
+    const { error: fallbackHata } = await db.from("voice_profiles").upsert({
       participant_id: session.sub,
       consent: true,
       status: "kayitli",
-      sample_path: ornekYolu,
+      sample_path: kayitYolu,
       beklenti,
       face_path: facePath,
       photo_path: fotoPath,
       video_status: fotoPath ? "bekliyor" : "yok",
       updated_at: new Date().toISOString(),
     });
+    if (fallbackHata) {
+      console.error("[ses-rituel] fallback upsert error:", fallbackHata.message);
+      return NextResponse.json({ hata: "kayit" }, { status: 500 });
+    }
     return NextResponse.json({ durum: "sonra" });
   }
 }

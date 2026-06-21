@@ -34,7 +34,9 @@ import AltAksiyonCubugu from "./AltAksiyonCubugu";
 import FazSifirKontrol from "./FazSifirKontrol";
 import BoslukKontrol from "./BoslukKontrol";
 import OnFarkindalikKontrol from "./OnFarkindalikKontrol";
+import HedefKontrol from "./HedefKontrol";
 import MuhurKontrol from "./MuhurKontrol";
+import SozV2Kontrol from "./SozV2Kontrol";
 import OdevPaketi from "./OdevPaketi";
 import SonEylemler from "./SonEylemler";
 import CanliPano from "./CanliPano";
@@ -514,6 +516,14 @@ export default async function AdminPanel() {
             <OnFarkindalikKontrol />
           </div>
 
+          {/* FAZ A — Hedef (Gün 2): nedenden kariyer hedefi + plan */}
+          <div id="hedef" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+              🎯 {tr.admin.hedef.baslik}
+            </h3>
+            <HedefKontrol />
+          </div>
+
           {/* ── 3 · KAMP CANLI ── */}
           <AsamaEtiket no={3} ad={tr.admin.funnel.asamalar.canli} aktif={aktifAsama} />
 
@@ -579,6 +589,14 @@ export default async function AdminPanel() {
               <Ipucu {...tr.admin.yardim.muhur} />
             </h3>
             <MuhurKontrol />
+          </div>
+
+          {/* FAZ A — Söz v2 (kapanış sözü, rapordan sonra) */}
+          <div id="soz-v2" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+              📜 {tr.admin.sozV2.baslik}
+            </h3>
+            <SozV2Kontrol />
           </div>
 
           {/* ── SİSTEM (kesişen) ── */}
