@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga, aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { hedefKapisiAcik } from "@/lib/hedef";
+import { kampOncesiAdim } from "@/lib/akis";
 import { sozTakipAktif, sahitSayim } from "@/lib/sozTakip";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
@@ -153,55 +154,40 @@ export default async function AnaSayfa({
   // Çerez temizle ve yeniden giriş yaptır.
   if (!kisi) redirect("/api/cikis");
 
-  // SIRA (kamp öncesi onboarding): 1) FOTO+SES RİTÜELİ → 2) OYUN SEÇİMİ (grup)
-  // → 3) PUSULA (10 öncelik + eleme + neden keşfi) → 3b) HEDEF → 4) ÖN FARKINDALIK.
-  // Her kapı bir öncekini bekler.
+  // SIRA (kamp öncesi onboarding) — tek doğruluk kaynağı: lib/akis.ts.
+  // 1) SES RİTÜELİ → 2) OYUN SEÇİMİ → 3) PUSULA → 3b) HEDEF → 4) ÖN FARKINDALIK
+  // → 5) MÜHÜR KAPISI → 6) KAMP İÇİ HEDEF. Sıralama orada kilitli; burada uygulanır.
 
-  // 1) FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Tamamlanana (ya da "sessiz"
-  // seçilene) dek grup ve sorular dahil başka hiçbir kapı açılmaz.
-  if (!sesVarRow) {
+  // Kamp içi hedef kapısı yalnız fiziksel giriş yapılmışsa sorgulanır (gereksiz
+  // DB çağrısı yok); pusula penceresi açık olmayan kişide de hedef erişilebilir kalsın.
+  const kampIciHedefKapisi = kisi?.camp_unlocked_at
+    ? await hedefKapisiAcik(db, session.sub)
+    : false;
+  const adim = kampOncesiAdim({
+    sesVar: !!sesVarRow,
+    team: kisi?.team ?? null,
+    campUnlocked: !!kisi?.camp_unlocked_at,
+    pusulaTamam: !!pusulaErken?.tamamlandi_at,
+    hedefTamam: !!hedefErken?.tamamlandi_at,
+    ofTamam: !!ofDurum?.tamamlandi_at,
+    oyunSecimiAcik: ayar.get("oyun_secimi_acik") === "true",
+    pusulaAcik: ayar.get("pusula_acik") === "true",
+    onFarkindalikAcik: ayar.get("on_farkindalik_acik") === "true",
+    kampIciHedefKapisi,
+  });
+  if (adim.tip === "rituel") {
+    // FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Tamamlanana (ya da "sessiz"
+    // seçilene) dek grup ve sorular dahil başka hiçbir kapı açılmaz.
     return <AynaRituel />;
   }
-  // 2) OYUN SEÇİMİ KAPISI: seçim açıkken grubu olmayan kişi önce oyununu seçer
-  // (Bowling herkes; diğer 3'ten 2) → uygun gruba atanır.
-  if (ayar.get("oyun_secimi_acik") === "true" && !kisi?.team) {
-    redirect("/oyun-secimi");
-  }
-  // 3) PUSULA (10 öncelik → eleme → neden keşfi): tamamlanana dek bu kapıda kalır.
-  if (ayar.get("pusula_acik") === "true" && !kisi?.camp_unlocked_at && !pusulaErken?.tamamlandi_at) {
-    // ?intro=1 (tanıtım testi) yönlendirmede kaybolmasın diye taşı.
-    const intro = (await searchParams).intro !== undefined;
-    redirect(intro ? "/pusula?intro=1" : "/pusula");
-  }
-  // 3b) HEDEF (kamp öncesi, otomatik): Pusula nedenler keşfi biter bitmez
-  // ayrı admin bayrağı gerekmeksizin devreye girer. Bitene dek bu kapıda kalır;
-  // sonra ön farkındalık/bekleme hub'ına geçilir.
-  const hedefTamam = !!hedefErken?.tamamlandi_at;
-  if (pusulaErken?.tamamlandi_at && !kisi?.camp_unlocked_at && !hedefTamam) {
-    redirect("/hedef");
-  }
-  // 4) ÖN FARKINDALIK: Pusula + Hedef tamamlandıktan sonra, kampa girmemiş ve
-  // henüz bitirmemiş kişiyi yönlendir.
-  if (
-    ayar.get("on_farkindalik_acik") === "true" &&
-    !kisi?.camp_unlocked_at &&
-    !ofDurum?.tamamlandi_at
-  ) {
-    redirect("/on-farkindalik");
-  }
-  // 5) MÜHÜR KAPISI (kök tutarlılık): kamp ritüeli açıkken (pusula penceresi)
-  // FİZİKSEL GİRİŞ yapmamış kişi — pusula/ÖF bitmiş olsa bile — kamp içeriğini
-  // GÖRMEZ. Bu, /degerlendir · /gorevler · /duvar ile BİREBİR aynı kilittir
-  // (lib/pusula → kampKilitliMi). Eksikti: ana sayfa "Dalga açık, değerlendir"
-  // diyor, alt sayfalar mührü görüp /pusula'ya tekmeliyor → kısır döngü. Artık
-  // kilitli kişi her yerde tek bir yerde durur: hazırlık hub'ı (/pusula).
-  if (ayar.get("pusula_acik") === "true" && !kisi?.camp_unlocked_at) {
-    redirect("/pusula");
-  }
-  // 6) HEDEF KAPISI (kamp içi): kampa girmiş kişi, admin hedef_acik bayrağı
-  // açıkken ve henüz hedef belirlemediyse yönlendirilir.
-  if (kisi?.camp_unlocked_at && (await hedefKapisiAcik(db, session.sub))) {
-    redirect("/hedef");
+  if (adim.tip === "yonlendir") {
+    // ?intro=1 (tanıtım testi) yalnız ilk Pusula kapısında (neden keşfi henüz
+    // bitmemişken) anlamlı — yönlendirmede kaybolmasın diye taşı.
+    if (adim.yol === "/pusula" && !pusulaErken?.tamamlandi_at) {
+      const intro = (await searchParams).intro !== undefined;
+      redirect(intro ? "/pusula?intro=1" : "/pusula");
+    }
+    redirect(adim.yol);
   }
 
   const [
