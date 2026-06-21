@@ -21,6 +21,11 @@ import {
   type Zorluk,
 } from "../lib/davranis";
 import {
+  limitAsildiMi,
+  MAX_BASARISIZ_IP,
+  MAX_BASARISIZ_GLOBAL,
+} from "../lib/auth/rateLimitKural";
+import {
   KAMP_GUNLERI,
   KAMP_PROGRAMI,
   kampGunu,
@@ -969,6 +974,55 @@ console.log("\n■ 11) FAZ B — SÖZ TAKİBİ & DÜRTME ESKALASYONU");
   }
 
   console.log("  Bölüm 12: OV simülasyon matematiği doğrulandı");
+}
+
+// ---------------------------------------------------------------
+// BÖLÜM 13 — GİRİŞ HIZ-SINIRI KURALI (paylaşımlı NAT IP'sine dayanıklılık)
+{
+  console.log("\n── Bölüm 13: Giriş hız-sınırı kuralı ──");
+
+  // Sınır altı → kilit yok (meşru kamp kullanımı bu bölgede kalmalı)
+  iddia(limitAsildiMi(0, 0) === false, "0 başarısız → kilit yok");
+  iddia(
+    limitAsildiMi(MAX_BASARISIZ_IP - 1, 0) === false,
+    "per-IP eşiğin 1 altı → kilit yok"
+  );
+  iddia(
+    limitAsildiMi(0, MAX_BASARISIZ_GLOBAL - 1) === false,
+    "global eşiğin 1 altı → kilit yok"
+  );
+
+  // Eşikte/üstünde → kilit (brute-force yanlış-deneme tarafında durdurulur)
+  iddia(limitAsildiMi(MAX_BASARISIZ_IP, 0) === true, "per-IP eşik → kilit");
+  iddia(
+    limitAsildiMi(MAX_BASARISIZ_IP + 5, 0) === true,
+    "per-IP eşik üstü → kilit"
+  );
+  iddia(
+    limitAsildiMi(0, MAX_BASARISIZ_GLOBAL) === true,
+    "global eşik → kilit"
+  );
+
+  // KAMP SENARYOSU: 100 kişilik kamp tek paylaşımlı IP. Eski global eşik (100)
+  // bu ölçekte kolayca dolardı; yeni tavan kampın doğal başarısızlık gürültüsünün
+  // çok üstünde olmalı ki kamp kendini kilitlemesin.
+  iddia(
+    MAX_BASARISIZ_GLOBAL >= 1000,
+    "global tavan kamp ölçeğinin (100 kişi) çok üstünde"
+  );
+  // 100 kişiden ~her biri pencere içinde 1 kez yanlış yazsa bile (=100 başarısız)
+  // sistem global olarak kilitlenmemeli.
+  iddia(
+    limitAsildiMi(0, 100) === false,
+    "100 kişi × 1 yanlış → global kilit YOK (kamp güvenli)"
+  );
+  // Ama tek IP'den 60+ yanlış (otomatik tahmin) per-IP tarafında durur.
+  iddia(
+    limitAsildiMi(60, 100) === true,
+    "tek IP 60 yanlış → per-IP durur (brute-force korunur)"
+  );
+
+  console.log("  Bölüm 13: hız-sınırı kuralı (NAT dayanıklılığı) doğrulandı");
 }
 
 // ---------------------------------------------------------------

@@ -1,10 +1,9 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { PENCERE_DK, limitAsildiMi } from "./rateLimitKural";
 
 // DB tabanlı limit: Vercel'in stateless lambda'larında bellek içi sayaç tutmaz.
-const WINDOW_MINUTES = 10;
-const MAX_FAILURES_PER_IP = 10;
-const MAX_FAILURES_GLOBAL = 100;
+// Eşikler + saf karar lib/auth/rateLimitKural.ts'te (test edilebilirlik).
 
 export function clientIp(req: Request): string {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
@@ -12,7 +11,7 @@ export function clientIp(req: Request): string {
 
 export async function isRateLimited(ip: string): Promise<boolean> {
   const db = supabaseAdmin();
-  const since = new Date(Date.now() - WINDOW_MINUTES * 60_000).toISOString();
+  const since = new Date(Date.now() - PENCERE_DK * 60_000).toISOString();
 
   const [perIp, global] = await Promise.all([
     db
@@ -28,10 +27,7 @@ export async function isRateLimited(ip: string): Promise<boolean> {
       .gte("created_at", since),
   ]);
 
-  return (
-    (perIp.count ?? 0) >= MAX_FAILURES_PER_IP ||
-    (global.count ?? 0) >= MAX_FAILURES_GLOBAL
-  );
+  return limitAsildiMi(perIp.count ?? 0, global.count ?? 0);
 }
 
 export async function recordAttempt(ip: string, success: boolean) {

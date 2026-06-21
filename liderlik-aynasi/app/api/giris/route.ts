@@ -17,10 +17,6 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.giris.hataGecersizBicim }, { status: 400 });
   }
 
-  if (await isRateLimited(ip)) {
-    return Response.json({ hata: tr.giris.hataCokFazlaDeneme }, { status: 429 });
-  }
-
   const db = supabaseAdmin();
   const { data: katilimci, error } = await db
     .from("participants")
@@ -36,7 +32,14 @@ export async function POST(req: Request) {
   const basarili = !!katilimci && katilimci.role === "participant";
   await recordAttempt(ip, basarili);
 
+  // Hız-sınırı YALNIZ yanlış kodu durdurur: kampta ~100 kişi tek paylaşımlı
+  // NAT IP'si ardında olduğundan, DOĞRU kod her zaman geçmeli — birkaç kişinin
+  // yanlış denemesi aynı IP'deki diğerlerini (doğru kod girenleri) kilitlemesin.
+  // Brute-force tahmini hâlâ yanlış-deneme tarafında 429 ile sınırlanır.
   if (!basarili) {
+    if (await isRateLimited(ip)) {
+      return Response.json({ hata: tr.giris.hataCokFazlaDeneme }, { status: 429 });
+    }
     return Response.json({ hata: tr.giris.hataKodHatali }, { status: 401 });
   }
 
