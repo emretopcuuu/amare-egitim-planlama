@@ -60,7 +60,7 @@ export default async function HazirlikPaneli({
     },
     { ok: (atama ?? 0) > 0, kritik: true, etiket: t.eslestirme, ipucu: t.eslestirmeIpucu, href: "/admin/eslestirme" },
     { ok: (dalga ?? 0) > 0, kritik: true, etiket: t.dalga, ipucu: t.dalgaIpucu, href: "/admin" },
-    { ok: zekaVar, kritik: false, etiket: t.zeka, ipucu: t.zekaIpucu, href: "/admin/kurulum" },
+    { ok: zekaVar, kritik: true, etiket: t.zeka, ipucu: t.zekaIpucu, href: "/admin/kurulum" },
     { ok: aynaAyar?.value === "true", kritik: false, etiket: t.ayna, ipucu: t.aynaIpucu, href: "/admin/ayna-direktoru" },
     { ok: vapidVar && (abone ?? 0) > 0, kritik: false, etiket: t.bildirim, ipucu: t.bildirimIpucu, href: "/admin/kurulum" },
     // #20 Final ön-koşulu: kamp canlı/sonrasındayken (aşama ≥ 3) Ayna mektupları
