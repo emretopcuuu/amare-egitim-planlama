@@ -1135,13 +1135,33 @@ export const tr = {
       sunum: "Sunum",
       gorevTuru: "Görev Türleri",
     },
-    // #3 Nav kategorileri: 14 düz sekme yerine 4 grup + Panel
+    // Funnel navigasyonu: türe göre değil, kampın YOLCULUĞUNA göre 4 aşama + Panel.
+    // Operatör soldan sağa = zaman akışı; aradığı aracı süreçteki yerinden bulur.
     navGrup: {
+      hazirlik: "1 · Hazırlık",
+      katilim: "2 · Katılım",
+      canli: "3 · Kamp Canlı",
+      final: "4 · Final & Sonrası",
+      prova: "PROVA",
+      // eski adlar (geriye dönük; kullanımdan kalktı)
       kurulum: "Kurulum",
-      canli: "Canlı",
       icerik: "İçerik",
       ayarlar: "Ayarlar",
-      prova: "PROVA",
+    },
+    // Funnel omurgası — panelin tepesinde kampın 5 aşaması, şu an neredeyiz
+    funnel: {
+      baslik: "Süreç Hunisi",
+      asamalar: {
+        hazirlik: "Hazırlık",
+        katilim: "Katılım",
+        canli: "Kamp Canlı",
+        final: "Final",
+        sonrasi: "Sonrası",
+      },
+      simdi: "şimdi buradasın",
+      tamam: "tamamlandı",
+      bekliyor: "sırada",
+      yonet: "Yönet →",
     },
     // Admin UX paketi (2026): kokpit hızı, güveni, hata payı
     ux: {
