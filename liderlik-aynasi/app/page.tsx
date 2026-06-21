@@ -147,6 +147,10 @@ export default async function AnaSayfa({
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
   const gununCumlesi = (ayar.get("gunun_cumlesi") ?? "").trim();
 
+  // Güvenlik: katılımcı DB'de silinmiş ama JWT hâlâ geçerli → sonsuz döngü yaşanır.
+  // Çerez temizle ve yeniden giriş yaptır.
+  if (!kisi) redirect("/api/cikis");
+
   // SIRA (kamp öncesi onboarding): 1) FOTO+SES RİTÜELİ → 2) OYUN SEÇİMİ (grup)
   // → 3) PUSULA (10 öncelik + eleme + neden) → 4) ÖN FARKINDALIK. Her kapı bir öncekini bekler.
 
