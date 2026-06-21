@@ -411,6 +411,103 @@ export type Database = {
           },
         ]
       }
+      hedef: {
+        Row: {
+          asama: string
+          baslangic_detay: string | null
+          baslangic_noktasi: string | null
+          created_at: string
+          deneyim_ay: number | null
+          gunluk_saat: string | null
+          gunluk_saat_sayi: number | null
+          hedef_gelir: number | null
+          hedef_rutbe: string | null
+          hedefler: Json
+          ozet: string | null
+          participant_id: string
+          plan: Json | null
+          sure_ay: number | null
+          tamamlandi_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          asama?: string
+          baslangic_detay?: string | null
+          baslangic_noktasi?: string | null
+          created_at?: string
+          deneyim_ay?: number | null
+          gunluk_saat?: string | null
+          gunluk_saat_sayi?: number | null
+          hedef_gelir?: number | null
+          hedef_rutbe?: string | null
+          hedefler?: Json
+          ozet?: string | null
+          participant_id: string
+          plan?: Json | null
+          sure_ay?: number | null
+          tamamlandi_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asama?: string
+          baslangic_detay?: string | null
+          baslangic_noktasi?: string | null
+          created_at?: string
+          deneyim_ay?: number | null
+          gunluk_saat?: string | null
+          gunluk_saat_sayi?: number | null
+          hedef_gelir?: number | null
+          hedef_rutbe?: string | null
+          hedefler?: Json
+          ozet?: string | null
+          participant_id?: string
+          plan?: Json | null
+          sure_ay?: number | null
+          tamamlandi_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hedef_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hedef_mesajlar: {
+        Row: {
+          created_at: string
+          icerik: string
+          id: number
+          participant_id: string
+          rol: string
+        }
+        Insert: {
+          created_at?: string
+          icerik: string
+          id?: never
+          participant_id: string
+          rol: string
+        }
+        Update: {
+          created_at?: string
+          icerik?: string
+          id?: never
+          participant_id?: string
+          rol?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hedef_mesajlar_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kocu_mesajlar: {
         Row: {
           created_at: string
@@ -864,6 +961,44 @@ export type Database = {
             foreignKeyName: "on_farkindalik_yanit_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      oyun_plani: {
+        Row: {
+          created_at: string
+          doksan_gun: Json
+          kirk_gun: Json
+          on_gun: Json
+          ozet: string | null
+          participant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doksan_gun?: Json
+          kirk_gun?: Json
+          on_gun?: Json
+          ozet?: string | null
+          participant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doksan_gun?: Json
+          kirk_gun?: Json
+          on_gun?: Json
+          ozet?: string | null
+          participant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "oyun_plani_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
             referencedRelation: "participants"
             referencedColumns: ["id"]
           },
@@ -1428,6 +1563,89 @@ export type Database = {
           value?: string
         }
         Relationships: []
+      }
+      soz: {
+        Row: {
+          aksiyonlar: Json
+          created_at: string
+          durum: string
+          kayit_at: string | null
+          metin: string | null
+          participant_id: string
+          sekillendi_at: string | null
+          updated_at: string
+          voice_path: string | null
+        }
+        Insert: {
+          aksiyonlar?: Json
+          created_at?: string
+          durum?: string
+          kayit_at?: string | null
+          metin?: string | null
+          participant_id: string
+          sekillendi_at?: string | null
+          updated_at?: string
+          voice_path?: string | null
+        }
+        Update: {
+          aksiyonlar?: Json
+          created_at?: string
+          durum?: string
+          kayit_at?: string | null
+          metin?: string | null
+          participant_id?: string
+          sekillendi_at?: string | null
+          updated_at?: string
+          voice_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "soz_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      soz_tanik: {
+        Row: {
+          created_at: string
+          id: string
+          imza_at: string | null
+          soz_sahibi: string
+          witness_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          imza_at?: string | null
+          soz_sahibi: string
+          witness_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          imza_at?: string | null
+          soz_sahibi?: string
+          witness_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "soz_tanik_soz_sahibi_fkey"
+            columns: ["soz_sahibi"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "soz_tanik_witness_id_fkey"
+            columns: ["witness_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       traits: {
         Row: {

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga, aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
+import { hedefKapisiAcik } from "@/lib/hedef";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
 import AynaRituel from "@/components/AynaRituel";
@@ -181,6 +182,12 @@ export default async function AnaSayfa({
   // kilitli kişi her yerde tek bir yerde durur: hazırlık hub'ı (/pusula).
   if (ayar.get("pusula_acik") === "true" && !kisi?.camp_unlocked_at) {
     redirect("/pusula");
+  }
+  // 6) HEDEF KAPISI (Gün 2): kampa girmiş kişi, admin hedef penceresini açınca
+  // nedeninden somut bir kariyer hedefi belirler. Nedenler keşfinden SONRA gelir;
+  // bitene dek bu kapıda kalır (Pusula/ön farkındalık gibi yönlendirilmiş adım).
+  if (kisi?.camp_unlocked_at && (await hedefKapisiAcik(db, session.sub))) {
+    redirect("/hedef");
   }
 
   const [

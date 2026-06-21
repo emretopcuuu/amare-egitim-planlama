@@ -34,6 +34,7 @@ import AltAksiyonCubugu from "./AltAksiyonCubugu";
 import FazSifirKontrol from "./FazSifirKontrol";
 import BoslukKontrol from "./BoslukKontrol";
 import OnFarkindalikKontrol from "./OnFarkindalikKontrol";
+import HedefKontrol from "./HedefKontrol";
 import MuhurKontrol from "./MuhurKontrol";
 import OdevPaketi from "./OdevPaketi";
 import SonEylemler from "./SonEylemler";
@@ -512,6 +513,14 @@ export default async function AdminPanel() {
               {tr.admin.onFark.baslik}
             </h3>
             <OnFarkindalikKontrol />
+          </div>
+
+          {/* FAZ A — Hedef (Gün 2): nedenden kariyer hedefi + plan */}
+          <div id="hedef" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+              🎯 {tr.admin.hedef.baslik}
+            </h3>
+            <HedefKontrol />
           </div>
 
           {/* ── 3 · KAMP CANLI ── */}

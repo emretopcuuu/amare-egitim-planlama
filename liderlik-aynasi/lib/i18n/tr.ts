@@ -864,6 +864,79 @@ export const tr = {
     kilit2: "3. günde aynan açılır",
     kilit3: "Sana özel AYNA görevleri",
   },
+  // FAZ A — Hedef (Gün 2). Nedenler keşfedildikten sonra: neredesin → kısa AI
+  // sohbeti → kariyer/gelir tablosu → 3 soru → kişisel kariyer planı.
+  hedef: {
+    baslik: "Hedefin",
+    hata: "Bir şeyler ters gitti — tekrar dene.",
+    aiHata: "AYNA şu an yanıt veremedi — birazdan tekrar dene.",
+    dusunuyor: "AYNA düşünüyor…",
+    gonder: "Gönder",
+    girisYer: "Yanıtını yaz…",
+    // Açılış kapağı
+    acilisBaslik: "Nedenini bir hedefe çevirelim",
+    acilisMetin:
+      "Neden bu işte olduğunu birlikte keşfettik. Önce kısaca konuşalım, sonra bunu somut bir kariyer hedefine — senin rakamlarınla — dönüştürelim.",
+    acilisBasla: "Başlayalım",
+    // Başlangıç noktası formu
+    noktaBaslik: "Önce: bu işin neresindesin?",
+    noktaAciklama:
+      "Hedefini doğru ölçekte koyabilmek için nerede durduğunu bilmem gerekiyor. Sana en yakın olanı seç.",
+    noktalar: {
+      yeni: { ad: "Yeni başladım", alt: "0-3 ay · ilk adımlar" },
+      baslangic: { ad: "Başlangıç aşamasındayım", alt: "3-18 ay · tempo kuruyorum" },
+      deneyimli: { ad: "Deneyimliyim", alt: "18 ay+ · ekibim var" },
+      lider: { ad: "Olgun bir liderim", alt: "Lider yetiştiriyorum" },
+    },
+    noktaAyEtiket: "Ne kadardır bu işin içindesin? (ay — opsiyonel)",
+    noktaDetayYer: "Eklemek istediğin bir şey var mı? (opsiyonel)",
+    noktaDevam: "Devam et",
+    // Isınma sohbeti ilerleme
+    ilerlemeEtiket: "Hedef netleşiyor",
+    // Somutlaştırma wizard'ı
+    wizardIntro: "Sana 3 soru soracağım. Cevaplarına göre kariyer planını oluşturacağım:",
+    soruEtiket: (n: number) => `SORU ${n}/3`,
+    q1Baslik: "Minimum ne kadar kazanmak heyecan verici olurdu?",
+    tabloKariyer: "KARİYER",
+    tabloEnDusuk: "EN DÜŞÜK",
+    tabloEnYuksek: "EN YÜKSEK",
+    tabloOrtalama: "ORTALAMA",
+    q2Baslik: "En geç ne kadar sürede bu gelire ulaşmak heyecan verici olurdu?",
+    q3Baslik: "Bu gelire ulaşacağını yüzde yüz bilsen — günde maksimum kaç saat ayırabilirsin?",
+    hedefinEtiket: "Hedefin",
+    suresiEtiket: "Süresi",
+    aylikBirim: "TL/ay",
+    degistirNot: "Değiştirmek için tekrar seç",
+    geri: "Geri",
+    // Kişisel kariyer planı kartı
+    planUstBaslik: "Kişisel kariyer planın:",
+    planBaslik: (rutbe: string) => `${rutbe} kariyer planı`,
+    planOzet: (sureAy: number, saat: string, haftalik: number) =>
+      `${sureAy} ay | ${saat} | Haftalık ~${haftalik} saat`,
+    ilkHedef: (ay: number) => `İlk hedefin (${ay}. ay)`,
+    ikinciHedef: (ay: number) => `İkinci hedefin (${ay}. ay)`,
+    anaHedef: (ay: number) => `Ana hedefin (${ay}. ay)`,
+    gunlukYatirim: "Günlük yatırımın",
+    toplamYatirim: "Toplam yatırım",
+    toplamYatirimDeger: (saat: number, para: string) => `~${saat} saat + ${para} TL`,
+    geriDonus: "Geri dönüş",
+    geriDonusDeger: (ay: number) => (ay <= 0 ? "1 ay içinde" : `${ay} ay içinde`),
+    bunuDusun: (saat: string, sureAy: number, gelir: string, saatlik: string) =>
+      `Bunu düşün: ${saat} ayırarak, ${sureAy} ay sonunda aylık ${gelir} TL. Saatlik kazanç ~${saatlik} TL.`,
+    planOnayla: "Bu hedefi mühürle",
+    planDegistir: "↺ Hedefi değiştir",
+    // Bitti
+    tamamBaslik: "Hedefin mühürlendi 🎯",
+    tamamMetin:
+      "Artık bir nedenin ve ona hizmet eden somut bir kariyer planın var. Kamp boyunca görevlerin ve kapanışta aynan bu hedefe göre şekillenecek.",
+    bittiDevam: "Devam et",
+    // Sıfırla
+    sifirlaDugme: "↺ Baştan",
+    sifirlaOnayMetin: "Hedef çalışmasını baştan başlatmak istediğine emin misin?",
+    sifirlaVazgec: "Vazgeç",
+    sifirlaEvet: "Evet, baştan",
+    sifirlaniyor: "Sıfırlanıyor…",
+  },
   // Grup ödevi (katılımcı görünümü)
   grup: {
     baslik: "Grubunun Ödevi",
@@ -1318,6 +1391,7 @@ export const tr = {
         uyariMuhurRapor: "Mühür açık ama Ayna Raporları kapalı — aday raporu görmeden sesli reveal'i duyar. Önce raporları aç.",
         adimHazirlik: "Hazırlık (FAZ 0)",
         adimOnFark: "Ön Farkındalık",
+        adimHedef: "Hedef (Gün 2)",
         adimDalga: (n: number) => `Dalga ${n}`,
         adimBosluk: "Boşluk Anı",
         adimRapor: "Ayna Raporu",
@@ -1391,6 +1465,17 @@ export const tr = {
       pencereAc: "Ön Farkındalık'ı Aç",
       pencereKapat: "Pencereyi Kapat",
       tamamlanma: (n: number, t: number) => `${n}/${t} Ön Farkındalık'ı tamamladı`,
+      hata: "İşlem başarısız, tekrar dene.",
+    },
+    hedef: {
+      baslik: "Hedef (Gün 2)",
+      aciklama:
+        "Nedenler keşfinden sonra, kampa girmiş aday önce kısa bir AI sohbeti yapar, sonra tüm kariyer basamakları + ortalama gelirleri görüp hedefini seçer; 3 soruyla kişisel kariyer planı çıkar. Bu pencere açılmazsa aday bu aşamaya giremez.",
+      pencereAcik: "● Pencere açık — Hedef erişimde",
+      pencereKapali: "○ Pencere kapalı — adaylar giremez",
+      pencereAc: "Hedef'i Aç",
+      pencereKapat: "Pencereyi Kapat",
+      tamamlanma: (n: number, t: number) => `${n}/${t} hedefini belirledi`,
       hata: "İşlem başarısız, tekrar dene.",
     },
     fazBir: {

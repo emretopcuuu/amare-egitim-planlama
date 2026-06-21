@@ -21,6 +21,7 @@ export default async function AkisDizisi() {
       .in("key", [
         "pusula_acik",
         "on_farkindalik_acik",
+        "hedef_acik",
         "kamp_kilit_kodu",
         "bosluk_acik",
         "reports_visible",
@@ -34,6 +35,7 @@ export default async function AkisDizisi() {
   const adimlar: Adim[] = [
     { etiket: t.adimHazirlik, acik: acikMi("pusula_acik"), href: "/admin#fazsifir" },
     { etiket: t.adimOnFark, acik: acikMi("on_farkindalik_acik"), href: "/admin#onfark" },
+    { etiket: t.adimHedef, acik: acikMi("hedef_acik"), href: "/admin#hedef" },
     ...(dalgalar ?? []).map((d) => ({
       etiket: t.adimDalga(d.id),
       acik: d.is_open,
