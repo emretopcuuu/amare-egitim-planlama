@@ -3073,7 +3073,7 @@ export const tr = {
       p2b: "Senin pusulan, nedenlerindir. Güçlü bir nedenin varsa, her yokuşu çıkarsın.",
       p3: "Öyle bir neden bul ki; başarı bir seçenek değil, zorunluluk olsun.",
       p4: "Tek şartım: kendine dürüst ol.",
-      p5: "Bu birkaç dakikayı içten geçenler, en uzağa gidenler oluyor. Hazırsan, pusulanı kuralım.",
+      p5: "Kendine en dürüst davrananlar, en uzağa gidenler oluyor. Hazırsan, pusulanı kuralım.",
     } as Record<string, string>,
   },
   ortak: {
