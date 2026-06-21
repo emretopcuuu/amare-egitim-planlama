@@ -6,6 +6,7 @@ import { raporHesapla, raporlarGorunurMu } from "@/lib/rapor";
 import { hedefCekirdek } from "@/lib/hedef";
 import { pusulaCekirdek } from "@/lib/pusula";
 import { oyunPlaniGetir } from "@/lib/oyunPlani";
+import { sozGetir, sozV2KapisiAcik } from "@/lib/soz";
 import { tlFormat } from "@/lib/kariyer";
 import OyunPlaniBolumu from "./OyunPlaniBolumu";
 import { arketipBul } from "@/lib/arketip";
@@ -54,7 +55,7 @@ export default async function AynaPage() {
     .select("id", { count: "exact", head: true })
     .eq("rater_id", session.sub);
 
-  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik, hedefC, oyunP, pusC] =
+  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik, hedefC, oyunP, pusC, sozAcikV2, sozKaydi] =
     await Promise.all([
       db
         .from("mirror_letters")
@@ -76,6 +77,8 @@ export default async function AynaPage() {
       hedefCekirdek(db, session.sub),
       oyunPlaniGetir(db, session.sub),
       pusulaCekirdek(db, session.sub),
+      sozV2KapisiAcik(db),
+      sozGetir(db, session.sub),
     ]);
 
   // FAZ A Rapor v2: raporu kişinin nedenine + kariyer hedefine bağla.
@@ -670,6 +673,21 @@ export default async function AynaPage() {
           <AynaHikaye slaytlar={filmSlaytlar} etiket={`🎬 ${t.filmIzle}`} />
         </div>
       </section>
+
+      {/* FAZ A Söz v2: raporu gördükten SONRA kapanış sözü — en güçlü an */}
+      {sozAcikV2 && sozKaydi?.durum !== "sesli" && (
+        <section className="yazdir-gizle kart-cerceve rounded-2xl bg-gradient-to-br from-gold/15 to-midnight-card/60 p-6 text-center shadow-xl ring-1 ring-gold/40 backdrop-blur">
+          <p className="text-4xl">📜</p>
+          <h2 className="prizma-serif ay-metin mt-2 text-xl font-semibold">{tr.sozV2.sekilBaslik}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-300">{tr.sozV2.sekilMetin}</p>
+          <Link
+            href="/sozum"
+            className="btn-kor parilti mt-5 inline-flex h-12 w-full items-center justify-center rounded-2xl text-base font-bold"
+          >
+            {tr.sozV2.sekillendir}
+          </Link>
+        </section>
+      )}
 
       <p className="yazdir-gizle pb-4 text-center">
         <Link

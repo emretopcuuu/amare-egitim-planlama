@@ -1478,6 +1478,17 @@ export const tr = {
       tamamlanma: (n: number, t: number) => `${n}/${t} hedefini belirledi`,
       hata: "İşlem başarısız, tekrar dene.",
     },
+    sozV2: {
+      baslik: "Söz (Kapanış)",
+      aciklama:
+        "Rapor açıldıktan SONRA aç. Katılımcı aynasını görür, AI sözünü şekillendirir, düzenler, kendi sesiyle okur ve 5 lider şahit seçer. Pencere açılmazsa söz aşamasına girilmez.",
+      pencereAcik: "● Pencere açık — Söz erişimde",
+      pencereKapali: "○ Pencere kapalı",
+      pencereAc: "Söz'ü Aç",
+      pencereKapat: "Pencereyi Kapat",
+      tamamlanma: (n: number, t: number) => `${n}/${t} sesli sözünü verdi`,
+      hata: "İşlem başarısız, tekrar dene.",
+    },
     fazBir: {
       baslik: "FAZ 1 — Boşluk Anı",
       aciklama:
@@ -3074,6 +3085,53 @@ export const tr = {
     kirkGun: "İlk 40 gün — tempo & ilk ekip",
     doksanGun: "İlk 90 gün — hedefe varış",
     olustur: "Oyun planımı oluştur",
+  },
+  // FAZ A — Söz v2 (kapanış): AI şekillendirir → kişi düzenler → kendi sesiyle
+  // okur/kaydeder → 5 lider şahit imzalar.
+  sozV2: {
+    baslik: "📜 Sözün",
+    kapali: "Söz penceresi henüz açılmadı — kapanışta açılacak.",
+    // Şekillendirme
+    sekilBaslik: "Sözünü birlikte şekillendirelim",
+    sekilMetin:
+      "Nedenini, hedefini ve kamptaki keşiflerini bir söze dönüştürüyorum. Sonra sen düzenle, dilediğin gibi yap — bu söz senin.",
+    sekillendir: "Sözümü oluştur",
+    dusunuyor: "AYNA sözünü yazıyor…",
+    // Düzenleme
+    duzenleBaslik: "Sözünü oku, dilediğin gibi düzenle",
+    duzenleMetin: "Bu söz senin ağzından çıkacak. Kelimeleri kendine ait hisset.",
+    aksiyonlarBaslik: "Sözündeki adımlar",
+    ufukEtiket: (u: string) => `${u}. gün`,
+    onayla: "Bu söz benim — devam",
+    // Ses
+    sesBaslik: "Şimdi sözünü kendi sesinle oku",
+    sesMetin:
+      "Sözünü yüksek sesle, içtenlikle oku ve kaydet. Bu kayıt 90 gün boyunca seni hatırlatacak.",
+    sesKaydet: "Sesli sözümü kaydet",
+    sesYukleniyor: "Kaydediliyor…",
+    sesTamam: "Sesin kaydedildi ✓",
+    sesAtla: "Sesi sonra eklerim",
+    // Şahitler
+    tanikBaslik: "5 lider seç — sözüne şahit olsunlar",
+    tanikMetin:
+      "Kamptan 5 lider seç. Onlar sözünü görecek, imzalayacak ve 90 gün boyunca adımlarını takip edecek — gerekirse seni dürtüp arayacaklar. Başarınızı birbirinize bağlıyoruz.",
+    tanikSecili: (n: number) => `${n}/5 şahit seçildi`,
+    tanikEkle: "Şahit yap",
+    tanikSil: "Kaldır",
+    tanikImzaBekliyor: "İmza bekleniyor",
+    tanikImzali: "İmzaladı ✓",
+    tanikDolu: "5 şahit seçtin.",
+    tanikLiderDolu: "Bu lider en fazla 5 kişiye şahit olabilir — doldu.",
+    tanikAra: "İsimle ara…",
+    tamamBaslik: "Sözün mühürlendi 🤝",
+    tamamMetin:
+      "Sözünü verdin, sesini kaydettin, liderlerin şahit oldu. 90 gün boyunca bu sözün peşinde olacağız.",
+    devam: "Bitir",
+    // Lider: imza bekleyenler
+    imzaBekleyenBaslik: "Sana güvenenler",
+    imzaBekleyenMetin: (ad: string) => `${ad} seni sözüne şahit gösterdi.`,
+    imzala: "Sözüne şahit ol (imzala)",
+    imzalandi: "İmzaladın ✓",
   },
   kelimeKarti: {
     baslik: "🖼️ Kelime Kartın",

@@ -67,7 +67,7 @@ const SEKMELER: { href: string; ikon: IkonAd; etiket: string }[] = [
 // Bu önekler katılımcı deneyimi değil (admin/büyük ekran/tam ekran) — çubuk yok.
 // /pusula tam ekran FAZ 0 akışıdır (Nedenler + "kampta görüşürüz" beklemesi);
 // kamp açılmadan görev/değerlendirme sekmeleri görünmesin.
-const GIZLI = ["/giris", "/admin", "/ekran", "/sahne", "/yansiman", "/pusula", "/on-farkindalik", "/hedef", "/mini360", "/ayna-esi", "/kocu"];
+const GIZLI = ["/giris", "/admin", "/ekran", "/sahne", "/yansiman", "/pusula", "/on-farkindalik", "/hedef", "/sozum", "/mini360", "/ayna-esi", "/kocu"];
 
 type Kivilcim = {
   toplam: number;
