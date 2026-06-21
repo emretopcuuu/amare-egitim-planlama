@@ -44,6 +44,31 @@ import BolumAtla from "./BolumAtla";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
+// #1 Tehlike bölgesi kontrollerini funnel aşamalarına ayıran etiket. Aktif
+// aşamadaki grup altın vurguyla öne çıkar; operatör "şu an buradayım"ı görür.
+function AsamaEtiket({ no, ad, aktif }: { no?: number; ad: string; aktif?: number }) {
+  const buradayim = no != null && no === aktif;
+  return (
+    <p
+      className={`flex items-center gap-2 pt-2 text-[0.7rem] font-bold uppercase tracking-wide ${
+        buradayim ? "text-gold-light" : "text-slate-500"
+      }`}
+    >
+      {no != null && (
+        <span
+          className={`flex h-5 w-5 items-center justify-center rounded-full text-[0.65rem] ${
+            buradayim ? "bg-gold text-[#1a1206]" : "bg-white/10 text-slate-400"
+          }`}
+        >
+          {no}
+        </span>
+      )}
+      {ad}
+      {buradayim && <span className="text-gold-light">• şu an</span>}
+    </p>
+  );
+}
+
 export default async function AdminPanel() {
   const session = await getSession();
   if (!session || (session.rol !== "admin" && session.rol !== "yardimci")) {
@@ -419,8 +444,26 @@ export default async function AdminPanel() {
             </div>
           </div>
 
-          {/* #3 Kamp akışı sıralayıcı — sıradaki anahtar + bağımlılık koruması */}
+          {/* #3 Kamp akışı sıralayıcı — sıradaki anahtar + bağımlılık kapısı */}
           <AkisDizisi />
+
+          {/* #1 Kontroller funnel sırasında: Katılım → Canlı → Final → Sistem.
+              Aşama etiketleri omurgayla birebir hizalı. */}
+
+          {/* ── 2 · KATILIM ── */}
+          <AsamaEtiket no={2} ad={tr.admin.funnel.asamalar.katilim} aktif={aktifAsama} />
+
+          {/* FAZ 0 — Pusula penceresi + oda QR kodu (kampa giriş kilidi) */}
+          <div id="fazsifir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+              {tr.admin.fazSifir.baslik}
+              <Ipucu {...tr.admin.yardim.fazSifir} />
+            </h3>
+            <FazSifirKontrol />
+          </div>
+
+          {/* ── 3 · KAMP CANLI ── */}
+          <AsamaEtiket no={3} ad={tr.admin.funnel.asamalar.canli} aktif={aktifAsama} />
 
           {/* Dalga */}
           <div
@@ -448,6 +491,18 @@ export default async function AdminPanel() {
             />
           </div>
 
+          {/* ── 4 · FİNAL — Ayna Anı ── */}
+          <AsamaEtiket no={4} ad={tr.admin.funnel.asamalar.final} aktif={aktifAsama} />
+
+          {/* FAZ 1 — Boşluk Anı penceresi + derinlik panosu */}
+          <div id="fazbir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+              {tr.admin.fazBir.baslik}
+              <Ipucu {...tr.admin.yardim.fazBir} />
+            </h3>
+            <BoslukKontrol />
+          </div>
+
           {/* Ayna Anı (raporlar) */}
           <div
             id="ayna-ani"
@@ -465,6 +520,18 @@ export default async function AdminPanel() {
             />
           </div>
 
+          {/* A2 — Mühür Açılışı (kamp sonu before/after sesli reveal) */}
+          <div id="muhur" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+              {tr.admin.muhur.baslik}
+              <Ipucu {...tr.admin.yardim.muhur} />
+            </h3>
+            <MuhurKontrol />
+          </div>
+
+          {/* ── SİSTEM (kesişen) ── */}
+          <AsamaEtiket ad={tr.admin.tehlike.sistemEtiket} />
+
           {/* #9 Prova Modu — canlı/test ayrımı kritik bir anahtar */}
           <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
             <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
@@ -472,34 +539,6 @@ export default async function AdminPanel() {
               <Ipucu {...tr.admin.yardim.prova} />
             </h3>
             <ProvaModuKontrol acik={provaAcik} />
-          </div>
-
-          {/* FAZ 0 — Pusula penceresi + oda QR kodu (kampa giriş kilidi) */}
-          <div id="fazsifir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.fazSifir.baslik}
-              <Ipucu {...tr.admin.yardim.fazSifir} />
-            </h3>
-            <FazSifirKontrol />
-          </div>
-
-          {/* FAZ 1 — Boşluk Anı penceresi + derinlik panosu */}
-          <div id="fazbir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.fazBir.baslik}
-              <Ipucu {...tr.admin.yardim.fazBir} />
-            </h3>
-            <BoslukKontrol />
-          </div>
-
-          {/* A2 — Mühür Açılışı (kamp sonu before/after sesli reveal) */}
-          <div id="muhur" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-
-            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.muhur.baslik}
-              <Ipucu {...tr.admin.yardim.muhur} />
-            </h3>
-            <MuhurKontrol />
           </div>
         </section>
       )}

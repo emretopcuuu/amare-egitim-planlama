@@ -1252,6 +1252,7 @@ export const tr = {
       baslik: "Kritik Kontroller",
       aciklama:
         "Bu anahtarlar tüm katılımcıların telefonunu anında etkiler. Her birinin onayı ve geri-al penceresi var.",
+      sistemEtiket: "⚙️ Sistem (her aşamada)",
     },
     // #1 İkincil araçlar: faz dışı her şey burada katlanık durur
     araclar: {
