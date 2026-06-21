@@ -657,7 +657,7 @@ export default function PusulaSohbet({
         {!sloganKendinYaz ? (
           <button
             onClick={() => setSloganKendinYaz(true)}
-            className="mt-4 text-sm font-medium text-royal-light underline-offset-2 hover:underline"
+            className="mx-auto mt-4 block text-sm font-medium text-royal-light underline-offset-2 hover:underline"
           >
             {t.sloganKendinYaz}
           </button>
@@ -682,7 +682,7 @@ export default function PusulaSohbet({
 
         <button
           onClick={() => setFaz("bitti")}
-          className="mt-3 text-sm text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+          className="mx-auto mt-3 block text-sm text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
         >
           {t.sloganAtla}
         </button>

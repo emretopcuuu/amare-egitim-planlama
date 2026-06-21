@@ -97,6 +97,9 @@ export default function HazirlikAkis({
       </div>
 
       {/* AŞAMA RAYI — tüm adımlar, sıradaki adıyla görünür */}
+      <p className="text-center text-xs font-semibold uppercase tracking-wide text-slate-400">
+        {t.hazirlikAdimlarBaslik}
+      </p>
       <AsamaRayi asamalar={ray} />
 
       <p className="text-center text-[0.7rem] font-semibold uppercase tracking-wide text-gold-light">

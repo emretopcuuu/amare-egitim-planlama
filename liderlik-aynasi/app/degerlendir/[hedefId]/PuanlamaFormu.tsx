@@ -73,6 +73,9 @@ export default function PuanlamaFormu({
   const [yorumUyari, setYorumUyari] = useState(false);
   // #4: her dokunuşta kısa "✓ Kaydedildi" güvencesi (yaşlı kullanıcı huzuru).
   const [kayitGoster, setKayitGoster] = useState(false);
+  // Seçim sonrası sıradakine geçişi gözle görülür kılan altın parlama.
+  const [gecisParla, setGecisParla] = useState(false);
+  const parlaZaman = useRef<ReturnType<typeof setTimeout> | null>(null);
   // #5: çevrimdışı gönderim başarısızsa, bağlantı gelince kendiliğinden gönder.
   const [cevrimdisiBekleniyor, setCevrimdisiBekleniyor] = useState(false);
   const yuklendi = useRef(false);
@@ -84,6 +87,7 @@ export default function PuanlamaFormu({
     return () => {
       if (ilerleZamanlayici.current) clearTimeout(ilerleZamanlayici.current);
       if (kayitZaman.current) clearTimeout(kayitZaman.current);
+      if (parlaZaman.current) clearTimeout(parlaZaman.current);
     };
   }, []);
 
@@ -173,9 +177,13 @@ export default function PuanlamaFormu({
     setYorumUyari(false);
     const yorumGerekli = !kendisi && p < 6;
     if (!yorumGerekli) {
-      // seçim hissedilsin, sonra kendiliğinden sıradaki özelliğe geç
+      // seçim hissedilsin: altın parlama + kendiliğinden sıradaki özelliğe geç.
+      // Parlama, geçişin gözle görülür sinyali (kullanıcı "ilerledim mi?" demesin).
+      setGecisParla(true);
+      if (parlaZaman.current) clearTimeout(parlaZaman.current);
+      parlaZaman.current = setTimeout(() => setGecisParla(false), 520);
       if (ilerleZamanlayici.current) clearTimeout(ilerleZamanlayici.current);
-      ilerleZamanlayici.current = setTimeout(ileri, 300);
+      ilerleZamanlayici.current = setTimeout(ileri, 320);
     }
   }
 
@@ -314,7 +322,14 @@ export default function PuanlamaFormu({
   }
 
   return (
-    <div className="flex min-h-[82vh] flex-col">
+    <div className="relative flex min-h-[82vh] flex-col">
+      {/* Geçiş parlaması — seçim sonrası ekranın üstünden altın ışık geçer */}
+      {gecisParla && (
+        <span
+          aria-hidden
+          className="gecis-parla pointer-events-none fixed inset-0 z-40 bg-gradient-to-b from-gold/30 via-gold/5 to-transparent"
+        />
+      )}
       {/* üst çubuk: geri + kim + ilerleme */}
       <header>
         <div className="flex items-center justify-between">
@@ -387,9 +402,9 @@ export default function PuanlamaFormu({
         )}
       </header>
 
-      {/* TEK ÖZELLİK ekranı */}
+      {/* TEK ÖZELLİK ekranı — key={adim}: her geçişte giriş animasyonu yeniden oynar */}
       {o && g && (
-        <div className="flex flex-1 flex-col justify-center py-8">
+        <div key={adim} className="of-adim flex flex-1 flex-col justify-center py-8">
           <h1 className="prizma-serif ay-metin text-4xl font-semibold leading-tight">
             {o.name}
           </h1>
@@ -431,7 +446,7 @@ export default function PuanlamaFormu({
                 onClick={() => puanSec(o, p)}
                 className={`h-16 rounded-2xl text-2xl font-bold transition-all ${
                   g.puan === p
-                    ? "btn-kor scale-105"
+                    ? "btn-kor scale-105 ring-2 ring-gold-light/70 ring-offset-2 ring-offset-transparent"
                     : "border-2 border-white/20 text-slate-200 hover:border-gold/60"
                 }`}
               >
