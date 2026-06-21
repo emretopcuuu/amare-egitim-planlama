@@ -18,7 +18,14 @@ export default async function AkisDizisi() {
     db
       .from("settings")
       .select("key, value")
-      .in("key", ["pusula_acik", "kamp_kilit_kodu", "bosluk_acik", "reports_visible", "muhur_acik"]),
+      .in("key", [
+        "pusula_acik",
+        "on_farkindalik_acik",
+        "kamp_kilit_kodu",
+        "bosluk_acik",
+        "reports_visible",
+        "muhur_acik",
+      ]),
     db.from("assignments").select("id", { count: "exact", head: true }),
   ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
@@ -26,6 +33,7 @@ export default async function AkisDizisi() {
 
   const adimlar: Adim[] = [
     { etiket: t.adimHazirlik, acik: acikMi("pusula_acik"), href: "/admin#fazsifir" },
+    { etiket: t.adimOnFark, acik: acikMi("on_farkindalik_acik"), href: "/admin#onfark" },
     ...(dalgalar ?? []).map((d) => ({
       etiket: t.adimDalga(d.id),
       acik: d.is_open,
@@ -47,11 +55,15 @@ export default async function AkisDizisi() {
   // eksik olduğunu söyler — operatör yanlış sırada anahtar açmasın.
   const raporAcik = acikMi("reports_visible");
   const muhurAcik = acikMi("muhur_acik");
+  const boslukAcik = acikMi("bosluk_acik");
   const dalgaAcikVar = (dalgalar ?? []).some((d) => d.is_open);
   const kilitKodu = (ayar.get("kamp_kilit_kodu") ?? "").trim();
   const uyarilar: string[] = [];
   if (acikMi("pusula_acik") && !kilitKodu) uyarilar.push(t.uyariKilitKodu);
   if (dalgaAcikVar && (eslestirmeSayi ?? 0) === 0) uyarilar.push(t.uyariEslestirme);
+  // #5 Final sırası: Boşluk ve Mühür, raporlardan ÖNCE açılmamalı.
+  if (boslukAcik && !raporAcik) uyarilar.push(t.uyariBoslukRapor);
+  if (muhurAcik && !raporAcik) uyarilar.push(t.uyariMuhurRapor);
   if (raporAcik && !muhurAcik) uyarilar.push(t.uyariMuhur);
 
   return (

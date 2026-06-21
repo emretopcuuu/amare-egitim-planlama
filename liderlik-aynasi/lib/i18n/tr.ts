@@ -1292,7 +1292,10 @@ export const tr = {
         // #2 Bağımlılık kapısı — sıra atlanınca uyarır
         uyariEslestirme: "Dalga açık ama eşleştirme yapılmamış — kimse kimseyi puanlayamaz. Önce Eşleştirme'yi tamamla.",
         uyariKilitKodu: "Pusula penceresi açık ama oda QR kilit kodu boş — kimse kampa giremez. Faz 0'da kodu ayarla.",
+        uyariBoslukRapor: "Boşluk Anı açık ama Ayna Raporları kapalı — aday rapora girmeden Boşluk'a düşer. Önce raporları aç.",
+        uyariMuhurRapor: "Mühür açık ama Ayna Raporları kapalı — aday raporu görmeden sesli reveal'i duyar. Önce raporları aç.",
         adimHazirlik: "Hazırlık (FAZ 0)",
+        adimOnFark: "Ön Farkındalık",
         adimDalga: (n: number) => `Dalga ${n}`,
         adimBosluk: "Boşluk Anı",
         adimRapor: "Ayna Raporu",
@@ -1356,6 +1359,18 @@ export const tr = {
         n > 0 ? `✓ ${n} kişinin kampı açıldı` : "Zaten herkes kampta",
     },
     // FAZ 1 — Boşluk Anı penceresi + derinlik panosu
+    // FAZ A — Ön Farkındalık penceresi (pusuladan sonra, kampa girmeden)
+    onFark: {
+      baslik: "Ön Farkındalık",
+      aciklama:
+        "Pusuladan sonra, kampa girmeden aday ön farkındalık katmanlarını (öz saygı/güven, kör nokta vb.) doldurur. Bu pencere açılmazsa aday bu aşamaya HİÇ giremez.",
+      pencereAcik: "● Pencere açık — Ön Farkındalık erişimde",
+      pencereKapali: "○ Pencere kapalı — adaylar giremez",
+      pencereAc: "Ön Farkındalık'ı Aç",
+      pencereKapat: "Pencereyi Kapat",
+      tamamlanma: (n: number, t: number) => `${n}/${t} Ön Farkındalık'ı tamamladı`,
+      hata: "İşlem başarısız, tekrar dene.",
+    },
     fazBir: {
       baslik: "FAZ 1 — Boşluk Anı",
       aciklama:

@@ -33,6 +33,7 @@ import Katlanir from "./Katlanir";
 import AltAksiyonCubugu from "./AltAksiyonCubugu";
 import FazSifirKontrol from "./FazSifirKontrol";
 import BoslukKontrol from "./BoslukKontrol";
+import OnFarkindalikKontrol from "./OnFarkindalikKontrol";
 import MuhurKontrol from "./MuhurKontrol";
 import OdevPaketi from "./OdevPaketi";
 import SonEylemler from "./SonEylemler";
@@ -134,7 +135,7 @@ export default async function AdminPanel() {
     db
       .from("settings")
       .select("key, value, updated_at")
-      .in("key", ["pusula_acik", "muhur_acik", "reports_visible"]),
+      .in("key", ["pusula_acik", "muhur_acik", "reports_visible", "on_farkindalik_acik"]),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
   const provaAcik = provaAyar?.value === "true";
@@ -215,6 +216,7 @@ export default async function AdminPanel() {
   const funnelAyar = new Map((funnelAyarlar ?? []).map((a) => [a.key, a.value]));
   const pusulaAcik = funnelAyar.get("pusula_acik") === "true";
   const muhurAcik = funnelAyar.get("muhur_acik") === "true";
+  const onFarkAcik = funnelAyar.get("on_farkindalik_acik") === "true";
   const aktifAsama =
     bugun > sonKampGun
       ? 5
@@ -268,6 +270,7 @@ export default async function AdminPanel() {
     sozAcik,
     pusulaAcik,
     hazirTamam: funnel.adimlar.find((a) => a.anahtar === "onfark")?.sayi ?? 0,
+    onFarkAcik,
   });
 
   // #8 Proaktif uyarılar (yalnız tam yetkiliye gösterilir).
@@ -496,6 +499,14 @@ export default async function AdminPanel() {
               <Ipucu {...tr.admin.yardim.fazSifir} />
             </h3>
             <FazSifirKontrol />
+          </div>
+
+          {/* FAZ A — Ön Farkındalık penceresi (pusuladan sonra, kampa girmeden) */}
+          <div id="onfark" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+              {tr.admin.onFark.baslik}
+            </h3>
+            <OnFarkindalikKontrol />
           </div>
 
           {/* ── 3 · KAMP CANLI ── */}
