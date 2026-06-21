@@ -219,6 +219,29 @@ body.gunes-modu .kart-cerceve {
   animation: of-adim-belir 0.34s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
+/* Geçiş parlaması — bir seçim sonrası sıradakine geçildiğini net hissettirir:
+   ekranın üstünden altın bir ışık dalgası geçip söner. */
+@keyframes gecis-parla-anim {
+  0% {
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.gecis-parla {
+  animation: gecis-parla-anim 0.5s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .gecis-parla {
+    animation: none;
+    opacity: 0;
+  }
+}
+
 /* "AYNA düşünüyor" dönen satır — her satır yumuşakça belirir */
 .dusunuyor-satir {
   animation: belir-yukari 0.45s ease-out both;
