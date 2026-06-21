@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { eskalasyonTara } from "@/lib/sozTakip";
 import {
   gorevUret,
   gorevPuanla,
@@ -769,6 +770,14 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       ozet.fisilti++;
     }
   }
+
+  // FAZ B — Söz takibi eskalasyonu: adımını kaçıranları dürt, 4+ günde şahitleri
+  // uyar. Sessiz saat kontrolü yukarıda geçildi (buraya gelindiyse push uygun).
+  // Kendi throttle'ı var; her tikte güvenle çağrılır.
+  try {
+    const esk = await eskalasyonTara(db);
+    ozet.durtulen += esk.kisi + esk.tanik;
+  } catch {}
 
   return { ozet: "tamam", ...ozet };
 }

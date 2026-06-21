@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga, aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { hedefKapisiAcik } from "@/lib/hedef";
+import { sozTakipAktif, sahitSayim } from "@/lib/sozTakip";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
 import AynaRituel from "@/components/AynaRituel";
@@ -252,6 +253,12 @@ export default async function AnaSayfa({
         .order("week_start", { ascending: false })
         .limit(2),
     ]);
+  // FAZ B: söz mühürlüyse (sesli) ana ekran 90-gün yolculuğuna geçer; ayrıca
+  // kişi başkalarına şahitse şahit paneline erişir.
+  const [takipAktif, sahitSayisi] = await Promise.all([
+    sozTakipAktif(db, session.sub),
+    sahitSayim(db, session.sub),
+  ]);
   const takim = kisi?.team ?? null;
   const momentumSkor =
     typeof momentumSatirlar?.[0]?.score === "number" ? momentumSatirlar[0].score : null;
@@ -429,6 +436,29 @@ export default async function AnaSayfa({
           ikon="👁"
           vurgu
         />
+      </Sayfa>
+    );
+  }
+
+  // 2d) 90 GÜN YOLCULUĞU — söz mühürlüyse (sesli) ana ekran takibe geçer.
+  // Rapor hâlâ üst menüden + buradaki linkten erişilir.
+  if (takipAktif) {
+    return (
+      <Sayfa ust={ust}>
+        <BuyukKart
+          baslik={t.takipBaslik}
+          metin={t.takipMetin}
+          href="/takip"
+          dugme={t.takipDugme}
+          ikon="🧭"
+          vurgu
+        />
+        <div className="mt-4 space-y-3">
+          {sahitSayisi > 0 && (
+            <SicakAdim href="/sahitlik" etiket={t.takipSahitlik(sahitSayisi)} vurgu />
+          )}
+          <SicakAdim href="/ayna" etiket={t.takipAyna} />
+        </div>
       </Sayfa>
     );
   }

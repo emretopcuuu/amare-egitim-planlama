@@ -1573,6 +1573,8 @@ export type Database = {
           metin: string | null
           participant_id: string
           sekillendi_at: string | null
+          son_durtme_at: string | null
+          son_tanik_uyari_at: string | null
           updated_at: string
           voice_path: string | null
         }
@@ -1584,6 +1586,8 @@ export type Database = {
           metin?: string | null
           participant_id: string
           sekillendi_at?: string | null
+          son_durtme_at?: string | null
+          son_tanik_uyari_at?: string | null
           updated_at?: string
           voice_path?: string | null
         }
@@ -1595,6 +1599,8 @@ export type Database = {
           metin?: string | null
           participant_id?: string
           sekillendi_at?: string | null
+          son_durtme_at?: string | null
+          son_tanik_uyari_at?: string | null
           updated_at?: string
           voice_path?: string | null
         }
@@ -1603,6 +1609,83 @@ export type Database = {
             foreignKeyName: "soz_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      soz_durtme: {
+        Row: {
+          created_at: string
+          gonderen: string | null
+          id: string
+          mesaj: string | null
+          sahibi: string
+          tip: string
+        }
+        Insert: {
+          created_at?: string
+          gonderen?: string | null
+          id?: string
+          mesaj?: string | null
+          sahibi: string
+          tip: string
+        }
+        Update: {
+          created_at?: string
+          gonderen?: string | null
+          id?: string
+          mesaj?: string | null
+          sahibi?: string
+          tip?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "soz_durtme_gonderen_fkey"
+            columns: ["gonderen"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "soz_durtme_sahibi_fkey"
+            columns: ["sahibi"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      soz_takip: {
+        Row: {
+          created_at: string
+          gun: string
+          id: string
+          notlar: string | null
+          participant_id: string
+          yapildi: boolean
+        }
+        Insert: {
+          created_at?: string
+          gun: string
+          id?: string
+          notlar?: string | null
+          participant_id: string
+          yapildi?: boolean
+        }
+        Update: {
+          created_at?: string
+          gun?: string
+          id?: string
+          notlar?: string | null
+          participant_id?: string
+          yapildi?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "soz_takip_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
             referencedRelation: "participants"
             referencedColumns: ["id"]
           },
