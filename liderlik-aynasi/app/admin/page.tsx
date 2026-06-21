@@ -360,9 +360,6 @@ export default async function AdminPanel() {
           panelin tepesinde numaralı rehber belirir; kurulum bitince kaybolur. */}
       {tamYetki && <HazirlikPaneli konum="ust" aktifAsama={aktifAsama} />}
 
-      {/* UX #1 (2.tur): Komuta triyajı — şu an ilgilenilmesi gereken adaylar */}
-      {tamYetki && <TriyajKart aktifAsama={aktifAsama} />}
-
       {/* #7 Tıklanır canlı özet — büyük rakamlar (her iki rol) */}
       <CanliOzet
         katilimci={katilimciSayisi ?? 0}
@@ -383,11 +380,13 @@ export default async function AdminPanel() {
         ozet={pano.ozet}
       />
 
-      {/* #5 Son kritik eylemler şeridi */}
-      {tamYetki && <SonEylemler />}
-
-      {/* Proaktif uyarılar — dikkat isteyen durumlar */}
-      <Uyarilar uyarilar={uyarilar} />
+      {/* Son eylemler + proaktif uyarılar — tek "dikkat" bloğu */}
+      {tamYetki && (
+        <div className="space-y-3">
+          <SonEylemler />
+          <Uyarilar uyarilar={uyarilar} />
+        </div>
+      )}
 
       {/* Bugünün Akışı — kamp günündeyse o günün adımları */}
       <GununAkisi bugun={bugun} />
@@ -407,6 +406,13 @@ export default async function AdminPanel() {
           <p className="mt-2 rounded-lg bg-amber-900/15 px-3 py-2 text-xs font-medium text-amber-300/90">
             {tr.admin.ilerleme.ozellikUyari}
           </p>
+        )}
+
+        {/* Komuta triyajı: hazırlıkta takılanlar (≤aşama 2) / sessizleşenler (≥aşama 3) */}
+        {tamYetki && (
+          <div className="mt-4">
+            <TriyajKart aktifAsama={aktifAsama} />
+          </div>
         )}
 
         {!ilerleme ? (
