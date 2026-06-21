@@ -401,6 +401,11 @@ export default async function AdminPanel() {
           )}
           <Ipucu {...tr.admin.yardim.panelIlerleme} />
         </h2>
+        {acikDalga && (
+          <p className="mt-2 rounded-lg bg-amber-900/15 px-3 py-2 text-xs font-medium text-amber-300/90">
+            {tr.admin.ilerleme.ozellikUyari}
+          </p>
+        )}
 
         {!ilerleme ? (
           /* #6 Bağlamsal sakin boş durum: "bozuk mu?" hissi yerine güven. */

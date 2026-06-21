@@ -2052,6 +2052,8 @@ export const tr = {
       vazgec: "Vazgeç",
       dalgaKapat: "Dalgayı kapatınca katılımcılar artık puanlayamaz. Emin misin?",
       raporAc: "Raporları açınca herkes aynasını görür — bu, kapanışın geri alınamaz anı. Emin misin?",
+      raporAcErken:
+        "DİKKAT: Mektuplar henüz hazır değil. Şimdi açarsan bazı adaylar boş/zayıf rapor görür. Yine de açmak istediğine emin misin?",
       raporKapat: "Raporları yeniden gizlemek istediğine emin misin?",
     },
     // Fotoğraf anı duvarı moderasyonu (büyük ekran herkese açık → onay şart)
@@ -2230,6 +2232,8 @@ export const tr = {
     },
     ilerleme: {
       baslik: "Canlı İlerleme",
+      ozellikUyari:
+        "⚠️ Dalga açıkken liderlik özelliği (trait) EKLEME/ÇIKARMA — öz-puanını bitirmiş adaylar tekrar 'eksik' sayılıp kilitlenir.",
       acikDalgaYok: "Açık dalga yok — ilerleme, bir dalga açıldığında görünür.",
       katilimci: "Katılımcı",
       ozTamam: "Öz değerlendirme",
@@ -2554,6 +2558,9 @@ export const tr = {
       mektupUret: "Eksik Mektupları Üret",
       mektupUretiliyor: (ad: string) => `Yazılıyor: ${ad}…`,
       mektupTamam: "Tüm mektuplar hazır ✓",
+      // #4 Mektuplar hazır değilken rapor açma uyarısı
+      mektupEksikUyari: (hazir: number, toplam: number) =>
+        `⚠️ Mektupların yalnızca ${hazir}/${toplam}'i hazır. Şimdi açarsan eksik kişiler boş/zayıf rapor görür. Önce "Eksik Mektupları Üret".`,
       mektupHata: "Mektup üretimi durdu. Tekrar başlatabilirsin.",
       mektupAnahtarYok:
         "ANTHROPIC_API_KEY tanımlı değil — mektuplar üretilemez (Vercel ortam değişkenlerine ekle).",

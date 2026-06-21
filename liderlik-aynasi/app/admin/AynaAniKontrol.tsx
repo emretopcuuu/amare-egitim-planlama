@@ -81,6 +81,11 @@ export default function AynaAniKontrol({ acik, mektupHazir, mektupToplam }: Prop
   }
 
   const tumHazir = hazirSayisi >= mektupToplam;
+  // #4 Mektuplar %80 hazır değilse rapor açmadan önce GÜÇLÜ onay + görünür
+  // uyarı. (Sert kilit değil: bazı kişiler mektupsuz kalabilir, kalıcı
+  // kilitlenmeyi önlüyoruz — ama yanlışlıkla erken açmayı zorlaştırıyoruz.)
+  const mektupYeterli = mektupToplam === 0 || hazirSayisi >= Math.ceil(mektupToplam * 0.8);
+  const erkenAcmaRiski = !acik && !mektupYeterli;
 
   return (
     <div className="mt-4 space-y-5">
@@ -116,6 +121,13 @@ export default function AynaAniKontrol({ acik, mektupHazir, mektupToplam }: Prop
         </div>
       </div>
 
+      {/* #4 Mektuplar hazır değilken görünür uyarı (rapor açmadan önce) */}
+      {erkenAcmaRiski && (
+        <p className="rounded-xl bg-amber-900/20 px-4 py-2.5 text-sm font-medium text-amber-300">
+          {t.mektupEksikUyari(hazirSayisi, mektupToplam)}
+        </p>
+      )}
+
       {/* Büyük düğme */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p
@@ -124,7 +136,13 @@ export default function AynaAniKontrol({ acik, mektupHazir, mektupToplam }: Prop
           {acik ? `● ${t.durumAcik}` : `○ ${t.durumKapali}`}
         </p>
         <OnayliDugme
-          onayMetni={acik ? tr.admin.onay.raporKapat : tr.admin.onay.raporAc}
+          onayMetni={
+            acik
+              ? tr.admin.onay.raporKapat
+              : erkenAcmaRiski
+                ? tr.admin.onay.raporAcErken
+                : tr.admin.onay.raporAc
+          }
           onaylandi={() => degistir(!acik)}
           disabled={bekliyor}
           className={`rounded-xl px-6 py-3 font-bold transition-colors disabled:opacity-50 ${
