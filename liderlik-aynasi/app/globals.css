@@ -296,6 +296,13 @@ html[data-tema="gunduz"] .kariyer-cizgi {
 html[data-tema="gunduz"] .kariyer-satir:nth-child(even) {
   background: rgba(16, 37, 56, 0.035);
 }
+/* Liste ayraçları (divide karşılığı) — iki temada da okunur ince çizgi. */
+.kariyer-bol > * + * {
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+html[data-tema="gunduz"] .kariyer-bol > * + * {
+  border-top-color: rgba(16, 37, 56, 0.09);
+}
 .sahne-giris > *:nth-child(2) {
   animation-delay: 0.06s;
 }
@@ -1134,25 +1141,6 @@ html[data-tema="gunduz"] .text-slate-500 {
 }
 html[data-tema="gunduz"] .text-white {
   color: #102538 !important;
-}
-
-/* BİLEREK KOYU PANELLER (kariyer tablosu, HBB, simülasyon vb.): gündüz teması
-   tüm slate metni koyuya çevirir; koyu zeminli bu panellerde bu "koyu-üstü-koyu"
-   yaratıp yazıyı yutuyordu. .koyu-panel içindeki metin gündüzde de AÇIK kalır.
-   Daha yüksek özgüllük (.koyu-panel .text-*) genel kuralı geçersiz kılar. */
-html[data-tema="gunduz"] .koyu-panel .text-slate-50,
-html[data-tema="gunduz"] .koyu-panel .text-slate-100,
-html[data-tema="gunduz"] .koyu-panel .text-slate-200 {
-  color: #eef4fb !important;
-}
-html[data-tema="gunduz"] .koyu-panel .text-slate-300 {
-  color: #cad6e4 !important;
-}
-html[data-tema="gunduz"] .koyu-panel .text-slate-400 {
-  color: #a3b4c6 !important;
-}
-html[data-tema="gunduz"] .koyu-panel .text-slate-500 {
-  color: #8597aa !important;
 }
 
 /* Hafif beyaz dolgulu kutular (ayar kartları: Yazı Boyutu, Görünüm) gündüzde

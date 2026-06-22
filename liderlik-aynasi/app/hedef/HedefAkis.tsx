@@ -610,14 +610,14 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
 // her ay bonus + ortalama kazanç. Uzun vadeli hedef seçiminden ÖNCE gösterilir.
 function HbbKarti() {
   return (
-    <div className="koyu-panel overflow-hidden rounded-2xl border border-gold/40 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
+    <div className="kart-cam overflow-hidden rounded-2xl shadow-[0_22px_55px_-26px_rgba(15,30,50,0.45)]">
       <div className="border-l-4 border-gold bg-gold/10 px-4 py-3">
-        <p className="text-sm font-bold text-gold-light">{t.hbbBaslik}</p>
+        <p className="kariyer-baslik text-sm font-bold">{t.hbbBaslik}</p>
         <p className="mt-0.5 text-xs text-slate-300">{t.hbbAciklama}</p>
       </div>
       <table className="w-full border-collapse text-left">
         <thead>
-          <tr className="bg-white/[0.05] text-[0.6rem] font-semibold uppercase tracking-wide text-slate-400">
+          <tr className="kariyer-baslik kariyer-cizgi border-b text-[0.6rem] font-semibold uppercase tracking-wide">
             <th className="px-3 py-2">{t.hbbAy}</th>
             <th className="px-2 py-2 text-right">{t.hbbBonus}</th>
             <th className="px-2 py-2 text-right">{t.hbbOrtalama}</th>
@@ -626,9 +626,9 @@ function HbbKarti() {
         </thead>
         <tbody>
           {HBB_AYLAR.map((a) => (
-            <tr key={a.ay} className="border-t border-royal/15">
+            <tr key={a.ay} className="kariyer-cizgi border-t">
               <td className="px-3 py-2.5">
-                <span className="text-sm font-medium text-slate-50">{t.hbbAyEtiket(a.ay)}</span>
+                <span className="text-sm font-semibold text-slate-100">{t.hbbAyEtiket(a.ay)}</span>
                 <span className="ml-1.5 rounded-full bg-gold/20 px-1.5 py-0.5 text-[0.55rem] font-semibold text-gold-light">
                   {a.rutbe}
                 </span>
@@ -639,18 +639,18 @@ function HbbKarti() {
               <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
                 {tlFormat(a.ortalama)}
               </td>
-              <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums text-emerald-300">
+              <td className="kariyer-vurgu whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums">
                 {tlFormat(a.toplam)}
               </td>
             </tr>
           ))}
-          <tr className="border-t border-gold/30 bg-gold/5">
-            <td className="px-3 py-2.5 text-sm font-bold text-gold-light">{t.hbbToplamSatir}</td>
+          <tr className="kariyer-cizgi border-t bg-gold/5">
+            <td className="kariyer-baslik px-3 py-2.5 text-sm font-bold">{t.hbbToplamSatir}</td>
             <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-300">
               {tlFormat(HBB_BONUS_TOPLAM)}
             </td>
             <td />
-            <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums text-emerald-200">
+            <td className="kariyer-vurgu whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums">
               {tlFormat(HBB_TOPLAM)}
             </td>
           </tr>
@@ -707,14 +707,14 @@ function PlanKarti({ plan }: { plan: KariyerPlani }) {
   const ara = km.slice(0, -1);
   const ana = km[km.length - 1];
   return (
-    <div className="koyu-panel overflow-hidden rounded-2xl border border-emerald-400/40 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
+    <div className="kart-cam overflow-hidden rounded-2xl shadow-[0_22px_55px_-26px_rgba(15,30,50,0.45)]">
       <div className="border-l-4 border-emerald-400 bg-emerald-500/15 px-5 py-3">
-        <p className="text-lg font-bold text-emerald-50">{t.planBaslik(plan.rutbe)}</p>
-        <p className="text-xs text-emerald-200/90">
+        <p className="kariyer-vurgu text-lg font-bold">{t.planBaslik(plan.rutbe)}</p>
+        <p className="text-xs text-slate-300">
           {t.planOzet(plan.sureAy, plan.gunlukSaatEtiket, plan.haftalikSaat)}
         </p>
       </div>
-      <dl className="divide-y divide-white/5 px-5 py-1 text-sm">
+      <dl className="kariyer-bol px-5 py-1 text-sm">
         {ara.map((k, i) => (
           <SatirKV
             key={k.rutbe}
@@ -724,7 +724,7 @@ function PlanKarti({ plan }: { plan: KariyerPlani }) {
         ))}
         <div className="flex items-baseline justify-between gap-3 py-3">
           <dt className="text-slate-400">{t.anaHedef(ana.ay)}</dt>
-          <dd className="text-right text-lg font-bold text-emerald-300">
+          <dd className="kariyer-vurgu text-right text-lg font-bold">
             {ana.rutbe} — {tlFormat(ana.gelir, ana.arti)} {t.aylikBirim}
           </dd>
         </div>
@@ -737,7 +737,7 @@ function PlanKarti({ plan }: { plan: KariyerPlani }) {
         <SatirKV k={t.geriDonus} v={t.geriDonusDeger(plan.geriDonusAy)} guclu />
       </dl>
       <div className="bg-gold/[0.06] px-5 py-3">
-        <p className="text-sm leading-relaxed text-gold-light">
+        <p className="kariyer-baslik text-sm leading-relaxed">
           {t.bunuDusun(
             plan.gunlukSaatEtiket,
             plan.sureAy,
@@ -757,30 +757,30 @@ function OvSimKarti({ ov0, ovHedef, sureAy }: { ov0: number; ovHedef: number; su
   const tempoYuzde = tempo > 0 ? `%${(tempo * 100).toFixed(0)}` : "—";
   const makul = makuSure(ov0, ovHedef);
   return (
-    <div className="koyu-panel overflow-hidden rounded-2xl border border-royal-light/25 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
-      <div className="border-b border-royal-light/15 px-4 py-2.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">{t.simulasyonBaslik}</p>
+    <div className="kart-cam overflow-hidden rounded-2xl shadow-[0_22px_55px_-26px_rgba(15,30,50,0.45)]">
+      <div className="kariyer-cizgi border-b px-4 py-2.5">
+        <p className="kariyer-baslik text-xs font-semibold uppercase tracking-wide">{t.simulasyonBaslik}</p>
       </div>
       {/* Senaryo tablosu */}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[300px] text-xs">
           <thead>
-            <tr className="border-b border-royal-light/10 text-slate-500">
-              <th className="px-3 py-2 text-left">Ay</th>
+            <tr className="kariyer-cizgi kariyer-baslik border-b">
+              <th className="px-3 py-2 text-left font-semibold">Ay</th>
               {OV_SENARYOLAR.map((s) => (
                 <th key={s.etiket} className="px-2 py-2 text-right font-semibold">{s.etiket}</th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-royal-light/10">
+          <tbody className="kariyer-bol">
             {milestoneAylar.map((ay) => (
               <tr key={ay} className={ay === sureAy ? "bg-gold/5" : ""}>
-                <td className="px-3 py-2 font-medium text-slate-300">{t.simulasyonAyEtiket(ay)}</td>
+                <td className="px-3 py-2 font-semibold text-slate-300">{t.simulasyonAyEtiket(ay)}</td>
                 {OV_SENARYOLAR.map((s) => {
                   const ov = ovSimulasyonu(ov0, ay, s.buyume);
                   const ulasmis = ov >= ovHedef;
                   return (
-                    <td key={s.etiket} className={`px-2 py-2 text-right font-mono ${ulasmis ? "font-bold text-emerald-400" : "text-slate-300"}`}>
+                    <td key={s.etiket} className={`px-2 py-2 text-right font-mono ${ulasmis ? "kariyer-vurgu font-bold" : "text-slate-400"}`}>
                       {tlFormat(ov)}{ulasmis ? " ✓" : ""}
                     </td>
                   );
@@ -791,12 +791,12 @@ function OvSimKarti({ ov0, ovHedef, sureAy }: { ov0: number; ovHedef: number; su
         </table>
       </div>
       {/* Tempo + makul süre */}
-      <div className="space-y-1 border-t border-royal-light/15 px-4 py-2.5">
+      <div className="kariyer-cizgi space-y-1 border-t px-4 py-2.5">
         <p className="text-xs text-slate-400">{t.simulasyonGerekliTempo(tempoYuzde)}</p>
-        {makul > 0 && <p className="text-xs text-gold-light">{t.simulasyonMakul(makul)}</p>}
+        {makul > 0 && <p className="kariyer-baslik text-xs">{t.simulasyonMakul(makul)}</p>}
       </div>
       {/* Uyarı */}
-      <div className="border-t border-royal-light/15 px-4 py-2.5">
+      <div className="kariyer-cizgi border-t px-4 py-2.5">
         <p className="text-[0.65rem] leading-relaxed text-slate-500">{t.simulasyonUyari}</p>
       </div>
     </div>
