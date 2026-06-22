@@ -27,6 +27,14 @@ import {
 } from "../lib/auth/rateLimitKural";
 import { dusukGuvenMi, MIN_DEGERLENDIREN } from "../lib/raporGuven";
 import {
+  WA_SABLONLAR,
+  sablonBul,
+  ilkAd,
+  degiskenleriUret,
+  onizleme,
+  twilioTipleri,
+} from "../lib/whatsappSablonlari";
+import {
   KAMP_GUNLERI,
   KAMP_PROGRAMI,
   kampGunu,
@@ -1043,6 +1051,69 @@ console.log("\n■ 11) FAZ B — SÖZ TAKİBİ & DÜRTME ESKALASYONU");
   iddia(dusukGuvenMi(8) === false, "8 değerlendiren → güvenli");
 
   console.log("  Bölüm 14: rapor güven eşiği (zarif ele alma) doğrulandı");
+}
+
+// ---------------------------------------------------------------
+// BÖLÜM 15 — WHATSAPP ŞABLONLARI (Meta onay kuralları + değişken üretimi)
+{
+  console.log("\n── Bölüm 15: WhatsApp şablonları ──");
+
+  // İlk ad çıkarımı (sıcak hitap)
+  iddia(ilkAd("Ayşe Yılmaz") === "Ayşe", "ilkAd: çok kelimeli addan ilk ad");
+  iddia(ilkAd("  Mehmet  ") === "Mehmet", "ilkAd: baştaki/sondaki boşluk temizlenir");
+  iddia(ilkAd("Elif") === "Elif", "ilkAd: tek kelime aynen döner");
+
+  // Meta onay kuralları — her şablon gövdesi için
+  const degiskenSay = (g: string) => (g.match(/\{\{\d+\}\}/g) ?? []).length;
+  for (const s of WA_SABLONLAR) {
+    const g = s.govde.trim();
+    iddia(!/^\{\{\d+\}\}/.test(g), `${s.anahtar}: gövde değişkenle BAŞLAMIYOR`);
+    iddia(!/\{\{\d+\}\}$/.test(g), `${s.anahtar}: gövde değişkenle BİTMİYOR`);
+    iddia(!/\{\{\d+\}\}\s*\{\{\d+\}\}/.test(g), `${s.anahtar}: yan yana değişken yok`);
+
+    // Değişkenler 1'den başlayıp atlamadan sıralı (gövde + buton url birlikte)
+    const tumMetin = g + (s.buton ? ` ${s.buton.url}` : "");
+    const numaralar = [...tumMetin.matchAll(/\{\{(\d+)\}\}/g)].map((m) => Number(m[1]));
+    const tekil = [...new Set(numaralar)].sort((a, b) => a - b);
+    iddia(
+      tekil.every((v, i) => v === i + 1),
+      `${s.anahtar}: değişkenler 1..n sıralı (atlamasız)`
+    );
+
+    // Tüm gövde değişkenlerinin örnek değeri var (CTA/medya onayı için şart)
+    for (let i = 1; i <= degiskenSay(g); i++) {
+      iddia(!!s.ornek[String(i)], `${s.anahtar}: {{${i}}} için örnek değer var`);
+    }
+  }
+
+  // Değişken üretimi — giriş/ödev: ad + kod; duyuru: ad + serbest mesaj
+  const giris = sablonBul("giris")!;
+  const gd = degiskenleriUret(giris, { ad: "Ayşe Yılmaz", kod: "427813" });
+  iddia(gd["1"] === "Ayşe" && gd["2"] === "427813", "giris: değişkenler {1:ilkAd, 2:kod}");
+
+  const duyuru = sablonBul("duyuru")!;
+  const dd = degiskenleriUret(duyuru, { ad: "Mehmet Demir", kod: "111111" }, "Yarın 09.00 salon");
+  iddia(dd["1"] === "Mehmet" && dd["2"] === "Yarın 09.00 salon", "duyuru: {1:ilkAd, 2:mesaj}");
+
+  // Önizleme: yer tutucular dolar, buton etiketi görünür
+  const onz = onizleme(giris, gd);
+  iddia(onz.includes("Ayşe") && onz.includes("427813"), "önizleme: değişkenler dolduruldu");
+  iddia(onz.includes(giris.buton!.baslik), "önizleme: buton etiketi görünüyor");
+  iddia(!onz.includes("{{"), "önizleme: çözülmemiş yer tutucu kalmadı");
+
+  // Twilio tipleri: butonlu → call-to-action + text yedeği; duyuru → salt text
+  const tip = twilioTipleri(giris) as Record<string, unknown>;
+  iddia("twilio/call-to-action" in tip && "twilio/text" in tip, "giris: CTA + text yedeği üretildi");
+  const dtip = twilioTipleri(duyuru) as Record<string, unknown>;
+  iddia(!("twilio/call-to-action" in dtip) && "twilio/text" in dtip, "duyuru: salt metin tipi");
+
+  // Adres normalizasyonu (saf regex; whatsapp.ts ile aynı kural)
+  const adresGecerli = (tel: string) => /^\+[1-9]\d{7,14}$/.test(tel.trim());
+  iddia(adresGecerli("+905001112233"), "telefon: E.164 geçerli");
+  iddia(!adresGecerli("05001112233"), "telefon: önek yoksa geçersiz");
+  iddia(!adresGecerli(""), "telefon: boş geçersiz");
+
+  console.log("  Bölüm 15: WhatsApp şablon kuralları + değişken üretimi doğrulandı");
 }
 
 // ---------------------------------------------------------------

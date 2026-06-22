@@ -1,0 +1,273 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { tr } from "@/lib/i18n/tr";
+import { tost } from "@/lib/tost";
+import {
+  WA_SABLONLAR,
+  type WaSablonAnahtar,
+  degiskenleriUret,
+  onizleme,
+} from "@/lib/whatsappSablonlari";
+
+const t = tr.admin.whatsapp;
+
+type Kisi = { id: string; ad: string; takim: string | null; telefonVar: boolean };
+type HedefTipi = "genel" | "takim" | "kisiler" | "odevYapmayan";
+
+export default function WhatsAppGonder({
+  yapilandirildi,
+  takimlar,
+  kisiler,
+  odevYapmayanSayisi,
+  telefonsuz,
+  kayitliAnahtarlar,
+}: {
+  yapilandirildi: boolean;
+  takimlar: string[];
+  kisiler: Kisi[];
+  odevYapmayanSayisi: number;
+  telefonsuz: number;
+  kayitliAnahtarlar: string[];
+}) {
+  const router = useRouter();
+  const [sablonAnahtar, setSablonAnahtar] = useState<WaSablonAnahtar | null>(null);
+  const [hedefTipi, setHedefTipi] = useState<HedefTipi>("genel");
+  const [takim, setTakim] = useState<string>(takimlar[0] ?? "");
+  const [seciliKisiler, setSeciliKisiler] = useState<Set<string>>(new Set());
+  const [mesaj, setMesaj] = useState("");
+  const [onayAcik, setOnayAcik] = useState(false);
+  const [gonderiliyor, setGonderiliyor] = useState(false);
+
+  const sablon = WA_SABLONLAR.find((s) => s.anahtar === sablonAnahtar) ?? null;
+  const telefonluToplam = kisiler.filter((k) => k.telefonVar).length;
+
+  // Seçili kitlenin yaklaşık telefonlu kişi sayısı (UI bilgisi).
+  const hedefSayisi = useMemo(() => {
+    if (hedefTipi === "genel") return telefonluToplam;
+    if (hedefTipi === "takim")
+      return kisiler.filter((k) => k.takim === takim && k.telefonVar).length;
+    if (hedefTipi === "odevYapmayan") return odevYapmayanSayisi;
+    if (hedefTipi === "kisiler")
+      return kisiler.filter((k) => seciliKisiler.has(k.id) && k.telefonVar).length;
+    return 0;
+  }, [hedefTipi, takim, seciliKisiler, kisiler, telefonluToplam, odevYapmayanSayisi]);
+
+  const onizlemeMetni = sablon
+    ? onizleme(sablon, degiskenleriUret(sablon, { ad: sablon.ornek["1"], kod: sablon.ornek["2"] }, mesaj || sablon.ornek["2"]))
+    : "";
+
+  function kisiSec(id: string) {
+    setSeciliKisiler((eski) => {
+      const yeni = new Set(eski);
+      if (yeni.has(id)) yeni.delete(id);
+      else yeni.add(id);
+      return yeni;
+    });
+  }
+
+  const gonderilebilir =
+    !!sablon &&
+    yapilandirildi &&
+    kayitliAnahtarlar.includes(sablon.anahtar) &&
+    hedefSayisi > 0 &&
+    (!sablon.serbestMi || mesaj.trim().length > 0) &&
+    !gonderiliyor;
+
+  async function gonder() {
+    if (!sablon) return;
+    setGonderiliyor(true);
+    try {
+      const res = await fetch("/api/admin/whatsapp", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          sablon: sablon.anahtar,
+          hedefTipi,
+          takim: hedefTipi === "takim" ? takim : undefined,
+          kisiIds: hedefTipi === "kisiler" ? [...seciliKisiler] : undefined,
+          mesaj: sablon.serbestMi ? mesaj.trim() : undefined,
+        }),
+      });
+      const veri = await res.json().catch(() => null);
+      if (!res.ok) {
+        tost(veri?.hata ?? t.api.hedefYok, "hata");
+        return;
+      }
+      tost(t.sonuc(veri.basarili, veri.basarisiz, veri.telefonsuz), "basari");
+      setOnayAcik(false);
+      router.refresh();
+    } catch {
+      tost(t.api.hedefYok, "hata");
+    } finally {
+      setGonderiliyor(false);
+    }
+  }
+
+  return (
+    <section className="kart-3d space-y-5 rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      {/* 1) Şablon seçimi */}
+      <div>
+        <h2 className="text-sm font-semibold text-gold-light">{t.adim1}</h2>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          {WA_SABLONLAR.map((s) => {
+            const kayitli = kayitliAnahtarlar.includes(s.anahtar);
+            const secili = sablonAnahtar === s.anahtar;
+            return (
+              <button
+                key={s.anahtar}
+                onClick={() => setSablonAnahtar(s.anahtar)}
+                className={`rounded-xl border p-3 text-left transition-colors ${
+                  secili
+                    ? "border-gold/60 bg-gold/10"
+                    : "border-white/15 bg-white/[0.04] hover:bg-white/[0.08]"
+                }`}
+              >
+                <span className="text-base" aria-hidden>
+                  {s.ikon}
+                </span>
+                <p className="mt-1 text-sm font-semibold text-slate-100">{s.etiket}</p>
+                <p className="mt-0.5 text-xs text-slate-400">{s.aciklama}</p>
+                {!kayitli && (
+                  <p className="mt-1 text-[0.7rem] font-medium text-amber-300">{t.onayBekliyor}</p>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {sablon && (
+        <>
+          {/* 2) Serbest mesaj (yalnız duyuru) */}
+          {sablon.serbestMi && (
+            <div>
+              <h2 className="text-sm font-semibold text-gold-light">{t.adimMesaj}</h2>
+              <textarea
+                value={mesaj}
+                onChange={(e) => setMesaj(e.target.value)}
+                maxLength={600}
+                rows={4}
+                placeholder={t.mesajIpucu}
+                className="mt-2 w-full rounded-xl border border-white/15 bg-midnight/60 p-3 text-sm text-slate-100 placeholder:text-slate-500 focus:border-gold/50 focus:outline-none"
+              />
+              <p className="mt-1 text-right text-xs text-slate-500">{mesaj.length}/600</p>
+            </div>
+          )}
+
+          {/* 3) Kitle seçimi */}
+          <div>
+            <h2 className="text-sm font-semibold text-gold-light">{t.adim2}</h2>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {([
+                ["genel", t.hedefGenel],
+                ["takim", t.hedefTakim],
+                ["odevYapmayan", t.hedefOdev(odevYapmayanSayisi)],
+                ["kisiler", t.hedefKisiler],
+              ] as [HedefTipi, string][]).map(([tip, etiket]) => (
+                <button
+                  key={tip}
+                  onClick={() => setHedefTipi(tip)}
+                  className={`rounded-lg border px-3 py-2 text-sm transition-colors ${
+                    hedefTipi === tip
+                      ? "border-royal-light/60 bg-royal/30 text-gold-light"
+                      : "border-white/15 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]"
+                  }`}
+                >
+                  {etiket}
+                </button>
+              ))}
+            </div>
+
+            {hedefTipi === "takim" && (
+              <select
+                value={takim}
+                onChange={(e) => setTakim(e.target.value)}
+                className="mt-3 w-full rounded-xl border border-white/15 bg-midnight/60 p-2.5 text-sm text-slate-100 focus:border-gold/50 focus:outline-none"
+              >
+                {takimlar.map((tk) => (
+                  <option key={tk} value={tk}>
+                    {tk}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            {hedefTipi === "kisiler" && (
+              <div className="mt-3 max-h-56 space-y-1 overflow-y-auto rounded-xl border border-white/10 bg-midnight/40 p-2">
+                {kisiler.map((k) => (
+                  <label
+                    key={k.id}
+                    className={`flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-sm ${
+                      k.telefonVar ? "text-slate-200 hover:bg-white/[0.06]" : "text-slate-500"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={seciliKisiler.has(k.id)}
+                      onChange={() => kisiSec(k.id)}
+                      disabled={!k.telefonVar}
+                      className="h-4 w-4 accent-gold"
+                    />
+                    <span className="flex-1">{k.ad}</span>
+                    {k.takim && <span className="text-xs text-slate-500">{k.takim}</span>}
+                    {!k.telefonVar && <span className="text-xs text-amber-400">{t.telefonYok}</span>}
+                  </label>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 4) Önizleme */}
+          <div>
+            <h2 className="text-sm font-semibold text-gold-light">{t.onizlemeBaslik}</h2>
+            <pre className="mt-2 whitespace-pre-wrap rounded-xl border border-emerald-400/20 bg-[#0b141a] p-4 font-sans text-sm leading-relaxed text-slate-100">
+              {onizlemeMetni}
+            </pre>
+          </div>
+
+          {/* 5) Gönder */}
+          <div className="border-t border-white/10 pt-4">
+            <p className="text-sm text-slate-300">{t.hedefOzet(hedefSayisi)}</p>
+            {telefonsuz > 0 && hedefTipi === "genel" && (
+              <p className="mt-1 text-xs text-amber-400">{t.telefonsuzNot(telefonsuz)}</p>
+            )}
+
+            {onayAcik ? (
+              <div className="mt-3 rounded-xl border border-gold/40 bg-gold/10 p-4">
+                <p className="text-sm font-medium text-slate-100">
+                  {t.onaySoru(sablon.etiket, hedefSayisi)}
+                </p>
+                <div className="mt-3 flex gap-2">
+                  <button
+                    onClick={gonder}
+                    disabled={gonderiliyor}
+                    className="rounded-lg bg-gold px-4 py-2 text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
+                  >
+                    {gonderiliyor ? t.gonderiliyor : t.gonderEt}
+                  </button>
+                  <button
+                    onClick={() => setOnayAcik(false)}
+                    disabled={gonderiliyor}
+                    className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm text-slate-300 transition-colors hover:bg-midnight-soft disabled:opacity-50"
+                  >
+                    {t.vazgec}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setOnayAcik(true)}
+                disabled={!gonderilebilir}
+                className="btn-3d mt-3 rounded-xl bg-gold px-5 py-2.5 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {t.gonder}
+              </button>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
