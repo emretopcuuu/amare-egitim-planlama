@@ -23,6 +23,14 @@ export function suDalgasi(x?: number, y?: number) {
   }
 }
 
+// Kutlama anı: bir başarı (hedef mühürlendi, görev tamamlandı) gerçekleştiğinde
+// dokunsal nabız + su dalgası birlikte tetiklenir. Görsel kıvılcım patlaması
+// ayrı bileşenle (KivilcimPatlama) yapılır. Hareket-azalt/destek yoksa sessiz.
+export function kutla() {
+  titret([18, 40, 22]);
+  suDalgasi();
+}
+
 // Tek seferlik paylaşılan AudioContext (her seste yeni context açmak pahalı
 // ve tarayıcı limitlidir). İlk dokunuştan sonra hazır olur.
 let _ses: AudioContext | null = null;

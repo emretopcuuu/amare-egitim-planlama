@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import { kutla } from "@/lib/his";
+import KivilcimPatlama from "@/components/KivilcimPatlama";
 import {
   KARIYER_BASAMAKLARI,
   SURE_SECENEKLERI,
@@ -54,6 +56,7 @@ export default function HedefAkis({
   const [hata, setHata] = useState<string | null>(null);
   const [plan, setPlan] = useState<KariyerPlani | null>(durum.plan);
   const [ov0, setOv0] = useState<number | null>(durum.baslangicOv ?? null);
+  const [kutlama, setKutlama] = useState(0); // hedef mühürlenince kıvılcım patlaması
 
   async function istek(govde: Record<string, unknown>) {
     const res = await fetch("/api/hedef", {
@@ -141,6 +144,8 @@ export default function HedefAkis({
           }
           setPlan(v.plan as KariyerPlani);
           setFaz("tamam");
+          kutla(); // dokunsal + su dalgası
+          setKutlama((k) => k + 1); // kıvılcım patlaması
         }}
         mesgul={mesgul}
         hata={hata}
@@ -152,6 +157,7 @@ export default function HedefAkis({
   // ---- TAMAM: mühürlenmiş plan ----
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
+      <KivilcimPatlama tetik={kutlama} />
       <div className="text-center">
         <p className="text-5xl" aria-hidden>
           🎯
@@ -455,6 +461,9 @@ function Wizard({
         <Rozet etiket={t.suresiEtiket} deger={sureObj.etiket} onTik={adim < 4 ? undefined : () => setSure(null)} />
       )}
 
+      {/* key={adim} → her soru geçişinde blok yeniden monte olur ve 'of-adim'
+          sinematik girişiyle (kayma + hafif yakınlaşma) belirir. */}
+      <div key={adim} className="of-adim space-y-4">
       {adim === 1 && (
         <section>
           <p className="rounded-xl bg-emerald-500/10 px-4 py-3 text-sm leading-relaxed text-emerald-200">
@@ -520,6 +529,7 @@ function Wizard({
           </button>
         </section>
       )}
+      </div>
 
       <SifirlaSatiri onSifirla={onSifirla} />
     </div>
