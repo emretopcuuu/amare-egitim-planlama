@@ -26,16 +26,43 @@ const TEMA: Record<string, string> = {
 
 // #3 Ayna Raporu "story" katmanı: kişinin en kritik içgörülerini tam-ekran,
 // kaydırmalı/otomatik akan slaytlar olarak gösterir — kör nokta doruk noktası.
+// #2 Rapor Anı sinematiği: otomatikAnahtar verilirse rapor İLK açıldığında
+// (kişi başına bir kez, localStorage) sinema kendiliğinden başlar — düz veri
+// yığını değil, rehberli törensel açılış.
 export default function AynaHikaye({
   slaytlar,
   etiket,
+  otomatikAnahtar,
+  muhurAktif = false,
 }: {
   slaytlar: Slayt[];
   etiket?: string;
+  otomatikAnahtar?: string;
+  muhurAktif?: boolean;
 }) {
   const [acik, setAcik] = useState(false);
   const [i, setI] = useState(0);
   useEsc(acik, () => setAcik(false));
+
+  // İlk açılışta sinemayı kendiliğinden başlat (kişi başına bir kez).
+  // Kamp sonu Mühür Açılışı aktifse, o tören zaten sinematik açılış görevini
+  // görür (z-70 tam ekran) — sinema onun üstüne binmesin; buton hep elde kalır.
+  useEffect(() => {
+    if (!otomatikAnahtar || slaytlar.length === 0 || muhurAktif) return;
+    try {
+      if (localStorage.getItem(otomatikAnahtar)) return;
+      localStorage.setItem(otomatikAnahtar, "1");
+    } catch {
+      return; // localStorage yoksa otomatik açma; buton hep elde
+    }
+    // Kısa gecikme: sayfa oturup perde geçişi yumuşak başlasın
+    const id = setTimeout(() => {
+      setI(0);
+      setAcik(true);
+    }, 600);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!acik || i >= slaytlar.length - 1) return;
