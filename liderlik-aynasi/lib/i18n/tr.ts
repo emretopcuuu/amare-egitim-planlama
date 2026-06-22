@@ -3584,6 +3584,22 @@ export const tr = {
     durdur: "Durdur",
     sesHata: "Ses yüklenemedi",
   } as const,
+  // #9 Akıllı zamanlı bildirimler — bağlama duyarlı, kişiye özel dürtmeler.
+  // Genel toplu dürtme yerine "bugün seni kaç kişi gözledi" gibi gerçek veriye
+  // dayalı, merak ve karşılıklılık uyandıran mesajlar.
+  akilliDurtme: {
+    gozlendiBaslik: (n: number) => `👁 Bugün ${n} kişi seni gözlemledi`,
+    gozlendiGovde:
+      "Aynan derinleşiyor. Sen de görmeye devam et — sıradaki gözlemin seni bekliyor.",
+    // Admin paneli — manuel tetikleme
+    yonetBaslik: "Akıllı Dürtme",
+    yonetAciklama:
+      "Bugün gözlemlenen ama haberi olmayan katılımcılara kişiye özel bildirim gönderir. Günde bir kez otomatik çalışır.",
+    tetikle: "Şimdi Gönder",
+    tetikleniyor: "Gönderiliyor…",
+    tetiklendi: "Akıllı dürtmeler gönderildi",
+    hata: "Gönderilemedi. Tekrar dene.",
+  },
   // #10 İşlem günlüğü: kritik admin eylemleri zaman damgasıyla
   islemGunlugu: {
     baslik: "İşlem Günlüğü",
