@@ -68,9 +68,12 @@ function SesDalga() {
 function SesButonu({
   onParca,
   dinleyince,
+  boyutSinif = "h-11 w-11 rounded-xl",
 }: {
   onParca: (metin: string) => void;
   dinleyince?: (aktif: boolean) => void;
+  // Satırdaki diğer kontrollerle hizalansın diye boyut dışarıdan verilebilir.
+  boyutSinif?: string;
 }) {
   const [dinliyor, setDinliyor] = useState(false);
   const [sesVar, setSesVar] = useState(false);
@@ -162,7 +165,7 @@ function SesButonu({
       onClick={() => (dinliyor ? durdur() : basla())}
       aria-label={dinliyor ? t.sesDurdur : t.sesYaz}
       aria-pressed={dinliyor}
-      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-xl transition-colors ${
+      className={`flex ${boyutSinif} shrink-0 items-center justify-center text-xl transition-colors ${
         dinliyor
           ? "bg-red-500/80 text-white ring-2 ring-red-400/50"
           : "bg-midnight-soft text-slate-300 hover:text-slate-100"
@@ -765,7 +768,7 @@ export default function PusulaSohbet({
           <div key={i} className={`flex ${m.rol === "ayna" ? "justify-start" : "justify-end"}`}>
             <p
               className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-base leading-relaxed ${
-                m.rol === "ayna" ? "kart-cam text-slate-100" : "bg-royal/40 text-slate-100"
+                m.rol === "ayna" ? "kart-cam text-slate-100" : "bg-[#4c2e8c] text-[#f5f3ff]"
               }`}
             >
               {m.icerik}
@@ -828,6 +831,7 @@ export default function PusulaSohbet({
         <SesButonu
           onParca={(m) => setGirdi((g) => (g ? `${g} ${m}` : m))}
           dinleyince={setSohbetDinliyor}
+          boyutSinif="h-12 w-12 rounded-2xl"
         />
         <button
           onClick={gonder}
