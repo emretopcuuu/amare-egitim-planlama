@@ -36,6 +36,18 @@ export const KARIYER_BASAMAKLARI: KariyerRutbe[] = [
 
 // Günlük saat seçenekleri → haftalık saat (7 gün üzerinden, ekrandaki gibi:
 // "Günde 5+ saat → Haftalık ~35 saat").
+// HIZLI BAŞLANGIÇ (HBB): yeni başlayanın ilk 3 ayı. Her ay bir rütbe (Bronze →
+// Silver → Gold) + HBB bonusu + ortalama kazanç. Bonus + ortalama = aylık toplam.
+// Rakamlar Amare HBB tablosundan (ilk 3 ay ortalama toplam kazanç senaryosu).
+export type HbbAy = { ay: number; rutbe: string; bonus: number; ortalama: number; toplam: number };
+export const HBB_AYLAR: HbbAy[] = [
+  { ay: 1, rutbe: "Bronze", bonus: 5175, ortalama: 24825, toplam: 30000 },
+  { ay: 2, rutbe: "Silver", bonus: 20700, ortalama: 39300, toplam: 60000 },
+  { ay: 3, rutbe: "Gold", bonus: 74520, ortalama: 47480, toplam: 122000 },
+];
+export const HBB_TOPLAM = HBB_AYLAR.reduce((t, a) => t + a.toplam, 0); // 212.000
+export const HBB_BONUS_TOPLAM = HBB_AYLAR.reduce((t, a) => t + a.bonus, 0); // 100.395
+
 export const GUNLUK_SAAT_SECENEKLERI = [
   { anahtar: "1", etiket: "Günde 1 saat", gunluk: 1 },
   { anahtar: "2", etiket: "Günde 2 saat", gunluk: 2 },

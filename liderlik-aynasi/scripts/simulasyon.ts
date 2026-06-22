@@ -61,6 +61,8 @@ import {
   mevcutRutbeIndex,
   simulasyonMilestonelari,
   OV_SENARYOLAR,
+  HBB_AYLAR,
+  HBB_TOPLAM,
 } from "../lib/kariyer";
 import {
   bugunTr,
@@ -959,6 +961,14 @@ console.log("\n■ 11) FAZ B — SÖZ TAKİBİ & DÜRTME ESKALASYONU");
   iddia(new Set(ms12).size === ms12.length, "aylar tekrarsız");
   const ms1 = simulasyonMilestonelari(1);
   iddia(ms1.length === 1 && ms1[0] === 1, "1 ay → tek satır (1)");
+
+  // HBB (Hızlı Başlangıç) rakam bütünlüğü — para; her ay bonus+ortalama=toplam
+  iddia(HBB_AYLAR.length === 3, "HBB: 3 ay (Bronze/Silver/Gold)");
+  for (const a of HBB_AYLAR) {
+    iddia(a.bonus + a.ortalama === a.toplam, `HBB ${a.ay}. ay: bonus+ortalama=toplam`);
+  }
+  iddia(HBB_TOPLAM === 212000, "HBB toplam = 212.000");
+  iddia(HBB_AYLAR.map((a) => a.rutbe).join() === "Bronze,Silver,Gold", "HBB rütbe sırası");
 
   // OV_SENARYOLAR içeriği doğrulama
   iddia(OV_SENARYOLAR.length === 3, "3 senaryo tanımlı");

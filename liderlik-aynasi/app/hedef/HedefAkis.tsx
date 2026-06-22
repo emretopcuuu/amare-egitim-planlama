@@ -15,12 +15,15 @@ import {
   makuSure,
   OV_SENARYOLAR,
   simulasyonMilestonelari,
+  HBB_AYLAR,
+  HBB_TOPLAM,
+  HBB_BONUS_TOPLAM,
 } from "@/lib/kariyer";
 
 const t = tr.hedef;
 
 type Mesaj = { rol: string; icerik: string };
-type Durum = { asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null };
+type Durum = { asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null; yeniBaslangic: boolean };
 type Faz = "acilis" | "baslangic" | "sohbet" | "wizard" | "tamam";
 
 const NOKTALAR = ["yeni", "baslangic", "deneyimli", "lider"] as const;
@@ -126,6 +129,7 @@ export default function HedefAkis({
     return (
       <Wizard
         ov0={ov0}
+        yeniBaslangic={durum.yeniBaslangic}
         onMuhur={async (hedefIndex, sure, gunluk) => {
           setMesgul(true);
           setHata(null);
@@ -401,12 +405,14 @@ function Sohbet({
 // ---------- Somutlaştırma wizard'ı (3 soru) ----------
 function Wizard({
   ov0,
+  yeniBaslangic,
   onMuhur,
   mesgul,
   hata,
   onSifirla,
 }: {
   ov0: number | null;
+  yeniBaslangic: boolean;
   onMuhur: (hedefIndex: number, sure: string, gunluk: string) => void;
   mesgul: boolean;
   hata: string | null;
@@ -454,6 +460,9 @@ function Wizard({
           <p className="rounded-xl bg-emerald-500/10 px-4 py-3 text-sm leading-relaxed text-emerald-200">
             {t.wizardIntro}
           </p>
+          {/* Yeni başlayan: önce Hızlı Başlangıç (ilk 3 ay) bonusları, sonra
+              uzun vadeli hedefini tablodan seçer. */}
+          {yeniBaslangic && <HbbKarti />}
           <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
             {t.soruEtiket(1)}
           </p>
@@ -576,6 +585,63 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
           ))}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// Yeni başlayan için Hızlı Başlangıç (HBB): ilk 3 ay Bronze→Silver→Gold,
+// her ay bonus + ortalama kazanç. Uzun vadeli hedef seçiminden ÖNCE gösterilir.
+function HbbKarti() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gold/40 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
+      <div className="border-l-4 border-gold bg-gold/10 px-4 py-3">
+        <p className="text-sm font-bold text-gold-light">{t.hbbBaslik}</p>
+        <p className="mt-0.5 text-xs text-slate-300">{t.hbbAciklama}</p>
+      </div>
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr className="bg-white/[0.05] text-[0.6rem] font-semibold uppercase tracking-wide text-slate-400">
+            <th className="px-3 py-2">{t.hbbAy}</th>
+            <th className="px-2 py-2 text-right">{t.hbbBonus}</th>
+            <th className="px-2 py-2 text-right">{t.hbbOrtalama}</th>
+            <th className="px-3 py-2 text-right">{t.hbbToplam}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {HBB_AYLAR.map((a) => (
+            <tr key={a.ay} className="border-t border-royal/15">
+              <td className="px-3 py-2.5">
+                <span className="text-sm font-medium text-slate-50">{t.hbbAyEtiket(a.ay)}</span>
+                <span className="ml-1.5 rounded-full bg-gold/20 px-1.5 py-0.5 text-[0.55rem] font-semibold text-gold-light">
+                  {a.rutbe}
+                </span>
+              </td>
+              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+                {tlFormat(a.bonus)}
+              </td>
+              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+                {tlFormat(a.ortalama)}
+              </td>
+              <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums text-emerald-300">
+                {tlFormat(a.toplam)}
+              </td>
+            </tr>
+          ))}
+          <tr className="border-t border-gold/30 bg-gold/5">
+            <td className="px-3 py-2.5 text-sm font-bold text-gold-light">{t.hbbToplamSatir}</td>
+            <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-300">
+              {tlFormat(HBB_BONUS_TOPLAM)}
+            </td>
+            <td />
+            <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums text-emerald-200">
+              {tlFormat(HBB_TOPLAM)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div className="px-4 py-2.5">
+        <p className="text-xs leading-relaxed text-slate-400">{t.hbbNot}</p>
+      </div>
     </div>
   );
 }

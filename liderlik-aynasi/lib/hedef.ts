@@ -408,7 +408,7 @@ export async function hedefCekirdek(db: Db, pid: string): Promise<HedefCekirdek 
 export async function hedefDurum(
   db: Db,
   pid: string
-): Promise<{ asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null }> {
+): Promise<{ asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null; yeniBaslangic: boolean }> {
   const { data } = await db
     .from("hedef")
     .select("asama, tamamlandi_at, baslangic_noktasi, plan, baslangic_ov")
@@ -420,6 +420,8 @@ export async function hedefDurum(
     baslangicVar: !!data?.baslangic_noktasi,
     plan: (data?.plan as KariyerPlani | null) ?? null,
     baslangicOv: (data?.baslangic_ov as number | null) ?? null,
+    // Yeni başlayan (0-3 ay) işaretlediyse → Hızlı Başlangıç (HBB) bonusları gösterilir.
+    yeniBaslangic: data?.baslangic_noktasi === "yeni",
   };
 }
 

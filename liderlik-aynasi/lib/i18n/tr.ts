@@ -914,6 +914,16 @@ export const tr = {
       "Bu kamp sana bir gelir garantisi değil, bir yöntem ve yol haritası sunar. Buradan aldığın araçlarla kendi OV'ini büyütmek sana kalmış.",
     // Isınma sohbeti ilerleme
     ilerlemeEtiket: "Hedef netleşiyor",
+    // Hızlı Başlangıç (HBB) — yalnız yeni başlayanlara
+    hbbBaslik: "Hızlı Başlangıç — İlk 3 Ayın",
+    hbbAciklama: "Yeni başlayan olarak ilk 3 ayında, bonuslarla birlikte örnek kazanç senaryon:",
+    hbbAy: "Ay",
+    hbbBonus: "HBB Bonusu",
+    hbbOrtalama: "Ortalama",
+    hbbToplam: "Toplam",
+    hbbAyEtiket: (n: number) => `${n}. ay`,
+    hbbToplamSatir: "İlk 3 ay",
+    hbbNot: "Bunlar örnek senaryolardır, gelir garantisi değildir. Bu hızlı başlangıçtan sonra aşağıdan seçeceğin uzun vadeli hedefe doğru planlarsın.",
     // Somutlaştırma wizard'ı
     wizardIntro: "Sana 3 soru soracağım. Cevaplarına göre kariyer planını oluşturacağım:",
     soruEtiket: (n: number) => `SORU ${n}/3`,
