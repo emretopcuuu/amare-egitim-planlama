@@ -461,6 +461,9 @@ function Wizard({
         <Rozet etiket={t.suresiEtiket} deger={sureObj.etiket} onTik={adim < 4 ? undefined : () => setSure(null)} />
       )}
 
+      {/* key={adim} → her soru geçişinde blok yeniden monte olur ve 'of-adim'
+          sinematik girişiyle (kayma + hafif yakınlaşma) belirir. */}
+      <div key={adim} className="of-adim space-y-4">
       {adim === 1 && (
         <section>
           <p className="rounded-xl bg-emerald-500/10 px-4 py-3 text-sm leading-relaxed text-emerald-200">
@@ -526,6 +529,7 @@ function Wizard({
           </button>
         </section>
       )}
+      </div>
 
       <SifirlaSatiri onSifirla={onSifirla} />
     </div>
