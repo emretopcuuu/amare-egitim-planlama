@@ -8,10 +8,17 @@ const t = tr.yaziBoyu;
 // Kök font-size px değerleri: tüm rem ölçeği buna göre büyür.
 // layout.tsx'teki FOUC önleyici inline script ile aynı eşleme kullanılır.
 const BOYUTLAR = {
+  kucuk: "15.5px",
   normal: "17.5px",
   buyuk: "19.5px",
-  cokBuyuk: "22px",
 } as const;
+
+// Eski "cokBuyuk" değerini "buyuk"a düşür, yoksa "normal" kullan.
+function normalizeBoyu(v: string | null): Boyu {
+  if (v === "cokBuyuk") return "buyuk";
+  if (v && v in BOYUTLAR) return v as Boyu;
+  return "normal";
+}
 
 type Boyu = keyof typeof BOYUTLAR;
 const DEPO = "la_yazi_boyu";
@@ -25,26 +32,26 @@ function uygula(boyu: Boyu) {
   }
 }
 
-// Yaşı ne olursa olsun herkes rahat okusun: üç kademeli yazı boyutu seçici.
-// Seçim cihazda saklanır; sonraki açılışta inline script anında uygular.
 export default function YaziBoyu() {
   const [boyu, setBoyu] = useState<Boyu>("normal");
 
   useEffect(() => {
     try {
-      const kayitli = localStorage.getItem(DEPO) as Boyu | null;
-      // localStorage yalnızca istemcide okunur; mount'ta tek seferlik eşitleme.
+      const kayitli = localStorage.getItem(DEPO);
+      const normalized = normalizeBoyu(kayitli);
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (kayitli && kayitli in BOYUTLAR) setBoyu(kayitli);
+      setBoyu(normalized);
+      // Eski "cokBuyuk" kayıtlı olanların fontunu da hemen düzelt
+      document.documentElement.style.fontSize = BOYUTLAR[normalized];
     } catch {
       // yok say
     }
   }, []);
 
   const secenekler: { deger: Boyu; etiket: string; sinif: string }[] = [
+    { deger: "kucuk",  etiket: t.kucuk,  sinif: "text-sm" },
     { deger: "normal", etiket: t.normal, sinif: "text-base" },
-    { deger: "buyuk", etiket: t.buyuk, sinif: "text-lg" },
-    { deger: "cokBuyuk", etiket: t.cokBuyuk, sinif: "text-2xl" },
+    { deger: "buyuk",  etiket: t.buyuk,  sinif: "text-lg" },
   ];
 
   return (

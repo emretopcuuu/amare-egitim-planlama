@@ -88,9 +88,9 @@ export const tr = {
   // Erişilebilirlik: yazı boyutu kontrolü (yaşı ne olursa olsun rahat okusun)
   yaziBoyu: {
     baslik: "Yazı Boyutu",
+    kucuk: "Küçük",
     normal: "Normal",
     buyuk: "Büyük",
-    cokBuyuk: "En Büyük",
     kisaEtiket: "Yazı",
   },
   // #8 Güneş modu: açık alanda/güneş altında okunabilirlik için yüksek kontrast
