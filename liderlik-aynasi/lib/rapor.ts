@@ -1,6 +1,7 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { aktifOzellikler } from "@/lib/degerlendirme";
+import { dusukGuvenMi } from "@/lib/raporGuven";
 
 // Ayna Raporu veri montajı: bir katılımcının tüm dalgalardaki öz ve dış
 // puanlarını tek yapıda toplar. /ayna sayfası ve AI mektup üretimi aynı
@@ -53,6 +54,8 @@ export type Rapor = {
   gercekBottomId: number | null;
   gorev: { tamamlanan: number; kivilcim: number };
   aynaYorumlari: string[]; // AYNA'nın görev yorumları (mektup sentezi için)
+  degerlendirenSayisi: number; // bu kişiyi puanlayan FARKLI kişi sayısı (öz hariç)
+  dusukGuven: boolean; // değerlendiren < MIN_DEGERLENDIREN → sınırlı yansıma
 };
 
 const JOHARI_ESIK = 1.5;
@@ -67,7 +70,7 @@ export async function raporHesapla(db: Db, katilimciId: string): Promise<Rapor> 
       aktifOzellikler(db),
       db
         .from("ratings")
-        .select("trait_id, wave, score, comment, is_self, is_hidden")
+        .select("rater_id, trait_id, wave, score, comment, is_self, is_hidden")
         .eq("target_id", katilimciId),
       db.from("waves").select("id, name").order("id"),
       db
@@ -100,6 +103,15 @@ export async function raporHesapla(db: Db, katilimciId: string): Promise<Rapor> 
 
   const puanlar = puanlarSonuc.data;
   const ozellikAd = new Map(ozellikler.map((o) => [o.id, o.name]));
+
+  // C1 güven: bu kişiyi puanlayan FARKLI kişi sayısı (öz-puan + gizlenen hariç).
+  // Eşik altıysa rapor "sınırlı yansıma" olarak işaretlenir — 1-2 kişilik zayıf
+  // ortalama otoriter gerçek gibi sunulmaz.
+  const degerlendirenler = new Set<string>();
+  for (const p of puanlar) {
+    if (!p.is_self && !p.is_hidden) degerlendirenler.add(p.rater_id);
+  }
+  const degerlendirenSayisi = degerlendirenler.size;
 
   // Özellik bazında öz/dış toplamları + dalga bazında dış toplamlar
   const ozToplam = new Map<number, { t: number; n: number }>();
@@ -257,6 +269,8 @@ export async function raporHesapla(db: Db, katilimciId: string): Promise<Rapor> 
       .map((g) => g.ai_comment)
       .filter((y): y is string => !!y)
       .slice(0, 8),
+    degerlendirenSayisi,
+    dusukGuven: dusukGuvenMi(degerlendirenSayisi),
   };
 }
 

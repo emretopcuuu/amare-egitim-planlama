@@ -279,6 +279,14 @@ export default async function AynaPage() {
         </div>
       </header>
 
+      {/* C1 Güven: çok az kişi puanladıysa, dış algı ortalaması istatistik olarak
+          zayıf — bunu dürüstçe belirt ki sınırlı veri otoriter gerçek sanılmasın. */}
+      {rapor.dusukGuven && (
+        <p className="rounded-2xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-center text-sm font-medium text-amber-200">
+          {t.dusukGuven(rapor.degerlendirenSayisi)}
+        </p>
+      )}
+
       {/* FAZ A Rapor v2: NEDEN + HEDEF — aynayı kişinin nedenine ve hedefine
           bağlar. Rapor artık "başkaları seni nasıl gördü" değil, "bu seni
           hedefine nasıl taşır" hikâyesidir. */}

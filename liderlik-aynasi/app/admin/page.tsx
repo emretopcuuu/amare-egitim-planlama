@@ -44,33 +44,10 @@ import FunnelMetrik from "./FunnelMetrik";
 import TriyajKart from "./TriyajKart";
 import AkisDizisi from "./AkisDizisi";
 import BolumAtla from "./BolumAtla";
+import FazGrubu from "./FazGrubu";
+import CapaAcici from "./CapaAcici";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
-
-// #1 Tehlike bölgesi kontrollerini funnel aşamalarına ayıran etiket. Aktif
-// aşamadaki grup altın vurguyla öne çıkar; operatör "şu an buradayım"ı görür.
-function AsamaEtiket({ no, ad, aktif }: { no?: number; ad: string; aktif?: number }) {
-  const buradayim = no != null && no === aktif;
-  return (
-    <p
-      className={`flex items-center gap-2 pt-2 text-[0.7rem] font-bold uppercase tracking-wide ${
-        buradayim ? "text-gold-light" : "text-slate-500"
-      }`}
-    >
-      {no != null && (
-        <span
-          className={`flex h-5 w-5 items-center justify-center rounded-full text-[0.65rem] ${
-            buradayim ? "bg-gold text-[#1a1206]" : "bg-white/10 text-slate-400"
-          }`}
-        >
-          {no}
-        </span>
-      )}
-      {ad}
-      {buradayim && <span className="text-gold-light">• şu an</span>}
-    </p>
-  );
-}
 
 export default async function AdminPanel() {
   const session = await getSession();
@@ -302,6 +279,8 @@ export default async function AdminPanel() {
   return (
     // #8 Mobilde alt sabit aksiyon çubuğu içeriği örtmesin: alt nefes payı.
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6 pb-28 sm:pb-6">
+      {/* Katlı faz gruplarındaki çapalara (#dalga, #muhur …) atlamayı garanti et */}
+      <CapaAcici />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-gold">{tr.admin.baslik}</h1>
@@ -360,17 +339,30 @@ export default async function AdminPanel() {
           panelin tepesinde numaralı rehber belirir; kurulum bitince kaybolur. */}
       {tamYetki && <HazirlikPaneli konum="ust" aktifAsama={aktifAsama} />}
 
-      {/* #7 Tıklanır canlı özet — büyük rakamlar (her iki rol) */}
-      <CanliOzet
-        katilimci={katilimciSayisi ?? 0}
-        ozTamam={ilerleme?.ozTamamlar.size ?? 0}
-        ozToplam={ilerleme?.katilimcilar.length ?? katilimciSayisi ?? 0}
-        gorus={ilerleme?.toplamPuan ?? 0}
-        dalgaAd={acikDalga?.name ?? null}
-      />
-
-      {/* Katılım hunisi: kamp öncesi dönüşüm — kim nerede takıldı (öneri #4) */}
-      <FunnelMetrik ozet={funnel} />
+      {/* GENEL DURUM: canlı özet rakamları + kamp öncesi katılım hunisi tek
+          kartta. İki ayrı özet bölümü yerine tek "nabız" paneli. */}
+      <section className="kart-3d space-y-4 rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-gold-light">
+            {tr.admin.ozet.genelBaslik}
+          </h2>
+          <Ipucu {...tr.admin.yardim.panelOzet} />
+        </div>
+        <CanliOzet
+          ciplak
+          katilimci={katilimciSayisi ?? 0}
+          ozTamam={ilerleme?.ozTamamlar.size ?? 0}
+          ozToplam={ilerleme?.katilimcilar.length ?? katilimciSayisi ?? 0}
+          gorus={ilerleme?.toplamPuan ?? 0}
+          dalgaAd={acikDalga?.name ?? null}
+        />
+        {funnel.toplam > 0 && (
+          <>
+            <div className="h-px bg-white/10" />
+            <FunnelMetrik ciplak ozet={funnel} />
+          </>
+        )}
+      </section>
 
       {/* Canlı pano: ızgara + teslim akışı + takım sıralaması (kampın nabzı) */}
       <CanliPano
@@ -499,123 +491,139 @@ export default async function AdminPanel() {
           {/* #3 Kamp akışı sıralayıcı — sıradaki anahtar + bağımlılık kapısı */}
           <AkisDizisi />
 
-          {/* #1 Kontroller funnel sırasında: Katılım → Canlı → Final → Sistem.
-              Aşama etiketleri omurgayla birebir hizalı. */}
+          {/* #1 Kontroller funnel fazına göre KATLANIR gruplarda: yalnız o anki
+              fazın anahtarları açık gelir, gerisi katlı. Operatör 9 kartla aynı
+              anda boğulmaz. Kapalı gruptaki çapaya atlanırsa CapaAcici onu açar. */}
 
           {/* ── 2 · KATILIM ── */}
-          <AsamaEtiket no={2} ad={tr.admin.funnel.asamalar.katilim} aktif={aktifAsama} />
+          <FazGrubu
+            no={2}
+            ad={tr.admin.tehlike.katilimGrup}
+            aktif={aktifAsama === 2}
+            varsayilanAcik={aktifAsama === 2}
+          >
+            {/* FAZ 0 — Pusula penceresi + oda QR kodu (kampa giriş kilidi) */}
+            <div id="fazsifir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                {tr.admin.fazSifir.baslik}
+                <Ipucu {...tr.admin.yardim.fazSifir} />
+              </h3>
+              <FazSifirKontrol />
+            </div>
 
-          {/* FAZ 0 — Pusula penceresi + oda QR kodu (kampa giriş kilidi) */}
-          <div id="fazsifir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.fazSifir.baslik}
-              <Ipucu {...tr.admin.yardim.fazSifir} />
-            </h3>
-            <FazSifirKontrol />
-          </div>
+            {/* FAZ A — Ön Farkındalık penceresi (pusuladan sonra, kampa girmeden) */}
+            <div id="onfark" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                {tr.admin.onFark.baslik}
+              </h3>
+              <OnFarkindalikKontrol />
+            </div>
 
-          {/* FAZ A — Ön Farkındalık penceresi (pusuladan sonra, kampa girmeden) */}
-          <div id="onfark" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.onFark.baslik}
-            </h3>
-            <OnFarkindalikKontrol />
-          </div>
-
-          {/* FAZ A — Hedef (Gün 2): nedenden kariyer hedefi + plan */}
-          <div id="hedef" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              🎯 {tr.admin.hedef.baslik}
-            </h3>
-            <HedefKontrol />
-          </div>
+            {/* FAZ A — Hedef (Gün 2): nedenden kariyer hedefi + plan */}
+            <div id="hedef" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                🎯 {tr.admin.hedef.baslik}
+              </h3>
+              <HedefKontrol />
+            </div>
+          </FazGrubu>
 
           {/* ── 3 · KAMP CANLI ── */}
-          <AsamaEtiket no={3} ad={tr.admin.funnel.asamalar.canli} aktif={aktifAsama} />
-
-          {/* Dalga */}
-          <div
-            id="dalga"
-            className="scroll-mt-20 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30"
+          <FazGrubu
+            no={3}
+            ad={tr.admin.tehlike.canliGrup}
+            aktif={aktifAsama === 3}
+            varsayilanAcik={aktifAsama === 3}
           >
-            <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.dalga.baslik}
-              <Ipucu {...tr.admin.yardim.dalga} />
-            </h3>
-            <p className="mt-1 text-sm text-slate-400">{tr.admin.dalga.aciklama}</p>
-            <DalgaKontrol
-              dalgalar={dalgalar.map((d) => ({
-                id: d.id,
-                ad: d.name,
-                acik: d.is_open,
-              }))}
-              puanlamayan={
-                acikDalga && ilerleme
-                  ? ilerleme.katilimcilar.filter(
-                      (k) => (ilerleme.puanladigi.get(k.id) ?? 0) === 0
-                    ).length
-                  : 0
-              }
-            />
-          </div>
+            {/* Dalga */}
+            <div
+              id="dalga"
+              className="scroll-mt-20 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30"
+            >
+              <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+                {tr.admin.dalga.baslik}
+                <Ipucu {...tr.admin.yardim.dalga} />
+              </h3>
+              <p className="mt-1 text-sm text-slate-400">{tr.admin.dalga.aciklama}</p>
+              <DalgaKontrol
+                dalgalar={dalgalar.map((d) => ({
+                  id: d.id,
+                  ad: d.name,
+                  acik: d.is_open,
+                }))}
+                puanlamayan={
+                  acikDalga && ilerleme
+                    ? ilerleme.katilimcilar.filter(
+                        (k) => (ilerleme.puanladigi.get(k.id) ?? 0) === 0
+                      ).length
+                    : 0
+                }
+              />
+            </div>
+          </FazGrubu>
 
           {/* ── 4 · FİNAL — Ayna Anı ── */}
-          <AsamaEtiket no={4} ad={tr.admin.funnel.asamalar.final} aktif={aktifAsama} />
-
-          {/* FAZ 1 — Boşluk Anı penceresi + derinlik panosu */}
-          <div id="fazbir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.fazBir.baslik}
-              <Ipucu {...tr.admin.yardim.fazBir} />
-            </h3>
-            <BoslukKontrol />
-          </div>
-
-          {/* Ayna Anı (raporlar) */}
-          <div
-            id="ayna-ani"
-            className="scroll-mt-20 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30"
+          <FazGrubu
+            no={4}
+            ad={tr.admin.tehlike.finalGrup}
+            aktif={aktifAsama === 4}
+            varsayilanAcik={aktifAsama === 4}
           >
-            <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.aynaAni.baslik}
-              <Ipucu {...tr.admin.yardim.rapor} />
-            </h3>
-            <p className="mt-1 text-sm text-slate-400">{tr.admin.aynaAni.aciklama}</p>
-            <AynaAniKontrol
-              acik={raporlarAcik}
-              mektupHazir={mektupSayisi ?? 0}
-              mektupToplam={katilimciSayisi ?? 0}
-            />
-          </div>
+            {/* FAZ 1 — Boşluk Anı penceresi + derinlik panosu */}
+            <div id="fazbir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                {tr.admin.fazBir.baslik}
+                <Ipucu {...tr.admin.yardim.fazBir} />
+              </h3>
+              <BoslukKontrol />
+            </div>
 
-          {/* A2 — Mühür Açılışı (kamp sonu before/after sesli reveal) */}
-          <div id="muhur" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.muhur.baslik}
-              <Ipucu {...tr.admin.yardim.muhur} />
-            </h3>
-            <MuhurKontrol />
-          </div>
+            {/* Ayna Anı (raporlar) */}
+            <div
+              id="ayna-ani"
+              className="scroll-mt-20 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30"
+            >
+              <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+                {tr.admin.aynaAni.baslik}
+                <Ipucu {...tr.admin.yardim.rapor} />
+              </h3>
+              <p className="mt-1 text-sm text-slate-400">{tr.admin.aynaAni.aciklama}</p>
+              <AynaAniKontrol
+                acik={raporlarAcik}
+                mektupHazir={mektupSayisi ?? 0}
+                mektupToplam={katilimciSayisi ?? 0}
+              />
+            </div>
 
-          {/* FAZ A — Söz v2 (kapanış sözü, rapordan sonra) */}
-          <div id="soz-v2" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              📜 {tr.admin.sozV2.baslik}
-            </h3>
-            <SozV2Kontrol />
-          </div>
+            {/* A2 — Mühür Açılışı (kamp sonu before/after sesli reveal) */}
+            <div id="muhur" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                {tr.admin.muhur.baslik}
+                <Ipucu {...tr.admin.yardim.muhur} />
+              </h3>
+              <MuhurKontrol />
+            </div>
 
-          {/* ── SİSTEM (kesişen) ── */}
-          <AsamaEtiket ad={tr.admin.tehlike.sistemEtiket} />
+            {/* FAZ A — Söz v2 (kapanış sözü, rapordan sonra) */}
+            <div id="soz-v2" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                📜 {tr.admin.sozV2.baslik}
+              </h3>
+              <SozV2Kontrol />
+            </div>
+          </FazGrubu>
 
-          {/* #9 Prova Modu — canlı/test ayrımı kritik bir anahtar */}
-          <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.provaModu.baslikKapali}
-              <Ipucu {...tr.admin.yardim.prova} />
-            </h3>
-            <ProvaModuKontrol acik={provaAcik} />
-          </div>
+          {/* ── SİSTEM (kesişen) — her aşamada lazım, varsayılan katlı ── */}
+          <FazGrubu ad={tr.admin.tehlike.sistemGrup} varsayilanAcik={false}>
+            {/* #9 Prova Modu — canlı/test ayrımı kritik bir anahtar */}
+            <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                {tr.provaModu.baslikKapali}
+                <Ipucu {...tr.admin.yardim.prova} />
+              </h3>
+              <ProvaModuKontrol acik={provaAcik} />
+            </div>
+          </FazGrubu>
         </section>
       )}
 
@@ -653,83 +661,89 @@ export default async function AdminPanel() {
       {tamYetki && (
         <div id="araclar" className="scroll-mt-24">
         <Katlanir baslik={tr.admin.araclar.baslik} aciklama={tr.admin.araclar.aciklama} yardim={tr.admin.yardim.araclar}>
-          {/* #10 Araçlar artık aşamaya göre gruplu: Kamp Sonrası + Sistem. */}
+          {/* #10 Araçlar aşamaya göre gruplu + her grup kendi içinde katlanır:
+              "Tüm araçlar" açılınca devasa bir liste değil, iki kompakt başlık
+              görünür; operatör yalnız ihtiyaç duyduğu grubu açar. */}
 
           {/* 📦 KAMP SONRASI — kamp bittikten sonraki uzun soluklu araçlar */}
-          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
-            {tr.admin.araclar.grupSonrasi}
-          </p>
-
-          {/* Ödev paketi (kamp sonrası 10/15 gün, Ağustos) */}
-          <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
-              {tr.admin.odev.baslik}
-              <Ipucu {...tr.admin.yardim.odev} />
-            </h2>
-            <div className="mt-3">
-              <OdevPaketi />
-            </div>
-          </section>
-
-          <section
-            id="davet"
-            className="kart-3d scroll-mt-20 rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur"
+          <Katlanir
+            baslik={tr.admin.araclar.grupSonrasiBaslik}
+            aciklama={tr.admin.araclar.grupSonrasiAciklama}
+            ikon="📦"
           >
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
-              {tr.admin.doksanGun.baslik}
-              <Ipucu {...tr.admin.yardim.davet} />
-            </h2>
-            <p className="mt-1 text-sm text-slate-400">{tr.admin.doksanGun.aciklama}</p>
-            <DavetKontrol
-              epostali={epostaliSayisi ?? 0}
-              toplam={katilimciSayisi ?? 0}
-              sonGonderim={davetAyari?.value ?? null}
-            />
-          </section>
+            {/* Ödev paketi (kamp sonrası 10/15 gün, Ağustos) */}
+            <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+                {tr.admin.odev.baslik}
+                <Ipucu {...tr.admin.yardim.odev} />
+              </h2>
+              <div className="mt-3">
+                <OdevPaketi />
+              </div>
+            </section>
 
-          <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
-              {tr.admin.ikili.baslik}
-              <Ipucu {...tr.admin.yardim.ikili} />
-            </h2>
-            <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.ikili.aciklama}</p>
-            <IkiliKontrol mevcut={ikiliSayisi ?? 0} />
-          </section>
+            <section
+              id="davet"
+              className="kart-3d scroll-mt-20 rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur"
+            >
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+                {tr.admin.doksanGun.baslik}
+                <Ipucu {...tr.admin.yardim.davet} />
+              </h2>
+              <p className="mt-1 text-sm text-slate-400">{tr.admin.doksanGun.aciklama}</p>
+              <DavetKontrol
+                epostali={epostaliSayisi ?? 0}
+                toplam={katilimciSayisi ?? 0}
+                sonGonderim={davetAyari?.value ?? null}
+              />
+            </section>
+
+            <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+                {tr.admin.ikili.baslik}
+                <Ipucu {...tr.admin.yardim.ikili} />
+              </h2>
+              <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.ikili.aciklama}</p>
+              <IkiliKontrol mevcut={ikiliSayisi ?? 0} />
+            </section>
+          </Katlanir>
 
           {/* ⚙️ SİSTEM & KAYIT — her aşamada lazım olan genel araçlar */}
-          <p className="pt-2 text-xs font-bold uppercase tracking-wide text-slate-500">
-            {tr.admin.araclar.grupSistem}
-          </p>
+          <Katlanir
+            baslik={tr.admin.araclar.grupSistemBaslik}
+            aciklama={tr.admin.araclar.grupSistemAciklama}
+            ikon="⚙️"
+          >
+            {/* Sağlık kontrol listesi — her zaman erişilebilir tam görünüm */}
+            <HazirlikPaneli konum="arac" aktifAsama={aktifAsama} />
+            <KodBul />
 
-          {/* Sağlık kontrol listesi — her zaman erişilebilir tam görünüm */}
-          <HazirlikPaneli konum="arac" aktifAsama={aktifAsama} />
-          <KodBul />
+            <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+                {tr.admin.yedek.baslik}
+                <Ipucu {...tr.admin.yardim.yedek} />
+              </h2>
+              <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.yedek.aciklama}</p>
+              <YedekButonu />
+            </section>
 
-          <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
-              {tr.admin.yedek.baslik}
-              <Ipucu {...tr.admin.yardim.yedek} />
-            </h2>
-            <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.yedek.aciklama}</p>
-            <YedekButonu />
-          </section>
+            <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+              <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
+                {tr.zamanlama.baslik}
+                <Ipucu {...tr.admin.yardim.zamanlama} />
+              </h2>
+              <p className="mt-1 mb-4 text-sm text-slate-400">{tr.zamanlama.aciklama}</p>
+              <OtomatikZamanlama
+                dalgalar={dalgalar.map((d) => ({ id: d.id, ad: d.name }))}
+              />
+            </section>
 
-          <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
-              {tr.zamanlama.baslik}
-              <Ipucu {...tr.admin.yardim.zamanlama} />
-            </h2>
-            <p className="mt-1 mb-4 text-sm text-slate-400">{tr.zamanlama.aciklama}</p>
-            <OtomatikZamanlama
-              dalgalar={dalgalar.map((d) => ({ id: d.id, ad: d.name }))}
-            />
-          </section>
-
-          {/* İşlem günlüğü: kritik eylemler buraya düşer; geri-al ise eylem
-              anındaki tostta sunulur (dalga/rapor). Kayıt + geri-al birlikte. */}
-          <div id="islem-gunlugu" className="scroll-mt-24">
-            <IslemGunlugu />
-          </div>
+            {/* İşlem günlüğü: kritik eylemler buraya düşer; geri-al ise eylem
+                anındaki tostta sunulur (dalga/rapor). Kayıt + geri-al birlikte. */}
+            <div id="islem-gunlugu" className="scroll-mt-24">
+              <IslemGunlugu />
+            </div>
+          </Katlanir>
         </Katlanir>
         </div>
       )}

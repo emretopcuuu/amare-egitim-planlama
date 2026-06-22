@@ -6,15 +6,22 @@ const t = tr.admin.funnelMetrik;
 // FUNNEL DÖNÜŞÜM PANOSU — kamp öncesi hunisinin gerçek hali. Her adım, toplama
 // göre oransal bir çubuk; bir önceki adıma göre düşüş (kaç kişi kayboldu)
 // kırmızıyla işaretlenir. Operatör darboğazı anında görür.
-export default function FunnelMetrik({ ozet }: { ozet: FunnelOzet }) {
+export default function FunnelMetrik({
+  ozet,
+  ciplak = false,
+}: {
+  ozet: FunnelOzet;
+  // ciplak: "Genel Durum" kartı içinde kendi section çerçevesi olmadan render.
+  ciplak?: boolean;
+}) {
   const { toplam, adimlar } = ozet;
   if (toplam === 0) return null;
 
-  return (
-    <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-gold-light">
+  const govde = (
+    <>
+      <h3 className="text-sm font-semibold uppercase tracking-wide text-gold-light">
         {t.baslik}
-      </h2>
+      </h3>
       <p className="mt-0.5 text-xs text-slate-400">{t.aciklama}</p>
 
       <ol className="mt-4 space-y-2.5">
@@ -49,6 +56,12 @@ export default function FunnelMetrik({ ozet }: { ozet: FunnelOzet }) {
           );
         })}
       </ol>
+    </>
+  );
+  if (ciplak) return govde;
+  return (
+    <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+      {govde}
     </section>
   );
 }
