@@ -354,7 +354,7 @@ function Sohbet({
           <div key={i} className={`flex ${m.rol === "ayna" ? "justify-start" : "justify-end"}`}>
             <p
               className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-base leading-relaxed ${
-                m.rol === "ayna" ? "kart-cam text-slate-100" : "bg-royal/40 text-slate-100"
+                m.rol === "ayna" ? "kart-cam text-slate-100" : "bg-[#4c2e8c] text-[#f5f3ff]"
               }`}
             >
               {m.icerik}
