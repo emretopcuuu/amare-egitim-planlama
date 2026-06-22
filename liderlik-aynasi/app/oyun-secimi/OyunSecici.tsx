@@ -96,10 +96,10 @@ export default function OyunSecici() {
               type="button"
               onClick={() => toggle(o)}
               aria-pressed={sec}
-              className={`flex w-full items-center gap-3 rounded-2xl p-4 text-left transition-all ${
+              className={`kart-cam flex w-full items-center gap-3 rounded-2xl p-4 text-left transition-all ${
                 sec
-                  ? "bg-royal/30 ring-2 ring-gold"
-                  : "kart-cam ring-1 ring-royal/30 hover:ring-royal/60"
+                  ? "ring-2 ring-gold shadow-[0_0_0_4px_rgba(212,175,55,0.12)]"
+                  : "ring-1 ring-royal/30 hover:ring-royal/60"
               }`}
             >
               <span className="text-3xl" aria-hidden>
