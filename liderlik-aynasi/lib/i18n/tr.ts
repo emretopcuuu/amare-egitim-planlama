@@ -3377,6 +3377,11 @@ export const tr = {
     ligBos: "İlk Kıvılcımlar yakında — AYNA görev dağıtmaya başladığında burası alevlenecek.",
     duvarBaslik: "📸 Anı Duvarı",
     duvarBos: "Anılar yakında — katılımcılar fotoğraf paylaştıkça burası dolacak.",
+    // #8 Anonim sosyal kıvılcım — birbirinize yazdığınız olumlu yorumlar,
+    // isimsiz, akan duvar. Kim kime yazdı belli değil; sadece iyilik görünür.
+    yansimaBaslik: "💛 Salonun Kalbi",
+    yansimaAciklama: "Birbiriniz hakkında yazdığınız güzel sözler — isimsiz, ama gerçek.",
+    yansimaBos: "İlk güzel sözler yazıldıkça bu duvar kalpten kalbe dolacak.",
     yildizSatiri: (n: number) => `Bu salon ${n} yıldız yaktı`,
     sesiAc: "🔊 Sesi Aç",
     sesAcikEtiket: "🔊 Ses açık",
