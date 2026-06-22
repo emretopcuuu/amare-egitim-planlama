@@ -72,7 +72,7 @@ Sarsılmaz kuralların:
 - Tek seferde TEK soru. Çekirdek nedeni yansıt, sonra o nedenin gerçeğe dönüştüğü hayatı canlandıracak 1-2 soru sor ("Bu neden gerçek olsaydı, hayatında ilk ne değişirdi?").
 - Rakam/gelir SORMA — o adımı birazdan tablo ile somutlaştıracağız.
 - Manipülasyon YOK; baskı YOK. Sıcak ve dürüst kal.
-- 2-3 turda bitir; sonra "şimdi bunu somut bir hedefe çevirelim" diyerek devret (bitti=true).`;
+- 3-4 turda bitir; acele etme, kişi cevabını okusun. Hazır olunca "gel, birkaç şeyi netleştirelim — birazdan bunu somut bir hedefe çevireceğiz" anlamında sıcak bir cümleyle devret (bitti=true).`;
 
 const NOKTA_CERCEVE: Record<string, string> = {
   yeni: "Kişi bu işe YENİ başlamış (0-3 ay). İlk momentumun hayalini canlandır.",
@@ -92,7 +92,7 @@ const SOHBET_SEMASI = {
     bitti: {
       type: "boolean" as const,
       description:
-        "Isınma sohbeti yeterince ilerlediyse (2-3 tur) ve somutlaştırmaya hazırsa true; aksi halde false.",
+        "Isınma sohbeti yeterince ilerlediyse (3-4 tur) ve somutlaştırmaya hazırsa true; aksi halde false.",
     },
   },
   required: ["mesaj", "bitti"],
@@ -268,7 +268,7 @@ ${nedenMetni}
 
 Başlangıç noktası: ${noktaCerceve}
 
-TEMPO: Bu kişiden şu ana dek ${kullaniciTur} yanıt aldın. ${kullaniciTur >= 2 ? "Artık devret: kısa, sıcak bir cümleyle 'şimdi bunu somut bir kariyer hedefine çevirelim' de ve bitti=true ver." : "Bir adım ilerlet; nedeni hayale bağla. bitti=false."}
+TEMPO: Bu kişiden şu ana dek ${kullaniciTur} yanıt aldın. ${kullaniciTur >= 3 ? "Artık devret: kısa, sıcak bir cümleyle 'gel, birkaç şeyi netleştirelim; birazdan bunu somut bir kariyer hedefine çevireceğiz' de ve bitti=true ver." : "Bir adım daha ilerlet; nedeni hayale bağla, acele etme. bitti=false."}
 
 ÇIKTI KURALI: "mesaj" alanına YALNIZCA kişiye söyleyeceğin tek, temiz, doğru yazılmış Türkçe cümle/soru yaz. Parantez, köşeli parantez, meta açıklama ASLA koyma. "bitti" alanını ayrıca doldur.`,
           messages: mesajlar,
@@ -408,7 +408,7 @@ export async function hedefCekirdek(db: Db, pid: string): Promise<HedefCekirdek 
 export async function hedefDurum(
   db: Db,
   pid: string
-): Promise<{ asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null }> {
+): Promise<{ asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null; yeniBaslangic: boolean }> {
   const { data } = await db
     .from("hedef")
     .select("asama, tamamlandi_at, baslangic_noktasi, plan, baslangic_ov")
@@ -420,6 +420,8 @@ export async function hedefDurum(
     baslangicVar: !!data?.baslangic_noktasi,
     plan: (data?.plan as KariyerPlani | null) ?? null,
     baslangicOv: (data?.baslangic_ov as number | null) ?? null,
+    // Yeni başlayan (0-3 ay) işaretlediyse → Hızlı Başlangıç (HBB) bonusları gösterilir.
+    yeniBaslangic: data?.baslangic_noktasi === "yeni",
   };
 }
 

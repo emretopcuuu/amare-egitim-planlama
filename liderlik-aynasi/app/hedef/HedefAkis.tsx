@@ -15,12 +15,15 @@ import {
   makuSure,
   OV_SENARYOLAR,
   simulasyonMilestonelari,
+  HBB_AYLAR,
+  HBB_TOPLAM,
+  HBB_BONUS_TOPLAM,
 } from "@/lib/kariyer";
 
 const t = tr.hedef;
 
 type Mesaj = { rol: string; icerik: string };
-type Durum = { asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null };
+type Durum = { asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null; yeniBaslangic: boolean };
 type Faz = "acilis" | "baslangic" | "sohbet" | "wizard" | "tamam";
 
 const NOKTALAR = ["yeni", "baslangic", "deneyimli", "lider"] as const;
@@ -126,6 +129,7 @@ export default function HedefAkis({
     return (
       <Wizard
         ov0={ov0}
+        yeniBaslangic={durum.yeniBaslangic}
         onMuhur={async (hedefIndex, sure, gunluk) => {
           setMesgul(true);
           setHata(null);
@@ -289,6 +293,9 @@ function Sohbet({
   const [girdi, setGirdi] = useState("");
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
+  // Sohbet "bitti" olunca otomatik geçme — kişi kapanış cümlesini okusun,
+  // hazır olunca kendisi "Devam et"e bassın.
+  const [hazirDevam, setHazirDevam] = useState(false);
   const altRef = useRef<HTMLDivElement>(null);
   const acilisRef = useRef(false);
 
@@ -325,7 +332,7 @@ function Sohbet({
       return;
     }
     if (v?.mesaj) setMesajlar((m) => [...m, { rol: "ayna", icerik: v.mesaj! }]);
-    if (v?.bitti) setTimeout(onBitti, 700);
+    if (v?.bitti) setHazirDevam(true);
   }
 
   return (
@@ -358,28 +365,38 @@ function Sohbet({
         <div ref={altRef} />
       </div>
       {hata && <p className="pb-2 text-center text-sm text-red-400">{hata}</p>}
-      <div className="flex shrink-0 items-end gap-2">
-        <textarea
-          value={girdi}
-          onChange={(e) => setGirdi(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              gonder();
-            }
-          }}
-          rows={1}
-          placeholder={t.girisYer}
-          className="max-h-[160px] min-h-[3rem] w-full flex-1 resize-none rounded-2xl border border-royal-light/30 bg-midnight-soft px-4 py-3 text-base leading-relaxed text-slate-100 outline-none focus:border-gold"
-        />
+      {hazirDevam ? (
+        // Sohbet tamam: kişi kapanış cümlesini okuduktan sonra kendisi geçer.
         <button
-          onClick={gonder}
-          disabled={mesgul || !girdi.trim()}
-          className="btn-kor flex h-12 shrink-0 items-center justify-center rounded-2xl px-5 text-base font-bold disabled:opacity-50"
+          onClick={onBitti}
+          className="btn-kor parilti flex h-14 w-full shrink-0 items-center justify-center rounded-2xl text-lg font-bold"
         >
-          {t.gonder}
+          {t.sohbetDevam}
         </button>
-      </div>
+      ) : (
+        <div className="flex shrink-0 items-end gap-2">
+          <textarea
+            value={girdi}
+            onChange={(e) => setGirdi(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                gonder();
+              }
+            }}
+            rows={1}
+            placeholder={t.girisYer}
+            className="max-h-[160px] min-h-[3rem] w-full flex-1 resize-none rounded-2xl border border-royal-light/30 bg-midnight-soft px-4 py-3 text-base leading-relaxed text-slate-100 outline-none focus:border-gold"
+          />
+          <button
+            onClick={gonder}
+            disabled={mesgul || !girdi.trim()}
+            className="btn-kor flex h-12 shrink-0 items-center justify-center rounded-2xl px-5 text-base font-bold disabled:opacity-50"
+          >
+            {t.gonder}
+          </button>
+        </div>
+      )}
       <SifirlaSatiri onSifirla={onSifirla} className="pt-3" />
     </main>
   );
@@ -388,12 +405,14 @@ function Sohbet({
 // ---------- Somutlaştırma wizard'ı (3 soru) ----------
 function Wizard({
   ov0,
+  yeniBaslangic,
   onMuhur,
   mesgul,
   hata,
   onSifirla,
 }: {
   ov0: number | null;
+  yeniBaslangic: boolean;
   onMuhur: (hedefIndex: number, sure: string, gunluk: string) => void;
   mesgul: boolean;
   hata: string | null;
@@ -441,6 +460,9 @@ function Wizard({
           <p className="rounded-xl bg-emerald-500/10 px-4 py-3 text-sm leading-relaxed text-emerald-200">
             {t.wizardIntro}
           </p>
+          {/* Yeni başlayan: önce Hızlı Başlangıç (ilk 3 ay) bonusları, sonra
+              uzun vadeli hedefini tablodan seçer. */}
+          {yeniBaslangic && <HbbKarti />}
           <p className="mt-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
             {t.soruEtiket(1)}
           </p>
@@ -472,10 +494,12 @@ function Wizard({
       {adim === 4 && plan && (
         <section className="space-y-4">
           <p className="text-center text-sm font-semibold text-gold-light">{t.planUstBaslik}</p>
-          <PlanKarti plan={plan} />
+          {/* OV büyüme simülasyonu ÖNCE: kişi önce kendi rakamının ay ay nasıl
+              büyüdüğünü görür, sonra somut kariyer planını. */}
           {ov0 && ov0 > 0 && hedefRutbe && sureObj && (
             <OvSimKarti ov0={ov0} ovHedef={hedefRutbe.ov} sureAy={sureObj.ay} />
           )}
+          <PlanKarti plan={plan} />
           {hata && <p className="text-center text-sm text-red-400">{hata}</p>}
           <button
             onClick={() => hedefIndex != null && sure && gunluk && onMuhur(hedefIndex, sure, gunluk)}
@@ -517,42 +541,107 @@ function Rozet({ etiket, deger, onTik }: { etiket: string; deger: string; onTik?
 }
 
 function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
+  // Gerçek <table>: sütunlar kendiliğinden hizalanır (her satır ayrı grid değil).
+  // Opak koyu zemin + bulanıklık → arka plan fotoğrafı yazıyı yutmaz.
   return (
-    <div className="mt-3 overflow-hidden rounded-2xl border border-royal-light/20">
-      <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 bg-white/[0.03] px-3 py-2 text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">
-        <span>{t.tabloKariyer}</span>
-        <span className="text-right">{t.tabloEnDusuk}</span>
-        <span className="text-right">{t.tabloEnYuksek}</span>
-        <span className="text-right">{t.tabloOrtalama}</span>
-      </div>
-      <ul className="divide-y divide-royal/15">
-        {KARIYER_BASAMAKLARI.map((r, i) => (
-          <li key={r.ad}>
-            <button
+    <div className="mt-3 overflow-hidden rounded-2xl border border-royal-light/25 bg-[#061320]/92 shadow-xl backdrop-blur-sm">
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr className="bg-white/[0.05] text-[0.6rem] font-semibold uppercase tracking-wide text-slate-400">
+            <th className="px-3 py-2 font-semibold">{t.tabloKariyer}</th>
+            <th className="px-2 py-2 text-right font-semibold">{t.tabloEnDusuk}</th>
+            <th className="px-2 py-2 text-right font-semibold">{t.tabloEnYuksek}</th>
+            <th className="px-3 py-2 text-right font-semibold">{t.tabloOrtalama}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {KARIYER_BASAMAKLARI.map((r, i) => (
+            <tr
+              key={r.ad}
               onClick={() => onSec(i)}
-              className="grid w-full grid-cols-[1fr_auto_auto_auto] items-center gap-x-3 px-3 py-2.5 text-left transition-colors hover:bg-gold/5"
+              style={{ animationDelay: `${i * 55}ms` }}
+              className="kariyer-satir cursor-pointer border-t border-royal/15 transition-colors hover:bg-gold/10"
             >
-              <span className="flex items-center gap-1.5">
-                <span className="text-sm font-medium text-slate-100">{r.ad}</span>
-                {r.rozet && (
-                  <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[0.55rem] font-semibold text-gold-light">
-                    {r.rozet}
-                  </span>
-                )}
-              </span>
-              <span className="text-right font-mono text-[0.7rem] text-slate-500">
-                {r.enDusuk != null ? tlFormat(r.enDusuk) : "-"}
-              </span>
-              <span className="text-right font-mono text-[0.7rem] text-slate-500">
-                {r.enYuksek != null ? tlFormat(r.enYuksek) : "-"}
-              </span>
-              <span className="text-right font-mono text-sm font-bold text-emerald-300">
+              <td className="px-3 py-2.5">
+                <span className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium text-slate-50">{r.ad}</span>
+                  {r.rozet && (
+                    <span className="shrink-0 rounded-full bg-gold/20 px-1.5 py-0.5 text-[0.55rem] font-semibold text-gold-light">
+                      {r.rozet}
+                    </span>
+                  )}
+                </span>
+              </td>
+              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+                {r.enDusuk != null ? tlFormat(r.enDusuk) : "—"}
+              </td>
+              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+                {r.enYuksek != null ? tlFormat(r.enYuksek) : "—"}
+              </td>
+              <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums text-emerald-300">
                 {tlFormat(r.ortalama, r.arti)}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+// Yeni başlayan için Hızlı Başlangıç (HBB): ilk 3 ay Bronze→Silver→Gold,
+// her ay bonus + ortalama kazanç. Uzun vadeli hedef seçiminden ÖNCE gösterilir.
+function HbbKarti() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-gold/40 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
+      <div className="border-l-4 border-gold bg-gold/10 px-4 py-3">
+        <p className="text-sm font-bold text-gold-light">{t.hbbBaslik}</p>
+        <p className="mt-0.5 text-xs text-slate-300">{t.hbbAciklama}</p>
+      </div>
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr className="bg-white/[0.05] text-[0.6rem] font-semibold uppercase tracking-wide text-slate-400">
+            <th className="px-3 py-2">{t.hbbAy}</th>
+            <th className="px-2 py-2 text-right">{t.hbbBonus}</th>
+            <th className="px-2 py-2 text-right">{t.hbbOrtalama}</th>
+            <th className="px-3 py-2 text-right">{t.hbbToplam}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {HBB_AYLAR.map((a) => (
+            <tr key={a.ay} className="border-t border-royal/15">
+              <td className="px-3 py-2.5">
+                <span className="text-sm font-medium text-slate-50">{t.hbbAyEtiket(a.ay)}</span>
+                <span className="ml-1.5 rounded-full bg-gold/20 px-1.5 py-0.5 text-[0.55rem] font-semibold text-gold-light">
+                  {a.rutbe}
+                </span>
+              </td>
+              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+                {tlFormat(a.bonus)}
+              </td>
+              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+                {tlFormat(a.ortalama)}
+              </td>
+              <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums text-emerald-300">
+                {tlFormat(a.toplam)}
+              </td>
+            </tr>
+          ))}
+          <tr className="border-t border-gold/30 bg-gold/5">
+            <td className="px-3 py-2.5 text-sm font-bold text-gold-light">{t.hbbToplamSatir}</td>
+            <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-300">
+              {tlFormat(HBB_BONUS_TOPLAM)}
+            </td>
+            <td />
+            <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums text-emerald-200">
+              {tlFormat(HBB_TOPLAM)}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div className="px-4 py-2.5">
+        <p className="text-xs leading-relaxed text-slate-400">{t.hbbNot}</p>
+      </div>
     </div>
   );
 }
@@ -601,10 +690,10 @@ function PlanKarti({ plan }: { plan: KariyerPlani }) {
   const ara = km.slice(0, -1);
   const ana = km[km.length - 1];
   return (
-    <div className="overflow-hidden rounded-2xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/15 to-midnight-card/70 shadow-xl">
-      <div className="border-l-4 border-emerald-400 bg-emerald-500/10 px-5 py-3">
-        <p className="text-lg font-bold text-emerald-100">{t.planBaslik(plan.rutbe)}</p>
-        <p className="text-xs text-emerald-300/80">
+    <div className="overflow-hidden rounded-2xl border border-emerald-400/40 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
+      <div className="border-l-4 border-emerald-400 bg-emerald-500/15 px-5 py-3">
+        <p className="text-lg font-bold text-emerald-50">{t.planBaslik(plan.rutbe)}</p>
+        <p className="text-xs text-emerald-200/90">
           {t.planOzet(plan.sureAy, plan.gunlukSaatEtiket, plan.haftalikSaat)}
         </p>
       </div>
@@ -651,9 +740,9 @@ function OvSimKarti({ ov0, ovHedef, sureAy }: { ov0: number; ovHedef: number; su
   const tempoYuzde = tempo > 0 ? `%${(tempo * 100).toFixed(0)}` : "—";
   const makul = makuSure(ov0, ovHedef);
   return (
-    <div className="overflow-hidden rounded-2xl border border-royal-light/25 bg-midnight-soft">
+    <div className="overflow-hidden rounded-2xl border border-royal-light/25 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
       <div className="border-b border-royal-light/15 px-4 py-2.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t.simulasyonBaslik}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">{t.simulasyonBaslik}</p>
       </div>
       {/* Senaryo tablosu */}
       <div className="overflow-x-auto">

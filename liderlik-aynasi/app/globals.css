@@ -246,6 +246,28 @@ body.gunes-modu .kart-cerceve {
 .dusunuyor-satir {
   animation: belir-yukari 0.45s ease-out both;
 }
+
+/* Kariyer tablosu: basamaklar tek tek (kademeli) belirir — merdiveni "tırmanma"
+   hissi. <tr> transform'u kırılgan olabildiği için yalnız opaklık + hafif kayma
+   (filtre yok). Gecikme satır indeksine göre inline verilir. */
+@keyframes kariyer-belir {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.kariyer-satir {
+  animation: kariyer-belir 0.4s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .kariyer-satir {
+    animation: none;
+  }
+}
 .sahne-giris > *:nth-child(2) {
   animation-delay: 0.06s;
 }

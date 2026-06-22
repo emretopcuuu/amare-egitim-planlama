@@ -78,15 +78,17 @@ export default function GolArkaplan() {
     <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 print:hidden">
       {gunduz ? (
         <>
-          {/* GÜNDÜZ: tan vakti göl manzarası (üretilmiş fotoğraf). Üstte bol
-              boş gökyüzü olduğu için içerik/kartlar net okunur. */}
+          {/* GÜNDÜZ: tan vakti göl manzarası (üretilmiş fotoğraf). */}
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: "url(/gunduz-gol.webp)" }}
           />
-          {/* Çok hafif alt fade: yalnız en altta (alt nav okunsun) — göl
-              manzarası soluklaşmasın, net görünsün. */}
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-white/20" />
+          {/* OKUNABİLİRLİK PERDESİ: tüm içerik (uyarı/kart/metin) koyu-yarı-saydam
+              tasarlandığı için parlak gündüz fotoğrafında yazılar yutuluyordu.
+              Gece temasındaki güçlü perdenin dusk eşdeğeri: üst gökyüzü/göl hâlâ
+              görünür, içeriğin yaşadığı orta-alt bölge okunur derecede koyulaşır. */}
+          <div className="absolute inset-0 bg-[radial-gradient(140%_110%_at_50%_15%,rgba(5,14,24,0.22)_0%,rgba(5,14,24,0.52)_58%,rgba(3,10,18,0.80)_100%)]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#06121e]/25 via-[#06121e]/38 to-[#040e18]/82" />
         </>
       ) : (
         <>
