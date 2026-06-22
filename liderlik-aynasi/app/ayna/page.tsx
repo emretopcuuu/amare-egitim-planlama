@@ -20,6 +20,7 @@ import RaporKaydet from "./RaporKaydet";
 import AynaHikaye, { type Slayt } from "./AynaHikaye";
 import AynaBekleme from "./AynaBekleme";
 import ArketipKarti from "./ArketipKarti";
+import AynaKarti from "./AynaKarti";
 import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
 import SesCal from "@/components/SesCal";
@@ -689,6 +690,21 @@ export default async function AynaPage() {
           <AynaHikaye slaytlar={filmSlaytlar} etiket={`🎬 ${t.filmIzle}`} />
         </div>
       </section>
+
+      {/* #10 Ayna Kartı — kapanış özeti: arketip + en güçlü 3 + en gelişen */}
+      {rapor.guclu.length > 0 && (
+        <section className="yazdir-gizle kart-cam rounded-2xl bg-gradient-to-br from-gold/10 to-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
+          <h2 className="font-semibold text-gold-light">{tr.aynaKarti.baslik}</h2>
+          <p className="mt-1 text-xs text-slate-400">{tr.aynaKarti.aciklama}</p>
+          <AynaKarti
+            ad={session.ad}
+            arketipAd={arketip.ad}
+            simge={arketip.simge}
+            guclu={rapor.guclu.map((s) => s.ad)}
+            gelisen={rapor.enGelisen?.ad ?? null}
+          />
+        </section>
+      )}
 
       {/* FAZ A Söz v2: raporu gördükten SONRA kapanış sözü — en güçlü an */}
       {sozAcikV2 && sozKaydi?.durum !== "sesli" && (

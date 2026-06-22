@@ -3293,6 +3293,17 @@ export const tr = {
     indir: "Kartı İndir",
     paylas: "Paylaş",
   },
+  // #10 Paylaşılabilir Ayna Kartı — raporun kapanışında kişinin tüm ayna anını
+  // (arketip + en güçlü 3 yan + en çok gelişen) tek görselde özetler.
+  aynaKarti: {
+    baslik: "🪞 Ayna Kartın",
+    aciklama: "Kampın sana bıraktığı iz — tek karede. İndir, paylaş.",
+    kartUst: "Bu kampta ben",
+    gucluUst: "En güçlü yanlarım",
+    gelisenUst: "En çok geliştiğim",
+    indir: "Kartı İndir",
+    paylas: "Paylaş",
+  },
   yansiman: {
     baslik: "Aynan seni gördü",
     izle: "▶ Suya bak",
