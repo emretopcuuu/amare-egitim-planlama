@@ -15,6 +15,7 @@ import GeriSayim from "@/components/GeriSayim";
 import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
 import YolculukSeridi from "@/components/YolculukSeridi";
+import YolculukHaritasi from "@/components/YolculukHaritasi";
 import KampHud from "@/components/KampHud";
 import GunProgramKarti from "@/components/GunProgramKarti";
 import MomentumGostergesi from "@/components/MomentumGostergesi";
@@ -359,8 +360,23 @@ export default async function AnaSayfa({
           ozHedefId={session.sub}
         />
       </header>
-      {/* #5 "Sen neredesin" — kampın neresindeyiz şeridi */}
+      {/* #5 "Sen neredesin" — kampın neresindeyiz şeridi (takvim günü) */}
       <YolculukSeridi bugun={bugunIst} />
+      {/* Üst seviye #6 — kişisel faz yolculuğu: ritüel → … → ayna */}
+      <div className="mt-2">
+        <YolculukHaritasi
+          siradaEtiket={tr.yolculuk.sirada}
+          fazlar={[
+            { ad: tr.yolculuk.faz.rituel, tamam: !!sesVarRow },
+            { ad: tr.yolculuk.faz.oyun, tamam: !!kisi?.team },
+            { ad: tr.yolculuk.faz.pusula, tamam: !!pusulaErken?.tamamlandi_at },
+            { ad: tr.yolculuk.faz.hedef, tamam: !!hedefErken?.tamamlandi_at },
+            { ad: tr.yolculuk.faz.farkindalik, tamam: !!ofDurum?.tamamlandi_at },
+            { ad: tr.yolculuk.faz.kamp, tamam: !!kisi?.camp_unlocked_at },
+            { ad: tr.yolculuk.faz.rapor, tamam: raporlarAcik },
+          ]}
+        />
+      </div>
       {/* UX #9 (2.tur): Kamp HUD'u — o anki blok + kalan süre + sırada ne var.
           Cumartesi'de grup üyesine grubunun gerçek bloğu gösterilir. */}
       <KampHud takim={takim} />

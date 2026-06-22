@@ -116,6 +116,17 @@ export const tr = {
     hazirlik: "Kamp yaklaşıyor",
     gun: (n: number) => `Kamp · Gün ${n}/3`,
     sonrasi: "90 günlük yolculuk",
+    // Kişisel faz haritası (YolculukHaritasi)
+    sirada: "sırada",
+    faz: {
+      rituel: "Ritüel",
+      oyun: "Oyun",
+      pusula: "Pusula",
+      hedef: "Hedef",
+      farkindalik: "Farkındalık",
+      kamp: "Kamp",
+      rapor: "Ayna",
+    },
   },
   // İlk girişte tek seferlik 30 saniyelik mini tanıtım (büyük yazı, az yazı)
   tanitim: {
