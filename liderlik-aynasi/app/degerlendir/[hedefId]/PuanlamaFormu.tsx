@@ -27,6 +27,21 @@ const YORUM_MAX = 500;
 // Gizlilik güvencesini ilk kez başkasını puanlarken bir kez göster (cihazda işaretli).
 const GIZLILIK_ACK = "la_gizlilik_ack_v1";
 
+// #7 Canlı renk spektrumu: 1-10 puanı anlamlı renge boyar (düşük=sıcak/kırmızı,
+// yüksek=serin/yeşil). Tailwind statik sınıf gerektirir → tam sınıflar sabit.
+const PUAN_RENK: Record<number, { bos: string; sec: string }> = {
+  1: { bos: "border-red-500/40 text-red-200 hover:border-red-400", sec: "border-red-400 bg-red-500 text-white ring-2 ring-red-300/70" },
+  2: { bos: "border-red-500/40 text-red-200 hover:border-red-400", sec: "border-red-400 bg-red-500 text-white ring-2 ring-red-300/70" },
+  3: { bos: "border-orange-500/40 text-orange-200 hover:border-orange-400", sec: "border-orange-400 bg-orange-500 text-white ring-2 ring-orange-300/70" },
+  4: { bos: "border-orange-500/40 text-orange-200 hover:border-orange-400", sec: "border-orange-400 bg-orange-500 text-white ring-2 ring-orange-300/70" },
+  5: { bos: "border-amber-500/40 text-amber-200 hover:border-amber-400", sec: "border-amber-400 bg-amber-500 text-[#1a1206] ring-2 ring-amber-300/70" },
+  6: { bos: "border-amber-500/40 text-amber-200 hover:border-amber-400", sec: "border-amber-400 bg-amber-500 text-[#1a1206] ring-2 ring-amber-300/70" },
+  7: { bos: "border-lime-500/40 text-lime-200 hover:border-lime-400", sec: "border-lime-400 bg-lime-500 text-[#0a1206] ring-2 ring-lime-300/70" },
+  8: { bos: "border-lime-500/40 text-lime-200 hover:border-lime-400", sec: "border-lime-400 bg-lime-500 text-[#0a1206] ring-2 ring-lime-300/70" },
+  9: { bos: "border-emerald-500/40 text-emerald-200 hover:border-emerald-400", sec: "border-emerald-400 bg-emerald-500 text-white ring-2 ring-emerald-300/70" },
+  10: { bos: "border-emerald-500/40 text-emerald-200 hover:border-emerald-400", sec: "border-emerald-400 bg-emerald-500 text-white ring-2 ring-emerald-300/70" },
+};
+
 // Kamp wifi'ı güvenilmez: her değişiklik localStorage'a taslak yazılır,
 // başarılı gönderimde silinir. Taslak, sunucudaki kayıtlı puanlardan
 // daha yenidir (gönderilmemiş düzenleme), bu yüzden önceliklidir.
@@ -450,10 +465,10 @@ export default function PuanlamaFormu({
                 role="radio"
                 aria-checked={g.puan === p}
                 onClick={() => puanSec(o, p)}
-                className={`h-16 rounded-2xl text-2xl font-bold transition-all ${
+                className={`h-16 rounded-2xl border-2 text-2xl font-bold transition-all ${
                   g.puan === p
-                    ? "btn-kor scale-105 ring-2 ring-gold-light/70 ring-offset-2 ring-offset-transparent"
-                    : "border-2 border-white/20 text-slate-200 hover:border-gold/60"
+                    ? `${PUAN_RENK[p].sec} scale-105 ring-offset-2 ring-offset-transparent`
+                    : PUAN_RENK[p].bos
                 }`}
               >
                 {p}
