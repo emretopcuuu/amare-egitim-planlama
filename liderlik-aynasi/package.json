@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "simulasyon": "tsx scripts/simulasyon.ts"
+    "simulasyon": "tsx scripts/simulasyon.ts",
+    "whatsapp:kaydet": "tsx scripts/whatsappKaydet.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.104.1",

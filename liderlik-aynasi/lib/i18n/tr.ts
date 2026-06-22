@@ -1301,6 +1301,7 @@ export const tr = {
       farkindalik: "Farkındalık Sinyali",
       takim: "Takım Sağlığı",
       duyuru: "Duyuru",
+      whatsapp: "WhatsApp",
       icerik: "İçerik",
       sunum: "Sunum",
       gorevTuru: "Görev Türleri",
@@ -2129,6 +2130,52 @@ export const tr = {
       gonderiliyor: "Gönderiliyor…",
       gonderildi: (e: string) => `"${e}" herkese gönderildi ✓`,
       hata: "Gönderilemedi, tekrar dene.",
+    },
+    // PD101 WhatsApp gönderim merkezi (Twilio)
+    whatsapp: {
+      baslik: "WhatsApp Gönder",
+      aciklama:
+        "PD101 katılımcılarına WhatsApp'tan giriş daveti, görev hatırlatması veya duyuru gönder.",
+      kurulumBaslik: "WhatsApp henüz bağlı değil",
+      kurulumAciklama:
+        "Gönderim için .env dosyasına Twilio bilgilerini ekle:\nTWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_WHATSAPP_FROM (örn. whatsapp:+90…)",
+      onayBaslik: "Şablonlar Meta onayını bekliyor",
+      onayAciklama:
+        "Şablonları Twilio'ya kaydet: npx tsx scripts/whatsappKaydet.ts\nOnay (Meta) birkaç dakika–24 saat sürer. Onaylanan şablonlar otomatik gönderilebilir.",
+      onayBekliyor: "Onay bekliyor",
+      adim1: "1 · Hangi mesaj?",
+      adimMesaj: "Duyuru metni",
+      mesajIpucu: "Katılımcılara iletmek istediğin duyuruyu yaz…",
+      adim2: "2 · Kime?",
+      hedefGenel: "Herkese",
+      hedefTakim: "Takıma",
+      hedefOdev: (n: number) => `Ödev yapmayanlar (${n})`,
+      hedefKisiler: "Seçili kişiler",
+      telefonYok: "telefon yok",
+      onizlemeBaslik: "Önizleme",
+      hedefOzet: (n: number) => `Bu mesaj ${n} kişiye gidecek.`,
+      telefonsuzNot: (n: number) => `${n} kişinin telefonu kayıtlı değil, onlara gitmeyecek.`,
+      gonder: "Gönder",
+      gonderEt: "Evet, gönder",
+      gonderiliyor: "Gönderiliyor…",
+      vazgec: "Vazgeç",
+      onaySoru: (e: string, n: number) => `"${e}" mesajı ${n} kişiye WhatsApp'tan gönderilsin mi?`,
+      sonuc: (basarili: number, basarisiz: number, telefonsuz: number) =>
+        `${basarili} gönderildi` +
+        (basarisiz > 0 ? `, ${basarisiz} başarısız` : "") +
+        (telefonsuz > 0 ? `, ${telefonsuz} telefonsuz atlandı` : "") +
+        " ✓",
+      api: {
+        yapilandirilmadi: "WhatsApp yapılandırılmadı (Twilio env eksik).",
+        sablonYok: "Geçersiz şablon.",
+        sablonKayitsiz: (e: string) =>
+          `"${e}" şablonu henüz Twilio'ya kaydedilmedi/onaylanmadı.`,
+        mesajBos: "Duyuru metni boş olamaz.",
+        takimYok: "Takım seçilmedi.",
+        kisiYok: "Kişi seçilmedi.",
+        odevYok: "Bekleyen görevi olan kimse yok.",
+        hedefYok: "Hedef kitle seçilmedi.",
+      },
     },
     // #7 Tek bakış canlı özet (büyük rakamlar)
     ozet: {
