@@ -83,12 +83,10 @@ export default function GolArkaplan() {
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: "url(/gunduz-gol.webp)" }}
           />
-          {/* OKUNABİLİRLİK PERDESİ: tüm içerik (uyarı/kart/metin) koyu-yarı-saydam
-              tasarlandığı için parlak gündüz fotoğrafında yazılar yutuluyordu.
-              Gece temasındaki güçlü perdenin dusk eşdeğeri: üst gökyüzü/göl hâlâ
-              görünür, içeriğin yaşadığı orta-alt bölge okunur derecede koyulaşır. */}
-          <div className="absolute inset-0 bg-[radial-gradient(140%_110%_at_50%_15%,rgba(5,14,24,0.22)_0%,rgba(5,14,24,0.52)_58%,rgba(3,10,18,0.80)_100%)]" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#06121e]/25 via-[#06121e]/38 to-[#040e18]/82" />
+          {/* OKUNABİLİRLİK PERDESİ: fotoğraf üstünde metin okunabilsin diye
+              hafif karartma — gece kadar ağır değil, gündüz hissi korunsun. */}
+          <div className="absolute inset-0 bg-[radial-gradient(140%_110%_at_50%_15%,rgba(5,14,24,0.05)_0%,rgba(5,14,24,0.18)_58%,rgba(3,10,18,0.42)_100%)]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#06121e]/8 via-[#06121e]/12 to-[#040e18]/45" />
         </>
       ) : (
         <>
