@@ -561,14 +561,14 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
   // Gerçek <table>: sütunlar kendiliğinden hizalanır (her satır ayrı grid değil).
   // Opak koyu zemin + bulanıklık → arka plan fotoğrafı yazıyı yutmaz.
   return (
-    <div className="koyu-panel mt-3 overflow-hidden rounded-2xl border border-royal-light/25 bg-[#061320]/92 shadow-xl backdrop-blur-sm">
+    <div className="koyu-panel mt-3 overflow-hidden rounded-2xl bg-gradient-to-b from-[#17293e]/92 to-[#0a1726]/96 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.65)] ring-1 ring-[#d4af37]/25 backdrop-blur-xl">
       <table className="w-full border-collapse text-left">
         <thead>
-          <tr className="bg-white/[0.05] text-[0.6rem] font-semibold uppercase tracking-wide text-slate-400">
-            <th className="px-3 py-2 font-semibold">{t.tabloKariyer}</th>
-            <th className="px-2 py-2 text-right font-semibold">{t.tabloEnDusuk}</th>
-            <th className="px-2 py-2 text-right font-semibold">{t.tabloEnYuksek}</th>
-            <th className="px-3 py-2 text-right font-semibold">{t.tabloOrtalama}</th>
+          <tr className="border-b border-[rgba(212,175,55,0.18)] text-[0.6rem] font-semibold uppercase tracking-wide text-[#cbb273]">
+            <th className="px-3 py-2.5 font-semibold">{t.tabloKariyer}</th>
+            <th className="px-2 py-2.5 text-right font-semibold">{t.tabloEnDusuk}</th>
+            <th className="px-2 py-2.5 text-right font-semibold">{t.tabloEnYuksek}</th>
+            <th className="px-3 py-2.5 text-right font-semibold">{t.tabloOrtalama}</th>
           </tr>
         </thead>
         <tbody>
@@ -577,7 +577,7 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
               key={r.ad}
               onClick={() => onSec(i)}
               style={{ animationDelay: `${i * 55}ms` }}
-              className="kariyer-satir cursor-pointer border-t border-royal/15 transition-colors hover:bg-gold/10"
+              className="kariyer-satir cursor-pointer border-t border-[rgba(255,255,255,0.05)] transition-colors even:bg-[rgba(255,255,255,0.025)] hover:bg-[rgba(212,175,55,0.12)]"
             >
               <td className="px-3 py-2.5">
                 <span className="flex items-center gap-1.5">
@@ -589,10 +589,10 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
                   )}
                 </span>
               </td>
-              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-300">
                 {r.enDusuk != null ? tlFormat(r.enDusuk) : "—"}
               </td>
-              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-300">
                 {r.enYuksek != null ? tlFormat(r.enYuksek) : "—"}
               </td>
               <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums text-emerald-300">
