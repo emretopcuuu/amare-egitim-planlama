@@ -54,9 +54,13 @@ function tanimaOlustur(): Tanima | null {
 export default function MikrofonButonu({
   onMetin,
   disabled,
+  ikon = false,
 }: {
   onMetin: (parca: string) => void;
   disabled?: boolean;
+  // Kompakt ikon modu: dar giriş satırlarında (Hedef/Pusula sohbeti gibi)
+  // textarea + Gönder ile aynı hizada duran kare ikon düğme.
+  ikon?: boolean;
 }) {
   const [destekli, setDestekli] = useState(false);
   const [dinliyor, setDinliyor] = useState(false);
@@ -124,6 +128,38 @@ export default function MikrofonButonu({
       setDinliyor(false);
       setHata(tr.ses.hata.genel);
     }
+  }
+
+  // Kompakt ikon modu: dar giriş satırında textarea + Gönder ile aynı hizada
+  // kare ikon düğme. Hata, satırı bozmamak için düğmenin ÜSTÜNDE balon olarak.
+  if (ikon) {
+    return (
+      <div className="relative shrink-0">
+        <button
+          type="button"
+          onClick={degistir}
+          disabled={disabled}
+          aria-pressed={dinliyor}
+          aria-label={dinliyor ? tr.ses.dinliyor : tr.ses.baslat}
+          title={dinliyor ? tr.ses.dinliyor : tr.ses.baslat}
+          className={`flex h-12 w-12 items-center justify-center rounded-2xl text-xl transition-colors disabled:opacity-40 ${
+            dinliyor
+              ? "animate-pulse bg-red-500/80 text-white ring-2 ring-red-400/50"
+              : "bg-midnight-soft text-slate-300 ring-1 ring-royal-light/40 hover:text-slate-100"
+          }`}
+        >
+          {dinliyor ? "⏹" : "🎤"}
+        </button>
+        {hata && (
+          <p
+            role="status"
+            className="absolute bottom-full right-0 mb-2 w-max max-w-[15rem] rounded-lg bg-midnight px-3 py-1.5 text-xs leading-relaxed text-amber-300/90 shadow-lg ring-1 ring-amber-400/20"
+          >
+            {hata}
+          </p>
+        )}
+      </div>
+    );
   }
 
   return (
