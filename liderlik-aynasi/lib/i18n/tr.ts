@@ -3557,6 +3557,17 @@ export const tr = {
     manuelTetiklendi: "Zamanlanmış eylemler tetiklendi ✓",
     manuelBilgi: "Cron günde bir çalışır — bekleyen eylemleri hemen tetiklemek için bu butonu kullan.",
   },
+  // AYNA SES MOMENTLERİ — ritüel ve rapor açılışlarında AYNA'nın imza sesi.
+  // Metinler beyaz listededir; /api/ayna-ses?k=<anahtar> ile seslendirilir.
+  aynaSesMomentleri: {
+    rituelGiris:
+      "Hoş geldin. Bu ritüel, sesin izini bırakmak için. Kampın sonunda, aynandan kendi sesini duyacaksın. Hazır olduğunda, kaydı başlat.",
+    raporAcilis:
+      "Bu kamp boyunca başkaları seni gözlemledi. Şimdi aynadaki yansımana bakma zamanı. Bu sayfa sana ait.",
+    dinle: "AYNA'yı Dinle",
+    durdur: "Durdur",
+    sesHata: "Ses yüklenemedi",
+  } as const,
   // #10 İşlem günlüğü: kritik admin eylemleri zaman damgasıyla
   islemGunlugu: {
     baslik: "İşlem Günlüğü",

@@ -23,6 +23,7 @@ import ArketipKarti from "./ArketipKarti";
 import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
 import SesCal from "@/components/SesCal";
+import AynaSesi from "@/components/AynaSesi";
 
 export const metadata = { title: "Ayna Raporun — Liderlik Aynası" };
 
@@ -271,7 +272,10 @@ export default async function AynaPage() {
         <p className="mt-2 text-sm font-semibold text-gold-light">
           {t.epikKatki(verdigiPuan ?? 0)}
         </p>
-        <div className="mt-4">
+        <div className="yazdir-gizle mt-4 text-left">
+          <AynaSesi kod="raporAcilis" />
+        </div>
+        <div className="mt-2">
           <RaporKaydet />
         </div>
         <div className="yazdir-gizle mt-3">

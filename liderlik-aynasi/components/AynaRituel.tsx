@@ -5,6 +5,7 @@ import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import { ortuAc, ortuKapat } from "@/lib/ortu";
 import AynaIkon from "@/components/AynaIkon";
+import AynaSesi from "@/components/AynaSesi";
 
 const t = tr.rituel;
 
@@ -436,7 +437,10 @@ export default function AynaRituel() {
               {t.baslik}
             </h1>
             <p className="mt-6 text-xl leading-relaxed text-slate-200">{t.aciklama}</p>
-            <div className="mt-10">
+            <div className="mt-8 text-left">
+              <AynaSesi kod="rituelGiris" />
+            </div>
+            <div className="mt-2">
               <DevButon onClick={() => setAsama("onay")}>{t.basla}</DevButon>
             </div>
             <button
