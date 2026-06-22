@@ -268,6 +268,34 @@ body.gunes-modu .kart-cerceve {
     animation: none;
   }
 }
+/* Kariyer tablosu — tek bileşen, iki tema: GÜNDÜZ beyaz-cam + koyu zarif metin
+   (kart-cam zemin) · GECE koyu cam + açık metin. Başlık/vurgu/çizgi tonları her
+   iki temada okunur (slate metinleri kart-cam üstünde tema kuralıyla otomatik
+   uyarlanır; aşağıdakiler accent ve yüzey detaylarıdır). */
+.kariyer-baslik {
+  color: #cbb273;
+}
+.kariyer-vurgu {
+  color: #34d399;
+}
+.kariyer-cizgi {
+  border-color: rgba(255, 255, 255, 0.07);
+}
+.kariyer-satir:nth-child(even) {
+  background: rgba(255, 255, 255, 0.03);
+}
+html[data-tema="gunduz"] .kariyer-baslik {
+  color: #9a7421;
+}
+html[data-tema="gunduz"] .kariyer-vurgu {
+  color: #047857;
+}
+html[data-tema="gunduz"] .kariyer-cizgi {
+  border-color: rgba(16, 37, 56, 0.09);
+}
+html[data-tema="gunduz"] .kariyer-satir:nth-child(even) {
+  background: rgba(16, 37, 56, 0.035);
+}
 .sahne-giris > *:nth-child(2) {
   animation-delay: 0.06s;
 }
