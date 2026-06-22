@@ -48,7 +48,7 @@ export const WA_SABLONLAR: WaSablon[] = [
     aciklama: "Aynayla tanışma daveti — kişiye özel giriş bağlantısı ve kodu.",
     friendlyName: "pd101_giris_daveti",
     dil: "tr",
-    kategori: "UTILITY",
+    kategori: "MARKETING",
     ayarAnahtari: "wa_tpl_giris",
     govde:
       "Merhaba {{1}}, PD101'e hoş geldin.\n\n" +
@@ -67,7 +67,7 @@ export const WA_SABLONLAR: WaSablon[] = [
     aciklama: "Sistemde bekleyen görevi olanlara (ödev yapmayanlara) dürtme.",
     friendlyName: "pd101_odev_hatirlatma",
     dil: "tr",
-    kategori: "UTILITY",
+    kategori: "MARKETING",
     ayarAnahtari: "wa_tpl_odev",
     govde:
       "Merhaba {{1}}, sistemde seni bekleyen bir görevin var.\n\n" +
