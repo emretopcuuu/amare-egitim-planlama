@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import { ortuAc, ortuKapat } from "@/lib/ortu";
+import AynaIkon from "@/components/AynaIkon";
 
 const t = tr.rituel;
 
@@ -430,8 +431,9 @@ export default function AynaRituel() {
             <p className="prizma-serif text-sm uppercase tracking-[0.4em] text-slate-400">
               Ses Ritüeli
             </p>
-            <h1 className="prizma-serif ay-metin mt-4 text-4xl font-semibold leading-tight">
-              🌊 {t.baslik}
+            <AynaIkon className="mx-auto mt-5 h-12 w-12 text-gold/85" />
+            <h1 className="prizma-serif ay-metin mt-3 text-4xl font-semibold leading-tight">
+              {t.baslik}
             </h1>
             <p className="mt-6 text-xl leading-relaxed text-slate-200">{t.aciklama}</p>
             <div className="mt-10">

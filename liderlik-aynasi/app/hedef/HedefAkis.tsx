@@ -517,42 +517,50 @@ function Rozet({ etiket, deger, onTik }: { etiket: string; deger: string; onTik?
 }
 
 function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
+  // Gerçek <table>: sütunlar kendiliğinden hizalanır (her satır ayrı grid değil).
+  // Opak koyu zemin + bulanıklık → arka plan fotoğrafı yazıyı yutmaz.
   return (
-    <div className="mt-3 overflow-hidden rounded-2xl border border-royal-light/20">
-      <div className="grid grid-cols-[1fr_auto_auto_auto] gap-x-3 bg-white/[0.03] px-3 py-2 text-[0.6rem] font-semibold uppercase tracking-wide text-slate-500">
-        <span>{t.tabloKariyer}</span>
-        <span className="text-right">{t.tabloEnDusuk}</span>
-        <span className="text-right">{t.tabloEnYuksek}</span>
-        <span className="text-right">{t.tabloOrtalama}</span>
-      </div>
-      <ul className="divide-y divide-royal/15">
-        {KARIYER_BASAMAKLARI.map((r, i) => (
-          <li key={r.ad}>
-            <button
+    <div className="mt-3 overflow-hidden rounded-2xl border border-royal-light/25 bg-[#061320]/92 shadow-xl backdrop-blur-sm">
+      <table className="w-full border-collapse text-left">
+        <thead>
+          <tr className="bg-white/[0.05] text-[0.6rem] font-semibold uppercase tracking-wide text-slate-400">
+            <th className="px-3 py-2 font-semibold">{t.tabloKariyer}</th>
+            <th className="px-2 py-2 text-right font-semibold">{t.tabloEnDusuk}</th>
+            <th className="px-2 py-2 text-right font-semibold">{t.tabloEnYuksek}</th>
+            <th className="px-3 py-2 text-right font-semibold">{t.tabloOrtalama}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {KARIYER_BASAMAKLARI.map((r, i) => (
+            <tr
+              key={r.ad}
               onClick={() => onSec(i)}
-              className="grid w-full grid-cols-[1fr_auto_auto_auto] items-center gap-x-3 px-3 py-2.5 text-left transition-colors hover:bg-gold/5"
+              style={{ animationDelay: `${i * 55}ms` }}
+              className="kariyer-satir cursor-pointer border-t border-royal/15 transition-colors hover:bg-gold/10"
             >
-              <span className="flex items-center gap-1.5">
-                <span className="text-sm font-medium text-slate-100">{r.ad}</span>
-                {r.rozet && (
-                  <span className="rounded-full bg-gold/15 px-1.5 py-0.5 text-[0.55rem] font-semibold text-gold-light">
-                    {r.rozet}
-                  </span>
-                )}
-              </span>
-              <span className="text-right font-mono text-[0.7rem] text-slate-500">
-                {r.enDusuk != null ? tlFormat(r.enDusuk) : "-"}
-              </span>
-              <span className="text-right font-mono text-[0.7rem] text-slate-500">
-                {r.enYuksek != null ? tlFormat(r.enYuksek) : "-"}
-              </span>
-              <span className="text-right font-mono text-sm font-bold text-emerald-300">
+              <td className="px-3 py-2.5">
+                <span className="flex items-center gap-1.5">
+                  <span className="text-sm font-medium text-slate-50">{r.ad}</span>
+                  {r.rozet && (
+                    <span className="shrink-0 rounded-full bg-gold/20 px-1.5 py-0.5 text-[0.55rem] font-semibold text-gold-light">
+                      {r.rozet}
+                    </span>
+                  )}
+                </span>
+              </td>
+              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+                {r.enDusuk != null ? tlFormat(r.enDusuk) : "—"}
+              </td>
+              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+                {r.enYuksek != null ? tlFormat(r.enYuksek) : "—"}
+              </td>
+              <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums text-emerald-300">
                 {tlFormat(r.ortalama, r.arti)}
-              </span>
-            </button>
-          </li>
-        ))}
-      </ul>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -601,10 +609,10 @@ function PlanKarti({ plan }: { plan: KariyerPlani }) {
   const ara = km.slice(0, -1);
   const ana = km[km.length - 1];
   return (
-    <div className="overflow-hidden rounded-2xl border border-emerald-400/30 bg-gradient-to-br from-emerald-500/15 to-midnight-card/70 shadow-xl">
-      <div className="border-l-4 border-emerald-400 bg-emerald-500/10 px-5 py-3">
-        <p className="text-lg font-bold text-emerald-100">{t.planBaslik(plan.rutbe)}</p>
-        <p className="text-xs text-emerald-300/80">
+    <div className="overflow-hidden rounded-2xl border border-emerald-400/40 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
+      <div className="border-l-4 border-emerald-400 bg-emerald-500/15 px-5 py-3">
+        <p className="text-lg font-bold text-emerald-50">{t.planBaslik(plan.rutbe)}</p>
+        <p className="text-xs text-emerald-200/90">
           {t.planOzet(plan.sureAy, plan.gunlukSaatEtiket, plan.haftalikSaat)}
         </p>
       </div>
