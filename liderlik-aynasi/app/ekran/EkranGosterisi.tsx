@@ -8,7 +8,7 @@ import EpicYildizlar from "./EpicYildizlar";
 const t = tr.ekran;
 const VERI_YOKLAMA_MS = 10_000;
 const SLAYT_MS = 14_000;
-const SLAYT_SAYISI = 5;
+const SLAYT_SAYISI = 6;
 
 // Takım renk paleti — projeksiyonda ayırt edilebilir, koyu zemine uygun
 const TAKIM_RENKLERI = [
@@ -475,6 +475,35 @@ export default function EkranGosterisi() {
                       alt=""
                       className="aspect-square w-full rounded-2xl object-cover ring-1 ring-white/10"
                     />
+                  ))}
+                </div>
+              )}
+            </section>
+
+            {/* Slayt 6 — #8 Salonun Kalbi: isimsiz olumlu yansımalar duvarı */}
+            <section
+              className={`absolute inset-0 flex flex-col transition-all duration-1000 ${
+                slayt === 5 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
+              }`}
+            >
+              <h2 className="text-3xl font-semibold text-gold-light">{t.yansimaBaslik}</h2>
+              <p className="mt-1 text-lg text-slate-400">{t.yansimaAciklama}</p>
+              {veri.yansimalar.length === 0 ? (
+                <p className="flex flex-1 items-center justify-center text-xl text-slate-400">
+                  {t.yansimaBos}
+                </p>
+              ) : (
+                <div className="mt-6 grid min-h-0 flex-1 grid-cols-2 content-start gap-5 overflow-hidden lg:grid-cols-3">
+                  {veri.yansimalar.map((söz, i) => (
+                    <blockquote
+                      key={i}
+                      className="kart-3d seri-belir rounded-3xl bg-midnight-card/60 p-6 text-2xl font-medium leading-snug text-slate-100 ring-1 ring-gold/20"
+                      style={{ animationDelay: `${(i % 6) * 120}ms` }}
+                    >
+                      <span className="text-gold-light">“</span>
+                      {söz}
+                      <span className="text-gold-light">”</span>
+                    </blockquote>
                   ))}
                 </div>
               )}

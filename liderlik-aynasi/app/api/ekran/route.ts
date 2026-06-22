@@ -29,6 +29,9 @@ export type EkranVerisi = {
   vitrin: number | null;
   // Onaylı anı duvarı fotoğraflarının imzalı URL'leri (en yeni)
   anilar: string[];
+  // #8 Anonim sosyal kıvılcım: yüksek puanlı (≥8), gizlenmemiş, öz-olmayan
+  // yorum metinleri — KİMLİKSİZ. Kim kime yazdı taşınmaz; sadece olumlu söz.
+  yansimalar: string[];
   // Sahne olayları: /ekran'ın bir kez oynatacağı taze sinyaller (≤4 dk)
   sahne: {
     fiero: { id: string; ad: string; sesUrl: string | null } | null;
@@ -52,6 +55,7 @@ export async function GET() {
     fieroSonuc,
     sahneAyarSonuc,
     fotoSonuc,
+    yansimaSonuc,
   ] = await Promise.all([
       acikDalga(db),
       aktifOzellikler(db),
@@ -88,6 +92,17 @@ export async function GET() {
         .eq("status", "approved")
         .order("created_at", { ascending: false })
         .limit(12),
+      // #8: SADECE yorum metni + skor seçilir — rater_id/target_id ASLA çekilmez
+      // ki kimlik bu uçtan (herkese açık) sızamasın. Yüksek puan + gizlenmemiş.
+      db
+        .from("ratings")
+        .select("comment")
+        .gte("score", 8)
+        .eq("is_self", false)
+        .eq("is_hidden", false)
+        .not("comment", "is", null)
+        .order("created_at", { ascending: false })
+        .limit(60),
     ]);
   if (kisilerSonuc.error || puanlarSonuc.error || gorevSonuc.error) {
     return Response.json({ hata: "Veri alınamadı." }, { status: 500 });
@@ -106,6 +121,13 @@ export async function GET() {
   const kisiler = kisilerSonuc.data;
   const puanlar = puanlarSonuc.data;
   const ozellikSayisi = ozellikler.length;
+
+  // #8 Olumlu yansımalar: kısa, anlamlı, isimsiz sözler. Çok kısa/çok uzun
+  // olanları ele, en yeni 60'tan deterministik bir karışımla 14 tanesini al.
+  const yansimalar = (yansimaSonuc.data ?? [])
+    .map((r) => (r.comment ?? "").trim())
+    .filter((c) => c.length >= 12 && c.length <= 180)
+    .slice(0, 14);
 
   // Düğümler: isim yok, yalnızca takım indeksi
   const takimlar = [...new Set(kisiler.map((k) => k.team).filter(Boolean))] as string[];
@@ -280,6 +302,7 @@ export async function GET() {
       };
     })(),
     anilar,
+    yansimalar,
   };
 
   return Response.json(veri);

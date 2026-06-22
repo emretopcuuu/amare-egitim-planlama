@@ -50,6 +50,7 @@ export default function OtomatikZamanlama({ dalgalar }: { dalgalar: Dalga[] }) {
   const [zaman, setZaman] = useState("");
   const [eklemeMesgul, setEklemeMesgul] = useState(false);
   const [tetikleniyor, setTetikleniyor] = useState(false);
+  const [akilliMesgul, setAkilliMesgul] = useState(false);
 
   const yukle = useCallback(async () => {
     try {
@@ -105,6 +106,28 @@ export default function OtomatikZamanlama({ dalgalar }: { dalgalar: Dalga[] }) {
     }
   }
 
+  async function akilliDurt() {
+    setAkilliMesgul(true);
+    try {
+      const res = await fetch("/api/cron/akilli-durtme", { method: "POST" });
+      if (!res.ok) {
+        tost(tr.akilliDurtme.hata, "hata");
+        return;
+      }
+      const veri = (await res.json().catch(() => null)) as {
+        gonderilen?: number;
+      } | null;
+      tost(
+        `${tr.akilliDurtme.tetiklendi} (${veri?.gonderilen ?? 0} kişi)`,
+        "basari"
+      );
+    } catch {
+      tost(tr.akilliDurtme.hata, "hata");
+    } finally {
+      setAkilliMesgul(false);
+    }
+  }
+
   async function iptal(id: number) {
     if (!confirm(t.iptalOnay)) return;
     const res = await fetch(`/api/admin/zamanlama?id=${id}`, { method: "DELETE" });
@@ -125,6 +148,25 @@ export default function OtomatikZamanlama({ dalgalar }: { dalgalar: Dalga[] }) {
           className="shrink-0 rounded-xl bg-amber-500 px-4 py-2 text-xs font-semibold text-[#1a1206] transition-colors hover:bg-amber-400 disabled:opacity-50"
         >
           {tetikleniyor ? t.manuelTetikleniyor : t.manuelTetikle}
+        </button>
+      </div>
+
+      {/* #9 Akıllı Dürtme — bağlama duyarlı kişiye özel bildirim */}
+      <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-500/30 bg-emerald-900/20 px-4 py-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-emerald-300">
+            {tr.akilliDurtme.yonetBaslik}
+          </p>
+          <p className="mt-0.5 text-xs text-emerald-200/70">
+            {tr.akilliDurtme.yonetAciklama}
+          </p>
+        </div>
+        <button
+          onClick={() => void akilliDurt()}
+          disabled={akilliMesgul}
+          className="shrink-0 rounded-xl bg-emerald-500 px-4 py-2 text-xs font-semibold text-[#06121e] transition-colors hover:bg-emerald-400 disabled:opacity-50"
+        >
+          {akilliMesgul ? tr.akilliDurtme.tetikleniyor : tr.akilliDurtme.tetikle}
         </button>
       </div>
 

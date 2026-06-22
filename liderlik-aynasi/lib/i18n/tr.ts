@@ -3293,6 +3293,17 @@ export const tr = {
     indir: "Kartı İndir",
     paylas: "Paylaş",
   },
+  // #10 Paylaşılabilir Ayna Kartı — raporun kapanışında kişinin tüm ayna anını
+  // (arketip + en güçlü 3 yan + en çok gelişen) tek görselde özetler.
+  aynaKarti: {
+    baslik: "🪞 Ayna Kartın",
+    aciklama: "Kampın sana bıraktığı iz — tek karede. İndir, paylaş.",
+    kartUst: "Bu kampta ben",
+    gucluUst: "En güçlü yanlarım",
+    gelisenUst: "En çok geliştiğim",
+    indir: "Kartı İndir",
+    paylas: "Paylaş",
+  },
   yansiman: {
     baslik: "Aynan seni gördü",
     izle: "▶ Suya bak",
@@ -3366,6 +3377,11 @@ export const tr = {
     ligBos: "İlk Kıvılcımlar yakında — AYNA görev dağıtmaya başladığında burası alevlenecek.",
     duvarBaslik: "📸 Anı Duvarı",
     duvarBos: "Anılar yakında — katılımcılar fotoğraf paylaştıkça burası dolacak.",
+    // #8 Anonim sosyal kıvılcım — birbirinize yazdığınız olumlu yorumlar,
+    // isimsiz, akan duvar. Kim kime yazdı belli değil; sadece iyilik görünür.
+    yansimaBaslik: "💛 Salonun Kalbi",
+    yansimaAciklama: "Birbiriniz hakkında yazdığınız güzel sözler — isimsiz, ama gerçek.",
+    yansimaBos: "İlk güzel sözler yazıldıkça bu duvar kalpten kalbe dolacak.",
     yildizSatiri: (n: number) => `Bu salon ${n} yıldız yaktı`,
     sesiAc: "🔊 Sesi Aç",
     sesAcikEtiket: "🔊 Ses açık",
@@ -3568,6 +3584,22 @@ export const tr = {
     durdur: "Durdur",
     sesHata: "Ses yüklenemedi",
   } as const,
+  // #9 Akıllı zamanlı bildirimler — bağlama duyarlı, kişiye özel dürtmeler.
+  // Genel toplu dürtme yerine "bugün seni kaç kişi gözledi" gibi gerçek veriye
+  // dayalı, merak ve karşılıklılık uyandıran mesajlar.
+  akilliDurtme: {
+    gozlendiBaslik: (n: number) => `👁 Bugün ${n} kişi seni gözlemledi`,
+    gozlendiGovde:
+      "Aynan derinleşiyor. Sen de görmeye devam et — sıradaki gözlemin seni bekliyor.",
+    // Admin paneli — manuel tetikleme
+    yonetBaslik: "Akıllı Dürtme",
+    yonetAciklama:
+      "Bugün gözlemlenen ama haberi olmayan katılımcılara kişiye özel bildirim gönderir. Günde bir kez otomatik çalışır.",
+    tetikle: "Şimdi Gönder",
+    tetikleniyor: "Gönderiliyor…",
+    tetiklendi: "Akıllı dürtmeler gönderildi",
+    hata: "Gönderilemedi. Tekrar dene.",
+  },
   // #10 İşlem günlüğü: kritik admin eylemleri zaman damgasıyla
   islemGunlugu: {
     baslik: "İşlem Günlüğü",
