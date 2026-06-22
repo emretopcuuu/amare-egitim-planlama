@@ -169,12 +169,9 @@ export const OV_SENARYOLAR = [
   { etiket: "%40 / ay", buyume: 0.4 },
 ] as const;
 
-// Simülasyon milestone'ları: ¼, ½, ¾ ve tam süre.
+// Simülasyon ayları: HER ay (1, 2, 3 … süre) — büyümeyi ay ay göster ki kişi
+// merdiveni adım adım hissetsin (¼/½/¾ atlamaları yerine sürekli).
 export function simulasyonMilestonelari(ay: number): number[] {
-  return [
-    Math.max(1, Math.round(ay / 4)),
-    Math.max(1, Math.round(ay / 2)),
-    Math.max(1, Math.round((3 * ay) / 4)),
-    ay,
-  ].filter((v, i, arr) => arr.indexOf(v) === i); // tekrarsız
+  const n = Math.max(1, Math.round(ay));
+  return Array.from({ length: n }, (_, i) => i + 1);
 }

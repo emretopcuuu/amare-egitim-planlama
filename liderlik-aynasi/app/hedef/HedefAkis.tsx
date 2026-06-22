@@ -472,10 +472,12 @@ function Wizard({
       {adim === 4 && plan && (
         <section className="space-y-4">
           <p className="text-center text-sm font-semibold text-gold-light">{t.planUstBaslik}</p>
-          <PlanKarti plan={plan} />
+          {/* OV büyüme simülasyonu ÖNCE: kişi önce kendi rakamının ay ay nasıl
+              büyüdüğünü görür, sonra somut kariyer planını. */}
           {ov0 && ov0 > 0 && hedefRutbe && sureObj && (
             <OvSimKarti ov0={ov0} ovHedef={hedefRutbe.ov} sureAy={sureObj.ay} />
           )}
+          <PlanKarti plan={plan} />
           {hata && <p className="text-center text-sm text-red-400">{hata}</p>}
           <button
             onClick={() => hedefIndex != null && sure && gunluk && onMuhur(hedefIndex, sure, gunluk)}
@@ -659,9 +661,9 @@ function OvSimKarti({ ov0, ovHedef, sureAy }: { ov0: number; ovHedef: number; su
   const tempoYuzde = tempo > 0 ? `%${(tempo * 100).toFixed(0)}` : "—";
   const makul = makuSure(ov0, ovHedef);
   return (
-    <div className="overflow-hidden rounded-2xl border border-royal-light/25 bg-midnight-soft">
+    <div className="overflow-hidden rounded-2xl border border-royal-light/25 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
       <div className="border-b border-royal-light/15 px-4 py-2.5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t.simulasyonBaslik}</p>
+        <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">{t.simulasyonBaslik}</p>
       </div>
       {/* Senaryo tablosu */}
       <div className="overflow-x-auto">
