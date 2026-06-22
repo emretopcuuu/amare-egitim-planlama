@@ -561,10 +561,10 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
   // Gerçek <table>: sütunlar kendiliğinden hizalanır (her satır ayrı grid değil).
   // Opak koyu zemin + bulanıklık → arka plan fotoğrafı yazıyı yutmaz.
   return (
-    <div className="koyu-panel mt-3 overflow-hidden rounded-2xl bg-gradient-to-b from-[#17293e]/92 to-[#0a1726]/96 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.65)] ring-1 ring-[#d4af37]/25 backdrop-blur-xl">
+    <div className="kart-cam mt-3 overflow-hidden rounded-2xl shadow-[0_22px_55px_-26px_rgba(15,30,50,0.45)]">
       <table className="w-full border-collapse text-left">
         <thead>
-          <tr className="border-b border-[rgba(212,175,55,0.18)] text-[0.6rem] font-semibold uppercase tracking-wide text-[#cbb273]">
+          <tr className="kariyer-cizgi kariyer-baslik border-b text-[0.6rem] font-semibold uppercase tracking-wide">
             <th className="px-3 py-2.5 font-semibold">{t.tabloKariyer}</th>
             <th className="px-2 py-2.5 text-right font-semibold">{t.tabloEnDusuk}</th>
             <th className="px-2 py-2.5 text-right font-semibold">{t.tabloEnYuksek}</th>
@@ -577,11 +577,11 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
               key={r.ad}
               onClick={() => onSec(i)}
               style={{ animationDelay: `${i * 55}ms` }}
-              className="kariyer-satir cursor-pointer border-t border-[rgba(255,255,255,0.05)] transition-colors even:bg-[rgba(255,255,255,0.025)] hover:bg-[rgba(212,175,55,0.12)]"
+              className="kariyer-satir kariyer-cizgi cursor-pointer border-t transition-colors hover:bg-gold/10"
             >
               <td className="px-3 py-2.5">
                 <span className="flex items-center gap-1.5">
-                  <span className="text-sm font-medium text-slate-50">{r.ad}</span>
+                  <span className="text-sm font-semibold text-slate-100">{r.ad}</span>
                   {r.rozet && (
                     <span className="shrink-0 rounded-full bg-gold/20 px-1.5 py-0.5 text-[0.55rem] font-semibold text-gold-light">
                       {r.rozet}
@@ -589,13 +589,13 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
                   )}
                 </span>
               </td>
-              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-300">
+              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
                 {r.enDusuk != null ? tlFormat(r.enDusuk) : "—"}
               </td>
-              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-300">
+              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
                 {r.enYuksek != null ? tlFormat(r.enYuksek) : "—"}
               </td>
-              <td className="whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums text-emerald-300">
+              <td className="kariyer-vurgu whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums">
                 {tlFormat(r.ortalama, r.arti)}
               </td>
             </tr>
