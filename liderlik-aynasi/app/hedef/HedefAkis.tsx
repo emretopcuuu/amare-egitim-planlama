@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import { kutla } from "@/lib/his";
+import KivilcimPatlama from "@/components/KivilcimPatlama";
 import {
   KARIYER_BASAMAKLARI,
   SURE_SECENEKLERI,
@@ -54,6 +56,7 @@ export default function HedefAkis({
   const [hata, setHata] = useState<string | null>(null);
   const [plan, setPlan] = useState<KariyerPlani | null>(durum.plan);
   const [ov0, setOv0] = useState<number | null>(durum.baslangicOv ?? null);
+  const [kutlama, setKutlama] = useState(0); // hedef mühürlenince kıvılcım patlaması
 
   async function istek(govde: Record<string, unknown>) {
     const res = await fetch("/api/hedef", {
@@ -141,6 +144,8 @@ export default function HedefAkis({
           }
           setPlan(v.plan as KariyerPlani);
           setFaz("tamam");
+          kutla(); // dokunsal + su dalgası
+          setKutlama((k) => k + 1); // kıvılcım patlaması
         }}
         mesgul={mesgul}
         hata={hata}
@@ -152,6 +157,7 @@ export default function HedefAkis({
   // ---- TAMAM: mühürlenmiş plan ----
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
+      <KivilcimPatlama tetik={kutlama} />
       <div className="text-center">
         <p className="text-5xl" aria-hidden>
           🎯
