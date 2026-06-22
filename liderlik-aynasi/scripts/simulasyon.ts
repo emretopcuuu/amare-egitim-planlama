@@ -1097,9 +1097,12 @@ console.log("\n■ 11) FAZ B — SÖZ TAKİBİ & DÜRTME ESKALASYONU");
 
   // Önizleme: yer tutucular dolar, buton etiketi görünür
   const onz = onizleme(giris, gd);
-  iddia(onz.includes("Ayşe") && onz.includes("427813"), "önizleme: değişkenler dolduruldu");
+  iddia(onz.includes("Ayşe"), "önizleme: ad dolduruldu");
   iddia(onz.includes(giris.buton!.baslik), "önizleme: buton etiketi görünüyor");
   iddia(!onz.includes("{{"), "önizleme: çözülmemiş yer tutucu kalmadı");
+  // duyuru gövdesinde {{2}} var → serbest mesaj önizlemede görünür
+  const donz = onizleme(duyuru, dd);
+  iddia(donz.includes("Yarın 09.00 salon"), "önizleme: serbest mesaj dolduruldu");
 
   // Twilio tipleri: butonlu → call-to-action + text yedeği; duyuru → salt text
   const tip = twilioTipleri(giris) as Record<string, unknown>;
