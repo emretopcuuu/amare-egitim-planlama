@@ -48,12 +48,11 @@ export const WA_SABLONLAR: WaSablon[] = [
     aciklama: "Aynayla tanışma daveti — kişiye özel giriş bağlantısı ve kodu.",
     friendlyName: "pd101_giris_daveti",
     dil: "tr",
-    kategori: "UTILITY",
+    kategori: "MARKETING",
     ayarAnahtari: "wa_tpl_giris",
     govde:
       "Merhaba {{1}}, PD101'e hoş geldin.\n\n" +
-      "Kendi gerçek potansiyelini görmeni sağlayacak, ona ulaşmanda sana rehber olacak bir ayna hazırladık. Erişmek için sana özel bir giriş bağlantın hazır.\n\n" +
-      "Giriş kodun: {{2}}\n\n" +
+      "Kendi gerçek potansiyelini görmeni sağlayacak, ona ulaşmanda sana rehber olacak bir ayna hazırladık. Erişmek için sana özel bir giriş bağlantın hazır — aşağıdaki butona dokunman yeterli.\n\n" +
       "Kampa gelmeden önce aynayla tanışmalısın. Aynaya bakıp kendini görmeye çalış, çünkü orada seni en doğru anlatan yansımayı bulacaksın.\n\n" +
       "— One Team AI",
     buton: { baslik: "Hesabıma Gir", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
@@ -67,7 +66,7 @@ export const WA_SABLONLAR: WaSablon[] = [
     aciklama: "Sistemde bekleyen görevi olanlara (ödev yapmayanlara) dürtme.",
     friendlyName: "pd101_odev_hatirlatma",
     dil: "tr",
-    kategori: "UTILITY",
+    kategori: "MARKETING",
     ayarAnahtari: "wa_tpl_odev",
     govde:
       "Merhaba {{1}}, sistemde seni bekleyen bir görevin var.\n\n" +
