@@ -1,11 +1,15 @@
 import { aynaSesId, seslendir, sesYapilandirildiMi } from "@/lib/eleven";
 import { tr } from "@/lib/i18n/tr";
 
-// AYNA SESİ — Pusula açılışının sabit repliklerini AYNA marka sesiyle (ElevenLabs)
-// seslendirip mp3 döner. Yalnız beyaz listedeki replik kodları kabul edilir
-// (içeriğe metin enjekte edilemez). Anahtar yoksa 503 → istemci sessiz+altyazı
-// moduna düşer. Güçlü cache: aynı replik bir daha üretilmesin (CDN/tarayıcı).
-const REPLIK = tr.pusulaAcilis.replik;
+// AYNA SESİ — Beyaz listedeki replik + ses-moment metinlerini AYNA marka sesiyle
+// (ElevenLabs) seslendirip mp3 döner. İçeriğe metin enjekte edilemez.
+// Anahtar yoksa 503 → istemci sessiz+altyazı moduna düşer.
+// Güçlü cache: aynı replik bir daha üretilmesin (CDN/tarayıcı).
+const REPLIK: Record<string, string> = {
+  ...tr.pusulaAcilis.replik,
+  rituelGiris: tr.aynaSesMomentleri.rituelGiris,
+  raporAcilis: tr.aynaSesMomentleri.raporAcilis,
+};
 
 export async function GET(req: Request) {
   const kod = new URL(req.url).searchParams.get("k") ?? "";
