@@ -435,7 +435,7 @@ export default function OnFarkindalikAkis({
                   aria-checked={yanitlar[a.kod] === p}
                   onClick={() => likertSec(a.kod, p)}
                   className={`flex h-12 w-full items-center gap-3 rounded-xl px-4 text-left transition-all ${
-                    yanitlar[a.kod] === p ? "btn-kor scale-[1.01]" : "border-2 border-white/20 text-slate-200 hover:border-gold/60"
+                    yanitlar[a.kod] === p ? "btn-kor scale-[1.01]" : "kart-cam border-2 border-white/20 text-slate-200 hover:border-gold/60"
                   }`}
                 >
                   <span className="font-mono text-lg font-bold">{p}</span>
@@ -585,7 +585,7 @@ function Olcek10({
             aria-pressed={secili === p}
             onClick={() => onSec(p)}
             className={`h-12 rounded-xl text-lg font-bold transition-all ${
-              secili === p ? "btn-kor scale-105" : "border-2 border-white/20 text-slate-200 hover:border-gold/60"
+              secili === p ? "btn-kor scale-105" : "kart-cam border-2 border-white/20 text-slate-200 hover:border-gold/60"
             }`}
           >
             {p}

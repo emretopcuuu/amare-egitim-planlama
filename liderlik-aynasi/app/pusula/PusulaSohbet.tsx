@@ -768,7 +768,9 @@ export default function PusulaSohbet({
           <div key={i} className={`flex ${m.rol === "ayna" ? "justify-start" : "justify-end"}`}>
             <p
               className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-base leading-relaxed ${
-                m.rol === "ayna" ? "kart-cam text-slate-100" : "bg-[#4c2e8c] text-[#f5f3ff]"
+                m.rol === "ayna"
+                  ? "kart-cam text-slate-100"
+                  : "bg-gradient-to-br from-[#243349] to-[#10192a] text-[#f5ecd8] ring-1 ring-[#d4af37]/40 shadow-[0_6px_20px_-6px_rgba(0,0,0,0.45)]"
               }`}
             >
               {m.icerik}

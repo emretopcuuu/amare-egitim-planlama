@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { kutla } from "@/lib/his";
 import KivilcimPatlama from "@/components/KivilcimPatlama";
+import MikrofonButonu from "@/components/MikrofonButonu";
 import {
   KARIYER_BASAMAKLARI,
   SURE_SECENEKLERI,
@@ -354,7 +355,9 @@ function Sohbet({
           <div key={i} className={`flex ${m.rol === "ayna" ? "justify-start" : "justify-end"}`}>
             <p
               className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-base leading-relaxed ${
-                m.rol === "ayna" ? "kart-cam text-slate-100" : "bg-[#4c2e8c] text-[#f5f3ff]"
+                m.rol === "ayna"
+                  ? "kart-cam text-slate-100"
+                  : "bg-gradient-to-br from-[#243349] to-[#10192a] text-[#f5ecd8] ring-1 ring-[#d4af37]/40 shadow-[0_6px_20px_-6px_rgba(0,0,0,0.45)]"
               }`}
             >
               {m.icerik}
@@ -393,6 +396,10 @@ function Sohbet({
             rows={1}
             placeholder={t.girisYer}
             className="max-h-[160px] min-h-[3rem] w-full flex-1 resize-none rounded-2xl border border-royal-light/30 bg-midnight-soft px-4 py-3 text-base leading-relaxed text-slate-100 outline-none focus:border-gold"
+          />
+          <MikrofonButonu
+            ikon
+            onMetin={(p) => setGirdi((g) => (g.trim() ? `${g.trim()} ${p}` : p))}
           />
           <button
             onClick={gonder}
@@ -554,7 +561,7 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
   // Gerçek <table>: sütunlar kendiliğinden hizalanır (her satır ayrı grid değil).
   // Opak koyu zemin + bulanıklık → arka plan fotoğrafı yazıyı yutmaz.
   return (
-    <div className="mt-3 overflow-hidden rounded-2xl border border-royal-light/25 bg-[#061320]/92 shadow-xl backdrop-blur-sm">
+    <div className="koyu-panel mt-3 overflow-hidden rounded-2xl border border-royal-light/25 bg-[#061320]/92 shadow-xl backdrop-blur-sm">
       <table className="w-full border-collapse text-left">
         <thead>
           <tr className="bg-white/[0.05] text-[0.6rem] font-semibold uppercase tracking-wide text-slate-400">
@@ -603,7 +610,7 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
 // her ay bonus + ortalama kazanç. Uzun vadeli hedef seçiminden ÖNCE gösterilir.
 function HbbKarti() {
   return (
-    <div className="overflow-hidden rounded-2xl border border-gold/40 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
+    <div className="koyu-panel overflow-hidden rounded-2xl border border-gold/40 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
       <div className="border-l-4 border-gold bg-gold/10 px-4 py-3">
         <p className="text-sm font-bold text-gold-light">{t.hbbBaslik}</p>
         <p className="mt-0.5 text-xs text-slate-300">{t.hbbAciklama}</p>
@@ -700,7 +707,7 @@ function PlanKarti({ plan }: { plan: KariyerPlani }) {
   const ara = km.slice(0, -1);
   const ana = km[km.length - 1];
   return (
-    <div className="overflow-hidden rounded-2xl border border-emerald-400/40 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
+    <div className="koyu-panel overflow-hidden rounded-2xl border border-emerald-400/40 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
       <div className="border-l-4 border-emerald-400 bg-emerald-500/15 px-5 py-3">
         <p className="text-lg font-bold text-emerald-50">{t.planBaslik(plan.rutbe)}</p>
         <p className="text-xs text-emerald-200/90">
@@ -750,7 +757,7 @@ function OvSimKarti({ ov0, ovHedef, sureAy }: { ov0: number; ovHedef: number; su
   const tempoYuzde = tempo > 0 ? `%${(tempo * 100).toFixed(0)}` : "—";
   const makul = makuSure(ov0, ovHedef);
   return (
-    <div className="overflow-hidden rounded-2xl border border-royal-light/25 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
+    <div className="koyu-panel overflow-hidden rounded-2xl border border-royal-light/25 bg-[#08182a]/95 shadow-xl backdrop-blur-sm">
       <div className="border-b border-royal-light/15 px-4 py-2.5">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-300">{t.simulasyonBaslik}</p>
       </div>
