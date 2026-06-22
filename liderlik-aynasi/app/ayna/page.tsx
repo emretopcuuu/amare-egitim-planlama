@@ -279,7 +279,11 @@ export default async function AynaPage() {
           <RaporKaydet />
         </div>
         <div className="yazdir-gizle mt-3">
-          <AynaHikaye slaytlar={slaytlar} />
+          <AynaHikaye
+            slaytlar={slaytlar}
+            otomatikAnahtar={`ayna-sinema-${session.sub}`}
+            muhurAktif={muhurAcik}
+          />
         </div>
       </header>
 
