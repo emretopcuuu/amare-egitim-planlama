@@ -289,6 +289,9 @@ function Sohbet({
   const [girdi, setGirdi] = useState("");
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
+  // Sohbet "bitti" olunca otomatik geçme — kişi kapanış cümlesini okusun,
+  // hazır olunca kendisi "Devam et"e bassın.
+  const [hazirDevam, setHazirDevam] = useState(false);
   const altRef = useRef<HTMLDivElement>(null);
   const acilisRef = useRef(false);
 
@@ -325,7 +328,7 @@ function Sohbet({
       return;
     }
     if (v?.mesaj) setMesajlar((m) => [...m, { rol: "ayna", icerik: v.mesaj! }]);
-    if (v?.bitti) setTimeout(onBitti, 700);
+    if (v?.bitti) setHazirDevam(true);
   }
 
   return (
@@ -358,28 +361,38 @@ function Sohbet({
         <div ref={altRef} />
       </div>
       {hata && <p className="pb-2 text-center text-sm text-red-400">{hata}</p>}
-      <div className="flex shrink-0 items-end gap-2">
-        <textarea
-          value={girdi}
-          onChange={(e) => setGirdi(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              gonder();
-            }
-          }}
-          rows={1}
-          placeholder={t.girisYer}
-          className="max-h-[160px] min-h-[3rem] w-full flex-1 resize-none rounded-2xl border border-royal-light/30 bg-midnight-soft px-4 py-3 text-base leading-relaxed text-slate-100 outline-none focus:border-gold"
-        />
+      {hazirDevam ? (
+        // Sohbet tamam: kişi kapanış cümlesini okuduktan sonra kendisi geçer.
         <button
-          onClick={gonder}
-          disabled={mesgul || !girdi.trim()}
-          className="btn-kor flex h-12 shrink-0 items-center justify-center rounded-2xl px-5 text-base font-bold disabled:opacity-50"
+          onClick={onBitti}
+          className="btn-kor parilti flex h-14 w-full shrink-0 items-center justify-center rounded-2xl text-lg font-bold"
         >
-          {t.gonder}
+          {t.sohbetDevam}
         </button>
-      </div>
+      ) : (
+        <div className="flex shrink-0 items-end gap-2">
+          <textarea
+            value={girdi}
+            onChange={(e) => setGirdi(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                gonder();
+              }
+            }}
+            rows={1}
+            placeholder={t.girisYer}
+            className="max-h-[160px] min-h-[3rem] w-full flex-1 resize-none rounded-2xl border border-royal-light/30 bg-midnight-soft px-4 py-3 text-base leading-relaxed text-slate-100 outline-none focus:border-gold"
+          />
+          <button
+            onClick={gonder}
+            disabled={mesgul || !girdi.trim()}
+            className="btn-kor flex h-12 shrink-0 items-center justify-center rounded-2xl px-5 text-base font-bold disabled:opacity-50"
+          >
+            {t.gonder}
+          </button>
+        </div>
+      )}
       <SifirlaSatiri onSifirla={onSifirla} className="pt-3" />
     </main>
   );

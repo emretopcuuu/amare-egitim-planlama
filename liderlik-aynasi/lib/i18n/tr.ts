@@ -879,6 +879,7 @@ export const tr = {
     dusunuyor: "AYNA düşünüyor…",
     gonder: "Gönder",
     girisYer: "Yanıtını yaz…",
+    sohbetDevam: "Hazırım, devam et →",
     // Açılış kapağı
     acilisBaslik: "Nedenini bir hedefe çevirelim",
     acilisMetin:
