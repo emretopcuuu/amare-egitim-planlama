@@ -147,21 +147,21 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
     ctx.fillRect(0, 0, W, H);
   }
 
-  // Üst maske — şablonun eski başlık/logo bölgesini kapat (yeni başlık için yer)
-  const topMaskH = Math.floor(H * 0.22);
+  // Üst maske — şablonun eski başlık/logo bölgesini TAM kapat (eski metin sızmasın)
+  const topMaskH = Math.floor(H * 0.27);
   const topMask = ctx.createLinearGradient(0, 0, 0, topMaskH);
-  topMask.addColorStop(0, 'rgba(61, 23, 52, 0.95)');
-  topMask.addColorStop(0.7, 'rgba(61, 23, 52, 0.85)');
+  topMask.addColorStop(0, 'rgba(61, 23, 52, 1)');
+  topMask.addColorStop(0.78, 'rgba(61, 23, 52, 0.99)');
   topMask.addColorStop(1, 'rgba(61, 23, 52, 0)');
   ctx.fillStyle = topMask;
   ctx.fillRect(0, 0, W, topMaskH);
 
-  // Alt maske — şablonun eski tarih/zoom bölgesini kapat
-  const botMaskH = Math.floor(H * 0.20);
+  // Alt maske — şablonun eski tarih/zoom bölgesini TAM kapat
+  const botMaskH = Math.floor(H * 0.24);
   const botMask = ctx.createLinearGradient(0, H - botMaskH, 0, H);
   botMask.addColorStop(0, 'rgba(20, 8, 30, 0)');
-  botMask.addColorStop(0.4, 'rgba(20, 8, 30, 0.85)');
-  botMask.addColorStop(1, 'rgba(20, 8, 30, 0.97)');
+  botMask.addColorStop(0.35, 'rgba(20, 8, 30, 0.99)');
+  botMask.addColorStop(1, 'rgba(20, 8, 30, 1)');
   ctx.fillStyle = botMask;
   ctx.fillRect(0, H - botMaskH, W, botMaskH);
 
