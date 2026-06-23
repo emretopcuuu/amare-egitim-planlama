@@ -114,7 +114,7 @@ const parseEkPromptEgitmenler = (ekPrompt, fallback = []) => {
   return out.length > 0 ? out : fallback;
 };
 
-export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile, ekPrompt = '', width = 1080, height = 1080 }) => {
+export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile, ekPrompt = '', width = 1080, height = 1080, sablonSadik = false }) => {
   // ekPrompt'taki düzenleme varsa egitmenleri ondan al
   egitmenler = parseEkPromptEgitmenler(ekPrompt, egitmenler);
   const W = width;
@@ -147,28 +147,43 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
     ctx.fillRect(0, 0, W, H);
   }
 
-  // Üst maske — şablonun eski başlık/logo bölgesini kapat (yeni başlık için yer)
-  const topMaskH = Math.floor(H * 0.22);
-  const topMask = ctx.createLinearGradient(0, 0, 0, topMaskH);
-  topMask.addColorStop(0, 'rgba(61, 23, 52, 0.95)');
-  topMask.addColorStop(0.7, 'rgba(61, 23, 52, 0.85)');
-  topMask.addColorStop(1, 'rgba(61, 23, 52, 0)');
-  ctx.fillStyle = topMask;
-  ctx.fillRect(0, 0, W, topMaskH);
+  if (!sablonSadik) {
+    // Üst maske — şablonun eski başlık/logo bölgesini kapat (yeni başlık için yer)
+    const topMaskH = Math.floor(H * 0.22);
+    const topMask = ctx.createLinearGradient(0, 0, 0, topMaskH);
+    topMask.addColorStop(0, 'rgba(61, 23, 52, 0.95)');
+    topMask.addColorStop(0.7, 'rgba(61, 23, 52, 0.85)');
+    topMask.addColorStop(1, 'rgba(61, 23, 52, 0)');
+    ctx.fillStyle = topMask;
+    ctx.fillRect(0, 0, W, topMaskH);
 
-  // Alt maske — şablonun eski tarih/zoom bölgesini kapat
-  const botMaskH = Math.floor(H * 0.20);
-  const botMask = ctx.createLinearGradient(0, H - botMaskH, 0, H);
-  botMask.addColorStop(0, 'rgba(20, 8, 30, 0)');
-  botMask.addColorStop(0.4, 'rgba(20, 8, 30, 0.85)');
-  botMask.addColorStop(1, 'rgba(20, 8, 30, 0.97)');
-  ctx.fillStyle = botMask;
-  ctx.fillRect(0, H - botMaskH, W, botMaskH);
+    // Alt maske — şablonun eski tarih/zoom bölgesini kapat
+    const botMaskH = Math.floor(H * 0.20);
+    const botMask = ctx.createLinearGradient(0, H - botMaskH, 0, H);
+    botMask.addColorStop(0, 'rgba(20, 8, 30, 0)');
+    botMask.addColorStop(0.4, 'rgba(20, 8, 30, 0.85)');
+    botMask.addColorStop(1, 'rgba(20, 8, 30, 0.97)');
+    ctx.fillStyle = botMask;
+    ctx.fillRect(0, H - botMaskH, W, botMaskH);
 
-  // İnce dekoratif çizgi (üst ve alt)
-  ctx.fillStyle = 'rgba(245, 215, 122, 0.7)'; // altın
-  ctx.fillRect(60, 22, W - 120, 3);
-  ctx.fillRect(60, H - 25, W - 120, 3);
+    // İnce dekoratif çizgi (üst ve alt)
+    ctx.fillStyle = 'rgba(245, 215, 122, 0.7)'; // altın
+    ctx.fillRect(60, 22, W - 120, 3);
+    ctx.fillRect(60, H - 25, W - 120, 3);
+  } else {
+    // ŞABLON SADIK: şablon birebir korunur — tüm bant karartma YOK.
+    // Sadece yazı bloklarının arkasına lokal yarı saydam okunabilirlik gölgesi.
+    const scrim = (x, y, w, h) => {
+      ctx.save();
+      ctx.fillStyle = 'rgba(20,8,30,0.42)';
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x, y, w, h, 24); else ctx.rect(x, y, w, h);
+      ctx.fill();
+      ctx.restore();
+    };
+    scrim(40, 80, W - 80, Math.floor(H * 0.20));                          // başlık + tarih
+    scrim(40, H - Math.floor(H * 0.24), W - 80, Math.floor(H * 0.21));    // alt bilgi + adres
+  }
 
   // ─── BAŞLIK ───
   ctx.textAlign = 'center';

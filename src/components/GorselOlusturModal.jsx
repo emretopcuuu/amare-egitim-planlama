@@ -4,6 +4,8 @@ import { gorselOlustur } from '../utils/gorselOlustur';
 import { gorselOlusturOpenAIPro } from '../utils/gorselOlusturOpenAIPro';
 import { gorselOlusturCanvas } from '../utils/gorselOlusturCanvas';
 import { gorselOlusturHibrit } from '../utils/gorselOlusturHibrit';
+import { gorselOlusturSablonSadik } from '../utils/gorselOlusturSablonSadik';
+import { gorselOlusturMaskeliAI } from '../utils/gorselOlusturMaskeliAI';
 import { afisTuru, afisTuruLabel } from '../utils/egitmenEtiket';
 
 const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, apiKey, openaiApiKey, onClose, sablonlar = [], onGorselBagla }) => {
@@ -20,7 +22,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     const saved = localStorage.getItem('aiModel');
     // Eski 'openai' kayıtlarını 'openai-pro'ya migrate et
     if (saved === 'openai') return 'openai-pro';
-    if (['canvas', 'openai-pro', 'gemini', 'hibrit'].includes(saved)) return saved;
+    if (['canvas', 'openai-pro', 'gemini', 'hibrit', 'sablon-sadik', 'maskeli-ai'].includes(saved)) return saved;
     return 'hibrit';
   });
   // Format: 'square' (1:1) | 'story' (9:16) | 'landscape' (16:9)
@@ -120,6 +122,19 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
         sablonFile: sablonKaynak, ekPrompt, ...dims,
       });
     }
+    if (model === 'sablon-sadik') {
+      return await gorselOlusturSablonSadik({
+        egitim, egitmenler: egitmenler || [],
+        sablonFile: sablonKaynak, ekPrompt, ...dims,
+      });
+    }
+    if (model === 'maskeli-ai') {
+      return await gorselOlusturMaskeliAI({
+        apiKey: openaiApiKey,
+        egitim, egitmenler: egitmenler || [],
+        sablonFile: sablonKaynak, ekPrompt, format,
+      });
+    }
     if (model === 'openai-pro') {
       const result = await gorselOlusturOpenAIPro({
         apiKey: openaiApiKey,
@@ -148,6 +163,8 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
       ? (aiModel === 'hibrit' ? ['hibrit', 'openai-pro', 'canvas']
         : aiModel === 'gemini' ? ['gemini', 'openai-pro', 'canvas']
         : aiModel === 'openai-pro' ? ['openai-pro', 'hibrit', 'canvas']
+        : aiModel === 'maskeli-ai' ? ['maskeli-ai', 'sablon-sadik']
+        : aiModel === 'sablon-sadik' ? ['sablon-sadik']
         : [aiModel])
       : [aiModel];
 
@@ -401,6 +418,22 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                   >
                     <div className="flex items-center gap-1 font-bold">✨ OpenAI Pro</div>
                     <div className="text-gray-500 mt-0.5">gpt-image-2 · Tam AI · ~$0.08</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAiModel('sablon-sadik'); localStorage.setItem('aiModel', 'sablon-sadik'); }}
+                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'sablon-sadik' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <div className="flex items-center gap-1 font-bold">🖼️ Şablon Sadık</div>
+                    <div className="text-gray-500 mt-0.5">Şablon birebir + içerik · ÜCRETSİZ</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAiModel('maskeli-ai'); localStorage.setItem('aiModel', 'maskeli-ai'); }}
+                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'maskeli-ai' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <div className="flex items-center gap-1 font-bold">🧩 Şablon + AI</div>
+                    <div className="text-gray-500 mt-0.5">Maskeli AI · şablon korunur · ~$0.08</div>
                   </button>
                 </div>
                 {aiModel !== 'canvas' && (
