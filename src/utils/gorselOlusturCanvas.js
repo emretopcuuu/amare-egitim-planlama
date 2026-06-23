@@ -171,18 +171,20 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
     ctx.fillRect(60, 22, W - 120, 3);
     ctx.fillRect(60, H - 25, W - 120, 3);
   } else {
-    // ŞABLON SADIK: şablon birebir korunur — tüm bant karartma YOK.
-    // Sadece yazı bloklarının arkasına lokal yarı saydam okunabilirlik gölgesi.
-    const scrim = (x, y, w, h) => {
-      ctx.save();
-      ctx.fillStyle = 'rgba(20,8,30,0.42)';
-      ctx.beginPath();
-      if (ctx.roundRect) ctx.roundRect(x, y, w, h, 24); else ctx.rect(x, y, w, h);
-      ctx.fill();
-      ctx.restore();
-    };
-    scrim(40, 80, W - 80, Math.floor(H * 0.20));                          // başlık + tarih
-    scrim(40, H - Math.floor(H * 0.24), W - 80, Math.floor(H * 0.21));    // alt bilgi + adres
+    // ŞABLON SADIK: şablon korunur — HARD kutu YOK. Üst/alt YUMUŞAK feather
+    // gradient (orta tamamen açık, şablon dominant) + güçlü yazı gölgesi.
+    const tg = ctx.createLinearGradient(0, 0, 0, Math.floor(H * 0.34));
+    tg.addColorStop(0, 'rgba(12,6,24,0.68)');
+    tg.addColorStop(0.55, 'rgba(12,6,24,0.34)');
+    tg.addColorStop(1, 'rgba(12,6,24,0)');
+    ctx.fillStyle = tg;
+    ctx.fillRect(0, 0, W, Math.floor(H * 0.34));
+    const bg = ctx.createLinearGradient(0, H - Math.floor(H * 0.30), 0, H);
+    bg.addColorStop(0, 'rgba(12,6,24,0)');
+    bg.addColorStop(0.5, 'rgba(12,6,24,0.52)');
+    bg.addColorStop(1, 'rgba(12,6,24,0.84)');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, H - Math.floor(H * 0.30), W, Math.floor(H * 0.30));
   }
 
   // ─── BAŞLIK ───
@@ -201,6 +203,8 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   const euBitis = trToEU(trBitis, egitim.tarih);
 
   let saatY = baslikY + 30;
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = 8;
   ctx.fillStyle = '#F5D77A';
   ctx.font = 'bold 36px Arial';
   ctx.fillText(`${egitim.tarih || ''} ${egitim.gun || ''}`.trim(), W / 2, saatY);
@@ -211,11 +215,12 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
     ctx.font = 'bold 32px Arial';
     ctx.fillText(`TR ${trSaat}${trBitis ? ' - ' + trBitis : ''}`, W / 2, saatY);
     saatY += 38;
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.font = '28px Arial';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 28px Arial';
     ctx.fillText(`EU ${euSaat}${euBitis ? ' - ' + euBitis : ''}`, W / 2, saatY);
     saatY += 30;
   }
+  ctx.shadowBlur = 0;
 
   // ─── KONUŞMACI KARTLARI ───
   const fotoluListe = egitmenler.filter(e => true); // hepsi (foto olmasa da)
