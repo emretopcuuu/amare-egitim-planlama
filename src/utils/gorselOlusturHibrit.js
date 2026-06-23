@@ -296,32 +296,34 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   const cardsAreaH = cardsAreaBot - cardsAreaTop;
 
   if (liste.length > 0) {
-    const cols = Math.min(liste.length, 4);
-    const rows = Math.ceil(liste.length / 4);
+    const dagilim = fotoYerlesim(liste.length); // dengeli satırlar: [3,3],[3,2]...
+    const rows = dagilim.length;
+    const maxCols = Math.max(...dagilim);
     const gap = 18;
     const sidePad = 50;
-    const maxCardW = (W - sidePad * 2 - gap * (cols - 1)) / cols;
-    // text alanı: 3 satır isim (~95px) + 2 satır unvan (~50px) + boşluk = ~155px
-    const textAreaH = 155;
-    const rowGap = 30;
+    const maxCardW = (W - sidePad * 2 - gap * (maxCols - 1)) / maxCols;
+    const textAreaH = 130;
+    const rowGap = 22;
     const availableHPerRow = (cardsAreaH - rowGap * (rows - 1)) / rows;
     const maxFotoFromH = availableHPerRow - textAreaH;
-    // Foto: width VEYA height limit'in min'i, en az 150 en çok 320
-    const fotoSize = Math.max(150, Math.min(maxCardW * 0.95, maxFotoFromH, 320));
+    // Foto KÜÇÜLTÜLMEZ: taban ≥190
+    const fotoSize = Math.max(190, Math.min(maxCardW * 0.95, maxFotoFromH, 320));
     const cardW = Math.max(fotoSize, maxCardW * 0.98);
     const cardH = fotoSize + textAreaH;
-    const totalW = cardW * cols + gap * (cols - 1);
-    const startX = (W - totalW) / 2;
     const rowH = cardH + rowGap;
     const totalH = rowH * rows - rowGap;
-    const cardsStartY = cardsAreaTop + (cardsAreaH - totalH) / 2;
+    const cardsStartY = cardsAreaTop + Math.max(0, (cardsAreaH - totalH) / 2);
 
-    for (let i = 0; i < liste.length; i++) {
-      const e = liste[i];
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = startX + col * (cardW + gap);
-      const y = cardsStartY + row * rowH;
+    let i = -1;
+    for (let r = 0; r < rows; r++) {
+      const satirAdet = dagilim[r];
+      const rowTotalW = cardW * satirAdet + gap * (satirAdet - 1);
+      const startX = (W - rowTotalW) / 2; // her satır ortalı
+      const y = cardsStartY + r * rowH;
+      for (let c = 0; c < satirAdet; c++) {
+        i++;
+        const e = liste[i];
+        const x = startX + c * (cardW + gap);
 
       const fotoX = x + (cardW - fotoSize) / 2;
       const fotoY = y;
@@ -413,7 +415,8 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
         drawWrappedText(ctx, e.unvan, x + cardW / 2, lastY + 6, cardW * 0.95, unvanLineHeight, 2);
       }
       ctx.shadowBlur = 0;
-    }
+      } // for c (satır içi)
+    } // for r (satırlar)
   }
 
   // ─── ALT: Daha güçlü gradient (Gemini'nin alt yazılarını kapatmak için) ───

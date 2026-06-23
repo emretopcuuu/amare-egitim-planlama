@@ -208,29 +208,31 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   const cardsAreaH = H - cardsStartY - 200;
 
   if (fotoluListe.length > 0) {
-    const cols = Math.min(fotoluListe.length, 4);
-    const rows = Math.ceil(fotoluListe.length / 4);
+    const dagilim = fotoYerlesim(fotoluListe.length); // dengeli satırlar: [3,3], [3,2]...
+    const rows = dagilim.length;
+    const maxCols = Math.max(...dagilim);
     const gap = 25;
-    // Metin alanı: 3 satır isim + 2 satır unvan + boşluklar ≈ 130-150px
-    const textAreaH = 150;
-    const rowGap = 30;
+    const textAreaH = 120; // isim + unvan
+    const rowGap = 20;
     const availableHPerRow = (cardsAreaH - rowGap * (rows - 1)) / rows;
     const maxFotoFromH = availableHPerRow - textAreaH;
-    const maxCardW = (W - 80 - gap * (cols - 1)) / cols;
-    // Foto çapı: width-limit VEYA height-limit'den küçük olanı
-    const fotoSize = Math.max(140, Math.min(maxCardW * 0.95, maxFotoFromH, 280));
-    const cardW = Math.max(fotoSize, maxCardW); // text alan'ı için kart en az foto kadar genis
+    const maxCardW = (W - 80 - gap * (maxCols - 1)) / maxCols;
+    // Foto KÜÇÜLTÜLMEZ: cömert taban (≥180), üst sınır container'a göre
+    const fotoSize = Math.max(180, Math.min(maxCardW * 0.95, maxFotoFromH, 300));
+    const cardW = Math.max(fotoSize, maxCardW);
     const cardH = fotoSize + textAreaH;
-    const totalW = cardW * cols + gap * (cols - 1);
-    const startX = (W - totalW) / 2;
     const rowH = cardH + rowGap;
 
-    for (let i = 0; i < fotoluListe.length; i++) {
-      const e = fotoluListe[i];
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = startX + col * (cardW + gap);
-      const y = cardsStartY + row * rowH;
+    let i = -1;
+    for (let r = 0; r < rows; r++) {
+      const satirAdet = dagilim[r];
+      const rowTotalW = cardW * satirAdet + gap * (satirAdet - 1);
+      const startX = (W - rowTotalW) / 2; // her satır kendi içinde ortalı
+      const y = cardsStartY + r * rowH;
+      for (let c = 0; c < satirAdet; c++) {
+        i++;
+        const e = fotoluListe[i];
+        const x = startX + c * (cardW + gap);
 
       // Yuvarlak foto
       const fotoX = x + (cardW - fotoSize) / 2;
@@ -334,7 +336,8 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
         drawWrappedText(ctx, e.unvan, x + cardW / 2, unvanY, cardW * 0.95, unvanLineHeight, 2);
         ctx.shadowBlur = 0;
       }
-    }
+      } // for c (satır içi)
+    } // for r (satırlar)
   }
 
   // ─── ALT: Yer/Zoom + Site URL ───

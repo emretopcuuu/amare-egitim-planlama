@@ -59,20 +59,23 @@ const composite = async (egitmenler, sablonImg) => {
   const fotoluListe = (egitmenler || []).filter(e => e.fotoURL);
   if (fotoluListe.length === 0) return canvas;
 
-  const cols = Math.min(fotoluListe.length, 4);
-  const cardW = W * 0.85 / cols;
+  const dagilim = fotoYerlesim(fotoluListe.length); // dengeli satırlar
+  const maxCols = Math.max(...dagilim);
+  const cardW = W * 0.85 / maxCols;
   const cardH = cardW * 1.4;
   const gap = 20;
-  const totalW = cardW * cols + gap * (cols - 1);
-  const startX = (W - totalW) / 2;
   const startY = H * 0.5;
 
-  for (let i = 0; i < fotoluListe.length; i++) {
+  let i = -1;
+  for (let r = 0; r < dagilim.length; r++) {
+    const satirAdet = dagilim[r];
+    const rowTotalW = cardW * satirAdet + gap * (satirAdet - 1);
+    const startX = (W - rowTotalW) / 2; // satır ortalı
+    const y = startY + r * (cardH + 30);
+    for (let c = 0; c < satirAdet; c++) {
+    i++;
     const e = fotoluListe[i];
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const x = startX + col * (cardW + gap);
-    const y = startY + row * (cardH + 30);
+    const x = startX + c * (cardW + gap);
     try {
       const img = await urlToImage(e.fotoURL);
       const fotoCap = cardW * 0.85;
@@ -105,6 +108,7 @@ const composite = async (egitmenler, sablonImg) => {
       ctx.font = `${Math.floor(cardW * 0.07)}px Arial`;
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.fillText(e.unvan, x + cardW / 2, textY + Math.floor(cardW * 0.1));
+    }
     }
   }
   return canvas;
