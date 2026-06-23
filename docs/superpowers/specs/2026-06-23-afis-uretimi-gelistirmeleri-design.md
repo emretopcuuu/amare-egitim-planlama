@@ -64,19 +64,32 @@ Modal'a küçük bilgi satırı: "Tespit edilen afiş türü: <Vizyon/Panel/Onli
 
 ---
 
-## #2 — Tam adres (fiziki etkinlik)
+## #2 — Kısa adres + QR kod (fiziki etkinlik)
 
-Yeni util `afisAdres(egitim)` (egitmenEtiket.js veya ayrı):
-- Online → `egitim.yer` (Zoom bilgisi, aynen).
-- Fiziki → `[mekanAdi, acikAdres].filter(Boolean)` — **tam, kırpmasız**. Canvas'ta çok satıra sarılır.
+Uzun adres afişi boğuyor; çözüm **kısa yazılı adres + QR kod**. QR okutunca **etkinlik detay sayfasına** (`/e/:id`) gider — orada tam adres, Yol Tarifi butonu, program akışı, takvime ekle hepsi var.
 
-Generator değişiklikleri:
-- **Canvas** (`gorselOlusturCanvas.js:342-343`): tek satır + kırpma yerine `wrapText` ile çok satır; uzunsa font küçült (alt bölge taşmasın).
-- **Hibrit** (`gorselOlusturHibrit.js:424-431`): aynı çok-satır mantığı.
-- **Gemini** (`gorselOlustur.js:203`): prompt'a tam adres.
-- **OpenAI** (`gorselOlusturOpenAIPro.js:171`): prompt'a tam adres.
+### Yazılı adres (kısa)
+Yeni util `afisAdresKisa(egitim)`:
+- Online → `egitim.yer` (Zoom, aynen).
+- Fiziki → `mekanAdi` + (ilçe/şehir). İlçe/şehir: `acikAdres`'ten basitçe ayıklanır, olmazsa `sehir`. Tam adres afişe yazılmaz (QR'da).
 
-Gerekirse paylaşılan bir canvas `wrapText(ctx, text, maxWidth)` yardımcısı (yoksa eklenir).
+### QR kod
+- **Kütüphane:** `qrcode` (npm) eklenir — dataURL/canvas üretir. Hafif, ek ağır bağımlılık yok.
+- Yeni util `src/utils/qrOlustur.js`: `qrOlustur(url)` → QR görseli (dataURL). URL = `deepLink(egitim)` (= `origin + '/e/' + id`, `eventActions.js` mevcut).
+- **Kritik:** QR **AI'a çizdirilmez** (sahte/okunmaz olur). Gerçek üretilip deterministik bindirilir:
+  - Canvas / Hibrit / Şablon Sadık (A): layout'ta canvas'a çizilir (alt köşe).
+  - Gemini / OpenAI / Maskeli AI (B): **post-process overlay** — `gorselLogoEkle.js`'e QR ekleme adımı (logolarla birlikte alt bant). AI çıktısının üstüne basılır; AI o köşeyi doldursa bile QR üzerine gelir.
+- Yanına küçük etiket: "Yol tarifi için okut".
+- Yalnız fiziki etkinlikte. Online'da QR yok.
+
+### Generator değişiklikleri
+- **Canvas** (`gorselOlusturCanvas.js`): adres = `afisAdresKisa`; QR alt köşeye çizilir.
+- **Hibrit** (`gorselOlusturHibrit.js`): aynı.
+- **Şablon Sadık (A)**: aynı (yeni util).
+- **Gemini** (`gorselOlustur.js`): prompt'a kısa adres + "alt köşede QR için yer bırak"; QR post-process overlay.
+- **OpenAI / Maskeli AI (B)** (`gorselOlusturOpenAIPro.js`, yeni B): aynı (kısa adres + QR overlay).
+
+Gerekirse paylaşılan canvas `wrapText(ctx, text, maxWidth)` yardımcısı (yoksa eklenir).
 
 ---
 
@@ -127,16 +140,19 @@ Yeni util `src/utils/gorselOlusturMaskeliAI.js` (OpenAI `images/edits`):
 |---|---|
 | `src/components/YeniEgitmenModal.jsx` | 3 yeni etiket alanı + legacy unvan; kaydetme |
 | `src/context/DataContext.jsx` | KONUSMACI_LIGHT_FIELDS += meslek, amareKariyer, doktorBrans |
-| `src/utils/egitmenEtiket.js` (yeni) | afisTuru, etiketSec, afisAdres |
+| `src/utils/egitmenEtiket.js` (yeni) | afisTuru, etiketSec, afisAdresKisa |
 | `src/utils/fotoYerlesim.js` (yeni) | satır dağılımı yardımcısı |
+| `src/utils/qrOlustur.js` (yeni) | QR dataURL üretimi (deepLink → /e/:id) |
+| `package.json` | `qrcode` bağımlılığı |
+| `src/utils/gorselLogoEkle.js` | post-process'e QR overlay adımı (Gemini/OpenAI/B) |
 | `src/pages/AdminPanel.jsx` | egitmenler[] kurarken etiket çöz; modal'a türü/adres geç |
 | `src/components/GorselOlusturModal.jsx` | etiket autofill etiketSec ile; tespit bilgi satırı; 2 yeni mod butonu + dispatch |
-| `src/utils/gorselOlusturCanvas.js` | adres çok-satır; fotoYerlesim |
-| `src/utils/gorselOlusturHibrit.js` | adres çok-satır; fotoYerlesim |
-| `src/utils/gorselOlustur.js` | prompt'a tam adres |
-| `src/utils/gorselOlusturOpenAIPro.js` | prompt'a tam adres; fotoYerlesim |
-| `src/utils/gorselOlusturSablonSadik.js` (yeni) | Mod A |
-| `src/utils/gorselOlusturMaskeliAI.js` (yeni) | Mod B |
+| `src/utils/gorselOlusturCanvas.js` | kısa adres + QR çiz; fotoYerlesim |
+| `src/utils/gorselOlusturHibrit.js` | kısa adres + QR çiz; fotoYerlesim |
+| `src/utils/gorselOlustur.js` | prompt'a kısa adres + QR yeri; QR overlay |
+| `src/utils/gorselOlusturOpenAIPro.js` | kısa adres; fotoYerlesim; QR overlay |
+| `src/utils/gorselOlusturSablonSadik.js` (yeni) | Mod A (kısa adres + QR) |
+| `src/utils/gorselOlusturMaskeliAI.js` (yeni) | Mod B (kısa adres + QR overlay) |
 
 ## Kapsam dışı
 - Excel import'a etiket kolonu yok (eğitmen alanları formdan girilir).
@@ -149,6 +165,7 @@ Yeni util `src/utils/gorselOlusturMaskeliAI.js` (OpenAI `images/edits`):
 
 ## Doğrulama
 - `npm run build` temiz.
-- Birim test (node): `afisTuru`/`etiketSec`/`afisAdres`/`fotoYerlesim` saf fonksiyonlar — senaryolarla.
+- Birim test (node): `afisTuru`/`etiketSec`/`afisAdresKisa`/`fotoYerlesim` saf fonksiyonlar — senaryolarla.
 - Canvas/Hibrit/A modları client-side → preview'da bir fiziki + bir online + çok katılımcılı (5 ve 6 kişi) afiş görsel doğrulaması.
 - Eğitmen formunda 3 alan kaydı + yeniden açınca yükleme.
+- QR: üretilen afişteki QR gerçek telefonla okutulup `/e/:id`'ye gittiği doğrulanır; online afişte QR çıkmamalı.
