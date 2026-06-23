@@ -1,5 +1,6 @@
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { telefonAyikla } from "@/lib/telefon";
 import { tr } from "@/lib/i18n/tr";
 
 const t = tr.admin.katilimcilar;
@@ -52,8 +53,11 @@ export async function PATCH(
     guncelleme.city = v ? v.slice(0, 100) : null;
   }
   if ("telefon" in body) {
-    const v = temiz(body.telefon);
-    guncelleme.phone = v ? v.slice(0, 20) : null;
+    const tel = telefonAyikla(temiz(body.telefon));
+    if (tel.durum === "bozuk") {
+      return Response.json({ hata: t.hataTelefon }, { status: 400 });
+    }
+    guncelleme.phone = tel.durum === "gecerli" ? tel.numara : null;
   }
 
   const db = supabaseAdmin();

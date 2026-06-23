@@ -1,6 +1,7 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { WA_SABLONLAR, type WaSablon } from "@/lib/whatsappSablonlari";
+import { telefonNormalize } from "@/lib/telefon";
 
 // WhatsApp gönderimi Twilio üzerinden. Tek dokunuş noktası burası — sağlayıcı
 // değişirse yalnız bu modül güncellenir (lib/eposta.ts deseni gibi).
@@ -38,12 +39,11 @@ export async function sablonSidGetir(db: Db, sablon: WaSablon): Promise<string |
   return data?.value || null;
 }
 
-// E.164 telefonu Twilio WhatsApp adresine çevirir; geçersizse null.
+// Telefonu Twilio WhatsApp adresine çevirir. Önce E.164'e normalize eder
+// (yerel 0532… dahil), geçerli numara çıkmazsa null döner.
 export function whatsAppAdresi(telefon: string | null | undefined): string | null {
-  if (!telefon) return null;
-  const t = telefon.trim();
-  if (!/^\+[1-9]\d{7,14}$/.test(t)) return null;
-  return `whatsapp:${t}`;
+  const t = telefonNormalize(telefon);
+  return t ? `whatsapp:${t}` : null;
 }
 
 // Tek bir onaylı şablon mesajı gönderir. Başarılıysa true.
