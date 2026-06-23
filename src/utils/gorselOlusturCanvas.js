@@ -219,21 +219,22 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
 
   // ─── KONUŞMACI KARTLARI ───
   const fotoluListe = egitmenler.filter(e => true); // hepsi (foto olmasa da)
-  const cardsStartY = saatY + 50;
-  const cardsAreaH = H - cardsStartY - 200;
+  const cardsStartY = saatY + 40;
+  // Alt footer (adres + logolar + QR) için yeterli pay → kartlar çakışmasın
+  const cardsAreaH = H - cardsStartY - 270;
 
   if (fotoluListe.length > 0) {
     const dagilim = fotoYerlesim(fotoluListe.length); // dengeli satırlar: [3,3], [3,2]...
     const rows = dagilim.length;
     const maxCols = Math.max(...dagilim);
     const gap = 25;
-    const textAreaH = 120; // isim + unvan
-    const rowGap = 20;
+    const textAreaH = rows > 1 ? 84 : 120; // çok sıralıda metin alanı dar
+    const rowGap = 14;
     const availableHPerRow = (cardsAreaH - rowGap * (rows - 1)) / rows;
     const maxFotoFromH = availableHPerRow - textAreaH;
     const maxCardW = (W - 80 - gap * (maxCols - 1)) / maxCols;
-    // Foto KÜÇÜLTÜLMEZ: cömert taban (≥180), üst sınır container'a göre
-    const fotoSize = Math.max(180, Math.min(maxCardW * 0.95, maxFotoFromH, 300));
+    // Foto: mümkün olduğunca büyük; alana sığması esas (taban 120 ile aşırı küçülmesin)
+    const fotoSize = Math.max(120, Math.min(maxCardW * 0.95, maxFotoFromH, 300));
     const cardW = Math.max(fotoSize, maxCardW);
     const cardH = fotoSize + textAreaH;
     const rowH = cardH + rowGap;

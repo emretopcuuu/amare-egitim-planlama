@@ -290,7 +290,7 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   // ─── KONUŞMACI KARTLARI — büyük + dikey ortalanmış ───
   const liste = (egitmenler || []);
   const titleEnd = saatY + 30;       // başlık+saat bloğu sonu
-  const footerStart = H - 200;        // alt zoom info başlangıcı
+  const footerStart = H - 260;        // alt adres/logo/QR için yeterli pay
   const cardsAreaTop = titleEnd;
   const cardsAreaBot = footerStart;
   const cardsAreaH = cardsAreaBot - cardsAreaTop;
@@ -302,12 +302,12 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
     const gap = 18;
     const sidePad = 50;
     const maxCardW = (W - sidePad * 2 - gap * (maxCols - 1)) / maxCols;
-    const textAreaH = 130;
-    const rowGap = 22;
+    const textAreaH = rows > 1 ? 84 : 130; // çok sıralıda metin alanı dar
+    const rowGap = 14;
     const availableHPerRow = (cardsAreaH - rowGap * (rows - 1)) / rows;
     const maxFotoFromH = availableHPerRow - textAreaH;
-    // Foto KÜÇÜLTÜLMEZ: taban ≥190
-    const fotoSize = Math.max(190, Math.min(maxCardW * 0.95, maxFotoFromH, 320));
+    // Foto: alana sığması esas, taban 120 (aşırı küçülmesin)
+    const fotoSize = Math.max(120, Math.min(maxCardW * 0.95, maxFotoFromH, 320));
     const cardW = Math.max(fotoSize, maxCardW * 0.98);
     const cardH = fotoSize + textAreaH;
     const rowH = cardH + rowGap;
