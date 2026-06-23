@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator, Video, Users2 } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator, Video, Users2, Copy } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
@@ -160,6 +160,26 @@ const MODULLER = [
     aktif: true,
     link: '/kayitli-egitimler',
     internal: true, // SPA içi sayfa — aynı sekmede aç
+    renk: 'amber',
+  },
+  {
+    id: 'rezervasyon',
+    ad: {
+      tr: 'Rezervasyon Sistemi',
+      en: 'Reservation System',
+      de: 'Reservierungssystem',
+      nl: 'Reserveringssysteem',
+    },
+    kisaltma: 'KAT',
+    aciklama: {
+      tr: 'Eklemeden katlamaya geçmek için fiziksel toplantı rezervasyon sistemi.',
+      en: 'Reservation system for in-person meetings to move from adding to multiplying.',
+      de: 'Reservierungssystem für Präsenztreffen – vom Addieren zum Vervielfachen.',
+      nl: 'Reserveringssysteem voor fysieke bijeenkomsten – van optellen naar vermenigvuldigen.',
+    },
+    icon: Copy,
+    aktif: true,
+    link: 'https://katlama.oneteamglobal.ai/',
     renk: 'amber',
   },
   // İleride buraya yeni modüller eklenecek
