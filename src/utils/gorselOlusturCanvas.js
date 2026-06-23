@@ -114,7 +114,7 @@ const parseEkPromptEgitmenler = (ekPrompt, fallback = []) => {
   return out.length > 0 ? out : fallback;
 };
 
-export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile, ekPrompt = '', width = 1080, height = 1080, sablonSadik = false }) => {
+export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile, ekPrompt = '', width = 1080, height = 1080 }) => {
   // ekPrompt'taki düzenleme varsa egitmenleri ondan al
   egitmenler = parseEkPromptEgitmenler(ekPrompt, egitmenler);
   const W = width;
@@ -147,45 +147,28 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
     ctx.fillRect(0, 0, W, H);
   }
 
-  if (!sablonSadik) {
-    // Üst maske — şablonun eski başlık/logo bölgesini kapat (yeni başlık için yer)
-    const topMaskH = Math.floor(H * 0.22);
-    const topMask = ctx.createLinearGradient(0, 0, 0, topMaskH);
-    topMask.addColorStop(0, 'rgba(61, 23, 52, 0.95)');
-    topMask.addColorStop(0.7, 'rgba(61, 23, 52, 0.85)');
-    topMask.addColorStop(1, 'rgba(61, 23, 52, 0)');
-    ctx.fillStyle = topMask;
-    ctx.fillRect(0, 0, W, topMaskH);
+  // Üst maske — şablonun eski başlık/logo bölgesini kapat (yeni başlık için yer)
+  const topMaskH = Math.floor(H * 0.22);
+  const topMask = ctx.createLinearGradient(0, 0, 0, topMaskH);
+  topMask.addColorStop(0, 'rgba(61, 23, 52, 0.95)');
+  topMask.addColorStop(0.7, 'rgba(61, 23, 52, 0.85)');
+  topMask.addColorStop(1, 'rgba(61, 23, 52, 0)');
+  ctx.fillStyle = topMask;
+  ctx.fillRect(0, 0, W, topMaskH);
 
-    // Alt maske — şablonun eski tarih/zoom bölgesini kapat
-    const botMaskH = Math.floor(H * 0.20);
-    const botMask = ctx.createLinearGradient(0, H - botMaskH, 0, H);
-    botMask.addColorStop(0, 'rgba(20, 8, 30, 0)');
-    botMask.addColorStop(0.4, 'rgba(20, 8, 30, 0.85)');
-    botMask.addColorStop(1, 'rgba(20, 8, 30, 0.97)');
-    ctx.fillStyle = botMask;
-    ctx.fillRect(0, H - botMaskH, W, botMaskH);
+  // Alt maske — şablonun eski tarih/zoom bölgesini kapat
+  const botMaskH = Math.floor(H * 0.20);
+  const botMask = ctx.createLinearGradient(0, H - botMaskH, 0, H);
+  botMask.addColorStop(0, 'rgba(20, 8, 30, 0)');
+  botMask.addColorStop(0.4, 'rgba(20, 8, 30, 0.85)');
+  botMask.addColorStop(1, 'rgba(20, 8, 30, 0.97)');
+  ctx.fillStyle = botMask;
+  ctx.fillRect(0, H - botMaskH, W, botMaskH);
 
-    // İnce dekoratif çizgi (üst ve alt)
-    ctx.fillStyle = 'rgba(245, 215, 122, 0.7)'; // altın
-    ctx.fillRect(60, 22, W - 120, 3);
-    ctx.fillRect(60, H - 25, W - 120, 3);
-  } else {
-    // ŞABLON SADIK: şablon korunur — HARD kutu YOK. Üst/alt YUMUŞAK feather
-    // gradient (orta tamamen açık, şablon dominant) + güçlü yazı gölgesi.
-    const tg = ctx.createLinearGradient(0, 0, 0, Math.floor(H * 0.34));
-    tg.addColorStop(0, 'rgba(12,6,24,0.68)');
-    tg.addColorStop(0.55, 'rgba(12,6,24,0.34)');
-    tg.addColorStop(1, 'rgba(12,6,24,0)');
-    ctx.fillStyle = tg;
-    ctx.fillRect(0, 0, W, Math.floor(H * 0.34));
-    const bg = ctx.createLinearGradient(0, H - Math.floor(H * 0.30), 0, H);
-    bg.addColorStop(0, 'rgba(12,6,24,0)');
-    bg.addColorStop(0.5, 'rgba(12,6,24,0.52)');
-    bg.addColorStop(1, 'rgba(12,6,24,0.84)');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, H - Math.floor(H * 0.30), W, Math.floor(H * 0.30));
-  }
+  // İnce dekoratif çizgi (üst ve alt)
+  ctx.fillStyle = 'rgba(245, 215, 122, 0.7)'; // altın
+  ctx.fillRect(60, 22, W - 120, 3);
+  ctx.fillRect(60, H - 25, W - 120, 3);
 
   // ─── BAŞLIK ───
   ctx.textAlign = 'center';

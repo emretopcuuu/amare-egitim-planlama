@@ -114,18 +114,7 @@ const composite = async (egitmenler, sablonImg) => {
   return canvas;
 };
 
-// Maske PNG: içerik bölgeleri (üst başlık + alt bilgi) şeffaf = AI düzenler,
-// geri kalan opak = şablon korunur. images/edits maske spesifikasyonu.
-const maskeUret = (W, H) => {
-  const c = document.createElement('canvas'); c.width = W; c.height = H;
-  const m = c.getContext('2d');
-  m.fillStyle = '#000000'; m.fillRect(0, 0, W, H);                  // opak = korun
-  m.clearRect(0, Math.floor(H * 0.04), W, Math.floor(H * 0.20));    // üst başlık bandı (düzenle)
-  m.clearRect(0, Math.floor(H * 0.74), W, Math.floor(H * 0.22));    // alt bilgi/adres bandı (düzenle)
-  return c;
-};
-
-export const gorselOlusturOpenAIPro = async ({ apiKey, egitim, egitmenler = [], sablonFile, ekPrompt = '', quality = 'medium', format = 'square', maske = false }) => {
+export const gorselOlusturOpenAIPro = async ({ apiKey, egitim, egitmenler = [], sablonFile, ekPrompt = '', quality = 'medium', format = 'square' }) => {
   if (!apiKey) throw new Error('OpenAI API anahtarı girilmedi.');
 
   // Şablon yükle
@@ -147,10 +136,6 @@ export const gorselOlusturOpenAIPro = async ({ apiKey, egitim, egitmenler = [], 
   // Pre-composite (yüzler + etiketler sabit)
   const compCanvas = await composite(egitmenler, sablonImg);
   const compositeBlob = await new Promise(res => compCanvas.toBlob(b => res(b), 'image/png'));
-  // Maskeli mod: şablonu koru, yalnız içerik bantlarını AI düzenlesin
-  const maskeBlob = maske
-    ? await new Promise(res => maskeUret(compCanvas.width, compCanvas.height).toBlob(b => res(b), 'image/png'))
-    : null;
 
   // Saat hesapla
   const trSaat = egitim.saat || '';
@@ -235,7 +220,6 @@ Hata varsa düzelt, sonra finalize et.`;
   const formData = new FormData();
   formData.append('model', 'gpt-image-2');
   formData.append('image', compositeBlob, 'composite.png');
-  if (maskeBlob) formData.append('mask', maskeBlob, 'mask.png');
   formData.append('prompt', prompt);
   formData.append('size', sizeMap[format] || '1024x1024');
   // Quality medium: 20-40s, kullanıcı deneyimi için makul süre
