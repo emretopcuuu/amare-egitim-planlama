@@ -93,11 +93,6 @@ const translations = {
 
     // AdminLogin
     admin_title: 'Admin Girişi',
-    admin_desc: 'Başvuruları yönetmek için şifrenizi girin',
-    admin_password: 'Şifre',
-    admin_login: 'Giriş Yap',
-    admin_error: 'Hatalı şifre! Lütfen tekrar deneyin.',
-    admin_forgot: 'Şifrenizi unuttuysan z sistem yöneticisine başvurun',
 
     // TakvimView
     cal_title: 'Eğitim Takvimi',
@@ -333,11 +328,6 @@ const translations = {
     sunday: 'Sunday',
 
     admin_title: 'Admin Login',
-    admin_desc: 'Enter your password to manage applications',
-    admin_password: 'Password',
-    admin_login: 'Log In',
-    admin_error: 'Wrong password! Please try again.',
-    admin_forgot: 'If you forgot your password, contact the system administrator',
 
     cal_title: 'Training Calendar',
     cal_trainings: 'trainings',
@@ -569,11 +559,6 @@ const translations = {
     sunday: 'Sonntag',
 
     admin_title: 'Admin-Anmeldung',
-    admin_desc: 'Geben Sie Ihr Passwort ein, um Bewerbungen zu verwalten',
-    admin_password: 'Passwort',
-    admin_login: 'Anmelden',
-    admin_error: 'Falsches Passwort! Bitte versuchen Sie es erneut.',
-    admin_forgot: 'Wenn Sie Ihr Passwort vergessen haben, wenden Sie sich an den Systemadministrator',
 
     cal_title: 'Schulungskalender',
     cal_trainings: 'Schulungen',
@@ -804,11 +789,6 @@ const translations = {
     sunday: 'Zondag',
 
     admin_title: 'Admin-Login',
-    admin_desc: 'Voer uw wachtwoord in om aanvragen te beheren',
-    admin_password: 'Wachtwoord',
-    admin_login: 'Inloggen',
-    admin_error: 'Verkeerd wachtwoord! Probeer opnieuw.',
-    admin_forgot: 'Als u uw wachtwoord bent vergeten, neem contact op met de systeembeheerder',
 
     cal_title: 'Trainingskalender',
     cal_trainings: 'Trainingen',
