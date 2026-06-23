@@ -38,12 +38,15 @@ async function resizeImageToBase64(file, maxSize = 600, quality = 0.85) {
   });
 }
 
-const YeniEgitmenModal = ({ onClose, onSaved }) => {
-  const [ad, setAd] = useState('');
-  const [unvan, setUnvan] = useState('');
-  const [biyografi, setBiyografi] = useState('');
-  const [linkedin, setLinkedin] = useState('');
-  const [fotoBase64, setFotoBase64] = useState('');
+const YeniEgitmenModal = ({ onClose, onSaved, egitmen }) => {
+  const [ad, setAd] = useState(egitmen?.ad || '');
+  const [unvan, setUnvan] = useState(egitmen?.unvan || '');
+  const [meslek, setMeslek] = useState(egitmen?.meslek || '');
+  const [amareKariyer, setAmareKariyer] = useState(egitmen?.amareKariyer || '');
+  const [doktorBrans, setDoktorBrans] = useState(egitmen?.doktorBrans || '');
+  const [biyografi, setBiyografi] = useState(egitmen?.biyografi || '');
+  const [linkedin, setLinkedin] = useState(egitmen?.linkedin || '');
+  const [fotoBase64, setFotoBase64] = useState(egitmen?.fotoURL || '');
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [hata, setHata] = useState('');
 
@@ -101,6 +104,9 @@ const YeniEgitmenModal = ({ onClose, onSaved }) => {
       await setDoc(ref, {
         ad: ad.trim(),
         unvan: unvan.trim() || null,
+        meslek: meslek.trim() || null,
+        amareKariyer: amareKariyer.trim() || null,
+        doktorBrans: doktorBrans.trim() || null,
         biyografi: biyografi.trim() || null,
         linkedin: linkedin.trim() || null,
         fotoURL: fotoBase64 || null,
@@ -124,7 +130,7 @@ const YeniEgitmenModal = ({ onClose, onSaved }) => {
         <div className="bg-gradient-to-br from-purple-700 to-indigo-700 px-6 py-4 flex items-center justify-between sm:rounded-t-2xl rounded-t-3xl">
           <div>
             <h3 className="text-white text-lg font-bold inline-flex items-center gap-2">
-              <User className="w-5 h-5" />Yeni Eğitmen Ekle
+              <User className="w-5 h-5" />{egitmen ? 'Eğitmen Düzenle' : 'Yeni Eğitmen Ekle'}
             </h3>
             <p className="text-purple-100 text-xs mt-0.5">Profil bilgileri ve fotoğrafı gir.</p>
           </div>
@@ -169,12 +175,34 @@ const YeniEgitmenModal = ({ onClose, onSaved }) => {
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500" />
           </Field>
 
-          {/* Unvan */}
-          <Field label="Unvan">
+          {/* Genel unvan (yedek/fallback) */}
+          <Field label="Genel unvan (yedek)">
             <input type="text" value={unvan} onChange={e => setUnvan(e.target.value)}
-              placeholder="Örn: Nefroloji Uzmanı, 3 Star Diamond"
+              placeholder="Rol etiketi boşsa kullanılır"
               className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500" />
           </Field>
+
+          {/* Rol-bazlı etiketler — afiş türüne göre otomatik seçilir */}
+          <div className="grid grid-cols-1 gap-3 rounded-xl border border-purple-100 bg-purple-50/40 p-3">
+            <p className="text-[11px] text-purple-700 font-semibold">
+              Afiş türüne göre otomatik yazılır: Vizyon Günü → meslek, Sağlıklı Yaşam Paneli → branş, online eğitim → Amare kariyeri.
+            </p>
+            <Field label="Amare-dışı meslek">
+              <input type="text" value={meslek} onChange={e => setMeslek(e.target.value)}
+                placeholder="Örn: Kd.Albay (E), Avukat"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500" />
+            </Field>
+            <Field label="Amare kariyeri">
+              <input type="text" value={amareKariyer} onChange={e => setAmareKariyer(e.target.value)}
+                placeholder="Örn: 3 Star Diamond"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500" />
+            </Field>
+            <Field label="Doktor branşı">
+              <input type="text" value={doktorBrans} onChange={e => setDoktorBrans(e.target.value)}
+                placeholder="Örn: Dahiliye ve Fonksiyonel Tıp Uzm."
+                className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/30 focus:border-purple-500" />
+            </Field>
+          </div>
 
           {/* Biyografi */}
           <Field label="Biyografi">

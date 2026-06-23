@@ -4,6 +4,7 @@ import { gorselOlustur } from '../utils/gorselOlustur';
 import { gorselOlusturOpenAIPro } from '../utils/gorselOlusturOpenAIPro';
 import { gorselOlusturCanvas } from '../utils/gorselOlusturCanvas';
 import { gorselOlusturHibrit } from '../utils/gorselOlusturHibrit';
+import { afisTuru, afisTuruLabel } from '../utils/egitmenEtiket';
 
 const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, apiKey, openaiApiKey, onClose, sablonlar = [], onGorselBagla }) => {
   const [mod, setMod] = useState('ai'); // 'ai' | 'upload'
@@ -316,8 +317,11 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                   Ek İstek / Konuşmacı Etiketleri
                   <span className="text-gray-400 font-normal"> (otomatik dolduruldu, dilersen düzenle)</span>
                 </label>
-                <p className="text-xs text-gray-500 mb-2">
+                <p className="text-xs text-gray-500 mb-1">
                   💡 Konuşmacıların altında yazılacak isim+unvan etiketleri. Panel/Vizyon günlerinde özel rol (örn. "Modaratör") yazmak istersen burayı düzenle. Tasarım için ek istek varsa en alta ekle.
+                </p>
+                <p className="text-[11px] text-amare-purple font-semibold mb-2">
+                  Tespit edilen tür: {afisTuruLabel(afisTuru(egitim))}
                 </p>
                 <textarea value={ekPrompt} onChange={(e) => setEkPrompt(e.target.value)} placeholder="Örn: arka planı koyu mor yap..." rows={10} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
               </div>

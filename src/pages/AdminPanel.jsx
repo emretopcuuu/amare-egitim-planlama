@@ -34,6 +34,7 @@ import AdminKategoriSiralama from '../components/AdminKategoriSiralama';
 import { gorselOlustur } from '../utils/gorselOlustur';
 import { gorselOlusturOpenAIPro } from '../utils/gorselOlusturOpenAIPro';
 import { uploadGorsel } from '../utils/uploadGorsel';
+import { afisTuru, etiketSec } from '../utils/egitmenEtiket';
 
 // ── Sabitler ────────────────────────────────────────────────────────────────
 const DURUM_RENKLER = {
@@ -287,7 +288,7 @@ const AdminPanel = () => {
   const [fotoUploadingId, setFotoUploadingId] = useState(null);
   const [kirpmaState, setKirpmaState] = useState(null); // { konusmaciAdi, file } | null
   const [bilgiModal, setBilgiModal] = useState(null);
-  const [bilgiForm, setBilgiForm] = useState({ unvan: '', biyografi: '', linkedin: '' });
+  const [bilgiForm, setBilgiForm] = useState({ unvan: '', meslek: '', amareKariyer: '', doktorBrans: '', biyografi: '', linkedin: '' });
   const [konusmaciArama, setKonusmaciArama] = useState('');
   const [yeniEgitmenAcik, setYeniEgitmenAcik] = useState(false);
   const [bilgiKaydediliyor, setBilgiKaydediliyor] = useState(false);
@@ -527,15 +528,16 @@ const AdminPanel = () => {
     const egitmenAdlari = splitEgitmen(egitim.egitmen);
     const egitmenler = [];
     const fotoURLs = [];
-    console.log(`[gorselAc] Eğitim: ${egitim.egitim}`);
-    console.log(`[gorselAc] Egitmen alanı: "${egitim.egitmen}"`);
+    const tur = afisTuru(egitim); // afiş türüne göre hangi etiket yazılacak
+    console.log(`[gorselAc] Eğitim: ${egitim.egitim} | afiş türü: ${tur}`);
     console.log(`[gorselAc] Ayrıştırılan isimler:`, egitmenAdlari);
     for (const ad of egitmenAdlari) {
       const k = konusmaciBul(ad);
-      console.log(`[gorselAc]   ${ad} → foto: ${k?.fotoURL ? 'VAR' : 'YOK'} | unvan: ${k?.unvan || '-'}`);
+      const etiket = etiketSec(k, tur); // rol-bazlı etiket (fallback: unvan)
+      console.log(`[gorselAc]   ${ad} → foto: ${k?.fotoURL ? 'VAR' : 'YOK'} | etiket: ${etiket || '-'}`);
       egitmenler.push({
         ad,
-        unvan: k?.unvan || '',
+        unvan: etiket, // generator'lar unvan'ı okur → çözülmüş etiketi alır
         biyografi: k?.biyografi || '',
         fotoURL: k?.fotoURL || null,
       });
@@ -758,7 +760,7 @@ const AdminPanel = () => {
   const handleBilgiAc = (ad) => {
     const safeId = makeSafeId(ad);
     const k = konusmaciBul(ad);
-    setBilgiForm({ ad: k?.ad || ad, unvan: k?.unvan || '', biyografi: k?.biyografi || '', linkedin: k?.linkedin || '' });
+    setBilgiForm({ ad: k?.ad || ad, unvan: k?.unvan || '', meslek: k?.meslek || '', amareKariyer: k?.amareKariyer || '', doktorBrans: k?.doktorBrans || '', biyografi: k?.biyografi || '', linkedin: k?.linkedin || '' });
     setBilgiModal({ ad, safeId: k?.id || safeId });
   };
 
@@ -1829,10 +1831,27 @@ const AdminPanel = () => {
                 <input type="text" value={bilgiForm.ad} onChange={e => setBilgiForm(f => ({ ...f, ad: e.target.value }))}
                   placeholder="Eğitmen adı" className={inputCls} />
               </FormField>
-              <FormField label="Unvan / Pozisyon">
+              <FormField label="Genel unvan (yedek)">
                 <input type="text" value={bilgiForm.unvan} onChange={e => setBilgiForm(f => ({ ...f, unvan: e.target.value }))}
-                  placeholder="Örn: Diamond Lider, Prof.Dr." className={inputCls} />
+                  placeholder="Rol etiketi boşsa kullanılır" className={inputCls} />
               </FormField>
+              <div className="rounded-xl border border-amare-purple/15 bg-amare-purple/5 p-3 space-y-3">
+                <p className="text-[11px] text-amare-purple font-semibold">
+                  Afiş türüne göre otomatik yazılır: Vizyon Günü → meslek, Sağlıklı Yaşam Paneli → branş, online eğitim → Amare kariyeri.
+                </p>
+                <FormField label="Amare-dışı meslek">
+                  <input type="text" value={bilgiForm.meslek} onChange={e => setBilgiForm(f => ({ ...f, meslek: e.target.value }))}
+                    placeholder="Örn: Kd.Albay (E), Avukat" className={inputCls} />
+                </FormField>
+                <FormField label="Amare kariyeri">
+                  <input type="text" value={bilgiForm.amareKariyer} onChange={e => setBilgiForm(f => ({ ...f, amareKariyer: e.target.value }))}
+                    placeholder="Örn: 3 Star Diamond" className={inputCls} />
+                </FormField>
+                <FormField label="Doktor branşı">
+                  <input type="text" value={bilgiForm.doktorBrans} onChange={e => setBilgiForm(f => ({ ...f, doktorBrans: e.target.value }))}
+                    placeholder="Örn: Dahiliye ve Fonksiyonel Tıp Uzm." className={inputCls} />
+                </FormField>
+              </div>
               <FormField label="E-posta Adresi">
                 <div className="relative">
                   <ExternalLink className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
