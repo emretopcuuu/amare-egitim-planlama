@@ -6,6 +6,9 @@
 // Hibrit-style'a göre: daha şık görünüm, AI yaratıcılığı; risk: rare text hataları
 
 import { logolariEkle } from './gorselLogoEkle';
+import { afisAdresKisa, isFiziki } from './egitmenEtiket';
+import { qrOlustur } from './qrOlustur';
+import { fotoYerlesim } from './fotoYerlesim';
 
 const urlToImage = (src) => new Promise((resolve, reject) => {
   const img = new Image();
@@ -168,7 +171,8 @@ Tarih: ${egitim.tarih || ''} ${egitim.gun || ''}
 ${trSaat ? `Saat (iki ayrı satır olarak yaz):
   TR ${trSaat}${trBitis ? ' - ' + trBitis : ''}
   EU ${euSaat}${euBitis ? ' - ' + euBitis : ''}` : 'Saat: belirlenmedi (yazma)'}
-Yer: ${egitim.yer || 'ZOOM'}
+Yer: ${afisAdresKisa(egitim) || egitim.yer || 'ZOOM'}
+${isFiziki(egitim) ? 'NOT: Sağ alt köşede QR kod için ~%12 kare boşluk bırak; oraya yazı/logo koyma.' : ''}
 
 KONUŞMACILAR (etiket sırası, AYNEN bunlar):
 ${konusmaciList}
@@ -253,8 +257,11 @@ Hata varsa düzelt, sonra finalize et.`;
       const data = await res.json();
       const b64 = data?.data?.[0]?.b64_json;
       if (!b64) throw new Error('OpenAI görsel döndürmedi.');
-      // Post-process: AI çıktısının alt orta kısmına OneTeam + Amare logoları
-      return await logolariEkle({ base64: b64, mimeType: 'image/png' });
+      // Post-process: OneTeam + Amare logoları (+ fiziki ise QR)
+      const qrDataUrl = isFiziki(egitim)
+        ? await qrOlustur(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${egitim.id || ''}`)
+        : null;
+      return await logolariEkle({ base64: b64, mimeType: 'image/png' }, { qrDataUrl });
     } catch (e) {
       clearTimeout(tid);
       // AbortError veya network hatası → retry

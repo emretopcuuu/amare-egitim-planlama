@@ -5,6 +5,10 @@
 // 3) applyLogos → tek noktadan gerçek Amare + One Team logoları bindirilir
 // Sonuç: AI yaratıcılığı + %100 doğru yüzler + tek logo
 
+import { afisAdresKisa, isFiziki } from './egitmenEtiket';
+import { qrOlustur } from './qrOlustur';
+import { fotoYerlesim } from './fotoYerlesim';
+
 const resmiBase64Yap = async (kaynak) => {
   if (kaynak instanceof File) {
     return new Promise((resolve, reject) => {
@@ -426,9 +430,9 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.font = 'bold 24px Arial';
   ctx.shadowColor = 'rgba(0,0,0,0.7)';
   ctx.shadowBlur = 8;
-  if (egitim.yer) {
-    const yer = egitim.yer.length > 55 ? egitim.yer.slice(0, 55) + '...' : egitim.yer;
-    ctx.fillText(yer, W / 2, H - 205);
+  const adresMetni = afisAdresKisa(egitim);
+  if (adresMetni) {
+    drawWrappedText(ctx, adresMetni, W / 2, H - 215, W * 0.82, 28, 2);
   }
   ctx.shadowBlur = 0;
 
@@ -472,6 +476,29 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
   ctx.font = '16px Arial';
   ctx.fillText('egitimtakvimi.oneteamglobal.ai', W / 2, H - 35);
+
+  // QR kod (fiziki etkinlik) — sağ alt köşe
+  if (isFiziki(egitim)) {
+    const qrDataUrl = await qrOlustur(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${egitim.id || ''}`);
+    if (qrDataUrl) {
+      try {
+        const qrImg = await urlToImage(qrDataUrl);
+        const qrSize = Math.floor(W * 0.12);
+        const pad = Math.floor(W * 0.03);
+        const qrX = W - qrSize - pad, qrY = H - qrSize - pad;
+        const b = Math.floor(qrSize * 0.06);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(qrX - b, qrY - b, qrSize + 2 * b, qrSize + 2 * b);
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.floor(qrSize * 0.12)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 4;
+        ctx.fillText('Yol tarifi için okut', qrX + qrSize / 2, qrY - b - 6);
+        ctx.shadowBlur = 0;
+      } catch (e) { console.warn('[hibrit] QR eklenemedi:', e.message); }
+    }
+  }
 
   const dataUrl = canvas.toDataURL('image/png');
   const base64 = dataUrl.split(',')[1];

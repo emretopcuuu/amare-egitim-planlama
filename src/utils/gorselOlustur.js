@@ -1,5 +1,7 @@
 // AI çıktısına OneTeam + Amare logoları post-process ile eklenir
 import { logolariEkle } from './gorselLogoEkle';
+import { afisAdresKisa, isFiziki } from './egitmenEtiket';
+import { qrOlustur } from './qrOlustur';
 
 // Resmi base64'e çevirir (URL veya File)
 const resmiBase64Yap = async (kaynak) => {
@@ -200,7 +202,8 @@ Tarih: ${egitim.tarih} ${egitim.gun}
 ${trSaat ? `Saat (iki ayrı satır olarak yaz):
   TR ${trSaat}${trBitis ? ' - ' + trBitis : ''}
   EU ${euSaat}${euBitis ? ' - ' + euBitis : ''}` : 'Saat: belirlenmedi (yazma)'}
-Yer: ${egitim.yer || 'ZOOM'}
+Yer: ${afisAdresKisa(egitim) || egitim.yer || 'ZOOM'}
+${isFiziki(egitim) ? 'NOT: Sağ alt köşede QR kod için ~%12 kare boşluk bırak; oraya yazı/logo koyma.' : ''}
 
 ${konusmaciFotoPrompt}
 
@@ -345,6 +348,9 @@ Bu yüzü başka bir konuşmacıyla DEĞİŞTİRME, isim/unvan KARIŞTIRMA.`,
   }
 
   const { data: imgBase64, mimeType: imgMime } = imgPart.inlineData;
-  // Post-process: AI çıktısının alt orta kısmına OneTeam + Amare logoları
-  return await logolariEkle({ base64: imgBase64, mimeType: imgMime });
+  // Post-process: AI çıktısının alt orta kısmına OneTeam + Amare logoları (+ fiziki ise QR)
+  const qrDataUrl = isFiziki(egitim)
+    ? await qrOlustur(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${egitim.id || ''}`)
+    : null;
+  return await logolariEkle({ base64: imgBase64, mimeType: imgMime }, { qrDataUrl });
 };

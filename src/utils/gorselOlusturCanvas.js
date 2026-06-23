@@ -2,6 +2,10 @@
 // AI'a HİÇ veri gönderilmez — yüzler ve isimler %100 garantili korunur.
 // Şablon arka plan olarak kullanılır, üzerine layout çizilir.
 
+import { afisAdresKisa, isFiziki } from './egitmenEtiket';
+import { qrOlustur } from './qrOlustur';
+import { fotoYerlesim } from './fotoYerlesim';
+
 const urlToImage = (src) => new Promise((resolve, reject) => {
   const img = new Image();
   img.crossOrigin = 'anonymous';
@@ -339,8 +343,9 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   ctx.font = 'bold 28px Arial';
   ctx.shadowColor = 'rgba(0,0,0,0.5)';
   ctx.shadowBlur = 6;
-  if (egitim.yer) {
-    ctx.fillText(egitim.yer.length > 50 ? egitim.yer.slice(0, 50) + '...' : egitim.yer, W / 2, H - 165);
+  const adresMetni = afisAdresKisa(egitim);
+  if (adresMetni) {
+    drawWrappedText(ctx, adresMetni, W / 2, H - 175, W * 0.82, 32, 2);
   }
   ctx.shadowBlur = 0;
 
@@ -385,6 +390,29 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.font = '20px Arial';
   ctx.fillText('egitimtakvimi.oneteamglobal.ai', W / 2, H - 40);
+
+  // QR kod (fiziki etkinlik) — sağ alt köşe, /e/:id detay sayfası
+  if (isFiziki(egitim)) {
+    const qrDataUrl = await qrOlustur(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${egitim.id || ''}`);
+    if (qrDataUrl) {
+      try {
+        const qrImg = await urlToImage(qrDataUrl);
+        const qrSize = Math.floor(W * 0.12);
+        const pad = Math.floor(W * 0.03);
+        const qrX = W - qrSize - pad, qrY = H - qrSize - pad;
+        const b = Math.floor(qrSize * 0.06);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(qrX - b, qrY - b, qrSize + 2 * b, qrSize + 2 * b);
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.floor(qrSize * 0.12)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 4;
+        ctx.fillText('Yol tarifi için okut', qrX + qrSize / 2, qrY - b - 6);
+        ctx.shadowBlur = 0;
+      } catch (e) { console.warn('[gorselCanvas] QR eklenemedi:', e.message); }
+    }
+  }
 
   // PNG base64 olarak döndür (Gemini sonucu ile uyumlu format)
   const dataUrl = canvas.toDataURL('image/png');
