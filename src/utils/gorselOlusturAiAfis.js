@@ -1,0 +1,266 @@
+// 5. üretim yöntemi — "AI Afiş" (şablonsuz, bağımsız tasarım).
+// OpenAI gpt-image temalı/şehir-illüstrasyonlu BOŞ arka plan üretir (yazı/yüz yok);
+// Canvas başlık/tarih/saat/konuşmacılar/adres/QR'ı KESKİN basar (metin hep doğru,
+// yüzler hep gerçek). Önceki şablon-sadakat/Amare-palet kurallarından bağımsız.
+// Sadece etkinlik verisini kullanır: başlık, tarih, gün, saat, şehir, mekan, adres,
+// konuşmacılar + (AdminPanel'de çözülmüş) etiketler.
+import { logolariEkle } from './gorselLogoEkle';
+import { afisAdresKisa, isFiziki } from './egitmenEtiket';
+import { qrOlustur } from './qrOlustur';
+import { fotoYerlesim } from './fotoYerlesim';
+
+const urlToImage = (src) => new Promise((resolve, reject) => {
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => resolve(img);
+  img.onerror = () => reject(new Error('Resim yüklenemedi'));
+  if (src instanceof File) {
+    const r = new FileReader();
+    r.onload = () => { img.src = r.result; };
+    r.onerror = reject;
+    r.readAsDataURL(src);
+  } else { img.src = src; }
+});
+
+// TR saat → EU saat (yaz EEST UTC+3 → orta avrupa CEST UTC+2 = -1 saat)
+const trToEU = (saat) => {
+  if (!saat || !/^\d{1,2}:\d{2}$/.test(saat.trim())) return '';
+  const [h, m] = saat.trim().split(':').map(Number);
+  let eu = h - 1; if (eu < 0) eu += 24;
+  return `${String(eu).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+};
+
+const roundRect = (ctx, x, y, w, h, r) => {
+  const rr = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(x, y, w, h, rr);
+  else {
+    ctx.moveTo(x + rr, y);
+    ctx.arcTo(x + w, y, x + w, y + h, rr);
+    ctx.arcTo(x + w, y + h, x, y + h, rr);
+    ctx.arcTo(x, y + h, x, y, rr);
+    ctx.arcTo(x, y, x + w, y, rr);
+    ctx.closePath();
+  }
+};
+
+// Çok satır metin — sonraki Y'i döner
+const wrapText = (ctx, text, x, y, maxW, lh, maxLines = 6) => {
+  const words = String(text || '').split(/\s+/);
+  let line = '', yy = y, n = 0;
+  for (let i = 0; i < words.length; i++) {
+    const test = line ? line + ' ' + words[i] : words[i];
+    if (ctx.measureText(test).width > maxW && line) {
+      ctx.fillText(line, x, yy); yy += lh; line = words[i]; n++;
+      if (n >= maxLines - 1) { line = words.slice(i).join(' '); break; }
+    } else line = test;
+  }
+  if (line) { ctx.fillText(line, x, yy); yy += lh; }
+  return yy;
+};
+
+// Kategori/başlığa göre renk paleti
+const paletSec = (egitim) => {
+  const k = `${egitim?.kategori || ''} ${egitim?.egitim || ''} ${egitim?.etkinlikTuru || ''}`.toLocaleLowerCase('tr-TR');
+  if (/sağlık|yaşam|wellness|panel|doktor/.test(k))
+    return { navy: '#123047', teal: '#15897a', tealKoyu: '#0e6155', krem: '#f3f0e7', vurgu: '#c9a24a', bgTema: 'sağlıklı yaşam / wellness — yumuşak teal-yeşil, organik yaprak ve kalp-sağlık çizgi motifleri' };
+  if (/liderlik|vizyon|başarı|diamond/.test(k))
+    return { navy: '#14233f', teal: '#b8902f', tealKoyu: '#8a6a1f', krem: '#f4f1e7', vurgu: '#caa64e', bgTema: 'liderlik / vizyon — koyu lacivert + altın, ışık huzmeleri, dramatik premium' };
+  return { navy: '#142a44', teal: '#2a6f97', tealKoyu: '#1d4e6e', krem: '#f3f1ea', vurgu: '#c9a24a', bgTema: 'modern profesyonel iş etkinliği — lacivert + cam göbeği, ince geometrik formlar' };
+};
+
+// OpenAI gpt-image ile BOŞ temalı arka plan üret (yazı/yüz/logo YOK)
+const arkaPlanUret = async (apiKey, egitim, palet, openaiSize) => {
+  const sehir = (egitim?.sehir && egitim.sehir !== 'Online') ? egitim.sehir : '';
+  const prompt = `Profesyonel bir etkinlik posteri için SADECE DEKORATİF ARKA PLAN üret. ` +
+    `Tema: ${palet.bgTema}. ` +
+    (sehir ? `Sağ tarafa, ${sehir} şehrinin meşhur silüetini/landmark'ını ince, zarif tek-renk LINE-ART (çizgi illüstrasyon) olarak yerleştir (örn. İzmir → Saat Kulesi; İstanbul → tarihi silüet). ` : '') +
+    `Üst bölge AÇIK/aydınlık olsun (büyük başlık oraya gelecek), alt-orta bölge sade kalsın (içerik oraya gelecek). ` +
+    `Renkler: krem/açık zemin + ${palet.teal} teal vurgular + ${palet.navy} koyu detaylar. ` +
+    `Düz/vektör illüstrasyon stili, premium, ferah, bol beyaz alan. ` +
+    `KESİNLİKLE YOK: hiç yazı, harf, sayı, kelime; hiç insan yüzü/figürü; hiç logo/amblem/marka; hiç çerçeve doldurma. Sadece zemin.`;
+  const res = await fetch('https://api.openai.com/v1/images/generations', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: 'gpt-image-2', prompt, size: openaiSize, quality: 'medium', n: 1 }),
+  });
+  if (!res.ok) {
+    const e = await res.json().catch(() => ({}));
+    throw new Error(e?.error?.message || `OpenAI arka plan hatası: ${res.status}`);
+  }
+  const data = await res.json();
+  const b64 = data?.data?.[0]?.b64_json;
+  if (!b64) throw new Error('OpenAI arka plan döndürmedi.');
+  return await urlToImage('data:image/png;base64,' + b64);
+};
+
+export const gorselOlusturAiAfis = async ({ apiKey, egitim, egitmenler = [], ekPrompt = '', format = 'portrait' }) => {
+  const palet = paletSec(egitim);
+
+  // Boyut — etkinlik posteri için dikey varsayılan
+  const dims = format === 'landscape' ? { W: 1350, H: 1080, os: '1536x1024' }
+    : format === 'square' ? { W: 1080, H: 1080, os: '1024x1024' }
+      : { W: 1080, H: 1350, os: '1024x1536' }; // portrait/story
+  const { W, H } = dims;
+
+  // AI arka plan (OpenAI). Anahtar yoksa/başarısızsa temalı gradient zemine düş.
+  let arkaPlanImg = null;
+  if (apiKey) {
+    try { arkaPlanImg = await arkaPlanUret(apiKey, egitim, palet, dims.os); }
+    catch (e) { console.warn('[ai-afis] arka plan üretilemedi, gradient kullanılıyor:', e.message); }
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  const ctx = canvas.getContext('2d');
+
+  if (arkaPlanImg) {
+    const ratio = Math.max(W / arkaPlanImg.width, H / arkaPlanImg.height);
+    ctx.drawImage(arkaPlanImg, (W - arkaPlanImg.width * ratio) / 2, (H - arkaPlanImg.height * ratio) / 2,
+      arkaPlanImg.width * ratio, arkaPlanImg.height * ratio);
+    const topWash = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+    topWash.addColorStop(0, 'rgba(244,241,233,0.82)');
+    topWash.addColorStop(1, 'rgba(244,241,233,0)');
+    ctx.fillStyle = topWash; ctx.fillRect(0, 0, W, H * 0.5);
+  } else {
+    // Temalı gradient zemin (AI yoksa)
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, palet.krem);
+    g.addColorStop(0.55, '#e8efe9');
+    g.addColorStop(1, '#dfe9e6');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+
+  const M = Math.round(W * 0.06); // kenar boşluğu
+  ctx.textAlign = 'left';
+
+  // ── Kicker (üst etiket) ──
+  ctx.fillStyle = palet.teal;
+  ctx.font = `600 ${Math.round(W * 0.022)}px Arial`;
+  const kicker = (palet.bgTema.includes('wellness')) ? 'SAĞLIKLI YAŞAM · GÜÇLÜ GİRİŞİM · AYDINLIK YARINLAR' : 'ONE TEAM ETKİNLİĞİ';
+  ctx.fillText(kicker, M, Math.round(H * 0.07));
+
+  // ── BAŞLIK (büyük, sol) ──
+  ctx.fillStyle = palet.navy;
+  const titleSize = Math.round(W * 0.082);
+  ctx.font = `800 ${titleSize}px Arial`;
+  let y = Math.round(H * 0.11) + titleSize;
+  y = wrapText(ctx, (egitim.egitim || '').toLocaleUpperCase('tr-TR'), M, y, W - M * 2, titleSize * 1.02, 5);
+
+  // ── Tarih + Saat pill ──
+  const trS = egitim.saat || '';
+  const trB = egitim.bitisSaati || '';
+  const saatStr = trS ? `${trS}${trB ? ' - ' + trB : ''}` : '';
+  const pillY = y + Math.round(H * 0.012);
+  const pillH = Math.round(H * 0.05);
+  ctx.fillStyle = palet.navy;
+  roundRect(ctx, M, pillY, W - M * 2, pillH, pillH / 2); ctx.fill();
+  ctx.fillStyle = palet.krem;
+  ctx.font = `700 ${Math.round(pillH * 0.42)}px Arial`;
+  ctx.textBaseline = 'middle';
+  const tarihTxt = `${egitim.gun || ''} ${egitim.tarih || ''}`.trim();
+  ctx.fillText('📅  ' + tarihTxt, M + pillH * 0.5, pillY + pillH / 2);
+  if (saatStr) {
+    ctx.textAlign = 'right';
+    ctx.fillText(saatStr + '  🕐', W - M - pillH * 0.5, pillY + pillH / 2);
+    ctx.textAlign = 'left';
+  }
+  ctx.textBaseline = 'alphabetic';
+
+  // ── KONUŞMACILAR (kart) ──
+  const liste = (egitmenler || []).slice(0, 6);
+  let cardBottom = pillY + pillH;
+  if (liste.length) {
+    const dagilim = fotoYerlesim(liste.length);
+    const cardY = pillY + pillH + Math.round(H * 0.025);
+    const cardX = M, cardW = W - M * 2;
+    const rows = dagilim.length;
+    const perRowH = Math.round(H * 0.20);
+    const cardH = perRowH * rows + Math.round(H * 0.02);
+    ctx.fillStyle = palet.navy;
+    roundRect(ctx, cardX, cardY, cardW, cardH, Math.round(W * 0.03)); ctx.fill();
+
+    let idx = 0;
+    for (let r = 0; r < rows; r++) {
+      const adet = dagilim[r];
+      const cellW = cardW / adet;
+      const rowY = cardY + Math.round(H * 0.012) + r * perRowH;
+      const foto = Math.min(Math.round(cellW * 0.5), Math.round(perRowH * 0.58));
+      for (let c = 0; c < adet; c++, idx++) {
+        const e = liste[idx];
+        const cx = cardX + cellW * c + cellW / 2;
+        const fy = rowY + foto / 2 + Math.round(H * 0.008);
+        // teal halka + foto
+        ctx.save();
+        ctx.beginPath(); ctx.arc(cx, fy, foto / 2 + 6, 0, Math.PI * 2);
+        ctx.fillStyle = palet.teal; ctx.fill();
+        ctx.beginPath(); ctx.arc(cx, fy, foto / 2, 0, Math.PI * 2); ctx.clip();
+        if (e.fotoURL) {
+          try {
+            const im = await urlToImage(e.fotoURL);
+            const md = Math.min(im.width, im.height);
+            ctx.drawImage(im, (im.width - md) / 2, (im.height - md) / 2, md, md, cx - foto / 2, fy - foto / 2, foto, foto);
+          } catch { ctx.fillStyle = palet.krem; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
+        } else { ctx.fillStyle = palet.krem; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
+        ctx.restore();
+        // isim + etiket
+        ctx.textAlign = 'center';
+        ctx.fillStyle = palet.krem;
+        ctx.font = `700 ${Math.round(cellW * 0.085)}px Arial`;
+        const nameY = fy + foto / 2 + Math.round(perRowH * 0.16);
+        ctx.fillText((e.ad || '').toLocaleUpperCase('tr-TR'), cx, nameY, cellW * 0.94);
+        if (e.unvan) {
+          ctx.fillStyle = palet.vurgu;
+          ctx.font = `600 ${Math.round(cellW * 0.062)}px Arial`;
+          ctx.fillText(e.unvan, cx, nameY + Math.round(perRowH * 0.11), cellW * 0.94);
+        }
+        ctx.textAlign = 'left';
+      }
+    }
+    cardBottom = cardY + cardH;
+  }
+
+  // ── ADRES kartı + QR (fiziki) ──
+  const adres = afisAdresKisa(egitim);
+  const fiziki = isFiziki(egitim);
+  if (adres) {
+    const aY = cardBottom + Math.round(H * 0.022);
+    const aH = Math.round(H * 0.11);
+    ctx.fillStyle = palet.krem;
+    roundRect(ctx, M, aY, W - M * 2, aH, Math.round(W * 0.025)); ctx.fill();
+    // pin
+    ctx.fillStyle = palet.teal;
+    ctx.beginPath(); ctx.arc(M + aH * 0.42, aY + aH * 0.42, aH * 0.16, 0, Math.PI * 2); ctx.fill();
+    // mekan + adres
+    const tx = M + aH * 0.8;
+    ctx.fillStyle = palet.navy;
+    ctx.font = `800 ${Math.round(aH * 0.22)}px Arial`;
+    ctx.fillText((egitim.mekanAdi || egitim.sehir || '').toLocaleUpperCase('tr-TR'), tx, aY + aH * 0.38, W - M * 2 - aH * 1.0 - (fiziki ? aH : 0));
+    ctx.fillStyle = '#5a5a52';
+    ctx.font = `400 ${Math.round(aH * 0.15)}px Arial`;
+    wrapText(ctx, egitim.acikAdres || adres, tx, aY + aH * 0.62, W - M * 2 - aH * 1.0 - (fiziki ? aH * 1.2 : 0), aH * 0.18, 2);
+    // QR
+    if (fiziki) {
+      const qr = await qrOlustur(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${egitim.id || ''}`);
+      if (qr) {
+        try {
+          const qi = await urlToImage(qr);
+          const qs = aH * 0.74;
+          ctx.drawImage(qi, W - M - qs - aH * 0.18, aY + (aH - qs) / 2, qs, qs);
+        } catch {}
+      }
+    }
+  }
+
+  // ── Üst ortada OneTeam logosu ──
+  try {
+    const logo = await urlToImage('/logos/oneteam-logo.png');
+    const lh = Math.round(H * 0.04);
+    ctx.drawImage(logo, (W - lh * (logo.width / logo.height)) / 2, Math.round(H * 0.018), lh * (logo.width / logo.height), lh);
+  } catch {}
+
+  // Base64 → post-process logolar (alt) + döndür
+  const dataUrl = canvas.toDataURL('image/png');
+  const b64 = dataUrl.split(',')[1];
+  return await logolariEkle({ base64: b64, mimeType: 'image/png' });
+};
