@@ -2,6 +2,7 @@ import { randomInt } from "node:crypto";
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { csvAyristir, basliklariEsle, kodUret, type KatilimciSatiri } from "@/lib/csv";
+import { telefonAyikla } from "@/lib/telefon";
 import { tr } from "@/lib/i18n/tr";
 
 const MAX_SATIR = 500;
@@ -52,6 +53,14 @@ export async function POST(req: Request) {
       hatalar.push(tr.admin.katilimcilar.hataSatir(i + 2, tr.admin.katilimcilar.hataAdEksik));
       return;
     }
+    // Telefonu E.164'e normalize et; bozuksa tüm import'u reddet (kısmi import
+    // kafa karıştırır). Boş telefon serbest.
+    const tel = telefonAyikla(kayit.telefon);
+    if (tel.durum === "bozuk") {
+      hatalar.push(tr.admin.katilimcilar.hataSatir(i + 2, tr.admin.katilimcilar.hataTelefon));
+      return;
+    }
+    kayit.telefon = tel.durum === "gecerli" ? tel.numara : null;
     kayitlar.push(kayit);
   });
 
@@ -101,6 +110,12 @@ export async function PUT(req: Request) {
   const temiz = (v: unknown) =>
     typeof v === "string" && v.trim() ? v.trim() : null;
 
+  // Telefonu E.164'e normalize et; girilmiş ama geçersizse reddet.
+  const tel = telefonAyikla(temiz(body?.telefon));
+  if (tel.durum === "bozuk") {
+    return Response.json({ hata: tr.admin.katilimcilar.hataTelefon }, { status: 400 });
+  }
+
   const db = supabaseAdmin();
   const { data: mevcutlar, error: kodHatasi } = await db
     .from("participants")
@@ -115,7 +130,7 @@ export async function PUT(req: Request) {
     full_name: ad,
     team: temiz(body?.takim),
     city: temiz(body?.sehir),
-    phone: temiz(body?.telefon),
+    phone: tel.durum === "gecerli" ? tel.numara : null,
     email: temiz(body?.eposta),
     login_code: kod,
     role: "participant" as const,

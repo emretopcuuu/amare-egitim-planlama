@@ -2521,6 +2521,7 @@ export const tr = {
       hataBosDosya: "Dosya boş veya okunamadı.",
       hataSatir: (satir: number, neden: string) => `Satır ${satir}: ${neden}`,
       hataAdEksik: "ad alanı boş",
+      hataTelefon: "telefon numarası geçersiz (örn. 0532 281 36 00 veya +90…)",
       hataBaslik: "Başlık satırında 'ad' sütunu bulunamadı.",
       hataCokSatir: "Tek seferde en fazla 500 satır içe aktarılabilir.",
       hataSunucu: "İçe aktarma başarısız. Lütfen tekrar dene.",
