@@ -130,6 +130,8 @@ sonradan Canvas dolduracak — sen sadece DEKORATİF ZEMİN üretirsin.
 # 2 · ŞABLONDAN ATIL
 • Tüm yazılar (başlık, isim, tarih, saat, zoom ID)
 • Tüm fotolar/yüzler/insan figürleri
+• Şablonda BİRDEN FAZLA kişi / konuşmacı ızgarası (3-12 küçük portre) olabilir —
+  HEPSİNİ tamamen kaldır, yerlerini boş dekoratif zemin yap. TEK BİR yüz bile kalmasın.
 • Tüm logolar/amblemler/markalar
 • Tüm aşağı şeritler/banner/bilgi kutuları
 
@@ -232,11 +234,19 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // Arka planı çiz (cover-fit)
+  // Arka planı çiz (cover-fit) — BLUR ile: Gemini şablondaki yüzleri/yazıları
+  // tam silmese bile blur onları tanınmaz yumuşak dokuya çevirir (hayalet
+  // konuşmacı ızgarası sorunu). Arka plan zaten yumuşak olmalı.
   const ratio = Math.max(W / arkaPlanImg.width, H / arkaPlanImg.height);
   const bgW = arkaPlanImg.width * ratio;
   const bgH = arkaPlanImg.height * ratio;
-  ctx.drawImage(arkaPlanImg, (W - bgW) / 2, (H - bgH) / 2, bgW, bgH);
+  ctx.save();
+  ctx.filter = 'blur(10px)';
+  ctx.drawImage(arkaPlanImg, (W - bgW) / 2 - 20, (H - bgH) / 2 - 20, bgW + 40, bgH + 40);
+  ctx.restore();
+  // Hafif tek-renk örtü — kalan yüz/yazı izlerini iyice bastırır, atmosferi korur
+  ctx.fillStyle = 'rgba(16, 8, 28, 0.34)';
+  ctx.fillRect(0, 0, W, H);
 
   // Üst kısımda HİÇBİR overlay yok — kullanıcı isteği üzerine kaldırıldı.
   // Başlık metninin okunabilir olması için sadece yumuşak text-shadow kullanılır.
