@@ -11,6 +11,7 @@ const PUBLIC_ROUTES = [
   /^\/api\/admin\/giris$/,
   /^\/api\/ekran$/, // büyük ekran verisi: isimsiz agregalar, oturumsuz erişilir
   /^\/api\/tik$/, // AYNA kalp atışı: cron çağırır, kendi gizli başlığıyla korunur
+  /^\/api\/cron\//, // zamanlanmış işler (olaylar, akıllı dürtme): CRON_SECRET Bearer ile korunur
   /^\/api\/saglik$/, // healthcheck: oturumsuz, veri yok — Railway/yük dengeleyici probu
   // NOT: Mini 360 ekip değerlendirmesi artık GİRİŞLİ (ekip-içi, anonim). Eski
   // girişsiz /mini360/d ve /api/mini360/dis public rotaları kaldırıldı.

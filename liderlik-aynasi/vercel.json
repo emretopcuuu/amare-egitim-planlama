@@ -1,12 +1,3 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/olaylar",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/akilli-durtme",
-      "schedule": "0 17 * * *"
-    }
-  ]
+  "crons": []
 }
