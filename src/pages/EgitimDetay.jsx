@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useData, makeSafeId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, Clock, MapPin, Wifi, Tag, User, Bell, Share2, Loader2, Calendar as CalendarIcon, Timer } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Wifi, Tag, User, Bell, Share2, Loader2, Calendar as CalendarIcon, Timer, Navigation, Users as UsersIcon } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import EventActions from '../components/EventActions';
 import AddToCalendarButton from '../components/AddToCalendarButton';
@@ -262,6 +262,59 @@ const EgitimDetay = () => {
                 <div className="mb-6">
                   <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-2">Açıklama</h2>
                   <p className="text-gray-700 leading-relaxed whitespace-pre-line">{tDynamic(egitim.aciklama)}</p>
+                </div>
+              )}
+
+              {/* Etkinlik Programı — fiziki etkinlikler (Vizyon Günü vb.) */}
+              {!isOnline && (
+                (Array.isArray(egitim.programAkisi) && egitim.programAkisi.length > 0)
+                || egitim.mekanAdi || egitim.acikAdres || egitim.sunucular
+              ) && (
+                <div className="mb-6 rounded-2xl border-2 border-amber-200 bg-amber-50/60 p-5">
+                  <h2 className="flex items-center gap-2 text-amber-900 font-extrabold text-base mb-4">
+                    <MapPin className="w-5 h-5" /> Etkinlik Programı
+                    {egitim.etkinlikTuru && <span className="text-amber-700/80 font-semibold text-sm">· {tDynamic(egitim.etkinlikTuru)}</span>}
+                  </h2>
+
+                  {/* Mekan + açık adres + yol tarifi */}
+                  {(egitim.mekanAdi || egitim.acikAdres) && (
+                    <div className="mb-4">
+                      {egitim.mekanAdi && <div className="text-gray-900 font-bold">{egitim.mekanAdi}</div>}
+                      {egitim.acikAdres && <div className="text-gray-600 text-sm mt-0.5 whitespace-pre-line">{egitim.acikAdres}</div>}
+                      <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent([egitim.acikAdres, egitim.mekanAdi, egitim.sehir].filter(Boolean).join(' '))}`}
+                        target="_blank" rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 mt-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold px-4 py-2.5 rounded-xl shadow-lg transition-all spring-tap">
+                        <Navigation className="w-4 h-4" /> Yol Tarifi
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Program zaman çizelgesi */}
+                  {Array.isArray(egitim.programAkisi) && egitim.programAkisi.length > 0 && (
+                    <div className="space-y-2">
+                      {egitim.programAkisi.filter(p => p && (p.baslik || p.baslangic)).map((p, i) => (
+                        <div key={i} className="flex items-center gap-3 bg-white rounded-xl border border-amber-200 px-4 py-2.5">
+                          {(p.baslangic || p.bitis) && (
+                            <div className="flex items-center gap-1.5 text-amber-700 font-bold text-sm tabular-nums whitespace-nowrap flex-shrink-0">
+                              <Clock className="w-3.5 h-3.5" />
+                              {p.baslangic}{p.bitis ? `–${p.bitis}` : ''}
+                            </div>
+                          )}
+                          <div className="text-gray-800 font-semibold">{tDynamic(p.baslik || '')}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Sunucular */}
+                  {egitim.sunucular && (
+                    <div className="mt-4 pt-3 border-t border-amber-200">
+                      <div className="flex items-center gap-1.5 text-[11px] uppercase tracking-wider text-amber-700 font-bold mb-1">
+                        <UsersIcon className="w-3.5 h-3.5" /> Sunucular
+                      </div>
+                      <div className="text-gray-800 text-sm">{egitim.sunucular}</div>
+                    </div>
+                  )}
                 </div>
               )}
 

@@ -13,7 +13,7 @@ import {
   CheckCircle2, Circle, BarChart2, FileText, Bell, Palette,
   Users2, TrendingUp, ExternalLink as CanvaIcon, Bell as BellIcon,
   Video, Play, Award, ChevronUp, ChevronDown, BarChart3,
-  Mail,
+  Mail, MapPin,
 } from 'lucide-react';
 import GorselOlusturModal from '../components/GorselOlusturModal';
 import DuyuruModal from '../components/DuyuruModal';
@@ -69,6 +69,8 @@ const BOŞ_FORM = {
   egitim: '', gun: 'Pazartesi', tarih: '', saat: '',
   bitisSaati: '', sure: '', egitmen: '', yer: 'ZOOM SALON ID: 937 3761 2425',
   hafta: 1, kategori: '', aciklama: '', katilimSayisi: '', sehir: '',
+  // Fiziki etkinlik (Vizyon Günü vb.) program detayları — opsiyonel
+  etkinlikTuru: '', mekanAdi: '', acikAdres: '', sunucular: '', programAkisi: [],
 };
 
 const inputCls = 'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30';
@@ -83,7 +85,21 @@ const FormField = ({ label, required, children }) => (
   </div>
 );
 
-const EgitimFormAlanlari = ({ form, setForm }) => (
+const EgitimFormAlanlari = ({ form, setForm }) => {
+  // Fiziki etkinlik mi? (online/Zoom değilse program detayları gösterilir)
+  const fiziki = form.sehir && form.sehir !== 'Online'
+    && !(form.yer || '').toLocaleUpperCase('tr-TR').includes('ZOOM');
+  const prog = Array.isArray(form.programAkisi) ? form.programAkisi : [];
+  const setProg = (yeni) => setForm(f => ({ ...f, programAkisi: yeni }));
+  const progGuncelle = (i, alan, val) => setProg(prog.map((r, idx) => idx === i ? { ...r, [alan]: val } : r));
+  const progEkle = () => setProg([...prog, { baslik: '', baslangic: '', bitis: '' }]);
+  const progSil = (i) => setProg(prog.filter((_, idx) => idx !== i));
+  const progVarsayilan = () => setProg([
+    { baslik: 'Özel Eğitim', baslangic: '', bitis: '' },
+    { baslik: 'Seminer', baslangic: '', bitis: '' },
+    { baslik: 'Soru & Cevap', baslangic: '', bitis: '' },
+  ]);
+  return (
   <>
     <FormField label="Eğitim Adı" required>
       <input type="text" value={form.egitim} onChange={e => setForm(f => ({ ...f, egitim: e.target.value }))} placeholder="Eğitim adını girin" className={inputCls} />
@@ -148,8 +164,57 @@ const EgitimFormAlanlari = ({ form, setForm }) => (
           placeholder="0" className={inputCls} />
       </FormField>
     </div>
+
+    {/* Fiziki etkinlik program detayları — online/Zoom değilse açılır */}
+    {fiziki && (
+      <div className="mt-1 rounded-xl border-2 border-amber-200 bg-amber-50/50 p-4 space-y-4">
+        <div className="flex items-center gap-2 text-amber-800 font-bold text-sm">
+          <MapPin className="w-4 h-4" /> Fiziki Etkinlik Program Detayları
+        </div>
+        <div className="grid grid-cols-2 gap-4">
+          <FormField label="Etkinlik Türü">
+            <input type="text" value={form.etkinlikTuru || ''} onChange={e => setForm(f => ({ ...f, etkinlikTuru: e.target.value }))} placeholder="Sağlıklı Yaşam ve Girişimcilik Semineri" className={inputCls} />
+          </FormField>
+          <FormField label="Mekan Adı">
+            <input type="text" value={form.mekanAdi || ''} onChange={e => setForm(f => ({ ...f, mekanAdi: e.target.value }))} placeholder="Amare Plaza (Hansen Salonu)" className={inputCls} />
+          </FormField>
+        </div>
+        <FormField label="Açık Adres">
+          <textarea value={form.acikAdres || ''} onChange={e => setForm(f => ({ ...f, acikAdres: e.target.value }))} rows={2} placeholder="Mahalle, cadde, no, ilçe / şehir" className={`${inputCls} resize-none`} />
+        </FormField>
+        <FormField label="Sunucular">
+          <input type="text" value={form.sunucular || ''} onChange={e => setForm(f => ({ ...f, sunucular: e.target.value }))} placeholder="Aytuğ Gönül, Canan Polat" className={inputCls} />
+        </FormField>
+
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-sm font-semibold text-gray-700">Program Akışı</label>
+            {prog.length === 0 && (
+              <button type="button" onClick={progVarsayilan} className="text-xs font-semibold text-amare-purple hover:underline">+ Varsayılan program</button>
+            )}
+          </div>
+          <div className="space-y-2">
+            {prog.map((r, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <input type="text" value={r.baslik || ''} onChange={e => progGuncelle(i, 'baslik', e.target.value)} placeholder="Bölüm (örn. Seminer)" className={`${inputCls} flex-1`} />
+                <input type="text" value={r.baslangic || ''} onChange={e => progGuncelle(i, 'baslangic', e.target.value)} placeholder="14:00" className={`${inputCls} w-20 flex-shrink-0`} />
+                <span className="text-gray-400 flex-shrink-0">–</span>
+                <input type="text" value={r.bitis || ''} onChange={e => progGuncelle(i, 'bitis', e.target.value)} placeholder="16:00" className={`${inputCls} w-20 flex-shrink-0`} />
+                <button type="button" onClick={() => progSil(i)} aria-label="Satırı sil" className="text-red-400 hover:text-red-600 flex-shrink-0 p-1">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <button type="button" onClick={progEkle} className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-amare-purple hover:underline">
+            <Plus className="w-4 h-4" /> Satır Ekle
+          </button>
+        </div>
+      </div>
+    )}
   </>
-);
+  );
+};
 
 // ── Yardımcılar ──────────────────────────────────────────────────────────────
 const splitEgitmen = (egitmen) => {
@@ -537,6 +602,9 @@ const AdminPanel = () => {
       egitmen: egitim.egitmen || '', yer: egitim.yer || '', hafta: egitim.hafta || 1,
       kategori: egitim.kategori || '', aciklama: egitim.aciklama || '',
       katilimSayisi: egitim.katilimSayisi || '', sehir: egitim.sehir || '',
+      etkinlikTuru: egitim.etkinlikTuru || '', mekanAdi: egitim.mekanAdi || '',
+      acikAdres: egitim.acikAdres || '', sunucular: egitim.sunucular || '',
+      programAkisi: Array.isArray(egitim.programAkisi) ? egitim.programAkisi : [],
     });
     setDuzenleModal(egitim);
   };
