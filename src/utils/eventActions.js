@@ -60,15 +60,40 @@ export const extractZoomUrl = (yer) => {
   return null;
 };
 
+// Fiziki etkinlik konumu: mekan adı + açık adres (yoksa yer). Online ise zoom URL.
+const konumStr = (egitim) => {
+  const zoomUrl = extractZoomUrl(egitim.yer);
+  if (zoomUrl) return zoomUrl;
+  return [egitim.mekanAdi, egitim.acikAdres].filter(Boolean).join(', ') || egitim.yer || '';
+};
+
+// Program akışı + tür + sunucular → açıklama/body için satır dizisi (boşsa [])
+const programDetay = (egitim) => {
+  const lines = [];
+  if (egitim.etkinlikTuru) lines.push(egitim.etkinlikTuru);
+  const prog = (Array.isArray(egitim.programAkisi) ? egitim.programAkisi : [])
+    .filter(p => p && (p.baslik || p.baslangic))
+    .map(p => {
+      const saat = [p.baslangic, p.bitis].filter(Boolean).join('–');
+      return (saat ? saat + ' ' : '') + (p.baslik || '');
+    })
+    .filter(s => s.trim());
+  if (prog.length) lines.push('Program:', ...prog);
+  if (egitim.sunucular) lines.push(`Sunucular: ${egitim.sunucular}`);
+  return lines;
+};
+
 // ICS dosyası oluştur (Apple Calendar, Outlook, Thunderbird, vs)
 export const generateICS = (egitim) => {
   const zaman = egitimZamani(egitim);
   if (!zaman) return null;
 
   const zoomUrl = extractZoomUrl(egitim.yer);
+  const konum = konumStr(egitim);
   const aciklama = [
     egitim.egitmen ? `Eğitmen: ${egitim.egitmen}` : '',
     egitim.kategori ? `Kategori: ${egitim.kategori}` : '',
+    ...programDetay(egitim),
     zoomUrl ? `\n${zoomUrl}` : '',
     egitim.aciklama || '',
   ].filter(Boolean).join('\n');
@@ -86,7 +111,7 @@ export const generateICS = (egitim) => {
     `DTEND:${icsDate(zaman.bitis)}`,
     `SUMMARY:${escapeIcs(egitim.egitim)}`,
     `DESCRIPTION:${escapeIcs(aciklama)}`,
-    egitim.yer ? `LOCATION:${escapeIcs(zoomUrl || egitim.yer)}` : '',
+    konum ? `LOCATION:${escapeIcs(konum)}` : '',
     zoomUrl ? `URL:${zoomUrl}` : '',
     'BEGIN:VALARM',
     'TRIGGER:-PT15M',
@@ -131,6 +156,7 @@ export const googleCalendarUrl = (egitim) => {
   const details = [
     egitim.egitmen ? `Eğitmen: ${egitim.egitmen}` : '',
     egitim.kategori ? `Kategori: ${egitim.kategori}` : '',
+    ...programDetay(egitim),
     zoomUrl ? zoomUrl : '',
     egitim.aciklama || '',
   ].filter(Boolean).join('\n');
@@ -139,7 +165,7 @@ export const googleCalendarUrl = (egitim) => {
     text: egitim.egitim || 'Eğitim',
     dates: `${fmt(zaman.baslangic)}/${fmt(zaman.bitis)}`,
     details,
-    location: zoomUrl || egitim.yer || '',
+    location: konumStr(egitim),
   });
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 };
@@ -160,6 +186,7 @@ export const outlookCalendarUrl = (egitim) => {
   const body = [
     egitim.egitmen ? `Eğitmen: ${egitim.egitmen}` : '',
     egitim.kategori ? `Kategori: ${egitim.kategori}` : '',
+    ...programDetay(egitim),
     zoomUrl ? zoomUrl : '',
   ].filter(Boolean).join('\n');
   const params = new URLSearchParams({
@@ -169,7 +196,7 @@ export const outlookCalendarUrl = (egitim) => {
     startdt,
     enddt,
     body,
-    location: zoomUrl || egitim.yer || '',
+    location: konumStr(egitim),
   });
   return `https://outlook.office.com/calendar/0/deeplink/compose?${params.toString()}`;
 };
@@ -180,12 +207,16 @@ export const outlookCalendarUrl = (egitim) => {
 export const whatsappShareUrl = (egitim, baseUrl) => {
   const zoomUrl = extractZoomUrl(egitim.yer);
   const dl = deepLink(egitim, baseUrl);
+  const fizikiKonum = !zoomUrl ? [egitim.mekanAdi, egitim.acikAdres].filter(Boolean).join(', ') : '';
+  const prog = !zoomUrl ? programDetay(egitim) : [];
   const lines = [
     `${dl}\n`, // ← İLK URL: bizim sayfamız, WhatsApp bunu önizler (zengin OG)
     `📅 *${egitim.egitim || 'Eğitim'}*`,
     `🗓️ ${egitim.tarih || ''} ${egitim.gun || ''}`,
     egitim.saat ? `⏰ ${egitim.saat}${egitim.bitisSaati ? ` - ${egitim.bitisSaati}` : ''}` : '',
     egitim.egitmen ? `🎤 ${egitim.egitmen}` : '',
+    fizikiKonum ? `📍 ${fizikiKonum}` : '',
+    prog.length ? `\n${prog.join('\n')}` : '',
     zoomUrl ? `\n📡 Zoom toplantı: ${zoomUrl}` : '',
   ].filter(Boolean).join('\n');
   return `https://wa.me/?text=${encodeURIComponent(lines)}`;
