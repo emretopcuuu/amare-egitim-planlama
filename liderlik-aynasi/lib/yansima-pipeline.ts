@@ -164,6 +164,85 @@ export async function yansimaUret(participantId: string): Promise<void> {
     .eq("participant_id", participantId);
 }
 
+// --- ÖNDEN ÜRETİM (pre-generation) ---
+// Birincil mimari: 150 video kamp öncesi harici olarak (MCP ile) üretilir,
+// sesi gömülü tek mp4 olarak buraya bağlanır. Uygulama runtime'da hiçbir
+// video/ses API'si çağırmaz; yalnızca Storage'tan servis eder. Bu sayede
+// prod'a Higgsfield/ElevenLabs anahtarı koymaya gerek kalmaz.
+
+export type YansimaBaglaSonuc =
+  | { ok: true }
+  | { ok: false; hata: string; kod: 400 | 404 | 502 | 500 };
+
+/** Önden üretilmiş videoyu (sesi gömülü tek mp4) bir katılımcıya bağlar.
+ *  Katılımcının voice_profiles kaydı (rıza) önceden var olmalı — rızasız
+ *  kişiye biyometrik içerik bağlanmaz (KVKK bütünlüğü). */
+export async function yansimaVideoBagla(
+  participantId: string,
+  videoBuf: ArrayBuffer
+): Promise<YansimaBaglaSonuc> {
+  const db = supabaseAdmin();
+
+  const { data: profil } = await db
+    .from("voice_profiles")
+    .select("consent")
+    .eq("participant_id", participantId)
+    .maybeSingle();
+  if (!profil) {
+    return { ok: false, hata: "Katılımcının rıza/ses kaydı yok.", kod: 400 };
+  }
+  if (profil.consent !== true) {
+    return { ok: false, hata: "Katılımcı açık rıza vermemiş.", kod: 400 };
+  }
+
+  const videoPath = `${participantId}/yansima.mp4`;
+  const { error: yukHata } = await db.storage
+    .from(BUCKET)
+    .upload(videoPath, videoBuf, { contentType: "video/mp4", upsert: true });
+  if (yukHata) {
+    return { ok: false, hata: "Video yüklenemedi.", kod: 500 };
+  }
+
+  const { error: gncHata } = await db
+    .from("voice_profiles")
+    .update({
+      video_status: "hazir",
+      video_path: videoPath,
+      // Yeniden bağlanınca bildirim yeniden gönderilebilsin
+      video_notified_at: null,
+    })
+    .eq("participant_id", participantId);
+  if (gncHata) {
+    return { ok: false, hata: "Durum güncellenemedi.", kod: 500 };
+  }
+
+  return { ok: true };
+}
+
+/** Önden üretilmiş videoyu bir URL'den indirip bağlar (MCP çıktısı CloudFront
+ *  URL'i gibi). Yalnız https; en fazla ~50MB. */
+export async function yansimaURLBagla(
+  participantId: string,
+  videoUrl: string
+): Promise<YansimaBaglaSonuc> {
+  let buf: ArrayBuffer;
+  try {
+    const u = new URL(videoUrl);
+    if (u.protocol !== "https:") {
+      return { ok: false, hata: "Yalnızca https URL.", kod: 400 };
+    }
+    const res = await fetch(videoUrl);
+    if (!res.ok) return { ok: false, hata: `İndirme ${res.status}`, kod: 502 };
+    buf = await res.arrayBuffer();
+  } catch {
+    return { ok: false, hata: "URL indirilemedi.", kod: 502 };
+  }
+  if (buf.byteLength > 50 * 1024 * 1024) {
+    return { ok: false, hata: "Video çok büyük (>50MB).", kod: 400 };
+  }
+  return yansimaVideoBagla(participantId, buf);
+}
+
 /** voice_status='bekliyor' olan kayıtları toplu işle (cron'dan çağrılır). */
 export async function bekleyenleriIsle(): Promise<number> {
   const db = supabaseAdmin();

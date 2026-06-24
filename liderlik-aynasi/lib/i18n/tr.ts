@@ -1327,6 +1327,7 @@ export const tr = {
       icerik: "İçerik",
       sunum: "Sunum",
       gorevTuru: "Görev Türleri",
+      yansima: "Yansıma Videoları",
     },
     // Funnel navigasyonu: türe göre değil, kampın YOLCULUĞUNA göre 4 aşama + Panel.
     // Operatör soldan sağa = zaman akışı; aradığı aracı süreçteki yerinden bulur.
