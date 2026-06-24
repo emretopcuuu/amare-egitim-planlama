@@ -5,6 +5,10 @@
 // 3) applyLogos → tek noktadan gerçek Amare + One Team logoları bindirilir
 // Sonuç: AI yaratıcılığı + %100 doğru yüzler + tek logo
 
+import { afisAdresKisa, isFiziki } from './egitmenEtiket';
+import { qrOlustur } from './qrOlustur';
+import { fotoYerlesim } from './fotoYerlesim';
+
 const resmiBase64Yap = async (kaynak) => {
   if (kaynak instanceof File) {
     return new Promise((resolve, reject) => {
@@ -126,6 +130,8 @@ sonradan Canvas dolduracak — sen sadece DEKORATİF ZEMİN üretirsin.
 # 2 · ŞABLONDAN ATIL
 • Tüm yazılar (başlık, isim, tarih, saat, zoom ID)
 • Tüm fotolar/yüzler/insan figürleri
+• Şablonda BİRDEN FAZLA kişi / konuşmacı ızgarası (3-12 küçük portre) olabilir —
+  HEPSİNİ tamamen kaldır, yerlerini boş dekoratif zemin yap. TEK BİR yüz bile kalmasın.
 • Tüm logolar/amblemler/markalar
 • Tüm aşağı şeritler/banner/bilgi kutuları
 
@@ -228,11 +234,19 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  // Arka planı çiz (cover-fit)
+  // Arka planı çiz (cover-fit) — BLUR ile: Gemini şablondaki yüzleri/yazıları
+  // tam silmese bile blur onları tanınmaz yumuşak dokuya çevirir (hayalet
+  // konuşmacı ızgarası sorunu). Arka plan zaten yumuşak olmalı.
   const ratio = Math.max(W / arkaPlanImg.width, H / arkaPlanImg.height);
   const bgW = arkaPlanImg.width * ratio;
   const bgH = arkaPlanImg.height * ratio;
-  ctx.drawImage(arkaPlanImg, (W - bgW) / 2, (H - bgH) / 2, bgW, bgH);
+  ctx.save();
+  ctx.filter = 'blur(10px)';
+  ctx.drawImage(arkaPlanImg, (W - bgW) / 2 - 20, (H - bgH) / 2 - 20, bgW + 40, bgH + 40);
+  ctx.restore();
+  // Hafif tek-renk örtü — kalan yüz/yazı izlerini iyice bastırır, atmosferi korur
+  ctx.fillStyle = 'rgba(16, 8, 28, 0.34)';
+  ctx.fillRect(0, 0, W, H);
 
   // Üst kısımda HİÇBİR overlay yok — kullanıcı isteği üzerine kaldırıldı.
   // Başlık metninin okunabilir olması için sadece yumuşak text-shadow kullanılır.
@@ -286,38 +300,40 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   // ─── KONUŞMACI KARTLARI — büyük + dikey ortalanmış ───
   const liste = (egitmenler || []);
   const titleEnd = saatY + 30;       // başlık+saat bloğu sonu
-  const footerStart = H - 200;        // alt zoom info başlangıcı
+  const footerStart = H - 260;        // alt adres/logo/QR için yeterli pay
   const cardsAreaTop = titleEnd;
   const cardsAreaBot = footerStart;
   const cardsAreaH = cardsAreaBot - cardsAreaTop;
 
   if (liste.length > 0) {
-    const cols = Math.min(liste.length, 4);
-    const rows = Math.ceil(liste.length / 4);
+    const dagilim = fotoYerlesim(liste.length); // dengeli satırlar: [3,3],[3,2]...
+    const rows = dagilim.length;
+    const maxCols = Math.max(...dagilim);
     const gap = 18;
     const sidePad = 50;
-    const maxCardW = (W - sidePad * 2 - gap * (cols - 1)) / cols;
-    // text alanı: 3 satır isim (~95px) + 2 satır unvan (~50px) + boşluk = ~155px
-    const textAreaH = 155;
-    const rowGap = 30;
+    const maxCardW = (W - sidePad * 2 - gap * (maxCols - 1)) / maxCols;
+    const textAreaH = rows > 1 ? 84 : 130; // çok sıralıda metin alanı dar
+    const rowGap = 14;
     const availableHPerRow = (cardsAreaH - rowGap * (rows - 1)) / rows;
     const maxFotoFromH = availableHPerRow - textAreaH;
-    // Foto: width VEYA height limit'in min'i, en az 150 en çok 320
-    const fotoSize = Math.max(150, Math.min(maxCardW * 0.95, maxFotoFromH, 320));
+    // Foto: alana sığması esas, taban 120 (aşırı küçülmesin)
+    const fotoSize = Math.max(120, Math.min(maxCardW * 0.95, maxFotoFromH, 320));
     const cardW = Math.max(fotoSize, maxCardW * 0.98);
     const cardH = fotoSize + textAreaH;
-    const totalW = cardW * cols + gap * (cols - 1);
-    const startX = (W - totalW) / 2;
     const rowH = cardH + rowGap;
     const totalH = rowH * rows - rowGap;
-    const cardsStartY = cardsAreaTop + (cardsAreaH - totalH) / 2;
+    const cardsStartY = cardsAreaTop + Math.max(0, (cardsAreaH - totalH) / 2);
 
-    for (let i = 0; i < liste.length; i++) {
-      const e = liste[i];
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = startX + col * (cardW + gap);
-      const y = cardsStartY + row * rowH;
+    let i = -1;
+    for (let r = 0; r < rows; r++) {
+      const satirAdet = dagilim[r];
+      const rowTotalW = cardW * satirAdet + gap * (satirAdet - 1);
+      const startX = (W - rowTotalW) / 2; // her satır ortalı
+      const y = cardsStartY + r * rowH;
+      for (let c = 0; c < satirAdet; c++) {
+        i++;
+        const e = liste[i];
+        const x = startX + c * (cardW + gap);
 
       const fotoX = x + (cardW - fotoSize) / 2;
       const fotoY = y;
@@ -409,7 +425,8 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
         drawWrappedText(ctx, e.unvan, x + cardW / 2, lastY + 6, cardW * 0.95, unvanLineHeight, 2);
       }
       ctx.shadowBlur = 0;
-    }
+      } // for c (satır içi)
+    } // for r (satırlar)
   }
 
   // ─── ALT: Daha güçlü gradient (Gemini'nin alt yazılarını kapatmak için) ───
@@ -426,9 +443,9 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.font = 'bold 24px Arial';
   ctx.shadowColor = 'rgba(0,0,0,0.7)';
   ctx.shadowBlur = 8;
-  if (egitim.yer) {
-    const yer = egitim.yer.length > 55 ? egitim.yer.slice(0, 55) + '...' : egitim.yer;
-    ctx.fillText(yer, W / 2, H - 205);
+  const adresMetni = afisAdresKisa(egitim);
+  if (adresMetni) {
+    drawWrappedText(ctx, adresMetni, W / 2, H - 215, W * 0.82, 28, 2);
   }
   ctx.shadowBlur = 0;
 
@@ -472,6 +489,29 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   ctx.fillStyle = 'rgba(255,255,255,0.55)';
   ctx.font = '16px Arial';
   ctx.fillText('egitimtakvimi.oneteamglobal.ai', W / 2, H - 35);
+
+  // QR kod (fiziki etkinlik) — sağ alt köşe
+  if (isFiziki(egitim)) {
+    const qrDataUrl = await qrOlustur(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${egitim.id || ''}`);
+    if (qrDataUrl) {
+      try {
+        const qrImg = await urlToImage(qrDataUrl);
+        const qrSize = Math.floor(W * 0.12);
+        const pad = Math.floor(W * 0.03);
+        const qrX = W - qrSize - pad, qrY = H - qrSize - pad;
+        const b = Math.floor(qrSize * 0.06);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(qrX - b, qrY - b, qrSize + 2 * b, qrSize + 2 * b);
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.floor(qrSize * 0.12)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 4;
+        ctx.fillText('Yol tarifi için okut', qrX + qrSize / 2, qrY - b - 6);
+        ctx.shadowBlur = 0;
+      } catch (e) { console.warn('[hibrit] QR eklenemedi:', e.message); }
+    }
+  }
 
   const dataUrl = canvas.toDataURL('image/png');
   const base64 = dataUrl.split(',')[1];

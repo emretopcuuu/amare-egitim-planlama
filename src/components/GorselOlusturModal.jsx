@@ -4,6 +4,8 @@ import { gorselOlustur } from '../utils/gorselOlustur';
 import { gorselOlusturOpenAIPro } from '../utils/gorselOlusturOpenAIPro';
 import { gorselOlusturCanvas } from '../utils/gorselOlusturCanvas';
 import { gorselOlusturHibrit } from '../utils/gorselOlusturHibrit';
+import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
+import { afisTuru, afisTuruLabel } from '../utils/egitmenEtiket';
 
 const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, apiKey, openaiApiKey, onClose, sablonlar = [], onGorselBagla }) => {
   const [mod, setMod] = useState('ai'); // 'ai' | 'upload'
@@ -19,7 +21,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     const saved = localStorage.getItem('aiModel');
     // Eski 'openai' kayıtlarını 'openai-pro'ya migrate et
     if (saved === 'openai') return 'openai-pro';
-    if (['canvas', 'openai-pro', 'gemini', 'hibrit'].includes(saved)) return saved;
+    if (['canvas', 'openai-pro', 'gemini', 'hibrit', 'ai-afis'].includes(saved)) return saved;
     return 'hibrit';
   });
   // Format: 'square' (1:1) | 'story' (9:16) | 'landscape' (16:9)
@@ -119,6 +121,13 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
         sablonFile: sablonKaynak, ekPrompt, ...dims,
       });
     }
+    if (model === 'ai-afis') {
+      return await gorselOlusturAiAfis({
+        geminiApiKey: apiKey, openaiApiKey,
+        egitim, egitmenler: egitmenler || [],
+        ekPrompt, format: 'portrait',
+      });
+    }
     if (model === 'openai-pro') {
       const result = await gorselOlusturOpenAIPro({
         apiKey: openaiApiKey,
@@ -132,13 +141,16 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   };
 
   const handleOlustur = async () => {
-    if (!secilenSablon) { setError('Lütfen bir şablon seçin.'); return; }
+    // AI Afiş şablonsuz çalışır; diğer yöntemler şablon ister
+    if (aiModel !== 'ai-afis' && !secilenSablon) { setError('Lütfen bir şablon seçin.'); return; }
     setGenerating(true);
     setError(null);
     if (resultBlobUrl) URL.revokeObjectURL(resultBlobUrl);
     setResultBlobUrl(null);
     setAktifModel(null);
-    const sablonKaynak = secilenSablon.type === 'file' ? secilenSablon.file : secilenSablon.url;
+    const sablonKaynak = secilenSablon
+      ? (secilenSablon.type === 'file' ? secilenSablon.file : secilenSablon.url)
+      : null;
 
     // Önce seçili model, başarısız olursa fallback zinciri
     // Hibrit/Gemini başarısız → OpenAI Pro
@@ -147,6 +159,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
       ? (aiModel === 'hibrit' ? ['hibrit', 'openai-pro', 'canvas']
         : aiModel === 'gemini' ? ['gemini', 'openai-pro', 'canvas']
         : aiModel === 'openai-pro' ? ['openai-pro', 'hibrit', 'canvas']
+        : aiModel === 'ai-afis' ? ['ai-afis']
         : [aiModel])
       : [aiModel];
 
@@ -316,8 +329,11 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                   Ek İstek / Konuşmacı Etiketleri
                   <span className="text-gray-400 font-normal"> (otomatik dolduruldu, dilersen düzenle)</span>
                 </label>
-                <p className="text-xs text-gray-500 mb-2">
+                <p className="text-xs text-gray-500 mb-1">
                   💡 Konuşmacıların altında yazılacak isim+unvan etiketleri. Panel/Vizyon günlerinde özel rol (örn. "Modaratör") yazmak istersen burayı düzenle. Tasarım için ek istek varsa en alta ekle.
+                </p>
+                <p className="text-[11px] text-amare-purple font-semibold mb-2">
+                  Tespit edilen tür: {afisTuruLabel(afisTuru(egitim))}
                 </p>
                 <textarea value={ekPrompt} onChange={(e) => setEkPrompt(e.target.value)} placeholder="Örn: arka planı koyu mor yap..." rows={10} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
               </div>
@@ -397,6 +413,14 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                   >
                     <div className="flex items-center gap-1 font-bold">✨ OpenAI Pro</div>
                     <div className="text-gray-500 mt-0.5">gpt-image-2 · Tam AI · ~$0.08</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAiModel('ai-afis'); localStorage.setItem('aiModel', 'ai-afis'); }}
+                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'ai-afis' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <div className="flex items-center gap-1 font-bold">🎨 AI Afiş</div>
+                    <div className="text-gray-500 mt-0.5">Şablonsuz · şehir illüstrasyonu · ~$0.08</div>
                   </button>
                 </div>
                 {aiModel !== 'canvas' && (

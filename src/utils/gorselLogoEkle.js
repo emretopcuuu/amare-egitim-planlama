@@ -18,7 +18,7 @@ const urlToImage = (src) => new Promise((resolve, reject) => {
  * @param {{ base64: string, mimeType?: string }} aiCikti
  * @returns {Promise<{ base64: string, mimeType: string }>}
  */
-export async function logolariEkle(aiCikti) {
+export async function logolariEkle(aiCikti, { qrDataUrl } = {}) {
   if (!aiCikti?.base64) return aiCikti;
 
   try {
@@ -71,6 +71,31 @@ export async function logolariEkle(aiCikti) {
     ctx.lineTo(startX + oneTeamW + gap / 2, logoY + logoH - 6);
     ctx.stroke();
     ctx.restore();
+
+    // 4.5 QR kod (varsa) — sağ alt köşe, gerçek (AI değil), logoların üstünde
+    if (qrDataUrl) {
+      try {
+        const qrImg = await urlToImage(qrDataUrl);
+        const qrSize = Math.max(90, Math.floor(W * 0.11));
+        const pad = Math.floor(W * 0.03);
+        const qrX = W - qrSize - pad;
+        const qrY = H - qrSize - pad;
+        const b = Math.floor(qrSize * 0.06);
+        ctx.save();
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(qrX - b, qrY - b, qrSize + 2 * b, qrSize + 2 * b);
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.floor(qrSize * 0.12)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.6)';
+        ctx.shadowBlur = 4;
+        ctx.fillText('Yol tarifi için okut', qrX + qrSize / 2, qrY - b - 6);
+        ctx.restore();
+      } catch (e) {
+        console.warn('[logo-ekle] QR eklenemedi:', e.message);
+      }
+    }
 
     // 5. Yeni base64
     const yeniDataUrl = canvas.toDataURL('image/png');

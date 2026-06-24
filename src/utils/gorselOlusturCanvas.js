@@ -2,6 +2,10 @@
 // AI'a HİÇ veri gönderilmez — yüzler ve isimler %100 garantili korunur.
 // Şablon arka plan olarak kullanılır, üzerine layout çizilir.
 
+import { afisAdresKisa, isFiziki } from './egitmenEtiket';
+import { qrOlustur } from './qrOlustur';
+import { fotoYerlesim } from './fotoYerlesim';
+
 const urlToImage = (src) => new Promise((resolve, reject) => {
   const img = new Image();
   img.crossOrigin = 'anonymous';
@@ -143,21 +147,21 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
     ctx.fillRect(0, 0, W, H);
   }
 
-  // Üst maske — şablonun eski başlık/logo bölgesini kapat (yeni başlık için yer)
-  const topMaskH = Math.floor(H * 0.22);
+  // Üst maske — şablonun eski başlık/logo bölgesini TAM kapat (eski metin sızmasın)
+  const topMaskH = Math.floor(H * 0.27);
   const topMask = ctx.createLinearGradient(0, 0, 0, topMaskH);
-  topMask.addColorStop(0, 'rgba(61, 23, 52, 0.95)');
-  topMask.addColorStop(0.7, 'rgba(61, 23, 52, 0.85)');
+  topMask.addColorStop(0, 'rgba(61, 23, 52, 1)');
+  topMask.addColorStop(0.78, 'rgba(61, 23, 52, 0.99)');
   topMask.addColorStop(1, 'rgba(61, 23, 52, 0)');
   ctx.fillStyle = topMask;
   ctx.fillRect(0, 0, W, topMaskH);
 
-  // Alt maske — şablonun eski tarih/zoom bölgesini kapat
-  const botMaskH = Math.floor(H * 0.20);
+  // Alt maske — şablonun eski tarih/zoom bölgesini TAM kapat
+  const botMaskH = Math.floor(H * 0.24);
   const botMask = ctx.createLinearGradient(0, H - botMaskH, 0, H);
   botMask.addColorStop(0, 'rgba(20, 8, 30, 0)');
-  botMask.addColorStop(0.4, 'rgba(20, 8, 30, 0.85)');
-  botMask.addColorStop(1, 'rgba(20, 8, 30, 0.97)');
+  botMask.addColorStop(0.35, 'rgba(20, 8, 30, 0.99)');
+  botMask.addColorStop(1, 'rgba(20, 8, 30, 1)');
   ctx.fillStyle = botMask;
   ctx.fillRect(0, H - botMaskH, W, botMaskH);
 
@@ -182,6 +186,8 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   const euBitis = trToEU(trBitis, egitim.tarih);
 
   let saatY = baslikY + 30;
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = 8;
   ctx.fillStyle = '#F5D77A';
   ctx.font = 'bold 36px Arial';
   ctx.fillText(`${egitim.tarih || ''} ${egitim.gun || ''}`.trim(), W / 2, saatY);
@@ -192,41 +198,45 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
     ctx.font = 'bold 32px Arial';
     ctx.fillText(`TR ${trSaat}${trBitis ? ' - ' + trBitis : ''}`, W / 2, saatY);
     saatY += 38;
-    ctx.fillStyle = 'rgba(255,255,255,0.85)';
-    ctx.font = '28px Arial';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = 'bold 28px Arial';
     ctx.fillText(`EU ${euSaat}${euBitis ? ' - ' + euBitis : ''}`, W / 2, saatY);
     saatY += 30;
   }
+  ctx.shadowBlur = 0;
 
   // ─── KONUŞMACI KARTLARI ───
   const fotoluListe = egitmenler.filter(e => true); // hepsi (foto olmasa da)
-  const cardsStartY = saatY + 50;
-  const cardsAreaH = H - cardsStartY - 200;
+  const cardsStartY = saatY + 40;
+  // Alt footer (adres + logolar + QR) için yeterli pay → kartlar çakışmasın
+  const cardsAreaH = H - cardsStartY - 270;
 
   if (fotoluListe.length > 0) {
-    const cols = Math.min(fotoluListe.length, 4);
-    const rows = Math.ceil(fotoluListe.length / 4);
+    const dagilim = fotoYerlesim(fotoluListe.length); // dengeli satırlar: [3,3], [3,2]...
+    const rows = dagilim.length;
+    const maxCols = Math.max(...dagilim);
     const gap = 25;
-    // Metin alanı: 3 satır isim + 2 satır unvan + boşluklar ≈ 130-150px
-    const textAreaH = 150;
-    const rowGap = 30;
+    const textAreaH = rows > 1 ? 84 : 120; // çok sıralıda metin alanı dar
+    const rowGap = 14;
     const availableHPerRow = (cardsAreaH - rowGap * (rows - 1)) / rows;
     const maxFotoFromH = availableHPerRow - textAreaH;
-    const maxCardW = (W - 80 - gap * (cols - 1)) / cols;
-    // Foto çapı: width-limit VEYA height-limit'den küçük olanı
-    const fotoSize = Math.max(140, Math.min(maxCardW * 0.95, maxFotoFromH, 280));
-    const cardW = Math.max(fotoSize, maxCardW); // text alan'ı için kart en az foto kadar genis
+    const maxCardW = (W - 80 - gap * (maxCols - 1)) / maxCols;
+    // Foto: mümkün olduğunca büyük; alana sığması esas (taban 120 ile aşırı küçülmesin)
+    const fotoSize = Math.max(120, Math.min(maxCardW * 0.95, maxFotoFromH, 300));
+    const cardW = Math.max(fotoSize, maxCardW);
     const cardH = fotoSize + textAreaH;
-    const totalW = cardW * cols + gap * (cols - 1);
-    const startX = (W - totalW) / 2;
     const rowH = cardH + rowGap;
 
-    for (let i = 0; i < fotoluListe.length; i++) {
-      const e = fotoluListe[i];
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = startX + col * (cardW + gap);
-      const y = cardsStartY + row * rowH;
+    let i = -1;
+    for (let r = 0; r < rows; r++) {
+      const satirAdet = dagilim[r];
+      const rowTotalW = cardW * satirAdet + gap * (satirAdet - 1);
+      const startX = (W - rowTotalW) / 2; // her satır kendi içinde ortalı
+      const y = cardsStartY + r * rowH;
+      for (let c = 0; c < satirAdet; c++) {
+        i++;
+        const e = fotoluListe[i];
+        const x = startX + c * (cardW + gap);
 
       // Yuvarlak foto
       const fotoX = x + (cardW - fotoSize) / 2;
@@ -330,7 +340,8 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
         drawWrappedText(ctx, e.unvan, x + cardW / 2, unvanY, cardW * 0.95, unvanLineHeight, 2);
         ctx.shadowBlur = 0;
       }
-    }
+      } // for c (satır içi)
+    } // for r (satırlar)
   }
 
   // ─── ALT: Yer/Zoom + Site URL ───
@@ -339,8 +350,9 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   ctx.font = 'bold 28px Arial';
   ctx.shadowColor = 'rgba(0,0,0,0.5)';
   ctx.shadowBlur = 6;
-  if (egitim.yer) {
-    ctx.fillText(egitim.yer.length > 50 ? egitim.yer.slice(0, 50) + '...' : egitim.yer, W / 2, H - 165);
+  const adresMetni = afisAdresKisa(egitim);
+  if (adresMetni) {
+    drawWrappedText(ctx, adresMetni, W / 2, H - 175, W * 0.82, 32, 2);
   }
   ctx.shadowBlur = 0;
 
@@ -385,6 +397,29 @@ export const gorselOlusturCanvas = async ({ egitim, egitmenler = [], sablonFile,
   ctx.fillStyle = 'rgba(255,255,255,0.7)';
   ctx.font = '20px Arial';
   ctx.fillText('egitimtakvimi.oneteamglobal.ai', W / 2, H - 40);
+
+  // QR kod (fiziki etkinlik) — sağ alt köşe, /e/:id detay sayfası
+  if (isFiziki(egitim)) {
+    const qrDataUrl = await qrOlustur(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${egitim.id || ''}`);
+    if (qrDataUrl) {
+      try {
+        const qrImg = await urlToImage(qrDataUrl);
+        const qrSize = Math.floor(W * 0.12);
+        const pad = Math.floor(W * 0.03);
+        const qrX = W - qrSize - pad, qrY = H - qrSize - pad;
+        const b = Math.floor(qrSize * 0.06);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(qrX - b, qrY - b, qrSize + 2 * b, qrSize + 2 * b);
+        ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${Math.floor(qrSize * 0.12)}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 4;
+        ctx.fillText('Yol tarifi için okut', qrX + qrSize / 2, qrY - b - 6);
+        ctx.shadowBlur = 0;
+      } catch (e) { console.warn('[gorselCanvas] QR eklenemedi:', e.message); }
+    }
+  }
 
   // PNG base64 olarak döndür (Gemini sonucu ile uyumlu format)
   const dataUrl = canvas.toDataURL('image/png');

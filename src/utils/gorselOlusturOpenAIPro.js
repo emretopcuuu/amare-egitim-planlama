@@ -1,11 +1,14 @@
-// OpenAI Pro: gpt-image-2 ile TAM AI poster üretimi
+// OpenAI Pro: gpt-image-1 ile TAM AI poster üretimi
 // - Şablon + speaker fotoları pre-composite edilir referans olarak
-// - gpt-image-2 /v1/images/edits ile başlık/tarih/yer dahil her şeyi AI çizer
-// - gpt-image-2 multilingual text rendering Türkçe karakterleri doğru basar
+// - gpt-image-1 /v1/images/edits ile başlık/tarih/yer dahil her şeyi AI çizer
+// - gpt-image-1 multilingual text rendering Türkçe karakterleri doğru basar
 // - Post-process: OneTeam + Amare logoları alta bindir
 // Hibrit-style'a göre: daha şık görünüm, AI yaratıcılığı; risk: rare text hataları
 
 import { logolariEkle } from './gorselLogoEkle';
+import { afisAdresKisa, isFiziki } from './egitmenEtiket';
+import { qrOlustur } from './qrOlustur';
+import { fotoYerlesim } from './fotoYerlesim';
 
 const urlToImage = (src) => new Promise((resolve, reject) => {
   const img = new Image();
@@ -56,20 +59,23 @@ const composite = async (egitmenler, sablonImg) => {
   const fotoluListe = (egitmenler || []).filter(e => e.fotoURL);
   if (fotoluListe.length === 0) return canvas;
 
-  const cols = Math.min(fotoluListe.length, 4);
-  const cardW = W * 0.85 / cols;
+  const dagilim = fotoYerlesim(fotoluListe.length); // dengeli satırlar
+  const maxCols = Math.max(...dagilim);
+  const cardW = W * 0.85 / maxCols;
   const cardH = cardW * 1.4;
   const gap = 20;
-  const totalW = cardW * cols + gap * (cols - 1);
-  const startX = (W - totalW) / 2;
   const startY = H * 0.5;
 
-  for (let i = 0; i < fotoluListe.length; i++) {
+  let i = -1;
+  for (let r = 0; r < dagilim.length; r++) {
+    const satirAdet = dagilim[r];
+    const rowTotalW = cardW * satirAdet + gap * (satirAdet - 1);
+    const startX = (W - rowTotalW) / 2; // satır ortalı
+    const y = startY + r * (cardH + 30);
+    for (let c = 0; c < satirAdet; c++) {
+    i++;
     const e = fotoluListe[i];
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const x = startX + col * (cardW + gap);
-    const y = startY + row * (cardH + 30);
+    const x = startX + c * (cardW + gap);
     try {
       const img = await urlToImage(e.fotoURL);
       const fotoCap = cardW * 0.85;
@@ -102,6 +108,7 @@ const composite = async (egitmenler, sablonImg) => {
       ctx.font = `${Math.floor(cardW * 0.07)}px Arial`;
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
       ctx.fillText(e.unvan, x + cardW / 2, textY + Math.floor(cardW * 0.1));
+    }
     }
   }
   return canvas;
@@ -168,7 +175,8 @@ Tarih: ${egitim.tarih || ''} ${egitim.gun || ''}
 ${trSaat ? `Saat (iki ayrı satır olarak yaz):
   TR ${trSaat}${trBitis ? ' - ' + trBitis : ''}
   EU ${euSaat}${euBitis ? ' - ' + euBitis : ''}` : 'Saat: belirlenmedi (yazma)'}
-Yer: ${egitim.yer || 'ZOOM'}
+Yer: ${afisAdresKisa(egitim) || egitim.yer || 'ZOOM'}
+${isFiziki(egitim) ? 'NOT: Sağ alt köşede QR kod için ~%12 kare boşluk bırak; oraya yazı/logo koyma.' : ''}
 
 KONUŞMACILAR (etiket sırası, AYNEN bunlar):
 ${konusmaciList}
@@ -210,7 +218,7 @@ Hata varsa düzelt, sonra finalize et.`;
   const sizeMap = { story: '1024x1536', landscape: '1536x1024', square: '1024x1024' };
 
   const formData = new FormData();
-  formData.append('model', 'gpt-image-2');
+  formData.append('model', 'gpt-image-1');
   formData.append('image', compositeBlob, 'composite.png');
   formData.append('prompt', prompt);
   formData.append('size', sizeMap[format] || '1024x1024');
@@ -228,7 +236,7 @@ Hata varsa düzelt, sonra finalize et.`;
     const ctrl = new AbortController();
     const tid = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
     try {
-      // Direkt OpenAI çağrısı — gpt-image-2 60-90s sürer, Netlify Function
+      // Direkt OpenAI çağrısı — gpt-image-1 60-90s sürer, Netlify Function
       // 26s sınırı bunu karşılayamıyor (504 dönüyordu). Direct call'da
       // network problemi olursa retry zaten devreye giriyor.
       const res = await fetch('https://api.openai.com/v1/images/edits', {
@@ -253,8 +261,11 @@ Hata varsa düzelt, sonra finalize et.`;
       const data = await res.json();
       const b64 = data?.data?.[0]?.b64_json;
       if (!b64) throw new Error('OpenAI görsel döndürmedi.');
-      // Post-process: AI çıktısının alt orta kısmına OneTeam + Amare logoları
-      return await logolariEkle({ base64: b64, mimeType: 'image/png' });
+      // Post-process: OneTeam + Amare logoları (+ fiziki ise QR)
+      const qrDataUrl = isFiziki(egitim)
+        ? await qrOlustur(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${egitim.id || ''}`)
+        : null;
+      return await logolariEkle({ base64: b64, mimeType: 'image/png' }, { qrDataUrl });
     } catch (e) {
       clearTimeout(tid);
       // AbortError veya network hatası → retry

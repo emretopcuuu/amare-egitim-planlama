@@ -4,7 +4,7 @@
 
 import {
   GraduationCap, Settings2, Package, Smartphone,
-  HeartHandshake, Award, Globe2, UsersRound, LineChart, Scale, Tent,
+  HeartHandshake, Award, Globe2, UsersRound, LineChart, Scale, Tent, Palette,
 } from 'lucide-react';
 
 export const KOMISYONLAR = [
@@ -118,6 +118,16 @@ export const KOMISYONLAR = [
     aktif: false,
     tagline: 'Yoğun eğitim kampları ve bağ kuran ekosistem etkinlikleri düzenler',
     renk: 'orange',
+  },
+  {
+    id: 'kultur',
+    ad: 'OneTeam Kültür Komisyonu',
+    kisaAd: 'Kültür',
+    aciklama: 'Kültür, sanat ve değerler',
+    icon: Palette,
+    aktif: false,
+    tagline: 'Kültürel etkinlikler düzenler, OneTeam değerlerini ve sanatı yaşatır',
+    renk: 'rose',
   },
 ];
 
