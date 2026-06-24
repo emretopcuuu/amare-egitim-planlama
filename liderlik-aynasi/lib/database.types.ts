@@ -1759,6 +1759,7 @@ export type Database = {
       }
       voice_profiles: {
         Row: {
+          audio_path: string | null
           beklenti: string | null
           consent: boolean
           created_at: string
@@ -1775,10 +1776,12 @@ export type Database = {
           video_notified_at: string | null
           video_path: string | null
           video_request_id: string | null
+          video_script: string | null
           video_status: string
           voice_id: string | null
         }
         Insert: {
+          audio_path?: string | null
           beklenti?: string | null
           consent?: boolean
           created_at?: string
@@ -1795,10 +1798,12 @@ export type Database = {
           video_notified_at?: string | null
           video_path?: string | null
           video_request_id?: string | null
+          video_script?: string | null
           video_status?: string
           voice_id?: string | null
         }
         Update: {
+          audio_path?: string | null
           beklenti?: string | null
           consent?: boolean
           created_at?: string
@@ -1815,6 +1820,7 @@ export type Database = {
           video_notified_at?: string | null
           video_path?: string | null
           video_request_id?: string | null
+          video_script?: string | null
           video_status?: string
           voice_id?: string | null
         }
