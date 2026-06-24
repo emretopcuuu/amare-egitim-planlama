@@ -69,32 +69,51 @@ const paletSec = (egitim) => {
   return { navy: '#142a44', teal: '#2a6f97', tealKoyu: '#1d4e6e', krem: '#f3f1ea', vurgu: '#c9a24a', bgTema: 'modern profesyonel iş etkinliği — lacivert + cam göbeği, ince geometrik formlar' };
 };
 
-// OpenAI gpt-image ile BOŞ temalı arka plan üret (yazı/yüz/logo YOK)
-const arkaPlanUret = async (apiKey, egitim, palet, openaiSize) => {
+// Temalı dekoratif arka plan prompt'u (her iki motor için ortak; yazı/yüz/logo YOK)
+const arkaPlanPrompt = (egitim, palet) => {
   const sehir = (egitim?.sehir && egitim.sehir !== 'Online') ? egitim.sehir : '';
-  const prompt = `Profesyonel bir etkinlik posteri için SADECE DEKORATİF ARKA PLAN üret. ` +
+  return `Profesyonel bir etkinlik posteri için SADECE DEKORATİF ARKA PLAN üret. ` +
     `Tema: ${palet.bgTema}. ` +
-    (sehir ? `Sağ tarafa, ${sehir} şehrinin meşhur silüetini/landmark'ını ince, zarif tek-renk LINE-ART (çizgi illüstrasyon) olarak yerleştir (örn. İzmir → Saat Kulesi; İstanbul → tarihi silüet). ` : '') +
-    `Üst bölge AÇIK/aydınlık olsun (büyük başlık oraya gelecek), alt-orta bölge sade kalsın (içerik oraya gelecek). ` +
+    (sehir ? `Sağ tarafa, ${sehir} şehrinin meşhur landmark'ını ince, zarif tek-renk LINE-ART (çizgi illüstrasyon) olarak yerleştir (örn. İzmir → Saat Kulesi; İstanbul → tarihi silüet). ` : '') +
+    `Üst bölge AÇIK/aydınlık olsun (büyük başlık oraya gelecek), alt-orta bölge sade kalsın. ` +
     `Renkler: krem/açık zemin + ${palet.teal} teal vurgular + ${palet.navy} koyu detaylar. ` +
     `Düz/vektör illüstrasyon stili, premium, ferah, bol beyaz alan. ` +
-    `KESİNLİKLE YOK: hiç yazı, harf, sayı, kelime; hiç insan yüzü/figürü; hiç logo/amblem/marka; hiç çerçeve doldurma. Sadece zemin.`;
-  const res = await fetch('https://api.openai.com/v1/images/generations', {
-    method: 'POST',
-    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'gpt-image-1', prompt, size: openaiSize, quality: 'medium', n: 1 }),
-  });
-  if (!res.ok) {
-    const e = await res.json().catch(() => ({}));
-    throw new Error(e?.error?.message || `OpenAI arka plan hatası: ${res.status}`);
-  }
-  const data = await res.json();
-  const b64 = data?.data?.[0]?.b64_json;
-  if (!b64) throw new Error('OpenAI arka plan döndürmedi.');
-  return await urlToImage('data:image/png;base64,' + b64);
+    `KESİNLİKLE YOK: hiç yazı, harf, sayı, kelime; hiç insan yüzü/figürü; hiç logo/amblem/marka. Sadece zemin.`;
 };
 
-export const gorselOlusturAiAfis = async ({ apiKey, egitim, egitmenler = [], ekPrompt = '', format = 'portrait' }) => {
+// Gemini (nano-banana) ile — tarayıcıdan SORUNSUZ çalışır (googleapis CORS'a izin verir)
+const arkaPlanGemini = async (geminiKey, egitim, palet) => {
+  const body = {
+    contents: [{ role: 'user', parts: [{ text: arkaPlanPrompt(egitim, palet) }] }],
+    generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
+  };
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), 90000);
+  let res;
+  try {
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/nano-banana-pro-preview:generateContent?key=${geminiKey}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctrl.signal });
+  } finally { clearTimeout(t); }
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error?.message || `Gemini ${res.status}`); }
+  const data = await res.json();
+  const part = (data?.candidates?.[0]?.content?.parts || []).find(p => p.inlineData?.mimeType?.startsWith('image/'));
+  if (!part) throw new Error('Gemini görsel döndürmedi.');
+  return await urlToImage(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`);
+};
+
+// OpenAI (sunucu proxy üzerinden — tarayıcı api.openai.com'a CORS ile erişemez)
+const arkaPlanOpenAI = async (openaiKey, egitim, palet, openaiSize) => {
+  const res = await fetch('/.netlify/functions/openai-gorsel', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ apiKey: openaiKey, prompt: arkaPlanPrompt(egitim, palet), size: openaiSize, quality: 'low' }),
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error || `OpenAI proxy ${res.status}`); }
+  const data = await res.json();
+  if (!data?.b64) throw new Error('OpenAI arka plan döndürmedi.');
+  return await urlToImage('data:image/png;base64,' + data.b64);
+};
+
+export const gorselOlusturAiAfis = async ({ geminiApiKey, openaiApiKey, egitim, egitmenler = [], ekPrompt = '', format = 'portrait' }) => {
   const palet = paletSec(egitim);
 
   // Boyut — etkinlik posteri için dikey varsayılan
@@ -103,12 +122,18 @@ export const gorselOlusturAiAfis = async ({ apiKey, egitim, egitmenler = [], ekP
       : { W: 1080, H: 1350, os: '1024x1536' }; // portrait/story
   const { W, H } = dims;
 
-  // AI arka plan (OpenAI). Anahtar yoksa/başarısızsa temalı gradient zemine düş.
+  // Zemin motoru: Gemini ÖNCELİK (tarayıcıdan çalışır), olmazsa OpenAI sunucu proxy.
   let arkaPlanImg = null;
-  // AI Afiş'in özü OpenAI illüstrasyonu — anahtar yoksa NET hata (sessiz gradient YOK)
-  if (!apiKey) throw new Error('AI Afiş OpenAI anahtarı gerektirir. Modalda OpenAI API anahtarını gir (Gemini değil).');
-  try { arkaPlanImg = await arkaPlanUret(apiKey, egitim, palet, dims.os); }
-  catch (e) { throw new Error('OpenAI arka plan üretemedi: ' + e.message); }
+  const hatalar = [];
+  if (geminiApiKey) {
+    try { arkaPlanImg = await arkaPlanGemini(geminiApiKey, egitim, palet); }
+    catch (e) { hatalar.push('Gemini: ' + e.message); }
+  }
+  if (!arkaPlanImg && openaiApiKey) {
+    try { arkaPlanImg = await arkaPlanOpenAI(openaiApiKey, egitim, palet, dims.os); }
+    catch (e) { hatalar.push('OpenAI: ' + e.message); }
+  }
+  if (!arkaPlanImg) throw new Error('AI Afiş arka planı üretilemedi. ' + (hatalar.join(' | ') || 'Gemini ya da OpenAI anahtarı gerekli.'));
 
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;

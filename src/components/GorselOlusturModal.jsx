@@ -123,7 +123,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     }
     if (model === 'ai-afis') {
       return await gorselOlusturAiAfis({
-        apiKey: openaiApiKey,
+        geminiApiKey: apiKey, openaiApiKey,
         egitim, egitmenler: egitmenler || [],
         ekPrompt, format: 'portrait',
       });
