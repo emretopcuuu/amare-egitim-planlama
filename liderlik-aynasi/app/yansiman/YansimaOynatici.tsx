@@ -51,7 +51,7 @@ export default function YansimaOynatici({
         loop={!!audioUrl}
         muted={!!audioUrl}
         onEnded={audioUrl ? undefined : () => setBasladi(false)}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-contain"
       />
       {audioUrl && (
         <audio ref={audioRef} src={audioUrl} preload="auto" />
