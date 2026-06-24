@@ -208,8 +208,9 @@ export async function yansimaVideoBagla(
     .update({
       video_status: "hazir",
       video_path: videoPath,
-      // Yeniden bağlanınca bildirim yeniden gönderilebilsin
-      video_notified_at: null,
+      // Otomatik "Suya bak" push'u bastır: video QR/ana sayfada zaten görünür,
+      // sürpriz bildirim gönderilmez (kullanıcı kararı: otomatik davranış yok).
+      video_notified_at: new Date().toISOString(),
     })
     .eq("participant_id", participantId);
   if (gncHata) {

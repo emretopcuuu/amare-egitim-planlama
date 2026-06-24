@@ -42,7 +42,6 @@ import {
   cumartesiGrupBitenEtkinlik,
 } from "@/lib/cumartesiProgrami";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
-import { karakterUretimBaslat } from "@/lib/karakter";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
 
 type Db = ReturnType<typeof supabaseAdmin>;
@@ -284,19 +283,11 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     }
   }
 
-  // 3b) YANSIMA VİDEOLARI: Higgsfield hattı — başlat (≤2), süreni kontrol et
-  // (≤3), hazır olanı fısılda (≤5). Başlatma karakterUretimBaslat'a devredildi:
-  // Canlı Ayna çoklu referansı (yenisi asıl) varsa onu, yoksa tek-foto (eski yedek).
+  // 3b) YANSIMA VİDEOLARI: ÖNDEN ÜRETİM modeli — videolar kamp öncesi harici
+  // olarak (MCP) üretilip /admin/yansima'dan yüklenir. Cron ASLA otomatik
+  // üretim başlatmaz (kullanıcı kararı). Burada yalnız: admin'in elle
+  // tetiklediği (uretiliyor) bir iş varsa indir, ve hazır olanı fısılda.
   if (higgsYapilandirildiMi()) {
-    const { data: bekleyenler } = await db
-      .from("voice_profiles")
-      .select("participant_id")
-      .eq("video_status", "bekliyor")
-      .limit(2);
-    for (const b of bekleyenler ?? []) {
-      await karakterUretimBaslat(db, b.participant_id);
-    }
-
     const { data: surenler } = await db
       .from("voice_profiles")
       .select("participant_id, video_request_id")

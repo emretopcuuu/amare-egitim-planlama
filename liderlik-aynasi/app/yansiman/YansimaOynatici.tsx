@@ -46,7 +46,9 @@ export default function YansimaOynatici({
         ref={videoRef}
         src={videoUrl}
         playsInline
-        loop
+        // Ayrı ses varsa video sessiz döngüde döner; sesi gömülü tek dosyada
+        // (önden üretim) bir kez oynar — anlatım tekrar etmesin.
+        loop={!!audioUrl}
         muted={!!audioUrl}
         onEnded={audioUrl ? undefined : () => setBasladi(false)}
         className="h-full w-full object-cover"
