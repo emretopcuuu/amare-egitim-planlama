@@ -15,15 +15,23 @@ export default async function YansimanPage() {
   const db = supabaseAdmin();
   const { data: profil } = await db
     .from("voice_profiles")
-    .select("video_path")
+    .select("video_path, audio_path")
     .eq("participant_id", session.sub)
     .maybeSingle();
   if (!profil?.video_path) redirect("/");
 
-  const { data: imzali } = await db.storage
-    .from("sesler")
-    .createSignedUrl(profil.video_path, 3600);
-  if (!imzali) redirect("/");
+  const [videoImza, audioImza] = await Promise.all([
+    db.storage.from("sesler").createSignedUrl(profil.video_path, 3600),
+    profil.audio_path
+      ? db.storage.from("sesler").createSignedUrl(profil.audio_path, 3600)
+      : Promise.resolve({ data: null }),
+  ]);
+  if (!videoImza.data) redirect("/");
 
-  return <YansimaOynatici url={imzali.signedUrl} />;
+  return (
+    <YansimaOynatici
+      videoUrl={videoImza.data.signedUrl}
+      audioUrl={audioImza.data?.signedUrl}
+    />
+  );
 }

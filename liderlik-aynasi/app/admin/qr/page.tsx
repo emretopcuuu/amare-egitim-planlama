@@ -31,11 +31,16 @@ export default async function QrPage() {
   const kartlar = await Promise.all(
     kisiler.map(async (k) => ({
       ...k,
-      svg: await QRCode.toString(`${origin}/giris?kod=${k.login_code}`, {
-        type: "svg",
-        margin: 1,
-        errorCorrectionLevel: "M",
-      }),
+      // QR → giriş → kişisel yansıma videosu (varsa oynar, yoksa /yansiman
+      // sessizce ana sayfaya yönlendirir): "video varsa göster, yoksa geç".
+      svg: await QRCode.toString(
+        `${origin}/giris?kod=${k.login_code}&next=${encodeURIComponent("/yansiman")}`,
+        {
+          type: "svg",
+          margin: 1,
+          errorCorrectionLevel: "M",
+        }
+      ),
     }))
   );
 

@@ -35,19 +35,39 @@ export async function sesKlonla(ad: string, ses: Blob, dosyaAdi: string): Promis
 /** Metni verilen sesle mp3'e çevirir (Türkçe destekli turbo model). */
 export async function seslendir(voiceId: string, metin: string): Promise<ArrayBuffer> {
   const res = await fetch(
-    `${TABAN}/text-to-speech/${voiceId}?output_format=mp3_44100_64`,
+    `${TABAN}/text-to-speech/${voiceId}?output_format=mp3_44100_128`,
     {
       method: "POST",
       headers: { "xi-api-key": anahtar(), "content-type": "application/json" },
       body: JSON.stringify({
         text: metin,
         model_id: "eleven_turbo_v2_5",
-        voice_settings: { stability: 0.5, similarity_boost: 0.8 },
+        // Onaylı v6 ayarları: doğal konuşma temposu, klon benzerliği yüksek
+        voice_settings: {
+          stability: 0.54,
+          similarity_boost: 0.85,
+          style: 0.30,
+          use_speaker_boost: true,
+          speed: 0.90,
+        },
       }),
     }
   );
   if (!res.ok) throw new Error(`ElevenLabs seslendirme ${res.status}`);
   return res.arrayBuffer();
+}
+
+/** Kişisel yansıma videosu için seslendirme metni.
+ * Ad parametresi ile kişiselleştirilir. */
+export function yansimaMetni(ad: string): string {
+  return (
+    `${ad}, bugün aynanın karşısındasın. ` +
+    `Karşındaki kişi sensin. Ama henüz tam tanışmadığın bir sen. ` +
+    `Bu kamp boyunca başkaları seni gözlemledi. Şimdi sen de kendini görüyorsun. ` +
+    `Liderlik, seyirciye değil, aynaya bakmakla başlar. ` +
+    `O bakış, zaten sende var. ` +
+    `Şimdi onu hisset.`
+  );
 }
 
 /** Klonu siler (kamp sonu temizliği / slot geri kazanımı). Hata yutar. */

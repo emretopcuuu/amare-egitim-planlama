@@ -1,11 +1,23 @@
 import "server-only";
 
-// Higgsfield platform API: kişisel yansıma videoları.
-// Sözleşme (docs.higgsfield.ai): POST https://platform.higgsfield.ai/{model}
-// → { request_id, status_url } ; GET /requests/{id}/status → { status, video: { url } }.
+// Higgsfield Platform API: kişisel yansıma videoları (Wan 2.7 — ucuz seçenek).
+// Platform API: https://platform.higgsfield.ai
 // Kimlik: HIGGSFIELD_CREDENTIALS="KEY_ID:KEY_SECRET"
+// Dashboard: higgsfield.ai → Settings → API Keys
 
 const TABAN = "https://platform.higgsfield.ai";
+
+// Onaylı Wan 2.7 prompt — doğal hareket, aynaya bakış, ağız kapalı, loop.
+const YANSIMA_PROMPT =
+  "Photorealistic, fixed camera, no zoom. One man, his own reflection in a mirror " +
+  "with a sharp ornate frame, seated at a desk with golden trophies and awards behind him. " +
+  "He looks STRAIGHT AHEAD directly into the camera, deep into his own eyes, holding steady " +
+  "confident warm eye contact the whole time, gaze locked forward toward the viewer. " +
+  "Natural lifelike movement: calm breathing with shoulders rising and falling, a slight head " +
+  "tilt and turn, a subtle confident shift of posture, a small natural hand movement on the " +
+  "desk, natural blinking — alive and human, never stiff. Mouth stays closed, NOT speaking. " +
+  "Begins and ends on the same pose for a seamless loop. Warm daylight, ivory and gold, " +
+  "no darkness. Identity preserved, photorealistic, no distortion. Eyes to camera.";
 
 export function higgsYapilandirildiMi(): boolean {
   return !!process.env.HIGGSFIELD_CREDENTIALS;
@@ -17,17 +29,10 @@ function kimlik(): string {
   return k;
 }
 
-const YANSIMA_PROMPT =
-  "Living mirror reflection on dark night lake water: gentle silver ripples shimmer " +
-  "across the portrait, slightly distorting it like a reflection on water; faint " +
-  "moonlight glints drift over the surface; the person blinks once and gives a very " +
-  "subtle calm smile; then the water settles and the reflection becomes perfectly " +
-  "clear. Serene, mysterious, elite. No camera movement. No text.";
-
-/** Fotoğraftan 5 sn'lik "canlı yansıma" videosu üretimini başlatır; request_id döner. */
+/** Wan 2.7 ile 5 sn'lik kişisel yansıma videosu üretimini başlatır; request_id döner. */
 export async function yansimaVideosuBaslat(fotoUrl: string): Promise<string | null> {
   try {
-    const res = await fetch(`${TABAN}/kling-video/v2.1/pro/image-to-video`, {
+    const res = await fetch(`${TABAN}/wan2_7/image-to-video`, {
       method: "POST",
       headers: {
         Authorization: `Key ${kimlik()}`,
@@ -37,6 +42,8 @@ export async function yansimaVideosuBaslat(fotoUrl: string): Promise<string | nu
         image_url: fotoUrl,
         prompt: YANSIMA_PROMPT,
         duration: 5,
+        resolution: "720p",
+        aspect_ratio: "9:16",
       }),
     });
     if (!res.ok) return null;
@@ -47,11 +54,8 @@ export async function yansimaVideosuBaslat(fotoUrl: string): Promise<string | nu
   }
 }
 
-// Çoklu referans (Canlı Ayna: düz/sağ/sol + selfie) → kimliği çok daha tutarlı
-// kuran "karakter" videosu. Platform çoklu-görsel modelleri images_list dizisi
-// alır (Seedance / Vidu Q1 Reference / Wan2.1 vb.). Model slug'ı canlı kredi
-// testinde doğrulanıp HIGGSFIELD_KARAKTER_MODEL env'ine yazılır; env yoksa
-// fonksiyon null döner ve çağıran taraf tek-görselli hatta zarifçe düşer.
+// Çoklu referans (karakter modeli): kimliği daha tutarlı kurar.
+// Model slug'ı HIGGSFIELD_KARAKTER_MODEL env'inde; tanımlı değilse null döner.
 export async function karakterVideosuBaslat(
   fotoUrllari: string[]
 ): Promise<string | null> {
@@ -68,6 +72,7 @@ export async function karakterVideosuBaslat(
         images_list: fotoUrllari,
         prompt: YANSIMA_PROMPT,
         duration: 5,
+        resolution: "720p",
       }),
     });
     if (!res.ok) return null;

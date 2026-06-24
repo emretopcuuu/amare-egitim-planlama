@@ -26,6 +26,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
       { href: "/admin/katilimcilar", etiket: n.katilimcilar },
       { href: "/admin/eslestirme", etiket: n.eslestirme },
       { href: "/admin/qr", etiket: n.qr },
+      { href: "/admin/yansima", etiket: n.yansima },
       { href: "/admin/kiosk", etiket: n.kiosk },
       { href: "/admin/program", etiket: n.program },
       { href: "/admin/icerik", etiket: n.icerik },
