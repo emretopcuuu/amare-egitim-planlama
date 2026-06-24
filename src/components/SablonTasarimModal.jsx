@@ -278,7 +278,7 @@ async function aiGorselUret(apiKey, prompt) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-image-2',
+        model: 'gpt-image-1',
         prompt: fullPrompt,
         size: '1024x1024',
         quality: 'medium',

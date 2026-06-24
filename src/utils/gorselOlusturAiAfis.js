@@ -82,7 +82,7 @@ const arkaPlanUret = async (apiKey, egitim, palet, openaiSize) => {
   const res = await fetch('https://api.openai.com/v1/images/generations', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'gpt-image-2', prompt, size: openaiSize, quality: 'medium', n: 1 }),
+    body: JSON.stringify({ model: 'gpt-image-1', prompt, size: openaiSize, quality: 'medium', n: 1 }),
   });
   if (!res.ok) {
     const e = await res.json().catch(() => ({}));
@@ -105,31 +105,26 @@ export const gorselOlusturAiAfis = async ({ apiKey, egitim, egitmenler = [], ekP
 
   // AI arka plan (OpenAI). Anahtar yoksa/başarısızsa temalı gradient zemine düş.
   let arkaPlanImg = null;
-  if (apiKey) {
-    try { arkaPlanImg = await arkaPlanUret(apiKey, egitim, palet, dims.os); }
-    catch (e) { console.warn('[ai-afis] arka plan üretilemedi, gradient kullanılıyor:', e.message); }
-  }
+  // AI Afiş'in özü OpenAI illüstrasyonu — anahtar yoksa NET hata (sessiz gradient YOK)
+  if (!apiKey) throw new Error('AI Afiş OpenAI anahtarı gerektirir. Modalda OpenAI API anahtarını gir (Gemini değil).');
+  try { arkaPlanImg = await arkaPlanUret(apiKey, egitim, palet, dims.os); }
+  catch (e) { throw new Error('OpenAI arka plan üretemedi: ' + e.message); }
 
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext('2d');
 
-  if (arkaPlanImg) {
-    const ratio = Math.max(W / arkaPlanImg.width, H / arkaPlanImg.height);
-    ctx.drawImage(arkaPlanImg, (W - arkaPlanImg.width * ratio) / 2, (H - arkaPlanImg.height * ratio) / 2,
-      arkaPlanImg.width * ratio, arkaPlanImg.height * ratio);
-    const topWash = ctx.createLinearGradient(0, 0, 0, H * 0.5);
-    topWash.addColorStop(0, 'rgba(244,241,233,0.82)');
-    topWash.addColorStop(1, 'rgba(244,241,233,0)');
-    ctx.fillStyle = topWash; ctx.fillRect(0, 0, W, H * 0.5);
-  } else {
-    // Temalı gradient zemin (AI yoksa)
-    const g = ctx.createLinearGradient(0, 0, W, H);
-    g.addColorStop(0, palet.krem);
-    g.addColorStop(0.55, '#e8efe9');
-    g.addColorStop(1, '#dfe9e6');
-    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  }
+  // Gradient taban (AI görseli kenarları doldurmazsa boşluk kalmasın), sonra AI üstüne
+  const base = ctx.createLinearGradient(0, 0, W, H);
+  base.addColorStop(0, palet.krem); base.addColorStop(1, '#e3ece8');
+  ctx.fillStyle = base; ctx.fillRect(0, 0, W, H);
+  const ratio = Math.max(W / arkaPlanImg.width, H / arkaPlanImg.height);
+  ctx.drawImage(arkaPlanImg, (W - arkaPlanImg.width * ratio) / 2, (H - arkaPlanImg.height * ratio) / 2,
+    arkaPlanImg.width * ratio, arkaPlanImg.height * ratio);
+  const topWash = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+  topWash.addColorStop(0, 'rgba(244,241,233,0.82)');
+  topWash.addColorStop(1, 'rgba(244,241,233,0)');
+  ctx.fillStyle = topWash; ctx.fillRect(0, 0, W, H * 0.5);
 
   const M = Math.round(W * 0.06); // kenar boşluğu
   ctx.textAlign = 'left';
@@ -167,16 +162,25 @@ export const gorselOlusturAiAfis = async ({ apiKey, egitim, egitmenler = [], ekP
   }
   ctx.textBaseline = 'alphabetic';
 
-  // ── KONUŞMACILAR (kart) ──
+  // ── ZONE hesabı: alt logo bandını rezerve et, içerik asla taşmasın ──
+  const adres = afisAdresKisa(egitim);
+  const fiziki = isFiziki(egitim);
+  const bottomReserve = Math.round(H * 0.115); // alt logo bandı (logolariEkle buraya çizer)
+  const gap = Math.round(H * 0.02);
+  const contentTop = pillY + pillH + gap;
+  const contentBottom = H - bottomReserve;
+  const aH = adres ? Math.round(H * 0.10) : 0;        // adres kartı yüksekliği
+  const speakersBottom = adres ? contentBottom - aH - gap : contentBottom;
+
+  // ── KONUŞMACILAR (kart) — kalan dikey alana sığar ──
   const liste = (egitmenler || []).slice(0, 6);
-  let cardBottom = pillY + pillH;
   if (liste.length) {
     const dagilim = fotoYerlesim(liste.length);
-    const cardY = pillY + pillH + Math.round(H * 0.025);
     const cardX = M, cardW = W - M * 2;
+    const cardY = contentTop;
     const rows = dagilim.length;
-    const perRowH = Math.round(H * 0.20);
-    const cardH = perRowH * rows + Math.round(H * 0.02);
+    const cardH = Math.max(Math.round(H * 0.14), speakersBottom - cardY);
+    const perRowH = (cardH - Math.round(H * 0.02)) / rows;
     ctx.fillStyle = palet.navy;
     roundRect(ctx, cardX, cardY, cardW, cardH, Math.round(W * 0.03)); ctx.fill();
 
@@ -185,14 +189,13 @@ export const gorselOlusturAiAfis = async ({ apiKey, egitim, egitmenler = [], ekP
       const adet = dagilim[r];
       const cellW = cardW / adet;
       const rowY = cardY + Math.round(H * 0.012) + r * perRowH;
-      const foto = Math.min(Math.round(cellW * 0.5), Math.round(perRowH * 0.58));
+      const foto = Math.min(Math.round(cellW * 0.46), Math.round(perRowH * 0.52));
       for (let c = 0; c < adet; c++, idx++) {
         const e = liste[idx];
         const cx = cardX + cellW * c + cellW / 2;
-        const fy = rowY + foto / 2 + Math.round(H * 0.008);
-        // teal halka + foto
+        const fy = rowY + foto / 2 + Math.round(perRowH * 0.06);
         ctx.save();
-        ctx.beginPath(); ctx.arc(cx, fy, foto / 2 + 6, 0, Math.PI * 2);
+        ctx.beginPath(); ctx.arc(cx, fy, foto / 2 + 5, 0, Math.PI * 2);
         ctx.fillStyle = palet.teal; ctx.fill();
         ctx.beginPath(); ctx.arc(cx, fy, foto / 2, 0, Math.PI * 2); ctx.clip();
         if (e.fotoURL) {
@@ -203,29 +206,24 @@ export const gorselOlusturAiAfis = async ({ apiKey, egitim, egitmenler = [], ekP
           } catch { ctx.fillStyle = palet.krem; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         } else { ctx.fillStyle = palet.krem; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         ctx.restore();
-        // isim + etiket
         ctx.textAlign = 'center';
         ctx.fillStyle = palet.krem;
-        ctx.font = `700 ${Math.round(cellW * 0.085)}px Arial`;
-        const nameY = fy + foto / 2 + Math.round(perRowH * 0.16);
+        ctx.font = `700 ${Math.round(cellW * 0.082)}px Arial`;
+        const nameY = fy + foto / 2 + Math.round(perRowH * 0.18);
         ctx.fillText((e.ad || '').toLocaleUpperCase('tr-TR'), cx, nameY, cellW * 0.94);
         if (e.unvan) {
           ctx.fillStyle = palet.vurgu;
-          ctx.font = `600 ${Math.round(cellW * 0.062)}px Arial`;
-          ctx.fillText(e.unvan, cx, nameY + Math.round(perRowH * 0.11), cellW * 0.94);
+          ctx.font = `600 ${Math.round(cellW * 0.06)}px Arial`;
+          ctx.fillText(e.unvan, cx, nameY + Math.round(perRowH * 0.12), cellW * 0.94);
         }
         ctx.textAlign = 'left';
       }
     }
-    cardBottom = cardY + cardH;
   }
 
-  // ── ADRES kartı + QR (fiziki) ──
-  const adres = afisAdresKisa(egitim);
-  const fiziki = isFiziki(egitim);
+  // ── ADRES kartı + QR (fiziki) — alt logo bandının hemen üstünde ──
   if (adres) {
-    const aY = cardBottom + Math.round(H * 0.022);
-    const aH = Math.round(H * 0.11);
+    const aY = contentBottom - aH;
     ctx.fillStyle = palet.krem;
     roundRect(ctx, M, aY, W - M * 2, aH, Math.round(W * 0.025)); ctx.fill();
     // pin

@@ -1,7 +1,7 @@
-// OpenAI Pro: gpt-image-2 ile TAM AI poster üretimi
+// OpenAI Pro: gpt-image-1 ile TAM AI poster üretimi
 // - Şablon + speaker fotoları pre-composite edilir referans olarak
-// - gpt-image-2 /v1/images/edits ile başlık/tarih/yer dahil her şeyi AI çizer
-// - gpt-image-2 multilingual text rendering Türkçe karakterleri doğru basar
+// - gpt-image-1 /v1/images/edits ile başlık/tarih/yer dahil her şeyi AI çizer
+// - gpt-image-1 multilingual text rendering Türkçe karakterleri doğru basar
 // - Post-process: OneTeam + Amare logoları alta bindir
 // Hibrit-style'a göre: daha şık görünüm, AI yaratıcılığı; risk: rare text hataları
 
@@ -218,7 +218,7 @@ Hata varsa düzelt, sonra finalize et.`;
   const sizeMap = { story: '1024x1536', landscape: '1536x1024', square: '1024x1024' };
 
   const formData = new FormData();
-  formData.append('model', 'gpt-image-2');
+  formData.append('model', 'gpt-image-1');
   formData.append('image', compositeBlob, 'composite.png');
   formData.append('prompt', prompt);
   formData.append('size', sizeMap[format] || '1024x1024');
@@ -236,7 +236,7 @@ Hata varsa düzelt, sonra finalize et.`;
     const ctrl = new AbortController();
     const tid = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
     try {
-      // Direkt OpenAI çağrısı — gpt-image-2 60-90s sürer, Netlify Function
+      // Direkt OpenAI çağrısı — gpt-image-1 60-90s sürer, Netlify Function
       // 26s sınırı bunu karşılayamıyor (504 dönüyordu). Direct call'da
       // network problemi olursa retry zaten devreye giriyor.
       const res = await fetch('https://api.openai.com/v1/images/edits', {
