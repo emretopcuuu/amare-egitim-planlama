@@ -34,20 +34,7 @@ const resmiBase64Yap = async (kaynak) => {
   });
 };
 
-const urlToImage = (src) => new Promise((resolve, reject) => {
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => resolve(img);
-  img.onerror = () => reject(new Error('Resim yüklenemedi'));
-  if (src instanceof File) {
-    const reader = new FileReader();
-    reader.onload = () => { img.src = reader.result; };
-    reader.onerror = reject;
-    reader.readAsDataURL(src);
-  } else {
-    img.src = src;
-  }
-});
+import { imgYukle as urlToImage } from './imgYukle';
 
 const isEUSummer = (tarihStr) => {
   if (!tarihStr) return true;

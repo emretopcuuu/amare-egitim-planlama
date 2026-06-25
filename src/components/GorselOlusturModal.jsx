@@ -571,8 +571,19 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                         {baglaniyor ? <><Loader2 className="w-4 h-4 animate-spin" />Kaydediliyor...</> : baglandi ? <><CheckCircle2 className="w-4 h-4" />Bağlandı</> : <><Link2 className="w-4 h-4" />Eğitime Bağla</>}
                       </button>
                     )}
-                    <button onClick={() => { setResultBlobUrl(null); setError(null); setBaglandi(false); }} className="py-3 px-4 rounded-xl font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 transition">Yeniden</button>
                   </div>
+                  {/* İterasyon: varyasyon üret / baştan */}
+                  <div className="flex gap-2">
+                    <button onClick={handleOlustur} disabled={generating}
+                      className="flex-1 py-2.5 rounded-xl font-bold text-amare-purple bg-purple-50 hover:bg-purple-100 border border-amare-purple/30 transition flex items-center justify-center gap-2 disabled:opacity-50">
+                      <Sparkles className="w-4 h-4" />Varyasyon üret
+                    </button>
+                    <button onClick={() => { setResultBlobUrl(null); setError(null); setBaglandi(false); }}
+                      className="py-2.5 px-4 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition">Baştan</button>
+                  </div>
+                  <p className="text-[11px] text-gray-500 text-center">
+                    Beğenmedin mi? Yukarıdan <b>"Tasarıma ek istek"</b>e not yaz (örn. "başlığı büyüt", "arka planı koyulaştır") → <b>Varyasyon üret</b>.
+                  </p>
                 </div>
               )}
             </>

@@ -5,13 +5,7 @@
 // Kural: AI çıktısının ALTI'na, URL üstüne (varsa) yumuşak bir şekilde bindir.
 // URL/yer text'leri varsa onlarla çakışmayacak şekilde Y konumu belirlenir.
 
-const urlToImage = (src) => new Promise((resolve, reject) => {
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => resolve(img);
-  img.onerror = () => reject(new Error('Logo yüklenemedi: ' + src));
-  img.src = src;
-});
+import { imgYukle as urlToImage } from './imgYukle';
 
 /**
  * AI çıktısı base64 alır, alta logolar bindirir, yeni base64 döndürür.

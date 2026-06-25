@@ -9,18 +9,7 @@ import { afisAdresKisa, isFiziki } from './egitmenEtiket';
 import { qrOlustur } from './qrOlustur';
 import { fotoYerlesim } from './fotoYerlesim';
 
-const urlToImage = (src) => new Promise((resolve, reject) => {
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => resolve(img);
-  img.onerror = () => reject(new Error('Resim yüklenemedi'));
-  if (src instanceof File) {
-    const r = new FileReader();
-    r.onload = () => { img.src = r.result; };
-    r.onerror = reject;
-    r.readAsDataURL(src);
-  } else { img.src = src; }
-});
+import { imgYukle as urlToImage } from './imgYukle';
 
 // TR saat → EU saat (yaz EEST UTC+3 → orta avrupa CEST UTC+2 = -1 saat)
 const trToEU = (saat) => {
