@@ -37,6 +37,8 @@ import TerimlerSozluk from "./TerimlerSozluk";
 import SimdiSonra from "./SimdiSonra";
 import OneriButonu from "./OneriButonu";
 import BasitEylem from "./BasitEylem";
+import GecisHazirlik from "./GecisHazirlik";
+import CanliSayac from "./CanliSayac";
 import BasitIlkIpucu from "./BasitIlkIpucu";
 import Link from "next/link";
 
@@ -251,6 +253,49 @@ export default async function AdminPanel() {
           ? "/admin/kontrol/final"
           : "/admin/sistem";
 
+  // UX #4+#9 — Bu aşamaya hazırlık skoru + geçiş checklist'i.
+  const hazirTamamSayi = funnel.adimlar.find((a) => a.anahtar === "onfark")?.sayi ?? 0;
+  const ozTamamSayi = ilerleme?.ozTamamlar.size ?? 0;
+  const ozToplamSayi = ilerleme?.katilimcilar.length ?? katilimciSayisi ?? 0;
+  const kSayi = katilimciSayisi ?? 0;
+  const gecisKontroller =
+    aktifAsama <= 2
+      ? [
+          { ad: "Katılımcı listesi yüklendi", tamam: kSayi > 0 },
+          { ad: "Pusula penceresi açık", tamam: pusulaAcik },
+          { ad: "Ön Farkındalık açık", tamam: onFarkAcik },
+          { ad: "Hazırlığı bitiren ≥ %80", tamam: kSayi > 0 && hazirTamamSayi / kSayi >= 0.8 },
+        ]
+      : aktifAsama === 3
+        ? [
+            { ad: "Bir dalga açık", tamam: !!acikDalga },
+            {
+              ad: "Çoğunluk kendini puanladı (≥ %80)",
+              tamam: ozToplamSayi > 0 && ozTamamSayi / ozToplamSayi >= 0.8,
+            },
+          ]
+        : aktifAsama === 4
+          ? [
+              { ad: "Ayna mektupları hazır", tamam: kSayi > 0 && (mektupSayisi ?? 0) >= kSayi },
+              { ad: "Ayna Raporları açık", tamam: raporlarAcik },
+            ]
+          : [];
+  const gecisBaslik =
+    aktifAsama <= 2
+      ? "Kampa hazırlık"
+      : aktifAsama === 3
+        ? "Bugünün dalgası"
+        : aktifAsama === 4
+          ? "Kapanışa hazırlık"
+          : "";
+
+  // UX #5 — Canlı süre rozeti: açık dalga süresi ya da kampa kalan süre.
+  const sayac = acikDalga?.opened_at
+    ? { ts: acikDalga.opened_at, etiket: `${acikDalga.name} açılalı`, mod: "gecen" as const }
+    : bugun < ilkGun
+      ? { ts: `${ilkGun}T09:00:00+03:00`, etiket: "Kampa", mod: "kalan" as const }
+      : null;
+
   // #8 Proaktif uyarılar (yalnız tam yetkiliye gösterilir).
   const uyarilar = tamYetki
     ? adminUyarilari({
@@ -382,6 +427,18 @@ export default async function AdminPanel() {
           </p>
         )}
       </div>
+
+      {/* UX #5 canlı süre rozeti + UX #4/#9 aşama hazırlık skoru (iki görünümde de) */}
+      {(sayac || (tamYetki && gecisKontroller.length > 0)) && (
+        <div className="space-y-3">
+          {sayac && (
+            <CanliSayac ts={sayac.ts} etiket={sayac.etiket} mod={sayac.mod} />
+          )}
+          {tamYetki && gecisKontroller.length > 0 && (
+            <GecisHazirlik baslik={gecisBaslik} kontroller={gecisKontroller} />
+          )}
+        </div>
+      )}
 
       {/* Şimdi/Sonra şeridi + kurulum rehberi — Uzman (Basit'te tek hero adımı yeter) */}
       <div className="uzman-only space-y-6">
