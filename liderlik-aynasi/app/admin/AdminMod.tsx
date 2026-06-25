@@ -29,18 +29,18 @@ export default function AdminMod() {
   }, [mod]);
 
   return (
-    <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3 px-6 py-2">
-      <p className="text-xs text-slate-500">
+    <div className="mx-auto flex w-full max-w-4xl items-center justify-between gap-3 px-4 py-2 sm:px-6">
+      <p className="min-w-0 text-xs text-slate-400">
         {mod === "basit"
-          ? "Basit görünüm — yalnız temel adımlar"
-          : "Uzman görünüm — tüm araçlar açık"}
+          ? "🟢 Basit görünüm — yalnız temel adımlar görünür"
+          : "🛠 Uzman görünüm — tüm araçlar açık"}
       </p>
-      <div className="flex shrink-0 overflow-hidden rounded-full border border-royal-light/30 text-xs font-semibold">
+      <div className="flex shrink-0 overflow-hidden rounded-full border border-gold/40 text-xs font-bold">
         <button
           type="button"
           onClick={() => setMod("basit")}
           aria-pressed={mod === "basit"}
-          className={`px-3 py-1.5 transition-colors ${
+          className={`px-4 py-2 transition-colors ${
             mod === "basit" ? "bg-gold text-[#1a1206]" : "text-slate-300 hover:bg-white/5"
           }`}
         >
@@ -50,7 +50,7 @@ export default function AdminMod() {
           type="button"
           onClick={() => setMod("uzman")}
           aria-pressed={mod === "uzman"}
-          className={`px-3 py-1.5 transition-colors ${
+          className={`px-4 py-2 transition-colors ${
             mod === "uzman" ? "bg-gold text-[#1a1206]" : "text-slate-300 hover:bg-white/5"
           }`}
         >
