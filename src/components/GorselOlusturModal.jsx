@@ -1,11 +1,20 @@
-import React, { useState } from 'react';
-import { X, Upload, ImageIcon, Download, Loader2, AlertCircle, CheckCircle2, Link2, Sparkles, FileImage, Zap } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { X, Upload, ImageIcon, Download, Loader2, AlertCircle, CheckCircle2, Link2, Sparkles, FileImage, Zap, ChevronDown, Settings2, KeyRound } from 'lucide-react';
 import { gorselOlustur } from '../utils/gorselOlustur';
 import { gorselOlusturOpenAIPro } from '../utils/gorselOlusturOpenAIPro';
 import { gorselOlusturCanvas } from '../utils/gorselOlusturCanvas';
 import { gorselOlusturHibrit } from '../utils/gorselOlusturHibrit';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
 import { afisTuru, afisTuruLabel } from '../utils/egitmenEtiket';
+
+// Üretim motorları — meta (ad, ikon, açıklama, tahmini süre sn, hangi anahtar gerekir)
+const MOTORLAR = {
+  hibrit: { ad: 'Hibrit', emoji: '🎯', not: 'AI tasarım + gerçek yüzler', sure: 55, key: 'gemini' },
+  'ai-afis': { ad: 'AI Afiş', emoji: '🎨', not: 'Şablonsuz · şehir illüstrasyonu', sure: 30, key: 'gemini', sablonsuz: true },
+  gemini: { ad: 'Gemini', emoji: '🍌', not: 'Tam AI · yüz değişebilir', sure: 45, key: 'gemini' },
+  canvas: { ad: 'Canvas', emoji: '🖌️', not: 'Anlık · ücretsiz · her zaman çalışır', sure: 3, key: null },
+  'openai-pro': { ad: 'OpenAI Pro', emoji: '✨', not: 'gpt-image · sunucu', sure: 45, key: 'openai' },
+};
 
 const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, apiKey, openaiApiKey, onClose, sablonlar = [], onGorselBagla }) => {
   const [mod, setMod] = useState('ai'); // 'ai' | 'upload'
@@ -32,6 +41,19 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     return v === null ? true : v === 'on';
   });
   const [aktifModel, setAktifModel] = useState(null); // üretim sırasında hangisinin çalıştığını göster
+  const [gelismis, setGelismis] = useState(false); // motor seçimi gizli, "Gelişmiş" altında
+  const [elapsed, setElapsed] = useState(0); // üretim geçen süre (sn)
+  const iptalRef = useRef(false); // soft-cancel: sonucu yoksay
+
+  // Üretim süresi sayacı
+  useEffect(() => {
+    if (!generating) { setElapsed(0); return; }
+    const t0 = Date.now();
+    const id = setInterval(() => setElapsed(Math.floor((Date.now() - t0) / 1000)), 500);
+    return () => clearInterval(id);
+  }, [generating]);
+
+  const keyDurum = { gemini: !!apiKey, openai: !!openaiApiKey };
 
   // Ek prompt — modal açılırken konuşmacı isim+unvan listesi ile otomatik doldurulur.
   // Kullanıcı bu listeyi görür ve etkinliğe özel rol değişiklikleri yapabilir
@@ -140,9 +162,12 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     return await gorselOlustur({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, sablonFile: sablonKaynak, ekPrompt, format });
   };
 
+  const iptalEt = () => { iptalRef.current = true; setGenerating(false); setAktifModel(null); };
+
   const handleOlustur = async () => {
     // AI Afiş şablonsuz çalışır; diğer yöntemler şablon ister
-    if (aiModel !== 'ai-afis' && !secilenSablon) { setError('Lütfen bir şablon seçin.'); return; }
+    if (aiModel !== 'ai-afis' && !secilenSablon) { setError('Lütfen bir şablon seçin (ya da "AI Afiş" yöntemini seç — şablonsuz çalışır).'); return; }
+    iptalRef.current = false;
     setGenerating(true);
     setError(null);
     if (resultBlobUrl) URL.revokeObjectURL(resultBlobUrl);
@@ -178,6 +203,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
       }
     }
 
+    if (iptalRef.current) return; // kullanıcı iptal etti — sonucu yoksay
     try {
       if (!result) throw lastErr || new Error('Tüm modeller başarısız.');
       const standardB64 = result.base64.replace(/-/g, '+').replace(/_/g, '/');
@@ -278,6 +304,13 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
           {/* ─── AI MOD ─── */}
           {mod === 'ai' && (
             <>
+              {/* Anahtar durumu */}
+              <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-xs">
+                <span className="inline-flex items-center gap-1 font-semibold text-gray-600"><KeyRound className="w-3.5 h-3.5" />Anahtarlar:</span>
+                <span className={keyDurum.gemini ? 'text-green-600 font-semibold' : 'text-gray-400'}>Gemini {keyDurum.gemini ? '✓' : '✗'}</span>
+                <span className={keyDurum.openai ? 'text-green-600 font-semibold' : 'text-gray-400'}>OpenAI {keyDurum.openai ? '✓' : '✗'}</span>
+                {!keyDurum.gemini && !keyDurum.openai && <span className="text-amber-600">AI için anahtar gerekli — Canvas ücretsiz çalışır</span>}
+              </div>
               {/* Şablon Seçimi */}
               <div>
                 <div className="text-sm font-semibold text-gray-700 mb-2">Şablon Seçin</div>
@@ -378,7 +411,21 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                 </div>
               </div>
 
-              {/* Model Seçici */}
+              {/* Yöntem özeti + Gelişmiş aç/kapa */}
+              <button type="button" onClick={() => setGelismis(g => !g)}
+                className="w-full flex items-center justify-between gap-2 text-sm bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 hover:bg-gray-100 transition">
+                <span className="text-gray-700">
+                  Yöntem: <b>{MOTORLAR[aiModel].emoji} {MOTORLAR[aiModel].ad}</b>
+                  <span className="text-gray-400 font-normal"> · {MOTORLAR[aiModel].not}</span>
+                </span>
+                <span className="inline-flex items-center gap-1 text-amare-purple font-semibold">
+                  <Settings2 className="w-3.5 h-3.5" />Gelişmiş
+                  <ChevronDown className={`w-4 h-4 transition-transform ${gelismis ? 'rotate-180' : ''}`} />
+                </span>
+              </button>
+
+              {/* Model Seçici (Gelişmiş) */}
+              {gelismis && (
               <div className="bg-gray-50 border border-gray-200 rounded-xl p-3">
                 <div className="text-xs font-semibold text-gray-700 mb-2">ÜRETİM YÖNTEMİ</div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -412,7 +459,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                     className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'openai-pro' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
                   >
                     <div className="flex items-center gap-1 font-bold">✨ OpenAI Pro</div>
-                    <div className="text-gray-500 mt-0.5">gpt-image-2 · Tam AI · ~$0.08</div>
+                    <div className="text-gray-500 mt-0.5">gpt-image-1 · Tam AI · ~$0.08</div>
                   </button>
                   <button
                     type="button"
@@ -436,63 +483,50 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                   </label>
                 )}
               </div>
+              )}
 
               {error && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 space-y-2">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
-                    <span>{error}</span>
-                  </div>
-                  {/* Gemini/timeout hatasında hızlı aksiyon butonları */}
-                  {(error.includes('Gemini') || error.includes('zaman aşımı') || error.includes('timeout')) && (
-                    <div className="flex flex-wrap gap-2 pt-1 border-t border-red-200">
-                      {!fallbackOn && (
-                        <button
-                          onClick={() => {
-                            setFallbackOn(true);
-                            localStorage.setItem('aiFallback', 'on');
-                            setError(null);
-                          }}
-                          className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
-                          ⚡ Fallback'i Aç + Tekrar Dene
-                        </button>
-                      )}
-                      <button
-                        onClick={() => {
-                          setAiModel('hibrit');
-                          localStorage.setItem('aiModel', 'hibrit');
-                          setError(null);
-                        }}
-                        className="bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
-                        🎯 Hibrit'e Geç (Önerilen)
-                      </button>
-                      <button
-                        onClick={() => {
-                          setAiModel('canvas');
-                          localStorage.setItem('aiModel', 'canvas');
-                          setError(null);
-                        }}
-                        className="bg-purple-500 hover:bg-purple-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">
-                        🎨 Canvas'a Geç (Ücretsiz)
-                      </button>
+                    <div>
+                      {/anahtar|api key|incorrect|unauthor|401|403/i.test(error)
+                        ? <>API anahtarın geçersiz görünüyor. Üstteki <b>AI API Anahtarları</b> panelinden düzelt — ya da aşağıdan <b>Canvas (ücretsiz)</b> ile üret.<div className="text-[11px] text-red-400 mt-1">{error}</div></>
+                        : <span>{error}</span>}
                     </div>
-                  )}
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1 border-t border-red-200">
+                    {!fallbackOn && aiModel !== 'canvas' && (
+                      <button onClick={() => { setFallbackOn(true); localStorage.setItem('aiFallback', 'on'); setError(null); }}
+                        className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg">⚡ Fallback'i aç</button>
+                    )}
+                    <button onClick={() => { setAiModel('canvas'); localStorage.setItem('aiModel', 'canvas'); setError(null); }}
+                      className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg">🖌️ Canvas'a geç (ücretsiz)</button>
+                    <button onClick={() => { setError(null); handleOlustur(); }}
+                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-bold px-3 py-1.5 rounded-lg">↻ Tekrar dene</button>
+                  </div>
                 </div>
               )}
 
               {!resultBlobUrl && (
-                <button onClick={handleOlustur} disabled={!secilenSablon || generating} className="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-amare-purple to-amare-blue hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
-                  {generating ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      {aktifModel === 'hibrit' ? '🎯 Gemini arka plan + Canvas yüzleri...' :
-                       aktifModel === 'canvas' ? '🎨 Canvas çiziyor...' :
-                       aktifModel === 'openai-pro' ? '✨ OpenAI Pro (gpt-image-2) üretiyor...' :
-                       aktifModel === 'gemini' ? '🍌 Gemini üretiyor...' :
-                       'Görsel Oluşturuluyor...'}
-                    </>
-                  ) : <><ImageIcon className="w-5 h-5" />Görsel Hazırla</>}
-                </button>
+                <div className="space-y-2">
+                  <button onClick={handleOlustur}
+                    disabled={generating || (aiModel !== 'ai-afis' && !secilenSablon)}
+                    className="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-amare-purple to-amare-blue hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                    {generating ? (
+                      <>
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                        {(MOTORLAR[aktifModel]?.emoji || '⏳')} {MOTORLAR[aktifModel]?.ad || 'Afiş'} üretiyor… {elapsed}sn
+                        <span className="opacity-70 font-normal">/ ~{MOTORLAR[aktifModel]?.sure || MOTORLAR[aiModel]?.sure || 30}sn</span>
+                      </>
+                    ) : <><ImageIcon className="w-5 h-5" />Afiş Oluştur</>}
+                  </button>
+                  {generating && (
+                    <button onClick={iptalEt} className="w-full py-2 rounded-xl text-sm font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
+                      İptal
+                    </button>
+                  )}
+                </div>
               )}
 
               {resultBlobUrl && (
