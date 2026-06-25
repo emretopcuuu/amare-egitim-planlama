@@ -16,6 +16,8 @@ import BaslaButonu from "./BaslaButonu";
 import ErteleButonu from "./ErteleButonu";
 import GorevGecmisi from "./GorevGecmisi";
 import NetlestirButonu from "./NetlestirButonu";
+import SayacSerit from "./SayacSerit";
+import { atmosferBul } from "@/lib/gorevTasarim";
 import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
 import GunlukCheckin from "@/components/GunlukCheckin";
@@ -28,17 +30,8 @@ export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
 const t = tr.gorevler;
 
-// Tür rozetleri: her görev türünün kendi rengi var — listede tarayınca ayırt edilir
-const TUR_RENK: Record<string, string> = {
-  gozlem: "bg-royal/30 text-royal-light",
-  cesaret: "bg-orange-500/20 text-orange-300",
-  yansima: "bg-emerald-500/20 text-emerald-300",
-  gizli: "bg-fuchsia-500/20 text-fuchsia-300",
-  tahmin: "bg-sky-500/20 text-sky-300",
-  simulasyon: "bg-rose-500/20 text-rose-300",
-  bag: "bg-teal-500/20 text-teal-300",
-  soz: "bg-gold/20 text-gold-light",
-};
+// (Tür rozet renkleri artık lib/gorevTasarim.ts'teki GOREV_ATMOSFER'den —
+// ikon + aksan + üst şerit ile birlikte tek görsel kimlik.)
 
 export default async function GorevlerPage() {
   const session = await getSession();
@@ -336,41 +329,60 @@ export default async function GorevlerPage() {
           </div>
         </>
       ) : (
-        aktif.map((g, i) => (
+        aktif.map((g, i) => {
+          const atm = atmosferBul(g.kind);
+          const zorluk = (g.difficulty as Zorluk) ?? 2;
+          return (
           <section
             key={g.id}
-            className="altin-nabiz relative overflow-hidden kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/40 backdrop-blur"
+            className={`gorev-giris relative overflow-hidden kart-3d rounded-2xl ${atm.arka} p-5 pt-6 shadow-xl ring-1 ${atm.halka} backdrop-blur`}
           >
-            <span className="altin-tel" />
+            {/* UX #6: üst kenarda boşalan sayaç şeridi (türe göre değil zamana göre) */}
+            <SayacSerit baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
+            {/* UX #1 (tasarım): türe özel üst atmosfer parıltısı */}
+            <span
+              className={`pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b ${atm.serit} opacity-60`}
+              aria-hidden
+            />
+            <div className="relative">
             {i === 0 && (
               <p className="mb-2 inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-bold tracking-wide text-gold-light">
                 {tr.degerlendir.simdiSira}
               </p>
             )}
             <div className="flex items-center justify-between text-xs">
-              <span
-                className={`rounded-md px-2 py-0.5 font-medium ${TUR_RENK[g.kind] ?? "bg-royal/30 text-royal-light"}`}
-              >
+              <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium ${atm.rozet}`}>
+                <span aria-hidden>{atm.ikon}</span>
                 {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
               </span>
               <GorevSayac baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
             </div>
-            <p className="mt-2 text-sm font-semibold text-sky-200">
-              {ZORLUK_ETIKETI[(g.difficulty as Zorluk) ?? 2]}
-              {/* A2: bu görev hangi liderlik kasını çalıştırıyor */}
+            {/* UX #3: zorluk sembol (pip) + kas + mikro-sprint */}
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+              <span className="inline-flex items-center gap-1" title={ZORLUK_ETIKETI[zorluk]}>
+                {[1, 2, 3].map((n) => (
+                  <span
+                    key={n}
+                    className={`h-2 w-2 rounded-full ${n <= zorluk ? "bg-sky-300" : "bg-white/15"}`}
+                    aria-hidden
+                  />
+                ))}
+                <span className="ml-1 text-xs text-slate-400">{ZORLUK_ETIKETI[zorluk]}</span>
+              </span>
               {g.trait_id && ozellikAd.has(g.trait_id) && (
-                <span className="ml-2 inline-block rounded-full bg-royal/30 px-2 py-0.5 text-xs font-medium text-royal-light">
+                <span className="inline-block rounded-full bg-royal/30 px-2 py-0.5 text-xs font-medium text-royal-light">
                   💪 {ozellikAd.get(g.trait_id)}
                 </span>
               )}
               {g.micro_sprint && (
-                <span className="ml-2 inline-block animate-pulse rounded-full bg-amber-500/25 px-2 py-0.5 text-xs font-bold text-amber-300">
-                  ⚡ 30 DAKİKA — ŞİMDİ
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/25 px-2 py-0.5 text-xs font-bold text-amber-300 ring-1 ring-amber-400/40">
+                  <span className="animate-pulse" aria-hidden>⚡</span> 30 DAKİKA — ŞİMDİ
                 </span>
               )}
-            </p>
-            <h2 className="mt-2 text-2xl font-bold leading-snug text-gold-light">{g.title}</h2>
-            <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
+            </div>
+            {/* UX #10: AYNA sesi için belirgin başlık tipografisi */}
+            <h2 className="font-display mt-3 text-[1.7rem] font-bold leading-tight text-gold-light">{g.title}</h2>
+            <p className="mt-2.5 whitespace-pre-wrap text-base leading-relaxed text-slate-100">
               {g.body}
             </p>
             {/* UX #5: "neden sana özel?" — hep açık kutu yerine dokun-aç; görev kahraman kalır */}
@@ -391,34 +403,42 @@ export default async function GorevlerPage() {
             ) : (
               <OkuButonu metin={`${g.title}. ${g.body}`} />
             )}
-            {/* A10: belirsiz görevde netleştirme (söz/senkron hariç) */}
-            {g.kind !== "soz" && g.kind !== "senkron" && <NetlestirButonu gorevId={g.id} />}
-            {/* UX #1: "Başladım" — saha görevi gerçek zaman alır (söz/senkron hariç) */}
+            {/* UX #1: "Başladım" — birincil-yakını, görünür kalır (söz/senkron hariç) */}
             {g.kind !== "soz" && g.kind !== "senkron" && (
               <BaslaButonu gorevId={g.id} basladiMi={!!g.started_at} />
             )}
-            {/* #6 Seçilen zorluk: zorlaştırılabilir türlerde ve üst kademede değilse */}
-            {g.kind !== "soz" && g.kind !== "senkron" && (g.difficulty ?? 2) < 3 && (
-              <ZorlastirButonu gorevId={g.id} />
-            )}
-            {/* #8 Duygusal güvenlik: "ağır geldi" → yumuşat (söz/senkron hariç) */}
-            {g.kind !== "soz" && g.kind !== "senkron" && (
-              <HafifletButonu gorevId={g.id} />
-            )}
-            {/* UX #2: "Şimdi uygun değilim → ertele" (en fazla 2 kez) */}
-            {g.kind !== "soz" && g.kind !== "senkron" && (
-              <ErteleButonu gorevId={g.id} kalanHak={2 - (g.ertelenme_sayisi ?? 0)} />
-            )}
+            {/* UX #2 (tasarım): birincil eylem (yanıt) baskın; ikincil eylemler
+                tek "⋯ Seçenekler" altında toplanır — kart dağınıklığı biter. */}
             <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} ekip={ekip} />
-            {/* A6: takılan kişi için çıkış — Ayna Koçu'na köprü */}
-            <Link
-              href="/kocu"
-              className="mt-3 block text-center text-xs text-slate-500 underline-offset-4 transition-colors hover:text-royal-light"
-            >
-              {t.koctanYardim}
-            </Link>
+            {g.kind !== "soz" && g.kind !== "senkron" && (
+              <details className="group mt-3">
+                <summary className="flex cursor-pointer list-none items-center justify-center gap-1 text-xs font-medium text-slate-500 transition-colors hover:text-slate-300">
+                  ⋯ {t.secenekler}
+                  <span className="transition-transform group-open:rotate-180" aria-hidden>▾</span>
+                </summary>
+                <div className="mt-2 space-y-1">
+                  {/* A10: belirsiz görevde netleştirme */}
+                  <NetlestirButonu gorevId={g.id} />
+                  {/* #6 Zorlaştır — üst kademede değilse */}
+                  {(g.difficulty ?? 2) < 3 && <ZorlastirButonu gorevId={g.id} />}
+                  {/* #8 "ağır geldi" → yumuşat */}
+                  <HafifletButonu gorevId={g.id} />
+                  {/* UX #2: ertele (en fazla 2 kez) */}
+                  <ErteleButonu gorevId={g.id} kalanHak={2 - (g.ertelenme_sayisi ?? 0)} />
+                  {/* A6: takılan kişi için Koç köprüsü */}
+                  <Link
+                    href="/kocu"
+                    className="block text-center text-xs text-slate-500 underline-offset-4 transition-colors hover:text-royal-light"
+                  >
+                    {t.koctanYardim}
+                  </Link>
+                </div>
+              </details>
+            )}
+            </div>
           </section>
-        ))
+          );
+        })
       )}
 
       {/* Geçmiş — A8 filtre + özet, A2 liderlik kası (client bileşeni) */}

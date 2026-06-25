@@ -55,6 +55,21 @@ export default function GorevGecmisi({
     return { tamam: scored.length, ort, kacan };
   }, [gorevler]);
 
+  // UX #8: kas haritası — tamamlanan görevlerin çalıştırdığı liderlik kasları.
+  const kasHaritasi = useMemo(() => {
+    const say = new Map<number, number>();
+    for (const g of gorevler) {
+      if (g.status === "scored" && g.trait_id != null && ozellikAd[g.trait_id]) {
+        say.set(g.trait_id, (say.get(g.trait_id) ?? 0) + 1);
+      }
+    }
+    const liste = [...say.entries()]
+      .map(([id, n]) => ({ ad: ozellikAd[id], n }))
+      .sort((a, b) => b.n - a.n);
+    const enCok = liste[0]?.n ?? 1;
+    return { liste, enCok };
+  }, [gorevler, ozellikAd]);
+
   const suzulmus = useMemo(() => {
     if (filtre === "yuksek")
       return gorevler.filter((g) => g.status === "scored" && (g.ai_score ?? 0) >= 8);
@@ -105,6 +120,31 @@ export default function GorevGecmisi({
         <p className="mt-3 text-sm text-slate-400">{t.gecmisYok}</p>
       ) : (
         <>
+          {/* UX #8: kas haritası — hangi liderlik kasını ne kadar çalıştın */}
+          {kasHaritasi.liste.length > 0 && (
+            <div className="mt-4 rounded-2xl border border-royal/25 bg-midnight-card/40 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gold-light/80">
+                💪 {t.kasHaritasi}
+              </p>
+              <div className="mt-3 space-y-1.5">
+                {kasHaritasi.liste.map((k) => (
+                  <div key={k.ad} className="flex items-center gap-2">
+                    <span className="w-28 shrink-0 truncate text-xs text-slate-300">{k.ad}</span>
+                    <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-royal-light to-gold"
+                        style={{ width: `${Math.round((k.n / kasHaritasi.enCok) * 100)}%` }}
+                      />
+                    </div>
+                    <span className="w-5 shrink-0 text-right text-xs font-medium text-slate-400">
+                      {k.n}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Filtre çipleri */}
           <div className="mt-3 flex gap-1.5">
             {cipler.map((c) => (

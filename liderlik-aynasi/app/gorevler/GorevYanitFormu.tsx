@@ -182,7 +182,13 @@ export default function GorevYanitFormu({
         <div className="mt-4 rounded-xl bg-midnight-soft p-4 text-center">
         {sonuc.bekliyor ? (
           <>
-            <p className="text-sm text-slate-300">{t.durumlar.submitted}…</p>
+            {/* UX #5: markalı shimmer — yapay zekânın "okuduğunu" hissettirir */}
+            <p className="flex items-center justify-center gap-2 text-sm font-medium text-gold-light">
+              <span className="inline-block h-2 w-2 animate-ping rounded-full bg-gold" aria-hidden />
+              {t.gonderiliyor}
+            </p>
+            <div className="ayna-shimmer mt-3 h-3 w-full rounded-full" aria-hidden />
+            <div className="ayna-shimmer mt-2 h-3 w-2/3 rounded-full" aria-hidden />
             {sonuc.yorum && (
               <p className="mt-3 text-sm leading-relaxed text-amber-200">{sonuc.yorum}</p>
             )}
@@ -287,7 +293,7 @@ export default function GorevYanitFormu({
         <button
           type="submit"
           disabled={yanit.trim().length < 2 || gonderiliyor}
-          className="h-11 flex-1 btn-3d rounded-xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+          className="bas-his h-11 flex-1 btn-3d rounded-xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
         >
           {gonderiliyor ? t.gonderiliyor : t.gonder}
         </button>

@@ -1281,3 +1281,42 @@ html:not([data-admin-mod="uzman"]) .uzman-only {
 html[data-admin-mod="uzman"] .basit-only {
   display: none !important;
 }
+
+/* ── GÖREV TASARIM CİLASI (UX+tasarım turu) ─────────────────────────────────── */
+
+/* 9 · Kart giriş animasyonu — yumuşak yukarı-belir (ease-out, kısa) */
+@keyframes gorevGiris {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.gorev-giris { animation: gorevGiris 0.34s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* 9 · Düğme/eylem basış geri bildirimi */
+.bas-his { transition: transform 0.12s ease, filter 0.12s ease; }
+.bas-his:active { transform: scale(0.97); filter: brightness(1.05); }
+
+/* 5 · "AYNA okuyor" — markalı shimmer iskeleti */
+@keyframes aynaShimmer {
+  0%   { background-position: -160% 0; }
+  100% { background-position: 160% 0; }
+}
+.ayna-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    rgba(212, 175, 55, 0.04) 30%,
+    rgba(212, 175, 55, 0.22) 50%,
+    rgba(212, 175, 55, 0.04) 70%
+  );
+  background-size: 220% 100%;
+  animation: aynaShimmer 1.25s ease-in-out infinite;
+}
+
+/* 4 · Skor halkası dolum */
+@keyframes halkaDol { from { stroke-dashoffset: var(--cevre); } }
+.skor-halka-yay { animation: halkaDol 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Hareket-azalt tercihine saygı */
+@media (prefers-reduced-motion: reduce) {
+  .gorev-giris, .ayna-shimmer, .skor-halka-yay { animation: none !important; }
+  .bas-his { transition: none !important; }
+}

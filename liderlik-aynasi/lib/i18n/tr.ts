@@ -3101,6 +3101,9 @@ export const tr = {
     // A10 — görevi netleştir
     netlestir: "Bu görevi netleştir",
     netlestiriliyor: "AYNA açıklıyor…",
+    // Tasarım turu — ikincil eylemler tek menüde
+    secenekler: "Seçenekler",
+    kasHaritasi: "Çalıştırdığın liderlik kasları",
   },
   kivilcim: {
     ad: "Kıvılcım",
