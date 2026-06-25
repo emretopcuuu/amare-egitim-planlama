@@ -1,12 +1,30 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Download, Link2, Loader2, Sparkles, ImageIcon, AlertCircle, RotateCcw, CheckCircle2, Plus, X } from 'lucide-react';
+import { ArrowLeft, Download, Link2, Loader2, Sparkles, ImageIcon, AlertCircle, RotateCcw, CheckCircle2, Plus, X, Dices, Save, Undo2, Redo2 } from 'lucide-react';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { afisTuru, etiketSec } from '../utils/egitmenEtiket';
 import { uploadGorsel } from '../utils/uploadGorsel';
 import { gorselOlusturMarkaAfis } from '../utils/gorselOlusturMarkaAfis';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
-import { MARKA_PRESETLER, markaGruplar, markaEkIstek } from '../utils/markaVaryasyon';
+import { MARKA_VARYASYON_INDEX, MARKA_PRESETLER, markaGruplar, markaEkIstek } from '../utils/markaVaryasyon';
+
+// Grup başlık ikonları (göz hızlı tarar)
+const GRUP_IKON = {
+  'Yazı': '🔠', 'Fotoğraf': '🖼️', 'Tema': '🎨', 'Yazı tipi': '🔤',
+  'Başlık': '✨', 'Foto şekli': '⬡', 'Arka plan': '🌗', 'Dekor': '💠',
+  'Köşe şerit': '🎀', 'İçerik': '📋',
+};
+// Çip font ailesi (görünür font önizleme)
+const CIP_FONT = {
+  'font-klasik': 'Arial, sans-serif', 'font-zarif': 'Georgia, serif', 'font-karisik': 'Georgia, serif',
+  'font-modern': '"Trebuchet MS", sans-serif', 'font-times': '"Times New Roman", serif',
+};
+// Foto şekli mini görseli için border-radius / clip
+const SEKIL_STIL = {
+  'sekil-yuvarlak': { borderRadius: '9999px' },
+  'sekil-kare': { borderRadius: '4px' },
+  'sekil-altigen': { clipPath: 'polygon(50% 0%,93% 25%,93% 75%,50% 100%,7% 75%,7% 25%)' },
+};
 
 // İsim ayrıştırma (AdminPanel ile aynı mantık)
 const splitEgitmen = (egitmen) => {
@@ -80,6 +98,12 @@ export default function GorselStudyo() {
   const [error, setError] = useState(null);
   const [baglandi, setBaglandi] = useState(false);
   const [baglaniyor, setBaglaniyor] = useState(false);
+  const [undoStack, setUndoStack] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
+  const [guncellendi, setGuncellendi] = useState(false); // canlı yenileme mikro-geri bildirim
+  const [ozelPresetler, setOzelPresetler] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('markaOzelPresetler') || '[]'); } catch { return []; }
+  });
 
   // eğitim değişince konuşmacıları çöz
   useEffect(() => { setSpeakers(cozEgitmenler(egitim)); setBaglandi(false); /* eslint-disable-next-line */ }, [egitimId, konusmacilar]);
@@ -134,18 +158,65 @@ export default function GorselStudyo() {
     return list;
   });
 
-  const markaCipToggle = (sec, grup) => setMarkaSecim(prev => {
-    const next = { ...prev };
-    if (prev[sec.key]) { delete next[sec.key]; return next; }
-    if (grup?.tekil) grup.secenekler.forEach(s => { delete next[s.key]; });
-    next[sec.key] = true;
-    return next;
-  });
-  const presetUygula = (p) => setMarkaSecim(prev => {
-    const hepsiVar = p.keys.every(k => prev[k]);
-    if (hepsiVar) { const n = { ...prev }; p.keys.forEach(k => delete n[k]); return n; }
-    const n = {}; p.keys.forEach(k => { n[k] = true; }); return n;
-  });
+  // Geçmiş-farkındalıklı değişiklik: önceki durumu undo'ya it, redo'yu temizle
+  const uygula = (next) => {
+    setUndoStack(s => [...s.slice(-49), markaSecim]);
+    setRedoStack([]);
+    setMarkaSecim(next);
+  };
+  const geriAl = () => {
+    if (!undoStack.length) return;
+    const prev = undoStack[undoStack.length - 1];
+    setRedoStack(r => [...r, markaSecim]);
+    setUndoStack(s => s.slice(0, -1));
+    setMarkaSecim(prev);
+  };
+  const ileriAl = () => {
+    if (!redoStack.length) return;
+    const nx = redoStack[redoStack.length - 1];
+    setUndoStack(s => [...s, markaSecim]);
+    setRedoStack(r => r.slice(0, -1));
+    setMarkaSecim(nx);
+  };
+  const markaCipToggle = (sec, grup) => {
+    const next = { ...markaSecim };
+    if (markaSecim[sec.key]) { delete next[sec.key]; }
+    else { if (grup?.tekil) grup.secenekler.forEach(s => { delete next[s.key]; }); next[sec.key] = true; }
+    uygula(next);
+  };
+  const presetUygula = (keys) => {
+    const hepsiVar = keys.every(k => markaSecim[k]);
+    if (hepsiVar) { const n = { ...markaSecim }; keys.forEach(k => delete n[k]); uygula(n); }
+    else { const n = {}; keys.forEach(k => { n[k] = true; }); uygula(n); }
+  };
+  const temizle = () => uygula({});
+  // 🎲 Sürpriz: tekil gruplardan rastgele birer seçim + bazı dokunuşlar
+  const rastgele = () => {
+    const n = {};
+    const pick = (grupAd) => {
+      const g = MARKA_VARYASYON_INDEX.filter(s => s.grup === grupAd);
+      if (g.length) n[g[Math.floor(Math.random() * g.length)].key] = true;
+    };
+    pick('Tema'); pick('Yazı tipi'); pick('Foto şekli');
+    if (Math.random() < 0.5) n['baslik-cift'] = true;
+    if (Math.random() < 0.35) pick('Köşe şerit');
+    uygula(n);
+  };
+  // 💾 Kendi presetini kaydet / sil
+  const ozelPresetKaydet = () => {
+    const keys = Object.keys(markaSecim).filter(k => markaSecim[k]);
+    if (!keys.length) return;
+    const ad = (window.prompt('Stil adı:', `Stilim ${ozelPresetler.length + 1}`) || '').trim();
+    if (!ad) return;
+    const yeni = [...ozelPresetler.filter(p => p.ad !== ad), { ad, keys }];
+    setOzelPresetler(yeni);
+    try { localStorage.setItem('markaOzelPresetler', JSON.stringify(yeni)); } catch {}
+  };
+  const ozelPresetSil = (ad) => {
+    const yeni = ozelPresetler.filter(p => p.ad !== ad);
+    setOzelPresetler(yeni);
+    try { localStorage.setItem('markaOzelPresetler', JSON.stringify(yeni)); } catch {}
+  };
 
   const uret = async () => {
     if (!egitim) return;
@@ -161,6 +232,7 @@ export default function GorselStudyo() {
       sonB64.current = res.base64;
       if (resultUrl) URL.revokeObjectURL(resultUrl);
       setResultUrl(b64ToUrl(res.base64, res.mimeType));
+      if (markaModu) { setGuncellendi(true); setTimeout(() => setGuncellendi(false), 1100); }
     } catch (e) {
       setError(e.message || 'Üretim başarısız.');
     } finally {
@@ -294,36 +366,59 @@ export default function GorselStudyo() {
             {/* Marka varyasyon / AI ek istek */}
             {markaModu ? (
               <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-gray-700">🎛️ Varyasyon seçenekleri</span>
-                  {Object.keys(markaSecim).length > 0 && (
-                    <button onClick={() => setMarkaSecim({})} className="text-[11px] text-amare-purple hover:underline">Temizle</button>
-                  )}
+                {/* Araç çubuğu: geri al / ileri / sürpriz / kaydet / temizle */}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-gray-700 flex items-center gap-1.5">🎛️ Varyasyon
+                    {guncellendi && <span className="text-[10px] font-semibold text-green-600 flex items-center gap-0.5 animate-pulse"><CheckCircle2 className="w-3 h-3" />güncellendi</span>}
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button onClick={geriAl} disabled={!undoStack.length} title="Geri al" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30"><Undo2 className="w-4 h-4" /></button>
+                    <button onClick={ileriAl} disabled={!redoStack.length} title="Yinele" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30"><Redo2 className="w-4 h-4" /></button>
+                    <button onClick={rastgele} title="Sürpriz kombinasyon" className="p-1.5 rounded-lg text-amare-purple hover:bg-purple-50"><Dices className="w-4 h-4" /></button>
+                    <button onClick={ozelPresetKaydet} disabled={!Object.keys(markaSecim).length} title="Bu stili kaydet" className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 disabled:opacity-30"><Save className="w-4 h-4" /></button>
+                    {Object.keys(markaSecim).length > 0 && (
+                      <button onClick={temizle} className="text-[11px] text-amare-purple hover:underline ml-1">Temizle</button>
+                    )}
+                  </div>
                 </div>
+                {/* Hazır + kendi stillerin */}
                 <div>
                   <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Hazır stiller</div>
                   <div className="flex flex-wrap gap-1.5">
                     {MARKA_PRESETLER.map(p => {
-                      const aktif = p.keys.every(k => markaSecim[k]);
+                      const aktif = p.keys.every(k => markaSecim[k]) && p.keys.length === Object.keys(markaSecim).length;
                       return (
-                        <button key={p.ad} onClick={() => presetUygula(p)}
+                        <button key={p.ad} onClick={() => presetUygula(p.keys)}
                           className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition ${aktif ? 'bg-amber-400 text-gray-900 border-amber-500' : 'bg-white text-gray-700 border-gray-300 hover:border-amber-400'}`}>
                           {p.ad}
                         </button>
                       );
                     })}
+                    {ozelPresetler.map(p => (
+                      <span key={p.ad} className="inline-flex items-center rounded-full border border-amare-purple/40 bg-purple-50 overflow-hidden">
+                        <button onClick={() => presetUygula(p.keys)} className="px-2.5 py-1 text-[11px] font-bold text-amare-purple hover:bg-purple-100">⭐ {p.ad}</button>
+                        <button onClick={() => ozelPresetSil(p.ad)} title="Sil" className="px-1.5 py-1 text-amare-purple/60 hover:text-red-500 hover:bg-purple-100"><X className="w-3 h-3" /></button>
+                      </span>
+                    ))}
                   </div>
                 </div>
+                {/* Gruplar — ikonlu başlık + görünür çipler */}
                 {markaGruplar(aiModel).map(g => (
                   <div key={g.grup}>
-                    <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">{g.grup}</div>
+                    <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <span className="text-xs">{GRUP_IKON[g.grup] || '•'}</span>{g.grup}
+                    </div>
                     <div className="flex flex-wrap gap-1.5">
                       {g.secenekler.map(s => {
                         const aktif = !!markaSecim[s.key];
+                        const fontStil = CIP_FONT[s.key] ? { fontFamily: CIP_FONT[s.key] } : undefined;
                         return (
-                          <button key={s.key} onClick={() => markaCipToggle(s, g)}
+                          <button key={s.key} onClick={() => markaCipToggle(s, g)} style={fontStil}
                             className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition inline-flex items-center gap-1.5 ${aktif ? 'bg-amare-purple text-white border-amare-purple' : 'bg-white text-gray-600 border-gray-300 hover:border-amare-purple/50'}`}>
-                            {s.renk && <span className="w-3 h-3 rounded-full border border-black/20" style={{ background: s.renk }} />}
+                            {/* tema gradient swatch */}
+                            {s.renk && <span className="w-3.5 h-3.5 rounded-full border border-black/20" style={{ background: `linear-gradient(135deg, ${s.renk} 55%, #d8b15a 55%)` }} />}
+                            {/* foto şekli mini görsel */}
+                            {SEKIL_STIL[s.key] && <span className={`w-3.5 h-3.5 ${aktif ? 'bg-white' : 'bg-amare-purple'}`} style={SEKIL_STIL[s.key]} />}
                             {aktif ? '✓ ' : ''}{s.label}
                           </button>
                         );
@@ -331,7 +426,7 @@ export default function GorselStudyo() {
                     </div>
                   </div>
                 ))}
-                <p className="text-[11px] text-gray-500 pt-0.5">Çipe bas → sağda <b>otomatik canlı önizleme</b>.</p>
+                <p className="text-[11px] text-gray-500 pt-0.5">Çipe bas → sağda <b>otomatik canlı önizleme</b>. 🎲 sürpriz · 💾 stilini kaydet · ↶ geri al.</p>
               </div>
             ) : (
               <div className="bg-white border border-gray-200 rounded-xl p-3">
