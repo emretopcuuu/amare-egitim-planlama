@@ -201,7 +201,9 @@ export default function AdminNav({
       {/* Yatay kaydırma yerine SATIRA SIĞMAYAN öğeler alt satıra taşar (wrap).
           Böylece hiçbir şey kırpılmaz, hiç kaydırmaya gerek kalmaz — operatör
           tüm aşamaları + durumu tek bakışta görür. */}
-      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-wrap items-center gap-1.5 p-3">
+      {/* İki sıra da EKRANDA ORTALI: Panel + 1·2·3·4·5 üst sırada ortalı,
+          Hızlı eylem + durum rozetleri alt sırada ortalı (kenarlara yayılmaz). */}
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-1.5 p-3">
         <span className="mr-1 hidden shrink-0 text-sm font-bold text-gold sm:block">
           {tr.app.name}
         </span>
@@ -248,20 +250,15 @@ export default function AdminNav({
         {/* #1/#4 Komut paleti tetikleyici (Hızlı eylem) — alt sırada, soldan */}
         {tamYetki && <KomutPaleti />}
 
-        {/* Canlı durum rozetleri: hangi sekmede olursan ol kokpit görünür */}
-        {/* #9 Prova rozeti: test ortamı her an net görünür */}
-        {/* Durum rozetleri: geniş ekranda sağa yaslı (ml-auto), dar ekranda
-            alt satıra temiz sarar. Sarımı bozmamak için ml-auto yalnız ilk
-            rozette; sonrakiler onu izler. */}
+        {/* Canlı durum rozetleri — alt sırada Hızlı eylem'le birlikte ORTALI
+            (eskiden ml-auto ile sağ kenara fırlıyordu; artık ortada toplanır). */}
         {provaAcik && (
-          <span className="ml-auto shrink-0 rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white">
+          <span className="shrink-0 rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white">
             ⚠️ {g.prova}
           </span>
         )}
         <span
           className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
-            provaAcik ? "" : "ml-auto"
-          } ${
             dalgaAdi
               ? "bg-emerald-400/15 text-emerald-400"
               : "bg-slate-500/15 text-slate-400"
