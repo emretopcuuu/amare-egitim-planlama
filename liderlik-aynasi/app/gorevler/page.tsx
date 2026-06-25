@@ -12,6 +12,8 @@ import GorevYanitFormu from "./GorevYanitFormu";
 import TanikOnay from "./TanikOnay";
 import ZorlastirButonu from "./ZorlastirButonu";
 import HafifletButonu from "./HafifletButonu";
+import BaslaButonu from "./BaslaButonu";
+import ErteleButonu from "./ErteleButonu";
 import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
 import GunlukCheckin from "@/components/GunlukCheckin";
@@ -47,7 +49,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, micro_sprint"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -55,7 +57,18 @@ export default async function GorevlerPage() {
   if (error) throw error;
 
   const aktif = (gorevler ?? []).filter((g) => g.status === "pending");
-  const gecmis = (gorevler ?? []).filter((g) => g.status !== "pending");
+  // UX #3 — Telafi: süresi YENİ geçmiş (24 saat içinde), telafi edilebilir
+  // görevler ayrı bir bölümde forma açık kalır. Söz/senkron telafi edilmez.
+  const simdiMs = new Date().getTime();
+  const telafiEdilebilir = (g: { status: string; kind: string; due_at: string }) =>
+    g.status === "expired" &&
+    g.kind !== "soz" &&
+    g.kind !== "senkron" &&
+    simdiMs - new Date(g.due_at).getTime() <= 24 * 3_600_000;
+  const telafiGorevler = (gorevler ?? []).filter(telafiEdilebilir);
+  const gecmis = (gorevler ?? []).filter(
+    (g) => g.status !== "pending" && !telafiEdilebilir(g)
+  );
 
   // YANSIMAN fısıltıları: aktif görevlerin ses dosyalarına kısa ömürlü imzalı URL
   const sesUrller = new Map<string, string>();
@@ -264,6 +277,37 @@ export default async function GorevlerPage() {
         yapildi={!!checkin}
       />
 
+      {/* UX #6: Günün görev haritası — kişi tek görev görüyor; gün boyu daha
+          geleceğini ve bugün nerede olduğunu bilsin (belirsizlik kalksın). */}
+      <section className="rounded-2xl border border-royal-light/20 bg-white/[0.02] px-4 py-3">
+        <p className="text-sm leading-relaxed text-slate-300">🗺 {t.gunHaritasi}</p>
+        <p className="mt-1 text-xs font-medium text-gold-light/80">{t.gunHaritasiSayi(bugunGorev)}</p>
+      </section>
+
+      {/* UX #3: Telafi — süresi yeni geçmiş görev(ler) forma açık kalır */}
+      {telafiGorevler.length > 0 && (
+        <section className="space-y-4">
+          {telafiGorevler.map((g) => (
+            <div
+              key={g.id}
+              className="kart-3d rounded-2xl border border-amber-400/30 bg-amber-500/[0.06] p-5"
+            >
+              <p className="inline-block rounded-full bg-amber-500/20 px-3 py-1 text-xs font-bold tracking-wide text-amber-300">
+                ⏳ {t.telafiRozet}
+              </p>
+              <h2 className="mt-2 text-xl font-bold leading-snug text-amber-100">{g.title}</h2>
+              <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
+                {g.body}
+              </p>
+              <p className="mt-3 rounded-xl border border-amber-400/20 bg-midnight/30 p-3 text-sm leading-relaxed text-amber-200/90">
+                {t.telafiAciklama}
+              </p>
+              <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} ekip={ekip} />
+            </div>
+          ))}
+        </section>
+      )}
+
       {/* Aktif görev(ler) */}
       {aktif.length === 0 ? (
         <>
@@ -302,7 +346,7 @@ export default async function GorevlerPage() {
               >
                 {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
               </span>
-              <GorevSayac baslangic={g.issued_at} bitis={g.due_at} />
+              <GorevSayac baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
             </div>
             <p className="mt-2 text-sm font-semibold text-sky-200">
               {ZORLUK_ETIKETI[(g.difficulty as Zorluk) ?? 2]}
@@ -316,12 +360,15 @@ export default async function GorevlerPage() {
             <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
               {g.body}
             </p>
-            {/* "Bu görev neden sana özel?" — AYNA'nın kişiselleştirme gerekçesi */}
+            {/* UX #5: "neden sana özel?" — hep açık kutu yerine dokun-aç; görev kahraman kalır */}
             {g.neden && (
-              <div className="mt-4 rounded-2xl border border-gold/30 bg-gold/[0.07] p-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-gold">✨ Sana Özel</p>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-200">{g.neden}</p>
-              </div>
+              <details className="group mt-4 rounded-2xl border border-gold/30 bg-gold/[0.07] p-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-xs font-bold uppercase tracking-widest text-gold">
+                  <span>✨ Neden ben?</span>
+                  <span className="text-gold/70 transition-transform group-open:rotate-180" aria-hidden>▾</span>
+                </summary>
+                <p className="mt-2 text-sm leading-relaxed text-slate-200">{g.neden}</p>
+              </details>
             )}
             {sesUrller.has(g.id) ? (
               <SesCal
@@ -331,6 +378,10 @@ export default async function GorevlerPage() {
             ) : (
               <OkuButonu metin={`${g.title}. ${g.body}`} />
             )}
+            {/* UX #1: "Başladım" — saha görevi gerçek zaman alır (söz/senkron hariç) */}
+            {g.kind !== "soz" && g.kind !== "senkron" && (
+              <BaslaButonu gorevId={g.id} basladiMi={!!g.started_at} />
+            )}
             {/* #6 Seçilen zorluk: zorlaştırılabilir türlerde ve üst kademede değilse */}
             {g.kind !== "soz" && g.kind !== "senkron" && (g.difficulty ?? 2) < 3 && (
               <ZorlastirButonu gorevId={g.id} />
@@ -338,6 +389,10 @@ export default async function GorevlerPage() {
             {/* #8 Duygusal güvenlik: "ağır geldi" → yumuşat (söz/senkron hariç) */}
             {g.kind !== "soz" && g.kind !== "senkron" && (
               <HafifletButonu gorevId={g.id} />
+            )}
+            {/* UX #2: "Şimdi uygun değilim → ertele" (en fazla 2 kez) */}
+            {g.kind !== "soz" && g.kind !== "senkron" && (
+              <ErteleButonu gorevId={g.id} kalanHak={2 - (g.ertelenme_sayisi ?? 0)} />
             )}
             <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} ekip={ekip} />
           </section>

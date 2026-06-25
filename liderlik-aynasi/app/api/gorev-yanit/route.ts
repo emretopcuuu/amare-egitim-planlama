@@ -55,8 +55,17 @@ export async function POST(req: Request) {
     .maybeSingle();
   if (error) return Response.json({ hata: tr.gorevler.hata }, { status: 500 });
   if (!gorev) return Response.json({ hata: tr.gorevler.hata }, { status: 404 });
-  if (gorev.status !== "pending") {
+  // UX #3 — TELAFİ: süresi geçen görev de yapılabilir (yakın zamanda geçtiyse).
+  // Kıvılcım yarıya iner; söz/senkron telafi edilmez (zaman-bağlı anlar).
+  const telafi = gorev.status === "expired";
+  if (gorev.status !== "pending" && !telafi) {
     return Response.json({ hata: tr.gorevler.durumlar.expired }, { status: 409 });
+  }
+  if (telafi) {
+    const gecenMs = Date.now() - new Date(gorev.due_at).getTime();
+    if (gorev.kind === "soz" || gorev.kind === "senkron" || gecenMs > 24 * 3_600_000) {
+      return Response.json({ hata: tr.gorevler.durumlar.expired }, { status: 409 });
+    }
   }
 
   const simdi = new Date();
@@ -125,8 +134,11 @@ export async function POST(req: Request) {
     return Response.json({ bekliyor: true, ...(kriz ? { guvenlik: true, yorum: KRIZ_YONLENDIRME } : {}) }, { status: 202 });
   }
 
-  const zamaninda = simdi <= new Date(gorev.due_at);
-  const kivilcim = kivilcimHesapla(sonuc.puan, zamaninda);
+  const zamaninda = !telafi && simdi <= new Date(gorev.due_at);
+  // Telafi (süresi geçmiş): kıvılcım yarıya iner — yine de yapmak değerli.
+  const kivilcim = telafi
+    ? Math.max(1, Math.ceil(kivilcimHesapla(sonuc.puan, false) / 2))
+    : kivilcimHesapla(sonuc.puan, zamaninda);
   await db
     .from("missions")
     .update({
@@ -135,6 +147,7 @@ export async function POST(req: Request) {
       ai_comment: sonuc.yorum,
       scored_at: new Date().toISOString(),
       spark_points: kivilcim,
+      ...(telafi ? { gec_tamamlandi: true } : {}),
       // #2 Yanıt madenciliği: paralel çıkarılan tema etiketleri
       ...(sonuc.response_tags.length > 0
         ? { response_tags: sonuc.response_tags }

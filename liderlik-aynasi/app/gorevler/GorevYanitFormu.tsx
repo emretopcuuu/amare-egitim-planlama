@@ -16,6 +16,10 @@ const t = tr.gorevler;
 function kuyrukAnahtari(gorevId: string) {
   return `la_gorev_yanit_v1:${gorevId}`;
 }
+// UX #4 — yazarken taslak: telefon kilitlenir/uygulama değişirse yanıt uçmasın.
+function taslakAnahtari(gorevId: string) {
+  return `la_gorev_taslak_v1:${gorevId}`;
+}
 
 type Sonuc = {
   puan?: number;
@@ -47,6 +51,23 @@ export default function GorevYanitFormu({
   // Bağlantı yokken yanıt cihazda kuyrukta bekliyor
   const [cevrimdisi, setCevrimdisi] = useState(false);
   const gonderiliyorRef = useRef(false);
+  const yanitRef = useRef<HTMLTextAreaElement>(null);
+
+  // UX #4 — yazarken taslağı cihazda tut (gönderilince/temizlenince silinir).
+  useEffect(() => {
+    try {
+      if (yanit.trim()) localStorage.setItem(taslakAnahtari(gorevId), yanit);
+      else localStorage.removeItem(taslakAnahtari(gorevId));
+    } catch {}
+  }, [yanit, gorevId]);
+
+  // UX #7 — yanıt alanı içeriğe göre büyüsün (lider düzeyi derin yanıt davet eder).
+  useEffect(() => {
+    const el = yanitRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 320)}px`;
+  }, [yanit]);
 
   // Sunucuya gönder; ağ hatasında yanıtı cihazda sakla (kaybetme).
   const sunucuyaGonder = useCallback(
@@ -65,9 +86,10 @@ export default function GorevYanitFormu({
         if (res.status === 202) {
           try {
             localStorage.removeItem(kuyrukAnahtari(gorevId));
+            localStorage.removeItem(taslakAnahtari(gorevId));
           } catch {}
           setCevrimdisi(false);
-          setSonuc({ bekliyor: true });
+          setSonuc(veri?.guvenlik ? { bekliyor: true, yorum: veri.yorum } : { bekliyor: true });
           return;
         }
         if (!res.ok) {
@@ -76,6 +98,7 @@ export default function GorevYanitFormu({
         }
         try {
           localStorage.removeItem(kuyrukAnahtari(gorevId));
+          localStorage.removeItem(taslakAnahtari(gorevId)); // UX #4: taslağı temizle
         } catch {}
         setCevrimdisi(false);
         const buyuk = (veri?.puan ?? 0) >= 8 || !!veri?.soz;
@@ -111,6 +134,12 @@ export default function GorevYanitFormu({
       setYanit(bekleyen);
       setCevrimdisi(true);
       void sunucuyaGonder(bekleyen);
+    } else {
+      // UX #4: gönderilmemiş taslak varsa kaldığın yerden devam et.
+      try {
+        const taslak = localStorage.getItem(taslakAnahtari(gorevId));
+        if (taslak) setYanit(taslak);
+      } catch {}
     }
     function tekrarDene() {
       try {
@@ -152,13 +181,24 @@ export default function GorevYanitFormu({
         {buyukKazanim && <Konfeti />}
         <div className="mt-4 rounded-xl bg-midnight-soft p-4 text-center">
         {sonuc.bekliyor ? (
-          <p className="text-sm text-slate-300">{t.durumlar.submitted}…</p>
+          <>
+            <p className="text-sm text-slate-300">{t.durumlar.submitted}…</p>
+            {sonuc.yorum && (
+              <p className="mt-3 text-sm leading-relaxed text-amber-200">{sonuc.yorum}</p>
+            )}
+          </>
         ) : (
           <>
             {sonuc.puan !== undefined && <PuanAcilisi puan={sonuc.puan} />}
             {sonuc.kivilcim !== undefined && <KivilcimSayac kazanim={sonuc.kivilcim} />}
             {sonuc.yorum && (
               <p className="mt-3 text-sm italic text-slate-200">“{sonuc.yorum}”</p>
+            )}
+            {/* UX #9 — düşük puanı büyüme çerçevesiyle yumuşat (rakam moral bozmasın) */}
+            {sonuc.puan !== undefined && sonuc.puan < 6 && (
+              <p className="mt-3 rounded-xl border border-royal-light/25 bg-midnight/40 p-3 text-sm leading-relaxed text-emerald-200/90">
+                {t.dusukPuanNot}
+              </p>
             )}
             {sonuc.toplam !== undefined && sonuc.unvan && (
               <p className="mt-3 text-xs text-slate-400">
@@ -194,15 +234,18 @@ export default function GorevYanitFormu({
       <label htmlFor={`yanit-${gorevId}`} className="text-xs font-medium text-slate-300">
         {t.yanitEtiket}
       </label>
+      {/* UX #8 — yanıt iskelesi: boş sayfa felcine karşı nazik çatı */}
+      <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{t.yanitIskele}</p>
       <textarea
         id={`yanit-${gorevId}`}
+        ref={yanitRef}
         value={yanit}
         onChange={(e) => setYanit(e.target.value)}
-        rows={3}
+        rows={4}
         maxLength={1500}
         disabled={gonderiliyor}
         placeholder={t.yanitPlaceholder}
-        className="mt-1 w-full rounded-xl border border-royal-light/30 bg-midnight-soft p-3 text-base text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
+        className="mt-1 max-h-[320px] min-h-[6rem] w-full resize-none rounded-xl border border-royal-light/30 bg-midnight-soft p-3 text-base text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
       />
       {hata && (
         <div

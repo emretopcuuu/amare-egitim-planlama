@@ -779,6 +779,8 @@ export type Database = {
           carried_at: string | null
           difficulty: number
           due_at: string
+          ertelenme_sayisi: number
+          gec_tamamlandi: boolean
           id: string
           issued_at: string
           kind: string
@@ -795,6 +797,7 @@ export type Database = {
           response_text: string | null
           scored_at: string | null
           spark_points: number
+          started_at: string | null
           status: string
           title: string
           trait_id: number | null
@@ -807,6 +810,8 @@ export type Database = {
           carried_at?: string | null
           difficulty?: number
           due_at: string
+          ertelenme_sayisi?: number
+          gec_tamamlandi?: boolean
           id?: string
           issued_at?: string
           kind: string
@@ -823,6 +828,7 @@ export type Database = {
           response_text?: string | null
           scored_at?: string | null
           spark_points?: number
+          started_at?: string | null
           status?: string
           title: string
           trait_id?: number | null
@@ -835,6 +841,8 @@ export type Database = {
           carried_at?: string | null
           difficulty?: number
           due_at?: string
+          ertelenme_sayisi?: number
+          gec_tamamlandi?: boolean
           id?: string
           issued_at?: string
           kind?: string
@@ -851,6 +859,7 @@ export type Database = {
           response_text?: string | null
           scored_at?: string | null
           spark_points?: number
+          started_at?: string | null
           status?: string
           title?: string
           trait_id?: number | null

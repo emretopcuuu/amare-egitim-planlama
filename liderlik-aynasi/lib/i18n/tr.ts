@@ -3020,6 +3020,27 @@ export const tr = {
     },
     sozTesekkur:
       "Sözünü sakladım. 90 gün sonra sana hatırlatacağım. — AYNA",
+    // UX #1 — "Başladım": saha görevi gerçek zaman alır
+    basladim: "✋ Başladım, üzerinde çalışıyorum",
+    basladimRozet: "✋ Üzerinde çalışıyorsun",
+    // UX #2 — Ertele
+    ertele: "Şimdi uygun değilim",
+    erteleniyor: "Erteleniyor…",
+    erteleNot: "+2 saat ileri aldım — sen hazır olunca buradayım.",
+    erteleBitti: "Bu görevi daha fazla erteleyemezsin — bugün sıra onda.",
+    // UX #3 — Telafi (süresi geçti ama yine de yapılabilir)
+    telafiRozet: "Süresi geçti — ama kapı açık",
+    telafiAciklama:
+      "Kaçırmış olman bir son değil. Yine de yap; kıvılcımın yarısı senin, asıl kazanç görevin kendisi.",
+    telafiYap: "Yine de yap",
+    // UX #6 — Günün görev haritası / beklenti
+    gunHaritasi: "AYNA gün boyu sana görev verir — birini bitirince bir sonraki gelir.",
+    gunHaritasiSayi: (n: number) =>
+      n > 0 ? `Bugün ${n} görev tamamladın.` : "Bugün ilk görevini bekliyorum.",
+    // UX #8 — Yanıt iskelesi (boş sayfa felcine karşı)
+    yanitIskele: "Şunları yaz: kiminle / ne oldu / ne hissettin / ne götürdün.",
+    // UX #9 — Düşük puanı büyüme çerçevesiyle yumuşatma
+    dusukPuanNot: "Bu bir başlangıç — önemli olan yapmış olman. AYNA bir sonraki adımı gösteriyor.",
   },
   kivilcim: {
     ad: "Kıvılcım",
