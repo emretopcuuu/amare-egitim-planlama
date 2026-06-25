@@ -1201,7 +1201,7 @@ export async function mentorlukGorevUret(
   katilimci: { id: string; full_name: string; kariyer_seviyesi: string | null },
   gun: number,
   tumKatilimcilar: { id: string; full_name: string; kariyer_seviyesi: string | null }[]
-): Promise<UretilenGorev | null> {
+): Promise<(UretilenGorev & { adayIdler: string[] }) | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
 
   const ad = katilimci.full_name.split(" ")[0];
@@ -1242,6 +1242,8 @@ export async function mentorlukGorevUret(
     itiraz: null,
     neden: "Seni bir adım öne taşıyacak sohbet başkasının deneyiminde saklı.",
     micro_sprint: false,
+    // #9 takip: önerilen 3 adayın id'leri (mentorluk_kayit'a yazılır)
+    adayIdler: secilen.map((k) => k.id),
   };
 }
 

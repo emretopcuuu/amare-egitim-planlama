@@ -155,6 +155,15 @@ export async function POST(req: Request) {
     })
     .eq("id", gorev.id);
 
+  // #9 mentorluk takibi: görev tamamlandıysa konuşma gerçekleşti say.
+  if (gorev.kind === "mentorluk") {
+    await db
+      .from("mentorluk_kayit")
+      .update({ konustu: true, updated_at: new Date().toISOString() })
+      .eq("mission_id", gorev.id)
+      .eq("mentee_id", session.sub);
+  }
+
   // FIERO: 10/10 anında büyük ekran AYNA'nın sesiyle alkışlar; yansıması
   // da kişiye kendi sesiyle konuşur (ana sayfadaki Konuşan Yansıma kartı)
   if (sonuc.puan === 10) {

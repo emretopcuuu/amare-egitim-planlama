@@ -761,16 +761,27 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         const gorev = await mentorlukGorevUret(db, k, gun, tumKatilimcilar);
         if (!gorev) continue;
         const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
-        await db.from("missions").insert({
-          participant_id: k.id,
-          kind: gorev.kind,
-          title: gorev.title,
-          body: gorev.body,
-          trait_id: gorev.trait_id,
-          due_at: dueAt.toISOString(),
-          difficulty: gorev.difficulty,
-          neden: gorev.neden,
-          micro_sprint: gorev.micro_sprint,
+        const { data: yeniMentor } = await db
+          .from("missions")
+          .insert({
+            participant_id: k.id,
+            kind: gorev.kind,
+            title: gorev.title,
+            body: gorev.body,
+            trait_id: gorev.trait_id,
+            due_at: dueAt.toISOString(),
+            difficulty: gorev.difficulty,
+            neden: gorev.neden,
+            micro_sprint: gorev.micro_sprint,
+          })
+          .select("id")
+          .single();
+        // #9 takip: önerilen adayları kayda bağla
+        await db.from("mentorluk_kayit").insert({
+          mentee_id: k.id,
+          mission_id: yeniMentor?.id ?? null,
+          aday_idler: gorev.adayIdler,
+          gun,
         });
         await katilimciyaBildir(
           db,

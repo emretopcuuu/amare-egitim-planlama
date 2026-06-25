@@ -17,6 +17,7 @@ import ErteleButonu from "./ErteleButonu";
 import GorevGecmisi from "./GorevGecmisi";
 import NetlestirButonu from "./NetlestirButonu";
 import SayacSerit from "./SayacSerit";
+import MentorSec from "./MentorSec";
 import { atmosferBul } from "@/lib/gorevTasarim";
 import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
@@ -64,6 +65,33 @@ export default async function GorevlerPage() {
   const gecmis = (gorevler ?? []).filter(
     (g) => g.status !== "pending" && !telafiEdilebilir(g)
   );
+
+  // #9 Mentorluk: aktif mentorluk görevleri için önerilen adayları + seçimi yükle.
+  const mentorVeri = new Map<string, { adaylar: { id: string; ad: string }[]; secilen: string | null }>();
+  const mentorlukAktif = aktif.filter((g) => g.kind === "mentorluk");
+  if (mentorlukAktif.length > 0) {
+    const { data: kayitlar } = await db
+      .from("mentorluk_kayit")
+      .select("mission_id, aday_idler, secilen_id")
+      .in("mission_id", mentorlukAktif.map((g) => g.id))
+      .eq("mentee_id", session.sub);
+    const tumIdler = [...new Set((kayitlar ?? []).flatMap((k) => (k.aday_idler as string[]) ?? []))];
+    const adMap = new Map<string, string>();
+    if (tumIdler.length > 0) {
+      const { data: kisiler } = await db
+        .from("participants")
+        .select("id, full_name")
+        .in("id", tumIdler);
+      for (const p of kisiler ?? []) adMap.set(p.id, p.full_name);
+    }
+    for (const k of kayitlar ?? []) {
+      if (!k.mission_id) continue;
+      mentorVeri.set(k.mission_id, {
+        adaylar: ((k.aday_idler as string[]) ?? []).map((id) => ({ id, ad: adMap.get(id) ?? "—" })),
+        secilen: k.secilen_id,
+      });
+    }
+  }
 
   // YANSIMAN fısıltıları: aktif görevlerin ses dosyalarına kısa ömürlü imzalı URL
   const sesUrller = new Map<string, string>();
@@ -402,6 +430,14 @@ export default async function GorevlerPage() {
               />
             ) : (
               <OkuButonu metin={`${g.title}. ${g.body}`} />
+            )}
+            {/* #9: mentorluk görevinde 3 adaydan yapılandırılmış seçim */}
+            {g.kind === "mentorluk" && mentorVeri.has(g.id) && (
+              <MentorSec
+                missionId={g.id}
+                adaylar={mentorVeri.get(g.id)!.adaylar}
+                secilen={mentorVeri.get(g.id)!.secilen}
+              />
             )}
             {/* UX #1: "Başladım" — birincil-yakını, görünür kalır (söz/senkron hariç) */}
             {g.kind !== "soz" && g.kind !== "senkron" && (

@@ -606,6 +606,64 @@ export type Database = {
         }
         Relationships: []
       }
+      mentorluk_kayit: {
+        Row: {
+          aday_idler: string[]
+          created_at: string
+          gun: number | null
+          id: string
+          konustu: boolean
+          mentee_id: string
+          mission_id: string | null
+          secilen_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          aday_idler?: string[]
+          created_at?: string
+          gun?: number | null
+          id?: string
+          konustu?: boolean
+          mentee_id: string
+          mission_id?: string | null
+          secilen_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aday_idler?: string[]
+          created_at?: string
+          gun?: number | null
+          id?: string
+          konustu?: boolean
+          mentee_id?: string
+          mission_id?: string | null
+          secilen_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentorluk_kayit_mentee_id_fkey"
+            columns: ["mentee_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentorluk_kayit_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentorluk_kayit_secilen_id_fkey"
+            columns: ["secilen_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mini360_dis: {
         Row: {
           created_at: string

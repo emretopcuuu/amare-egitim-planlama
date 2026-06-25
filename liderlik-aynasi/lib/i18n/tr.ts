@@ -1381,6 +1381,7 @@ export const tr = {
       kurulum: "Kurulum",
       analiz: "Analiz",
       aynaSaglik: "AYNA Sağlık",
+      mentorluk: "Mentorluk Ağı",
       farkindalik: "Farkındalık Sinyali",
       takim: "Takım Sağlığı",
       duyuru: "Duyuru",
