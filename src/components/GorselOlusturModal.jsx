@@ -3,15 +3,15 @@ import { X, Upload, ImageIcon, Download, Loader2, AlertCircle, CheckCircle2, Lin
 import { gorselOlustur } from '../utils/gorselOlustur';
 import { gorselOlusturOpenAIPro } from '../utils/gorselOlusturOpenAIPro';
 import { gorselOlusturCanvas } from '../utils/gorselOlusturCanvas';
-import { gorselOlusturHibrit } from '../utils/gorselOlusturHibrit';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
 import { gorselOlusturMarkaAfis } from '../utils/gorselOlusturMarkaAfis';
 import { afisTuru, afisTuruLabel } from '../utils/egitmenEtiket';
 
 // Üretim motorları — meta (ad, ikon, açıklama, tahmini süre sn, hangi anahtar gerekir)
 const MOTORLAR = {
-  'marka-afis': { ad: 'Marka Afiş', emoji: '🏆', not: 'Şablonsuz · marka tasarımı · anahtarsız', sure: 3, key: null, sablonsuz: true, yuzGuvenli: true },
-  hibrit: { ad: 'Hibrit', emoji: '🎯', not: 'AI tasarım + gerçek yüzler', sure: 55, key: 'gemini', yuzGuvenli: true },
+  'marka-afis': { ad: 'Marka Afiş', emoji: '🏆', not: 'Otomatik tema · marka tasarımı · ÜCRETSİZ', sure: 3, key: null, sablonsuz: true, yuzGuvenli: true },
+  'marka-koyu': { ad: 'Marka Koyu', emoji: '⬛', not: 'Siyah & altın · lüks · ÜCRETSİZ', sure: 3, key: null, sablonsuz: true, yuzGuvenli: true },
+  'marka-acik': { ad: 'Marka Açık', emoji: '⬜', not: 'Krem & altın · zarif · ÜCRETSİZ', sure: 3, key: null, sablonsuz: true, yuzGuvenli: true },
   'ai-afis': { ad: 'AI Afiş', emoji: '🎨', not: 'Şablonsuz · şehir illüstrasyonu', sure: 30, key: 'gemini', sablonsuz: true, yuzGuvenli: true },
   gemini: { ad: 'Gemini', emoji: '🍌', not: 'Tam AI · YÜZ DEĞİŞİR', sure: 45, key: 'gemini', yuzGuvenli: false },
   canvas: { ad: 'Canvas', emoji: '🖌️', not: 'Anlık · ücretsiz · her zaman çalışır', sure: 3, key: null, yuzGuvenli: true },
@@ -75,11 +75,11 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   const [resultBlobUrl, setResultBlobUrl] = useState(null);
   const [error, setError] = useState(null);
   const [yeniYukle, setYeniYukle] = useState(sablonlar.length === 0);
-  // Model seçimi: 'hibrit' | 'gemini' | 'canvas' | 'openai-pro' — default 'hibrit'
+  // Model seçimi — default 'marka-afis'
   const [aiModel, setAiModel] = useState(() => {
     const saved = localStorage.getItem('aiModel');
-    // Yüz-değiştiren modlar (gemini/openai/openai-pro) kaldırıldı → marka-afis'e migrate
-    if (['marka-afis', 'canvas', 'hibrit', 'ai-afis'].includes(saved)) return saved;
+    // Yüz-değiştiren modlar (gemini/openai/openai-pro) ve Hibrit kaldırıldı → marka-afis'e migrate
+    if (['marka-afis', 'marka-koyu', 'marka-acik', 'canvas', 'ai-afis'].includes(saved)) return saved;
     return 'marka-afis';
   });
   // Format: 'square' (1:1) | 'story' (9:16) | 'landscape' (16:9)
@@ -128,6 +128,8 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   };
   // seçili çipleri motor komut metnine çevir
   const markaEkIstek = () => MARKA_VARYASYON_INDEX.filter(s => markaSecim[s.key]).map(s => s.cmd).join(', ');
+  // Marka ailesi (otomatik + koyu + açık) — hepsi çip varyasyonu kullanır
+  const markaModu = aiModel === 'marka-afis' || aiModel === 'marka-koyu' || aiModel === 'marka-acik';
 
   // Upload mod state
   const [uploadedFile, setUploadedFile] = useState(null); // { file, preview, dataUrl }
@@ -186,20 +188,15 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   const runModel = async (model, sablonKaynak, ekPromptStr) => {
     setAktifModel(model);
     const dims = getDimensions(format);
-    if (model === 'hibrit') {
-      return await gorselOlusturHibrit({
-        apiKey, egitim, egitmenler: egitmenler || [],
-        sablonFile: sablonKaynak, ekPrompt: ekPromptStr, ...dims,
-      });
-    }
     if (model === 'canvas') {
       return await gorselOlusturCanvas({
         egitim, egitmenler: egitmenler || [],
         sablonFile: sablonKaynak, ekPrompt: ekPromptStr, ...dims,
       });
     }
-    if (model === 'marka-afis') {
-      return await gorselOlusturMarkaAfis({ egitim, egitmenler: egitmenler || [], format, ekPrompt: markaEkIstek() });
+    if (model === 'marka-afis' || model === 'marka-koyu' || model === 'marka-acik') {
+      const stil = model === 'marka-koyu' ? 'koyu' : model === 'marka-acik' ? 'acik' : null;
+      return await gorselOlusturMarkaAfis({ egitim, egitmenler: egitmenler || [], format, ekPrompt: markaEkIstek(), stil });
     }
     if (model === 'ai-afis') {
       return await gorselOlusturAiAfis({
@@ -237,12 +234,9 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     const ekPromptStr = buildEkPrompt(etiketler, ekIstek);
 
     // Önce seçili model, başarısız olursa fallback zinciri
-    // Hibrit/Gemini başarısız → OpenAI Pro
-    // OpenAI Pro başarısız → Hibrit (varsa)
+    // AI Afiş başarısız → Marka Afiş (deterministik, her zaman çalışır)
     const modelSirasi = fallbackOn
-      ? (aiModel === 'hibrit' ? ['hibrit', 'canvas']
-        : aiModel === 'ai-afis' ? ['ai-afis', 'marka-afis']
-        : [aiModel])
+      ? (aiModel === 'ai-afis' ? ['ai-afis', 'marka-afis'] : [aiModel])
       : [aiModel];
 
     let lastErr = null;
@@ -250,7 +244,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     for (const m of modelSirasi) {
       try {
         if (m === 'openai-pro' && !openaiApiKey) { lastErr = new Error('OpenAI API anahtarı yok.'); continue; }
-        if ((m === 'gemini' || m === 'hibrit') && !apiKey) { lastErr = new Error('Gemini API anahtarı yok.'); continue; }
+        if (m === 'gemini' && !apiKey) { lastErr = new Error('Gemini API anahtarı yok.'); continue; }
         result = await runModel(m, sablonKaynak, ekPromptStr);
         break;
       } catch (err) {
@@ -446,7 +440,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                     ))}
                   </div>
                 )}
-                {aiModel === 'marka-afis' ? (
+                {markaModu ? (
                   <p className="text-[11px] text-gray-500 mt-3">Tasarım ayarları için aşağıda üret, sonra <b>varyasyon seçeneklerinden</b> seçip yeniden üret.</p>
                 ) : (
                   <>
@@ -521,9 +515,9 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                   <div className="flex-1">
                     <b>⚠️ Bu yöntem yüzleri AI ile YENİDEN ÇİZER — gerçek fotoğraf garantisi YOK</b> (yüzler değişir, Türkçe yazı bozulabilir). Yüzlerin birebir kalması için güvenli yöntem seç:
                     <div className="flex flex-wrap gap-2 mt-2">
-                      <button onClick={() => { setAiModel('ai-afis'); localStorage.setItem('aiModel', 'ai-afis'); }} className="bg-amare-purple hover:bg-amare-dark text-white font-bold px-3 py-1.5 rounded-lg">🎨 AI Afiş</button>
-                      <button onClick={() => { setAiModel('hibrit'); localStorage.setItem('aiModel', 'hibrit'); }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg">🎯 Hibrit</button>
-                      <button onClick={() => { setAiModel('canvas'); localStorage.setItem('aiModel', 'canvas'); }} className="bg-gray-600 hover:bg-gray-700 text-white font-bold px-3 py-1.5 rounded-lg">🖌️ Canvas</button>
+                      <button onClick={() => { setAiModel('marka-afis'); localStorage.setItem('aiModel', 'marka-afis'); }} className="bg-amare-purple hover:bg-amare-dark text-white font-bold px-3 py-1.5 rounded-lg">🏆 Marka Afiş</button>
+                      <button onClick={() => { setAiModel('marka-koyu'); localStorage.setItem('aiModel', 'marka-koyu'); }} className="bg-gray-800 hover:bg-black text-white font-bold px-3 py-1.5 rounded-lg">⬛ Marka Koyu</button>
+                      <button onClick={() => { setAiModel('marka-acik'); localStorage.setItem('aiModel', 'marka-acik'); }} className="bg-amber-200 hover:bg-amber-300 text-amber-900 font-bold px-3 py-1.5 rounded-lg">⬜ Marka Açık</button>
                     </div>
                   </div>
                 </div>
@@ -544,11 +538,19 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setAiModel('hibrit'); localStorage.setItem('aiModel', 'hibrit'); }}
-                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'hibrit' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                    onClick={() => { setAiModel('marka-koyu'); localStorage.setItem('aiModel', 'marka-koyu'); }}
+                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'marka-koyu' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
                   >
-                    <div className="flex items-center gap-1 font-bold">🎯 Hibrit</div>
-                    <div className="text-gray-500 mt-0.5">AI tasarım + Gerçek yüzler · ~$0.04</div>
+                    <div className="flex items-center gap-1 font-bold">⬛ Marka Koyu</div>
+                    <div className="text-gray-500 mt-0.5">Siyah & altın · lüks · ÜCRETSİZ</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAiModel('marka-acik'); localStorage.setItem('aiModel', 'marka-acik'); }}
+                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'marka-acik' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <div className="flex items-center gap-1 font-bold">⬜ Marka Açık</div>
+                    <div className="text-gray-500 mt-0.5">Krem & altın · zarif · ÜCRETSİZ</div>
                   </button>
                   <button
                     type="button"
@@ -650,8 +652,9 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                       className="py-2.5 px-4 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition">Baştan</button>
                   </div>
 
-                  {/* Marka Afiş varyasyon seçenekleri — seç, sonra "Varyasyon üret"e bas */}
-                  {aiModel === 'marka-afis' ? (
+                  {/* Marka varyasyon seçenekleri — seç, sonra "Varyasyon üret"e bas.
+                      Koyu/Açık yöntemlerde tema kilitli → Tema grubu gizlenir. */}
+                  {markaModu ? (
                     <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2.5">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-bold text-gray-700">🎛️ Varyasyon seçenekleri</span>
@@ -659,7 +662,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                           <button onClick={() => setMarkaSecim({})} className="text-[11px] text-amare-purple hover:underline">Temizle</button>
                         )}
                       </div>
-                      {MARKA_VARYASYON.map(g => (
+                      {(aiModel === 'marka-afis' ? MARKA_VARYASYON : MARKA_VARYASYON.filter(g => g.grup !== 'Tema')).map(g => (
                         <div key={g.grup}>
                           <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">{g.grup}</div>
                           <div className="flex flex-wrap gap-1.5">

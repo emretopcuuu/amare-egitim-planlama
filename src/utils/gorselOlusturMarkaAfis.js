@@ -36,14 +36,17 @@ const wrapText = (ctx, text, x, y, maxW, lh, maxLines = 6) => {
   return yy;
 };
 
-// Tema paleti (kategori/başlığa göre)
+// Hazır paletler
+const paletKoyu = () => ({ ad: 'siyah', bg1: '#0b0b0d', bg2: '#17120a', gold: '#d8b15a', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#d9d6cf', elmas: true, acik: false });
+const paletMor = () => ({ ad: 'mor', bg1: '#3a2b54', bg2: '#211633', gold: '#d8b15a', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#e7e0f0', elmas: false, acik: false });
+// Açık/lüks krem-altın palet (referans 2)
+const paletAcik = () => ({ ad: 'acik', bg1: '#f7f1e4', bg2: '#ece0c8', gold: '#c69a3f', goldKoyu: '#9c7426', pillText: '#2a1f08', metin: '#241c10', alt: '#6b5d44', elmas: false, acik: true });
+
+// Tema paleti (kategori/başlığa göre) — stil verilmemişse otomatik seçer
 const paletSec = (egitim) => {
   const k = `${egitim?.kategori || ''} ${egitim?.egitim || ''} ${egitim?.etkinlikTuru || ''}`.toLocaleLowerCase('tr-TR');
-  const gold = '#d8b15a', goldKoyu = '#b8923f', pillText = '#2a1c06';
-  if (/vizyon|diamond|liderlik|kapan|strateji/.test(k))
-    return { ad: 'siyah', bg1: '#0b0b0d', bg2: '#17120a', gold, goldKoyu, pillText, metin: '#ffffff', alt: '#d9d6cf', elmas: true };
-  // seminer / panel / sağlık / toplantı → mor
-  return { ad: 'mor', bg1: '#3a2b54', bg2: '#211633', gold, goldKoyu, pillText, metin: '#ffffff', alt: '#e7e0f0', elmas: false };
+  if (/vizyon|diamond|liderlik|kapan|strateji/.test(k)) return paletKoyu();
+  return paletMor(); // seminer / panel / sağlık / toplantı → mor
 };
 
 // Serbest tasarım isteğini ("Tasarıma ek istek") deterministik ayarlara çevirir.
@@ -100,9 +103,10 @@ const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, palet.bg1); g.addColorStop(1, palet.bg2);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // üstte yumuşak, ORTALI ışık (her iki temada simetrik)
+  // üstte yumuşak, ORTALI ışık (koyu temada beyaz, açık temada sıcak altın hâle)
   const r = ctx.createRadialGradient(W / 2, H * 0.16, 40, W / 2, H * 0.16, W * 0.85);
-  r.addColorStop(0, 'rgba(255,255,255,0.08)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+  if (palet.acik) { r.addColorStop(0, 'rgba(255,255,255,0.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); }
+  else { r.addColorStop(0, 'rgba(255,255,255,0.08)'); r.addColorStop(1, 'rgba(255,255,255,0)'); }
   ctx.fillStyle = r; ctx.fillRect(0, 0, W, H * 0.6);
   // LÜKS: diyagonal altın ışık huzmesi (dinamizm) — kapatılabilir
   if (isik) {
@@ -115,9 +119,10 @@ const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
     ctx.fillStyle = ray; ctx.fillRect(-W, -H * 0.16, W * 2, H * 0.32);
     ctx.restore();
   }
-  // kenar vinyet (derinlik)
+  // kenar vinyet (derinlik) — koyu temada siyah, açık temada yumuşak sıcak ton
   const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.34, W / 2, H / 2, H * 0.72);
-  vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.42)');
+  if (palet.acik) { vig.addColorStop(0, 'rgba(150,115,40,0)'); vig.addColorStop(1, 'rgba(150,115,40,0.12)'); }
+  else { vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.42)'); }
   ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
   // siyah temada altın elmas/parıltı serpiştir (üst bölge)
   if (palet.elmas && elmas) {
@@ -136,7 +141,7 @@ const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
   try {
     const logo = await urlToImage('/logos/oneteam-logo.png');
     const lw = W * 0.62, lh = lw * (logo.height / logo.width);
-    ctx.save(); ctx.globalAlpha = palet.ad === 'siyah' ? 0.10 : 0.08;
+    ctx.save(); ctx.globalAlpha = palet.acik ? 0.05 : (palet.ad === 'siyah' ? 0.10 : 0.08);
     ctx.drawImage(logo, (W - lw) / 2, H * 0.30, lw, lh);
     ctx.restore();
   } catch {}
@@ -165,17 +170,20 @@ const altinHap = (ctx, cx, y, text, fontSize, palet) => {
   return y + h;
 };
 
-export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '' }) => {
+export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null }) => {
   // Marka Afiş HER ZAMAN dikey (kare/story selektöründen bağımsız) — referanslar dikey,
   // kare alan fotoları sıkıştırıyordu.
   const W = 1080, H = 1350;
   const ayar = ayarCikar(ekPrompt); // "Tasarıma ek istek" → deterministik ayar
-  const palet = paletSec(egitim);
-  // tema zorlaması (ek istek)
-  if (ayar.tema === 'siyah' && palet.ad !== 'siyah') {
-    palet.ad = 'siyah'; palet.bg1 = '#0b0b0d'; palet.bg2 = '#17120a'; palet.elmas = true;
-  } else if (ayar.tema === 'mor' && palet.ad !== 'mor') {
-    palet.ad = 'mor'; palet.bg1 = '#3a2b54'; palet.bg2 = '#211633'; palet.elmas = false;
+  // Palet: stil kilitli ise onu kullan (Marka Koyu/Açık), değilse kategoriye göre otomatik
+  let palet;
+  if (stil === 'koyu') palet = paletKoyu();
+  else if (stil === 'acik') palet = paletAcik();
+  else palet = paletSec(egitim);
+  // tema zorlaması (ek istek) — yalnız otomatik (kilitsiz) modda
+  if (!stil) {
+    if (ayar.tema === 'siyah' && palet.ad !== 'siyah') palet = paletKoyu();
+    else if (ayar.tema === 'mor' && palet.ad !== 'mor') palet = paletMor();
   }
   // zemin tonu (koyulaştır / aç)
   if (ayar.zemin !== 1) {
@@ -204,7 +212,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   ctx.fillStyle = palet.metin;
   const tSize = Math.round(W * 0.072 * ayar.yazi);
   ctx.font = `800 ${tSize}px Arial`;
-  ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
+  ctx.shadowColor = palet.acik ? 'rgba(120,90,30,0.18)' : 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
   y = wrapText(ctx, (egitim.egitim || '').toLocaleUpperCase('tr-TR'), W / 2, y + tSize, W - M * 2, tSize * 1.05, 4);
   ctx.shadowBlur = 0;
   // başlık altı altın aksan çizgisi (parıltılı uçlar) — modern dokunuş
@@ -282,7 +290,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
         ctx.beginPath(); ctx.arc(cx, fy, foto * 0.88, 0, Math.PI * 2); ctx.fill();
         // altın halka + foto (gölgeli → ön plan hissi)
         ctx.save();
-        ctx.shadowColor = 'rgba(0,0,0,0.55)';
+        ctx.shadowColor = palet.acik ? 'rgba(120,90,30,0.35)' : 'rgba(0,0,0,0.55)';
         ctx.shadowBlur = Math.round(foto * 0.12);
         ctx.shadowOffsetY = Math.round(foto * 0.04);
         ctx.beginPath(); ctx.arc(cx, fy, foto / 2 + 7, 0, Math.PI * 2);
@@ -362,9 +370,9 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     ctx.fillText(zPill, W / 2, footerTop + Math.round(H * 0.01) + zh / 2);
     ctx.textBaseline = 'alphabetic';
   }
-  // amare logosu (en alt orta)
+  // amare logosu (en alt orta) — açık temada koyu (mor) varyant, koyu temada beyaz
   try {
-    const amare = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
+    const amare = await urlToImage(palet.acik ? '/logos/AmareBPLogo-Horizontal-Purple-TR.png' : '/logos/AmareBPLogo-Horizontal-White-TR.png');
     const ah = Math.round(H * 0.03), aw = ah * (amare.width / amare.height);
     ctx.drawImage(amare, (W - aw) / 2, H - ah - Math.round(H * 0.018), aw, ah);
   } catch {}
