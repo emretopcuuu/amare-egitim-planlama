@@ -166,15 +166,21 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       const adet = dagilim[r];
       const cellW = (W - M * 2) / adet;
       const rowY = speakersTop + r * perRowH;
-      const foto = Math.min(Math.round(cellW * 0.5), Math.round(perRowH * 0.5), Math.round(W * 0.22));
+      // Foto büyük + ön planda (tek sıra daha da büyük)
+      const fotoCap = rows === 1 ? W * 0.42 : W * 0.31;
+      const foto = Math.min(Math.round(cellW * 0.62), Math.round(perRowH * 0.64), Math.round(fotoCap));
       for (let c = 0; c < adet; c++, idx++) {
         const e = liste[idx];
         const cx = M + cellW * c + cellW / 2;
-        const fy = rowY + foto / 2 + Math.round(perRowH * 0.04);
-        // altın halka + foto
+        const fy = rowY + foto / 2 + Math.round(perRowH * 0.03);
+        // altın halka + foto (gölgeli → ön plan hissi)
         ctx.save();
-        ctx.beginPath(); ctx.arc(cx, fy, foto / 2 + 6, 0, Math.PI * 2);
+        ctx.shadowColor = 'rgba(0,0,0,0.55)';
+        ctx.shadowBlur = Math.round(foto * 0.12);
+        ctx.shadowOffsetY = Math.round(foto * 0.04);
+        ctx.beginPath(); ctx.arc(cx, fy, foto / 2 + 7, 0, Math.PI * 2);
         ctx.fillStyle = palet.gold; ctx.fill();
+        ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
         ctx.beginPath(); ctx.arc(cx, fy, foto / 2 + 2, 0, Math.PI * 2);
         ctx.fillStyle = palet.bg2; ctx.fill();
         ctx.beginPath(); ctx.arc(cx, fy, foto / 2, 0, Math.PI * 2); ctx.clip();
@@ -187,7 +193,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
         } else { ctx.fillStyle = '#888'; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         ctx.restore();
         // isim — altın hap
-        const hapY = fy + foto / 2 + Math.round(perRowH * 0.08);
+        const hapY = fy + foto / 2 + Math.round(perRowH * 0.045);
         const nameSize = Math.round(cellW * 0.062);
         const hapBottom = altinHap(ctx, cx, hapY, e.ad || '', nameSize, palet);
         // rol — hapın altında
