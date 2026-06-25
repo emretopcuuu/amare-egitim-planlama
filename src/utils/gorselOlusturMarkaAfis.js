@@ -167,12 +167,20 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       const sidePad = Math.round(W * 0.035);
       const cellW = (W - sidePad * 2) / adet;
       const rowY = speakersTop + r * perRowH;
-      // Foto BASKIN: satır yüksekliğinin çoğunu kaplar (isim hapı alt kenara biner)
-      const foto = Math.min(Math.round(cellW * 0.82), Math.round(perRowH * 0.84), Math.round(W * 0.48));
+      // ORANLAMA (bütçe-bazlı): satır = topPad + foto + g1 + isim hapı + g2 + rol.
+      // foto kalan yere göre hesaplanır → asla çakışmaz, foto mümkün olduğunca büyük.
+      const nameSize = Math.max(15, Math.min(Math.round(cellW * 0.048), 26));
+      const roleSize = Math.max(12, Math.min(Math.round(cellW * 0.038), 18));
+      const pillH = Math.round(nameSize * 1.7);
+      const topPad = Math.round(perRowH * 0.04);
+      const g1 = Math.round(perRowH * 0.035);
+      const g2 = Math.round(perRowH * 0.02);
+      let foto = Math.round(perRowH * 0.93) - topPad - g1 - pillH - g2 - roleSize;
+      foto = Math.max(90, Math.min(foto, Math.round(cellW * 0.86), Math.round(W * 0.46)));
       for (let c = 0; c < adet; c++, idx++) {
         const e = liste[idx];
         const cx = sidePad + cellW * c + cellW / 2;
-        const fy = rowY + foto / 2 + Math.round(perRowH * 0.02);
+        const fy = rowY + topPad + foto / 2;
         // altın halka + foto (gölgeli → ön plan hissi)
         ctx.save();
         ctx.shadowColor = 'rgba(0,0,0,0.55)';
@@ -192,16 +200,14 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
           } catch { ctx.fillStyle = '#888'; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         } else { ctx.fillStyle = '#888'; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         ctx.restore();
-        // isim — altın hap, fotonun ALT KENARINA biner (foto baskın kalsın)
-        const nameSize = Math.round(cellW * 0.058);
-        const hapTop = fy + foto / 2 - Math.round(nameSize * 0.85);
-        const hapBottom = altinHap(ctx, cx, hapTop, e.ad || '', nameSize, palet);
+        // isim — altın hap, fotonun ALTINDA (çakışma yok)
+        const hapBottom = altinHap(ctx, cx, fy + foto / 2 + g1, e.ad || '', nameSize, palet);
         // rol — hapın altında
         if (e.unvan) {
           ctx.fillStyle = palet.alt;
-          ctx.font = `500 ${Math.round(cellW * 0.046)}px Arial`;
+          ctx.font = `500 ${roleSize}px Arial`;
           ctx.textAlign = 'center';
-          ctx.fillText(e.unvan, cx, hapBottom + Math.round(cellW * 0.05), cellW * 0.98);
+          ctx.fillText(e.unvan, cx, hapBottom + g2 + roleSize, cellW * 0.98);
         }
       }
     }
