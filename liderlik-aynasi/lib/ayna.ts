@@ -254,6 +254,14 @@ async function temalarCikar(
   }
 }
 
+// KAMP YAYI — 3 günün dramaturjisi (Üç Kariyer Hâli belgesi 7 günü buraya sıkıştırılır).
+// Gün 1 gör → Gün 2 yüzleş/çöz → Gün 3 tasarla/adan/çoğalt. Yalnız kamp modunda.
+const KAMP_YAY_TEMASI: Record<number, string> = {
+  1: "KAMP YAYI — GÜN 1 (GÖR): Bugün kişi gerçek konumunu görüyor. Görev, kendine anlattığı hikâye ile gerçeği/veriyi ayırmasına hizmet etsin — dürüst konum, öz-farkındalık.",
+  2: "KAMP YAYI — GÜN 2 (YÜZLEŞ & ÇÖZ): Bugün kişi kaçtığı şeyle yüzleşiyor ve kafasındaki soru işaretini çözüyor. Görev iç engeli doğrudan zorlasın; yeni bir çerçeve kurup 'CEO'yu koltuğa oturtsun'.",
+  3: "KAMP YAYI — GÜN 3 (TASARLA & ADAN & ÇOĞALT): Bugün kişi planını kurar, kararını verir ve ışığını başkasına taşır. Görev somut bir 30-90 günlük adım İLE bir başkasına dokunmayı (öğret/destek/dönüş) birleştirsin.",
+};
+
 export async function gorevUret(
   db: Db,
   katilimci: { id: string; full_name: string; team: string | null },
@@ -608,7 +616,7 @@ export async function gorevUret(
           text: `Görevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı.
 
 KARİYER SEVİYESİ: Bu kişi lider veya üzeri kariyer basamağında — görev yeni başlayan düzeyi değil, LİDER düzeyi olmalı. Katlama, lider yetiştirme, devretme, ekip önünde duruş, zor kararlar, üst seviye etki gibi konuları hedefle.
-${personaMetni ? `\n${personaMetni}\n` : ""}
+${personaMetni ? `\n${personaMetni}\n` : ""}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
 
 HEDEF BAĞLANTISI: Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.

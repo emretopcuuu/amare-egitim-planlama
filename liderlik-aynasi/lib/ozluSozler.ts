@@ -97,6 +97,67 @@ export const OZLU_SOZLER: Record<OzluKategori, { metin: string; kaynak: string }
   ],
 };
 
+// ── PERSONA SÖZLERİ (Üç Kariyer Hâli) ────────────────────────────────────────
+// Kampın merkez cümlesi — Gün 3 (zirve/"Adan") herkese gider.
+export const MERKEZ_CUMLE = {
+  metin: "İnsan sakin kaldığı her şeyin galibidir.",
+  kaynak: "Amare",
+};
+
+// Kariyer hâline (A/B/C) özel sözler. A+ (yukselis) hazırlayıcı tonu paylaştığı
+// için A (test_edilmemis) bankasını kullanır. Kamp boyunca (3 gün) bu bankadan
+// seçilir; 90 günlük yolculukta iç-engel bankalarına düşülür (daha geniş havuz).
+export const PERSONA_SOZLER: Record<string, { metin: string; kaynak: string }[]> = {
+  test_edilmemis: [
+    { metin: "Fırtına gelmeden kaptan belli olmaz. Ama hazırlanan kaptan fırtınayı bekler.", kaynak: "Amare" },
+    { metin: "Güven, hiç düşmemek değildir. Düşeceğini bilip yine de yürümektir.", kaynak: "Amare" },
+    { metin: "Korku, ışığı kapatılmış bir odadır. İçeri girince dev sandığın şey bir sandalye çıkar.", kaynak: "Amare" },
+    { metin: "Hazır olmak korkunun yokluğu değildir. Korkuyla ne yapacağını bilmektir.", kaynak: "Amare" },
+  ],
+  duraksama: [
+    { metin: "Düz yol seni dinlendirmek için var. Orada yaşamak için değil.", kaynak: "Amare" },
+    { metin: "Sızıntıyı bulmadan gemiyi kurtaramazsın. Önce su nereden giriyor, onu gör.", kaynak: "Amare" },
+    { metin: "Konfor, hayallerin en kibar hapishanesidir.", kaynak: "Amare" },
+    { metin: "Düzlük bir cümlenin sonu değil, yeni paragrafın başıdır.", kaynak: "Amare" },
+  ],
+  gerileme: [
+    { metin: "Yıldız düştüğünde sönmüş olmaz. Bakanlar dilek tutar. Sıra senin dileğinde.", kaynak: "Amare" },
+    { metin: "Rütbe giydiğin bir cekettir. Sen ceket değilsin.", kaynak: "Amare" },
+    { metin: "İkinci zirve birincisinden daha sağlamdır. Çünkü temelini düşüşten dökersin.", kaynak: "Amare" },
+    { metin: "Düşmek bir cümle değil, virgüldür. Cümleyi sen bitirirsin.", kaynak: "Amare" },
+  ],
+};
+
+// Persona bankası anahtarı: yukselis (A+) → test_edilmemis (A) bankası.
+function personaBankaAnahtari(hal: string | null | undefined): string | null {
+  if (hal === "yukselis") return "test_edilmemis";
+  if (hal && PERSONA_SOZLER[hal]) return hal;
+  return null;
+}
+
+// ★ BİRLEŞİK GÜNLÜK SÖZ SEÇİCİSİ — tik motoru bunu çağırır.
+// Öncelik: (1) kamp zirve günü (Gün 3) → merkez cümle; (2) kariyer hâli varsa
+// persona bankası; (3) yoksa Pusula iç engeline göre genel banka.
+export function gunlukSoz(opts: {
+  hal: string | null | undefined;
+  icEngelKat: string | null | undefined;
+  gun: number;
+  kampGunu: number | null;
+}): { metin: string; kaynak: string } {
+  // Kampın son günü (Adan/zirve): herkese merkez cümle.
+  if (opts.kampGunu === 3) return MERKEZ_CUMLE;
+
+  // Kamp içindeyken (Gün 1-2) kariyer hâline özel söz.
+  const banka = personaBankaAnahtari(opts.hal);
+  if (opts.kampGunu !== null && banka) {
+    const liste = PERSONA_SOZLER[banka];
+    return liste[Math.max(0, (opts.gun - 1) % liste.length)];
+  }
+
+  // Yolculuk ya da hâl yok → Pusula iç engeline göre genel banka.
+  return sozSec(kategoriSec(opts.icEngelKat), opts.gun);
+}
+
 // Pusula ic_engel_kat → özlü söz kategorisi eşlemesi
 export function kategoriSec(icEngelKat: string | null | undefined): OzluKategori {
   switch (icEngelKat) {

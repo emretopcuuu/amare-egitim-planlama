@@ -44,7 +44,7 @@ import {
 } from "@/lib/cumartesiProgrami";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
-import { kategoriSec, sozSec } from "@/lib/ozluSozler";
+import { gunlukSoz } from "@/lib/ozluSozler";
 
 type Db = ReturnType<typeof supabaseAdmin>;
 
@@ -196,7 +196,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
           : 1));
 
   const [{ data: kisiler }, { data: sonGorevler }] = await Promise.all([
-    db.from("participants").select("id, full_name, team, kariyer_seviyesi").eq("role", "participant"),
+    db.from("participants").select("id, full_name, team, kariyer_seviyesi, kariyer_durumu").eq("role", "participant"),
     db
       .from("missions")
       .select("participant_id, status, issued_at, kind")
@@ -715,8 +715,14 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       );
       for (const k of kisiler ?? []) {
         const engelKat = engelHarita.get(k.id) ?? null;
-        const kategori = kategoriSec(engelKat);
-        const soz = sozSec(kategori, gun);
+        // Kariyer hâli (A/B/C) varsa persona sözü; kamp zirvesinde merkez cümle;
+        // yoksa Pusula iç engeline göre genel banka.
+        const soz = gunlukSoz({
+          hal: k.kariyer_durumu,
+          icEngelKat: engelKat,
+          gun,
+          kampGunu: kampGunuBugun,
+        });
         await katilimciyaBildir(
           db,
           k.id,
