@@ -9,11 +9,11 @@ import { afisTuru, afisTuruLabel } from '../utils/egitmenEtiket';
 
 // Üretim motorları — meta (ad, ikon, açıklama, tahmini süre sn, hangi anahtar gerekir)
 const MOTORLAR = {
-  hibrit: { ad: 'Hibrit', emoji: '🎯', not: 'AI tasarım + gerçek yüzler', sure: 55, key: 'gemini' },
-  'ai-afis': { ad: 'AI Afiş', emoji: '🎨', not: 'Şablonsuz · şehir illüstrasyonu', sure: 30, key: 'gemini', sablonsuz: true },
-  gemini: { ad: 'Gemini', emoji: '🍌', not: 'Tam AI · yüz değişebilir', sure: 45, key: 'gemini' },
-  canvas: { ad: 'Canvas', emoji: '🖌️', not: 'Anlık · ücretsiz · her zaman çalışır', sure: 3, key: null },
-  'openai-pro': { ad: 'OpenAI Pro', emoji: '✨', not: 'gpt-image · sunucu', sure: 45, key: 'openai' },
+  hibrit: { ad: 'Hibrit', emoji: '🎯', not: 'AI tasarım + gerçek yüzler', sure: 55, key: 'gemini', yuzGuvenli: true },
+  'ai-afis': { ad: 'AI Afiş', emoji: '🎨', not: 'Şablonsuz · şehir illüstrasyonu', sure: 30, key: 'gemini', sablonsuz: true, yuzGuvenli: true },
+  gemini: { ad: 'Gemini', emoji: '🍌', not: 'Tam AI · YÜZ DEĞİŞİR', sure: 45, key: 'gemini', yuzGuvenli: false },
+  canvas: { ad: 'Canvas', emoji: '🖌️', not: 'Anlık · ücretsiz · her zaman çalışır', sure: 3, key: null, yuzGuvenli: true },
+  'openai-pro': { ad: 'OpenAI Pro', emoji: '✨', not: 'gpt-image · YÜZ DEĞİŞEBİLİR', sure: 45, key: 'openai', yuzGuvenli: false },
 };
 
 // Yapısal konuşmacı etiketlerinden generator'ların beklediği metin bloğunu üret.
@@ -448,10 +448,28 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                   <span className="text-gray-400 font-normal"> · {MOTORLAR[aiModel].not}</span>
                 </span>
                 <span className="inline-flex items-center gap-1 text-amare-purple font-semibold">
+                  {MOTORLAR[aiModel].yuzGuvenli
+                    ? <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold">✓ yüz birebir</span>
+                    : <span className="text-[10px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold">⚠ yüz değişir</span>}
                   <Settings2 className="w-3.5 h-3.5" />Gelişmiş
                   <ChevronDown className={`w-4 h-4 transition-transform ${gelismis ? 'rotate-180' : ''}`} />
                 </span>
               </button>
+
+              {/* Yüz-değiştiren yöntem uyarısı */}
+              {!MOTORLAR[aiModel].yuzGuvenli && (
+                <div className="bg-red-50 border-2 border-red-300 rounded-xl p-3 text-xs text-red-700 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <b>⚠️ Bu yöntem yüzleri AI ile YENİDEN ÇİZER — gerçek fotoğraf garantisi YOK</b> (yüzler değişir, Türkçe yazı bozulabilir). Yüzlerin birebir kalması için güvenli yöntem seç:
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <button onClick={() => { setAiModel('ai-afis'); localStorage.setItem('aiModel', 'ai-afis'); }} className="bg-amare-purple hover:bg-amare-dark text-white font-bold px-3 py-1.5 rounded-lg">🎨 AI Afiş</button>
+                      <button onClick={() => { setAiModel('hibrit'); localStorage.setItem('aiModel', 'hibrit'); }} className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg">🎯 Hibrit</button>
+                      <button onClick={() => { setAiModel('canvas'); localStorage.setItem('aiModel', 'canvas'); }} className="bg-gray-600 hover:bg-gray-700 text-white font-bold px-3 py-1.5 rounded-lg">🖌️ Canvas</button>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Model Seçici (Gelişmiş) */}
               {gelismis && (
