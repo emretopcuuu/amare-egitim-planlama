@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -49,6 +48,7 @@ import CapaAcici from "./CapaAcici";
 import TerimlerSozluk from "./TerimlerSozluk";
 import SimdiSonra from "./SimdiSonra";
 import YeniKampButonu from "./YeniKampButonu";
+import OneriButonu from "./OneriButonu";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -296,16 +296,10 @@ export default async function AdminPanel() {
         </div>
       </div>
 
-      {/* FUNNEL OMURGASI — kampın 5 aşaması, şu an neredeyiz, açılış zamanları */}
-      <FunnelOmurga aktif={aktifAsama} zamanlar={asamaZaman} />
-
-      {/* UX #6: basit görünümde acemi yönergesi (kapatılamaz, sade) */}
-      <p className="basit-only rounded-xl border border-royal-light/20 bg-white/[0.02] px-4 py-2.5 text-sm leading-relaxed text-slate-300">
-        👋 Sade görünümdesin. Aşağıdaki <span className="font-semibold text-gold-light">altın kart</span> her
-        zaman sıradaki tek adımı söyler — şüphedeysen ona bas. Bir kelimeyi anlamazsan üstteki{" "}
-        <span className="font-semibold text-gold-light">📖 Terimler</span>’e bak. Tüm araçlar için sağ üstten{" "}
-        <span className="font-semibold text-gold-light">Uzman</span>’a geç.
-      </p>
+      {/* FUNNEL OMURGASI — kampın 5 aşaması (yalnız Uzman; Basit'te tek adım odağı) */}
+      <div className="uzman-only">
+        <FunnelOmurga aktif={aktifAsama} zamanlar={asamaZaman} />
+      </div>
 
       {/* #7 Bölüm atlama — yapışkan mini içindekiler (yalnız uzman) */}
       <div className="uzman-only">
@@ -344,31 +338,17 @@ export default async function AdminPanel() {
             </p>
           </div>
         </div>
-        <Link
-          href={oneri.href}
-          className="btn-kor parilti mt-4 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold transition-transform hover:scale-[1.01]"
-        >
-          {oneri.butonEtiket}
-        </Link>
+        <OneriButonu href={oneri.href} etiket={oneri.butonEtiket} />
       </section>
 
-      {/* UX #4: Şimdi / Sonra şeridi — somut "ne yap, sonra ne gelir" */}
-      <SimdiSonra aktifAsama={aktifAsama} />
+      {/* Şimdi/Sonra şeridi + kurulum rehberi — Uzman (Basit'te tek hero adımı yeter) */}
+      <div className="uzman-only space-y-6">
+        <SimdiSonra aktifAsama={aktifAsama} />
+        {tamYetki && <HazirlikPaneli konum="ust" aktifAsama={aktifAsama} />}
+      </div>
 
-      {/* UX #5 (2.tur): İlk Kurulum Rehberi — kritik bir kurulum adımı eksikse
-          panelin tepesinde numaralı rehber belirir; kurulum bitince kaybolur.
-          Basit görünümde her zaman göster (acemi için kalıcı checklist). */}
-      {tamYetki && <HazirlikPaneli konum="ust" aktifAsama={aktifAsama} />}
-      {/* UX #8: basit görünümde tam kurulum checklist'i her zaman görünür */}
-      {tamYetki && (
-        <div className="basit-only">
-          <HazirlikPaneli konum="arac" aktifAsama={aktifAsama} />
-        </div>
-      )}
-
-      {/* GENEL DURUM: canlı özet rakamları + kamp öncesi katılım hunisi tek
-          kartta. İki ayrı özet bölümü yerine tek "nabız" paneli. */}
-      <section className="kart-3d space-y-4 rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      {/* GENEL DURUM: canlı özet rakamları (yalnız Uzman — Basit'te tek adım odağı) */}
+      <section className="uzman-only kart-3d space-y-4 rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gold-light">
             {tr.admin.ozet.genelBaslik}
@@ -414,18 +394,13 @@ export default async function AdminPanel() {
         </div>
       )}
 
-      {/* UX #5: Kumanda Odası — kamp günündeysen basit görünümde odak çerçevesi */}
-      {kampGun !== null && (
-        <p className="basit-only rounded-xl border border-emerald-400/30 bg-emerald-500/[0.07] px-4 py-2.5 text-sm font-medium text-emerald-200">
-          🎛 Kumanda Odası — bugün canlı kamp (Gün {kampGun}). Sadece aşağıdaki günün adımlarına odaklan; kurulum işleri bitti.
-        </p>
-      )}
+      {/* Bugünün Akışı — kamp günündeyse o günün adımları (yalnız Uzman) */}
+      <div className="uzman-only">
+        <GununAkisi bugun={bugun} />
+      </div>
 
-      {/* Bugünün Akışı — kamp günündeyse o günün adımları */}
-      <GununAkisi bugun={bugun} />
-
-      {/* CANLI ÇALIŞMA ALANI: açık dalga ilerlemesi + toplu eylem */}
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      {/* CANLI ÇALIŞMA ALANI: açık dalga ilerlemesi + toplu eylem (yalnız Uzman) */}
+      <section className="uzman-only kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 id="ilerleme" className="scroll-mt-20 text-lg font-semibold text-slate-200">
           {tr.admin.ilerleme.baslik}
           {acikDalga && (
@@ -518,7 +493,7 @@ export default async function AdminPanel() {
       {tamYetki && (
         <section
           id="tehlike"
-          className="scroll-mt-24 space-y-5 rounded-2xl border-2 border-red-500/30 bg-red-950/10 p-5"
+          className="uzman-only scroll-mt-24 space-y-5 rounded-2xl border-2 border-red-500/30 bg-red-950/10 p-5"
         >
           {/* Uzman: tam "Tehlike Bölgesi" başlığı */}
           <div className="uzman-only flex items-start gap-3">
@@ -696,11 +671,12 @@ export default async function AdminPanel() {
         </section>
       )}
 
-      {/* Basit modda: gizlenenlerin olduğunu hatırlat (kaybolmuş hissi olmasın) */}
+      {/* Basit modda: yalnız sıradaki adım gösterilir; gerisi Uzman'da */}
       {tamYetki && (
         <p className="basit-only rounded-xl border border-royal-light/20 bg-white/[0.02] px-4 py-3 text-center text-sm text-slate-400">
-          İleri araçlar, geçmiş aşamalar ve tüm kontroller{" "}
-          <span className="font-semibold text-gold-light">Uzman</span> görünümünde (sağ üstteki anahtar).
+          Basit görünümde yalnız <span className="font-semibold text-gold-light">sıradaki tek adımı</span> görürsün.
+          Durum, ilerleme, tüm araçlar ve kontroller için sağ üstten{" "}
+          <span className="font-semibold text-gold-light">Uzman</span>’a geç.
         </p>
       )}
 
