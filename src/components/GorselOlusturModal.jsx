@@ -5,10 +5,12 @@ import { gorselOlusturOpenAIPro } from '../utils/gorselOlusturOpenAIPro';
 import { gorselOlusturCanvas } from '../utils/gorselOlusturCanvas';
 import { gorselOlusturHibrit } from '../utils/gorselOlusturHibrit';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
+import { gorselOlusturMarkaAfis } from '../utils/gorselOlusturMarkaAfis';
 import { afisTuru, afisTuruLabel } from '../utils/egitmenEtiket';
 
 // Üretim motorları — meta (ad, ikon, açıklama, tahmini süre sn, hangi anahtar gerekir)
 const MOTORLAR = {
+  'marka-afis': { ad: 'Marka Afiş', emoji: '🏆', not: 'Şablonsuz · marka tasarımı · anahtarsız', sure: 3, key: null, sablonsuz: true, yuzGuvenli: true },
   hibrit: { ad: 'Hibrit', emoji: '🎯', not: 'AI tasarım + gerçek yüzler', sure: 55, key: 'gemini', yuzGuvenli: true },
   'ai-afis': { ad: 'AI Afiş', emoji: '🎨', not: 'Şablonsuz · şehir illüstrasyonu', sure: 30, key: 'gemini', sablonsuz: true, yuzGuvenli: true },
   gemini: { ad: 'Gemini', emoji: '🍌', not: 'Tam AI · YÜZ DEĞİŞİR', sure: 45, key: 'gemini', yuzGuvenli: false },
@@ -41,9 +43,9 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   // Model seçimi: 'hibrit' | 'gemini' | 'canvas' | 'openai-pro' — default 'hibrit'
   const [aiModel, setAiModel] = useState(() => {
     const saved = localStorage.getItem('aiModel');
-    // Yüz-değiştiren modlar (gemini/openai/openai-pro) kaldırıldı → hibrit'e migrate
-    if (['canvas', 'hibrit', 'ai-afis'].includes(saved)) return saved;
-    return 'hibrit';
+    // Yüz-değiştiren modlar (gemini/openai/openai-pro) kaldırıldı → marka-afis'e migrate
+    if (['marka-afis', 'canvas', 'hibrit', 'ai-afis'].includes(saved)) return saved;
+    return 'marka-afis';
   });
   // Format: 'square' (1:1) | 'story' (9:16) | 'landscape' (16:9)
   const [format, setFormat] = useState(() => localStorage.getItem('aiFormat') || 'square');
@@ -146,6 +148,9 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
         sablonFile: sablonKaynak, ekPrompt: ekPromptStr, ...dims,
       });
     }
+    if (model === 'marka-afis') {
+      return await gorselOlusturMarkaAfis({ egitim, egitmenler: egitmenler || [], format });
+    }
     if (model === 'ai-afis') {
       return await gorselOlusturAiAfis({
         geminiApiKey: apiKey, openaiApiKey,
@@ -168,8 +173,8 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   const iptalEt = () => { iptalRef.current = true; setGenerating(false); setAktifModel(null); };
 
   const handleOlustur = async () => {
-    // AI Afiş şablonsuz çalışır; diğer yöntemler şablon ister
-    if (aiModel !== 'ai-afis' && !secilenSablon) { setError('Lütfen bir şablon seçin (ya da "AI Afiş" yöntemini seç — şablonsuz çalışır).'); return; }
+    // Şablonsuz yöntemler (Marka Afiş, AI Afiş) şablon istemez
+    if (!MOTORLAR[aiModel].sablonsuz && !secilenSablon) { setError('Lütfen bir şablon seçin (ya da "Marka Afiş" / "AI Afiş" — şablonsuz çalışır).'); return; }
     iptalRef.current = false;
     setGenerating(true);
     setError(null);
@@ -186,7 +191,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     // OpenAI Pro başarısız → Hibrit (varsa)
     const modelSirasi = fallbackOn
       ? (aiModel === 'hibrit' ? ['hibrit', 'canvas']
-        : aiModel === 'ai-afis' ? ['ai-afis']
+        : aiModel === 'ai-afis' ? ['ai-afis', 'marka-afis']
         : [aiModel])
       : [aiModel];
 
@@ -475,10 +480,18 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <button
                     type="button"
+                    onClick={() => { setAiModel('marka-afis'); localStorage.setItem('aiModel', 'marka-afis'); }}
+                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'marka-afis' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <div className="flex items-center gap-1 font-bold">🏆 Marka Afiş <span className="text-[10px] bg-green-200 text-green-900 px-1 rounded">önerilen</span></div>
+                    <div className="text-gray-500 mt-0.5">Şablonsuz · marka tasarımı · ÜCRETSİZ</div>
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => { setAiModel('hibrit'); localStorage.setItem('aiModel', 'hibrit'); }}
                     className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'hibrit' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
                   >
-                    <div className="flex items-center gap-1 font-bold">🎯 Hibrit <span className="text-[10px] bg-green-200 text-green-900 px-1 rounded">önerilen</span></div>
+                    <div className="flex items-center gap-1 font-bold">🎯 Hibrit</div>
                     <div className="text-gray-500 mt-0.5">AI tasarım + Gerçek yüzler · ~$0.04</div>
                   </button>
                   <button
@@ -539,7 +552,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
               {!resultBlobUrl && (
                 <div className="space-y-2">
                   <button onClick={handleOlustur}
-                    disabled={generating || (aiModel !== 'ai-afis' && !secilenSablon)}
+                    disabled={generating || (!MOTORLAR[aiModel].sablonsuz && !secilenSablon)}
                     className="w-full py-3 rounded-xl font-bold text-white bg-gradient-to-r from-amare-purple to-amare-blue hover:opacity-90 transition disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2">
                     {generating ? (
                       <>
