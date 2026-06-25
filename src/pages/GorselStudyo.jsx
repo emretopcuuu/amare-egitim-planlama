@@ -7,7 +7,10 @@ import { uploadGorsel } from '../utils/uploadGorsel';
 import { gorselOlusturMarkaAfis } from '../utils/gorselOlusturMarkaAfis';
 import { gorselOlusturProgramAfis } from '../utils/gorselOlusturProgramAfis';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
-import { MARKA_VARYASYON_INDEX, MARKA_PRESETLER, markaGruplar, markaEkIstek } from '../utils/markaVaryasyon';
+import { MARKA_VARYASYON, MARKA_VARYASYON_INDEX, MARKA_PRESETLER, markaGruplar, markaEkIstek } from '../utils/markaVaryasyon';
+
+// Program afişinde anlamlı varyasyon grupları (foto düzeni/içerik vb. hariç)
+const PROGRAM_GRUPLARI = ['Tema', 'Yazı', 'Yazı tipi', 'Arka plan', 'Filigran', 'Dil', 'Foto şekli', 'Arka plan dokusu'];
 
 // Grup başlık ikonları (göz hızlı tarar)
 const GRUP_IKON = {
@@ -248,7 +251,7 @@ export default function GorselStudyo() {
           }
           return { saat: r.saat, baslik: r.baslik, konusmaci: k };
         });
-        res = await gorselOlusturProgramAfis({ egitim, programSatirlari });
+        res = await gorselOlusturProgramAfis({ egitim, programSatirlari, ekPrompt: markaEkIstek(markaSecim) });
       } else {
         if (!geminiApiKey) throw new Error('AI Afiş için Gemini API anahtarı gerekli (Ayarlar → AI API Anahtarları).');
         res = await gorselOlusturAiAfis({ geminiApiKey, openaiApiKey, egitim, egitmenler: speakers, ekPrompt: ekIstek, format: 'portrait' });
@@ -427,8 +430,8 @@ export default function GorselStudyo() {
               </div>
             )}
 
-            {/* Marka varyasyon / AI ek istek */}
-            {markaModu ? (
+            {/* Varyasyon paneli (Marka + Program) / AI ek istek */}
+            {(markaModu || programModu) ? (
               <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2.5">
                 {/* Araç çubuğu: geri al / ileri / sürpriz / kaydet / temizle */}
                 <div className="flex items-center justify-between gap-2">
@@ -467,7 +470,7 @@ export default function GorselStudyo() {
                   </div>
                 </div>
                 {/* Gruplar — ikonlu başlık + görünür çipler */}
-                {markaGruplar(aiModel).map(g => (
+                {(programModu ? MARKA_VARYASYON.filter(g => PROGRAM_GRUPLARI.includes(g.grup)) : markaGruplar(aiModel)).map(g => (
                   <div key={g.grup}>
                     <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1 flex items-center gap-1">
                       <span className="text-xs">{GRUP_IKON[g.grup] || '•'}</span>{g.grup}

@@ -131,7 +131,7 @@ const kurdeleCiz = (ctx, W, metin, palet) => {
 };
 
 // Hazır paletler — goldRGB: dekor (ışık/elmas/parıltı) rengi, aksana göre değişir
-const paletKoyu = () => ({ ad: 'siyah', bg1: '#0b0b0d', bg2: '#17120a', gold: '#d8b15a', goldRGB: '216,177,90', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#d9d6cf', elmas: true, acik: false });
+export const paletKoyu = () => ({ ad: 'siyah', bg1: '#0b0b0d', bg2: '#17120a', gold: '#d8b15a', goldRGB: '216,177,90', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#d9d6cf', elmas: true, acik: false });
 const paletMor = () => ({ ad: 'mor', bg1: '#3a2b54', bg2: '#211633', gold: '#d8b15a', goldRGB: '216,177,90', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#e7e0f0', elmas: false, acik: false });
 // Açık/lüks krem-altın palet (referans 2)
 const paletAcik = () => ({ ad: 'acik', bg1: '#f7f1e4', bg2: '#ece0c8', gold: '#c69a3f', goldRGB: '198,154,63', goldKoyu: '#9c7426', pillText: '#2a1f08', metin: '#241c10', alt: '#6b5d44', elmas: false, acik: true });
@@ -143,7 +143,7 @@ const paletZumrut = () => ({ ad: 'zumrut', bg1: '#0a261d', bg2: '#061a13', gold:
 const paletGumus = () => ({ ad: 'gumus', bg1: '#1a1c20', bg2: '#0e1013', gold: '#cdd1d8', goldRGB: '205,209,216', goldKoyu: '#9aa0a8', pillText: '#1a1c20', metin: '#ffffff', alt: '#cfd3da', elmas: true, acik: false });
 const paletPlatin = () => ({ ad: 'platin', bg1: '#f3f4f6', bg2: '#e2e4e8', gold: '#8d929c', goldRGB: '141,146,156', goldKoyu: '#6b7079', pillText: '#1a1c20', metin: '#1f232a', alt: '#5b616b', elmas: false, acik: true });
 // İsimle palet getir (tema çipi / ek istek)
-const paletAdla = (ad) => ({ siyah: paletKoyu, mor: paletMor, acik: paletAcik, lacivert: paletLacivert, bordo: paletBordo, zumrut: paletZumrut, gumus: paletGumus, platin: paletPlatin }[ad] || null);
+export const paletAdla = (ad) => ({ siyah: paletKoyu, mor: paletMor, acik: paletAcik, lacivert: paletLacivert, bordo: paletBordo, zumrut: paletZumrut, gumus: paletGumus, platin: paletPlatin }[ad] || null);
 
 // Yazı tipi setleri — başlık / isim / gövde ayrı olabilir (isimlere şık font)
 const FONT_SETLERI = {
@@ -153,14 +153,14 @@ const FONT_SETLERI = {
   modern: { baslik: '"Trebuchet MS"', isim: '"Trebuchet MS"', govde: '"Trebuchet MS"' },
   klasikSerif: { baslik: '"Times New Roman"', isim: 'Georgia', govde: 'Georgia' },
 };
-const fontSec = (ad) => FONT_SETLERI[ad] || FONT_SETLERI.klasik;
+export const fontSec = (ad) => FONT_SETLERI[ad] || FONT_SETLERI.klasik;
 
 // Gün adı TR→EN (dil çipi için)
 const GUN_EN = {
   'PAZARTESİ': 'MONDAY', 'SALI': 'TUESDAY', 'ÇARŞAMBA': 'WEDNESDAY', 'PERŞEMBE': 'THURSDAY',
   'CUMA': 'FRIDAY', 'CUMARTESİ': 'SATURDAY', 'PAZAR': 'SUNDAY',
 };
-const gunCevir = (gun, dil) => {
+export const gunCevir = (gun, dil) => {
   if (dil !== 'en' || !gun) return gun;
   return GUN_EN[gun.toLocaleUpperCase('tr-TR').trim()] || gun;
 };
@@ -179,7 +179,7 @@ const renkAyarla = (hex, f) => {
   const c = (i) => Math.max(0, Math.min(255, Math.round(parseInt(n.slice(i, i + 2), 16) * f)));
   return `#${[c(0), c(2), c(4)].map(v => v.toString(16).padStart(2, '0')).join('')}`;
 };
-const ayarCikar = (ek) => {
+export const ayarCikar = (ek) => {
   const t = (ek || '').toLocaleLowerCase('tr-TR');
   // bayraklar: dekor + içerik açık varsayılan
   const a = {
