@@ -606,6 +606,64 @@ export type Database = {
         }
         Relationships: []
       }
+      mentorluk_kayit: {
+        Row: {
+          aday_idler: string[]
+          created_at: string
+          gun: number | null
+          id: string
+          konustu: boolean
+          mentee_id: string
+          mission_id: string | null
+          secilen_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          aday_idler?: string[]
+          created_at?: string
+          gun?: number | null
+          id?: string
+          konustu?: boolean
+          mentee_id: string
+          mission_id?: string | null
+          secilen_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aday_idler?: string[]
+          created_at?: string
+          gun?: number | null
+          id?: string
+          konustu?: boolean
+          mentee_id?: string
+          mission_id?: string | null
+          secilen_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mentorluk_kayit_mentee_id_fkey"
+            columns: ["mentee_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentorluk_kayit_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mentorluk_kayit_secilen_id_fkey"
+            columns: ["secilen_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mini360_dis: {
         Row: {
           created_at: string
@@ -779,10 +837,13 @@ export type Database = {
           carried_at: string | null
           difficulty: number
           due_at: string
+          ertelenme_sayisi: number
+          gec_tamamlandi: boolean
           id: string
           issued_at: string
           kind: string
           lightened_at: string | null
+          micro_sprint: boolean
           neden: string | null
           participant_id: string
           reflected_at: string | null
@@ -790,9 +851,11 @@ export type Database = {
           reflection_text: string | null
           reminded_at: string | null
           responded_at: string | null
+          response_tags: string[] | null
           response_text: string | null
           scored_at: string | null
           spark_points: number
+          started_at: string | null
           status: string
           title: string
           trait_id: number | null
@@ -805,10 +868,13 @@ export type Database = {
           carried_at?: string | null
           difficulty?: number
           due_at: string
+          ertelenme_sayisi?: number
+          gec_tamamlandi?: boolean
           id?: string
           issued_at?: string
           kind: string
           lightened_at?: string | null
+          micro_sprint?: boolean
           neden?: string | null
           participant_id: string
           reflected_at?: string | null
@@ -816,9 +882,11 @@ export type Database = {
           reflection_text?: string | null
           reminded_at?: string | null
           responded_at?: string | null
+          response_tags?: string[] | null
           response_text?: string | null
           scored_at?: string | null
           spark_points?: number
+          started_at?: string | null
           status?: string
           title: string
           trait_id?: number | null
@@ -831,10 +899,13 @@ export type Database = {
           carried_at?: string | null
           difficulty?: number
           due_at?: string
+          ertelenme_sayisi?: number
+          gec_tamamlandi?: boolean
           id?: string
           issued_at?: string
           kind?: string
           lightened_at?: string | null
+          micro_sprint?: boolean
           neden?: string | null
           participant_id?: string
           reflected_at?: string | null
@@ -842,9 +913,11 @@ export type Database = {
           reflection_text?: string | null
           reminded_at?: string | null
           responded_at?: string | null
+          response_tags?: string[] | null
           response_text?: string | null
           scored_at?: string | null
           spark_points?: number
+          started_at?: string | null
           status?: string
           title?: string
           trait_id?: number | null
@@ -1084,14 +1157,21 @@ export type Database = {
       }
       participants: {
         Row: {
+          amare_puan: number | null
+          camp_unlock_token: string | null
           camp_unlocked_at: string | null
           city: string | null
           consent_at: string | null
           created_at: string
           deletion_requested_at: string | null
           email: string | null
+          en_yuksek_kariyer: string | null
           full_name: string
+          gecen_ay_kariyer: string | null
           id: string
+          kariyer_durumu: string | null
+          kariyer_seviyesi: string | null
+          kidem_ay: number | null
           login_code: string
           phone: string | null
           profil_foto_path: string | null
@@ -1100,14 +1180,21 @@ export type Database = {
           yuz_fotolari: Json
         }
         Insert: {
+          amare_puan?: number | null
+          camp_unlock_token?: string | null
           camp_unlocked_at?: string | null
           city?: string | null
           consent_at?: string | null
           created_at?: string
           deletion_requested_at?: string | null
           email?: string | null
+          en_yuksek_kariyer?: string | null
           full_name: string
+          gecen_ay_kariyer?: string | null
           id?: string
+          kariyer_durumu?: string | null
+          kariyer_seviyesi?: string | null
+          kidem_ay?: number | null
           login_code: string
           phone?: string | null
           profil_foto_path?: string | null
@@ -1116,14 +1203,21 @@ export type Database = {
           yuz_fotolari?: Json
         }
         Update: {
+          amare_puan?: number | null
+          camp_unlock_token?: string | null
           camp_unlocked_at?: string | null
           city?: string | null
           consent_at?: string | null
           created_at?: string
           deletion_requested_at?: string | null
           email?: string | null
+          en_yuksek_kariyer?: string | null
           full_name?: string
+          gecen_ay_kariyer?: string | null
           id?: string
+          kariyer_durumu?: string | null
+          kariyer_seviyesi?: string | null
+          kidem_ay?: number | null
           login_code?: string
           phone?: string | null
           profil_foto_path?: string | null
@@ -1863,7 +1957,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      yeni_kamp_hazirla: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

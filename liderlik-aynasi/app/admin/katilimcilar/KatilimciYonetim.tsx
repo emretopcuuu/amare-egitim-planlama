@@ -13,6 +13,26 @@ const takimAdi = (i: number) => `Grup ${i}`;
 const BOS_KISI = { ad: "", takim: "", sehir: "", telefon: "", eposta: "" };
 const SAYFA_BOYU = 10;
 
+type KariyerSeviyesi = "leader" | "senior_leader" | "exec_leader" | "diamond" | "star" | "";
+
+const KARIYER_ETIKETLER: Record<string, string> = {
+  leader: "Leader",
+  senior_leader: "Senior Leader",
+  exec_leader: "Exec. Leader",
+  diamond: "Diamond",
+  star: "Star",
+};
+
+// Türetilen kariyer hâli (A/B/C/A+) — admin düzenleme modalında rozet.
+const DURUM_ETIKETLER: Record<string, string> = {
+  test_edilmemis: "A · Test Edilmemiş",
+  yukselis: "A+ · Yükselişte",
+  duraksama: "B · Düzlükte",
+  gerileme: "C · Düşüşten Dönen",
+};
+
+const KARIYER_SECENEKLER = ["leader", "senior_leader", "exec_leader", "diamond", "star"] as const;
+
 type Kisi = {
   id: string;
   full_name: string;
@@ -20,6 +40,11 @@ type Kisi = {
   city: string | null;
   phone: string | null;
   login_code: string;
+  kariyer_seviyesi: string | null;
+  en_yuksek_kariyer: string | null;
+  gecen_ay_kariyer: string | null;
+  kidem_ay: number | null;
+  kariyer_durumu: string | null;
 };
 
 // Tek sayfa yönetimi: liste EN ÜSTTE ve açık; diğer her şey katlanır (kapalı) bölüm.
@@ -41,7 +66,7 @@ export default function KatilimciYonetim({
 
   // ---- satır düzenleme ----
   const [duzenle, setDuzenle] = useState<Kisi | null>(null);
-  const [duzenleDeger, setDuzenleDeger] = useState({ ad: "", takim: "", sehir: "", telefon: "", login_code: "" });
+  const [duzenleDeger, setDuzenleDeger] = useState({ ad: "", takim: "", sehir: "", telefon: "", login_code: "", kariyer_seviyesi: "" as KariyerSeviyesi, en_yuksek_kariyer: "" as KariyerSeviyesi, gecen_ay_kariyer: "" as KariyerSeviyesi, kidem_ay: "" });
   const [duzenleYukleniyor, setDuzenleYukleniyor] = useState(false);
   const [duzenleMesaj, setDuzenleMesaj] = useState<string | null>(null);
   const [duzenleHataMsg, setDuzenleHataMsg] = useState<string | null>(null);
@@ -52,7 +77,7 @@ export default function KatilimciYonetim({
 
   function duzenleAc(k: Kisi) {
     setDuzenle(k);
-    setDuzenleDeger({ ad: k.full_name, takim: k.team ?? "", sehir: k.city ?? "", telefon: k.phone ?? "", login_code: k.login_code });
+    setDuzenleDeger({ ad: k.full_name, takim: k.team ?? "", sehir: k.city ?? "", telefon: k.phone ?? "", login_code: k.login_code, kariyer_seviyesi: (k.kariyer_seviyesi ?? "") as KariyerSeviyesi, en_yuksek_kariyer: (k.en_yuksek_kariyer ?? "") as KariyerSeviyesi, gecen_ay_kariyer: (k.gecen_ay_kariyer ?? "") as KariyerSeviyesi, kidem_ay: k.kidem_ay != null ? String(k.kidem_ay) : "" });
     setDuzenleMesaj(null);
     setDuzenleHataMsg(null);
     setSilOnayMod(false);
@@ -655,6 +680,72 @@ export default function KatilimciYonetim({
                     className={`${giris} w-full font-mono tracking-widest`}
                   />
                 </label>
+                {/* Kariyer momentumu — A/B/C/A+ türetmesi + mentorluk eşleştirmesi.
+                    Katılımcı bunları girişte kendisi de doldurur; burada düzeltilebilir. */}
+                <div className="rounded-xl border border-royal/20 bg-white/[0.02] p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-gold-light/80">Kariyer momentumu</span>
+                    {duzenle.kariyer_durumu && (
+                      <span className="rounded-full bg-gold/15 px-2 py-0.5 text-[0.65rem] font-semibold text-gold-light">
+                        {DURUM_ETIKETLER[duzenle.kariyer_durumu] ?? duzenle.kariyer_durumu}
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-3 space-y-3">
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-slate-400">Şu anki seviye</span>
+                      <select
+                        value={duzenleDeger.kariyer_seviyesi}
+                        onChange={(e) => setDuzenleDeger({ ...duzenleDeger, kariyer_seviyesi: e.target.value as KariyerSeviyesi })}
+                        className={`${giris} w-full`}
+                      >
+                        <option value="">— Belirtilmemiş —</option>
+                        {KARIYER_SECENEKLER.map((k) => (
+                          <option key={k} value={k}>{KARIYER_ETIKETLER[k]}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-slate-400">En yüksek seviye</span>
+                      <select
+                        value={duzenleDeger.en_yuksek_kariyer}
+                        onChange={(e) => setDuzenleDeger({ ...duzenleDeger, en_yuksek_kariyer: e.target.value as KariyerSeviyesi })}
+                        className={`${giris} w-full`}
+                      >
+                        <option value="">— Belirtilmemiş —</option>
+                        {KARIYER_SECENEKLER.map((k) => (
+                          <option key={k} value={k}>{KARIYER_ETIKETLER[k]}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-slate-400">Geçen ayki seviye</span>
+                      <select
+                        value={duzenleDeger.gecen_ay_kariyer}
+                        onChange={(e) => setDuzenleDeger({ ...duzenleDeger, gecen_ay_kariyer: e.target.value as KariyerSeviyesi })}
+                        className={`${giris} w-full`}
+                      >
+                        <option value="">— Belirtilmemiş —</option>
+                        {KARIYER_SECENEKLER.map((k) => (
+                          <option key={k} value={k}>{KARIYER_ETIKETLER[k]}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="block">
+                      <span className="mb-1 block text-xs font-medium text-slate-400">Kıdem (ay)</span>
+                      <input
+                        type="number"
+                        min={0}
+                        max={600}
+                        inputMode="numeric"
+                        value={duzenleDeger.kidem_ay}
+                        onChange={(e) => setDuzenleDeger({ ...duzenleDeger, kidem_ay: e.target.value })}
+                        placeholder="Örn. 18"
+                        className={`${giris} w-full`}
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
               {duzenleMesaj && <p className="mt-3 text-sm font-medium text-emerald-400">{duzenleMesaj}</p>}
               {duzenleHataMsg && <p role="alert" className="mt-3 text-sm font-medium text-red-400">{duzenleHataMsg}</p>}

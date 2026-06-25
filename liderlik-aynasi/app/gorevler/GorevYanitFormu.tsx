@@ -8,6 +8,7 @@ import MikrofonButonu from "@/components/MikrofonButonu";
 import Konfeti from "@/components/Konfeti";
 import PuanAcilisi from "@/components/PuanAcilisi";
 import KivilcimSayac from "@/components/KivilcimSayac";
+import AynaBalon from "@/components/AynaBalon";
 
 const t = tr.gorevler;
 
@@ -15,6 +16,10 @@ const t = tr.gorevler;
 // saklanır, internet gelince (online olayı) otomatik gönderilir.
 function kuyrukAnahtari(gorevId: string) {
   return `la_gorev_yanit_v1:${gorevId}`;
+}
+// UX #4 — yazarken taslak: telefon kilitlenir/uygulama değişirse yanıt uçmasın.
+function taslakAnahtari(gorevId: string) {
+  return `la_gorev_taslak_v1:${gorevId}`;
 }
 
 type Sonuc = {
@@ -47,6 +52,23 @@ export default function GorevYanitFormu({
   // Bağlantı yokken yanıt cihazda kuyrukta bekliyor
   const [cevrimdisi, setCevrimdisi] = useState(false);
   const gonderiliyorRef = useRef(false);
+  const yanitRef = useRef<HTMLTextAreaElement>(null);
+
+  // UX #4 — yazarken taslağı cihazda tut (gönderilince/temizlenince silinir).
+  useEffect(() => {
+    try {
+      if (yanit.trim()) localStorage.setItem(taslakAnahtari(gorevId), yanit);
+      else localStorage.removeItem(taslakAnahtari(gorevId));
+    } catch {}
+  }, [yanit, gorevId]);
+
+  // UX #7 — yanıt alanı içeriğe göre büyüsün (lider düzeyi derin yanıt davet eder).
+  useEffect(() => {
+    const el = yanitRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 320)}px`;
+  }, [yanit]);
 
   // Sunucuya gönder; ağ hatasında yanıtı cihazda sakla (kaybetme).
   const sunucuyaGonder = useCallback(
@@ -65,9 +87,10 @@ export default function GorevYanitFormu({
         if (res.status === 202) {
           try {
             localStorage.removeItem(kuyrukAnahtari(gorevId));
+            localStorage.removeItem(taslakAnahtari(gorevId));
           } catch {}
           setCevrimdisi(false);
-          setSonuc({ bekliyor: true });
+          setSonuc(veri?.guvenlik ? { bekliyor: true, yorum: veri.yorum } : { bekliyor: true });
           return;
         }
         if (!res.ok) {
@@ -76,6 +99,7 @@ export default function GorevYanitFormu({
         }
         try {
           localStorage.removeItem(kuyrukAnahtari(gorevId));
+          localStorage.removeItem(taslakAnahtari(gorevId)); // UX #4: taslağı temizle
         } catch {}
         setCevrimdisi(false);
         const buyuk = (veri?.puan ?? 0) >= 8 || !!veri?.soz;
@@ -111,6 +135,12 @@ export default function GorevYanitFormu({
       setYanit(bekleyen);
       setCevrimdisi(true);
       void sunucuyaGonder(bekleyen);
+    } else {
+      // UX #4: gönderilmemiş taslak varsa kaldığın yerden devam et.
+      try {
+        const taslak = localStorage.getItem(taslakAnahtari(gorevId));
+        if (taslak) setYanit(taslak);
+      } catch {}
     }
     function tekrarDene() {
       try {
@@ -152,13 +182,32 @@ export default function GorevYanitFormu({
         {buyukKazanim && <Konfeti />}
         <div className="mt-4 rounded-xl bg-midnight-soft p-4 text-center">
         {sonuc.bekliyor ? (
-          <p className="text-sm text-slate-300">{t.durumlar.submitted}…</p>
+          <>
+            {/* UX #5: markalı shimmer — yapay zekânın "okuduğunu" hissettirir */}
+            <p className="flex items-center justify-center gap-2 text-sm font-medium text-gold-light">
+              <span className="inline-block h-2 w-2 animate-ping rounded-full bg-gold" aria-hidden />
+              {t.gonderiliyor}
+            </p>
+            <div className="ayna-shimmer mt-3 h-3 w-full rounded-full" aria-hidden />
+            <div className="ayna-shimmer mt-2 h-3 w-2/3 rounded-full" aria-hidden />
+            {sonuc.yorum && (
+              <p className="mt-3 text-sm leading-relaxed text-amber-200">{sonuc.yorum}</p>
+            )}
+          </>
         ) : (
           <>
             {sonuc.puan !== undefined && <PuanAcilisi puan={sonuc.puan} />}
             {sonuc.kivilcim !== undefined && <KivilcimSayac kazanim={sonuc.kivilcim} />}
             {sonuc.yorum && (
-              <p className="mt-3 text-sm italic text-slate-200">“{sonuc.yorum}”</p>
+              <div className="mt-3 text-left">
+                <AynaBalon baslik="AYNA">{sonuc.yorum}</AynaBalon>
+              </div>
+            )}
+            {/* UX #9 — düşük puanı büyüme çerçevesiyle yumuşat (rakam moral bozmasın) */}
+            {sonuc.puan !== undefined && sonuc.puan < 6 && (
+              <p className="mt-3 rounded-xl border border-royal-light/25 bg-midnight/40 p-3 text-sm leading-relaxed text-emerald-200/90">
+                {t.dusukPuanNot}
+              </p>
             )}
             {sonuc.toplam !== undefined && sonuc.unvan && (
               <p className="mt-3 text-xs text-slate-400">
@@ -178,11 +227,14 @@ export default function GorevYanitFormu({
         )}
         {/* #4 Kanıt Duvarı: görevi foto kanıtıyla kapat → duvara taşı */}
         {!sonuc.bekliyor && !sonuc.soz && <KanitEkle gorevBaslik={gorevBaslik} />}
+        {/* A5: bu konuda bir görev daha — büyüme döngüsü (söz/senkron hariç) */}
+        {!sonuc.bekliyor && !sonuc.soz && !sonuc.senkron && <BenzeriDene gorevId={gorevId} />}
+        {/* A4: tamamlayınca sıradaki göreve net geçiş (belirgin buton) */}
         <button
           onClick={() => router.refresh()}
-          className="mt-4 text-xs text-royal-light underline-offset-4 hover:underline"
+          className="mt-4 flex h-11 w-full items-center justify-center rounded-xl border border-royal-light/40 text-sm font-semibold text-royal-light transition-colors hover:bg-white/5"
         >
-          {tr.degerlendir.devamEt} →
+          {t.siradakiGorev}
         </button>
         </div>
       </>
@@ -194,15 +246,18 @@ export default function GorevYanitFormu({
       <label htmlFor={`yanit-${gorevId}`} className="text-xs font-medium text-slate-300">
         {t.yanitEtiket}
       </label>
+      {/* UX #8 — yanıt iskelesi: boş sayfa felcine karşı nazik çatı */}
+      <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{t.yanitIskele}</p>
       <textarea
         id={`yanit-${gorevId}`}
+        ref={yanitRef}
         value={yanit}
         onChange={(e) => setYanit(e.target.value)}
-        rows={3}
+        rows={4}
         maxLength={1500}
         disabled={gonderiliyor}
         placeholder={t.yanitPlaceholder}
-        className="mt-1 w-full rounded-xl border border-royal-light/30 bg-midnight-soft p-3 text-base text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
+        className="mt-1 max-h-[320px] min-h-[6rem] w-full resize-none rounded-xl border border-royal-light/30 bg-midnight-soft p-3 text-base text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
       />
       {hata && (
         <div
@@ -241,7 +296,7 @@ export default function GorevYanitFormu({
         <button
           type="submit"
           disabled={yanit.trim().length < 2 || gonderiliyor}
-          className="h-11 flex-1 btn-3d rounded-xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+          className="bas-his h-11 flex-1 btn-3d rounded-xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
         >
           {gonderiliyor ? t.gonderiliyor : t.gonder}
         </button>
@@ -427,6 +482,48 @@ function TanikGoster({
         </button>
       </div>
     </div>
+  );
+}
+
+// A5 — "Bu konuda bir görev daha". Tamamlanan görevin çalıştırdığı kası farklı
+// bir açıdan tekrar çalıştıran yeni bir görev üretir (büyüme döngüsü).
+function BenzeriDene({ gorevId }: { gorevId: string }) {
+  const router = useRouter();
+  const [durum, setDurum] = useState<"idle" | "uretiliyor" | "hazir" | "hata">("idle");
+
+  async function iste() {
+    if (durum === "uretiliyor") return;
+    setDurum("uretiliyor");
+    try {
+      const res = await fetch("/api/gorev-tekrar", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ gorevId }),
+      });
+      if (res.ok) {
+        titret([10, 30, 10]);
+        setDurum("hazir");
+        setTimeout(() => router.refresh(), 1200);
+      } else {
+        setDurum("hata");
+      }
+    } catch {
+      setDurum("hata");
+    }
+  }
+
+  if (durum === "hazir") {
+    return <p className="mt-3 text-xs font-medium text-emerald-400">{t.benzeriHazir}</p>;
+  }
+  return (
+    <button
+      type="button"
+      onClick={iste}
+      disabled={durum === "uretiliyor"}
+      className="mt-3 w-full text-center text-xs text-gold-light/80 underline-offset-4 transition-colors hover:text-gold-light disabled:opacity-50"
+    >
+      {durum === "uretiliyor" ? t.benzeriUretiliyor : durum === "hata" ? t.benzeriOlmaz : `🔁 ${t.benzeriIste}`}
+    </button>
   );
 }
 

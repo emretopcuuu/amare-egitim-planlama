@@ -82,6 +82,37 @@ export async function sesSil(voiceId: string): Promise<void> {
   }
 }
 
+export type ElevenSes = {
+  voice_id: string;
+  name: string;
+  category: string; // 'cloned' | 'premade' | 'professional' | 'generated'
+};
+
+/** Hesaptaki tüm sesleri listeler — slot doluluğunu görmek/temizlemek için. */
+export async function sesleriListele(): Promise<ElevenSes[]> {
+  const res = await fetch(`${TABAN}/voices`, {
+    headers: { "xi-api-key": anahtar() },
+  });
+  if (!res.ok) throw new Error(`ElevenLabs ses listesi ${res.status}`);
+  const veri = (await res.json()) as {
+    voices?: { voice_id: string; name: string; category: string }[];
+  };
+  return (veri.voices ?? []).map((v) => ({
+    voice_id: v.voice_id,
+    name: v.name,
+    category: v.category,
+  }));
+}
+
+/** Bir sesi siler ve sonucu döner (sessizce yutmaz — admin temizliği için). */
+export async function sesSilDogrula(voiceId: string): Promise<boolean> {
+  const res = await fetch(`${TABAN}/voices/${voiceId}`, {
+    method: "DELETE",
+    headers: { "xi-api-key": anahtar() },
+  });
+  return res.ok;
+}
+
 /** AYNA'nın marka sesi: katılımcı klonu değil, kampın imza sesi.
  * Varsayılan, ElevenLabs'in derin/nötr hazır sesi; AYNA_SES_ID env'iyle
  * (örn. Voice Design'da tasarlanmış özel sesle) değiştirilebilir. */

@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { gorevPuanla } from "@/lib/ayna";
+import { gorevPuanla, korNoktaGuncelle } from "@/lib/ayna";
+import { krizDiliVarMi, krizUyarisiGonder, KRIZ_YONLENDIRME } from "@/lib/guvenlik";
 import { markaAnons, fieroSesi } from "@/lib/yansima";
 import {
   kivilcimHesapla,
@@ -38,6 +39,14 @@ export async function POST(req: Request) {
   const yanitMetni = yanit.trim().slice(0, 1500);
 
   const db = supabaseAdmin();
+
+  // GÜVENLİK SINIRI: gerçek kriz/umutsuzluk sinyali → admin bayrağı + kişiye
+  // insan-mentor yönlendirmesi (AYNA koç sınırında kalır). Akışı bozmaz.
+  const kriz = krizDiliVarMi(yanitMetni);
+  if (kriz) {
+    await krizUyarisiGonder(db, session.sub, session.ad, "gorev-yanit", yanitMetni);
+  }
+  const guvenlikEk = kriz ? `\n\n${KRIZ_YONLENDIRME}` : "";
   const { data: gorev, error } = await db
     .from("missions")
     .select("id, kind, title, body, status, due_at")
@@ -46,8 +55,17 @@ export async function POST(req: Request) {
     .maybeSingle();
   if (error) return Response.json({ hata: tr.gorevler.hata }, { status: 500 });
   if (!gorev) return Response.json({ hata: tr.gorevler.hata }, { status: 404 });
-  if (gorev.status !== "pending") {
+  // UX #3 — TELAFİ: süresi geçen görev de yapılabilir (yakın zamanda geçtiyse).
+  // Kıvılcım yarıya iner; söz/senkron telafi edilmez (zaman-bağlı anlar).
+  const telafi = gorev.status === "expired";
+  if (gorev.status !== "pending" && !telafi) {
     return Response.json({ hata: tr.gorevler.durumlar.expired }, { status: 409 });
+  }
+  if (telafi) {
+    const gecenMs = Date.now() - new Date(gorev.due_at).getTime();
+    if (gorev.kind === "soz" || gorev.kind === "senkron" || gecenMs > 24 * 3_600_000) {
+      return Response.json({ hata: tr.gorevler.durumlar.expired }, { status: 409 });
+    }
   }
 
   const simdi = new Date();
@@ -68,10 +86,11 @@ export async function POST(req: Request) {
     const toplam = await toplamKivilcim(db, session.sub);
     return Response.json({
       soz: true,
-      yorum: tr.gorevler.sozTesekkur,
+      yorum: tr.gorevler.sozTesekkur + guvenlikEk,
       kivilcim: SOZ_KIVILCIMI,
       toplam,
       unvan: unvanBul(toplam).mevcut.ad,
+      ...(kriz ? { guvenlik: true } : {}),
     });
   }
 
@@ -92,10 +111,11 @@ export async function POST(req: Request) {
     const toplam = await toplamKivilcim(db, session.sub);
     return Response.json({
       senkron: true,
-      yorum: tr.gorevler.senkronTesekkur,
+      yorum: tr.gorevler.senkronTesekkur + guvenlikEk,
       kivilcim: SENKRON_KIVILCIMI,
       toplam,
       unvan: unvanBul(toplam).mevcut.ad,
+      ...(kriz ? { guvenlik: true } : {}),
     });
   }
 
@@ -111,11 +131,14 @@ export async function POST(req: Request) {
 
   const sonuc = await gorevPuanla(gorev, yanitMetni);
   if (!sonuc) {
-    return Response.json({ bekliyor: true }, { status: 202 });
+    return Response.json({ bekliyor: true, ...(kriz ? { guvenlik: true, yorum: KRIZ_YONLENDIRME } : {}) }, { status: 202 });
   }
 
-  const zamaninda = simdi <= new Date(gorev.due_at);
-  const kivilcim = kivilcimHesapla(sonuc.puan, zamaninda);
+  const zamaninda = !telafi && simdi <= new Date(gorev.due_at);
+  // Telafi (süresi geçmiş): kıvılcım yarıya iner — yine de yapmak değerli.
+  const kivilcim = telafi
+    ? Math.max(1, Math.ceil(kivilcimHesapla(sonuc.puan, false) / 2))
+    : kivilcimHesapla(sonuc.puan, zamaninda);
   await db
     .from("missions")
     .update({
@@ -124,8 +147,22 @@ export async function POST(req: Request) {
       ai_comment: sonuc.yorum,
       scored_at: new Date().toISOString(),
       spark_points: kivilcim,
+      ...(telafi ? { gec_tamamlandi: true } : {}),
+      // #2 Yanıt madenciliği: paralel çıkarılan tema etiketleri
+      ...(sonuc.response_tags.length > 0
+        ? { response_tags: sonuc.response_tags }
+        : {}),
     })
     .eq("id", gorev.id);
+
+  // #9 mentorluk takibi: görev tamamlandıysa konuşma gerçekleşti say.
+  if (gorev.kind === "mentorluk") {
+    await db
+      .from("mentorluk_kayit")
+      .update({ konustu: true, updated_at: new Date().toISOString() })
+      .eq("mission_id", gorev.id)
+      .eq("mentee_id", session.sub);
+  }
 
   // FIERO: 10/10 anında büyük ekran AYNA'nın sesiyle alkışlar; yansıması
   // da kişiye kendi sesiyle konuşur (ana sayfadaki Konuşan Yansıma kartı)
@@ -139,12 +176,25 @@ export async function POST(req: Request) {
   }
 
   const toplam = await toplamKivilcim(db, session.sub);
+
+  // #6 Kör nokta güncelleme döngüsü: milestone (5, 10, 15) tamamlamada
+  // Haiku, son yanıtları analiz edip on_farkindalik profilini günceller.
+  const { count: tamamlananSayi } = await db
+    .from("missions")
+    .select("id", { count: "exact", head: true })
+    .eq("participant_id", session.sub)
+    .eq("status", "scored");
+  if (tamamlananSayi && tamamlananSayi % 5 === 0) {
+    korNoktaGuncelle(db, session.sub, tamamlananSayi).catch(() => {});
+  }
+
   return Response.json({
     puan: sonuc.puan,
-    yorum: sonuc.yorum,
+    yorum: sonuc.yorum + guvenlikEk,
     kivilcim,
     toplam,
     unvan: unvanBul(toplam).mevcut.ad,
+    ...(kriz ? { guvenlik: true } : {}),
   });
 }
 

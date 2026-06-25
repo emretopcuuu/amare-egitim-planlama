@@ -164,21 +164,31 @@ export default function MikrofonButonu({
 
   return (
     <div className="flex flex-col items-start gap-2">
-      <button
-        type="button"
-        onClick={degistir}
-        disabled={disabled}
-        aria-pressed={dinliyor}
-        aria-label={dinliyor ? tr.ses.dinliyor : tr.ses.baslat}
-        title={dinliyor ? tr.ses.dinliyor : undefined}
-        className={`flex h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 text-sm font-semibold transition-colors disabled:opacity-40 ${
-          dinliyor
-            ? "animate-pulse bg-red-500/80 text-white"
-            : "border border-royal-light/40 text-slate-200 hover:bg-midnight-soft"
-        }`}
-      >
-        {dinliyor ? `⏺ ${tr.ses.dinliyorKisa}` : `🎙 ${tr.ses.baslat}`}
-      </button>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={degistir}
+          disabled={disabled}
+          aria-pressed={dinliyor}
+          aria-label={dinliyor ? tr.ses.dinliyor : tr.ses.baslat}
+          title={dinliyor ? tr.ses.dinliyor : undefined}
+          className={`bas-his flex h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 text-sm font-semibold transition-colors disabled:opacity-40 ${
+            dinliyor
+              ? "bg-red-500/80 text-white ring-2 ring-red-400/40"
+              : "border border-royal-light/40 text-slate-200 hover:bg-midnight-soft"
+          }`}
+        >
+          {dinliyor ? `⏺ ${tr.ses.dinliyorKisa}` : `🎙 ${tr.ses.baslat}`}
+        </button>
+        {/* UX #7: dinlerken canlı ses dalgası */}
+        {dinliyor && (
+          <div className="flex h-8 items-center gap-[3px]" aria-hidden>
+            {[0, 0.12, 0.24, 0.36, 0.18, 0.06, 0.3, 0.2].map((g, i) => (
+              <span key={i} className="ses-cubuk" style={{ animationDelay: `${g}s` }} />
+            ))}
+          </div>
+        )}
+      </div>
       {hata && (
         <p role="status" className="max-w-xs text-xs leading-relaxed text-amber-300/90">
           {hata}

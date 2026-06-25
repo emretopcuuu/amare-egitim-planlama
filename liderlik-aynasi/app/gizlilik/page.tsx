@@ -56,7 +56,16 @@ export default async function GizlilikPage() {
             <p className="text-sm text-slate-300">
               {rizaTarih ? t.rizaVar(rizaTarih) : t.rizaYok}
             </p>
-            <div className="mt-4">
+            {/* #10: GDPR veri taşınabilirliği — kendi verini JSON indir */}
+            <a
+              href="/api/veri-disa-aktar"
+              download
+              className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-royal-light/40 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/5"
+            >
+              ⬇ {t.veriIndir}
+            </a>
+            <p className="mt-1.5 text-xs text-slate-500">{t.veriIndirNot}</p>
+            <div className="mt-4 border-t border-white/10 pt-4">
               <VeriSilmeTalebi mevcutTarih={silmeTarih} />
             </div>
           </div>

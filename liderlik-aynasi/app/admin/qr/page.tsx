@@ -16,7 +16,7 @@ export default async function QrPage() {
   const [{ data: kisiler, error }, istekBasliklari] = await Promise.all([
     supabaseAdmin()
       .from("participants")
-      .select("id, full_name, team, login_code")
+      .select("id, full_name, team, login_code, camp_unlock_token")
       .eq("role", "participant")
       .order("full_name"),
     headers(),
@@ -31,16 +31,14 @@ export default async function QrPage() {
   const kartlar = await Promise.all(
     kisiler.map(async (k) => ({
       ...k,
-      // QR → giriş → kişisel yansıma videosu (varsa oynar, yoksa /yansiman
-      // sessizce ana sayfaya yönlendirir): "video varsa göster, yoksa geç".
-      svg: await QRCode.toString(
-        `${origin}/giris?kod=${k.login_code}&next=${encodeURIComponent("/yansiman")}`,
-        {
-          type: "svg",
-          margin: 1,
-          errorCorrectionLevel: "M",
-        }
-      ),
+      // QR YALNIZ kamp açma içindir: kişiye özel jeton taşır (/ac?u=<token>).
+      // Giriş ayrı 6 haneli kodla yapılır. Kişi mühürlü alana kadar koduyla
+      // gelir, sonra kendi QR'ını okutup kampını açar — başkasınınki açmaz.
+      svg: await QRCode.toString(`${origin}/ac?u=${k.camp_unlock_token}`, {
+        type: "svg",
+        margin: 1,
+        errorCorrectionLevel: "M",
+      }),
     }))
   );
 

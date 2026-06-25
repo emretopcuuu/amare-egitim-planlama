@@ -13,6 +13,7 @@ export default function PuanAcilisi({ puan }: { puan: number }) {
   useEffect(() => {
     const azalt = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
     if (azalt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setGoster(puan);
       return;
     }
@@ -87,10 +88,40 @@ export default function PuanAcilisi({ puan }: { puan: number }) {
     };
   }, [puan]);
 
+  // UX #4 — dairesel skor halkası. Renk kademeli: düşük nötr, orta royal, yüksek altın.
+  const r = 30;
+  const cevre = 2 * Math.PI * r;
+  const oran = Math.max(0, Math.min(1, goster / 10));
+  const renk = puan >= 8 ? "#f59e0b" : puan >= 6 ? "#a78bfa" : "#64748b";
+
   return (
-    <div ref={canvasRef} className="relative">
-      <p className="text-3xl font-bold text-gold tabular-nums">
-        AYNA puanın: {goster}/10
+    <div ref={canvasRef} className="relative flex flex-col items-center">
+      <div className="relative h-[76px] w-[76px]">
+        <svg width="76" height="76" viewBox="0 0 76 76" className="-rotate-90">
+          <circle cx="38" cy="38" r={r} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+          <circle
+            cx="38"
+            cy="38"
+            r={r}
+            fill="none"
+            stroke={renk}
+            strokeWidth="6"
+            strokeLinecap="round"
+            strokeDasharray={cevre}
+            strokeDashoffset={cevre * (1 - oran)}
+            className="skor-halka-yay"
+            style={{ ["--cevre" as string]: `${cevre}` }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-2xl font-bold tabular-nums" style={{ color: renk }}>
+            {goster}
+          </span>
+          <span className="-mt-1 text-[0.6rem] font-medium text-slate-400">/ 10</span>
+        </div>
+      </div>
+      <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
+        AYNA puanın
       </p>
     </div>
   );

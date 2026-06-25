@@ -7,9 +7,12 @@ import { useEffect, useState } from "react";
 export default function GorevSayac({
   baslangic,
   bitis,
+  sakin = false,
 }: {
   baslangic: string;
   bitis: string;
+  // UX #1: kişi "başladım" dediyse sayaç kaygılı titremez, tonu yumuşar.
+  sakin?: boolean;
 }) {
   const [simdi, setSimdi] = useState(() => Date.now());
   useEffect(() => {
@@ -31,11 +34,23 @@ export default function GorevSayac({
       ? `${Math.floor(dk / 60)}s ${dk % 60}dk`
       : `${Math.floor(kalan / 60000)}:${String(Math.floor((kalan % 60000) / 1000)).padStart(2, "0")}`;
 
-  const renk = gecti ? "#ef4444" : oran < 0.25 ? "#f59e0b" : "#34d399";
+  // Sakin modda kırmızı yerine amber — "üzerinde çalışıyorsun", panik yok.
+  const renk = sakin
+    ? gecti
+      ? "#f59e0b"
+      : oran < 0.25
+        ? "#fbbf24"
+        : "#34d399"
+    : gecti
+      ? "#ef4444"
+      : oran < 0.25
+        ? "#f59e0b"
+        : "#34d399";
   const r = 9;
   const cevre = 2 * Math.PI * r;
   // Son ~10 dk: nazik bir aciliyet — rozet titrer (kaygı değil, dürtü).
-  const kritik = !gecti && kalan <= 10 * 60000;
+  // Sakin modda titreme yok.
+  const kritik = !sakin && !gecti && kalan <= 10 * 60000;
 
   return (
     <span

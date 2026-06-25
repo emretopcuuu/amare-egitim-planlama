@@ -1270,3 +1270,102 @@ html[data-tema="gunduz"] .gece-ada .border-white\/15 {
   border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
+
+/* ── ADMIN BASİT / UZMAN MOD (UX #1) ─────────────────────────────────────────
+   Varsayılan BASİT (data-admin-mod yoksa da): .uzman-only gizli, .basit-only
+   görünür. Uzman moda geçince tersine döner. Flash olmaması için "uzman"
+   anahtarına göre yazıldı. */
+html:not([data-admin-mod="uzman"]) .uzman-only {
+  display: none !important;
+}
+html[data-admin-mod="uzman"] .basit-only {
+  display: none !important;
+}
+
+/* ── GÖREV TASARIM CİLASI (UX+tasarım turu) ─────────────────────────────────── */
+
+/* 9 · Kart giriş animasyonu — yumuşak yukarı-belir (ease-out, kısa) */
+@keyframes gorevGiris {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.gorev-giris { animation: gorevGiris 0.34s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* 9 · Düğme/eylem basış geri bildirimi */
+.bas-his { transition: transform 0.12s ease, filter 0.12s ease; }
+.bas-his:active { transform: scale(0.97); filter: brightness(1.05); }
+
+/* 5 · "AYNA okuyor" — markalı shimmer iskeleti */
+@keyframes aynaShimmer {
+  0%   { background-position: -160% 0; }
+  100% { background-position: 160% 0; }
+}
+.ayna-shimmer {
+  background-image: linear-gradient(
+    100deg,
+    rgba(212, 175, 55, 0.04) 30%,
+    rgba(212, 175, 55, 0.22) 50%,
+    rgba(212, 175, 55, 0.04) 70%
+  );
+  background-size: 220% 100%;
+  animation: aynaShimmer 1.25s ease-in-out infinite;
+}
+
+/* 4 · Skor halkası dolum */
+@keyframes halkaDol { from { stroke-dashoffset: var(--cevre); } }
+.skor-halka-yay { animation: halkaDol 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Hareket-azalt tercihine saygı */
+@media (prefers-reduced-motion: reduce) {
+  .gorev-giris, .ayna-shimmer, .skor-halka-yay { animation: none !important; }
+  .bas-his { transition: none !important; }
+}
+
+/* ── ADAY GENELİ BUTON HİYERARŞİSİ (UX #5) ──────────────────────────────────
+   Birincil = .btn-kor (altın, mevcut). İkincil/üçüncül için tutarlı sınıflar:
+   her ekranda aynı dil. Min 44px dokunma hedefi + odak halkası global'den gelir. */
+.btn-ikincil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(124, 110, 205, 0.4); /* royal-light/40 */
+  padding: 0 1.25rem;
+  font-weight: 600;
+  color: rgb(226, 232, 240); /* slate-200 */
+  transition: background-color 0.15s ease, transform 0.12s ease;
+}
+.btn-ikincil:hover { background-color: rgba(255, 255, 255, 0.05); }
+.btn-ikincil:active { transform: scale(0.98); }
+.btn-uclu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(148, 163, 184); /* slate-400 */
+  text-underline-offset: 4px;
+  transition: color 0.15s ease;
+}
+.btn-uclu:hover { color: rgb(203, 213, 225); text-decoration: underline; }
+
+/* ── SU/AYNA MARKA HAREKETİ (tasarım #5) — dokunulan noktada su dalgası ──────── */
+@keyframes suDalgaTik {
+  0%   { transform: scale(0); opacity: 0.55; }
+  70%  { opacity: 0.18; }
+  100% { transform: scale(7); opacity: 0; }
+}
+.su-dalga-tik {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(212, 175, 55, 0.55); /* altın halka */
+  box-shadow: 0 0 0 1px rgba(124, 110, 205, 0.25) inset; /* royal iç */
+  animation: suDalgaTik 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .su-dalga-tik { display: none !important; }
+}

@@ -15,7 +15,10 @@ const ORNEK_GORUNUR = 6; // ilk gösterilen örnek sayısı; gerisi "daha fazla"
 const SOHBET_ASAMALARI = ["eleme", "bosluk", "engel"] as const;
 
 type Mesaj = { rol: string; icerik: string };
-type Faz = "riza" | "liste" | "kopru" | "sohbet" | "slogan" | "bitti";
+type Faz = "riza" | "kariyer" | "liste" | "kopru" | "sohbet" | "slogan" | "bitti";
+
+// Kariyer basamakları — form dropdown'ları için sıralı (düşükten yükseğe).
+const KARIYER_SECENEKLER = ["leader", "senior_leader", "exec_leader", "diamond", "star"] as const;
 
 // Sohbet ilerlemesi — aşamadan yüzdeye. Her AYNA yanıtı aşamayı döndürür,
 // böylece kişi her soruda sona ne kadar kaldığını görür.
@@ -248,19 +251,29 @@ function MaddeMetni({ metin }: { metin: string }) {
 export default function PusulaSohbet({
   baslangic,
   rizaVar,
+  kariyerVar = false,
   onceliklerVar,
   oncelikler = [],
   asamaBaslangic = "eleme",
 }: {
   baslangic: Mesaj[];
   rizaVar: boolean;
+  kariyerVar?: boolean;
   onceliklerVar: boolean;
   oncelikler?: string[];
   asamaBaslangic?: string;
 }) {
   const router = useRouter();
+  // Akış: riza → kariyer (Pusula öncesi) → liste → sohbet. Dönen kullanıcıda
+  // tamamlanmış adımlar atlanır.
   const ilkFaz: Faz =
-    baslangic.length > 0 || onceliklerVar ? "sohbet" : rizaVar ? "liste" : "riza";
+    baslangic.length > 0 || onceliklerVar
+      ? "sohbet"
+      : !rizaVar
+        ? "riza"
+        : !kariyerVar
+          ? "kariyer"
+          : "liste";
 
   const [faz, setFaz] = useState<Faz>(ilkFaz);
   const [mesajlar, setMesajlar] = useState<Mesaj[]>(baslangic);
@@ -289,6 +302,11 @@ export default function PusulaSohbet({
   const [sloganKaydediyor, setSloganKaydediyor] = useState(false);
   const [sifirlaSor, setSifirlaSor] = useState(false);
   const [sifirliyor, setSifirliyor] = useState(false);
+  // Kariyer konumu formu (Pusula öncesi)
+  const [karSuanki, setKarSuanki] = useState("");
+  const [karEnYuksek, setKarEnYuksek] = useState("");
+  const [karGecenAy, setKarGecenAy] = useState("");
+  const [karKidem, setKarKidem] = useState("");
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const altRef = useRef<HTMLDivElement>(null);
@@ -359,6 +377,36 @@ export default function PusulaSohbet({
     setMesgul(true);
     await istek({ basla: true });
     setMesgul(false);
+    setFaz("kariyer");
+  }
+
+  // Kariyer konumunu kaydet (yalnız "şu anki" zorunlu) → liste adımına geç.
+  async function kariyerKaydet() {
+    if (mesgul) return;
+    if (!karSuanki) {
+      setHata(t.kariyerSuankiEtiket);
+      return;
+    }
+    setMesgul(true);
+    setHata(null);
+    const v = await istek({
+      kariyer: {
+        suanki: karSuanki,
+        enYuksek: karEnYuksek || null,
+        gecenAy: karGecenAy || null,
+        kidemAy: karKidem.trim() === "" ? null : Number(karKidem),
+      },
+    });
+    setMesgul(false);
+    if (!v?.ok) {
+      setHata(v?.hata ?? t.aiHata);
+      return;
+    }
+    setFaz("liste");
+  }
+
+  function kariyerAtla() {
+    setHata(null);
     setFaz("liste");
   }
 
@@ -458,6 +506,71 @@ export default function PusulaSohbet({
           className="btn-kor parilti mt-7 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
         >
           {t.rizaKabul}
+        </button>
+      </Kapak>
+    );
+  }
+
+  // ---- Kariyer konumu (Pusula öncesi) ----
+  if (faz === "kariyer") {
+    const sec = (
+      deger: string,
+      setDeger: (v: string) => void,
+      etiket: string,
+      bosLabel: string
+    ) => (
+      <label className="block text-left">
+        <span className="mb-1.5 block text-sm font-medium text-slate-300">{etiket}</span>
+        <select
+          value={deger}
+          onChange={(e) => setDeger(e.target.value)}
+          className="h-12 w-full rounded-2xl border border-royal-light/30 bg-midnight-soft px-3 text-base text-slate-100 outline-none focus:border-gold"
+        >
+          <option value="">{bosLabel}</option>
+          {KARIYER_SECENEKLER.map((k) => (
+            <option key={k} value={k}>
+              {t.kariyerSeviyeEtiketler[k]}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+    return (
+      <Kapak ikon="📊" baslik={t.kariyerBaslik}>
+        <p className="mt-3 text-base leading-relaxed text-slate-300">{t.kariyerMetin}</p>
+        <div className="mt-6 space-y-4">
+          {sec(karSuanki, setKarSuanki, t.kariyerSuankiEtiket, t.kariyerSecimYer)}
+          {sec(karEnYuksek, setKarEnYuksek, t.kariyerEnYuksekEtiket, t.kariyerSecimYer)}
+          {sec(karGecenAy, setKarGecenAy, t.kariyerGecenAyEtiket, t.kariyerSecimYer)}
+          <label className="block text-left">
+            <span className="mb-1.5 block text-sm font-medium text-slate-300">
+              {t.kariyerKidemEtiket}
+            </span>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={600}
+              value={karKidem}
+              onChange={(e) => setKarKidem(e.target.value)}
+              placeholder={t.kariyerKidemYer}
+              className="h-12 w-full rounded-2xl border border-royal-light/30 bg-midnight-soft px-3 text-base text-slate-100 outline-none focus:border-gold"
+            />
+          </label>
+        </div>
+        {hata && <p className="mt-3 text-sm text-red-400">{hata}</p>}
+        <button
+          onClick={kariyerKaydet}
+          disabled={mesgul || !karSuanki}
+          className="btn-kor parilti mt-7 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
+        >
+          {mesgul ? t.dusunuyor : t.kariyerKaydet}
+        </button>
+        <button
+          onClick={kariyerAtla}
+          className="mx-auto mt-3 block text-sm text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+        >
+          {t.kariyerAtla}
         </button>
       </Kapak>
     );

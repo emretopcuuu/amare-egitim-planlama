@@ -9,6 +9,7 @@ import { tr } from "@/lib/i18n/tr";
 import Avatar from "@/components/Avatar";
 import BenKarti from "./BenKarti";
 import GeriButonu from "@/components/GeriButonu";
+import Rozet from "@/components/Rozet";
 
 export const metadata = { title: "Ben — Liderlik Aynası" };
 
@@ -182,15 +183,9 @@ export default async function BenPage() {
         {rozetler.length > 0 && (
           <section className="kart-cam rounded-2xl p-5 ring-1 ring-royal/30">
             <h2 className="text-sm font-semibold text-gold-light">{t.rozetlerBaslik}</h2>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-4 flex flex-wrap justify-center gap-4">
               {rozetler.map((r) => (
-                <span
-                  key={r.ad}
-                  className="flex items-center gap-1.5 rounded-full bg-white/[0.05] px-3 py-1.5 text-sm text-slate-200"
-                >
-                  <span aria-hidden>{r.ikon}</span>
-                  {r.ad}
-                </span>
+                <Rozet key={r.ad} ikon={r.ikon} ad={r.ad} />
               ))}
             </div>
           </section>

@@ -46,6 +46,9 @@ import AkisDizisi from "./AkisDizisi";
 import BolumAtla from "./BolumAtla";
 import FazGrubu from "./FazGrubu";
 import CapaAcici from "./CapaAcici";
+import TerimlerSozluk from "./TerimlerSozluk";
+import SimdiSonra from "./SimdiSonra";
+import YeniKampButonu from "./YeniKampButonu";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -278,7 +281,7 @@ export default async function AdminPanel() {
 
   return (
     // #8 Mobilde alt sabit aksiyon çubuğu içeriği örtmesin: alt nefes payı.
-    <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6 pb-28 sm:pb-6">
+    <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-4 pb-28 sm:p-6 sm:pb-6">
       {/* Katlı faz gruplarındaki çapalara (#dalga, #muhur …) atlamayı garanti et */}
       <CapaAcici />
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -286,14 +289,28 @@ export default async function AdminPanel() {
           <h1 className="text-2xl font-bold text-gold">{tr.admin.baslik}</h1>
           <Ipucu {...tr.admin.yardim.panel} />
         </div>
-        <OtoYenile />
+        <div className="flex items-center gap-2">
+          {/* UX #2: terimler sözlüğü — içeriden kelimeler için sade karşılık */}
+          <TerimlerSozluk />
+          <OtoYenile />
+        </div>
       </div>
 
       {/* FUNNEL OMURGASI — kampın 5 aşaması, şu an neredeyiz, açılış zamanları */}
       <FunnelOmurga aktif={aktifAsama} zamanlar={asamaZaman} />
 
-      {/* #7 Bölüm atlama — yapışkan mini içindekiler */}
-      <BolumAtla bolumler={bolumler} />
+      {/* UX #6: basit görünümde acemi yönergesi (kapatılamaz, sade) */}
+      <p className="basit-only rounded-xl border border-royal-light/20 bg-white/[0.02] px-4 py-2.5 text-sm leading-relaxed text-slate-300">
+        👋 Sade görünümdesin. Aşağıdaki <span className="font-semibold text-gold-light">altın kart</span> her
+        zaman sıradaki tek adımı söyler — şüphedeysen ona bas. Bir kelimeyi anlamazsan üstteki{" "}
+        <span className="font-semibold text-gold-light">📖 Terimler</span>’e bak. Tüm araçlar için sağ üstten{" "}
+        <span className="font-semibold text-gold-light">Uzman</span>’a geç.
+      </p>
+
+      {/* #7 Bölüm atlama — yapışkan mini içindekiler (yalnız uzman) */}
+      <div className="uzman-only">
+        <BolumAtla bolumler={bolumler} />
+      </div>
 
       {!tamYetki && (
         <p className="rounded-xl border border-royal-light/40 bg-royal/15 px-4 py-3 text-sm font-medium text-slate-100">
@@ -335,9 +352,19 @@ export default async function AdminPanel() {
         </Link>
       </section>
 
+      {/* UX #4: Şimdi / Sonra şeridi — somut "ne yap, sonra ne gelir" */}
+      <SimdiSonra aktifAsama={aktifAsama} />
+
       {/* UX #5 (2.tur): İlk Kurulum Rehberi — kritik bir kurulum adımı eksikse
-          panelin tepesinde numaralı rehber belirir; kurulum bitince kaybolur. */}
+          panelin tepesinde numaralı rehber belirir; kurulum bitince kaybolur.
+          Basit görünümde her zaman göster (acemi için kalıcı checklist). */}
       {tamYetki && <HazirlikPaneli konum="ust" aktifAsama={aktifAsama} />}
+      {/* UX #8: basit görünümde tam kurulum checklist'i her zaman görünür */}
+      {tamYetki && (
+        <div className="basit-only">
+          <HazirlikPaneli konum="arac" aktifAsama={aktifAsama} />
+        </div>
+      )}
 
       {/* GENEL DURUM: canlı özet rakamları + kamp öncesi katılım hunisi tek
           kartta. İki ayrı özet bölümü yerine tek "nabız" paneli. */}
@@ -348,6 +375,9 @@ export default async function AdminPanel() {
           </h2>
           <Ipucu {...tr.admin.yardim.panelOzet} />
         </div>
+        <p className="basit-only -mt-2 text-xs text-slate-500">
+          Kampın o anki nabzı — tek bakışta kaç kişi katıldı ve ne kadar ilerlendi.
+        </p>
         <CanliOzet
           ciplak
           katilimci={katilimciSayisi ?? 0}
@@ -356,28 +386,39 @@ export default async function AdminPanel() {
           gorus={ilerleme?.toplamPuan ?? 0}
           dalgaAd={acikDalga?.name ?? null}
         />
+        {/* Dönüşüm hunisi metriği — ileri (yalnız uzman) */}
         {funnel.toplam > 0 && (
-          <>
+          <div className="uzman-only">
             <div className="h-px bg-white/10" />
+            <div className="mt-4" />
             <FunnelMetrik ciplak ozet={funnel} />
-          </>
+          </div>
         )}
       </section>
 
-      {/* Canlı pano: ızgara + teslim akışı + takım sıralaması (kampın nabzı) */}
-      <CanliPano
-        izgara={pano.izgara}
-        teslimler={pano.teslimler}
-        takimlar={pano.takimlar}
-        ozet={pano.ozet}
-      />
+      {/* Canlı pano: ızgara + teslim akışı + takım sıralaması (kampın nabzı) — uzman */}
+      <div className="uzman-only">
+        <CanliPano
+          izgara={pano.izgara}
+          teslimler={pano.teslimler}
+          takimlar={pano.takimlar}
+          ozet={pano.ozet}
+        />
+      </div>
 
-      {/* Son eylemler + proaktif uyarılar — tek "dikkat" bloğu */}
+      {/* Son eylemler + proaktif uyarılar — tek "dikkat" bloğu (uzman) */}
       {tamYetki && (
-        <div className="space-y-3">
+        <div className="uzman-only space-y-3">
           <SonEylemler />
           <Uyarilar uyarilar={uyarilar} />
         </div>
+      )}
+
+      {/* UX #5: Kumanda Odası — kamp günündeysen basit görünümde odak çerçevesi */}
+      {kampGun !== null && (
+        <p className="basit-only rounded-xl border border-emerald-400/30 bg-emerald-500/[0.07] px-4 py-2.5 text-sm font-medium text-emerald-200">
+          🎛 Kumanda Odası — bugün canlı kamp (Gün {kampGun}). Sadece aşağıdaki günün adımlarına odaklan; kurulum işleri bitti.
+        </p>
       )}
 
       {/* Bugünün Akışı — kamp günündeyse o günün adımları */}
@@ -394,6 +435,10 @@ export default async function AdminPanel() {
           )}
           <Ipucu {...tr.admin.yardim.panelIlerleme} />
         </h2>
+        {/* Basit modda sade açıklama */}
+        <p className="basit-only mt-1 text-sm text-slate-400">
+          Şu an kim ne yapıyor: kaç kişi kendini puanladı, kaç görüş toplandı. Takılanlar aşağıda.
+        </p>
         {acikDalga && (
           <p className="mt-2 rounded-lg bg-amber-900/15 px-3 py-2 text-xs font-medium text-amber-300/90">
             {tr.admin.ilerleme.ozellikUyari}
@@ -445,7 +490,7 @@ export default async function AdminPanel() {
               </div>
             </dl>
 
-            <div className="mt-4">
+            <div className="uzman-only mt-4">
               <TopluEylem
                 katilimcilar={ilerleme.katilimcilar.map((k) => ({
                   id: k.id,
@@ -475,7 +520,8 @@ export default async function AdminPanel() {
           id="tehlike"
           className="scroll-mt-24 space-y-5 rounded-2xl border-2 border-red-500/30 bg-red-950/10 p-5"
         >
-          <div className="flex items-start gap-3">
+          {/* Uzman: tam "Tehlike Bölgesi" başlığı */}
+          <div className="uzman-only flex items-start gap-3">
             <span className="text-xl" aria-hidden>
               ⚠️
             </span>
@@ -487,15 +533,29 @@ export default async function AdminPanel() {
               <p className="mt-0.5 text-xs text-slate-400">{tr.admin.tehlike.aciklama}</p>
             </div>
           </div>
+          {/* Basit: korkutmayan sade başlık */}
+          <div className="basit-only">
+            <h2 className="text-lg font-bold text-gold-light">🎛 Kamp Kontrolleri</h2>
+            <p className="mt-1 text-sm leading-relaxed text-slate-300">
+              Aşağıda <span className="font-semibold">şu anki aşamanın</span> anahtarları var. Her işlem
+              önce onay ister ve geri-al penceresi sunar — kazara bir şey bozman çok zor.
+            </p>
+          </div>
 
-          {/* #3 Kamp akışı sıralayıcı — sıradaki anahtar + bağımlılık kapısı */}
-          <AkisDizisi />
+          {/* UX #9: acemi için sade sonuç uyarısı (geri-al güvencesiyle) — yalnız uzman'da
+              tekrar etmesin diye sade başlığa taşındı */}
+
+          {/* #3 Kamp akışı sıralayıcı — ileri operatör aracı (yalnız uzman) */}
+          <div className="uzman-only">
+            <AkisDizisi />
+          </div>
 
           {/* #1 Kontroller funnel fazına göre KATLANIR gruplarda: yalnız o anki
               fazın anahtarları açık gelir, gerisi katlı. Operatör 9 kartla aynı
               anda boğulmaz. Kapalı gruptaki çapaya atlanırsa CapaAcici onu açar. */}
 
-          {/* ── 2 · KATILIM ── */}
+          {/* ── 2 · KATILIM ── (basit modda yalnız aktif fazsa görünür) */}
+          <div className={aktifAsama === 2 ? "" : "uzman-only"}>
           <FazGrubu
             no={2}
             ad={tr.admin.tehlike.katilimGrup}
@@ -527,8 +587,10 @@ export default async function AdminPanel() {
               <HedefKontrol />
             </div>
           </FazGrubu>
+          </div>
 
-          {/* ── 3 · KAMP CANLI ── */}
+          {/* ── 3 · KAMP CANLI ── (basit modda yalnız aktif fazsa görünür) */}
+          <div className={aktifAsama === 3 ? "" : "uzman-only"}>
           <FazGrubu
             no={3}
             ad={tr.admin.tehlike.canliGrup}
@@ -561,8 +623,10 @@ export default async function AdminPanel() {
               />
             </div>
           </FazGrubu>
+          </div>
 
-          {/* ── 4 · FİNAL — Ayna Anı ── */}
+          {/* ── 4 · FİNAL — Ayna Anı ── (basit modda yalnız aktif fazsa görünür) */}
+          <div className={aktifAsama === 4 ? "" : "uzman-only"}>
           <FazGrubu
             no={4}
             ad={tr.admin.tehlike.finalGrup}
@@ -612,19 +676,32 @@ export default async function AdminPanel() {
               <SozV2Kontrol />
             </div>
           </FazGrubu>
+          </div>
 
-          {/* ── SİSTEM (kesişen) — her aşamada lazım, varsayılan katlı ── */}
-          <FazGrubu ad={tr.admin.tehlike.sistemGrup} varsayilanAcik={false}>
-            {/* #9 Prova Modu — canlı/test ayrımı kritik bir anahtar */}
-            <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                {tr.provaModu.baslikKapali}
-                <Ipucu {...tr.admin.yardim.prova} />
-              </h3>
-              <ProvaModuKontrol acik={provaAcik} />
-            </div>
-          </FazGrubu>
+          {/* ── SİSTEM (kesişen) — her aşamada lazım, varsayılan katlı (uzman) ── */}
+          <div className="uzman-only">
+            <FazGrubu ad={tr.admin.tehlike.sistemGrup} varsayilanAcik={false}>
+              {/* #9 Prova Modu — canlı/test ayrımı kritik bir anahtar */}
+              <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                  {tr.provaModu.baslikKapali}
+                  <Ipucu {...tr.admin.yardim.prova} />
+                </h3>
+                <ProvaModuKontrol acik={provaAcik} />
+              </div>
+              {/* #4 Yeni kamp hazırla — bir sonraki kamp için güvenli sıfırlama */}
+              <YeniKampButonu />
+            </FazGrubu>
+          </div>
         </section>
+      )}
+
+      {/* Basit modda: gizlenenlerin olduğunu hatırlat (kaybolmuş hissi olmasın) */}
+      {tamYetki && (
+        <p className="basit-only rounded-xl border border-royal-light/20 bg-white/[0.02] px-4 py-3 text-center text-sm text-slate-400">
+          İleri araçlar, geçmiş aşamalar ve tüm kontroller{" "}
+          <span className="font-semibold text-gold-light">Uzman</span> görünümünde (sağ üstteki anahtar).
+        </p>
       )}
 
       {/* KVKK — yalnız bekleyen talep varsa (yasal/acil), üst seviyede kırmızı.
@@ -656,10 +733,34 @@ export default async function AdminPanel() {
         </section>
       )}
 
-      {/* #1 TÜM ARAÇLAR — faz dışı ikincil her şey tek katlanır bölümde.
-          Varsayılan kapalı: panel açılınca yalnız o anki işe odaklanılır. */}
+      {/* UX #10: Devret — paneli başkasına verirken güvenli yol (yalnız uzman görür) */}
       {tamYetki && (
-        <div id="araclar" className="scroll-mt-24">
+        <details className="uzman-only group rounded-2xl border border-royal/30 bg-midnight-card/40 p-4">
+          <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gold-light">
+            <span>🤝 Paneli başkasına devredeceksin?</span>
+            <span className="transition-transform group-open:rotate-180" aria-hidden>▾</span>
+          </summary>
+          <div className="mt-3 space-y-2 text-sm leading-relaxed text-slate-300">
+            <p>
+              1. Devredeceğin kişiye paneli <span className="font-semibold text-gold-light">Basit görünümde</span> bırak
+              (sağ üstteki anahtar) — tehlikeli araçlar ve sistem ayarları görünmez.
+            </p>
+            <p>
+              2. Tam kısıtlı erişim için ona <span className="font-semibold text-gold-light">Yardımcı</span> girişi ver:
+              yalnız izleme ve hatırlatma yapar; kritik anahtarlara dokunamaz.
+            </p>
+            <p>
+              3. İlk girdiğinde otomatik <span className="font-semibold text-gold-light">kısa tur</span> ve{" "}
+              <span className="font-semibold text-gold-light">📖 Terimler</span> ona yol gösterir.
+            </p>
+          </div>
+        </details>
+      )}
+
+      {/* #1 TÜM ARAÇLAR — faz dışı ikincil her şey tek katlanır bölümde.
+          Varsayılan kapalı; basit görünümde tamamen gizli (uzman). */}
+      {tamYetki && (
+        <div id="araclar" className="uzman-only scroll-mt-24">
         <Katlanir baslik={tr.admin.araclar.baslik} aciklama={tr.admin.araclar.aciklama} yardim={tr.admin.yardim.araclar}>
           {/* #10 Araçlar aşamaya göre gruplu + her grup kendi içinde katlanır:
               "Tüm araçlar" açılınca devasa bir liste değil, iki kompakt başlık

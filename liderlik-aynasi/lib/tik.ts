@@ -5,6 +5,7 @@ import {
   gorevUret,
   gorevPuanla,
   senkronGorevUret,
+  mentorlukGorevUret,
   gorevAraligiDk,
   istanbulSaati,
   sessizSaatMi,
@@ -43,6 +44,7 @@ import {
 } from "@/lib/cumartesiProgrami";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
+import { gunlukSoz } from "@/lib/ozluSozler";
 
 type Db = ReturnType<typeof supabaseAdmin>;
 
@@ -138,6 +140,10 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         ai_comment: sonuc.yorum,
         scored_at: simdi.toISOString(),
         spark_points: kivilcim,
+        // #2 Kurtarma yolunda da response_tags kaydedilir
+        ...(sonuc.response_tags.length > 0
+          ? { response_tags: sonuc.response_tags }
+          : {}),
       })
       .eq("id", g.id);
     ozet.puanlanan++;
@@ -190,7 +196,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
           : 1));
 
   const [{ data: kisiler }, { data: sonGorevler }] = await Promise.all([
-    db.from("participants").select("id, full_name, team").eq("role", "participant"),
+    db.from("participants").select("id, full_name, team, kariyer_seviyesi, kariyer_durumu").eq("role", "participant"),
     db
       .from("missions")
       .select("participant_id, status, issued_at, kind")
@@ -251,6 +257,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     }
     const gorev = await gorevUret(db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu);
     if (!gorev) continue;
+    // #8 micro_sprint: sure_saat 0.5 = 30 dk
     const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
     const { data: yeniGorev, error } = await db
       .from("missions")
@@ -262,6 +269,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         body: gorev.body,
         difficulty: gorev.difficulty,
         neden: gorev.neden,
+        micro_sprint: gorev.micro_sprint,
         due_at: dueAt.toISOString(),
       })
       .select("id")
@@ -272,7 +280,8 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       db,
       k.id,
       `🤖 AYNA'dan yeni görev: ${gorev.title}`,
-      gorev.body.length > 120 ? gorev.body.slice(0, 117) + "…" : gorev.body
+      gorev.body.length > 120 ? gorev.body.slice(0, 117) + "…" : gorev.body,
+      "/gorevler" // A3: bildirimden doğrudan görev ekranına
     );
     // Ses katmanı: simülasyonda İTİRAZCI konuşur (stok ses, herkese);
     // gizli/cesarette YANSIMAN fısıldar (klon, bütçeli)
@@ -683,6 +692,107 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       updated_at: simdi.toISOString(),
     });
     ozet.acilan++;
+  }
+
+  // 6a) SABAH ÖZLÜ SÖZ: 08:00-09:00 arasında, günde bir kez, herkese kendi
+  // Pusula iç engel kategorisine göre seçilmiş bir söz push'la gönder.
+  // Pusula dolmamışsa varsayılan → liderlik kategorisi.
+  if (saat === 8 && !sahneSessiz) {
+    const sabahSozAnahtari = `sabah_soz_${bugun}`;
+    const { data: sozGonderilmis } = await db
+      .from("settings")
+      .select("key")
+      .eq("key", sabahSozAnahtari)
+      .maybeSingle();
+    if (!sozGonderilmis) {
+      await db.from("settings").upsert({ key: sabahSozAnahtari, value: "1" });
+      // Pusula iç engel kategorilerini tek sorguda çek
+      const { data: pusulalar } = await db
+        .from("pusula")
+        .select("participant_id, ic_engel_kat")
+        .not("tamamlandi_at", "is", null);
+      const engelHarita = new Map(
+        (pusulalar ?? []).map((p) => [p.participant_id, p.ic_engel_kat as string | null])
+      );
+      for (const k of kisiler ?? []) {
+        const engelKat = engelHarita.get(k.id) ?? null;
+        // Kariyer hâli (A/B/C) varsa persona sözü; kamp zirvesinde merkez cümle;
+        // yoksa Pusula iç engeline göre genel banka.
+        const soz = gunlukSoz({
+          hal: k.kariyer_durumu,
+          icEngelKat: engelKat,
+          gun,
+          kampGunu: kampGunuBugun,
+        });
+        await katilimciyaBildir(
+          db,
+          k.id,
+          "✨ Bugünün sözü",
+          `"${soz.metin}" — ${soz.kaynak}`,
+          "/"
+        );
+        ozet.fisilti++;
+      }
+    }
+  }
+
+  // 6aa) MENTORLUK GÖREVİ: 10:00-11:00 arasında, günde bir kez, her katılımcıya
+  // kariyer seviyesine göre 3 mentor adayı içeren görev verilir.
+  // Normal görev kotasının dışındadır — kendi kilidiyle ayrı çalışır.
+  if (saat === 10 && !sahneSessiz) {
+    const mentorlukAnahtari = `mentorluk_${bugun}`;
+    const { data: mentorlukGonderilmis } = await db
+      .from("settings")
+      .select("key")
+      .eq("key", mentorlukAnahtari)
+      .maybeSingle();
+    if (!mentorlukGonderilmis) {
+      await db.from("settings").upsert({ key: mentorlukAnahtari, value: "1" });
+      const tumKatilimcilar = (kisiler ?? []) as {
+        id: string;
+        full_name: string;
+        team: string | null;
+        kariyer_seviyesi: string | null;
+      }[];
+      for (const k of tumKatilimcilar) {
+        // Zaten bekleyen görev varsa mentorluk verme (telefonu tıkama)
+        const d = durumlar.get(k.id);
+        if (d?.bekleyen) continue;
+        const gorev = await mentorlukGorevUret(db, k, gun, tumKatilimcilar);
+        if (!gorev) continue;
+        const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
+        const { data: yeniMentor } = await db
+          .from("missions")
+          .insert({
+            participant_id: k.id,
+            kind: gorev.kind,
+            title: gorev.title,
+            body: gorev.body,
+            trait_id: gorev.trait_id,
+            due_at: dueAt.toISOString(),
+            difficulty: gorev.difficulty,
+            neden: gorev.neden,
+            micro_sprint: gorev.micro_sprint,
+          })
+          .select("id")
+          .single();
+        // #9 takip: önerilen adayları kayda bağla
+        await db.from("mentorluk_kayit").insert({
+          mentee_id: k.id,
+          mission_id: yeniMentor?.id ?? null,
+          aday_idler: gorev.adayIdler,
+          gun,
+        });
+        await katilimciyaBildir(
+          db,
+          k.id,
+          "🤝 AYNA'dan bugünkü mentorluk görevi",
+          gorev.body.replace(/\*\*/g, "").slice(0, 120),
+          "/"
+        );
+        ozet.uretilen++;
+      }
+    }
   }
 
   // 6) Günlük fısıltı (13-14 ve 20-21 aralığında birer kez): "bugün N göz seni puanladı"

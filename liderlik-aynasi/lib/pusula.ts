@@ -2,6 +2,8 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
+import { kritikAiHatasiBildir, type AiHataDetay } from "@/lib/uyari";
+import { KARIYER_RANK, kariyerHalTuret } from "@/lib/persona";
 
 // FAZ 0 — PUSULA (Nedenler & Çekirdek Profil).
 // Kamp ÖNCESİ kişiselleştirme omurgası. 10 öncelik bir FORM ile (madde madde)
@@ -56,11 +58,13 @@ function hataDetay(e: unknown): Record<string, unknown> {
   };
 }
 
-// Gerçek sebebi audit_log'a yaz (Railway loglarına erişmeden teşhis için).
+// Gerçek sebebi audit_log'a yaz (Railway loglarına erişmeden teşhis için) +
+// kritikse (kredi bitti/anahtar geçersiz) admin'e e-posta uyarısı gönder.
 async function pusulaHataKaydet(db: Db, asama: string, detay: Record<string, unknown>) {
   try {
     await db.from("audit_log").insert({ eylem: "pusula_ai_hata", detay: { asama, ...detay } });
   } catch {}
+  await kritikAiHatasiBildir(db, `pusula:${asama}`, detay as AiHataDetay);
 }
 
 const PERSONA = `Sen AYNA'sın — ama kamp henüz başlamadı. Şu an bir REHBERSİN: kişinin hayattaki gerçek "neden"ini bulmasına yardım ediyorsun. Kampta seni izleyen direktöre dönüşeceksin; ama şimdi sıcak, sakin, meraklı bir eşlikçisin. "Seni izliyorum / gözüm üzerinde" dili ASLA.
@@ -223,6 +227,63 @@ export async function onceliklerKaydet(
       { onConflict: "participant_id" }
     );
   return !error;
+}
+
+// KARİYER KONUMU (Pusula öncesi) — kişi kampa girişte kendi rakamlarını yazar.
+// 4 ham veriden kariyer_durumu (A/B/C/A+) TÜRETİLİR ve participants'a mühürlenir.
+// Bundan sonra AYNA görevleri bu persona eksenini de okur.
+export type KariyerGirdi = {
+  suanki: unknown;
+  enYuksek: unknown;
+  gecenAy: unknown;
+  kidemAy: unknown;
+};
+export async function kariyerKaydet(
+  db: Db,
+  pid: string,
+  g: KariyerGirdi
+): Promise<boolean> {
+  // Geçerli basamak değeri ya da null. Geçersiz/boş → null (zorunlu değil).
+  const seviye = (v: unknown): string | null =>
+    typeof v === "string" && KARIYER_RANK[v] ? v : null;
+  const suanki = seviye(g.suanki);
+  // Mevcut seviye olmadan momentum türetilemez — en azından o gerekli.
+  if (!suanki) return false;
+
+  const enYuksek = seviye(g.enYuksek);
+  const gecenAy = seviye(g.gecenAy);
+  const kidemHam = Number(g.kidemAy);
+  const kidemAy =
+    Number.isFinite(kidemHam) && kidemHam >= 0 && kidemHam <= 600
+      ? Math.round(kidemHam)
+      : null;
+
+  const persona = kariyerHalTuret({ suanki, enYuksek, gecenAy, kidemAy });
+
+  const { error } = await db
+    .from("participants")
+    .update({
+      kariyer_seviyesi: suanki,
+      en_yuksek_kariyer: enYuksek,
+      gecen_ay_kariyer: gecenAy,
+      kidem_ay: kidemAy,
+      kariyer_durumu: persona?.hal ?? null,
+    })
+    .eq("id", pid);
+  return !error;
+}
+
+// Kariyer konumu girilmiş mi (form kapısı için).
+export async function kariyerDurum(
+  db: Db,
+  pid: string
+): Promise<{ var: boolean; suanki: string | null }> {
+  const { data } = await db
+    .from("participants")
+    .select("kariyer_seviyesi")
+    .eq("id", pid)
+    .maybeSingle();
+  return { var: !!data?.kariyer_seviyesi, suanki: data?.kariyer_seviyesi ?? null };
 }
 
 // Pusula'yı en baştan başlat: sohbet, öncelikler ve rızayı temizler. Kişi

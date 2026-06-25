@@ -44,9 +44,37 @@ export const tr = {
     bulunamadiAciklama: "Aradığın sayfa taşınmış ya da hiç var olmamış olabilir.",
   },
   // Alt navigasyon çubuğu: en sık kullanılan 4 hedef, başparmak erişiminde
+  muhurTuru: {
+    gec: "Geç",
+    ileri: "İleri",
+    basla: "Hazırım",
+    kartlar: [
+      {
+        simge: "🤖",
+        baslik: "Mühür açıldı",
+        metin: "Artık kamptasın. Aşağıdaki çubuktan her şeye ulaşırsın. Sana hızlı bir tur atayım.",
+      },
+      {
+        simge: "🎯",
+        baslik: "Görevler",
+        metin: "AYNA gün boyu sana özel görevler verir. Çubuktaki hedef simgesinden ulaşırsın.",
+      },
+      {
+        simge: "👁",
+        baslik: "Ayna Koçu",
+        metin: "Takıldığında ya da 'şimdi ne yapayım?' dediğinde Koç hep orada.",
+      },
+      {
+        simge: "🖼",
+        baslik: "Duvar",
+        metin: "Anların, kanıtların ve topluluğun burada toplanır. Yalnız değilsin.",
+      },
+    ],
+  },
   altNav: {
     ana: "Ana sayfa",
     degerlendir: "Değerlendir",
+    koc: "Ayna Koçu",
     gorevler: "Görevler",
     duvar: "Duvar",
     kivilcimSonraki: (kalan: number, ad: string) => `${kalan} ⚡ → ${ad}`,
@@ -219,6 +247,13 @@ export const tr = {
     gorevTekDugme: (n: number) => (n > 1 ? `${n} Görevi Aç` : "Görevi Aç"),
     bekleBaslik: "AYNA seninle",
     bekleMetin: "Şu an duraksama vaktin. Sıradaki adım geldiğinde yanında olacağım. 👁",
+    // B2: ikincil widget'lar katlanır pano
+    panoBaslik: "Bugünün panosu",
+    // B5: bugün ne oldu özeti
+    bugunNeOldu: (gorev: number, takdir: number) =>
+      `Bugün${gorev > 0 ? ` 🎯 ${gorev} görev kapattın` : ""}${takdir > 0 ? `${gorev > 0 ? "," : ""} 💛 ${takdir} takdir aldın` : ""}.`,
+    // B7: bekleme beklentisi
+    bekleBeklenti: "AYNA gün boyu seni izliyor — yeni bir görev her an gelebilir.",
     // İlk 60 saniye rehberi: ilk öz-puana doğru nazik canlı işaret (#3).
     ilkAdimIpucu: "İlk adımın bu — başla",
     // Çıkmaz yok: boş anda bile sıcak bir sonraki adım — birine takdir bırak.
@@ -400,6 +435,8 @@ export const tr = {
     ],
     rizaVar: (tarih: string) => `✓ Ses ritüeli için açık rızanı ${tarih} tarihinde verdin.`,
     rizaYok: "Henüz ses ritüeli için açık rıza vermedin.",
+    veriIndir: "Verilerimi indir (JSON)",
+    veriIndirNot: "Sana ait tüm veriyi indirir. Diğer katılımcıların kimliği gizlilik gereği dahil edilmez.",
     silBaslik: "Verilerimin silinmesini istiyorum",
     silAciklama:
       "Talebin yöneticiye iletilir; ad, puan, ses ve tüm verilerin en kısa sürede silinir. Bu işlem geri alınamaz.",
@@ -688,6 +725,25 @@ export const tr = {
       "Birazdan birlikte hayattaki gerçek nedenlerini bulacağız. Yazdıkların yalnızca senin için saklanır ve kampta sana daha iyi eşlik etmek için kullanılır. Kimse ham cevaplarını görmez — yalnızca paylaşmayı seçtiklerin.",
     rizaNot: "Dilediğin an verilerini silebilirsin.",
     rizaKabul: "Anladım, başlayalım",
+    // Kariyer konumu (Pusula öncesi) — A/B/C persona türetmesi için ham veri
+    kariyerBaslik: "Kariyer konumun",
+    kariyerMetin:
+      "Sana en doğru yol arkadaşlığını yapabilmem için kariyer yolculuğunun şu anki resmini bilmem gerekiyor. Rakamlar zamanla değişir — bu çok normal. En dürüst hâliyle yaz; bu sayılar yalnızca sana özel görevleri şekillendirmek için.",
+    kariyerSuankiEtiket: "Şu anki kariyer basamağın",
+    kariyerEnYuksekEtiket: "Bugüne kadar ulaştığın en yüksek basamak",
+    kariyerGecenAyEtiket: "Geçen ayki basamağın",
+    kariyerKidemEtiket: "Kaç aydır bu işin içindesin?",
+    kariyerKidemYer: "Örn. 18",
+    kariyerSecimYer: "— Seç —",
+    kariyerKaydet: "Devam et",
+    kariyerAtla: "Şimdilik geç",
+    kariyerSeviyeEtiketler: {
+      leader: "Leader",
+      senior_leader: "Senior Leader",
+      exec_leader: "Exec. Leader",
+      diamond: "Diamond",
+      star: "Star",
+    } as Record<string, string>,
     listeBaslik: "Hayatındaki 10 öncelik",
     listeAciklama:
       "Hayatta senin için olmazsa olmaz dediğin, en çok önemsediğin, yapmaktan en çok zevk aldığın, kesinlikle hayatından çıkarmak istemediğin ya da hayatına katmak istediğin 10 önceliğinin listesini yapmanı istiyoruz.",
@@ -809,7 +865,7 @@ export const tr = {
     // Slogan seçim ekranı
     sloganBaslik: "Pusulana mühür vur",
     sloganAciklama:
-      "Nedenlerinden damıttım. Bunlardan birini seç ya da kendi kelimelinle yaz — bu cümle bundan sonra her yerde sana eşlik edecek.",
+      "Nedenlerini analiz ettim, bunları çıkardım. Birini seç ya da kendi kelimelinle yaz — bu cümle bundan sonra her yerde sana eşlik edecek.",
     sloganSec: "Bunu seçiyorum",
     sloganKendinYaz: "Kendim yaz",
     sloganYazYer: "Kendi sloganını yaz…",
@@ -828,6 +884,10 @@ export const tr = {
     acBasariDugme: "Kampa gir →",
     acZatenBaslik: "Kampın zaten açık 🔓",
     acZatenMetin: "Mührün çoktan kalkmış. Devam edebilirsin.",
+    // Başkasının kişisel açma QR'ı okutulduğunda
+    acYabanciBaslik: "Bu QR sana ait değil",
+    acYabanciMetin:
+      "Bu açma QR'ı başka bir katılımcıya ait. Kendi kartındaki QR'ı okut — herkes yalnız kendi kampını açabilir.",
     // FAZ 0 hazırlık hub'ı (Pusula bitince, kampa gelmeden)
     hazirlikBaslik: "Pusulan kuruldu 🧭",
     hazirlikAltBaslik:
@@ -1320,6 +1380,8 @@ export const tr = {
       test: "Prova",
       kurulum: "Kurulum",
       analiz: "Analiz",
+      aynaSaglik: "AYNA Sağlık",
+      mentorluk: "Mentorluk Ağı",
       farkindalik: "Farkındalık Sinyali",
       takim: "Takım Sağlığı",
       duyuru: "Duyuru",
@@ -2743,11 +2805,11 @@ export const tr = {
       pusulaEksik: "ses var · pusula eksik",
     },
     qr: {
-      baslik: "QR Giriş Kartları",
+      baslik: "Kişisel Kamp Açma Kartları",
       aciklama:
-        "Yaka kartlarının arkasına basılacak kartlar. Yazdır penceresinden 'PDF olarak kaydet' seçebilirsin.",
+        "Her kartta kişiye özel kamp açma QR'ı + giriş kodu var. Giriş kodla yapılır; mühürlü alandan sonrası kendi QR'ıyla açılır (başkasınınki açmaz). Yazdır penceresinden 'PDF olarak kaydet' seçebilirsin.",
       yazdir: "Yazdır / PDF Kaydet",
-      kartAltyazi: "QR'ı okut veya kodu gir",
+      kartAltyazi: "Giriş: kodu gir · Kampı aç: QR'ı okut",
       katilimciYok: "Önce katılımcı ekle.",
     },
     moderasyon: {
@@ -2992,10 +3054,60 @@ export const tr = {
       tahmin: "🎲 Tahmin",
       simulasyon: "🎭 Simülasyon",
       senkron: "⏱ Senkron An",
+      bag: "🤝 Bağ",
       soz: "🤝 Söz",
     },
     sozTesekkur:
       "Sözünü sakladım. 90 gün sonra sana hatırlatacağım. — AYNA",
+    // UX #1 — "Başladım": saha görevi gerçek zaman alır
+    basladim: "✋ Başladım, üzerinde çalışıyorum",
+    basladimRozet: "✋ Üzerinde çalışıyorsun",
+    // UX #2 — Ertele
+    ertele: "Şimdi uygun değilim",
+    erteleniyor: "Erteleniyor…",
+    erteleNot: "+2 saat ileri aldım — sen hazır olunca buradayım.",
+    erteleBitti: "Bu görevi daha fazla erteleyemezsin — bugün sıra onda.",
+    // UX #3 — Telafi (süresi geçti ama yine de yapılabilir)
+    telafiRozet: "Süresi geçti — ama kapı açık",
+    telafiAciklama:
+      "Kaçırmış olman bir son değil. Yine de yap; kıvılcımın yarısı senin, asıl kazanç görevin kendisi.",
+    telafiYap: "Yine de yap",
+    // UX #6 — Günün görev haritası / beklenti
+    gunHaritasi: "AYNA gün boyu sana görev verir — birini bitirince bir sonraki gelir.",
+    gunHaritasiSayi: (n: number) =>
+      n > 0 ? `Bugün ${n} görev tamamladın.` : "Bugün ilk görevini bekliyorum.",
+    // UX #8 — Yanıt iskelesi (boş sayfa felcine karşı)
+    yanitIskele: "Şunları yaz: kiminle / ne oldu / ne hissettin / ne götürdün.",
+    // UX #9 — Düşük puanı büyüme çerçevesiyle yumuşatma
+    dusukPuanNot: "Bu bir başlangıç — önemli olan yapmış olman. AYNA bir sonraki adımı gösteriyor.",
+    // A1 — seri kırılma riski (kayıp kaçınması)
+    seriRiski: (n: number) => `${n}'lik serin sürüyor — bugün bir görevle koru, kırma.`,
+    // A6 — zor görevde koça köprü
+    koctanYardim: "Takıldın mı? Ayna Koçu'na danış →",
+    // A7 — aşırı yük koruması
+    yeterinceBaslik: "Bugün yeterince yaptın",
+    yeterinceMetin: (n: number) =>
+      `Bugün ${n} görev kapattın — bu güçlü bir gün. Şimdi dinlen; yarın yine buradayım.`,
+    // A8 — geçmiş filtre + özet
+    gecmisOzet: (tamam: number, ort: number | null, kacan: number) =>
+      `${tamam} tamamlandı${ort != null ? ` · ort. ${ort.toFixed(1)}` : ""}${kacan > 0 ? ` · ${kacan} kaçan` : ""}`,
+    filtreTum: "Tümü",
+    filtreYuksek: "Yüksek puan",
+    filtreKacan: "Kaçan",
+    filtreBos: "Bu filtrede görev yok.",
+    // A4 — tamamlayınca sıradaki görev
+    siradakiGorev: "Sıradaki göreve geç →",
+    // A5 — benzerini tekrar dene
+    benzeriIste: "Bu konuda bir görev daha ver",
+    benzeriUretiliyor: "AYNA hazırlıyor…",
+    benzeriHazir: "✓ Yeni görevin hazır — yukarı kaydır.",
+    benzeriOlmaz: "Şu an yeni görev üretilemedi.",
+    // A10 — görevi netleştir
+    netlestir: "Bu görevi netleştir",
+    netlestiriliyor: "AYNA açıklıyor…",
+    // Tasarım turu — ikincil eylemler tek menüde
+    secenekler: "Seçenekler",
+    kasHaritasi: "Çalıştırdığın liderlik kasları",
   },
   kivilcim: {
     ad: "Kıvılcım",
@@ -3254,6 +3366,9 @@ export const tr = {
     kaydet: "Kaydet",
     seri: (n: number) => `${n} günlük seri 🔥`,
     seriYok: "Serini bugün başlat.",
+    // B8: 90 günlük genel ilerleme
+    yolBaslik: "90 günlük yol",
+    yolGun: (n: number) => `${n} / 90 gün`,
     toplam: (n: number) => `${n} gün adım attın`,
     bugunTamam: "Bugünün adımı işaretlendi ✓",
     son14: "Son 14 gün",

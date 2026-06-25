@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
     hedefler.map(async (k) => {
       const gorev = await gorevUret(db, k, 2, saat, "kamp", etkinlik, biten, ipucu);
       if (!gorev) return;
+      // #8 micro_sprint: sure_saat 0.5 = 30 dk
       const dueAt = new Date(now.getTime() + gorev.sure_saat * 3_600_000);
       const { data: yeni, error } = await db
         .from("missions")
@@ -78,6 +79,7 @@ export async function POST(req: NextRequest) {
           body: gorev.body,
           difficulty: gorev.difficulty,
           neden: gorev.neden,
+          micro_sprint: gorev.micro_sprint,
           due_at: dueAt.toISOString(),
         })
         .select("id")

@@ -68,6 +68,20 @@ export default function TakipAkis({
         </div>
       </div>
 
+      {/* B8: 90 günlük genel ilerleme — kaç gün tamamlandı, ne kadar kaldı */}
+      <div className="rounded-2xl border border-royal/25 bg-midnight-card/50 p-4">
+        <div className="flex items-center justify-between text-xs font-medium text-slate-400">
+          <span>{t.yolBaslik}</span>
+          <span className="text-gold-light">{t.yolGun(Math.min(durum.toplam, 90))}</span>
+        </div>
+        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-royal-light to-gold transition-all duration-700"
+            style={{ width: `${Math.min(100, Math.round((durum.toplam / 90) * 100))}%` }}
+          />
+        </div>
+      </div>
+
       {/* Bugünün check-in'i */}
       <section className="kart-cam rounded-2xl p-5">
         {isaretli ? (

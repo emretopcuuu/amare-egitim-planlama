@@ -12,6 +12,13 @@ import GorevYanitFormu from "./GorevYanitFormu";
 import TanikOnay from "./TanikOnay";
 import ZorlastirButonu from "./ZorlastirButonu";
 import HafifletButonu from "./HafifletButonu";
+import BaslaButonu from "./BaslaButonu";
+import ErteleButonu from "./ErteleButonu";
+import GorevGecmisi from "./GorevGecmisi";
+import NetlestirButonu from "./NetlestirButonu";
+import SayacSerit from "./SayacSerit";
+import MentorSec from "./MentorSec";
+import { atmosferBul } from "@/lib/gorevTasarim";
 import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
 import GunlukCheckin from "@/components/GunlukCheckin";
@@ -24,15 +31,8 @@ export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
 const t = tr.gorevler;
 
-// Tür rozetleri: her görev türünün kendi rengi var — listede tarayınca ayırt edilir
-const TUR_RENK: Record<string, string> = {
-  gozlem: "bg-royal/30 text-royal-light",
-  cesaret: "bg-orange-500/20 text-orange-300",
-  yansima: "bg-emerald-500/20 text-emerald-300",
-  gizli: "bg-fuchsia-500/20 text-fuchsia-300",
-  tahmin: "bg-sky-500/20 text-sky-300",
-  soz: "bg-gold/20 text-gold-light",
-};
+// (Tür rozet renkleri artık lib/gorevTasarim.ts'teki GOREV_ATMOSFER'den —
+// ikon + aksan + üst şerit ile birlikte tek görsel kimlik.)
 
 export default async function GorevlerPage() {
   const session = await getSession();
@@ -45,7 +45,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -53,7 +53,45 @@ export default async function GorevlerPage() {
   if (error) throw error;
 
   const aktif = (gorevler ?? []).filter((g) => g.status === "pending");
-  const gecmis = (gorevler ?? []).filter((g) => g.status !== "pending");
+  // UX #3 — Telafi: süresi YENİ geçmiş (24 saat içinde), telafi edilebilir
+  // görevler ayrı bir bölümde forma açık kalır. Söz/senkron telafi edilmez.
+  const simdiMs = new Date().getTime();
+  const telafiEdilebilir = (g: { status: string; kind: string; due_at: string }) =>
+    g.status === "expired" &&
+    g.kind !== "soz" &&
+    g.kind !== "senkron" &&
+    simdiMs - new Date(g.due_at).getTime() <= 24 * 3_600_000;
+  const telafiGorevler = (gorevler ?? []).filter(telafiEdilebilir);
+  const gecmis = (gorevler ?? []).filter(
+    (g) => g.status !== "pending" && !telafiEdilebilir(g)
+  );
+
+  // #9 Mentorluk: aktif mentorluk görevleri için önerilen adayları + seçimi yükle.
+  const mentorVeri = new Map<string, { adaylar: { id: string; ad: string }[]; secilen: string | null }>();
+  const mentorlukAktif = aktif.filter((g) => g.kind === "mentorluk");
+  if (mentorlukAktif.length > 0) {
+    const { data: kayitlar } = await db
+      .from("mentorluk_kayit")
+      .select("mission_id, aday_idler, secilen_id")
+      .in("mission_id", mentorlukAktif.map((g) => g.id))
+      .eq("mentee_id", session.sub);
+    const tumIdler = [...new Set((kayitlar ?? []).flatMap((k) => (k.aday_idler as string[]) ?? []))];
+    const adMap = new Map<string, string>();
+    if (tumIdler.length > 0) {
+      const { data: kisiler } = await db
+        .from("participants")
+        .select("id, full_name")
+        .in("id", tumIdler);
+      for (const p of kisiler ?? []) adMap.set(p.id, p.full_name);
+    }
+    for (const k of kayitlar ?? []) {
+      if (!k.mission_id) continue;
+      mentorVeri.set(k.mission_id, {
+        adaylar: ((k.aday_idler as string[]) ?? []).map((id) => ({ id, ad: adMap.get(id) ?? "—" })),
+        secilen: k.secilen_id,
+      });
+    }
+  }
 
   // YANSIMAN fısıltıları: aktif görevlerin ses dosyalarına kısa ömürlü imzalı URL
   const sesUrller = new Map<string, string>();
@@ -151,26 +189,15 @@ export default async function GorevlerPage() {
     else break;
   }
 
-  // #10 Zaman çizelgesi: geçmiş görevleri İstanbul gününe göre grupla (her gün
-  // bir bölüm). En yeni gün üstte; gün içinde en yeni görev üstte.
-  const gunEtiket = new Intl.DateTimeFormat("tr-TR", {
-    timeZone: "Europe/Istanbul",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-  const gunAnahtar = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" });
-  const gecmisGruplar: { anahtar: string; etiket: string; gorevler: typeof gecmis }[] = [];
-  for (const g of gecmis) {
-    const zaman = new Date(g.scored_at ?? g.issued_at);
-    const anahtar = gunAnahtar.format(zaman);
-    let grup = gecmisGruplar.find((x) => x.anahtar === anahtar);
-    if (!grup) {
-      grup = { anahtar, etiket: gunEtiket.format(zaman), gorevler: [] };
-      gecmisGruplar.push(grup);
-    }
-    grup.gorevler.push(g);
-  }
+  // A2: görevin çalıştırdığı liderlik kası (trait_id → ad).
+  const ozellikAd = new Map(ozellikler.map((o) => [o.id, o.name]));
+  // A1: seri kırılma riski — serin var ama bugün henüz görev kapatmadın.
+  const seriRiski = seri >= 2 && bugunGorev === 0;
+  // A7: aşırı yük koruması — bugün çok görev yaptıysan dinlenmeye davet.
+  const yeterince = aktif.length === 0 && bugunGorev >= 5;
+
+  // (Geçmiş zaman çizelgesi gruplaması artık GorevGecmisi client bileşeninde —
+  // filtre + özet için.)
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
@@ -233,12 +260,21 @@ export default async function GorevlerPage() {
       )}
 
       {/* #6 Seri ateşi — kesintisiz tamamlanan görevler momentumu */}
-      {seri >= 3 && (
+      {seri >= 3 && !seriRiski && (
         <section className="seri-belir flex items-center gap-3 rounded-2xl border border-orange-400/30 bg-gradient-to-r from-orange-500/15 to-midnight-card/60 px-4 py-3">
           <span className="text-2xl" aria-hidden>
             🔥
           </span>
           <p className="text-sm font-semibold text-orange-200">{t.seriAtesi(seri)}</p>
+        </section>
+      )}
+      {/* A1: seri kırılma riski — kayıp kaçınması dürtüsü (serin var, bugün koru) */}
+      {seriRiski && (
+        <section className="flex items-center gap-3 rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/15 to-midnight-card/60 px-4 py-3">
+          <span className="text-2xl" aria-hidden>
+            🔥
+          </span>
+          <p className="text-sm font-semibold text-amber-200">{t.seriRiski(seri)}</p>
         </section>
       )}
 
@@ -262,8 +298,46 @@ export default async function GorevlerPage() {
         yapildi={!!checkin}
       />
 
+      {/* UX #6: Günün görev haritası — kişi tek görev görüyor; gün boyu daha
+          geleceğini ve bugün nerede olduğunu bilsin (belirsizlik kalksın). */}
+      <section className="rounded-2xl border border-royal-light/20 bg-white/[0.02] px-4 py-3">
+        <p className="text-sm leading-relaxed text-slate-300">🗺 {t.gunHaritasi}</p>
+        <p className="mt-1 text-xs font-medium text-gold-light/80">{t.gunHaritasiSayi(bugunGorev)}</p>
+      </section>
+
+      {/* UX #3: Telafi — süresi yeni geçmiş görev(ler) forma açık kalır */}
+      {telafiGorevler.length > 0 && (
+        <section className="space-y-4">
+          {telafiGorevler.map((g) => (
+            <div
+              key={g.id}
+              className="kart-3d rounded-2xl border border-amber-400/30 bg-amber-500/[0.06] p-5"
+            >
+              <p className="inline-block rounded-full bg-amber-500/20 px-3 py-1 text-xs font-bold tracking-wide text-amber-300">
+                ⏳ {t.telafiRozet}
+              </p>
+              <h2 className="mt-2 text-xl font-bold leading-snug text-amber-100">{g.title}</h2>
+              <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
+                {g.body}
+              </p>
+              <p className="mt-3 rounded-xl border border-amber-400/20 bg-midnight/30 p-3 text-sm leading-relaxed text-amber-200/90">
+                {t.telafiAciklama}
+              </p>
+              <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} ekip={ekip} />
+            </div>
+          ))}
+        </section>
+      )}
+
       {/* Aktif görev(ler) */}
-      {aktif.length === 0 ? (
+      {aktif.length === 0 && yeterince ? (
+        /* A7: aşırı yük koruması — bugün çok görev yaptın, dinlen */
+        <section className="kart-cam rounded-3xl p-8 text-center ring-1 ring-emerald-400/25">
+          <p className="text-5xl" aria-hidden>🌿</p>
+          <h2 className="prizma-serif ay-metin mt-3 text-2xl font-semibold">{t.yeterinceBaslik}</h2>
+          <p className="mt-3 text-base leading-relaxed text-slate-300">{t.yeterinceMetin(bugunGorev)}</p>
+        </section>
+      ) : aktif.length === 0 ? (
         <>
           <BosDurum simge="👁" baslik={t.aktifYokBaslik} metin={t.aktifYok} />
           {/* UX #9: boş durum ölü kalmasın — sıcak bir sonraki adım sun */}
@@ -283,38 +357,71 @@ export default async function GorevlerPage() {
           </div>
         </>
       ) : (
-        aktif.map((g, i) => (
+        aktif.map((g, i) => {
+          const atm = atmosferBul(g.kind);
+          const zorluk = (g.difficulty as Zorluk) ?? 2;
+          return (
           <section
             key={g.id}
-            className="altin-nabiz relative overflow-hidden kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/40 backdrop-blur"
+            className={`gorev-giris relative overflow-hidden kart-3d rounded-2xl ${atm.arka} p-5 pt-6 shadow-xl ring-1 ${atm.halka} backdrop-blur`}
           >
-            <span className="altin-tel" />
+            {/* UX #6: üst kenarda boşalan sayaç şeridi (türe göre değil zamana göre) */}
+            <SayacSerit baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
+            {/* UX #1 (tasarım): türe özel üst atmosfer parıltısı */}
+            <span
+              className={`pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b ${atm.serit} opacity-60`}
+              aria-hidden
+            />
+            <div className="relative">
             {i === 0 && (
               <p className="mb-2 inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-bold tracking-wide text-gold-light">
                 {tr.degerlendir.simdiSira}
               </p>
             )}
             <div className="flex items-center justify-between text-xs">
-              <span
-                className={`rounded-md px-2 py-0.5 font-medium ${TUR_RENK[g.kind] ?? "bg-royal/30 text-royal-light"}`}
-              >
+              <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium ${atm.rozet}`}>
+                <span aria-hidden>{atm.ikon}</span>
                 {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
               </span>
-              <GorevSayac baslangic={g.issued_at} bitis={g.due_at} />
+              <GorevSayac baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
             </div>
-            <p className="mt-2 text-sm font-semibold text-sky-200">
-              {ZORLUK_ETIKETI[(g.difficulty as Zorluk) ?? 2]}
-            </p>
-            <h2 className="mt-2 text-2xl font-bold leading-snug text-gold-light">{g.title}</h2>
-            <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
+            {/* UX #3: zorluk sembol (pip) + kas + mikro-sprint */}
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+              <span className="inline-flex items-center gap-1" title={ZORLUK_ETIKETI[zorluk]}>
+                {[1, 2, 3].map((n) => (
+                  <span
+                    key={n}
+                    className={`h-2 w-2 rounded-full ${n <= zorluk ? "bg-sky-300" : "bg-white/15"}`}
+                    aria-hidden
+                  />
+                ))}
+                <span className="ml-1 text-xs text-slate-400">{ZORLUK_ETIKETI[zorluk]}</span>
+              </span>
+              {g.trait_id && ozellikAd.has(g.trait_id) && (
+                <span className="inline-block rounded-full bg-royal/30 px-2 py-0.5 text-xs font-medium text-royal-light">
+                  💪 {ozellikAd.get(g.trait_id)}
+                </span>
+              )}
+              {g.micro_sprint && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/25 px-2 py-0.5 text-xs font-bold text-amber-300 ring-1 ring-amber-400/40">
+                  <span className="animate-pulse" aria-hidden>⚡</span> 30 DAKİKA — ŞİMDİ
+                </span>
+              )}
+            </div>
+            {/* UX #10: AYNA sesi için belirgin başlık tipografisi */}
+            <h2 className="font-display mt-3 text-[1.7rem] font-bold leading-tight text-gold-light">{g.title}</h2>
+            <p className="mt-2.5 whitespace-pre-wrap text-base leading-relaxed text-slate-100">
               {g.body}
             </p>
-            {/* "Bu görev neden sana özel?" — AYNA'nın kişiselleştirme gerekçesi */}
+            {/* UX #5: "neden sana özel?" — hep açık kutu yerine dokun-aç; görev kahraman kalır */}
             {g.neden && (
-              <div className="mt-4 rounded-2xl border border-gold/30 bg-gold/[0.07] p-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-gold">✨ Sana Özel</p>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-200">{g.neden}</p>
-              </div>
+              <details className="group mt-4 rounded-2xl border border-gold/30 bg-gold/[0.07] p-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-xs font-bold uppercase tracking-widest text-gold">
+                  <span>✨ Neden ben?</span>
+                  <span className="text-gold/70 transition-transform group-open:rotate-180" aria-hidden>▾</span>
+                </summary>
+                <p className="mt-2 text-sm leading-relaxed text-slate-200">{g.neden}</p>
+              </details>
             )}
             {sesUrller.has(g.id) ? (
               <SesCal
@@ -324,91 +431,69 @@ export default async function GorevlerPage() {
             ) : (
               <OkuButonu metin={`${g.title}. ${g.body}`} />
             )}
-            {/* #6 Seçilen zorluk: zorlaştırılabilir türlerde ve üst kademede değilse */}
-            {g.kind !== "soz" && g.kind !== "senkron" && (g.difficulty ?? 2) < 3 && (
-              <ZorlastirButonu gorevId={g.id} />
+            {/* #9: mentorluk görevinde 3 adaydan yapılandırılmış seçim */}
+            {g.kind === "mentorluk" && mentorVeri.has(g.id) && (
+              <MentorSec
+                missionId={g.id}
+                adaylar={mentorVeri.get(g.id)!.adaylar}
+                secilen={mentorVeri.get(g.id)!.secilen}
+              />
             )}
-            {/* #8 Duygusal güvenlik: "ağır geldi" → yumuşat (söz/senkron hariç) */}
+            {/* UX #1: "Başladım" — birincil-yakını, görünür kalır (söz/senkron hariç) */}
             {g.kind !== "soz" && g.kind !== "senkron" && (
-              <HafifletButonu gorevId={g.id} />
+              <BaslaButonu gorevId={g.id} basladiMi={!!g.started_at} />
             )}
+            {/* UX #2 (tasarım): birincil eylem (yanıt) baskın; ikincil eylemler
+                tek "⋯ Seçenekler" altında toplanır — kart dağınıklığı biter. */}
             <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} ekip={ekip} />
+            {g.kind !== "soz" && g.kind !== "senkron" && (
+              <details className="group mt-3">
+                <summary className="flex cursor-pointer list-none items-center justify-center gap-1 text-xs font-medium text-slate-500 transition-colors hover:text-slate-300">
+                  ⋯ {t.secenekler}
+                  <span className="transition-transform group-open:rotate-180" aria-hidden>▾</span>
+                </summary>
+                <div className="mt-2 space-y-1">
+                  {/* A10: belirsiz görevde netleştirme */}
+                  <NetlestirButonu gorevId={g.id} />
+                  {/* #6 Zorlaştır — üst kademede değilse */}
+                  {(g.difficulty ?? 2) < 3 && <ZorlastirButonu gorevId={g.id} />}
+                  {/* #8 "ağır geldi" → yumuşat */}
+                  <HafifletButonu gorevId={g.id} />
+                  {/* UX #2: ertele (en fazla 2 kez) */}
+                  <ErteleButonu gorevId={g.id} kalanHak={2 - (g.ertelenme_sayisi ?? 0)} />
+                  {/* A6: takılan kişi için Koç köprüsü */}
+                  <Link
+                    href="/kocu"
+                    className="block text-center text-xs text-slate-500 underline-offset-4 transition-colors hover:text-royal-light"
+                  >
+                    {t.koctanYardim}
+                  </Link>
+                </div>
+              </details>
+            )}
+            </div>
           </section>
-        ))
+          );
+        })
       )}
 
-      {/* Geçmiş — #10 günlere bölünmüş zaman çizelgesi (kamp yolculuğun) */}
-      <section>
-        <h2 className="text-lg font-semibold text-gold-light">{t.gecmisBaslik}</h2>
-        {gecmis.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-400">{t.gecmisYok}</p>
-        ) : (
-          <div className="mt-4 space-y-6">
-            {gecmisGruplar.map((grup) => (
-              <div key={grup.anahtar}>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  {grup.etiket}
-                </p>
-                {/* Sol rayda dikey çizgi + her görevde nokta */}
-                <ul className="relative space-y-3 border-l border-royal/25 pl-5">
-                  {grup.gorevler.map((g) => (
-                    <li key={g.id} className="relative">
-                      <span
-                        className={`absolute -left-[1.46rem] top-3 h-2.5 w-2.5 rounded-full ring-2 ring-midnight ${
-                          g.status === "expired"
-                            ? "bg-slate-600"
-                            : (g.ai_score ?? 0) >= 8
-                              ? "bg-gold"
-                              : "bg-royal-light"
-                        }`}
-                        aria-hidden
-                      />
-                      <div
-                        className={`kart-3d rounded-2xl bg-midnight-card/60 p-4 ring-1 backdrop-blur ${
-                          g.status === "expired" ? "opacity-60 ring-royal/20" : "ring-royal/30"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-3 text-xs">
-                          <span
-                            className={`rounded-md px-2 py-0.5 font-medium ${TUR_RENK[g.kind] ?? "text-slate-400"}`}
-                          >
-                            {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
-                          </span>
-                          {g.status === "scored" && g.ai_score !== null ? (
-                            <span className="font-bold text-gold">
-                              {t.puanin(g.ai_score)} · +{g.spark_points} ⚡
-                            </span>
-                          ) : g.status === "scored" ? (
-                            <span className="font-bold text-gold">+{g.spark_points} ⚡</span>
-                          ) : (
-                            <span className="text-slate-500">
-                              {t.durumlar[g.status as keyof typeof t.durumlar]}
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-1.5 text-sm font-medium text-slate-100">{g.title}</p>
-                        {g.ai_comment && (
-                          <p className="mt-2 rounded-xl bg-midnight-soft p-3 text-sm italic text-slate-300">
-                            “{g.ai_comment}”
-                          </p>
-                        )}
-                        {gelenGozlem.has(g.id) && (
-                          <p className="mt-2 rounded-xl border border-royal-light/25 bg-midnight/40 p-3 text-sm text-slate-200">
-                            <span className="mr-1 text-xs font-semibold text-royal-light">
-                              {t.tanikGelenEtiket}
-                            </span>
-                            “{gelenGozlem.get(g.id)}”
-                          </p>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      {/* Geçmiş — A8 filtre + özet, A2 liderlik kası (client bileşeni) */}
+      <GorevGecmisi
+        gorevler={gecmis.map((g) => ({
+          id: g.id,
+          kind: g.kind,
+          title: g.title,
+          status: g.status,
+          ai_score: g.ai_score,
+          spark_points: g.spark_points,
+          ai_comment: g.ai_comment,
+          scored_at: g.scored_at,
+          issued_at: g.issued_at,
+          trait_id: g.trait_id,
+          gozlem: gelenGozlem.get(g.id) ?? null,
+        }))}
+        ozellikAd={Object.fromEntries(ozellikAd)}
+      />
       </div>
     </main>
   );

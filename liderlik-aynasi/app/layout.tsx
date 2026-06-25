@@ -9,6 +9,7 @@ import AcilisSplash from "@/components/AcilisSplash";
 import IlkKarsilama from "@/components/IlkKarsilama";
 import AtlaBaglantisi from "@/components/AtlaBaglantisi";
 import ProvaModuBayragi from "@/components/ProvaModuBayragi";
+import SuDalgaTik from "@/components/SuDalgaTik";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -109,6 +110,8 @@ export default async function RootLayout({
         <GolArkaplan />
         {children}
         <AltNav />
+        {/* #5 Su/ayna marka hareketi — dokunuşta su dalgası */}
+        <SuDalgaTik />
         <IlkKarsilama />
         <BaglantiDurumu />
         <CanliTazele />
