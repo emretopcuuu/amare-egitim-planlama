@@ -218,11 +218,14 @@ export default function GorevYanitFormu({
         )}
         {/* #4 Kanıt Duvarı: görevi foto kanıtıyla kapat → duvara taşı */}
         {!sonuc.bekliyor && !sonuc.soz && <KanitEkle gorevBaslik={gorevBaslik} />}
+        {/* A5: bu konuda bir görev daha — büyüme döngüsü (söz/senkron hariç) */}
+        {!sonuc.bekliyor && !sonuc.soz && !sonuc.senkron && <BenzeriDene gorevId={gorevId} />}
+        {/* A4: tamamlayınca sıradaki göreve net geçiş (belirgin buton) */}
         <button
           onClick={() => router.refresh()}
-          className="mt-4 text-xs text-royal-light underline-offset-4 hover:underline"
+          className="mt-4 flex h-11 w-full items-center justify-center rounded-xl border border-royal-light/40 text-sm font-semibold text-royal-light transition-colors hover:bg-white/5"
         >
-          {tr.degerlendir.devamEt} →
+          {t.siradakiGorev}
         </button>
         </div>
       </>
@@ -470,6 +473,48 @@ function TanikGoster({
         </button>
       </div>
     </div>
+  );
+}
+
+// A5 — "Bu konuda bir görev daha". Tamamlanan görevin çalıştırdığı kası farklı
+// bir açıdan tekrar çalıştıran yeni bir görev üretir (büyüme döngüsü).
+function BenzeriDene({ gorevId }: { gorevId: string }) {
+  const router = useRouter();
+  const [durum, setDurum] = useState<"idle" | "uretiliyor" | "hazir" | "hata">("idle");
+
+  async function iste() {
+    if (durum === "uretiliyor") return;
+    setDurum("uretiliyor");
+    try {
+      const res = await fetch("/api/gorev-tekrar", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ gorevId }),
+      });
+      if (res.ok) {
+        titret([10, 30, 10]);
+        setDurum("hazir");
+        setTimeout(() => router.refresh(), 1200);
+      } else {
+        setDurum("hata");
+      }
+    } catch {
+      setDurum("hata");
+    }
+  }
+
+  if (durum === "hazir") {
+    return <p className="mt-3 text-xs font-medium text-emerald-400">{t.benzeriHazir}</p>;
+  }
+  return (
+    <button
+      type="button"
+      onClick={iste}
+      disabled={durum === "uretiliyor"}
+      className="mt-3 w-full text-center text-xs text-gold-light/80 underline-offset-4 transition-colors hover:text-gold-light disabled:opacity-50"
+    >
+      {durum === "uretiliyor" ? t.benzeriUretiliyor : durum === "hata" ? t.benzeriOlmaz : `🔁 ${t.benzeriIste}`}
+    </button>
   );
 }
 

@@ -3041,6 +3041,31 @@ export const tr = {
     yanitIskele: "Şunları yaz: kiminle / ne oldu / ne hissettin / ne götürdün.",
     // UX #9 — Düşük puanı büyüme çerçevesiyle yumuşatma
     dusukPuanNot: "Bu bir başlangıç — önemli olan yapmış olman. AYNA bir sonraki adımı gösteriyor.",
+    // A1 — seri kırılma riski (kayıp kaçınması)
+    seriRiski: (n: number) => `${n}'lik serin sürüyor — bugün bir görevle koru, kırma.`,
+    // A6 — zor görevde koça köprü
+    koctanYardim: "Takıldın mı? Ayna Koçu'na danış →",
+    // A7 — aşırı yük koruması
+    yeterinceBaslik: "Bugün yeterince yaptın",
+    yeterinceMetin: (n: number) =>
+      `Bugün ${n} görev kapattın — bu güçlü bir gün. Şimdi dinlen; yarın yine buradayım.`,
+    // A8 — geçmiş filtre + özet
+    gecmisOzet: (tamam: number, ort: number | null, kacan: number) =>
+      `${tamam} tamamlandı${ort != null ? ` · ort. ${ort.toFixed(1)}` : ""}${kacan > 0 ? ` · ${kacan} kaçan` : ""}`,
+    filtreTum: "Tümü",
+    filtreYuksek: "Yüksek puan",
+    filtreKacan: "Kaçan",
+    filtreBos: "Bu filtrede görev yok.",
+    // A4 — tamamlayınca sıradaki görev
+    siradakiGorev: "Sıradaki göreve geç →",
+    // A5 — benzerini tekrar dene
+    benzeriIste: "Bu konuda bir görev daha ver",
+    benzeriUretiliyor: "AYNA hazırlıyor…",
+    benzeriHazir: "✓ Yeni görevin hazır — yukarı kaydır.",
+    benzeriOlmaz: "Şu an yeni görev üretilemedi.",
+    // A10 — görevi netleştir
+    netlestir: "Bu görevi netleştir",
+    netlestiriliyor: "AYNA açıklıyor…",
   },
   kivilcim: {
     ad: "Kıvılcım",

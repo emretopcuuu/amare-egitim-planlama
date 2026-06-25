@@ -280,7 +280,8 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       db,
       k.id,
       `🤖 AYNA'dan yeni görev: ${gorev.title}`,
-      gorev.body.length > 120 ? gorev.body.slice(0, 117) + "…" : gorev.body
+      gorev.body.length > 120 ? gorev.body.slice(0, 117) + "…" : gorev.body,
+      "/gorevler" // A3: bildirimden doğrudan görev ekranına
     );
     // Ses katmanı: simülasyonda İTİRAZCI konuşur (stok ses, herkese);
     // gizli/cesarette YANSIMAN fısıldar (klon, bütçeli)

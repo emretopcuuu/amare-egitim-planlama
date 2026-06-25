@@ -1244,3 +1244,47 @@ export async function mentorlukGorevUret(
     micro_sprint: false,
   };
 }
+
+// A10 — "Bu görevi netleştir". Belirsiz bir görevde kişiye tek-iki cümlelik,
+// somut bir açıklama döndürür (boş sayfa felcine ikinci kalkan). Persona/Pusula
+// gerektirmez; yalnız görevi sadeleştirir.
+export async function gorevNetlestir(gorev: {
+  title: string;
+  body: string;
+  kind: string;
+}): Promise<string | null> {
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+  const SEMA = {
+    type: "object" as const,
+    properties: {
+      aciklama: {
+        type: "string" as const,
+        description:
+          "Görevi netleştiren 1-2 kısa, somut Türkçe cümle: tam olarak ne yapılacak ve sonunda AYNA'ya ne yazılacak.",
+      },
+    },
+    required: ["aciklama"],
+    additionalProperties: false,
+  };
+  try {
+    const client = new Anthropic();
+    const yanit = await client.messages.create({
+      model: "claude-opus-4-8",
+      max_tokens: 600,
+      thinking: { type: "disabled" },
+      output_config: { effort: "low", format: { type: "json_schema", schema: SEMA } },
+      system:
+        "Sen AYNA'sın — bir liderlik kampının yol arkadaşı. Katılımcı bir görevi tam anlamadı. " +
+        "Görevi 1-2 KISA, somut cümleyle netleştir: tam olarak ne yapacağını ve sonunda sana ne yazacağını söyle. " +
+        "Yeni bir görev UYDURMA; var olanı sadeleştir. Sıcak ama net ol.",
+      messages: [
+        { role: "user", content: `Görev başlığı: ${gorev.title}\nGörev: ${gorev.body}` },
+      ],
+    });
+    const veri = jsonCoz<{ aciklama?: string }>(yanit);
+    const metin = (veri?.aciklama ?? "").trim();
+    return metin || null;
+  } catch {
+    return null;
+  }
+}

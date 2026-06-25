@@ -14,6 +14,8 @@ import ZorlastirButonu from "./ZorlastirButonu";
 import HafifletButonu from "./HafifletButonu";
 import BaslaButonu from "./BaslaButonu";
 import ErteleButonu from "./ErteleButonu";
+import GorevGecmisi from "./GorevGecmisi";
+import NetlestirButonu from "./NetlestirButonu";
 import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
 import GunlukCheckin from "@/components/GunlukCheckin";
@@ -49,7 +51,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -166,26 +168,15 @@ export default async function GorevlerPage() {
     else break;
   }
 
-  // #10 Zaman çizelgesi: geçmiş görevleri İstanbul gününe göre grupla (her gün
-  // bir bölüm). En yeni gün üstte; gün içinde en yeni görev üstte.
-  const gunEtiket = new Intl.DateTimeFormat("tr-TR", {
-    timeZone: "Europe/Istanbul",
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-  });
-  const gunAnahtar = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" });
-  const gecmisGruplar: { anahtar: string; etiket: string; gorevler: typeof gecmis }[] = [];
-  for (const g of gecmis) {
-    const zaman = new Date(g.scored_at ?? g.issued_at);
-    const anahtar = gunAnahtar.format(zaman);
-    let grup = gecmisGruplar.find((x) => x.anahtar === anahtar);
-    if (!grup) {
-      grup = { anahtar, etiket: gunEtiket.format(zaman), gorevler: [] };
-      gecmisGruplar.push(grup);
-    }
-    grup.gorevler.push(g);
-  }
+  // A2: görevin çalıştırdığı liderlik kası (trait_id → ad).
+  const ozellikAd = new Map(ozellikler.map((o) => [o.id, o.name]));
+  // A1: seri kırılma riski — serin var ama bugün henüz görev kapatmadın.
+  const seriRiski = seri >= 2 && bugunGorev === 0;
+  // A7: aşırı yük koruması — bugün çok görev yaptıysan dinlenmeye davet.
+  const yeterince = aktif.length === 0 && bugunGorev >= 5;
+
+  // (Geçmiş zaman çizelgesi gruplaması artık GorevGecmisi client bileşeninde —
+  // filtre + özet için.)
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
@@ -248,12 +239,21 @@ export default async function GorevlerPage() {
       )}
 
       {/* #6 Seri ateşi — kesintisiz tamamlanan görevler momentumu */}
-      {seri >= 3 && (
+      {seri >= 3 && !seriRiski && (
         <section className="seri-belir flex items-center gap-3 rounded-2xl border border-orange-400/30 bg-gradient-to-r from-orange-500/15 to-midnight-card/60 px-4 py-3">
           <span className="text-2xl" aria-hidden>
             🔥
           </span>
           <p className="text-sm font-semibold text-orange-200">{t.seriAtesi(seri)}</p>
+        </section>
+      )}
+      {/* A1: seri kırılma riski — kayıp kaçınması dürtüsü (serin var, bugün koru) */}
+      {seriRiski && (
+        <section className="flex items-center gap-3 rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/15 to-midnight-card/60 px-4 py-3">
+          <span className="text-2xl" aria-hidden>
+            🔥
+          </span>
+          <p className="text-sm font-semibold text-amber-200">{t.seriRiski(seri)}</p>
         </section>
       )}
 
@@ -309,7 +309,14 @@ export default async function GorevlerPage() {
       )}
 
       {/* Aktif görev(ler) */}
-      {aktif.length === 0 ? (
+      {aktif.length === 0 && yeterince ? (
+        /* A7: aşırı yük koruması — bugün çok görev yaptın, dinlen */
+        <section className="kart-cam rounded-3xl p-8 text-center ring-1 ring-emerald-400/25">
+          <p className="text-5xl" aria-hidden>🌿</p>
+          <h2 className="prizma-serif ay-metin mt-3 text-2xl font-semibold">{t.yeterinceBaslik}</h2>
+          <p className="mt-3 text-base leading-relaxed text-slate-300">{t.yeterinceMetin(bugunGorev)}</p>
+        </section>
+      ) : aktif.length === 0 ? (
         <>
           <BosDurum simge="👁" baslik={t.aktifYokBaslik} metin={t.aktifYok} />
           {/* UX #9: boş durum ölü kalmasın — sıcak bir sonraki adım sun */}
@@ -350,6 +357,12 @@ export default async function GorevlerPage() {
             </div>
             <p className="mt-2 text-sm font-semibold text-sky-200">
               {ZORLUK_ETIKETI[(g.difficulty as Zorluk) ?? 2]}
+              {/* A2: bu görev hangi liderlik kasını çalıştırıyor */}
+              {g.trait_id && ozellikAd.has(g.trait_id) && (
+                <span className="ml-2 inline-block rounded-full bg-royal/30 px-2 py-0.5 text-xs font-medium text-royal-light">
+                  💪 {ozellikAd.get(g.trait_id)}
+                </span>
+              )}
               {g.micro_sprint && (
                 <span className="ml-2 inline-block animate-pulse rounded-full bg-amber-500/25 px-2 py-0.5 text-xs font-bold text-amber-300">
                   ⚡ 30 DAKİKA — ŞİMDİ
@@ -378,6 +391,8 @@ export default async function GorevlerPage() {
             ) : (
               <OkuButonu metin={`${g.title}. ${g.body}`} />
             )}
+            {/* A10: belirsiz görevde netleştirme (söz/senkron hariç) */}
+            {g.kind !== "soz" && g.kind !== "senkron" && <NetlestirButonu gorevId={g.id} />}
             {/* UX #1: "Başladım" — saha görevi gerçek zaman alır (söz/senkron hariç) */}
             {g.kind !== "soz" && g.kind !== "senkron" && (
               <BaslaButonu gorevId={g.id} basladiMi={!!g.started_at} />
@@ -395,82 +410,34 @@ export default async function GorevlerPage() {
               <ErteleButonu gorevId={g.id} kalanHak={2 - (g.ertelenme_sayisi ?? 0)} />
             )}
             <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} ekip={ekip} />
+            {/* A6: takılan kişi için çıkış — Ayna Koçu'na köprü */}
+            <Link
+              href="/kocu"
+              className="mt-3 block text-center text-xs text-slate-500 underline-offset-4 transition-colors hover:text-royal-light"
+            >
+              {t.koctanYardim}
+            </Link>
           </section>
         ))
       )}
 
-      {/* Geçmiş — #10 günlere bölünmüş zaman çizelgesi (kamp yolculuğun) */}
-      <section>
-        <h2 className="text-lg font-semibold text-gold-light">{t.gecmisBaslik}</h2>
-        {gecmis.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-400">{t.gecmisYok}</p>
-        ) : (
-          <div className="mt-4 space-y-6">
-            {gecmisGruplar.map((grup) => (
-              <div key={grup.anahtar}>
-                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  {grup.etiket}
-                </p>
-                {/* Sol rayda dikey çizgi + her görevde nokta */}
-                <ul className="relative space-y-3 border-l border-royal/25 pl-5">
-                  {grup.gorevler.map((g) => (
-                    <li key={g.id} className="relative">
-                      <span
-                        className={`absolute -left-[1.46rem] top-3 h-2.5 w-2.5 rounded-full ring-2 ring-midnight ${
-                          g.status === "expired"
-                            ? "bg-slate-600"
-                            : (g.ai_score ?? 0) >= 8
-                              ? "bg-gold"
-                              : "bg-royal-light"
-                        }`}
-                        aria-hidden
-                      />
-                      <div
-                        className={`kart-3d rounded-2xl bg-midnight-card/60 p-4 ring-1 backdrop-blur ${
-                          g.status === "expired" ? "opacity-60 ring-royal/20" : "ring-royal/30"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between gap-3 text-xs">
-                          <span
-                            className={`rounded-md px-2 py-0.5 font-medium ${TUR_RENK[g.kind] ?? "text-slate-400"}`}
-                          >
-                            {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
-                          </span>
-                          {g.status === "scored" && g.ai_score !== null ? (
-                            <span className="font-bold text-gold">
-                              {t.puanin(g.ai_score)} · +{g.spark_points} ⚡
-                            </span>
-                          ) : g.status === "scored" ? (
-                            <span className="font-bold text-gold">+{g.spark_points} ⚡</span>
-                          ) : (
-                            <span className="text-slate-500">
-                              {t.durumlar[g.status as keyof typeof t.durumlar]}
-                            </span>
-                          )}
-                        </div>
-                        <p className="mt-1.5 text-sm font-medium text-slate-100">{g.title}</p>
-                        {g.ai_comment && (
-                          <p className="mt-2 rounded-xl bg-midnight-soft p-3 text-sm italic text-slate-300">
-                            “{g.ai_comment}”
-                          </p>
-                        )}
-                        {gelenGozlem.has(g.id) && (
-                          <p className="mt-2 rounded-xl border border-royal-light/25 bg-midnight/40 p-3 text-sm text-slate-200">
-                            <span className="mr-1 text-xs font-semibold text-royal-light">
-                              {t.tanikGelenEtiket}
-                            </span>
-                            “{gelenGozlem.get(g.id)}”
-                          </p>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      {/* Geçmiş — A8 filtre + özet, A2 liderlik kası (client bileşeni) */}
+      <GorevGecmisi
+        gorevler={gecmis.map((g) => ({
+          id: g.id,
+          kind: g.kind,
+          title: g.title,
+          status: g.status,
+          ai_score: g.ai_score,
+          spark_points: g.spark_points,
+          ai_comment: g.ai_comment,
+          scored_at: g.scored_at,
+          issued_at: g.issued_at,
+          trait_id: g.trait_id,
+          gozlem: gelenGozlem.get(g.id) ?? null,
+        }))}
+        ozellikAd={Object.fromEntries(ozellikAd)}
+      />
       </div>
     </main>
   );
