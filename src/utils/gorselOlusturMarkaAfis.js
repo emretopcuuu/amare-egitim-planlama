@@ -155,6 +155,16 @@ const FONT_SETLERI = {
 };
 const fontSec = (ad) => FONT_SETLERI[ad] || FONT_SETLERI.klasik;
 
+// Gün adı TR→EN (dil çipi için)
+const GUN_EN = {
+  'PAZARTESİ': 'MONDAY', 'SALI': 'TUESDAY', 'ÇARŞAMBA': 'WEDNESDAY', 'PERŞEMBE': 'THURSDAY',
+  'CUMA': 'FRIDAY', 'CUMARTESİ': 'SATURDAY', 'PAZAR': 'SUNDAY',
+};
+const gunCevir = (gun, dil) => {
+  if (dil !== 'en' || !gun) return gun;
+  return GUN_EN[gun.toLocaleUpperCase('tr-TR').trim()] || gun;
+};
+
 // Tema paleti (kategori/başlığa göre) — stil verilmemişse otomatik seçer
 const paletSec = (egitim) => {
   const k = `${egitim?.kategori || ''} ${egitim?.egitim || ''} ${egitim?.etkinlikTuru || ''}`.toLocaleLowerCase('tr-TR');
@@ -177,6 +187,7 @@ const ayarCikar = (ek) => {
     isik: true, elmas: true, cerceve: true, // dekor
     qr: true, program: true, tarih: true,   // içerik
     tekSira: false, fotoSekil: 'yuvarlak', kurdele: null, ciftRenkBaslik: false,
+    filigran: 'normal', anaVurgu: false, doku: null, dil: 'tr',
   };
   const has = (...ws) => ws.some(w => t.includes(w));
   // metin boyutu
@@ -228,13 +239,27 @@ const ayarCikar = (ek) => {
   if (has('tarih gizle', 'tarih kaldır', 'tarih yok', 'tarihi gizle', 'tarihi kaldır')) a.tarih = false;
   // düzen
   if (has('tek sıra', 'tek satır', 'yan yana', 'tek sırada')) a.tekSira = true;
+  // ana konuşmacı vurgusu (1. kişi büyük)
+  if (has('ana konuşmacı', 'baş konuşmacı', 'ana vurgu', 'ilk büyük')) a.anaVurgu = true;
+  // filigran (arka amblem) yoğunluğu
+  if (has('filigran belirgin', 'amblem belirgin')) a.filigran = 'belirgin';
+  if (has('filigran soluk', 'amblem soluk')) a.filigran = 'soluk';
+  if (has('filigran yok', 'amblem yok', 'filigransız')) a.filigran = 'yok';
+  // arka plan dokusu
+  if (has('düz doku', 'sade doku', 'dokusuz')) a.doku = 'duz';
+  if (has('elmas doku', 'elmaslı doku')) a.doku = 'elmas';
+  if (has('geometrik doku', 'geometrik')) a.doku = 'geometrik';
+  if (has('bokeh', 'ışık topları')) a.doku = 'bokeh';
+  // dil
+  if (has('ingilizce', 'english', 'en dil')) a.dil = 'en';
+  if (has('türkçe', 'turkce')) a.dil = 'tr';
   return a;
 };
 
 // Koyu zemin + soluk One Team amblemi + (siyah temada) altın elmas serpiştir.
 // dekor = { isik, elmas, cerceve } — tekil dekor kapatma için.
 const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
-  const { isik = true, elmas = true, cerceve = true, kurdeleVar = false } = dekor;
+  const { isik = true, elmas = true, cerceve = true, kurdeleVar = false, filigran = 'normal', doku = null } = dekor;
   // DİKEY ve simetrik gradient (çapraz değil → sol/sağ eşit, "yarısı koyu yarısı açık" olmaz)
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, palet.bg1); g.addColorStop(1, palet.bg2);
@@ -260,8 +285,10 @@ const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
   if (palet.acik) { vig.addColorStop(0, 'rgba(150,115,40,0)'); vig.addColorStop(1, 'rgba(150,115,40,0.12)'); }
   else { vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.42)'); }
   ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
-  // siyah temada altın elmas/parıltı serpiştir (üst bölge)
-  if (palet.elmas && elmas) {
+  // ── ARKA PLAN DOKUSU ──
+  // doku seçilmişse onu uygula; değilse varsayılan (siyah temada elmas) davranışı.
+  const dokuEtkin = doku || ((palet.elmas && elmas) ? 'elmas' : 'duz');
+  if (dokuEtkin === 'elmas') {
     ctx.save();
     const noktalar = [[0.08,0.06],[0.2,0.03],[0.32,0.08],[0.7,0.04],[0.84,0.09],[0.92,0.05],[0.14,0.13],[0.88,0.16],[0.05,0.2],[0.95,0.24]];
     noktalar.forEach(([px, py], i) => {
@@ -272,15 +299,41 @@ const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
       ctx.rotate(-Math.PI / 4); ctx.translate(-cx, -cy);
     });
     ctx.restore();
-  }
-  // büyük soluk One Team amblemi (orta-üst watermark)
-  try {
-    const logo = await urlToImage('/logos/oneteam-logo.png');
-    const lw = W * 0.62, lh = lw * (logo.height / logo.width);
-    ctx.save(); ctx.globalAlpha = palet.acik ? 0.05 : (palet.ad === 'siyah' ? 0.10 : 0.08);
-    ctx.drawImage(logo, (W - lw) / 2, H * 0.30, lw, lh);
+  } else if (dokuEtkin === 'geometrik') {
+    // ince eşkenar üçgen/çizgi dokusu (üst bölge)
+    ctx.save();
+    ctx.strokeStyle = `rgba(${palet.goldRGB},0.10)`; ctx.lineWidth = 1.5;
+    const adim = W * 0.11;
+    for (let x = -H; x < W; x += adim) {
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + H * 0.55, H * 0.55); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x, H * 0.55); ctx.lineTo(x + H * 0.55, 0); ctx.stroke();
+    }
     ctx.restore();
-  } catch {}
+  } else if (dokuEtkin === 'bokeh') {
+    // yumuşak altın ışık topları
+    ctx.save();
+    const toplar = [[0.18,0.1,0.09],[0.8,0.08,0.07],[0.32,0.22,0.05],[0.9,0.2,0.06],[0.08,0.28,0.05],[0.66,0.16,0.045]];
+    toplar.forEach(([px, py, rr]) => {
+      const cx = px * W, cy = py * H, R = rr * W;
+      const gg = ctx.createRadialGradient(cx, cy, 0, cx, cy, R);
+      gg.addColorStop(0, `rgba(${palet.goldRGB},0.22)`); gg.addColorStop(1, `rgba(${palet.goldRGB},0)`);
+      ctx.fillStyle = gg; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.restore();
+  }
+  // 'duz' → ek doku yok
+  // büyük soluk One Team amblemi (orta-üst watermark) — yoğunluk ayarlı
+  const filigranBaz = palet.acik ? 0.05 : (palet.ad === 'siyah' ? 0.10 : 0.08);
+  const filigranAlpha = filigran === 'yok' ? 0 : filigran === 'soluk' ? filigranBaz * 0.5 : filigran === 'belirgin' ? Math.min(filigranBaz * 2.2, 0.22) : filigranBaz;
+  if (filigranAlpha > 0) {
+    try {
+      const logo = await urlToImage('/logos/oneteam-logo.png');
+      const lw = W * 0.62, lh = lw * (logo.height / logo.width);
+      ctx.save(); ctx.globalAlpha = filigranAlpha;
+      ctx.drawImage(logo, (W - lw) / 2, H * 0.30, lw, lh);
+      ctx.restore();
+    } catch {}
+  }
   // LÜKS: köşe altın çerçeve aksanları (premium his) — kapatılabilir
   if (cerceve) {
     ctx.strokeStyle = palet.gold; ctx.lineWidth = 3; ctx.globalAlpha = 0.85;
@@ -334,7 +387,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const ctx = canvas.getContext('2d');
   const M = Math.round(W * 0.07);
 
-  await zeminCiz(ctx, W, H, palet, { isik: ayar.isik, elmas: ayar.elmas, cerceve: ayar.cerceve, kurdeleVar: !!ayar.kurdele });
+  await zeminCiz(ctx, W, H, palet, { isik: ayar.isik, elmas: ayar.elmas, cerceve: ayar.cerceve, kurdeleVar: !!ayar.kurdele, filigran: ayar.filigran, doku: ayar.doku });
 
   // ── ÜST: One Team logosu ──
   let y = Math.round(H * 0.02);
@@ -381,7 +434,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     ctx.textAlign = 'left';
     const tFont = Math.round(W * 0.038 * ayar.yazi);
     ctx.font = `700 ${tFont}px ${FF.govde}`;
-    const tarihTxt = `${egitim.tarih || ''} ${egitim.gun || ''}`.trim();
+    const tarihTxt = `${egitim.tarih || ''} ${gunCevir(egitim.gun, ayar.dil) || ''}`.trim();
     const ikS = Math.round(tFont * 0.95), gap = Math.round(W * 0.012);
     const tw = ctx.measureText(tarihTxt).width;
     const tBaseY = y + Math.round(W * 0.036);
@@ -413,9 +466,14 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const speakersBottom = bandTop - Math.round(H * 0.02);
 
   // ── KONUŞMACILAR (altın halkalı foto + altın hap isim + rol) ──
-  const liste = (egitmenler || []).slice(0, 6);
+  const liste = (egitmenler || []).slice(0, 12); // 6→12 (daha fazla konuşmacı)
   if (liste.length) {
-    const dagilim = ayar.tekSira ? [liste.length] : fotoYerlesim(liste.length);
+    // ana konuşmacı vurgusu: 1. kişi tek başına büyük, diğerleri alt sıralarda
+    const dagilim = ayar.tekSira
+      ? [liste.length]
+      : (ayar.anaVurgu && liste.length > 1)
+        ? [1, ...fotoYerlesim(liste.length - 1)]
+        : fotoYerlesim(liste.length);
     const rows = dagilim.length;
     const areaH = speakersBottom - speakersTop;
     const perRowH = areaH / rows;
@@ -435,9 +493,9 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       const g2 = Math.round(perRowH * 0.02);
       let foto = Math.round(perRowH * 0.93) - topPad - g1 - pillH - g2 - roleSize;
       foto = Math.round(foto * ayar.foto);
-      // kişi sayısına göre genişlik tavanı (1 kişi → dev oval, 2 → büyük)
-      const wOran = liste.length === 1 ? 0.62 : liste.length === 2 ? 0.52 : 0.46;
-      foto = Math.max(90, Math.min(foto, Math.round(cellW * 0.86), Math.round(W * wOran)));
+      // SATIR başına genişlik tavanı (satırda 1 kişi → dev oval; ana vurgu da bundan yararlanır)
+      const wOran = adet === 1 ? 0.6 : adet === 2 ? 0.5 : 0.46;
+      foto = Math.max(80, Math.min(foto, Math.round(cellW * 0.86), Math.round(W * wOran)));
       for (let c = 0; c < adet; c++, idx++) {
         const e = liste[idx];
         const cx = sidePad + cellW * c + cellW / 2;

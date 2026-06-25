@@ -12,6 +12,9 @@ export const MARKA_VARYASYON = [
     { key: 'foto-kucuk', label: 'Küçük', cmd: 'fotoları küçült' },
     { key: 'foto-teksira', label: 'Tek sıra', cmd: 'tek sıra' },
   ] },
+  { grup: 'Vurgu', tekil: false, secenekler: [
+    { key: 'ana-konusmaci', label: 'Ana konuşmacı büyük', cmd: 'ana konuşmacı' },
+  ] },
   { grup: 'Tema', tekil: true, secenekler: [
     { key: 'tema-siyah', label: 'Siyah & altın', cmd: 'siyah tema', renk: '#0b0b0d' },
     { key: 'tema-mor', label: 'Mor', cmd: 'mor tema', renk: '#3a2b54' },
@@ -52,6 +55,21 @@ export const MARKA_VARYASYON = [
     { key: 'serit-kontenjan', label: 'Kontenjan sınırlı', cmd: 'kontenjan sınırlı' },
     { key: 'serit-son', label: 'Son fırsat', cmd: 'son fırsat' },
     { key: 'serit-yeni', label: 'Yeni', cmd: 'yeni şerit' },
+  ] },
+  { grup: 'Arka plan dokusu', tekil: true, secenekler: [
+    { key: 'doku-duz', label: 'Düz', cmd: 'düz doku' },
+    { key: 'doku-elmas', label: 'Elmas', cmd: 'elmas doku' },
+    { key: 'doku-geometrik', label: 'Geometrik', cmd: 'geometrik doku' },
+    { key: 'doku-bokeh', label: 'Bokeh', cmd: 'bokeh' },
+  ] },
+  { grup: 'Filigran', tekil: true, secenekler: [
+    { key: 'filigran-belirgin', label: 'Belirgin', cmd: 'filigran belirgin' },
+    { key: 'filigran-soluk', label: 'Soluk', cmd: 'filigran soluk' },
+    { key: 'filigran-yok', label: 'Yok', cmd: 'filigran yok' },
+  ] },
+  { grup: 'Dil', tekil: true, secenekler: [
+    { key: 'dil-tr', label: 'Türkçe', cmd: 'türkçe' },
+    { key: 'dil-en', label: 'English', cmd: 'ingilizce' },
   ] },
   { grup: 'İçerik', tekil: false, secenekler: [
     { key: 'no-qr', label: 'QR yok', cmd: 'qr kaldır' },

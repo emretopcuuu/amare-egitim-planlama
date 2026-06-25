@@ -10,9 +10,9 @@ import { MARKA_VARYASYON_INDEX, MARKA_PRESETLER, markaGruplar, markaEkIstek } fr
 
 // Grup başlık ikonları (göz hızlı tarar)
 const GRUP_IKON = {
-  'Yazı': '🔠', 'Fotoğraf': '🖼️', 'Tema': '🎨', 'Yazı tipi': '🔤',
+  'Yazı': '🔠', 'Fotoğraf': '🖼️', 'Vurgu': '👤', 'Tema': '🎨', 'Yazı tipi': '🔤',
   'Başlık': '✨', 'Foto şekli': '⬡', 'Arka plan': '🌗', 'Dekor': '💠',
-  'Köşe şerit': '🎀', 'İçerik': '📋',
+  'Köşe şerit': '🎀', 'Arka plan dokusu': '🌌', 'Filigran': '🏷️', 'Dil': '🌐', 'İçerik': '📋',
 };
 // Çip font ailesi (görünür font önizleme)
 const CIP_FONT = {
