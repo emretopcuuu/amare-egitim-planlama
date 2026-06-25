@@ -72,10 +72,13 @@ export async function davetGonder(
 export async function uyariEpostasiGonder(
   konu: string,
   metin: string,
-  html: string
+  html: string,
+  aliciOverride?: string
 ): Promise<boolean> {
   if (!epostaYapilandirildiMi()) return false;
-  const alici = process.env.UYARI_EPOSTA || "s.emretopcu@gmail.com";
+  // Belirli bir alıcı verilmişse (ör. kriz → Presidential Diamond listesi) ona,
+  // yoksa genel uyarı adresine. Postmark "To" virgülle ayrılmış çoklu kabul eder.
+  const alici = aliciOverride?.trim() || process.env.UYARI_EPOSTA || "s.emretopcu@gmail.com";
   try {
     const res = await fetch("https://api.postmarkapp.com/email", {
       method: "POST",

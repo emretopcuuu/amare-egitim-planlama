@@ -61,8 +61,9 @@ export function krizDiliVarMi(metin: string | null | undefined): boolean {
 }
 
 // Kişiye gösterilecek şefkatli yönlendirme — AYNA koç sınırında kalır.
+// (Acil servis numarası yok; kişiyi güvendiği üst liderine/mentoruna yöneltir.)
 export const KRIZ_YONLENDIRME =
-  "Yazdıkların bana dokundu ve seni ciddiye alıyorum. Ben bir yol arkadaşıyım ama bazı yükler bir insanın yanında, yüz yüze paylaşılmayı hak eder. Bugün güvendiğin bir liderinle, mentorunla ya da sevdiğin biriyle bunu konuşmanı çok isterim. Yalnız değilsin. Acil bir durumda 112'yi arayabilir ya da 182 (Sağlık Bakanlığı) hattına ulaşabilirsin.";
+  "Yazdıkların bana dokundu — seni ciddiye alıyorum. Ben yanında bir yol arkadaşıyım, ama bazı yükler yüz yüze, güvendiğin biriyle paylaşılmayı hak eder. Bugün üst liderinle ya da sana yol gösteren birine ulaş, bunu onunla konuş. Yalnız değilsin; onlar da bu yollardan geçti.";
 
 // Aynı kişi için günde tek uyarı (spam değil, ama her kişi ayrı yakalanır).
 export async function krizUyarisiGonder(
@@ -89,19 +90,24 @@ export async function krizUyarisiGonder(
 
     if (data) return; // bugün bu kişi için e-posta zaten gitti
 
-    const konu = `🟠 AYNA güvenlik bayrağı: ${kisiAdi}`;
+    // Kriz uyarısı Presidential Diamond ekibine gider (KRIZ_EPOSTA env —
+    // virgülle ayrılmış adresler). Tanımlı değilse genel uyarı adresine düşer.
+    const aliciListe = process.env.KRIZ_EPOSTA?.trim() || undefined;
+
+    const konu = `🟠 AYNA güvenlik bayrağı — Presidential Diamond'a: ${kisiAdi}`;
     const metin =
-      `Bir katılımcının yazısında olası bir kriz/umutsuzluk sinyali yakalandı. ` +
-      `AYNA kişiyi bir insan mentora yönlendirdi; lütfen siz de nazikçe ulaşın.\n\n` +
+      `Bir kamp katılımcısının yazısında olası bir kriz/umutsuzluk sinyali yakalandı. ` +
+      `AYNA kişiyi güvendiği bir üst liderine yönlendirdi. Lütfen Presidential Diamond ` +
+      `olarak bu kişiye en kısa sürede, nazikçe ve kişisel olarak ulaşın.\n\n` +
       `Kişi: ${kisiAdi}\nKaynak: ${kaynak}\nAlıntı: "${alinti.slice(0, 300)}"`;
     const html = `<div style="font-family:system-ui,Segoe UI,sans-serif;max-width:560px;margin:0 auto">
-        <h2 style="color:#ea580c;margin:0 0 12px">${konu}</h2>
-        <p style="line-height:1.6;color:#1e293b">Bir katılımcının yazısında olası bir kriz/umutsuzluk sinyali yakalandı. AYNA kişiyi bir insan mentora yönlendirdi; lütfen siz de nazikçe ulaşın.</p>
+        <h2 style="color:#ea580c;margin:0 0 12px">🟠 AYNA güvenlik bayrağı — Presidential Diamond'a</h2>
+        <p style="line-height:1.6;color:#1e293b">Bir kamp katılımcısının yazısında olası bir kriz/umutsuzluk sinyali yakalandı. AYNA kişiyi güvendiği bir üst liderine yönlendirdi. Lütfen Presidential Diamond olarak bu kişiye en kısa sürede, nazikçe ve kişisel olarak ulaşın.</p>
         <p style="font-size:13px;color:#64748b;margin:16px 0 4px">Kişi: <b>${kisiAdi}</b> · Kaynak: <b>${kaynak}</b></p>
         <pre style="font-size:12px;background:#fff7ed;padding:10px;border-radius:8px;white-space:pre-wrap;color:#9a3412;margin:0">${alinti.slice(0, 300)}</pre>
       </div>`;
 
-    const ok = await uyariEpostasiGonder(konu, metin, html);
+    const ok = await uyariEpostasiGonder(konu, metin, html, aliciListe);
     if (ok) {
       await db.from("settings").upsert({
         key: anahtar,
