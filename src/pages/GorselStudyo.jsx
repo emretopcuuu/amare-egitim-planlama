@@ -43,11 +43,15 @@ export default function GorselStudyo() {
   const egitimId = params.get('egitim') || '';
   const egitim = useMemo(() => (takvim || []).find(e => e.id === egitimId) || null, [takvim, egitimId]);
 
-  // tarih sıralı eğitim listesi (seçici)
+  // Eğitim seçici — yalnız bugün ve sonrası (geçmiş toplantıları gösterme),
+  // yaklaşan en yakın üstte. Seçili eğitim geçmişte olsa bile listede kalır.
   const egitimSecenekleri = useMemo(() => {
     const parse = (t) => { const [g, a, y] = (t || '').split('.'); return new Date(+y, +a - 1, +g).getTime() || 0; };
-    return [...(takvim || [])].sort((a, b) => parse(b.tarih) - parse(a.tarih));
-  }, [takvim]);
+    const bugun = new Date(); bugun.setHours(0, 0, 0, 0);
+    return [...(takvim || [])]
+      .filter(e => parse(e.tarih) >= bugun.getTime() || e.id === egitimId)
+      .sort((a, b) => parse(a.tarih) - parse(b.tarih));
+  }, [takvim, egitimId]);
 
   const konusmaciBul = (ad) => {
     const sid = makeSafeId(ad), cid = makeCoreId(ad);
