@@ -5,6 +5,7 @@ import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { afisTuru, etiketSec } from '../utils/egitmenEtiket';
 import { uploadGorsel } from '../utils/uploadGorsel';
 import { gorselOlusturMarkaAfis } from '../utils/gorselOlusturMarkaAfis';
+import { gorselOlusturProgramAfis } from '../utils/gorselOlusturProgramAfis';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
 import { MARKA_VARYASYON_INDEX, MARKA_PRESETLER, markaGruplar, markaEkIstek } from '../utils/markaVaryasyon';
 
@@ -39,9 +40,8 @@ const splitEgitmen = (egitmen) => {
 };
 
 const METOTLAR = [
-  { id: 'marka-afis', ad: '🏆 Marka Afiş', not: 'Otomatik tema', stil: null, ai: false },
-  { id: 'marka-koyu', ad: '⬛ Marka Koyu', not: 'Siyah & altın', stil: 'koyu', ai: false },
-  { id: 'marka-acik', ad: '⬜ Marka Açık', not: 'Krem & altın', stil: 'acik', ai: false },
+  { id: 'marka-afis', ad: '🏆 Marka Afiş', not: 'Konuşmacı afişi · tema seç', stil: null, ai: false },
+  { id: 'program-icerigi', ad: '📋 Program İçeriği', not: 'Zaman çizelgesi · siyah & altın', stil: null, ai: false },
   { id: 'ai-afis', ad: '🎨 AI Afiş', not: 'Gemini · ~$0.08 · yavaş', stil: null, ai: true },
 ];
 
@@ -93,6 +93,7 @@ export default function GorselStudyo() {
   });
   const [ekIstek, setEkIstek] = useState('');
   const [altNot, setAltNot] = useState(''); // afiş altına serbest not/uyarı
+  const [programSatir, setProgramSatir] = useState([]); // Program İçeriği afişi satırları
   const [resultUrl, setResultUrl] = useState(null);
   const sonB64 = useRef(null);
   const [generating, setGenerating] = useState(false);
@@ -107,12 +108,23 @@ export default function GorselStudyo() {
   });
 
   // eğitim değişince konuşmacıları çöz
-  useEffect(() => { setSpeakers(cozEgitmenler(egitim)); setBaglandi(false); setAltNot(''); /* eslint-disable-next-line */ }, [egitimId, konusmacilar]);
+  useEffect(() => {
+    setSpeakers(cozEgitmenler(egitim)); setBaglandi(false); setAltNot('');
+    // Program satırlarını eğitimin programAkışından başlat
+    const pa = Array.isArray(egitim?.programAkisi) ? egitim.programAkisi : [];
+    setProgramSatir(pa.map(p => ({
+      saat: [p.baslangic, p.bitis].filter(Boolean).join(' - '),
+      baslik: p.baslik || '', konusmaciAd: '', notlar: '',
+    })));
+    /* eslint-disable-next-line */
+  }, [egitimId, konusmacilar]);
   // stil hafızası
   useEffect(() => { try { localStorage.setItem('markaSecim', JSON.stringify(markaSecim)); } catch {} }, [markaSecim]);
 
   const aktifMetot = METOTLAR.find(m => m.id === aiModel) || METOTLAR[0];
-  const markaModu = !aktifMetot.ai;
+  const markaModu = aiModel === 'marka-afis';
+  const programModu = aiModel === 'program-icerigi';
+  const canliModu = markaModu || programModu; // deterministik → otomatik canlı önizleme
 
   // ── Konuşmacı yönetimi (ekle/çıkar → hem görsele hem sisteme yazılır) ──
   const [kayit, setKayit] = useState(null); // null | 'saving' | 'saved' | 'err'
@@ -226,6 +238,17 @@ export default function GorselStudyo() {
       let res;
       if (markaModu) {
         res = await gorselOlusturMarkaAfis({ egitim, egitmenler: speakers, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil, altNot });
+      } else if (programModu) {
+        const tur = afisTuru(egitim);
+        const programSatirlari = programSatir.map(r => {
+          let k = null;
+          if (r.konusmaciAd) {
+            const kk = konusmaciBul(r.konusmaciAd);
+            k = { ad: kk?.ad || r.konusmaciAd, unvan: etiketSec(kk, tur), fotoURL: kk?.fotoURL || null, notlar: (r.notlar || '').split('\n').map(s => s.trim()).filter(Boolean) };
+          }
+          return { saat: r.saat, baslik: r.baslik, konusmaci: k };
+        });
+        res = await gorselOlusturProgramAfis({ egitim, programSatirlari });
       } else {
         if (!geminiApiKey) throw new Error('AI Afiş için Gemini API anahtarı gerekli (Ayarlar → AI API Anahtarları).');
         res = await gorselOlusturAiAfis({ geminiApiKey, openaiApiKey, egitim, egitmenler: speakers, ekPrompt: ekIstek, format: 'portrait' });
@@ -233,7 +256,7 @@ export default function GorselStudyo() {
       sonB64.current = res.base64;
       if (resultUrl) URL.revokeObjectURL(resultUrl);
       setResultUrl(b64ToUrl(res.base64, res.mimeType));
-      if (markaModu) { setGuncellendi(true); setTimeout(() => setGuncellendi(false), 1100); }
+      if (canliModu) { setGuncellendi(true); setTimeout(() => setGuncellendi(false), 1100); }
     } catch (e) {
       setError(e.message || 'Üretim başarısız.');
     } finally {
@@ -241,13 +264,13 @@ export default function GorselStudyo() {
     }
   };
 
-  // CANLI ÖNİZLEME — Marka modunda değişiklikte otomatik üret (debounce). AI modunda manuel.
+  // CANLI ÖNİZLEME — deterministik modlarda (Marka + Program) değişiklikte otomatik üret. AI manuel.
   useEffect(() => {
-    if (!egitim || !markaModu) return;
+    if (!egitim || !canliModu) return;
     const id = setTimeout(() => { uret(); }, 450);
     return () => clearTimeout(id);
     // eslint-disable-next-line
-  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan])), altNot]);
+  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan])), altNot, JSON.stringify(programSatir)]);
 
   const indir = () => {
     if (!resultUrl) return;
@@ -323,7 +346,8 @@ export default function GorselStudyo() {
               )}
             </div>
 
-            {/* Konuşmacı etiketleri + ekle/çıkar (sisteme de yazılır) */}
+            {/* Konuşmacı etiketleri + ekle/çıkar (sisteme de yazılır) — program modunda gizli */}
+            {!programModu && (
             <div className="bg-white border border-gray-200 rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-gray-700">KONUŞMACI ETİKETLERİ</span>
@@ -363,6 +387,45 @@ export default function GorselStudyo() {
                 <p className="text-[10px] text-gray-400">★ = sistemde fotoğrafı var. Eklediğin kişi görselde ve eğitimin her yerinde görünür.</p>
               </div>
             </div>
+            )}
+
+            {/* Program İçeriği satır editörü (her satıra saat + başlık + konuşmacı) */}
+            {programModu && (
+              <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-700">📋 Program satırları</span>
+                  <button onClick={() => setProgramSatir(prev => [...prev, { saat: '', baslik: '', konusmaciAd: '', notlar: '' }])}
+                    className="text-[11px] text-amare-purple hover:underline flex items-center gap-0.5"><Plus className="w-3 h-3" /> satır ekle</button>
+                </div>
+                {programSatir.length === 0 && <div className="text-[11px] text-gray-400">Bu eğitimde program akışı yok. "+ satır ekle" ile oluştur.</div>}
+                {programSatir.map((r, i) => {
+                  const upd = (alan, val) => setProgramSatir(prev => prev.map((x, idx) => idx === i ? { ...x, [alan]: val } : x));
+                  return (
+                    <div key={i} className="border border-gray-200 rounded-lg p-2 space-y-1.5 relative">
+                      <button onClick={() => setProgramSatir(prev => prev.filter((_, idx) => idx !== i))} title="Satırı sil" className="absolute top-1 right-1 text-gray-400 hover:text-red-500"><X className="w-3.5 h-3.5" /></button>
+                      <div className="flex gap-1.5">
+                        <input value={r.saat} onChange={(e) => upd('saat', e.target.value)} placeholder="12:20 - 13:30"
+                          className="w-28 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                        <input value={r.baslik} onChange={(e) => upd('baslik', e.target.value)} placeholder="Aktivite başlığı"
+                          className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                      </div>
+                      <select value={r.konusmaciAd} onChange={(e) => upd('konusmaciAd', e.target.value)}
+                        className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30">
+                        <option value="">— Konuşmacı (opsiyonel) —</option>
+                        {speakers.map(s => <option key={'s' + s.ad} value={s.ad}>{s.ad}</option>)}
+                        {tumKonusmacilar.filter(k => !speakers.some(s => makeCoreId(s.ad) === makeCoreId(k.ad))).map(k => <option key={k.ad} value={k.ad}>{k.ad}{k.fotoURL ? ' ★' : ''}</option>)}
+                      </select>
+                      {r.konusmaciAd && (
+                        <textarea value={r.notlar} onChange={(e) => upd('notlar', e.target.value)} rows={2}
+                          placeholder="Alt isimler (panelistler), her satıra bir isim — opsiyonel"
+                          className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
+                      )}
+                    </div>
+                  );
+                })}
+                <p className="text-[10px] text-gray-400">Saat boş bırakılan satır (örn. "Etkinlik Sorumlusu") başlıkla gösterilir. Sağda canlı işlenir.</p>
+              </div>
+            )}
 
             {/* Marka varyasyon / AI ek istek */}
             {markaModu ? (
@@ -429,7 +492,7 @@ export default function GorselStudyo() {
                 ))}
                 <p className="text-[11px] text-gray-500 pt-0.5">Çipe bas → sağda <b>otomatik canlı önizleme</b>. 🎲 sürpriz · 💾 stilini kaydet · ↶ geri al.</p>
               </div>
-            ) : (
+            ) : !programModu ? (
               <div className="bg-white border border-gray-200 rounded-xl p-3">
                 <label className="text-xs font-semibold text-gray-700 mb-1 block">Tasarıma ek istek</label>
                 <textarea value={ekIstek} onChange={(e) => setEkIstek(e.target.value)} rows={3}
@@ -440,7 +503,7 @@ export default function GorselStudyo() {
                   {generating ? <><Loader2 className="w-4 h-4 animate-spin" /> Üretiliyor…</> : <><Sparkles className="w-4 h-4" /> AI Afiş Üret</>}
                 </button>
               </div>
-            )}
+            ) : null}
 
             {/* Alt not / uyarı — serbest metin (afişin altına işlenir, canlı) */}
             {markaModu && (
@@ -462,7 +525,7 @@ export default function GorselStudyo() {
                   <img src={resultUrl} alt="Önizleme" className="w-full rounded-lg" />
                 ) : (
                   <div className="text-gray-400 text-sm py-20 text-center px-4">
-                    {markaModu ? 'Önizleme hazırlanıyor…' : 'AI Afiş için "Üret"e bas.'}
+                    {canliModu ? 'Önizleme hazırlanıyor…' : 'AI Afiş için "Üret"e bas.'}
                   </div>
                 )}
                 {generating && (
@@ -484,7 +547,7 @@ export default function GorselStudyo() {
                   {baglandi ? <><CheckCircle2 className="w-4 h-4" /> Bağlandı</> : baglaniyor ? <><Loader2 className="w-4 h-4 animate-spin" /> …</> : <><Link2 className="w-4 h-4" /> Eğitime Bağla</>}
                 </button>
               </div>
-              {markaModu && (
+              {canliModu && (
                 <button onClick={uret} disabled={generating} className="w-full mt-2 py-2 rounded-lg text-sm font-semibold text-amare-purple bg-purple-50 hover:bg-purple-100 border border-amare-purple/30 transition flex items-center justify-center gap-1.5 disabled:opacity-50">
                   <RotateCcw className="w-4 h-4" /> Yeniden üret
                 </button>
