@@ -48,15 +48,14 @@ const paletSec = (egitim) => {
 
 // Koyu zemin + soluk One Team amblemi + (siyah temada) altın elmas serpiştir
 const zeminCiz = async (ctx, W, H, palet) => {
-  const g = ctx.createLinearGradient(0, 0, W * 0.4, H);
+  // DİKEY ve simetrik gradient (çapraz değil → sol/sağ eşit, "yarısı koyu yarısı açık" olmaz)
+  const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, palet.bg1); g.addColorStop(1, palet.bg2);
   ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-  // mor temada üstte yumuşak ışık
-  if (palet.ad === 'mor') {
-    const r = ctx.createRadialGradient(W / 2, H * 0.12, 40, W / 2, H * 0.12, W * 0.7);
-    r.addColorStop(0, 'rgba(255,255,255,0.10)'); r.addColorStop(1, 'rgba(255,255,255,0)');
-    ctx.fillStyle = r; ctx.fillRect(0, 0, W, H * 0.5);
-  }
+  // üstte yumuşak, ORTALI ışık (her iki temada simetrik)
+  const r = ctx.createRadialGradient(W / 2, H * 0.16, 40, W / 2, H * 0.16, W * 0.85);
+  r.addColorStop(0, 'rgba(255,255,255,0.08)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = r; ctx.fillRect(0, 0, W, H * 0.6);
   // siyah temada altın elmas/parıltı serpiştir (üst bölge)
   if (palet.elmas) {
     ctx.save();
