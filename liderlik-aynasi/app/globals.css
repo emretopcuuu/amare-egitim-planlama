@@ -1320,3 +1320,33 @@ html[data-admin-mod="uzman"] .basit-only {
   .gorev-giris, .ayna-shimmer, .skor-halka-yay { animation: none !important; }
   .bas-his { transition: none !important; }
 }
+
+/* ── ADAY GENELİ BUTON HİYERARŞİSİ (UX #5) ──────────────────────────────────
+   Birincil = .btn-kor (altın, mevcut). İkincil/üçüncül için tutarlı sınıflar:
+   her ekranda aynı dil. Min 44px dokunma hedefi + odak halkası global'den gelir. */
+.btn-ikincil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(124, 110, 205, 0.4); /* royal-light/40 */
+  padding: 0 1.25rem;
+  font-weight: 600;
+  color: rgb(226, 232, 240); /* slate-200 */
+  transition: background-color 0.15s ease, transform 0.12s ease;
+}
+.btn-ikincil:hover { background-color: rgba(255, 255, 255, 0.05); }
+.btn-ikincil:active { transform: scale(0.98); }
+.btn-uclu {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: rgb(148, 163, 184); /* slate-400 */
+  text-underline-offset: 4px;
+  transition: color 0.15s ease;
+}
+.btn-uclu:hover { color: rgb(203, 213, 225); text-decoration: underline; }

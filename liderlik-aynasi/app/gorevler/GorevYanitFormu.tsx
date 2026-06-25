@@ -8,6 +8,7 @@ import MikrofonButonu from "@/components/MikrofonButonu";
 import Konfeti from "@/components/Konfeti";
 import PuanAcilisi from "@/components/PuanAcilisi";
 import KivilcimSayac from "@/components/KivilcimSayac";
+import AynaBalon from "@/components/AynaBalon";
 
 const t = tr.gorevler;
 
@@ -198,7 +199,9 @@ export default function GorevYanitFormu({
             {sonuc.puan !== undefined && <PuanAcilisi puan={sonuc.puan} />}
             {sonuc.kivilcim !== undefined && <KivilcimSayac kazanim={sonuc.kivilcim} />}
             {sonuc.yorum && (
-              <p className="mt-3 text-sm italic text-slate-200">“{sonuc.yorum}”</p>
+              <div className="mt-3 text-left">
+                <AynaBalon baslik="AYNA">{sonuc.yorum}</AynaBalon>
+              </div>
             )}
             {/* UX #9 — düşük puanı büyüme çerçevesiyle yumuşat (rakam moral bozmasın) */}
             {sonuc.puan !== undefined && sonuc.puan < 6 && (
