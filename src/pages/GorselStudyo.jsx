@@ -10,7 +10,7 @@ import { MARKA_VARYASYON_INDEX, MARKA_PRESETLER, markaGruplar, markaEkIstek } fr
 
 // Grup başlık ikonları (göz hızlı tarar)
 const GRUP_IKON = {
-  'Yazı': '🔠', 'Fotoğraf': '🖼️', 'Vurgu': '👤', 'Tema': '🎨', 'Yazı tipi': '🔤',
+  'Yazı': '🔠', 'Fotoğraf': '🖼️', 'Vurgu': '👤', 'Yerleşim': '▦', 'Tema': '🎨', 'Yazı tipi': '🔤',
   'Başlık': '✨', 'Foto şekli': '⬡', 'Arka plan': '🌗', 'Dekor': '💠',
   'Köşe şerit': '🎀', 'Arka plan dokusu': '🌌', 'Filigran': '🏷️', 'Dil': '🌐', 'İçerik': '📋',
 };

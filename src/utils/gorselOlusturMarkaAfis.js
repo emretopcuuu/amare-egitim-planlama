@@ -187,7 +187,7 @@ const ayarCikar = (ek) => {
     isik: true, elmas: true, cerceve: true, // dekor
     qr: true, program: true, tarih: true,   // içerik
     tekSira: false, fotoSekil: 'yuvarlak', kurdele: null, ciftRenkBaslik: false,
-    filigran: 'normal', anaVurgu: false, doku: null, dil: 'tr',
+    filigran: 'normal', anaVurgu: false, doku: null, dil: 'tr', duzen: null,
   };
   const has = (...ws) => ws.some(w => t.includes(w));
   // metin boyutu
@@ -239,6 +239,9 @@ const ayarCikar = (ek) => {
   if (has('tarih gizle', 'tarih kaldır', 'tarih yok', 'tarihi gizle', 'tarihi kaldır')) a.tarih = false;
   // düzen
   if (has('tek sıra', 'tek satır', 'yan yana', 'tek sırada')) a.tekSira = true;
+  if (has('2 sütun', 'iki sütun', 'ikili dizilim', 'ikili düzen')) a.duzen = 'iki';
+  if (has('3 sütun', 'üç sütun', 'üçlü dizilim', 'üçlü düzen')) a.duzen = 'uc';
+  if (has('4 sütun', 'dört sütun', 'dörtlü dizilim', 'dörtlü düzen')) a.duzen = 'dort';
   // ana konuşmacı vurgusu (1. kişi büyük)
   if (has('ana konuşmacı', 'baş konuşmacı', 'ana vurgu', 'ilk büyük')) a.anaVurgu = true;
   // filigran (arka amblem) yoğunluğu
@@ -470,37 +473,46 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   // ── KONUŞMACILAR (altın halkalı foto + altın hap isim + rol) ──
   const liste = (egitmenler || []).slice(0, 12); // 6→12 (daha fazla konuşmacı)
   if (liste.length) {
-    // ana konuşmacı vurgusu: 1. kişi tek başına büyük, diğerleri alt sıralarda
+    // Yerleşim düzeni: tek sıra / ana konuşmacı / N'li sütun / otomatik
+    const perMap = { iki: 2, uc: 3, dort: 4 };
+    const chunkRows = (n, per) => { const a = []; let kalan = n; while (kalan > 0) { a.push(Math.min(per, kalan)); kalan -= per; } return a; };
     const dagilim = ayar.tekSira
       ? [liste.length]
       : (ayar.anaVurgu && liste.length > 1)
         ? [1, ...fotoYerlesim(liste.length - 1)]
-        : fotoYerlesim(liste.length);
+        : (ayar.duzen && perMap[ayar.duzen])
+          ? chunkRows(liste.length, perMap[ayar.duzen])
+          : fotoYerlesim(liste.length);
     const rows = dagilim.length;
     const areaH = speakersBottom - speakersTop;
     const perRowH = areaH / rows;
+    // Hücre genişliği: en kalabalık satıra göre TUTARLI (eşit boyut), satırlar ortalı.
+    // Ana vurgu modunda 1. satır (tek kişi) hariç tutulur → o satır dev oval kalır.
+    const sidePad = Math.round(W * 0.035);
+    const boyutAdetler = (ayar.anaVurgu && rows > 1) ? dagilim.slice(1) : dagilim;
+    const maxAdet = Math.max(1, ...boyutAdetler);
+    const cellW = (W - sidePad * 2) / maxAdet;
     let idx = 0;
     for (let r = 0; r < rows; r++) {
       const adet = dagilim[r];
-      const sidePad = Math.round(W * 0.035);
-      const cellW = (W - sidePad * 2) / adet;
       const rowY = speakersTop + r * perRowH;
+      // ana vurgu 1. satır → daha geniş hücre (dev oval); diğerleri tutarlı cellW
+      const buCellW = (ayar.anaVurgu && r === 0 && rows > 1) ? Math.round(W * 0.5) : cellW;
+      const startX = Math.round((W - adet * buCellW) / 2); // satırı ortala
       // ORANLAMA (bütçe-bazlı): satır = topPad + foto + g1 + isim hapı + g2 + rol.
-      // foto kalan yere göre hesaplanır → asla çakışmaz, foto mümkün olduğunca büyük.
-      const nameSize = Math.round(Math.max(15, Math.min(Math.round(cellW * 0.048), 26)) * ayar.yazi);
-      const roleSize = Math.round(Math.max(12, Math.min(Math.round(cellW * 0.038), 18)) * ayar.yazi);
+      const nameSize = Math.round(Math.max(15, Math.min(Math.round(buCellW * 0.048), 26)) * ayar.yazi);
+      const roleSize = Math.round(Math.max(12, Math.min(Math.round(buCellW * 0.038), 18)) * ayar.yazi);
       const pillH = Math.round(nameSize * 1.7);
       const topPad = Math.round(perRowH * 0.04);
       const g1 = Math.round(perRowH * 0.035);
       const g2 = Math.round(perRowH * 0.02);
       let foto = Math.round(perRowH * 0.93) - topPad - g1 - pillH - g2 - roleSize;
       foto = Math.round(foto * ayar.foto);
-      // SATIR başına genişlik tavanı (satırda 1 kişi → dev oval; ana vurgu da bundan yararlanır)
-      const wOran = adet === 1 ? 0.6 : adet === 2 ? 0.5 : 0.46;
-      foto = Math.max(80, Math.min(foto, Math.round(cellW * 0.86), Math.round(W * wOran)));
+      const wTavan = (ayar.anaVurgu && r === 0 && rows > 1) ? 0.6 : (maxAdet === 1 ? 0.6 : maxAdet === 2 ? 0.5 : 0.46);
+      foto = Math.max(80, Math.min(foto, Math.round(buCellW * 0.86), Math.round(W * wTavan)));
       for (let c = 0; c < adet; c++, idx++) {
         const e = liste[idx];
-        const cx = sidePad + cellW * c + cellW / 2;
+        const cx = startX + buCellW * c + buCellW / 2;
         const fy = rowY + topPad + foto / 2;
         // yumuşak altın ışıltı (derinlik / modern his)
         const gl = ctx.createRadialGradient(cx, fy, foto * 0.32, cx, fy, foto * 0.88);
@@ -536,7 +548,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
           ctx.fillStyle = palet.alt;
           ctx.font = `500 ${roleSize}px ${FF.govde}`;
           ctx.textAlign = 'center';
-          ctx.fillText(e.unvan, cx, hapBottom + g2 + roleSize, cellW * 0.98);
+          ctx.fillText(e.unvan, cx, hapBottom + g2 + roleSize, buCellW * 0.98);
         }
       }
     }

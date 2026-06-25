@@ -15,6 +15,11 @@ export const MARKA_VARYASYON = [
   { grup: 'Vurgu', tekil: false, secenekler: [
     { key: 'ana-konusmaci', label: 'Ana konuşmacı büyük', cmd: 'ana konuşmacı' },
   ] },
+  { grup: 'Yerleşim', tekil: true, secenekler: [
+    { key: 'duzen-iki', label: '2\'li sütun', cmd: '2 sütun' },
+    { key: 'duzen-uc', label: '3\'lü sütun', cmd: '3 sütun' },
+    { key: 'duzen-dort', label: '4\'lü sütun', cmd: '4 sütun' },
+  ] },
   { grup: 'Tema', tekil: true, secenekler: [
     { key: 'tema-siyah', label: 'Siyah & altın', cmd: 'siyah tema', renk: '#0b0b0d' },
     { key: 'tema-mor', label: 'Mor', cmd: 'mor tema', renk: '#3a2b54' },
