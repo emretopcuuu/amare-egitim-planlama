@@ -1099,6 +1099,7 @@ export type Database = {
           email: string | null
           full_name: string
           id: string
+          kariyer_seviyesi: string | null
           login_code: string
           phone: string | null
           profil_foto_path: string | null
@@ -1116,6 +1117,7 @@ export type Database = {
           email?: string | null
           full_name: string
           id?: string
+          kariyer_seviyesi?: string | null
           login_code: string
           phone?: string | null
           profil_foto_path?: string | null
@@ -1133,6 +1135,7 @@ export type Database = {
           email?: string | null
           full_name?: string
           id?: string
+          kariyer_seviyesi?: string | null
           login_code?: string
           phone?: string | null
           profil_foto_path?: string | null
@@ -2005,3 +2008,4 @@ export const Constants = {
     Enums: {},
   },
 } as const
+

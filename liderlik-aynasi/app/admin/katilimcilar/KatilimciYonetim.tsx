@@ -13,6 +13,15 @@ const takimAdi = (i: number) => `Grup ${i}`;
 const BOS_KISI = { ad: "", takim: "", sehir: "", telefon: "", eposta: "" };
 const SAYFA_BOYU = 10;
 
+type KariyerSeviyesi = "leader" | "senior_leader" | "exec_leader" | "diamond" | "";
+
+const KARIYER_ETIKETLER: Record<string, string> = {
+  leader: "Leader",
+  senior_leader: "Senior Leader",
+  exec_leader: "Exec. Leader",
+  diamond: "Diamond+",
+};
+
 type Kisi = {
   id: string;
   full_name: string;
@@ -20,6 +29,7 @@ type Kisi = {
   city: string | null;
   phone: string | null;
   login_code: string;
+  kariyer_seviyesi: string | null;
 };
 
 // Tek sayfa yönetimi: liste EN ÜSTTE ve açık; diğer her şey katlanır (kapalı) bölüm.
@@ -41,7 +51,7 @@ export default function KatilimciYonetim({
 
   // ---- satır düzenleme ----
   const [duzenle, setDuzenle] = useState<Kisi | null>(null);
-  const [duzenleDeger, setDuzenleDeger] = useState({ ad: "", takim: "", sehir: "", telefon: "", login_code: "" });
+  const [duzenleDeger, setDuzenleDeger] = useState({ ad: "", takim: "", sehir: "", telefon: "", login_code: "", kariyer_seviyesi: "" as KariyerSeviyesi });
   const [duzenleYukleniyor, setDuzenleYukleniyor] = useState(false);
   const [duzenleMesaj, setDuzenleMesaj] = useState<string | null>(null);
   const [duzenleHataMsg, setDuzenleHataMsg] = useState<string | null>(null);
@@ -52,7 +62,7 @@ export default function KatilimciYonetim({
 
   function duzenleAc(k: Kisi) {
     setDuzenle(k);
-    setDuzenleDeger({ ad: k.full_name, takim: k.team ?? "", sehir: k.city ?? "", telefon: k.phone ?? "", login_code: k.login_code });
+    setDuzenleDeger({ ad: k.full_name, takim: k.team ?? "", sehir: k.city ?? "", telefon: k.phone ?? "", login_code: k.login_code, kariyer_seviyesi: (k.kariyer_seviyesi ?? "") as KariyerSeviyesi });
     setDuzenleMesaj(null);
     setDuzenleHataMsg(null);
     setSilOnayMod(false);
@@ -654,6 +664,20 @@ export default function KatilimciYonetim({
                     inputMode="numeric"
                     className={`${giris} w-full font-mono tracking-widest`}
                   />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-xs font-medium text-slate-400">Kariyer seviyesi (mentorluk eşleştirmesi)</span>
+                  <select
+                    value={duzenleDeger.kariyer_seviyesi}
+                    onChange={(e) => setDuzenleDeger({ ...duzenleDeger, kariyer_seviyesi: e.target.value as KariyerSeviyesi })}
+                    className={`${giris} w-full`}
+                  >
+                    <option value="">— Belirtilmemiş —</option>
+                    <option value="leader">Leader</option>
+                    <option value="senior_leader">Senior Leader</option>
+                    <option value="exec_leader">Exec. Leader</option>
+                    <option value="diamond">Diamond+</option>
+                  </select>
                 </label>
               </div>
               {duzenleMesaj && <p className="mt-3 text-sm font-medium text-emerald-400">{duzenleMesaj}</p>}

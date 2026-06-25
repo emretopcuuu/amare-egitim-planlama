@@ -381,6 +381,7 @@ export const GOREV_TURLERI = [
   "tahmin",
   "simulasyon",
   "bag", // #4 sosyal bağlantı görevi
+  "mentorluk", // günde bir kez, aynı/üst kariyer basamağından 3 aday önerilir
 ] as const;
 export type GorevTuru = (typeof GOREV_TURLERI)[number];
 
@@ -414,6 +415,9 @@ export function turSec(
       simulasyon: gun >= 2 ? 1 : 0, // direnç provası 2. günden itibaren
       // #4 Bağ görevi: 2. günden itibaren, öğleden sonra, serbest/oyun saatlerinde artar
       bag: gun >= 2 && saat >= 12 ? 1 : 0,
+      // Mentorluk: tik.ts'de ayrı kota ve pencereyle günde 1 kez tetiklenir;
+      // turSec() ağırlığına girmesin (0), doğrudan "mentorluk" türüyle çağrılır.
+      mentorluk: 0,
     };
     // Program bağlamı: oyun saatinde gözlem/gizli, molada yansıma,
     // yemekte tahmin, doğada cesaret; serbest/yemekte bağ artar

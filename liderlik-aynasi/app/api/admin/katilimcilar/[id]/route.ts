@@ -34,6 +34,7 @@ export async function PATCH(
     city?: string | null;
     phone?: string | null;
     login_code?: string;
+    kariyer_seviyesi?: string | null;
   };
   const guncelleme: Guncelleme = {};
 
@@ -79,6 +80,15 @@ export async function PATCH(
       }
       guncelleme.login_code = kod;
     }
+  }
+
+  if ("kariyer_seviyesi" in body) {
+    const GECERLI = ["leader", "senior_leader", "exec_leader", "diamond"];
+    const v = temiz(body.kariyer_seviyesi);
+    if (v !== null && !GECERLI.includes(v)) {
+      return Response.json({ hata: t.hataSunucu }, { status: 400 });
+    }
+    guncelleme.kariyer_seviyesi = v;
   }
 
   // Ses profili sıfırlama — voice_profiles satırını sil

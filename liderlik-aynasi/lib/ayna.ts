@@ -1166,3 +1166,72 @@ export async function senkronGorevUret(
     return null;
   }
 }
+
+// KARİYER SEVİYESİ SIRASI — mentorluk eşleştirme için.
+const KARIYER_SIRASI: Record<string, number> = {
+  leader: 1,
+  senior_leader: 2,
+  exec_leader: 3,
+  diamond: 4,
+};
+
+/** Mentorluk görevi: kişinin kariyer seviyesine göre aynı/üst basamaktan
+ * 3 isim önerir; katılımcı birini seçip 15 dk konuşur.
+ * Seviye bilgisi eksik katılımcılarda rastgele 3 kişi önerilir. */
+export async function mentorlukGorevUret(
+  db: Db,
+  katilimci: { id: string; full_name: string; kariyer_seviyesi: string | null },
+  gun: number,
+  tumKatilimcilar: { id: string; full_name: string; kariyer_seviyesi: string | null }[]
+): Promise<UretilenGorev | null> {
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+
+  const ad = katilimci.full_name.split(" ")[0];
+  const benimSeviye = KARIYER_SIRASI[katilimci.kariyer_seviyesi ?? ""] ?? 0;
+
+  // Aynı veya üst seviyedeki diğer katılımcılar (kendisi hariç)
+  const adaylar = tumKatilimcilar.filter((k) => {
+    if (k.id === katilimci.id) return false;
+    const onunSeviye = KARIYER_SIRASI[k.kariyer_seviyesi ?? ""] ?? 0;
+    // Seviye bilgisi varsa filtreye sok; yoksa herkesi dahil et
+    if (benimSeviye > 0 && onunSeviye > 0) return onunSeviye >= benimSeviye;
+    return true;
+  });
+
+  if (adaylar.length < 1) return null;
+
+  // 3 adayı karıştırarak seç (gün bazlı seed ile her gün farklı öneri)
+  const karisik = [...adaylar].sort((a, b) => {
+    const h = (s: string) => [...s].reduce((acc, c) => acc + c.charCodeAt(0), 0);
+    return (h(a.id) * gun) % 97 - (h(b.id) * gun) % 97;
+  });
+  const secilen = karisik.slice(0, 3);
+  const isimler = secilen.map((k) => {
+    const seviyeEtiketi =
+      k.kariyer_seviyesi === "senior_leader"
+        ? "Senior Leader"
+        : k.kariyer_seviyesi === "exec_leader"
+          ? "Exec. Leader"
+          : k.kariyer_seviyesi === "diamond"
+            ? "Diamond"
+            : k.kariyer_seviyesi === "leader"
+              ? "Leader"
+              : "";
+    return seviyeEtiketi ? `${k.full_name} (${seviyeEtiketi})` : k.full_name;
+  });
+
+  // Görev metni — AI yerine deterministik (hız + maliyet: isimleri doğrudan gömüyoruz)
+  const body = `${ad}, bugün bir mentor seç: **${isimler[0]}**, **${isimler[1]}**${isimler[2] ? ` veya **${isimler[2]}**` : ""}. Birini bul, en az 15 dakika konuş — konu: şu an işinde en çok takıldığın bir şey. Akşam bana yaz: kimin yanına gittin, ne sordun ve ne götürdün?`;
+
+  return {
+    kind: "mentorluk",
+    title: "Bugünün mentorunu seç",
+    body,
+    trait_id: null,
+    sure_saat: 1,
+    difficulty: 2 as const,
+    itiraz: null,
+    neden: "Seni bir adım öne taşıyacak sohbet başkasının deneyiminde saklı.",
+    micro_sprint: false,
+  };
+}

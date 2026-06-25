@@ -5,6 +5,7 @@ import {
   gorevUret,
   gorevPuanla,
   senkronGorevUret,
+  mentorlukGorevUret,
   gorevAraligiDk,
   istanbulSaati,
   sessizSaatMi,
@@ -195,7 +196,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
           : 1));
 
   const [{ data: kisiler }, { data: sonGorevler }] = await Promise.all([
-    db.from("participants").select("id, full_name, team").eq("role", "participant"),
+    db.from("participants").select("id, full_name, team, kariyer_seviyesi").eq("role", "participant"),
     db
       .from("missions")
       .select("participant_id, status, issued_at, kind")
@@ -724,6 +725,54 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
           "/"
         );
         ozet.fisilti++;
+      }
+    }
+  }
+
+  // 6aa) MENTORLUK GÖREVİ: 10:00-11:00 arasında, günde bir kez, her katılımcıya
+  // kariyer seviyesine göre 3 mentor adayı içeren görev verilir.
+  // Normal görev kotasının dışındadır — kendi kilidiyle ayrı çalışır.
+  if (saat === 10 && !sahneSessiz) {
+    const mentorlukAnahtari = `mentorluk_${bugun}`;
+    const { data: mentorlukGonderilmis } = await db
+      .from("settings")
+      .select("key")
+      .eq("key", mentorlukAnahtari)
+      .maybeSingle();
+    if (!mentorlukGonderilmis) {
+      await db.from("settings").upsert({ key: mentorlukAnahtari, value: "1" });
+      const tumKatilimcilar = (kisiler ?? []) as {
+        id: string;
+        full_name: string;
+        team: string | null;
+        kariyer_seviyesi: string | null;
+      }[];
+      for (const k of tumKatilimcilar) {
+        // Zaten bekleyen görev varsa mentorluk verme (telefonu tıkama)
+        const d = durumlar.get(k.id);
+        if (d?.bekleyen) continue;
+        const gorev = await mentorlukGorevUret(db, k, gun, tumKatilimcilar);
+        if (!gorev) continue;
+        const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
+        await db.from("missions").insert({
+          participant_id: k.id,
+          kind: gorev.kind,
+          title: gorev.title,
+          body: gorev.body,
+          trait_id: gorev.trait_id,
+          due_at: dueAt.toISOString(),
+          difficulty: gorev.difficulty,
+          neden: gorev.neden,
+          micro_sprint: gorev.micro_sprint,
+        });
+        await katilimciyaBildir(
+          db,
+          k.id,
+          "🤝 AYNA'dan bugünkü mentorluk görevi",
+          gorev.body.replace(/\*\*/g, "").slice(0, 120),
+          "/"
+        );
+        ozet.uretilen++;
       }
     }
   }

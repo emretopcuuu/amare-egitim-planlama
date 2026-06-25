@@ -16,7 +16,7 @@ export default async function KatilimcilarPage() {
   const [{ data: kisiler, error }, { data: churnlar }] = await Promise.all([
     db
       .from("participants")
-      .select("id, full_name, team, city, phone, login_code")
+      .select("id, full_name, team, city, phone, login_code, kariyer_seviyesi")
       .eq("role", "participant")
       .order("full_name"),
     // UX #2: sessizleşen (dürtülmüş) adayları listede kırmızı işaretlemek için.
