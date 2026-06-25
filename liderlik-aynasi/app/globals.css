@@ -1350,3 +1350,22 @@ html[data-admin-mod="uzman"] .basit-only {
   transition: color 0.15s ease;
 }
 .btn-uclu:hover { color: rgb(203, 213, 225); text-decoration: underline; }
+
+/* ── SU/AYNA MARKA HAREKETİ (tasarım #5) — dokunulan noktada su dalgası ──────── */
+@keyframes suDalgaTik {
+  0%   { transform: scale(0); opacity: 0.55; }
+  70%  { opacity: 0.18; }
+  100% { transform: scale(7); opacity: 0; }
+}
+.su-dalga-tik {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(212, 175, 55, 0.55); /* altın halka */
+  box-shadow: 0 0 0 1px rgba(124, 110, 205, 0.25) inset; /* royal iç */
+  animation: suDalgaTik 0.62s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .su-dalga-tik { display: none !important; }
+}
