@@ -8,9 +8,9 @@ const t = tr.yaziBoyu;
 // Kök font-size px değerleri: tüm rem ölçeği buna göre büyür.
 // layout.tsx'teki FOUC önleyici inline script ile aynı eşleme kullanılır.
 const BOYUTLAR = {
-  kucuk: "15.5px",
-  normal: "17.5px",
-  buyuk: "19.5px",
+  kucuk: "14.5px",
+  normal: "16px",
+  buyuk: "18px",
 } as const;
 
 // Eski "cokBuyuk" değerini "buyuk"a düşür, yoksa "normal" kullan.

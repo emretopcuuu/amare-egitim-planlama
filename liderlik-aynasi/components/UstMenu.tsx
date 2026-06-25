@@ -83,11 +83,11 @@ export default function UstMenu({
               className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-midnight-card p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Her zaman görünen kapatma çarpısı — menüyü kapatmak tek dokunuş */}
+              {/* Her zaman görünen kapatma çarpısı — altın dolgu her iki temada net */}
               <button
                 onClick={() => setAcik(false)}
                 aria-label={t.menuKapat}
-                className="absolute right-3 top-3 flex h-14 w-14 items-center justify-center rounded-full border border-white/20 bg-white/[0.09] text-xl text-slate-200 transition-colors hover:bg-white/[0.15] active:scale-95"
+                className="absolute right-3 top-3 flex h-14 w-14 items-center justify-center rounded-full bg-gold text-2xl font-bold text-[#1a1206] shadow-lg ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95"
               >
                 ✕
               </button>
@@ -146,9 +146,9 @@ export default function UstMenu({
               </button>
               <button
                 onClick={() => setAcik(false)}
-                className="mt-5 flex h-12 w-full items-center justify-center text-base text-slate-400 hover:text-slate-200"
+                className="mt-5 flex h-14 w-full items-center justify-center rounded-2xl border-2 border-gold/50 text-base font-semibold text-gold-light transition-colors hover:bg-gold/10"
               >
-                {t.menuKapat}
+                ✕ {t.menuKapat}
               </button>
             </div>
           </div>

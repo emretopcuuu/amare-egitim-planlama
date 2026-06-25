@@ -10,6 +10,7 @@ import IlkKarsilama from "@/components/IlkKarsilama";
 import AtlaBaglantisi from "@/components/AtlaBaglantisi";
 import ProvaModuBayragi from "@/components/ProvaModuBayragi";
 import SuDalgaTik from "@/components/SuDalgaTik";
+import YuzenGeri from "@/components/YuzenGeri";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -91,7 +92,7 @@ export default async function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var s=localStorage.getItem('la_yazi_boyu');var m={kucuk:'15.5px',normal:'17.5px',buyuk:'19.5px',cokBuyuk:'19.5px'};if(s&&m[s])document.documentElement.style.fontSize=m[s];var tm=localStorage.getItem('la_tema')||'otomatik';var et=tm;if(tm==='otomatik'){var h=new Date().getHours();et=(h>=7&&h<19)?'gunduz':'gece';}document.documentElement.setAttribute('data-tema',et);}catch(e){document.documentElement.setAttribute('data-tema','gece');}",
+              "try{var s=localStorage.getItem('la_yazi_boyu');var m={kucuk:'14.5px',normal:'16px',buyuk:'18px',cokBuyuk:'18px'};if(s&&m[s])document.documentElement.style.fontSize=m[s];var tm=localStorage.getItem('la_tema')||'otomatik';var et=tm;if(tm==='otomatik'){var h=new Date().getHours();et=(h>=7&&h<19)?'gunduz':'gece';}document.documentElement.setAttribute('data-tema',et);}catch(e){document.documentElement.setAttribute('data-tema','gece');}",
           }}
         />
         {/* monitor.oneteamglobal.ai/api/track-visit beacon - One Team AI trafik takip */}
@@ -110,6 +111,8 @@ export default async function RootLayout({
         <GolArkaplan />
         {children}
         <AltNav />
+        {/* Alt nav gizli içerik sayfalarında sabit "← Ana sayfa" */}
+        <YuzenGeri />
         {/* #5 Su/ayna marka hareketi — dokunuşta su dalgası */}
         <SuDalgaTik />
         <IlkKarsilama />
