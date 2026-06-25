@@ -62,12 +62,29 @@ export default function OyunSecici() {
           🎲
         </p>
         <h1 className="prizma-serif ay-metin mt-3 text-2xl font-semibold">Oyununu Seç</h1>
-        <p className="mt-2 text-sm leading-relaxed text-slate-300">
-          Cumartesi 4 oyun var. <b className="text-gold-light">Bowling&apos;i herkes oynayacak.</b>{" "}
-          Diğer 3 oyundan <b>2 tanesini</b> seç — Cumartesi programın ve grubun buna göre
-          belirlenecek.
-        </p>
       </header>
+
+      {/* Kural kartı — mobil için büyük, net, madde madde */}
+      <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 space-y-3">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 text-xl" aria-hidden>🎳</span>
+          <p className="text-base font-semibold leading-snug text-gold-light">
+            Bowling&apos;i herkes oynayacak — zorunlu.
+          </p>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 text-xl" aria-hidden>✌️</span>
+          <p className="text-base font-semibold leading-snug text-slate-100">
+            Geri kalan <span className="text-gold-light">3 oyundan 2&apos;sini</span> sen seç.
+          </p>
+        </div>
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 text-xl" aria-hidden>👥</span>
+          <p className="text-base leading-snug text-slate-300">
+            Seçimine göre Cumartesi programın ve grubun belirlenecek.
+          </p>
+        </div>
+      </div>
 
       {/* Bowling — sabit, herkes oynar */}
       <div className="kart-cam rounded-2xl p-4 ring-1 ring-gold/30">
@@ -77,7 +94,7 @@ export default function OyunSecici() {
           </span>
           <div className="min-w-0 flex-1">
             <p className="font-semibold text-slate-100">{bowling.ad}</p>
-            <p className="text-xs text-slate-400">{bowling.aciklama}</p>
+            <p className="text-sm text-slate-400">{bowling.aciklama}</p>
           </div>
           <span className="shrink-0 rounded-full bg-gold/20 px-2 py-0.5 text-[0.65rem] font-bold text-gold-light">
             HERKES
@@ -107,7 +124,7 @@ export default function OyunSecici() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="font-semibold text-slate-100">{bilgi.ad}</p>
-                <p className="text-xs text-slate-400">{bilgi.aciklama}</p>
+                <p className="text-sm text-slate-400">{bilgi.aciklama}</p>
               </div>
               <span
                 className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
@@ -122,8 +139,11 @@ export default function OyunSecici() {
         })}
       </div>
 
-      <p className="text-center text-xs text-slate-400">
+      <p className="text-center text-sm font-medium text-slate-400">
         {secili.length}/{SECILECEK_ADET} seçildi
+        {secili.length === SECILECEK_ADET && (
+          <span className="ml-2 text-gold-light">✓ Hazır!</span>
+        )}
       </p>
       {hata && <p className="text-center text-sm text-red-300">{hata}</p>}
 
@@ -135,9 +155,9 @@ export default function OyunSecici() {
       >
         {yukleniyor ? "Grubun belirleniyor…" : "Seçimi Onayla"}
       </button>
-      <p className="text-center text-[0.7rem] text-slate-500">
-        Onayladığında oyunlarına uygun bir gruba yerleştirileceksin. Bu seçim sonradan
-        değiştirilemez.
+      <p className="text-center text-xs text-slate-500">
+        Onayladığında oyunlarına uygun bir gruba yerleştirileceksin.{" "}
+        <span className="font-semibold text-slate-400">Bu seçim sonradan değiştirilemez.</span>
       </p>
     </div>
   );
