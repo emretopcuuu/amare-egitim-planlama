@@ -41,9 +41,8 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   // Model seçimi: 'hibrit' | 'gemini' | 'canvas' | 'openai-pro' — default 'hibrit'
   const [aiModel, setAiModel] = useState(() => {
     const saved = localStorage.getItem('aiModel');
-    // Eski 'openai' kayıtlarını 'openai-pro'ya migrate et
-    if (saved === 'openai') return 'openai-pro';
-    if (['canvas', 'openai-pro', 'gemini', 'hibrit', 'ai-afis'].includes(saved)) return saved;
+    // Yüz-değiştiren modlar (gemini/openai/openai-pro) kaldırıldı → hibrit'e migrate
+    if (['canvas', 'hibrit', 'ai-afis'].includes(saved)) return saved;
     return 'hibrit';
   });
   // Format: 'square' (1:1) | 'story' (9:16) | 'landscape' (16:9)
@@ -186,9 +185,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     // Hibrit/Gemini başarısız → OpenAI Pro
     // OpenAI Pro başarısız → Hibrit (varsa)
     const modelSirasi = fallbackOn
-      ? (aiModel === 'hibrit' ? ['hibrit', 'openai-pro', 'canvas']
-        : aiModel === 'gemini' ? ['gemini', 'openai-pro', 'canvas']
-        : aiModel === 'openai-pro' ? ['openai-pro', 'hibrit', 'canvas']
+      ? (aiModel === 'hibrit' ? ['hibrit', 'canvas']
         : aiModel === 'ai-afis' ? ['ai-afis']
         : [aiModel])
       : [aiModel];
@@ -486,27 +483,11 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                   </button>
                   <button
                     type="button"
-                    onClick={() => { setAiModel('gemini'); localStorage.setItem('aiModel', 'gemini'); }}
-                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'gemini' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
-                  >
-                    <div className="flex items-center gap-1 font-bold">🍌 Gemini</div>
-                    <div className="text-gray-500 mt-0.5">Tam AI · Yüz değişebilir · ~$0.04</div>
-                  </button>
-                  <button
-                    type="button"
                     onClick={() => { setAiModel('canvas'); localStorage.setItem('aiModel', 'canvas'); }}
                     className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'canvas' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
                   >
                     <div className="flex items-center gap-1 font-bold">🎨 Canvas</div>
                     <div className="text-gray-500 mt-0.5">Yüz garantili · Anlık · ÜCRETSİZ</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setAiModel('openai-pro'); localStorage.setItem('aiModel', 'openai-pro'); }}
-                    className={`p-2.5 rounded-lg border-2 text-left text-xs transition-all ${aiModel === 'openai-pro' ? 'border-amare-purple bg-purple-50' : 'border-gray-200 hover:border-gray-300'}`}
-                  >
-                    <div className="flex items-center gap-1 font-bold">✨ OpenAI Pro</div>
-                    <div className="text-gray-500 mt-0.5">gpt-image-1 · Tam AI · ~$0.08</div>
                   </button>
                   <button
                     type="button"
