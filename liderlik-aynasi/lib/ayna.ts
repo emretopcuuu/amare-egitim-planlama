@@ -54,7 +54,7 @@ const GOREV_SEMASI = {
     govde: {
       type: "string" as const,
       description:
-        "AYNA'nın ağzından görev metni: ne yapacak + bana ne yazacak. 2-4 cümle.",
+        "AYNA'nın ağzından görev metni. SADE, gündelik Türkçe; kısa ve net cümleler. Yapı: (1) tek bir somut eylem — ne yapacağı tek okumada anlaşılsın, (2) sonra sana ne yazacağı — tek net soru. En fazla 3 cümle. Süslü mecaz, küçültme eki ('ricacık' gibi), iç içe yan cümle ve şiirsel/bulanık ifade ('içinde ne koptu' gibi) KULLANMA.",
     },
     ozellik_id: {
       type: "integer" as const,
@@ -592,7 +592,11 @@ export async function gorevUret(
         },
         {
           type: "text" as const,
-          text: `Görevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa görevi o nedene/iç engele göre kişiselleştir. Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.\n\n${yeniYonergeler}`,
+          text: `Görevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa görevi o nedene/iç engele göre kişiselleştir. Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.
+
+DİL NETLİĞİ (çok önemli): Görev metni SADE ve anlaşılır olmalı — katılımcı tek okumada (1) ne yapacağını ve (2) sana ne yazacağını net anlamalı. Kısa, gerçek cümleler kur. Şu hatalardan kaçın: iç içe geçmiş uzun cümleler, art arda tire (—) ile uzayan eklemeler, küçültme ekleri ('ricacık'), bulanık şiirsel ifadeler ('içinde ne koptu'). Yukarıdaki davranışsal kalıplar (FUN FAILURE, EUSTRESS vb.) PUANLAMA/teşvik tonu içindir; görev metnini süslemek için değil. Önce ne yapacağını söyle, sonra tek bir soruyla geri bildirimi iste.
+
+${yeniYonergeler}`,
         },
       ],
       messages: [{ role: "user", content: JSON.stringify(baglam) }],
