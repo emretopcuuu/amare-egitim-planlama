@@ -1147,7 +1147,7 @@ const TakvimView = () => {
                   </span>
                 </div>
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
-                  {yurtdisiYaklasan.slice(0, 8).map(e => (
+                  {yurtdisiYaklasan.map(e => (
                     <a key={e.id} href={`/e/${e.id}`}
                       className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-amber-400/30 hover:border-amber-400 rounded-xl p-3 transition-all hover-lift spring-tap">
                       <div className="flex items-center gap-2 mb-1">
@@ -1180,7 +1180,7 @@ const TakvimView = () => {
                   </span>
                 </div>
                 <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
-                  {yurticiFizikiYaklasan.slice(0, 8).map(e => (
+                  {yurticiFizikiYaklasan.map(e => (
                     <a key={e.id} href={`/e/${e.id}`}
                       className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-emerald-400/30 hover:border-emerald-400 rounded-xl p-3 transition-all hover-lift spring-tap">
                       <div className="flex items-center gap-2 mb-1">
