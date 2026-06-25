@@ -104,24 +104,28 @@ const ikonCiz = (ctx, tip, cx, cy, s, renk) => {
 // Köşe kurdele/şerit (sağ üst) — üst kenardaki (W-L,0) ile sağ kenardaki (W,L)
 // noktalarını birleştirir; böylece TAMAMI tuval içinde kalır (taşma/kırpılma yok).
 const kurdeleCiz = (ctx, W, metin, palet) => {
-  const L = Math.round(W * 0.36);            // köşeden her kenara uzanım
-  const kalin = Math.round(W * 0.055);       // bant kalınlığı
+  const L = Math.round(W * 0.28);            // köşeden her kenara uzanım (daha zarif/küçük)
+  const kalin = Math.round(W * 0.044);       // bant kalınlığı (incelendi)
   const len = Math.round(L * Math.SQRT2 * 0.98); // bant boyu (iki kenar arası çapraz)
   ctx.save();
   ctx.translate(W - L / 2, L / 2);           // bandın merkezi köşenin içinde
   ctx.rotate(Math.PI / 4);
-  // gölge (kabarık his)
-  ctx.shadowColor = 'rgba(0,0,0,0.35)'; ctx.shadowBlur = 6; ctx.shadowOffsetY = 2;
+  // yumuşak gölge
+  ctx.shadowColor = 'rgba(0,0,0,0.3)'; ctx.shadowBlur = 5; ctx.shadowOffsetY = 2;
   const grad = ctx.createLinearGradient(-len / 2, 0, len / 2, 0);
   grad.addColorStop(0, palet.goldKoyu); grad.addColorStop(0.5, palet.gold); grad.addColorStop(1, palet.goldKoyu);
   ctx.fillStyle = grad;
   ctx.fillRect(-len / 2, -kalin / 2, len, kalin);
   ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-  // metin — banda sığacak şekilde
+  // ince iç çerçeve çizgisi (premium dokunuş)
+  ctx.strokeStyle = `rgba(${palet.goldRGB},0.55)`; ctx.lineWidth = 1;
+  const ic = Math.round(kalin * 0.16);
+  ctx.strokeRect(-len / 2, -kalin / 2 + ic, len, kalin - ic * 2);
+  // metin — banda sığacak, hafif harf aralığı
   ctx.fillStyle = palet.pillText;
-  ctx.font = `800 ${Math.round(kalin * 0.46)}px Arial`;
+  ctx.font = `800 ${Math.round(kalin * 0.42)}px Arial`;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText((metin || '').toLocaleUpperCase('tr-TR'), 0, 0, len * 0.82);
+  ctx.fillText((metin || '').toLocaleUpperCase('tr-TR'), 0, 1, len * 0.74);
   ctx.restore();
   ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
 };
@@ -230,7 +234,7 @@ const ayarCikar = (ek) => {
 // Koyu zemin + soluk One Team amblemi + (siyah temada) altın elmas serpiştir.
 // dekor = { isik, elmas, cerceve } — tekil dekor kapatma için.
 const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
-  const { isik = true, elmas = true, cerceve = true } = dekor;
+  const { isik = true, elmas = true, cerceve = true, kurdeleVar = false } = dekor;
   // DİKEY ve simetrik gradient (çapraz değil → sol/sağ eşit, "yarısı koyu yarısı açık" olmaz)
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, palet.bg1); g.addColorStop(1, palet.bg2);
@@ -282,7 +286,7 @@ const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
     ctx.strokeStyle = palet.gold; ctx.lineWidth = 3; ctx.globalAlpha = 0.85;
     const cm = Math.round(W * 0.045), cl = Math.round(W * 0.075);
     const kose = (x, y, dx, dy) => { ctx.beginPath(); ctx.moveTo(x + dx * cl, y); ctx.lineTo(x, y); ctx.lineTo(x, y + dy * cl); ctx.stroke(); };
-    kose(cm, cm, 1, 1); kose(W - cm, cm, -1, 1); kose(cm, H - cm, 1, -1); kose(W - cm, H - cm, -1, -1);
+    kose(cm, cm, 1, 1); if (!kurdeleVar) kose(W - cm, cm, -1, 1); kose(cm, H - cm, 1, -1); kose(W - cm, H - cm, -1, -1);
     ctx.globalAlpha = 1;
   }
 };
@@ -330,7 +334,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const ctx = canvas.getContext('2d');
   const M = Math.round(W * 0.07);
 
-  await zeminCiz(ctx, W, H, palet, { isik: ayar.isik, elmas: ayar.elmas, cerceve: ayar.cerceve });
+  await zeminCiz(ctx, W, H, palet, { isik: ayar.isik, elmas: ayar.elmas, cerceve: ayar.cerceve, kurdeleVar: !!ayar.kurdele });
 
   // ── ÜST: One Team logosu ──
   let y = Math.round(H * 0.02);
