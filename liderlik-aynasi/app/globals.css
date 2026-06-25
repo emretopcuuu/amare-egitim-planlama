@@ -1403,3 +1403,14 @@ html[data-tema="gunduz"] .gece-ada [class*="text-rose-2"],
 html[data-tema="gunduz"] .gece-ada [class*="text-rose-3"] { color: #fda4af !important; }
 html[data-tema="gunduz"] .gece-ada [class*="text-orange-2"],
 html[data-tema="gunduz"] .gece-ada [class*="text-orange-3"] { color: #fdba74 !important; }
+
+/* UX #7 — Admin görünüm tercihleri (yalnız .admin-kok altında uygulanır).
+   Büyüt: zoom (Chrome/Edge/Safari; Firefox sessizce yok sayar). Yüksek
+   kontrast: soluk gri metinleri parlatır. */
+html[data-admin-yazi="buyuk"] .admin-kok {
+  zoom: 1.12;
+}
+html[data-admin-kontrast="yuksek"] .admin-kok .text-slate-400,
+html[data-admin-kontrast="yuksek"] .admin-kok .text-slate-500 {
+  color: #cbd5e1 !important;
+}

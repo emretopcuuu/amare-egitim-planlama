@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import AdminGorunum from "./AdminGorunum";
 
 const DEPO = "la_admin_mod_v1";
 export type AdminModTipi = "basit" | "uzman";
@@ -35,7 +36,9 @@ export default function AdminMod() {
           ? "🟢 Basit görünüm — yalnız temel adımlar görünür"
           : "🛠 Uzman görünüm — tüm araçlar açık"}
       </p>
-      <div className="flex shrink-0 overflow-hidden rounded-full border border-gold/40 text-xs font-bold">
+      <div className="flex shrink-0 items-center gap-2">
+        <AdminGorunum />
+        <div className="flex overflow-hidden rounded-full border border-gold/40 text-xs font-bold">
         <button
           type="button"
           onClick={() => setMod("basit")}
@@ -56,6 +59,7 @@ export default function AdminMod() {
         >
           Uzman
         </button>
+        </div>
       </div>
     </div>
   );

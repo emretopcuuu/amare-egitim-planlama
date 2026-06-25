@@ -5,6 +5,9 @@ import AdminNav from "./AdminNav";
 import AdminTost from "./AdminTost";
 import AdminMod from "./AdminMod";
 import AdminTuru from "./AdminTuru";
+import KlavyeKisayollari from "./KlavyeKisayollari";
+import CanliOlayAkisi from "./CanliOlayAkisi";
+import AcilDurumKarti from "./AcilDurumKarti";
 
 // /admin/giris da bu layout'tan geçer: nav yalnızca admin oturumunda görünür.
 // Nav'daki durum rozetleri her eylem sonrası router.refresh ile tazelenir.
@@ -60,6 +63,10 @@ export default async function AdminLayout({
       <AdminTost />
       {/* UX #7: panele ilk giren yöneticiye tek seferlik tur */}
       <AdminTuru />
+      {/* Yeni UX katmanları: klavye kısayolları, canlı olay akışı, acil kart */}
+      <KlavyeKisayollari />
+      {tamYetki && <CanliOlayAkisi />}
+      <AcilDurumKarti />
     </div>
   );
 }
