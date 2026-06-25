@@ -48,6 +48,7 @@ import FazGrubu from "./FazGrubu";
 import CapaAcici from "./CapaAcici";
 import TerimlerSozluk from "./TerimlerSozluk";
 import SimdiSonra from "./SimdiSonra";
+import YeniKampButonu from "./YeniKampButonu";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -666,6 +667,8 @@ export default async function AdminPanel() {
                 </h3>
                 <ProvaModuKontrol acik={provaAcik} />
               </div>
+              {/* #4 Yeni kamp hazırla — bir sonraki kamp için güvenli sıfırlama */}
+              <YeniKampButonu />
             </FazGrubu>
           </div>
         </section>

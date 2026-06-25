@@ -1957,7 +1957,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      yeni_kamp_hazirla: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never
