@@ -12,23 +12,14 @@ import { kampGunu, KAMP_GUNLERI } from "@/lib/kampProgrami";
 import FunnelOmurga from "./FunnelOmurga";
 import DalgaKontrol from "./DalgaKontrol";
 import AynaAniKontrol from "./AynaAniKontrol";
-import DavetKontrol from "./DavetKontrol";
-import YedekButonu from "./YedekButonu";
-import SilmeTalepleri from "./SilmeTalepleri";
-import IkiliKontrol from "./IkiliKontrol";
 import EksikDurt from "./EksikDurt";
 import OtoYenile from "./OtoYenile";
 import GununAkisi from "./GununAkisi";
 import HazirlikPaneli from "./HazirlikPaneli";
 import CanliOzet from "./CanliOzet";
-import KodBul from "./KodBul";
 import Uyarilar from "./Uyarilar";
 import Ipucu from "./Ipucu";
-import ProvaModuKontrol from "./ProvaModuKontrol";
 import TopluEylem from "./TopluEylem";
-import OtomatikZamanlama from "./OtomatikZamanlama";
-import IslemGunlugu from "./IslemGunlugu";
-import Katlanir from "./Katlanir";
 import AltAksiyonCubugu from "./AltAksiyonCubugu";
 import FazSifirKontrol from "./FazSifirKontrol";
 import BoslukKontrol from "./BoslukKontrol";
@@ -36,18 +27,14 @@ import OnFarkindalikKontrol from "./OnFarkindalikKontrol";
 import HedefKontrol from "./HedefKontrol";
 import MuhurKontrol from "./MuhurKontrol";
 import SozV2Kontrol from "./SozV2Kontrol";
-import OdevPaketi from "./OdevPaketi";
 import SonEylemler from "./SonEylemler";
 import CanliPano from "./CanliPano";
 import FunnelMetrik from "./FunnelMetrik";
 import TriyajKart from "./TriyajKart";
-import AkisDizisi from "./AkisDizisi";
 import BolumAtla from "./BolumAtla";
-import FazGrubu from "./FazGrubu";
 import CapaAcici from "./CapaAcici";
 import TerimlerSozluk from "./TerimlerSozluk";
 import SimdiSonra from "./SimdiSonra";
-import YeniKampButonu from "./YeniKampButonu";
 import OneriButonu from "./OneriButonu";
 import BasitEylem from "./BasitEylem";
 import BasitIlkIpucu from "./BasitIlkIpucu";
@@ -71,13 +58,9 @@ export default async function AdminPanel() {
     raporlarAcik,
     { count: katilimciSayisi },
     { count: mektupSayisi },
-    { count: epostaliSayisi },
-    { data: davetAyari },
     { data: silmeTalepleri },
-    { count: ikiliSayisi },
     { data: sozAyar },
     { count: bekleyenFoto },
-    { data: provaAyar },
     { count: kayanSayi },
     { data: funnelAyarlar },
   ] = await Promise.all([
@@ -91,26 +74,14 @@ export default async function AdminPanel() {
     db.from("mirror_letters").select("participant_id", { count: "exact", head: true }),
     db
       .from("participants")
-      .select("id", { count: "exact", head: true })
-      .eq("role", "participant")
-      .not("email", "is", null),
-    db
-      .from("settings")
-      .select("value")
-      .eq("key", "wave4_davet_gonderildi")
-      .maybeSingle(),
-    db
-      .from("participants")
       .select("id, full_name, team, deletion_requested_at")
       .not("deletion_requested_at", "is", null)
       .order("deletion_requested_at"),
-    db.from("pairs").select("id", { count: "exact", head: true }),
     db.from("settings").select("value").eq("key", "kapanis_soz_acik").maybeSingle(),
     db
       .from("photos")
       .select("id", { count: "exact", head: true })
       .eq("status", "pending"),
-    db.from("settings").select("value").eq("key", "prova_modu").maybeSingle(),
     // #4 Erken uyarı: sessizleşen (dürtülmüş) aday sayısı
     db
       .from("churn_radar")
@@ -123,7 +94,6 @@ export default async function AdminPanel() {
       .in("key", ["pusula_acik", "muhur_acik", "reports_visible", "on_farkindalik_acik"]),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
-  const provaAcik = provaAyar?.value === "true";
 
   const sozAcik = sozAyar?.value === "true";
 
@@ -270,6 +240,17 @@ export default async function AdminPanel() {
   };
   const siradakiAsama = aktifAsama < 5 ? ASAMA_AD[aktifAsama + 1] : null;
 
+  // Aktif aşamanın tüm kontrollerini barındıran menü sayfası (panel yalnız
+  // o aşamanın anahtarlarını gösterir; gerisi bu sayfada).
+  const kontrolSayfa =
+    aktifAsama <= 2
+      ? "/admin/kontrol/hazirlik"
+      : aktifAsama === 3
+        ? "/admin/kontrol/canli"
+        : aktifAsama === 4
+          ? "/admin/kontrol/final"
+          : "/admin/sistem";
+
   // #8 Proaktif uyarılar (yalnız tam yetkiliye gösterilir).
   const uyarilar = tamYetki
     ? adminUyarilari({
@@ -291,7 +272,6 @@ export default async function AdminPanel() {
     { id: "ilerleme", etiket: atla.ilerleme },
     ...(tamYetki ? [{ id: "tehlike", etiket: atla.tehlike }] : []),
     ...(tamYetki && silmeBekleyen > 0 ? [{ id: "kvkk", etiket: atla.kvkk }] : []),
-    ...(tamYetki ? [{ id: "araclar", etiket: atla.araclar }] : []),
   ];
 
   return (
@@ -549,342 +529,152 @@ export default async function AdminPanel() {
         )}
       </section>
 
-      {/* #5 TEHLİKE BÖLGESİ — tüm katılımcıları etkileyen kritik anahtarlar
-          tek, görsel olarak ayrılmış bir bölgede toplanır. Her birinin onayı +
-          geri-al penceresi var. Yalnız tam yetkili admin. */}
+      {/* BU AŞAMANIN ANAHTARLARI — panel artık yalnız AKTİF aşamanın switch'lerini
+          tutar (durum + adım + aktif anahtar). Diğer aşamalar, sistem ve tüm
+          araçlar üstteki 1·2·3·4 ve ⚙ Sistem menülerinin altında. */}
       {tamYetki && (
         <section
           id="tehlike"
-          className="uzman-only scroll-mt-24 space-y-5 rounded-2xl border-2 border-red-500/30 bg-red-950/10 p-5"
+          className="scroll-mt-24 space-y-4 rounded-2xl border border-royal/30 bg-midnight-card/50 p-5"
         >
-          {/* Uzman: tam "Tehlike Bölgesi" başlığı */}
-          <div className="uzman-only flex items-start gap-3">
-            <span className="text-xl" aria-hidden>
-              ⚠️
-            </span>
-            <div>
-              <h2 className="flex items-center gap-2 text-lg font-bold text-red-200">
-                {tr.admin.tehlike.baslik}
-                <Ipucu {...tr.admin.yardim.tehlike} />
-              </h2>
-              <p className="mt-0.5 text-xs text-slate-400">{tr.admin.tehlike.aciklama}</p>
-            </div>
-          </div>
-          {/* Basit: korkutmayan sade başlık */}
-          <div className="basit-only">
-            <h2 className="text-lg font-bold text-gold-light">🎛 Kamp Kontrolleri</h2>
-            <p className="mt-1 text-sm leading-relaxed text-slate-300">
-              Aşağıda <span className="font-semibold">şu anki aşamanın</span> anahtarları var. Her işlem
-              önce onay ister ve geri-al penceresi sunar — kazara bir şey bozman çok zor.
-            </p>
-          </div>
-
-          {/* UX #9: acemi için sade sonuç uyarısı (geri-al güvencesiyle) — yalnız uzman'da
-              tekrar etmesin diye sade başlığa taşındı */}
-
-          {/* #3 Kamp akışı sıralayıcı — ileri operatör aracı (yalnız uzman) */}
-          <div className="uzman-only">
-            <AkisDizisi />
-          </div>
-
-          {/* #1 Kontroller funnel fazına göre KATLANIR gruplarda: yalnız o anki
-              fazın anahtarları açık gelir, gerisi katlı. Operatör 9 kartla aynı
-              anda boğulmaz. Kapalı gruptaki çapaya atlanırsa CapaAcici onu açar. */}
-
-          {/* ── 2 · KATILIM ── (basit modda yalnız aktif fazsa görünür) */}
-          <div className={aktifAsama === 2 ? "" : "uzman-only"}>
-          <FazGrubu
-            no={2}
-            ad={tr.admin.tehlike.katilimGrup}
-            aktif={aktifAsama === 2}
-            varsayilanAcik={aktifAsama === 2}
-          >
-            {/* FAZ 0 — Pusula penceresi + oda QR kodu (kampa giriş kilidi) */}
-            <div id="fazsifir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                {tr.admin.fazSifir.baslik}
-                <Ipucu {...tr.admin.yardim.fazSifir} />
-              </h3>
-              <FazSifirKontrol />
-            </div>
-
-            {/* FAZ A — Ön Farkındalık penceresi (pusuladan sonra, kampa girmeden) */}
-            <div id="onfark" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                {tr.admin.onFark.baslik}
-              </h3>
-              <OnFarkindalikKontrol />
-            </div>
-
-            {/* FAZ A — Hedef (Gün 2): nedenden kariyer hedefi + plan */}
-            <div id="hedef" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                🎯 {tr.admin.hedef.baslik}
-              </h3>
-              <HedefKontrol />
-            </div>
-          </FazGrubu>
-          </div>
-
-          {/* ── 3 · KAMP CANLI ── (basit modda yalnız aktif fazsa görünür) */}
-          <div className={aktifAsama === 3 ? "" : "uzman-only"}>
-          <FazGrubu
-            no={3}
-            ad={tr.admin.tehlike.canliGrup}
-            aktif={aktifAsama === 3}
-            varsayilanAcik={aktifAsama === 3}
-          >
-            {/* Dalga */}
-            <div
-              id="dalga"
-              className="scroll-mt-20 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30"
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="flex items-center gap-2 text-lg font-bold text-gold-light">
+              🎛 Bu Aşamanın Anahtarları
+              <Ipucu {...tr.admin.yardim.tehlike} />
+            </h2>
+            <Link
+              href={kontrolSayfa}
+              className="text-xs font-medium text-royal-light hover:underline"
             >
-              <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
-                {tr.admin.dalga.baslik}
-                <Ipucu {...tr.admin.yardim.dalga} />
-              </h3>
-              <p className="mt-1 text-sm text-slate-400">{tr.admin.dalga.aciklama}</p>
-              <DalgaKontrol
-                dalgalar={dalgalar.map((d) => ({
-                  id: d.id,
-                  ad: d.name,
-                  acik: d.is_open,
-                }))}
-                puanlamayan={
-                  acikDalga && ilerleme
-                    ? ilerleme.katilimcilar.filter(
-                        (k) => (ilerleme.puanladigi.get(k.id) ?? 0) === 0
-                      ).length
-                    : 0
-                }
-              />
-            </div>
-          </FazGrubu>
+              Tüm aşama kontrolleri →
+            </Link>
           </div>
+          <p className="text-sm leading-relaxed text-slate-300">
+            Şu an <span className="font-semibold text-gold-light">{ASAMA_AD[aktifAsama]}</span>{" "}
+            aşamasındasın; aşağıda yalnız bu aşamanın anahtarları var. Her işlem önce onay
+            ister ve geri-al penceresi sunar. Diğer aşamalar ve tüm araçlar üstteki menülerde.
+          </p>
 
-          {/* ── 4 · FİNAL — Ayna Anı ── (basit modda yalnız aktif fazsa görünür) */}
-          <div className={aktifAsama === 4 ? "" : "uzman-only"}>
-          <FazGrubu
-            no={4}
-            ad={tr.admin.tehlike.finalGrup}
-            aktif={aktifAsama === 4}
-            varsayilanAcik={aktifAsama === 4}
-          >
-            {/* FAZ 1 — Boşluk Anı penceresi + derinlik panosu */}
-            <div id="fazbir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                {tr.admin.fazBir.baslik}
-                <Ipucu {...tr.admin.yardim.fazBir} />
-              </h3>
-              <BoslukKontrol />
-            </div>
-
-            {/* Ayna Anı (raporlar) */}
-            <div
-              id="ayna-ani"
-              className="scroll-mt-20 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30"
-            >
-              <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
-                {tr.admin.aynaAni.baslik}
-                <Ipucu {...tr.admin.yardim.rapor} />
-              </h3>
-              <p className="mt-1 text-sm text-slate-400">{tr.admin.aynaAni.aciklama}</p>
-              <AynaAniKontrol
-                acik={raporlarAcik}
-                mektupHazir={mektupSayisi ?? 0}
-                mektupToplam={katilimciSayisi ?? 0}
-              />
-            </div>
-
-            {/* A2 — Mühür Açılışı (kamp sonu before/after sesli reveal) */}
-            <div id="muhur" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                {tr.admin.muhur.baslik}
-                <Ipucu {...tr.admin.yardim.muhur} />
-              </h3>
-              <MuhurKontrol />
-            </div>
-
-            {/* FAZ A — Söz v2 (kapanış sözü, rapordan sonra) */}
-            <div id="soz-v2" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                📜 {tr.admin.sozV2.baslik}
-              </h3>
-              <SozV2Kontrol />
-            </div>
-          </FazGrubu>
-          </div>
-
-          {/* ── SİSTEM (kesişen) — her aşamada lazım, varsayılan katlı (uzman) ── */}
-          <div className="uzman-only">
-            <FazGrubu ad={tr.admin.tehlike.sistemGrup} varsayilanAcik={false}>
-              {/* #9 Prova Modu — canlı/test ayrımı kritik bir anahtar */}
-              <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+          {/* 1-2 · Hazırlık & Katılım anahtarları */}
+          {(aktifAsama === 1 || aktifAsama === 2) && (
+            <div className="space-y-4">
+              <div id="fazsifir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
                 <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                  {tr.provaModu.baslikKapali}
-                  <Ipucu {...tr.admin.yardim.prova} />
+                  {tr.admin.fazSifir.baslik}
+                  <Ipucu {...tr.admin.yardim.fazSifir} />
                 </h3>
-                <ProvaModuKontrol acik={provaAcik} />
+                <FazSifirKontrol />
               </div>
-              {/* #4 Yeni kamp hazırla — bir sonraki kamp için güvenli sıfırlama */}
-              <YeniKampButonu />
-            </FazGrubu>
-          </div>
+              <div id="onfark" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                  {tr.admin.onFark.baslik}
+                </h3>
+                <OnFarkindalikKontrol />
+              </div>
+            </div>
+          )}
+
+          {/* 3 · Kamp Canlı anahtarları */}
+          {aktifAsama === 3 && (
+            <div className="space-y-4">
+              <div id="dalga" className="scroll-mt-20 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+                <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+                  {tr.admin.dalga.baslik}
+                  <Ipucu {...tr.admin.yardim.dalga} />
+                </h3>
+                <p className="mt-1 text-sm text-slate-400">{tr.admin.dalga.aciklama}</p>
+                <DalgaKontrol
+                  dalgalar={dalgalar.map((d) => ({ id: d.id, ad: d.name, acik: d.is_open }))}
+                  puanlamayan={
+                    acikDalga && ilerleme
+                      ? ilerleme.katilimcilar.filter(
+                          (k) => (ilerleme.puanladigi.get(k.id) ?? 0) === 0
+                        ).length
+                      : 0
+                  }
+                />
+              </div>
+              <div id="hedef" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                  🎯 {tr.admin.hedef.baslik}
+                </h3>
+                <HedefKontrol />
+              </div>
+            </div>
+          )}
+
+          {/* 4 · Final anahtarları */}
+          {aktifAsama === 4 && (
+            <div className="space-y-4">
+              <div id="fazbir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                  {tr.admin.fazBir.baslik}
+                  <Ipucu {...tr.admin.yardim.fazBir} />
+                </h3>
+                <BoslukKontrol />
+              </div>
+              <div id="ayna-ani" className="scroll-mt-20 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+                <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+                  {tr.admin.aynaAni.baslik}
+                  <Ipucu {...tr.admin.yardim.rapor} />
+                </h3>
+                <p className="mt-1 text-sm text-slate-400">{tr.admin.aynaAni.aciklama}</p>
+                <AynaAniKontrol
+                  acik={raporlarAcik}
+                  mektupHazir={mektupSayisi ?? 0}
+                  mektupToplam={katilimciSayisi ?? 0}
+                />
+              </div>
+              <div id="muhur" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                  {tr.admin.muhur.baslik}
+                  <Ipucu {...tr.admin.yardim.muhur} />
+                </h3>
+                <MuhurKontrol />
+              </div>
+              <div id="soz-v2" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+                  📜 {tr.admin.sozV2.baslik}
+                </h3>
+                <SozV2Kontrol />
+              </div>
+            </div>
+          )}
+
+          {/* 5 · Kamp sonrası — panelde anahtar yok; araçlar menüde */}
+          {aktifAsama === 5 && (
+            <p className="rounded-xl border border-white/5 bg-white/[0.02] px-4 py-6 text-center text-sm text-slate-400">
+              Kamp tamamlandı — bu aşamada panelde anahtar yok. Kapanış kontrolleri{" "}
+              <Link href="/admin/kontrol/final" className="text-royal-light hover:underline">
+                4 · Final
+              </Link>{" "}
+              menüsünde, kamp sonrası araçlar oradadır.
+            </p>
+          )}
         </section>
       )}
 
-      {/* Basit modda: yalnız sıradaki adım gösterilir; gerisi Uzman'da */}
+      {/* Tüm kontroller & araçlar üstteki menülerde — yön gösterici. */}
       {tamYetki && (
-        <p className="basit-only rounded-xl border border-royal-light/20 bg-white/[0.02] px-4 py-3 text-center text-sm text-slate-400">
-          Basit görünümde yalnız <span className="font-semibold text-gold-light">sıradaki tek adımı</span> görürsün.
-          Durum, ilerleme, tüm araçlar ve kontroller için sağ üstten{" "}
-          <span className="font-semibold text-gold-light">Uzman</span>’a geç.
+        <p className="rounded-xl border border-royal-light/20 bg-white/[0.02] px-4 py-3 text-center text-sm text-slate-400">
+          Tüm kontroller ve araçlar üstteki{" "}
+          <span className="font-semibold text-gold-light">1·2·3·4</span> ve{" "}
+          <span className="font-semibold text-gold-light">⚙ Sistem</span> menülerinin altında.
         </p>
       )}
 
-      {/* KVKK — yalnız bekleyen talep varsa (yasal/acil), üst seviyede kırmızı.
-          Boşken hiç gösterilmez (#6: boş bölüm yok). */}
+      {/* KVKK — bekleyen silme talebi varsa ACİL uyarı; işlem ⚙ Sistem'de. */}
       {tamYetki && silmeBekleyen > 0 && (
-        <section
+        <Link
           id="kvkk"
-          className="kart-3d scroll-mt-20 rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-red-400/40 backdrop-blur"
+          href="/admin/sistem#kvkk"
+          className="scroll-mt-24 flex items-center justify-between gap-3 rounded-2xl bg-red-950/15 px-5 py-4 ring-1 ring-red-400/40 transition-colors hover:bg-red-950/25"
         >
-          <h2 className="flex items-center gap-2 text-lg font-semibold text-red-200">
-            {tr.kvkk.adminBaslik}
-            <Ipucu {...tr.admin.yardim.kvkk} />
-          </h2>
-          <p className="mt-1 text-sm text-slate-400">{tr.kvkk.adminAciklama}</p>
-          <SilmeTalepleri
-            talepler={(silmeTalepleri ?? []).map((k) => ({
-              id: k.id,
-              ad: k.full_name,
-              takim: k.team,
-              tarih: new Intl.DateTimeFormat("tr-TR", {
-                timeZone: "Europe/Istanbul",
-                day: "numeric",
-                month: "short",
-                hour: "2-digit",
-                minute: "2-digit",
-              }).format(new Date(k.deletion_requested_at!)),
-            }))}
-          />
-        </section>
-      )}
-
-      {/* UX #10: Devret — paneli başkasına verirken güvenli yol (yalnız uzman görür) */}
-      {tamYetki && (
-        <details className="uzman-only group rounded-2xl border border-royal/30 bg-midnight-card/40 p-4">
-          <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-gold-light">
-            <span>🤝 Paneli başkasına devredeceksin?</span>
-            <span className="transition-transform group-open:rotate-180" aria-hidden>▾</span>
-          </summary>
-          <div className="mt-3 space-y-2 text-sm leading-relaxed text-slate-300">
-            <p>
-              1. Devredeceğin kişiye paneli <span className="font-semibold text-gold-light">Basit görünümde</span> bırak
-              (sağ üstteki anahtar) — tehlikeli araçlar ve sistem ayarları görünmez.
-            </p>
-            <p>
-              2. Tam kısıtlı erişim için ona <span className="font-semibold text-gold-light">Yardımcı</span> girişi ver:
-              yalnız izleme ve hatırlatma yapar; kritik anahtarlara dokunamaz.
-            </p>
-            <p>
-              3. İlk girdiğinde otomatik <span className="font-semibold text-gold-light">kısa tur</span> ve{" "}
-              <span className="font-semibold text-gold-light">📖 Terimler</span> ona yol gösterir.
-            </p>
-          </div>
-        </details>
-      )}
-
-      {/* #1 TÜM ARAÇLAR — faz dışı ikincil her şey tek katlanır bölümde.
-          Varsayılan kapalı; basit görünümde tamamen gizli (uzman). */}
-      {tamYetki && (
-        <div id="araclar" className="uzman-only scroll-mt-24">
-        <Katlanir baslik={tr.admin.araclar.baslik} aciklama={tr.admin.araclar.aciklama} yardim={tr.admin.yardim.araclar}>
-          {/* #10 Araçlar aşamaya göre gruplu + her grup kendi içinde katlanır:
-              "Tüm araçlar" açılınca devasa bir liste değil, iki kompakt başlık
-              görünür; operatör yalnız ihtiyaç duyduğu grubu açar. */}
-
-          {/* 📦 KAMP SONRASI — kamp bittikten sonraki uzun soluklu araçlar */}
-          <Katlanir
-            baslik={tr.admin.araclar.grupSonrasiBaslik}
-            aciklama={tr.admin.araclar.grupSonrasiAciklama}
-            ikon="📦"
-          >
-            {/* Ödev paketi (kamp sonrası 10/15 gün, Ağustos) */}
-            <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-              <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
-                {tr.admin.odev.baslik}
-                <Ipucu {...tr.admin.yardim.odev} />
-              </h2>
-              <div className="mt-3">
-                <OdevPaketi />
-              </div>
-            </section>
-
-            <section
-              id="davet"
-              className="kart-3d scroll-mt-20 rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur"
-            >
-              <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
-                {tr.admin.doksanGun.baslik}
-                <Ipucu {...tr.admin.yardim.davet} />
-              </h2>
-              <p className="mt-1 text-sm text-slate-400">{tr.admin.doksanGun.aciklama}</p>
-              <DavetKontrol
-                epostali={epostaliSayisi ?? 0}
-                toplam={katilimciSayisi ?? 0}
-                sonGonderim={davetAyari?.value ?? null}
-              />
-            </section>
-
-            <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-              <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
-                {tr.admin.ikili.baslik}
-                <Ipucu {...tr.admin.yardim.ikili} />
-              </h2>
-              <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.ikili.aciklama}</p>
-              <IkiliKontrol mevcut={ikiliSayisi ?? 0} />
-            </section>
-          </Katlanir>
-
-          {/* ⚙️ SİSTEM & KAYIT — her aşamada lazım olan genel araçlar */}
-          <Katlanir
-            baslik={tr.admin.araclar.grupSistemBaslik}
-            aciklama={tr.admin.araclar.grupSistemAciklama}
-            ikon="⚙️"
-          >
-            {/* Sağlık kontrol listesi — her zaman erişilebilir tam görünüm */}
-            <HazirlikPaneli konum="arac" aktifAsama={aktifAsama} />
-            <KodBul />
-
-            <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-              <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
-                {tr.admin.yedek.baslik}
-                <Ipucu {...tr.admin.yardim.yedek} />
-              </h2>
-              <p className="mt-1 mb-4 text-sm text-slate-400">{tr.admin.yedek.aciklama}</p>
-              <YedekButonu />
-            </section>
-
-            <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-              <h2 className="flex items-center gap-2 text-lg font-semibold text-gold-light">
-                {tr.zamanlama.baslik}
-                <Ipucu {...tr.admin.yardim.zamanlama} />
-              </h2>
-              <p className="mt-1 mb-4 text-sm text-slate-400">{tr.zamanlama.aciklama}</p>
-              <OtomatikZamanlama
-                dalgalar={dalgalar.map((d) => ({ id: d.id, ad: d.name }))}
-              />
-            </section>
-
-            {/* İşlem günlüğü: kritik eylemler buraya düşer; geri-al ise eylem
-                anındaki tostta sunulur (dalga/rapor). Kayıt + geri-al birlikte. */}
-            <div id="islem-gunlugu" className="scroll-mt-24">
-              <IslemGunlugu />
-            </div>
-          </Katlanir>
-        </Katlanir>
-        </div>
+          <span className="text-sm font-semibold text-red-200">
+            ⚠️ {silmeBekleyen} bekleyen KVKK silme talebi
+          </span>
+          <span className="shrink-0 text-sm font-medium text-red-200">Sistem’de işle →</span>
+        </Link>
       )}
 
       {/* #8 Mobil alt aksiyon çubuğu — yalnız kritik (vurgu) öneride */}
