@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { sesYapilandirildiMi } from "@/lib/eleven";
 import KomutaSekme from "../KomutaSekme";
 import YansimaYukleyici from "./YansimaYukleyici";
+import SesKlonPanel from "./SesKlonPanel";
 
 export const metadata = { title: "Yansıma Videoları — Liderlik Aynası" };
 
@@ -14,16 +16,35 @@ export default async function YansimaYonetimPage() {
   if (!session || session.rol !== "admin") redirect("/admin/giris");
 
   const db = supabaseAdmin();
-  const { data: kayitlar } = await db
-    .from("participants")
-    .select(
-      "id, full_name, login_code, profil:voice_profiles(consent, video_status)"
-    )
-    .eq("role", "participant")
-    .order("full_name");
+  const [kayitlar, sesProf, klonSonuc] = await Promise.all([
+    db
+      .from("participants")
+      .select("id, full_name, login_code, profil:voice_profiles(consent, video_status)")
+      .eq("role", "participant")
+      .order("full_name"),
+    db
+      .from("voice_profiles")
+      .select("participant_id, status, updated_at, participants!inner(full_name)")
+      .eq("status", "kayitli")
+      .not("sample_path", "is", null),
+    db
+      .from("voice_profiles")
+      .select("participant_id", { count: "exact", head: true })
+      .eq("status", "klonlandi"),
+  ]);
+
+  // Klonlama bekleyenler
+  const bekleyenSes = (sesProf.data ?? []).map((v) => {
+    const p = Array.isArray(v.participants) ? v.participants[0] : v.participants;
+    return {
+      id: v.participant_id,
+      ad: (p as { full_name: string } | null)?.full_name ?? "?",
+      tarih: v.updated_at,
+    };
+  });
 
   // İstemciye yalnız şekillendirilmiş DTO (rater/target kimliği yok).
-  const liste = (kayitlar ?? []).map((k) => {
+  const liste = (kayitlar.data ?? []).map((k) => {
     const p = Array.isArray(k.profil) ? k.profil[0] : k.profil;
     return {
       kod: k.login_code,
@@ -50,6 +71,12 @@ export default async function YansimaYonetimPage() {
           .
         </p>
       </div>
+
+      <SesKlonPanel
+        bekleyen={bekleyenSes}
+        klonlandi={klonSonuc.count ?? 0}
+        apiAcik={sesYapilandirildiMi()}
+      />
 
       <YansimaYukleyici liste={liste} />
     </main>

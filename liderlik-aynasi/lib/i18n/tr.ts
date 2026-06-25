@@ -809,7 +809,7 @@ export const tr = {
     // Slogan seçim ekranı
     sloganBaslik: "Pusulana mühür vur",
     sloganAciklama:
-      "Nedenlerinden damıttım. Bunlardan birini seç ya da kendi kelimelinle yaz — bu cümle bundan sonra her yerde sana eşlik edecek.",
+      "Nedenlerini analiz ettim, bunları çıkardım. Birini seç ya da kendi kelimelinle yaz — bu cümle bundan sonra her yerde sana eşlik edecek.",
     sloganSec: "Bunu seçiyorum",
     sloganKendinYaz: "Kendim yaz",
     sloganYazYer: "Kendi sloganını yaz…",
