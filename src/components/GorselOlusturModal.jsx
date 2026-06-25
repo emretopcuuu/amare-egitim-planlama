@@ -32,12 +32,14 @@ const MARKA_VARYASYON = [
     { key: 'foto-teksira', label: 'Tek sıra', cmd: 'tek sıra' },
   ] },
   { grup: 'Tema', tekil: true, secenekler: [
-    { key: 'tema-siyah', label: 'Siyah & altın', cmd: 'siyah tema' },
-    { key: 'tema-mor', label: 'Mor', cmd: 'mor tema' },
-    { key: 'tema-lacivert', label: 'Lacivert', cmd: 'lacivert tema' },
-    { key: 'tema-bordo', label: 'Bordo', cmd: 'bordo tema' },
-    { key: 'tema-zumrut', label: 'Zümrüt', cmd: 'zümrüt tema' },
-    { key: 'tema-krem', label: 'Krem & altın', cmd: 'krem tema' },
+    { key: 'tema-siyah', label: 'Siyah & altın', cmd: 'siyah tema', renk: '#0b0b0d' },
+    { key: 'tema-mor', label: 'Mor', cmd: 'mor tema', renk: '#3a2b54' },
+    { key: 'tema-lacivert', label: 'Lacivert', cmd: 'lacivert tema', renk: '#0c1730' },
+    { key: 'tema-bordo', label: 'Bordo', cmd: 'bordo tema', renk: '#2c0e13' },
+    { key: 'tema-zumrut', label: 'Zümrüt', cmd: 'zümrüt tema', renk: '#0a261d' },
+    { key: 'tema-krem', label: 'Krem & altın', cmd: 'krem tema', renk: '#ece0c8' },
+    { key: 'tema-gumus', label: 'Gümüş', cmd: 'gümüş tema', renk: '#1a1c20' },
+    { key: 'tema-platin', label: 'Platin', cmd: 'platin tema', renk: '#e2e4e8' },
   ] },
   { grup: 'Yazı tipi', tekil: true, secenekler: [
     { key: 'font-klasik', label: 'Klasik', cmd: 'klasik font' },
@@ -45,6 +47,20 @@ const MARKA_VARYASYON = [
     { key: 'font-karisik', label: 'Şık isimler', cmd: 'şık isim' },
     { key: 'font-modern', label: 'Modern', cmd: 'modern font' },
     { key: 'font-times', label: 'Klasik serif', cmd: 'klasik serif' },
+  ] },
+  { grup: 'Başlık', tekil: false, secenekler: [
+    { key: 'baslik-cift', label: 'İki renkli', cmd: 'iki renkli başlık' },
+  ] },
+  { grup: 'Foto şekli', tekil: true, secenekler: [
+    { key: 'sekil-yuvarlak', label: 'Yuvarlak', cmd: 'yuvarlak foto' },
+    { key: 'sekil-kare', label: 'Yuvarlak kare', cmd: 'kare foto' },
+    { key: 'sekil-altigen', label: 'Altıgen', cmd: 'altıgen' },
+  ] },
+  { grup: 'Köşe şerit', tekil: true, secenekler: [
+    { key: 'serit-ucretsiz', label: 'ÜCRETSİZ', cmd: 'ücretsiz şerit' },
+    { key: 'serit-kontenjan', label: 'Kontenjan sınırlı', cmd: 'kontenjan sınırlı' },
+    { key: 'serit-son', label: 'Son fırsat', cmd: 'son fırsat' },
+    { key: 'serit-yeni', label: 'Yeni', cmd: 'yeni şerit' },
   ] },
   { grup: 'Arka plan', tekil: true, secenekler: [
     { key: 'zemin-koyu', label: 'Daha koyu', cmd: 'arka planı koyulaştır' },
@@ -63,6 +79,15 @@ const MARKA_VARYASYON = [
   ] },
 ];
 const MARKA_VARYASYON_INDEX = MARKA_VARYASYON.flatMap(g => g.secenekler.map(s => ({ ...s, grup: g.grup })));
+
+// Hazır stil setleri — tek tıkla birden çok çip seçer
+const MARKA_PRESETLER = [
+  { ad: '🌙 Lüks Gece', keys: ['tema-siyah', 'font-karisik', 'baslik-cift'] },
+  { ad: '🤍 Zarif Krem', keys: ['tema-krem', 'font-zarif'] },
+  { ad: '🌊 Kurumsal Lacivert', keys: ['tema-lacivert', 'font-modern'] },
+  { ad: '🍷 Bordo Klasik', keys: ['tema-bordo', 'font-times', 'baslik-cift'] },
+  { ad: '🥈 Sade Gümüş', keys: ['tema-gumus', 'sade'] },
+];
 
 // Yapısal konuşmacı etiketlerinden generator'ların beklediği metin bloğunu üret.
 const buildEkPrompt = (etiketler, ekIstek) => {
@@ -124,7 +149,9 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   const [etiketler, setEtiketler] = useState(() =>
     (egitmenler || []).map(e => ({ ad: e.ad || '', etiket: e.unvan || '', fotoURL: e.fotoURL || null })));
   const [ekIstek, setEkIstek] = useState(''); // serbest tasarım isteği (AI Afiş/Hibrit)
-  const [markaSecim, setMarkaSecim] = useState({}); // Marka Afiş varyasyon çipleri (key->true)
+  const [markaSecim, setMarkaSecim] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('markaSecim') || '{}'); } catch { return {}; }
+  }); // Marka Afiş varyasyon çipleri (key->true) — stil hafızası
 
   // Marka Afiş: çip seç/kaldır. Tekil gruplarda diğerlerini temizle (radyo gibi).
   const markaCipToggle = (sec) => {
@@ -137,10 +164,25 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
       return next;
     });
   };
+  // Hazır stil seti uygula (zaten seçiliyse temizle = toggle)
+  const presetUygula = (p) => {
+    setMarkaSecim(prev => {
+      const hepsiVar = p.keys.every(k => prev[k]);
+      if (hepsiVar) { const n = { ...prev }; p.keys.forEach(k => delete n[k]); return n; }
+      const n = {};
+      p.keys.forEach(k => { n[k] = true; });
+      return n; // preset = temiz başlangıç + setin çipleri
+    });
+  };
   // seçili çipleri motor komut metnine çevir
   const markaEkIstek = () => MARKA_VARYASYON_INDEX.filter(s => markaSecim[s.key]).map(s => s.cmd).join(', ');
   // Marka ailesi (otomatik + koyu + açık) — hepsi çip varyasyonu kullanır
   const markaModu = aiModel === 'marka-afis' || aiModel === 'marka-koyu' || aiModel === 'marka-acik';
+
+  // Stil hafızası — seçimleri localStorage'a kaydet
+  useEffect(() => {
+    try { localStorage.setItem('markaSecim', JSON.stringify(markaSecim)); } catch {}
+  }, [markaSecim]);
 
   // Upload mod state
   const [uploadedFile, setUploadedFile] = useState(null); // { file, preview, dataUrl }
@@ -280,6 +322,14 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
       setGenerating(false);
     }
   };
+
+  // CANLI ÖNİZLEME — Marka modunda çip değişince (ilk üretimden sonra) otomatik yeniden üret
+  useEffect(() => {
+    if (!markaModu || !resultBlobUrl || generating) return;
+    const id = setTimeout(() => { handleOlustur(); }, 500);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [markaSecim]);
 
   const handleIndir = () => {
     const a = document.createElement('a');
@@ -673,6 +723,21 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                           <button onClick={() => setMarkaSecim({})} className="text-[11px] text-amare-purple hover:underline">Temizle</button>
                         )}
                       </div>
+                      {/* Hazır stil setleri */}
+                      <div>
+                        <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">Hazır stiller</div>
+                        <div className="flex flex-wrap gap-1.5">
+                          {MARKA_PRESETLER.map(p => {
+                            const aktif = p.keys.every(k => markaSecim[k]);
+                            return (
+                              <button key={p.ad} onClick={() => presetUygula(p)}
+                                className={`px-2.5 py-1 rounded-full text-[11px] font-bold border transition ${aktif ? 'bg-amber-400 text-gray-900 border-amber-500' : 'bg-white text-gray-700 border-gray-300 hover:border-amber-400'}`}>
+                                {p.ad}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
                       {(aiModel === 'marka-afis' ? MARKA_VARYASYON : MARKA_VARYASYON.filter(g => g.grup !== 'Tema')).map(g => (
                         <div key={g.grup}>
                           <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">{g.grup}</div>
@@ -681,7 +746,8 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                               const aktif = !!markaSecim[s.key];
                               return (
                                 <button key={s.key} onClick={() => markaCipToggle(s)}
-                                  className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition ${aktif ? 'bg-amare-purple text-white border-amare-purple' : 'bg-white text-gray-600 border-gray-300 hover:border-amare-purple/50'}`}>
+                                  className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition inline-flex items-center gap-1.5 ${aktif ? 'bg-amare-purple text-white border-amare-purple' : 'bg-white text-gray-600 border-gray-300 hover:border-amare-purple/50'}`}>
+                                  {s.renk && <span className="w-3 h-3 rounded-full border border-black/20" style={{ background: s.renk }} />}
                                   {aktif ? '✓ ' : ''}{s.label}
                                 </button>
                               );
@@ -689,7 +755,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                           </div>
                         </div>
                       ))}
-                      <p className="text-[11px] text-gray-500 pt-0.5">Seç → yukarıdan <b>Varyasyon üret</b>. Hiçbir şey seçmezsen orijinal tasarım üretilir.</p>
+                      <p className="text-[11px] text-gray-500 pt-0.5">{resultBlobUrl ? <>Seç → <b>otomatik canlı önizleme</b> (yeniden üretir).</> : <>Seç → yukarıdan <b>Varyasyon üret</b>. Hiçbir şey seçmezsen orijinal tasarım üretilir.</>}</p>
                     </div>
                   ) : (
                     <p className="text-[11px] text-gray-500 text-center">

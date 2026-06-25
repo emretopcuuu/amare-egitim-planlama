@@ -22,6 +22,19 @@ const roundRect = (ctx, x, y, w, h, r) => {
   }
 };
 
+// Foto çerçeve yolu (yuvarlak / yuvarlak-kare / altıgen) — half = yarıçap eşdeğeri
+const cizYol = (ctx, cx, cy, half, sekil) => {
+  ctx.beginPath();
+  if (sekil === 'kare') {
+    const r = half * 0.30, x = cx - half, y = cy - half, w = half * 2, h = half * 2;
+    if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
+    else { ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
+  } else if (sekil === 'altigen') {
+    for (let i = 0; i < 6; i++) { const a = Math.PI / 180 * (60 * i - 90); const px = cx + half * Math.cos(a), py = cy + half * Math.sin(a); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }
+    ctx.closePath();
+  } else { ctx.arc(cx, cy, half, 0, Math.PI * 2); }
+};
+
 const wrapText = (ctx, text, x, y, maxW, lh, maxLines = 6) => {
   const words = String(text || '').split(/\s+/);
   let line = '', yy = y, n = 0;
@@ -36,17 +49,89 @@ const wrapText = (ctx, text, x, y, maxW, lh, maxLines = 6) => {
   return yy;
 };
 
-// Hazır paletler
-const paletKoyu = () => ({ ad: 'siyah', bg1: '#0b0b0d', bg2: '#17120a', gold: '#d8b15a', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#d9d6cf', elmas: true, acik: false });
-const paletMor = () => ({ ad: 'mor', bg1: '#3a2b54', bg2: '#211633', gold: '#d8b15a', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#e7e0f0', elmas: false, acik: false });
+// Başlık çiz — ortalı kelime-kaydırma; ciftRenk=true ise SON kelime vurgu renginde.
+const basligiCiz = (ctx, text, cx, y, maxW, lh, maxLines, renkMetin, renkVurgu, ciftRenk) => {
+  const words = String(text || '').split(/\s+/).filter(Boolean);
+  const sonIdx = words.length - 1;
+  // satırlara böl (kelime kaydırma, maxLines sınırı)
+  const satirlar = []; let cur = [];
+  for (let i = 0; i < words.length; i++) {
+    const test = [...cur, words[i]].join(' ');
+    if (ctx.measureText(test).width > maxW && cur.length && satirlar.length < maxLines - 1) {
+      satirlar.push(cur); cur = [words[i]];
+    } else cur.push(words[i]);
+  }
+  if (cur.length) satirlar.push(cur);
+  let gidx = 0, yy = y;
+  const bosluk = ctx.measureText(' ').width;
+  for (const satir of satirlar) {
+    const genislikler = satir.map(w => ctx.measureText(w).width);
+    const toplam = genislikler.reduce((s, w) => s + w, 0) + bosluk * (satir.length - 1);
+    let x = cx - toplam / 2;
+    satir.forEach((w, j) => {
+      ctx.fillStyle = (ciftRenk && gidx === sonIdx) ? renkVurgu : renkMetin;
+      ctx.textAlign = 'left';
+      ctx.fillText(w, x, yy);
+      x += genislikler[j] + bosluk; gidx++;
+    });
+    yy += lh;
+  }
+  ctx.textAlign = 'center';
+  return yy;
+};
+
+// Küçük vektör ikon (takvim/saat) — altın çizgiyle. cx,cy merkez; s boyut.
+const ikonCiz = (ctx, tip, cx, cy, s, renk) => {
+  ctx.save();
+  ctx.strokeStyle = renk; ctx.fillStyle = renk; ctx.lineWidth = Math.max(2, s * 0.08);
+  ctx.lineJoin = 'round';
+  if (tip === 'takvim') {
+    const x = cx - s / 2, y = cy - s / 2;
+    roundRect(ctx, x, y + s * 0.08, s, s * 0.84, s * 0.12); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(x, y + s * 0.32); ctx.lineTo(x + s, y + s * 0.32); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + s * 0.28, y); ctx.lineTo(x + s * 0.28, y + s * 0.18);
+    ctx.moveTo(x + s * 0.72, y); ctx.lineTo(x + s * 0.72, y + s * 0.18); ctx.stroke();
+  } else { // saat
+    ctx.beginPath(); ctx.arc(cx, cy, s * 0.46, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - s * 0.28);
+    ctx.moveTo(cx, cy); ctx.lineTo(cx + s * 0.22, cy + s * 0.06); ctx.stroke();
+  }
+  ctx.restore();
+};
+
+// Köşe kurdele/şerit (sağ üst çapraz bant)
+const kurdeleCiz = (ctx, W, metin, palet) => {
+  const bant = Math.round(W * 0.30), kalin = Math.round(W * 0.052);
+  ctx.save();
+  ctx.translate(W, 0); ctx.rotate(Math.PI / 4);
+  const grad = ctx.createLinearGradient(-bant / 2, 0, bant / 2, 0);
+  grad.addColorStop(0, palet.goldKoyu); grad.addColorStop(0.5, palet.gold); grad.addColorStop(1, palet.goldKoyu);
+  ctx.fillStyle = grad;
+  ctx.fillRect(-bant / 2, kalin * 0.6, bant, kalin);
+  ctx.fillStyle = palet.pillText;
+  ctx.font = `800 ${Math.round(kalin * 0.42)}px Arial`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(metin, 0, kalin * 0.6 + kalin / 2, bant * 0.92);
+  ctx.restore();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+};
+
+// Hazır paletler — goldRGB: dekor (ışık/elmas/parıltı) rengi, aksana göre değişir
+const paletKoyu = () => ({ ad: 'siyah', bg1: '#0b0b0d', bg2: '#17120a', gold: '#d8b15a', goldRGB: '216,177,90', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#d9d6cf', elmas: true, acik: false });
+const paletMor = () => ({ ad: 'mor', bg1: '#3a2b54', bg2: '#211633', gold: '#d8b15a', goldRGB: '216,177,90', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#e7e0f0', elmas: false, acik: false });
 // Açık/lüks krem-altın palet (referans 2)
-const paletAcik = () => ({ ad: 'acik', bg1: '#f7f1e4', bg2: '#ece0c8', gold: '#c69a3f', goldKoyu: '#9c7426', pillText: '#2a1f08', metin: '#241c10', alt: '#6b5d44', elmas: false, acik: true });
+const paletAcik = () => ({ ad: 'acik', bg1: '#f7f1e4', bg2: '#ece0c8', gold: '#c69a3f', goldRGB: '198,154,63', goldKoyu: '#9c7426', pillText: '#2a1f08', metin: '#241c10', alt: '#6b5d44', elmas: false, acik: true });
 // Ek koyu temalar — hepsi altın aksanlı (mevcut altın dekorla uyumlu), sadece zemin değişir
-const paletLacivert = () => ({ ad: 'lacivert', bg1: '#0c1730', bg2: '#070f20', gold: '#d8b15a', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#cdd6e6', elmas: true, acik: false });
-const paletBordo = () => ({ ad: 'bordo', bg1: '#2c0e13', bg2: '#1a070a', gold: '#dcb866', goldKoyu: '#b8923f', pillText: '#2a1206', metin: '#ffffff', alt: '#e7cfd2', elmas: true, acik: false });
-const paletZumrut = () => ({ ad: 'zumrut', bg1: '#0a261d', bg2: '#061a13', gold: '#d8b15a', goldKoyu: '#b8923f', pillText: '#0a1c14', metin: '#ffffff', alt: '#c8e0d4', elmas: true, acik: false });
+const paletLacivert = () => ({ ad: 'lacivert', bg1: '#0c1730', bg2: '#070f20', gold: '#d8b15a', goldRGB: '216,177,90', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#cdd6e6', elmas: true, acik: false });
+const paletBordo = () => ({ ad: 'bordo', bg1: '#2c0e13', bg2: '#1a070a', gold: '#dcb866', goldRGB: '220,184,102', goldKoyu: '#b8923f', pillText: '#2a1206', metin: '#ffffff', alt: '#e7cfd2', elmas: true, acik: false });
+const paletZumrut = () => ({ ad: 'zumrut', bg1: '#0a261d', bg2: '#061a13', gold: '#d8b15a', goldRGB: '216,177,90', goldKoyu: '#b8923f', pillText: '#0a1c14', metin: '#ffffff', alt: '#c8e0d4', elmas: true, acik: false });
+// Gümüş/platin aksanlı temalar (altın yerine metalik gri)
+const paletGumus = () => ({ ad: 'gumus', bg1: '#1a1c20', bg2: '#0e1013', gold: '#cdd1d8', goldRGB: '205,209,216', goldKoyu: '#9aa0a8', pillText: '#1a1c20', metin: '#ffffff', alt: '#cfd3da', elmas: true, acik: false });
+const paletPlatin = () => ({ ad: 'platin', bg1: '#f3f4f6', bg2: '#e2e4e8', gold: '#8d929c', goldRGB: '141,146,156', goldKoyu: '#6b7079', pillText: '#1a1c20', metin: '#1f232a', alt: '#5b616b', elmas: false, acik: true });
 // İsimle palet getir (tema çipi / ek istek)
-const paletAdla = (ad) => ({ siyah: paletKoyu, mor: paletMor, acik: paletAcik, lacivert: paletLacivert, bordo: paletBordo, zumrut: paletZumrut }[ad] || null);
+const paletAdla = (ad) => ({ siyah: paletKoyu, mor: paletMor, acik: paletAcik, lacivert: paletLacivert, bordo: paletBordo, zumrut: paletZumrut, gumus: paletGumus, platin: paletPlatin }[ad] || null);
 
 // Yazı tipi setleri — başlık / isim / gövde ayrı olabilir (isimlere şık font)
 const FONT_SETLERI = {
@@ -79,7 +164,7 @@ const ayarCikar = (ek) => {
     yazi: 1, foto: 1, tema: null, zemin: 1, font: null,
     isik: true, elmas: true, cerceve: true, // dekor
     qr: true, program: true, tarih: true,   // içerik
-    tekSira: false,
+    tekSira: false, fotoSekil: 'yuvarlak', kurdele: null, ciftRenkBaslik: false,
   };
   const has = (...ws) => ws.some(w => t.includes(w));
   // metin boyutu
@@ -97,6 +182,19 @@ const ayarCikar = (ek) => {
   if (has('bordo tema', 'bordo', 'şarap', 'kırmızı tema')) a.tema = 'bordo';
   if (has('zümrüt tema', 'zümrüt', 'yeşil tema', 'zumrut')) a.tema = 'zumrut';
   if (has('krem tema', 'açık tema', 'beyaz tema', 'krem zemin')) a.tema = 'acik';
+  if (has('gümüş tema', 'gümüş', 'gumus')) a.tema = 'gumus';
+  if (has('platin tema', 'platin')) a.tema = 'platin';
+  // foto şekli
+  if (has('kare foto', 'köşeli foto', 'yuvarlak kare', 'kare çerçeve')) a.fotoSekil = 'kare';
+  if (has('altıgen', 'altigen', 'petek')) a.fotoSekil = 'altigen';
+  if (has('yuvarlak foto', 'daire foto', 'oval foto')) a.fotoSekil = 'yuvarlak';
+  // köşe kurdele/şerit
+  if (has('ücretsiz şerit', 'ücretsiz kurdele', 'ücretsiz rozet')) a.kurdele = 'ÜCRETSİZ';
+  if (has('kontenjan', 'sınırlı kontenjan', 'kontenjan sınırlı')) a.kurdele = 'KONTENJAN SINIRLI';
+  if (has('son fırsat', 'son gün', 'acele')) a.kurdele = 'SON FIRSAT';
+  if (has('yeni şerit', 'yeni rozet')) a.kurdele = 'YENİ';
+  // iki renkli başlık (son kelime altın)
+  if (has('iki renkli başlık', 'çift renk başlık', 'altın vurgu başlık', 'renkli başlık')) a.ciftRenkBaslik = true;
   // yazı tipi (font)
   if (has('zarif font', 'zarif yazı', 'serif font', 'georgia')) a.font = 'zarif';
   if (has('karışık font', 'şık isim', 'zarif isim')) a.font = 'karisik';
@@ -139,9 +237,9 @@ const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
     ctx.save();
     ctx.translate(W * 0.5, H * 0.30); ctx.rotate(-0.34);
     const ray = ctx.createLinearGradient(-W, 0, W, 0);
-    ray.addColorStop(0, 'rgba(216,177,90,0)');
-    ray.addColorStop(0.5, 'rgba(216,177,90,0.12)');
-    ray.addColorStop(1, 'rgba(216,177,90,0)');
+    ray.addColorStop(0, `rgba(${palet.goldRGB},0)`);
+    ray.addColorStop(0.5, `rgba(${palet.goldRGB},0.12)`);
+    ray.addColorStop(1, `rgba(${palet.goldRGB},0)`);
     ctx.fillStyle = ray; ctx.fillRect(-W, -H * 0.16, W * 2, H * 0.32);
     ctx.restore();
   }
@@ -156,7 +254,7 @@ const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
     const noktalar = [[0.08,0.06],[0.2,0.03],[0.32,0.08],[0.7,0.04],[0.84,0.09],[0.92,0.05],[0.14,0.13],[0.88,0.16],[0.05,0.2],[0.95,0.24]];
     noktalar.forEach(([px, py], i) => {
       const cx = px * W, cy = py * H, s = (i % 3 === 0 ? 10 : 6);
-      ctx.fillStyle = `rgba(216,177,90,${0.5 - (i % 4) * 0.08})`;
+      ctx.fillStyle = `rgba(${palet.goldRGB},${0.5 - (i % 4) * 0.08})`;
       ctx.translate(cx, cy); ctx.rotate(Math.PI / 4);
       ctx.fillRect(-s / 2, -s / 2, s, s);
       ctx.rotate(-Math.PI / 4); ctx.translate(-cx, -cy);
@@ -235,19 +333,26 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     y += lh + Math.round(H * 0.025);
   } catch { y += Math.round(H * 0.05); }
 
+  // ── KATEGORİ ROZETİ (başlığın üstünde küçük altın etiket) ──
+  const katEtiket = (egitim.etkinlikTuru || egitim.kategori || '').trim();
+  if (katEtiket) {
+    const kSize = Math.round(W * 0.026 * ayar.yazi);
+    y = altinHap(ctx, W / 2, y, katEtiket, kSize, palet, FF.govde) + Math.round(H * 0.012);
+  }
+
   // ── BAŞLIK ──
   ctx.textAlign = 'center';
   ctx.fillStyle = palet.metin;
   const tSize = Math.round(W * 0.072 * ayar.yazi);
   ctx.font = `800 ${tSize}px ${FF.baslik}`;
   ctx.shadowColor = palet.acik ? 'rgba(120,90,30,0.18)' : 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
-  y = wrapText(ctx, (egitim.egitim || '').toLocaleUpperCase('tr-TR'), W / 2, y + tSize, W - M * 2, tSize * 1.05, 4);
+  y = basligiCiz(ctx, (egitim.egitim || '').toLocaleUpperCase('tr-TR'), W / 2, y + tSize, W - M * 2, tSize * 1.05, 4, palet.metin, palet.gold, ayar.ciftRenkBaslik);
   ctx.shadowBlur = 0;
   // başlık altı altın aksan çizgisi (parıltılı uçlar) — modern dokunuş
   y += Math.round(H * 0.006);
   const akcW = Math.round(W * 0.16);
   const akc = ctx.createLinearGradient(W / 2 - akcW, 0, W / 2 + akcW, 0);
-  akc.addColorStop(0, 'rgba(216,177,90,0)'); akc.addColorStop(0.5, palet.gold); akc.addColorStop(1, 'rgba(216,177,90,0)');
+  akc.addColorStop(0, `rgba(${palet.goldRGB},0)`); akc.addColorStop(0.5, palet.gold); akc.addColorStop(1, `rgba(${palet.goldRGB},0)`);
   ctx.fillStyle = akc; ctx.fillRect(W / 2 - akcW, y, akcW * 2, 3);
   y += Math.round(H * 0.012);
 
@@ -259,19 +364,31 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     y += Math.round(H * 0.018);
   }
 
-  // ── Tarih + Saat ── (gizlenebilir)
+  // ── Tarih + Saat ── (gizlenebilir, takvim/saat ikonlu)
   if (ayar.tarih) {
-    ctx.fillStyle = palet.gold;
-    ctx.font = `700 ${Math.round(W * 0.038 * ayar.yazi)}px ${FF.govde}`;
+    ctx.textAlign = 'left';
+    const tFont = Math.round(W * 0.038 * ayar.yazi);
+    ctx.font = `700 ${tFont}px ${FF.govde}`;
     const tarihTxt = `${egitim.tarih || ''} ${egitim.gun || ''}`.trim();
-    ctx.fillText(tarihTxt, W / 2, y + Math.round(W * 0.036));
+    const ikS = Math.round(tFont * 0.95), gap = Math.round(W * 0.012);
+    const tw = ctx.measureText(tarihTxt).width;
+    const tBaseY = y + Math.round(W * 0.036);
+    const tStartX = W / 2 - (tw + ikS + gap) / 2;
+    ikonCiz(ctx, 'takvim', tStartX + ikS / 2, tBaseY - tFont * 0.35, ikS, palet.gold);
+    ctx.fillStyle = palet.gold; ctx.fillText(tarihTxt, tStartX + ikS + gap, tBaseY);
     y += Math.round(W * 0.055);
     if (egitim.saat) {
-      ctx.fillStyle = palet.metin;
-      ctx.font = `600 ${Math.round(W * 0.032 * ayar.yazi)}px ${FF.govde}`;
-      ctx.fillText(`${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}`, W / 2, y + Math.round(W * 0.03));
+      const sFont = Math.round(W * 0.032 * ayar.yazi);
+      ctx.font = `600 ${sFont}px ${FF.govde}`;
+      const saatTxt = `${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}`;
+      const sik = Math.round(sFont * 0.95), sBaseY = y + Math.round(W * 0.03);
+      const sw = ctx.measureText(saatTxt).width;
+      const sStartX = W / 2 - (sw + sik + gap) / 2;
+      ikonCiz(ctx, 'saat', sStartX + sik / 2, sBaseY - sFont * 0.35, sik, palet.gold);
+      ctx.fillStyle = palet.metin; ctx.fillText(saatTxt, sStartX + sik + gap, sBaseY);
       y += Math.round(W * 0.05);
     }
+    ctx.textAlign = 'center';
   }
 
   // ── ZONE: program bandı + footer rezervi ──
@@ -306,14 +423,16 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       const g2 = Math.round(perRowH * 0.02);
       let foto = Math.round(perRowH * 0.93) - topPad - g1 - pillH - g2 - roleSize;
       foto = Math.round(foto * ayar.foto);
-      foto = Math.max(90, Math.min(foto, Math.round(cellW * 0.86), Math.round(W * 0.46)));
+      // kişi sayısına göre genişlik tavanı (1 kişi → dev oval, 2 → büyük)
+      const wOran = liste.length === 1 ? 0.62 : liste.length === 2 ? 0.52 : 0.46;
+      foto = Math.max(90, Math.min(foto, Math.round(cellW * 0.86), Math.round(W * wOran)));
       for (let c = 0; c < adet; c++, idx++) {
         const e = liste[idx];
         const cx = sidePad + cellW * c + cellW / 2;
         const fy = rowY + topPad + foto / 2;
         // yumuşak altın ışıltı (derinlik / modern his)
         const gl = ctx.createRadialGradient(cx, fy, foto * 0.32, cx, fy, foto * 0.88);
-        gl.addColorStop(0, 'rgba(216,177,90,0.32)'); gl.addColorStop(1, 'rgba(216,177,90,0)');
+        gl.addColorStop(0, `rgba(${palet.goldRGB},0.32)`); gl.addColorStop(1, `rgba(${palet.goldRGB},0)`);
         ctx.fillStyle = gl;
         ctx.beginPath(); ctx.arc(cx, fy, foto * 0.88, 0, Math.PI * 2); ctx.fill();
         // altın halka + foto (gölgeli → ön plan hissi)
@@ -321,17 +440,20 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
         ctx.shadowColor = palet.acik ? 'rgba(120,90,30,0.35)' : 'rgba(0,0,0,0.55)';
         ctx.shadowBlur = Math.round(foto * 0.12);
         ctx.shadowOffsetY = Math.round(foto * 0.04);
-        ctx.beginPath(); ctx.arc(cx, fy, foto / 2 + 7, 0, Math.PI * 2);
+        cizYol(ctx, cx, fy, foto / 2 + 7, ayar.fotoSekil);
         ctx.fillStyle = palet.gold; ctx.fill();
         ctx.shadowColor = 'transparent'; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
-        ctx.beginPath(); ctx.arc(cx, fy, foto / 2 + 2, 0, Math.PI * 2);
+        cizYol(ctx, cx, fy, foto / 2 + 2, ayar.fotoSekil);
         ctx.fillStyle = palet.bg2; ctx.fill();
-        ctx.beginPath(); ctx.arc(cx, fy, foto / 2, 0, Math.PI * 2); ctx.clip();
+        cizYol(ctx, cx, fy, foto / 2, ayar.fotoSekil); ctx.clip();
         if (e.fotoURL) {
           try {
             const im = await urlToImage(e.fotoURL);
             const md = Math.min(im.width, im.height);
-            ctx.drawImage(im, (im.width - md) / 2, (im.height - md) / 2, md, md, cx - foto / 2, fy - foto / 2, foto, foto);
+            // yüz-merkezli kırpma: üstten biraz pay bırak (yüzler genelde üst bölgede → kesilmez)
+            const sx = (im.width - md) / 2;
+            const sy = Math.max(0, (im.height - md) * 0.2);
+            ctx.drawImage(im, sx, sy, md, md, cx - foto / 2, fy - foto / 2, foto, foto);
           } catch { ctx.fillStyle = '#888'; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         } else { ctx.fillStyle = '#888'; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         ctx.restore();
@@ -361,7 +483,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       if (saat) {
         ctx.font = `700 ${Math.round(W * 0.026)}px ${FF.govde}`;
         const sw = ctx.measureText(saat).width + Math.round(W * 0.04);
-        ctx.strokeStyle = palet.gold; ctx.lineWidth = 2; ctx.fillStyle = 'rgba(216,177,90,0.12)';
+        ctx.strokeStyle = palet.gold; ctx.lineWidth = 2; ctx.fillStyle = `rgba(${palet.goldRGB},0.12)`;
         roundRect(ctx, cx - sw / 2, bandTop, sw, sh, sh / 2); ctx.fill(); ctx.stroke();
         ctx.fillStyle = palet.gold; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(saat, cx, bandTop + sh / 2); ctx.textBaseline = 'alphabetic';
@@ -438,6 +560,9 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       } catch {}
     }
   }
+
+  // ── KÖŞE KURDELE/ŞERİT (sağ üst) — en üstte çizilir ──
+  if (ayar.kurdele) kurdeleCiz(ctx, W, ayar.kurdele, palet);
 
   const dataUrl = canvas.toDataURL('image/png');
   return { base64: dataUrl.split(',')[1], mimeType: 'image/png' };
