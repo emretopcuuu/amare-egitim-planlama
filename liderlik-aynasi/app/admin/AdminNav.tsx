@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { tr } from "@/lib/i18n/tr";
 import KomutPaleti from "./KomutPaleti";
@@ -94,28 +94,9 @@ export default function AdminNav({
   const [cikiliyor, setCikiliyor] = useState(false);
   const [acikGrup, setAcikGrup] = useState<string | null>(null);
   const [acikKonum, setAcikKonum] = useState<{ left: number; top: number } | null>(null);
-  const seritRef = useRef<HTMLDivElement>(null);
 
-  // Üst şerit yatay taşar (4 aşama + durum rozetleri). Masaüstünde scrollbar
-  // gizli + dikey tekerlek yatay kaymadığı için sağdaki öğelere ulaşılamıyordu.
-  // Dikey tekerleği yatay kaydırmaya çevir (yalnız taşma varsa). Dokunmatikte
-  // yatay kaydırma zaten doğal çalışır — orada dokunma.
-  useEffect(() => {
-    const el = seritRef.current;
-    if (!el) return;
-    const tekerlek = (e: WheelEvent) => {
-      if (el.scrollWidth <= el.clientWidth) return; // taşma yok
-      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // zaten yatay jest
-      el.scrollLeft += e.deltaY;
-      e.preventDefault();
-    };
-    el.addEventListener("wheel", tekerlek, { passive: false });
-    return () => el.removeEventListener("wheel", tekerlek);
-  }, []);
-
-  // Açık menü, butonun ölçülen konumuna sabitlenir ve gövdeye portallanır —
-  // böylece yatay kaydırma kabının (overflow-x) altında kırpılmaz. Kaydırma /
-  // yeniden boyutlandırmada konum kaymasın diye menüyü kapatırız.
+  // Açık menü, butonun ölçülen konumuna sabitlenir ve gövdeye portallanır.
+  // Kaydırma / yeniden boyutlandırmada konum kaymasın diye menüyü kapatırız.
   const grupKapat = () => {
     setAcikGrup(null);
     setAcikKonum(null);
@@ -193,10 +174,10 @@ export default function AdminNav({
           </>,
           document.body
         )}
-      <div
-        ref={seritRef}
-        className="scrollbar-gizle relative z-10 mx-auto flex w-full max-w-4xl items-center gap-1 overflow-x-auto p-3"
-      >
+      {/* Yatay kaydırma yerine SATIRA SIĞMAYAN öğeler alt satıra taşar (wrap).
+          Böylece hiçbir şey kırpılmaz, hiç kaydırmaya gerek kalmaz — operatör
+          tüm aşamaları + durumu tek bakışta görür. */}
+      <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-wrap items-center gap-1.5 p-3">
         <span className="mr-1 hidden shrink-0 text-sm font-bold text-gold sm:block">
           {tr.app.name}
         </span>
@@ -241,6 +222,9 @@ export default function AdminNav({
 
         {/* Canlı durum rozetleri: hangi sekmede olursan ol kokpit görünür */}
         {/* #9 Prova rozeti: test ortamı her an net görünür */}
+        {/* Durum rozetleri: geniş ekranda sağa yaslı (ml-auto), dar ekranda
+            alt satıra temiz sarar. Sarımı bozmamak için ml-auto yalnız ilk
+            rozette; sonrakiler onu izler. */}
         {provaAcik && (
           <span className="ml-auto shrink-0 rounded-full bg-red-600 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-white">
             ⚠️ {g.prova}
