@@ -34,6 +34,17 @@ const MARKA_VARYASYON = [
   { grup: 'Tema', tekil: true, secenekler: [
     { key: 'tema-siyah', label: 'Siyah & altın', cmd: 'siyah tema' },
     { key: 'tema-mor', label: 'Mor', cmd: 'mor tema' },
+    { key: 'tema-lacivert', label: 'Lacivert', cmd: 'lacivert tema' },
+    { key: 'tema-bordo', label: 'Bordo', cmd: 'bordo tema' },
+    { key: 'tema-zumrut', label: 'Zümrüt', cmd: 'zümrüt tema' },
+    { key: 'tema-krem', label: 'Krem & altın', cmd: 'krem tema' },
+  ] },
+  { grup: 'Yazı tipi', tekil: true, secenekler: [
+    { key: 'font-klasik', label: 'Klasik', cmd: 'klasik font' },
+    { key: 'font-zarif', label: 'Zarif (serif)', cmd: 'zarif font' },
+    { key: 'font-karisik', label: 'Şık isimler', cmd: 'şık isim' },
+    { key: 'font-modern', label: 'Modern', cmd: 'modern font' },
+    { key: 'font-times', label: 'Klasik serif', cmd: 'klasik serif' },
   ] },
   { grup: 'Arka plan', tekil: true, secenekler: [
     { key: 'zemin-koyu', label: 'Daha koyu', cmd: 'arka planı koyulaştır' },

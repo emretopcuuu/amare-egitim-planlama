@@ -41,6 +41,22 @@ const paletKoyu = () => ({ ad: 'siyah', bg1: '#0b0b0d', bg2: '#17120a', gold: '#
 const paletMor = () => ({ ad: 'mor', bg1: '#3a2b54', bg2: '#211633', gold: '#d8b15a', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#e7e0f0', elmas: false, acik: false });
 // Açık/lüks krem-altın palet (referans 2)
 const paletAcik = () => ({ ad: 'acik', bg1: '#f7f1e4', bg2: '#ece0c8', gold: '#c69a3f', goldKoyu: '#9c7426', pillText: '#2a1f08', metin: '#241c10', alt: '#6b5d44', elmas: false, acik: true });
+// Ek koyu temalar — hepsi altın aksanlı (mevcut altın dekorla uyumlu), sadece zemin değişir
+const paletLacivert = () => ({ ad: 'lacivert', bg1: '#0c1730', bg2: '#070f20', gold: '#d8b15a', goldKoyu: '#b8923f', pillText: '#2a1c06', metin: '#ffffff', alt: '#cdd6e6', elmas: true, acik: false });
+const paletBordo = () => ({ ad: 'bordo', bg1: '#2c0e13', bg2: '#1a070a', gold: '#dcb866', goldKoyu: '#b8923f', pillText: '#2a1206', metin: '#ffffff', alt: '#e7cfd2', elmas: true, acik: false });
+const paletZumrut = () => ({ ad: 'zumrut', bg1: '#0a261d', bg2: '#061a13', gold: '#d8b15a', goldKoyu: '#b8923f', pillText: '#0a1c14', metin: '#ffffff', alt: '#c8e0d4', elmas: true, acik: false });
+// İsimle palet getir (tema çipi / ek istek)
+const paletAdla = (ad) => ({ siyah: paletKoyu, mor: paletMor, acik: paletAcik, lacivert: paletLacivert, bordo: paletBordo, zumrut: paletZumrut }[ad] || null);
+
+// Yazı tipi setleri — başlık / isim / gövde ayrı olabilir (isimlere şık font)
+const FONT_SETLERI = {
+  klasik: { baslik: 'Arial', isim: 'Arial', govde: 'Arial' },
+  zarif: { baslik: 'Georgia', isim: 'Georgia', govde: 'Georgia' },
+  karisik: { baslik: 'Arial', isim: 'Georgia', govde: 'Arial' }, // güçlü başlık + zarif isim
+  modern: { baslik: '"Trebuchet MS"', isim: '"Trebuchet MS"', govde: '"Trebuchet MS"' },
+  klasikSerif: { baslik: '"Times New Roman"', isim: 'Georgia', govde: 'Georgia' },
+};
+const fontSec = (ad) => FONT_SETLERI[ad] || FONT_SETLERI.klasik;
 
 // Tema paleti (kategori/başlığa göre) — stil verilmemişse otomatik seçer
 const paletSec = (egitim) => {
@@ -60,7 +76,7 @@ const ayarCikar = (ek) => {
   const t = (ek || '').toLocaleLowerCase('tr-TR');
   // bayraklar: dekor + içerik açık varsayılan
   const a = {
-    yazi: 1, foto: 1, tema: null, zemin: 1,
+    yazi: 1, foto: 1, tema: null, zemin: 1, font: null,
     isik: true, elmas: true, cerceve: true, // dekor
     qr: true, program: true, tarih: true,   // içerik
     tekSira: false,
@@ -77,6 +93,16 @@ const ayarCikar = (ek) => {
   // tema
   if (has('siyah tema', 'altın siyah', 'koyu tema', 'siyah zemin', 'lüks tema')) a.tema = 'siyah';
   if (has('mor tema', 'mor zemin')) a.tema = 'mor';
+  if (has('lacivert tema', 'lacivert', 'mavi tema', 'gece mavisi')) a.tema = 'lacivert';
+  if (has('bordo tema', 'bordo', 'şarap', 'kırmızı tema')) a.tema = 'bordo';
+  if (has('zümrüt tema', 'zümrüt', 'yeşil tema', 'zumrut')) a.tema = 'zumrut';
+  if (has('krem tema', 'açık tema', 'beyaz tema', 'krem zemin')) a.tema = 'acik';
+  // yazı tipi (font)
+  if (has('zarif font', 'zarif yazı', 'serif font', 'georgia')) a.font = 'zarif';
+  if (has('karışık font', 'şık isim', 'zarif isim')) a.font = 'karisik';
+  if (has('modern font', 'modern yazı', 'trebuchet')) a.font = 'modern';
+  if (has('klasik serif', 'times')) a.font = 'klasikSerif';
+  if (has('klasik font', 'klasik yazı', 'arial')) a.font = 'klasik';
   // zemin tonu
   if (has('arka planı koyulaştır', 'daha koyu', 'koyulaştır', 'koyu arka')) a.zemin = 0.75;
   if (has('arka planı aç', 'aydınlat', 'daha açık', 'açık arka', 'arka plan açık')) a.zemin = 1.28;
@@ -156,8 +182,8 @@ const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
 };
 
 // Altın hap içinde metin (referanslardaki isim etiketi). Dönüş: alt Y.
-const altinHap = (ctx, cx, y, text, fontSize, palet) => {
-  ctx.font = `800 ${fontSize}px Arial`;
+const altinHap = (ctx, cx, y, text, fontSize, palet, fontAd = 'Arial') => {
+  ctx.font = `800 ${fontSize}px ${fontAd}`;
   const tw = ctx.measureText((text || '').toLocaleUpperCase('tr-TR')).width;
   const h = Math.round(fontSize * 1.7), padX = Math.round(fontSize * 0.7);
   const w = tw + padX * 2;
@@ -181,15 +207,17 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   else if (stil === 'acik') palet = paletAcik();
   else palet = paletSec(egitim);
   // tema zorlaması (ek istek) — yalnız otomatik (kilitsiz) modda
-  if (!stil) {
-    if (ayar.tema === 'siyah' && palet.ad !== 'siyah') palet = paletKoyu();
-    else if (ayar.tema === 'mor' && palet.ad !== 'mor') palet = paletMor();
+  if (!stil && ayar.tema) {
+    const yeni = paletAdla(ayar.tema);
+    if (yeni) palet = yeni();
   }
   // zemin tonu (koyulaştır / aç)
   if (ayar.zemin !== 1) {
     palet.bg1 = renkAyarla(palet.bg1, ayar.zemin);
     palet.bg2 = renkAyarla(palet.bg2, ayar.zemin);
   }
+  // yazı tipi seti (başlık / isim / gövde)
+  const FF = fontSec(ayar.font);
   const fiziki = isFiziki(egitim);
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
@@ -211,7 +239,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   ctx.textAlign = 'center';
   ctx.fillStyle = palet.metin;
   const tSize = Math.round(W * 0.072 * ayar.yazi);
-  ctx.font = `800 ${tSize}px Arial`;
+  ctx.font = `800 ${tSize}px ${FF.baslik}`;
   ctx.shadowColor = palet.acik ? 'rgba(120,90,30,0.18)' : 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
   y = wrapText(ctx, (egitim.egitim || '').toLocaleUpperCase('tr-TR'), W / 2, y + tSize, W - M * 2, tSize * 1.05, 4);
   ctx.shadowBlur = 0;
@@ -226,7 +254,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   // ── Altın şehir rozeti (fiziki) ──
   if (fiziki && egitim.sehir) {
     y += Math.round(H * 0.005);
-    y = altinHap(ctx, W / 2, y, egitim.sehir, Math.round(W * 0.034 * ayar.yazi), palet) + Math.round(H * 0.012);
+    y = altinHap(ctx, W / 2, y, egitim.sehir, Math.round(W * 0.034 * ayar.yazi), palet, FF.govde) + Math.round(H * 0.012);
   } else {
     y += Math.round(H * 0.018);
   }
@@ -234,13 +262,13 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   // ── Tarih + Saat ── (gizlenebilir)
   if (ayar.tarih) {
     ctx.fillStyle = palet.gold;
-    ctx.font = `700 ${Math.round(W * 0.038 * ayar.yazi)}px Arial`;
+    ctx.font = `700 ${Math.round(W * 0.038 * ayar.yazi)}px ${FF.govde}`;
     const tarihTxt = `${egitim.tarih || ''} ${egitim.gun || ''}`.trim();
     ctx.fillText(tarihTxt, W / 2, y + Math.round(W * 0.036));
     y += Math.round(W * 0.055);
     if (egitim.saat) {
       ctx.fillStyle = palet.metin;
-      ctx.font = `600 ${Math.round(W * 0.032 * ayar.yazi)}px Arial`;
+      ctx.font = `600 ${Math.round(W * 0.032 * ayar.yazi)}px ${FF.govde}`;
       ctx.fillText(`${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}`, W / 2, y + Math.round(W * 0.03));
       y += Math.round(W * 0.05);
     }
@@ -307,12 +335,12 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
           } catch { ctx.fillStyle = '#888'; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         } else { ctx.fillStyle = '#888'; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         ctx.restore();
-        // isim — altın hap, fotonun ALTINDA (çakışma yok)
-        const hapBottom = altinHap(ctx, cx, fy + foto / 2 + g1, e.ad || '', nameSize, palet);
+        // isim — altın hap, fotonun ALTINDA (çakışma yok) — şık isim fontu
+        const hapBottom = altinHap(ctx, cx, fy + foto / 2 + g1, e.ad || '', nameSize, palet, FF.isim);
         // rol — hapın altında
         if (e.unvan) {
           ctx.fillStyle = palet.alt;
-          ctx.font = `500 ${roleSize}px Arial`;
+          ctx.font = `500 ${roleSize}px ${FF.govde}`;
           ctx.textAlign = 'center';
           ctx.fillText(e.unvan, cx, hapBottom + g2 + roleSize, cellW * 0.98);
         }
@@ -331,7 +359,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       const sh = Math.round(H * 0.035);
       // saat hapı (altın çerçeve) — YALNIZ saat girilmişse (boş daire çizme)
       if (saat) {
-        ctx.font = `700 ${Math.round(W * 0.026)}px Arial`;
+        ctx.font = `700 ${Math.round(W * 0.026)}px ${FF.govde}`;
         const sw = ctx.measureText(saat).width + Math.round(W * 0.04);
         ctx.strokeStyle = palet.gold; ctx.lineWidth = 2; ctx.fillStyle = 'rgba(216,177,90,0.12)';
         roundRect(ctx, cx - sw / 2, bandTop, sw, sh, sh / 2); ctx.fill(); ctx.stroke();
@@ -340,28 +368,37 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       }
       // aktivite — saat varsa hapın altında, yoksa bandın üstünde (boşluk bırakma)
       ctx.fillStyle = palet.metin;
-      ctx.font = `600 ${Math.round(W * 0.022)}px Arial`;
+      ctx.font = `600 ${Math.round(W * 0.022)}px ${FF.govde}`;
       const aktY = saat ? bandTop + sh + Math.round(W * 0.028) : bandTop + Math.round(W * 0.026);
       wrapText(ctx, (p.baslik || '').toLocaleUpperCase('tr-TR'), cx, aktY, cellW * 0.92, Math.round(W * 0.026), 2);
     }
   }
 
   // ── ALT: adres (fiziki) / ZOOM (online) + amare logosu ──
+  // QR ölçüleri önceden hesap (adres metni QR'ın soluna sığsın → çakışma yok)
+  const qrVar = fiziki && ayar.qr;
+  const qs = Math.round(W * 0.1), qpad = Math.round(W * 0.03);
+  const qrSol = W - qs - qpad; // QR sol kenarı
+  // Metin alanı: QR varsa onun soluna kadar; yoksa tam genişlik
+  const metinSagSinir = qrVar ? qrSol - Math.round(W * 0.025) : W - M;
+  const adresCX = qrVar ? Math.round((M + metinSagSinir) / 2) : Math.round(W / 2);
+  const adresW = qrVar ? (metinSagSinir - M) : (W - M * 2);
   ctx.textAlign = 'center';
   if (fiziki) {
     const mekan = (egitim.mekanAdi || egitim.sehir || '').toLocaleUpperCase('tr-TR');
     if (mekan) {
-      ctx.fillStyle = palet.gold; ctx.font = `800 ${Math.round(W * 0.03)}px Arial`;
-      ctx.fillText(mekan, W / 2, footerTop + Math.round(H * 0.028), W - M * 2);
+      ctx.fillStyle = palet.gold; ctx.font = `800 ${Math.round(W * 0.03)}px ${FF.govde}`;
+      ctx.fillText(mekan, adresCX, footerTop + Math.round(H * 0.026), adresW);
     }
     if (egitim.acikAdres) {
-      ctx.fillStyle = palet.alt; ctx.font = `400 ${Math.round(W * 0.021)}px Arial`;
-      wrapText(ctx, egitim.acikAdres, W / 2, footerTop + Math.round(H * 0.052), W - M * 2, Math.round(W * 0.026), 2);
+      ctx.fillStyle = palet.alt; ctx.font = `400 ${Math.round(W * 0.021)}px ${FF.govde}`;
+      // uzun adres → 2 satır (QR'ın soluna sığacak genişlikte)
+      wrapText(ctx, egitim.acikAdres, adresCX, footerTop + Math.round(H * 0.05), adresW, Math.round(W * 0.026), 2);
     }
   } else {
     const zoom = (egitim.yer || '').replace(/zoom\s*salon\s*id[:\s]*/i, '').trim();
     const zPill = `ZOOM SALON ID: ${zoom || egitim.yer || ''}`;
-    ctx.font = `800 ${Math.round(W * 0.03)}px Arial`;
+    ctx.font = `800 ${Math.round(W * 0.03)}px ${FF.govde}`;
     const zw = ctx.measureText(zPill).width + Math.round(W * 0.06);
     const zh = Math.round(H * 0.05);
     ctx.fillStyle = palet.gold;
@@ -377,14 +414,13 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     ctx.drawImage(amare, (W - aw) / 2, H - ah - Math.round(H * 0.018), aw, ah);
   } catch {}
 
-  // QR (fiziki) sağ alt — gizlenebilir
-  if (fiziki && ayar.qr) {
+  // QR (fiziki) sağ alt — gizlenebilir (ölçüler footer'da hesaplandı)
+  if (qrVar) {
     const qr = await qrOlustur(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${egitim.id || ''}`);
     if (qr) {
       try {
         const qi = await urlToImage(qr);
-        const qs = Math.round(W * 0.1), pad = Math.round(W * 0.03);
-        const qx = W - qs - pad, qy = H - qs - pad, b = Math.round(qs * 0.06);
+        const qx = qrSol, qy = H - qs - qpad, b = Math.round(qs * 0.06);
         ctx.fillStyle = '#fff'; ctx.fillRect(qx - b, qy - b, qs + 2 * b, qs + 2 * b);
         ctx.drawImage(qi, qx, qy, qs, qs);
       } catch {}
