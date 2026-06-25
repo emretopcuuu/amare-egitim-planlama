@@ -30,7 +30,7 @@ export default async function PusulaSayfa() {
     pusulaGecmis(db, session.sub),
     db
       .from("participants")
-      .select("consent_at, profil_foto_path, yuz_fotolari, full_name, camp_unlocked_at")
+      .select("consent_at, profil_foto_path, yuz_fotolari, full_name, camp_unlocked_at, kariyer_seviyesi")
       .eq("id", session.sub)
       .maybeSingle(),
     db.from("pusula").select("oncelikler, slogan").eq("participant_id", session.sub).maybeSingle(),
@@ -203,6 +203,7 @@ export default async function PusulaSayfa() {
       <PusulaSohbet
         baslangic={gecmis}
         rizaVar={!!kisi?.consent_at}
+        kariyerVar={!!kisi?.kariyer_seviyesi}
         onceliklerVar={durum.onceliklerVar}
         oncelikler={oncelikler}
         asamaBaslangic={durum.asama}

@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { pusulaTuru, pusulaDurum, pusulaGecmis, onceliklerKaydet, pusulaSifirla } from "@/lib/pusula";
+import { pusulaTuru, pusulaDurum, pusulaGecmis, onceliklerKaydet, pusulaSifirla, kariyerKaydet } from "@/lib/pusula";
 import { tr } from "@/lib/i18n/tr";
 
 // FAZ 0 Nedenler — GET: devam (durum + geçmiş + rıza). POST: rıza / liste / tur.
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.pusula.hata }, { status: 401 });
   }
 
-  let govde: { mesaj?: unknown; basla?: unknown; oncelikler?: unknown; sifirla?: unknown; sloganSec?: unknown };
+  let govde: { mesaj?: unknown; basla?: unknown; oncelikler?: unknown; sifirla?: unknown; sloganSec?: unknown; kariyer?: { suanki?: unknown; enYuksek?: unknown; gecenAy?: unknown; kidemAy?: unknown } };
   try {
     govde = await req.json();
   } catch {
@@ -46,6 +46,19 @@ export async function POST(req: Request) {
   // 0) Sıfırla: kişi baştan başlamak isterse sohbet+öncelik+rızayı temizle.
   if (govde.sifirla === true) {
     await pusulaSifirla(db, session.sub);
+    return Response.json({ ok: true });
+  }
+
+  // 0b) Kariyer konumu (Pusula öncesi): 4 ham veri → kariyer_durumu türetilir.
+  if (govde.kariyer && typeof govde.kariyer === "object") {
+    const k = govde.kariyer;
+    const ok = await kariyerKaydet(db, session.sub, {
+      suanki: k.suanki,
+      enYuksek: k.enYuksek,
+      gecenAy: k.gecenAy,
+      kidemAy: k.kidemAy,
+    });
+    if (!ok) return Response.json({ hata: tr.pusula.hata }, { status: 400 });
     return Response.json({ ok: true });
   }
 

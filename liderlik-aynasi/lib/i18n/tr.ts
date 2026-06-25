@@ -688,6 +688,25 @@ export const tr = {
       "Birazdan birlikte hayattaki gerçek nedenlerini bulacağız. Yazdıkların yalnızca senin için saklanır ve kampta sana daha iyi eşlik etmek için kullanılır. Kimse ham cevaplarını görmez — yalnızca paylaşmayı seçtiklerin.",
     rizaNot: "Dilediğin an verilerini silebilirsin.",
     rizaKabul: "Anladım, başlayalım",
+    // Kariyer konumu (Pusula öncesi) — A/B/C persona türetmesi için ham veri
+    kariyerBaslik: "Kariyer konumun",
+    kariyerMetin:
+      "Sana en doğru yol arkadaşlığını yapabilmem için kariyer yolculuğunun şu anki resmini bilmem gerekiyor. Rakamlar zamanla değişir — bu çok normal. En dürüst hâliyle yaz; bu sayılar yalnızca sana özel görevleri şekillendirmek için.",
+    kariyerSuankiEtiket: "Şu anki kariyer basamağın",
+    kariyerEnYuksekEtiket: "Bugüne kadar ulaştığın en yüksek basamak",
+    kariyerGecenAyEtiket: "Geçen ayki basamağın",
+    kariyerKidemEtiket: "Kaç aydır bu işin içindesin?",
+    kariyerKidemYer: "Örn. 18",
+    kariyerSecimYer: "— Seç —",
+    kariyerKaydet: "Devam et",
+    kariyerAtla: "Şimdilik geç",
+    kariyerSeviyeEtiketler: {
+      leader: "Leader",
+      senior_leader: "Senior Leader",
+      exec_leader: "Exec. Leader",
+      diamond: "Diamond",
+      star: "Star",
+    } as Record<string, string>,
     listeBaslik: "Hayatındaki 10 öncelik",
     listeAciklama:
       "Hayatta senin için olmazsa olmaz dediğin, en çok önemsediğin, yapmaktan en çok zevk aldığın, kesinlikle hayatından çıkarmak istemediğin ya da hayatına katmak istediğin 10 önceliğinin listesini yapmanı istiyoruz.",

@@ -1090,6 +1090,7 @@ export type Database = {
       }
       participants: {
         Row: {
+          amare_puan: number | null
           camp_unlock_token: string | null
           camp_unlocked_at: string | null
           city: string | null
@@ -1097,9 +1098,13 @@ export type Database = {
           created_at: string
           deletion_requested_at: string | null
           email: string | null
+          en_yuksek_kariyer: string | null
           full_name: string
+          gecen_ay_kariyer: string | null
           id: string
+          kariyer_durumu: string | null
           kariyer_seviyesi: string | null
+          kidem_ay: number | null
           login_code: string
           phone: string | null
           profil_foto_path: string | null
@@ -1108,6 +1113,7 @@ export type Database = {
           yuz_fotolari: Json
         }
         Insert: {
+          amare_puan?: number | null
           camp_unlock_token?: string | null
           camp_unlocked_at?: string | null
           city?: string | null
@@ -1115,9 +1121,13 @@ export type Database = {
           created_at?: string
           deletion_requested_at?: string | null
           email?: string | null
+          en_yuksek_kariyer?: string | null
           full_name: string
+          gecen_ay_kariyer?: string | null
           id?: string
+          kariyer_durumu?: string | null
           kariyer_seviyesi?: string | null
+          kidem_ay?: number | null
           login_code: string
           phone?: string | null
           profil_foto_path?: string | null
@@ -1126,6 +1136,7 @@ export type Database = {
           yuz_fotolari?: Json
         }
         Update: {
+          amare_puan?: number | null
           camp_unlock_token?: string | null
           camp_unlocked_at?: string | null
           city?: string | null
@@ -1133,9 +1144,13 @@ export type Database = {
           created_at?: string
           deletion_requested_at?: string | null
           email?: string | null
+          en_yuksek_kariyer?: string | null
           full_name?: string
+          gecen_ay_kariyer?: string | null
           id?: string
+          kariyer_durumu?: string | null
           kariyer_seviyesi?: string | null
+          kidem_ay?: number | null
           login_code?: string
           phone?: string | null
           profil_foto_path?: string | null
@@ -2008,4 +2023,3 @@ export const Constants = {
     Enums: {},
   },
 } as const
-

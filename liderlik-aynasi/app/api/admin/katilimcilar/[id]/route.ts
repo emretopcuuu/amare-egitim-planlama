@@ -2,6 +2,7 @@ import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { telefonAyikla } from "@/lib/telefon";
 import { tr } from "@/lib/i18n/tr";
+import { KARIYER_RANK, kariyerHalKisidenTuret } from "@/lib/persona";
 
 const t = tr.admin.katilimcilar;
 
@@ -35,8 +36,13 @@ export async function PATCH(
     phone?: string | null;
     login_code?: string;
     kariyer_seviyesi?: string | null;
+    en_yuksek_kariyer?: string | null;
+    gecen_ay_kariyer?: string | null;
+    kidem_ay?: number | null;
   };
   const guncelleme: Guncelleme = {};
+  // Kariyer alanlarından biri değişirse durumu yeniden türetmek için işaret.
+  let kariyerDokunuldu = false;
 
   if ("ad" in body) {
     const v = temiz(body.ad);
@@ -82,13 +88,36 @@ export async function PATCH(
     }
   }
 
-  if ("kariyer_seviyesi" in body) {
-    const GECERLI = ["leader", "senior_leader", "exec_leader", "diamond"];
-    const v = temiz(body.kariyer_seviyesi);
-    if (v !== null && !GECERLI.includes(v)) {
-      return Response.json({ hata: t.hataSunucu }, { status: 400 });
+  // Kariyer basamak alanları (mevcut / en yüksek / geçen ay) — ladder doğrulaması.
+  const seviyeAlan = (
+    anahtar: "kariyer_seviyesi" | "en_yuksek_kariyer" | "gecen_ay_kariyer"
+  ): "ok" | "hata" => {
+    if (!(anahtar in body)) return "ok";
+    const v = temiz((body as Record<string, unknown>)[anahtar]);
+    if (v !== null && !KARIYER_RANK[v]) return "hata";
+    guncelleme[anahtar] = v;
+    kariyerDokunuldu = true;
+    return "ok";
+  };
+  if (seviyeAlan("kariyer_seviyesi") === "hata")
+    return Response.json({ hata: t.hataSunucu }, { status: 400 });
+  if (seviyeAlan("en_yuksek_kariyer") === "hata")
+    return Response.json({ hata: t.hataSunucu }, { status: 400 });
+  if (seviyeAlan("gecen_ay_kariyer") === "hata")
+    return Response.json({ hata: t.hataSunucu }, { status: 400 });
+
+  if ("kidem_ay" in body) {
+    const raw = body.kidem_ay;
+    if (raw === null || raw === "") {
+      guncelleme.kidem_ay = null;
+    } else {
+      const n = Number(raw);
+      if (!Number.isFinite(n) || n < 0 || n > 600) {
+        return Response.json({ hata: t.hataSunucu }, { status: 400 });
+      }
+      guncelleme.kidem_ay = Math.round(n);
     }
-    guncelleme.kariyer_seviyesi = v;
+    kariyerDokunuldu = true;
   }
 
   // Ses profili sıfırlama — voice_profiles satırını sil
@@ -110,6 +139,22 @@ export async function PATCH(
 
   if (error) {
     return Response.json({ hata: t.hataSunucu }, { status: 500 });
+  }
+
+  // Kariyer verisi değiştiyse persona hâlini (A/B/C/A+) yeniden türet ve yaz.
+  if (kariyerDokunuldu) {
+    const { data: k } = await db
+      .from("participants")
+      .select("kariyer_seviyesi, en_yuksek_kariyer, gecen_ay_kariyer, kidem_ay")
+      .eq("id", id)
+      .maybeSingle();
+    if (k) {
+      const persona = kariyerHalKisidenTuret(k);
+      await db
+        .from("participants")
+        .update({ kariyer_durumu: persona?.hal ?? null })
+        .eq("id", id);
+    }
   }
 
   return Response.json({ guncellendi: 1 });

@@ -7,6 +7,7 @@ import { hedefOzeti } from "@/lib/hedef";
 import { yeniCumleOku } from "@/lib/bosluk";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
+import { kariyerHalKisidenTuret, personaBlogu, KARIYER_RANK, KARIYER_ETIKET } from "@/lib/persona";
 import { aiHataYakala } from "@/lib/uyari";
 import {
   fazBul,
@@ -278,6 +279,8 @@ export async function gorevUret(
     aktifDalgaSonuc,
     // #4 Bağ görevi — bağlantı sayısı
     baglantıCountSonuc,
+    // Kariyer momentumu (persona ekseni)
+    kariyerSonuc,
   ] = await Promise.all([
     aktifOzellikler(db),
     db
@@ -308,7 +311,17 @@ export async function gorevUret(
       .from("assignments")
       .select("id", { count: "exact", head: true })
       .eq("observer_id", katilimci.id),
+    // Kariyer momentumu (persona ekseni) — A/B/C türetmesi için ham veriler.
+    db
+      .from("participants")
+      .select("kariyer_seviyesi, en_yuksek_kariyer, gecen_ay_kariyer, kidem_ay")
+      .eq("id", katilimci.id)
+      .maybeSingle(),
   ]);
+
+  // Kariyer hâlini türet ve prompt bloğunu hazırla (veri yoksa boş → jenerik).
+  const persona = kariyerSonuc.data ? kariyerHalKisidenTuret(kariyerSonuc.data) : null;
+  const personaMetni = personaBlogu(persona);
 
   const icerik = new Map((icerikAyar?.data ?? []).map((s) => [s.key, s.value]));
   const aynaEkTon = (icerik.get("ayna_ek_ton") ?? "").trim();
@@ -595,7 +608,7 @@ export async function gorevUret(
           text: `Görevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı.
 
 KARİYER SEVİYESİ: Bu kişi lider veya üzeri kariyer basamağında — görev yeni başlayan düzeyi değil, LİDER düzeyi olmalı. Katlama, lider yetiştirme, devretme, ekip önünde duruş, zor kararlar, üst seviye etki gibi konuları hedefle.
-
+${personaMetni ? `\n${personaMetni}\n` : ""}
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
 
 HEDEF BAĞLANTISI: Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.
@@ -1167,13 +1180,8 @@ export async function senkronGorevUret(
   }
 }
 
-// KARİYER SEVİYESİ SIRASI — mentorluk eşleştirme için.
-const KARIYER_SIRASI: Record<string, number> = {
-  leader: 1,
-  senior_leader: 2,
-  exec_leader: 3,
-  diamond: 4,
-};
+// Mentorluk eşleştirmesi kariyer rütbe sırasını lib/persona.ts'ten okur
+// (KARIYER_RANK — star dahil tek kaynak).
 
 /** Mentorluk görevi: kişinin kariyer seviyesine göre aynı/üst basamaktan
  * 3 isim önerir; katılımcı birini seçip 15 dk konuşur.
@@ -1187,12 +1195,12 @@ export async function mentorlukGorevUret(
   if (!process.env.ANTHROPIC_API_KEY) return null;
 
   const ad = katilimci.full_name.split(" ")[0];
-  const benimSeviye = KARIYER_SIRASI[katilimci.kariyer_seviyesi ?? ""] ?? 0;
+  const benimSeviye = KARIYER_RANK[katilimci.kariyer_seviyesi ?? ""] ?? 0;
 
   // Aynı veya üst seviyedeki diğer katılımcılar (kendisi hariç)
   const adaylar = tumKatilimcilar.filter((k) => {
     if (k.id === katilimci.id) return false;
-    const onunSeviye = KARIYER_SIRASI[k.kariyer_seviyesi ?? ""] ?? 0;
+    const onunSeviye = KARIYER_RANK[k.kariyer_seviyesi ?? ""] ?? 0;
     // Seviye bilgisi varsa filtreye sok; yoksa herkesi dahil et
     if (benimSeviye > 0 && onunSeviye > 0) return onunSeviye >= benimSeviye;
     return true;
@@ -1207,16 +1215,7 @@ export async function mentorlukGorevUret(
   });
   const secilen = karisik.slice(0, 3);
   const isimler = secilen.map((k) => {
-    const seviyeEtiketi =
-      k.kariyer_seviyesi === "senior_leader"
-        ? "Senior Leader"
-        : k.kariyer_seviyesi === "exec_leader"
-          ? "Exec. Leader"
-          : k.kariyer_seviyesi === "diamond"
-            ? "Diamond"
-            : k.kariyer_seviyesi === "leader"
-              ? "Leader"
-              : "";
+    const seviyeEtiketi = KARIYER_ETIKET[k.kariyer_seviyesi ?? ""] ?? "";
     return seviyeEtiketi ? `${k.full_name} (${seviyeEtiketi})` : k.full_name;
   });
 
