@@ -92,6 +92,7 @@ export default function GorselStudyo() {
     try { return JSON.parse(localStorage.getItem('markaSecim') || '{}'); } catch { return {}; }
   });
   const [ekIstek, setEkIstek] = useState('');
+  const [altNot, setAltNot] = useState(''); // afiş altına serbest not/uyarı
   const [resultUrl, setResultUrl] = useState(null);
   const sonB64 = useRef(null);
   const [generating, setGenerating] = useState(false);
@@ -106,7 +107,7 @@ export default function GorselStudyo() {
   });
 
   // eğitim değişince konuşmacıları çöz
-  useEffect(() => { setSpeakers(cozEgitmenler(egitim)); setBaglandi(false); /* eslint-disable-next-line */ }, [egitimId, konusmacilar]);
+  useEffect(() => { setSpeakers(cozEgitmenler(egitim)); setBaglandi(false); setAltNot(''); /* eslint-disable-next-line */ }, [egitimId, konusmacilar]);
   // stil hafızası
   useEffect(() => { try { localStorage.setItem('markaSecim', JSON.stringify(markaSecim)); } catch {} }, [markaSecim]);
 
@@ -224,7 +225,7 @@ export default function GorselStudyo() {
     try {
       let res;
       if (markaModu) {
-        res = await gorselOlusturMarkaAfis({ egitim, egitmenler: speakers, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil });
+        res = await gorselOlusturMarkaAfis({ egitim, egitmenler: speakers, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil, altNot });
       } else {
         if (!geminiApiKey) throw new Error('AI Afiş için Gemini API anahtarı gerekli (Ayarlar → AI API Anahtarları).');
         res = await gorselOlusturAiAfis({ geminiApiKey, openaiApiKey, egitim, egitmenler: speakers, ekPrompt: ekIstek, format: 'portrait' });
@@ -246,7 +247,7 @@ export default function GorselStudyo() {
     const id = setTimeout(() => { uret(); }, 450);
     return () => clearTimeout(id);
     // eslint-disable-next-line
-  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan]))]);
+  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan])), altNot]);
 
   const indir = () => {
     if (!resultUrl) return;
@@ -438,6 +439,17 @@ export default function GorselStudyo() {
                   className="mt-2 w-full py-2.5 rounded-lg font-bold text-white bg-amare-purple hover:bg-amare-dark transition flex items-center justify-center gap-2 disabled:opacity-50">
                   {generating ? <><Loader2 className="w-4 h-4 animate-spin" /> Üretiliyor…</> : <><Sparkles className="w-4 h-4" /> AI Afiş Üret</>}
                 </button>
+              </div>
+            )}
+
+            {/* Alt not / uyarı — serbest metin (afişin altına işlenir, canlı) */}
+            {markaModu && (
+              <div className="bg-white border border-gray-200 rounded-xl p-3">
+                <label className="text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1.5">📝 Alt not / uyarı</label>
+                <textarea value={altNot} onChange={(e) => setAltNot(e.target.value)} rows={2} maxLength={140}
+                  placeholder="Örn: Saat 14:00'ten sonra salona giriş yapılamaz.&#10;Etkinliğe 18 yaşından küçükler katılamaz."
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
+                <p className="text-[10px] text-gray-400 mt-1">Her satır afişin altında ayrı görünür (en fazla 3 satır). Yazdıkça sağda canlı işlenir.</p>
               </div>
             )}
           </div>

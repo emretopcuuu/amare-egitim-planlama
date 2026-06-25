@@ -359,7 +359,7 @@ const altinHap = (ctx, cx, y, text, fontSize, palet, fontAd = 'Arial') => {
   return y + h;
 };
 
-export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null }) => {
+export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '' }) => {
   // Marka Afiş HER ZAMAN dikey (kare/story selektöründen bağımsız) — referanslar dikey,
   // kare alan fotoları sıkıştırıyordu.
   const W = 1080, H = 1350;
@@ -458,7 +458,9 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
 
   // ── ZONE: program bandı + footer rezervi ──
   const prog = (Array.isArray(egitim.programAkisi) ? egitim.programAkisi : []).filter(p => p && (p.baslik || p.baslangic));
-  const footerH = Math.round(H * 0.135);
+  // Alt not / uyarı satırları (kullanıcının serbest metni) — en fazla 3 satır
+  const notSatirlari = String(altNot || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 3);
+  const footerH = Math.round(H * (0.135 + (notSatirlari.length ? 0.03 * notSatirlari.length : 0)));
   const footerTop = H - footerH;
   const bandH = (fiziki && prog.length && ayar.program) ? Math.round(H * 0.085) : 0;
   const bandTop = bandH ? footerTop - bandH - Math.round(H * 0.02) : footerTop;
@@ -601,6 +603,20 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     ctx.fillText(zPill, W / 2, footerTop + Math.round(H * 0.01) + zh / 2);
     ctx.textBaseline = 'alphabetic';
   }
+  // ── ALT NOT / UYARI (kullanıcının serbest metni) — amare logosunun üstünde ──
+  if (notSatirlari.length) {
+    const uyariRenk = palet.acik ? '#9c2b2b' : '#f0b3b3'; // soft kırmızı (uyarı hissi)
+    const nlH = Math.round(W * 0.026);
+    const amareUst = H - Math.round(H * 0.032) - Math.round(H * 0.018);
+    const baslangic = amareUst - notSatirlari.length * nlH - Math.round(H * 0.006);
+    ctx.textAlign = 'center';
+    ctx.font = `600 ${Math.round(W * 0.021)}px ${FF.govde}`;
+    notSatirlari.forEach((ln, i) => {
+      ctx.fillStyle = uyariRenk;
+      ctx.fillText(ln, adresCX, baslangic + (i + 1) * nlH, adresW);
+    });
+  }
+
   // amare logosu (en alt orta) — HER ZAMAN düzgün yatay beyaz logo (1426x292).
   // (Purple dosyası kare/boşluklu olduğu için kullanılmaz.) Açık temada koyuya boyanır.
   try {
