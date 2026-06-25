@@ -138,6 +138,10 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         ai_comment: sonuc.yorum,
         scored_at: simdi.toISOString(),
         spark_points: kivilcim,
+        // #2 Kurtarma yolunda da response_tags kaydedilir
+        ...(sonuc.response_tags.length > 0
+          ? { response_tags: sonuc.response_tags }
+          : {}),
       })
       .eq("id", g.id);
     ozet.puanlanan++;
@@ -251,6 +255,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     }
     const gorev = await gorevUret(db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu);
     if (!gorev) continue;
+    // #8 micro_sprint: sure_saat 0.5 = 30 dk
     const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
     const { data: yeniGorev, error } = await db
       .from("missions")
@@ -262,6 +267,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         body: gorev.body,
         difficulty: gorev.difficulty,
         neden: gorev.neden,
+        micro_sprint: gorev.micro_sprint,
         due_at: dueAt.toISOString(),
       })
       .select("id")

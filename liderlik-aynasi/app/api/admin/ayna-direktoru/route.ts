@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { SOZ_GOREVI } from "@/lib/ayna";
+import { SOZ_GOREVI, sozGoreviKisisel } from "@/lib/ayna";
 import { gorevSeslendir, markaAnons } from "@/lib/yansima";
 import { ACILIS_ANONSU, aynaAniMetni } from "@/lib/kampProgrami";
 import { katilimciyaBildir } from "@/lib/push";
@@ -174,7 +174,7 @@ export async function POST(req: Request) {
 
   if (govde.islem === "soz") {
     const [{ data: kisiler }, { data: mevcutSozler }] = await Promise.all([
-      db.from("participants").select("id").eq("role", "participant"),
+      db.from("participants").select("id, full_name").eq("role", "participant"),
       db.from("missions").select("participant_id").eq("kind", "soz"),
     ]);
     const sozluler = new Set((mevcutSozler ?? []).map((m) => m.participant_id));
@@ -182,26 +182,31 @@ export async function POST(req: Request) {
     const dueAt = new Date(Date.now() + 12 * 3_600_000).toISOString();
 
     for (const k of hedefler) {
+      // #10 Kişiselleştirilmiş SÖZ — template-tabanlı, güvenli düşüş dahil
+      const kisiselSoz = await sozGoreviKisisel(db, k).catch(() => ({
+        title: SOZ_GOREVI.title,
+        body: SOZ_GOREVI.body,
+      }));
       const { data: yeniGorev, error } = await db
         .from("missions")
         .insert({
           participant_id: k.id,
           kind: SOZ_GOREVI.kind,
-          title: SOZ_GOREVI.title,
-          body: SOZ_GOREVI.body,
+          title: kisiselSoz.title,
+          body: kisiselSoz.body,
           due_at: dueAt,
         })
         .select("id")
         .single();
       if (!error && yeniGorev) {
-        await katilimciyaBildir(db, k.id, `🤝 ${SOZ_GOREVI.title}`, SOZ_GOREVI.body);
+        await katilimciyaBildir(db, k.id, `🤝 ${kisiselSoz.title}`, kisiselSoz.body);
         // SÖZ kampın tek seferlik anı: günlük fısıltı tavanından muaf
         await gorevSeslendir(
           db,
           k.id,
           yeniGorev.id,
-          SOZ_GOREVI.title,
-          SOZ_GOREVI.body,
+          kisiselSoz.title,
+          kisiselSoz.body,
           true
         );
       }

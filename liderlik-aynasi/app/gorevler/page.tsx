@@ -31,6 +31,8 @@ const TUR_RENK: Record<string, string> = {
   yansima: "bg-emerald-500/20 text-emerald-300",
   gizli: "bg-fuchsia-500/20 text-fuchsia-300",
   tahmin: "bg-sky-500/20 text-sky-300",
+  simulasyon: "bg-rose-500/20 text-rose-300",
+  bag: "bg-teal-500/20 text-teal-300",
   soz: "bg-gold/20 text-gold-light",
 };
 
@@ -45,7 +47,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, micro_sprint"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -304,6 +306,11 @@ export default async function GorevlerPage() {
             </div>
             <p className="mt-2 text-sm font-semibold text-sky-200">
               {ZORLUK_ETIKETI[(g.difficulty as Zorluk) ?? 2]}
+              {g.micro_sprint && (
+                <span className="ml-2 inline-block animate-pulse rounded-full bg-amber-500/25 px-2 py-0.5 text-xs font-bold text-amber-300">
+                  ⚡ 30 DAKİKA — ŞİMDİ
+                </span>
+              )}
             </p>
             <h2 className="mt-2 text-2xl font-bold leading-snug text-gold-light">{g.title}</h2>
             <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">

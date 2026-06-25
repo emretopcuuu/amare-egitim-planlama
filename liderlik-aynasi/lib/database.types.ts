@@ -783,6 +783,7 @@ export type Database = {
           issued_at: string
           kind: string
           lightened_at: string | null
+          micro_sprint: boolean
           neden: string | null
           participant_id: string
           reflected_at: string | null
@@ -790,6 +791,7 @@ export type Database = {
           reflection_text: string | null
           reminded_at: string | null
           responded_at: string | null
+          response_tags: string[] | null
           response_text: string | null
           scored_at: string | null
           spark_points: number
@@ -809,6 +811,7 @@ export type Database = {
           issued_at?: string
           kind: string
           lightened_at?: string | null
+          micro_sprint?: boolean
           neden?: string | null
           participant_id: string
           reflected_at?: string | null
@@ -816,6 +819,7 @@ export type Database = {
           reflection_text?: string | null
           reminded_at?: string | null
           responded_at?: string | null
+          response_tags?: string[] | null
           response_text?: string | null
           scored_at?: string | null
           spark_points?: number
@@ -835,6 +839,7 @@ export type Database = {
           issued_at?: string
           kind?: string
           lightened_at?: string | null
+          micro_sprint?: boolean
           neden?: string | null
           participant_id?: string
           reflected_at?: string | null
@@ -842,6 +847,7 @@ export type Database = {
           reflection_text?: string | null
           reminded_at?: string | null
           responded_at?: string | null
+          response_tags?: string[] | null
           response_text?: string | null
           scored_at?: string | null
           spark_points?: number

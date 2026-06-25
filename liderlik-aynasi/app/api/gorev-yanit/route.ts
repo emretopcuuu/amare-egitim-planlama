@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { gorevPuanla } from "@/lib/ayna";
+import { gorevPuanla, korNoktaGuncelle } from "@/lib/ayna";
 import { markaAnons, fieroSesi } from "@/lib/yansima";
 import {
   kivilcimHesapla,
@@ -124,6 +124,10 @@ export async function POST(req: Request) {
       ai_comment: sonuc.yorum,
       scored_at: new Date().toISOString(),
       spark_points: kivilcim,
+      // #2 Yanıt madenciliği: paralel çıkarılan tema etiketleri
+      ...(sonuc.response_tags.length > 0
+        ? { response_tags: sonuc.response_tags }
+        : {}),
     })
     .eq("id", gorev.id);
 
@@ -139,6 +143,18 @@ export async function POST(req: Request) {
   }
 
   const toplam = await toplamKivilcim(db, session.sub);
+
+  // #6 Kör nokta güncelleme döngüsü: milestone (5, 10, 15) tamamlamada
+  // Haiku, son yanıtları analiz edip on_farkindalik profilini günceller.
+  const { count: tamamlananSayi } = await db
+    .from("missions")
+    .select("id", { count: "exact", head: true })
+    .eq("participant_id", session.sub)
+    .eq("status", "scored");
+  if (tamamlananSayi && tamamlananSayi % 5 === 0) {
+    korNoktaGuncelle(db, session.sub, tamamlananSayi).catch(() => {});
+  }
+
   return Response.json({
     puan: sonuc.puan,
     yorum: sonuc.yorum,

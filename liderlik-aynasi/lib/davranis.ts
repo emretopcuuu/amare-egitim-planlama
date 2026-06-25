@@ -380,6 +380,7 @@ export const GOREV_TURLERI = [
   "gizli",
   "tahmin",
   "simulasyon",
+  "bag", // #4 sosyal bağlantı görevi
 ] as const;
 export type GorevTuru = (typeof GOREV_TURLERI)[number];
 
@@ -411,16 +412,21 @@ export function turSec(
       gizli: bugunGizliVar || saat < 10 ? 0 : 1,
       tahmin: 1,
       simulasyon: gun >= 2 ? 1 : 0, // direnç provası 2. günden itibaren
+      // #4 Bağ görevi: 2. günden itibaren, öğleden sonra, serbest/oyun saatlerinde artar
+      bag: gun >= 2 && saat >= 12 ? 1 : 0,
     };
     // Program bağlamı: oyun saatinde gözlem/gizli, molada yansıma,
-    // yemekte tahmin, doğada cesaret öne çıkar
+    // yemekte tahmin, doğada cesaret; serbest/yemekte bağ artar
     if (etkinlikTur === "oyun") {
       taban.gozlem += 2;
       if (taban.gizli > 0) taban.gizli += 1;
+      if (taban.bag > 0) taban.bag += 1; // sosyal ortam bağa uygun
     } else if (etkinlikTur === "serbest") {
       taban.yansima += 2;
+      if (taban.bag > 0) taban.bag += 2; // serbest zaman insan bağı için ideal
     } else if (etkinlikTur === "yemek" || etkinlikTur === "ara") {
       taban.tahmin += 2;
+      if (taban.bag > 0) taban.bag += 1; // yemekte bağ doğal
     } else if (etkinlikTur === "doga") {
       taban.cesaret += 2;
     }

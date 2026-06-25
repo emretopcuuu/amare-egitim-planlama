@@ -74,7 +74,7 @@ const GOREV_SEMASI = {
     neden: {
       type: "string" as const,
       description:
-        "Bu görevin neden ÖZELLİKLE BU kişiye verildiğine dair TEK kısa cümle (en fazla 16 kelime), adayın göreceği sıcak bir dille. Örn: 'Son günlerde geri çekildin; bu küçük adım seni yeniden sahaya çağırıyor.' Ham veri/puan/teknik terim YOK; kör noktayı yüzüne vurma. Yoksa boş string.",
+        "Bu görevin neden ÖZELLİKLE BU kişiye verildiğine dair TEK kısa cümle (en fazla 16 kelime), adayın göreceği sıcak bir dille. Ham veri/puan/teknik terim YOK; kör noktayı yüzüne vurma. Yoksa boş string.",
     },
   },
   required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden"],
@@ -99,6 +99,22 @@ const PUAN_SEMASI = {
   additionalProperties: false,
 };
 
+// #2 Yanıt madenciliği — Haiku ile yanıttan tema etiketleri çıkar
+const TEMA_SEMASI = {
+  type: "object" as const,
+  properties: {
+    temalar: {
+      type: "array" as const,
+      items: { type: "string" as const },
+      description:
+        "2-3 kısa psikolojik tema etiketi (en fazla 3 kelime, Türkçe). Örn: 'ret korkusu', 'öz şüphe', 'bağ kurma isteği'",
+      maxItems: 3,
+    },
+  },
+  required: ["temalar"],
+  additionalProperties: false,
+};
+
 function jsonCoz<T>(yanit: Anthropic.Message): T | null {
   if (yanit.stop_reason === "refusal") return null;
   const metin = yanit.content
@@ -112,10 +128,7 @@ function jsonCoz<T>(yanit: Anthropic.Message): T | null {
   }
 }
 
-// GELİŞTİRME #4 — GÖREV YAYI. Görevler kopuk değil; her aday için tek bir
-// çekirdek kör nokta etrafında derinleşen bir yay: ısınma → yüzleşme → kanıt →
-// entegrasyon. Aşama, tamamlanan görev sayısından türer; AYNA her turda bir
-// önceki aşamanın üstüne çıkar (geri gitmez).
+// GELİŞTİRME #4 — GÖREV YAYI.
 const ARK_ASAMALARI = [
   { ad: "ısınma", yonerge: "İlk temas: küçük, güvenli, merak uyandıran bir adım. Çekirdek temayı sezdir ama üstüne yüklenme." },
   { ad: "yüzleşme", yonerge: "Aday artık çekirdek kör noktasıyla DOĞRUDAN ama güvenli biçimde yüzleşsin — kaçtığı şeyi nazikçe yapsın." },
@@ -133,18 +146,17 @@ export type UretilenGorev = {
   title: string;
   body: string;
   trait_id: number | null;
-  sure_saat: number;
+  sure_saat: number; // 0.5 = 30 dk (micro-sprint), 1-3 normal
   difficulty: Zorluk;
   /** simulasyon: itirazcının söylediği cümle(ler) — sese çevrilir */
   itiraz: string | null;
-  /** #8: "bu görev neden SANA özel" — kısa, sıcak; ham veri ifşa etmez */
+  /** "bu görev neden SANA özel" — kısa, sıcak; ham veri ifşa etmez */
   neden: string | null;
+  /** #8 micro-sprint: true ise due_at 30 dakika olarak hesaplanır */
+  micro_sprint: boolean;
 };
 
-
-// Ön Farkındalık profilini görev üretimi için sıkıştırır: yalnız hedefe yön
-// veren sinyaller (en zayıf alan, en büyük 2 açık, kör nokta, ritim, açıklık).
-// Profil yoksa null — görev eski davranışa (Pusula + puanlar) düşer.
+// Ön Farkındalık profilini görev üretimi için sıkıştırır.
 const OZ_ALAN_AD: Record<string, string> = {
   oz_saygi: "Öz Saygı",
   oz_guven: "Öz Güven",
@@ -187,9 +199,7 @@ async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | null> {
   };
 }
 
-// Aday'ın AYNA Koçu'yla paylaştıkları: kendi sözleriyle dile getirdiği dert,
-// hedef ve takıntılar — görevi onun GERÇEK gündemine demirlemek için en taze
-// sinyal. Yalnız kişinin KENDİ mesajları (en sinyalli), son birkaçı, kısaltılmış.
+// Aday'ın AYNA Koçu'yla paylaştıkları.
 async function kocuOzeti(db: Db, pid: string): Promise<string[] | null> {
   const { data } = await db
     .from("kocu_mesajlar")
@@ -205,6 +215,44 @@ async function kocuOzeti(db: Db, pid: string): Promise<string[] | null> {
   return mesajlar.length ? mesajlar.reverse() : null;
 }
 
+// #2 Yanıt madenciliği — Haiku ile yanıttan tema etiketleri çıkar (paralel çalışır)
+async function temalarCikar(
+  gorev: { title: string; body: string; kind: string },
+  yanitMetni: string
+): Promise<string[]> {
+  try {
+    const client = new Anthropic();
+    const yanit = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 256,
+      thinking: { type: "disabled" },
+      output_config: {
+        effort: "low",
+        format: { type: "json_schema", schema: TEMA_SEMASI },
+      },
+      system:
+        "Bir liderlik kampı görev yanıtını analiz et. Kişinin yanıtında öne çıkan 2-3 psikolojik tema, duygu veya örüntüyü kısa etiket olarak çıkar. Örnekler: 'ret korkusu', 'öz güven eksikliği', 'bağ kurma isteği', 'mükemmeliyetçilik', 'söz vermekten kaçınma'. Yalnızca JSON döndür.",
+      messages: [
+        {
+          role: "user",
+          content: JSON.stringify({
+            gorevBaslik: gorev.title,
+            gorevTuru: gorev.kind,
+            yanit: yanitMetni.slice(0, 600),
+          }),
+        },
+      ],
+    });
+    const veri = jsonCoz<{ temalar: string[] }>(yanit);
+    return (veri?.temalar ?? [])
+      .slice(0, 3)
+      .map((t) => String(t).trim().slice(0, 40))
+      .filter((t) => t.length > 0);
+  } catch {
+    return [];
+  }
+}
+
 export async function gorevUret(
   db: Db,
   katilimci: { id: string; full_name: string; team: string | null },
@@ -213,44 +261,55 @@ export async function gorevUret(
   mod: SistemModu = "kamp",
   etkinlik: ProgramMaddesi | null = null,
   bitenEtkinlik: ProgramMaddesi | null = null,
-  // Slice 3: grubun ŞU ANKİ etkinliğine özel görev yönergesi (Cumartesi).
-  // Doluysa görev bu etkinliğin içine dikilir (David'le foto/soru, oyunda gözlem...).
   gorevIpucu: string | null = null
 ): Promise<UretilenGorev | null> {
-  const [ozellikler, oncekilerSonuc, puanlarSonuc, pusula, hedef, onFarkindalik, kocuPaylasim, kapaliAyar, icerikAyar, tamamCountSonuc] =
-    await Promise.all([
-      aktifOzellikler(db),
-      db
-        .from("missions")
-        .select("kind, title, issued_at, status, ai_score, lightened_at")
-        .eq("participant_id", katilimci.id)
-        .order("issued_at", { ascending: false })
-        .limit(6),
-      db
-        .from("ratings")
-        .select("trait_id, score, is_self")
-        .eq("target_id", katilimci.id),
-      // FAZ 0 Pusula: kişinin nedeni/iç engeli — görevi buna göre kişiselleştir.
-      pusulaOzeti(db, katilimci.id),
-      // FAZ A Hedef (Gün 2): kişinin kariyer hedefi + planı — görevi bu hedefe demirle.
-      hedefOzeti(db, katilimci.id),
-      // ÖN FARKINDALIK: kamp öncesi ayna profili — en zayıf alan, en büyük açık,
-      // kör nokta (koruyucu inanç), ritim. Görevi bunlara göre hedefle.
-      onFarkindalikOzeti(db, katilimci.id),
-      // AYNA KOÇU: kişinin koça kendi sözleriyle yazdıkları — en taze, en gerçek
-      // gündem. Görevi onun şu an dert ettiği/hedeflediği şeye demirle.
-      kocuOzeti(db, katilimci.id),
-      // Admin'in kapattığı görev türleri (Görev Türü Stüdyosu).
-      db.from("settings").select("value").eq("key", "kapali_gorev_turleri").maybeSingle(),
-      // #10 İçerik Stüdyosu: admin'in canlı ayarladığı AYNA ek-tonu + günün teması.
-      db.from("settings").select("key, value").in("key", ["ayna_ek_ton", "gunun_temasi"]),
-      // GELİŞTİRME #4 Görev Yayı: toplam tamamlanan görev sayısı (yay aşaması bundan türer).
-      db
-        .from("missions")
-        .select("id", { count: "exact", head: true })
-        .eq("participant_id", katilimci.id)
-        .eq("status", "scored"),
-    ]);
+  const [
+    ozellikler,
+    oncekilerSonuc,
+    puanlarSonuc,
+    pusula,
+    hedef,
+    onFarkindalik,
+    kocuPaylasim,
+    kapaliAyar,
+    icerikAyar,
+    tamamCountSonuc,
+    // #5 Dalga hazırlık modu
+    aktifDalgaSonuc,
+    // #4 Bağ görevi — bağlantı sayısı
+    baglantıCountSonuc,
+  ] = await Promise.all([
+    aktifOzellikler(db),
+    db
+      .from("missions")
+      .select("kind, title, issued_at, status, ai_score, lightened_at, responded_at, response_tags")
+      .eq("participant_id", katilimci.id)
+      .order("issued_at", { ascending: false })
+      .limit(10), // genişletildi: streak ve pik pencere için
+    db
+      .from("ratings")
+      .select("trait_id, score, is_self")
+      .eq("target_id", katilimci.id),
+    pusulaOzeti(db, katilimci.id),
+    hedefOzeti(db, katilimci.id),
+    onFarkindalikOzeti(db, katilimci.id),
+    kocuOzeti(db, katilimci.id),
+    db.from("settings").select("value").eq("key", "kapali_gorev_turleri").maybeSingle(),
+    db.from("settings").select("key, value").in("key", ["ayna_ek_ton", "gunun_temasi"]),
+    db
+      .from("missions")
+      .select("id", { count: "exact", head: true })
+      .eq("participant_id", katilimci.id)
+      .eq("status", "scored"),
+    // #5
+    db.from("waves").select("id, name").eq("is_open", true).maybeSingle(),
+    // #4
+    db
+      .from("assignments")
+      .select("id", { count: "exact", head: true })
+      .eq("observer_id", katilimci.id),
+  ]);
+
   const icerik = new Map((icerikAyar?.data ?? []).map((s) => [s.key, s.value]));
   const aynaEkTon = (icerik.get("ayna_ek_ton") ?? "").trim();
   const gununTemasi = (icerik.get("gunun_temasi") ?? "").trim();
@@ -262,9 +321,9 @@ export async function gorevUret(
   }
   const onceki = oncekilerSonuc.data ?? [];
   const puanlar = puanlarSonuc.data ?? [];
-  // FAZ 2 re-entry: yolculukta kamp sonrası görev, kişinin yeni cümlesini savunur.
   const yeniCumle = mod === "yolculuk" ? await yeniCumleOku(db, katilimci.id) : null;
 
+  // --- Puan analizi ---
   const ozet = new Map<number, { oz: number[]; dis: number[] }>();
   for (const p of puanlar) {
     const k = ozet.get(p.trait_id) ?? { oz: [], dis: [] };
@@ -274,41 +333,93 @@ export async function gorevUret(
   const ort = (d: number[]) =>
     d.length ? Number((d.reduce((a, b) => a + b, 0) / d.length).toFixed(1)) : null;
 
+  // #1 ALGORİTMİK ÖZELLİK HEDEFLEME — kod öz/dış farkı en büyük 2 özelliği seçer;
+  // "hangi özelliği hedefle" kararını modele bırakmak yerine deterministik yapar.
+  const deltalar = ozellikler
+    .map((o) => {
+      const k = ozet.get(o.id);
+      const oz = ort(k?.oz ?? []);
+      const dis = ort(k?.dis ?? []);
+      if (oz === null || dis === null) return null;
+      const fark = Math.abs(oz - dis);
+      if (fark < 0.5) return null; // anlamlı fark eşiği
+      return { id: o.id, ad: o.name, oz, dis, fark };
+    })
+    .filter((d): d is NonNullable<typeof d> => d !== null)
+    .sort((a, b) => b.fark - a.fark)
+    .slice(0, 2);
+
+  // #3 STREAK MEKANİĞİ — ard arda tamamlanan görev sayısı (expire streak keser)
+  let streak = 0;
+  for (const o of onceki) {
+    if (o.status === "scored") streak++;
+    else break;
+  }
+
+  // #3b PİK YANIT PENCERESİ — kişinin en çok yanıt verdiği saat dilimi (Istanbul)
+  let pikYanitSaati: number | null = null;
+  const yanitlananlar = onceki.filter(
+    (o) => o.status === "scored" && o.responded_at
+  );
+  if (yanitlananlar.length >= 4) {
+    const saatSayaci: Record<number, number> = {};
+    for (const o of yanitlananlar) {
+      const utcSaat = new Date(o.responded_at as string).getUTCHours();
+      const trSaat = (utcSaat + 3) % 24; // Istanbul ≈ UTC+3
+      saatSayaci[trSaat] = (saatSayaci[trSaat] ?? 0) + 1;
+    }
+    let maxSaat = -1,
+      maxCount = 0;
+    for (const [s, c] of Object.entries(saatSayaci)) {
+      if (c > maxCount) {
+        maxCount = c;
+        maxSaat = Number(s);
+      }
+    }
+    if (maxSaat >= 0 && maxCount >= 2) pikYanitSaati = maxSaat;
+  }
+
+  // #2 YANIT TEMALARı — son 3 puanlı görevden çıkarılan tema etiketleri
+  const oncekiYanitTemalari = onceki
+    .filter(
+      (o) =>
+        o.status === "scored" &&
+        Array.isArray(o.response_tags) &&
+        (o.response_tags as string[]).length > 0
+    )
+    .slice(0, 3)
+    .flatMap((o) => o.response_tags as string[]);
+
   const bugunTurleri = onceki
     .filter((o) => Date.now() - new Date(o.issued_at).getTime() < 86_400_000)
     .map((o) => o.kind);
   const tur = turSec(gun, saat, bugunTurleri, mod, undefined, etkinlik?.tur, kapaliTurler);
 
-  // EUSTRESS: son görev formundan akış-kanalı zorluğu
+  // Zorluk hesabı (eustress motoru)
   const kapananlar = onceki.filter(
     (o) => o.status === "scored" || o.status === "expired"
   );
   const puanlilar = kapananlar.filter((o) => o.ai_score !== null);
-  // GELİŞTİRME #3: takılma/kayma sinyali — son 3 görevin 2+'si süresi dolarak
-  // kapandıysa aday sessizleşiyor; tırmanan zorluk yerine yeniden-bağlayan görev ver.
   const kayan = onceki.slice(0, 3).filter((o) => o.status === "expired").length >= 2;
-  // GELİŞTİRME #8 Kaçınma zekâsı: aday son ~8 saatte bir görevi "ağır geldi"
-  // diye hafiflettiyse, bir süre nazik kal (zorluğu düşür, şefkati artır).
   const naziklesir = onceki.some(
-    (o) => o.lightened_at && Date.now() - new Date(o.lightened_at).getTime() < 8 * 3_600_000
+    (o) =>
+      o.lightened_at &&
+      Date.now() - new Date(o.lightened_at as string).getTime() < 8 * 3_600_000
   );
   let zorluk = zorlukSec({
     puanOrt: puanlilar.length
       ? puanlilar.reduce((t, o) => t + (o.ai_score ?? 0), 0) / puanlilar.length
       : null,
     teslimOrani: kapananlar.length
-      ? kapananlar.filter((o) => o.status === "scored").length /
-        kapananlar.length
+      ? kapananlar.filter((o) => o.status === "scored").length / kapananlar.length
       : 1,
     sonSuresiDoldu: kapananlar[0]?.status === "expired",
     kayan,
   });
-  // Yakın zamanda "ağır geldi" dediyse zorluğu en alt kademeye çek.
   if (naziklesir) zorluk = 1;
   const faz = mod === "yolculuk" ? fazBul(gun) : null;
 
-  // GELİŞTİRME #4 Görev Yayı: çekirdek kör nokta + ilerleyen aşama (yalnız ÖF
-  // profili varsa anlamlı; yoksa AYNA serbest üretir).
+  // Görev Yayı
   const ofYay = onFarkindalik as {
     enZayifAlan?: string | null;
     enBuyukAciklar?: { baslik: string }[];
@@ -319,47 +430,137 @@ export async function gorevUret(
     ? { cekirdekTema, ...arkAsamasi(tamamCountSonuc?.count ?? 0) }
     : null;
 
+  // #7 SES TONU KİŞİSELLEŞTİRME — ÖF'ten ritim + geri bildirim açıklığı
+  const ofTon = onFarkindalik as {
+    ritim?: string;
+    geriBildirimAcikligi?: number | null;
+  } | null;
+  let tonOnerisi: string | null = null;
+  if (ofTon?.ritim === "patlayan") {
+    tonOnerisi = "Enerjik, tempolu ve oyunbaz yaz; bu kişi hızlı tutuşur ve ritmi yüksek.";
+  } else if (ofTon?.ritim === "tutarsiz") {
+    tonOnerisi =
+      "Nazik, adım adım ve baskısız bir dil kullan; bu kişinin ritmi tutarsız — küçük, garantili bir adım öner.";
+  }
+  if (
+    typeof ofTon?.geriBildirimAcikligi === "number" &&
+    ofTon.geriBildirimAcikligi < 4
+  ) {
+    tonOnerisi =
+      (tonOnerisi ? tonOnerisi + " " : "") +
+      "Geri bildirime açıklığı düşük — dolaylı, onaylayıcı ve yargısız bir dille yaz; yüzleştirme değil, davet et.";
+  }
+
+  // #5 DALGA HAZIRLIK — aktif değerlendirme dalgası varsa gözlem odağı ekle
+  const aktifDalga = aktifDalgaSonuc?.data ?? null;
+
+  // #4 BAĞ GÖREVİ — eşleşme bağlantı sayısı
+  const baglantıSayisi = baglantıCountSonuc?.count ?? 0;
+
+  // #8 MİKRO-SPRINT — streak≥3, zorluk=3, %20 olasılık
+  const microSprint = streak >= 3 && zorluk === 3 && Math.random() < 0.2;
+
+  // --- Tüm yeni yönergeleri oluştur ---
+  const yeniYonergeler = [
+    // #1 Algoritmik özellik hedefleme
+    deltalar.length > 0
+      ? `ÖNCELİKLİ ÖZELLİK HEDEFLEMESİ: Aşağıdaki özellikler bu kişide öz/dış puan farkı en yüksek olanlar — görevi KESİNLİKLE bunlardan birini hedefleyecek şekilde yaz. Başka özelliği değil, yalnızca şunları çalıştır:\n${deltalar.map((d) => `• ${d.ad} (öz: ${d.oz}, dışarıdan: ${d.dis}, fark: ${d.fark.toFixed(1)})`).join("\n")}`
+      : "",
+    // #2 Yanıt temaları
+    oncekiYanitTemalari.length > 0
+      ? `KİŞİNİN SON YANITLARINDAN ÇIKAN TEMALAR: ${oncekiYanitTemalari.join(", ")}. Görevi mümkünse bu temaların doğal devamına/derinlemesine bağla — ama temaları açıkça söyleme.`
+      : "",
+    // #3 Streak
+    streak >= 5
+      ? `STREAK ONURU (${streak} ard arda görev): Bu momentumu göreve sessizce işle — "ibreyi görüyorum, ilerliyorsun" hissi uyandır. Onu onurlandıran ama biraz daha zorlayan bir görev seç.`
+      : streak >= 3
+        ? `İYİ FORM (${streak} ard arda): Biraz daha iddialı ve enerjik yaz — bu kişi formda.`
+        : "",
+    // #5 Dalga hazırlık
+    aktifDalga
+      ? `DEĞERLENDİRME DALGASI AÇIK (${aktifDalga.name}): Görevi mümkünse adayın değerlendireceği kişileri daha bilinçli gözlemlemesine yönlendir — "daha derin bak" odağıyla.`
+      : "",
+    // #7 Ses tonu
+    tonOnerisi ? `AYNA SES TONU (kişiye özel): ${tonOnerisi}` : "",
+    // #4 Bağ görevi
+    tur === "bag"
+      ? `BAĞ GÖREVİ: Adayı takımından veya kamptan gerçek bir insanla bağlantı kurmaya yönlendir. İsim verme; "az tanıdığın biri", "farklı bir takımdan biri", "sohbet etmek isteyip ertelediğin biri" gibi ifadeler kullan. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
+      : "",
+    // #8 Micro-sprint
+    microSprint
+      ? "MİKRO-SPRINT: Bu görev tam 30 dakikada, tek atomik bir eylemle tamamlanabilmeli. 'Şimdi yap, erteleme' tonuyla yaz — anlık ve tetikleyici olsun. sure_saat=1 döndür."
+      : "",
+    // Mevcut yönergeler
+    tur === "gizli" ? '"Bunu kimseye söyleme" ruhuyla yaz.' : "",
+    tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda karşılaştırılabilecek bir öngörü istesin." : "",
+    tur === "simulasyon"
+      ? 'SİMÜLASYON: kısa bir sahne kur; itirazcının sözünü tırnak içinde (sese çevrilecek), katılımcıdan cevabını sana yazmasını iste.'
+      : "",
+    mod === "yolculuk" ? "Kamp değil, sahada (günlük hayat ve iş ortamı) yapılacak görev." : "",
+    kayan
+      ? "YENİDEN BAĞLAMA: Sessizleşti — sıcak, küçük, garantili bir başlangıç; suçluluk ya da baskı yükleme."
+      : "",
+    naziklesir
+      ? "ŞEFKAT MODU: 'Ağır geldi' dedi — küçük, güvenli, baskısız tut. Önce güveni geri kur."
+      : "",
+    yay
+      ? `GÖREV YAYI ("${yay.cekirdekTema}"), aşama "${yay.ad}": ${yay.yonerge} Önceki aşamaların üstüne çık, geri gitme.`
+      : "",
+    bitenEtkinlik
+      ? `AN'A KİLİTLİ: Az önce "${bitenEtkinlik.baslik}" bitti — duygusu sıcak. Enerjisine bağla.`
+      : "",
+    gununTemasi ? `GÜNÜN TEMASI (görevi mümkünse buna dik): ${gununTemasi}` : "",
+    aynaEkTon ? `ADMIN TON AYARI: ${aynaEkTon}` : "",
+    gorevIpucu
+      ? `ETKİNLİĞE ÖZEL YÖNERGE (MUTLAKA kat): ${gorevIpucu}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
   const baglam = {
     ad: katilimci.full_name.split(" ")[0],
     takim: katilimci.team,
-    // FAZ 0 Pusula: kişinin kamp öncesi damıtılmış nedeni + iç engeli (varsa).
     pusula: pusula ?? null,
-    // FAZ A Hedef: kişinin kariyer hedefi + planı özeti (varsa) — görev bu hedefe hizmet etsin.
     hedef: hedef ?? null,
-    // Ön Farkındalık: ayna profilinin görev için sıkıştırılmış özeti (varsa).
     onFarkindalik: onFarkindalik ?? null,
-    // AYNA Koçu: kişinin koça kendi sözleriyle yazdığı son paylaşımlar (varsa).
     kocuPaylasimlari: kocuPaylasim ?? null,
-    // GELİŞTİRME #4: görev yayı — çekirdek tema + şu anki aşama (varsa).
     gorevYayi: yay,
-    // FAZ 2: kişinin kampta yazdığı yeni cümle (yolculukta savunulacak çapa).
     yeniCumle: yeniCumle ?? null,
     kampGunu: gun,
     saat,
     istenenGorevTuru: tur,
     zorlukSeviyesi: zorluk,
     zorlukYonergesi: ZORLUK_YONERGESI[zorluk],
-    // GELİŞTİRME #3: aday takıldıysa görev yeniden-bağlama ruhuyla kurulur.
     yenidenBagla: kayan,
-    // GELİŞTİRME #8: aday yakında "ağır geldi" dediyse nazik/güvenli kal.
     naziklesir,
-    // #10 İçerik Stüdyosu: admin'in belirlediği günün teması (doluysa görevi ona dik).
     gununTemasi: gununTemasi || null,
     mod,
     suankiKampEtkinligi: etkinlik
       ? {
           baslik: etkinlik.baslik,
           bitisSaati: etkinlik.bitis,
-          not: "Görevi mümkünse bu etkinliğin içine dik — kampın o anki gerçek akışına otursun, etkinlikle yarışmasın.",
-          // Slice 3: grubun şu anki etkinliğine özel görev yönergesi (doluysa).
+          not: "Görevi mümkünse bu etkinliğin içine dik — kampın o anki gerçek akışına otursun.",
           ...(gorevIpucu ? { ozelYonerge: gorevIpucu } : {}),
         }
       : null,
-    // GELİŞTİRME #7: az önce biten deneyimsel an (duygu sıcakken bağla).
     azOnceBitenEtkinlik: bitenEtkinlik ? { baslik: bitenEtkinlik.baslik } : null,
-    yolculukFazi: faz
-      ? { ad: faz.ad, odak: faz.odak, yonerge: faz.yonerge }
-      : null,
+    yolculukFazi: faz ? { ad: faz.ad, odak: faz.odak, yonerge: faz.yonerge } : null,
+    // #1
+    birincilHedefler: deltalar.length > 0 ? deltalar : null,
+    // #2
+    oncekiYanitTemalari: oncekiYanitTemalari.length > 0 ? oncekiYanitTemalari : null,
+    // #3
+    streak,
+    pikYanitSaati,
+    // #5
+    aktifDalga: aktifDalga ? { id: aktifDalga.id, ad: aktifDalga.name } : null,
+    // #7
+    tonOnerisi,
+    // #4
+    baglantıSayisi: baglantıSayisi > 0 ? baglantıSayisi : null,
+    // #8
+    microSprint,
     ozellikler: ozellikler.map((o) => ({
       id: o.id,
       ad: o.name,
@@ -391,7 +592,7 @@ export async function gorevUret(
         },
         {
           type: "text" as const,
-          text: `Görevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa (kişinin nedeni + iç engeli), görevi ona göre kişiselleştir: nedenine sessizce dokun ve iç engelini nazikçe zorlayan bir görev seç — ama iç engeli açıkça yüzüne vurma. Bağlamda "hedef" doluysa (kişinin kariyer hedefi + 90 günlük planı), görevi bu hedefe hizmet eden somut, bugün atılabilir bir saha adımına bağla — nedeniyle hedefini sessizce köprüle, ama hedef rakamlarını kuru kuruya tekrar etme. Bağlamda "onFarkindalik" doluysa (kamp öncesi ayna profili), görevi şuna göre hedefle: "enZayifAlan" kırılgansa o kası çalıştıran, "enBuyukAciklar"daki başlıkta söylediğiyle yaptığı arasını kapatan, "korNokta"daki koruyucu inancı/kalkanı nazikçe sınayan bir görev seç. Ritim "patlayan" ise sürekliliği, geri bildirim açıklığı düşükse geri bildirim almayı/işlemeyi çalıştır. Kör noktayı/açığı ASLA açıkça yüzüne vurma — görev onu sessizce çalışsın. Bağlamda "kocuPaylasimlari" doluysa (kişinin AYNA Koçu'na kendi sözleriyle yazdıkları), görevi onun ŞU AN dert ettiği/hedeflediği gerçek gündemine demirle — paylaştığı somut durumu sessizce dikkate al, ama cümlelerini birebir tekrar etme. Zorluk yönergesine MUTLAKA uy. ${tur === "gizli" ? 'Gizli görevse "Bunu kimseye söyleme" ruhuyla yaz.' : ""} ${tur === "tahmin" ? "Tahmin görevi: akşam büyük ekranda/sonuçlarda karşılaştırılabilecek bir öngörü istemeli." : ""} ${tur === "simulasyon" ? 'SİMÜLASYON görevi: bir aday/müşteri rolünde KISA bir sahne kur; gövdede adayın itirazını tırnak içinde söyle (ör. "Bunlara vaktim yok", "Bu işler bana göre değil") ve katılımcıdan cevabını sana yazmasını/söylemesini iste. İtirazın sertliğini zorluk seviyesine göre ayarla.' : ""} ${mod === "yolculuk" ? "Bu görev KAMPTA DEĞİL, kamp sonrası 90 günlük sahada (günlük hayat ve iş ortamı) yapılacak — kamp alanı varsayma. Bağlamda 'yeniCumle' doluysa: görevi, kişinin kampta yazdığı o yeni cümleyi BUGÜN somut bir adımla YAŞATAN/doğrulayan bir saha eylemi olarak kur — cümleyi açıkça tekrarlama, ama görev onu çalışsın." : ""} ${baglam.yenidenBagla ? "YENİDEN BAĞLAMA: Bu aday son görevlerde sessizleşti/takıldı. Onu YARGILAMADAN, sıcak bir dille yeniden çağır — küçük, eğlenceli, kesinlikle başarılabilir bir başlangıç ver; 'tekrar buradayım, hoş geldin' hissi uyandır. Suçluluk ya da baskı yükleme." : ""} ${naziklesir ? "ŞEFKAT MODU: Bu aday yakın zamanda bir görevi 'ağır geldi' diye hafifletti. Görevi KÜÇÜK, güvenli ve baskısız tut; ona kendi hızında olduğunu hissettir. Zorlama, yüzleştirme, risk yükleme — önce güveni geri kur." : ""} ${yay ? `GÖREV YAYI: Bu adayın görevleri kopuk kopuk değil — tek bir çekirdek tema ("${yay.cekirdekTema}") etrafında derinleşen bir yay. Şu anki aşama "${yay.ad}": ${yay.yonerge} Önceki aşamaların üstüne çık, geri gitme; ama çekirdek temadan da sapma. Temayı adıyla yüzüne vurma.` : ""} ${bitenEtkinlik ? `AN'A KİLİTLİ: Az önce "${bitenEtkinlik.baslik}" anı bitti — duygusu hâlâ sıcak. Görevi bu anın enerjisine bağla; o deneyimde yaşanan şeyi BUGÜN somut bir adıma çevir. Anı doğal biçimde an, zorlama.` : ""} ${gununTemasi ? `GÜNÜN TEMASI (admin belirledi — görevi mümkünse buna dik): ${gununTemasi}` : ""} ${aynaEkTon ? `ADMIN TON AYARI (üsluba uygula): ${aynaEkTon}` : ""} ${gorevIpucu ? `ETKİNLİĞE ÖZEL YÖNERGE (grubun ŞU ANKİ etkinliğine göre — göreve MUTLAKA bunu kat, etkinliğin akışını bozma): ${gorevIpucu}` : ""}`,
+          text: `Görevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa görevi o nedene/iç engele göre kişiselleştir. Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.\n\n${yeniYonergeler}`,
         },
       ],
       messages: [{ role: "user", content: JSON.stringify(baglam) }],
@@ -408,12 +609,14 @@ export async function gorevUret(
     if (!veri?.baslik || !veri.govde) return null;
 
     const gecerliIdler = new Set(ozellikler.map((o) => o.id));
+    // #8 micro-sprint: sure_saat 0.5 = 30 dk
+    const sureSaat = microSprint ? 0.5 : Math.min(3, Math.max(1, veri.sure_saat));
     return {
       kind: tur,
       title: veri.baslik.slice(0, 120),
       body: veri.govde.slice(0, 1000),
       trait_id: gecerliIdler.has(veri.ozellik_id) ? veri.ozellik_id : null,
-      sure_saat: Math.min(3, Math.max(1, veri.sure_saat)),
+      sure_saat: sureSaat,
       difficulty: zorluk,
       itiraz:
         tur === "simulasyon" && veri.itiraz && veri.itiraz.trim().length > 3
@@ -423,66 +626,68 @@ export async function gorevUret(
         veri.neden && veri.neden.trim().length > 3
           ? veri.neden.trim().slice(0, 200)
           : null,
+      micro_sprint: microSprint,
     };
   } catch (e) {
-    // Görev üretimi kampta en sık çalışan Opus çağrısı — kredi/anahtar hatası
-    // önce burada görünür. audit_log'a yaz + kritikse admin'e e-posta uyarısı.
     await aiHataYakala(db, "gorev_uretimi", e);
     return null;
   }
 }
 
+// #2 Yanıt madenciliği + puanlama — paralel çalışarak ek gecikme olmaz.
 export async function gorevPuanla(
   gorev: { title: string; body: string; kind: string },
   yanitMetni: string
-): Promise<{ puan: number; yorum: string } | null> {
+): Promise<{ puan: number; yorum: string; response_tags: string[] } | null> {
   try {
     const client = new Anthropic();
-    const yanit = await client.messages.create({
-      model: "claude-opus-4-8",
-      max_tokens: 1024,
-      thinking: { type: "adaptive" },
-      output_config: {
-        effort: "low",
-        format: { type: "json_schema", schema: PUAN_SEMASI },
-      },
-      system: [
-        {
-          type: "text" as const,
-          text: `${PERSONA}\n\n${BASARI_STRATEJISI}\n\n`,
-          cache_control: { type: "ephemeral" as const },
+    // Puanlama (Opus) ve tema çıkarımı (Haiku) paralel başlar
+    const [yanit, temalar] = await Promise.all([
+      client.messages.create({
+        model: "claude-opus-4-8",
+        max_tokens: 1024,
+        thinking: { type: "adaptive" },
+        output_config: {
+          effort: "low",
+          format: { type: "json_schema", schema: PUAN_SEMASI },
         },
-        {
-          type: "text" as const,
-          text: `${gorev.kind === "simulasyon" ? "Görevin: SİMÜLASYON değerlendirmesi. Önce görevdeki müşteri/aday rolüne gir ve katılımcının cevabına o karakterin ağzından 1 cümlelik gerçekçi tepki ver (ikna olduysa yumuşa, olmadıysa nazikçe diren). Ardından AYNA olarak 1 cümle koçluk ekle: neyi iyi yaptı + bir sonraki denemede tek somut iyileştirme; koçluğu yukarıdaki saha tekniğine (feel-felt-found, ısınma, tempo, 1–10, ısrar=taciz) dayandır. İkisini birlikte 'yorum' alanına yaz. Puanı itirazı karşılama becerisine göre ver." : "Görevin: verdiğin görevin yanıtını puanla. Çabayı, samimiyeti ve somutluğu ödüllendir; boş/alaycı yanıta düşük puan ver ama yine de yapıcı kal. Yorum 1-2 cümle, AYNA'nın ağzından."}`,
-        },
-      ],
-      messages: [
-        {
-          role: "user",
-          content: JSON.stringify({
-            gorev: { baslik: gorev.title, metin: gorev.body, tur: gorev.kind },
-            katilimciYaniti: yanitMetni,
-          }),
-        },
-      ],
-    });
+        system: [
+          {
+            type: "text" as const,
+            text: `${PERSONA}\n\n${BASARI_STRATEJISI}\n\n`,
+            cache_control: { type: "ephemeral" as const },
+          },
+          {
+            type: "text" as const,
+            text: `${gorev.kind === "simulasyon" ? "Görevin: SİMÜLASYON değerlendirmesi. Önce görevdeki müşteri/aday rolüne gir ve katılımcının cevabına o karakterin ağzından 1 cümlelik gerçekçi tepki ver (ikna olduysa yumuşa, olmadıysa nazikçe diren). Ardından AYNA olarak 1 cümle koçluk ekle: neyi iyi yaptı + bir sonraki denemede tek somut iyileştirme; koçluğu yukarıdaki saha tekniğine (feel-felt-found, ısınma, tempo, 1–10, ısrar=taciz) dayandır. İkisini birlikte 'yorum' alanına yaz. Puanı itirazı karşılama becerisine göre ver." : "Görevin: verdiğin görevin yanıtını puanla. Çabayı, samimiyeti ve somutluğu ödüllendir; boş/alaycı yanıta düşük puan ver ama yine de yapıcı kal. Yorum 1-2 cümle, AYNA'nın ağzından."}`,
+          },
+        ],
+        messages: [
+          {
+            role: "user",
+            content: JSON.stringify({
+              gorev: { baslik: gorev.title, metin: gorev.body, tur: gorev.kind },
+              katilimciYaniti: yanitMetni,
+            }),
+          },
+        ],
+      }),
+      temalarCikar(gorev, yanitMetni), // #2 paralel tema çıkarımı
+    ]);
+
     const veri = jsonCoz<{ puan: number; yorum: string }>(yanit);
     if (!veri || !Number.isInteger(veri.puan)) return null;
     return {
       puan: Math.min(10, Math.max(1, veri.puan)),
       yorum: (veri.yorum ?? "").slice(0, 400),
+      response_tags: temalar, // #2
     };
   } catch {
     return null;
   }
 }
 
-// GELİŞTİRME #1 — YANSIMA KAPANIŞI. Görev puanlandıktan sonra adaydan tek
-// cümlelik bir iç-yansıma alınır ("ne zorladı, ne değişti?"). AYNA bunu okuyup
-// kişinin kör noktasıyla SESSİZ bir bağ kurar ve tek, sıcak cümleyle geri
-// yansıtır — kör noktayı adıyla koymadan. Görevi "yapılan iş"ten "görülen
-// içgörü"ye çeviren adım budur. Serbest metin, hızlı model.
+// GELİŞTİRME #1 — YANSIMA KAPANIŞI.
 export async function gorevYansit(
   db: Db,
   pid: string,
@@ -532,11 +737,7 @@ ${onFarkindalik ? `\nADAYIN AYNA PROFİLİ (yalnız senin gözün): ${JSON.strin
   }
 }
 
-// GELİŞTİRME #3 — AYNA ANI. Adayın kamp ÖNCESİ kendi yazdığı kör nokta cümlesini
-// (ters davranış / kalkan / varsayım), kampta yaptıklarıyla yüzleştirip tek bir
-// "gördün mü?" anında geri yansıtır. Kişi yeterince görev tamamladıysa (≥3) ve
-// elimizde alıntılayacak kendi cümlesi varsa üretilir; kişi başına bir kez.
-// Döndürdüğü metin yoksa null (koşul tutmadı ya da üretim düştü).
+// GELİŞTİRME #3 — AYNA ANI.
 export async function aynaAniUret(
   db: Db,
   katilimci: { id: string; full_name: string }
@@ -557,13 +758,12 @@ export async function aynaAniUret(
     enZayifAlan?: string | null;
     korNokta?: { tersDavranis?: string | null; kalkan?: string | null; varsayim?: string | null };
   } | null;
-  // Alıntılanacak kendi cümlesi yoksa Ayna Anı'nın gücü olmaz.
   const kendiCumlesi =
     of?.korNokta?.tersDavranis || of?.korNokta?.kalkan || of?.korNokta?.varsayim || null;
   if (!kendiCumlesi) return null;
 
   const kapananlar = kapananSonuc.data ?? [];
-  if (kapananlar.length < 3) return null; // yeterince "yaşanmış" iş yok
+  if (kapananlar.length < 3) return null;
 
   try {
     const client = new Anthropic();
@@ -607,9 +807,7 @@ Kurallar:
   }
 }
 
-// GELİŞTİRME #6 — SEÇİLEN ZORLUK ("daha ileri git"). Aday aktif bir görevi
-// kendi isteğiyle zorlaştırabilir. Dayatılan değil SEÇİLEN meydan okuma çok daha
-// fazla sahiplik ve farkındalık üretir. Aynı tema/tür korunur; ask cesurlaşır.
+// GELİŞTİRME #6 — SEÇİLEN ZORLUK.
 export async function gorevZorlastir(
   gorev: { title: string; body: string; kind: string },
   yeniZorluk: Zorluk
@@ -664,9 +862,7 @@ export async function gorevZorlastir(
   }
 }
 
-// GELİŞTİRME #8 — DUYGUSAL GÜVENLİK ("bu bana ağır geldi"). Aday bir görevi
-// fazla bulduğunda AYNA YARGILAMADAN, şefkatle daha küçük/güvenli bir varyant
-// verir. Kişiyi koparmak yerine yanında tutar. #6'nın tersi: ask yumuşar.
+// GELİŞTİRME #8 — DUYGUSAL GÜVENLİK.
 export async function gorevHafiflet(
   gorev: { title: string; body: string; kind: string },
   yeniZorluk: Zorluk
@@ -719,7 +915,7 @@ export async function gorevHafiflet(
   }
 }
 
-// ---- Zaman yardımcıları (kamp saati: Europe/Istanbul) ----
+// ---- Zaman yardımcıları ----
 
 export function istanbulSaati(simdi = new Date()): { saat: number; dakika: number } {
   const parcalar = new Intl.DateTimeFormat("tr-TR", {
@@ -733,8 +929,6 @@ export function istanbulSaati(simdi = new Date()): { saat: number; dakika: numbe
   return { saat: al("hour"), dakika: al("minute") };
 }
 
-/** Sessiz saatler (AYNA da uyur). Kamp programı 23:35'e dek sürer ve
- * Gün 2 trekking 07:00'de başlar → kampta 00:00–06:30; yolculukta 22:30–07:30. */
 export function sessizSaatMi(
   simdi = new Date(),
   mod: SistemModu = "kamp"
@@ -745,24 +939,181 @@ export function sessizSaatMi(
   return dk >= 22 * 60 + 30 || dk < 7 * 60 + 30;
 }
 
-/** Sürpriz tempo: kişi+sıra bazlı deterministik 60-180 dk aralık. */
 export function gorevAraligiDk(tempo: string, pid: string, sira: number): number {
   if (tempo === "2") return 120;
   if (tempo === "3") return 180;
   let h = 0;
   const tohum = `${pid}:${sira}`;
   for (let i = 0; i < tohum.length; i++) h = (h * 31 + tohum.charCodeAt(i)) >>> 0;
-  return 60 + (h % 121); // 60–180 dk
+  return 60 + (h % 121);
+}
+
+// #10 KİŞİSELLEŞTİRİLMİŞ SÖZ GÖREVİ — template + opsiyonel AI kişiselleştirme.
+// Statik metnin yerine kişinin pusula nedenini, kör noktasını ve kariyer hedefini
+// doğal bir cümleye dokur. AI düşerse statik versiyona güvenli düşüş yapar.
+export async function sozGoreviKisisel(
+  db: Db,
+  katilimci: { id: string; full_name: string }
+): Promise<{ title: string; body: string }> {
+  const ad = katilimci.full_name.split(" ")[0];
+  const [pusula, hedef, onFarkindalik] = await Promise.all([
+    pusulaOzeti(db, katilimci.id),
+    hedefOzeti(db, katilimci.id),
+    onFarkindalikOzeti(db, katilimci.id),
+  ]);
+
+  const of = onFarkindalik as {
+    korNokta?: { tersDavranis?: string | null; kalkan?: string | null };
+    enZayifAlan?: string | null;
+  } | null;
+  const kendiCumlesi =
+    of?.korNokta?.tersDavranis || of?.korNokta?.kalkan || null;
+
+  // Template-tabanlı kişiselleştirme (AI çağrısı yok — güvenilir ve hızlı)
+  const parcalar: string[] = [`Üç gündür seni izliyorum, ${ad}.`];
+
+  if (pusula) {
+    const pusulaStr =
+      typeof pusula === "object" && pusula !== null
+        ? JSON.stringify(pusula).slice(0, 200)
+        : String(pusula).slice(0, 200);
+    if (pusulaStr.length > 10) {
+      parcalar.push("Bu yolculukta ne getirdiğini gördüm.");
+    }
+  }
+
+  if (kendiCumlesi) {
+    parcalar.push(
+      `"${kendiCumlesi.slice(0, 120)}" diye yazmıştın. Bugün ne değişti, sence?`
+    );
+  }
+
+  if (hedef) {
+    parcalar.push("Şimdi son görevin — bu kamptan 90 gün sonraki haline söz ver.");
+  } else {
+    parcalar.push("Şimdi son görevin — en önemlisi: 90 gün sonraki haline bir söz yaz.");
+  }
+
+  parcalar.push(
+    "Bu kamptan ne götürüyorsun, neyi değiştireceksin? Sözünü saklayacağım. Ve günü geldiğinde... sana hatırlatacağım. — AYNA"
+  );
+
+  return {
+    title: SOZ_GOREVI.title,
+    body: parcalar.join(" "),
+  };
 }
 
 export const SOZ_GOREVI = {
   kind: "soz" as const,
   title: "Son Görev: SÖZ",
-  body:
-    "Üç gündür seni izliyorum. Şimdi son görevin — en önemlisi: Kendine, 90 gün sonraki haline bir söz yaz. Bu kamptan ne götürüyorsun, neyi değiştireceksin? Sözünü saklayacağım. Ve günü geldiğinde... sana hatırlatacağım. — AYNA",
+  body: "Üç gündür seni izliyorum. Şimdi son görevin — en önemlisi: Kendine, 90 gün sonraki haline bir söz yaz. Bu kamptan ne götürüyorsun, neyi değiştireceksin? Sözünü saklayacağım. Ve günü geldiğinde... sana hatırlatacağım. — AYNA",
 };
 
-// ---- SENKRON AN: herkese aynı anda aynı mikro görev (ambient sociability) ----
+// #6 KÖR NOKTA GÜNCELLEME DÖNGÜSÜ — kamp ortasında birikim analizi.
+// Katılımcının 5., 10. veya 15. puanlı görevi tamamlandığında çağrılır.
+// Son 5 görev yanıtından yeni/derinleşen temayı Haiku ile analiz eder ve
+// on_farkindalik.profil.kampici_guncelleme alanına ekler.
+export async function korNoktaGuncelle(
+  db: Db,
+  pid: string,
+  toplamTamamlanan: number
+): Promise<void> {
+  // Yalnız milestone'larda çalış (5, 10, 15)
+  if (toplamTamamlanan % 5 !== 0 || toplamTamamlanan === 0) return;
+
+  // Daha önce bu milestone'da güncelleme yapıldıysa atla
+  const { data: ofData } = await db
+    .from("on_farkindalik")
+    .select("profil")
+    .eq("participant_id", pid)
+    .maybeSingle();
+  const mevcutProfil = (ofData?.profil ?? {}) as Record<string, unknown>;
+  const sonGuncelleme = mevcutProfil["kampici_guncelleme"] as
+    | { milestone?: number }
+    | undefined;
+  if (sonGuncelleme?.milestone === toplamTamamlanan) return;
+
+  // Son 5 yanıtı al
+  const { data: yanitlar } = await db
+    .from("missions")
+    .select("title, response_text, response_tags")
+    .eq("participant_id", pid)
+    .eq("status", "scored")
+    .not("response_text", "is", null)
+    .order("scored_at", { ascending: false })
+    .limit(5);
+
+  if (!yanitlar?.length) return;
+
+  try {
+    const client = new Anthropic();
+    const yanit = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 300,
+      thinking: { type: "disabled" },
+      output_config: {
+        effort: "low",
+        format: {
+          type: "json_schema",
+          schema: {
+            type: "object",
+            properties: {
+              yeniTema: {
+                type: "string",
+                description:
+                  "Son yanıtlardan öne çıkan yeni veya derinleşen psikolojik tema (en fazla 5 kelime, Türkçe). Yoksa boş string.",
+              },
+              aciklama: {
+                type: "string",
+                description: "Neden bu temayı gördün? 1 cümle.",
+              },
+            },
+            required: ["yeniTema", "aciklama"],
+            additionalProperties: false,
+          },
+        },
+      },
+      system:
+        "Bir liderlik kampı katılımcısının son görev yanıtlarını analiz et. Kamp öncesi profilinden farklılaşan, kamp boyunca öne çıkan yeni veya derinleşen psikolojik temayı tespit et. Yalnızca gerçekten belirgin bir tema varsa yaz; yoksa boş string döndür.",
+      messages: [
+        {
+          role: "user",
+          content: JSON.stringify({
+            son5Yanit: yanitlar.map((y) => ({
+              gorev: y.title,
+              yanit: (y.response_text as string | null)?.slice(0, 300),
+              temalar: y.response_tags,
+            })),
+          }),
+        },
+      ],
+    });
+
+    const veri = jsonCoz<{ yeniTema: string; aciklama: string }>(yanit);
+    if (!veri?.yeniTema) return;
+
+    // on_farkindalik.profil'e ekle (merge)
+    const guncellenmis = {
+      ...mevcutProfil,
+      kampici_guncelleme: {
+        milestone: toplamTamamlanan,
+        yeniTema: veri.yeniTema.trim().slice(0, 80),
+        aciklama: veri.aciklama.trim().slice(0, 200),
+      },
+    };
+    await db
+      .from("on_farkindalik")
+      .upsert(
+        { participant_id: pid, profil: guncellenmis, updated_at: new Date().toISOString() },
+        { onConflict: "participant_id" }
+      );
+  } catch {
+    // güncelleme düşerse kampı etkilemez
+  }
+}
+
+// ---- SENKRON AN ----
 
 const SENKRON_SEMASI = {
   type: "object" as const,

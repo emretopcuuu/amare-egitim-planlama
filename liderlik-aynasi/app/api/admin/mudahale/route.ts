@@ -36,6 +36,7 @@ export async function POST(req: Request) {
     const { saat } = istanbulSaati();
     const gorev = await gorevUret(db, kisi, gun, saat, "kamp", null);
     if (!gorev) return Response.json({ hata: tr.admin.mudahale.uretilemedi }, { status: 503 });
+    // #8 micro_sprint: sure_saat 0.5 = 30 dk
     const dueAt = new Date(Date.now() + gorev.sure_saat * 3_600_000);
     const { error } = await db.from("missions").insert({
       participant_id: kisi.id,
@@ -44,6 +45,8 @@ export async function POST(req: Request) {
       title: gorev.title,
       body: gorev.body,
       difficulty: gorev.difficulty,
+      neden: gorev.neden,
+      micro_sprint: gorev.micro_sprint,
       due_at: dueAt.toISOString(),
     });
     if (error) return Response.json({ hata: tr.admin.mudahale.hata }, { status: 500 });

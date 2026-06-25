@@ -2992,6 +2992,7 @@ export const tr = {
       tahmin: "🎲 Tahmin",
       simulasyon: "🎭 Simülasyon",
       senkron: "⏱ Senkron An",
+      bag: "🤝 Bağ",
       soz: "🤝 Söz",
     },
     sozTesekkur:
