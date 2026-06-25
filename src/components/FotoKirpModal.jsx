@@ -95,6 +95,9 @@ const FotoKirpModal = ({ file, onSave, onCancel }) => {
       canvas.width = OUTPUT_SIZE;
       canvas.height = OUTPUT_SIZE;
       const ctx = canvas.getContext('2d');
+      // Uzaklaştırınca daire dışı boşluk JPEG'de siyah çıkmasın → beyaz zemin
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, srcX, srcY, srcW, srcH, 0, 0, OUTPUT_SIZE, OUTPUT_SIZE);
@@ -125,11 +128,11 @@ const FotoKirpModal = ({ file, onSave, onCancel }) => {
         </button>
 
         <h3 className="text-lg font-bold text-gray-800 mb-1">Fotoğrafı Ayarla</h3>
-        <p className="text-xs text-gray-500 mb-4">Sürükle ve zoom ile yüzü ortala</p>
+        <p className="text-xs text-gray-500 mb-4">Sürükle, yakınlaştır/uzaklaştır ile yüzü ortala</p>
 
         {/* Daire crop alanı */}
         <div
-          className="relative mx-auto bg-gray-100 rounded-full overflow-hidden border-4 border-purple-200 select-none"
+          className="relative mx-auto bg-white rounded-full overflow-hidden border-4 border-purple-200 select-none"
           style={{ width: CONTAINER_SIZE, height: CONTAINER_SIZE, cursor: dragState.current.active ? 'grabbing' : 'grab' }}
           onMouseDown={onDragStart}
           onMouseMove={onDragMove}
@@ -171,7 +174,7 @@ const FotoKirpModal = ({ file, onSave, onCancel }) => {
           <ZoomOut className="w-4 h-4 text-gray-500 flex-shrink-0" />
           <input
             type="range"
-            min="1"
+            min="0.4"
             max="3"
             step="0.05"
             value={zoom}
