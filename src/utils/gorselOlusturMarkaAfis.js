@@ -300,18 +300,21 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       const p = prog[i];
       const cx = M + cellW * i + cellW / 2;
       const saat = [p.baslangic, p.bitis].filter(Boolean).join(' - ');
-      // saat hapı (altın çerçeve)
-      ctx.font = `700 ${Math.round(W * 0.026)}px Arial`;
-      const sw = ctx.measureText(saat).width + Math.round(W * 0.04);
       const sh = Math.round(H * 0.035);
-      ctx.strokeStyle = palet.gold; ctx.lineWidth = 2; ctx.fillStyle = 'rgba(216,177,90,0.12)';
-      roundRect(ctx, cx - sw / 2, bandTop, sw, sh, sh / 2); ctx.fill(); ctx.stroke();
-      ctx.fillStyle = palet.gold; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(saat, cx, bandTop + sh / 2); ctx.textBaseline = 'alphabetic';
-      // aktivite
+      // saat hapı (altın çerçeve) — YALNIZ saat girilmişse (boş daire çizme)
+      if (saat) {
+        ctx.font = `700 ${Math.round(W * 0.026)}px Arial`;
+        const sw = ctx.measureText(saat).width + Math.round(W * 0.04);
+        ctx.strokeStyle = palet.gold; ctx.lineWidth = 2; ctx.fillStyle = 'rgba(216,177,90,0.12)';
+        roundRect(ctx, cx - sw / 2, bandTop, sw, sh, sh / 2); ctx.fill(); ctx.stroke();
+        ctx.fillStyle = palet.gold; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(saat, cx, bandTop + sh / 2); ctx.textBaseline = 'alphabetic';
+      }
+      // aktivite — saat varsa hapın altında, yoksa bandın üstünde (boşluk bırakma)
       ctx.fillStyle = palet.metin;
       ctx.font = `600 ${Math.round(W * 0.022)}px Arial`;
-      wrapText(ctx, (p.baslik || '').toLocaleUpperCase('tr-TR'), cx, bandTop + sh + Math.round(W * 0.028), cellW * 0.92, Math.round(W * 0.026), 2);
+      const aktY = saat ? bandTop + sh + Math.round(W * 0.028) : bandTop + Math.round(W * 0.026);
+      wrapText(ctx, (p.baslik || '').toLocaleUpperCase('tr-TR'), cx, aktY, cellW * 0.92, Math.round(W * 0.026), 2);
     }
   }
 
