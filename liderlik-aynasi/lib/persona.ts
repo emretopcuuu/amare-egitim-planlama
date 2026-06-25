@@ -151,3 +151,21 @@ export function personaBlogu(p: PersonaSonuc | null): string {
 
   return ortak + bloklar[p.hal];
 }
+
+// ★ 90 GÜNLÜK YOLCULUK ODAĞI — kamp biter, kimlik 90 günde yerleşir. Her hâl
+// farklı bir şeye odaklanır (Üç Kariyer Hâli belgesi: 66 gün protokolü).
+// Yalnız yolculuk modunda enjekte edilir.
+export function personaYolculukOdak(p: PersonaSonuc | null): string {
+  if (!p) return "";
+  const odak: Record<KariyerHal, string> = {
+    test_edilmemis:
+      "YOLCULUK ODAĞI (A): Kampta tasarladığı kontrollü zorlukları gerçek sahaya taşı; hazırlığını sına. Görev küçük ama gerçek bir riski davet etsin — beklemek değil, kendi spor salonunu kurmak.",
+    yukselis:
+      "YOLCULUK ODAĞI (A+): İvmeyi sürdürülebilir sisteme çevir. Görev, sıçramayı kalıcı kılan bir alışkanlık ya da bir sonraki lideri yetiştiren bir adım olsun.",
+    duraksama:
+      "YOLCULUK ODAĞI (B): Momentum zincirini kırmadan biriktir — her gün tek bir küçük hareket (görüşme/davet/takip), 'yaptım' zinciri. Büyük kahramanlık değil, sıkıcı süreklilik.",
+    gerileme:
+      "YOLCULUK ODAĞI (C): Tek kişiyle başlattığı dönüşü çekirdekten kalabalığa büyüt. Görev, ekibinde bir kişinin ışığını yeniden yakmaya ve oradan genişlemeye odaklansın. Rütbe değil, bir insanla başla.",
+  };
+  return odak[p.hal];
+}
