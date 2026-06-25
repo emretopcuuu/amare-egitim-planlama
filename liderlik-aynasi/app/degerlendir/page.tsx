@@ -104,6 +104,21 @@ export default async function DegerlendirPage() {
   const ozBirincil = !ozTamam;
   const atananBirincil = ozTamam && atananEksik;
 
+  // Aday UX #3 — yarım kalan değerlendirme: ilk kısmen-puanlanmış hedef
+  // (0 < yapılan < toplam) "kaldığın yerden devam et" bandında öne çıkar.
+  const yarimKalan: { id: string; ad: string } | null = (() => {
+    if (ozSayi > 0 && ozSayi < toplam) return { id: session.sub, ad: "kendin" };
+    for (const a of atamalar) {
+      const c = puanSayilari.get(a.target.id) ?? 0;
+      if (c > 0 && c < toplam) return { id: a.target.id, ad: a.target.full_name };
+    }
+    for (const k of katilimcilar) {
+      const c = puanSayilari.get(k.id) ?? 0;
+      if (c > 0 && c < toplam) return { id: k.id, ad: k.full_name };
+    }
+    return null;
+  })();
+
   // Avatar fotoğrafları: tüm hedeflerin profil_foto_path'lerini tek seferde imzala.
   const fotoKayit: { id: string; path: string }[] = [];
   if (kendiFoto?.profil_foto_path)
@@ -142,6 +157,22 @@ export default async function DegerlendirPage() {
           {dalga.name}
         </h1>
       </header>
+
+      {/* Aday UX #3 — kaldığın yerden devam et (yarım kalan varsa) */}
+      {yarimKalan && (
+        <Link
+          href={`/degerlendir/${yarimKalan.id}`}
+          className="flex items-center justify-between gap-3 rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 transition-colors hover:bg-gold/15"
+        >
+          <span className="min-w-0 text-sm text-slate-200">
+            <span className="font-semibold text-gold-light">↩ Kaldığın yerden devam et</span>
+            <span className="ml-1 text-slate-400">· {yarimKalan.ad}</span>
+          </span>
+          <span aria-hidden className="shrink-0 text-gold-light">
+            →
+          </span>
+        </Link>
+      )}
 
       {/* DALGA ÇERÇEVESİ: puanlar kalıcı değil — her dalga bir sonrakinde
           güncellenir. Kullanıcı baskı hissetmeden, dürüstçe puanlasın. */}

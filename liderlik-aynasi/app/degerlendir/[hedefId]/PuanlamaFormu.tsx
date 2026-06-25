@@ -8,6 +8,8 @@ import { titret, suDalgasi, cal } from "@/lib/his";
 import Avatar from "@/components/Avatar";
 import AynaLogo from "@/components/AynaLogo";
 import MikrofonButonu from "@/components/MikrofonButonu";
+import YorumKocu from "./YorumKocu";
+import PuanlamaTuru from "./PuanlamaTuru";
 
 type Ozellik = { id: number; name: string; observation_hint: string };
 type Girdi = { puan: number | null; yorum: string };
@@ -423,6 +425,9 @@ export default function PuanlamaFormu({
         )}
       </header>
 
+      {/* Aday UX #9 — ilk kez puanlayana tek seferlik 3 adımlık mini-tur */}
+      {adim === 0 && <div className="mt-4"><PuanlamaTuru /></div>}
+
       {/* TEK ÖZELLİK ekranı — key={adim}: her geçişte giriş animasyonu yeniden oynar */}
       {o && g && (
         <div key={adim} className="of-adim flex flex-1 flex-col justify-center py-8">
@@ -485,6 +490,8 @@ export default function PuanlamaFormu({
               <label htmlFor="yorum" className="text-lg font-semibold text-amber-300">
                 {tr.puanlama.yorumEtiket}
               </label>
+              {/* Aday UX #4 — yapıcı yorum koçu */}
+              <YorumKocu />
               <textarea
                 id="yorum"
                 value={g.yorum}

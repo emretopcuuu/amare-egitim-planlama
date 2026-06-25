@@ -11,6 +11,7 @@ import AtlaBaglantisi from "@/components/AtlaBaglantisi";
 import ProvaModuBayragi from "@/components/ProvaModuBayragi";
 import SuDalgaTik from "@/components/SuDalgaTik";
 import YuzenGeri from "@/components/YuzenGeri";
+import YardimKanali from "@/components/YardimKanali";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -113,6 +114,8 @@ export default async function RootLayout({
         <AltNav />
         {/* Alt nav gizli içerik sayfalarında sabit "← Ana sayfa" */}
         <YuzenGeri />
+        {/* Aday UX #8 — her katılımcı ekranında "Takıldım / yardım" düğmesi */}
+        <YardimKanali />
         {/* #5 Su/ayna marka hareketi — dokunuşta su dalgası */}
         <SuDalgaTik />
         <IlkKarsilama />
