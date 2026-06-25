@@ -65,3 +65,36 @@ export async function davetGonder(
     return false;
   }
 }
+
+// Sistem uyarısı (ör. AYNA kredisi bitti) admin'e gider. Alıcı UYARI_EPOSTA
+// env'inden, yoksa kamp yöneticisinin sabit adresine. Gönderici davet maili
+// ile aynı (POSTMARK_SERVER_TOKEN + EMAIL_FROM).
+export async function uyariEpostasiGonder(
+  konu: string,
+  metin: string,
+  html: string
+): Promise<boolean> {
+  if (!epostaYapilandirildiMi()) return false;
+  const alici = process.env.UYARI_EPOSTA || "s.emretopcu@gmail.com";
+  try {
+    const res = await fetch("https://api.postmarkapp.com/email", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        accept: "application/json",
+        "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN!,
+      },
+      body: JSON.stringify({
+        From: process.env.EMAIL_FROM!,
+        To: alici,
+        Subject: konu,
+        TextBody: metin,
+        HtmlBody: html,
+        MessageStream: "outbound",
+      }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}

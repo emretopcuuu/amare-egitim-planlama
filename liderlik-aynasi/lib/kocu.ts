@@ -2,6 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { pusulaOzeti } from "@/lib/pusula";
+import { kritikAiHatasiBildir } from "@/lib/uyari";
 
 // GELİŞTİRME #1 — AYNA KOÇU. Adayın her an açabildiği sürekli, bağlamsal sohbet.
 // Pusula (neden/iç engel) + Ön Farkındalık (kör nokta) + aktif görev bağlamını
@@ -180,6 +181,11 @@ Yanıtın YALNIZCA adaya söyleyeceğin temiz, doğru yazılmış Türkçe repli
     } catch {
       // audit yazımı da düşerse yut
     }
+    // Kritikse (kredi/anahtar) admin'e e-posta uyarısı gönder.
+    await kritikAiHatasiBildir(db, "kocu", {
+      status: (e as { status?: number })?.status ?? null,
+      message: sebep,
+    });
     return null;
   }
   if (!metin) return null;

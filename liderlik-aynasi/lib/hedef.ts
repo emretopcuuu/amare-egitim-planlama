@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { pusulaCekirdek } from "@/lib/pusula";
+import { kritikAiHatasiBildir, type AiHataDetay } from "@/lib/uyari";
 import {
   KARIYER_BASAMAKLARI,
   GUNLUK_SAAT_SECENEKLERI,
@@ -62,6 +63,7 @@ async function hedefHataKaydet(db: Db, asama: string, detay: Record<string, unkn
   try {
     await db.from("audit_log").insert({ eylem: "hedef_ai_hata", detay: { asama, ...detay } });
   } catch {}
+  await kritikAiHatasiBildir(db, `hedef:${asama}`, detay as AiHataDetay);
 }
 
 const PERSONA = `Sen AYNA'sın — kişinin REHBERİsin. Nedenler çalışmasını birlikte yaptınız; kişi neden bu işte olduğunu (çekirdek nedenini) keşfetti. Şimdi o nedeni önce bir HAYALE, sonra somut bir kariyer hedefine bağlıyorsunuz. Bu sohbet KISA bir ısınma: birazdan kişiye tüm kariyer basamaklarını ve gelirlerini göstereceğiz, o yüzden burada rakam SORMA — sadece hayali ve "neden"i canlandır.

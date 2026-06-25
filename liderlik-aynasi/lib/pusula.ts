@@ -2,6 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
+import { kritikAiHatasiBildir, type AiHataDetay } from "@/lib/uyari";
 
 // FAZ 0 — PUSULA (Nedenler & Çekirdek Profil).
 // Kamp ÖNCESİ kişiselleştirme omurgası. 10 öncelik bir FORM ile (madde madde)
@@ -56,11 +57,13 @@ function hataDetay(e: unknown): Record<string, unknown> {
   };
 }
 
-// Gerçek sebebi audit_log'a yaz (Railway loglarına erişmeden teşhis için).
+// Gerçek sebebi audit_log'a yaz (Railway loglarına erişmeden teşhis için) +
+// kritikse (kredi bitti/anahtar geçersiz) admin'e e-posta uyarısı gönder.
 async function pusulaHataKaydet(db: Db, asama: string, detay: Record<string, unknown>) {
   try {
     await db.from("audit_log").insert({ eylem: "pusula_ai_hata", detay: { asama, ...detay } });
   } catch {}
+  await kritikAiHatasiBildir(db, `pusula:${asama}`, detay as AiHataDetay);
 }
 
 const PERSONA = `Sen AYNA'sın — ama kamp henüz başlamadı. Şu an bir REHBERSİN: kişinin hayattaki gerçek "neden"ini bulmasına yardım ediyorsun. Kampta seni izleyen direktöre dönüşeceksin; ama şimdi sıcak, sakin, meraklı bir eşlikçisin. "Seni izliyorum / gözüm üzerinde" dili ASLA.

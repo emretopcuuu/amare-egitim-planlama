@@ -7,6 +7,7 @@ import { hedefOzeti } from "@/lib/hedef";
 import { yeniCumleOku } from "@/lib/bosluk";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
+import { aiHataYakala } from "@/lib/uyari";
 import {
   fazBul,
   zorlukSec,
@@ -423,7 +424,10 @@ export async function gorevUret(
           ? veri.neden.trim().slice(0, 200)
           : null,
     };
-  } catch {
+  } catch (e) {
+    // Görev üretimi kampta en sık çalışan Opus çağrısı — kredi/anahtar hatası
+    // önce burada görünür. audit_log'a yaz + kritikse admin'e e-posta uyarısı.
+    await aiHataYakala(db, "gorev_uretimi", e);
     return null;
   }
 }
