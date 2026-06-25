@@ -1090,6 +1090,7 @@ export type Database = {
       }
       participants: {
         Row: {
+          camp_unlock_token: string | null
           camp_unlocked_at: string | null
           city: string | null
           consent_at: string | null
@@ -1106,6 +1107,7 @@ export type Database = {
           yuz_fotolari: Json
         }
         Insert: {
+          camp_unlock_token?: string | null
           camp_unlocked_at?: string | null
           city?: string | null
           consent_at?: string | null
@@ -1122,6 +1124,7 @@ export type Database = {
           yuz_fotolari?: Json
         }
         Update: {
+          camp_unlock_token?: string | null
           camp_unlocked_at?: string | null
           city?: string | null
           consent_at?: string | null

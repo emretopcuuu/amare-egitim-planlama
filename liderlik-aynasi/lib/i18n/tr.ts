@@ -828,6 +828,10 @@ export const tr = {
     acBasariDugme: "Kampa gir →",
     acZatenBaslik: "Kampın zaten açık 🔓",
     acZatenMetin: "Mührün çoktan kalkmış. Devam edebilirsin.",
+    // Başkasının kişisel açma QR'ı okutulduğunda
+    acYabanciBaslik: "Bu QR sana ait değil",
+    acYabanciMetin:
+      "Bu açma QR'ı başka bir katılımcıya ait. Kendi kartındaki QR'ı okut — herkes yalnız kendi kampını açabilir.",
     // FAZ 0 hazırlık hub'ı (Pusula bitince, kampa gelmeden)
     hazirlikBaslik: "Pusulan kuruldu 🧭",
     hazirlikAltBaslik:
@@ -2743,11 +2747,11 @@ export const tr = {
       pusulaEksik: "ses var · pusula eksik",
     },
     qr: {
-      baslik: "QR Giriş Kartları",
+      baslik: "Kişisel Kamp Açma Kartları",
       aciklama:
-        "Yaka kartlarının arkasına basılacak kartlar. Yazdır penceresinden 'PDF olarak kaydet' seçebilirsin.",
+        "Her kartta kişiye özel kamp açma QR'ı + giriş kodu var. Giriş kodla yapılır; mühürlü alandan sonrası kendi QR'ıyla açılır (başkasınınki açmaz). Yazdır penceresinden 'PDF olarak kaydet' seçebilirsin.",
       yazdir: "Yazdır / PDF Kaydet",
-      kartAltyazi: "QR'ı okut veya kodu gir",
+      kartAltyazi: "Giriş: kodu gir · Kampı aç: QR'ı okut",
       katilimciYok: "Önce katılımcı ekle.",
     },
     moderasyon: {
