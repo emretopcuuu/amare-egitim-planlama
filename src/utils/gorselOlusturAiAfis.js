@@ -66,8 +66,10 @@ const arkaPlanPrompt = (egitim, palet) => {
     (sehir ? `Sağ tarafa, ${sehir} şehrinin meşhur landmark'ını ince, zarif tek-renk LINE-ART (çizgi illüstrasyon) olarak yerleştir (örn. İzmir → Saat Kulesi; İstanbul → tarihi silüet). ` : '') +
     `Üst bölge AÇIK/aydınlık olsun (büyük başlık oraya gelecek), alt-orta bölge sade kalsın. ` +
     `Renkler: krem/açık zemin + ${palet.teal} teal vurgular + ${palet.navy} koyu detaylar. ` +
-    `Düz/vektör illüstrasyon stili, premium, ferah, bol beyaz alan. ` +
-    `KESİNLİKLE YOK: hiç yazı, harf, sayı, kelime; hiç insan yüzü/figürü; hiç logo/amblem/marka. Sadece zemin.`;
+    `Düz/vektör illüstrasyon stili, premium, ferah, ÇOK bol beyaz/boş alan. ` +
+    `MUTLAK YASAK (bunlardan HİÇBİRİ olmayacak): insan, yüz, portre, vücut, silüet, kişi; ` +
+    `yazı, harf, sayı, kelime; logo, amblem, marka. ` +
+    `Sadece soyut dekoratif zemin + (varsa) şehir landmark line-art. İnsan figürü görürsen YANLIŞ.`;
 };
 
 // Gemini (nano-banana) ile — tarayıcıdan SORUNSUZ çalışır (googleapis CORS'a izin verir)
@@ -177,8 +179,8 @@ export const gorselOlusturAiAfis = async ({ geminiApiKey, openaiApiKey, egitim, 
   ctx.textBaseline = 'alphabetic';
 
   // ── ZONE hesabı: alt logo bandını rezerve et, içerik asla taşmasın ──
-  const adres = afisAdresKisa(egitim);
   const fiziki = isFiziki(egitim);
+  const adres = fiziki ? afisAdresKisa(egitim) : ''; // online'da çirkin Zoom ID kartı yok
   const bottomReserve = Math.round(H * 0.115); // alt logo bandı (logolariEkle buraya çizer)
   const gap = Math.round(H * 0.02);
   const contentTop = pillY + pillH + gap;
@@ -221,14 +223,18 @@ export const gorselOlusturAiAfis = async ({ geminiApiKey, openaiApiKey, egitim, 
         } else { ctx.fillStyle = palet.krem; ctx.fillRect(cx - foto / 2, fy - foto / 2, foto, foto); }
         ctx.restore();
         ctx.textAlign = 'center';
+        // İsim — fotoğrafın altında net boşlukla (px-tabanlı, çakışma yok)
+        const nameSize = Math.round(cellW * 0.072);
         ctx.fillStyle = palet.krem;
-        ctx.font = `700 ${Math.round(cellW * 0.082)}px Arial`;
-        const nameY = fy + foto / 2 + Math.round(perRowH * 0.18);
+        ctx.font = `700 ${nameSize}px Arial`;
+        const nameY = fy + foto / 2 + nameSize + 16;
         ctx.fillText((e.ad || '').toLocaleUpperCase('tr-TR'), cx, nameY, cellW * 0.94);
+        // Etiket — ismin altında net boşlukla
         if (e.unvan) {
+          const labelSize = Math.round(cellW * 0.054);
           ctx.fillStyle = palet.vurgu;
-          ctx.font = `600 ${Math.round(cellW * 0.06)}px Arial`;
-          ctx.fillText(e.unvan, cx, nameY + Math.round(perRowH * 0.12), cellW * 0.94);
+          ctx.font = `600 ${labelSize}px Arial`;
+          ctx.fillText(e.unvan, cx, nameY + labelSize + 12, cellW * 0.94);
         }
         ctx.textAlign = 'left';
       }
