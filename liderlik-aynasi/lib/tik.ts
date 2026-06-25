@@ -43,6 +43,7 @@ import {
 } from "@/lib/cumartesiProgrami";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
+import { kategoriSec, sozSec } from "@/lib/ozluSozler";
 
 type Db = ReturnType<typeof supabaseAdmin>;
 
@@ -689,6 +690,42 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       updated_at: simdi.toISOString(),
     });
     ozet.acilan++;
+  }
+
+  // 6a) SABAH ÖZLÜ SÖZ: 08:00-09:00 arasında, günde bir kez, herkese kendi
+  // Pusula iç engel kategorisine göre seçilmiş bir söz push'la gönder.
+  // Pusula dolmamışsa varsayılan → liderlik kategorisi.
+  if (saat === 8 && !sahneSessiz) {
+    const sabahSozAnahtari = `sabah_soz_${bugun}`;
+    const { data: sozGonderilmis } = await db
+      .from("settings")
+      .select("key")
+      .eq("key", sabahSozAnahtari)
+      .maybeSingle();
+    if (!sozGonderilmis) {
+      await db.from("settings").upsert({ key: sabahSozAnahtari, value: "1" });
+      // Pusula iç engel kategorilerini tek sorguda çek
+      const { data: pusulalar } = await db
+        .from("pusula")
+        .select("participant_id, ic_engel_kat")
+        .not("tamamlandi_at", "is", null);
+      const engelHarita = new Map(
+        (pusulalar ?? []).map((p) => [p.participant_id, p.ic_engel_kat as string | null])
+      );
+      for (const k of kisiler ?? []) {
+        const engelKat = engelHarita.get(k.id) ?? null;
+        const kategori = kategoriSec(engelKat);
+        const soz = sozSec(kategori, gun);
+        await katilimciyaBildir(
+          db,
+          k.id,
+          "✨ Bugünün sözü",
+          `"${soz.metin}" — ${soz.kaynak}`,
+          "/"
+        );
+        ozet.fisilti++;
+      }
+    }
   }
 
   // 6) Günlük fısıltı (13-14 ve 20-21 aralığında birer kez): "bugün N göz seni puanladı"
