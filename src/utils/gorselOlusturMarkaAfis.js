@@ -95,7 +95,9 @@ const altinHap = (ctx, cx, y, text, fontSize, palet) => {
 };
 
 export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait' }) => {
-  const W = 1080, H = format === 'square' ? 1080 : 1350;
+  // Marka Afiş HER ZAMAN dikey (kare/story selektöründen bağımsız) — referanslar dikey,
+  // kare alan fotoları sıkıştırıyordu.
+  const W = 1080, H = 1350;
   const palet = paletSec(egitim);
   const fiziki = isFiziki(egitim);
   const canvas = document.createElement('canvas');
@@ -122,6 +124,13 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   ctx.shadowColor = 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
   y = wrapText(ctx, (egitim.egitim || '').toLocaleUpperCase('tr-TR'), W / 2, y + tSize, W - M * 2, tSize * 1.05, 4);
   ctx.shadowBlur = 0;
+  // başlık altı altın aksan çizgisi (parıltılı uçlar) — modern dokunuş
+  y += Math.round(H * 0.006);
+  const akcW = Math.round(W * 0.16);
+  const akc = ctx.createLinearGradient(W / 2 - akcW, 0, W / 2 + akcW, 0);
+  akc.addColorStop(0, 'rgba(216,177,90,0)'); akc.addColorStop(0.5, palet.gold); akc.addColorStop(1, 'rgba(216,177,90,0)');
+  ctx.fillStyle = akc; ctx.fillRect(W / 2 - akcW, y, akcW * 2, 3);
+  y += Math.round(H * 0.012);
 
   // ── Altın şehir rozeti (fiziki) ──
   if (fiziki && egitim.sehir) {
@@ -180,6 +189,11 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
         const e = liste[idx];
         const cx = sidePad + cellW * c + cellW / 2;
         const fy = rowY + topPad + foto / 2;
+        // yumuşak altın ışıltı (derinlik / modern his)
+        const gl = ctx.createRadialGradient(cx, fy, foto * 0.32, cx, fy, foto * 0.88);
+        gl.addColorStop(0, 'rgba(216,177,90,0.32)'); gl.addColorStop(1, 'rgba(216,177,90,0)');
+        ctx.fillStyle = gl;
+        ctx.beginPath(); ctx.arc(cx, fy, foto * 0.88, 0, Math.PI * 2); ctx.fill();
         // altın halka + foto (gölgeli → ön plan hissi)
         ctx.save();
         ctx.shadowColor = 'rgba(0,0,0,0.55)';
