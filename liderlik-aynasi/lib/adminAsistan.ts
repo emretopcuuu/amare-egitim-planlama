@@ -12,6 +12,13 @@ export type AdminOneri = {
   href: string;
   // true ise kamp akışının kritik anı (kor/altın vurgu); false ise sakin bilgi.
   vurgu: boolean;
+  // Basit panel #1 — TEK-TIKLA EYLEM. Doluysa hero butonu kontrole gitmek yerine
+  // işi doğrudan yapar (BasitEylem). Anahtar değerleri BasitEylem.planla ile eşleşir:
+  // "pusula-ac" | "of-ac" | "rapor-ac" | "dalga-ac" | "dalga-kapat".
+  eylem?: string;
+  eylemDalga?: number; // dalga-ac/dalga-kapat için dalga numarası
+  basari?: string; // #2 net başarı mesajı ("Pusula penceresi açıldı.")
+  onay?: string; // #9 kritik eylemlerde sade dilli onay metni
 };
 
 export type AsistanDurum = {
@@ -59,6 +66,8 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
         butonEtiket: "Pusula Penceresini Aç",
         href: "#fazsifir",
         vurgu: true,
+        eylem: "pusula-ac",
+        basari: "Pusula penceresi açıldı. Katılımcılar artık hazırlığa başlayabilir.",
       };
     }
     // Pusula açık ama Ön Farkındalık penceresi kapalı → adaylar o aşamaya
@@ -72,6 +81,8 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
         butonEtiket: "Ön Farkındalık'ı Aç",
         href: "#onfark",
         vurgu: true,
+        eylem: "of-ac",
+        basari: "Ön Farkındalık penceresi açıldı. Pusulayı bitirenler buraya geçebilir.",
       };
     }
     // Pencere açık: hazırlığı biten azsa hatırlatmaya yönlendir.
@@ -121,6 +132,10 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
             butonEtiket: "Dalga 3'ü Kapat",
             href: "#dalga",
             vurgu: true,
+            eylem: "dalga-kapat",
+            eylemDalga: 3,
+            basari: "Dalga 3 kapandı. Şimdi Ayna Raporlarını açabilirsin.",
+            onay: "Dalga 3'ü kapatınca katılımcılar artık puan giremez. Geri alınabilir.",
           }
         : dalgaSuruyor(3, d);
     }
@@ -133,6 +148,10 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
         butonEtiket: "Raporları Aç",
         href: "#ayna-ani",
         vurgu: true,
+        eylem: "rapor-ac",
+        basari: "Ayna Raporları açıldı. Herkesin telefonunda kişisel raporu beliriyor.",
+        onay:
+          "Bu, herkesin kişisel Ayna Raporunu TÜM katılımcılara açar — kapanışın 'wow' anı. Geri alınabilir.",
       };
     }
     if (!d.sozAcik) {
@@ -167,6 +186,9 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
         butonEtiket: `Dalga ${gun}'i Aç`,
         href: "#dalga",
         vurgu: true,
+        eylem: "dalga-ac",
+        eylemDalga: gun,
+        basari: `Dalga ${gun} açıldı. Katılımcılar artık puanlamaya başlayabilir.`,
       };
     }
     if (cogunlukBitti) {
@@ -177,6 +199,10 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
         butonEtiket: "Dalgayı Kapat",
         href: "#dalga",
         vurgu: false,
+        eylem: "dalga-kapat",
+        eylemDalga: d.acikDalgaId,
+        basari: `Dalga ${d.acikDalgaId} kapandı. Sonraki güne geçebilirsin.`,
+        onay: "Dalgayı kapatınca katılımcılar artık bu dalgaya puan giremez. Geri alınabilir.",
       };
     }
     return dalgaSuruyor(d.acikDalgaId, d);

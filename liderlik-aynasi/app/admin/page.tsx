@@ -49,6 +49,9 @@ import TerimlerSozluk from "./TerimlerSozluk";
 import SimdiSonra from "./SimdiSonra";
 import YeniKampButonu from "./YeniKampButonu";
 import OneriButonu from "./OneriButonu";
+import BasitEylem from "./BasitEylem";
+import BasitIlkIpucu from "./BasitIlkIpucu";
+import Link from "next/link";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
 
@@ -255,6 +258,18 @@ export default async function AdminPanel() {
     onFarkAcik,
   });
 
+  // Basit panel #5/#6 — mini konum + "sırada ne var". Aşama adları funnel
+  // şeridinden gelir; Basit'te şerit gizli olduğu için tek satırda özetlenir.
+  const asamaAdlari = tr.admin.funnel.asamalar;
+  const ASAMA_AD: Record<number, string> = {
+    1: asamaAdlari.hazirlik,
+    2: asamaAdlari.katilim,
+    3: asamaAdlari.canli,
+    4: asamaAdlari.final,
+    5: asamaAdlari.sonrasi,
+  };
+  const siradakiAsama = aktifAsama < 5 ? ASAMA_AD[aktifAsama + 1] : null;
+
   // #8 Proaktif uyarılar (yalnız tam yetkiliye gösterilir).
   const uyarilar = tamYetki
     ? adminUyarilari({
@@ -312,6 +327,9 @@ export default async function AdminPanel() {
         </p>
       )}
 
+      {/* Basit #10 — ilk girişte tek seferlik "nasıl çalışır" ipucu */}
+      <BasitIlkIpucu />
+
       {/* #2 HERO: "Şimdi ne yapmalıyım?" — adminin o an basması gereken TEK
           adım, sayfanın en üstünde. #4 Tek vurgu kuralı: altın + parıltı
           YALNIZ bu karta; gerisi nötr. Renk = öncelik sinyali. */}
@@ -338,8 +356,52 @@ export default async function AdminPanel() {
             </p>
           </div>
         </div>
-        <OneriButonu href={oneri.href} etiket={oneri.butonEtiket} />
+        {/* Basit #1-4,9 — eylem doluysa buton işi DOĞRUDAN yapar (tek tık,
+            anlık geri bildirim, geri al, kritikse onay); değilse kontrole götürür. */}
+        {oneri.eylem ? (
+          <BasitEylem
+            eylem={oneri.eylem}
+            dalga={oneri.eylemDalga}
+            etiket={oneri.butonEtiket}
+            basariMesaj={oneri.basari ?? "İşlem tamam."}
+            onayMesaj={oneri.onay}
+          />
+        ) : (
+          <OneriButonu href={oneri.href} etiket={oneri.butonEtiket} />
+        )}
+
+        {/* Basit #7 — yapacak acil iş yokken sakin güven cümlesi (telaş yok) */}
+        {!oneri.vurgu && (
+          <p className="basit-only mt-3 text-center text-xs text-emerald-300/80">
+            ✓ Şu an acil bir şey yok — her şey yolunda. Hazır olduğunda yukarıdaki adımı at.
+          </p>
+        )}
       </section>
+
+      {/* Basit panel #6 konum + #5 sırada + #8 tek kısayol — şerit gizli olduğu
+          için Basit'te tek satırlık "neredeyim / sırada ne var / kişiler" özeti. */}
+      <div className="basit-only flex flex-col gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
+          {/* #6 mini konum göstergesi */}
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-royal-light/30 bg-white/[0.03] px-3 py-1.5 font-medium text-slate-300">
+            <span aria-hidden>📍</span>
+            Aşama {aktifAsama}/5 · {ASAMA_AD[aktifAsama]}
+          </span>
+          {/* #8 tek kısayol — katılımcı listesi */}
+          <Link
+            href="/admin/katilimcilar"
+            className="inline-flex items-center gap-1.5 rounded-full border border-royal-light/30 px-3 py-1.5 font-medium text-gold-light transition-colors hover:bg-white/5"
+          >
+            👥 Katılımcılar
+          </Link>
+        </div>
+        {/* #5 sırada ne var — tek satır */}
+        {siradakiAsama && (
+          <p className="px-1 text-xs text-slate-500">
+            <span className="font-semibold text-slate-400">Sırada:</span> {siradakiAsama} aşaması.
+          </p>
+        )}
+      </div>
 
       {/* Şimdi/Sonra şeridi + kurulum rehberi — Uzman (Basit'te tek hero adımı yeter) */}
       <div className="uzman-only space-y-6">
