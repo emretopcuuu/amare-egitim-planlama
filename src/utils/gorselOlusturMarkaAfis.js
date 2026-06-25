@@ -520,10 +520,12 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       ctx.fillStyle = palet.gold; ctx.font = `800 ${Math.round(W * 0.03)}px ${FF.govde}`;
       ctx.fillText(mekan, adresCX, footerTop + Math.round(H * 0.026), adresW);
     }
-    if (egitim.acikAdres) {
+    // Adres: acikAdres yoksa "yer" alanına düş (çoğu fiziki etkinlikte adres yer'de)
+    const adresMetni = (egitim.acikAdres || egitim.yer || '').trim();
+    if (adresMetni) {
       ctx.fillStyle = palet.alt; ctx.font = `400 ${Math.round(W * 0.021)}px ${FF.govde}`;
       // uzun adres → 2 satır (QR'ın soluna sığacak genişlikte)
-      wrapText(ctx, egitim.acikAdres, adresCX, footerTop + Math.round(H * 0.05), adresW, Math.round(W * 0.026), 2);
+      wrapText(ctx, adresMetni, adresCX, footerTop + Math.round(H * 0.05), adresW, Math.round(W * 0.026), 2);
     }
   } else {
     const zoom = (egitim.yer || '').replace(/zoom\s*salon\s*id[:\s]*/i, '').trim();
