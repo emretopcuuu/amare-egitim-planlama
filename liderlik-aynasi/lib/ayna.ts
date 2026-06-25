@@ -74,7 +74,7 @@ const GOREV_SEMASI = {
     neden: {
       type: "string" as const,
       description:
-        "Bu görevin neden ÖZELLİKLE BU kişiye verildiğine dair TEK kısa cümle (en fazla 16 kelime), adayın göreceği sıcak bir dille. Ham veri/puan/teknik terim YOK; kör noktayı yüzüne vurma. Yoksa boş string.",
+        "Bu görevin neden ÖZELLİKLE BU kişiye verildiğine dair TEK kısa cümle (en fazla 16 kelime), adayın göreceği sıcak bir dille. Pusula doluysa nedeni orada geçen çekirdek neden/iç engele bağla ama doğrudan alıntı yapma. Ham veri/puan/teknik terim YOK; kör noktayı yüzüne vurma. Yoksa boş string.",
     },
   },
   required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden"],
@@ -592,7 +592,13 @@ export async function gorevUret(
         },
         {
           type: "text" as const,
-          text: `Görevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı. Bağlamda "pusula" doluysa görevi o nedene/iç engele göre kişiselleştir. Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.
+          text: `Görevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı.
+
+KARİYER SEVİYESİ: Bu kişi lider veya üzeri kariyer basamağında — görev yeni başlayan düzeyi değil, LİDER düzeyi olmalı. Katlama, lider yetiştirme, devretme, ekip önünde duruş, zor kararlar, üst seviye etki gibi konuları hedefle.
+
+PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
+
+HEDEF BAĞLANTISI: Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.
 
 DİL NETLİĞİ (çok önemli): Görev metni SADE ve anlaşılır olmalı — katılımcı tek okumada (1) ne yapacağını ve (2) sana ne yazacağını net anlamalı. Kısa, gerçek cümleler kur. Şu hatalardan kaçın: iç içe geçmiş uzun cümleler, art arda tire (—) ile uzayan eklemeler, küçültme ekleri ('ricacık'), bulanık şiirsel ifadeler ('içinde ne koptu'). Yukarıdaki davranışsal kalıplar (FUN FAILURE, EUSTRESS vb.) PUANLAMA/teşvik tonu içindir; görev metnini süslemek için değil. Önce ne yapacağını söyle, sonra tek bir soruyla geri bildirimi iste.
 
