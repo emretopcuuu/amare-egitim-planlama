@@ -127,16 +127,13 @@ export default function AynaKurulum() {
   }
 
   if (durum === "abone") {
+    // B4: bildirim zaten açıksa kart gürültü yapmasın — mobilde tamamen gizlen.
+    // Masaüstünde yine de telefona kurma önerisi anlamlı olduğu için kalır.
+    if (!masaustu) return null;
     return (
-      <div>
-        <p className="text-center text-xs font-medium text-emerald-400">{t.izinVerildi}</p>
-        {/* Bu cihazda açık ama masaüstündeyse telefona da kurmayı öner */}
-        {masaustu && (
-          <div className="mt-3 rounded-2xl border border-royal-light/30 bg-white/[0.02] p-4">
-            <p className="text-sm text-slate-300">{t.masaustuNot}</p>
-            <TelefonaKur />
-          </div>
-        )}
+      <div className="mt-3 rounded-2xl border border-royal-light/30 bg-white/[0.02] p-4">
+        <p className="text-sm text-slate-300">{t.masaustuNot}</p>
+        <TelefonaKur />
       </div>
     );
   }

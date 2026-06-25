@@ -14,6 +14,7 @@ import EgilenKart from "@/components/EgilenKart";
 import GeriSayim from "@/components/GeriSayim";
 import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
+import MuhurTuru from "@/components/MuhurTuru";
 import YolculukSeridi from "@/components/YolculukSeridi";
 import YolculukHaritasi from "@/components/YolculukHaritasi";
 import KampHud from "@/components/KampHud";
@@ -234,7 +235,7 @@ export default async function AnaSayfa({
       db.from("settings").select("value").eq("key", "sonraki_dalga_zamani").maybeSingle(),
       // FAZ 1 Boşluk Anı (Gün 3 zirvesi) — yalnız pencere açıkken devreye girer
       db.from("settings").select("value").eq("key", "bosluk_acik").maybeSingle(),
-      db.from("pusula").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+      db.from("pusula").select("tamamlandi_at, slogan").eq("participant_id", session.sub).maybeSingle(),
       db.from("bosluk_ani").select("yeni_cumle").eq("participant_id", session.sub).maybeSingle(),
       // Ana sayfada "sıradaki görev"i adıyla gösterebilmek için en yakın bekleyen görev.
       db
@@ -266,6 +267,8 @@ export default async function AnaSayfa({
     typeof momentumSatirlar?.[1]?.score === "number" ? momentumSatirlar[1].score : null;
   const siradakiGorevBasligi =
     typeof siradakiGorevSatir?.title === "string" ? siradakiGorevSatir.title : null;
+  // B3: kişinin Pusula sloganı — hub'da kimlik çapası.
+  const kisiSlogan = (pusulaKisi as { slogan?: string | null } | null)?.slogan ?? null;
   const sozAcik = sozAyar?.value === "true";
   const sozVar = !!soz;
   // FAZ 1: pusulasını kuran kişi, pencere açıkken iç engeliyle yüzleşir.
@@ -289,6 +292,24 @@ export default async function AnaSayfa({
   }).format(new Date());
   // eslint-disable-next-line react-hooks/purity
   const istekAni = Date.now();
+
+  // B5: "bugün ne oldu" — bekleme/sakin anlarda hub'ı canlı tutar.
+  const bugunBasISO = new Date(`${bugunIst}T00:00:00+03:00`).toISOString();
+  const [{ count: bugunTakdir }, { count: bugunGorevSayi }] = await Promise.all([
+    db
+      .from("kudos")
+      .select("id", { count: "exact", head: true })
+      .eq("to_id", session.sub)
+      .eq("is_hidden", false)
+      .gte("created_at", bugunBasISO),
+    db
+      .from("missions")
+      .select("id", { count: "exact", head: true })
+      .eq("participant_id", session.sub)
+      .eq("status", "scored")
+      .gte("scored_at", bugunBasISO),
+  ]);
+  const bugunOzetVar = (bugunTakdir ?? 0) > 0 || (bugunGorevSayi ?? 0) > 0;
 
   let yansimaVideoUrl: string | null = null;
   if (yansimanHazir && sesProfili?.video_path) {
@@ -342,6 +363,8 @@ export default async function AnaSayfa({
 
   const ust = (
     <div>
+      {/* B9: mühür açıldıysa tek seferlik kısa tur (kendi içinde localStorage ile gated) */}
+      {kisi?.camp_unlocked_at && <MuhurTuru />}
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
@@ -360,6 +383,12 @@ export default async function AnaSayfa({
           ozHedefId={session.sub}
         />
       </header>
+      {/* B3: Pusula sloganı — her gün görünür kimlik çapası */}
+      {kisiSlogan && (
+        <p className="prizma-serif ay-metin mt-2 text-sm font-medium italic leading-snug text-gold-light/90">
+          “{kisiSlogan}”
+        </p>
+      )}
       {/* #5 "Sen neredesin" — kampın neresindeyiz şeridi (takvim günü) */}
       <YolculukSeridi bugun={bugunIst} />
       {/* Üst seviye #6 — kişisel faz yolculuğu: ritüel → … → ayna */}
@@ -380,21 +409,31 @@ export default async function AnaSayfa({
       {/* UX #9 (2.tur): Kamp HUD'u — o anki blok + kalan süre + sırada ne var.
           Cumartesi'de grup üyesine grubunun gerçek bloğu gösterilir. */}
       <KampHud takim={takim} />
-      {/* Topluluk nabzı — yalnız değilsin hissi */}
-      <ToplulukNabzi />
-      {/* #3 Ayna Anı — kamp öncesi kör nokta cümlesini bugünkü çabayla yüzleştirir */}
-      <AynaAniKarti />
-      {/* #5 Momentum göstergesi — haftalık davranış-momentum (skor varsa) */}
-      <MomentumGostergesi skor={momentumSkor} onceki={momentumOnceki} />
-      {/* #10 Günün Cümlesi — admin'in seçtiği davranışsal-dil cümlesi */}
-      {gununCumlesi && (
-        <div className="mt-3 rounded-xl border border-gold/25 bg-gold/[0.06] px-4 py-2.5">
-          <p className="text-sm italic leading-relaxed text-slate-200">
-            <span className="mr-1">🗣</span>
-            {gununCumlesi}
-          </p>
+      {/* B2: ikincil widget'lar tek kahraman kartı aşağı itmesin — katlanır
+          "Bugünün panosu" altında toplanır (varsayılan kapalı). */}
+      <details className="group mt-3">
+        <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-royal-light/20 bg-white/[0.02] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+          <span>📊 {t.panoBaslik}</span>
+          <span className="transition-transform group-open:rotate-180" aria-hidden>▾</span>
+        </summary>
+        <div className="mt-3 space-y-3">
+          {/* Topluluk nabzı — yalnız değilsin hissi */}
+          <ToplulukNabzi />
+          {/* #3 Ayna Anı — kamp öncesi kör nokta cümlesini bugünkü çabayla yüzleştirir */}
+          <AynaAniKarti />
+          {/* #5 Momentum göstergesi — haftalık davranış-momentum (skor varsa) */}
+          <MomentumGostergesi skor={momentumSkor} onceki={momentumOnceki} />
+          {/* #10 Günün Cümlesi — admin'in seçtiği davranışsal-dil cümlesi */}
+          {gununCumlesi && (
+            <div className="rounded-xl border border-gold/25 bg-gold/[0.06] px-4 py-2.5">
+              <p className="text-sm italic leading-relaxed text-slate-200">
+                <span className="mr-1">🗣</span>
+                {gununCumlesi}
+              </p>
+            </div>
+          )}
         </div>
-      )}
+      </details>
     </div>
   );
 
@@ -551,6 +590,14 @@ export default async function AnaSayfa({
           {t.bekleBaslik}
         </h2>
         <p className="mt-3 text-base leading-relaxed text-slate-300">{t.bekleMetin}</p>
+        {/* B5: bugün ne oldu — sakin anda hub'ı canlı tutar */}
+        {bugunOzetVar && (
+          <p className="mt-3 rounded-xl bg-white/[0.03] px-4 py-2.5 text-sm text-slate-300">
+            {t.bugunNeOldu(bugunGorevSayi ?? 0, bugunTakdir ?? 0)}
+          </p>
+        )}
+        {/* B7: canlı beklenti — bir sonraki an belirsiz kalmasın */}
+        <p className="mt-3 text-sm text-slate-400">{t.bekleBeklenti}</p>
         {/* #4 Sıradaki dalgaya geri sayım: yalnızca zamanlama ayarlıysa */}
         {sonrakiDalgaZamani && <GeriSayim hedefZaman={sonrakiDalgaZamani} />}
         <div className="mt-6 space-y-3">

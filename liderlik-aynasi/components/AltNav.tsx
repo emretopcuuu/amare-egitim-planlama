@@ -9,7 +9,7 @@ const t = tr.altNav;
 
 // İnce çizgi ikon seti: emoji yerine (cihazdan cihaza değişen, kaba duran ve
 // premium koyu temayla çelişen) currentColor ile boyanan, zarif SVG'ler.
-type IkonAd = "ana" | "degerlendir" | "gorevler" | "duvar";
+type IkonAd = "ana" | "degerlendir" | "koc" | "gorevler" | "duvar";
 function Ikon({ ad, className = "" }: { ad: IkonAd; className?: string }) {
   const ortak = {
     viewBox: "0 0 24 24",
@@ -52,6 +52,13 @@ function Ikon({ ad, className = "" }: { ad: IkonAd; className?: string }) {
           <path d="M4 16.5 9 12l3 3 3.5-3.5L20.5 16" />
         </svg>
       );
+    case "koc":
+      return (
+        <svg {...ortak}>
+          <path d="M4 5.5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H9l-4 3.5V16.5H4a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1Z" />
+          <path d="M8.5 10h7M8.5 12.75h4" />
+        </svg>
+      );
   }
 }
 
@@ -75,6 +82,7 @@ type Kivilcim = {
   sonraki: string | null;
   kalan: number;
   yuzde: number;
+  dalgaAcik?: boolean;
 };
 
 export default function AltNav() {
@@ -113,6 +121,15 @@ export default function AltNav() {
     return href === "/" ? pathname === "/" : pathname.startsWith(href);
   }
 
+  // B1: bağlam-duyarlı çubuk. Dalga kapalıyken "Değerlendir" sekmesi ölü kalır;
+  // onun yerine her zaman değerli olan "Ayna Koçu"nu göster. Dalga açıkken
+  // (yükleme dahil değilse) değerlendirme öne döner.
+  const sekmeler = SEKMELER.map((s) =>
+    s.href === "/degerlendir" && kiv && kiv.dalgaAcik === false
+      ? { href: "/kocu", ikon: "koc" as IkonAd, etiket: t.koc }
+      : s
+  );
+
   return (
     <nav className="alt-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-midnight/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md print:hidden">
       {/* #2 Kıvılcım ilerleme şeridi — toplam + unvan + sonraki rozete kalan */}
@@ -138,7 +155,7 @@ export default function AltNav() {
         </Link>
       )}
       <div className="mx-auto flex w-full max-w-md items-stretch justify-around">
-        {SEKMELER.map((s) => {
+        {sekmeler.map((s) => {
           const aktif = aktifMi(s.href);
           return (
             <Link

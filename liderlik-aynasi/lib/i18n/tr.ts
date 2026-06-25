@@ -44,9 +44,37 @@ export const tr = {
     bulunamadiAciklama: "Aradığın sayfa taşınmış ya da hiç var olmamış olabilir.",
   },
   // Alt navigasyon çubuğu: en sık kullanılan 4 hedef, başparmak erişiminde
+  muhurTuru: {
+    gec: "Geç",
+    ileri: "İleri",
+    basla: "Hazırım",
+    kartlar: [
+      {
+        simge: "🤖",
+        baslik: "Mühür açıldı",
+        metin: "Artık kamptasın. Aşağıdaki çubuktan her şeye ulaşırsın. Sana hızlı bir tur atayım.",
+      },
+      {
+        simge: "🎯",
+        baslik: "Görevler",
+        metin: "AYNA gün boyu sana özel görevler verir. Çubuktaki hedef simgesinden ulaşırsın.",
+      },
+      {
+        simge: "👁",
+        baslik: "Ayna Koçu",
+        metin: "Takıldığında ya da 'şimdi ne yapayım?' dediğinde Koç hep orada.",
+      },
+      {
+        simge: "🖼",
+        baslik: "Duvar",
+        metin: "Anların, kanıtların ve topluluğun burada toplanır. Yalnız değilsin.",
+      },
+    ],
+  },
   altNav: {
     ana: "Ana sayfa",
     degerlendir: "Değerlendir",
+    koc: "Ayna Koçu",
     gorevler: "Görevler",
     duvar: "Duvar",
     kivilcimSonraki: (kalan: number, ad: string) => `${kalan} ⚡ → ${ad}`,
@@ -219,6 +247,13 @@ export const tr = {
     gorevTekDugme: (n: number) => (n > 1 ? `${n} Görevi Aç` : "Görevi Aç"),
     bekleBaslik: "AYNA seninle",
     bekleMetin: "Şu an duraksama vaktin. Sıradaki adım geldiğinde yanında olacağım. 👁",
+    // B2: ikincil widget'lar katlanır pano
+    panoBaslik: "Bugünün panosu",
+    // B5: bugün ne oldu özeti
+    bugunNeOldu: (gorev: number, takdir: number) =>
+      `Bugün${gorev > 0 ? ` 🎯 ${gorev} görev kapattın` : ""}${takdir > 0 ? `${gorev > 0 ? "," : ""} 💛 ${takdir} takdir aldın` : ""}.`,
+    // B7: bekleme beklentisi
+    bekleBeklenti: "AYNA gün boyu seni izliyor — yeni bir görev her an gelebilir.",
     // İlk 60 saniye rehberi: ilk öz-puana doğru nazik canlı işaret (#3).
     ilkAdimIpucu: "İlk adımın bu — başla",
     // Çıkmaz yok: boş anda bile sıcak bir sonraki adım — birine takdir bırak.
@@ -3324,6 +3359,9 @@ export const tr = {
     kaydet: "Kaydet",
     seri: (n: number) => `${n} günlük seri 🔥`,
     seriYok: "Serini bugün başlat.",
+    // B8: 90 günlük genel ilerleme
+    yolBaslik: "90 günlük yol",
+    yolGun: (n: number) => `${n} / 90 gün`,
     toplam: (n: number) => `${n} gün adım attın`,
     bugunTamam: "Bugünün adımı işaretlendi ✓",
     son14: "Son 14 gün",
