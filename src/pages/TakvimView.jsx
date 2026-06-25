@@ -53,13 +53,13 @@ function Karusel({ children, okRenk = 'bg-white/20 hover:bg-white/40 text-white'
       </div>
       {solVar && (
         <button onClick={() => kaydir(-1)} aria-label="Sola kaydır"
-          className={`absolute left-1 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full backdrop-blur shadow-lg flex items-center justify-center transition ${okRenk}`}>
+          className={`absolute left-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full backdrop-blur shadow-lg flex items-center justify-center transition-colors duration-150 ${okRenk}`}>
           <ChevronLeft className="w-5 h-5" />
         </button>
       )}
       {sagVar && (
         <button onClick={() => kaydir(1)} aria-label="Sağa kaydır"
-          className={`absolute right-1 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full backdrop-blur shadow-lg flex items-center justify-center transition ${okRenk}`}>
+          className={`absolute right-1 top-1/2 -translate-y-1/2 z-20 w-9 h-9 rounded-full backdrop-blur shadow-lg flex items-center justify-center transition-colors duration-150 ${okRenk}`}>
           <ChevronRight className="w-5 h-5" />
         </button>
       )}
@@ -1193,7 +1193,7 @@ const TakvimView = () => {
                 <Karusel okRenk="bg-amber-400/90 hover:bg-amber-400 text-gray-900">
                   {yurtdisiYaklasan.map(e => (
                     <a key={e.id} href={`/e/${e.id}`}
-                      className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-amber-400/30 hover:border-amber-400 rounded-xl p-3 transition-all hover-lift spring-tap">
+                      className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-amber-400/30 hover:border-amber-400 rounded-xl p-3 transition-colors duration-200">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xl leading-none">{e._yd.bayrak}</span>
                         <span className="bg-amber-400 text-gray-900 text-[10px] font-bold px-1.5 py-0.5 rounded-full">{e._yd.kisa}</span>
@@ -1226,7 +1226,7 @@ const TakvimView = () => {
                 <Karusel okRenk="bg-emerald-400/90 hover:bg-emerald-400 text-gray-900">
                   {yurticiFizikiYaklasan.map(e => (
                     <a key={e.id} href={`/e/${e.id}`}
-                      className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-emerald-400/30 hover:border-emerald-400 rounded-xl p-3 transition-all hover-lift spring-tap">
+                      className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-emerald-400/30 hover:border-emerald-400 rounded-xl p-3 transition-colors duration-200">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-base leading-none">📍</span>
                         <span className="bg-emerald-400 text-gray-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">{e._sehir}</span>
