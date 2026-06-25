@@ -56,6 +56,19 @@ const zeminCiz = async (ctx, W, H, palet) => {
   const r = ctx.createRadialGradient(W / 2, H * 0.16, 40, W / 2, H * 0.16, W * 0.85);
   r.addColorStop(0, 'rgba(255,255,255,0.08)'); r.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = r; ctx.fillRect(0, 0, W, H * 0.6);
+  // LÜKS: diyagonal altın ışık huzmesi (dinamizm)
+  ctx.save();
+  ctx.translate(W * 0.5, H * 0.30); ctx.rotate(-0.34);
+  const ray = ctx.createLinearGradient(-W, 0, W, 0);
+  ray.addColorStop(0, 'rgba(216,177,90,0)');
+  ray.addColorStop(0.5, 'rgba(216,177,90,0.12)');
+  ray.addColorStop(1, 'rgba(216,177,90,0)');
+  ctx.fillStyle = ray; ctx.fillRect(-W, -H * 0.16, W * 2, H * 0.32);
+  ctx.restore();
+  // kenar vinyet (derinlik)
+  const vig = ctx.createRadialGradient(W / 2, H / 2, H * 0.34, W / 2, H / 2, H * 0.72);
+  vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.42)');
+  ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
   // siyah temada altın elmas/parıltı serpiştir (üst bölge)
   if (palet.elmas) {
     ctx.save();
@@ -77,6 +90,12 @@ const zeminCiz = async (ctx, W, H, palet) => {
     ctx.drawImage(logo, (W - lw) / 2, H * 0.30, lw, lh);
     ctx.restore();
   } catch {}
+  // LÜKS: köşe altın çerçeve aksanları (premium his)
+  ctx.strokeStyle = palet.gold; ctx.lineWidth = 3; ctx.globalAlpha = 0.85;
+  const cm = Math.round(W * 0.045), cl = Math.round(W * 0.075);
+  const kose = (x, y, dx, dy) => { ctx.beginPath(); ctx.moveTo(x + dx * cl, y); ctx.lineTo(x, y); ctx.lineTo(x, y + dy * cl); ctx.stroke(); };
+  kose(cm, cm, 1, 1); kose(W - cm, cm, -1, 1); kose(cm, H - cm, 1, -1); kose(W - cm, H - cm, -1, -1);
+  ctx.globalAlpha = 1;
 };
 
 // Altın hap içinde metin (referanslardaki isim etiketi). Dönüş: alt Y.
