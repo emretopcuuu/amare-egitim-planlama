@@ -18,6 +18,41 @@ const MOTORLAR = {
   'openai-pro': { ad: 'OpenAI Pro', emoji: '✨', not: 'gpt-image · YÜZ DEĞİŞEBİLİR', sure: 45, key: 'openai', yuzGuvenli: false },
 };
 
+// Marka Afiş varyasyon seçenekleri — her çip deterministik bir komuta bağlı.
+// tekil:true → grup içinde tek seçim (radyo gibi); değilse çoklu seçim (toggle).
+const MARKA_VARYASYON = [
+  { grup: 'Yazı', tekil: true, secenekler: [
+    { key: 'yazi-buyuk', label: 'Büyük', cmd: 'yazıları büyüt' },
+    { key: 'yazi-kucuk', label: 'Küçük', cmd: 'yazıları küçült' },
+    { key: 'yazi-cokkucuk', label: 'Çok küçük', cmd: 'yazıları çok küçült' },
+  ] },
+  { grup: 'Fotoğraf', tekil: true, secenekler: [
+    { key: 'foto-buyuk', label: 'Büyük', cmd: 'fotoları büyüt' },
+    { key: 'foto-kucuk', label: 'Küçük', cmd: 'fotoları küçült' },
+    { key: 'foto-teksira', label: 'Tek sıra', cmd: 'tek sıra' },
+  ] },
+  { grup: 'Tema', tekil: true, secenekler: [
+    { key: 'tema-siyah', label: 'Siyah & altın', cmd: 'siyah tema' },
+    { key: 'tema-mor', label: 'Mor', cmd: 'mor tema' },
+  ] },
+  { grup: 'Arka plan', tekil: true, secenekler: [
+    { key: 'zemin-koyu', label: 'Daha koyu', cmd: 'arka planı koyulaştır' },
+    { key: 'zemin-acik', label: 'Daha açık', cmd: 'arka planı aç' },
+  ] },
+  { grup: 'Dekor', tekil: false, secenekler: [
+    { key: 'no-isik', label: 'Işıksız', cmd: 'ışık kapat' },
+    { key: 'no-elmas', label: 'Elmassız', cmd: 'elmasları kaldır' },
+    { key: 'no-cerceve', label: 'Çerçevesiz', cmd: 'çerçeveyi kaldır' },
+    { key: 'sade', label: 'Tamamen sade', cmd: 'sade' },
+  ] },
+  { grup: 'İçerik', tekil: false, secenekler: [
+    { key: 'no-qr', label: 'QR yok', cmd: 'qr kaldır' },
+    { key: 'no-program', label: 'Program yok', cmd: 'program gizle' },
+    { key: 'no-tarih', label: 'Tarih yok', cmd: 'tarih gizle' },
+  ] },
+];
+const MARKA_VARYASYON_INDEX = MARKA_VARYASYON.flatMap(g => g.secenekler.map(s => ({ ...s, grup: g.grup })));
+
 // Yapısal konuşmacı etiketlerinden generator'ların beklediği metin bloğunu üret.
 const buildEkPrompt = (etiketler, ekIstek) => {
   const lines = ['KONUŞMACI ALTI YAZILACAK ETİKETLER (her bloğu görselde aynen göster, sıra önemli):', ''];
@@ -77,7 +112,22 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   // Konuşmacı etiketleri — yapısal (foto + isim + düzenlenebilir etiket)
   const [etiketler, setEtiketler] = useState(() =>
     (egitmenler || []).map(e => ({ ad: e.ad || '', etiket: e.unvan || '', fotoURL: e.fotoURL || null })));
-  const [ekIstek, setEkIstek] = useState(''); // serbest tasarım isteği
+  const [ekIstek, setEkIstek] = useState(''); // serbest tasarım isteği (AI Afiş/Hibrit)
+  const [markaSecim, setMarkaSecim] = useState({}); // Marka Afiş varyasyon çipleri (key->true)
+
+  // Marka Afiş: çip seç/kaldır. Tekil gruplarda diğerlerini temizle (radyo gibi).
+  const markaCipToggle = (sec) => {
+    setMarkaSecim(prev => {
+      const next = { ...prev };
+      const grup = MARKA_VARYASYON.find(g => g.secenekler.some(s => s.key === sec.key));
+      if (prev[sec.key]) { delete next[sec.key]; return next; } // kapat
+      if (grup?.tekil) grup.secenekler.forEach(s => { delete next[s.key]; }); // grup tekse temizle
+      next[sec.key] = true;
+      return next;
+    });
+  };
+  // seçili çipleri motor komut metnine çevir
+  const markaEkIstek = () => MARKA_VARYASYON_INDEX.filter(s => markaSecim[s.key]).map(s => s.cmd).join(', ');
 
   // Upload mod state
   const [uploadedFile, setUploadedFile] = useState(null); // { file, preview, dataUrl }
@@ -149,7 +199,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
       });
     }
     if (model === 'marka-afis') {
-      return await gorselOlusturMarkaAfis({ egitim, egitmenler: egitmenler || [], format, ekPrompt: ekIstek });
+      return await gorselOlusturMarkaAfis({ egitim, egitmenler: egitmenler || [], format, ekPrompt: markaEkIstek() });
     }
     if (model === 'ai-afis') {
       return await gorselOlusturAiAfis({
@@ -396,10 +446,16 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                     ))}
                   </div>
                 )}
-                <label className="text-xs font-semibold text-gray-600 mt-3 mb-1 block">Tasarıma ek istek (opsiyonel)</label>
-                <textarea value={ekIstek} onChange={(e) => setEkIstek(e.target.value)} rows={2}
-                  placeholder="Örn: arka planı koyu mor yap, üstte ışık efekti…"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
+                {aiModel === 'marka-afis' ? (
+                  <p className="text-[11px] text-gray-500 mt-3">Tasarım ayarları için aşağıda üret, sonra <b>varyasyon seçeneklerinden</b> seçip yeniden üret.</p>
+                ) : (
+                  <>
+                    <label className="text-xs font-semibold text-gray-600 mt-3 mb-1 block">Tasarıma ek istek (opsiyonel)</label>
+                    <textarea value={ekIstek} onChange={(e) => setEkIstek(e.target.value)} rows={2}
+                      placeholder="Örn: arka planı koyu mor yap, üstte ışık efekti…"
+                      className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
+                  </>
+                )}
               </div>
 
               {/* Format Seçici */}
@@ -593,10 +649,39 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                     <button onClick={() => { setResultBlobUrl(null); setError(null); setBaglandi(false); }}
                       className="py-2.5 px-4 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition">Baştan</button>
                   </div>
-                  <p className="text-[11px] text-gray-500 text-center">
-                    Beğenmedin mi? Yukarıdan <b>"Tasarıma ek istek"</b>e komut yaz → <b>Varyasyon üret</b>.
-                    {aiModel === 'marka-afis' && <><br/>Marka Afiş komutları: <i>yazıları büyüt/küçült · fotoları büyüt/küçült · arka planı koyulaştır/aç · siyah tema · mor tema · sade</i></>}
-                  </p>
+
+                  {/* Marka Afiş varyasyon seçenekleri — seç, sonra "Varyasyon üret"e bas */}
+                  {aiModel === 'marka-afis' ? (
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 space-y-2.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-gray-700">🎛️ Varyasyon seçenekleri</span>
+                        {Object.keys(markaSecim).length > 0 && (
+                          <button onClick={() => setMarkaSecim({})} className="text-[11px] text-amare-purple hover:underline">Temizle</button>
+                        )}
+                      </div>
+                      {MARKA_VARYASYON.map(g => (
+                        <div key={g.grup}>
+                          <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1">{g.grup}</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {g.secenekler.map(s => {
+                              const aktif = !!markaSecim[s.key];
+                              return (
+                                <button key={s.key} onClick={() => markaCipToggle(s)}
+                                  className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition ${aktif ? 'bg-amare-purple text-white border-amare-purple' : 'bg-white text-gray-600 border-gray-300 hover:border-amare-purple/50'}`}>
+                                  {aktif ? '✓ ' : ''}{s.label}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                      <p className="text-[11px] text-gray-500 pt-0.5">Seç → yukarıdan <b>Varyasyon üret</b>. Hiçbir şey seçmezsen orijinal tasarım üretilir.</p>
+                    </div>
+                  ) : (
+                    <p className="text-[11px] text-gray-500 text-center">
+                      Beğenmedin mi? Yukarıdan <b>"Tasarıma ek istek"</b>e komut yaz → <b>Varyasyon üret</b>.
+                    </p>
+                  )}
                 </div>
               )}
             </>

@@ -55,7 +55,13 @@ const renkAyarla = (hex, f) => {
 };
 const ayarCikar = (ek) => {
   const t = (ek || '').toLocaleLowerCase('tr-TR');
-  const a = { yazi: 1, foto: 1, tema: null, zemin: 1, sade: false };
+  // bayraklar: dekor + içerik açık varsayılan
+  const a = {
+    yazi: 1, foto: 1, tema: null, zemin: 1,
+    isik: true, elmas: true, cerceve: true, // dekor
+    qr: true, program: true, tarih: true,   // içerik
+    tekSira: false,
+  };
   const has = (...ws) => ws.some(w => t.includes(w));
   // metin boyutu
   if (has('yazı büyüt', 'yazıları büyüt', 'yazılar büyük', 'büyük yazı', 'başlığı büyüt', 'başlık büyüt', 'metni büyüt')) a.yazi = 1.18;
@@ -71,13 +77,25 @@ const ayarCikar = (ek) => {
   // zemin tonu
   if (has('arka planı koyulaştır', 'daha koyu', 'koyulaştır', 'koyu arka')) a.zemin = 0.75;
   if (has('arka planı aç', 'aydınlat', 'daha açık', 'açık arka', 'arka plan açık')) a.zemin = 1.28;
-  // sade mod (süsleri kaldır)
-  if (has('sade', 'minimal', 'süsleri kaldır', 'çerçeveyi kaldır', 'süssüz', 'düz')) a.sade = true;
+  // sade mod (tüm dekoru kaldır)
+  if (has('sade', 'minimal', 'süsleri kaldır', 'süssüz', 'düz')) { a.isik = false; a.elmas = false; a.cerceve = false; }
+  // tekil dekor kapatma
+  if (has('ışık kapat', 'ışık huzmesi kapat', 'huzme kapat', 'ışıksız')) a.isik = false;
+  if (has('elmas kaldır', 'elmasları kaldır', 'elmassız', 'parıltı kaldır')) a.elmas = false;
+  if (has('çerçeve kaldır', 'çerçeveyi kaldır', 'çerçevesiz', 'köşe kaldır')) a.cerceve = false;
+  // içerik gizleme
+  if (has('qr kaldır', 'qr gizle', 'qr yok', 'karekod kaldır', 'karekod gizle')) a.qr = false;
+  if (has('program gizle', 'program kaldır', 'program yok', 'bant kaldır', 'bant gizle')) a.program = false;
+  if (has('tarih gizle', 'tarih kaldır', 'tarih yok', 'tarihi gizle', 'tarihi kaldır')) a.tarih = false;
+  // düzen
+  if (has('tek sıra', 'tek satır', 'yan yana', 'tek sırada')) a.tekSira = true;
   return a;
 };
 
-// Koyu zemin + soluk One Team amblemi + (siyah temada) altın elmas serpiştir
-const zeminCiz = async (ctx, W, H, palet, sade = false) => {
+// Koyu zemin + soluk One Team amblemi + (siyah temada) altın elmas serpiştir.
+// dekor = { isik, elmas, cerceve } — tekil dekor kapatma için.
+const zeminCiz = async (ctx, W, H, palet, dekor = {}) => {
+  const { isik = true, elmas = true, cerceve = true } = dekor;
   // DİKEY ve simetrik gradient (çapraz değil → sol/sağ eşit, "yarısı koyu yarısı açık" olmaz)
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0, palet.bg1); g.addColorStop(1, palet.bg2);
@@ -86,8 +104,8 @@ const zeminCiz = async (ctx, W, H, palet, sade = false) => {
   const r = ctx.createRadialGradient(W / 2, H * 0.16, 40, W / 2, H * 0.16, W * 0.85);
   r.addColorStop(0, 'rgba(255,255,255,0.08)'); r.addColorStop(1, 'rgba(255,255,255,0)');
   ctx.fillStyle = r; ctx.fillRect(0, 0, W, H * 0.6);
-  // LÜKS: diyagonal altın ışık huzmesi (dinamizm) — sade modda atla
-  if (!sade) {
+  // LÜKS: diyagonal altın ışık huzmesi (dinamizm) — kapatılabilir
+  if (isik) {
     ctx.save();
     ctx.translate(W * 0.5, H * 0.30); ctx.rotate(-0.34);
     const ray = ctx.createLinearGradient(-W, 0, W, 0);
@@ -102,7 +120,7 @@ const zeminCiz = async (ctx, W, H, palet, sade = false) => {
   vig.addColorStop(0, 'rgba(0,0,0,0)'); vig.addColorStop(1, 'rgba(0,0,0,0.42)');
   ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
   // siyah temada altın elmas/parıltı serpiştir (üst bölge)
-  if (palet.elmas && !sade) {
+  if (palet.elmas && elmas) {
     ctx.save();
     const noktalar = [[0.08,0.06],[0.2,0.03],[0.32,0.08],[0.7,0.04],[0.84,0.09],[0.92,0.05],[0.14,0.13],[0.88,0.16],[0.05,0.2],[0.95,0.24]];
     noktalar.forEach(([px, py], i) => {
@@ -122,8 +140,8 @@ const zeminCiz = async (ctx, W, H, palet, sade = false) => {
     ctx.drawImage(logo, (W - lw) / 2, H * 0.30, lw, lh);
     ctx.restore();
   } catch {}
-  // LÜKS: köşe altın çerçeve aksanları (premium his) — sade modda atla
-  if (!sade) {
+  // LÜKS: köşe altın çerçeve aksanları (premium his) — kapatılabilir
+  if (cerceve) {
     ctx.strokeStyle = palet.gold; ctx.lineWidth = 3; ctx.globalAlpha = 0.85;
     const cm = Math.round(W * 0.045), cl = Math.round(W * 0.075);
     const kose = (x, y, dx, dy) => { ctx.beginPath(); ctx.moveTo(x + dx * cl, y); ctx.lineTo(x, y); ctx.lineTo(x, y + dy * cl); ctx.stroke(); };
@@ -170,7 +188,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const ctx = canvas.getContext('2d');
   const M = Math.round(W * 0.07);
 
-  await zeminCiz(ctx, W, H, palet, ayar.sade);
+  await zeminCiz(ctx, W, H, palet, { isik: ayar.isik, elmas: ayar.elmas, cerceve: ayar.cerceve });
 
   // ── ÜST: One Team logosu ──
   let y = Math.round(H * 0.02);
@@ -205,24 +223,26 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     y += Math.round(H * 0.018);
   }
 
-  // ── Tarih + Saat ──
-  ctx.fillStyle = palet.gold;
-  ctx.font = `700 ${Math.round(W * 0.038 * ayar.yazi)}px Arial`;
-  const tarihTxt = `${egitim.tarih || ''} ${egitim.gun || ''}`.trim();
-  ctx.fillText(tarihTxt, W / 2, y + Math.round(W * 0.036));
-  y += Math.round(W * 0.055);
-  if (egitim.saat) {
-    ctx.fillStyle = palet.metin;
-    ctx.font = `600 ${Math.round(W * 0.032 * ayar.yazi)}px Arial`;
-    ctx.fillText(`${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}`, W / 2, y + Math.round(W * 0.03));
-    y += Math.round(W * 0.05);
+  // ── Tarih + Saat ── (gizlenebilir)
+  if (ayar.tarih) {
+    ctx.fillStyle = palet.gold;
+    ctx.font = `700 ${Math.round(W * 0.038 * ayar.yazi)}px Arial`;
+    const tarihTxt = `${egitim.tarih || ''} ${egitim.gun || ''}`.trim();
+    ctx.fillText(tarihTxt, W / 2, y + Math.round(W * 0.036));
+    y += Math.round(W * 0.055);
+    if (egitim.saat) {
+      ctx.fillStyle = palet.metin;
+      ctx.font = `600 ${Math.round(W * 0.032 * ayar.yazi)}px Arial`;
+      ctx.fillText(`${egitim.saat}${egitim.bitisSaati ? ' - ' + egitim.bitisSaati : ''}`, W / 2, y + Math.round(W * 0.03));
+      y += Math.round(W * 0.05);
+    }
   }
 
   // ── ZONE: program bandı + footer rezervi ──
   const prog = (Array.isArray(egitim.programAkisi) ? egitim.programAkisi : []).filter(p => p && (p.baslik || p.baslangic));
   const footerH = Math.round(H * 0.135);
   const footerTop = H - footerH;
-  const bandH = (fiziki && prog.length) ? Math.round(H * 0.085) : 0;
+  const bandH = (fiziki && prog.length && ayar.program) ? Math.round(H * 0.085) : 0;
   const bandTop = bandH ? footerTop - bandH - Math.round(H * 0.02) : footerTop;
   const speakersTop = y + Math.round(H * 0.01);
   const speakersBottom = bandTop - Math.round(H * 0.02);
@@ -230,7 +250,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   // ── KONUŞMACILAR (altın halkalı foto + altın hap isim + rol) ──
   const liste = (egitmenler || []).slice(0, 6);
   if (liste.length) {
-    const dagilim = fotoYerlesim(liste.length);
+    const dagilim = ayar.tekSira ? [liste.length] : fotoYerlesim(liste.length);
     const rows = dagilim.length;
     const areaH = speakersBottom - speakersTop;
     const perRowH = areaH / rows;
@@ -349,8 +369,8 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     ctx.drawImage(amare, (W - aw) / 2, H - ah - Math.round(H * 0.018), aw, ah);
   } catch {}
 
-  // QR (fiziki) sağ alt
-  if (fiziki) {
+  // QR (fiziki) sağ alt — gizlenebilir
+  if (fiziki && ayar.qr) {
     const qr = await qrOlustur(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${egitim.id || ''}`);
     if (qr) {
       try {
