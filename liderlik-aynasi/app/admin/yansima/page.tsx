@@ -5,6 +5,7 @@ import { sesYapilandirildiMi } from "@/lib/eleven";
 import KomutaSekme from "../KomutaSekme";
 import YansimaYukleyici from "./YansimaYukleyici";
 import SesKlonPanel from "./SesKlonPanel";
+import SesTemizlikPanel from "./SesTemizlikPanel";
 
 export const metadata = { title: "Yansıma Videoları — Liderlik Aynası" };
 
@@ -71,6 +72,8 @@ export default async function YansimaYonetimPage() {
           .
         </p>
       </div>
+
+      <SesTemizlikPanel />
 
       <SesKlonPanel
         bekleyen={bekleyenSes}
