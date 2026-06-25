@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw, LogIn, LogOut, UserCircle } from 'lucide-react';
+import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, ChevronLeft, ChevronRight, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw, LogIn, LogOut, UserCircle } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import EventActions from '../components/EventActions';
@@ -22,6 +22,50 @@ import { signOut } from 'firebase/auth';
 import { auth } from '../utils/firebase';
 // jsPDF + html2canvas dinamik import — sadece PDF indir butonu tıklandığında yüklenir
 // İlk yükleme süresinden ~400KB tasarruf
+
+// Yatay kaydırılabilir şerit — ok butonları + tekerlek (dikey→yatay) + sürükle.
+// Masaüstünde fareyle yatay kaydırma sorununu çözer.
+function Karusel({ children, okRenk = 'bg-white/20 hover:bg-white/40 text-white' }) {
+  const ref = useRef(null);
+  const [solVar, setSolVar] = useState(false);
+  const [sagVar, setSagVar] = useState(false);
+  const durumGuncelle = () => {
+    const el = ref.current; if (!el) return;
+    setSolVar(el.scrollLeft > 4);
+    setSagVar(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+  useEffect(() => {
+    durumGuncelle();
+    const el = ref.current; if (!el) return;
+    el.addEventListener('scroll', durumGuncelle, { passive: true });
+    window.addEventListener('resize', durumGuncelle);
+    return () => { el.removeEventListener('scroll', durumGuncelle); window.removeEventListener('resize', durumGuncelle); };
+  }, [children]);
+  const kaydir = (yon) => ref.current?.scrollBy({ left: yon * Math.max(280, ref.current.clientWidth * 0.8), behavior: 'smooth' });
+  const wheel = (e) => {
+    const el = ref.current; if (!el) return;
+    if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { el.scrollLeft += e.deltaY; }
+  };
+  return (
+    <div className="relative group">
+      <div ref={ref} onWheel={wheel} className="flex gap-3 overflow-x-auto scrollbar-hide pb-1 scroll-smooth">
+        {children}
+      </div>
+      {solVar && (
+        <button onClick={() => kaydir(-1)} aria-label="Sola kaydır"
+          className={`absolute left-1 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full backdrop-blur shadow-lg flex items-center justify-center transition ${okRenk}`}>
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+      )}
+      {sagVar && (
+        <button onClick={() => kaydir(1)} aria-label="Sağa kaydır"
+          className={`absolute right-1 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full backdrop-blur shadow-lg flex items-center justify-center transition ${okRenk}`}>
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      )}
+    </div>
+  );
+}
 
 // Sofistike kategori renkleri: bg + text + border + ring (hover/active)
 const KATEGORI_RENK = {
@@ -1146,7 +1190,7 @@ const TakvimView = () => {
                     {yurtdisiYaklasan.length} yurtdışı etkinliği yaklaşıyor
                   </span>
                 </div>
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+                <Karusel okRenk="bg-amber-400/90 hover:bg-amber-400 text-gray-900">
                   {yurtdisiYaklasan.map(e => (
                     <a key={e.id} href={`/e/${e.id}`}
                       className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-amber-400/30 hover:border-amber-400 rounded-xl p-3 transition-all hover-lift spring-tap">
@@ -1160,7 +1204,7 @@ const TakvimView = () => {
                       {e.yer && <div className="text-amber-300/70 text-[11px] mt-0.5 line-clamp-1">📍 {e.yer.slice(0, 45)}</div>}
                     </a>
                   ))}
-                </div>
+                </Karusel>
               </div>
             </div>
           </div>
@@ -1179,7 +1223,7 @@ const TakvimView = () => {
                     {yurticiFizikiYaklasan.length} şehirde fiziki etkinlik yaklaşıyor
                   </span>
                 </div>
-                <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+                <Karusel okRenk="bg-emerald-400/90 hover:bg-emerald-400 text-gray-900">
                   {yurticiFizikiYaklasan.map(e => (
                     <a key={e.id} href={`/e/${e.id}`}
                       className="flex-shrink-0 w-56 sm:w-64 bg-white/10 hover:bg-white/20 border border-emerald-400/30 hover:border-emerald-400 rounded-xl p-3 transition-all hover-lift spring-tap">
@@ -1193,7 +1237,7 @@ const TakvimView = () => {
                       {e.yer && <div className="text-emerald-300/70 text-[11px] mt-0.5 line-clamp-1">{e.yer.slice(0, 45)}</div>}
                     </a>
                   ))}
-                </div>
+                </Karusel>
               </div>
             </div>
           </div>
