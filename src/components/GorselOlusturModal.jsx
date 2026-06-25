@@ -149,7 +149,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
       });
     }
     if (model === 'marka-afis') {
-      return await gorselOlusturMarkaAfis({ egitim, egitmenler: egitmenler || [], format });
+      return await gorselOlusturMarkaAfis({ egitim, egitmenler: egitmenler || [], format, ekPrompt: ekIstek });
     }
     if (model === 'ai-afis') {
       return await gorselOlusturAiAfis({
@@ -594,7 +594,8 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                       className="py-2.5 px-4 rounded-xl font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition">Baştan</button>
                   </div>
                   <p className="text-[11px] text-gray-500 text-center">
-                    Beğenmedin mi? Yukarıdan <b>"Tasarıma ek istek"</b>e not yaz (örn. "başlığı büyüt", "arka planı koyulaştır") → <b>Varyasyon üret</b>.
+                    Beğenmedin mi? Yukarıdan <b>"Tasarıma ek istek"</b>e komut yaz → <b>Varyasyon üret</b>.
+                    {aiModel === 'marka-afis' && <><br/>Marka Afiş komutları: <i>yazıları büyüt/küçült · fotoları büyüt/küçült · arka planı koyulaştır/aç · siyah tema · mor tema · sade</i></>}
                   </p>
                 </div>
               )}
