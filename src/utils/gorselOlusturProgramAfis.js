@@ -43,7 +43,7 @@ const wrapText = (ctx, text, x, y, maxW, lh, maxLines = 3) => {
   return yy;
 };
 
-export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], ekPrompt = '' }) => {
+export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], ekPrompt = '', baslik = '' }) => {
   const W = 1080;
   const ayar = ayarCikar(ekPrompt);
   let palet = (ayar.tema && paletAdla(ayar.tema)) ? paletAdla(ayar.tema)() : paletKoyu();
@@ -86,8 +86,10 @@ export const gorselOlusturProgramAfis = async ({ egitim, programSatirlari = [], 
   const tSize = Math.round(W * 0.058 * ys);
   ctx.font = `800 ${tSize}px ${FF.baslik}`;
   ctx.shadowColor = palet.acik ? 'rgba(120,90,30,0.18)' : 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 8;
-  const baslik = `${(egitim.etkinlikTuru || '').toLocaleUpperCase('tr-TR')} PROGRAM İÇERİĞİ`.trim();
-  y = wrapText(ctx, baslik, W / 2, y + tSize, W - M * 2, tSize * 1.12, 2) + Math.round(W * 0.012);
+  const baslikMetni = (baslik && baslik.trim())
+    ? baslik.trim().toLocaleUpperCase('tr-TR')
+    : `${(egitim.etkinlikTuru || '').toLocaleUpperCase('tr-TR')} PROGRAM İÇERİĞİ`.trim();
+  y = wrapText(ctx, baslikMetni, W / 2, y + tSize, W - M * 2, tSize * 1.12, 2) + Math.round(W * 0.012);
   ctx.shadowBlur = 0;
 
   // şehir rozeti + tarih + saat (ortalı, çakışmasız)

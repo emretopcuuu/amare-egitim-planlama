@@ -96,6 +96,7 @@ export default function GorselStudyo() {
   });
   const [ekIstek, setEkIstek] = useState('');
   const [altNot, setAltNot] = useState(''); // afiş altına serbest not/uyarı
+  const [baslikOzel, setBaslikOzel] = useState(''); // özel başlık (boş = otomatik)
   const [programSatir, setProgramSatir] = useState([]); // Program İçeriği afişi satırları
   const [resultUrl, setResultUrl] = useState(null);
   const sonB64 = useRef(null);
@@ -112,7 +113,7 @@ export default function GorselStudyo() {
 
   // eğitim değişince konuşmacıları çöz
   useEffect(() => {
-    setSpeakers(cozEgitmenler(egitim)); setBaglandi(false); setAltNot('');
+    setSpeakers(cozEgitmenler(egitim)); setBaglandi(false); setAltNot(''); setBaslikOzel('');
     // Program satırlarını eğitimin programAkışından başlat
     const pa = Array.isArray(egitim?.programAkisi) ? egitim.programAkisi : [];
     setProgramSatir(pa.map(p => ({
@@ -240,7 +241,7 @@ export default function GorselStudyo() {
     try {
       let res;
       if (markaModu) {
-        res = await gorselOlusturMarkaAfis({ egitim, egitmenler: speakers, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil, altNot });
+        res = await gorselOlusturMarkaAfis({ egitim, egitmenler: speakers, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil, altNot, baslik: baslikOzel });
       } else if (programModu) {
         const tur = afisTuru(egitim);
         const programSatirlari = programSatir.map(r => {
@@ -251,7 +252,7 @@ export default function GorselStudyo() {
           }
           return { saat: r.saat, baslik: r.baslik, konusmaci: k };
         });
-        res = await gorselOlusturProgramAfis({ egitim, programSatirlari, ekPrompt: markaEkIstek(markaSecim) });
+        res = await gorselOlusturProgramAfis({ egitim, programSatirlari, ekPrompt: markaEkIstek(markaSecim), baslik: baslikOzel });
       } else {
         if (!geminiApiKey) throw new Error('AI Afiş için Gemini API anahtarı gerekli (Ayarlar → AI API Anahtarları).');
         res = await gorselOlusturAiAfis({ geminiApiKey, openaiApiKey, egitim, egitmenler: speakers, ekPrompt: ekIstek, format: 'portrait' });
@@ -273,7 +274,7 @@ export default function GorselStudyo() {
     const id = setTimeout(() => { uret(); }, 450);
     return () => clearTimeout(id);
     // eslint-disable-next-line
-  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan])), altNot, JSON.stringify(programSatir)]);
+  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan])), altNot, baslikOzel, JSON.stringify(programSatir)]);
 
   const indir = () => {
     if (!resultUrl) return;
@@ -348,6 +349,16 @@ export default function GorselStudyo() {
                 </div>
               )}
             </div>
+
+            {/* Özel başlık (boş = otomatik) — Marka + Program */}
+            {canliModu && (
+              <div className="bg-white border border-gray-200 rounded-xl p-3">
+                <label className="text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1.5">✏️ Başlık <span className="text-[10px] font-normal text-gray-400">(boş = otomatik)</span></label>
+                <input value={baslikOzel} onChange={(e) => setBaslikOzel(e.target.value)}
+                  placeholder={programModu ? 'Örn: VİZYON GÜNÜ PROGRAM İÇERİĞİ' : (egitim.egitim || 'Afiş başlığı')}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+              </div>
+            )}
 
             {/* Konuşmacı etiketleri + ekle/çıkar (sisteme de yazılır) — program modunda gizli */}
             {!programModu && (

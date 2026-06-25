@@ -362,7 +362,7 @@ const altinHap = (ctx, cx, y, text, fontSize, palet, fontAd = 'Arial') => {
   return y + h;
 };
 
-export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '' }) => {
+export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', baslik = '' }) => {
   // Marka Afiş HER ZAMAN dikey (kare/story selektöründen bağımsız) — referanslar dikey,
   // kare alan fotoları sıkıştırıyordu.
   const W = 1080, H = 1350;
@@ -414,7 +414,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const tSize = Math.round(W * 0.072 * ayar.yazi);
   ctx.font = `800 ${tSize}px ${FF.baslik}`;
   ctx.shadowColor = palet.acik ? 'rgba(120,90,30,0.18)' : 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
-  y = basligiCiz(ctx, (egitim.egitim || '').toLocaleUpperCase('tr-TR'), W / 2, y + tSize, W - M * 2, tSize * 1.05, 4, palet.metin, palet.gold, ayar.ciftRenkBaslik);
+  y = basligiCiz(ctx, ((baslik || egitim.egitim) || '').toLocaleUpperCase('tr-TR'), W / 2, y + tSize, W - M * 2, tSize * 1.05, 4, palet.metin, palet.gold, ayar.ciftRenkBaslik);
   ctx.shadowBlur = 0;
   // başlık altı altın aksan çizgisi (parıltılı uçlar) — modern dokunuş
   y += Math.round(H * 0.006);
@@ -648,9 +648,15 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     }
   } catch {}
 
-  // QR (fiziki) sağ alt — gizlenebilir (ölçüler footer'da hesaplandı)
+  // QR (fiziki) sağ alt — gizlenebilir. Adres varsa GOOGLE MAPS'e yönlendirir,
+  // yoksa etkinlik detay sayfasına düşer.
   if (qrVar) {
-    const qr = await qrOlustur(`${typeof window !== 'undefined' ? window.location.origin : ''}/e/${egitim.id || ''}`);
+    const adresSorgu = [egitim.mekanAdi, (egitim.acikAdres || egitim.yer || ''), egitim.sehir].filter(Boolean).join(' ').trim();
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const qrHedef = adresSorgu
+      ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(adresSorgu)}`
+      : `${origin}/e/${egitim.id || ''}`;
+    const qr = await qrOlustur(qrHedef);
     if (qr) {
       try {
         const qi = await urlToImage(qr);
