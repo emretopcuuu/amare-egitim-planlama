@@ -22,6 +22,9 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
     ad: g.hazirlik,
     ikon: "🧰",
     linkler: [
+      // Panel'den taşınan KONTROL anahtarları en üstte (işi yapan)
+      { href: "/admin/kontrol/hazirlik#pusula", etiket: n.kPusula },
+      { href: "/admin/kontrol/hazirlik#onfark", etiket: n.kOnfark },
       { href: "/admin/kurulum", etiket: n.kurulum },
       { href: "/admin/katilimcilar", etiket: n.katilimcilar },
       { href: "/admin/eslestirme", etiket: n.eslestirme },
@@ -47,6 +50,9 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
     ad: g.canli,
     ikon: "🎛",
     linkler: [
+      // Panel'den taşınan KONTROL anahtarları en üstte
+      { href: "/admin/kontrol/canli#dalga", etiket: n.kDalga },
+      { href: "/admin/kontrol/canli#hedef", etiket: n.kHedef },
       // Kamp Komuta (direktör + komutan + sahne) tek girişten — alt sekmelerle gezilir
       { href: "/admin/ayna-direktoru", etiket: n.komuta },
       { href: "/admin/duyuru", etiket: n.duyuru },
@@ -64,8 +70,26 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
     ad: g.final,
     ikon: "🪞",
     linkler: [
+      // Panel'den taşınan KONTROL anahtarları en üstte
+      { href: "/admin/kontrol/final#bosluk", etiket: n.kBosluk },
+      { href: "/admin/kontrol/final#rapor", etiket: n.kRapor },
+      { href: "/admin/kontrol/final#muhur", etiket: n.kMuhur },
+      { href: "/admin/kontrol/final#soz", etiket: n.kSoz },
+      { href: "/admin/kontrol/final#sonrasi", etiket: n.kSonrasi },
       { href: "/admin/sozler", etiket: n.sozler },
       { href: "/admin/elmas", etiket: n.elmas },
+    ],
+  },
+  {
+    ad: g.sistem,
+    ikon: "⚙",
+    linkler: [
+      { href: "/admin/sistem#prova", etiket: n.sProva },
+      { href: "/admin/sistem#zamanlama", etiket: n.sZamanlama },
+      { href: "/admin/sistem#kod", etiket: n.sKod },
+      { href: "/admin/sistem#yedek", etiket: n.sYedek },
+      { href: "/admin/sistem#yeni-kamp", etiket: n.sYeniKamp },
+      { href: "/admin/sistem#kvkk", etiket: n.sKvkk },
     ],
   },
 ];

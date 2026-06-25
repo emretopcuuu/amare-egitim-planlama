@@ -1390,6 +1390,23 @@ export const tr = {
       sunum: "Sunum",
       gorevTuru: "Görev Türleri",
       yansima: "Yansıma Videoları",
+      // Panel'den taşınan kamp kontrol anahtarları (aşama menüleri altında)
+      kPusula: "Pusula Penceresi",
+      kOnfark: "Ön Farkındalık",
+      kDalga: "Dalga Aç / Kapat",
+      kHedef: "Hedef (Gün 2)",
+      kBosluk: "Boşluk Anı",
+      kRapor: "Ayna Raporları",
+      kMuhur: "Mühür Açılışı",
+      kSoz: "Kapanış Sözü",
+      kSonrasi: "Ödev · Davet · İkili",
+      // ⚙ Sistem menüsü
+      sProva: "Prova Modu",
+      sYeniKamp: "Yeni Kamp",
+      sYedek: "Yedek & İşlem Günlüğü",
+      sZamanlama: "Otomatik Zamanlama",
+      sKod: "Kod Bul",
+      sKvkk: "KVKK Silme Talepleri",
     },
     // Funnel navigasyonu: türe göre değil, kampın YOLCULUĞUNA göre 4 aşama + Panel.
     // Operatör soldan sağa = zaman akışı; aradığı aracı süreçteki yerinden bulur.
@@ -1398,6 +1415,7 @@ export const tr = {
       katilim: "2 · Katılım",
       canli: "3 · Kamp Canlı",
       final: "4 · Final & Sonrası",
+      sistem: "Sistem",
       prova: "PROVA",
       // eski adlar (geriye dönük; kullanımdan kalktı)
       kurulum: "Kurulum",
