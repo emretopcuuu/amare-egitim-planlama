@@ -50,14 +50,14 @@ const KATEGORILER = [
   'Kişisel Gelişim', 'Vizyon Günü', 'Panel', 'Diğer',
 ];
 
-// Türkiye 81 il + Çorlu (büyük etkinlik merkezi) — Türkçe alfabetik sıralı
+// Türkiye 81 il + Çorlu (büyük etkinlik merkezi) + yurtdışı (Almanya, Hollanda) — Türkçe alfabetik sıralı
 const SEHIRLER_LISTESI = [
-  'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Amasya', 'Ankara',
+  'Adana', 'Adıyaman', 'Afyonkarahisar', 'Ağrı', 'Aksaray', 'Almanya', 'Amasya', 'Ankara',
   'Antalya', 'Ardahan', 'Artvin', 'Aydın', 'Balıkesir', 'Bartın', 'Batman',
   'Bayburt', 'Bilecik', 'Bingöl', 'Bitlis', 'Bolu', 'Burdur', 'Bursa',
   'Çanakkale', 'Çankırı', 'Çorlu', 'Çorum', 'Denizli', 'Diyarbakır', 'Düzce',
   'Edirne', 'Elazığ', 'Erzincan', 'Erzurum', 'Eskişehir', 'Gaziantep', 'Giresun',
-  'Gümüşhane', 'Hakkari', 'Hatay', 'Iğdır', 'Isparta', 'İstanbul', 'İzmir',
+  'Gümüşhane', 'Hakkari', 'Hatay', 'Hollanda', 'Iğdır', 'Isparta', 'İstanbul', 'İzmir',
   'Kahramanmaraş', 'Karabük', 'Karaman', 'Kars', 'Kastamonu', 'Kayseri', 'Kilis',
   'Kırıkkale', 'Kırklareli', 'Kırşehir', 'Kocaeli', 'Konya', 'Kütahya', 'Malatya',
   'Manisa', 'Mardin', 'Mersin', 'Muğla', 'Muş', 'Nevşehir', 'Niğde', 'Ordu',
