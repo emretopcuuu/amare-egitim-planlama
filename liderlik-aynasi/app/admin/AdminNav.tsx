@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { tr } from "@/lib/i18n/tr";
 import KomutPaleti from "./KomutPaleti";
@@ -94,6 +94,24 @@ export default function AdminNav({
   const [cikiliyor, setCikiliyor] = useState(false);
   const [acikGrup, setAcikGrup] = useState<string | null>(null);
   const [acikKonum, setAcikKonum] = useState<{ left: number; top: number } | null>(null);
+  const seritRef = useRef<HTMLDivElement>(null);
+
+  // Üst şerit yatay taşar (4 aşama + durum rozetleri). Masaüstünde scrollbar
+  // gizli + dikey tekerlek yatay kaymadığı için sağdaki öğelere ulaşılamıyordu.
+  // Dikey tekerleği yatay kaydırmaya çevir (yalnız taşma varsa). Dokunmatikte
+  // yatay kaydırma zaten doğal çalışır — orada dokunma.
+  useEffect(() => {
+    const el = seritRef.current;
+    if (!el) return;
+    const tekerlek = (e: WheelEvent) => {
+      if (el.scrollWidth <= el.clientWidth) return; // taşma yok
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // zaten yatay jest
+      el.scrollLeft += e.deltaY;
+      e.preventDefault();
+    };
+    el.addEventListener("wheel", tekerlek, { passive: false });
+    return () => el.removeEventListener("wheel", tekerlek);
+  }, []);
 
   // Açık menü, butonun ölçülen konumuna sabitlenir ve gövdeye portallanır —
   // böylece yatay kaydırma kabının (overflow-x) altında kırpılmaz. Kaydırma /
@@ -175,7 +193,10 @@ export default function AdminNav({
           </>,
           document.body
         )}
-      <div className="scrollbar-gizle relative z-10 mx-auto flex w-full max-w-4xl items-center gap-1 overflow-x-auto p-3">
+      <div
+        ref={seritRef}
+        className="scrollbar-gizle relative z-10 mx-auto flex w-full max-w-4xl items-center gap-1 overflow-x-auto p-3"
+      >
         <span className="mr-1 hidden shrink-0 text-sm font-bold text-gold sm:block">
           {tr.app.name}
         </span>
