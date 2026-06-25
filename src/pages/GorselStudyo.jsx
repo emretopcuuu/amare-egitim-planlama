@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Download, Link2, Loader2, Sparkles, ImageIcon, AlertCircle, RotateCcw, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, Download, Link2, Loader2, Sparkles, ImageIcon, AlertCircle, RotateCcw, CheckCircle2, Plus, X } from 'lucide-react';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { afisTuru, etiketSec } from '../utils/egitmenEtiket';
 import { uploadGorsel } from '../utils/uploadGorsel';
@@ -88,6 +88,51 @@ export default function GorselStudyo() {
 
   const aktifMetot = METOTLAR.find(m => m.id === aiModel) || METOTLAR[0];
   const markaModu = !aktifMetot.ai;
+
+  // ── Konuşmacı yönetimi (ekle/çıkar → hem görsele hem sisteme yazılır) ──
+  const [kayit, setKayit] = useState(null); // null | 'saving' | 'saved' | 'err'
+  const [yeniAd, setYeniAd] = useState('');
+  // sistemdeki benzersiz konuşmacılar (fotolu olanı tercih), alfabetik
+  const tumKonusmacilar = useMemo(() => {
+    const seen = new Map();
+    (konusmacilar || []).forEach(k => {
+      if (!k.id) return;
+      const cid = makeCoreId(k.ad || k.id); if (!cid) return;
+      const ex = seen.get(cid);
+      if (!ex || (!ex.fotoURL && k.fotoURL)) seen.set(cid, { ad: k.ad || k.id, fotoURL: k.fotoURL || null });
+    });
+    return [...seen.values()].sort((a, b) => a.ad.localeCompare(b.ad, 'tr'));
+  }, [konusmacilar]);
+  const eklenebilir = useMemo(
+    () => tumKonusmacilar.filter(k => !speakers.some(s => makeCoreId(s.ad) === makeCoreId(k.ad))),
+    [tumKonusmacilar, speakers]
+  );
+  // konuşmacı listesini eğitimin "egitmen" alanına yaz (sistem geneli)
+  const egitmenKaydet = async (list) => {
+    if (!egitim) return;
+    const str = list.map(s => s.ad).join(' / ');
+    setKayit('saving');
+    try { const r = await egitimGuncelle(egitim.id, { egitmen: str }); setKayit(r?.success ? 'saved' : 'err'); }
+    catch { setKayit('err'); }
+  };
+  const konusmaciEkle = (ad) => {
+    const isim = (ad || '').trim();
+    if (!isim || !egitim) return;
+    const k = konusmaciBul(isim);
+    const yeni = { ad: k?.ad || isim.toLocaleUpperCase('tr-TR'), unvan: etiketSec(k, afisTuru(egitim)), biyografi: k?.biyografi || '', fotoURL: k?.fotoURL || null };
+    setSpeakers(prev => {
+      if (prev.some(s => makeCoreId(s.ad) === makeCoreId(yeni.ad))) return prev;
+      const list = [...prev, yeni];
+      egitmenKaydet(list);
+      return list;
+    });
+    setYeniAd('');
+  };
+  const konusmaciCikar = (i) => setSpeakers(prev => {
+    const list = prev.filter((_, idx) => idx !== i);
+    egitmenKaydet(list);
+    return list;
+  });
 
   const markaCipToggle = (sec, grup) => setMarkaSecim(prev => {
     const next = { ...prev };
@@ -205,22 +250,46 @@ export default function GorselStudyo() {
               )}
             </div>
 
-            {/* Konuşmacı etiketleri */}
-            {speakers.length > 0 && (
-              <div className="bg-white border border-gray-200 rounded-xl p-3">
-                <div className="text-xs font-semibold text-gray-700 mb-2">KONUŞMACI ETİKETLERİ</div>
-                <div className="space-y-1.5">
-                  {speakers.map((s, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                      {s.fotoURL ? <img src={s.fotoURL} alt="" className="w-7 h-7 rounded-full object-cover" /> : <div className="w-7 h-7 rounded-full bg-gray-200" />}
-                      <div className="text-xs font-semibold text-gray-700 w-32 truncate">{s.ad}</div>
-                      <input value={s.unvan || ''} onChange={(ev) => setSpeakers(prev => prev.map((x, idx) => idx === i ? { ...x, unvan: ev.target.value } : x))}
-                        placeholder="Unvan / rol" className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
-                    </div>
-                  ))}
-                </div>
+            {/* Konuşmacı etiketleri + ekle/çıkar (sisteme de yazılır) */}
+            <div className="bg-white border border-gray-200 rounded-xl p-3">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-semibold text-gray-700">KONUŞMACI ETİKETLERİ</span>
+                {kayit === 'saving' && <span className="text-[11px] text-gray-400 flex items-center gap-1"><Loader2 className="w-3 h-3 animate-spin" /> kaydediliyor…</span>}
+                {kayit === 'saved' && <span className="text-[11px] text-green-600 flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> sisteme kaydedildi</span>}
+                {kayit === 'err' && <span className="text-[11px] text-red-600">kaydedilemedi</span>}
               </div>
-            )}
+              <div className="space-y-1.5">
+                {speakers.map((s, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    {s.fotoURL ? <img src={s.fotoURL} alt="" className="w-7 h-7 rounded-full object-cover" /> : <div className="w-7 h-7 rounded-full bg-gray-200 flex items-center justify-center text-[9px] text-gray-400">?</div>}
+                    <div className="text-xs font-semibold text-gray-700 w-28 truncate" title={s.ad}>{s.ad}</div>
+                    <input value={s.unvan || ''} onChange={(ev) => setSpeakers(prev => prev.map((x, idx) => idx === i ? { ...x, unvan: ev.target.value } : x))}
+                      placeholder="Unvan / rol" className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                    <button onClick={() => konusmaciCikar(i)} title="Çıkar" className="text-gray-400 hover:text-red-500 p-1"><X className="w-4 h-4" /></button>
+                  </div>
+                ))}
+                {speakers.length === 0 && <div className="text-[11px] text-gray-400 py-1">Henüz konuşmacı yok. Aşağıdan ekle.</div>}
+              </div>
+              {/* Ekle: mevcut konuşmacılardan seç veya yeni isim */}
+              <div className="mt-2.5 pt-2.5 border-t border-gray-100 space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Plus className="w-3.5 h-3.5 text-amare-purple" />
+                  <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">Konuşmacı ekle</span>
+                </div>
+                <select value="" onChange={(e) => konusmaciEkle(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30">
+                  <option value="">— Mevcut konuşmaculardan seç ({eklenebilir.length}) —</option>
+                  {eklenebilir.map(k => <option key={k.ad} value={k.ad}>{k.ad}{k.fotoURL ? ' ★' : ''}</option>)}
+                </select>
+                <div className="flex gap-1.5">
+                  <input value={yeniAd} onChange={(e) => setYeniAd(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') konusmaciEkle(yeniAd); }}
+                    placeholder="…veya yeni isim yaz" className="flex-1 border border-gray-200 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                  <button onClick={() => konusmaciEkle(yeniAd)} disabled={!yeniAd.trim()}
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-amare-purple hover:bg-amare-dark transition disabled:opacity-40">Ekle</button>
+                </div>
+                <p className="text-[10px] text-gray-400">★ = sistemde fotoğrafı var. Eklediğin kişi görselde ve eğitimin her yerinde görünür.</p>
+              </div>
+            </div>
 
             {/* Marka varyasyon / AI ek istek */}
             {markaModu ? (
