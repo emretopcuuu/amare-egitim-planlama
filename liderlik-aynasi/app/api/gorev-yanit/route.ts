@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { gorevPuanla, korNoktaGuncelle } from "@/lib/ayna";
+import { krizDiliVarMi, krizUyarisiGonder, KRIZ_YONLENDIRME } from "@/lib/guvenlik";
 import { markaAnons, fieroSesi } from "@/lib/yansima";
 import {
   kivilcimHesapla,
@@ -38,6 +39,14 @@ export async function POST(req: Request) {
   const yanitMetni = yanit.trim().slice(0, 1500);
 
   const db = supabaseAdmin();
+
+  // GÜVENLİK SINIRI: gerçek kriz/umutsuzluk sinyali → admin bayrağı + kişiye
+  // insan-mentor yönlendirmesi (AYNA koç sınırında kalır). Akışı bozmaz.
+  const kriz = krizDiliVarMi(yanitMetni);
+  if (kriz) {
+    await krizUyarisiGonder(db, session.sub, session.ad, "gorev-yanit", yanitMetni);
+  }
+  const guvenlikEk = kriz ? `\n\n${KRIZ_YONLENDIRME}` : "";
   const { data: gorev, error } = await db
     .from("missions")
     .select("id, kind, title, body, status, due_at")
@@ -68,10 +77,11 @@ export async function POST(req: Request) {
     const toplam = await toplamKivilcim(db, session.sub);
     return Response.json({
       soz: true,
-      yorum: tr.gorevler.sozTesekkur,
+      yorum: tr.gorevler.sozTesekkur + guvenlikEk,
       kivilcim: SOZ_KIVILCIMI,
       toplam,
       unvan: unvanBul(toplam).mevcut.ad,
+      ...(kriz ? { guvenlik: true } : {}),
     });
   }
 
@@ -92,10 +102,11 @@ export async function POST(req: Request) {
     const toplam = await toplamKivilcim(db, session.sub);
     return Response.json({
       senkron: true,
-      yorum: tr.gorevler.senkronTesekkur,
+      yorum: tr.gorevler.senkronTesekkur + guvenlikEk,
       kivilcim: SENKRON_KIVILCIMI,
       toplam,
       unvan: unvanBul(toplam).mevcut.ad,
+      ...(kriz ? { guvenlik: true } : {}),
     });
   }
 
@@ -111,7 +122,7 @@ export async function POST(req: Request) {
 
   const sonuc = await gorevPuanla(gorev, yanitMetni);
   if (!sonuc) {
-    return Response.json({ bekliyor: true }, { status: 202 });
+    return Response.json({ bekliyor: true, ...(kriz ? { guvenlik: true, yorum: KRIZ_YONLENDIRME } : {}) }, { status: 202 });
   }
 
   const zamaninda = simdi <= new Date(gorev.due_at);
@@ -157,10 +168,11 @@ export async function POST(req: Request) {
 
   return Response.json({
     puan: sonuc.puan,
-    yorum: sonuc.yorum,
+    yorum: sonuc.yorum + guvenlikEk,
     kivilcim,
     toplam,
     unvan: unvanBul(toplam).mevcut.ad,
+    ...(kriz ? { guvenlik: true } : {}),
   });
 }
 

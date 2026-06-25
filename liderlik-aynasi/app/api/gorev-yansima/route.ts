@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { gorevYansit } from "@/lib/ayna";
+import { krizDiliVarMi, krizUyarisiGonder, KRIZ_YONLENDIRME } from "@/lib/guvenlik";
 import { tr } from "@/lib/i18n/tr";
 
 export const maxDuration = 60;
@@ -47,14 +48,23 @@ export async function POST(req: Request) {
     yansimaMetni
   );
 
+  // GÜVENLİK SINIRI: yansımada gerçek kriz sinyali → admin bayrağı + kişiye
+  // insan-mentor yönlendirmesi (koç sınırı). Akışı bozmaz.
+  const kriz = krizDiliVarMi(yansimaMetni);
+  if (kriz) {
+    await krizUyarisiGonder(db, session.sub, session.ad, "gorev-yansima", yansimaMetni);
+  }
+
+  const yanitMesaji = (yansit ?? tr.gorevler.yansimaTesekkur) + (kriz ? `\n\n${KRIZ_YONLENDIRME}` : "");
+
   await db
     .from("missions")
     .update({
       reflection_text: yansimaMetni,
-      reflection_reply: yansit ?? tr.gorevler.yansimaTesekkur,
+      reflection_reply: yanitMesaji,
       reflected_at: new Date().toISOString(),
     })
     .eq("id", gorev.id);
 
-  return Response.json({ yansit: yansit ?? tr.gorevler.yansimaTesekkur });
+  return Response.json({ yansit: yanitMesaji, ...(kriz ? { guvenlik: true } : {}) });
 }
