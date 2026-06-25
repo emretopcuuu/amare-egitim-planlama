@@ -228,11 +228,11 @@ export const gorselOlusturHibrit = async ({ apiKey, egitim, egitmenler = [], sab
   const bgW = arkaPlanImg.width * ratio;
   const bgH = arkaPlanImg.height * ratio;
   ctx.save();
-  ctx.filter = 'blur(10px)';
-  ctx.drawImage(arkaPlanImg, (W - bgW) / 2 - 20, (H - bgH) / 2 - 20, bgW + 40, bgH + 40);
+  ctx.filter = 'blur(34px)'; // ağır blur: şablondaki büyük yüzler tanınmaz dokuya dönsün
+  ctx.drawImage(arkaPlanImg, (W - bgW) / 2 - 60, (H - bgH) / 2 - 60, bgW + 120, bgH + 120);
   ctx.restore();
-  // Hafif tek-renk örtü — kalan yüz/yazı izlerini iyice bastırır, atmosferi korur
-  ctx.fillStyle = 'rgba(16, 8, 28, 0.34)';
+  // Güçlü tek-renk örtü — kalan yüz/yazı izlerini iyice bastır (atmosfer/renk kalır)
+  ctx.fillStyle = 'rgba(16, 8, 28, 0.5)';
   ctx.fillRect(0, 0, W, H);
 
   // Üst kısımda HİÇBİR overlay yok — kullanıcı isteği üzerine kaldırıldı.
