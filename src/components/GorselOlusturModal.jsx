@@ -16,6 +16,19 @@ const MOTORLAR = {
   'openai-pro': { ad: 'OpenAI Pro', emoji: '✨', not: 'gpt-image · sunucu', sure: 45, key: 'openai' },
 };
 
+// Yapısal konuşmacı etiketlerinden generator'ların beklediği metin bloğunu üret.
+const buildEkPrompt = (etiketler, ekIstek) => {
+  const lines = ['KONUŞMACI ALTI YAZILACAK ETİKETLER (her bloğu görselde aynen göster, sıra önemli):', ''];
+  (etiketler || []).forEach((e, i) => {
+    lines.push(`${i + 1}. ${(e.ad || '').toUpperCase()}`);
+    lines.push(`   ${(e.etiket || '').trim() || '(unvan girilmemiş — boş bırak)'}`);
+    lines.push('');
+  });
+  lines.push('NOT: Yukarıdaki unvanlar dışında HİÇBİR şey yazma, başka unvan UYDURMA.');
+  if (ekIstek && ekIstek.trim()) lines.push('', 'EK TASARIM İSTEĞİ: ' + ekIstek.trim());
+  return lines.join('\n');
+};
+
 const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, apiKey, openaiApiKey, onClose, sablonlar = [], onGorselBagla }) => {
   const [mod, setMod] = useState('ai'); // 'ai' | 'upload'
 
@@ -42,6 +55,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   });
   const [aktifModel, setAktifModel] = useState(null); // üretim sırasında hangisinin çalıştığını göster
   const [gelismis, setGelismis] = useState(false); // motor seçimi gizli, "Gelişmiş" altında
+  const [tumSablon, setTumSablon] = useState(false); // şablon grid: ilk 8 mi hepsi mi
   const [elapsed, setElapsed] = useState(0); // üretim geçen süre (sn)
   const iptalRef = useRef(false); // soft-cancel: sonucu yoksay
 
@@ -59,20 +73,10 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   // Kullanıcı bu listeyi görür ve etkinliğe özel rol değişiklikleri yapabilir
   // (örn. panel modaratörü = "Modaratör"). Boş satırla ayrılan bloklar Gemini'ye
   // her konuşmacının ekranda nasıl yazılacağını kesin söyler.
-  const [ekPrompt, setEkPrompt] = useState(() => {
-    if (!egitmenler || egitmenler.length === 0) return '';
-    const lines = [
-      'KONUŞMACI ALTI YAZILACAK ETİKETLER (her bloğu görselde aynen göster, sıra önemli):',
-      '',
-    ];
-    egitmenler.forEach((e, i) => {
-      lines.push(`${i + 1}. ${(e.ad || '').toUpperCase()}`);
-      lines.push(`   ${e.unvan || '(unvan girilmemiş — boş bırak)'}`);
-      lines.push('');
-    });
-    lines.push('NOT: Yukarıdaki unvanlar dışında HİÇBİR şey yazma, başka unvan UYDURMA.');
-    return lines.join('\n');
-  });
+  // Konuşmacı etiketleri — yapısal (foto + isim + düzenlenebilir etiket)
+  const [etiketler, setEtiketler] = useState(() =>
+    (egitmenler || []).map(e => ({ ad: e.ad || '', etiket: e.unvan || '', fotoURL: e.fotoURL || null })));
+  const [ekIstek, setEkIstek] = useState(''); // serbest tasarım isteği
 
   // Upload mod state
   const [uploadedFile, setUploadedFile] = useState(null); // { file, preview, dataUrl }
@@ -128,38 +132,38 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
   };
 
   // Modeli çalıştıran inner fonksiyon — fallback için kullanılır
-  const runModel = async (model, sablonKaynak) => {
+  const runModel = async (model, sablonKaynak, ekPromptStr) => {
     setAktifModel(model);
     const dims = getDimensions(format);
     if (model === 'hibrit') {
       return await gorselOlusturHibrit({
         apiKey, egitim, egitmenler: egitmenler || [],
-        sablonFile: sablonKaynak, ekPrompt, ...dims,
+        sablonFile: sablonKaynak, ekPrompt: ekPromptStr, ...dims,
       });
     }
     if (model === 'canvas') {
       return await gorselOlusturCanvas({
         egitim, egitmenler: egitmenler || [],
-        sablonFile: sablonKaynak, ekPrompt, ...dims,
+        sablonFile: sablonKaynak, ekPrompt: ekPromptStr, ...dims,
       });
     }
     if (model === 'ai-afis') {
       return await gorselOlusturAiAfis({
         geminiApiKey: apiKey, openaiApiKey,
         egitim, egitmenler: egitmenler || [],
-        ekPrompt, format: 'portrait',
+        ekPrompt: ekPromptStr, format: 'portrait',
       });
     }
     if (model === 'openai-pro') {
       const result = await gorselOlusturOpenAIPro({
         apiKey: openaiApiKey,
         egitim, egitmenler: egitmenler || [],
-        sablonFile: sablonKaynak, ekPrompt,
+        sablonFile: sablonKaynak, ekPrompt: ekPromptStr,
         quality: 'medium', format,
       });
       return result;
     }
-    return await gorselOlustur({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, sablonFile: sablonKaynak, ekPrompt, format });
+    return await gorselOlustur({ apiKey, egitim, egitmenFotoURL, egitmenFotoURLs, egitmenler, sablonFile: sablonKaynak, ekPrompt: ekPromptStr, format });
   };
 
   const iptalEt = () => { iptalRef.current = true; setGenerating(false); setAktifModel(null); };
@@ -176,6 +180,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
     const sablonKaynak = secilenSablon
       ? (secilenSablon.type === 'file' ? secilenSablon.file : secilenSablon.url)
       : null;
+    const ekPromptStr = buildEkPrompt(etiketler, ekIstek);
 
     // Önce seçili model, başarısız olursa fallback zinciri
     // Hibrit/Gemini başarısız → OpenAI Pro
@@ -194,7 +199,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
       try {
         if (m === 'openai-pro' && !openaiApiKey) { lastErr = new Error('OpenAI API anahtarı yok.'); continue; }
         if ((m === 'gemini' || m === 'hibrit') && !apiKey) { lastErr = new Error('Gemini API anahtarı yok.'); continue; }
-        result = await runModel(m, sablonKaynak);
+        result = await runModel(m, sablonKaynak, ekPromptStr);
         break;
       } catch (err) {
         console.warn(`[gorsel] ${m} başarısız:`, err.message);
@@ -317,7 +322,7 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                 {sablonlar.length > 0 && (
                   <div className="mb-3">
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mb-2">
-                      {sablonlar.map((s) => {
+                      {(tumSablon ? sablonlar : sablonlar.slice(0, 8)).map((s) => {
                         const secili = secilenSablon?.type === 'saved' && secilenSablon.url === s.url;
                         return (
                           <button
@@ -332,9 +337,16 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                         );
                       })}
                     </div>
-                    <button onClick={() => setYeniYukle(!yeniYukle)} className="text-xs text-amare-purple hover:underline">
-                      {yeniYukle ? '▲ Yeni şablon yüklemeyi gizle' : '▼ Farklı bir şablon yükle'}
-                    </button>
+                    <div className="flex items-center gap-3">
+                      {sablonlar.length > 8 && (
+                        <button onClick={() => setTumSablon(t => !t)} className="text-xs text-gray-500 hover:underline">
+                          {tumSablon ? '▲ Daha az göster' : `▼ Tüm şablonlar (${sablonlar.length})`}
+                        </button>
+                      )}
+                      <button onClick={() => setYeniYukle(!yeniYukle)} className="text-xs text-amare-purple hover:underline">
+                        {yeniYukle ? '▲ Yeni şablon yüklemeyi gizle' : '▼ Farklı bir şablon yükle'}
+                      </button>
+                    </div>
                   </div>
                 )}
                 {yeniYukle && (
@@ -356,19 +368,36 @@ const GorselOlusturModal = ({ egitim, egitmenFotoURL, egitmenFotoURLs, egitmenle
                 )}
               </div>
 
-              {/* Ek Prompt */}
+              {/* Konuşmacı etiketleri — yapısal form */}
               <div>
-                <label className="text-sm font-semibold text-gray-700 mb-1 block">
-                  Ek İstek / Konuşmacı Etiketleri
-                  <span className="text-gray-400 font-normal"> (otomatik dolduruldu, dilersen düzenle)</span>
-                </label>
-                <p className="text-xs text-gray-500 mb-1">
-                  💡 Konuşmacıların altında yazılacak isim+unvan etiketleri. Panel/Vizyon günlerinde özel rol (örn. "Modaratör") yazmak istersen burayı düzenle. Tasarım için ek istek varsa en alta ekle.
-                </p>
+                <label className="text-sm font-semibold text-gray-700 mb-1 block">Konuşmacı Etiketleri</label>
                 <p className="text-[11px] text-amare-purple font-semibold mb-2">
-                  Tespit edilen tür: {afisTuruLabel(afisTuru(egitim))}
+                  Tespit edilen tür: {afisTuruLabel(afisTuru(egitim))} — etiketler buna göre dolduruldu, gerekirse düzenle.
                 </p>
-                <textarea value={ekPrompt} onChange={(e) => setEkPrompt(e.target.value)} placeholder="Örn: arka planı koyu mor yap..." rows={10} className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
+                {etiketler.length === 0 ? (
+                  <p className="text-xs text-gray-400">Bu etkinlikte konuşmacı bulunamadı.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {etiketler.map((e, i) => (
+                      <div key={i} className="flex items-center gap-2">
+                        {e.fotoURL
+                          ? <img src={e.fotoURL} alt="" className="w-9 h-9 rounded-full object-cover border border-gray-200 flex-shrink-0" />
+                          : <div className="w-9 h-9 rounded-full bg-purple-100 text-amare-purple flex items-center justify-center text-xs font-bold flex-shrink-0">{(e.ad || '?').slice(0, 1).toUpperCase()}</div>}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-xs font-semibold text-gray-700 truncate">{e.ad}</div>
+                          <input value={e.etiket}
+                            onChange={(ev) => setEtiketler(prev => prev.map((x, idx) => idx === i ? { ...x, etiket: ev.target.value } : x))}
+                            placeholder="Unvan / rol (örn. Diamond, Moderatör)"
+                            className="w-full border border-gray-200 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <label className="text-xs font-semibold text-gray-600 mt-3 mb-1 block">Tasarıma ek istek (opsiyonel)</label>
+                <textarea value={ekIstek} onChange={(e) => setEkIstek(e.target.value)} rows={2}
+                  placeholder="Örn: arka planı koyu mor yap, üstte ışık efekti…"
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
               </div>
 
               {/* Format Seçici */}
