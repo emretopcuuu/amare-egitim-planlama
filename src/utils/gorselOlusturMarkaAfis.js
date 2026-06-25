@@ -407,11 +407,23 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     ctx.fillText(zPill, W / 2, footerTop + Math.round(H * 0.01) + zh / 2);
     ctx.textBaseline = 'alphabetic';
   }
-  // amare logosu (en alt orta) — açık temada koyu (mor) varyant, koyu temada beyaz
+  // amare logosu (en alt orta) — HER ZAMAN düzgün yatay beyaz logo (1426x292).
+  // (Purple dosyası kare/boşluklu olduğu için kullanılmaz.) Açık temada koyuya boyanır.
   try {
-    const amare = await urlToImage(palet.acik ? '/logos/AmareBPLogo-Horizontal-Purple-TR.png' : '/logos/AmareBPLogo-Horizontal-White-TR.png');
-    const ah = Math.round(H * 0.03), aw = ah * (amare.width / amare.height);
-    ctx.drawImage(amare, (W - aw) / 2, H - ah - Math.round(H * 0.018), aw, ah);
+    const amare = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
+    const ah = Math.round(H * 0.032), aw = Math.round(ah * (amare.width / amare.height));
+    const ax = Math.round((W - aw) / 2), ay = H - ah - Math.round(H * 0.018);
+    if (palet.acik) {
+      // beyaz logoyu koyu renge boya (krem zeminde görünür olsun)
+      const oc = document.createElement('canvas'); oc.width = aw; oc.height = ah;
+      const octx = oc.getContext('2d');
+      octx.drawImage(amare, 0, 0, aw, ah);
+      octx.globalCompositeOperation = 'source-in';
+      octx.fillStyle = palet.metin; octx.fillRect(0, 0, aw, ah);
+      ctx.drawImage(oc, ax, ay, aw, ah);
+    } else {
+      ctx.drawImage(amare, ax, ay, aw, ah);
+    }
   } catch {}
 
   // QR (fiziki) sağ alt — gizlenebilir (ölçüler footer'da hesaplandı)
