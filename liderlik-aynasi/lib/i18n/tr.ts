@@ -435,6 +435,8 @@ export const tr = {
     ],
     rizaVar: (tarih: string) => `✓ Ses ritüeli için açık rızanı ${tarih} tarihinde verdin.`,
     rizaYok: "Henüz ses ritüeli için açık rıza vermedin.",
+    veriIndir: "Verilerimi indir (JSON)",
+    veriIndirNot: "Sana ait tüm veriyi indirir. Diğer katılımcıların kimliği gizlilik gereği dahil edilmez.",
     silBaslik: "Verilerimin silinmesini istiyorum",
     silAciklama:
       "Talebin yöneticiye iletilir; ad, puan, ses ve tüm verilerin en kısa sürede silinir. Bu işlem geri alınamaz.",
@@ -1378,6 +1380,7 @@ export const tr = {
       test: "Prova",
       kurulum: "Kurulum",
       analiz: "Analiz",
+      aynaSaglik: "AYNA Sağlık",
       farkindalik: "Farkındalık Sinyali",
       takim: "Takım Sağlığı",
       duyuru: "Duyuru",
