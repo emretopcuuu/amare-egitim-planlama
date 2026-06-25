@@ -1415,7 +1415,7 @@ export const tr = {
       katilim: "2 · Katılım",
       canli: "3 · Kamp Canlı",
       final: "4 · Final & Sonrası",
-      sistem: "Sistem",
+      sistem: "5 · Sistem",
       prova: "PROVA",
       // eski adlar (geriye dönük; kullanımdan kalktı)
       kurulum: "Kurulum",

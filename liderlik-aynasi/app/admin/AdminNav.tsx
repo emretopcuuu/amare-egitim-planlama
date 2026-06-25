@@ -48,7 +48,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
   },
   {
     ad: g.canli,
-    ikon: "🎛",
+    ikon: "🎬",
     linkler: [
       // Panel'den taşınan KONTROL anahtarları en üstte
       { href: "/admin/kontrol/canli#dalga", etiket: n.kDalga },
@@ -68,7 +68,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
   },
   {
     ad: g.final,
-    ikon: "🪞",
+    ikon: "🏁",
     linkler: [
       // Panel'den taşınan KONTROL anahtarları en üstte
       { href: "/admin/kontrol/final#bosluk", etiket: n.kBosluk },
@@ -82,7 +82,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
   },
   {
     ad: g.sistem,
-    ikon: "⚙",
+    ikon: "⚙️",
     linkler: [
       { href: "/admin/sistem#prova", etiket: n.sProva },
       { href: "/admin/sistem#zamanlama", etiket: n.sZamanlama },
@@ -201,7 +201,7 @@ export default function AdminNav({
       {/* Yatay kaydırma yerine SATIRA SIĞMAYAN öğeler alt satıra taşar (wrap).
           Böylece hiçbir şey kırpılmaz, hiç kaydırmaya gerek kalmaz — operatör
           tüm aşamaları + durumu tek bakışta görür. */}
-      <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-wrap items-center gap-1.5 p-3">
+      <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-wrap items-center gap-1.5 p-3">
         <span className="mr-1 hidden shrink-0 text-sm font-bold text-gold sm:block">
           {tr.app.name}
         </span>
@@ -217,10 +217,7 @@ export default function AdminNav({
           {PANEL.etiket}
         </Link>
 
-        {/* #1/#4 Komut paleti tetikleyici — her sayfadan ⌘K ile de açılır */}
-        {tamYetki && <KomutPaleti />}
-
-        {/* Kategori açılır menüleri — yalnız tam yetkili admin */}
+        {/* Kategori açılır menüleri — Panel'in HEMEN yanında 1·2·3·4·5 tek sırada */}
         {tamYetki &&
           GRUPLAR.map((grup) => {
             const acik = acikGrup === grup.ad;
@@ -243,6 +240,13 @@ export default function AdminNav({
               </button>
             );
           })}
+
+        {/* Zorunlu satır kırma: Panel + 1·2·3·4·5 üstte tek sırada kalsın;
+            Hızlı eylem ve durum rozetleri ALT SATIRA insin. */}
+        <div className="basis-full" aria-hidden />
+
+        {/* #1/#4 Komut paleti tetikleyici (Hızlı eylem) — alt sırada, soldan */}
+        {tamYetki && <KomutPaleti />}
 
         {/* Canlı durum rozetleri: hangi sekmede olursan ol kokpit görünür */}
         {/* #9 Prova rozeti: test ortamı her an net görünür */}
