@@ -1270,3 +1270,14 @@ html[data-tema="gunduz"] .gece-ada .border-white\/15 {
   border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
+
+/* ── ADMIN BASİT / UZMAN MOD (UX #1) ─────────────────────────────────────────
+   Varsayılan BASİT (data-admin-mod yoksa da): .uzman-only gizli, .basit-only
+   görünür. Uzman moda geçince tersine döner. Flash olmaması için "uzman"
+   anahtarına göre yazıldı. */
+html:not([data-admin-mod="uzman"]) .uzman-only {
+  display: none !important;
+}
+html[data-admin-mod="uzman"] .basit-only {
+  display: none !important;
+}

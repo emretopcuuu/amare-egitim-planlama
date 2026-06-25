@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga } from "@/lib/degerlendirme";
 import AdminNav from "./AdminNav";
 import AdminTost from "./AdminTost";
+import AdminMod from "./AdminMod";
+import AdminTuru from "./AdminTuru";
 
 // /admin/giris da bu layout'tan geçer: nav yalnızca admin oturumunda görünür.
 // Nav'daki durum rozetleri her eylem sonrası router.refresh ile tazelenir.
@@ -52,8 +54,12 @@ export default async function AdminLayout({
         muhurAcik={muhurAyari?.value === "true"}
         moderasyonBekleyen={bekleyenFoto ?? 0}
       />
+      {/* UX #1: Basit/Uzman mod anahtarı — tüm admin sayfalarında geçerli */}
+      <AdminMod />
       {children}
       <AdminTost />
+      {/* UX #7: panele ilk giren yöneticiye tek seferlik tur */}
+      <AdminTuru />
     </div>
   );
 }
