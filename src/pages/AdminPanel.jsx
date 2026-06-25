@@ -15,7 +15,6 @@ import {
   Video, Play, Award, ChevronUp, ChevronDown, BarChart3,
   Mail, MapPin,
 } from 'lucide-react';
-import GorselOlusturModal from '../components/GorselOlusturModal';
 import DuyuruModal from '../components/DuyuruModal';
 import HatirlatmaModal from '../components/HatirlatmaModal';
 import SablonTasarimModal from '../components/SablonTasarimModal';
@@ -295,7 +294,6 @@ const AdminPanel = () => {
   const [linkKopyalandi, setLinkKopyalandi] = useState(false);
 
   // Görsel
-  const [gorselModal, setGorselModal] = useState(null);
   // Lightbox (poster önizleme)
   const [lightboxUrl, setLightboxUrl] = useState(null);
 
@@ -524,27 +522,9 @@ const AdminPanel = () => {
     if (!result.success) alert('Silme başarısız: ' + result.error);
   };
 
+  // Görsel üretimi artık ayrı "Görsel Stüdyo" sayfasında (modal kaldırıldı)
   const handleGorselAc = (egitim) => {
-    const egitmenAdlari = splitEgitmen(egitim.egitmen);
-    const egitmenler = [];
-    const fotoURLs = [];
-    const tur = afisTuru(egitim); // afiş türüne göre hangi etiket yazılacak
-    console.log(`[gorselAc] Eğitim: ${egitim.egitim} | afiş türü: ${tur}`);
-    console.log(`[gorselAc] Ayrıştırılan isimler:`, egitmenAdlari);
-    for (const ad of egitmenAdlari) {
-      const k = konusmaciBul(ad);
-      const etiket = etiketSec(k, tur); // rol-bazlı etiket (fallback: unvan)
-      console.log(`[gorselAc]   ${ad} → foto: ${k?.fotoURL ? 'VAR' : 'YOK'} | etiket: ${etiket || '-'}`);
-      egitmenler.push({
-        ad,
-        unvan: etiket, // generator'lar unvan'ı okur → çözülmüş etiketi alır
-        biyografi: k?.biyografi || '',
-        fotoURL: k?.fotoURL || null,
-      });
-      if (k?.fotoURL) fotoURLs.push(k.fotoURL);
-    }
-    console.log(`[gorselAc] Toplam fotoğraf: ${fotoURLs.length}/${egitmenAdlari.length}`);
-    setGorselModal({ egitim, egitmenFotoURL: fotoURLs[0] || null, egitmenFotoURLs: fotoURLs, egitmenler });
+    navigate(`/admin/gorsel?egitim=${encodeURIComponent(egitim.id)}`);
   };
 
   const handleQrAc = async (egitim) => {
@@ -2044,24 +2024,6 @@ const AdminPanel = () => {
         </div>
       )}
 
-      {gorselModal && (
-        <GorselOlusturModal
-          egitim={gorselModal.egitim}
-          egitmenFotoURL={gorselModal.egitmenFotoURL}
-          egitmenFotoURLs={gorselModal.egitmenFotoURLs}
-          egitmenler={gorselModal.egitmenler}
-          apiKey={geminiApiKey}
-          openaiApiKey={openaiApiKey}
-          sablonlar={sablonlar}
-          onClose={() => setGorselModal(null)}
-          onGorselBagla={async (id, dataUrl) => {
-            // Önce Storage'a yükle, sonra Firestore'a URL yaz (1MB doc limit'i aşmasın)
-            const url = await uploadGorsel(id, dataUrl);
-            const result = await egitimGuncelle(id, { gorselUrl: url });
-            if (!result.success) throw new Error(result.error);
-          }}
-        />
-      )}
 
       {/* Hatırlatma Modal */}
       {hatirlatmaModal && (

@@ -35,6 +35,7 @@ const YurutmekuruluSayfasi = lazy(() => import('./pages/YurutmekuruluSayfasi'));
 // Admin sayfaları — public kullanıcı hiç indirmez (en büyük kazanç)
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
+const GorselStudyo = lazy(() => import('./pages/GorselStudyo'));
 
 // Hatayı ekrana basan basit error boundary
 class ErrorBoundary extends React.Component {
@@ -113,6 +114,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <AdminPanel />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/gorsel"
+            element={
+              <ProtectedRoute>
+                <GorselStudyo />
               </ProtectedRoute>
             }
           />
