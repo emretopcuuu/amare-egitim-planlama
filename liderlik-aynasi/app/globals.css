@@ -1369,3 +1369,37 @@ html[data-admin-mod="uzman"] .basit-only {
 @media (prefers-reduced-motion: reduce) {
   .su-dalga-tik { display: none !important; }
 }
+
+/* ── GÜNDÜZ AKSAN KONTRASTI ──────────────────────────────────────────────────
+   gold-light/royal-light CSS değişkeni olduğu için gündüzde otomatik koyulaşır;
+   ama amber/emerald/sky/… Tailwind varsayılanları sabit ve PARLAK → beyaz kart
+   üstünde okunmaz. Gündüzde bunları koyu, okunur tonlara çevir. Koyu kalan
+   tam-ekran sahnelerde (.gece-ada) orijinal parlak hâllerine geri döndür. */
+html[data-tema="gunduz"] [class*="text-amber-1"],
+html[data-tema="gunduz"] [class*="text-amber-2"],
+html[data-tema="gunduz"] [class*="text-amber-3"] { color: #b45309 !important; }
+html[data-tema="gunduz"] [class*="text-emerald-2"],
+html[data-tema="gunduz"] [class*="text-emerald-3"],
+html[data-tema="gunduz"] [class*="text-emerald-4"] { color: #047857 !important; }
+html[data-tema="gunduz"] [class*="text-sky-2"],
+html[data-tema="gunduz"] [class*="text-sky-3"] { color: #0369a1 !important; }
+html[data-tema="gunduz"] [class*="text-rose-2"],
+html[data-tema="gunduz"] [class*="text-rose-3"] { color: #be123c !important; }
+html[data-tema="gunduz"] [class*="text-orange-2"],
+html[data-tema="gunduz"] [class*="text-orange-3"] { color: #c2410c !important; }
+html[data-tema="gunduz"] [class*="text-fuchsia-3"] { color: #a21caf !important; }
+html[data-tema="gunduz"] [class*="text-teal-3"] { color: #0f766e !important; }
+
+/* .gece-ada (gündüzde bile koyu kalan tam-ekran sahneler): aksanları geri parlat */
+html[data-tema="gunduz"] .gece-ada [class*="text-amber-1"],
+html[data-tema="gunduz"] .gece-ada [class*="text-amber-2"],
+html[data-tema="gunduz"] .gece-ada [class*="text-amber-3"] { color: #fcd34d !important; }
+html[data-tema="gunduz"] .gece-ada [class*="text-emerald-2"],
+html[data-tema="gunduz"] .gece-ada [class*="text-emerald-3"],
+html[data-tema="gunduz"] .gece-ada [class*="text-emerald-4"] { color: #6ee7b7 !important; }
+html[data-tema="gunduz"] .gece-ada [class*="text-sky-2"],
+html[data-tema="gunduz"] .gece-ada [class*="text-sky-3"] { color: #7dd3fc !important; }
+html[data-tema="gunduz"] .gece-ada [class*="text-rose-2"],
+html[data-tema="gunduz"] .gece-ada [class*="text-rose-3"] { color: #fda4af !important; }
+html[data-tema="gunduz"] .gece-ada [class*="text-orange-2"],
+html[data-tema="gunduz"] .gece-ada [class*="text-orange-3"] { color: #fdba74 !important; }

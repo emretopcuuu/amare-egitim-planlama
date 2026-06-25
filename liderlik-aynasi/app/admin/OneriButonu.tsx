@@ -24,9 +24,22 @@ export default function OneriButonu({ href, etiket }: { href: string; etiket: st
         href={href}
         onClick={(e) => {
           e.preventDefault();
+          // Uzman'a geç ki hedef bölüm görünür olsun (Basit'te gizliydi).
           uzmanaGec();
+          // Hedef kapalı bir katlanır grubun (<details>) içinde olabilir —
+          // CapaAcici mantığını burada uygula: tüm <details> atalarını aç,
+          // sonra kaydır. (preventDefault hashchange'i kestiği için şart.)
           requestAnimationFrame(() => {
-            document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+            const hedef = document.getElementById(id);
+            if (!hedef) return;
+            let dugum: HTMLElement | null = hedef;
+            while (dugum) {
+              if (dugum instanceof HTMLDetailsElement && !dugum.open) dugum.open = true;
+              dugum = dugum.parentElement;
+            }
+            requestAnimationFrame(() =>
+              hedef.scrollIntoView({ behavior: "smooth", block: "start" })
+            );
           });
         }}
         className={SINIF}

@@ -119,6 +119,7 @@ export default function Ipucu({
 }) {
   const [acik, setAcik] = useState(false);
   const btnRef = useRef<HTMLButtonElement>(null);
+  const kutuRef = useRef<HTMLDivElement>(null);
   const [konum, setKonum] = useState<{
     left: number;
     top?: number;
@@ -149,10 +150,21 @@ export default function Ipucu({
     setAcik(true);
   }
 
-  // Kaydırma / yeniden boyutlandırmada konum kaymasın diye kapat.
+  // Sayfa kaydırılınca/yeniden boyutlanınca konum kaymasın diye kapat. AMA
+  // popover'ın KENDİ iç kaydırması kapatmasın (uzun içerik okunabilsin).
   useEffect(() => {
     if (!acik) return;
-    const kapat = () => setAcik(false);
+    const kapat = (e?: Event) => {
+      const hedef = e?.target;
+      if (
+        e?.type === "scroll" &&
+        hedef instanceof Node &&
+        kutuRef.current?.contains(hedef)
+      ) {
+        return; // popover içi kaydırma → kapatma
+      }
+      setAcik(false);
+    };
     window.addEventListener("resize", kapat);
     window.addEventListener("scroll", kapat, true);
     return () => {
@@ -194,6 +206,7 @@ export default function Ipucu({
               className="fixed inset-0 z-[60] cursor-default"
             />
             <div
+              ref={kutuRef}
               role="tooltip"
               style={{
                 position: "fixed",
