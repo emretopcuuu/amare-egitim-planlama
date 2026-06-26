@@ -6,10 +6,11 @@
 // Public alanlar: bio, kisaTanitim, linkler (instagram/linkedin/website), favori_alintilar
 
 import React, { useEffect, useState } from 'react';
-import { X, Save, Loader2, Edit3, Instagram, Linkedin, Globe, Quote, Plus, Trash2 } from 'lucide-react';
+import { X, Save, Loader2, Edit3, Instagram, Linkedin, Globe, Quote, Plus, Trash2, TrendingUp } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useToast } from './Toast';
+import { KARIYER_BASAMAKLARI, kariyerTarih } from '../utils/kariyer';
 
 const EgitmenProfilDuzenleyici = ({ coreId, onClose }) => {
   const { toast } = useToast();
@@ -20,6 +21,8 @@ const EgitmenProfilDuzenleyici = ({ coreId, onClose }) => {
     linkedin: '',
     website: '',
     favori_alintilar: [],
+    katilimTarihi: '',
+    kariyerGecmis: [],
   });
   const [yukleniyor, setYukleniyor] = useState(true);
   const [kaydediliyor, setKaydediliyor] = useState(false);
@@ -38,6 +41,8 @@ const EgitmenProfilDuzenleyici = ({ coreId, onClose }) => {
             linkedin: d.linkedin || '',
             website: d.website || '',
             favori_alintilar: Array.isArray(d.favori_alintilar) ? d.favori_alintilar : [],
+            katilimTarihi: d.katilimTarihi || '',
+            kariyerGecmis: Array.isArray(d.kariyerGecmis) ? d.kariyerGecmis : [],
           });
         }
       } catch (e) {
@@ -59,6 +64,11 @@ const EgitmenProfilDuzenleyici = ({ coreId, onClose }) => {
         linkedin: veri.linkedin.trim() || null,
         website: veri.website.trim() || null,
         favori_alintilar: veri.favori_alintilar.filter(a => a.trim()),
+        katilimTarihi: veri.katilimTarihi.trim() || null,
+        // kariyer geçmişi: dolu satırlar, tarihe göre sıralı
+        kariyerGecmis: veri.kariyerGecmis
+          .filter(k => k.kariyer && k.tarih)
+          .sort((a, b) => (kariyerTarih(a.tarih)?.getTime() || 0) - (kariyerTarih(b.tarih)?.getTime() || 0)),
         sonGuncelleme: serverTimestamp(),
       }, { merge: true });
       setBasari(true);
@@ -87,6 +97,16 @@ const EgitmenProfilDuzenleyici = ({ coreId, onClose }) => {
       ...v,
       favori_alintilar: v.favori_alintilar.filter((_, idx) => idx !== i),
     }));
+  }
+
+  function kariyerEkle() {
+    setVeri(v => ({ ...v, kariyerGecmis: [...v.kariyerGecmis, { kariyer: '', tarih: '' }] }));
+  }
+  function kariyerDegistir(i, alan, deger) {
+    setVeri(v => ({ ...v, kariyerGecmis: v.kariyerGecmis.map((k, idx) => idx === i ? { ...k, [alan]: deger } : k) }));
+  }
+  function kariyerSil(i) {
+    setVeri(v => ({ ...v, kariyerGecmis: v.kariyerGecmis.filter((_, idx) => idx !== i) }));
   }
 
   return (
@@ -125,6 +145,45 @@ const EgitmenProfilDuzenleyici = ({ coreId, onClose }) => {
                 onChange={v => setVeri(s => ({ ...s, bio: v }))}
                 placeholder="Daha detaylı kendini anlat. Tecrübelerin, yaklaşımın, neden ders veriyorsun..."
                 rows={5} />
+
+              {/* Kariyer Geçmişi (başarı grafiğinin kaynağı) */}
+              <div className="bg-white/5 border border-amber-400/20 rounded-xl p-3">
+                <div className="text-white/90 text-xs font-bold mb-2 uppercase tracking-wider flex items-center justify-between">
+                  <span className="inline-flex items-center gap-1.5"><TrendingUp className="w-3.5 h-3.5 text-amber-300" />Kariyer Geçmişi</span>
+                  <button onClick={kariyerEkle}
+                    className="bg-amber-400/20 text-amber-300 text-[10px] font-bold px-2 py-1 rounded inline-flex items-center gap-1 spring-tap">
+                    <Plus className="w-3 h-3" />Basamak
+                  </button>
+                </div>
+                {/* Amare'ye katılım tarihi */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-purple-200/80 text-[11px] w-28 flex-shrink-0">Amare'ye katılım</span>
+                  <input type="text" value={veri.katilimTarihi} onChange={e => setVeri(s => ({ ...s, katilimTarihi: e.target.value }))}
+                    placeholder="AA.YYYY (örn. 03.2022)"
+                    className="flex-1 bg-white/10 border border-white/20 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-purple-300/40 focus:outline-none focus:border-amber-400/60" />
+                </div>
+                <div className="space-y-2">
+                  {veri.kariyerGecmis.map((k, i) => (
+                    <div key={i} className="flex gap-2 items-center">
+                      <select value={k.kariyer} onChange={e => kariyerDegistir(i, 'kariyer', e.target.value)}
+                        className="flex-1 bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-xs text-white focus:outline-none focus:border-amber-400/60">
+                        <option value="" className="text-gray-800">— Kariyer —</option>
+                        {KARIYER_BASAMAKLARI.map(b => <option key={b} value={b} className="text-gray-800">{b}</option>)}
+                      </select>
+                      <input type="text" value={k.tarih} onChange={e => kariyerDegistir(i, 'tarih', e.target.value)}
+                        placeholder="AA.YYYY" maxLength={10}
+                        className="w-28 bg-white/10 border border-white/20 rounded-lg px-2 py-1.5 text-xs text-white placeholder-purple-300/40 focus:outline-none focus:border-amber-400/60" />
+                      <button onClick={() => kariyerSil(i)} className="bg-rose-500/20 hover:bg-rose-500/40 text-rose-300 px-2 py-1.5 rounded-lg">
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  {veri.kariyerGecmis.length === 0 && (
+                    <p className="text-purple-300/40 text-[11px] text-center py-2">Henüz kariyer basamağı yok. "Basamak" ile ekle (örn. DIAMOND · 12.2024).</p>
+                  )}
+                </div>
+                <p className="text-purple-300/40 text-[10px] mt-2">Tarihi AA.YYYY yaz (ulaşılan ay). Sıralama otomatik. Bu veri "ne kadar sürede" ve başarı grafiğini besler.</p>
+              </div>
 
               {/* Sosyal medya */}
               <div>
