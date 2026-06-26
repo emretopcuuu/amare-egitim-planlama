@@ -1159,28 +1159,32 @@ const AdminPanel = () => {
                 </div>
               </div>
 
-              {/* ── Dashboard İstatistik Paneli ── */}
+              {/* ── Dashboard İstatistik Paneli ── (yalnız bugün ve sonrası; geçmiş eğitimler sayılmaz) */}
               {takvim.length > 0 && (() => {
-                const onlineS = takvim.filter(e => e.sehir === 'Online' || (e.yer||'').toUpperCase().includes('ZOOM')).length;
-                const offlineS = takvim.length - onlineS;
-                const tamamS = takvim.filter(e => e.tamamlandi).length;
-                const gorselS = takvim.filter(e => e.gorselUrl).length;
+                const _p = (t) => { const [g,a,y] = (t||'').split('.'); const d = new Date(+y, +a-1, +g); return isNaN(d) ? 0 : d.getTime(); };
+                const _bugun = new Date(); _bugun.setHours(0,0,0,0);
+                const aktifTakvim = takvim.filter(e => _p(e.tarih) >= _bugun.getTime());
+                const onlineS = aktifTakvim.filter(e => e.sehir === 'Online' || (e.yer||'').toUpperCase().includes('ZOOM')).length;
+                const offlineS = aktifTakvim.length - onlineS;
+                const tamamS = aktifTakvim.filter(e => e.tamamlandi).length;
+                const gorselS = aktifTakvim.filter(e => e.gorselUrl).length;
                 const katStat = {};
-                takvim.forEach(e => { const k = e.kategori || 'Kategorisiz'; katStat[k] = (katStat[k]||0)+1; });
+                aktifTakvim.forEach(e => { const k = e.kategori || 'Kategorisiz'; katStat[k] = (katStat[k]||0)+1; });
                 const topKat = Object.entries(katStat).sort(([,a],[,b])=>b-a);
                 const konStat = {};
-                takvim.forEach(e => { if(!e.egitmen) return; splitEgitmen(e.egitmen).forEach(ad => { const key = makeSafeId(ad); if(!konStat[key]) konStat[key]={ad,count:0}; konStat[key].count++; }); });
+                aktifTakvim.forEach(e => { if(!e.egitmen) return; splitEgitmen(e.egitmen).forEach(ad => { const key = makeSafeId(ad); if(!konStat[key]) konStat[key]={ad,count:0}; konStat[key].count++; }); });
                 const topKon = Object.values(konStat).sort((a,b)=>b.count-a.count).slice(0,5);
                 const haftalar = {};
-                takvim.forEach(e => { const k = getHaftaKey(e.tarih)||'x'; if(!haftalar[k]) haftalar[k]=[]; haftalar[k].push(e); });
+                aktifTakvim.forEach(e => { const k = getHaftaKey(e.tarih)||'x'; if(!haftalar[k]) haftalar[k]=[]; haftalar[k].push(e); });
                 const hKeys = Object.keys(haftalar).sort();
+                const toplamS = aktifTakvim.length;
 
                 return (
                   <div className="mb-4 space-y-3">
                     {/* Üst: Ana metrikler */}
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                       <div className="bg-purple-50 rounded-xl p-3 text-center">
-                        <div className="text-2xl font-extrabold text-purple-700">{takvim.length}</div>
+                        <div className="text-2xl font-extrabold text-purple-700">{toplamS}</div>
                         <div className="text-xs text-purple-500 font-semibold">Toplam Eğitim</div>
                       </div>
                       <div className="bg-green-50 rounded-xl p-3 text-center">
@@ -1209,7 +1213,7 @@ const AdminPanel = () => {
                         <div className="space-y-2">
                           {hKeys.map((k, i) => {
                             const arr = haftalar[k];
-                            const pct = Math.round((arr.length / takvim.length) * 100);
+                            const pct = Math.round((arr.length / (toplamS || 1)) * 100);
                             return (
                               <div key={k} className="flex items-center gap-2">
                                 <span className="text-xs font-bold text-purple-600 w-12">H{i+1}</span>
@@ -1228,7 +1232,7 @@ const AdminPanel = () => {
                         <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Kategori Dağılımı</div>
                         <div className="space-y-2">
                           {topKat.map(([kat, sayi]) => {
-                            const pct = Math.round((sayi / takvim.length) * 100);
+                            const pct = Math.round((sayi / (toplamS || 1)) * 100);
                             return (
                               <div key={kat} className="flex items-center gap-2">
                                 <span className="text-xs font-medium text-gray-700 w-24 truncate">{kat}</span>
