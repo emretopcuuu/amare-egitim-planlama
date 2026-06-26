@@ -258,6 +258,21 @@ export default function Mini360Oz({
                 {t.enBuyukFark(enBuyukFark.ifade)}
               </p>
             )}
+            {/* UX #5 — bağlam rehberi: çıplak sayı yerine "fark ne demek?".
+                Pozitif fark = kör nokta sinyali; negatif = gizli güç. Tablo
+                aşağıda; rehber okumayı içgörüye çevirir. */}
+            <details className="group mt-3 rounded-xl border border-royal-light/25 bg-midnight/40 p-3">
+              <summary className="flex cursor-pointer list-none items-center justify-between text-sm font-semibold text-royal-light">
+                <span>💡 {t.rehberBaslik}</span>
+                <span className="text-royal-light/60 transition-transform group-open:rotate-180" aria-hidden>▾</span>
+              </summary>
+              <ul className="mt-2 space-y-1.5 text-sm leading-relaxed text-slate-300">
+                <li>{t.rehberPozitif}</li>
+                <li>{t.rehberNegatif}</li>
+                <li>{t.rehberSifir}</li>
+              </ul>
+              <p className="mt-2 text-xs italic text-slate-400">{t.rehberKapanis}</p>
+            </details>
             <table className="mt-3 w-full text-sm">
               <thead>
                 <tr className="text-xs uppercase tracking-wide text-slate-500">
