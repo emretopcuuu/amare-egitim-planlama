@@ -288,6 +288,24 @@ export default async function AynaPage() {
         </div>
       </header>
 
+      {/* UX #2 — Rapor haritası: uzun rapor için bölümlere atlama. Her bağlantı
+          ilgili bölüme yumuşak kaydırır (scroll-mt anchor'lar). "Buradan başla"
+          en güçlü bölüme götürür — boş sayfa felci yerine yön verir. */}
+      <nav
+        aria-label={t.haritaBaslik}
+        className="yazdir-gizle flex flex-wrap items-center gap-2 rounded-2xl border border-royal-light/20 bg-white/[0.02] px-4 py-3 text-sm"
+      >
+        <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
+          🗺 {t.haritaBaslik}
+        </span>
+        <a href="#r-guclu" className="rounded-full bg-white/5 px-3 py-1 text-slate-200 transition-colors hover:bg-gold/15 hover:text-gold-light">{t.haritaGuclu}</a>
+        <a href="#r-yolculuk" className="rounded-full bg-white/5 px-3 py-1 text-slate-200 transition-colors hover:bg-gold/15 hover:text-gold-light">{t.haritaYolculuk}</a>
+        <a href="#r-tablo" className="rounded-full bg-white/5 px-3 py-1 text-slate-200 transition-colors hover:bg-gold/15 hover:text-gold-light">{t.haritaTablo}</a>
+        <a href="#r-plan" className="rounded-full bg-white/5 px-3 py-1 text-slate-200 transition-colors hover:bg-gold/15 hover:text-gold-light">{t.haritaPlan}</a>
+        <a href="#r-mektup" className="rounded-full bg-white/5 px-3 py-1 text-slate-200 transition-colors hover:bg-gold/15 hover:text-gold-light">{t.haritaMektup}</a>
+        <a href="#r-guclu" className="ml-auto rounded-full bg-gold/20 px-3 py-1 font-semibold text-gold-light transition-colors hover:bg-gold/30">↓ {t.haritaBasla}</a>
+      </nav>
+
       {/* C1 Güven: çok az kişi puanladıysa, dış algı ortalaması istatistik olarak
           zayıf — bunu dürüstçe belirt ki sınırlı veri otoriter gerçek sanılmasın. */}
       {rapor.dusukGuven && (
@@ -329,7 +347,7 @@ export default async function AynaPage() {
       )}
 
       {/* Güçlü yanlar / gelişim alanları */}
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <section id="r-guclu" className="grid scroll-mt-4 grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="kart-cam rounded-2xl p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
           <h2 className="font-semibold text-gold-light">{t.gucluBaslik}</h2>
           {rapor.guclu.length === 0 ? (
@@ -511,13 +529,42 @@ export default async function AynaPage() {
       </section>
 
       {/* Dalga yolculuğu — hikâye modu */}
-      <section className="kart-cam rounded-2xl p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section id="r-yolculuk" className="kart-cam scroll-mt-4 rounded-2xl p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="font-semibold text-gold-light">{t.hikayeBaslik}</h2>
         <p className="mt-1 text-xs text-slate-400">{t.hikayeAciklama}</p>
         {rapor.dalgalar.length === 0 ? (
           <p className="mt-3 text-sm text-slate-400">{t.veriYok}</p>
         ) : (
           <>
+            {/* Gel #9 — kümülatif trend: ilk→son dalga genel algı yönü.
+                Puanlar her dalgada sıfırlanır; bu satır toplam yolculuğu
+                tek bakışta gösterir (yükseldin/sabit/dalgalandı). */}
+            {(() => {
+              const ilk = rapor.dalgalar[0]?.genelOrtalama;
+              const son = rapor.dalgalar[rapor.dalgalar.length - 1]?.genelOrtalama;
+              if (rapor.dalgalar.length < 2 || ilk == null || son == null) return null;
+              const fark = Number((son - ilk).toFixed(1));
+              const yon = fark > 0.2 ? "yukari" : fark < -0.2 ? "asagi" : "sabit";
+              const ikon = yon === "yukari" ? "📈" : yon === "asagi" ? "📉" : "➡️";
+              const renk =
+                yon === "yukari"
+                  ? "bg-emerald-500/10 text-emerald-200"
+                  : yon === "asagi"
+                    ? "bg-amber-500/10 text-amber-200"
+                    : "bg-white/[0.04] text-slate-300";
+              return (
+                <p className={`mt-3 rounded-xl px-4 py-2.5 text-sm font-medium ${renk}`}>
+                  {ikon}{" "}
+                  {t.trendOzet(
+                    rapor.dalgalar.length,
+                    puanYaz(ilk),
+                    puanYaz(son),
+                    yon,
+                    Math.abs(fark).toFixed(1)
+                  )}
+                </p>
+              );
+            })()}
             <ol className="relative mt-4 space-y-4 border-l border-royal/40 pl-5">
               {rapor.dalgalar.map((d) => (
                 <li key={d.dalgaId} className="relative">
@@ -545,7 +592,7 @@ export default async function AynaPage() {
       </section>
 
       {/* Özellik özellik öz vs dış */}
-      <section className="kart-cam rounded-2xl p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      <section id="r-tablo" className="kart-cam scroll-mt-4 rounded-2xl p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="font-semibold text-gold-light">{t.tabloBaslik}</h2>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400">
           <span>
@@ -665,14 +712,18 @@ export default async function AynaPage() {
       )}
 
       {/* FAZ A Rapor v2: 10/40/90 gün oyun planı — hedefe + nedene + aynaya göre */}
-      <OyunPlaniBolumu mevcutPlan={oyunP} />
+      <div id="r-plan" className="scroll-mt-4">
+        <OyunPlaniBolumu mevcutPlan={oyunP} />
+      </div>
 
       {/* AI Ayna Mektubu — varsa Mektup Filmi olarak (video + kendi sesi) */}
-      <MektupBolumu
-        mevcutMektup={mevcutMektup?.content ?? null}
-        sesUrl={mektupSesUrl}
-        videoUrl={yansimaVideoUrl}
-      />
+      <div id="r-mektup" className="scroll-mt-4">
+        <MektupBolumu
+          mevcutMektup={mevcutMektup?.content ?? null}
+          sesUrl={mektupSesUrl}
+          videoUrl={yansimaVideoUrl}
+        />
+      </div>
 
       {sozSesUrl && (
         <section className="kart-cam relative overflow-hidden rounded-2xl p-5">

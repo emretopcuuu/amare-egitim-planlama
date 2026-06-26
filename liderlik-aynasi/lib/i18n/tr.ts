@@ -1132,6 +1132,16 @@ export const tr = {
     disSayi: (n: number) => `${n} anonim yanıt`,
     disYok: "Henüz dış yanıt yok — linki paylaş, birikince burada görünür.",
     enBuyukFark: (ifade: string) => `En büyük fark: “${ifade}” — kampta ilk buraya bak.`,
+    // UX #5 — fark bağlam rehberi (sayıyı içgörüye çevirir)
+    rehberBaslik: "Bu farklar ne anlama geliyor?",
+    rehberPozitif:
+      "➕ Sen yüksek, ekip düşük (artı fark): muhtemel bir kör nokta. Kendinde gördüğünü ekip henüz görmüyor — bunu davranışla göster.",
+    rehberNegatif:
+      "➖ Ekip yüksek, sen düşük (eksi fark): gizli bir güç. Başkaları sende fark ediyor, sen küçümsüyorsun — buna güven.",
+    rehberSifir:
+      "🟰 Fark yok: algın hizalı. Kendini gördüğün gibi görünüyorsun — sağlam bir zemin.",
+    rehberKapanis:
+      "Amaç “haklı çıkmak” değil; farkı merak etmek. Küçük farklar normaldir, büyük farklar en çok öğreten yerdir.",
     disDolu: "Bu kişi için yeterli yanıt toplandı, teşekkürler.",
     turRozet: (n: number) => `🔄 ${n}. tur — algın dalga dalga değişiyor`,
     hata: "İşlem başarısız. Lütfen tekrar dene.",
@@ -3270,6 +3280,21 @@ export const tr = {
     hikayeGelisen: (ozellik: string, fark: string) =>
       `En çok yükselen özelliğin: ${ozellik} (+${fark} puan). Kamp seni değiştirdi — ve insanlar bunu fark etti.`,
     hikayeDalgaOzet: (ort: string) => `Genel ortalama: ${ort}`,
+    // UX #2 — Rapor haritası (bölümlere atlama)
+    haritaBaslik: "Rapor haritası",
+    haritaGuclu: "Güçlü yanların",
+    haritaYolculuk: "Yolculuğun",
+    haritaTablo: "Özellik tablosu",
+    haritaPlan: "Oyun planın",
+    haritaMektup: "Aynan'ın mektubu",
+    haritaBasla: "Buradan başla",
+    // Gel #9 — kümülatif trend yönü (ilk→son dalga genel algı)
+    trendOzet: (dalgaSayi: number, ilk: string, son: string, yon: string, fark: string) =>
+      yon === "yukari"
+        ? `${dalgaSayi} dalga boyunca genel algın ${ilk} → ${son} yükseldi (+${fark}). Yön yukarı.`
+        : yon === "asagi"
+          ? `${dalgaSayi} dalga boyunca genel algın ${ilk} → ${son} (−${fark}). Bir düşüş normaldir — son dalgaya odaklan.`
+          : `${dalgaSayi} dalga boyunca genel algın ${ilk} → ${son} dengede kaldı. İstikrar da bir güçtür.`,
     // #3 Story katmanı
     hikayeIzle: "Hikâye olarak izle",
     hikayeUstAcilis: "AYNA RAPORU",
