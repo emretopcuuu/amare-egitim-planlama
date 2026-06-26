@@ -468,7 +468,23 @@ export default function LiderProfil() {
           </>
         )}
         {tab === 'sozler' && <EgitmenSozleri coreId={coreId} onSozTikla={handleSozTikla} dil={(lang || 'tr').toUpperCase()} />}
-        {tab === 'bio' && kayit?.biyografi && <div className="prose max-w-none"><p className="text-gray-700 leading-relaxed whitespace-pre-line">{kayit.biyografi}</p></div>}
+        {tab === 'bio' && kayit?.biyografi && (() => {
+          // Biyografiyi cümlelere böl → madde madde. "65.000" gibi sayıları bölme (nokta+boşluk+harf/rakam).
+          const maddeler = String(kayit.biyografi)
+            .split(/(?<=\.)\s+(?=[0-9A-ZÇĞİÖŞÜ])/)
+            .map(s => s.trim().replace(/\s+/g, ' '))
+            .filter(s => s.length > 1);
+          return (
+            <ul className="space-y-2.5">
+              {maddeler.map((m, i) => (
+                <li key={i} className="flex items-start gap-3 text-gray-700 leading-relaxed">
+                  <span className="mt-2 w-1.5 h-1.5 rounded-full bg-amber-400 flex-shrink-0" />
+                  <span>{m}</span>
+                </li>
+              ))}
+            </ul>
+          );
+        })()}
       </div>
 
       {takipModal && <KonusmaciTakipModal konusmaciAd={ad} onClose={() => setTakipModal(false)} />}
