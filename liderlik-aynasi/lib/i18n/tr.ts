@@ -3712,6 +3712,34 @@ export const tr = {
     secilenDurt: (n: number) => `${n} Kişiyi Dürt 🔔`,
     durtSonuc: (n: number) => `${n} kişiye hatırlatma gönderildi ✓`,
     hata: "İşlem başarısız. Tekrar dene.",
+    // UX 7 — ilerleme bandı + kısmi başarısızlık raporu
+    gonderiliyor: (n: number, t: number) => `Gönderiliyor… ${n}/${t}`,
+    kismiSonuc: (basarili: number, toplam: number) =>
+      basarili === toplam
+        ? `${toplam} kişiye gönderildi ✓`
+        : `${basarili}/${toplam} gönderildi — ${toplam - basarili} başarısız`,
+    hataliKisiler: "Ulaşılamayan kişiler:",
+  },
+  // Geliştirme 8 — Eşleştirme kalite metriği
+  eslestirmeMetrik: {
+    baslik: "Eşleştirme Kalitesi",
+    kapsam: "Kapsam",
+    kapsamAciklama: (kapsamli: number, toplam: number) =>
+      `${kapsamli}/${toplam} kişi en az 2 gözlemci aldı`,
+    takimFarki: "Takım Çeşitliliği",
+    takimFarkiAciklama: (yuzde: number) => `Atamaların %${yuzde} farklı takımdan`,
+    yukDengesi: "Yük Dengesi",
+    yukDengesiAciklama: (min: number, maks: number) =>
+      `Her gözlemci ${min}–${maks} kişi değerlendiriyor`,
+    iyiSinir: 75,
+  },
+  // Geliştirme 4 — Kriz bildiri kanalı
+  krizBildir: {
+    dugme: "🆘 Kriz Bildir",
+    onay: "Presidential Diamond upline'a kriz sinyali gönderilsin mi?",
+    gonderiliyor: "Gönderiliyor…",
+    gonderildi: "Kriz sinyali gönderildi ✓ — ekip haberdar edildi.",
+    hata: "Gönderilemedi. Liderlik ekibiyle direkt iletişime geç.",
   },
   // #7 Otomatik zamanlama: admin belirlediği saatte dalga/rapor açılsın
   zamanlama: {

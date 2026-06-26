@@ -5,6 +5,7 @@ import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
 import EslestirmeFormu from "./EslestirmeFormu";
 import AtamaDuzenle from "./AtamaDuzenle";
+import EslestirmeMetrik from "./EslestirmeMetrik";
 import Ipucu from "../Ipucu";
 
 export const metadata = { title: "Eşleştirme — Liderlik Aynası" };
@@ -55,6 +56,14 @@ export default async function EslestirmePage() {
     takim: k.team,
   }));
 
+  // Geliştirme 8: metrik için atamalar tipini normalize et
+  const metrikAtamalar = duzAtamalar.map((a) => ({
+    observerId: a.observerId,
+    targetId: a.targetId,
+    observerTakim: a.observerTakim,
+    targetTakim: a.targetTakim,
+  }));
+
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
       <div className="flex items-center gap-2">
@@ -63,6 +72,9 @@ export default async function EslestirmePage() {
       </div>
 
       <EslestirmeFormu />
+
+      {/* Geliştirme 8 — Kalite metriği: kapsam, takım çeşitliliği, yük dengesi */}
+      <EslestirmeMetrik atamalar={metrikAtamalar} katilimciSayisi={kisiler.length} />
 
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 className="text-lg font-semibold text-gold-light">{t.mevcutBaslik}</h2>
