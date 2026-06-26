@@ -12,6 +12,7 @@ import ProvaModuBayragi from "@/components/ProvaModuBayragi";
 import SuDalgaTik from "@/components/SuDalgaTik";
 import YuzenGeri from "@/components/YuzenGeri";
 import YardimKanali from "@/components/YardimKanali";
+import BildirimLogDinleyici from "@/components/BildirimLogDinleyici";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -121,6 +122,8 @@ export default async function RootLayout({
         <IlkKarsilama />
         <BaglantiDurumu />
         <CanliTazele />
+        {/* Geliştirme 1 — SW push'larını localStorage log'una kaydeder */}
+        <BildirimLogDinleyici />
       </body>
     </html>
   );
