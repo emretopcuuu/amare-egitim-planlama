@@ -260,7 +260,10 @@ export default function LiderProfil() {
           const farklar = yolculuk.filter(k => k.fark != null && k.fark > 0).map(k => k.fark);
           const enHizli = farklar.length ? Math.min(...farklar) : null;
           const tarihMap = new Map(yolculuk.map(k => [kariyerSira(k.kariyer), k]));
-          const firstSira = yolculuk.length ? kariyerSira(yolculuk[0].kariyer) : -1;
+          // ulaşılan basamaklar — en üst geldiği kariyer en tepede (ters sıra); ulaşılmayanlar gösterilmez
+          const ulasilanlar = [];
+          for (let i = 0; i <= guncelSira; i++) ulasilanlar.push(i);
+          ulasilanlar.reverse();
           return (
             <div className="space-y-5">
               {/* ÖZET KART */}
@@ -283,31 +286,23 @@ export default function LiderProfil() {
                 <Download className="w-5 h-5" />{kartUretiliyor ? 'Hazırlanıyor…' : 'Başarı kartını indir (PNG)'}
               </button>
 
-              {/* TEK MERDİVEN — 14 basamak, ulaşılanlar zengin, gelecek soluk (tekrar yok) */}
+              {/* MERDİVEN — sadece ulaşılan kariyerler, en üst geldiği kariyer en tepede */}
               <div>
-                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Amare Kariyer Yolculuğu</div>
+                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Amare Kariyer Yolculuğu <span className="text-gray-400 normal-case font-normal">· katılımından bu yana</span></div>
                 <div className="relative bg-gradient-to-b from-gray-900 via-purple-950 to-gray-900 rounded-2xl p-4 sm:p-5 overflow-hidden">
                   {/* üst altın hâle */}
                   <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: `radial-gradient(circle at 50% 0%, rgba(216,177,90,${0.08 + isiltiSeviye * 0.25}), transparent 70%)` }} />
                   {/* dikey bağlantı çizgisi */}
                   <div className="absolute left-[39px] sm:left-[43px] top-7 bottom-7 w-0.5 bg-gradient-to-b from-amber-300/70 via-amber-500/40 to-amber-700/10" />
                   <div className="relative space-y-1.5">
-                    {KARIYER_BASAMAKLARI.map((b, idx) => {
-                      const ulasildi = guncelSira >= 0 && idx <= guncelSira;
+                    {ulasilanlar.map((idx) => {
+                      const b = KARIYER_BASAMAKLARI[idx];
                       const suAn = idx === guncelSira;
                       const sv = idx / Math.max(1, KS - 1);
                       const k = tarihMap.get(idx);
                       const hizli = k?.fark != null && k.fark > 0 && k.fark <= 6;
-                      const ilk = idx === firstSira;
-                      if (!ulasildi) {
-                        return (
-                          <div key={b} className="flex items-center gap-3 rounded-xl px-2 py-1.5 opacity-45">
-                            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold bg-white/5 text-white/40 border border-white/10">{idx + 1}</div>
-                            <div className="flex-1 text-sm font-semibold text-white/40">{b}</div>
-                            <div className="text-[10px] text-white/25 uppercase tracking-wide">hedef</div>
-                          </div>
-                        );
-                      }
+                      // katılımın kaçıncı ayında bu kariyere geldi (kümülatif, 1-indeksli)
+                      const ayNo = (k?.dt && katilim) ? ayFarki(katilim, k.dt) + 1 : null;
                       return (
                         <div key={b} className="relative flex items-center gap-3 rounded-xl px-2 py-2 transition-all" style={suAn ? { background: 'rgba(216,177,90,0.12)', boxShadow: 'inset 0 0 0 1px rgba(216,177,90,0.5)' } : {}}>
                           <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold z-10" style={{ background: 'linear-gradient(135deg,#b8923f,#d8b15a)', color: '#2a1c06', boxShadow: `0 0 ${6 + sv * 24}px rgba(216,177,90,${0.35 + sv * 0.65})` }}>{idx + 1}</div>
@@ -320,10 +315,10 @@ export default function LiderProfil() {
                             </div>
                             {k && <div className="text-[11px] text-amber-200/60 mt-0.5">{k.dt.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}</div>}
                           </div>
-                          {k?.fark != null && (
+                          {ayNo != null && (
                             <div className="text-right flex-shrink-0">
-                              <div className="text-sm font-bold text-amber-300">{sureMetni(k.fark)}</div>
-                              <div className="text-[10px] text-white/40">{ilk ? 'katılımdan' : 'önceki basamaktan'}</div>
+                              <div className="text-sm font-bold text-amber-300">{ayNo}. ay</div>
+                              <div className="text-[10px] text-white/40">katılımdan beri</div>
                             </div>
                           )}
                         </div>
