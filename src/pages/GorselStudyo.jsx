@@ -579,9 +579,11 @@ export default function GorselStudyo() {
                   {baglandi ? <><CheckCircle2 className="w-4 h-4" /> Bağlandı</> : baglaniyor ? <><Loader2 className="w-4 h-4 animate-spin" /> …</> : <><Link2 className="w-4 h-4" /> Eğitime Bağla</>}
                 </button>
               </div>
-              {canliModu && (
+              {/* Canlı modlarda otomatik üretildiği için "Yeniden üret" kaldırıldı.
+                  Hata olursa elle tekrar denemek için göster. */}
+              {canliModu && error && (
                 <button onClick={uret} disabled={generating} className="w-full mt-2 py-2 rounded-lg text-sm font-semibold text-amare-purple bg-purple-50 hover:bg-purple-100 border border-amare-purple/30 transition flex items-center justify-center gap-1.5 disabled:opacity-50">
-                  <RotateCcw className="w-4 h-4" /> Yeniden üret
+                  <RotateCcw className="w-4 h-4" /> Tekrar dene
                 </button>
               )}
             </div>
