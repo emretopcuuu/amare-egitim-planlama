@@ -3,6 +3,21 @@
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim()));
 
+const LOG_ANAHTAR = "la_bildirim_log";
+
+// Geliştirme 1 — Bildirim Merkezi: gelen push'u localStorage log'una yaz.
+// Açık sekme varsa postMessage ile anlık güncelleme tetiklenir.
+function logYaz(baslik, govde, url) {
+  try {
+    const acik = self.clients.matchAll({ type: "window" });
+    acik.then((pencereler) => {
+      for (const p of pencereler) {
+        p.postMessage({ tip: "la_bildirim_geldi", baslik, govde, url });
+      }
+    });
+  } catch {}
+}
+
 self.addEventListener("push", (event) => {
   let veri = { baslik: "AYNA", govde: "", url: "/gorevler" };
   try {
@@ -10,6 +25,7 @@ self.addEventListener("push", (event) => {
   } catch {
     /* yük çözülemezse varsayılanlar */
   }
+  logYaz(veri.baslik, veri.govde, veri.url);
   event.waitUntil(
     self.registration.showNotification(veri.baslik, {
       body: veri.govde,

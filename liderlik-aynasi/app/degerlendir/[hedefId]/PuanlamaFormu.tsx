@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useIdempotency } from "@/lib/useIdempotency";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
@@ -65,6 +66,7 @@ export default function PuanlamaFormu({
   mevcut,
 }: Props) {
   const router = useRouter();
+  const { headers: idempotencyHeaders, yenile: idempotencyYenile } = useIdempotency();
 
   const [girdiler, setGirdiler] = useState<Record<number, Girdi>>(() => {
     const ilk: Record<number, Girdi> = {};
@@ -246,7 +248,7 @@ export default function PuanlamaFormu({
     try {
       const res = await fetch("/api/puanla", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", ...idempotencyHeaders() },
         body: JSON.stringify({
           hedefId,
           puanlar: puanlananlar.map((o) => ({
@@ -268,6 +270,7 @@ export default function PuanlamaFormu({
       } catch {
         // taslak silinemezse sorun değil: sunucu kaydı esas
       }
+      idempotencyYenile(); // Geliştirme 7: yeni anahtar — form tekrar gönderilebilir
       titret([12, 40, 12]);
       cal("kazanim");
       suDalgasi();
