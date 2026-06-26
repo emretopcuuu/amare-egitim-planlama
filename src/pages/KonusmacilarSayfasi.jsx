@@ -444,7 +444,7 @@ const KonusmacilarSayfasi = () => {
           {Object.keys(istatistik.ortRutbe).length > 0 && (
             <div className="mb-5 rounded-2xl bg-gradient-to-br from-purple-950/60 to-indigo-950/40 border border-amber-300/20 p-3 sm:p-4">
               <div className="flex items-center justify-between gap-2 mb-2.5">
-                <div className="text-amber-300 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5"><TrendingUp className="w-4 h-4" />Kariyere ortalama ne kadar sürede ulaşılıyor?</div>
+                <div className="text-amber-300 text-xs font-bold uppercase tracking-wider inline-flex items-center gap-1.5"><TrendingUp className="w-4 h-4" />Eğitmenlerin ortalama kariyer süreleri</div>
                 {rutbeFiltre != null && (
                   <button onClick={() => setRutbeFiltre(null)} className="text-[11px] text-purple-200 hover:text-white inline-flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-full"><X className="w-3 h-3" />filtreyi kaldır</button>
                 )}
@@ -461,7 +461,7 @@ const KonusmacilarSayfasi = () => {
                   );
                 })}
               </div>
-              <div className="text-[10px] text-purple-300/60 mt-2">Katılımdan itibaren ortalama süre · {istatistik.veriOlan} liderin verisiyle · rütbeye tıkla → filtrele</div>
+              <div className="text-[10px] text-purple-300/60 mt-2">Hangi kariyere ortalama ne kadar sürede ulaşıldı · {istatistik.veriOlan} liderin verisiyle · rütbeye tıkla → filtrele <span className="text-red-300/80">(tüm kayıtlar henüz dolmadığı için test aşamasındadır)</span></div>
             </div>
           )}
 
