@@ -3553,6 +3553,8 @@ export const tr = {
     sesAcikEtiket: "🔊 Ses açık",
     fiero: (ad: string) => `${ad} AYNAYI PARLATTI`,
     senkronBaslik: "SENKRON AN",
+    // UX #9 — anons görsel bandı (ses kapalı odada da görünür)
+    anonsBant: "Program anonsu",
   },
   // A2 — Mühür Açılışı: kamp sonunda onboarding'de mühürlenen söz açılır
   muhur: {

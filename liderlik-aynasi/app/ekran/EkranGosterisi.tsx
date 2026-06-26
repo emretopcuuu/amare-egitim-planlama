@@ -77,6 +77,8 @@ export default function EkranGosterisi() {
   const [sesAcik, setSesAcik] = useState(false);
   const [fieroGoster, setFieroGoster] = useState<{ ad: string } | null>(null);
   const [dalgaVideo, setDalgaVideo] = useState<number | null>(null);
+  // UX #9 — anons görsel bandı: ses kapalıyken bile salon "anons var" görsün.
+  const [anonsGoster, setAnonsGoster] = useState(false);
   const sesAcikRef = useRef(false);
   const oynanan = useRef<Set<string>>(new Set());
   // Sahne Vitrini (DJ): host bir slayt sabitlediyse otomatik döngü durur.
@@ -116,6 +118,9 @@ export default function EkranGosterisi() {
         }
         if (s?.anons && !oynanan.current.has(`a${s.anons.id}`)) {
           oynanan.current.add(`a${s.anons.id}`);
+          // UX #9 — sesle birlikte görsel bant (ses kapalı odada da görünür)
+          setAnonsGoster(true);
+          setTimeout(() => setAnonsGoster(false), 8000);
           if (sesAcikRef.current && s.anons.sesUrl) {
             void new Audio(s.anons.sesUrl).play().catch(() => {});
           }
@@ -171,6 +176,15 @@ export default function EkranGosterisi() {
         <div className="fixed inset-x-0 top-0 z-40 bg-gold/95 px-10 py-5 text-center shadow-2xl">
           <p className="font-display text-4xl font-bold text-[#1a1206]">
             📣 {veri.sahne.duyuru.metin}
+          </p>
+        </div>
+      )}
+
+      {/* UX #9 — ANONS BANDI: program anonsu çalarken görsel işaret */}
+      {anonsGoster && (
+        <div className="fixed inset-x-0 top-0 z-40 bg-royal/95 px-10 py-5 text-center shadow-2xl">
+          <p className="font-display text-4xl font-bold text-white">
+            📢 {t.anonsBant}
           </p>
         </div>
       )}
@@ -409,11 +423,25 @@ export default function EkranGosterisi() {
                         <span className="w-10 text-center text-3xl">
                           {["🥇", "🥈", "🥉"][i] ?? `${i + 1}.`}
                         </span>
-                        <span className="min-w-0 flex-1 truncate text-2xl font-semibold text-slate-100">
-                          {k.ad}
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-2xl font-semibold text-slate-100">
+                            {k.ad}
+                          </span>
+                          {/* UX #8 — spotlight: kişi salt sayı değil, kim olduğu */}
+                          {(k.arketip || k.enGuclu) && (
+                            <span className="mt-0.5 block truncate text-base text-slate-400">
+                              {k.arketip && (
+                                <span className="text-gold-light/90">
+                                  {k.arketip.simge} {k.arketip.ad}
+                                </span>
+                              )}
+                              {k.arketip && k.enGuclu && <span className="mx-1.5 text-slate-600">·</span>}
+                              {k.enGuclu && <span>💪 {k.enGuclu}</span>}
+                            </span>
+                          )}
                         </span>
-                        <span className="text-lg text-royal-light">{k.unvan}</span>
-                        <span className="font-mono text-2xl font-bold text-gold">
+                        <span className="shrink-0 text-lg text-royal-light">{k.unvan}</span>
+                        <span className="shrink-0 font-mono text-2xl font-bold text-gold">
                           {k.kivilcim} ⚡
                         </span>
                       </li>
