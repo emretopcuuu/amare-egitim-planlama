@@ -610,10 +610,15 @@ const KomisyonDetay = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {icerik.uyeler.map((u, i) => {
                     const baskanMi = u.unvan === 'Komisyon Başkanı';
+                    const cid = getEffectiveCoreId(u);
+                    const tiklanabilir = !duzenleme && !!cid;
                     return (
-                    <div key={i} className={`bg-white/5 border rounded-xl p-4 flex items-start gap-3 ${
+                    <div key={i}
+                      onClick={tiklanabilir ? () => navigate(`/lider/${cid}`) : undefined}
+                      role={tiklanabilir ? 'button' : undefined}
+                      className={`bg-white/5 border rounded-xl p-4 flex items-start gap-3 ${
                       baskanMi ? 'border-amber-300/40 bg-gradient-to-br from-amber-400/10 to-transparent' : 'border-white/15'
-                    }`}>
+                    } ${tiklanabilir ? 'cursor-pointer hover:bg-white/10 hover:border-amber-300/40 transition-all spring-tap' : ''}`}>
                       {/* Avatar — güncel fotoğraf (konuşmacılar'dan) varsa göster, yoksa initial */}
                       <div className="relative w-14 h-14 flex-shrink-0">
                         {getUyeFoto(u) ? (
@@ -693,7 +698,7 @@ const KomisyonDetay = () => {
                             <div className="text-white font-bold text-sm truncate">{u.ad || '—'}</div>
                             {u.unvan && <div className={`text-xs truncate font-semibold ${baskanMi ? 'text-amber-300' : 'text-amber-300/80'}`}>{u.unvan}</div>}
                             {u.telefon && (
-                              <a href={`tel:${u.telefon}`} className="inline-flex items-center gap-1 text-purple-200 text-xs hover:text-amber-300 mt-1">
+                              <a href={`tel:${u.telefon}`} onClick={(e) => e.stopPropagation()} className="inline-flex items-center gap-1 text-purple-200 text-xs hover:text-amber-300 mt-1">
                                 <Phone className="w-3 h-3" /> {u.telefon}
                               </a>
                             )}

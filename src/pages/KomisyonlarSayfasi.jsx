@@ -287,7 +287,10 @@ const KomisyonlarSayfasi = () => {
                     </div>
                   </div>
                 ) : baskan ? (
-                  <div className="flex items-center gap-3 mb-3 pb-3 border-b border-white/10">
+                  <div
+                    role="button"
+                    onClick={(e) => { e.stopPropagation(); const cid = baskan.coreId || makeCoreId(baskan.ad); if (cid) navigate(`/lider/${cid}`); }}
+                    className="flex items-center gap-3 mb-3 pb-3 border-b border-white/10 -mx-1 px-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer">
                     <div className="relative w-14 h-14 flex-shrink-0">
                       {getBaskanFoto(baskan) ? (
                         <img src={getBaskanFoto(baskan)} alt={baskan.ad}
