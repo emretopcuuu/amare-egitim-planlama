@@ -39,9 +39,25 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.duvar.hata }, { status: 400 });
   }
 
+  // "Düz" karesi geldiyse ve avatar henüz yoksa onu profil_foto_path olarak da ata.
+  // Böylece ayrı bir selfie adımı yok — tek "yüzünü göster" anı hem avatar hem video referansı doldurur.
+  const duzPath = sonuc.find((s) => s.aci === "duz")?.path;
+  const { data: mevcut } = await db
+    .from("participants")
+    .select("profil_foto_path")
+    .eq("id", session.sub)
+    .maybeSingle();
+
+  const guncelleme: { yuz_fotolari: typeof sonuc; profil_foto_path?: string } = {
+    yuz_fotolari: sonuc,
+  };
+  if (duzPath && !mevcut?.profil_foto_path) {
+    guncelleme.profil_foto_path = duzPath;
+  }
+
   const { error } = await db
     .from("participants")
-    .update({ yuz_fotolari: sonuc })
+    .update(guncelleme)
     .eq("id", session.sub);
   if (error) {
     return Response.json({ hata: tr.duvar.hata }, { status: 500 });
