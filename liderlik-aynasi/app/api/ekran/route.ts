@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga, aktifOzellikler } from "@/lib/degerlendirme";
 import { unvanBul } from "@/lib/kivilcim";
+import { arketipBul } from "@/lib/arketip";
 
 // Büyük ekran verisi — bu uç HERKESE AÇIK (sahne bilgisayarı giriş yapmaz).
 // Bu yüzden yalnızca isimsiz agregalar döner: sayılar, özellik ortalamaları
@@ -20,7 +21,15 @@ export type EkranVerisi = {
   caprazOran: number | null;
   // Kıvılcım Ligi: oyunlaştırma sıralaması isimlidir (puan/yorum değil,
   // görev puanı — sahne alkışı için bilinçli olarak açık).
-  lig: { ad: string; kivilcim: number; unvan: string }[];
+  // UX #8 — spotlight: sahnedeki kişi salt sayı değil; arketipi + en güçlü
+  // yönü gösterilir. Salon "kim bu?" sorusuna 2 saniyede yanıt alır.
+  lig: {
+    ad: string;
+    kivilcim: number;
+    unvan: string;
+    arketip: { ad: string; simge: string } | null;
+    enGuclu: string | null;
+  }[];
   takimLigi: { takim: string; kivilcim: number }[];
   // Senkron An canlı katılımı (aktif pencere yoksa null)
   senkron: { baslik: string; yanit: number; toplam: number; kalanSn: number } | null;
@@ -143,6 +152,8 @@ export async function GET() {
   const ozSayilari = new Map<string, number>();
   const ciftler = new Map<string, { a: number; b: number; capraz: boolean }>();
   const tamCiftSayilari = new Map<string, number>();
+  // UX #8 — kişi başına özellik dış-ortalaması (lig spotlight: arketip + güçlü yön).
+  const hedefOzellik = new Map<string, Map<number, { t: number; n: number }>>();
 
   for (const p of puanlar) {
     if (p.is_self) {
@@ -153,6 +164,13 @@ export async function GET() {
     k.t += p.score;
     k.n += 1;
     ozellikToplam.set(p.trait_id, k);
+
+    const ho = hedefOzellik.get(p.target_id) ?? new Map<number, { t: number; n: number }>();
+    const hk = ho.get(p.trait_id) ?? { t: 0, n: 0 };
+    hk.t += p.score;
+    hk.n += 1;
+    ho.set(p.trait_id, hk);
+    hedefOzellik.set(p.target_id, ho);
 
     const a = dugumIndeksi.get(p.rater_id);
     const b = dugumIndeksi.get(p.target_id);
@@ -184,12 +202,34 @@ export async function GET() {
   }
   const lig = kisiler
     .map((k) => ({
+      id: k.id,
       ad: k.full_name,
       takim: k.team,
       kivilcim: kivilcimlar.get(k.id) ?? 0,
     }))
     .filter((k) => k.kivilcim > 0)
     .sort((a, b) => b.kivilcim - a.kivilcim);
+  // UX #8 — bir kişinin arketip + en güçlü yönünü dış-puanlarından çıkar.
+  const ozellikAd = new Map(ozellikler.map((o) => [o.id, o.name]));
+  const spotlight = (kisiId: string) => {
+    const ho = hedefOzellik.get(kisiId);
+    if (!ho || ho.size === 0) return { arketip: null, enGuclu: null };
+    const satirlar = ozellikler.map((o) => {
+      const k = ho.get(o.id);
+      return { ad: o.name, dis: k ? k.t / k.n : null, oz: null };
+    });
+    let enGuclu: string | null = null;
+    let enYuksek = -1;
+    for (const [traitId, k] of ho) {
+      const ort = k.t / k.n;
+      if (ort > enYuksek) {
+        enYuksek = ort;
+        enGuclu = ozellikAd.get(traitId) ?? null;
+      }
+    }
+    const ark = arketipBul(satirlar);
+    return { arketip: { ad: ark.ad, simge: ark.simge }, enGuclu };
+  };
   const takimToplam = new Map<string, number>();
   for (const k of lig) {
     if (!k.takim) continue;
@@ -224,11 +264,16 @@ export async function GET() {
     baglar,
     caprazOran:
       baglar.length > 0 ? Math.round((caprazSayisi / baglar.length) * 100) : null,
-    lig: lig.slice(0, 5).map((k) => ({
-      ad: k.ad,
-      kivilcim: k.kivilcim,
-      unvan: unvanBul(k.kivilcim).mevcut.ad,
-    })),
+    lig: lig.slice(0, 5).map((k) => {
+      const s = spotlight(k.id);
+      return {
+        ad: k.ad,
+        kivilcim: k.kivilcim,
+        unvan: unvanBul(k.kivilcim).mevcut.ad,
+        arketip: s.arketip,
+        enGuclu: s.enGuclu,
+      };
+    }),
     takimLigi: [...takimToplam.entries()]
       .map(([takim, kivilcim]) => ({ takim, kivilcim }))
       .sort((a, b) => b.kivilcim - a.kivilcim),
