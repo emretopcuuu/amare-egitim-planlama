@@ -205,25 +205,78 @@ export default function LiderProfil() {
 
       {/* İçerik */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
-        {tab === 'kariyer' && (
-          <div className="space-y-3">
-            {yolculuk.map((k, i) => {
-              const sv = kariyerSira(k.kariyer) / Math.max(1, KARIYER_BASAMAKLARI.length - 1);
-              return (
-                <div key={i} className="relative flex items-center gap-4 bg-white border border-gray-200 rounded-xl p-4 overflow-hidden">
-                  <div className="absolute inset-y-0 left-0 w-1" style={{ background: `rgba(216,177,90,${0.4 + sv * 0.6})` }} />
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white" style={{ background: `linear-gradient(135deg, #b8923f, #d8b15a)`, boxShadow: `0 0 ${sv * 18}px rgba(216,177,90,${sv})` }}>{i + 1}</div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-extrabold text-gray-900 flex items-center gap-2">{k.kariyer}{sv > 0.7 && <Star className="w-4 h-4 text-amber-500" fill="currentColor" />}</div>
-                    <div className="text-xs text-gray-500 mt-0.5">{k.dt.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}</div>
+        {tab === 'kariyer' && (() => {
+          const KS = KARIYER_BASAMAKLARI.length;
+          const guncelSira = kariyerSira(guncelKariyer);
+          const farklar = yolculuk.filter(k => k.fark != null && k.fark > 0).map(k => k.fark);
+          const enHizli = farklar.length ? Math.min(...farklar) : null;
+          const tarihMap = new Map(yolculuk.map(k => [kariyerSira(k.kariyer), k]));
+          return (
+            <div className="space-y-5">
+              {/* ÖZET KART */}
+              <div className="relative overflow-hidden rounded-2xl p-5 text-white bg-gradient-to-br from-purple-700 to-indigo-900">
+                <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(circle at 80% 10%, rgba(216,177,90,${0.15 + isiltiSeviye * 0.4}), transparent 55%)` }} />
+                <div className="relative grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+                  <div className="col-span-2 sm:col-span-1 text-left">
+                    <div className="text-amber-300 text-[11px] uppercase tracking-wider">Güncel kariyer</div>
+                    <div className="text-xl font-extrabold gold-text-glow leading-tight">{guncelKariyer || '—'}</div>
                   </div>
-                  {k.fark != null && <div className="text-right flex-shrink-0"><div className="text-sm font-bold text-amare-purple">{sureMetni(k.fark)}</div><div className="text-[10px] text-gray-400">{i === 0 ? 'katılımdan' : 'önceki basamaktan'}</div></div>}
+                  <div><div className="text-2xl font-extrabold">{toplamAy != null ? sureMetni(toplamAy) : '—'}</div><div className="text-purple-200/70 text-[11px]">Amare'de</div></div>
+                  <div><div className="text-2xl font-extrabold">{yolculuk.length}</div><div className="text-purple-200/70 text-[11px]">basamak</div></div>
+                  <div><div className="text-2xl font-extrabold text-amber-300">{enHizli != null ? sureMetni(enHizli) : '—'}</div><div className="text-purple-200/70 text-[11px]">en hızlı yükseliş</div></div>
                 </div>
-              );
-            })}
-            {toplamAy != null && <div className="text-center text-sm text-gray-500 pt-2">Amare yolculuğu: <b className="text-amare-purple">{sureMetni(toplamAy)}</b> · güncel: <b>{guncelKariyer}</b></div>}
-          </div>
-        )}
+              </div>
+
+              {/* KRONOLOJİK ADIMLAR — kaç ayda hangi kariyer */}
+              <div className="relative pl-2">
+                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Kariyer Adımları</div>
+                <div className="relative space-y-3">
+                  {/* dikey bağlantı çizgisi */}
+                  <div className="absolute left-[27px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-amber-300 to-amber-600/30" />
+                  {yolculuk.map((k, i) => {
+                    const sv = kariyerSira(k.kariyer) / Math.max(1, KS - 1);
+                    const hizli = k.fark != null && k.fark > 0 && k.fark <= 6;
+                    return (
+                      <div key={i} className="relative flex items-center gap-4 bg-white border border-gray-200 rounded-xl p-4">
+                        <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white z-10 ring-4 ring-white" style={{ background: 'linear-gradient(135deg, #b8923f, #d8b15a)', boxShadow: `0 0 ${4 + sv * 22}px rgba(216,177,90,${0.3 + sv * 0.7})` }}>{i + 1}</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-extrabold text-gray-900 flex items-center gap-2 flex-wrap">
+                            {k.kariyer}
+                            {sv > 0.7 && <Star className="w-4 h-4 text-amber-500" fill="currentColor" />}
+                            {hizli && <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">⚡ hızlı</span>}
+                          </div>
+                          <div className="text-xs text-gray-500 mt-0.5">{k.dt.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}</div>
+                        </div>
+                        {k.fark != null && <div className="text-right flex-shrink-0"><div className="text-sm font-bold text-amare-purple">{sureMetni(k.fark)}</div><div className="text-[10px] text-gray-400">{i === 0 ? 'katılımdan' : 'önceki basamaktan'}</div></div>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* TÜM MERDİVEN — 14 basamakta nerede (ışıltılı) */}
+              <div>
+                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Amare Rütbe Merdiveni</div>
+                <div className="bg-gradient-to-b from-gray-900 to-purple-950 rounded-2xl p-3 space-y-1">
+                  {KARIYER_BASAMAKLARI.map((b, idx) => {
+                    const ulasildi = guncelSira >= 0 && idx <= guncelSira;
+                    const suAn = idx === guncelSira;
+                    const sv = idx / Math.max(1, KS - 1);
+                    const k = tarihMap.get(idx);
+                    return (
+                      <div key={b} className={`flex items-center gap-3 rounded-lg px-3 py-1.5 transition-all ${suAn ? 'bg-amber-400/15' : ''}`} style={ulasildi ? { boxShadow: suAn ? `inset 0 0 0 1px rgba(216,177,90,0.6)` : 'none' } : {}}>
+                        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold" style={ulasildi ? { background: 'linear-gradient(135deg,#b8923f,#d8b15a)', color: '#2a1c06', boxShadow: `0 0 ${sv * 14}px rgba(216,177,90,${sv})` } : { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)' }}>{idx + 1}</div>
+                        <div className={`flex-1 text-sm font-semibold ${ulasildi ? 'text-white' : 'text-white/30'}`}>{b}</div>
+                        {k && <div className="text-[10px] text-amber-300/80">{k.dt.toLocaleDateString('tr-TR', { month: '2-digit', year: 'numeric' })}</div>}
+                        {suAn && <span className="text-[10px] font-extrabold text-amber-300 flex items-center gap-1"><Star className="w-3 h-3" fill="currentColor" />ŞU AN</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })()}
         {tab === 'gelecek' && (gelecek.length ? <div className="space-y-2">{gelecek.map(renderEgitim)}</div> : <div className="text-center py-12 text-gray-400"><Calendar className="w-16 h-16 mx-auto mb-3 opacity-30" /><p>Planlanmış eğitim yok.</p></div>)}
         {tab === 'gecmis' && <div className="space-y-2">{gecmis.map(renderEgitim)}</div>}
         {tab === 'kayitli' && (
