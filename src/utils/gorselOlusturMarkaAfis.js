@@ -50,9 +50,12 @@ const wrapText = (ctx, text, x, y, maxW, lh, maxLines = 6) => {
 };
 
 // Başlık çiz — ortalı kelime-kaydırma; ciftRenk=true ise SON kelime vurgu renginde.
-const basligiCiz = (ctx, text, cx, y, maxW, lh, maxLines, renkMetin, renkVurgu, ciftRenk) => {
+const basligiCiz = (ctx, text, cx, y, maxW, lh, maxLines, renkMetin, renkVurgu, ciftRenk, vurguAdet = 1, vurguYon = 'son') => {
   const words = String(text || '').split(/\s+/).filter(Boolean);
-  const sonIdx = words.length - 1;
+  // Vurgu (farklı renk) kelime kümesi: baştan veya sondan N kelime
+  const adet = Math.max(0, Math.min(vurguAdet, words.length));
+  const vurguIdx = new Set();
+  for (let i = 0; i < adet; i++) vurguIdx.add(vurguYon === 'bas' ? i : words.length - 1 - i);
   // satırlara böl (kelime kaydırma, maxLines sınırı)
   const satirlar = []; let cur = [];
   for (let i = 0; i < words.length; i++) {
@@ -69,7 +72,7 @@ const basligiCiz = (ctx, text, cx, y, maxW, lh, maxLines, renkMetin, renkVurgu, 
     const toplam = genislikler.reduce((s, w) => s + w, 0) + bosluk * (satir.length - 1);
     let x = cx - toplam / 2;
     satir.forEach((w, j) => {
-      ctx.fillStyle = (ciftRenk && gidx === sonIdx) ? renkVurgu : renkMetin;
+      ctx.fillStyle = (ciftRenk && vurguIdx.has(gidx)) ? renkVurgu : renkMetin;
       ctx.textAlign = 'left';
       ctx.fillText(w, x, yy);
       x += genislikler[j] + bosluk; gidx++;
@@ -365,7 +368,7 @@ const altinHap = (ctx, cx, y, text, fontSize, palet, fontAd = 'Arial') => {
   return y + h;
 };
 
-export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', baslik = '' }) => {
+export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', baslik = '', baslikVurgu = { adet: 1, yon: 'son' } }) => {
   // Marka Afiş HER ZAMAN dikey (kare/story selektöründen bağımsız) — referanslar dikey,
   // kare alan fotoları sıkıştırıyordu.
   const W = 1080, H = 1350;
@@ -417,7 +420,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const tSize = Math.round(W * 0.072 * ayar.yazi);
   ctx.font = `800 ${tSize}px ${FF.baslik}`;
   ctx.shadowColor = palet.acik ? 'rgba(120,90,30,0.18)' : 'rgba(0,0,0,0.5)'; ctx.shadowBlur = 10;
-  y = basligiCiz(ctx, ((baslik || egitim.egitim) || '').toLocaleUpperCase('tr-TR'), W / 2, y + tSize, W - M * 2, tSize * 1.05, 4, palet.metin, palet.gold, ayar.ciftRenkBaslik);
+  y = basligiCiz(ctx, ((baslik || egitim.egitim) || '').toLocaleUpperCase('tr-TR'), W / 2, y + tSize, W - M * 2, tSize * 1.05, 4, palet.metin, palet.gold, ayar.ciftRenkBaslik, baslikVurgu?.adet ?? 1, baslikVurgu?.yon || 'son');
   ctx.shadowBlur = 0;
   // başlık altı altın aksan çizgisi (parıltılı uçlar) — modern dokunuş
   y += Math.round(H * 0.006);

@@ -97,6 +97,8 @@ export default function GorselStudyo() {
   const [ekIstek, setEkIstek] = useState('');
   const [altNot, setAltNot] = useState(''); // afiş altına serbest not/uyarı
   const [baslikOzel, setBaslikOzel] = useState(''); // özel başlık (boş = otomatik)
+  const [vurguKelime, setVurguKelime] = useState(1); // iki renkli başlıkta vurgulu kelime sayısı
+  const [vurguYon, setVurguYon] = useState('son');   // 'son' | 'bas'
   const [programSatir, setProgramSatir] = useState([]); // Program İçeriği afişi satırları
   const [resultUrl, setResultUrl] = useState(null);
   const sonB64 = useRef(null);
@@ -241,7 +243,7 @@ export default function GorselStudyo() {
     try {
       let res;
       if (markaModu) {
-        res = await gorselOlusturMarkaAfis({ egitim, egitmenler: speakers, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil, altNot, baslik: baslikOzel });
+        res = await gorselOlusturMarkaAfis({ egitim, egitmenler: speakers, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil, altNot, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon } });
       } else if (programModu) {
         const tur = afisTuru(egitim);
         const programSatirlari = programSatir.map(r => {
@@ -274,7 +276,7 @@ export default function GorselStudyo() {
     const id = setTimeout(() => { uret(); }, 450);
     return () => clearTimeout(id);
     // eslint-disable-next-line
-  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan])), altNot, baslikOzel, JSON.stringify(programSatir)]);
+  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan])), altNot, baslikOzel, vurguKelime, vurguYon, JSON.stringify(programSatir)]);
 
   const indir = () => {
     if (!resultUrl) return;
@@ -357,6 +359,22 @@ export default function GorselStudyo() {
                 <input value={baslikOzel} onChange={(e) => setBaslikOzel(e.target.value)}
                   placeholder={programModu ? 'Örn: VİZYON GÜNÜ PROGRAM İÇERİĞİ' : (egitim.egitim || 'Afiş başlığı')}
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                {/* İki renkli başlık aktifse: kaç kelime vurgu rengi + baştan/sondan */}
+                {markaModu && markaSecim['baslik-cift'] && (
+                  <div className="mt-2 flex items-center gap-2 flex-wrap text-xs">
+                    <span className="text-gray-500">Altın renkli:</span>
+                    <div className="inline-flex items-center border border-gray-200 rounded-lg overflow-hidden">
+                      <button onClick={() => setVurguKelime(v => Math.max(1, v - 1))} className="px-2 py-1 text-gray-600 hover:bg-gray-100">−</button>
+                      <span className="px-2 font-semibold text-gray-700">{vurguKelime} kelime</span>
+                      <button onClick={() => setVurguKelime(v => Math.min(8, v + 1))} className="px-2 py-1 text-gray-600 hover:bg-gray-100">+</button>
+                    </div>
+                    <select value={vurguYon} onChange={(e) => setVurguYon(e.target.value)}
+                      className="border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30">
+                      <option value="son">sondan</option>
+                      <option value="bas">baştan</option>
+                    </select>
+                  </div>
+                )}
               </div>
             )}
 
