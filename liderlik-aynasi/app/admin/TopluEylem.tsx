@@ -17,6 +17,12 @@ type Katilimci = {
   onuPuanlayan: number;
 };
 
+type IlerlemeState = {
+  yapilan: number;
+  toplam: number;
+  hataliIdler: string[];
+} | null;
+
 export default function TopluEylem({
   katilimcilar,
   ozellikSayisi,
@@ -27,6 +33,8 @@ export default function TopluEylem({
   const router = useRouter();
   const [secili, setSecili] = useState<Set<string>>(new Set());
   const [mesgul, setMesgul] = useState(false);
+  const [ilerleme, setIlerleme] = useState<IlerlemeState>(null);
+  const [sonuc, setSonuc] = useState<{ basarili: number; toplam: number; hataliIdler: string[] } | null>(null);
 
   const tumSecili = secili.size === katilimcilar.length && katilimcilar.length > 0;
 
@@ -49,23 +57,35 @@ export default function TopluEylem({
 
   async function topluDurt() {
     if (secili.size === 0) return;
+    const hedefler = [...secili];
+    const toplam = hedefler.length;
     setMesgul(true);
-    try {
-      const res = await fetch("/api/admin/toplu-durt", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ hedefler: [...secili] }),
-      });
-      const veri = await res.json().catch(() => null);
-      if (!res.ok) { tost(t.hata, "hata"); return; }
-      tost(t.durtSonuc(veri?.gonderilen ?? secili.size), "basari");
-      setSecili(new Set());
-      router.refresh();
-    } catch {
-      tost(t.hata, "hata");
-    } finally {
-      setMesgul(false);
+    setSonuc(null);
+    setIlerleme({ yapilan: 0, toplam, hataliIdler: [] });
+
+    const hataliIdler: string[] = [];
+    // Kişileri tek tek gönder — gerçek ilerleme ve kısmi başarısızlık takibi
+    for (let i = 0; i < hedefler.length; i++) {
+      try {
+        const res = await fetch("/api/admin/toplu-durt", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ hedefler: [hedefler[i]] }),
+        });
+        if (!res.ok) hataliIdler.push(hedefler[i]);
+      } catch {
+        hataliIdler.push(hedefler[i]);
+      }
+      setIlerleme({ yapilan: i + 1, toplam, hataliIdler: [...hataliIdler] });
     }
+
+    const basarili = toplam - hataliIdler.length;
+    setSonuc({ basarili, toplam, hataliIdler });
+    setIlerleme(null);
+    setMesgul(false);
+    setSecili(new Set());
+    tost(t.kismiSonuc(basarili, toplam), basarili === toplam ? "basari" : "bilgi");
+    router.refresh();
   }
 
   return (
@@ -93,6 +113,46 @@ export default function TopluEylem({
           </button>
         )}
       </div>
+
+      {/* UX 7 — İlerleme bandı */}
+      {ilerleme && (
+        <div className="mb-3 rounded-xl border border-royal/30 bg-midnight-card/60 p-3">
+          <p className="mb-2 text-sm font-medium text-slate-300">
+            {t.gonderiliyor(ilerleme.yapilan, ilerleme.toplam)}
+          </p>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-midnight-soft">
+            <div
+              className="h-full rounded-full bg-gold transition-all duration-300"
+              style={{ width: `${Math.round((ilerleme.yapilan / ilerleme.toplam) * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* UX 7 — Kısmi başarısızlık raporu */}
+      {sonuc && (
+        <div
+          className={`mb-3 rounded-xl border p-3 text-sm ${
+            sonuc.hataliIdler.length === 0
+              ? "border-emerald-400/30 bg-emerald-400/[0.06] text-emerald-300"
+              : "border-amber-400/30 bg-amber-400/[0.06] text-amber-300"
+          }`}
+        >
+          <p className="font-semibold">{t.kismiSonuc(sonuc.basarili, sonuc.toplam)}</p>
+          {sonuc.hataliIdler.length > 0 && (
+            <div className="mt-1.5">
+              <p className="text-xs text-amber-400/80">{t.hataliKisiler}</p>
+              <ul className="mt-1 space-y-0.5 text-xs text-slate-300">
+                {sonuc.hataliIdler.map((id) => {
+                  const k = katilimcilar.find((k) => k.id === id);
+                  return <li key={id}>• {k?.ad ?? id}</li>;
+                })}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+
 
       {/* Katılımcı tablosu */}
       <div className="overflow-x-auto">
