@@ -117,7 +117,7 @@ export async function sesSilDogrula(voiceId: string): Promise<boolean> {
  * Varsayılan, ElevenLabs'in derin/nötr hazır sesi; AYNA_SES_ID env'iyle
  * (örn. Voice Design'da tasarlanmış özel sesle) değiştirilebilir. */
 export function aynaSesId(): string {
-  return process.env.AYNA_SES_ID || "pNInz6obpgDQGcFmaJgB";
+  return process.env.AYNA_SES_ID || "j82ax9yhzfYwq9lDvRWL";
 }
 
 /** Direnç Simülatörü itirazcısının sesi (stok karakter; klon değil). */
