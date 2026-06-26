@@ -59,6 +59,22 @@
   [headers.values]
     Cache-Control = "public, max-age=3600"
 
+# Service worker dosyaları → ASLA cache'leme (yoksa tarayıcı eski SW'yi tutar,
+# yeni deploy kullanıcıya ulaşmaz). Her ziyarette taze çekilsin.
+[[headers]]
+  for = "/sw-offline.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+[[headers]]
+  for = "/sw-push.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+# index.html → her zaman revalidate (yeni hashed bundle'lara işaret etsin)
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
 # ─── Security headers (2026-06-05 audit) ──────────────────────────────────
 # Tüm route'lara uygulanır. CSP Report-Only modunda — 48 saat gözlem sonrası
 # Content-Security-Policy-Report-Only → Content-Security-Policy'ye çevrilecek.
