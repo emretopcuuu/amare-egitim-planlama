@@ -16,6 +16,7 @@ import VideoOynatModal from '../components/VideoOynatModal';
 import UyeGirisModal from '../components/UyeGirisModal';
 import EgitmenSozleri from '../components/EgitmenSozleri';
 import EgitmenProfilDuzenleyici from '../components/EgitmenProfilDuzenleyici';
+import { gorselOlusturBasariKarti } from '../utils/gorselOlusturBasariKarti';
 
 const parseTarih = (t) => {
   if (!t) return null;
@@ -47,6 +48,7 @@ export default function LiderProfil() {
   const [oynatSeekTo, setOynatSeekTo] = useState(null);
   const [girisModalAcik, setGirisModalAcik] = useState(false);
   const [duzenleAcik, setDuzenleAcik] = useState(false);
+  const [kartUretiliyor, setKartUretiliyor] = useState(false);
 
   // Konuşmacı kaydını coreId ile bul
   const kayit = useMemo(() => {
@@ -114,6 +116,26 @@ export default function LiderProfil() {
     if (!isAuthenticated) { setGirisModalAcik(true); return; }
     const v = (kayitliVideolar || []).find(x => (x.vimeoId || x.id) === soz.vimeoId) || { id: soz.vimeoId, vimeoId: soz.vimeoId, baslik: soz.baslik, thumbnailUrl: soz.thumbnailUrl };
     setOynatSeekTo(Math.floor(soz.start || 0)); setOynatilanVideo(v);
+  };
+
+  const indirBasariKarti = async () => {
+    setKartUretiliyor(true);
+    try {
+      const res = await gorselOlusturBasariKarti({
+        ad, fotoURL: kayit?.fotoURL || null, guncelKariyer,
+        toplamMetni: toplamAy != null ? sureMetni(toplamAy) : '',
+        isilti: isiltiSeviye,
+        adimlar: yolculuk.map(k => ({ kariyer: k.kariyer, tarih: k.dt.toLocaleDateString('tr-TR', { month: '2-digit', year: 'numeric' }), sure: k.fark != null ? sureMetni(k.fark) : '' })),
+      });
+      const bin = atob(res.base64); const arr = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      const url = URL.createObjectURL(new Blob([arr], { type: 'image/png' }));
+      const a = document.createElement('a');
+      a.href = url; a.download = `${(ad || 'lider').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_basari_karti.png`;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (e) { console.warn('[basari-karti] hata:', e.message); }
+    finally { setKartUretiliyor(false); }
   };
 
   const renderEgitim = (egitim) => {
@@ -226,6 +248,12 @@ export default function LiderProfil() {
                   <div><div className="text-2xl font-extrabold text-amber-300">{enHizli != null ? sureMetni(enHizli) : '—'}</div><div className="text-purple-200/70 text-[11px]">en hızlı yükseliş</div></div>
                 </div>
               </div>
+
+              {/* Işıltılı başarı kartı PNG indir */}
+              <button onClick={indirBasariKarti} disabled={kartUretiliyor}
+                className="w-full py-3 rounded-xl font-bold text-gray-900 bg-gradient-to-r from-amber-300 to-amber-500 hover:from-amber-200 hover:to-amber-400 transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-60">
+                <Download className="w-5 h-5" />{kartUretiliyor ? 'Hazırlanıyor…' : 'Başarı kartını indir (PNG)'}
+              </button>
 
               {/* KRONOLOJİK ADIMLAR — kaç ayda hangi kariyer */}
               <div className="relative pl-2">
