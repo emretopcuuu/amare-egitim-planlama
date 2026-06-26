@@ -346,17 +346,6 @@ export default function LiderProfil() {
           // UX8 — yıl ayracı: bir öncekiyle yılı değişen ilk satıra
           satirlar.forEach((r, i) => { const prev = satirlar[i - 1]; r.yilAyraci = r.yil && (!prev || prev.yil !== r.yil); });
 
-          // UX3 — ivme grafiği noktaları (katılım + her dated basamak)
-          const noktalar = [];
-          if (katilim) noktalar.push({ ay: 0, sira: 0 });
-          yolculuk.forEach(k => { const ay = ayFarki(katilim, k.dt); if (ay != null && ay >= 0) noktalar.push({ ay, sira: kariyerSira(k.kariyer) }); });
-          const maxAy = noktalar.length ? Math.max(...noktalar.map(n => n.ay), 1) : 1;
-          const CW = 320, CH = 110, PADX = 14, PADY = 12;
-          const px = (ay) => PADX + (ay / maxAy) * (CW - PADX * 2);
-          const py = (sira) => CH - PADY - (sira / Math.max(1, KS - 1)) * (CH - PADY * 2);
-          const cizgiPath = noktalar.map((n, i) => `${i === 0 ? 'M' : 'L'}${px(n.ay).toFixed(1)},${py(n.sira).toFixed(1)}`).join(' ');
-          const alanPath = noktalar.length ? `${cizgiPath} L${px(noktalar[noktalar.length - 1].ay).toFixed(1)},${CH - PADY} L${px(0).toFixed(1)},${CH - PADY} Z` : '';
-
           return (
             <div className="space-y-5">
               {/* ÖZET KART */}
@@ -372,26 +361,6 @@ export default function LiderProfil() {
                   <div><div className="text-2xl font-extrabold text-amber-300">{enHizli != null ? sureMetni(enHizli) : '—'}</div><div className="text-purple-200/70 text-[11px]">en hızlı yükseliş</div></div>
                 </div>
               </div>
-
-              {/* UX3 — İVME GRAFİĞİ */}
-              {noktalar.length >= 2 && (
-                <div className="rounded-2xl p-4 bg-gradient-to-br from-gray-900 to-purple-950 text-white">
-                  <div className="flex items-center gap-2 mb-2"><TrendingUp className="w-4 h-4 text-amber-300" /><span className="text-xs font-bold uppercase tracking-wider text-gray-300">Yükseliş ivmesi</span></div>
-                  <svg viewBox={`0 0 ${CW} ${CH}`} className="w-full h-auto" preserveAspectRatio="none" role="img" aria-label="Kariyer yükseliş ivmesi grafiği">
-                    <defs>
-                      <linearGradient id="ivmeAlan" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="rgba(216,177,90,0.45)" />
-                        <stop offset="100%" stopColor="rgba(216,177,90,0)" />
-                      </linearGradient>
-                    </defs>
-                    {[0.25, 0.5, 0.75].map(g => <line key={g} x1={PADX} y1={CH - PADY - g * (CH - PADY * 2)} x2={CW - PADX} y2={CH - PADY - g * (CH - PADY * 2)} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />)}
-                    {alanPath && <path d={alanPath} fill="url(#ivmeAlan)" />}
-                    <path d={cizgiPath} fill="none" stroke="#e8c878" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-                    {noktalar.map((n, i) => <circle key={i} cx={px(n.ay)} cy={py(n.sira)} r={i === noktalar.length - 1 ? 4 : 2.5} fill="#f4dca0" />)}
-                  </svg>
-                  <div className="flex justify-between text-[10px] text-white/40 mt-1"><span>Katılım</span><span>{sureMetni(maxAy)} sonra</span></div>
-                </div>
-              )}
 
               {/* Işıltılı başarı kartı PNG indir */}
               <button onClick={indirBasariKarti} disabled={kartUretiliyor}
