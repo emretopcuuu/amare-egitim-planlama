@@ -20,6 +20,10 @@ export const MARKA_VARYASYON = [
     { key: 'duzen-uc', label: '3\'lü sütun', cmd: '3 sütun' },
     { key: 'duzen-dort', label: '4\'lü sütun', cmd: '4 sütun' },
   ] },
+  { grup: 'Aralık', tekil: true, secenekler: [
+    { key: 'aralik-siki', label: 'Sıkı', cmd: 'sıkı aralık' },
+    { key: 'aralik-genis', label: 'Geniş', cmd: 'geniş aralık' },
+  ] },
   { grup: 'Tema', tekil: true, secenekler: [
     { key: 'tema-siyah', label: 'Siyah & altın', cmd: 'siyah tema', renk: '#0b0b0d' },
     { key: 'tema-mor', label: 'Mor', cmd: 'mor tema', renk: '#3a2b54' },

@@ -14,7 +14,7 @@ const PROGRAM_GRUPLARI = ['Tema', 'Yazı', 'Yazı tipi', 'Arka plan', 'Filigran'
 
 // Grup başlık ikonları (göz hızlı tarar)
 const GRUP_IKON = {
-  'Yazı': '🔠', 'Fotoğraf': '🖼️', 'Vurgu': '👤', 'Yerleşim': '▦', 'Tema': '🎨', 'Yazı tipi': '🔤',
+  'Yazı': '🔠', 'Fotoğraf': '🖼️', 'Vurgu': '👤', 'Yerleşim': '▦', 'Aralık': '↔️', 'Tema': '🎨', 'Yazı tipi': '🔤',
   'Başlık': '✨', 'Foto şekli': '⬡', 'Arka plan': '🌗', 'Dekor': '💠',
   'Köşe şerit': '🎀', 'Arka plan dokusu': '🌌', 'Filigran': '🏷️', 'Dil': '🌐', 'İçerik': '📋',
 };

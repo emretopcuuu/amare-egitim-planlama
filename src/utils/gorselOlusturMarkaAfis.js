@@ -187,7 +187,7 @@ export const ayarCikar = (ek) => {
     isik: true, elmas: true, cerceve: true, // dekor
     qr: true, program: true, tarih: true,   // içerik
     tekSira: false, fotoSekil: 'yuvarlak', kurdele: null, ciftRenkBaslik: false,
-    filigran: 'normal', anaVurgu: false, doku: null, dil: 'tr', duzen: null,
+    filigran: 'normal', anaVurgu: false, doku: null, dil: 'tr', duzen: null, aralik: 'normal',
   };
   const has = (...ws) => ws.some(w => t.includes(w));
   // metin boyutu
@@ -242,6 +242,9 @@ export const ayarCikar = (ek) => {
   if (has('2 sütun', 'iki sütun', 'ikili dizilim', 'ikili düzen')) a.duzen = 'iki';
   if (has('3 sütun', 'üç sütun', 'üçlü dizilim', 'üçlü düzen')) a.duzen = 'uc';
   if (has('4 sütun', 'dört sütun', 'dörtlü dizilim', 'dörtlü düzen')) a.duzen = 'dort';
+  // konuşmacı arası boşluk
+  if (has('sıkı aralık', 'sık aralık', 'dar aralık', 'sıkışık')) a.aralik = 'siki';
+  if (has('geniş aralık', 'ferah', 'bol boşluk', 'aralıklı')) a.aralik = 'genis';
   // ana konuşmacı vurgusu (1. kişi büyük)
   if (has('ana konuşmacı', 'baş konuşmacı', 'ana vurgu', 'ilk büyük')) a.anaVurgu = true;
   // filigran (arka amblem) yoğunluğu
@@ -500,16 +503,19 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
       const buCellW = (ayar.anaVurgu && r === 0 && rows > 1) ? Math.round(W * 0.5) : cellW;
       const startX = Math.round((W - adet * buCellW) / 2); // satırı ortala
       // ORANLAMA (bütçe-bazlı): satır = topPad + foto + g1 + isim hapı + g2 + rol.
+      // Aralık: konuşmacı arası boşluk (dikey gap + yatay hücre doluluğu).
+      const gapMul = ayar.aralik === 'siki' ? 0.6 : ayar.aralik === 'genis' ? 1.7 : 1;
+      const capMul = ayar.aralik === 'siki' ? 0.92 : ayar.aralik === 'genis' ? 0.72 : 0.86;
       const nameSize = Math.round(Math.max(15, Math.min(Math.round(buCellW * 0.048), 26)) * ayar.yazi);
-      const roleSize = Math.round(Math.max(12, Math.min(Math.round(buCellW * 0.038), 18)) * ayar.yazi);
+      const roleSize = Math.round(Math.max(13, Math.min(Math.round(buCellW * 0.038), 18)) * ayar.yazi);
       const pillH = Math.round(nameSize * 1.7);
-      const topPad = Math.round(perRowH * 0.04);
-      const g1 = Math.round(perRowH * 0.035);
-      const g2 = Math.round(perRowH * 0.02);
+      const topPad = Math.round(perRowH * 0.04 * gapMul);
+      const g1 = Math.round(perRowH * 0.035 * gapMul);
+      const g2 = Math.round(perRowH * 0.02 * gapMul);
       let foto = Math.round(perRowH * 0.93) - topPad - g1 - pillH - g2 - roleSize;
       foto = Math.round(foto * ayar.foto);
       const wTavan = (ayar.anaVurgu && r === 0 && rows > 1) ? 0.6 : (maxAdet === 1 ? 0.6 : maxAdet === 2 ? 0.5 : 0.46);
-      foto = Math.max(80, Math.min(foto, Math.round(buCellW * 0.86), Math.round(W * wTavan)));
+      foto = Math.max(72, Math.min(foto, Math.round(buCellW * capMul), Math.round(W * wTavan)));
       for (let c = 0; c < adet; c++, idx++) {
         const e = liste[idx];
         const cx = startX + buCellW * c + buCellW / 2;
@@ -591,17 +597,18 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const adresW = qrVar ? (metinSagSinir - M) : (W - M * 2);
   ctx.textAlign = 'center';
   if (fiziki) {
-    const mekan = (egitim.mekanAdi || egitim.sehir || '').toLocaleUpperCase('tr-TR');
+    // Mekan adı (gold). Şehir üstte rozette zaten var → burada TEKRAR ETME (sehir fallback yok).
+    const mekan = (egitim.mekanAdi || '').toLocaleUpperCase('tr-TR');
+    const adresMetni = (egitim.acikAdres || egitim.yer || '').trim();
     if (mekan) {
       ctx.fillStyle = palet.gold; ctx.font = `800 ${Math.round(W * 0.03)}px ${FF.govde}`;
       ctx.fillText(mekan, adresCX, footerTop + Math.round(H * 0.026), adresW);
     }
-    // Adres: acikAdres yoksa "yer" alanına düş (çoğu fiziki etkinlikte adres yer'de)
-    const adresMetni = (egitim.acikAdres || egitim.yer || '').trim();
     if (adresMetni) {
       ctx.fillStyle = palet.alt; ctx.font = `400 ${Math.round(W * 0.021)}px ${FF.govde}`;
-      // uzun adres → 2 satır (QR'ın soluna sığacak genişlikte)
-      wrapText(ctx, adresMetni, adresCX, footerTop + Math.round(H * 0.05), adresW, Math.round(W * 0.026), 2);
+      // mekan yoksa adres tek başına biraz yukarı/ortalı; varsa altında
+      const adresY = footerTop + Math.round(H * (mekan ? 0.05 : 0.038));
+      wrapText(ctx, adresMetni, adresCX, adresY, adresW, Math.round(W * 0.026), 2);
     }
   } else {
     const zoom = (egitim.yer || '').replace(/zoom\s*salon\s*id[:\s]*/i, '').trim();
