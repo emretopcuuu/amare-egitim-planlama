@@ -470,7 +470,7 @@ const KonusmacilarSayfasi = () => {
                       </button>
                       {/* #3 — Hover preview (sadece desktop, son eğitim varsa) */}
                       {isHovered && sonEg?.egitim && (
-                        <div className="hidden md:block absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 pointer-events-none animate-fade-in">
+                        <div className="hidden md:block absolute z-40 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 pointer-events-none animate-fade-in">
                           <div className="bg-purple-950/95 backdrop-blur-md border border-amber-300/40 rounded-xl p-3 shadow-2xl">
                             <div className="text-amber-300 text-[10px] uppercase tracking-wider font-bold mb-1 inline-flex items-center gap-1">
                               <Calendar className="w-3 h-3" />
