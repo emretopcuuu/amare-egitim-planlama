@@ -260,6 +260,7 @@ export default function LiderProfil() {
           const farklar = yolculuk.filter(k => k.fark != null && k.fark > 0).map(k => k.fark);
           const enHizli = farklar.length ? Math.min(...farklar) : null;
           const tarihMap = new Map(yolculuk.map(k => [kariyerSira(k.kariyer), k]));
+          const firstSira = yolculuk.length ? kariyerSira(yolculuk[0].kariyer) : -1;
           return (
             <div className="space-y-5">
               {/* ÖZET KART */}
@@ -282,51 +283,53 @@ export default function LiderProfil() {
                 <Download className="w-5 h-5" />{kartUretiliyor ? 'Hazırlanıyor…' : 'Başarı kartını indir (PNG)'}
               </button>
 
-              {/* KRONOLOJİK ADIMLAR — kaç ayda hangi kariyer */}
-              <div className="relative pl-2">
-                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Kariyer Adımları</div>
-                <div className="relative space-y-3">
-                  {/* dikey bağlantı çizgisi */}
-                  <div className="absolute left-[27px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-amber-300 to-amber-600/30" />
-                  {yolculuk.map((k, i) => {
-                    const sv = kariyerSira(k.kariyer) / Math.max(1, KS - 1);
-                    const hizli = k.fark != null && k.fark > 0 && k.fark <= 6;
-                    return (
-                      <div key={i} className="relative flex items-center gap-4 bg-white border border-gray-200 rounded-xl p-4">
-                        <div className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-white z-10 ring-4 ring-white" style={{ background: 'linear-gradient(135deg, #b8923f, #d8b15a)', boxShadow: `0 0 ${4 + sv * 22}px rgba(216,177,90,${0.3 + sv * 0.7})` }}>{i + 1}</div>
-                        <div className="flex-1 min-w-0">
-                          <div className="font-extrabold text-gray-900 flex items-center gap-2 flex-wrap">
-                            {k.kariyer}
-                            {sv > 0.7 && <Star className="w-4 h-4 text-amber-500" fill="currentColor" />}
-                            {hizli && <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full">⚡ hızlı</span>}
-                          </div>
-                          <div className="text-xs text-gray-500 mt-0.5">{k.dt.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}</div>
-                        </div>
-                        {k.fark != null && <div className="text-right flex-shrink-0"><div className="text-sm font-bold text-amare-purple">{sureMetni(k.fark)}</div><div className="text-[10px] text-gray-400">{i === 0 ? 'katılımdan' : 'önceki basamaktan'}</div></div>}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* TÜM MERDİVEN — 14 basamakta nerede (ışıltılı) */}
+              {/* TEK MERDİVEN — 14 basamak, ulaşılanlar zengin, gelecek soluk (tekrar yok) */}
               <div>
-                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Amare Rütbe Merdiveni</div>
-                <div className="bg-gradient-to-b from-gray-900 to-purple-950 rounded-2xl p-3 space-y-1">
-                  {KARIYER_BASAMAKLARI.map((b, idx) => {
-                    const ulasildi = guncelSira >= 0 && idx <= guncelSira;
-                    const suAn = idx === guncelSira;
-                    const sv = idx / Math.max(1, KS - 1);
-                    const k = tarihMap.get(idx);
-                    return (
-                      <div key={b} className={`flex items-center gap-3 rounded-lg px-3 py-1.5 transition-all ${suAn ? 'bg-amber-400/15' : ''}`} style={ulasildi ? { boxShadow: suAn ? `inset 0 0 0 1px rgba(216,177,90,0.6)` : 'none' } : {}}>
-                        <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 text-[10px] font-bold" style={ulasildi ? { background: 'linear-gradient(135deg,#b8923f,#d8b15a)', color: '#2a1c06', boxShadow: `0 0 ${sv * 14}px rgba(216,177,90,${sv})` } : { background: 'rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.35)' }}>{idx + 1}</div>
-                        <div className={`flex-1 text-sm font-semibold ${ulasildi ? 'text-white' : 'text-white/30'}`}>{b}</div>
-                        {k && <div className="text-[10px] text-amber-300/80">{k.dt.toLocaleDateString('tr-TR', { month: '2-digit', year: 'numeric' })}</div>}
-                        {suAn && <span className="text-[10px] font-extrabold text-amber-300 flex items-center gap-1"><Star className="w-3 h-3" fill="currentColor" />ŞU AN</span>}
-                      </div>
-                    );
-                  })}
+                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Amare Kariyer Yolculuğu</div>
+                <div className="relative bg-gradient-to-b from-gray-900 via-purple-950 to-gray-900 rounded-2xl p-4 sm:p-5 overflow-hidden">
+                  {/* üst altın hâle */}
+                  <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: `radial-gradient(circle at 50% 0%, rgba(216,177,90,${0.08 + isiltiSeviye * 0.25}), transparent 70%)` }} />
+                  {/* dikey bağlantı çizgisi */}
+                  <div className="absolute left-[39px] sm:left-[43px] top-7 bottom-7 w-0.5 bg-gradient-to-b from-amber-300/70 via-amber-500/40 to-amber-700/10" />
+                  <div className="relative space-y-1.5">
+                    {KARIYER_BASAMAKLARI.map((b, idx) => {
+                      const ulasildi = guncelSira >= 0 && idx <= guncelSira;
+                      const suAn = idx === guncelSira;
+                      const sv = idx / Math.max(1, KS - 1);
+                      const k = tarihMap.get(idx);
+                      const hizli = k?.fark != null && k.fark > 0 && k.fark <= 6;
+                      const ilk = idx === firstSira;
+                      if (!ulasildi) {
+                        return (
+                          <div key={b} className="flex items-center gap-3 rounded-xl px-2 py-1.5 opacity-45">
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-[11px] font-bold bg-white/5 text-white/40 border border-white/10">{idx + 1}</div>
+                            <div className="flex-1 text-sm font-semibold text-white/40">{b}</div>
+                            <div className="text-[10px] text-white/25 uppercase tracking-wide">hedef</div>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div key={b} className="relative flex items-center gap-3 rounded-xl px-2 py-2 transition-all" style={suAn ? { background: 'rgba(216,177,90,0.12)', boxShadow: 'inset 0 0 0 1px rgba(216,177,90,0.5)' } : {}}>
+                          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold z-10" style={{ background: 'linear-gradient(135deg,#b8923f,#d8b15a)', color: '#2a1c06', boxShadow: `0 0 ${6 + sv * 24}px rgba(216,177,90,${0.35 + sv * 0.65})` }}>{idx + 1}</div>
+                          <div className="flex-1 min-w-0">
+                            <div className="font-extrabold text-white flex items-center gap-2 flex-wrap leading-tight">
+                              {b}
+                              {sv > 0.7 && <Star className="w-3.5 h-3.5 text-amber-400" fill="currentColor" />}
+                              {hizli && <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-full">⚡ hızlı</span>}
+                              {suAn && <span className="text-[10px] font-extrabold text-gray-900 bg-amber-400 px-1.5 py-0.5 rounded-full">ŞU AN</span>}
+                            </div>
+                            {k && <div className="text-[11px] text-amber-200/60 mt-0.5">{k.dt.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}</div>}
+                          </div>
+                          {k?.fark != null && (
+                            <div className="text-right flex-shrink-0">
+                              <div className="text-sm font-bold text-amber-300">{sureMetni(k.fark)}</div>
+                              <div className="text-[10px] text-white/40">{ilk ? 'katılımdan' : 'önceki basamaktan'}</div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
