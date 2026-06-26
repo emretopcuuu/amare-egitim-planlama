@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
@@ -8,6 +8,8 @@ import { titret, cal } from "@/lib/his";
 import { MINI360_IFADELER } from "@/lib/onFarkindalik";
 
 const t = tr.mini360;
+// UX #4 — yazarken/seçerken taslak: telefon kilitlenirse öz-puanlar uçmasın.
+const TASLAK_ANAHTAR = "la_mini360_oz_taslak_v1";
 
 type EkipUye = { id: string; ad: string; istiyor: boolean; degerlendirdim: boolean };
 
@@ -33,6 +35,27 @@ export default function Mini360Oz({
   const [hata, setHata] = useState<string | null>(null);
   const [istiyor, setIstiyor] = useState(oylanmaIstiyor);
   const [istekMesgul, setIstekMesgul] = useState(false);
+
+  // UX #4 — taslağı geri yükle (yalnız öz-puan henüz kaydedilmemişken).
+  useEffect(() => {
+    if (ozTamam) return;
+    try {
+      const ham = localStorage.getItem(TASLAK_ANAHTAR);
+      if (ham) {
+        const t = JSON.parse(ham) as Record<string, number>;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setPuanlar((e) => ({ ...e, ...t }));
+      }
+    } catch {}
+  }, [ozTamam]);
+
+  // UX #4 — seçim değiştikçe cihazda sakla (kaydedilince temizlenir).
+  useEffect(() => {
+    try {
+      if (Object.keys(puanlar).length > 0)
+        localStorage.setItem(TASLAK_ANAHTAR, JSON.stringify(puanlar));
+    } catch {}
+  }, [puanlar]);
 
   const tamam = MINI360_IFADELER.every((i) => puanlar[i.kod]);
   // Öz-puan kaydedildiyse (sunucudan ya da bu oturumda) ekip listesi açılır.
@@ -68,6 +91,9 @@ export default function Mini360Oz({
         return;
       }
       setKaydedildi(true);
+      try {
+        localStorage.removeItem(TASLAK_ANAHTAR); // UX #4: taslağı temizle
+      } catch {}
       titret([12, 40, 12]);
       cal("kazanim");
       router.refresh();
