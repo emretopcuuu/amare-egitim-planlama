@@ -141,7 +141,7 @@ export async function yansimaUret(participantId: string): Promise<void> {
   const voiceId =
     profil.status === "klonlandi" && profil.voice_id
       ? profil.voice_id
-      : (process.env.AYNA_SES_ID ?? "pNInz6obpgDQGcFmaJgB");
+      : (process.env.AYNA_SES_ID ?? "j82ax9yhzfYwq9lDvRWL");
 
   let audioPath: string | null = null;
   try {
