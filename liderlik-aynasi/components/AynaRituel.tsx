@@ -11,12 +11,13 @@ const t = tr.rituel;
 
 // SES RİTÜELİ — YANSIMAN'ın doğum anı, TAM EKRAN sihirbaz.
 // UX ilkesi: her ekranda TEK iş, az yazı, BÜYÜK yazı, tek ana buton.
-// Akış: davet → onay (iki dev buton) → fotoğraf → yemin → soru → uyanış → ses.
+// Akış: davet → onay (iki dev buton) → yemin → soru → uyanış → ses.
+// NOT: Açılış selfie'si KALDIRILDI — avatar artık Canlı Ayna'nın "düz" karesinden
+// gelir (tek yüz anı). Tek fotoğraf, hem avatar hem video referansı.
 
 type Asama =
   | "giris"
   | "onay"
-  | "foto"
   | "yeminHazirlik"
   | "kayit"
   | "soru"
@@ -96,7 +97,6 @@ export default function AynaRituel() {
   const [sesUrl, setSesUrl] = useState<string | null>(null);
   const [calindi, setCalindi] = useState(false);
   const [hataMesaji, setHataMesaji] = useState<string | null>(null);
-  const [fotoOnizleme, setFotoOnizleme] = useState<string | null>(null);
   const [kayitOnizleme, setKayitOnizleme] = useState<string | null>(null);
   const [kayitCaliyor, setKayitCaliyor] = useState(false);
   const [sesKalitesi, setSesKalitesi] = useState<SesKalitesi>(null);
@@ -106,8 +106,6 @@ export default function AynaRituel() {
   const [dinleniyor, setDinleniyor] = useState(false);
 
   const kayitci = useRef<MediaRecorder | null>(null);
-  const fotoDosya = useRef<File | null>(null);
-  const dosyaGirisi = useRef<HTMLInputElement | null>(null);
   const parcalar = useRef<Blob[]>([]);
   const kayitVerisi = useRef<{ blob: Blob; tip: string } | null>(null);
   const onizlemeSes = useRef<HTMLAudioElement | null>(null);
@@ -149,15 +147,6 @@ export default function AynaRituel() {
       window.location.href = "/";
     }
   }, [asama]);
-
-  function fotoSecildi(dosya: File | null) {
-    if (!dosya) return;
-    fotoDosya.current = dosya;
-    setFotoOnizleme((eski) => {
-      if (eski) URL.revokeObjectURL(eski);
-      return URL.createObjectURL(dosya);
-    });
-  }
 
   async function sesBasla() {
     setHataMesaji(null);
@@ -377,7 +366,6 @@ export default function AynaRituel() {
         "ses",
         new File([blob], tip.includes("mp4") ? "ornek.mp4" : "ornek.webm", { type: tip })
       );
-      if (fotoDosya.current) form.append("foto", fotoDosya.current);
       const res = await fetch("/api/ses-rituel", { method: "POST", body: form });
       if (!res.ok) throw new Error();
       const veri = (await res.json()) as { durum: string; url?: string | null };
@@ -459,56 +447,11 @@ export default function AynaRituel() {
             </h1>
             <p className="mt-6 text-xl leading-relaxed text-slate-200">{t.onay}</p>
             <div className="mt-10 space-y-4">
-              <DevButon onClick={() => setAsama("foto")}>{t.onayla}</DevButon>
+              <DevButon onClick={() => setAsama("yeminHazirlik")}>{t.onayla}</DevButon>
               <DevButon onClick={sessizSec} ikincil>
                 {t.sessiz}
               </DevButon>
             </div>
-          </div>
-        )}
-
-        {asama === "foto" && (
-          <div className="text-center">
-            <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
-              👁 {t.fotoBaslik}
-            </h1>
-            <p className="mt-5 text-xl leading-relaxed text-slate-200">{t.fotoAciklama}</p>
-            <input
-              ref={dosyaGirisi}
-              type="file"
-              accept="image/*"
-              capture="user"
-              className="hidden"
-              onChange={(e) => fotoSecildi(e.target.files?.[0] ?? null)}
-            />
-            {fotoOnizleme ? (
-              <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={fotoOnizleme}
-                  alt=""
-                  className="mx-auto mt-6 h-48 w-40 rounded-3xl object-cover opacity-85"
-                />
-                <div className="mt-8 space-y-4">
-                  <DevButon onClick={() => setAsama("yeminHazirlik")}>{t.fotoDevam} →</DevButon>
-                  <DevButon onClick={() => dosyaGirisi.current?.click()} ikincil>
-                    {t.fotoYeniden}
-                  </DevButon>
-                </div>
-              </>
-            ) : (
-              <div className="mt-10">
-                <DevButon onClick={() => dosyaGirisi.current?.click()}>
-                  {t.fotoCek}
-                </DevButon>
-              </div>
-            )}
-            <button
-              onClick={() => setAsama("yeminHazirlik")}
-              className="mt-6 text-base text-slate-500 underline-offset-4 hover:underline"
-            >
-              {t.fotoAtla}
-            </button>
           </div>
         )}
 
