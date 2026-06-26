@@ -3,8 +3,9 @@
 // Admin ise kariyer geçmişini sayfadan düzenleyebilir.
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, Clock, MapPin, Wifi, ExternalLink, Tag, UserPlus, Play, Video, Star, TrendingUp, Edit3, Download } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Clock, MapPin, Wifi, ExternalLink, Tag, UserPlus, Play, Video, Star, TrendingUp, Edit3, Download, Share2, Check } from 'lucide-react';
 import { useData, makeCoreId } from '../context/DataContext';
+import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { useTranslation } from '../context/LanguageContext';
 import { useAuth } from '../context/AuthContext';
 import { useTakipEgitmenler } from '../utils/takip';
@@ -92,6 +93,20 @@ export default function LiderProfil() {
   const guncelKariyer = yolculuk.length ? yolculuk[yolculuk.length - 1].kariyer : (kayit?.unvan || '');
   const toplamAy = katilim ? ayFarki(katilim, new Date()) : null;
   const isiltiSeviye = kariyerSira(guncelKariyer) / Math.max(1, KARIYER_BASAMAKLARI.length - 1);
+
+  useDocumentTitle(ad, guncelKariyer ? `${guncelKariyer}${toplamAy != null ? ` · Amare'de ${sureMetni(toplamAy)}` : ''}` : undefined);
+
+  // Paylaş (Web Share API → yoksa panoya kopyala)
+  const [paylasildi, setPaylasildi] = useState(false);
+  const paylas = async () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const baslik = `${ad}${guncelKariyer ? ' — ' + guncelKariyer : ''}`;
+    try {
+      if (navigator.share) { await navigator.share({ title: baslik, url }); return; }
+      await navigator.clipboard.writeText(url);
+      setPaylasildi(true); setTimeout(() => setPaylasildi(false), 1800);
+    } catch {}
+  };
 
   // Kayıtlı eğitimler lazy fetch
   useEffect(() => {
@@ -209,12 +224,24 @@ export default function LiderProfil() {
                   <Star className="w-3.5 h-3.5" fill={favori ? 'currentColor' : 'none'} />{favori ? 'Favori' : 'Favoriye ekle'}
                 </button>
                 <button onClick={() => setTakipModal(true)} className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 px-3 py-1 rounded-full font-bold gold-glow"><UserPlus className="w-3.5 h-3.5" />E-posta ile takip</button>
+                <button onClick={paylas} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full font-bold">{paylasildi ? <><Check className="w-3.5 h-3.5" />Kopyalandı</> : <><Share2 className="w-3.5 h-3.5" />Paylaş</>}</button>
                 {isAdmin && <button onClick={() => setDuzenleAcik(true)} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full font-bold"><Edit3 className="w-3.5 h-3.5" />Kariyeri düzenle</button>}
               </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Admin ipucu — kariyer verisi yoksa */}
+      {isAdmin && yolculuk.length === 0 && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-4">
+          <button onClick={() => setDuzenleAcik(true)} className="w-full text-left bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 flex items-center gap-3 hover:bg-amber-100 transition">
+            <TrendingUp className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <div className="flex-1 text-sm text-amber-900"><b>Kariyer yolculuğu boş.</b> "Kariyeri düzenle" ile Amare'ye katılım + basamakları (kariyer + AA.YYYY) gir → ışıltılı başarı grafiği ve PNG kart belirir.</div>
+            <Edit3 className="w-4 h-4 text-amber-600 flex-shrink-0" />
+          </button>
+        </div>
+      )}
 
       {/* Sekmeler */}
       <div className="bg-white border-b border-gray-200 sticky top-[49px] z-10">
