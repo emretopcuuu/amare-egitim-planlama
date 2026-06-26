@@ -436,7 +436,7 @@ const KonusmacilarSayfasi = () => {
               <span className="inline-flex items-center gap-1.5 bg-cyan-400/10 border border-cyan-300/30 text-cyan-100 text-xs font-semibold px-3 py-1.5 rounded-full">💎 {istatistik.diamondPlus} Diamond+</span>
               {istatistik.avgTenure != null && <span className="inline-flex items-center gap-1.5 bg-white/8 border border-white/15 text-white text-xs font-semibold px-3 py-1.5 rounded-full"><Calendar className="w-3.5 h-3.5 text-amber-300" />ort. kıdem {sureMetni(istatistik.avgTenure)}</span>}
               {istatistik.enHizliDiamond != null && <span className="inline-flex items-center gap-1.5 bg-amber-400/10 border border-amber-300/30 text-amber-200 text-xs font-semibold px-3 py-1.5 rounded-full"><Zap className="w-3.5 h-3.5" />en hızlı Diamond {sureMetni(istatistik.enHizliDiamond)}</span>}
-              <span className="inline-flex items-center gap-1.5 bg-orange-500/15 border border-orange-300/40 text-orange-200 text-[11px] font-bold px-3 py-1.5 rounded-full" title="Kariyer verileri henüz tüm eğitmenler için tamamlanmadı">⚠ Veriler %{istatistik.tamamlanma} tamamlandı · test aşaması</span>
+              <span className="inline-flex items-center gap-1.5 bg-red-600/25 border border-red-400/60 text-red-100 text-[11px] font-extrabold px-3 py-1.5 rounded-full shadow-[0_0_12px_rgba(239,68,68,0.35)]" title="Kariyer verileri henüz tüm eğitmenler için tamamlanmadı — test aşamasında">⚠ TEST · Veriler yalnızca %{istatistik.tamamlanma} tamamlandı</span>
             </div>
           )}
 
