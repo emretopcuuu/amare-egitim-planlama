@@ -338,10 +338,15 @@ export default function LiderProfil() {
           const diamondSira = kariyerSira('DIAMOND'); // UX8 — dönüm noktası
 
           // ulaşılan basamaklar — en üst geldiği kariyer en tepede (ters sıra); ulaşılmayanlar gösterilmez
+          // BRAND PARTNER/BUILDER veride yok → BRONZE'un ayını/tarihini miras al (boş kalmasın)
+          const bronzeSira = kariyerSira('BRONZE');
+          const bronzeK = tarihMap.get(bronzeSira);
           const satirlar = [];
           for (let i = guncelSira; i >= 0; i--) {
-            const k = tarihMap.get(i);
-            satirlar.push({ idx: i, k, yil: k?.dt ? k.dt.getFullYear() : null });
+            let k = tarihMap.get(i);
+            let mirasli = false;
+            if (!k && i < bronzeSira && bronzeK) { k = bronzeK; mirasli = true; }
+            satirlar.push({ idx: i, k, mirasli, yil: k?.dt ? k.dt.getFullYear() : null });
           }
           // UX8 — yıl ayracı: bir öncekiyle yılı değişen ilk satıra
           satirlar.forEach((r, i) => { const prev = satirlar[i - 1]; r.yilAyraci = r.yil && (!prev || prev.yil !== r.yil); });
@@ -379,10 +384,10 @@ export default function LiderProfil() {
                   {/* dikey bağlantı çizgisi */}
                   <div className="absolute left-[31px] sm:left-[43px] top-7 bottom-7 w-0.5 bg-gradient-to-b from-amber-300/70 via-amber-500/40 to-amber-700/10" />
                   <div className="relative space-y-1.5">
-                    {satirlar.map(({ idx, k, yil, yilAyraci }) => {
+                    {satirlar.map(({ idx, k, yil, yilAyraci, mirasli }) => {
                       const suAn = idx === guncelSira;
                       const sv = idx / Math.max(1, KS - 1);
-                      const hizli = k?.fark != null && k.fark > 0 && k.fark <= 6;
+                      const hizli = !mirasli && k?.fark != null && k.fark > 0 && k.fark <= 6;
                       const ayNo = (k?.dt && katilim) ? ayFarki(katilim, k.dt) + 1 : null;       // katılımın kaçıncı ayı (1-tabanlı)
                       const benimAy = ayNo != null ? ayNo - 1 : null;                              // kümülatif (0-tabanlı)
                       const ort = benchmark.avg[idx];                                              // ortalama kümülatif ay
@@ -420,8 +425,8 @@ export default function LiderProfil() {
                             {ayNo != null && (
                               <div className="text-right flex-shrink-0">
                                 <div className="text-sm font-bold text-amber-300">{ayNo}. ay</div>
-                                {/* UX4 — kümülatif yanında önceki basamaktan delta */}
-                                <div className="text-[10px] text-white/40">{k.fark != null ? (k.fark === 0 ? 'aynı ay atladı' : `önceki +${k.fark} ay`) : 'katılımdan'}</div>
+                                {/* UX4 — kümülatif yanında önceki basamaktan delta (miras satırda başlangıç) */}
+                                <div className="text-[10px] text-white/40">{mirasli ? 'başlangıç' : (k.fark != null ? (k.fark === 0 ? 'aynı ay atladı' : `önceki +${k.fark} ay`) : 'katılımdan')}</div>
                               </div>
                             )}
                           </div>
