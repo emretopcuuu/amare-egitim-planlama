@@ -7,7 +7,6 @@ import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wi
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import EventActions from '../components/EventActions';
-import KonusmaciFullModal from '../components/KonusmaciFullModal';
 import StoryStrip from '../components/StoryStrip';
 import { EmptySearch, EmptyCompleted } from '../components/EmptyState';
 import LoadingProgress from '../components/LoadingProgress';
@@ -577,6 +576,7 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
 const TakvimView = () => {
   useDocumentTitle('Eğitim Takvimi', 'Bu hafta ve gelecekteki canlı eğitimler');
   const navigate = useNavigate();
+  const acLider = (a) => { if (a) navigate(`/lider/${makeCoreId(a)}`); };
   const { takvim, takvimYayinlandi, loading, konusmacilar, hatirlatmaSayilari } = useData();
   const { t, locale, tDynamic, translateBatch, lang } = useTranslation();
   const contentRef = useRef(null); // sayfa scroll ref
@@ -987,7 +987,7 @@ const TakvimView = () => {
             {konusmacilar2.length > 0 && (
               <div className="flex items-center gap-2">
                 <div className="flex -space-x-2">
-                  {konusmacilar2.slice(0, 3).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={(a,k)=>setKonusmaciModal({ad:a,kayit:k})} size="sm" />)}
+                  {konusmacilar2.slice(0, 3).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={acLider} size="sm" />)}
                 </div>
                 <span className="text-xs text-gray-600 line-clamp-1 flex-1">{konusmacilar2.join(', ')}</span>
               </div>
@@ -1061,7 +1061,7 @@ const TakvimView = () => {
                 {online && !gecmis && (() => { const m=(egitim.yer||'').match(/(\d[\d\s]{6,})/); const id=m?m[1].replace(/\s/g,''):null; return id ? <a href={`https://zoom.us/j/${id}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs font-bold rounded-lg shadow hover:shadow-md transition-all"><Wifi className="w-3.5 h-3.5" />{t('cal_join_meeting')}</a> : null; })()}
               </div>
               <div className="hidden md:flex items-start gap-1.5 flex-shrink-0 justify-end max-w-[280px]">
-                {konusmacilar2.slice(0, 4).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={(a,k)=>setKonusmaciModal({ad:a,kayit:k})} />)}
+                {konusmacilar2.slice(0, 4).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={acLider} />)}
                 {konusmacilar2.length > 4 && (
                   <div className="flex flex-col items-center gap-1 flex-shrink-0">
                     <div className="w-14 h-14 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200 text-purple-700 font-bold text-sm">+{konusmacilar2.length - 4}</div>
@@ -1248,13 +1248,13 @@ const TakvimView = () => {
           <div className="px-4 py-4">
             <div className="container mx-auto max-w-7xl space-y-3">
               <HeroBolum egitim={enYakinEgitimler[0]} sira={1} konusmacilar={konusmacilar||[]}
-                onKonusmaci={(a,k)=>setKonusmaciModal({ad:a,kayit:k})}
+                onKonusmaci={acLider}
                 onPoster={(p)=>setPosterModal(p)} onHatirlatma={(e)=>setHatirlatmaModal(e)} />
               {enYakinEgitimler.length > 1 && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {enYakinEgitimler.slice(1).map((egitim, i) => (
                     <HeroBolum key={egitim.id} egitim={egitim} sira={i + 2} konusmacilar={konusmacilar||[]}
-                      onKonusmaci={(a,k)=>setKonusmaciModal({ad:a,kayit:k})}
+                      onKonusmaci={acLider}
                       onPoster={(p)=>setPosterModal(p)} onHatirlatma={(e)=>setHatirlatmaModal(e)} />
                   ))}
                 </div>
@@ -1450,7 +1450,6 @@ const TakvimView = () => {
         <div className="border-t border-white/10 py-6 text-center text-white/40 text-sm">{t('copyright')}</div>
       </div>
 
-      {konusmaciModal && <KonusmaciFullModal ad={konusmaciModal.ad} kayit={konusmaciModal.kayit} takvim={takvim} onClose={()=>setKonusmaciModal(null)} />}
       {posterModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={()=>setPosterModal(null)}>
           <div className="relative max-w-lg w-full animate-scaleIn" onClick={e=>e.stopPropagation()}>

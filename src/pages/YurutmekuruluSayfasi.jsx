@@ -11,7 +11,6 @@ import { YURUTME_KURULU as YURUTME_DEFAULT } from '../utils/yurutmeKurulu';
 import { db } from '../utils/firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import { makeCoreId, useData } from '../context/DataContext';
-import KonusmaciFullModal from '../components/KonusmaciFullModal';
 import { useSmartBack } from '../utils/navigation';
 import { getSiteIcerik, saveSiteIcerik, isSiteAdmin } from '../utils/siteIcerik';
 import { useAuth } from '../context/AuthContext';
@@ -183,8 +182,7 @@ const YurutmekuruluSayfasi = () => {
   };
 
   const acModal = (uye) => {
-    const kayit = getKayit(uye);
-    setSeciliUye({ ad: uye.ad, kayit });
+    navigate(`/lider/${uye.coreId || makeCoreId(uye.ad)}`);
   };
 
   return (
@@ -364,15 +362,6 @@ const YurutmekuruluSayfasi = () => {
         </div>
       </div>
 
-      {/* Konuşmacı modal — gelecek/geçmiş eğitimler + kayıtlı + ilham veren sözler */}
-      {seciliUye && (
-        <KonusmaciFullModal
-          ad={seciliUye.ad}
-          kayit={seciliUye.kayit}
-          takvim={takvim}
-          onClose={() => setSeciliUye(null)}
-        />
-      )}
     </div>
   );
 };

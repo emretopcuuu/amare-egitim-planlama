@@ -1,10 +1,10 @@
 // Yatay konuşmacı şeridi — eğitim sayısına göre sıralı, tıklayınca konuşmacı modal'ı
 // Hem mobilde hem desktop'ta görünür (eskiden mobil-only idi, gün gün gösteriyordu)
 import React, { useMemo, useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../context/LanguageContext';
 import { makeSafeId, makeCoreId } from '../context/DataContext';
 import { coreIdFuzzyEslesir, gecerliEgitmenMi } from '../utils/egitmenFotoMatch';
-import KonusmaciFullModal from './KonusmaciFullModal';
 import { User, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const parseTarih = (t) => {
@@ -33,7 +33,7 @@ const splitEgitmen = (e) => {
 };
 
 const StoryStrip = ({ takvim, konusmacilar }) => {
-  const [secili, setSecili] = useState(null);
+  const navigate = useNavigate();
   const scrollRef = useRef(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(false);
@@ -223,7 +223,7 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
           {konusmaciListesi.map(({ ad, kayit, sayi }, idx) => {
             const top3 = idx < 3;
             return (
-              <button key={ad} onClick={() => setSecili({ ad, kayit })}
+              <button key={ad} onClick={() => navigate(`/lider/${makeCoreId(ad)}`)}
                 className="flex-shrink-0 flex flex-col items-center gap-1 group focus:outline-none spring-tap w-[68px]">
                 <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-full p-0.5 ${top3 ? 'bg-gradient-to-tr from-amber-400 via-pink-500 to-purple-500' : 'bg-gradient-to-tr from-purple-400/60 to-purple-600/60'} group-hover:scale-105 transition-all`}>
                   <div className="w-full h-full rounded-full overflow-hidden bg-purple-900 border-2 border-purple-900">
@@ -253,7 +253,6 @@ const StoryStrip = ({ takvim, konusmacilar }) => {
         </div>
       </div>
 
-      {secili && <KonusmaciFullModal ad={secili.ad} kayit={secili.kayit} takvim={takvim} onClose={() => setSecili(null)} />}
     </>
   );
 };

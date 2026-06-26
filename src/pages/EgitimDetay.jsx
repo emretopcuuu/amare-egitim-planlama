@@ -3,14 +3,13 @@
 // netlify/edge-functions/event-og.mjs HTML'i crawler için pre-render eder.
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { useData, makeSafeId } from '../context/DataContext';
+import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, Clock, MapPin, Wifi, Tag, User, Bell, Share2, Loader2, Calendar as CalendarIcon, Timer, Navigation, Users as UsersIcon } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import EventActions from '../components/EventActions';
 import AddToCalendarButton from '../components/AddToCalendarButton';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
-import KonusmaciFullModal from '../components/KonusmaciFullModal';
 import LoadingProgress from '../components/LoadingProgress';
 
 const parseTarih = (t) => {
@@ -236,7 +235,7 @@ const EgitimDetay = () => {
                   <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Eğitmenler</h2>
                   <div className="flex flex-wrap gap-4">
                     {konusmaciKayitlari.map(({ ad, kayit }) => (
-                      <button key={ad} onClick={() => setKonusmaciModal({ ad, kayit })}
+                      <button key={ad} onClick={() => navigate(`/lider/${makeCoreId(ad)}`)}
                         className="flex items-center gap-3 bg-gray-50 hover:bg-purple-50 border border-gray-200 hover:border-purple-300 rounded-xl p-3 transition-all spring-tap focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
                         {kayit?.fotoURL ? (
                           <img src={kayit.fotoURL} alt={kayit.ad || ad} loading="lazy" decoding="async"
@@ -385,7 +384,6 @@ const EgitimDetay = () => {
       </div>
 
       {hatirlatmaModal && <HatirlatmaKayitModal egitim={egitim} onClose={() => setHatirlatmaModal(false)} />}
-      {konusmaciModal && <KonusmaciFullModal ad={konusmaciModal.ad} kayit={konusmaciModal.kayit} takvim={takvim} onClose={() => setKonusmaciModal(null)} />}
     </div>
   );
 };

@@ -36,6 +36,7 @@ const YurutmekuruluSayfasi = lazy(() => import('./pages/YurutmekuruluSayfasi'));
 const AdminLogin = lazy(() => import('./pages/AdminLogin'));
 const AdminPanel = lazy(() => import('./pages/AdminPanel'));
 const GorselStudyo = lazy(() => import('./pages/GorselStudyo'));
+const LiderProfil = lazy(() => import('./pages/LiderProfil'));
 
 // Hatayı ekrana basan basit error boundary
 class ErrorBoundary extends React.Component {
@@ -102,6 +103,7 @@ function AppRoutes() {
           <Route path="/takvim" element={<TakvimView />} />
           <Route path="/e/:id" element={<EgitimDetay />} />
           <Route path="/konusmacilar" element={<KonusmacilarSayfasi />} />
+          <Route path="/lider/:id" element={<LiderProfil />} />
           <Route path="/kayitli-egitimler" element={<KayitliEgitimlerSayfasi />} />
           <Route path="/komisyonlar" element={<KomisyonlarSayfasi />} />
           <Route path="/komisyonlar/:id" element={<KomisyonDetay />} />

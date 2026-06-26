@@ -6,7 +6,6 @@ import { coreIdFuzzyEslesir, gecerliEgitmenMi } from '../utils/egitmenFotoMatch'
 import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, User, Search, X, Loader2, Star, RotateCw, SlidersHorizontal, ArrowDownUp, LayoutGrid, List, Sparkles, ArrowRight, Calendar, Eye } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
-import KonusmaciFullModal from '../components/KonusmaciFullModal';
 import LoadingProgress from '../components/LoadingProgress';
 import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
 import { useTakipEgitmenler } from '../utils/takip';
@@ -398,7 +397,7 @@ const KonusmacilarSayfasi = () => {
                 const isFav = cid && takipSet.has(cid);
                 const sonEg = sonEgitimMap.get(cid);
                 return (
-                  <button key={ad} onClick={() => setSecili({ ad, kayit })}
+                  <button key={ad} onClick={() => navigate(`/lider/${makeCoreId(ad)}`)}
                     className="relative w-full bg-white/5 hover:bg-white/12 border border-white/10 hover:border-amber-400/60 rounded-xl p-3 sm:p-4 transition-all spring-tap text-left flex items-center gap-3 sm:gap-4 group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
                     {kayit?.fotoURL ? (
                       <LazyImage src={kayit.fotoURL} alt={kayit.ad || ad}
@@ -447,7 +446,7 @@ const KonusmacilarSayfasi = () => {
                     <div key={ad} className="relative"
                       onMouseEnter={() => setHoverId(cid)}
                       onMouseLeave={() => setHoverId(null)}>
-                      <button onClick={() => setSecili({ ad, kayit })}
+                      <button onClick={() => navigate(`/lider/${makeCoreId(ad)}`)}
                         className="relative w-full bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-400 rounded-xl p-3 transition-all hover-lift spring-tap text-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
                         {kayit?.fotoURL ? (
                           <LazyImage src={kayit.fotoURL} alt={kayit.ad || ad}
@@ -499,7 +498,6 @@ const KonusmacilarSayfasi = () => {
         </div>
       </div>
 
-      {secili && <KonusmaciFullModal {...secili} takvim={takvim} onClose={() => setSecili(null)} />}
 
       {/* Mobile filter bottom sheet */}
       {sheetOpen && (
