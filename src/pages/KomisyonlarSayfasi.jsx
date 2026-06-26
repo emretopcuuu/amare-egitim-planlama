@@ -289,7 +289,10 @@ const KomisyonlarSayfasi = () => {
                 ) : baskan ? (
                   <div
                     role="button"
+                    tabIndex={0}
+                    aria-label={`${baskan.ad} profilini aç`}
                     onClick={(e) => { e.stopPropagation(); const cid = baskan.coreId || makeCoreId(baskan.ad); if (cid) navigate(`/lider/${cid}`); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); e.preventDefault(); const cid = baskan.coreId || makeCoreId(baskan.ad); if (cid) navigate(`/lider/${cid}`); } }}
                     className="flex items-center gap-3 mb-3 pb-3 border-b border-white/10 -mx-1 px-1 rounded-lg hover:bg-white/10 transition-colors cursor-pointer">
                     <div className="relative w-14 h-14 flex-shrink-0">
                       {getBaskanFoto(baskan) ? (

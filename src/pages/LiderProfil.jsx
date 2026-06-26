@@ -3,7 +3,7 @@
 // Admin ise kariyer geçmişini sayfadan düzenleyebilir.
 import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, User, Calendar, Clock, MapPin, Wifi, ExternalLink, Tag, UserPlus, Play, Video, Star, TrendingUp, Edit3, Download, Share2, Check } from 'lucide-react';
+import { ArrowLeft, User, Calendar, Clock, MapPin, Wifi, ExternalLink, Tag, UserPlus, Play, Video, Star, TrendingUp, Edit3, Download, Share2, Check, ChevronRight, Bell } from 'lucide-react';
 import { useData, makeCoreId } from '../context/DataContext';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { useTranslation } from '../context/LanguageContext';
@@ -28,7 +28,7 @@ const parseTarih = (t) => {
 };
 const splitEgitmen = (e) => {
   if (!e) return [];
-  return e.normalize('NFC').replace(/[​-‍﻿]/g, '').replace(/ /g, ' ')
+  return e.normalize('NFC').replace(/[​-‍﻿]/g, '').replace(/ /g, ' ')
     .split(/[\/,&]|\s*-\s*(?=[A-ZÇĞİÖŞÜa-zçğışöşü]*\.?\s*[A-ZÇĞİÖŞÜ]|Prof\.|Doç\.|Uzm\.|Dr\.|Dyt\.|Op\.)/)
     .map(n => n.trim()).filter(n => n.length > 1);
 };
@@ -50,6 +50,7 @@ export default function LiderProfil() {
   const [girisModalAcik, setGirisModalAcik] = useState(false);
   const [duzenleAcik, setDuzenleAcik] = useState(false);
   const [kartUretiliyor, setKartUretiliyor] = useState(false);
+  const [kucukBaslik, setKucukBaslik] = useState(false); // UX1 — scroll'da mini başlık
 
   // Konuşmacı kaydını coreId ile bul
   const kayit = useMemo(() => {
@@ -59,11 +60,21 @@ export default function LiderProfil() {
       || null;
   }, [konusmacilar, id]);
 
+  // Veri henüz yükleniyor mu (header skeleton için) — UX10
+  const veriYukleniyor = !konusmacilar || konusmacilar.length === 0;
+
   const ad = kayit?.ad || (id || '').replace(/-/g, ' ').toLocaleUpperCase('tr-TR');
   const coreId = id;
   const favori = coreId ? isTakip(coreId) : false;
 
   useEffect(() => { window.scrollTo(0, 0); }, [id]);
+
+  // UX1 — scroll dinleyici: 260px geçince mini başlık
+  useEffect(() => {
+    const onScroll = () => setKucukBaslik(window.scrollY > 260);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // İlgili eğitimler
   const adNorm = (ad || '').normalize('NFC').toLocaleUpperCase('tr-TR').trim();
@@ -94,6 +105,33 @@ export default function LiderProfil() {
   const toplamAy = katilim ? ayFarki(katilim, new Date()) : null;
   const isiltiSeviye = kariyerSira(guncelKariyer) / Math.max(1, KARIYER_BASAMAKLARI.length - 1);
 
+  // UX2 — Kıyas: tüm liderlerden rütbe-başına ortalama kümülatif ay (katılımdan)
+  const benchmark = useMemo(() => {
+    const acc = {}; // sira -> [ay]
+    const kaynaklar = new Set();
+    (konusmacilar || []).forEach(k => {
+      const kat = kariyerTarih(k.katilimTarihi);
+      if (!kat || !Array.isArray(k.kariyerGecmis)) return;
+      let katkili = false;
+      k.kariyerGecmis.forEach(g => {
+        const dt = kariyerTarih(g.tarih);
+        if (!dt) return;
+        const m = ayFarki(kat, dt);
+        if (m == null || m < 0) return;
+        const s = kariyerSira(g.kariyer);
+        if (s < 0) return;
+        (acc[s] || (acc[s] = [])).push(m);
+        katkili = true;
+      });
+      if (katkili) kaynaklar.add(k.id || k.ad);
+    });
+    const avg = {};
+    Object.entries(acc).forEach(([s, arr]) => {
+      if (arr.length >= 3) avg[s] = Math.round(arr.reduce((a, b) => a + b, 0) / arr.length);
+    });
+    return { avg, kaynakSayisi: kaynaklar.size, yeterli: Object.keys(avg).length > 0 };
+  }, [konusmacilar]);
+
   useDocumentTitle(ad, guncelKariyer ? `${guncelKariyer}${toplamAy != null ? ` · Amare'de ${sureMetni(toplamAy)}` : ''}` : undefined);
 
   // Paylaş (Web Share API → yoksa panoya kopyala)
@@ -108,9 +146,9 @@ export default function LiderProfil() {
     } catch {}
   };
 
-  // Kayıtlı eğitimler lazy fetch
+  // Kayıtlı eğitimler — UX5: artık SAYFA AÇILIŞINDA çekilir (sekme rozeti için), 24s cache
   useEffect(() => {
-    if (tab !== 'kayitli' || kayitliVideolar !== null || !coreId) return;
+    if (kayitliVideolar !== null || !coreId) return;
     const cacheKey = `amare_videos_${coreId}_v1`, TTL = 24 * 60 * 60 * 1000;
     try { const c = localStorage.getItem(cacheKey); if (c) { const { ts, data } = JSON.parse(c); if (Date.now() - ts < TTL && Array.isArray(data)) { setKayitliVideolar(data); return; } } } catch {}
     setKayitliLoading(true);
@@ -124,7 +162,7 @@ export default function LiderProfil() {
       } catch (e) { console.warn('[kayitli] hata:', e.message); setKayitliVideolar([]); }
       finally { setKayitliLoading(false); }
     })();
-  }, [tab, coreId, kayitliVideolar]);
+  }, [coreId, kayitliVideolar]);
 
   const handleKayitliOynat = (v) => { if (!isAuthenticated) { setGirisModalAcik(true); return; } setOynatSeekTo(null); setOynatilanVideo(v); };
   const handleSozTikla = (soz) => {
@@ -140,7 +178,7 @@ export default function LiderProfil() {
         ad, fotoURL: kayit?.fotoURL || null, guncelKariyer,
         toplamMetni: toplamAy != null ? sureMetni(toplamAy) : '',
         isilti: isiltiSeviye,
-        adimlar: yolculuk.map(k => ({ kariyer: k.kariyer, tarih: k.dt.toLocaleDateString('tr-TR', { month: '2-digit', year: 'numeric' }), sure: k.fark != null ? sureMetni(k.fark) : '' })),
+        adimlar: yolculuk.map(k => ({ kariyer: k.kariyer, tarih: k.dt.toLocaleDateString('tr-TR', { month: '2-digit', year: 'numeric' }), sure: katilim ? `${ayFarki(katilim, k.dt) + 1}. ay` : (k.fark != null ? sureMetni(k.fark) : '') })),
       });
       const bin = atob(res.base64); const arr = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
@@ -176,25 +214,40 @@ export default function LiderProfil() {
     );
   };
 
+  // UX5 — sekme sayıları + boşları gizle
+  const kayitliSayi = kayitliVideolar?.length ?? null;
   const sekmeler = [
     { key: 'kariyer', label: 'Kariyer Yolculuğu', show: yolculuk.length > 0 },
-    { key: 'gelecek', label: `Gelecek (${gelecek.length})`, show: true },
+    { key: 'gelecek', label: `Gelecek (${gelecek.length})`, show: gelecek.length > 0 },
     { key: 'gecmis', label: `Geçmiş (${gecmis.length})`, show: gecmis.length > 0 },
-    { key: 'kayitli', label: 'Kayıtlı Eğitimler', show: true },
+    { key: 'kayitli', label: kayitliSayi != null ? `Kayıtlı Eğitimler (${kayitliSayi})` : 'Kayıtlı Eğitimler', show: kayitliSayi == null || kayitliSayi > 0 },
     { key: 'sozler', label: 'İlham Sözleri', show: true },
     { key: 'bio', label: 'Biyografi', show: !!kayit?.biyografi },
   ].filter(x => x.show);
   // varsayılan sekme geçerli mi
-  useEffect(() => { if (!sekmeler.some(s => s.key === tab)) setTab(sekmeler[0]?.key || 'gelecek'); /* eslint-disable-next-line */ }, [yolculuk.length, gecmis.length, kayit?.biyografi]);
+  useEffect(() => { if (!sekmeler.some(s => s.key === tab)) setTab(sekmeler[0]?.key || 'sozler'); /* eslint-disable-next-line */ }, [yolculuk.length, gelecek.length, gecmis.length, kayitliSayi, kayit?.biyografi]);
+
+  // UX9 — ziyaretçi için birincil aksiyon: yaklaşan eğitim
+  const yaklasanEgitim = gelecek[0] || null;
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Üst geri bar */}
-      <div className="bg-white/80 backdrop-blur border-b border-gray-200 sticky top-0 z-20">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center gap-2">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-600 hover:text-amare-purple text-sm font-semibold"><ArrowLeft className="w-4 h-4" /> Geri</button>
-          <div className="flex-1" />
-          <Link to="/takvim" className="text-sm text-gray-500 hover:text-amare-purple">Takvim</Link>
+      {/* Üst geri bar — UX1: scroll'da mini profil */}
+      <div className="bg-white/90 backdrop-blur border-b border-gray-200 sticky top-0 z-30">
+        <div className="max-w-4xl mx-auto px-4 py-2.5 flex items-center gap-2">
+          <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-gray-600 hover:text-amare-purple text-sm font-semibold flex-shrink-0"><ArrowLeft className="w-4 h-4" /> Geri</button>
+          <div className="flex-1 flex items-center justify-center min-w-0">
+            <div className={`flex items-center gap-2 min-w-0 transition-all duration-300 ${kucukBaslik ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-1 pointer-events-none'}`}>
+              {kayit?.fotoURL
+                ? <img src={kayit.fotoURL} alt="" className="w-7 h-7 rounded-full object-cover border border-amber-300/60" style={{ objectPosition: 'center 25%' }} />
+                : <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center"><User className="w-4 h-4 text-purple-500" /></div>}
+              <div className="min-w-0 leading-tight text-left">
+                <div className="text-sm font-bold text-gray-900 truncate">{ad}</div>
+                {guncelKariyer && <div className="text-[10px] text-amber-600 font-semibold truncate -mt-0.5">{guncelKariyer}</div>}
+              </div>
+            </div>
+          </div>
+          <Link to="/takvim" className="text-sm text-gray-500 hover:text-amare-purple flex-shrink-0">Takvim</Link>
         </div>
       </div>
 
@@ -204,6 +257,17 @@ export default function LiderProfil() {
         {/* ışıltı katmanı (rütbe yükseldikçe daha belirgin) */}
         <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(circle at 30% 20%, rgba(216,177,90,${0.12 + isiltiSeviye * 0.33}), transparent 60%)` }} />
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 py-8 text-white">
+          {veriYukleniyor ? (
+            /* UX10 — header skeleton */
+            <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5 animate-pulse">
+              <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-full bg-white/15" />
+              <div className="flex-1 w-full space-y-3 text-center sm:text-left">
+                <div className="h-8 bg-white/15 rounded w-2/3 mx-auto sm:mx-0" />
+                <div className="h-4 bg-white/10 rounded w-1/3 mx-auto sm:mx-0" />
+                <div className="flex gap-2 justify-center sm:justify-start"><div className="h-7 w-24 bg-white/10 rounded-full" /><div className="h-7 w-24 bg-white/10 rounded-full" /></div>
+              </div>
+            </div>
+          ) : (
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-5">
             <div className="relative">
               {kayit?.fotoURL ? (
@@ -218,22 +282,33 @@ export default function LiderProfil() {
               {guncelKariyer && <p className="text-amber-300 font-bold text-lg mt-1">{guncelKariyer}</p>}
               <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 mt-3 text-sm">
                 {toplamAy != null && <span className="bg-white/10 px-3 py-1 rounded-full">Amare'de <b>{sureMetni(toplamAy)}</b></span>}
-                <span className="bg-white/10 px-3 py-1 rounded-full"><b>{gelecek.length}</b> gelecek</span>
+                {gelecek.length > 0 && <span className="bg-white/10 px-3 py-1 rounded-full"><b>{gelecek.length}</b> gelecek</span>}
                 {gecmis.length > 0 && <span className="bg-white/10 px-3 py-1 rounded-full"><b>{gecmis.length}</b> geçmiş</span>}
-                <button onClick={() => coreId && takipToggle(coreId)} className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition-all ${favori ? 'bg-yellow-400 text-gray-900' : 'bg-white/10 hover:bg-white/20 border border-white/20'}`}>
+                {/* UX9 — Favori (uygulamada kaydet) */}
+                <button onClick={() => coreId && takipToggle(coreId)} title="Uygulamada favorilerine kaydet" className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition-all ${favori ? 'bg-yellow-400 text-gray-900' : 'bg-white/10 hover:bg-white/20 border border-white/20'}`}>
                   <Star className="w-3.5 h-3.5" fill={favori ? 'currentColor' : 'none'} />{favori ? 'Favori' : 'Favoriye ekle'}
                 </button>
-                <button onClick={() => setTakipModal(true)} className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 px-3 py-1 rounded-full font-bold gold-glow"><UserPlus className="w-3.5 h-3.5" />E-posta ile takip</button>
+                {/* UX9 — E-posta ile bildirim */}
+                <button onClick={() => setTakipModal(true)} title="Yeni eğitiminde e-posta bildirimi al" className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 px-3 py-1 rounded-full font-bold gold-glow"><Bell className="w-3.5 h-3.5" />Yeni eğitimde haber ver</button>
                 <button onClick={paylas} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full font-bold">{paylasildi ? <><Check className="w-3.5 h-3.5" />Kopyalandı</> : <><Share2 className="w-3.5 h-3.5" />Paylaş</>}</button>
                 {isAdmin && <button onClick={() => setDuzenleAcik(true)} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full font-bold"><Edit3 className="w-3.5 h-3.5" />Kariyeri düzenle</button>}
               </div>
+              {/* UX9 — yaklaşan eğitim birincil CTA */}
+              {yaklasanEgitim && (
+                <Link to={`/e/${yaklasanEgitim.id}`} className="mt-3 inline-flex items-center gap-2 bg-white text-purple-800 hover:bg-amber-50 px-4 py-2 rounded-xl font-bold shadow-lg transition-all">
+                  <Calendar className="w-4 h-4" />
+                  Yaklaşan eğitimi gör · {yaklasanEgitim.d.toLocaleDateString(locale, { day: 'numeric', month: 'short' })}
+                  <ChevronRight className="w-4 h-4" />
+                </Link>
+              )}
             </div>
           </div>
+          )}
         </div>
       </div>
 
       {/* Admin ipucu — kariyer verisi yoksa */}
-      {isAdmin && yolculuk.length === 0 && (
+      {isAdmin && !veriYukleniyor && yolculuk.length === 0 && (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-4">
           <button onClick={() => setDuzenleAcik(true)} className="w-full text-left bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 flex items-center gap-3 hover:bg-amber-100 transition">
             <TrendingUp className="w-5 h-5 text-amber-600 flex-shrink-0" />
@@ -244,7 +319,7 @@ export default function LiderProfil() {
       )}
 
       {/* Sekmeler */}
-      <div className="bg-white border-b border-gray-200 sticky top-[49px] z-10">
+      <div className="bg-white border-b border-gray-200 sticky top-[45px] z-20">
         <div className="max-w-4xl mx-auto px-2 sm:px-6 flex overflow-x-auto scrollbar-hide">
           {sekmeler.map(s => (
             <button key={s.key} onClick={() => setTab(s.key)} className={`px-3 sm:px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-2 transition-all ${tab === s.key ? 'border-purple-600 text-purple-700' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>{s.label}</button>
@@ -260,10 +335,28 @@ export default function LiderProfil() {
           const farklar = yolculuk.filter(k => k.fark != null && k.fark > 0).map(k => k.fark);
           const enHizli = farklar.length ? Math.min(...farklar) : null;
           const tarihMap = new Map(yolculuk.map(k => [kariyerSira(k.kariyer), k]));
+          const diamondSira = kariyerSira('DIAMOND'); // UX8 — dönüm noktası
+
           // ulaşılan basamaklar — en üst geldiği kariyer en tepede (ters sıra); ulaşılmayanlar gösterilmez
-          const ulasilanlar = [];
-          for (let i = 0; i <= guncelSira; i++) ulasilanlar.push(i);
-          ulasilanlar.reverse();
+          const satirlar = [];
+          for (let i = guncelSira; i >= 0; i--) {
+            const k = tarihMap.get(i);
+            satirlar.push({ idx: i, k, yil: k?.dt ? k.dt.getFullYear() : null });
+          }
+          // UX8 — yıl ayracı: bir öncekiyle yılı değişen ilk satıra
+          satirlar.forEach((r, i) => { const prev = satirlar[i - 1]; r.yilAyraci = r.yil && (!prev || prev.yil !== r.yil); });
+
+          // UX3 — ivme grafiği noktaları (katılım + her dated basamak)
+          const noktalar = [];
+          if (katilim) noktalar.push({ ay: 0, sira: 0 });
+          yolculuk.forEach(k => { const ay = ayFarki(katilim, k.dt); if (ay != null && ay >= 0) noktalar.push({ ay, sira: kariyerSira(k.kariyer) }); });
+          const maxAy = noktalar.length ? Math.max(...noktalar.map(n => n.ay), 1) : 1;
+          const CW = 320, CH = 110, PADX = 14, PADY = 12;
+          const px = (ay) => PADX + (ay / maxAy) * (CW - PADX * 2);
+          const py = (sira) => CH - PADY - (sira / Math.max(1, KS - 1)) * (CH - PADY * 2);
+          const cizgiPath = noktalar.map((n, i) => `${i === 0 ? 'M' : 'L'}${px(n.ay).toFixed(1)},${py(n.sira).toFixed(1)}`).join(' ');
+          const alanPath = noktalar.length ? `${cizgiPath} L${px(noktalar[noktalar.length - 1].ay).toFixed(1)},${CH - PADY} L${px(0).toFixed(1)},${CH - PADY} Z` : '';
+
           return (
             <div className="space-y-5">
               {/* ÖZET KART */}
@@ -280,6 +373,26 @@ export default function LiderProfil() {
                 </div>
               </div>
 
+              {/* UX3 — İVME GRAFİĞİ */}
+              {noktalar.length >= 2 && (
+                <div className="rounded-2xl p-4 bg-gradient-to-br from-gray-900 to-purple-950 text-white">
+                  <div className="flex items-center gap-2 mb-2"><TrendingUp className="w-4 h-4 text-amber-300" /><span className="text-xs font-bold uppercase tracking-wider text-gray-300">Yükseliş ivmesi</span></div>
+                  <svg viewBox={`0 0 ${CW} ${CH}`} className="w-full h-auto" preserveAspectRatio="none" role="img" aria-label="Kariyer yükseliş ivmesi grafiği">
+                    <defs>
+                      <linearGradient id="ivmeAlan" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="rgba(216,177,90,0.45)" />
+                        <stop offset="100%" stopColor="rgba(216,177,90,0)" />
+                      </linearGradient>
+                    </defs>
+                    {[0.25, 0.5, 0.75].map(g => <line key={g} x1={PADX} y1={CH - PADY - g * (CH - PADY * 2)} x2={CW - PADX} y2={CH - PADY - g * (CH - PADY * 2)} stroke="rgba(255,255,255,0.06)" strokeWidth="1" />)}
+                    {alanPath && <path d={alanPath} fill="url(#ivmeAlan)" />}
+                    <path d={cizgiPath} fill="none" stroke="#e8c878" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+                    {noktalar.map((n, i) => <circle key={i} cx={px(n.ay)} cy={py(n.sira)} r={i === noktalar.length - 1 ? 4 : 2.5} fill="#f4dca0" />)}
+                  </svg>
+                  <div className="flex justify-between text-[10px] text-white/40 mt-1"><span>Katılım</span><span>{sureMetni(maxAy)} sonra</span></div>
+                </div>
+              )}
+
               {/* Işıltılı başarı kartı PNG indir */}
               <button onClick={indirBasariKarti} disabled={kartUretiliyor}
                 className="w-full py-3 rounded-xl font-bold text-gray-900 bg-gradient-to-r from-amber-300 to-amber-500 hover:from-amber-200 hover:to-amber-400 transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-60">
@@ -288,40 +401,62 @@ export default function LiderProfil() {
 
               {/* MERDİVEN — sadece ulaşılan kariyerler, en üst geldiği kariyer en tepede */}
               <div>
-                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Amare Kariyer Yolculuğu <span className="text-gray-400 normal-case font-normal">· katılımından bu yana</span></div>
+                <div className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Amare Kariyer Yolculuğu <span className="text-gray-400 normal-case font-normal">· katılımından bu yana</span></div>
+                {/* UX2 — kıyas dipnotu */}
+                {benchmark.yeterli && <div className="text-[11px] text-gray-400 mb-3">Kıyas: {benchmark.kaynakSayisi} liderin verisiyle ortalama süreye göre</div>}
                 <div className="relative bg-gradient-to-b from-gray-900 via-purple-950 to-gray-900 rounded-2xl p-4 sm:p-5 overflow-hidden">
                   {/* üst altın hâle */}
                   <div className="absolute inset-x-0 top-0 h-40 pointer-events-none" style={{ background: `radial-gradient(circle at 50% 0%, rgba(216,177,90,${0.08 + isiltiSeviye * 0.25}), transparent 70%)` }} />
                   {/* dikey bağlantı çizgisi */}
-                  <div className="absolute left-[39px] sm:left-[43px] top-7 bottom-7 w-0.5 bg-gradient-to-b from-amber-300/70 via-amber-500/40 to-amber-700/10" />
+                  <div className="absolute left-[31px] sm:left-[43px] top-7 bottom-7 w-0.5 bg-gradient-to-b from-amber-300/70 via-amber-500/40 to-amber-700/10" />
                   <div className="relative space-y-1.5">
-                    {ulasilanlar.map((idx) => {
-                      const b = KARIYER_BASAMAKLARI[idx];
+                    {satirlar.map(({ idx, k, yil, yilAyraci }) => {
                       const suAn = idx === guncelSira;
                       const sv = idx / Math.max(1, KS - 1);
-                      const k = tarihMap.get(idx);
                       const hizli = k?.fark != null && k.fark > 0 && k.fark <= 6;
-                      // katılımın kaçıncı ayında bu kariyere geldi (kümülatif, 1-indeksli)
-                      const ayNo = (k?.dt && katilim) ? ayFarki(katilim, k.dt) + 1 : null;
+                      const ayNo = (k?.dt && katilim) ? ayFarki(katilim, k.dt) + 1 : null;       // katılımın kaçıncı ayı (1-tabanlı)
+                      const benimAy = ayNo != null ? ayNo - 1 : null;                              // kümülatif (0-tabanlı)
+                      const ort = benchmark.avg[idx];                                              // ortalama kümülatif ay
+                      const ortFark = (ort != null && benimAy != null) ? ort - benimAy : null;     // + → ortalamadan hızlı
+                      const ilkDiamond = idx === diamondSira;                                       // UX8 dönüm noktası
                       return (
-                        <div key={b} className="relative flex items-center gap-3 rounded-xl px-2 py-2 transition-all" style={suAn ? { background: 'rgba(216,177,90,0.12)', boxShadow: 'inset 0 0 0 1px rgba(216,177,90,0.5)' } : {}}>
-                          <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold z-10" style={{ background: 'linear-gradient(135deg,#b8923f,#d8b15a)', color: '#2a1c06', boxShadow: `0 0 ${6 + sv * 24}px rgba(216,177,90,${0.35 + sv * 0.65})` }}>{idx + 1}</div>
-                          <div className="flex-1 min-w-0">
-                            <div className="font-extrabold text-white flex items-center gap-2 flex-wrap leading-tight">
-                              {b}
-                              {sv > 0.7 && <Star className="w-3.5 h-3.5 text-amber-400" fill="currentColor" />}
-                              {hizli && <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-full">⚡ hızlı</span>}
-                              {suAn && <span className="text-[10px] font-extrabold text-gray-900 bg-amber-400 px-1.5 py-0.5 rounded-full">ŞU AN</span>}
-                            </div>
-                            {k && <div className="text-[11px] text-amber-200/60 mt-0.5">{k.dt.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}</div>}
-                          </div>
-                          {ayNo != null && (
-                            <div className="text-right flex-shrink-0">
-                              <div className="text-sm font-bold text-amber-300">{ayNo}. ay</div>
-                              <div className="text-[10px] text-white/40">katılımdan beri</div>
+                        <React.Fragment key={KARIYER_BASAMAKLARI[idx]}>
+                          {/* UX8 — yıl ayracı */}
+                          {yilAyraci && (
+                            <div className="flex items-center gap-2 pl-1 pt-1.5 pb-0.5">
+                              <span className="text-[10px] font-bold text-amber-300/70 bg-amber-400/10 px-2 py-0.5 rounded-full">{yil}</span>
+                              <div className="flex-1 h-px bg-white/5" />
                             </div>
                           )}
-                        </div>
+                          <div className="relative flex items-center gap-2.5 sm:gap-3 rounded-xl px-1.5 sm:px-2 py-2 transition-all" style={suAn ? { background: 'rgba(216,177,90,0.12)', boxShadow: 'inset 0 0 0 1px rgba(216,177,90,0.5)' } : {}}>
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-sm z-10" style={{ background: 'linear-gradient(135deg,#b8923f,#d8b15a)', color: '#2a1c06', boxShadow: `0 0 ${6 + sv * 24}px rgba(216,177,90,${0.35 + sv * 0.65})` }}>{idx + 1}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-extrabold text-white flex items-center gap-x-2 gap-y-0.5 flex-wrap leading-tight text-sm sm:text-base">
+                                {KARIYER_BASAMAKLARI[idx]}
+                                {sv > 0.7 && <Star className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="currentColor" />}
+                                {ilkDiamond && <span className="text-[10px] font-bold bg-cyan-400/20 text-cyan-200 px-1.5 py-0.5 rounded-full">💎 ilk Diamond</span>}
+                                {hizli && <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-full">⚡ hızlı</span>}
+                                {suAn && <span className="text-[10px] font-extrabold text-gray-900 bg-amber-400 px-1.5 py-0.5 rounded-full">ŞU AN</span>}
+                              </div>
+                              <div className="flex flex-wrap items-center gap-x-2 mt-0.5">
+                                {k && <span className="text-[11px] text-amber-200/60">{k.dt.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}</span>}
+                                {/* UX2 — kıyas rozeti */}
+                                {ortFark != null && Math.abs(ortFark) >= 2 && (
+                                  <span className={`text-[10px] font-semibold ${ortFark > 0 ? 'text-emerald-300' : 'text-rose-300/80'}`}>
+                                    {ortFark > 0 ? `ort. ${ortFark} ay önde` : `ort. ${-ortFark} ay geride`}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {ayNo != null && (
+                              <div className="text-right flex-shrink-0">
+                                <div className="text-sm font-bold text-amber-300">{ayNo}. ay</div>
+                                {/* UX4 — kümülatif yanında önceki basamaktan delta */}
+                                <div className="text-[10px] text-white/40">{k.fark != null ? (k.fark === 0 ? 'aynı ay atladı' : `önceki +${k.fark} ay`) : 'katılımdan'}</div>
+                              </div>
+                            )}
+                          </div>
+                        </React.Fragment>
                       );
                     })}
                   </div>
@@ -334,7 +469,17 @@ export default function LiderProfil() {
         {tab === 'gecmis' && <div className="space-y-2">{gecmis.map(renderEgitim)}</div>}
         {tab === 'kayitli' && (
           <>
-            {kayitliLoading && <div className="text-center py-12 text-gray-400"><Video className="w-12 h-12 mx-auto mb-2 opacity-40 animate-pulse" /><p>Yükleniyor...</p></div>}
+            {kayitliLoading && (
+              /* UX10 — kayıtlı iskelet grid */
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[0, 1, 2, 3].map(i => (
+                  <div key={i} className="bg-white border border-gray-200 rounded-xl overflow-hidden animate-pulse">
+                    <div className="aspect-video bg-gray-200" />
+                    <div className="p-3 space-y-2"><div className="h-3 bg-gray-200 rounded w-5/6" /><div className="h-2.5 bg-gray-100 rounded w-1/3" /></div>
+                  </div>
+                ))}
+              </div>
+            )}
             {!kayitliLoading && kayitliVideolar?.length === 0 && <div className="text-center py-12 text-gray-400"><Video className="w-16 h-16 mx-auto mb-3 opacity-30" /><p>Kayıtlı eğitim yok.</p></div>}
             {!kayitliLoading && kayitliVideolar?.length > 0 && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

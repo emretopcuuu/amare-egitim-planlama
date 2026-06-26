@@ -615,7 +615,10 @@ const KomisyonDetay = () => {
                     return (
                     <div key={i}
                       onClick={tiklanabilir ? () => navigate(`/lider/${cid}`) : undefined}
+                      onKeyDown={tiklanabilir ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); navigate(`/lider/${cid}`); } } : undefined}
                       role={tiklanabilir ? 'button' : undefined}
+                      tabIndex={tiklanabilir ? 0 : undefined}
+                      aria-label={tiklanabilir ? `${u.ad} profilini aç` : undefined}
                       className={`bg-white/5 border rounded-xl p-4 flex items-start gap-3 ${
                       baskanMi ? 'border-amber-300/40 bg-gradient-to-br from-amber-400/10 to-transparent' : 'border-white/15'
                     } ${tiklanabilir ? 'cursor-pointer hover:bg-white/10 hover:border-amber-300/40 transition-all spring-tap' : ''}`}>
