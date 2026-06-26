@@ -8,7 +8,6 @@ import { tr } from "@/lib/i18n/tr";
 import PusulaSohbet from "./PusulaSohbet";
 import PusulaGiris from "./PusulaGiris";
 import HazirlikAkis from "./HazirlikAkis";
-import ProfilFoto from "@/components/ProfilFoto";
 import CanliAyna from "@/components/CanliAyna";
 import GeriSayim from "@/components/GeriSayim";
 import Konfeti from "@/components/Konfeti";
@@ -69,7 +68,6 @@ export default async function PusulaSayfa() {
       db.from("settings").select("value").eq("key", "kamp_tarihi").maybeSingle(),
     ]);
     const ozTamam = await ozPuanTamamMi(db, session.sub, 1, ozellikler.length);
-    const selfieVar = !!kisi?.profil_foto_path;
     const yuzVar = Array.isArray(kisi?.yuz_fotolari) && (kisi.yuz_fotolari as unknown[]).length > 0;
     const kampTarihi = kampAyar?.value ?? null;
 
@@ -88,14 +86,6 @@ export default async function PusulaSayfa() {
             {ozTamam ? t.adimPuanDuzelt : t.adimPuanDugme}
           </Link>
         ),
-      },
-      {
-        k: "selfie",
-        ikon: "📸",
-        baslik: t.adimFotoBaslik,
-        metin: t.adimFotoMetin,
-        tamam: selfieVar,
-        aksiyon: <ProfilFoto varMi={selfieVar} />,
       },
       {
         k: "yuz",

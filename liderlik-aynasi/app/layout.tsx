@@ -13,6 +13,7 @@ import SuDalgaTik from "@/components/SuDalgaTik";
 import YuzenGeri from "@/components/YuzenGeri";
 import YardimKanali from "@/components/YardimKanali";
 import BildirimLogDinleyici from "@/components/BildirimLogDinleyici";
+import KimsinBant from "@/components/KimsinBant";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -107,6 +108,8 @@ export default async function RootLayout({
         {/* #8 PROVA MODU: admin açarsa tüm sayfalarda kırmızı şerit çıkar */}
         {provaAcik && <ProvaModuBayragi />}
         <AtlaBaglantisi />
+        {/* Üst-orta "kimsin?" bandı: aday hangi sayfada olursa olsun adını görür */}
+        <KimsinBant />
         {/* İlk açılışta tek seferlik ONE TEAM marka videosu */}
         <AcilisSplash />
         {/* GECE GÖLÜ tüm evrenin zemini: her ekran canlı gölün üstünde yaşar */}
