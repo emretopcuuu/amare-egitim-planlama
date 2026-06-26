@@ -1271,6 +1271,9 @@ export const tr = {
     gonderiliyor: "Kaydediliyor…",
     tamamMetin: "Bugünkü check-in'ini yaptın. Yarın yine buradayım. — AYNA",
     hata: "Kaydedilemedi, tekrar dene.",
+    // UX #10 — check-in serisi
+    seri: (n: number) => `${n} gün üst üste`,
+    seriKoru: "Seriyi koru — bugün de bir cümle yaz, zincir kırılmasın.",
   },
   // "Canlı Ayna" — selfie sonrası çoklu açılı yüz yakalama (KYC hissi)
   canliAyna: {
@@ -3090,6 +3093,9 @@ export const tr = {
     telafiAciklama:
       "Kaçırmış olman bir son değil. Yine de yap; kıvılcımın yarısı senin, asıl kazanç görevin kendisi.",
     telafiYap: "Yine de yap",
+    // UX #3 — Telafi penceresi geri sayımı
+    telafiKalan: (sure: string) => `Telafi penceresi: ${sure} kaldı`,
+    telafiBitti: "Telafi penceresi kapandı.",
     // UX #6 — Günün görev haritası / beklenti
     gunHaritasi: "AYNA gün boyu sana görev verir — birini bitirince bir sonraki gelir.",
     gunHaritasiSayi: (n: number) =>

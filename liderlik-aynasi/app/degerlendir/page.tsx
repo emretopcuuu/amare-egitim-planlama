@@ -13,6 +13,7 @@ import KisiSatiri from "./KisiSatiri";
 import SerbestListe from "./SerbestListe";
 import BosDurum from "@/components/BosDurum";
 import GeriButonu from "@/components/GeriButonu";
+import GeriSayim from "@/components/GeriSayim";
 
 export const metadata = { title: "Değerlendirme — Liderlik Aynası" };
 
@@ -27,6 +28,15 @@ export default async function DegerlendirPage() {
   const dalga = await acikDalga(db);
 
   if (!dalga) {
+    // UX #1 — kilit/bekleme şeffaflığı: "neden kapalı + ne zaman açılacak".
+    // Admin sonraki dalga zamanını ayarladıysa canlı geri sayım gösterilir;
+    // belirsizlik ("sistem mi bozuk?") yerine net bir bekleyiş kalır.
+    const { data: zamanAyar } = await db
+      .from("settings")
+      .select("value")
+      .eq("key", "sonraki_dalga_zamani")
+      .maybeSingle();
+    const sonrakiZaman = zamanAyar?.value || null;
     return (
       <main className="flex min-h-dvh flex-col overflow-y-auto">
         <div className="mx-auto my-auto w-full max-w-md p-5">
@@ -35,12 +45,15 @@ export default async function DegerlendirPage() {
             baslik={tr.degerlendir.dalgaKapaliBaslik}
             metin={tr.degerlendir.dalgaKapaliAciklama}
             eylem={
-              <Link
-                href="/"
-                className="text-sm text-royal-light underline-offset-4 hover:underline"
-              >
-                {tr.degerlendir.anaSayfayaDon}
-              </Link>
+              <div className="flex flex-col items-center gap-3">
+                {sonrakiZaman && <GeriSayim hedefZaman={sonrakiZaman} />}
+                <Link
+                  href="/"
+                  className="text-sm text-royal-light underline-offset-4 hover:underline"
+                >
+                  {tr.degerlendir.anaSayfayaDon}
+                </Link>
+              </div>
             }
           />
         </div>

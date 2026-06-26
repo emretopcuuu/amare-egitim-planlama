@@ -24,6 +24,7 @@ import OkuButonu from "@/components/OkuButonu";
 import GunlukCheckin from "@/components/GunlukCheckin";
 import BosDurum from "@/components/BosDurum";
 import GorevSayac from "./GorevSayac";
+import TelafiSayac from "./TelafiSayac";
 import UnvanKutlama from "@/components/UnvanKutlama";
 import GeriButonu from "@/components/GeriButonu";
 
@@ -121,20 +122,37 @@ export default async function GorevlerPage() {
     timeZone: "Europe/Istanbul",
   }).format(new Date());
   const bugunBas = new Date(`${bugun}T00:00:00+03:00`).toISOString();
-  const [ozellikler, { data: checkin }, { count: bugunTakdir }] = await Promise.all([
+  const [ozellikler, { data: checkinler }, { count: bugunTakdir }] = await Promise.all([
     aktifOzellikler(db),
+    // UX #10 — seri için son günlerin check-in tarihleri (bugün dahil ardışık).
     db
       .from("gunluk_checkin")
-      .select("id")
+      .select("tarih")
       .eq("participant_id", session.sub)
-      .eq("tarih", bugun)
-      .maybeSingle(),
+      .order("tarih", { ascending: false })
+      .limit(30),
     db
       .from("kudos")
       .select("id", { count: "exact", head: true })
       .eq("to_id", session.sub)
       .gte("created_at", bugunBas),
   ]);
+  const checkinGunler = new Set((checkinler ?? []).map((c) => c.tarih as string));
+  const checkin = checkinGunler.has(bugun);
+  // UX #10 — check-in serisi: bugünden (yoksa dünden) geriye kesintisiz gün sayısı.
+  // Bugün henüz yapılmadıysa seri düne kadarki zinciri gösterir → "koru" dürtüsü.
+  const checkinSeri = (() => {
+    const g = new Date(`${bugun}T12:00:00+03:00`);
+    if (!checkinGunler.has(bugun)) g.setDate(g.getDate() - 1);
+    let seri = 0;
+    for (let i = 0; i < 60; i++) {
+      const gun = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(g);
+      if (!checkinGunler.has(gun)) break;
+      seri++;
+      g.setDate(g.getDate() - 1);
+    }
+    return seri;
+  })();
 
   // #5 Tanıklı görevler: ekip arkadaşları (tanık seçimi için), bana gelen
   // tanıklık çağrıları ve tamamladığım görevlere gelen anonim gözlemler.
@@ -295,7 +313,8 @@ export default async function GorevlerPage() {
       {/* #5 Günün Aynası — günlük mikro check-in */}
       <GunlukCheckin
         ozellikler={ozellikler.map((o) => ({ id: o.id, ad: o.name }))}
-        yapildi={!!checkin}
+        yapildi={checkin}
+        seri={checkinSeri}
       />
 
       {/* UX #6: Günün görev haritası — kişi tek görev görüyor; gün boyu daha
@@ -323,6 +342,8 @@ export default async function GorevlerPage() {
               <p className="mt-3 rounded-xl border border-amber-400/20 bg-midnight/30 p-3 text-sm leading-relaxed text-amber-200/90">
                 {t.telafiAciklama}
               </p>
+              {/* UX #3 — telafi penceresinin canlı geri sayımı (due_at + 24sa) */}
+              <TelafiSayac bitis={new Date(new Date(g.due_at).getTime() + 24 * 3_600_000).toISOString()} />
               <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} ekip={ekip} />
             </div>
           ))}

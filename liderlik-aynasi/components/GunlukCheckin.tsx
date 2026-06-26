@@ -11,9 +11,12 @@ const t = tr.gunluk;
 export default function GunlukCheckin({
   ozellikler,
   yapildi,
+  seri = 0,
 }: {
   ozellikler: { id: number; ad: string }[];
   yapildi: boolean;
+  // UX #10 — kesintisiz check-in gün serisi (bugün dahil)
+  seri?: number;
 }) {
   const router = useRouter();
   const [bitti, setBitti] = useState(yapildi);
@@ -22,10 +25,21 @@ export default function GunlukCheckin({
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
 
+  // UX #10 — seri rozeti: 2+ gün üst üste yapıldıysa "🔥 N gün üst üste".
+  const seriRozet =
+    seri >= 2 ? (
+      <span className="ml-2 inline-flex items-center gap-1 rounded-full bg-orange-500/20 px-2 py-0.5 text-xs font-bold text-orange-300">
+        🔥 {t.seri(seri)}
+      </span>
+    ) : null;
+
   if (bitti) {
     return (
       <section className="kart-cam rounded-2xl p-4 text-center ring-1 ring-emerald-500/20">
-        <p className="text-sm text-emerald-400">✓ {t.tamamMetin}</p>
+        <p className="text-sm text-emerald-400">
+          ✓ {t.tamamMetin}
+          {seriRozet}
+        </p>
       </section>
     );
   }
@@ -55,7 +69,12 @@ export default function GunlukCheckin({
     <section className="kart-cam rounded-2xl p-5 ring-1 ring-gold/30">
       <p className="text-xs font-semibold uppercase tracking-wide text-royal-light">
         🌅 {t.ust}
+        {seriRozet}
       </p>
+      {/* UX #10 — seri varsa "koru" dürtüsü: bugün yapmazsan zincir kırılır */}
+      {seri >= 2 && (
+        <p className="mt-0.5 text-xs font-medium text-orange-300/90">{t.seriKoru}</p>
+      )}
       <h2 className="mt-1 text-lg font-bold text-gold-light">{t.soru}</h2>
       <div className="mt-3 flex flex-wrap gap-2">
         {ozellikler.map((o) => (
