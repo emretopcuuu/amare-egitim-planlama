@@ -3193,6 +3193,7 @@ export const tr = {
     // A4 — tamamlayınca sıradaki görev
     siradakiGorev: "Sıradaki göreve geç →",
     // A5 — benzerini tekrar dene
+    gelistirYeniden: "Geliştir ve yeniden gönder",
     benzeriIste: "Bu konuda bir görev daha ver",
     benzeriUretiliyor: "AYNA hazırlıyor…",
     benzeriHazir: "✓ Yeni görevin hazır — yukarı kaydır.",

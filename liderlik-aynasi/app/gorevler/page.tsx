@@ -481,6 +481,7 @@ export default async function GorevlerPage() {
           issued_at: g.issued_at,
           trait_id: g.trait_id,
           gozlem: gelenGozlem.get(g.id) ?? null,
+          response_text: g.response_text,
         }))}
         ozellikAd={Object.fromEntries(ozellikAd)}
       />

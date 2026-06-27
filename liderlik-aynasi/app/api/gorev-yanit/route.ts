@@ -58,7 +58,11 @@ export async function POST(req: Request) {
   // UX #3 — TELAFİ: süresi geçen görev de yapılabilir (yakın zamanda geçtiyse).
   // Kıvılcım yarıya iner; söz/senkron telafi edilmez (zaman-bağlı anlar).
   const telafi = gorev.status === "expired";
-  if (gorev.status !== "pending" && !telafi) {
+  // Puanlanmış görev (söz/senkron hariç) "geliştir ve yeniden gönder" ile tekrar
+  // gönderilebilir → AYNA yeniden puanlar, kıvılcım güncellenir (toplam görevlerden
+  // türediği için kendiliğinden düzelir).
+  const yenidenScored = gorev.status === "scored" && gorev.kind !== "soz" && gorev.kind !== "senkron";
+  if (gorev.status !== "pending" && !telafi && !yenidenScored) {
     return Response.json({ hata: tr.gorevler.durumlar.expired }, { status: 409 });
   }
   if (telafi) {
