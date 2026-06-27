@@ -286,8 +286,8 @@ export async function sabahSesi(
         ? `Günaydın ${ilkAd}. Dün hakkında ${dunkuGozlem} gözlem yazıldı — görülüyorsun.`
         : `Günaydın ${ilkAd}. Yeni bir gün, temiz bir su.`;
     const kapanis = alan
-      ? `Bugün ${alan} kasını çalıştır; küçük bir kanıt yeter. Gözüm üzerinde.`
-      : "Bugün gözüm üzerinde. Beni şaşırt.";
+      ? `Bugün ${alan} kasını çalıştır; küçük bir kanıt yeter. Yanındayım.`
+      : "Bugün yanındayım. Beni şaşırt.";
     const metin = `${acilis} ${kapanis}`;
     const yolu = await klonluSeslendirVeYukle(db, katilimciId, "sabah.mp3", metin);
     if (!yolu) return false;
