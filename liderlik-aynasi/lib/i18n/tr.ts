@@ -583,6 +583,15 @@ export const tr = {
     ozetBaslik: "Kontrol et ve gönder",
     dusukUc: "1 = hiç",
     yuksekUc: "10 = tam",
+    // #5 Seçilen puana göre dinamik, destekleyici geri bildirim (yargısız).
+    seciliGeri: (p: number) =>
+      p <= 3
+        ? `${p}/10 — gelişime en açık alan; dürüstlüğün değerli.`
+        : p <= 6
+          ? `${p}/10 — ortada; küçük adımlarla yükselir.`
+          : p <= 8
+            ? `${p}/10 — güçlü bir tarafın.`
+            : `${p}/10 — en güçlü yanlarından.`,
     ozBaslik: "Kendini Puanla",
     baslikKisi: (ad: string) => `${ad} kişisini puanla`,
     ozAciklama:
