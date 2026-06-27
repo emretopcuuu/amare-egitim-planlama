@@ -27,6 +27,25 @@ const ILERLEME: Record<string, number> = {
   tamam: 100,
 };
 
+// Türkçe küçük harf + harf/rakam dışını boşluğa indirerek normalleştir.
+function normMetin(s: string): string {
+  return s.toLocaleLowerCase("tr").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+// Yazılan metnin hangi önceliği elediğini bul: birebir (normalleştirilmiş) ya da
+// kapsama ("finansal" → "Finansal olarak özgür olmak"). Çok kısa girdilerde
+// yanlış eşleşmeyi önlemek için kapsama eşiği (>=4 harf) var.
+function elenenEslesme(metin: string, liste: string[]): string | null {
+  const n = normMetin(metin);
+  if (!n) return null;
+  const tam = liste.find((o) => normMetin(o) === n);
+  if (tam) return tam;
+  if (n.length < 4) return null;
+  return liste.find((o) => {
+    const no = normMetin(o);
+    return no.includes(n) || n.includes(no);
+  }) ?? null;
+}
+
 // Web Speech API — sesle yazma (Türkçe). Desteklenmiyorsa buton görünmez.
 type TanimaSonuc = ArrayLike<{ transcript: string }> & { isFinal: boolean };
 type SesTaniyici = {
@@ -418,9 +437,12 @@ export default function PusulaSohbet({
     if (!metin || mesgul) return;
     setMesajlar((m) => [...m, { rol: "kullanici", icerik: metin }]);
     if (metinParam === undefined) setGirdi("");
-    // Gönderilen madde listede varsa eleme olarak işaretle (chip'lerden düşsün).
-    if (tumListe.includes(metin)) {
-      setElenenler((e) => (e.includes(metin) ? e : [...e, metin]));
+    // Eleme işareti: chip'e dokunmak birebir gelir; ELLE YAZARAK eleyince ("finansal"
+    // gibi) tam metinle eşleşmez. Bu yüzden normalleştirilmiş kapsama eşleşmesi de
+    // dene — eşleşen önceliği chip'lerden düşür.
+    const elenen = elenenEslesme(metin, tumListe);
+    if (elenen) {
+      setElenenler((e) => (e.includes(elenen) ? e : [...e, elenen]));
     }
     setMesgul(true);
     setHata(null);
@@ -489,7 +511,8 @@ export default function PusulaSohbet({
     const tamam = maddeler.length >= BLANK_SAYISI;
     const yeterli = maddeler.length >= MIN_MADDE;
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
+      <main className="relative isolate mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
+        <div aria-hidden className="pusula-okur-zemin pointer-events-none absolute inset-0 -z-10" />
         <div className="flex items-start justify-between gap-3">
           <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.listeBaslik}</h1>
           <SifirlaButon sor={sifirlaSor} setSor={setSifirlaSor} sifirla={sifirla} mesgul={sifirliyor} />
@@ -742,7 +765,8 @@ export default function PusulaSohbet({
   // Seçilip elenenler düştükten sonra kalan öncelikler chip olarak görünür.
   const gosterListe = tumListe.filter((m) => !elenenler.includes(m));
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
+    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
+      <div aria-hidden className="pusula-okur-zemin pointer-events-none absolute inset-0 -z-10" />
       <header className="shrink-0 pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 text-center">
@@ -887,13 +911,15 @@ export default function PusulaSohbet({
                     onClick={() => (asama === "eleme" ? gonder(m) : setGirdi(m))}
                     disabled={mesgul}
                     title={m}
-                    className={`max-w-[12rem] truncate rounded-full border px-3 py-1 text-sm transition-colors disabled:opacity-50 ${
+                    className={`flex max-w-[14rem] items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors disabled:opacity-50 ${
                       asama === "eleme"
                         ? "border-rose-400/30 bg-rose-500/5 text-slate-200 hover:border-rose-400/70 hover:bg-rose-500/10"
                         : "border-royal-light/30 bg-midnight-soft text-slate-200 hover:border-gold"
                     }`}
                   >
-                    {asama === "eleme" ? `${m} ✕` : m}
+                    {/* Uzun yazıda yalnız etiket kısalsın; ✕ her zaman görünür kalsın */}
+                    <span className="truncate">{m}</span>
+                    {asama === "eleme" && <span aria-hidden className="shrink-0 text-rose-300/90">✕</span>}
                   </button>
                 ))}
               </div>
