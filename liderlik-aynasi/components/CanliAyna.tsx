@@ -9,9 +9,9 @@ import { useEsc } from "@/lib/useEsc";
 const t = tr.canliAyna;
 
 const ADIMLAR = [
-  { aci: "duz", yonerge: t.duz },
-  { aci: "sag", yonerge: t.sag },
-  { aci: "sol", yonerge: t.sol },
+  { aci: "duz", yonerge: t.duz, ikon: "🙂" },
+  { aci: "sag", yonerge: t.sag, ikon: "➡️" },
+  { aci: "sol", yonerge: t.sol, ikon: "⬅️" },
 ] as const;
 
 // Selfie sonrası "Canlı Ayna": çemberde düz/sağ/sol yüz kareleri (KYC hissi).
@@ -144,11 +144,16 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
         {t.ust}
       </p>
       <p className="prizma-serif ay-metin mt-1 text-2xl font-semibold">{t.ustBaslik}</p>
-      <p className="mt-3 min-h-[1.5rem] text-center text-base text-slate-200">
-        {ADIMLAR[adim].yonerge}
-      </p>
 
-      <div className="relative my-6 h-72 w-72 overflow-hidden rounded-full ring-4 ring-gold/60">
+      {/* Belirgin yönerge — büyük ikon + kalın metin + adım sayacı (kişi her
+          karede ne yapacağını net görür; küçük gri satır fark edilmiyordu). */}
+      <div className="mt-4 flex items-center gap-3 rounded-2xl border border-gold/45 bg-gold/10 px-5 py-3 shadow-[0_0_24px_-6px_rgba(245,158,11,0.5)]">
+        <span aria-hidden className="text-3xl leading-none">{ADIMLAR[adim].ikon}</span>
+        <span className="text-2xl font-bold text-gold-light">{ADIMLAR[adim].yonerge}</span>
+      </div>
+      <p className="mt-1.5 text-sm font-medium text-slate-400">{t.adimSayac(adim + 1, ADIMLAR.length)}</p>
+
+      <div className="relative my-5 h-72 w-72 overflow-hidden rounded-full ring-4 ring-gold/60">
         <video
           ref={videoRef}
           muted
