@@ -5,6 +5,7 @@ import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
 import Katlanir from "../Katlanir";
 import Ipucu from "../Ipucu";
+import OtoYenile from "../OtoYenile";
 import EslestirmeFormu from "../eslestirme/EslestirmeFormu";
 import AtamaDuzenle from "../eslestirme/AtamaDuzenle";
 import EslestirmeMetrik from "../eslestirme/EslestirmeMetrik";
@@ -88,9 +89,12 @@ export default async function EslestirmelerPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
-      <div className="flex items-center gap-2">
-        <h1 className="text-2xl font-bold text-gold">🔗 Eşleştirmeler</h1>
-        <Ipucu {...tr.admin.yardim.eslestirme} />
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gold">🔗 Eşleştirmeler</h1>
+          <Ipucu {...tr.admin.yardim.eslestirme} />
+        </div>
+        <OtoYenile />
       </div>
 
       {/* Gözlemci atamaları */}

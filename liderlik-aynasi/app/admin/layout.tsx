@@ -4,7 +4,6 @@ import { acikDalga } from "@/lib/degerlendirme";
 import AdminNav from "./AdminNav";
 import AdminTost from "./AdminTost";
 import AdminTuru from "./AdminTuru";
-import KlavyeKisayollari from "./KlavyeKisayollari";
 import CanliOlayAkisi from "./CanliOlayAkisi";
 import AcilDurumKarti from "./AcilDurumKarti";
 
@@ -60,8 +59,6 @@ export default async function AdminLayout({
       <AdminTost />
       {/* UX #7: panele ilk giren yöneticiye tek seferlik tur */}
       <AdminTuru />
-      {/* Yeni UX katmanları: klavye kısayolları, canlı olay akışı, acil kart */}
-      <KlavyeKisayollari />
       {tamYetki && <CanliOlayAkisi />}
       <AcilDurumKarti />
     </div>

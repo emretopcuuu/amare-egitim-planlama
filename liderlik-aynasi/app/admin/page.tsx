@@ -5,7 +5,6 @@ import { aktifOzellikler } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { adminOnerisi } from "@/lib/adminAsistan";
 import { adminUyarilari } from "@/lib/adminUyarilar";
-import { canliPano } from "@/lib/canliPano";
 import { funnelMetrikleri } from "@/lib/funnel";
 import { tr } from "@/lib/i18n/tr";
 import { kampGunu, KAMP_GUNLERI } from "@/lib/kampProgrami";
@@ -13,20 +12,15 @@ import FunnelOmurga from "./FunnelOmurga";
 import EksikDurt from "./EksikDurt";
 import OtoYenile from "./OtoYenile";
 import GununAkisi from "./GununAkisi";
-import HazirlikPaneli from "./HazirlikPaneli";
 import CanliOzet from "./CanliOzet";
 import Uyarilar from "./Uyarilar";
 import Ipucu from "./Ipucu";
 import TopluEylem from "./TopluEylem";
 import AltAksiyonCubugu from "./AltAksiyonCubugu";
 import SonEylemler from "./SonEylemler";
-import CanliPano from "./CanliPano";
 import FunnelMetrik from "./FunnelMetrik";
 import TriyajKart from "./TriyajKart";
-import BolumAtla from "./BolumAtla";
-import CapaAcici from "./CapaAcici";
-import TerimlerSozluk from "./TerimlerSozluk";
-import SimdiSonra from "./SimdiSonra";
+import Katlanir from "./Katlanir";
 import OneriButonu from "./OneriButonu";
 import BasitEylem from "./BasitEylem";
 import GecisHazirlik from "./GecisHazirlik";
@@ -147,9 +141,8 @@ export default async function AdminPanel() {
     };
   }
 
-  // Canlı pano: katılımcı ızgarası + teslim akışı + takım sıralaması (#1/#4/#10).
   // Funnel: kamp öncesi katılım hunisinin dönüşümü (kim nerede takıldı).
-  const [pano, funnel] = await Promise.all([canliPano(db), funnelMetrikleri(db)]);
+  const funnel = await funnelMetrikleri(db);
 
   // #7 Asistan: kampın takvimi + sistemin durumundan tek önerilen adımı çıkar.
   const bugun = new Intl.DateTimeFormat("en-CA", {
@@ -221,18 +214,6 @@ export default async function AdminPanel() {
     onFarkAcik,
   });
 
-  // Basit panel #5/#6 — mini konum + "sırada ne var". Aşama adları funnel
-  // şeridinden gelir; Basit'te şerit gizli olduğu için tek satırda özetlenir.
-  const asamaAdlari = tr.admin.funnel.asamalar;
-  const ASAMA_AD: Record<number, string> = {
-    1: asamaAdlari.hazirlik,
-    2: asamaAdlari.katilim,
-    3: asamaAdlari.canli,
-    4: asamaAdlari.final,
-    5: asamaAdlari.sonrasi,
-  };
-  const siradakiAsama = aktifAsama < 5 ? ASAMA_AD[aktifAsama + 1] : null;
-
   // UX #4+#9 — Bu aşamaya hazırlık skoru + geçiş checklist'i.
   const hazirTamamSayi = funnel.adimlar.find((a) => a.anahtar === "onfark")?.sayi ?? 0;
   const ozTamamSayi = ilerleme?.ozTamamlar.size ?? 0;
@@ -290,40 +271,18 @@ export default async function AdminPanel() {
 
   const silmeBekleyen = (silmeTalepleri ?? []).length;
 
-  // #7 Bölüm atlama listesi — yalnız var olan bölümler
-  const atla = tr.admin.ux.atla;
-  const bolumler = [
-    { id: "ozet", etiket: atla.ozet },
-    { id: "ilerleme", etiket: atla.ilerleme },
-    ...(tamYetki && silmeBekleyen > 0 ? [{ id: "kvkk", etiket: atla.kvkk }] : []),
-  ];
-
   return (
     // #8 Mobilde alt sabit aksiyon çubuğu içeriği örtmesin: alt nefes payı.
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-4 pb-28 sm:p-6 sm:pb-6">
-      {/* Katlı faz gruplarındaki çapalara (#dalga, #muhur …) atlamayı garanti et */}
-      <CapaAcici />
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-gold">{tr.admin.baslik}</h1>
           <Ipucu {...tr.admin.yardim.panel} />
         </div>
-        <div className="flex items-center gap-2">
-          {/* UX #2: terimler sözlüğü — içeriden kelimeler için sade karşılık */}
-          <TerimlerSozluk />
-          <OtoYenile />
-        </div>
+        <OtoYenile />
       </div>
 
-      {/* FUNNEL OMURGASI — kampın 5 aşaması (yalnız Uzman; Basit'te tek adım odağı) */}
-      <div className="uzman-only">
-        <FunnelOmurga aktif={aktifAsama} zamanlar={asamaZaman} />
-      </div>
-
-      {/* #7 Bölüm atlama — yapışkan mini içindekiler (yalnız uzman) */}
-      <div className="uzman-only">
-        <BolumAtla bolumler={bolumler} />
-      </div>
+      <FunnelOmurga aktif={aktifAsama} zamanlar={asamaZaman} />
 
       {!tamYetki && (
         <p className="rounded-xl border border-royal-light/40 bg-royal/15 px-4 py-3 text-sm font-medium text-slate-100">
@@ -371,40 +330,14 @@ export default async function AdminPanel() {
           <OneriButonu href={oneri.href} etiket={oneri.butonEtiket} />
         )}
 
-        {/* Basit #7 — yapacak acil iş yokken sakin güven cümlesi (telaş yok) */}
         {!oneri.vurgu && (
-          <p className="basit-only mt-3 text-center text-xs text-emerald-300/80">
+          <p className="mt-3 text-center text-xs text-emerald-300/80">
             ✓ Şu an acil bir şey yok — her şey yolunda. Hazır olduğunda yukarıdaki adımı at.
           </p>
         )}
       </section>
 
-      {/* Basit panel #6 konum + #5 sırada + #8 tek kısayol — şerit gizli olduğu
-          için Basit'te tek satırlık "neredeyim / sırada ne var / kişiler" özeti. */}
-      <div className="basit-only flex flex-col gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
-          {/* #6 mini konum göstergesi */}
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-royal-light/30 bg-white/[0.03] px-3 py-1.5 font-medium text-slate-300">
-            <span aria-hidden>📍</span>
-            Aşama {aktifAsama}/5 · {ASAMA_AD[aktifAsama]}
-          </span>
-          {/* #8 tek kısayol — katılımcı listesi */}
-          <Link
-            href="/admin/katilimcilar"
-            className="inline-flex items-center gap-1.5 rounded-full border border-royal-light/30 px-3 py-1.5 font-medium text-gold-light transition-colors hover:bg-white/5"
-          >
-            👥 Katılımcılar
-          </Link>
-        </div>
-        {/* #5 sırada ne var — tek satır */}
-        {siradakiAsama && (
-          <p className="px-1 text-xs text-slate-500">
-            <span className="font-semibold text-slate-400">Sırada:</span> {siradakiAsama} aşaması.
-          </p>
-        )}
-      </div>
-
-      {/* UX #5 canlı süre rozeti + UX #4/#9 aşama hazırlık skoru (iki görünümde de) */}
+      {/* UX #5 canlı süre rozeti + UX #4/#9 aşama hazırlık skoru */}
       {(sayac || (tamYetki && gecisKontroller.length > 0)) && (
         <div className="space-y-3">
           {sayac && (
@@ -416,23 +349,14 @@ export default async function AdminPanel() {
         </div>
       )}
 
-      {/* Şimdi/Sonra şeridi + kurulum rehberi — Uzman (Basit'te tek hero adımı yeter) */}
-      <div className="uzman-only space-y-6">
-        <SimdiSonra aktifAsama={aktifAsama} />
-        {tamYetki && <HazirlikPaneli konum="ust" aktifAsama={aktifAsama} />}
-      </div>
-
-      {/* GENEL DURUM: canlı özet rakamları (yalnız Uzman — Basit'te tek adım odağı) */}
-      <section className="uzman-only kart-3d space-y-4 rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      {/* GENEL DURUM: canlı özet rakamları */}
+      <section className="kart-3d space-y-4 rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-gold-light">
             {tr.admin.ozet.genelBaslik}
           </h2>
           <Ipucu {...tr.admin.yardim.panelOzet} />
         </div>
-        <p className="basit-only -mt-2 text-xs text-slate-500">
-          Kampın o anki nabzı — tek bakışta kaç kişi katıldı ve ne kadar ilerlendi.
-        </p>
         <CanliOzet
           ciplak
           katilimci={katilimciSayisi ?? 0}
@@ -441,41 +365,31 @@ export default async function AdminPanel() {
           gorus={ilerleme?.toplamPuan ?? 0}
           dalgaAd={acikDalga?.name ?? null}
         />
-        {/* Dönüşüm hunisi metriği — ileri (yalnız uzman) */}
+        {/* Dönüşüm hunisi metriği */}
         {funnel.toplam > 0 && (
-          <div className="uzman-only">
+          <>
             <div className="h-px bg-white/10" />
             <div className="mt-4" />
             <FunnelMetrik ciplak ozet={funnel} />
-          </div>
+          </>
         )}
       </section>
 
-      {/* Canlı pano: ızgara + teslim akışı + takım sıralaması (kampın nabzı) — uzman */}
-      <div className="uzman-only">
-        <CanliPano
-          izgara={pano.izgara}
-          teslimler={pano.teslimler}
-          takimlar={pano.takimlar}
-          ozet={pano.ozet}
-        />
-      </div>
+      {/* Etkinlik akışı + uyarılar — katlanır panel */}
+      <Katlanir baslik="Etkinlik & Uyarılar" ikon="📋">
+        <>
+          {tamYetki && (
+            <div className="space-y-3">
+              <SonEylemler />
+              <Uyarilar uyarilar={uyarilar} />
+            </div>
+          )}
+          <GununAkisi bugun={bugun} />
+        </>
+      </Katlanir>
 
-      {/* Son eylemler + proaktif uyarılar — tek "dikkat" bloğu (uzman) */}
-      {tamYetki && (
-        <div className="uzman-only space-y-3">
-          <SonEylemler />
-          <Uyarilar uyarilar={uyarilar} />
-        </div>
-      )}
-
-      {/* Bugünün Akışı — kamp günündeyse o günün adımları (yalnız Uzman) */}
-      <div className="uzman-only">
-        <GununAkisi bugun={bugun} />
-      </div>
-
-      {/* CANLI ÇALIŞMA ALANI: açık dalga ilerlemesi + toplu eylem (yalnız Uzman) */}
-      <section className="uzman-only kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      {/* CANLI ÇALIŞMA ALANI: açık dalga ilerlemesi + toplu eylem */}
+      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <h2 id="ilerleme" className="scroll-mt-20 text-lg font-semibold text-slate-200">
           {tr.admin.ilerleme.baslik}
           {acikDalga && (
@@ -485,10 +399,6 @@ export default async function AdminPanel() {
           )}
           <Ipucu {...tr.admin.yardim.panelIlerleme} />
         </h2>
-        {/* Basit modda sade açıklama */}
-        <p className="basit-only mt-1 text-sm text-slate-400">
-          Şu an kim ne yapıyor: kaç kişi kendini puanladı, kaç görüş toplandı. Takılanlar aşağıda.
-        </p>
         {acikDalga && (
           <p className="mt-2 rounded-lg bg-amber-900/15 px-3 py-2 text-xs font-medium text-amber-300/90">
             {tr.admin.ilerleme.ozellikUyari}
@@ -540,15 +450,15 @@ export default async function AdminPanel() {
               </div>
             </dl>
 
-            <div className="uzman-only mt-4">
+            <div className="mt-4">
               <TopluEylem
                 katilimcilar={ilerleme.katilimcilar.map((k) => ({
                   id: k.id,
                   ad: k.ad,
                   takim: k.takim,
-                  ozTamam: ilerleme.ozTamamlar.has(k.id),
-                  puanladigi: ilerleme.puanladigi.get(k.id) ?? 0,
-                  onuPuanlayan: ilerleme.onuPuanlayan.get(k.id) ?? 0,
+                  ozTamam: ilerleme!.ozTamamlar.has(k.id),
+                  puanladigi: ilerleme!.puanladigi.get(k.id) ?? 0,
+                  onuPuanlayan: ilerleme!.onuPuanlayan.get(k.id) ?? 0,
                 }))}
                 ozellikSayisi={ozellikler.length}
               />
@@ -581,7 +491,7 @@ export default async function AdminPanel() {
           <span className="text-sm font-semibold text-red-200">
             ⚠️ {silmeBekleyen} bekleyen KVKK silme talebi
           </span>
-          <span className="shrink-0 text-sm font-medium text-red-200">Sistem’de işle →</span>
+          <span className="shrink-0 text-sm font-medium text-red-200">Sistem'de işle →</span>
         </Link>
       )}
 

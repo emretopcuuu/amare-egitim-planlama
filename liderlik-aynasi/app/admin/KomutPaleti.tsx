@@ -187,8 +187,8 @@ export default function KomutPaleti() {
         title={t.ac}
       >
         <span aria-hidden>🔍</span>
-        <span className="hidden md:inline">{t.ac}</span>
-        <kbd className="hidden rounded bg-white/10 px-1.5 py-0.5 text-[0.65rem] font-medium md:inline">
+        <span className="inline">{t.ac}</span>
+        <kbd className="inline rounded bg-white/10 px-1.5 py-0.5 text-[0.65rem] font-medium">
           {t.ipucu}
         </kbd>
       </button>

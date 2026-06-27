@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { tr } from "@/lib/i18n/tr";
 import KomutPaleti from "./KomutPaleti";
+import KlavyeKisayollari from "./KlavyeKisayollari";
 import TemaDugmesi from "@/components/TemaDugmesi";
 
 const n = tr.admin.nav;
@@ -145,6 +146,7 @@ export default function AdminNav({
   const panelAktif = pathname === PANEL.href;
 
   return (
+    <>
     <nav className="sticky top-0 z-30 border-b border-royal/30 bg-midnight/90 backdrop-blur print:hidden">
       {/* Açık menü gövdeye portallanır (overflow-x kabının altında kırpılmasın).
           acikGrup yalnız tıklamayla (hidrasyon sonrası) dolar → SSR'da portal yok. */}
@@ -287,5 +289,7 @@ export default function AdminNav({
         </button>
       </div>
     </nav>
+    <KlavyeKisayollari />
+    </>
   );
 }
