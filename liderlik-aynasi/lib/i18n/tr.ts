@@ -740,9 +740,12 @@ export const tr = {
     kariyerSeviyeEtiketler: {
       leader: "Leader",
       senior_leader: "Senior Leader",
-      exec_leader: "Exec. Leader",
+      exec_leader: "Executive Leader",
       diamond: "Diamond",
-      star: "Star",
+      "1_star_diamond": "1 Star Diamond",
+      "2_star_diamond": "2 Star Diamond",
+      "3_star_diamond": "3 Star Diamond",
+      presidential_diamond: "Presidential Diamond",
     } as Record<string, string>,
     listeBaslik: "Hayatındaki 10 öncelik",
     listeAciklama:
