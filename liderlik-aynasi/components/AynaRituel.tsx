@@ -362,6 +362,10 @@ export default function AynaRituel() {
     setSesKalitesi(null);
     setKayitSuresi(0);
     sesSeviyeleriRef.current = [];
+    // Hazır ekranından yeniden üretirken: üretilmiş klonu da sıfırla ki yeni
+    // kayıt tekrar dinleme akışından geçsin (eski klona düşmesin).
+    setCalindi(false);
+    setSesUrl(null);
     void sesBasla();
   }
 
@@ -479,6 +483,20 @@ export default function AynaRituel() {
             <p className="mt-2 text-center text-sm text-slate-500">
               {t.kayitHenuzBaslamadi}
             </p>
+            {/* Kayıt ipuçları — daha net ses = daha iyi klon */}
+            <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gold-light">
+                💡 {t.ipuclariBaslik}
+              </p>
+              <ul className="mt-2 space-y-1.5">
+                {t.ipuclari.map((ip) => (
+                  <li key={ip} className="flex gap-2 text-sm leading-relaxed text-slate-300">
+                    <span aria-hidden className="text-gold-light/70">•</span>
+                    <span>{ip}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
             <p className="mt-6 text-sm uppercase tracking-widest text-slate-400">
               {t.yeminYonerge}
             </p>
@@ -670,6 +688,16 @@ export default function AynaRituel() {
                 <div className="mt-6">
                   <DevButon onClick={() => setAsama("kapandi")}>{t.kapat}</DevButon>
                 </div>
+                {/* Klonu beğenmediyse: baştan kaydedip yeniden üret */}
+                <button
+                  onClick={tekrarKaydet}
+                  className="mx-auto mt-5 block max-w-xs text-base font-semibold text-gold-light underline-offset-4 hover:underline"
+                >
+                  {t.yenidenOlustur}
+                </button>
+                <p className="mx-auto mt-1.5 max-w-xs text-sm text-slate-500">
+                  {t.yenidenOlusturAlt}
+                </p>
               </>
             )}
           </div>
