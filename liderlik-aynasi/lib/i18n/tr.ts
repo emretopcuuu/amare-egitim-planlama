@@ -999,7 +999,17 @@ export const tr = {
       "3_star_diamond": "3 Star Diamond",
       presidential_diamond: "Presidential Diamond",
     } as Record<string, string>,
-    noktaAyEtiket: "Ne kadardır bu işin içindesin? (ay — opsiyonel)",
+    noktaAyEtiket: "Ne kadardır bu işin içindesin? (opsiyonel)",
+    kidemSecimYer: "— Seç —",
+    // Ay yerine değer aralığı seçtir (yıllarca işte olan "ay" hesabı yapmasın);
+    // her aralık persona için temsili bir ay değerine eşlenir.
+    kidemAraliklar: [
+      { ay: 2, etiket: "0-3 ay" },
+      { ay: 7, etiket: "3-12 ay" },
+      { ay: 18, etiket: "1-2 yıl" },
+      { ay: 42, etiket: "2-5 yıl" },
+      { ay: 72, etiket: "5+ yıl" },
+    ] as { ay: number; etiket: string }[],
     noktaDetayYer: "Eklemek istediğin bir şey var mı? (opsiyonel)",
     // OV + VOL alanları (Son 3 ay ortalaması, ikisi de zorunlu)
     ovEtiket: "Son 3 ayın ortalama OV'si (zorunlu)",
