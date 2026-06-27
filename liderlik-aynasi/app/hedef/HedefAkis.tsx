@@ -304,11 +304,20 @@ function Sohbet({
   // hazır olunca kendisi "Devam et"e bassın.
   const [hazirDevam, setHazirDevam] = useState(false);
   const altRef = useRef<HTMLDivElement>(null);
+  const taRef = useRef<HTMLTextAreaElement>(null);
   const acilisRef = useRef(false);
 
   useEffect(() => {
     altRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mesajlar, mesgul]);
+
+  // Yazdıkça metin alanı içeriğe göre büyüsün (tek satırda kırpılmasın).
+  useEffect(() => {
+    const el = taRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
+  }, [girdi]);
 
   // Açılış repliğini getir (mesaj yoksa).
   useEffect(() => {
@@ -343,7 +352,7 @@ function Sohbet({
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-16">
       <header className="shrink-0 pb-3 text-center">
         <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
           {tr.app.name}
@@ -385,6 +394,7 @@ function Sohbet({
       ) : (
         <div className="flex shrink-0 items-end gap-2">
           <textarea
+            ref={taRef}
             value={girdi}
             onChange={(e) => setGirdi(e.target.value)}
             onKeyDown={(e) => {
