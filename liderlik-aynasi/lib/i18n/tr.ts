@@ -1015,6 +1015,12 @@ export const tr = {
     simulasyonAyEtiket: (ay: number) => `${ay}. ay`,
     simulasyonGerekliTempo: (oran: string) => `Hedef için gereken tempo: aylık ${oran}`,
     simulasyonMakul: (ay: number) => `%20 büyümeyle tahmini süre: ${ay} ay`,
+    simulasyonSinirNot:
+      "1.000.000 OV sonrası gösterilmedi — sağlıklı ve sürdürülebilir büyümeye odaklan.",
+    // Kampta + sonraki 90 gün destek vaadi (plan ekranı)
+    destek90Baslik: "Yalnız değilsin",
+    destek90Metin:
+      "Bu plana kampta ve kamptan sonraki 90 gün boyunca birlikte çalışacağız — adım adım yanındayız.",
     // Kamp sonu taahhüt metni
     kampTaahhut:
       "Bu kamp sana bir gelir garantisi değil, bir yöntem ve yol haritası sunar. Buradan aldığın araçlarla kendi OV'ini büyütmek sana kalmış.",
@@ -1038,10 +1044,12 @@ export const tr = {
     tabloEnDusuk: "EN DÜŞÜK",
     tabloEnYuksek: "EN YÜKSEK",
     tabloOrtalama: "ORTALAMA",
-    q2Baslik: "En geç ne kadar sürede bu gelire ulaşmak heyecan verici olurdu?",
+    q2Baslik: "Hangi tempoda büyümek istersin? (aylık OV artışı)",
     q3Baslik: "Bu gelire ulaşacağını yüzde yüz bilsen — günde maksimum kaç saat ayırabilirsin?",
     hedefinEtiket: "Hedefin",
     suresiEtiket: "Süresi",
+    tempoEtiket: "Tempo",
+    tempoAyTahmin: (ay: number) => `≈ ${ay} ayda hedefe`,
     aylikBirim: "TL/ay",
     degistirNot: "Değiştirmek için tekrar seç",
     geri: "Geri",

@@ -181,6 +181,37 @@ export const OV_SENARYOLAR = [
   { etiket: "%40 / ay", buyume: 0.4 },
 ] as const;
 
+// Kişi tempo (aylık OV artışı) seçer; süre buna göre TÜRETİLİR.
+export const TEMPO_SECENEKLERI = [
+  { anahtar: "20", etiket: "%20 / ay", buyume: 0.2 },
+  { anahtar: "30", etiket: "%30 / ay", buyume: 0.3 },
+  { anahtar: "40", etiket: "%40 / ay", buyume: 0.4 },
+] as const;
+
+// Seçilen tempoyla OV₀'dan hedef OV'ye kaç ayda ulaşılır (en az 1 ay).
+export function tempoSure(ov0: number, ovHedef: number, buyume: number): number {
+  if (ov0 <= 0 || buyume <= 0 || ovHedef <= ov0) return 1;
+  return Math.max(1, Math.ceil(Math.log(ovHedef / ov0) / Math.log(1 + buyume)));
+}
+
+// Simülasyon tablosu 1.000.000 OV'yi geçince afaki büyümeyi GÖSTERMESİN: sınırı
+// ilk geçtiği aya kadar olan ayları döndür (o ay dahil), en fazla maxAy.
+export const OV_SIM_SINIR = 1_000_000;
+export function simulasyonSinirliAylar(
+  ov0: number,
+  buyume: number,
+  maxAy: number,
+  sinir = OV_SIM_SINIR
+): number[] {
+  const n = Math.max(1, Math.round(maxAy));
+  const aylar: number[] = [];
+  for (let ay = 1; ay <= n; ay++) {
+    aylar.push(ay);
+    if (ovSimulasyonu(ov0, ay, buyume) >= sinir) break;
+  }
+  return aylar;
+}
+
 // Simülasyon ayları: HER ay (1, 2, 3 … süre) — büyümeyi ay ay göster ki kişi
 // merdiveni adım adım hissetsin (¼/½/¾ atlamaları yerine sürekli).
 export function simulasyonMilestonelari(ay: number): number[] {

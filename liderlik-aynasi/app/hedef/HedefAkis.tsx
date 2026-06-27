@@ -8,16 +8,15 @@ import KivilcimPatlama from "@/components/KivilcimPatlama";
 import MikrofonButonu from "@/components/MikrofonButonu";
 import {
   KARIYER_BASAMAKLARI,
-  SURE_SECENEKLERI,
+  TEMPO_SECENEKLERI,
+  tempoSure,
   GUNLUK_SAAT_SECENEKLERI,
   kariyerPlaniHesapla,
   tlFormat,
   type KariyerPlani,
   ovSimulasyonu,
-  gerekliTempo,
-  makuSure,
-  OV_SENARYOLAR,
-  simulasyonMilestonelari,
+  simulasyonSinirliAylar,
+  OV_SIM_SINIR,
   HBB_AYLAR,
   HBB_TOPLAM,
   HBB_BONUS_TOPLAM,
@@ -140,10 +139,10 @@ export default function HedefAkis({
       <Wizard
         ov0={ov0}
         yeniBaslangic={durum.yeniBaslangic}
-        onMuhur={async (hedefIndex, sure, gunluk) => {
+        onMuhur={async (hedefIndex, tempo, gunluk) => {
           setMesgul(true);
           setHata(null);
-          const v = await istek({ kariyer: { hedefIndex, sure, gunluk } });
+          const v = await istek({ kariyer: { hedefIndex, tempo, gunluk } });
           setMesgul(false);
           if (!v?.ok || !v.plan) {
             setHata(v?.hata ?? t.hata);
@@ -447,22 +446,25 @@ function Wizard({
 }: {
   ov0: number | null;
   yeniBaslangic: boolean;
-  onMuhur: (hedefIndex: number, sure: string, gunluk: string) => void;
+  onMuhur: (hedefIndex: number, tempo: string, gunluk: string) => void;
   mesgul: boolean;
   hata: string | null;
   onSifirla: () => void;
 }) {
   const [hedefIndex, setHedefIndex] = useState<number | null>(null);
-  const [sure, setSure] = useState<string | null>(null);
+  const [tempo, setTempo] = useState<string | null>(null);
   const [gunluk, setGunluk] = useState<string | null>(null);
 
-  const adim = hedefIndex == null ? 1 : sure == null ? 2 : gunluk == null ? 3 : 4;
+  const adim = hedefIndex == null ? 1 : tempo == null ? 2 : gunluk == null ? 3 : 4;
   const hedefRutbe = hedefIndex != null ? KARIYER_BASAMAKLARI[hedefIndex] : null;
-  const sureObj = SURE_SECENEKLERI.find((s) => s.anahtar === sure);
+  const tempoObj = TEMPO_SECENEKLERI.find((tp) => tp.anahtar === tempo);
   const saatObj = GUNLUK_SAAT_SECENEKLERI.find((g) => g.anahtar === gunluk);
+  // Süre, seçilen tempoyla OV₀'dan hedef OV'ye TÜRETİLİR (sabit "1/3/6/12 ay" yok).
+  const sureAy =
+    hedefRutbe && tempoObj ? tempoSure(ov0 ?? 0, hedefRutbe.ov, tempoObj.buyume) : null;
   const plan =
-    hedefIndex != null && sureObj && saatObj
-      ? kariyerPlaniHesapla(hedefIndex, sureObj.ay, saatObj.gunluk, saatObj.etiket)
+    hedefIndex != null && sureAy && saatObj
+      ? kariyerPlaniHesapla(hedefIndex, sureAy, saatObj.gunluk, saatObj.etiket)
       : null;
 
   return (
@@ -485,8 +487,12 @@ function Wizard({
           onTik={adim < 4 ? undefined : () => setHedefIndex(null)}
         />
       )}
-      {sureObj && (
-        <Rozet etiket={t.suresiEtiket} deger={sureObj.etiket} onTik={adim < 4 ? undefined : () => setSure(null)} />
+      {tempoObj && sureAy && (
+        <Rozet
+          etiket={t.tempoEtiket}
+          deger={`${tempoObj.etiket} · ${t.tempoAyTahmin(sureAy)}`}
+          onTik={adim < 4 ? undefined : () => setTempo(null)}
+        />
       )}
 
       {/* key={adim} → her soru geçişinde blok yeniden monte olur ve 'of-adim'
@@ -508,14 +514,34 @@ function Wizard({
         </section>
       )}
 
-      {adim === 2 && (
-        <Secenekler
-          etiket={t.soruEtiket(2)}
-          baslik={t.q2Baslik}
-          secenekler={SURE_SECENEKLERI.map((s) => ({ anahtar: s.anahtar, metin: s.etiket }))}
-          onSec={setSure}
-          onGeri={() => setHedefIndex(null)}
-        />
+      {/* SORU 2 — TEMPO seçimi: kişi büyüme hızını seçer; her seçenekte hedefe
+          kaç ayda ulaşacağı (kendi OV'sinden türetilmiş) gösterilir. */}
+      {adim === 2 && hedefRutbe && (
+        <section>
+          <button
+            onClick={() => setHedefIndex(null)}
+            className="mb-2 text-sm text-slate-400 underline-offset-2 hover:text-slate-200 hover:underline"
+          >
+            ← {t.geri}
+          </button>
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.soruEtiket(2)}</p>
+          <h2 className="mt-1 text-lg font-semibold text-slate-100">{t.q2Baslik}</h2>
+          <div className="mt-4 space-y-2.5">
+            {TEMPO_SECENEKLERI.map((tp) => {
+              const ay = tempoSure(ov0 ?? 0, hedefRutbe.ov, tp.buyume);
+              return (
+                <button
+                  key={tp.anahtar}
+                  onClick={() => setTempo(tp.anahtar)}
+                  className="flex w-full items-center justify-between rounded-2xl border border-royal-light/25 bg-midnight-soft px-4 py-3.5 text-left transition-colors hover:border-gold hover:bg-midnight-card"
+                >
+                  <span className="text-base font-semibold text-slate-100">{tp.etiket}</span>
+                  <span className="text-sm font-bold text-gold-light">{t.tempoAyTahmin(ay)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
       )}
 
       {adim === 3 && (
@@ -524,22 +550,26 @@ function Wizard({
           baslik={t.q3Baslik}
           secenekler={GUNLUK_SAAT_SECENEKLERI.map((g) => ({ anahtar: g.anahtar, metin: g.etiket }))}
           onSec={setGunluk}
-          onGeri={() => setSure(null)}
+          onGeri={() => setTempo(null)}
         />
       )}
 
       {adim === 4 && plan && (
         <section className="space-y-4">
           <p className="text-center text-sm font-semibold text-gold-light">{t.planUstBaslik}</p>
-          {/* OV büyüme simülasyonu ÖNCE: kişi önce kendi rakamının ay ay nasıl
-              büyüdüğünü görür, sonra somut kariyer planını. */}
-          {ov0 && ov0 > 0 && hedefRutbe && sureObj && (
-            <OvSimKarti ov0={ov0} ovHedef={hedefRutbe.ov} sureAy={sureObj.ay} />
+          {/* OV büyüme simülasyonu: SEÇİLEN tempoyla ay ay; 1M'i geçince durur. */}
+          {ov0 && ov0 > 0 && hedefRutbe && tempoObj && sureAy && (
+            <OvSimKarti ov0={ov0} ovHedef={hedefRutbe.ov} buyume={tempoObj.buyume} sureAy={sureAy} />
           )}
           <PlanKarti plan={plan} />
+          {/* Kampta + sonraki 90 gün destek vaadi */}
+          <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3">
+            <p className="text-sm font-semibold text-emerald-200">🤝 {t.destek90Baslik}</p>
+            <p className="mt-1 text-sm leading-relaxed text-slate-300">{t.destek90Metin}</p>
+          </div>
           {hata && <p className="text-center text-sm text-red-400">{hata}</p>}
           <button
-            onClick={() => hedefIndex != null && sure && gunluk && onMuhur(hedefIndex, sure, gunluk)}
+            onClick={() => hedefIndex != null && tempo && gunluk && onMuhur(hedefIndex, tempo, gunluk)}
             disabled={mesgul}
             className="btn-kor parilti flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
           >
@@ -548,7 +578,7 @@ function Wizard({
           <button
             onClick={() => {
               setHedefIndex(null);
-              setSure(null);
+              setTempo(null);
               setGunluk(null);
             }}
             className="mx-auto block text-sm text-slate-400 underline-offset-2 hover:text-slate-200 hover:underline"
@@ -771,52 +801,56 @@ function PlanKarti({ plan }: { plan: KariyerPlani }) {
   );
 }
 
-// ---------- OV büyüme simülasyon kartı ----------
-function OvSimKarti({ ov0, ovHedef, sureAy }: { ov0: number; ovHedef: number; sureAy: number }) {
-  const milestoneAylar = simulasyonMilestonelari(sureAy);
-  const tempo = gerekliTempo(ov0, ovHedef, sureAy);
-  const tempoYuzde = tempo > 0 ? `%${(tempo * 100).toFixed(0)}` : "—";
-  const makul = makuSure(ov0, ovHedef);
+// ---------- OV büyüme simülasyon kartı (seçilen tek tempo, 1M sınırlı) ----------
+function OvSimKarti({
+  ov0,
+  ovHedef,
+  buyume,
+  sureAy,
+}: {
+  ov0: number;
+  ovHedef: number;
+  buyume: number;
+  sureAy: number;
+}) {
+  // 1M'i geçince afaki büyümeyi gösterme: tablo o ayda durur.
+  const aylar = simulasyonSinirliAylar(ov0, buyume, sureAy);
+  const sonOv = ovSimulasyonu(ov0, aylar[aylar.length - 1], buyume);
+  const siniraUlasti = sonOv >= OV_SIM_SINIR && sureAy > aylar.length;
   return (
     <div className="kart-cam overflow-hidden rounded-2xl shadow-[0_22px_55px_-26px_rgba(15,30,50,0.45)]">
       <div className="kariyer-cizgi border-b px-4 py-2.5">
         <p className="kariyer-baslik text-xs font-semibold uppercase tracking-wide">{t.simulasyonBaslik}</p>
       </div>
-      {/* Senaryo tablosu */}
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[300px] text-xs">
+        <table className="w-full text-xs">
           <thead>
             <tr className="kariyer-cizgi kariyer-baslik border-b">
               <th className="px-3 py-2 text-left font-semibold">Ay</th>
-              {OV_SENARYOLAR.map((s) => (
-                <th key={s.etiket} className="px-2 py-2 text-right font-semibold">{s.etiket}</th>
-              ))}
+              <th className="px-3 py-2 text-right font-semibold">{`%${Math.round(buyume * 100)} / ay`}</th>
             </tr>
           </thead>
           <tbody className="kariyer-bol">
-            {milestoneAylar.map((ay) => (
-              <tr key={ay} className={ay === sureAy ? "bg-gold/5" : ""}>
-                <td className="px-3 py-2 font-semibold text-slate-300">{t.simulasyonAyEtiket(ay)}</td>
-                {OV_SENARYOLAR.map((s) => {
-                  const ov = ovSimulasyonu(ov0, ay, s.buyume);
-                  const ulasmis = ov >= ovHedef;
-                  return (
-                    <td key={s.etiket} className={`px-2 py-2 text-right font-mono ${ulasmis ? "kariyer-vurgu font-bold" : "text-slate-400"}`}>
-                      {tlFormat(ov)}{ulasmis ? " ✓" : ""}
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
+            {aylar.map((ay) => {
+              const ov = ovSimulasyonu(ov0, ay, buyume);
+              const ulasmis = ov >= ovHedef;
+              return (
+                <tr key={ay} className={ulasmis ? "bg-gold/5" : ""}>
+                  <td className="px-3 py-2 font-semibold text-slate-300">{t.simulasyonAyEtiket(ay)}</td>
+                  <td className={`px-3 py-2 text-right font-mono ${ulasmis ? "kariyer-vurgu font-bold" : "text-slate-400"}`}>
+                    {tlFormat(ov)}{ulasmis ? " ✓" : ""}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
-      {/* Tempo + makul süre */}
-      <div className="kariyer-cizgi space-y-1 border-t px-4 py-2.5">
-        <p className="text-xs text-slate-400">{t.simulasyonGerekliTempo(tempoYuzde)}</p>
-        {makul > 0 && <p className="kariyer-baslik text-xs">{t.simulasyonMakul(makul)}</p>}
-      </div>
-      {/* Uyarı */}
+      {siniraUlasti && (
+        <div className="kariyer-cizgi border-t px-4 py-2.5">
+          <p className="kariyer-baslik text-xs">{t.simulasyonSinirNot}</p>
+        </div>
+      )}
       <div className="kariyer-cizgi border-t px-4 py-2.5">
         <p className="text-[0.65rem] leading-relaxed text-slate-500">{t.simulasyonUyari}</p>
       </div>
