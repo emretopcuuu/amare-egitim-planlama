@@ -33,22 +33,15 @@ const splitEgitmen = (e) => {
     .map(n => n.trim()).filter(n => n.length > 1);
 };
 
-// Rütbeye göre rozet sınıfı (header) ve merdiven numara rozeti gradyanı
+// Rütbe hiyerarşisi tek altın ailesinde — yoğunluk arttıkça daha parlak (elit/kısıtlı palet)
 const rutbeRozetSinif = (idx) => {
-  if (idx >= 13) return 'bg-gradient-to-r from-fuchsia-500/40 to-amber-400/40 text-amber-50 border-amber-300/60';
-  if (idx >= 10) return 'bg-amber-400/25 text-amber-100 border-amber-300/50';
-  if (idx >= 9) return 'bg-cyan-400/20 text-cyan-50 border-cyan-300/50';
-  if (idx >= 6) return 'bg-indigo-400/20 text-indigo-50 border-indigo-300/40';
-  if (idx >= 2) return 'bg-white/15 text-white border-white/25';
-  return 'bg-white/10 text-white/70 border-white/15';
+  if (idx >= 13) return 'bg-amber-400/30 text-amber-50 border-amber-300/60';
+  if (idx >= 10) return 'bg-amber-400/20 text-amber-100 border-amber-300/45';
+  if (idx >= 9) return 'bg-amber-400/12 text-amber-200 border-amber-300/35';
+  if (idx >= 2) return 'bg-white/10 text-amber-100/80 border-white/20';
+  return 'bg-white/5 text-white/60 border-white/12';
 };
-const rutbeBadgeGrad = (idx) => {
-  if (idx >= 13) return 'linear-gradient(135deg,#a21caf,#e8b339)';
-  if (idx >= 10) return 'linear-gradient(135deg,#b8923f,#f4dca0)';
-  if (idx >= 9) return 'linear-gradient(135deg,#0e7490,#67e8f9)';
-  if (idx >= 6) return 'linear-gradient(135deg,#4338ca,#a5b4fc)';
-  return 'linear-gradient(135deg,#b8923f,#d8b15a)';
-};
+const rutbeBadgeGrad = (idx) => (idx >= 10 ? 'linear-gradient(135deg,#c69a3f,#f4dca0)' : 'linear-gradient(135deg,#a8843a,#d8b15a)');
 
 export default function LiderProfil() {
   const { id } = useParams();
@@ -473,7 +466,7 @@ export default function LiderProfil() {
                               <div className="font-extrabold text-white flex items-center gap-x-2 gap-y-0.5 flex-wrap leading-tight text-sm sm:text-base">
                                 {KARIYER_BASAMAKLARI[idx]}
                                 {sv > 0.7 && <Star className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" fill="currentColor" />}
-                                {ilkDiamond && <span className="text-[10px] font-bold bg-cyan-400/20 text-cyan-200 px-1.5 py-0.5 rounded-full">💎 ilk Diamond</span>}
+                                {ilkDiamond && <span className="text-[10px] font-bold bg-amber-400/15 text-amber-200 px-1.5 py-0.5 rounded-full">💎 ilk Diamond</span>}
                                 {hizli && <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 px-1.5 py-0.5 rounded-full">⚡ hızlı</span>}
                                 {suAn && <span className="text-[10px] font-extrabold text-gray-900 bg-amber-400 px-1.5 py-0.5 rounded-full">ŞU AN</span>}
                               </div>
@@ -481,7 +474,7 @@ export default function LiderProfil() {
                                 {k && <span className="text-[11px] text-amber-200/60">{k.dt.toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' })}</span>}
                                 {/* UX2 — kıyas rozeti */}
                                 {ortFark != null && Math.abs(ortFark) >= 2 && (
-                                  <span className={`text-[10px] font-semibold ${ortFark > 0 ? 'text-emerald-300' : 'text-rose-300/80'}`}>
+                                  <span className={`text-[10px] font-semibold ${ortFark > 0 ? 'text-amber-200/90' : 'text-white/40'}`}>
                                     {ortFark > 0 ? `ort. ${ortFark} ay önde` : `ort. ${-ortFark} ay geride`}
                                   </span>
                                 )}

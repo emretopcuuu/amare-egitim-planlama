@@ -44,14 +44,13 @@ const rutbeCoz = (kayit) => {
   return { rankIdx, kariyer: rankIdx >= 0 ? KARIYER_BASAMAKLARI[rankIdx] : null, meslek };
 };
 
-// Rütbe → renk/tier stili (yükseldikçe daha parlak)
+// Rütbe → tek altın ailesi, yükseldikçe daha yoğun (elit/kısıtlı palet)
 const rutbeStil = (idx) => {
-  if (idx >= 13) return 'bg-gradient-to-r from-fuchsia-500/30 to-amber-400/30 text-amber-100 border-amber-300/50';
-  if (idx >= 10) return 'bg-amber-400/20 text-amber-200 border-amber-300/40';
-  if (idx >= 9) return 'bg-cyan-400/15 text-cyan-100 border-cyan-300/40';
-  if (idx >= 6) return 'bg-indigo-400/15 text-indigo-100 border-indigo-300/30';
-  if (idx >= 2) return 'bg-white/10 text-purple-100 border-white/20';
-  return 'bg-white/5 text-white/60 border-white/10';
+  if (idx >= 13) return 'bg-amber-400/30 text-amber-50 border-amber-300/60';
+  if (idx >= 10) return 'bg-amber-400/20 text-amber-100 border-amber-300/45';
+  if (idx >= 9) return 'bg-amber-400/12 text-amber-200 border-amber-300/35';
+  if (idx >= 2) return 'bg-white/10 text-amber-100/80 border-white/20';
+  return 'bg-white/5 text-white/60 border-white/12';
 };
 const tierBilgi = (idx) => {
   if (idx == null || idx < 0) return { key: 'yok', label: 'Kariyer verisi yok' };
@@ -66,12 +65,11 @@ const tierBilgi = (idx) => {
 const rutbeYazi = (r) => (r || '').toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
 // Rütbeye göre foto halkası rengi (hiyerarşi pekişir)
 const rutbeHalka = (idx) => {
-  if (idx >= 13) return 'border-fuchsia-300';
-  if (idx >= 10) return 'border-amber-300';
-  if (idx >= 9) return 'border-cyan-300';
-  if (idx >= 6) return 'border-indigo-300';
-  if (idx >= 2) return 'border-purple-300/60';
-  return 'border-purple-300/40';
+  if (idx >= 13) return 'border-amber-300';
+  if (idx >= 10) return 'border-amber-300/80';
+  if (idx >= 9) return 'border-amber-300/55';
+  if (idx >= 2) return 'border-amber-200/35';
+  return 'border-purple-300/30';
 };
 
 const splitEgitmen = (e) => {
@@ -480,7 +478,7 @@ const KonusmacilarSayfasi = () => {
           {istatistik.veriOlan > 0 && (
             <div className="mb-4 flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 bg-white/8 border border-white/15 text-white text-xs font-semibold px-3 py-1.5 rounded-full"><User className="w-3.5 h-3.5 text-purple-200" />{istatistik.toplam} eğitmen</span>
-              <span className="inline-flex items-center gap-1.5 bg-cyan-400/10 border border-cyan-300/30 text-cyan-100 text-xs font-semibold px-3 py-1.5 rounded-full">💎 {istatistik.diamondPlus} Diamond+</span>
+              <span className="inline-flex items-center gap-1.5 bg-amber-400/10 border border-amber-300/30 text-amber-100 text-xs font-semibold px-3 py-1.5 rounded-full">💎 {istatistik.diamondPlus} Diamond+</span>
               {istatistik.avgTenure != null && <span className="inline-flex items-center gap-1.5 bg-white/8 border border-white/15 text-white text-xs font-semibold px-3 py-1.5 rounded-full"><Calendar className="w-3.5 h-3.5 text-amber-300" />ort. kıdem {sureMetni(istatistik.avgTenure)}</span>}
               {istatistik.enHizliDiamond != null && <span className="inline-flex items-center gap-1.5 bg-amber-400/10 border border-amber-300/30 text-amber-200 text-xs font-semibold px-3 py-1.5 rounded-full"><Zap className="w-3.5 h-3.5" />en hızlı Diamond {sureMetni(istatistik.enHizliDiamond)}</span>}
               <span className="inline-flex items-center gap-1.5 bg-red-600/25 border border-red-400/60 text-red-100 text-[11px] font-extrabold px-3 py-1.5 rounded-full shadow-[0_0_12px_rgba(239,68,68,0.35)]" title="Kariyer verileri henüz tüm eğitmenler için tamamlanmadı — test aşamasında">⚠ TEST · Veriler yalnızca %{istatistik.tamamlanma} tamamlandı</span>
