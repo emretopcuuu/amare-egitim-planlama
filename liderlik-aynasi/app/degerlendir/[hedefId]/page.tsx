@@ -80,7 +80,7 @@ export default async function PuanlaPage({
       {/* Okunabilirlik: içerik açık arka plan (orman) üstünde opak kart içinde.
           Üst pill boşluğu KimsinBant'taki global spacer ile halledilir. */}
       <div className="mx-auto my-auto w-full max-w-md px-4 pb-6 pt-5">
-      <div className="rounded-3xl bg-midnight-card/80 p-5 shadow-xl ring-1 ring-white/10 backdrop-blur-md">
+      <div className="koyu-alan rounded-3xl bg-midnight-card/80 p-5 shadow-xl ring-1 ring-white/10 backdrop-blur-md">
       <PuanlamaFormu
         dalgaId={dalgaId}
         dalgaAdi={dalgaAdi}

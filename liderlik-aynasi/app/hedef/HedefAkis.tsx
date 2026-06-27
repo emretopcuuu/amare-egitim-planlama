@@ -362,7 +362,8 @@ function Sohbet({
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
+    <main className="koyu-alan relative isolate mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
+      <div aria-hidden className="pusula-okur-zemin pointer-events-none absolute inset-0 -z-10" />
       <header className="shrink-0 pb-3 text-center">
         <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
           {tr.app.name}

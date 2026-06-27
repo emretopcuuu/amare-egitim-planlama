@@ -511,7 +511,7 @@ export default function PusulaSohbet({
     const tamam = maddeler.length >= BLANK_SAYISI;
     const yeterli = maddeler.length >= MIN_MADDE;
     return (
-      <main className="relative isolate mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
+      <main className="koyu-alan relative isolate mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
         <div aria-hidden className="pusula-okur-zemin pointer-events-none absolute inset-0 -z-10" />
         <div className="flex items-start justify-between gap-3">
           <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.listeBaslik}</h1>
@@ -765,7 +765,7 @@ export default function PusulaSohbet({
   // Seçilip elenenler düştükten sonra kalan öncelikler chip olarak görünür.
   const gosterListe = tumListe.filter((m) => !elenenler.includes(m));
   return (
-    <main className="relative mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
+    <main className="koyu-alan relative isolate mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
       <div aria-hidden className="pusula-okur-zemin pointer-events-none absolute inset-0 -z-10" />
       <header className="shrink-0 pb-3">
         <div className="flex items-start justify-between gap-3">
