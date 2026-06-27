@@ -193,7 +193,6 @@ export default async function PusulaSayfa() {
       <PusulaSohbet
         baslangic={gecmis}
         rizaVar={!!kisi?.consent_at}
-        kariyerVar={!!kisi?.kariyer_seviyesi}
         onceliklerVar={durum.onceliklerVar}
         oncelikler={oncelikler}
         asamaBaslangic={durum.asama}

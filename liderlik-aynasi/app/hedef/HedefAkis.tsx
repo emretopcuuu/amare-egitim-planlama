@@ -29,7 +29,11 @@ type Mesaj = { rol: string; icerik: string };
 type Durum = { asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null; yeniBaslangic: boolean };
 type Faz = "acilis" | "baslangic" | "sohbet" | "wizard" | "tamam";
 
-const NOKTALAR = ["yeni", "baslangic", "deneyimli", "lider"] as const;
+// Kariyer basamakları — 8 seviye (Pusula başından buraya taşındı).
+const KARIYER_SECENEKLER = [
+  "leader", "senior_leader", "exec_leader", "diamond",
+  "1_star_diamond", "2_star_diamond", "3_star_diamond", "presidential_diamond",
+] as const;
 
 export default function HedefAkis({
   durum,
@@ -97,10 +101,12 @@ export default function HedefAkis({
   if (faz === "baslangic") {
     return (
       <BaslangicFormu
-        onKaydet={async (nokta, ay, detay, ov) => {
+        onKaydet={async (kariyer, ay, detay, ov, vol) => {
           setMesgul(true);
           setHata(null);
-          const v = await istek({ baslangic: { nokta, deneyimAy: ay, detay, baslangicOv: ov } });
+          const v = await istek({
+            baslangic: { kariyer, deneyimAy: ay, detay, baslangicOv: ov, baslangicVol: vol },
+          });
           setMesgul(false);
           if (!v?.ok) {
             setHata(v?.hata ?? t.hata);
@@ -193,64 +199,69 @@ function BaslangicFormu({
   hata,
   onSifirla,
 }: {
-  onKaydet: (nokta: string, ay: number | null, detay: string | null, ov: number) => void;
+  onKaydet: (kariyer: string, ay: number | null, detay: string | null, ov: number, vol: number) => void;
   mesgul: boolean;
   hata: string | null;
   onSifirla: () => void;
 }) {
-  const [nokta, setNokta] = useState<string | null>(null);
+  const [kariyer, setKariyer] = useState("");
   const [ay, setAy] = useState("");
   const [detay, setDetay] = useState("");
   const [ov, setOv] = useState("");
+  const [vol, setVol] = useState("");
   const ovNum = Number(ov);
+  const volNum = Number(vol);
   const ovGecerli = ov.length > 0 && ovNum > 0;
+  const volGecerli = vol.length > 0 && volNum > 0;
+  const gecerli = !!kariyer && ovGecerli && volGecerli;
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
       <header>
         <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.noktaBaslik}</h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.noktaAciklama}</p>
       </header>
-      <div className="space-y-2.5">
-        {NOKTALAR.map((k) => {
-          const secili = nokta === k;
-          return (
-            <button
-              key={k}
-              onClick={() => setNokta(k)}
-              className={`flex w-full items-center gap-3 rounded-2xl border px-4 py-3.5 text-left transition-colors ${
-                secili
-                  ? "border-gold bg-gold/10 ring-1 ring-gold/40"
-                  : "border-royal-light/25 bg-midnight-soft hover:border-gold/50"
-              }`}
-            >
-              <span
-                className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
-                  secili ? "border-gold bg-gold text-[#1a1206]" : "border-slate-500"
-                }`}
-              >
-                {secili ? "✓" : ""}
-              </span>
-              <span>
-                <span className="block font-semibold text-slate-100">{t.noktalar[k].ad}</span>
-                <span className="block text-xs text-slate-400">{t.noktalar[k].alt}</span>
-              </span>
-            </button>
-          );
-        })}
+      {/* Kariyer basamağı — 8 seviye (zorunlu) */}
+      <div className="space-y-2">
+        <label className="block text-xs font-medium text-slate-400">{t.kariyerEtiket}</label>
+        <select
+          value={kariyer}
+          onChange={(e) => setKariyer(e.target.value)}
+          className="h-12 w-full rounded-xl border border-royal-light/30 bg-midnight-soft px-3 text-base text-slate-100 outline-none focus:border-gold"
+        >
+          <option value="">{t.kariyerSecimYer}</option>
+          {KARIYER_SECENEKLER.map((k) => (
+            <option key={k} value={k}>
+              {t.kariyerSeviyeEtiketler[k]}
+            </option>
+          ))}
+        </select>
       </div>
-      {/* OV — zorunlu, tüm seviyelerde */}
+      {/* OV — Son 3 ay ortalaması (zorunlu) */}
       <div className="space-y-2">
         <label className="block text-xs font-medium text-slate-400">{t.ovEtiket}</label>
         <input
           inputMode="numeric"
           value={ov}
-          onChange={(e) => setOv(e.target.value.replace(/[^0-9]/g, "").slice(0, 8))}
+          onChange={(e) => setOv(e.target.value.replace(/[^0-9]/g, "").slice(0, 9))}
           className={`w-full rounded-xl border bg-midnight-soft px-4 py-2.5 text-base text-slate-100 outline-none focus:border-gold ${
             ov.length > 0 && !ovGecerli ? "border-red-400/60" : "border-royal-light/30"
           }`}
           placeholder={t.ovYer}
         />
-        {ov.length > 0 && !ovGecerli && (
+      </div>
+      {/* VOL — Son 3 ay ortalaması (zorunlu), kariyerin/OV'nin hemen altında */}
+      <div className="space-y-2">
+        <label className="block text-xs font-medium text-slate-400">{t.volEtiket}</label>
+        <input
+          inputMode="numeric"
+          value={vol}
+          onChange={(e) => setVol(e.target.value.replace(/[^0-9]/g, "").slice(0, 9))}
+          className={`w-full rounded-xl border bg-midnight-soft px-4 py-2.5 text-base text-slate-100 outline-none focus:border-gold ${
+            vol.length > 0 && !volGecerli ? "border-red-400/60" : "border-royal-light/30"
+          }`}
+          placeholder={t.volYer}
+        />
+        {((ov.length > 0 && !ovGecerli) || (vol.length > 0 && !volGecerli)) && (
           <p className="text-xs text-red-400">{t.ovZorunlu}</p>
         )}
       </div>
@@ -273,8 +284,8 @@ function BaslangicFormu({
       />
       {hata && <p className="text-center text-sm text-red-400">{hata}</p>}
       <button
-        onClick={() => nokta && ovGecerli && onKaydet(nokta, ay ? Number(ay) : null, detay || null, ovNum)}
-        disabled={!nokta || !ovGecerli || mesgul}
+        onClick={() => gecerli && onKaydet(kariyer, ay ? Number(ay) : null, detay || null, ovNum, volNum)}
+        disabled={!gecerli || mesgul}
         className="btn-kor parilti flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
       >
         {mesgul ? t.dusunuyor : t.noktaDevam}
