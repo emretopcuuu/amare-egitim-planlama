@@ -82,27 +82,37 @@ export default function PwaKur() {
   if (!gorunur || !olay) return null;
   if (GIZLI_ONEK.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null;
 
+  // İlk aynayı açar gibi — ortada, logolu, belirgin tam ekran istem.
+  // Kullanıcı katılımcı yüzeyine ilk girdiğinde (beforeinstallprompt yakalanınca)
+  // hemen çıkar; "Şimdilik geç" dersek bir daha gösterilmez (localStorage).
   return (
-    <div className="fixed inset-x-0 bottom-[calc(6.5rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4 print:hidden">
-      <div className="flex w-full max-w-md items-center gap-3 rounded-2xl border border-gold/40 bg-midnight-card/95 px-4 py-3 shadow-xl backdrop-blur-md">
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-6 print:hidden">
+      <div
+        className="absolute inset-0 bg-midnight/85 backdrop-blur-sm"
+        onClick={kapat}
+        aria-hidden
+      />
+      <div className="relative w-full max-w-sm rounded-3xl border border-gold/40 bg-midnight-card/95 p-6 text-center shadow-2xl">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/icon-192.png" alt="" aria-hidden className="h-9 w-9 shrink-0 rounded-lg" />
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold text-slate-100">{t.pwaBaslik}</p>
-          <p className="text-xs text-slate-400">{t.pwaAlt}</p>
-        </div>
+        <img
+          src="/icon-192.png"
+          alt=""
+          aria-hidden
+          className="mx-auto mb-4 h-20 w-20 rounded-2xl shadow-lg ring-1 ring-gold/30"
+        />
+        <p className="text-lg font-bold text-slate-50">{t.pwaIlkBaslik}</p>
+        <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.pwaIlkAlt}</p>
         <button
           onClick={kur}
-          className="shrink-0 rounded-xl bg-gold px-3 py-2 text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light"
+          className="mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-gold text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light"
         >
-          {t.pwaEkle}
+          {t.pwaIlkEkle}
         </button>
         <button
           onClick={kapat}
-          aria-label={t.pwaKapat}
-          className="shrink-0 px-1 text-lg text-slate-500 hover:text-slate-300"
+          className="mt-2 w-full py-2 text-sm text-slate-400 hover:text-slate-200"
         >
-          ✕
+          {t.pwaIlkSonra}
         </button>
       </div>
     </div>
