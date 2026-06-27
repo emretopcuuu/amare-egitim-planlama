@@ -288,23 +288,12 @@ export default async function AynaPage() {
         </div>
       </header>
 
-      {/* UX #2 — Rapor haritası: uzun rapor için bölümlere atlama. Her bağlantı
-          ilgili bölüme yumuşak kaydırır (scroll-mt anchor'lar). "Buradan başla"
-          en güçlü bölüme götürür — boş sayfa felci yerine yön verir. */}
-      <nav
-        aria-label={t.haritaBaslik}
-        className="yazdir-gizle flex flex-wrap items-center gap-2 rounded-2xl border border-royal-light/20 bg-white/[0.02] px-4 py-3 text-sm"
-      >
-        <span className="mr-1 text-xs font-semibold uppercase tracking-wide text-slate-500">
-          🗺 {t.haritaBaslik}
-        </span>
-        <a href="#r-guclu" className="rounded-full bg-white/5 px-3 py-1 text-slate-200 transition-colors hover:bg-gold/15 hover:text-gold-light">{t.haritaGuclu}</a>
-        <a href="#r-yolculuk" className="rounded-full bg-white/5 px-3 py-1 text-slate-200 transition-colors hover:bg-gold/15 hover:text-gold-light">{t.haritaYolculuk}</a>
-        <a href="#r-tablo" className="rounded-full bg-white/5 px-3 py-1 text-slate-200 transition-colors hover:bg-gold/15 hover:text-gold-light">{t.haritaTablo}</a>
-        <a href="#r-plan" className="rounded-full bg-white/5 px-3 py-1 text-slate-200 transition-colors hover:bg-gold/15 hover:text-gold-light">{t.haritaPlan}</a>
-        <a href="#r-mektup" className="rounded-full bg-white/5 px-3 py-1 text-slate-200 transition-colors hover:bg-gold/15 hover:text-gold-light">{t.haritaMektup}</a>
-        <a href="#r-guclu" className="ml-auto rounded-full bg-gold/20 px-3 py-1 font-semibold text-gold-light transition-colors hover:bg-gold/30">↓ {t.haritaBasla}</a>
-      </nav>
+      {/* S7: Rapor Haritası kaldırıldı; tek "başla" linki yeterli */}
+      <div className="yazdir-gizle text-center">
+        <a href="#r-guclu" className="inline-block rounded-full bg-gold/20 px-4 py-1.5 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/30">
+          ↓ {t.haritaBasla}
+        </a>
+      </div>
 
       {/* C1 Güven: çok az kişi puanladıysa, dış algı ortalaması istatistik olarak
           zayıf — bunu dürüstçe belirt ki sınırlı veri otoriter gerçek sanılmasın. */}

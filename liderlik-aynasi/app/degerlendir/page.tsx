@@ -275,44 +275,53 @@ export default async function DegerlendirPage() {
         )}
       </section>
 
-      {/* Tahmin oyunu */}
-      <section className="kart-cerceve rounded-2xl bg-gradient-to-br from-royal/30 to-midnight-card/60 p-6 shadow-xl ring-1 ring-gold/30 backdrop-blur">
-        <h2 className="text-lg font-semibold text-gold-light">
-          {tr.tahmin.kartBaslik}
-        </h2>
-        {tahmin ? (
-          <p className="mt-2 text-sm text-slate-300">{tr.tahmin.kartTamam}</p>
-        ) : (
-          <>
-            <p className="mt-2 text-sm text-slate-300">{tr.tahmin.kartAciklama}</p>
-            <Link
-              href="/tahmin"
-              className="mt-4 inline-block btn-3d rounded-xl bg-gold px-5 py-2.5 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light"
-            >
-              {tr.tahmin.tahminYap}
-            </Link>
-          </>
-        )}
-      </section>
+      {/* S6: Tahmin + Serbest puanlama katlanır — ana akış Öz→Atananlar */}
+      <details className="group">
+        <summary className="flex cursor-pointer list-none items-center justify-between rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3 text-sm font-semibold text-slate-300">
+          <span>+ Ekstra: Tahmin & Serbest Puanlama</span>
+          <span className="transition-transform group-open:rotate-180 text-slate-500" aria-hidden>▾</span>
+        </summary>
+        <div className="mt-3 space-y-4">
+          {/* Tahmin oyunu */}
+          <section className="kart-cerceve rounded-2xl bg-gradient-to-br from-royal/30 to-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
+            <h2 className="text-base font-semibold text-gold-light">
+              {tr.tahmin.kartBaslik}
+            </h2>
+            {tahmin ? (
+              <p className="mt-2 text-sm text-slate-300">{tr.tahmin.kartTamam}</p>
+            ) : (
+              <>
+                <p className="mt-2 text-sm text-slate-300">{tr.tahmin.kartAciklama}</p>
+                <Link
+                  href="/tahmin"
+                  className="mt-3 inline-block btn-3d rounded-xl bg-gold px-5 py-2.5 font-semibold text-[#1a1206] transition-colors hover:bg-gold-light"
+                >
+                  {tr.tahmin.tahminYap}
+                </Link>
+              </>
+            )}
+          </section>
 
-      {/* Serbest puanlama */}
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-        <h2 className="text-lg font-semibold text-gold-light">
-          {tr.degerlendir.serbestBaslik}
-        </h2>
-        <p className="mt-2 text-sm text-slate-300">{tr.degerlendir.serbestAciklama}</p>
-        <SerbestListe
-          kisiler={serbestler.map((k) => ({
-            id: k.id,
-            ad: k.full_name,
-            takim: k.team,
-            yapilan: puanSayilari.get(k.id) ?? 0,
-            foto: fotoHarita.get(k.id) ?? null,
-          }))}
-          toplam={toplam}
-          kilitli={!ozTamam}
-        />
-      </section>
+          {/* Serbest puanlama */}
+          <section className="kart-3d rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+            <h2 className="text-base font-semibold text-gold-light">
+              {tr.degerlendir.serbestBaslik}
+            </h2>
+            <p className="mt-2 text-sm text-slate-300">{tr.degerlendir.serbestAciklama}</p>
+            <SerbestListe
+              kisiler={serbestler.map((k) => ({
+                id: k.id,
+                ad: k.full_name,
+                takim: k.team,
+                yapilan: puanSayilari.get(k.id) ?? 0,
+                foto: fotoHarita.get(k.id) ?? null,
+              }))}
+              toplam={toplam}
+              kilitli={!ozTamam}
+            />
+          </section>
+        </div>
+      </details>
       </div>
     </main>
   );

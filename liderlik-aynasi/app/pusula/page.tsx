@@ -136,21 +136,20 @@ export default async function PusulaSayfa() {
           {kampTarihi && <GeriSayim hedefZaman={kampTarihi} etiket={t.kampaKalan} />}
         </div>
 
-        {/* Kampta seni neler bekliyor — merak tohumu */}
+        {/* S9: Kilitli maddeler gerçek başlıkla — "Kampta açılır" chip kaldırıldı */}
         <div className="rounded-2xl border border-white/5 bg-white/[0.02] p-4">
           <p className="mb-2.5 text-[0.7rem] font-semibold uppercase tracking-wide text-slate-500">
             ✨ {t.kilitBaslik}
           </p>
           <div className="space-y-2">
-            {[t.kilit1, t.kilit2, t.kilit3].map((m) => (
-              <div key={m} className="flex items-center gap-3 rounded-xl bg-black/20 px-3 py-2.5">
-                <span className="text-base" aria-hidden>
-                  🔒
-                </span>
-                <span className="flex-1 text-sm text-slate-400">{m}</span>
-                <span className="shrink-0 text-[0.6rem] uppercase tracking-wide text-slate-600">
-                  {t.kilitNot}
-                </span>
+            {[
+              { ikon: "🎙", metin: t.kilit1 },
+              { ikon: "👁", metin: t.kilit2 },
+              { ikon: "🤖", metin: t.kilit3 },
+            ].map(({ ikon, metin }) => (
+              <div key={metin} className="flex items-center gap-3 rounded-xl bg-black/20 px-3 py-2.5">
+                <span className="text-base" aria-hidden>{ikon}</span>
+                <span className="flex-1 text-sm text-slate-300">{metin}</span>
               </div>
             ))}
           </div>

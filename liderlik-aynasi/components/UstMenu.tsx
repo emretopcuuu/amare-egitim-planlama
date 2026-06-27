@@ -40,17 +40,13 @@ export default function UstMenu({
   birincil.push({ href: "/soz", etiket: t.menuSoz });
 
   // EKSTRA: sosyal ve ikincil her şey (küçük, ikişerli ızgara).
+  // S4: Anlar/Turnuva/Ortak/Mini360/Plan kaldırıldı — erişilmez veya kenar özellikler.
   const ekstra: { href: string; etiket: string }[] = [
     { href: "/ben", etiket: t.menuBen },
     { href: "/gunluk", etiket: t.menuGunluk },
-    { href: "/plan", etiket: t.menuPlan },
     { href: "/grup", etiket: t.menuGrup },
-    { href: "/mini360", etiket: t.menuMini360 },
     { href: "/ayna-esi", etiket: t.menuAynaEsi },
-    { href: "/anlar", etiket: t.menuAnlar },
-    { href: "/turnuva", etiket: t.menuTurnuva },
     { href: "/takdir", etiket: t.menuTakdir },
-    { href: "/ortak", etiket: t.menuOrtak },
     { href: "/program", etiket: t.menuProgram },
     { href: "/gizlilik", etiket: t.menuGizlilik },
   ];
