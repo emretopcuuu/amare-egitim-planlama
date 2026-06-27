@@ -4,7 +4,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { coreIdFuzzyEslesir, gecerliEgitmenMi } from '../utils/egitmenFotoMatch';
 import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, User, Search, X, Loader2, Star, RotateCw, SlidersHorizontal, ArrowDownUp, LayoutGrid, List, Sparkles, ArrowRight, Calendar, Eye, TrendingUp, Zap } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { ArrowLeft, User, Search, X, Loader2, Star, RotateCw, SlidersHorizontal, ArrowDownUp, LayoutGrid, List, Sparkles, ArrowRight, Calendar, Eye, TrendingUp, Zap, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import LoadingProgress from '../components/LoadingProgress';
 import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
@@ -63,6 +64,15 @@ const tierBilgi = (idx) => {
 };
 // "PRESIDENTIAL DIAMOND" → "Presidential Diamond" (İngilizce rütbe adları — düz casing, "Dıamond" olmasın)
 const rutbeYazi = (r) => (r || '').toLowerCase().replace(/(^|\s)\S/g, c => c.toUpperCase());
+// Rütbeye göre foto halkası rengi (hiyerarşi pekişir)
+const rutbeHalka = (idx) => {
+  if (idx >= 13) return 'border-fuchsia-300';
+  if (idx >= 10) return 'border-amber-300';
+  if (idx >= 9) return 'border-cyan-300';
+  if (idx >= 6) return 'border-indigo-300';
+  if (idx >= 2) return 'border-purple-300/60';
+  return 'border-purple-300/40';
+};
 
 const splitEgitmen = (e) => {
   if (!e) return [];
@@ -89,6 +99,7 @@ const KonusmacilarSayfasi = () => {
   const aramaRef = useRef(null);
   const { takipSet, toggle: takipToggle, count: favSayisi } = useTakipEgitmenler();
   const { toast } = useToast();
+  const { email: girisEmail } = useAuth();
 
   // Klavye kısayolları
   useKeyboardShortcuts({
@@ -291,6 +302,22 @@ const KonusmacilarSayfasi = () => {
     return map;
   }, [takvim, tumKonusmacilar]);
 
+  // #9 — Keşif: yaklaşan eğitimi olan eğitmenler (en yakın tarih)
+  const yaklasanEgitmenler = useMemo(() => {
+    const parse = (t) => { const p = String(t || '').split('.').map(Number); if (p.length !== 3 || p.some(isNaN)) return null; const d = new Date(p[2], p[1] - 1, p[0]); return isNaN(d.getTime()) ? null : d; };
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    const map = new Map();
+    (takvim || []).forEach(e => {
+      const d = parse(e.tarih); if (!d || d < now) return;
+      splitEgitmen(e.egitmen).filter(gecerliEgitmenMi).forEach(ad => {
+        const c = makeCoreId(ad); if (!c) return;
+        const cur = map.get(c); if (!cur || d < cur.dt) map.set(c, { dt: d, egitim: e.egitim });
+      });
+    });
+    const byCore = new Map(tumKonusmacilar.map(k => [makeCoreId(k.ad), k]));
+    return [...map.entries()].map(([c, v]) => ({ cid: c, k: byCore.get(c), ...v })).filter(x => x.k).sort((a, b) => a.dt - b.dt).slice(0, 14);
+  }, [takvim, tumKonusmacilar]);
+
   // #4 — Hızlı favori toggle — modal açmadan
   const favToggle = (e, k) => {
     e.stopPropagation();
@@ -429,6 +456,26 @@ const KonusmacilarSayfasi = () => {
       {/* Grid / Liste */}
       <div className="px-4 py-6 pb-bottom-nav">
         <div className="container mx-auto max-w-7xl">
+          {/* #9 — Keşif: yaklaşan eğitimi olan eğitmenler (sadece arama/filtre yokken) */}
+          {!arama.trim() && rutbeFiltre == null && !sadeceFav && yaklasanEgitmenler.length > 0 && (
+            <div className="mb-5">
+              <div className="text-amber-300 text-xs font-bold uppercase tracking-wider mb-2 inline-flex items-center gap-1.5"><Calendar className="w-4 h-4" />Yaklaşan eğitimi olan eğitmenler</div>
+              <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
+                {yaklasanEgitmenler.map(x => (
+                  <button key={x.cid} onClick={() => navigate(`/lider/${x.cid}`)} className="flex-shrink-0 w-[72px] text-center group spring-tap">
+                    <div className="relative w-16 h-16 mx-auto">
+                      {x.k.kayit?.fotoURL
+                        ? <LazyImage src={x.k.kayit.fotoURL} alt={x.k.ad} className="w-16 h-16 rounded-full object-top border-2 border-amber-300/50 group-hover:border-amber-400 transition-all" />
+                        : <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center border-2 border-amber-300/40"><User className="w-7 h-7 text-white/40" /></div>}
+                      <span className="absolute -bottom-1 left-1/2 -translate-x-1/2 text-[8px] font-extrabold text-purple-900 bg-amber-400 px-1.5 py-0.5 rounded-full whitespace-nowrap shadow">{x.dt.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })}</span>
+                    </div>
+                    <div className="mt-1.5 text-[10px] text-white/80 leading-tight line-clamp-2">{x.k.kayit?.ad || x.k.ad}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* #6 — İstatistik şeridi + veri tamamlanma (test) */}
           {istatistik.veriOlan > 0 && (
             <div className="mb-4 flex flex-wrap items-center gap-2">
@@ -449,17 +496,23 @@ const KonusmacilarSayfasi = () => {
                   <button onClick={() => setRutbeFiltre(null)} className="text-[11px] text-purple-200 hover:text-white inline-flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-full"><X className="w-3 h-3" />filtreyi kaldır</button>
                 )}
               </div>
-              <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-                {Object.keys(istatistik.ortRutbe).map(Number).sort((a, b) => a - b).map(i => {
-                  const sel = rutbeFiltre === i;
-                  return (
-                    <button key={i} onClick={() => setRutbeFiltre(sel ? null : i)}
-                      className={`flex-shrink-0 rounded-xl border px-3 py-2 text-center min-w-[96px] transition-all spring-tap ${rutbeStil(i)} ${sel ? 'ring-2 ring-amber-400 scale-105' : 'hover:brightness-125'}`}>
-                      <div className="text-[10px] font-bold leading-tight line-clamp-1">{rutbeYazi(KARIYER_BASAMAKLARI[i])}</div>
-                      <div className="text-sm font-extrabold mt-0.5">~{sureMetni(istatistik.ortRutbe[i])}</div>
-                    </button>
-                  );
-                })}
+              <div className="relative">
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 pr-6">
+                  {Object.keys(istatistik.ortRutbe).map(Number).sort((a, b) => a - b).map(i => {
+                    const sel = rutbeFiltre === i;
+                    return (
+                      <button key={i} onClick={() => setRutbeFiltre(sel ? null : i)}
+                        className={`flex-shrink-0 rounded-xl border px-3 py-2 text-center min-w-[96px] transition-all spring-tap ${rutbeStil(i)} ${sel ? 'ring-2 ring-amber-400 scale-105' : 'hover:brightness-125'}`}>
+                        <div className="text-[10px] font-bold leading-tight line-clamp-1">{rutbeYazi(KARIYER_BASAMAKLARI[i])}</div>
+                        <div className="text-sm font-extrabold mt-0.5">~{sureMetni(istatistik.ortRutbe[i])}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* sağ kenar fade — kaydırılabilir olduğunu belli eder */}
+                <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-purple-950/90 to-transparent flex items-center justify-end">
+                  <ChevronRight className="w-4 h-4 text-amber-300/70 animate-pulse" />
+                </div>
               </div>
               <div className="text-[10px] text-purple-300/60 mt-2">Hangi kariyere ortalama ne kadar sürede ulaşıldı · {istatistik.veriOlan} liderin verisiyle · rütbeye tıkla → filtrele <span className="text-red-300/80">(tüm kayıtlar henüz dolmadığı için test aşamasındadır)</span></div>
             </div>
@@ -536,19 +589,20 @@ const KonusmacilarSayfasi = () => {
                 const isFav = cid && takipSet.has(cid);
                 const sonEg = sonEgitimMap.get(cid);
                 const info = kariyerMap.get(cid);
+                const benim = !!girisEmail && !!kayit?.email && girisEmail.toLowerCase() === String(kayit.email).toLowerCase();
                 return (
                   <button key={ad} onClick={() => navigate(`/lider/${makeCoreId(ad)}`)}
-                    className="relative w-full bg-white/5 hover:bg-white/12 border border-white/10 hover:border-amber-400/60 rounded-xl p-3 sm:p-4 transition-all spring-tap text-left flex items-center gap-3 sm:gap-4 group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+                    className={`relative w-full rounded-xl p-3 sm:p-4 transition-all spring-tap text-left flex items-center gap-3 sm:gap-4 group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${benim ? 'bg-amber-400/10 border-2 border-amber-400/70' : 'bg-white/5 hover:bg-white/12 border border-white/10 hover:border-amber-400/60'}`}>
                     {kayit?.fotoURL ? (
                       <LazyImage src={kayit.fotoURL} alt={kayit.ad || ad}
-                        className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-top border-2 border-purple-300/40 group-hover:border-amber-400 transition-all flex-shrink-0" />
+                        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full object-top border-2 group-hover:border-amber-400 transition-all flex-shrink-0 ${rutbeHalka(info?.rankIdx ?? -1)}`} />
                     ) : (
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 flex items-center justify-center border-2 border-purple-300/40 group-hover:border-amber-400 transition-all flex-shrink-0" aria-hidden="true">
+                      <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/10 flex items-center justify-center border-2 group-hover:border-amber-400 transition-all flex-shrink-0 ${rutbeHalka(info?.rankIdx ?? -1)}`} aria-hidden="true">
                         <User className="w-7 h-7 text-white/40" />
                       </div>
                     )}
                     <div className="flex-1 min-w-0">
-                      <div className="text-white font-bold text-sm sm:text-base leading-tight truncate">{kayit?.ad || ad}</div>
+                      <div className="text-white font-bold text-sm sm:text-base leading-tight truncate">{kayit?.ad || ad}{benim && <span className="ml-2 text-[9px] font-extrabold text-purple-900 bg-amber-400 px-1.5 py-0.5 rounded-full align-middle">★ BU SENSİN</span>}</div>
                       <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                         {info?.kariyer
                           ? <span className={`inline-block text-[10px] font-bold px-2 py-0.5 rounded-full border ${rutbeStil(info.rankIdx)}`}>{rutbeYazi(info.kariyer)}</span>
@@ -558,6 +612,7 @@ const KonusmacilarSayfasi = () => {
                       </div>
                       <div className="text-[11px] text-purple-200/70 mt-1 truncate">
                         {egitimSayisi} {t('trainers_count_label')}
+                        {kayit?.sehir && <> · <span className="inline-flex items-center gap-0.5"><MapPin className="w-2.5 h-2.5" />{kayit.sehir}</span></>}
                         {sonEg?.egitim && <> · <span className="italic">Son: {sonEg.egitim}</span></>}
                       </div>
                     </div>
@@ -592,6 +647,7 @@ const KonusmacilarSayfasi = () => {
                     const sonEg = sonEgitimMap.get(cid);
                     const isHovered = hoverId === cid;
                     const info = kariyerMap.get(cid);
+                    const benim = !!girisEmail && !!kayit?.email && girisEmail.toLowerCase() === String(kayit.email).toLowerCase();
                     // #7 — Rütbe sıralamasında kademe başlıkları
                     if (siralama === 'rutbe') {
                       const tb = tierBilgi(info?.rankIdx);
@@ -609,12 +665,14 @@ const KonusmacilarSayfasi = () => {
                         onMouseEnter={() => setHoverId(cid)}
                         onMouseLeave={() => setHoverId(null)}>
                         <button onClick={() => navigate(`/lider/${makeCoreId(ad)}`)}
-                          className="relative w-full min-h-[182px] flex flex-col items-center bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-400 rounded-xl p-3 transition-all hover-lift spring-tap text-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+                          className={`relative w-full min-h-[182px] flex flex-col items-center rounded-xl p-3 transition-all hover-lift spring-tap text-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${benim ? 'bg-amber-400/10 border-2 border-amber-400/70' : 'bg-white/5 hover:bg-white/15 border border-white/10 hover:border-amber-400'}`}>
+                          {/* #7 — Bu sensin rozeti */}
+                          {benim && <span className="absolute top-2 left-2 z-10 text-[9px] font-extrabold text-purple-900 bg-amber-400 px-1.5 py-0.5 rounded-full">★ BU SENSİN</span>}
                           {kayit?.fotoURL ? (
                             <LazyImage src={kayit.fotoURL} alt={kayit.ad || ad}
-                              className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-top border-2 border-purple-300/40 shadow-sm group-hover:border-amber-400 group-hover:scale-105 transition-all" />
+                              className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full object-top border-2 shadow-sm group-hover:border-amber-400 group-hover:scale-105 transition-all ${rutbeHalka(info?.rankIdx ?? -1)}`} />
                           ) : (
-                            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/10 flex items-center justify-center border-2 border-purple-300/40 group-hover:border-amber-400 group-hover:scale-105 transition-all" aria-hidden="true">
+                            <div className={`w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-white/10 flex items-center justify-center border-2 group-hover:border-amber-400 group-hover:scale-105 transition-all ${rutbeHalka(info?.rankIdx ?? -1)}`} aria-hidden="true">
                               <User className="w-10 h-10 text-white/40" />
                             </div>
                           )}
@@ -627,7 +685,8 @@ const KonusmacilarSayfasi = () => {
                           ) : kayit?.unvan ? (
                             <div className="text-[10px] text-amber-300 mt-0.5 line-clamp-1">{kayit.unvan}</div>
                           ) : null}
-                          <div className="mt-auto pt-1 text-[10px] text-purple-200">{egitimSayisi} {t('trainers_count_label')}</div>
+                          {kayit?.sehir && <div className="mt-0.5 text-[9px] text-purple-200/60 inline-flex items-center gap-0.5"><MapPin className="w-2.5 h-2.5" />{kayit.sehir}</div>}
+                          <div className="mt-auto pt-1 text-[10px] text-purple-200">{benim ? 'Profilini düzenle →' : `${egitimSayisi} ${t('trainers_count_label')}`}</div>
                         </button>
                         {/* #4 — Hızlı favori toggle (kart üstünde) */}
                         <button onClick={(e) => favToggle(e, { ad, kayit })}
