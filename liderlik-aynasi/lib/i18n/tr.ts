@@ -1242,15 +1242,17 @@ export const tr = {
   // ÖN FARKINDALIK — kamp öncesi Ayna/Kalibrasyon çalışması (Faz A: Katman 1)
   onFarkindalik: {
     baslik: "Liderlik Aynası",
-    girisBaslik: "Ne düşündüğünü değil, ne yaptığını gösterir",
+    // Pusula'dan sonra bu modüle geçişi YUMUŞAT: "sırada bu var" köprüsü.
+    girisUst: "SIRADA · KAMP ÖNCESİ",
+    girisBaslik: "Sırada: Öz Farkındalık",
     girisMetin:
-      "Bu bir kişilik testi değil — bir ayna. Amacı seni etiketlemek değil, kampa gelmeden nerede tıkandığını sana göstermek. Gücü tek şeye bağlı: dürüstlüğüne. Acelesi yok; günde birkaç madde yeter.",
+      "Nedenlerini çıkardın — şimdi sıra kendini biraz daha yakından tanımakta. Bu bir kişilik testi değil, bir ayna: ne düşündüğünü değil, ne yaptığını gösterir. Amacı, kampa gelmeden nerede tıkandığını sana göstermek. Gücü tek şeye bağlı: dürüstlüğüne. Tek oturuşta bitirmek zorunda değilsin — cevapların kaydedilir, dilediğin an kaldığın yerden devam edersin. Önemli olan: kamp başlamadan tamamlaman.",
     girisKazanimlar: [
       "Güçlü alanını ve kör noktanı net göreceksin.",
       "Kampta sana özel görevler bu cevaplara göre şekillenecek.",
-      "Üç gün sonra ne kadar yol aldığını sayılarla göreceksin.",
+      "Tek seferde bitirmek zorunda değilsin — kaldığın yerden devam edersin.",
     ],
-    girisDevam: "Başla",
+    girisDevam: "Hazırım, başla →",
     olcek: {
       1: "Hiçbir zaman",
       2: "Nadiren",
@@ -1277,15 +1279,15 @@ export const tr = {
     devam: "Devam",
     geri: "Geri",
     geriDon: "Ana sayfaya dön",
-    kismiNot: "İstediğin kadarını şimdi yap — kalanını sonra ekleyebilirsin.",
+    kismiNot: "İstediğin kadarını şimdi yap; kaldığın yerden devam edersin. Yeter ki kamp başlamadan tamamla.",
     enAzBir: "Kaydetmek için en az bir madde işaretle.",
     hata: "Kaydedilemedi. Lütfen tekrar dene.",
     // Tamam ekranı
     tamamBaslik: "Bu bölümü tamamladın 👁",
     tamamMetin:
-      "İlk katmanı bitirdin. Kalan adımlar kamp yaklaştıkça açılacak — her gün küçük bir parça.",
+      "Hepsini tamamladın. Kampta sana özel görevler bu cevaplara göre şekillenecek — kamp başlamadan bitirdiğin için hazırsın.",
     devamBaslik: "Kaldığın yerden devam",
-    devamMetin: "Birkaç madde daha işaretle; acelesi yok.",
+    devamMetin: "Hepsini bir oturuşta bitirmek zorunda değilsin — kaldığın yerden devam et. Yeter ki kamp başlamadan tamamla.",
     guvenBaslik: "Bir an dur 👁",
     guvenMetin:
       "Cevaplarının çoğu birbirine çok yakın çıktı. Bu ayna ancak dürüstlüğünle çalışır — istersen ilk maddelere bir kez daha, gerçekten yaptığını düşünerek bak.",
