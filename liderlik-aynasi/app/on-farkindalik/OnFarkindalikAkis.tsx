@@ -74,14 +74,9 @@ export default function OnFarkindalikAkis({
 }) {
   const router = useRouter();
   const [yanitlar, setYanitlar] = useState<Record<string, number>>({ ...baslangicSayi });
-  // Sonuç Kartı'nı profil önerisiyle pre-fill et (boşsa) — düzenlenebilir.
-  const [metinler, setMetinler] = useState<Record<string, string>>(() => {
-    const m = { ...baslangicMetin };
-    for (const kod of SONUC_KODLAR) {
-      if (!(m[kod] ?? "").trim() && (oneri[kod] ?? "").trim()) m[kod] = oneri[kod];
-    }
-    return m;
-  });
+  // Sonuç Kartı alanları artık ÖN-DOLU DEĞİL (kişi "bu benim mi, öneri mi?"
+  // diye karışmasın). Öneri, alanın üstünde "Bunu kullan" ile sunulur (aşağıda).
+  const [metinler, setMetinler] = useState<Record<string, string>>({ ...baslangicMetin });
   const [giris, setGiris] = useState(
     Object.keys(baslangicSayi).length === 0 && Object.keys(baslangicMetin).length === 0
   );
@@ -494,6 +489,7 @@ export default function OnFarkindalikAkis({
             zorunlu={a.zorunlu}
             deger={metinler[a.kod] ?? ""}
             onDegis={(v) => setMetin(a.kod, v)}
+            oneri={SONUC_KODLAR.has(a.kod) ? (oneri[a.kod] ?? "").trim() : ""}
           />
         )}
 
@@ -532,12 +528,14 @@ function MetinAdim({
   metin,
   deger,
   onDegis,
+  oneri = "",
 }: {
   kod: string;
   metin: string;
   zorunlu: boolean;
   deger: string;
   onDegis: (v: string) => void;
+  oneri?: string;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   useEffect(() => {
@@ -551,6 +549,23 @@ function MetinAdim({
       <h1 className="prizma-serif text-xl font-semibold leading-snug text-slate-50">{metin}</h1>
       {METIN_IPUCLARI[kod] && (
         <p className="mt-2 text-sm leading-relaxed text-slate-400">{METIN_IPUCLARI[kod]}</p>
+      )}
+      {/* Profil önerisi: kendi cümlen değil, BİZİM önerimiz — istersen kullan,
+          istersen sıfırdan yaz. Alan boşken görünür; "Bunu kullan" doldurur. */}
+      {oneri && !deger.trim() && (
+        <div className="mt-3 rounded-2xl border border-gold/25 bg-gold/[0.06] p-3 text-left">
+          <p className="text-xs font-semibold uppercase tracking-wide text-gold-light">
+            💡 {t.oneriBaslik}
+          </p>
+          <p className="mt-1 text-sm italic leading-relaxed text-slate-200">“{oneri}”</p>
+          <button
+            type="button"
+            onClick={() => onDegis(oneri)}
+            className="mt-2 rounded-lg border border-gold/40 px-3 py-1.5 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10"
+          >
+            {t.oneriKullan}
+          </button>
+        </div>
       )}
       <textarea
         ref={ref}
