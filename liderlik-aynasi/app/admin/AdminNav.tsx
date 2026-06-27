@@ -12,8 +12,8 @@ const n = tr.admin.nav;
 const g = tr.admin.navGrup;
 const k = tr.admin.ux.kokpit;
 
-// FUNNEL NAVİGASYONU: Panel + kampın YOLCULUĞUNA göre 4 aşama (açılır menü).
-// Türe göre değil zamana göre: Hazırlık → Katılım → Kamp Canlı → Final & Sonrası.
+// FUNNEL NAVİGASYONU: Panel + kampın YOLCULUĞUNA göre 4 grup (açılır menü).
+// Türe göre değil zamana göre: Hazırlık → Kamp Canlı → Final → Sistem.
 // Operatör soldan sağa okur = süreçte ilerler; aradığı aracı aşamasından bulur.
 type NavLink = { href: string; etiket: string };
 const PANEL: NavLink = { href: "/admin", etiket: n.panel };
@@ -22,60 +22,37 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
     ad: g.hazirlik,
     ikon: "🧰",
     linkler: [
-      // Panel'den taşınan KONTROL anahtarları en üstte (işi yapan)
-      { href: "/admin/kontrol/hazirlik#pusula", etiket: n.kPusula },
-      { href: "/admin/kontrol/hazirlik#onfark", etiket: n.kOnfark },
+      { href: "/admin/kontrol", etiket: n.kontrol },
       { href: "/admin/kurulum", etiket: n.kurulum },
       { href: "/admin/katilimcilar", etiket: n.katilimcilar },
-      { href: "/admin/eslestirme", etiket: n.eslestirme },
+      { href: "/admin/eslestirmeler", etiket: n.eslestirmeler },
+      { href: "/admin/gonder", etiket: n.gonder },
       { href: "/admin/qr", etiket: n.qr },
       { href: "/admin/yansima", etiket: n.yansima },
       { href: "/admin/kiosk", etiket: n.kiosk },
-      { href: "/admin/program", etiket: n.program },
       { href: "/admin/icerik", etiket: n.icerik },
-      { href: "/admin/gorev-turleri", etiket: n.gorevTuru },
-      { href: "/admin/test", etiket: n.test },
-    ],
-  },
-  {
-    ad: g.katilim,
-    ikon: "🎯",
-    linkler: [
-      { href: "/admin/farkindalik", etiket: n.farkindalik },
-      { href: "/admin/ayna-esi", etiket: n.aynaEsi },
-      { href: "/admin/whatsapp", etiket: n.whatsapp },
     ],
   },
   {
     ad: g.canli,
     ikon: "🎬",
     linkler: [
-      // Panel'den taşınan KONTROL anahtarları en üstte
-      { href: "/admin/kontrol/canli#dalga", etiket: n.kDalga },
-      { href: "/admin/kontrol/canli#hedef", etiket: n.kHedef },
-      // Kamp Komuta (direktör + komutan + sahne) tek girişten — alt sekmelerle gezilir
+      { href: "/admin/kontrol#dalga", etiket: n.kDalga },
       { href: "/admin/ayna-direktoru", etiket: n.komuta },
-      { href: "/admin/duyuru", etiket: n.duyuru },
+      { href: "/admin/sahne", etiket: n.sahne },
       { href: "/admin/moderasyon", etiket: n.moderasyon },
       { href: "/admin/canli-ayna", etiket: n.canliAyna },
-      { href: "/admin/analiz", etiket: n.analiz },
-      { href: "/admin/ayna-saglik", etiket: n.aynaSaglik },
+      { href: "/admin/saglik", etiket: n.saglik },
       { href: "/admin/mentorluk", etiket: n.mentorluk },
-      { href: "/admin/takim", etiket: n.takim },
       { href: "/admin/grup-odev", etiket: n.grupOdev },
-      { href: "/admin/sunum", etiket: n.sunum },
     ],
   },
   {
     ad: g.final,
     ikon: "🏁",
     linkler: [
-      // Panel'den taşınan KONTROL anahtarları en üstte
-      { href: "/admin/kontrol/final#bosluk", etiket: n.kBosluk },
-      { href: "/admin/kontrol/final#rapor", etiket: n.kRapor },
-      { href: "/admin/kontrol/final#muhur", etiket: n.kMuhur },
-      { href: "/admin/kontrol/final#soz", etiket: n.kSoz },
-      { href: "/admin/kontrol/final#sonrasi", etiket: n.kSonrasi },
+      { href: "/admin/kontrol#bosluk", etiket: n.kBosluk },
+      { href: "/admin/ayna-saglik", etiket: n.aynaSaglik },
       { href: "/admin/sozler", etiket: n.sozler },
       { href: "/admin/elmas", etiket: n.elmas },
     ],
@@ -86,6 +63,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
     linkler: [
       { href: "/admin/sistem#prova", etiket: n.sProva },
       { href: "/admin/sistem#zamanlama", etiket: n.sZamanlama },
+      { href: "/admin/sistem#araclar", etiket: n.sAraclar },
       { href: "/admin/sistem#kod", etiket: n.sKod },
       { href: "/admin/sistem#yedek", etiket: n.sYedek },
       { href: "/admin/sistem#yeni-kamp", etiket: n.sYeniKamp },

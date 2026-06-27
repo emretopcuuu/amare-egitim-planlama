@@ -6,6 +6,7 @@ import { acikDalga, aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { hedefKapisiAcik } from "@/lib/hedef";
 import { kampOncesiAdim } from "@/lib/akis";
+import { KAMP_GUNLERI } from "@/lib/kampProgrami";
 import { sozTakipAktif, sahitSayim } from "@/lib/sozTakip";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
@@ -15,17 +16,13 @@ import GeriSayim from "@/components/GeriSayim";
 import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
 import MuhurTuru from "@/components/MuhurTuru";
-import YolculukSeridi from "@/components/YolculukSeridi";
 import YolculukHaritasi from "@/components/YolculukHaritasi";
 import KampHud from "@/components/KampHud";
 import GorusmeSimdi from "@/components/GorusmeSimdi";
 import GunProgramKarti from "@/components/GunProgramKarti";
-import MomentumGostergesi from "@/components/MomentumGostergesi";
 import KonusanYansima from "@/components/KonusanYansima";
-import AynaAniKarti from "@/components/AynaAniKarti";
 import SicakAdim from "@/components/SicakAdim";
 import UstMenu from "@/components/UstMenu";
-import ToplulukNabzi from "@/components/ToplulukNabzi";
 import { SiradakiOnizleme } from "@/components/AsamaRayi";
 
 const t = tr.anaSayfa;
@@ -417,15 +414,18 @@ export default async function AnaSayfa({
       {/* B3: Pusula sloganı — her gün görünür kimlik çapası */}
       {kisiSlogan && (
         <p className="prizma-serif ay-metin mt-2 text-sm font-medium italic leading-snug text-gold-light/90">
-          “{kisiSlogan}”
+          &ldquo;{kisiSlogan}&rdquo;
         </p>
       )}
-      {/* #5 "Sen neredesin" — kampın neresindeyiz şeridi (takvim günü) */}
-      <YolculukSeridi bugun={bugunIst} />
-      {/* Üst seviye #6 — kişisel faz yolculuğu: ritüel → … → ayna */}
+      {/* S1: YolculukSeridi kaldırıldı; gün etiketi haritanın içine taşındı */}
       <div className="mt-2">
         <YolculukHaritasi
           siradaEtiket={tr.yolculuk.sirada}
+          gunEtiketi={
+            (KAMP_GUNLERI as readonly string[]).includes(bugunIst)
+              ? `Gün ${(KAMP_GUNLERI as readonly string[]).indexOf(bugunIst) + 1}`
+              : undefined
+          }
           fazlar={[
             { ad: tr.yolculuk.faz.rituel, tamam: !!sesVarRow },
             { ad: tr.yolculuk.faz.oyun, tamam: !!kisi?.team },
@@ -437,36 +437,20 @@ export default async function AnaSayfa({
           ]}
         />
       </div>
-      {/* UX #9 (2.tur): Kamp HUD'u — o anki blok + kalan süre + sırada ne var.
-          Cumartesi'de grup üyesine grubunun gerçek bloğu gösterilir. */}
-      <KampHud takim={takim} />
-      {/* Canlı "şimdi görüşmen" — Ayna Eşin görüşmesinin saati gelince belirir */}
-      <GorusmeSimdi gorusmeler={gorusmeListe} />
-      {/* B2: ikincil widget'lar tek kahraman kartı aşağı itmesin — katlanır
-          "Bugünün panosu" altında toplanır (varsayılan kapalı). */}
-      <details className="group mt-3">
-        <summary className="flex cursor-pointer list-none items-center justify-between rounded-xl border border-royal-light/20 bg-white/[0.02] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
-          <span>📊 {t.panoBaslik}</span>
-          <span className="transition-transform group-open:rotate-180" aria-hidden>▾</span>
-        </summary>
-        <div className="mt-3 space-y-3">
-          {/* Topluluk nabzı — yalnız değilsin hissi */}
-          <ToplulukNabzi />
-          {/* #3 Ayna Anı — kamp öncesi kör nokta cümlesini bugünkü çabayla yüzleştirir */}
-          <AynaAniKarti />
-          {/* #5 Momentum göstergesi — haftalık davranış-momentum (skor varsa) */}
-          <MomentumGostergesi skor={momentumSkor} onceki={momentumOnceki} />
-          {/* #10 Günün Cümlesi — admin'in seçtiği davranışsal-dil cümlesi */}
-          {gununCumlesi && (
-            <div className="rounded-xl border border-gold/25 bg-gold/[0.06] px-4 py-2.5">
-              <p className="text-sm italic leading-relaxed text-slate-200">
-                <span className="mr-1">🗣</span>
-                {gununCumlesi}
-              </p>
-            </div>
-          )}
+      {/* S8: KampHud + GorusmeSimdi tek "şu an" bloğu */}
+      <div className="space-y-1.5">
+        <KampHud takim={takim} />
+        <GorusmeSimdi gorusmeler={gorusmeListe} />
+      </div>
+      {/* S2: Pano sadeleşti — sadece Günün Cümlesi (admin seçimi) inline kalır */}
+      {gununCumlesi && (
+        <div className="mt-3 rounded-xl border border-gold/25 bg-gold/[0.06] px-4 py-2.5">
+          <p className="text-sm italic leading-relaxed text-slate-200">
+            <span className="mr-1">🗣</span>
+            {gununCumlesi}
+          </p>
         </div>
-      </details>
+      )}
     </div>
   );
 
@@ -604,7 +588,7 @@ export default async function AnaSayfa({
       <Sayfa ust={ust} program={<GunProgramKarti takim={takim} />}>
         <BuyukKart
           baslik={t.gorevTekBaslik}
-          metin={siradakiGorevBasligi ? `“${siradakiGorevBasligi}”` : t.gorevTekMetin}
+          metin={siradakiGorevBasligi ? `"${siradakiGorevBasligi}"` : t.gorevTekMetin}
           href="/gorevler"
           dugme={t.gorevTekDugme(gorevSayisi)}
           ikon="🤖"
@@ -634,9 +618,11 @@ export default async function AnaSayfa({
         {/* #4 Sıradaki dalgaya geri sayım: yalnızca zamanlama ayarlıysa */}
         {sonrakiDalgaZamani && <GeriSayim hedefZaman={sonrakiDalgaZamani} />}
         <div className="mt-6 space-y-3">
-          {/* UX #10: her durumda TEK net sonraki adım — "şimdi ne yapayım?" cevabı koçta */}
+          {/* S10: dalga kapalıyken Koç zaten alt çubukta — burada tek öneri yeterli */}
           <SicakAdim href="/kocu" etiket={t.bekleKocu} vurgu />
-          <SicakAdim href="/takdir" etiket={t.bekleEylem} />
+          {(bugunTakdir ?? 0) > 0 && (
+            <SicakAdim href="/takdir" etiket={t.bekleEylem} />
+          )}
         </div>
       </div>
     </Sayfa>

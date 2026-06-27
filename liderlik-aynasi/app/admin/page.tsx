@@ -39,7 +39,6 @@ import OneriButonu from "./OneriButonu";
 import BasitEylem from "./BasitEylem";
 import GecisHazirlik from "./GecisHazirlik";
 import CanliSayac from "./CanliSayac";
-import BasitIlkIpucu from "./BasitIlkIpucu";
 import Link from "next/link";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
@@ -245,13 +244,7 @@ export default async function AdminPanel() {
   // Aktif aşamanın tüm kontrollerini barındıran menü sayfası (panel yalnız
   // o aşamanın anahtarlarını gösterir; gerisi bu sayfada).
   const kontrolSayfa =
-    aktifAsama <= 2
-      ? "/admin/kontrol/hazirlik"
-      : aktifAsama === 3
-        ? "/admin/kontrol/canli"
-        : aktifAsama === 4
-          ? "/admin/kontrol/final"
-          : "/admin/sistem";
+    aktifAsama <= 4 ? "/admin/kontrol" : "/admin/sistem";
 
   // UX #4+#9 — Bu aşamaya hazırlık skoru + geçiş checklist'i.
   const hazirTamamSayi = funnel.adimlar.find((a) => a.anahtar === "onfark")?.sayi ?? 0;
@@ -351,9 +344,6 @@ export default async function AdminPanel() {
           {tr.admin.yardimci.banner}
         </p>
       )}
-
-      {/* Basit #10 — ilk girişte tek seferlik "nasıl çalışır" ipucu */}
-      <BasitIlkIpucu />
 
       {/* #2 HERO: "Şimdi ne yapmalıyım?" — adminin o an basması gereken TEK
           adım, sayfanın en üstünde. #4 Tek vurgu kuralı: altın + parıltı
@@ -702,8 +692,8 @@ export default async function AdminPanel() {
           {aktifAsama === 5 && (
             <p className="rounded-xl border border-white/5 bg-white/[0.02] px-4 py-6 text-center text-sm text-slate-400">
               Kamp tamamlandı — bu aşamada panelde anahtar yok. Kapanış kontrolleri{" "}
-              <Link href="/admin/kontrol/final" className="text-royal-light hover:underline">
-                4 · Final
+              <Link href="/admin/kontrol" className="text-royal-light hover:underline">
+                Kontroller
               </Link>{" "}
               menüsünde, kamp sonrası araçlar oradadır.
             </p>
