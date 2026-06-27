@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { tr } from "@/lib/i18n/tr";
 import KomutPaleti from "./KomutPaleti";
+import KlavyeKisayollari from "./KlavyeKisayollari";
 import TemaDugmesi from "@/components/TemaDugmesi";
 
 const n = tr.admin.nav;
@@ -80,6 +81,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
 export default function AdminNav({
   ad,
   dalgaAdi,
+  dalgaSure,
   aynaUyanik,
   tamYetki = true,
   provaAcik = false,
@@ -89,6 +91,7 @@ export default function AdminNav({
 }: {
   ad: string;
   dalgaAdi: string | null;
+  dalgaSure?: string | null;
   aynaUyanik: boolean;
   tamYetki?: boolean;
   provaAcik?: boolean;
@@ -145,6 +148,7 @@ export default function AdminNav({
   const panelAktif = pathname === PANEL.href;
 
   return (
+    <>
     <nav className="sticky top-0 z-30 border-b border-royal/30 bg-midnight/90 backdrop-blur print:hidden">
       {/* Açık menü gövdeye portallanır (overflow-x kabının altında kırpılmasın).
           acikGrup yalnız tıklamayla (hidrasyon sonrası) dolar → SSR'da portal yok. */}
@@ -248,6 +252,7 @@ export default function AdminNav({
           }`}
         >
           🌊 {dalgaAdi ?? "Dalga kapalı"}
+          {dalgaSure && <span className="ml-1 opacity-70">· {dalgaSure}</span>}
         </span>
         <span
           className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -287,5 +292,7 @@ export default function AdminNav({
         </button>
       </div>
     </nav>
+    <KlavyeKisayollari />
+    </>
   );
 }

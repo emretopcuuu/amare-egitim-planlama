@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { createPortal } from "react-dom";
 import { tr } from "@/lib/i18n/tr";
 import { tost } from "@/lib/tost";
@@ -65,8 +65,28 @@ function esles(metin: string, q: string): boolean {
   return metin.toLocaleLowerCase("tr-TR").includes(q.toLocaleLowerCase("tr-TR"));
 }
 
+// Mevcut sayfanın aşamasına göre KONTROLLER listesi yeniden sıralanır.
+// Kamp canlı sayfalarında dalga + ilerleme kontrolü en üstte çıkar.
+const CANLI_ROTALAR = ["/admin/saglik", "/admin/ayna-direktoru", "/admin/sahne", "/admin/canli-ayna"];
+const HAZIRLIK_ROTALAR = ["/admin/kurulum", "/admin/katilimcilar", "/admin/eslestirmeler", "/admin/farkindalik"];
+
+function siralaKontroller(pathname: string): Hedef[] {
+  if (CANLI_ROTALAR.some((r) => pathname.startsWith(r))) {
+    const once = KONTROLLER.filter((k) => k.href.includes("dalga") || k.href.includes("ilerleme"));
+    const gerisi = KONTROLLER.filter((k) => !once.includes(k));
+    return [...once, ...gerisi];
+  }
+  if (HAZIRLIK_ROTALAR.some((r) => pathname.startsWith(r))) {
+    const once = KONTROLLER.filter((k) => k.href.includes("fazsifir") || k.href.includes("dalga"));
+    const gerisi = KONTROLLER.filter((k) => !once.includes(k));
+    return [...once, ...gerisi];
+  }
+  return KONTROLLER;
+}
+
 export default function KomutPaleti() {
   const router = useRouter();
+  const pathname = usePathname();
   const [acik, setAcik] = useState(false);
   const [sorgu, setSorgu] = useState("");
   const [kisiler, setKisiler] = useState<Kisi[]>([]);
@@ -123,10 +143,10 @@ export default function KomutPaleti() {
     () => (sorgu.trim() ? SAYFALAR.filter((s) => esles(s.etiket, sorgu.trim())) : SAYFALAR),
     [sorgu]
   );
-  const kontrolSonuc = useMemo(
-    () => (sorgu.trim() ? KONTROLLER.filter((s) => esles(s.etiket, sorgu.trim())) : KONTROLLER),
-    [sorgu]
-  );
+  const kontrolSonuc = useMemo(() => {
+    const sirali = siralaKontroller(pathname);
+    return sorgu.trim() ? sirali.filter((s) => esles(s.etiket, sorgu.trim())) : sirali;
+  }, [sorgu, pathname]);
 
   // Düz liste (klavye gezinmesi için) — sıra: sayfalar, kontroller, kişiler
   const duzListe = useMemo(
@@ -187,8 +207,8 @@ export default function KomutPaleti() {
         title={t.ac}
       >
         <span aria-hidden>🔍</span>
-        <span className="hidden md:inline">{t.ac}</span>
-        <kbd className="hidden rounded bg-white/10 px-1.5 py-0.5 text-[0.65rem] font-medium md:inline">
+        <span className="inline">{t.ac}</span>
+        <kbd className="inline rounded bg-white/10 px-1.5 py-0.5 text-[0.65rem] font-medium">
           {t.ipucu}
         </kbd>
       </button>

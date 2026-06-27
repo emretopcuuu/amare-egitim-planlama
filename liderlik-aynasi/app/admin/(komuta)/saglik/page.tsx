@@ -6,9 +6,9 @@ import { radarHesapla, fazBul, yolculukGunuHesapla } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
 import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
-import Katlanir from "../Katlanir";
-import Ipucu from "../Ipucu";
-import OtoYenile from "../OtoYenile";
+import Katlanir from "../../Katlanir";
+import Ipucu from "../../Ipucu";
+import OtoYenile from "../../OtoYenile";
 
 export const revalidate = 15;
 
