@@ -253,7 +253,7 @@ export const tr = {
     bugunNeOldu: (gorev: number, takdir: number) =>
       `Bugün${gorev > 0 ? ` 🎯 ${gorev} görev kapattın` : ""}${takdir > 0 ? `${gorev > 0 ? "," : ""} 💛 ${takdir} takdir aldın` : ""}.`,
     // B7: bekleme beklentisi
-    bekleBeklenti: "AYNA gün boyu seni izliyor — yeni bir görev her an gelebilir.",
+    bekleBeklenti: "AYNA gün boyu yanında — yeni bir görev her an gelebilir.",
     // İlk 60 saniye rehberi: ilk öz-puana doğru nazik canlı işaret (#3).
     ilkAdimIpucu: "İlk adımın bu — başla",
     // Çıkmaz yok: boş anda bile sıcak bir sonraki adım — birine takdir bırak.
@@ -3067,7 +3067,7 @@ export const tr = {
     ipucuYeterli: "Güçlü — AYNA'nın görmesi için yeterince derin. Dilersen gönder.",
     altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
     aktifYokBaslik: "Şu an görevin yok",
-    aktifYok: "AYNA seni izliyor — yeni bir görev her an gelebilir.",
+    aktifYok: "AYNA yanında — yeni bir görev her an gelebilir.",
     bosKocu: "Ayna Koçu'na danış",
     bosTakdir: "Birine takdir bırak",
     // #4 Günün özeti: gün sonu kapanış kartı
@@ -3367,7 +3367,7 @@ export const tr = {
     hikayeUstAcilis: "AYNA RAPORU",
     hikayeAcilis: (ad: string) => `${ad}, aynan hazır`,
     hikayeAcilisMetin: (n: number) =>
-      `Üç gün seni izledik; sen de ${n} kez başkalarını gözledin. İşte gerçek yansıman.`,
+      `Üç gün boyunca seninleydik; sen de ${n} kez başkalarını gözledin. İşte gerçek yansıman.`,
     hikayeGucluMetin: "Başkalarının gözünde en parlak yanın bu.",
     hikayeGizliMetin:
       "Kendine az verdin ama başkaları çok gördü — sandığından güçlüsün.",
