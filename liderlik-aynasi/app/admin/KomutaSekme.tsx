@@ -11,8 +11,8 @@ const k = tr.admin.komuta;
 // konur; aktif olan vurgulanır. Sayfalar ayrı kalır ama operatör için tek yer.
 const SEKMELER = [
   { href: "/admin/ayna-direktoru", ad: k.direktor },
-  { href: "/admin/komutan", ad: k.komutan },
-  { href: "/admin/sahne-kumanda", ad: k.sahne },
+  { href: "/admin/saglik", ad: k.komutan },
+  { href: "/admin/sahne", ad: k.sahne },
 ];
 
 export default function KomutaSekme() {

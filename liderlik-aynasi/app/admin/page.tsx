@@ -10,8 +10,6 @@ import { funnelMetrikleri } from "@/lib/funnel";
 import { tr } from "@/lib/i18n/tr";
 import { kampGunu, KAMP_GUNLERI } from "@/lib/kampProgrami";
 import FunnelOmurga from "./FunnelOmurga";
-import DalgaKontrol from "./DalgaKontrol";
-import AynaAniKontrol from "./AynaAniKontrol";
 import EksikDurt from "./EksikDurt";
 import OtoYenile from "./OtoYenile";
 import GununAkisi from "./GununAkisi";
@@ -21,12 +19,6 @@ import Uyarilar from "./Uyarilar";
 import Ipucu from "./Ipucu";
 import TopluEylem from "./TopluEylem";
 import AltAksiyonCubugu from "./AltAksiyonCubugu";
-import FazSifirKontrol from "./FazSifirKontrol";
-import BoslukKontrol from "./BoslukKontrol";
-import OnFarkindalikKontrol from "./OnFarkindalikKontrol";
-import HedefKontrol from "./HedefKontrol";
-import MuhurKontrol from "./MuhurKontrol";
-import SozV2Kontrol from "./SozV2Kontrol";
 import SonEylemler from "./SonEylemler";
 import CanliPano from "./CanliPano";
 import FunnelMetrik from "./FunnelMetrik";
@@ -241,11 +233,6 @@ export default async function AdminPanel() {
   };
   const siradakiAsama = aktifAsama < 5 ? ASAMA_AD[aktifAsama + 1] : null;
 
-  // Aktif aşamanın tüm kontrollerini barındıran menü sayfası (panel yalnız
-  // o aşamanın anahtarlarını gösterir; gerisi bu sayfada).
-  const kontrolSayfa =
-    aktifAsama <= 4 ? "/admin/kontrol" : "/admin/sistem";
-
   // UX #4+#9 — Bu aşamaya hazırlık skoru + geçiş checklist'i.
   const hazirTamamSayi = funnel.adimlar.find((a) => a.anahtar === "onfark")?.sayi ?? 0;
   const ozTamamSayi = ilerleme?.ozTamamlar.size ?? 0;
@@ -308,7 +295,6 @@ export default async function AdminPanel() {
   const bolumler = [
     { id: "ozet", etiket: atla.ozet },
     { id: "ilerleme", etiket: atla.ilerleme },
-    ...(tamYetki ? [{ id: "tehlike", etiket: atla.tehlike }] : []),
     ...(tamYetki && silmeBekleyen > 0 ? [{ id: "kvkk", etiket: atla.kvkk }] : []),
   ];
 
@@ -575,131 +561,6 @@ export default async function AdminPanel() {
           </>
         )}
       </section>
-
-      {/* BU AŞAMANIN ANAHTARLARI — panel artık yalnız AKTİF aşamanın switch'lerini
-          tutar (durum + adım + aktif anahtar). Diğer aşamalar, sistem ve tüm
-          araçlar üstteki 1·2·3·4 ve ⚙ Sistem menülerinin altında. */}
-      {tamYetki && (
-        <section
-          id="tehlike"
-          className="scroll-mt-24 space-y-4 rounded-2xl border border-royal/30 bg-midnight-card/50 p-5"
-        >
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="flex items-center gap-2 text-lg font-bold text-gold-light">
-              🎛 Bu Aşamanın Anahtarları
-              <Ipucu {...tr.admin.yardim.tehlike} />
-            </h2>
-            <Link
-              href={kontrolSayfa}
-              className="text-xs font-medium text-royal-light hover:underline"
-            >
-              Tüm aşama kontrolleri →
-            </Link>
-          </div>
-          <p className="text-sm leading-relaxed text-slate-300">
-            Şu an <span className="font-semibold text-gold-light">{ASAMA_AD[aktifAsama]}</span>{" "}
-            aşamasındasın; aşağıda yalnız bu aşamanın anahtarları var. Her işlem önce onay
-            ister ve geri-al penceresi sunar. Diğer aşamalar ve tüm araçlar üstteki menülerde.
-          </p>
-
-          {/* 1-2 · Hazırlık & Katılım anahtarları */}
-          {(aktifAsama === 1 || aktifAsama === 2) && (
-            <div className="space-y-4">
-              <div id="fazsifir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                  {tr.admin.fazSifir.baslik}
-                  <Ipucu {...tr.admin.yardim.fazSifir} />
-                </h3>
-                <FazSifirKontrol />
-              </div>
-              <div id="onfark" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                  {tr.admin.onFark.baslik}
-                </h3>
-                <OnFarkindalikKontrol />
-              </div>
-            </div>
-          )}
-
-          {/* 3 · Kamp Canlı anahtarları */}
-          {aktifAsama === 3 && (
-            <div className="space-y-4">
-              <div id="dalga" className="scroll-mt-20 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-                <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
-                  {tr.admin.dalga.baslik}
-                  <Ipucu {...tr.admin.yardim.dalga} />
-                </h3>
-                <p className="mt-1 text-sm text-slate-400">{tr.admin.dalga.aciklama}</p>
-                <DalgaKontrol
-                  dalgalar={dalgalar.map((d) => ({ id: d.id, ad: d.name, acik: d.is_open }))}
-                  puanlamayan={
-                    acikDalga && ilerleme
-                      ? ilerleme.katilimcilar.filter(
-                          (k) => (ilerleme.puanladigi.get(k.id) ?? 0) === 0
-                        ).length
-                      : 0
-                  }
-                />
-              </div>
-              <div id="hedef" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                  🎯 {tr.admin.hedef.baslik}
-                </h3>
-                <HedefKontrol />
-              </div>
-            </div>
-          )}
-
-          {/* 4 · Final anahtarları */}
-          {aktifAsama === 4 && (
-            <div className="space-y-4">
-              <div id="fazbir" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                  {tr.admin.fazBir.baslik}
-                  <Ipucu {...tr.admin.yardim.fazBir} />
-                </h3>
-                <BoslukKontrol />
-              </div>
-              <div id="ayna-ani" className="scroll-mt-20 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-                <h3 className="flex items-center gap-2 text-base font-semibold text-slate-100">
-                  {tr.admin.aynaAni.baslik}
-                  <Ipucu {...tr.admin.yardim.rapor} />
-                </h3>
-                <p className="mt-1 text-sm text-slate-400">{tr.admin.aynaAni.aciklama}</p>
-                <AynaAniKontrol
-                  acik={raporlarAcik}
-                  mektupHazir={mektupSayisi ?? 0}
-                  mektupToplam={katilimciSayisi ?? 0}
-                />
-              </div>
-              <div id="muhur" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                  {tr.admin.muhur.baslik}
-                  <Ipucu {...tr.admin.yardim.muhur} />
-                </h3>
-                <MuhurKontrol />
-              </div>
-              <div id="soz-v2" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-                  📜 {tr.admin.sozV2.baslik}
-                </h3>
-                <SozV2Kontrol />
-              </div>
-            </div>
-          )}
-
-          {/* 5 · Kamp sonrası — panelde anahtar yok; araçlar menüde */}
-          {aktifAsama === 5 && (
-            <p className="rounded-xl border border-white/5 bg-white/[0.02] px-4 py-6 text-center text-sm text-slate-400">
-              Kamp tamamlandı — bu aşamada panelde anahtar yok. Kapanış kontrolleri{" "}
-              <Link href="/admin/kontrol" className="text-royal-light hover:underline">
-                Kontroller
-              </Link>{" "}
-              menüsünde, kamp sonrası araçlar oradadır.
-            </p>
-          )}
-        </section>
-      )}
 
       {/* Tüm kontroller & araçlar üstteki menülerde — yön gösterici. */}
       {tamYetki && (

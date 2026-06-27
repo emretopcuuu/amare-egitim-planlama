@@ -12,6 +12,11 @@ const n = tr.admin.nav;
 const g = tr.admin.navGrup;
 const k = tr.admin.ux.kokpit;
 
+function aktifMi(href: string, pathname: string): boolean {
+  const base = href.split("#")[0];
+  return pathname === href || (href.includes("#") && pathname === base);
+}
+
 // FUNNEL NAVİGASYONU: Panel + kampın YOLCULUĞUNA göre 4 grup (açılır menü).
 // Türe göre değil zamana göre: Hazırlık → Kamp Canlı → Final → Sistem.
 // Operatör soldan sağa okur = süreçte ilerler; aradığı aracı aşamasından bulur.
@@ -164,7 +169,7 @@ export default function AdminNav({
                   href={l.href}
                   onClick={grupKapat}
                   className={`block px-4 py-2.5 text-sm transition-colors ${
-                    pathname === l.href
+                    aktifMi(l.href, pathname)
                       ? "bg-royal/40 text-gold-light"
                       : "text-slate-300 hover:bg-royal/20"
                   }`}
@@ -201,7 +206,7 @@ export default function AdminNav({
         {tamYetki &&
           GRUPLAR.map((grup) => {
             const acik = acikGrup === grup.ad;
-            const grupAktif = grup.linkler.some((l) => pathname === l.href);
+            const grupAktif = grup.linkler.some((l) => aktifMi(l.href, pathname));
             return (
               <button
                 key={grup.ad}

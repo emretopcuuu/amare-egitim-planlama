@@ -66,7 +66,7 @@ export default async function SahnePage() {
           <h1 className="text-2xl font-bold text-gold">🎬 Sahne</h1>
           <Ipucu {...tr.admin.yardim.sahne} />
         </div>
-        <OtoYenile />
+        <OtoYenile saniye={15} />
       </div>
 
       {/* Sahne kumandası — canlı kamp için birincil kontrol */}
