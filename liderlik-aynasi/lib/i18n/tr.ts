@@ -1487,6 +1487,7 @@ export const tr = {
       sZamanlama: "Otomatik Zamanlama",
       sKod: "Kod Bul",
       sKvkk: "KVKK Silme Talepleri",
+      sSimulasyon: "Kamp Prova Simülatörü",
     },
     // Funnel navigasyonu: türe göre değil, kampın YOLCULUĞUNA göre 4 aşama + Panel.
     // Operatör soldan sağa = zaman akışı; aradığı aracı süreçteki yerinden bulur.

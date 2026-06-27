@@ -1176,6 +1176,7 @@ export type Database = {
           phone: string | null
           profil_foto_path: string | null
           role: string
+          simulasyon: boolean
           team: string | null
           yuz_fotolari: Json
         }
@@ -1199,6 +1200,7 @@ export type Database = {
           phone?: string | null
           profil_foto_path?: string | null
           role?: string
+          simulasyon?: boolean
           team?: string | null
           yuz_fotolari?: Json
         }
@@ -1222,6 +1224,7 @@ export type Database = {
           phone?: string | null
           profil_foto_path?: string | null
           role?: string
+          simulasyon?: boolean
           team?: string | null
           yuz_fotolari?: Json
         }

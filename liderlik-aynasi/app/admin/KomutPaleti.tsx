@@ -45,6 +45,8 @@ const SAYFALAR: Hedef[] = [
   // 4 · Final
   { tip: "sayfa", etiket: n.sozler, href: "/admin/sozler" },
   { tip: "sayfa", etiket: n.elmas, href: "/admin/elmas" },
+  // Sistem
+  { tip: "sayfa", etiket: n.sSimulasyon, href: "/admin/simulasyon" },
 ];
 
 // #11 Funnel kontrol komutları — aşama-aksiyonları doğrudan ⌘K'dan.
