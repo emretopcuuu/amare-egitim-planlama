@@ -34,7 +34,7 @@ export async function POST(req: Request) {
   let govde: {
     mesaj?: unknown;
     baslangic?: { kariyer?: unknown; deneyimAy?: unknown; detay?: unknown; baslangicOv?: unknown; baslangicVol?: unknown };
-    kariyer?: { hedefIndex?: unknown; sure?: unknown; gunluk?: unknown };
+    kariyer?: { hedefIndex?: unknown; tempo?: unknown; gunluk?: unknown };
     sifirla?: unknown;
   };
   try {
@@ -82,13 +82,13 @@ export async function POST(req: Request) {
 
   // 2) SOMUTLAŞTIRMA: kariyer hedefi + süre + günlük saat → plan hesapla + mühürle.
   if (govde.kariyer && typeof govde.kariyer.hedefIndex === "number") {
-    const sure = typeof govde.kariyer.sure === "string" ? govde.kariyer.sure : "";
+    const tempo = typeof govde.kariyer.tempo === "string" ? govde.kariyer.tempo : "";
     const gunluk = typeof govde.kariyer.gunluk === "string" ? govde.kariyer.gunluk : "";
     const plan = await kariyerPlaniKaydet(
       db,
       katilimci,
       govde.kariyer.hedefIndex,
-      sure,
+      tempo,
       gunluk
     );
     if (!plan) return Response.json({ hata: tr.hedef.hata }, { status: 400 });

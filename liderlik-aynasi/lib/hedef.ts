@@ -8,7 +8,8 @@ import { kritikAiHatasiBildir, type AiHataDetay } from "@/lib/uyari";
 import {
   KARIYER_BASAMAKLARI,
   GUNLUK_SAAT_SECENEKLERI,
-  SURE_SECENEKLERI,
+  TEMPO_SECENEKLERI,
+  tempoSure,
   kariyerPlaniHesapla,
   tlFormat,
   type KariyerPlani,
@@ -349,15 +350,24 @@ export async function kariyerPlaniKaydet(
   db: Db,
   katilimci: { id: string; full_name: string },
   hedefIndex: number,
-  sureAnahtar: string,
+  tempoAnahtar: string,
   gunlukAnahtar: string
 ): Promise<KariyerPlani | null> {
-  const sure = SURE_SECENEKLERI.find((s) => s.anahtar === sureAnahtar);
+  const tempo = TEMPO_SECENEKLERI.find((t) => t.anahtar === tempoAnahtar);
   const saat = GUNLUK_SAAT_SECENEKLERI.find((g) => g.anahtar === gunlukAnahtar);
   const rutbe = KARIYER_BASAMAKLARI[hedefIndex];
-  if (!sure || !saat || !rutbe) return null;
+  if (!tempo || !saat || !rutbe) return null;
 
-  const plan = kariyerPlaniHesapla(hedefIndex, sure.ay, saat.gunluk, saat.etiket);
+  // Süre, kişinin Son 3 ay ortalama OV'sinden seçtiği tempoyla TÜRETİLİR.
+  const { data: h } = await db
+    .from("hedef")
+    .select("baslangic_ov")
+    .eq("participant_id", katilimci.id)
+    .maybeSingle();
+  const ov0 = (h?.baslangic_ov as number | null) ?? 0;
+  const sureAy = tempoSure(ov0, rutbe.ov, tempo.buyume);
+
+  const plan = kariyerPlaniHesapla(hedefIndex, sureAy, saat.gunluk, saat.etiket);
   if (!plan) return null;
 
   const ozet = await ozetUret(db, katilimci.id, plan);
