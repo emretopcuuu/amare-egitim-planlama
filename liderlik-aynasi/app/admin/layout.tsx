@@ -27,6 +27,7 @@ export default async function AdminLayout({
     { data: raporAyari },
     { data: muhurAyari },
     { count: bekleyenFoto },
+    { data: dalgaAcilis },
   ] = await Promise.all([
     acikDalga(db),
     db.from("settings").select("value").eq("key", "ayna_aktif").maybeSingle(),
@@ -34,8 +35,17 @@ export default async function AdminLayout({
     db.from("settings").select("value").eq("key", "reports_visible").maybeSingle(),
     db.from("settings").select("value").eq("key", "muhur_acik").maybeSingle(),
     db.from("photos").select("id", { count: "exact", head: true }).eq("status", "pending"),
+    db.from("waves").select("opened_at").eq("is_open", true).order("id", { ascending: false }).limit(1).maybeSingle(),
   ]);
   const provaAcik = provaAyari?.value === "true";
+
+  // Dalga süresi — saniye hassasiyetinde gerek yok, OtoYenile zaten tazeliyor.
+  let dalgaSure: string | null = null;
+  if (dalgaAcilis?.opened_at) {
+    const dakika = Math.floor((Date.now() - new Date(dalgaAcilis.opened_at).getTime()) / 60_000);
+    if (dakika < 60) dalgaSure = `${dakika}dk`;
+    else dalgaSure = `${Math.floor(dakika / 60)}sa ${dakika % 60 > 0 ? `${dakika % 60}dk` : ""}`.trim();
+  }
 
   return (
     // #9 Prova modunda admin kromu kırmızı çerçeveyle uyarır: yönetici "bu
@@ -48,6 +58,7 @@ export default async function AdminLayout({
       <AdminNav
         ad={session.ad}
         dalgaAdi={dalga?.name ?? null}
+        dalgaSure={dalgaSure}
         aynaUyanik={aynaAyari?.value === "true"}
         tamYetki={tamYetki}
         provaAcik={provaAcik}

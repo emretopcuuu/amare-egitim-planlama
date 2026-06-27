@@ -85,6 +85,10 @@ export default async function EslestirmelerPage() {
 
   const aynaEsiAcik = aynaAyar?.value === "true";
 
+  // Kompakt istatistik şeridi
+  const gozlemciSayisi = new Set(atamalar.map((a) => a.observer.id)).size;
+  const aynaEsiTamam = (aynaEsiSatirlar ?? []).filter((r) => r.a_tamam && r.b_tamam).length;
+
   const t = tr.admin.eslestirme;
 
   return (
@@ -95,6 +99,21 @@ export default async function EslestirmelerPage() {
           <Ipucu {...tr.admin.yardim.eslestirme} />
         </div>
         <OtoYenile />
+      </div>
+
+      {/* Kompakt istatistik şeridi */}
+      <div className="flex flex-wrap gap-2 text-xs">
+        <span className="rounded-full bg-midnight-card/60 px-3 py-1.5 text-slate-300 ring-1 ring-royal/20">
+          👁 Gözlemci: {gozlemciSayisi}/{kisiler.length}
+        </span>
+        <span className={`rounded-full px-3 py-1.5 ring-1 ${aynaEsiTamam > 0 ? "bg-emerald-400/10 text-emerald-400 ring-emerald-400/20" : "bg-midnight-card/60 text-slate-400 ring-royal/20"}`}>
+          🤝 Ayna Eşi: {aynaEsiTamam}/{(aynaEsiSatirlar ?? []).length} tamamlandı
+        </span>
+        {gozlemciSayisi === kisiler.length && (
+          <span className="rounded-full bg-gold/10 px-3 py-1.5 text-gold-light ring-1 ring-gold/20">
+            ✓ Tüm eşleştirmeler hazır
+          </span>
+        )}
       </div>
 
       {/* Gözlemci atamaları */}

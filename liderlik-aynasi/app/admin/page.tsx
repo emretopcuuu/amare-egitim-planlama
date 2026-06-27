@@ -9,22 +9,18 @@ import { funnelMetrikleri } from "@/lib/funnel";
 import { tr } from "@/lib/i18n/tr";
 import { kampGunu, KAMP_GUNLERI } from "@/lib/kampProgrami";
 import FunnelOmurga from "./FunnelOmurga";
-import EksikDurt from "./EksikDurt";
 import OtoYenile from "./OtoYenile";
 import GununAkisi from "./GununAkisi";
 import CanliOzet from "./CanliOzet";
 import Uyarilar from "./Uyarilar";
 import Ipucu from "./Ipucu";
-import TopluEylem from "./TopluEylem";
 import AltAksiyonCubugu from "./AltAksiyonCubugu";
 import SonEylemler from "./SonEylemler";
 import FunnelMetrik from "./FunnelMetrik";
-import TriyajKart from "./TriyajKart";
 import Katlanir from "./Katlanir";
 import OneriButonu from "./OneriButonu";
 import BasitEylem from "./BasitEylem";
 import GecisHazirlik from "./GecisHazirlik";
-import CanliSayac from "./CanliSayac";
 import Link from "next/link";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
@@ -250,13 +246,6 @@ export default async function AdminPanel() {
           ? "Kapanışa hazırlık"
           : "";
 
-  // UX #5 — Canlı süre rozeti: açık dalga süresi ya da kampa kalan süre.
-  const sayac = acikDalga?.opened_at
-    ? { ts: acikDalga.opened_at, etiket: `${acikDalga.name} açılalı`, mod: "gecen" as const }
-    : bugun < ilkGun
-      ? { ts: `${ilkGun}T09:00:00+03:00`, etiket: "Kampa", mod: "kalan" as const }
-      : null;
-
   // #8 Proaktif uyarılar (yalnız tam yetkiliye gösterilir).
   const uyarilar = tamYetki
     ? adminUyarilari({
@@ -337,16 +326,9 @@ export default async function AdminPanel() {
         )}
       </section>
 
-      {/* UX #5 canlı süre rozeti + UX #4/#9 aşama hazırlık skoru */}
-      {(sayac || (tamYetki && gecisKontroller.length > 0)) && (
-        <div className="space-y-3">
-          {sayac && (
-            <CanliSayac ts={sayac.ts} etiket={sayac.etiket} mod={sayac.mod} />
-          )}
-          {tamYetki && gecisKontroller.length > 0 && (
-            <GecisHazirlik baslik={gecisBaslik} kontroller={gecisKontroller} />
-          )}
-        </div>
+      {/* UX #4/#9 aşama hazırlık skoru — dalga süre artık nav rozetinde */}
+      {tamYetki && gecisKontroller.length > 0 && (
+        <GecisHazirlik baslik={gecisBaslik} kontroller={gecisKontroller} />
       )}
 
       {/* GENEL DURUM: canlı özet rakamları */}
@@ -384,118 +366,60 @@ export default async function AdminPanel() {
               <Uyarilar uyarilar={uyarilar} />
             </div>
           )}
-          <GununAkisi bugun={bugun} />
+          {kampGun !== null && <GununAkisi bugun={bugun} />}
         </>
       </Katlanir>
 
-      {/* CANLI ÇALIŞMA ALANI: açık dalga ilerlemesi + toplu eylem */}
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-        <h2 id="ilerleme" className="scroll-mt-20 text-lg font-semibold text-slate-200">
-          {tr.admin.ilerleme.baslik}
-          {acikDalga && (
-            <span className="ml-2 text-sm font-normal text-slate-400">
-              · {acikDalga.name}
-            </span>
+      {/* İlerleme özeti — detay Sağlık sayfasında */}
+      <Link
+        id="ilerleme"
+        href="/admin/saglik"
+        className="scroll-mt-20 flex items-center justify-between gap-4 rounded-2xl bg-midnight-card/60 px-5 py-4 ring-1 ring-royal/30 transition-colors hover:bg-midnight-card/80"
+      >
+        <div>
+          <p className="text-sm font-semibold text-slate-200">{tr.admin.ilerleme.baslik}</p>
+          {acikDalga ? (
+            <p className="mt-0.5 text-xs text-slate-400">
+              {ilerleme
+                ? `${ilerleme.ozTamamlar.size}/${ilerleme.katilimcilar.length} kişi kendini puanladı · ${ilerleme.toplamPuan} toplam görüş`
+                : "Dalga açık"}
+              {" "}· {acikDalga.name}
+            </p>
+          ) : (
+            <p className="mt-0.5 text-xs text-slate-500">Açık dalga yok</p>
           )}
-          <Ipucu {...tr.admin.yardim.panelIlerleme} />
-        </h2>
-        {acikDalga && (
-          <p className="mt-2 rounded-lg bg-amber-900/15 px-3 py-2 text-xs font-medium text-amber-300/90">
-            {tr.admin.ilerleme.ozellikUyari}
-          </p>
-        )}
+        </div>
+        <span className="shrink-0 text-sm font-medium text-gold-light">Sağlık →</span>
+      </Link>
 
-        {/* Komuta triyajı: hazırlıkta takılanlar (≤aşama 2) / sessizleşenler (≥aşama 3) */}
-        {tamYetki && (
-          <div className="mt-4">
-            <TriyajKart aktifAsama={aktifAsama} />
-          </div>
-        )}
-
-        {!ilerleme ? (
-          /* #6 Bağlamsal sakin boş durum: "bozuk mu?" hissi yerine güven. */
-          <div className="mt-4 rounded-xl border border-white/5 bg-white/[0.02] px-5 py-8 text-center">
-            <p className="text-4xl" aria-hidden>
-              {tr.admin.bosDurum.ikon}
-            </p>
-            <p className="mt-3 text-base font-semibold text-slate-200">
-              {tr.admin.bosDurum.baslik}
-            </p>
-            <p className="mt-1 text-sm text-slate-400">{tr.admin.bosDurum.aciklama}</p>
-          </div>
-        ) : (
-          <>
-            <dl className="mt-4 grid grid-cols-3 gap-3 text-center">
-              <div className="rounded-xl bg-midnight-soft p-3">
-                <dd className="text-2xl font-bold text-gold">
-                  {ilerleme.katilimcilar.length}
-                </dd>
-                <dt className="mt-1 text-xs text-slate-400">
-                  {tr.admin.ilerleme.katilimci}
-                </dt>
-              </div>
-              <div className="rounded-xl bg-midnight-soft p-3">
-                <dd className="text-2xl font-bold text-gold">
-                  {ilerleme.ozTamamlar.size}/{ilerleme.katilimcilar.length}
-                </dd>
-                <dt className="mt-1 text-xs text-slate-400">
-                  {tr.admin.ilerleme.ozTamam}
-                </dt>
-              </div>
-              <div className="rounded-xl bg-midnight-soft p-3">
-                <dd className="text-2xl font-bold text-gold">{ilerleme.toplamPuan}</dd>
-                <dt className="mt-1 text-xs text-slate-400">
-                  {tr.admin.ilerleme.toplamPuan}
-                </dt>
-              </div>
-            </dl>
-
-            <div className="mt-4">
-              <TopluEylem
-                katilimcilar={ilerleme.katilimcilar.map((k) => ({
-                  id: k.id,
-                  ad: k.ad,
-                  takim: k.takim,
-                  ozTamam: ilerleme!.ozTamamlar.has(k.id),
-                  puanladigi: ilerleme!.puanladigi.get(k.id) ?? 0,
-                  onuPuanlayan: ilerleme!.onuPuanlayan.get(k.id) ?? 0,
-                }))}
-                ozellikSayisi={ozellikler.length}
-              />
-            </div>
-            {ilerleme.katilimcilar.length - ilerleme.ozTamamlar.size > 0 && (
-              <EksikDurt
-                eksikSayisi={ilerleme.katilimcilar.length - ilerleme.ozTamamlar.size}
-              />
-            )}
-          </>
-        )}
-      </section>
-
-      {/* Tüm kontroller & araçlar üstteki menülerde — yön gösterici. */}
-      {tamYetki && (
+      {/* Sistem özeti — sorun varsa göster, yoksa yön gösterici. */}
+      {tamYetki && ((bekleyenFoto ?? 0) > 0 || silmeBekleyen > 0) ? (
+        <div className="flex flex-wrap gap-2">
+          {(bekleyenFoto ?? 0) > 0 && (
+            <Link
+              href="/admin/moderasyon"
+              className="flex items-center gap-2 rounded-xl bg-amber-500/10 px-4 py-3 text-sm font-medium text-amber-300 ring-1 ring-amber-500/30 transition-colors hover:bg-amber-500/15"
+            >
+              🖼 {bekleyenFoto ?? 0} bekleyen fotoğraf
+            </Link>
+          )}
+          {silmeBekleyen > 0 && (
+            <Link
+              href="/admin/sistem#kvkk"
+              className="flex items-center gap-2 rounded-xl bg-red-500/10 px-4 py-3 text-sm font-medium text-red-300 ring-1 ring-red-400/30 transition-colors hover:bg-red-500/15"
+            >
+              ⚠️ {silmeBekleyen} KVKK silme talebi
+            </Link>
+          )}
+        </div>
+      ) : tamYetki ? (
         <p className="rounded-xl border border-royal-light/20 bg-white/[0.02] px-4 py-3 text-center text-sm text-slate-400">
-          Tüm kontroller ve araçlar üstteki{" "}
-          <span className="font-semibold text-gold-light">1·2·3·4</span> ve{" "}
-          <span className="font-semibold text-gold-light">⚙ Sistem</span> menülerinin altında.
+          Kontroller: <span className="font-semibold text-gold-light">🧰·🎬·🏁·⚙</span> menüleri · Sorun yok ✓
         </p>
-      )}
+      ) : null}
 
-      {/* KVKK — bekleyen silme talebi varsa ACİL uyarı; işlem ⚙ Sistem'de. */}
-      {tamYetki && silmeBekleyen > 0 && (
-        <Link
-          id="kvkk"
-          href="/admin/sistem#kvkk"
-          className="scroll-mt-24 flex items-center justify-between gap-3 rounded-2xl bg-red-950/15 px-5 py-4 ring-1 ring-red-400/40 transition-colors hover:bg-red-950/25"
-        >
-          <span className="text-sm font-semibold text-red-200">
-            ⚠️ {silmeBekleyen} bekleyen KVKK silme talebi
-          </span>
-          <span className="shrink-0 text-sm font-medium text-red-200">Sistem'de işle →</span>
-        </Link>
-      )}
 
-      {/* #8 Mobil alt aksiyon çubuğu — yalnız kritik (vurgu) öneride */}
+{/* #8 Mobil alt aksiyon çubuğu — yalnız kritik (vurgu) öneride */}
       {oneri.vurgu && (
         <AltAksiyonCubugu
           baslik={oneri.baslik}

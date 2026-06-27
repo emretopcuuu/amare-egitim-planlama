@@ -81,6 +81,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
 export default function AdminNav({
   ad,
   dalgaAdi,
+  dalgaSure,
   aynaUyanik,
   tamYetki = true,
   provaAcik = false,
@@ -90,6 +91,7 @@ export default function AdminNav({
 }: {
   ad: string;
   dalgaAdi: string | null;
+  dalgaSure?: string | null;
   aynaUyanik: boolean;
   tamYetki?: boolean;
   provaAcik?: boolean;
@@ -250,6 +252,7 @@ export default function AdminNav({
           }`}
         >
           🌊 {dalgaAdi ?? "Dalga kapalı"}
+          {dalgaSure && <span className="ml-1 opacity-70">· {dalgaSure}</span>}
         </span>
         <span
           className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${

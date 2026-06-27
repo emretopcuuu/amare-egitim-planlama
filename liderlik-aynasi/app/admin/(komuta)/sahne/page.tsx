@@ -9,13 +9,12 @@ import {
   gunProgrami,
 } from "@/lib/kampProgrami";
 import { tr } from "@/lib/i18n/tr";
-import Katlanir from "../Katlanir";
-import Ipucu from "../Ipucu";
-import ProgramYonetimi from "../program/ProgramYonetimi";
-import CumartesiProgram from "../program/CumartesiProgram";
-import SahneKumanda from "../sahne-kumanda/SahneKumanda";
-import KomutaSekme from "../KomutaSekme";
-import OtoYenile from "../OtoYenile";
+import Katlanir from "../../Katlanir";
+import Ipucu from "../../Ipucu";
+import ProgramYonetimi from "../../program/ProgramYonetimi";
+import CumartesiProgram from "../../program/CumartesiProgram";
+import SahneKumanda from "../../sahne-kumanda/SahneKumanda";
+import OtoYenile from "../../OtoYenile";
 
 export const metadata = { title: "Sahne — Liderlik Aynası" };
 
@@ -60,7 +59,6 @@ export default async function SahnePage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
-      <KomutaSekme />
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <h1 className="text-2xl font-bold text-gold">🎬 Sahne</h1>

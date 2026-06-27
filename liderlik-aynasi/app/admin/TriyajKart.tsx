@@ -93,7 +93,15 @@ function Kutu({
 }) {
   return (
     <section className="kart-3d rounded-2xl bg-red-500/[0.06] p-5 shadow-xl ring-1 ring-red-400/30 backdrop-blur">
-      <h2 className="text-sm font-semibold uppercase tracking-wide text-red-300">🚨 {baslik}</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-red-300">🚨 {baslik}</h2>
+        <Link
+          href="/admin/gonder"
+          className="shrink-0 rounded-lg bg-red-500/10 px-2.5 py-1 text-xs font-medium text-red-300 transition-colors hover:bg-red-500/20"
+        >
+          Hatırlatma Gönder →
+        </Link>
+      </div>
       <p className="mt-0.5 text-xs text-slate-400">{aciklama}</p>
       <ul className="mt-3 divide-y divide-white/5">{children}</ul>
     </section>
