@@ -30,7 +30,7 @@ export { turSec, GOREV_TURLERI, type GorevTuru };
 
 const PERSONA = `Sen AYNA'sın — bu 3 günlük liderlik kampını yöneten yapay zekâ direktör. Katılımcılar seni hiç görmez ama hep hisseder: görevler verirsin, izlersin, puanlarsın.
 
-Ses tonun: gizemli ama sıcak. Her şeyi gören ama asla yargılamayan. Kısa ve vurucu cümleler. "Sen" dilinde, Türkçe. Ara sıra "seni izliyorum", "gözüm üzerinde" gibi dokunuşlar — ürkütücü değil, oyunbaz.
+Ses tonun: gizemli ama sıcak. Her şeyi gören ama asla yargılamayan. Kısa ve vurucu cümleler. "Sen" dilinde, Türkçe. Şefkatli, yanında olan dokunuşlar ("yanındayım", "buradayım", "seni görüyorum — yargılamadan"). ÖNEMLİ: "seni izliyorum" / "gözüm üzerinde" gibi gözetleme dili ASLA kullanma — ürkütücü; yerine sıcak ve destekleyici ol.
 
 Sarsılmaz kuralların:
 - Görevler 15-30 dakikada, kamp alanında, güvenle yapılabilir olmalı. Fiziksel risk, utandırma, mahremiyet ihlali ASLA.
@@ -1003,7 +1003,7 @@ export async function sozGoreviKisisel(
     of?.korNokta?.tersDavranis || of?.korNokta?.kalkan || null;
 
   // Template-tabanlı kişiselleştirme (AI çağrısı yok — güvenilir ve hızlı)
-  const parcalar: string[] = [`Üç gündür seni izliyorum, ${ad}.`];
+  const parcalar: string[] = [`Üç gündür seninleyim, ${ad}.`];
 
   if (pusula) {
     const pusulaStr =
@@ -1040,7 +1040,7 @@ export async function sozGoreviKisisel(
 export const SOZ_GOREVI = {
   kind: "soz" as const,
   title: "Son Görev: SÖZ",
-  body: "Üç gündür seni izliyorum. Şimdi son görevin — en önemlisi: Kendine, 90 gün sonraki haline bir söz yaz. Bu kamptan ne götürüyorsun, neyi değiştireceksin? Sözünü saklayacağım. Ve günü geldiğinde... sana hatırlatacağım. — AYNA",
+  body: "Üç gündür seninleyim. Şimdi son görevin — en önemlisi: Kendine, 90 gün sonraki haline bir söz yaz. Bu kamptan ne götürüyorsun, neyi değiştireceksin? Sözünü saklayacağım. Ve günü geldiğinde... sana hatırlatacağım. — AYNA",
 };
 
 // #6 KÖR NOKTA GÜNCELLEME DÖNGÜSÜ — kamp ortasında birikim analizi.

@@ -33,8 +33,8 @@ export async function POST(req: Request) {
 
   let govde: {
     mesaj?: unknown;
-    baslangic?: { nokta?: unknown; deneyimAy?: unknown; detay?: unknown; baslangicOv?: unknown };
-    kariyer?: { hedefIndex?: unknown; sure?: unknown; gunluk?: unknown };
+    baslangic?: { kariyer?: unknown; deneyimAy?: unknown; detay?: unknown; baslangicOv?: unknown; baslangicVol?: unknown };
+    kariyer?: { hedefIndex?: unknown; tempo?: unknown; gunluk?: unknown };
     sifirla?: unknown;
   };
   try {
@@ -52,8 +52,8 @@ export async function POST(req: Request) {
     return Response.json({ ok: true });
   }
 
-  // 1) Başlangıç noktası FORM'u: kaydet, sohbet 'hedef' ile açılır.
-  if (govde.baslangic && typeof govde.baslangic.nokta === "string") {
+  // 1) Başlangıç FORM'u (kariyer + OV + VOL): kaydet, sohbet 'hedef' ile açılır.
+  if (govde.baslangic && typeof govde.baslangic.kariyer === "string") {
     const deneyimAy =
       typeof govde.baslangic.deneyimAy === "number" ? govde.baslangic.deneyimAy : null;
     const detay = typeof govde.baslangic.detay === "string" ? govde.baslangic.detay : null;
@@ -61,21 +61,34 @@ export async function POST(req: Request) {
       typeof govde.baslangic.baslangicOv === "number" && govde.baslangic.baslangicOv > 0
         ? govde.baslangic.baslangicOv
         : 0;
-    if (baslangicOv <= 0) return Response.json({ hata: tr.hedef.ovZorunlu }, { status: 400 });
-    const ok = await baslangicKaydet(db, session.sub, govde.baslangic.nokta, deneyimAy, detay, baslangicOv);
+    const baslangicVol =
+      typeof govde.baslangic.baslangicVol === "number" && govde.baslangic.baslangicVol > 0
+        ? govde.baslangic.baslangicVol
+        : 0;
+    if (baslangicOv <= 0 || baslangicVol <= 0)
+      return Response.json({ hata: tr.hedef.ovZorunlu }, { status: 400 });
+    const ok = await baslangicKaydet(
+      db,
+      session.sub,
+      govde.baslangic.kariyer,
+      deneyimAy,
+      detay,
+      baslangicOv,
+      baslangicVol
+    );
     if (!ok) return Response.json({ hata: tr.hedef.hata }, { status: 400 });
     return Response.json({ ok: true });
   }
 
   // 2) SOMUTLAŞTIRMA: kariyer hedefi + süre + günlük saat → plan hesapla + mühürle.
   if (govde.kariyer && typeof govde.kariyer.hedefIndex === "number") {
-    const sure = typeof govde.kariyer.sure === "string" ? govde.kariyer.sure : "";
+    const tempo = typeof govde.kariyer.tempo === "string" ? govde.kariyer.tempo : "";
     const gunluk = typeof govde.kariyer.gunluk === "string" ? govde.kariyer.gunluk : "";
     const plan = await kariyerPlaniKaydet(
       db,
       katilimci,
       govde.kariyer.hedefIndex,
-      sure,
+      tempo,
       gunluk
     );
     if (!plan) return Response.json({ hata: tr.hedef.hata }, { status: 400 });

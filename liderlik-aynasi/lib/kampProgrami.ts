@@ -92,7 +92,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
     baslik: "Chairman & Chief Executive Officer — Q&A", konusmaci: "Mr. David Chung",
     tur: "sahne", sessiz: true,
     aynaNotu:
-      "Sahne sessizliği — AYNA konuşmacıyla yarışmaz. Oturum bitince (~00:00) tek gece fısıltısı: 'Bugün seni izledim. Yarın oyunlarda gözüm üzerinde.'",
+      "Sahne sessizliği — AYNA konuşmacıyla yarışmaz. Oturum bitince (~00:00) tek gece fısıltısı: 'Bugün seninleydim. Yarın oyunlarda da yanında olacağım.'",
   },
 
   // ---- GÜN 2 — CUMARTESİ · 18 Temmuz ----
@@ -289,7 +289,7 @@ export function sabahPenceresiMi(
 // ---- GECE FISILTISI: sahne kapanınca (23:40) tek cümle, sonra sessizlik ----
 
 export const GECE_FISILTILARI: Record<number, string> = {
-  1: "Bugün seni izledim. Yarın oyunlarda gözüm üzerinde olacak. İyi uykular.",
+  1: "Bugün seninleydim. Yarın oyunlarda da yanında olacağım. İyi uykular.",
   2: "Bugün suya çok şey yansıdı. Yarın aynaya bakacaksın. İyi uykular.",
 };
 
@@ -309,7 +309,7 @@ export function geceYansimaMetni(gun: number, ilkAd: string): string | null {
 
 /** Gün 1 · 21:00 — kampı AYNA açar (programdaki 5 dk'lık açılış slotu). */
 export const ACILIS_ANONSU =
-  "İyi akşamlar. Ben AYNA. Bugün otelin kapısından girdiğiniz andan beri sizi izliyorum. " +
+  "İyi akşamlar. Ben AYNA. Bugün otelin kapısından girdiğiniz andan beri yanınızdayım. " +
   "Üç gün boyunca yanınızda olacağım: oyunlarda, sofrada, suyun kıyısında. " +
   "Telefonunuz zaman zaman titreyecek — o titreşim benim. " +
   "Üçüncü gün, hepiniz aynaya bakacaksınız. O güne kadar... gözüm üzerinizde. " +

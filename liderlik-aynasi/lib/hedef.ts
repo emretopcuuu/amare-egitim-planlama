@@ -3,11 +3,13 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { pusulaCekirdek } from "@/lib/pusula";
+import { KARIYER_RANK, kariyerHalTuret } from "@/lib/persona";
 import { kritikAiHatasiBildir, type AiHataDetay } from "@/lib/uyari";
 import {
   KARIYER_BASAMAKLARI,
   GUNLUK_SAAT_SECENEKLERI,
-  SURE_SECENEKLERI,
+  TEMPO_SECENEKLERI,
+  tempoSure,
   kariyerPlaniHesapla,
   tlFormat,
   type KariyerPlani,
@@ -146,6 +148,16 @@ type Mesaj = { rol: string; icerik: string };
 
 const BASLANGIC_NOKTALARI = new Set(["yeni", "baslangic", "deneyimli", "lider"]);
 
+// Kariyer artık /hedef'te alınıyor; deneyim ayından (kıdem) sohbet çerçevesi için
+// deneyim kovası türetilir. Kıdem yoksa güvenli varsayılan: baslangic.
+function noktaTuret(deneyimAy: number | null): string {
+  if (deneyimAy == null) return "baslangic";
+  if (deneyimAy <= 3) return "yeni";
+  if (deneyimAy <= 12) return "baslangic";
+  if (deneyimAy <= 36) return "deneyimli";
+  return "lider";
+}
+
 async function satirGetir(db: Db, pid: string) {
   const { data } = await db
     .from("hedef")
@@ -161,32 +173,55 @@ async function satirGetir(db: Db, pid: string) {
   };
 }
 
-// Başlangıç noktası FORM'dan kaydedilir; sohbet bundan sonra 'hedef' ile açılır.
+// Başlangıç FORM'u: kariyer (8 basamak) + Son 3 ay ort. OV + VOL + (ops.) kıdem.
+// Kariyer participants'a da yazılır ve persona (A/B) ORADAN türetilir; deneyim
+// kovası (yeni/başlangıç/...) sohbet çerçevesi için kıdemden türetilir.
 export async function baslangicKaydet(
   db: Db,
   pid: string,
-  nokta: string,
+  kariyer: string,
   deneyimAy: number | null,
   detay: string | null,
-  baslangicOv: number
+  baslangicOv: number,
+  baslangicVol: number
 ): Promise<boolean> {
-  if (!BASLANGIC_NOKTALARI.has(nokta)) return false;
-  if (baslangicOv <= 0) return false;
+  if (!KARIYER_RANK[kariyer]) return false;
+  if (baslangicOv <= 0 || baslangicVol <= 0) return false;
+  const kidem = deneyimAy != null && deneyimAy >= 0 ? Math.min(600, Math.floor(deneyimAy)) : null;
+  const nokta = noktaTuret(kidem);
   const { error } = await db
     .from("hedef")
     .upsert(
       {
         participant_id: pid,
         baslangic_noktasi: nokta,
-        deneyim_ay: deneyimAy != null && deneyimAy >= 0 ? Math.min(600, Math.floor(deneyimAy)) : null,
+        // kariyer_seviyesi/baslangic_vol kolonları migration 0061'de eklendi;
+        // üretilmiş tipler henüz içermediği için bilinçli cast.
+        kariyer_seviyesi: kariyer,
+        deneyim_ay: kidem,
         baslangic_detay: (detay ?? "").trim().slice(0, 500) || null,
-        baslangic_ov: Math.min(10_000_000, Math.floor(baslangicOv)),
+        baslangic_ov: Math.min(1_000_000_000, Math.floor(baslangicOv)),
+        baslangic_vol: Math.min(1_000_000_000, Math.floor(baslangicVol)),
         asama: "hedef",
         updated_at: new Date().toISOString(),
-      },
+      } as never,
       { onConflict: "participant_id" }
     );
-  return !error;
+  if (error) return false;
+
+  // Kariyeri participants'a mühürle + persona (A/B) türet. en_yuksek = şu anki
+  // (form sadeleştirildi); kıdem persona için kullanılır.
+  const persona = kariyerHalTuret({ suanki: kariyer, enYuksek: kariyer, gecenAy: null, kidemAy: kidem });
+  await db
+    .from("participants")
+    .update({
+      kariyer_seviyesi: kariyer,
+      en_yuksek_kariyer: kariyer,
+      kidem_ay: kidem,
+      kariyer_durumu: persona?.hal ?? null,
+    })
+    .eq("id", pid);
+  return true;
 }
 
 export async function hedefSifirla(db: Db, pid: string): Promise<void> {
@@ -315,15 +350,24 @@ export async function kariyerPlaniKaydet(
   db: Db,
   katilimci: { id: string; full_name: string },
   hedefIndex: number,
-  sureAnahtar: string,
+  tempoAnahtar: string,
   gunlukAnahtar: string
 ): Promise<KariyerPlani | null> {
-  const sure = SURE_SECENEKLERI.find((s) => s.anahtar === sureAnahtar);
+  const tempo = TEMPO_SECENEKLERI.find((t) => t.anahtar === tempoAnahtar);
   const saat = GUNLUK_SAAT_SECENEKLERI.find((g) => g.anahtar === gunlukAnahtar);
   const rutbe = KARIYER_BASAMAKLARI[hedefIndex];
-  if (!sure || !saat || !rutbe) return null;
+  if (!tempo || !saat || !rutbe) return null;
 
-  const plan = kariyerPlaniHesapla(hedefIndex, sure.ay, saat.gunluk, saat.etiket);
+  // Süre, kişinin Son 3 ay ortalama OV'sinden seçtiği tempoyla TÜRETİLİR.
+  const { data: h } = await db
+    .from("hedef")
+    .select("baslangic_ov")
+    .eq("participant_id", katilimci.id)
+    .maybeSingle();
+  const ov0 = (h?.baslangic_ov as number | null) ?? 0;
+  const sureAy = tempoSure(ov0, rutbe.ov, tempo.buyume);
+
+  const plan = kariyerPlaniHesapla(hedefIndex, sureAy, saat.gunluk, saat.etiket);
   if (!plan) return null;
 
   const ozet = await ozetUret(db, katilimci.id, plan);

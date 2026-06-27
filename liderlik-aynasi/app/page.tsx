@@ -18,6 +18,7 @@ import MuhurTuru from "@/components/MuhurTuru";
 import YolculukSeridi from "@/components/YolculukSeridi";
 import YolculukHaritasi from "@/components/YolculukHaritasi";
 import KampHud from "@/components/KampHud";
+import GorusmeSimdi from "@/components/GorusmeSimdi";
 import GunProgramKarti from "@/components/GunProgramKarti";
 import MomentumGostergesi from "@/components/MomentumGostergesi";
 import KonusanYansima from "@/components/KonusanYansima";
@@ -261,6 +262,36 @@ export default async function AnaSayfa({
     sahitSayim(db, session.sub),
   ]);
   const takim = kisi?.team ?? null;
+
+  // Ayna Eşin görüşmeleri (canlı "şimdi görüşmen" şeridi için) — yalnız açıkken.
+  let gorusmeListe: { slot: string; esAd: string; benimTamam: boolean }[] = [];
+  {
+    const { data: aeAyar } = await db
+      .from("settings")
+      .select("value")
+      .eq("key", "ayna_esi_acik")
+      .maybeSingle();
+    if (aeAyar?.value === "true") {
+      const { data: aeSatir } = await db
+        .from("ayna_esi")
+        .select(
+          "slot, a_id, b_id, a_tamam, b_tamam, a:participants!ayna_esi_a_id_fkey(full_name), b:participants!ayna_esi_b_id_fkey(full_name)"
+        )
+        .or(`a_id.eq.${session.sub},b_id.eq.${session.sub}`)
+        .order("tur");
+      gorusmeListe = (aeSatir ?? []).map((s) => {
+        const benA = s.a_id === session.sub;
+        const a = s.a as unknown as { full_name: string } | null;
+        const b = s.b as unknown as { full_name: string } | null;
+        return {
+          slot: s.slot as string,
+          esAd: (benA ? b?.full_name : a?.full_name)?.split(" ")[0] ?? "—",
+          benimTamam: benA ? !!s.a_tamam : !!s.b_tamam,
+        };
+      });
+    }
+  }
+
   const momentumSkor =
     typeof momentumSatirlar?.[0]?.score === "number" ? momentumSatirlar[0].score : null;
   const momentumOnceki =
@@ -409,6 +440,8 @@ export default async function AnaSayfa({
       {/* UX #9 (2.tur): Kamp HUD'u — o anki blok + kalan süre + sırada ne var.
           Cumartesi'de grup üyesine grubunun gerçek bloğu gösterilir. */}
       <KampHud takim={takim} />
+      {/* Canlı "şimdi görüşmen" — Ayna Eşin görüşmesinin saati gelince belirir */}
+      <GorusmeSimdi gorusmeler={gorusmeListe} />
       {/* B2: ikincil widget'lar tek kahraman kartı aşağı itmesin — katlanır
           "Bugünün panosu" altında toplanır (varsayılan kapalı). */}
       <details className="group mt-3">
@@ -604,8 +637,6 @@ export default async function AnaSayfa({
           {/* UX #10: her durumda TEK net sonraki adım — "şimdi ne yapayım?" cevabı koçta */}
           <SicakAdim href="/kocu" etiket={t.bekleKocu} vurgu />
           <SicakAdim href="/takdir" etiket={t.bekleEylem} />
-          {/* FAZ 3 Go-for-No: boş anda reddi veriye çevir */}
-          <SicakAdim href="/red" etiket={t.bekleRed} />
         </div>
       </div>
     </Sayfa>

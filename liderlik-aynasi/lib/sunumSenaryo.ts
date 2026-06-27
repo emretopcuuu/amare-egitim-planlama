@@ -130,7 +130,7 @@ export function sunumSenaryo(tohum: number): Senaryo {
       ekran: "gorev",
       baslik: "İlk görev geldi",
       turEtiket: "👁 Gözlem",
-      govde: `${ad}, etrafına bak. Bugün kimse fark etmeden en çok kime destek olan kişiyi seç. Adını ve neden onu seçtiğini bana yaz. Gözüm üzerinde. — AYNA`,
+      govde: `${ad}, etrafına bak. Bugün kimse fark etmeden en çok kime destek olan kişiyi seç. Adını ve neden onu seçtiğini bana yaz. Yanındayım. — AYNA`,
       sunumNotu: `Kamp başlar başlamaz telefonu titriyor. AYNA görünmez ama hep orada. Görev 15 dakikalık, sahada, güvenli — ve onu gözlemci yapıyor.`,
     },
     {
@@ -209,7 +209,7 @@ export function sunumSenaryo(tohum: number): Senaryo {
       zaman: "Son görev",
       ekran: "soz",
       baslik: "Kendine bir söz",
-      govde: `Üç gündür seni izliyorum. Son görevin en önemlisi: 90 gün sonraki ${ad}'e bir söz yaz. Neyi değiştireceksin? Sözünü saklayacağım... ve günü geldiğinde hatırlatacağım. — AYNA`,
+      govde: `Üç gündür seninleyim. Son görevin en önemlisi: 90 gün sonraki ${ad}'e bir söz yaz. Neyi değiştireceksin? Sözünü saklayacağım... ve günü geldiğinde hatırlatacağım. — AYNA`,
       sunumNotu: `Kamp bitmiyor — burada bağ kuruluyor. ${ad} bir söz veriyor ve sistem onu unutmayacak. Sahnenin perdesi inmiyor, ikinci perde açılıyor.`,
     },
     {

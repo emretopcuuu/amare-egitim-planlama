@@ -10,7 +10,15 @@ import Avatar from "@/components/Avatar";
 import AynaLogo from "@/components/AynaLogo";
 import MikrofonButonu from "@/components/MikrofonButonu";
 import YorumKocu from "./YorumKocu";
-import PuanlamaTuru from "./PuanlamaTuru";
+
+// #6 Mini-tur: ilk kez puanlayana 3 adımlık rehber. İçerikle çakışmasın diye
+// TAM EKRAN kapı olarak gösterilir; "Anladım"a basılınca puanlama açılır.
+const TUR_ANAHTAR = "la_puanlama_turu_v1";
+const TUR_ADIMLAR = [
+  { ikon: "👆", ad: "Büyük butonlarla 1–10 arası puan ver — seçince kendiliğinden sıradakine geçer." },
+  { ikon: "✍️", ad: "6’nın altında puan verirsen kısa bir yorum istenir (yapıcı, davranışa dair)." },
+  { ikon: "🔎", ad: "Her özellikte “ne gözlemle” ipucu var — puanı ona göre düşün." },
+];
 
 type Ozellik = { id: number; name: string; observation_hint: string };
 type Girdi = { puan: number | null; yorum: string };
@@ -84,6 +92,8 @@ export default function PuanlamaFormu({
   const [giris, setGiris] = useState(kendisi && mevcut.length === 0);
   // İlk kez BİRİNİ puanlayan için gizlilik güvencesi (mount'ta localStorage'a bakılır).
   const [gizlilik, setGizlilik] = useState(false);
+  // #6 Mini-tur kapısı (mount'ta localStorage'a bakılır; görülmediyse açılır).
+  const [tur, setTur] = useState(false);
   // İlk öz puanlamadan sonra kutlama/bilgilendirme ekranına gidilir (mount'ta sabit)
   const ilkOzPuan = useRef(kendisi && mevcut.length === 0);
   const [taslakGeldi, setTaslakGeldi] = useState(false);
@@ -139,6 +149,14 @@ export default function PuanlamaFormu({
       }
     } catch {
       // depolama kapalı: güvenceyi atla
+    }
+    try {
+      if (!localStorage.getItem(TUR_ANAHTAR)) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setTur(true);
+      }
+    } catch {
+      // depolama kapalı: turu atla
     }
     try {
       const ham = localStorage.getItem(taslakAnahtari(dalgaId, hedefId));
@@ -201,8 +219,9 @@ export default function PuanlamaFormu({
       setGecisParla(true);
       if (parlaZaman.current) clearTimeout(parlaZaman.current);
       parlaZaman.current = setTimeout(() => setGecisParla(false), 520);
+      // #10 Seçim + dinamik geri bildirim görülsün diye geçiş biraz beklesin.
       if (ilerleZamanlayici.current) clearTimeout(ilerleZamanlayici.current);
-      ilerleZamanlayici.current = setTimeout(ileri, 320);
+      ilerleZamanlayici.current = setTimeout(ileri, 650);
     }
   }
 
@@ -341,6 +360,39 @@ export default function PuanlamaFormu({
     );
   }
 
+  // MİNİ-TUR KAPISI (#6): puanlama içeriğiyle çakışmasın diye tam ekran; kapatınca açılır.
+  if (tur) {
+    return (
+      <div className="flex min-h-[82vh] flex-col justify-center py-8 text-center">
+        <p className="text-5xl" aria-hidden>👋</p>
+        <h1 className="prizma-serif ay-metin mt-5 text-2xl font-semibold leading-tight">
+          İlk kez mi puanlıyorsun? 3 adımda:
+        </h1>
+        <ul className="mx-auto mt-6 max-w-md space-y-3 text-left">
+          {TUR_ADIMLAR.map((a) => (
+            <li key={a.ad} className="flex gap-3 rounded-2xl border border-gold/25 bg-gold/[0.06] p-4 text-base leading-relaxed text-slate-200">
+              <span className="text-xl" aria-hidden>{a.ikon}</span>
+              <span>{a.ad}</span>
+            </li>
+          ))}
+        </ul>
+        <button
+          onClick={() => {
+            try {
+              localStorage.setItem(TUR_ANAHTAR, "1");
+            } catch {
+              // depolama kapalı: yine de devam et
+            }
+            setTur(false);
+          }}
+          className="parilti btn-kor mx-auto mt-8 flex h-16 w-full max-w-md items-center justify-center rounded-2xl text-xl font-bold"
+        >
+          Anladım, başlayalım
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="relative flex min-h-[82vh] flex-col">
       {/* Geçiş parlaması — seçim sonrası ekranın üstünden altın ışık geçer */}
@@ -428,9 +480,6 @@ export default function PuanlamaFormu({
         )}
       </header>
 
-      {/* Aday UX #9 — ilk kez puanlayana tek seferlik 3 adımlık mini-tur */}
-      {adim === 0 && <div className="mt-4"><PuanlamaTuru /></div>}
-
       {/* TEK ÖZELLİK ekranı — key={adim}: her geçişte giriş animasyonu yeniden oynar */}
       {o && g && (
         <div key={adim} className="of-adim flex flex-1 flex-col justify-center py-8">
@@ -475,7 +524,7 @@ export default function PuanlamaFormu({
                 onClick={() => puanSec(o, p)}
                 className={`h-16 rounded-2xl border-2 text-2xl font-bold transition-all ${
                   g.puan === p
-                    ? `${PUAN_RENK[p].sec} scale-105 ring-offset-2 ring-offset-transparent`
+                    ? "scale-105 border-gold bg-gold text-[#1a1206] ring-2 ring-gold/50"
                     : PUAN_RENK[p].bos
                 }`}
               >
@@ -487,6 +536,15 @@ export default function PuanlamaFormu({
             <span>{tr.puanlama.dusukUc}</span>
             <span>{tr.puanlama.yuksekUc}</span>
           </div>
+          {/* #5 Dinamik geri bildirim — seçilen puana göre destekleyici tek satır */}
+          {g.puan !== null && (
+            <p
+              aria-live="polite"
+              className="mt-3 rounded-xl bg-white/[0.05] px-3 py-2 text-center text-base font-semibold text-gold-light"
+            >
+              {tr.puanlama.seciliGeri(g.puan)}
+            </p>
+          )}
 
           {yorumGerekli && (
             <div className="mt-6">

@@ -14,6 +14,7 @@ import YuzenGeri from "@/components/YuzenGeri";
 import YardimKanali from "@/components/YardimKanali";
 import BildirimLogDinleyici from "@/components/BildirimLogDinleyici";
 import KimsinBant from "@/components/KimsinBant";
+import PwaKur from "@/components/PwaKur";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -110,6 +111,8 @@ export default async function RootLayout({
         <AtlaBaglantisi />
         {/* Üst-orta "kimsin?" bandı: aday hangi sayfada olursa olsun adını görür */}
         <KimsinBant />
+        {/* PWA tek-tuş "ana ekrana ekle" + SW'yi global kaydet (logolu kurulum) */}
+        <PwaKur />
         {/* İlk açılışta tek seferlik ONE TEAM marka videosu */}
         <AcilisSplash />
         {/* GECE GÖLÜ tüm evrenin zemini: her ekran canlı gölün üstünde yaşar */}

@@ -15,13 +15,8 @@ const ORNEK_GORUNUR = 6; // ilk gösterilen örnek sayısı; gerisi "daha fazla"
 const SOHBET_ASAMALARI = ["eleme", "bosluk", "engel"] as const;
 
 type Mesaj = { rol: string; icerik: string };
-type Faz = "riza" | "kariyer" | "liste" | "kopru" | "sohbet" | "slogan" | "bitti";
-
-// Kariyer basamakları — form dropdown'ları için sıralı (düşükten yükseğe).
-const KARIYER_SECENEKLER = [
-  "leader", "senior_leader", "exec_leader", "diamond",
-  "1_star_diamond", "2_star_diamond", "3_star_diamond", "presidential_diamond",
-] as const;
+// Kariyer artık Pusula başında değil, /hedef'te (nedenlerden sonra) sorulur.
+type Faz = "riza" | "liste" | "kopru" | "sohbet" | "slogan" | "bitti";
 
 // Sohbet ilerlemesi — aşamadan yüzdeye. Her AYNA yanıtı aşamayı döndürür,
 // böylece kişi her soruda sona ne kadar kaldığını görür.
@@ -31,6 +26,25 @@ const ILERLEME: Record<string, number> = {
   engel: 82,
   tamam: 100,
 };
+
+// Türkçe küçük harf + harf/rakam dışını boşluğa indirerek normalleştir.
+function normMetin(s: string): string {
+  return s.toLocaleLowerCase("tr").replace(/[^\p{L}\p{N}]+/gu, " ").trim();
+}
+// Yazılan metnin hangi önceliği elediğini bul: birebir (normalleştirilmiş) ya da
+// kapsama ("finansal" → "Finansal olarak özgür olmak"). Çok kısa girdilerde
+// yanlış eşleşmeyi önlemek için kapsama eşiği (>=4 harf) var.
+function elenenEslesme(metin: string, liste: string[]): string | null {
+  const n = normMetin(metin);
+  if (!n) return null;
+  const tam = liste.find((o) => normMetin(o) === n);
+  if (tam) return tam;
+  if (n.length < 4) return null;
+  return liste.find((o) => {
+    const no = normMetin(o);
+    return no.includes(n) || n.includes(no);
+  }) ?? null;
+}
 
 // Web Speech API — sesle yazma (Türkçe). Desteklenmiyorsa buton görünmez.
 type TanimaSonuc = ArrayLike<{ transcript: string }> & { isFinal: boolean };
@@ -254,29 +268,21 @@ function MaddeMetni({ metin }: { metin: string }) {
 export default function PusulaSohbet({
   baslangic,
   rizaVar,
-  kariyerVar = false,
   onceliklerVar,
   oncelikler = [],
   asamaBaslangic = "eleme",
 }: {
   baslangic: Mesaj[];
   rizaVar: boolean;
-  kariyerVar?: boolean;
   onceliklerVar: boolean;
   oncelikler?: string[];
   asamaBaslangic?: string;
 }) {
   const router = useRouter();
-  // Akış: riza → kariyer (Pusula öncesi) → liste → sohbet. Dönen kullanıcıda
-  // tamamlanmış adımlar atlanır.
+  // Akış: riza → liste → sohbet. Kariyer artık /hedef'te sorulur. Dönen
+  // kullanıcıda tamamlanmış adımlar atlanır.
   const ilkFaz: Faz =
-    baslangic.length > 0 || onceliklerVar
-      ? "sohbet"
-      : !rizaVar
-        ? "riza"
-        : !kariyerVar
-          ? "kariyer"
-          : "liste";
+    baslangic.length > 0 || onceliklerVar ? "sohbet" : !rizaVar ? "riza" : "liste";
 
   const [faz, setFaz] = useState<Faz>(ilkFaz);
   const [mesajlar, setMesajlar] = useState<Mesaj[]>(baslangic);
@@ -305,11 +311,8 @@ export default function PusulaSohbet({
   const [sloganKaydediyor, setSloganKaydediyor] = useState(false);
   const [sifirlaSor, setSifirlaSor] = useState(false);
   const [sifirliyor, setSifirliyor] = useState(false);
-  // Kariyer konumu formu (Pusula öncesi)
-  const [karSuanki, setKarSuanki] = useState("");
-  const [karEnYuksek, setKarEnYuksek] = useState("");
-  const [karGecenAy, setKarGecenAy] = useState("");
-  const [karKidem, setKarKidem] = useState("");
+  const [geriAliniyor, setGeriAliniyor] = useState(false); // son elemeyi geri alma
+  const [bittiBekliyor, setBittiBekliyor] = useState(false); // son analiz okunsun, sonra devam
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const altRef = useRef<HTMLDivElement>(null);
@@ -380,36 +383,6 @@ export default function PusulaSohbet({
     setMesgul(true);
     await istek({ basla: true });
     setMesgul(false);
-    setFaz("kariyer");
-  }
-
-  // Kariyer konumunu kaydet (yalnız "şu anki" zorunlu) → liste adımına geç.
-  async function kariyerKaydet() {
-    if (mesgul) return;
-    if (!karSuanki) {
-      setHata(t.kariyerSuankiEtiket);
-      return;
-    }
-    setMesgul(true);
-    setHata(null);
-    const v = await istek({
-      kariyer: {
-        suanki: karSuanki,
-        enYuksek: karEnYuksek || null,
-        gecenAy: karGecenAy || null,
-        kidemAy: karKidem.trim() === "" ? null : Number(karKidem),
-      },
-    });
-    setMesgul(false);
-    if (!v?.ok) {
-      setHata(v?.hata ?? t.aiHata);
-      return;
-    }
-    setFaz("liste");
-  }
-
-  function kariyerAtla() {
-    setHata(null);
     setFaz("liste");
   }
 
@@ -458,14 +431,18 @@ export default function PusulaSohbet({
     setTimeout(() => altRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   }
 
-  async function gonder() {
-    const metin = girdi.trim();
+  // metinParam verilirse (chip'ten tek dokunuş eleme) onu gönderir; yoksa girdi.
+  async function gonder(metinParam?: string) {
+    const metin = (metinParam ?? girdi).trim();
     if (!metin || mesgul) return;
     setMesajlar((m) => [...m, { rol: "kullanici", icerik: metin }]);
-    setGirdi("");
-    // Gönderilen madde listede varsa eleme olarak işaretle (chip'lerden düşsün).
-    if (tumListe.includes(metin)) {
-      setElenenler((e) => (e.includes(metin) ? e : [...e, metin]));
+    if (metinParam === undefined) setGirdi("");
+    // Eleme işareti: chip'e dokunmak birebir gelir; ELLE YAZARAK eleyince ("finansal"
+    // gibi) tam metinle eşleşmez. Bu yüzden normalleştirilmiş kapsama eşleşmesi de
+    // dene — eşleşen önceliği chip'lerden düşür.
+    const elenen = elenenEslesme(metin, tumListe);
+    if (elenen) {
+      setElenenler((e) => (e.includes(elenen) ? e : [...e, elenen]));
     }
     setMesgul(true);
     setHata(null);
@@ -479,13 +456,28 @@ export default function PusulaSohbet({
     if (v.asama) setAsama(v.asama);
     if (v.bitti) {
       setAsama("tamam");
-      if (v.sloganAdaylar?.length) {
-        setSloganAdaylar(v.sloganAdaylar);
-        setFaz("slogan");
-      } else {
-        setFaz("bitti");
-      }
+      if (v.sloganAdaylar?.length) setSloganAdaylar(v.sloganAdaylar);
+      // Doğrudan slogan/bitti ekranına atlama: önce son analiz mesajı sohbette
+      // okunsun, kişi hazır olunca kendisi geçsin (#6 — çok hızlı geçme sorunu).
+      setBittiBekliyor(true);
     }
+  }
+
+  // Son elemeyi geri al: sunucudan son (kullanıcı eleme + AYNA yanıtı) çiftini
+  // sildir, istemcide de son iki mesajı ve son eleneni çıkar.
+  async function sonElemeyiGeriAl() {
+    if (geriAliniyor || mesgul || !elenenler.length) return;
+    setGeriAliniyor(true);
+    const v = await istek({ geriAl: true });
+    setGeriAliniyor(false);
+    if (!v?.ok) {
+      setHata(t.aiHata);
+      return;
+    }
+    setMesajlar((m) => m.slice(0, -2));
+    setElenenler((e) => e.slice(0, -1));
+    setAsama("eleme");
+    setHata(null);
   }
 
   async function sloganKaydet(secilen: string) {
@@ -514,77 +506,13 @@ export default function PusulaSohbet({
     );
   }
 
-  // ---- Kariyer konumu (Pusula öncesi) ----
-  if (faz === "kariyer") {
-    const sec = (
-      deger: string,
-      setDeger: (v: string) => void,
-      etiket: string,
-      bosLabel: string
-    ) => (
-      <label className="block text-left">
-        <span className="mb-1.5 block text-sm font-medium text-slate-300">{etiket}</span>
-        <select
-          value={deger}
-          onChange={(e) => setDeger(e.target.value)}
-          className="h-12 w-full rounded-2xl border border-royal-light/30 bg-midnight-soft px-3 text-base text-slate-100 outline-none focus:border-gold"
-        >
-          <option value="">{bosLabel}</option>
-          {KARIYER_SECENEKLER.map((k) => (
-            <option key={k} value={k}>
-              {t.kariyerSeviyeEtiketler[k]}
-            </option>
-          ))}
-        </select>
-      </label>
-    );
-    return (
-      <Kapak ikon="📊" baslik={t.kariyerBaslik}>
-        <p className="mt-3 text-base leading-relaxed text-slate-300">{t.kariyerMetin}</p>
-        <div className="mt-6 space-y-4">
-          {sec(karSuanki, setKarSuanki, t.kariyerSuankiEtiket, t.kariyerSecimYer)}
-          {sec(karEnYuksek, setKarEnYuksek, t.kariyerEnYuksekEtiket, t.kariyerSecimYer)}
-          {sec(karGecenAy, setKarGecenAy, t.kariyerGecenAyEtiket, t.kariyerSecimYer)}
-          <label className="block text-left">
-            <span className="mb-1.5 block text-sm font-medium text-slate-300">
-              {t.kariyerKidemEtiket}
-            </span>
-            <input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={600}
-              value={karKidem}
-              onChange={(e) => setKarKidem(e.target.value)}
-              placeholder={t.kariyerKidemYer}
-              className="h-12 w-full rounded-2xl border border-royal-light/30 bg-midnight-soft px-3 text-base text-slate-100 outline-none focus:border-gold"
-            />
-          </label>
-        </div>
-        {hata && <p className="mt-3 text-sm text-red-400">{hata}</p>}
-        <button
-          onClick={kariyerKaydet}
-          disabled={mesgul || !karSuanki}
-          className="btn-kor parilti mt-7 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
-        >
-          {mesgul ? t.dusunuyor : t.kariyerKaydet}
-        </button>
-        <button
-          onClick={kariyerAtla}
-          className="mx-auto mt-3 block text-sm text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
-        >
-          {t.kariyerAtla}
-        </button>
-      </Kapak>
-    );
-  }
-
   // ---- Liste (tek tek / madde madde) ----
   if (faz === "liste") {
     const tamam = maddeler.length >= BLANK_SAYISI;
     const yeterli = maddeler.length >= MIN_MADDE;
     return (
-      <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
+      <main className="koyu-alan relative isolate mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
+        <div aria-hidden className="pusula-okur-zemin pointer-events-none absolute inset-0 -z-10" />
         <div className="flex items-start justify-between gap-3">
           <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.listeBaslik}</h1>
           <SifirlaButon sor={sifirlaSor} setSor={setSifirlaSor} sifirla={sifirla} mesgul={sifirliyor} />
@@ -837,7 +765,8 @@ export default function PusulaSohbet({
   // Seçilip elenenler düştükten sonra kalan öncelikler chip olarak görünür.
   const gosterListe = tumListe.filter((m) => !elenenler.includes(m));
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
+    <main className="koyu-alan relative isolate mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
+      <div aria-hidden className="pusula-okur-zemin pointer-events-none absolute inset-0 -z-10" />
       <header className="shrink-0 pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 text-center">
@@ -876,6 +805,28 @@ export default function PusulaSohbet({
                     : "bekliyor",
             }))}
           />
+          {/* ELEME SAYACI (#1) — kalan öncelik görsel noktalarla, metin tekrarı yerine */}
+          {asama === "eleme" && tumListe.length > 0 && (
+            <div className="mt-3 flex flex-col items-center gap-1.5">
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {tumListe.map((m, i) => {
+                  const elendi = elenenler.includes(m);
+                  return (
+                    <span
+                      key={i}
+                      aria-hidden
+                      className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                        elendi ? "bg-white/15" : "bg-gold"
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+              <span className="text-[0.7rem] font-medium text-slate-400">
+                {t.elemeKalanEtiket(gosterListe.length)}
+              </span>
+            </div>
+          )}
         </div>
       </header>
 
@@ -885,7 +836,7 @@ export default function PusulaSohbet({
             <p
               className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-base leading-relaxed ${
                 m.rol === "ayna"
-                  ? "kart-cam text-slate-100"
+                  ? "ayna-balon-okur text-slate-100"
                   : "bg-gradient-to-br from-[#243349] to-[#10192a] text-[#f5ecd8] ring-1 ring-[#d4af37]/40 shadow-[0_6px_20px_-6px_rgba(0,0,0,0.45)]"
               }`}
             >
@@ -909,56 +860,103 @@ export default function PusulaSohbet({
         </p>
       )}
 
-      {/* Öncelik listesi yanıt kutusunun HEMEN ÜSTÜNDE; dokun → yanıta yaz */}
-      {gosterListe.length > 0 && (
-        <div className="shrink-0 pb-3">
-          <p className="mb-1.5 text-center text-[0.65rem] uppercase tracking-wide text-slate-500">
-            {t.listeHatirlat}
-          </p>
-          <div className="flex flex-wrap justify-center gap-1.5">
-            {gosterListe.map((m, i) => (
-              <button
-                key={i}
-                onClick={() => setGirdi(m)}
-                title={m}
-                className="max-w-[12rem] truncate rounded-full border border-royal-light/30 bg-midnight-soft px-3 py-1 text-sm text-slate-200 transition-colors hover:border-gold"
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {sohbetDinliyor && (
-        <div className="mb-2 flex shrink-0 items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/5 px-3 py-2">
-          <SesDalga />
-          <span className="shrink-0 text-xs font-medium text-red-200">{t.sesDinleniyor}</span>
-        </div>
-      )}
-      <div className="flex shrink-0 items-end gap-2">
-        <div className="min-w-0 flex-1">
-          <OtoTextarea
-            value={girdi}
-            onChange={setGirdi}
-            onEnter={gonder}
-            placeholder={t.girisYer}
-            ariaLabel={t.girisYer}
-          />
-        </div>
-        <SesButonu
-          onParca={(m) => setGirdi((g) => (g ? `${g} ${m}` : m))}
-          dinleyince={setSohbetDinliyor}
-          boyutSinif="h-12 w-12 rounded-2xl"
-        />
+      {/* Bitiş bekliyor (#6): son analiz mesajı sohbette okunsun; kişi hazır
+          olunca slogan/bitiş ekranına KENDİSİ geçsin (ani atlama yok). */}
+      {bittiBekliyor ? (
         <button
-          onClick={gonder}
-          disabled={mesgul || !girdi.trim()}
-          className="btn-kor flex h-12 shrink-0 items-center justify-center rounded-2xl px-5 text-base font-bold disabled:opacity-50"
+          onClick={() => setFaz(sloganAdaylar.length ? "slogan" : "bitti")}
+          className="btn-kor parilti flex h-14 w-full shrink-0 items-center justify-center rounded-2xl text-lg font-bold"
         >
-          {t.gonder}
+          {sloganAdaylar.length ? t.analizDevamSlogan : t.analizDevamBitti}
         </button>
-      </div>
+      ) : (
+        <>
+          {/* Bıraktıkların izi + son elemeyi geri al (#3) — yalnız eleme aşamasında */}
+          {asama === "eleme" && elenenler.length > 0 && (
+            <div className="shrink-0 pb-2">
+              <p className="mb-1 text-center text-[0.65rem] uppercase tracking-wide text-slate-600">
+                {t.elenenlerBaslik}
+              </p>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {elenenler.map((m, i) => (
+                  <span
+                    key={i}
+                    title={m}
+                    className="max-w-[10rem] truncate rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-xs text-slate-500 line-through"
+                  >
+                    {m}
+                  </span>
+                ))}
+              </div>
+              <button
+                onClick={sonElemeyiGeriAl}
+                disabled={geriAliniyor}
+                className="mx-auto mt-1.5 block text-xs font-medium text-gold-light/80 underline-offset-2 hover:underline disabled:opacity-50"
+              >
+                {geriAliniyor ? t.geriAliniyor : t.geriAlSon}
+              </button>
+            </div>
+          )}
+
+          {/* Kalan öncelikler — eleme'de tek dokunuş 'bırak', diğer aşamada yanıta yaz (#4) */}
+          {gosterListe.length > 0 && (
+            <div className="shrink-0 pb-3">
+              <p className="mb-1.5 text-center text-[0.65rem] uppercase tracking-wide text-slate-500">
+                {asama === "eleme" ? t.elemeChipIpucu : t.listeHatirlat}
+              </p>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {gosterListe.map((m, i) => (
+                  <button
+                    key={i}
+                    onClick={() => (asama === "eleme" ? gonder(m) : setGirdi(m))}
+                    disabled={mesgul}
+                    title={m}
+                    className={`flex max-w-[14rem] items-center gap-1.5 rounded-full border px-3 py-1 text-sm transition-colors disabled:opacity-50 ${
+                      asama === "eleme"
+                        ? "border-rose-400/30 bg-rose-500/5 text-slate-200 hover:border-rose-400/70 hover:bg-rose-500/10"
+                        : "border-royal-light/30 bg-midnight-soft text-slate-200 hover:border-gold"
+                    }`}
+                  >
+                    {/* Uzun yazıda yalnız etiket kısalsın; ✕ her zaman görünür kalsın */}
+                    <span className="truncate">{m}</span>
+                    {asama === "eleme" && <span aria-hidden className="shrink-0 text-rose-300/90">✕</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {sohbetDinliyor && (
+            <div className="mb-2 flex shrink-0 items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/5 px-3 py-2">
+              <SesDalga />
+              <span className="shrink-0 text-xs font-medium text-red-200">{t.sesDinleniyor}</span>
+            </div>
+          )}
+          <div className="flex shrink-0 items-end gap-2">
+            <div className="min-w-0 flex-1">
+              <OtoTextarea
+                value={girdi}
+                onChange={setGirdi}
+                onEnter={() => gonder()}
+                placeholder={t.girisYer}
+                ariaLabel={t.girisYer}
+              />
+            </div>
+            <SesButonu
+              onParca={(m) => setGirdi((g) => (g ? `${g} ${m}` : m))}
+              dinleyince={setSohbetDinliyor}
+              boyutSinif="h-12 w-12 rounded-2xl"
+            />
+            <button
+              onClick={() => gonder()}
+              disabled={mesgul || !girdi.trim()}
+              className="btn-kor flex h-12 shrink-0 items-center justify-center rounded-2xl px-5 text-base font-bold disabled:opacity-50"
+            >
+              {t.gonder}
+            </button>
+          </div>
+        </>
+      )}
     </main>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import GorevYanitFormu from "./GorevYanitFormu";
 
 const t = tr.gorevler;
 
@@ -28,6 +29,7 @@ export type GecmisGorev = {
   issued_at: string;
   trait_id: number | null;
   gozlem: string | null;
+  response_text: string | null;
 };
 
 type Filtre = "tum" | "yuksek" | "kacan";
@@ -42,6 +44,8 @@ export default function GorevGecmisi({
   ozellikAd: Record<number, string>;
 }) {
   const [filtre, setFiltre] = useState<Filtre>("tum");
+  // "Geliştir ve yeniden gönder" açık olan görev (puanı artırmak için tekrar dene).
+  const [gelistirId, setGelistirId] = useState<string | null>(null);
 
   // Özet: tamamlanan (scored) sayısı + ortalama puan + kaçan sayısı.
   const ozet = useMemo(() => {
@@ -227,6 +231,27 @@ export default function GorevGecmisi({
                               </span>
                               “{g.gozlem}”
                             </p>
+                          )}
+                          {/* Geliştir ve yeniden gönder — puanı artırmak için aynı görevi
+                              tekrar dene (söz/senkron hariç puanlanmış görevler). */}
+                          {g.status === "scored" && g.kind !== "soz" && g.kind !== "senkron" && (
+                            gelistirId === g.id ? (
+                              <div className="mt-3">
+                                <GorevYanitFormu
+                                  gorevId={g.id}
+                                  gorevBaslik={g.title}
+                                  baslangicYanit={g.response_text ?? ""}
+                                />
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setGelistirId(g.id)}
+                                className="mt-3 w-full text-center text-xs font-medium text-gold-light/80 underline-offset-4 transition-colors hover:text-gold-light"
+                              >
+                                🔁 {t.gelistirYeniden}
+                              </button>
+                            )
                           )}
                         </div>
                       </li>

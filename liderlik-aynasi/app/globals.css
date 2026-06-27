@@ -710,6 +710,44 @@ body {
 }
 
 /* Cam kart: buzlu beyaz panel + maske tekniğiyle sedefli 1px kenar */
+/* Sohbet balonu — açık arka plan (orman) üstünde AYNA repliği net okunsun:
+   yarı saydam camdan daha opak koyu zemin + bulanıklık. */
+.ayna-balon-okur {
+  background: rgba(18, 20, 38, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.5);
+}
+body.gunes-modu .ayna-balon-okur {
+  background: rgba(20, 24, 44, 0.8);
+}
+
+/* Pusula/Hedef sohbet, Değerlendir gibi fotoğraf zemin üstünde yaşayan
+   sürükleyici ekranlar: HER TEMADA koyu yüzey. (Gündüz teması metni koyuya
+   çevirdiği için açık zeminde değil, koyu zemin + açık metin tutarlı okunur.) */
+.pusula-okur-zemin {
+  background: rgba(6, 14, 26, 0.72);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+/* KOYU ALAN — içindeki tema-bağımlı slate metinleri AÇIK tutar; böylece gündüz
+   temasında koyu yüzey üstünde metin kaybolmaz. Sürükleyici ekranlara uygulanır. */
+.koyu-alan .text-slate-50,
+.koyu-alan .text-slate-100,
+.koyu-alan .text-slate-200 {
+  color: #e8eef6 !important;
+}
+.koyu-alan .text-slate-300 {
+  color: #c4cfdd !important;
+}
+.koyu-alan .text-slate-400 {
+  color: #9fb0c4 !important;
+}
+.koyu-alan .text-slate-500 {
+  color: #8294a8 !important;
+}
+
 .kart-cam {
   position: relative;
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));

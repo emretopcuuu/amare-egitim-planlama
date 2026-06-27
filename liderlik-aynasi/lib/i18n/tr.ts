@@ -243,7 +243,7 @@ export const tr = {
     dalgaDevamMetin: "Şimdi gözlemlediğin kişileri puanlama zamanı.",
     dalgaDevamDugme: "Değerlendirmeye Devam Et",
     gorevTekBaslik: "AYNA'dan görevin var",
-    gorevTekMetin: "Seni izliyorum. Sıradaki adımın hazır.",
+    gorevTekMetin: "Yanındayım. Sıradaki adımın hazır.",
     gorevTekDugme: (n: number) => (n > 1 ? `${n} Görevi Aç` : "Görevi Aç"),
     bekleBaslik: "AYNA seninle",
     bekleMetin: "Şu an duraksama vaktin. Sıradaki adım geldiğinde yanında olacağım. 👁",
@@ -253,7 +253,7 @@ export const tr = {
     bugunNeOldu: (gorev: number, takdir: number) =>
       `Bugün${gorev > 0 ? ` 🎯 ${gorev} görev kapattın` : ""}${takdir > 0 ? `${gorev > 0 ? "," : ""} 💛 ${takdir} takdir aldın` : ""}.`,
     // B7: bekleme beklentisi
-    bekleBeklenti: "AYNA gün boyu seni izliyor — yeni bir görev her an gelebilir.",
+    bekleBeklenti: "AYNA gün boyu yanında — yeni bir görev her an gelebilir.",
     // İlk 60 saniye rehberi: ilk öz-puana doğru nazik canlı işaret (#3).
     ilkAdimIpucu: "İlk adımın bu — başla",
     // Çıkmaz yok: boş anda bile sıcak bir sonraki adım — birine takdir bırak.
@@ -583,6 +583,15 @@ export const tr = {
     ozetBaslik: "Kontrol et ve gönder",
     dusukUc: "1 = hiç",
     yuksekUc: "10 = tam",
+    // #5 Seçilen puana göre dinamik, destekleyici geri bildirim (yargısız).
+    seciliGeri: (p: number) =>
+      p <= 3
+        ? `${p}/10 — gelişime en açık alan; dürüstlüğün değerli.`
+        : p <= 6
+          ? `${p}/10 — ortada; küçük adımlarla yükselir.`
+          : p <= 8
+            ? `${p}/10 — güçlü bir tarafın.`
+            : `${p}/10 — en güçlü yanlarından.`,
     ozBaslik: "Kendini Puanla",
     baslikKisi: (ad: string) => `${ad} kişisini puanla`,
     ozAciklama:
@@ -729,9 +738,8 @@ export const tr = {
     kariyerBaslik: "Kariyer konumun",
     kariyerMetin:
       "Sana en doğru yol arkadaşlığını yapabilmem için kariyer yolculuğunun şu anki resmini bilmem gerekiyor. Rakamlar zamanla değişir — bu çok normal. En dürüst hâliyle yaz; bu sayılar yalnızca sana özel görevleri şekillendirmek için.",
-    kariyerSuankiEtiket: "Şu anki kariyer basamağın",
-    kariyerEnYuksekEtiket: "Bugüne kadar ulaştığın en yüksek basamak",
-    kariyerGecenAyEtiket: "Geçen ayki basamağın",
+    kariyerSuankiEtiket: "Şu anki kariyer basamağın (bugüne kadar ulaştığın en yüksek kariyer)",
+    kariyerGecenAyEtiket: "Geçen ay hangi kariyerle bitirdin?",
     kariyerKidemEtiket: "Kaç aydır bu işin içindesin?",
     kariyerKidemYer: "Örn. 18",
     kariyerSecimYer: "— Seç —",
@@ -860,6 +868,15 @@ export const tr = {
     maddeAc: "Tamamını gör",
     maddeKapat: "Kısalt",
     listeHatirlat: "Öncelik listen — seçmek için dokun",
+    // Eleme aşaması — görsel sayaç, tek dokunuş eleme, geri al
+    elemeChipIpucu: "Bırakmak için dokun (yanlışsa geri alabilirsin)",
+    elemeKalanEtiket: (kalan: number) => `${kalan} öncelik kaldı`,
+    elenenlerBaslik: "Bıraktıkların",
+    geriAlSon: "↩ Son bıraktığını geri al",
+    geriAliniyor: "Geri alınıyor…",
+    // Sohbet bitince son analiz mesajı okunsun, sonra mühür/devam
+    analizDevamSlogan: "Pusulama mühür vur →",
+    analizDevamBitti: "Devam et →",
     dusunuyor: "AYNA düşünüyor…",
     yukleniyor: "Yükleniyor…",
     tamamBaslik: "Pusulan kuruldu 🧭",
@@ -962,19 +979,44 @@ export const tr = {
     // Başlangıç noktası formu
     noktaBaslik: "Önce: bu işin neresindesin?",
     noktaAciklama:
-      "Hedefini doğru ölçekte koyabilmek için nerede durduğunu bilmem gerekiyor. Sana en yakın olanı seç.",
+      "Hedefini doğru ölçekte koyabilmem için nerede durduğunu bilmem gerekiyor. Şu anki kariyer basamağını ve son 3 ayın ortalamalarını yaz.",
     noktalar: {
       yeni: { ad: "Yeni başladım", alt: "0-3 ay · ilk adımlar" },
       baslangic: { ad: "Başlangıç aşamasındayım", alt: "3-12 ay · tempo kuruyorum" },
       deneyimli: { ad: "Deneyimliyim", alt: "12 ay ve üstü · ekibim var" },
       lider: { ad: "Olgun bir liderim", alt: "Lider yetiştiriyorum" },
     },
-    noktaAyEtiket: "Ne kadardır bu işin içindesin? (ay — opsiyonel)",
+    // Kariyer seçimi (Pusula başından buraya taşındı) — 8 basamak
+    kariyerEtiket: "Şu anki kariyer basamağın (bugüne kadar ulaştığın en yüksek kariyer)",
+    kariyerSecimYer: "— Seç —",
+    kariyerSeviyeEtiketler: {
+      leader: "Leader",
+      senior_leader: "Senior Leader",
+      exec_leader: "Executive Leader",
+      diamond: "Diamond",
+      "1_star_diamond": "1 Star Diamond",
+      "2_star_diamond": "2 Star Diamond",
+      "3_star_diamond": "3 Star Diamond",
+      presidential_diamond: "Presidential Diamond",
+    } as Record<string, string>,
+    noktaAyEtiket: "Ne kadardır bu işin içindesin? (opsiyonel)",
+    kidemSecimYer: "— Seç —",
+    // Ay yerine değer aralığı seçtir (yıllarca işte olan "ay" hesabı yapmasın);
+    // her aralık persona için temsili bir ay değerine eşlenir.
+    kidemAraliklar: [
+      { ay: 2, etiket: "0-3 ay" },
+      { ay: 7, etiket: "3-12 ay" },
+      { ay: 18, etiket: "1-2 yıl" },
+      { ay: 42, etiket: "2-5 yıl" },
+      { ay: 72, etiket: "5+ yıl" },
+    ] as { ay: number; etiket: string }[],
     noktaDetayYer: "Eklemek istediğin bir şey var mı? (opsiyonel)",
-    // OV alanı (zorunlu, tüm seviyelerde)
+    // OV + VOL alanları (Son 3 ay ortalaması, ikisi de zorunlu)
     ovEtiket: "Son 3 ayın ortalama OV'si (zorunlu)",
     ovYer: "Örn: 2500",
-    ovZorunlu: "OV değeri gerekli — bu rakam planını kişiselleştirir.",
+    ovZorunlu: "OV ve VOL gerekli — bu rakamlar planını kişiselleştirir.",
+    volEtiket: "Son 3 ayın ortalama VOL'si (zorunlu)",
+    volYer: "Örn: 1500",
     noktaDevam: "Devam et",
     // OV simülasyonu
     simulasyonBaslik: "OV büyüme simülasyonu",
@@ -983,6 +1025,12 @@ export const tr = {
     simulasyonAyEtiket: (ay: number) => `${ay}. ay`,
     simulasyonGerekliTempo: (oran: string) => `Hedef için gereken tempo: aylık ${oran}`,
     simulasyonMakul: (ay: number) => `%20 büyümeyle tahmini süre: ${ay} ay`,
+    simulasyonSinirNot:
+      "1.000.000 OV sonrası gösterilmedi — sağlıklı ve sürdürülebilir büyümeye odaklan.",
+    // Kampta + sonraki 90 gün destek vaadi (plan ekranı)
+    destek90Baslik: "Yalnız değilsin",
+    destek90Metin:
+      "Bu plana kampta ve kamptan sonraki 90 gün boyunca birlikte çalışacağız — adım adım yanındayız.",
     // Kamp sonu taahhüt metni
     kampTaahhut:
       "Bu kamp sana bir gelir garantisi değil, bir yöntem ve yol haritası sunar. Buradan aldığın araçlarla kendi OV'ini büyütmek sana kalmış.",
@@ -1006,10 +1054,12 @@ export const tr = {
     tabloEnDusuk: "EN DÜŞÜK",
     tabloEnYuksek: "EN YÜKSEK",
     tabloOrtalama: "ORTALAMA",
-    q2Baslik: "En geç ne kadar sürede bu gelire ulaşmak heyecan verici olurdu?",
+    q2Baslik: "Hangi tempoda büyümek istersin? (aylık OV artışı)",
     q3Baslik: "Bu gelire ulaşacağını yüzde yüz bilsen — günde maksimum kaç saat ayırabilirsin?",
     hedefinEtiket: "Hedefin",
     suresiEtiket: "Süresi",
+    tempoEtiket: "Tempo",
+    tempoAyTahmin: (ay: number) => `≈ ${ay} ayda hedefe`,
     aylikBirim: "TL/ay",
     degistirNot: "Değiştirmek için tekrar seç",
     geri: "Geri",
@@ -1024,8 +1074,10 @@ export const tr = {
     gunlukYatirim: "Günlük yatırımın",
     toplamYatirim: "Toplam yatırım",
     toplamYatirimDeger: (saat: number, para: string) => `~${saat} saat + ${para} TL`,
-    geriDonus: "Geri dönüş",
-    geriDonusDeger: (ay: number) => (ay <= 0 ? "1 ay içinde" : `${ay} ay içinde`),
+    geriDonus: "Yatırımını çıkarma süresi",
+    geriDonusDeger: (ay: number) => (ay <= 0 ? "~ilk ay (tahmini)" : `~${ay} ay (tahmini)`),
+    geriDonusNot:
+      "Başlangıç yatırımını (~30.000 TL kayıt + ürün paketi) çıkarman beklenen tahmini süredir — gelir garantisi değildir.",
     bunuDusun: (saat: string, sureAy: number, gelir: string, saatlik: string) =>
       `Bunu düşün: ${saat} ayırarak, ${sureAy} ay sonunda aylık ${gelir} TL. Saatlik kazanç ~${saatlik} TL.`,
     planOnayla: "Bu hedefi mühürle",
@@ -1202,15 +1254,17 @@ export const tr = {
   // ÖN FARKINDALIK — kamp öncesi Ayna/Kalibrasyon çalışması (Faz A: Katman 1)
   onFarkindalik: {
     baslik: "Liderlik Aynası",
-    girisBaslik: "Ne düşündüğünü değil, ne yaptığını gösterir",
+    // Pusula'dan sonra bu modüle geçişi YUMUŞAT: "sırada bu var" köprüsü.
+    girisUst: "SIRADA · KAMP ÖNCESİ",
+    girisBaslik: "Sırada: Öz Farkındalık",
     girisMetin:
-      "Bu bir kişilik testi değil — bir ayna. Amacı seni etiketlemek değil, kampa gelmeden nerede tıkandığını sana göstermek. Gücü tek şeye bağlı: dürüstlüğüne. Acelesi yok; günde birkaç madde yeter.",
+      "Nedenlerini çıkardın — şimdi sıra kendini biraz daha yakından tanımakta. Bu bir kişilik testi değil, bir ayna: ne düşündüğünü değil, ne yaptığını gösterir. Amacı, kampa gelmeden nerede tıkandığını sana göstermek. Gücü tek şeye bağlı: dürüstlüğüne. Tek oturuşta bitirmek zorunda değilsin — cevapların kaydedilir, dilediğin an kaldığın yerden devam edersin. Önemli olan: kamp başlamadan tamamlaman.",
     girisKazanimlar: [
       "Güçlü alanını ve kör noktanı net göreceksin.",
       "Kampta sana özel görevler bu cevaplara göre şekillenecek.",
-      "Üç gün sonra ne kadar yol aldığını sayılarla göreceksin.",
+      "Tek seferde bitirmek zorunda değilsin — kaldığın yerden devam edersin.",
     ],
-    girisDevam: "Başla",
+    girisDevam: "Hazırım, başla →",
     olcek: {
       1: "Hiçbir zaman",
       2: "Nadiren",
@@ -1229,6 +1283,9 @@ export const tr = {
     // Katman 4/5 yazılı yanıtlar
     metinYer: "Kısa ve dürüst yaz — bu cevap sana ait.",
     metinAtla: "Şimdilik geç →",
+    // Profil önerisi (kişinin cevaplarından çıkan taslak) — alanın üstünde sunulur.
+    oneriBaslik: "Cevaplarından çıkan öneri",
+    oneriKullan: "Bunu kullan, düzenle",
     ilerleme: (yapilan: number, toplam: number) => `${yapilan} / ${toplam}`,
     kaydet: "Kaydet",
     kaydediliyor: "Kaydediliyor…",
@@ -1237,19 +1294,19 @@ export const tr = {
     devam: "Devam",
     geri: "Geri",
     geriDon: "Ana sayfaya dön",
-    kismiNot: "İstediğin kadarını şimdi yap — kalanını sonra ekleyebilirsin.",
+    kismiNot: "İstediğin kadarını şimdi yap; kaldığın yerden devam edersin. Yeter ki kamp başlamadan tamamla.",
     enAzBir: "Kaydetmek için en az bir madde işaretle.",
     hata: "Kaydedilemedi. Lütfen tekrar dene.",
     // Tamam ekranı
     tamamBaslik: "Bu bölümü tamamladın 👁",
     tamamMetin:
-      "İlk katmanı bitirdin. Kalan adımlar kamp yaklaştıkça açılacak — her gün küçük bir parça.",
+      "Hepsini tamamladın. Kampta sana özel görevler bu cevaplara göre şekillenecek — kamp başlamadan bitirdiğin için hazırsın.",
     devamBaslik: "Kaldığın yerden devam",
-    devamMetin: "Birkaç madde daha işaretle; acelesi yok.",
-    guvenBaslik: "Bir an dur 👁",
+    devamMetin: "Hepsini bir oturuşta bitirmek zorunda değilsin — kaldığın yerden devam et. Yeter ki kamp başlamadan tamamla.",
+    guvenBaslik: "Buradayım, sana yardımcı olmak için 🤝",
     guvenMetin:
-      "Cevaplarının çoğu birbirine çok yakın çıktı. Bu ayna ancak dürüstlüğünle çalışır — istersen ilk maddelere bir kez daha, gerçekten yaptığını düşünerek bak.",
-    guvenTekrar: "Maddelere tekrar bak",
+      "Bu çalışma seni yargılamak için değil — sana gerçekten yardımcı olabilmem için. Ne kadar açık olursan, kampta sana o kadar isabetli eşlik edebilirim. Acelesi yok; ne zaman hazır hissedersen, istersen bu maddelerin üzerinden birlikte yeniden geçeriz.",
+    guvenTekrar: "Birlikte yeniden geçelim",
     gozdenGecir: "← Cevaplarımı gözden geçir",
     // Gözden geçirme modunda tek tuşla bitiş ekranına dönüş
     sonaDon: "Sona dön",
@@ -1294,9 +1351,10 @@ export const tr = {
     tamam: "✓ Canlı Aynan hazır",
     ust: "Son bir şey",
     ustBaslik: "Canlı Aynan",
-    duz: "Yüzünü çembere yerleştir — düz bak",
-    sag: "Başını yavaşça sağa çevir",
-    sol: "Şimdi yavaşça sola çevir",
+    duz: "Düz bak",
+    sag: "Başını sağa çevir",
+    sol: "Başını sola çevir",
+    adimSayac: (n: number, toplam: number) => `Kare ${n}/${toplam} · yüzünü çembere yerleştir`,
     cek: "Çek",
     gonderiliyor: "Yansın diye gönderiliyor…",
     vazgec: "Vazgeç",
@@ -3009,7 +3067,7 @@ export const tr = {
     ipucuYeterli: "Güçlü — AYNA'nın görmesi için yeterince derin. Dilersen gönder.",
     altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
     aktifYokBaslik: "Şu an görevin yok",
-    aktifYok: "AYNA seni izliyor — yeni bir görev her an gelebilir.",
+    aktifYok: "AYNA yanında — yeni bir görev her an gelebilir.",
     bosKocu: "Ayna Koçu'na danış",
     bosTakdir: "Birine takdir bırak",
     // #4 Günün özeti: gün sonu kapanış kartı
@@ -3135,6 +3193,7 @@ export const tr = {
     // A4 — tamamlayınca sıradaki görev
     siradakiGorev: "Sıradaki göreve geç →",
     // A5 — benzerini tekrar dene
+    gelistirYeniden: "Geliştir ve yeniden gönder",
     benzeriIste: "Bu konuda bir görev daha ver",
     benzeriUretiliyor: "AYNA hazırlıyor…",
     benzeriHazir: "✓ Yeni görevin hazır — yukarı kaydır.",
@@ -3190,6 +3249,17 @@ export const tr = {
     masaustuNot:
       "Bilgisayardasın. Bildirimleri sadece buradan değil, telefonundan da alabilirsin — kampta yanında telefonun olacağı için en iyisi onu kurman.",
     telefonAc: "📱 Telefonuna kur — bildirimleri orada al",
+    // PWA tek-tuş "ana ekrana ekle" banner'ı
+    pwaBaslik: "Liderlik Aynası'nı ana ekrana ekle",
+    pwaAlt: "Tek dokunuş — uygulama gibi açılır, bildirimler gelir.",
+    pwaEkle: "Ekle",
+    pwaKapat: "Kapat",
+    // PWA ilk-açılış belirgin istemi (logolu, ortada, "ilk aynayı açar gibi")
+    pwaIlkBaslik: "AYNA'yı telefonuna kur",
+    pwaIlkAlt:
+      "Tek dokunuşla ana ekranına eklenir — gerçek bir uygulama gibi açılır, görevlerin ve sana özel fısıltılar bildirimle cebine düşer.",
+    pwaIlkEkle: "📲 Ana ekrana ekle",
+    pwaIlkSonra: "Şimdilik geç",
     telefonKapat: "Kapat",
     telefonGiris:
       "Uygulamayı telefonunun ana ekranına eklersen gerçek bir uygulama gibi açılır; görevlerin ve sana özel fısıltılar bildirimle cebine düşer.",
@@ -3303,7 +3373,7 @@ export const tr = {
     hikayeUstAcilis: "AYNA RAPORU",
     hikayeAcilis: (ad: string) => `${ad}, aynan hazır`,
     hikayeAcilisMetin: (n: number) =>
-      `Üç gün seni izledik; sen de ${n} kez başkalarını gözledin. İşte gerçek yansıman.`,
+      `Üç gün boyunca seninleydik; sen de ${n} kez başkalarını gözledin. İşte gerçek yansıman.`,
     hikayeGucluMetin: "Başkalarının gözünde en parlak yanın bu.",
     hikayeGizliMetin:
       "Kendine az verdin ama başkaları çok gördü — sandığından güçlüsün.",
@@ -3601,6 +3671,13 @@ export const tr = {
     yeminHazirlikBaslik: "Birazdan sesini kaydedeceğiz",
     yeminHazirlikAciklama:
       "Acele yok. Önce aşağıdaki yemini bir oku. Hazır olduğunda 🎤 düğmesine bas — kayıt tam o an başlar.",
+    // Daha iyi ses klonu için kayıt ipuçları (kalite puanını yükseltir)
+    ipuclariBaslik: "Daha net bir ses için:",
+    ipuclari: [
+      "Telefonu ağzına yaklaştır (20-30 cm).",
+      "Sessiz bir yerde, doğal ama vurgulu oku.",
+      "Acele etme — cümleleri tane tane söyle.",
+    ] as string[],
     kayitBaslat: "Kaydı başlat",
     kayitHenuzBaslamadi: "Kayıt henüz başlamadı — hazır olunca sen başlatırsın.",
     kaydediliyor: "Kaydediliyor",
@@ -3613,6 +3690,9 @@ export const tr = {
     soruNot: "Yaz ya da 🎤 ile sesli söyle",
     sesliYazBaslat: "🎤 Sesle yaz",
     sesliYazDurdur: "■ Sesli yazmayı durdur",
+    sesliYazDinleniyor: "Dinliyorum, konuş…",
+    // Yemin okunduktan sonra (Devam) kayıt biter — söz ekranında net onay.
+    sesAlindi: "Ses kaydın alındı",
     devam: "Devam",
     bitir: "Sözümü mühürle",
     inceleBaslik: "Kaydını dinle",
@@ -3624,6 +3704,9 @@ export const tr = {
     uyaniyor: "Aynan uyanıyor…",
     dinle: "▶ Yansımanı dinle",
     tekrarDinle: "▶ Yansımanı tekrar dinle",
+    // Klon beğenilmezse: baştan kaydedip yeniden üret
+    yenidenOlustur: "↺ Beğenmedim, yeniden oluştur",
+    yenidenOlusturAlt: "Sesini baştan kaydedip yansımanı yeniden üretiriz.",
     seninle: "Yansıman artık seninle. Su her durulduğunda burada.",
     sonra: "Kaydın aynada saklandı. Yansıman kamp başlarken uyanacak.",
     // A1 Mühür: beklenti sözü "geleceğe mühürlü mesaj" olarak kapanışta onaylanır
