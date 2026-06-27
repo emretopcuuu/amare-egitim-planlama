@@ -197,16 +197,32 @@ export const DataProvider = ({ children }) => {
   const TAKVIM_LIGHT_FIELDS = ['egitim','gun','tarih','saat','bitisSaati','sure','egitmen','yer','hafta','kategori','sehir','aciklama','katilimSayisi','tamamlandi'];
   const KONUSMACI_LIGHT_FIELDS = ['ad','unvan','biyografi','linkedin','meslek','amareKariyer','doktorBrans']; // fotoURL hariç
 
-  const fetchLightCollection = async (name, fields) => {
+  const fetchLightCollection = async (name, fields, deneme = 2) => {
     const mask = fields.map(f => `mask.fieldPaths=${f}`).join('&');
     const url = `https://firestore.googleapis.com/v1/projects/amare-egitim-planlama/databases/(default)/documents/${name}?${mask}&pageSize=300`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Firestore REST ${res.status}`);
-    const data = await res.json();
-    return (data.documents || []).map(d => ({
-      id: d.name.split('/').pop(),
-      ...parseFields(d.fields),
-    }));
+    let sonHata;
+    for (let i = 0; i < deneme; i++) {
+      try {
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`Firestore REST ${res.status}`);
+        const data = await res.json();
+        return (data.documents || []).map(d => ({ id: d.name.split('/').pop(), ...parseFields(d.fields) }));
+      } catch (e) {
+        sonHata = e;
+        if (i < deneme - 1) await new Promise(r => setTimeout(r, 400 * (i + 1)));
+      }
+    }
+    throw sonHata;
+  };
+
+  // getDocs retry sarmalayıcı (geçici ağ/SDK hatalarına karşı)
+  const getDocsRetry = async (ref, deneme = 2) => {
+    let sonHata;
+    for (let i = 0; i < deneme; i++) {
+      try { return await getDocs(ref); }
+      catch (e) { sonHata = e; if (i < deneme - 1) await new Promise(r => setTimeout(r, 500 * (i + 1))); }
+    }
+    throw sonHata;
   };
 
   // Tek doc full fetch (gorselUrl/fotoURL dahil)
@@ -250,6 +266,17 @@ export const DataProvider = ({ children }) => {
     if (takvimLight.status === 'fulfilled') {
       lightTakvimData = takvimLight.value.map(t => ({ ...t, _light: true }));
       setTakvim(lightTakvimData);
+    } else {
+      // REST light başarısız → SDK ile anında dene (takvim boş kalmasın)
+      console.warn('[loadData] takvim LIGHT başarısız, SDK fallback:', takvimLight.reason?.message);
+      try {
+        const snap = await getDocsRetry(collection(db, 'takvim'));
+        lightTakvimData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (lightTakvimData.length) setTakvim(lightTakvimData);
+      } catch (e) {
+        console.error('[loadData] takvim SDK fallback de başarısız:', e?.message);
+        try { (await import('../utils/sentry')).Sentry?.captureException?.(e, { tags: { yer: 'takvim-load-fallback' } }); } catch {}
+      }
     }
     if (konusmacilarLight.status === 'fulfilled') {
       const coreMap = new Map();
@@ -365,8 +392,8 @@ export const DataProvider = ({ children }) => {
       // 3. AŞAMA: Geri kalan herkes (background full fetch)
       setTimeout(async () => {
         const [takvimFull, konusmacilarFull] = await Promise.allSettled([
-          getDocs(collection(db, 'takvim')),
-          getDocs(collection(db, 'konusmacilar')),
+          getDocsRetry(collection(db, 'takvim')),
+          getDocsRetry(collection(db, 'konusmacilar')),
         ]);
 
         let freshTakvim = null;
@@ -374,7 +401,11 @@ export const DataProvider = ({ children }) => {
 
         if (takvimFull.status === 'fulfilled') {
           freshTakvim = takvimFull.value.docs.map(d => ({ id: d.id, ...d.data() }));
-          setTakvim(freshTakvim);
+          // Boş gelirse mevcut (light) veriyi EZME — yalnız doluysa yaz
+          if (freshTakvim.length) setTakvim(freshTakvim);
+        } else {
+          console.error('[loadData] takvim FULL başarısız:', takvimFull.reason?.message);
+          try { (await import('../utils/sentry')).Sentry?.captureException?.(takvimFull.reason, { tags: { yer: 'takvim-load-full' } }); } catch {}
         }
         if (konusmacilarFull.status === 'fulfilled') {
           const rawData = konusmacilarFull.value.docs.map(d => ({ id: d.id, ...d.data() }));
