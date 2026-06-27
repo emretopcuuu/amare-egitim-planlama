@@ -18,7 +18,10 @@ type Mesaj = { rol: string; icerik: string };
 type Faz = "riza" | "kariyer" | "liste" | "kopru" | "sohbet" | "slogan" | "bitti";
 
 // Kariyer basamakları — form dropdown'ları için sıralı (düşükten yükseğe).
-const KARIYER_SECENEKLER = ["leader", "senior_leader", "exec_leader", "diamond", "star"] as const;
+const KARIYER_SECENEKLER = [
+  "leader", "senior_leader", "exec_leader", "diamond",
+  "1_star_diamond", "2_star_diamond", "3_star_diamond", "presidential_diamond",
+] as const;
 
 // Sohbet ilerlemesi — aşamadan yüzdeye. Her AYNA yanıtı aşamayı döndürür,
 // böylece kişi her soruda sona ne kadar kaldığını görür.
