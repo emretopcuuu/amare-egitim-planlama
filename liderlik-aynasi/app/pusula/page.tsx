@@ -12,6 +12,7 @@ import CanliAyna from "@/components/CanliAyna";
 import GeriSayim from "@/components/GeriSayim";
 import Konfeti from "@/components/Konfeti";
 import AynaKurulum from "@/components/AynaKurulum";
+import GunProgramKarti from "@/components/GunProgramKarti";
 
 const t = tr.pusula;
 
@@ -29,7 +30,7 @@ export default async function PusulaSayfa() {
     pusulaGecmis(db, session.sub),
     db
       .from("participants")
-      .select("consent_at, profil_foto_path, yuz_fotolari, full_name, camp_unlocked_at, kariyer_seviyesi")
+      .select("consent_at, profil_foto_path, yuz_fotolari, full_name, camp_unlocked_at, kariyer_seviyesi, team")
       .eq("id", session.sub)
       .maybeSingle(),
     db.from("pusula").select("oncelikler, slogan").eq("participant_id", session.sub).maybeSingle(),
@@ -170,6 +171,9 @@ export default async function PusulaSayfa() {
           <span className="flex-1 text-sm text-slate-300">{t.adimRehberMetin}</span>
           <span className="text-sm font-semibold text-gold-light">{t.adimRehberDugme} →</span>
         </Link>
+
+        {/* 3 günlük kamp programı — mühür açılmadan da görünsün */}
+        <GunProgramKarti takim={kisi?.team ?? null} />
       </div>
     );
 
