@@ -3641,6 +3641,13 @@ export const tr = {
     yeminHazirlikBaslik: "Birazdan sesini kaydedeceğiz",
     yeminHazirlikAciklama:
       "Acele yok. Önce aşağıdaki yemini bir oku. Hazır olduğunda 🎤 düğmesine bas — kayıt tam o an başlar.",
+    // Daha iyi ses klonu için kayıt ipuçları (kalite puanını yükseltir)
+    ipuclariBaslik: "Daha net bir ses için:",
+    ipuclari: [
+      "Telefonu ağzına yaklaştır (20-30 cm).",
+      "Sessiz bir yerde, doğal ama vurgulu oku.",
+      "Acele etme — cümleleri tane tane söyle.",
+    ] as string[],
     kayitBaslat: "Kaydı başlat",
     kayitHenuzBaslamadi: "Kayıt henüz başlamadı — hazır olunca sen başlatırsın.",
     kaydediliyor: "Kaydediliyor",
@@ -3667,6 +3674,9 @@ export const tr = {
     uyaniyor: "Aynan uyanıyor…",
     dinle: "▶ Yansımanı dinle",
     tekrarDinle: "▶ Yansımanı tekrar dinle",
+    // Klon beğenilmezse: baştan kaydedip yeniden üret
+    yenidenOlustur: "↺ Beğenmedim, yeniden oluştur",
+    yenidenOlusturAlt: "Sesini baştan kaydedip yansımanı yeniden üretiriz.",
     seninle: "Yansıman artık seninle. Su her durulduğunda burada.",
     sonra: "Kaydın aynada saklandı. Yansıman kamp başlarken uyanacak.",
     // A1 Mühür: beklenti sözü "geleceğe mühürlü mesaj" olarak kapanışta onaylanır
