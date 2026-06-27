@@ -742,7 +742,7 @@ export default function PusulaSohbet({
   // Seçilip elenenler düştükten sonra kalan öncelikler chip olarak görünür.
   const gosterListe = tumListe.filter((m) => !elenenler.includes(m));
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-16">
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
       <header className="shrink-0 pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 text-center">

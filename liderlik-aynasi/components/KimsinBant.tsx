@@ -27,7 +27,12 @@ export default async function KimsinBant() {
   const ilkHarf = kisi.full_name.trim().charAt(0).toUpperCase();
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-[max(0.5rem,env(safe-area-inset-top))] z-30 flex justify-center px-4 print:hidden">
+    <>
+      {/* Akışta yer kaplayan boşluk: sabit pill içeriği örtmesin (tüm katılımcı
+          ekranlarında global üst güvenli alan). Pill yalnız katılımcıda render
+          edildiği için admin/ekran sayfaları etkilenmez. */}
+      <div aria-hidden className="h-[calc(env(safe-area-inset-top,0px)+3.25rem)] shrink-0 print:hidden" />
+      <div className="pointer-events-none fixed inset-x-0 top-[max(0.5rem,env(safe-area-inset-top))] z-30 flex justify-center px-4 print:hidden">
       <div className="pointer-events-auto flex items-center gap-2 rounded-full border border-gold/30 bg-midnight-card/85 px-3 py-1.5 text-xs font-medium text-slate-200 shadow-lg backdrop-blur-md">
         {avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -48,5 +53,6 @@ export default async function KimsinBant() {
         <span className="max-w-[55vw] truncate">{kisi.full_name}</span>
       </div>
     </div>
+    </>
   );
 }
