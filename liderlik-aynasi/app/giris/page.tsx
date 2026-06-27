@@ -30,11 +30,11 @@ export default async function GirisPage({
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
-      <div className="mx-auto my-auto flex w-full max-w-sm flex-col items-center p-5">
+      <div className="mx-auto flex w-full max-w-sm flex-col items-center px-5 py-10">
         <Suspense>
           <GirisForm />
         </Suspense>
-        <p className="mt-5 text-center text-xs leading-relaxed text-slate-500">
+        <p className="mt-4 text-center text-xs leading-relaxed text-slate-500">
           {tr.kvkk.girisNot}{" "}
           <Link
             href="/gizlilik"
@@ -43,7 +43,7 @@ export default async function GirisPage({
             {tr.kvkk.girisLink}
           </Link>
         </p>
-        <div className="mt-6 w-full space-y-3">
+        <div className="mt-4 w-full space-y-3">
           <YaziBoyu />
           <TemaSecimi />
         </div>

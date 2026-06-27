@@ -60,19 +60,19 @@ export default function GirisForm() {
 
   return (
     <EgilenKart className="w-full max-w-sm rounded-3xl">
-    <div className="kart-cam relative w-full overflow-hidden rounded-3xl p-8">
+    <div className="kart-cam relative w-full overflow-hidden rounded-3xl p-5 sm:p-8">
       <p className="prizma-serif text-center text-xs uppercase tracking-[0.45em] text-slate-400">
         Liderlik
       </p>
-      <h1 className="prizma-serif ay-metin mt-1 text-center text-5xl font-semibold tracking-tight">
+      <h1 className="prizma-serif ay-metin mt-1 text-center text-4xl font-semibold tracking-tight sm:text-5xl">
         AYNA
       </h1>
-      <p className="mt-4 text-center text-sm leading-relaxed text-slate-300">
+      <p className="mt-3 text-center text-sm leading-relaxed text-slate-300">
         {tr.giris.altBaslik}
       </p>
 
       <form
-        className="mt-8 space-y-6"
+        className="mt-5 space-y-4 sm:mt-8 sm:space-y-6"
         onSubmit={(e) => {
           e.preventDefault();
           if (kod.length === 6) void submit(kod);
