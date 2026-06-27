@@ -39,13 +39,15 @@ export default function GorevYanitFormu({
   gorevId,
   gorevBaslik,
   ekip = [],
+  baslangicYanit = "",
 }: {
   gorevId: string;
   gorevBaslik?: string;
   ekip?: { id: string; ad: string }[];
+  baslangicYanit?: string; // "geliştir ve yeniden gönder"de önceki yanıtla doldur
 }) {
   const router = useRouter();
-  const [yanit, setYanit] = useState("");
+  const [yanit, setYanit] = useState(baslangicYanit);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [sonuc, setSonuc] = useState<Sonuc | null>(null);
   const [hata, setHata] = useState(false);
