@@ -22,6 +22,7 @@ import { atmosferBul } from "@/lib/gorevTasarim";
 import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
 import BosDurum from "@/components/BosDurum";
+import EkstraGorev from "./EkstraGorev";
 import GorevSayac from "./GorevSayac";
 import TelafiSayac from "./TelafiSayac";
 import UnvanKutlama from "@/components/UnvanKutlama";
@@ -326,15 +327,22 @@ export default async function GorevlerPage() {
           <p className="text-5xl" aria-hidden>🌿</p>
           <h2 className="prizma-serif ay-metin mt-3 text-2xl font-semibold">{t.yeterinceBaslik}</h2>
           <p className="mt-3 text-base leading-relaxed text-slate-300">{t.yeterinceMetin(bugunGorev)}</p>
+          {/* Boş zamanı/istekliliği olan ekstra görevle puanını artırabilsin */}
+          <div className="mx-auto mt-5 w-full max-w-sm">
+            <EkstraGorev ikincil />
+            <p className="mt-1.5 text-xs text-slate-500">{t.ekstraNot}</p>
+          </div>
         </section>
       ) : aktif.length === 0 ? (
         <>
           <BosDurum simge="👁" baslik={t.aktifYokBaslik} metin={t.aktifYok} />
           {/* UX #9: boş durum ölü kalmasın — sıcak bir sonraki adım sun */}
           <div className="mx-auto mt-4 grid w-full max-w-sm gap-2.5">
+            {/* Ekstra görev: boş anda puanını artırmak isteyene birincil CTA */}
+            <EkstraGorev />
             <Link
               href="/kocu"
-              className="btn-kor flex h-12 items-center justify-center rounded-xl text-sm font-bold"
+              className="flex h-12 items-center justify-center rounded-xl border border-royal-light/30 text-sm font-medium text-slate-200 hover:bg-white/5"
             >
               👁 {t.bosKocu}
             </Link>
