@@ -1,6 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { pusulaTuru, pusulaDurum, pusulaGecmis, onceliklerKaydet, pusulaSifirla, kariyerKaydet } from "@/lib/pusula";
+import { pusulaTuru, pusulaDurum, pusulaGecmis, onceliklerKaydet, pusulaSifirla, pusulaGeriAl, kariyerKaydet } from "@/lib/pusula";
 import { tr } from "@/lib/i18n/tr";
 
 // FAZ 0 Nedenler — GET: devam (durum + geçmiş + rıza). POST: rıza / liste / tur.
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.pusula.hata }, { status: 401 });
   }
 
-  let govde: { mesaj?: unknown; basla?: unknown; oncelikler?: unknown; sifirla?: unknown; sloganSec?: unknown; kariyer?: { suanki?: unknown; enYuksek?: unknown; gecenAy?: unknown; kidemAy?: unknown } };
+  let govde: { mesaj?: unknown; basla?: unknown; oncelikler?: unknown; sifirla?: unknown; geriAl?: unknown; sloganSec?: unknown; kariyer?: { suanki?: unknown; enYuksek?: unknown; gecenAy?: unknown; kidemAy?: unknown } };
   try {
     govde = await req.json();
   } catch {
@@ -47,6 +47,12 @@ export async function POST(req: Request) {
   if (govde.sifirla === true) {
     await pusulaSifirla(db, session.sub);
     return Response.json({ ok: true });
+  }
+
+  // 0c) Geri al: son eleme turunu (kullanıcı eleme + AYNA yanıtı) sil.
+  if (govde.geriAl === true) {
+    const ok = await pusulaGeriAl(db, session.sub);
+    return Response.json({ ok });
   }
 
   // 0b) Kariyer konumu (Pusula öncesi): 4 ham veri → kariyer_durumu türetilir.
