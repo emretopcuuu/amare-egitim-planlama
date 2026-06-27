@@ -3254,6 +3254,12 @@ export const tr = {
     pwaAlt: "Tek dokunuş — uygulama gibi açılır, bildirimler gelir.",
     pwaEkle: "Ekle",
     pwaKapat: "Kapat",
+    // PWA ilk-açılış belirgin istemi (logolu, ortada, "ilk aynayı açar gibi")
+    pwaIlkBaslik: "AYNA'yı telefonuna kur",
+    pwaIlkAlt:
+      "Tek dokunuşla ana ekranına eklenir — gerçek bir uygulama gibi açılır, görevlerin ve sana özel fısıltılar bildirimle cebine düşer.",
+    pwaIlkEkle: "📲 Ana ekrana ekle",
+    pwaIlkSonra: "Şimdilik geç",
     telefonKapat: "Kapat",
     telefonGiris:
       "Uygulamayı telefonunun ana ekranına eklersen gerçek bir uygulama gibi açılır; görevlerin ve sana özel fısıltılar bildirimle cebine düşer.",
