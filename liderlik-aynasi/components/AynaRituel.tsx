@@ -207,10 +207,17 @@ export default function AynaRituel() {
     }
   }
 
-  function soruyaGec() {
-    setAsama("soru");
-    // Geri sayım YOK: kayıt sürer; kişi sözünü bırakınca "Sözümü mühürle" ile
-    // kendi mühürler. Konuşma tanıma da OTOMATİK başlamaz (manuel "🎤 Sesle yaz").
+  // "Devam →": yemin okundu → KAYIT BİTER (ses örneği = yemin okuması). Söz
+  // ekranına geçilir; orada artık kayıt YOK, yalnız metin + sesle-yaz var.
+  function yeminiBitir() {
+    bitirVeGec("soru");
+  }
+
+  // Söz ekranından "Sözümü mühürle": kayıt zaten bitti, doğrudan incelemeye geç.
+  function sozuMuhurle() {
+    taniyici.current?.stop();
+    setDinleniyor(false);
+    setAsama("inceleme");
   }
 
   // Manuel sesli yazma anahtarı (soru ekranı): yalnız basınca konuşma yazıya döker.
@@ -243,8 +250,9 @@ export default function AynaRituel() {
     }
   }
 
-  // Kaydı bitir: GÖNDERME — önce dinleme/inceleme ekranına götür.
-  function bitir() {
+  // Kaydı bitir ve `hedef` aşamasına geç. Yemin okunduğunda (Devam) çağrılır;
+  // ses örneği o an mühürlenir, kişi söz ekranına geçer.
+  function bitirVeGec(hedef: Asama) {
     if (bitiriliyor.current) return;
     bitiriliyor.current = true;
     if (zamanlayici.current) clearInterval(zamanlayici.current);
@@ -284,7 +292,7 @@ export default function AynaRituel() {
         return URL.createObjectURL(blob);
       });
       setKayitCaliyor(false);
-      setAsama("inceleme");
+      setAsama(hedef);
     };
     if (kaydedici.state !== "inactive") kaydedici.stop();
   }
@@ -495,17 +503,17 @@ export default function AynaRituel() {
               “{t.yemin}”
             </p>
             <div className="mt-8">
-              <DevButon onClick={soruyaGec}>{t.devam} →</DevButon>
+              <DevButon onClick={yeminiBitir}>{t.devam} →</DevButon>
             </div>
           </div>
         )}
 
         {asama === "soru" && (
           <div className="text-center">
-            <div className="flex items-center justify-center rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3">
-              <span className="flex items-center gap-2.5 text-lg font-bold text-red-300">
-                <span className="h-3.5 w-3.5 animate-pulse rounded-full bg-red-500 shadow-[0_0_10px_2px_rgba(239,68,68,0.7)]" />
-                {t.kaydediliyor}…
+            {/* Kayıt bitti: ses örneği alındı — net onay (belirsizlik gitsin) */}
+            <div className="flex items-center justify-center rounded-2xl border border-emerald-500/40 bg-emerald-500/10 px-4 py-3">
+              <span className="flex items-center gap-2.5 text-base font-bold text-emerald-300">
+                ✓ {t.sesAlindi}
               </span>
             </div>
             <p className="mt-5 text-5xl" aria-hidden>
@@ -515,34 +523,37 @@ export default function AynaRituel() {
               {t.soru}
             </h1>
             <p className="mt-3 text-base leading-relaxed text-slate-300">{t.soruAlt}</p>
-            <textarea
-              value={beklenti}
-              onChange={(e) => setBeklenti(e.target.value.slice(0, 300))}
-              rows={3}
-              className="mt-6 w-full rounded-2xl border-2 border-white/20 bg-white/[0.06] p-4 text-xl text-slate-100 placeholder:text-slate-500 focus:border-sky-200/70 focus:outline-none"
-              placeholder={t.soruNot}
-            />
-            {/* Sesle yaz: MANUEL — yalnız basınca dinler (kazara dolmayı önler) */}
-            <button
-              type="button"
-              onClick={sesliYazAnahtar}
-              className={`mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border-2 text-base font-semibold transition-colors ${
-                dinleniyor
-                  ? "border-red-500/50 bg-red-500/10 text-red-300"
-                  : "border-white/25 text-slate-100 hover:bg-white/[0.08]"
-              }`}
-            >
-              {dinleniyor ? (
-                <>
-                  <span className="h-3 w-3 animate-pulse rounded-full bg-red-500" />
-                  {t.sesliYazDurdur}
-                </>
-              ) : (
-                t.sesliYazBaslat
-              )}
-            </button>
+            {/* Söz kutusu — kenarında mikrofon: basınca konuşmayı yazıya döker */}
+            <div className="relative mt-6">
+              <textarea
+                value={beklenti}
+                onChange={(e) => setBeklenti(e.target.value.slice(0, 300))}
+                rows={3}
+                className="w-full rounded-2xl border-2 border-white/20 bg-white/[0.06] p-4 pr-16 text-xl text-slate-100 placeholder:text-slate-500 focus:border-sky-200/70 focus:outline-none"
+                placeholder={t.soruNot}
+              />
+              <button
+                type="button"
+                onClick={sesliYazAnahtar}
+                aria-label={dinleniyor ? t.sesliYazDurdur : t.sesliYazBaslat}
+                aria-pressed={dinleniyor}
+                className={`absolute bottom-3 right-3 flex h-12 w-12 items-center justify-center rounded-xl border-2 text-2xl transition-colors ${
+                  dinleniyor
+                    ? "border-red-500/60 bg-red-500/20 text-red-200"
+                    : "border-white/25 bg-white/[0.06] text-slate-100 hover:bg-white/[0.12]"
+                }`}
+              >
+                {dinleniyor ? "■" : "🎤"}
+              </button>
+            </div>
+            {dinleniyor && (
+              <p className="mt-2 flex items-center justify-center gap-2 text-sm font-medium text-red-300">
+                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
+                {t.sesliYazDinleniyor}
+              </p>
+            )}
             <div className="mt-6">
-              <DevButon onClick={bitir}>{t.bitir}</DevButon>
+              <DevButon onClick={sozuMuhurle}>{t.bitir}</DevButon>
             </div>
           </div>
         )}

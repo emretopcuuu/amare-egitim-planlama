@@ -3653,6 +3653,9 @@ export const tr = {
     soruNot: "Yaz ya da 🎤 ile sesli söyle",
     sesliYazBaslat: "🎤 Sesle yaz",
     sesliYazDurdur: "■ Sesli yazmayı durdur",
+    sesliYazDinleniyor: "Dinliyorum, konuş…",
+    // Yemin okunduktan sonra (Devam) kayıt biter — söz ekranında net onay.
+    sesAlindi: "Ses kaydın alındı",
     devam: "Devam",
     bitir: "Sözümü mühürle",
     inceleBaslik: "Kaydını dinle",
