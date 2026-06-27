@@ -33,6 +33,23 @@ const splitEgitmen = (e) => {
     .map(n => n.trim()).filter(n => n.length > 1);
 };
 
+// Rütbeye göre rozet sınıfı (header) ve merdiven numara rozeti gradyanı
+const rutbeRozetSinif = (idx) => {
+  if (idx >= 13) return 'bg-gradient-to-r from-fuchsia-500/40 to-amber-400/40 text-amber-50 border-amber-300/60';
+  if (idx >= 10) return 'bg-amber-400/25 text-amber-100 border-amber-300/50';
+  if (idx >= 9) return 'bg-cyan-400/20 text-cyan-50 border-cyan-300/50';
+  if (idx >= 6) return 'bg-indigo-400/20 text-indigo-50 border-indigo-300/40';
+  if (idx >= 2) return 'bg-white/15 text-white border-white/25';
+  return 'bg-white/10 text-white/70 border-white/15';
+};
+const rutbeBadgeGrad = (idx) => {
+  if (idx >= 13) return 'linear-gradient(135deg,#a21caf,#e8b339)';
+  if (idx >= 10) return 'linear-gradient(135deg,#b8923f,#f4dca0)';
+  if (idx >= 9) return 'linear-gradient(135deg,#0e7490,#67e8f9)';
+  if (idx >= 6) return 'linear-gradient(135deg,#4338ca,#a5b4fc)';
+  return 'linear-gradient(135deg,#b8923f,#d8b15a)';
+};
+
 export default function LiderProfil() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -106,7 +123,12 @@ export default function LiderProfil() {
   }, [kariyerGecmis, katilim]);
   const guncelKariyer = yolculuk.length ? yolculuk[yolculuk.length - 1].kariyer : (kayit?.unvan || '');
   const toplamAy = katilim ? ayFarki(katilim, new Date()) : null;
-  const isiltiSeviye = kariyerSira(guncelKariyer) / Math.max(1, KARIYER_BASAMAKLARI.length - 1);
+  const guncelSira = kariyerSira(guncelKariyer);
+  const isiltiSeviye = guncelSira / Math.max(1, KARIYER_BASAMAKLARI.length - 1);
+  // UX1 — sıradaki hedef rütbe
+  const sonrakiSira = (guncelSira >= 0 && guncelSira < KARIYER_BASAMAKLARI.length - 1) ? guncelSira + 1 : -1;
+  // UX8 — öne çıkan ilham sözü
+  const oneCikanSoz = Array.isArray(kayit?.favori_alintilar) ? (kayit.favori_alintilar.find(a => a && a.trim()) || null) : null;
 
   // UX2 — Kıyas: tüm liderlerden rütbe-başına ortalama kümülatif ay (katılımdan)
   const benchmark = useMemo(() => {
@@ -147,6 +169,12 @@ export default function LiderProfil() {
       await navigator.clipboard.writeText(url);
       setPaylasildi(true); setTimeout(() => setPaylasildi(false), 1800);
     } catch {}
+  };
+  // UX6 — WhatsApp'ta paylaş (link → OG önizleme kartıyla açılır)
+  const whatsappPaylas = () => {
+    const url = typeof window !== 'undefined' ? window.location.href : '';
+    const metin = `${ad}${guncelKariyer ? ' — ' + guncelKariyer : ''}${toplamAy != null ? ` · Amare'de ${sureMetni(toplamAy)}` : ''}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(metin + '\n' + url)}`, '_blank', 'noopener');
   };
 
   // Kayıtlı eğitimler — UX5: artık SAYFA AÇILIŞINDA çekilir (sekme rozeti için), 24s cache
@@ -280,21 +308,29 @@ export default function LiderProfil() {
               )}
               {isiltiSeviye > 0.6 && <div className="absolute -inset-1 rounded-full pointer-events-none animate-pulse" style={{ boxShadow: `0 0 ${20 + isiltiSeviye * 40}px rgba(216,177,90,${isiltiSeviye})` }} />}
             </div>
-            <div className="flex-1 text-center sm:text-left">
+            <div className="flex-1 text-center sm:text-left w-full min-w-0">
               <h1 className="text-3xl sm:text-4xl font-extrabold gold-text-glow">{ad}</h1>
-              {guncelKariyer && <p className="text-amber-300 font-bold text-lg mt-1">{guncelKariyer}</p>}
-              <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 mt-3 text-sm">
-                {toplamAy != null && <span className="bg-white/10 px-3 py-1 rounded-full">Amare'de <b>{sureMetni(toplamAy)}</b></span>}
-                {gelecek.length > 0 && <span className="bg-white/10 px-3 py-1 rounded-full"><b>{gelecek.length}</b> gelecek</span>}
-                {gecmis.length > 0 && <span className="bg-white/10 px-3 py-1 rounded-full"><b>{gecmis.length}</b> geçmiş</span>}
-                {/* UX9 — Favori (uygulamada kaydet) */}
-                <button onClick={() => coreId && takipToggle(coreId)} title="Uygulamada favorilerine kaydet" className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition-all ${favori ? 'bg-yellow-400 text-gray-900' : 'bg-white/10 hover:bg-white/20 border border-white/20'}`}>
-                  <Star className="w-3.5 h-3.5" fill={favori ? 'currentColor' : 'none'} />{favori ? 'Favori' : 'Favoriye ekle'}
+              {/* UX4 — rütbe renk-kodlu rozet */}
+              {guncelKariyer && <span className={`inline-block mt-2 text-xs font-extrabold px-3 py-1 rounded-full border ${rutbeRozetSinif(guncelSira)}`}>{guncelKariyer}</span>}
+
+              {/* UX10 — etki/sosyal kanıt şeridi */}
+              <div className="flex flex-wrap justify-center sm:justify-start items-baseline gap-x-2 gap-y-1 mt-3">
+                {toplamAy != null && <span className="text-white"><b className="text-lg">{sureMetni(toplamAy)}</b> <span className="text-white/60 text-xs">Amare'de</span></span>}
+                {kayitliSayi > 0 && <><span className="text-white/30">·</span><span className="text-white"><b>{kayitliSayi}</b> <span className="text-white/60 text-xs">kayıtlı eğitim</span></span></>}
+                {ilgili.length > 0 && <><span className="text-white/30">·</span><span className="text-white"><b>{ilgili.length}</b> <span className="text-white/60 text-xs">eğitim</span></span></>}
+              </div>
+
+              {/* UX8 — öne çıkan ilham sözü */}
+              {oneCikanSoz && <p className="mt-2.5 text-amber-100/85 italic text-sm leading-snug max-w-xl mx-auto sm:mx-0">"{oneCikanSoz}"</p>}
+
+              {/* Aksiyonlar — mobilde ikincil butonlar ikon-only (UX9) */}
+              <div className="flex flex-wrap justify-center sm:justify-start items-center gap-2 mt-3.5 text-sm">
+                <button onClick={() => setTakipModal(true)} title="Yeni eğitiminde e-posta bildirimi al" className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 px-3.5 py-1.5 rounded-full font-bold gold-glow"><Bell className="w-4 h-4" />Yeni eğitimde haber ver</button>
+                <button onClick={() => coreId && takipToggle(coreId)} title={favori ? 'Favori' : 'Favoriye ekle'} className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-bold transition-all ${favori ? 'bg-yellow-400 text-gray-900' : 'bg-white/10 hover:bg-white/20 border border-white/20'}`}>
+                  <Star className="w-4 h-4" fill={favori ? 'currentColor' : 'none'} /><span className="hidden sm:inline">{favori ? 'Favori' : 'Favoriye ekle'}</span>
                 </button>
-                {/* UX9 — E-posta ile bildirim */}
-                <button onClick={() => setTakipModal(true)} title="Yeni eğitiminde e-posta bildirimi al" className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 px-3 py-1 rounded-full font-bold gold-glow"><Bell className="w-3.5 h-3.5" />Yeni eğitimde haber ver</button>
-                <button onClick={paylas} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full font-bold">{paylasildi ? <><Check className="w-3.5 h-3.5" />Kopyalandı</> : <><Share2 className="w-3.5 h-3.5" />Paylaş</>}</button>
-                {duzenleyebilir && <button onClick={() => setDuzenleAcik(true)} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full font-bold"><Edit3 className="w-3.5 h-3.5" />{benimProfilim && !isAdmin ? 'Profilimi düzenle' : 'Profili düzenle'}</button>}
+                <button onClick={paylas} title="Paylaş" className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full font-bold">{paylasildi ? <><Check className="w-4 h-4" /><span className="hidden sm:inline">Kopyalandı</span></> : <><Share2 className="w-4 h-4" /><span className="hidden sm:inline">Paylaş</span></>}</button>
+                {duzenleyebilir && <button onClick={() => setDuzenleAcik(true)} title="Profili düzenle" className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1.5 rounded-full font-bold"><Edit3 className="w-4 h-4" /><span className="hidden sm:inline">{benimProfilim && !isAdmin ? 'Profilimi düzenle' : 'Profili düzenle'}</span></button>}
               </div>
               {/* UX9 — yaklaşan eğitim birincil CTA */}
               {yaklasanEgitim && (
@@ -377,11 +413,31 @@ export default function LiderProfil() {
                 </div>
               </div>
 
-              {/* Işıltılı başarı kartı PNG indir */}
-              <button onClick={indirBasariKarti} disabled={kartUretiliyor}
-                className="w-full py-3 rounded-xl font-bold text-gray-900 bg-gradient-to-r from-amber-300 to-amber-500 hover:from-amber-200 hover:to-amber-400 transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-60">
-                <Download className="w-5 h-5" />{kartUretiliyor ? 'Hazırlanıyor…' : 'Başarı kartını indir (PNG)'}
-              </button>
+              {/* UX1 — Sıradaki hedef */}
+              {sonrakiSira >= 0 ? (
+                <div className="rounded-2xl p-4 bg-gradient-to-br from-indigo-900 to-purple-900 border border-amber-300/20 flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold" style={{ background: rutbeBadgeGrad(sonrakiSira), color: '#2a1c06' }}><TrendingUp className="w-5 h-5" /></div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-amber-300 text-[11px] uppercase tracking-wider">Sıradaki hedef</div>
+                    <div className="text-white font-extrabold leading-tight">{KARIYER_BASAMAKLARI[sonrakiSira]}</div>
+                  </div>
+                  {benchmark.avg[sonrakiSira] != null && <div className="text-right flex-shrink-0"><div className="text-amber-300 font-bold">~{sureMetni(benchmark.avg[sonrakiSira])}</div><div className="text-white/40 text-[10px]">ortalama süre</div></div>}
+                </div>
+              ) : guncelSira >= 0 ? (
+                <div className="rounded-2xl p-4 bg-gradient-to-br from-fuchsia-900/70 to-amber-900/40 border border-amber-300/40 text-center text-white font-extrabold">👑 Zirvede — en yüksek kariyer basamağı</div>
+              ) : null}
+
+              {/* UX6 — Başarı kartı PNG + WhatsApp paylaş */}
+              <div className="flex gap-2">
+                <button onClick={indirBasariKarti} disabled={kartUretiliyor}
+                  className="flex-1 py-3 rounded-xl font-bold text-gray-900 bg-gradient-to-r from-amber-300 to-amber-500 hover:from-amber-200 hover:to-amber-400 transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-60">
+                  <Download className="w-5 h-5" />{kartUretiliyor ? 'Hazırlanıyor…' : 'Başarı kartı (PNG)'}
+                </button>
+                <button onClick={whatsappPaylas} title="WhatsApp'ta paylaş"
+                  className="flex-shrink-0 py-3 px-4 rounded-xl font-bold text-white bg-[#25D366] hover:bg-[#1ebe5b] transition flex items-center justify-center gap-2 shadow-lg">
+                  <Share2 className="w-5 h-5" /><span className="hidden sm:inline">WhatsApp</span>
+                </button>
+              </div>
 
               {/* MERDİVEN — sadece ulaşılan kariyerler, en üst geldiği kariyer en tepede */}
               <div>
@@ -413,7 +469,7 @@ export default function LiderProfil() {
                             </div>
                           )}
                           <div className="relative flex items-center gap-2.5 sm:gap-3 rounded-xl px-1.5 sm:px-2 py-2 transition-all" style={suAn ? { background: 'rgba(216,177,90,0.12)', boxShadow: 'inset 0 0 0 1px rgba(216,177,90,0.5)' } : {}}>
-                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-sm z-10" style={{ background: 'linear-gradient(135deg,#b8923f,#d8b15a)', color: '#2a1c06', boxShadow: `0 0 ${6 + sv * 24}px rgba(216,177,90,${0.35 + sv * 0.65})` }}>{idx + 1}</div>
+                            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 font-extrabold text-sm z-10" style={{ background: rutbeBadgeGrad(idx), color: '#1a1205', boxShadow: `0 0 ${6 + sv * 24}px rgba(216,177,90,${0.35 + sv * 0.65})` }}>{idx + 1}</div>
                             <div className="flex-1 min-w-0">
                               <div className="font-extrabold text-white flex items-center gap-x-2 gap-y-0.5 flex-wrap leading-tight text-sm sm:text-base">
                                 {KARIYER_BASAMAKLARI[idx]}
@@ -446,6 +502,27 @@ export default function LiderProfil() {
                   </div>
                 </div>
               </div>
+
+              {/* UX7 — öne çıkan kayıtlı eğitim */}
+              {kayitliVideolar && kayitliVideolar.length > 0 && (
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs font-bold text-gray-500 uppercase tracking-wider">Öne çıkan kayıtlı eğitim</div>
+                    <button onClick={() => setTab('kayitli')} className="text-xs font-semibold text-purple-600 hover:text-purple-800 inline-flex items-center gap-0.5">Tümü ({kayitliVideolar.length}) <ChevronRight className="w-3.5 h-3.5" /></button>
+                  </div>
+                  <button onClick={() => handleKayitliOynat(kayitliVideolar[0])} className="w-full bg-white border border-gray-200 hover:border-purple-400 hover:shadow-md rounded-xl overflow-hidden text-left transition-all group flex">
+                    <div className="relative w-36 sm:w-44 flex-shrink-0 aspect-video bg-gray-100">
+                      {kayitliVideolar[0].thumbnailUrl ? <img src={kayitliVideolar[0].thumbnailUrl} alt="" loading="lazy" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center"><Video className="w-8 h-8 text-gray-300" /></div>}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all"><div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center"><Play className="w-5 h-5 text-purple-700 ml-0.5" fill="currentColor" /></div></div>
+                    </div>
+                    <div className="p-3 flex-1 min-w-0">
+                      <div className="text-[10px] uppercase tracking-wider text-purple-500 font-bold mb-0.5">Kayıtlı eğitim</div>
+                      <h4 className="font-bold text-gray-900 text-sm line-clamp-2">{kayitliVideolar[0].baslik}</h4>
+                      {kayitliVideolar[0].tarih && <span className="text-xs text-gray-500 inline-flex items-center gap-1 mt-1"><Calendar className="w-3 h-3" />{kayitliVideolar[0].tarih}</span>}
+                    </div>
+                  </button>
+                </div>
+              )}
             </div>
           );
         })()}
