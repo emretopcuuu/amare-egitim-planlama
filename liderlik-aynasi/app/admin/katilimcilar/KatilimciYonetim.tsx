@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import KodKopyala from "./KodKopyala";
+import KisiSlideOver from "./KisiSlideOver";
 
 const t = tr.admin.katilimcilar;
 
@@ -193,6 +194,9 @@ export default function KatilimciYonetim({
     () => (secili.size > 0 ? [...secili] : kisiler.map((k) => k.id)),
     [secili, kisiler]
   );
+
+  // ---- kişi özet slide-over ----
+  const [slideoverId, setSlideoverId] = useState<string | null>(null);
 
   // ---- kişi ekle ----
   const [kisi, setKisi] = useState({ ...BOS_KISI });
@@ -436,12 +440,15 @@ export default function KatilimciYonetim({
                         />
                       </td>
                       <td className="py-2 pr-3 font-medium">
-                        <Link href={`/admin/kisi/${k.id}`} className="inline-flex items-center gap-1.5 text-slate-100 underline-offset-4 hover:text-gold-light hover:underline">
+                        <button
+                          onClick={() => setSlideoverId(k.id)}
+                          className="inline-flex items-center gap-1.5 text-slate-100 underline-offset-4 hover:text-gold-light hover:underline"
+                        >
                           {kayanSet.has(k.id) && (
                             <span className="h-2 w-2 shrink-0 rounded-full bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.7)]" aria-label={t.riskIsaret} title={t.riskIsaret} />
                           )}
                           {k.full_name}
-                        </Link>
+                        </button>
                       </td>
                       <td className="py-2 pr-3 text-slate-400">{k.team ?? "—"}</td>
                       <td className="py-2 pr-3 text-slate-400">{k.city ?? "—"}</td>
@@ -481,12 +488,15 @@ export default function KatilimciYonetim({
                     className="h-4 w-4 shrink-0 accent-gold"
                   />
                   <div className="min-w-0 flex-1">
-                    <Link href={`/admin/kisi/${k.id}`} className="flex items-center gap-1.5 truncate font-medium text-slate-100 hover:text-gold-light">
+                    <button
+                      onClick={() => setSlideoverId(k.id)}
+                      className="flex items-center gap-1.5 truncate font-medium text-slate-100 hover:text-gold-light"
+                    >
                       {kayanSet.has(k.id) && (
                         <span className="h-2 w-2 shrink-0 rounded-full bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.7)]" aria-label={t.riskIsaret} title={t.riskIsaret} />
                       )}
                       <span className="truncate">{k.full_name}</span>
-                    </Link>
+                    </button>
                     <p className="mt-0.5 truncate text-xs text-slate-400">
                       {[k.team, k.city].filter(Boolean).join(" · ") || "—"}
                       {k.phone ? ` · ${k.phone}` : ""}
@@ -834,6 +844,10 @@ export default function KatilimciYonetim({
           </div>
         )}
       </DuzenleModal>
+
+      {slideoverId && (
+        <KisiSlideOver kisiId={slideoverId} onKapat={() => setSlideoverId(null)} />
+      )}
     </div>
   );
 }

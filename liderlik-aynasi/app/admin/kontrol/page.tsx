@@ -37,6 +37,7 @@ export default async function KontrolPage() {
     { count: epostaliSayisi },
     { data: davetAyari },
     { count: ikiliSayisi },
+    { count: pusulaTamam },
   ] = await Promise.all([
     db.from("waves").select("id, name, is_open").order("id"),
     aktifOzellikler(db),
@@ -50,6 +51,7 @@ export default async function KontrolPage() {
       .not("email", "is", null),
     db.from("settings").select("value").eq("key", "wave4_davet_gonderildi").maybeSingle(),
     db.from("pairs").select("id", { count: "exact", head: true }),
+    db.from("pusula").select("participant_id", { count: "exact", head: true }).not("tamamlandi_at", "is", null),
   ]);
   if (error) throw error;
 
@@ -81,6 +83,17 @@ export default async function KontrolPage() {
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-bold text-gold">🎛 Kontroller</h1>
         <OtoYenile />
+      </div>
+      <div className="flex flex-wrap gap-2 text-xs">
+        <span className="rounded-full bg-midnight-card/60 px-3 py-1.5 text-slate-300 ring-1 ring-royal/20">
+          🧭 Pusula: {pusulaTamam ?? 0}/{katilimciSayisi ?? 0}
+        </span>
+        <span className={`rounded-full px-3 py-1.5 ring-1 ${acik ? "bg-emerald-400/10 text-emerald-400 ring-emerald-400/20" : "bg-midnight-card/60 text-slate-400 ring-royal/20"}`}>
+          🌊 Dalga: {acik?.name ?? "kapalı"}
+        </span>
+        <span className={`rounded-full px-3 py-1.5 ring-1 ${raporlarAcik ? "bg-gold/10 text-gold-light ring-gold/20" : "bg-midnight-card/60 text-slate-400 ring-royal/20"}`}>
+          👁 Rapor: {raporlarAcik ? "açık" : "kapalı"}
+        </span>
       </div>
       <p className="text-sm text-slate-400">
         Kamp öncesi hazırlık → kamp günü → kapanış sırası. Her işlem onay ister.

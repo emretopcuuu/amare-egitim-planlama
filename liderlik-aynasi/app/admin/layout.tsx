@@ -3,7 +3,6 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga } from "@/lib/degerlendirme";
 import AdminNav from "./AdminNav";
 import AdminTost from "./AdminTost";
-import AdminMod from "./AdminMod";
 import AdminTuru from "./AdminTuru";
 import KlavyeKisayollari from "./KlavyeKisayollari";
 import CanliOlayAkisi from "./CanliOlayAkisi";
@@ -57,8 +56,6 @@ export default async function AdminLayout({
         muhurAcik={muhurAyari?.value === "true"}
         moderasyonBekleyen={bekleyenFoto ?? 0}
       />
-      {/* UX #1: Basit/Uzman mod anahtarı — tüm admin sayfalarında geçerli */}
-      <AdminMod />
       {children}
       <AdminTost />
       {/* UX #7: panele ilk giren yöneticiye tek seferlik tur */}

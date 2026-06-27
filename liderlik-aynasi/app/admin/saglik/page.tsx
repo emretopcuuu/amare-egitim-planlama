@@ -10,6 +10,8 @@ import Katlanir from "../Katlanir";
 import Ipucu from "../Ipucu";
 import OtoYenile from "../OtoYenile";
 
+export const revalidate = 15;
+
 export const metadata = { title: "Sağlık — Liderlik Aynası" };
 
 const KANIT_ESIK = 3;
