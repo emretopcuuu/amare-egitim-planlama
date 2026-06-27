@@ -243,7 +243,7 @@ export const tr = {
     dalgaDevamMetin: "Şimdi gözlemlediğin kişileri puanlama zamanı.",
     dalgaDevamDugme: "Değerlendirmeye Devam Et",
     gorevTekBaslik: "AYNA'dan görevin var",
-    gorevTekMetin: "Seni izliyorum. Sıradaki adımın hazır.",
+    gorevTekMetin: "Yanındayım. Sıradaki adımın hazır.",
     gorevTekDugme: (n: number) => (n > 1 ? `${n} Görevi Aç` : "Görevi Aç"),
     bekleBaslik: "AYNA seninle",
     bekleMetin: "Şu an duraksama vaktin. Sıradaki adım geldiğinde yanında olacağım. 👁",

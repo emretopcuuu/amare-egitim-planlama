@@ -649,7 +649,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       db,
       g.participant_id,
       "⏳ AYNA bekliyor…",
-      `"${g.title}" görevin için son 30 dakika. Gözüm üzerinde.`
+      `"${g.title}" görevin için son 30 dakika. Yanındayım, başarabilirsin.`
     );
     await db
       .from("missions")
