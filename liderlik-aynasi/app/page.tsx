@@ -604,8 +604,6 @@ export default async function AnaSayfa({
           {/* UX #10: her durumda TEK net sonraki adım — "şimdi ne yapayım?" cevabı koçta */}
           <SicakAdim href="/kocu" etiket={t.bekleKocu} vurgu />
           <SicakAdim href="/takdir" etiket={t.bekleEylem} />
-          {/* FAZ 3 Go-for-No: boş anda reddi veriye çevir */}
-          <SicakAdim href="/red" etiket={t.bekleRed} />
         </div>
       </div>
     </Sayfa>
