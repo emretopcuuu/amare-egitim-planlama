@@ -710,6 +710,18 @@ body {
 }
 
 /* Cam kart: buzlu beyaz panel + maske tekniğiyle sedefli 1px kenar */
+/* Sohbet balonu — açık arka plan (orman) üstünde AYNA repliği net okunsun:
+   yarı saydam camdan daha opak koyu zemin + bulanıklık. */
+.ayna-balon-okur {
+  background: rgba(18, 20, 38, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 20px -8px rgba(0, 0, 0, 0.5);
+}
+body.gunes-modu .ayna-balon-okur {
+  background: rgba(20, 24, 44, 0.8);
+}
+
 .kart-cam {
   position: relative;
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));

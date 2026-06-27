@@ -859,6 +859,15 @@ export const tr = {
     maddeAc: "Tamamını gör",
     maddeKapat: "Kısalt",
     listeHatirlat: "Öncelik listen — seçmek için dokun",
+    // Eleme aşaması — görsel sayaç, tek dokunuş eleme, geri al
+    elemeChipIpucu: "Bırakmak için dokun (yanlışsa geri alabilirsin)",
+    elemeKalanEtiket: (kalan: number) => `${kalan} öncelik kaldı`,
+    elenenlerBaslik: "Bıraktıkların",
+    geriAlSon: "↩ Son bıraktığını geri al",
+    geriAliniyor: "Geri alınıyor…",
+    // Sohbet bitince son analiz mesajı okunsun, sonra mühür/devam
+    analizDevamSlogan: "Pusulama mühür vur →",
+    analizDevamBitti: "Devam et →",
     dusunuyor: "AYNA düşünüyor…",
     yukleniyor: "Yükleniyor…",
     tamamBaslik: "Pusulan kuruldu 🧭",

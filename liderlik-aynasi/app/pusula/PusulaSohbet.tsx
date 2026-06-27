@@ -305,6 +305,8 @@ export default function PusulaSohbet({
   const [sloganKaydediyor, setSloganKaydediyor] = useState(false);
   const [sifirlaSor, setSifirlaSor] = useState(false);
   const [sifirliyor, setSifirliyor] = useState(false);
+  const [geriAliniyor, setGeriAliniyor] = useState(false); // son elemeyi geri alma
+  const [bittiBekliyor, setBittiBekliyor] = useState(false); // son analiz okunsun, sonra devam
   // Kariyer konumu formu (Pusula öncesi). "Şu anki" alanı artık aynı zamanda
   // "bugüne kadar ulaşılan en yüksek" anlamına gelir (tek alana sadeleştirildi).
   const [karSuanki, setKarSuanki] = useState("");
@@ -460,11 +462,12 @@ export default function PusulaSohbet({
     setTimeout(() => altRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   }
 
-  async function gonder() {
-    const metin = girdi.trim();
+  // metinParam verilirse (chip'ten tek dokunuş eleme) onu gönderir; yoksa girdi.
+  async function gonder(metinParam?: string) {
+    const metin = (metinParam ?? girdi).trim();
     if (!metin || mesgul) return;
     setMesajlar((m) => [...m, { rol: "kullanici", icerik: metin }]);
-    setGirdi("");
+    if (metinParam === undefined) setGirdi("");
     // Gönderilen madde listede varsa eleme olarak işaretle (chip'lerden düşsün).
     if (tumListe.includes(metin)) {
       setElenenler((e) => (e.includes(metin) ? e : [...e, metin]));
@@ -481,13 +484,28 @@ export default function PusulaSohbet({
     if (v.asama) setAsama(v.asama);
     if (v.bitti) {
       setAsama("tamam");
-      if (v.sloganAdaylar?.length) {
-        setSloganAdaylar(v.sloganAdaylar);
-        setFaz("slogan");
-      } else {
-        setFaz("bitti");
-      }
+      if (v.sloganAdaylar?.length) setSloganAdaylar(v.sloganAdaylar);
+      // Doğrudan slogan/bitti ekranına atlama: önce son analiz mesajı sohbette
+      // okunsun, kişi hazır olunca kendisi geçsin (#6 — çok hızlı geçme sorunu).
+      setBittiBekliyor(true);
     }
+  }
+
+  // Son elemeyi geri al: sunucudan son (kullanıcı eleme + AYNA yanıtı) çiftini
+  // sildir, istemcide de son iki mesajı ve son eleneni çıkar.
+  async function sonElemeyiGeriAl() {
+    if (geriAliniyor || mesgul || !elenenler.length) return;
+    setGeriAliniyor(true);
+    const v = await istek({ geriAl: true });
+    setGeriAliniyor(false);
+    if (!v?.ok) {
+      setHata(t.aiHata);
+      return;
+    }
+    setMesajlar((m) => m.slice(0, -2));
+    setElenenler((e) => e.slice(0, -1));
+    setAsama("eleme");
+    setHata(null);
   }
 
   async function sloganKaydet(secilen: string) {
@@ -838,7 +856,7 @@ export default function PusulaSohbet({
   // Seçilip elenenler düştükten sonra kalan öncelikler chip olarak görünür.
   const gosterListe = tumListe.filter((m) => !elenenler.includes(m));
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
+    <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-16">
       <header className="shrink-0 pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1 text-center">
@@ -877,6 +895,28 @@ export default function PusulaSohbet({
                     : "bekliyor",
             }))}
           />
+          {/* ELEME SAYACI (#1) — kalan öncelik görsel noktalarla, metin tekrarı yerine */}
+          {asama === "eleme" && tumListe.length > 0 && (
+            <div className="mt-3 flex flex-col items-center gap-1.5">
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {tumListe.map((m, i) => {
+                  const elendi = elenenler.includes(m);
+                  return (
+                    <span
+                      key={i}
+                      aria-hidden
+                      className={`h-2.5 w-2.5 rounded-full transition-colors ${
+                        elendi ? "bg-white/15" : "bg-gold"
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+              <span className="text-[0.7rem] font-medium text-slate-400">
+                {t.elemeKalanEtiket(gosterListe.length)}
+              </span>
+            </div>
+          )}
         </div>
       </header>
 
@@ -886,7 +926,7 @@ export default function PusulaSohbet({
             <p
               className={`max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-base leading-relaxed ${
                 m.rol === "ayna"
-                  ? "kart-cam text-slate-100"
+                  ? "ayna-balon-okur text-slate-100"
                   : "bg-gradient-to-br from-[#243349] to-[#10192a] text-[#f5ecd8] ring-1 ring-[#d4af37]/40 shadow-[0_6px_20px_-6px_rgba(0,0,0,0.45)]"
               }`}
             >
@@ -910,56 +950,101 @@ export default function PusulaSohbet({
         </p>
       )}
 
-      {/* Öncelik listesi yanıt kutusunun HEMEN ÜSTÜNDE; dokun → yanıta yaz */}
-      {gosterListe.length > 0 && (
-        <div className="shrink-0 pb-3">
-          <p className="mb-1.5 text-center text-[0.65rem] uppercase tracking-wide text-slate-500">
-            {t.listeHatirlat}
-          </p>
-          <div className="flex flex-wrap justify-center gap-1.5">
-            {gosterListe.map((m, i) => (
-              <button
-                key={i}
-                onClick={() => setGirdi(m)}
-                title={m}
-                className="max-w-[12rem] truncate rounded-full border border-royal-light/30 bg-midnight-soft px-3 py-1 text-sm text-slate-200 transition-colors hover:border-gold"
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {sohbetDinliyor && (
-        <div className="mb-2 flex shrink-0 items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/5 px-3 py-2">
-          <SesDalga />
-          <span className="shrink-0 text-xs font-medium text-red-200">{t.sesDinleniyor}</span>
-        </div>
-      )}
-      <div className="flex shrink-0 items-end gap-2">
-        <div className="min-w-0 flex-1">
-          <OtoTextarea
-            value={girdi}
-            onChange={setGirdi}
-            onEnter={gonder}
-            placeholder={t.girisYer}
-            ariaLabel={t.girisYer}
-          />
-        </div>
-        <SesButonu
-          onParca={(m) => setGirdi((g) => (g ? `${g} ${m}` : m))}
-          dinleyince={setSohbetDinliyor}
-          boyutSinif="h-12 w-12 rounded-2xl"
-        />
+      {/* Bitiş bekliyor (#6): son analiz mesajı sohbette okunsun; kişi hazır
+          olunca slogan/bitiş ekranına KENDİSİ geçsin (ani atlama yok). */}
+      {bittiBekliyor ? (
         <button
-          onClick={gonder}
-          disabled={mesgul || !girdi.trim()}
-          className="btn-kor flex h-12 shrink-0 items-center justify-center rounded-2xl px-5 text-base font-bold disabled:opacity-50"
+          onClick={() => setFaz(sloganAdaylar.length ? "slogan" : "bitti")}
+          className="btn-kor parilti flex h-14 w-full shrink-0 items-center justify-center rounded-2xl text-lg font-bold"
         >
-          {t.gonder}
+          {sloganAdaylar.length ? t.analizDevamSlogan : t.analizDevamBitti}
         </button>
-      </div>
+      ) : (
+        <>
+          {/* Bıraktıkların izi + son elemeyi geri al (#3) — yalnız eleme aşamasında */}
+          {asama === "eleme" && elenenler.length > 0 && (
+            <div className="shrink-0 pb-2">
+              <p className="mb-1 text-center text-[0.65rem] uppercase tracking-wide text-slate-600">
+                {t.elenenlerBaslik}
+              </p>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {elenenler.map((m, i) => (
+                  <span
+                    key={i}
+                    title={m}
+                    className="max-w-[10rem] truncate rounded-full border border-white/10 bg-white/[0.03] px-2.5 py-0.5 text-xs text-slate-500 line-through"
+                  >
+                    {m}
+                  </span>
+                ))}
+              </div>
+              <button
+                onClick={sonElemeyiGeriAl}
+                disabled={geriAliniyor}
+                className="mx-auto mt-1.5 block text-xs font-medium text-gold-light/80 underline-offset-2 hover:underline disabled:opacity-50"
+              >
+                {geriAliniyor ? t.geriAliniyor : t.geriAlSon}
+              </button>
+            </div>
+          )}
+
+          {/* Kalan öncelikler — eleme'de tek dokunuş 'bırak', diğer aşamada yanıta yaz (#4) */}
+          {gosterListe.length > 0 && (
+            <div className="shrink-0 pb-3">
+              <p className="mb-1.5 text-center text-[0.65rem] uppercase tracking-wide text-slate-500">
+                {asama === "eleme" ? t.elemeChipIpucu : t.listeHatirlat}
+              </p>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {gosterListe.map((m, i) => (
+                  <button
+                    key={i}
+                    onClick={() => (asama === "eleme" ? gonder(m) : setGirdi(m))}
+                    disabled={mesgul}
+                    title={m}
+                    className={`max-w-[12rem] truncate rounded-full border px-3 py-1 text-sm transition-colors disabled:opacity-50 ${
+                      asama === "eleme"
+                        ? "border-rose-400/30 bg-rose-500/5 text-slate-200 hover:border-rose-400/70 hover:bg-rose-500/10"
+                        : "border-royal-light/30 bg-midnight-soft text-slate-200 hover:border-gold"
+                    }`}
+                  >
+                    {asama === "eleme" ? `${m} ✕` : m}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {sohbetDinliyor && (
+            <div className="mb-2 flex shrink-0 items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/5 px-3 py-2">
+              <SesDalga />
+              <span className="shrink-0 text-xs font-medium text-red-200">{t.sesDinleniyor}</span>
+            </div>
+          )}
+          <div className="flex shrink-0 items-end gap-2">
+            <div className="min-w-0 flex-1">
+              <OtoTextarea
+                value={girdi}
+                onChange={setGirdi}
+                onEnter={() => gonder()}
+                placeholder={t.girisYer}
+                ariaLabel={t.girisYer}
+              />
+            </div>
+            <SesButonu
+              onParca={(m) => setGirdi((g) => (g ? `${g} ${m}` : m))}
+              dinleyince={setSohbetDinliyor}
+              boyutSinif="h-12 w-12 rounded-2xl"
+            />
+            <button
+              onClick={() => gonder()}
+              disabled={mesgul || !girdi.trim()}
+              className="btn-kor flex h-12 shrink-0 items-center justify-center rounded-2xl px-5 text-base font-bold disabled:opacity-50"
+            >
+              {t.gonder}
+            </button>
+          </div>
+        </>
+      )}
     </main>
   );
 }

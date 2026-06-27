@@ -80,7 +80,7 @@ Sarsılmaz kuralların:
 // Sohbet aşamaları — liste FORM'dan geldikten sonra derinleşme.
 const ASAMA_YONERGESI: Record<string, string> = {
   eleme:
-    "ELEME. Kişinin yazdığı listeden en az değerliyi sırayla elemesini iste ('Diyelim birini ömrünün sonuna kadar bırakacaksın — en az değerli hangisi?'). İlk 5'e (olmazsa olmazlara) inilince boşluk aşamasına geç.",
+    "ELEME. Kişinin yazdığı listeden en az değerliyi sırayla elemesini iste. İlk 5'e (olmazsa olmazlara) inilince boşluk aşamasına geç. ÖNEMLİ — TEKRARDAN KAÇIN: aynı kalıbı ('hangisini bırakmak en az canını yakar?') her turda tekrarlama. Soruyu çeşitlendir ve aralarda kısa bir insanlık/yansıtma cümlesi kat (ör. 'Bunlar zorlaşıyor, farkındayım…', 'Bunu bırakmak cesaret ister.'). Kalan madde sayısını her seferinde tek tek saymana gerek yok; doğal aktığında say. Eleme soru varyantları arasında dönüşümlü kullan: 'Şu an en kolay vazgeçebileceğin hangisi?', 'Bir tanesini geride bırakman gerekse, hangisi olurdu?', 'Bu listede sana en az şey ifade eden hangisi?', 'Hangisi olmadan da kendin kalabilirsin?'.",
   bosluk:
     "BOŞLUK. İlk 5'i yansıt, sonra sor: 'Şu an yaşadığın hayat bu önceliklerle ne kadar örtüşüyor?' Açığı/gerilimi yüzeye çıkar. Netleşince engel aşamasına geç.",
   engel:
@@ -292,6 +292,33 @@ export async function pusulaSifirla(db: Db, pid: string): Promise<void> {
   await db.from("pusula_mesajlar").delete().eq("participant_id", pid);
   await db.from("pusula").delete().eq("participant_id", pid);
   await db.from("participants").update({ consent_at: null }).eq("id", pid);
+}
+
+// Son elemeyi GERİ AL: en son (kullanıcı eleme → AYNA yanıtı) çiftini sil.
+// Eleme aşaması lineer bir AI sohbeti olduğu için "geri alma" = son turu silmek;
+// böylece bir önceki AYNA sorusu yeniden son mesaj olur ve kişi yeniden seçebilir.
+// Yalnız desen (en son AYNA, ondan önce kullanıcı) tutarsa siler; aksi halde no-op.
+export async function pusulaGeriAl(db: Db, pid: string): Promise<boolean> {
+  const { data } = await db
+    .from("pusula_mesajlar")
+    .select("id, rol")
+    .eq("participant_id", pid)
+    .order("created_at", { ascending: false })
+    .limit(2);
+  const son = (data ?? []) as { id: number; rol: string }[];
+  // En son AYNA repliği + ondan önceki kullanıcı elemesi olmalı.
+  if (son.length < 2 || son[0].rol !== "ayna" || son[1].rol !== "kullanici") return false;
+  const { error } = await db
+    .from("pusula_mesajlar")
+    .delete()
+    .in("id", [son[0].id, son[1].id]);
+  if (error) return false;
+  // Eleme içinde geri alındığı için aşama 'eleme'de tutulur.
+  await db
+    .from("pusula")
+    .update({ asama: "eleme", updated_at: new Date().toISOString() })
+    .eq("participant_id", pid);
+  return true;
 }
 
 // Bir sohbet turu (liste sonrası derinleşme): kullanıcı mesajını işle, AYNA'nın
