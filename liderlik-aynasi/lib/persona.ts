@@ -7,21 +7,27 @@
 // (görev üretimi, prompt enjeksiyonu) hem de istemci/simülasyon aynı kuralı
 // kullansın. Tek doğruluk kaynağı: ladder + türetme burada yaşar.
 
-// Amare kariyer basamakları — büyüdükçe artan rütbe. star, diamond'ın üstü.
+// Amare kariyer basamakları — büyüdükçe artan rütbe.
 export const KARIYER_RANK: Record<string, number> = {
   leader: 1,
   senior_leader: 2,
   exec_leader: 3,
   diamond: 4,
-  star: 5,
+  "1_star_diamond": 5,
+  "2_star_diamond": 6,
+  "3_star_diamond": 7,
+  presidential_diamond: 8,
 };
 
 export const KARIYER_ETIKET: Record<string, string> = {
   leader: "Leader",
   senior_leader: "Senior Leader",
-  exec_leader: "Exec. Leader",
+  exec_leader: "Executive Leader",
   diamond: "Diamond",
-  star: "Star",
+  "1_star_diamond": "1 Star Diamond",
+  "2_star_diamond": "2 Star Diamond",
+  "3_star_diamond": "3 Star Diamond",
+  presidential_diamond: "Presidential Diamond",
 };
 
 // Sıralı seçenek listesi (form dropdown'ları için).
@@ -30,7 +36,10 @@ export const KARIYER_SECENEKLER = [
   "senior_leader",
   "exec_leader",
   "diamond",
-  "star",
+  "1_star_diamond",
+  "2_star_diamond",
+  "3_star_diamond",
+  "presidential_diamond",
 ] as const;
 
 export type KariyerHal = "test_edilmemis" | "duraksama" | "gerileme" | "yukselis";

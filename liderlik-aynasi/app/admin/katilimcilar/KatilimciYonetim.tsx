@@ -13,14 +13,17 @@ const takimAdi = (i: number) => `Grup ${i}`;
 const BOS_KISI = { ad: "", takim: "", sehir: "", telefon: "", eposta: "" };
 const SAYFA_BOYU = 10;
 
-type KariyerSeviyesi = "leader" | "senior_leader" | "exec_leader" | "diamond" | "star" | "";
+type KariyerSeviyesi = "leader" | "senior_leader" | "exec_leader" | "diamond" | "1_star_diamond" | "2_star_diamond" | "3_star_diamond" | "presidential_diamond" | "";
 
 const KARIYER_ETIKETLER: Record<string, string> = {
   leader: "Leader",
   senior_leader: "Senior Leader",
-  exec_leader: "Exec. Leader",
+  exec_leader: "Executive Leader",
   diamond: "Diamond",
-  star: "Star",
+  "1_star_diamond": "1 Star Diamond",
+  "2_star_diamond": "2 Star Diamond",
+  "3_star_diamond": "3 Star Diamond",
+  presidential_diamond: "Presidential Diamond",
 };
 
 // Türetilen kariyer hâli (A/B/C/A+) — admin düzenleme modalında rozet.
@@ -31,7 +34,10 @@ const DURUM_ETIKETLER: Record<string, string> = {
   gerileme: "C · Düşüşten Dönen",
 };
 
-const KARIYER_SECENEKLER = ["leader", "senior_leader", "exec_leader", "diamond", "star"] as const;
+const KARIYER_SECENEKLER = [
+  "leader", "senior_leader", "exec_leader", "diamond",
+  "1_star_diamond", "2_star_diamond", "3_star_diamond", "presidential_diamond",
+] as const;
 
 type Kisi = {
   id: string;
