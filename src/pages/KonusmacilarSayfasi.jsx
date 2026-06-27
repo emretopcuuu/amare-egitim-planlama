@@ -496,23 +496,17 @@ const KonusmacilarSayfasi = () => {
                   <button onClick={() => setRutbeFiltre(null)} className="text-[11px] text-purple-200 hover:text-white inline-flex items-center gap-1 bg-white/10 px-2 py-0.5 rounded-full"><X className="w-3 h-3" />filtreyi kaldır</button>
                 )}
               </div>
-              <div className="relative">
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1 pr-6">
-                  {Object.keys(istatistik.ortRutbe).map(Number).sort((a, b) => a - b).map(i => {
-                    const sel = rutbeFiltre === i;
-                    return (
-                      <button key={i} onClick={() => setRutbeFiltre(sel ? null : i)}
-                        className={`flex-shrink-0 rounded-xl border px-3 py-2 text-center min-w-[96px] transition-all spring-tap ${rutbeStil(i)} ${sel ? 'ring-2 ring-amber-400 scale-105' : 'hover:brightness-125'}`}>
-                        <div className="text-[10px] font-bold leading-tight line-clamp-1">{rutbeYazi(KARIYER_BASAMAKLARI[i])}</div>
-                        <div className="text-sm font-extrabold mt-0.5">~{sureMetni(istatistik.ortRutbe[i])}</div>
-                      </button>
-                    );
-                  })}
-                </div>
-                {/* sağ kenar fade — kaydırılabilir olduğunu belli eder */}
-                <div className="pointer-events-none absolute right-0 top-0 bottom-1 w-10 bg-gradient-to-l from-purple-950/90 to-transparent flex items-center justify-end">
-                  <ChevronRight className="w-4 h-4 text-amber-300/70 animate-pulse" />
-                </div>
+              <div className="flex flex-wrap gap-2">
+                {Object.keys(istatistik.ortRutbe).map(Number).sort((a, b) => a - b).map(i => {
+                  const sel = rutbeFiltre === i;
+                  return (
+                    <button key={i} onClick={() => setRutbeFiltre(sel ? null : i)}
+                      className={`flex-1 basis-[80px] sm:basis-[96px] rounded-xl border px-2 py-2 text-center transition-all spring-tap ${rutbeStil(i)} ${sel ? 'ring-2 ring-amber-400 scale-105' : 'hover:brightness-125'}`}>
+                      <div className="text-[10px] font-bold leading-tight line-clamp-2 min-h-[1.6em]">{rutbeYazi(KARIYER_BASAMAKLARI[i])}</div>
+                      <div className="text-sm font-extrabold mt-0.5">~{sureMetni(istatistik.ortRutbe[i])}</div>
+                    </button>
+                  );
+                })}
               </div>
               <div className="text-[10px] text-purple-300/60 mt-2">Hangi kariyere ortalama ne kadar sürede ulaşıldı · {istatistik.veriOlan} liderin verisiyle · rütbeye tıkla → filtrele <span className="text-red-300/80">(tüm kayıtlar henüz dolmadığı için test aşamasındadır)</span></div>
             </div>
