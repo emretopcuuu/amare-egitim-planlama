@@ -186,6 +186,7 @@ const KayitliEgitimlerSayfasi = () => {
   // ─── State ─────────────────────────────────────────────────────────────
   const [tumVideolar, setTumVideolar] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [yuklemeHatasi, setYuklemeHatasi] = useState(false);
   const [kategoriler, setKategoriler] = useState(VARSAYILAN_KATEGORILER);
   const initKategoriSet = () => new Set((searchParams.get('kat') || '').split(',').filter(Boolean));
   const [kategoriSet, setKategoriSet] = useState(initKategoriSet);
@@ -328,31 +329,40 @@ const KayitliEgitimlerSayfasi = () => {
 
     setLoading(true);
     (async () => {
-      try {
-        const q = query(
-          collection(db, 'kayitli_egitimler'),
-          where('kayeneFiltrelendi', '==', false),
-          orderBy('tarih', 'desc'),
-          fbLimit(2500)
-        );
-        const snap = await getDocs(q);
-        const data = snap.docs.map(d => {
-          const { transcript, ...rest } = d.data();
-          const v = { id: d.id, ...rest };
-          v.dil = detectDil(v);
-          return v;
-        });
-        setTumVideolar(data);
-        // Boş sonucu CACHE'LEME — geçici glitch 12 saatlik "0 eğitim" ekranına dönüşür
-        if (data.length > 0) {
-          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+      const q = query(
+        collection(db, 'kayitli_egitimler'),
+        where('kayeneFiltrelendi', '==', false),
+        orderBy('tarih', 'desc'),
+        fbLimit(2500)
+      );
+      // Geçici ağ/SDK hatasına karşı 3 deneme — tek blip "0 eğitim" yapmasın
+      let sonHata;
+      for (let i = 0; i < 3; i++) {
+        try {
+          const snap = await getDocs(q);
+          const data = snap.docs.map(d => {
+            const { transcript, ...rest } = d.data();
+            const v = { id: d.id, ...rest };
+            v.dil = detectDil(v);
+            return v;
+          });
+          setTumVideolar(data);
+          setYuklemeHatasi(false);
+          // Boş sonucu CACHE'LEME — geçici glitch 12 saatlik "0 eğitim" ekranına dönüşür
+          if (data.length > 0) {
+            try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+          }
+          setLoading(false);
+          return;
+        } catch (err) {
+          sonHata = err;
+          if (i < 2) await new Promise(r => setTimeout(r, 600 * (i + 1)));
         }
-      } catch (err) {
-        console.warn('[kayitli_egitimler] fetch hatası:', err.message);
-        setTumVideolar([]);
-      } finally {
-        setLoading(false);
       }
+      console.error('[kayitli_egitimler] fetch 3 denemede de başarısız:', sonHata?.message);
+      try { (await import('../utils/sentry')).Sentry?.captureException?.(sonHata, { tags: { yer: 'kayitli-egitimler-load' } }); } catch {}
+      setYuklemeHatasi(true); // mevcut (cache) veriyi EZME, hatayı işaretle
+      setLoading(false);
     })();
   }, []);
 
@@ -1090,7 +1100,7 @@ const KayitliEgitimlerSayfasi = () => {
           {loading ? (
             <SkeletonGrid />
           ) : filtrelenmis.length === 0 ? (
-            <EmptyState t={t} onClear={filtreleriTemizle} hasFilters={aktifFiltreler.length > 0} />
+            <EmptyState t={t} onClear={filtreleriTemizle} hasFilters={aktifFiltreler.length > 0} loadHatasi={yuklemeHatasi && tumVideolar.length === 0} />
           ) : (
             <>
               {/* Mobile: compact list, Desktop: grid */}
@@ -1188,15 +1198,29 @@ const SkeletonGrid = () => (
 );
 
 // ─── Empty state ────────────────────────────────────────────────────────
-const EmptyState = ({ t, onClear, hasFilters }) => (
+const EmptyState = ({ t, onClear, hasFilters, loadHatasi }) => (
   <div className="text-center py-16 text-white/50">
-    <Video className="w-20 h-20 mx-auto mb-3 opacity-30" />
-    <p className="text-lg">{t('rec_no_results')}</p>
-    {hasFilters && (
-      <button onClick={onClear}
-        className="mt-4 inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold px-5 py-2.5 rounded-xl spring-tap">
-        <RotateCcw className="w-4 h-4" />{t('rec_clear_filters')}
-      </button>
+    {loadHatasi ? (
+      <>
+        <RotateCw className="w-16 h-16 mx-auto mb-3 opacity-40 text-amber-300/70" />
+        <p className="text-lg text-white/80 font-bold">Eğitimler yüklenemedi</p>
+        <p className="text-sm text-white/50 mt-1 max-w-sm mx-auto">Bağlantı sorunu olabilir. Yenileyince düzelir.</p>
+        <button onClick={() => window.location.reload()}
+          className="mt-4 inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold px-5 py-2.5 rounded-xl spring-tap">
+          <RotateCw className="w-4 h-4" />Yenile
+        </button>
+      </>
+    ) : (
+      <>
+        <Video className="w-20 h-20 mx-auto mb-3 opacity-30" />
+        <p className="text-lg">{t('rec_no_results')}</p>
+        {hasFilters && (
+          <button onClick={onClear}
+            className="mt-4 inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 font-bold px-5 py-2.5 rounded-xl spring-tap">
+            <RotateCcw className="w-4 h-4" />{t('rec_clear_filters')}
+          </button>
+        )}
+      </>
     )}
   </div>
 );
