@@ -56,10 +56,16 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // Konuşmacılar — herkes görür, sadece admin yazar
+    // Konuşmacılar — herkes görür; admin yazar VEYA lider kendi kaydını (email eşleşmeli) günceller.
+    // Self-edit: giriş yapan e-posta doc'taki email ile aynıysa ve email alanı değiştirilmiyorsa.
     match /konusmacilar/{docId} {
       allow read: if true;
       allow write: if isAdmin();
+      allow update: if isSignedIn()
+        && resource != null
+        && resource.data.email is string
+        && request.auth.token.email == resource.data.email
+        && request.resource.data.email == resource.data.email;
     }
 
     // Şablonlar — herkes görür (poster üretimi için), sadece admin yazar

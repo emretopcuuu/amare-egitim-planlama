@@ -38,7 +38,7 @@ export default function LiderProfil() {
   const navigate = useNavigate();
   const { t, locale, tDynamic, lang } = useTranslation();
   const { takvim, konusmacilar, isAdmin } = useData();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, email } = useAuth();
   const { toggle: takipToggle, isTakip } = useTakipEgitmenler();
 
   const [tab, setTab] = useState('kariyer');
@@ -66,6 +66,9 @@ export default function LiderProfil() {
   const ad = kayit?.ad || (id || '').replace(/-/g, ' ').toLocaleUpperCase('tr-TR');
   const coreId = id;
   const favori = coreId ? isTakip(coreId) : false;
+  // Lider kendi profilini düzenleyebilir mi? (giriş e-postası kayıttaki email ile aynı) — admin her zaman
+  const benimProfilim = !!email && !!kayit?.email && email.toLowerCase() === String(kayit.email).toLowerCase();
+  const duzenleyebilir = isAdmin || benimProfilim;
 
   useEffect(() => { window.scrollTo(0, 0); }, [id]);
 
@@ -291,7 +294,7 @@ export default function LiderProfil() {
                 {/* UX9 — E-posta ile bildirim */}
                 <button onClick={() => setTakipModal(true)} title="Yeni eğitiminde e-posta bildirimi al" className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 px-3 py-1 rounded-full font-bold gold-glow"><Bell className="w-3.5 h-3.5" />Yeni eğitimde haber ver</button>
                 <button onClick={paylas} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full font-bold">{paylasildi ? <><Check className="w-3.5 h-3.5" />Kopyalandı</> : <><Share2 className="w-3.5 h-3.5" />Paylaş</>}</button>
-                {isAdmin && <button onClick={() => setDuzenleAcik(true)} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full font-bold"><Edit3 className="w-3.5 h-3.5" />Kariyeri düzenle</button>}
+                {duzenleyebilir && <button onClick={() => setDuzenleAcik(true)} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full font-bold"><Edit3 className="w-3.5 h-3.5" />{benimProfilim && !isAdmin ? 'Profilimi düzenle' : 'Kariyeri düzenle'}</button>}
               </div>
               {/* UX9 — yaklaşan eğitim birincil CTA */}
               {yaklasanEgitim && (
@@ -308,7 +311,7 @@ export default function LiderProfil() {
       </div>
 
       {/* Admin ipucu — kariyer verisi yoksa */}
-      {isAdmin && !veriYukleniyor && yolculuk.length === 0 && (
+      {duzenleyebilir && !veriYukleniyor && yolculuk.length === 0 && (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 mt-4">
           <button onClick={() => setDuzenleAcik(true)} className="w-full text-left bg-amber-50 border border-amber-300 rounded-xl px-4 py-3 flex items-center gap-3 hover:bg-amber-100 transition">
             <TrendingUp className="w-5 h-5 text-amber-600 flex-shrink-0" />
