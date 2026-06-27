@@ -3249,6 +3249,11 @@ export const tr = {
     masaustuNot:
       "Bilgisayardasın. Bildirimleri sadece buradan değil, telefonundan da alabilirsin — kampta yanında telefonun olacağı için en iyisi onu kurman.",
     telefonAc: "📱 Telefonuna kur — bildirimleri orada al",
+    // PWA tek-tuş "ana ekrana ekle" banner'ı
+    pwaBaslik: "Liderlik Aynası'nı ana ekrana ekle",
+    pwaAlt: "Tek dokunuş — uygulama gibi açılır, bildirimler gelir.",
+    pwaEkle: "Ekle",
+    pwaKapat: "Kapat",
     telefonKapat: "Kapat",
     telefonGiris:
       "Uygulamayı telefonunun ana ekranına eklersen gerçek bir uygulama gibi açılır; görevlerin ve sana özel fısıltılar bildirimle cebine düşer.",
