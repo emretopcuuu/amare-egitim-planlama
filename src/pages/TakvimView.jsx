@@ -1366,9 +1366,18 @@ const TakvimView = () => {
         <div className="px-4 pb-bottom-nav pt-2">
           <div className="container mx-auto max-w-7xl space-y-8">
             {haftaKeys.length===0 && (
-              aktifFiltreSayisi > 0
-                ? <EmptySearch onReset={filtreyiSifirla} />
-                : <EmptyCompleted />
+              takvim.length === 0
+                ? (
+                  <div className="text-center py-16">
+                    <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-white/10 border border-white/15 mb-3"><RotateCw className="w-8 h-8 text-amber-300/70" /></div>
+                    <p className="text-white font-bold text-lg mb-1">Eğitimler yüklenemedi</p>
+                    <p className="text-purple-200/70 text-sm mb-4 max-w-sm mx-auto">Bağlantı veya önbellek sorunu olabilir. Sayfayı yenileyince düzelir.</p>
+                    <button onClick={() => window.location.reload()} className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold text-sm px-5 py-2.5 rounded-full spring-tap shadow-lg"><RotateCw className="w-4 h-4" />Yenile</button>
+                  </div>
+                )
+                : aktifFiltreSayisi > 0
+                  ? <EmptySearch onReset={filtreyiSifirla} />
+                  : <EmptyCompleted />
             )}
 
             {/* Tamamen geçmiş haftaları say + toggle */}
