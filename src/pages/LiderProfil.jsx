@@ -337,16 +337,23 @@ export default function LiderProfil() {
           const tarihMap = new Map(yolculuk.map(k => [kariyerSira(k.kariyer), k]));
           const diamondSira = kariyerSira('DIAMOND'); // UX8 — dönüm noktası
 
-          // ulaşılan basamaklar — en üst geldiği kariyer en tepede (ters sıra); ulaşılmayanlar gösterilmez
-          // BRAND PARTNER/BUILDER veride yok → BRONZE'un ayını/tarihini miras al (boş kalmasın)
-          const bronzeSira = kariyerSira('BRONZE');
-          const bronzeK = tarihMap.get(bronzeSira);
+          // ulaşılan basamaklar — en üst geldiği kariyer en tepede (ters sıra); ulaşılmayanlar gösterilmez.
+          // Tarihsiz ulaşılan basamaklar (Brand Partner/Builder ya da atlanmış Platinum gibi ara basamaklar)
+          // alttaki en yakın dolu basamağın ayını/tarihini miras alır → boş kalmasın.
+          let firstFilledIdx = -1;
+          for (let i = 0; i <= guncelSira; i++) { if (tarihMap.has(i)) { firstFilledIdx = i; break; } }
+          const eff = []; const mirasliArr = []; const mirasTipArr = [];
+          let altDolu = null;
+          for (let i = 0; i <= guncelSira; i++) {
+            const own = tarihMap.get(i);
+            if (own) { altDolu = own; eff[i] = own; mirasliArr[i] = false; mirasTipArr[i] = null; }
+            else { eff[i] = altDolu; mirasliArr[i] = true; mirasTipArr[i] = (firstFilledIdx >= 0 && i < firstFilledIdx) ? 'baslangic' : 'gecis'; }
+          }
+          const ilkDolu = eff.find(Boolean) || null;
+          for (let i = 0; i <= guncelSira; i++) if (!eff[i]) { eff[i] = ilkDolu; mirasliArr[i] = true; mirasTipArr[i] = 'baslangic'; }
           const satirlar = [];
           for (let i = guncelSira; i >= 0; i--) {
-            let k = tarihMap.get(i);
-            let mirasli = false;
-            if (!k && i < bronzeSira && bronzeK) { k = bronzeK; mirasli = true; }
-            satirlar.push({ idx: i, k, mirasli, yil: k?.dt ? k.dt.getFullYear() : null });
+            satirlar.push({ idx: i, k: eff[i], mirasli: mirasliArr[i], mirasTip: mirasTipArr[i], yil: eff[i]?.dt ? eff[i].dt.getFullYear() : null });
           }
           // UX8 — yıl ayracı: bir öncekiyle yılı değişen ilk satıra
           satirlar.forEach((r, i) => { const prev = satirlar[i - 1]; r.yilAyraci = r.yil && (!prev || prev.yil !== r.yil); });
@@ -384,7 +391,7 @@ export default function LiderProfil() {
                   {/* dikey bağlantı çizgisi */}
                   <div className="absolute left-[31px] sm:left-[43px] top-7 bottom-7 w-0.5 bg-gradient-to-b from-amber-300/70 via-amber-500/40 to-amber-700/10" />
                   <div className="relative space-y-1.5">
-                    {satirlar.map(({ idx, k, yil, yilAyraci, mirasli }) => {
+                    {satirlar.map(({ idx, k, yil, yilAyraci, mirasli, mirasTip }) => {
                       const suAn = idx === guncelSira;
                       const sv = idx / Math.max(1, KS - 1);
                       const hizli = !mirasli && k?.fark != null && k.fark > 0 && k.fark <= 6;
@@ -426,7 +433,7 @@ export default function LiderProfil() {
                               <div className="text-right flex-shrink-0">
                                 <div className="text-sm font-bold text-amber-300">{ayNo}. ay</div>
                                 {/* UX4 — kümülatif yanında önceki basamaktan delta (miras satırda başlangıç) */}
-                                <div className="text-[10px] text-white/40">{mirasli ? 'başlangıç' : (k.fark != null ? (k.fark === 0 ? 'aynı ay atladı' : `önceki +${k.fark} ay`) : 'katılımdan')}</div>
+                                <div className="text-[10px] text-white/40">{mirasli ? (mirasTip === 'baslangic' ? 'başlangıç' : '≈ geçiş') : (k.fark != null ? (k.fark === 0 ? 'aynı ay atladı' : `önceki +${k.fark} ay`) : 'katılımdan')}</div>
                               </div>
                             )}
                           </div>
