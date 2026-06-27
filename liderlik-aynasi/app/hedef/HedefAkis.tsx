@@ -264,15 +264,21 @@ function BaslangicFormu({
           <p className="text-xs text-red-400">{t.ovZorunlu}</p>
         )}
       </div>
+      {/* Kıdem — ay yazdırmak yerine değer aralığı seçtir (opsiyonel) */}
       <div className="space-y-2">
         <label className="block text-xs font-medium text-slate-400">{t.noktaAyEtiket}</label>
-        <input
-          inputMode="numeric"
+        <select
           value={ay}
-          onChange={(e) => setAy(e.target.value.replace(/[^0-9]/g, "").slice(0, 3))}
-          className="w-full rounded-xl border border-royal-light/30 bg-midnight-soft px-4 py-2.5 text-base text-slate-100 outline-none focus:border-gold"
-          placeholder="—"
-        />
+          onChange={(e) => setAy(e.target.value)}
+          className="h-12 w-full rounded-xl border border-royal-light/30 bg-midnight-soft px-3 text-base text-slate-100 outline-none focus:border-gold"
+        >
+          <option value="">{t.kidemSecimYer}</option>
+          {t.kidemAraliklar.map((r) => (
+            <option key={r.ay} value={String(r.ay)}>
+              {r.etiket}
+            </option>
+          ))}
+        </select>
       </div>
       <textarea
         value={detay}
