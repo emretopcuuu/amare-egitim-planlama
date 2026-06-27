@@ -1474,6 +1474,12 @@ export const tr = {
       kMuhur: "Mühür Açılışı",
       kSoz: "Kapanış Sözü",
       kSonrasi: "Ödev · Davet · İkili",
+      // Yeni birleşik sayfalar
+      saglik: "Sağlık Panosu",
+      eslestirmeler: "Eşleştirmeler",
+      gonder: "Mesaj Gönder",
+      kontrol: "Kontroller",
+      sAraclar: "Sunum & Prova",
       // ⚙ Sistem menüsü
       sProva: "Prova Modu",
       sYeniKamp: "Yeni Kamp",
@@ -1487,9 +1493,9 @@ export const tr = {
     navGrup: {
       hazirlik: "1 · Hazırlık",
       katilim: "2 · Katılım",
-      canli: "3 · Kamp Canlı",
-      final: "4 · Final & Sonrası",
-      sistem: "5 · Sistem",
+      canli: "2 · Kamp Canlı",
+      final: "3 · Final & Sonrası",
+      sistem: "4 · Sistem",
       prova: "PROVA",
       // eski adlar (geriye dönük; kullanımdan kalktı)
       kurulum: "Kurulum",

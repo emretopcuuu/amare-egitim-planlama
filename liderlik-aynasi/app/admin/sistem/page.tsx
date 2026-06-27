@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { KAMP_GUNLERI } from "@/lib/kampProgrami";
 import { tr } from "@/lib/i18n/tr";
 import ProvaModuKontrol from "../ProvaModuKontrol";
 import OtomatikZamanlama from "../OtomatikZamanlama";
@@ -12,6 +13,8 @@ import KodBul from "../KodBul";
 import SilmeTalepleri from "../SilmeTalepleri";
 import Ipucu from "../Ipucu";
 import OtoYenile from "../OtoYenile";
+import SunumOynatici from "../sunum/SunumOynatici";
+import TestPaneli from "../test/TestPaneli";
 
 export const metadata = { title: "Sistem & Bakım — Liderlik Aynası" };
 
@@ -22,7 +25,7 @@ export default async function SistemPage() {
   if (!session || session.rol !== "admin") redirect("/admin/giris");
 
   const db = supabaseAdmin();
-  const [{ data: provaAyar }, { data: dalgalar }, { data: silmeTalepleri }] = await Promise.all([
+  const [{ data: provaAyar }, { data: dalgalar }, { data: silmeTalepleri }, { data: demolar }] = await Promise.all([
     db.from("settings").select("value").eq("key", "prova_modu").maybeSingle(),
     db.from("waves").select("id, name").order("id"),
     db
@@ -30,6 +33,12 @@ export default async function SistemPage() {
       .select("id, full_name, team, deletion_requested_at")
       .not("deletion_requested_at", "is", null)
       .order("deletion_requested_at"),
+    db
+      .from("participants")
+      .select("id, full_name, login_code")
+      .eq("team", "DEMO")
+      .eq("role", "participant")
+      .order("full_name"),
   ]);
   const provaAcik = provaAyar?.value === "true";
   const silmeBekleyen = (silmeTalepleri ?? []).length;
@@ -110,6 +119,37 @@ export default async function SistemPage() {
             {tr.kvkk.adminBaslik}: bekleyen silme talebi yok. ✓
           </p>
         )}
+      </div>
+
+      <div id="araclar" className="scroll-mt-24 space-y-5 border-t border-white/10 pt-5">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-gold-light">
+          🎭 Sunum & Prova Araçları
+        </h2>
+
+        <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+          <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+            {tr.admin.sunum.baslik}
+            <Ipucu {...tr.admin.yardim.sunum} />
+          </h3>
+          <p className="mb-4 text-sm text-slate-400">{tr.admin.sunum.aciklama}</p>
+          <SunumOynatici tohum={1} />
+        </div>
+
+        <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+          <h3 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+            {tr.admin.test.baslik}
+            <Ipucu {...tr.admin.yardim.test} />
+          </h3>
+          <p className="mb-4 text-sm leading-relaxed text-slate-400">{tr.admin.test.aciklama}</p>
+          <TestPaneli
+            demolar={(demolar ?? []).map((d) => ({
+              id: d.id,
+              ad: d.full_name,
+              kod: d.login_code,
+            }))}
+            kampGunleri={[...KAMP_GUNLERI]}
+          />
+        </div>
       </div>
 
       <Link href="/admin" className="block text-center text-sm text-royal-light hover:underline">
