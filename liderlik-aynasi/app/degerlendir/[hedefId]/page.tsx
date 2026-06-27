@@ -77,7 +77,10 @@ export default async function PuanlaPage({
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
-      <div className="mx-auto my-auto w-full max-w-md p-5">
+      {/* pt-16: üst-orta isim pill'inin altına insin. Okunabilirlik için içerik
+          açık arka plan (orman) üstünde opak bir kart içinde. */}
+      <div className="mx-auto my-auto w-full max-w-md px-4 pb-6 pt-16">
+      <div className="rounded-3xl bg-midnight-card/80 p-5 shadow-xl ring-1 ring-white/10 backdrop-blur-md">
       <PuanlamaFormu
         dalgaId={dalgaId}
         dalgaAdi={dalgaAdi}
@@ -93,6 +96,7 @@ export default async function PuanlaPage({
           yorum: m.comment ?? "",
         }))}
       />
+      </div>
       </div>
     </main>
   );
