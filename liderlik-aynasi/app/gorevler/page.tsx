@@ -206,69 +206,35 @@ export default async function GorevlerPage() {
         <p className="mt-1 text-sm text-slate-400">{t.altBaslik}</p>
       </header>
 
-      {/* Kıvılcım durumu */}
-      <section className="parilti kart-cerceve rounded-2xl bg-gradient-to-br from-gold/15 to-midnight-card/60 p-5 ring-1 ring-gold/30 backdrop-blur">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-3xl font-bold text-gold">
-              {tr.kivilcim.toplam(toplamKivilcim)}
-            </p>
-            <p className="mt-1 text-sm text-slate-300">
-              {tr.kivilcim.unvanin}:{" "}
-              <span className="font-semibold text-gold-light">{unvan.mevcut.ad}</span>
-            </p>
-            {momentum && (
-              <p className="mt-1 text-sm font-semibold text-emerald-300">
-                {t.momentumSatiri(momentum.score)}
-              </p>
-            )}
-          </div>
-          <p className="max-w-[10rem] text-right text-xs text-slate-400">
-            {unvan.sonraki
-              ? tr.kivilcim.sonrakiUnvan(unvan.sonraki.ad, unvan.kalan)
-              : tr.kivilcim.zirve}
-          </p>
+      {/* S3: Kıvılcım kompakt şerit — alt çubukta tam bilgi zaten var */}
+      <section className="flex items-center justify-between rounded-2xl border border-gold/25 bg-gold/[0.06] px-4 py-2.5">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-gold">{tr.kivilcim.toplam(toplamKivilcim)}</span>
+          <span className="text-slate-500">·</span>
+          <span className="text-sm text-gold-light">{unvan.mevcut.ad}</span>
         </div>
         {unvan.sonraki && (
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-midnight-soft">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold"
-              style={{
-                width: `${Math.min(100, (toplamKivilcim / unvan.sonraki.esik) * 100)}%`,
-              }}
-            />
-          </div>
+          <span className="text-xs text-slate-400">
+            {tr.kivilcim.sonrakiUnvan(unvan.sonraki.ad, unvan.kalan)}
+          </span>
         )}
       </section>
 
-      {/* #4 Bugünün özeti — gün sonu kapanış kartı */}
-      {ozetVar && (
-        <section className="rounded-2xl bg-gradient-to-r from-emerald-500/10 to-midnight-card/60 p-4 ring-1 ring-emerald-400/20">
-          <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">
-            {t.bugunBaslik}
+      {/* S5: Seri + Özet tek satırda — iki ayrı banner yerine */}
+      {(ozetVar || seri >= 3 || seriRiski) && (
+        <section className={`flex items-center gap-3 rounded-2xl px-4 py-2.5 ${
+          seriRiski ? "border border-amber-400/40 bg-amber-500/10" :
+          seri >= 3 ? "border border-orange-400/30 bg-orange-500/10" :
+          "border border-emerald-400/20 bg-emerald-500/10"
+        }`}>
+          {(seri >= 3 || seriRiski) && <span aria-hidden>🔥</span>}
+          <p className={`text-sm font-semibold ${
+            seriRiski ? "text-amber-200" : seri >= 3 ? "text-orange-200" : "text-emerald-200"
+          }`}>
+            {seriRiski ? t.seriRiski(seri) :
+             seri >= 3 ? t.seriAtesi(seri) :
+             t.bugunOzet(bugunGorev, bugunKivilcim, bugunTakdirSayi)}
           </p>
-          <p className="mt-1 text-sm text-slate-200">
-            {t.bugunOzet(bugunGorev, bugunKivilcim, bugunTakdirSayi)}
-          </p>
-        </section>
-      )}
-
-      {/* #6 Seri ateşi — kesintisiz tamamlanan görevler momentumu */}
-      {seri >= 3 && !seriRiski && (
-        <section className="seri-belir flex items-center gap-3 rounded-2xl border border-orange-400/30 bg-gradient-to-r from-orange-500/15 to-midnight-card/60 px-4 py-3">
-          <span className="text-2xl" aria-hidden>
-            🔥
-          </span>
-          <p className="text-sm font-semibold text-orange-200">{t.seriAtesi(seri)}</p>
-        </section>
-      )}
-      {/* A1: seri kırılma riski — kayıp kaçınması dürtüsü (serin var, bugün koru) */}
-      {seriRiski && (
-        <section className="flex items-center gap-3 rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-500/15 to-midnight-card/60 px-4 py-3">
-          <span className="text-2xl" aria-hidden>
-            🔥
-          </span>
-          <p className="text-sm font-semibold text-amber-200">{t.seriRiski(seri)}</p>
         </section>
       )}
 
@@ -285,13 +251,6 @@ export default async function GorevlerPage() {
           </ul>
         </section>
       )}
-
-      {/* UX #6: Günün görev haritası — kişi tek görev görüyor; gün boyu daha
-          geleceğini ve bugün nerede olduğunu bilsin (belirsizlik kalksın). */}
-      <section className="rounded-2xl border border-royal-light/20 bg-white/[0.02] px-4 py-3">
-        <p className="text-sm leading-relaxed text-slate-300">🗺 {t.gunHaritasi}</p>
-        <p className="mt-1 text-xs font-medium text-gold-light/80">{t.gunHaritasiSayi(bugunGorev)}</p>
-      </section>
 
       {/* UX #3: Telafi — süresi yeni geçmiş görev(ler) forma açık kalır */}
       {telafiGorevler.length > 0 && (
