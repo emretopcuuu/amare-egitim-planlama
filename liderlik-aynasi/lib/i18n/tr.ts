@@ -1074,8 +1074,10 @@ export const tr = {
     gunlukYatirim: "Günlük yatırımın",
     toplamYatirim: "Toplam yatırım",
     toplamYatirimDeger: (saat: number, para: string) => `~${saat} saat + ${para} TL`,
-    geriDonus: "Geri dönüş",
-    geriDonusDeger: (ay: number) => (ay <= 0 ? "1 ay içinde" : `${ay} ay içinde`),
+    geriDonus: "Yatırımını çıkarma süresi",
+    geriDonusDeger: (ay: number) => (ay <= 0 ? "~ilk ay (tahmini)" : `~${ay} ay (tahmini)`),
+    geriDonusNot:
+      "Başlangıç yatırımını (~30.000 TL kayıt + ürün paketi) çıkarman beklenen tahmini süredir — gelir garantisi değildir.",
     bunuDusun: (saat: string, sureAy: number, gelir: string, saatlik: string) =>
       `Bunu düşün: ${saat} ayırarak, ${sureAy} ay sonunda aylık ${gelir} TL. Saatlik kazanç ~${saatlik} TL.`,
     planOnayla: "Bu hedefi mühürle",
@@ -1281,6 +1283,9 @@ export const tr = {
     // Katman 4/5 yazılı yanıtlar
     metinYer: "Kısa ve dürüst yaz — bu cevap sana ait.",
     metinAtla: "Şimdilik geç →",
+    // Profil önerisi (kişinin cevaplarından çıkan taslak) — alanın üstünde sunulur.
+    oneriBaslik: "Cevaplarından çıkan öneri",
+    oneriKullan: "Bunu kullan, düzenle",
     ilerleme: (yapilan: number, toplam: number) => `${yapilan} / ${toplam}`,
     kaydet: "Kaydet",
     kaydediliyor: "Kaydediliyor…",

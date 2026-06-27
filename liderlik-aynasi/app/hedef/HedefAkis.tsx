@@ -793,6 +793,7 @@ function PlanKarti({ plan }: { plan: KariyerPlani }) {
           guclu
         />
         <SatirKV k={t.geriDonus} v={t.geriDonusDeger(plan.geriDonusAy)} guclu />
+        <p className="pb-1 pt-1 text-[0.7rem] leading-relaxed text-slate-500">{t.geriDonusNot}</p>
       </dl>
       <div className="bg-gold/[0.06] px-5 py-3">
         <p className="kariyer-baslik text-sm leading-relaxed">
