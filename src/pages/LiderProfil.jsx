@@ -294,7 +294,7 @@ export default function LiderProfil() {
                 {/* UX9 — E-posta ile bildirim */}
                 <button onClick={() => setTakipModal(true)} title="Yeni eğitiminde e-posta bildirimi al" className="inline-flex items-center gap-1.5 bg-amber-400 hover:bg-amber-300 text-gray-900 px-3 py-1 rounded-full font-bold gold-glow"><Bell className="w-3.5 h-3.5" />Yeni eğitimde haber ver</button>
                 <button onClick={paylas} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full font-bold">{paylasildi ? <><Check className="w-3.5 h-3.5" />Kopyalandı</> : <><Share2 className="w-3.5 h-3.5" />Paylaş</>}</button>
-                {duzenleyebilir && <button onClick={() => setDuzenleAcik(true)} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full font-bold"><Edit3 className="w-3.5 h-3.5" />{benimProfilim && !isAdmin ? 'Profilimi düzenle' : 'Kariyeri düzenle'}</button>}
+                {duzenleyebilir && <button onClick={() => setDuzenleAcik(true)} className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/20 px-3 py-1 rounded-full font-bold"><Edit3 className="w-3.5 h-3.5" />{benimProfilim && !isAdmin ? 'Profilimi düzenle' : 'Profili düzenle'}</button>}
               </div>
               {/* UX9 — yaklaşan eğitim birincil CTA */}
               {yaklasanEgitim && (

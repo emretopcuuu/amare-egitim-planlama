@@ -15,6 +15,8 @@ import { KARIYER_BASAMAKLARI, kariyerTarih } from '../utils/kariyer';
 const EgitmenProfilDuzenleyici = ({ coreId, onClose }) => {
   const { toast } = useToast();
   const [veri, setVeri] = useState({
+    ad: '',
+    unvan: '',
     bio: '',
     kisaTanitim: '',
     instagram: '',
@@ -35,6 +37,8 @@ const EgitmenProfilDuzenleyici = ({ coreId, onClose }) => {
         if (snap.exists()) {
           const d = snap.data();
           setVeri({
+            ad: d.ad || '',
+            unvan: d.unvan || '',
             bio: d.bio || d.biyografi || '',
             kisaTanitim: d.kisaTanitim || '',
             instagram: d.instagram || '',
@@ -57,6 +61,8 @@ const EgitmenProfilDuzenleyici = ({ coreId, onClose }) => {
     setKaydediliyor(true);
     try {
       await setDoc(doc(db, `konusmacilar/${coreId}`), {
+        ...(veri.ad.trim() ? { ad: veri.ad.trim() } : {}), // boşsa mevcut ismi silme
+        unvan: veri.unvan.trim() || null,                  // ünvan/meslek (boş → temizle)
         bio: veri.bio.trim(),
         biyografi: veri.bio.trim(), // backward compat
         kisaTanitim: veri.kisaTanitim.trim(),
@@ -134,6 +140,22 @@ const EgitmenProfilDuzenleyici = ({ coreId, onClose }) => {
             <div className="flex justify-center py-8"><Loader2 className="w-8 h-8 animate-spin text-amber-400" /></div>
           ) : (
             <>
+              {/* İsim + Ünvan/Meslek */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="text-white/90 text-xs font-bold uppercase tracking-wider mb-1 block">İsim Soyisim</label>
+                  <input type="text" value={veri.ad} onChange={e => setVeri(s => ({ ...s, ad: e.target.value }))}
+                    placeholder="Ad Soyad"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-amber-400/60" />
+                </div>
+                <div>
+                  <label className="text-white/90 text-xs font-bold uppercase tracking-wider mb-1 block">Ünvan / Meslek</label>
+                  <input type="text" value={veri.unvan} onChange={e => setVeri(s => ({ ...s, unvan: e.target.value }))}
+                    placeholder="örn. Nefroloji Uzmanı (boş bırakılabilir)"
+                    className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-amber-400/60" />
+                </div>
+              </div>
+
               {/* Kısa tanıtım */}
               <Field label="Kısa Tanıtım" max={150} value={veri.kisaTanitim}
                 onChange={v => setVeri(s => ({ ...s, kisaTanitim: v }))}
