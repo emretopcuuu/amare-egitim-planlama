@@ -305,9 +305,9 @@ export default function PusulaSohbet({
   const [sloganKaydediyor, setSloganKaydediyor] = useState(false);
   const [sifirlaSor, setSifirlaSor] = useState(false);
   const [sifirliyor, setSifirliyor] = useState(false);
-  // Kariyer konumu formu (Pusula öncesi)
+  // Kariyer konumu formu (Pusula öncesi). "Şu anki" alanı artık aynı zamanda
+  // "bugüne kadar ulaşılan en yüksek" anlamına gelir (tek alana sadeleştirildi).
   const [karSuanki, setKarSuanki] = useState("");
-  const [karEnYuksek, setKarEnYuksek] = useState("");
   const [karGecenAy, setKarGecenAy] = useState("");
   const [karKidem, setKarKidem] = useState("");
   const [mesgul, setMesgul] = useState(false);
@@ -395,7 +395,9 @@ export default function PusulaSohbet({
     const v = await istek({
       kariyer: {
         suanki: karSuanki,
-        enYuksek: karEnYuksek || null,
+        // Form sadeleştirildi: "şu anki" alanı aynı zamanda en yüksek ulaşılan
+        // kariyer olarak alınır (ayrı en-yüksek dropdown'ı kaldırıldı).
+        enYuksek: karSuanki || null,
         gecenAy: karGecenAy || null,
         kidemAy: karKidem.trim() === "" ? null : Number(karKidem),
       },
@@ -543,7 +545,6 @@ export default function PusulaSohbet({
         <p className="mt-3 text-base leading-relaxed text-slate-300">{t.kariyerMetin}</p>
         <div className="mt-6 space-y-4">
           {sec(karSuanki, setKarSuanki, t.kariyerSuankiEtiket, t.kariyerSecimYer)}
-          {sec(karEnYuksek, setKarEnYuksek, t.kariyerEnYuksekEtiket, t.kariyerSecimYer)}
           {sec(karGecenAy, setKarGecenAy, t.kariyerGecenAyEtiket, t.kariyerSecimYer)}
           <label className="block text-left">
             <span className="mb-1.5 block text-sm font-medium text-slate-300">

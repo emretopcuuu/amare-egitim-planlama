@@ -729,9 +729,8 @@ export const tr = {
     kariyerBaslik: "Kariyer konumun",
     kariyerMetin:
       "Sana en doğru yol arkadaşlığını yapabilmem için kariyer yolculuğunun şu anki resmini bilmem gerekiyor. Rakamlar zamanla değişir — bu çok normal. En dürüst hâliyle yaz; bu sayılar yalnızca sana özel görevleri şekillendirmek için.",
-    kariyerSuankiEtiket: "Şu anki kariyer basamağın",
-    kariyerEnYuksekEtiket: "Bugüne kadar ulaştığın en yüksek basamak",
-    kariyerGecenAyEtiket: "Geçen ayki basamağın",
+    kariyerSuankiEtiket: "Şu anki kariyer basamağın (bugüne kadar ulaştığın en yüksek kariyer)",
+    kariyerGecenAyEtiket: "Geçen ay hangi kariyerle bitirdin?",
     kariyerKidemEtiket: "Kaç aydır bu işin içindesin?",
     kariyerKidemYer: "Örn. 18",
     kariyerSecimYer: "— Seç —",
