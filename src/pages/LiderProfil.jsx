@@ -421,7 +421,6 @@ export default function LiderProfil() {
                     <div className="text-amber-300 text-[11px] uppercase tracking-wider">Sıradaki hedef</div>
                     <div className="text-white font-extrabold leading-tight">{KARIYER_BASAMAKLARI[sonrakiSira]}</div>
                   </div>
-                  {benchmark.avg[sonrakiSira] != null && <div className="text-right flex-shrink-0"><div className="text-amber-300 font-bold">~{sureMetni(benchmark.avg[sonrakiSira])}</div><div className="text-white/40 text-[10px]">ortalama süre</div></div>}
                 </div>
               ) : guncelSira >= 0 ? (
                 <div className="rounded-2xl p-4 bg-gradient-to-br from-fuchsia-900/70 to-amber-900/40 border border-amber-300/40 text-center text-white font-extrabold">👑 Zirvede — en yüksek kariyer basamağı</div>
