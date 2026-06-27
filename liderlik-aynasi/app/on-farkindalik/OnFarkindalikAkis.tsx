@@ -261,7 +261,10 @@ export default function OnFarkindalikAkis({
     return (
       <div className="flex min-h-[82vh] flex-col justify-center py-8 text-center">
         <AynaLogo className="text-4xl" />
-        <h1 className="prizma-serif ay-metin mt-5 text-3xl font-semibold leading-tight">{t.girisBaslik}</h1>
+        <p className="prizma-serif mt-5 text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-gold-light/80">
+          {t.girisUst}
+        </p>
+        <h1 className="prizma-serif ay-metin mt-2 text-3xl font-semibold leading-tight">{t.girisBaslik}</h1>
         <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-slate-300"><DurustVurgu metin={t.girisMetin} /></p>
         {/* UX #4: sonunda ne kazanacağın — "neden buradayım" çerçevesi + ödül önizlemesi */}
         <ul className="mx-auto mt-6 max-w-md space-y-2 text-left">
