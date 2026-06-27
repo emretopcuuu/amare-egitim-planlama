@@ -970,19 +970,34 @@ export const tr = {
     // Başlangıç noktası formu
     noktaBaslik: "Önce: bu işin neresindesin?",
     noktaAciklama:
-      "Hedefini doğru ölçekte koyabilmek için nerede durduğunu bilmem gerekiyor. Sana en yakın olanı seç.",
+      "Hedefini doğru ölçekte koyabilmem için nerede durduğunu bilmem gerekiyor. Şu anki kariyer basamağını ve son 3 ayın ortalamalarını yaz.",
     noktalar: {
       yeni: { ad: "Yeni başladım", alt: "0-3 ay · ilk adımlar" },
       baslangic: { ad: "Başlangıç aşamasındayım", alt: "3-12 ay · tempo kuruyorum" },
       deneyimli: { ad: "Deneyimliyim", alt: "12 ay ve üstü · ekibim var" },
       lider: { ad: "Olgun bir liderim", alt: "Lider yetiştiriyorum" },
     },
+    // Kariyer seçimi (Pusula başından buraya taşındı) — 8 basamak
+    kariyerEtiket: "Şu anki kariyer basamağın (bugüne kadar ulaştığın en yüksek kariyer)",
+    kariyerSecimYer: "— Seç —",
+    kariyerSeviyeEtiketler: {
+      leader: "Leader",
+      senior_leader: "Senior Leader",
+      exec_leader: "Executive Leader",
+      diamond: "Diamond",
+      "1_star_diamond": "1 Star Diamond",
+      "2_star_diamond": "2 Star Diamond",
+      "3_star_diamond": "3 Star Diamond",
+      presidential_diamond: "Presidential Diamond",
+    } as Record<string, string>,
     noktaAyEtiket: "Ne kadardır bu işin içindesin? (ay — opsiyonel)",
     noktaDetayYer: "Eklemek istediğin bir şey var mı? (opsiyonel)",
-    // OV alanı (zorunlu, tüm seviyelerde)
+    // OV + VOL alanları (Son 3 ay ortalaması, ikisi de zorunlu)
     ovEtiket: "Son 3 ayın ortalama OV'si (zorunlu)",
     ovYer: "Örn: 2500",
-    ovZorunlu: "OV değeri gerekli — bu rakam planını kişiselleştirir.",
+    ovZorunlu: "OV ve VOL gerekli — bu rakamlar planını kişiselleştirir.",
+    volEtiket: "Son 3 ayın ortalama VOL'si (zorunlu)",
+    volYer: "Örn: 1500",
     noktaDevam: "Devam et",
     // OV simülasyonu
     simulasyonBaslik: "OV büyüme simülasyonu",
