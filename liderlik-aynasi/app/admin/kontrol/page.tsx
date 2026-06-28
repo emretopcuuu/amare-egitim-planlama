@@ -7,8 +7,6 @@ import { tr } from "@/lib/i18n/tr";
 import Katlanir from "../Katlanir";
 import Ipucu from "../Ipucu";
 import OtoYenile from "../OtoYenile";
-import FazSifirKontrol from "../FazSifirKontrol";
-import OnFarkindalikKontrol from "../OnFarkindalikKontrol";
 import DalgaKontrol from "../DalgaKontrol";
 import HedefKontrol from "../HedefKontrol";
 import BoslukKontrol from "../BoslukKontrol";
@@ -37,7 +35,6 @@ export default async function KontrolPage() {
     { count: epostaliSayisi },
     { data: davetAyari },
     { count: ikiliSayisi },
-    { count: pusulaTamam },
     { data: muhurAyar },
   ] = await Promise.all([
     db.from("waves").select("id, name, is_open").order("id"),
@@ -52,7 +49,6 @@ export default async function KontrolPage() {
       .not("email", "is", null),
     db.from("settings").select("value").eq("key", "wave4_davet_gonderildi").maybeSingle(),
     db.from("pairs").select("id", { count: "exact", head: true }),
-    db.from("pusula").select("participant_id", { count: "exact", head: true }).not("tamamlandi_at", "is", null),
     db.from("settings").select("value").eq("key", "muhur_acik").maybeSingle(),
   ]);
   if (error) throw error;
@@ -88,9 +84,6 @@ export default async function KontrolPage() {
         <OtoYenile />
       </div>
       <div className="flex flex-wrap gap-2 text-xs">
-        <span className="rounded-full bg-midnight-card/60 px-3 py-1.5 text-slate-300 ring-1 ring-royal/20">
-          🧭 Pusula: {pusulaTamam ?? 0}/{katilimciSayisi ?? 0}
-        </span>
         <span className={`rounded-full px-3 py-1.5 ring-1 ${acik ? "bg-emerald-400/10 text-emerald-400 ring-emerald-400/20" : "bg-midnight-card/60 text-slate-400 ring-royal/20"}`}>
           🌊 Dalga: {acik?.name ?? "kapalı"}
         </span>
@@ -101,30 +94,8 @@ export default async function KontrolPage() {
           🔒 Mühür: {muhurAcik ? "açık" : "kapalı"}
         </span>
       </div>
-      <p className="text-sm text-slate-400">
-        Kamp öncesi hazırlık → kamp günü → kapanış sırası. Her işlem onay ister.
-      </p>
 
-      {/* 1 · Hazırlık */}
-      <section id="hazirlik" className="scroll-mt-24">
-        <Katlanir baslik="Hazırlık" aciklama="Pusula + Ön Farkındalık ilerleme" ikon="🧰" yardim={tr.admin.yardim.fazSifir} varsayilanAcik>
-          <div id="pusula" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.fazSifir.baslik}
-              <Ipucu {...tr.admin.yardim.fazSifir} />
-            </h2>
-            <FazSifirKontrol />
-          </div>
-          <div id="onfark" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.onFark.baslik}
-            </h2>
-            <OnFarkindalikKontrol />
-          </div>
-        </Katlanir>
-      </section>
-
-      {/* 2 · Kamp Canlı */}
+      {/* 1 · Kamp Canlı */}
       <section id="dalga" className="scroll-mt-24">
         <Katlanir baslik="Kamp Canlı" aciklama="Dalga aç/kapat + hedef akışı" ikon="🎬" yardim={tr.admin.yardim.dalga}>
           <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
