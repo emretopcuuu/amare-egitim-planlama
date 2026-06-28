@@ -23,7 +23,7 @@ const SAYFALAR: Hedef[] = [
   { tip: "sayfa", etiket: n.katilimcilar, href: "/admin/katilimcilar" },
   { tip: "sayfa", etiket: n.eslestirme, href: "/admin/eslestirme" },
   { tip: "sayfa", etiket: n.qr, href: "/admin/qr" },
-  { tip: "sayfa", etiket: n.kiosk, href: "/admin/kiosk" },
+
   { tip: "sayfa", etiket: n.program, href: "/admin/program" },
   { tip: "sayfa", etiket: n.icerik, href: "/admin/icerik" },
   { tip: "sayfa", etiket: n.gorevTuru, href: "/admin/gorev-turleri" },
