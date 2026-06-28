@@ -9,7 +9,9 @@ import {
   gorevAraligiDk,
   istanbulSaati,
   sessizSaatMi,
+  aynaAniUret,
 } from "@/lib/ayna";
+import { aynaAniAdaylari } from "@/lib/aynaAniTetik";
 import { kivilcimHesapla } from "@/lib/kivilcim";
 import {
   kaymaKarari,
@@ -412,6 +414,34 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         .from("voice_profiles")
         .update({ video_notified_at: simdi.toISOString() })
         .eq("participant_id", h.participant_id);
+    }
+  }
+
+  // 3b3) AYNA ANI (otomatik): kamp içinde yeterince görev yapmış + kör nokta
+  // cümlesi yazmış kişilere, AYNA o cümleyi bugünkü çabalarıyla yüzleştiren
+  // "gördün mü?" anını üretir, mühürler ve bildirir. Olgunluğa bağlıdır (zaman
+  // değil), kişi başına bir kez. Tik başına ≤2 (Opus maliyeti). Eskiden admin
+  // AYNA Direktörü'nden elle tetikliyordu — artık sistem o an geldiğinde gönderir.
+  if (mod === "kamp" && !sahneSessiz) {
+    const aniAdaylar = await aynaAniAdaylari(db);
+    for (const aday of aniAdaylar.slice(0, 2)) {
+      const govde = await aynaAniUret(db, { id: aday.id, full_name: aday.ad });
+      if (!govde) continue;
+      const { error: aniHata } = await db
+        .from("mirror_moments")
+        .upsert(
+          { participant_id: aday.id, body: govde },
+          { onConflict: "participant_id", ignoreDuplicates: true }
+        );
+      if (aniHata) continue;
+      await katilimciyaBildir(
+        db,
+        aday.id,
+        "👁 Aynan sana bir şey gösteriyor",
+        "Bugün yaptıkların aynada bir şey değiştirdi. Bak.",
+        "/"
+      );
+      ozet.fisilti++;
     }
   }
 
