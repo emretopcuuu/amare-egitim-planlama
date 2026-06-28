@@ -59,3 +59,15 @@ export async function POST(req: Request) {
 
   return Response.json({ atamaSayisi: atamalar.length });
 }
+
+// Tüm atamaları sil (yeniden oluşturmadan sıfırla).
+export async function DELETE() {
+  if (!(await adminOturumu())) {
+    return Response.json({ hata: tr.admin.yetkisiz }, { status: 401 });
+  }
+
+  const db = supabaseAdmin();
+  const { error } = await db.from("assignments").delete().gte("created_at", "1970-01-01");
+  if (error) return Response.json({ hata: tr.admin.eslestirme.hataSunucu }, { status: 500 });
+  return Response.json({ tamam: true });
+}
