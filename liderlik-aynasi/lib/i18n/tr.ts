@@ -3378,6 +3378,10 @@ export const tr = {
     seninIcinPaylas: "Sevdiğine gönder",
     seninIcinKopyala: "Kopyala",
     seninIcinKopyalandi: "Kopyalandı ✓",
+    // Aynalar Meclisi — kolektif bilgelik / aidiyet
+    meclisBaslik: "Aynalar Meclisi",
+    meclisMetin: (n: number, etiket: string) =>
+      `Bu kampta senin gibi ${n} kişi daha ${etiket}. Yalnız yürümedin.`,
     kisiSayisi: (n: number) => `${n} kişi puanladı`,
     veriYok: "Henüz yeterli dış puan yok.",
     hikayeBaslik: "📖 Dalga Yolculuğun",
