@@ -332,6 +332,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         difficulty: gorev.difficulty,
         neden: gorev.neden,
         micro_sprint: gorev.micro_sprint,
+        yay_gorevi: gorev.yayGorevi,
         due_at: dueAt.toISOString(),
       })
       .select("id")

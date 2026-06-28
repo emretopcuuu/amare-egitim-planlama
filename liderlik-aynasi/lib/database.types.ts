@@ -932,6 +932,7 @@ export type Database = {
           kind: string
           lightened_at: string | null
           micro_sprint: boolean
+          yay_gorevi: boolean
           neden: string | null
           participant_id: string
           reflected_at: string | null
@@ -963,6 +964,7 @@ export type Database = {
           kind: string
           lightened_at?: string | null
           micro_sprint?: boolean
+          yay_gorevi?: boolean
           neden?: string | null
           participant_id: string
           reflected_at?: string | null
@@ -994,6 +996,7 @@ export type Database = {
           kind?: string
           lightened_at?: string | null
           micro_sprint?: boolean
+          yay_gorevi?: boolean
           neden?: string | null
           participant_id?: string
           reflected_at?: string | null
