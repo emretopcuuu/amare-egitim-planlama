@@ -28,6 +28,19 @@ export default function SunumOynatici({ tohum }: { tohum: number }) {
 
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
+      // Yazı alanındayken (aynı sayfadaki input/textarea — ör. "YENİ KAMP" onay
+      // kutusu) kısayolları yutma: Space/oklar metne geçsin, slayt atlamasın.
+      const el = e.target as HTMLElement | null;
+      if (
+        el &&
+        (el.tagName === "INPUT" ||
+          el.tagName === "TEXTAREA" ||
+          el.tagName === "SELECT" ||
+          el.isContentEditable)
+      ) {
+        return;
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
       if (e.key === "ArrowRight" || e.key === " ") {
         e.preventDefault();
         ileri();
