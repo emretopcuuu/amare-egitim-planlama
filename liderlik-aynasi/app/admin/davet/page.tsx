@@ -33,8 +33,10 @@ export default async function DavetPage() {
 
   const girisYapmamisSayisi = tumKisiler.filter((k) => !k.girisYapti && k.telefonVar).length;
 
+  // sablonSidleri haritayı şablon anahtarıyla ("giris") döndürür, settings
+  // anahtarıyla ("wa_tpl_giris") değil — doğru anahtarla eriş.
   const kayitliAnahtarlar = (["giris", "giris_hatirlatma"] as const)
-    .filter((a) => !!sidler[a === "giris" ? "wa_tpl_giris" : "wa_tpl_giris_hatirlatma"]);
+    .filter((a) => !!sidler[a]);
 
   return (
     <main className="mx-auto w-full max-w-2xl flex-1 space-y-6 p-6">
