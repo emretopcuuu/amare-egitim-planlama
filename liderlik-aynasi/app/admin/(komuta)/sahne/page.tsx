@@ -14,6 +14,7 @@ import Ipucu from "../../Ipucu";
 import ProgramYonetimi from "../../program/ProgramYonetimi";
 import CumartesiProgram from "../../program/CumartesiProgram";
 import SahneKumanda from "../../sahne-kumanda/SahneKumanda";
+import SahneAnlari from "../../sahne-kumanda/SahneAnlari";
 import OtoYenile from "../../OtoYenile";
 
 export const metadata = { title: "Sahne — Liderlik Aynası" };
@@ -78,6 +79,11 @@ export default async function SahnePage() {
             acik: d.is_open,
           }))}
         />
+      </Katlanir>
+
+      {/* Sahne anları — AYNA'nın marka sesiyle salona konuşması (Açılış, Ayna Anı) */}
+      <Katlanir baslik={tr.admin.aynaDirektor.sahneBaslik} ikon="🎙" varsayilanAcik>
+        <SahneAnlari />
       </Katlanir>
 
       {/* Sürpriz duyurular */}
