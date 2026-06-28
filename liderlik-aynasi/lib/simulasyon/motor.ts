@@ -4,7 +4,7 @@ import type { Database } from "@/lib/database.types";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { eslestir, type EslesmeKisi } from "@/lib/eslestirme";
 import { gorevUret, gorevPuanla } from "@/lib/ayna";
-import { kariyerHalKisidenTuret } from "@/lib/persona";
+import { kariyerHalKisidenTuret, KARIYER_SECENEKLER, KARIYER_ETIKET } from "@/lib/persona";
 import {
   SIM_KARAKTERLER,
   simPuan,
@@ -238,6 +238,55 @@ async function adimPusula(db: Db): Promise<AdimSonuc> {
   return { tamam: true, ilerleme: kisiler.length, mesaj: `${satirlar.length} karakter için pusula tamamlandı.` };
 }
 
+// Mevcut kariyerin bir üstü (zirvedeyse aynısı) — hedef rütbesi.
+function birUstKariyer(suanki: string | null): string {
+  const i = suanki ? KARIYER_SECENEKLER.indexOf(suanki as (typeof KARIYER_SECENEKLER)[number]) : -1;
+  if (i < 0) return KARIYER_SECENEKLER[1];
+  return KARIYER_SECENEKLER[Math.min(i + 1, KARIYER_SECENEKLER.length - 1)];
+}
+
+// HEDEF — nedenler (Pusula) bittikten SONRA. Her karakter mevcut kariyerinin
+// bir üstünü hedefler; 90 günlük plan + tempo mühürlenir. Sentetik ama tutarlı.
+async function adimHedef(db: Db): Promise<AdimSonuc> {
+  const kisiler = await simKatilimcilar(db);
+  const satirlar: Database["public"]["Tables"]["hedef"]["Insert"][] = [];
+  const simdi = new Date().toISOString();
+  for (const k of kisiler) {
+    const kar = karakterBul(k.full_name);
+    const hedefRutbe = birUstKariyer(k.kariyer_seviyesi);
+    const suankiEtiket = k.kariyer_seviyesi ? KARIYER_ETIKET[k.kariyer_seviyesi] ?? "—" : "—";
+    const hedefEtiket = KARIYER_ETIKET[hedefRutbe] ?? hedefRutbe;
+    const rnd = tohumla(k.id, "hedef");
+    const tempo = rnd() < 0.5 ? 2 : 3; // günlük saat
+    satirlar.push({
+      participant_id: k.id,
+      asama: "tamam",
+      baslangic_noktasi: suankiEtiket,
+      baslangic_detay: `${k.kidem_ay ?? 0} aydır ${suankiEtiket} seviyesinde.`,
+      baslangic_ov: 6,
+      deneyim_ay: k.kidem_ay,
+      hedef_rutbe: hedefRutbe,
+      hedef_gelir: null,
+      sure_ay: 12,
+      gunluk_saat: `${tempo} saat`,
+      gunluk_saat_sayi: tempo,
+      hedefler: [`${hedefEtiket} seviyesine çıkmak`, kar?.slogan ?? "İstikrarlı büyüme"],
+      plan: {
+        ozet: `${suankiEtiket} → ${hedefEtiket}`,
+        tempo: tempo === 2 ? "dengeli" : "agresif",
+        gunluk: `${tempo} saat/gün`,
+      },
+      ozet: `Hedef: ${suankiEtiket} → ${hedefEtiket}. Günde ${tempo} saat, ~12 ayda. Nedeni: "${kar?.icEngel ?? ""}" engelini aşmak.`,
+      tamamlandi_at: simdi,
+      updated_at: simdi,
+    });
+  }
+  if (satirlar.length > 0) {
+    await db.from("hedef").upsert(satirlar, { onConflict: "participant_id" });
+  }
+  return { tamam: true, ilerleme: kisiler.length, mesaj: `${satirlar.length} karakter için hedef (bir üst kariyer) mühürlendi.` };
+}
+
 async function adimEslestirme(db: Db): Promise<AdimSonuc> {
   const kisiler = await simKatilimcilar(db);
   const kisilerEsles: EslesmeKisi[] = kisiler.map((k) => ({ id: k.id, team: k.team }));
@@ -432,6 +481,7 @@ async function adimCalistir(db: Db, adimId: string, ilerleme: number): Promise<A
   switch (adimId) {
     case "karakterler": return adimKarakterler(db);
     case "pusula": return adimPusula(db);
+    case "hedef": return adimHedef(db);
     case "eslestirme": return adimEslestirme(db);
     case "kamp_ac": return adimKampAc(db);
     case "dalga1": return adimDalga(db, 1);
@@ -481,6 +531,7 @@ export async function sifirla(db: Db): Promise<{ mesaj: string }> {
     await db.from("assignments").delete().in("target_id", ids);
     await db.from("missions").delete().in("participant_id", ids);
     await db.from("pusula").delete().in("participant_id", ids);
+    await db.from("hedef").delete().in("participant_id", ids);
     await db.from("ayna_esi").delete().in("a_id", ids);
     await db.from("ayna_esi").delete().in("b_id", ids);
     await db.from("participants").delete().eq("simulasyon", true);
