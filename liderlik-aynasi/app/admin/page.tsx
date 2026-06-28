@@ -47,7 +47,7 @@ export default async function AdminPanel() {
     { count: kayanSayi },
     { data: funnelAyarlar },
   ] = await Promise.all([
-    db.from("waves").select("id, name, is_open, opened_at").order("id"),
+    db.from("waves").select("id, name, is_open, opened_at, closed_at").order("id"),
     aktifOzellikler(db),
     raporlarGorunurMu(db),
     db
@@ -201,6 +201,10 @@ export default async function AdminPanel() {
     acikDalgaId: acikDalga?.id ?? null,
     ozTamam: ilerleme?.ozTamamlar.size ?? 0,
     ozToplam: ilerleme?.katilimcilar.length ?? katilimciSayisi ?? 0,
+    degerlendirmeKapandi: (() => {
+      const kd = dalgalar.find((d) => d.id === 1);
+      return !!kd && !kd.is_open && !!kd.closed_at;
+    })(),
     raporlarAcik,
     sozAcik,
     pusulaAcik: true,

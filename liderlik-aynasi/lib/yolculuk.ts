@@ -13,7 +13,7 @@ export type YolcuOlay = {
   vurgu?: boolean; // kilometre taşı (büyük an)
 };
 
-const DALGA_AD: Record<number, string> = { 1: "Dalga 1", 2: "Dalga 2", 3: "Dalga 3" };
+const DALGA_AD: Record<number, string> = { 1: "Kamp Değerlendirmesi", 4: "90 Gün Sonra" };
 
 export async function yolculukOlaylari(db: Db, pid: string): Promise<YolcuOlay[]> {
   const [

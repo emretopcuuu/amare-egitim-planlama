@@ -6,12 +6,11 @@ import { createPortal } from "react-dom";
 // UX #2 — Terimler sözlüğü. Paneldeki içeriden kelimelerin sade Türkçe karşılığı.
 // Dışarıdan gelen yönetici "Dalga ne demek?" diye takılmasın.
 const TERIMLER: { terim: string; aciklama: string }[] = [
-  { terim: "Dalga", aciklama: "Değerlendirme turu. Katılımcıların birbirini puanladığı dönem (Dalga 1, 2, 3)." },
+  { terim: "Değerlendirme", aciklama: "Katılımcıların birbirini 10 liderlik özelliğiyle puanladığı pencere. İkisi var: Kamp Değerlendirmesi (Gün 3 sabahı) ve 90 Gün Sonra." },
   { terim: "Mühür", aciklama: "Kamp kilidi. Açılınca katılımcıların Ayna Raporu görünür olur." },
   { terim: "Funnel / Aşamalar", aciklama: "Kampın 5 aşaması: Hazırlık → Katılım → Kamp Canlı → Final → Sonrası." },
   { terim: "Pusula", aciklama: "Katılımcının kamp öncesi doldurduğu 'neden/iç engel' çalışması." },
   { terim: "Triyaj", aciklama: "Risk listesi. Sessizleşen / geride kalan katılımcıların öne çıkarıldığı liste." },
-  { terim: "Kiosk", aciklama: "Ortak tablet modu. Girişte paylaşılan bir cihazdan sırayla işlem." },
   { terim: "AYNA Direktörü", aciklama: "Kampı yöneten yapay zekânın kontrol ekranı (sahne, duyuru, akış)." },
   { terim: "Komutan", aciklama: "Canlı analiz ekranı: ekip radarı, momentum, istatistikler." },
   { terim: "Elmas / Kıvılcım", aciklama: "Katılımcıların görevlerden kazandığı puan ve unvan sistemi." },

@@ -31,8 +31,8 @@ export default async function PuanlaPage({
   const ozellikler = await aktifOzellikler(db);
   const kendisi = hedefId === session.sub;
 
-  // Hangi dalgaya yazılıyor: dalga açıksa o; kapalıysa kamp öncesi (FAZ 0)
-  // yalnız öz-puan Dalga 1'e (İlk İzlenim). Başkasını puanlama kampta açılır.
+  // Hangi değerlendirmeye yazılıyor: açıksa o; kapalıysa kamp öncesi (FAZ 0)
+  // yalnız öz-puan Kamp Değerlendirmesine (id=1). Başkasını puanlama kampta açılır.
   let dalgaId: number;
   let dalgaAdi: string;
   if (dalga) {

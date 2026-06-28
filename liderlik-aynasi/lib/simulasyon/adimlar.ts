@@ -67,14 +67,6 @@ export const SIM_ADIMLAR: SimAdim[] = [
     faz: "Hazırlık",
   },
   {
-    id: "dalga1",
-    baslik: "Dalga 1 + İlk İzlenim",
-    aciklama:
-      "Dalga 1 açılır. Her karakter önce kendini, sonra atandığı kişileri 10 özellik üzerinden puanlar (arketipe göre: cömert / sert / tutarlı / dağınık).",
-    ikon: "🌊",
-    faz: "Gün 1",
-  },
-  {
     id: "gorev1",
     baslik: "AYNA görev üretir — Gün 1",
     aciklama:
@@ -91,14 +83,6 @@ export const SIM_ADIMLAR: SimAdim[] = [
     ikon: "✍️",
     faz: "Gün 1",
     ai: true,
-  },
-  {
-    id: "dalga2",
-    baslik: "Dalga 2 + Gözlem",
-    aciklama:
-      "Dalga 1 kapanır, Dalga 2 açılır. Karakterler ikinci kez puanlar; gözlem derinleştikçe puanlar ilk izlenimden ayrışır.",
-    ikon: "🌊",
-    faz: "Gün 2",
   },
   {
     id: "gorev2",
@@ -126,10 +110,10 @@ export const SIM_ADIMLAR: SimAdim[] = [
     faz: "Gün 2",
   },
   {
-    id: "dalga3",
-    baslik: "Dalga 3 + Gerçek Algı",
+    id: "dalga1",
+    baslik: "Kamp Değerlendirmesi",
     aciklama:
-      "Son dalga açılır. Üç günün gözlemi olgunlaşır; final puanları girilir.",
+      "Kampın tek liderlik puanlaması açılır (Gün 3 sabahı). Her karakter önce kendini, sonra atandığı kişileri 10 özellik üzerinden puanlar (arketipe göre: cömert / sert / tutarlı / dağınık).",
     ikon: "🌊",
     faz: "Gün 3",
   },
