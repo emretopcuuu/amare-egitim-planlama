@@ -13,6 +13,7 @@ import {
   fazBul,
   zorlukSec,
   turSec,
+  pikSaatBul,
   GOREV_TURLERI,
   ZORLUK_YONERGESI,
   type GorevTuru,
@@ -400,27 +401,11 @@ export async function gorevUret(
   }
 
   // #3b PİK YANIT PENCERESİ — kişinin en çok yanıt verdiği saat dilimi (Istanbul)
-  let pikYanitSaati: number | null = null;
-  const yanitlananlar = onceki.filter(
-    (o) => o.status === "scored" && o.responded_at
+  const pikYanitSaati = pikSaatBul(
+    onceki
+      .filter((o) => o.status === "scored" && o.responded_at)
+      .map((o) => (new Date(o.responded_at as string).getUTCHours() + 3) % 24)
   );
-  if (yanitlananlar.length >= 4) {
-    const saatSayaci: Record<number, number> = {};
-    for (const o of yanitlananlar) {
-      const utcSaat = new Date(o.responded_at as string).getUTCHours();
-      const trSaat = (utcSaat + 3) % 24; // Istanbul ≈ UTC+3
-      saatSayaci[trSaat] = (saatSayaci[trSaat] ?? 0) + 1;
-    }
-    let maxSaat = -1,
-      maxCount = 0;
-    for (const [s, c] of Object.entries(saatSayaci)) {
-      if (c > maxCount) {
-        maxCount = c;
-        maxSaat = Number(s);
-      }
-    }
-    if (maxSaat >= 0 && maxCount >= 2) pikYanitSaati = maxSaat;
-  }
 
   // #2 YANIT TEMALARı — son 3 puanlı görevden çıkarılan tema etiketleri
   const oncekiYanitTemalari = onceki

@@ -16,6 +16,8 @@ import {
   senkronAnahtari,
   senkronYedekSec,
   yolculukGunuHesapla,
+  pikSaatBul,
+  saatFarki,
   type SistemModu,
 } from "@/lib/davranis";
 import { momentumHesaplaVeYaz } from "@/lib/momentum";
@@ -200,13 +202,34 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
             )
           : 1));
 
-  const [{ data: kisiler }, { data: sonGorevler }] = await Promise.all([
-    db.from("participants").select("id, full_name, team, kariyer_seviyesi, kariyer_durumu").eq("role", "participant"),
-    db
-      .from("missions")
-      .select("participant_id, status, issued_at, kind")
-      .gte("issued_at", new Date(simdi.getTime() - 26 * 3_600_000).toISOString()),
-  ]);
+  const [{ data: kisiler }, { data: sonGorevler }, { data: yanitGecmisi }] =
+    await Promise.all([
+      db.from("participants").select("id, full_name, team, kariyer_seviyesi, kariyer_durumu").eq("role", "participant"),
+      db
+        .from("missions")
+        .select("participant_id, status, issued_at, kind")
+        .gte("issued_at", new Date(simdi.getTime() - 26 * 3_600_000).toISOString()),
+      // #2 Pik yanıt saati için son 3 günlük yanıt geçmişi (responded_at).
+      db
+        .from("missions")
+        .select("participant_id, responded_at")
+        .not("responded_at", "is", null)
+        .gte("responded_at", new Date(simdi.getTime() - 3 * 86_400_000).toISOString()),
+    ]);
+
+  // #2 Kişi başına pik yanıt saati (Istanbul). Yeterli/net veri yoksa null.
+  const pikSaatleri = new Map<string, number | null>();
+  {
+    const saatHarita = new Map<string, number[]>();
+    for (const y of yanitGecmisi ?? []) {
+      if (!y.responded_at) continue;
+      const trSaat = (new Date(y.responded_at).getUTCHours() + 3) % 24;
+      const arr = saatHarita.get(y.participant_id) ?? [];
+      arr.push(trSaat);
+      saatHarita.set(y.participant_id, arr);
+    }
+    for (const [pid, saatler] of saatHarita) pikSaatleri.set(pid, pikSaatBul(saatler));
+  }
 
   type Durum = { bekleyen: boolean; bugunSayisi: number; sonVerilis: number };
   const durumlar = new Map<string, Durum>();
@@ -243,6 +266,11 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       // veya grup) duygu sıcakken yakala — min aralık yarıya iner.
       const firsat =
         !!bitenEtkinlik || (grupNo ? grupBitenBlok(grupNo, gunDk) !== null : false);
+      // #2 Pik saat: kişinin aktif olduğu saat biliniyorsa, o pencereden (±2 saat)
+      // uzaktayken görevi geciktir — ölü saatte rahatsız etme. Fırsat penceresi
+      // (sıcak an) bunu ezer; yolculuk modu kendi sabah penceresini kullanır.
+      const pik = mod === "kamp" ? pikSaatleri.get(k.id) : null;
+      if (pik != null && !firsat && saatFarki(saat, pik) > 2) return false;
       const aralikDk = gorevAraligiDk(tempo, k.id, d.bugunSayisi, firsat);
       return simdi.getTime() - d.sonVerilis >= aralikDk * 60_000;
     })
