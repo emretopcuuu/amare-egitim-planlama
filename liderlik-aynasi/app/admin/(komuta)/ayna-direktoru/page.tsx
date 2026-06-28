@@ -2,9 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
-import { aynaAniAdaylari } from "@/lib/aynaAniTetik";
 import AynaDirektorKontrol from "./AynaDirektorKontrol";
-import AynaAniTetik from "./AynaAniTetik";
 import SonGorevler from "./SonGorevler";
 import Ipucu from "../../Ipucu";
 import Katlanir from "../../Katlanir";
@@ -43,9 +41,6 @@ export default async function AynaDirektorPage() {
   ]);
   if (error) throw error;
 
-  // #3 Ayna Anı manuel tetik: kamp içi "gördün mü?" anına hazır adaylar.
-  const aynaAniAdaylar = await aynaAniAdaylari(db);
-
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
 
   return (
@@ -64,13 +59,6 @@ export default async function AynaDirektorPage() {
           aboneSayisi={aboneSayisi ?? 0}
           katilimciSayisi={katilimciSayisi ?? 0}
         />
-      </section>
-
-      {/* #3 Ayna Anı — kamp içi "gördün mü?" anını hazır adaylar için üret */}
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-        <h2 className="text-lg font-semibold text-gold-light">{t.aynaAniBaslik}</h2>
-        <p className="mt-1 mb-4 text-sm text-slate-400">{t.aynaAniAciklama}</p>
-        <AynaAniTetik adaylar={aynaAniAdaylar} />
       </section>
 
       <Katlanir baslik={t.akisBaslik} ikon="📜" yardim={tr.admin.yardim.aynaAkis}>
