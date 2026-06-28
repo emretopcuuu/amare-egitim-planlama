@@ -101,25 +101,26 @@ export default function AynaDirektorKontrol({
         </button>
       </div>
 
-      {/* Test + final */}
-      <div className="flex flex-wrap gap-3 border-t border-royal/20 pt-4">
+      {/* Deneme turu + kapanış */}
+      <div className="border-t border-royal/20 pt-4">
         <button
           onClick={tikCalistir}
           disabled={bekliyor !== null}
           className="rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-medium text-slate-200 transition-colors hover:bg-midnight-soft disabled:opacity-50"
         >
-          {bekliyor === "tik" ? <Bekle /> : `⚙️ ${t.tikCalistir}`}
+          {bekliyor === "tik" ? <Bekle /> : `▶ ${t.tikCalistir}`}
         </button>
+        <p className="mt-2 max-w-prose text-xs text-slate-500">{t.tikAciklama}</p>
         <button
           onClick={sozGonder}
           disabled={bekliyor !== null}
-          className="rounded-lg border border-gold/50 px-4 py-2 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-50"
+          className="mt-4 rounded-lg border border-gold/50 px-4 py-2 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-50"
         >
           {bekliyor === "soz" ? <Bekle /> : t.sozGonder}
         </button>
       </div>
 
-      <p className="text-xs text-slate-500">{t.kurulumUyari}</p>
+      <p className="max-w-prose text-xs text-slate-500">{t.kurulumUyari}</p>
 
       {mesaj && <p className="text-sm font-medium text-emerald-400">{mesaj}</p>}
       {hata && (
