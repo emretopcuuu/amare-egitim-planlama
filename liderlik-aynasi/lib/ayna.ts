@@ -9,6 +9,7 @@ import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
 import { kariyerHalKisidenTuret, personaBlogu, personaYolculukOdak, KARIYER_RANK, KARIYER_ETIKET } from "@/lib/persona";
 import { aiHataYakala } from "@/lib/uyari";
+import { vinyetSec, type LiderKas } from "@/lib/liderlikVinyetleri";
 import {
   fazBul,
   zorlukSec,
@@ -588,8 +589,25 @@ export async function gorevUret(
     .filter(Boolean)
     .join("\n\n");
 
+  // GÖREV DNA'SI — "wow" çekirdeği: her görev bir lider KASINI çalıştırır ve
+  // o kasa ait küratörlü bir tarihî/arketip hikâyeyle açılır. Kas, kişi+gün
+  // bazında DÖNER → aynı tema üst üste gelmez (eski sorun: hep "dur ve izle").
+  const tamamSayisi = tamamCountSonuc.count ?? 0;
+  const KAS_DONGU: LiderKas[] = [
+    "cesaret", "devretme", "zor_konusma", "baglanti", "vizyon",
+    "yardim_iste", "dinleme", "sorumluluk", "ornek_olma", "dayaniklilik",
+  ];
+  const hedefKas =
+    KAS_DONGU[(((tamamSayisi + gun) % KAS_DONGU.length) + KAS_DONGU.length) % KAS_DONGU.length];
+  const secilenVinyet = vinyetSec(hedefKas, tamamSayisi);
+
   const baglam = {
     ad: katilimci.full_name.split(" ")[0],
+    // Bu görevin çalıştıracağı lider kası + açılış hikâyesi (küratörlü, doğru).
+    hedefLiderKasi: hedefKas,
+    acilisHikayesi: secilenVinyet
+      ? { baslik: secilenVinyet.baslik, hikaye: secilenVinyet.metin }
+      : null,
     takim: katilimci.team,
     pusula: pusula ?? null,
     hedef: hedef ?? null,
@@ -678,6 +696,15 @@ export async function gorevUret(
           text: `Görevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı.
 
 KARİYER SEVİYESİ: Bu kişi lider veya üzeri kariyer basamağında — görev yeni başlayan düzeyi değil, LİDER düzeyi olmalı. Katlama, lider yetiştirme, devretme, ekip önünde duruş, zor kararlar, üst seviye etki gibi konuları hedefle.
+
+GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lider kasını çalıştırır ve bağlamdaki "acilisHikayesi" ile AÇILIR. Yapı (toplam ~5 cümle, UZUN OLMASIN):
+1) HİKÂYE — gövdenin başında "acilisHikayesi"ni KISA (2-3 cümle) ve SADIK anlat. Uydurma, yalnız verileni kullan. Başlığı bu hikâyeyle ilişkilendir (birebir kopyalama).
+2) AYNA — kişinin pusula/kör nokta/hedefiyle AÇIK bağ kur: "sen … demiştin / … istiyorsun". Hikâyedeki eşik, tam da onun eşiği olsun.
+3) MEYDAN OKUMA — o anki kamp anına demirli, GERÇEKTEN zorlayan ama yapılabilir TEK bir lider hamlesi (kasla uyumlu: devret / ilk adımı at / zor konuş / yardım iste / söz ver / sorumluluğu üstlen…). Yumuşak "birini izle/gözlemle" DEĞİL.
+4) DÖNÜŞ — bana ne getireceğini söyle ve ÇEŞİTLENDİR: her görev "bana yaz" olmasın; kimi yap-ve-anlat, kimi grupla etkileş, kimi tek cümle/tek kelime.
+"ozellik_id"yi bu kasla uyumlu seç (cesaret→Cesaret, devretme→Sorumluluk/Takım Ruhu, zor_konusma→Dürüstlük, vizyon→Vizyonerlik, dinleme→İletişim, baglanti→Takım Ruhu/Pozitif Enerji vb.).
+
+ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz.
 ${personaMetni ? `\n${personaMetni}\n` : ""}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
 
