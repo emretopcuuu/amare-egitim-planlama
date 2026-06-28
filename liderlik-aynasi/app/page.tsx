@@ -417,26 +417,31 @@ export default async function AnaSayfa({
           &ldquo;{kisiSlogan}&rdquo;
         </p>
       )}
-      {/* S1: YolculukSeridi kaldırıldı; gün etiketi haritanın içine taşındı */}
-      <div className="mt-2">
-        <YolculukHaritasi
-          siradaEtiket={tr.yolculuk.sirada}
-          gunEtiketi={
-            (KAMP_GUNLERI as readonly string[]).includes(bugunIst)
-              ? `Gün ${(KAMP_GUNLERI as readonly string[]).indexOf(bugunIst) + 1}`
-              : undefined
-          }
-          fazlar={[
-            { ad: tr.yolculuk.faz.rituel, tamam: !!sesVarRow },
-            { ad: tr.yolculuk.faz.oyun, tamam: !!kisi?.team },
-            { ad: tr.yolculuk.faz.pusula, tamam: !!pusulaErken?.tamamlandi_at },
-            { ad: tr.yolculuk.faz.hedef, tamam: !!hedefErken?.tamamlandi_at },
-            { ad: tr.yolculuk.faz.farkindalik, tamam: !!ofDurum?.tamamlandi_at },
-            { ad: tr.yolculuk.faz.kamp, tamam: !!kisi?.camp_unlocked_at },
-            { ad: tr.yolculuk.faz.rapor, tamam: raporlarAcik },
-          ]}
-        />
-      </div>
+      {/* S1: YolculukSeridi kaldırıldı; gün etiketi haritanın içine taşındı.
+          UX: Faz merdiveni HAZIRLIK göstergesidir — kamp açıldıktan sonra
+          (kişi içerideyken) görev + programın önüne geçen ikincil gürültüdür.
+          Bu yüzden YALNIZ kamp öncesinde gösterilir; kamp boyunca gizlenir. */}
+      {!kisi?.camp_unlocked_at && (
+        <div className="mt-2">
+          <YolculukHaritasi
+            siradaEtiket={tr.yolculuk.sirada}
+            gunEtiketi={
+              (KAMP_GUNLERI as readonly string[]).includes(bugunIst)
+                ? `Gün ${(KAMP_GUNLERI as readonly string[]).indexOf(bugunIst) + 1}`
+                : undefined
+            }
+            fazlar={[
+              { ad: tr.yolculuk.faz.rituel, tamam: !!sesVarRow },
+              { ad: tr.yolculuk.faz.oyun, tamam: !!kisi?.team },
+              { ad: tr.yolculuk.faz.pusula, tamam: !!pusulaErken?.tamamlandi_at },
+              { ad: tr.yolculuk.faz.hedef, tamam: !!hedefErken?.tamamlandi_at },
+              { ad: tr.yolculuk.faz.farkindalik, tamam: !!ofDurum?.tamamlandi_at },
+              { ad: tr.yolculuk.faz.kamp, tamam: !!kisi?.camp_unlocked_at },
+              { ad: tr.yolculuk.faz.rapor, tamam: raporlarAcik },
+            ]}
+          />
+        </div>
+      )}
       {/* S8: KampHud + GorusmeSimdi tek "şu an" bloğu */}
       <div className="space-y-1.5">
         <KampHud takim={takim} />
@@ -597,27 +602,27 @@ export default async function AnaSayfa({
     );
   }
 
-  // 7) BEKLEME — sıradaki an için sakin durum. Çıkmaz olmasın: yapacak iş
-  // yokken bile sıcak bir sonraki adım (birine takdir bırakmak) sun.
+  // 7) BEKLEME — görev/dalga yokken BOŞLUK GÖSTERME: program birincil olur.
+  // "Şimdi ne yapacağım?" sorusu hep programla yanıtlanır; sakin durum + sıcak
+  // adım ikincil, küçük bir kartta akar (görev + program her zaman önde).
   return (
-    <Sayfa ust={ust} program={<GunProgramKarti takim={takim} />}>
-      <div className="kart-cam relative overflow-hidden rounded-3xl p-10 text-center">
-        <p className="text-5xl">👁</p>
-        <h2 className="prizma-serif ay-metin mt-4 text-2xl font-semibold">
-          {t.bekleBaslik}
-        </h2>
-        <p className="mt-3 text-base leading-relaxed text-slate-300">{t.bekleMetin}</p>
+    <Sayfa ust={ust}>
+      {/* Program = omurga: boş anda ana kart odur (Şu an / Sırada canlı) */}
+      <GunProgramKarti takim={takim} />
+
+      {/* İkincil sakin durum — küçük, programın altında akar */}
+      <div className="kart-cam relative overflow-hidden rounded-2xl p-5 text-center">
+        <h2 className="prizma-serif ay-metin text-lg font-semibold">{t.bekleBaslik}</h2>
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-400">{t.bekleMetin}</p>
         {/* B5: bugün ne oldu — sakin anda hub'ı canlı tutar */}
         {bugunOzetVar && (
-          <p className="mt-3 rounded-xl bg-white/[0.03] px-4 py-2.5 text-sm text-slate-300">
+          <p className="mt-2.5 rounded-xl bg-white/[0.03] px-4 py-2 text-sm text-slate-300">
             {t.bugunNeOldu(bugunGorevSayi ?? 0, bugunTakdir ?? 0)}
           </p>
         )}
-        {/* B7: canlı beklenti — bir sonraki an belirsiz kalmasın */}
-        <p className="mt-3 text-sm text-slate-400">{t.bekleBeklenti}</p>
         {/* #4 Sıradaki dalgaya geri sayım: yalnızca zamanlama ayarlıysa */}
         {sonrakiDalgaZamani && <GeriSayim hedefZaman={sonrakiDalgaZamani} />}
-        <div className="mt-6 space-y-3">
+        <div className="mt-4 space-y-3">
           {/* S10: dalga kapalıyken Koç zaten alt çubukta — burada tek öneri yeterli */}
           <SicakAdim href="/kocu" etiket={t.bekleKocu} vurgu />
           {(bugunTakdir ?? 0) > 0 && (

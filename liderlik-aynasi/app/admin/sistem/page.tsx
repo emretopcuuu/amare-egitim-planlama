@@ -13,6 +13,7 @@ import KodBul from "../KodBul";
 import SilmeTalepleri from "../SilmeTalepleri";
 import Ipucu from "../Ipucu";
 import OtoYenile from "../OtoYenile";
+import TerimlerSozluk from "../TerimlerSozluk";
 import SunumOynatici from "../sunum/SunumOynatici";
 import TestPaneli from "../test/TestPaneli";
 
@@ -47,7 +48,10 @@ export default async function SistemPage() {
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-4 pb-28 sm:p-6 sm:pb-6">
       <div className="flex items-center justify-between gap-2">
         <h1 className="text-2xl font-bold text-gold">⚙ Sistem & Bakım</h1>
-        <OtoYenile />
+        <div className="flex items-center gap-2">
+          <TerimlerSozluk />
+          <OtoYenile />
+        </div>
       </div>
       <p className="text-sm text-slate-400">
         Aşamadan bağımsız, her zaman lazım olan anahtarlar ve bakım araçları.

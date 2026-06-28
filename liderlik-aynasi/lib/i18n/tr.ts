@@ -76,6 +76,7 @@ export const tr = {
     degerlendir: "Değerlendir",
     koc: "Ayna Koçu",
     gorevler: "Görevler",
+    program: "Program",
     duvar: "Duvar",
     kivilcimSonraki: (kalan: number, ad: string) => `${kalan} ⚡ → ${ad}`,
     kivilcimZirve: "🏆 Zirve",
@@ -1487,6 +1488,7 @@ export const tr = {
       sZamanlama: "Otomatik Zamanlama",
       sKod: "Kod Bul",
       sKvkk: "KVKK Silme Talepleri",
+      sSimulasyon: "Kamp Prova Simülatörü",
     },
     // Funnel navigasyonu: türe göre değil, kampın YOLCULUĞUNA göre 4 aşama + Panel.
     // Operatör soldan sağa = zaman akışı; aradığı aracı süreçteki yerinden bulur.
@@ -3352,6 +3354,19 @@ export const tr = {
     aynaBaslik: "🤖 AYNA'nın Üç Günü",
     aynaOzeti: (gorev: number, kivilcim: number, unvan: string) =>
       `Üç gün boyunca ${gorev} görevini izledim, ${kivilcim} Kıvılcım topladın. Unvanın: ${unvan}. Görevlerinde gördüklerim yukarıdaki yeşil çubuklarda — insanların gözüyle örtüşen yerlere dikkat et.`,
+    // AYNA'nın Tek Cümlesi — kapanışın duygusal doruğu
+    tekCumleBaslik: "AYNA'nın sana tek cümlesi",
+    tekCumleAciklama: "Üç gün seni izledim. Geriye tek bir cümle kalıyor.",
+    tekCumleBekle: "AYNA son cümlesini yazıyor…",
+    tekCumleHata: "AYNA'nın cümlesi şu an hazırlanamadı.",
+    // "Senin İçin" köprüsü — nedeni canlı tutan, paylaşılabilir keepsake
+    seninIcinBaslik: "Senin için",
+    seninIcinAciklama: "Bu kampta neden burada olduğunu unutma. İstersen onlara da göster.",
+    seninIcinBekle: "AYNA senin nedenini hatırlıyor…",
+    seninIcinHata: "Bu metin şu an hazırlanamadı.",
+    seninIcinPaylas: "Sevdiğine gönder",
+    seninIcinKopyala: "Kopyala",
+    seninIcinKopyalandi: "Kopyalandı ✓",
     kisiSayisi: (n: number) => `${n} kişi puanladı`,
     veriYok: "Henüz yeterli dış puan yok.",
     hikayeBaslik: "📖 Dalga Yolculuğun",

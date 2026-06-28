@@ -11,13 +11,20 @@ export async function GET() {
     return Response.json({ toplam: 0 }, { status: 401 });
   }
   const db = supabaseAdmin();
-  const [{ data }, dalga] = await Promise.all([
+  const [{ data }, dalga, { count: gorevBekleyen }] = await Promise.all([
     db
       .from("missions")
       .select("spark_points")
       .eq("participant_id", session.sub)
       .eq("status", "scored"),
     acikDalga(db),
+    // Bekleyen görev sayısı — alt çubukta "Görevler" sekmesi nokta rozetiyle
+    // görevi her ekranda öne çeksin (görev her zaman birincil).
+    db
+      .from("missions")
+      .select("id", { count: "exact", head: true })
+      .eq("participant_id", session.sub)
+      .eq("status", "pending"),
   ]);
   const toplam = (data ?? []).reduce((t, g) => t + (g.spark_points ?? 0), 0);
   const u = unvanBul(toplam);
@@ -28,5 +35,6 @@ export async function GET() {
     kalan: u.kalan,
     yuzde: u.sonraki ? Math.min(100, Math.round((toplam / u.sonraki.esik) * 100)) : 100,
     dalgaAcik: !!dalga,
+    gorevBekleyen: gorevBekleyen ?? 0,
   });
 }

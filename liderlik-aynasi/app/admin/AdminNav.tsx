@@ -6,11 +6,17 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { tr } from "@/lib/i18n/tr";
 import KomutPaleti from "./KomutPaleti";
+import KlavyeKisayollari from "./KlavyeKisayollari";
 import TemaDugmesi from "@/components/TemaDugmesi";
 
 const n = tr.admin.nav;
 const g = tr.admin.navGrup;
 const k = tr.admin.ux.kokpit;
+
+function aktifMi(href: string, pathname: string): boolean {
+  const base = href.split("#")[0];
+  return pathname === href || (href.includes("#") && pathname === base);
+}
 
 // FUNNEL NAVİGASYONU: Panel + kampın YOLCULUĞUNA göre 4 grup (açılır menü).
 // Türe göre değil zamana göre: Hazırlık → Kamp Canlı → Final → Sistem.
@@ -68,6 +74,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
       { href: "/admin/sistem#yedek", etiket: n.sYedek },
       { href: "/admin/sistem#yeni-kamp", etiket: n.sYeniKamp },
       { href: "/admin/sistem#kvkk", etiket: n.sKvkk },
+      { href: "/admin/simulasyon", etiket: n.sSimulasyon },
     ],
   },
 ];
@@ -75,6 +82,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
 export default function AdminNav({
   ad,
   dalgaAdi,
+  dalgaSure,
   aynaUyanik,
   tamYetki = true,
   provaAcik = false,
@@ -84,6 +92,7 @@ export default function AdminNav({
 }: {
   ad: string;
   dalgaAdi: string | null;
+  dalgaSure?: string | null;
   aynaUyanik: boolean;
   tamYetki?: boolean;
   provaAcik?: boolean;
@@ -140,6 +149,7 @@ export default function AdminNav({
   const panelAktif = pathname === PANEL.href;
 
   return (
+    <>
     <nav className="sticky top-0 z-30 border-b border-royal/30 bg-midnight/90 backdrop-blur print:hidden">
       {/* Açık menü gövdeye portallanır (overflow-x kabının altında kırpılmasın).
           acikGrup yalnız tıklamayla (hidrasyon sonrası) dolar → SSR'da portal yok. */}
@@ -164,7 +174,7 @@ export default function AdminNav({
                   href={l.href}
                   onClick={grupKapat}
                   className={`block px-4 py-2.5 text-sm transition-colors ${
-                    pathname === l.href
+                    aktifMi(l.href, pathname)
                       ? "bg-royal/40 text-gold-light"
                       : "text-slate-300 hover:bg-royal/20"
                   }`}
@@ -201,7 +211,7 @@ export default function AdminNav({
         {tamYetki &&
           GRUPLAR.map((grup) => {
             const acik = acikGrup === grup.ad;
-            const grupAktif = grup.linkler.some((l) => pathname === l.href);
+            const grupAktif = grup.linkler.some((l) => aktifMi(l.href, pathname));
             return (
               <button
                 key={grup.ad}
@@ -243,6 +253,7 @@ export default function AdminNav({
           }`}
         >
           🌊 {dalgaAdi ?? "Dalga kapalı"}
+          {dalgaSure && <span className="ml-1 opacity-70">· {dalgaSure}</span>}
         </span>
         <span
           className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
@@ -282,5 +293,7 @@ export default function AdminNav({
         </button>
       </div>
     </nav>
+    <KlavyeKisayollari />
+    </>
   );
 }

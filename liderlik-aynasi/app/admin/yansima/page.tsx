@@ -2,7 +2,6 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { sesYapilandirildiMi } from "@/lib/eleven";
-import KomutaSekme from "../KomutaSekme";
 import YansimaYukleyici from "./YansimaYukleyici";
 import SesKlonPanel from "./SesKlonPanel";
 import SesTemizlikPanel from "./SesTemizlikPanel";
@@ -60,7 +59,6 @@ export default async function YansimaYonetimPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
-      <KomutaSekme />
       <div>
         <h1 className="text-2xl font-bold text-gold">Yansıma Videoları</h1>
         <p className="mt-1 text-sm text-slate-400">

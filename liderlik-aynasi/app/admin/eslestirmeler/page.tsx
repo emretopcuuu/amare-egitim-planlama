@@ -5,6 +5,7 @@ import { tumKayitlar } from "@/lib/tumKayitlar";
 import { tr } from "@/lib/i18n/tr";
 import Katlanir from "../Katlanir";
 import Ipucu from "../Ipucu";
+import OtoYenile from "../OtoYenile";
 import EslestirmeFormu from "../eslestirme/EslestirmeFormu";
 import AtamaDuzenle from "../eslestirme/AtamaDuzenle";
 import EslestirmeMetrik from "../eslestirme/EslestirmeMetrik";
@@ -84,13 +85,35 @@ export default async function EslestirmelerPage() {
 
   const aynaEsiAcik = aynaAyar?.value === "true";
 
+  // Kompakt istatistik şeridi
+  const gozlemciSayisi = new Set(atamalar.map((a) => a.observer.id)).size;
+  const aynaEsiTamam = (aynaEsiSatirlar ?? []).filter((r) => r.a_tamam && r.b_tamam).length;
+
   const t = tr.admin.eslestirme;
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
-      <div className="flex items-center gap-2">
-        <h1 className="text-2xl font-bold text-gold">🔗 Eşleştirmeler</h1>
-        <Ipucu {...tr.admin.yardim.eslestirme} />
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-gold">🔗 Eşleştirmeler</h1>
+          <Ipucu {...tr.admin.yardim.eslestirme} />
+        </div>
+        <OtoYenile />
+      </div>
+
+      {/* Kompakt istatistik şeridi */}
+      <div className="flex flex-wrap gap-2 text-xs">
+        <span className="rounded-full bg-midnight-card/60 px-3 py-1.5 text-slate-300 ring-1 ring-royal/20">
+          👁 Gözlemci: {gozlemciSayisi}/{kisiler.length}
+        </span>
+        <span className={`rounded-full px-3 py-1.5 ring-1 ${aynaEsiTamam > 0 ? "bg-emerald-400/10 text-emerald-400 ring-emerald-400/20" : "bg-midnight-card/60 text-slate-400 ring-royal/20"}`}>
+          🤝 Ayna Eşi: {aynaEsiTamam}/{(aynaEsiSatirlar ?? []).length} tamamlandı
+        </span>
+        {gozlemciSayisi === kisiler.length && (
+          <span className="rounded-full bg-gold/10 px-3 py-1.5 text-gold-light ring-1 ring-gold/20">
+            ✓ Tüm eşleştirmeler hazır
+          </span>
+        )}
       </div>
 
       {/* Gözlemci atamaları */}

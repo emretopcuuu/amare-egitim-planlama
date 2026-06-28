@@ -23,9 +23,9 @@ const KARTLAR = [
     metin: "Üstteki şerit kampın neresinde olduğunu gösterir: Hazırlık → Katılım → Canlı → Final. Soldan sağa ilerlersin.",
   },
   {
-    simge: "🎚",
-    baslik: "Karmaşık geldiyse: Basit görünüm",
-    metin: "Üstteki 'Basit / Uzman' anahtarını Basit'te tut — yalnız temel adımları görürsün. Takıldığın kelime için '📖 Terimler'e bak.",
+    simge: "🗂",
+    baslik: "Menüler: Hazırlık · Canlı · Final · Sistem",
+    metin: "Üstteki 4 menü kampın aşamalarına göre bölünmüş. Hangi aşamadaysan o menüde çalış; soldan sağa ilerlersin.",
   },
 ];
 
