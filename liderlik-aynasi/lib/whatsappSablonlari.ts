@@ -51,9 +51,10 @@ export const WA_SABLONLAR: WaSablon[] = [
     kategori: "MARKETING",
     ayarAnahtari: "wa_tpl_giris",
     govde:
-      "Merhaba {{1}}, PD101'e hoş geldin.\n\n" +
+      "Merhaba {{1}}, PD101 — Presidential Diamond Kampına hoş geldin.\n\n" +
       "Kendi gerçek potansiyelini görmeni sağlayacak, ona ulaşmanda sana rehber olacak bir ayna hazırladık. Erişmek için sana özel bir giriş bağlantın hazır — aşağıdaki butona dokunman yeterli.\n\n" +
       "Kampa gelmeden önce aynayla tanışmalısın. Aynaya bakıp kendini görmeye çalış, çünkü orada seni en doğru anlatan yansımayı bulacaksın.\n\n" +
+      "Giriş kodun: {{2}}\n\n" +
       "— One Team AI",
     buton: { baslik: "Hesabıma Gir", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
     serbestMi: false,
