@@ -8,7 +8,7 @@ import Katlanir from "../Katlanir";
 import Ipucu from "../Ipucu";
 import OtoYenile from "../OtoYenile";
 import DalgaKontrol from "../DalgaKontrol";
-import HedefKontrol from "../HedefKontrol";
+
 import BoslukKontrol from "../BoslukKontrol";
 import AynaAniKontrol from "../AynaAniKontrol";
 import MuhurKontrol from "../MuhurKontrol";
@@ -97,7 +97,7 @@ export default async function KontrolPage() {
 
       {/* 1 · Kamp Canlı */}
       <section id="dalga" className="scroll-mt-24">
-        <Katlanir baslik="Kamp Canlı" aciklama="Dalga aç/kapat + hedef akışı" ikon="🎬" yardim={tr.admin.yardim.dalga}>
+        <Katlanir baslik="Kamp Canlı" aciklama="Dalga aç/kapat" ikon="🎬" yardim={tr.admin.yardim.dalga}>
           <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
             <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.admin.dalga.baslik}
@@ -112,12 +112,6 @@ export default async function KontrolPage() {
               }))}
               puanlamayan={puanlamayan}
             />
-          </div>
-          <div id="hedef" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              🎯 {tr.admin.hedef.baslik}
-            </h2>
-            <HedefKontrol />
           </div>
         </Katlanir>
       </section>

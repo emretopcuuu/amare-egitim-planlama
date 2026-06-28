@@ -46,9 +46,9 @@ export const WA_SABLONLAR: WaSablon[] = [
     ikon: "🔑",
     etiket: "Giriş daveti (link + şifre)",
     aciklama: "Aynayla tanışma daveti — kişiye özel giriş bağlantısı ve kodu.",
-    friendlyName: "pd101_giris_v3",
+    friendlyName: "pd101_giris_v4",
     dil: "tr",
-    kategori: "UTILITY",
+    kategori: "MARKETING",
     ayarAnahtari: "wa_tpl_giris",
     govde:
       "Merhaba {{1}},\n\n" +
