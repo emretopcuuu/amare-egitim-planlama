@@ -14,6 +14,11 @@ type Props = {
   raporlarAcik: boolean;
   yansimanHazir: boolean;
   ozHedefId: string;
+  // Kamp öncesi adımları (Pusula/Hedef/Ön Farkındalık) tamamlayanlar için
+  // bu sayfalar yetim kalmasın — menüden geri dönülebilsin.
+  pusulaTamam?: boolean;
+  hedefTamam?: boolean;
+  ofTamam?: boolean;
 };
 
 // Üst menü: açılış ekranı tek işe odaklanır; ikincil her şey (kendi puanlarını
@@ -25,6 +30,9 @@ export default function UstMenu({
   raporlarAcik,
   yansimanHazir,
   ozHedefId,
+  pusulaTamam = false,
+  hedefTamam = false,
+  ofTamam = false,
 }: Props) {
   const [acik, setAcik] = useState(false);
 
@@ -42,6 +50,10 @@ export default function UstMenu({
   // EKSTRA: sosyal ve ikincil her şey (küçük, ikişerli ızgara).
   // S4: Anlar/Turnuva/Ortak/Mini360/Plan kaldırıldı — erişilmez veya kenar özellikler.
   const ekstra: { href: string; etiket: string }[] = [
+    // Kamp öncesi adımlar — tamamlandıysa düzenlemek için erişilebilir kalsın.
+    ...(pusulaTamam ? [{ href: "/pusula", etiket: t.menuPusula }] : []),
+    ...(hedefTamam ? [{ href: "/hedef", etiket: t.menuHedef }] : []),
+    ...(ofTamam ? [{ href: "/on-farkindalik", etiket: t.menuFarkindalik }] : []),
     { href: "/ben", etiket: t.menuBen },
     { href: "/gunluk", etiket: t.menuGunluk },
     { href: "/grup", etiket: t.menuGrup },

@@ -413,6 +413,9 @@ export default async function AnaSayfa({
           raporlarAcik={raporlarAcik}
           yansimanHazir={yansimanHazir}
           ozHedefId={session.sub}
+          pusulaTamam={!!pusulaErken?.tamamlandi_at}
+          hedefTamam={!!hedefErken?.tamamlandi_at}
+          ofTamam={!!ofDurum?.tamamlandi_at}
         />
       </header>
       {/* B3: Pusula sloganı — her gün görünür kimlik çapası */}
