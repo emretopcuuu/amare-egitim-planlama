@@ -171,7 +171,7 @@ export default function WhatsAppGonder({
               {([
                 ["genel", t.hedefGenel],
                 ["takim", t.hedefTakim],
-                ["odevYapmayan", t.hedefOdev(odevYapmayanSayisi)],
+                ...(sablonAnahtar !== "giris" ? [["odevYapmayan", t.hedefOdev(odevYapmayanSayisi)]] : []),
                 ["kisiler", t.hedefKisiler],
               ] as [HedefTipi, string][]).map(([tip, etiket]) => (
                 <button
