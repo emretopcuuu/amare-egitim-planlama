@@ -24,6 +24,7 @@ import AynaKarti from "./AynaKarti";
 import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
 import TekCumleBolumu from "./TekCumleBolumu";
+import SeninIcinBolumu from "./SeninIcinBolumu";
 import SesCal from "@/components/SesCal";
 import AynaSesi from "@/components/AynaSesi";
 
@@ -58,7 +59,7 @@ export default async function AynaPage() {
     .select("id", { count: "exact", head: true })
     .eq("rater_id", session.sub);
 
-  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik, hedefC, oyunP, pusC, sozAcikV2, sozKaydi, { data: mevcutCumle }] =
+  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik, hedefC, oyunP, pusC, sozAcikV2, sozKaydi, { data: mevcutCumle }, { data: mevcutSeninIcin }] =
     await Promise.all([
       db
         .from("mirror_letters")
@@ -85,6 +86,11 @@ export default async function AynaPage() {
       db
         .from("ayna_tek_cumle")
         .select("cumle")
+        .eq("participant_id", session.sub)
+        .maybeSingle(),
+      db
+        .from("senin_icin")
+        .select("metin")
         .eq("participant_id", session.sub)
         .maybeSingle(),
     ]);
@@ -693,6 +699,12 @@ export default async function AynaPage() {
           <TekCumleBolumu mevcut={mevcutCumle?.cumle ?? null} />
         </div>
       )}
+
+      {/* "Senin İçin" köprüsü — nedeni canlı tutan, sevdiğine gönderilebilir keepsake.
+          Çekirdek neden yoksa bileşen kendini gizler. */}
+      <div id="r-senin-icin" className="scroll-mt-4">
+        <SeninIcinBolumu mevcut={mevcutSeninIcin?.metin ?? null} />
+      </div>
 
       {/* AYNA'nın görev özeti */}
       {rapor.gorev.tamamlanan > 0 && (
