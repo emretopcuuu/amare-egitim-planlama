@@ -54,6 +54,8 @@ import {
 } from "@/lib/cumartesiProgrami";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
+import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
+import { sablonBul, ilkAd } from "@/lib/whatsappSablonlari";
 import { gunlukSoz } from "@/lib/ozluSozler";
 
 type Db = ReturnType<typeof supabaseAdmin>;
@@ -783,29 +785,71 @@ export async function tikCalistir(
     }
   }
 
-  // 4) Teslim hatırlatması (son 30 dk, bir kez) — sahnedeyken susar
+  // 4) Teslim hatırlatması — bitiş süresine ~15 dk kala, HENÜZ YAPILMAMIŞ
+  // görev(ler) için KİŞİ BAŞINA TEK hatırlatma: push (abone ise) + WhatsApp
+  // (onaylı "odev" şablonu varsa). Birikmiş tüm görevleri tek mesajla kapsar;
+  // görev yapıldıysa (status değişti) listeye girmez, mesaj gitmez. Söz/senkron
+  // gibi "ödev olmayan" türler dışarıda. Sahnedeyken susar.
+  // PROVA (36× hızlandırılmış): gerçek telefonları yakmamak için WhatsApp KAPALI
+  // — push yine gider, deneyim hissedilir.
   const { data: yaklasanlar } = sahneSessiz
     ? { data: [] }
     : await db
         .from("missions")
-        .select("id, participant_id, title")
+        .select("id, participant_id, title, kind")
         .eq("status", "pending")
         .is("reminded_at", null)
         .gt("due_at", simdi.toISOString())
-        .lt("due_at", new Date(simdi.getTime() + 30 * 60_000).toISOString())
-        .limit(10);
+        .lt("due_at", new Date(simdi.getTime() + 15 * 60_000).toISOString())
+        .limit(80);
+
+  // Kişi başına grupla (söz/senkron hariç).
+  const hatirlatHarita = new Map<string, { idler: string[]; ilkBaslik: string }>();
   for (const g of yaklasanlar ?? []) {
-    await katilimciyaBildir(
-      db,
-      g.participant_id,
-      "⏳ AYNA bekliyor…",
-      `"${g.title}" görevin için son 30 dakika. Yanındayım, başarabilirsin.`
-    );
-    await db
-      .from("missions")
-      .update({ reminded_at: simdi.toISOString() })
-      .eq("id", g.id);
-    ozet.hatirlatilan++;
+    if (g.kind === "soz" || g.kind === "senkron") continue;
+    const k = hatirlatHarita.get(g.participant_id) ?? { idler: [], ilkBaslik: g.title };
+    k.idler.push(g.id);
+    hatirlatHarita.set(g.participant_id, k);
+  }
+
+  if (hatirlatHarita.size > 0) {
+    // WhatsApp: yalnız gerçek kampta (prova değil) + yapılandırma + onaylı şablon.
+    let odevSid: string | null = null;
+    if (!provaModu && whatsAppYapilandirildiMi()) {
+      const sablon = sablonBul("odev");
+      odevSid = sablon ? await sablonSidGetir(db, sablon) : null;
+    }
+    const { data: hkisiler } = await db
+      .from("participants")
+      .select("id, full_name, phone, login_code")
+      .in("id", [...hatirlatHarita.keys()]);
+    const hkisiHarita = new Map((hkisiler ?? []).map((k) => [k.id, k]));
+
+    for (const [pid, veri] of hatirlatHarita) {
+      const adet = veri.idler.length;
+      // Push (abone ise) — bir taşla iki kuş
+      await katilimciyaBildir(
+        db,
+        pid,
+        "⏳ AYNA bekliyor…",
+        adet > 1
+          ? `${adet} görevin için son 15 dakika. Yanındayım, başarabilirsin.`
+          : `"${veri.ilkBaslik}" görevin için son 15 dakika. Yanındayım, başarabilirsin.`,
+        "/gorevler"
+      );
+      // WhatsApp (onaylı şablon + geçerli telefon + kod varsa) — link tıklayınca
+      // /giris?kod ile otomatik girer; kuramamış olsa bile tarayıcıdan ulaşır.
+      const kisi = hkisiHarita.get(pid);
+      if (odevSid && kisi?.phone && kisi.full_name && kisi.login_code) {
+        await whatsAppGonder(kisi.phone, odevSid, {
+          "1": ilkAd(kisi.full_name),
+          "2": kisi.login_code,
+        });
+      }
+      // Hepsini hatırlatıldı işaretle — tekrar mesaj gitmesin.
+      await db.from("missions").update({ reminded_at: simdi.toISOString() }).in("id", veri.idler);
+      ozet.hatirlatilan++;
+    }
   }
 
   // 5) Program duyuruları (başlamadan reveal_minutes önce, herkese)
