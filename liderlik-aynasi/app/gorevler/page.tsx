@@ -7,7 +7,27 @@ import { aktifOzellikler } from "@/lib/degerlendirme";
 import { unvanBul, UNVANLAR } from "@/lib/kivilcim";
 import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
+import { kampGunu } from "@/lib/kampProgrami";
 import { tr } from "@/lib/i18n/tr";
+
+// Görevin geldiği kamp günü + saati (prova'da issued_at = sanal saat → doğru
+// kamp günü/saati görünür). Kamp gününe denk gelmezse hafta günü + saat.
+function gelisZamani(iso: string): string {
+  const d = new Date(iso);
+  const tarih = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(d);
+  const saat = new Intl.DateTimeFormat("tr-TR", {
+    timeZone: "Europe/Istanbul",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
+  const gun = kampGunu(tarih);
+  if (gun) return `Gün ${gun} · ${saat}`;
+  const gunAd = new Intl.DateTimeFormat("tr-TR", {
+    timeZone: "Europe/Istanbul",
+    weekday: "long",
+  }).format(d);
+  return `${gunAd} · ${saat}`;
+}
 import GorevYanitFormu from "./GorevYanitFormu";
 import TanikOnay from "./TanikOnay";
 import ZorlastirButonu from "./ZorlastirButonu";
@@ -334,6 +354,10 @@ export default async function GorevlerPage() {
               </span>
               <GorevSayac baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
             </div>
+            {/* Görevin geldiği gün + saat (katılımcı isteği) */}
+            <p className="mt-1.5 text-xs font-medium text-slate-400">
+              📅 {gelisZamani(g.issued_at)} geldi
+            </p>
             {/* UX #3: zorluk sembol (pip) + kas + mikro-sprint */}
             <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
               <span className="inline-flex items-center gap-1" title={ZORLUK_ETIKETI[zorluk]}>

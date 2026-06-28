@@ -340,6 +340,11 @@ export async function tikCalistir(
         neden: gorev.neden,
         micro_sprint: gorev.micro_sprint,
         yay_gorevi: gorev.yayGorevi,
+        // KRİTİK: issued_at motorun kullandığı saate (prova'da SANAL saat) eşit
+        // olmalı. Aksi halde sonGorevler penceresi + bugunSayisi + sonVerilis +
+        // bekleyen kontrolleri kayıyor ve prova'da her tik görev üretip sel oluyor.
+        // Gerçek kampta simdi = gerçek now → değişiklik yok.
+        issued_at: simdi.toISOString(),
         due_at: dueAt.toISOString(),
       })
       .select("id")
