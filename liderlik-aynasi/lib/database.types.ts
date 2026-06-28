@@ -168,6 +168,32 @@ export type Database = {
           },
         ]
       }
+      senin_icin: {
+        Row: {
+          created_at: string
+          metin: string
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          metin: string
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          metin?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "senin_icin_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bosluk_ani: {
         Row: {
           created_at: string
