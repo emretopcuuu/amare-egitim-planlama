@@ -144,6 +144,25 @@ export default function AltNav() {
 
   return (
     <nav className="alt-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-midnight/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md print:hidden">
+      {/* Sticky görev şeridi: bekleyen görev varken her ekranda üstte durur,
+          tek dokunuşla göreve götürür. Görev = her zaman birincil. /gorevler'de
+          gizlenir (zaten oradasın). */}
+      {(kiv?.gorevBekleyen ?? 0) > 0 && !pathname.startsWith("/gorevler") && (
+        <Link
+          href="/gorevler"
+          className="block border-b border-gold/25 bg-gold/[0.1] px-4 py-2 transition-colors hover:bg-gold/15"
+        >
+          <div className="mx-auto flex w-full max-w-md items-center gap-2 text-xs font-semibold text-gold-light">
+            <span aria-hidden>🤖</span>
+            <span>
+              {(kiv?.gorevBekleyen ?? 0) > 1
+                ? `${kiv?.gorevBekleyen} bekleyen görevin var`
+                : "Bekleyen görevin var"}
+            </span>
+            <span className="ml-auto">Aç →</span>
+          </div>
+        </Link>
+      )}
       {/* #2 Kıvılcım ilerleme şeridi — toplam + unvan + sonraki rozete kalan */}
       {kiv && (
         <Link
