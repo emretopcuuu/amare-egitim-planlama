@@ -45,6 +45,7 @@ import {
   cumartesiGrupSiradakiEtkinlik,
   grupAktifBlok,
   grupBitenBlok,
+  grupAzOnceFiziksel,
 } from "@/lib/cumartesiProgrami";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
@@ -267,6 +268,8 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     // #8 sıradaki etkinlik: genel kamp programından, Gün 2'de grup programından
     let kSiradaki =
       mod === "kamp" && kampGunuBugun ? siradakiMadde(kampGunuBugun, gunDk) : null;
+    // #7 fiziksel yorgunluk: genel doğa bloğu veya Gün 2 grup fiziksel oyunu sonrası
+    let kYorgun = bitenEtkinlik?.tur === "doga";
     if (mod === "kamp" && gun === 2) {
       const grupNo = grupNoCozumle(k.team);
       if (grupNo) {
@@ -279,12 +282,13 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         if (cmtBiten) kBiten = cmtBiten;
         const cmtSiradaki = cumartesiGrupSiradakiEtkinlik(grupNo, gunDk);
         if (cmtSiradaki) kSiradaki = cmtSiradaki;
+        if (grupAzOnceFiziksel(grupNo, gunDk)) kYorgun = true;
       }
     }
     // Sıradaki köprüsünü yalnız kişi ŞU AN bir etkinliğin içinde DEĞİLken kur
     // (etkinlikteyse görev zaten ona bağlanıyor; çift bağlam karıştırır).
     const gorev = await gorevUret(
-      db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu, kEtkinlik ? null : kSiradaki
+      db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu, kEtkinlik ? null : kSiradaki, kYorgun
     );
     if (!gorev) continue;
     // #8 micro_sprint: sure_saat 0.5 = 30 dk

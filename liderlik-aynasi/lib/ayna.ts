@@ -271,7 +271,8 @@ export async function gorevUret(
   etkinlik: ProgramMaddesi | null = null,
   bitenEtkinlik: ProgramMaddesi | null = null,
   gorevIpucu: string | null = null,
-  siradakiEtkinlik: ProgramMaddesi | null = null
+  siradakiEtkinlik: ProgramMaddesi | null = null,
+  yorgunMu = false
 ): Promise<UretilenGorev | null> {
   const [
     ozellikler,
@@ -459,6 +460,8 @@ export async function gorevUret(
     kayan,
   });
   if (naziklesir) zorluk = 1;
+  // #7 Fiziksel yorgunluk: az önce yorucu bir etkinlikten çıktıysa görev hafif olsun.
+  if (yorgunMu) zorluk = 1;
   const faz = mod === "yolculuk" ? fazBul(gun) : null;
 
   // Görev Yayı — çekirdek tema öncelik sırası: kör nokta → en büyük açık →
@@ -508,6 +511,16 @@ export async function gorevUret(
   // #8 MİKRO-SPRINT — streak≥3, zorluk=3, %20 olasılık
   const microSprint = streak >= 3 && zorluk === 3 && Math.random() < 0.2;
 
+  // #10 Kamp olayı bağlamı: görevi kampın canlı akışına demirle —
+  // son fiero (10/10 zafer) ve son senkron (kolektif an) son 10 görevden çekilir.
+  const sonZafer = onceki.find((o) => o.ai_score === 10) ?? null;
+  const sonKolektif =
+    onceki.find(
+      (o) =>
+        o.kind === "senkron" &&
+        Date.now() - new Date(o.issued_at).getTime() < 86_400_000
+    ) ?? null;
+
   // --- Tüm yeni yönergeleri oluştur ---
   const yeniYonergeler = [
     // #1 Algoritmik özellik hedefleme
@@ -556,6 +569,17 @@ export async function gorevUret(
       : "",
     bitenEtkinlik
       ? `AN'A KİLİTLİ: Az önce "${bitenEtkinlik.baslik}" bitti — duygusu sıcak. Enerjisine bağla.`
+      : "",
+    // #7 Fiziksel yorgunluk
+    yorgunMu
+      ? "FİZİKSEL YORGUNLUK: Aday az önce yorucu bir fiziksel etkinlikten (ATV / oyun / parkur) çıktı — bedeni yorgun. Görevi KÜÇÜK ve hafif tut; oturarak/dinlenirken yapabileceği zihinsel-hafif bir adım olsun. Meydan okuma değil nazik bir davet."
+      : "",
+    // #10 Kamp olayı bağlamı
+    sonZafer
+      ? `ZAFER MOMENTUMU: Az önce "${sonZafer.title}" görevini 10/10 başardı — bu zaferin enerjisini yeni göreve sessizce taşı, onu kanatlandır (ama abartma).`
+      : "",
+    sonKolektif
+      ? `KOLEKTİF AN: Az önce tüm salon aynı anda "${sonKolektif.title}" senkron görevini yaptı. İSTERSEN kişisel görevi o ortak enerjinin doğal devamına bağla — zorunlu değil.`
       : "",
     gununTemasi ? `GÜNÜN TEMASI (görevi mümkünse buna dik): ${gununTemasi}` : "",
     aynaEkTon ? `ADMIN TON AYARI: ${aynaEkTon}` : "",
