@@ -10,7 +10,7 @@
 
 export const BAGLANTI_TABANI = "https://ayna.oneteamglobal.ai";
 
-export type WaSablonAnahtar = "giris" | "odev" | "duyuru";
+export type WaSablonAnahtar = "giris" | "giris_hatirlatma" | "odev" | "duyuru";
 export type WaKategori = "UTILITY" | "MARKETING";
 
 export type WaButon = {
@@ -57,6 +57,25 @@ export const WA_SABLONLAR: WaSablon[] = [
       "Giriş kodun: {{2}}\n\n" +
       "— One Team AI",
     buton: { baslik: "Hesabıma Gir", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
+    serbestMi: false,
+    ornek: { "1": "Ayşe", "2": "427813" },
+  },
+  {
+    anahtar: "giris_hatirlatma",
+    ikon: "⏰",
+    etiket: "Kamp öncesi hatırlatma (giriş yapmamış)",
+    aciklama: "Henüz uygulamaya giriş yapmamış katılımcılara son hatırlatma.",
+    friendlyName: "pd101_giris_hatirlatma",
+    dil: "tr",
+    kategori: "MARKETING",
+    ayarAnahtari: "wa_tpl_giris_hatirlatma",
+    govde:
+      "Merhaba {{1}}, PD101 — Presidential Diamond Kampına hoş geldin.\n\n" +
+      "Kamp öncesi hazırlığını henüz tamamlamadın. Aynana giriş yapman ve seni bekleyen adımları bitirmen gerekiyor.\n\n" +
+      "Kampa başlamadan önce aynanla tanışmak çok önemli — orada seni en doğru anlatan yansımayı bulacaksın.\n\n" +
+      "Giriş kodun: {{2}}\n\n" +
+      "— One Team AI",
+    buton: { baslik: "Şimdi Giriş Yap", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
     serbestMi: false,
     ornek: { "1": "Ayşe", "2": "427813" },
   },
@@ -115,6 +134,7 @@ export function degiskenleriUret(
   const ad = ilkAd(kisi.ad);
   switch (sablon.anahtar) {
     case "giris":
+    case "giris_hatirlatma":
     case "odev":
       return { "1": ad, "2": kisi.kod };
     case "duyuru":
