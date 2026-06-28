@@ -46,15 +46,14 @@ export const WA_SABLONLAR: WaSablon[] = [
     ikon: "🔑",
     etiket: "Giriş daveti (link + şifre)",
     aciklama: "Aynayla tanışma daveti — kişiye özel giriş bağlantısı ve kodu.",
-    friendlyName: "pd101_giris_daveti",
+    friendlyName: "pd101_giris_v2",
     dil: "tr",
-    kategori: "MARKETING",
+    kategori: "UTILITY",
     ayarAnahtari: "wa_tpl_giris",
     govde:
-      "Merhaba {{1}}, PD101 — Presidential Diamond Kampına hoş geldin.\n\n" +
-      "Kendi gerçek potansiyelini görmeni sağlayacak, ona ulaşmanda sana rehber olacak bir ayna hazırladık. Erişmek için sana özel bir giriş bağlantın hazır — aşağıdaki butona dokunman yeterli.\n\n" +
-      "Kampa gelmeden önce aynayla tanışmalısın. Aynaya bakıp kendini görmeye çalış, çünkü orada seni en doğru anlatan yansımayı bulacaksın.\n\n" +
-      "Giriş kodun: {{2}}\n\n" +
+      "Merhaba {{1}},\n\n" +
+      "PD101 Liderlik Aynası uygulamasına erişim kodun: {{2}}\n\n" +
+      "Kampa başlamadan önce uygulamaya girip hazırlığını tamamlamanı bekliyoruz.\n\n" +
       "— One Team AI",
     buton: { baslik: "Hesabıma Gir", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
     serbestMi: false,
@@ -65,15 +64,14 @@ export const WA_SABLONLAR: WaSablon[] = [
     ikon: "⏰",
     etiket: "Kamp öncesi hatırlatma (giriş yapmamış)",
     aciklama: "Henüz uygulamaya giriş yapmamış katılımcılara son hatırlatma.",
-    friendlyName: "pd101_giris_hatirlatma",
+    friendlyName: "pd101_hatirlatma_v2",
     dil: "tr",
-    kategori: "MARKETING",
+    kategori: "UTILITY",
     ayarAnahtari: "wa_tpl_giris_hatirlatma",
     govde:
-      "Merhaba {{1}}, PD101 — Presidential Diamond Kampına hoş geldin.\n\n" +
-      "Kamp öncesi hazırlığını henüz tamamlamadın. Aynana giriş yapman ve seni bekleyen adımları bitirmen gerekiyor.\n\n" +
-      "Kampa başlamadan önce aynanla tanışmak çok önemli — orada seni en doğru anlatan yansımayı bulacaksın.\n\n" +
-      "Giriş kodun: {{2}}\n\n" +
+      "Merhaba {{1}},\n\n" +
+      "PD101 Liderlik Aynası uygulamasına henüz giriş yapmadın. Giriş kodun: {{2}}\n\n" +
+      "Lütfen kampa başlamadan önce uygulamaya giriş yap ve hazırlığını tamamla.\n\n" +
       "— One Team AI",
     buton: { baslik: "Şimdi Giriş Yap", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
     serbestMi: false,
