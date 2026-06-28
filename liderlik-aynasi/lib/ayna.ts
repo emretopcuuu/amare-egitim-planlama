@@ -270,7 +270,8 @@ export async function gorevUret(
   mod: SistemModu = "kamp",
   etkinlik: ProgramMaddesi | null = null,
   bitenEtkinlik: ProgramMaddesi | null = null,
-  gorevIpucu: string | null = null
+  gorevIpucu: string | null = null,
+  siradakiEtkinlik: ProgramMaddesi | null = null
 ): Promise<UretilenGorev | null> {
   const [
     ozellikler,
@@ -584,6 +585,15 @@ export async function gorevUret(
         }
       : null,
     azOnceBitenEtkinlik: bitenEtkinlik ? { baslik: bitenEtkinlik.baslik } : null,
+    // #8 sıradaki etkinlik: kişi şu an boşta ve birazdan buna geçecek — görevi
+    // niyet/hazırlık köprüsü olarak ona bağlama fırsatı (zorunlu değil).
+    siradakiKampEtkinligi: siradakiEtkinlik
+      ? {
+          baslik: siradakiEtkinlik.baslik,
+          baslangicSaati: siradakiEtkinlik.baslangic,
+          not: "Kişi şu an boşta; birazdan buna geçecek. İSTERSEN görevi buna küçük bir hazırlık/niyet adımı olarak bağla — zorunlu değil.",
+        }
+      : null,
     yolculukFazi: faz ? { ad: faz.ad, odak: faz.odak, yonerge: faz.yonerge } : null,
     // #1
     birincilHedefler: deltalar.length > 0 ? deltalar : null,
@@ -992,13 +1002,25 @@ export function sessizSaatMi(
   return dk >= 22 * 60 + 30 || dk < 7 * 60 + 30;
 }
 
-export function gorevAraligiDk(tempo: string, pid: string, sira: number): number {
-  if (tempo === "2") return 120;
-  if (tempo === "3") return 180;
-  let h = 0;
-  const tohum = `${pid}:${sira}`;
-  for (let i = 0; i < tohum.length; i++) h = (h * 31 + tohum.charCodeAt(i)) >>> 0;
-  return 60 + (h % 121);
+// Tempo = iki görev arası MİNİMUM bekleme. "2"/"3" sabit; "surpriz" kişi+sıraya
+// göre deterministik 60-180 dk. firsatPenceresi: az önce deneyimsel bir etkinlik
+// bittiyse (duygu sıcak) aralığı yarıya indir (en az 30 dk) — altın anı yakala.
+export function gorevAraligiDk(
+  tempo: string,
+  pid: string,
+  sira: number,
+  firsatPenceresi = false
+): number {
+  let temel: number;
+  if (tempo === "2") temel = 120;
+  else if (tempo === "3") temel = 180;
+  else {
+    let h = 0;
+    const tohum = `${pid}:${sira}`;
+    for (let i = 0; i < tohum.length; i++) h = (h * 31 + tohum.charCodeAt(i)) >>> 0;
+    temel = 60 + (h % 121);
+  }
+  return firsatPenceresi ? Math.max(30, Math.round(temel / 2)) : temel;
 }
 
 // #10 KİŞİSELLEŞTİRİLMİŞ SÖZ GÖREVİ — template + opsiyonel AI kişiselleştirme.

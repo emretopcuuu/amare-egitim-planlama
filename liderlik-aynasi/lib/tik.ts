@@ -23,6 +23,7 @@ import {
   kampGunu,
   suankiMadde,
   bitenMadde,
+  siradakiMadde,
   sahneSessizMi,
   sabahPenceresiMi,
   GECE_FISILTILARI,
@@ -41,6 +42,9 @@ import {
   grupNoCozumle,
   cumartesiGrupEtkinligi,
   cumartesiGrupBitenEtkinlik,
+  cumartesiGrupSiradakiEtkinlik,
+  grupAktifBlok,
+  grupBitenBlok,
 } from "@/lib/cumartesiProgrami";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
@@ -216,16 +220,26 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
   }
 
   const tempo = ayar.get("ayna_tempo") ?? "surpriz";
+  const gunDk = saat * 60 + dakika;
   // Yolculuk modunda ritim sakindir: günde TEK görev, 09-11 sabah penceresi
   const gunlukUst = mod === "yolculuk" ? 1 : 7;
   const yolculukPenceresi = mod !== "yolculuk" || (saat >= 9 && saat < 11);
   const uygunlar = (kisiler ?? [])
     .filter((k) => {
       if (!yolculukPenceresi || sahneSessiz) return false;
+      // #1 Cumartesi (Gün 2): grup David Chung'un kapalı oturumundaysa AYNA susar
+      // (sahne sessizliği gibi) — görev sonraki açık pencereye sarkar. Oyun/yemek
+      // bloklarında susmaz; oradaki "etkinliğe özel görev" tasarımı korunur.
+      const grupNo = mod === "kamp" && gun === 2 ? grupNoCozumle(k.team) : null;
+      if (grupNo && grupAktifBlok(grupNo, gunDk)?.tur === "david_toplanti") return false;
       const d = durumlar.get(k.id);
       if (!d) return true; // hiç görev almamış
       if (d.bekleyen || d.bugunSayisi >= gunlukUst) return false;
-      const aralikDk = gorevAraligiDk(tempo, k.id, d.bugunSayisi);
+      // #3 Fırsat penceresi: az önce deneyimsel bir etkinlik bittiyse (genel kamp
+      // veya grup) duygu sıcakken yakala — min aralık yarıya iner.
+      const firsat =
+        !!bitenEtkinlik || (grupNo ? grupBitenBlok(grupNo, gunDk) !== null : false);
+      const aralikDk = gorevAraligiDk(tempo, k.id, d.bugunSayisi, firsat);
       return simdi.getTime() - d.sonVerilis >= aralikDk * 60_000;
     })
     .sort(
@@ -242,10 +256,12 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     let kEtkinlik = etkinlik;
     let kBiten = bitenEtkinlik;
     let kIpucu: string | null = null;
+    // #8 sıradaki etkinlik: genel kamp programından, Gün 2'de grup programından
+    let kSiradaki =
+      mod === "kamp" && kampGunuBugun ? siradakiMadde(kampGunuBugun, gunDk) : null;
     if (mod === "kamp" && gun === 2) {
       const grupNo = grupNoCozumle(k.team);
       if (grupNo) {
-        const gunDk = saat * 60 + dakika;
         const cmt = cumartesiGrupEtkinligi(grupNo, gunDk);
         if (cmt) {
           kEtkinlik = cmt.madde;
@@ -253,9 +269,15 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         }
         const cmtBiten = cumartesiGrupBitenEtkinlik(grupNo, gunDk);
         if (cmtBiten) kBiten = cmtBiten;
+        const cmtSiradaki = cumartesiGrupSiradakiEtkinlik(grupNo, gunDk);
+        if (cmtSiradaki) kSiradaki = cmtSiradaki;
       }
     }
-    const gorev = await gorevUret(db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu);
+    // Sıradaki köprüsünü yalnız kişi ŞU AN bir etkinliğin içinde DEĞİLken kur
+    // (etkinlikteyse görev zaten ona bağlanıyor; çift bağlam karıştırır).
+    const gorev = await gorevUret(
+      db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu, kEtkinlik ? null : kSiradaki
+    );
     if (!gorev) continue;
     // #8 micro_sprint: sure_saat 0.5 = 30 dk
     const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
