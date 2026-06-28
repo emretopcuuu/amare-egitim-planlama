@@ -129,13 +129,15 @@ export default function BildirimAnahtari() {
           role="switch"
           aria-checked={acik}
           aria-label={acik ? t.anahtarKapat : t.anahtarAc}
-          className={`relative h-8 w-14 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
+          className={`relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-50 ${
             acik ? "bg-gold" : "bg-white/20"
           }`}
         >
+          {/* Topuz: 4px iç boşlukla; açıkken sağ kenara taşmaz (w-12=48, knob=20,
+              left-1=4 + translate-x-5=20 → 24..44, 4px marj). */}
           <span
-            className={`absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-transform ${
-              acik ? "translate-x-7" : "translate-x-1"
+            className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+              acik ? "translate-x-5" : "translate-x-0"
             }`}
           />
         </button>

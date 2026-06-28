@@ -50,17 +50,15 @@ export default function UstMenu({
 
   // EKSTRA: sosyal ve ikincil her şey (küçük, ikişerli ızgara).
   // S4: Anlar/Turnuva/Ortak/Mini360/Plan kaldırıldı — erişilmez veya kenar özellikler.
+  // Sadeleştirme: Kamp Programı (alt çubukta "Program" sekmesiyle aynı) ve kamp
+  // öncesi düzelt-linkleri (Pusulam/Hedefim/Ön Farkındalık — mühür ekranındaki
+  // checklist'te zaten var) menüden kaldırıldı; kalabalık azaltıldı.
   const ekstra: { href: string; etiket: string }[] = [
-    // Kamp öncesi adımlar — tamamlandıysa düzenlemek için erişilebilir kalsın.
-    ...(pusulaTamam ? [{ href: "/pusula", etiket: t.menuPusula }] : []),
-    ...(hedefTamam ? [{ href: "/hedef", etiket: t.menuHedef }] : []),
-    ...(ofTamam ? [{ href: "/on-farkindalik", etiket: t.menuFarkindalik }] : []),
     { href: "/ben", etiket: t.menuBen },
     { href: "/gunluk", etiket: t.menuGunluk },
     { href: "/grup", etiket: t.menuGrup },
     { href: "/ayna-esi", etiket: t.menuAynaEsi },
     { href: "/takdir", etiket: t.menuTakdir },
-    { href: "/program", etiket: t.menuProgram },
     { href: "/gizlilik", etiket: t.menuGizlilik },
   ];
 
@@ -87,7 +85,9 @@ export default function UstMenu({
           className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm"
           onClick={() => setAcik(false)}
         >
-          <div className="flex min-h-full items-center justify-center p-4">
+          {/* Alt nav (alttaki Ana sayfa/Görevler/Program çubuğu) menünün en alt
+              tuşunu örtmesin: alta geniş nefes payı + güvenli alan. */}
+          <div className="flex min-h-full items-center justify-center p-4 pb-[calc(7rem+env(safe-area-inset-bottom))]">
             <div
               className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-midnight-card p-6"
               onClick={(e) => e.stopPropagation()}
