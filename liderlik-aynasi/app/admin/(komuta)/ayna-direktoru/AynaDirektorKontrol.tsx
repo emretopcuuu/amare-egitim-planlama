@@ -9,7 +9,6 @@ const t = tr.admin.aynaDirektor;
 
 type Props = {
   aktif: boolean;
-  tempo: string;
   mod: string;
   aboneSayisi: number;
   katilimciSayisi: number;
@@ -17,7 +16,6 @@ type Props = {
 
 export default function AynaDirektorKontrol({
   aktif,
-  tempo,
   mod,
   aboneSayisi,
   katilimciSayisi,
@@ -103,25 +101,6 @@ export default function AynaDirektorKontrol({
         >
           {bekliyor === "durum" ? <Bekle /> : aktif ? t.durdur : `🤖 ${t.uyandir}`}
         </button>
-      </div>
-
-      {/* Tempo */}
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="text-sm font-medium text-slate-300">{t.tempoEtiket}:</span>
-        {(["surpriz", "2", "3"] as const).map((secenek) => (
-          <button
-            key={secenek}
-            onClick={() => istek({ islem: "tempo", tempo: secenek }, "tempo")}
-            disabled={bekliyor !== null}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${
-              tempo === secenek
-                ? "bg-royal/50 text-gold-light"
-                : "border border-royal-light/30 text-slate-300 hover:bg-midnight-soft"
-            }`}
-          >
-            {t.tempolar[secenek]}
-          </button>
-        ))}
       </div>
 
       {/* Sistem modu: kamp ↔ 90 günlük yolculuk */}

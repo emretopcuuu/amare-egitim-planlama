@@ -95,7 +95,6 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     .select("key, value")
     .in("key", [
       "ayna_aktif",
-      "ayna_tempo",
       "ayna_baslangic",
       "sistem_modu",
       "yolculuk_baslangic",
@@ -246,7 +245,6 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     durumlar.set(g.participant_id, d);
   }
 
-  const tempo = ayar.get("ayna_tempo") ?? "surpriz";
   const gunDk = saat * 60 + dakika;
   // Yolculuk modunda ritim sakindir: günde TEK görev, 09-11 sabah penceresi
   const gunlukUst = mod === "yolculuk" ? 1 : 7;
@@ -271,7 +269,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       // (sıcak an) bunu ezer; yolculuk modu kendi sabah penceresini kullanır.
       const pik = mod === "kamp" ? pikSaatleri.get(k.id) : null;
       if (pik != null && !firsat && saatFarki(saat, pik) > 2) return false;
-      const aralikDk = gorevAraligiDk(tempo, k.id, d.bugunSayisi, firsat);
+      const aralikDk = gorevAraligiDk(k.id, d.bugunSayisi, firsat);
       return simdi.getTime() - d.sonVerilis >= aralikDk * 60_000;
     })
     // #6 Adalet: önce bugün EN AZ görev alan (taban eşitliği), sonra en uzun
