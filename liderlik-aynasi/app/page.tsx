@@ -417,26 +417,31 @@ export default async function AnaSayfa({
           &ldquo;{kisiSlogan}&rdquo;
         </p>
       )}
-      {/* S1: YolculukSeridi kaldırıldı; gün etiketi haritanın içine taşındı */}
-      <div className="mt-2">
-        <YolculukHaritasi
-          siradaEtiket={tr.yolculuk.sirada}
-          gunEtiketi={
-            (KAMP_GUNLERI as readonly string[]).includes(bugunIst)
-              ? `Gün ${(KAMP_GUNLERI as readonly string[]).indexOf(bugunIst) + 1}`
-              : undefined
-          }
-          fazlar={[
-            { ad: tr.yolculuk.faz.rituel, tamam: !!sesVarRow },
-            { ad: tr.yolculuk.faz.oyun, tamam: !!kisi?.team },
-            { ad: tr.yolculuk.faz.pusula, tamam: !!pusulaErken?.tamamlandi_at },
-            { ad: tr.yolculuk.faz.hedef, tamam: !!hedefErken?.tamamlandi_at },
-            { ad: tr.yolculuk.faz.farkindalik, tamam: !!ofDurum?.tamamlandi_at },
-            { ad: tr.yolculuk.faz.kamp, tamam: !!kisi?.camp_unlocked_at },
-            { ad: tr.yolculuk.faz.rapor, tamam: raporlarAcik },
-          ]}
-        />
-      </div>
+      {/* S1: YolculukSeridi kaldırıldı; gün etiketi haritanın içine taşındı.
+          UX: Faz merdiveni HAZIRLIK göstergesidir — kamp açıldıktan sonra
+          (kişi içerideyken) görev + programın önüne geçen ikincil gürültüdür.
+          Bu yüzden YALNIZ kamp öncesinde gösterilir; kamp boyunca gizlenir. */}
+      {!kisi?.camp_unlocked_at && (
+        <div className="mt-2">
+          <YolculukHaritasi
+            siradaEtiket={tr.yolculuk.sirada}
+            gunEtiketi={
+              (KAMP_GUNLERI as readonly string[]).includes(bugunIst)
+                ? `Gün ${(KAMP_GUNLERI as readonly string[]).indexOf(bugunIst) + 1}`
+                : undefined
+            }
+            fazlar={[
+              { ad: tr.yolculuk.faz.rituel, tamam: !!sesVarRow },
+              { ad: tr.yolculuk.faz.oyun, tamam: !!kisi?.team },
+              { ad: tr.yolculuk.faz.pusula, tamam: !!pusulaErken?.tamamlandi_at },
+              { ad: tr.yolculuk.faz.hedef, tamam: !!hedefErken?.tamamlandi_at },
+              { ad: tr.yolculuk.faz.farkindalik, tamam: !!ofDurum?.tamamlandi_at },
+              { ad: tr.yolculuk.faz.kamp, tamam: !!kisi?.camp_unlocked_at },
+              { ad: tr.yolculuk.faz.rapor, tamam: raporlarAcik },
+            ]}
+          />
+        </div>
+      )}
       {/* S8: KampHud + GorusmeSimdi tek "şu an" bloğu */}
       <div className="space-y-1.5">
         <KampHud takim={takim} />
