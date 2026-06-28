@@ -5,6 +5,9 @@ import { tr } from "@/lib/i18n/tr";
 import KatilimciYonetim from "./KatilimciYonetim";
 import OyunSecimiPanel from "./OyunSecimiPanel";
 import Ipucu from "../Ipucu";
+import Katlanir from "../Katlanir";
+import FazSifirKontrol from "../FazSifirKontrol";
+import OnFarkindalikKontrol from "../OnFarkindalikKontrol";
 
 export const metadata = { title: "Katılımcılar — Liderlik Aynası" };
 
@@ -33,6 +36,25 @@ export default async function KatilimcilarPage() {
         <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
         <Ipucu {...tr.admin.yardim.katilimcilar} />
       </div>
+
+      {/* Hazırlık ilerleme — Pusula + Ön Farkındalık tamamlanma durumu */}
+      <section id="hazirlik" className="scroll-mt-24">
+        <Katlanir baslik="Hazırlık Durumu" aciklama="Pusula + Ön Farkındalık ilerleme" ikon="🧰" yardim={tr.admin.yardim.fazSifir} varsayilanAcik>
+          <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+            <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+              {tr.admin.fazSifir.baslik}
+              <Ipucu {...tr.admin.yardim.fazSifir} />
+            </h2>
+            <FazSifirKontrol />
+          </div>
+          <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+            <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
+              {tr.admin.onFark.baslik}
+            </h2>
+            <OnFarkindalikKontrol />
+          </div>
+        </Katlanir>
+      </section>
 
       {/* Liste en üstte ve açık; diğer her şey (ekle, dağıt, adlandır, import,
           tehlikeli) katlanır ve varsayılan kapalı — KatilimciYonetim içinde. */}
