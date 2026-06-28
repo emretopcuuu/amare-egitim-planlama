@@ -23,6 +23,7 @@ export default function WhatsAppGonder({
   odevYapmayanSayisi,
   telefonsuz,
   kayitliAnahtarlar,
+  sadeceSablonlar,
 }: {
   yapilandirildi: boolean;
   takimlar: string[];
@@ -30,9 +31,16 @@ export default function WhatsAppGonder({
   odevYapmayanSayisi: number;
   telefonsuz: number;
   kayitliAnahtarlar: string[];
+  sadeceSablonlar?: WaSablonAnahtar[];
 }) {
+  const gosterilecekSablonlar = sadeceSablonlar
+    ? WA_SABLONLAR.filter((s) => sadeceSablonlar.includes(s.anahtar))
+    : WA_SABLONLAR;
+
   const router = useRouter();
-  const [sablonAnahtar, setSablonAnahtar] = useState<WaSablonAnahtar | null>(null);
+  const [sablonAnahtar, setSablonAnahtar] = useState<WaSablonAnahtar | null>(
+    sadeceSablonlar?.length === 1 ? sadeceSablonlar[0] : null
+  );
   const [hedefTipi, setHedefTipi] = useState<HedefTipi>("genel");
   const [takim, setTakim] = useState<string>(takimlar[0] ?? "");
   const [seciliKisiler, setSeciliKisiler] = useState<Set<string>>(new Set());
@@ -111,7 +119,7 @@ export default function WhatsAppGonder({
       <div>
         <h2 className="text-sm font-semibold text-gold-light">{t.adim1}</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          {WA_SABLONLAR.map((s) => {
+          {gosterilecekSablonlar.map((s) => {
             const kayitli = kayitliAnahtarlar.includes(s.anahtar);
             const secili = sablonAnahtar === s.anahtar;
             return (

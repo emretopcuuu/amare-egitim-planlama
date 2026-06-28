@@ -38,6 +38,14 @@ export async function POST(req: Request) {
     return Response.json({ ok: true, hedef: tr.admin.yayin.herkes });
   }
 
+  // Tek kişi: "kisi:<uuid>"
+  if (hedef.startsWith("kisi:")) {
+    const kisiId = hedef.slice(5);
+    await katilimciyaBildir(db, kisiId, baslik, govde, "/");
+    return Response.json({ ok: true, sayi: 1 });
+  }
+
+  // Takım adı
   const { data: kisiler } = await db
     .from("participants")
     .select("id")

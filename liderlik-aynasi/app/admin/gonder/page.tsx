@@ -59,7 +59,7 @@ export default async function GonderPage() {
       </div>
 
       <Katlanir baslik={tr.admin.yayin.baslik} ikon="🔔" varsayilanAcik>
-        <DuyuruGonder takimlar={takimlar} />
+        <DuyuruGonder takimlar={takimlar} kisiler={tumKisiler} />
         <div className="mt-4 border-t border-white/10 pt-4">
           <DuyuruSablonlari />
         </div>

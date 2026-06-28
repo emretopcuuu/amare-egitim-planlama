@@ -32,7 +32,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
       { href: "/admin/katilimcilar", etiket: n.katilimcilar },
       { href: "/admin/eslestirmeler", etiket: n.eslestirmeler },
       { href: "/admin/qr", etiket: n.qr },
-      { href: "/admin/gonder", etiket: n.gonder },
+      { href: "/admin/davet", etiket: n.davet },
       { href: "/admin/kontrol", etiket: n.kontrol },
       { href: "/admin/yansima", etiket: n.yansima },
       { href: "/admin/kiosk", etiket: n.kiosk },
@@ -43,6 +43,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
     ad: g.canli,
     ikon: "🎬",
     linkler: [
+      { href: "/admin/gonder", etiket: n.gonder },
       { href: "/admin/kontrol#dalga", etiket: n.kDalga },
       { href: "/admin/ayna-direktoru", etiket: n.komuta },
       { href: "/admin/sahne", etiket: n.sahne },
