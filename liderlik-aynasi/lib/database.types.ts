@@ -142,6 +142,32 @@ export type Database = {
           },
         ]
       }
+      ayna_tek_cumle: {
+        Row: {
+          created_at: string
+          cumle: string
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          cumle: string
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          cumle?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ayna_tek_cumle_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bosluk_ani: {
         Row: {
           created_at: string

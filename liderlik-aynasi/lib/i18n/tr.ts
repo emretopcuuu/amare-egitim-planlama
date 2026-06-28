@@ -3353,6 +3353,11 @@ export const tr = {
     aynaBaslik: "🤖 AYNA'nın Üç Günü",
     aynaOzeti: (gorev: number, kivilcim: number, unvan: string) =>
       `Üç gün boyunca ${gorev} görevini izledim, ${kivilcim} Kıvılcım topladın. Unvanın: ${unvan}. Görevlerinde gördüklerim yukarıdaki yeşil çubuklarda — insanların gözüyle örtüşen yerlere dikkat et.`,
+    // AYNA'nın Tek Cümlesi — kapanışın duygusal doruğu
+    tekCumleBaslik: "AYNA'nın sana tek cümlesi",
+    tekCumleAciklama: "Üç gün seni izledim. Geriye tek bir cümle kalıyor.",
+    tekCumleBekle: "AYNA son cümlesini yazıyor…",
+    tekCumleHata: "AYNA'nın cümlesi şu an hazırlanamadı.",
     kisiSayisi: (n: number) => `${n} kişi puanladı`,
     veriYok: "Henüz yeterli dış puan yok.",
     hikayeBaslik: "📖 Dalga Yolculuğun",

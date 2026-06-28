@@ -23,6 +23,7 @@ import ArketipKarti from "./ArketipKarti";
 import AynaKarti from "./AynaKarti";
 import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
+import TekCumleBolumu from "./TekCumleBolumu";
 import SesCal from "@/components/SesCal";
 import AynaSesi from "@/components/AynaSesi";
 
@@ -57,7 +58,7 @@ export default async function AynaPage() {
     .select("id", { count: "exact", head: true })
     .eq("rater_id", session.sub);
 
-  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik, hedefC, oyunP, pusC, sozAcikV2, sozKaydi] =
+  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik, hedefC, oyunP, pusC, sozAcikV2, sozKaydi, { data: mevcutCumle }] =
     await Promise.all([
       db
         .from("mirror_letters")
@@ -81,6 +82,11 @@ export default async function AynaPage() {
       pusulaCekirdek(db, session.sub),
       sozV2KapisiAcik(db),
       sozGetir(db, session.sub),
+      db
+        .from("ayna_tek_cumle")
+        .select("cumle")
+        .eq("participant_id", session.sub)
+        .maybeSingle(),
     ]);
 
   // FAZ A Rapor v2: raporu kişinin nedenine + kariyer hedefine bağla.
@@ -679,6 +685,13 @@ export default async function AynaPage() {
             ))}
           </ul>
         </section>
+      )}
+
+      {/* AYNA'nın Tek Cümlesi — kapanışın duygusal doruğu */}
+      {rapor.gorev.tamamlanan > 0 && (
+        <div id="r-tek-cumle" className="scroll-mt-4">
+          <TekCumleBolumu mevcut={mevcutCumle?.cumle ?? null} />
+        </div>
       )}
 
       {/* AYNA'nın görev özeti */}
