@@ -1497,6 +1497,7 @@ export const tr = {
       saglik: "Sağlık Panosu",
       eslestirmeler: "Eşleştirmeler",
       gonder: "Mesaj Gönder",
+      davet: "Giriş Daveti",
       kontrol: "Kontroller",
       sAraclar: "Sunum & Prova",
       // ⚙ Sistem menüsü
