@@ -259,6 +259,152 @@ export const VINYETLER: Vinyet[] = [
     metin:
       "Anlatılır ki çölde tek bardak su İskender'e uzatıldığında, askerleri içemezken o da içmedi; suyu kuma döktü. Susuzluğu paylaşmak, emirden güçlüydü.",
   },
+
+  // ══ TÜRK & DÜNYA KÖKLERİ — tarihî ve çağdaş ═══════════════════════════════
+  // Kültürel kök: katılımcı kendi tarihinden / sevdiği çağdaş bir isimden bir an
+  // görünce bağ daha güçlü kurulur. Yalnız yaygın kabul gören, doğru anlar/sözler.
+
+  // — devretme —
+  {
+    kod: "mevlana_mum",
+    kas: "devretme",
+    baslik: "Bir Mumun Diğerini Yakması",
+    metin:
+      "Mevlânâ'dan kalan söz: 'Bir mum, başka bir mumu yakmakla ışığından hiçbir şey kaybetmez.' Bildiğini paylaşmak, öğretmek insanı küçültmez — çoğaltır.",
+  },
+  {
+    kod: "yesevi_ocak",
+    kas: "devretme",
+    baslik: "Bir Ocak Kuran Pîr",
+    metin:
+      "Pîr-i Türkistan Hoca Ahmet Yesevî, kendi adına değil, yetiştirip Anadolu'ya gönderdiği yüzlerce dervişe iz bıraktı. Ardında lider değil, lider yetiştirenler kaldı; bir kişi değil, bir ocak kurdu.",
+  },
+  {
+    kod: "sancar_turkevi",
+    kas: "devretme",
+    baslik: "Işığı Sonrakilere Taşımak",
+    metin:
+      "Mardin'in köyünden çıkıp DNA onarımını çözen Aziz Sancar, 2015'te Nobel aldı. Ünden çok geleceği düşündü: kazancıyla Türk öğrencilere bir yuva, Carolina Türk Evi'ni kurdu.",
+  },
+
+  // — cesaret —
+  {
+    kod: "fatih_gemiler",
+    kas: "cesaret",
+    baslik: "Karadan Yürüyen Gemiler",
+    metin:
+      "1453'te Haliç'in girişi zincirle kapalıyken Fatih, gemilerini bir gecede karadan, yağlı kızaklarla tepelerin üzerinden yürüttü. Herkesin 'imkânsız' dediği yerde kimsenin bakmadığı yola baktı.",
+  },
+  {
+    kod: "curie_baraka",
+    kas: "cesaret",
+    baslik: "Barakadaki Işık",
+    metin:
+      "Marie Curie, soğuk ve bozuk bir barakada yıllarca uğraşıp radyumu ayrıştırdı; iki ayrı bilimde Nobel alan ilk insan oldu. 'Hayatta korkulacak bir şey yoktur, yalnızca anlaşılması gereken şeyler vardır' dedi.",
+  },
+  {
+    kod: "naim_herkul",
+    kas: "cesaret",
+    baslik: "Cep Herkülü",
+    metin:
+      "Baskı altındaki kimliğini bırakmamak için Bulgaristan'dan kaçıp Türkiye'ye gelen Naim Süleymanoğlu, 1988 Seul'de kendi ağırlığının üç katını kaldırdı. Küçük bedeninde dev bir cesaret taşıdı.",
+  },
+
+  // — sorumluluk —
+  {
+    kod: "kanuni_adalet",
+    kas: "sorumluluk",
+    baslik: "Kanunu Kendine de Uygulayan",
+    metin:
+      "Cihana hükmeden Kanuni, kanunu yalnız halka değil kendi sarayına da uyguladı; 'Kanuni' adını buradan aldı. En güçlü olduğu anda bile hesabı önce kendinden sorması, otoritesini büyüttü.",
+  },
+  {
+    kod: "jordan_sut",
+    kas: "sorumluluk",
+    baslik: "Topu Bana Verin",
+    metin:
+      "Michael Jordan: '9000'den fazla şut kaçırdım; 26 kez maçı bitirecek şut bana emanet edildi ve kaçırdım. İşte bu yüzden başarıyorum.' Kaçırma korkusuyla değil, sorumluluğu isteyerek büyüdü.",
+  },
+
+  // — yardım iste —
+  {
+    kod: "gazali_bilmiyorum",
+    kas: "yardim_iste",
+    baslik: "'Bilmiyorum' Diyen Âlim",
+    metin:
+      "İmam Gazali, Bağdat'ın en saygın kürsüsünde herkesin başvurduğu âlimken bir şüphe kriziyle 'aslında bilmiyorum' dedi. Makamını bırakıp yıllarca aradı; bilmediğini itiraf etmek, bildiğini sanmaktan büyük cesaretti.",
+  },
+
+  // — dinleme —
+  {
+    kod: "yunus_kendini",
+    kas: "dinleme",
+    baslik: "İlim Kendin Bilmektir",
+    metin:
+      "Yunus Emre 'İlim ilim bilmektir, ilim kendin bilmektir; sen kendini bilmezsen bu nice okumaktır' dedi. En zor dinlenecek ses, insanın kendi içidir.",
+  },
+  {
+    kod: "einstein_soru",
+    kas: "dinleme",
+    baslik: "55 Dakika Soruya",
+    metin:
+      "Einstein'a atfedilen söz: 'Bir problemi çözmek için bir saatim olsa, 55 dakikasını problemi anlamaya ayırırdım.' Acele çözüm değil, doğru anlaşılmış soru kazandırır.",
+  },
+
+  // — dayanıklılık —
+  {
+    kod: "sinan_ustalik",
+    kas: "dayaniklilik",
+    baslik: "Ustalık Eserim Selimiye",
+    metin:
+      "Mimar Sinan, 'Şehzade çıraklık, Süleymaniye kalfalık, Selimiye ise ustalık eserimdir' dedi — ve ustalık eserini seksenli yaşlarında verdi. Her yapı bir öncekinin üstüne kondu; ustalık, sabrın uzun yoluydu.",
+  },
+  {
+    kod: "pamuk_masa",
+    kas: "dayaniklilik",
+    baslik: "Bir Memur Gibi Yazmak",
+    metin:
+      "Nobel'li yazar Orhan Pamuk, ilhamı beklemeden her gün masasına oturmasıyla bilinir; 'bir memur gibi' yazdığını söyler. Büyük eser esinle değil, tekrar eden disiplinle kuruldu.",
+  },
+  {
+    kod: "ronaldo_calisma",
+    kas: "dayaniklilik",
+    baslik: "İlk Gelen, Son Çıkan",
+    metin:
+      "Cristiano Ronaldo, antrenmana ilk gelen ve en son çıkan oyuncu olmasıyla bilinir; 'Çok çalışmadan yetenek hiçbir şeydir' der. Zirvede kalmayı yetenek değil, yıllarca süren tekrar sağladı.",
+  },
+
+  // — vizyon —
+  {
+    kod: "ataturk_emanet",
+    kas: "vizyon",
+    baslik: "Kendinden Sonra Yaşayan Eser",
+    metin:
+      "Atatürk 'Benim naçiz vücudum elbet bir gün toprak olacaktır; fakat Türkiye Cumhuriyeti ilelebet payidar kalacaktır' dedi. Kurduğu şeyi kendisi olmadan da yaşayacak biçimde tasarladı — asıl miras, kendinden sonra ayakta kalandır.",
+  },
+  {
+    kod: "ortayli_kok",
+    kas: "vizyon",
+    baslik: "Önce Geriyi Okumak",
+    metin:
+      "Tarihçi İlber Ortaylı, geçmişini bilmeyenin geleceğini kuramayacağını söyler; ona göre kökünü tanımayan nereye gideceğini de bilemez. İleriyi görmek, önce geriyi okumakla başlar.",
+  },
+  {
+    kod: "curry_ucsayi",
+    kas: "vizyon",
+    baslik: "Kimsenin Görmediği Atış",
+    metin:
+      "Yedinci sıradan seçilen, 'fazla zayıf' diye küçümsenen Stephen Curry, herkesin önemsemediği üç sayılık atışı oyunun merkezine koydu ve basketbolu değiştirdi. Kimsenin görmediği değeri görmek, vizyondu.",
+  },
+
+  // — örnek olma —
+  {
+    kod: "messi_sahada",
+    kas: "ornek_olma",
+    baslik: "Sözle Değil, Oyunla",
+    metin:
+      "Çocukken büyüme sorunu yüzünden 'fazla ufak' diye elenen Messi, yıllarca konuşmadan yalnız oyunuyla liderlik etti. Sözle değil, sahadaki işiyle takımı peşinden sürükledi.",
+  },
 ];
 
 // Bir kasa ait vinyetler arasında dönerek seçer (tohum = tamamlanan görev sayısı
