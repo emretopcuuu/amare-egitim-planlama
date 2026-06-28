@@ -10,6 +10,7 @@ import { KAMP_GUNLERI } from "@/lib/kampProgrami";
 import { sozTakipAktif, sahitSayim } from "@/lib/sozTakip";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
+import TelefonaKurKocu from "@/components/TelefonaKurKocu";
 import AynaRituel from "@/components/AynaRituel";
 import EgilenKart from "@/components/EgilenKart";
 import GeriSayim from "@/components/GeriSayim";
@@ -56,7 +57,8 @@ function Sayfa({
         </div>
       </div>
       {kurulum && (
-        <div className="mx-auto w-full max-w-md shrink-0 px-5 pb-5">
+        <div className="mx-auto w-full max-w-md shrink-0 space-y-4 px-5 pb-5">
+          <TelefonaKurKocu />
           <AynaKurulum />
         </div>
       )}
