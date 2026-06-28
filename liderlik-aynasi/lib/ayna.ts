@@ -1347,12 +1347,70 @@ export async function mentorlukGorevUret(
 
   if (adaylar.length < 1) return null;
 
-  // 3 adayı karıştırarak seç (gün bazlı seed ile her gün farklı öneri)
+  // Gün bazlı karışık sıra (yetersiz veri durumunda yedek + güç eşitliğinde stabil).
   const karisik = [...adaylar].sort((a, b) => {
     const h = (s: string) => [...s].reduce((acc, c) => acc + c.charCodeAt(0), 0);
     return (h(a.id) * gun) % 97 - (h(b.id) * gun) % 97;
   });
-  const secilen = karisik.slice(0, 3);
+
+  // #9a Aday seçimi: kişinin EN ZAYIF algılandığı (gelişmek istediği) özellikte
+  // GÜÇLÜ olan adayları öncele — "İletişimde zorlanıyorsan İletişimi güçlü birine
+  // git". Yeterli puan verisi yoksa gün-bazlı karışık seçime düşülür.
+  let secilen = karisik.slice(0, 3);
+  if (adaylar.length > 3) {
+    const { data: kendiPuanlar } = await db
+      .from("ratings")
+      .select("trait_id, score")
+      .eq("target_id", katilimci.id)
+      .eq("is_self", false);
+    let hedefTrait: number | null = null;
+    if ((kendiPuanlar?.length ?? 0) >= 3) {
+      const top = new Map<number, { t: number; n: number }>();
+      for (const p of kendiPuanlar ?? []) {
+        const e = top.get(p.trait_id) ?? { t: 0, n: 0 };
+        e.t += p.score;
+        e.n++;
+        top.set(p.trait_id, e);
+      }
+      let enDusuk = Infinity;
+      for (const [tid, { t, n }] of top) {
+        const ort = t / n;
+        if (ort < enDusuk) {
+          enDusuk = ort;
+          hedefTrait = tid;
+        }
+      }
+    }
+    if (hedefTrait !== null) {
+      const { data: adayPuanlar } = await db
+        .from("ratings")
+        .select("target_id, score")
+        .eq("trait_id", hedefTrait)
+        .eq("is_self", false)
+        .in(
+          "target_id",
+          adaylar.map((a) => a.id)
+        );
+      const guc = new Map<string, { t: number; n: number }>();
+      for (const p of adayPuanlar ?? []) {
+        const e = guc.get(p.target_id) ?? { t: 0, n: 0 };
+        e.t += p.score;
+        e.n++;
+        guc.set(p.target_id, e);
+      }
+      const ortGuc = (id: string) => {
+        const g = guc.get(id);
+        return g && g.n > 0 ? g.t / g.n : 0;
+      };
+      // En güçlü 3; eşitlikte gün-hash sırasını koru (stabil çeşitlilik).
+      secilen = [...adaylar]
+        .sort(
+          (a, b) =>
+            ortGuc(b.id) - ortGuc(a.id) || karisik.indexOf(a) - karisik.indexOf(b)
+        )
+        .slice(0, 3);
+    }
+  }
   const isimler = secilen.map((k) => {
     const seviyeEtiketi = KARIYER_ETIKET[k.kariyer_seviyesi ?? ""] ?? "";
     return seviyeEtiketi ? `${k.full_name} (${seviyeEtiketi})` : k.full_name;
