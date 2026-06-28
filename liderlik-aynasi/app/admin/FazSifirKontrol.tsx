@@ -6,10 +6,8 @@ import { tr } from "@/lib/i18n/tr";
 
 const t = tr.admin.fazSifir;
 
-// FAZ 0 admin kontrolü: Pusula penceresini aç/kapa, oda QR kodunu ayarla,
-// tamamlanma sayısını izle. Kritik Kontroller bölgesinde yaşar.
+// FAZ 0 admin kontrolü: Oda QR kodunu ayarla + tamamlanma sayısını izle.
 export default function FazSifirKontrol() {
-  const [acik, setAcik] = useState(false);
   const [kod, setKod] = useState("");
   const [kayitliKod, setKayitliKod] = useState(""); // QR yalnız KAYDEDİLEN koddan üretilir
   const [tamam, setTamam] = useState(0);
@@ -23,7 +21,6 @@ export default function FazSifirKontrol() {
       const res = await fetch("/api/admin/pusula");
       const v = await res.json().catch(() => null);
       if (res.ok && v) {
-        setAcik(!!v.acik);
         setKod(v.kilitKodu ?? "");
         setKayitliKod(v.kilitKodu ?? "");
         setTamam(v.tamam ?? 0);
@@ -59,7 +56,7 @@ export default function FazSifirKontrol() {
     };
   }, [kayitliKod]);
 
-  async function gonder(govde: Record<string, unknown>, basariMesaji?: string) {
+  async function gonder(govde: Record<string, unknown>, basariMesaji: string) {
     setMesgul(true);
     try {
       const res = await fetch("/api/admin/pusula", {
@@ -71,7 +68,7 @@ export default function FazSifirKontrol() {
         tost(t.hata, "hata");
         return;
       }
-      if (basariMesaji) tost(basariMesaji, "basari");
+      tost(basariMesaji, "basari");
       await yukle();
     } catch {
       tost(t.hata, "hata");
@@ -126,26 +123,6 @@ export default function FazSifirKontrol() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-slate-400">{t.aciklama}</p>
-
-      {/* Pencere aç/kapa */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p
-          className={`text-sm font-semibold ${acik ? "text-emerald-400" : "text-slate-400"}`}
-        >
-          {acik ? t.pencereAcik : t.pencereKapali}
-        </p>
-        <button
-          onClick={() => void gonder({ acik: !acik })}
-          disabled={mesgul}
-          className={`rounded-xl px-5 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${
-            acik
-              ? "border border-royal-light/40 text-slate-300 hover:bg-midnight-soft"
-              : "bg-gold text-[#1a1206] hover:bg-gold-light"
-          }`}
-        >
-          {acik ? t.pencereKapat : t.pencereAc}
-        </button>
-      </div>
 
       {/* Tamamlanma */}
       <div className="rounded-xl bg-midnight-soft p-3 text-center">

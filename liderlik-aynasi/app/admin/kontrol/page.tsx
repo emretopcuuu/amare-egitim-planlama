@@ -107,7 +107,7 @@ export default async function KontrolPage() {
 
       {/* 1 · Hazırlık */}
       <section id="hazirlik" className="scroll-mt-24">
-        <Katlanir baslik="Hazırlık" aciklama="Pusula + Ön Farkındalık pencereleri" ikon="🧰" yardim={tr.admin.yardim.fazSifir} varsayilanAcik>
+        <Katlanir baslik="Hazırlık" aciklama="Pusula + Ön Farkındalık ilerleme" ikon="🧰" yardim={tr.admin.yardim.fazSifir} varsayilanAcik>
           <div id="pusula" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
             <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.admin.fazSifir.baslik}
