@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import { tost } from "@/lib/tost";
 
 const t = tr.admin.eslestirme;
 
@@ -14,6 +15,7 @@ export default function EslestirmeFormu() {
   const [mesaj, setMesaj] = useState<string | null>(null);
   const [hata, setHata] = useState<string | null>(null);
   const [calisiyor, setCalisiyor] = useState(false);
+  const [ekleniyor, setEkleniyor] = useState(false);
 
   async function calistir(e: React.FormEvent) {
     e.preventDefault();
@@ -39,6 +41,30 @@ export default function EslestirmeFormu() {
       setHata(t.hataSunucu);
     } finally {
       setCalisiyor(false);
+    }
+  }
+
+  async function ekle() {
+    if (ekleniyor || grupIci + grupDisi < 1) return;
+    setEkleniyor(true);
+    try {
+      const res = await fetch("/api/admin/eslestirme-ekle", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ grupIci, grupDisi }),
+      });
+      const veri = await res.json().catch(() => null);
+      if (!res.ok) {
+        tost(veri?.hata ?? t.hataSunucu, "hata");
+        return;
+      }
+      const n: number = veri.atamaSayisi ?? 0;
+      tost(n > 0 ? t.ekleBasarili(n) : (veri.mesaj ?? t.ekleYeniYok), "basari");
+      router.refresh();
+    } catch {
+      tost(t.hataSunucu, "hata");
+    } finally {
+      setEkleniyor(false);
     }
   }
 
@@ -81,7 +107,21 @@ export default function EslestirmeFormu() {
         </label>
       </div>
 
-      <p className="mt-4 text-xs font-medium text-amber-400">⚠️ {t.uyari}</p>
+      {/* Artımlı tamamlama — mevcut atamalara dokunmaz */}
+      <div className="mt-4 rounded-xl border border-royal/20 bg-midnight-soft/30 p-3">
+        <p className="text-xs text-slate-400">{t.ekleAciklama}</p>
+        <button
+          type="button"
+          onClick={() => void ekle()}
+          disabled={ekleniyor || grupIci + grupDisi < 1}
+          className="mt-2 rounded-lg border border-royal-light/40 px-4 py-2 text-sm font-semibold text-slate-200 transition-colors hover:bg-midnight-soft disabled:opacity-40"
+        >
+          {ekleniyor ? t.ekleniyor : `➕ ${t.ekle}`}
+        </button>
+      </div>
+
+      {/* Tam yeniden eşleştirme */}
+      <p className="mt-5 text-xs font-medium text-amber-400">⚠️ {t.uyari}</p>
       <label className="mt-2 flex items-center gap-2 text-sm text-slate-300">
         <input
           type="checkbox"

@@ -1,11 +1,10 @@
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { eslestir } from "@/lib/eslestirme";
+import { eslestirEkle } from "@/lib/eslestirme";
 import { tr } from "@/lib/i18n/tr";
 
-// Eşleştirmeyi baştan kurar: mevcut TÜM atamalar silinir, algoritma yeniden
-// çalışır. Dalga ortasında çalıştırmak gözlem listelerini değiştirir — UI bu
-// konuda açıkça uyarır ve onay kutusu ister.
+// Artımlı eşleştirme: mevcut atamalara dokunmaz, yalnızca hedef sayısının
+// altında kalan kişileri (yeni katılımcılar dahil) tamamlar.
 export async function POST(req: Request) {
   if (!(await adminOturumu())) {
     return Response.json({ hata: tr.admin.yetkisiz }, { status: 403 });
@@ -28,34 +27,41 @@ export async function POST(req: Request) {
   }
 
   const db = supabaseAdmin();
-  const [{ data: kisiler, error }, { data: dislananlar }] = await Promise.all([
-    db.from("participants").select("id, team").eq("role", "participant"),
-    db.from("excluded_pairs").select("a_id, b_id"),
-  ]);
+  const [{ data: kisiler, error }, { data: mevcutAtamalar }, { data: dislananlar }] =
+    await Promise.all([
+      db.from("participants").select("id, team").eq("role", "participant"),
+      db.from("assignments").select("observer_id, target_id").eq("type", "shadow"),
+      db.from("excluded_pairs").select("a_id, b_id"),
+    ]);
+
   if (error) {
     return Response.json({ hata: tr.admin.eslestirme.hataSunucu }, { status: 500 });
   }
-  if (kisiler.length < 2) {
+  if ((kisiler ?? []).length < 2) {
     return Response.json({ hata: tr.admin.eslestirme.hataAzKisi }, { status: 400 });
   }
 
   const dislamaSet = new Set<string>(
     (dislananlar ?? []).map((d) => `${d.a_id}|${d.b_id}`)
   );
-  const atamalar = eslestir(kisiler, grupIci, grupDisi, Math.random, dislamaSet);
 
-  const { error: silmeHatasi } = await db
-    .from("assignments")
-    .delete()
-    .gte("created_at", "1970-01-01"); // koşulsuz delete'i Supabase reddeder
-  if (silmeHatasi) {
+  const yeniAtamalar = eslestirEkle(
+    kisiler ?? [],
+    mevcutAtamalar ?? [],
+    grupIci,
+    grupDisi,
+    Math.random,
+    dislamaSet
+  );
+
+  if (yeniAtamalar.length === 0) {
+    return Response.json({ atamaSayisi: 0, mesaj: tr.admin.eslestirme.ekleYeniYok });
+  }
+
+  const { error: yazHata } = await db.from("assignments").insert(yeniAtamalar);
+  if (yazHata) {
     return Response.json({ hata: tr.admin.eslestirme.hataSunucu }, { status: 500 });
   }
 
-  const { error: yazmaHatasi } = await db.from("assignments").insert(atamalar);
-  if (yazmaHatasi) {
-    return Response.json({ hata: tr.admin.eslestirme.hataSunucu }, { status: 500 });
-  }
-
-  return Response.json({ atamaSayisi: atamalar.length });
+  return Response.json({ atamaSayisi: yeniAtamalar.length });
 }
