@@ -22,6 +22,7 @@ export default async function AynaDirektorPage() {
     { count: aboneSayisi },
     { count: katilimciSayisi },
     { data: sonGorevler, error },
+    { data: grupOdevler },
   ] = await Promise.all([
     db
       .from("settings")
@@ -39,6 +40,12 @@ export default async function AynaDirektorPage() {
       )
       .order("issued_at", { ascending: false })
       .limit(20),
+    // AYNA'nın otomatik ürettiği aktif grup ödevleri (takım × tip)
+    db
+      .from("grup_odev")
+      .select("takim, tip, baslik, govde, hedef, created_at")
+      .eq("aktif", true)
+      .order("takim"),
   ]);
   if (error) throw error;
 
@@ -94,6 +101,28 @@ export default async function AynaDirektorPage() {
             tarih: g.issued_at,
           }))}
         />
+      </Katlanir>
+
+      {/* AYNA'nın otomatik ürettiği grup ödevleri — takıma göre */}
+      <Katlanir baslik="🤝 Grup Ödevleri" aciklama="AYNA'nın gruplara otomatik ürettiği ortak ödevler" ikon="🤝">
+        {(grupOdevler ?? []).length === 0 ? (
+          <p className="text-sm text-slate-400">
+            Henüz grup ödevi yok — takımlar oluşup Ön Farkındalık profilleri dolunca AYNA kendiliğinden üretir.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {(grupOdevler ?? []).map((o, i) => (
+              <li key={i} className="rounded-xl border border-gold/20 bg-gold/[0.04] p-3">
+                <p className="text-xs font-medium text-gold-light/80">
+                  {o.takim} · {o.tip === "grup_birlikte" ? "🔗 Grup-birlikte" : "🤝 Grup-içi"}
+                  {o.hedef ? ` · ${o.hedef}` : ""}
+                </p>
+                <p className="mt-1 font-semibold text-slate-100">{o.baslik}</p>
+                <p className="mt-1 text-sm leading-relaxed text-slate-300">{o.govde}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </Katlanir>
     </main>
   );

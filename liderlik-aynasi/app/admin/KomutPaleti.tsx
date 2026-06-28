@@ -40,7 +40,6 @@ const SAYFALAR: Hedef[] = [
   { tip: "sayfa", etiket: n.canliAyna, href: "/admin/canli-ayna" },
   { tip: "sayfa", etiket: n.analiz, href: "/admin/analiz" },
   { tip: "sayfa", etiket: n.takim, href: "/admin/takim" },
-  { tip: "sayfa", etiket: n.grupOdev, href: "/admin/grup-odev" },
   { tip: "sayfa", etiket: n.sunum, href: "/admin/sunum" },
   // 4 · Final
   { tip: "sayfa", etiket: n.sozler, href: "/admin/sozler" },
