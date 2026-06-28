@@ -21,6 +21,7 @@ import Katlanir from "./Katlanir";
 import OneriButonu from "./OneriButonu";
 import BasitEylem from "./BasitEylem";
 import GecisHazirlik from "./GecisHazirlik";
+import HazirlikPaneli from "./HazirlikPaneli";
 import Link from "next/link";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
@@ -329,6 +330,15 @@ export default async function AdminPanel() {
       {/* UX #4/#9 aşama hazırlık skoru — dalga süre artık nav rozetinde */}
       {tamYetki && gecisKontroller.length > 0 && (
         <GecisHazirlik baslik={gecisBaslik} kontroller={gecisKontroller} />
+      )}
+
+      {/* Kamp/prova öncesi tam sağlık kontrolü (katılımcı, eşleştirme, dalga,
+          AYNA zekâsı, VAPID anahtarı, bildirim abonesi). Eskiden hiç render
+          edilmiyordu — bildirim altyapısı görünmez kalıyordu. Katlanır. */}
+      {tamYetki && (
+        <Katlanir baslik="Kamp hazırlık kontrolü" ikon="✅">
+          <HazirlikPaneli konum="arac" aktifAsama={aktifAsama} />
+        </Katlanir>
       )}
 
       {/* GENEL DURUM: canlı özet rakamları */}
