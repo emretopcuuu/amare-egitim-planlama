@@ -2758,7 +2758,7 @@ export const tr = {
     grupOdev: {
       baslik: "Grup Ödevleri",
       aciklama:
-        "AYNA, her grubun Ön Farkındalık profillerini toplayıp ortak açığa göre ödev üretir. Grup-içi: üyeler birlikte ortak açığı çalışır. Grup-birlikte: tamamlayıcı profiller (güçlü zayıfa koçluk) eşleşir.",
+        "AYNA, her grubun Ön Farkındalık profillerini toplayıp ortak açığa göre ödev üretir. Grup-içi: üyeler birlikte ortak açığı çalışır. Grup-birlikte: tamamlayıcı profiller (güçlü zayıfa koçluk) eşleşir. Takım oluşup profiller dolunca AYNA bunları KENDİLİĞİNDEN üretir ve üyelere bildirir — aşağıdaki butonla istersen elle yeniden üretebilirsin.",
       uyeEtiket: (profilli: number, toplam: number) => `${profilli}/${toplam} üye profilini doldurdu`,
       zayifEtiket: "Baskın zayıf alan",
       acikEtiket: "Ortak en büyük açık",

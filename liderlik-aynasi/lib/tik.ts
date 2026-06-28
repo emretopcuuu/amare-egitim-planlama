@@ -12,6 +12,7 @@ import {
   aynaAniUret,
 } from "@/lib/ayna";
 import { aynaAniAdaylari } from "@/lib/aynaAniTetik";
+import { grupOdevUret } from "@/lib/grupOdev";
 import { kivilcimHesapla } from "@/lib/kivilcim";
 import {
   kaymaKarari,
@@ -448,6 +449,53 @@ export async function tikCalistir(
         "/"
       );
       ozet.fisilti++;
+    }
+  }
+
+  // 3b4) GRUP ÖDEVİ (otomatik): takım oluşmuş + profilli üyesi olan + henüz aktif
+  // ödevi olmayan (takım × tip) için AYNA grup ödevi üretir ve o takımın üyelerine
+  // bildirir. Olgunluğa bağlı (takım + profil), zaman değil; tik başına ≤3 üretim
+  // (Opus maliyeti). Eskiden admin Grup Ödevleri sayfasından elle üretiyordu.
+  if (mod === "kamp" && !sahneSessiz) {
+    const takimlar = [
+      ...new Set(
+        (kisiler ?? []).map((k) => k.team).filter((t): t is string => !!t)
+      ),
+    ];
+    if (takimlar.length > 0) {
+      const { data: mevcutOdev } = await db
+        .from("grup_odev")
+        .select("takim, tip")
+        .eq("aktif", true);
+      const olan = new Set((mevcutOdev ?? []).map((o) => `${o.takim}|${o.tip}`));
+      const uyeler = new Map<string, string[]>();
+      for (const k of kisiler ?? []) {
+        if (!k.team) continue;
+        const arr = uyeler.get(k.team) ?? [];
+        arr.push(k.id);
+        uyeler.set(k.team, arr);
+      }
+      let grupUretim = 0;
+      for (const takim of takimlar) {
+        if (grupUretim >= 3) break;
+        for (const tip of ["grup_ici", "grup_birlikte"] as const) {
+          if (grupUretim >= 3) break;
+          if (olan.has(`${takim}|${tip}`)) continue;
+          const sonuc = await grupOdevUret(db, takim, tip);
+          if (!sonuc) continue;
+          grupUretim++;
+          for (const uid of uyeler.get(takim) ?? []) {
+            await katilimciyaBildir(
+              db,
+              uid,
+              "🤝 Grubunun yeni ödevi var",
+              sonuc.baslik,
+              "/grup"
+            );
+          }
+        }
+      }
+      if (grupUretim > 0) ozet.uretilen += grupUretim;
     }
   }
 
