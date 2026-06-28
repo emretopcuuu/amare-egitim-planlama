@@ -155,10 +155,11 @@ export async function grupOdevUret(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-opus-4-8",
+      // MALİYET: grup ödevi üretimi → Haiku 4.5 (effort yok, format kalır).
+      model: "claude-haiku-4-5",
       max_tokens: 1024,
       thinking: { type: "disabled" },
-      output_config: { effort: "low", format: { type: "json_schema", schema: SEMA } },
+      output_config: { format: { type: "json_schema", schema: SEMA } },
       system: `${PERSONA}
 
 Görevin: bir kamp grubuna TEK bir ödev üret. ${tipYonerge}
