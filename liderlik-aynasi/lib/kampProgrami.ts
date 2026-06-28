@@ -53,7 +53,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
     gun: 1, baslangic: "14:30", bitis: "19:00",
     baslik: "Havuz, Güneş, Dinlenme, Tesisi Keşfetme ve Ayna 🪞 Görevlerinin Başlaması", tur: "serbest",
     aynaNotu:
-      "İlk gözlem görevleri damla damla dağıtılır (hafif, eğlenceli). 'Aynan seni gördü' kişisel videoları bu pencerede düşmeye başlar. DALGA 1 — İlk İzlenim de bu pencerede açılır; akşam yemeğinden önce puanlama biter.",
+      "İlk gözlem görevleri damla damla dağıtılır (hafif, eğlenceli). 'Aynan seni gördü' kişisel videoları bu pencerede düşmeye başlar. (Liderlik değerlendirmesi yok — o, Gün 3 sabahı tek seferde açılır.)",
   },
   {
     gun: 1, baslangic: "19:00", bitis: "21:00",
@@ -105,7 +105,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
   {
     gun: 2, baslangic: "08:00", bitis: "09:30",
     baslik: "Kahvaltı", tur: "yemek",
-    aynaNotu: "09:00 DALGA 2 — Gözlem açılır (sinematik + push). Görev akışı 09:30 blokta başlar.",
+    aynaNotu: "Görev akışı 09:30 blokta başlar. (Değerlendirme yok — Gün 3 sabahı.)",
   },
   {
     gun: 2, baslangic: "09:30", bitis: "19:30",
@@ -113,7 +113,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
       "Oyunlar & Öğle Yemeği & AYNA 🪞 Görevlendirmeleri & David'in Odasında Grup Görüşmeleri & Serbest Zaman",
     tur: "oyun",
     aynaNotu:
-      "★ AYNA GÖREV ANA PENCERESİ. Gün boyu kişiye özel görevler akar: oyunlara, grup görüşmelerine ve serbest zamana bağlı gözlem/cesaret/gizli görevler. Tüm ekiplerin programı farklı — AYNA herkese ayrı ritimde verir. 13:30 SENKRON AN + Dalga 2 puanlama hatırlatması.",
+      "★ AYNA GÖREV ANA PENCERESİ. Gün boyu kişiye özel görevler akar: oyunlara, grup görüşmelerine ve serbest zamana bağlı gözlem/cesaret/gizli görevler. Tüm ekiplerin programı farklı — AYNA herkese ayrı ritimde verir. 13:30 SENKRON AN.",
   },
   {
     gun: 2, baslangic: "19:30", bitis: "21:00",
@@ -124,7 +124,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
     gun: 2, baslangic: "21:00", bitis: "23:00",
     baslik: "AYNA 🪞 Görevlendirmeleri & Serbest Zaman", konusmaci: "AYNA", tur: "ayna",
     aynaNotu:
-      "★ AYNA AKŞAM GÖREV PENCERESİ. Telefonun rahatça elde olduğu blok: birikmiş yanıtlar, yansıma görevleri, Dalga 2 son çağrı, kişiye özel akşam görevleri. İstenirse Direktör panelinden 'Ayna Anı' (günün özeti) salona okunur. Blok bitince gece fısıltısı.",
+      "★ AYNA AKŞAM GÖREV PENCERESİ. Telefonun rahatça elde olduğu blok: birikmiş yanıtlar, yansıma görevleri, kişiye özel akşam görevleri. İstenirse Direktör panelinden 'Ayna Anı' (günün özeti) salona okunur. Blok bitince gece fısıltısı.",
   },
 
   // ---- GÜN 3 — PAZAR · 19 Temmuz ----
@@ -132,7 +132,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
     gun: 3, baslangic: "07:00", bitis: "10:00",
     baslik: "Kahvaltı & Oda Boşaltma", tur: "yemek",
     aynaNotu:
-      "07:00 sabah yoklaması. 07:15 DALGA 3 — Gerçek Algı açılır; bavul telaşına karşı pencere geniş (kahvaltı + checkout). 09:30 SENKRON son çağrı — puanlama oturumlardan önce bitsin.",
+      "07:00 sabah yoklaması. 07:15 KAMP DEĞERLENDİRMESİ açılır (kampın tek liderlik puanlaması); bavul telaşına karşı pencere geniş (kahvaltı + checkout). 09:30 SENKRON son çağrı — puanlama oturumlardan önce bitsin.",
   },
   {
     gun: 3, baslangic: "10:00", bitis: "10:15",
@@ -158,7 +158,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
   {
     gun: 3, baslangic: "11:15", bitis: "11:40",
     baslik: "Ara", tur: "ara",
-    aynaNotu: "Dalga 3 son çağrı / puanlama kapanır. Zirve oturumuna geçişten önce son fırsat.",
+    aynaNotu: "Kamp Değerlendirmesi son çağrı / puanlama kapanır. Zirve oturumuna geçişten önce son fırsat.",
   },
   {
     gun: 3, baslangic: "11:40", bitis: "13:10",

@@ -484,14 +484,12 @@ async function adimCalistir(db: Db, adimId: string, ilerleme: number): Promise<A
     case "hedef": return adimHedef(db);
     case "eslestirme": return adimEslestirme(db);
     case "kamp_ac": return adimKampAc(db);
-    case "dalga1": return adimDalga(db, 1);
     case "gorev1": return adimGorev(db, ilerleme, 1);
     case "yanit1": return adimYanit(db, ilerleme, 1);
-    case "dalga2": return adimDalga(db, 2);
     case "gorev2": return adimGorev(db, ilerleme, 2);
     case "yanit2": return adimYanit(db, ilerleme, 2);
     case "oyun": return adimOyun(db);
-    case "dalga3": return adimDalga(db, 3);
+    case "dalga1": return adimDalga(db, 1);
     case "aynaesi": return adimAynaEsi(db);
     case "muhur": return adimMuhur(db);
     case "tamam": return { tamam: true, ilerleme: SIM_TOPLAM, mesaj: "Simülasyon zaten tamamlandı." };

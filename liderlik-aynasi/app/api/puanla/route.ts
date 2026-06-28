@@ -37,8 +37,8 @@ export async function POST(req: Request) {
   const db = supabaseAdmin();
   const [dalga, ozellikler] = await Promise.all([acikDalga(db), aktifOzellikler(db)]);
   const kendisi = hedefId === session.sub;
-  // Dalga açıksa onun numarası; değilse kamp öncesi (FAZ 0) yalnız ÖZ-PUAN
-  // Dalga 1'e (İlk İzlenim) yazılır — başkasını puanlama kapalı kalır.
+  // Değerlendirme açıksa onun id'si; değilse kamp öncesi (FAZ 0) yalnız ÖZ-PUAN
+  // Kamp Değerlendirmesine (id=1) yazılır — başkasını puanlama kapalı kalır.
   let waveId: number;
   if (dalga) {
     waveId = dalga.id;

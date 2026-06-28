@@ -25,8 +25,10 @@ export type AsistanDurum = {
   bugun: string; // Istanbul "YYYY-MM-DD"
   katilimciSayisi: number;
   acikDalgaId: number | null;
-  ozTamam: number; // açık dalgada kendini puanlayan sayısı
-  ozToplam: number; // toplam katılımcı (açık dalga için payda)
+  ozTamam: number; // açık değerlendirmede kendini puanlayan sayısı
+  ozToplam: number; // toplam katılımcı (açık değerlendirme için payda)
+  // Kamp Değerlendirmesi (id=1) açılıp kapandı mı — açma adımını tekrar önermemek için.
+  degerlendirmeKapandi: boolean;
   raporlarAcik: boolean;
   sozAcik: boolean;
   // #3 Kamp öncesi funnel: Pusula penceresi açık mı + hazırlığı bitiren sayısı
@@ -121,23 +123,40 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
   }
 
   // 3) KAMP GÜNLERİ (gun: 1-3)
+  // Yeni model: kamp içi tek değerlendirme var (Kamp Değerlendirmesi, id=1),
+  // Gün 3 sabahı tören öncesi açılır. Gün 1-2'de değerlendirme yoktur.
   if (gun === 3) {
-    // Gün 3 finali: Dalga 3 → kapat → Ayna Raporları → Kapanış Sözü
-    if (d.acikDalgaId === 3) {
+    // Değerlendirme açıksa: çoğunluk bitince kapat, değilse sürüyor.
+    if (d.acikDalgaId === 1) {
       return cogunlukBitti
         ? {
             ikon: "👁",
-            baslik: "Kapanış vakti — Dalga 3'ü kapat",
-            aciklama: `${d.ozTamam}/${d.ozToplam} son dalgayı bitirdi. Dalga 3'ü kapat, aynaları açmaya hazırlan.`,
-            butonEtiket: "Dalga 3'ü Kapat",
+            baslik: "Kapanış vakti — Değerlendirmeyi kapat",
+            aciklama: `${d.ozTamam}/${d.ozToplam} değerlendirmeyi bitirdi. Kamp Değerlendirmesini kapat, aynaları açmaya hazırlan.`,
+            butonEtiket: "Değerlendirmeyi Kapat",
             href: "#dalga",
             vurgu: true,
             eylem: "dalga-kapat",
-            eylemDalga: 3,
-            basari: "Dalga 3 kapandı. Şimdi Ayna Raporlarını açabilirsin.",
-            onay: "Dalga 3'ü kapatınca katılımcılar artık puan giremez. Geri alınabilir.",
+            eylemDalga: 1,
+            basari: "Kamp Değerlendirmesi kapandı. Şimdi Ayna Raporlarını açabilirsin.",
+            onay: "Değerlendirmeyi kapatınca katılımcılar artık puan giremez. Geri alınabilir.",
           }
-        : dalgaSuruyor(3, d);
+        : dalgaSuruyor(d);
+    }
+    // Henüz açılmadı (ve kapanmadı): Gün 3 sabahının ilk işi — değerlendirmeyi aç.
+    if (!d.degerlendirmeKapandi && !d.raporlarAcik) {
+      return {
+        ikon: "🪞",
+        baslik: "Kamp Değerlendirmesini aç",
+        aciklama:
+          "Tören öncesi son adım: katılımcılar birbirini liderlik özellikleriyle puanlasın. Pencere kapanınca Ayna Raporları hazır olur.",
+        butonEtiket: "Değerlendirmeyi Aç",
+        href: "#dalga",
+        vurgu: true,
+        eylem: "dalga-ac",
+        eylemDalga: 1,
+        basari: "Kamp Değerlendirmesi açıldı. Katılımcılar artık puanlamaya başlayabilir.",
+      };
     }
     if (!d.raporlarAcik) {
       return {
@@ -176,36 +195,18 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
     };
   }
 
-  // Gün 1-2: günün dalgası = gün numarası
+  // Gün 1-2: değerlendirme yok. Bu günler görev/sahne/oyun akışıdır; admin
+  // canlı kampı yönetir, kapanış değerlendirmesi Gün 3 sabahına bırakılır.
   if (gun === 1 || gun === 2) {
-    if (d.acikDalgaId === null) {
-      return {
-        ikon: "🌊",
-        baslik: `Dalga ${gun}'i aç`,
-        aciklama: `Gün ${gun}. Katılımcıların ${gun}. dalgayı doldurabilmesi için dalgayı aç.`,
-        butonEtiket: `Dalga ${gun}'i Aç`,
-        href: "#dalga",
-        vurgu: true,
-        eylem: "dalga-ac",
-        eylemDalga: gun,
-        basari: `Dalga ${gun} açıldı. Katılımcılar artık puanlamaya başlayabilir.`,
-      };
-    }
-    if (cogunlukBitti) {
-      return {
-        ikon: "✅",
-        baslik: `Çoğu Dalga ${d.acikDalgaId}'i bitirdi`,
-        aciklama: `${d.ozTamam}/${d.ozToplam} kendini puanladı. Dalgayı kapatıp sonraki güne geçebilirsin.`,
-        butonEtiket: "Dalgayı Kapat",
-        href: "#dalga",
-        vurgu: false,
-        eylem: "dalga-kapat",
-        eylemDalga: d.acikDalgaId,
-        basari: `Dalga ${d.acikDalgaId} kapandı. Sonraki güne geçebilirsin.`,
-        onay: "Dalgayı kapatınca katılımcılar artık bu dalgaya puan giremez. Geri alınabilir.",
-      };
-    }
-    return dalgaSuruyor(d.acikDalgaId, d);
+    return {
+      ikon: "🎬",
+      baslik: `Gün ${gun} — kampı yönet`,
+      aciklama:
+        "Bugün görevler, sahne ve oyunlar akışı. Kapanış değerlendirmesi Gün 3 sabahı açılacak; şimdilik canlı akışı yönet.",
+      butonEtiket: "Sahne Kumandası",
+      href: "/admin/sahne-kumanda",
+      vurgu: false,
+    };
   }
 
   // Güvenli varsayılan (tarih kamp aralığında ama gün eşleşmedi — olası değil)
@@ -219,10 +220,10 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
   };
 }
 
-function dalgaSuruyor(dalgaId: number, d: AsistanDurum): AdminOneri {
+function dalgaSuruyor(d: AsistanDurum): AdminOneri {
   return {
     ikon: "⏳",
-    baslik: `Dalga ${dalgaId} sürüyor`,
+    baslik: "Değerlendirme sürüyor",
     aciklama: `${d.ozTamam}/${d.ozToplam} kendini puanladı. Eksik kalanları dürtebilirsin.`,
     butonEtiket: "Eksikleri Gör",
     href: "#ilerleme",

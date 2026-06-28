@@ -9,7 +9,7 @@ export const maxDuration = 60;
 
 const PARTI = 10;
 
-// Dalga 4 davetleri: her çağrı en fazla PARTI e-posta gönderir; istemci
+// "90 Gün Sonra" davetleri: her çağrı en fazla PARTI e-posta gönderir; istemci
 // offset ile döngüler (mektup üretimiyle aynı desen — süre sınırına takılmaz,
 // ilerleme görünür). Son partide gönderim zamanı settings'e yazılır.
 export async function POST(req: Request) {
