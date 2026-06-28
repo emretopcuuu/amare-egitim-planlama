@@ -1466,7 +1466,7 @@ export const tr = {
       moderasyon: "Moderasyon",
       komutan: "Komutan",
       sahne: "Sahne",
-      kiosk: "Kayıt",
+
       foto: "Fotoğraf",
       canliAyna: "Canlı Ayna",
       sozler: "Sözler",
@@ -2157,14 +2157,7 @@ export const tr = {
           "NE ZAMAN: Kodlar üretildikten sonra, kamp/kayıt öncesi bas ve yazdır.",
         ],
       },
-      kiosk: {
-        baslik: "Kayıt masası ekranı",
-        metin: [
-          "NE: Kayıt masasındaki bir ekranda (laptop/tablet) açık tutulur — canlı katılım sayacı, uygulamayı açan büyük QR ve kodunu kaybedeni isimle bulma.",
-          "NASIL: Katılımcı QR'ı okutur, kendi koduyla girer; sayaç anlık ilerler — masada 'kaç kişi girdi' bir bakışta görünür.",
-          "NE ZAMAN: Kayıt/karşılama sırasında masadaki ekrana koy.",
-        ],
-      },
+
       analiz: {
         baslik: "Analiz panosu",
         metin: [
@@ -2493,18 +2486,7 @@ export const tr = {
       higgsKapali: "Higgsfield yapılandırılmadı (HIGGSFIELD_CREDENTIALS yok) — üretim devre dışı.",
       hata: "İşlem başarısız. Tekrar dene.",
     },
-    // Kayıt masası kiosk ekranı: canlı katılım + QR + kod bulma
-    kiosk: {
-      baslik: "Kayıt Masası",
-      katildi: "katıldı",
-      toplam: (n: number) => `${n} kayıtlı`,
-      qrBaslik: "Uygulamayı aç",
-      qrAciklama: "Telefon kamerası ile okut veya yaka kartındaki QR'ı kullan.",
-      bulBaslik: "Kodunu kaybedeni bul",
-      bulYer: "İsim yaz…",
-      bulYok: "Eşleşme yok.",
-      bulKod: "Kod",
-    },
+
     // Felaket sigortası: tüm verinin tek dosyada yedeği
     yedek: {
       baslik: "Veri Yedeği",
