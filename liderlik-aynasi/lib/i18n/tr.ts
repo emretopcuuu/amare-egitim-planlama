@@ -82,6 +82,13 @@ export const tr = {
     gorev: (n: number) => `${n} görevle kas çalıştı`,
     beklenti: "Gün 3'te aynan tam açılacak. 👁",
   },
+  // Karşılaşma — AYNA'nın eşlediği tamamlayıcı kişiyle gerçek konuşma daveti
+  karsilasma: {
+    baslik: "Bugünün Karşılaşması",
+    metin: (ad: string) =>
+      `${ad} ile 10 dakika konuş. Seni AYNA eşledi — onda senin için bir şey var, sende onun için.`,
+    not: "Neden bu kişi olduğunu Gün 3'te anlayacaksın.",
+  },
   altNav: {
     ana: "Ana sayfa",
     degerlendir: "Değerlendir",
