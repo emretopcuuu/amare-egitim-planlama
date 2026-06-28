@@ -2,7 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { aktifOzellikler } from "@/lib/degerlendirme";
-import { pusulaOzeti } from "@/lib/pusula";
+import { pusulaOzeti, pusulaCekirdek } from "@/lib/pusula";
 import { hedefOzeti } from "@/lib/hedef";
 import { yeniCumleOku } from "@/lib/bosluk";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
@@ -132,7 +132,7 @@ function jsonCoz<T>(yanit: Anthropic.Message): T | null {
 // GELİŞTİRME #4 — GÖREV YAYI.
 const ARK_ASAMALARI = [
   { ad: "ısınma", yonerge: "İlk temas: küçük, güvenli, merak uyandıran bir adım. Çekirdek temayı sezdir ama üstüne yüklenme." },
-  { ad: "yüzleşme", yonerge: "Aday artık çekirdek kör noktasıyla DOĞRUDAN ama güvenli biçimde yüzleşsin — kaçtığı şeyi nazikçe yapsın." },
+  { ad: "yüzleşme", yonerge: "Aday artık çekirdek temasıyla DOĞRUDAN ama güvenli biçimde yüzleşsin — kaçındığı / zorlandığı şeyi nazikçe yapsın." },
   { ad: "kanıt", yonerge: "Yeni davranışı GERÇEK bir durumda uygulayıp somut bir kanıt/sonuç toplasın (birinin tepkisi, bir sayı, bir an)." },
   { ad: "entegrasyon", yonerge: "Yeni davranışı kendi sözüne/kimliğine bağlasın; kamp sonrası da sürdürebileceği bir alışkanlığa dönüştürsün." },
 ] as const;
@@ -278,6 +278,7 @@ export async function gorevUret(
     oncekilerSonuc,
     puanlarSonuc,
     pusula,
+    pusulaCekirdekSonuc,
     hedef,
     onFarkindalik,
     kocuPaylasim,
@@ -303,6 +304,7 @@ export async function gorevUret(
       .select("trait_id, score, is_self")
       .eq("target_id", katilimci.id),
     pusulaOzeti(db, katilimci.id),
+    pusulaCekirdek(db, katilimci.id),
     hedefOzeti(db, katilimci.id),
     onFarkindalikOzeti(db, katilimci.id),
     kocuOzeti(db, katilimci.id),
@@ -459,13 +461,19 @@ export async function gorevUret(
   if (naziklesir) zorluk = 1;
   const faz = mod === "yolculuk" ? fazBul(gun) : null;
 
-  // Görev Yayı
+  // Görev Yayı — çekirdek tema öncelik sırası: kör nokta → en büyük açık →
+  // pusula çekirdek nedeni → pusula iç engeli. #4: kör noktası dolmamış ama
+  // pusulası dolu kişide de yay kurulur (görevler bağımsız atışlara dönmesin).
   const ofYay = onFarkindalik as {
     enZayifAlan?: string | null;
     enBuyukAciklar?: { baslik: string }[];
   } | null;
   const cekirdekTema =
-    ofYay?.enZayifAlan ?? ofYay?.enBuyukAciklar?.[0]?.baslik ?? null;
+    ofYay?.enZayifAlan ??
+    ofYay?.enBuyukAciklar?.[0]?.baslik ??
+    pusulaCekirdekSonuc?.ic_engel ??
+    pusulaCekirdekSonuc?.cekirdek_neden?.[0] ??
+    null;
   const yay = cekirdekTema
     ? { cekirdekTema, ...arkAsamasi(tamamCountSonuc?.count ?? 0) }
     : null;

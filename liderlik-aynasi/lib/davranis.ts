@@ -436,6 +436,15 @@ export function turSec(
     }
     agirliklar = GOREV_TURLERI.map((t) => [t, taban[t]]);
   }
+  // #5 ÇEŞİTLİLİK: son 2 görevde geçen türün ağırlığını yarıya indir — aynı tür
+  // art arda tekrarlanmasın (oncekiTurler en yeniden eskiye sıralı). Tamamen
+  // engellemez, yalnız çeşitliliği teşvik eder; "gizli" zaten ayrıca korunuyor.
+  const sonIkiTur = new Set(oncekiTurler.slice(0, 2));
+  if (sonIkiTur.size > 0) {
+    agirliklar = agirliklar.map(
+      ([t, a]) => [t, sonIkiTur.has(t) ? a / 2 : a] as [GorevTuru, number]
+    );
+  }
   // Admin kapattığı türler: ağırlığı sıfırla (hepsi kapalı kalırsa yok say).
   if (kapaliTurler && kapaliTurler.length) {
     const suzulmus = agirliklar.map(
