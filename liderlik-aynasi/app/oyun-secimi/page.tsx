@@ -13,12 +13,8 @@ export default async function OyunSecimiSayfa() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
-  const [{ data: kisi }, { data: ayar }] = await Promise.all([
-    db.from("participants").select("team").eq("id", session.sub).maybeSingle(),
-    db.from("settings").select("value").eq("key", "oyun_secimi_acik").maybeSingle(),
-  ]);
+  const { data: kisi } = await db.from("participants").select("team").eq("id", session.sub).maybeSingle();
   if (kisi?.team) redirect("/");
-  if (ayar?.value !== "true") redirect("/");
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">

@@ -143,7 +143,7 @@ export default async function AnaSayfa({
       db
         .from("settings")
         .select("key, value")
-        .in("key", ["oyun_secimi_acik", "gunun_cumlesi"]),
+        .in("key", ["gunun_cumlesi"]),
       db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
       // Ses/foto ritüeli kapısı için erken kontrol — akışın EN BAŞINA gelir.
       db.from("voice_profiles").select("participant_id").eq("participant_id", session.sub).maybeSingle(),
@@ -174,7 +174,7 @@ export default async function AnaSayfa({
     pusulaTamam: !!pusulaErken?.tamamlandi_at,
     hedefTamam: !!hedefErken?.tamamlandi_at,
     ofTamam: !!ofDurum?.tamamlandi_at,
-    oyunSecimiAcik: ayar.get("oyun_secimi_acik") === "true",
+    oyunSecimiAcik: true,
     pusulaAcik: true,
     onFarkindalikAcik: true,
     kampIciHedefKapisi,
