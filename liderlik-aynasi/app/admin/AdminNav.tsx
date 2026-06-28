@@ -34,14 +34,13 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
       { href: "/admin/qr", etiket: n.qr },
       { href: "/admin/davet", etiket: n.davet },
       { href: "/admin/yansima", etiket: n.yansima },
-
-      { href: "/admin/icerik", etiket: n.icerik },
     ],
   },
   {
     ad: g.canli,
     ikon: "🎬",
     linkler: [
+      { href: "/admin/icerik", etiket: n.icerik },
       { href: "/admin/gonder", etiket: n.gonder },
       { href: "/admin/kontrol#dalga", etiket: n.kDalga },
       { href: "/admin/ayna-direktoru", etiket: n.komuta },
