@@ -222,6 +222,17 @@ export function sahneSessizMi(gun: 1 | 2 | 3, gunDakikasi: number): boolean {
   return suankiMadde(gun, gunDakikasi)?.sessiz === true;
 }
 
+/** Şu andan SONRA başlayan ilk program maddesi (sıradaki) — yoksa null.
+ * Görev üretiminde "10 dk sonra X'e gidiyorsun, şu niyeti taşı" köprüsü için. */
+export function siradakiMadde(
+  gun: 1 | 2 | 3,
+  gunDakikasi: number
+): ProgramMaddesi | null {
+  return (
+    gunProgrami(gun).find((m) => dakikaCevir(m.baslangic) > gunDakikasi) ?? null
+  );
+}
+
 // GELİŞTİRME #7 — Ana kilitli tetikleme. Az önce BİTEN (deneyimsel) bir etkinlik
 // varsa onu yakala: sahne/oyun/doğa/ayna/gezi anlarının duygusu hâlâ sıcakken
 // göreve dönsün. Yemek/serbest/ara gibi nötr bloklar bu kapsama girmez.

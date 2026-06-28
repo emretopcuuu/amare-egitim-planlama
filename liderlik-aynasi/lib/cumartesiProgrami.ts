@@ -383,6 +383,17 @@ export function cumartesiGrupEtkinligi(
   return { madde: cmtMadde(blok), ipucu: TUR_GOREV_IPUCU[blok.tur] };
 }
 
+/** Grubun sıradaki etkinliği (niyet/hazırlık köprüsü) — ProgramMaddesi olarak.
+ * Yalnız deneyimsel/anlamlı bloklar; yemek nötr olduğu için atlanır. */
+export function cumartesiGrupSiradakiEtkinlik(
+  grup: number,
+  gunDk: number
+): ProgramMaddesi | null {
+  const blok = grupSiradaki(grup, gunDk);
+  if (!blok || blok.tur === "yemek") return null;
+  return cmtMadde(blok);
+}
+
 /** Az önce biten grup etkinliği (ana-bağlı tetik) — nötr bloklar hariç. */
 export function cumartesiGrupBitenEtkinlik(
   grup: number,
