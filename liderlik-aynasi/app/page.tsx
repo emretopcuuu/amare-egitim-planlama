@@ -24,6 +24,8 @@ import KonusanYansima from "@/components/KonusanYansima";
 import SicakAdim from "@/components/SicakAdim";
 import AlgiKoprusuKarti from "@/components/AlgiKoprusuKarti";
 import { algiKoprusu } from "@/lib/algiKoprusu";
+import KarsilasmaKarti from "@/components/KarsilasmaKarti";
+import { karsilasmaBul } from "@/lib/karsilasma";
 import UstMenu from "@/components/UstMenu";
 import { SiradakiOnizleme } from "@/components/AsamaRayi";
 
@@ -610,10 +612,13 @@ export default async function AnaSayfa({
   //
   // #3 Algı Köprüsü (finali koruyan canlı deney): yalnız kamp açıkken ve raporlar
   // HENÜZ kapalıyken (Gün 3 öncesi/finalden önce) gösterilir; içerik açmaz.
-  const koprusu =
+  const [koprusu, karsilasma] =
     kisi?.camp_unlocked_at && !raporlarAcik
-      ? await algiKoprusu(db, session.sub)
-      : null;
+      ? await Promise.all([
+          algiKoprusu(db, session.sub),
+          karsilasmaBul(db, session.sub),
+        ])
+      : [null, null];
   return (
     <Sayfa ust={ust}>
       {/* Program = omurga: boş anda ana kart odur (Şu an / Sırada canlı) */}
@@ -621,6 +626,9 @@ export default async function AnaSayfa({
 
       {/* AYNA'nın deneyi — ikincil, merak uyandıran (kör nokta içeriği YOK) */}
       {koprusu && <AlgiKoprusuKarti veri={koprusu} />}
+
+      {/* Karşılaşma — AYNA'nın eşlediği tamamlayıcı kişiyle konuşma daveti */}
+      {karsilasma && <KarsilasmaKarti partnerAd={karsilasma.partnerAd} />}
 
       {/* İkincil sakin durum — küçük, programın altında akar */}
       <div className="kart-cam relative overflow-hidden rounded-2xl p-5 text-center">
