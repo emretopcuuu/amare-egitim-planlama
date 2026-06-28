@@ -1267,6 +1267,62 @@ export async function senkronGorevUret(
 // Mentorluk eşleştirmesi kariyer rütbe sırasını lib/persona.ts'ten okur
 // (KARIYER_RANK — star dahil tek kaynak).
 
+// #9 Mentorluk metnini kişinin gerçek gündemine demirler: pusula iç engeli /
+// çekirdek nedeni / kör noktası varsa AI ile kişiselleştirir. Veri yoksa veya
+// AI düşerse null döner → çağıran statik metne güvenli düşüş yapar.
+async function mentorlukBodyKisisel(
+  db: Db,
+  pid: string,
+  ad: string,
+  isimler: string[]
+): Promise<string | null> {
+  if (!process.env.ANTHROPIC_API_KEY) return null;
+  const [cekirdek, onFark] = await Promise.all([
+    pusulaCekirdek(db, pid),
+    onFarkindalikOzeti(db, pid),
+  ]);
+  const of = onFark as {
+    enZayifAlan?: string | null;
+    korNokta?: { tersDavranis?: string | null };
+  } | null;
+  const takildigi =
+    cekirdek?.ic_engel ??
+    cekirdek?.cekirdek_neden?.[0] ??
+    of?.enZayifAlan ??
+    of?.korNokta?.tersDavranis ??
+    null;
+  if (!takildigi) return null;
+  try {
+    const client = new Anthropic();
+    const yanit = await client.messages.create({
+      model: "claude-sonnet-4-6",
+      max_tokens: 400,
+      thinking: { type: "disabled" },
+      output_config: { effort: "low" },
+      system: `${PERSONA}\n\nGörevin: bir MENTORLUK görevi metni yaz. Kişi bugün 3 mentor adayından birini seçip en az 15 dk konuşacak. Metni kişinin ŞU AN takıldığı gerçek konuya nazikçe demirle — ama yüzüne vurma. Kurallar:\n- 2-3 kısa, sade cümle. "Sen" dili, doğru Türkçe.\n- Verilen 3 ismi metinde MUTLAKA kalın (**İsim**) olarak ver.\n- Sonunda akşam sana ne yazacağını iste: kimin yanına gitti, ne sordu, ne götürdü.\n- Süslü/şiirsel değil; net ve davetkâr ol.`,
+      messages: [
+        {
+          role: "user",
+          content: JSON.stringify({
+            ad,
+            mentorAdaylari: isimler,
+            suAnTakildigi: takildigi,
+          }),
+        },
+      ],
+    });
+    if (yanit.stop_reason === "refusal") return null;
+    const metin = yanit.content
+      .filter((b) => b.type === "text")
+      .map((b) => b.text)
+      .join("")
+      .trim();
+    return metin ? metin.slice(0, 600) : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Mentorluk görevi: kişinin kariyer seviyesine göre aynı/üst basamaktan
  * 3 isim önerir; katılımcı birini seçip 15 dk konuşur.
  * Seviye bilgisi eksik katılımcılarda rastgele 3 kişi önerilir. */
@@ -1303,8 +1359,12 @@ export async function mentorlukGorevUret(
     return seviyeEtiketi ? `${k.full_name} (${seviyeEtiketi})` : k.full_name;
   });
 
-  // Görev metni — AI yerine deterministik (hız + maliyet: isimleri doğrudan gömüyoruz)
-  const body = `${ad}, bugün bir mentor seç: **${isimler[0]}**, **${isimler[1]}**${isimler[2] ? ` veya **${isimler[2]}**` : ""}. Birini bul, en az 15 dakika konuş — konu: şu an işinde en çok takıldığın bir şey. Akşam bana yaz: kimin yanına gittin, ne sordun ve ne götürdün?`;
+  // Statik metin (güvenli düşüş) — isimler doğrudan gömülü.
+  const statikBody = `${ad}, bugün bir mentor seç: **${isimler[0]}**, **${isimler[1]}**${isimler[2] ? ` veya **${isimler[2]}**` : ""}. Birini bul, en az 15 dakika konuş — konu: şu an işinde en çok takıldığın bir şey. Akşam bana yaz: kimin yanına gittin, ne sordun ve ne götürdün?`;
+
+  // #9 KİŞİSELLEŞTİRME: kişinin pusula nedeni / iç engeli / kör noktası varsa
+  // mentorluk metni o gerçek gündeme demirlenir (AI ile). AI düşerse statik metin.
+  const body = (await mentorlukBodyKisisel(db, katilimci.id, ad, isimler)) ?? statikBody;
 
   return {
     kind: "mentorluk",
