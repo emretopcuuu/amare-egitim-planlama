@@ -12,15 +12,6 @@ export async function POST() {
   }
 
   const db = supabaseAdmin();
-  const { data: ayar } = await db
-    .from("settings")
-    .select("value")
-    .eq("key", "pusula_acik")
-    .maybeSingle();
-  if (ayar?.value !== "true") {
-    return Response.json({ hata: "Pusula penceresi kapalı." }, { status: 409 });
-  }
-
   const ozellikler = await aktifOzellikler(db);
   const [{ data: kisiler }, { data: puslar }, { data: ozPuanlar }] = await Promise.all([
     db
