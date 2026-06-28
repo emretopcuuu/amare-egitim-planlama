@@ -13,14 +13,15 @@ import {
 
 const t = tr.admin.whatsapp;
 
-type Kisi = { id: string; ad: string; takim: string | null; telefonVar: boolean };
-type HedefTipi = "genel" | "takim" | "kisiler" | "odevYapmayan";
+type Kisi = { id: string; ad: string; takim: string | null; telefonVar: boolean; girisYapti?: boolean };
+type HedefTipi = "genel" | "takim" | "kisiler" | "odevYapmayan" | "girisYapmamis";
 
 export default function WhatsAppGonder({
   yapilandirildi,
   takimlar,
   kisiler,
   odevYapmayanSayisi,
+  girisYapmamisSayisi,
   telefonsuz,
   kayitliAnahtarlar,
   sadeceSablonlar,
@@ -29,6 +30,7 @@ export default function WhatsAppGonder({
   takimlar: string[];
   kisiler: Kisi[];
   odevYapmayanSayisi: number;
+  girisYapmamisSayisi?: number;
   telefonsuz: number;
   kayitliAnahtarlar: string[];
   sadeceSablonlar?: WaSablonAnahtar[];
@@ -57,10 +59,11 @@ export default function WhatsAppGonder({
     if (hedefTipi === "takim")
       return kisiler.filter((k) => k.takim === takim && k.telefonVar).length;
     if (hedefTipi === "odevYapmayan") return odevYapmayanSayisi;
+    if (hedefTipi === "girisYapmamis") return girisYapmamisSayisi ?? 0;
     if (hedefTipi === "kisiler")
       return kisiler.filter((k) => seciliKisiler.has(k.id) && k.telefonVar).length;
     return 0;
-  }, [hedefTipi, takim, seciliKisiler, kisiler, telefonluToplam, odevYapmayanSayisi]);
+  }, [hedefTipi, takim, seciliKisiler, kisiler, telefonluToplam, odevYapmayanSayisi, girisYapmamisSayisi]);
 
   const onizlemeMetni = sablon
     ? onizleme(sablon, degiskenleriUret(sablon, { ad: sablon.ornek["1"], kod: sablon.ornek["2"] }, mesaj || sablon.ornek["2"]))
@@ -171,7 +174,12 @@ export default function WhatsAppGonder({
               {([
                 ["genel", t.hedefGenel],
                 ["takim", t.hedefTakim],
-                ...(sablonAnahtar !== "giris" ? [["odevYapmayan", t.hedefOdev(odevYapmayanSayisi)]] : []),
+                ...(sablonAnahtar !== "giris" && sablonAnahtar !== "giris_hatirlatma"
+                  ? [["odevYapmayan", t.hedefOdev(odevYapmayanSayisi)]]
+                  : []),
+                ...((sablonAnahtar === "giris" || sablonAnahtar === "giris_hatirlatma") && girisYapmamisSayisi !== undefined
+                  ? [["girisYapmamis", `Giriş yapmamış (${girisYapmamisSayisi})`]]
+                  : []),
                 ["kisiler", t.hedefKisiler],
               ] as [HedefTipi, string][]).map(([tip, etiket]) => (
                 <button

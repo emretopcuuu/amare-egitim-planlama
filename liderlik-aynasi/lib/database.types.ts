@@ -1254,6 +1254,7 @@ export type Database = {
           deletion_requested_at: string | null
           email: string | null
           en_yuksek_kariyer: string | null
+          first_login_at: string | null
           full_name: string
           gecen_ay_kariyer: string | null
           id: string
@@ -1278,6 +1279,7 @@ export type Database = {
           deletion_requested_at?: string | null
           email?: string | null
           en_yuksek_kariyer?: string | null
+          first_login_at?: string | null
           full_name: string
           gecen_ay_kariyer?: string | null
           id?: string
@@ -1301,6 +1303,7 @@ export type Database = {
           created_at?: string
           deletion_requested_at?: string | null
           email?: string | null
+          first_login_at?: string | null
           en_yuksek_kariyer?: string | null
           full_name?: string
           gecen_ay_kariyer?: string | null
