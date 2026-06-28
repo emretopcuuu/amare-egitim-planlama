@@ -56,13 +56,11 @@ const MIN_DIS = 3; // güvenilir dış algı için en az bu kadar anonim puan
 const ADAY_YUZDELIK = 85; // bu yüzdeliğin üstü + temiz tutarlılık = aday
 const ADAY_TAMLIK = 0.6; // en az bu kadar alt-skor dolu olmalı
 
-// Katman 3 üretim ağırlıkları: ham aktivite < sonuç. Sonuçlar (ortak/Silver/Gold)
-// gerçek lider çıktısı olduğu için daha ağır.
+// Katman 3 üretim ağırlıkları: birebir koçluk ham görüşmeden ağır. (Eskiden
+// "yeni ortak"/"Silver" sonuç soruları da vardı; sade tutmak için kaldırıldı.)
 const URETIM_AGIRLIK: Record<string, number> = {
   "k3.ilk_gorusme": 1,
   "k3.birebir_kocluk": 1.5,
-  "k3.yeni_ortak": 3,
-  "k3.silver": 5,
 };
 
 const RITIM_PUAN: Record<string, number> = { duzenli: 100, patlayan: 45, belirsiz: 25 };
