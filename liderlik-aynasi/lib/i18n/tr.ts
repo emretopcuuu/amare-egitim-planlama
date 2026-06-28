@@ -1478,7 +1478,7 @@ export const tr = {
       kOnfark: "Ön Farkındalık",
       kDalga: "Değerlendirme Aç / Kapat",
       kHedef: "Hedef (Gün 2)",
-      kBosluk: "Boşluk Anı",
+      kBosluk: "Final & Sonrası",
       kRapor: "Ayna Raporları",
       kMuhur: "Mühür Açılışı",
       kSoz: "Kapanış Sözü",
