@@ -38,12 +38,22 @@ export default function YardimKanali() {
   if (GIZLI.some((r) => pathname === r || pathname.startsWith(`${r}/`))) return null;
 
   return (
-    <div className="fixed bottom-20 right-3 z-40 print:hidden sm:bottom-4">
+    // Üstte, sağ köşede — "kimsin?" bandının (ad çipi) yanında. Eskiden alt
+    // köşedeydi ve alt menü + içerik üstünü kapatıyordu; yukarı alındı.
+    <div className="fixed right-3 top-3 z-50 flex flex-col items-end print:hidden">
+      <button
+        onClick={() => setAcik((a) => !a)}
+        aria-expanded={acik}
+        aria-label="Yardım"
+        className="flex h-11 w-11 items-center justify-center rounded-full border border-royal-light/40 bg-midnight-card/90 text-xl text-gold-light shadow-lg backdrop-blur transition-transform hover:scale-105 active:scale-95"
+      >
+        {acik ? "✕" : "?"}
+      </button>
       {acik && (
         <div
           role="dialog"
           aria-label="Yardım"
-          className="mb-2 max-h-[70vh] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-2xl border border-royal/40 bg-midnight-card p-4 shadow-2xl"
+          className="mt-2 max-h-[70vh] w-80 max-w-[calc(100vw-1.5rem)] overflow-y-auto rounded-2xl border border-royal/40 bg-midnight-card p-4 shadow-2xl"
         >
           <div className="mb-2 flex items-center justify-between">
             <p className="text-sm font-bold text-gold-light">🛟 Yardım</p>
@@ -74,14 +84,6 @@ export default function YardimKanali() {
           </div>
         </div>
       )}
-      <button
-        onClick={() => setAcik((a) => !a)}
-        aria-expanded={acik}
-        aria-label="Yardım"
-        className="flex h-12 w-12 items-center justify-center rounded-full border border-royal-light/40 bg-midnight-card/90 text-xl text-gold-light shadow-lg backdrop-blur transition-transform hover:scale-105 active:scale-95"
-      >
-        {acik ? "✕" : "?"}
-      </button>
     </div>
   );
 }

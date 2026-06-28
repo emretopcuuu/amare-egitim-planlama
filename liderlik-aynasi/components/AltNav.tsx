@@ -143,7 +143,7 @@ export default function AltNav() {
   );
 
   return (
-    <nav className="alt-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-midnight/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md print:hidden">
+    <nav className="alt-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-midnight/95 pt-1 pb-[calc(env(safe-area-inset-bottom)+0.6rem)] backdrop-blur-md print:hidden">
       {/* Sticky görev şeridi: bekleyen görev varken her ekranda üstte durur,
           tek dokunuşla göreve götürür. Görev = her zaman birincil. /gorevler'de
           gizlenir (zaten oradasın). */}
@@ -196,7 +196,7 @@ export default function AltNav() {
               href={s.href}
               aria-label={gorevVar ? `${s.etiket} · bekleyen görev var` : s.etiket}
               aria-current={aktif ? "page" : undefined}
-              className={`relative flex min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[0.65rem] font-medium transition-colors ${
+              className={`relative flex min-h-[60px] flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[0.72rem] font-semibold transition-colors ${
                 aktif ? "text-gold-light" : "text-slate-400 hover:text-slate-200"
               }`}
             >
@@ -207,7 +207,7 @@ export default function AltNav() {
               <span className="relative">
                 <Ikon
                   ad={s.ikon}
-                  className={`h-6 w-6 transition-transform ${aktif ? "scale-105" : ""}`}
+                  className={`h-7 w-7 transition-transform ${aktif ? "scale-110" : ""}`}
                 />
                 {gorevVar && (
                   <span className="absolute -right-1.5 -top-0.5 flex h-2.5 w-2.5">
