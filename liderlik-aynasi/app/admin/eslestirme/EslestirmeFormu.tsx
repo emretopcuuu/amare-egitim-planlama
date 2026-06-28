@@ -16,6 +16,8 @@ export default function EslestirmeFormu() {
   const [hata, setHata] = useState<string | null>(null);
   const [calisiyor, setCalisiyor] = useState(false);
   const [ekleniyor, setEkleniyor] = useState(false);
+  const [sifirlaOnay, setSifirlaOnay] = useState(false);
+  const [sifirlayor, setSifirlayor] = useState(false);
 
   async function calistir(e: React.FormEvent) {
     e.preventDefault();
@@ -141,13 +143,48 @@ export default function EslestirmeFormu() {
         </p>
       )}
 
-      <button
-        type="submit"
-        disabled={!onay || calisiyor || grupIci + grupDisi < 1}
-        className="mt-4 rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
-      >
-        {calisiyor ? t.calisiyor : t.calistir}
-      </button>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button
+          type="submit"
+          disabled={!onay || calisiyor || grupIci + grupDisi < 1}
+          className="rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          {calisiyor ? t.calisiyor : t.calistir}
+        </button>
+
+        {/* Sıfırla — atamaları sil, yeniden oluşturma */}
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={sifirlaOnay}
+              onChange={(e) => setSifirlaOnay(e.target.checked)}
+              className="h-3.5 w-3.5 accent-red-400"
+            />
+            {t.sifirlaOnay}
+          </label>
+          <button
+            type="button"
+            onClick={async () => {
+              if (!sifirlaOnay || sifirlayor) return;
+              setSifirlayor(true);
+              try {
+                const res = await fetch("/api/admin/eslestirme", { method: "DELETE" });
+                const v = await res.json().catch(() => null);
+                if (!res.ok) { tost(v?.hata ?? t.hataSunucu, "hata"); return; }
+                tost(t.sifirlaBasarili, "basari");
+                setSifirlaOnay(false);
+                router.refresh();
+              } catch { tost(t.hataSunucu, "hata"); }
+              finally { setSifirlayor(false); }
+            }}
+            disabled={!sifirlaOnay || sifirlayor}
+            className="rounded-lg border border-red-500/40 px-3 py-2 text-xs font-semibold text-red-400 transition-colors hover:bg-red-500/10 disabled:opacity-40"
+          >
+            {sifirlayor ? t.sifirlaCalisiyor : `🗑 ${t.sifirla}`}
+          </button>
+        </div>
+      </div>
     </form>
   );
 }

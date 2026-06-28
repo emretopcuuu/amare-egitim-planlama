@@ -146,6 +146,7 @@ export default async function EslestirmelerPage() {
         <AynaEsiPanel
           acik={aynaEsiAcik}
           satirlar={(aynaEsiSatirlar ?? []) as unknown as AynaEsiSatir[]}
+          kisiler={kisiler.map((k) => ({ id: k.id, ad: k.ad }))}
         />
       </Katlanir>
     </main>

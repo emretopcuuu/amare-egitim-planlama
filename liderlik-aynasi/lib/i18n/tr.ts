@@ -2755,6 +2755,12 @@ export const tr = {
       degisVazgec: "Vazgeç",
       degisti: "✓ Değiştirildi",
       degisHata: "Değiştirilemedi.",
+      // Sıfırlama
+      sifirla: "Eşleştirmeleri Sıfırla",
+      sifirlaOnay: "Tüm atamaları silmek istediğimi anladım",
+      sifirlaUyari: "Tüm atamalar silinir, yeniden oluşturulmaz.",
+      sifirlaCalisiyor: "Sıfırlanıyor…",
+      sifirlaBasarili: "✓ Tüm atamalar silindi.",
       // Artımlı ekleme
       ekle: "Eksikleri Tamamla",
       ekleAciklama: "Ataması olmayan veya hedef sayısının altında kalan kişilere atama ekler. Mevcut atamalara dokunmaz.",
