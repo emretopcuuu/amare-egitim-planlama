@@ -64,13 +64,32 @@ export default async function PusulaSayfa() {
   const kisislogan = (pus as { slogan?: string | null } | null)?.slogan ?? null;
 
   if (durum.tamam) {
-    const [ozellikler, { data: kampAyar }] = await Promise.all([
-      aktifOzellikler(db),
-      db.from("settings").select("value").eq("key", "kamp_tarihi").maybeSingle(),
-    ]);
+    const [ozellikler, { data: kampAyar }, { data: sesRow }, { data: hedefRow }, { data: ofRow }] =
+      await Promise.all([
+        aktifOzellikler(db),
+        db.from("settings").select("value").eq("key", "kamp_tarihi").maybeSingle(),
+        db.from("voice_profiles").select("participant_id").eq("participant_id", session.sub).maybeSingle(),
+        db.from("hedef").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+        db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+      ]);
     const ozTamam = await ozPuanTamamMi(db, session.sub, 1, ozellikler.length);
     const yuzVar = Array.isArray(kisi?.yuz_fotolari) && (kisi.yuz_fotolari as unknown[]).length > 0;
     const kampTarihi = kampAyar?.value ?? null;
+    const sesVar = !!sesRow;
+    const hedefTamam = !!hedefRow?.tamamlandi_at;
+    const ofTamam = !!ofRow?.tamamlandi_at;
+
+    // Mühür ekranı HAZIRLIK ÖZETİ: 6 adımın tek bakışta tik durumu + düzelt yolu.
+    // Ses/Nedenler bu hub'a gelindiyse zaten tamam (ön koşul) — gösterip onaylarız;
+    // Hedef/Farkındalık/Liderlik/Foto için doğrudan düzelt/yap bağlantısı verilir.
+    const ozetAdimlar: { ad: string; tamam: boolean; href: string | null }[] = [
+      { ad: t.ozetSes, tamam: sesVar, href: null },
+      { ad: t.ozetNedenler, tamam: durum.tamam, href: null },
+      { ad: t.ozetHedef, tamam: hedefTamam, href: "/hedef" },
+      { ad: t.ozetFarkindalik, tamam: ofTamam, href: "/on-farkindalik" },
+      { ad: t.ozetFoto, tamam: yuzVar, href: null },
+      { ad: t.ozetLiderlik, tamam: ozTamam, href: `/degerlendir/${session.sub}` },
+    ];
 
     const adimlar = [
       {
@@ -134,6 +153,44 @@ export default async function PusulaSayfa() {
           </p>
           <p className="mt-4 text-sm font-semibold text-gold-light">{t.muhurHeroNot}</p>
           {kampTarihi && <GeriSayim hedefZaman={kampTarihi} etiket={t.kampaKalan} />}
+        </div>
+
+        {/* HAZIRLIK ÖZETİ — tüm adımlar tek bakışta tik + düzelt (katılımcı isteği) */}
+        <div className="rounded-2xl border border-royal/25 bg-midnight-card/40 p-4">
+          <p className="text-[0.7rem] font-semibold uppercase tracking-wide text-slate-400">
+            ✅ {t.ozetBaslik}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-500">{t.ozetAciklama}</p>
+          <ul className="mt-3 space-y-1.5">
+            {ozetAdimlar.map((a) => (
+              <li
+                key={a.ad}
+                className="flex items-center gap-3 rounded-xl bg-black/20 px-3 py-2.5"
+              >
+                <span
+                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                    a.tamam ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"
+                  }`}
+                  aria-hidden
+                >
+                  {a.tamam ? "✓" : "!"}
+                </span>
+                <span className="flex-1 text-sm text-slate-200">{a.ad}</span>
+                {a.href ? (
+                  <Link
+                    href={a.href}
+                    className="shrink-0 text-xs font-semibold text-gold-light underline-offset-4 hover:underline"
+                  >
+                    {a.tamam ? t.ozetDuzelt : t.ozetYap} →
+                  </Link>
+                ) : (
+                  <span className="shrink-0 text-xs text-slate-500">
+                    {a.tamam ? t.ozetTamam : t.ozetEksik}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
         </div>
 
         {/* S9: Kilitli maddeler gerçek başlıkla — "Kampta açılır" chip kaldırıldı */}

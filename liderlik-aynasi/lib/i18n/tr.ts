@@ -973,6 +973,19 @@ export const tr = {
     kilit1: "Kendi sesinle bir sürpriz",
     kilit2: "3. günde aynan açılır",
     kilit3: "Sana özel AYNA görevleri",
+    // Mühür ekranı hazırlık ÖZETİ (tüm adımlar tek bakışta tik + düzelt)
+    ozetBaslik: "Hazırlık adımların",
+    ozetAciklama: "Hepsini tamamladın. İstersen herhangi birine dönüp düzeltebilirsin.",
+    ozetSes: "Ses ritüeli",
+    ozetNedenler: "Nedenlerin (Pusula)",
+    ozetHedef: "Hedefin",
+    ozetFarkindalik: "Ön Farkındalık",
+    ozetFoto: "Canlı Aynan (fotoğraf)",
+    ozetLiderlik: "Liderlik öz-değerlendirmen",
+    ozetTamam: "Tamam",
+    ozetEksik: "Eksik",
+    ozetDuzelt: "Düzelt",
+    ozetYap: "Yap",
   },
   // FAZ A — Hedef (Gün 2). Nedenler keşfedildikten sonra: neredesin → kısa AI
   // sohbeti → kariyer/gelir tablosu → 3 soru → kişisel kariyer planı.
