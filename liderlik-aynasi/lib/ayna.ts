@@ -230,8 +230,8 @@ async function temalarCikar(
       model: "claude-haiku-4-5",
       max_tokens: 256,
       thinking: { type: "disabled" },
+      // Haiku effort'u desteklemiyor (400) — yalnız format.
       output_config: {
-        effort: "low",
         format: { type: "json_schema", schema: TEMA_SEMASI },
       },
       system:
@@ -658,8 +658,10 @@ export async function gorevUret(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-opus-4-8",
-      max_tokens: 2048,
+      // MALİYET: görev üretimi sıcak yolun ana sürücüsü. Opus yerine Sonnet 4.6
+      // (~%40 ucuz, kalite çok yakın); çıktı kısa olduğu için max_tokens kırpıldı.
+      model: "claude-sonnet-4-6",
+      max_tokens: 1024,
       thinking: { type: "adaptive" },
       output_config: {
         effort: "low",
@@ -735,14 +737,15 @@ export async function gorevPuanla(
 ): Promise<{ puan: number; yorum: string; response_tags: string[] } | null> {
   try {
     const client = new Anthropic();
-    // Puanlama (Opus) ve tema çıkarımı (Haiku) paralel başlar
+    // Puanlama (Haiku) ve tema çıkarımı (Haiku) paralel başlar.
+    // MALİYET: puanlama yanıt başına çalışır; Haiku 4.5 (5× ucuz) yeterli.
+    // Haiku effort'u desteklemiyor → output_config'de yalnız format.
     const [yanit, temalar] = await Promise.all([
       client.messages.create({
-        model: "claude-opus-4-8",
-        max_tokens: 1024,
-        thinking: { type: "adaptive" },
+        model: "claude-haiku-4-5",
+        max_tokens: 768,
+        thinking: { type: "disabled" },
         output_config: {
-          effort: "low",
           format: { type: "json_schema", schema: PUAN_SEMASI },
         },
         system: [
@@ -862,10 +865,10 @@ export async function aynaAniUret(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-opus-4-8",
+      // MALİYET: ikincil üretim → Haiku 4.5 (effort yok). Kısa, sıcak metin.
+      model: "claude-haiku-4-5",
       max_tokens: 512,
       thinking: { type: "disabled" },
-      output_config: { effort: "low" },
       system: `${PERSONA}
 
 Şimdi özel bir an kuruyorsun: AYNA ANI. Adayın KAMP ÖNCESİ kendi yazdığı kör nokta cümlesi elinde. Aday o günden beri kampta görevler yaptı, harekete geçti. Senin işin: onun kendi cümlesini nazikçe ALINTILAYIP, bugün yaptıklarıyla yüzleştir ve tek bir "gördün mü?" içgörüsü ver.
@@ -910,11 +913,11 @@ export async function gorevZorlastir(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-opus-4-8",
-      max_tokens: 1024,
+      // MALİYET: görev zorlaştır/hafiflet → Haiku 4.5 (effort yok, format kalır).
+      model: "claude-haiku-4-5",
+      max_tokens: 768,
       thinking: { type: "disabled" },
       output_config: {
-        effort: "low",
         format: {
           type: "json_schema",
           schema: {
@@ -965,11 +968,11 @@ export async function gorevHafiflet(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-opus-4-8",
-      max_tokens: 1024,
+      // MALİYET: görev zorlaştır/hafiflet → Haiku 4.5 (effort yok, format kalır).
+      model: "claude-haiku-4-5",
+      max_tokens: 768,
       thinking: { type: "disabled" },
       output_config: {
-        effort: "low",
         format: {
           type: "json_schema",
           schema: {
@@ -1153,8 +1156,8 @@ export async function korNoktaGuncelle(
       model: "claude-haiku-4-5",
       max_tokens: 300,
       thinking: { type: "disabled" },
+      // Haiku effort'u desteklemiyor (400) — yalnız format.
       output_config: {
-        effort: "low",
         format: {
           type: "json_schema",
           schema: {

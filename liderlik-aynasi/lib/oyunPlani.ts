@@ -112,8 +112,9 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-opus-4-8",
-      max_tokens: 3072,
+      // MALİYET: oyun planı → Sonnet 4.6 (effort/format korunur, plan kalitesi yakın).
+      model: "claude-sonnet-4-6",
+      max_tokens: 2048,
       thinking: { type: "adaptive" },
       output_config: { effort: "medium", format: { type: "json_schema", schema: PLAN_SEMASI } },
       system: `${SISTEM}\n\n${KATILIMCI_EVRENI}`,
