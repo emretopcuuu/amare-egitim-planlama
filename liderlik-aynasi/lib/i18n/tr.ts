@@ -304,6 +304,10 @@ export const tr = {
     menuPlan: "🧭 90 Günlük Yolculuk",
     menuBen: "👤 Profilim",
     menuGrup: "👥 Grup Ödevi",
+    // Kamp öncesi adımlar — tamamlandıktan sonra da düzenlenebilir kalsın
+    menuFarkindalik: "🪞 Ön Farkındalık",
+    menuPusula: "🧭 Pusulam",
+    menuHedef: "🎯 Hedefim",
     menuMini360: "👁 Ekip Aynası",
     menuAynaEsi: "🤝 Ayna Eşin",
     menuAnlar: "Anların (Zaman Tüneli)",
