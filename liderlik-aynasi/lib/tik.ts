@@ -214,7 +214,10 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       durumlar.get(g.participant_id) ??
       ({ bekleyen: false, bugunSayisi: 0, sonVerilis: 0 } as Durum);
     if (g.status === "pending" || g.status === "submitted") d.bekleyen = true;
-    if (istanbulTarihi(new Date(g.issued_at)) === bugun) d.bugunSayisi++;
+    // #6 Günlük kota yalnız EYLEM görevlerini sayar; "senkron" kolektif/hafif bir
+    // an olduğu için kişinin görev kotasını (gunlukUst) doldurmamalı.
+    if (istanbulTarihi(new Date(g.issued_at)) === bugun && g.kind !== "senkron")
+      d.bugunSayisi++;
     d.sonVerilis = Math.max(d.sonVerilis, new Date(g.issued_at).getTime());
     durumlar.set(g.participant_id, d);
   }
@@ -242,10 +245,15 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       const aralikDk = gorevAraligiDk(tempo, k.id, d.bugunSayisi, firsat);
       return simdi.getTime() - d.sonVerilis >= aralikDk * 60_000;
     })
-    .sort(
-      (a, b) =>
-        (durumlar.get(a.id)?.sonVerilis ?? 0) - (durumlar.get(b.id)?.sonVerilis ?? 0)
-    )
+    // #6 Adalet: önce bugün EN AZ görev alan (taban eşitliği), sonra en uzun
+    // süredir görev almayan. Sürekli yanıt veren biri herkesin önüne geçmesin.
+    .sort((a, b) => {
+      const da = durumlar.get(a.id);
+      const db = durumlar.get(b.id);
+      const fark = (da?.bugunSayisi ?? 0) - (db?.bugunSayisi ?? 0);
+      if (fark !== 0) return fark;
+      return (da?.sonVerilis ?? 0) - (db?.sonVerilis ?? 0);
+    })
     .slice(0, 3);
 
   for (const k of uygunlar) {
@@ -777,9 +785,11 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         kariyer_seviyesi: string | null;
       }[];
       for (const k of tumKatilimcilar) {
-        // Zaten bekleyen görev varsa mentorluk verme (telefonu tıkama)
+        // Bekleyen görev varsa veya günlük görev kotası dolduysa mentorluk verme
+        // (#6: mentorluk da eylem görevidir; "7 görev + mentorluk = 8" taşmasını
+        // önler — telefon görev yağmuruna dönmesin).
         const d = durumlar.get(k.id);
-        if (d?.bekleyen) continue;
+        if (d?.bekleyen || (d?.bugunSayisi ?? 0) >= gunlukUst) continue;
         const gorev = await mentorlukGorevUret(db, k, gun, tumKatilimcilar);
         if (!gorev) continue;
         const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
