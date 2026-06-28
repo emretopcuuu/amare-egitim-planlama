@@ -373,6 +373,34 @@ export function radarHesapla(g: RadarGirdisi): RadarSonucu {
 
 // ---------- GÖREV TÜRÜ SEÇİMİ (saf — simülasyon da kullanır) ----------
 
+// #2 Pik yanıt saati: kişinin en çok yanıt verdiği saat dilimini (Istanbul, 0-23)
+// bulur. Yeterli veri (minToplam) ve net pik (minPik aynı saatte) yoksa null.
+// Hem rapor bağlamı hem görev zamanlaması (tik.ts) bunu kullanır.
+export function pikSaatBul(
+  trSaatler: number[],
+  minToplam = 4,
+  minPik = 2
+): number | null {
+  if (trSaatler.length < minToplam) return null;
+  const sayac: Record<number, number> = {};
+  for (const s of trSaatler) sayac[s] = (sayac[s] ?? 0) + 1;
+  let maxSaat = -1;
+  let maxCount = 0;
+  for (const [s, c] of Object.entries(sayac)) {
+    if (c > maxCount) {
+      maxCount = c;
+      maxSaat = Number(s);
+    }
+  }
+  return maxSaat >= 0 && maxCount >= minPik ? maxSaat : null;
+}
+
+/** İki saat (0-23) arası döngüsel fark (saat). 23↔1 = 2. */
+export function saatFarki(a: number, b: number): number {
+  const d = Math.abs(a - b);
+  return Math.min(d, 24 - d);
+}
+
 export const GOREV_TURLERI = [
   "gozlem",
   "cesaret",
