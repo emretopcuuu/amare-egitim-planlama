@@ -170,8 +170,6 @@ export type Katman3Soru = { kod: string; metin: string; max: number };
 export const KATMAN3_AKTIVITE: Katman3Soru[] = [
   { kod: "k3.ilk_gorusme", metin: "Son 30 günde kaç yeni kişiyle ilk görüşme yaptın?", max: 999 },
   { kod: "k3.birebir_kocluk", metin: "Kaç kişiyle birebir (koçluk) çalıştın?", max: 999 },
-  { kod: "k3.yeni_ortak", metin: "Kaç yeni ortak kaydı oldu?", max: 999 },
-  { kod: "k3.silver", metin: "Ekibinden kaç kişi Silver oldu?", max: 999 },
 ];
 
 export const KATMAN3_RITIM: Katman3Soru[] = [
@@ -214,7 +212,6 @@ export const KATMAN4_SORULAR: MetinSoru[] = [
 // ============================================================================
 
 export const KATMAN5A_SORULAR: Katman3Soru[] = [
-  { kod: "k5a.beceri", metin: "Son 12 ayda kaç yeni beceri öğrendin ya da geliştirdin?", max: 999 },
   { kod: "k5a.egitim", metin: "Son 12 ayda kaç eğitim, seminer ya da kursu tamamladın?", max: 999 },
 ];
 
