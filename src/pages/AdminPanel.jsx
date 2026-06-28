@@ -102,7 +102,7 @@ const EgitimFormAlanlari = ({ form, setForm }) => {
   return (
   <>
     <FormField label="Eğitim Adı" required>
-      <input type="text" value={form.egitim} onChange={e => setForm(f => ({ ...f, egitim: e.target.value }))} placeholder="Eğitim adını girin" className={inputCls} />
+      <input type="text" value={form.egitim} onChange={e => setForm(f => ({ ...f, egitim: e.target.value, etkinlikTuru: (!f.etkinlikTuru || f.etkinlikTuru === f.egitim) ? e.target.value : f.etkinlikTuru }))} placeholder="Eğitim adını girin" className={inputCls} />
     </FormField>
     <div className="grid grid-cols-2 gap-4">
       <FormField label="Gün">
@@ -126,10 +126,10 @@ const EgitimFormAlanlari = ({ form, setForm }) => {
       </FormField>
     </div>
     <FormField label="Eğitmen">
-      <input type="text" value={form.egitmen} onChange={e => setForm(f => ({ ...f, egitmen: e.target.value }))} className={inputCls} />
+      <input type="text" value={form.egitmen} onChange={e => setForm(f => ({ ...f, egitmen: e.target.value, sunucular: (!f.sunucular || f.sunucular === f.egitmen) ? e.target.value : f.sunucular }))} className={inputCls} />
     </FormField>
     <FormField label="Yer / Platform">
-      <input type="text" value={form.yer} onChange={e => setForm(f => ({ ...f, yer: e.target.value }))} className={inputCls} />
+      <input type="text" value={form.yer} onChange={e => setForm(f => ({ ...f, yer: e.target.value, mekanAdi: (!f.mekanAdi || f.mekanAdi === f.yer) ? e.target.value : f.mekanAdi, acikAdres: (!f.acikAdres || f.acikAdres === f.yer) ? e.target.value : f.acikAdres }))} className={inputCls} />
     </FormField>
     <div className="grid grid-cols-2 gap-4">
       <FormField label="Şehir" required>
@@ -180,7 +180,7 @@ const EgitimFormAlanlari = ({ form, setForm }) => {
           </FormField>
         </div>
         <FormField label="Açık Adres">
-          <textarea value={form.acikAdres || ''} onChange={e => setForm(f => ({ ...f, acikAdres: e.target.value }))} rows={2} placeholder="Mahalle, cadde, no, ilçe / şehir" className={`${inputCls} resize-none`} />
+          <textarea value={form.acikAdres || ''} onChange={e => setForm(f => ({ ...f, acikAdres: e.target.value, yer: !f.yer ? e.target.value : f.yer }))} rows={2} placeholder="Mahalle, cadde, no, ilçe / şehir" className={`${inputCls} resize-none`} />
         </FormField>
         <FormField label="Sunucular">
           <input type="text" value={form.sunucular || ''} onChange={e => setForm(f => ({ ...f, sunucular: e.target.value }))} placeholder="Aytuğ Gönül, Canan Polat" className={inputCls} />
