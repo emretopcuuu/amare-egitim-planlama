@@ -5,6 +5,7 @@ import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import YaziBoyu from "@/components/YaziBoyu";
 import TemaSecimi from "@/components/TemaSecimi";
+import BildirimAnahtari from "@/components/BildirimAnahtari";
 
 const t = tr.anaSayfa;
 
@@ -143,6 +144,7 @@ export default function UstMenu({
               </nav>
 
               <div className="mt-4 space-y-3">
+                <BildirimAnahtari />
                 <YaziBoyu />
                 <TemaSecimi />
               </div>
