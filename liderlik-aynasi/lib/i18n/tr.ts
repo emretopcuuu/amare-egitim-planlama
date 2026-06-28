@@ -2990,7 +2990,9 @@ export const tr = {
       durdur: "AYNA'yı Durdur",
       aboneSayisi: (n: number, toplam: number) =>
         `${toplam} katılımcının ${n} tanesi bildirime abone`,
-      tikCalistir: "Şimdi Tik Çalıştır (test)",
+      tikCalistir: "AYNA'yı Şimdi Bir Tur Çalıştır",
+      tikAciklama:
+        "AYNA'nın bir turunu hemen başlatır (normalde 5 dakikada bir kendiliğinden çalışır). O an sırası gelen kişilere görev/ses üretir — herkese değil. Deneme amaçlıdır: gece ve sahne sessizliğini yok sayar.",
       tikSonuc: (ozet: string) => `Tik tamam: ${ozet}`,
       sozGonder: "🤝 Son Görevi Gönder: SÖZ",
       sozOnay:
@@ -3025,7 +3027,7 @@ export const tr = {
         "ELEVENLABS_API_KEY tanımlı değil ya da ses üretimi başarısız — anons çıkmadı.",
       hata: "İşlem başarısız. Tekrar dene.",
       kurulumUyari:
-        "Zamanlayıcı kurulu değilse AYNA kendiliğinden uyanmaz — README'deki cron SQL'ini Supabase'de çalıştır ya da test için 'Şimdi Tik Çalıştır'ı kullan (test tiki sessiz saati yok sayar).",
+        "Not: AYNA'nın kamp boyunca kendiliğinden (5 dakikada bir) çalışması için zamanlayıcı kurulu olmalı — README'deki cron SQL'ini Supabase'de bir kez çalıştır. Kurulu değilse yalnız yukarıdaki butonla elle çalışır.",
     },
     program: {
       baslik: "Kamp Programı & AYNA Planı",
