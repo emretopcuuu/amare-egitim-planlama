@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -52,6 +53,20 @@ export default async function AynaDirektorPage() {
         </div>
         <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>
       </div>
+
+      {/* Prova Kampı — gerçek kişilerle hızlandırılmış 3 günlük kamp provası */}
+      <Link
+        href="/admin/prova"
+        className="flex items-center justify-between gap-3 rounded-2xl border border-gold/40 bg-gold/10 p-5 transition-colors hover:bg-gold/15"
+      >
+        <div>
+          <p className="text-base font-bold text-gold-light">🎭 Prova Kampı (canlı tatbikat)</p>
+          <p className="mt-0.5 text-sm text-slate-300">
+            Gerçek kişilerle 3 günü hızlandırılmış yaşat — başlat, gün gün ilerlet, akışı izle.
+          </p>
+        </div>
+        <span className="shrink-0 text-2xl text-gold-light">→</span>
+      </Link>
 
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-gold/40 backdrop-blur">
         <AynaDirektorKontrol
