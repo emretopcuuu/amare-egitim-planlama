@@ -12,6 +12,7 @@ import SozV2Kontrol from "../SozV2Kontrol";
 import OdevPaketi from "../OdevPaketi";
 import DavetKontrol from "../DavetKontrol";
 import IkiliKontrol from "../IkiliKontrol";
+import SistemModuKontrol from "./SistemModuKontrol";
 
 export const metadata = { title: "Final & Sonrası — Liderlik Aynası" };
 
@@ -32,6 +33,7 @@ export default async function FinalPage() {
     { data: davetAyari },
     { count: ikiliSayisi },
     { data: muhurAyar },
+    { data: modAyar },
   ] = await Promise.all([
     raporlarGorunurMu(db),
     db.from("mirror_letters").select("participant_id", { count: "exact", head: true }),
@@ -44,9 +46,11 @@ export default async function FinalPage() {
     db.from("settings").select("value").eq("key", "wave4_davet_gonderildi").maybeSingle(),
     db.from("pairs").select("id", { count: "exact", head: true }),
     db.from("settings").select("value").eq("key", "muhur_acik").maybeSingle(),
+    db.from("settings").select("value").eq("key", "sistem_modu").maybeSingle(),
   ]);
 
   const muhurAcik = muhurAyar?.value === "true";
+  const sistemModu = modAyar?.value === "yolculuk" ? "yolculuk" : "kamp";
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-5 p-4 pb-28 sm:p-6 sm:pb-6">
@@ -108,6 +112,13 @@ export default async function FinalPage() {
         <h2 className="text-sm font-semibold uppercase tracking-wide text-gold-light">
           📦 Kamp Sonrası
         </h2>
+
+        <div className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
+          <h3 className="text-base font-semibold text-gold-light">{tr.admin.aynaDirektor.modBaslik}</h3>
+          <div className="mt-3">
+            <SistemModuKontrol mod={sistemModu} />
+          </div>
+        </div>
 
         <div className="kart-3d rounded-2xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
           <h3 className="flex items-center gap-2 text-base font-semibold text-gold-light">
