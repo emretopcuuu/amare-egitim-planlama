@@ -39,7 +39,7 @@ export default async function KatilimcilarPage() {
 
       {/* Hazırlık ilerleme — Pusula + Ön Farkındalık tamamlanma durumu */}
       <section id="hazirlik" className="scroll-mt-24">
-        <Katlanir baslik="Hazırlık Durumu" aciklama="Pusula + Ön Farkındalık ilerleme" ikon="🧰" yardim={tr.admin.yardim.fazSifir} varsayilanAcik>
+        <Katlanir baslik="Hazırlık Durumu" aciklama="Pusula + Ön Farkındalık ilerleme" ikon="🧰" yardim={tr.admin.yardim.fazSifir}>
           <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
             <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.admin.fazSifir.baslik}
