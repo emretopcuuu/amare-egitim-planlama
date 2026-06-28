@@ -62,7 +62,10 @@ export default async function HazirlikPaneli({
     { ok: (dalga ?? 0) > 0, kritik: true, etiket: t.dalga, ipucu: t.dalgaIpucu, href: "/admin" },
     { ok: zekaVar, kritik: true, etiket: t.zeka, ipucu: t.zekaIpucu, href: "/admin/kurulum" },
     { ok: aynaAyar?.value === "true", kritik: false, etiket: t.ayna, ipucu: t.aynaIpucu, href: "/admin/ayna-direktoru" },
-    { ok: vapidVar && (abone ?? 0) > 0, kritik: false, etiket: t.bildirim, ipucu: t.bildirimIpucu, href: "/admin/kurulum" },
+    // Bildirim sağlığı İKİ satır: önce sunucu anahtarı (VAPID env), sonra abone.
+    // Böylece "anahtar mı yok, abone mi yok" tek bakışta ayrışır.
+    { ok: vapidVar, kritik: false, etiket: t.vapidKonfig, ipucu: t.vapidKonfigIpucu, href: "/admin/kurulum" },
+    { ok: (abone ?? 0) > 0, kritik: false, etiket: t.bildirim, ipucu: t.bildirimIpucu(abone ?? 0), href: "/admin/kurulum" },
     // #20 Final ön-koşulu: kamp canlı/sonrasındayken (aşama ≥ 3) Ayna mektupları
     // hazır mı? Rapor anının gücü buna bağlı. Erken aşamalarda gösterilmez.
     ...(aktifAsama >= 3

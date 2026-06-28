@@ -2406,8 +2406,17 @@ export const tr = {
       zekaIpucu: "AYNA zekâ anahtarı (ANTHROPIC) tanımlı değil",
       ayna: "AYNA uyanık",
       aynaIpucu: "AYNA uyuyor — uyandır",
-      bildirim: "Bildirimler çalışıyor",
-      bildirimIpucu: "Push abonesi/anahtarı yok",
+      // Bildirim sağlığı İKİ ayrı satır: (1) sunucu anahtarı tanımlı mı,
+      // (2) en az bir kişi abone olmuş mu. Eskiden tek satırda birleşikti ve
+      // "anahtar mı yok, abone mi yok" ayırt edilemiyordu.
+      vapidKonfig: "Push anahtarı (VAPID) tanımlı",
+      vapidKonfigIpucu:
+        "VAPID anahtarları eksik — Netlify env'e NEXT_PUBLIC_VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY ekle, yeniden deploy et",
+      bildirim: "En az bir bildirim abonesi var",
+      bildirimIpucu: (n: number) =>
+        n === 0
+          ? "Kimse abone değil — kişiler telefonda PWA kurup bildirime izin vermeli (iOS: önce Ana Ekrana Ekle)"
+          : `${n} abone`,
       // #20 Final aşaması hazırlığı (kamp ilerleyince görünür)
       mektup: "Ayna mektupları hazır",
       mektupIpucu: (n: number, t: number) => `Ayna mektupları eksik (${n}/${t}) — rapor zayıf kalır`,
