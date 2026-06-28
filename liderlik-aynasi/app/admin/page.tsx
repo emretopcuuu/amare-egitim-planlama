@@ -74,7 +74,7 @@ export default async function AdminPanel() {
     db
       .from("settings")
       .select("key, value, updated_at")
-      .in("key", ["pusula_acik", "muhur_acik", "reports_visible", "on_farkindalik_acik"]),
+      .in("key", ["muhur_acik", "reports_visible"]),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
 
@@ -151,9 +151,7 @@ export default async function AdminPanel() {
   const kampGun = kampGunu(bugun);
   const sonKampGun = KAMP_GUNLERI[KAMP_GUNLERI.length - 1];
   const funnelAyar = new Map((funnelAyarlar ?? []).map((a) => [a.key, a.value]));
-  const pusulaAcik = funnelAyar.get("pusula_acik") === "true";
   const muhurAcik = funnelAyar.get("muhur_acik") === "true";
-  const onFarkAcik = funnelAyar.get("on_farkindalik_acik") === "true";
   const aktifAsama =
     bugun > sonKampGun
       ? 5
@@ -161,7 +159,7 @@ export default async function AdminPanel() {
         ? 4
         : acikDalga || kampGun != null
           ? 3
-          : pusulaAcik
+          : katilimciSayisi && katilimciSayisi > 0
             ? 2
             : 1;
 
@@ -189,7 +187,7 @@ export default async function AdminPanel() {
     .filter((x): x is string => !!x)
     .sort()[0];
   const asamaZaman: Record<number, string> = {};
-  const z2 = pusulaAcik ? saatBicim(funnelZaman.get("pusula_acik")) : null;
+  const z2 = katilimciSayisi && katilimciSayisi > 0 ? "katılımcı var" : null;
   if (z2) asamaZaman[2] = z2;
   const z3 = saatBicim(ilkDalgaAcilis) ?? (kalanGun > 0 ? `kampa ${kalanGun}g` : null);
   if (z3) asamaZaman[3] = z3;
@@ -205,9 +203,9 @@ export default async function AdminPanel() {
     ozToplam: ilerleme?.katilimcilar.length ?? katilimciSayisi ?? 0,
     raporlarAcik,
     sozAcik,
-    pusulaAcik,
+    pusulaAcik: true,
     hazirTamam: funnel.adimlar.find((a) => a.anahtar === "onfark")?.sayi ?? 0,
-    onFarkAcik,
+    onFarkAcik: true,
   });
 
   // UX #4+#9 — Bu aşamaya hazırlık skoru + geçiş checklist'i.
@@ -219,8 +217,6 @@ export default async function AdminPanel() {
     aktifAsama <= 2
       ? [
           { ad: "Katılımcı listesi yüklendi", tamam: kSayi > 0 },
-          { ad: "Pusula penceresi açık", tamam: pusulaAcik },
-          { ad: "Ön Farkındalık açık", tamam: onFarkAcik },
           { ad: "Hazırlığı bitiren ≥ %80", tamam: kSayi > 0 && hazirTamamSayi / kSayi >= 0.8 },
         ]
       : aktifAsama === 3
