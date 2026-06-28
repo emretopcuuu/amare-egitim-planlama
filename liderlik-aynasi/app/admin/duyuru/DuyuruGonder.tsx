@@ -5,7 +5,15 @@ import { tr } from "@/lib/i18n/tr";
 
 const t = tr.admin.yayin;
 
-export default function DuyuruGonder({ takimlar }: { takimlar: string[] }) {
+type Kisi = { id: string; ad: string; takim: string | null; telefonVar: boolean };
+
+export default function DuyuruGonder({
+  takimlar,
+  kisiler = [],
+}: {
+  takimlar: string[];
+  kisiler?: Kisi[];
+}) {
   const [baslik, setBaslik] = useState("");
   const [govde, setGovde] = useState("");
   const [hedef, setHedef] = useState("herkes");
@@ -14,7 +22,15 @@ export default function DuyuruGonder({ takimlar }: { takimlar: string[] }) {
   const [sonuc, setSonuc] = useState<{ ok: boolean; metin: string } | null>(null);
 
   const gecerli = baslik.trim().length > 1 && govde.trim().length > 1;
-  const hedefAd = hedef === "herkes" ? t.herkes : hedef;
+
+  function hedefAd() {
+    if (hedef === "herkes") return t.herkes;
+    if (hedef.startsWith("kisi:")) {
+      const id = hedef.slice(5);
+      return kisiler.find((k) => k.id === id)?.ad ?? hedef;
+    }
+    return hedef;
+  }
 
   async function gonder() {
     if (!gecerli || gonderiliyor) return;
@@ -31,7 +47,7 @@ export default function DuyuruGonder({ takimlar }: { takimlar: string[] }) {
         setSonuc({ ok: false, metin: v?.hata ?? t.hata });
         return;
       }
-      setSonuc({ ok: true, metin: t.gonderildi(hedefAd, v?.sayi ?? null) });
+      setSonuc({ ok: true, metin: t.gonderildi(hedefAd(), v?.sayi ?? null) });
       setBaslik("");
       setGovde("");
       setOnay(false);
@@ -70,22 +86,32 @@ export default function DuyuruGonder({ takimlar }: { takimlar: string[] }) {
           <label className="text-xs font-semibold text-slate-400">{t.hedefEtiket}</label>
           <select
             value={hedef}
-            onChange={(e) => setHedef(e.target.value)}
+            onChange={(e) => { setHedef(e.target.value); setOnay(false); }}
             className="mt-1 h-11 w-full rounded-lg border border-white/15 bg-midnight px-3 text-sm text-slate-100 outline-none focus:border-gold"
           >
             <option value="herkes">{t.herkes}</option>
-            {takimlar.map((tk) => (
-              <option key={tk} value={tk}>
-                {tk}
-              </option>
-            ))}
+            {takimlar.length > 0 && (
+              <optgroup label="— Takımlar —">
+                {takimlar.map((tk) => (
+                  <option key={tk} value={tk}>{tk}</option>
+                ))}
+              </optgroup>
+            )}
+            {kisiler.length > 0 && (
+              <optgroup label="— Kişiler —">
+                {kisiler.map((k) => (
+                  <option key={k.id} value={`kisi:${k.id}`}>
+                    {k.ad}{k.takim ? ` (${k.takim})` : ""}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
         </div>
 
-        {/* UX: yüksek etkili işlem — onay kutusu */}
         <label className="flex items-start gap-2 text-sm text-slate-300">
           <input type="checkbox" checked={onay} onChange={(e) => setOnay(e.target.checked)} className="mt-1 h-4 w-4 accent-gold" />
-          <span>{t.onayMetin(hedefAd)}</span>
+          <span>{t.onayMetin(hedefAd())}</span>
         </label>
 
         <button
