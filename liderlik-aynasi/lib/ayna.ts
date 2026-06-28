@@ -1033,24 +1033,19 @@ export function sessizSaatMi(
   return dk >= 22 * 60 + 30 || dk < 7 * 60 + 30;
 }
 
-// Tempo = iki görev arası MİNİMUM bekleme. "2"/"3" sabit; "surpriz" kişi+sıraya
-// göre deterministik 60-180 dk. firsatPenceresi: az önce deneyimsel bir etkinlik
-// bittiyse (duygu sıcak) aralığı yarıya indir (en az 30 dk) — altın anı yakala.
+// İki görev arası MİNİMUM bekleme: kişi+sıraya göre deterministik 60-180 dk
+// (sürpriz — tahmin edilemez). Üstüne ajanda katmanı biner (firsatPenceresi,
+// David seansı, pik saat, yorgunluk). firsatPenceresi: az önce deneyimsel bir
+// etkinlik bittiyse (duygu sıcak) aralığı yarıya indir (en az 30 dk).
 export function gorevAraligiDk(
-  tempo: string,
   pid: string,
   sira: number,
   firsatPenceresi = false
 ): number {
-  let temel: number;
-  if (tempo === "2") temel = 120;
-  else if (tempo === "3") temel = 180;
-  else {
-    let h = 0;
-    const tohum = `${pid}:${sira}`;
-    for (let i = 0; i < tohum.length; i++) h = (h * 31 + tohum.charCodeAt(i)) >>> 0;
-    temel = 60 + (h % 121);
-  }
+  let h = 0;
+  const tohum = `${pid}:${sira}`;
+  for (let i = 0; i < tohum.length; i++) h = (h * 31 + tohum.charCodeAt(i)) >>> 0;
+  const temel = 60 + (h % 121);
   return firsatPenceresi ? Math.max(30, Math.round(temel / 2)) : temel;
 }
 

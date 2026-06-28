@@ -2988,12 +2988,6 @@ export const tr = {
       durumPasif: "AYNA uyuyor",
       uyandir: "AYNA'yı Uyandır",
       durdur: "AYNA'yı Durdur",
-      tempoEtiket: "Görev temposu",
-      tempolar: {
-        surpriz: "Sürpriz (1-3 saat)",
-        "2": "Sabit 2 saat",
-        "3": "Sabit 3 saat",
-      },
       aboneSayisi: (n: number, toplam: number) =>
         `${toplam} katılımcının ${n} tanesi bildirime abone`,
       tikCalistir: "Şimdi Tik Çalıştır (test)",
