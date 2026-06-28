@@ -46,13 +46,13 @@ export const WA_SABLONLAR: WaSablon[] = [
     ikon: "🔑",
     etiket: "Giriş daveti (link + şifre)",
     aciklama: "Aynayla tanışma daveti — kişiye özel giriş bağlantısı ve kodu.",
-    friendlyName: "pd101_giris_v2",
+    friendlyName: "pd101_giris_v3",
     dil: "tr",
     kategori: "UTILITY",
     ayarAnahtari: "wa_tpl_giris",
     govde:
       "Merhaba {{1}},\n\n" +
-      "PD101 Liderlik Aynası uygulamasına erişim kodun: {{2}}\n\n" +
+      "PD101 Liderlik Aynası uygulamasına giriş bağlantın hazır. Aşağıdaki butona dokunarak hesabına giriş yapabilirsin.\n\n" +
       "Kampa başlamadan önce uygulamaya girip hazırlığını tamamlamanı bekliyoruz.\n\n" +
       "— One Team AI",
     buton: { baslik: "Hesabıma Gir", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
@@ -64,14 +64,13 @@ export const WA_SABLONLAR: WaSablon[] = [
     ikon: "⏰",
     etiket: "Kamp öncesi hatırlatma (giriş yapmamış)",
     aciklama: "Henüz uygulamaya giriş yapmamış katılımcılara son hatırlatma.",
-    friendlyName: "pd101_hatirlatma_v2",
+    friendlyName: "pd101_hatirlatma_v3",
     dil: "tr",
     kategori: "UTILITY",
     ayarAnahtari: "wa_tpl_giris_hatirlatma",
     govde:
       "Merhaba {{1}},\n\n" +
-      "PD101 Liderlik Aynası uygulamasına henüz giriş yapmadın. Giriş kodun: {{2}}\n\n" +
-      "Lütfen kampa başlamadan önce uygulamaya giriş yap ve hazırlığını tamamla.\n\n" +
+      "PD101 Liderlik Aynası uygulamasına henüz giriş yapmadın. Kampa başlamadan önce giriş yapman gerekiyor. Aşağıdaki butona dokunabilirsin.\n\n" +
       "— One Team AI",
     buton: { baslik: "Şimdi Giriş Yap", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
     serbestMi: false,
