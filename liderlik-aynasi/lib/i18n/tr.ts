@@ -71,6 +71,17 @@ export const tr = {
       },
     ],
   },
+  // Algı Köprüsü — kamp içi "canlı deney" kartı (finali korur, içerik açmaz)
+  deney: {
+    baslik: "AYNA'nın Deneyi",
+    canli: "Canlı",
+    aciklama:
+      "Bu kampta sessizce bir şey ölçüyorum: senin kendini gördüğünle başkalarının seni gördüğü nasıl yaklaşıyor. İçeriği henüz söylemiyorum — o, finalin sürprizi.",
+    kopru: "Algı köprüsü kuruluyor",
+    gozlem: (n: number) => `${n} kişi gözlemledi`,
+    gorev: (n: number) => `${n} görevle kas çalıştı`,
+    beklenti: "Gün 3'te aynan tam açılacak. 👁",
+  },
   altNav: {
     ana: "Ana sayfa",
     degerlendir: "Değerlendir",

@@ -22,6 +22,8 @@ import GorusmeSimdi from "@/components/GorusmeSimdi";
 import GunProgramKarti from "@/components/GunProgramKarti";
 import KonusanYansima from "@/components/KonusanYansima";
 import SicakAdim from "@/components/SicakAdim";
+import AlgiKoprusuKarti from "@/components/AlgiKoprusuKarti";
+import { algiKoprusu } from "@/lib/algiKoprusu";
 import UstMenu from "@/components/UstMenu";
 import { SiradakiOnizleme } from "@/components/AsamaRayi";
 
@@ -605,10 +607,20 @@ export default async function AnaSayfa({
   // 7) BEKLEME — görev/dalga yokken BOŞLUK GÖSTERME: program birincil olur.
   // "Şimdi ne yapacağım?" sorusu hep programla yanıtlanır; sakin durum + sıcak
   // adım ikincil, küçük bir kartta akar (görev + program her zaman önde).
+  //
+  // #3 Algı Köprüsü (finali koruyan canlı deney): yalnız kamp açıkken ve raporlar
+  // HENÜZ kapalıyken (Gün 3 öncesi/finalden önce) gösterilir; içerik açmaz.
+  const koprusu =
+    kisi?.camp_unlocked_at && !raporlarAcik
+      ? await algiKoprusu(db, session.sub)
+      : null;
   return (
     <Sayfa ust={ust}>
       {/* Program = omurga: boş anda ana kart odur (Şu an / Sırada canlı) */}
       <GunProgramKarti takim={takim} />
+
+      {/* AYNA'nın deneyi — ikincil, merak uyandıran (kör nokta içeriği YOK) */}
+      {koprusu && <AlgiKoprusuKarti veri={koprusu} />}
 
       {/* İkincil sakin durum — küçük, programın altında akar */}
       <div className="kart-cam relative overflow-hidden rounded-2xl p-5 text-center">
