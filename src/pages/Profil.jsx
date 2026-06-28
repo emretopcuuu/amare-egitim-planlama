@@ -10,11 +10,11 @@ import {
   RefreshCw, Trophy, TrendingUp, Sparkles, Edit3, User, X,
   Briefcase, Cake, Flame, AlertTriangle, Users, Timer, Target, Hourglass,
   CheckCircle2, TrendingUp as TrendIcon, Zap, Medal, Crown, Star,
-  Share2, Download, Layers, Calculator, ExternalLink,
+  Share2, Download, Layers, Calculator, ExternalLink, Save,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../utils/firebase';
-import { collection, query, where, getDocs, doc, getDoc, deleteDoc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, getDoc, deleteDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -102,6 +102,9 @@ const Profil = () => {
   const [streak, setStreak] = useState({ current: 0, longest: 0, total: 0 });
   const [streakAciklamaAcik, setStreakAciklamaAcik] = useState(false);
   const [wrappedAcik, setWrappedAcik] = useState(false);
+  const [tanitimAcik, setTanitimAcik] = useState(false); // uygulama içi tanıtım editörü
+  const [tanitimMetni, setTanitimMetni] = useState('');
+  const [tanitimKaydediliyor, setTanitimKaydediliyor] = useState(false);
   const [waModalAcik, setWaModalAcik] = useState(false);
 
   // Sekmeli dashboard — aktif tab (3 sekme: Yolculuk / Eğitim / Profil)
@@ -492,7 +495,10 @@ const Profil = () => {
         }
       },
       { key: 'bio', label: 'Tanıtım metni', done: bioVar, weight: 25,
-        action: () => { window.location.href = onboardingUrl; }
+        action: () => {
+          setTanitimMetni(userDoc?.tanitim || profilVerisi?.member?.bio_data?.tanitim || profilVerisi?.member?.bio || '');
+          setTanitimAcik(true);
+        }
       },
       { key: 'onboarding', label: 'Onboarding cevapları', done: !!profilVerisi?.onboardingTamamlandi, weight: 25,
         action: () => { window.location.href = onboardingUrl; }
@@ -1440,6 +1446,42 @@ const Profil = () => {
           streakLongest={streak.longest}
           uyelikYil={profilVerisi?.uyelikSuresi?.yil || 0}
         />
+      )}
+
+      {/* Uygulama içi Tanıtım editörü — dış onboarding'e çıkmadan (kaldığın yerden devam sorunu çözüldü) */}
+      {tanitimAcik && (
+        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onClick={() => !tanitimKaydediliyor && setTanitimAcik(false)}>
+          <div className="bg-gradient-to-br from-purple-900 to-indigo-950 border border-white/15 rounded-t-3xl sm:rounded-3xl w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-4 sm:p-5 border-b border-white/10">
+              <div>
+                <h2 className="text-white font-extrabold text-lg inline-flex items-center gap-2"><Sparkles className="w-5 h-5 text-amber-300" />Tanıtım Metni</h2>
+                <p className="text-purple-200/70 text-xs mt-0.5">Kendini birkaç cümleyle anlat — profilinde görünür.</p>
+              </div>
+              <button onClick={() => setTanitimAcik(false)} className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white"><X className="w-5 h-5" /></button>
+            </div>
+            <div className="p-4 sm:p-5">
+              <textarea value={tanitimMetni} onChange={e => setTanitimMetni(e.target.value.slice(0, 500))} rows={5} autoFocus
+                placeholder="Örn: 12 yıldır One Team yolculuğunda; sağlıklı yaşam ve girişimcilik tutkunu..."
+                className="w-full bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-sm text-white placeholder-purple-300/40 focus:outline-none focus:border-amber-400/60 resize-none" />
+              <div className="text-right text-purple-300/50 text-[10px] mt-1">{tanitimMetni.length}/500</div>
+            </div>
+            <div className="p-4 border-t border-white/10 flex gap-2">
+              <button onClick={() => setTanitimAcik(false)} disabled={tanitimKaydediliyor} className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl text-sm disabled:opacity-50">İptal</button>
+              <button disabled={tanitimKaydediliyor || !tanitimMetni.trim() || !uid}
+                onClick={async () => {
+                  setTanitimKaydediliyor(true);
+                  try {
+                    await setDoc(doc(db, 'users', uid), { tanitim: tanitimMetni.trim(), tanitimGuncelleme: serverTimestamp() }, { merge: true });
+                    setTanitimAcik(false);
+                  } catch (e) { console.warn('[tanitim] kaydedilemedi:', e?.message); }
+                  finally { setTanitimKaydediliyor(false); }
+                }}
+                className="flex-[2] bg-amber-400 hover:bg-amber-300 text-purple-900 font-bold py-3 rounded-xl text-sm inline-flex items-center justify-center gap-2 disabled:opacity-50">
+                {tanitimKaydediliyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}{tanitimKaydediliyor ? 'Kaydediliyor…' : 'Kaydet'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
