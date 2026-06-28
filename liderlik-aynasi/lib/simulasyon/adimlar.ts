@@ -36,10 +36,18 @@ export const SIM_ADIMLAR: SimAdim[] = [
   },
   {
     id: "pusula",
-    baslik: "Pusula tamamlanır",
+    baslik: "Pusula — nedenler & öncelik keşfi",
     aciklama:
-      "Her karakter adına kariyer formu, 10 öncelik, çekirdek neden, iç engel ve slogan doldurulur (persona hâline uygun). Pusula mührü kapanır.",
+      "Her karakter adına 10 öncelik, çekirdek neden, iç engel ve slogan doldurulur (persona hâline uygun). Pusula mührü kapanır. Hedef ADIMINDAN ÖNCE gelir — önce nedenler.",
     ikon: "🧭",
+    faz: "Hazırlık",
+  },
+  {
+    id: "hedef",
+    baslik: "Hedef — kariyer hedefi & plan",
+    aciklama:
+      "Nedenler bittikten SONRA: her karakter mevcut kariyerinin bir üstünü hedef alır, 90 günlük plan + tempo belirlenir ve hedef mühürlenir. (Pusula → Hedef sırası korunur.)",
+    ikon: "🎯",
     faz: "Hazırlık",
   },
   {
