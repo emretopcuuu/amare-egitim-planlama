@@ -353,7 +353,7 @@ export default async function SaglikPage() {
           <span className="absolute right-3 top-3">
             <Ipucu {...tr.admin.yardim.komutanRadar} />
           </span>
-          <svg viewBox="0 -16 340 348" className="mx-auto w-full max-w-md">
+          <svg viewBox="-64 -20 468 360" className="mx-auto w-full max-w-md">
             {[0.25, 0.5, 0.75, 1].map((o) => (
               <polygon key={o} points={halka(o)} fill="none" stroke="rgba(156,195,224,0.25)" strokeWidth="1" />
             ))}
