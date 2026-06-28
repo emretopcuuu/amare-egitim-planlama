@@ -73,7 +73,12 @@ function istanbulTarihi(an: Date): string {
 //
 // testModu: sessiz saat ve sahne sessizliğini yok sayar (gece/sahne sırasında
 // bile prova yapılabilsin).
-export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
+export async function tikCalistir(
+  db: Db,
+  simdi: Date,
+  testModu: boolean,
+  provaModu = false
+) {
   const ozet = {
     uretilen: 0,
     puanlanan: 0,
@@ -283,7 +288,8 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       if (fark !== 0) return fark;
       return (da?.sonVerilis ?? 0) - (db?.sonVerilis ?? 0);
     })
-    .slice(0, 3);
+    // Prova kampında zaman hızlandırılmış: 25 kişiye çabuk dağıtım için limit açılır.
+    .slice(0, provaModu ? 40 : 3);
 
   for (const k of uygunlar) {
     // Slice 3 — CUMARTESİ ETKİNLİK FARKINDALIĞI: Gün 2'de grup üyesine, grubunun
