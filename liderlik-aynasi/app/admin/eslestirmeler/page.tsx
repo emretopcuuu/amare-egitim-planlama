@@ -9,6 +9,7 @@ import OtoYenile from "../OtoYenile";
 import EslestirmeFormu from "../eslestirme/EslestirmeFormu";
 import AtamaDuzenle from "../eslestirme/AtamaDuzenle";
 import EslestirmeMetrik from "../eslestirme/EslestirmeMetrik";
+import DislaymaListesi from "../eslestirme/DislaymaListesi";
 import AynaEsiPanel from "../ayna-esi/AynaEsiPanel";
 
 export const metadata = { title: "Eşleştirmeler — Liderlik Aynası" };
@@ -123,6 +124,12 @@ export default async function EslestirmelerPage() {
           atamalar={metrikAtamalar}
           katilimciSayisi={kisiler.length}
         />
+        <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+          <h2 className="mb-4 text-lg font-semibold text-gold-light">
+            {t.dislamaBaslik}
+          </h2>
+          <DislaymaListesi kisiler={kisiler.map((k) => ({ id: k.id, ad: k.ad }))} />
+        </section>
         <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
           <h2 className="text-lg font-semibold text-gold-light">
             {t.mevcutBaslik}

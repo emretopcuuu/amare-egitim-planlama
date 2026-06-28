@@ -53,6 +53,42 @@ export type Database = {
           },
         ]
       }
+      excluded_pairs: {
+        Row: {
+          id: string
+          a_id: string
+          b_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          a_id: string
+          b_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          a_id?: string
+          b_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excluded_pairs_a_id_fkey"
+            columns: ["a_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excluded_pairs_b_id_fkey"
+            columns: ["b_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           admin_id: string | null
