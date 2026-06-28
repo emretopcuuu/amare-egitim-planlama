@@ -76,6 +76,7 @@ export const tr = {
     degerlendir: "Değerlendir",
     koc: "Ayna Koçu",
     gorevler: "Görevler",
+    program: "Program",
     duvar: "Duvar",
     kivilcimSonraki: (kalan: number, ad: string) => `${kalan} ⚡ → ${ad}`,
     kivilcimZirve: "🏆 Zirve",
