@@ -3313,6 +3313,29 @@ export const tr = {
     anahtarIos: "Önce ana ekrana ekle",
     anahtarReddedildi: "Tarayıcı ayarından izin ver",
     anahtarDesteklenmiyor: "Bu cihaz desteklemiyor",
+    // Kurulum koçu (görsel, cihaza özel) — telefona ekleme adımları
+    kocBaslik: "📲 AYNA'yı telefonuna ekle",
+    kocAlt: "Uygulama gibi açılır; görevler ve hatırlatmalar cebine düşer.",
+    kocIosAdim1: "Aşağıdaki",
+    kocIosAdim1b: "Paylaş",
+    kocIosAdim1c: "düğmesine bas",
+    kocIosAdim2: "Açılan listede",
+    kocIosAdim2b: "\"Ana Ekrana Ekle\"",
+    kocIosAdim2c: "seç",
+    kocIosOk: "Paylaş düğmesi tarayıcının altında ↓",
+    kocIosTekrar: "Sonra uygulamayı ana ekrandan aç — bildirimler oradan gelir.",
+    kocBaskaTarayiciBaslik: "Önce Safari'de aç",
+    kocBaskaTarayiciMetin:
+      "Ana ekrana ekleme yalnızca Safari'de çalışır. Linki kopyala → Safari'yi aç → adres çubuğuna yapıştır.",
+    kocInappBaslik: "Önce tarayıcıda aç",
+    kocInappMetin:
+      "Bu sayfa bir uygulama içinde açıldı (WhatsApp/Instagram). Kurmak için linki kopyala, sonra Safari (iPhone) veya Chrome (Android) ile aç.",
+    kocAndroidYukle: "📲 Uygulamayı yükle",
+    kocAndroidTalimatBaslik: "Ana ekrana ekle",
+    kocAndroidTalimatMetin:
+      "Chrome menüsünü (sağ üst ⋮) aç → \"Uygulamayı yükle\" ya da \"Ana ekrana ekle\".",
+    kocLinkKopyala: "🔗 Linki kopyala",
+    kocKopyalandi: "Kopyalandı ✓",
     // PWA ilk-açılış belirgin istemi (logolu, ortada, "ilk aynayı açar gibi")
     pwaIlkBaslik: "AYNA'yı telefonuna kur",
     pwaIlkAlt:

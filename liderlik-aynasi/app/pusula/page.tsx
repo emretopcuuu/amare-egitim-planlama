@@ -12,6 +12,7 @@ import CanliAyna from "@/components/CanliAyna";
 import GeriSayim from "@/components/GeriSayim";
 import Konfeti from "@/components/Konfeti";
 import AynaKurulum from "@/components/AynaKurulum";
+import TelefonaKurKocu from "@/components/TelefonaKurKocu";
 import GunProgramKarti from "@/components/GunProgramKarti";
 
 const t = tr.pusula;
@@ -211,6 +212,9 @@ export default async function PusulaSayfa() {
             ))}
           </div>
         </div>
+
+        {/* Telefona kurulum koçu — yanlış tarayıcı yakala + görsel adım adım rehber */}
+        <TelefonaKurKocu />
 
         {/* Bildirim izni — hatırlatmaların çalışması için */}
         <div className="rounded-2xl bg-midnight-card/40 p-4 ring-1 ring-royal/20">
