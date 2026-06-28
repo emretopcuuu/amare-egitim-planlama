@@ -346,6 +346,22 @@ export async function gorevUret(
   const puanlar = puanlarSonuc.data ?? [];
   const yeniCumle = mod === "yolculuk" ? await yeniCumleOku(db, katilimci.id) : null;
 
+  // #1 ADAPTİF TON — anlık ruh hâli (persona'nın ÜZERİNE binen ince ayar).
+  // Yeni sorgu YOK: yalnız son görevlerin puanı + "hafiflet" kullanımından türetilir.
+  // Sinyal yoksa null → davranış birebir eskisi gibi (graceful degrade).
+  const sonPuanli = onceki
+    .filter((m) => m.status === "scored" && typeof m.ai_score === "number")
+    .slice(0, 4);
+  const hafifletSayisi = onceki.filter((m) => m.lightened_at).length;
+  let ruhHali: "zorlaniyor" | "akista" | "guclu" | null = null;
+  if (sonPuanli.length >= 2) {
+    const ortPuan =
+      sonPuanli.reduce((t, m) => t + (m.ai_score ?? 0), 0) / sonPuanli.length;
+    if (ortPuan <= 4.5 || hafifletSayisi >= 2) ruhHali = "zorlaniyor";
+    else if (ortPuan >= 8) ruhHali = "guclu";
+    else ruhHali = "akista";
+  }
+
   // --- Puan analizi ---
   const ozet = new Map<number, { oz: number[]; dis: number[] }>();
   for (const p of puanlar) {
@@ -580,6 +596,8 @@ export async function gorevUret(
     aktifDalga: aktifDalga ? { id: aktifDalga.id, ad: aktifDalga.name } : null,
     // #7
     tonOnerisi,
+    // #1 adaptif ton — anlık ruh hâli
+    ruhHali,
     // #4
     baglantıSayisi: baglantıSayisi > 0 ? baglantıSayisi : null,
     // #8
@@ -622,6 +640,8 @@ ${personaMetni ? `\n${personaMetni}\n` : ""}${mod === "kamp" && KAMP_YAY_TEMASI[
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
 
 HEDEF BAĞLANTISI: Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.
+
+ANLIK RUH HÂLİ (adaptif ton — persona hâlinin ÜZERİNE binen ince ayar): Bağlamdaki "ruhHali" alanı "zorlaniyor" ise tonu belirgin yumuşat, görevi küçült ve nefes aldır (baskı kurma, kişiyi onaylayarak küçük bir adım iste); "guclu" ise güvenini onurlandırıp bir tık daha meydan oku; "akista" ya da boş ise olağan tonunda devam et. Persona hâlini EZME — yalnız tonu o anki duruma göre yumuşat/sertleştir.
 
 DİL NETLİĞİ (çok önemli): Görev metni SADE ve anlaşılır olmalı — katılımcı tek okumada (1) ne yapacağını ve (2) sana ne yazacağını net anlamalı. Kısa, gerçek cümleler kur. Şu hatalardan kaçın: iç içe geçmiş uzun cümleler, art arda tire (—) ile uzayan eklemeler, küçültme ekleri ('ricacık'), bulanık şiirsel ifadeler ('içinde ne koptu'). Yukarıdaki davranışsal kalıplar (FUN FAILURE, EUSTRESS vb.) PUANLAMA/teşvik tonu içindir; görev metnini süslemek için değil. Önce ne yapacağını söyle, sonra tek bir soruyla geri bildirimi iste.
 
