@@ -5,6 +5,10 @@ import { tr } from "@/lib/i18n/tr";
 
 const ONAY = "YENİ KAMP";
 
+// Çok katılımcılı kampta cascade silme uzun sürebilir — varsayılan fonksiyon
+// süresine sığmayıp UI'da yanlış "başarısız" göstermesin diye süreyi uzatıyoruz.
+export const maxDuration = 60;
+
 // #4 — Yeni kamp hazırla (güvenli sıfırlama). TÜM katılımcı verisini ve kamp
 // durumunu siler; yapı (özellikler, dalga satırları, admin) korunur. Yardımcı
 // görevli YAPAMAZ — yalnız tam yetkili admin + yazılı onay.
@@ -25,7 +29,11 @@ export async function POST(req: Request) {
   const db = supabaseAdmin();
   const { error } = await db.rpc("yeni_kamp_hazirla");
   if (error) {
-    return Response.json({ hata: tr.admin.katilimcilar.hataSunucu }, { status: 500 });
+    // Doğru mesaj — eskiden CSV import'tan ödünç "İçe aktarma başarısız" yazıyordu.
+    return Response.json(
+      { hata: "Sıfırlama tamamlanamadı. Lütfen tekrar dene." },
+      { status: 500 }
+    );
   }
   // İz bırak (kim, ne zaman sıfırladı).
   try {
