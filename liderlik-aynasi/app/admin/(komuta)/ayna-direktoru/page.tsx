@@ -27,7 +27,7 @@ export default async function AynaDirektorPage() {
     db
       .from("settings")
       .select("key, value")
-      .in("key", ["ayna_aktif", "sistem_modu"]),
+      .in("key", ["ayna_aktif"]),
     db.from("push_subscriptions").select("id", { count: "exact", head: true }),
     db
       .from("participants")
@@ -61,7 +61,6 @@ export default async function AynaDirektorPage() {
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-gold/40 backdrop-blur">
         <AynaDirektorKontrol
           aktif={ayar.get("ayna_aktif") === "true"}
-          mod={ayar.get("sistem_modu") === "yolculuk" ? "yolculuk" : "kamp"}
           aboneSayisi={aboneSayisi ?? 0}
           katilimciSayisi={katilimciSayisi ?? 0}
         />

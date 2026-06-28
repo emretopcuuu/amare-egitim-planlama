@@ -9,14 +9,12 @@ const t = tr.admin.aynaDirektor;
 
 type Props = {
   aktif: boolean;
-  mod: string;
   aboneSayisi: number;
   katilimciSayisi: number;
 };
 
 export default function AynaDirektorKontrol({
   aktif,
-  mod,
   aboneSayisi,
   katilimciSayisi,
 }: Props) {
@@ -101,36 +99,6 @@ export default function AynaDirektorKontrol({
         >
           {bekliyor === "durum" ? <Bekle /> : aktif ? t.durdur : `🤖 ${t.uyandir}`}
         </button>
-      </div>
-
-      {/* Sistem modu: kamp ↔ 90 günlük yolculuk */}
-      <div className="border-t border-royal/20 pt-4">
-        <p className="text-sm font-medium text-slate-300">{t.modBaslik}</p>
-        <p className="mt-1 text-xs text-slate-500">{t.modAciklama}</p>
-        <div className="mt-2 flex flex-wrap gap-3">
-          <button
-            onClick={() => istek({ islem: "mod", mod: "kamp" }, "mod")}
-            disabled={bekliyor !== null || mod === "kamp"}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-60 ${
-              mod === "kamp"
-                ? "bg-royal/50 text-gold-light"
-                : "border border-royal-light/30 text-slate-300 hover:bg-midnight-soft"
-            }`}
-          >
-            {t.kampaDon}
-          </button>
-          <button
-            onClick={() => istek({ islem: "mod", mod: "yolculuk" }, "mod")}
-            disabled={bekliyor !== null || mod === "yolculuk"}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-60 ${
-              mod === "yolculuk"
-                ? "bg-royal/50 text-gold-light"
-                : "border border-gold/50 text-gold-light hover:bg-gold/10"
-            }`}
-          >
-            {t.yolculukBaslat}
-          </button>
-        </div>
       </div>
 
       {/* Test + final */}
