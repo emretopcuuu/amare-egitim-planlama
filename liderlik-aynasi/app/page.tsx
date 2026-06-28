@@ -19,7 +19,6 @@ import MuhurTuru from "@/components/MuhurTuru";
 import YolculukHaritasi from "@/components/YolculukHaritasi";
 import KampHud from "@/components/KampHud";
 import GorusmeSimdi from "@/components/GorusmeSimdi";
-import GunProgramKarti from "@/components/GunProgramKarti";
 import KonusanYansima from "@/components/KonusanYansima";
 import SicakAdim from "@/components/SicakAdim";
 import AlgiKoprusuKarti from "@/components/AlgiKoprusuKarti";
@@ -581,7 +580,7 @@ export default async function AnaSayfa({
   // 5) DEĞERLENDİRME — dalga açık ve kendini puanladın: başkalarını puanla
   if (dalga) {
     return (
-      <Sayfa ust={ust} program={<GunProgramKarti takim={takim} />}>
+      <Sayfa ust={ust}>
         <BuyukKart
           baslik={t.dalgaDevamBaslik(dalga.name)}
           metin={t.dalgaDevamMetin}
@@ -597,7 +596,7 @@ export default async function AnaSayfa({
   // 6) GÖREV — açık dalga yok ama AYNA'nın görevi var
   if (gorevSayisi > 0) {
     return (
-      <Sayfa ust={ust} program={<GunProgramKarti takim={takim} />}>
+      <Sayfa ust={ust}>
         <BuyukKart
           baslik={t.gorevTekBaslik}
           metin={siradakiGorevBasligi ? `"${siradakiGorevBasligi}"` : t.gorevTekMetin}
@@ -624,8 +623,8 @@ export default async function AnaSayfa({
       : [null, null];
   return (
     <Sayfa ust={ust}>
-      {/* Program = omurga: boş anda ana kart odur (Şu an / Sırada canlı) */}
-      <GunProgramKarti takim={takim} />
+      {/* Program artık alt menüdeki "Program" sekmesinde (kişisel, katlanır).
+          Ana ekran sadeleşti — burada tekrar gösterilmiyor. */}
 
       {/* AYNA'nın deneyi — ikincil, merak uyandıran (kör nokta içeriği YOK) */}
       {koprusu && <AlgiKoprusuKarti veri={koprusu} />}
