@@ -156,6 +156,8 @@ export type UretilenGorev = {
   neden: string | null;
   /** #8 micro-sprint: true ise due_at 30 dakika olarak hesaplanır */
   micro_sprint: boolean;
+  /** #4b görev yayı aktifken üretildi mi — yay aşaması bu işaretli görevlerden sayılır */
+  yayGorevi: boolean;
 };
 
 // Ön Farkındalık profilini görev üretimi için sıkıştırır.
@@ -287,6 +289,8 @@ export async function gorevUret(
     kapaliAyar,
     icerikAyar,
     tamamCountSonuc,
+    // #4b yay aşaması — yalnız işaretli yay görevlerinden sayılır
+    yayCountSonuc,
     // #5 Dalga hazırlık modu
     aktifDalgaSonuc,
     // #4 Bağ görevi — bağlantı sayısı
@@ -316,6 +320,13 @@ export async function gorevUret(
       .from("missions")
       .select("id", { count: "exact", head: true })
       .eq("participant_id", katilimci.id)
+      .eq("status", "scored"),
+    // #4b tamamlanan yay görevi sayısı (yay aşamasını temaya-özel ilerletir)
+    db
+      .from("missions")
+      .select("id", { count: "exact", head: true })
+      .eq("participant_id", katilimci.id)
+      .eq("yay_gorevi", true)
       .eq("status", "scored"),
     // #5
     db.from("waves").select("id, name").eq("is_open", true).maybeSingle(),
@@ -462,8 +473,10 @@ export async function gorevUret(
     pusulaCekirdekSonuc?.ic_engel ??
     pusulaCekirdekSonuc?.cekirdek_neden?.[0] ??
     null;
+  // #4b Aşama, TOPLAM görev yerine yalnız tamamlanmış YAY görevlerinden ilerler —
+  // kişi çekirdek temasıyla gerçekten çalıştıkça yüzleşme→kanıt→entegrasyona yürür.
   const yay = cekirdekTema
-    ? { cekirdekTema, ...arkAsamasi(tamamCountSonuc?.count ?? 0) }
+    ? { cekirdekTema, ...arkAsamasi(yayCountSonuc?.count ?? 0) }
     : null;
 
   // #7 SES TONU KİŞİSELLEŞTİRME — ÖF'ten ritim + geri bildirim açıklığı
@@ -707,6 +720,7 @@ ${yeniYonergeler}`,
           ? veri.neden.trim().slice(0, 200)
           : null,
       micro_sprint: microSprint,
+      yayGorevi: yay !== null,
     };
   } catch (e) {
     await aiHataYakala(db, "gorev_uretimi", e);
@@ -1361,6 +1375,7 @@ export async function mentorlukGorevUret(
     itiraz: null,
     neden: "Seni bir adım öne taşıyacak sohbet başkasının deneyiminde saklı.",
     micro_sprint: false,
+    yayGorevi: false,
     // #9 takip: önerilen 3 adayın id'leri (mentorluk_kayit'a yazılır)
     adayIdler: secilen.map((k) => k.id),
   };
