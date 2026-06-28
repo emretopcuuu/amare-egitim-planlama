@@ -41,10 +41,20 @@ export default async function ProgramPage() {
   if (!session) redirect("/giris");
   if (session.rol !== "participant") redirect("/admin");
 
-  const { data: surprizler, error } = await supabaseAdmin()
-    .from("schedule_items")
-    .select("id, starts_at, title, location, teaser, reveal_minutes")
-    .order("starts_at");
+  const db = supabaseAdmin();
+  const [{ data: surprizler, error }, { data: gorevler }] = await Promise.all([
+    db
+      .from("schedule_items")
+      .select("id, starts_at, title, location, teaser, reveal_minutes")
+      .order("starts_at"),
+    // #6 Program-omurga: görevler programa satır-içi gömülür. Kişinin görevleri
+    // (üretildikleri saatte) programın iskeletine işlenir — program tek akış olur.
+    db
+      .from("missions")
+      .select("id, title, status, issued_at")
+      .eq("participant_id", session.sub)
+      .order("issued_at", { ascending: true }),
+  ]);
   if (error) throw error;
 
   // Sunucu bileşeni her istekte çalışır; "şimdi" istek anıdır.
@@ -52,6 +62,31 @@ export default async function ProgramPage() {
   const bugun = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
   }).format(simdi);
+
+  // Bir ISO anının Istanbul gününü + gün-içi dakikasını verir (görevleri
+  // programın saat dilimlerine yerleştirmek için).
+  function istGunDk(iso: string): { gun: string; dk: number } {
+    const d = new Date(iso);
+    const gun = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(d);
+    const p = new Intl.DateTimeFormat("tr-TR", {
+      timeZone: "Europe/Istanbul",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: false,
+    }).formatToParts(d);
+    const g = (tip: string) => Number(p.find((x) => x.type === tip)?.value ?? 0);
+    return { gun, dk: g("hour") * 60 + g("minute") };
+  }
+
+  // Görevleri güne göre kovala (yalnız o güne ait olanlar o günün altına düşer).
+  type GorevOlay = { id: string; baslik: string; durum: string; dk: number };
+  const gorevKovalari = new Map<string, GorevOlay[]>();
+  for (const g of gorevler ?? []) {
+    const { gun, dk } = istGunDk(g.issued_at);
+    const kova = gorevKovalari.get(gun) ?? [];
+    kova.push({ id: g.id, baslik: g.title, durum: g.status, dk });
+    gorevKovalari.set(gun, kova);
+  }
   const parcalar = new Intl.DateTimeFormat("tr-TR", {
     timeZone: "Europe/Istanbul",
     hour: "numeric",
@@ -129,6 +164,27 @@ export default async function ProgramPage() {
     );
   }
 
+  // #6 Görev satırı — programın saat diliminin altına gömülü, /gorevler'e götürür.
+  function GorevSatir({ g }: { g: { id: string; baslik: string; durum: string } }) {
+    const bitti = g.durum === "scored" || g.durum === "expired";
+    return (
+      <Link
+        href="/gorevler"
+        className={`ml-6 flex items-center gap-2.5 rounded-xl border-l-2 border-gold/40 bg-gold/[0.06] px-3 py-2 transition-colors hover:bg-gold/[0.1] ${
+          bitti ? "opacity-60" : ""
+        }`}
+      >
+        <span aria-hidden>🤖</span>
+        <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-200">
+          {g.baslik}
+        </span>
+        <span className="shrink-0 text-xs font-semibold text-gold-light">
+          {g.durum === "pending" ? t.gorevAcik : bitti ? "✓" : t.gorevBekliyor}
+        </span>
+      </Link>
+    );
+  }
+
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-8 p-5">
@@ -164,43 +220,57 @@ export default async function ProgramPage() {
                 const suAn = gunBugun && suankiDk >= basDk && suankiDk < bitDk;
                 const gecmis =
                   gunGecti || (gunBugun && suankiDk >= bitDk);
+                // #6 Bu zaman diliminde üretilen görevler — programın altına gömülü.
+                const oGorevler = (gorevKovalari.get(tarih) ?? []).filter(
+                  (g) => g.dk >= basDk && g.dk < bitDk
+                );
                 return (
-                  <li
-                    key={`${m.gun}-${m.baslangic}`}
-                    className={`flex items-start gap-3 rounded-2xl p-4 ${
-                      suAn
-                        ? "parilti kart-cam ring-2 ring-gold/70"
-                        : "kart-cam"
-                    } ${gecmis ? "opacity-50" : ""}`}
-                  >
-                    <span className="text-2xl">{ETKINLIK_SIMGESI[m.tur]}</span>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p
-                          className={`text-base font-bold ${
-                            suAn ? "text-gold" : "text-royal-light"
-                          }`}
-                        >
-                          {m.baslangic} – {m.bitis}
+                  <li key={`${m.gun}-${m.baslangic}`} className="space-y-2">
+                    <div
+                      className={`flex items-start gap-3 rounded-2xl p-4 ${
+                        suAn ? "parilti kart-cam ring-2 ring-gold/70" : "kart-cam"
+                      } ${gecmis ? "opacity-50" : ""}`}
+                    >
+                      <span className="text-2xl">{ETKINLIK_SIMGESI[m.tur]}</span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p
+                            className={`text-base font-bold ${
+                              suAn ? "text-gold" : "text-royal-light"
+                            }`}
+                          >
+                            {m.baslangic} – {m.bitis}
+                          </p>
+                          {suAn && (
+                            <span className="altin-nabiz rounded-full bg-gold px-3 py-0.5 text-xs font-black text-[#1a1206]">
+                              {t.suAn}
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-0.5 text-lg font-semibold leading-snug text-slate-100">
+                          {m.baslik}
                         </p>
-                        {suAn && (
-                          <span className="altin-nabiz rounded-full bg-gold px-3 py-0.5 text-xs font-black text-[#1a1206]">
-                            {t.suAn}
-                          </span>
+                        {m.konusmaci && (
+                          <p className="mt-0.5 text-base text-slate-400">
+                            🎙 {m.konusmaci}
+                          </p>
                         )}
                       </div>
-                      <p className="mt-0.5 text-lg font-semibold leading-snug text-slate-100">
-                        {m.baslik}
-                      </p>
-                      {m.konusmaci && (
-                        <p className="mt-0.5 text-base text-slate-400">
-                          🎙 {m.konusmaci}
-                        </p>
-                      )}
                     </div>
+                    {oGorevler.map((g) => (
+                      <GorevSatir key={g.id} g={g} />
+                    ))}
                   </li>
                 );
               })}
+              {/* Hiçbir program dilimine düşmeyen (boşluk/serbest zaman) görevler */}
+              {(gorevKovalari.get(tarih) ?? [])
+                .filter((g) => !gunProgrami((KAMP_GUNLERI as readonly string[]).indexOf(tarih) + 1 as 1 | 2 | 3).some((m) => g.dk >= dakikaCevir(m.baslangic) && g.dk < dakikaCevir(m.bitis)))
+                .map((g) => (
+                  <li key={g.id}>
+                    <GorevSatir g={g} />
+                  </li>
+                ))}
               {(surprizKovalari.get(tarih) ?? []).map((s) => (
                 <SurprizKart key={s.id} s={s} />
               ))}

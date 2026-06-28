@@ -3248,6 +3248,9 @@ export const tr = {
     acilma: (saat: string) => `${saat}'te açıklanacak`,
     bos: "Program henüz yüklenmedi.",
     gecmis: "tamamlandı",
+    // #6 Programa gömülü görev satırı
+    gorevAcik: "Aç →",
+    gorevBekliyor: "bekliyor",
   },
   bildirim: {
     kurBaslik: "📲 AYNA'yı telefonuna kur",
