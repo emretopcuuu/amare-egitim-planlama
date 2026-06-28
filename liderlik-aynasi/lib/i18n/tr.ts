@@ -3291,6 +3291,15 @@ export const tr = {
     pwaAlt: "Tek dokunuş — uygulama gibi açılır, bildirimler gelir.",
     pwaEkle: "Ekle",
     pwaKapat: "Kapat",
+    // Menüdeki kalıcı aç/kapa anahtarı
+    anahtarBaslik: "🔔 Bildirimler",
+    anahtarAcik: "Açık",
+    anahtarKapali: "Kapalı",
+    anahtarAc: "Aç",
+    anahtarKapat: "Kapat",
+    anahtarIos: "Önce ana ekrana ekle",
+    anahtarReddedildi: "Tarayıcı ayarından izin ver",
+    anahtarDesteklenmiyor: "Bu cihaz desteklemiyor",
     // PWA ilk-açılış belirgin istemi (logolu, ortada, "ilk aynayı açar gibi")
     pwaIlkBaslik: "AYNA'yı telefonuna kur",
     pwaIlkAlt:
