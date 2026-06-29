@@ -405,6 +405,96 @@ export const VINYETLER: Vinyet[] = [
     metin:
       "Çocukken büyüme sorunu yüzünden 'fazla ufak' diye elenen Messi, yıllarca konuşmadan yalnız oyunuyla liderlik etti. Sözle değil, sahadaki işiyle takımı peşinden sürükledi.",
   },
+
+  // ══ KENDİ ALANININ ÖNCÜLERİ — iş, sanat, bilim, spor ══════════════════════
+  // Farklı alanlardan lider/öncü figürler: katılımcı kendi dünyasından bir yüz
+  // bulsun. Yalnız yaygın kabul gören, doğru anlar/sözler.
+
+  // — vizyon —
+  {
+    kod: "jobs_hayir",
+    kas: "vizyon",
+    baslik: "Bin Fikre 'Hayır'",
+    metin:
+      "1997'de batma eşiğindeki Apple'a dönen Steve Jobs, onlarca ürünü birkaç modele indirdi; 'İnovasyon, bin iyi fikre hayır diyebilmektir' dedi. Odak, neyi yapacağın kadar neyi yapmayacağını bilmekti.",
+  },
+
+  // — bağlantı —
+  {
+    kod: "sabanci_insan",
+    kas: "baglanti",
+    baslik: "Adını Hatırlayan Patron",
+    metin:
+      "Türkiye'nin en zengin işadamlarından Sakıp Sabancı, kapısını herkese açık tutar, karşısındakinin adını ve hâlini hatırlamasıyla bilinirdi. 'İşin sırrı insandadır' der; servetiyle değil sıcaklığıyla anılırdı.",
+  },
+  {
+    kod: "manco_kopru",
+    kas: "baglanti",
+    baslik: "7'den 77'ye",
+    metin:
+      "Barış Manço dünyayı gezip Türk kültürünü sevdirdi ve müziğiyle '7'den 77'ye' herkese dokundu. Çocukların gözünde bir abi, büyüklerin gözünde bir elçiydi; farkları değil ortak yanı buldu.",
+  },
+
+  // — sorumluluk —
+  {
+    kod: "koc_defter",
+    kas: "sorumluluk",
+    baslik: "Ülkem Varsa Ben de Varım",
+    metin:
+      "Bir imparatorluk kuran Vehbi Koç, yıllarca kendi hesap defterini bizzat tuttu, disiplinden ödün vermedi. 'Ülkem varsa ben de varım' diyerek kazancının sorumluluğunu ülkesine kurumlar olarak geri ödedi.",
+  },
+
+  // — dayanıklılık —
+  {
+    kod: "veysel_yol",
+    kas: "dayaniklilik",
+    baslik: "Uzun İnce Bir Yol",
+    metin:
+      "Yedi yaşında gözlerini kaybeden Aşık Veysel, karanlığı bir türküye çevirdi: 'Uzun ince bir yoldayım.' Görmeden, sazıyla ve kalbiyle bütün bir ülkeye yol gösterdi.",
+  },
+  {
+    kod: "beethoven_dokuz",
+    kas: "dayaniklilik",
+    baslik: "Sağırlığın İçinden Senfoni",
+    metin:
+      "Beethoven, işitme yetisini yavaş yavaş kaybederken en güçlü eseri 9. Senfoni'yi besteledi; duyamadığı 'Sevinç Korosu'nu sağırlığın içinden çıkardı. Susmayı değil, susturulmamayı seçti.",
+  },
+
+  // — cesaret —
+  {
+    kod: "arf_merak",
+    kas: "cesaret",
+    baslik: "Bilinmeyenin Önünde Durmamak",
+    metin:
+      "On liralık banknota adı basılan Cahit Arf, kimsenin girmediği soyut sorulara merakla daldı ve kendi adıyla anılan teoremi buldu. Ona göre asıl cesaret, bilinmeyenin önünde durmamaktı.",
+  },
+
+  // — zor konuşma —
+  {
+    kod: "ferguson_kulup",
+    kas: "zor_konusma",
+    baslik: "Kimse Kulüpten Büyük Değil",
+    metin:
+      "26 yıl Manchester United'ı yöneten Sir Alex Ferguson'ın tek kuralı vardı: 'Hiçbir oyuncu kulüpten büyük değildir.' En parlak yıldızıyla bile gerekince yüzleşti; takımı, rahatından önce tuttu.",
+  },
+
+  // — örnek olma —
+  {
+    kod: "teresa_kucuk",
+    kas: "ornek_olma",
+    baslik: "Küçük İşler, Büyük Sevgi",
+    metin:
+      "Rahibe Teresa, Kalküta'nın sokaklarında kimsenin dokunmadığı hastalara eğildi; 'Büyük işler yapamayız, yalnız küçük işleri büyük sevgiyle yapabiliriz' dedi. Vaaz vermedi, önce kendi elini uzattı.",
+  },
+
+  // — dinleme —
+  {
+    kod: "buffett_oku",
+    kas: "dinleme",
+    baslik: "Günün Çoğu Okumakla",
+    metin:
+      "Dünyanın en zengin insanlarından Warren Buffett, gününün çoğunu okuyarak ve anlamadığı işten uzak durarak geçirir. Aynı mütevazı evde yaşar; acele kararı değil, sabırla dinlemeyi servet yaptı.",
+  },
 ];
 
 // Bir kasa ait vinyetler arasında dönerek seçer (tohum = tamamlanan görev sayısı
