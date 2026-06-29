@@ -172,7 +172,7 @@ export default function AltNav() {
 
   return (
     <div
-      className="fixed inset-x-0 z-40 flex flex-col items-center gap-2 px-3 print:hidden"
+      className="alt-nav fixed inset-x-0 z-40 flex flex-col items-center gap-2 px-3 print:hidden"
       style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 0.55rem)" }}
     >
       {/* Bekleyen görev dürtüsü — kapsülün üstünde yüzen küçük pill */}

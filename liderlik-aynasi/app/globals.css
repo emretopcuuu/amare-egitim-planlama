@@ -55,7 +55,8 @@ body.alt-nav-acik .baglanti-serit {
 /* Tam-ekran ilk-açılış katmanı (marka splash'ı / tanıtım / karşılama) açıkken
    alt menü TAMAMEN gizlenir — takeover ekranını dibe taşırmasın / üstüne sızmasın
    (iOS'ta z-index örtüşmesi garanti değil; bu, düzeni kesin korur). */
-body.ortu-acik .alt-nav {
+body.ortu-acik .alt-nav,
+body.ortu-acik .kimsin-bant {
   display: none !important;
 }
 
