@@ -82,7 +82,7 @@ export default function KimsinBantClient({
         style={{ height: "calc(env(safe-area-inset-top, 0px) + 3.5rem)" }}
       />
       <div
-        className="fixed inset-x-0 z-50 flex justify-center px-4 print:hidden"
+        className="kimsin-bant fixed inset-x-0 z-50 flex justify-center px-4 print:hidden"
         style={{ top: "max(0.5rem, env(safe-area-inset-top, 0px))" }}
       >
         <div className="flex items-center gap-1.5">

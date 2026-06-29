@@ -46,6 +46,14 @@ export default function AynaAnalizDeneyim({
     };
   }, []);
 
+  // Tam ekran sahne açıkken global çubuklar (üstte KimsinBant, altta AltNav)
+  // katmanın üstüne binmesin / X'i kapatmasın: mevcut "ortu-acik" mekanizması
+  // ikisini de CSS ile gizler. Kapanış/unmount'ta temizle.
+  useEffect(() => {
+    document.body.classList.toggle("ortu-acik", acik);
+    return () => document.body.classList.remove("ortu-acik");
+  }, [acik]);
+
   async function ac() {
     titret(8);
     setAcik(true);
@@ -164,15 +172,15 @@ export default function AynaAnalizDeneyim({
             <div className="absolute inset-0 bg-gradient-to-b from-[#04101c]/70 via-[#04101c]/40 to-[#04101c]/90" />
           </div>
 
-          {/* Kapat */}
-          <div className="relative z-10 flex shrink-0 items-center justify-between px-5 pt-[calc(0.75rem+env(safe-area-inset-top))]">
+          {/* Kapat — büyük, net dokunma hedefi; her şeyin üstünde (z-20) */}
+          <div className="relative z-20 flex shrink-0 items-center justify-between px-5 pt-[calc(0.75rem+env(safe-area-inset-top))]">
             <span className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-light/70">
               {t.asamaAd[asama]}
             </span>
             <button
               onClick={kapat}
               aria-label={t.kapat}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-2xl text-slate-200 hover:bg-white/20"
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-white/15 text-3xl text-slate-100 shadow-lg ring-1 ring-white/20 transition-colors hover:bg-white/25 active:bg-white/30"
             >
               ✕
             </button>
