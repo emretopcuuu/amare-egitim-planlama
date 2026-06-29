@@ -198,7 +198,7 @@ export function katman3Hesapla(yanitlar: Record<string, number>): {
 export type MetinSoru = { kod: string; metin: string; zorunlu: boolean };
 
 export const KATMAN4_SORULAR: MetinSoru[] = [
-  { kod: "k4.hedef", metin: "Önümüzdeki 12 ayda gerçekten ulaşmak istediğin sonuç ya da kariyer nedir?", zorunlu: true },
+  { kod: "k4.hedef", metin: "Önümüzdeki 12 ayda gerçekten ulaşmak istediğin kariyer nedir?", zorunlu: true },
   { kod: "k4.ters_davranis", metin: "Bu hedefe ters düşen, yapman gerektiğini bildiğin halde yapmadığın davranış nedir?", zorunlu: true },
   { kod: "k4.kalkan", metin: "Bu davranışı sürdürmek seni neyden koruyor? Hangi korku ya da riski senden uzak tutuyor?", zorunlu: true },
   { kod: "k4.varsayim", metin: "Seni durduran gizli inanç: “Eğer ___ yaparsam, ___ olur.” Bu cümleyi kendine göre tamamla.", zorunlu: true },
