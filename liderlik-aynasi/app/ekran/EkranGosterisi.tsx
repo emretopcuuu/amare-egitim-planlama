@@ -254,6 +254,30 @@ export default function EkranGosterisi() {
         </div>
       </header>
 
+      {/* BUGÜNÜN CANLI SAYAÇLARI — salonun enerjisi tek bakışta (her slaytta sabit) */}
+      {veri?.bugun && (
+        <div className="mt-5 grid grid-cols-4 gap-3">
+          {[
+            { ikon: "🤖", sayi: veri.bugun.gorev, etiket: "görev", renk: "text-gold-light" },
+            { ikon: "👁", sayi: veri.bugun.gozlem, etiket: "gözlem", renk: "text-sky-300" },
+            { ikon: "💛", sayi: veri.bugun.takdir, etiket: "takdir", renk: "text-pink-300" },
+            { ikon: "⭐", sayi: veri.bugun.fiero, etiket: "fiero", renk: "text-amber-300" },
+          ].map((s) => (
+            <div
+              key={s.etiket}
+              className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-center backdrop-blur"
+            >
+              <p className={`font-display text-5xl font-bold leading-none tabular-nums ${s.renk}`}>
+                {s.sayi}
+              </p>
+              <p className="mt-1.5 text-base font-medium uppercase tracking-wide text-slate-400">
+                {s.ikon} bugün {s.etiket}
+              </p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* SENKRON AN canlı katılım bandı */}
       {veri?.senkron && (
         <div className="parilti mt-4 flex items-center justify-between rounded-2xl border-2 border-gold/50 bg-gold/15 px-8 py-4">
