@@ -29,6 +29,7 @@ import KarsilasmaKarti from "@/components/KarsilasmaKarti";
 import { karsilasmaBul } from "@/lib/karsilasma";
 import UstMenu from "@/components/UstMenu";
 import { SiradakiOnizleme } from "@/components/AsamaRayi";
+import YeniGorevButonu from "@/components/YeniGorevButonu";
 
 const t = tr.anaSayfa;
 
@@ -452,7 +453,7 @@ export default async function AnaSayfa({
       )}
       {/* S8: KampHud + GorusmeSimdi tek "şu an" bloğu */}
       <div className="space-y-1.5">
-        <KampHud takim={takim} />
+        <KampHud takim={takim} baslangic={kampBaslangic} />
         <GorusmeSimdi gorusmeler={gorusmeListe} />
       </div>
       {/* S2: Pano sadeleşti — sadece Günün Cümlesi (admin seçimi) inline kalır */}
@@ -647,8 +648,10 @@ export default async function AnaSayfa({
         {/* #4 Sıradaki dalgaya geri sayım: yalnızca zamanlama ayarlıysa */}
         {sonrakiDalgaZamani && <GeriSayim hedefZaman={sonrakiDalgaZamani} />}
         <div className="mt-4 space-y-3">
+          {/* Beklemeden, kişi AYNA'dan o an taze bir görev çekebilir. */}
+          <YeniGorevButonu vurgu />
           {/* S10: dalga kapalıyken Koç zaten alt çubukta — burada tek öneri yeterli */}
-          <SicakAdim href="/kocu" etiket={t.bekleKocu} vurgu />
+          <SicakAdim href="/kocu" etiket={t.bekleKocu} />
           {(bugunTakdir ?? 0) > 0 && (
             <SicakAdim href="/takdir" etiket={t.bekleEylem} />
           )}

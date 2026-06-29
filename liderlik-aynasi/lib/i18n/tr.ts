@@ -3294,6 +3294,10 @@ export const tr = {
     benzeriUretiliyor: "AYNA hazırlıyor…",
     benzeriHazir: "✓ Yeni görevin hazır — yukarı kaydır.",
     benzeriOlmaz: "Şu an yeni görev üretilemedi.",
+    // "Yeni görev iste" butonu
+    yeniGorevIste: "🤖 Yeni görev iste",
+    yeniGorevUretiliyor: "AYNA hazırlıyor…",
+    zatenGorevVar: "Önce bekleyen görevini bitir.",
     // A10 — görevi netleştir
     netlestir: "Bu görevi netleştir",
     netlestiriliyor: "AYNA açıklıyor…",
