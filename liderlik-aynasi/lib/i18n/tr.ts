@@ -953,7 +953,10 @@ export const tr = {
       "Hazırsın. Kampın geri kalanı, oraya gelip odandaki kodu okuttuğunda açılacak. O ana dek dinlen.",
     // Mühür kahramanı: bekleme ekranının EN BÜYÜK, merkez mesajı — aday bundan
     // sonra nasıl ilerleyeceğini buradan anlar.
-    muhurRozet: "🔒 Mühür kapalı",
+    muhurRozet: "Mühür kapalı",
+    // Mühür ekranına AYNA'nın ilk analizi kartı
+    ilkAynaBaslik: "Sana dair ilk aynam",
+    ilkAynaTeaser: "Dokun — kendi sesinle, sana dair ilk izlenimimi dinle",
     muhurHeroBaslik: "Mührü kaldırmadan devam edemezsin",
     muhurHeroMetin:
       "Kampta odana girdiğinde seni bir QR karekod karşılayacak. Onu telefonunla okut — mühür kalkar, kamp ve AYNA sana açılır.",
@@ -986,6 +989,52 @@ export const tr = {
     ozetEksik: "Eksik",
     ozetDuzelt: "Düzelt",
     ozetYap: "Yap",
+  },
+  // AYNA'NIN ANALİZLERİ — kişiye dair, zaman içinde biriken, kendi sesiyle okunan
+  // derin analiz (dönen ayna + Star Wars akışı).
+  analiz: {
+    asamaAd: {
+      kamp_oncesi: "İlk Aynam · Kamp Öncesi",
+      aksam_1: "Aynam · 1. Akşam",
+      aksam_2: "Aynam · 2. Akşam",
+      cikis: "Son Aynam · Kamp Çıkışı",
+    } as Record<string, string>,
+    // Akışın üstündeki sabit çerçeve (AI değil)
+    cerceve: {
+      kamp_oncesi:
+        "Seni şimdilik yalnız kendi anlattıklarından tanıyorum. Bu, sana dair ilk aynam — kampta başkalarının söyledikleri ve senin yaptıkların eklendikçe derinleşecek.",
+      aksam_1: "İlk günün ardından aynan biraz daha derinleşti.",
+      aksam_2: "İki günün iziyle aynan netleşiyor.",
+      cikis: "Üç günün sonunda, sana dair son aynam.",
+    } as Record<string, string>,
+    uyari:
+      "Bunların hiçbiri kesin bir yargı değil — yalnızca şu ana dek paylaştıklarından yapılmış iyi niyetli okumalar. Yanlış geleni bırak, doğru geleni cebine koy.",
+    yukleniyor: "AYNA seni okuyor…",
+    hata: "Aynan şu an oluşturulamadı — birazdan tekrar dene.",
+    veriYok: "Aynayı oluşturmak için önce hazırlık adımlarını tamamla.",
+    oynat: "Aynayı oku",
+    oynatSesli: "Kendi sesinle dinle",
+    durdur: "Durdur",
+    metniOku: "Yazıyı sabit göster",
+    akisaDon: "Akışa dön",
+    kapat: "Kapat",
+    // Yeniden değerlendir (hak bir kez, sebep zorunlu)
+    yeniden: "Sağlıklı gelmediyse yeniden değerlendir",
+    yenidenKilit: "Yeniden değerlendirme hakkını kullandın.",
+    yenidenBaslik: "Neden sağlıklı/doğru gelmedi?",
+    yenidenAciklama:
+      "Bu hakkı bir kez kullanabilirsin ve sebebini yazman gerekiyor. AYNA, yazdığını dikkate alarak seni yeniden okuyacak.",
+    yenidenYer: "Örn: Beni yanlış anladığın yer şu… / Bu kısım bana hiç uymuyor çünkü…",
+    yenidenGonder: "Yeniden değerlendir",
+    yenidenBekle: "AYNA yeniden okuyor…",
+    sebepKisa: "Lütfen sebebini biraz daha açık yaz.",
+    vazgec: "Vazgeç",
+    // /analizlerim listesi + menü
+    listeBaslik: "AYNA'nın seninle ilgili analizleri",
+    listeAciklama:
+      "Aynan kamp boyunca derinleşti. Her biri verildiği anın izini taşır — üstüne yazılmaz, yan yana durur.",
+    listeBos: "Henüz bir analiz yok. İlk aynan, hazırlığını tamamlayınca mühür ekranında belirir.",
+    menuLink: "Aynalarım",
   },
   // FAZ A — Hedef (Gün 2). Nedenler keşfedildikten sonra: neredesin → kısa AI
   // sohbeti → kariyer/gelir tablosu → 3 soru → kişisel kariyer planı.
@@ -1424,7 +1473,7 @@ export const tr = {
     cumleYer: "Geriye kalan cümleyi kendi kelimelerinle yaz…",
     cumleKaydet: "Mühürle",
     cumleBosUyari: "Bir cümle yaz.",
-    tamamBaslik: "Mühürlendi 🔒",
+    tamamBaslik: "Mühürlendi",
     tamamMetin:
       "Bu cümle artık senin. Yola çıktığında — eski cümle kıpırdadığında — onu sana hatırlatacağım.",
     pusulaYokBaslik: "Önce pusulan",
@@ -1758,7 +1807,7 @@ export const tr = {
       pencereKapat: "Pencereyi Kapat",
       muhurluUyari: (n: number, t: number) =>
         n < t
-          ? `🔒 ${n}/${t} kişi söz mühürledi — mührü olmayanlar bu anı atlar`
+          ? `${n}/${t} kişi söz mühürledi — mührü olmayanlar bu anı atlar`
           : `✓ ${t}/${t} kişinin mühürlü sözü var`,
       hata: "İşlem başarısız, tekrar dene.",
     },
@@ -3734,7 +3783,7 @@ export const tr = {
     kapaliBaslik: "Bu yolculuğun başında, buraya bir söz bıraktın",
     kapaliMetin:
       "Daha en başta, kendi sesinle geleceğine bir söz mühürledin. Onu birlikte açmanın vakti geldi.",
-    ac: "🔒 Mührü aç",
+    ac: "Mührü aç",
     sesUst: "EN BAŞTAN — KENDİ SESİN",
     sesBaslik: "İşte o an",
     sesMetin:
@@ -3809,7 +3858,7 @@ export const tr = {
     seninle: "Yansıman artık seninle. Su her durulduğunda burada.",
     sonra: "Kaydın aynada saklandı. Yansıman kamp başlarken uyanacak.",
     // A1 Mühür: beklenti sözü "geleceğe mühürlü mesaj" olarak kapanışta onaylanır
-    muhurUst: "🔒 SÖZÜN MÜHÜRLENDİ",
+    muhurUst: "SÖZÜN MÜHÜRLENDİ",
     muhurMetin:
       "Bugün kendine verdiğin sözü bu aynaya kilitledik. Kampın son anında, onu birlikte açacağız — ve ne kadar yol aldığını göreceksin.",
     hata: "Bir şey ters gitti. Tekrar dene.",

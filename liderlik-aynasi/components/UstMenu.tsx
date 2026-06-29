@@ -42,6 +42,8 @@ export default function UstMenu({
   const birincil: { href: string; etiket: string }[] = [];
   // GELİŞTİRME #1: Ayna Koçu her zaman erişilebilir birincil eylem.
   birincil.push({ href: "/kocu", etiket: t.menuKocu });
+  // AYNA'nın zaman içinde biriken analizleri (kamp öncesi → çıkış).
+  birincil.push({ href: "/analizlerim", etiket: tr.analiz.menuLink });
   if (ozTamam && dalgaAcik)
     birincil.push({ href: `/degerlendir/${ozHedefId}`, etiket: t.menuOzDuzenle });
   if (raporlarAcik) birincil.push({ href: "/ayna", etiket: t.menuRapor });

@@ -12,6 +12,7 @@ import {
   aynaAniUret,
 } from "@/lib/ayna";
 import { aynaAniAdaylari } from "@/lib/aynaAniTetik";
+import { kampAnaliziTik, type AsamaKod } from "@/lib/aynaAnaliz";
 import { grupOdevUret } from "@/lib/grupOdev";
 import { kivilcimHesapla } from "@/lib/kivilcim";
 import {
@@ -555,6 +556,37 @@ export async function tikCalistir(
               "/"
             );
           }
+        }
+      }
+    }
+  }
+
+  // 3b3) AYNA ANALİZİ: kamp aşamalarında kişiye dair derin analiz + kendi sesi.
+  // Aşamalar: 1. akşam (Gün 1, 21:00+), 2. akşam (Gün 2, 23:30), kamp çıkışı
+  // (Gün 3, 14:00+). unique(participant,asama) tekrarı engeller; tik başına ≤6
+  // üretim. Kamp öncesi analiz mühür ekranında talep üzerine üretilir (burada değil).
+  if (mod === "kamp") {
+    let analizAsama: AsamaKod | null = null;
+    if (gun === 1 && saat >= 21) analizAsama = "aksam_1";
+    else if (gun === 2 && saat === 23 && dakika >= 30) analizAsama = "aksam_2";
+    else if (gun >= 3 && saat >= 14) analizAsama = "cikis";
+    if (analizAsama && (kisiler ?? []).length > 0) {
+      const uretilenler = await kampAnaliziTik(
+        db,
+        analizAsama,
+        (kisiler ?? []).map((k) => ({ id: k.id, full_name: k.full_name })),
+        6
+      );
+      if (uretilenler.length > 0) {
+        ozet.uretilen += uretilenler.length;
+        for (const pid of uretilenler) {
+          await katilimciyaBildir(
+            db,
+            pid,
+            "🪞 Aynan derinleşti",
+            "Sana dair yeni bir analiz var — kendi sesinle dinle.",
+            "/analizlerim"
+          );
         }
       }
     }
