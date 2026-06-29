@@ -146,7 +146,7 @@ export default function AynaAnalizDeneyim({
       {/* TETİK — mühür kartı ya da liste öğesi */}
       <button
         onClick={ac}
-        className="group flex w-full items-center gap-3 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-midnight-card/60 p-4 text-left transition-colors hover:border-gold/55"
+        className="ayna-vurgu group relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-br from-gold/10 to-midnight-card/60 p-4 text-left transition-colors hover:border-gold/55"
       >
         <span className="text-2xl" aria-hidden>🪞</span>
         <span className="min-w-0 flex-1">
@@ -167,7 +167,7 @@ export default function AynaAnalizDeneyim({
               loop
               autoPlay
               playsInline
-              className="ayna-doner h-full w-full object-cover opacity-30"
+              className="h-full w-full object-cover opacity-30"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-[#04101c]/70 via-[#04101c]/40 to-[#04101c]/90" />
           </div>
