@@ -1,5 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { okunmamisSayisi } from "@/lib/bildirim";
 import KimsinBantClient from "./KimsinBantClient";
 
 // Onboarding/Pusula/Kamp ekranlarında "kimin sayfasındayız" göstergesi.
@@ -27,6 +28,14 @@ export default async function KimsinBant() {
   }
 
   const ilkHarf = kisi.full_name.trim().charAt(0).toUpperCase();
+  const okunmamis = await okunmamisSayisi(db, session.sub);
 
-  return <KimsinBantClient ad={kisi.full_name} avatarUrl={avatarUrl} ilkHarf={ilkHarf} />;
+  return (
+    <KimsinBantClient
+      ad={kisi.full_name}
+      avatarUrl={avatarUrl}
+      ilkHarf={ilkHarf}
+      okunmamis={okunmamis}
+    />
+  );
 }
