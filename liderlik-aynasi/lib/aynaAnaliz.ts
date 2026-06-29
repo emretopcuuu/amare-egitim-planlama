@@ -179,7 +179,9 @@ async function metinUret(
       max_tokens: 1500,
       thinking: { type: "adaptive" },
       output_config: {
-        effort: "high",
+        // Opus medium hâlâ çok derin; high'ın ~2× token maliyetine gerek yok
+        // (timeout riskini de azaltır).
+        effort: "medium",
         format: { type: "json_schema", schema: SEMA },
       },
       system: `${PERSONA}\n\nAŞAMA: ${ASAMA_CERCEVE[asama]}\n\n${TALIMAT}${yenidenNot}`,

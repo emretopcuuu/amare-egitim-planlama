@@ -469,7 +469,15 @@ async function damitVeMuhurle(
         effort: "high",
         format: { type: "json_schema", schema: DAMITMA_SEMASI },
       },
-      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\nGörevin: aşağıdaki öncelik listesi + Nedenler sohbetini yapılandırılmış profile damıt. Kişinin KENDİ kelimelerine sadık kal, uydurma. "ic_engel_kat" için yukarıdaki kategori eşlemesini sezgi olarak kullan. "ozet" alanı en kritik: bundan sonra bu kişiye üretilecek her görev/tavsiye onu okuyacak.`,
+      // Sistem tamamen SABİT (kişi verisi messages'ta) → tek önbellek bloğu;
+      // birbirine yakın çalışan damıtmalar girdiyi yeniden okumaz.
+      system: [
+        {
+          type: "text" as const,
+          text: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\nGörevin: aşağıdaki öncelik listesi + Nedenler sohbetini yapılandırılmış profile damıt. Kişinin KENDİ kelimelerine sadık kal, uydurma. "ic_engel_kat" için yukarıdaki kategori eşlemesini sezgi olarak kullan. "ozet" alanı en kritik: bundan sonra bu kişiye üretilecek her görev/tavsiye onu okuyacak.`,
+          cache_control: { type: "ephemeral" as const },
+        },
+      ],
       messages: [{ role: "user", content: girdi }],
     });
     const veri = jsonCoz<{
