@@ -31,6 +31,8 @@ export type EkranVerisi = {
     enGuclu: string | null;
   }[];
   takimLigi: { takim: string; kivilcim: number }[];
+  // Bugünün canlı sayaçları (Istanbul günü) — salonun enerjisini görünür kılar.
+  bugun: { gorev: number; gozlem: number; takdir: number; fiero: number };
   // Senkron An canlı katılımı (aktif pencere yoksa null)
   senkron: { baslik: string; yanit: number; toplam: number; kalanSn: number } | null;
   // Sahne Vitrini (DJ): host belirli bir slaydı sabitlediyse onun indeksi,
@@ -116,6 +118,24 @@ export async function GET() {
   if (kisilerSonuc.error || puanlarSonuc.error || gorevSonuc.error) {
     return Response.json({ hata: "Veri alınamadı." }, { status: 500 });
   }
+
+  // Bugünün canlı sayaçları (Istanbul günü başından beri).
+  const bugunIst = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Istanbul",
+  }).format(simdi);
+  const gunBasi = new Date(`${bugunIst}T00:00:00+03:00`).toISOString();
+  const [bgGorev, bgGozlem, bgTakdir, bgFiero] = await Promise.all([
+    db.from("missions").select("id", { count: "exact", head: true }).eq("status", "scored").gte("scored_at", gunBasi),
+    db.from("ratings").select("id", { count: "exact", head: true }).eq("is_self", false).gte("created_at", gunBasi),
+    db.from("kudos").select("id", { count: "exact", head: true }).eq("is_hidden", false).gte("created_at", gunBasi),
+    db.from("missions").select("id", { count: "exact", head: true }).eq("ai_score", 10).gte("scored_at", gunBasi),
+  ]);
+  const bugun = {
+    gorev: bgGorev.count ?? 0,
+    gozlem: bgGozlem.count ?? 0,
+    takdir: bgTakdir.count ?? 0,
+    fiero: bgFiero.count ?? 0,
+  };
 
   // Onaylı anı duvarı fotoğrafları — büyük ekran slaytı için imzalı URL'ler
   const anilar = (
@@ -348,6 +368,7 @@ export async function GET() {
     })(),
     anilar,
     yansimalar,
+    bugun,
   };
 
   return Response.json(veri);
