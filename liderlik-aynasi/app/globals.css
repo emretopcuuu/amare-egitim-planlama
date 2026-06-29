@@ -66,17 +66,13 @@ body.ortu-acik .kimsin-bant {
   50% { opacity: 0.5; box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
 }
 .ekran-canli-nokta { animation: ekran-canli-nabiz 1.6s ease-in-out infinite; }
-.ekran-sahne::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background:
-    radial-gradient(120% 80% at 50% -10%, rgba(212, 175, 55, 0.1), transparent 55%),
-    radial-gradient(100% 70% at 50% 110%, rgba(78, 124, 166, 0.12), transparent 60%);
+/* Sinematik glow vinyet — inset box-shadow ile (pseudo-element + z-index savaşı
+   YOK; absolute konumlu çocukları, ör. "Sesi Aç" düğmesini bozmaz). */
+.ekran-sahne {
+  box-shadow:
+    inset 0 130px 220px -110px rgba(212, 175, 55, 0.14),
+    inset 0 -130px 220px -110px rgba(78, 124, 166, 0.16);
 }
-.ekran-sahne > * { position: relative; z-index: 1; }
 
 /* "Sana dair ilk aynam" kartı — görmezden gelinmesin diye kırmızımsı-elit vurgu:
    nazik kırmızı nabız (dışarı taşan glow) + üstünden geçen çizgisel ışık parıltısı. */
