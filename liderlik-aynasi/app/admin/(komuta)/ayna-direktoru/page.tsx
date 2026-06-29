@@ -84,6 +84,12 @@ export default async function AynaDirektorPage() {
       </section>
 
       <Katlanir baslik={t.akisBaslik} ikon="📜" yardim={tr.admin.yardim.aynaAkis}>
+        <Link
+          href="/admin/gorev-akisi"
+          className="mb-3 inline-flex items-center gap-1.5 rounded-lg border border-gold/40 px-3 py-1.5 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10"
+        >
+          📜 Tüm görevleri gör (ara · sırala) →
+        </Link>
         <SonGorevler
           gorevler={(sonGorevler ?? []).map((g) => ({
             id: g.id,
