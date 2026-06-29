@@ -46,16 +46,24 @@ export const WA_SABLONLAR: WaSablon[] = [
     ikon: "🔑",
     etiket: "Giriş daveti (link + şifre)",
     aciklama: "Aynayla tanışma daveti — kişiye özel giriş bağlantısı ve kodu.",
-    friendlyName: "pd101_giris_v5",
+    friendlyName: "pd101_giris_v6",
     dil: "tr",
     kategori: "MARKETING",
     ayarAnahtari: "wa_tpl_giris",
-    // Not: "giriş bağlantın / hesabına giriş" gibi login ifadeleri Meta'da
-    // AUTHENTICATION sınıflandırması tetikleyip redde yol açtı (v3 UTILITY, v4
-    // MARKETING ikisi de INCORRECT_CATEGORY). v5 davet tonunda, login dili yok.
+    // Not: "giriş bağlantın / hesabına giriş / şifre / doğrulama" gibi login
+    // ifadeleri Meta'da AUTHENTICATION sınıflandırması tetikleyip redde yol açtı
+    // (v3 UTILITY, v4 MARKETING ikisi de INCORRECT_CATEGORY). Bu yüzden v6'da da
+    // login dili YOK — kod "kamp kodun" olarak geçer.
+    // v6: kod artık GÖVDEDE görünür ({{2}}) + WhatsApp iç tarayıcısı uyarısı.
+    // Buton WhatsApp WebView'ında patlasa bile kişi tarayıcısını açıp adres+kodla
+    // devam edebilir (eskiden kod sadece butonun URL'sindeydi, görünmüyordu).
     govde:
       "Merhaba {{1}}, PD101 Liderlik Aynası kampına hoş geldin! 🪞\n\n" +
-      "Kampa hazırlanmak için aşağıdaki butona dokun, seni bekleyen ilk adımları keşfet.\n\n" +
+      "Kampın telefonunda yaşıyor. Başlamak için:\n\n" +
+      "1) Telefonunda Chrome veya Safari'yi aç\n" +
+      "2) Şu adrese git: ayna.oneteamglobal.ai\n" +
+      "3) Sana özel kamp kodun: {{2}}\n\n" +
+      "Aşağıdaki butona da dokunabilirsin. Sayfa WhatsApp içinde açılıp ilerlemezse, sağ üstteki menüden \"Tarayıcıda aç\"ı (Chrome/Safari) seç — kurulum ve kamera yalnız gerçek tarayıcıda çalışır.\n\n" +
       "— One Team AI",
     buton: { baslik: "Kampıma Başla", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
     serbestMi: false,
