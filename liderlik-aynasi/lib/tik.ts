@@ -30,6 +30,8 @@ import {
   suankiMadde,
   bitenMadde,
   siradakiMadde,
+  yaklasanEtkinlik,
+  dakikaCevir,
   sahneSessizMi,
   sabahPenceresiMi,
   GECE_FISILTILARI,
@@ -925,6 +927,31 @@ export async function tikCalistir(
       updated_at: simdi.toISOString(),
     });
     ozet.acilan++;
+  }
+
+  // 5b) PROGRAM HATIRLATMASI: sabit programdaki yaklaşan DENEYİMSEL etkinlikten
+  // (~10 dk önce) herkese TEK seferlik "sıradaki: X" push'u → Program sekmesine.
+  // Yalnız kamp gününde + sahne sessizliği dışında (sessiz saat yukarıda zaten
+  // elendi). Yemek/ara/serbest dahil değil (yaklasanEtkinlik filtreler). Settings
+  // kilidi blok başına tek atış garantiler.
+  if (kampGunuBugun && !sahneSessiz) {
+    const yaklasan = yaklasanEtkinlik(kampGunuBugun, gunDk, 12);
+    if (yaklasan) {
+      const anahtar = `program_uyari_${bugun}_${kampGunuBugun}_${yaklasan.baslangic}`;
+      const { error: kilit } = await db
+        .from("settings")
+        .insert({ key: anahtar, value: "1" });
+      if (!kilit) {
+        const kalanDk = dakikaCevir(yaklasan.baslangic) - gunDk;
+        await herkeseBildir(
+          db,
+          `⏰ ${kalanDk} dk sonra: ${yaklasan.baslik}`,
+          `Sıradaki etkinlik yaklaşıyor${yaklasan.konusmaci ? ` · ${yaklasan.konusmaci}` : ""}. Programın gerisinde kalma — Program'a göz at.`,
+          "/program"
+        );
+        ozet.acilan++;
+      }
+    }
   }
 
   // 6a) SABAH ÖZLÜ SÖZ: 08:00-09:00 arasında, günde bir kez, herkese kendi
