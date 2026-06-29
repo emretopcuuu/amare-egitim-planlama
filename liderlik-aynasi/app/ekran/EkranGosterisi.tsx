@@ -441,7 +441,7 @@ export default function EkranGosterisi() {
 
             {/* Slayt 2 — Takım kimyası ağ haritası */}
             <section
-              className={`absolute inset-0 flex flex-col transition-all duration-1000 ${
+              className={`absolute inset-0 flex flex-col pb-44 transition-all duration-1000 ${
                 slayt === 1 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
@@ -528,7 +528,7 @@ export default function EkranGosterisi() {
 
             {/* Slayt 3 — Özellik ortalamaları */}
             <section
-              className={`absolute inset-0 flex flex-col transition-all duration-1000 ${
+              className={`absolute inset-0 flex flex-col pb-44 transition-all duration-1000 ${
                 slayt === 2 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
@@ -566,7 +566,7 @@ export default function EkranGosterisi() {
             </section>
             {/* Slayt 4 — Kıvılcım Ligi */}
             <section
-              className={`absolute inset-0 flex flex-col transition-all duration-1000 ${
+              className={`absolute inset-0 flex flex-col pb-44 transition-all duration-1000 ${
                 slayt === 3 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
@@ -651,7 +651,7 @@ export default function EkranGosterisi() {
             </section>
             {/* Slayt 5 — Anı Duvarı */}
             <section
-              className={`absolute inset-0 flex flex-col transition-all duration-1000 ${
+              className={`absolute inset-0 flex flex-col pb-44 transition-all duration-1000 ${
                 slayt === 4 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
@@ -677,7 +677,7 @@ export default function EkranGosterisi() {
 
             {/* Slayt 6 — #8 Salonun Kalbi: isimsiz olumlu yansımalar duvarı */}
             <section
-              className={`absolute inset-0 flex flex-col transition-all duration-1000 ${
+              className={`absolute inset-0 flex flex-col pb-44 transition-all duration-1000 ${
                 slayt === 5 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
@@ -706,7 +706,7 @@ export default function EkranGosterisi() {
 
             {/* Slayt 7 — ŞİMDİ / SIRADA: o anki program bloğu + geri sayım + sıradaki */}
             <section
-              className={`absolute inset-0 flex flex-col transition-all duration-1000 ${
+              className={`absolute inset-0 flex flex-col pb-44 transition-all duration-1000 ${
                 slayt === 6 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
@@ -764,17 +764,17 @@ export default function EkranGosterisi() {
 
       {/* QR + AKSİYON ÇAĞRISI — salondaki herkesi telefona/eyleme iter (sol-alt) */}
       {qr && (
-        <div className="absolute bottom-20 left-8 z-20 flex items-center gap-4 rounded-2xl border border-gold/30 bg-[#04101c]/85 p-4 shadow-2xl backdrop-blur">
+        <div className="absolute bottom-16 left-6 z-20 flex items-center gap-3 rounded-2xl border border-gold/30 bg-[#04101c]/85 p-3 shadow-2xl backdrop-blur">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qr} alt="Katıl" className="h-28 w-28 rounded-lg" />
-          <div className="max-w-[15rem]">
-            <p className="text-base font-semibold uppercase tracking-wide text-gold-light/80">
+          <img src={qr} alt="Katıl" className="h-20 w-20 rounded-lg" />
+          <div className="max-w-[12rem]">
+            <p className="text-sm font-semibold uppercase tracking-wide text-gold-light/80">
               📲 Telefonunu çıkar
             </p>
-            <p className="mt-1 text-2xl font-bold leading-tight text-slate-100">
+            <p className="mt-0.5 text-lg font-bold leading-tight text-slate-100">
               {AKSIYONLAR[slayt % AKSIYONLAR.length]}
             </p>
-            <p className="mt-1.5 font-mono text-sm text-slate-400">ayna.oneteamglobal.ai</p>
+            <p className="mt-1 font-mono text-xs text-slate-400">ayna.oneteamglobal.ai</p>
           </div>
         </div>
       )}

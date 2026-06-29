@@ -145,18 +145,27 @@ export async function GET() {
     fiero: bgFiero.count ?? 0,
   };
 
-  // CANLI OLAY AKIŞI — son 45 dk'lık aktivite (görev/fiero/takdir/gözlem).
+  // CANLI OLAY AKIŞI — son 45 dk'lık aktivite. Kişinin EYLEMİ görünür ama
+  // YAPTIĞININ İÇERİĞİ/HEDEFİ değil: görev başlığı yazılmaz; peer eylemler
+  // (değerlendirme/takdir) "kim kimi" sızdırmadan anonim ("biri ...").
   const olayBasi = new Date(simdi.getTime() - 45 * 60_000).toISOString();
-  const [sonGorevler, sonKudos, sonGozlemler] = await Promise.all([
+  const [sonGorevler, sonTamamlanan, sonKudos, sonGozlemler] = await Promise.all([
     db
       .from("missions")
-      .select("participant_id, title, kind, issued_at, ai_score, scored_at")
+      .select("participant_id, kind, issued_at")
       .gte("issued_at", olayBasi)
       .order("issued_at", { ascending: false })
       .limit(20),
     db
+      .from("missions")
+      .select("participant_id, ai_score, scored_at")
+      .not("scored_at", "is", null)
+      .gte("scored_at", olayBasi)
+      .order("scored_at", { ascending: false })
+      .limit(20),
+    db
       .from("kudos")
-      .select("to_id, created_at")
+      .select("created_at")
       .eq("is_hidden", false)
       .gte("created_at", olayBasi)
       .order("created_at", { ascending: false })
@@ -184,24 +193,32 @@ export async function GET() {
   const puanlar = puanlarSonuc.data;
   const ozellikSayisi = ozellikler.length;
 
-  // Olay metinleri — Türkçe ek hatasından kaçınmak için "→" ile (isim + eylem).
+  // Kişinin EYLEMİ görünür, içeriği/hedefi GİZLİ. Görev = AYNA→kişi (isimli,
+  // başlıksız). Tamamlama/fiero = kişinin kendi eylemi (isimli). Peer eylemler
+  // (değerlendirme/takdir) ANONİM — kim kimi sızmaz ("biri ...").
   const adOf = (id: string) =>
     (kisiler.find((k) => k.id === id)?.full_name ?? "Biri").split(" ")[0];
-  const kisaltBaslik = (s: string) => (s.length > 38 ? s.slice(0, 35) + "…" : s);
   const olaylar: EkranVerisi["olaylar"] = [];
+  // Yeni görev aldı (başlık yok)
   for (const g of sonGorevler.data ?? []) {
-    if (g.ai_score === 10 && g.scored_at) {
-      olaylar.push({ tur: "fiero", ikon: "⭐", metin: `${adOf(g.participant_id)} → 10/10, aynayı parlattı`, ts: g.scored_at });
-    }
-    if (g.kind !== "senkron" && g.kind !== "soz") {
-      olaylar.push({ tur: "gorev", ikon: "🤖", metin: `${adOf(g.participant_id)} → yeni görev: ${kisaltBaslik(g.title)}`, ts: g.issued_at });
+    if (g.kind === "senkron" || g.kind === "soz") continue;
+    olaylar.push({ tur: "gorev", ikon: "🤖", metin: `${adOf(g.participant_id)} → yeni görev aldı`, ts: g.issued_at });
+  }
+  // Görev tamamladı / 10'da 10 (fiero) — içerik yok
+  for (const m of sonTamamlanan.data ?? []) {
+    if (!m.scored_at) continue;
+    if (m.ai_score === 10) {
+      olaylar.push({ tur: "fiero", ikon: "⭐", metin: `${adOf(m.participant_id)} → aynayı parlattı`, ts: m.scored_at });
+    } else {
+      olaylar.push({ tur: "tamam", ikon: "✅", metin: `${adOf(m.participant_id)} → bir görev tamamladı`, ts: m.scored_at });
     }
   }
+  // Peer eylemler — ANONİM (kim kimi yok)
   for (const k of sonKudos.data ?? []) {
-    olaylar.push({ tur: "takdir", ikon: "💛", metin: `${adOf(k.to_id)} → bir takdir aldı`, ts: k.created_at });
+    olaylar.push({ tur: "takdir", ikon: "💛", metin: "biri bir takdir yazdı", ts: k.created_at });
   }
   for (const r of sonGozlemler.data ?? []) {
-    olaylar.push({ tur: "gozlem", ikon: "👁", metin: "yeni bir gözlem bağı kuruldu", ts: r.created_at });
+    olaylar.push({ tur: "gozlem", ikon: "👁", metin: "biri birini değerlendirdi", ts: r.created_at });
   }
   olaylar.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
 
