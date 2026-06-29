@@ -10,6 +10,8 @@ import Avatar from "@/components/Avatar";
 import BenKarti from "./BenKarti";
 import GeriButonu from "@/components/GeriButonu";
 import Rozet from "@/components/Rozet";
+import HedefPlanKarti from "@/components/HedefPlanKarti";
+import type { KariyerPlani } from "@/lib/kariyer";
 
 export const metadata = { title: "Ben — Liderlik Aynası" };
 
@@ -66,6 +68,18 @@ export default async function BenPage() {
     raporlarGorunurMu(db),
     yolculukOlaylari(db, session.sub),
   ]);
+
+  // Mühürlenmiş kariyer hedefi + planı: kamp sonrası 90 gün boyunca profilden
+  // erişilebilir olmalı (kullanıcı isteği). Yalnız hedef tamamlandıysa gösterilir.
+  const { data: hedefRow } = await db
+    .from("hedef")
+    .select("plan, tamamlandi_at")
+    .eq("participant_id", session.sub)
+    .maybeSingle();
+  const hedefPlan =
+    hedefRow?.tamamlandi_at && hedefRow.plan
+      ? (hedefRow.plan as unknown as KariyerPlani)
+      : null;
 
   const yolcuTarih = (ts: string) =>
     new Intl.DateTimeFormat("tr-TR", {
@@ -139,6 +153,25 @@ export default async function BenPage() {
             </div>
           )}
         </section>
+
+        {/* Kariyer hedefin & planın — kamptan sonra 90 gün boyunca buradan takip */}
+        {hedefPlan && (
+          <section className="space-y-3">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-gold-light">🎯 Kariyer Hedefin & Planın</h2>
+              <Link
+                href="/hedef"
+                className="shrink-0 text-xs text-royal-light underline-offset-4 hover:underline"
+              >
+                Düzenle →
+              </Link>
+            </div>
+            <p className="text-xs leading-relaxed text-slate-400">
+              Bu plan senin 90 günlük pusulan — kamptan sonra da buradan takip et.
+            </p>
+            <HedefPlanKarti plan={hedefPlan} />
+          </section>
+        )}
 
         {/* #2 Ayna Yolculuğu — kronolojik kişisel zaman çizelgesi */}
         <section className="kart-cam rounded-2xl p-5 ring-1 ring-royal/30">
