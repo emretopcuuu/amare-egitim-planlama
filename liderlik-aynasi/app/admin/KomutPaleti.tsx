@@ -23,7 +23,7 @@ const SAYFALAR: Hedef[] = [
   { tip: "sayfa", etiket: n.katilimcilar, href: "/admin/katilimcilar" },
   { tip: "sayfa", etiket: n.eslestirme, href: "/admin/eslestirme" },
   { tip: "sayfa", etiket: n.qr, href: "/admin/qr" },
-  { tip: "sayfa", etiket: n.kiosk, href: "/admin/kiosk" },
+
   { tip: "sayfa", etiket: n.program, href: "/admin/program" },
   { tip: "sayfa", etiket: n.icerik, href: "/admin/icerik" },
   { tip: "sayfa", etiket: n.gorevTuru, href: "/admin/gorev-turleri" },
@@ -40,7 +40,6 @@ const SAYFALAR: Hedef[] = [
   { tip: "sayfa", etiket: n.canliAyna, href: "/admin/canli-ayna" },
   { tip: "sayfa", etiket: n.analiz, href: "/admin/analiz" },
   { tip: "sayfa", etiket: n.takim, href: "/admin/takim" },
-  { tip: "sayfa", etiket: n.grupOdev, href: "/admin/grup-odev" },
   { tip: "sayfa", etiket: n.sunum, href: "/admin/sunum" },
   // 4 · Final
   { tip: "sayfa", etiket: n.sozler, href: "/admin/sozler" },

@@ -71,6 +71,24 @@ export const tr = {
       },
     ],
   },
+  // Algı Köprüsü — kamp içi "canlı deney" kartı (finali korur, içerik açmaz)
+  deney: {
+    baslik: "AYNA'nın Deneyi",
+    canli: "Canlı",
+    aciklama:
+      "Bu kampta sessizce bir şey ölçüyorum: senin kendini gördüğünle başkalarının seni gördüğü nasıl yaklaşıyor. İçeriği henüz söylemiyorum — o, finalin sürprizi.",
+    kopru: "Algı köprüsü kuruluyor",
+    gozlem: (n: number) => `${n} kişi gözlemledi`,
+    gorev: (n: number) => `${n} görevle kas çalıştı`,
+    beklenti: "Gün 3'te aynan tam açılacak. 👁",
+  },
+  // Karşılaşma — AYNA'nın eşlediği tamamlayıcı kişiyle gerçek konuşma daveti
+  karsilasma: {
+    baslik: "Bugünün Karşılaşması",
+    metin: (ad: string) =>
+      `${ad} ile 10 dakika konuş. Seni AYNA eşledi — onda senin için bir şey var, sende onun için.`,
+    not: "Neden bu kişi olduğunu Gün 3'te anlayacaksın.",
+  },
   altNav: {
     ana: "Ana sayfa",
     degerlendir: "Değerlendir",
@@ -215,7 +233,7 @@ export const tr = {
       "3 gün boyunca hem kendini hem kampta tanıdığın kişileri puanlayacaksın. Gün 3'te aynan açılacak.",
     degerlendirmeyeBasla: "Değerlendirmeye Başla",
     dalgaAcik: (dalga: string) => `${dalga} şu anda açık`,
-    dalgaKapali: "Şu anda açık dalga yok",
+    dalgaKapali: "Şu anda açık değerlendirme yok",
     aynaniGor: "✨ Aynan Açıldı — Raporunu Gör",
     gorevler: "🤖 AYNA'nın Görevleri",
     aktifGorev: (n: number) => `${n} aktif görev`,
@@ -286,6 +304,10 @@ export const tr = {
     menuPlan: "🧭 90 Günlük Yolculuk",
     menuBen: "👤 Profilim",
     menuGrup: "👥 Grup Ödevi",
+    // Kamp öncesi adımlar — tamamlandıktan sonra da düzenlenebilir kalsın
+    menuFarkindalik: "🪞 Ön Farkındalık",
+    menuPusula: "🧭 Pusulam",
+    menuHedef: "🎯 Hedefim",
     menuMini360: "👁 Ekip Aynası",
     menuAynaEsi: "🤝 Ayna Eşin",
     menuAnlar: "Anların (Zaman Tüneli)",
@@ -538,18 +560,18 @@ export const tr = {
   },
   degerlendir: {
     baslik: "Değerlendirme",
-    dalgaKapaliBaslik: "Dalga henüz açık değil",
+    dalgaKapaliBaslik: "Değerlendirme henüz açık değil",
     dalgaKapaliAciklama:
-      "Puanlama, eğitmen dalgayı açtığında başlar. Açılışlar sahneden duyurulacak — bu sayfayı sonra tekrar ziyaret et.",
+      "Puanlama, eğitmen değerlendirmeyi açtığında başlar. Açılış sahneden duyurulacak — bu sayfayı sonra tekrar ziyaret et.",
     anaSayfayaDon: "Ana sayfaya dön",
     ozBaslik: "Önce Kendini Puanla",
     ozAciklama:
-      "Her dalga kendi aynanla başlar. Kendini puanlamadan başkalarını puanlayamazsın.",
+      "Değerlendirme kendi aynanla başlar. Kendini puanlamadan başkalarını puanlayamazsın.",
     ozTamamlandi: "Öz değerlendirmen tamam",
     kilitliIpucu: "Önce kendini puanlamalısın",
     atananBaslik: "Gözlem Listen",
-    atananAciklama: "Bu dalgada sana atanan kişiler. Hepsini puanlamayı hedefle.",
-    atananYok: "Bu dalga için sana atanmış kişi yok.",
+    atananAciklama: "Sana atanan kişiler. Hepsini puanlamayı hedefle.",
+    atananYok: "Bu değerlendirme için sana atanmış kişi yok.",
     gizliGozlem: "Gizli gözlem",
     acikGozlem: "Açık gözlem",
     serbestBaslik: "Serbest Puanlama",
@@ -564,19 +586,13 @@ export const tr = {
     ilerleme: (yapilan: number, toplam: number) => `${yapilan}/${toplam} özellik`,
     // #8 Birincil eylem hiyerarşisi: o an yapılacak tek şeyi vurgula
     simdiSira: "👉 ŞİMDİ SIRADA",
-    // DALGA ÇERÇEVESİ: kullanıcı puanların KALICI olmadığını, her dalganın bir
-    // sonrakinde güncelleneceğini anlasın → baskı hissetmeden, dürüstçe puanlar.
-    // "İlk izlenim" turunda yarı tanıdık birini puanlamak doğaldır; mesele o anki
-    // algıyı yakalamak, son hükmü vermek değil.
-    dalgaCerceveBaslik: "Verdiğin puanlar kalıcı değil",
+    // DEĞERLENDİRME ÇERÇEVESİ: kullanıcı puanların pencere kapanana dek
+    // değiştirilebilir olduğunu anlasın → baskı hissetmeden, dürüstçe puanlar.
+    dalgaCerceveBaslik: "Puanların kilitli değil",
     dalgaCerceve: (dalgaId: number): string =>
-      dalgaId === 1
-        ? "Bu ilk izlenim turu. Amaç bu kişiyi şu an dışarıdan nasıl gördüğünü yakalamak. Yarın, biraz daha tanıdıktan sonra aynı kişiyi tekrar puanlayacaksın; son kararını 3. gün vereceksin. Rahat ol — dürüst ilk izlenimini ver, sonra değiştirebilirsin."
-        : dalgaId === 2
-        ? "İkinci tur. Artık bu kişiyi biraz daha tanıyorsun. İlk izlenimin değiştiyse puanını güncelle — değişmesi çok doğal. Son kararını 3. gün vereceksin."
-        : dalgaId === 3
-        ? "Son tur. Kampta gerçekten tanıdığın haliyle algını yansıt. Bu, bu kişi için son değerlendirmen."
-        : "Bu turda gözlemlerini güncelle; dalga kapanana dek puanların değiştirilebilir.",
+      dalgaId === 4
+        ? "90 gün geçti. Bu kişiyi kamptan bugüne yaşadığı değişimle değerlendir. Pencere kapanana dek puanlarını güncelleyebilirsin."
+        : "Kampta tanıdığın haliyle algını dürüstçe yansıt. Bu, kampın liderlik değerlendirmesi; pencere kapanana dek puanlarını değiştirebilirsin.",
   },
   puanlama: {
     geri: "Geri",
@@ -599,15 +615,11 @@ export const tr = {
       "Dürüst ol — öz puanların raporda başkalarının sana verdikleriyle yan yana gelecek.",
     kisiAciklama:
       "Gözlemlerine dayan, genel izlenime değil. 6'nın altındaki puanlara kısa bir neden yazman gerekir.",
-    // Sihirbaz başlığında kısa dalga hatırlatması: puan kalıcı değil, sonra güncellenir.
+    // Sihirbaz başlığında kısa hatırlatma: puan pencere kapanana dek değiştirilebilir.
     dalgaHatirlatma: (dalgaId: number): string =>
-      dalgaId === 1
-        ? "İlk izlenim turu — yarın tekrar puanlayacaksın, kalıcı değil."
-        : dalgaId === 2
-        ? "İkinci tur — fikrin değiştiyse güncelle, son karar 3. gün."
-        : dalgaId === 3
-        ? "Son tur — bu kişi için final algın."
-        : "Puanların dalga kapanana dek değiştirilebilir.",
+      dalgaId === 4
+        ? "90 Gün Sonra — kamptan bugüne değişimi yansıt."
+        : "Puanların pencere kapanana dek değiştirilebilir.",
     yorumEtiket: "Bu puanın nedeni (zorunlu)",
     yorumPlaceholder: "Kısaca yaz: hangi davranışı gözlemledin?",
     yorumZorunlu: "6'nın altındaki puanlar için kısa bir neden yazmalısın.",
@@ -631,7 +643,7 @@ export const tr = {
     kismiNot: "İstediğin kadarını şimdi kaydet — kalanını kamp boyunca ekleyip düzeltebilirsin.",
     kismiOzet: (dolu: number, toplam: number) => `${dolu}/${toplam} özellik puanlandı — gerisini sonra ekleyebilirsin.`,
     hataSunucu: "Kaydedilemedi. Lütfen tekrar dene.",
-    hataDalgaKapandi: "Bu dalga kapandı. Cevapların bu cihazda güvende — dalga yeniden açıldığında gönderebilirsin.",
+    hataDalgaKapandi: "Bu değerlendirme kapandı. Cevapların bu cihazda güvende — değerlendirme yeniden açıldığında gönderebilirsin.",
     geriDon: "Değerlendirmeye dön",
     // İlk kez kullananlar için: programın genel açıklaması (giriş ekranı)
     girisBaslik: "Liderlik Aynası'na hoş geldin",
@@ -941,7 +953,10 @@ export const tr = {
       "Hazırsın. Kampın geri kalanı, oraya gelip odandaki kodu okuttuğunda açılacak. O ana dek dinlen.",
     // Mühür kahramanı: bekleme ekranının EN BÜYÜK, merkez mesajı — aday bundan
     // sonra nasıl ilerleyeceğini buradan anlar.
-    muhurRozet: "🔒 Mühür kapalı",
+    muhurRozet: "Mühür kapalı",
+    // Mühür ekranına AYNA'nın ilk analizi kartı
+    ilkAynaBaslik: "Sana dair ilk aynam",
+    ilkAynaTeaser: "Dokun — kendi sesinle, sana dair ilk izlenimimi dinle",
     muhurHeroBaslik: "Mührü kaldırmadan devam edemezsin",
     muhurHeroMetin:
       "Kampta odana girdiğinde seni bir QR karekod karşılayacak. Onu telefonunla okut — mühür kalkar, kamp ve AYNA sana açılır.",
@@ -961,6 +976,65 @@ export const tr = {
     kilit1: "Kendi sesinle bir sürpriz",
     kilit2: "3. günde aynan açılır",
     kilit3: "Sana özel AYNA görevleri",
+    // Mühür ekranı hazırlık ÖZETİ (tüm adımlar tek bakışta tik + düzelt)
+    ozetBaslik: "Hazırlık adımların",
+    ozetAciklama: "Hepsini tamamladın. İstersen herhangi birine dönüp düzeltebilirsin.",
+    ozetSes: "Ses ritüeli",
+    ozetNedenler: "Nedenlerin (Pusula)",
+    ozetHedef: "Hedefin",
+    ozetFarkindalik: "Ön Farkındalık",
+    ozetFoto: "Canlı Aynan (fotoğraf)",
+    ozetLiderlik: "Liderlik öz-değerlendirmen",
+    ozetTamam: "Tamam",
+    ozetEksik: "Eksik",
+    ozetDuzelt: "Düzelt",
+    ozetYap: "Yap",
+  },
+  // AYNA'NIN ANALİZLERİ — kişiye dair, zaman içinde biriken, kendi sesiyle okunan
+  // derin analiz (dönen ayna + Star Wars akışı).
+  analiz: {
+    asamaAd: {
+      kamp_oncesi: "İlk Aynam · Kamp Öncesi",
+      aksam_1: "Aynam · 1. Akşam",
+      aksam_2: "Aynam · 2. Akşam",
+      cikis: "Son Aynam · Kamp Çıkışı",
+    } as Record<string, string>,
+    // Akışın üstündeki sabit çerçeve (AI değil)
+    cerceve: {
+      kamp_oncesi:
+        "Seni şimdilik yalnız kendi anlattıklarından tanıyorum. Bu, sana dair ilk aynam — kampta başkalarının söyledikleri ve senin yaptıkların eklendikçe derinleşecek.",
+      aksam_1: "İlk günün ardından aynan biraz daha derinleşti.",
+      aksam_2: "İki günün iziyle aynan netleşiyor.",
+      cikis: "Üç günün sonunda, sana dair son aynam.",
+    } as Record<string, string>,
+    uyari:
+      "Bunların hiçbiri kesin bir yargı değil — yalnızca şu ana dek paylaştıklarından yapılmış iyi niyetli okumalar. Yanlış geleni bırak, doğru geleni cebine koy.",
+    yukleniyor: "AYNA seni okuyor…",
+    hata: "Aynan şu an oluşturulamadı — birazdan tekrar dene.",
+    veriYok: "Aynayı oluşturmak için önce hazırlık adımlarını tamamla.",
+    oynat: "Aynayı oku",
+    oynatSesli: "Kendi sesinle dinle",
+    durdur: "Durdur",
+    metniOku: "Yazıyı sabit göster",
+    akisaDon: "Akışa dön",
+    kapat: "Kapat",
+    // Yeniden değerlendir (hak bir kez, sebep zorunlu)
+    yeniden: "Sağlıklı gelmediyse yeniden değerlendir",
+    yenidenKilit: "Yeniden değerlendirme hakkını kullandın.",
+    yenidenBaslik: "Neden sağlıklı/doğru gelmedi?",
+    yenidenAciklama:
+      "Bu hakkı bir kez kullanabilirsin ve sebebini yazman gerekiyor. AYNA, yazdığını dikkate alarak seni yeniden okuyacak.",
+    yenidenYer: "Örn: Beni yanlış anladığın yer şu… / Bu kısım bana hiç uymuyor çünkü…",
+    yenidenGonder: "Yeniden değerlendir",
+    yenidenBekle: "AYNA yeniden okuyor…",
+    sebepKisa: "Lütfen sebebini biraz daha açık yaz.",
+    vazgec: "Vazgeç",
+    // /analizlerim listesi + menü
+    listeBaslik: "AYNA'nın seninle ilgili analizleri",
+    listeAciklama:
+      "Aynan kamp boyunca derinleşti. Her biri verildiği anın izini taşır — üstüne yazılmaz, yan yana durur.",
+    listeBos: "Henüz bir analiz yok. İlk aynan, hazırlığını tamamlayınca mühür ekranında belirir.",
+    menuLink: "Aynalarım",
   },
   // FAZ A — Hedef (Gün 2). Nedenler keşfedildikten sonra: neredesin → kısa AI
   // sohbeti → kariyer/gelir tablosu → 3 soru → kişisel kariyer planı.
@@ -1220,7 +1294,7 @@ export const tr = {
   // AYNA EŞİ — tamamlayıcı akran eşleştirmesi (cumartesi akşamı 3 görüşme)
   aynaEsi: {
     hata: "İşlem başarısız. Lütfen tekrar dene.",
-    yetersizVeri: "Eşleştirme için yeterli puan toplanmamış. Birkaç dalga sonra tekrar dene.",
+    yetersizVeri: "Eşleştirme için yeterli puan toplanmamış. Değerlendirme ilerleyince tekrar dene.",
     // Katılımcı
     baslik: "Ayna Eşin",
     aciklama:
@@ -1399,7 +1473,7 @@ export const tr = {
     cumleYer: "Geriye kalan cümleyi kendi kelimelerinle yaz…",
     cumleKaydet: "Mühürle",
     cumleBosUyari: "Bir cümle yaz.",
-    tamamBaslik: "Mühürlendi 🔒",
+    tamamBaslik: "Mühürlendi",
     tamamMetin:
       "Bu cümle artık senin. Yola çıktığında — eski cümle kıpırdadığında — onu sana hatırlatacağım.",
     pusulaYokBaslik: "Önce pusulan",
@@ -1448,7 +1522,7 @@ export const tr = {
       moderasyon: "Moderasyon",
       komutan: "Komutan",
       sahne: "Sahne",
-      kiosk: "Kayıt",
+
       foto: "Fotoğraf",
       canliAyna: "Canlı Ayna",
       sozler: "Sözler",
@@ -1468,9 +1542,9 @@ export const tr = {
       // Panel'den taşınan kamp kontrol anahtarları (aşama menüleri altında)
       kPusula: "Pusula Penceresi",
       kOnfark: "Ön Farkındalık",
-      kDalga: "Dalga Aç / Kapat",
+      kDalga: "Değerlendirme Aç / Kapat",
       kHedef: "Hedef (Gün 2)",
-      kBosluk: "Boşluk Anı",
+      kBosluk: "Final & Sonrası",
       kRapor: "Ayna Raporları",
       kMuhur: "Mühür Açılışı",
       kSoz: "Kapanış Sözü",
@@ -1479,6 +1553,7 @@ export const tr = {
       saglik: "Sağlık Panosu",
       eslestirmeler: "Eşleştirmeler",
       gonder: "Mesaj Gönder",
+      davet: "Giriş Daveti",
       kontrol: "Kontroller",
       sAraclar: "Sunum & Prova",
       // ⚙ Sistem menüsü
@@ -1489,6 +1564,7 @@ export const tr = {
       sKod: "Kod Bul",
       sKvkk: "KVKK Silme Talepleri",
       sSimulasyon: "Kamp Prova Simülatörü",
+      prova: "Prova Kampı (canlı)",
     },
     // Funnel navigasyonu: türe göre değil, kampın YOLCULUĞUNA göre 4 aşama + Panel.
     // Operatör soldan sağa = zaman akışı; aradığı aracı süreçteki yerinden bulur.
@@ -1591,14 +1667,14 @@ export const tr = {
         bekliyor: "Bekliyor",
         uyariMuhur: "Mührü, raporları açtığın anda (veya hemen öncesinde) aç.",
         // #2 Bağımlılık kapısı — sıra atlanınca uyarır
-        uyariEslestirme: "Dalga açık ama eşleştirme yapılmamış — kimse kimseyi puanlayamaz. Önce Eşleştirme'yi tamamla.",
+        uyariEslestirme: "Değerlendirme açık ama eşleştirme yapılmamış — kimse kimseyi puanlayamaz. Önce Eşleştirme'yi tamamla.",
         uyariKilitKodu: "Pusula penceresi açık ama oda QR kilit kodu boş — kimse kampa giremez. Faz 0'da kodu ayarla.",
         uyariBoslukRapor: "Boşluk Anı açık ama Ayna Raporları kapalı — aday rapora girmeden Boşluk'a düşer. Önce raporları aç.",
         uyariMuhurRapor: "Mühür açık ama Ayna Raporları kapalı — aday raporu görmeden sesli reveal'i duyar. Önce raporları aç.",
         adimHazirlik: "Hazırlık (FAZ 0)",
         adimOnFark: "Ön Farkındalık",
         adimHedef: "Hedef (Gün 2)",
-        adimDalga: (n: number) => `Dalga ${n}`,
+        adimDalga: (n: number) => `Kamp Değerlendirmesi`,
         adimBosluk: "Boşluk Anı",
         adimRapor: "Ayna Raporu",
         adimMuhur: "Mühür Açılışı",
@@ -1634,7 +1710,7 @@ export const tr = {
     bosDurum: {
       ikon: "🌙",
       baslik: "Şu an her şey yolunda",
-      aciklama: "Aktif dalga yok. Sıradaki adım yukarıdaki öneri kartında.",
+      aciklama: "Aktif değerlendirme yok. Sıradaki adım yukarıdaki öneri kartında.",
     },
     // #8 Mobilde alt-sabit birincil aksiyon çubuğu
     altAksiyon: {
@@ -1731,7 +1807,7 @@ export const tr = {
       pencereKapat: "Pencereyi Kapat",
       muhurluUyari: (n: number, t: number) =>
         n < t
-          ? `🔒 ${n}/${t} kişi söz mühürledi — mührü olmayanlar bu anı atlar`
+          ? `${n}/${t} kişi söz mühürledi — mührü olmayanlar bu anı atlar`
           : `✓ ${t}/${t} kişinin mühürlü sözü var`,
       hata: "İşlem başarısız, tekrar dene.",
     },
@@ -1813,7 +1889,7 @@ export const tr = {
     // #4 Yardımcı görevli: sınırlı yetki bilgilendirmesi
     yardimci: {
       banner:
-        "👀 Yardımcı görevli — yalnız izleme ve hatırlatma yapabilirsin. Kritik anahtarlar (dalga, rapor, veri) yöneticiye özeldir.",
+        "👀 Yardımcı görevli — yalnız izleme ve hatırlatma yapabilirsin. Kritik anahtarlar (değerlendirme, rapor, veri) yöneticiye özeldir.",
     },
     // #8 Proaktif uyarı kartları
     uyarilar: {
@@ -1826,7 +1902,7 @@ export const tr = {
       neZaman: "Ne zaman & nasıl kullanılır?",
       dikkat: "Dikkat",
       dalga:
-        "Dalgayı açınca katılımcılar o turda puanlama yapabilir. Her güne bir dalga (Gün 1→Dalga 1). Çoğu kişi bitirince kapat.",
+        "Değerlendirmeyi açınca katılımcılar birbirini puanlayabilir. Kamp Değerlendirmesi Gün 3 sabahı (tören öncesi) açılır. Çoğu kişi bitirince kapat.",
       rapor:
         "Açınca herkes kişisel Ayna Raporunu görür — kapanışın 'wow' anı. Yalnız 3. günün sonunda, mektuplar hazırken aç.",
       davet:
@@ -1923,7 +1999,7 @@ export const tr = {
         metin: [
           "NE: Kampın komuta merkezi — tüm kampı buradan yönetirsin. Sayfa yukarıdan aşağı 'önce en acil' mantığıyla dizildi.",
           "EN ÜSTTE: 'Şimdi ne yapmalıyım?' kartı o an yapman gereken TEK adımı söyler; programı bilmiyorsan bile sadece onun düğmesine bas, doğru yere gider. Altında canlı rakamlar (katılımcı, öz-puan, değerlendirme), dikkat isteyen uyarılar ve (kamp günündeyse) o günün saat saat akışı gelir.",
-          "ORTADA: 'Canlı Çalışma Alanı' açık dalgada kimin ilerlediğini gösterir. Hemen altında KIRMIZI çerçeveli 'Kritik Kontroller' — tüm telefonları anında etkileyen anahtarları (dalga aç/kapa, raporları aç, prova modu, faz pencereleri) toplar. Kamp boyunca en çok burayı kullanırsın.",
+          "ORTADA: 'Canlı Çalışma Alanı' açık değerlendirmede kimin ilerlediğini gösterir. Hemen altında KIRMIZI çerçeveli 'Kritik Kontroller' — tüm telefonları anında etkileyen anahtarları (değerlendirme aç/kapa, raporları aç, prova modu, faz pencereleri) toplar. Kamp boyunca en çok burayı kullanırsın.",
           "EN ALTTA: 'Tüm Araçlar' katlanır bölümü kurulum/sonrası gibi günlük olmayan araçları gizler. Her kartın yanındaki '?' o kartın ne işe yaradığını ve ne zaman basılacağını anlatır.",
           "ROL: 'yardımcı' görevli yalnız izleme + hatırlatma görür; kritik anahtarlar gizlidir. Tam yetkili admin her şeyi görür.",
         ],
@@ -1932,7 +2008,7 @@ export const tr = {
         baslik: "Şimdi ne yapmalıyım? (asistan kartı)",
         metin: [
           "NE: Sistem, kamp takvimini ve uygulamanın o anki durumunu okuyup yapman gereken TEK en önemli adımı buraya yazar.",
-          "NASIL KULLANILIR: Programı hiç bilmiyorsan bile kartın düğmesine bas — seni doğru kontrole götürür (ör. 'Dalga 1'i aç', 'Raporları açma vakti').",
+          "NASIL KULLANILIR: Programı hiç bilmiyorsan bile kartın düğmesine bas — seni doğru kontrole götürür (ör. 'Kamp Değerlendirmesini aç', 'Raporları açma vakti').",
           "RENK = ACİLİYET: Kart altın renkli ve parıldıyorsa adım ACİL, hemen yap. Nötr griyse acil bir şey yok, izlemeye devam et.",
           "NE ZAMAN: Gün boyu birkaç dakikada bir buraya bak; kart değiştikçe bir sonraki hamleni söyler.",
         ],
@@ -1940,8 +2016,8 @@ export const tr = {
       panelOzet: {
         baslik: "Canlı özet rakamları",
         metin: [
-          "NE: Kampın canlı nabzı — kaç katılımcı kayıtlı, kaçı kendini puanlamayı bitirdi, toplam kaç değerlendirme girildi, hangi dalga açık.",
-          "DOKUN: Bir rakama dokununca ilgili bölüme atlar (öz-puana dokun → eksik kişiler; dalgaya dokun → dalga kontrolü).",
+          "NE: Kampın canlı nabzı — kaç katılımcı kayıtlı, kaçı kendini puanlamayı bitirdi, toplam kaç değerlendirme girildi, hangi değerlendirme açık.",
+          "DOKUN: Bir rakama dokununca ilgili bölüme atlar (öz-puana dokun → eksik kişiler; değerlendirmeye dokun → değerlendirme kontrolü).",
           "Rakamlar kendi kendine tazelenir; bir işlem yaptıktan sonra etkisini burada anında görürsün.",
         ],
       },
@@ -1956,7 +2032,7 @@ export const tr = {
       panelGun: {
         baslik: "Bugünün akışı",
         metin: [
-          "NE: Bugün bir kamp günüyse (17–19 Temmuz) o günün admin checklist'ini sırayla verir: hangi saatte hangi dalgayı açacağın, ne zaman duyuru/rapor yapacağın.",
+          "NE: Bugün bir kamp günüyse (17–19 Temmuz) o günün admin checklist'ini sırayla verir: hangi saatte değerlendirmeyi açacağın, ne zaman duyuru/rapor yapacağın.",
           "DOKUN: Her adım tıklanır, seni ilgili kontrole götürür. Sırayla yukarıdan aşağı ilerle.",
           "Kamp günü değilse görünmez. Saat saat tüm plan için 'Program' sayfasına bak.",
         ],
@@ -1964,9 +2040,9 @@ export const tr = {
       panelIlerleme: {
         baslik: "Canlı çalışma alanı (ilerleme)",
         metin: [
-          "NE: Yalnız AÇIK dalga için hesaplanır (kamp aynı anda tek dalga yaşar). Tablo: kim kendini puanladı, kim kaç kişiyi değerlendirdi, onu kaç kişi değerlendirdi.",
+          "NE: Yalnız AÇIK değerlendirme için hesaplanır (aynı anda tek değerlendirme açık olabilir). Tablo: kim kendini puanladı, kim kaç kişiyi değerlendirdi, onu kaç kişi değerlendirdi.",
           "TOPLU HATIRLAT: Geç kalanları seç → 'Toplu hatırlat' ile tek seferde nazik bir push gönder ('değerlendirmeni bekliyoruz' gibi).",
-          "Açık dalga yoksa sade bir 'boş durum' kartı çıkar; bu HATA DEĞİL, sadece o an puanlama turu kapalı demektir. Bir dalga açınca tablo dolar.",
+          "Açık değerlendirme yoksa sade bir 'boş durum' kartı çıkar; bu HATA DEĞİL, sadece o an puanlama penceresi kapalı demektir. Bir değerlendirme açınca tablo dolar.",
         ],
       },
       // ---- Kritik Kontroller (tehlike bölgesi) ----
@@ -1975,17 +2051,17 @@ export const tr = {
         metin: [
           "NE: Buradaki anahtarlar TÜM katılımcıların telefonunu ANINDA etkiler — o yüzden kırmızı çerçeveyle ayrıldı ve en dikkatli kullanılacak bölge burası.",
           "GÜVENLİK: Her kritik işlem önce bir onay sorar; bastıktan sonra kısa bir 'Geri Al' penceresi açılır — yanlışlıkla bastıysan oradan geri alırsın.",
-          "İÇİNDE: Dalga aç/kapa, Ayna Raporlarını aç, Prova modu, FAZ 0 ve FAZ 1 pencereleri. Yalnız tam yetkili admin erişir.",
+          "İÇİNDE: Değerlendirme aç/kapa, Ayna Raporlarını aç, Prova modu, FAZ 0 ve FAZ 1 pencereleri. Yalnız tam yetkili admin erişir.",
         ],
       },
       dalga: {
-        baslik: "Dalga (puanlama turu) yönetimi",
+        baslik: "Değerlendirme (puanlama) yönetimi",
         metin: [
-          "NE: Dalga = bir değerlendirme (puanlama) turu. Üç dalga var: Dalga 1 (İlk İzlenim), Dalga 2 (Gözlem), Dalga 3 (Gerçek Algı).",
-          "AÇINCA NE OLUR: O dalgaya dahil herkesin telefonunda 'değerlendir' ekranı açılır; kendini ve kendisine atanmış kişileri 1–10 puanlar (6'nın altına yorum zorunlu). KAPATINCA o tur KİLİTLENİR; artık o dalgaya puan girilemez.",
-          "KURAL: Aynı anda yalnız BİR dalga açık olabilir. Sıralı git: Gün 1 → Dalga 1, Gün 2 → Dalga 2, Gün 3 → Dalga 3.",
-          "ADIM ADIM: Günün ilgili oturumunda dalgayı 'Aç' → 'Canlı Çalışma Alanı'ndan ilerlemeyi izle → çoğu kişi bitince 'Kapat'. Geç kalan varsa kapatmadan önce 'Toplu hatırlat' gönder.",
-          "DİKKAT: Erken kapatırsan girmeyenler o turu kaçırır; açık unutursan (tek dalga kuralı yüzünden) sonraki dalgayı açamazsın.",
+          "NE: Değerlendirme = katılımcıların birbirini 10 liderlik özelliğiyle puanladığı pencere. İki tane var: Kamp Değerlendirmesi (kamp içi) ve 90 Gün Sonra (kamp sonrası değişim).",
+          "AÇINCA NE OLUR: Herkesin telefonunda 'değerlendir' ekranı açılır; kendini ve kendisine atanmış kişileri 1–10 puanlar (6'nın altına yorum zorunlu). KAPATINCA pencere KİLİTLENİR; artık puan girilemez.",
+          "KURAL: Aynı anda yalnız BİR değerlendirme açık olabilir.",
+          "ADIM ADIM: Kamp Değerlendirmesini Gün 3 sabahı (kapanış töreni öncesi) 'Aç' → 'Canlı Çalışma Alanı'ndan ilerlemeyi izle → çoğu kişi bitince 'Kapat' → Ayna Raporlarını aç. Geç kalan varsa kapatmadan önce 'Toplu hatırlat' gönder.",
+          "DİKKAT: Erken kapatırsan girmeyenler değerlendirmeyi kaçırır. Pencere oturumlardan önce kapansın ki raporlar tören için hazır olsun.",
         ],
       },
       rapor: {
@@ -1994,7 +2070,7 @@ export const tr = {
           "NE: 'Ayna Anı' = herkesin kişiye özel 'Ayna Raporu'nu görmesi. Kampın kapanıştaki en güçlü 'vav' anı: kişi kendini ilk kez başkalarının gözünden görür (öz-algı vs dış-algı + kör nokta).",
           "AÇINCA NE OLUR: Tüm katılımcıların telefonunda rapor kilidi açılır, anında görebilirler. Geri alınamaz bir etkidir — zamanlama kritiktir.",
           "NE ZAMAN: YALNIZCA 3. günün kapanışında, sahnede o ana geldiğinde aç. Erken açarsan tüm sürpriz ve kapanış etkisi kaybolur.",
-          "ADIM ADIM: 3 dalganın da kapandığından ve 'mektup hazır' sayacının dolduğundan emin ol → kapanış anına gel → 'Raporları Aç' → onayla. Yanlış an bastıysan açılan 'Geri Al' ile hemen kapat.",
+          "ADIM ADIM: Kamp Değerlendirmesinin kapandığından ve 'mektup hazır' sayacının dolduğundan emin ol → kapanış anına gel → 'Raporları Aç' → onayla. Yanlış an bastıysan açılan 'Geri Al' ile hemen kapat.",
         ],
       },
       prova: {
@@ -2095,7 +2171,7 @@ export const tr = {
       zamanlama: {
         baslik: "Otomatik zamanlama",
         metin: [
-          "NE: Dalga açma/kapama gibi olayları İLERİ bir saate planlarsın; sistem zamanı gelince otomatik çalıştırır — gece/oturum sırasında elle basmana gerek kalmaz.",
+          "NE: Değerlendirme açma/kapama gibi olayları İLERİ bir saate planlarsın; sistem zamanı gelince otomatik çalıştırır — gece/oturum sırasında elle basmana gerek kalmaz.",
           "ADIM ADIM: Olayı + saatini seç → kaydet. 'Şimdi Tetikle' düğmesi, vakti gelmiş bekleyen olayları beklemeden hemen çalıştırır (provada test için kullanışlı).",
           "DİKKAT: Otomatik zamanlama kursan bile kritik anlarda panelden gözle doğrula; tek başına ona bağımlı kalma.",
         ],
@@ -2103,7 +2179,7 @@ export const tr = {
       islemGunlugu: {
         baslik: "İşlem günlüğü",
         metin: [
-          "NE: Son 20 kritik admin eylemini listeler — kim, ne zaman, neyi değiştirdi (dalga açtı, rapor açtı vb.).",
+          "NE: Son 20 kritik admin eylemini listeler — kim, ne zaman, neyi değiştirdi (değerlendirme açtı, rapor açtı vb.).",
           "NEDEN: 'Bunu kim/ne zaman yaptı?' sorusunu yanıtlamak, değişiklikleri denetlemek için bak. Salt okunur.",
         ],
       },
@@ -2138,14 +2214,7 @@ export const tr = {
           "NE ZAMAN: Kodlar üretildikten sonra, kamp/kayıt öncesi bas ve yazdır.",
         ],
       },
-      kiosk: {
-        baslik: "Kayıt masası ekranı",
-        metin: [
-          "NE: Kayıt masasındaki bir ekranda (laptop/tablet) açık tutulur — canlı katılım sayacı, uygulamayı açan büyük QR ve kodunu kaybedeni isimle bulma.",
-          "NASIL: Katılımcı QR'ı okutur, kendi koduyla girer; sayaç anlık ilerler — masada 'kaç kişi girdi' bir bakışta görünür.",
-          "NE ZAMAN: Kayıt/karşılama sırasında masadaki ekrana koy.",
-        ],
-      },
+
       analiz: {
         baslik: "Analiz panosu",
         metin: [
@@ -2229,7 +2298,7 @@ export const tr = {
         baslik: "Sahne Kumandası",
         metin: [
           "NE: Canlı etkinlikte salondaki büyük ekranın (/sahne, projeksiyon) NE göstereceğini buradan yönetirsin.",
-          "NASIL: Buradan AYNA'yı sahnede aktif edersin, hangi sahne anı/dalganın gösterileceğini seçersin, 'Açılış Anonsu' gibi sahne anlarını tetiklersin. (Projeksiyondaki ekranda '🔊 Sesi Aç' açık olmalı ki AYNA salona sesli konuşsun.)",
+          "NASIL: Buradan AYNA'yı sahnede aktif edersin, hangi sahne anı/değerlendirmenin gösterileceğini seçersin, 'Açılış Anonsu' gibi sahne anlarını tetiklersin. (Projeksiyondaki ekranda '🔊 Sesi Aç' açık olmalı ki AYNA salona sesli konuşsun.)",
           "NE ZAMAN: Sahne/sunum anlarında, projeksiyon açıkken kullan. Sessizlik gereken oturumda AYNA'nın push göndermemesini de buradan kontrol edersin.",
         ],
       },
@@ -2238,7 +2307,7 @@ export const tr = {
         metin: [
           "NE: Katılımcıların BAŞKALARINA yazdığı değerlendirme yorumları buraya düşer (kişinin kendine yazdığı öz-yorumlar kişiye özeldir, burada görünmez).",
           "BASINCA NE OLUR: Uygunsuz/kırıcı bir yorumu 'Gizle' → o yorum raporlarda ve büyük ekranda görünmez olur. İstersen geri gösterirsin. Karar verirken kim→kime ve hangi özellik bilgisine bakabilirsin.",
-          "NE ZAMAN: Dalga puanlamaları geldikçe ara ara tara; özellikle raporları açmadan ÖNCE bir kez gözden geçir.",
+          "NE ZAMAN: Değerlendirme puanlamaları geldikçe ara ara tara; özellikle raporları açmadan ÖNCE bir kez gözden geçir.",
         ],
       },
       foto: {
@@ -2277,7 +2346,7 @@ export const tr = {
         baslik: "Prova / Test paneli",
         metin: [
           "NE: Güvenli deneme alanı — DEMO takımındaki sahte katılımcılarla ve kamp günlerini simüle ederek her şeyi GERÇEK veriye dokunmadan provarsın.",
-          "NASIL: Demo kişilerle giriş yapar, görev/dalga akışını test eder, kamp gününü ileri alırsın.",
+          "NASIL: Demo kişilerle giriş yapar, görev/değerlendirme akışını test eder, kamp gününü ileri alırsın.",
           "NE ZAMAN: Canlıya geçmeden, akışı öğrenmek/denemek için. Gerçek katılımcıları etkilemez.",
         ],
       },
@@ -2301,7 +2370,7 @@ export const tr = {
         baslik: "Kamp Zaman Tüneli",
         metin: [
           "NE: Panelin tepesinde 'şu an neredeyiz' çizgisi — Hazırlık → Gün 1/2/3 → Kapanış → Saha. Altın yanan adım o anki konum, yeşil ✓ geçilenler.",
-          "NASIL: Raporlar açıksa Kapanış; bir dalga açıksa o gün; değilse takvim gününe göre belirlenir. Dalga açma / rapor açma gibi hamlelerde otomatik ilerler.",
+          "NASIL: Raporlar açıksa Kapanış; bir değerlendirme açıksa o gün; değilse takvim gününe göre belirlenir. Değerlendirme açma / rapor açma gibi hamlelerde otomatik ilerler.",
         ],
       },
     },
@@ -2368,7 +2437,7 @@ export const tr = {
       katilimci: "Katılımcı",
       ozPuan: "Öz-puan",
       gorus: "Puanlama",
-      dalga: "Açık dalga",
+      dalga: "Açık değerlendirme",
       dalgaYok: "—",
     },
     // #6 Hızlı kişi/kod bulma
@@ -2393,14 +2462,23 @@ export const tr = {
       takimIpucu: (n: number) => `${n} kişi takımsız — takımlara dağıt`,
       eslestirme: "Eşleştirme yapıldı",
       eslestirmeIpucu: "Henüz eşleştirme yok",
-      dalga: "Dalgalar tanımlı",
-      dalgaIpucu: "Dalga tanımı eksik",
+      dalga: "Değerlendirmeler tanımlı",
+      dalgaIpucu: "Değerlendirme tanımı eksik",
       zeka: "AYNA zekâsı bağlı",
       zekaIpucu: "AYNA zekâ anahtarı (ANTHROPIC) tanımlı değil",
       ayna: "AYNA uyanık",
       aynaIpucu: "AYNA uyuyor — uyandır",
-      bildirim: "Bildirimler çalışıyor",
-      bildirimIpucu: "Push abonesi/anahtarı yok",
+      // Bildirim sağlığı İKİ ayrı satır: (1) sunucu anahtarı tanımlı mı,
+      // (2) en az bir kişi abone olmuş mu. Eskiden tek satırda birleşikti ve
+      // "anahtar mı yok, abone mi yok" ayırt edilemiyordu.
+      vapidKonfig: "Push anahtarı (VAPID) tanımlı",
+      vapidKonfigIpucu:
+        "VAPID anahtarları eksik — Netlify env'e NEXT_PUBLIC_VAPID_PUBLIC_KEY + VAPID_PRIVATE_KEY ekle, yeniden deploy et",
+      bildirim: "En az bir bildirim abonesi var",
+      bildirimIpucu: (n: number) =>
+        n === 0
+          ? "Kimse abone değil — kişiler telefonda PWA kurup bildirime izin vermeli (iOS: önce Ana Ekrana Ekle)"
+          : `${n} abone`,
       // #20 Final aşaması hazırlığı (kamp ilerleyince görünür)
       mektup: "Ayna mektupları hazır",
       mektupIpucu: (n: number, t: number) => `Ayna mektupları eksik (${n}/${t}) — rapor zayıf kalır`,
@@ -2414,7 +2492,7 @@ export const tr = {
     durt: {
       bildirimBaslik: "👁 Kendini puanla",
       bildirimGovde: "Kampın ilk adımı seni bekliyor — kendini dürüstçe puanla.",
-      dalgaYok: "Şu an açık dalga yok.",
+      dalgaYok: "Şu an açık değerlendirme yok.",
       dugme: (n: number) => `Eksik ${n} kişiyi dürt 🔔`,
       gonderiliyor: "Gönderiliyor…",
       sonuc: (n: number) => `${n} kişiye hatırlatma gönderildi ✓`,
@@ -2423,8 +2501,8 @@ export const tr = {
     // #10 Eylem tostu mesajları (köşede "✓ yapıldı" geri bildirimi)
     // #3 geriAl: tostta tek dokunuşla son eylemi geri alma
     tost: {
-      dalgaAcildi: "Dalga açıldı ✓",
-      dalgaKapatildi: "Dalga kapatıldı",
+      dalgaAcildi: "Değerlendirme açıldı ✓",
+      dalgaKapatildi: "Değerlendirme kapatıldı",
       raporAcildi: "Ayna Raporları açıldı ✓",
       raporGizlendi: "Raporlar yeniden gizlendi",
       geriAl: "↩ Geri al",
@@ -2434,7 +2512,7 @@ export const tr = {
     onay: {
       evet: "Evet, yap",
       vazgec: "Vazgeç",
-      dalgaKapat: "Dalgayı kapatınca katılımcılar artık puanlayamaz. Emin misin?",
+      dalgaKapat: "Değerlendirmeyi kapatınca katılımcılar artık puanlayamaz. Emin misin?",
       raporAc: "Raporları açınca herkes aynasını görür — bu, kapanışın geri alınamaz anı. Emin misin?",
       raporAcErken:
         "DİKKAT: Mektuplar henüz hazır değil. Şimdi açarsan bazı adaylar boş/zayıf rapor görür. Yine de açmak istediğine emin misin?",
@@ -2474,18 +2552,7 @@ export const tr = {
       higgsKapali: "Higgsfield yapılandırılmadı (HIGGSFIELD_CREDENTIALS yok) — üretim devre dışı.",
       hata: "İşlem başarısız. Tekrar dene.",
     },
-    // Kayıt masası kiosk ekranı: canlı katılım + QR + kod bulma
-    kiosk: {
-      baslik: "Kayıt Masası",
-      katildi: "katıldı",
-      toplam: (n: number) => `${n} kayıtlı`,
-      qrBaslik: "Uygulamayı aç",
-      qrAciklama: "Telefon kamerası ile okut veya yaka kartındaki QR'ı kullan.",
-      bulBaslik: "Kodunu kaybedeni bul",
-      bulYer: "İsim yaz…",
-      bulYok: "Eşleşme yok.",
-      bulKod: "Kod",
-    },
+
     // Felaket sigortası: tüm verinin tek dosyada yedeği
     yedek: {
       baslik: "Veri Yedeği",
@@ -2527,7 +2594,7 @@ export const tr = {
       aynaPasif: "AYNA uykuda — sessiz",
       aynaDuraklat: "AYNA'yı Duraklat",
       aynaSurdur: "AYNA'yı Sürdür",
-      dalgaBaslik: "🌊 Dalgalar",
+      dalgaBaslik: "🌊 Değerlendirmeler",
       dalgaAc: "Aç",
       dalgaKapat: "Kapat",
       dalgaAcik: "açık",
@@ -2545,7 +2612,7 @@ export const tr = {
       vitrinOtomatik: "Otomatik döngüye dön",
       acilBaslik: "🛑 Acil Durdur",
       acilAciklama:
-        "AYNA'yı duraklatır VE açık tüm dalgaları kapatır. Bir şeyler ters gittiğinde tek dokunuş.",
+        "AYNA'yı duraklatır VE açık değerlendirmeyi kapatır. Bir şeyler ters gittiğinde tek dokunuş.",
       acilDugme: "ACİL DURDUR",
       acilOnay: "Emin misin? Tekrar bas",
       acilOldu: "Durduruldu ✓",
@@ -2582,18 +2649,18 @@ export const tr = {
       sonucBaslik: "Sonuç",
     },
     dalga: {
-      baslik: "Dalga Kontrolü",
+      baslik: "Değerlendirme Kontrolü",
       aciklama:
-        "Aynı anda yalnızca bir dalga açık olur; birini açmak diğerlerini kapatır. Kamp planı: Dalga 1 → Gün 1 · 18:00 (serbest zaman) · Dalga 2 → Gün 2 · 09:00 (kahvaltı) · Dalga 3 → Gün 3 · 07:15 (kahvaltı & oda boşaltma).",
+        "Katılımcılar birbirini 10 liderlik özelliğiyle puanlar. İki değerlendirme var: Kamp Değerlendirmesi (Gün 3 sabahı, kapanış töreni öncesi açılır) ve 90 Gün Sonra (kamp sonrası değişim ölçümü). Aynı anda yalnızca biri açık olur.",
       acik: "Açık",
       kapali: "Kapalı",
       ac: "Aç",
       kapat: "Kapat",
-      hata: "Dalga güncellenemedi. Lütfen tekrar dene.",
+      hata: "Değerlendirme güncellenemedi. Lütfen tekrar dene.",
       // #2 Kapanış sayacı
       puanlamayan: (n: number) => `${n} kişi henüz hiç puanlamadı`,
       kapatUyari: (n: number) =>
-        `${n} kişi bu dalgada henüz hiç puanlamadı. Kapatınca artık puanlayamazlar. Yine de kapatılsın mı?`,
+        `${n} kişi bu değerlendirmede henüz hiç puanlamadı. Kapatınca artık puanlayamazlar. Yine de kapatılsın mı?`,
     },
     canliPano: {
       izgaraBaslik: "Katılımcı Nabzı",
@@ -2617,8 +2684,8 @@ export const tr = {
     ilerleme: {
       baslik: "Canlı İlerleme",
       ozellikUyari:
-        "⚠️ Dalga açıkken liderlik özelliği (trait) EKLEME/ÇIKARMA — öz-puanını bitirmiş adaylar tekrar 'eksik' sayılıp kilitlenir.",
-      acikDalgaYok: "Açık dalga yok — ilerleme, bir dalga açıldığında görünür.",
+        "⚠️ Değerlendirme açıkken liderlik özelliği (trait) EKLEME/ÇIKARMA — öz-puanını bitirmiş adaylar tekrar 'eksik' sayılıp kilitlenir.",
+      acikDalgaYok: "Açık değerlendirme yok — ilerleme, bir değerlendirme açıldığında görünür.",
       katilimci: "Katılımcı",
       ozTamam: "Öz değerlendirme",
       toplamPuan: "Toplam puan satırı",
@@ -2737,11 +2804,36 @@ export const tr = {
       degisVazgec: "Vazgeç",
       degisti: "✓ Değiştirildi",
       degisHata: "Değiştirilemedi.",
+      // Sıfırlama
+      sifirla: "Eşleştirmeleri Sıfırla",
+      sifirlaOnay: "Tüm atamaları silmek istediğimi anladım",
+      sifirlaUyari: "Tüm atamalar silinir, yeniden oluşturulmaz.",
+      sifirlaCalisiyor: "Sıfırlanıyor…",
+      sifirlaBasarili: "✓ Tüm atamalar silindi.",
+      // Artımlı ekleme
+      ekle: "Eksikleri Tamamla",
+      ekleAciklama: "Ataması olmayan veya hedef sayısının altında kalan kişilere atama ekler. Mevcut atamalara dokunmaz.",
+      ekleniyor: "Tamamlanıyor…",
+      ekleBasarili: (n: number) => `${n} yeni atama eklendi.`,
+      ekleYeniYok: "Tüm katılımcıların ataması zaten tamamlanmış.",
+      // Dışlama listesi
+      dislamaBaslik: "Dışlama Listesi",
+      dislamaAciklama: "Bu çiftler asla birbirine eşleştirilmez. Eşleştirme çalıştırdığında veya eksik tamamladığında algoritma bunları atlar.",
+      dislamaEkle: "Çift Ekle",
+      dislamaKaldir: "Kaldır",
+      dislamaYok: "Henüz dışlama yok.",
+      dislamaGecersiz: "Geçersiz istek — iki farklı katılımcı seç.",
+      dislamaZatenVar: "Bu çift zaten dışlama listesinde.",
+      dislamaEklendi: "✓ Dışlama eklendi.",
+      dislamaKaldirildi: "✓ Dışlama kaldırıldı.",
+      dislamaHata: "İşlem başarısız, tekrar dene.",
+      kisiBir: "1. kişi",
+      kisiIki: "2. kişi",
     },
     grupOdev: {
       baslik: "Grup Ödevleri",
       aciklama:
-        "AYNA, her grubun Ön Farkındalık profillerini toplayıp ortak açığa göre ödev üretir. Grup-içi: üyeler birlikte ortak açığı çalışır. Grup-birlikte: tamamlayıcı profiller (güçlü zayıfa koçluk) eşleşir.",
+        "AYNA, her grubun Ön Farkındalık profillerini toplayıp ortak açığa göre ödev üretir. Grup-içi: üyeler birlikte ortak açığı çalışır. Grup-birlikte: tamamlayıcı profiller (güçlü zayıfa koçluk) eşleşir. Takım oluşup profiller dolunca AYNA bunları KENDİLİĞİNDEN üretir ve üyelere bildirir — aşağıdaki butonla istersen elle yeniden üretebilirsin.",
       uyeEtiket: (profilli: number, toplam: number) => `${profilli}/${toplam} üye profilini doldurdu`,
       zayifEtiket: "Baskın zayıf alan",
       acikEtiket: "Ortak en büyük açık",
@@ -2972,15 +3064,11 @@ export const tr = {
       durumPasif: "AYNA uyuyor",
       uyandir: "AYNA'yı Uyandır",
       durdur: "AYNA'yı Durdur",
-      tempoEtiket: "Görev temposu",
-      tempolar: {
-        surpriz: "Sürpriz (1-3 saat)",
-        "2": "Sabit 2 saat",
-        "3": "Sabit 3 saat",
-      },
       aboneSayisi: (n: number, toplam: number) =>
         `${toplam} katılımcının ${n} tanesi bildirime abone`,
-      tikCalistir: "Şimdi Tik Çalıştır (test)",
+      tikCalistir: "AYNA'yı Şimdi Bir Tur Çalıştır",
+      tikAciklama:
+        "AYNA'nın bir turunu hemen başlatır (normalde 5 dakikada bir kendiliğinden çalışır). O an sırası gelen kişilere görev/ses üretir — herkese değil. Deneme amaçlıdır: gece ve sahne sessizliğini yok sayar.",
       tikSonuc: (ozet: string) => `Tik tamam: ${ozet}`,
       sozGonder: "🤝 Son Görevi Gönder: SÖZ",
       sozOnay:
@@ -3015,7 +3103,7 @@ export const tr = {
         "ELEVENLABS_API_KEY tanımlı değil ya da ses üretimi başarısız — anons çıkmadı.",
       hata: "İşlem başarısız. Tekrar dene.",
       kurulumUyari:
-        "Zamanlayıcı kurulu değilse AYNA kendiliğinden uyanmaz — README'deki cron SQL'ini Supabase'de çalıştır ya da test için 'Şimdi Tik Çalıştır'ı kullan (test tiki sessiz saati yok sayar).",
+        "Not: AYNA'nın kamp boyunca kendiliğinden (5 dakikada bir) çalışması için zamanlayıcı kurulu olmalı — README'deki cron SQL'ini Supabase'de bir kez çalıştır. Kurulu değilse yalnız yukarıdaki butonla elle çalışır.",
     },
     program: {
       baslik: "Kamp Programı & AYNA Planı",
@@ -3040,7 +3128,7 @@ export const tr = {
     doksanGun: {
       baslik: "📬 90 Gün Sonra",
       aciklama:
-        "Kamptan ~90 gün sonra: yukarıdan Dalga 4'ü aç, sonra davet e-postalarını gönder. Herkes kendi koduyla geri döner; rapor ve dalga yolculuğu yeni puanlarla kendiliğinden güncellenir.",
+        "Kamptan ~90 gün sonra: yukarıdan 90 Gün Sonra değerlendirmesini aç, sonra davet e-postalarını gönder. Herkes kendi koduyla geri döner; rapor ve değerlendirme yolculuğu yeni puanlarla kendiliğinden güncellenir.",
       epostali: (n: number, toplam: number) =>
         `${toplam} katılımcının ${n} tanesinde e-posta adresi kayıtlı`,
       epostaYok:
@@ -3230,6 +3318,9 @@ export const tr = {
     acilma: (saat: string) => `${saat}'te açıklanacak`,
     bos: "Program henüz yüklenmedi.",
     gecmis: "tamamlandı",
+    // #6 Programa gömülü görev satırı
+    gorevAcik: "Aç →",
+    gorevBekliyor: "bekliyor",
   },
   bildirim: {
     kurBaslik: "📲 AYNA'yı telefonuna kur",
@@ -3262,6 +3353,39 @@ export const tr = {
     pwaAlt: "Tek dokunuş — uygulama gibi açılır, bildirimler gelir.",
     pwaEkle: "Ekle",
     pwaKapat: "Kapat",
+    // Menüdeki kalıcı aç/kapa anahtarı
+    anahtarBaslik: "🔔 Bildirimler",
+    anahtarAcik: "Açık",
+    anahtarKapali: "Kapalı",
+    anahtarAc: "Aç",
+    anahtarKapat: "Kapat",
+    anahtarIos: "Önce ana ekrana ekle",
+    anahtarReddedildi: "Tarayıcı ayarından izin ver",
+    anahtarDesteklenmiyor: "Bu cihaz desteklemiyor",
+    // Kurulum koçu (görsel, cihaza özel) — telefona ekleme adımları
+    kocBaslik: "📲 AYNA'yı telefonuna ekle",
+    kocAlt: "Uygulama gibi açılır; görevler ve hatırlatmalar cebine düşer.",
+    kocIosAdim1: "Aşağıdaki",
+    kocIosAdim1b: "Paylaş",
+    kocIosAdim1c: "düğmesine bas",
+    kocIosAdim2: "Açılan listede",
+    kocIosAdim2b: "\"Ana Ekrana Ekle\"",
+    kocIosAdim2c: "seç",
+    kocIosOk: "Paylaş düğmesi: Safari'de altta ↓ · Chrome'da ⋮ menüsünde",
+    kocIosTarayici: "Safari ya da Chrome — ikisinde de çalışır.",
+    kocIosTekrar: "Sonra uygulamayı ana ekrandan aç — bildirimler oradan gelir.",
+    kocBaskaTarayiciBaslik: "Önce Safari'de aç",
+    kocBaskaTarayiciMetin:
+      "Ana ekrana ekleme yalnızca Safari'de çalışır. Linki kopyala → Safari'yi aç → adres çubuğuna yapıştır.",
+    kocInappBaslik: "Önce gerçek tarayıcıda aç",
+    kocInappMetin:
+      "Bu sayfa bir uygulama içinde açıldı (WhatsApp/Instagram). Kurmak için linki kopyala, sonra Safari ya da Chrome ile aç — aşağıdaki adımları izle.",
+    kocAndroidYukle: "📲 Uygulamayı yükle",
+    kocAndroidTalimatBaslik: "Ana ekrana ekle",
+    kocAndroidTalimatMetin:
+      "Chrome menüsünü (sağ üst ⋮) aç → \"Uygulamayı yükle\" ya da \"Ana ekrana ekle\".",
+    kocLinkKopyala: "🔗 Linki kopyala",
+    kocKopyalandi: "Kopyalandı ✓",
     // PWA ilk-açılış belirgin istemi (logolu, ortada, "ilk aynayı açar gibi")
     pwaIlkBaslik: "AYNA'yı telefonuna kur",
     pwaIlkAlt:
@@ -3304,12 +3428,12 @@ export const tr = {
     davetKonu: "Aynaya tekrar bakma zamanı ✨ — Liderlik Aynası",
     davetBaslik: "90 gün geçti. Ayna seni bekliyor.",
     davetParagraf: (ad: string) =>
-      `Merhaba ${ad}, kamptan bu yana 90 gün geçti. Dalga 4 açıldı: arkadaşlarını bugünkü gözünle yeniden puanla, kendi aynanda neyin değiştiğini gör.`,
+      `Merhaba ${ad}, kamptan bu yana 90 gün geçti. 90 Gün Sonra değerlendirmesi açıldı: arkadaşlarını bugünkü gözünle yeniden puanla, kendi aynanda neyin değiştiğini gör.`,
     davetButon: "Aynaya Tekrar Bak",
     davetKodNotu: (kod: string) =>
       `Buton çalışmazsa giriş kodunla girebilirsin: ${kod}`,
     davetMetin: (ad: string, link: string, kod: string) =>
-      `Merhaba ${ad},\n\nKamptan bu yana 90 gün geçti. Dalga 4 açıldı: arkadaşlarını bugünkü gözünle yeniden puanla, kendi aynanda neyin değiştiğini gör.\n\nGiriş: ${link}\nKodun: ${kod}\n\n— Liderlik Aynası`,
+      `Merhaba ${ad},\n\nKamptan bu yana 90 gün geçti. "90 Gün Sonra" değerlendirmesi açıldı: arkadaşlarını bugünkü gözünle yeniden puanla, kendi aynanda neyin değiştiğini gör.\n\nGiriş: ${link}\nKodun: ${kod}\n\n— Liderlik Aynası`,
     davetSozBaslik: "Bana bir söz vermiştin. Hatırlıyor musun?",
     davetSozMetin: (soz: string) =>
       `Kampın son gecesi kendine şunu yazmıştın:\n\n"${soz}"\n\nTuttun mu? — AYNA`,
@@ -3343,7 +3467,7 @@ export const tr = {
       `${ozellik} konusunda kendine, başkalarının sana verdiğinden belirgin şekilde yüksek puan vermişsin. Buraya bir daha bakmaya değer.`,
     daralmaBaslik: "📉 Açığın Kapanıyor",
     daralmaAciklama: (ozellik: string, oz: string) =>
-      `${ozellik} alanında kendini ${oz} gördün. Üç dalga boyunca, başkalarının gözüyle arandaki açık şöyle değişti:`,
+      `${ozellik} alanında kendini ${oz} gördün. Başkalarının gözüyle arandaki açık şöyle:`,
     daralmaAcik: (fark: string) => `açık ${fark}`,
     daralmaKapandi: "Açık kapandı — algın gerçekle hizalanıyor. İşte aynanın işi bu.",
     daralmaDevam: "Açık hâlâ açık. Kapatmak senin elinde — yolculuk burada bitmiyor.",
@@ -3367,10 +3491,14 @@ export const tr = {
     seninIcinPaylas: "Sevdiğine gönder",
     seninIcinKopyala: "Kopyala",
     seninIcinKopyalandi: "Kopyalandı ✓",
+    // Aynalar Meclisi — kolektif bilgelik / aidiyet
+    meclisBaslik: "Aynalar Meclisi",
+    meclisMetin: (n: number, etiket: string) =>
+      `Bu kampta senin gibi ${n} kişi daha ${etiket}. Yalnız yürümedin.`,
     kisiSayisi: (n: number) => `${n} kişi puanladı`,
     veriYok: "Henüz yeterli dış puan yok.",
-    hikayeBaslik: "📖 Dalga Yolculuğun",
-    hikayeAciklama: "Üç gün boyunca algı nasıl değişti?",
+    hikayeBaslik: "📖 Değerlendirme Yolculuğun",
+    hikayeAciklama: "Kamptan bugüne algı nasıl değişti?",
     hikayeGelisen: (ozellik: string, fark: string) =>
       `En çok yükselen özelliğin: ${ozellik} (+${fark} puan). Kamp seni değiştirdi — ve insanlar bunu fark etti.`,
     hikayeDalgaOzet: (ort: string) => `Genel ortalama: ${ort}`,
@@ -3382,13 +3510,13 @@ export const tr = {
     haritaPlan: "Oyun planın",
     haritaMektup: "Aynan'ın mektubu",
     haritaBasla: "Buradan başla",
-    // Gel #9 — kümülatif trend yönü (ilk→son dalga genel algı)
+    // Gel #9 — kümülatif trend yönü (ilk→son değerlendirme genel algı)
     trendOzet: (dalgaSayi: number, ilk: string, son: string, yon: string, fark: string) =>
       yon === "yukari"
-        ? `${dalgaSayi} dalga boyunca genel algın ${ilk} → ${son} yükseldi (+${fark}). Yön yukarı.`
+        ? `${dalgaSayi} değerlendirme boyunca genel algın ${ilk} → ${son} yükseldi (+${fark}). Yön yukarı.`
         : yon === "asagi"
-          ? `${dalgaSayi} dalga boyunca genel algın ${ilk} → ${son} (−${fark}). Bir düşüş normaldir — son dalgaya odaklan.`
-          : `${dalgaSayi} dalga boyunca genel algın ${ilk} → ${son} dengede kaldı. İstikrar da bir güçtür.`,
+          ? `${dalgaSayi} değerlendirme boyunca genel algın ${ilk} → ${son} (−${fark}). Bir düşüş normaldir — son değerlendirmeye odaklan.`
+          : `${dalgaSayi} değerlendirme boyunca genel algın ${ilk} → ${son} dengede kaldı. İstikrar da bir güçtür.`,
     // #3 Story katmanı
     hikayeIzle: "Hikâye olarak izle",
     hikayeUstAcilis: "AYNA RAPORU",
@@ -3617,7 +3745,7 @@ export const tr = {
   ekran: {
     baslik: "Kampın Nabzı",
     altBaslik: "Liderlik Aynası · canlı",
-    dalgaYok: "Şu anda açık dalga yok",
+    dalgaYok: "Şu anda açık değerlendirme yok",
     veriYok: "Puanlar gelmeye başlayınca burası canlanacak…",
     nabiz: {
       katilimci: "katılımcı",
@@ -3656,7 +3784,7 @@ export const tr = {
     kapaliBaslik: "Bu yolculuğun başında, buraya bir söz bıraktın",
     kapaliMetin:
       "Daha en başta, kendi sesinle geleceğine bir söz mühürledin. Onu birlikte açmanın vakti geldi.",
-    ac: "🔒 Mührü aç",
+    ac: "Mührü aç",
     sesUst: "EN BAŞTAN — KENDİ SESİN",
     sesBaslik: "İşte o an",
     sesMetin:
@@ -3731,7 +3859,7 @@ export const tr = {
     seninle: "Yansıman artık seninle. Su her durulduğunda burada.",
     sonra: "Kaydın aynada saklandı. Yansıman kamp başlarken uyanacak.",
     // A1 Mühür: beklenti sözü "geleceğe mühürlü mesaj" olarak kapanışta onaylanır
-    muhurUst: "🔒 SÖZÜN MÜHÜRLENDİ",
+    muhurUst: "SÖZÜN MÜHÜRLENDİ",
     muhurMetin:
       "Bugün kendine verdiğin sözü bu aynaya kilitledik. Kampın son anında, onu birlikte açacağız — ve ne kadar yol aldığını göreceksin.",
     hata: "Bir şey ters gitti. Tekrar dene.",
@@ -3797,9 +3925,9 @@ export const tr = {
     kapatildi: "Prova modu kapatıldı ✓",
     hata: "Güncellenemedi. Tekrar dene.",
   },
-  // #4 Sonraki dalga geri sayımı: bekleme ekranında "14 saat sonra açılıyor"
+  // #4 Sonraki değerlendirme geri sayımı: bekleme ekranında "14 saat sonra açılıyor"
   geriSayim: {
-    baslik: "Sıradaki dalga",
+    baslik: "Sıradaki değerlendirme",
     gun: (n: number) => `${n} gün`,
     saat: (n: number) => `${n} saat`,
     dakika: (n: number) => `${n} dakika`,
@@ -3848,7 +3976,7 @@ export const tr = {
     gonderildi: "Kriz sinyali gönderildi ✓ — ekip haberdar edildi.",
     hata: "Gönderilemedi. Liderlik ekibiyle direkt iletişime geç.",
   },
-  // #7 Otomatik zamanlama: admin belirlediği saatte dalga/rapor açılsın
+  // #7 Otomatik zamanlama: admin belirlediği saatte değerlendirme/rapor açılsın
   zamanlama: {
     baslik: "Otomatik Zamanlama",
     aciklama: "Bir eylem için saat belirle — sistem tam o anda gerçekleştirir.",
@@ -3909,8 +4037,8 @@ export const tr = {
     aciklama: "Son kritik admin eylemleri. Kim, ne zaman, ne yaptı.",
     bos: "Henüz kayıtlı işlem yok.",
     eylemler: {
-      dalga_acildi: "Dalga açıldı",
-      dalga_kapatildi: "Dalga kapatıldı",
+      dalga_acildi: "Değerlendirme açıldı",
+      dalga_kapatildi: "Değerlendirme kapatıldı",
       rapor_acildi: "Raporlar açıldı",
       rapor_kapatildi: "Raporlar kapatıldı",
       prova_acildi: "Prova modu açıldı",

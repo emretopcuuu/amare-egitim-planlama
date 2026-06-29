@@ -97,6 +97,35 @@ export async function grupOdevUret(
   const ozet = await grupOzeti(db, takim);
   if (ozet.profilliUye === 0) return null;
 
+  // GRUP-BİRLİKTE için somut eşleştirme: üyelerin adı + en zayıf alanı çekilir;
+  // AYNA bunlara göre tamamlayıcı İKİLİLER kurup görevi İSİMLERLE yazar.
+  let uyeProfilleri: { ad: string; zayifAlan: string | null }[] = [];
+  if (tip === "grup_birlikte") {
+    const { data: uyeler } = await db
+      .from("participants")
+      .select("id, full_name")
+      .eq("team", takim)
+      .eq("role", "participant");
+    const idler = (uyeler ?? []).map((u) => u.id);
+    let ofler: { participant_id: string; profil: unknown }[] = [];
+    if (idler.length) {
+      const { data } = await db
+        .from("on_farkindalik")
+        .select("participant_id, profil")
+        .in("participant_id", idler);
+      ofler = data ?? [];
+    }
+    const ofHarita = new Map(ofler.map((o) => [o.participant_id, o.profil as OFProfil | null]));
+    uyeProfilleri = (uyeler ?? []).map((u) => {
+      const p = ofHarita.get(u.id);
+      const z = p?.katman1?.enZayif;
+      return {
+        ad: u.full_name,
+        zayifAlan: z ? OZ_ALAN_AD[z] ?? z : null,
+      };
+    });
+  }
+
   const baglam = {
     takim,
     tip,
@@ -104,12 +133,13 @@ export async function grupOdevUret(
     baskinZayifAlan: ozet.baskinZayifAlan,
     baskinAciklar: ozet.baskinAciklar,
     ritim: ozet.ritim,
+    ...(tip === "grup_birlikte" ? { uyeler: uyeProfilleri } : {}),
   };
 
   const tipYonerge =
     tip === "grup_ici"
       ? "GRUP-İÇİ ödev: grubun ÜYELERİ BİRLİKTE, paylaştıkları ortak açık/zayıf alan üzerine çalışır. Tek bir somut, gözlenebilir grup eylemi kur (birlikte yapılacak)."
-      : "GRUP-BİRLİKTE ödev: grup üyeleri İKİŞERLİ/üçerli, BİRBİRİNİ TAMAMLAYARAK çalışır — güçlü olan zayıf olana koçluk eder, herkes hem öğretir hem öğrenir. Rolleri net ama esnek kur.";
+      : "GRUP-BİRLİKTE ödev: bağlamdaki \"uyeler\" listesine bakarak üyeleri SOMUT İKİLİLER halinde EŞLEŞTİR — birinin zayıf olduğu alanda diğeri ona destek olacak şekilde tamamlayıcı kur (tek sayıda üye varsa bir üçlü olabilir). Görev metninde eşleştirmeleri AÇIKÇA İSİMLE yaz (örn: \"Ahmet ↔ Mehmet\"). Soyut \"ikişerli eşleşin\" DEME; gerçek isimlerle kim-kimle net olsun. Her ikili karşılıklı koçluk yapsın: herkes hem öğretir hem öğrenir.";
 
   const SEMA = {
     type: "object" as const,
@@ -125,7 +155,8 @@ export async function grupOdevUret(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-opus-4-8",
+      // Grup ödevi düşük hacimli (grup başına 1) — kalite için Sonnet, effort low.
+      model: "claude-sonnet-4-6",
       max_tokens: 1024,
       thinking: { type: "disabled" },
       output_config: { effort: "low", format: { type: "json_schema", schema: SEMA } },

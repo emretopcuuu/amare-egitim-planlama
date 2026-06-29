@@ -5,6 +5,7 @@ import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import YaziBoyu from "@/components/YaziBoyu";
 import TemaSecimi from "@/components/TemaSecimi";
+import BildirimAnahtari from "@/components/BildirimAnahtari";
 
 const t = tr.anaSayfa;
 
@@ -14,6 +15,11 @@ type Props = {
   raporlarAcik: boolean;
   yansimanHazir: boolean;
   ozHedefId: string;
+  // Kamp öncesi adımları (Pusula/Hedef/Ön Farkındalık) tamamlayanlar için
+  // bu sayfalar yetim kalmasın — menüden geri dönülebilsin.
+  pusulaTamam?: boolean;
+  hedefTamam?: boolean;
+  ofTamam?: boolean;
 };
 
 // Üst menü: açılış ekranı tek işe odaklanır; ikincil her şey (kendi puanlarını
@@ -25,6 +31,9 @@ export default function UstMenu({
   raporlarAcik,
   yansimanHazir,
   ozHedefId,
+  pusulaTamam = false,
+  hedefTamam = false,
+  ofTamam = false,
 }: Props) {
   const [acik, setAcik] = useState(false);
 
@@ -33,6 +42,8 @@ export default function UstMenu({
   const birincil: { href: string; etiket: string }[] = [];
   // GELİŞTİRME #1: Ayna Koçu her zaman erişilebilir birincil eylem.
   birincil.push({ href: "/kocu", etiket: t.menuKocu });
+  // AYNA'nın zaman içinde biriken analizleri (kamp öncesi → çıkış).
+  birincil.push({ href: "/analizlerim", etiket: tr.analiz.menuLink });
   if (ozTamam && dalgaAcik)
     birincil.push({ href: `/degerlendir/${ozHedefId}`, etiket: t.menuOzDuzenle });
   if (raporlarAcik) birincil.push({ href: "/ayna", etiket: t.menuRapor });
@@ -41,13 +52,15 @@ export default function UstMenu({
 
   // EKSTRA: sosyal ve ikincil her şey (küçük, ikişerli ızgara).
   // S4: Anlar/Turnuva/Ortak/Mini360/Plan kaldırıldı — erişilmez veya kenar özellikler.
+  // Sadeleştirme: Kamp Programı (alt çubukta "Program" sekmesiyle aynı) ve kamp
+  // öncesi düzelt-linkleri (Pusulam/Hedefim/Ön Farkındalık — mühür ekranındaki
+  // checklist'te zaten var) menüden kaldırıldı; kalabalık azaltıldı.
   const ekstra: { href: string; etiket: string }[] = [
     { href: "/ben", etiket: t.menuBen },
     { href: "/gunluk", etiket: t.menuGunluk },
     { href: "/grup", etiket: t.menuGrup },
     { href: "/ayna-esi", etiket: t.menuAynaEsi },
     { href: "/takdir", etiket: t.menuTakdir },
-    { href: "/program", etiket: t.menuProgram },
     { href: "/gizlilik", etiket: t.menuGizlilik },
   ];
 
@@ -74,7 +87,9 @@ export default function UstMenu({
           className="fixed inset-0 z-50 overflow-y-auto bg-black/70 backdrop-blur-sm"
           onClick={() => setAcik(false)}
         >
-          <div className="flex min-h-full items-center justify-center p-4">
+          {/* Alt nav (alttaki Ana sayfa/Görevler/Program çubuğu) menünün en alt
+              tuşunu örtmesin: alta geniş nefes payı + güvenli alan. */}
+          <div className="flex min-h-full items-center justify-center p-4 pb-[calc(7rem+env(safe-area-inset-bottom))]">
             <div
               className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-midnight-card p-6"
               onClick={(e) => e.stopPropagation()}
@@ -131,6 +146,7 @@ export default function UstMenu({
               </nav>
 
               <div className="mt-4 space-y-3">
+                <BildirimAnahtari />
                 <YaziBoyu />
                 <TemaSecimi />
               </div>

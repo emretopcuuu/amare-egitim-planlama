@@ -9,13 +9,19 @@ import {
   gorevAraligiDk,
   istanbulSaati,
   sessizSaatMi,
+  aynaAniUret,
 } from "@/lib/ayna";
+import { aynaAniAdaylari } from "@/lib/aynaAniTetik";
+import { kampAnaliziTik, type AsamaKod } from "@/lib/aynaAnaliz";
+import { grupOdevUret } from "@/lib/grupOdev";
 import { kivilcimHesapla } from "@/lib/kivilcim";
 import {
   kaymaKarari,
   senkronAnahtari,
   senkronYedekSec,
   yolculukGunuHesapla,
+  pikSaatBul,
+  saatFarki,
   type SistemModu,
 } from "@/lib/davranis";
 import { momentumHesaplaVeYaz } from "@/lib/momentum";
@@ -23,6 +29,7 @@ import {
   kampGunu,
   suankiMadde,
   bitenMadde,
+  siradakiMadde,
   sahneSessizMi,
   sabahPenceresiMi,
   GECE_FISILTILARI,
@@ -41,9 +48,15 @@ import {
   grupNoCozumle,
   cumartesiGrupEtkinligi,
   cumartesiGrupBitenEtkinlik,
+  cumartesiGrupSiradakiEtkinlik,
+  grupAktifBlok,
+  grupBitenBlok,
+  grupAzOnceFiziksel,
 } from "@/lib/cumartesiProgrami";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
+import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
+import { sablonBul, ilkAd } from "@/lib/whatsappSablonlari";
 import { gunlukSoz } from "@/lib/ozluSozler";
 
 type Db = ReturnType<typeof supabaseAdmin>;
@@ -64,7 +77,12 @@ function istanbulTarihi(an: Date): string {
 //
 // testModu: sessiz saat ve sahne sessizliğini yok sayar (gece/sahne sırasında
 // bile prova yapılabilsin).
-export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
+export async function tikCalistir(
+  db: Db,
+  simdi: Date,
+  testModu: boolean,
+  provaModu = false
+) {
   const ozet = {
     uretilen: 0,
     puanlanan: 0,
@@ -88,7 +106,6 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     .select("key, value")
     .in("key", [
       "ayna_aktif",
-      "ayna_tempo",
       "ayna_baslangic",
       "sistem_modu",
       "yolculuk_baslangic",
@@ -106,7 +123,13 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
   // görev, hatırlatma, fısıltı ve dürtmeler bir sonraki pencereye sarkar.
   const bugun = istanbulTarihi(simdi);
   const { saat, dakika } = istanbulSaati(simdi);
-  const kampGunuBugun = mod === "kamp" ? kampGunu(bugun) : null;
+  // Kampın 1. günü = AYNA'nın başlatıldığı (ayna_baslangic) Istanbul tarihi.
+  // Böylece Gün 1/2/3 sabit takvime değil, kullanıcının başlattığı ana bağlı.
+  const aynaBaslangicAyar = ayar.get("ayna_baslangic");
+  const kampBaslangic = aynaBaslangicAyar
+    ? istanbulTarihi(new Date(aynaBaslangicAyar))
+    : undefined;
+  const kampGunuBugun = mod === "kamp" ? kampGunu(bugun, kampBaslangic) : null;
   const sahneSessiz =
     kampGunuBugun !== null &&
     sahneSessizMi(kampGunuBugun, saat * 60 + dakika) &&
@@ -195,13 +218,34 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
             )
           : 1));
 
-  const [{ data: kisiler }, { data: sonGorevler }] = await Promise.all([
-    db.from("participants").select("id, full_name, team, kariyer_seviyesi, kariyer_durumu").eq("role", "participant"),
-    db
-      .from("missions")
-      .select("participant_id, status, issued_at, kind")
-      .gte("issued_at", new Date(simdi.getTime() - 26 * 3_600_000).toISOString()),
-  ]);
+  const [{ data: kisiler }, { data: sonGorevler }, { data: yanitGecmisi }] =
+    await Promise.all([
+      db.from("participants").select("id, full_name, team, kariyer_seviyesi, kariyer_durumu").eq("role", "participant"),
+      db
+        .from("missions")
+        .select("participant_id, status, issued_at, kind")
+        .gte("issued_at", new Date(simdi.getTime() - 26 * 3_600_000).toISOString()),
+      // #2 Pik yanıt saati için son 3 günlük yanıt geçmişi (responded_at).
+      db
+        .from("missions")
+        .select("participant_id, responded_at")
+        .not("responded_at", "is", null)
+        .gte("responded_at", new Date(simdi.getTime() - 3 * 86_400_000).toISOString()),
+    ]);
+
+  // #2 Kişi başına pik yanıt saati (Istanbul). Yeterli/net veri yoksa null.
+  const pikSaatleri = new Map<string, number | null>();
+  {
+    const saatHarita = new Map<string, number[]>();
+    for (const y of yanitGecmisi ?? []) {
+      if (!y.responded_at) continue;
+      const trSaat = (new Date(y.responded_at).getUTCHours() + 3) % 24;
+      const arr = saatHarita.get(y.participant_id) ?? [];
+      arr.push(trSaat);
+      saatHarita.set(y.participant_id, arr);
+    }
+    for (const [pid, saatler] of saatHarita) pikSaatleri.set(pid, pikSaatBul(saatler));
+  }
 
   type Durum = { bekleyen: boolean; bugunSayisi: number; sonVerilis: number };
   const durumlar = new Map<string, Durum>();
@@ -210,29 +254,52 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       durumlar.get(g.participant_id) ??
       ({ bekleyen: false, bugunSayisi: 0, sonVerilis: 0 } as Durum);
     if (g.status === "pending" || g.status === "submitted") d.bekleyen = true;
-    if (istanbulTarihi(new Date(g.issued_at)) === bugun) d.bugunSayisi++;
+    // #6 Günlük kota yalnız EYLEM görevlerini sayar; "senkron" kolektif/hafif bir
+    // an olduğu için kişinin görev kotasını (gunlukUst) doldurmamalı.
+    if (istanbulTarihi(new Date(g.issued_at)) === bugun && g.kind !== "senkron")
+      d.bugunSayisi++;
     d.sonVerilis = Math.max(d.sonVerilis, new Date(g.issued_at).getTime());
     durumlar.set(g.participant_id, d);
   }
 
-  const tempo = ayar.get("ayna_tempo") ?? "surpriz";
+  const gunDk = saat * 60 + dakika;
   // Yolculuk modunda ritim sakindir: günde TEK görev, 09-11 sabah penceresi
   const gunlukUst = mod === "yolculuk" ? 1 : 7;
   const yolculukPenceresi = mod !== "yolculuk" || (saat >= 9 && saat < 11);
   const uygunlar = (kisiler ?? [])
     .filter((k) => {
       if (!yolculukPenceresi || sahneSessiz) return false;
+      // #1 Cumartesi (Gün 2): grup David Chung'un kapalı oturumundaysa AYNA susar
+      // (sahne sessizliği gibi) — görev sonraki açık pencereye sarkar. Oyun/yemek
+      // bloklarında susmaz; oradaki "etkinliğe özel görev" tasarımı korunur.
+      const grupNo = mod === "kamp" && gun === 2 ? grupNoCozumle(k.team) : null;
+      if (grupNo && grupAktifBlok(grupNo, gunDk)?.tur === "david_toplanti") return false;
       const d = durumlar.get(k.id);
       if (!d) return true; // hiç görev almamış
       if (d.bekleyen || d.bugunSayisi >= gunlukUst) return false;
-      const aralikDk = gorevAraligiDk(tempo, k.id, d.bugunSayisi);
+      // #3 Fırsat penceresi: az önce deneyimsel bir etkinlik bittiyse (genel kamp
+      // veya grup) duygu sıcakken yakala — min aralık yarıya iner.
+      const firsat =
+        !!bitenEtkinlik || (grupNo ? grupBitenBlok(grupNo, gunDk) !== null : false);
+      // #2 Pik saat: kişinin aktif olduğu saat biliniyorsa, o pencereden (±2 saat)
+      // uzaktayken görevi geciktir — ölü saatte rahatsız etme. Fırsat penceresi
+      // (sıcak an) bunu ezer; yolculuk modu kendi sabah penceresini kullanır.
+      const pik = mod === "kamp" ? pikSaatleri.get(k.id) : null;
+      if (pik != null && !firsat && saatFarki(saat, pik) > 2) return false;
+      const aralikDk = gorevAraligiDk(k.id, d.bugunSayisi, firsat);
       return simdi.getTime() - d.sonVerilis >= aralikDk * 60_000;
     })
-    .sort(
-      (a, b) =>
-        (durumlar.get(a.id)?.sonVerilis ?? 0) - (durumlar.get(b.id)?.sonVerilis ?? 0)
-    )
-    .slice(0, 3);
+    // #6 Adalet: önce bugün EN AZ görev alan (taban eşitliği), sonra en uzun
+    // süredir görev almayan. Sürekli yanıt veren biri herkesin önüne geçmesin.
+    .sort((a, b) => {
+      const da = durumlar.get(a.id);
+      const db = durumlar.get(b.id);
+      const fark = (da?.bugunSayisi ?? 0) - (db?.bugunSayisi ?? 0);
+      if (fark !== 0) return fark;
+      return (da?.sonVerilis ?? 0) - (db?.sonVerilis ?? 0);
+    })
+    // Prova kampında zaman hızlandırılmış: 25 kişiye çabuk dağıtım için limit açılır.
+    .slice(0, provaModu ? 40 : 3);
 
   for (const k of uygunlar) {
     // Slice 3 — CUMARTESİ ETKİNLİK FARKINDALIĞI: Gün 2'de grup üyesine, grubunun
@@ -242,10 +309,14 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     let kEtkinlik = etkinlik;
     let kBiten = bitenEtkinlik;
     let kIpucu: string | null = null;
+    // #8 sıradaki etkinlik: genel kamp programından, Gün 2'de grup programından
+    let kSiradaki =
+      mod === "kamp" && kampGunuBugun ? siradakiMadde(kampGunuBugun, gunDk) : null;
+    // #7 fiziksel yorgunluk: genel doğa bloğu veya Gün 2 grup fiziksel oyunu sonrası
+    let kYorgun = bitenEtkinlik?.tur === "doga";
     if (mod === "kamp" && gun === 2) {
       const grupNo = grupNoCozumle(k.team);
       if (grupNo) {
-        const gunDk = saat * 60 + dakika;
         const cmt = cumartesiGrupEtkinligi(grupNo, gunDk);
         if (cmt) {
           kEtkinlik = cmt.madde;
@@ -253,9 +324,16 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         }
         const cmtBiten = cumartesiGrupBitenEtkinlik(grupNo, gunDk);
         if (cmtBiten) kBiten = cmtBiten;
+        const cmtSiradaki = cumartesiGrupSiradakiEtkinlik(grupNo, gunDk);
+        if (cmtSiradaki) kSiradaki = cmtSiradaki;
+        if (grupAzOnceFiziksel(grupNo, gunDk)) kYorgun = true;
       }
     }
-    const gorev = await gorevUret(db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu);
+    // Sıradaki köprüsünü yalnız kişi ŞU AN bir etkinliğin içinde DEĞİLken kur
+    // (etkinlikteyse görev zaten ona bağlanıyor; çift bağlam karıştırır).
+    const gorev = await gorevUret(
+      db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu, kEtkinlik ? null : kSiradaki, kYorgun
+    );
     if (!gorev) continue;
     // #8 micro_sprint: sure_saat 0.5 = 30 dk
     const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
@@ -270,6 +348,12 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         difficulty: gorev.difficulty,
         neden: gorev.neden,
         micro_sprint: gorev.micro_sprint,
+        yay_gorevi: gorev.yayGorevi,
+        // KRİTİK: issued_at motorun kullandığı saate (prova'da SANAL saat) eşit
+        // olmalı. Aksi halde sonGorevler penceresi + bugunSayisi + sonVerilis +
+        // bekleyen kontrolleri kayıyor ve prova'da her tik görev üretip sel oluyor.
+        // Gerçek kampta simdi = gerçek now → değişiklik yok.
+        issued_at: simdi.toISOString(),
         due_at: dueAt.toISOString(),
       })
       .select("id")
@@ -354,6 +438,81 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     }
   }
 
+  // 3b3) AYNA ANI (otomatik): kamp içinde yeterince görev yapmış + kör nokta
+  // cümlesi yazmış kişilere, AYNA o cümleyi bugünkü çabalarıyla yüzleştiren
+  // "gördün mü?" anını üretir, mühürler ve bildirir. Olgunluğa bağlıdır (zaman
+  // değil), kişi başına bir kez. Tik başına ≤2 (Opus maliyeti). Eskiden admin
+  // AYNA Direktörü'nden elle tetikliyordu — artık sistem o an geldiğinde gönderir.
+  if (mod === "kamp" && !sahneSessiz) {
+    const aniAdaylar = await aynaAniAdaylari(db);
+    for (const aday of aniAdaylar.slice(0, 2)) {
+      const govde = await aynaAniUret(db, { id: aday.id, full_name: aday.ad });
+      if (!govde) continue;
+      const { error: aniHata } = await db
+        .from("mirror_moments")
+        .upsert(
+          { participant_id: aday.id, body: govde },
+          { onConflict: "participant_id", ignoreDuplicates: true }
+        );
+      if (aniHata) continue;
+      await katilimciyaBildir(
+        db,
+        aday.id,
+        "👁 Aynan sana bir şey gösteriyor",
+        "Bugün yaptıkların aynada bir şey değiştirdi. Bak.",
+        "/"
+      );
+      ozet.fisilti++;
+    }
+  }
+
+  // 3b4) GRUP ÖDEVİ (otomatik): takım oluşmuş + profilli üyesi olan + henüz aktif
+  // ödevi olmayan (takım × tip) için AYNA grup ödevi üretir ve o takımın üyelerine
+  // bildirir. Olgunluğa bağlı (takım + profil), zaman değil; tik başına ≤3 üretim
+  // (Opus maliyeti). Eskiden admin Grup Ödevleri sayfasından elle üretiyordu.
+  if (mod === "kamp" && !sahneSessiz) {
+    const takimlar = [
+      ...new Set(
+        (kisiler ?? []).map((k) => k.team).filter((t): t is string => !!t)
+      ),
+    ];
+    if (takimlar.length > 0) {
+      const { data: mevcutOdev } = await db
+        .from("grup_odev")
+        .select("takim, tip")
+        .eq("aktif", true);
+      const olan = new Set((mevcutOdev ?? []).map((o) => `${o.takim}|${o.tip}`));
+      const uyeler = new Map<string, string[]>();
+      for (const k of kisiler ?? []) {
+        if (!k.team) continue;
+        const arr = uyeler.get(k.team) ?? [];
+        arr.push(k.id);
+        uyeler.set(k.team, arr);
+      }
+      let grupUretim = 0;
+      for (const takim of takimlar) {
+        if (grupUretim >= 3) break;
+        for (const tip of ["grup_ici", "grup_birlikte"] as const) {
+          if (grupUretim >= 3) break;
+          if (olan.has(`${takim}|${tip}`)) continue;
+          const sonuc = await grupOdevUret(db, takim, tip);
+          if (!sonuc) continue;
+          grupUretim++;
+          for (const uid of uyeler.get(takim) ?? []) {
+            await katilimciyaBildir(
+              db,
+              uid,
+              "🤝 Grubunun yeni ödevi var",
+              sonuc.baslik,
+              "/grup"
+            );
+          }
+        }
+      }
+      if (grupUretim > 0) ozet.uretilen += grupUretim;
+    }
+  }
+
   // 3b2) SABAH YOKLAMASI: kamp Gün 2+ sabahları kendi sesinden günaydın.
   // Pencereler programa dikili: Gün 2 trekking öncesi 06:40-08:00,
   // Gün 3 kahvaltı boyunca 07:00-08:45; kamp tarihi dışında (prova)
@@ -408,6 +567,37 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     }
   }
 
+  // 3b3) AYNA ANALİZİ: kamp aşamalarında kişiye dair derin analiz + kendi sesi.
+  // Aşamalar: 1. akşam (Gün 1, 21:00+), 2. akşam (Gün 2, 23:30), kamp çıkışı
+  // (Gün 3, 14:00+). unique(participant,asama) tekrarı engeller; tik başına ≤6
+  // üretim. Kamp öncesi analiz mühür ekranında talep üzerine üretilir (burada değil).
+  if (mod === "kamp") {
+    let analizAsama: AsamaKod | null = null;
+    if (gun === 1 && saat >= 21) analizAsama = "aksam_1";
+    else if (gun === 2 && saat === 23 && dakika >= 30) analizAsama = "aksam_2";
+    else if (gun >= 3 && saat >= 14) analizAsama = "cikis";
+    if (analizAsama && (kisiler ?? []).length > 0) {
+      const uretilenler = await kampAnaliziTik(
+        db,
+        analizAsama,
+        (kisiler ?? []).map((k) => ({ id: k.id, full_name: k.full_name })),
+        6
+      );
+      if (uretilenler.length > 0) {
+        ozet.uretilen += uretilenler.length;
+        for (const pid of uretilenler) {
+          await katilimciyaBildir(
+            db,
+            pid,
+            "🪞 Aynan derinleşti",
+            "Sana dair yeni bir analiz var — kendi sesinle dinle.",
+            "/analizlerim"
+          );
+        }
+      }
+    }
+  }
+
   // 3c) SENKRON AN: herkese aynı anda aynı mikro görev (ambient sociability).
   // Pencere anahtarı settings kilidiyle tek seferliktir; üretim düşerse
   // deterministik yedek görev devreye girer — an asla boş geçmez.
@@ -428,6 +618,7 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
       saat,
       dakika,
       tarih: bugun,
+      baslangic: kampBaslangic,
     });
     if (anahtar) {
       const { error: kilitHatasi } = await db
@@ -633,29 +824,71 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
     }
   }
 
-  // 4) Teslim hatırlatması (son 30 dk, bir kez) — sahnedeyken susar
+  // 4) Teslim hatırlatması — bitiş süresine ~15 dk kala, HENÜZ YAPILMAMIŞ
+  // görev(ler) için KİŞİ BAŞINA TEK hatırlatma: push (abone ise) + WhatsApp
+  // (onaylı "odev" şablonu varsa). Birikmiş tüm görevleri tek mesajla kapsar;
+  // görev yapıldıysa (status değişti) listeye girmez, mesaj gitmez. Söz/senkron
+  // gibi "ödev olmayan" türler dışarıda. Sahnedeyken susar.
+  // PROVA (36× hızlandırılmış): gerçek telefonları yakmamak için WhatsApp KAPALI
+  // — push yine gider, deneyim hissedilir.
   const { data: yaklasanlar } = sahneSessiz
     ? { data: [] }
     : await db
         .from("missions")
-        .select("id, participant_id, title")
+        .select("id, participant_id, title, kind")
         .eq("status", "pending")
         .is("reminded_at", null)
         .gt("due_at", simdi.toISOString())
-        .lt("due_at", new Date(simdi.getTime() + 30 * 60_000).toISOString())
-        .limit(10);
+        .lt("due_at", new Date(simdi.getTime() + 15 * 60_000).toISOString())
+        .limit(80);
+
+  // Kişi başına grupla (söz/senkron hariç).
+  const hatirlatHarita = new Map<string, { idler: string[]; ilkBaslik: string }>();
   for (const g of yaklasanlar ?? []) {
-    await katilimciyaBildir(
-      db,
-      g.participant_id,
-      "⏳ AYNA bekliyor…",
-      `"${g.title}" görevin için son 30 dakika. Yanındayım, başarabilirsin.`
-    );
-    await db
-      .from("missions")
-      .update({ reminded_at: simdi.toISOString() })
-      .eq("id", g.id);
-    ozet.hatirlatilan++;
+    if (g.kind === "soz" || g.kind === "senkron") continue;
+    const k = hatirlatHarita.get(g.participant_id) ?? { idler: [], ilkBaslik: g.title };
+    k.idler.push(g.id);
+    hatirlatHarita.set(g.participant_id, k);
+  }
+
+  if (hatirlatHarita.size > 0) {
+    // WhatsApp: yalnız gerçek kampta (prova değil) + yapılandırma + onaylı şablon.
+    let odevSid: string | null = null;
+    if (!provaModu && whatsAppYapilandirildiMi()) {
+      const sablon = sablonBul("odev");
+      odevSid = sablon ? await sablonSidGetir(db, sablon) : null;
+    }
+    const { data: hkisiler } = await db
+      .from("participants")
+      .select("id, full_name, phone, login_code")
+      .in("id", [...hatirlatHarita.keys()]);
+    const hkisiHarita = new Map((hkisiler ?? []).map((k) => [k.id, k]));
+
+    for (const [pid, veri] of hatirlatHarita) {
+      const adet = veri.idler.length;
+      // Push (abone ise) — bir taşla iki kuş
+      await katilimciyaBildir(
+        db,
+        pid,
+        "⏳ AYNA bekliyor…",
+        adet > 1
+          ? `${adet} görevin için son 15 dakika. Yanındayım, başarabilirsin.`
+          : `"${veri.ilkBaslik}" görevin için son 15 dakika. Yanındayım, başarabilirsin.`,
+        "/gorevler"
+      );
+      // WhatsApp (onaylı şablon + geçerli telefon + kod varsa) — link tıklayınca
+      // /giris?kod ile otomatik girer; kuramamış olsa bile tarayıcıdan ulaşır.
+      const kisi = hkisiHarita.get(pid);
+      if (odevSid && kisi?.phone && kisi.full_name && kisi.login_code) {
+        await whatsAppGonder(kisi.phone, odevSid, {
+          "1": ilkAd(kisi.full_name),
+          "2": kisi.login_code,
+        });
+      }
+      // Hepsini hatırlatıldı işaretle — tekrar mesaj gitmesin.
+      await db.from("missions").update({ reminded_at: simdi.toISOString() }).in("id", veri.idler);
+      ozet.hatirlatilan++;
+    }
   }
 
   // 5) Program duyuruları (başlamadan reveal_minutes önce, herkese)
@@ -755,9 +988,11 @@ export async function tikCalistir(db: Db, simdi: Date, testModu: boolean) {
         kariyer_seviyesi: string | null;
       }[];
       for (const k of tumKatilimcilar) {
-        // Zaten bekleyen görev varsa mentorluk verme (telefonu tıkama)
+        // Bekleyen görev varsa veya günlük görev kotası dolduysa mentorluk verme
+        // (#6: mentorluk da eylem görevidir; "7 görev + mentorluk = 8" taşmasını
+        // önler — telefon görev yağmuruna dönmesin).
         const d = durumlar.get(k.id);
-        if (d?.bekleyen) continue;
+        if (d?.bekleyen || (d?.bugunSayisi ?? 0) >= gunlukUst) continue;
         const gorev = await mentorlukGorevUret(db, k, gun, tumKatilimcilar);
         if (!gorev) continue;
         const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);

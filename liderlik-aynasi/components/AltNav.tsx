@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import { titret } from "@/lib/his";
 
 const t = tr.altNav;
 
@@ -105,6 +106,10 @@ export default function AltNav() {
     GIZLI.some((p) => pathname === p || pathname.startsWith(`${p}/`)) ||
     /^\/degerlendir\/[^/]+$/.test(pathname);
   const [kiv, setKiv] = useState<Kivilcim | null>(null);
+  // Instagram tarzı: aşağı kaydırınca kapsül küçülür (etiketler gizlenir),
+  // yukarı kaydırınca büyür. Scroll iç kapsayıcılarda da olabildiği için
+  // capture:true ile yakalanır (scroll event bubble etmez).
+  const [kompakt, setKompakt] = useState(false);
 
   // Çubuk görünürken içerik altına nefes payı bırak (sabit çubuk içeriği örtmesin)
   useEffect(() => {
@@ -127,6 +132,29 @@ export default function AltNav() {
     };
   }, [gizli, pathname]);
 
+  // Kaydırma yönüne göre kompakt aç/kapa (Instagram gibi). capture:true → iç
+  // overflow-y-auto kapsayıcıların scroll'unu da yakalar.
+  useEffect(() => {
+    if (gizli) return;
+    let sonY = -1;
+    function onScroll(e: Event) {
+      const hedef = e.target as HTMLElement | Document;
+      const y =
+        hedef === document || hedef === (document.scrollingElement as unknown)
+          ? window.scrollY
+          : (hedef as HTMLElement).scrollTop ?? window.scrollY;
+      if (sonY < 0) {
+        sonY = y;
+        return;
+      }
+      if (y > sonY + 8 && y > 56) setKompakt(true); // aşağı → küçül
+      else if (y < sonY - 8) setKompakt(false); // yukarı → büyü
+      sonY = y;
+    }
+    window.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    return () => window.removeEventListener("scroll", onScroll, { capture: true } as EventListenerOptions);
+  }, [gizli]);
+
   if (gizli) return null;
 
   function aktifMi(href: string) {
@@ -143,49 +171,33 @@ export default function AltNav() {
   );
 
   return (
-    <nav className="alt-nav fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-midnight/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md print:hidden">
-      {/* Sticky görev şeridi: bekleyen görev varken her ekranda üstte durur,
-          tek dokunuşla göreve götürür. Görev = her zaman birincil. /gorevler'de
-          gizlenir (zaten oradasın). */}
+    <div
+      className="fixed inset-x-0 z-40 flex flex-col items-center gap-2 px-3 print:hidden"
+      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 0.55rem)" }}
+    >
+      {/* Bekleyen görev dürtüsü — kapsülün üstünde yüzen küçük pill */}
       {(kiv?.gorevBekleyen ?? 0) > 0 && !pathname.startsWith("/gorevler") && (
         <Link
           href="/gorevler"
-          className="block border-b border-gold/25 bg-gold/[0.1] px-4 py-2 transition-colors hover:bg-gold/15"
+          onClick={() => titret(8)}
+          className="flex items-center gap-2 rounded-full border border-gold/30 bg-midnight/85 px-4 py-1.5 text-xs font-semibold text-gold-light shadow-lg backdrop-blur-xl transition-transform active:scale-95"
         >
-          <div className="mx-auto flex w-full max-w-md items-center gap-2 text-xs font-semibold text-gold-light">
-            <span aria-hidden>🤖</span>
-            <span>
-              {(kiv?.gorevBekleyen ?? 0) > 1
-                ? `${kiv?.gorevBekleyen} bekleyen görevin var`
-                : "Bekleyen görevin var"}
-            </span>
-            <span className="ml-auto">Aç →</span>
-          </div>
+          <span aria-hidden>🤖</span>
+          <span>
+            {(kiv?.gorevBekleyen ?? 0) > 1
+              ? `${kiv?.gorevBekleyen} bekleyen görev`
+              : "Bekleyen görevin var"}
+          </span>
+          <span aria-hidden>→</span>
         </Link>
       )}
-      {/* #2 Kıvılcım ilerleme şeridi — toplam + unvan + sonraki rozete kalan */}
-      {kiv && (
-        <Link
-          href="/ben"
-          title={t.kivilcimIpucu}
-          className="block border-b border-white/5 px-4 pb-1 pt-1.5"
-        >
-          <div className="mx-auto flex w-full max-w-md items-center gap-2 text-[0.7rem]">
-            <span className="font-bold text-gold">⚡ {kiv.toplam}</span>
-            <span className="text-slate-400">{kiv.unvan}</span>
-            <span className="ml-auto text-slate-500">
-              {kiv.sonraki ? t.kivilcimSonraki(kiv.kalan, kiv.sonraki) : t.kivilcimZirve}
-            </span>
-          </div>
-          <div className="mx-auto mt-1 h-1 w-full max-w-md overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-700"
-              style={{ width: `${kiv.yuzde}%` }}
-            />
-          </div>
-        </Link>
-      )}
-      <div className="mx-auto flex w-full max-w-md items-stretch justify-around">
+
+      {/* YÜZEN KAPSÜL — buzlu cam, yuvarlak ada; kaydırınca küçülür/büyür */}
+      <nav
+        className={`alt-nav flex items-center rounded-[2rem] border border-white/12 bg-midnight/70 shadow-[0_12px_44px_-10px_rgba(0,0,0,0.7)] backdrop-blur-2xl transition-all duration-300 ${
+          kompakt ? "w-auto gap-0.5 px-1.5 py-1" : "w-full max-w-md gap-1 px-2 py-1"
+        }`}
+      >
         {sekmeler.map((s) => {
           const aktif = aktifMi(s.href);
           // Görev her zaman öne çıksın: bekleyen görev varsa sekmede nokta rozeti.
@@ -194,33 +206,48 @@ export default function AltNav() {
             <Link
               key={s.href}
               href={s.href}
+              onClick={() => titret(10)}
               aria-label={gorevVar ? `${s.etiket} · bekleyen görev var` : s.etiket}
               aria-current={aktif ? "page" : undefined}
-              className={`relative flex min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[0.65rem] font-medium transition-colors ${
-                aktif ? "text-gold-light" : "text-slate-400 hover:text-slate-200"
-              }`}
+              className={`group relative flex select-none flex-col items-center justify-center rounded-[1.4rem] transition-all duration-300 active:scale-90 ${
+                kompakt ? "w-12 py-1.5" : "flex-1 py-1"
+              } ${aktif ? "text-gold-light" : "text-slate-300"}`}
             >
-              {/* Aktif sekme üst çizgisi — "neredesin?" işareti */}
-              {aktif && (
-                <span className="absolute inset-x-4 top-0 h-[2px] rounded-full bg-gold" />
-              )}
-              <span className="relative">
+              {/* İkon kabı — aktifte gold dolgu + halka + ışıma; dokununca zemin belirir */}
+              <span
+                className={`relative flex items-center justify-center rounded-2xl transition-all duration-300 ${
+                  kompakt ? "h-8 w-8" : "h-10 w-10"
+                } ${
+                  aktif
+                    ? "bg-gold/18 ring-1 ring-gold/45 shadow-[0_0_22px_-5px_rgba(212,175,55,0.6)]"
+                    : "ring-1 ring-transparent group-active:bg-white/12"
+                }`}
+              >
                 <Ikon
                   ad={s.ikon}
-                  className={`h-6 w-6 transition-transform ${aktif ? "scale-105" : ""}`}
+                  className={`transition-all duration-300 ${
+                    kompakt ? "h-[1.35rem] w-[1.35rem]" : "h-[1.65rem] w-[1.65rem]"
+                  } ${aktif ? "scale-105" : ""}`}
                 />
                 {gorevVar && (
-                  <span className="absolute -right-1.5 -top-0.5 flex h-2.5 w-2.5">
+                  <span className="absolute -right-0.5 -top-0.5 flex h-2.5 w-2.5">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold/70" />
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-gold ring-2 ring-midnight" />
                   </span>
                 )}
               </span>
-              {s.etiket}
+              {/* Etiket — kapsül büyükken görünür; kaydırınca (kompakt) gizlenir */}
+              <span
+                className={`overflow-hidden text-[0.68rem] font-semibold leading-none transition-all duration-300 ${
+                  kompakt ? "mt-0 max-h-0 opacity-0" : "mt-0.5 max-h-4 opacity-95"
+                }`}
+              >
+                {s.etiket}
+              </span>
             </Link>
           );
         })}
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }

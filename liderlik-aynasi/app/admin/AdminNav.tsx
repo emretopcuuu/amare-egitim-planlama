@@ -28,21 +28,20 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
     ad: g.hazirlik,
     ikon: "🧰",
     linkler: [
-      { href: "/admin/kontrol", etiket: n.kontrol },
       { href: "/admin/kurulum", etiket: n.kurulum },
       { href: "/admin/katilimcilar", etiket: n.katilimcilar },
       { href: "/admin/eslestirmeler", etiket: n.eslestirmeler },
-      { href: "/admin/gonder", etiket: n.gonder },
       { href: "/admin/qr", etiket: n.qr },
+      { href: "/admin/davet", etiket: n.davet },
       { href: "/admin/yansima", etiket: n.yansima },
-      { href: "/admin/kiosk", etiket: n.kiosk },
-      { href: "/admin/icerik", etiket: n.icerik },
     ],
   },
   {
     ad: g.canli,
     ikon: "🎬",
     linkler: [
+      { href: "/admin/icerik", etiket: n.icerik },
+      { href: "/admin/gonder", etiket: n.gonder },
       { href: "/admin/kontrol#dalga", etiket: n.kDalga },
       { href: "/admin/ayna-direktoru", etiket: n.komuta },
       { href: "/admin/sahne", etiket: n.sahne },
@@ -50,14 +49,13 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
       { href: "/admin/canli-ayna", etiket: n.canliAyna },
       { href: "/admin/saglik", etiket: n.saglik },
       { href: "/admin/mentorluk", etiket: n.mentorluk },
-      { href: "/admin/grup-odev", etiket: n.grupOdev },
     ],
   },
   {
     ad: g.final,
     ikon: "🏁",
     linkler: [
-      { href: "/admin/kontrol#bosluk", etiket: n.kBosluk },
+      { href: "/admin/final", etiket: n.kBosluk },
       { href: "/admin/ayna-saglik", etiket: n.aynaSaglik },
       { href: "/admin/sozler", etiket: n.sozler },
       { href: "/admin/elmas", etiket: n.elmas },
@@ -75,6 +73,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
       { href: "/admin/sistem#yeni-kamp", etiket: n.sYeniKamp },
       { href: "/admin/sistem#kvkk", etiket: n.sKvkk },
       { href: "/admin/simulasyon", etiket: n.sSimulasyon },
+      { href: "/admin/prova", etiket: n.prova },
     ],
   },
 ];

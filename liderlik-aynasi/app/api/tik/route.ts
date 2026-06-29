@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tikCalistir } from "@/lib/tik";
+import { provaDurum, provaSanalSaat } from "@/lib/prova";
 
 export const maxDuration = 60;
 
@@ -11,10 +12,21 @@ export async function POST(req: Request) {
     return Response.json({ hata: "Yetkisiz." }, { status: 401 });
   }
 
-  // Admin'in elle bastığı test tiki sessiz saati yok sayar (gece prova yapılabilsin);
-  // cron'dan gelen olağan tikler kurala uyar.
-  const testModu = req.headers.get("x-ayna-test") === "1";
+  const db = supabaseAdmin();
 
-  const sonuc = await tikCalistir(supabaseAdmin(), new Date(), testModu);
+  // PROVA KAMPI aktifse cron tiki de SANAL saatle çalışır — yoksa gerçek-zaman
+  // tiki prova akışıyla çakışır. Prova kapalıyken olağan gerçek-zaman davranışı.
+  const durum = await provaDurum(db);
+  if (durum.aktif) {
+    const sanal = provaSanalSaat(durum, new Date());
+    if (sanal) {
+      const sonuc = await tikCalistir(db, sanal, true, true);
+      return Response.json(sonuc);
+    }
+  }
+
+  // Admin'in elle bastığı test tiki sessiz saati yok sayar; cron tikleri kurala uyar.
+  const testModu = req.headers.get("x-ayna-test") === "1";
+  const sonuc = await tikCalistir(db, new Date(), testModu);
   return Response.json(sonuc);
 }

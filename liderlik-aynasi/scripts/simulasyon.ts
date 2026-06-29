@@ -36,6 +36,7 @@ import {
 } from "../lib/whatsappSablonlari";
 import {
   KAMP_GUNLERI,
+  kampGunleri,
   KAMP_PROGRAMI,
   kampGunu,
   gunProgrami,
@@ -480,6 +481,16 @@ console.log("\n■ 8) KAMP PROGRAMI — Sapanca akışı ve zaman pencereleri");
   iddia(kampGunu("2026-07-18") === 2, "18 Temmuz → Gün 2");
   iddia(kampGunu("2026-07-19") === 3, "19 Temmuz → Gün 3");
   iddia(kampGunu("2026-07-16") === null, "16 Temmuz kamp dışı");
+
+  // DİNAMİK kamp günleri: başlangıç verilince 3 gün o tarihten türetilir.
+  iddia(kampGunu("2026-06-29", "2026-06-29") === 1, "başlangıç günü → Gün 1");
+  iddia(kampGunu("2026-06-30", "2026-06-29") === 2, "başlangıç +1 → Gün 2");
+  iddia(kampGunu("2026-07-01", "2026-06-29") === 3, "başlangıç +2 → Gün 3");
+  iddia(kampGunu("2026-07-02", "2026-06-29") === null, "başlangıç +3 kamp dışı");
+  iddia(kampGunu("2026-07-17", "2026-06-29") === null, "dinamikte sabit tarih kamp dışı");
+  // Ay sonu taşması (TZ/DST'den bağımsız gün ekleme)
+  iddia(kampGunleri("2026-01-31")[1] === "2026-02-01", "31 Ocak +1 = 1 Şubat");
+  iddia(kampGunleri("2026-03-28")[2] === "2026-03-30", "DST haftasında +2 doğru");
 
   // Program bütünlüğü: her gün kronolojik ve çakışmasız
   for (const gun of [1, 2, 3] as const) {

@@ -6,7 +6,6 @@ import {
   aktifOzellikler,
   ozPuanTamamMi,
 } from "@/lib/degerlendirme";
-import { kampKilitliMi } from "@/lib/pusula";
 import PuanlamaFormu from "./PuanlamaFormu";
 
 export const metadata = { title: "Puanla — Liderlik Aynası" };
@@ -31,8 +30,8 @@ export default async function PuanlaPage({
   const ozellikler = await aktifOzellikler(db);
   const kendisi = hedefId === session.sub;
 
-  // Hangi dalgaya yazılıyor: dalga açıksa o; kapalıysa kamp öncesi (FAZ 0)
-  // yalnız öz-puan Dalga 1'e (İlk İzlenim). Başkasını puanlama kampta açılır.
+  // Hangi değerlendirmeye yazılıyor: açıksa o; kapalıysa kamp öncesi (FAZ 0)
+  // yalnız öz-puan Kamp Değerlendirmesine (id=1). Başkasını puanlama kampta açılır.
   let dalgaId: number;
   let dalgaAdi: string;
   if (dalga) {
@@ -42,7 +41,16 @@ export default async function PuanlaPage({
     if (!kendisi && !(await ozPuanTamamMi(db, session.sub, dalga.id, ozellikler.length))) {
       redirect("/degerlendir");
     }
-  } else if (kendisi && (await kampKilitliMi(db, session.sub))) {
+  } else if (kendisi) {
+    // ÖZ-DEĞERLENDİRME kamptan ÖNCE de serbest yapılabilir (hazırlık adımı; admin
+    // bir dalga açmasa da). Kamp fiziksel olarak açıldıktan sonra normal dalga
+    // akışına bırakılır. Kişinin kendi öz-puanı zararsızdır; istediğinde düzeltir.
+    const { data: k } = await db
+      .from("participants")
+      .select("camp_unlocked_at")
+      .eq("id", session.sub)
+      .maybeSingle();
+    if (k?.camp_unlocked_at) redirect("/degerlendir");
     dalgaId = 1;
     const { data: d1 } = await db.from("waves").select("name").eq("id", 1).maybeSingle();
     dalgaAdi = d1?.name ?? "İlk İzlenim";

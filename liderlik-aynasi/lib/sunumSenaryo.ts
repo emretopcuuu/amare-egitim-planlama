@@ -146,8 +146,8 @@ export function sunumSenaryo(tohum: number): Senaryo {
       sunumNotu: `Anında, kişiye özel geri bildirim. Not değil — bir koç. Ve her görev 'Kıvılcım' kazandırıyor; oyun başlıyor.`,
     },
     {
-      faz: "Kamp · Gün 1",
-      zaman: "Akşam · Dalga 1",
+      faz: "Kamp · Gün 3",
+      zaman: "Sabah · Kamp Değerlendirmesi",
       ekran: "dalga",
       baslik: "360° başlıyor",
       govde:

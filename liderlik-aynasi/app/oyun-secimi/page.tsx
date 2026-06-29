@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import OyunSecici from "./OyunSecici";
+import KurulumGecidi from "@/components/KurulumGecidi";
 
 export const metadata = { title: "Oyun Seçimi — Liderlik Aynası" };
 
@@ -13,17 +14,16 @@ export default async function OyunSecimiSayfa() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
-  const [{ data: kisi }, { data: ayar }] = await Promise.all([
-    db.from("participants").select("team").eq("id", session.sub).maybeSingle(),
-    db.from("settings").select("value").eq("key", "oyun_secimi_acik").maybeSingle(),
-  ]);
+  const { data: kisi } = await db.from("participants").select("team").eq("id", session.sub).maybeSingle();
   if (kisi?.team) redirect("/");
-  if (ayar?.value !== "true") redirect("/");
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="mx-auto my-auto w-full max-w-md p-5">
-        <OyunSecici />
+        {/* Oyun seçiminden ÖNCE: telefona kurulum geçidi (atlanabilir). */}
+        <KurulumGecidi>
+          <OyunSecici />
+        </KurulumGecidi>
       </div>
     </main>
   );

@@ -25,6 +25,8 @@ import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
 import TekCumleBolumu from "./TekCumleBolumu";
 import SeninIcinBolumu from "./SeninIcinBolumu";
+import AynalarMeclisiBolumu from "./AynalarMeclisiBolumu";
+import { aynalarMeclisi } from "@/lib/aynalarMeclisi";
 import SesCal from "@/components/SesCal";
 import AynaSesi from "@/components/AynaSesi";
 
@@ -48,6 +50,8 @@ export default async function AynaPage() {
   const rapor = await raporHesapla(db, session.sub);
   const t = tr.ayna;
   const arketip = arketipBul(rapor.satirlar);
+  // #10 Aynalar Meclisi — kapanışta aidiyet (kohort persona dağılımı).
+  const meclis = await aynalarMeclisi(db, session.sub);
   const ozellikAd = new Map(rapor.satirlar.map((s) => [s.ozellikId, s.ad]));
   // 3B kristal için 10 özellik dış puanı (yoksa öz), özellik sırasına göre
   const kristalDegerler = [...rapor.satirlar]
@@ -705,6 +709,13 @@ export default async function AynaPage() {
       <div id="r-senin-icin" className="scroll-mt-4">
         <SeninIcinBolumu mevcut={mevcutSeninIcin?.metin ?? null} />
       </div>
+
+      {/* Aynalar Meclisi — kolektif bilgelik / aidiyet (kohort persona) */}
+      {meclis && (
+        <div id="r-meclis" className="scroll-mt-4">
+          <AynalarMeclisiBolumu veri={meclis} />
+        </div>
+      )}
 
       {/* AYNA'nın görev özeti */}
       {rapor.gorev.tamamlanan > 0 && (

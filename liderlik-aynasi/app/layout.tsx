@@ -11,7 +11,6 @@ import AtlaBaglantisi from "@/components/AtlaBaglantisi";
 import ProvaModuBayragi from "@/components/ProvaModuBayragi";
 import SuDalgaTik from "@/components/SuDalgaTik";
 import YuzenGeri from "@/components/YuzenGeri";
-import YardimKanali from "@/components/YardimKanali";
 import BildirimLogDinleyici from "@/components/BildirimLogDinleyici";
 import KimsinBant from "@/components/KimsinBant";
 import PwaKur from "@/components/PwaKur";
@@ -121,8 +120,7 @@ export default async function RootLayout({
         <AltNav />
         {/* Alt nav gizli içerik sayfalarında sabit "← Ana sayfa" */}
         <YuzenGeri />
-        {/* Aday UX #8 — her katılımcı ekranında "Takıldım / yardım" düğmesi */}
-        <YardimKanali />
+        {/* Yardım artık üstteki kimlik çipine gömülü (KimsinBant) — çipe dokun. */}
         {/* #5 Su/ayna marka hareketi — dokunuşta su dalgası */}
         <SuDalgaTik />
         <IlkKarsilama />

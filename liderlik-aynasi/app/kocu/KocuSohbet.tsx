@@ -118,9 +118,19 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
   }
 
   return (
-    <div className="flex h-dvh flex-col">
-      <header className="sticky top-0 z-10 flex shrink-0 items-center gap-3 border-b border-white/10 bg-midnight/90 px-4 py-3 backdrop-blur">
-        <Link href="/" aria-label={t.geri} className="text-slate-400 hover:text-slate-200">
+    // Üstteki kimlik bandı (KimsinBant) global olarak yer ayırdığı için tam
+    // h-dvh taşardı (alttaki giriş kutusu ekran dışına kayardı); bandı çıkararak
+    // hesaplanan yükseklik kullanılır.
+    <div
+      className="flex flex-col"
+      style={{ height: "calc(100dvh - env(safe-area-inset-top, 0px) - 3.5rem)" }}
+    >
+      <header className="sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b border-white/10 bg-midnight/90 px-3 py-2.5 backdrop-blur">
+        <Link
+          href="/"
+          aria-label={t.geri}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-2xl text-slate-300 transition-colors hover:bg-white/10 hover:text-slate-100"
+        >
           ←
         </Link>
         <div className="flex items-center gap-2">
@@ -140,18 +150,18 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
           }}
           aria-pressed={sesli}
           aria-label={t.sesliMod}
-          className={`ml-auto flex h-10 w-10 items-center justify-center rounded-xl transition-colors ${
-            sesli ? "bg-gold/20 text-gold-light" : "text-slate-400 hover:text-slate-200"
+          className={`ml-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors ${
+            sesli ? "bg-gold/20 text-gold-light" : "text-slate-400 hover:bg-white/10 hover:text-slate-200"
           }`}
         >
           <svg
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            strokeWidth={1.8}
+            strokeWidth={1.9}
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="h-5 w-5"
+            className="h-6 w-6"
             aria-hidden
           >
             <path d="M11 5 6 9H3v6h3l5 4z" />

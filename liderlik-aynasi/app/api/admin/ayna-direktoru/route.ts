@@ -9,13 +9,13 @@ import { tr } from "@/lib/i18n/tr";
 
 export const maxDuration = 60;
 
-// AYNA Kontrol Odası eylemleri: uyandır/durdur, tempo, manuel tik, SÖZ finali.
+// AYNA Kontrol Odası eylemleri: uyandır/durdur, mod, manuel tik, SÖZ finali.
 export async function POST(req: Request) {
   if (!(await adminOturumu())) {
     return Response.json({ hata: tr.admin.yetkisiz }, { status: 403 });
   }
 
-  let govde: { islem?: unknown; aktif?: unknown; tempo?: unknown; mod?: unknown };
+  let govde: { islem?: unknown; aktif?: unknown; mod?: unknown };
   try {
     govde = await req.json();
   } catch {
@@ -42,17 +42,6 @@ export async function POST(req: Request) {
           .upsert({ key: "ayna_baslangic", value: simdi, updated_at: simdi });
       }
     }
-    return Response.json({ ok: true });
-  }
-
-  if (
-    govde.islem === "tempo" &&
-    typeof govde.tempo === "string" &&
-    ["surpriz", "2", "3"].includes(govde.tempo)
-  ) {
-    await db
-      .from("settings")
-      .upsert({ key: "ayna_tempo", value: govde.tempo, updated_at: simdi });
     return Response.json({ ok: true });
   }
 

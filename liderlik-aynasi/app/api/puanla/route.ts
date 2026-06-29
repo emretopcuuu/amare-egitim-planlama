@@ -1,7 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga, aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
-import { kampKilitliMi } from "@/lib/pusula";
 import { tr } from "@/lib/i18n/tr";
 
 const YORUM_MAX = 500;
@@ -37,12 +36,23 @@ export async function POST(req: Request) {
   const db = supabaseAdmin();
   const [dalga, ozellikler] = await Promise.all([acikDalga(db), aktifOzellikler(db)]);
   const kendisi = hedefId === session.sub;
-  // Dalga açıksa onun numarası; değilse kamp öncesi (FAZ 0) yalnız ÖZ-PUAN
-  // Dalga 1'e (İlk İzlenim) yazılır — başkasını puanlama kapalı kalır.
+  // Değerlendirme açıksa onun id'si; değilse kamp öncesi (FAZ 0) yalnız ÖZ-PUAN
+  // Kamp Değerlendirmesine (id=1) yazılır — başkasını puanlama kapalı kalır.
   let waveId: number;
   if (dalga) {
     waveId = dalga.id;
-  } else if (kendisi && (await kampKilitliMi(db, session.sub))) {
+  } else if (kendisi) {
+    // ÖZ-DEĞERLENDİRME kamptan ÖNCE de gönderilebilir (sayfa kapısıyla tutarlı,
+    // PR #423): admin bir dalga açmasa da. Kamp fiziksel olarak açıldıktan sonra
+    // (camp_unlocked) normal dalga akışına bırakılır.
+    const { data: k } = await db
+      .from("participants")
+      .select("camp_unlocked_at")
+      .eq("id", session.sub)
+      .maybeSingle();
+    if (k?.camp_unlocked_at) {
+      return Response.json({ hata: tr.puanlama.hataDalgaKapandi }, { status: 409 });
+    }
     waveId = 1;
   } else {
     return Response.json({ hata: tr.puanlama.hataDalgaKapandi }, { status: 409 });

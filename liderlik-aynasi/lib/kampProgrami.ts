@@ -6,6 +6,10 @@
 // hep buradan okur. Bilinçli olarak 'server-only' DEĞİL ve DB'siz —
 // simülasyon ve istemci bileşenleri de aynı kuralları kullanır.
 
+// Sabit (varsayılan) kamp takvimi — yalnız bir başlangıç verilmediğinde geçerli.
+// Kamp "başlatıldığında" (AYNA aktifleştirilince ayna_baslangic yazılır) gerçek
+// 3 gün o tarihten türetilir; bkz. kampGunleri(baslangic). Böylece simülasyon
+// "bugün başlat → bugün/yarın/öbür gün" olarak akar, takvime çakılı değil.
 export const KAMP_GUNLERI = ["2026-07-17", "2026-07-18", "2026-07-19"] as const;
 
 export const KAMP_BASLIK = "SAPANCA LEADER PLUS PD101";
@@ -53,7 +57,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
     gun: 1, baslangic: "14:30", bitis: "19:00",
     baslik: "Havuz, Güneş, Dinlenme, Tesisi Keşfetme ve Ayna 🪞 Görevlerinin Başlaması", tur: "serbest",
     aynaNotu:
-      "İlk gözlem görevleri damla damla dağıtılır (hafif, eğlenceli). 'Aynan seni gördü' kişisel videoları bu pencerede düşmeye başlar. DALGA 1 — İlk İzlenim de bu pencerede açılır; akşam yemeğinden önce puanlama biter.",
+      "İlk gözlem görevleri damla damla dağıtılır (hafif, eğlenceli). 'Aynan seni gördü' kişisel videoları bu pencerede düşmeye başlar. (Liderlik değerlendirmesi yok — o, Gün 3 sabahı tek seferde açılır.)",
   },
   {
     gun: 1, baslangic: "19:00", bitis: "21:00",
@@ -105,7 +109,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
   {
     gun: 2, baslangic: "08:00", bitis: "09:30",
     baslik: "Kahvaltı", tur: "yemek",
-    aynaNotu: "09:00 DALGA 2 — Gözlem açılır (sinematik + push). Görev akışı 09:30 blokta başlar.",
+    aynaNotu: "Görev akışı 09:30 blokta başlar. (Değerlendirme yok — Gün 3 sabahı.)",
   },
   {
     gun: 2, baslangic: "09:30", bitis: "19:30",
@@ -113,7 +117,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
       "Oyunlar & Öğle Yemeği & AYNA 🪞 Görevlendirmeleri & David'in Odasında Grup Görüşmeleri & Serbest Zaman",
     tur: "oyun",
     aynaNotu:
-      "★ AYNA GÖREV ANA PENCERESİ. Gün boyu kişiye özel görevler akar: oyunlara, grup görüşmelerine ve serbest zamana bağlı gözlem/cesaret/gizli görevler. Tüm ekiplerin programı farklı — AYNA herkese ayrı ritimde verir. 13:30 SENKRON AN + Dalga 2 puanlama hatırlatması.",
+      "★ AYNA GÖREV ANA PENCERESİ. Gün boyu kişiye özel görevler akar: oyunlara, grup görüşmelerine ve serbest zamana bağlı gözlem/cesaret/gizli görevler. Tüm ekiplerin programı farklı — AYNA herkese ayrı ritimde verir. 13:30 SENKRON AN.",
   },
   {
     gun: 2, baslangic: "19:30", bitis: "21:00",
@@ -124,7 +128,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
     gun: 2, baslangic: "21:00", bitis: "23:00",
     baslik: "AYNA 🪞 Görevlendirmeleri & Serbest Zaman", konusmaci: "AYNA", tur: "ayna",
     aynaNotu:
-      "★ AYNA AKŞAM GÖREV PENCERESİ. Telefonun rahatça elde olduğu blok: birikmiş yanıtlar, yansıma görevleri, Dalga 2 son çağrı, kişiye özel akşam görevleri. İstenirse Direktör panelinden 'Ayna Anı' (günün özeti) salona okunur. Blok bitince gece fısıltısı.",
+      "★ AYNA AKŞAM GÖREV PENCERESİ. Telefonun rahatça elde olduğu blok: birikmiş yanıtlar, yansıma görevleri, kişiye özel akşam görevleri. İstenirse Direktör panelinden 'Ayna Anı' (günün özeti) salona okunur. Blok bitince gece fısıltısı.",
   },
 
   // ---- GÜN 3 — PAZAR · 19 Temmuz ----
@@ -132,7 +136,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
     gun: 3, baslangic: "07:00", bitis: "10:00",
     baslik: "Kahvaltı & Oda Boşaltma", tur: "yemek",
     aynaNotu:
-      "07:00 sabah yoklaması. 07:15 DALGA 3 — Gerçek Algı açılır; bavul telaşına karşı pencere geniş (kahvaltı + checkout). 09:30 SENKRON son çağrı — puanlama oturumlardan önce bitsin.",
+      "07:00 sabah yoklaması. 07:15 KAMP DEĞERLENDİRMESİ açılır (kampın tek liderlik puanlaması); bavul telaşına karşı pencere geniş (kahvaltı + checkout). 09:30 SENKRON son çağrı — puanlama oturumlardan önce bitsin.",
   },
   {
     gun: 3, baslangic: "10:00", bitis: "10:15",
@@ -158,7 +162,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
   {
     gun: 3, baslangic: "11:15", bitis: "11:40",
     baslik: "Ara", tur: "ara",
-    aynaNotu: "Dalga 3 son çağrı / puanlama kapanır. Zirve oturumuna geçişten önce son fırsat.",
+    aynaNotu: "Kamp Değerlendirmesi son çağrı / puanlama kapanır. Zirve oturumuna geçişten önce son fırsat.",
   },
   {
     gun: 3, baslangic: "11:40", bitis: "13:10",
@@ -193,9 +197,27 @@ export function dakikaCevir(saatYazi: string): number {
   return s * 60 + d;
 }
 
-/** "YYYY-MM-DD" (Istanbul) → kamp günü 1-3, kamp dışıysa null. */
-export function kampGunu(tarih: string): 1 | 2 | 3 | null {
-  const i = (KAMP_GUNLERI as readonly string[]).indexOf(tarih);
+/** Bir "YYYY-MM-DD" tarihine n gün ekler (takvim günü; TZ/DST'den bağımsız —
+ * öğlen UTC çapasıyla gün kayması olmaz). */
+function gunEkle(tarih: string, n: number): string {
+  const [y, ay, g] = tarih.split("-").map(Number);
+  const d = new Date(Date.UTC(y, ay - 1, g + n, 12));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(
+    d.getUTCDate()
+  ).padStart(2, "0")}`;
+}
+
+/** Kampın 3 gününün tarihleri. baslangic verilirse (1. günün Istanbul
+ * "YYYY-MM-DD" tarihi) ardışık 3 gün; verilmezse sabit varsayılan takvim. */
+export function kampGunleri(baslangic?: string): readonly [string, string, string] {
+  if (!baslangic) return KAMP_GUNLERI;
+  return [gunEkle(baslangic, 0), gunEkle(baslangic, 1), gunEkle(baslangic, 2)];
+}
+
+/** "YYYY-MM-DD" (Istanbul) → kamp günü 1-3, kamp dışıysa null.
+ * baslangic verilirse kamp o tarihten başlar (dinamik); yoksa sabit takvim. */
+export function kampGunu(tarih: string, baslangic?: string): 1 | 2 | 3 | null {
+  const i = (kampGunleri(baslangic) as readonly string[]).indexOf(tarih);
   return i === -1 ? null : ((i + 1) as 1 | 2 | 3);
 }
 
@@ -220,6 +242,17 @@ export function suankiMadde(
 /** Sahne sessizliği: kürsüde biri varken AYNA telefonları titretmez. */
 export function sahneSessizMi(gun: 1 | 2 | 3, gunDakikasi: number): boolean {
   return suankiMadde(gun, gunDakikasi)?.sessiz === true;
+}
+
+/** Şu andan SONRA başlayan ilk program maddesi (sıradaki) — yoksa null.
+ * Görev üretiminde "10 dk sonra X'e gidiyorsun, şu niyeti taşı" köprüsü için. */
+export function siradakiMadde(
+  gun: 1 | 2 | 3,
+  gunDakikasi: number
+): ProgramMaddesi | null {
+  return (
+    gunProgrami(gun).find((m) => dakikaCevir(m.baslangic) > gunDakikasi) ?? null
+  );
 }
 
 // GELİŞTİRME #7 — Ana kilitli tetikleme. Az önce BİTEN (deneyimsel) bir etkinlik
@@ -261,9 +294,10 @@ export const SENKRON_SAATLERI: Record<1 | 2 | 3, [number, number]> = {
 export function kampSenkronAnahtari(
   tarih: string,
   saat: number,
-  dakika: number
+  dakika: number,
+  baslangic?: string
 ): string | null {
-  const gun = kampGunu(tarih);
+  const gun = kampGunu(tarih, baslangic);
   if (!gun) return null;
   const [ss, dd] = SENKRON_SAATLERI[gun];
   const dk = saat * 60 + dakika;

@@ -53,6 +53,42 @@ export type Database = {
           },
         ]
       }
+      excluded_pairs: {
+        Row: {
+          id: string
+          a_id: string
+          b_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          a_id: string
+          b_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          a_id?: string
+          b_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excluded_pairs_a_id_fkey"
+            columns: ["a_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excluded_pairs_b_id_fkey"
+            columns: ["b_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       audit_log: {
         Row: {
           admin_id: string | null
@@ -163,6 +199,88 @@ export type Database = {
             foreignKeyName: "ayna_tek_cumle_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bildirimler: {
+        Row: {
+          baslik: string
+          created_at: string
+          govde: string
+          id: string
+          okundu_at: string | null
+          participant_id: string
+          url: string | null
+        }
+        Insert: {
+          baslik: string
+          created_at?: string
+          govde: string
+          id?: string
+          okundu_at?: string | null
+          participant_id: string
+          url?: string | null
+        }
+        Update: {
+          baslik?: string
+          created_at?: string
+          govde?: string
+          id?: string
+          okundu_at?: string | null
+          participant_id?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bildirimler_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ayna_analiz: {
+        Row: {
+          asama: string
+          created_at: string
+          id: string
+          metin: string
+          participant_id: string
+          ses_path: string | null
+          updated_at: string
+          yeniden_kullanildi: boolean
+          yeniden_sebep: string | null
+        }
+        Insert: {
+          asama: string
+          created_at?: string
+          id?: string
+          metin: string
+          participant_id: string
+          ses_path?: string | null
+          updated_at?: string
+          yeniden_kullanildi?: boolean
+          yeniden_sebep?: string | null
+        }
+        Update: {
+          asama?: string
+          created_at?: string
+          id?: string
+          metin?: string
+          participant_id?: string
+          ses_path?: string | null
+          updated_at?: string
+          yeniden_kullanildi?: boolean
+          yeniden_sebep?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ayna_analiz_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
             referencedRelation: "participants"
             referencedColumns: ["id"]
           },
@@ -896,6 +1014,7 @@ export type Database = {
           kind: string
           lightened_at: string | null
           micro_sprint: boolean
+          yay_gorevi: boolean
           neden: string | null
           participant_id: string
           reflected_at: string | null
@@ -927,6 +1046,7 @@ export type Database = {
           kind: string
           lightened_at?: string | null
           micro_sprint?: boolean
+          yay_gorevi?: boolean
           neden?: string | null
           participant_id: string
           reflected_at?: string | null
@@ -958,6 +1078,7 @@ export type Database = {
           kind?: string
           lightened_at?: string | null
           micro_sprint?: boolean
+          yay_gorevi?: boolean
           neden?: string | null
           participant_id?: string
           reflected_at?: string | null
@@ -1218,6 +1339,7 @@ export type Database = {
           deletion_requested_at: string | null
           email: string | null
           en_yuksek_kariyer: string | null
+          first_login_at: string | null
           full_name: string
           gecen_ay_kariyer: string | null
           id: string
@@ -1242,6 +1364,7 @@ export type Database = {
           deletion_requested_at?: string | null
           email?: string | null
           en_yuksek_kariyer?: string | null
+          first_login_at?: string | null
           full_name: string
           gecen_ay_kariyer?: string | null
           id?: string
@@ -1265,6 +1388,7 @@ export type Database = {
           created_at?: string
           deletion_requested_at?: string | null
           email?: string | null
+          first_login_at?: string | null
           en_yuksek_kariyer?: string | null
           full_name?: string
           gecen_ay_kariyer?: string | null

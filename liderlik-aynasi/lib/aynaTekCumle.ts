@@ -77,7 +77,7 @@ export async function tekCumleGetirVeyaUret(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-opus-4-8",
+      model: "claude-sonnet-4-6",
       max_tokens: 400,
       thinking: { type: "disabled" },
       output_config: { effort: "low" },

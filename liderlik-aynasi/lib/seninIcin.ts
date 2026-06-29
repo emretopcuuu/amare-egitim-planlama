@@ -76,10 +76,10 @@ export async function seninIcinGetirVeyaUret(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-opus-4-8",
+      // MALİYET: kısa kişisel mesaj → Haiku 4.5 (effort yok).
+      model: "claude-haiku-4-5",
       max_tokens: 500,
       thinking: { type: "disabled" },
-      output_config: { effort: "low" },
       system: SISTEM,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });

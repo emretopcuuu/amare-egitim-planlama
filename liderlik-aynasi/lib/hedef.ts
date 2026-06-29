@@ -22,7 +22,7 @@ import {
 // seçer → kişisel kariyer planı (ara hedefler, toplam yatırım, saatlik kazanç)
 // hesaplanır ve mühürlenir. Özet bundan sonra görevler/rapor/söz tarafından okunur.
 
-const MODEL = "claude-opus-4-8"; // özet damıtma (ağır, tek seferlik)
+const MODEL = "claude-sonnet-4-6"; // özet damıtma (tek seferlik; Sonnet yeterli)
 const SOHBET_MODEL = "claude-sonnet-4-6"; // sohbet turları (hız öncelikli)
 
 async function yenidenDene<T>(fn: () => Promise<T>, etiket: string, kez = 3): Promise<T> {
@@ -290,17 +290,26 @@ export async function hedefTuru(
       () =>
         client.messages.create({
           model: SOHBET_MODEL,
-          max_tokens: 1024,
+          // Mesaj yarıda kesilmesin: kısa bir sohbet repliği ağır akıl yürütme
+          // istemez; effort düşük + token tavanı yüksek → tam cümle garanti.
+          max_tokens: 2000,
           thinking: { type: "disabled" },
           output_config: {
-            effort: "medium",
+            effort: "low",
             format: { type: "json_schema", schema: SOHBET_SEMASI },
           },
-          system: `${PERSONA}
-
-${KATILIMCI_EVRENI}
-
-Kişinin adı: ${ad}.
+          // Caching: büyük SABİT önek (PERSONA + KATILIMCI_EVRENI) ayrı blokta
+          // önbelleğe alınır; çok turlu sohbette her tur bunu yeniden okumaz
+          // (girdi maliyeti ~%90 düşer). Dinamik kısım ayrı, önbelleksiz blok.
+          system: [
+            {
+              type: "text" as const,
+              text: `${PERSONA}\n\n${KATILIMCI_EVRENI}`,
+              cache_control: { type: "ephemeral" as const },
+            },
+            {
+              type: "text" as const,
+              text: `\n\nKişinin adı: ${ad}.
 ${nedenMetni}
 
 Başlangıç noktası: ${noktaCerceve}
@@ -308,6 +317,8 @@ Başlangıç noktası: ${noktaCerceve}
 TEMPO: Bu kişiden şu ana dek ${kullaniciTur} yanıt aldın. ${kullaniciTur >= 3 ? "Artık devret: kısa, sıcak bir cümleyle 'gel, birkaç şeyi netleştirelim; birazdan bunu somut bir kariyer hedefine çevireceğiz' de ve bitti=true ver." : "Bir adım daha ilerlet; nedeni hayale bağla, acele etme. bitti=false."}
 
 ÇIKTI KURALI: "mesaj" alanına YALNIZCA kişiye söyleyeceğin tek, temiz, doğru yazılmış Türkçe cümle/soru yaz. Parantez, köşeli parantez, meta açıklama ASLA koyma. "bitti" alanını ayrıca doldur.`,
+            },
+          ],
           messages: mesajlar,
         }),
       "sohbet turu"

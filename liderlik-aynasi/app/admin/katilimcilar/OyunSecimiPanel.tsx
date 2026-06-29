@@ -6,19 +6,14 @@ import {
   OYUN_BILGI,
 } from "@/lib/cumartesiProgrami";
 import Katlanir from "../Katlanir";
-import OyunSecimiToggle from "./OyunSecimiToggle";
 
 const GRUP_KAPASITE = 10;
 
-// Admin: oyun seçimi ile dağıtım paneli. Giriş kapısını aç/kapa + her oyun
-// ikilisinin grup doluluklarını tek bakışta gösterir (atanmamış kişi dahil).
+// Admin: oyun seçimi ile dağıtım paneli. Her oyun ikilisinin grup doluluklarını
+// tek bakışta gösterir (atanmamış kişi dahil). Seçim her zaman açıktır.
 export default async function OyunSecimiPanel() {
   const db = supabaseAdmin();
-  const [{ data: ayar }, { data: kisiler }] = await Promise.all([
-    db.from("settings").select("value").eq("key", "oyun_secimi_acik").maybeSingle(),
-    db.from("participants").select("team").eq("role", "participant"),
-  ]);
-  const acik = ayar?.value === "true";
+  const { data: kisiler } = await db.from("participants").select("team").eq("role", "participant");
 
   const sayim = new Map<number, number>();
   let atanmamis = 0;
@@ -38,11 +33,9 @@ export default async function OyunSecimiPanel() {
       ikon="🎲"
     >
       <div className="space-y-4">
-        <OyunSecimiToggle acik={acik} />
-
         <p className="text-xs leading-relaxed text-slate-400">
-          Kapı açıkken, grubu olmayan her katılımcı girişte 2 oyun seçer ve o ikiliyi
-          oynayan gruplardan en boş olanına atanır. Atama tek seferliktir. Toplam{" "}
+          Grubu olmayan her katılımcı girişte 2 oyun seçer ve o ikiliyi oynayan
+          gruplardan en boş olanına atanır. Atama tek seferliktir. Toplam{" "}
           <span className="font-semibold text-slate-200">{toplam}</span> kişi ·{" "}
           <span className="font-semibold text-amber-300">{atanmamis}</span> henüz atanmadı.
         </p>

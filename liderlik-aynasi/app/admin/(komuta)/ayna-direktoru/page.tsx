@@ -1,10 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
-import { aynaAniAdaylari } from "@/lib/aynaAniTetik";
 import AynaDirektorKontrol from "./AynaDirektorKontrol";
-import AynaAniTetik from "./AynaAniTetik";
 import SonGorevler from "./SonGorevler";
 import Ipucu from "../../Ipucu";
 import Katlanir from "../../Katlanir";
@@ -23,11 +22,12 @@ export default async function AynaDirektorPage() {
     { count: aboneSayisi },
     { count: katilimciSayisi },
     { data: sonGorevler, error },
+    { data: grupOdevler },
   ] = await Promise.all([
     db
       .from("settings")
       .select("key, value")
-      .in("key", ["ayna_aktif", "ayna_tempo", "sistem_modu"]),
+      .in("key", ["ayna_aktif"]),
     db.from("push_subscriptions").select("id", { count: "exact", head: true }),
     db
       .from("participants")
@@ -40,11 +40,14 @@ export default async function AynaDirektorPage() {
       )
       .order("issued_at", { ascending: false })
       .limit(20),
+    // AYNA'nın otomatik ürettiği aktif grup ödevleri (takım × tip)
+    db
+      .from("grup_odev")
+      .select("takim, tip, baslik, govde, hedef, created_at")
+      .eq("aktif", true)
+      .order("takim"),
   ]);
   if (error) throw error;
-
-  // #3 Ayna Anı manuel tetik: kamp içi "gördün mü?" anına hazır adaylar.
-  const aynaAniAdaylar = await aynaAniAdaylari(db);
 
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
 
@@ -58,21 +61,26 @@ export default async function AynaDirektorPage() {
         <p className="mt-1 text-sm text-slate-400">{t.aciklama}</p>
       </div>
 
+      {/* Prova Kampı — gerçek kişilerle hızlandırılmış 3 günlük kamp provası */}
+      <Link
+        href="/admin/prova"
+        className="flex items-center justify-between gap-3 rounded-2xl border border-gold/40 bg-gold/10 p-5 transition-colors hover:bg-gold/15"
+      >
+        <div>
+          <p className="text-base font-bold text-gold-light">🎭 Prova Kampı (canlı tatbikat)</p>
+          <p className="mt-0.5 text-sm text-slate-300">
+            Gerçek kişilerle 3 günü hızlandırılmış yaşat — başlat, gün gün ilerlet, akışı izle.
+          </p>
+        </div>
+        <span className="shrink-0 text-2xl text-gold-light">→</span>
+      </Link>
+
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-gold/40 backdrop-blur">
         <AynaDirektorKontrol
           aktif={ayar.get("ayna_aktif") === "true"}
-          tempo={ayar.get("ayna_tempo") ?? "surpriz"}
-          mod={ayar.get("sistem_modu") === "yolculuk" ? "yolculuk" : "kamp"}
           aboneSayisi={aboneSayisi ?? 0}
           katilimciSayisi={katilimciSayisi ?? 0}
         />
-      </section>
-
-      {/* #3 Ayna Anı — kamp içi "gördün mü?" anını hazır adaylar için üret */}
-      <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
-        <h2 className="text-lg font-semibold text-gold-light">{t.aynaAniBaslik}</h2>
-        <p className="mt-1 mb-4 text-sm text-slate-400">{t.aynaAniAciklama}</p>
-        <AynaAniTetik adaylar={aynaAniAdaylar} />
       </section>
 
       <Katlanir baslik={t.akisBaslik} ikon="📜" yardim={tr.admin.yardim.aynaAkis}>
@@ -93,6 +101,28 @@ export default async function AynaDirektorPage() {
             tarih: g.issued_at,
           }))}
         />
+      </Katlanir>
+
+      {/* AYNA'nın otomatik ürettiği grup ödevleri — takıma göre */}
+      <Katlanir baslik="🤝 Grup Ödevleri" aciklama="AYNA'nın gruplara otomatik ürettiği ortak ödevler" ikon="🤝">
+        {(grupOdevler ?? []).length === 0 ? (
+          <p className="text-sm text-slate-400">
+            Henüz grup ödevi yok — takımlar oluşup Ön Farkındalık profilleri dolunca AYNA kendiliğinden üretir.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {(grupOdevler ?? []).map((o, i) => (
+              <li key={i} className="rounded-xl border border-gold/20 bg-gold/[0.04] p-3">
+                <p className="text-xs font-medium text-gold-light/80">
+                  {o.takim} · {o.tip === "grup_birlikte" ? "🔗 Grup-birlikte" : "🤝 Grup-içi"}
+                  {o.hedef ? ` · ${o.hedef}` : ""}
+                </p>
+                <p className="mt-1 font-semibold text-slate-100">{o.baslik}</p>
+                <p className="mt-1 text-sm leading-relaxed text-slate-300">{o.govde}</p>
+              </li>
+            ))}
+          </ul>
+        )}
       </Katlanir>
     </main>
   );

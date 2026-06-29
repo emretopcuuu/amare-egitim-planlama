@@ -2,18 +2,20 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import {
-  KAMP_GUNLERI,
+  kampGunleri,
   KAMP_BASLIK,
   KAMP_ALT_BASLIK,
   ETKINLIK_SIMGESI,
   gunProgrami,
 } from "@/lib/kampProgrami";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { tr } from "@/lib/i18n/tr";
 import Katlanir from "../../Katlanir";
 import Ipucu from "../../Ipucu";
 import ProgramYonetimi from "../../program/ProgramYonetimi";
 import CumartesiProgram from "../../program/CumartesiProgram";
 import SahneKumanda from "../../sahne-kumanda/SahneKumanda";
+import SahneAnlari from "../../sahne-kumanda/SahneAnlari";
 import OtoYenile from "../../OtoYenile";
 
 export const metadata = { title: "Sahne — Liderlik Aynası" };
@@ -49,6 +51,7 @@ export default async function SahnePage() {
     db.from("settings").select("value").eq("key", "sahne_slayt").maybeSingle(),
   ]);
   if (error) throw error;
+  const kampBaslangic = await kampBaslangicGetir(db);
 
   let vitrin: number | null = null;
   const vh = vitrinAyar?.value;
@@ -80,6 +83,11 @@ export default async function SahnePage() {
         />
       </Katlanir>
 
+      {/* Sahne anları — AYNA'nın marka sesiyle salona konuşması (Açılış, Ayna Anı) */}
+      <Katlanir baslik={tr.admin.aynaDirektor.sahneBaslik} ikon="🎙" varsayilanAcik>
+        <SahneAnlari />
+      </Katlanir>
+
       {/* Sürpriz duyurular */}
       <Katlanir baslik={tr.admin.program.surprizBaslik} aciklama={tr.admin.program.surprizAciklama} ikon="✨" yardim={tr.admin.yardim.program}>
         <ProgramYonetimi
@@ -97,7 +105,7 @@ export default async function SahnePage() {
 
       {/* Resmî kamp akışı — referans */}
       <Katlanir baslik={KAMP_BASLIK} aciklama={KAMP_ALT_BASLIK} ikon="📅" yardim={tr.admin.yardim.program}>
-        {KAMP_GUNLERI.map((tarih, i) => {
+        {kampGunleri(kampBaslangic).map((tarih, i) => {
           const gun = (i + 1) as 1 | 2 | 3;
           return (
             <div key={tarih} className="mt-2">

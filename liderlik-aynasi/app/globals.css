@@ -44,12 +44,12 @@ body.alt-nav-acik main {
   /* Alt çubuk (kıvılcım şeridi + sekmeler) + iOS ana çubuğu (safe-area) için
      nefes payı; başparmak bölgesindeki birincil butonlar çubuğun arkasında
      kalmasın. */
-  padding-bottom: calc(6.75rem + env(safe-area-inset-bottom));
+  padding-bottom: calc(7.75rem + env(safe-area-inset-bottom));
 }
 
 /* Bağlantı durumu şeridi, alt çubuk açıkken onun üstüne otursun (örtmesin). */
 body.alt-nav-acik .baglanti-serit {
-  bottom: 5.75rem;
+  bottom: 6.75rem;
 }
 
 /* Tam-ekran ilk-açılış katmanı (marka splash'ı / tanıtım / karşılama) açıkken
@@ -1160,6 +1160,17 @@ html[data-tema="gunduz"] body {
 html[data-tema="gunduz"] .ay-metin {
   text-shadow: none;
 }
+/* KRİTİK OKUNABİLİRLİK: Koyu-zeminli (sürükleyici) bölgelerde — .koyu-alan ve
+   .gece-ada — metin zaten AÇIK renktir. Gündüzün beyaz metin-gölgesi bu açık
+   metni bulanık bir hâleyle SARIP OKUNMAZ yapıyordu. Bu yüzeylerde (ve tüm
+   alt öğelerinde) gölgeyi kapat — fotoğraf-üstü beyaz hale yalnız gerçekten
+   parlak zeminli yerlerde kalsın. */
+html[data-tema="gunduz"] .koyu-alan,
+html[data-tema="gunduz"] .koyu-alan *,
+html[data-tema="gunduz"] .gece-ada,
+html[data-tema="gunduz"] .gece-ada * {
+  text-shadow: none;
+}
 
 /* Metin tonlarını ters çevir: gecede açık olanlar gündüz koyulaşır.
    İkincil tonlar (400/500) fotoğraf üstünde okunsun diye belirgin koyu. */
@@ -1179,6 +1190,39 @@ html[data-tema="gunduz"] .text-slate-500 {
 }
 html[data-tema="gunduz"] .text-white {
   color: #102538 !important;
+}
+
+/* KRİTİK: Yukarıdaki gündüz koyulaştırması, KOYU-ZEMİNLİ bölgelerde
+   (.koyu-alan / .gece-ada — Pusula öncelik formu, ayna sahnesi vb.) metni
+   koyu-üstüne-koyu yapıp OKUNMAZ kılıyordu. Daha yüksek specificity ile bu
+   yüzeylerdeki metni gündüzde de AÇIK tut. (Bu yüzeyler tanımı gereği koyudur.) */
+html[data-tema="gunduz"] .koyu-alan .text-slate-50,
+html[data-tema="gunduz"] .koyu-alan .text-slate-100,
+html[data-tema="gunduz"] .koyu-alan .text-slate-200,
+html[data-tema="gunduz"] .koyu-alan .text-white,
+html[data-tema="gunduz"] .gece-ada .text-slate-50,
+html[data-tema="gunduz"] .gece-ada .text-slate-100,
+html[data-tema="gunduz"] .gece-ada .text-slate-200,
+html[data-tema="gunduz"] .gece-ada .text-white {
+  color: #e8eef6 !important;
+}
+html[data-tema="gunduz"] .koyu-alan .text-slate-300,
+html[data-tema="gunduz"] .gece-ada .text-slate-300 {
+  color: #c4cfdd !important;
+}
+html[data-tema="gunduz"] .koyu-alan .text-slate-400,
+html[data-tema="gunduz"] .gece-ada .text-slate-400 {
+  color: #9fb0c4 !important;
+}
+html[data-tema="gunduz"] .koyu-alan .text-slate-500,
+html[data-tema="gunduz"] .gece-ada .text-slate-500 {
+  color: #8294a8 !important;
+}
+/* Başlık (ay-metin gradyanı): koyu zeminde gündüzün koyu gradyanı yerine AÇIK
+   gradyan kullan → başlık da net okunur. */
+html[data-tema="gunduz"] .koyu-alan .ay-metin {
+  background-image: linear-gradient(180deg, #f4f8fc 0%, #d3dfeb 50%, #93a9bf 100%);
+  filter: drop-shadow(0 2px 16px rgba(201, 214, 227, 0.22));
 }
 
 /* Hafif beyaz dolgulu kutular (ayar kartları: Yazı Boyutu, Görünüm) gündüzde
@@ -1234,7 +1278,13 @@ html[data-tema="gunduz"] .ay-metin {
 /* geri çevirir: koyu cam kart + açık metin. (Yalnız gündüz temasında      */
 /* devreye girer; gecede zaten doğru.) */
 /* ============================================================= */
-html[data-tema="gunduz"] .gece-ada {
+html[data-tema="gunduz"] .gece-ada,
+html[data-tema="gunduz"] .koyu-alan {
+  /* Koyu zemin token'ları gündüzde de KOYU kalsın (kart/çip/giriş beyazlaşmasın):
+     bg-midnight* açık değişkene dönüyordu → açık-metin-açık-zemin = görünmez. */
+  --color-midnight: #081726;
+  --color-midnight-soft: #0a1c2e;
+  --color-midnight-card: #0f2840;
   --color-slate-100: #f1f5f9;
   --color-slate-200: #e2e8f0;
   --color-slate-300: #cbd5e1;
@@ -1280,14 +1330,18 @@ html[data-tema="gunduz"] .gece-ada .ay-metin {
 }
 html[data-tema="gunduz"] .gece-ada .kart-cam,
 html[data-tema="gunduz"] .gece-ada .kart-3d,
-html[data-tema="gunduz"] .gece-ada .kart-cerceve {
+html[data-tema="gunduz"] .gece-ada .kart-cerceve,
+html[data-tema="gunduz"] .koyu-alan .kart-cam,
+html[data-tema="gunduz"] .koyu-alan .kart-3d,
+html[data-tema="gunduz"] .koyu-alan .kart-cerceve {
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03)) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.4),
     0 30px 60px -20px rgba(0, 0, 0, 0.7) !important;
 }
-html[data-tema="gunduz"] .gece-ada .kart-cam::before {
+html[data-tema="gunduz"] .gece-ada .kart-cam::before,
+html[data-tema="gunduz"] .koyu-alan .kart-cam::before {
   background: linear-gradient(
     140deg,
     rgba(191, 233, 255, 0.7),
@@ -1299,12 +1353,18 @@ html[data-tema="gunduz"] .gece-ada .kart-cam::before {
 }
 html[data-tema="gunduz"] .gece-ada .bg-white\/\[0\.02\],
 html[data-tema="gunduz"] .gece-ada .bg-white\/\[0\.03\],
-html[data-tema="gunduz"] .gece-ada .bg-white\/\[0\.04\] {
+html[data-tema="gunduz"] .gece-ada .bg-white\/\[0\.04\],
+html[data-tema="gunduz"] .koyu-alan .bg-white\/\[0\.02\],
+html[data-tema="gunduz"] .koyu-alan .bg-white\/\[0\.03\],
+html[data-tema="gunduz"] .koyu-alan .bg-white\/\[0\.04\] {
   background-color: rgba(255, 255, 255, 0.03) !important;
 }
 html[data-tema="gunduz"] .gece-ada .border-white\/5,
 html[data-tema="gunduz"] .gece-ada .border-white\/10,
-html[data-tema="gunduz"] .gece-ada .border-white\/15 {
+html[data-tema="gunduz"] .gece-ada .border-white\/15,
+html[data-tema="gunduz"] .koyu-alan .border-white\/5,
+html[data-tema="gunduz"] .koyu-alan .border-white\/10,
+html[data-tema="gunduz"] .koyu-alan .border-white\/15 {
   border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
@@ -1441,4 +1501,48 @@ html[data-admin-yazi="buyuk"] .admin-kok {
 html[data-admin-kontrast="yuksek"] .admin-kok .text-slate-400,
 html[data-admin-kontrast="yuksek"] .admin-kok .text-slate-500 {
   color: #cbd5e1 !important;
+}
+
+/* ── AYNA ANALİZİ — Star Wars jeneriği gibi aynanın içine doğru akan metin ── */
+/* Perspektif kabı: yazı uzaklara/aynanın içine doğru daralır. */
+.ayna-perspektif {
+  perspective: 340px;
+  perspective-origin: 50% 38%;
+}
+.ayna-egim {
+  transform: rotateX(26deg);
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+}
+/* Metin aşağıdan başlar, yukarı (uzağa) doğru süzülür; süre sese eşitlenir. */
+.ayna-akan {
+  animation-name: ayna-akis;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  animation-iteration-count: 1;
+}
+@keyframes ayna-akis {
+  0% { transform: translateY(70%); opacity: 0; }
+  6% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-135%); opacity: 0; }
+}
+/* Üstte yazının "uzakta kaybolması" için gradyan maske. */
+.ayna-maske {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 32%, #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 32%, #000 100%);
+}
+/* Dönen ayna videosu — yavaş, sakin bir nefes. */
+.ayna-doner {
+  animation: ayna-don 36s linear infinite;
+}
+@keyframes ayna-don {
+  from { transform: scale(1.08) rotate(0deg); }
+  to { transform: scale(1.08) rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ayna-akan { animation: none; transform: none; }
+  .ayna-egim { transform: none; }
+  .ayna-maske { -webkit-mask-image: none; mask-image: none; }
+  .ayna-doner { animation: none; }
 }

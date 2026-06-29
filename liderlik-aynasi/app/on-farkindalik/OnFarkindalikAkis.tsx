@@ -461,12 +461,13 @@ export default function OnFarkindalikAkis({
               type="number"
               inputMode="numeric"
               min={0}
-              max={a.max}
               value={yanitlar[a.kod] !== undefined ? String(yanitlar[a.kod]) : sayiGirdi}
               onChange={(e) => {
                 setSayiGirdi(e.target.value);
                 const n = Number(e.target.value);
-                if (e.target.value !== "" && Number.isInteger(n) && n >= 0 && n <= a.max) {
+                // Üst sınırla tuşlamayı ENGELLEME (büyük gerçek sayılar girilebilsin);
+                // yalnız 0+ tam sayı olsun. Yüksek bir güvenlik tavanı uygulanır.
+                if (e.target.value !== "" && Number.isInteger(n) && n >= 0 && n <= 1_000_000) {
                   setSayi(a.kod, n);
                 } else {
                   setYanitlar((y) => {

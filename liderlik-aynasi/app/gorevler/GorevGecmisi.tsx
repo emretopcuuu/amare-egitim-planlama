@@ -46,6 +46,10 @@ export default function GorevGecmisi({
   const [filtre, setFiltre] = useState<Filtre>("tum");
   // "Geliştir ve yeniden gönder" açık olan görev (puanı artırmak için tekrar dene).
   const [gelistirId, setGelistirId] = useState<string | null>(null);
+  // PERFORMANS: geçmiş çok uzunsa (ör. yoğun günler) tüm kartları birden basmak
+  // — her biri backdrop-blur — düşük bellekli uygulama-içi tarayıcıyı çökertir.
+  // Varsayılan ilk N kart; gerisi "daha fazla" ile açılır.
+  const [hepsiGoster, setHepsiGoster] = useState(false);
 
   // Özet: tamamlanan (scored) sayısı + ortalama puan + kaçan sayısı.
   const ozet = useMemo(() => {
@@ -81,6 +85,13 @@ export default function GorevGecmisi({
     return gorevler;
   }, [gorevler, filtre]);
 
+  const LISTE_LIMIT = 20;
+  const kesilmis = useMemo(
+    () => (hepsiGoster ? suzulmus : suzulmus.slice(0, LISTE_LIMIT)),
+    [suzulmus, hepsiGoster]
+  );
+  const gizliSayi = suzulmus.length - kesilmis.length;
+
   const gruplar = useMemo(() => {
     const gunEtiket = new Intl.DateTimeFormat("tr-TR", {
       timeZone: "Europe/Istanbul",
@@ -90,7 +101,7 @@ export default function GorevGecmisi({
     });
     const gunAnahtar = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" });
     const out: { anahtar: string; etiket: string; gorevler: GecmisGorev[] }[] = [];
-    for (const g of suzulmus) {
+    for (const g of kesilmis) {
       const zaman = new Date(g.scored_at ?? g.issued_at);
       const anahtar = gunAnahtar.format(zaman);
       let grup = out.find((x) => x.anahtar === anahtar);
@@ -101,7 +112,7 @@ export default function GorevGecmisi({
       grup.gorevler.push(g);
     }
     return out;
-  }, [suzulmus]);
+  }, [kesilmis]);
 
   const cipler: { ad: Filtre; etiket: string }[] = [
     { ad: "tum", etiket: t.filtreTum },
@@ -259,6 +270,16 @@ export default function GorevGecmisi({
                   </ul>
                 </div>
               ))}
+              {/* Çok uzun geçmişte kalan kartları talep üzerine aç (bellek dostu) */}
+              {gizliSayi > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setHepsiGoster(true)}
+                  className="mx-auto block rounded-full border border-royal-light/30 px-4 py-2 text-xs font-medium text-slate-300 transition-colors hover:bg-white/5"
+                >
+                  {gizliSayi} görev daha göster
+                </button>
+              )}
             </div>
           )}
         </>

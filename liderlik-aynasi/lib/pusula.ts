@@ -80,7 +80,7 @@ Sarsılmaz kuralların:
 // Sohbet aşamaları — liste FORM'dan geldikten sonra derinleşme.
 const ASAMA_YONERGESI: Record<string, string> = {
   eleme:
-    "ELEME. Kişinin yazdığı listeden en az değerliyi sırayla elemesini iste. İlk 5'e (olmazsa olmazlara) inilince boşluk aşamasına geç. ÖNEMLİ — TEKRARDAN KAÇIN: aynı kalıbı ('hangisini bırakmak en az canını yakar?') her turda tekrarlama. Soruyu çeşitlendir ve aralarda kısa bir insanlık/yansıtma cümlesi kat (ör. 'Bunlar zorlaşıyor, farkındayım…', 'Bunu bırakmak cesaret ister.'). Kalan madde sayısını her seferinde tek tek saymana gerek yok; doğal aktığında say. Eleme soru varyantları arasında dönüşümlü kullan: 'Şu an en kolay vazgeçebileceğin hangisi?', 'Bir tanesini geride bırakman gerekse, hangisi olurdu?', 'Bu listede sana en az şey ifade eden hangisi?', 'Hangisi olmadan da kendin kalabilirsin?'.",
+    "ELEME. Kişinin yazdığı listeden en az değerliyi sırayla elemesini iste. İlk 5'e (olmazsa olmazlara) inilince boşluk aşamasına geç. ÖNEMLİ — TEKRARDAN KAÇIN: aynı kalıbı her turda tekrarlama. Soruyu çeşitlendir ve aralarda kısa bir insanlık/yansıtma cümlesi kat (ör. 'Bunu bırakmak cesaret ister.'). VURUCU ÇERÇEVE (kullan, soruyu ağırlaştır): eleme 'en kolay hangisi' değil, GERİ DÖNÜŞÜ OLMAYAN BİR KAYIP gibi hissettirilmeli. Sorularını şu ağırlıkta kur: bıraktığı şeye ÖMRÜNÜN SONUNA KADAR bir daha sahip olamayacak, onu hiç gerçekleştiremeyecek, o artık hayatının parçası olmayacak — bunu bilerek vazgeçmek zorunda olsaydı hangisinden vazgeçerdi? Liste daraldıkça (özellikle son birkaç madde) bu ağırlığı artır. Soru varyantları arasında dönüşümlü kullan: 'Bir tanesinden ömrünün sonuna kadar vazgeçmek zorunda olsaydın — bir daha asla ona sahip olamayacaksan, onu hiç yaşayamayacaksan — hangisinden vazgeçerdin?', 'Bunlardan birini sonsuza dek hayatından çıkarman gerekse, o hiç gerçekleşmeyecek olsa, hangisi olurdu?', 'Hangisi olmadan da hâlâ kendin kalabilirsin?', 'Bir tanesini bırakman şart olsaydı ve geri dönüşü olmasaydı, hangisi en az koparırdı seni?'. Kalan madde sayısını her seferinde tek tek saymana gerek yok; doğal aktığında say.",
   bosluk:
     "BOŞLUK. İlk 5'i yansıt, sonra sor: 'Şu an yaşadığın hayat bu önceliklerle ne kadar örtüşüyor?' Açığı/gerilimi yüzeye çıkar. Netleşince engel aşamasına geç.",
   engel:
@@ -375,7 +375,9 @@ export async function pusulaTuru(
       () =>
         client.messages.create({
       model: SOHBET_MODEL,
-      max_tokens: 1024,
+      // Replik yarıda kesilmesin: effort düşünme bütçesi + çıktı aynı tavanı
+      // paylaşır; tavanı yükseltip tam cümle garantile.
+      max_tokens: 2000,
       thinking: { type: "disabled" },
       output_config: {
         effort: "medium",
@@ -467,7 +469,15 @@ async function damitVeMuhurle(
         effort: "high",
         format: { type: "json_schema", schema: DAMITMA_SEMASI },
       },
-      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\nGörevin: aşağıdaki öncelik listesi + Nedenler sohbetini yapılandırılmış profile damıt. Kişinin KENDİ kelimelerine sadık kal, uydurma. "ic_engel_kat" için yukarıdaki kategori eşlemesini sezgi olarak kullan. "ozet" alanı en kritik: bundan sonra bu kişiye üretilecek her görev/tavsiye onu okuyacak.`,
+      // Sistem tamamen SABİT (kişi verisi messages'ta) → tek önbellek bloğu;
+      // birbirine yakın çalışan damıtmalar girdiyi yeniden okumaz.
+      system: [
+        {
+          type: "text" as const,
+          text: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\nGörevin: aşağıdaki öncelik listesi + Nedenler sohbetini yapılandırılmış profile damıt. Kişinin KENDİ kelimelerine sadık kal, uydurma. "ic_engel_kat" için yukarıdaki kategori eşlemesini sezgi olarak kullan. "ozet" alanı en kritik: bundan sonra bu kişiye üretilecek her görev/tavsiye onu okuyacak.`,
+          cache_control: { type: "ephemeral" as const },
+        },
+      ],
       messages: [{ role: "user", content: girdi }],
     });
     const veri = jsonCoz<{
@@ -596,15 +606,19 @@ export async function pusulaCekirdek(
   };
 }
 
-// FAZ 0 kapısı: Pusula penceresi açık ve kişi kampı (oda QR) henüz açmadıysa
-// kamp özellikleri (görevler, değerlendirme, duvar...) kilitlidir — kişi
-// bekleme/Pusula ekranına yönlendirilir. Pencere kapalıyken hep false.
+// FAZ 0 kapısı: kamp özellikleri (görevler, değerlendirme, duvar...) yalnız
+// kişi kampı (oda QR / kamp kodu) fiziksel olarak açana kadar kilitlidir; ondan
+// önce kişi hazırlık (Pusula) hub'ına yönlendirilir. Onboarding HEP AÇIK olduğu
+// için ayrı bir "pusula penceresi" bayrağına bağlı değil — admin pencere açıp
+// kapamakla uğraşmaz. (Öz-değerlendirme kamp öncesi /degerlendir/[kendiId]
+// üzerinden erişilir; bu kapının dışındadır.)
 export async function kampKilitliMi(db: Db, pid: string): Promise<boolean> {
-  const [{ data: kisi }, { data: ayar }] = await Promise.all([
-    db.from("participants").select("camp_unlocked_at").eq("id", pid).maybeSingle(),
-    db.from("settings").select("value").eq("key", "pusula_acik").maybeSingle(),
-  ]);
-  return ayar?.value === "true" && !kisi?.camp_unlocked_at;
+  const { data: kisi } = await db
+    .from("participants")
+    .select("camp_unlocked_at")
+    .eq("id", pid)
+    .maybeSingle();
+  return !kisi?.camp_unlocked_at;
 }
 
 // Gate/UI için durum: aşama, tamamlandı mı, öncelik listesi girilmiş mi.

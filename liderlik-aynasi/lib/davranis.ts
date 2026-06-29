@@ -279,6 +279,8 @@ export type SenkronBaglam = {
   dakika: number;
   /** YYYY-MM-DD (Istanbul) */
   tarih: string;
+  /** Kampın 1. günü (Istanbul YYYY-MM-DD); yoksa sabit takvim. */
+  baslangic?: string;
 };
 
 /**
@@ -291,7 +293,8 @@ export type SenkronBaglam = {
 export function senkronAnahtari(b: SenkronBaglam): string | null {
   if (b.mod === "kamp") {
     // Kamp tarihindeyse YALNIZ programa dikilmiş pencere geçerli
-    if (kampGunu(b.tarih)) return kampSenkronAnahtari(b.tarih, b.saat, b.dakika);
+    if (kampGunu(b.tarih, b.baslangic))
+      return kampSenkronAnahtari(b.tarih, b.saat, b.dakika, b.baslangic);
     if (b.dakika < 10 && (b.saat === 12 || b.saat === 17)) {
       return `senkron_${b.tarih}_${b.saat}`;
     }
@@ -373,6 +376,34 @@ export function radarHesapla(g: RadarGirdisi): RadarSonucu {
 
 // ---------- GÖREV TÜRÜ SEÇİMİ (saf — simülasyon da kullanır) ----------
 
+// #2 Pik yanıt saati: kişinin en çok yanıt verdiği saat dilimini (Istanbul, 0-23)
+// bulur. Yeterli veri (minToplam) ve net pik (minPik aynı saatte) yoksa null.
+// Hem rapor bağlamı hem görev zamanlaması (tik.ts) bunu kullanır.
+export function pikSaatBul(
+  trSaatler: number[],
+  minToplam = 4,
+  minPik = 2
+): number | null {
+  if (trSaatler.length < minToplam) return null;
+  const sayac: Record<number, number> = {};
+  for (const s of trSaatler) sayac[s] = (sayac[s] ?? 0) + 1;
+  let maxSaat = -1;
+  let maxCount = 0;
+  for (const [s, c] of Object.entries(sayac)) {
+    if (c > maxCount) {
+      maxCount = c;
+      maxSaat = Number(s);
+    }
+  }
+  return maxSaat >= 0 && maxCount >= minPik ? maxSaat : null;
+}
+
+/** İki saat (0-23) arası döngüsel fark (saat). 23↔1 = 2. */
+export function saatFarki(a: number, b: number): number {
+  const d = Math.abs(a - b);
+  return Math.min(d, 24 - d);
+}
+
 export const GOREV_TURLERI = [
   "gozlem",
   "cesaret",
@@ -435,6 +466,15 @@ export function turSec(
       taban.cesaret += 2;
     }
     agirliklar = GOREV_TURLERI.map((t) => [t, taban[t]]);
+  }
+  // #5 ÇEŞİTLİLİK: son 2 görevde geçen türün ağırlığını yarıya indir — aynı tür
+  // art arda tekrarlanmasın (oncekiTurler en yeniden eskiye sıralı). Tamamen
+  // engellemez, yalnız çeşitliliği teşvik eder; "gizli" zaten ayrıca korunuyor.
+  const sonIkiTur = new Set(oncekiTurler.slice(0, 2));
+  if (sonIkiTur.size > 0) {
+    agirliklar = agirliklar.map(
+      ([t, a]) => [t, sonIkiTur.has(t) ? a / 2 : a] as [GorevTuru, number]
+    );
   }
   // Admin kapattığı türler: ağırlığı sıfırla (hepsi kapalı kalırsa yok say).
   if (kapaliTurler && kapaliTurler.length) {

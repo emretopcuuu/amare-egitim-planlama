@@ -43,6 +43,13 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.giris.hataKodHatali }, { status: 401 });
   }
 
+  // İlk girişte first_login_at kaydedilir (sonrakiler güncellenmez).
+  await db
+    .from("participants")
+    .update({ first_login_at: new Date().toISOString() })
+    .eq("id", katilimci.id)
+    .is("first_login_at", null);
+
   await createSession({
     sub: katilimci.id,
     ad: katilimci.full_name,

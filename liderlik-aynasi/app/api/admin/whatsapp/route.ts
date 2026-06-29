@@ -82,6 +82,15 @@ export async function POST(req: Request) {
       .eq("role", "participant")
       .in("id", idler);
     kisiler = (data ?? []) as Kisi[];
+  } else if (body?.hedefTipi === "girisYapmamis") {
+    // Henüz hiç giriş yapmamış (first_login_at NULL) katılımcılar.
+    const { data } = await db
+      .from("participants")
+      .select(alanlar)
+      .eq("role", "participant")
+      .is("first_login_at", null);
+    kisiler = (data ?? []) as Kisi[];
+    if (kisiler.length === 0) return Response.json({ hata: "Tüm katılımcılar zaten giriş yaptı." }, { status: 400 });
   } else {
     return Response.json({ hata: t.api.hedefYok }, { status: 400 });
   }

@@ -7,7 +7,8 @@ import { adminOnerisi } from "@/lib/adminAsistan";
 import { adminUyarilari } from "@/lib/adminUyarilar";
 import { funnelMetrikleri } from "@/lib/funnel";
 import { tr } from "@/lib/i18n/tr";
-import { kampGunu, KAMP_GUNLERI } from "@/lib/kampProgrami";
+import { kampGunu, kampGunleri } from "@/lib/kampProgrami";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 import FunnelOmurga from "./FunnelOmurga";
 import OtoYenile from "./OtoYenile";
 import GununAkisi from "./GununAkisi";
@@ -21,6 +22,7 @@ import Katlanir from "./Katlanir";
 import OneriButonu from "./OneriButonu";
 import BasitEylem from "./BasitEylem";
 import GecisHazirlik from "./GecisHazirlik";
+import HazirlikPaneli from "./HazirlikPaneli";
 import Link from "next/link";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
@@ -47,7 +49,7 @@ export default async function AdminPanel() {
     { count: kayanSayi },
     { data: funnelAyarlar },
   ] = await Promise.all([
-    db.from("waves").select("id, name, is_open, opened_at").order("id"),
+    db.from("waves").select("id, name, is_open, opened_at, closed_at").order("id"),
     aktifOzellikler(db),
     raporlarGorunurMu(db),
     db
@@ -74,7 +76,7 @@ export default async function AdminPanel() {
     db
       .from("settings")
       .select("key, value, updated_at")
-      .in("key", ["pusula_acik", "muhur_acik", "reports_visible", "on_farkindalik_acik"]),
+      .in("key", ["muhur_acik", "reports_visible"]),
   ]);
   if (dalgaHatasi) throw dalgaHatasi;
 
@@ -144,16 +146,16 @@ export default async function AdminPanel() {
   const bugun = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
   }).format(new Date());
+  // Kamp takvimi başlatılan tarihten türetilir (sabit değil).
+  const kampBaslangic = await kampBaslangicGetir(db);
+  const [ilkGun, , sonKampGun] = kampGunleri(kampBaslangic);
 
   // FUNNEL aşaması: kampın yolculuğunda operatör NEREDE? 1 Hazırlık → 2 Katılım
   // → 3 Kamp Canlı → 4 Final → 5 Sonrası. Pencere anahtarları + kamp takviminden
   // çıkarılır; omurga şeridi bunu vurgular.
-  const kampGun = kampGunu(bugun);
-  const sonKampGun = KAMP_GUNLERI[KAMP_GUNLERI.length - 1];
+  const kampGun = kampGunu(bugun, kampBaslangic);
   const funnelAyar = new Map((funnelAyarlar ?? []).map((a) => [a.key, a.value]));
-  const pusulaAcik = funnelAyar.get("pusula_acik") === "true";
   const muhurAcik = funnelAyar.get("muhur_acik") === "true";
-  const onFarkAcik = funnelAyar.get("on_farkindalik_acik") === "true";
   const aktifAsama =
     bugun > sonKampGun
       ? 5
@@ -161,7 +163,7 @@ export default async function AdminPanel() {
         ? 4
         : acikDalga || kampGun != null
           ? 3
-          : pusulaAcik
+          : katilimciSayisi && katilimciSayisi > 0
             ? 2
             : 1;
 
@@ -179,7 +181,6 @@ export default async function AdminPanel() {
     return g === bugun ? `açıldı ${sa}` : `açıldı ${g.slice(8)}/${g.slice(5, 7)} ${sa}`;
   };
   // Kampa kalan gün (ETA) — kamp öncesi 3·Canlı aşamasına bilgi olarak.
-  const ilkGun = KAMP_GUNLERI[0];
   const kalanGun =
     bugun < ilkGun
       ? Math.ceil((new Date(ilkGun).getTime() - new Date(bugun).getTime()) / 86_400_000)
@@ -189,7 +190,7 @@ export default async function AdminPanel() {
     .filter((x): x is string => !!x)
     .sort()[0];
   const asamaZaman: Record<number, string> = {};
-  const z2 = pusulaAcik ? saatBicim(funnelZaman.get("pusula_acik")) : null;
+  const z2 = katilimciSayisi && katilimciSayisi > 0 ? "katılımcı var" : null;
   if (z2) asamaZaman[2] = z2;
   const z3 = saatBicim(ilkDalgaAcilis) ?? (kalanGun > 0 ? `kampa ${kalanGun}g` : null);
   if (z3) asamaZaman[3] = z3;
@@ -199,15 +200,20 @@ export default async function AdminPanel() {
 
   const oneri = adminOnerisi({
     bugun,
+    baslangic: kampBaslangic,
     katilimciSayisi: katilimciSayisi ?? 0,
     acikDalgaId: acikDalga?.id ?? null,
     ozTamam: ilerleme?.ozTamamlar.size ?? 0,
     ozToplam: ilerleme?.katilimcilar.length ?? katilimciSayisi ?? 0,
+    degerlendirmeKapandi: (() => {
+      const kd = dalgalar.find((d) => d.id === 1);
+      return !!kd && !kd.is_open && !!kd.closed_at;
+    })(),
     raporlarAcik,
     sozAcik,
-    pusulaAcik,
+    pusulaAcik: true,
     hazirTamam: funnel.adimlar.find((a) => a.anahtar === "onfark")?.sayi ?? 0,
-    onFarkAcik,
+    onFarkAcik: true,
   });
 
   // UX #4+#9 — Bu aşamaya hazırlık skoru + geçiş checklist'i.
@@ -219,8 +225,6 @@ export default async function AdminPanel() {
     aktifAsama <= 2
       ? [
           { ad: "Katılımcı listesi yüklendi", tamam: kSayi > 0 },
-          { ad: "Pusula penceresi açık", tamam: pusulaAcik },
-          { ad: "Ön Farkındalık açık", tamam: onFarkAcik },
           { ad: "Hazırlığı bitiren ≥ %80", tamam: kSayi > 0 && hazirTamamSayi / kSayi >= 0.8 },
         ]
       : aktifAsama === 3
@@ -331,6 +335,15 @@ export default async function AdminPanel() {
         <GecisHazirlik baslik={gecisBaslik} kontroller={gecisKontroller} />
       )}
 
+      {/* Kamp/prova öncesi tam sağlık kontrolü (katılımcı, eşleştirme, dalga,
+          AYNA zekâsı, VAPID anahtarı, bildirim abonesi). Eskiden hiç render
+          edilmiyordu — bildirim altyapısı görünmez kalıyordu. Katlanır. */}
+      {tamYetki && (
+        <Katlanir baslik="Kamp hazırlık kontrolü" ikon="✅">
+          <HazirlikPaneli konum="arac" aktifAsama={aktifAsama} />
+        </Katlanir>
+      )}
+
       {/* GENEL DURUM: canlı özet rakamları */}
       <section className="kart-3d space-y-4 rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <div className="flex items-center justify-between">
@@ -366,7 +379,7 @@ export default async function AdminPanel() {
               <Uyarilar uyarilar={uyarilar} />
             </div>
           )}
-          {kampGun !== null && <GununAkisi bugun={bugun} />}
+          {kampGun !== null && <GununAkisi bugun={bugun} baslangic={kampBaslangic} />}
         </>
       </Katlanir>
 

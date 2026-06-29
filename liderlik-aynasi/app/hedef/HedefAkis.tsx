@@ -6,6 +6,7 @@ import { tr } from "@/lib/i18n/tr";
 import { kutla } from "@/lib/his";
 import KivilcimPatlama from "@/components/KivilcimPatlama";
 import MikrofonButonu from "@/components/MikrofonButonu";
+import HedefPlanKarti from "@/components/HedefPlanKarti";
 import {
   KARIYER_BASAMAKLARI,
   TEMPO_SECENEKLERI,
@@ -171,7 +172,7 @@ export default function HedefAkis({
         <h1 className="prizma-serif ay-metin mt-3 text-2xl font-semibold">{t.tamamBaslik}</h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.tamamMetin}</p>
       </div>
-      {plan && <PlanKarti plan={plan} />}
+      {plan && <HedefPlanKarti plan={plan} />}
       <div className="rounded-2xl border border-slate-700/60 bg-midnight-soft px-4 py-3">
         <p className="text-xs leading-relaxed text-slate-400">{t.kampTaahhut}</p>
       </div>
@@ -368,7 +369,12 @@ function Sohbet({
   }
 
   return (
-    <main className="koyu-alan relative isolate mx-auto flex min-h-dvh w-full max-w-md flex-col px-4 pb-4 pt-6">
+    <main
+      className="koyu-alan relative isolate mx-auto flex w-full max-w-md flex-col px-4 pb-4 pt-3"
+      // Üstteki kimlik çipi (KimsinBant) global boşluk ayırıyor; min-h-dvh
+      // çakışma yaratıyordu. Çipin altındaki kalan alana TAM sığ (KocuSohbet deseni).
+      style={{ height: "calc(100dvh - env(safe-area-inset-top, 0px) - 3.5rem)" }}
+    >
       <div aria-hidden className="pusula-okur-zemin pointer-events-none absolute inset-0 -z-10" />
       <header className="shrink-0 pb-3 text-center">
         <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
@@ -568,7 +574,7 @@ function Wizard({
           {ov0 && ov0 > 0 && hedefRutbe && tempoObj && sureAy && (
             <OvSimKarti ov0={ov0} ovHedef={hedefRutbe.ov} buyume={tempoObj.buyume} sureAy={sureAy} />
           )}
-          <PlanKarti plan={plan} />
+          <HedefPlanKarti plan={plan} />
           {/* Kampta + sonraki 90 gün destek vaadi */}
           <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3">
             <p className="text-sm font-semibold text-emerald-200">🤝 {t.destek90Baslik}</p>
@@ -619,14 +625,14 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
   // Gerçek <table>: sütunlar kendiliğinden hizalanır (her satır ayrı grid değil).
   // Opak koyu zemin + bulanıklık → arka plan fotoğrafı yazıyı yutmaz.
   return (
-    <div className="kart-cam mt-3 overflow-hidden rounded-2xl shadow-[0_22px_55px_-26px_rgba(15,30,50,0.45)]">
+    <div className="kart-cam mt-3 overflow-x-auto rounded-2xl shadow-[0_22px_55px_-26px_rgba(15,30,50,0.45)]">
       <table className="w-full border-collapse text-left">
         <thead>
           <tr className="kariyer-cizgi kariyer-baslik border-b text-[0.6rem] font-semibold uppercase tracking-wide">
-            <th className="px-3 py-2.5 font-semibold">{t.tabloKariyer}</th>
-            <th className="px-2 py-2.5 text-right font-semibold">{t.tabloEnDusuk}</th>
-            <th className="px-2 py-2.5 text-right font-semibold">{t.tabloEnYuksek}</th>
-            <th className="px-3 py-2.5 text-right font-semibold">{t.tabloOrtalama}</th>
+            <th className="px-2.5 py-2.5 font-semibold">{t.tabloKariyer}</th>
+            <th className="px-1.5 py-2.5 text-right font-semibold">{t.tabloEnDusuk}</th>
+            <th className="px-1.5 py-2.5 text-right font-semibold">{t.tabloEnYuksek}</th>
+            <th className="px-2.5 py-2.5 text-right font-semibold">{t.tabloOrtalama}</th>
           </tr>
         </thead>
         <tbody>
@@ -637,7 +643,7 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
               style={{ animationDelay: `${i * 55}ms` }}
               className="kariyer-satir kariyer-cizgi cursor-pointer border-t transition-colors hover:bg-gold/10"
             >
-              <td className="px-3 py-2.5">
+              <td className="px-2.5 py-2.5">
                 <span className="flex items-center gap-1.5">
                   <span className="text-sm font-semibold text-slate-100">{r.ad}</span>
                   {r.rozet && (
@@ -647,13 +653,13 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
                   )}
                 </span>
               </td>
-              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+              <td className="whitespace-nowrap px-1.5 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
                 {r.enDusuk != null ? tlFormat(r.enDusuk) : "—"}
               </td>
-              <td className="whitespace-nowrap px-2 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+              <td className="whitespace-nowrap px-1.5 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
                 {r.enYuksek != null ? tlFormat(r.enYuksek) : "—"}
               </td>
-              <td className="kariyer-vurgu whitespace-nowrap px-3 py-2.5 text-right font-mono text-sm font-bold tabular-nums">
+              <td className="kariyer-vurgu whitespace-nowrap px-2.5 py-2.5 text-right font-mono text-sm font-bold tabular-nums">
                 {tlFormat(r.ortalama, r.arti)}
               </td>
             </tr>
@@ -668,7 +674,7 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
 // her ay bonus + ortalama kazanç. Uzun vadeli hedef seçiminden ÖNCE gösterilir.
 function HbbKarti() {
   return (
-    <div className="kart-cam overflow-hidden rounded-2xl shadow-[0_22px_55px_-26px_rgba(15,30,50,0.45)]">
+    <div className="kart-cam overflow-x-auto rounded-2xl shadow-[0_22px_55px_-26px_rgba(15,30,50,0.45)]">
       <div className="border-l-4 border-gold bg-gold/10 px-4 py-3">
         <p className="kariyer-baslik text-sm font-bold">{t.hbbBaslik}</p>
         <p className="mt-0.5 text-xs text-slate-300">{t.hbbAciklama}</p>
@@ -759,56 +765,6 @@ function Secenekler({
   );
 }
 
-// ---------- Kişisel kariyer planı kartı ----------
-function PlanKarti({ plan }: { plan: KariyerPlani }) {
-  const km = plan.kilometreTaslari;
-  const ara = km.slice(0, -1);
-  const ana = km[km.length - 1];
-  return (
-    <div className="kart-cam overflow-hidden rounded-2xl shadow-[0_22px_55px_-26px_rgba(15,30,50,0.45)]">
-      <div className="border-l-4 border-emerald-400 bg-emerald-500/15 px-5 py-3">
-        <p className="kariyer-vurgu text-lg font-bold">{t.planBaslik(plan.rutbe)}</p>
-        <p className="text-xs text-slate-300">
-          {t.planOzet(plan.sureAy, plan.gunlukSaatEtiket, plan.haftalikSaat)}
-        </p>
-      </div>
-      <dl className="kariyer-bol px-5 py-1 text-sm">
-        {ara.map((k, i) => (
-          <SatirKV
-            key={k.rutbe}
-            k={i === 0 ? t.ilkHedef(k.ay) : t.ikinciHedef(k.ay)}
-            v={`${k.rutbe} — ${tlFormat(k.gelir, k.arti)} ${t.aylikBirim}`}
-          />
-        ))}
-        <div className="flex items-baseline justify-between gap-3 py-3">
-          <dt className="text-slate-400">{t.anaHedef(ana.ay)}</dt>
-          <dd className="kariyer-vurgu text-right text-lg font-bold">
-            {ana.rutbe} — {tlFormat(ana.gelir, ana.arti)} {t.aylikBirim}
-          </dd>
-        </div>
-        <SatirKV k={t.gunlukYatirim} v={plan.gunlukSaatEtiket} guclu />
-        <SatirKV
-          k={t.toplamYatirim}
-          v={t.toplamYatirimDeger(plan.toplamSaat, tlFormat(plan.toplamPara))}
-          guclu
-        />
-        <SatirKV k={t.geriDonus} v={t.geriDonusDeger(plan.geriDonusAy)} guclu />
-        <p className="pb-1 pt-1 text-[0.7rem] leading-relaxed text-slate-500">{t.geriDonusNot}</p>
-      </dl>
-      <div className="bg-gold/[0.06] px-5 py-3">
-        <p className="kariyer-baslik text-sm leading-relaxed">
-          {t.bunuDusun(
-            plan.gunlukSaatEtiket,
-            plan.sureAy,
-            tlFormat(plan.gelir, plan.gelirArti),
-            tlFormat(plan.saatlikKazanc)
-          )}
-        </p>
-      </div>
-    </div>
-  );
-}
-
 // ---------- OV büyüme simülasyon kartı (seçilen tek tempo, 1M sınırlı) ----------
 function OvSimKarti({
   ov0,
@@ -862,15 +818,6 @@ function OvSimKarti({
       <div className="kariyer-cizgi border-t px-4 py-2.5">
         <p className="text-[0.65rem] leading-relaxed text-slate-500">{t.simulasyonUyari}</p>
       </div>
-    </div>
-  );
-}
-
-function SatirKV({ k, v, guclu }: { k: string; v: string; guclu?: boolean }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3 py-2.5">
-      <dt className="text-slate-400">{k}</dt>
-      <dd className={`text-right ${guclu ? "font-bold text-slate-100" : "font-medium text-slate-200"}`}>{v}</dd>
     </div>
   );
 }

@@ -248,6 +248,16 @@ export function grupBostaMi(grup: number, gunDk: number): boolean {
   return grupBosPencereler(grup).some((p) => gunDk >= p.bas && gunDk < p.bit);
 }
 
+// Fiziksel/yorucu oyun blokları — bitiminde kişi enerjisi düşük olur; AYNA o an
+// hafif görev versin (zorluk düşürülür).
+const FIZIKSEL_TURLER = new Set<CmtTur>(["atv", "big_bubble", "hazine_avi", "bowling"]);
+
+/** Grup az önce (son `pencereDk` dk) fiziksel/yorucu bir blok bitirdi mi? */
+export function grupAzOnceFiziksel(grup: number, gunDk: number, pencereDk = 20): boolean {
+  const blok = grupBitenBlok(grup, gunDk, pencereDk);
+  return blok ? FIZIKSEL_TURLER.has(blok.tur) : false;
+}
+
 export function grupAdi(grup: number): string {
   return `Grup ${grup}`;
 }
@@ -381,6 +391,17 @@ export function cumartesiGrupEtkinligi(
   const blok = grupAktifBlok(grup, gunDk);
   if (!blok) return null;
   return { madde: cmtMadde(blok), ipucu: TUR_GOREV_IPUCU[blok.tur] };
+}
+
+/** Grubun sıradaki etkinliği (niyet/hazırlık köprüsü) — ProgramMaddesi olarak.
+ * Yalnız deneyimsel/anlamlı bloklar; yemek nötr olduğu için atlanır. */
+export function cumartesiGrupSiradakiEtkinlik(
+  grup: number,
+  gunDk: number
+): ProgramMaddesi | null {
+  const blok = grupSiradaki(grup, gunDk);
+  if (!blok || blok.tur === "yemek") return null;
+  return cmtMadde(blok);
 }
 
 /** Az önce biten grup etkinliği (ana-bağlı tetik) — nötr bloklar hariç. */

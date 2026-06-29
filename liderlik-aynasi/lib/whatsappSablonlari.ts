@@ -10,7 +10,7 @@
 
 export const BAGLANTI_TABANI = "https://ayna.oneteamglobal.ai";
 
-export type WaSablonAnahtar = "giris" | "odev" | "duyuru";
+export type WaSablonAnahtar = "giris" | "giris_hatirlatma" | "odev" | "duyuru";
 export type WaKategori = "UTILITY" | "MARKETING";
 
 export type WaButon = {
@@ -46,16 +46,35 @@ export const WA_SABLONLAR: WaSablon[] = [
     ikon: "🔑",
     etiket: "Giriş daveti (link + şifre)",
     aciklama: "Aynayla tanışma daveti — kişiye özel giriş bağlantısı ve kodu.",
-    friendlyName: "pd101_giris_daveti",
+    friendlyName: "pd101_giris_v5",
     dil: "tr",
     kategori: "MARKETING",
     ayarAnahtari: "wa_tpl_giris",
+    // Not: "giriş bağlantın / hesabına giriş" gibi login ifadeleri Meta'da
+    // AUTHENTICATION sınıflandırması tetikleyip redde yol açtı (v3 UTILITY, v4
+    // MARKETING ikisi de INCORRECT_CATEGORY). v5 davet tonunda, login dili yok.
     govde:
-      "Merhaba {{1}}, PD101'e hoş geldin.\n\n" +
-      "Kendi gerçek potansiyelini görmeni sağlayacak, ona ulaşmanda sana rehber olacak bir ayna hazırladık. Erişmek için sana özel bir giriş bağlantın hazır — aşağıdaki butona dokunman yeterli.\n\n" +
-      "Kampa gelmeden önce aynayla tanışmalısın. Aynaya bakıp kendini görmeye çalış, çünkü orada seni en doğru anlatan yansımayı bulacaksın.\n\n" +
+      "Merhaba {{1}}, PD101 Liderlik Aynası kampına hoş geldin! 🪞\n\n" +
+      "Kampa hazırlanmak için aşağıdaki butona dokun, seni bekleyen ilk adımları keşfet.\n\n" +
       "— One Team AI",
-    buton: { baslik: "Hesabıma Gir", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
+    buton: { baslik: "Kampıma Başla", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
+    serbestMi: false,
+    ornek: { "1": "Ayşe", "2": "427813" },
+  },
+  {
+    anahtar: "giris_hatirlatma",
+    ikon: "⏰",
+    etiket: "Kamp öncesi hatırlatma (giriş yapmamış)",
+    aciklama: "Henüz uygulamaya giriş yapmamış katılımcılara son hatırlatma.",
+    friendlyName: "pd101_hatirlatma_v3",
+    dil: "tr",
+    kategori: "UTILITY",
+    ayarAnahtari: "wa_tpl_giris_hatirlatma",
+    govde:
+      "Merhaba {{1}},\n\n" +
+      "PD101 Liderlik Aynası uygulamasına henüz giriş yapmadın. Kampa başlamadan önce giriş yapman gerekiyor. Aşağıdaki butona dokunabilirsin.\n\n" +
+      "— One Team AI",
+    buton: { baslik: "Şimdi Giriş Yap", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
     serbestMi: false,
     ornek: { "1": "Ayşe", "2": "427813" },
   },
@@ -114,6 +133,7 @@ export function degiskenleriUret(
   const ad = ilkAd(kisi.ad);
   switch (sablon.anahtar) {
     case "giris":
+    case "giris_hatirlatma":
     case "odev":
       return { "1": ad, "2": kisi.kod };
     case "duyuru":

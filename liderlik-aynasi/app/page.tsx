@@ -6,10 +6,12 @@ import { acikDalga, aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { hedefKapisiAcik } from "@/lib/hedef";
 import { kampOncesiAdim } from "@/lib/akis";
-import { KAMP_GUNLERI } from "@/lib/kampProgrami";
+import { kampGunu } from "@/lib/kampProgrami";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { sozTakipAktif, sahitSayim } from "@/lib/sozTakip";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
+import TelefonaKurKocu from "@/components/TelefonaKurKocu";
 import AynaRituel from "@/components/AynaRituel";
 import EgilenKart from "@/components/EgilenKart";
 import GeriSayim from "@/components/GeriSayim";
@@ -19,9 +21,12 @@ import MuhurTuru from "@/components/MuhurTuru";
 import YolculukHaritasi from "@/components/YolculukHaritasi";
 import KampHud from "@/components/KampHud";
 import GorusmeSimdi from "@/components/GorusmeSimdi";
-import GunProgramKarti from "@/components/GunProgramKarti";
 import KonusanYansima from "@/components/KonusanYansima";
 import SicakAdim from "@/components/SicakAdim";
+import AlgiKoprusuKarti from "@/components/AlgiKoprusuKarti";
+import { algiKoprusu } from "@/lib/algiKoprusu";
+import KarsilasmaKarti from "@/components/KarsilasmaKarti";
+import { karsilasmaBul } from "@/lib/karsilasma";
 import UstMenu from "@/components/UstMenu";
 import { SiradakiOnizleme } from "@/components/AsamaRayi";
 
@@ -53,7 +58,8 @@ function Sayfa({
         </div>
       </div>
       {kurulum && (
-        <div className="mx-auto w-full max-w-md shrink-0 px-5 pb-5">
+        <div className="mx-auto w-full max-w-md shrink-0 space-y-4 px-5 pb-5">
+          <TelefonaKurKocu />
           <AynaKurulum />
         </div>
       )}
@@ -139,7 +145,7 @@ export default async function AnaSayfa({
       db
         .from("settings")
         .select("key, value")
-        .in("key", ["pusula_acik", "on_farkindalik_acik", "oyun_secimi_acik", "gunun_cumlesi"]),
+        .in("key", ["gunun_cumlesi"]),
       db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
       // Ses/foto ritüeli kapısı için erken kontrol — akışın EN BAŞINA gelir.
       db.from("voice_profiles").select("participant_id").eq("participant_id", session.sub).maybeSingle(),
@@ -170,9 +176,9 @@ export default async function AnaSayfa({
     pusulaTamam: !!pusulaErken?.tamamlandi_at,
     hedefTamam: !!hedefErken?.tamamlandi_at,
     ofTamam: !!ofDurum?.tamamlandi_at,
-    oyunSecimiAcik: ayar.get("oyun_secimi_acik") === "true",
-    pusulaAcik: ayar.get("pusula_acik") === "true",
-    onFarkindalikAcik: ayar.get("on_farkindalik_acik") === "true",
+    oyunSecimiAcik: true,
+    pusulaAcik: true,
+    onFarkindalikAcik: true,
     kampIciHedefKapisi,
   });
   if (adim.tip === "rituel") {
@@ -318,6 +324,9 @@ export default async function AnaSayfa({
   const bugunIst = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
   }).format(new Date());
+  // Kamp günü etiketi: kampın başlatıldığı tarihten türetilir (sabit takvim değil).
+  const kampBaslangic = await kampBaslangicGetir(db);
+  const kampGunNo = kampGunu(bugunIst, kampBaslangic);
   // eslint-disable-next-line react-hooks/purity
   const istekAni = Date.now();
 
@@ -409,6 +418,9 @@ export default async function AnaSayfa({
           raporlarAcik={raporlarAcik}
           yansimanHazir={yansimanHazir}
           ozHedefId={session.sub}
+          pusulaTamam={!!pusulaErken?.tamamlandi_at}
+          hedefTamam={!!hedefErken?.tamamlandi_at}
+          ofTamam={!!ofDurum?.tamamlandi_at}
         />
       </header>
       {/* B3: Pusula sloganı — her gün görünür kimlik çapası */}
@@ -425,11 +437,7 @@ export default async function AnaSayfa({
         <div className="mt-2">
           <YolculukHaritasi
             siradaEtiket={tr.yolculuk.sirada}
-            gunEtiketi={
-              (KAMP_GUNLERI as readonly string[]).includes(bugunIst)
-                ? `Gün ${(KAMP_GUNLERI as readonly string[]).indexOf(bugunIst) + 1}`
-                : undefined
-            }
+            gunEtiketi={kampGunNo ? `Gün ${kampGunNo}` : undefined}
             fazlar={[
               { ad: tr.yolculuk.faz.rituel, tamam: !!sesVarRow },
               { ad: tr.yolculuk.faz.oyun, tamam: !!kisi?.team },
@@ -574,7 +582,7 @@ export default async function AnaSayfa({
   // 5) DEĞERLENDİRME — dalga açık ve kendini puanladın: başkalarını puanla
   if (dalga) {
     return (
-      <Sayfa ust={ust} program={<GunProgramKarti takim={takim} />}>
+      <Sayfa ust={ust}>
         <BuyukKart
           baslik={t.dalgaDevamBaslik(dalga.name)}
           metin={t.dalgaDevamMetin}
@@ -590,7 +598,7 @@ export default async function AnaSayfa({
   // 6) GÖREV — açık dalga yok ama AYNA'nın görevi var
   if (gorevSayisi > 0) {
     return (
-      <Sayfa ust={ust} program={<GunProgramKarti takim={takim} />}>
+      <Sayfa ust={ust}>
         <BuyukKart
           baslik={t.gorevTekBaslik}
           metin={siradakiGorevBasligi ? `"${siradakiGorevBasligi}"` : t.gorevTekMetin}
@@ -605,10 +613,26 @@ export default async function AnaSayfa({
   // 7) BEKLEME — görev/dalga yokken BOŞLUK GÖSTERME: program birincil olur.
   // "Şimdi ne yapacağım?" sorusu hep programla yanıtlanır; sakin durum + sıcak
   // adım ikincil, küçük bir kartta akar (görev + program her zaman önde).
+  //
+  // #3 Algı Köprüsü (finali koruyan canlı deney): yalnız kamp açıkken ve raporlar
+  // HENÜZ kapalıyken (Gün 3 öncesi/finalden önce) gösterilir; içerik açmaz.
+  const [koprusu, karsilasma] =
+    kisi?.camp_unlocked_at && !raporlarAcik
+      ? await Promise.all([
+          algiKoprusu(db, session.sub),
+          karsilasmaBul(db, session.sub),
+        ])
+      : [null, null];
   return (
     <Sayfa ust={ust}>
-      {/* Program = omurga: boş anda ana kart odur (Şu an / Sırada canlı) */}
-      <GunProgramKarti takim={takim} />
+      {/* Program artık alt menüdeki "Program" sekmesinde (kişisel, katlanır).
+          Ana ekran sadeleşti — burada tekrar gösterilmiyor. */}
+
+      {/* AYNA'nın deneyi — ikincil, merak uyandıran (kör nokta içeriği YOK) */}
+      {koprusu && <AlgiKoprusuKarti veri={koprusu} />}
+
+      {/* Karşılaşma — AYNA'nın eşlediği tamamlayıcı kişiyle konuşma daveti */}
+      {karsilasma && <KarsilasmaKarti partnerAd={karsilasma.partnerAd} />}
 
       {/* İkincil sakin durum — küçük, programın altında akar */}
       <div className="kart-cam relative overflow-hidden rounded-2xl p-5 text-center">

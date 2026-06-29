@@ -4,6 +4,8 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import CumartesiGrupHud from "@/components/CumartesiGrupHud";
 import GeriButonu from "@/components/GeriButonu";
+import { kampGunleri } from "@/lib/kampProgrami";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 
 export const metadata = { title: "Grubunun Ödevi — Liderlik Aynası" };
 
@@ -33,6 +35,9 @@ export default async function GrupSayfa() {
     odevler = data ?? [];
   }
 
+  // Cumartesi (Gün 2) tarihi kampın başlatıldığı tarihten türetilir (sabit değil).
+  const cumartesiTarih = kampGunleri(await kampBaslangicGetir(db))[1];
+
   return (
     <main className="mx-auto w-full max-w-md flex-1 space-y-5 p-5">
       <GeriButonu />
@@ -42,7 +47,7 @@ export default async function GrupSayfa() {
       </header>
 
       {/* Slice 5 — Cumartesi grup HUD: grubunun gün 2 akışı (canlı now/next). */}
-      <CumartesiGrupHud takim={kisi?.team ?? null} />
+      <CumartesiGrupHud takim={kisi?.team ?? null} cumartesiTarih={cumartesiTarih} />
 
       {!kisi?.team ? (
         <p className="text-sm text-slate-400">{t.takimsiz}</p>

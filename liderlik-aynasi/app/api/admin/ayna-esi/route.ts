@@ -54,6 +54,9 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.aynaEsi.yetersizVeri }, { status: 409 });
   }
 
+  // Hesaplama her zaman yayını kapatır — admin inceleyip manuel "Yayınla"ya basmalı.
+  await db.from("settings").upsert({ key: "ayna_esi_acik", value: "false", updated_at: new Date().toISOString() });
+
   // Eskiyi temizle, yeniyi yaz (tek seferlik tam yeniden hesap).
   const { error: silErr } = await db.from("ayna_esi").delete().not("id", "is", null);
   if (silErr) return Response.json({ hata: tr.aynaEsi.hata }, { status: 500 });
