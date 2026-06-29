@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { KAMP_BASLIK } from "@/lib/kampProgrami";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { tr } from "@/lib/i18n/tr";
 import GeriButonu from "@/components/GeriButonu";
 import GunProgramKarti from "@/components/GunProgramKarti";
@@ -21,15 +22,16 @@ export default async function ProgramPage() {
   if (!session) redirect("/giris");
   if (session.rol !== "participant") redirect("/admin");
 
-  const { data: kisi } = await supabaseAdmin()
-    .from("participants")
-    .select("team")
-    .eq("id", session.sub)
-    .maybeSingle();
+  const db = supabaseAdmin();
+  const [{ data: kisi }, kampBaslangic] = await Promise.all([
+    db.from("participants").select("team").eq("id", session.sub).maybeSingle(),
+    kampBaslangicGetir(db),
+  ]);
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
-      <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-6 p-5">
+      {/* Üstten hizalı (my-auto kaldırıldı) → boş alanda yüzmesin, kompakt dursun */}
+      <div className="sahne-giris mx-auto w-full max-w-md space-y-5 p-5">
         <GeriButonu />
         <header>
           <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
@@ -41,7 +43,7 @@ export default async function ProgramPage() {
           <p className="mt-1 text-base text-slate-400">{t.altBaslik}</p>
         </header>
 
-        <GunProgramKarti takim={kisi?.team ?? null} />
+        <GunProgramKarti takim={kisi?.team ?? null} baslangic={kampBaslangic} />
       </div>
     </main>
   );

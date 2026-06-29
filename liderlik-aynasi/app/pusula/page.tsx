@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { pusulaDurum, pusulaGecmis } from "@/lib/pusula";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { tr } from "@/lib/i18n/tr";
 import PusulaSohbet from "./PusulaSohbet";
@@ -29,7 +30,7 @@ export default async function PusulaSayfa() {
   if (session.rol !== "participant") redirect("/");
 
   const db = supabaseAdmin();
-  const [durum, gecmis, { data: kisi }, { data: pus }] = await Promise.all([
+  const [durum, gecmis, { data: kisi }, { data: pus }, kampBaslangic] = await Promise.all([
     pusulaDurum(db, session.sub),
     pusulaGecmis(db, session.sub),
     db
@@ -38,6 +39,7 @@ export default async function PusulaSayfa() {
       .eq("id", session.sub)
       .maybeSingle(),
     db.from("pusula").select("oncelikler, slogan").eq("participant_id", session.sub).maybeSingle(),
+    kampBaslangicGetir(db),
   ]);
 
   // Kamp açıldıysa (oda QR'ı okutuldu ya da görevli elle açtı) Pusula
@@ -236,7 +238,7 @@ export default async function PusulaSayfa() {
         </Link>
 
         {/* 3 günlük kamp programı — mühür açılmadan da görünsün */}
-        <GunProgramKarti takim={kisi?.team ?? null} />
+        <GunProgramKarti takim={kisi?.team ?? null} baslangic={kampBaslangic} />
       </div>
     );
 
