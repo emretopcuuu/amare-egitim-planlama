@@ -14,6 +14,7 @@ import YuzenGeri from "@/components/YuzenGeri";
 import BildirimLogDinleyici from "@/components/BildirimLogDinleyici";
 import KimsinBant from "@/components/KimsinBant";
 import PwaKur from "@/components/PwaKur";
+import TarayicidaAc from "@/components/TarayicidaAc";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -107,6 +108,9 @@ export default async function RootLayout({
         />
         {/* #8 PROVA MODU: admin açarsa tüm sayfalarda kırmızı şerit çıkar */}
         {provaAcik && <ProvaModuBayragi />}
+        {/* WhatsApp/Instagram iç tarayıcısında açıldıysa "gerçek tarayıcıda aç"
+            uyarısı (yalnız o UA'larda görünür; akışı bozmaz, kapatılabilir). */}
+        <TarayicidaAc />
         <AtlaBaglantisi />
         {/* Üst-orta "kimsin?" bandı: aday hangi sayfada olursa olsun adını görür */}
         <KimsinBant />
