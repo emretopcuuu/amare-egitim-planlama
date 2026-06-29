@@ -973,35 +973,38 @@ function SifirlaButon({
   sifirla: () => void;
   mesgul: boolean;
 }) {
-  if (sor) {
-    return (
-      <div className="shrink-0 rounded-xl border border-royal-light/30 bg-midnight-card/90 p-2 text-right">
-        <p className="px-1 pb-1.5 text-xs text-slate-300">{t.sifirlaOnayMetin}</p>
-        <div className="flex items-center justify-end gap-1.5">
-          <button
-            onClick={() => setSor(false)}
-            className="rounded-lg px-2.5 py-1 text-xs font-medium text-slate-400 hover:text-slate-200"
-          >
-            {t.sifirlaVazgec}
-          </button>
-          <button
-            onClick={sifirla}
-            disabled={mesgul}
-            className="rounded-lg bg-red-500/80 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-40"
-          >
-            {mesgul ? t.sifirlaniyor : t.sifirlaEvet}
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // Onay artık başlığın yanında YER KAPLAYAN bir kutu değil; butona sabitli,
+  // viewport'a sığacak biçimde SINIRLI bir açılır kutu (mobilde taşmaz).
   return (
-    <button
-      onClick={() => setSor(true)}
-      className="shrink-0 rounded-xl border border-royal-light/30 px-2.5 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:border-gold hover:text-slate-200"
-    >
-      {t.sifirlaDugme}
-    </button>
+    <div className="relative shrink-0">
+      <button
+        onClick={() => setSor(!sor)}
+        aria-expanded={sor}
+        className="rounded-xl border border-royal-light/30 px-2.5 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:border-gold hover:text-slate-200"
+      >
+        {t.sifirlaDugme}
+      </button>
+      {sor && (
+        <div className="absolute right-0 top-full z-20 mt-1.5 w-[min(16rem,calc(100vw-2.5rem))] rounded-xl border border-royal-light/30 bg-midnight-card/95 p-2.5 shadow-xl backdrop-blur">
+          <p className="pb-2 text-xs leading-relaxed text-slate-300">{t.sifirlaOnayMetin}</p>
+          <div className="flex items-center justify-end gap-1.5">
+            <button
+              onClick={() => setSor(false)}
+              className="rounded-lg px-2.5 py-1 text-xs font-medium text-slate-400 hover:text-slate-200"
+            >
+              {t.sifirlaVazgec}
+            </button>
+            <button
+              onClick={sifirla}
+              disabled={mesgul}
+              className="rounded-lg bg-red-500/80 px-2.5 py-1 text-xs font-semibold text-white hover:bg-red-500 disabled:opacity-40"
+            >
+              {mesgul ? t.sifirlaniyor : t.sifirlaEvet}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }
 
