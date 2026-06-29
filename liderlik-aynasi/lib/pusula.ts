@@ -375,7 +375,9 @@ export async function pusulaTuru(
       () =>
         client.messages.create({
       model: SOHBET_MODEL,
-      max_tokens: 1024,
+      // Replik yarıda kesilmesin: effort düşünme bütçesi + çıktı aynı tavanı
+      // paylaşır; tavanı yükseltip tam cümle garantile.
+      max_tokens: 2000,
       thinking: { type: "disabled" },
       output_config: {
         effort: "medium",

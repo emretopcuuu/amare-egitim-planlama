@@ -290,10 +290,12 @@ export async function hedefTuru(
       () =>
         client.messages.create({
           model: SOHBET_MODEL,
-          max_tokens: 1024,
+          // Mesaj yarıda kesilmesin: kısa bir sohbet repliği ağır akıl yürütme
+          // istemez; effort düşük + token tavanı yüksek → tam cümle garanti.
+          max_tokens: 2000,
           thinking: { type: "disabled" },
           output_config: {
-            effort: "medium",
+            effort: "low",
             format: { type: "json_schema", schema: SOHBET_SEMASI },
           },
           system: `${PERSONA}
