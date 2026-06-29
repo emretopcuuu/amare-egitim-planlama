@@ -391,12 +391,30 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   // yazı tipi seti (başlık / isim / gövde)
   const FF = fontSec(ayar.font);
   const fiziki = isFiziki(egitim);
+
+  // ── Konuşmacı satır sayısını ÖNCEDEN hesapla → çok kişide afiş AŞAĞI uzar (kesilme yok) ──
+  const KONUSMACI_CAP = 24; // 12→24 (boy uzadığı için daha fazlası sığar)
+  const liste = (egitmenler || []).slice(0, KONUSMACI_CAP);
+  const perMap = { iki: 2, uc: 3, dort: 4 };
+  const chunkRows = (n, per) => { const a = []; let kalan = n; while (kalan > 0) { a.push(Math.min(per, kalan)); kalan -= per; } return a; };
+  const dagilim = !liste.length ? []
+    : ayar.tekSira ? [liste.length]
+    : (ayar.anaVurgu && liste.length > 1) ? [1, ...fotoYerlesim(liste.length - 1)]
+    : (ayar.duzen && perMap[ayar.duzen]) ? chunkRows(liste.length, perMap[ayar.duzen])
+    : fotoYerlesim(liste.length);
+  const rows = dagilim.length;
+  // 3 sıra taban afişe rahat sığar; üstüne her sıra için boy uzat (aralık geniş → biraz daha)
+  const ROWS_FIT = 3;
+  const extraPerRow = Math.round(H * 0.16) * (ayar.aralik === 'genis' ? 1.3 : ayar.aralik === 'siki' ? 0.9 : 1);
+  const extra = Math.max(0, rows - ROWS_FIT) * extraPerRow;
+  const CANVAS_H = H + extra; // fiziksel yükseklik; oranlar hâlâ H=1350 tabanlı
+
   const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
+  canvas.width = W; canvas.height = CANVAS_H;
   const ctx = canvas.getContext('2d');
   const M = Math.round(W * 0.07);
 
-  await zeminCiz(ctx, W, H, palet, { isik: ayar.isik, elmas: ayar.elmas, cerceve: ayar.cerceve, kurdeleVar: !!ayar.kurdele, filigran: ayar.filigran, doku: ayar.doku });
+  await zeminCiz(ctx, W, CANVAS_H, palet, { isik: ayar.isik, elmas: ayar.elmas, cerceve: ayar.cerceve, kurdeleVar: !!ayar.kurdele, filigran: ayar.filigran, doku: ayar.doku });
 
   // ── ÜST: One Team logosu ──
   let y = Math.round(H * 0.02);
@@ -470,26 +488,15 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   // Alt not / uyarı satırları (kullanıcının serbest metni) — en fazla 3 satır
   const notSatirlari = String(altNot || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 3);
   const footerH = Math.round(H * (0.135 + (notSatirlari.length ? 0.03 * notSatirlari.length : 0)));
-  const footerTop = H - footerH;
+  const footerTop = CANVAS_H - footerH; // uzayan canvas'ın altına otur
   const bandH = (fiziki && prog.length && ayar.program) ? Math.round(H * 0.085) : 0;
   const bandTop = bandH ? footerTop - bandH - Math.round(H * 0.02) : footerTop;
   const speakersTop = y + Math.round(H * 0.01);
   const speakersBottom = bandTop - Math.round(H * 0.02);
 
   // ── KONUŞMACILAR (altın halkalı foto + altın hap isim + rol) ──
-  const liste = (egitmenler || []).slice(0, 12); // 6→12 (daha fazla konuşmacı)
+  // liste / dagilim / rows yukarıda (canvas yüksekliği için) hesaplandı.
   if (liste.length) {
-    // Yerleşim düzeni: tek sıra / ana konuşmacı / N'li sütun / otomatik
-    const perMap = { iki: 2, uc: 3, dort: 4 };
-    const chunkRows = (n, per) => { const a = []; let kalan = n; while (kalan > 0) { a.push(Math.min(per, kalan)); kalan -= per; } return a; };
-    const dagilim = ayar.tekSira
-      ? [liste.length]
-      : (ayar.anaVurgu && liste.length > 1)
-        ? [1, ...fotoYerlesim(liste.length - 1)]
-        : (ayar.duzen && perMap[ayar.duzen])
-          ? chunkRows(liste.length, perMap[ayar.duzen])
-          : fotoYerlesim(liste.length);
-    const rows = dagilim.length;
     const areaH = speakersBottom - speakersTop;
     const perRowH = areaH / rows;
     // Hücre genişliği: en kalabalık satıra göre TUTARLI (eşit boyut), satırlar ortalı.

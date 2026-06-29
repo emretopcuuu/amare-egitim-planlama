@@ -209,6 +209,11 @@ export default function GorselStudyo() {
     else { const n = {}; keys.forEach(k => { n[k] = true; }); uygula(n); }
   };
   const temizle = () => uygula({});
+  // Tüm tasarım tercihlerini varsayılana döndür (aralık dahil) — geri alınabilir (markaSecim undo'ya gider)
+  const sifirla = () => {
+    uygula({});
+    setEkIstek(''); setAltNot(''); setBaslikOzel(''); setVurguKelime(1); setVurguYon('son');
+  };
   // 🎲 Sürpriz: tekil gruplardan rastgele birer seçim + bazı dokunuşlar
   const rastgele = () => {
     const n = {};
@@ -472,9 +477,7 @@ export default function GorselStudyo() {
                     <button onClick={ileriAl} disabled={!redoStack.length} title="Yinele" className="p-1.5 rounded-lg text-gray-500 hover:bg-gray-100 disabled:opacity-30"><Redo2 className="w-4 h-4" /></button>
                     <button onClick={rastgele} title="Sürpriz kombinasyon" className="p-1.5 rounded-lg text-amare-purple hover:bg-purple-50"><Dices className="w-4 h-4" /></button>
                     <button onClick={ozelPresetKaydet} disabled={!Object.keys(markaSecim).length} title="Bu stili kaydet" className="p-1.5 rounded-lg text-amber-600 hover:bg-amber-50 disabled:opacity-30"><Save className="w-4 h-4" /></button>
-                    {Object.keys(markaSecim).length > 0 && (
-                      <button onClick={temizle} className="text-[11px] text-amare-purple hover:underline ml-1">Temizle</button>
-                    )}
+                    <button onClick={sifirla} title="Tüm tasarım tercihlerini varsayılana döndür" className="text-[11px] text-amare-purple hover:bg-purple-50 rounded-lg px-1.5 py-1 ml-1 inline-flex items-center gap-1"><RotateCcw className="w-3.5 h-3.5" />Sıfırla</button>
                   </div>
                 </div>
                 {/* Hazır + kendi stillerin */}
