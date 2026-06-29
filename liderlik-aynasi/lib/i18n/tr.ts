@@ -3371,14 +3371,15 @@ export const tr = {
     kocIosAdim2: "Açılan listede",
     kocIosAdim2b: "\"Ana Ekrana Ekle\"",
     kocIosAdim2c: "seç",
-    kocIosOk: "Paylaş düğmesi tarayıcının altında ↓",
+    kocIosOk: "Paylaş düğmesi: Safari'de altta ↓ · Chrome'da ⋮ menüsünde",
+    kocIosTarayici: "Safari ya da Chrome — ikisinde de çalışır.",
     kocIosTekrar: "Sonra uygulamayı ana ekrandan aç — bildirimler oradan gelir.",
     kocBaskaTarayiciBaslik: "Önce Safari'de aç",
     kocBaskaTarayiciMetin:
       "Ana ekrana ekleme yalnızca Safari'de çalışır. Linki kopyala → Safari'yi aç → adres çubuğuna yapıştır.",
-    kocInappBaslik: "Önce tarayıcıda aç",
+    kocInappBaslik: "Önce gerçek tarayıcıda aç",
     kocInappMetin:
-      "Bu sayfa bir uygulama içinde açıldı (WhatsApp/Instagram). Kurmak için linki kopyala, sonra Safari (iPhone) veya Chrome (Android) ile aç.",
+      "Bu sayfa bir uygulama içinde açıldı (WhatsApp/Instagram). Kurmak için linki kopyala, sonra Safari ya da Chrome ile aç — aşağıdaki adımları izle.",
     kocAndroidYukle: "📲 Uygulamayı yükle",
     kocAndroidTalimatBaslik: "Ana ekrana ekle",
     kocAndroidTalimatMetin:
