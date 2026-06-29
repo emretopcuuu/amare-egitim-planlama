@@ -60,6 +60,41 @@ body.ortu-acik .kimsin-bant {
   display: none !important;
 }
 
+/* "Sana dair ilk aynam" kartı — görmezden gelinmesin diye kırmızımsı-elit vurgu:
+   nazik kırmızı nabız (dışarı taşan glow) + üstünden geçen çizgisel ışık parıltısı. */
+@keyframes ayna-vurgu-nabiz {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(255, 90, 90, 0.3), 0 0 16px -5px rgba(255, 90, 90, 0.4); }
+  50% { box-shadow: 0 0 0 1px rgba(255, 120, 120, 0.65), 0 0 26px -3px rgba(255, 90, 90, 0.75); }
+}
+@keyframes ayna-vurgu-parla {
+  0% { transform: translateX(-160%) skewX(-12deg); }
+  55%, 100% { transform: translateX(320%) skewX(-12deg); }
+}
+.ayna-vurgu { animation: ayna-vurgu-nabiz 2.4s ease-in-out infinite; }
+.ayna-vurgu::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 45%;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    rgba(255, 170, 120, 0.35) 45%,
+    rgba(255, 80, 80, 0.5) 55%,
+    transparent
+  );
+  transform: translateX(-160%) skewX(-12deg);
+  animation: ayna-vurgu-parla 5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ayna-vurgu,
+  .ayna-vurgu::after { animation: none; }
+  .ayna-vurgu { box-shadow: 0 0 0 1px rgba(255, 90, 90, 0.55); }
+}
+
 /* "✓ Kaydedildi" güvencesi yumuşakça belirir (ani sıçrama olmasın). */
 @keyframes kayit-belir-an {
   from {

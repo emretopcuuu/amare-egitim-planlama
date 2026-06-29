@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import YaziBoyu from "@/components/YaziBoyu";
@@ -36,6 +36,13 @@ export default function UstMenu({
   ofTamam = false,
 }: Props) {
   const [acik, setAcik] = useState(false);
+
+  // Menü açıkken üstteki kimlik çubuğu (KimsinBant) ve alttaki kapsül menü
+  // kapatma ✕'ini örtüp dokunuşu yutmasın: "ortu-acik" ikisini de gizler.
+  useEffect(() => {
+    document.body.classList.toggle("ortu-acik", acik);
+    return () => document.body.classList.remove("ortu-acik");
+  }, [acik]);
 
   // BİRİNCİL: o an kişiye özel, en önemli işler (büyük butonlar).
   // Değerlendir / Görevler / Duvar zaten alt çubukta — menüde tekrarlanmaz.
