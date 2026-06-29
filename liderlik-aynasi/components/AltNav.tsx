@@ -195,7 +195,7 @@ export default function AltNav() {
       {/* YÜZEN KAPSÜL — buzlu cam, yuvarlak ada; kaydırınca küçülür/büyür */}
       <nav
         className={`alt-nav flex items-center rounded-[2rem] border border-white/12 bg-midnight/70 shadow-[0_12px_44px_-10px_rgba(0,0,0,0.7)] backdrop-blur-2xl transition-all duration-300 ${
-          kompakt ? "gap-0.5 px-1.5 py-1" : "gap-1 px-2 py-1.5"
+          kompakt ? "w-auto gap-0.5 px-1.5 py-1" : "w-full max-w-md gap-1 px-2 py-1"
         }`}
       >
         {sekmeler.map((s) => {
@@ -210,13 +210,13 @@ export default function AltNav() {
               aria-label={gorevVar ? `${s.etiket} · bekleyen görev var` : s.etiket}
               aria-current={aktif ? "page" : undefined}
               className={`group relative flex select-none flex-col items-center justify-center rounded-[1.4rem] transition-all duration-300 active:scale-90 ${
-                kompakt ? "w-12 py-1.5" : "w-[3.6rem] py-2"
+                kompakt ? "w-12 py-1.5" : "flex-1 py-1"
               } ${aktif ? "text-gold-light" : "text-slate-300"}`}
             >
               {/* İkon kabı — aktifte gold dolgu + halka + ışıma; dokununca zemin belirir */}
               <span
                 className={`relative flex items-center justify-center rounded-2xl transition-all duration-300 ${
-                  kompakt ? "h-8 w-8" : "h-9 w-9"
+                  kompakt ? "h-8 w-8" : "h-10 w-10"
                 } ${
                   aktif
                     ? "bg-gold/18 ring-1 ring-gold/45 shadow-[0_0_22px_-5px_rgba(212,175,55,0.6)]"
@@ -226,7 +226,7 @@ export default function AltNav() {
                 <Ikon
                   ad={s.ikon}
                   className={`transition-all duration-300 ${
-                    kompakt ? "h-[1.35rem] w-[1.35rem]" : "h-6 w-6"
+                    kompakt ? "h-[1.35rem] w-[1.35rem]" : "h-[1.65rem] w-[1.65rem]"
                   } ${aktif ? "scale-105" : ""}`}
                 />
                 {gorevVar && (
@@ -238,8 +238,8 @@ export default function AltNav() {
               </span>
               {/* Etiket — kapsül büyükken görünür; kaydırınca (kompakt) gizlenir */}
               <span
-                className={`overflow-hidden text-[0.62rem] font-semibold leading-none transition-all duration-300 ${
-                  kompakt ? "mt-0 max-h-0 opacity-0" : "mt-1 max-h-4 opacity-90"
+                className={`overflow-hidden text-[0.68rem] font-semibold leading-none transition-all duration-300 ${
+                  kompakt ? "mt-0 max-h-0 opacity-0" : "mt-0.5 max-h-4 opacity-95"
                 }`}
               >
                 {s.etiket}
