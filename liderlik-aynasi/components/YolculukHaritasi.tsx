@@ -19,7 +19,7 @@ export default function YolculukHaritasi({
   const suAn = ilkEksik === -1 ? fazlar.length - 1 : ilkEksik;
 
   return (
-    <div className="rounded-2xl border border-royal/25 bg-[#08182a]/70 px-3 py-2.5 backdrop-blur-sm">
+    <div className="koyu-alan rounded-2xl border border-royal/25 bg-[#08182a]/70 px-3 py-2.5 backdrop-blur-sm">
       <div className="flex items-center gap-1">
         {fazlar.map((f, i) => {
           const cur = i === suAn && !f.tamam;

@@ -41,7 +41,7 @@ export default function YansimaOynatici({
   }, []);
 
   return (
-    <main className="fixed inset-0 z-50 bg-black">
+    <main className="koyu-alan fixed inset-0 z-50 bg-black">
       <video
         ref={videoRef}
         src={videoUrl}
