@@ -5,6 +5,7 @@ import Konfeti from "@/components/Konfeti";
 import { titret } from "@/lib/his";
 import { useEsc } from "@/lib/useEsc";
 import { tr } from "@/lib/i18n/tr";
+import MuhurIkon from "@/components/MuhurIkon";
 
 const ANAHTAR = "la_muhur_v1";
 const t = tr.muhur;
@@ -100,9 +101,7 @@ export default function MuhurAcilis({
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-8 text-center">
         {asama === "kapali" && (
           <>
-            <span className="text-7xl" aria-hidden>
-              🔒
-            </span>
+            <MuhurIkon className="mx-auto h-20 w-20 text-gold-light" />
             <p className="prizma-serif mt-6 text-sm uppercase tracking-[0.4em] text-slate-400">
               {t.kapaliUst}
             </p>

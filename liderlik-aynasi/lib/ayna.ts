@@ -167,7 +167,7 @@ const OZ_ALAN_AD: Record<string, string> = {
   oz_guven: "Öz Güven",
   oz_yeterlilik: "Öz Yeterlilik",
 };
-async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | null> {
+export async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | null> {
   const { data } = await db
     .from("on_farkindalik")
     .select("profil")

@@ -204,6 +204,50 @@ export type Database = {
           },
         ]
       }
+      ayna_analiz: {
+        Row: {
+          asama: string
+          created_at: string
+          id: string
+          metin: string
+          participant_id: string
+          ses_path: string | null
+          updated_at: string
+          yeniden_kullanildi: boolean
+          yeniden_sebep: string | null
+        }
+        Insert: {
+          asama: string
+          created_at?: string
+          id?: string
+          metin: string
+          participant_id: string
+          ses_path?: string | null
+          updated_at?: string
+          yeniden_kullanildi?: boolean
+          yeniden_sebep?: string | null
+        }
+        Update: {
+          asama?: string
+          created_at?: string
+          id?: string
+          metin?: string
+          participant_id?: string
+          ses_path?: string | null
+          updated_at?: string
+          yeniden_kullanildi?: boolean
+          yeniden_sebep?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ayna_analiz_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       senin_icin: {
         Row: {
           created_at: string

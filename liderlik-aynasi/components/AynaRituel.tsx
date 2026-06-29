@@ -6,6 +6,7 @@ import { titret } from "@/lib/his";
 import { ortuAc, ortuKapat } from "@/lib/ortu";
 import AynaIkon from "@/components/AynaIkon";
 import AynaSesi from "@/components/AynaSesi";
+import MuhurIkon from "@/components/MuhurIkon";
 
 const t = tr.rituel;
 
@@ -81,7 +82,8 @@ function DevButon({
 function MuhurRozet() {
   return (
     <div className="mt-8 rounded-2xl border border-gold/30 bg-gold/[0.06] px-5 py-4 text-center">
-      <p className="text-xs font-bold uppercase tracking-[0.25em] text-gold-light">
+      <p className="flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.25em] text-gold-light">
+        <MuhurIkon className="h-4 w-4" />
         {t.muhurUst}
       </p>
       <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.muhurMetin}</p>
@@ -534,9 +536,7 @@ export default function AynaRituel() {
                 ✓ {t.sesAlindi}
               </span>
             </div>
-            <p className="mt-5 text-5xl" aria-hidden>
-              🔒
-            </p>
+            <MuhurIkon className="mx-auto mt-5 h-14 w-14 text-gold-light" />
             <h1 className="prizma-serif ay-metin mt-3 text-3xl font-semibold leading-tight">
               {t.soru}
             </h1>

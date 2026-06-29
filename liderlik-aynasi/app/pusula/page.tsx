@@ -14,6 +14,8 @@ import Konfeti from "@/components/Konfeti";
 import AynaKurulum from "@/components/AynaKurulum";
 import TelefonaKurKocu from "@/components/TelefonaKurKocu";
 import GunProgramKarti from "@/components/GunProgramKarti";
+import AynaAnalizDeneyim from "@/components/AynaAnalizDeneyim";
+import MuhurIkon from "@/components/MuhurIkon";
 
 const t = tr.pusula;
 
@@ -129,10 +131,9 @@ export default async function PusulaSayfa() {
         {/* HERO — mühür kilidi: ekranın merkez, en baskın öğesi */}
         <div className="relative overflow-hidden rounded-3xl border-2 border-gold/45 bg-gradient-to-b from-gold/12 to-midnight-card/70 p-7 text-center shadow-xl">
           <span className="altin-tel" />
-          <p className="text-6xl leading-none" aria-hidden>
-            🔒
-          </p>
-          <p className="mt-4 inline-block rounded-full bg-gold/15 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-gold-light">
+          <MuhurIkon className="mx-auto h-16 w-16 text-gold-light" />
+          <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-gold/15 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-gold-light">
+            <MuhurIkon className="h-3.5 w-3.5" />
             {t.muhurRozet}
           </p>
           {kisislogan ? (
@@ -155,6 +156,13 @@ export default async function PusulaSayfa() {
           <p className="mt-4 text-sm font-semibold text-gold-light">{t.muhurHeroNot}</p>
           {kampTarihi && <GeriSayim hedefZaman={kampTarihi} etiket={t.kampaKalan} />}
         </div>
+
+        {/* AYNA'NIN İLK ANALİZİ — checklist'in tepesinde, kendi sesiyle okunan ilk ayna */}
+        <AynaAnalizDeneyim
+          asama="kamp_oncesi"
+          etiket={t.ilkAynaBaslik}
+          altEtiket={t.ilkAynaTeaser}
+        />
 
         {/* HAZIRLIK ÖZETİ — tüm adımlar tek bakışta tik + düzelt (katılımcı isteği) */}
         <div className="rounded-2xl border border-royal/25 bg-midnight-card/40 p-4">

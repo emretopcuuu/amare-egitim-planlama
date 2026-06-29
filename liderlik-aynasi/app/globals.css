@@ -1442,3 +1442,47 @@ html[data-admin-kontrast="yuksek"] .admin-kok .text-slate-400,
 html[data-admin-kontrast="yuksek"] .admin-kok .text-slate-500 {
   color: #cbd5e1 !important;
 }
+
+/* ── AYNA ANALİZİ — Star Wars jeneriği gibi aynanın içine doğru akan metin ── */
+/* Perspektif kabı: yazı uzaklara/aynanın içine doğru daralır. */
+.ayna-perspektif {
+  perspective: 340px;
+  perspective-origin: 50% 38%;
+}
+.ayna-egim {
+  transform: rotateX(26deg);
+  transform-origin: 50% 100%;
+  transform-style: preserve-3d;
+}
+/* Metin aşağıdan başlar, yukarı (uzağa) doğru süzülür; süre sese eşitlenir. */
+.ayna-akan {
+  animation-name: ayna-akis;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  animation-iteration-count: 1;
+}
+@keyframes ayna-akis {
+  0% { transform: translateY(70%); opacity: 0; }
+  6% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { transform: translateY(-135%); opacity: 0; }
+}
+/* Üstte yazının "uzakta kaybolması" için gradyan maske. */
+.ayna-maske {
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 32%, #000 100%);
+  mask-image: linear-gradient(to bottom, transparent 0%, #000 32%, #000 100%);
+}
+/* Dönen ayna videosu — yavaş, sakin bir nefes. */
+.ayna-doner {
+  animation: ayna-don 36s linear infinite;
+}
+@keyframes ayna-don {
+  from { transform: scale(1.08) rotate(0deg); }
+  to { transform: scale(1.08) rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ayna-akan { animation: none; transform: none; }
+  .ayna-egim { transform: none; }
+  .ayna-maske { -webkit-mask-image: none; mask-image: none; }
+  .ayna-doner { animation: none; }
+}
