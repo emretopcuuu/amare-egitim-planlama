@@ -3290,6 +3290,13 @@ export const tr = {
     siradakiGorev: "Sıradaki göreve geç →",
     // A5 — benzerini tekrar dene
     gelistirYeniden: "Geliştir ve yeniden gönder",
+    // "Bana ekstra görev ver" — boş zamanda puanını artırma
+    ekstraIste: "Bana ekstra görev ver",
+    ekstraUretiliyor: "AYNA hazırlıyor…",
+    ekstraHazir: "✓ Ekstra görevin hazır.",
+    ekstraOlmadi: "Şu an üretilemedi — birazdan tekrar dene.",
+    ekstraBekleyenVar: "Önce mevcut görevini bitir.",
+    ekstraNot: "Boş zamanın mı var? Ekstra görevle kıvılcımını artır.",
     benzeriIste: "Bu konuda bir görev daha ver",
     benzeriUretiliyor: "AYNA hazırlıyor…",
     benzeriHazir: "✓ Yeni görevin hazır — yukarı kaydır.",
