@@ -154,9 +154,10 @@ export default function EkranGosterisi() {
   const enYuksekOrt = siraliOzellikler[0]?.ort ?? null;
 
   return (
-    // koyu-alan + koyu perde: projeksiyon ekranında parlak göl fotoğrafı yazıyı/
-    // grafiği yutmasın — foto ambian olarak kalır (≈%30) ama içerik net okunur.
-    <main className="koyu-alan flex h-screen w-screen flex-col overflow-hidden bg-gradient-to-b from-[#04101c]/78 via-[#04101c]/68 to-[#020a12]/82 p-10">
+    // SİNEMATİK PROJEKSİYON ZEMİNİ: hall'da parlak foto yazıyı yutar. Foto artık
+    // yalnız faint bir doku (≈%8) — neredeyse opak koyu zemin + üstte hafif glow
+    // vinyet. İçerik ışıldar, uzaktan okunur. koyu-alan: gündüz teması da koyu.
+    <main className="koyu-alan ekran-sahne relative flex h-screen w-screen flex-col overflow-hidden bg-gradient-to-b from-[#020a12]/95 via-[#040f1c]/92 to-[#01040a]/97 p-10">
       {/* Ses kapısı: kurulumda tek tıklama, sonrası otomatik anonslar */}
       <button
         onClick={() => {
@@ -229,10 +230,13 @@ export default function EkranGosterisi() {
       )}
       <header className="flex items-end justify-between">
         <div>
-          <p className="text-lg font-medium uppercase tracking-[0.3em] text-royal-light">
+          <p className="flex items-center gap-2.5 text-lg font-semibold uppercase tracking-[0.3em] text-royal-light">
+            <span className="ekran-canli-nokta inline-block h-3 w-3 rounded-full bg-red-500" aria-hidden />
             {t.altBaslik}
           </p>
-          <h1 className="font-display altin-metin mt-1 text-5xl font-bold text-gold">{t.baslik}</h1>
+          <h1 className="font-display altin-metin mt-1 text-7xl font-bold leading-none text-gold drop-shadow-[0_2px_18px_rgba(212,175,55,0.25)]">
+            {t.baslik}
+          </h1>
         </div>
         <div className="text-right">
           <p className="text-xl text-slate-400">{veri?.dalgaAdi ?? t.dalgaYok}</p>
@@ -294,7 +298,7 @@ export default function EkranGosterisi() {
               }`}
             >
               <div className="flex items-baseline justify-between">
-                <h2 className="text-3xl font-semibold text-gold-light">
+                <h2 className="text-4xl font-bold text-gold-light">
                   {t.agBaslik}
                 </h2>
                 {veri.caprazOran !== null && (
@@ -372,7 +376,7 @@ export default function EkranGosterisi() {
                 slayt === 2 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
-              <h2 className="text-3xl font-semibold text-gold-light">
+              <h2 className="text-4xl font-bold text-gold-light">
                 💪 {t.ozellikBaslik}
               </h2>
               <p className="mt-1 text-lg text-slate-400">{t.ozellikAciklama}</p>
@@ -410,7 +414,7 @@ export default function EkranGosterisi() {
                 slayt === 3 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
-              <h2 className="text-3xl font-semibold text-gold-light">
+              <h2 className="text-4xl font-bold text-gold-light">
                 {t.ligBaslik}
               </h2>
               <p className="mt-1 text-lg text-slate-400">{t.ligAciklama}</p>
@@ -495,7 +499,7 @@ export default function EkranGosterisi() {
                 slayt === 4 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
-              <h2 className="text-3xl font-semibold text-gold-light">{t.duvarBaslik}</h2>
+              <h2 className="text-4xl font-bold text-gold-light">{t.duvarBaslik}</h2>
               {veri.anilar.length === 0 ? (
                 <p className="flex flex-1 items-center justify-center text-xl text-slate-400">
                   {t.duvarBos}
@@ -521,7 +525,7 @@ export default function EkranGosterisi() {
                 slayt === 5 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
               }`}
             >
-              <h2 className="text-3xl font-semibold text-gold-light">{t.yansimaBaslik}</h2>
+              <h2 className="text-4xl font-bold text-gold-light">{t.yansimaBaslik}</h2>
               <p className="mt-1 text-lg text-slate-400">{t.yansimaAciklama}</p>
               {veri.yansimalar.length === 0 ? (
                 <p className="flex flex-1 items-center justify-center text-xl text-slate-400">
