@@ -1,20 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { ortuAc, ortuKapat } from "@/lib/ortu";
 
 const DEPO = "la_marka_splash_v1";
+// Projeksiyon ekranlarının (/ekran, /sahne) KENDİ marka videosu açılışı var;
+// global statik logo splash'ı orada gösterme (çift açılış / çakışma olmasın).
+const ATLA = ["/ekran", "/sahne"];
 
 // Tek seferlik marka açılışı: ilk açılışta ONE TEAM amblemi şık bir reveal'le
 // belirir, sonra bir daha çıkmaz. Eski siyah-kutu marka videosu yerine şeffaf
 // logo (ton uyuşmazlığı yok); atlanabilir + güvenlik zamanlayıcısı kapatır.
 // Test için: URL'ye ?intro=1 eklenirse localStorage'a bakmadan yeniden gösterir.
 export default function AcilisSplash() {
+  const pathname = usePathname();
   const [goster, setGoster] = useState(false);
   const [kapaniyor, setKapaniyor] = useState(false);
 
   useEffect(() => {
+    if (ATLA.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return;
     let acildi = false;
     try {
       const zorla = new URLSearchParams(window.location.search).has("intro");
@@ -29,7 +35,8 @@ export default function AcilisSplash() {
     if (!acildi) return;
     const z = setTimeout(kapat, 2600);
     return () => clearTimeout(z);
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   // Açıkken alt menüyü gizle (tam-ekran takeover'ı dibe taşımasın/örtmesin).
   useEffect(() => {
