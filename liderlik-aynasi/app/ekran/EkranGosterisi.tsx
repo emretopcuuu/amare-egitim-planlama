@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import type { EkranVerisi } from "@/app/api/ekran/route";
 import EpicYildizlar from "./EpicYildizlar";
+import AynaGoz from "@/components/AynaGoz";
 import {
   kampGunu,
   suankiMadde,
@@ -140,6 +141,14 @@ export default function EkranGosterisi() {
   const oynanan = useRef<Set<string>>(new Set());
   // Sahne Vitrini (DJ): host bir slayt sabitlediyse otomatik döngü durur.
   const vitrinRef = useRef<number | null>(null);
+  // Canlı enerji (0-1): AYNA gözünün nabzını + ruh halini sürer. Aktivite
+  // arttıkça yükselir, sönümlenerek azalır.
+  const [enerji, setEnerji] = useState(0);
+  const sonAktiviteRef = useRef<number | null>(null);
+  useEffect(() => {
+    const id = setInterval(() => setEnerji((e) => (e > 0.02 ? e * 0.85 : 0)), 3000);
+    return () => clearInterval(id);
+  }, []);
 
   useEffect(() => {
     let iptal = false;
@@ -150,6 +159,15 @@ export default function EkranGosterisi() {
         const yeni = (await res.json()) as EkranVerisi;
         if (iptal) return;
         setVeri(yeni);
+
+        // CANLI ENERJİ: bugünkü toplam aktivitenin (görev+gözlem+takdir) son
+        // yoklamadan beri artışı → AYNA gözünün nabzını/parlaklığını canlandırır.
+        const toplam = yeni.bugun.gorev + yeni.bugun.gozlem + yeni.bugun.takdir;
+        if (sonAktiviteRef.current !== null) {
+          const delta = Math.max(0, toplam - sonAktiviteRef.current);
+          setEnerji((onceki) => Math.min(1, Math.max(onceki * 0.55, delta / 4)));
+        }
+        sonAktiviteRef.current = toplam;
 
         // Sahne Vitrini (DJ): host bir slayt sabitlemişse ekranı oraya kilitle
         vitrinRef.current = yeni.vitrin;
@@ -219,11 +237,21 @@ export default function EkranGosterisi() {
   );
   const enYuksekOrt = siraliOzellikler[0]?.ort ?? null;
 
+  // AYNA'nın ruh hali — canlı enerjiden türetilir (atmosfer barometresi).
+  const ruh =
+    enerji > 0.45
+      ? { e: "🔥", t: "Salon yüksek enerjide", c: "text-rose-300", b: "border-rose-400/40 bg-rose-400/10" }
+      : enerji > 0.12
+        ? { e: "⚡", t: "Hareketli", c: "text-amber-300", b: "border-amber-400/40 bg-amber-400/10" }
+        : { e: "🌙", t: "Sakin salon", c: "text-sky-300", b: "border-sky-400/30 bg-sky-400/10" };
+
   return (
     // SİNEMATİK PROJEKSİYON ZEMİNİ: hall'da parlak foto yazıyı yutar. Foto artık
     // yalnız faint bir doku (≈%8) — neredeyse opak koyu zemin + üstte hafif glow
     // vinyet. İçerik ışıldar, uzaktan okunur. koyu-alan: gündüz teması da koyu.
     <main className="koyu-alan ekran-sahne relative flex h-screen w-screen flex-col overflow-hidden bg-gradient-to-b from-[#020a12]/95 via-[#040f1c]/92 to-[#01040a]/97 p-10">
+      {/* AYNA'NIN YAŞAYAN GÖZÜ — her şey onun gözünün içinde yaşar (z-0, arkada) */}
+      <AynaGoz enerji={enerji} fiero={!!fieroGoster} />
       {/* Ses kapısı: kurulumda tek tıklama, sonrası otomatik anonslar */}
       <button
         onClick={() => {
@@ -294,7 +322,7 @@ export default function EkranGosterisi() {
           />
         </div>
       )}
-      <header className="flex items-end justify-between">
+      <header className="relative z-10 flex items-end justify-between">
         <div>
           <p className="flex items-center gap-2.5 text-lg font-semibold uppercase tracking-[0.3em] text-royal-light">
             <span className="ekran-canli-nokta inline-block h-3 w-3 rounded-full bg-red-500" aria-hidden />
@@ -304,7 +332,13 @@ export default function EkranGosterisi() {
             {t.baslik}
           </h1>
         </div>
-        <div className="text-right">
+        <div className="flex flex-col items-end gap-2 text-right">
+          {/* AYNA'nın ruh hali — salonun o anki enerjisini hisseder */}
+          <span
+            className={`rounded-full border px-4 py-1.5 text-lg font-bold ${ruh.b} ${ruh.c}`}
+          >
+            {ruh.e} {ruh.t}
+          </span>
           <p className="text-xl text-slate-400">{veri?.dalgaAdi ?? t.dalgaYok}</p>
           {veri && <EpicYildizlar toplam={veri.toplamPuan} />}
         </div>
@@ -312,7 +346,7 @@ export default function EkranGosterisi() {
 
       {/* BUGÜNÜN CANLI SAYAÇLARI — salonun enerjisi tek bakışta (her slaytta sabit) */}
       {veri?.bugun && (
-        <div className="mt-5 grid grid-cols-4 gap-3">
+        <div className="relative z-10 mt-5 grid grid-cols-4 gap-3">
           {[
             { ikon: "🤖", sayi: veri.bugun.gorev, etiket: "görev", renk: "text-gold-light" },
             { ikon: "👁", sayi: veri.bugun.gozlem, etiket: "gözlem", renk: "text-sky-300" },
@@ -336,7 +370,7 @@ export default function EkranGosterisi() {
 
       {/* SENKRON AN canlı katılım bandı */}
       {veri?.senkron && (
-        <div className="parilti mt-4 flex items-center justify-between rounded-2xl border-2 border-gold/50 bg-gold/15 px-8 py-4">
+        <div className="parilti relative z-10 mt-4 flex items-center justify-between rounded-2xl border-2 border-gold/50 bg-gold/15 px-8 py-4">
           <p className="text-3xl font-bold text-gold-light">
             ⏰ {t.senkronBaslik}: {veri.senkron.baslik}
           </p>
@@ -350,7 +384,7 @@ export default function EkranGosterisi() {
         </div>
       )}
 
-      <div className="relative mt-8 flex-1">
+      <div className="relative z-10 mt-8 flex-1">
         {!veri ? (
           <p className="flex h-full items-center justify-center text-2xl text-slate-400">
             {t.veriYok}
@@ -721,8 +755,13 @@ export default function EkranGosterisi() {
         </div>
       )}
 
+      {/* AYNA imzası — her slaytta dönen kısa fısıltı (sinematik kabuk) */}
+      <p className="relative z-10 mt-4 text-center text-sm font-medium uppercase tracking-[0.4em] text-gold-light/40">
+        — {["AYNA gözlemliyor", "AYNA görüyor", "AYNA dinliyor", "AYNA hatırlıyor", "AYNA yönetiyor"][slayt % 5]} —
+      </p>
+
       {/* Slayt göstergesi: tempo çubuğu + nokta + N/toplam */}
-      <footer className="mt-6">
+      <footer className="relative z-10 mt-3">
         <div className="mx-auto mb-3 h-1 w-64 overflow-hidden rounded-full bg-white/10">
           {/* key={slayt} → her slaytta baştan dolar (kalan süre görünür) */}
           <div key={slayt} className="ekran-ilerle h-full rounded-full bg-gold/70" />

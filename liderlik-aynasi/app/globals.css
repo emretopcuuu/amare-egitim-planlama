@@ -67,6 +67,19 @@ body.ortu-acik .kimsin-bant {
 }
 .ekran-canli-nokta { animation: ekran-canli-nabiz 1.6s ease-in-out infinite; }
 
+/* AYNA'nın yaşayan gözü: nefes (ölçek) + irisin çok yavaş dönüşü. Nefes süresi
+   bileşende enerjiye göre inline ayarlanır (sakin 6s → yüksek enerji 3s). */
+@keyframes ayna-goz-nefes {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+.ayna-goz { animation: ayna-goz-nefes 6s ease-in-out infinite; }
+@keyframes ayna-goz-don { to { transform: rotate(360deg); } }
+.ayna-goz-iris { animation: ayna-goz-don 110s linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .ayna-goz, .ayna-goz-iris { animation: none; }
+}
+
 /* Takım Kimyası ağı — düğümler nabız atar, takımlar-arası altın köprüler akar. */
 @keyframes ekran-dugum-nabiz {
   0%, 100% { transform: scale(1); opacity: 0.92; }
