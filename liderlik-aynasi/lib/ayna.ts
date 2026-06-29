@@ -228,11 +228,11 @@ async function temalarCikar(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-haiku-4-5",
+      model: "claude-sonnet-4-6",
       max_tokens: 256,
       thinking: { type: "disabled" },
-      // Haiku effort'u desteklemiyor (400) — yalnız format.
       output_config: {
+        effort: "low",
         format: { type: "json_schema", schema: TEMA_SEMASI },
       },
       system:
@@ -1180,11 +1180,11 @@ export async function korNoktaGuncelle(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-haiku-4-5",
+      model: "claude-sonnet-4-6",
       max_tokens: 300,
       thinking: { type: "disabled" },
-      // Haiku effort'u desteklemiyor (400) — yalnız format.
       output_config: {
+        effort: "low",
         format: {
           type: "json_schema",
           schema: {
@@ -1488,7 +1488,7 @@ export async function gorevNetlestir(gorev: {
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-opus-4-8",
+      model: "claude-sonnet-4-6",
       max_tokens: 600,
       thinking: { type: "disabled" },
       output_config: { effort: "low", format: { type: "json_schema", schema: SEMA } },
