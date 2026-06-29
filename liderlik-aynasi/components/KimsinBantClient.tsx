@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 // Üst-orta kimlik çipi + YARDIM. Çip her zaman en tepede sabit durur; ALTINDAKİ
@@ -44,6 +44,34 @@ export default function KimsinBantClient({
   okunmamis?: number;
 }) {
   const [acik, setAcik] = useState(false);
+
+  // CANLI ROZET: okunmamış sayısını periyodik + sekme/uygulama öne gelince yokla
+  // (sayfa yenilemeden güncellensin). Başlangıç sunucudan gelen değer.
+  const [sayi, setSayi] = useState(okunmamis);
+  useEffect(() => setSayi(okunmamis), [okunmamis]); // sayfa geçişinde sunucu değeriyle eşitle
+  useEffect(() => {
+    let durdu = false;
+    async function cek() {
+      try {
+        const r = await fetch("/api/bildirimler");
+        if (!r.ok) return;
+        const d = await r.json();
+        if (!durdu && typeof d?.okunmamis === "number") setSayi(d.okunmamis);
+      } catch {}
+    }
+    const id = setInterval(cek, 25_000);
+    function gorunur() {
+      if (document.visibilityState === "visible") cek();
+    }
+    document.addEventListener("visibilitychange", gorunur);
+    window.addEventListener("focus", cek);
+    return () => {
+      durdu = true;
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", gorunur);
+      window.removeEventListener("focus", cek);
+    };
+  }, []);
 
   return (
     <>
@@ -134,7 +162,7 @@ export default function KimsinBantClient({
           {/* Zil — bildirim gelen kutusu; okunmamış sayısı rozette (soru işaretinin yanında) */}
           <Link
             href="/bildirimler"
-            aria-label={`Bildirimler${okunmamis > 0 ? ` (${okunmamis} okunmamış)` : ""}`}
+            aria-label={`Bildirimler${sayi > 0 ? ` (${sayi} okunmamış)` : ""}`}
             className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gold/30 bg-midnight-card/90 text-slate-200 shadow-lg backdrop-blur-md transition-colors hover:border-gold/50"
           >
             <svg
@@ -148,9 +176,9 @@ export default function KimsinBantClient({
               <path d="M6 9a6 6 0 0 1 12 0c0 4 1 5 1.6 6H4.4C5 14 6 13 6 9Z" strokeLinejoin="round" />
               <path d="M10 19a2 2 0 0 0 4 0" strokeLinecap="round" />
             </svg>
-            {okunmamis > 0 && (
+            {sayi > 0 && (
               <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[0.6rem] font-bold leading-none text-white">
-                {okunmamis > 9 ? "9+" : okunmamis}
+                {sayi > 9 ? "9+" : sayi}
               </span>
             )}
           </Link>
