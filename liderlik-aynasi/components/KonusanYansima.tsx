@@ -18,6 +18,9 @@ export default function KonusanYansima({
 }) {
   const video = useRef<HTMLVideoElement | null>(null);
   const ses = useRef<HTMLAudioElement | null>(null);
+  // Senkron başlatma kilidi: hızlı çift dokunuş React state'i (caliyor) güncellenmeden
+  // ikinci kez play() çağırıp sesi ÜST ÜSTE bindirmesin.
+  const baslatiliyor = useRef(false);
   const [caliyor, setCaliyor] = useState(false);
   const [hata, setHata] = useState(false);
 
@@ -30,6 +33,7 @@ export default function KonusanYansima({
   }, []);
 
   function durdur() {
+    baslatiliyor.current = false;
     ses.current?.pause();
     if (ses.current) ses.current.currentTime = 0;
     video.current?.pause();
@@ -38,19 +42,31 @@ export default function KonusanYansima({
   }
 
   function tikla() {
-    if (caliyor) {
+    const a = ses.current;
+    // Çalıyorsa (state'e değil, elementin gerçek durumuna bak) → durdur.
+    if (a && !a.paused) {
       durdur();
       return;
     }
+    // Başlatma sürerken ikinci dokunuşu yok say (üst üste binmeyi önler).
+    if (baslatiliyor.current) return;
+    baslatiliyor.current = true;
+
     if (!ses.current) {
       ses.current = new Audio(sesUrl);
       ses.current.onended = durdur;
       // Dosya yüklenemezse (404/ağ) sessizce yutma — kullanıcıya bildir.
       ses.current.onerror = () => {
+        baslatiliyor.current = false;
         setHata(true);
         setCaliyor(false);
       };
     }
+    // Tek element üzerinden hep baştan çal — kalıntı çakışma olmasın.
+    try {
+      ses.current.pause();
+      ses.current.currentTime = 0;
+    } catch {}
     setHata(false);
     // Ses anlatıcıdır; video onun altında sessizce döner
     void video.current?.play().catch(() => {});
@@ -60,6 +76,9 @@ export default function KonusanYansima({
       .catch(() => {
         setHata(true);
         setCaliyor(false);
+      })
+      .finally(() => {
+        baslatiliyor.current = false;
       });
   }
 

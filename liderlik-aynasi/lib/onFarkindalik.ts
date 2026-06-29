@@ -174,7 +174,6 @@ export const KATMAN3_AKTIVITE: Katman3Soru[] = [
 
 export const KATMAN3_RITIM: Katman3Soru[] = [
   { kod: "k3.gelir_gun", metin: "Son 30 günün kaçında gelir getirici bir aktivite yaptın? (0-30)", max: 30 },
-  { kod: "k3.uzak_gun", metin: "En uzun kaç gün üst üste sahadan tamamen uzak kaldın?", max: 30 },
 ];
 
 export const KATMAN3_SORULAR: Katman3Soru[] = [...KATMAN3_AKTIVITE, ...KATMAN3_RITIM];
@@ -185,10 +184,9 @@ export function katman3Hesapla(yanitlar: Record<string, number>): {
 } {
   const tamamMi = KATMAN3_SORULAR.every((s) => yanitlar[s.kod] !== undefined);
   const gelirGun = yanitlar["k3.gelir_gun"] ?? 0;
-  const uzakGun = yanitlar["k3.uzak_gun"] ?? 0;
-  // Ritim: çok gün aktif + kısa kopuş = düzenli; az gün + uzun kopuş = patlayıp sönen.
+  // Ritim: ayın yarısından çoğunda aktif = düzenli; aksi halde patlayıp sönen.
   let ritim: "duzenli" | "patlayan" | "belirsiz" = "belirsiz";
-  if (tamamMi) ritim = gelirGun >= 15 && uzakGun <= 5 ? "duzenli" : "patlayan";
+  if (tamamMi) ritim = gelirGun >= 15 ? "duzenli" : "patlayan";
   return { ritim, tamamMi };
 }
 
@@ -321,11 +319,10 @@ export function gecerliYanit(kod: string, deger: number): boolean {
   if (!Number.isInteger(deger)) return false;
   if (kod.startsWith("k1.") || kod.startsWith("k5b.")) return deger >= 1 && deger <= 5;
   if (kod.startsWith("k2.")) return deger >= 1 && deger <= 10;
-  if (kod.startsWith("k3.")) {
-    const soru = KATMAN3_SORULAR.find((s) => s.kod === kod);
-    return deger >= 0 && deger <= (soru?.max ?? 999);
-  }
-  if (kod.startsWith("k5a.")) return deger >= 0 && deger <= 999;
+  // Sayısal aktivite/ritim/öğrenme alanları: büyük gerçek sayılara izin ver
+  // (üst sınır sadece güvenlik tavanı; tuşlamayı kısıtlamaz).
+  if (kod.startsWith("k3.")) return deger >= 0 && deger <= 1_000_000;
+  if (kod.startsWith("k5a.")) return deger >= 0 && deger <= 1_000_000;
   return false;
 }
 
