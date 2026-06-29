@@ -1,4 +1,4 @@
-import { KAMP_GUNLERI, kampGunu } from "./kampProgrami";
+import { kampGunleri, kampGunu } from "./kampProgrami";
 
 // #7 "Şimdi ne yapmalıyım?" — adminin o an basması gereken TEK adımı, kampın
 // takvimine + sistemin durumuna bakarak öneren saf (yan etkisiz) karar motoru.
@@ -23,6 +23,8 @@ export type AdminOneri = {
 
 export type AsistanDurum = {
   bugun: string; // Istanbul "YYYY-MM-DD"
+  // Kampın 1. günü (Istanbul "YYYY-MM-DD"); yoksa sabit varsayılan takvim.
+  baslangic?: string;
   katilimciSayisi: number;
   acikDalgaId: number | null;
   ozTamam: number; // açık değerlendirmede kendini puanlayan sayısı
@@ -38,11 +40,10 @@ export type AsistanDurum = {
   onFarkAcik: boolean;
 };
 
-const ILK_GUN = KAMP_GUNLERI[0];
-const SON_GUN = KAMP_GUNLERI[KAMP_GUNLERI.length - 1];
-
 export function adminOnerisi(d: AsistanDurum): AdminOneri {
-  const gun = kampGunu(d.bugun);
+  // Kamp takvimi başlangıçtan türetilir (sabit değil) — bkz. AsistanDurum.baslangic.
+  const [ILK_GUN, , SON_GUN] = kampGunleri(d.baslangic);
+  const gun = kampGunu(d.bugun, d.baslangic);
   const cogunlukBitti = d.ozToplam > 0 && d.ozTamam / d.ozToplam >= 0.8;
 
   // 1) KAMP ÖNCESİ — hazırlık hunisi (funnel'a bağlı: yükle → pencere aç →

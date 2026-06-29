@@ -6,6 +6,10 @@
 // hep buradan okur. Bilinçli olarak 'server-only' DEĞİL ve DB'siz —
 // simülasyon ve istemci bileşenleri de aynı kuralları kullanır.
 
+// Sabit (varsayılan) kamp takvimi — yalnız bir başlangıç verilmediğinde geçerli.
+// Kamp "başlatıldığında" (AYNA aktifleştirilince ayna_baslangic yazılır) gerçek
+// 3 gün o tarihten türetilir; bkz. kampGunleri(baslangic). Böylece simülasyon
+// "bugün başlat → bugün/yarın/öbür gün" olarak akar, takvime çakılı değil.
 export const KAMP_GUNLERI = ["2026-07-17", "2026-07-18", "2026-07-19"] as const;
 
 export const KAMP_BASLIK = "SAPANCA LEADER PLUS PD101";
@@ -193,9 +197,27 @@ export function dakikaCevir(saatYazi: string): number {
   return s * 60 + d;
 }
 
-/** "YYYY-MM-DD" (Istanbul) → kamp günü 1-3, kamp dışıysa null. */
-export function kampGunu(tarih: string): 1 | 2 | 3 | null {
-  const i = (KAMP_GUNLERI as readonly string[]).indexOf(tarih);
+/** Bir "YYYY-MM-DD" tarihine n gün ekler (takvim günü; TZ/DST'den bağımsız —
+ * öğlen UTC çapasıyla gün kayması olmaz). */
+function gunEkle(tarih: string, n: number): string {
+  const [y, ay, g] = tarih.split("-").map(Number);
+  const d = new Date(Date.UTC(y, ay - 1, g + n, 12));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(
+    d.getUTCDate()
+  ).padStart(2, "0")}`;
+}
+
+/** Kampın 3 gününün tarihleri. baslangic verilirse (1. günün Istanbul
+ * "YYYY-MM-DD" tarihi) ardışık 3 gün; verilmezse sabit varsayılan takvim. */
+export function kampGunleri(baslangic?: string): readonly [string, string, string] {
+  if (!baslangic) return KAMP_GUNLERI;
+  return [gunEkle(baslangic, 0), gunEkle(baslangic, 1), gunEkle(baslangic, 2)];
+}
+
+/** "YYYY-MM-DD" (Istanbul) → kamp günü 1-3, kamp dışıysa null.
+ * baslangic verilirse kamp o tarihten başlar (dinamik); yoksa sabit takvim. */
+export function kampGunu(tarih: string, baslangic?: string): 1 | 2 | 3 | null {
+  const i = (kampGunleri(baslangic) as readonly string[]).indexOf(tarih);
   return i === -1 ? null : ((i + 1) as 1 | 2 | 3);
 }
 
@@ -272,9 +294,10 @@ export const SENKRON_SAATLERI: Record<1 | 2 | 3, [number, number]> = {
 export function kampSenkronAnahtari(
   tarih: string,
   saat: number,
-  dakika: number
+  dakika: number,
+  baslangic?: string
 ): string | null {
-  const gun = kampGunu(tarih);
+  const gun = kampGunu(tarih, baslangic);
   if (!gun) return null;
   const [ss, dd] = SENKRON_SAATLERI[gun];
   const dk = saat * 60 + dakika;

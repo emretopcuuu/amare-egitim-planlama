@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { gorevUret, istanbulSaati } from "@/lib/ayna";
 import { katilimciyaBildir } from "@/lib/push";
 import { kampGunu } from "@/lib/kampProgrami";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { tr } from "@/lib/i18n/tr";
 
 export const maxDuration = 60;
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
 
   if (eylem === "gorev") {
     const bugun = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
-    const gun = kampGunu(bugun) ?? 2;
+    const gun = kampGunu(bugun, await kampBaslangicGetir(db)) ?? 2;
     const { saat } = istanbulSaati();
     const gorev = await gorevUret(db, kisi, gun, saat, "kamp", null);
     if (!gorev) return Response.json({ hata: tr.admin.mudahale.uretilemedi }, { status: 503 });

@@ -7,7 +7,8 @@ import { adminOnerisi } from "@/lib/adminAsistan";
 import { adminUyarilari } from "@/lib/adminUyarilar";
 import { funnelMetrikleri } from "@/lib/funnel";
 import { tr } from "@/lib/i18n/tr";
-import { kampGunu, KAMP_GUNLERI } from "@/lib/kampProgrami";
+import { kampGunu, kampGunleri } from "@/lib/kampProgrami";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 import FunnelOmurga from "./FunnelOmurga";
 import OtoYenile from "./OtoYenile";
 import GununAkisi from "./GununAkisi";
@@ -145,12 +146,14 @@ export default async function AdminPanel() {
   const bugun = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
   }).format(new Date());
+  // Kamp takvimi başlatılan tarihten türetilir (sabit değil).
+  const kampBaslangic = await kampBaslangicGetir(db);
+  const [ilkGun, , sonKampGun] = kampGunleri(kampBaslangic);
 
   // FUNNEL aşaması: kampın yolculuğunda operatör NEREDE? 1 Hazırlık → 2 Katılım
   // → 3 Kamp Canlı → 4 Final → 5 Sonrası. Pencere anahtarları + kamp takviminden
   // çıkarılır; omurga şeridi bunu vurgular.
-  const kampGun = kampGunu(bugun);
-  const sonKampGun = KAMP_GUNLERI[KAMP_GUNLERI.length - 1];
+  const kampGun = kampGunu(bugun, kampBaslangic);
   const funnelAyar = new Map((funnelAyarlar ?? []).map((a) => [a.key, a.value]));
   const muhurAcik = funnelAyar.get("muhur_acik") === "true";
   const aktifAsama =
@@ -178,7 +181,6 @@ export default async function AdminPanel() {
     return g === bugun ? `açıldı ${sa}` : `açıldı ${g.slice(8)}/${g.slice(5, 7)} ${sa}`;
   };
   // Kampa kalan gün (ETA) — kamp öncesi 3·Canlı aşamasına bilgi olarak.
-  const ilkGun = KAMP_GUNLERI[0];
   const kalanGun =
     bugun < ilkGun
       ? Math.ceil((new Date(ilkGun).getTime() - new Date(bugun).getTime()) / 86_400_000)
@@ -198,6 +200,7 @@ export default async function AdminPanel() {
 
   const oneri = adminOnerisi({
     bugun,
+    baslangic: kampBaslangic,
     katilimciSayisi: katilimciSayisi ?? 0,
     acikDalgaId: acikDalga?.id ?? null,
     ozTamam: ilerleme?.ozTamamlar.size ?? 0,
@@ -376,7 +379,7 @@ export default async function AdminPanel() {
               <Uyarilar uyarilar={uyarilar} />
             </div>
           )}
-          {kampGun !== null && <GununAkisi bugun={bugun} />}
+          {kampGun !== null && <GununAkisi bugun={bugun} baslangic={kampBaslangic} />}
         </>
       </Katlanir>
 

@@ -606,15 +606,19 @@ export async function pusulaCekirdek(
   };
 }
 
-// FAZ 0 kapısı: Pusula penceresi açık ve kişi kampı (oda QR) henüz açmadıysa
-// kamp özellikleri (görevler, değerlendirme, duvar...) kilitlidir — kişi
-// bekleme/Pusula ekranına yönlendirilir. Pencere kapalıyken hep false.
+// FAZ 0 kapısı: kamp özellikleri (görevler, değerlendirme, duvar...) yalnız
+// kişi kampı (oda QR / kamp kodu) fiziksel olarak açana kadar kilitlidir; ondan
+// önce kişi hazırlık (Pusula) hub'ına yönlendirilir. Onboarding HEP AÇIK olduğu
+// için ayrı bir "pusula penceresi" bayrağına bağlı değil — admin pencere açıp
+// kapamakla uğraşmaz. (Öz-değerlendirme kamp öncesi /degerlendir/[kendiId]
+// üzerinden erişilir; bu kapının dışındadır.)
 export async function kampKilitliMi(db: Db, pid: string): Promise<boolean> {
-  const [{ data: kisi }, { data: ayar }] = await Promise.all([
-    db.from("participants").select("camp_unlocked_at").eq("id", pid).maybeSingle(),
-    db.from("settings").select("value").eq("key", "pusula_acik").maybeSingle(),
-  ]);
-  return ayar?.value === "true" && !kisi?.camp_unlocked_at;
+  const { data: kisi } = await db
+    .from("participants")
+    .select("camp_unlocked_at")
+    .eq("id", pid)
+    .maybeSingle();
+  return !kisi?.camp_unlocked_at;
 }
 
 // Gate/UI için durum: aşama, tamamlandı mı, öncelik listesi girilmiş mi.

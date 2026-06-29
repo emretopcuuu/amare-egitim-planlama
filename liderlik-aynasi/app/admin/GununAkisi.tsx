@@ -8,8 +8,14 @@ const t = tr.admin.akis;
 
 // #2 Bugünün Akışı: kamp günündeyse o günün admin adımlarını sıralı checklist
 // olarak gösterir. Kamp günü değilse (öncesi/sonrası) hiç görünmez.
-export default function GununAkisi({ bugun }: { bugun: string }) {
-  const gun = kampGunu(bugun);
+export default function GununAkisi({
+  bugun,
+  baslangic,
+}: {
+  bugun: string;
+  baslangic?: string;
+}) {
+  const gun = kampGunu(bugun, baslangic);
   if (!gun) return null;
   const adimlar = KAMP_ADMIN_AKISI[gun];
 

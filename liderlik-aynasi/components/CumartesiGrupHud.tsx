@@ -36,7 +36,14 @@ function istanbulAni(): { tarih: string; gunDk: number } {
   return { tarih, gunDk: h * 60 + m };
 }
 
-export default function CumartesiGrupHud({ takim }: { takim: string | null }) {
+export default function CumartesiGrupHud({
+  takim,
+  cumartesiTarih = CUMARTESI_TARIH,
+}: {
+  takim: string | null;
+  // Kampın 2. günü (Istanbul "YYYY-MM-DD"); kamp başlatma tarihinden türetilir.
+  cumartesiTarih?: string;
+}) {
   const grup = grupNoCozumle(takim);
   const [an, setAn] = useState<{ tarih: string; gunDk: number } | null>(null);
 
@@ -50,7 +57,7 @@ export default function CumartesiGrupHud({ takim }: { takim: string | null }) {
   if (!grup) return null;
 
   const bloklar = grupBloklari(grup);
-  const canli = an?.tarih === CUMARTESI_TARIH;
+  const canli = an?.tarih === cumartesiTarih;
   const aktif = canli && an ? grupAktifBlok(grup, an.gunDk) : null;
   const siradaki = canli && an ? grupSiradaki(grup, an.gunDk) : null;
   const bosta = canli && an ? grupBostaMi(grup, an.gunDk) : false;

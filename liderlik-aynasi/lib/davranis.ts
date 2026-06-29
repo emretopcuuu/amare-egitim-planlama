@@ -279,6 +279,8 @@ export type SenkronBaglam = {
   dakika: number;
   /** YYYY-MM-DD (Istanbul) */
   tarih: string;
+  /** Kampın 1. günü (Istanbul YYYY-MM-DD); yoksa sabit takvim. */
+  baslangic?: string;
 };
 
 /**
@@ -291,7 +293,8 @@ export type SenkronBaglam = {
 export function senkronAnahtari(b: SenkronBaglam): string | null {
   if (b.mod === "kamp") {
     // Kamp tarihindeyse YALNIZ programa dikilmiş pencere geçerli
-    if (kampGunu(b.tarih)) return kampSenkronAnahtari(b.tarih, b.saat, b.dakika);
+    if (kampGunu(b.tarih, b.baslangic))
+      return kampSenkronAnahtari(b.tarih, b.saat, b.dakika, b.baslangic);
     if (b.dakika < 10 && (b.saat === 12 || b.saat === 17)) {
       return `senkron_${b.tarih}_${b.saat}`;
     }
