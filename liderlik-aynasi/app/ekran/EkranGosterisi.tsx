@@ -35,7 +35,8 @@ function agYerlesimi(veri: EkranVerisi) {
   const merkezX = W / 2;
   const merkezY = H / 2;
   const takimSayisi = Math.max(veri.takimlar.length, 1);
-  const kumeYaricap = takimSayisi > 1 ? 200 : 0;
+  // Daha geniş yayılım → ekranın boş alanını kullan (eski 200 küçük kalıyordu).
+  const kumeYaricap = takimSayisi > 1 ? 258 : 0;
 
   const kumeMerkezleri = new Map<number, { x: number; y: number }>();
   for (let i = 0; i < takimSayisi; i++) {
@@ -57,7 +58,7 @@ function agYerlesimi(veri: EkranVerisi) {
   const konumlar: { x: number; y: number }[] = new Array(veri.dugumler.length);
   for (const [takim, uyeler] of gruplar) {
     const merkez = kumeMerkezleri.get(takim) ?? { x: merkezX, y: merkezY };
-    const r = 36 + uyeler.length * 5;
+    const r = 46 + uyeler.length * 6;
     uyeler.forEach((dugum, j) => {
       const aci = (2 * Math.PI * j) / uyeler.length;
       konumlar[dugum] = {
@@ -144,6 +145,15 @@ export default function EkranGosterisi() {
   }, []);
 
   const yerlesim = useMemo(() => (veri ? agYerlesimi(veri) : null), [veri]);
+  // Düğüm derecesi (kaç gözlem bağı dokunuyor) → düğüm boyutu = etki.
+  const dereceler = useMemo(() => {
+    const m = new Map<number, number>();
+    for (const b of veri?.baglar ?? []) {
+      m.set(b.a, (m.get(b.a) ?? 0) + 1);
+      m.set(b.b, (m.get(b.b) ?? 0) + 1);
+    }
+    return m;
+  }, [veri]);
   const siraliOzellikler = useMemo(
     () =>
       veri
@@ -324,23 +334,31 @@ export default function EkranGosterisi() {
                         x2={k2.x}
                         y2={k2.y}
                         stroke={b.capraz ? "#f59e0b" : "#4e7ca6"}
-                        strokeOpacity={b.capraz ? 0.55 : 0.3}
-                        strokeWidth={b.capraz ? 2 : 1.2}
+                        strokeOpacity={b.capraz ? 0.7 : 0.28}
+                        strokeWidth={b.capraz ? 2.4 : 1.2}
+                        strokeLinecap="round"
+                        // Takımlar-arası altın köprüler "akan enerji" gibi titreşir.
+                        className={b.capraz ? "ekran-bag-akan" : undefined}
                       />
                     );
                   })}
                   {veri.dugumler.map((d, i) => {
                     const k = yerlesim.konumlar[i];
                     if (!k) return null;
+                    // Çok gözlemlenen düğüm daha büyük + nabız atar (etki = boyut).
+                    const der = dereceler.get(i) ?? 0;
+                    const r = 10 + Math.min(der, 12) * 1;
                     return (
                       <circle
                         key={i}
                         cx={k.x}
                         cy={k.y}
-                        r={9}
+                        r={r}
                         fill={takimRengi(d.t)}
                         stroke="#06121e"
-                        strokeWidth={2}
+                        strokeWidth={2.5}
+                        className="ekran-dugum"
+                        style={{ animationDelay: `${(i % 8) * 0.25}s` }}
                       />
                     );
                   })}

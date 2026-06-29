@@ -66,6 +66,27 @@ body.ortu-acik .kimsin-bant {
   50% { opacity: 0.5; box-shadow: 0 0 0 7px rgba(239, 68, 68, 0); }
 }
 .ekran-canli-nokta { animation: ekran-canli-nabiz 1.6s ease-in-out infinite; }
+
+/* Takım Kimyası ağı — düğümler nabız atar, takımlar-arası altın köprüler akar. */
+@keyframes ekran-dugum-nabiz {
+  0%, 100% { transform: scale(1); opacity: 0.92; }
+  50% { transform: scale(1.14); opacity: 1; }
+}
+.ekran-dugum {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ekran-dugum-nabiz 2.6s ease-in-out infinite;
+}
+@keyframes ekran-bag-ak {
+  to { stroke-dashoffset: -32; }
+}
+.ekran-bag-akan {
+  stroke-dasharray: 6 10;
+  animation: ekran-bag-ak 1.3s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ekran-dugum, .ekran-bag-akan, .ekran-canli-nokta { animation: none; }
+}
 /* Sinematik glow vinyet — inset box-shadow ile (pseudo-element + z-index savaşı
    YOK; absolute konumlu çocukları, ör. "Sesi Aç" düğmesini bozmaz). */
 .ekran-sahne {
