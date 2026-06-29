@@ -44,11 +44,15 @@ export default async function GorevAkisiPage() {
   }));
 
   return (
-    <main className="mx-auto w-full max-w-5xl flex-1 space-y-4 p-6">
-      <Link href="/admin/ayna-direktoru" className="text-sm text-royal-light hover:underline">
-        ← AYNA Direktörü
-      </Link>
-      <GorevAkisiTablo gorevler={satirlar} baslangic={baslangic ?? null} />
+    <main className="mx-auto w-full max-w-5xl flex-1 p-4 sm:p-6">
+      {/* Katı koyu kart: gündüz temasında arka plan fotoğrafı yazının altından
+          sızıp okunurluğu bozmasın (koyu-alan = bölgeyi zorla koyu işler). */}
+      <div className="koyu-alan space-y-4 rounded-2xl bg-midnight-card/95 p-4 shadow-xl ring-1 ring-royal/30 backdrop-blur sm:p-6">
+        <Link href="/admin/ayna-direktoru" className="text-sm text-royal-light hover:underline">
+          ← AYNA Direktörü
+        </Link>
+        <GorevAkisiTablo gorevler={satirlar} baslangic={baslangic ?? null} />
+      </div>
     </main>
   );
 }
