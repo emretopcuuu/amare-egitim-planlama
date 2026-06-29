@@ -104,6 +104,12 @@ body.ortu-acik .kimsin-bant {
   to { width: 100%; }
 }
 .ekran-ilerle { animation: ekran-ilerle-an 14s linear forwards; }
+/* Canlı olay şeridi (ticker): liste iki kez basılır, -50% ile kusursuz döner. */
+@keyframes ekran-ticker-kay {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.ekran-ticker { animation: ekran-ticker-kay 45s linear infinite; }
 @media (prefers-reduced-motion: reduce) {
   .ekran-dugum, .ekran-bag-akan, .ekran-canli-nokta { animation: none; }
   .ekran-ilerle { width: 100%; animation: none; }

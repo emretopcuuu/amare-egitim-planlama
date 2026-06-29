@@ -37,6 +37,10 @@ export type EkranVerisi = {
   // Kampın 1. gününün Istanbul tarihi ("YYYY-MM-DD") — ŞİMDİ/SIRADA program
   // slaytı bunu kullanır (sahne bilgisayarı oturumsuz; gün/blok bundan türer).
   kampGun1: string | null;
+  // CANLI OLAY AKIŞI: AYNA'nın o an ne yaptığının kanıtı (ticker + karar anı).
+  // Gizlilik: görev/fiero/takdir İSİMLE (AYNA'nın eylemi / olumlu), gözlem
+  // ANONİM (kim kimi gözledi sızmaz). tur: "gorev" anı karar-flash'ı tetikler.
+  olaylar: { tur: string; ikon: string; metin: string; ts: string }[];
   // Senkron An canlı katılımı (aktif pencere yoksa null)
   senkron: { baslik: string; yanit: number; toplam: number; kalanSn: number } | null;
   // Sahne Vitrini (DJ): host belirli bir slaydı sabitlediyse onun indeksi,
@@ -141,6 +145,31 @@ export async function GET() {
     fiero: bgFiero.count ?? 0,
   };
 
+  // CANLI OLAY AKIŞI — son 45 dk'lık aktivite (görev/fiero/takdir/gözlem).
+  const olayBasi = new Date(simdi.getTime() - 45 * 60_000).toISOString();
+  const [sonGorevler, sonKudos, sonGozlemler] = await Promise.all([
+    db
+      .from("missions")
+      .select("participant_id, title, kind, issued_at, ai_score, scored_at")
+      .gte("issued_at", olayBasi)
+      .order("issued_at", { ascending: false })
+      .limit(20),
+    db
+      .from("kudos")
+      .select("to_id, created_at")
+      .eq("is_hidden", false)
+      .gte("created_at", olayBasi)
+      .order("created_at", { ascending: false })
+      .limit(8),
+    db
+      .from("ratings")
+      .select("created_at")
+      .eq("is_self", false)
+      .gte("created_at", olayBasi)
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
+
   // Onaylı anı duvarı fotoğrafları — büyük ekran slaytı için imzalı URL'ler
   const anilar = (
     await Promise.all(
@@ -154,6 +183,27 @@ export async function GET() {
   const kisiler = kisilerSonuc.data;
   const puanlar = puanlarSonuc.data;
   const ozellikSayisi = ozellikler.length;
+
+  // Olay metinleri — Türkçe ek hatasından kaçınmak için "→" ile (isim + eylem).
+  const adOf = (id: string) =>
+    (kisiler.find((k) => k.id === id)?.full_name ?? "Biri").split(" ")[0];
+  const kisaltBaslik = (s: string) => (s.length > 38 ? s.slice(0, 35) + "…" : s);
+  const olaylar: EkranVerisi["olaylar"] = [];
+  for (const g of sonGorevler.data ?? []) {
+    if (g.ai_score === 10 && g.scored_at) {
+      olaylar.push({ tur: "fiero", ikon: "⭐", metin: `${adOf(g.participant_id)} → 10/10, aynayı parlattı`, ts: g.scored_at });
+    }
+    if (g.kind !== "senkron" && g.kind !== "soz") {
+      olaylar.push({ tur: "gorev", ikon: "🤖", metin: `${adOf(g.participant_id)} → yeni görev: ${kisaltBaslik(g.title)}`, ts: g.issued_at });
+    }
+  }
+  for (const k of sonKudos.data ?? []) {
+    olaylar.push({ tur: "takdir", ikon: "💛", metin: `${adOf(k.to_id)} → bir takdir aldı`, ts: k.created_at });
+  }
+  for (const r of sonGozlemler.data ?? []) {
+    olaylar.push({ tur: "gozlem", ikon: "👁", metin: "yeni bir gözlem bağı kuruldu", ts: r.created_at });
+  }
+  olaylar.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
 
   // #8 Olumlu yansımalar: kısa, anlamlı, isimsiz sözler. Çok kısa/çok uzun
   // olanları ele, en yeni 60'tan deterministik bir karışımla 14 tanesini al.
@@ -374,6 +424,7 @@ export async function GET() {
     yansimalar,
     bugun,
     kampGun1: (await kampBaslangicGetir(db)) ?? null,
+    olaylar: olaylar.slice(0, 16),
   };
 
   return Response.json(veri);

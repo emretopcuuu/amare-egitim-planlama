@@ -149,6 +149,9 @@ export default function EkranGosterisi() {
     const id = setInterval(() => setEnerji((e) => (e > 0.02 ? e * 0.85 : 0)), 3000);
     return () => clearInterval(id);
   }, []);
+  // AYNA "karar veriyor" anı: yeni bir görev olayı gelince kısa flash.
+  const [kararFlash, setKararFlash] = useState<string | null>(null);
+  const sonGorevOlayRef = useRef<string | null>(null);
 
   useEffect(() => {
     let iptal = false;
@@ -168,6 +171,17 @@ export default function EkranGosterisi() {
           setEnerji((onceki) => Math.min(1, Math.max(onceki * 0.55, delta / 4)));
         }
         sonAktiviteRef.current = toplam;
+
+        // AYNA KARAR ANI: yeni bir görev olayı tepeye geldiyse kısa flash göster
+        // ("AYNA karar verdi → X'e görev"). İlk yüklemede tetiklenmez.
+        const enYeniGorev = yeni.olaylar?.find((o) => o.tur === "gorev");
+        if (enYeniGorev && enYeniGorev.ts !== sonGorevOlayRef.current) {
+          if (sonGorevOlayRef.current !== null) {
+            setKararFlash(enYeniGorev.metin);
+            setTimeout(() => setKararFlash(null), 6000);
+          }
+          sonGorevOlayRef.current = enYeniGorev.ts;
+        }
 
         // Sahne Vitrini (DJ): host bir slayt sabitlemişse ekranı oraya kilitle
         vitrinRef.current = yeni.vitrin;
@@ -249,7 +263,7 @@ export default function EkranGosterisi() {
     // SİNEMATİK PROJEKSİYON ZEMİNİ: hall'da parlak foto yazıyı yutar. Foto artık
     // yalnız faint bir doku (≈%8) — neredeyse opak koyu zemin + üstte hafif glow
     // vinyet. İçerik ışıldar, uzaktan okunur. koyu-alan: gündüz teması da koyu.
-    <main className="koyu-alan ekran-sahne relative flex h-screen w-screen flex-col overflow-hidden bg-gradient-to-b from-[#020a12]/95 via-[#040f1c]/92 to-[#01040a]/97 p-10">
+    <main className="koyu-alan ekran-sahne relative flex h-screen w-screen flex-col overflow-hidden bg-gradient-to-b from-[#020a12]/95 via-[#040f1c]/92 to-[#01040a]/97 p-10 pb-20">
       {/* AYNA'NIN YAŞAYAN GÖZÜ — her şey onun gözünün içinde yaşar (z-0, arkada) */}
       <AynaGoz enerji={enerji} fiero={!!fieroGoster} />
       {/* Ses kapısı: kurulumda tek tıklama, sonrası otomatik anonslar */}
@@ -282,6 +296,16 @@ export default function EkranGosterisi() {
         <div className="fixed inset-x-0 top-0 z-40 bg-royal/95 px-10 py-5 text-center shadow-2xl">
           <p className="font-display text-4xl font-bold text-white">
             📢 {t.anonsBant}
+          </p>
+        </div>
+      )}
+
+      {/* AYNA KARAR ANI: yeni görev gönderince kısa, dikkat çeken flash */}
+      {kararFlash && (
+        <div className="parilti fixed inset-x-0 top-0 z-[45] flex items-center justify-center gap-3 bg-gradient-to-r from-royal/95 via-[#1a2c4a]/95 to-royal/95 px-10 py-4 shadow-2xl">
+          <span className="text-2xl" aria-hidden>🤖</span>
+          <p className="font-display text-2xl font-bold text-gold-light">
+            AYNA karar verdi · <span className="text-white">{kararFlash}</span>
           </p>
         </div>
       )}
@@ -740,7 +764,7 @@ export default function EkranGosterisi() {
 
       {/* QR + AKSİYON ÇAĞRISI — salondaki herkesi telefona/eyleme iter (sol-alt) */}
       {qr && (
-        <div className="absolute bottom-8 left-8 z-20 flex items-center gap-4 rounded-2xl border border-gold/30 bg-[#04101c]/85 p-4 shadow-2xl backdrop-blur">
+        <div className="absolute bottom-20 left-8 z-20 flex items-center gap-4 rounded-2xl border border-gold/30 bg-[#04101c]/85 p-4 shadow-2xl backdrop-blur">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={qr} alt="Katıl" className="h-28 w-28 rounded-lg" />
           <div className="max-w-[15rem]">
@@ -782,6 +806,21 @@ export default function EkranGosterisi() {
           </span>
         </div>
       </footer>
+
+      {/* CANLI OLAY ŞERİDİ (ticker): AYNA'nın o an ne yaptığının durmayan kanıtı */}
+      {veri?.olaylar && veri.olaylar.length > 0 && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 overflow-hidden border-t border-white/10 bg-[#020a12]/90 py-2.5 backdrop-blur">
+          <div className="ekran-ticker flex w-max items-center gap-10 whitespace-nowrap pl-10">
+            {[...veri.olaylar, ...veri.olaylar].map((o, i) => (
+              <span key={i} className="flex items-center gap-2.5 text-lg font-medium text-slate-200">
+                <span aria-hidden>{o.ikon}</span>
+                <span>{o.metin}</span>
+                <span className="text-gold-light/40">◆</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
