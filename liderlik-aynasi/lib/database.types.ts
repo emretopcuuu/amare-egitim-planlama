@@ -204,6 +204,44 @@ export type Database = {
           },
         ]
       }
+      bildirimler: {
+        Row: {
+          baslik: string
+          created_at: string
+          govde: string
+          id: string
+          okundu_at: string | null
+          participant_id: string
+          url: string | null
+        }
+        Insert: {
+          baslik: string
+          created_at?: string
+          govde: string
+          id?: string
+          okundu_at?: string | null
+          participant_id: string
+          url?: string | null
+        }
+        Update: {
+          baslik?: string
+          created_at?: string
+          govde?: string
+          id?: string
+          okundu_at?: string | null
+          participant_id?: string
+          url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bildirimler_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ayna_analiz: {
         Row: {
           asama: string

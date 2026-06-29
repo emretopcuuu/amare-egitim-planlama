@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 // Üst-orta kimlik çipi + YARDIM. Çip her zaman en tepede sabit durur; ALTINDAKİ
 // boşluk gerçek yüksekliği kadar yer ayırır (sayfa onun altından başlar, çakışma
@@ -35,10 +36,12 @@ export default function KimsinBantClient({
   ad,
   avatarUrl,
   ilkHarf,
+  okunmamis = 0,
 }: {
   ad: string;
   avatarUrl: string | null;
   ilkHarf: string;
+  okunmamis?: number;
 }) {
   const [acik, setAcik] = useState(false);
 
@@ -54,7 +57,8 @@ export default function KimsinBantClient({
         className="fixed inset-x-0 z-50 flex justify-center px-4 print:hidden"
         style={{ top: "max(0.5rem, env(safe-area-inset-top, 0px))" }}
       >
-        <div className="relative">
+        <div className="flex items-center gap-1.5">
+          <div className="relative">
           {/* Çip = yardım tetikleyici. Dokununca SSS açılır. */}
           <button
             onClick={() => setAcik((a) => !a)}
@@ -125,6 +129,31 @@ export default function KimsinBantClient({
               </div>
             </>
           )}
+          </div>
+
+          {/* Zil — bildirim gelen kutusu; okunmamış sayısı rozette (soru işaretinin yanında) */}
+          <Link
+            href="/bildirimler"
+            aria-label={`Bildirimler${okunmamis > 0 ? ` (${okunmamis} okunmamış)` : ""}`}
+            className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gold/30 bg-midnight-card/90 text-slate-200 shadow-lg backdrop-blur-md transition-colors hover:border-gold/50"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              className="h-[1.05rem] w-[1.05rem]"
+              aria-hidden
+            >
+              <path d="M6 9a6 6 0 0 1 12 0c0 4 1 5 1.6 6H4.4C5 14 6 13 6 9Z" strokeLinejoin="round" />
+              <path d="M10 19a2 2 0 0 0 4 0" strokeLinecap="round" />
+            </svg>
+            {okunmamis > 0 && (
+              <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[0.6rem] font-bold leading-none text-white">
+                {okunmamis > 9 ? "9+" : okunmamis}
+              </span>
+            )}
+          </Link>
         </div>
       </div>
     </>

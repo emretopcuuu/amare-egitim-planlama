@@ -49,6 +49,14 @@ export async function katilimciyaBildir(
   govde: string,
   url = "/gorevler"
 ): Promise<void> {
+  // 1) GELEN KUTUSU: push olsun olmasın her bildirim kalıcı saklanır (geçmiş +
+  //    okunmamış sayısı + detay + bağlantı). Push gelmese de kişi buradan görür.
+  try {
+    await db.from("bildirimler").insert({ participant_id: participantId, baslik, govde, url });
+  } catch {
+    // kayıt başarısızsa push'u yine de dene
+  }
+  // 2) Anlık push (VAPID + abonelik varsa).
   if (!hazirla()) return;
   const { data } = await db
     .from("push_subscriptions")
@@ -65,6 +73,21 @@ export async function herkeseBildir(
   govde: string,
   url = "/program"
 ): Promise<void> {
+  // 1) GELEN KUTUSU: tüm katılımcılara kalıcı kaydet (push'tan bağımsız).
+  try {
+    const { data: kisiler } = await db
+      .from("participants")
+      .select("id")
+      .eq("role", "participant");
+    if (kisiler?.length) {
+      await db
+        .from("bildirimler")
+        .insert(kisiler.map((k) => ({ participant_id: k.id, baslik, govde, url })));
+    }
+  } catch {
+    // kayıt başarısızsa push'u yine de dene
+  }
+  // 2) Anlık push.
   if (!hazirla()) return;
   const { data } = await db
     .from("push_subscriptions")
