@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import { titret } from "@/lib/his";
 
 const t = tr.altNav;
 
@@ -185,7 +186,9 @@ export default function AltNav() {
           </div>
         </Link>
       )}
-      <div className="mx-auto flex w-full max-w-md items-stretch justify-around">
+      {/* Sekmeler: her biri kendi "pill"i — aralarında nefes payı (gap), dokununca
+          basılma hissi (haptik + ölçek + ikon kabında zemin), aktifte gold dolgu. */}
+      <div className="mx-auto flex w-full max-w-md items-stretch gap-1.5 px-2.5">
         {sekmeler.map((s) => {
           const aktif = aktifMi(s.href);
           // Görev her zaman öne çıksın: bekleyen görev varsa sekmede nokta rozeti.
@@ -194,29 +197,35 @@ export default function AltNav() {
             <Link
               key={s.href}
               href={s.href}
+              onClick={() => titret(10)}
               aria-label={gorevVar ? `${s.etiket} · bekleyen görev var` : s.etiket}
               aria-current={aktif ? "page" : undefined}
-              className={`relative flex min-h-[60px] flex-1 flex-col items-center justify-center gap-1 py-2.5 text-[0.72rem] font-semibold transition-colors ${
-                aktif ? "text-gold-light" : "text-slate-400 hover:text-slate-200"
+              className={`group relative flex min-h-[58px] flex-1 select-none flex-col items-center justify-center gap-1 rounded-2xl py-1.5 text-[0.7rem] font-semibold transition-all duration-150 active:scale-[0.88] ${
+                aktif ? "text-gold-light" : "text-slate-400"
               }`}
             >
-              {/* Aktif sekme üst çizgisi — "neredesin?" işareti */}
-              {aktif && (
-                <span className="absolute inset-x-4 top-0 h-[2px] rounded-full bg-gold" />
-              )}
-              <span className="relative">
+              {/* İkon kabı — aktifte gold dolgu + halka + ışıma; dokununca zemin belirir */}
+              <span
+                className={`relative flex h-11 w-11 items-center justify-center rounded-2xl transition-all duration-200 ${
+                  aktif
+                    ? "bg-gold/15 ring-1 ring-gold/40 shadow-[0_0_20px_-5px_rgba(212,175,55,0.55)]"
+                    : "ring-1 ring-transparent group-hover:bg-white/[0.06] group-active:bg-white/[0.12]"
+                }`}
+              >
                 <Ikon
                   ad={s.ikon}
-                  className={`h-7 w-7 transition-transform ${aktif ? "scale-110" : ""}`}
+                  className={`h-6 w-6 transition-transform duration-200 ${
+                    aktif ? "scale-105" : "group-active:scale-90"
+                  }`}
                 />
                 {gorevVar && (
-                  <span className="absolute -right-1.5 -top-0.5 flex h-2.5 w-2.5">
+                  <span className="absolute right-1 top-1 flex h-2.5 w-2.5">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-gold/70" />
                     <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-gold ring-2 ring-midnight" />
                   </span>
                 )}
               </span>
-              {s.etiket}
+              <span className={aktif ? "" : "opacity-90"}>{s.etiket}</span>
             </Link>
           );
         })}
