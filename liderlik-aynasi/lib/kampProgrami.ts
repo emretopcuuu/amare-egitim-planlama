@@ -260,6 +260,22 @@ export function siradakiMadde(
 // göreve dönsün. Yemek/serbest/ara gibi nötr bloklar bu kapsama girmez.
 const ANA_KILITLI_TURLER = new Set<EtkinlikTuru>(["sahne", "oyun", "doga", "ayna", "gezi"]);
 
+/** `gunDakikasi`'dan sonra (0, pencereDk] dk içinde başlayacak ilk HATIRLATMAYA
+ * DEĞER (deneyimsel: sahne/oyun/doğa/ayna/gezi) program maddesi; yoksa null.
+ * Program bildirimi için — yemek/ara/serbest gibi nötr bloklar dahil değil. */
+export function yaklasanEtkinlik(
+  gun: 1 | 2 | 3,
+  gunDakikasi: number,
+  pencereDk = 12
+): ProgramMaddesi | null {
+  for (const m of gunProgrami(gun)) {
+    if (!ANA_KILITLI_TURLER.has(m.tur)) continue;
+    const fark = dakikaCevir(m.baslangic) - gunDakikasi;
+    if (fark > 0 && fark <= pencereDk) return m;
+  }
+  return null;
+}
+
 /** Son `pencereDk` dakikada biten, deneyimsel bir program maddesi (yoksa null). */
 export function bitenMadde(
   gun: 1 | 2 | 3,

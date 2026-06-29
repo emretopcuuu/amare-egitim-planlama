@@ -42,6 +42,7 @@ import {
   gunProgrami,
   dakikaCevir,
   suankiMadde,
+  yaklasanEtkinlik,
   sahneSessizMi,
   sabahPenceresiMi,
   kampSenkronAnahtari,
@@ -584,6 +585,11 @@ console.log("\n■ 8) KAMP PROGRAMI — Sapanca akışı ve zaman pencereleri");
   iddia(!sabahPenceresiMi(2, 6, 39) && sabahPenceresiMi(2, 6, 40), "Gün 2 sabah penceresi 06:40'ta açılır");
   iddia(sabahPenceresiMi(2, 7, 59) && !sabahPenceresiMi(2, 8, 0), "Gün 2 penceresi 08:00'de kapanır");
   iddia(sabahPenceresiMi(3, 7, 0) && sabahPenceresiMi(3, 8, 59) && !sabahPenceresiMi(3, 9, 0), "Gün 3 penceresi 07:00-08:59");
+
+  // Program hatırlatması: yaklaşan deneyimsel etkinlik (≤12 dk), nötr bloklar hariç
+  iddia(yaklasanEtkinlik(1, dakikaCevir("20:50"), 12)?.tur === "sahne", "Gün 1 20:50 → 21:00 sahne açılışını 10 dk kala yakalar");
+  iddia(yaklasanEtkinlik(1, dakikaCevir("20:45"), 12) === null, "Gün 1 20:45 → 15 dk kala pencere dışı (null)");
+  iddia(yaklasanEtkinlik(1, dakikaCevir("12:50"), 12) === null, "Gün 1 12:50 → yaklaşan yemek hatırlatılmaz (null)");
   iddia(!sabahPenceresiMi(1, 7, 30), "Gün 1 sabah yoklaması yok");
 
   // Görev türü etkinlik yanlılığı: oyun saatinde gözlem, molada yansıma artar
