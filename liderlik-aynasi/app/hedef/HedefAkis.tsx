@@ -211,8 +211,10 @@ function BaslangicFormu({
   const [vol, setVol] = useState("");
   const ovNum = Number(ov);
   const volNum = Number(vol);
-  const ovGecerli = ov.length > 0 && ovNum > 0;
-  const volGecerli = vol.length > 0 && volNum > 0;
+  // 0 GEÇERLİ: 3 ay pasif kalmış (OV/VOL = 0) biri de ilerleyebilmeli. Şart,
+  // "0'dan büyük" değil "boş değil" — alan rakam girilince geçerli (0 dahil).
+  const ovGecerli = ov.length > 0 && ovNum >= 0;
+  const volGecerli = vol.length > 0 && volNum >= 0;
   const gecerli = !!kariyer && ovGecerli && volGecerli;
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
@@ -630,8 +632,10 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
         <thead>
           <tr className="kariyer-cizgi kariyer-baslik border-b text-[0.6rem] font-semibold uppercase tracking-wide">
             <th className="px-2.5 py-2.5 font-semibold">{t.tabloKariyer}</th>
-            <th className="px-1.5 py-2.5 text-right font-semibold">{t.tabloEnDusuk}</th>
-            <th className="px-1.5 py-2.5 text-right font-semibold">{t.tabloEnYuksek}</th>
+            {/* Dar ekranda (telefon) detay sütunları gizlenir → tablo yatay
+                kaydırma gerektirmeden sığar; sm+ (tablet/masaüstü) hepsi görünür. */}
+            <th className="hidden px-1.5 py-2.5 text-right font-semibold sm:table-cell">{t.tabloEnDusuk}</th>
+            <th className="hidden px-1.5 py-2.5 text-right font-semibold sm:table-cell">{t.tabloEnYuksek}</th>
             <th className="px-2.5 py-2.5 text-right font-semibold">{t.tabloOrtalama}</th>
           </tr>
         </thead>
@@ -653,10 +657,10 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
                   )}
                 </span>
               </td>
-              <td className="whitespace-nowrap px-1.5 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+              <td className="hidden whitespace-nowrap px-1.5 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400 sm:table-cell">
                 {r.enDusuk != null ? tlFormat(r.enDusuk) : "—"}
               </td>
-              <td className="whitespace-nowrap px-1.5 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+              <td className="hidden whitespace-nowrap px-1.5 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400 sm:table-cell">
                 {r.enYuksek != null ? tlFormat(r.enYuksek) : "—"}
               </td>
               <td className="kariyer-vurgu whitespace-nowrap px-2.5 py-2.5 text-right font-mono text-sm font-bold tabular-nums">
