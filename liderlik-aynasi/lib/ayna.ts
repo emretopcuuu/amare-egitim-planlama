@@ -590,16 +590,24 @@ export async function gorevUret(
     .join("\n\n");
 
   // GÖREV DNA'SI — "wow" çekirdeği: her görev bir lider KASINI çalıştırır ve
-  // o kasa ait küratörlü bir tarihî/arketip hikâyeyle açılır. Kas, kişi+gün
+  // o kasa ait küratörlü bir tarihî/arketip hikâyeyle açılır. Kas, KİŞİ+gün
   // bazında DÖNER → aynı tema üst üste gelmez (eski sorun: hep "dur ve izle").
   const tamamSayisi = tamamCountSonuc.count ?? 0;
   const KAS_DONGU: LiderKas[] = [
     "cesaret", "devretme", "zor_konusma", "baglanti", "vizyon",
     "yardim_iste", "dinleme", "sorumluluk", "ornek_olma", "dayaniklilik",
   ];
-  const hedefKas =
-    KAS_DONGU[(((tamamSayisi + gun) % KAS_DONGU.length) + KAS_DONGU.length) % KAS_DONGU.length];
-  const secilenVinyet = vinyetSec(hedefKas, tamamSayisi);
+  // KİŞİYE ÖZEL SABİT KAYMA: katılımcı id'sinden türetilen deterministik offset.
+  // Olmadan, herkesin ilk görevinde tamamSayisi=0 + aynı gün → herkes AYNI kası
+  // (örn. Gün 1 → "devretme") alıp aynı vinyetle açılıyordu. Bu kayma ilk turda
+  // bile kişileri farklı kaslara dağıtır; tamamSayisi arttıkça döngü sürer.
+  let kisiKaymasi = 0;
+  for (const ch of katilimci.id) kisiKaymasi = (kisiKaymasi * 31 + ch.charCodeAt(0)) % KAS_DONGU.length;
+  const L = KAS_DONGU.length;
+  const hedefKas = KAS_DONGU[(((tamamSayisi + gun + kisiKaymasi) % L) + L) % L];
+  // Vinyet seçimine de kişi kaymasını kat → aynı kasa düşen iki kişi farklı
+  // küratörlü hikâyeyle açılsın (aynı kas + aynı vinyet çakışması da kırılır).
+  const secilenVinyet = vinyetSec(hedefKas, tamamSayisi + kisiKaymasi);
 
   const baglam = {
     ad: katilimci.full_name.split(" ")[0],
