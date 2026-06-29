@@ -70,9 +70,37 @@ function agYerlesimi(veri: EkranVerisi) {
   return { W, H, konumlar, kumeMerkezleri };
 }
 
+// QR aksiyon prompt'ları — slayta göre döner (insanları telefona/eyleme iter).
+const AKSIYONLAR = [
+  "Şimdi birini gözlemle 👁",
+  "Bir takdir yaz 💛",
+  "Bekleyen görevini yap 🤖",
+  "Kendi aynana bak 🪞",
+];
+
 export default function EkranGosterisi() {
   const [veri, setVeri] = useState<EkranVerisi | null>(null);
   const [slayt, setSlayt] = useState(0);
+  // QR — sahnedeki herkes telefonuyla anında uygulamaya girsin (client-side üret).
+  const [qr, setQr] = useState<string | null>(null);
+  useEffect(() => {
+    let iptal = false;
+    import("qrcode")
+      .then((m) =>
+        m.default.toDataURL("https://ayna.oneteamglobal.ai", {
+          margin: 1,
+          width: 220,
+          color: { dark: "#04101c", light: "#ffffff" },
+        })
+      )
+      .then((url) => {
+        if (!iptal) setQr(url);
+      })
+      .catch(() => {});
+    return () => {
+      iptal = true;
+    };
+  }, []);
   // SAHNE: tarayıcı sesli oynatmayı kullanıcı dokunuşuna bağlar — kurulumda
   // bir kez "Sesi Aç"a tıklanır, sonrası otomatik. Olaylar bir kez oynar.
   const [sesAcik, setSesAcik] = useState(false);
@@ -593,18 +621,44 @@ export default function EkranGosterisi() {
         )}
       </div>
 
-      {/* Slayt göstergesi */}
-      <footer className="mt-6 flex justify-center gap-3">
-        {Array.from({ length: SLAYT_SAYISI }, (_, i) => (
-          <button
-            key={i}
-            onClick={() => setSlayt(i)}
-            aria-label={`Slayt ${i + 1}`}
-            className={`h-2.5 rounded-full transition-all ${
-              slayt === i ? "w-10 bg-gold" : "w-2.5 bg-slate-600"
-            }`}
-          />
-        ))}
+      {/* QR + AKSİYON ÇAĞRISI — salondaki herkesi telefona/eyleme iter (sol-alt) */}
+      {qr && (
+        <div className="absolute bottom-8 left-8 z-20 flex items-center gap-4 rounded-2xl border border-gold/30 bg-[#04101c]/85 p-4 shadow-2xl backdrop-blur">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={qr} alt="Katıl" className="h-28 w-28 rounded-lg" />
+          <div className="max-w-[15rem]">
+            <p className="text-base font-semibold uppercase tracking-wide text-gold-light/80">
+              📲 Telefonunu çıkar
+            </p>
+            <p className="mt-1 text-2xl font-bold leading-tight text-slate-100">
+              {AKSIYONLAR[slayt % AKSIYONLAR.length]}
+            </p>
+            <p className="mt-1.5 font-mono text-sm text-slate-400">ayna.oneteamglobal.ai</p>
+          </div>
+        </div>
+      )}
+
+      {/* Slayt göstergesi: tempo çubuğu + nokta + N/toplam */}
+      <footer className="mt-6">
+        <div className="mx-auto mb-3 h-1 w-64 overflow-hidden rounded-full bg-white/10">
+          {/* key={slayt} → her slaytta baştan dolar (kalan süre görünür) */}
+          <div key={slayt} className="ekran-ilerle h-full rounded-full bg-gold/70" />
+        </div>
+        <div className="flex items-center justify-center gap-3">
+          {Array.from({ length: SLAYT_SAYISI }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => setSlayt(i)}
+              aria-label={`Slayt ${i + 1}`}
+              className={`h-2.5 rounded-full transition-all ${
+                slayt === i ? "w-10 bg-gold" : "w-2.5 bg-slate-600"
+              }`}
+            />
+          ))}
+          <span className="ml-3 font-mono text-base text-slate-400">
+            {slayt + 1}/{SLAYT_SAYISI}
+          </span>
+        </div>
       </footer>
     </main>
   );
