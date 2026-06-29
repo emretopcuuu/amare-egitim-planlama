@@ -6,7 +6,8 @@ import { acikDalga, aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { hedefKapisiAcik } from "@/lib/hedef";
 import { kampOncesiAdim } from "@/lib/akis";
-import { KAMP_GUNLERI } from "@/lib/kampProgrami";
+import { kampGunu } from "@/lib/kampProgrami";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { sozTakipAktif, sahitSayim } from "@/lib/sozTakip";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
@@ -323,6 +324,9 @@ export default async function AnaSayfa({
   const bugunIst = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
   }).format(new Date());
+  // Kamp günü etiketi: kampın başlatıldığı tarihten türetilir (sabit takvim değil).
+  const kampBaslangic = await kampBaslangicGetir(db);
+  const kampGunNo = kampGunu(bugunIst, kampBaslangic);
   // eslint-disable-next-line react-hooks/purity
   const istekAni = Date.now();
 
@@ -433,11 +437,7 @@ export default async function AnaSayfa({
         <div className="mt-2">
           <YolculukHaritasi
             siradaEtiket={tr.yolculuk.sirada}
-            gunEtiketi={
-              (KAMP_GUNLERI as readonly string[]).includes(bugunIst)
-                ? `Gün ${(KAMP_GUNLERI as readonly string[]).indexOf(bugunIst) + 1}`
-                : undefined
-            }
+            gunEtiketi={kampGunNo ? `Gün ${kampGunNo}` : undefined}
             fazlar={[
               { ad: tr.yolculuk.faz.rituel, tamam: !!sesVarRow },
               { ad: tr.yolculuk.faz.oyun, tamam: !!kisi?.team },

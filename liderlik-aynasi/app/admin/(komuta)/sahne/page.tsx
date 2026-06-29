@@ -2,12 +2,13 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import {
-  KAMP_GUNLERI,
+  kampGunleri,
   KAMP_BASLIK,
   KAMP_ALT_BASLIK,
   ETKINLIK_SIMGESI,
   gunProgrami,
 } from "@/lib/kampProgrami";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { tr } from "@/lib/i18n/tr";
 import Katlanir from "../../Katlanir";
 import Ipucu from "../../Ipucu";
@@ -50,6 +51,7 @@ export default async function SahnePage() {
     db.from("settings").select("value").eq("key", "sahne_slayt").maybeSingle(),
   ]);
   if (error) throw error;
+  const kampBaslangic = await kampBaslangicGetir(db);
 
   let vitrin: number | null = null;
   const vh = vitrinAyar?.value;
@@ -103,7 +105,7 @@ export default async function SahnePage() {
 
       {/* Resmî kamp akışı — referans */}
       <Katlanir baslik={KAMP_BASLIK} aciklama={KAMP_ALT_BASLIK} ikon="📅" yardim={tr.admin.yardim.program}>
-        {KAMP_GUNLERI.map((tarih, i) => {
+        {kampGunleri(kampBaslangic).map((tarih, i) => {
           const gun = (i + 1) as 1 | 2 | 3;
           return (
             <div key={tarih} className="mt-2">

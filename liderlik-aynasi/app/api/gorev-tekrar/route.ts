@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { gorevUret } from "@/lib/ayna";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { kampGunu } from "@/lib/kampProgrami";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { tr } from "@/lib/i18n/tr";
 
 export const maxDuration = 60;
@@ -65,8 +66,9 @@ export async function POST(req: Request) {
   }).formatToParts(simdi);
   const saat = Number(istParts.find((p) => p.type === "hour")?.value ?? 12);
   const bugun = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(simdi);
-  const mod = kampGunu(bugun) ? "kamp" : "yolculuk";
-  const gun = kampGunu(bugun) ?? 1;
+  const kampBaslangic = await kampBaslangicGetir(db);
+  const mod = kampGunu(bugun, kampBaslangic) ? "kamp" : "yolculuk";
+  const gun = kampGunu(bugun, kampBaslangic) ?? 1;
 
   const gorev = await gorevUret(db, kisi, gun, saat, mod, null, null, ipucu);
   if (!gorev) return Response.json({ hata: tr.gorevler.benzeriOlmaz }, { status: 503 });

@@ -49,15 +49,14 @@ export default async function PusulaSayfa() {
   // sıra: aksi halde masaüstü hub'da "takılı" görünüp telefonda ÖF çıkıyor,
   // ikisi tutarsız oluyordu.
   if (durum.tamam) {
-    const [{ data: ofAyar }, { data: ofDurum }] = await Promise.all([
-      db.from("settings").select("value").eq("key", "on_farkindalik_acik").maybeSingle(),
-      db
-        .from("on_farkindalik")
-        .select("tamamlandi_at")
-        .eq("participant_id", session.sub)
-        .maybeSingle(),
-    ]);
-    if (ofAyar?.value === "true" && !ofDurum?.tamamlandi_at) redirect("/on-farkindalik");
+    // Ön Farkındalık onboarding'in HEP AÇIK bir adımı — ayrı bir admin penceresi
+    // gerektirmez. Pusula bitti ama ÖF bitmediyse hub'dan önce oraya gönder.
+    const { data: ofDurum } = await db
+      .from("on_farkindalik")
+      .select("tamamlandi_at")
+      .eq("participant_id", session.sub)
+      .maybeSingle();
+    if (!ofDurum?.tamamlandi_at) redirect("/on-farkindalik");
   }
 
   const oncelikler = ((pus?.oncelikler as { sira: number; metin: string }[]) ?? [])

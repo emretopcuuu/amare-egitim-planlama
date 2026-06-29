@@ -123,7 +123,13 @@ export async function tikCalistir(
   // görev, hatırlatma, fısıltı ve dürtmeler bir sonraki pencereye sarkar.
   const bugun = istanbulTarihi(simdi);
   const { saat, dakika } = istanbulSaati(simdi);
-  const kampGunuBugun = mod === "kamp" ? kampGunu(bugun) : null;
+  // Kampın 1. günü = AYNA'nın başlatıldığı (ayna_baslangic) Istanbul tarihi.
+  // Böylece Gün 1/2/3 sabit takvime değil, kullanıcının başlattığı ana bağlı.
+  const aynaBaslangicAyar = ayar.get("ayna_baslangic");
+  const kampBaslangic = aynaBaslangicAyar
+    ? istanbulTarihi(new Date(aynaBaslangicAyar))
+    : undefined;
+  const kampGunuBugun = mod === "kamp" ? kampGunu(bugun, kampBaslangic) : null;
   const sahneSessiz =
     kampGunuBugun !== null &&
     sahneSessizMi(kampGunuBugun, saat * 60 + dakika) &&
@@ -612,6 +618,7 @@ export async function tikCalistir(
       saat,
       dakika,
       tarih: bugun,
+      baslangic: kampBaslangic,
     });
     if (anahtar) {
       const { error: kilitHatasi } = await db
