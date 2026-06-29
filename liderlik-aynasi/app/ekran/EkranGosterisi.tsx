@@ -154,7 +154,9 @@ export default function EkranGosterisi() {
   const enYuksekOrt = siraliOzellikler[0]?.ort ?? null;
 
   return (
-    <main className="flex h-screen w-screen flex-col overflow-hidden p-10">
+    // koyu-alan + koyu perde: projeksiyon ekranında parlak göl fotoğrafı yazıyı/
+    // grafiği yutmasın — foto ambian olarak kalır (≈%30) ama içerik net okunur.
+    <main className="koyu-alan flex h-screen w-screen flex-col overflow-hidden bg-gradient-to-b from-[#04101c]/78 via-[#04101c]/68 to-[#020a12]/82 p-10">
       {/* Ses kapısı: kurulumda tek tıklama, sonrası otomatik anonslar */}
       <button
         onClick={() => {
@@ -348,8 +350,13 @@ export default function EkranGosterisi() {
                         y={merkez.y + 5}
                         textAnchor="middle"
                         fill={takimRengi(i)}
-                        fontSize={22}
-                        fontWeight={700}
+                        fontSize={23}
+                        fontWeight={800}
+                        // Koyu hale: etiket parlak fotoğrafın üstünde de net okunsun.
+                        stroke="#020a12"
+                        strokeWidth={5}
+                        strokeLinejoin="round"
+                        paintOrder="stroke"
                       >
                         {ad}
                       </text>
