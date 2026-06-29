@@ -16,6 +16,7 @@ import TelefonaKurKocu from "@/components/TelefonaKurKocu";
 import GunProgramKarti from "@/components/GunProgramKarti";
 import AynaAnalizDeneyim from "@/components/AynaAnalizDeneyim";
 import MuhurIkon from "@/components/MuhurIkon";
+import HazirlikYeniden from "@/components/HazirlikYeniden";
 
 const t = tr.pusula;
 
@@ -85,9 +86,14 @@ export default async function PusulaSayfa() {
     // Mühür ekranı HAZIRLIK ÖZETİ: 6 adımın tek bakışta tik durumu + düzelt yolu.
     // Ses/Nedenler bu hub'a gelindiyse zaten tamam (ön koşul) — gösterip onaylarız;
     // Hedef/Farkındalık/Liderlik/Foto için doğrudan düzelt/yap bağlantısı verilir.
-    const ozetAdimlar: { ad: string; tamam: boolean; href: string | null }[] = [
-      { ad: t.ozetSes, tamam: sesVar, href: null },
-      { ad: t.ozetNedenler, tamam: durum.tamam, href: null },
+    const ozetAdimlar: {
+      ad: string;
+      tamam: boolean;
+      href: string | null;
+      yeniden?: "ses" | "nedenler";
+    }[] = [
+      { ad: t.ozetSes, tamam: sesVar, href: null, yeniden: "ses" },
+      { ad: t.ozetNedenler, tamam: durum.tamam, href: null, yeniden: "nedenler" },
       { ad: t.ozetHedef, tamam: hedefTamam, href: "/hedef" },
       { ad: t.ozetFarkindalik, tamam: ofTamam, href: "/on-farkindalik" },
       { ad: t.ozetFoto, tamam: yuzVar, href: null },
@@ -185,7 +191,16 @@ export default async function PusulaSayfa() {
                   {a.tamam ? "✓" : "!"}
                 </span>
                 <span className="flex-1 text-sm text-slate-200">{a.ad}</span>
-                {a.href ? (
+                {a.yeniden ? (
+                  <HazirlikYeniden
+                    ne={a.yeniden}
+                    uyari={
+                      a.yeniden === "ses"
+                        ? "Ses ritüelini sıfırlayıp yeniden kaydedeceksin."
+                        : "Nedenler (Pusula) sohbetini sıfırlayıp baştan yapacaksın."
+                    }
+                  />
+                ) : a.href ? (
                   <Link
                     href={a.href}
                     className="shrink-0 text-xs font-semibold text-gold-light underline-offset-4 hover:underline"
