@@ -282,6 +282,10 @@ export type GunSatiri = {
   simge: string;
   /** Boş pencere doldurması mı (AYNA Görevleri & Serbest Zaman)? */
   serbest?: boolean;
+  /** Etkinlik türü (renk kodu için) — yemek/oyun/sahne/doga/ara/gezi/ayna. */
+  tur?: string;
+  /** Sahne sessizliği: bu blokta AYNA susar (kürsüde konuşmacı var). */
+  sessiz?: boolean;
 };
 
 export const SERBEST_BASLIK = "AYNA 🪞 Görevleri & Serbest Zaman";
