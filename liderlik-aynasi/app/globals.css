@@ -1192,6 +1192,39 @@ html[data-tema="gunduz"] .text-white {
   color: #102538 !important;
 }
 
+/* KRİTİK: Yukarıdaki gündüz koyulaştırması, KOYU-ZEMİNLİ bölgelerde
+   (.koyu-alan / .gece-ada — Pusula öncelik formu, ayna sahnesi vb.) metni
+   koyu-üstüne-koyu yapıp OKUNMAZ kılıyordu. Daha yüksek specificity ile bu
+   yüzeylerdeki metni gündüzde de AÇIK tut. (Bu yüzeyler tanımı gereği koyudur.) */
+html[data-tema="gunduz"] .koyu-alan .text-slate-50,
+html[data-tema="gunduz"] .koyu-alan .text-slate-100,
+html[data-tema="gunduz"] .koyu-alan .text-slate-200,
+html[data-tema="gunduz"] .koyu-alan .text-white,
+html[data-tema="gunduz"] .gece-ada .text-slate-50,
+html[data-tema="gunduz"] .gece-ada .text-slate-100,
+html[data-tema="gunduz"] .gece-ada .text-slate-200,
+html[data-tema="gunduz"] .gece-ada .text-white {
+  color: #e8eef6 !important;
+}
+html[data-tema="gunduz"] .koyu-alan .text-slate-300,
+html[data-tema="gunduz"] .gece-ada .text-slate-300 {
+  color: #c4cfdd !important;
+}
+html[data-tema="gunduz"] .koyu-alan .text-slate-400,
+html[data-tema="gunduz"] .gece-ada .text-slate-400 {
+  color: #9fb0c4 !important;
+}
+html[data-tema="gunduz"] .koyu-alan .text-slate-500,
+html[data-tema="gunduz"] .gece-ada .text-slate-500 {
+  color: #8294a8 !important;
+}
+/* Başlık (ay-metin gradyanı): koyu zeminde gündüzün koyu gradyanı yerine AÇIK
+   gradyan kullan → başlık da net okunur. */
+html[data-tema="gunduz"] .koyu-alan .ay-metin {
+  background-image: linear-gradient(180deg, #f4f8fc 0%, #d3dfeb 50%, #93a9bf 100%);
+  filter: drop-shadow(0 2px 16px rgba(201, 214, 227, 0.22));
+}
+
 /* Hafif beyaz dolgulu kutular (ayar kartları: Yazı Boyutu, Görünüm) gündüzde
    doğrudan fotoğrafın üstünde durduğu için yarı-opak BEYAZ dolgu alır →
    okunaklı yumuşak kart olur (gecedeki "ince beyaz örtü"nün gündüz karşılığı). */
