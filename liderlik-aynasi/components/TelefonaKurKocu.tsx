@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import { IosKurulumGorsel, AndroidKurulumGorsel } from "@/components/KurulumGorseli";
 
 const t = tr.bildirim;
 
@@ -129,6 +130,10 @@ export default function TelefonaKurKocu() {
       {/* B) iOS Safari → görsel adım adım koç (Paylaş ikonunu işaret eder) */}
       {ortam === "ios-safari" && (
         <div className="mt-3 space-y-2.5">
+          {/* Ekran mockup'ı — gerçek Safari adımları */}
+          <div className="rounded-xl bg-black/25 p-3">
+            <IosKurulumGorsel />
+          </div>
           <Adim no={1}>
             {t.kocIosAdim1}{" "}
             <IosPaylasIkon /> <b className="text-gold-light">{t.kocIosAdim1b}</b>{" "}
@@ -159,13 +164,16 @@ export default function TelefonaKurKocu() {
         </button>
       )}
 
-      {/* B) Android: istem yok → menü talimatı */}
+      {/* B) Android: istem yok → menü talimatı + ekran mockup'ı */}
       {ortam === "android-talimat" && (
         <div className="mt-3 rounded-xl bg-black/20 p-3">
           <p className="text-sm font-semibold text-gold-light">{t.kocAndroidTalimatBaslik}</p>
           <p className="mt-1 text-sm leading-relaxed text-slate-300">
             {t.kocAndroidTalimatMetin}
           </p>
+          <div className="mt-3">
+            <AndroidKurulumGorsel />
+          </div>
         </div>
       )}
     </div>
