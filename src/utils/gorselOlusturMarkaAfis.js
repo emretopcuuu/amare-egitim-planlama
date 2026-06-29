@@ -489,7 +489,8 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const notSatirlari = String(altNot || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 3);
   const footerH = Math.round(H * (0.135 + (notSatirlari.length ? 0.03 * notSatirlari.length : 0)));
   const footerTop = CANVAS_H - footerH; // uzayan canvas'ın altına otur
-  const bandH = (fiziki && prog.length && ayar.program) ? Math.round(H * 0.085) : 0;
+  // Program girilmişse her afişte göster (online dahil) — fiziki şartı kaldırıldı.
+  const bandH = (prog.length && ayar.program) ? Math.round(H * 0.085) : 0;
   const bandTop = bandH ? footerTop - bandH - Math.round(H * 0.02) : footerTop;
   const speakersTop = y + Math.round(H * 0.01);
   const speakersBottom = bandTop - Math.round(H * 0.02);
