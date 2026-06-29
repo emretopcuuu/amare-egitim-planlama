@@ -1160,6 +1160,17 @@ html[data-tema="gunduz"] body {
 html[data-tema="gunduz"] .ay-metin {
   text-shadow: none;
 }
+/* KRİTİK OKUNABİLİRLİK: Koyu-zeminli (sürükleyici) bölgelerde — .koyu-alan ve
+   .gece-ada — metin zaten AÇIK renktir. Gündüzün beyaz metin-gölgesi bu açık
+   metni bulanık bir hâleyle SARIP OKUNMAZ yapıyordu. Bu yüzeylerde (ve tüm
+   alt öğelerinde) gölgeyi kapat — fotoğraf-üstü beyaz hale yalnız gerçekten
+   parlak zeminli yerlerde kalsın. */
+html[data-tema="gunduz"] .koyu-alan,
+html[data-tema="gunduz"] .koyu-alan *,
+html[data-tema="gunduz"] .gece-ada,
+html[data-tema="gunduz"] .gece-ada * {
+  text-shadow: none;
+}
 
 /* Metin tonlarını ters çevir: gecede açık olanlar gündüz koyulaşır.
    İkincil tonlar (400/500) fotoğraf üstünde okunsun diye belirgin koyu. */
