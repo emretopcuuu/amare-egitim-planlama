@@ -84,8 +84,16 @@ body.ortu-acik .kimsin-bant {
   stroke-dasharray: 6 10;
   animation: ekran-bag-ak 1.3s linear infinite;
 }
+/* Slayt tempo çubuğu — SLAYT_MS (14s) boyunca 0→100 dolar (key ile her slaytta
+   baştan başlar). Süre EkranGosterisi'ndeki SLAYT_MS ile eşleşir. */
+@keyframes ekran-ilerle-an {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+.ekran-ilerle { animation: ekran-ilerle-an 14s linear forwards; }
 @media (prefers-reduced-motion: reduce) {
   .ekran-dugum, .ekran-bag-akan, .ekran-canli-nokta { animation: none; }
+  .ekran-ilerle { width: 100%; animation: none; }
 }
 /* Sinematik glow vinyet — inset box-shadow ile (pseudo-element + z-index savaşı
    YOK; absolute konumlu çocukları, ör. "Sesi Aç" düğmesini bozmaz). */
