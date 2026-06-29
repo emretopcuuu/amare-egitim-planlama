@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga, aktifOzellikler } from "@/lib/degerlendirme";
 import { unvanBul } from "@/lib/kivilcim";
 import { arketipBul } from "@/lib/arketip";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 
 // Büyük ekran verisi — bu uç HERKESE AÇIK (sahne bilgisayarı giriş yapmaz).
 // Bu yüzden yalnızca isimsiz agregalar döner: sayılar, özellik ortalamaları
@@ -33,6 +34,9 @@ export type EkranVerisi = {
   takimLigi: { takim: string; kivilcim: number }[];
   // Bugünün canlı sayaçları (Istanbul günü) — salonun enerjisini görünür kılar.
   bugun: { gorev: number; gozlem: number; takdir: number; fiero: number };
+  // Kampın 1. gününün Istanbul tarihi ("YYYY-MM-DD") — ŞİMDİ/SIRADA program
+  // slaytı bunu kullanır (sahne bilgisayarı oturumsuz; gün/blok bundan türer).
+  kampGun1: string | null;
   // Senkron An canlı katılımı (aktif pencere yoksa null)
   senkron: { baslik: string; yanit: number; toplam: number; kalanSn: number } | null;
   // Sahne Vitrini (DJ): host belirli bir slaydı sabitlediyse onun indeksi,
@@ -369,6 +373,7 @@ export async function GET() {
     anilar,
     yansimalar,
     bugun,
+    kampGun1: (await kampBaslangicGetir(db)) ?? null,
   };
 
   return Response.json(veri);

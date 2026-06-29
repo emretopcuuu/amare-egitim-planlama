@@ -4,11 +4,18 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import type { EkranVerisi } from "@/app/api/ekran/route";
 import EpicYildizlar from "./EpicYildizlar";
+import {
+  kampGunu,
+  suankiMadde,
+  siradakiMadde,
+  dakikaCevir,
+  ETKINLIK_SIMGESI,
+} from "@/lib/kampProgrami";
 
 const t = tr.ekran;
 const VERI_YOKLAMA_MS = 10_000;
 const SLAYT_MS = 14_000;
-const SLAYT_SAYISI = 6;
+const SLAYT_SAYISI = 7;
 
 // Takım renk paleti — projeksiyonda ayırt edilebilir, koyu zemine uygun
 const TAKIM_RENKLERI = [
@@ -100,6 +107,27 @@ export default function EkranGosterisi() {
     return () => {
       iptal = true;
     };
+  }, []);
+  // ŞİMDİ/SIRADA program slaytı için Istanbul saati — 30 sn'de bir tazelenir.
+  const [an, setAn] = useState<{ tarih: string; dk: number } | null>(null);
+  useEffect(() => {
+    const guncelle = () => {
+      const simdi = new Date();
+      const tarih = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(simdi);
+      const [s, d] = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Europe/Istanbul",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      })
+        .format(simdi)
+        .split(":")
+        .map(Number);
+      setAn({ tarih, dk: s * 60 + d });
+    };
+    guncelle();
+    const id = setInterval(guncelle, 30_000);
+    return () => clearInterval(id);
   }, []);
   // SAHNE: tarayıcı sesli oynatmayı kullanıcı dokunuşuna bağlar — kurulumda
   // bir kez "Sesi Aç"a tıklanır, sonrası otomatik. Olaylar bir kez oynar.
@@ -230,9 +258,9 @@ export default function EkranGosterisi() {
         </div>
       )}
 
-      {/* FIERO: 10/10 anı — yıldız patlaması + isim */}
+      {/* FIERO: 10/10 anı — tüm perdeyi alan tören: koyu zemin + yıldız patlaması */}
       {fieroGoster && (
-        <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center">
+        <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-[#020a12]/85">
           {Array.from({ length: 16 }, (_, i) => (
             <span
               key={i}
@@ -616,6 +644,61 @@ export default function EkranGosterisi() {
                   ))}
                 </div>
               )}
+            </section>
+
+            {/* Slayt 7 — ŞİMDİ / SIRADA: o anki program bloğu + geri sayım + sıradaki */}
+            <section
+              className={`absolute inset-0 flex flex-col transition-all duration-1000 ${
+                slayt === 6 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
+              }`}
+            >
+              <h2 className="text-4xl font-bold text-gold-light">📍 Şimdi / Sırada</h2>
+              <p className="mt-1 text-lg text-slate-400">
+                Salonun nabzı: o an ne yapıyoruz, sırada ne var.
+              </p>
+              {(() => {
+                const gun = an && veri?.kampGun1 ? kampGunu(an.tarih, veri.kampGun1) : null;
+                if (!gun || !an) {
+                  return (
+                    <div className="flex flex-1 items-center justify-center">
+                      <p className="text-2xl text-slate-400">Kamp programı yakında başlıyor.</p>
+                    </div>
+                  );
+                }
+                const aktif = suankiMadde(gun, an.dk);
+                const sira = siradakiMadde(gun, an.dk);
+                const kalan = aktif
+                  ? dakikaCevir(aktif.bitis) - an.dk
+                  : sira
+                    ? dakikaCevir(sira.baslangic) - an.dk
+                    : null;
+                return (
+                  <div className="flex flex-1 flex-col items-center justify-center gap-8 text-center">
+                    <span className="rounded-full bg-gold/15 px-5 py-1.5 text-2xl font-bold text-gold-light">
+                      Gün {gun} / 3
+                    </span>
+                    <div>
+                      <p className="text-2xl uppercase tracking-[0.3em] text-slate-400">Şimdi</p>
+                      <p className="mt-2 font-display text-7xl font-bold text-slate-100">
+                        {aktif ? `${ETKINLIK_SIMGESI[aktif.tur]} ${aktif.baslik}` : "🌿 Serbest zaman"}
+                      </p>
+                      {kalan != null && kalan >= 0 && (
+                        <p className="mt-3 font-mono text-3xl text-amber-300">
+                          {aktif ? `bitişe ~${kalan} dk` : `başlamasına ~${kalan} dk`}
+                        </p>
+                      )}
+                    </div>
+                    {sira && (
+                      <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-8 py-4">
+                        <p className="text-xl uppercase tracking-[0.3em] text-slate-500">Sırada</p>
+                        <p className="mt-1 text-3xl font-semibold text-slate-200">
+                          {sira.baslangic} · {ETKINLIK_SIMGESI[sira.tur]} {sira.baslik}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </section>
           </>
         )}
