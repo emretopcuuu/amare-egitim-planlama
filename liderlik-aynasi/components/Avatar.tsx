@@ -87,7 +87,7 @@ export default function Avatar({
         createPortal(
           <button
             onClick={() => setAcik(false)}
-            className="fixed inset-0 z-[80] flex flex-col items-center justify-center gap-4 bg-black/85 p-8 backdrop-blur"
+            className="koyu-alan fixed inset-0 z-[80] flex flex-col items-center justify-center gap-4 bg-black/85 p-8 backdrop-blur"
             aria-label="Kapat"
           >
             <div className="h-64 w-64 max-w-[80vw] overflow-hidden rounded-3xl ring-2 ring-gold/40">

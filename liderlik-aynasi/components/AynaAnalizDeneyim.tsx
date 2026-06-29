@@ -150,7 +150,7 @@ export default function AynaAnalizDeneyim({
 
       {/* TAM EKRAN AYNA SAHNESİ */}
       {acik && (
-        <div className="fixed inset-0 z-[70] flex flex-col bg-[#04101c]">
+        <div className="koyu-alan fixed inset-0 z-[70] flex flex-col bg-[#04101c]">
           {/* Dönen ayna videosu — sahnenin nefesi */}
           <div className="pointer-events-none absolute inset-0 overflow-hidden">
             <video

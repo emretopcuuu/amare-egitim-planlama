@@ -138,7 +138,7 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
     <div
       role="dialog"
       aria-modal="true"
-      className="fixed inset-0 z-[80] flex flex-col items-center justify-center bg-black px-6 py-8"
+      className="koyu-alan fixed inset-0 z-[80] flex flex-col items-center justify-center bg-black px-6 py-8"
     >
       <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
         {t.ust}

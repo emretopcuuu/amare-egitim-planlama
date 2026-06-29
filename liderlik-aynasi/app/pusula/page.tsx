@@ -242,7 +242,7 @@ export default async function PusulaSayfa() {
     );
 
     return (
-      <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <main className="koyu-alan flex min-h-dvh flex-col overflow-y-auto">
         <div className="mx-auto my-auto w-full max-w-md px-5 py-8">
           <HazirlikAkis adimlar={adimlar} bekleIcerik={bekleIcerik} />
         </div>
