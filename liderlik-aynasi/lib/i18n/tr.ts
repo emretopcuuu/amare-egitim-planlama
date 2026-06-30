@@ -3193,6 +3193,12 @@ export const tr = {
     altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
     aktifYokBaslik: "Şu an görevin yok",
     aktifYok: "AYNA yanında — yeni bir görev her an gelebilir.",
+    bosIzliyor: "AYNA seni izliyor",
+    bosHerAn: "Sıradaki görev her an gelebilir.",
+    bosSiradaki: (dk: number) => `Sıradaki görev ~${dk} dk içinde gelebilir.`,
+    bosMerak: "AYNA bir sonraki adımını senin için hazırlıyor.",
+    unvanZirve: "Zirvedesin",
+    gununRitmi: "Bugün",
     bosKocu: "Ayna Koçu'na danış",
     bosTakdir: "Birine takdir bırak",
     // #4 Günün özeti: gün sonu kapanış kartı
