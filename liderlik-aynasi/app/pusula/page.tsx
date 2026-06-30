@@ -42,9 +42,11 @@ export default async function PusulaSayfa() {
     kampBaslangicGetir(db),
   ]);
 
-  // Kamp açıldıysa (oda QR'ı okutuldu ya da görevli elle açtı) Pusula
-  // hub'ında/mühür ekranında oyalanma — doğrudan kamp akışına gönder.
-  if (kisi?.camp_unlocked_at) redirect("/");
+  // Kamp açık VE pusula TAMAM ise hub'da/mühür ekranında oyalanma — kamp akışına
+  // gönder. ÖNEMLİ: pusula henüz bitmemişse kamp açık olsa bile burada KAL (zorunlu
+  // onboarding). Aksi halde ana sayfa "/pusula"ya yollar, burası "/"ye geri yollar →
+  // sonsuz yönlendirme (ERR_TOO_MANY_REDIRECTS) olur.
+  if (kisi?.camp_unlocked_at && durum.tamam) redirect("/");
 
   // Pusula tamamsa ama ÖN FARKINDALIK penceresi açık ve bitmemişse, hub'dan ÖNCE
   // oraya gönder. Ana sayfa kapısı (pusula → ön farkındalık → bekleme) ile aynı
