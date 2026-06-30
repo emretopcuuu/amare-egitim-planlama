@@ -47,14 +47,14 @@ function Sayfa({
   program?: React.ReactNode;
   kurulum?: boolean;
 }) {
-  // Mobil öncelikli düzen kuralı: başlık üstte sabit, tek kart kalan boşlukta
-  // DİKEY ORTALANIR, kurulum ipucu altta. `my-auto` az içerikte ekranı
-  // ortalar; çok içerik olursa kırpmadan kayar (asla yarım ekran hissi yok).
+  // Mobil öncelikli düzen: başlık üstte, içerik onun ALTINDA üstten hizalı.
+  // (Eskiden `my-auto` ile dikey ortalanıyordu; içerik ekrandan uzunsa Chrome
+  // ortalayıp üstünü kırpıyor → sayfa "ortadan" açılıyordu. Artık hep en tepede.)
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <IlkTanitim />
       <div className="mx-auto w-full max-w-md shrink-0 px-5 pt-5">{ust}</div>
-      <div className="mx-auto my-auto w-full max-w-md px-5 py-5">
+      <div className="mx-auto w-full max-w-md px-5 py-5">
         <div className="sahne-giris space-y-5">
           {children}
           {program}
