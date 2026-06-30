@@ -82,8 +82,12 @@ export default function KimlikElmasi({
               className="h-full w-full object-cover"
               style={{
                 mixBlendMode: "screen",
-                WebkitMaskImage: "radial-gradient(circle, #000 55%, transparent 80%)",
-                maskImage: "radial-gradient(circle, #000 55%, transparent 80%)",
+                // (1) Videonun siyahı TAM siyaha ezildi (ffmpeg curves) → screen
+                // blend'de zemin tamamen kaybolur, kare/dikdörtgen kalmaz.
+                // (2) closest-side maske 4 kenara KADAR yumuşar → üst/alt/sağ/sol
+                // düz çizgi olmaz; elması kırpmadan kenarı eritir.
+                WebkitMaskImage: "radial-gradient(closest-side, #000 78%, transparent 100%)",
+                maskImage: "radial-gradient(closest-side, #000 78%, transparent 100%)",
               }}
             />
           </div>
