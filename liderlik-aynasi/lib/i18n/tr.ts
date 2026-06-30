@@ -3457,6 +3457,10 @@ export const tr = {
       "“Ana ekrana ekle” / “Uygulamayı yükle”yi seç.",
       "Uygulamayı ana ekrandan aç → “Bildirimlere izin ver”.",
     ] as const,
+    // iOS görsel rehber (Apple otomatik kurmayı engeller → netlik tek silah)
+    iosGorselPaylas: "Paylaş",
+    iosGorselEkle: "Ana Ekrana Ekle",
+    iosGorselAlt: "Paylaş düğmesi Safari'de ekranın altındadır",
   },
   ses: {
     baslat: "Sesle Yaz",

@@ -18,9 +18,32 @@ export default function TarayicidaAc() {
     const ua = navigator.userAgent || "";
     // WhatsApp WebView UA'sında "WhatsApp"; Meta uygulama-içi tarayıcıları FBAN/FBAV/
     // Instagram; Line da kendi token'ını koyar. Hepsi PWA/kamera kısıtlar.
-    setIcTarayici(/WhatsApp|FBAN|FBAV|Instagram|Line\//i.test(ua));
-    setAndroid(/Android/i.test(ua));
+    const ic = /WhatsApp|FBAN|FBAV|Instagram|Line\//i.test(ua);
+    const adr = /Android/i.test(ua);
+    setIcTarayici(ic);
+    setAndroid(adr);
     setUrl(window.location.href);
+
+    // Android'de "tek tuş"u "sıfır tuş"a indir: WebView algılanır algılanmaz
+    // Chrome'u kendiliğinden dene. Oturumda bir kez (geri dönüşte tekrar
+    // sıçramasın); başarısızsa kişi alttaki butona/talimata düşer.
+    if (ic && adr) {
+      try {
+        if (!sessionStorage.getItem("la_intent_denendi")) {
+          sessionStorage.setItem("la_intent_denendi", "1");
+          const hedef = `intent://${window.location.href.replace(
+            /^https?:\/\//,
+            ""
+          )}#Intent;scheme=https;package=com.android.chrome;end`;
+          // Kısa gecikme: bileşen önce render olsun (atlama olmazsa uyarı görünür).
+          setTimeout(() => {
+            window.location.href = hedef;
+          }, 600);
+        }
+      } catch {
+        /* sessionStorage kapalıysa otomatik atlamadan, butonla devam */
+      }
+    }
   }, []);
 
   if (!icTarayici || kapandi) return null;
@@ -77,7 +100,7 @@ export default function TarayicidaAc() {
           </p>
         ) : (
           <p>
-            Veya sağ alttaki <b>paylaş / Safari</b> simgesine dokun →{" "}
+            Veya alttaki <b>paylaş / Safari</b> simgesine dokun →{" "}
             <b>&ldquo;Safari'de Aç&rdquo;</b>.
           </p>
         )}
@@ -91,6 +114,22 @@ export default function TarayicidaAc() {
       >
         Yine de burada devam et
       </button>
+
+      {/* iOS'ta Chrome'a programla atlamak mümkün değil → kişiyi WhatsApp'ın
+          alttaki "Safari'de aç" denetimine bir ZIPLAYAN okla yönlendir. */}
+      {!android && (
+        <div
+          className="pointer-events-none fixed bottom-2 right-3 flex flex-col items-center gap-1"
+          aria-hidden
+        >
+          <span className="rounded-lg bg-gold px-2.5 py-1 text-xs font-bold text-[#1a1206] shadow-lg">
+            Safari'de aç
+          </span>
+          <span className="animate-bounce text-4xl leading-none text-gold drop-shadow">
+            ↓
+          </span>
+        </div>
+      )}
     </div>
   );
 }
