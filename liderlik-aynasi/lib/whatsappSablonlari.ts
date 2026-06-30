@@ -44,25 +44,22 @@ export const WA_SABLONLAR: WaSablon[] = [
   {
     anahtar: "giris",
     ikon: "🔑",
-    etiket: "Giriş daveti (link + şifre)",
-    aciklama: "Aynayla tanışma daveti — kişiye özel giriş bağlantısı ve kodu.",
-    friendlyName: "pd101_giris_v7",
+    etiket: "Giriş daveti (+ kamp kodu)",
+    aciklama:
+      "Aynayla tanışma daveti — link butonda. Kamp kodu HEMEN ARDINDAN ayrı (onaylı OTP) mesajla gider.",
+    friendlyName: "pd101_giris_v5",
     dil: "tr",
     kategori: "MARKETING",
     ayarAnahtari: "wa_tpl_giris",
-    // Not: "giriş bağlantın / hesabına giriş / şifre / doğrulama" gibi login
-    // ifadeleri Meta'da AUTHENTICATION sınıflandırması tetikleyip redde yol açtı
-    // (v3 UTILITY, v4 MARKETING ikisi de INCORRECT_CATEGORY).
-    // v6 reddedildi: kodu GÖVDEDE çıplak göstermek ("kamp kodun: {{2}}") Meta'da
-    // OTP/doğrulama kodu sayıldı → yine INCORRECT_CATEGORY.
-    // v7: kod artık çıplak değil, kişisel ADRESİN İÇİNDE görünür
-    // (ayna.oneteamglobal.ai/giris?kod={{2}}). Böylece WebView buton patlasa bile
-    // kişi adresi tarayıcısına yazıp devam edebilir, ama metin OTP gibi okunmaz.
+    // ÖNEMLİ — kodu davet GÖVDESİNE koymak Meta'da imkânsız: v3/v6/v7 hepsi
+    // INCORRECT_CATEGORY ile reddedildi (görünür kod = OTP sayılıyor).
+    // Çözüm: davet (bu, canlı onaylı v5 — kod yalnız butonun URL'sinde) + kamp
+    // kodu HEMEN ARDINDAN ayrı bir AUTHENTICATION/OTP şablonuyla (pd101_kamp_kodu,
+    // settings.wa_tpl_kod) görünür+kopyalanabilir gelir. İki mesaj birlikte gönderilir
+    // (app/api/admin/whatsapp/route.ts). Bu govde = canlı v5 gövdesi (önizleme dürüst).
     govde:
       "Merhaba {{1}}, PD101 Liderlik Aynası kampına hoş geldin! 🪞\n\n" +
-      "Kampın telefonunda yaşıyor. Başlamak için telefonunda Chrome veya Safari'yi aç ve sana özel şu adrese git:\n\n" +
-      "ayna.oneteamglobal.ai/giris?kod={{2}}\n\n" +
-      "Aşağıdaki butona da dokunabilirsin. Sayfa WhatsApp içinde açılıp ilerlemezse, sağ üstteki menüden \"Tarayıcıda aç\"ı (Chrome/Safari) seç — kurulum ve kamera yalnız gerçek tarayıcıda çalışır.\n\n" +
+      "Kampa hazırlanmak için aşağıdaki butona dokun, seni bekleyen ilk adımları keşfet.\n\n" +
       "— One Team AI",
     buton: { baslik: "Kampıma Başla", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
     serbestMi: false,
