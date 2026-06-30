@@ -77,7 +77,7 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
     // giremez. Pusulayı bitirenler birikmeye başladıysa ÖF'i açmayı öner.
     if (!d.onFarkAcik && d.hazirTamam < d.katilimciSayisi) {
       return {
-        ikon: "🪞",
+        ikon: "👁",
         baslik: "Ön Farkındalık'ı aç",
         aciklama:
           "Pusula penceresi açık. Sıradaki aşama Ön Farkındalık — bu pencereyi açmazsan adaylar oraya hiç giremez. Pusulayı bitirenler buraya geçsin.",
@@ -147,7 +147,7 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
     // Henüz açılmadı (ve kapanmadı): Gün 3 sabahının ilk işi — değerlendirmeyi aç.
     if (!d.degerlendirmeKapandi && !d.raporlarAcik) {
       return {
-        ikon: "🪞",
+        ikon: "👁",
         baslik: "Kamp Değerlendirmesini aç",
         aciklama:
           "Tören öncesi son adım: katılımcılar birbirini liderlik özellikleriyle puanlasın. Pencere kapanınca Ayna Raporları hazır olur.",

@@ -288,7 +288,7 @@ export type GunSatiri = {
   sessiz?: boolean;
 };
 
-export const SERBEST_BASLIK = "AYNA 🪞 Görevleri & Serbest Zaman";
+export const SERBEST_BASLIK = "AYNA Görevleri & Serbest Zaman";
 
 // Cumartesi'nin kamp-geneli sabit blokları (Excel grup programının dışı).
 const CMT_SABIT: { bas: string; bit: string; baslik: string; simge: string; serbest?: boolean }[] = [

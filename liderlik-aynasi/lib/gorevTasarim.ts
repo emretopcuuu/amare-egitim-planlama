@@ -38,7 +38,7 @@ export const GOREV_ATMOSFER: Record<string, GorevAtmosfer> = {
     arka: "bg-orange-500/[0.04]",
   },
   yansima: {
-    ikon: "🪞",
+    ikon: "🌊",
     rozet: "bg-emerald-500/20 text-emerald-300",
     serit: "from-emerald-400/60 via-emerald-500/20 to-transparent",
     halka: "ring-emerald-400/40",

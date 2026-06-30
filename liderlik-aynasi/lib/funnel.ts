@@ -50,7 +50,7 @@ export async function funnelMetrikleri(db: Db): Promise<FunnelOzet> {
     { anahtar: "toplam", ad: "Toplam", ikon: "👥", sayi: t },
     { anahtar: "ses", ad: "Ses ritüeli", ikon: "🎙", sayi: ses ?? 0 },
     { anahtar: "pusula", ad: "Pusula kuruldu", ikon: "🧭", sayi: pusula ?? 0 },
-    { anahtar: "onfark", ad: "Ön Farkındalık", ikon: "🪞", sayi: onFark ?? 0 },
+    { anahtar: "onfark", ad: "Ön Farkındalık", ikon: "👁", sayi: onFark ?? 0 },
     { anahtar: "kampta", ad: "Kampa geldi", ikon: "🔓", sayi: kampta ?? 0 },
   ];
 

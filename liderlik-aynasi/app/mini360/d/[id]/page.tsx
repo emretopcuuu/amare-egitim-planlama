@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { MINI360_IFADELER } from "@/lib/onFarkindalik";
 import { tr } from "@/lib/i18n/tr";
 import Mini360Dis from "./Mini360Dis";
+import AynaIkon from "@/components/AynaIkon";
 
 export const metadata = { title: "Ekip Aynası — Liderlik Aynası" };
 
@@ -15,7 +16,7 @@ function Bilgi({ metin, geri = true }: { metin: string; geri?: boolean }) {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
       <div className="kart-cam max-w-md rounded-3xl p-10">
-        <p className="text-5xl" aria-hidden>🪞</p>
+        <AynaIkon className="mx-auto h-12 w-12 text-gold-light" />
         <p className="mt-4 text-base leading-relaxed text-slate-300">{metin}</p>
         {geri && (
           <Link href="/mini360" className="mt-6 inline-block rounded-xl bg-gold px-5 py-2.5 font-semibold text-[#1a1206]">
