@@ -21,6 +21,7 @@ export type ElmasVeri = {
   sonFacet: string | null; // en son ışıyan özellik (kıvılcım vurgusu)
   asama: number; // 1..5 — unvana (Çırak→Efsane) göre elmas görseli aşaması
   unvanAd: string; // mevcut unvan adı
+  kivilcim: number; // toplam kıvılcım (menü kimlik başlığı)
 };
 
 // Bir faset "tam dolu" sayılması için gereken tamamlanmış görev (yumuşak eğri).
@@ -91,5 +92,6 @@ export async function kimlikElmasiVerisi(db: Db, pid: string): Promise<ElmasVeri
     sonFacet: sonTraitId != null ? (traitListe.find((t) => t.id === sonTraitId)?.name ?? null) : null,
     asama,
     unvanAd: unvan.mevcut.ad,
+    kivilcim: toplamKivilcim,
   };
 }
