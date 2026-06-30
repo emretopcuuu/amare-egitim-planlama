@@ -52,6 +52,7 @@ import {
   aynaAniMetni,
 } from "../lib/kampProgrami";
 import { kampOncesiAdim, type AkisDurum } from "../lib/akis";
+import { GARANTILI_GOREVLER, siradakiGarantiliGorev } from "../lib/garantiliGorevler";
 import {
   KARIYER_BASAMAKLARI,
   GUNLUK_SAAT_SECENEKLERI,
@@ -640,6 +641,25 @@ console.log("\n■ 8) KAMP PROGRAMI — Sapanca akışı ve zaman pencereleri");
   const aynaAniBos = aynaAniMetni({ gozlemSayisi: 0, teslimSayisi: 0, fieroAdlari: [] });
   iddia(!aynaAniBos.includes("undefined") && aynaAniBos.length > 50, "Ayna Anı fiero'suz da düzgün");
   console.log("  Sapanca akışı: 23 madde, sahne sessizliği, senkron ve sabah pencereleri doğrulandı");
+}
+
+// ---------------------------------------------------------------
+// ---------------------------------------------------------------
+console.log("\n■ 8c) GARANTİLİ GÖREVLER — kamp boyunca herkese tam bir kez, sırayla");
+{
+  const verilen = new Set<string>();
+  // Hiç verilmemiş → liste sırasıyla ilk görev gelir, hepsi farklı.
+  for (let i = 0; i < GARANTILI_GOREVLER.length; i++) {
+    const g = siradakiGarantiliGorev(verilen);
+    iddia(g !== null, `garantili görev ${i + 1} verilebilir`);
+    iddia(g!.kod === GARANTILI_GOREVLER[i].kod, `garantili görevler liste sırasıyla verilir (#${i + 1})`);
+    verilen.add(g!.kod);
+  }
+  // Hepsi verildiyse artık null (aynı kişiye iki kez gitmez).
+  iddia(siradakiGarantiliGorev(verilen) === null, "tüm garantili görevler verilince tekrar verilmez");
+  // Kodlar tekil (çift kayıt/karışıklık olmasın).
+  const kodlar = GARANTILI_GOREVLER.map((g) => g.kod);
+  iddia(new Set(kodlar).size === kodlar.length, "garantili görev kodları tekil");
 }
 
 // ---------------------------------------------------------------

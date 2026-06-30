@@ -138,6 +138,15 @@ export const VINYETLER: Vinyet[] = [
       "Kennedy, teknolojisi daha yokken 'Bu on yıl bitmeden aya gideceğiz' dedi. Hedefi kolay olduğu için değil, insanları büyüttüğü için seçti.",
   },
   {
+    // "Üç yıl sonrası" görevini herkese taşıyan küratörlü çapa: AYNA bu vinyetle
+    // vizyon görevini geleceği CANLI hayal edip ANLATMA egzersizine yöneltir.
+    kod: "uc_yil_sonrasi",
+    kas: "vizyon",
+    baslik: "Önce Zihinde Yaşanır",
+    metin:
+      "Büyük liderler geleceği önce zihinlerinde yaşar: üç yıl sonraki bir sabahı, nerede uyandıklarını, ekiplerinin kaç kişi olduğunu net görürler. Sonra o günü başkalarına anlatırlar — ve insanlar henüz var olmayan o geleceğe katılır.",
+  },
+  {
     kod: "uc_tas_ustasi",
     kas: "vizyon",
     baslik: "Üç Taş Ustası",
