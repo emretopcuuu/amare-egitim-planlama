@@ -1,177 +1,228 @@
 "use client";
 
-import { useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 
-// KİMLİK ELMASI — gerçek zamanlı 3B brillant-kesim elmas. 10 liderlik özelliği =
-// 10 faset; her özelliğe yatırım yaptıkça (görev tamamladıkça) o faset altın
-// ışır, sönükler derin lacivert kalır. Elmas usulca döner, NEFES alır; ışıklar
-// yörüngede dönüp yüzeyde kıvılcımlar gezdirir. Saf görsel — hiçbir veri değişmez.
+// KİMLİK ELMASI v2 — GERÇEK kırılmalı kristal elmas. MeshPhysicalMaterial ile
+// transmission (cam/kırılma) + dispersion (gökkuşağı kenarlar) + clearcoat.
+// İçinde ALTIN ATEŞ: her görevle büyüyen bir kor + 10 özelliğe karşılık 10 iç
+// kıvılcım; camdan kırılarak ışıldar. Elmas HEP parlak (env yansımalarıyla
+// kamp başında bile boş görünmez), usulca döner ve nefes alır. Saf görsel.
 
-const DIM = new THREE.Color("#0b2740");
-const GOLD = new THREE.Color("#f7d97c");
+// Brillant-kesim geometri: kron (üstte tabla + eğik fasetler) + pavyon (sivri uç).
+function elmasGeometri(): THREE.BufferGeometry {
+  const kron = new THREE.CylinderGeometry(0.58, 1.0, 0.46, 10, 1, false);
+  kron.translate(0, 0.23, 0);
+  const pavyon = new THREE.ConeGeometry(1.0, 1.3, 10, 1, false);
+  pavyon.rotateX(Math.PI);
+  pavyon.translate(0, -0.65, 0);
+  // İki parçayı tek non-indexed geometride birleştir (flat fasetler için).
+  const birlestir = (g: THREE.BufferGeometry) => g.toNonIndexed();
+  const a = birlestir(kron);
+  const b = birlestir(pavyon);
+  const pa = a.attributes.position.array as Float32Array;
+  const pb = b.attributes.position.array as Float32Array;
+  const pos = new Float32Array(pa.length + pb.length);
+  pos.set(pa, 0);
+  pos.set(pb, pa.length);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+  geo.computeVertexNormals();
+  kron.dispose();
+  pavyon.dispose();
+  a.dispose();
+  b.dispose();
+  return geo;
+}
 
-// Bir geometriyi açıya göre 10 fasete böler; her faset değerine göre
-// (0..1) lacivert↔altın renklendirir. Merkeze yakın üçgenler ("masa"/tabla)
-// her zaman parlak — elmasın üst yıldızı.
-function fasetliGeometri(geo: THREE.BufferGeometry, degerler: number[]): THREE.BufferGeometry {
-  const g = geo.toNonIndexed();
-  const pos = g.attributes.position;
-  const renkler = new Float32Array(pos.count * 3);
-  const v = new THREE.Vector3();
-  const c = new THREE.Color();
-  const N = degerler.length;
-  for (let i = 0; i < pos.count; i += 3) {
-    let cx = 0;
-    let cz = 0;
-    for (let k = 0; k < 3; k++) {
-      v.fromBufferAttribute(pos, i + k);
-      cx += v.x;
-      cz += v.z;
-    }
-    cx /= 3;
-    cz /= 3;
-    const yaricap = Math.hypot(cx, cz);
-    let parlak: number;
-    if (yaricap < 0.26) {
-      parlak = 0.92; // tabla — daima parlak
-    } else {
-      let ang = Math.atan2(cz, cx);
-      if (ang < 0) ang += Math.PI * 2;
-      const seg = Math.min(N - 1, Math.floor((ang / (Math.PI * 2)) * N));
-      const d = Math.max(0, Math.min(1, degerler[seg] ?? 0));
-      parlak = 0.12 + d * 0.88;
-    }
-    c.copy(DIM).lerp(GOLD, parlak);
-    for (let k = 0; k < 3; k++) {
-      renkler[(i + k) * 3] = c.r;
-      renkler[(i + k) * 3 + 1] = c.g;
-      renkler[(i + k) * 3 + 2] = c.b;
-    }
+// Prosedürel equirectangular ortam (cam taşın yansıtıp kıracağı ışık dünyası):
+// koyu lacivart gök + altın/teal/beyaz parlak lekeler → kristalde kıvılcımlar.
+function ortamTexturesi(): THREE.Texture {
+  const c = document.createElement("canvas");
+  c.width = 1024;
+  c.height = 512;
+  const ctx = c.getContext("2d")!;
+  const g = ctx.createLinearGradient(0, 0, 0, 512);
+  g.addColorStop(0, "#0a1f38");
+  g.addColorStop(0.5, "#0c2742");
+  g.addColorStop(1, "#04101c");
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, 1024, 512);
+  const lekeler: [number, number, number, string][] = [
+    [240, 150, 150, "rgba(255,239,196,0.95)"], // altın güneş
+    [760, 120, 110, "rgba(255,255,255,0.9)"], // beyaz parlama
+    [520, 300, 130, "rgba(126,211,255,0.6)"], // teal
+    [880, 360, 90, "rgba(255,214,140,0.7)"], // altın
+    [120, 380, 80, "rgba(180,210,255,0.5)"], // soğuk
+  ];
+  for (const [x, y, r, renk] of lekeler) {
+    const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
+    rg.addColorStop(0, renk);
+    rg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = rg;
+    ctx.fillRect(x - r, y - r, r * 2, r * 2);
   }
-  g.setAttribute("color", new THREE.BufferAttribute(renkler, 3));
-  g.computeVertexNormals();
-  return g;
+  const tex = new THREE.CanvasTexture(c);
+  tex.mapping = THREE.EquirectangularReflectionMapping;
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// Ortamı sahneye kur (PMREM ile filtrelenmiş env → yumuşak yansıma/kırılma).
+function Ortam() {
+  const { gl, scene } = useThree();
+  useEffect(() => {
+    const pmrem = new THREE.PMREMGenerator(gl);
+    const ham = ortamTexturesi();
+    const env = pmrem.fromEquirectangular(ham).texture;
+    scene.environment = env;
+    ham.dispose();
+    pmrem.dispose();
+    return () => {
+      scene.environment = null;
+      env.dispose();
+    };
+  }, [gl, scene]);
+  return null;
 }
 
 function Elmas({ facetler, parlaklik }: { facetler: number[]; parlaklik: number }) {
   const grup = useRef<THREE.Group>(null);
-  const isik1 = useRef<THREE.PointLight>(null);
-  const isik2 = useRef<THREE.PointLight>(null);
+  const korRef = useRef<THREE.Mesh>(null);
+  const isikRef = useRef<THREE.PointLight>(null);
 
-  // Brillant kesim: kron (üstte, tabla + eğik fasetler) + pavyon (altta, sivri).
-  const { geo } = useMemo(() => {
-    const kron = new THREE.CylinderGeometry(0.6, 1.0, 0.46, 10, 1, false);
-    kron.translate(0, 0.23, 0);
-    const pavyon = new THREE.ConeGeometry(1.0, 1.28, 10, 1, false);
-    pavyon.rotateX(Math.PI); // sivri uç aşağı
-    pavyon.translate(0, -0.64, 0);
-    const kronR = fasetliGeometri(kron, facetler);
-    const pavR = fasetliGeometri(pavyon, facetler);
-    kron.dispose();
-    pavyon.dispose();
-    return { geo: { kronR, pavR } };
-  }, [facetler]);
-
+  const geo = useMemo(() => elmasGeometri(), []);
   const mat = useMemo(
     () =>
-      new THREE.MeshStandardMaterial({
-        vertexColors: true,
-        metalness: 0.55,
-        roughness: 0.12,
+      new THREE.MeshPhysicalMaterial({
+        transmission: 1,
+        thickness: 1.4,
+        ior: 2.42, // elmas
+        roughness: 0.03,
+        metalness: 0,
+        clearcoat: 1,
+        clearcoatRoughness: 0.06,
+        dispersion: 6, // gökkuşağı kenarlar (kromatik)
+        attenuationColor: new THREE.Color("#fff3d6"),
+        attenuationDistance: 2.4,
+        color: new THREE.Color("#ffffff"),
+        envMapIntensity: 2.0,
         flatShading: true,
-        envMapIntensity: 1,
       }),
     [],
   );
-  // Dış altın hâle (fresnel benzeri aura): geometrinin biraz büyüğü, arka yüz.
-  const auraMat = useMemo(
+
+  // İç altın ATEŞ koru — parlaklıkla büyür/parlar (camdan kırılarak görünür).
+  const korMat = useMemo(
     () =>
       new THREE.MeshBasicMaterial({
-        color: GOLD,
-        side: THREE.BackSide,
+        color: new THREE.Color("#ffd27a"),
         transparent: true,
-        opacity: 0.1 + parlaklik * 0.28,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
+        toneMapped: false,
       }),
-    [parlaklik],
+    [],
   );
+  const korGeo = useMemo(() => new THREE.IcosahedronGeometry(0.5, 1), []);
+
+  // 10 iç kıvılcım — her biri bir özelliğe (facet) karşılık; değeri arttıkça parlar.
+  const kivilcimlar = useMemo(() => {
+    const renkA = new THREE.Color("#0a1f33"); // sönük
+    const renkB = new THREE.Color("#ffdf9a"); // dolu altın
+    return facetler.map((deger, i) => {
+      const a = (i / facetler.length) * Math.PI * 2;
+      const yar = 0.42;
+      const y = ((i % 5) / 5 - 0.4) * 0.7;
+      const c = renkA.clone().lerp(renkB, Math.max(0.04, deger));
+      return { pos: [Math.cos(a) * yar, y, Math.sin(a) * yar] as [number, number, number], renk: c, deger };
+    });
+  }, [facetler]);
+
+  const korOlcek = 0.4 + parlaklik * 0.7;
 
   useFrame((state, delta) => {
     if (grup.current) {
-      grup.current.rotation.y += delta * 0.35;
-      // Nefes: parlaklık arttıkça biraz daha canlı.
+      grup.current.rotation.y += delta * 0.4;
       const t = state.clock.elapsedTime;
-      const nefes = 1 + Math.sin(t * (0.9 + parlaklik * 0.6)) * 0.02;
-      grup.current.scale.setScalar(nefes);
+      grup.current.scale.setScalar(1 + Math.sin(t * (0.8 + parlaklik * 0.6)) * 0.018);
     }
-    const t = state.clock.elapsedTime;
-    if (isik1.current) {
-      isik1.current.position.set(Math.cos(t * 0.9) * 3, 1.6, Math.sin(t * 0.9) * 3);
+    if (korRef.current) {
+      // ateş nefes alır
+      const t = state.clock.elapsedTime;
+      const titre = korOlcek * (1 + Math.sin(t * 3) * 0.08);
+      korRef.current.scale.setScalar(titre);
+      (korRef.current.material as THREE.MeshBasicMaterial).opacity = 0.55 + parlaklik * 0.4;
     }
-    if (isik2.current) {
-      isik2.current.position.set(Math.cos(t * 0.6 + 2) * 2.6, -1.2, Math.sin(t * 0.6 + 2) * 2.6);
+    if (isikRef.current) {
+      const t = state.clock.elapsedTime;
+      isikRef.current.position.set(Math.cos(t * 0.8) * 3.2, 1.8, Math.sin(t * 0.8) * 3.2);
     }
   });
 
   return (
     <group ref={grup}>
-      <mesh geometry={geo.kronR} material={mat} />
-      <mesh geometry={geo.pavR} material={mat} />
-      {/* aura */}
-      <mesh geometry={geo.kronR} material={auraMat} scale={1.05} />
-      <mesh geometry={geo.pavR} material={auraMat} scale={1.05} />
-      <hemisphereLight args={["#bcd6ff", "#1a1206", 0.5]} />
-      <pointLight ref={isik1} color="#fff3d6" intensity={28} distance={12} />
-      <pointLight ref={isik2} color="#7fd7ff" intensity={16} distance={10} />
-      <pointLight position={[0, 0, 4]} color="#ffffff" intensity={10} distance={12} />
+      {/* İç altın ateş + 10 kıvılcım (camın ARDINDA → kırılarak görünür) */}
+      <mesh ref={korRef} geometry={korGeo} material={korMat} />
+      {kivilcimlar.map((k, i) => (
+        <mesh key={i} position={k.pos} scale={0.07 + k.deger * 0.06}>
+          <sphereGeometry args={[1, 8, 8]} />
+          <meshBasicMaterial color={k.renk} toneMapped={false} />
+        </mesh>
+      ))}
+
+      {/* Kristal kabuk — gerçek kırılma */}
+      <mesh geometry={geo} material={mat} />
+
+      {/* Işıklar: clearcoat parıltıları + env zaten yansıma sağlıyor */}
+      <ambientLight intensity={0.35} />
+      <pointLight ref={isikRef} color="#fff3d6" intensity={26} distance={14} />
+      <pointLight position={[-3, -1.5, 2.5]} color="#7fd7ff" intensity={12} distance={12} />
+      <directionalLight position={[0, 3, 4]} intensity={1.2} color="#ffffff" />
     </group>
   );
 }
 
-// Çevrede twinkle eden kıvılcımlar — "canlı" his.
-function Kivilcimlar({ adet, parlaklik }: { adet: number; parlaklik: number }) {
+// Çevrede twinkle eden kıvılcımlar — dışarıda dönen yıldız tozu.
+function Yildizlar({ adet, parlaklik }: { adet: number; parlaklik: number }) {
   const ref = useRef<THREE.Points>(null);
   const { geo, mat } = useMemo(() => {
     const pos = new Float32Array(adet * 3);
     for (let i = 0; i < adet; i++) {
       const a = (i / adet) * Math.PI * 2;
-      const r = 1.7 + (i % 3) * 0.32;
+      const r = 1.85 + (i % 3) * 0.34;
       pos[i * 3] = Math.cos(a) * r;
-      pos[i * 3 + 1] = (((i * 7) % 11) / 11 - 0.5) * 3;
+      pos[i * 3 + 1] = (((i * 7) % 11) / 11 - 0.5) * 3.2;
       pos[i * 3 + 2] = Math.sin(a) * r;
     }
     const g = new THREE.BufferGeometry();
     g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
-    const tuval = document.createElement("canvas");
-    tuval.width = 64;
-    tuval.height = 64;
-    const ctx = tuval.getContext("2d")!;
+    const t = document.createElement("canvas");
+    t.width = 64;
+    t.height = 64;
+    const ctx = t.getContext("2d")!;
     const grad = ctx.createRadialGradient(32, 32, 0, 32, 32, 32);
     grad.addColorStop(0, "rgba(255,247,214,1)");
-    grad.addColorStop(0.4, "rgba(247,217,124,0.6)");
+    grad.addColorStop(0.4, "rgba(247,217,124,0.55)");
     grad.addColorStop(1, "rgba(247,217,124,0)");
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 64, 64);
-    const tex = new THREE.CanvasTexture(tuval);
+    const tex = new THREE.CanvasTexture(t);
     const m = new THREE.PointsMaterial({
-      size: 0.34,
+      size: 0.3,
       map: tex,
       transparent: true,
       blending: THREE.AdditiveBlending,
       depthWrite: false,
-      opacity: 0.5 + parlaklik * 0.5,
+      opacity: 0.5 + parlaklik * 0.4,
     });
     return { geo: g, mat: m };
   }, [adet, parlaklik]);
 
   useFrame((state) => {
     if (ref.current) {
-      ref.current.rotation.y = state.clock.elapsedTime * 0.12;
+      ref.current.rotation.y = state.clock.elapsedTime * 0.1;
       const m = ref.current.material as THREE.PointsMaterial;
-      m.opacity = (0.4 + parlaklik * 0.5) * (0.7 + Math.sin(state.clock.elapsedTime * 2.5) * 0.3);
+      m.opacity = (0.4 + parlaklik * 0.45) * (0.7 + Math.sin(state.clock.elapsedTime * 2.4) * 0.3);
     }
   });
 
@@ -190,14 +241,15 @@ export default function ElmasSahne({
   return (
     <Canvas
       dpr={[1, 1.6]}
-      gl={{ antialias: true, alpha: true }}
-      camera={{ position: [0, 0.25, 3.7], fov: 34 }}
+      gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
+      camera={{ position: [0, 0.25, 3.8], fov: 32 }}
       frameloop={hareketli ? "always" : "demand"}
       style={{ background: "transparent" }}
     >
+      <Ortam />
       <group position={[0, 0.35, 0]}>
         <Elmas facetler={facetler} parlaklik={parlaklik} />
-        {hareketli && <Kivilcimlar adet={14} parlaklik={parlaklik} />}
+        {hareketli && <Yildizlar adet={16} parlaklik={parlaklik} />}
       </group>
     </Canvas>
   );
