@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { kampKilitliMi } from "@/lib/pusula";
 import { aktifOzellikler } from "@/lib/degerlendirme";
+import { gorevAraligiDk } from "@/lib/ayna";
 import { unvanBul, UNVANLAR } from "@/lib/kivilcim";
 import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
@@ -42,7 +43,8 @@ import MentorSec from "./MentorSec";
 import { atmosferBul } from "@/lib/gorevTasarim";
 import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
-import BosDurum from "@/components/BosDurum";
+import BosGorevDurumu from "./BosGorevDurumu";
+import KampNabzi from "./KampNabzi";
 import EkstraGorev from "./EkstraGorev";
 import GorevSayac from "./GorevSayac";
 import TelafiSayac from "./TelafiSayac";
@@ -138,6 +140,13 @@ export default async function GorevlerPage() {
     .reduce((top, g) => top + g.spark_points, 0);
   const unvan = unvanBul(toplamKivilcim);
   const unvanSeviye = UNVANLAR.findIndex((u) => u.ad === unvan.mevcut.ad);
+  // UX #2: unvan ilerleme oranı (mevcut eşik → sonraki eşik). Son unvanda %100.
+  const unvanTaban = unvan.mevcut.esik;
+  const unvanTavan = unvan.sonraki?.esik ?? unvanTaban;
+  const unvanYuzde =
+    unvan.sonraki && unvanTavan > unvanTaban
+      ? Math.min(100, Math.max(3, Math.round(((toplamKivilcim - unvanTaban) / (unvanTavan - unvanTaban)) * 100)))
+      : 100;
 
   // #5 Günlük check-in: bugün yapıldı mı + özellik seçenekleri
   const bugun = new Intl.DateTimeFormat("en-CA", {
@@ -213,6 +222,16 @@ export default async function GorevlerPage() {
   // A7: aşırı yük koruması — bugün çok görev yaptıysan dinlenmeye davet.
   const yeterince = aktif.length === 0 && bugunGorev >= 5;
 
+  // UX #1/#3: günün ritmi + "sıradaki görev ~N dk" tahmini (boş durumu canlandırır).
+  const GUNLUK_KOTA = 7;
+  const sonGorevZamani = (gorevler ?? [])[0]?.issued_at ?? null;
+  let siradakiDk: number | null = null;
+  if (sonGorevZamani) {
+    const aralik = gorevAraligiDk(session.sub, bugunGorev, false);
+    const kalanMs = new Date(sonGorevZamani).getTime() + aralik * 60_000 - simdiMs;
+    siradakiDk = kalanMs > 60_000 ? Math.ceil(kalanMs / 60_000) : 0;
+  }
+
   // (Geçmiş zaman çizelgesi gruplaması artık GorevGecmisi client bileşeninde —
   // filtre + özet için.)
 
@@ -229,19 +248,52 @@ export default async function GorevlerPage() {
         <p className="mt-1 text-sm text-slate-400">{t.altBaslik}</p>
       </header>
 
-      {/* S3: Kıvılcım kompakt şerit — alt çubukta tam bilgi zaten var */}
-      <section className="flex items-center justify-between rounded-2xl border border-gold/25 bg-gold/[0.06] px-4 py-2.5">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-gold">{tr.kivilcim.toplam(toplamKivilcim)}</span>
-          <span className="text-slate-500">·</span>
-          <span className="text-sm text-gold-light">{unvan.mevcut.ad}</span>
+      {/* UX #2 + #3: Kıvılcım + unvan İLERLEME ÇUBUĞU + günün ritmi (X/7 nokta) */}
+      <section className="rounded-2xl border border-gold/25 bg-gold/[0.06] px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-baseline gap-2">
+            <span className="font-display text-lg font-bold text-gold">{tr.kivilcim.toplam(toplamKivilcim)}</span>
+            <span className="text-sm font-semibold text-gold-light">{unvan.mevcut.ad}</span>
+          </div>
+          {unvan.sonraki ? (
+            <span className="text-xs text-slate-400">
+              {tr.kivilcim.sonrakiUnvan(unvan.sonraki.ad, unvan.kalan)}
+            </span>
+          ) : (
+            <span className="text-xs font-semibold text-gold-light">⭐ {t.unvanZirve}</span>
+          )}
         </div>
-        {unvan.sonraki && (
-          <span className="text-xs text-slate-400">
-            {tr.kivilcim.sonrakiUnvan(unvan.sonraki.ad, unvan.kalan)}
+        {/* Unvan ilerleme çubuğu */}
+        <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-white/10">
+          <div
+            className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-700"
+            style={{ width: `${unvanYuzde}%` }}
+          />
+        </div>
+        {/* Günün ritmi — bugün kaç görev kapattın (kota: GUNLUK_KOTA) */}
+        <div className="mt-3 flex items-center gap-2">
+          <span className="text-[0.7rem] font-medium uppercase tracking-wide text-slate-400">
+            {t.gununRitmi}
           </span>
-        )}
+          <div className="flex flex-1 items-center gap-1">
+            {Array.from({ length: GUNLUK_KOTA }).map((_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 flex-1 rounded-full ${
+                  i < bugunGorev ? "bg-gold" : "bg-white/12"
+                }`}
+                aria-hidden
+              />
+            ))}
+          </div>
+          <span className="text-xs font-semibold tabular-nums text-gold-light">
+            {Math.min(bugunGorev, GUNLUK_KOTA)}/{GUNLUK_KOTA}
+          </span>
+        </div>
       </section>
+
+      {/* Kampın canlı nabzı — tek sakin şerit (toplu istatistik + sıran) */}
+      <KampNabzi />
 
       {/* S5: Seri + Özet tek satırda — iki ayrı banner yerine */}
       {(ozetVar || seri >= 3 || seriRiski) && (
@@ -315,26 +367,7 @@ export default async function GorevlerPage() {
           </div>
         </section>
       ) : aktif.length === 0 ? (
-        <>
-          <BosDurum simge="👁" baslik={t.aktifYokBaslik} metin={t.aktifYok} />
-          {/* UX #9: boş durum ölü kalmasın — sıcak bir sonraki adım sun */}
-          <div className="mx-auto mt-4 grid w-full max-w-sm gap-2.5">
-            {/* Ekstra görev: boş anda puanını artırmak isteyene birincil CTA */}
-            <EkstraGorev />
-            <Link
-              href="/kocu"
-              className="flex h-12 items-center justify-center rounded-xl border border-royal-light/30 text-sm font-medium text-slate-200 hover:bg-white/5"
-            >
-              👁 {t.bosKocu}
-            </Link>
-            <Link
-              href="/takdir"
-              className="flex h-12 items-center justify-center rounded-xl border border-royal-light/30 text-sm font-medium text-slate-200 hover:bg-white/5"
-            >
-              💛 {t.bosTakdir}
-            </Link>
-          </div>
-        </>
+        <BosGorevDurumu siradakiDk={siradakiDk} />
       ) : (
         aktif.map((g, i) => {
           const atm = atmosferBul(g.kind);
