@@ -53,51 +53,42 @@ export default function KimlikElmasi({
           setAcik(true);
         }}
         aria-label={t.ac}
-        className="relative block w-full overflow-hidden rounded-3xl border border-gold/25 bg-gradient-to-b from-[#071726]/60 to-[#040e18]/70 px-4 pb-4 pt-3"
+        className="relative block w-full"
       >
-        {/* arka altın hâle — parlaklıkla yoğunlaşır */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
-          style={{
-            background: `radial-gradient(circle, rgba(212,175,55,${0.1 + parlaklik * 0.3}) 0%, rgba(212,175,55,0) 68%)`,
-          }}
-        />
-        <div className="relative">
-          <p className="text-center text-[0.7rem] font-semibold uppercase tracking-[0.3em] text-gold-light/70">
-            {t.baslik}
-          </p>
+        {/* ELMAS — arkasında kutu/zemin YOK; göl/zemin üzerinde yüzer (screen
+            blend). Yalnız arkasında yumuşak altın bir hâle. */}
+        <div className="relative mx-auto aspect-square w-full max-w-[16rem]">
+          <span
+            aria-hidden
+            className="pointer-events-none absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
+            style={{
+              background: `radial-gradient(circle, rgba(212,175,55,${0.08 + parlaklik * 0.26}) 0%, rgba(212,175,55,0) 64%)`,
+            }}
+          />
+          {/* kendi ekseninde dönen kusursuz loop video; siyah-ez + screen blend
+              + closest-side maske → kare/ton/çizgi yok, zemine kaynaşır. */}
+          <video
+            key={n}
+            src={`/elmas/elmas-loop-${n}.mp4`}
+            poster={`/elmas/elmas-loop-${n}-poster.webp`}
+            autoPlay={hareketli}
+            loop
+            muted
+            playsInline
+            preload="auto"
+            aria-label={t.baslik}
+            className="relative h-full w-full object-cover"
+            style={{
+              mixBlendMode: "screen",
+              WebkitMaskImage: "radial-gradient(closest-side, #000 78%, transparent 100%)",
+              maskImage: "radial-gradient(closest-side, #000 78%, transparent 100%)",
+            }}
+          />
+        </div>
 
-          {/* KİMLİK ELMASI — kendi ekseninde dönen kusursuz loop video.
-              mix-blend-mode: screen → siyah zemin tamamen kaybolur (kare yok,
-              ton farkı yok), yalnız ışıyan elmas görünür; radyal maske kenarları
-              eritir. Hareket-azaltta poster karesinde durur. */}
-          <div className="relative mx-auto mt-1 aspect-square w-full max-w-[17rem]">
-            <video
-              key={n}
-              src={`/elmas/elmas-loop-${n}.mp4`}
-              poster={`/elmas/elmas-loop-${n}-poster.webp`}
-              autoPlay={hareketli}
-              loop
-              muted
-              playsInline
-              preload="auto"
-              aria-label={t.baslik}
-              className="h-full w-full object-cover"
-              style={{
-                mixBlendMode: "screen",
-                // (1) Videonun siyahı TAM siyaha ezildi (ffmpeg curves) → screen
-                // blend'de zemin tamamen kaybolur, kare/dikdörtgen kalmaz.
-                // (2) closest-side maske 4 kenara KADAR yumuşar → üst/alt/sağ/sol
-                // düz çizgi olmaz; elması kırpmadan kenarı eritir.
-                WebkitMaskImage: "radial-gradient(closest-side, #000 78%, transparent 100%)",
-                maskImage: "radial-gradient(closest-side, #000 78%, transparent 100%)",
-              }}
-            />
-          </div>
-
-          {/* parlaklık çubuğu */}
-          <div className="mx-auto mt-1 h-1.5 w-44 overflow-hidden rounded-full bg-white/10">
+        {/* YAZILAR — sade zemin SADECE bunların çevresinde (okunabilirlik) */}
+        <div className="mx-auto mt-1 w-full max-w-xs rounded-2xl border border-white/10 bg-midnight-card/55 px-4 py-3 backdrop-blur">
+          <div className="mx-auto h-1.5 w-44 overflow-hidden rounded-full bg-white/10">
             <span
               className="block h-full rounded-full bg-gradient-to-r from-gold-light to-gold transition-all duration-700"
               style={{ width: `${Math.max(4, yuzde)}%` }}
