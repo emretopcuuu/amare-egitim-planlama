@@ -671,10 +671,12 @@ console.log("\n■ 9) FAZ A AKIŞ SIRASI — kamp öncesi onboarding kapıları"
     sesVar: false,
     team: null,
     campUnlocked: false,
+    degerlerTamam: true, // değerler adımı varsayılan "bitti" — diğer kapı testleri bozulmasın
     pusulaTamam: false,
     hedefTamam: false,
     ofTamam: false,
     oyunSecimiAcik: true,
+    degerlerAcik: true,
     pusulaAcik: true,
     onFarkindalikAcik: true,
     kampIciHedefKapisi: false,
@@ -688,10 +690,17 @@ console.log("\n■ 9) FAZ A AKIŞ SIRASI — kamp öncesi onboarding kapıları"
   const a2 = kampOncesiAdim(sesli);
   iddia(a2.tip === "yonlendir" && a2.yol === "/oyun-secimi", "ses sonrası oyun seçimine gider");
 
-  // 3) Grup atandı → pusula.
+  // 2b) ★ Değerler çalışması Pusula'daki nedenlerden ÖNCE gelir.
+  const degersiz = kampOncesiAdim({ ...sesli, team: "Kartallar", degerlerTamam: false });
+  iddia(
+    degersiz.tip === "yonlendir" && degersiz.yol === "/degerler",
+    "grup sonrası önce değerler çalışmasına gider"
+  );
+
+  // 3) Grup atandı + değerler bitti → pusula.
   const gruplu = { ...sesli, team: "Kartallar" };
   const a3 = kampOncesiAdim(gruplu);
-  iddia(a3.tip === "yonlendir" && a3.yol === "/pusula", "grup sonrası pusulaya gider");
+  iddia(a3.tip === "yonlendir" && a3.yol === "/pusula", "değerler sonrası pusulaya gider");
 
   // 3b) ★ KRİTİK: pusula (neden keşfi) biter bitmez HEDEF gelir — ön farkındalıktan ÖNCE.
   const pusulali = { ...gruplu, pusulaTamam: true };
@@ -735,6 +744,7 @@ console.log("\n■ 9) FAZ A AKIŞ SIRASI — kamp öncesi onboarding kapıları"
     sesVar: true,
     team: "Kartallar",
     oyunSecimiAcik: false,
+    degerlerAcik: false,
     pusulaAcik: false,
     onFarkindalikAcik: false,
   };

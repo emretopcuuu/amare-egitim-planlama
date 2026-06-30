@@ -143,7 +143,7 @@ export default async function AnaSayfa({
   // yapmamış katılımcı kamp öncesi yolculuğu yapar. Sıra: önce ÖN FARKINDALIK
   // (ayna katmanları — bayrak açıksa ve bitmediyse), sonra PUSULA (derin neden +
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
-  const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }, { data: hedefErken }] =
+  const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }, { data: hedefErken }, { data: degerlerDurum }] =
     await Promise.all([
       db.from("participants").select("camp_unlocked_at, team").eq("id", session.sub).maybeSingle(),
       db
@@ -156,6 +156,8 @@ export default async function AnaSayfa({
       db.from("pusula").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
       // Hedef kapısı (kamp öncesi 3b): Pusula biter bitmez devreye girer.
       db.from("hedef").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+      // Değerler çalışması (2b): Pusula'dan hemen önce + ana sayfa kimlik çapası.
+      db.from("degerler_calismasi").select("tamamlandi_at, secilen_uc, neden_cumlesi").eq("participant_id", session.sub).maybeSingle(),
     ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
   const gununCumlesi = (ayar.get("gunun_cumlesi") ?? "").trim();
@@ -191,10 +193,12 @@ export default async function AnaSayfa({
     sesVar: !!sesVarRow,
     team: kisi?.team ?? null,
     campUnlocked: !!kisi?.camp_unlocked_at,
+    degerlerTamam: !!degerlerDurum?.tamamlandi_at,
     pusulaTamam: !!pusulaErken?.tamamlandi_at,
     hedefTamam: !!hedefErken?.tamamlandi_at,
     ofTamam: !!ofDurum?.tamamlandi_at,
     oyunSecimiAcik: true,
+    degerlerAcik: true,
     pusulaAcik: true,
     onFarkindalikAcik: true,
     kampIciHedefKapisi,
@@ -451,6 +455,26 @@ export default async function AnaSayfa({
         <p className="prizma-serif ay-metin mt-2 text-sm font-medium italic leading-snug text-gold-light/90">
           &ldquo;{kisiSlogan}&rdquo;
         </p>
+      )}
+      {/* DEĞERLER ÇAPASI — değerler çalışmasından çıkan 3 temel değer + neden cümlesi */}
+      {degerlerDurum?.secilen_uc && degerlerDurum.secilen_uc.length === 3 && (
+        <div className="mt-3 rounded-2xl border border-gold/20 bg-white/[0.02] p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[0.7rem] font-semibold uppercase tracking-wide text-slate-400">
+              Temel değerlerim
+            </span>
+            {degerlerDurum.secilen_uc.map((d) => (
+              <span key={d} className="rounded-full bg-gold/15 px-2.5 py-0.5 text-sm font-semibold text-gold-light">
+                {d}
+              </span>
+            ))}
+          </div>
+          {degerlerDurum.neden_cumlesi && (
+            <p className="prizma-serif ay-metin mt-2 text-sm italic leading-snug text-gold-light/90">
+              {degerlerDurum.neden_cumlesi}
+            </p>
+          )}
+        </div>
       )}
       {/* KİMLİK ELMASI — kampın kalbi: her görevle parlayan canlı 3B artefakt */}
       {elmasVeri && (

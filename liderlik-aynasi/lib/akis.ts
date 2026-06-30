@@ -14,11 +14,13 @@ export type AkisDurum = {
   sesVar: boolean; // ses/foto ritüeli kaydı var mı (ya da "sessiz" seçildi)
   team: string | null; // atanmış grup
   campUnlocked: boolean; // kampa fiziksel giriş yapıldı mı
+  degerlerTamam: boolean; // değerler çalışması (değer keşfi + neden) tamamlandı mı
   pusulaTamam: boolean; // pusula (neden keşfi) tamamlandı mı
   hedefTamam: boolean; // kariyer hedefi mühürlendi mi
   ofTamam: boolean; // ön farkındalık tamamlandı mı
   // Admin pencereleri (settings)
   oyunSecimiAcik: boolean;
+  degerlerAcik: boolean;
   pusulaAcik: boolean;
   onFarkindalikAcik: boolean;
   // Kamp içi hedef penceresi açık + kişi henüz bitirmemiş (hedefKapisiAcik sonucu)
@@ -37,6 +39,12 @@ export function kampOncesiAdim(d: AkisDurum): AkisAdim {
 
   // 2) OYUN SEÇİMİ — seçim açıkken grubu olmayan kişi önce oyununu seçer.
   if (d.oyunSecimiAcik && !d.team) return { tip: "yonlendir", yol: "/oyun-secimi" };
+
+  // 2b) DEĞERLER ÇALIŞMASI — Pusula'daki nedenlerden HEMEN ÖNCE. Değer keşfi +
+  //     5-neden derinleşmesi. ZORUNLU: kamp açık olsa bile atlanamaz.
+  if (d.degerlerAcik && !d.degerlerTamam) {
+    return { tip: "yonlendir", yol: "/degerler" };
+  }
 
   // 3) PUSULA — 10 öncelik → eleme → neden keşfi. Tamamlanana dek bu kapıda kalır.
   //    ZORUNLU: kamp açık/girilmiş olsa BİLE (sonradan katılan dahil) bu adım
