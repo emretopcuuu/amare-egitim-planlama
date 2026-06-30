@@ -263,7 +263,7 @@ export default function EkranGosterisi() {
     // SİNEMATİK PROJEKSİYON ZEMİNİ: hall'da parlak foto yazıyı yutar. Foto artık
     // yalnız faint bir doku (≈%8) — neredeyse opak koyu zemin + üstte hafif glow
     // vinyet. İçerik ışıldar, uzaktan okunur. koyu-alan: gündüz teması da koyu.
-    <main className="koyu-alan ekran-sahne relative flex h-screen w-screen flex-col overflow-hidden bg-gradient-to-b from-[#020a12]/95 via-[#040f1c]/92 to-[#01040a]/97 p-10 pb-20">
+    <main className="koyu-alan ekran-sahne relative flex h-screen w-screen flex-col overflow-hidden bg-gradient-to-b from-[#020a12]/95 via-[#040f1c]/92 to-[#01040a]/97 p-5 pb-20 sm:p-10">
       {/* AYNA'NIN YAŞAYAN GÖZÜ — her şey onun gözünün içinde yaşar (z-0, arkada) */}
       <AynaGoz enerji={enerji} fiero={!!fieroGoster} />
       {/* Ses kapısı: kurulumda tek tıklama, sonrası otomatik anonslar */}
@@ -346,24 +346,24 @@ export default function EkranGosterisi() {
           />
         </div>
       )}
-      <header className="relative z-10 flex items-end justify-between">
-        <div>
-          <p className="flex items-center gap-2.5 text-lg font-semibold uppercase tracking-[0.3em] text-royal-light">
+      <header className="relative z-10 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">
+          <p className="flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.3em] text-royal-light sm:text-lg">
             <span className="ekran-canli-nokta inline-block h-3 w-3 rounded-full bg-red-500" aria-hidden />
             {t.altBaslik}
           </p>
-          <h1 className="font-display altin-metin mt-1 text-7xl font-bold leading-none text-gold drop-shadow-[0_2px_18px_rgba(212,175,55,0.25)]">
+          <h1 className="font-display altin-metin mt-1 text-4xl font-bold leading-none text-gold drop-shadow-[0_2px_18px_rgba(212,175,55,0.25)] sm:text-7xl">
             {t.baslik}
           </h1>
         </div>
-        <div className="flex flex-col items-end gap-2 text-right">
+        <div className="flex min-w-0 flex-col items-end gap-2 text-right">
           {/* AYNA'nın ruh hali — salonun o anki enerjisini hisseder */}
           <span
-            className={`rounded-full border px-4 py-1.5 text-lg font-bold ${ruh.b} ${ruh.c}`}
+            className={`rounded-full border px-3 py-1 text-base font-bold sm:px-4 sm:py-1.5 sm:text-lg ${ruh.b} ${ruh.c}`}
           >
             {ruh.e} {ruh.t}
           </span>
-          <p className="text-xl text-slate-400">{veri?.dalgaAdi ?? t.dalgaYok}</p>
+          <p className="text-base text-slate-400 sm:text-xl">{veri?.dalgaAdi ?? t.dalgaYok}</p>
           {veri && <EpicYildizlar toplam={veri.toplamPuan} />}
         </div>
       </header>
