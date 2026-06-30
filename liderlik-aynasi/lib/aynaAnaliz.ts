@@ -43,16 +43,18 @@ const SEMA = {
   additionalProperties: false,
 };
 
-// Aşamaya özel çerçeve: hangi veriye yaslanıyor + ne kadar kesin konuşmalı.
+// Aşamaya özel çerçeve: HER AŞAMA FARKLI BİR MERCEK. Aynı veriden bile farklı bir
+// katman açar; böylece dört ayna birbirini tekrar etmez, birbirini tamamlar.
+// (Kamp kanıtı azsa bile her aşama onboarding'in BAŞKA bir yüzüne iner.)
 const ASAMA_CERCEVE: Record<AsamaKod, string> = {
   kamp_oncesi:
-    "Bu KAMP ÖNCESİ ilk aynan. Yalnız kişinin KENDİ anlattıklarına (pusula, hedef, ön farkındalık) yaslan. Henüz onu kampta görmedin; bu yüzden 'bana öyle geliyor ki', 'sanki', 'paylaştıklarından sezdiğim' gibi TEMKİNLİ bir dil kullan. Kesin yargı koyma.",
+    "Bu KAMP ÖNCESİ ilk aynan. MERCEK: KÖK GERİLİM — kişiyi buraya getiren çekirdek neden ile iç engeli arasındaki gizli bağ. 'Seni ne çağırıyor, aynı anda ne tutuyor?' Yalnız kişinin KENDİ anlattıklarına yaslan; henüz onu kampta görmedin → 'sanki', 'paylaştıklarından sezdiğim' gibi TEMKİNLİ dil, kesin yargı yok.",
   aksam_1:
-    "Kampın 1. AKŞAMI. Artık kişiyi bir gün boyunca gördün: başkalarının ona dair söyledikleri, yaptığı görevler, aldığı takdirler elinde. İlk aynayı DERİNLEŞTİR; söyledikleriyle yaptıkları arasındaki örtüşme ya da çelişkiyi nazikçe göster.",
+    "Kampın 1. AKŞAMI. MERCEK: DEĞERLER VE ÖNCELİKLER — kişinin sıraladığı önceliklerdeki gizli hiyerarşi ya da çelişki; en çok değer verdiği şeyin onu hem nasıl güçlendirdiği hem nasıl sınırladığı. Kamp kanıtı (başkalarının yorumları, görevler) varsa söyledikleriyle yaptıkları arasındaki örtüşme/çelişkiyi de kat; YOKSA önceliklerinin katmanına in. İlk aynadaki kök gerilimi TEKRARLAMA — onun ÜSTÜNE farklı bir şey koy.",
   aksam_2:
-    "Kampın 2. AKŞAMI, gece. İki günün kanıtı elinde. Örüntü artık daha net; ama yine de mütevazı kal. Değişimi/momentumu işaret et: ilk aynadan bu yana neyin kımıldadığını gör.",
+    "Kampın 2. AKŞAMI, gece. MERCEK: HEDEF VE MOMENTUM — kişinin gitmek istediği yer (hedef/gelecek beni) ile iç engeli arasındaki gerilim; ilk aynadan bu yana neyin kımıldadığı ve yolundaki TEK kör nokta. Önceki iki aynanın değdiği yerleri tekrar etme; farklı bir açıdan, ileriye dönük bak.",
   cikis:
-    "Kamp ÇIKIŞI — son ayna. Üç günün tüm kanıtı elinde. En dolu, en cesur ama yine sevecen analiz. Kişinin kampta gösterdiği gerçek dönüşümü ve bundan sonra onu en çok büyütecek tek şeyi söyle.",
+    "Kamp ÇIKIŞI — son ayna. MERCEK: BÜTÜNLEŞME — önceki üç aynayı tek bir örüntüde birleştir (ama hiçbirini olduğu gibi tekrarlama), kişinin kampta gösterdiği gerçek dönüşümü adlandır ve bundan sonra onu en çok büyütecek TEK şeyi söyle. En dolu, en cesur ama yine sevecen.",
 };
 
 const TALIMAT = `Görevin: kişinin verisinden, onun KENDİNİN kolayca göremediği ama duyunca derinden tanıyacağı 2-3 çıkarım üret ve fark edince onu başarılı kılacak şeyi söyle.
@@ -163,15 +165,26 @@ async function veriTopla(db: Db, pid: string, ad: string, asama: AsamaKod) {
   };
 }
 
-// Metni Opus 4.8 ile üret. yenidenSebep verilirse onu dikkate alır.
+// Metni Opus 4.8 ile üret. yenidenSebep verilirse onu dikkate alır. onceki =
+// kişinin daha erken aşamalardaki analizleri (tekrarı önlemek için modele verilir).
 async function metinUret(
   asama: AsamaKod,
   veri: object,
-  yenidenSebep: string | null
+  yenidenSebep: string | null,
+  onceki: string[] = []
 ): Promise<string | null> {
   const yenidenNot = yenidenSebep
     ? `\n\nÖNEMLİ — KİŞİ İLK ANALİZİ SAĞLIKLI/DOĞRU BULMADI ve şu sebebi yazdı: "${yenidenSebep}". Bu geri bildirimi CİDDİYE al: yanlış/incitici bulduğu açıyı düzelt, ona daha çok kulak vererek ve verisine daha sadık kalarak yeniden yaz. Savunmaya geçme; onu daha iyi gör.`
     : "";
+  // En kritik tekrar-önleyici: modele önceki aynalarını GÖSTER ve "aynısını farklı
+  // kelimelerle söyleme, yeni bir katman aç" de. (Eskiden model öncekini görmüyordu
+  // → aynı veriden aynı çıkarımı tekrar üretiyordu.)
+  const oncekiNot =
+    onceki.length > 0
+      ? `\n\nÖNCEKİ AYNALARINDA KİŞİYE ŞUNLARI SÖYLEDİN:\n${onceki
+          .map((m, i) => `(${i + 1}) ${m}`)
+          .join("\n\n")}\n\nBU AYNA FARKLI OLMALI: Yukarıdaki çıkarımları AYNI fikrin yeniden ifadesi olarak TEKRARLAMA — aynı şeyi farklı kelimelerle söylemek YASAK. Öncekileri DESTEKLE ama kişinin verisinin henüz dokunmadığın BAŞKA bir yüzünü aç (farklı bir öncelik, değer, hedef, iç engel ya da çelişki). Kamp kanıtı henüz azsa, onboarding cevaplarının başka bir katmanına yaslan. Bu aşamanın MERCEĞİNE sadık kal.`
+      : "";
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
@@ -184,7 +197,7 @@ async function metinUret(
         effort: "medium",
         format: { type: "json_schema", schema: SEMA },
       },
-      system: `${PERSONA}\n\nAŞAMA: ${ASAMA_CERCEVE[asama]}\n\n${TALIMAT}${yenidenNot}`,
+      system: `${PERSONA}\n\nAŞAMA: ${ASAMA_CERCEVE[asama]}\n\n${TALIMAT}${oncekiNot}${yenidenNot}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
     const o = jsonCoz(yanit);
@@ -229,6 +242,23 @@ async function sesUrl(db: Db, yol: string | null): Promise<string | null> {
   return data?.signedUrl ?? null;
 }
 
+// Kişinin bu aşamadan ÖNCEKİ aşamalardaki analiz metinleri (tekrarı önlemek için
+// metinUret'e verilir) — ASAMA_SIRA düzeninde.
+async function oncekiAnalizMetinleri(db: Db, pid: string, asama: AsamaKod): Promise<string[]> {
+  const idx = ASAMA_SIRA.indexOf(asama);
+  if (idx <= 0) return [];
+  const oncekiKodlar = ASAMA_SIRA.slice(0, idx);
+  const { data } = await db
+    .from("ayna_analiz")
+    .select("asama, metin")
+    .eq("participant_id", pid)
+    .in("asama", oncekiKodlar);
+  return ((data ?? []) as { asama: AsamaKod; metin: string | null }[])
+    .filter((r) => r.metin)
+    .sort((a, b) => ASAMA_SIRA.indexOf(a.asama) - ASAMA_SIRA.indexOf(b.asama))
+    .map((r) => r.metin as string);
+}
+
 // Bir aşamanın analizini getir; yoksa üret (write-once + cache).
 export async function analizGetirVeyaUret(
   db: Db,
@@ -256,7 +286,8 @@ export async function analizGetirVeyaUret(
   const veri = await veriTopla(db, pid, ad, asama);
   if (!veri) return { durum: "veri-yok" };
 
-  const metin = await metinUret(asama, veri, null);
+  const onceki = await oncekiAnalizMetinleri(db, pid, asama);
+  const metin = await metinUret(asama, veri, null, onceki);
   if (!metin) return { durum: "hata" };
 
   const sesPath = await sesUret(db, pid, asama, metin);
@@ -323,7 +354,8 @@ export async function analizYenidenDegerlendir(
   const veri = await veriTopla(db, pid, ad, asama);
   if (!veri) return { durum: "veri-yok" };
 
-  const metin = await metinUret(asama, veri, temizSebep);
+  const onceki = await oncekiAnalizMetinleri(db, pid, asama);
+  const metin = await metinUret(asama, veri, temizSebep, onceki);
   if (!metin) return { durum: "hata" };
 
   const sesPath = await sesUret(db, pid, asama, metin);
