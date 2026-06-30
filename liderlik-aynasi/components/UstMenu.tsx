@@ -101,16 +101,20 @@ export default function UstMenu({
               className="relative w-full max-w-lg rounded-3xl border border-white/10 bg-midnight-card p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              {/* Her zaman görünen kapatma çarpısı — altın dolgu her iki temada net */}
+              {/* Her zaman görünen kapatma çarpısı — altın dolgu her iki temada net.
+                  z-50: başlık/ızgara gibi kardeş öğeler dokunuşu ÇALMASIN
+                  (eskiden ortadaki ✕'e basınca tam üstündeki başlık bloğu
+                  dokunuşu yutuyordu; düğme her şeyin üstünde olmalı). */}
               <button
                 onClick={() => setAcik(false)}
                 aria-label={t.menuKapat}
-                className="absolute right-3 top-3 flex h-14 w-14 items-center justify-center rounded-full bg-gold text-2xl font-bold text-[#1a1206] shadow-lg ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95"
+                className="absolute right-3 top-3 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gold text-2xl font-bold text-[#1a1206] shadow-lg ring-1 ring-black/10 transition-transform hover:scale-105 active:scale-95"
               >
                 ✕
               </button>
 
-              <p className="prizma-serif ay-metin text-center text-2xl font-semibold">
+              {/* Başlık dokunuşu yutmasın: pointer-events-none + sağda ✕ payı (pr-16). */}
+              <p className="prizma-serif ay-metin pointer-events-none pr-16 text-center text-2xl font-semibold">
                 {t.menuBaslik}
               </p>
 
