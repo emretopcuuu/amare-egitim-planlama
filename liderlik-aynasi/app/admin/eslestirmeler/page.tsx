@@ -139,7 +139,7 @@ export default async function EslestirmelerPage() {
       </Katlanir>
 
       {/* Ayna Eşi */}
-      <Katlanir baslik={tr.aynaEsi.adminBaslik} ikon="🪞">
+      <Katlanir baslik={tr.aynaEsi.adminBaslik} ikon="👁">
         <p className="text-sm leading-relaxed text-slate-400">
           {tr.aynaEsi.adminAciklama}
         </p>

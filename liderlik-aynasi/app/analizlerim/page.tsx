@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
+import AynaIkon from "@/components/AynaIkon";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { analizListeSesli } from "@/lib/aynaAnaliz";
 import { tr } from "@/lib/i18n/tr";
@@ -38,7 +39,7 @@ export default async function AnalizlerimSayfa() {
           ← Ana sayfa
         </Link>
         <h1 className="prizma-serif ay-metin mt-3 flex items-center gap-2 text-2xl font-bold">
-          <span aria-hidden>🪞</span>
+          <AynaIkon className="h-6 w-6 text-gold-light" />
           {t.listeBaslik}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-400">{t.listeAciklama}</p>

@@ -256,7 +256,7 @@ export const tr = {
     takipBaslik: "90 günlük yolun",
     takipMetin: "Sözünü verdin. Şimdi her gün bir adım — bugün adımını işaretle.",
     takipDugme: "Bugünün adımı",
-    takipAyna: "🪞 Aynanı tekrar gör",
+    takipAyna: "Aynanı tekrar gör",
     takipSahitlik: (n: number) => `🤝 Şahit olduğun ${n} lideri takip et`,
     dalgaDevamBaslik: (dalga: string) => `${dalga} açık`,
     dalgaDevamMetin: "Şimdi gözlemlediğin kişileri puanlama zamanı.",
@@ -305,7 +305,7 @@ export const tr = {
     menuBen: "👤 Profilim",
     menuGrup: "👥 Grup Ödevi",
     // Kamp öncesi adımlar — tamamlandıktan sonra da düzenlenebilir kalsın
-    menuFarkindalik: "🪞 Ön Farkındalık",
+    menuFarkindalik: "Ön Farkındalık",
     menuPusula: "🧭 Pusulam",
     menuHedef: "🎯 Hedefim",
     menuMini360: "👁 Ekip Aynası",
@@ -3730,7 +3730,7 @@ export const tr = {
   // #10 Paylaşılabilir Ayna Kartı — raporun kapanışında kişinin tüm ayna anını
   // (arketip + en güçlü 3 yan + en çok gelişen) tek görselde özetler.
   aynaKarti: {
-    baslik: "🪞 Ayna Kartın",
+    baslik: "Ayna Kartın",
     aciklama: "Kampın sana bıraktığı iz — tek karede. İndir, paylaş.",
     kartUst: "Bu kampta ben",
     gucluUst: "En güçlü yanlarım",

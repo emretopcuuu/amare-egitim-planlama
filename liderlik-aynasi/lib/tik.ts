@@ -672,7 +672,7 @@ export async function tikCalistir(
           await katilimciyaBildir(
             db,
             pid,
-            "🪞 Aynan derinleşti",
+            "Aynan derinleşti",
             "Sana dair yeni bir analiz var — kendi sesinle dinle.",
             "/analizlerim"
           );

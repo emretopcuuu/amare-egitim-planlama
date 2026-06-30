@@ -44,7 +44,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
   // ---- GÜN 1 — CUMA · 17 Temmuz ----
   {
     gun: 1, baslangic: "12:00", bitis: "13:00",
-    baslik: "Otel Giriş & Odaya Yerleşme ve Ayna 🪞 Barkodunun Okutulması", tur: "serbest",
+    baslik: "Otel Giriş & Odaya Yerleşme ve Ayna Barkodunun Okutulması", tur: "serbest",
     aynaNotu:
       "Karşılama ritüeli: QR kartla giriş → ses ritüeli + fotoğraf ritüeli. İlk dakika wow anı burada — klon ve silüet hattı çalışmaya başlar.",
   },
@@ -55,7 +55,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
   },
   {
     gun: 1, baslangic: "14:30", bitis: "19:00",
-    baslik: "Havuz, Güneş, Dinlenme, Tesisi Keşfetme ve Ayna 🪞 Görevlerinin Başlaması", tur: "serbest",
+    baslik: "Havuz, Güneş, Dinlenme, Tesisi Keşfetme ve Ayna Görevlerinin Başlaması", tur: "serbest",
     aynaNotu:
       "İlk gözlem görevleri damla damla dağıtılır (hafif, eğlenceli). 'Aynan seni gördü' kişisel videoları bu pencerede düşmeye başlar. (Liderlik değerlendirmesi yok — o, Gün 3 sabahı tek seferde açılır.)",
   },
@@ -114,7 +114,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
   {
     gun: 2, baslangic: "09:30", bitis: "19:30",
     baslik:
-      "Oyunlar & Öğle Yemeği & AYNA 🪞 Görevlendirmeleri & David'in Odasında Grup Görüşmeleri & Serbest Zaman",
+      "Oyunlar & Öğle Yemeği & AYNA Görevlendirmeleri & David'in Odasında Grup Görüşmeleri & Serbest Zaman",
     tur: "oyun",
     aynaNotu:
       "★ AYNA GÖREV ANA PENCERESİ. Gün boyu kişiye özel görevler akar: oyunlara, grup görüşmelerine ve serbest zamana bağlı gözlem/cesaret/gizli görevler. Tüm ekiplerin programı farklı — AYNA herkese ayrı ritimde verir. 13:30 SENKRON AN.",
@@ -126,7 +126,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
   },
   {
     gun: 2, baslangic: "21:00", bitis: "23:00",
-    baslik: "AYNA 🪞 Görevlendirmeleri & Serbest Zaman", konusmaci: "AYNA", tur: "ayna",
+    baslik: "AYNA Görevlendirmeleri & Serbest Zaman", konusmaci: "AYNA", tur: "ayna",
     aynaNotu:
       "★ AYNA AKŞAM GÖREV PENCERESİ. Telefonun rahatça elde olduğu blok: birikmiş yanıtlar, yansıma görevleri, kişiye özel akşam görevleri. İstenirse Direktör panelinden 'Ayna Anı' (günün özeti) salona okunur. Blok bitince gece fısıltısı.",
   },
@@ -166,7 +166,7 @@ export const KAMP_PROGRAMI: ProgramMaddesi[] = [
   },
   {
     gun: 3, baslangic: "11:40", bitis: "13:10",
-    baslik: "PD101 Yapay Zeka & AYNA 🪞 Kamp Analizi & PD2026", konusmaci: "Emre Topçu",
+    baslik: "PD101 Yapay Zeka & AYNA Kamp Analizi & PD2026", konusmaci: "Emre Topçu",
     tur: "ayna",
     aynaNotu:
       "★ KAMPIN ZİRVESİ. PC ve telefonlar elde. Raporlar CANLI açılır ('Ayna Anı' raporu aç), sesli mektup + 'suda beliren sen'. Ardından SÖZ ritüeli (Direktör panelinden SÖZ görevi) + Komutan paneli analiz verileri (ekip radarı, momentum top 10, istatistikler).",

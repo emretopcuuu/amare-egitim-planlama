@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
+import AynaIkon from "@/components/AynaIkon";
 
 const t = tr.analiz;
 
@@ -148,7 +149,7 @@ export default function AynaAnalizDeneyim({
         onClick={ac}
         className="ayna-vurgu group relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-br from-gold/10 to-midnight-card/60 p-4 text-left transition-colors hover:border-gold/55"
       >
-        <span className="text-2xl" aria-hidden>🪞</span>
+        <AynaIkon className="h-6 w-6 text-gold-light" />
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-gold-light">{etiket}</span>
           {altEtiket && <span className="mt-0.5 block text-xs text-slate-400">{altEtiket}</span>}
@@ -190,7 +191,7 @@ export default function AynaAnalizDeneyim({
           <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5">
             {yukleniyor && (
               <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-                <span className="text-5xl" aria-hidden>🪞</span>
+                <AynaIkon className="h-12 w-12 text-gold-light" />
                 <p className="prizma-serif ay-metin text-lg">{t.yukleniyor}</p>
                 <span className="flex gap-1.5">
                   <span className="h-2 w-2 animate-bounce rounded-full bg-gold [animation-delay:-0.3s]" />

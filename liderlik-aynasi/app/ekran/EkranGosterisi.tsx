@@ -83,7 +83,7 @@ const AKSIYONLAR = [
   "Şimdi birini gözlemle 👁",
   "Bir takdir yaz 💛",
   "Bekleyen görevini yap 🤖",
-  "Kendi aynana bak 🪞",
+  "Kendi aynana bak",
 ];
 
 export default function EkranGosterisi() {
