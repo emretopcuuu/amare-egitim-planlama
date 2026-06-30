@@ -82,6 +82,8 @@ export async function POST(req: Request) {
     body: gorev.body,
     difficulty: gorev.difficulty,
     neden: gorev.neden,
+    fayda: gorev.fayda,
+    ipuclari: gorev.ipuclari,
     micro_sprint: gorev.micro_sprint,
     due_at: dueAt.toISOString(),
   });

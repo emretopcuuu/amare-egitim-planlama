@@ -1036,9 +1036,12 @@ export type Database = {
           difficulty: number
           due_at: string
           ertelenme_sayisi: number
+          fayda: string | null
           gec_tamamlandi: boolean
           id: string
+          ipuclari: string[] | null
           issued_at: string
+          kaynak_id: string | null
           kind: string
           lightened_at: string | null
           micro_sprint: boolean
@@ -1068,9 +1071,12 @@ export type Database = {
           difficulty?: number
           due_at: string
           ertelenme_sayisi?: number
+          fayda?: string | null
           gec_tamamlandi?: boolean
           id?: string
+          ipuclari?: string[] | null
           issued_at?: string
+          kaynak_id?: string | null
           kind: string
           lightened_at?: string | null
           micro_sprint?: boolean
@@ -1100,9 +1106,12 @@ export type Database = {
           difficulty?: number
           due_at?: string
           ertelenme_sayisi?: number
+          fayda?: string | null
           gec_tamamlandi?: boolean
           id?: string
+          ipuclari?: string[] | null
           issued_at?: string
+          kaynak_id?: string | null
           kind?: string
           lightened_at?: string | null
           micro_sprint?: boolean
@@ -1125,6 +1134,13 @@ export type Database = {
           yay_gorevi?: boolean
         }
         Relationships: [
+          {
+            foreignKeyName: "missions_kaynak_id_fkey"
+            columns: ["kaynak_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "missions_participant_id_fkey"
             columns: ["participant_id"]

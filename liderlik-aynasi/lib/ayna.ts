@@ -79,8 +79,19 @@ const GOREV_SEMASI = {
       description:
         "Bu görevin neden ÖZELLİKLE BU kişiye verildiğine dair TEK kısa cümle (en fazla 16 kelime), adayın göreceği sıcak bir dille. Pusula doluysa nedeni orada geçen çekirdek neden/iç engele bağla ama doğrudan alıntı yapma. Ham veri/puan/teknik terim YOK; kör noktayı yüzüne vurma. Yoksa boş string.",
     },
+    fayda: {
+      type: "string" as const,
+      description:
+        "'Bu ödev neden önemli?' — bu görevi yapmanın kişinin LİDERLİĞİNE ve SAHADA işini (network marketing) kurarken NE KATACAĞINI anlatan 1-2 cümle. ŞU İKİSİNİ birleştir: (a) hangi farkındalığı/yeteneği besler (ör. zor konuşmayı yönetme, soğuk pazarda ilk adım, ekip güveni), (b) sahada somut karşılığı (ör. ekibini büyütürken, lider yetiştirirken, itiraz karşılarken). Sıcak, motive edici, ikinci tekil ('sana/işine'); genel-geçer klişe değil BU göreve özel. Ham veri/puan/teknik terim YOK.",
+    },
+    ipuclari: {
+      type: "array" as const,
+      items: { type: "string" as const },
+      description:
+        "YALNIZ bağlamda 'düşük puan sonrası derinleştirme/tekrar' dendiyse: kişinin BU SEFER daha iyi yapması için 2 KISA, somut tavsiye (her biri tek cümle, eyleme dönük). Aksi halde boş dizi [].",
+    },
   },
-  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden"],
+  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden", "fayda", "ipuclari"],
   additionalProperties: false,
 };
 
@@ -155,6 +166,10 @@ export type UretilenGorev = {
   itiraz: string | null;
   /** "bu görev neden SANA özel" — kısa, sıcak; ham veri ifşa etmez */
   neden: string | null;
+  /** "Bu ödev neden önemli?" — hangi farkındalık/yetenek + sahada faydası (1-2 cümle) */
+  fayda: string | null;
+  /** düşük-puan derinleştirme görevlerinde: bu sefer daha iyi yapması için 2 somut ipucu */
+  ipuclari: string[];
   /** #8 micro-sprint: true ise due_at 30 dakika olarak hesaplanır */
   micro_sprint: boolean;
   /** #4b görev yayı aktifken üretildi mi — yay aşaması bu işaretli görevlerden sayılır */
@@ -735,6 +750,8 @@ ${yeniYonergeler}`,
       sure_saat: number;
       itiraz?: string;
       neden?: string;
+      fayda?: string;
+      ipuclari?: unknown;
     }>(yanit);
     if (!veri?.baslik || !veri.govde) return null;
 
@@ -756,6 +773,16 @@ ${yeniYonergeler}`,
         veri.neden && veri.neden.trim().length > 3
           ? veri.neden.trim().slice(0, 200)
           : null,
+      fayda:
+        veri.fayda && veri.fayda.trim().length > 3
+          ? veri.fayda.trim().slice(0, 400)
+          : null,
+      ipuclari: Array.isArray(veri.ipuclari)
+        ? veri.ipuclari
+            .filter((x): x is string => typeof x === "string" && x.trim().length > 2)
+            .slice(0, 2)
+            .map((x) => x.trim().slice(0, 200))
+        : [],
       micro_sprint: microSprint,
       yayGorevi: yay !== null,
     };
@@ -1465,6 +1492,9 @@ export async function mentorlukGorevUret(
     difficulty: 2 as const,
     itiraz: null,
     neden: "Seni bir adım öne taşıyacak sohbet başkasının deneyiminde saklı.",
+    fayda:
+      "Doğru kişiye doğru soruyu sormak, sahada lider yetiştirmenin temelidir; bugün kurduğun bu köprü, yarın kendi ekibine rehberlik etme kasını güçlendirir.",
+    ipuclari: [],
     micro_sprint: false,
     yayGorevi: false,
     // #9 takip: önerilen 3 adayın id'leri (mentorluk_kayit'a yazılır)

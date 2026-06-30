@@ -349,6 +349,8 @@ export async function tikCalistir(
         body: gorev.body,
         difficulty: gorev.difficulty,
         neden: gorev.neden,
+        fayda: gorev.fayda,
+        ipuclari: gorev.ipuclari,
         micro_sprint: gorev.micro_sprint,
         yay_gorevi: gorev.yayGorevi,
         // KRİTİK: issued_at motorun kullandığı saate (prova'da SANAL saat) eşit
