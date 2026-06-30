@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 // Üst-orta kimlik çipi + YARDIM. Çip her zaman en tepede sabit durur; ALTINDAKİ
@@ -44,6 +45,9 @@ export default function KimsinBantClient({
   okunmamis?: number;
 }) {
   const [acik, setAcik] = useState(false);
+  // KIOSK: büyük ekran/sahne rotalarında kimlik çipi görünmez (sahne kromsuz).
+  const pathname = usePathname();
+  const kiosk = pathname === "/ekran" || pathname.startsWith("/ekran/") || pathname.startsWith("/sahne");
 
   // CANLI ROZET: okunmamış sayısını periyodik + sekme/uygulama öne gelince yokla
   // (sayfa yenilemeden güncellensin). Başlangıç sunucudan gelen değer.
@@ -72,6 +76,8 @@ export default function KimsinBantClient({
       window.removeEventListener("focus", cek);
     };
   }, []);
+
+  if (kiosk) return null;
 
   return (
     <>
