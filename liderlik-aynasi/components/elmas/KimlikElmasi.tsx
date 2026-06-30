@@ -13,6 +13,7 @@ export type ElmasProps = {
   ortalamaPuan: number | null;
   facetler: ElmasFacet[];
   sonFacet: string | null;
+  asama: number; // 1..5 — unvana göre elmas aşaması
 };
 
 // Ana sayfanın kalbindeki CANLI kimlik elması + dokununca faset dökümü.
@@ -24,6 +25,7 @@ export default function KimlikElmasi({
   ortalamaPuan,
   facetler,
   sonFacet,
+  asama,
 }: ElmasProps) {
   const [hareketli, setHareketli] = useState(true);
   const [acik, setAcik] = useState(false);
@@ -34,6 +36,7 @@ export default function KimlikElmasi({
 
   const isiyan = facetler.filter((f) => f.deger > 0).length;
   const yuzde = Math.round(parlaklik * 100);
+  const n = Math.min(5, Math.max(1, asama)); // güvenli aşama (1..5)
 
   const altMetin =
     tamamlanan === 0
@@ -71,8 +74,9 @@ export default function KimlikElmasi({
               eritir. Hareket-azaltta poster karesinde durur. */}
           <div className="relative mx-auto mt-1 aspect-square w-full max-w-[17rem]">
             <video
-              src="/elmas/elmas-loop.mp4"
-              poster="/elmas/elmas-loop-poster.webp"
+              key={n}
+              src={`/elmas/elmas-loop-${n}.mp4`}
+              poster={`/elmas/elmas-loop-${n}-poster.webp`}
               autoPlay={hareketli}
               loop
               muted
@@ -82,8 +86,12 @@ export default function KimlikElmasi({
               className="h-full w-full object-cover"
               style={{
                 mixBlendMode: "screen",
-                WebkitMaskImage: "radial-gradient(circle, #000 55%, transparent 80%)",
-                maskImage: "radial-gradient(circle, #000 55%, transparent 80%)",
+                // (1) Videonun siyahı TAM siyaha ezildi (ffmpeg curves) → screen
+                // blend'de zemin tamamen kaybolur, kare/dikdörtgen kalmaz.
+                // (2) closest-side maske 4 kenara KADAR yumuşar → üst/alt/sağ/sol
+                // düz çizgi olmaz; elması kırpmadan kenarı eritir.
+                WebkitMaskImage: "radial-gradient(closest-side, #000 78%, transparent 100%)",
+                maskImage: "radial-gradient(closest-side, #000 78%, transparent 100%)",
               }}
             />
           </div>

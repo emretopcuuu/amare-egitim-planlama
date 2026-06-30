@@ -445,6 +445,7 @@ export default async function AnaSayfa({
             ortalamaPuan={elmasVeri.ortalamaPuan}
             facetler={elmasVeri.facetler}
             sonFacet={elmasVeri.sonFacet}
+            asama={elmasVeri.asama}
           />
         </div>
       )}

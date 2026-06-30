@@ -1,5 +1,6 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
+import { unvanBul, UNVANLAR } from "@/lib/kivilcim";
 
 // KİMLİK ELMASI — katılımcının ana sayfasındaki canlı 3B elmasını besleyen veri.
 // Her tamamlanan görev, o görevin çalıştırdığı liderlik özelliğine (trait) denk
@@ -18,6 +19,8 @@ export type ElmasVeri = {
   ortalamaPuan: number | null; // puanlanan görevlerin ortalaması (1-10)
   facetler: Facet[]; // her zaman 10 (sıralı)
   sonFacet: string | null; // en son ışıyan özellik (kıvılcım vurgusu)
+  asama: number; // 1..5 — unvana (Çırak→Efsane) göre elmas görseli aşaması
+  unvanAd: string; // mevcut unvan adı
 };
 
 // Bir faset "tam dolu" sayılması için gereken tamamlanmış görev (yumuşak eğri).
@@ -30,7 +33,7 @@ export async function kimlikElmasiVerisi(db: Db, pid: string): Promise<ElmasVeri
     db.from("traits").select("id, name").order("sort_order", { ascending: true }),
     db
       .from("missions")
-      .select("trait_id, status, ai_score, scored_at")
+      .select("trait_id, status, ai_score, scored_at, spark_points")
       .eq("participant_id", pid)
       .in("status", ["submitted", "scored"])
       .order("scored_at", { ascending: true }),
@@ -42,12 +45,14 @@ export async function kimlikElmasiVerisi(db: Db, pid: string): Promise<ElmasVeri
     status: string;
     ai_score: number | null;
     scored_at: string | null;
+    spark_points: number | null;
   }[];
 
   // trait_id → tamamlanan görev sayısı.
   const sayac = new Map<number, number>();
   let puanTopla = 0;
   let puanAdet = 0;
+  let toplamKivilcim = 0;
   let sonTraitId: number | null = null;
   for (const g of tamamlar) {
     if (g.trait_id != null) {
@@ -58,6 +63,7 @@ export async function kimlikElmasiVerisi(db: Db, pid: string): Promise<ElmasVeri
       puanTopla += g.ai_score;
       puanAdet += 1;
     }
+    toplamKivilcim += g.spark_points ?? 0;
   }
 
   const facetler: Facet[] = traitListe.map((tr) => {
@@ -72,11 +78,18 @@ export async function kimlikElmasiVerisi(db: Db, pid: string): Promise<ElmasVeri
   const sayiOran = Math.min(1, tamamlanan / PARLAK_HEDEF);
   const parlaklik = Math.min(1, sayiOran * 0.65 + yaygin * 0.35);
 
+  // AŞAMA — 5 unvan (Çırak→Efsane) = 5 elmas görseli. unvan indeksi + 1 (1..5).
+  const unvan = unvanBul(toplamKivilcim);
+  const unvanIndex = Math.max(0, UNVANLAR.findIndex((u) => u.ad === unvan.mevcut.ad));
+  const asama = Math.min(UNVANLAR.length, unvanIndex + 1);
+
   return {
     tamamlanan,
     parlaklik,
     ortalamaPuan: puanAdet > 0 ? Math.round((puanTopla / puanAdet) * 10) / 10 : null,
     facetler,
     sonFacet: sonTraitId != null ? (traitListe.find((t) => t.id === sonTraitId)?.name ?? null) : null,
+    asama,
+    unvanAd: unvan.mevcut.ad,
   };
 }
