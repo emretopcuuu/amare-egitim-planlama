@@ -736,20 +736,54 @@ console.log("\n■ 9) FAZ A AKIŞ SIRASI — kamp öncesi onboarding kapıları"
     "pusula tamamsa hedef, pusula_acik bayrağından bağımsız devreye girer"
   );
 
-  // Kamp açıldıysa pusula yarım bile olsa kamp öncesi kapı kişiyi geri çekmez.
-  const yarimAmaKampta: AkisDurum = {
+  // ★ ZORUNLU ONBOARDING: kamp açık/girilmiş olsa BİLE (sonradan katılan dahil)
+  // onboarding tamamlanmadan kampa girilemez — her aşama zorla yaptırılır.
+  const kamptaPusulaYarim: AkisDurum = {
     ...taban,
     sesVar: true,
     team: "Kartallar",
     campUnlocked: true,
     pusulaTamam: false,
   };
+  const aZ1 = kampOncesiAdim(kamptaPusulaYarim);
   iddia(
-    kampOncesiAdim(yarimAmaKampta).tip === "devam",
-    "kamp açıldıysa yarım pusula kişiyi geri çekmez"
+    aZ1.tip === "yonlendir" && aZ1.yol === "/pusula",
+    "kamp açık olsa bile pusula yapılmadan kampa girilemez (zorunlu onboarding)"
   );
 
-  console.log("  Akış sırası: ses → oyun → pusula → HEDEF → ön farkındalık → mühür → kamp doğrulandı");
+  const kamptaHedefYarim: AkisDurum = {
+    ...kamptaPusulaYarim,
+    pusulaTamam: true,
+    hedefTamam: false,
+  };
+  const aZ2 = kampOncesiAdim(kamptaHedefYarim);
+  iddia(
+    aZ2.tip === "yonlendir" && aZ2.yol === "/hedef",
+    "kamp açık olsa bile hedef yapılmadan kampa girilemez"
+  );
+
+  const kamptaOfYarim: AkisDurum = {
+    ...kamptaHedefYarim,
+    hedefTamam: true,
+    ofTamam: false,
+  };
+  const aZ3 = kampOncesiAdim(kamptaOfYarim);
+  iddia(
+    aZ3.tip === "yonlendir" && aZ3.yol === "/on-farkindalik",
+    "kamp açık olsa bile ön farkındalık yapılmadan kampa girilemez"
+  );
+
+  // Onboarding'in TAMAMI bitmiş + kampa girmiş kişi normal akışa devam eder.
+  const kamptaHepsiTamam: AkisDurum = {
+    ...kamptaOfYarim,
+    ofTamam: true,
+  };
+  iddia(
+    kampOncesiAdim(kamptaHepsiTamam).tip === "devam",
+    "onboarding'in tamamı bitince kampa girmiş kişi normal akışa devam eder"
+  );
+
+  console.log("  Akış sırası: ses → oyun → pusula → HEDEF → ön farkındalık → mühür → kamp (ZORUNLU) doğrulandı");
 }
 
 // ---------------------------------------------------------------

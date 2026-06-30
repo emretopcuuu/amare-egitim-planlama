@@ -118,6 +118,7 @@ export default function HedefAkis({
         mesgul={mesgul}
         hata={hata}
         onSifirla={sifirla}
+        onGeri={() => setFaz("acilis")}
       />
     );
   }
@@ -130,6 +131,7 @@ export default function HedefAkis({
         istek={istek}
         onBitti={() => setFaz("wizard")}
         onSifirla={sifirla}
+        onGeri={() => setFaz("baslangic")}
       />
     );
   }
@@ -198,11 +200,13 @@ function BaslangicFormu({
   mesgul,
   hata,
   onSifirla,
+  onGeri,
 }: {
   onKaydet: (kariyer: string, ay: number | null, detay: string | null, ov: number, vol: number) => void;
   mesgul: boolean;
   hata: string | null;
   onSifirla: () => void;
+  onGeri: () => void;
 }) {
   const [kariyer, setKariyer] = useState("");
   const [ay, setAy] = useState("");
@@ -218,6 +222,13 @@ function BaslangicFormu({
   const gecerli = !!kariyer && ovGecerli && volGecerli;
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
+      <button
+        type="button"
+        onClick={onGeri}
+        className="-mb-1 flex items-center gap-1 text-sm text-slate-400 transition-colors hover:text-slate-200"
+      >
+        ← {t.geri}
+      </button>
       <header>
         <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.noktaBaslik}</h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.noktaAciklama}</p>
@@ -309,11 +320,13 @@ function Sohbet({
   istek,
   onBitti,
   onSifirla,
+  onGeri,
 }: {
   baslangic: Mesaj[];
   istek: (g: Record<string, unknown>) => Promise<{ mesaj?: string; bitti?: boolean; hata?: string } | null>;
   onBitti: () => void;
   onSifirla: () => void;
+  onGeri: () => void;
 }) {
   const [mesajlar, setMesajlar] = useState<Mesaj[]>(baslangic);
   const [girdi, setGirdi] = useState("");
@@ -378,7 +391,14 @@ function Sohbet({
       style={{ height: "calc(100dvh - env(safe-area-inset-top, 0px) - 3.5rem)" }}
     >
       <div aria-hidden className="pusula-okur-zemin pointer-events-none absolute inset-0 -z-10" />
-      <header className="shrink-0 pb-3 text-center">
+      <header className="relative shrink-0 pb-3 text-center">
+        <button
+          type="button"
+          onClick={onGeri}
+          className="absolute left-0 top-0 flex items-center gap-1 text-sm text-slate-400 transition-colors hover:text-slate-200"
+        >
+          ← {t.geri}
+        </button>
         <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
           {tr.app.name}
         </p>

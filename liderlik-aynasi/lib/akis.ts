@@ -39,18 +39,22 @@ export function kampOncesiAdim(d: AkisDurum): AkisAdim {
   if (d.oyunSecimiAcik && !d.team) return { tip: "yonlendir", yol: "/oyun-secimi" };
 
   // 3) PUSULA — 10 öncelik → eleme → neden keşfi. Tamamlanana dek bu kapıda kalır.
-  if (d.pusulaAcik && !d.campUnlocked && !d.pusulaTamam) {
+  //    ZORUNLU: kamp açık/girilmiş olsa BİLE (sonradan katılan dahil) bu adım
+  //    atlanamaz — onboarding'ini yapmadan kimse kampa giremez.
+  if (d.pusulaAcik && !d.pusulaTamam) {
     return { tip: "yonlendir", yol: "/pusula" };
   }
 
   // 3b) HEDEF (kamp öncesi, otomatik) — Pusula neden keşfi biter bitmez ayrı
   // admin bayrağı gerekmeksizin devreye girer. Bitene dek bu kapıda kalır.
-  if (d.pusulaTamam && !d.campUnlocked && !d.hedefTamam) {
+  // ZORUNLU: kamp açık olsa bile tamamlanmadan geçilemez.
+  if (d.pusulaTamam && !d.hedefTamam) {
     return { tip: "yonlendir", yol: "/hedef" };
   }
 
   // 4) ÖN FARKINDALIK — Pusula + Hedef tamamlandıktan sonra.
-  if (d.onFarkindalikAcik && !d.campUnlocked && !d.ofTamam) {
+  // ZORUNLU: kamp açık olsa bile tamamlanmadan geçilemez.
+  if (d.onFarkindalikAcik && !d.ofTamam) {
     return { tip: "yonlendir", yol: "/on-farkindalik" };
   }
 
