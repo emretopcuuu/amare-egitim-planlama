@@ -428,6 +428,45 @@ export type Database = {
           },
         ]
       }
+      garantili_gorev_kayit: {
+        Row: {
+          created_at: string
+          id: string
+          kod: string
+          mission_id: string | null
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kod: string
+          mission_id?: string | null
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kod?: string
+          mission_id?: string | null
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "garantili_gorev_kayit_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: false
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "garantili_gorev_kayit_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gorev_tanik: {
         Row: {
           confirmed_at: string | null

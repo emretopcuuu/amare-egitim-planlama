@@ -25,6 +25,8 @@ import {
   type SistemModu,
 } from "@/lib/davranis";
 import { momentumHesaplaVeYaz } from "@/lib/momentum";
+import { aktifOzellikler } from "@/lib/degerlendirme";
+import { GARANTILI_GOREVLER, siradakiGarantiliGorev } from "@/lib/garantiliGorevler";
 import {
   kampGunu,
   suankiMadde,
@@ -377,6 +379,83 @@ export async function tikCalistir(
       await itirazSesi(db, k.id, yeniGorev.id, gorev.itiraz);
     } else if (gorev.kind === "gizli" || gorev.kind === "cesaret") {
       await gorevSeslendir(db, k.id, yeniGorev.id, gorev.title, gorev.body);
+    }
+  }
+
+  // 3a-bis) GARANTİLİ GÖREVLER — kamp boyunca HER katılımcıya tam bir kez verilen
+  // küratörlü "wow" görevleri (lib/garantiliGorevler.ts). Kişi boştayken (bekleyen
+  // görevi yokken), kotası dolmamışken ve son garantili görevden ≥3 saat geçmişken
+  // sıradaki VERİLMEMİŞ garantili görevi verir; teslim garantili_gorev_kayit'a
+  // yazılır → aynı kişiye iki kez gitmez, kamp bitmeden herkese ulaşır. Statik
+  // içerik (AI yok → ucuz, güvenilir). Bu tikte normal görev seçilenler atlanır.
+  if (!sahneSessiz && GARANTILI_GOREVLER.length > 0) {
+    const GARANTI_ARALIK_MS = 3 * 3_600_000; // aynı kişiye iki garantili görev arası min
+    const GARANTI_TIK_UST = 4; // tik başına en fazla (bildirim seli olmasın)
+    const buTikSet = new Set(uygunlar.map((u) => u.id));
+    const aktifIdler = (kisiler ?? []).map((k) => k.id);
+    if (aktifIdler.length > 0) {
+      const { data: kayitlar } = await db
+        .from("garantili_gorev_kayit")
+        .select("participant_id, kod, created_at")
+        .in("participant_id", aktifIdler);
+      const verilen = new Map<string, { kodlar: Set<string>; son: number }>();
+      for (const r of kayitlar ?? []) {
+        const v = verilen.get(r.participant_id) ?? { kodlar: new Set<string>(), son: 0 };
+        v.kodlar.add(r.kod);
+        v.son = Math.max(v.son, new Date(r.created_at).getTime());
+        verilen.set(r.participant_id, v);
+      }
+      let ozellikAd: Map<string, number> | null = null; // trait adı → id (tembel yükle)
+      let garantiVerilen = 0;
+      for (const k of (kisiler ?? []) as { id: string }[]) {
+        if (garantiVerilen >= GARANTI_TIK_UST) break;
+        if (buTikSet.has(k.id)) continue; // bu tikte zaten normal görev seçildi
+        const d = durumlar.get(k.id);
+        if (d?.bekleyen || (d?.bugunSayisi ?? 0) >= gunlukUst) continue;
+        const v = verilen.get(k.id) ?? { kodlar: new Set<string>(), son: 0 };
+        if (v.son && simdi.getTime() - v.son < GARANTI_ARALIK_MS) continue; // aralık dolmadı
+        const garanti = siradakiGarantiliGorev(v.kodlar);
+        if (!garanti) continue; // hepsini almış
+        if (!ozellikAd) {
+          const oz = await aktifOzellikler(db);
+          ozellikAd = new Map(oz.map((o) => [o.name, o.id]));
+        }
+        const dueAt = new Date(simdi.getTime() + garanti.sureSaat * 3_600_000);
+        const { data: yeni, error } = await db
+          .from("missions")
+          .insert({
+            participant_id: k.id,
+            trait_id: ozellikAd.get(garanti.traitAd) ?? null,
+            kind: garanti.kind,
+            title: garanti.title,
+            body: garanti.body,
+            difficulty: garanti.difficulty,
+            neden: garanti.neden,
+            fayda: garanti.fayda,
+            issued_at: simdi.toISOString(),
+            due_at: dueAt.toISOString(),
+          })
+          .select("id")
+          .single();
+        if (error || !yeni) continue;
+        // Teslimi işaretle. Yarış/çift teslimde unique ihlali → görevi geri al.
+        const { error: kayitHata } = await db
+          .from("garantili_gorev_kayit")
+          .insert({ participant_id: k.id, kod: garanti.kod, mission_id: yeni.id });
+        if (kayitHata) {
+          await db.from("missions").delete().eq("id", yeni.id);
+          continue;
+        }
+        garantiVerilen++;
+        ozet.uretilen++;
+        await katilimciyaBildir(
+          db,
+          k.id,
+          `🤖 AYNA'dan özel görev: ${garanti.title}`,
+          garanti.body.length > 120 ? garanti.body.slice(0, 117) + "…" : garanti.body,
+          "/gorevler",
+        );
+      }
     }
   }
 
