@@ -13,6 +13,7 @@ export type ElmasProps = {
   ortalamaPuan: number | null;
   facetler: ElmasFacet[];
   sonFacet: string | null;
+  asama: number; // 1..5 — unvana göre elmas aşaması
 };
 
 // Ana sayfanın kalbindeki CANLI kimlik elması + dokununca faset dökümü.
@@ -24,6 +25,7 @@ export default function KimlikElmasi({
   ortalamaPuan,
   facetler,
   sonFacet,
+  asama,
 }: ElmasProps) {
   const [hareketli, setHareketli] = useState(true);
   const [acik, setAcik] = useState(false);
@@ -34,6 +36,7 @@ export default function KimlikElmasi({
 
   const isiyan = facetler.filter((f) => f.deger > 0).length;
   const yuzde = Math.round(parlaklik * 100);
+  const n = Math.min(5, Math.max(1, asama)); // güvenli aşama (1..5)
 
   const altMetin =
     tamamlanan === 0
@@ -71,8 +74,9 @@ export default function KimlikElmasi({
               eritir. Hareket-azaltta poster karesinde durur. */}
           <div className="relative mx-auto mt-1 aspect-square w-full max-w-[17rem]">
             <video
-              src="/elmas/elmas-loop.mp4"
-              poster="/elmas/elmas-loop-poster.webp"
+              key={n}
+              src={`/elmas/elmas-loop-${n}.mp4`}
+              poster={`/elmas/elmas-loop-${n}-poster.webp`}
               autoPlay={hareketli}
               loop
               muted
