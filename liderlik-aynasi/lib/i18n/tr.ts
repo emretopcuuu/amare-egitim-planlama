@@ -1170,6 +1170,23 @@ export const tr = {
     sifirlaniyor: "Sıfırlanıyor…",
   },
   // Grup ödevi (katılımcı görünümü)
+  elmas: {
+    baslik: "Kimlik Elmasın",
+    dokun: "dokun → fasetlerin",
+    ac: "Kimlik elmasını aç",
+    kapat: "Kapat",
+    ilk: "İlk görevini tamamla — elmasının ilk faseti ışısın.",
+    isiyanOzet: (n: number) => `${n}/10 faset ışıdı — kimliğin parlıyor.`,
+    sonIsiyan: (ad: string, n: number) => `Son ışıyan: ${ad} · ${n}/10 faset parlıyor`,
+    aciklama:
+      "Yaptığın her görev, Presidential Diamond yolculuğunda kendi kimliğine bir yatırımdır. Her görev bir liderlik özelliğini (faseti) çalıştırır ve ışıtır. Elması sen yontuyorsun.",
+    gorev: "görev",
+    faset: "faset",
+    puan: "ort. puan",
+    yatirim: (n: number) => `${n} yatırım`,
+    motivasyon:
+      "Her tamamladığın görevle yeni bir farkındalık, yeni bir yetenek ekliyorsun. Bu kamp bittiğinde elindeki elmas — senin gelişmiş liderliğin — kalıcı olacak.",
+  },
   grup: {
     baslik: "Grubunun Ödevi",
     altBaslik: (takim: string) => `${takim} · birlikte çalışın`,

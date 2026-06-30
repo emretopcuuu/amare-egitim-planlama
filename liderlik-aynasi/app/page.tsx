@@ -30,6 +30,8 @@ import { karsilasmaBul } from "@/lib/karsilasma";
 import UstMenu from "@/components/UstMenu";
 import { SiradakiOnizleme } from "@/components/AsamaRayi";
 import YeniGorevButonu from "@/components/YeniGorevButonu";
+import KimlikElmasi from "@/components/elmas/KimlikElmasi";
+import { kimlikElmasiVerisi } from "@/lib/elmas";
 
 const t = tr.anaSayfa;
 
@@ -160,6 +162,10 @@ export default async function AnaSayfa({
   // Güvenlik: katılımcı DB'de silinmiş ama JWT hâlâ geçerli → sonsuz döngü yaşanır.
   // Çerez temizle ve yeniden giriş yaptır.
   if (!kisi) redirect("/api/cikis");
+
+  // KİMLİK ELMASI verisi (yalnız kamp içindeyken) — ana sayfanın kalbindeki
+  // canlı 3B elmasını besler: her tamamlanan görev bir faseti ışıtır.
+  const elmasVeri = kisi.camp_unlocked_at ? await kimlikElmasiVerisi(db, session.sub) : null;
 
   // SIRA (kamp öncesi onboarding) — tek doğruluk kaynağı: lib/akis.ts.
   // 1) SES RİTÜELİ → 2) OYUN SEÇİMİ → 3) PUSULA → 3b) HEDEF → 4) ÖN FARKINDALIK
@@ -429,6 +435,18 @@ export default async function AnaSayfa({
         <p className="prizma-serif ay-metin mt-2 text-sm font-medium italic leading-snug text-gold-light/90">
           &ldquo;{kisiSlogan}&rdquo;
         </p>
+      )}
+      {/* KİMLİK ELMASI — kampın kalbi: her görevle parlayan canlı 3B artefakt */}
+      {elmasVeri && (
+        <div className="mt-3">
+          <KimlikElmasi
+            tamamlanan={elmasVeri.tamamlanan}
+            parlaklik={elmasVeri.parlaklik}
+            ortalamaPuan={elmasVeri.ortalamaPuan}
+            facetler={elmasVeri.facetler}
+            sonFacet={elmasVeri.sonFacet}
+          />
+        </div>
       )}
       {/* S1: YolculukSeridi kaldırıldı; gün etiketi haritanın içine taşındı.
           UX: Faz merdiveni HAZIRLIK göstergesidir — kamp açıldıktan sonra
