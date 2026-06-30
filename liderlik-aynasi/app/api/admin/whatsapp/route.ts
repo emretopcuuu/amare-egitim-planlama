@@ -99,8 +99,19 @@ export async function POST(req: Request) {
   const gecerli = kisiler.filter((k) => whatsAppAdresi(k.phone) !== null);
   const telefonsuz = kisiler.length - gecerli.length;
 
+  // "giris" davetinde kamp kodu HEMEN ARDINDAN ayrı (onaylı AUTHENTICATION/OTP)
+  // mesajla gider: davet metninde kod gösterilemiyor (Meta OTP sayıp reddediyor),
+  // bu yüzden kod görünür+kopyalanabilir şekilde kendi onaylı şablonuyla gelir.
+  const ikiAsamali = sablon.anahtar === "giris";
+  let kodSid: string | null = null;
+  if (ikiAsamali) {
+    const { data } = await db.from("settings").select("value").eq("key", "wa_tpl_kod").maybeSingle();
+    kodSid = data?.value || null;
+  }
+
   let basarili = 0;
   let basarisiz = 0;
+  let kodGonderildi = 0;
   // Twilio hız sınırını zorlamamak için küçük gruplar halinde gönder.
   const PARCA = 20;
   for (let i = 0; i < gecerli.length; i += PARCA) {
@@ -118,7 +129,20 @@ export async function POST(req: Request) {
       if (ok) basarili++;
       else basarisiz++;
     }
+    // Davetin hemen ardından kamp kodu (OTP) — ContentVariables {"1": kod}.
+    if (ikiAsamali && kodSid) {
+      const kodSonuc = await Promise.all(
+        dilim.map((k) => whatsAppGonder(k.phone!, kodSid!, { "1": k.login_code }))
+      );
+      for (const ok of kodSonuc) if (ok) kodGonderildi++;
+    }
   }
 
-  return Response.json({ ok: true, basarili, basarisiz, telefonsuz });
+  return Response.json({
+    ok: true,
+    basarili,
+    basarisiz,
+    telefonsuz,
+    ...(ikiAsamali ? { kodGonderildi, kodKayitsiz: !kodSid } : {}),
+  });
 }
