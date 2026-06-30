@@ -316,7 +316,7 @@ body.gunes-modu .kart-cerceve {
 @keyframes of-adim-belir {
   from {
     opacity: 0;
-    transform: translateY(16px) scale(0.985);
+    transform: translateY(22px) scale(0.98);
   }
   to {
     opacity: 1;
@@ -324,7 +324,39 @@ body.gunes-modu .kart-cerceve {
   }
 }
 .of-adim {
-  animation: of-adim-belir 0.34s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation: of-adim-belir 0.42s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+/* GEÇİŞ PARLAMASI — yeni soru monte olunca kısa altın bir ışıma çakar; kullanıcı
+   sorunun DEĞİŞTİĞİNİ net görür ("aynı soruda kaldım" sanmasın). */
+@keyframes of-parla {
+  0% { opacity: 0; }
+  16% { opacity: 0.9; }
+  100% { opacity: 0; }
+}
+.of-parla {
+  position: absolute;
+  inset: -1.25rem;
+  z-index: -1;
+  pointer-events: none;
+  border-radius: 1.75rem;
+  background: radial-gradient(circle at 50% 42%, rgba(212, 175, 55, 0.4), rgba(212, 175, 55, 0) 68%);
+  animation: of-parla 0.55s ease-out both;
+}
+
+/* Soru numarası rozeti — her geçişte hafif "pop" ile dikkat çeker. */
+@keyframes of-soru-no-pop {
+  0% { opacity: 0; transform: translateY(-6px) scale(0.9); }
+  60% { transform: translateY(0) scale(1.04); }
+  100% { opacity: 1; transform: none; }
+}
+.of-soru-no {
+  animation: of-soru-no-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .of-parla { animation: none; opacity: 0; }
+  .of-soru-no { animation: none; }
 }
 
 /* Geçiş parlaması — bir seçim sonrası sıradakine geçildiğini net hissettirir:

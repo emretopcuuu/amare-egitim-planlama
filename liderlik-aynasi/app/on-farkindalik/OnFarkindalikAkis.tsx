@@ -417,9 +417,17 @@ export default function OnFarkindalikAkis({
         </button>
       )}
 
-      {/* key={adim} → her geçişte yeniden monte; .of-adim zarif giriş animasyonu
-          verir (sayfanın değiştiği net hissedilir). py daraltıldı: tek ekrana sığ. */}
-      <div key={adim} className="of-adim flex flex-1 flex-col justify-center py-4">
+      {/* key={adim} → her geçişte yeniden monte; .of-adim giriş animasyonu + .of-parla
+          parlama → sorunun DEĞİŞTİĞİ net hissedilir (aynı soruda kaldı sanılmasın). */}
+      <div key={adim} className="of-adim relative flex flex-1 flex-col justify-center py-4">
+        {/* Geçiş parlaması — yeni soruda kısa altın bir ışıma çakar */}
+        <span className="of-parla" aria-hidden />
+        {/* Kaçıncı sorudasın — her sorunun başında net numara */}
+        <div className="of-soru-no mb-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-gold-light">
+          {t.soruEtiket}
+          <span className="font-mono text-sm text-gold">{adim + 1}</span>
+          <span className="text-gold-light/55">/ {TOPLAM}</span>
+        </div>
         {a.tip === "likert5" && (
           <>
             <h1 className="prizma-serif text-xl font-semibold leading-snug text-slate-50">{a.metin}</h1>

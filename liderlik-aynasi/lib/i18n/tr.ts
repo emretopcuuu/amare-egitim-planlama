@@ -1375,6 +1375,7 @@ export const tr = {
       5: "Her zaman",
     } as Record<number, string>,
     blokGiris: (ad: string) => `${ad}`,
+    soruEtiket: "SORU",
     blokAlt:
       "Son birkaç ayını düşün. İçinden geçeni değil, gerçekten yaptığını işaretle.",
     // Katman 2 (açık analizi) — ikili 1-10
