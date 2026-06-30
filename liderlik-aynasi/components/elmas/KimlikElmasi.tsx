@@ -1,11 +1,8 @@
 "use client";
 
-import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
-
-const ElmasSahne = dynamic(() => import("./ElmasSahne"), { ssr: false, loading: () => null });
 
 const t = tr.elmas;
 
@@ -28,23 +25,17 @@ export default function KimlikElmasi({
   facetler,
   sonFacet,
 }: ElmasProps) {
-  const [webgl, setWebgl] = useState(true);
   const [hareketli, setHareketli] = useState(true);
   const [acik, setAcik] = useState(false);
 
   useEffect(() => {
-    try {
-      const tuval = document.createElement("canvas");
-      setWebgl(!!(tuval.getContext("webgl2") ?? tuval.getContext("webgl")));
-    } catch {
-      setWebgl(false);
-    }
     setHareketli(!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
   }, []);
 
   const isiyan = facetler.filter((f) => f.deger > 0).length;
-  const degerler = facetler.map((f) => f.deger);
   const yuzde = Math.round(parlaklik * 100);
+  // 5 aşamalı görsel: parlaklık arttıkça elmas bir üst aşamaya geçer (1..5).
+  const asama = Math.min(5, Math.max(1, Math.ceil(parlaklik * 5)));
 
   const altMetin =
     tamamlanan === 0
@@ -76,21 +67,20 @@ export default function KimlikElmasi({
             {t.baslik}
           </p>
 
-          {/* 3B elmas (veya yedek) */}
-          <div className="relative mx-auto mt-1 h-56 w-full">
-            {webgl ? (
-              <ElmasSahne facetler={degerler} parlaklik={parlaklik} hareketli={hareketli} />
-            ) : (
-              <div className="flex h-full items-center justify-center">
-                <span
-                  className="text-7xl"
-                  style={{ filter: `drop-shadow(0 0 ${8 + parlaklik * 26}px rgba(212,175,55,${0.4 + parlaklik * 0.5}))` }}
-                  aria-hidden
-                >
-                  💎
-                </span>
-              </div>
-            )}
+          {/* 5 AŞAMALI KİMLİK ELMASI görseli — ilerlemeyle bir üst aşamaya parlar.
+              Üzerine hafif nefes + parlaklıkla yoğunlaşan altın ışıma. */}
+          <div className="relative mx-auto mt-1 aspect-square w-full max-w-[17rem]">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={`/elmas/asama-${asama}.webp`}
+              alt={t.baslik}
+              width={720}
+              height={720}
+              className={`h-full w-full object-contain ${hareketli ? "elmas-asama-nefes" : ""}`}
+              style={{
+                filter: `drop-shadow(0 0 ${10 + parlaklik * 32}px rgba(212,175,55,${0.15 + parlaklik * 0.45}))`,
+              }}
+            />
           </div>
 
           {/* parlaklık çubuğu */}

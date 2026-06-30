@@ -80,6 +80,16 @@ body.ortu-acik .kimsin-bant {
   .ayna-goz, .ayna-goz-iris { animation: none; }
 }
 
+/* KİMLİK ELMASI (aşamalı görsel) — hafif nefes; tam statik durmasın. */
+@keyframes elmas-asama-nefes {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.035); }
+}
+.elmas-asama-nefes { animation: elmas-asama-nefes 5.5s ease-in-out infinite; will-change: transform; }
+@media (prefers-reduced-motion: reduce) {
+  .elmas-asama-nefes { animation: none; }
+}
+
 /* Takım Kimyası ağı — düğümler nabız atar, takımlar-arası altın köprüler akar. */
 @keyframes ekran-dugum-nabiz {
   0%, 100% { transform: scale(1); opacity: 0.92; }
