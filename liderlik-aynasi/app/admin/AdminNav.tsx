@@ -46,6 +46,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
       { href: "/admin/ayna-direktoru", etiket: n.komuta },
       { href: "/admin/sahne", etiket: n.sahne },
       { href: "/admin/moderasyon", etiket: n.moderasyon },
+      { href: "/admin/mesajlar", etiket: n.mesajlar },
       { href: "/admin/canli-ayna", etiket: n.canliAyna },
       { href: "/admin/saglik", etiket: n.saglik },
       { href: "/admin/mentorluk", etiket: n.mentorluk },
@@ -88,6 +89,7 @@ export default function AdminNav({
   raporAcik = false,
   muhurAcik = false,
   moderasyonBekleyen = 0,
+  mesajBekleyen = 0,
 }: {
   ad: string;
   dalgaAdi: string | null;
@@ -98,6 +100,7 @@ export default function AdminNav({
   raporAcik?: boolean;
   muhurAcik?: boolean;
   moderasyonBekleyen?: number;
+  mesajBekleyen?: number;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -278,6 +281,14 @@ export default function AdminNav({
             className="shrink-0 rounded-full bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-300 transition-colors hover:bg-amber-500/30"
           >
             🖼 {k.moderasyon(moderasyonBekleyen)}
+          </Link>
+        )}
+        {mesajBekleyen > 0 && (
+          <Link
+            href="/admin/mesajlar"
+            className="shrink-0 rounded-full bg-gold/20 px-2.5 py-1 text-xs font-semibold text-gold-light transition-colors hover:bg-gold/30"
+          >
+            💬 {k.mesaj(mesajBekleyen)}
           </Link>
         )}
         <span className="hidden shrink-0 text-xs text-slate-400 sm:block">{ad}</span>

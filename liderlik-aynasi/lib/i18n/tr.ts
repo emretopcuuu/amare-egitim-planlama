@@ -1178,6 +1178,16 @@ export const tr = {
     grupBirlikte: "🔗 Grup-birlikte",
     hedefEtiket: "Odak",
     takimsiz: "Henüz bir gruba atanmadın.",
+    // İç mesajlaşma
+    arkadaslarBaslik: "Grup Arkadaşların",
+    arkadaslarAlt: "Bir arkadaşına dokun, mesaj yaz — bildirim olarak ulaşır.",
+    uyeYok: "Grubunda şu an başka kişi görünmüyor.",
+    mesajRozet: (n: number) => (n > 0 ? `${n} yeni mesaj` : ""),
+    yonetimBaslik: "Kamp Yönetimi",
+    yonetimAlt: "Soru, ihtiyaç ya da bir mesaj — doğrudan yönetime yaz.",
+    yonetimYaz: "Yönetime yaz",
+    sohbetGeri: "← Grubum",
+    yonetimSohbetBaslik: "Kamp Yönetimi",
   },
   // AYNA KOÇU — adayın her an danışabildiği bağlamsal sohbet
   kocu: {
@@ -1520,6 +1530,7 @@ export const tr = {
       grupOdev: "Grup Ödevleri",
       elmas: "Elmas Seçimi",
       moderasyon: "Moderasyon",
+      mesajlar: "Ekip Mesajları",
       komutan: "Komutan",
       sahne: "Sahne",
 
@@ -1629,6 +1640,7 @@ export const tr = {
         muhurAcik: "Mühür açık",
         muhurKapali: "Mühür kapalı",
         moderasyon: (n: number) => `${n} moderasyon`,
+        mesaj: (n: number) => `${n} mesaj`,
       },
       // #1 + #4 Komut paleti / hızlı eylem
       palet: {

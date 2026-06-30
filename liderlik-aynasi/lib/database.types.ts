@@ -53,42 +53,6 @@ export type Database = {
           },
         ]
       }
-      excluded_pairs: {
-        Row: {
-          id: string
-          a_id: string
-          b_id: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          a_id: string
-          b_id: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          a_id?: string
-          b_id?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "excluded_pairs_a_id_fkey"
-            columns: ["a_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "excluded_pairs_b_id_fkey"
-            columns: ["b_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       audit_log: {
         Row: {
           admin_id: string | null
@@ -118,6 +82,50 @@ export type Database = {
           {
             foreignKeyName: "audit_log_admin_id_fkey"
             columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ayna_analiz: {
+        Row: {
+          asama: string
+          created_at: string
+          id: string
+          metin: string
+          participant_id: string
+          ses_path: string | null
+          updated_at: string
+          yeniden_kullanildi: boolean
+          yeniden_sebep: string | null
+        }
+        Insert: {
+          asama: string
+          created_at?: string
+          id?: string
+          metin: string
+          participant_id: string
+          ses_path?: string | null
+          updated_at?: string
+          yeniden_kullanildi?: boolean
+          yeniden_sebep?: string | null
+        }
+        Update: {
+          asama?: string
+          created_at?: string
+          id?: string
+          metin?: string
+          participant_id?: string
+          ses_path?: string | null
+          updated_at?: string
+          yeniden_kullanildi?: boolean
+          yeniden_sebep?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ayna_analiz_participant_id_fkey"
+            columns: ["participant_id"]
             isOneToOne: false
             referencedRelation: "participants"
             referencedColumns: ["id"]
@@ -242,76 +250,6 @@ export type Database = {
           },
         ]
       }
-      ayna_analiz: {
-        Row: {
-          asama: string
-          created_at: string
-          id: string
-          metin: string
-          participant_id: string
-          ses_path: string | null
-          updated_at: string
-          yeniden_kullanildi: boolean
-          yeniden_sebep: string | null
-        }
-        Insert: {
-          asama: string
-          created_at?: string
-          id?: string
-          metin: string
-          participant_id: string
-          ses_path?: string | null
-          updated_at?: string
-          yeniden_kullanildi?: boolean
-          yeniden_sebep?: string | null
-        }
-        Update: {
-          asama?: string
-          created_at?: string
-          id?: string
-          metin?: string
-          participant_id?: string
-          ses_path?: string | null
-          updated_at?: string
-          yeniden_kullanildi?: boolean
-          yeniden_sebep?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ayna_analiz_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      senin_icin: {
-        Row: {
-          created_at: string
-          metin: string
-          participant_id: string
-        }
-        Insert: {
-          created_at?: string
-          metin: string
-          participant_id: string
-        }
-        Update: {
-          created_at?: string
-          metin?: string
-          participant_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "senin_icin_participant_id_fkey"
-            columns: ["participant_id"]
-            isOneToOne: true
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       bosluk_ani: {
         Row: {
           created_at: string
@@ -371,6 +309,42 @@ export type Database = {
             foreignKeyName: "churn_radar_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      excluded_pairs: {
+        Row: {
+          a_id: string
+          b_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          a_id: string
+          b_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          a_id?: string
+          b_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "excluded_pairs_a_id_fkey"
+            columns: ["a_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "excluded_pairs_b_id_fkey"
+            columns: ["b_id"]
+            isOneToOne: false
             referencedRelation: "participants"
             referencedColumns: ["id"]
           },
@@ -587,6 +561,7 @@ export type Database = {
           baslangic_detay: string | null
           baslangic_noktasi: string | null
           baslangic_ov: number | null
+          baslangic_vol: number | null
           created_at: string
           deneyim_ay: number | null
           gunluk_saat: string | null
@@ -594,6 +569,7 @@ export type Database = {
           hedef_gelir: number | null
           hedef_rutbe: string | null
           hedefler: Json
+          kariyer_seviyesi: string | null
           ozet: string | null
           participant_id: string
           plan: Json | null
@@ -606,6 +582,7 @@ export type Database = {
           baslangic_detay?: string | null
           baslangic_noktasi?: string | null
           baslangic_ov?: number | null
+          baslangic_vol?: number | null
           created_at?: string
           deneyim_ay?: number | null
           gunluk_saat?: string | null
@@ -613,6 +590,7 @@ export type Database = {
           hedef_gelir?: number | null
           hedef_rutbe?: string | null
           hedefler?: Json
+          kariyer_seviyesi?: string | null
           ozet?: string | null
           participant_id: string
           plan?: Json | null
@@ -625,6 +603,7 @@ export type Database = {
           baslangic_detay?: string | null
           baslangic_noktasi?: string | null
           baslangic_ov?: number | null
+          baslangic_vol?: number | null
           created_at?: string
           deneyim_ay?: number | null
           gunluk_saat?: string | null
@@ -632,6 +611,7 @@ export type Database = {
           hedef_gelir?: number | null
           hedef_rutbe?: string | null
           hedefler?: Json
+          kariyer_seviyesi?: string | null
           ozet?: string | null
           participant_id?: string
           plan?: Json | null
@@ -675,6 +655,54 @@ export type Database = {
           {
             foreignKeyName: "hedef_mesajlar_participant_id_fkey"
             columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ic_mesajlar: {
+        Row: {
+          admin_hedef: boolean
+          alici_id: string | null
+          created_at: string
+          gonderen_admin: boolean
+          gonderen_id: string
+          govde: string
+          id: string
+          okundu_at: string | null
+        }
+        Insert: {
+          admin_hedef?: boolean
+          alici_id?: string | null
+          created_at?: string
+          gonderen_admin?: boolean
+          gonderen_id: string
+          govde: string
+          id?: string
+          okundu_at?: string | null
+        }
+        Update: {
+          admin_hedef?: boolean
+          alici_id?: string | null
+          created_at?: string
+          gonderen_admin?: boolean
+          gonderen_id?: string
+          govde?: string
+          id?: string
+          okundu_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ic_mesajlar_alici_id_fkey"
+            columns: ["alici_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ic_mesajlar_gonderen_id_fkey"
+            columns: ["gonderen_id"]
             isOneToOne: false
             referencedRelation: "participants"
             referencedColumns: ["id"]
@@ -1014,7 +1042,6 @@ export type Database = {
           kind: string
           lightened_at: string | null
           micro_sprint: boolean
-          yay_gorevi: boolean
           neden: string | null
           participant_id: string
           reflected_at: string | null
@@ -1031,6 +1058,7 @@ export type Database = {
           title: string
           trait_id: number | null
           voice_path: string | null
+          yay_gorevi: boolean
         }
         Insert: {
           ai_comment?: string | null
@@ -1046,7 +1074,6 @@ export type Database = {
           kind: string
           lightened_at?: string | null
           micro_sprint?: boolean
-          yay_gorevi?: boolean
           neden?: string | null
           participant_id: string
           reflected_at?: string | null
@@ -1063,6 +1090,7 @@ export type Database = {
           title: string
           trait_id?: number | null
           voice_path?: string | null
+          yay_gorevi?: boolean
         }
         Update: {
           ai_comment?: string | null
@@ -1078,7 +1106,6 @@ export type Database = {
           kind?: string
           lightened_at?: string | null
           micro_sprint?: boolean
-          yay_gorevi?: boolean
           neden?: string | null
           participant_id?: string
           reflected_at?: string | null
@@ -1095,6 +1122,7 @@ export type Database = {
           title?: string
           trait_id?: number | null
           voice_path?: string | null
+          yay_gorevi?: boolean
         }
         Relationships: [
           {
@@ -1388,8 +1416,8 @@ export type Database = {
           created_at?: string
           deletion_requested_at?: string | null
           email?: string | null
-          first_login_at?: string | null
           en_yuksek_kariyer?: string | null
+          first_login_at?: string | null
           full_name?: string
           gecen_ay_kariyer?: string | null
           id?: string
@@ -1818,6 +1846,32 @@ export type Database = {
             columns: ["wave_id"]
             isOneToOne: false
             referencedRelation: "waves"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      senin_icin: {
+        Row: {
+          created_at: string
+          metin: string
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          metin: string
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          metin?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "senin_icin_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
             referencedColumns: ["id"]
           },
         ]
