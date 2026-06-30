@@ -34,8 +34,6 @@ export default function KimlikElmasi({
 
   const isiyan = facetler.filter((f) => f.deger > 0).length;
   const yuzde = Math.round(parlaklik * 100);
-  // 5 aşamalı görsel: parlaklık arttıkça elmas bir üst aşamaya geçer (1..5).
-  const asama = Math.min(5, Math.max(1, Math.ceil(parlaklik * 5)));
 
   const altMetin =
     tamamlanan === 0
@@ -67,18 +65,25 @@ export default function KimlikElmasi({
             {t.baslik}
           </p>
 
-          {/* 5 AŞAMALI KİMLİK ELMASI görseli — ilerlemeyle bir üst aşamaya parlar.
-              Üzerine hafif nefes + parlaklıkla yoğunlaşan altın ışıma. */}
+          {/* KİMLİK ELMASI — kendi ekseninde dönen kusursuz loop video.
+              mix-blend-mode: screen → siyah zemin tamamen kaybolur (kare yok,
+              ton farkı yok), yalnız ışıyan elmas görünür; radyal maske kenarları
+              eritir. Hareket-azaltta poster karesinde durur. */}
           <div className="relative mx-auto mt-1 aspect-square w-full max-w-[17rem]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={`/elmas/asama-${asama}.webp`}
-              alt={t.baslik}
-              width={720}
-              height={720}
-              className={`h-full w-full object-contain ${hareketli ? "elmas-asama-nefes" : ""}`}
+            <video
+              src="/elmas/elmas-loop.mp4"
+              poster="/elmas/elmas-loop-poster.webp"
+              autoPlay={hareketli}
+              loop
+              muted
+              playsInline
+              preload="auto"
+              aria-label={t.baslik}
+              className="h-full w-full object-cover"
               style={{
-                filter: `drop-shadow(0 0 ${10 + parlaklik * 32}px rgba(212,175,55,${0.15 + parlaklik * 0.45}))`,
+                mixBlendMode: "screen",
+                WebkitMaskImage: "radial-gradient(circle, #000 55%, transparent 80%)",
+                maskImage: "radial-gradient(circle, #000 55%, transparent 80%)",
               }}
             />
           </div>
