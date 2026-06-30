@@ -78,6 +78,18 @@ function agYerlesimi(veri: EkranVerisi) {
   return { W, H, konumlar, kumeMerkezleri };
 }
 
+// #4 — program bloğu türü → sahne başlığı rozeti etiketi
+const BLOK_ETIKET: Record<string, string> = {
+  sahne: "Sahnede",
+  ayna: "AYNA zamanı",
+  serbest: "Serbest zaman",
+  oyun: "Oyun zamanı",
+  yemek: "Yemek molası",
+  ara: "Ara",
+  doga: "Doğa zamanı",
+  gezi: "Gezi",
+};
+
 // QR aksiyon prompt'ları — slayta göre döner (insanları telefona/eyleme iter).
 const AKSIYONLAR = [
   "Şimdi birini gözlemle 👁",
@@ -159,6 +171,13 @@ export default function EkranGosterisi() {
   // Ligde "yükselenler" — bir önceki yoklamaya göre üst sıraya çıkanlar parlar.
   const oncekiLigRef = useRef<string[]>([]);
   const [yukselenler, setYukselenler] = useState<Set<string>>(new Set());
+  // #4 PROGRAM-DUYARLI SAHNE: o anki program bloğuna göre "ilgili" slayt öne çıkar.
+  // tur döngüsü (tourRef) her geçişte ilerler; her 3 geçişin 1'inde program-ilgili
+  // sahne gösterilir → slaytlar kör dönmek yerine "doğru anı" yansıtır.
+  const tercihSlaytRef = useRef<number | null>(null);
+  const tourRef = useRef(0);
+  const slaytSayacRef = useRef(0);
+  const [aktifBlok, setAktifBlok] = useState<string | null>(null);
 
   useEffect(() => {
     let iptal = false;
@@ -262,7 +281,16 @@ export default function EkranGosterisi() {
     const slaytZamanlayici = setInterval(() => {
       // DJ sabitlemesi varken otomatik döngüyü atla.
       if (vitrinRef.current !== null) return;
-      setSlayt((s) => (s + 1) % SLAYT_SAYISI);
+      tourRef.current = (tourRef.current + 1) % SLAYT_SAYISI;
+      slaytSayacRef.current += 1;
+      // #4 Program-duyarlı: her 3 geçişin 1'inde program-ilgili sahneye yönel,
+      // gerisinde tüm slaytları sırayla turla (her şey yine görünür).
+      const tercih = tercihSlaytRef.current;
+      if (tercih !== null && slaytSayacRef.current % 3 === 0) {
+        setSlayt(tercih);
+      } else {
+        setSlayt(tourRef.current);
+      }
     }, SLAYT_MS);
     return () => {
       iptal = true;
@@ -270,6 +298,29 @@ export default function EkranGosterisi() {
       clearInterval(slaytZamanlayici);
     };
   }, []);
+
+  // #4 — o anki program bloğunu çöz → ilgili slaytı tercih et.
+  useEffect(() => {
+    if (!an || !veri?.kampGun1) {
+      tercihSlaytRef.current = null;
+      setAktifBlok(null);
+      return;
+    }
+    const gun = kampGunu(an.tarih, veri.kampGun1);
+    if (!gun) {
+      tercihSlaytRef.current = null;
+      setAktifBlok(null);
+      return;
+    }
+    const aktif = suankiMadde(gun, an.dk);
+    // Blok türü → ilgili slayt: sahne→Şimdi/Sırada, ayna/serbest→Nabız,
+    // oyun→Takım ağı, yemek/ara/doğa→Yansımalar, gezi→Anı Duvarı.
+    const harita: Record<string, number> = {
+      sahne: 6, ayna: 0, serbest: 0, oyun: 1, yemek: 5, ara: 5, doga: 5, gezi: 4,
+    };
+    tercihSlaytRef.current = aktif ? harita[aktif.tur] ?? null : null;
+    setAktifBlok(aktif?.tur ?? null);
+  }, [an, veri]);
 
   const yerlesim = useMemo(() => (veri ? agYerlesimi(veri) : null), [veri]);
   // Düğüm derecesi (kaç gözlem bağı dokunuyor) → düğüm boyutu = etki.
@@ -439,6 +490,12 @@ export default function EkranGosterisi() {
           >
             {ruh.e} {ruh.t}
           </span>
+          {aktifBlok && (
+            <span className="rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-sm font-medium text-slate-300 sm:text-base">
+              {ETKINLIK_SIMGESI[aktifBlok as keyof typeof ETKINLIK_SIMGESI] ?? "📍"}{" "}
+              {BLOK_ETIKET[aktifBlok] ?? "Program"}
+            </span>
+          )}
           <p className="text-base text-slate-400 sm:text-xl">{veri?.dalgaAdi ?? t.dalgaYok}</p>
           {veri && <EpicYildizlar toplam={veri.toplamPuan} />}
         </div>
@@ -710,13 +767,24 @@ export default function EkranGosterisi() {
                     <ul className="mt-4 space-y-4">
                       {veri.takimLigi.map((tk, i) => {
                         const enYuksek = veri.takimLigi[0]?.kivilcim ?? 1;
+                        // #8 Takım amblemi: takımın kendi rengi (ağ haritasıyla aynı)
+                        const renk = takimRengi(veri.takimlar.indexOf(tk.takim));
                         return (
                           <li key={tk.takim}>
-                            <div className="flex items-baseline justify-between">
-                              <span className="text-xl font-medium text-slate-100">
-                                {tk.takim} {i === 0 && "👑"}
+                            <div className="flex items-center justify-between gap-3">
+                              <span className="flex min-w-0 items-center gap-2.5">
+                                <span
+                                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-extrabold text-[#06121e] ring-2 ring-white/10"
+                                  style={{ background: renk }}
+                                  aria-hidden
+                                >
+                                  {tk.takim.charAt(0).toUpperCase()}
+                                </span>
+                                <span className="truncate text-xl font-medium text-slate-100">
+                                  {tk.takim} {i === 0 && "👑"}
+                                </span>
                               </span>
-                              <span className="font-mono text-xl font-bold text-gold-light">
+                              <span className="shrink-0 font-mono text-xl font-bold text-gold-light">
                                 {tk.kivilcim} ⚡
                               </span>
                             </div>
@@ -725,8 +793,7 @@ export default function EkranGosterisi() {
                                 className="h-full rounded-full transition-all duration-1000"
                                 style={{
                                   width: `${(tk.kivilcim / enYuksek) * 100}%`,
-                                  background:
-                                    "linear-gradient(90deg, #f59e0b, #fbbf24)",
+                                  background: `linear-gradient(90deg, ${renk}88, ${renk})`,
                                 }}
                               />
                             </div>
