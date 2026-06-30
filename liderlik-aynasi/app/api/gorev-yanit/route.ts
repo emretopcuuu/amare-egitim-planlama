@@ -1,6 +1,9 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { gorevPuanla, korNoktaGuncelle } from "@/lib/ayna";
+import { gorevPuanla, korNoktaGuncelle, gorevUret } from "@/lib/ayna";
+import { aktifOzellikler } from "@/lib/degerlendirme";
+import { kampGunu } from "@/lib/kampProgrami";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { krizDiliVarMi, krizUyarisiGonder, KRIZ_YONLENDIRME } from "@/lib/guvenlik";
 import { markaAnons, fieroSesi } from "@/lib/yansima";
 import {
@@ -49,7 +52,7 @@ export async function POST(req: Request) {
   const guvenlikEk = kriz ? `\n\n${KRIZ_YONLENDIRME}` : "";
   const { data: gorev, error } = await db
     .from("missions")
-    .select("id, kind, title, body, status, due_at")
+    .select("id, kind, title, body, status, due_at, trait_id, kaynak_id")
     .eq("id", gorevId)
     .eq("participant_id", session.sub)
     .maybeSingle();
@@ -192,6 +195,20 @@ export async function POST(req: Request) {
     korNoktaGuncelle(db, session.sub, tamamlananSayi).catch(() => {});
   }
 
+  // DÜŞÜK PUAN → DERİNLEŞTİRME: kişi bu konuda zorlandıysa, AYNI kası FARKLI ve
+  // daha erişilebilir bir açıdan + 2 somut ipucuyla tekrar çalıştıran hızlı bir
+  // ek görev üret (büyüme döngüsü). Yalnız ilk-gerçek tamamlamada, koçlanabilir
+  // görevlerde ve bir derinleştirmenin kendisinde DEĞİL (sonsuz döngü guard'ı).
+  // Fire-and-forget (korNoktaGuncelle gibi) — puan cevabını geciktirmez.
+  const koclanabilir = !["soz", "senkron", "mentorluk"].includes(gorev.kind);
+  if (sonuc.puan <= 5 && !telafi && !yenidenScored && koclanabilir && !gorev.kaynak_id) {
+    dusukPuanTelafiYarat(db, session.sub, {
+      id: gorev.id,
+      trait_id: gorev.trait_id,
+      title: gorev.title,
+    }).catch(() => {});
+  }
+
   return Response.json({
     puan: sonuc.puan,
     yorum: sonuc.yorum + guvenlikEk,
@@ -199,6 +216,63 @@ export async function POST(req: Request) {
     toplam,
     unvan: unvanBul(toplam).mevcut.ad,
     ...(kriz ? { guvenlik: true } : {}),
+  });
+}
+
+// Düşük puan sonrası derinleştirme görevi üret + ekle. Bekleyen görev varsa
+// üretmez (telefonu tıkamaz). kaynak_id ile kaynağa bağlanır (loop guard).
+async function dusukPuanTelafiYarat(
+  db: ReturnType<typeof supabaseAdmin>,
+  pid: string,
+  kaynak: { id: string; trait_id: number | null; title: string }
+): Promise<void> {
+  const { count: bekleyen } = await db
+    .from("missions")
+    .select("id", { count: "exact", head: true })
+    .eq("participant_id", pid)
+    .eq("status", "pending");
+  if ((bekleyen ?? 0) > 0) return;
+
+  const [{ data: kisi }, ozellikler] = await Promise.all([
+    db.from("participants").select("id, full_name, team").eq("id", pid).maybeSingle(),
+    aktifOzellikler(db),
+  ]);
+  if (!kisi) return;
+
+  const kasAd = ozellikler.find((o) => o.id === kaynak.trait_id)?.name ?? null;
+  const ipucu =
+    `Kişi az önce "${kaynak.title}" görevinden DÜŞÜK puan aldı; bu konuda zorlandı. ` +
+    `${kasAd ? `Hedef liderlik kası: "${kasAd}". ` : ""}` +
+    `AYNI kası DAHA ERİŞİLEBİLİR ve FARKLI bir açıdan, tekrar etmeden çalıştır — bu sefer ` +
+    `başarması daha kolay olsun. 'ipuclari' alanına bu sefer daha iyi yapması için 2 KISA, ` +
+    `somut tavsiye yaz. Asla kırıcı olma; "bu sefer yakalarsın" enerjisi ver.`;
+
+  const simdi = new Date();
+  const saat = Number(
+    new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Istanbul", hour: "2-digit", hour12: false })
+      .formatToParts(simdi)
+      .find((p) => p.type === "hour")?.value ?? 12
+  );
+  const bugun = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(simdi);
+  const kampBaslangic = await kampBaslangicGetir(db);
+  const gunNo = kampGunu(bugun, kampBaslangic);
+  const gorev = await gorevUret(db, kisi, gunNo ?? 1, saat, gunNo ? "kamp" : "yolculuk", null, null, ipucu);
+  if (!gorev) return;
+
+  const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
+  await db.from("missions").insert({
+    participant_id: pid,
+    trait_id: gorev.trait_id,
+    kind: gorev.kind,
+    title: gorev.title,
+    body: gorev.body,
+    difficulty: gorev.difficulty,
+    neden: gorev.neden,
+    fayda: gorev.fayda,
+    ipuclari: gorev.ipuclari,
+    micro_sprint: gorev.micro_sprint,
+    kaynak_id: kaynak.id,
+    due_at: dueAt.toISOString(),
   });
 }
 

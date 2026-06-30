@@ -67,7 +67,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -396,6 +396,31 @@ export default async function GorevlerPage() {
             <p className="mt-2.5 whitespace-pre-wrap text-base leading-relaxed text-slate-100">
               {g.body}
             </p>
+            {/* Düşük puan sonrası derinleştirme görevi: "bu sefer şunu dene" ipuçları */}
+            {Array.isArray(g.ipuclari) && g.ipuclari.length > 0 && (
+              <div className="mt-4 rounded-2xl border border-sky-400/30 bg-sky-400/[0.08] p-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-sky-300">
+                  🎯 Bu sefer şunu dene
+                </p>
+                <ul className="mt-2 space-y-1.5">
+                  {g.ipuclari.map((ip: string, i: number) => (
+                    <li key={i} className="flex gap-2 text-sm leading-relaxed text-slate-200">
+                      <span className="text-sky-300" aria-hidden>›</span>
+                      <span>{ip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {/* "Bu ödev neden önemli?" — her görevin altında görünür; hayata + sahaya katkısı */}
+            {g.fayda && (
+              <div className="mt-4 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.07] p-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">
+                  💡 Bu ödev neden önemli?
+                </p>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-200">{g.fayda}</p>
+              </div>
+            )}
             {/* UX #5: "neden sana özel?" — hep açık kutu yerine dokun-aç; görev kahraman kalır */}
             {g.neden && (
               <details className="group mt-4 rounded-2xl border border-gold/30 bg-gold/[0.07] p-4">
