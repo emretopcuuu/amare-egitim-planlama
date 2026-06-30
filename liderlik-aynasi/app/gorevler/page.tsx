@@ -237,7 +237,7 @@ export default async function GorevlerPage() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
-      <div className="sahne-giris mx-auto my-auto w-full max-w-md space-y-6 p-5">
+      <div className="sahne-giris mx-auto w-full max-w-md space-y-6 p-5">
       <UnvanKutlama unvan={unvan.mevcut.ad} seviye={unvanSeviye} />
       <GeriButonu />
       <header>
