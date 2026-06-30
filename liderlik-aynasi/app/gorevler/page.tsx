@@ -44,12 +44,11 @@ import { atmosferBul } from "@/lib/gorevTasarim";
 import SesCal from "@/components/SesCal";
 import OkuButonu from "@/components/OkuButonu";
 import BosGorevDurumu from "./BosGorevDurumu";
-import KampNabzi from "./KampNabzi";
+import DurumSeridi from "./DurumSeridi";
 import EkstraGorev from "./EkstraGorev";
 import GorevSayac from "./GorevSayac";
 import TelafiSayac from "./TelafiSayac";
 import UnvanKutlama from "@/components/UnvanKutlama";
-import GeriButonu from "@/components/GeriButonu";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -237,81 +236,29 @@ export default async function GorevlerPage() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
-      <div className="sahne-giris mx-auto w-full max-w-md space-y-6 p-5">
+      <div className="sahne-giris mx-auto w-full max-w-md space-y-4 p-5">
       <UnvanKutlama unvan={unvan.mevcut.ad} seviye={unvanSeviye} />
-      <GeriButonu />
+      {/* Başlık sadeleşti: tek satır, alt açıklama kaldırıldı (geri butonu da —
+          alt nav'da "Ana sayfa" zaten var). */}
       <header>
-        <p className="text-sm font-medium uppercase tracking-widest text-royal-light">
-          🤖 AYNA
-        </p>
-        <h1 className="font-display altin-metin mt-1 text-3xl font-bold leading-tight">{t.baslik}</h1>
-        <p className="mt-1 text-sm text-slate-400">{t.altBaslik}</p>
+        <h1 className="font-display altin-metin text-2xl font-bold leading-tight">{t.baslik}</h1>
       </header>
 
-      {/* UX #2 + #3: Kıvılcım + unvan İLERLEME ÇUBUĞU + günün ritmi (X/7 nokta) */}
-      <section className="rounded-2xl border border-gold/25 bg-gold/[0.06] px-4 py-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-baseline gap-2">
-            <span className="font-display text-lg font-bold text-gold">{tr.kivilcim.toplam(toplamKivilcim)}</span>
-            <span className="text-sm font-semibold text-gold-light">{unvan.mevcut.ad}</span>
-          </div>
-          {unvan.sonraki ? (
-            <span className="text-xs text-slate-400">
-              {tr.kivilcim.sonrakiUnvan(unvan.sonraki.ad, unvan.kalan)}
-            </span>
-          ) : (
-            <span className="text-xs font-semibold text-gold-light">⭐ {t.unvanZirve}</span>
-          )}
-        </div>
-        {/* Unvan ilerleme çubuğu */}
-        <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-white/10">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-700"
-            style={{ width: `${unvanYuzde}%` }}
-          />
-        </div>
-        {/* Günün ritmi — bugün kaç görev kapattın (kota: GUNLUK_KOTA) */}
-        <div className="mt-3 flex items-center gap-2">
-          <span className="text-[0.7rem] font-medium uppercase tracking-wide text-slate-400">
-            {t.gununRitmi}
-          </span>
-          <div className="flex flex-1 items-center gap-1">
-            {Array.from({ length: GUNLUK_KOTA }).map((_, i) => (
-              <span
-                key={i}
-                className={`h-1.5 flex-1 rounded-full ${
-                  i < bugunGorev ? "bg-gold" : "bg-white/12"
-                }`}
-                aria-hidden
-              />
-            ))}
-          </div>
-          <span className="text-xs font-semibold tabular-nums text-gold-light">
-            {Math.min(bugunGorev, GUNLUK_KOTA)}/{GUNLUK_KOTA}
-          </span>
-        </div>
-      </section>
-
-      {/* Kampın canlı nabzı — tek sakin şerit (toplu istatistik + sıran) */}
-      <KampNabzi />
-
-      {/* S5: Seri + Özet tek satırda — iki ayrı banner yerine */}
-      {(ozetVar || seri >= 3 || seriRiski) && (
-        <section className={`flex items-center gap-3 rounded-2xl px-4 py-2.5 ${
-          seriRiski ? "border border-amber-400/40 bg-amber-500/10" :
-          seri >= 3 ? "border border-orange-400/30 bg-orange-500/10" :
-          "border border-emerald-400/20 bg-emerald-500/10"
-        }`}>
-          {(seri >= 3 || seriRiski) && <span aria-hidden>🔥</span>}
-          <p className={`text-sm font-semibold ${
-            seriRiski ? "text-amber-200" : seri >= 3 ? "text-orange-200" : "text-emerald-200"
-          }`}>
-            {seriRiski ? t.seriRiski(seri) :
-             seri >= 3 ? t.seriAtesi(seri) :
-             t.bugunOzet(bugunGorev, bugunKivilcim, bugunTakdirSayi)}
-          </p>
-        </section>
-      )}
+      {/* Tek konsolide DURUM ŞERİDİ — unvan/ilerleme + günün ritmi + kampın nabzı
+          + bugün özeti hepsi burada; aktif görev varken kapalı gelir (odak göreve). */}
+      <DurumSeridi
+        kivilcim={toplamKivilcim}
+        unvanAd={unvan.mevcut.ad}
+        unvanYuzde={unvanYuzde}
+        sonrakiMetin={unvan.sonraki ? tr.kivilcim.sonrakiUnvan(unvan.sonraki.ad, unvan.kalan) : null}
+        zirveMetin={unvan.sonraki ? null : t.unvanZirve}
+        bugunGorev={bugunGorev}
+        gunlukKota={GUNLUK_KOTA}
+        ozetMetin={ozetVar ? t.bugunOzet(bugunGorev, bugunKivilcim, bugunTakdirSayi) : null}
+        seriMetin={seri >= 3 ? t.seriAtesi(seri) : null}
+        seriRiski={seriRiski}
+        aktifVar={aktif.length > 0}
+      />
 
       {/* #5 Tanıklık bekleyenler — sana gelen tanık çağrıları */}
       {bekleyenler.length > 0 && (

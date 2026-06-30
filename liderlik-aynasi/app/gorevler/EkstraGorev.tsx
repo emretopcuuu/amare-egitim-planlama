@@ -43,7 +43,7 @@ export default function EkstraGorev({ ikincil = false }: { ikincil?: boolean }) 
       disabled={durum === "uretiliyor"}
       className={
         ikincil
-          ? "flex h-12 w-full items-center justify-center rounded-xl border border-gold/40 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-50"
+          ? "flex h-11 w-full items-center justify-center rounded-xl border border-white/12 text-sm font-medium text-slate-400 transition-colors hover:bg-white/5 hover:text-slate-200 disabled:opacity-50"
           : "btn-kor parilti flex h-12 w-full items-center justify-center rounded-xl text-sm font-bold disabled:opacity-50"
       }
     >
