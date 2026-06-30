@@ -32,6 +32,7 @@ import { SiradakiOnizleme } from "@/components/AsamaRayi";
 import YeniGorevButonu from "@/components/YeniGorevButonu";
 import KimlikElmasi from "@/components/elmas/KimlikElmasi";
 import { kimlikElmasiVerisi } from "@/lib/elmas";
+import { okunmamisMesaj } from "@/lib/icMesaj";
 
 const t = tr.anaSayfa;
 
@@ -166,6 +167,16 @@ export default async function AnaSayfa({
   // KİMLİK ELMASI verisi (yalnız kamp içindeyken) — ana sayfanın kalbindeki
   // canlı 3B elmasını besler: her tamamlanan görev bir faseti ışıtır.
   const elmasVeri = kisi.camp_unlocked_at ? await kimlikElmasiVerisi(db, session.sub) : null;
+
+  // Menü rozetleri: okunmamış iç mesaj sayısı + analiz sayısı ("yeni" noktası).
+  const [okunmamisMesajSayisi, analizSayisi] = await Promise.all([
+    okunmamisMesaj(db, session.sub),
+    db
+      .from("ayna_analiz")
+      .select("id", { count: "exact", head: true })
+      .eq("participant_id", session.sub)
+      .then((r) => r.count ?? 0),
+  ]);
 
   // SIRA (kamp öncesi onboarding) — tek doğruluk kaynağı: lib/akis.ts.
   // 1) SES RİTÜELİ → 2) OYUN SEÇİMİ → 3) PUSULA → 3b) HEDEF → 4) ÖN FARKINDALIK
@@ -425,6 +436,11 @@ export default async function AnaSayfa({
           raporlarAcik={raporlarAcik}
           yansimanHazir={yansimanHazir}
           ozHedefId={session.sub}
+          ad={session.ad}
+          unvanAd={elmasVeri?.unvanAd ?? null}
+          kivilcim={elmasVeri?.kivilcim ?? 0}
+          okunmamisMesaj={okunmamisMesajSayisi}
+          analizSayisi={analizSayisi}
           pusulaTamam={!!pusulaErken?.tamamlandi_at}
           hedefTamam={!!hedefErken?.tamamlandi_at}
           ofTamam={!!ofDurum?.tamamlandi_at}
