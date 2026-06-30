@@ -152,6 +152,13 @@ export default function EkranGosterisi() {
   // AYNA "karar veriyor" anı: yeni bir görev olayı gelince kısa flash.
   const [kararFlash, setKararFlash] = useState<string | null>(null);
   const sonGorevOlayRef = useRef<string | null>(null);
+  // KİLOMETRE TAŞI kutlaması (her 100 kıvılcım / takım lideri değişimi).
+  const [kutlama, setKutlama] = useState<{ metin: string } | null>(null);
+  const oncekiKivilcimRef = useRef<number | null>(null);
+  const oncekiLiderRef = useRef<string | null>(null);
+  // Ligde "yükselenler" — bir önceki yoklamaya göre üst sıraya çıkanlar parlar.
+  const oncekiLigRef = useRef<string[]>([]);
+  const [yukselenler, setYukselenler] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     let iptal = false;
@@ -182,6 +189,38 @@ export default function EkranGosterisi() {
           }
           sonGorevOlayRef.current = enYeniGorev.ts;
         }
+
+        // KİLOMETRE TAŞI: kümülatif kıvılcım 100'lük eşiği geçince ya da takım
+        // lideri değişince tam ekran kutlama (ilk yüklemede tetiklenmez).
+        const kiv = yeni.kumulatif?.kivilcim ?? 0;
+        if (oncekiKivilcimRef.current !== null && kiv > 0) {
+          if (Math.floor(kiv / 100) > Math.floor(oncekiKivilcimRef.current / 100)) {
+            const esik = Math.floor(kiv / 100) * 100;
+            setKutlama({ metin: `${esik} kıvılcım! 🎉` });
+            setTimeout(() => setKutlama(null), 7000);
+          }
+        }
+        oncekiKivilcimRef.current = kiv;
+        const lider = yeni.takimLigi?.[0]?.takim ?? null;
+        if (oncekiLiderRef.current !== null && lider && lider !== oncekiLiderRef.current) {
+          setKutlama({ metin: `${lider} lider oldu! 👑` });
+          setTimeout(() => setKutlama(null), 7000);
+        }
+        oncekiLiderRef.current = lider;
+        // Ligde yükselenler (önceki sıraya göre üst sıraya çıkanlar) parlasın.
+        const yeniSira = (yeni.lig ?? []).map((k) => k.ad);
+        if (oncekiLigRef.current.length > 0) {
+          const yuks = new Set<string>();
+          yeniSira.forEach((ad, i) => {
+            const eski = oncekiLigRef.current.indexOf(ad);
+            if (eski > i) yuks.add(ad);
+          });
+          if (yuks.size > 0) {
+            setYukselenler(yuks);
+            setTimeout(() => setYukselenler(new Set()), 6000);
+          }
+        }
+        oncekiLigRef.current = yeniSira;
 
         // Sahne Vitrini (DJ): host bir slayt sabitlemişse ekranı oraya kilitle
         vitrinRef.current = yeni.vitrin;
@@ -266,6 +305,20 @@ export default function EkranGosterisi() {
     <main className="koyu-alan ekran-sahne relative flex h-screen w-screen flex-col overflow-hidden bg-gradient-to-b from-[#020a12]/95 via-[#040f1c]/92 to-[#01040a]/97 p-5 pb-20 sm:p-10">
       {/* AYNA'NIN YAŞAYAN GÖZÜ — her şey onun gözünün içinde yaşar (z-0, arkada) */}
       <AynaGoz enerji={enerji} fiero={!!fieroGoster} />
+      {/* #9 DUYGU BAROMETRESİ: salonun enerjisi arka plan rengini hafifçe sürükler */}
+      <div
+        className="pointer-events-none absolute inset-0 z-0 transition-opacity duration-[3000ms]"
+        style={{
+          opacity: Math.min(0.55, 0.1 + enerji * 0.55),
+          background:
+            enerji > 0.45
+              ? "radial-gradient(80% 60% at 50% 38%, rgba(244,63,94,0.18), transparent 70%)"
+              : enerji > 0.12
+                ? "radial-gradient(80% 60% at 50% 38%, rgba(245,158,11,0.15), transparent 70%)"
+                : "radial-gradient(80% 60% at 50% 38%, rgba(56,189,248,0.08), transparent 72%)",
+        }}
+        aria-hidden
+      />
       {/* Ses kapısı: kurulumda tek tıklama, sonrası otomatik anonslar */}
       <button
         onClick={() => {
@@ -306,6 +359,29 @@ export default function EkranGosterisi() {
           <span className="text-2xl" aria-hidden>🤖</span>
           <p className="font-display text-2xl font-bold text-gold-light">
             AYNA karar verdi · <span className="text-white">{kararFlash}</span>
+          </p>
+        </div>
+      )}
+
+      {/* KİLOMETRE TAŞI KUTLAMASI — kolektif başarı anı (100 kıvılcım / yeni lider) */}
+      {kutlama && (
+        <div className="pointer-events-none fixed inset-0 z-[46] flex items-center justify-center bg-[#020a12]/70">
+          {Array.from({ length: 14 }, (_, i) => (
+            <span
+              key={i}
+              className="yildiz-dogus absolute text-4xl"
+              style={{
+                left: `${12 + ((i * 41) % 76)}%`,
+                top: `${18 + ((i * 29) % 60)}%`,
+                color: ["#fbbf24", "#f472b6", "#34d399", "#60a5fa"][i % 4],
+                animationDelay: `${i * 90}ms`,
+              }}
+            >
+              ✦
+            </span>
+          ))}
+          <p className="parilti rounded-3xl border-2 border-gold/60 bg-[#06121e]/90 px-12 py-7 text-center font-display text-6xl font-bold text-gold-light">
+            {kutlama.metin}
           </p>
         </div>
       )}
@@ -368,25 +444,29 @@ export default function EkranGosterisi() {
         </div>
       </header>
 
-      {/* BUGÜNÜN CANLI SAYAÇLARI — salonun enerjisi tek bakışta (her slaytta sabit) */}
-      {veri?.bugun && (
+      {/* KÜMÜLATİF KAHRAMAN SAYAÇLAR — kampın TOPLAM efsanesi büyük; "bugün +N"
+          küçük ikincil. Böylece sahne aktivite 0 olsa bile asla ölü görünmez. */}
+      {veri?.kumulatif && (
         <div className="relative z-10 mt-5 grid grid-cols-4 gap-3">
           {[
-            { ikon: "🤖", sayi: veri.bugun.gorev, etiket: "görev", renk: "text-gold-light" },
-            { ikon: "👁", sayi: veri.bugun.gozlem, etiket: "gözlem", renk: "text-sky-300" },
-            { ikon: "💛", sayi: veri.bugun.takdir, etiket: "takdir", renk: "text-pink-300" },
-            { ikon: "⭐", sayi: veri.bugun.fiero, etiket: "fiero", renk: "text-amber-300" },
+            { ikon: "⚡", toplam: veri.kumulatif.kivilcim, bugun: null, etiket: "kıvılcım", renk: "text-gold" },
+            { ikon: "🤖", toplam: veri.kumulatif.gorev, bugun: veri.bugun?.gorev ?? 0, etiket: "görev", renk: "text-gold-light" },
+            { ikon: "💛", toplam: veri.kumulatif.takdir, bugun: veri.bugun?.takdir ?? 0, etiket: "takdir", renk: "text-pink-300" },
+            { ikon: "⭐", toplam: veri.kumulatif.fiero, bugun: veri.bugun?.fiero ?? 0, etiket: "fiero", renk: "text-amber-300" },
           ].map((s) => (
             <div
               key={s.etiket}
-              className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-2.5 text-center backdrop-blur"
+              className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-center backdrop-blur"
             >
-              <p className={`font-display text-5xl font-bold leading-none tabular-nums ${s.renk}`}>
-                {s.sayi}
+              <p className={`font-display text-6xl font-bold leading-none tabular-nums ${s.renk} drop-shadow-[0_2px_14px_rgba(212,175,55,0.18)]`}>
+                {s.toplam}
               </p>
               <p className="mt-1.5 text-base font-medium uppercase tracking-wide text-slate-400">
-                {s.ikon} bugün {s.etiket}
+                {s.ikon} {s.etiket}
               </p>
+              {s.bugun != null && s.bugun > 0 && (
+                <p className="mt-0.5 text-sm font-semibold text-emerald-300">bugün +{s.bugun}</p>
+              )}
             </div>
           ))}
         </div>
@@ -585,11 +665,20 @@ export default function EkranGosterisi() {
                     {veri.lig.map((k, i) => (
                       <li
                         key={k.ad}
-                        className="flex items-center gap-4 kart-3d rounded-2xl bg-midnight-card/60 p-4 ring-1 ring-gold/20"
+                        className={`flex items-center gap-4 kart-3d rounded-2xl bg-midnight-card/60 p-4 transition-all duration-700 ${
+                          yukselenler.has(k.ad)
+                            ? "parilti ring-2 ring-emerald-400/70"
+                            : "ring-1 ring-gold/20"
+                        }`}
                       >
                         <span className="w-10 text-center text-3xl">
                           {["🥇", "🥈", "🥉"][i] ?? `${i + 1}.`}
                         </span>
+                        {yukselenler.has(k.ad) && (
+                          <span className="shrink-0 rounded-full bg-emerald-400/20 px-2 py-0.5 text-sm font-bold text-emerald-300">
+                            ▲ yükseldi
+                          </span>
+                        )}
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-2xl font-semibold text-slate-100">
                             {k.ad}
@@ -657,9 +746,16 @@ export default function EkranGosterisi() {
             >
               <h2 className="text-4xl font-bold text-gold-light">{t.duvarBaslik}</h2>
               {veri.anilar.length === 0 ? (
-                <p className="flex flex-1 items-center justify-center text-xl text-slate-400">
-                  {t.duvarBos}
-                </p>
+                <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+                  <span className="text-7xl" aria-hidden>📸</span>
+                  <p className="font-display text-4xl font-bold text-slate-200">
+                    İlk anıyı sen ekle
+                  </p>
+                  <p className="max-w-2xl text-2xl text-slate-400">{t.duvarBos}</p>
+                  <p className="mt-2 rounded-full bg-gold/15 px-6 py-2 text-xl font-bold text-gold-light">
+                    📲 Telefonundan fotoğraf paylaş → ayna.oneteamglobal.ai
+                  </p>
+                </div>
               ) : (
                 <div className="mt-6 grid grid-cols-3 gap-4 lg:grid-cols-4">
                   {veri.anilar.map((url, i) => (
@@ -766,15 +862,15 @@ export default function EkranGosterisi() {
       {qr && (
         <div className="absolute bottom-16 left-6 z-20 flex items-center gap-3 rounded-2xl border border-gold/30 bg-[#04101c]/85 p-3 shadow-2xl backdrop-blur">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qr} alt="Katıl" className="h-20 w-20 rounded-lg" />
-          <div className="max-w-[12rem]">
-            <p className="text-sm font-semibold uppercase tracking-wide text-gold-light/80">
+          <img src={qr} alt="Katıl" className="h-28 w-28 rounded-lg" />
+          <div className="max-w-[14rem]">
+            <p className="text-base font-semibold uppercase tracking-wide text-gold-light/80">
               📲 Telefonunu çıkar
             </p>
-            <p className="mt-0.5 text-lg font-bold leading-tight text-slate-100">
+            <p className="mt-0.5 text-2xl font-bold leading-tight text-slate-100">
               {AKSIYONLAR[slayt % AKSIYONLAR.length]}
             </p>
-            <p className="mt-1 font-mono text-xs text-slate-400">ayna.oneteamglobal.ai</p>
+            <p className="mt-1 font-mono text-sm text-slate-400">ayna.oneteamglobal.ai</p>
           </div>
         </div>
       )}
@@ -807,17 +903,43 @@ export default function EkranGosterisi() {
         </div>
       </footer>
 
-      {/* CANLI OLAY ŞERİDİ (ticker): AYNA'nın o an ne yaptığının durmayan kanıtı */}
+      {/* CANLI OLAY ŞERİDİ (ticker): AYNA'nın o an ne yaptığının durmayan kanıtı.
+          Olaylar türe göre renk-kodlu; solda "son 60 sn'de N olay" hız rozeti. */}
       {veri?.olaylar && veri.olaylar.length > 0 && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 overflow-hidden border-t border-white/10 bg-[#020a12]/90 py-2.5 backdrop-blur">
-          <div className="ekran-ticker flex w-max items-center gap-10 whitespace-nowrap pl-10">
-            {[...veri.olaylar, ...veri.olaylar].map((o, i) => (
-              <span key={i} className="flex items-center gap-2.5 text-lg font-medium text-slate-200">
-                <span aria-hidden>{o.ikon}</span>
-                <span>{o.metin}</span>
-                <span className="text-gold-light/40">◆</span>
+        <div className="fixed inset-x-0 bottom-0 z-20 flex items-center overflow-hidden border-t border-white/10 bg-[#020a12]/90 backdrop-blur">
+          {(() => {
+            const sonDk = veri.olaylar.filter(
+              (o) => Date.now() - new Date(o.ts).getTime() < 60_000
+            ).length;
+            return sonDk > 0 ? (
+              <span className="z-10 flex shrink-0 items-center gap-2 self-stretch bg-gold/15 px-4 text-base font-bold text-gold-light">
+                <span className="ekran-canli-nokta inline-block h-2 w-2 rounded-full bg-gold" aria-hidden />
+                son 60 sn · {sonDk} olay
               </span>
-            ))}
+            ) : null;
+          })()}
+          <div className="pointer-events-none overflow-hidden py-2.5">
+            <div className="ekran-ticker flex w-max items-center gap-10 whitespace-nowrap pl-10">
+              {[...veri.olaylar, ...veri.olaylar].map((o, i) => {
+                const renk =
+                  o.tur === "fiero"
+                    ? "text-amber-300"
+                    : o.tur === "tamam"
+                      ? "text-emerald-300"
+                      : o.tur === "takdir"
+                        ? "text-pink-300"
+                        : o.tur === "gozlem"
+                          ? "text-sky-300"
+                          : "text-royal-light";
+                return (
+                  <span key={i} className={`flex items-center gap-2.5 text-lg font-medium ${renk}`}>
+                    <span aria-hidden>{o.ikon}</span>
+                    <span>{o.metin}</span>
+                    <span className="text-gold-light/40">◆</span>
+                  </span>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

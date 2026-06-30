@@ -34,6 +34,8 @@ export type EkranVerisi = {
   takimLigi: { takim: string; kivilcim: number }[];
   // Bugünün canlı sayaçları (Istanbul günü) — salonun enerjisini görünür kılar.
   bugun: { gorev: number; gozlem: number; takdir: number; fiero: number };
+  // KÜMÜLATİF kamp efsanesi — sahne asla "0/ölü" görünmesin; toplam kahraman sayaç.
+  kumulatif: { kivilcim: number; gorev: number; takdir: number; fiero: number; anlar: number };
   // Kampın 1. gününün Istanbul tarihi ("YYYY-MM-DD") — ŞİMDİ/SIRADA program
   // slaytı bunu kullanır (sahne bilgisayarı oturumsuz; gün/blok bundan türer).
   kampGun1: string | null;
@@ -143,6 +145,21 @@ export async function GET() {
     gozlem: bgGozlem.count ?? 0,
     takdir: bgTakdir.count ?? 0,
     fiero: bgFiero.count ?? 0,
+  };
+
+  // KÜMÜLATİF: kampın bugüne dek toplam efsanesi (sahne hero sayaç).
+  const [kumGorev, kumTakdir, kumFiero, kumAnlar] = await Promise.all([
+    db.from("missions").select("id", { count: "exact", head: true }).eq("status", "scored"),
+    db.from("kudos").select("id", { count: "exact", head: true }).eq("is_hidden", false),
+    db.from("missions").select("id", { count: "exact", head: true }).eq("ai_score", 10),
+    db.from("photos").select("id", { count: "exact", head: true }).eq("status", "approved"),
+  ]);
+  const kumulatif = {
+    kivilcim: (gorevSonuc.data ?? []).reduce((s, g) => s + (g.spark_points ?? 0), 0),
+    gorev: kumGorev.count ?? 0,
+    takdir: kumTakdir.count ?? 0,
+    fiero: kumFiero.count ?? 0,
+    anlar: kumAnlar.count ?? 0,
   };
 
   // CANLI OLAY AKIŞI — son 45 dk'lık aktivite. Kişinin EYLEMİ görünür ama
@@ -440,6 +457,7 @@ export async function GET() {
     anilar,
     yansimalar,
     bugun,
+    kumulatif,
     kampGun1: (await kampBaslangicGetir(db)) ?? null,
     olaylar: olaylar.slice(0, 16),
   };
