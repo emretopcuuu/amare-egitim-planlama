@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { kocuGecmis, kocuTuru } from "@/lib/kocu";
+import { krizDiliVarMi, krizUyarisiGonder, KRIZ_YONLENDIRME } from "@/lib/guvenlik";
 import { tr } from "@/lib/i18n/tr";
 
 export const maxDuration = 60;
@@ -23,11 +24,23 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => null);
   const mesaj = typeof body?.mesaj === "string" ? body.mesaj : null;
 
+  const db = supabaseAdmin();
+
+  // GÜVENLİK SINIRI: koç sohbeti serbest-metin bir duygusal yüzeydir. Gerçek
+  // kriz/umutsuzluk sinyali → admin bayrağı (Presidential Diamond) + kişiye
+  // insan-mentor yönlendirmesi. AYNA koç sınırında kalır; akışı bozmaz.
+  const kriz = !!mesaj && krizDiliVarMi(mesaj);
+  if (kriz) {
+    await krizUyarisiGonder(db, session.sub, session.ad, "kocu", mesaj!);
+  }
+
   const tur = await kocuTuru(
-    supabaseAdmin(),
+    db,
     { id: session.sub, full_name: session.ad },
     mesaj
   );
   if (!tur) return Response.json({ hata: tr.kocu.uretilemedi }, { status: 503 });
-  return Response.json(tur);
+  return Response.json(
+    kriz ? { ...tur, mesaj: `${tur.mesaj}\n\n${KRIZ_YONLENDIRME}`, guvenlik: true } : tur
+  );
 }
