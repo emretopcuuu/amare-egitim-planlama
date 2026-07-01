@@ -107,7 +107,7 @@ export const ADIMLAR: Adim[] = [
   { kod: "k8", tip: "metin", baslik: "Sevdiğin biri seni tek cümleyle anlatacak olsa, ne söylemesini isterdin?", vurgu: "tek cümleyle anlatacak olsa" },
   { kod: "k9", tip: "metin", baslik: "Bugün hayatında seni en çok mutlu eden üç şey nedir?", vurgu: "en çok mutlu eden" },
   { kod: "k10", tip: "metin", baslik: "Bugün hayatında seni en çok zorlayan üç şey nedir?", vurgu: "en çok zorlayan" },
-  { kod: "k11", tip: "metin", baslik: "Sence bunun altında hangi ihtiyacın karşılanmıyor?", vurgu: "hangi ihtiyacın" },
+  { kod: "k11", tip: "metin", baslik: "Bu zorlukların altında hangi ihtiyacın karşılanmıyor?", vurgu: ["zorlukların", "hangi ihtiyacın karşılanmıyor"] },
   {
     kod: "ai_oneri",
     tip: "ai_oneri" as const,
