@@ -1450,6 +1450,10 @@ export const tr = {
     kismiNot: "İstediğin kadarını şimdi yap; kaldığın yerden devam edersin. Yeter ki kamp başlamadan tamamla.",
     enAzBir: "Kaydetmek için en az bir madde işaretle.",
     hata: "Kaydedilemedi. Lütfen tekrar dene.",
+    // Oturumun artık geçersiz bir katılımcıya bağlı olduğu (ör. kamp sıfırlaması
+    // sonrası eski çerez) durumunda: sonsuz "tekrar dene" yerine net bir çıkış yolu.
+    oturumBayat: "Oturumun eskimiş görünüyor. Tekrar giriş yapman gerekiyor — cevapların kaybolmadı, kod ile girince kaldığın yerden devam edeceksin.",
+    oturumBayatDugme: "Tekrar giriş yap",
     // Tamam ekranı
     tamamBaslik: "Bu bölümü tamamladın 👁",
     tamamMetin:

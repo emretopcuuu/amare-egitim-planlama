@@ -216,6 +216,14 @@ export default function OnFarkindalikAkis({
       });
       const v = await res.json().catch(() => null);
       if (!res.ok) {
+        if (v?.oturumBayat) {
+          // Oturum artık geçersiz bir katılımcıya bağlı (bkz. route.ts) — tekrar
+          // denemek asla başarılı olmaz; kişiyi doğrudan /giris'e yönlendir.
+          // localStorage taslağı zaten var, /giris sonrası kaldığı yerden devam eder.
+          setHata(v.hata);
+          setTimeout(() => router.push("/giris"), 2200);
+          return false;
+        }
         setHata(v?.hata ?? t.hata);
         return false;
       }

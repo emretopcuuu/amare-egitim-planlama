@@ -1,4 +1,4 @@
-import { getSession } from "@/lib/auth/session";
+import { getSession, clearSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { gecerliYanit, metinKodMu, profilHesapla, METIN_MAX } from "@/lib/onFarkindalik";
 import { tr } from "@/lib/i18n/tr";
@@ -72,32 +72,57 @@ export async function POST(req: Request) {
     .from("on_farkindalik_yanit")
     .upsert(temiz, { onConflict: "participant_id,madde_kod" });
   if (error) {
+    console.error("[on-farkindalik] yanit upsert hatasi", {
+      participant_id: session.sub,
+      code: error.code,
+      message: error.message,
+    });
+    // 23503 = foreign key ihlali: session.sub artık participants'ta yok (ör. kamp
+    // sıfırlaması sonrası eski çerez). "Tekrar dene" sonsuza kadar aynı şekilde
+    // başarısız olur — oturumu temizleyip kişiye net bir çıkış yolu göster.
+    if (error.code === "23503") {
+      await clearSession();
+      return Response.json({ hata: tr.onFarkindalik.oturumBayat, oturumBayat: true }, { status: 409 });
+    }
     return Response.json({ hata: tr.onFarkindalik.hata }, { status: 500 });
   }
 
-  // Güncel tüm yanıtları çek, tüm katmanları profile damıt.
-  const { data: hepsi } = await db
-    .from("on_farkindalik_yanit")
-    .select("madde_kod, deger_sayi, deger_metin")
-    .eq("participant_id", session.sub);
-  const sayilar: Record<string, number> = {};
-  const metinler: Record<string, string> = {};
-  for (const r of hepsi ?? []) {
-    if (r.deger_sayi !== null) sayilar[r.madde_kod] = r.deger_sayi;
-    if (r.deger_metin !== null) metinler[r.madde_kod] = r.deger_metin;
+  // Cevaplar güvenle kaydedildi. Profil damıtma (katman hesapları + özet upsert)
+  // buradan sonrası best-effort — burada bir sorun çıksa bile kişinin yanıtları
+  // zaten kalıcı; sahte bir "kaydedilemedi" ile onu tekrar tekrar denetmeyelim.
+  try {
+    const { data: hepsi } = await db
+      .from("on_farkindalik_yanit")
+      .select("madde_kod, deger_sayi, deger_metin")
+      .eq("participant_id", session.sub);
+    const sayilar: Record<string, number> = {};
+    const metinler: Record<string, string> = {};
+    for (const r of hepsi ?? []) {
+      if (r.deger_sayi !== null) sayilar[r.madde_kod] = r.deger_sayi;
+      if (r.deger_metin !== null) metinler[r.madde_kod] = r.deger_metin;
+    }
+    const profil = profilHesapla(sayilar, metinler);
+
+    const { error: profilHata } = await db.from("on_farkindalik").upsert(
+      {
+        participant_id: session.sub,
+        profil,
+        basladi_at: simdi,
+        tamamlandi_at: profil.tamamMi ? simdi : null,
+        updated_at: simdi,
+      },
+      { onConflict: "participant_id" }
+    );
+    if (profilHata) {
+      console.error("[on-farkindalik] profil upsert hatasi", {
+        participant_id: session.sub,
+        code: profilHata.code,
+        message: profilHata.message,
+      });
+    }
+    return Response.json({ ok: true, tamamMi: profil.tamamMi });
+  } catch (e) {
+    console.error("[on-farkindalik] profil hesaplama hatasi", { participant_id: session.sub, error: e });
+    return Response.json({ ok: true, tamamMi: false });
   }
-  const profil = profilHesapla(sayilar, metinler);
-
-  await db.from("on_farkindalik").upsert(
-    {
-      participant_id: session.sub,
-      profil,
-      basladi_at: simdi,
-      tamamlandi_at: profil.tamamMi ? simdi : null,
-      updated_at: simdi,
-    },
-    { onConflict: "participant_id" }
-  );
-
-  return Response.json({ ok: true, tamamMi: profil.tamamMi });
 }
