@@ -33,7 +33,7 @@ export type Adim =
   // Tanıtım/geçiş paragrafı
   | { kod: string; tip: "intro"; baslik: string; paragraf: string; dugme: string }
   // Açık uçlu metin sorusu (refleksiyon — zorunlu değilse teşvik)
-  | { kod: string; tip: "metin"; baslik: string; ipuclari?: string[]; zorunlu?: boolean; guclu?: boolean }
+  | { kod: string; tip: "metin"; baslik: string; vurgu?: string; degerSecimi?: boolean; ipuclari?: string[]; zorunlu?: boolean; guclu?: boolean }
   // Listeden tam N seçim (10 → 5 → 3)
   | { kod: "sec10" | "sec5" | "sec3"; tip: "sec"; baslik: string; aciklama: string; kaynak: "liste" | "sec10" | "sec5"; adet: number }
   // Bir değer için 5 ardışık "neden?" zinciri (degerIndeks: 0|1|2)
@@ -62,6 +62,7 @@ export const ADIMLAR: Adim[] = [
     kod: "k1",
     tip: "metin",
     baslik: "Zaman nasıl geçtiğini anlamadığın, kendini en çok “sen” hissettiğin, mutlu olduğun bir anı düşün — tam yerindeymişsin, tam kendinmişsin gibi.",
+    vurgu: "mutlu olduğun bir anı",
     ipuclari: [
       "O an ne yapıyordun?",
       "O anda hangi ihtiyacın karşılandı?",
@@ -72,6 +73,7 @@ export const ADIMLAR: Adim[] = [
     kod: "k2",
     tip: "metin",
     baslik: "Kendinle en çok gurur duyduğun bir anı düşün.",
+    vurgu: "gurur duyduğun",
     ipuclari: ["Seni en çok tatmin eden neydi?", "Sana kendin hakkında ne hissettirdi?"],
   },
   {
@@ -84,6 +86,7 @@ export const ADIMLAR: Adim[] = [
     kod: "k4",
     tip: "metin",
     baslik: "Seni en çok öfkelendiren üç davranış nedir?",
+    vurgu: "en çok öfkelendiren",
     ipuclari: [
       "İnsanlarda asla kabul edemediğin şeyler nelerdir?",
       "İpucu: Bizi en çok öfkelendiren şeyler, çoğu zaman en güçlü değerlerimizin ihlal edilmesidir.",
@@ -93,14 +96,15 @@ export const ADIMLAR: Adim[] = [
     kod: "k5",
     tip: "metin",
     baslik: "Boş bir günün olsa, hiçbir maddi kaygın olmasa, günü nasıl geçirirdin?",
+    vurgu: "hiçbir maddi kaygın olmasa",
     ipuclari: ["Sabah kalktığından gece yatana kadar yaz."],
   },
-  { kod: "k6", tip: "metin", baslik: "Sana göre “başarılı bir insan” nasıl biridir? Hangi özellikleri taşımalıdır?" },
-  { kod: "k7", tip: "metin", baslik: "İnsanların seni hangi özelliklerinle hatırlamasını istersin?" },
-  { kod: "k8", tip: "metin", baslik: "Sevdiğin biri seni tek cümleyle anlatacak olsa, ne söylemesini isterdin?" },
-  { kod: "k9", tip: "metin", baslik: "Bugün hayatında seni en çok mutlu eden üç şey nedir?" },
-  { kod: "k10", tip: "metin", baslik: "Bugün hayatında seni en çok zorlayan üç şey nedir?" },
-  { kod: "k11", tip: "metin", baslik: "Sence bunun altında hangi ihtiyacın karşılanmıyor?" },
+  { kod: "k6", tip: "metin", baslik: "Sana göre “başarılı bir insan” nasıl biridir? Hangi özellikleri taşımalıdır?", vurgu: "başarılı bir insan" },
+  { kod: "k7", tip: "metin", baslik: "İnsanların seni hangi özelliklerinle hatırlamasını istersin?", vurgu: "hatırlamasını istersin" },
+  { kod: "k8", tip: "metin", baslik: "Sevdiğin biri seni tek cümleyle anlatacak olsa, ne söylemesini isterdin?", vurgu: "tek cümleyle anlatacak olsa" },
+  { kod: "k9", tip: "metin", baslik: "Bugün hayatında seni en çok mutlu eden üç şey nedir?", vurgu: "en çok mutlu eden" },
+  { kod: "k10", tip: "metin", baslik: "Bugün hayatında seni en çok zorlayan üç şey nedir?", vurgu: "en çok zorlayan" },
+  { kod: "k11", tip: "metin", baslik: "Sence bunun altında hangi ihtiyacın karşılanmıyor?", vurgu: "hangi ihtiyacın" },
   {
     kod: "secimGiris",
     tip: "intro",
@@ -120,11 +124,11 @@ export const ADIMLAR: Adim[] = [
       "Üç temel değerin belli oldu. Şimdi onlarla aranı kısaca yokla — bu, değerlerini günlük hayatına bağlamanın en hızlı yolu.",
     dugme: "Devam",
   },
-  { kod: "f1", tip: "metin", baslik: "Bu üç değerden hangisini bugün en çok yaşıyorsun?" },
-  { kod: "f2", tip: "metin", baslik: "Hangisini ihmal ediyorsun?" },
-  { kod: "f3", tip: "metin", baslik: "Son bir yıl içinde hangi kararın bu değerlerinle uyumluydu?" },
-  { kod: "f4", tip: "metin", baslik: "Hangi kararın değerlerine aykırıydı?" },
-  { kod: "f5", tip: "metin", baslik: "Bugünden sonra alacağın kararlarda bu üç değer sana nasıl rehber olacak?" },
+  { kod: "f1", tip: "metin", baslik: "Bu üç değerden hangisini bugün en çok yaşıyorsun?", vurgu: "en çok yaşıyorsun", degerSecimi: true },
+  { kod: "f2", tip: "metin", baslik: "Hangisini ihmal ediyorsun?", vurgu: "ihmal ediyorsun", degerSecimi: true },
+  { kod: "f3", tip: "metin", baslik: "Son bir yıl içinde hangi kararın bu değerlerinle uyumluydu?", vurgu: "değerlerinle uyumluydu" },
+  { kod: "f4", tip: "metin", baslik: "Hangi kararın değerlerine aykırıydı?", vurgu: "değerlerine aykırıydı" },
+  { kod: "f5", tip: "metin", baslik: "Bugünden sonra alacağın kararlarda bu üç değer sana nasıl rehber olacak?", vurgu: "nasıl rehber olacak" },
   {
     kod: "nedenGiris",
     tip: "intro",
@@ -136,13 +140,13 @@ export const ADIMLAR: Adim[] = [
   { kod: "neden0", tip: "neden", baslik: "1. değerin için “neden?” zinciri", degerIndeks: 0, zorunlu: true },
   { kod: "neden1", tip: "neden", baslik: "2. değerin için “neden?” zinciri", degerIndeks: 1 },
   { kod: "neden2", tip: "neden", baslik: "3. değerin için “neden?” zinciri", degerIndeks: 2 },
-  { kod: "n3", tip: "metin", baslik: "Eğer bu üç değeri hayatından çıkarırsak, nasıl biri olurdun? Hayatında neler eksik olurdu?" },
+  { kod: "n3", tip: "metin", baslik: "Eğer bu üç değeri hayatından çıkarırsak, nasıl biri olurdun? Hayatında neler eksik olurdu?", vurgu: "hayatından çıkarırsak" },
   { kod: "n4", tip: "metin", baslik: "Bu değerleri yaşadığında kendini nasıl hissediyorsun? Üç kelime yaz." },
   { kod: "n5", tip: "metin", baslik: "Bu değerleri yaşayamadığında en çok ne hissediyorsun?" },
-  { kod: "n6", tip: "metin", baslik: "Bugüne kadar aldığın en önemli üç kararı düşün. Bu kararları alırken seni aslında ne motive ediyordu?" },
-  { kod: "n7", tip: "metin", baslik: "Geriye dönüp bak: hayatındaki ortak tema nedir? Hep neyi arıyorsun?" },
-  { kod: "n8", tip: "metin", baslik: "İnsanlara ne kazandırmak istiyorsun? Onlar seninle karşılaştıktan sonra ne değişsin istersin?" },
-  { kod: "n9", tip: "metin", baslik: "Hayatının sonunda tek bir cümle bırakacak olsan, o cümle ne olurdu?" },
+  { kod: "n6", tip: "metin", baslik: "Bugüne kadar aldığın en önemli üç kararı düşün. Bu kararları alırken seni aslında ne motive ediyordu?", vurgu: "ne motive ediyordu" },
+  { kod: "n7", tip: "metin", baslik: "Geriye dönüp bak: hayatındaki ortak tema nedir? Hep neyi arıyorsun?", vurgu: "hep neyi arıyorsun" },
+  { kod: "n8", tip: "metin", baslik: "İnsanlara ne kazandırmak istiyorsun? Onlar seninle karşılaştıktan sonra ne değişsin istersin?", vurgu: "ne kazandırmak istiyorsun" },
+  { kod: "n9", tip: "metin", baslik: "Hayatının sonunda tek bir cümle bırakacak olsan, o cümle ne olurdu?", vurgu: "tek bir cümle bırakacak olsan" },
   {
     kod: "sonGiris",
     tip: "intro",

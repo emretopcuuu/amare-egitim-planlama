@@ -300,18 +300,51 @@ export default function DegerlerAkis() {
 
           {a.tip === "metin" && (
             <div className="flex flex-col">
-              <h2 className={`text-2xl font-bold leading-snug ${a.guclu ? "altin-metin" : "text-slate-100"}`}>
-                {a.guclu && "✦ "}{a.baslik}
+              <h2 className="text-2xl font-bold leading-snug text-slate-100">
+                {a.guclu && <span className="text-gold mr-1">✦</span>}
+                {a.vurgu && a.baslik.includes(a.vurgu) ? (
+                  <>
+                    {a.baslik.slice(0, a.baslik.indexOf(a.vurgu))}
+                    <span className="text-gold font-extrabold">{a.vurgu}</span>
+                    {a.baslik.slice(a.baslik.indexOf(a.vurgu) + a.vurgu.length)}
+                  </>
+                ) : a.baslik}
               </h2>
               {a.ipuclari && a.ipuclari.length > 0 && (
-                <ul className="mt-3 space-y-1.5">
+                <div className="mt-4 flex flex-col gap-2">
                   {a.ipuclari.map((ip, i) => (
-                    <li key={i} className="flex gap-2 text-sm leading-relaxed text-slate-400">
-                      <span className="text-gold-light/70">•</span>
-                      <span>{ip}</span>
-                    </li>
+                    <div key={i} className="flex items-start gap-3 rounded-xl border border-gold/15 bg-gold/[0.05] px-4 py-3">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/20 text-[10px] font-bold text-gold-light">
+                        {i + 1}
+                      </span>
+                      <span className="text-sm leading-relaxed text-slate-300">{ip}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
+              )}
+              {a.degerSecimi && secilenUc.length > 0 && (
+                <div className="mt-5">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">Üç değerinizden birini seçin</p>
+                  <div className="flex flex-wrap gap-2">
+                    {secilenUc.map((d) => {
+                      const secili = metin(a.kod) === d;
+                      return (
+                        <button
+                          key={d}
+                          type="button"
+                          onClick={() => metinDegis(a.kod, secili ? "" : d)}
+                          className={`rounded-full border px-5 py-2 text-sm font-semibold transition-all active:scale-95 ${
+                            secili
+                              ? "border-gold bg-gold/20 text-gold-light"
+                              : "border-royal/40 bg-royal/10 text-slate-200 hover:border-gold/50 hover:text-gold-light"
+                          }`}
+                        >
+                          {d}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               )}
               <textarea
                 value={metin(a.kod)}
