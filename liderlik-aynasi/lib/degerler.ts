@@ -33,7 +33,7 @@ export type Adim =
   // Tanıtım/geçiş paragrafı
   | { kod: string; tip: "intro"; baslik: string; paragraf: string; dugme: string }
   // Açık uçlu metin sorusu (refleksiyon — zorunlu değilse teşvik)
-  | { kod: string; tip: "metin"; baslik: string; vurgu?: string; degerSecimi?: boolean; ipuclari?: string[]; zorunlu?: boolean; guclu?: boolean }
+  | { kod: string; tip: "metin"; baslik: string; vurgu?: string | string[]; degerSecimi?: boolean; ipuclari?: string[]; zorunlu?: boolean; guclu?: boolean }
   // Listeden tam N seçim (10 → 5 → 3)
   | { kod: "sec10" | "sec5" | "sec3"; tip: "sec"; baslik: string; aciklama: string; kaynak: "liste" | "sec10" | "sec5"; adet: number }
   // Bir değer için 5 ardışık "neden?" zinciri (degerIndeks: 0|1|2)
@@ -63,8 +63,8 @@ export const ADIMLAR: Adim[] = [
   {
     kod: "k1",
     tip: "metin",
-    baslik: "Zaman nasıl geçtiğini anlamadığın, kendini en çok “sen” hissettiğin, mutlu olduğun bir anı düşün — tam yerindeymişsin, tam kendinmişsin gibi.",
-    vurgu: "mutlu olduğun bir anı",
+    baslik: "Zamanın nasıl geçtiğini anlamadığın, kendini en çok “sen” hissettiğin, mutlu olduğun bir anı düşün — tam yerindeymişsin, tam kendinmişsin gibi.",
+    vurgu: ["Zamanın", "“sen”", "mutlu olduğun bir anı"],
     ipuclari: [
       "O an ne yapıyordun?",
       "O anda hangi ihtiyacın karşılandı?",
@@ -74,14 +74,15 @@ export const ADIMLAR: Adim[] = [
   {
     kod: "k2",
     tip: "metin",
-    baslik: "Kendinle en çok gurur duyduğun bir anı düşün.",
+    baslik: "Kendinle çok gurur duyduğun bir anı düşün.",
     vurgu: "gurur duyduğun",
     ipuclari: ["Seni en çok tatmin eden neydi?", "Sana kendin hakkında ne hissettirdi?"],
   },
   {
     kod: "k3",
     tip: "metin",
-    baslik: "Seni en çok etkileyen veya hayran olduğun üç kişiyi yaz.",
+    baslik: "Seni çok etkileyen veya hayran olduğun üç kişiyi yaz.",
+    vurgu: "hayran olduğun",
     ipuclari: ["Onlarda seni etkileyen hangi özellikler var?"],
   },
   {
@@ -102,7 +103,7 @@ export const ADIMLAR: Adim[] = [
     ipuclari: ["Sabah kalktığından gece yatana kadar yaz."],
   },
   { kod: "k6", tip: "metin", baslik: "Sana göre “başarılı bir insan” nasıl biridir? Hangi özellikleri taşımalıdır?", vurgu: "başarılı bir insan" },
-  { kod: "k7", tip: "metin", baslik: "İnsanların seni hangi özelliklerinle hatırlamasını istersin?", vurgu: "hatırlamasını istersin" },
+  { kod: "k7", tip: "metin", baslik: "İnsanların seni hangi özelliklerinle hatırlamasını istersin?", vurgu: "hangi özelliklerinle hatırlamasını" },
   { kod: "k8", tip: "metin", baslik: "Sevdiğin biri seni tek cümleyle anlatacak olsa, ne söylemesini isterdin?", vurgu: "tek cümleyle anlatacak olsa" },
   { kod: "k9", tip: "metin", baslik: "Bugün hayatında seni en çok mutlu eden üç şey nedir?", vurgu: "en çok mutlu eden" },
   { kod: "k10", tip: "metin", baslik: "Bugün hayatında seni en çok zorlayan üç şey nedir?", vurgu: "en çok zorlayan" },
