@@ -237,6 +237,7 @@ export default function DegerlerAkis() {
   const [nedenSorular, setNedenSorular] = useState<Record<string, string>>({});
   const [nedenSoruYukleniyor, setNedenSoruYukleniyor] = useState<Record<string, boolean>>({});
   const ustRef = useRef<HTMLDivElement | null>(null);
+  const contentRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
     let iptal = false;
@@ -393,25 +394,46 @@ export default function DegerlerAkis() {
     return null;
   }
 
+  function gecisYap(sonra: () => void) {
+    // iOS Safari'de window.scrollTo react render'dan önce görsel olarak uygulanmıyor.
+    // Çözüm: content'i DOM üzerinden anında gizle → scroll → adım değiştir →
+    // 2 frame sonra opacity geri getir (yeni içerik doğru konumda belirir).
+    const el = contentRef.current;
+    if (el) { el.style.transition = "none"; el.style.opacity = "0"; }
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+    sonra();
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (contentRef.current) {
+          contentRef.current.style.transition = "opacity 0.12s ease";
+          contentRef.current.style.opacity = "1";
+        }
+      });
+    });
+  }
+
   async function ileri() {
     const a = ADIMLAR[adim];
     const hata = ilerlenebilir(a);
     if (hata) { setUyari(hata); return; }
     await kaydet();
-    // Scroll ÖNCE — klavye kapanma + yeni içerik yarış koşulunu önler
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-    if (adim < TOPLAM - 1) {
-      setAdim((x) => x + 1);
-    } else {
-      router.push("/");
-      router.refresh();
-    }
+    gecisYap(() => {
+      if (adim < TOPLAM - 1) {
+        setAdim((x) => x + 1);
+      } else {
+        router.push("/");
+        router.refresh();
+      }
+    });
   }
 
   function geri() {
     setUyari(null);
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-    if (adim > 0) setAdim((x) => x - 1);
+    gecisYap(() => {
+      if (adim > 0) setAdim((x) => x - 1);
+    });
   }
 
   if (!yuklendi) {
@@ -426,7 +448,7 @@ export default function DegerlerAkis() {
       {/* Göl arka planını sihirbaz sayfasında kapat — içerik odağı için */}
       <div className="fixed inset-0 z-0 bg-[#06121e]" aria-hidden />
 
-      <main className="relative z-10 mx-auto w-full max-w-xl px-5 pb-10 pt-[calc(env(safe-area-inset-top,0px)+3.5rem+1rem)]">
+      <main ref={(el) => { contentRef.current = el; }} className="relative z-10 mx-auto w-full max-w-xl px-5 pb-10 pt-[calc(env(safe-area-inset-top,0px)+3.5rem+1rem)]">
         <div ref={ustRef} />
 
         {/* İlerleme */}
