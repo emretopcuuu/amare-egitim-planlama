@@ -39,25 +39,31 @@ export async function POST(req: Request) {
         ? "Kişinin bu cevabının arkasındaki ihtiyaca veya duyguya dokunan kısa bir soru sor. Cevaptaki kelimeleri aynen kullanma."
         : "Bu değerin kişi için taşıdığı en derin anlamı ortaya çıkaran güçlü bir son soru sor.";
 
+    // MALİYET: bu çağrı kişi başı en fazla 6 kez tetiklenir (3 değer × tur 2-3)
+    // — düşük hacim, kalite önemli. Haiku'nun ürettiği sorularda ton kaçması
+    // (resmi "-sunuz" çoğul hitap, garip gramer) görüldü; Sonnet'e yükseltildi.
     const msg = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
+      model: "claude-sonnet-5",
       max_tokens: 80,
       messages: [
         {
           role: "user",
-          content: `Koç olarak "${deger}" değeri hakkındaki bu cevapları oku:\n${gecmis}\n\n${turTalimat}\n\nKural: Türkçe, en fazla 10 kelime, soru işaretiyle bitsin. Sadece soruyu yaz.`,
+          content: `Sen AYNA'sın — sıcak, meraklı bir koç. "${deger}" değeri hakkındaki bu cevapları oku:\n${gecmis}\n\n${turTalimat}\n\nKurallar: Türkçe, DOĞRU DİLBİLGİSİ, en fazla 10 kelime, soru işaretiyle bitsin. Kişiye MUTLAKA tekil "sen" diliyle hitap et — "-sunuz/-nız" gibi resmi çoğul ekler ASLA kullanma. Belirsiz ya da soyut olma; net ve somut bir soru sor. Sadece soruyu yaz, başka hiçbir şey ekleme.`,
         },
       ],
     });
 
     const soru = msg.content[0].type === "text" ? msg.content[0].text.trim() : null;
 
-    // Basit kalite kontrolü: çok uzun, ? ile bitmiyor, ya da "kimim" gibi yanlış gramer
+    // Basit kalite kontrolü: çok uzun, ? ile bitmiyor, resmi çoğul hitap
+    // ("musunuz", "-sınız" vb.) kaçmış ya da "kimim" gibi yanlış gramer.
+    const resmiCogulKacagi = /\b\w*(sunuz|siniz|sünüz|sınız|nız|niz|nüz|nuz)\??$/i;
     const gecerli =
       soru &&
       soru.endsWith("?") &&
       soru.length <= 100 &&
-      soru.split(/\s+/).length <= 15;
+      soru.split(/\s+/).length <= 15 &&
+      !resmiCogulKacagi.test(soru);
 
     return Response.json({ soru: gecerli ? soru : YEDEK_SORULAR[tur] });
   } catch {

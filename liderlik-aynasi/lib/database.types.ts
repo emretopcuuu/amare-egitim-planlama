@@ -1497,6 +1497,7 @@ export type Database = {
           first_login_at: string | null
           full_name: string
           gecen_ay_kariyer: string | null
+          gorulen_vinyetler: string[]
           id: string
           kariyer_durumu: string | null
           kariyer_seviyesi: string | null
@@ -1524,6 +1525,7 @@ export type Database = {
           first_login_at?: string | null
           full_name: string
           gecen_ay_kariyer?: string | null
+          gorulen_vinyetler?: string[]
           id?: string
           kariyer_durumu?: string | null
           kariyer_seviyesi?: string | null
@@ -1551,6 +1553,7 @@ export type Database = {
           first_login_at?: string | null
           full_name?: string
           gecen_ay_kariyer?: string | null
+          gorulen_vinyetler?: string[]
           id?: string
           kariyer_durumu?: string | null
           kariyer_seviyesi?: string | null

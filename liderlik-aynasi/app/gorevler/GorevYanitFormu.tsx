@@ -38,12 +38,10 @@ type Sonuc = {
 export default function GorevYanitFormu({
   gorevId,
   gorevBaslik,
-  ekip = [],
   baslangicYanit = "",
 }: {
   gorevId: string;
   gorevBaslik?: string;
-  ekip?: { id: string; ad: string }[];
   baslangicYanit?: string; // "geliştir ve yeniden gönder"de önceki yanıtla doldur
 }) {
   const router = useRouter();
@@ -223,10 +221,6 @@ export default function GorevYanitFormu({
         {!sonuc.bekliyor && !sonuc.soz && !sonuc.senkron && (
           <YansimaKapanisi gorevId={gorevId} />
         )}
-        {/* #5 Tanık göster: görevi yanında gören ekip arkadaşını çağır */}
-        {!sonuc.bekliyor && !sonuc.soz && !sonuc.senkron && ekip.length > 0 && (
-          <TanikGoster gorevId={gorevId} ekip={ekip} />
-        )}
         {/* #4 Kanıt Duvarı: görevi foto kanıtıyla kapat → duvara taşı */}
         {!sonuc.bekliyor && !sonuc.soz && <KanitEkle gorevBaslik={gorevBaslik} />}
         {/* A5: bu konuda bir görev daha — büyüme döngüsü (söz/senkron hariç) */}
@@ -278,9 +272,16 @@ export default function GorevYanitFormu({
           </div>
         </div>
       )}
-      {/* #9 Akıllı ipucu: yazının uzunluğuna göre nazik yönlendirme */}
+      {/* #9 Akıllı ipucu: yazının uzunluğuna göre nazik yönlendirme.
+          İSTİSNA: soru sayısal bir cevap istiyorsa ("kaç kişi…?") ya da yazılan
+          zaten sayısalsa (örn. "5") kısa diye uyarma — doğru cevabı eleştirmiş
+          oluyordu. */}
       {(() => {
-        const n = yanit.trim().length;
+        const yaziTemiz = yanit.trim();
+        const n = yaziTemiz.length;
+        const sayisalCevap = /^\d+([.,]\d+)?\s*%?$/.test(yaziTemiz);
+        const sayisalSoru = gorevBaslik ? /\bkaç\b/i.test(gorevBaslik) : false;
+        if (sayisalCevap || sayisalSoru) return null;
         if (n >= 2 && n < 25)
           return <p className="mt-2 text-xs text-amber-300/90">{t.ipucuKisa}</p>;
         if (n >= 60)
@@ -417,72 +418,6 @@ function YansimaKapanisi({ gorevId }: { gorevId: string }) {
       >
         {t.yansimaAtla}
       </button>
-    </div>
-  );
-}
-
-// #5 Tanık göster: görevi yanında gören bir ekip arkadaşını seç → ona bildirim
-// gider, tek cümlelik gözlemini bırakır (adaya anonim görünür).
-function TanikGoster({
-  gorevId,
-  ekip,
-}: {
-  gorevId: string;
-  ekip: { id: string; ad: string }[];
-}) {
-  const [secili, setSecili] = useState("");
-  const [gonderiliyor, setGonderiliyor] = useState(false);
-  const [bitti, setBitti] = useState(false);
-
-  async function gonder() {
-    if (!secili || gonderiliyor) return;
-    setGonderiliyor(true);
-    try {
-      const res = await fetch("/api/gorev-tanik", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ gorevId, tanikId: secili }),
-      });
-      if (res.ok) {
-        titret([10, 30, 10]);
-        setBitti(true);
-      }
-    } catch {
-    } finally {
-      setGonderiliyor(false);
-    }
-  }
-
-  if (bitti) {
-    return <p className="mt-3 text-xs font-medium text-emerald-400">{t.tanikGonderildi}</p>;
-  }
-  return (
-    <div className="mt-3 rounded-xl border border-royal-light/25 bg-midnight/40 p-3 text-left">
-      <p className="text-sm font-semibold text-slate-100">{t.tanikGosterBaslik}</p>
-      <p className="mt-0.5 text-xs leading-relaxed text-slate-400">{t.tanikGosterAciklama}</p>
-      <div className="mt-2 flex gap-2">
-        <select
-          value={secili}
-          onChange={(e) => setSecili(e.target.value)}
-          disabled={gonderiliyor}
-          className="h-11 flex-1 rounded-xl border border-royal-light/30 bg-midnight-soft px-3 text-sm text-slate-100 outline-none focus:border-gold"
-        >
-          <option value="">{t.tanikSec}</option>
-          {ekip.map((k) => (
-            <option key={k.id} value={k.id}>
-              {k.ad}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={gonder}
-          disabled={!secili || gonderiliyor}
-          className="h-11 shrink-0 rounded-xl border border-gold/40 px-4 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-40"
-        >
-          {gonderiliyor ? t.tanikGonderiliyor : t.tanikGonder}
-        </button>
-      </div>
     </div>
   );
 }

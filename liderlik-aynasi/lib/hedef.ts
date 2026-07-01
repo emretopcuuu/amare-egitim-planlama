@@ -22,8 +22,8 @@ import {
 // seçer → kişisel kariyer planı (ara hedefler, toplam yatırım, saatlik kazanç)
 // hesaplanır ve mühürlenir. Özet bundan sonra görevler/rapor/söz tarafından okunur.
 
-const MODEL = "claude-sonnet-4-6"; // özet damıtma (tek seferlik; Sonnet yeterli)
-const SOHBET_MODEL = "claude-sonnet-4-6"; // sohbet turları (hız öncelikli)
+const MODEL = "claude-sonnet-5"; // özet damıtma (tek seferlik; Sonnet yeterli)
+const SOHBET_MODEL = "claude-sonnet-5"; // sohbet turları (hız öncelikli)
 
 async function yenidenDene<T>(fn: () => Promise<T>, etiket: string, kez = 3): Promise<T> {
   let sonHata: unknown;

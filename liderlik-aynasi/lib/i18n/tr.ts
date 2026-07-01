@@ -3293,13 +3293,9 @@ export const tr = {
     zorlastiriliyor: "AYNA zoru kuruyor…",
     zorlastirIpucu: "Hazır hissediyorsan AYNA bu görevi senin için cesurlaştırsın.",
     zorlastirOlmaz: "Bu görev daha fazla zorlaştırılamaz.",
-    // #5 Tanıklı görev: adayın tanık gösterme + tanığın onay/gözlem akışı
-    tanikGosterBaslik: "Bunu biri gördü mü?",
-    tanikGosterAciklama: "Görevi yanında yapan bir ekip arkadaşını tanık göster — sana bir cümle gözlem bırakır (anonim).",
-    tanikSec: "Tanık seç…",
-    tanikGonder: "Tanık çağır",
-    tanikGonderiliyor: "Çağrılıyor…",
-    tanikGonderildi: "✓ Tanığın çağrıldı — gözlemini bekliyoruz.",
+    // #5 Tanıklık: tanığın onay/gözlem akışı (kendi göreve tanık ÇAĞIRMA
+    // widget'ı kart kalabalığı yarattığı için kaldırıldı — bu, gelen tarafın
+    // metinleri).
     tanikBildirimBaslik: "👁 Tanıklık",
     tanikBildirimGovde: (ad: string) => `${ad} seni bir göreve tanık gösterdi — tek cümleyle ne gördüğünü yaz.`,
     tanikBekleyenBaslik: "👁 Senden bir tanıklık bekleniyor",
