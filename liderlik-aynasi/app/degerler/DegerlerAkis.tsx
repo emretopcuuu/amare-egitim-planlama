@@ -580,14 +580,18 @@ export default function DegerlerAkis() {
                   </div>
                 </div>
               )}
-              <textarea
-                value={metin(a.kod)}
-                onChange={(e) => metinDegis(a.kod, e.target.value)}
-                rows={5}
-                placeholder={a.zorunlu ? "Buraya yaz…" : "Dilersen yaz, dilersen geç…"}
-                className="mt-4 w-full resize-y rounded-2xl border border-white/15 bg-white/[0.04] p-4 text-base leading-relaxed text-slate-100 outline-none focus:border-gold/50"
-              />
-              <SesliYazButonu onEkle={(t) => metinEkle(a.kod, t)} />
+              {!a.degerSecimi && (
+                <>
+                  <textarea
+                    value={metin(a.kod)}
+                    onChange={(e) => metinDegis(a.kod, e.target.value)}
+                    rows={5}
+                    placeholder={a.zorunlu ? "Buraya yaz…" : "Dilersen yaz, dilersen geç…"}
+                    className="mt-4 w-full resize-y rounded-2xl border border-white/15 bg-white/[0.04] p-4 text-base leading-relaxed text-slate-100 outline-none focus:border-gold/50"
+                  />
+                  <SesliYazButonu onEkle={(t) => metinEkle(a.kod, t)} />
+                </>
+              )}
             </div>
           )}
 
