@@ -243,7 +243,7 @@ async function temalarCikar(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 256,
       thinking: { type: "disabled" },
       output_config: {
@@ -1234,7 +1234,7 @@ export async function korNoktaGuncelle(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 300,
       thinking: { type: "disabled" },
       output_config: {
@@ -1324,7 +1324,7 @@ export async function senkronGorevUret(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 1024,
       thinking: { type: "adaptive" },
       output_config: {
@@ -1373,7 +1373,7 @@ async function mentorlukBodyKisisel(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 400,
       thinking: { type: "disabled" },
       output_config: { effort: "low" },
@@ -1545,7 +1545,7 @@ export async function gorevNetlestir(gorev: {
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 600,
       thinking: { type: "disabled" },
       output_config: { effort: "low", format: { type: "json_schema", schema: SEMA } },

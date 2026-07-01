@@ -12,10 +12,10 @@ import { KARIYER_RANK, kariyerHalTuret } from "@/lib/persona";
 // pusula'ya mühürlenir; bundan sonraki TÜM AI modülleri bu özeti baz alır.
 
 const MODEL = "claude-opus-4-8";
-// Sohbet turları (eleme→boşluk→engel): hız öncelikli. Sonnet 4.6 + düşünme
+// Sohbet turları (eleme→boşluk→engel): hız öncelikli. Sonnet 5 + düşünme
 // kapalı + düşük efor = en düşük gecikme; yapılandırılmış çıktı korunur.
 // Nihai profil DAMITMASI ağır ve tek seferlik olduğu için Opus'ta kalır.
-const SOHBET_MODEL = "claude-sonnet-4-6";
+const SOHBET_MODEL = "claude-sonnet-5";
 
 // Canlı seansta ~160 kişi aynı anda; geçici Anthropic hıçkırığı (429/5xx/529
 // overloaded/timeout) adaya "yanıt veremedim" göstermesin. Üstel backoff ile 3
