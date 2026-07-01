@@ -193,8 +193,10 @@ export default function DegerlerAkis() {
         if (r.ok) {
           const d = await r.json();
           if (!iptal) {
-            setCevaplar((d.cevaplar as Record<string, unknown>) ?? {});
-            setSecilenUc((d.secilenUc as string[]) ?? []);
+            const yuklenen = (d.cevaplar as Record<string, unknown>) ?? {};
+            // DB verisi temel alınır ama kullanıcının zaten yazdıkları korunur
+            setCevaplar((prev) => ({ ...yuklenen, ...prev }));
+            setSecilenUc((prev) => prev.length > 0 ? prev : ((d.secilenUc as string[]) ?? []));
           }
         }
       } catch {}
