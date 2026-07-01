@@ -54,5 +54,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, yol: "/" });
   }
 
+  if (govde.ne === "foto") {
+    // Canlı Ayna: kayıtlı 3 açı fotoğrafını temizle — kişi /pusula hub'ında
+    // yeniden çekebilsin (ekstra referans fotoğrafları ayrı, silinmez).
+    await db
+      .from("participants")
+      .update({ yuz_fotolari: [] })
+      .eq("id", session.sub);
+    return NextResponse.json({ ok: true, yol: "/pusula" });
+  }
+
   return NextResponse.json({ ok: false }, { status: 400 });
 }

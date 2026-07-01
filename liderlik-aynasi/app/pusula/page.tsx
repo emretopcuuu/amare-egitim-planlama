@@ -18,6 +18,7 @@ import GunProgramKarti from "@/components/GunProgramKarti";
 import AynaAnalizDeneyim from "@/components/AynaAnalizDeneyim";
 import MuhurIkon from "@/components/MuhurIkon";
 import HazirlikYeniden from "@/components/HazirlikYeniden";
+import CanliAynaOzetSatiri from "@/components/CanliAynaOzetSatiri";
 import OnboardingRayi from "@/components/OnboardingRayi";
 
 const t = tr.pusula;
@@ -95,12 +96,13 @@ export default async function PusulaSayfa() {
       tamam: boolean;
       href: string | null;
       yeniden?: "ses" | "nedenler";
+      foto?: boolean;
     }[] = [
       { ad: t.ozetSes, tamam: sesVar, href: null, yeniden: "ses" },
       { ad: t.ozetNedenler, tamam: durum.tamam, href: null, yeniden: "nedenler" },
       { ad: t.ozetHedef, tamam: hedefTamam, href: "/hedef" },
       { ad: t.ozetFarkindalik, tamam: ofTamam, href: "/on-farkindalik" },
-      { ad: t.ozetFoto, tamam: yuzVar, href: null },
+      { ad: t.ozetFoto, tamam: yuzVar, href: null, foto: true },
       { ad: t.ozetLiderlik, tamam: ozTamam, href: `/degerlendir/${session.sub}` },
     ];
 
@@ -181,43 +183,67 @@ export default async function PusulaSayfa() {
           </p>
           <p className="mt-1 text-xs leading-relaxed text-slate-500">{t.ozetAciklama}</p>
           <ul className="mt-3 space-y-1.5">
-            {ozetAdimlar.map((a) => (
-              <li
-                key={a.ad}
-                className="flex items-center gap-3 rounded-xl bg-black/20 px-3 py-2.5"
-              >
-                <span
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                    a.tamam ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"
-                  }`}
-                  aria-hidden
+            {ozetAdimlar.map((a) =>
+              a.foto ? (
+                <li key={a.ad}>
+                  <details className="group rounded-xl bg-black/20">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5">
+                      <span
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                          a.tamam ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"
+                        }`}
+                        aria-hidden
+                      >
+                        {a.tamam ? "✓" : "!"}
+                      </span>
+                      <span className="flex-1 text-sm text-slate-200">{a.ad}</span>
+                      <span className="shrink-0 text-xs font-semibold text-gold-light underline-offset-4 group-hover:underline">
+                        {a.tamam ? "Değiştir / Ekle" : t.ozetYap} →
+                      </span>
+                    </summary>
+                    <div className="border-t border-white/10 px-3 py-3">
+                      <CanliAynaOzetSatiri yuzVar={a.tamam} />
+                    </div>
+                  </details>
+                </li>
+              ) : (
+                <li
+                  key={a.ad}
+                  className="flex items-center gap-3 rounded-xl bg-black/20 px-3 py-2.5"
                 >
-                  {a.tamam ? "✓" : "!"}
-                </span>
-                <span className="flex-1 text-sm text-slate-200">{a.ad}</span>
-                {a.yeniden ? (
-                  <HazirlikYeniden
-                    ne={a.yeniden}
-                    uyari={
-                      a.yeniden === "ses"
-                        ? "Ses ritüelini sıfırlayıp yeniden kaydedeceksin."
-                        : "Nedenler (Pusula) sohbetini sıfırlayıp baştan yapacaksın."
-                    }
-                  />
-                ) : a.href ? (
-                  <Link
-                    href={a.href}
-                    className="shrink-0 text-xs font-semibold text-gold-light underline-offset-4 hover:underline"
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                      a.tamam ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"
+                    }`}
+                    aria-hidden
                   >
-                    {a.tamam ? t.ozetDuzelt : t.ozetYap} →
-                  </Link>
-                ) : (
-                  <span className="shrink-0 text-xs text-slate-500">
-                    {a.tamam ? t.ozetTamam : t.ozetEksik}
+                    {a.tamam ? "✓" : "!"}
                   </span>
-                )}
-              </li>
-            ))}
+                  <span className="flex-1 text-sm text-slate-200">{a.ad}</span>
+                  {a.yeniden ? (
+                    <HazirlikYeniden
+                      ne={a.yeniden}
+                      uyari={
+                        a.yeniden === "ses"
+                          ? "Ses ritüelini sıfırlayıp yeniden kaydedeceksin."
+                          : "Nedenler (Pusula) sohbetini sıfırlayıp baştan yapacaksın."
+                      }
+                    />
+                  ) : a.href ? (
+                    <Link
+                      href={a.href}
+                      className="shrink-0 text-xs font-semibold text-gold-light underline-offset-4 hover:underline"
+                    >
+                      {a.tamam ? t.ozetDuzelt : t.ozetYap} →
+                    </Link>
+                  ) : (
+                    <span className="shrink-0 text-xs text-slate-500">
+                      {a.tamam ? t.ozetTamam : t.ozetEksik}
+                    </span>
+                  )}
+                </li>
+              )
+            )}
           </ul>
         </div>
 

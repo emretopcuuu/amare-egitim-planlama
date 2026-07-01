@@ -57,7 +57,7 @@ const GOREV_SEMASI = {
     govde: {
       type: "string" as const,
       description:
-        "AYNA'nın ağzından görev metni. SADE, gündelik Türkçe; kısa ve net cümleler. Yapı: (1) tek bir somut eylem — ne yapacağı tek okumada anlaşılsın, (2) sonra sana ne yazacağı — tek net soru. En fazla 3 cümle. Süslü mecaz, küçültme eki ('ricacık' gibi), iç içe yan cümle ve şiirsel/bulanık ifade ('içinde ne koptu' gibi) KULLANMA.",
+        "AYNA'nın ağzından görev metni, gündelik Türkçe, kısa ve net cümleler (sistem promptundaki GÖREV DNA'SI yapısına uy — hikaye + ayna + meydan okuma + dönüş, toplam ~5 cümle). Süslü mecaz, küçültme eki ('ricacık' gibi), iç içe yan cümle ve şiirsel/bulanık ifade ('içinde ne koptu' gibi) KULLANMA. KRİTİK: metin YARIM BIRAKILAMAZ — birine belirli bir sözü/cümleyi söylemesini istiyorsan o sözün TAM METNİNİ tırnak içinde mutlaka yaz; ':' ya da 'şunu söyle:' gibi bir ifadeyle bitirip alıntıyı boş bırakma. Her zaman tam, noktalanmış bir cümleyle bitir.",
     },
     ozellik_id: {
       type: "integer" as const,
@@ -763,7 +763,7 @@ GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lid
 1) HİKÂYE — gövdenin başında "acilisHikayesi"ni KISA (2-3 cümle) ve SADIK anlat. Uydurma, yalnız verileni kullan. Başlığı bu hikâyeyle ilişkilendir (birebir kopyalama).
 2) AYNA — kişinin pusula/kör nokta/hedefiyle AÇIK bağ kur: "sen … demiştin / … istiyorsun". Hikâyedeki eşik, tam da onun eşiği olsun.
 3) MEYDAN OKUMA — o anki kamp anına demirli, GERÇEKTEN zorlayan ama yapılabilir TEK bir lider hamlesi (kasla uyumlu: devret / ilk adımı at / zor konuş / yardım iste / söz ver / sorumluluğu üstlen…). Yumuşak "birini izle/gözlemle" DEĞİL.
-4) DÖNÜŞ — bana ne getireceğini söyle ve ÇEŞİTLENDİR: her görev "bana yaz" olmasın; kimi yap-ve-anlat, kimi grupla etkileş, kimi tek cümle/tek kelime.
+4) DÖNÜŞ — bana ne getireceğini söyle ve ÇEŞİTLENDİR: her görev "bana yaz" olmasın; kimi yap-ve-anlat, kimi grupla etkileş, kimi tek cümle/tek kelime. Birine BELİRLİ bir cümleyi birebir söylemesini istiyorsan ("şunu söyle", "de ki" vb.) o cümlenin TAM METNİNİ tırnak içinde MUTLAKA yaz — asla ":" ile bitirip alıntıyı boş bırakma.
 "ozellik_id"yi bu kasla uyumlu seç (cesaret→Cesaret, devretme→Sorumluluk/Takım Ruhu, zor_konusma→Dürüstlük, vizyon→Vizyonerlik, dinleme→İletişim, baglanti→Takım Ruhu/Pozitif Enerji vb.).
 
 ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz.
@@ -795,6 +795,16 @@ ${yeniYonergeler}`,
       ipuclari?: unknown;
     }>(yanit);
     if (!veri?.baslik || !veri.govde) return null;
+    // Savunma: model bazen "...yalnızca şunu söyle:" diyip asıl alıntıyı yazmadan
+    // cümleyi yarıda bırakıyor (bkz. görev sistemi olayı). max_tokens'ta kesilmiş
+    // ya da ':'/bağlaçla asılı kalmış bir gövdeyi ASLA katılımcıya gösterme —
+    // reddet, bir sonraki tick'te temiz bir görev yeniden üretilir.
+    const govdeYarim =
+      yanit.stop_reason === "max_tokens" || /[:,;—-]\s*$/.test(veri.govde.trim());
+    if (govdeYarim) {
+      await aiHataYakala(db, "gorev_uretimi", new Error(`Yarım kalan govde: "${veri.govde.slice(-60)}"`));
+      return null;
+    }
 
     const gecerliIdler = new Set(ozellikler.map((o) => o.id));
     // #8 micro-sprint: sure_saat 0.5 = 30 dk
