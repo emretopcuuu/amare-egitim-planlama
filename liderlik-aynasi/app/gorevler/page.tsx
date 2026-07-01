@@ -161,21 +161,10 @@ export default async function GorevlerPage() {
       .gte("created_at", bugunBas),
   ]);
 
-  // #5 Tanıklı görevler: ekip arkadaşları (tanık seçimi için), bana gelen
-  // tanıklık çağrıları ve tamamladığım görevlere gelen anonim gözlemler.
-  const { data: ben } = await db
-    .from("participants")
-    .select("team")
-    .eq("id", session.sub)
-    .maybeSingle();
-  const [{ data: ekipHam }, { data: bekleyenHam }, { data: gelenHam }] = await Promise.all([
-    db
-      .from("participants")
-      .select("id, full_name")
-      .eq("role", "participant")
-      .eq("team", ben?.team ?? "__yok__")
-      .neq("id", session.sub)
-      .order("full_name"),
+  // #5 Tanıklık: bana gelen tanıklık çağrıları + tamamladığım görevlere gelen
+  // anonim gözlemler. (Kendi görevime tanık ÇAĞIRMA widget'ı kaldırıldı —
+  // kart kalabalığı yaratıyordu; bu gelen-taraf akış hâlâ geçerli.)
+  const [{ data: bekleyenHam }, { data: gelenHam }] = await Promise.all([
     db
       .from("gorev_tanik")
       .select("id, doer:participants!gorev_tanik_doer_id_fkey(full_name)")
@@ -187,7 +176,6 @@ export default async function GorevlerPage() {
       .eq("doer_id", session.sub)
       .not("confirmed_at", "is", null),
   ]);
-  const ekip = (ekipHam ?? []).map((k) => ({ id: k.id, ad: k.full_name }));
   const bekleyenler = (bekleyenHam ?? [])
     .filter((b) => b.doer)
     .map((b) => ({
@@ -306,7 +294,7 @@ export default async function GorevlerPage() {
               </p>
               {/* UX #3 — telafi penceresinin canlı geri sayımı (due_at + 24sa) */}
               <TelafiSayac bitis={new Date(new Date(g.due_at).getTime() + 24 * 3_600_000).toISOString()} />
-              <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} ekip={ekip} />
+              <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
             </div>
           ))}
         </section>
@@ -444,7 +432,7 @@ export default async function GorevlerPage() {
             )}
             {/* UX #2 (tasarım): birincil eylem (yanıt) baskın; ikincil eylemler
                 tek "⋯ Seçenekler" altında toplanır — kart dağınıklığı biter. */}
-            <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} ekip={ekip} />
+            <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
             {g.kind !== "soz" && g.kind !== "senkron" && (
               <details className="group mt-3">
                 <summary className="flex cursor-pointer list-none items-center justify-center gap-1 text-xs font-medium text-slate-500 transition-colors hover:text-slate-300">

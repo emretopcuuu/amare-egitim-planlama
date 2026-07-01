@@ -354,9 +354,11 @@ export async function gorevUret(
       .select("id", { count: "exact", head: true })
       .eq("observer_id", katilimci.id),
     // Kariyer momentumu (persona ekseni) — A/B/C türetmesi için ham veriler.
+    // gorulen_vinyetler aynı sorguya bindirildi: kişinin daha önce gördüğü
+    // açılış hikayeleri — "aynı hikaye asla iki kez" kuralı için.
     db
       .from("participants")
-      .select("kariyer_seviyesi, en_yuksek_kariyer, gecen_ay_kariyer, kidem_ay")
+      .select("kariyer_seviyesi, en_yuksek_kariyer, gecen_ay_kariyer, kidem_ay, gorulen_vinyetler")
       .eq("id", katilimci.id)
       .maybeSingle(),
     db
@@ -638,7 +640,26 @@ export async function gorevUret(
   const hedefKas = KAS_DONGU[(((tamamSayisi + gun + kisiKaymasi) % L) + L) % L];
   // Vinyet seçimine de kişi kaymasını kat → aynı kasa düşen iki kişi farklı
   // küratörlü hikâyeyle açılsın (aynı kas + aynı vinyet çakışması da kırılır).
-  const secilenVinyet = vinyetSec(hedefKas, tamamSayisi + kisiKaymasi);
+  // Kişi isteği: AYNI HİKAYE bir kişiye ASLA iki kez gösterilmesin — daha önce
+  // görülen vinyet kodları hariç tutulur (kariyerSonuc sorgusuna bindirildi).
+  const gorulenVinyetler = new Set(
+    (kariyerSonuc.data as { gorulen_vinyetler?: string[] } | null)?.gorulen_vinyetler ?? []
+  );
+  const secilenVinyet = vinyetSec(hedefKas, tamamSayisi + kisiKaymasi, gorulenVinyetler);
+  // Yeni (hiç görülmemiş) bir vinyet seçildiyse kişinin görülen listesine ekle
+  // — sonraki üretimlerde tekrar seçilmesin. Serverless'te un-awaited yazma
+  // response gönderilince öldürülebileceği için AWAIT edilir; ama hatası görev
+  // üretimini bloklamasın diye yutulur (en kötü ihtimalle nadir bir tekrar olur).
+  if (secilenVinyet && !gorulenVinyetler.has(secilenVinyet.kod)) {
+    try {
+      await db
+        .from("participants")
+        .update({ gorulen_vinyetler: [...gorulenVinyetler, secilenVinyet.kod] })
+        .eq("id", katilimci.id);
+    } catch {
+      // best-effort — yazım başarısız olsa bile görev üretimi devam eder
+    }
+  }
 
   const baglam = {
     ad: katilimci.full_name.split(" ")[0],
@@ -716,9 +737,10 @@ export async function gorevUret(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      // MALİYET: görev üretimi sıcak yolun ana sürücüsü. Opus yerine Sonnet 4.6
-      // (~%40 ucuz, kalite çok yakın); çıktı kısa olduğu için max_tokens kırpıldı.
-      model: "claude-sonnet-4-6",
+      // Görev üretimi kampın en sık çalışan, en kritik parçası — güncel
+      // Sonnet 5'e yükseltildi (kullanıcı isteği). Opus yerine Sonnet seçimi
+      // hâlâ geçerli: çıktı kısa olduğu için max_tokens kırpıldı.
+      model: "claude-sonnet-5",
       max_tokens: 1024,
       thinking: { type: "adaptive" },
       output_config: {
