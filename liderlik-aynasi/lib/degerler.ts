@@ -2,7 +2,7 @@
 // Adım-adım sihirbaz; bu modül tek doğruluk kaynağı (adımlar + değer listesi +
 // çekirdek tamamlanma kuralı). UI (DegerlerAkis) bu yapıyı genel olarak render eder.
 //
-// Çekirdek ZORUNLU: 3 temel değer + en az 1. değerin ilk "neden"i + final cümleler
+// Çekirdek ZORUNLU: 3 temel değer + 1. değerin ilk neden turu + final cümleler
 // + en güçlü soru. Refleksiyon soruları TEŞVİK edilir ama boş geçilebilir.
 
 // Koçluk/psikoloji/liderlikte en sık öne çıkan 20 temel değer.
@@ -34,10 +34,12 @@ export type Adim =
   | { kod: string; tip: "intro"; baslik: string; vurgu?: string; paragrafVurgu?: string; paragraf: string; dugme: string }
   // Açık uçlu metin sorusu (refleksiyon — zorunlu değilse teşvik)
   | { kod: string; tip: "metin"; baslik: string; vurgu?: string | string[]; degerSecimi?: boolean; cokSecim?: boolean; ipuclari?: string[]; zorunlu?: boolean; guclu?: boolean }
-  // Listeden tam N seçim (10 → 5 → 3)
+  // Listeden tam N seçim (legacy)
   | { kod: "sec10" | "sec5" | "sec3"; tip: "sec"; baslik: string; aciklama: string; kaynak: "liste" | "sec10" | "sec5"; adet: number }
-  // Bir değer için 5 ardışık "neden?" zinciri (degerIndeks: 0|1|2)
+  // Bir değer için 5 ardışık "neden?" zinciri (legacy)
   | { kod: string; tip: "neden"; baslik: string; degerIndeks: 0 | 1 | 2; zorunlu?: boolean }
+  // Sarmal neden: her değer için 3 turlu derinleşme (AI 2. ve 3. soruyu üretiyor)
+  | { kod: string; tip: "neden_soru"; degerIndeks: 0 | 1 | 2; tur: 1 | 2 | 3; zorunlu?: boolean }
   // AI değer önerisi adımı
   | { kod: "ai_oneri"; tip: "ai_oneri"; baslik: string; paragraf: string }
   // Cümle tamamlama (final "neden cümlesi")
@@ -117,33 +119,41 @@ export const ADIMLAR: Adim[] = [
   {
     kod: "farkGiris",
     tip: "intro",
-    baslik: "Farkındalık",
+    baslik: "5 Temel Değer",
     paragraf:
-      "Üç temel değerin belli oldu. Şimdi onlarla aranı kısaca yokla — bu, değerlerini günlük hayatına bağlamanın en hızlı yolu.",
+      "Beş temel değerin belli oldu. Şimdi onlarla aranı kısaca yokla — bu, değerlerini günlük hayatına bağlamanın en hızlı yolu.",
     dugme: "Devam",
   },
-  { kod: "f1", tip: "metin", baslik: "Bu üç değerden hangisini bugün en çok yaşıyorsun?", vurgu: "en çok yaşıyorsun", degerSecimi: true },
-  { kod: "f2", tip: "metin", baslik: "Hangisini ihmal ediyorsun?", vurgu: "ihmal ediyorsun", degerSecimi: true },
+  { kod: "f1", tip: "metin", baslik: "Bu beş değerden hangisini bugün en çok onurlandırıyorsun?", vurgu: "en çok onurlandırıyorsun", degerSecimi: true },
+  { kod: "f2", tip: "metin", baslik: "Hangilerini ihmal ediyorsun?", vurgu: "ihmal ediyorsun", degerSecimi: true, cokSecim: true },
   { kod: "f3", tip: "metin", baslik: "Son bir yıl içinde hangi kararın bu değerlerinle uyumluydu?", vurgu: "değerlerinle uyumluydu" },
   { kod: "f4", tip: "metin", baslik: "Hangi kararın değerlerine aykırıydı?", vurgu: "değerlerine aykırıydı" },
-  { kod: "f5", tip: "metin", baslik: "Bugünden sonra alacağın kararlarda bu üç değer sana nasıl rehber olacak?", vurgu: "nasıl rehber olacak" },
+  { kod: "f5", tip: "metin", baslik: "Bugünden sonra alacağın kararlarda bu beş değer sana nasıl rehber olacak?", vurgu: "nasıl rehber olacak" },
   {
     kod: "nedenGiris",
     tip: "intro",
-    baslik: "Şimdi sıra NEDENlerinde!",
-    vurgu: "NEDEN",
+    baslik: "Gel, NEDENlerini Keşfedelim",
+    vurgu: "NEDENlerini",
     paragrafVurgu: "Değerler sana yönünü gösterir; nedenlerin ise sana hareket etme gücü verir.",
     paragraf:
-      "Her hedefin, her kararın arkasında görünmeyen bir “neden” vardır. İnsanlar çoğu zaman hedeflerinden değil, nedenlerinden güç alırlar. Şimdi seni gerçekten harekete geçiren içsel motivasyonu keşfedelim.",
+      "Yapay zeka en güçlü üç değerini belirledi. Şimdi her biri için 3 turda derinleşeceğiz — ilk cevabın ardından AYNA sana daha kişisel sorular soracak. En derin nedene ulaşmak için dürüst ol.",
     dugme: "Nedenimi Keşfet",
   },
-  { kod: "neden0", tip: "neden", baslik: "1. değerin için “neden?” zinciri", degerIndeks: 0, zorunlu: true },
-  { kod: "neden1", tip: "neden", baslik: "2. değerin için “neden?” zinciri", degerIndeks: 1 },
-  { kod: "neden2", tip: "neden", baslik: "3. değerin için “neden?” zinciri", degerIndeks: 2 },
+  // Değer 0 — 3 turlu sarmal neden
+  { kod: "nd_0_1", tip: "neden_soru" as const, degerIndeks: 0 as const, tur: 1 as const, zorunlu: true },
+  { kod: "nd_0_2", tip: "neden_soru" as const, degerIndeks: 0 as const, tur: 2 as const },
+  { kod: "nd_0_3", tip: "neden_soru" as const, degerIndeks: 0 as const, tur: 3 as const },
+  // Değer 1 — 3 turlu sarmal neden
+  { kod: "nd_1_1", tip: "neden_soru" as const, degerIndeks: 1 as const, tur: 1 as const, zorunlu: true },
+  { kod: "nd_1_2", tip: "neden_soru" as const, degerIndeks: 1 as const, tur: 2 as const },
+  { kod: "nd_1_3", tip: "neden_soru" as const, degerIndeks: 1 as const, tur: 3 as const },
+  // Değer 2 — 3 turlu sarmal neden
+  { kod: "nd_2_1", tip: "neden_soru" as const, degerIndeks: 2 as const, tur: 1 as const, zorunlu: true },
+  { kod: "nd_2_2", tip: "neden_soru" as const, degerIndeks: 2 as const, tur: 2 as const },
+  { kod: "nd_2_3", tip: "neden_soru" as const, degerIndeks: 2 as const, tur: 3 as const },
   { kod: "n3", tip: "metin", baslik: "Eğer bu üç değeri hayatından çıkarırsak, nasıl biri olurdun? Hayatında neler eksik olurdu?", vurgu: "hayatından çıkarırsak" },
   { kod: "n4", tip: "metin", baslik: "Bu değerleri yaşadığında kendini nasıl hissediyorsun? Üç kelime yaz." },
   { kod: "n5", tip: "metin", baslik: "Bu değerleri yaşayamadığında en çok ne hissediyorsun?" },
-  { kod: "n6", tip: "metin", baslik: "Bugüne kadar aldığın en önemli üç kararı düşün. Bu kararları alırken seni aslında ne motive ediyordu?", vurgu: "ne motive ediyordu" },
   { kod: "n7", tip: "metin", baslik: "Geriye dönüp bak: hayatındaki ortak tema nedir? Hep neyi arıyorsun?", vurgu: "hep neyi arıyorsun" },
   { kod: "n8", tip: "metin", baslik: "İnsanlara ne kazandırmak istiyorsun? Onlar seninle karşılaştıktan sonra ne değişsin istersin?", vurgu: "ne kazandırmak istiyorsun" },
   { kod: "n9", tip: "metin", baslik: "Hayatının sonunda tek bir cümle bırakacak olsan, o cümle ne olurdu?", vurgu: "tek bir cümle bırakacak olsan" },
@@ -170,7 +180,7 @@ export const ADIMLAR: Adim[] = [
   },
 ];
 
-// Bir değerin 5-neden zinciri için cevap kodları (cevaplar JSONB içinde).
+// Bir değerin 5-neden zinciri için cevap kodları (legacy)
 export function nedenKodlari(degerIndeks: number): string[] {
   return [1, 2, 3, 4, 5].map((n) => `neden_${degerIndeks}_${n}`);
 }
@@ -186,14 +196,14 @@ function metinAl(c: Record<string, unknown>, k: string): string {
 }
 
 // ÇEKİRDEK TAMAM: bitirmek için zorunlu alanlar dolu mu?
-// 3 değer + en az 1. değerin ilk "neden"i + "Ben ... için yaşıyorum" + "Çünkü ..."
+// 3+ değer + 1. değerin ilk neden turu + "Ben ... için yaşıyorum" + "Çünkü ..."
 // + en güçlü soru. (Refleksiyon soruları zorunlu değil.)
 export function cekirdekTamam(v: DegerlerCevap): boolean {
   const c = v.cevaplar ?? {};
   const dolu = (k: string) => metinAl(c, k).length > 0;
   return (
-    (v.secilenUc?.length ?? 0) === 3 &&
-    dolu("neden_0_1") &&
+    (v.secilenUc?.length ?? 0) >= 3 &&
+    dolu("nd_0_1") &&
     dolu("cumle1") &&
     dolu("cumle3") &&
     dolu("final")

@@ -57,6 +57,11 @@ const DEGER_ETIKET: Record<string, string> = {
   "Yaratıcılık": "Ruhunun rengi", "Yaşam dengesi": "Ritmin",
 };
 
+const NEDEN_YEDEK: Record<number, string> = {
+  2: "Peki bu sana neden bu kadar önemli? Daha derine git — gerçek nedeni bul.",
+  3: "Bu değer olmadan nasıl biri olurdun? Hayatında ne eksik kalırdı?",
+};
+
 // AYNA'nın ElevenLabs sesiyle intro metnini okutan buton.
 // /api/ayna-ses?k=degerler_<kod> → mp3; ses yoksa 503 → sessizce gizlenir.
 function AynaSesButonu({ anahtar }: { anahtar: string }) {
@@ -205,6 +210,8 @@ export default function DegerlerAkis() {
   const [secilenUc, setSecilenUc] = useState<string[]>([]);
   const [aiOneri, setAiOneri] = useState<string[] | null>(null);
   const [aiYukleniyor, setAiYukleniyor] = useState(false);
+  const [nedenSorular, setNedenSorular] = useState<Record<string, string>>({});
+  const [nedenSoruYukleniyor, setNedenSoruYukleniyor] = useState<Record<string, boolean>>({});
   const ustRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -230,6 +237,7 @@ export default function DegerlerAkis() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     setParla(true);
+    setUyari(null);
     const id = setTimeout(() => setParla(false), 420);
     return () => clearTimeout(id);
   }, [adim]);
@@ -257,6 +265,46 @@ export default function DegerlerAkis() {
         setAiYukleniyor(false);
       })
       .catch(() => { setAiOneri([]); setAiYukleniyor(false); });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adim]);
+
+  // Sarmal neden: tur 2 ve 3 için AI sorusu çek (tur 1 sabit soru)
+  useEffect(() => {
+    const a = ADIMLAR[adim];
+    if (a?.tip !== "neden_soru" || a.tur === 1) return;
+    const clef = `${a.degerIndeks}_${a.tur}`;
+    if (nedenSorular[clef] !== undefined || nedenSoruYukleniyor[clef]) return;
+    const deger = secilenUc[a.degerIndeks];
+    if (!deger) {
+      setNedenSorular((s) => ({ ...s, [clef]: NEDEN_YEDEK[a.tur] ?? "" }));
+      return;
+    }
+    const oncekiCevaplar: string[] = [];
+    for (let t = 1; t < a.tur; t++) {
+      const v = typeof cevaplar[`nd_${a.degerIndeks}_${t}`] === "string"
+        ? (cevaplar[`nd_${a.degerIndeks}_${t}`] as string).trim()
+        : "";
+      if (v) oncekiCevaplar.push(v);
+    }
+    if (!oncekiCevaplar.length) {
+      setNedenSorular((s) => ({ ...s, [clef]: NEDEN_YEDEK[a.tur] ?? "" }));
+      return;
+    }
+    setNedenSoruYukleniyor((s) => ({ ...s, [clef]: true }));
+    fetch("/api/degerler/neden-derinles", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ deger, tur: a.tur, oncekiCevaplar }),
+    })
+      .then((r) => r.json())
+      .then((d: { soru?: string }) => {
+        setNedenSorular((s) => ({ ...s, [clef]: d.soru ?? NEDEN_YEDEK[a.tur] ?? "" }));
+        setNedenSoruYukleniyor((s) => ({ ...s, [clef]: false }));
+      })
+      .catch(() => {
+        setNedenSorular((s) => ({ ...s, [clef]: NEDEN_YEDEK[a.tur] ?? "" }));
+        setNedenSoruYukleniyor((s) => ({ ...s, [clef]: false }));
+      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adim]);
 
@@ -318,6 +366,7 @@ export default function DegerlerAkis() {
     }
     if (a.tip === "cumle" && a.zorunlu && !metin(a.kod).trim()) return "Bu cümleyi tamamla.";
     if (a.tip === "metin" && a.zorunlu && !metin(a.kod).trim()) return "Bu soruyu yanıtla.";
+    if (a.tip === "neden_soru" && a.zorunlu && !metin(a.kod).trim()) return "Bu soruyu yanıtla.";
     return null;
   }
 
@@ -557,6 +606,89 @@ export default function DegerlerAkis() {
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {a.tip === "neden_soru" && (
+            <div className="flex flex-col gap-4">
+              {/* Değer başlığı + tur ilerleme noktaları */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                    {a.degerIndeks === 0 ? "1." : a.degerIndeks === 1 ? "2." : "3."}{" Değer · "}
+                    <span className="text-gold/70">{a.tur}. Tur</span>
+                  </p>
+                  <h2 className="mt-0.5 text-3xl font-black leading-tight text-gold truncate">
+                    {secilenUc[a.degerIndeks] ?? "—"}
+                  </h2>
+                </div>
+                <div className="flex items-center gap-1.5 pt-2 shrink-0">
+                  {[1, 2, 3].map((t) => (
+                    <span
+                      key={t}
+                      className={`rounded-full transition-all ${
+                        t === a.tur
+                          ? "h-2.5 w-2.5 bg-gold"
+                          : t < a.tur
+                            ? "h-2 w-2 bg-gold/40"
+                            : "h-2 w-2 bg-white/15"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Önceki cevaplar (tur 2 ve 3) */}
+              {a.tur > 1 && (
+                <div className="space-y-2">
+                  {Array.from({ length: a.tur - 1 }, (_, i) => i + 1).map((t) => {
+                    const v = metin(`nd_${a.degerIndeks}_${t}`);
+                    return v.trim() ? (
+                      <div
+                        key={t}
+                        className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-2.5 text-sm italic leading-relaxed text-slate-400"
+                      >
+                        &ldquo;{v.trim()}&rdquo;
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+              )}
+
+              {/* Soru kutusu + textarea */}
+              {(() => {
+                const clef = `${a.degerIndeks}_${a.tur}`;
+                const yukleniyor = !!nedenSoruYukleniyor[clef];
+                const soru =
+                  a.tur === 1
+                    ? "Bu değer benim için neden önemli?"
+                    : (nedenSorular[clef] ?? NEDEN_YEDEK[a.tur]);
+                return (
+                  <>
+                    {yukleniyor ? (
+                      <div className="flex items-center gap-2.5 rounded-xl border border-gold/15 bg-gold/[0.04] px-4 py-3 text-sm text-slate-400">
+                        <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-gold/30 border-t-gold" />
+                        AYNA bir sonraki soru hazırlıyor…
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-royal/30 bg-royal/[0.08] px-4 py-3">
+                        <p className="mb-1 text-[0.65rem] font-semibold uppercase tracking-widest text-slate-500">
+                          {a.tur === 1 ? "İlk soru" : a.tur === 2 ? "✦ AYNA soruyor" : "Son soru"}
+                        </p>
+                        <p className="text-xl font-bold leading-snug text-slate-100">{soru}</p>
+                      </div>
+                    )}
+                    <textarea
+                      value={metin(a.kod)}
+                      onChange={(e) => metinDegis(a.kod, e.target.value)}
+                      rows={4}
+                      placeholder={a.zorunlu ? "Buraya yaz…" : "Dilersen yaz, dilersen geç…"}
+                      className="w-full resize-y rounded-2xl border border-white/15 bg-white/[0.04] p-4 text-base leading-relaxed text-slate-100 outline-none focus:border-gold/50"
+                    />
+                    <SesliYazButonu onEkle={(t) => metinEkle(a.kod, t)} />
+                  </>
+                );
+              })()}
             </div>
           )}
 
