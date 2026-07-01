@@ -104,8 +104,7 @@ export default function DegerlerAkis() {
   }, []);
 
   useEffect(() => {
-    ustRef.current?.scrollIntoView({ block: "start" });
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     setParla(true);
     const id = setTimeout(() => setParla(false), 420);
     return () => clearTimeout(id);
@@ -201,7 +200,7 @@ export default function DegerlerAkis() {
       {/* Göl arka planını sihirbaz sayfasında kapat — içerik odağı için */}
       <div className="fixed inset-0 z-0 bg-[#06121e]" aria-hidden />
 
-      <main className="relative z-10 mx-auto w-full max-w-xl px-5 pb-10 pt-[calc(1rem+env(safe-area-inset-top))]">
+      <main className="relative z-10 mx-auto w-full max-w-xl px-5 pb-10 pt-[calc(env(safe-area-inset-top,0px)+3.5rem+1rem)]">
         <div ref={ustRef} />
 
         {/* İlerleme */}
