@@ -38,6 +38,8 @@ export type Adim =
   | { kod: "sec10" | "sec5" | "sec3"; tip: "sec"; baslik: string; aciklama: string; kaynak: "liste" | "sec10" | "sec5"; adet: number }
   // Bir değer için 5 ardışık "neden?" zinciri (degerIndeks: 0|1|2)
   | { kod: string; tip: "neden"; baslik: string; degerIndeks: 0 | 1 | 2; zorunlu?: boolean }
+  // AI değer önerisi adımı
+  | { kod: "ai_oneri"; tip: "ai_oneri"; baslik: string; paragraf: string }
   // Cümle tamamlama (final "neden cümlesi")
   | { kod: "cumle1" | "cumle2" | "cumle3"; tip: "cumle"; baslik: string; on: string; son: string; zorunlu?: boolean };
 
@@ -105,6 +107,12 @@ export const ADIMLAR: Adim[] = [
   { kod: "k9", tip: "metin", baslik: "Bugün hayatında seni en çok mutlu eden üç şey nedir?", vurgu: "en çok mutlu eden" },
   { kod: "k10", tip: "metin", baslik: "Bugün hayatında seni en çok zorlayan üç şey nedir?", vurgu: "en çok zorlayan" },
   { kod: "k11", tip: "metin", baslik: "Sence bunun altında hangi ihtiyacın karşılanmıyor?", vurgu: "hangi ihtiyacın" },
+  {
+    kod: "ai_oneri",
+    tip: "ai_oneri" as const,
+    baslik: "Cevapların şunu söylüyor",
+    paragraf: "Şu ana kadar verdiğin cevapları inceledim. Sende en güçlü öne çıkan değerler bunlar:",
+  },
   {
     kod: "secimGiris",
     tip: "intro",

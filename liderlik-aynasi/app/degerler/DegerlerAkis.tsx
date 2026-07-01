@@ -155,6 +155,8 @@ export default function DegerlerAkis() {
   const [uyari, setUyari] = useState<string | null>(null);
   const [cevaplar, setCevaplar] = useState<Record<string, unknown>>({});
   const [secilenUc, setSecilenUc] = useState<string[]>([]);
+  const [aiOneri, setAiOneri] = useState<string[] | null>(null);
+  const [aiYukleniyor, setAiYukleniyor] = useState(false);
   const ustRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -180,6 +182,30 @@ export default function DegerlerAkis() {
     setParla(true);
     const id = setTimeout(() => setParla(false), 420);
     return () => clearTimeout(id);
+  }, [adim]);
+
+  // AI analiz: ai_oneri adımına gelince k1-k11 cevaplarını gönder
+  useEffect(() => {
+    const a = ADIMLAR[adim];
+    if (a?.tip !== "ai_oneri" || aiOneri !== null || aiYukleniyor) return;
+    setAiYukleniyor(true);
+    const metinler: Record<string, string> = {};
+    ["k1","k2","k3","k4","k5","k6","k7","k8","k9","k10","k11"].forEach((k) => {
+      const v = cevaplar[k];
+      if (typeof v === "string" && v.trim()) metinler[k] = v.trim();
+    });
+    fetch("/api/degerler/ai-oneri", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ cevaplar: metinler }),
+    })
+      .then((r) => r.json())
+      .then((d: { degerler?: string[] }) => {
+        setAiOneri(d.degerler ?? []);
+        setAiYukleniyor(false);
+      })
+      .catch(() => { setAiOneri([]); setAiYukleniyor(false); });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adim]);
 
   const metin = (kod: string) => (typeof cevaplar[kod] === "string" ? (cevaplar[kod] as string) : "");
@@ -229,6 +255,7 @@ export default function DegerlerAkis() {
   }
 
   function ilerlenebilir(a: Adim): string | null {
+    if (a.tip === "ai_oneri" && aiYukleniyor) return "Analiz tamamlanıyor…";
     if (a.tip === "sec") {
       const n = secGuncel(a).length;
       if (n !== a.adet) return `Tam ${a.adet} değer seç (şu an ${n}).`;
@@ -298,6 +325,42 @@ export default function DegerlerAkis() {
             </div>
           )}
 
+          {a.tip === "ai_oneri" && (
+            <div className="py-6">
+              <h1 className="prizma-serif ay-metin text-3xl font-bold leading-tight">{a.baslik}</h1>
+              <p className="mt-4 text-base leading-relaxed text-slate-300">{a.paragraf}</p>
+              <div className="mt-8">
+                {aiYukleniyor ? (
+                  <div className="flex flex-col items-center gap-4 py-6">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold/30 border-t-gold" />
+                    <p className="text-sm text-slate-400">Cevapların analiz ediliyor…</p>
+                  </div>
+                ) : aiOneri && aiOneri.length > 0 ? (
+                  <div className="flex flex-col gap-3">
+                    {aiOneri.map((d, i) => (
+                      <div
+                        key={d}
+                        className="flex items-center gap-4 rounded-2xl border border-gold/25 bg-gold/[0.07] px-5 py-4"
+                      >
+                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gold/20 text-sm font-bold text-gold">
+                          {i + 1}
+                        </span>
+                        <span className="text-lg font-semibold text-slate-100">{d}</span>
+                      </div>
+                    ))}
+                    <p className="mt-3 text-xs text-slate-500">
+                      Bu değerler bir sonraki adımda sana önerilecek. İstersen farklı seçimler de yapabilirsin.
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    Refleksiyon sorularını yanıtladıkça analiz daha iyi çalışır.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
           {a.tip === "metin" && (
             <div className="flex flex-col">
               <h2 className="text-2xl font-bold leading-snug text-slate-100">
@@ -364,10 +427,21 @@ export default function DegerlerAkis() {
                 {a.aciklama}{" "}
                 <span className="font-semibold text-gold-light">{secGuncel(a).length}/{a.adet}</span>
               </p>
+              {a.kod === "sec10" && aiOneri && aiOneri.length > 0 && (
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  <span className="w-full text-xs font-semibold uppercase tracking-widest text-gold-light/70">✦ AYNA önerisi</span>
+                  {aiOneri.map((d) => (
+                    <span key={d} className="rounded-full border border-gold/40 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold-light">
+                      {d}
+                    </span>
+                  ))}
+                </div>
+              )}
               <div className="mt-4 flex flex-wrap gap-2.5">
                 {secKaynak(a).map((d) => {
                   const secili = secGuncel(a).includes(d);
                   const dolu = !secili && secGuncel(a).length >= a.adet;
+                  const onerildi = a.kod === "sec10" && aiOneri?.includes(d);
                   return (
                     <button
                       key={d}
@@ -379,7 +453,9 @@ export default function DegerlerAkis() {
                           ? "border-gold bg-gold text-[#1a1206]"
                           : dolu
                             ? "border-white/10 text-slate-600"
-                            : "border-white/20 text-slate-200 hover:border-gold/50 hover:bg-white/5"
+                            : onerildi
+                              ? "border-gold/40 bg-gold/[0.08] text-slate-100 hover:border-gold/70 hover:bg-gold/15"
+                              : "border-white/20 text-slate-200 hover:border-gold/50 hover:bg-white/5"
                       }`}
                     >
                       {d}
@@ -454,7 +530,7 @@ export default function DegerlerAkis() {
             disabled={kaydediliyor}
             className="btn-kor flex h-12 flex-1 items-center justify-center rounded-xl text-base font-bold disabled:opacity-60"
           >
-            {a.tip === "intro" && "dugme" in a ? a.dugme : sonAdim ? "Tamamla →" : "İleri →"}
+            {a.tip === "ai_oneri" ? (aiYukleniyor ? "Analiz ediliyor…" : "Değerlerimi Seç →") : a.tip === "intro" && "dugme" in a ? a.dugme : sonAdim ? "Tamamla →" : "İleri →"}
           </button>
         </div>
       </main>
