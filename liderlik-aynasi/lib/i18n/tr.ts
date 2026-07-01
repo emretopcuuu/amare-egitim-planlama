@@ -3914,12 +3914,10 @@ export const tr = {
   rituel: {
     baslik: "Aynaya kendini tanıt",
     aciklama: "Aynan seninle kendi sesinle konuşacak.",
-    onayBaslik: "İzin veriyor musun?",
-    onay: "Sesin ve fotoğrafın sadece SANA özel deneyim için kullanılır. İstediğin zaman tek tuşla sildirebilirsin.",
-    onayla: "Onaylıyorum, başla",
     basla: "Ritüeli başlat",
-    // Canlı Ayna (yüz yakalama) — ses kaydından ÖNCE, kimliğin doğuşunun ilk
-    // adımı. Zorunlu değil: kişi isterse geçip Pusula hub'ında sonradan yapabilir.
+    // Canlı Ayna (yüz yakalama) — ses ritüelinin EN SONUNDA: kişi önce sesiyle
+    // tanışır, sonra aynaya yüzünü gösterir. Zorunlu değil: kişi isterse geçip
+    // Pusula hub'ında sonradan yapabilir.
     yuzYakalaBaslik: "Şimdi aynana yüzünü göster",
     yuzYakalaAciklama:
       "Düz, sağ ve sol — üç kısa kare. Bu kareler senin avatarın ve kişisel yansıma videonun temeli olacak.",
@@ -3927,7 +3925,7 @@ export const tr = {
     sessiz: "Sessiz ayna istiyorum",
     yeminHazirlikBaslik: "Birazdan sesini kaydedeceğiz",
     yeminHazirlikAciklama:
-      "Acele yok. Önce aşağıdaki yemini bir oku. Hazır olduğunda 🎤 düğmesine bas — kayıt tam o an başlar.",
+      "Acele yok. Kaydı başlattığında sıradaki ekranda kısa bir taahhüt göreceksin — onu doğal bir sesle okuyacaksın. Hazır olduğunda 🎤 düğmesine bas.",
     // Daha iyi ses klonu için kayıt ipuçları (kalite puanını yükseltir)
     ipuclariBaslik: "Daha net bir ses için:",
     ipuclari: [
@@ -3938,7 +3936,7 @@ export const tr = {
     kayitBaslat: "Kaydı başlat",
     kayitHenuzBaslamadi: "Kayıt henüz başlamadı — hazır olunca sen başlatırsın.",
     kaydediliyor: "Kaydediliyor",
-    yeminYonerge: "Aşağıdaki yemini doğal bir sesle, acele etmeden oku:",
+    yeminYonerge: "Aşağıdaki taahhüdü doğal bir sesle, acele etmeden oku:",
     yemin:
       "Ben, bu üç gün boyunca kendime dürüst olmaya söz veriyorum. Gördüğümü açıkça söyleyeceğim, duyduğumu adil tartacağım. Arkadaşlarımı yargılamak için değil, anlamak için izleyeceğim. Zor anlarda kolay olanı değil, doğru olanı seçeceğim. Suya baktığımda yalnızca yüzümü değil, yönümü de göreceğim. Bugün burada başlayan yolculuk, kamptan sonra da benimle gelecek. Hazırım: aynanın karşısına çıkıyorum ve yansımamdan saklanmıyorum.",
     soru: "Son bir mühür: geleceğine söz bırak",

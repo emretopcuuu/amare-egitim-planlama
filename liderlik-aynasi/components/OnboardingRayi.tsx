@@ -41,7 +41,12 @@ export default async function OnboardingRayi() {
     !!kisi?.camp_unlocked_at, // Kamp
   ];
   // Şu anki faz: ilk tamamlanmamış olan (ya da hepsi bittiyse Kamp).
-  const suankiIndeks = Math.max(tamamlar.findIndex((t) => !t), tamamlar.length - 1);
+  // NOT: eskiden Math.max(ilkEksik, length-1) kullanılıyordu — length-1 sabiti
+  // ilk eksik indeksten hep büyük/eşit olduğundan sonuç HER ZAMAN son indekse
+  // (Kamp) eşitleniyordu, gerçek ilerleme hiç yansımıyordu (bkz. doğru desen:
+  // YolculukHaritasi.tsx).
+  const ilkEksik = tamamlar.findIndex((t) => !t);
+  const suankiIndeks = ilkEksik === -1 ? tamamlar.length - 1 : ilkEksik;
 
   // Ritüel'in kendi sayfası yok (ana sayfada inline render edilir); tamamlandığında
   // görüntülenecek en yakın karşılığı kişisel yansıma videosu — o da hazır olmayabilir.
