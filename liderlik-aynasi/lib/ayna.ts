@@ -313,6 +313,8 @@ export async function gorevUret(
     baglantıCountSonuc,
     // Kariyer momentumu (persona ekseni)
     kariyerSonuc,
+    // Değerler çalışması — kişinin seçtiği 3 temel değer + neden cümlesi.
+    degerlerSonuc,
   ] = await Promise.all([
     aktifOzellikler(db),
     db
@@ -357,7 +359,21 @@ export async function gorevUret(
       .select("kariyer_seviyesi, en_yuksek_kariyer, gecen_ay_kariyer, kidem_ay")
       .eq("id", katilimci.id)
       .maybeSingle(),
+    db
+      .from("degerler_calismasi")
+      .select("secilen_uc, neden_cumlesi")
+      .eq("participant_id", katilimci.id)
+      .maybeSingle(),
   ]);
+
+  // Değerler: kişinin seçtiği 3 temel değer + neden cümlesi → görev bunları
+  // "yaşama" meydan okumasına dönüşür (değer soyut kalmaz, eyleme geçer).
+  const degerlerVeri = degerlerSonuc.data;
+  const secilenDegerler = (degerlerVeri?.secilen_uc as string[] | null) ?? [];
+  const degerler =
+    secilenDegerler.length > 0
+      ? { temelDegerler: secilenDegerler, nedenCumlesi: degerlerVeri?.neden_cumlesi ?? null }
+      : null;
 
   // Kariyer hâlini türet ve prompt bloğunu hazırla (veri yoksa boş → jenerik).
   const persona = kariyerSonuc.data ? kariyerHalKisidenTuret(kariyerSonuc.data) : null;
@@ -633,6 +649,7 @@ export async function gorevUret(
       : null,
     takim: katilimci.team,
     pusula: pusula ?? null,
+    degerler: degerler ?? null,
     hedef: hedef ?? null,
     onFarkindalik: onFarkindalik ?? null,
     kocuPaylasimlari: kocuPaylasim ?? null,
@@ -730,6 +747,8 @@ GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lid
 ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz.
 ${personaMetni ? `\n${personaMetni}\n` : ""}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
+
+DEĞER KİŞİSELLEŞTİRMESİ: Bağlamda "degerler" doluysa görevi kişinin seçtiği temel değerlerinden (temelDegerler) BİRİNİ bugün somut bir eylemle YAŞAMA meydan okumasına bağla — değeri soyut anmakla kalma, o değerin gerektirdiği gerçek bir lider hamlesini istet (örn. değeri "Dürüstlük" ise bugün kaçındığı zor bir doğruyu söyle; "Cesaret" ise ertelediği ilk adımı at; "Takım Ruhu" ise geride kalan birine uzan). Görevi tek bir değere demirle (hepsini birden sıralama), değeri başlıkta ya da dönüşte kişinin diliyle çağır. Uygun olduğunda değer ile çalışılan lider kasını örtüştür. Değer yoksa bu bağı atla.
 
 HEDEF BAĞLANTISI: Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.
 
