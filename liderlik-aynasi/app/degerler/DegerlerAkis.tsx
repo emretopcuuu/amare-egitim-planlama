@@ -9,6 +9,78 @@ import { ADIMLAR, DEGER_LISTESI, nedenKodlari, type Adim } from "@/lib/degerler"
 
 const TOPLAM = ADIMLAR.length;
 
+// AYNA'nın ElevenLabs sesiyle intro metnini okutan buton.
+// /api/ayna-ses?k=degerler_<kod> → mp3; ses yoksa 503 → sessizce gizlenir.
+function AynaSesButonu({ anahtar }: { anahtar: string }) {
+  const [durum, setDurum] = useState<"bos" | "yukleniyor" | "oynatiliyor">("bos");
+  const [destekleniyor, setDestekleniyor] = useState(true);
+  const sesRef = useRef<HTMLAudioElement | null>(null);
+
+  async function togla() {
+    if (durum === "oynatiliyor") {
+      sesRef.current?.pause();
+      sesRef.current = null;
+      setDurum("bos");
+      return;
+    }
+    if (durum === "yukleniyor") return;
+    setDurum("yukleniyor");
+    try {
+      const r = await fetch(`/api/ayna-ses?k=${anahtar}`);
+      if (!r.ok) { setDestekleniyor(false); setDurum("bos"); return; }
+      const blob = await r.blob();
+      const url = URL.createObjectURL(blob);
+      const ses = new Audio(url);
+      sesRef.current = ses;
+      ses.onended = () => { URL.revokeObjectURL(url); setDurum("bos"); };
+      ses.onerror = () => { setDurum("bos"); };
+      await ses.play();
+      setDurum("oynatiliyor");
+    } catch {
+      setDurum("bos");
+    }
+  }
+
+  if (!destekleniyor) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={togla}
+      aria-label={durum === "oynatiliyor" ? "Sesi durdur" : "AYNA'nın sesiyle dinle"}
+      className={`mx-auto mt-6 flex items-center gap-2 rounded-full border px-5 py-2.5 text-sm font-medium transition-all active:scale-95 ${
+        durum === "oynatiliyor"
+          ? "border-gold/60 bg-gold/15 text-gold-light"
+          : durum === "yukleniyor"
+            ? "border-white/15 text-slate-500"
+            : "border-white/20 text-slate-400 hover:border-gold/40 hover:text-gold-light"
+      }`}
+    >
+      {durum === "yukleniyor" ? (
+        <>
+          <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-600 border-t-gold" aria-hidden />
+          Yükleniyor…
+        </>
+      ) : durum === "oynatiliyor" ? (
+        <>
+          <span className="flex h-4 w-4 items-center justify-center" aria-hidden>
+            <span className="h-3 w-[3px] rounded-sm bg-gold-light" />
+            <span className="mx-0.5 h-3 w-[3px] rounded-sm bg-gold-light" />
+          </span>
+          Durdur
+        </>
+      ) : (
+        <>
+          <svg viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 shrink-0" aria-hidden>
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          AYNA'dan dinle
+        </>
+      )}
+    </button>
+  );
+}
+
 // Web Speech API — Türkçe dikte. Her buton kendi kaydını yönetir.
 function SesliYazButonu({ onEkle }: { onEkle: (metin: string) => void }) {
   const [destekleniyor, setDestekleniyor] = useState(false);
@@ -222,6 +294,7 @@ export default function DegerlerAkis() {
             <div className="py-8 text-center">
               <h1 className="prizma-serif ay-metin text-3xl font-bold leading-tight">{a.baslik}</h1>
               <p className="mt-5 text-lg leading-relaxed text-slate-200">{a.paragraf}</p>
+              <AynaSesButonu anahtar={`degerler_${a.kod}`} />
             </div>
           )}
 
