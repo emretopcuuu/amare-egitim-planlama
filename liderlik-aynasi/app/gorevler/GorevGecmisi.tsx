@@ -30,6 +30,8 @@ export type GecmisGorev = {
   trait_id: number | null;
   gozlem: string | null;
   response_text: string | null;
+  neden: string | null;
+  fayda: string | null;
 };
 
 type Filtre = "tum" | "yuksek" | "kacan";
@@ -229,6 +231,19 @@ export default function GorevGecmisi({
                             <p className="mt-1 text-xs text-royal-light/80">
                               💪 {ozellikAd[g.trait_id]}
                             </p>
+                          )}
+                          {/* Neden sen + fayda: geçmişte de görünür kalır (süre geçse de anlam kaybolmaz) */}
+                          {g.neden && (
+                            <div className="mt-2 rounded-xl border border-gold/25 bg-gold/[0.07] px-3 py-2">
+                              <p className="text-[0.65rem] font-bold uppercase tracking-widest text-gold/80">✨ Neden sana?</p>
+                              <p className="mt-0.5 text-xs leading-relaxed text-slate-300">{g.neden}</p>
+                            </div>
+                          )}
+                          {g.fayda && (
+                            <div className="mt-1.5 rounded-xl border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-2">
+                              <p className="text-[0.65rem] font-bold uppercase tracking-widest text-emerald-400/80">💡 Katkısı</p>
+                              <p className="mt-0.5 text-xs leading-relaxed text-slate-300">{g.fayda}</p>
+                            </div>
                           )}
                           {g.ai_comment && (
                             <p className="mt-2 rounded-xl bg-midnight-soft p-3 text-sm italic text-slate-300">

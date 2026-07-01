@@ -286,7 +286,19 @@ export default async function GorevlerPage() {
                 ⏳ {t.telafiRozet}
               </p>
               <h2 className="mt-2 text-xl font-bold leading-snug text-amber-100">{g.title}</h2>
-              <p className="mt-2 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
+              {g.neden && (
+                <div className="mt-3 rounded-xl border border-gold/35 bg-gold/[0.09] p-3">
+                  <p className="text-xs font-bold uppercase tracking-widest text-gold">✨ Bu görev neden sana verildi?</p>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-100">{g.neden}</p>
+                </div>
+              )}
+              {g.fayda && (
+                <div className="mt-2 rounded-xl border border-emerald-400/30 bg-emerald-400/[0.08] p-3">
+                  <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">💡 İşine nasıl katkı sağlar?</p>
+                  <p className="mt-1 text-sm leading-relaxed text-slate-100">{g.fayda}</p>
+                </div>
+              )}
+              <p className="mt-3 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
                 {g.body}
               </p>
               <p className="mt-3 rounded-xl border border-amber-400/20 bg-midnight/30 p-3 text-sm leading-relaxed text-amber-200/90">
@@ -373,7 +385,25 @@ export default async function GorevlerPage() {
             </div>
             {/* UX #10: AYNA sesi için belirgin başlık tipografisi */}
             <h2 className="font-display mt-3 text-[1.7rem] font-bold leading-tight text-gold-light">{g.title}</h2>
-            <p className="mt-2.5 whitespace-pre-wrap text-base leading-relaxed text-slate-100">
+
+            {/* ✨ NEDEN SEN — başlığın hemen altında, her zaman açık, gold kart.
+                Kişiye özel motivasyon; görev isteğini doğrudan artırır. */}
+            {g.neden && (
+              <div className="mt-3 rounded-2xl border border-gold/40 bg-gold/[0.10] p-4 shadow-[0_0_20px_-6px_rgba(212,175,55,0.25)]">
+                <p className="text-xs font-bold uppercase tracking-widest text-gold">✨ Bu görev neden sana verildi?</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-100">{g.neden}</p>
+              </div>
+            )}
+
+            {/* 💡 İŞİNE KATKISI — neden'in hemen altında, her zaman açık, emerald kart. */}
+            {g.fayda && (
+              <div className="mt-3 rounded-2xl border border-emerald-400/35 bg-emerald-400/[0.09] p-4">
+                <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">💡 İşine nasıl katkı sağlar?</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-100">{g.fayda}</p>
+              </div>
+            )}
+
+            <p className="mt-4 whitespace-pre-wrap text-base leading-relaxed text-slate-100">
               {g.body}
             </p>
             {/* Düşük puan sonrası derinleştirme görevi: "bu sefer şunu dene" ipuçları */}
@@ -391,25 +421,6 @@ export default async function GorevlerPage() {
                   ))}
                 </ul>
               </div>
-            )}
-            {/* "Bu ödev neden önemli?" — her görevin altında görünür; hayata + sahaya katkısı */}
-            {g.fayda && (
-              <div className="mt-4 rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.07] p-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">
-                  💡 Bu ödev neden önemli?
-                </p>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-200">{g.fayda}</p>
-              </div>
-            )}
-            {/* UX #5: "neden sana özel?" — hep açık kutu yerine dokun-aç; görev kahraman kalır */}
-            {g.neden && (
-              <details className="group mt-4 rounded-2xl border border-gold/30 bg-gold/[0.07] p-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between text-xs font-bold uppercase tracking-widest text-gold">
-                  <span>✨ Neden ben?</span>
-                  <span className="text-gold/70 transition-transform group-open:rotate-180" aria-hidden>▾</span>
-                </summary>
-                <p className="mt-2 text-sm leading-relaxed text-slate-200">{g.neden}</p>
-              </details>
             )}
             {sesUrller.has(g.id) ? (
               <SesCal
@@ -480,6 +491,8 @@ export default async function GorevlerPage() {
           trait_id: g.trait_id,
           gozlem: gelenGozlem.get(g.id) ?? null,
           response_text: g.response_text,
+          neden: g.neden ?? null,
+          fayda: g.fayda ?? null,
         }))}
         ozellikAd={Object.fromEntries(ozellikAd)}
       />
