@@ -156,7 +156,7 @@ export async function grupOdevUret(
     const client = new Anthropic();
     const yanit = await client.messages.create({
       // Grup ödevi düşük hacimli (grup başına 1) — kalite için Sonnet, effort low.
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 1024,
       thinking: { type: "disabled" },
       output_config: { effort: "low", format: { type: "json_schema", schema: SEMA } },

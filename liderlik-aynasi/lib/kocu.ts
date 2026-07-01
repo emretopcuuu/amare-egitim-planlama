@@ -10,7 +10,7 @@ import { kritikAiHatasiBildir } from "@/lib/uyari";
 // Pusula (neden/iç engel) + Ön Farkındalık (kör nokta) + aktif görev bağlamını
 // bilir; adayı bir sonraki somut adıma taşır. Serbest metin (şema yok), hızlı model.
 
-const MODEL = "claude-sonnet-4-6";
+const MODEL = "claude-sonnet-5";
 
 const PERSONA = `Sen AYNA'sın — bu liderlik kampını yöneten yapay zekâ direktör ve adayın kişisel koçu. Aday seni hiç görmez ama her an sana danışabilir.
 
