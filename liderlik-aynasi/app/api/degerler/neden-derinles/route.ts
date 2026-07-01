@@ -5,8 +5,8 @@ import Anthropic from "@anthropic-ai/sdk";
 export const maxDuration = 30;
 
 const YEDEK_SORULAR: Record<number, string> = {
-  2: "Peki bu sana neden bu kadar önemli? Daha derine git — gerçek nedeni bul.",
-  3: "Son soru: Bu değer olmadan nasıl biri olurdun? Hayatında ne eksik kalırdı?",
+  2: "Bu değer sana ne kazandırıyor? Hayatında somut olarak ne değiştiriyor?",
+  3: "Bu değer olmadan nasıl biri olurdun? İçinde ne eksik kalırdı?",
 };
 
 export async function POST(req: Request) {
@@ -18,7 +18,9 @@ export async function POST(req: Request) {
     oncekiCevaplar: string[];
   };
 
-  if (!deger || !oncekiCevaplar?.length) {
+  // Çok kısa/muğlak cevaplarda yedek soruya dön
+  const anlamliCevap = oncekiCevaplar.find((c) => c.trim().length >= 10);
+  if (!deger || !anlamliCevap) {
     return Response.json({ soru: YEDEK_SORULAR[tur] ?? null });
   }
 
@@ -28,25 +30,29 @@ export async function POST(req: Request) {
 
   try {
     const client = new Anthropic();
-    const gecmis = oncekiCevaplar.map((c, i) => `${i + 1}. Cevap: "${c}"`).join("\n");
-    const turMetin =
+    const gecmis = oncekiCevaplar.map((c, i) => `${i + 1}. "${c}"`).join("\n");
+    const turTalimat =
       tur === 2
-        ? "Kişinin cevabını daha da derinleştiren, içsel motivasyona ulaşmak için 'peki bu neden önemli?' ruhunda yeni bir soru sor."
-        : "Kişinin değerinin özünü ortaya çıkaran son ve en güçlü soruyu sor. Bu değer olmadan ne kaybederlerdi, kim olurlardı?";
+        ? "Bu kişinin daha derine inmesini sağlayacak bir soru sor. Cevaptaki kelimeleri aynen tekrarlama — arka plandaki ihtiyaca veya duyguya dokunmaya çalış."
+        : "Bu kişinin bu değerin özündeki en derin motivasyonunu bulmasını sağlayacak son soruyu sor. Bu değer olmadan hayatında ne eksik olurdu?";
 
     const msg = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 120,
+      max_tokens: 100,
       messages: [
         {
           role: "user",
-          content: `Sen derin bir koç ve değer araştırmacısısın. Bir kişi "${deger}" değeriyle ilgili şunları söyledi:\n\n${gecmis}\n\n${turMetin}\n\nSoruyu Türkçe, kısa (1 cümle, maksimum 20 kelime), samimi ve içten yaz. Soru işaretiyle bitir. Başka hiçbir şey yazma — sadece soruyu.`,
+          content: `Sen bir koçsun. Kişi "${deger}" değeri hakkında şunları söyledi:\n${gecmis}\n\n${turTalimat}\n\nKural: Soru kısa (max 12 kelime), Türkçe, içten, soru işaretiyle bitmeli. Sadece soruyu yaz.`,
         },
       ],
     });
 
     const soru = msg.content[0].type === "text" ? msg.content[0].text.trim() : null;
-    return Response.json({ soru: soru || YEDEK_SORULAR[tur] });
+    // Çok uzun veya hatalı çıktıda yedek kullan
+    if (!soru || soru.length > 120 || !soru.endsWith("?")) {
+      return Response.json({ soru: YEDEK_SORULAR[tur] });
+    }
+    return Response.json({ soru });
   } catch {
     return Response.json({ soru: YEDEK_SORULAR[tur] ?? null });
   }
