@@ -108,7 +108,7 @@ export const tr = {
     giris:
       "Birazdan kendinle çok özel bir yolculuğa çıkacaksın. Sana sorulacak sorular basit görünebilir ama cevapların, kim olduğunu ve nereye gittiğini gösterecek bir aynaya dönüşecek. Bu yüzden acele etme.",
     deger:
-      "Bunu, binlerce liralık çok değerli bir koçluk — bir mentorluk seansı gibi düşün. Tek farkı: buradaki rehber, kendi iç sesin.",
+      "Bu birkaç dakika, üst düzey bir mentorluk seansının değerini taşıyor. Farkı: fatura yok, rehber sadece senin kendi iç sesin.",
     kosullar: [
       {
         ikon: "🤫",
