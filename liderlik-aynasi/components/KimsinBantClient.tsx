@@ -95,10 +95,15 @@ export default function KimsinBantClient({
         style={{ height: "calc(env(safe-area-inset-top, 0px) + 3.5rem)" }}
       />
       <div
-        className="kimsin-bant fixed inset-x-0 z-50 flex justify-center px-4 print:hidden"
+        // pointer-events-none: bu şerit inset-x-0 ile TAM EKRAN GENİŞLİĞİNDE
+        // görünmez bir kutu — z-50 olduğu için altındaki sayfaların kendi
+        // başlıklarındaki (ör. Ayna Koçu'nun "←" geri butonu) dokunuşları
+        // yutuyordu (buton orada görünmese de kutunun sınırları içindeydi).
+        // İçerideki gerçek çip/zil/dişli pointer-events-auto ile geri açılır.
+        className="kimsin-bant pointer-events-none fixed inset-x-0 z-50 flex justify-center px-4 print:hidden"
         style={{ top: "max(0.5rem, env(safe-area-inset-top, 0px))" }}
       >
-        <div className="flex items-center gap-1.5">
+        <div className="pointer-events-auto flex items-center gap-1.5">
           <div className="relative">
           {/* Çip = yardım tetikleyici. Dokununca SSS açılır. */}
           <button
