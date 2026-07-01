@@ -226,7 +226,7 @@ export default function KimsinBantClient({
           <div
             role="dialog"
             aria-label="Görünüm ayarları"
-            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border-t border-white/10 bg-[#1a1035] px-5 pb-8 pt-4"
+            className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-3xl border border-white/10 bg-[#1a1035] px-5 pb-8 pt-4 sm:bottom-4 sm:rounded-3xl"
           >
             <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
             <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
