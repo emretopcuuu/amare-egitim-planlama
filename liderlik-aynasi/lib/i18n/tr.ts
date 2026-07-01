@@ -3250,6 +3250,9 @@ export const tr = {
     ipucuKisa: "Biraz daha açabilir misin? Tek satır AYNA'ya az gelir.",
     ipucuYeterli: "Güçlü — AYNA'nın görmesi için yeterince derin. Dilersen gönder.",
     altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
+    // Aktif görev akordeonu: en son gelen görev açık, gerisi numaralı+kapalı.
+    digerBekleyen: (n: number) => `Bekleyen ${n} görevin daha var — açmak için dokun`,
+    odevNo: (n: number) => `Ödev #${n}`,
     aktifYokBaslik: "Şu an görevin yok",
     aktifYok: "AYNA yanında — yeni bir görev her an gelebilir.",
     bosIzliyor: "AYNA seni izliyor",

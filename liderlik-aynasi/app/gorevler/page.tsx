@@ -77,6 +77,12 @@ export default async function GorevlerPage() {
   const kampBaslangic = await kampBaslangicGetir(db);
 
   const aktif = (gorevler ?? []).filter((g) => g.status === "pending");
+  // Kamp boyu sıra numarası (en eskiden en yeniye 1, 2, 3…) — katılımcı isteği:
+  // "1. ödevin, 2. ödevin" diye numara görsün. `gorevler` en yeniden en eskiye
+  // sıralı geldiği için ters çevirip numaralıyoruz (limit 50 — 3 günlük kampta
+  // kişi başı görev sayısı bunu aşmaz).
+  const numaraMap = new Map<string, number>();
+  [...(gorevler ?? [])].reverse().forEach((g, i) => numaraMap.set(g.id, i + 1));
   // UX #3 — Telafi: süresi YENİ geçmiş (24 saat içinde), telafi edilebilir
   // görevler ayrı bir bölümde forma açık kalır. Söz/senkron telafi edilmez.
   const simdiMs = new Date().getTime();
@@ -222,6 +228,155 @@ export default async function GorevlerPage() {
   // (Geçmiş zaman çizelgesi gruplaması artık GorevGecmisi client bileşeninde —
   // filtre + özet için.)
 
+  // Bir aktif görevin TAM detaylı kartı — hem tek başına (en son gelen görev
+  // için, vurgu=true) hem akordeonun kapalı satırı açılınca (vurgu=false)
+  // kullanılır. Aynı işi iki yerde tekrar yazmamak için fonksiyona çıkarıldı.
+  function GorevKarti({ g, vurgu }: { g: (typeof aktif)[number]; vurgu: boolean }) {
+    const atm = atmosferBul(g.kind);
+    const zorluk = (g.difficulty as Zorluk) ?? 2;
+    return (
+      <section
+        className={`gorev-giris relative overflow-hidden kart-3d rounded-2xl ${atm.arka} p-5 pt-6 shadow-xl ring-1 ${atm.halka} backdrop-blur`}
+      >
+        {/* UX #6: üst kenarda boşalan sayaç şeridi (türe göre değil zamana göre) */}
+        <SayacSerit baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
+        {/* UX #1 (tasarım): türe özel üst atmosfer parıltısı */}
+        <span
+          className={`pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b ${atm.serit} opacity-60`}
+          aria-hidden
+        />
+        <div className="relative">
+        {vurgu && (
+          <p className="mb-2 inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-bold tracking-wide text-gold-light">
+            {tr.degerlendir.simdiSira}
+          </p>
+        )}
+        <div className="flex items-center justify-between text-xs">
+          <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium ${atm.rozet}`}>
+            <span aria-hidden>{atm.ikon}</span>
+            {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
+          </span>
+          <GorevSayac baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
+        </div>
+        {/* Görevin geldiği gün + saat (katılımcı isteği) */}
+        <p className="mt-1.5 text-xs font-medium text-slate-400">
+          📅 {gelisZamani(g.issued_at, kampBaslangic)} geldi
+        </p>
+        {/* UX #3: zorluk sembol (pip) + kas + mikro-sprint */}
+        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
+          <span className="inline-flex items-center gap-1" title={ZORLUK_ETIKETI[zorluk]}>
+            {[1, 2, 3].map((n) => (
+              <span
+                key={n}
+                className={`h-2 w-2 rounded-full ${n <= zorluk ? "bg-sky-300" : "bg-white/15"}`}
+                aria-hidden
+              />
+            ))}
+            <span className="ml-1 text-xs text-slate-400">{ZORLUK_ETIKETI[zorluk]}</span>
+          </span>
+          {g.trait_id && ozellikAd.has(g.trait_id) && (
+            <span className="inline-block rounded-full bg-royal/30 px-2 py-0.5 text-xs font-medium text-royal-light">
+              💪 {ozellikAd.get(g.trait_id)}
+            </span>
+          )}
+          {g.micro_sprint && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/25 px-2 py-0.5 text-xs font-bold text-amber-300 ring-1 ring-amber-400/40">
+              <span className="animate-pulse" aria-hidden>⚡</span> 30 DAKİKA — ŞİMDİ
+            </span>
+          )}
+        </div>
+        {/* UX #10: AYNA sesi için belirgin başlık tipografisi */}
+        <h2 className="font-display mt-3 text-[1.7rem] font-bold leading-tight text-gold-light">{g.title}</h2>
+
+        {/* ✨ NEDEN SEN — başlığın hemen altında, her zaman açık, gold kart.
+            Kişiye özel motivasyon; görev isteğini doğrudan artırır. */}
+        {g.neden && (
+          <div className="mt-3 rounded-2xl border border-gold/40 bg-gold/[0.10] p-4 shadow-[0_0_20px_-6px_rgba(212,175,55,0.25)]">
+            <p className="text-xs font-bold uppercase tracking-widest text-gold">✨ Bu görev neden sana verildi?</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-100">{g.neden}</p>
+          </div>
+        )}
+
+        {/* 💡 İŞİNE KATKISI — neden'in hemen altında, her zaman açık, emerald kart. */}
+        {g.fayda && (
+          <div className="mt-3 rounded-2xl border border-emerald-400/35 bg-emerald-400/[0.09] p-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">💡 İşine nasıl katkı sağlar?</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-slate-100">{g.fayda}</p>
+          </div>
+        )}
+
+        <p className="mt-4 whitespace-pre-wrap text-base leading-relaxed text-slate-100">
+          {g.body}
+        </p>
+        {/* Düşük puan sonrası derinleştirme görevi: "bu sefer şunu dene" ipuçları */}
+        {Array.isArray(g.ipuclari) && g.ipuclari.length > 0 && (
+          <div className="mt-4 rounded-2xl border border-sky-400/30 bg-sky-400/[0.08] p-4">
+            <p className="text-xs font-bold uppercase tracking-widest text-sky-300">
+              🎯 Bu sefer şunu dene
+            </p>
+            <ul className="mt-2 space-y-1.5">
+              {g.ipuclari.map((ip: string, i: number) => (
+                <li key={i} className="flex gap-2 text-sm leading-relaxed text-slate-200">
+                  <span className="text-sky-300" aria-hidden>›</span>
+                  <span>{ip}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {sesUrller.has(g.id) ? (
+          <SesCal
+            url={sesUrller.get(g.id)!}
+            etiket={g.kind === "simulasyon" ? t.dinleItiraz : t.dinle}
+          />
+        ) : (
+          <OkuButonu metin={`${g.title}. ${g.body}`} />
+        )}
+        {/* #9: mentorluk görevinde 3 adaydan yapılandırılmış seçim */}
+        {g.kind === "mentorluk" && mentorVeri.has(g.id) && (
+          <MentorSec
+            missionId={g.id}
+            adaylar={mentorVeri.get(g.id)!.adaylar}
+            secilen={mentorVeri.get(g.id)!.secilen}
+          />
+        )}
+        {/* UX #1: "Başladım" — birincil-yakını, görünür kalır (söz/senkron hariç) */}
+        {g.kind !== "soz" && g.kind !== "senkron" && (
+          <BaslaButonu gorevId={g.id} basladiMi={!!g.started_at} />
+        )}
+        {/* UX #2 (tasarım): birincil eylem (yanıt) baskın; ikincil eylemler
+            tek "⋯ Seçenekler" altında toplanır — kart dağınıklığı biter. */}
+        <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
+        {g.kind !== "soz" && g.kind !== "senkron" && (
+          <details className="group mt-3">
+            <summary className="flex cursor-pointer list-none items-center justify-center gap-1 text-xs font-medium text-slate-500 transition-colors hover:text-slate-300">
+              ⋯ {t.secenekler}
+              <span className="transition-transform group-open:rotate-180" aria-hidden>▾</span>
+            </summary>
+            <div className="mt-2 space-y-1">
+              {/* A10: belirsiz görevde netleştirme */}
+              <NetlestirButonu gorevId={g.id} />
+              {/* #6 Zorlaştır — üst kademede değilse */}
+              {(g.difficulty ?? 2) < 3 && <ZorlastirButonu gorevId={g.id} />}
+              {/* #8 "ağır geldi" → yumuşat */}
+              <HafifletButonu gorevId={g.id} />
+              {/* UX #2: ertele (en fazla 2 kez) */}
+              <ErteleButonu gorevId={g.id} kalanHak={2 - (g.ertelenme_sayisi ?? 0)} />
+              {/* A6: takılan kişi için Koç köprüsü */}
+              <Link
+                href="/kocu"
+                className="block text-center text-xs text-slate-500 underline-offset-4 transition-colors hover:text-royal-light"
+              >
+                {t.koctanYardim}
+              </Link>
+            </div>
+          </details>
+        )}
+        </div>
+      </section>
+    );
+  }
+
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="sahne-giris mx-auto w-full max-w-md space-y-4 p-5">
@@ -316,152 +471,46 @@ export default async function GorevlerPage() {
       ) : aktif.length === 0 ? (
         <BosGorevDurumu siradakiDk={siradakiDk} />
       ) : (
-        aktif.map((g, i) => {
-          const atm = atmosferBul(g.kind);
-          const zorluk = (g.difficulty as Zorluk) ?? 2;
-          return (
-          <section
-            key={g.id}
-            className={`gorev-giris relative overflow-hidden kart-3d rounded-2xl ${atm.arka} p-5 pt-6 shadow-xl ring-1 ${atm.halka} backdrop-blur`}
-          >
-            {/* UX #6: üst kenarda boşalan sayaç şeridi (türe göre değil zamana göre) */}
-            <SayacSerit baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
-            {/* UX #1 (tasarım): türe özel üst atmosfer parıltısı */}
-            <span
-              className={`pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b ${atm.serit} opacity-60`}
-              aria-hidden
-            />
-            <div className="relative">
-            {i === 0 && (
-              <p className="mb-2 inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-bold tracking-wide text-gold-light">
-                {tr.degerlendir.simdiSira}
+        <>
+          {/* En son gelen görev — TEK odak, tam açık. */}
+          <GorevKarti g={aktif[0]} vurgu />
+
+          {/* Diğer bekleyen görevler — katılımcı isteği: birden fazla görev
+              varken ekran karışıyordu. Artık numaralı + KAPALI akordeon;
+              dokununca aynı tam detaylı kartı açar. Biri tamamlanınca (sayfa
+              yeniden render olunca) bir öncekinin sırası otomatik öne gelir. */}
+          {aktif.length > 1 && (
+            <section className="space-y-2">
+              <p className="px-1 text-xs font-medium text-slate-500">
+                {t.digerBekleyen(aktif.length - 1)}
               </p>
-            )}
-            <div className="flex items-center justify-between text-xs">
-              <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium ${atm.rozet}`}>
-                <span aria-hidden>{atm.ikon}</span>
-                {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
-              </span>
-              <GorevSayac baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
-            </div>
-            {/* Görevin geldiği gün + saat (katılımcı isteği) */}
-            <p className="mt-1.5 text-xs font-medium text-slate-400">
-              📅 {gelisZamani(g.issued_at, kampBaslangic)} geldi
-            </p>
-            {/* UX #3: zorluk sembol (pip) + kas + mikro-sprint */}
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-              <span className="inline-flex items-center gap-1" title={ZORLUK_ETIKETI[zorluk]}>
-                {[1, 2, 3].map((n) => (
-                  <span
-                    key={n}
-                    className={`h-2 w-2 rounded-full ${n <= zorluk ? "bg-sky-300" : "bg-white/15"}`}
-                    aria-hidden
-                  />
-                ))}
-                <span className="ml-1 text-xs text-slate-400">{ZORLUK_ETIKETI[zorluk]}</span>
-              </span>
-              {g.trait_id && ozellikAd.has(g.trait_id) && (
-                <span className="inline-block rounded-full bg-royal/30 px-2 py-0.5 text-xs font-medium text-royal-light">
-                  💪 {ozellikAd.get(g.trait_id)}
-                </span>
-              )}
-              {g.micro_sprint && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/25 px-2 py-0.5 text-xs font-bold text-amber-300 ring-1 ring-amber-400/40">
-                  <span className="animate-pulse" aria-hidden>⚡</span> 30 DAKİKA — ŞİMDİ
-                </span>
-              )}
-            </div>
-            {/* UX #10: AYNA sesi için belirgin başlık tipografisi */}
-            <h2 className="font-display mt-3 text-[1.7rem] font-bold leading-tight text-gold-light">{g.title}</h2>
-
-            {/* ✨ NEDEN SEN — başlığın hemen altında, her zaman açık, gold kart.
-                Kişiye özel motivasyon; görev isteğini doğrudan artırır. */}
-            {g.neden && (
-              <div className="mt-3 rounded-2xl border border-gold/40 bg-gold/[0.10] p-4 shadow-[0_0_20px_-6px_rgba(212,175,55,0.25)]">
-                <p className="text-xs font-bold uppercase tracking-widest text-gold">✨ Bu görev neden sana verildi?</p>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-100">{g.neden}</p>
-              </div>
-            )}
-
-            {/* 💡 İŞİNE KATKISI — neden'in hemen altında, her zaman açık, emerald kart. */}
-            {g.fayda && (
-              <div className="mt-3 rounded-2xl border border-emerald-400/35 bg-emerald-400/[0.09] p-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">💡 İşine nasıl katkı sağlar?</p>
-                <p className="mt-1.5 text-sm leading-relaxed text-slate-100">{g.fayda}</p>
-              </div>
-            )}
-
-            <p className="mt-4 whitespace-pre-wrap text-base leading-relaxed text-slate-100">
-              {g.body}
-            </p>
-            {/* Düşük puan sonrası derinleştirme görevi: "bu sefer şunu dene" ipuçları */}
-            {Array.isArray(g.ipuclari) && g.ipuclari.length > 0 && (
-              <div className="mt-4 rounded-2xl border border-sky-400/30 bg-sky-400/[0.08] p-4">
-                <p className="text-xs font-bold uppercase tracking-widest text-sky-300">
-                  🎯 Bu sefer şunu dene
-                </p>
-                <ul className="mt-2 space-y-1.5">
-                  {g.ipuclari.map((ip: string, i: number) => (
-                    <li key={i} className="flex gap-2 text-sm leading-relaxed text-slate-200">
-                      <span className="text-sky-300" aria-hidden>›</span>
-                      <span>{ip}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-            {sesUrller.has(g.id) ? (
-              <SesCal
-                url={sesUrller.get(g.id)!}
-                etiket={g.kind === "simulasyon" ? t.dinleItiraz : t.dinle}
-              />
-            ) : (
-              <OkuButonu metin={`${g.title}. ${g.body}`} />
-            )}
-            {/* #9: mentorluk görevinde 3 adaydan yapılandırılmış seçim */}
-            {g.kind === "mentorluk" && mentorVeri.has(g.id) && (
-              <MentorSec
-                missionId={g.id}
-                adaylar={mentorVeri.get(g.id)!.adaylar}
-                secilen={mentorVeri.get(g.id)!.secilen}
-              />
-            )}
-            {/* UX #1: "Başladım" — birincil-yakını, görünür kalır (söz/senkron hariç) */}
-            {g.kind !== "soz" && g.kind !== "senkron" && (
-              <BaslaButonu gorevId={g.id} basladiMi={!!g.started_at} />
-            )}
-            {/* UX #2 (tasarım): birincil eylem (yanıt) baskın; ikincil eylemler
-                tek "⋯ Seçenekler" altında toplanır — kart dağınıklığı biter. */}
-            <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
-            {g.kind !== "soz" && g.kind !== "senkron" && (
-              <details className="group mt-3">
-                <summary className="flex cursor-pointer list-none items-center justify-center gap-1 text-xs font-medium text-slate-500 transition-colors hover:text-slate-300">
-                  ⋯ {t.secenekler}
-                  <span className="transition-transform group-open:rotate-180" aria-hidden>▾</span>
-                </summary>
-                <div className="mt-2 space-y-1">
-                  {/* A10: belirsiz görevde netleştirme */}
-                  <NetlestirButonu gorevId={g.id} />
-                  {/* #6 Zorlaştır — üst kademede değilse */}
-                  {(g.difficulty ?? 2) < 3 && <ZorlastirButonu gorevId={g.id} />}
-                  {/* #8 "ağır geldi" → yumuşat */}
-                  <HafifletButonu gorevId={g.id} />
-                  {/* UX #2: ertele (en fazla 2 kez) */}
-                  <ErteleButonu gorevId={g.id} kalanHak={2 - (g.ertelenme_sayisi ?? 0)} />
-                  {/* A6: takılan kişi için Koç köprüsü */}
-                  <Link
-                    href="/kocu"
-                    className="block text-center text-xs text-slate-500 underline-offset-4 transition-colors hover:text-royal-light"
-                  >
-                    {t.koctanYardim}
-                  </Link>
-                </div>
-              </details>
-            )}
-            </div>
-          </section>
-          );
-        })
+              {aktif.slice(1).map((g) => (
+                <details
+                  key={g.id}
+                  className="group overflow-hidden rounded-2xl border border-white/10 bg-midnight-card/40"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 p-4">
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-xs font-bold text-slate-300">
+                        {t.odevNo(numaraMap.get(g.id) ?? 0)}
+                      </span>
+                      <span className="truncate text-sm font-medium text-slate-200">{g.title}</span>
+                    </span>
+                    <span
+                      className="shrink-0 text-slate-500 transition-transform group-open:rotate-180"
+                      aria-hidden
+                    >
+                      ▾
+                    </span>
+                  </summary>
+                  <div className="border-t border-white/10 p-2">
+                    <GorevKarti g={g} vurgu={false} />
+                  </div>
+                </details>
+              ))}
+            </section>
+          )}
+        </>
       )}
 
       {/* Geçmiş — A8 filtre + özet, A2 liderlik kası (client bileşeni) */}
