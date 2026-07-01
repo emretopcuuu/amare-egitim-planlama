@@ -259,7 +259,6 @@ export default function DegerlerAkis() {
   }, []);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     setParla(true);
     setUyari(null);
     const id = setTimeout(() => setParla(false), 420);
@@ -399,6 +398,8 @@ export default function DegerlerAkis() {
     const hata = ilerlenebilir(a);
     if (hata) { setUyari(hata); return; }
     await kaydet();
+    // Scroll ÖNCE — klavye kapanma + yeni içerik yarış koşulunu önler
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     if (adim < TOPLAM - 1) {
       setAdim((x) => x + 1);
     } else {
@@ -409,6 +410,7 @@ export default function DegerlerAkis() {
 
   function geri() {
     setUyari(null);
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     if (adim > 0) setAdim((x) => x - 1);
   }
 
