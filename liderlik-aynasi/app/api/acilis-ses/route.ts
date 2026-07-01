@@ -38,7 +38,9 @@ export async function GET(req: Request) {
     return new Response(buf, {
       headers: {
         "content-type": "audio/mpeg",
-        "cache-control": "private, max-age=3600",
+        // Kişi ses tercihini istediği an değiştirebilir — kısa TTL, uzun/immutable
+        // önbellek verirsek tercih değişikliği tarayıcıya yansımaz (bkz. ayna-ses).
+        "cache-control": "private, max-age=120",
       },
     });
   } catch {
