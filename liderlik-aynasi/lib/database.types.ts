@@ -352,6 +352,38 @@ export type Database = {
           },
         ]
       }
+      gelisim_dosyasi: {
+        Row: {
+          created_at: string | null
+          mektup: string
+          ozet: Json
+          participant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          mektup: string
+          ozet?: Json
+          participant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          mektup?: string
+          ozet?: Json
+          participant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gelisim_dosyasi_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       excluded_pairs: {
         Row: {
           a_id: string
