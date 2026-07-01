@@ -9,6 +9,32 @@ import { ADIMLAR, DEGER_LISTESI, nedenKodlari, type Adim } from "@/lib/degerler"
 
 const TOPLAM = ADIMLAR.length;
 
+function vurguRender(baslik: string, vurgu: string | string[]): React.ReactNode {
+  const vurgular = Array.isArray(vurgu) ? vurgu : [vurgu];
+  const parts: React.ReactNode[] = [];
+  let remaining = baslik;
+  let key = 0;
+  while (remaining.length > 0) {
+    let bestIdx = -1;
+    let bestV = "";
+    for (const v of vurgular) {
+      const idx = remaining.indexOf(v);
+      if (idx !== -1 && (bestIdx === -1 || idx < bestIdx)) {
+        bestIdx = idx;
+        bestV = v;
+      }
+    }
+    if (bestIdx === -1) {
+      parts.push(<span key={key++}>{remaining}</span>);
+      break;
+    }
+    if (bestIdx > 0) parts.push(<span key={key++}>{remaining.slice(0, bestIdx)}</span>);
+    parts.push(<span key={key++} className="text-gold font-extrabold">{bestV}</span>);
+    remaining = remaining.slice(bestIdx + bestV.length);
+  }
+  return <>{parts}</>;
+}
+
 // AYNA'nın ElevenLabs sesiyle intro metnini okutan buton.
 // /api/ayna-ses?k=degerler_<kod> → mp3; ses yoksa 503 → sessizce gizlenir.
 function AynaSesButonu({ anahtar }: { anahtar: string }) {
@@ -365,13 +391,7 @@ export default function DegerlerAkis() {
             <div className="flex flex-col">
               <h2 className="text-2xl font-bold leading-snug text-slate-100">
                 {a.guclu && <span className="text-gold mr-1">✦</span>}
-                {a.vurgu && a.baslik.includes(a.vurgu) ? (
-                  <>
-                    {a.baslik.slice(0, a.baslik.indexOf(a.vurgu))}
-                    <span className="text-gold font-extrabold">{a.vurgu}</span>
-                    {a.baslik.slice(a.baslik.indexOf(a.vurgu) + a.vurgu.length)}
-                  </>
-                ) : a.baslik}
+                {a.vurgu ? vurguRender(a.baslik, a.vurgu) : a.baslik}
               </h2>
               {a.ipuclari && a.ipuclari.length > 0 && (
                 <div className="mt-4 flex flex-col gap-2">
