@@ -354,9 +354,26 @@ body.gunes-modu .kart-cerceve {
   animation: of-soru-no-pop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+/* Canlı Ayna yön okları — "kafanı sağa/sola çevir" yönergesini görsel olarak
+   pekiştirir; ok o yöne doğru hafifçe nabız gibi kayar. */
+@keyframes yon-oku-sag {
+  0%, 100% { transform: translateX(0); opacity: 0.55; }
+  50% { transform: translateX(8px); opacity: 1; }
+}
+/* Sol ok aynı SVG'nin 180° döndürülmüş hali: rotate her karede transform'un
+   İÇİNDE kalmalı, aksi halde Tailwind'in statik rotate-180'i animasyon
+   tarafından her karede ezilir ve ok düzleşir (yön kaybolur). */
+@keyframes yon-oku-sol {
+  0%, 100% { transform: rotate(180deg) translateX(0); opacity: 0.55; }
+  50% { transform: rotate(180deg) translateX(8px); opacity: 1; }
+}
+.yon-oku-sag { animation: yon-oku-sag 1s ease-in-out infinite; }
+.yon-oku-sol { animation: yon-oku-sol 1s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   .of-parla { animation: none; opacity: 0; }
   .of-soru-no { animation: none; }
+  .yon-oku-sag, .yon-oku-sol { animation: none; }
 }
 
 /* Geçiş parlaması — bir seçim sonrası sıradakine geçildiğini net hissettirir:
