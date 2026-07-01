@@ -12,6 +12,7 @@
 export type AkisDurum = {
   // Katılımcı durumu
   rizaVar: boolean; // KVKK/kutsal-alan hazırlık rızası verildi mi (consent_at)
+  sesSecildi: boolean; // AYNA'nın erkek/kadın sesi seçildi mi (ayna_ses_secildi_at)
   sesVar: boolean; // ses/foto ritüeli kaydı var mı (ya da "sessiz" seçildi)
   team: string | null; // atanmış grup
   campUnlocked: boolean; // kampa fiziksel giriş yapıldı mı
@@ -30,6 +31,7 @@ export type AkisDurum = {
 
 export type AkisAdim =
   | { tip: "hazirlik" } // kutsal-alan hazırlık + KVKK rızası ekranını göster (render)
+  | { tip: "sesSecimi" } // AYNA'nın erkek/kadın sesini seç (render)
   | { tip: "rituel" } // ses/foto ritüelini göster (redirect değil, render)
   | { tip: "yonlendir"; yol: string } // bu yola yönlendir
   | { tip: "devam" }; // kapı yok — ana akışa (durum makinesi) devam et
@@ -42,7 +44,11 @@ export function kampOncesiAdim(d: AkisDurum): AkisAdim {
   // artık en başta — daha güçlü, kayıtlı KVKK onayı.)
   if (!d.rizaVar) return { tip: "hazirlik" };
 
-  // 1) FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Rızadan sonra gelir.
+  // 0b) AYNA SESİ SEÇİMİ — hazırlıktan hemen sonra, ritüelden önce. AYNA'nın
+  // tüm kişisel seslendirmeleri (bu andan itibaren) seçilen sesle konuşur.
+  if (!d.sesSecildi) return { tip: "sesSecimi" };
+
+  // 1) FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Rızadan/ses seçiminden sonra gelir.
   if (!d.sesVar) return { tip: "rituel" };
 
   // 2) OYUN SEÇİMİ — seçim açıkken grubu olmayan kişi önce oyununu seçer.

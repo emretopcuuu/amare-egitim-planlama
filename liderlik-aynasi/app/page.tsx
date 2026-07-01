@@ -14,6 +14,7 @@ import AynaKurulum from "@/components/AynaKurulum";
 import TelefonaKurKocu from "@/components/TelefonaKurKocu";
 import AynaRituel from "@/components/AynaRituel";
 import HazirlikEkrani from "@/components/HazirlikEkrani";
+import SesSecimiEkrani from "@/components/SesSecimiEkrani";
 import EgilenKart from "@/components/EgilenKart";
 import GeriSayim from "@/components/GeriSayim";
 import IlkAdimIpucu from "@/components/IlkAdimIpucu";
@@ -146,7 +147,7 @@ export default async function AnaSayfa({
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
   const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }, { data: hedefErken }, { data: degerlerDurum }] =
     await Promise.all([
-      db.from("participants").select("camp_unlocked_at, team, consent_at").eq("id", session.sub).maybeSingle(),
+      db.from("participants").select("camp_unlocked_at, team, consent_at, ayna_ses_secildi_at").eq("id", session.sub).maybeSingle(),
       db
         .from("settings")
         .select("key, value")
@@ -192,6 +193,7 @@ export default async function AnaSayfa({
     : false;
   const adim = kampOncesiAdim({
     rizaVar: !!kisi?.consent_at,
+    sesSecildi: !!kisi?.ayna_ses_secildi_at,
     sesVar: !!sesVarRow,
     team: kisi?.team ?? null,
     campUnlocked: !!kisi?.camp_unlocked_at,
@@ -210,6 +212,11 @@ export default async function AnaSayfa({
     // sakin, ~1 saat, kendine dönüş) + KVKK rızasını kayıtla alır. Rıza
     // verilene dek veri toplayan hiçbir adım açılmaz.
     return <HazirlikEkrani ad={session.ad} />;
+  }
+  if (adim.tip === "sesSecimi") {
+    // AYNA SESİ SEÇİMİ — hazırlıktan hemen sonra, ritüelden önce. Bu andan
+    // itibaren AYNA'nın kişisel seslendirmeleri seçilen sesle konuşur.
+    return <SesSecimiEkrani />;
   }
   if (adim.tip === "rituel") {
     // FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Tamamlanana (ya da "sessiz"
