@@ -20,6 +20,8 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
   const altRef = useRef<HTMLDivElement>(null);
   const alanRef = useRef<HTMLTextAreaElement>(null);
   const baslatildi = useRef(false);
+  // İlk yüklemede false → scroll tetiklenmez; yeni mesaj gelince true olur.
+  const ilkYuklemeTamam = useRef(false);
 
   // İlk yük: geçmişi getir; boşsa karşılama repliğini iste.
   useEffect(() => {
@@ -33,19 +35,25 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
         if (gecmis.length) {
           setMesajlar(gecmis);
           setYukleniyor(false);
+          // Geçmiş yüklendi → sayfa en tepede kalsın, alta KAYMASIN.
+          window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
         } else {
           setYukleniyor(false);
           await karsila();
         }
+        ilkYuklemeTamam.current = true;
       } catch {
         setYukleniyor(false);
         setHata(t.hata);
+        ilkYuklemeTamam.current = true;
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Sayfa açılınca en tepede başla; yeni mesaj/yazıyor gelince alta kaydır.
   useEffect(() => {
+    if (!ilkYuklemeTamam.current) return;
     altRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mesajlar, yaziyor]);
 
