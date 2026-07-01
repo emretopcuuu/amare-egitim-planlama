@@ -61,9 +61,9 @@ export const ADIMLAR: Adim[] = [
   {
     kod: "k1",
     tip: "metin",
-    baslik: "Hayatında kendini en mutlu hissettiğin üç anı düşün.",
+    baslik: "Zaman nasıl geçtiğini anlamadığın, kendini en çok “sen” hissettiğin, mutlu olduğun bir anı düşün — tam yerindeymişsin, tam kendinmişsin gibi.",
     ipuclari: [
-      "Seni en çok mutlu eden neydi?",
+      "O an ne yapıyordun?",
       "O anda hangi ihtiyacın karşılandı?",
       "O olay sana kendin hakkında ne hissettirdi?",
     ],
@@ -71,7 +71,7 @@ export const ADIMLAR: Adim[] = [
   {
     kod: "k2",
     tip: "metin",
-    baslik: "Kendinle en çok gurur duyduğun üç olayı düşün.",
+    baslik: "Kendinle en çok gurur duyduğun bir anı düşün.",
     ipuclari: ["Seni en çok tatmin eden neydi?", "Sana kendin hakkında ne hissettirdi?"],
   },
   {
