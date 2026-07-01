@@ -42,7 +42,11 @@ export async function GET(req: Request) {
     return new Response(buf, {
       headers: {
         "content-type": "audio/mpeg",
-        "cache-control": "private, max-age=31536000, immutable",
+        // ÖNEMLİ: kişi ses tercihini (erkek/kadın) İSTEDİĞİ AN değiştirebilir —
+        // "immutable"/uzun önbellek verirsek tarayıcı sunucuya hiç sormadan
+        // eski sesi çalmaya devam eder (tercih değişikliği hiç yansımaz).
+        // Kısa TTL: performans kazancı korunur ama değişiklik hızla yansır.
+        "cache-control": "private, max-age=120",
       },
     });
   } catch {
