@@ -167,14 +167,12 @@ export function katman2Hesapla(
 
 export type Katman3Soru = { kod: string; metin: string; max: number };
 
-export const KATMAN3_AKTIVITE: Katman3Soru[] = [
-  { kod: "k3.ilk_gorusme", metin: "Son 30 günde kaç yeni kişiyle ilk görüşme yaptın?", max: 999 },
-  { kod: "k3.birebir_kocluk", metin: "Kaç kişiyle birebir (koçluk) çalıştın?", max: 999 },
-];
+// GERÇEKLİK katmanı (aktivite sayıları + ritim) katılımcı isteğiyle KALDIRILDI —
+// soru sayısı azaltıldı. Boş bırakılıyor; profil/skorlama boş sette bozulmaz
+// (aşağıdaki katman3Hesapla ve elmasSkoru opsiyonel erişimle güvenli).
+export const KATMAN3_AKTIVITE: Katman3Soru[] = [];
 
-export const KATMAN3_RITIM: Katman3Soru[] = [
-  { kod: "k3.gelir_gun", metin: "Son 30 günün kaçında gelir getirici bir aktivite yaptın? (0-30)", max: 30 },
-];
+export const KATMAN3_RITIM: Katman3Soru[] = [];
 
 export const KATMAN3_SORULAR: Katman3Soru[] = [...KATMAN3_AKTIVITE, ...KATMAN3_RITIM];
 
@@ -182,6 +180,8 @@ export function katman3Hesapla(yanitlar: Record<string, number>): {
   ritim: "duzenli" | "patlayan" | "belirsiz";
   tamamMi: boolean;
 } {
+  // GERÇEKLİK katmanı kaldırıldıysa (boş set) ritim ölçülemez → "belirsiz".
+  if (KATMAN3_SORULAR.length === 0) return { ritim: "belirsiz", tamamMi: true };
   const tamamMi = KATMAN3_SORULAR.every((s) => yanitlar[s.kod] !== undefined);
   const gelirGun = yanitlar["k3.gelir_gun"] ?? 0;
   // Ritim: ayın yarısından çoğunda aktif = düzenli; aksi halde patlayıp sönen.
@@ -201,7 +201,7 @@ export const KATMAN4_SORULAR: MetinSoru[] = [
   { kod: "k4.hedef", metin: "Önümüzdeki 12 ayda gerçekten ulaşmak istediğin kariyer nedir?", zorunlu: true },
   { kod: "k4.ters_davranis", metin: "Bu hedefe ters düşen, yapman gerektiğini bildiğin halde yapmadığın davranış nedir?", zorunlu: true },
   { kod: "k4.kalkan", metin: "Bu davranışı sürdürmek seni neyden koruyor? Hangi korku ya da riski senden uzak tutuyor?", zorunlu: true },
-  { kod: "k4.varsayim", metin: "Seni durduran gizli inanç: “Eğer ___ yaparsam, ___ olur.” Bu cümleyi kendine göre tamamla.", zorunlu: true },
+  // "Gizli inanç" (k4.varsayim) sorusu katılımcı isteğiyle KALDIRILDI.
 ];
 
 // ============================================================================
@@ -209,9 +209,9 @@ export const KATMAN4_SORULAR: MetinSoru[] = [
 // (1-5) + yansıma (yazılı). Diamond'ın gerçek yakıtı: bugünkü değil, hız.
 // ============================================================================
 
-export const KATMAN5A_SORULAR: Katman3Soru[] = [
-  { kod: "k5a.egitim", metin: "Son 12 ayda kaç eğitim, seminer ya da kursu tamamladın?", max: 999 },
-];
+// "Kaç eğitim/seminer/kurs" (k5a.egitim) sorusu katılımcı isteğiyle KALDIRILDI.
+// Boş set: profilHesapla'daki KATMAN5A kontrolü boş dizide "true" döner (sorunsuz).
+export const KATMAN5A_SORULAR: Katman3Soru[] = [];
 
 export const KATMAN5B_MADDELER: Madde[] = [
   { kod: "k5b.1", metin: "Geri bildirimi savunmaya geçmeden dinleyebilirim." },
