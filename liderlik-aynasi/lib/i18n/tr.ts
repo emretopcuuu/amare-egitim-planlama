@@ -3906,13 +3906,12 @@ export const tr = {
     onay: "Sesin ve fotoğrafın sadece SANA özel deneyim için kullanılır. İstediğin zaman tek tuşla sildirebilirsin.",
     onayla: "Onaylıyorum, başla",
     basla: "Ritüeli başlat",
-    fotoBaslik: "Aynaya yüzünü göster",
-    fotoAciklama:
-      "Bir fotoğraf çek — aynan onu suya yansıyan hayalet bir silüete çevirecek. Yüzün tanınmaz; sadece izin kalır.",
-    fotoCek: "📷 Fotoğraf çek",
-    fotoYeniden: "↺ Tekrar çek",
-    fotoDevam: "Beğendim, devam et",
-    fotoAtla: "Fotoğrafsız devam et",
+    // Canlı Ayna (yüz yakalama) — ses kaydından ÖNCE, kimliğin doğuşunun ilk
+    // adımı. Zorunlu değil: kişi isterse geçip Pusula hub'ında sonradan yapabilir.
+    yuzYakalaBaslik: "Şimdi aynana yüzünü göster",
+    yuzYakalaAciklama:
+      "Düz, sağ ve sol — üç kısa kare. Bu kareler senin avatarın ve kişisel yansıma videonun temeli olacak.",
+    yuzYakalaAtla: "Şimdilik geç",
     sessiz: "Sessiz ayna istiyorum",
     yeminHazirlikBaslik: "Birazdan sesini kaydedeceğiz",
     yeminHazirlikAciklama:

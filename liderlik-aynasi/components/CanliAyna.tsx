@@ -16,7 +16,19 @@ const ADIMLAR = [
 
 // Selfie sonrası "Canlı Ayna": çemberde düz/sağ/sol yüz kareleri (KYC hissi).
 // Video üretiminde mimik malzemesi için. Kamera tam ekran sihirbaz.
-export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
+//
+// `gomulu`: Ritüel'in kendi adım akışına gömülü kullanıldığında (ses kaydından
+// ÖNCE) sayfa yenilemez — akışı Ritüel'in kendi state'i yönetir, `onTamam`
+// çağrılır. Bağımsız kullanımda (Pusula hub'ı) eskisi gibi router.refresh().
+export default function CanliAyna({
+  varMi = false,
+  gomulu = false,
+  onTamam,
+}: {
+  varMi?: boolean;
+  gomulu?: boolean;
+  onTamam?: () => void;
+}) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const akisRef = useRef<MediaStream | null>(null);
@@ -102,7 +114,11 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
       durdur();
       setAcik(false);
       setBitti(true);
-      router.refresh();
+      if (gomulu) {
+        onTamam?.();
+      } else {
+        router.refresh();
+      }
     } catch {
       setHata(t.hata);
     } finally {
