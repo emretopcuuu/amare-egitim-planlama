@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { pusulaOzeti } from "@/lib/pusula";
 import { kisiSentezi, sentezMetni } from "@/lib/sentez";
+import { gelisimMektubuGetir } from "@/lib/gelisimMektubu";
 import { kritikAiHatasiBildir } from "@/lib/uyari";
 
 // GELİŞTİRME #1 — AYNA KOÇU. Adayın her an açabildiği sürekli, bağlamsal sohbet.
@@ -129,12 +130,15 @@ export async function kocuTuru(
   }
 
   const ad = katilimci.full_name.split(" ")[0];
-  const [gecmis, baglam, sentez, tonAyar] = await Promise.all([
+  const [gecmis, baglam, sentez, gelisim, tonAyar] = await Promise.all([
     kocuGecmis(db, katilimci.id),
     kocuBaglam(db, katilimci.id),
     // GELİŞİM SENTEZİ: koçun kişiyi gerçekten tanıması için değer+neden+hedef+
     // söz + 360° gözlem tek blokta. Hata olursa koç yine de çalışsın (null).
     kisiSentezi(db, katilimci.id, katilimci.full_name).catch(() => null),
+    // Kampsonu gelişim mektubu ürediyse: koç verilen tavsiyeden de haberdar olsun
+    // (mektupla koç aynı beyni paylaşır). Üretmez, yalnız kayıtlıyı okur.
+    gelisimMektubuGetir(db, katilimci.id).catch(() => null),
     db.from("settings").select("value").eq("key", "ayna_ek_ton").maybeSingle(),
   ]);
   const ekTon = (tonAyar.data?.value ?? "").trim(); // #10 İçerik Stüdyosu: admin ton ayarı
@@ -167,7 +171,7 @@ export async function kocuTuru(
       system: `${PERSONA}
 
 Adayın adı: ${ad}.
-${sentez ? `\nGELİŞİM SENTEZİ (yalnız senin gözün; bu kişiyi tanı ve yanıtlarını buna dayandır):\n${sentezMetni(sentez)}\n` : ""}
+${sentez ? `\nGELİŞİM SENTEZİ (yalnız senin gözün; bu kişiyi tanı ve yanıtlarını buna dayandır):\n${sentezMetni(sentez)}\n` : ""}${gelisim ? `\nKAMPSONU GELİŞİM MEKTUBUNDA ONA VERİLEN TAVSİYE (tutarlı ol, gerekince nazikçe hatırlat):\n- Değer–davranış uyumu: ${gelisim.ozet.hiza ?? "—"}\n- Gelişim fırsatı: ${gelisim.ozet.firsat ?? "—"}\n- Somut tavsiye: ${gelisim.ozet.tavsiye ?? "—"}\n- İlk adım: ${gelisim.ozet.ilkAdim ?? "—"}\n` : ""}
 ADAY BAĞLAMI (aktif görevler + ilerleme; sessizce kullan):
 ${JSON.stringify(baglam)}
 

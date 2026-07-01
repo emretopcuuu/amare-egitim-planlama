@@ -23,6 +23,8 @@ import ArketipKarti from "./ArketipKarti";
 import AynaKarti from "./AynaKarti";
 import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
+import GelisimMektubuBolumu from "./GelisimMektubuBolumu";
+import { gelisimMektubuGetir } from "@/lib/gelisimMektubu";
 import TekCumleBolumu from "./TekCumleBolumu";
 import SeninIcinBolumu from "./SeninIcinBolumu";
 import AynalarMeclisiBolumu from "./AynalarMeclisiBolumu";
@@ -142,6 +144,10 @@ export default async function AynaPage() {
     rapor.tahmin &&
     rapor.gercekTopId !== null &&
     rapor.tahmin.topId === rapor.gercekTopId;
+
+  // GELİŞİM MEKTUBU (kampsonu tavsiye): kayıtlıysa server'dan gelir; yoksa
+  // bölüm istek üzerine üretir (opus çağrısı ağır — rapor render'ını yavaşlatma).
+  const gelisimKaydi = await gelisimMektubuGetir(db, session.sub);
 
   // #3 Story slaytları — en kritik içgörüler (kör nokta doruk noktası)
   const slaytlar: Slayt[] = [
@@ -747,6 +753,15 @@ export default async function AynaPage() {
           mevcutMektup={mevcutMektup?.content ?? null}
           sesUrl={mektupSesUrl}
           videoUrl={yansimaVideoUrl}
+        />
+      </div>
+
+      {/* GELİŞİM MEKTUBU — değerler + kamp eylemi + arkadaş gözlemi sentezi:
+          değer–davranış uyumu + fırsat + somut tavsiye + 90 gün ilk adım. */}
+      <div id="r-gelisim" className="scroll-mt-4">
+        <GelisimMektubuBolumu
+          mevcutMektup={gelisimKaydi?.mektup ?? null}
+          mevcutOzet={gelisimKaydi?.ozet ?? null}
         />
       </div>
 
