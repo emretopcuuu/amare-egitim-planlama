@@ -5,9 +5,16 @@ import Anthropic from "@anthropic-ai/sdk";
 export const maxDuration = 30;
 
 const YEDEK_SORULAR: Record<number, string> = {
-  2: "Peki bu sana neden bu kadar önemli? Daha derine git — gerçek nedeni bul.",
-  3: "Son soru: Bu değer olmadan nasıl biri olurdun? Hayatında ne eksik kalırdı?",
+  2: "Bu değer sana somut olarak ne kazandırıyor? Hayatına nasıl yansıyor?",
+  3: "Bu değer olmadan nasıl biri olurdun? İçinde ne eksik kalırdı?",
 };
+
+// Cevabın AI'ya gönderilmeye yeterince anlamlı olup olmadığını kontrol et:
+// en az 20 karakter ve 3 kelime.
+function anlamliMi(c: string): boolean {
+  const temiz = c.trim();
+  return temiz.length >= 20 && temiz.split(/\s+/).length >= 3;
+}
 
 export async function POST(req: Request) {
   if (!(await getSession())) return Response.json({ soru: null }, { status: 401 });
@@ -18,35 +25,41 @@ export async function POST(req: Request) {
     oncekiCevaplar: string[];
   };
 
-  if (!deger || !oncekiCevaplar?.length) {
-    return Response.json({ soru: YEDEK_SORULAR[tur] ?? null });
-  }
-
-  if (!process.env.ANTHROPIC_API_KEY) {
+  // Anlamlı cevap yoksa veya API key yoksa yedek kullan
+  const anlamliCevap = oncekiCevaplar.find(anlamliMi);
+  if (!deger || !anlamliCevap || !process.env.ANTHROPIC_API_KEY) {
     return Response.json({ soru: YEDEK_SORULAR[tur] ?? null });
   }
 
   try {
     const client = new Anthropic();
-    const gecmis = oncekiCevaplar.map((c, i) => `${i + 1}. Cevap: "${c}"`).join("\n");
-    const turMetin =
+    const gecmis = oncekiCevaplar.map((c, i) => `${i + 1}. "${c}"`).join("\n");
+    const turTalimat =
       tur === 2
-        ? "Kişinin cevabını daha da derinleştiren, içsel motivasyona ulaşmak için 'peki bu neden önemli?' ruhunda yeni bir soru sor."
-        : "Kişinin değerinin özünü ortaya çıkaran son ve en güçlü soruyu sor. Bu değer olmadan ne kaybederlerdi, kim olurlardı?";
+        ? "Kişinin bu cevabının arkasındaki ihtiyaca veya duyguya dokunan kısa bir soru sor. Cevaptaki kelimeleri aynen kullanma."
+        : "Bu değerin kişi için taşıdığı en derin anlamı ortaya çıkaran güçlü bir son soru sor.";
 
     const msg = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
-      max_tokens: 120,
+      max_tokens: 80,
       messages: [
         {
           role: "user",
-          content: `Sen derin bir koç ve değer araştırmacısısın. Bir kişi "${deger}" değeriyle ilgili şunları söyledi:\n\n${gecmis}\n\n${turMetin}\n\nSoruyu Türkçe, kısa (1 cümle, maksimum 20 kelime), samimi ve içten yaz. Soru işaretiyle bitir. Başka hiçbir şey yazma — sadece soruyu.`,
+          content: `Koç olarak "${deger}" değeri hakkındaki bu cevapları oku:\n${gecmis}\n\n${turTalimat}\n\nKural: Türkçe, en fazla 10 kelime, soru işaretiyle bitsin. Sadece soruyu yaz.`,
         },
       ],
     });
 
     const soru = msg.content[0].type === "text" ? msg.content[0].text.trim() : null;
-    return Response.json({ soru: soru || YEDEK_SORULAR[tur] });
+
+    // Basit kalite kontrolü: çok uzun, ? ile bitmiyor, ya da "kimim" gibi yanlış gramer
+    const gecerli =
+      soru &&
+      soru.endsWith("?") &&
+      soru.length <= 100 &&
+      soru.split(/\s+/).length <= 15;
+
+    return Response.json({ soru: gecerli ? soru : YEDEK_SORULAR[tur] });
   } catch {
     return Response.json({ soru: YEDEK_SORULAR[tur] ?? null });
   }
