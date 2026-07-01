@@ -164,7 +164,7 @@ export const tr = {
         ikon: "👁",
         baslik: "Sen, başkalarının gözünden",
         metin:
-          "Kendini nasıl gördüğünle, başkalarının seni nasıl gördüğünü yan yana koyacağım. Kapanışta aynan açılır — çoğu insan kendini orada ilk kez görür.",
+          "Kendini nasıl gördüğünü, başkalarının seni nasıl gördüğüyle yan yana koyacağım. Kapanışta aynan açılır — çoğu insan kendini orada ilk kez görür.",
       },
       {
         ikon: "✨",
