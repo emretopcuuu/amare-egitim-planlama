@@ -35,6 +35,30 @@ function vurguRender(baslik: string, vurgu: string | string[]): React.ReactNode 
   return <>{parts}</>;
 }
 
+// Paragraf metnini zenginleştirir: **bold** desteği + \n\n satır arası boşluk.
+function zenginMetin(text: string): React.ReactNode {
+  const parcalar = text.split("\n\n");
+  return (
+    <>
+      {parcalar.map((p, pi) => {
+        const bolumler: React.ReactNode[] = [];
+        let kalan = p;
+        let key = 0;
+        while (kalan.length > 0) {
+          const bas = kalan.indexOf("**");
+          if (bas === -1) { bolumler.push(<span key={key++}>{kalan}</span>); break; }
+          if (bas > 0) bolumler.push(<span key={key++}>{kalan.slice(0, bas)}</span>);
+          const son = kalan.indexOf("**", bas + 2);
+          if (son === -1) { bolumler.push(<span key={key++}>{kalan.slice(bas)}</span>); break; }
+          bolumler.push(<strong key={key++} className="font-bold text-white">{kalan.slice(bas + 2, son)}</strong>);
+          kalan = kalan.slice(son + 2);
+        }
+        return <p key={pi}>{bolumler}</p>;
+      })}
+    </>
+  );
+}
+
 // Değer → emoji + şiirsel etiket haritaları (ai_oneri kartları)
 const DEGER_EMOJI: Record<string, string> = {
   "Sevgi": "❤️", "Aile": "🏠", "Sağlık": "💪", "Özgürlük": "🦅",
@@ -235,7 +259,6 @@ export default function DegerlerAkis() {
   }, []);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     setParla(true);
     setUyari(null);
     const id = setTimeout(() => setParla(false), 420);
@@ -375,6 +398,8 @@ export default function DegerlerAkis() {
     const hata = ilerlenebilir(a);
     if (hata) { setUyari(hata); return; }
     await kaydet();
+    // Scroll ÖNCE — klavye kapanma + yeni içerik yarış koşulunu önler
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     if (adim < TOPLAM - 1) {
       setAdim((x) => x + 1);
     } else {
@@ -385,6 +410,7 @@ export default function DegerlerAkis() {
 
   function geri() {
     setUyari(null);
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     if (adim > 0) setAdim((x) => x - 1);
   }
 
@@ -426,7 +452,9 @@ export default function DegerlerAkis() {
               {a.paragrafVurgu && (
                 <p className="mt-5 text-lg font-semibold leading-relaxed text-gold-light">{a.paragrafVurgu}</p>
               )}
-              <p className={`${a.paragrafVurgu ? "mt-3" : "mt-5"} text-lg leading-relaxed text-slate-200`}>{a.paragraf}</p>
+              <div className={`${a.paragrafVurgu ? "mt-3" : "mt-5"} space-y-3 text-lg leading-relaxed text-slate-300`}>
+                {zenginMetin(a.paragraf)}
+              </div>
               <AynaSesButonu anahtar={`degerler_${a.kod}`} />
             </div>
           )}
@@ -552,14 +580,18 @@ export default function DegerlerAkis() {
                   </div>
                 </div>
               )}
-              <textarea
-                value={metin(a.kod)}
-                onChange={(e) => metinDegis(a.kod, e.target.value)}
-                rows={5}
-                placeholder={a.zorunlu ? "Buraya yaz…" : "Dilersen yaz, dilersen geç…"}
-                className="mt-4 w-full resize-y rounded-2xl border border-white/15 bg-white/[0.04] p-4 text-base leading-relaxed text-slate-100 outline-none focus:border-gold/50"
-              />
-              <SesliYazButonu onEkle={(t) => metinEkle(a.kod, t)} />
+              {!a.degerSecimi && (
+                <>
+                  <textarea
+                    value={metin(a.kod)}
+                    onChange={(e) => metinDegis(a.kod, e.target.value)}
+                    rows={5}
+                    placeholder={a.zorunlu ? "Buraya yaz…" : "Dilersen yaz, dilersen geç…"}
+                    className="mt-4 w-full resize-y rounded-2xl border border-white/15 bg-white/[0.04] p-4 text-base leading-relaxed text-slate-100 outline-none focus:border-gold/50"
+                  />
+                  <SesliYazButonu onEkle={(t) => metinEkle(a.kod, t)} />
+                </>
+              )}
             </div>
           )}
 
