@@ -168,6 +168,7 @@ export const tr = {
     faz: {
       rituel: "Ritüel",
       oyun: "Oyun",
+      degerler: "Değerler",
       pusula: "Pusula",
       hedef: "Hedef",
       farkindalik: "Farkındalık",

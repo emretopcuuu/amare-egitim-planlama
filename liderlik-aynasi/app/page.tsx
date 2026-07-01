@@ -501,6 +501,7 @@ export default async function AnaSayfa({
             fazlar={[
               { ad: tr.yolculuk.faz.rituel, tamam: !!sesVarRow },
               { ad: tr.yolculuk.faz.oyun, tamam: !!kisi?.team },
+              { ad: tr.yolculuk.faz.degerler, tamam: !!degerlerDurum?.tamamlandi_at },
               { ad: tr.yolculuk.faz.pusula, tamam: !!pusulaErken?.tamamlandi_at },
               { ad: tr.yolculuk.faz.hedef, tamam: !!hedefErken?.tamamlandi_at },
               { ad: tr.yolculuk.faz.farkindalik, tamam: !!ofDurum?.tamamlandi_at },
