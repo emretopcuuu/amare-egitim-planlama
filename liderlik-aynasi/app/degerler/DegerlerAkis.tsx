@@ -35,6 +35,28 @@ function vurguRender(baslik: string, vurgu: string | string[]): React.ReactNode 
   return <>{parts}</>;
 }
 
+// Değer → emoji + şiirsel etiket haritaları (ai_oneri kartları)
+const DEGER_EMOJI: Record<string, string> = {
+  "Sevgi": "❤️", "Aile": "🏠", "Sağlık": "💪", "Özgürlük": "🦅",
+  "Güven": "🛡️", "Dürüstlük": "💎", "Başarı": "🔥", "Gelişim": "🌱",
+  "Saygı": "🤝", "Huzur": "🌊", "Anlam": "✨", "Mutluluk": "☀️",
+  "Öğrenme": "📚", "Bağımsızlık": "🌿", "Katkı sağlamak": "🌟",
+  "Adalet": "⚖️", "Sorumluluk": "🎯", "Liderlik": "👑",
+  "Yaratıcılık": "🎨", "Yaşam dengesi": "🧘",
+};
+const DEGER_ETIKET: Record<string, string> = {
+  "Sevgi": "Tüm kararlarının özü", "Aile": "Güç kaynağın",
+  "Sağlık": "Temelinsin", "Özgürlük": "Nefessin",
+  "Güven": "Zırhın", "Dürüstlük": "Pusulan",
+  "Başarı": "İtici gücün", "Gelişim": "Yolculuğun",
+  "Saygı": "Köprün", "Huzur": "Sığınağın",
+  "Anlam": "Ateşin", "Mutluluk": "Işığın",
+  "Öğrenme": "Kanatların", "Bağımsızlık": "Özgün sessin",
+  "Katkı sağlamak": "Mirasın", "Adalet": "Kılıcın",
+  "Sorumluluk": "Omurgan", "Liderlik": "Yolunsu",
+  "Yaratıcılık": "Ruhunun rengi", "Yaşam dengesi": "Ritmin",
+};
+
 // AYNA'nın ElevenLabs sesiyle intro metnini okutan buton.
 // /api/ayna-ses?k=degerler_<kod> → mp3; ses yoksa 503 → sessizce gizlenir.
 function AynaSesButonu({ anahtar }: { anahtar: string }) {
@@ -361,38 +383,68 @@ export default function DegerlerAkis() {
           )}
 
           {a.tip === "ai_oneri" && (
-            <div className="py-6">
-              <h1 className="prizma-serif ay-metin text-3xl font-bold leading-tight">{a.baslik}</h1>
-              <p className="mt-4 text-base leading-relaxed text-slate-300">{a.paragraf}</p>
-              <div className="mt-8">
-                {aiYukleniyor ? (
-                  <div className="flex flex-col items-center gap-4 py-6">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold/30 border-t-gold" />
-                    <p className="text-sm text-slate-400">Cevapların analiz ediliyor…</p>
-                  </div>
-                ) : aiOneri && aiOneri.length > 0 ? (
-                  <div className="flex flex-col gap-3">
-                    {aiOneri.map((d, i) => (
-                      <div
-                        key={d}
-                        className="flex items-center gap-4 rounded-2xl border border-gold/25 bg-gold/[0.07] px-5 py-4"
-                      >
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gold/20 text-sm font-bold text-gold">
-                          {i + 1}
-                        </span>
-                        <span className="text-lg font-semibold text-slate-100">{d}</span>
-                      </div>
-                    ))}
-                    <p className="mt-3 text-xs text-slate-500">
-                      Bu değerler bu yolculukta sana rehber olacak.
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-500">
-                    Refleksiyon sorularını yanıtladıkça analiz daha iyi çalışır.
-                  </p>
-                )}
+            <div className="py-4">
+              {/* Başlık */}
+              <div className="mb-6 text-center">
+                <h1 className="prizma-serif text-2xl font-black tracking-wide">
+                  <span className="text-gold">✦ SENİN </span>
+                  <span className="text-slate-100">DEĞERLERİN</span>
+                  <span className="text-gold"> ✦</span>
+                </h1>
+                <p className="mt-2 text-sm text-slate-400">{a.paragraf}</p>
               </div>
+
+              {aiYukleniyor ? (
+                <div className="flex flex-col items-center gap-4 py-8">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold/30 border-t-gold" />
+                  <p className="text-sm text-slate-400">Cevapların analiz ediliyor…</p>
+                </div>
+              ) : aiOneri && aiOneri.length > 0 ? (
+                <div className="flex flex-col gap-2.5">
+                  {aiOneri.map((d, i) => {
+                    const barGenislik = [100, 85, 72, 61, 52][i] ?? 50;
+                    const emoji = DEGER_EMOJI[d] ?? "✦";
+                    const etiket = DEGER_ETIKET[d] ?? "";
+                    if (i === 0) return (
+                      <div key={d} className="rounded-2xl border border-gold bg-gradient-to-br from-[#1a1206] to-[#271a07] px-5 py-4 shadow-[0_0_24px_#d4af3720]">
+                        <div className="mb-3 flex items-center gap-3">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gold text-sm font-black text-[#1a1206]">1</span>
+                          <span className="text-2xl">{emoji}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xl font-black leading-none text-[#fef3c7]">{d}</div>
+                            {etiket && <div className="mt-0.5 text-[0.62rem] font-bold uppercase tracking-widest text-gold">{etiket}</div>}
+                          </div>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                          <div className="h-full w-full rounded-full bg-gradient-to-r from-[#b8891e] to-[#d4af37]" />
+                        </div>
+                      </div>
+                    );
+                    return (
+                      <div key={d} className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+                        <div className="mb-2 flex items-center gap-2.5">
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/20 text-[0.62rem] font-bold text-gold">{i + 1}</span>
+                          <span className="text-lg">{emoji}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-base font-bold leading-none text-slate-100">{d}</div>
+                            {etiket && <div className="mt-0.5 text-[0.58rem] font-semibold italic text-slate-500">{etiket}</div>}
+                          </div>
+                        </div>
+                        <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+                          <div className="h-full rounded-full bg-gradient-to-r from-[#b8891e]/70 to-[#d4af37]/70" style={{ width: `${barGenislik}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <p className="mt-2 text-center text-xs text-slate-500">
+                    Bu değerler bu yolculukta sana rehber olacak.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">
+                  Refleksiyon sorularını yanıtladıkça analiz daha iyi çalışır.
+                </p>
+              )}
             </div>
           )}
 
