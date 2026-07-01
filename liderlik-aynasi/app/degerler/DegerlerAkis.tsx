@@ -848,11 +848,17 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
                 <input
                   value={metin(a.kod)}
                   onChange={(e) => metinDegis(a.kod, e.target.value)}
-                  placeholder="…"
-                  className="inline-block min-w-[8rem] border-b-2 border-gold/50 bg-transparent px-2 py-1 text-center text-slate-100 outline-none focus:border-gold"
+                  placeholder="dokun, yaz…"
+                  className="inline-block min-w-[10rem] rounded-xl border-2 border-dashed border-gold/60 bg-gold/[0.08] px-3 py-1.5 text-center text-slate-100 outline-none placeholder:text-gold-light/50 focus:border-solid focus:border-gold focus:bg-gold/[0.14]"
                 />{" "}
                 {a.son && <span className="font-semibold text-gold-light">{a.son}</span>}
               </p>
+              {/* Boşluğun bir input olduğu net olsun diye açıklayıcı ipucu —
+                  eskiden yalnız alt çizgili "…" vardı, insanlar tıklanabilir
+                  bir alan olduğunu fark etmiyordu. */}
+              {!metin(a.kod).trim() && (
+                <p className="mt-2 text-sm text-slate-500">👆 Yukarıdaki kutuya dokunup cümleyi tamamla.</p>
+              )}
               <SesliYazButonu onEkle={(t) => metinEkle(a.kod, t)} />
             </div>
           )}
