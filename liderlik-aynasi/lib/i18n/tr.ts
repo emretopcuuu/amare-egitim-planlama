@@ -126,8 +126,12 @@ export const tr = {
         metin: "Doğru cevap yok; yalnız senin cevabın var. Ne kadar açılırsan, ayna seni o kadar net gösterir.",
       },
     ],
-    kvkkOnay:
-      "Verdiğim cevapların bu gelişim çalışması için güvenle işlenip saklanmasına onay veriyorum. Dilediğim an tüm verilerimi silebileceğimi biliyorum. ",
+    // Bold vurgusu için 3 parçaya bölündü — "admin dahil kimse görmeyecek"
+    // kısmı katılımcıya güven vermesi için kalın gösteriliyor (bkz. HazirlikEkrani).
+    kvkkOnayOn: "Verdiğim cevapları ",
+    kvkkOnayKalin: "admin dahil hiç kimse görmeyecek",
+    kvkkOnayOrta:
+      " — yalnızca yapay zeka bunları işleyip bana daha güzel bir deneyim sunmak için kullanacak. Dilediğim an tüm verilerimi silebileceğimi biliyorum. ",
     kvkkLink: "KVKK Aydınlatma Metni",
     kvkkSon: "’ni okudum.",
     dugme: "Hazırım, başlıyorum →",

@@ -76,7 +76,9 @@ export default function HazirlikEkrani({ ad }: { ad: string }) {
           ))}
         </div>
 
-        {/* KVKK rızası — kayıtlı, açık onay */}
+        {/* KVKK rızası — kayıtlı, açık onay. Tikleme kutusu tıklanabilir
+            olduğu belirgin olsun diye altın halka + kalın çerçeve verildi
+            (eskiden fark edilmiyordu). */}
         <div className="mt-7 rounded-2xl border border-royal/30 bg-white/[0.02] p-4">
           <label className="flex cursor-pointer items-start gap-3">
             <input
@@ -86,10 +88,12 @@ export default function HazirlikEkrani({ ad }: { ad: string }) {
                 setOnay(e.target.checked);
                 setHata(false);
               }}
-              className="mt-1 h-5 w-5 shrink-0 accent-gold"
+              className="mt-0.5 h-6 w-6 shrink-0 cursor-pointer rounded-md border-2 border-gold/70 accent-gold ring-2 ring-gold/40 ring-offset-2 ring-offset-[#06121e]"
             />
             <span className="text-sm leading-relaxed text-slate-300">
-              {t.kvkkOnay}{" "}
+              {t.kvkkOnayOn}
+              <strong className="font-bold text-white">{t.kvkkOnayKalin}</strong>
+              {t.kvkkOnayOrta}
               <Link href="/gizlilik" className="font-semibold text-gold-light underline underline-offset-2">
                 {t.kvkkLink}
               </Link>
