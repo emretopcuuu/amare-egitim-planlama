@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { sonucOnerileri } from "@/lib/onFarkindalik";
 import OnFarkindalikAkis from "./OnFarkindalikAkis";
+import OnboardingRayi from "@/components/OnboardingRayi";
 
 export const metadata = { title: "Ön Farkındalık — Liderlik Aynası" };
 
@@ -27,6 +28,9 @@ export default async function OnFarkindalikSayfa() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <div className="mx-auto w-full max-w-md px-5 pt-[calc(env(safe-area-inset-top,0px)+3.5rem+0.5rem)]">
+        <OnboardingRayi />
+      </div>
       <div className="mx-auto w-full max-w-md p-5">
         <OnFarkindalikAkis
           baslangicSayi={sayilar}

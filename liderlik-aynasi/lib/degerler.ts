@@ -180,6 +180,51 @@ export const ADIMLAR: Adim[] = [
   },
 ];
 
+// BÖLÜMLEME — 41 adımlık akışı 5 anlamlı bölüme ayırır (UX: "Adım 23/41"
+// yerine "Bölüm 3/5 — Nedenlerini Keşfet"). Sınır kodları: her bölümün İLK
+// adımı. Adım SIRASI (ADIMLAR dizisi) değişmez, yalnız etiketlenir.
+export const BOLUM_ADLARI = [
+  "Kendini Tanı",
+  "Değerlerini Seç",
+  "Nedenlerini Keşfet",
+  "Derinleş",
+  "Sözünü Bul",
+] as const;
+const BOLUM_BASLANGIC_KODLARI = new Set(["giris", "ai_oneri", "nedenGiris", "n3", "sonGiris"]);
+
+const KOD_BOLUM: Record<string, number> = {};
+const BOLUM_ADIM_SAYISI: number[] = new Array(BOLUM_ADLARI.length).fill(0);
+{
+  let b = -1;
+  for (const a of ADIMLAR) {
+    if (BOLUM_BASLANGIC_KODLARI.has(a.kod)) b++;
+    KOD_BOLUM[a.kod] = Math.max(b, 0);
+    BOLUM_ADIM_SAYISI[Math.max(b, 0)]++;
+  }
+}
+
+/** Bir adım kodunun bölüm indeksini (0-4) döndürür. */
+export function bolumIndeksi(kod: string): number {
+  return KOD_BOLUM[kod] ?? 0;
+}
+
+/** O bölümdeki toplam adım sayısı. */
+export function bolumToplamAdim(bolum: number): number {
+  return BOLUM_ADIM_SAYISI[bolum] ?? 1;
+}
+
+/** Adımın (global indeks) kendi bölümü içindeki sırası (1-based). */
+export function bolumIcindekiSira(adimGlobalIndeks: number): number {
+  const kod = ADIMLAR[adimGlobalIndeks]?.kod;
+  if (!kod) return 1;
+  const b = bolumIndeksi(kod);
+  let sira = 0;
+  for (let i = 0; i <= adimGlobalIndeks; i++) {
+    if (bolumIndeksi(ADIMLAR[i].kod) === b) sira++;
+  }
+  return sira;
+}
+
 // Bir değerin 5-neden zinciri için cevap kodları (legacy)
 export function nedenKodlari(degerIndeks: number): string[] {
   return [1, 2, 3, 4, 5].map((n) => `neden_${degerIndeks}_${n}`);
