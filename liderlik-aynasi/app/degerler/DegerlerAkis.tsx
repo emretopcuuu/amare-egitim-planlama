@@ -227,7 +227,6 @@ export default function DegerlerAkis() {
   const router = useRouter();
   const [yuklendi, setYuklendi] = useState(false);
   const [adim, setAdim] = useState(0);
-  const [parla, setParla] = useState(false);
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [uyari, setUyari] = useState<string | null>(null);
   const [cevaplar, setCevaplar] = useState<Record<string, unknown>>({});
@@ -259,11 +258,10 @@ export default function DegerlerAkis() {
     return () => { iptal = true; };
   }, []);
 
+  // Adım değişince uyarıyı temizle. (Geçiş ışıması artık key={adim} remount'uyla
+  // kendiliğinden çalıyor — ayrı bir "parla" state'ine gerek yok.)
   useEffect(() => {
-    setParla(true);
     setUyari(null);
-    const id = setTimeout(() => setParla(false), 420);
-    return () => clearTimeout(id);
   }, [adim]);
 
   // AI analiz: ai_oneri adımına gelince k1-k11 cevaplarını gönder
@@ -464,8 +462,12 @@ export default function DegerlerAkis() {
           </p>
         </div>
 
-        {/* İçerik */}
-        <div key={adim} className={parla ? "of-parla" : ""}>
+        {/* İçerik — ışıma (of-parla) AYRI bir arka plan katmanıdır; sınıfı
+            doğrudan içeriğe verirsek içerik `position:absolute; z-index:-1`
+            olup akıştan çıkar ve her şeyle çakışır (geçiş glitch'inin gerçek
+            nedeni buydu). İçerik hep normal akışta; ışıma onun arkasında. */}
+        <div key={adim} className="relative">
+          <span className="of-parla" aria-hidden />
           {a.tip === "intro" && (
             <div className="py-8 text-center">
               <h1 className="prizma-serif ay-metin text-3xl font-bold leading-tight">
