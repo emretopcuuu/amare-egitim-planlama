@@ -668,6 +668,7 @@ console.log("\n■ 9) FAZ A AKIŞ SIRASI — kamp öncesi onboarding kapıları"
 {
   // Tüm pencereler açık, kişi sıfırdan başlıyor: her aşamada doğru sonraki adım.
   const taban: AkisDurum = {
+    rizaVar: true, // KVKK/hazırlık rızası verilmiş varsay — diğer kapı testleri bozulmasın
     sesVar: false,
     team: null,
     campUnlocked: false,
@@ -682,8 +683,14 @@ console.log("\n■ 9) FAZ A AKIŞ SIRASI — kamp öncesi onboarding kapıları"
     kampIciHedefKapisi: false,
   };
 
-  // 1) Ses ritüeli her şeyden önce gelir.
-  iddia(kampOncesiAdim(taban).tip === "rituel", "ses kaydı yokken ritüel gösterilir");
+  // 0) KVKK/hazırlık rızası yoksa her şeyden önce hazırlık ekranı gelir.
+  iddia(
+    kampOncesiAdim({ ...taban, rizaVar: false }).tip === "hazirlik",
+    "rıza yokken kutsal-alan hazırlık ekranı gösterilir"
+  );
+
+  // 1) Ses ritüeli rızadan sonra gelir.
+  iddia(kampOncesiAdim(taban).tip === "rituel", "rıza sonrası ses kaydı yokken ritüel gösterilir");
 
   // 2) Ses bitti → oyun seçimi (grup yok).
   const sesli = { ...taban, sesVar: true };

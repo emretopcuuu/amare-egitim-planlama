@@ -236,9 +236,32 @@ export default function KimsinBantClient({
               <YaziBoyu />
               <TemaSecimi />
             </div>
+
+            {/* KVKK / Gizlilik — verilerine hâkim ol: dilediğin an çık ya da sil. */}
+            <div className="mt-5 border-t border-white/10 pt-4">
+              <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+                Gizlilik ve Verilerim
+              </p>
+              <Link
+                href="/gizlilik"
+                onClick={() => setAyarlarAcik(false)}
+                className="flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3 text-sm text-slate-200 transition-colors hover:bg-white/[0.06]"
+              >
+                <span>🛡️ KVKK · Verilerimi görüntüle / sil</span>
+                <span aria-hidden className="text-slate-500">›</span>
+              </Link>
+              <a
+                href="/api/cikis"
+                className="mt-2 flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3 text-sm text-slate-300 transition-colors hover:bg-red-500/10 hover:text-red-300"
+              >
+                <span>🚪 Çıkış yap</span>
+                <span aria-hidden className="text-slate-500">›</span>
+              </a>
+            </div>
+
             <button
               onClick={() => setAyarlarAcik(false)}
-              className="mt-5 w-full rounded-xl py-3 text-sm text-slate-400 transition-colors hover:text-slate-200"
+              className="mt-4 w-full rounded-xl py-3 text-sm text-slate-400 transition-colors hover:text-slate-200"
             >
               Kapat
             </button>
