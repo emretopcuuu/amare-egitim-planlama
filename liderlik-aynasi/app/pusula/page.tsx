@@ -250,11 +250,10 @@ export default async function PusulaSayfa() {
         {/* Telefona kurulum koçu — yanlış tarayıcı yakala + görsel adım adım rehber */}
         <TelefonaKurKocu />
 
-        {/* Bildirim izni — hatırlatmaların çalışması için */}
-        <div className="rounded-2xl bg-midnight-card/40 p-4 ring-1 ring-royal/20">
-          <p className="mb-2 text-sm font-semibold text-slate-200">🔔 {t.bildirimBaslik}</p>
-          <AynaKurulum />
-        </div>
+        {/* Bildirim izni — hatırlatmaların çalışması için. Kendi başlığı zaten
+            "AYNA seni dürtebilsin mi?" — üstüne ayrı bir genel başlık koymuyoruz,
+            kişi tam olarak neye basması gerektiğini net görsün (katılımcı isteği). */}
+        <AynaKurulum />
 
         {/* Kamp rehberi — bilgi */}
         <Link
