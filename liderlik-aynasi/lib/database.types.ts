@@ -314,6 +314,44 @@ export type Database = {
           },
         ]
       }
+      degerler_calismasi: {
+        Row: {
+          basladi_at: string | null
+          cevaplar: Json
+          neden_cumlesi: string | null
+          participant_id: string
+          secilen_uc: string[]
+          tamamlandi_at: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          basladi_at?: string | null
+          cevaplar?: Json
+          neden_cumlesi?: string | null
+          participant_id: string
+          secilen_uc?: string[]
+          tamamlandi_at?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          basladi_at?: string | null
+          cevaplar?: Json
+          neden_cumlesi?: string | null
+          participant_id?: string
+          secilen_uc?: string[]
+          tamamlandi_at?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "degerler_calismasi_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       excluded_pairs: {
         Row: {
           a_id: string
