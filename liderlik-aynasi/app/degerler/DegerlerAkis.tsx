@@ -35,6 +35,30 @@ function vurguRender(baslik: string, vurgu: string | string[]): React.ReactNode 
   return <>{parts}</>;
 }
 
+// Paragraf metnini zenginleştirir: **bold** desteği + \n\n satır arası boşluk.
+function zenginMetin(text: string): React.ReactNode {
+  const parcalar = text.split("\n\n");
+  return (
+    <>
+      {parcalar.map((p, pi) => {
+        const bolumler: React.ReactNode[] = [];
+        let kalan = p;
+        let key = 0;
+        while (kalan.length > 0) {
+          const bas = kalan.indexOf("**");
+          if (bas === -1) { bolumler.push(<span key={key++}>{kalan}</span>); break; }
+          if (bas > 0) bolumler.push(<span key={key++}>{kalan.slice(0, bas)}</span>);
+          const son = kalan.indexOf("**", bas + 2);
+          if (son === -1) { bolumler.push(<span key={key++}>{kalan.slice(bas)}</span>); break; }
+          bolumler.push(<strong key={key++} className="font-bold text-white">{kalan.slice(bas + 2, son)}</strong>);
+          kalan = kalan.slice(son + 2);
+        }
+        return <p key={pi}>{bolumler}</p>;
+      })}
+    </>
+  );
+}
+
 // Değer → emoji + şiirsel etiket haritaları (ai_oneri kartları)
 const DEGER_EMOJI: Record<string, string> = {
   "Sevgi": "❤️", "Aile": "🏠", "Sağlık": "💪", "Özgürlük": "🦅",
@@ -426,7 +450,9 @@ export default function DegerlerAkis() {
               {a.paragrafVurgu && (
                 <p className="mt-5 text-lg font-semibold leading-relaxed text-gold-light">{a.paragrafVurgu}</p>
               )}
-              <p className={`${a.paragrafVurgu ? "mt-3" : "mt-5"} text-lg leading-relaxed text-slate-200`}>{a.paragraf}</p>
+              <div className={`${a.paragrafVurgu ? "mt-3" : "mt-5"} space-y-3 text-lg leading-relaxed text-slate-300`}>
+                {zenginMetin(a.paragraf)}
+              </div>
               <AynaSesButonu anahtar={`degerler_${a.kod}`} />
             </div>
           )}

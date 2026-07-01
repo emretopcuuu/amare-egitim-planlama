@@ -51,7 +51,7 @@ export const ADIMLAR: Adim[] = [
     tip: "intro",
     baslik: "Değerlerin: Görünmez Pusulan",
     paragraf:
-      "Değerler, hayatımızdaki seçimleri sessizce yöneten görünmez pusulamızdır. Doğru kararlar aldığımızda huzur, yanlış seçimler yaptığımızda ise çoğu zaman içsel bir huzursuzluk hissetmemizin nedeni budur. Şimdi seni, gerçekten kim olduğunu ve senin için neyin vazgeçilmez olduğunu keşfedeceğin kısa ama güçlü bir yolculuğa davet ediyorum.",
+      "🧭 Değerler, hayatındaki seçimleri **sessizce yöneten görünmez pusulalardır.**\n\nDoğru kararlar aldığında huzur; yanlış seçimler yaptığında ise o tanıdık içsel huzursuzluk — **hep bu yüzden.**\n\n✨ Şimdi seni, gerçekten kim olduğunu ve senin için neyin vazgeçilmez olduğunu keşfedeceğin **kısa ama güçlü** bir yolculuğa davet ediyorum.",
     dugme: "Değerlerimi Keşfet",
   },
   {
@@ -59,7 +59,7 @@ export const ADIMLAR: Adim[] = [
     tip: "intro",
     baslik: "Değerlerini Keşfet",
     paragraf:
-      "Aşağıdaki soruları acele etmeden cevapla. İlk aklına gelen değil, seni gerçekten anlatan cevapları yaz. Dilediğin soruyu boş geçebilirsin — ama ne kadar açılırsan, ayna seni o kadar net gösterir.",
+      "Soruları **acele etmeden** cevapla. İlk aklına gelen değil, **seni gerçekten anlatan** cevapları yaz.\n\n🪞 Dilediğin soruyu boş geçebilirsin — ama ne kadar açılırsan, ayna seni **o kadar net gösterir.**",
     dugme: "Başla",
   },
   {
@@ -121,7 +121,7 @@ export const ADIMLAR: Adim[] = [
     tip: "intro",
     baslik: "5 Temel Değer",
     paragraf:
-      "Beş temel değerin belli oldu. Şimdi onlarla aranı kısaca yokla — bu, değerlerini günlük hayatına bağlamanın en hızlı yolu.",
+      "⚡ Beş temel değerin belli oldu.\n\nŞimdi onlarla aranı kısaca yokla — bu, değerlerini günlük hayatına bağlamanın **en hızlı yolu.**",
     dugme: "Devam",
   },
   { kod: "f1", tip: "metin", baslik: "Bu beş değerden hangisini bugün en çok onurlandırıyorsun?", vurgu: "en çok onurlandırıyorsun", degerSecimi: true },
@@ -136,7 +136,7 @@ export const ADIMLAR: Adim[] = [
     vurgu: "NEDENlerini",
     paragrafVurgu: "Değerler sana yönünü gösterir; nedenlerin ise sana hareket etme gücü verir.",
     paragraf:
-      "Yapay zeka en güçlü üç değerini belirledi. Şimdi her biri için 3 turda derinleşeceğiz — ilk cevabın ardından AYNA sana daha kişisel sorular soracak. En derin nedene ulaşmak için dürüst ol.",
+      "Yapay zeka en güçlü **üç değerini** belirledi. Her biri için **3 turda** derinleşeceğiz — ilk cevabın ardından AYNA daha kişisel bir soru soracak.\n\n🔍 En derin nedene ulaşmak için **dürüst ol.**",
     dugme: "Nedenimi Keşfet",
   },
   // Değer 0 — 3 turlu sarmal neden
@@ -162,7 +162,7 @@ export const ADIMLAR: Adim[] = [
     tip: "intro",
     baslik: "Gerçek Neden",
     paragraf:
-      "Şimdi cevaplarından yola çıkarak nedenini cümleye dökeceğiz. Acele etme; bu cümle senin pusulan olacak.",
+      "Şimdi cevaplarından yola çıkarak nedenini **cümleye dökeceğiz.**\n\n✍️ Acele etme — bu cümle **senin pusulan** olacak.",
     dugme: "Cümlemi Kur",
   },
   { kod: "cumle1", tip: "cumle", baslik: "Tamamla", on: "Ben,", son: "için yaşıyorum.", zorunlu: true },
