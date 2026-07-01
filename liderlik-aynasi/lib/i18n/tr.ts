@@ -101,6 +101,40 @@ export const tr = {
     kivilcimIpucu: "Görev tamamla +10 XP · Değerlendirme yap +5 XP · Duvar paylaşımı +3 XP",
   },
   // #1 İlk açılış mikro-turu (AYNA kendini tanıtır)
+  // KUTSAL ALAN / HAZIRLIK — onboarding'in en başı: tonu kurar + KVKK rızası.
+  hazirlik: {
+    ust: "Başlamadan önce",
+    baslik: (ad: string) => `${ad}, bu sıradan bir form değil.`,
+    giris:
+      "Birazdan kendinle çok özel bir yolculuğa çıkacaksın. Sana sorulacak sorular basit görünebilir ama cevapların, kim olduğunu ve nereye gittiğini gösterecek bir aynaya dönüşecek. Bu yüzden acele etme.",
+    deger:
+      "Bunu, binlerce liralık çok değerli bir koçluk — bir mentorluk seansı gibi düşün. Tek farkı: buradaki rehber, kendi iç sesin.",
+    kosullar: [
+      {
+        ikon: "🤫",
+        baslik: "Yalnız ve sakin bir an seç",
+        metin: "Kimsenin seni bölmeyeceği, kendine dönebileceğin sessiz bir yer bul.",
+      },
+      {
+        ikon: "⏳",
+        baslik: "Kendine en az bir saat ayır",
+        metin: "Yarıda kalırsan sorun değil — kaldığın yerden devam edebilirsin. Ama mümkünse tek nefeste, dalarak yaşa.",
+      },
+      {
+        ikon: "🫀",
+        baslik: "Keyifle ve dürüstçe cevapla",
+        metin: "Doğru cevap yok; yalnız senin cevabın var. Ne kadar açılırsan, ayna seni o kadar net gösterir.",
+      },
+    ],
+    kvkkOnay:
+      "Verdiğim cevapların bu gelişim çalışması için güvenle işlenip saklanmasına onay veriyorum. Dilediğim an tüm verilerimi silebileceğimi biliyorum. ",
+    kvkkLink: "KVKK Aydınlatma Metni",
+    kvkkSon: "’ni okudum.",
+    dugme: "Hazırım, başlıyorum →",
+    basliyor: "Hazırlanıyor…",
+    hata: "Bir şey ters gitti — tekrar dene.",
+    dipnot: "Bu onay yalnız bir kez istenir; sonra kaldığın yerden devam edersin.",
+  },
   karsilama: {
     atla: "Geç",
     ileri: "İleri",

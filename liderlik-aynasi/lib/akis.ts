@@ -11,6 +11,7 @@
 
 export type AkisDurum = {
   // Katılımcı durumu
+  rizaVar: boolean; // KVKK/kutsal-alan hazırlık rızası verildi mi (consent_at)
   sesVar: boolean; // ses/foto ritüeli kaydı var mı (ya da "sessiz" seçildi)
   team: string | null; // atanmış grup
   campUnlocked: boolean; // kampa fiziksel giriş yapıldı mı
@@ -28,13 +29,20 @@ export type AkisDurum = {
 };
 
 export type AkisAdim =
+  | { tip: "hazirlik" } // kutsal-alan hazırlık + KVKK rızası ekranını göster (render)
   | { tip: "rituel" } // ses/foto ritüelini göster (redirect değil, render)
   | { tip: "yonlendir"; yol: string } // bu yola yönlendir
   | { tip: "devam" }; // kapı yok — ana akışa (durum makinesi) devam et
 
 // Kişinin yolculuğunun neresinde olduğuna göre TEK bir sonraki adımı döndürür.
 export function kampOncesiAdim(d: AkisDurum): AkisAdim {
-  // 1) FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Her şeyden önce gelir.
+  // 0) HAZIRLIK / KUTSAL ALAN — her şeyden ÖNCE. Kişi tonu (yalnız, sakin, ~1
+  // saat, kendine dönüş) kavrar ve KVKK rızasını verir. Rıza olmadan hiçbir
+  // veri toplayan adım açılmaz. (consent_at daha önce Pusula'da alınıyordu;
+  // artık en başta — daha güçlü, kayıtlı KVKK onayı.)
+  if (!d.rizaVar) return { tip: "hazirlik" };
+
+  // 1) FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Rızadan sonra gelir.
   if (!d.sesVar) return { tip: "rituel" };
 
   // 2) OYUN SEÇİMİ — seçim açıkken grubu olmayan kişi önce oyununu seçer.
