@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import YaziBoyu from "./YaziBoyu";
 import TemaSecimi from "./TemaSecimi";
+import SesSecimiEkrani from "./SesSecimiEkrani";
 
 // Üst-orta kimlik çipi + YARDIM. Çip her zaman en tepede sabit durur; ALTINDAKİ
 // boşluk gerçek yüksekliği kadar yer ayırır (sayfa onun altından başlar, çakışma
@@ -40,14 +41,17 @@ export default function KimsinBantClient({
   avatarUrl,
   ilkHarf,
   okunmamis = 0,
+  aynaSes = "erkek",
 }: {
   ad: string;
   avatarUrl: string | null;
   ilkHarf: string;
   okunmamis?: number;
+  aynaSes?: "erkek" | "kadin";
 }) {
   const [acik, setAcik] = useState(false);
   const [ayarlarAcik, setAyarlarAcik] = useState(false);
+  const [sesDegistirAcik, setSesDegistirAcik] = useState(false);
   // KIOSK: büyük ekran/sahne rotalarında kimlik çipi görünmez (sahne kromsuz).
   const pathname = usePathname();
   const kiosk = pathname === "/ekran" || pathname.startsWith("/ekran/") || pathname.startsWith("/sahne");
@@ -237,6 +241,20 @@ export default function KimsinBantClient({
               <TemaSecimi />
             </div>
 
+            {/* Ayna Sesi — kişi istediği an erkek/kadın tercihini değiştirebilir. */}
+            <div className="mt-5 border-t border-white/10 pt-4">
+              <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+                Aynanın Sesi
+              </p>
+              <button
+                onClick={() => setSesDegistirAcik(true)}
+                className="flex w-full items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3 text-sm text-slate-200 transition-colors hover:bg-white/[0.06]"
+              >
+                <span>🔊 Şu an: {aynaSes === "kadin" ? "Kadın ses" : "Erkek ses"} — değiştir</span>
+                <span aria-hidden className="text-slate-500">›</span>
+              </button>
+            </div>
+
             {/* KVKK / Gizlilik — verilerine hâkim ol: dilediğin an çık ya da sil. */}
             <div className="mt-5 border-t border-white/10 pt-4">
               <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
@@ -265,6 +283,28 @@ export default function KimsinBantClient({
             >
               Kapat
             </button>
+          </div>
+        </>
+      )}
+
+      {/* Ayna sesi değiştirme alt-modalı */}
+      {sesDegistirAcik && (
+        <>
+          <button
+            aria-label="Kapat"
+            onClick={() => setSesDegistirAcik(false)}
+            className="fixed inset-0 z-[60] cursor-default bg-black/60"
+          />
+          <div
+            role="dialog"
+            aria-label="Aynanın sesini değiştir"
+            className="fixed left-1/2 top-1/2 z-[61] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/10 bg-[#1a1035] py-6"
+          >
+            <SesSecimiEkrani
+              mevcutSes={aynaSes}
+              ayarModu
+              onKapat={() => setSesDegistirAcik(false)}
+            />
           </div>
         </>
       )}

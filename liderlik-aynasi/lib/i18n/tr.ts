@@ -135,6 +135,20 @@ export const tr = {
     hata: "Bir şey ters gitti — tekrar dene.",
     dipnot: "Bu onay yalnız bir kez istenir; sonra kaldığın yerden devam edersin.",
   },
+  // AYNA SESİ SEÇİMİ — hazırlıktan hemen sonra, ritüelden önce. Bu andan
+  // itibaren AYNA'nın tüm kişisel seslendirmeleri seçilen sesle konuşur.
+  sesSecimi: {
+    ust: "Son bir şey",
+    baslik: "Aynanın sesi nasıl olsun?",
+    aciklama: "AYNA seninle konuşurken hangi sesle seslensin? Dilediğin an değiştirebilirsin.",
+    erkek: "Erkek ses",
+    kadin: "Kadın ses",
+    dinle: "Dinle",
+    dinleniyor: "Çalıyor…",
+    dugme: "Bu sesle devam et →",
+    varsayilanNot: "Varsayılan: Erkek ses",
+    hata: "Bir şey ters gitti — tekrar dene.",
+  },
   karsilama: {
     atla: "Geç",
     ileri: "İleri",
