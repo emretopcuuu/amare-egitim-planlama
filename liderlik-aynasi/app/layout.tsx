@@ -15,6 +15,7 @@ import BildirimLogDinleyici from "@/components/BildirimLogDinleyici";
 import KimsinBant from "@/components/KimsinBant";
 import PwaKur from "@/components/PwaKur";
 import TarayicidaAc from "@/components/TarayicidaAc";
+import AyarlarKopuk from "@/components/AyarlarKopuk";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -111,6 +112,7 @@ export default async function RootLayout({
         {/* WhatsApp/Instagram iç tarayıcısında açıldıysa "gerçek tarayıcıda aç"
             uyarısı (yalnız o UA'larda görünür; akışı bozmaz, kapatılabilir). */}
         <TarayicidaAc />
+        <AyarlarKopuk />
         <AtlaBaglantisi />
         {/* Üst-orta "kimsin?" bandı: aday hangi sayfada olursa olsun adını görür */}
         <KimsinBant />
