@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { cekirdekTamam, nedenCumlesiKur } from "@/lib/degerler";
+import { krizDiliVarMi, krizUyarisiGonder } from "@/lib/guvenlik";
 import { tr } from "@/lib/i18n/tr";
 
 // DEĞERLER ÇALIŞMASI — kısmi/aşamalı kayıt (kaydet-devam). Her adımda istemci
@@ -57,6 +58,16 @@ export async function POST(req: Request) {
   for (const [k, v] of Object.entries(gelen)) {
     if (typeof v === "string") birlesik[k] = v.slice(0, METIN_MAX);
     else if (Array.isArray(v)) birlesik[k] = v.filter((x): x is string => typeof x === "string").slice(0, 20);
+  }
+
+  // GÜVENLİK SINIRI: değer/neden keşfi derin öz-yansıma metnidir. Yalnız BU
+  // kayıtta yeni gelen metinlerde gerçek kriz sinyali aranır (aşamalı kayıtta
+  // eski cevaplar tekrar taranmaz) → varsa admin bayrağı düşer.
+  for (const v of Object.values(gelen)) {
+    if (typeof v === "string" && krizDiliVarMi(v)) {
+      await krizUyarisiGonder(db, session.sub, session.ad, "degerler", v);
+      break;
+    }
   }
 
   const secilenUc = Array.isArray(body.secilenUc)

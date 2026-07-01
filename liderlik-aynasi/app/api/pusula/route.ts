@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { pusulaTuru, pusulaDurum, pusulaGecmis, onceliklerKaydet, pusulaSifirla, pusulaGeriAl, kariyerKaydet } from "@/lib/pusula";
+import { krizDiliVarMi, krizUyarisiGonder, KRIZ_YONLENDIRME } from "@/lib/guvenlik";
 import { tr } from "@/lib/i18n/tr";
 
 // FAZ 0 Nedenler — GET: devam (durum + geçmiş + rıza). POST: rıza / liste / tur.
@@ -91,7 +92,18 @@ export async function POST(req: Request) {
   // 3) Sohbet turu (eleme → boşluk → engel).
   const mesaj =
     typeof govde.mesaj === "string" && govde.mesaj.trim() ? govde.mesaj : null;
+
+  // GÜVENLİK SINIRI: Pusula "neden/boşluk/engel" sohbeti derin duygusal bir
+  // yüzeydir. Gerçek kriz/umutsuzluk sinyali → admin bayrağı + kişiye
+  // insan-mentor yönlendirmesi. Liderlik öz-şüphesi (normal malzeme) yakalanmaz.
+  const kriz = !!mesaj && krizDiliVarMi(mesaj);
+  if (kriz) {
+    await krizUyarisiGonder(db, session.sub, session.ad, "pusula", mesaj!);
+  }
+
   const tur = await pusulaTuru(db, { id: session.sub, full_name: session.ad }, mesaj);
   if (!tur) return Response.json({ hata: tr.pusula.aiHata }, { status: 503 });
-  return Response.json(tur);
+  return Response.json(
+    kriz ? { ...tur, mesaj: `${tur.mesaj}\n\n${KRIZ_YONLENDIRME}`, guvenlik: true } : tur
+  );
 }
