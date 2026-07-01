@@ -1514,6 +1514,18 @@ export const tr = {
     desteklenmiyor:
       "Bu tarayıcıda kamera açılamıyor. Linki Safari ya da Chrome'da aç (uygulama içi tarayıcı kamerayı engeller).",
     hata: "Gönderilemedi, tekrar dene.",
+    // Ekstra referans fotoğrafları — 3 zorunlu açıdan SONRA, isteğe bağlı.
+    // Video üretim motoru çoklu referans kabul ediyor: ne kadar çok fotoğraf,
+    // o kadar gerçekçi video.
+    ekstraBaslik: "Videonu daha da güçlendir",
+    ekstraAciklama:
+      "İstersen profilden, yukarıdan ya da boydan birkaç fotoğraf daha ekle — ne kadar çok fotoğraf yüklersen, videon o kadar gerçekçi çıkar.",
+    ekstraSec: "📷 Fotoğraf ekle",
+    ekstraYukleniyor: "Yükleniyor…",
+    ekstraEklendi: (n: number) => `${n} fotoğraf eklendi ✓`,
+    ekstraHata: "Yüklenemedi, tekrar dene.",
+    ekstraDoluHata: "Yeterince fotoğrafın var — daha fazlasına gerek yok.",
+    devamEt: "Devam Et",
   },
   // FAZ 3 — Reddi Kutla (Go-for-No / Fun Failure)
   red: {
