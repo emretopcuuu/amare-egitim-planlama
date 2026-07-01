@@ -31,9 +31,9 @@ export const DEGER_LISTESI: string[] = [
 
 export type Adim =
   // Tanıtım/geçiş paragrafı
-  | { kod: string; tip: "intro"; baslik: string; paragraf: string; dugme: string }
+  | { kod: string; tip: "intro"; baslik: string; vurgu?: string; paragrafVurgu?: string; paragraf: string; dugme: string }
   // Açık uçlu metin sorusu (refleksiyon — zorunlu değilse teşvik)
-  | { kod: string; tip: "metin"; baslik: string; vurgu?: string | string[]; degerSecimi?: boolean; ipuclari?: string[]; zorunlu?: boolean; guclu?: boolean }
+  | { kod: string; tip: "metin"; baslik: string; vurgu?: string | string[]; degerSecimi?: boolean; cokSecim?: boolean; ipuclari?: string[]; zorunlu?: boolean; guclu?: boolean }
   // Listeden tam N seçim (10 → 5 → 3)
   | { kod: "sec10" | "sec5" | "sec3"; tip: "sec"; baslik: string; aciklama: string; kaynak: "liste" | "sec10" | "sec5"; adet: number }
   // Bir değer için 5 ardışık "neden?" zinciri (degerIndeks: 0|1|2)
@@ -115,17 +115,6 @@ export const ADIMLAR: Adim[] = [
     paragraf: "Şu ana kadar verdiğin cevapları inceledim. Sende en güçlü öne çıkan değerler bunlar:",
   },
   {
-    kod: "secimGiris",
-    tip: "intro",
-    baslik: "Yaşam Pusulan",
-    paragraf:
-      "Şimdi sana en çok uyan değerleri seçeceğiz. Önce 10, sonra 5, en sonunda hiçbir koşulda vazgeçemeyeceğin 3 temel değerini belirleyeceğiz. İşte bunlar senin yaşam pusulan olacak.",
-    dugme: "Değerleri Seç",
-  },
-  { kod: "sec10", tip: "sec", baslik: "Sana en çok uyan 10 değeri seç", aciklama: "Listeden tam 10 değer işaretle.", kaynak: "liste", adet: 10 },
-  { kod: "sec5", tip: "sec", baslik: "Şimdi 5’e indir", aciklama: "Seçtiğin 10 değerden en güçlü 5’ini bırak.", kaynak: "sec10", adet: 5 },
-  { kod: "sec3", tip: "sec", baslik: "Son olarak, 3 temel değerin", aciklama: "Hiçbir koşulda vazgeçemeyeceğin 3 değerini seç.", kaynak: "sec5", adet: 3 },
-  {
     kod: "farkGiris",
     tip: "intro",
     baslik: "Farkındalık",
@@ -141,9 +130,11 @@ export const ADIMLAR: Adim[] = [
   {
     kod: "nedenGiris",
     tip: "intro",
-    baslik: "Şimdi: Nedenlerin",
+    baslik: "Şimdi sıra NEDENlerinde!",
+    vurgu: "NEDEN",
+    paragrafVurgu: "Değerler sana yönünü gösterir; nedenlerin ise sana hareket etme gücü verir.",
     paragraf:
-      "Değerler sana yönünü gösterir; nedenlerin ise sana hareket etme gücü verir. Her hedefin, her kararın arkasında görünmeyen bir “neden” vardır. İnsanlar çoğu zaman hedeflerinden değil, nedenlerinden güç alırlar. Şimdi seni gerçekten harekete geçiren içsel motivasyonu keşfedelim.",
+      "Her hedefin, her kararın arkasında görünmeyen bir “neden” vardır. İnsanlar çoğu zaman hedeflerinden değil, nedenlerinden güç alırlar. Şimdi seni gerçekten harekete geçiren içsel motivasyonu keşfedelim.",
     dugme: "Nedenimi Keşfet",
   },
   { kod: "neden0", tip: "neden", baslik: "1. değerin için “neden?” zinciri", degerIndeks: 0, zorunlu: true },

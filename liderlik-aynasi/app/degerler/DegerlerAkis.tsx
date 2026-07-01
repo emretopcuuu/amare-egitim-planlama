@@ -229,7 +229,9 @@ export default function DegerlerAkis() {
     })
       .then((r) => r.json())
       .then((d: { degerler?: string[] }) => {
-        setAiOneri(d.degerler ?? []);
+        const degerler = d.degerler ?? [];
+        setAiOneri(degerler);
+        setSecilenUc(degerler);
         setAiYukleniyor(false);
       })
       .catch(() => { setAiOneri([]); setAiYukleniyor(false); });
@@ -347,8 +349,13 @@ export default function DegerlerAkis() {
         <div key={adim} className={parla ? "of-parla" : ""}>
           {a.tip === "intro" && (
             <div className="py-8 text-center">
-              <h1 className="prizma-serif ay-metin text-3xl font-bold leading-tight">{a.baslik}</h1>
-              <p className="mt-5 text-lg leading-relaxed text-slate-200">{a.paragraf}</p>
+              <h1 className="prizma-serif ay-metin text-3xl font-bold leading-tight">
+                {a.vurgu ? vurguRender(a.baslik, a.vurgu) : a.baslik}
+              </h1>
+              {a.paragrafVurgu && (
+                <p className="mt-5 text-lg font-semibold leading-relaxed text-gold-light">{a.paragrafVurgu}</p>
+              )}
+              <p className={`${a.paragrafVurgu ? "mt-3" : "mt-5"} text-lg leading-relaxed text-slate-200`}>{a.paragraf}</p>
               <AynaSesButonu anahtar={`degerler_${a.kod}`} />
             </div>
           )}
@@ -377,7 +384,7 @@ export default function DegerlerAkis() {
                       </div>
                     ))}
                     <p className="mt-3 text-xs text-slate-500">
-                      Bu değerler bir sonraki adımda sana önerilecek. İstersen farklı seçimler de yapabilirsin.
+                      Bu değerler bu yolculukta sana rehber olacak.
                     </p>
                   </div>
                 ) : (
@@ -409,15 +416,28 @@ export default function DegerlerAkis() {
               )}
               {a.degerSecimi && secilenUc.length > 0 && (
                 <div className="mt-5">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">Üç değerinizden birini seçin</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
+                    {a.cokSecim ? "Beş değerinizden seçin" : "Beş değerinizden birini seçin"}
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {secilenUc.map((d) => {
-                      const secili = metin(a.kod) === d;
+                      const secili = a.cokSecim
+                        ? (Array.isArray(cevaplar[a.kod]) ? (cevaplar[a.kod] as string[]).includes(d) : false)
+                        : metin(a.kod) === d;
                       return (
                         <button
                           key={d}
                           type="button"
-                          onClick={() => metinDegis(a.kod, secili ? "" : d)}
+                          onClick={() => {
+                            if (a.cokSecim) {
+                              const mevcut = Array.isArray(cevaplar[a.kod]) ? (cevaplar[a.kod] as string[]) : [];
+                              const yeni = secili ? mevcut.filter((x) => x !== d) : [...mevcut, d];
+                              setCevaplar((c) => ({ ...c, [a.kod]: yeni }));
+                              setUyari(null);
+                            } else {
+                              metinDegis(a.kod, secili ? "" : d);
+                            }
+                          }}
                           className={`rounded-full border px-5 py-2 text-sm font-semibold transition-all active:scale-95 ${
                             secili
                               ? "border-gold bg-gold/20 text-gold-light"
@@ -552,7 +572,7 @@ export default function DegerlerAkis() {
             disabled={kaydediliyor}
             className="btn-kor flex h-12 flex-1 items-center justify-center rounded-xl text-base font-bold disabled:opacity-60"
           >
-            {a.tip === "ai_oneri" ? (aiYukleniyor ? "Analiz ediliyor…" : "Değerlerimi Seç →") : a.tip === "intro" && "dugme" in a ? a.dugme : sonAdim ? "Tamamla →" : "İleri →"}
+            {a.tip === "ai_oneri" ? (aiYukleniyor ? "Analiz ediliyor…" : "Devam →") : a.tip === "intro" && "dugme" in a ? a.dugme : sonAdim ? "Tamamla →" : "İleri →"}
           </button>
         </div>
       </main>
