@@ -35,6 +35,33 @@ function vurguRender(baslik: string, vurgu: string | string[]): React.ReactNode 
   return <>{parts}</>;
 }
 
+// Değer → emoji + şiirsel etiket haritaları (ai_oneri kartları)
+const DEGER_EMOJI: Record<string, string> = {
+  "Sevgi": "❤️", "Aile": "🏠", "Sağlık": "💪", "Özgürlük": "🦅",
+  "Güven": "🛡️", "Dürüstlük": "💎", "Başarı": "🔥", "Gelişim": "🌱",
+  "Saygı": "🤝", "Huzur": "🌊", "Anlam": "✨", "Mutluluk": "☀️",
+  "Öğrenme": "📚", "Bağımsızlık": "🌿", "Katkı sağlamak": "🌟",
+  "Adalet": "⚖️", "Sorumluluk": "🎯", "Liderlik": "👑",
+  "Yaratıcılık": "🎨", "Yaşam dengesi": "🧘",
+};
+const DEGER_ETIKET: Record<string, string> = {
+  "Sevgi": "Tüm kararlarının özü", "Aile": "Güç kaynağın",
+  "Sağlık": "Temelinsin", "Özgürlük": "Nefessin",
+  "Güven": "Zırhın", "Dürüstlük": "Pusulan",
+  "Başarı": "İtici gücün", "Gelişim": "Yolculuğun",
+  "Saygı": "Köprün", "Huzur": "Sığınağın",
+  "Anlam": "Ateşin", "Mutluluk": "Işığın",
+  "Öğrenme": "Kanatların", "Bağımsızlık": "Özgün sessin",
+  "Katkı sağlamak": "Mirasın", "Adalet": "Kılıcın",
+  "Sorumluluk": "Omurgan", "Liderlik": "Yolunsu",
+  "Yaratıcılık": "Ruhunun rengi", "Yaşam dengesi": "Ritmin",
+};
+
+const NEDEN_YEDEK: Record<number, string> = {
+  2: "Peki bu sana neden bu kadar önemli? Daha derine git — gerçek nedeni bul.",
+  3: "Bu değer olmadan nasıl biri olurdun? Hayatında ne eksik kalırdı?",
+};
+
 // AYNA'nın ElevenLabs sesiyle intro metnini okutan buton.
 // /api/ayna-ses?k=degerler_<kod> → mp3; ses yoksa 503 → sessizce gizlenir.
 function AynaSesButonu({ anahtar }: { anahtar: string }) {
@@ -183,6 +210,8 @@ export default function DegerlerAkis() {
   const [secilenUc, setSecilenUc] = useState<string[]>([]);
   const [aiOneri, setAiOneri] = useState<string[] | null>(null);
   const [aiYukleniyor, setAiYukleniyor] = useState(false);
+  const [nedenSorular, setNedenSorular] = useState<Record<string, string>>({});
+  const [nedenSoruYukleniyor, setNedenSoruYukleniyor] = useState<Record<string, boolean>>({});
   const ustRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -208,6 +237,7 @@ export default function DegerlerAkis() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
     setParla(true);
+    setUyari(null);
     const id = setTimeout(() => setParla(false), 420);
     return () => clearTimeout(id);
   }, [adim]);
@@ -229,10 +259,52 @@ export default function DegerlerAkis() {
     })
       .then((r) => r.json())
       .then((d: { degerler?: string[] }) => {
-        setAiOneri(d.degerler ?? []);
+        const degerler = d.degerler ?? [];
+        setAiOneri(degerler);
+        setSecilenUc(degerler);
         setAiYukleniyor(false);
       })
       .catch(() => { setAiOneri([]); setAiYukleniyor(false); });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adim]);
+
+  // Sarmal neden: tur 2 ve 3 için AI sorusu çek (tur 1 sabit soru)
+  useEffect(() => {
+    const a = ADIMLAR[adim];
+    if (a?.tip !== "neden_soru" || a.tur === 1) return;
+    const clef = `${a.degerIndeks}_${a.tur}`;
+    if (nedenSorular[clef] !== undefined || nedenSoruYukleniyor[clef]) return;
+    const deger = secilenUc[a.degerIndeks];
+    if (!deger) {
+      setNedenSorular((s) => ({ ...s, [clef]: NEDEN_YEDEK[a.tur] ?? "" }));
+      return;
+    }
+    const oncekiCevaplar: string[] = [];
+    for (let t = 1; t < a.tur; t++) {
+      const v = typeof cevaplar[`nd_${a.degerIndeks}_${t}`] === "string"
+        ? (cevaplar[`nd_${a.degerIndeks}_${t}`] as string).trim()
+        : "";
+      if (v) oncekiCevaplar.push(v);
+    }
+    if (!oncekiCevaplar.length) {
+      setNedenSorular((s) => ({ ...s, [clef]: NEDEN_YEDEK[a.tur] ?? "" }));
+      return;
+    }
+    setNedenSoruYukleniyor((s) => ({ ...s, [clef]: true }));
+    fetch("/api/degerler/neden-derinles", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ deger, tur: a.tur, oncekiCevaplar }),
+    })
+      .then((r) => r.json())
+      .then((d: { soru?: string }) => {
+        setNedenSorular((s) => ({ ...s, [clef]: d.soru ?? NEDEN_YEDEK[a.tur] ?? "" }));
+        setNedenSoruYukleniyor((s) => ({ ...s, [clef]: false }));
+      })
+      .catch(() => {
+        setNedenSorular((s) => ({ ...s, [clef]: NEDEN_YEDEK[a.tur] ?? "" }));
+        setNedenSoruYukleniyor((s) => ({ ...s, [clef]: false }));
+      });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [adim]);
 
@@ -294,6 +366,7 @@ export default function DegerlerAkis() {
     }
     if (a.tip === "cumle" && a.zorunlu && !metin(a.kod).trim()) return "Bu cümleyi tamamla.";
     if (a.tip === "metin" && a.zorunlu && !metin(a.kod).trim()) return "Bu soruyu yanıtla.";
+    if (a.tip === "neden_soru" && a.zorunlu && !metin(a.kod).trim()) return "Bu soruyu yanıtla.";
     return null;
   }
 
@@ -347,45 +420,80 @@ export default function DegerlerAkis() {
         <div key={adim} className={parla ? "of-parla" : ""}>
           {a.tip === "intro" && (
             <div className="py-8 text-center">
-              <h1 className="prizma-serif ay-metin text-3xl font-bold leading-tight">{a.baslik}</h1>
-              <p className="mt-5 text-lg leading-relaxed text-slate-200">{a.paragraf}</p>
+              <h1 className="prizma-serif ay-metin text-3xl font-bold leading-tight">
+                {a.vurgu ? vurguRender(a.baslik, a.vurgu) : a.baslik}
+              </h1>
+              {a.paragrafVurgu && (
+                <p className="mt-5 text-lg font-semibold leading-relaxed text-gold-light">{a.paragrafVurgu}</p>
+              )}
+              <p className={`${a.paragrafVurgu ? "mt-3" : "mt-5"} text-lg leading-relaxed text-slate-200`}>{a.paragraf}</p>
               <AynaSesButonu anahtar={`degerler_${a.kod}`} />
             </div>
           )}
 
           {a.tip === "ai_oneri" && (
-            <div className="py-6">
-              <h1 className="prizma-serif ay-metin text-3xl font-bold leading-tight">{a.baslik}</h1>
-              <p className="mt-4 text-base leading-relaxed text-slate-300">{a.paragraf}</p>
-              <div className="mt-8">
-                {aiYukleniyor ? (
-                  <div className="flex flex-col items-center gap-4 py-6">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold/30 border-t-gold" />
-                    <p className="text-sm text-slate-400">Cevapların analiz ediliyor…</p>
-                  </div>
-                ) : aiOneri && aiOneri.length > 0 ? (
-                  <div className="flex flex-col gap-3">
-                    {aiOneri.map((d, i) => (
-                      <div
-                        key={d}
-                        className="flex items-center gap-4 rounded-2xl border border-gold/25 bg-gold/[0.07] px-5 py-4"
-                      >
-                        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gold/20 text-sm font-bold text-gold">
-                          {i + 1}
-                        </span>
-                        <span className="text-lg font-semibold text-slate-100">{d}</span>
-                      </div>
-                    ))}
-                    <p className="mt-3 text-xs text-slate-500">
-                      Bu değerler bir sonraki adımda sana önerilecek. İstersen farklı seçimler de yapabilirsin.
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-slate-500">
-                    Refleksiyon sorularını yanıtladıkça analiz daha iyi çalışır.
-                  </p>
-                )}
+            <div className="py-4">
+              {/* Başlık */}
+              <div className="mb-6 text-center">
+                <h1 className="prizma-serif text-2xl font-black tracking-wide">
+                  <span className="text-gold">✦ SENİN </span>
+                  <span className="text-slate-100">DEĞERLERİN</span>
+                  <span className="text-gold"> ✦</span>
+                </h1>
+                <p className="mt-2 text-sm text-slate-400">{a.paragraf}</p>
               </div>
+
+              {aiYukleniyor ? (
+                <div className="flex flex-col items-center gap-4 py-8">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-gold/30 border-t-gold" />
+                  <p className="text-sm text-slate-400">Cevapların analiz ediliyor…</p>
+                </div>
+              ) : aiOneri && aiOneri.length > 0 ? (
+                <div className="flex flex-col gap-2.5">
+                  {aiOneri.map((d, i) => {
+                    const barGenislik = [100, 85, 72, 61, 52][i] ?? 50;
+                    const emoji = DEGER_EMOJI[d] ?? "✦";
+                    const etiket = DEGER_ETIKET[d] ?? "";
+                    if (i === 0) return (
+                      <div key={d} className="rounded-2xl border border-gold bg-gradient-to-br from-[#1a1206] to-[#271a07] px-5 py-4 shadow-[0_0_24px_#d4af3720]">
+                        <div className="mb-3 flex items-center gap-3">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gold text-sm font-black text-[#1a1206]">1</span>
+                          <span className="text-2xl">{emoji}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xl font-black leading-none text-[#fef3c7]">{d}</div>
+                            {etiket && <div className="mt-0.5 text-[0.62rem] font-bold uppercase tracking-widest text-gold">{etiket}</div>}
+                          </div>
+                        </div>
+                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                          <div className="h-full w-full rounded-full bg-gradient-to-r from-[#b8891e] to-[#d4af37]" />
+                        </div>
+                      </div>
+                    );
+                    return (
+                      <div key={d} className="rounded-xl border border-white/10 bg-white/[0.04] px-4 py-3">
+                        <div className="mb-2 flex items-center gap-2.5">
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold/20 text-[0.62rem] font-bold text-gold">{i + 1}</span>
+                          <span className="text-lg">{emoji}</span>
+                          <div className="min-w-0 flex-1">
+                            <div className="text-base font-bold leading-none text-slate-100">{d}</div>
+                            {etiket && <div className="mt-0.5 text-[0.58rem] font-semibold italic text-slate-500">{etiket}</div>}
+                          </div>
+                        </div>
+                        <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
+                          <div className="h-full rounded-full bg-gradient-to-r from-[#b8891e]/70 to-[#d4af37]/70" style={{ width: `${barGenislik}%` }} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <p className="mt-2 text-center text-xs text-slate-500">
+                    Bu değerler bu yolculukta sana rehber olacak.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-slate-500">
+                  Refleksiyon sorularını yanıtladıkça analiz daha iyi çalışır.
+                </p>
+              )}
             </div>
           )}
 
@@ -409,15 +517,28 @@ export default function DegerlerAkis() {
               )}
               {a.degerSecimi && secilenUc.length > 0 && (
                 <div className="mt-5">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">Üç değerinizden birini seçin</p>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-slate-500">
+                    {a.cokSecim ? "Beş değerinizden seçin" : "Beş değerinizden birini seçin"}
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {secilenUc.map((d) => {
-                      const secili = metin(a.kod) === d;
+                      const secili = a.cokSecim
+                        ? (Array.isArray(cevaplar[a.kod]) ? (cevaplar[a.kod] as string[]).includes(d) : false)
+                        : metin(a.kod) === d;
                       return (
                         <button
                           key={d}
                           type="button"
-                          onClick={() => metinDegis(a.kod, secili ? "" : d)}
+                          onClick={() => {
+                            if (a.cokSecim) {
+                              const mevcut = Array.isArray(cevaplar[a.kod]) ? (cevaplar[a.kod] as string[]) : [];
+                              const yeni = secili ? mevcut.filter((x) => x !== d) : [...mevcut, d];
+                              setCevaplar((c) => ({ ...c, [a.kod]: yeni }));
+                              setUyari(null);
+                            } else {
+                              metinDegis(a.kod, secili ? "" : d);
+                            }
+                          }}
                           className={`rounded-full border px-5 py-2 text-sm font-semibold transition-all active:scale-95 ${
                             secili
                               ? "border-gold bg-gold/20 text-gold-light"
@@ -488,6 +609,89 @@ export default function DegerlerAkis() {
             </div>
           )}
 
+          {a.tip === "neden_soru" && (
+            <div className="flex flex-col gap-4">
+              {/* Değer başlığı + tur ilerleme noktaları */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                    {a.degerIndeks === 0 ? "1." : a.degerIndeks === 1 ? "2." : "3."}{" Değer · "}
+                    <span className="text-gold/70">{a.tur}. Tur</span>
+                  </p>
+                  <h2 className="mt-0.5 text-3xl font-black leading-tight text-gold truncate">
+                    {secilenUc[a.degerIndeks] ?? "—"}
+                  </h2>
+                </div>
+                <div className="flex items-center gap-1.5 pt-2 shrink-0">
+                  {[1, 2, 3].map((t) => (
+                    <span
+                      key={t}
+                      className={`rounded-full transition-all ${
+                        t === a.tur
+                          ? "h-2.5 w-2.5 bg-gold"
+                          : t < a.tur
+                            ? "h-2 w-2 bg-gold/40"
+                            : "h-2 w-2 bg-white/15"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Önceki cevaplar (tur 2 ve 3) */}
+              {a.tur > 1 && (
+                <div className="space-y-2">
+                  {Array.from({ length: a.tur - 1 }, (_, i) => i + 1).map((t) => {
+                    const v = metin(`nd_${a.degerIndeks}_${t}`);
+                    return v.trim() ? (
+                      <div
+                        key={t}
+                        className="rounded-xl border border-white/[0.07] bg-white/[0.03] px-4 py-2.5 text-sm italic leading-relaxed text-slate-400"
+                      >
+                        &ldquo;{v.trim()}&rdquo;
+                      </div>
+                    ) : null;
+                  })}
+                </div>
+              )}
+
+              {/* Soru kutusu + textarea */}
+              {(() => {
+                const clef = `${a.degerIndeks}_${a.tur}`;
+                const yukleniyor = !!nedenSoruYukleniyor[clef];
+                const soru =
+                  a.tur === 1
+                    ? "Bu değer benim için neden önemli?"
+                    : (nedenSorular[clef] ?? NEDEN_YEDEK[a.tur]);
+                return (
+                  <>
+                    {yukleniyor ? (
+                      <div className="flex items-center gap-2.5 rounded-xl border border-gold/15 bg-gold/[0.04] px-4 py-3 text-sm text-slate-400">
+                        <span className="h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-gold/30 border-t-gold" />
+                        AYNA bir sonraki soru hazırlıyor…
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-royal/30 bg-royal/[0.08] px-4 py-3">
+                        <p className="mb-1 text-[0.65rem] font-semibold uppercase tracking-widest text-slate-500">
+                          {a.tur === 1 ? "İlk soru" : a.tur === 2 ? "✦ AYNA soruyor" : "Son soru"}
+                        </p>
+                        <p className="text-xl font-bold leading-snug text-slate-100">{soru}</p>
+                      </div>
+                    )}
+                    <textarea
+                      value={metin(a.kod)}
+                      onChange={(e) => metinDegis(a.kod, e.target.value)}
+                      rows={4}
+                      placeholder={a.zorunlu ? "Buraya yaz…" : "Dilersen yaz, dilersen geç…"}
+                      className="w-full resize-y rounded-2xl border border-white/15 bg-white/[0.04] p-4 text-base leading-relaxed text-slate-100 outline-none focus:border-gold/50"
+                    />
+                    <SesliYazButonu onEkle={(t) => metinEkle(a.kod, t)} />
+                  </>
+                );
+              })()}
+            </div>
+          )}
+
           {a.tip === "neden" && (
             <div>
               <h2 className="text-2xl font-bold leading-snug text-slate-100">{a.baslik}</h2>
@@ -552,7 +756,7 @@ export default function DegerlerAkis() {
             disabled={kaydediliyor}
             className="btn-kor flex h-12 flex-1 items-center justify-center rounded-xl text-base font-bold disabled:opacity-60"
           >
-            {a.tip === "ai_oneri" ? (aiYukleniyor ? "Analiz ediliyor…" : "Değerlerimi Seç →") : a.tip === "intro" && "dugme" in a ? a.dugme : sonAdim ? "Tamamla →" : "İleri →"}
+            {a.tip === "ai_oneri" ? (aiYukleniyor ? "Analiz ediliyor…" : "Devam →") : a.tip === "intro" && "dugme" in a ? a.dugme : sonAdim ? "Tamamla →" : "İleri →"}
           </button>
         </div>
       </main>
