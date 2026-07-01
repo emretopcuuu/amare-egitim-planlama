@@ -7,18 +7,20 @@ import { ortuAc, ortuKapat } from "@/lib/ortu";
 import AynaIkon from "@/components/AynaIkon";
 import AynaSesi from "@/components/AynaSesi";
 import MuhurIkon from "@/components/MuhurIkon";
+import CanliAyna from "@/components/CanliAyna";
 
 const t = tr.rituel;
 
 // SES RİTÜELİ — YANSIMAN'ın doğum anı, TAM EKRAN sihirbaz.
 // UX ilkesi: her ekranda TEK iş, az yazı, BÜYÜK yazı, tek ana buton.
-// Akış: davet → onay (iki dev buton) → yemin → soru → uyanış → ses.
-// NOT: Açılış selfie'si KALDIRILDI — avatar artık Canlı Ayna'nın "düz" karesinden
-// gelir (tek yüz anı). Tek fotoğraf, hem avatar hem video referansı.
+// Akış: davet → onay (iki dev buton) → YÜZ YAKALA (Canlı Ayna, gömülü) → yemin
+// → soru → uyanış → ses. Kimliğin doğuşu artık TEK törende: yüz + ses birlikte.
+// Yüz yakalama zorunlu değil — atlayan kişi Pusula hub'ında sonradan yapabilir.
 
 type Asama =
   | "giris"
   | "onay"
+  | "yuzYakala"
   | "yeminHazirlik"
   | "kayit"
   | "soru"
@@ -461,11 +463,32 @@ export default function AynaRituel() {
             </h1>
             <p className="mt-6 text-xl leading-relaxed text-slate-200">{t.onay}</p>
             <div className="mt-10 space-y-4">
-              <DevButon onClick={() => setAsama("yeminHazirlik")}>{t.onayla}</DevButon>
+              <DevButon onClick={() => setAsama("yuzYakala")}>{t.onayla}</DevButon>
               <DevButon onClick={sessizSec} ikincil>
                 {t.sessiz}
               </DevButon>
             </div>
+          </div>
+        )}
+
+        {asama === "yuzYakala" && (
+          <div className="text-center">
+            <AynaIkon className="mx-auto h-12 w-12 text-gold/85" />
+            <h1 className="prizma-serif ay-metin mt-4 text-3xl font-semibold leading-tight">
+              {t.yuzYakalaBaslik}
+            </h1>
+            <p className="mt-4 text-lg leading-relaxed text-slate-300">
+              {t.yuzYakalaAciklama}
+            </p>
+            <div className="mt-8">
+              <CanliAyna gomulu onTamam={() => setAsama("yeminHazirlik")} />
+            </div>
+            <button
+              onClick={() => setAsama("yeminHazirlik")}
+              className="mt-6 text-base text-slate-500 underline-offset-4 hover:underline"
+            >
+              {t.yuzYakalaAtla}
+            </button>
           </div>
         )}
 
