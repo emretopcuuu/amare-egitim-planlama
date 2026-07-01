@@ -2,7 +2,19 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ADIMLAR, DEGER_LISTESI, nedenKodlari, type Adim } from "@/lib/degerler";
+import {
+  ADIMLAR,
+  DEGER_LISTESI,
+  nedenKodlari,
+  nedenCumlesiKur,
+  BOLUM_ADLARI,
+  bolumIndeksi,
+  bolumToplamAdim,
+  bolumIcindekiSira,
+  type Adim,
+} from "@/lib/degerler";
+import AsamaRayi, { type RayAsama } from "@/components/AsamaRayi";
+import Konfeti from "@/components/Konfeti";
 
 // DEĞERLER ÇALIŞMASI sihirbazı — adım-adım, kaydet-devam, geri tuşlu, user-friendly.
 // Çekirdek (3 değer + 1. neden + cümleler + final) zorunlu; gerisi teşvik.
@@ -223,7 +235,7 @@ function SesliYazButonu({ onEkle }: { onEkle: (metin: string) => void }) {
   );
 }
 
-export default function DegerlerAkis() {
+export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = {}) {
   const router = useRouter();
   const [yuklendi, setYuklendi] = useState(false);
   const [adim, setAdim] = useState(0);
@@ -235,6 +247,10 @@ export default function DegerlerAkis() {
   const [aiYukleniyor, setAiYukleniyor] = useState(false);
   const [nedenSorular, setNedenSorular] = useState<Record<string, string>>({});
   const [nedenSoruYukleniyor, setNedenSoruYukleniyor] = useState<Record<string, boolean>>({});
+  // Son adım ("final") bitince ana sayfaya ANINDA atmak yerine kapanış ekranı
+  // gösterilir — Pusula/Hedef/Farkındalık'taki kanıtlı desenle aynı: kişinin
+  // en ağır soruyu yanıtladığı an bir törenle kapanır, sessizce atılmaz.
+  const [kapanisGoster, setKapanisGoster] = useState(false);
   const ustRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLElement | null>(null);
 
@@ -417,14 +433,13 @@ export default function DegerlerAkis() {
     const hata = ilerlenebilir(a);
     if (hata) { setUyari(hata); return; }
     await kaydet();
-    gecisYap(() => {
-      if (adim < TOPLAM - 1) {
-        setAdim((x) => x + 1);
-      } else {
-        router.push("/");
-        router.refresh();
-      }
-    });
+    if (adim < TOPLAM - 1) {
+      gecisYap(() => setAdim((x) => x + 1));
+    } else {
+      // Son (en ağır) soru yanıtlandı — sessizce ana sayfaya atmak yerine
+      // kendi neden cümlesini ona geri veren bir kapanış ekranı gösterilir.
+      setKapanisGoster(true);
+    }
   }
 
   function geri() {
@@ -438,6 +453,41 @@ export default function DegerlerAkis() {
     return <div className="flex min-h-dvh items-center justify-center text-slate-400">Yükleniyor…</div>;
   }
 
+  if (kapanisGoster) {
+    const nedenCumlesi = nedenCumlesiKur(cevaplar as Record<string, string>);
+    return (
+      <>
+        <div className="fixed inset-0 z-0 bg-[#06121e]" aria-hidden />
+        <Konfeti anahtar="kutlama-degerler" />
+        <main className="relative z-10 mx-auto flex min-h-dvh w-full max-w-lg flex-col items-center justify-center px-6 py-10 text-center">
+          <p className="text-6xl" aria-hidden>💎</p>
+          <h1 className="prizma-serif ay-metin mt-5 text-3xl font-bold leading-tight">
+            Artık kim olduğunu biliyorsun
+          </h1>
+          {nedenCumlesi && (
+            <div className="mt-6 rounded-2xl border border-gold/25 bg-gold/[0.06] px-5 py-4">
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">
+                Sen dedin ki
+              </p>
+              <p className="prizma-serif ay-metin mt-2 text-lg italic leading-relaxed text-gold-light">
+                “{nedenCumlesi}”
+              </p>
+            </div>
+          )}
+          <p className="mt-5 max-w-sm text-base leading-relaxed text-slate-300">
+            Bu senin çekirdeğin. Şimdi bu çekirdekten yola çıkarak, seni harekete geçiren derin nedenini keşfedeceğiz.
+          </p>
+          <button
+            onClick={() => { router.push("/"); router.refresh(); }}
+            className="btn-kor parilti mt-8 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold"
+          >
+            Şimdi Pusulanı Kur →
+          </button>
+        </main>
+      </>
+    );
+  }
+
   const a = ADIMLAR[adim];
   const sonAdim = adim === TOPLAM - 1;
 
@@ -448,19 +498,33 @@ export default function DegerlerAkis() {
 
       <main ref={(el) => { contentRef.current = el; }} className="relative z-10 mx-auto w-full max-w-xl px-5 pb-10 pt-[calc(env(safe-area-inset-top,0px)+3.5rem+1rem)]">
         <div ref={ustRef} />
+        {ustRay && <div className="mb-3">{ustRay}</div>}
 
-        {/* İlerleme */}
-        <div className="mb-5">
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-500"
-              style={{ width: `${((adim + 1) / TOPLAM) * 100}%` }}
-            />
-          </div>
-          <p className="mt-1.5 text-xs font-medium uppercase tracking-wide text-slate-500">
-            Adım {adim + 1} / {TOPLAM}
-          </p>
-        </div>
+        {/* İlerleme — "Adım 23/41" yerine 5 bölümlük ray + bölüm-içi ilerleme.
+            "40 adım" korkusunu, bütünsel ve sindirilir bir haritaya çevirir. */}
+        {(() => {
+          const suankiBolum = bolumIndeksi(a.kod);
+          const rayAsamalar: RayAsama[] = BOLUM_ADLARI.map((ad, i) => ({
+            ad,
+            durum: i < suankiBolum ? "tamam" : i === suankiBolum ? "simdi" : "bekliyor",
+          }));
+          const localSira = bolumIcindekiSira(adim);
+          const localToplam = bolumToplamAdim(suankiBolum);
+          return (
+            <div className="mb-5">
+              <AsamaRayi asamalar={rayAsamalar} />
+              <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-gold-dim to-gold transition-all duration-500"
+                  style={{ width: `${(localSira / localToplam) * 100}%` }}
+                />
+              </div>
+              <p className="mt-1.5 text-center text-xs font-medium uppercase tracking-wide text-slate-500">
+                Bölüm {suankiBolum + 1}/5 — {BOLUM_ADLARI[suankiBolum]} · {localSira}/{localToplam}
+              </p>
+            </div>
+          );
+        })()}
 
         {/* İçerik — ışıma (of-parla) AYRI bir arka plan katmanıdır; sınıfı
             doğrudan içeriğe verirsek içerik `position:absolute; z-index:-1`

@@ -6,7 +6,6 @@ import { acikDalga, aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { hedefKapisiAcik } from "@/lib/hedef";
 import { kampOncesiAdim } from "@/lib/akis";
-import { kampGunu } from "@/lib/kampProgrami";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { sozTakipAktif, sahitSayim } from "@/lib/sozTakip";
 import { tr } from "@/lib/i18n/tr";
@@ -19,7 +18,7 @@ import GeriSayim from "@/components/GeriSayim";
 import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
 import MuhurTuru from "@/components/MuhurTuru";
-import YolculukHaritasi from "@/components/YolculukHaritasi";
+import OnboardingRayi from "@/components/OnboardingRayi";
 import KampHud from "@/components/KampHud";
 import GorusmeSimdi from "@/components/GorusmeSimdi";
 import KonusanYansima from "@/components/KonusanYansima";
@@ -354,9 +353,8 @@ export default async function AnaSayfa({
   const bugunIst = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
   }).format(new Date());
-  // Kamp günü etiketi: kampın başlatıldığı tarihten türetilir (sabit takvim değil).
+  // Kamp başlangıcı: KampHud kendi gün hesabını buradan türetir.
   const kampBaslangic = await kampBaslangicGetir(db);
-  const kampGunNo = kampGunu(bugunIst, kampBaslangic);
   // eslint-disable-next-line react-hooks/purity
   const istekAni = Date.now();
 
@@ -503,20 +501,9 @@ export default async function AnaSayfa({
           Bu yüzden YALNIZ kamp öncesinde gösterilir; kamp boyunca gizlenir. */}
       {!kisi?.camp_unlocked_at && (
         <div className="mt-2">
-          <YolculukHaritasi
-            siradaEtiket={tr.yolculuk.sirada}
-            gunEtiketi={kampGunNo ? `Gün ${kampGunNo}` : undefined}
-            fazlar={[
-              { ad: tr.yolculuk.faz.rituel, tamam: !!sesVarRow },
-              { ad: tr.yolculuk.faz.oyun, tamam: !!kisi?.team },
-              { ad: tr.yolculuk.faz.degerler, tamam: !!degerlerDurum?.tamamlandi_at },
-              { ad: tr.yolculuk.faz.pusula, tamam: !!pusulaErken?.tamamlandi_at },
-              { ad: tr.yolculuk.faz.hedef, tamam: !!hedefErken?.tamamlandi_at },
-              { ad: tr.yolculuk.faz.farkindalik, tamam: !!ofDurum?.tamamlandi_at },
-              { ad: tr.yolculuk.faz.kamp, tamam: !!kisi?.camp_unlocked_at },
-              { ad: tr.yolculuk.faz.rapor, tamam: raporlarAcik },
-            ]}
-          />
+          {/* ONBOARDING RAYI — tüm 6 faz + Kamp tek bakışta; bitirdiğin faza
+              tıklayıp geri dönebilirsin, henüz açmadığına atlayamazsın. */}
+          <OnboardingRayi />
         </div>
       )}
       {/* S8: KampHud + GorusmeSimdi tek "şu an" bloğu */}

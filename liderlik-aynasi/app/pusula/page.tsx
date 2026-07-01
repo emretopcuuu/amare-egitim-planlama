@@ -18,6 +18,7 @@ import GunProgramKarti from "@/components/GunProgramKarti";
 import AynaAnalizDeneyim from "@/components/AynaAnalizDeneyim";
 import MuhurIkon from "@/components/MuhurIkon";
 import HazirlikYeniden from "@/components/HazirlikYeniden";
+import OnboardingRayi from "@/components/OnboardingRayi";
 
 const t = tr.pusula;
 
@@ -246,6 +247,9 @@ export default async function PusulaSayfa() {
 
     return (
       <main className="koyu-alan flex min-h-dvh flex-col overflow-y-auto">
+        <div className="mx-auto w-full max-w-md pt-[calc(env(safe-area-inset-top,0px)+3.5rem+0.5rem)]">
+          <OnboardingRayi />
+        </div>
         <div className="mx-auto my-auto w-full max-w-md px-5 py-8">
           <HazirlikAkis adimlar={adimlar} bekleIcerik={bekleIcerik} />
         </div>
