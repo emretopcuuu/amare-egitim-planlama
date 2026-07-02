@@ -4,51 +4,110 @@
       "collectionGroup": "hatirlatmalar",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "gonderildi", "order": "ASCENDING" },
-        { "fieldPath": "gonderilecekZaman", "order": "ASCENDING" }
+        {
+          "fieldPath": "gonderildi",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "gonderilecekZaman",
+          "order": "ASCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "kayitli_egitimler",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "egitmenler", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "kayeneFiltrelendi", "order": "ASCENDING" },
-        { "fieldPath": "tarih", "order": "DESCENDING" }
+        {
+          "fieldPath": "egitmenler",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "kayeneFiltrelendi",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tarih",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "kayitli_egitimler",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "kategoriler", "arrayConfig": "CONTAINS" },
-        { "fieldPath": "kayeneFiltrelendi", "order": "ASCENDING" },
-        { "fieldPath": "tarih", "order": "DESCENDING" }
+        {
+          "fieldPath": "kategoriler",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "kayeneFiltrelendi",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tarih",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "kayitli_egitimler",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "kayeneFiltrelendi", "order": "ASCENDING" },
-        { "fieldPath": "tarih", "order": "DESCENDING" }
+        {
+          "fieldPath": "kayeneFiltrelendi",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tarih",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "kayitli_egitimler",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "kayeneFiltrelendi", "order": "ASCENDING" },
-        { "fieldPath": "eslesmemis", "order": "ASCENDING" },
-        { "fieldPath": "olusturulmaTarihi", "order": "DESCENDING" }
+        {
+          "fieldPath": "kayeneFiltrelendi",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "eslesmemis",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "olusturulmaTarihi",
+          "order": "DESCENDING"
+        }
       ]
     },
     {
       "collectionGroup": "kayitli_egitimler",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "kategoriKaynagi", "order": "ASCENDING" },
-        { "fieldPath": "kayeneFiltrelendi", "order": "ASCENDING" }
+        {
+          "fieldPath": "kategoriKaynagi",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "kayeneFiltrelendi",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "bookmarks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "vimeoId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "saniye",
+          "order": "ASCENDING"
+        }
       ]
     }
   ],
