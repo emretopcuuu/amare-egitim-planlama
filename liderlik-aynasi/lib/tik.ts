@@ -48,6 +48,7 @@ import {
   geceSesi,
   markaAnons,
 } from "@/lib/yansima";
+import { kampKayipWhatsApp } from "@/lib/kayipRadar";
 import {
   grupNoCozumle,
   cumartesiGrupEtkinligi,
@@ -266,7 +267,7 @@ export async function tikCalistir(
 
   const [{ data: kisiler }, { data: sonGorevler }, { data: yanitGecmisi }] =
     await Promise.all([
-      db.from("participants").select("id, full_name, team, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak").eq("role", "participant"),
+      db.from("participants").select("id, full_name, team, phone, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak").eq("role", "participant"),
       db
         .from("missions")
         .select("participant_id, status, issued_at, kind")
@@ -452,6 +453,49 @@ export async function tikCalistir(
     if (mod === "kamp" && kBasamak === 2 && sonKacirma?.kacirma_sebebi && kayanMi) {
       girisBasamak = 0;
       await db.from("participants").update({ yeniden_giris_basamak: 0 }).eq("id", k.id);
+    }
+
+    // [E6] GÖREV ÇEK — sessizleşip dönen kişiye (girisBasamak===0) tek AI görevi
+    // yerine 3 KAPALI kart: birini çeker, diğerleri söner. İki Kapı (secim_grubu)
+    // altyapısını genelleştirir; /api/kapi-sec seçileni açar, kalanları expire
+    // eder. Nazik yeniden giriş: hafif, kısa, seçim özgürlüğü olan kartlar. AI
+    // çağrısından ÖNCE — ucuz. Guard: açık çek yoksa üret (pile-up önle).
+    if (mod === "kamp" && girisBasamak === 0) {
+      const { count: acikCek } = await db
+        .from("missions")
+        .select("id", { count: "exact", head: true })
+        .eq("participant_id", k.id)
+        .eq("status", "secim_bekliyor");
+      if ((acikCek ?? 0) === 0) {
+        const cekGrubu = crypto.randomUUID();
+        const cekDue = new Date(simdi.getTime() + 3 * 3_600_000).toISOString();
+        const kartlar = [
+          { kind: "bag", title: "Bir isim", body: "Az tanıdığın birine git; içten tek bir soru sor. Cevabından bir cümleyi bana yaz.", kapi_etiket: "🤝 bir isim" },
+          { kind: "cesaret", title: "Bir eşik", body: "Ertelediğin, seni azıcık zorlayan küçük bir ilk adımı at. Ne yaptığını tek cümleyle yaz.", kapi_etiket: "🔥 bir eşik" },
+          { kind: "serbest", title: "Bir cümle", body: "Şu an nasıl hissettiğini tek dürüst cümleyle bana yaz. Başlamanın en küçük hâli bu.", kapi_etiket: "✍️ bir cümle" },
+        ];
+        let cekYazildi = false;
+        for (const kart of kartlar) {
+          const { error: cekHata } = await db.from("missions").insert({
+            participant_id: k.id,
+            kind: kart.kind,
+            title: kart.title,
+            body: kart.body,
+            kapi_etiket: kart.kapi_etiket,
+            difficulty: 1,
+            status: "secim_bekliyor",
+            secim_grubu: cekGrubu,
+            issued_at: simdi.toISOString(),
+            due_at: cekDue,
+          });
+          if (!cekHata) cekYazildi = true;
+        }
+        if (cekYazildi) {
+          ozet.uretilen++;
+          await katilimciyaBildir(db, k.id, "🎴 Bir görev çek", "Üç kart açık — birini çek, gerisi sönsün.", "/gorevler");
+        }
+      }
+      continue; // yeniden giriş: bu tik AI görevi üretme, çek sun
     }
 
     // Sıradaki köprüsünü yalnız kişi ŞU AN bir etkinliğin içinde DEĞİLken kur
@@ -1018,7 +1062,7 @@ export async function tikCalistir(
           .select("participant_id, responded_at")
           .gte("responded_at", yedi),
         db.from("ratings").select("rater_id, created_at").gte("created_at", yedi),
-        db.from("churn_radar").select("participant_id, nudged_at, admin_alerted_at"),
+        db.from("churn_radar").select("participant_id, nudged_at, admin_alerted_at, wa_sent_at"),
         // FAZ 2 re-entry: nüks anında geri çalınacak yeni cümleler
         db.from("bosluk_ani").select("participant_id, yeni_cumle").not("yeni_cumle", "is", null),
       ]);
@@ -1051,11 +1095,20 @@ export async function tikCalistir(
         // Sahne sessizliğinde kişiye dürtme ertelenir (sonraki saate sarkar);
         // lider uyarısı sessiz kayıttır, sahnede de işlenebilir.
         const durtulebilir = karar.nudge && !sahneSessiz;
-        if (durtulebilir || karar.alert) {
+        // [E8] KAMP İÇİ KAYIP RADARI: kamp modunda drift onaylanınca (alert) +
+        // telefon varsa + daha önce gönderilmediyse "seni özledik" WhatsApp'ı
+        // (giden Meta-onaylı şablon; webhook'a dokunulmaz). Tek seferlik (wa_sent_at).
+        let waGonderildi = false;
+        const kTel = (k as { phone?: string | null }).phone ?? null;
+        if (karar.alert && mod === "kamp" && !iz?.wa_sent_at && kTel) {
+          waGonderildi = await kampKayipWhatsApp(db, k.full_name, kTel).catch(() => false);
+        }
+        if (durtulebilir || karar.alert || waGonderildi) {
           await db.from("churn_radar").upsert({
             participant_id: k.id,
             ...(durtulebilir ? { nudged_at: simdi.toISOString() } : {}),
             ...(karar.alert ? { admin_alerted_at: simdi.toISOString() } : {}),
+            ...(waGonderildi ? { wa_sent_at: simdi.toISOString() } : {}),
             updated_at: simdi.toISOString(),
           });
         }

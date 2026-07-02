@@ -5,6 +5,38 @@ self.addEventListener("activate", (event) => event.waitUntil(self.clients.claim(
 
 const LOG_ANAHTAR = "la_bildirim_log";
 
+// [E1-c] REVEAL VARLIK ÖNBELLEĞİ: kapanışta 29 telefon aynı anda rapor+ses
+// açtığında API/storage yükünü sıfıra indirmek için, istemci reveal ÖNCESİ
+// kişinin kendi mektup sesini SW'ye önbelletir. Reveal anında ses ağdan değil
+// önbellekten çalar. Yalnız açık uçlu küçük bir varlık listesi cache'lenir.
+const VARLIK_ONBELLEK = "la-varlik-v1";
+const ONBELLEK_YOLLARI = ["/api/mektup-ses"];
+
+self.addEventListener("message", (event) => {
+  const veri = event.data || {};
+  if (veri.tip === "la-onbellek" && typeof veri.url === "string") {
+    event.waitUntil(
+      caches
+        .open(VARLIK_ONBELLEK)
+        .then((c) => c.add(new Request(veri.url, { credentials: "include" })))
+        .catch(() => {}) // ses yoksa (404) sessiz geç
+    );
+  }
+});
+
+// Önbelletilmiş reveal varlıkları için önce-önbellek (stale-while-revalidate değil;
+// varlık değişmez). Diğer istekler dokunulmadan ağa gider.
+self.addEventListener("fetch", (event) => {
+  const url = new URL(event.request.url);
+  if (event.request.method !== "GET") return;
+  if (!ONBELLEK_YOLLARI.some((y) => url.pathname === y)) return;
+  event.respondWith(
+    caches.open(VARLIK_ONBELLEK).then((c) =>
+      c.match(event.request).then((v) => v || fetch(event.request))
+    )
+  );
+});
+
 // Geliştirme 1 — Bildirim Merkezi: gelen push'u localStorage log'una yaz.
 // Açık sekme varsa postMessage ile anlık güncelleme tetiklenir.
 function logYaz(baslik, govde, url) {

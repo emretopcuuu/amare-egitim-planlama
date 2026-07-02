@@ -3379,7 +3379,7 @@ export const tr = {
       "Yanıtın bana ulaştı ve emeğini gördüm — bu görevi tamamladın. Yola devam. ⚡",
     bekliyorTekrar: "Sonuç gelmedi mi? Tekrar gönder",
     // UX #1 — "Başladım": saha görevi gerçek zaman alır
-    basladim: "✋ Başladım, üzerinde çalışıyorum",
+    basladim: "🎯 Şimdi yapıyorum",
     basladimRozet: "✋ Üzerinde çalışıyorsun",
     // FAZ 6.1 — "Başladım" canlı modu: 60-90 sn sonra tek cümlelik cesaret
     // fısıltısı (şablon havuzu, LLM yok). gorevId tohumlu seçilir.
@@ -3921,6 +3921,7 @@ export const tr = {
     ligBaslik: "⚡ Kıvılcım Ligi",
     ligAciklama: "AYNA'nın görevlerinde en çok Kıvılcım toplayanlar",
     ligTakimlar: "Takım Yarışı",
+    ligTakimlarAlt: "En çok BİRLİKTE tamamlayan takım önde — tek yıldız değil, herkes.",
     ligBos: "İlk Kıvılcımlar yakında — AYNA görev dağıtmaya başladığında burası alevlenecek.",
     duvarBaslik: "📸 Anı Duvarı",
     duvarBos: "Anılar yakında — katılımcılar fotoğraf paylaştıkça burası dolacak.",
@@ -4083,6 +4084,9 @@ export const tr = {
   },
   eylulAynasi: {
     kayitHata: "Yanıt kaydedilemedi.",
+  },
+  ilk72: {
+    kayitHata: "Adımlar kaydedilemedi.",
   },
   ortak: {
     oturumGerekli: "Oturum gerekli.",

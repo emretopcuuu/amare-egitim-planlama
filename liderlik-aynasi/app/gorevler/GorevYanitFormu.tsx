@@ -34,6 +34,8 @@ type Sonuc = {
   // FAZ 6.2 — Fiero sahnesi: bu görevin çalıştırdığı kas + kaçıncı kez.
   kasSayaci?: { ad: string; kez: number };
   altin?: boolean;
+  // E4 — Görev fragmanı: sıradaki program anı + kilitli ipucu.
+  fragman?: { saat: string | null; ipucu: string };
 };
 
 // Görev yanıtı: gönderim AYNA'nın anlık puanını bekler (5-15 sn) —
@@ -239,6 +241,13 @@ export default function GorevYanitFormu({
               <p className="mt-3 text-xs text-slate-400">
                 {tr.kivilcim.toplam(sonuc.toplam)} · {tr.kivilcim.unvanin}:{" "}
                 {sonuc.unvan}
+              </p>
+            )}
+            {/* E4 — Görev fragmanı: sıradaki an + kilitli ipucu (içerik gizli) */}
+            {sonuc.fragman?.saat && (
+              <p className="mt-4 rounded-xl border border-gold/25 bg-gold/[0.06] p-3 text-sm text-slate-200">
+                Sıradaki: <b className="text-gold-light">{sonuc.fragman.saat}</b>
+                <span className="text-slate-400"> · İpucu: {sonuc.fragman.ipucu}</span>
               </p>
             )}
           </>

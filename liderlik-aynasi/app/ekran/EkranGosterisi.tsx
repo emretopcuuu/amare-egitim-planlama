@@ -764,6 +764,8 @@ export default function EkranGosterisi() {
                     <h3 className="text-xl font-semibold text-slate-300">
                       {t.ligTakimlar}
                     </h3>
+                    {/* [E7] Takım Çekimi vurgusu: skor kıvılcım × tamamlama oranı */}
+                    <p className="mt-1 text-sm text-gold-light/80">{t.ligTakimlarAlt}</p>
                     <ul className="mt-4 space-y-4">
                       {veri.takimLigi.map((tk, i) => {
                         const enYuksek = veri.takimLigi[0]?.kivilcim ?? 1;
@@ -986,6 +988,15 @@ export default function EkranGosterisi() {
                         <p className="text-3xl" aria-hidden>🕊️</p>
                         <p className="mt-1 text-lg font-semibold text-emerald-300">
                           Bu salondan {veri.salonDavetSayisi} davet çıktı
+                        </p>
+                      </div>
+                    )}
+                    {/* [E3] Kolektif söz mührü — canlı sayaç */}
+                    {veri.sozMuhur && (
+                      <div className="kart-3d rounded-2xl border border-gold/40 bg-gold/[0.08] p-5 text-center sm:col-span-2">
+                        <p className="text-3xl" aria-hidden>📜</p>
+                        <p className="mt-1 text-2xl font-bold text-gold-light">
+                          {veri.sozMuhur.muhurlu} / {veri.sozMuhur.sozVeren} söz mühürlendi
                         </p>
                       </div>
                     )}

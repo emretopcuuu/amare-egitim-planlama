@@ -502,6 +502,7 @@ export type Database = {
           participant_id: string
           updated_at: string
           voice_path: string | null
+          wa_sent_at: string | null
         }
         Insert: {
           admin_alerted_at?: string | null
@@ -509,6 +510,7 @@ export type Database = {
           participant_id: string
           updated_at?: string
           voice_path?: string | null
+          wa_sent_at?: string | null
         }
         Update: {
           admin_alerted_at?: string | null
@@ -516,6 +518,7 @@ export type Database = {
           participant_id?: string
           updated_at?: string
           voice_path?: string | null
+          wa_sent_at?: string | null
         }
         Relationships: [
           {
@@ -938,6 +941,47 @@ export type Database = {
             foreignKeyName: "eylul_aynasi_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      eylul_dis: {
+        Row: {
+          cevaplar: Json | null
+          created_at: string
+          expires_at: string
+          kvkk_onay: boolean
+          participant_id: string
+          token: string
+          used_at: string | null
+          yorum: string | null
+        }
+        Insert: {
+          cevaplar?: Json | null
+          created_at?: string
+          expires_at: string
+          kvkk_onay?: boolean
+          participant_id: string
+          token: string
+          used_at?: string | null
+          yorum?: string | null
+        }
+        Update: {
+          cevaplar?: Json | null
+          created_at?: string
+          expires_at?: string
+          kvkk_onay?: boolean
+          participant_id?: string
+          token?: string
+          used_at?: string | null
+          yorum?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eylul_dis_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
             referencedRelation: "participants"
             referencedColumns: ["id"]
           },
@@ -1568,6 +1612,7 @@ export type Database = {
           baglanti_id: string | null
           body: string
           carried_at: string | null
+          cesaret_push: boolean
           difficulty: number
           donus_bicimi: string | null
           due_at: string
@@ -1612,6 +1657,7 @@ export type Database = {
           baglanti_id?: string | null
           body: string
           carried_at?: string | null
+          cesaret_push?: boolean
           difficulty?: number
           donus_bicimi?: string | null
           due_at: string
@@ -1656,6 +1702,7 @@ export type Database = {
           baglanti_id?: string | null
           body?: string
           carried_at?: string | null
+          cesaret_push?: boolean
           difficulty?: number
           donus_bicimi?: string | null
           due_at?: string
@@ -2772,6 +2819,47 @@ export type Database = {
           puan?: number
         }
         Relationships: []
+      }
+      taahhut: {
+        Row: {
+          adim: number
+          created_at: string
+          durum: string
+          id: string
+          metin: string
+          participant_id: string
+          planlanan_zaman: string
+          push_gonderildi: boolean
+        }
+        Insert: {
+          adim: number
+          created_at?: string
+          durum?: string
+          id?: string
+          metin: string
+          participant_id: string
+          planlanan_zaman: string
+          push_gonderildi?: boolean
+        }
+        Update: {
+          adim?: number
+          created_at?: string
+          durum?: string
+          id?: string
+          metin?: string
+          participant_id?: string
+          planlanan_zaman?: string
+          push_gonderildi?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taahhut_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       waves: {
         Row: {
