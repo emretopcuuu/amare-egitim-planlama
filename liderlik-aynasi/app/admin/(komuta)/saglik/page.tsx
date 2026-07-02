@@ -98,6 +98,41 @@ export default async function SaglikPage() {
     ),
   ]);
 
+  // ======================== FAZ 8 — AKTİVASYON METRİKLERİ ========================
+  // Kamp başlangıcına göre ilk-24s aktivasyon + 48s tutunma; eşleşme kalitesi
+  // ("gerçek miydi?" ort), isimli/eşleşmeli oran, kaçırma sebebi dağılımı.
+  const toplamKisi = (kisiler ?? []).length || 1;
+  const [{ data: baslangicAyar }, eslesmeSonuc, sebepSonuc] = await Promise.all([
+    db.from("settings").select("value").eq("key", "ayna_baslangic").maybeSingle(),
+    db.from("gorev_eslesme").select("isimli, gercek_miydi"),
+    db.from("missions").select("kacirma_sebebi").not("kacirma_sebebi", "is", null),
+  ]);
+  const baslangic = baslangicAyar?.value ? new Date(baslangicAyar.value) : null;
+  let ilk24Oran: number | null = null;
+  let tutunma48Oran: number | null = null;
+  if (baslangic) {
+    const b24 = new Date(baslangic.getTime() + 24 * 3_600_000).toISOString();
+    const b48 = new Date(baslangic.getTime() + 48 * 3_600_000).toISOString();
+    const [{ data: ilk24 }, { data: aktif48 }] = await Promise.all([
+      db.from("missions").select("participant_id").eq("status", "scored").lte("scored_at", b24),
+      db.from("missions").select("participant_id").not("responded_at", "is", null).gte("responded_at", b24).lte("responded_at", b48),
+    ]);
+    ilk24Oran = Math.round((new Set((ilk24 ?? []).map((m) => m.participant_id)).size / toplamKisi) * 100);
+    tutunma48Oran = Math.round((new Set((aktif48 ?? []).map((m) => m.participant_id)).size / toplamKisi) * 100);
+  }
+  const eslesmeler = eslesmeSonuc.data ?? [];
+  const eslesmeliSayi = eslesmeler.length;
+  const isimliOran = eslesmeliSayi > 0 ? Math.round((eslesmeler.filter((e) => e.isimli).length / eslesmeliSayi) * 100) : null;
+  const gercekPuanlar = eslesmeler.map((e) => e.gercek_miydi).filter((p): p is number => typeof p === "number");
+  const gercekOrt = gercekPuanlar.length > 0 ? Number((gercekPuanlar.reduce((a, b) => a + b, 0) / gercekPuanlar.length).toFixed(1)) : null;
+  const sebepDagilim = new Map<string, number>();
+  for (const m of sebepSonuc.data ?? []) {
+    if (m.kacirma_sebebi) sebepDagilim.set(m.kacirma_sebebi, (sebepDagilim.get(m.kacirma_sebebi) ?? 0) + 1);
+  }
+  const SEBEP_ETIKET: Record<string, string> = {
+    vakit: "⏰ Vakit yoktu", anlamadim: "🤔 Anlamadım", cekindim: "😬 Çekindim", ilgi_yok: "😐 İlgi yok",
+  };
+
   // ======================== KOMUTAN HESAPLARI ========================
   const kisiHarita = new Map((kisiler ?? []).map((k) => [k.id, k]));
   const takimHarita = new Map((kisiler ?? []).map((k) => [k.id, k.team]));
@@ -340,6 +375,44 @@ export default async function SaglikPage() {
         </div>
         <OtoYenile saniye={20} />
       </div>
+
+      {/* 0 · FAZ 8 — Aktivasyon Metrikleri */}
+      <Katlanir baslik="⚡ Aktivasyon Metrikleri" aciklama="İlk temas, tutunma ve eşleşme kalitesi" ikon="⚡" varsayilanAcik>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+            <p className="font-mono text-2xl font-bold text-gold">{ilk24Oran === null ? "—" : `%${ilk24Oran}`}</p>
+            <p className="mt-0.5 text-xs text-slate-400">ilk 24s&apos;te ≥1 görev</p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+            <p className="font-mono text-2xl font-bold text-gold-light">{tutunma48Oran === null ? "—" : `%${tutunma48Oran}`}</p>
+            <p className="mt-0.5 text-xs text-slate-400">48s&apos;te hâlâ aktif</p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+            <p className="font-mono text-2xl font-bold text-teal-300">{eslesmeliSayi}</p>
+            <p className="mt-0.5 text-xs text-slate-400">eşleşmeli görev</p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+            <p className="font-mono text-2xl font-bold text-teal-300">{isimliOran === null ? "—" : `%${isimliOran}`}</p>
+            <p className="mt-0.5 text-xs text-slate-400">isimli oran</p>
+          </div>
+          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3 text-center">
+            <p className="font-mono text-2xl font-bold text-emerald-300">{gercekOrt === null ? "—" : `${gercekOrt}/5`}</p>
+            <p className="mt-0.5 text-xs text-slate-400">&quot;gerçek miydi?&quot; ort.</p>
+          </div>
+        </div>
+        {sebepDagilim.size > 0 && (
+          <div className="mt-3">
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Kaçırma sebebi dağılımı</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {[...sebepDagilim.entries()].sort((a, b) => b[1] - a[1]).map(([kod, n]) => (
+                <span key={kod} className="rounded-full bg-white/[0.06] px-3 py-1 text-sm text-slate-200">
+                  {SEBEP_ETIKET[kod] ?? kod}: <b>{n}</b>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </Katlanir>
 
       {/* 1 · Komutan Radarı */}
       <Katlanir baslik={t.baslik} aciklama={t.aciklama} ikon="🎛" yardim={tr.admin.yardim.komutan} varsayilanAcik>
