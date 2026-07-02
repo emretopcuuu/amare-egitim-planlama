@@ -454,6 +454,49 @@ export async function tikCalistir(
       await db.from("participants").update({ yeniden_giris_basamak: 0 }).eq("id", k.id);
     }
 
+    // [E6] GÖREV ÇEK — sessizleşip dönen kişiye (girisBasamak===0) tek AI görevi
+    // yerine 3 KAPALI kart: birini çeker, diğerleri söner. İki Kapı (secim_grubu)
+    // altyapısını genelleştirir; /api/kapi-sec seçileni açar, kalanları expire
+    // eder. Nazik yeniden giriş: hafif, kısa, seçim özgürlüğü olan kartlar. AI
+    // çağrısından ÖNCE — ucuz. Guard: açık çek yoksa üret (pile-up önle).
+    if (mod === "kamp" && girisBasamak === 0) {
+      const { count: acikCek } = await db
+        .from("missions")
+        .select("id", { count: "exact", head: true })
+        .eq("participant_id", k.id)
+        .eq("status", "secim_bekliyor");
+      if ((acikCek ?? 0) === 0) {
+        const cekGrubu = crypto.randomUUID();
+        const cekDue = new Date(simdi.getTime() + 3 * 3_600_000).toISOString();
+        const kartlar = [
+          { kind: "bag", title: "Bir isim", body: "Az tanıdığın birine git; içten tek bir soru sor. Cevabından bir cümleyi bana yaz.", kapi_etiket: "🤝 bir isim" },
+          { kind: "cesaret", title: "Bir eşik", body: "Ertelediğin, seni azıcık zorlayan küçük bir ilk adımı at. Ne yaptığını tek cümleyle yaz.", kapi_etiket: "🔥 bir eşik" },
+          { kind: "serbest", title: "Bir cümle", body: "Şu an nasıl hissettiğini tek dürüst cümleyle bana yaz. Başlamanın en küçük hâli bu.", kapi_etiket: "✍️ bir cümle" },
+        ];
+        let cekYazildi = false;
+        for (const kart of kartlar) {
+          const { error: cekHata } = await db.from("missions").insert({
+            participant_id: k.id,
+            kind: kart.kind,
+            title: kart.title,
+            body: kart.body,
+            kapi_etiket: kart.kapi_etiket,
+            difficulty: 1,
+            status: "secim_bekliyor",
+            secim_grubu: cekGrubu,
+            issued_at: simdi.toISOString(),
+            due_at: cekDue,
+          });
+          if (!cekHata) cekYazildi = true;
+        }
+        if (cekYazildi) {
+          ozet.uretilen++;
+          await katilimciyaBildir(db, k.id, "🎴 Bir görev çek", "Üç kart açık — birini çek, gerisi sönsün.", "/gorevler");
+        }
+      }
+      continue; // yeniden giriş: bu tik AI görevi üretme, çek sun
+    }
+
     // Sıradaki köprüsünü yalnız kişi ŞU AN bir etkinliğin içinde DEĞİLken kur
     // (etkinlikteyse görev zaten ona bağlanıyor; çift bağlam karıştırır).
     const gorev = await gorevUret(
