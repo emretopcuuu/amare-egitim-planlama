@@ -1,0 +1,43 @@
+# Deploy Bekçisi — her main push'undan sonra canlı siteyi test eder.
+# Kırıksa workflow FAIL olur → GitHub repo sahibine otomatik e-posta bildirimi gönderir.
+# Ayrıca her sabah 08:00 İstanbul'da rutin kontrol (gece bozulmalarını yakalar).
+name: Deploy Bekçisi
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 5 * * *'   # 08:00 Europe/Istanbul
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Netlify build'i bekle (yalnız push'ta)
+        if: github.event_name == 'push'
+        run: sleep 240
+
+      - name: Ana sayfa ayakta mı
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" https://egitimtakvimi.oneteamglobal.ai/)
+          echo "HTTP $code"; [ "$code" = "200" ]
+
+      - name: Takvim sayfası ayakta mı
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" https://egitimtakvimi.oneteamglobal.ai/takvim)
+          echo "HTTP $code"; [ "$code" = "200" ]
+
+      - name: Veritabanı (Firestore) veri veriyor mu
+        run: |
+          out=$(curl -s "https://firestore.googleapis.com/v1/projects/amare-egitim-planlama/databases/(default)/documents/takvim?pageSize=1")
+          echo "$out" | grep -q '"documents"' && echo "takvim verisi OK"
+
+      - name: Backend (Netlify Functions) cevap veriyor mu
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" "https://egitimtakvimi.oneteamglobal.ai/.netlify/functions/kisalt?kod=bekci")
+          echo "HTTP $code"; [ "$code" -lt 500 ]
+
+      - name: Bundle güncel mi (index.html hashed script içeriyor)
+        run: |
+          curl -s https://egitimtakvimi.oneteamglobal.ai/ | grep -qE '/assets/.*\.js' && echo "bundle referansı OK"
