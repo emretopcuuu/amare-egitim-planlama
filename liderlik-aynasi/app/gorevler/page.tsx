@@ -49,6 +49,8 @@ import EkstraGorev from "./EkstraGorev";
 import GorevSayac from "./GorevSayac";
 import TelafiSayac from "./TelafiSayac";
 import UnvanKutlama from "@/components/UnvanKutlama";
+import SomutlukChecklist from "./SomutlukChecklist";
+import GercekMiydiSoru from "./GercekMiydiSoru";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -68,7 +70,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id, somutluk"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -191,6 +193,17 @@ export default async function GorevlerPage() {
   const gelenGozlem = new Map<string, string>();
   for (const g of gelenHam ?? []) if (g.observation) gelenGozlem.set(g.mission_id, g.observation);
 
+  // FAZ 1.3 — eşleşme dengeleyici: teslim edilmiş (scored) eşleşmeli görevler
+  // için henüz cevaplanmamış "gerçek miydi?" sorusu.
+  const { data: gercekMiydiHam } = await db
+    .from("gorev_eslesme")
+    .select("mission_id")
+    .eq("kaynak_id", session.sub)
+    .is("gercek_miydi", null);
+  const gercekMiydiBekleyen = (gercekMiydiHam ?? [])
+    .map((r) => (gorevler ?? []).find((g) => g.id === r.mission_id && g.status === "scored"))
+    .filter((g): g is NonNullable<typeof g> => !!g);
+
   // #4 Bugünün özeti
   const bugunScored = (gorevler ?? []).filter(
     (g) => g.status === "scored" && g.scored_at && g.scored_at >= bugunBas
@@ -308,6 +321,12 @@ export default async function GorevlerPage() {
         <p className="mt-4 whitespace-pre-wrap text-base leading-relaxed text-slate-100">
           {g.body}
         </p>
+        {/* FAZ 1.1: gövdeyi 5 satırlık somutluk checklist'ine ayrıştırır */}
+        <SomutlukChecklist
+          somutluk={
+            g.somutluk as { kim: string | null; ne: string; nerede: string; neZaman: string; kanit: string } | null
+          }
+        />
         {/* Düşük puan sonrası derinleştirme görevi: "bu sefer şunu dene" ipuçları */}
         {Array.isArray(g.ipuclari) && g.ipuclari.length > 0 && (
           <div className="mt-4 rounded-2xl border border-sky-400/30 bg-sky-400/[0.08] p-4">
@@ -402,6 +421,15 @@ export default async function GorevlerPage() {
         seriRiski={seriRiski}
         aktifVar={aktif.length > 0}
       />
+
+      {/* FAZ 1.3 — teslim ettiğin eşleşmeli görev(ler) için "gerçek miydi?" sorusu */}
+      {gercekMiydiBekleyen.length > 0 && (
+        <section className="space-y-2">
+          {gercekMiydiBekleyen.map((g) => (
+            <GercekMiydiSoru key={g.id} gorevId={g.id} />
+          ))}
+        </section>
+      )}
 
       {/* #5 Tanıklık bekleyenler — sana gelen tanık çağrıları */}
       {bekleyenler.length > 0 && (
