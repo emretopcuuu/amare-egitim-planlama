@@ -146,10 +146,27 @@ export async function POST(req: Request) {
   }
 
   const zamaninda = !telafi && simdi <= new Date(gorev.due_at);
+  // Öneri #5 — STREAK ÖDÜLÜ: ard arda tamamlanan görev sayısı kıvılcıma basamak
+  // bonusu katar (momentum somut ödüllenir). Bu görev şu an "submitted" — onu
+  // atlayıp önceki ardışık "scored" zincirini say.
+  let streak = 0;
+  {
+    const { data: sonlar } = await db
+      .from("missions")
+      .select("id, status")
+      .eq("participant_id", session.sub)
+      .order("issued_at", { ascending: false })
+      .limit(12);
+    for (const m of sonlar ?? []) {
+      if (m.id === gorev.id) continue; // puanlanmakta olan görev
+      if (m.status === "scored") streak++;
+      else break;
+    }
+  }
   // Telafi (süresi geçmiş): kıvılcım yarıya iner — yine de yapmak değerli.
   const kivilcim = telafi
-    ? Math.max(1, Math.ceil(kivilcimHesapla(sonuc.puan, false) / 2))
-    : kivilcimHesapla(sonuc.puan, zamaninda);
+    ? Math.max(1, Math.ceil(kivilcimHesapla(sonuc.puan, false, streak) / 2))
+    : kivilcimHesapla(sonuc.puan, zamaninda, streak);
   await db
     .from("missions")
     .update({
