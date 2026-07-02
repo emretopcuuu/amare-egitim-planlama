@@ -401,18 +401,26 @@ export default function AynaRituel() {
     }
   }
 
+  const sessizGonderiliyor = useRef(false);
   async function sessizSec() {
+    if (sessizGonderiliyor.current) return;
+    sessizGonderiliyor.current = true;
     try {
       const form = new FormData();
       form.append("onay", "0");
       const res = await fetch("/api/ses-rituel", { method: "POST", body: form });
       if (!res.ok) throw new Error("api-hatasi");
+      setAsama("kapandi");
     } catch {
-      // Ağ/sunucu hatası: sessiz tercih kaydedilemedi — yine de devam et.
-      // Sayfa yenilenmeden voice_profiles yazılamasa da uygulama "kapandi"
-      // sonrası /api/cikis'e ya da "/" ye gidiyor; kötü durumda giriş tekrar sorulur.
+      // Tercih SUNUCUYA yazılamadıysa "kapandi"ya geçmek görünmez bir döngü
+      // yaratıyordu: ana sayfa voice_profiles'ı boş görüp ritüeli yeniden
+      // açıyor, kişi neden döndüğünü hiç anlamıyordu. Artık hatayı söylüyor
+      // ve tekrar denemesine izin veriyoruz.
+      setHataMesaji(t.sessizHata);
+      setAsama("hata");
+    } finally {
+      sessizGonderiliyor.current = false;
     }
-    setAsama("kapandi");
   }
 
   function dinle() {

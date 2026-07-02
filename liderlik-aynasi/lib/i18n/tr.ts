@@ -1460,6 +1460,9 @@ export const tr = {
       "Hepsini tamamladın. Kampta sana özel görevler bu cevaplara göre şekillenecek — kamp başlamadan bitirdiğin için hazırsın.",
     devamBaslik: "Kaldığın yerden devam",
     devamMetin: "Hepsini bir oturuşta bitirmek zorunda değilsin — kaldığın yerden devam et. Yeter ki kamp başlamadan tamamla.",
+    // Kısmi "kaydet & çık" onayı — kişi mola verebileceğini net bilsin.
+    kaydedildiNot:
+      "✓ Cevapların kaydedildi. İstersen şimdi mola ver — uygulamayı kapatabilirsin; döndüğünde tam kaldığın yerden devam edeceksin.",
     guvenBaslik: "Buradayım, sana yardımcı olmak için 🤝",
     guvenMetin:
       "Bu çalışma seni yargılamak için değil — sana gerçekten yardımcı olabilmem için. Ne kadar açık olursan, kampta sana o kadar isabetli eşlik edebilirim. Acelesi yok; ne zaman hazır hissedersen, istersen bu maddelerin üzerinden birlikte yeniden geçeriz.",
@@ -3930,6 +3933,10 @@ export const tr = {
       "Düz, sağ ve sol — üç kısa kare. Bu kareler senin avatarın ve kişisel yansıma videonun temeli olacak.",
     yuzYakalaAtla: "Şimdilik geç",
     sessiz: "Sessiz ayna istiyorum",
+    // Sessiz tercih sunucuya yazılamazsa (ağ/sunucu hatası) gösterilir —
+    // sessizce kapatıp ritüele geri düşürmek yerine dürüstçe söyle.
+    sessizHata:
+      "Tercihin kaydedilemedi — bağlantını kontrol edip tekrar dene. (Cevapların güvende, sadece bu seçim iletilmedi.)",
     yeminHazirlikBaslik: "Birazdan sesini kaydedeceğiz",
     yeminHazirlikAciklama:
       "Acele yok. Kaydı başlattığında sıradaki ekranda kısa bir taahhüt göreceksin — onu doğal bir sesle okuyacaksın. Hazır olduğunda 🎤 düğmesine bas.",

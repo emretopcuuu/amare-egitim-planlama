@@ -236,10 +236,21 @@ export default function OnFarkindalikAkis({
     }
   }
 
+  const [kaydedildi, setKaydedildi] = useState(false);
+
   async function kaydetVeCik() {
     if (await kaydet()) {
-      router.refresh();
-      router.push("/");
+      if (yapilan === TOPLAM) {
+        router.refresh();
+        router.push("/");
+        return;
+      }
+      // KISMİ KAYIT TUZAĞI DÜZELTMESİ: ÖF zorunlu onboarding kapısı — ana sayfa
+      // tamamlanmadan kişiyi ANINDA buraya geri fırlatır. Sahte bir "çıkışa"
+      // gönderip sektirmek yerine kayıt onayı veren özet ekranına al: kişi
+      // uygulamayı gönül rahatlığıyla kapatabilir, dönünce kaldığı yerden sürer.
+      setKaydedildi(true);
+      setAdim(TOPLAM);
     }
   }
 
@@ -305,6 +316,12 @@ export default function OnFarkindalikAkis({
         <p className="mx-auto mt-4 max-w-md text-lg leading-relaxed text-slate-300">
           {tamamMi ? t.tamamMetin : t.devamMetin}
         </p>
+        {/* Kısmi kayıt onayı: kişi mola verebileceğini NET bilsin */}
+        {kaydedildi && !tamamMi && (
+          <p className="mx-auto mt-4 max-w-md rounded-2xl border border-emerald-400/30 bg-emerald-500/[0.08] px-4 py-3 text-sm font-medium leading-relaxed text-emerald-300">
+            {t.kaydedildiNot}
+          </p>
+        )}
         <p className="mt-4 text-sm text-slate-400">{t.ilerleme(yapilan, TOPLAM)}</p>
         {/* #10 Veri dürüstlüğü: düz-çizgi cevap sezilirse nazik, özel bir yansıma */}
         {katman1Tutarlilik(yanitlar).dusukVaryans && (
