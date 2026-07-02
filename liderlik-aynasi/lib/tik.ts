@@ -244,7 +244,7 @@ export async function tikCalistir(
 
   const [{ data: kisiler }, { data: sonGorevler }, { data: yanitGecmisi }] =
     await Promise.all([
-      db.from("participants").select("id, full_name, team, kariyer_seviyesi, kariyer_durumu").eq("role", "participant"),
+      db.from("participants").select("id, full_name, team, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak").eq("role", "participant"),
       db
         .from("missions")
         .select("participant_id, status, issued_at, kind")
@@ -407,11 +407,37 @@ export async function tikCalistir(
           .map((p) => ({ id: p.id, full_name: p.full_name, team: p.team }));
       }
     }
+    // FAZ 7.2 — SEBEP MOTORU: kişinin en son "neden kaçırdım" cevabı, bir
+    // sonraki görevi biçimler. En son (24s içinde) süresi dolmuş görevinden oku.
+    const gunOnce = new Date(simdi.getTime() - 24 * 3_600_000).toISOString();
+    const { data: sonKacirma } = await db
+      .from("missions")
+      .select("kacirma_sebebi")
+      .eq("participant_id", k.id)
+      .eq("status", "expired")
+      .not("kacirma_sebebi", "is", null)
+      .gte("issued_at", gunOnce)
+      .order("issued_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    // FAZ 7.3 — YENİDEN GİRİŞ MERDİVENİ: kişi sessizleşip döndüyse (son görevleri
+    // arka arkaya expire olduysa = kayan) ve normal basamaktaysa, basamağı 0'a
+    // indir (nazik yeniden giriş). Basamak, tamamlamada gorev-yanit'te yükselir.
+    const kBasamak = (k as { yeniden_giris_basamak?: number }).yeniden_giris_basamak ?? 2;
+    let girisBasamak = kBasamak;
+    const kayanMi = (durumlar.get(k.id)?.bugunSayisi ?? 0) === 0; // bugün hiç görev kapatmadı
+    if (mod === "kamp" && kBasamak === 2 && sonKacirma?.kacirma_sebebi && kayanMi) {
+      girisBasamak = 0;
+      await db.from("participants").update({ yeniden_giris_basamak: 0 }).eq("id", k.id);
+    }
+
     // Sıradaki köprüsünü yalnız kişi ŞU AN bir etkinliğin içinde DEĞİLken kur
     // (etkinlikteyse görev zaten ona bağlanıyor; çift bağlam karıştırır).
     const gorev = await gorevUret(
       db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu, kEtkinlik ? null : kSiradaki, kYorgun,
-      kMekanFarkindaAdaylar
+      kMekanFarkindaAdaylar,
+      { sonKacirmaSebebi: sonKacirma?.kacirma_sebebi ?? null, girisBasamak }
     );
     if (!gorev) continue;
 

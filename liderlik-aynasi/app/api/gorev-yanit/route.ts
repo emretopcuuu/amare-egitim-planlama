@@ -339,6 +339,20 @@ export async function POST(req: Request) {
 
   const toplam = await toplamKivilcim(db, session.sub);
 
+  // FAZ 7.3 — YENİDEN GİRİŞ MERDİVENİ: tamamlama basamağı bir üst kademeye
+  // taşır (0→1→2). Sessizleşince tik.ts tekrar 0'a indirir.
+  {
+    const { data: p } = await db
+      .from("participants")
+      .select("yeniden_giris_basamak")
+      .eq("id", session.sub)
+      .maybeSingle();
+    const basamak = p?.yeniden_giris_basamak ?? 2;
+    if (basamak < 2) {
+      await db.from("participants").update({ yeniden_giris_basamak: basamak + 1 }).eq("id", session.sub);
+    }
+  }
+
   // FAZ 6.2 — FIERO SAHNESİ: bu görevin çalıştırdığı lider kası bu kampta
   // kaçıncı kez çalıştı? İlerleme halkası için trait adı + tamamlama sayısı.
   let kasSayaci: { ad: string; kez: number } | null = null;

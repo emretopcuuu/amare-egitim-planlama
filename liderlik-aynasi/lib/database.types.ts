@@ -14,6 +14,52 @@ export type Database = {
   }
   public: {
     Tables: {
+      akran_kurtarma: {
+        Row: {
+          aktif_id: string
+          created_at: string
+          id: string
+          mission_id: string
+          sessiz_id: string
+        }
+        Insert: {
+          aktif_id: string
+          created_at?: string
+          id?: string
+          mission_id: string
+          sessiz_id: string
+        }
+        Update: {
+          aktif_id?: string
+          created_at?: string
+          id?: string
+          mission_id?: string
+          sessiz_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "akran_kurtarma_aktif_id_fkey"
+            columns: ["aktif_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "akran_kurtarma_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: true
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "akran_kurtarma_sessiz_id_fkey"
+            columns: ["sessiz_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_istek_log: {
         Row: {
           created_at: string
@@ -1283,6 +1329,7 @@ export type Database = {
           kaynak_id: string | null
           kind: string
           lightened_at: string | null
+          kacirma_sebebi: string | null
           micro_sprint: boolean
           neden: string | null
           kapi_etiket: string | null
@@ -1325,6 +1372,7 @@ export type Database = {
           issued_at?: string
           kaynak_id?: string | null
           kind: string
+          kacirma_sebebi?: string | null
           lightened_at?: string | null
           micro_sprint?: boolean
           neden?: string | null
@@ -1368,6 +1416,7 @@ export type Database = {
           issued_at?: string
           kaynak_id?: string | null
           kind?: string
+          kacirma_sebebi?: string | null
           lightened_at?: string | null
           micro_sprint?: boolean
           neden?: string | null
@@ -1659,6 +1708,7 @@ export type Database = {
           role: string
           simulasyon: boolean
           team: string | null
+          yeniden_giris_basamak: number
           yuz_fotolari: Json
         }
         Insert: {
@@ -1687,6 +1737,7 @@ export type Database = {
           role?: string
           simulasyon?: boolean
           team?: string | null
+          yeniden_giris_basamak?: number
           yuz_fotolari?: Json
         }
         Update: {
@@ -1715,6 +1766,7 @@ export type Database = {
           role?: string
           simulasyon?: boolean
           team?: string | null
+          yeniden_giris_basamak?: number
           yuz_fotolari?: Json
         }
         Relationships: []
