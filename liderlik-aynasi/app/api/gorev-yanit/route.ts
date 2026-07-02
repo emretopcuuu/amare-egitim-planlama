@@ -9,6 +9,7 @@ import { markaAnons, fieroSesi } from "@/lib/yansima";
 import { katilimciyaBildir } from "@/lib/push";
 import { eslesmeKaydet } from "@/lib/gorevEslesme";
 import { zincirDevamEttir } from "@/lib/kampZinciri";
+import { gorevFragmani } from "@/lib/fragman";
 import {
   kivilcimHesapla,
   SOZ_KIVILCIMI,
@@ -394,6 +395,9 @@ export async function POST(req: Request) {
     }).catch(() => {});
   }
 
+  // [E4] Görev fragmanı: sıradaki program anı + kilitli ipucu (merak köprüsü).
+  const fragman = await gorevFragmani(db, simdi);
+
   return Response.json({
     puan: sonuc.puan,
     yorum: sonuc.yorum + guvenlikEk,
@@ -403,6 +407,7 @@ export async function POST(req: Request) {
     ...(kasSayaci ? { kasSayaci } : {}),
     ...(gorev.altin ? { altin: true } : {}),
     ...(kriz ? { guvenlik: true } : {}),
+    fragman,
   });
 }
 
