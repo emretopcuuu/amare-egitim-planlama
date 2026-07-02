@@ -24,6 +24,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const [
     cekirdek,
     { data: ofRow },
+    { data: degerlerRow },
+    { count: pushSayi },
     { data: momentumlar },
     { data: churn },
     { count: gorevTamam },
@@ -31,6 +33,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   ] = await Promise.all([
     pusulaCekirdek(db, id),
     db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", id).maybeSingle(),
+    // [M2] Değerler tamamlanma SONUCU (içerik değil).
+    db.from("degerler_calismasi").select("tamamlandi_at").eq("participant_id", id).maybeSingle(),
+    // [M9] Push izni var mı (en az bir abonelik satırı).
+    db.from("push_subscriptions").select("id", { count: "exact", head: true }).eq("participant_id", id),
     db.from("momentum_scores").select("score, week_start").eq("participant_id", id).order("week_start", { ascending: false }).limit(1),
     db.from("churn_radar").select("updated_at").eq("participant_id", id).maybeSingle(),
     db.from("missions").select("id", { count: "exact", head: true }).eq("participant_id", id).eq("status", "done"),
@@ -48,9 +54,12 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     loginKodu: kisi.login_code,
     kampAcik: !!kisi.camp_unlocked_at,
     ofTamam: !!ofRow?.tamamlandi_at,
-    // KVKK: pusula İÇERİĞİ (neden/iç engel/özet) admin'e asla dönmez —
+    // KVKK: pusula/değerler İÇERİĞİ (neden/iç engel/özet) admin'e asla dönmez —
     // yalnız tamamlanma SONUCU. (Eski alan ham özet metnini sızdırıyordu.)
     pusulaTamam: !!cekirdek?.ozet,
+    degerlerTamam: !!degerlerRow?.tamamlandi_at,
+    oyunSecti: !!kisi.team,
+    pushVar: (pushSayi ?? 0) > 0,
     momentum: momentumlar?.[0]?.score ?? null,
     gorevTamam: gorevTamam ?? 0,
     takdir: takdirSayi ?? 0,
