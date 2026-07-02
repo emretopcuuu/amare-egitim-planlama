@@ -485,10 +485,28 @@ export async function GET() {
     const ark = arketipBul(satirlar);
     return { arketip: { ad: ark.ad, simge: ark.simge }, enGuclu };
   };
-  const takimToplam = new Map<string, number>();
+  // FAZ 7.7 — TAKIM ÇEKİMİ: takım skoru ham kıvılcım toplamı DEĞİL, üyelerin
+  // TAMAMLAMA ORANIYLA çarpılmış hâli. Böylece tek kişinin 300'ü, 5 kişinin
+  // 60'ından az eder — "birlikte tamamlayan" takım kazanır, tek yıldız değil.
+  const takimHam = new Map<string, number>();
   for (const k of lig) {
     if (!k.takim) continue;
-    takimToplam.set(k.takim, (takimToplam.get(k.takim) ?? 0) + k.kivilcim);
+    takimHam.set(k.takim, (takimHam.get(k.takim) ?? 0) + k.kivilcim);
+  }
+  const takimUye = new Map<string, number>();
+  const takimAktif = new Map<string, number>();
+  const kivilcimliIdler = new Set(lig.filter((k) => k.kivilcim > 0).map((k) => k.id));
+  for (const k of kisiler) {
+    if (!k.team) continue;
+    takimUye.set(k.team, (takimUye.get(k.team) ?? 0) + 1);
+    if (kivilcimliIdler.has(k.id)) takimAktif.set(k.team, (takimAktif.get(k.team) ?? 0) + 1);
+  }
+  const takimToplam = new Map<string, number>();
+  for (const [takim, ham] of takimHam) {
+    const uye = takimUye.get(takim) ?? 1;
+    const aktif = takimAktif.get(takim) ?? 0;
+    const oran = uye > 0 ? aktif / uye : 0; // tamamlama genişliği
+    takimToplam.set(takim, Math.round(ham * oran));
   }
 
   // Sahne Vitrini (DJ): host sabitlediği slayt indeksi (30 dk taze) ya da null

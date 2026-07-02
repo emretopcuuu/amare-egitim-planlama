@@ -447,7 +447,10 @@ export async function gorevUret(
   // FAZ 2.2 — mekân-farkında eşleştirme: çağıran (tik.ts), o an aynı
   // mekânda/boşta olan adayları biliyorsa geçer. null/undefined = filtre yok
   // (mod !== kamp gün 2 gibi mekân verisi olmayan durumlar).
-  mekanFarkindaAdaylar: EslesmeAday[] | null = null
+  mekanFarkindaAdaylar: EslesmeAday[] | null = null,
+  // FAZ 7 — AKTİVASYON: kişinin son kaçırma sebebi (7.2 sebep motoru) ve
+  // yeniden giriş basamağı (7.3 merdiven). tik.ts geçirir.
+  aktivasyon: { sonKacirmaSebebi?: string | null; girisBasamak?: number } = {}
 ): Promise<UretilenGorev | null> {
   const [
     ozellikler,
@@ -908,6 +911,22 @@ export async function gorevUret(
     gorevIpucu
       ? `ETKİNLİĞE ÖZEL YÖNERGE (MUTLAKA kat): ${gorevIpucu}`
       : "",
+    // FAZ 7.2 — SEBEP MOTORU: kişi son görevini şu sebeple kaçırdı → görevi ona göre biçimle.
+    aktivasyon.sonKacirmaSebebi === "anlamadim"
+      ? "KAÇIRMA SEBEBİ 'ANLAMADIM': Bu görevi AŞIRI SOMUT ve basit yaz — tek cümlelik tek bir eylem, hiç mecaz yok, ne yapacağı ve sana ne yazacağı çocukça net olsun."
+      : aktivasyon.sonKacirmaSebebi === "cekindim"
+        ? "KAÇIRMA SEBEBİ 'ÇEKİNDİM': ŞEFKAT MODU — küçük, güvenli, düşük-riskli, kimsenin önünde olmayan bir ilk adım. Baskı yok; 'kendi hızında' güvencesi ver."
+        : aktivasyon.sonKacirmaSebebi === "vakit"
+          ? "KAÇIRMA SEBEBİ 'VAKİT YOKTU': Bu görev TAM 10 DAKİKADA bitebilmeli — tek atomik eylem. 'Şimdi, kısacık' tonu."
+          : aktivasyon.sonKacirmaSebebi === "ilgi_yok"
+            ? "KAÇIRMA SEBEBİ 'İLGİMİ ÇEKMEDİ': FARKLI bir kas + farklı bir tür + farklı bir dönüş biçimi seç; öncekine hiç benzemesin, taze bir açı getir."
+            : "",
+    // FAZ 7.3 — YENİDEN GİRİŞ MERDİVENİ: sessizleşip dönen kişiye önce en küçük adım.
+    aktivasyon.girisBasamak === 0
+      ? "YENİDEN GİRİŞ (BASAMAK 0): Bu kişi bir süre sessizdi, yeni dönüyor. Görev TEK DOKUNUŞLUK olsun — tek kelime ya da tek cümlelik bir yanıt yeter; eşiği yerde tut, 'tekrar buradasın, bu kadarı harika' hissi ver. sure_saat=1."
+      : aktivasyon.girisBasamak === 1
+        ? "YENİDEN GİRİŞ (BASAMAK 1): Yeni döndü, ısınıyor. Görev en fazla 20 dakikalık, küçük ve garantili başarılabilir olsun; güveni tazele."
+        : "",
   ]
     .filter(Boolean)
     .join("\n\n");

@@ -52,6 +52,7 @@ import UnvanKutlama from "@/components/UnvanKutlama";
 import SomutlukChecklist from "./SomutlukChecklist";
 import GercekMiydiSoru from "./GercekMiydiSoru";
 import KapiSecimi from "./KapiSecimi";
+import NedenButonlari from "./NedenButonlari";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -506,6 +507,8 @@ export default async function GorevlerPage() {
               {/* UX #3 — telafi penceresinin canlı geri sayımı (due_at + 24sa) */}
               <TelafiSayac bitis={new Date(new Date(g.due_at).getTime() + 24 * 3_600_000).toISOString()} />
               <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
+              {/* FAZ 7.2 — "Neden?" tek dokunuş: sonraki görevi kişiye göre biçimler */}
+              <NedenButonlari gorevId={g.id} />
             </div>
           ))}
         </section>
