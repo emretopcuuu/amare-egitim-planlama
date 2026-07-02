@@ -971,6 +971,15 @@ export default function EkranGosterisi() {
                         </p>
                       </div>
                     )}
+                    {/* FAZ 3.5 — kamp zinciri: isimsiz, yalnız ulaştığı halka sayısı */}
+                    {veri.zincir && (
+                      <div className="kart-3d rounded-2xl border border-royal-light/25 bg-royal/[0.08] p-5 text-center sm:col-span-2">
+                        <p className="text-3xl" aria-hidden>🔗</p>
+                        <p className="mt-1 text-lg font-semibold text-royal-light">
+                          Zincir {veri.zincir.uzunluk} kişiye ulaştı
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

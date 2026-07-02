@@ -6,6 +6,9 @@ import { kampGunu } from "@/lib/kampProgrami";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { krizDiliVarMi, krizUyarisiGonder, KRIZ_YONLENDIRME } from "@/lib/guvenlik";
 import { markaAnons, fieroSesi } from "@/lib/yansima";
+import { katilimciyaBildir } from "@/lib/push";
+import { eslesmeKaydet } from "@/lib/gorevEslesme";
+import { zincirDevamEttir } from "@/lib/kampZinciri";
 import {
   kivilcimHesapla,
   SOZ_KIVILCIMI,
@@ -52,7 +55,7 @@ export async function POST(req: Request) {
   const guvenlikEk = kriz ? `\n\n${KRIZ_YONLENDIRME}` : "";
   const { data: gorev, error } = await db
     .from("missions")
-    .select("id, kind, title, body, status, due_at, trait_id, kaynak_id")
+    .select("id, kind, title, body, status, due_at, trait_id, kaynak_id, baglanti_id, zincir_id, zincir_sira")
     .eq("id", gorevId)
     .eq("participant_id", session.sub)
     .maybeSingle();
@@ -182,6 +185,88 @@ export async function POST(req: Request) {
         : {}),
     })
     .eq("id", gorev.id);
+
+  // FAZ 3.1 — ÇİFT TARAFLI ASİMETRİK GİZLİ GÖREV reveal: bu görev bir gizli
+  // bağa (baglanti_id) sahipse ve KARŞI TARAF da tamamladıysa, ikisine de
+  // "O da tam o anda bir görevdeydi" notu eklenir. Yalnız "gizli" içeren
+  // 2'li bağlarda çalışır (mini-konsey/zincir aynı kolonu farklı amaçla kullanır).
+  if (gorev.baglanti_id) {
+    const { data: baglantiliGorevler } = await db
+      .from("missions")
+      .select("id, kind, status, ai_comment")
+      .eq("baglanti_id", gorev.baglanti_id);
+    const grup = baglantiliGorevler ?? [];
+    const gizliIcerir = grup.some((m) => m.kind === "gizli");
+    if (gizliIcerir && grup.length === 2) {
+      const diger = grup.find((m) => m.id !== gorev.id);
+      if (diger && diger.status === "scored") {
+        const REVEAL_NOTU = " 💫 O da tam o anda bir görevdeydi — ikiniz de aynı ana katkı sağladınız.";
+        for (const taraf of [gorev.id, diger.id]) {
+          const { data: guncelHal } = await db
+            .from("missions")
+            .select("ai_comment")
+            .eq("id", taraf)
+            .maybeSingle();
+          const mevcut = guncelHal?.ai_comment ?? "";
+          if (mevcut && !mevcut.includes("O da tam o anda")) {
+            await db.from("missions").update({ ai_comment: mevcut + REVEAL_NOTU }).eq("id", taraf);
+          }
+        }
+      }
+    }
+  }
+
+  // FAZ 3.5 — KAMP ZİNCİRİ: bu görev bir zincir halkasıysa, tamamlanınca
+  // bayrak otomatik hedefe geçer — sıradaki halka üretilir.
+  if (gorev.zincir_id) {
+    try {
+      const { data: eslesme } = await db
+        .from("gorev_eslesme")
+        .select("hedef_id")
+        .eq("mission_id", gorev.id)
+        .maybeSingle();
+      if (eslesme?.hedef_id) {
+        const { data: hedefKisi } = await db
+          .from("participants")
+          .select("id, full_name")
+          .eq("id", eslesme.hedef_id)
+          .maybeSingle();
+        if (hedefKisi) {
+          const devam = await zincirDevamEttir(db, gorev.zincir_id, hedefKisi, simdi);
+          if (devam) {
+            const zincirDueAt = new Date(simdi.getTime() + 3 * 3_600_000);
+            const { data: yeniHalka } = await db
+              .from("missions")
+              .insert({
+                participant_id: hedefKisi.id,
+                kind: "bag",
+                title: devam.title,
+                body: devam.body,
+                difficulty: 2,
+                zincir_id: gorev.zincir_id,
+                zincir_sira: devam.sira,
+                issued_at: simdi.toISOString(),
+                due_at: zincirDueAt.toISOString(),
+              })
+              .select("id")
+              .single();
+            if (yeniHalka) {
+              await eslesmeKaydet(db, yeniHalka.id, hedefKisi.id, devam.hedef.id, true);
+              await katilimciyaBildir(
+                db,
+                hedefKisi.id,
+                "🔗 Bayrak sana ulaştı",
+                devam.body.slice(0, 120),
+                "/gorevler"
+              );
+            }
+          }
+        }
+      }
+    } catch {
+      // zincir devamı düşse bile yanıt akışını bozma
+    }
+  }
 
   // #9 mentorluk takibi: görev tamamlandıysa konuşma gerçekleşti say.
   if (gorev.kind === "mentorluk") {
