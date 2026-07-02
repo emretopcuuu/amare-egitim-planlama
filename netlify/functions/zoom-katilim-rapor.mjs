@@ -154,6 +154,7 @@ export const handler = async (event) => {
         zoomGercekKatilim: sayi,
         zoomOrtDakika: ortDk,
         zoomEgri: egri, // 5-dk kovalar; admin-only gösterilir
+        zoomUuid: oturum.uuid, // transkript cron'u bu oturumun kaydını çeker
         zoomRaporTs: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
       // Ekip nabzı temeli: katılımcı emailleri — SERVER-ONLY koleksiyon (rules'ta match yok → client erişemez)

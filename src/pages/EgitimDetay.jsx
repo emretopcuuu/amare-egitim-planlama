@@ -12,6 +12,7 @@ import AddToCalendarButton from '../components/AddToCalendarButton';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import LoadingProgress from '../components/LoadingProgress';
 import { katilTikla } from '../utils/katilim';
+import { useAuth } from '../context/AuthContext';
 
 const parseTarih = (t) => {
   if (!t) return null;
@@ -62,6 +63,7 @@ const EgitimDetay = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { takvim, loading, konusmacilar, isAdmin } = useData();
+  const { isAuthenticated } = useAuth(); // gerçek üye girişi (anonim değil) — katılım sayısını görebilir
   const { t, locale, tDynamic } = useTranslation();
   const [hatirlatmaModal, setHatirlatmaModal] = useState(false);
   const [konusmaciModal, setKonusmaciModal] = useState(null);
@@ -332,9 +334,9 @@ const EgitimDetay = () => {
                       </span>
                     )}
                     {/* Zoom GERÇEK katılım (rapor) — sadece admin görür */}
-                    {isAdmin && egitim.zoomGercekKatilim > 0 && (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2.5 py-1" title="Zoom raporundan: gerçekten giren kişi sayısı ve ortalama kalma süresi (yalnız admin görür)">
-                        📊 Zoom: {egitim.zoomGercekKatilim} kişi girdi{egitim.zoomOrtDakika ? ` · ort. ${egitim.zoomOrtDakika} dk kaldı` : ''}
+                    {(isAdmin || isAuthenticated) && egitim.zoomGercekKatilim > 0 && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2.5 py-1" title="Zoom raporundan: gerçekten giren kişi sayısı ve ortalama kalma süresi (üye girişi yapanlar görür)">
+                        📊 Zoom: {egitim.zoomGercekKatilim} kişi katıldı{egitim.zoomOrtDakika ? ` · ort. ${egitim.zoomOrtDakika} dk kaldı` : ''}
                       </span>
                     )}
                   </span>
