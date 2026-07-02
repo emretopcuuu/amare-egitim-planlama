@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { kocuGecmis, kocuTuru } from "@/lib/kocu";
 import { krizDiliVarMi, krizUyarisiGonder, KRIZ_YONLENDIRME } from "@/lib/guvenlik";
+import { aiLimitYaniti } from "@/lib/aiLimit";
 import { tr } from "@/lib/i18n/tr";
 
 export const maxDuration = 60;
@@ -23,6 +24,10 @@ export async function POST(req: Request) {
   }
   const body = await req.json().catch(() => null);
   const mesaj = typeof body?.mesaj === "string" ? body.mesaj : null;
+
+  // Maliyet sigortası: kullanıcı başına AI çağrı tavanı (bkz. lib/aiLimit.ts).
+  const limit = await aiLimitYaniti(session.sub, "kocu");
+  if (limit) return limit;
 
   const db = supabaseAdmin();
 

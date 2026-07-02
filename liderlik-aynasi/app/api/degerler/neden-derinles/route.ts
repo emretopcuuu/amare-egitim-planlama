@@ -1,6 +1,7 @@
 import "server-only";
 import { getSession } from "@/lib/auth/session";
 import Anthropic from "@anthropic-ai/sdk";
+import { aiLimitYaniti } from "@/lib/aiLimit";
 
 export const maxDuration = 30;
 
@@ -17,19 +18,33 @@ function anlamliMi(c: string): boolean {
 }
 
 export async function POST(req: Request) {
-  if (!(await getSession())) return Response.json({ soru: null }, { status: 401 });
+  const session = await getSession();
+  if (!session || session.rol !== "participant") {
+    return Response.json({ soru: null }, { status: 401 });
+  }
 
-  const { deger, tur, oncekiCevaplar } = (await req.json()) as {
-    deger: string;
-    tur: 2 | 3;
-    oncekiCevaplar: string[];
-  };
+  // Bozuk/eksik gövdede ham 500 yerine yedek soruya düş (istemci dayanıklı).
+  const body = (await req.json().catch(() => null)) as {
+    deger?: unknown;
+    tur?: unknown;
+    oncekiCevaplar?: unknown;
+  } | null;
+  const deger = typeof body?.deger === "string" ? body.deger : "";
+  const tur = body?.tur === 3 ? 3 : 2;
+  const oncekiCevaplar = Array.isArray(body?.oncekiCevaplar)
+    ? (body.oncekiCevaplar as unknown[]).filter((x): x is string => typeof x === "string")
+    : [];
 
   // Anlamlı cevap yoksa veya API key yoksa yedek kullan
   const anlamliCevap = oncekiCevaplar.find(anlamliMi);
   if (!deger || !anlamliCevap || !process.env.ANTHROPIC_API_KEY) {
     return Response.json({ soru: YEDEK_SORULAR[tur] ?? null });
   }
+
+  // Maliyet sigortası (bkz. lib/aiLimit.ts) — limitteyse yedek soruyla devam
+  // (akışı hiç bozma; sadece AI çağrısını atla).
+  const limit = await aiLimitYaniti(session.sub, "neden-derinles");
+  if (limit) return Response.json({ soru: YEDEK_SORULAR[tur] ?? null });
 
   try {
     const client = new Anthropic();
