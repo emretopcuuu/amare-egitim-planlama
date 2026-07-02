@@ -989,6 +989,15 @@ export default function EkranGosterisi() {
                         </p>
                       </div>
                     )}
+                    {/* [E3] Kolektif söz mührü — canlı sayaç */}
+                    {veri.sozMuhur && (
+                      <div className="kart-3d rounded-2xl border border-gold/40 bg-gold/[0.08] p-5 text-center sm:col-span-2">
+                        <p className="text-3xl" aria-hidden>📜</p>
+                        <p className="mt-1 text-2xl font-bold text-gold-light">
+                          {veri.sozMuhur.muhurlu} / {veri.sozMuhur.sozVeren} söz mühürlendi
+                        </p>
+                      </div>
+                    )}
                     {/* FAZ 5.2 — altın görev kutlaması: isimli (bilinçli — kutlama) */}
                     {veri.altinKazananlar.length > 0 && (
                       <div className="kart-3d rounded-2xl border border-gold/40 bg-gold/[0.10] p-5 text-center sm:col-span-2">

@@ -1,10 +1,14 @@
 import { redirect } from "next/navigation";
+import { headers } from "next/headers";
 import Link from "next/link";
+import QRCode from "qrcode";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { sozGetir, taniklar, bekleyenImzalar, sozV2KapisiAcik } from "@/lib/soz";
+import { sozMuhurDurumu } from "@/lib/sozMuhur";
 import { tr } from "@/lib/i18n/tr";
 import SozV2Akis from "./SozV2Akis";
+import SozMuhurFinal from "./SozMuhurFinal";
 
 export const metadata = { title: "Sözün — Liderlik Aynası" };
 
@@ -30,17 +34,34 @@ export default async function SozumSayfa() {
     );
   }
 
-  const [soz, tanikList, bekleyen, { data: liderler }] = await Promise.all([
-    sozGetir(db, session.sub),
-    taniklar(db, session.sub),
-    bekleyenImzalar(db, session.sub),
-    db
-      .from("participants")
-      .select("id, full_name, team")
-      .eq("role", "participant")
-      .neq("id", session.sub)
-      .order("full_name"),
-  ]);
+  const [soz, tanikList, bekleyen, { data: liderler }, { data: ben }, muhurDurum] =
+    await Promise.all([
+      sozGetir(db, session.sub),
+      taniklar(db, session.sub),
+      bekleyenImzalar(db, session.sub),
+      db
+        .from("participants")
+        .select("id, full_name, team")
+        .eq("role", "participant")
+        .neq("id", session.sub)
+        .order("full_name"),
+      db.from("participants").select("camp_unlock_token").eq("id", session.sub).maybeSingle(),
+      sozMuhurDurumu(db),
+    ]);
+
+  // [E3] Yüz yüze şahitlik QR'ı: şahitler bunu okutup söze imza atar.
+  const token = ben?.camp_unlock_token ?? null;
+  let qrSvg = "";
+  if (token) {
+    const h = await headers();
+    const proto = h.get("x-forwarded-proto") ?? "https";
+    const host = h.get("host") ?? "ayna.oneteamglobal.ai";
+    qrSvg = await QRCode.toString(`${proto}://${host}/sahit?u=${token}`, {
+      type: "svg",
+      margin: 1,
+      errorCorrectionLevel: "M",
+    }).catch(() => "");
+  }
 
   // [E2] Söz mühürlendiyse (kendi sesiyle okundu) İlk 72 Saat kartına yönlendir.
   const sozMuhurlu = !!soz?.voice_path || soz?.durum === "onaylandi";
@@ -53,6 +74,7 @@ export default async function SozumSayfa() {
         bekleyenImzalar={bekleyen}
         liderler={(liderler ?? []).map((l) => ({ id: l.id, ad: l.full_name, takim: l.team }))}
       />
+      {sozMuhurlu && qrSvg && <SozMuhurFinal qrSvg={qrSvg} ilkDurum={muhurDurum} />}
       {sozMuhurlu && (
         <div className="mx-auto w-full max-w-md px-5 pb-8">
           <Link
