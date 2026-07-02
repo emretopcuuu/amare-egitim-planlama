@@ -12,13 +12,21 @@ export type EslesmeAday = { id: string; full_name: string; team: string | null }
 
 const GUNLUK_HEDEF_UST = 2;
 
+// FAZ 2.1 — eşleşmeli sayılan görev türleri (kota hesaplarında kullanılır).
+// FAZ 3, "tanik"/"cift" gibi yeni türler eklediğinde bu listeye katılır.
+export const ESLESMELI_TURLER: readonly string[] = ["bag"];
+
 /** Verilen aday havuzundan dengeli kotalara uyan bir "hedef" seçer.
- * Uygun aday yoksa null döner (çağıran isimsiz moda düşmeli). */
+ * `tercihEdilenId` verilirse (ör. karsilasma.ts'in tamamlayıcı persona
+ * eşleşmesi) ve dengeleyici kısıtlarını geçerse ÖNCELİKLİ olarak o döner;
+ * geçmezse ya da verilmezse dengeli seçime düşülür. Uygun aday yoksa null
+ * döner (çağıran isimsiz moda düşmeli). */
 export async function eslesmeHedefiSec(
   db: Db,
   kaynakId: string,
   adaylar: EslesmeAday[],
-  simdi = new Date()
+  simdi = new Date(),
+  tercihEdilenId?: string | null
 ): Promise<EslesmeAday | null> {
   const havuz = adaylar.filter((a) => a.id !== kaynakId);
   if (havuz.length === 0) return null;
@@ -58,6 +66,13 @@ export async function eslesmeHedefiSec(
       (gunlukSayac.get(a.id) ?? 0) < GUNLUK_HEDEF_UST
   );
   if (uygunlar.length === 0) return null;
+
+  // Tercih edilen aday (persona-tamamlayıcı eşleşme) dengeleyici kısıtlarını
+  // geçtiyse önceliklidir — persona uyumu + dengeli dağıtım BİRLİKTE çalışır.
+  if (tercihEdilenId) {
+    const tercihEdilen = uygunlar.find((a) => a.id === tercihEdilenId);
+    if (tercihEdilen) return tercihEdilen;
+  }
 
   // Hiç eşleşmemişe (ya da en az eşleşmişe) öncelik; eşitlikte deterministik
   // (kaynak+aday tohumlu) sırayla dengeli dağıt.
