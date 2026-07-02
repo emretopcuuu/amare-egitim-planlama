@@ -4074,6 +4074,9 @@ export const tr = {
       p5: "Kendine en dürüst davrananlar, en uzağa gidenler oluyor. Hazırsan, pusulanı kuralım.",
     } as Record<string, string>,
   },
+  muhurZinciri: {
+    teyitHata: "Teyit kaydedilemedi.",
+  },
   ortak: {
     oturumGerekli: "Oturum gerekli.",
     genelHata: "Bir şeyler ters gitti, tekrar dener misin?",
