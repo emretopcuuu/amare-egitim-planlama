@@ -3380,6 +3380,16 @@ export const tr = {
     // UX #1 — "Başladım": saha görevi gerçek zaman alır
     basladim: "✋ Başladım, üzerinde çalışıyorum",
     basladimRozet: "✋ Üzerinde çalışıyorsun",
+    // FAZ 6.1 — "Başladım" canlı modu: 60-90 sn sonra tek cümlelik cesaret
+    // fısıltısı (şablon havuzu, LLM yok). gorevId tohumlu seçilir.
+    cesaretFisiltilari: [
+      "Kapıdasın. İlk cümle en zoru — onu söyle, gerisi gelir.",
+      "Şu an tam da olması gereken yerdesin. Nefes al, başla.",
+      "Mükemmel olmasına gerek yok; gerçek olması yeter.",
+      "Bir adım. Sadece bir adım. Ben buradayım.",
+      "Korku ile heyecan aynı şeydir — sen heyecanlısın.",
+      "Bu anı sonra hatırlayacaksın. Şimdi cesur ol.",
+    ] as string[],
     // UX #2 — Ertele
     ertele: "Şimdi uygun değilim",
     erteleniyor: "Erteleniyor…",

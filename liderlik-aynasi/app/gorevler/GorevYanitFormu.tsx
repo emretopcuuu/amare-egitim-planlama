@@ -31,6 +31,9 @@ type Sonuc = {
   soz?: boolean;
   senkron?: boolean;
   bekliyor?: boolean;
+  // FAZ 6.2 — Fiero sahnesi: bu görevin çalıştırdığı kas + kaçıncı kez.
+  kasSayaci?: { ad: string; kez: number };
+  altin?: boolean;
 };
 
 // Görev yanıtı: gönderim AYNA'nın anlık puanını bekler (5-15 sn) —
@@ -206,8 +209,21 @@ export default function GorevYanitFormu({
           </>
         ) : (
           <>
+            {/* FAZ 6.2 — altın görev tamamlandıysa sahnenin başında parlar */}
+            {sonuc.altin && (
+              <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-gold/30 px-3 py-1 text-xs font-bold uppercase tracking-widest text-gold-light ring-1 ring-gold/50">
+                ⚡ Altın Görev · 3× kıvılcım
+              </p>
+            )}
             {sonuc.puan !== undefined && <PuanAcilisi puan={sonuc.puan} />}
             {sonuc.kivilcim !== undefined && <KivilcimSayac kazanim={sonuc.kivilcim} />}
+            {/* FAZ 6.2 — kas ilerleme halkası: "bu görevle X kasın N. kez çalıştı" */}
+            {sonuc.kasSayaci && (
+              <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-royal-light/30 bg-royal/15 px-4 py-1.5 text-sm font-medium text-royal-light">
+                <span aria-hidden>💪</span>
+                Bu görevle <b className="text-slate-100">{sonuc.kasSayaci.ad}</b> kasın bu kampta {sonuc.kasSayaci.kez}. kez çalıştı
+              </p>
+            )}
             {sonuc.yorum && (
               <div className="mt-3 text-left">
                 <AynaBalon baslik="AYNA">{sonuc.yorum}</AynaBalon>

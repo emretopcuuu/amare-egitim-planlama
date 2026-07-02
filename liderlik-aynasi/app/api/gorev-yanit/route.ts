@@ -339,6 +339,22 @@ export async function POST(req: Request) {
 
   const toplam = await toplamKivilcim(db, session.sub);
 
+  // FAZ 6.2 — FIERO SAHNESİ: bu görevin çalıştırdığı lider kası bu kampta
+  // kaçıncı kez çalıştı? İlerleme halkası için trait adı + tamamlama sayısı.
+  let kasSayaci: { ad: string; kez: number } | null = null;
+  if (gorev.trait_id) {
+    const [{ count: kasKez }, { data: traitData }] = await Promise.all([
+      db
+        .from("missions")
+        .select("id", { count: "exact", head: true })
+        .eq("participant_id", session.sub)
+        .eq("trait_id", gorev.trait_id)
+        .eq("status", "scored"),
+      db.from("traits").select("name").eq("id", gorev.trait_id).maybeSingle(),
+    ]);
+    if (traitData?.name && kasKez) kasSayaci = { ad: traitData.name, kez: kasKez };
+  }
+
   // #6 Kör nokta güncelleme döngüsü: milestone (5, 10, 15) tamamlamada
   // Haiku, son yanıtları analiz edip on_farkindalik profilini günceller.
   const { count: tamamlananSayi } = await db
@@ -370,6 +386,8 @@ export async function POST(req: Request) {
     kivilcim,
     toplam,
     unvan: unvanBul(toplam).mevcut.ad,
+    ...(kasSayaci ? { kasSayaci } : {}),
+    ...(gorev.altin ? { altin: true } : {}),
     ...(kriz ? { guvenlik: true } : {}),
   });
 }
