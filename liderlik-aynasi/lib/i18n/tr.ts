@@ -3859,6 +3859,13 @@ export const tr = {
     izle: "▶ Suya bak",
     anaSayfa: "🌊 Yansımanı izle",
     sesHata: "Ses şu an yüklenemedi — birazdan tekrar dene.",
+    // [M10] Video henüz hazır değilken boş ekrana/sessiz yönlendirmeye düşmek
+    // yerine nazik bir bekleme ekranı.
+    hazirlaniyorBaslik: "Yansıman hazırlanıyor",
+    hazirlaniyorMetin: "Aynan seni suda çiziyor — birkaç dakika içinde hazır olacak. Hazır olduğunda bildirim göndereceğiz.",
+    yokBaslik: "Yansıman henüz hazır değil",
+    yokMetin: "Bu an için yansıman hazırlanmadı. Merak etme — raporunda seni bekleyen çok şey var.",
+    geriDon: "← Ana sayfaya dön",
   },
   sahne: {
     ipucu: "Ayna Anı'nı başlatmak için tıkla",
