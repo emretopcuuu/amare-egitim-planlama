@@ -50,6 +50,17 @@ export type EkranVerisi = {
   vitrin: number | null;
   // Onaylı anı duvarı fotoğraflarının imzalı URL'leri (en yeni)
   anilar: string[];
+  // [9] SALON MOZAİĞİ — kolektif dönüşüm haritası. Tamamen İSİMSİZ: her katılımcı
+  // için yalnız arketip ikon+ad döner (sıra karışık — kimin hangisi olduğu
+  // eşleştirilemez). körNoktaKapananOran: dalga-dalga öz/dış açığı daralan
+  // kişilerin oranı (yeterli veri olan kişiler arasında). enCokBuyuyenOzellik:
+  // kamp genelinde ilk→son dalga dış-puan ortalaması en çok yükselen özellik.
+  mozaik: {
+    arketipler: { simge: string; ad: string }[];
+    korNoktaKapananOran: number | null;
+    korNoktaOrneklem: number;
+    enCokBuyuyenOzellik: { ad: string; fark: number } | null;
+  };
   // #8 Anonim sosyal kıvılcım: yüksek puanlı (≥8), gizlenmemiş, öz-olmayan
   // yorum metinleri — KİMLİKSİZ. Kim kime yazdı taşınmaz; sadece olumlu söz.
   yansimalar: string[];
@@ -84,7 +95,7 @@ export async function GET() {
         .from("participants")
         .select("id, full_name, team")
         .eq("role", "participant"),
-      db.from("ratings").select("rater_id, target_id, trait_id, score, is_self"),
+      db.from("ratings").select("rater_id, target_id, trait_id, score, is_self, wave"),
       db
         .from("missions")
         .select("participant_id, spark_points")
@@ -209,6 +220,7 @@ export async function GET() {
   const kisiler = kisilerSonuc.data;
   const puanlar = puanlarSonuc.data;
   const ozellikSayisi = ozellikler.length;
+  const ozellikAd = new Map(ozellikler.map((o) => [o.id, o.name]));
 
   // Kişinin EYLEMİ görünür, içeriği/hedefi GİZLİ. Görev = AYNA→kişi (isimli,
   // başlıksız). Tamamlama/fiero = kişinin kendi eylemi (isimli). Peer eylemler
@@ -300,6 +312,113 @@ export async function GET() {
     (n) => n >= ozellikSayisi
   ).length;
 
+  // [9] SALON MOZAİĞİ — kolektif dönüşüm haritası için ek toplamalar.
+  // Kişi başına öz puan (trait), kişi başına dalga-bazlı dış ortalama (trait) ve
+  // kamp geneli dalga-bazlı dış ortalama (trait) — hepsi tek geçişte.
+  const ozPuanlari = new Map<string, Map<number, { t: number; n: number }>>();
+  const hedefOzellikDalga = new Map<string, Map<number, Map<number, { t: number; n: number }>>>();
+  const kampDalgaOzellik = new Map<number, Map<number, { t: number; n: number }>>();
+  for (const p of puanlar) {
+    if (p.is_self) {
+      const om = ozPuanlari.get(p.target_id) ?? new Map<number, { t: number; n: number }>();
+      const ok = om.get(p.trait_id) ?? { t: 0, n: 0 };
+      ok.t += p.score;
+      ok.n += 1;
+      om.set(p.trait_id, ok);
+      ozPuanlari.set(p.target_id, om);
+      continue;
+    }
+    if (p.wave === null) continue;
+    const hd = hedefOzellikDalga.get(p.target_id) ?? new Map<number, Map<number, { t: number; n: number }>>();
+    const hdw = hd.get(p.trait_id) ?? new Map<number, { t: number; n: number }>();
+    const hdk = hdw.get(p.wave) ?? { t: 0, n: 0 };
+    hdk.t += p.score;
+    hdk.n += 1;
+    hdw.set(p.wave, hdk);
+    hd.set(p.trait_id, hdw);
+    hedefOzellikDalga.set(p.target_id, hd);
+
+    const kd = kampDalgaOzellik.get(p.wave) ?? new Map<number, { t: number; n: number }>();
+    const kdk = kd.get(p.trait_id) ?? { t: 0, n: 0 };
+    kdk.t += p.score;
+    kdk.n += 1;
+    kd.set(p.trait_id, kdk);
+    kampDalgaOzellik.set(p.wave, kd);
+  }
+
+  // Arketip mozaiği: her yeterli-verili kişi için isimsiz {simge, ad} — sıralama
+  // KARIŞIK (kimin hangisi olduğu eşleştirilemez, spotlight'tan bağımsız hesap).
+  const arketipMozaik = kisiler
+    .map((k) => {
+      const ho = hedefOzellik.get(k.id);
+      if (!ho || ho.size === 0) return null;
+      const satirlar = ozellikler.map((o) => {
+        const kk = ho.get(o.id);
+        return { ad: o.name, dis: kk ? kk.t / kk.n : null, oz: null };
+      });
+      const ark = arketipBul(satirlar);
+      return { simge: ark.simge, ad: ark.ad };
+    })
+    .filter((x): x is { simge: string; ad: string } => x !== null)
+    .sort(() => Math.random() - 0.5);
+
+  // Kör nokta kapanma oranı: kişi başına en büyük |öz-dış| açığına sahip trait'i
+  // bul, o trait'in dalga-dalga dış ortalamasına bak (rapor.ts ile aynı mantık,
+  // toplu). ≥2 dalga verisi olanlar örneklem; son açık ilk açıktan küçükse kapandı.
+  let kapananSayisi = 0;
+  let ornekSayisi = 0;
+  for (const k of kisiler) {
+    const om = ozPuanlari.get(k.id);
+    const ho = hedefOzellik.get(k.id);
+    const hd = hedefOzellikDalga.get(k.id);
+    if (!om || !ho || !hd) continue;
+    let enFark = -1;
+    let korTrait: number | null = null;
+    for (const [traitId, ok] of om) {
+      const dis = ho.get(traitId);
+      if (!dis) continue;
+      const oz = ok.t / ok.n;
+      const disOrt = dis.t / dis.n;
+      const fark = Math.abs(oz - disOrt);
+      if (fark > enFark) {
+        enFark = fark;
+        korTrait = traitId;
+      }
+    }
+    if (korTrait === null) continue;
+    const oz = om.get(korTrait)!;
+    const ozDeger = oz.t / oz.n;
+    const dalgaVerisi = hd.get(korTrait);
+    if (!dalgaVerisi) continue;
+    const dalgalarSirali = [...dalgaVerisi.entries()].sort((a, b) => a[0] - b[0]);
+    if (dalgalarSirali.length < 2) continue;
+    const ilkFark = Math.abs(ozDeger - dalgalarSirali[0][1].t / dalgalarSirali[0][1].n);
+    const sonFark = Math.abs(
+      ozDeger - dalgalarSirali[dalgalarSirali.length - 1][1].t / dalgalarSirali[dalgalarSirali.length - 1][1].n
+    );
+    ornekSayisi++;
+    if (sonFark < ilkFark) kapananSayisi++;
+  }
+
+  // En çok büyüyen özellik (kamp geneli): ilk→son dalga dış-puan ortalaması
+  // farkı en büyük özellik (bireysel değil, tüm katılımcıların toplamı).
+  let enCokBuyuyenOzellik: { ad: string; fark: number } | null = null;
+  {
+    const dalgaSirali = [...kampDalgaOzellik.keys()].sort((a, b) => a - b);
+    if (dalgaSirali.length >= 2) {
+      const ilkDalga = kampDalgaOzellik.get(dalgaSirali[0])!;
+      const sonDalga = kampDalgaOzellik.get(dalgaSirali[dalgaSirali.length - 1])!;
+      for (const [traitId, sonK] of sonDalga) {
+        const ilkK = ilkDalga.get(traitId);
+        if (!ilkK) continue;
+        const fark = sonK.t / sonK.n - ilkK.t / ilkK.n;
+        if (fark > 0 && (!enCokBuyuyenOzellik || fark > enCokBuyuyenOzellik.fark)) {
+          enCokBuyuyenOzellik = { ad: ozellikAd.get(traitId) ?? "", fark: Number(fark.toFixed(1)) };
+        }
+      }
+    }
+  }
+
   // Kıvılcım Ligi
   const kivilcimlar = new Map<string, number>();
   for (const g of gorevSonuc.data) {
@@ -318,7 +437,6 @@ export async function GET() {
     .filter((k) => k.kivilcim > 0)
     .sort((a, b) => b.kivilcim - a.kivilcim);
   // UX #8 — bir kişinin arketip + en güçlü yönünü dış-puanlarından çıkar.
-  const ozellikAd = new Map(ozellikler.map((o) => [o.id, o.name]));
   const spotlight = (kisiId: string) => {
     const ho = hedefOzellik.get(kisiId);
     if (!ho || ho.size === 0) return { arketip: null, enGuclu: null };
@@ -385,6 +503,13 @@ export async function GET() {
     takimLigi: [...takimToplam.entries()]
       .map(([takim, kivilcim]) => ({ takim, kivilcim }))
       .sort((a, b) => b.kivilcim - a.kivilcim),
+    mozaik: {
+      arketipler: arketipMozaik,
+      korNoktaKapananOran:
+        ornekSayisi > 0 ? Math.round((kapananSayisi / ornekSayisi) * 100) : null,
+      korNoktaOrneklem: ornekSayisi,
+      enCokBuyuyenOzellik,
+    },
     sahne: await (async () => {
       const ayar = new Map((sahneAyarSonuc.data ?? []).map((a) => [a.key, a.value]));
       const taze = (deger: string | undefined, dakika: number) => {

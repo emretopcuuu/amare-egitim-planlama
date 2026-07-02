@@ -3913,6 +3913,13 @@ export const tr = {
     senkronBaslik: "SENKRON AN",
     // UX #9 — anons görsel bandı (ses kapalı odada da görünür)
     anonsBant: "Program anonsu",
+    // [9] Salon Mozaiği — kolektif dönüşüm haritası. Tamamen isimsiz.
+    mozaikBaslik: "🧩 Salon Mozaiği",
+    mozaikAciklama: "Bu salondaki herkesin ruhu — kimin hangisi olduğu gizli.",
+    mozaikBos: "Mozaik yakında — yeterli gözlem toplandığında burası dolacak.",
+    mozaikKorNokta: (oran: number) => `Salonun %${oran}'i kör noktasını daraltıyor`,
+    mozaikKorNoktaAciklama: "Öz görüşle aynadaki görüş arasındaki fark küçülüyor",
+    mozaikBuyuyen: (ad: string) => `En çok büyüyen: ${ad}`,
   },
   // A2 — Mühür Açılışı: kamp sonunda onboarding'de mühürlenen söz açılır
   muhur: {
