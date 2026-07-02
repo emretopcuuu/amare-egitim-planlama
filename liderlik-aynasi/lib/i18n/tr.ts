@@ -1245,6 +1245,15 @@ export const tr = {
     grupBirlikte: "🔗 Grup-birlikte",
     hedefEtiket: "Odak",
     takimsiz: "Henüz bir gruba atanmadın.",
+    // Öneri #4 — grup ödevi kapanışı
+    tamamButon: "✅ Biz bunu yaptık",
+    tamamYerTutucu: "Nasıl yaptınız? Tek cümle yeter — grubun kanıtı.",
+    tamamGonder: "Gönder, ödevi kapat",
+    tamamGonderiliyor: "Gönderiliyor…",
+    tamamVazgec: "Vazgeç",
+    tamamOldu: "🎉 Ödev kapandı — kıvılcım tüm gruba yazıldı!",
+    tamamTesekkur: "Grubun birlikte başardı. Bu kıvılcım hepinizin.",
+    tamamHata: "Kapatılamadı, tekrar dene.",
     // İç mesajlaşma
     arkadaslarBaslik: "Grup Arkadaşların",
     arkadaslarAlt: "Bir arkadaşına dokun, mesaj yaz — bildirim olarak ulaşır.",
