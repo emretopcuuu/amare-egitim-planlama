@@ -48,7 +48,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     loginKodu: kisi.login_code,
     kampAcik: !!kisi.camp_unlocked_at,
     ofTamam: !!ofRow?.tamamlandi_at,
-    pusulaCekirdek: cekirdek?.ozet ?? null,
+    // KVKK: pusula İÇERİĞİ (neden/iç engel/özet) admin'e asla dönmez —
+    // yalnız tamamlanma SONUCU. (Eski alan ham özet metnini sızdırıyordu.)
+    pusulaTamam: !!cekirdek?.ozet,
     momentum: momentumlar?.[0]?.score ?? null,
     gorevTamam: gorevTamam ?? 0,
     takdir: takdirSayi ?? 0,

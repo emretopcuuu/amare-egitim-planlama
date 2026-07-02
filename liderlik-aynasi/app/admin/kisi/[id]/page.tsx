@@ -116,13 +116,14 @@ export default async function Kisi360Page({ params }: { params: Promise<{ id: st
         <MudahaleKonsolu hedefId={id} kampAcik={!!kisi.camp_unlocked_at} />
       </Bolum>
 
-      {/* Pusula */}
+      {/* Pusula — KVKK: kişinin nedeni/iç engeli MAHREMDİR, admin dahil kimse
+          ham metni görmez (KVKK vaadi). Yalnız tamamlanma SONUCU gösterilir. */}
       <Bolum baslik={t.pusulaBaslik}>
         {cekirdek?.ozet ? (
-          <>
-            <p className="text-sm leading-relaxed text-slate-200">{cekirdek.ozet}</p>
-            {cekirdek.ic_engel && <p className="mt-2 text-sm text-amber-300/90">{t.icEngel}: {cekirdek.ic_engel}</p>}
-          </>
+          <p className="text-sm text-emerald-300">
+            ✓ Pusula tamamlandı{" "}
+            <span className="text-xs text-slate-500">(içerik KVKK gereği yalnız katılımcıya görünür)</span>
+          </p>
         ) : (
           <p className="text-sm text-slate-500">{t.veriYok}</p>
         )}

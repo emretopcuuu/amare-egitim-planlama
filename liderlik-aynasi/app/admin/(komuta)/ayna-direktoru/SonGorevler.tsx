@@ -21,8 +21,6 @@ export type GorevSatir = {
   puan: number | null;
   kivilcim: number;
   govde: string;
-  yanit: string | null;
-  aiYorum: string | null;
   zorluk: number | null;
   ozellik: string | null;
   tarih: string; // ISO
@@ -92,16 +90,12 @@ export default function SonGorevler({ gorevler }: { gorevler: GorevSatir[] }) {
                     <td colSpan={5} className="px-4 py-4">
                       <div className="space-y-3">
                         <Alan baslik={t.detayMesaj}>{g.govde}</Alan>
-                        <Alan baslik={t.detayYanit}>{g.yanit || t.detayYanitYok}</Alan>
-                        {g.aiYorum && (
-                          <Alan
-                            baslik={`${t.detayYorum}${
-                              g.puan != null ? ` · ${g.puan}/10` : ""
-                            }`}
-                          >
-                            {g.aiYorum}
-                          </Alan>
-                        )}
+                        {/* KVKK: katılımcının YANITI ve AYNA'nın kişisel yorumu
+                            admin'e gösterilmez — yalnız sonuç (puan/kıvılcım). */}
+                        <p className="text-xs text-slate-500">
+                          Yanıt içeriği KVKK gereği yalnız katılımcıya görünür
+                          {g.puan != null ? ` · sonuç: ${g.puan}/10` : ""}
+                        </p>
                         <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-500">
                           {g.zorluk ? (
                             <span>
