@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import TelefonaGecKoprusu from "@/components/TelefonaGecKoprusu";
 
 // ONBOARDING RAYI — kamp öncesi TÜM 6 fazı (+ Kamp) tek bakışta gösteren,
 // her sayfada (ana sayfa + her fazın içinde) görünen kalıcı harita.
@@ -12,6 +13,9 @@ type FazDurum = "tamam" | "simdi" | "kilitli";
 type FazNode = { ad: string; kisaAd: string; href: string | null; durum: FazDurum };
 
 const FAZ_ADLARI = ["Ritüel", "Oyun", "Değerler", "Pusula", "Hedef", "Farkındalık", "Kamp"] as const;
+// [UX4] Faz başına tahmini süre (dk) — bilinmezlik yarıda bırakmanın 1 numaralı
+// sebebi. "Kamp" için süre anlamsız (0 = gösterme).
+const FAZ_SURE_DK = [3, 1, 15, 10, 8, 5, 0] as const;
 
 // Şu anki faz DB'deki tamamlanma durumundan kendiliğinden hesaplanır (bir
 // önceki tamamlanan faz gerçekleşince rail otomatik ilerler) — çağıran
@@ -60,10 +64,20 @@ export default async function OnboardingRayi() {
     durum: i < suankiIndeks ? "tamam" : i === suankiIndeks ? "simdi" : "kilitli",
   }));
 
+  // [UX9] Dönüş bağlamı: "neredesin + ne kadar kaldı" tek satırda. Kalan süre =
+  // tamamlanmamış fazların süre toplamı (Kamp hariç).
+  const kalanDk = tamamlar.reduce(
+    (t, tamam, i) => t + (!tamam && FAZ_SURE_DK[i] > 0 ? FAZ_SURE_DK[i] : 0),
+    0
+  );
+  const suankiAd = FAZ_ADLARI[suankiIndeks];
+  const suankiSure = FAZ_SURE_DK[suankiIndeks];
+
   return (
+    <div className="mx-auto w-full max-w-md">
     <nav
       aria-label="Onboarding yolculuğu"
-      className="mx-auto flex w-full max-w-md items-stretch gap-1 px-1 py-2"
+      className="flex w-full items-stretch gap-1 px-1 py-2"
     >
       {nodelar.map((n, i) => {
         const tiklanabilir = n.durum === "tamam" && !!n.href;
@@ -116,5 +130,17 @@ export default async function OnboardingRayi() {
         );
       })}
     </nav>
+    {/* [UX4/UX9] Konum + süre bağlamı — dönen kişi nereye ışınlandığını anlar */}
+    {kalanDk > 0 && suankiIndeks < tamamlar.length - 1 && (
+      <p className="pb-1 text-center text-[0.65rem] font-medium text-slate-500">
+        Sıradaki: <span className="text-gold-light">{suankiAd}</span>
+        {suankiSure > 0 && ` (~${suankiSure} dk)`} · toplam ~{kalanDk} dk kaldı
+      </p>
+    )}
+    {/* [UX6] Bilgisayardan girene telefona geçiş QR'ı (yalnız masaüstünde görünür) */}
+    <div className="mt-2">
+      <TelefonaGecKoprusu />
+    </div>
+    </div>
   );
 }
