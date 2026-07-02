@@ -346,6 +346,22 @@ const EgitimDetay = () => {
                 <AddToCalendarButton egitim={egitim} />
                 <EventActions egitim={egitim} />
               </div>
+
+              {/* Terk eğrisi — 5-dk kovalarda içerideki kişi (Zoom raporu, yalnız admin) */}
+              {isAdmin && Array.isArray(egitim.zoomEgri) && egitim.zoomEgri.length > 1 && (() => {
+                const max = Math.max(...egitim.zoomEgri, 1);
+                return (
+                  <div className="mt-5 pt-4 border-t border-gray-200">
+                    <div className="text-xs font-bold text-gray-600 mb-1">📉 Katılım Eğrisi <span className="font-normal text-gray-400">(5 dakikalık dilimlerde içerideki kişi — yalnız admin görür)</span></div>
+                    <div className="flex items-end gap-[2px] h-16">
+                      {egitim.zoomEgri.map((v, i) => (
+                        <div key={i} className="flex-1 bg-blue-400/80 rounded-t-sm min-w-[3px]" style={{ height: `${Math.max(3, (v / max) * 100)}%` }} title={`${i * 5}–${i * 5 + 5} dk: ${v} kişi`} />
+                      ))}
+                    </div>
+                    <div className="flex justify-between text-[10px] text-gray-400 mt-0.5"><span>başlangıç</span><span>{egitim.zoomEgri.length * 5} dk</span></div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
 

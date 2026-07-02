@@ -195,7 +195,7 @@ export const DataProvider = ({ children }) => {
 
   // HIZLI takvim fetch — base64 gorselUrl HARİÇ (her doc 1MB → 1KB!)
   // gorselUrl marker ile bilinir, lazy yüklenir
-  const TAKVIM_LIGHT_FIELDS = ['egitim','gun','tarih','saat','bitisSaati','sure','egitmen','yer','hafta','kategori','sehir','aciklama','katilimSayisi','tamamlandi','katilTiklamaSayisi','zoomGercekKatilim','zoomOrtDakika'];
+  const TAKVIM_LIGHT_FIELDS = ['egitim','gun','tarih','saat','bitisSaati','sure','egitmen','yer','hafta','kategori','sehir','aciklama','katilimSayisi','tamamlandi','katilTiklamaSayisi','zoomGercekKatilim','zoomOrtDakika','zoomEgri','canliKisi'];
   const KONUSMACI_LIGHT_FIELDS = ['ad','unvan','biyografi','linkedin','meslek','amareKariyer','doktorBrans']; // fotoURL hariç
 
   const fetchLightCollection = async (name, fields, deneme = 2) => {

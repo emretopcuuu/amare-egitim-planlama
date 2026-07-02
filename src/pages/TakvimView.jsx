@@ -18,7 +18,8 @@ import { usePullToRefresh } from '../utils/usePullToRefresh';
 import { useDocumentTitle } from '../utils/useDocumentTitle';
 import { useAuth } from '../context/AuthContext';
 import { signOut } from 'firebase/auth';
-import { auth } from '../utils/firebase';
+import { auth, db } from '../utils/firebase';
+import { doc as fsDoc, onSnapshot } from 'firebase/firestore';
 import { katilTikla } from '../utils/katilim';
 // jsPDF + html2canvas dinamik import — sadece PDF indir butonu tıklandığında yüklenir
 // İlk yükleme süresinden ~400KB tasarruf
@@ -529,12 +530,25 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
   const { t, tDynamic } = useTranslation();
   const [cd, setCd] = useState(() => cdZorla(getCountdown(egitim), true));
   const [kapatildi, setKapatildi] = useState(false);
+  const [canliKisi, setCanliKisi] = useState(0); // Zoom webhook'tan gerçek zamanlı "içerideki kişi"
   useEffect(() => { const iv = setInterval(() => setCd(cdZorla(getCountdown(egitim), true)), 1000); return () => clearInterval(iv); }, [egitim]);
 
   const online = egitim ? isOnline(egitim) : false;
   const zoomId = zoomIdBul(egitim);
   const aktif = !kapatildi && online && !!zoomId && (cd?.durum === 'yakin' || cd?.durum === 'canli');
   useEffect(() => { onAktifDegisti?.(aktif); }, [aktif, onAktifDegisti]);
+
+  // Canlı sayaç: bar aktifken yalnız BU eğitimin doc'unu dinle (tek doc, ucuz)
+  useEffect(() => {
+    if (!aktif || !egitim?.id) { setCanliKisi(0); return; }
+    try {
+      const unsub = onSnapshot(fsDoc(db, 'takvim', egitim.id), snap => {
+        setCanliKisi(Math.max(0, snap.data()?.canliKisi || 0));
+      }, () => {});
+      return () => unsub();
+    } catch { /* dinleme başarısızsa sayaç görünmez, bar çalışır */ }
+  }, [aktif, egitim?.id]);
+
   if (!aktif) return null;
 
   const canli = cd.durum === 'canli';
@@ -556,6 +570,7 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
             {etiketMetin}
           </div>
           <div className="text-xs md:text-sm font-bold text-white truncate">{tDynamic(egitim.egitim)}</div>
+          {canliKisi > 0 && <div className="text-[10px] md:text-xs font-bold text-white/90 inline-flex items-center gap-1 mt-0.5"><span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />şu an {canliKisi} kişi içeride</div>}
         </div>
         <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)}
           className={`flex-shrink-0 inline-flex items-center gap-2 bg-white ${butonRenk} font-extrabold text-sm md:text-base px-4 md:px-6 py-3 rounded-xl shadow-lg spring-tap`}>

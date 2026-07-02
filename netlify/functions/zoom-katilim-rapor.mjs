@@ -120,25 +120,49 @@ export const handler = async (event) => {
       })[0];
       if (!oturum) { sonuclar.push(`${a.egitim}: o güne ait Zoom oturumu yok`); continue; }
 
-      // Katılımcılar (sayfalı)
+      // Katılımcılar (sayfalı) — süre toplamı + giriş/çıkış zamanları (terk eğrisi için)
       const kisiler = new Map(); // email|isim -> toplam saniye
+      const emailler = new Set(); // ekip nabzı eşleştirmesi için (server-only koleksiyona)
+      const oturumlar = []; // {j: joinMs, l: leaveMs}
       let nextToken = '';
       do {
         const page = await zoomGet(token, `/report/meetings/${encUUID(oturum.uuid)}/participants?page_size=300${nextToken ? `&next_page_token=${nextToken}` : ''}`);
         for (const p of page.participants || []) {
           const key = (p.user_email || p.name || 'anon').toLowerCase().trim();
           kisiler.set(key, (kisiler.get(key) || 0) + (p.duration || 0));
+          if (p.user_email) emailler.add(String(p.user_email).toLowerCase().trim());
+          if (p.join_time && p.leave_time) oturumlar.push({ j: new Date(p.join_time).getTime(), l: new Date(p.leave_time).getTime() });
         }
         nextToken = page.next_page_token || '';
       } while (nextToken);
 
       const sayi = kisiler.size;
       const ortDk = sayi ? Math.round([...kisiler.values()].reduce((s, v) => s + v, 0) / sayi / 60) : 0;
+
+      // Terk eğrisi: oturum başlangıcından itibaren 5-dk kovalarda "içerideki kişi" sayısı (maks 3 saat)
+      const t0 = new Date(oturum.start_time).getTime();
+      const kovaN = 36; // 36 × 5dk = 180dk
+      const egri = Array(kovaN).fill(0);
+      for (const o of oturumlar) {
+        const bas = Math.max(0, Math.floor((o.j - t0) / 300000));
+        const bit = Math.min(kovaN - 1, Math.floor((o.l - t0) / 300000));
+        for (let k = bas; k <= bit; k++) egri[k]++;
+      }
+      while (egri.length && egri[egri.length - 1] === 0) egri.pop(); // boş kuyruğu kes
+
       await db.collection('takvim').doc(a.id).set({
         zoomGercekKatilim: sayi,
         zoomOrtDakika: ortDk,
+        zoomEgri: egri, // 5-dk kovalar; admin-only gösterilir
         zoomRaporTs: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
+      // Ekip nabzı temeli: katılımcı emailleri — SERVER-ONLY koleksiyon (rules'ta match yok → client erişemez)
+      if (emailler.size) {
+        await db.collection('zoom_katilimcilar').doc(a.id).set({
+          egitim: a.egitim, tarih: a.tarih, emails: [...emailler],
+          ts: admin.firestore.FieldValue.serverTimestamp(),
+        });
+      }
       sonuclar.push(`${a.egitim}: ${sayi} kişi, ort ${ortDk} dk`);
     } catch (e) {
       console.warn('[zoom-rapor]', a.egitim, e.message);
