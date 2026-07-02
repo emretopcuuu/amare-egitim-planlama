@@ -327,7 +327,14 @@ export async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | 
     // kamp-içi derinleşen tema. Eskiden YAZILIYOR ama HİÇ OKUNMUYORDU (ölü
     // döngü) — artık gorevUret bağlamına taşınır, en pahalı geri besleme
     // mekanizmasının çıktısı görevleri şekillendirir.
-    kampici_guncelleme?: { milestone?: number; yeniTema?: string; aciklama?: string } | null;
+    // FAZ 4.1: sosyalTema — akran yorumları + takdirlerin TEMA DÜZEYİNDE
+    // damıtılmış özeti (asla birebir alıntı).
+    kampici_guncelleme?: {
+      milestone?: number;
+      yeniTema?: string;
+      aciklama?: string;
+      sosyalTema?: string;
+    } | null;
   } | null;
   if (!p || !p.katman1) return null;
   const k4 = p.katman4 ?? {};
@@ -339,12 +346,14 @@ export async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | 
   const kg = p.kampici_guncelleme;
   const kampBoyuncaDerinlesenTema =
     kg?.yeniTema ? { tema: kg.yeniTema, aciklama: kg.aciklama ?? null } : null;
+  const sosyalTema = kg?.sosyalTema ?? null;
   const dolu =
     p.katman1.enZayif ||
     (p.katman2?.enBuyukIki?.length ?? 0) > 0 ||
     korNokta.tersDavranis ||
     korNokta.kalkan ||
-    kampBoyuncaDerinlesenTema;
+    kampBoyuncaDerinlesenTema ||
+    sosyalTema;
   if (!dolu) return null;
   return {
     enZayifAlan: p.katman1.enZayif ? OZ_ALAN_AD[p.katman1.enZayif] ?? p.katman1.enZayif : null,
@@ -357,6 +366,8 @@ export async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | 
     // Kamp ilerledikçe açığa çıkan gerçek örüntü (varsa kamp-öncesi profilden
     // daha isabetli — görevleri buna göre demirle).
     kampBoyuncaDerinlesenTema,
+    // FAZ 4.1 — akran yorumları + takdirlerden damıtılmış tek tema etiketi.
+    sosyalTema,
   };
 }
 
@@ -462,6 +473,8 @@ export async function gorevUret(
     degerlerSonuc,
     // Öneri #3: alınan takdirler (sosyal kanıt / güç).
     alinanTakdirlerSonuc,
+    // FAZ 4.2 — kamp öncesi kendi sesiyle bıraktığı beklenti cümlesi.
+    beklentiSonuc,
   ] = await Promise.all([
     aktifOzellikler(db),
     db
@@ -525,6 +538,13 @@ export async function gorevUret(
       .eq("is_hidden", false)
       .order("created_at", { ascending: false })
       .limit(5),
+    // FAZ 4.2 — kamp öncesi kaydettiği beklenti cümlesi ("bu kamptan ne
+    // bekliyorsun?"). Görevler bunu kişinin KENDİ SÖZÜ olarak geri çalabilir.
+    db
+      .from("voice_profiles")
+      .select("beklenti")
+      .eq("participant_id", katilimci.id)
+      .maybeSingle(),
   ]);
 
   // Değerler: kişinin seçtiği 3 temel değer + neden cümlesi → görev bunları
@@ -622,12 +642,13 @@ export async function gorevUret(
     .slice(0, 3)
     .flatMap((o) => o.response_tags as string[]);
 
-  // Öneri #1 — KİŞİNİN GERÇEK CÜMLELERİ: son puanlı görevlerin ham yanıt metni
-  // (etiket değil, kişinin kendi kelimeleri). Görev bu ana demirlenirse "beni
-  // gerçekten dinliyor" hissi doğar — sahiplenmenin en güçlü tetikleyicisi.
+  // Öneri #1 / FAZ 4.4 — KİŞİNİN GERÇEK CÜMLELERİ + DEVAM EDEN HİKÂYE: son
+  // puanlı görevlerin ham yanıt metni (etiket değil, kişinin kendi kelimeleri).
+  // 3'e çıkarıldı (öneri #1'de 2'ydi) — görevler birbirine referans verip
+  // kopuk atışlar değil, süren bir hikâye gibi hissettirsin.
   const sonYanitAlintilari = onceki
     .filter((o) => o.status === "scored" && (o.response_text as string | null)?.trim())
-    .slice(0, 2)
+    .slice(0, 3)
     .map((o) => ({
       gorev: o.title,
       yanit: (o.response_text as string).trim().slice(0, 240),
@@ -984,6 +1005,8 @@ export async function gorevUret(
     // Öneri #3 — sosyal kanıt: akran yorumları + alınan takdirler (güç kaynağı).
     akranYorumlari: akranYorumlari.length > 0 ? akranYorumlari : null,
     alinanTakdirler: alinanTakdirler.length > 0 ? alinanTakdirler : null,
+    // FAZ 4.2 — kamp öncesi kendi sesiyle bıraktığı beklenti cümlesi.
+    beklentiSozu: beklentiSonuc?.data?.beklenti?.trim().slice(0, 240) || null,
     // #3
     streak,
     pikYanitSaati,
@@ -1060,11 +1083,13 @@ DEĞER KİŞİSELLEŞTİRMESİ: Bağlamda "degerler" doluysa görevi kişinin se
 
 HEDEF BAĞLANTISI: Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. onFarkindalik.kampBoyuncaDerinlesenTema doluysa ONA öncelik ver (kamp-öncesi profilden daha taze/isabetli). Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.
 
-KİŞİNİN KENDİ SÖZLERİ (çok güçlü): Bağlamda "sonYanitlari" doluysa, görevi kişinin SON yazdığı gerçek cümleye demirle — onun kendi kelimesini/anını hatırla ("geçen sefer '…' demiştin") ama birebir uzun alıntı yapma, bir-iki kelime dokun yeter. Bu "beni gerçekten dinliyor" hissini kurar.
+KİŞİNİN KENDİ SÖZLERİ / FAZ 4.4 DEVAM EDEN HİKÂYE (çok güçlü): Bağlamda "sonYanitlari" doluysa (son 2-3 görev yanıtı), görevi kişinin SON yazdığı gerçek cümleye demirle — onun kendi kelimesini/anını hatırla ("geçen sefer '…' demiştin") ama birebir uzun alıntı yapma, bir-iki kelime dokun yeter. Birden fazla yanıt varsa aralarında bir İLERLEME/İP UCU gör ve yeni görevi onun doğal devamı yap ("dünkü konuşman seni buraya getirdi, bugün bir adım daha ileri taşı") — görevler kopuk atışlar değil, süren bir hikâye gibi hissettirsin. Bu "beni gerçekten dinliyor" hissini kurar.
 
 KONUŞMANIN DEVAMI: Bağlamda "sonAynaTavsiyesi" doluysa, yeni görev o tavsiyenin TAKİPÇİSİ olsun ("Geçen sefer sana şunu önermiştim — bugün onu deneme zamanı"). Görevler kopuk atışlar değil, süren bir koçluk konuşması gibi hissettir.
 
-SOSYAL KANIT / GÜÇ: Bağlamda "akranYorumlari" ya da "alinanTakdirler" doluysa, ARADA BİR görevi kişinin zayıflığına değil GÜCÜNE bağla — arkadaşlarının onda gördüğü bir yanı hatırlat ve bugün onu bilerek kullanmasını istet ("Arkadaşların sende '…' görüyor; bugün onu bir kez daha, bilerek göster"). Her görev güç-temelli olmasın; kör nokta ile denge kur.
+FAZ 4.2 — KENDİ SÖZÜNÜ GERİ ÇALMA: Bağlamda "beklentiSozu" doluysa (kişinin kamp BAŞLAMADAN ÖNCE kendi sesiyle bıraktığı "bu kamptan ne bekliyorum" cümlesi), ARADA BİR görevi ona bağla: "Kamptan önce bana '…' demiştin — bugün ona bir adım daha yaklaş." Bu, kişinin kendi niyetiyle yüzleşmesinin en güçlü anıdır; birebir uzun alıntı yapma, özünü yakala.
+
+SOSYAL KANIT / GÜÇ: Bağlamda "onFarkindalik.sosyalTema" doluysa (akran yorumları + takdirlerden BAĞIMSIZ birden çok kaynakta tekrar eden, tema düzeyinde damıtılmış tek güç — asla birebir yorum alıntısı), bunu en güçlü kanca olarak kullan: "Kamptaki birden fazla göz sende [sosyalTema]'yı görüyor — bugün onu bilerek, bir kez daha göster." Yoksa bağlamdaki "akranYorumlari"/"alinanTakdirler" ARADA BİR görevi kişinin zayıflığına değil GÜCÜNE bağlamak için kullanılabilir — ama asla birebir alıntı yapma, yalnız özünü paraphrase et. Her görev güç-temelli olmasın; kör nokta ile denge kur.
 
 ANLIK RUH HÂLİ (adaptif ton — persona hâlinin ÜZERİNE binen ince ayar): Bağlamdaki "ruhHali" alanı "zorlaniyor" ise tonu belirgin yumuşat, görevi küçült ve nefes aldır (baskı kurma, kişiyi onaylayarak küçük bir adım iste); "guclu" ise güvenini onurlandırıp bir tık daha meydan oku; "akista" ya da boş ise olağan tonunda devam et. Persona hâlini EZME — yalnız tonu o anki duruma göre yumuşat/sertleştir.
 
@@ -1603,13 +1628,23 @@ export async function korNoktaGuncelle(
     .order("scored_at", { ascending: false })
     .limit(5);
 
-  if (!yanitlar?.length) return;
+  // FAZ 4.1 — YORUM + TAKDİR MADENCİLİĞİ: akranların bu kişi hakkında yazdığı
+  // yorumlar + aldığı takdirler TEMA DÜZEYİNDE damıtılır (asla birebir alıntı,
+  // asla kim yazdı) — "üç ayrı göz sende aynı şeyi gördü" kancasının kaynağı.
+  const [{ data: akranYorumHam }, { data: takdirHam }] = await Promise.all([
+    db.from("ratings").select("comment").eq("target_id", pid).eq("is_hidden", false).not("comment", "is", null),
+    db.from("kudos").select("message").eq("to_id", pid).eq("is_hidden", false),
+  ]);
+  const akranYorumSayisi = akranYorumHam?.length ?? 0;
+  const takdirSayisi = takdirHam?.length ?? 0;
+
+  if (!yanitlar?.length && akranYorumSayisi === 0 && takdirSayisi === 0) return;
 
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
-      max_tokens: 300,
+      max_tokens: 400,
       thinking: { type: "disabled" },
       output_config: {
         effort: "low",
@@ -1627,38 +1662,48 @@ export async function korNoktaGuncelle(
                 type: "string",
                 description: "Neden bu temayı gördün? 1 cümle.",
               },
+              sosyalTema: {
+                type: "string",
+                description:
+                  "Akran yorumları + takdirlerde TEKRAR EDEN tek bir güç/tema (en fazla 4 kelime, Türkçe, ör. 'sakin liderlik', 'gerçek dinleme'). Yalnız en az 2-3 ayrı kaynakta bağımsız olarak görülüyorsa yaz; tek bir yorumdan çıkarma. Yoksa boş string.",
+              },
             },
-            required: ["yeniTema", "aciklama"],
+            required: ["yeniTema", "aciklama", "sosyalTema"],
             additionalProperties: false,
           },
         },
       },
       system:
-        "Bir liderlik kampı katılımcısının son görev yanıtlarını analiz et. Kamp öncesi profilinden farklılaşan, kamp boyunca öne çıkan yeni veya derinleşen psikolojik temayı tespit et. Yalnızca gerçekten belirgin bir tema varsa yaz; yoksa boş string döndür.",
+        "Bir liderlik kampı katılımcısını analiz ediyorsun. (1) Son görev yanıtlarından kamp öncesi profilinden farklılaşan yeni/derinleşen psikolojik temayı bul. (2) Akranlarının onun hakkında yazdığı yorumlar + aldığı takdirlerde BAĞIMSIZ olarak TEKRAR EDEN tek bir gücü/temayı bul — bu, hiçbir yorumu birebir alıntılamadan, yalnız ÖZÜNÜ tek bir tema etiketiyle yakala. Yalnızca gerçekten belirgin olanları yaz; yoksa boş string döndür.",
       messages: [
         {
           role: "user",
           content: JSON.stringify({
-            son5Yanit: yanitlar.map((y) => ({
+            son5Yanit: (yanitlar ?? []).map((y) => ({
               gorev: y.title,
               yanit: (y.response_text as string | null)?.slice(0, 300),
               temalar: y.response_tags,
             })),
+            // Kimlik taşınmaz — yalnız metin içeriği, kim yazdığı hiç gönderilmez.
+            akranYorumlari: (akranYorumHam ?? []).map((r) => (r.comment ?? "").slice(0, 200)),
+            takdirler: (takdirHam ?? []).map((k) => (k.message ?? "").slice(0, 200)),
           }),
         },
       ],
     });
 
-    const veri = jsonCoz<{ yeniTema: string; aciklama: string }>(yanit);
-    if (!veri?.yeniTema) return;
+    const veri = jsonCoz<{ yeniTema: string; aciklama: string; sosyalTema: string }>(yanit);
+    if (!veri?.yeniTema && !veri?.sosyalTema) return;
 
     // on_farkindalik.profil'e ekle (merge)
     const guncellenmis = {
       ...mevcutProfil,
       kampici_guncelleme: {
         milestone: toplamTamamlanan,
-        yeniTema: veri.yeniTema.trim().slice(0, 80),
-        aciklama: veri.aciklama.trim().slice(0, 200),
+        ...(veri.yeniTema
+          ? { yeniTema: veri.yeniTema.trim().slice(0, 80), aciklama: veri.aciklama.trim().slice(0, 200) }
+          : {}),
+        ...(veri.sosyalTema ? { sosyalTema: veri.sosyalTema.trim().slice(0, 60) } : {}),
       },
     };
     await db
