@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { eylulOzet, eylulKayitGetir, eylulAynasiAcikMi } from "@/lib/eylulAynasi";
+import { jetonlarGetir } from "@/lib/eylulDis";
 import EylulAynasiForm from "./EylulAynasiForm";
+import EylulDisDavet from "./EylulDisDavet";
 
 export const metadata = { title: "Eylül Aynası — Liderlik Aynası" };
 export const revalidate = 0;
@@ -15,10 +17,11 @@ export default async function EylulAynasiPage() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
-  const [acik, ozet, kayit] = await Promise.all([
+  const [acik, ozet, kayit, jetonlar] = await Promise.all([
     eylulAynasiAcikMi(db),
     eylulOzet(db, session.sub),
     eylulKayitGetir(db, session.sub),
+    jetonlarGetir(db, session.sub),
   ]);
 
   const kartlar = [
@@ -50,7 +53,10 @@ export default async function EylulAynasiPage() {
         </div>
 
         {acik ? (
-          <EylulAynasiForm mevcut={kayit} />
+          <>
+            <EylulAynasiForm mevcut={kayit} />
+            <EylulDisDavet ilk={jetonlar.map((j) => j.token)} />
+          </>
         ) : (
           <p className="rounded-2xl border border-white/10 bg-midnight-card/50 p-5 text-center text-sm text-slate-400">
             Eylül Aynası kamp sonrası ~45. günde açılır. Yolculuğun sürüyor.
