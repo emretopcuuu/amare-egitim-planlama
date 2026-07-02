@@ -549,6 +549,29 @@ export async function gorevUret(
     .filter((b): b is string => !!b)
     .slice(0, 3);
 
+  // Öneri #8 — ODA SICAKLIĞI: görev yalnız bireyin değil ODANIN duygu ritmine
+  // de otursun. Son 2 saatte kamp GENELİNDE puanlanan görevlerin ortalaması,
+  // odanın enerjisini verir: düşükse tonu toparlayıcı yap, yüksekse iddialaştır.
+  // Yalnız kamp modunda + yeterli sinyalde (≥5 teslim); aksi halde null → nötr.
+  let odaSicakligi: "dusuk" | "yuksek" | null = null;
+  if (mod === "kamp") {
+    const ikiSaatOnce = new Date(Date.now() - 2 * 3_600_000).toISOString();
+    const { data: odaSon } = await db
+      .from("missions")
+      .select("ai_score")
+      .eq("status", "scored")
+      .not("ai_score", "is", null)
+      .gte("scored_at", ikiSaatOnce);
+    const puanlar2s = (odaSon ?? [])
+      .map((m) => m.ai_score)
+      .filter((s): s is number => typeof s === "number");
+    if (puanlar2s.length >= 5) {
+      const ortalama = puanlar2s.reduce((a, b) => a + b, 0) / puanlar2s.length;
+      if (ortalama <= 5) odaSicakligi = "dusuk";
+      else if (ortalama >= 7.5) odaSicakligi = "yuksek";
+    }
+  }
+
   const bugunTurleri = onceki
     .filter((o) => Date.now() - new Date(o.issued_at).getTime() < 86_400_000)
     .map((o) => o.kind);
@@ -823,6 +846,8 @@ export async function gorevUret(
     oncekiGorevBasliklari: onceki.map((o) => o.title),
     // #7 son dönüş biçimleri — art arda aynısını seçme (donus_bicimi'ni farklı seç).
     sonDonusBicimleri: sonDonusBicimleri.length > 0 ? sonDonusBicimleri : null,
+    // #8 odanın o anki enerjisi (kamp geneli son 2 saat).
+    odaSicakligi,
     yonerge:
       gun === 1
         ? "İlk gün: tanışma ve buz kırma odaklı, veriye fazla yaslanma."
@@ -878,6 +903,8 @@ KONUŞMANIN DEVAMI: Bağlamda "sonAynaTavsiyesi" doluysa, yeni görev o tavsiyen
 SOSYAL KANIT / GÜÇ: Bağlamda "akranYorumlari" ya da "alinanTakdirler" doluysa, ARADA BİR görevi kişinin zayıflığına değil GÜCÜNE bağla — arkadaşlarının onda gördüğü bir yanı hatırlat ve bugün onu bilerek kullanmasını istet ("Arkadaşların sende '…' görüyor; bugün onu bir kez daha, bilerek göster"). Her görev güç-temelli olmasın; kör nokta ile denge kur.
 
 ANLIK RUH HÂLİ (adaptif ton — persona hâlinin ÜZERİNE binen ince ayar): Bağlamdaki "ruhHali" alanı "zorlaniyor" ise tonu belirgin yumuşat, görevi küçült ve nefes aldır (baskı kurma, kişiyi onaylayarak küçük bir adım iste); "guclu" ise güvenini onurlandırıp bir tık daha meydan oku; "akista" ya da boş ise olağan tonunda devam et. Persona hâlini EZME — yalnız tonu o anki duruma göre yumuşat/sertleştir.
+
+ODANIN ENERJİSİ (kolektif ton): Bağlamdaki "odaSicakligi" "dusuk" ise (oda yorgun/kırık) görevi toparlayıcı, birleştirici ve biraz daha hafif yap — "hep birlikte" hissi ver; "yuksek" ise (oda coşkulu) momentumu kullanıp bir tık daha iddialı, cesur bir hamle istet. Bu bireysel ruhHali'nin üstünde ince bir kolektif ayardır; boşsa dikkate alma.
 
 DİL NETLİĞİ (çok önemli): Görev metni SADE ve anlaşılır olmalı — katılımcı tek okumada (1) ne yapacağını ve (2) sana ne yazacağını net anlamalı. Kısa, gerçek cümleler kur. Şu hatalardan kaçın: iç içe geçmiş uzun cümleler, art arda tire (—) ile uzayan eklemeler, küçültme ekleri ('ricacık'), bulanık şiirsel ifadeler ('içinde ne koptu'). Yukarıdaki davranışsal kalıplar (FUN FAILURE, EUSTRESS vb.) PUANLAMA/teşvik tonu içindir; görev metnini süslemek için değil. Önce ne yapacağını söyle, sonra tek bir soruyla geri bildirimi iste.
 
