@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      salon_daveti: {
+        Row: {
+          created_at: string
+          gonderildi_at: string | null
+          hedef_ad: string
+          id: string
+          participant_id: string
+          taslak: string
+        }
+        Insert: {
+          created_at?: string
+          gonderildi_at?: string | null
+          hedef_ad: string
+          id?: string
+          participant_id: string
+          taslak: string
+        }
+        Update: {
+          created_at?: string
+          gonderildi_at?: string | null
+          hedef_ad?: string
+          id?: string
+          participant_id?: string
+          taslak?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "salon_daveti_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kamp_senaryosu: {
         Row: {
           atesleme_zamani: string | null
