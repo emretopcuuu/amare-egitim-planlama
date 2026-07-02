@@ -49,6 +49,13 @@ service cloud.firestore {
     match /takvim/{docId} {
       allow read: if true;
       allow write: if isAdmin();
+
+      // Katılımlar — "X kişi katıldı" sayacının dedup kaydı.
+      // Yalnız /.netlify/functions/katil-tikla (admin SDK) yazar; client kapalı
+      // (aynı 2026-06-05 puan-manipülasyon dersi: aggregate client'tan korunur).
+      match /katilimlar/{uid} {
+        allow read, write: if false;
+      }
     }
 
     // Arşiv takvim — eski dönem kayıtları, sadece admin okur/yazar

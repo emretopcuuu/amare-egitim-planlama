@@ -21,7 +21,7 @@ function initFirebase() {
 
 // Koleksiyon → izinli alanlar (null = tümü). Firestore rules'ta zaten read:true olanlar.
 const WHITELIST = {
-  takvim: ['egitim', 'gun', 'tarih', 'saat', 'bitisSaati', 'sure', 'egitmen', 'yer', 'hafta', 'kategori', 'sehir', 'aciklama', 'katilimSayisi', 'tamamlandi', 'etkinlikTuru', 'mekanAdi', 'acikAdres', 'sunucular', 'programAkisi'],
+  takvim: ['egitim', 'gun', 'tarih', 'saat', 'bitisSaati', 'sure', 'egitmen', 'yer', 'hafta', 'kategori', 'sehir', 'aciklama', 'katilimSayisi', 'tamamlandi', 'etkinlikTuru', 'mekanAdi', 'acikAdres', 'sunucular', 'programAkisi', 'katilTiklamaSayisi'],
   konusmacilar: ['ad', 'unvan', 'biyografi', 'bio', 'kisaTanitim', 'linkedin', 'instagram', 'website', 'meslek', 'amareKariyer', 'doktorBrans', 'kariyerGecmis', 'katilimTarihi', 'sehir', 'favori_alintilar'],
   settings: null,
   sablonlar: null,

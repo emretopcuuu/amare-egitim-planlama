@@ -11,6 +11,7 @@ import EventActions from '../components/EventActions';
 import AddToCalendarButton from '../components/AddToCalendarButton';
 import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import LoadingProgress from '../components/LoadingProgress';
+import { katilTikla } from '../utils/katilim';
 
 const parseTarih = (t) => {
   if (!t) return null;
@@ -320,10 +321,17 @@ const EgitimDetay = () => {
               {/* Aksiyon butonları */}
               <div className="flex flex-wrap items-center gap-3 mt-6 pt-6 border-t border-gray-200">
                 {isOnline && zoomId && (
-                  <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all spring-tap">
-                    <Wifi className="w-4 h-4" />Toplantıya Katıl
-                  </a>
+                  <span className="inline-flex items-center gap-3 flex-wrap">
+                    <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)}
+                      className="inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all spring-tap">
+                      <Wifi className="w-4 h-4" />Toplantıya Katıl
+                    </a>
+                    {egitim.katilTiklamaSayisi > 0 && (
+                      <span className="inline-flex items-center gap-1.5 text-sm font-bold text-red-500">
+                        <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />{egitim.katilTiklamaSayisi} kişi katıldı
+                      </span>
+                    )}
+                  </span>
                 )}
                 <button onClick={() => setHatirlatmaModal(true)}
                   className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all spring-tap">
