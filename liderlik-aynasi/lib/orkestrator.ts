@@ -61,7 +61,7 @@ const ON_KOSULLAR: Record<string, (db: Db) => Promise<{ hazir: boolean; mesaj: s
  * saati kadar kayıyordu.) Türkiye kalıcı UTC+3, DST yok → +03:00 sabiti güvenli.
  * Not: kamp gün ortası başlatılırsa, o günün geçmiş-saatli satırları ilk tikte
  * hemen ateşlenir (yetişme davranışı — bayrak açılışları için doğru). */
-function kampGorelliZaman(baslangic: Date, gun: number, saat: number): number {
+export function kampGorelliZaman(baslangic: Date, gun: number, saat: number): number {
   const tarih = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(baslangic);
   const gunBasi = Date.parse(`${tarih}T00:00:00+03:00`);
   return gunBasi + (gun - 1) * 86_400_000 + saat * 3_600_000;

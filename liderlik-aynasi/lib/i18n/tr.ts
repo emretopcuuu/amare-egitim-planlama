@@ -1712,8 +1712,11 @@ export const tr = {
     komuta: {
       baslik: "Kamp Komuta",
       direktor: "🤖 AYNA Direktörü",
+      senaryo: "🎬 Senaryo",
       komutan: "📡 Komutan",
-      sahne: "🎬 Sahne",
+      sahne: "🎭 Sahne",
+      zirve: "🛡️ Zirve",
+      kayip: "🛟 Kayıp",
       kapanis: "🚪 Kapanış",
     },
     // Admin UX paketi (2026): kokpit hızı, güveni, hata payı
