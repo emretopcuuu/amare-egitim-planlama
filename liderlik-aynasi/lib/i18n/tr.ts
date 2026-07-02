@@ -3921,6 +3921,7 @@ export const tr = {
     ligBaslik: "⚡ Kıvılcım Ligi",
     ligAciklama: "AYNA'nın görevlerinde en çok Kıvılcım toplayanlar",
     ligTakimlar: "Takım Yarışı",
+    ligTakimlarAlt: "En çok BİRLİKTE tamamlayan takım önde — tek yıldız değil, herkes.",
     ligBos: "İlk Kıvılcımlar yakında — AYNA görev dağıtmaya başladığında burası alevlenecek.",
     duvarBaslik: "📸 Anı Duvarı",
     duvarBos: "Anılar yakında — katılımcılar fotoğraf paylaştıkça burası dolacak.",

@@ -764,6 +764,8 @@ export default function EkranGosterisi() {
                     <h3 className="text-xl font-semibold text-slate-300">
                       {t.ligTakimlar}
                     </h3>
+                    {/* [E7] Takım Çekimi vurgusu: skor kıvılcım × tamamlama oranı */}
+                    <p className="mt-1 text-sm text-gold-light/80">{t.ligTakimlarAlt}</p>
                     <ul className="mt-4 space-y-4">
                       {veri.takimLigi.map((tk, i) => {
                         const enYuksek = veri.takimLigi[0]?.kivilcim ?? 1;
