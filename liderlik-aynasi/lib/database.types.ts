@@ -946,6 +946,47 @@ export type Database = {
           },
         ]
       }
+      eylul_dis: {
+        Row: {
+          cevaplar: Json | null
+          created_at: string
+          expires_at: string
+          kvkk_onay: boolean
+          participant_id: string
+          token: string
+          used_at: string | null
+          yorum: string | null
+        }
+        Insert: {
+          cevaplar?: Json | null
+          created_at?: string
+          expires_at: string
+          kvkk_onay?: boolean
+          participant_id: string
+          token: string
+          used_at?: string | null
+          yorum?: string | null
+        }
+        Update: {
+          cevaplar?: Json | null
+          created_at?: string
+          expires_at?: string
+          kvkk_onay?: boolean
+          participant_id?: string
+          token?: string
+          used_at?: string | null
+          yorum?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eylul_dis_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       is_verisi: {
         Row: {
           created_at: string
