@@ -4,6 +4,7 @@ import { acikDalga } from "@/lib/degerlendirme";
 import { adminOkunmamis } from "@/lib/icMesaj";
 import AdminNav from "./AdminNav";
 import NabizSeridi from "./NabizSeridi";
+import AltEylemCubugu from "./AltEylemCubugu";
 import AdminTost from "./AdminTost";
 import AdminTuru from "./AdminTuru";
 import CanliOlayAkisi from "./CanliOlayAkisi";
@@ -83,6 +84,9 @@ export default async function AdminLayout({
       <AdminTuru />
       {tamYetki && <CanliOlayAkisi />}
       <AcilDurumKarti />
+      {/* [ADMIN-UX4] Mobil alt eylem çubuğu + içerik onun altında kalmasın diye boşluk */}
+      <div className="h-14 md:hidden" aria-hidden />
+      <AltEylemCubugu />
     </div>
   );
 }

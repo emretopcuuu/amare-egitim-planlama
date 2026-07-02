@@ -1,5 +1,6 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
+import { adminlereBildir } from "@/lib/push";
 
 // [FAZ1-B] OTOMASYON NABZI — sistemin kalp atışı görünür olsun. Bugün yakalanan
 // "cron günde 1 çalışıyormuş" sınıfı hatanın kalıcı bekçisi: tik ve olaylar
@@ -7,6 +8,47 @@ import type { Db } from "@/lib/degerlendirme";
 
 export const NABIZ_TIK = "son_tik_at";
 export const NABIZ_OLAYLAR = "son_olaylar_at";
+
+// [ADMIN-UX6] ÇAPRAZ BEKÇİ — ölen cron kendi alarmını çalamaz; öteki çalar.
+// olaylar (dakikalık) tik'i, tik (5 dk'lık) olaylar'ı denetler. Kamp açıkken
+// karşı damga eşikten eskiyse adminlere push — saatte en çok bir kez (settings
+// nabiz_alarm_at kilidi; panel açık olmasa da haber ulaşır).
+const ALARM_ARALIK_MS = 60 * 60_000;
+
+export async function nabizBekcisi(
+  db: Db,
+  karsiAnahtar: typeof NABIZ_TIK | typeof NABIZ_OLAYLAR,
+  esikDk: number
+): Promise<void> {
+  try {
+    const { data: ayarlar } = await db
+      .from("settings")
+      .select("key, value")
+      .in("key", [karsiAnahtar, "ayna_aktif", "nabiz_alarm_at"]);
+    const a = new Map((ayarlar ?? []).map((s) => [s.key, s.value]));
+    if (a.get("ayna_aktif") !== "true") return; // kamp kapalıyken alarm yok
+
+    const damga = a.get(karsiAnahtar);
+    const yasDk = damga ? (Date.now() - Date.parse(damga)) / 60_000 : Infinity;
+    if (yasDk <= esikDk) return;
+
+    const sonAlarm = a.get("nabiz_alarm_at");
+    if (sonAlarm && Date.now() - Date.parse(sonAlarm) < ALARM_ARALIK_MS) return;
+
+    await db
+      .from("settings")
+      .upsert({ key: "nabiz_alarm_at", value: new Date().toISOString(), updated_at: new Date().toISOString() });
+    const ad = karsiAnahtar === NABIZ_TIK ? "ayna-tik" : "ayna-olaylar";
+    await adminlereBildir(
+      db,
+      "🔴 AYNA nabız alarmı",
+      `${ad} cron'u ${Math.round(yasDk)} dakikadır sessiz — panel > Senaryo'ya bak, gerekirse olayları elle ateşle.`,
+      "/admin/senaryo"
+    );
+  } catch {
+    /* bekçi hiçbir akışı bozmaz */
+  }
+}
 
 // Damga vur (best-effort — akışı asla kırmaz).
 export async function nabizVur(db: Db, anahtar: string): Promise<void> {

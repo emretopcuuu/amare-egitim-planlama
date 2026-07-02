@@ -18,7 +18,7 @@ export default async function KatilimcilarPage() {
   if (!session || session.rol !== "admin") redirect("/admin/giris");
 
   const db = supabaseAdmin();
-  const [{ data: kisiler, error }, { data: churnlar }] = await Promise.all([
+  const [{ data: kisiler, error }, { data: churnlar }, { data: degerlerTamam }, { data: aboneler }] = await Promise.all([
     db
       .from("participants")
       .select("id, full_name, team, city, phone, login_code, kariyer_seviyesi, en_yuksek_kariyer, gecen_ay_kariyer, kidem_ay, kariyer_durumu")
@@ -26,9 +26,14 @@ export default async function KatilimcilarPage() {
       .order("full_name"),
     // UX #2: sessizleşen (dürtülmüş) adayları listede kırmızı işaretlemek için.
     db.from("churn_radar").select("participant_id").not("nudged_at", "is", null),
+    // [ADMIN-UX5] Satır rozetleri: değerler tamam + push izni id kümeleri.
+    db.from("degerler_calismasi").select("participant_id").not("tamamlandi_at", "is", null),
+    db.from("push_subscriptions").select("participant_id"),
   ]);
   if (error) throw error;
   const kayanIdler = (churnlar ?? []).map((c) => c.participant_id);
+  const degerlerTamamIdler = (degerlerTamam ?? []).map((r) => r.participant_id);
+  const pushluIdler = [...new Set((aboneler ?? []).map((a) => a.participant_id))];
 
   const t = tr.admin.katilimcilar;
 
@@ -71,7 +76,12 @@ export default async function KatilimcilarPage() {
       {/* Oyun seçimi ile grup dağıtımı — giriş kapısı + doluluk */}
       <OyunSecimiPanel />
 
-      <KatilimciYonetim kisiler={kisiler} kayanIdler={kayanIdler} />
+      <KatilimciYonetim
+        kisiler={kisiler}
+        kayanIdler={kayanIdler}
+        degerlerTamamIdler={degerlerTamamIdler}
+        pushluIdler={pushluIdler}
+      />
     </main>
   );
 }

@@ -1,6 +1,7 @@
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { herkeseBildir, katilimciyaBildir } from "@/lib/push";
+import { yazAuditLog } from "@/lib/auditLog";
 import { DUYURU_SABLONLARI } from "@/lib/duyuruSablonlari";
 import { tr } from "@/lib/i18n/tr";
 
@@ -22,6 +23,8 @@ export async function POST(req: Request) {
     const sablon = DUYURU_SABLONLARI.find((s) => s.anahtar === body.sablon);
     if (!sablon) return Response.json({ hata: tr.admin.duyuru.hata }, { status: 400 });
     await herkeseBildir(db, sablon.baslik, sablon.govde, "/program");
+    // [ADMIN-UX8] Denetim izi: "az önce ne gönderdim?" sorusunun kaynağı.
+    await yazAuditLog(db, null, "duyuru_gonderildi", { baslik: sablon.baslik, hedef: "herkes" });
     return Response.json({ ok: true });
   }
 
@@ -35,6 +38,7 @@ export async function POST(req: Request) {
 
   if (hedef === "herkes") {
     await herkeseBildir(db, baslik, govde, "/");
+    await yazAuditLog(db, null, "duyuru_gonderildi", { baslik, hedef: "herkes" });
     return Response.json({ ok: true, hedef: tr.admin.yayin.herkes });
   }
 
@@ -42,6 +46,7 @@ export async function POST(req: Request) {
   if (hedef.startsWith("kisi:")) {
     const kisiId = hedef.slice(5);
     await katilimciyaBildir(db, kisiId, baslik, govde, "/");
+    await yazAuditLog(db, null, "duyuru_gonderildi", { baslik, hedef: "kisi", sayi: 1 });
     return Response.json({ ok: true, sayi: 1 });
   }
 
@@ -56,5 +61,6 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.admin.yayin.takimBos }, { status: 400 });
   }
   await Promise.all(idler.map((id) => katilimciyaBildir(db, id, baslik, govde, "/")));
+  await yazAuditLog(db, null, "duyuru_gonderildi", { baslik, hedef, sayi: idler.length });
   return Response.json({ ok: true, hedef, sayi: idler.length });
 }

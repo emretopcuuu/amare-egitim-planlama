@@ -1,7 +1,7 @@
 import "server-only";
 import type { supabaseAdmin } from "@/lib/supabase/server";
 import { yazAuditLog } from "@/lib/auditLog";
-import { herkeseBildir } from "@/lib/push";
+import { herkeseBildir, adminlereBildir } from "@/lib/push";
 import { p72Gun1, p72Gun2, p72Gun3, odev10Gun, odev15Gun, agustosOdev, agustosGrupOdev } from "@/lib/kampSonrasi";
 import { kampArkadasiAta, kampArkadasiHatirlat } from "@/lib/kampArkadasi";
 import { eylulKanit1, eylulKanit2, eylulKanit3 } from "@/lib/eylulKanit";
@@ -222,6 +222,13 @@ export async function orkestratoduIsle(
       // — eskiden 'atesledi' kalıp sessizce bir daha hiç denenmiyordu.
       await db.from("kamp_senaryosu").update({ durum: "hata" }).eq("id", s.id);
       await yazAuditLog(db, null, "orkestrator_hata", { olay_kodu: s.olay_kodu });
+      // [ADMIN-UX6] Panel kapalıyken de haber ulaşsın — hata nadirdir, throttle yok.
+      await adminlereBildir(
+        db,
+        "🔴 Senaryo satırı hata verdi",
+        `${s.olay_kodu} ateşlenemedi — Senaryo'dan "yeniden dene".`,
+        "/admin/senaryo"
+      ).catch(() => {});
     }
   }
 

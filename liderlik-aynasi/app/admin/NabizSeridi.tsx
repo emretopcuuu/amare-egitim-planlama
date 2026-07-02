@@ -16,6 +16,7 @@ export default async function NabizSeridi() {
   const dkYazi = (dk: number | null) => (dk === null ? "hiç" : dk === 0 ? "şimdi" : `${dk} dk önce`);
 
   return (
+    <>
     <Link
       href="/admin/senaryo"
       className={`flex flex-wrap items-center gap-x-4 gap-y-1 border-b px-4 py-1.5 text-xs transition-colors ${
@@ -40,5 +41,40 @@ export default async function NabizSeridi() {
       )}
       {n.hataSatirSayisi === 0 && n.sonHata && <span className="font-semibold text-rose-300">⚠ hata: {n.sonHata}</span>}
     </Link>
+    {/* [ADMIN-UX7] Alarm anında mini runbook — kırmızıyı gören operatör ne
+        yapacağını aramasın; durumuna göre yalnız ilgili adımlar listelenir. */}
+    {alarm && (
+      <details className="border-b border-rose-500/20 bg-rose-500/[0.06] px-4 py-1.5 text-xs text-rose-100/90">
+        <summary className="cursor-pointer font-semibold [&::-webkit-details-marker]:hidden">
+          🧯 Ne yapmalıyım? (aç)
+        </summary>
+        <ol className="mt-1.5 list-decimal space-y-1 pb-1 pl-5 text-rose-100/80">
+          {(n.hataSatirSayisi > 0 || n.sonHata) && (
+            <li>
+              Senaryo&apos;da kırmızı satırı bul → <span className="font-semibold">↻ yeniden dene</span>.
+              İkinci denemede de düşerse satırı atla, olayı elle yap.
+            </li>
+          )}
+          {n.durduruldu && (
+            <li>
+              Orkestratör elle durdurulmuş — bilinçli değilse Senaryo&apos;dan{" "}
+              <span className="font-semibold">▶ Devam</span>.
+            </li>
+          )}
+          {n.kampAcik && (tikAlarm || olayAlarm) && (
+            <>
+              <li>Cron susmuş görünüyor: 2-3 dk bekle, sayfayı yenile (tek gecikme olabilir).</li>
+              <li>
+                Düzelmediyse Supabase → Integrations → Cron&apos;da{" "}
+                <span className="font-mono">ayna-tik</span> / <span className="font-mono">ayna-olaylar</span>{" "}
+                aktif mi bak; bu sırada kritik senaryo satırını{" "}
+                <span className="font-semibold">şimdi ateşle</span> ile elle yürüt.
+              </li>
+            </>
+          )}
+        </ol>
+      </details>
+    )}
+    </>
   );
 }
