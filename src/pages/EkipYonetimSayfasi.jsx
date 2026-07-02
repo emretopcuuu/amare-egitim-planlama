@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator, Video, Users2, Copy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, Rocket, Lock, Building2, Bot, Calculator, Video, Users2, Copy, Award } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import { useTranslation } from '../context/LanguageContext';
 import { useData } from '../context/DataContext';
@@ -180,6 +180,26 @@ const MODULLER = [
     icon: Copy,
     aktif: true,
     link: 'https://katlama.oneteamglobal.ai/',
+    renk: 'amber',
+  },
+  {
+    id: 'takdir',
+    ad: {
+      tr: 'Tebrik Afişi Düzenleyici',
+      en: 'Congratulations Poster Editor',
+      de: 'Glückwunsch-Poster-Editor',
+      nl: 'Felicitatieposter Editor',
+    },
+    kisaltma: 'TAKDİR',
+    aciklama: {
+      tr: 'Rütbe ve başarı kutlamaları için kişiselleştirilmiş, baskıya uygun tebrik afişi oluştur.',
+      en: 'Create personalized, print-ready congratulations posters for rank and achievement celebrations.',
+      de: 'Erstelle personalisierte, druckfertige Glückwunschposter für Rang- und Erfolgsfeiern.',
+      nl: 'Maak gepersonaliseerde, afdrukklare felicitatieposters voor rang- en prestatievieringen.',
+    },
+    icon: Award,
+    aktif: true,
+    link: 'https://takdir.oneteamglobal.ai/',
     renk: 'amber',
   },
   // İleride buraya yeni modüller eklenecek
