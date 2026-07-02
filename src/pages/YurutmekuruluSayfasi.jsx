@@ -10,6 +10,7 @@ import { useTranslation } from '../context/LanguageContext';
 import { YURUTME_KURULU as YURUTME_DEFAULT } from '../utils/yurutmeKurulu';
 import { db } from '../utils/firebase';
 import { collection, getDocs } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { makeCoreId, useData } from '../context/DataContext';
 import { useSmartBack } from '../utils/navigation';
 import { getSiteIcerik, saveSiteIcerik, isSiteAdmin } from '../utils/siteIcerik';
@@ -146,7 +147,7 @@ const YurutmekuruluSayfasi = () => {
     // 2. Fresh fetch arka planda — sessizce güncelle + cache yenile
     (async () => {
       try {
-        const snap = await getDocs(collection(db, 'konusmacilar'));
+        const snap = await guvenliGetDocs(collection(db, 'konusmacilar'));
         const ykIds = new Set(YURUTME_KURULU.map(u => u.coreId || makeCoreId(u.ad)));
         const map = {};
         snap.forEach(d => {

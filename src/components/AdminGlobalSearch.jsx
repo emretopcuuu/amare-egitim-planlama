@@ -5,6 +5,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, X, User, Calendar, Video, UserCircle, Loader2 } from 'lucide-react';
 import { useData } from '../context/DataContext';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 
 const AdminGlobalSearch = () => {
   const [acik, setAcik] = useState(false);
@@ -42,7 +43,7 @@ const AdminGlobalSearch = () => {
       try {
         const { collection, getDocs, query, limit, where } = await import('firebase/firestore');
         const { db } = await import('../utils/firebase');
-        const qSnap = await getDocs(query(
+        const qSnap = await guvenliGetDocs(query(
           collection(db, 'kayitli_egitimler'),
           where('kayeneFiltrelendi', '==', false),
           limit(500),

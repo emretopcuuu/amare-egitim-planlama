@@ -6,6 +6,7 @@ import {
   collection, query, where, orderBy, limit as fbLimit,
   getDocs, doc, updateDoc, deleteDoc, setDoc, serverTimestamp,
 } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { Loader2, Video, Save, Search, RefreshCw, ExternalLink, Download, MoreVertical, Edit2, Trash2, Ban, Play, FileText, X } from 'lucide-react';
 import VideoOynatModal from './VideoOynatModal';
 import { useData, makeCoreId } from '../context/DataContext';
@@ -69,7 +70,7 @@ const AdminKayitliEgitimlerTab = () => {
           fbLimit(100)
         );
       }
-      const snap = await getDocs(q);
+      const snap = await guvenliGetDocs(q);
       setVideolar(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (err) {
       console.warn('[admin/kayitli] fetch:', err.message);

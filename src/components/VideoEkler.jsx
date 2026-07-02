@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { FileText, Paperclip, Loader2, ExternalLink } from 'lucide-react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { db } from '../utils/firebase';
 
 const TIP_META = {
@@ -29,7 +30,7 @@ const VideoEkler = ({ vimeoId }) => {
     (async () => {
       try {
         const q = query(collection(db, `kayitli_egitimler/${vimeoId}/ekler`), orderBy('eklenmeTarihi', 'desc'));
-        const snap = await getDocs(q);
+        const snap = await guvenliGetDocs(q);
         setEkler(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       } catch (e) {
         console.warn('[ekler] read err:', e.message);

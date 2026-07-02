@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Bell, Clock, Mail, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, addDoc, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { useTranslation } from '../context/LanguageContext';
 import confetti from 'canvas-confetti';
 
@@ -79,7 +80,7 @@ const HatirlatmaKayitModal = ({ egitim, onClose }) => {
             where('email', '==', email.trim().toLowerCase()),
             where('hatirlatmaZamani', '==', zamanId)
           );
-          const existing = await getDocs(q);
+          const existing = await guvenliGetDocs(q);
           if (!existing.empty) continue;
         } catch (qErr) {
           // anonim read kapalı — sessizce devam, kayıt yapılır

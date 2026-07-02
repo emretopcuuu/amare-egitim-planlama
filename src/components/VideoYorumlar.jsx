@@ -6,6 +6,7 @@ import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { MessageSquare, Send, Loader2, Trash2, CornerDownRight, X, Clock } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, query, orderBy, getDocs, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { useAuth } from '../context/AuthContext';
 
 const COOLDOWN_MS = 5000; // 5 saniye yorumlar arası min süre — spam koruma
@@ -35,7 +36,7 @@ const VideoYorumlar = ({ vimeoId }) => {
     if (!vimeoId) { setYukleniyor(false); return; }
     try {
       const q = query(collection(db, `kayitli_egitimler/${vimeoId}/yorumlar`), orderBy('tarih', 'desc'));
-      const snap = await getDocs(q);
+      const snap = await guvenliGetDocs(q);
       setYorumlar(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (e) {
       console.warn('[yorum] read err:', e.message);

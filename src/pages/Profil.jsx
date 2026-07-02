@@ -15,6 +15,7 @@ import {
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../utils/firebase';
 import { collection, query, where, getDocs, doc, getDoc, deleteDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -324,8 +325,8 @@ const Profil = () => {
     (async () => {
       try {
         const [bultenSnap, hatSnap] = await Promise.all([
-          getDocs(query(collection(db, 'bulten_aboneleri'), where('email', '==', email))),
-          getDocs(query(collection(db, 'hatirlatmalar'), where('email', '==', email))),
+          guvenliGetDocs(query(collection(db, 'bulten_aboneleri'), where('email', '==', email))),
+          guvenliGetDocs(query(collection(db, 'hatirlatmalar'), where('email', '==', email))),
         ]);
         const bultenDoc = bultenSnap.docs[0];
         const pushIzin = webPushDestekli() && webPushIzinDurumu() === 'granted';
@@ -382,7 +383,7 @@ const Profil = () => {
     setBultenModalAcik(false);
     // Email ile yeniden sorgu
     if (email) {
-      getDocs(query(collection(db, 'bulten_aboneleri'), where('email', '==', email)))
+      guvenliGetDocs(query(collection(db, 'bulten_aboneleri'), where('email', '==', email)))
         .then(snap => {
           const bd = snap.docs[0];
           setAbonelikler(prev => ({ ...prev, bulten: !!bd, bultenDocId: bd?.id || null }));

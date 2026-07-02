@@ -10,6 +10,7 @@ import { useTranslation } from '../context/LanguageContext';
 import { useSmartBack } from '../utils/navigation';
 import { db } from '../utils/firebase';
 import { collection, getDocs, getDoc, doc } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { YURUTME_KURULU } from '../utils/yurutmeKurulu';
 import { KOMISYONLAR } from '../utils/komisyonlar';
 import { makeCoreId, useData } from '../context/DataContext';
@@ -253,7 +254,7 @@ const HakkimizdaSayfasi = () => {
     const prefetchYK = async () => {
       if (isCacheTaze(YK_KEY)) return;
       try {
-        const snap = await getDocs(collection(db, 'konusmacilar'));
+        const snap = await guvenliGetDocs(collection(db, 'konusmacilar'));
         const ykIds = new Set(YURUTME_KURULU.map(u => u.coreId || makeCoreId(u.ad)));
         const slim = {};
         snap.forEach(d => { if (ykIds.has(d.id)) slim[d.id] = { id: d.id, ...d.data() }; });
@@ -265,7 +266,7 @@ const HakkimizdaSayfasi = () => {
     const prefetchKomisyonlar = async () => {
       if (isCacheTaze(KOM_KEY)) return;
       try {
-        const snap = await getDocs(collection(db, 'komisyonlar'));
+        const snap = await guvenliGetDocs(collection(db, 'komisyonlar'));
         const baskanlar = {};
         const icerikler = {};
         snap.forEach(d => {

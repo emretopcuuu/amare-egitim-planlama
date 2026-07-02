@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { X, Mail, CheckCircle2, Loader2, AlertCircle, Newspaper } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, addDoc, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 
 const BultenModal = ({ onClose }) => {
   const [email, setEmail] = useState('');
@@ -22,7 +23,7 @@ const BultenModal = ({ onClose }) => {
       // Duplicate kontrol
       try {
         const q = query(collection(db, 'bulten_aboneleri'), where('email', '==', email.trim().toLowerCase()));
-        const snap = await getDocs(q);
+        const snap = await guvenliGetDocs(q);
         if (!snap.empty) { setBasarili(true); return; }
       } catch {}
       await addDoc(collection(db, 'bulten_aboneleri'), {

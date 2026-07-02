@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { Loader2, History, User, Calendar, Edit3, Trash2, Plus, Tag } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, query, orderBy, limit as fbLimit, getDocs, where } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 
 const ACTION_META = {
   'takvim_yarat':  { etiket: 'Eğitim yarattı', renk: 'emerald', Icon: Plus },
@@ -34,7 +35,7 @@ const AdminAuditLogTab = () => {
     (async () => {
       try {
         const q = query(collection(db, 'audit_log'), orderBy('tarih', 'desc'), fbLimit(200));
-        const snap = await getDocs(q);
+        const snap = await guvenliGetDocs(q);
         setLoglar(snap.docs.map(d => ({ id: d.id, ...d.data() })));
       } catch (e) {
         console.warn('[audit] read err:', e.message);

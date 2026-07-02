@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { X, UserPlus, CheckCircle2, Loader2, Mail, AlertCircle } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, addDoc, query, where, getDocs, Timestamp } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 
 const KonusmaciTakipModal = ({ konusmaciAd, onClose }) => {
   const [email, setEmail] = useState('');
@@ -26,7 +27,7 @@ const KonusmaciTakipModal = ({ konusmaciAd, onClose }) => {
           where('email', '==', email.trim().toLowerCase()),
           where('konusmaciAd', '==', konusmaciAd)
         );
-        const snap = await getDocs(q);
+        const snap = await guvenliGetDocs(q);
         if (!snap.empty) {
           setBasarili(true);
           return;

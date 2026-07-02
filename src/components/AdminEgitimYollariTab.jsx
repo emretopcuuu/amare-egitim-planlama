@@ -4,6 +4,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { db, auth } from '../utils/firebase';
 import { doc, getDoc, setDoc, collection, getDocs, query, where, limit as fbLimit, serverTimestamp } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { RANK_SIRALAMA, getRankByKey, rankRenkClass } from '../utils/rankSchema';
 import { Award, Save, Search, Plus, X, ChevronUp, ChevronDown, Trash2, Loader2, Video, CheckCircle2, Zap, Sparkles, RotateCw, Check, ChevronRight } from 'lucide-react';
 
@@ -568,7 +569,7 @@ const VideoAramaModal = ({ eklenecekleri, onSec, onClose }) => {
     let cancelled = false;
     (async () => {
       try {
-        const snap = await getDocs(collection(db, 'kayitli_egitimler'));
+        const snap = await guvenliGetDocs(collection(db, 'kayitli_egitimler'));
         if (cancelled) return;
         const liste = snap.docs.map(d => ({
           vimeoId: d.id,

@@ -11,6 +11,7 @@ import {
   orderBy,
   setDoc
 } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { takvimOlustur } from '../utils/takvimAlgoritma';
@@ -215,15 +216,8 @@ export const DataProvider = ({ children }) => {
     throw sonHata;
   };
 
-  // getDocs retry sarmalayıcı (geçici ağ/SDK hatalarına karşı)
-  const getDocsRetry = async (ref, deneme = 2) => {
-    let sonHata;
-    for (let i = 0; i < deneme; i++) {
-      try { return await getDocs(ref); }
-      catch (e) { sonHata = e; if (i < deneme - 1) await new Promise(r => setTimeout(r, 500 * (i + 1))); }
-    }
-    throw sonHata;
-  };
+  // getDocs retry — merkezî sigortalı okuma katmanına delege (utils/guvenliVeri)
+  const getDocsRetry = (ref) => guvenliGetDocs(ref);
 
   // Tek doc full fetch (gorselUrl/fotoURL dahil)
   const fetchSingleDoc = async (collection, id) => {
@@ -254,9 +248,9 @@ export const DataProvider = ({ children }) => {
     //    Her şey paralel, ~500ms-1sn'de bitti
     const [takvimLight, settingsResult, konusmacilarLight, sablonlarResult] = await Promise.allSettled([
       fetchLightCollection('takvim', TAKVIM_LIGHT_FIELDS),
-      getDocs(collection(db, 'settings')),
+      guvenliGetDocs(collection(db, 'settings')),
       fetchLightCollection('konusmacilar', KONUSMACI_LIGHT_FIELDS),
-      getDocs(collection(db, 'sablonlar')),
+      guvenliGetDocs(collection(db, 'sablonlar')),
     ]);
 
     // Light data'yı state'e koy
@@ -439,10 +433,10 @@ export const DataProvider = ({ children }) => {
   /*
   const loadDataOld = async () => {
     const [takvimResult, settingsResult, konusmacilarResult, sablonlarResult] = await Promise.allSettled([
-      getDocs(collection(db, 'takvim')),
-      getDocs(collection(db, 'settings')),
-      getDocs(collection(db, 'konusmacilar')),
-      getDocs(collection(db, 'sablonlar')),
+      guvenliGetDocs(collection(db, 'takvim')),
+      guvenliGetDocs(collection(db, 'settings')),
+      guvenliGetDocs(collection(db, 'konusmacilar')),
+      guvenliGetDocs(collection(db, 'sablonlar')),
     ]);
 
     // Sonuçları işle ve state'e yaz
@@ -527,13 +521,13 @@ export const DataProvider = ({ children }) => {
   const loadAdminData = async () => {
     // Eğitmen başvuruları (admin-only read)
     try {
-      const snap = await getDocs(query(collection(db, 'egitmenler'), orderBy('timestamp', 'desc')));
+      const snap = await guvenliGetDocs(query(collection(db, 'egitmenler'), orderBy('timestamp', 'desc')));
       setEgitmenler(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (e) { console.warn('[loadAdminData] egitmenler:', e?.code || e?.message); }
 
     // Hatırlatma kayıtları (admin-only read)
     try {
-      const snap = await getDocs(collection(db, 'hatirlatmalar'));
+      const snap = await guvenliGetDocs(collection(db, 'hatirlatmalar'));
       const sayilar = {};
       snap.docs.forEach(d => {
         const data = d.data();
@@ -567,7 +561,7 @@ export const DataProvider = ({ children }) => {
   const otomatikTakvimOlustur = async () => {
     try {
       // Mevcut takvimi temizle
-      const takvimSnapshot = await getDocs(collection(db, 'takvim'));
+      const takvimSnapshot = await guvenliGetDocs(collection(db, 'takvim'));
       const deletePromises = takvimSnapshot.docs.map(doc => deleteDoc(doc.ref));
       await Promise.all(deletePromises);
       
@@ -711,7 +705,7 @@ export const DataProvider = ({ children }) => {
 
       const yeniSlotSet = new Set(yeniTakvim.map(e => e.slot));
 
-      const takvimSnapshot = await getDocs(collection(db, 'takvim'));
+      const takvimSnapshot = await guvenliGetDocs(collection(db, 'takvim'));
       const arsivlenecek = [];
       let korunan = 0;
       for (const d of takvimSnapshot.docs) {
@@ -802,7 +796,7 @@ export const DataProvider = ({ children }) => {
   // Takvimi yayınla/gizle
   const takvimDurumDegistir = async (yayinlandiMi) => {
     try {
-      const settingsSnapshot = await getDocs(collection(db, 'settings'));
+      const settingsSnapshot = await guvenliGetDocs(collection(db, 'settings'));
       
       if (settingsSnapshot.empty) {
         // İlk kez oluştur

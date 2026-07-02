@@ -6,6 +6,7 @@ import { X, Paperclip, FileText, ExternalLink, Trash2, Plus, Loader2 } from 'luc
 import {
   collection, getDocs, query, orderBy, addDoc, deleteDoc, doc, serverTimestamp,
 } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { db } from '../utils/firebase';
 
 const TIPLER = [
@@ -23,7 +24,7 @@ const VideoEklerAdminModal = ({ vimeoId, baslik, onClose }) => {
   const load = async () => {
     try {
       const q = query(collection(db, `kayitli_egitimler/${vimeoId}/ekler`), orderBy('eklenmeTarihi', 'desc'));
-      const snap = await getDocs(q);
+      const snap = await guvenliGetDocs(q);
       setEkler(snap.docs.map(d => ({ id: d.id, ...d.data() })));
     } finally {
       setYukleniyor(false);

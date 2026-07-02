@@ -5,6 +5,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Bookmark, BookmarkPlus, Loader2, Trash2, Play, X } from 'lucide-react';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, getDocs, doc, setDoc, deleteDoc, serverTimestamp } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { useAuth } from '../context/AuthContext';
 import { trackAnTikla } from '../utils/anlarTrack';
 
@@ -34,7 +35,7 @@ const VideoBookmarklar = ({ vimeoId, iframeRef, onSeek }) => {
         where('vimeoId', '==', String(vimeoId)),
         orderBy('saniye', 'asc')
       );
-      const snap = await getDocs(q);
+      const snap = await guvenliGetDocs(q);
       const liste = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setBookmarks(liste);
     } catch (e) {

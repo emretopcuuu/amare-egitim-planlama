@@ -11,6 +11,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTakipEgitmenler } from '../utils/takip';
 import { db } from '../utils/firebase';
 import { collection, query, where, orderBy, limit as fbLimit, getDocs } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { KARIYER_BASAMAKLARI, kariyerSira, kariyerTarih, ayFarki, sureMetni } from '../utils/kariyer';
 import KonusmaciTakipModal from '../components/KonusmaciTakipModal';
 import VideoOynatModal from '../components/VideoOynatModal';
@@ -179,7 +180,7 @@ export default function LiderProfil() {
     (async () => {
       try {
         const q = query(collection(db, 'kayitli_egitimler'), where('egitmenler', 'array-contains', coreId), where('kayeneFiltrelendi', '==', false), orderBy('tarih', 'desc'), fbLimit(50));
-        const snap = await getDocs(q);
+        const snap = await guvenliGetDocs(q);
         const videos = snap.docs.map(d => { const { transcript, ...rest } = d.data(); return { id: d.id, ...rest }; });
         setKayitliVideolar(videos);
         try { localStorage.setItem(cacheKey, JSON.stringify({ ts: Date.now(), data: videos })); } catch {}

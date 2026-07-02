@@ -20,6 +20,7 @@ const TakvimView = lazy(() => import('./pages/TakvimView'));
 const EgitimDetay = lazy(() => import('./pages/EgitimDetay'));
 const KonusmacilarSayfasi = lazy(() => import('./pages/KonusmacilarSayfasi'));
 const KayitliEgitimlerSayfasi = lazy(() => import('./pages/KayitliEgitimlerSayfasi'));
+const DurumSayfasi = lazy(() => import('./pages/DurumSayfasi'));
 const EgitmenBasvuru = lazy(() => import('./pages/EgitmenBasvuru'));
 const GirisTamamla = lazy(() => import('./pages/GirisTamamla'));
 const SsoCallback = lazy(() => import('./pages/SsoCallback'));
@@ -105,6 +106,7 @@ function AppRoutes() {
           <Route path="/konusmacilar" element={<KonusmacilarSayfasi />} />
           <Route path="/lider/:id" element={<LiderProfil />} />
           <Route path="/kayitli-egitimler" element={<KayitliEgitimlerSayfasi />} />
+          <Route path="/durum" element={<DurumSayfasi />} />
           <Route path="/komisyonlar" element={<KomisyonlarSayfasi />} />
           <Route path="/komisyonlar/:id" element={<KomisyonDetay />} />
           <Route path="/hakkimizda" element={<HakkimizdaSayfasi />} />

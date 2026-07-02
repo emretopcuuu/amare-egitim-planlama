@@ -11,6 +11,7 @@ import { useSmartBack } from '../utils/navigation';
 import { KOMISYONLAR } from '../utils/komisyonlar';
 import { db } from '../utils/firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { makeCoreId } from '../context/DataContext';
 
 // Çok dilli statik metinler — translations.js'e taşımak yerine inline
@@ -123,7 +124,7 @@ const KomisyonlarSayfasi = () => {
     // 2. Fresh fetch arka planda — sessizce güncelle
     (async () => {
       try {
-        const snap = await getDocs(collection(db, 'komisyonlar'));
+        const snap = await guvenliGetDocs(collection(db, 'komisyonlar'));
         const map = {};
         const icerikMap = {};
         snap.forEach(d => {
