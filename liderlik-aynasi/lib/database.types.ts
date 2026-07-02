@@ -911,6 +911,79 @@ export type Database = {
         }
         Relationships: []
       }
+      eylul_aynasi: {
+        Row: {
+          cevap: string
+          created_at: string
+          id: string
+          participant_id: string
+          puan: number
+        }
+        Insert: {
+          cevap: string
+          created_at?: string
+          id?: string
+          participant_id: string
+          puan: number
+        }
+        Update: {
+          cevap?: string
+          created_at?: string
+          id?: string
+          participant_id?: string
+          puan?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "eylul_aynasi_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      is_verisi: {
+        Row: {
+          created_at: string
+          gorusme: number
+          hafta: number
+          id: string
+          kayit: number
+          participant_id: string
+          takip: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gorusme?: number
+          hafta: number
+          id?: string
+          kayit?: number
+          participant_id: string
+          takip?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gorusme?: number
+          hafta?: number
+          id?: string
+          kayit?: number
+          participant_id?: string
+          takip?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "is_verisi_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gunluk_checkin: {
         Row: {
           created_at: string

@@ -4,6 +4,7 @@ import { yazAuditLog } from "@/lib/auditLog";
 import { herkeseBildir } from "@/lib/push";
 import { p72Gun1, p72Gun2, p72Gun3, odev10Gun, odev15Gun, agustosOdev, agustosGrupOdev } from "@/lib/kampSonrasi";
 import { kampArkadasiAta, kampArkadasiHatirlat } from "@/lib/kampArkadasi";
+import { eylulKanit1, eylulKanit2, eylulKanit3 } from "@/lib/eylulKanit";
 
 type Db = ReturnType<typeof supabaseAdmin>;
 
@@ -54,6 +55,10 @@ const FONKSIYONLAR: Record<string, (db: Db) => Promise<void>> = {
   kamp_arkadasi_hatirlat: kampArkadasiHatirlat,
   // FAZ 4.3 — Ağustos grup ödevi (her takıma isimli grup-birlikte ödevi)
   agustos_grup_odev: agustosGrupOdev,
+  // FAZ 5.1 — Eylül kanıt görevleri
+  eylul_kanit1: eylulKanit1,
+  eylul_kanit2: eylulKanit2,
+  eylul_kanit3: eylulKanit3,
 };
 
 /** Tek bir senaryo satırının eylemini uygular (settings/push/fonksiyon).
