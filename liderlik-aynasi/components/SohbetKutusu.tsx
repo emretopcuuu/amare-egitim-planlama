@@ -36,6 +36,8 @@ export default function SohbetKutusu({ benId, mod, anahtar, digerAd, baslangic }
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const sonRef = useRef<HTMLDivElement>(null);
+  const akisRef = useRef<HTMLDivElement>(null);
+  const oncekiSayi = useRef(baslangic.length);
 
   const pollUrl = mod === "admin"
     ? `/api/admin/mesaj?sohbet=${encodeURIComponent(anahtar)}`
@@ -71,10 +73,25 @@ export default function SohbetKutusu({ benId, mod, anahtar, digerAd, baslangic }
     };
   }, [yokla]);
 
-  // Yeni mesajda en alta kaydır.
+  // Yeni mesajda en alta kaydır — AMA yalnız kişi zaten dipteyse ya da son
+  // mesaj kendisininse. Eskiden 8 sn'lik yoklama her turda zorla en alta
+  // kaydırıyordu: eski mesajları okuyan kişi sürekli aşağı fırlatılıyordu.
   useEffect(() => {
-    sonRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
-  }, [mesajlar.length]);
+    const yeniGeldi = mesajlar.length > oncekiSayi.current;
+    oncekiSayi.current = mesajlar.length;
+    if (!yeniGeldi) return;
+    const son = mesajlar[mesajlar.length - 1];
+    const benimki = !!son && benimMi(son);
+    // Kaydırma kabı iç kap ise onun konumuna, değilse sayfa konumuna bak.
+    const kap = akisRef.current;
+    const kapKayar = !!kap && kap.scrollHeight > kap.clientHeight + 8;
+    const dipte = kapKayar
+      ? kap.scrollHeight - kap.scrollTop - kap.clientHeight < 140
+      : window.innerHeight + window.scrollY >= document.body.scrollHeight - 160;
+    if (benimki || dipte) {
+      sonRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }
+  }, [mesajlar, benimMi]);
 
   async function gonder(e: React.FormEvent) {
     e.preventDefault();
@@ -110,7 +127,7 @@ export default function SohbetKutusu({ benId, mod, anahtar, digerAd, baslangic }
   return (
     <div className="flex flex-col" style={{ minHeight: "60vh" }}>
       {/* Mesaj akışı */}
-      <div className="flex-1 space-y-2.5 overflow-y-auto pb-4">
+      <div ref={akisRef} className="flex-1 space-y-2.5 overflow-y-auto pb-4">
         {mesajlar.length === 0 ? (
           <div className="kart-cam rounded-3xl p-8 text-center">
             <p className="text-4xl" aria-hidden>💬</p>
