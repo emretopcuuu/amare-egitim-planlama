@@ -1232,6 +1232,38 @@ export type Database = {
         }
         Relationships: []
       }
+      muhur_zinciri: {
+        Row: {
+          created_at: string
+          halka: number
+          id: string
+          participant_id: string
+          teyit: string
+        }
+        Insert: {
+          created_at?: string
+          halka: number
+          id?: string
+          participant_id: string
+          teyit: string
+        }
+        Update: {
+          created_at?: string
+          halka?: number
+          id?: string
+          participant_id?: string
+          teyit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "muhur_zinciri_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mentorluk_kayit: {
         Row: {
           aday_idler: string[]
