@@ -16,7 +16,7 @@ import {
 const t = tr.ekran;
 const VERI_YOKLAMA_MS = 10_000;
 const SLAYT_MS = 14_000;
-const SLAYT_SAYISI = 7;
+const SLAYT_SAYISI = 8;
 
 // Takım renk paleti — projeksiyonda ayırt edilebilir, koyu zemine uygun
 const TAKIM_RENKLERI = [
@@ -920,6 +920,60 @@ export default function EkranGosterisi() {
                   </div>
                 );
               })()}
+            </section>
+
+            {/* Slayt 8 — [9] Salon Mozaiği: kolektif dönüşüm haritası, isimsiz */}
+            <section
+              className={`absolute inset-0 flex flex-col pb-44 transition-all duration-1000 ${
+                slayt === 7 ? "opacity-100 scale-100" : "pointer-events-none scale-[0.98] opacity-0"
+              }`}
+            >
+              <h2 className="text-4xl font-bold text-gold-light">{t.mozaikBaslik}</h2>
+              <p className="mt-1 text-lg text-slate-400">{t.mozaikAciklama}</p>
+              {veri.mozaik.arketipler.length === 0 ? (
+                <p className="flex flex-1 items-center justify-center text-xl text-slate-400">
+                  {t.mozaikBos}
+                </p>
+              ) : (
+                <div className="mt-6 flex min-h-0 flex-1 flex-col gap-6">
+                  <div className="flex flex-wrap content-start justify-center gap-3 overflow-hidden">
+                    {veri.mozaik.arketipler.map((a, i) => (
+                      <span
+                        key={i}
+                        className="kart-3d seri-belir flex items-center gap-2 rounded-2xl bg-midnight-card/60 px-4 py-2.5 ring-1 ring-gold/20"
+                        style={{ animationDelay: `${(i % 12) * 80}ms` }}
+                      >
+                        <span className="text-2xl" aria-hidden>{a.simge}</span>
+                        <span className="text-lg font-medium text-slate-200">{a.ad}</span>
+                      </span>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    {veri.mozaik.korNoktaKapananOran !== null && (
+                      <div className="kart-3d rounded-2xl border border-gold/25 bg-gold/[0.06] p-5 text-center">
+                        <p className="font-mono text-4xl font-bold text-gold">
+                          %{veri.mozaik.korNoktaKapananOran}
+                        </p>
+                        <p className="mt-1 text-lg font-semibold text-gold-light">
+                          {t.mozaikKorNokta(veri.mozaik.korNoktaKapananOran)}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-400">{t.mozaikKorNoktaAciklama}</p>
+                      </div>
+                    )}
+                    {veri.mozaik.enCokBuyuyenOzellik && (
+                      <div className="kart-3d rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.06] p-5 text-center">
+                        <p className="text-3xl" aria-hidden>📈</p>
+                        <p className="mt-1 text-lg font-semibold text-emerald-300">
+                          {t.mozaikBuyuyen(veri.mozaik.enCokBuyuyenOzellik.ad)}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-400">
+                          +{veri.mozaik.enCokBuyuyenOzellik.fark.toFixed(1)} puan (ilk → son dalga)
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </section>
           </>
         )}
