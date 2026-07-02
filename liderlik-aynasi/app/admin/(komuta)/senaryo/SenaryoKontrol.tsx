@@ -50,19 +50,22 @@ export function SenaryoUstKontrol({ durduruldu, kaydirmaDk }: { durduruldu: bool
   );
 }
 
-export function SenaryoSatirKontrol({ id }: { id: string }) {
+export function SenaryoSatirKontrol({ id, yenidenDene = false }: { id: string; yenidenDene?: boolean }) {
   const router = useRouter();
   const [mesgul, setMesgul] = useState(false);
+  const [hata, setHata] = useState(false);
 
   async function gonder(islem: string) {
     if (mesgul) return;
     setMesgul(true);
+    setHata(false);
     try {
-      await fetch("/api/admin/senaryo", {
+      const r = await fetch("/api/admin/senaryo", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ islem, id }),
       });
+      if (!r.ok) setHata(true);
       router.refresh();
     } finally {
       setMesgul(false);
@@ -70,21 +73,26 @@ export function SenaryoSatirKontrol({ id }: { id: string }) {
   }
 
   return (
-    <span className="flex shrink-0 gap-1.5">
+    <span className="flex shrink-0 items-center gap-1.5">
+      {hata && <span className="text-xs font-medium text-rose-300">tekrar başarısız</span>}
       <button
         onClick={() => void gonder("atesle")}
         disabled={mesgul}
-        className="rounded-lg bg-gold/20 px-2.5 py-1 text-xs font-bold text-gold-light disabled:opacity-40"
+        className={`rounded-lg px-2.5 py-1 text-xs font-bold disabled:opacity-40 ${
+          yenidenDene ? "bg-rose-500/20 text-rose-200" : "bg-gold/20 text-gold-light"
+        }`}
       >
-        şimdi ateşle
+        {yenidenDene ? "↻ yeniden dene" : "şimdi ateşle"}
       </button>
-      <button
-        onClick={() => void gonder("atla")}
-        disabled={mesgul}
-        className="rounded-lg border border-white/15 px-2.5 py-1 text-xs text-slate-300 disabled:opacity-40"
-      >
-        atla
-      </button>
+      {!yenidenDene && (
+        <button
+          onClick={() => void gonder("atla")}
+          disabled={mesgul}
+          className="rounded-lg border border-white/15 px-2.5 py-1 text-xs text-slate-300 disabled:opacity-40"
+        >
+          atla
+        </button>
+      )}
     </span>
   );
 }

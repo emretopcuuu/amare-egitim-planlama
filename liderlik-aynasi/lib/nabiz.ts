@@ -24,17 +24,19 @@ export type Nabiz = {
   olaylarDk: number | null; // son olaylar-cron kaç dk önce
   durduruldu: boolean; // orkestratör elle durduruldu mu
   bekleyen: number; // bekleyen senaryo satırı
+  hataSatirSayisi: number; // 'hata' durumunda kalan, yeniden denenmeyi bekleyen satır
   sonHata: string | null; // son orkestrator_hata olay kodu (varsa)
   kampAcik: boolean; // ayna_aktif
 };
 
 export async function nabizOku(db: Db): Promise<Nabiz> {
-  const [{ data: ayarlar }, { count: bekleyen }, { data: hata }] = await Promise.all([
+  const [{ data: ayarlar }, { count: bekleyen }, { count: hataSayisi }, { data: hata }] = await Promise.all([
     db
       .from("settings")
       .select("key, value")
       .in("key", [NABIZ_TIK, NABIZ_OLAYLAR, "orkestrator_durduruldu", "ayna_aktif"]),
     db.from("kamp_senaryosu").select("id", { count: "exact", head: true }).eq("durum", "bekliyor"),
+    db.from("kamp_senaryosu").select("id", { count: "exact", head: true }).eq("durum", "hata"),
     db
       .from("audit_log")
       .select("detay, created_at")
@@ -49,7 +51,8 @@ export async function nabizOku(db: Db): Promise<Nabiz> {
     return Number.isFinite(t) ? Math.max(0, Math.round((Date.now() - t) / 60_000)) : null;
   };
   const sonHataDetay = hata?.[0]?.detay as { olay_kodu?: string } | null;
-  // Son 24 saatten eski hatayı gösterme (bayat gürültü).
+  // Son 24 saatten eski hatayı gösterme (bayat gürültü) — ama satır hâlâ
+  // 'hata' durumundaysa hataSatirSayisi zaten kalıcı olarak uyarır.
   const hataTaze =
     hata?.[0]?.created_at && Date.now() - Date.parse(hata[0].created_at) < 24 * 3_600_000;
 
@@ -58,6 +61,7 @@ export async function nabizOku(db: Db): Promise<Nabiz> {
     olaylarDk: dk(a.get(NABIZ_OLAYLAR)),
     durduruldu: a.get("orkestrator_durduruldu") === "true",
     bekleyen: bekleyen ?? 0,
+    hataSatirSayisi: hataSayisi ?? 0,
     sonHata: hataTaze ? (sonHataDetay?.olay_kodu ?? "bilinmeyen") : null,
     kampAcik: a.get("ayna_aktif") === "true",
   };
