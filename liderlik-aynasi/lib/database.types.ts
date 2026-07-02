@@ -1798,6 +1798,7 @@ export type Database = {
           phone: string | null
           profil_foto_path: string | null
           role: string
+          sahne_onay: boolean
           simulasyon: boolean
           team: string | null
           yeniden_giris_basamak: number
@@ -1827,6 +1828,7 @@ export type Database = {
           phone?: string | null
           profil_foto_path?: string | null
           role?: string
+          sahne_onay?: boolean
           simulasyon?: boolean
           team?: string | null
           yeniden_giris_basamak?: number
@@ -1856,6 +1858,7 @@ export type Database = {
           phone?: string | null
           profil_foto_path?: string | null
           role?: string
+          sahne_onay?: boolean
           simulasyon?: boolean
           team?: string | null
           yeniden_giris_basamak?: number
