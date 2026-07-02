@@ -61,7 +61,7 @@ const useCountdown = (egitim) => {
 const EgitimDetay = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { takvim, loading, konusmacilar } = useData();
+  const { takvim, loading, konusmacilar, isAdmin } = useData();
   const { t, locale, tDynamic } = useTranslation();
   const [hatirlatmaModal, setHatirlatmaModal] = useState(false);
   const [konusmaciModal, setKonusmaciModal] = useState(null);
@@ -329,6 +329,12 @@ const EgitimDetay = () => {
                     {egitim.katilTiklamaSayisi > 0 && (
                       <span className="inline-flex items-center gap-1.5 text-sm font-bold text-red-500">
                         <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />{egitim.katilTiklamaSayisi} kişi katıldı
+                      </span>
+                    )}
+                    {/* Zoom GERÇEK katılım (rapor) — sadece admin görür */}
+                    {isAdmin && egitim.zoomGercekKatilim != null && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2.5 py-1" title="Zoom raporundan: gerçekten giren kişi sayısı ve ortalama kalma süresi (yalnız admin görür)">
+                        📊 Zoom: {egitim.zoomGercekKatilim} kişi girdi{egitim.zoomOrtDakika ? ` · ort. ${egitim.zoomOrtDakika} dk kaldı` : ''}
                       </span>
                     )}
                   </span>
