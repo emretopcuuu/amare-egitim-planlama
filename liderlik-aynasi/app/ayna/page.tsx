@@ -27,6 +27,7 @@ import GelisimMektubuBolumu from "./GelisimMektubuBolumu";
 import { gelisimMektubuGetir } from "@/lib/gelisimMektubu";
 import TekCumleBolumu from "./TekCumleBolumu";
 import SeninIcinBolumu from "./SeninIcinBolumu";
+import ZirveOlcum from "./ZirveOlcum";
 import AynalarMeclisiBolumu from "./AynalarMeclisiBolumu";
 import { aynalarMeclisi } from "@/lib/aynalarMeclisi";
 import SesCal from "@/components/SesCal";
@@ -65,7 +66,7 @@ export default async function AynaPage() {
     .select("id", { count: "exact", head: true })
     .eq("rater_id", session.sub);
 
-  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik, hedefC, oyunP, pusC, sozAcikV2, sozKaydi, { data: mevcutCumle }, { data: mevcutSeninIcin }] =
+  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik, hedefC, oyunP, pusC, sozAcikV2, sozKaydi, { data: mevcutCumle }, { data: mevcutSeninIcin }, { data: mevcutZirve }] =
     await Promise.all([
       db
         .from("mirror_letters")
@@ -97,6 +98,12 @@ export default async function AynaPage() {
       db
         .from("senin_icin")
         .select("metin")
+        .eq("participant_id", session.sub)
+        .maybeSingle(),
+      // [10] Zirveyi Ölç — daha önce işaretlendi mi (bir kez göster).
+      db
+        .from("zirve_olcum")
+        .select("participant_id")
         .eq("participant_id", session.sub)
         .maybeSingle(),
     ]);
@@ -325,6 +332,14 @@ export default async function AynaPage() {
           />
         </div>
       </header>
+
+      {/* [10] Zirveyi Ölç — doruğun (mühür + sinema) hemen ardından, henüz
+          ölçmemiş kişiye tek kelime + slider. Peak-End "peak" ölçümü; bir kez. */}
+      {muhurAcik && !mevcutZirve && (
+        <div className="yazdir-gizle">
+          <ZirveOlcum />
+        </div>
+      )}
 
       {/* S7: Rapor Haritası kaldırıldı; tek "başla" linki yeterli */}
       <div className="yazdir-gizle text-center">

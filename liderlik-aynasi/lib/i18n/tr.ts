@@ -4014,6 +4014,18 @@ export const tr = {
     kaliteSessiz: "Ses tespit edilemedi. Mikrofon kapalı ya da çok uzakta olabilir.",
     kaliteUyari: "Yeniden kayıt önerilir",
   },
+  // [10] Zirveyi Ölç — kamp doruğunun ardından tek kelime + slider (peak ölçümü).
+  zirve: {
+    baslik: "Şu an, tek kelimeyle.",
+    altBaslik: "Bu anı sonra sana hatırlatacağım. Aklına ilk geleni yaz.",
+    kelimeSoru: "Şu an kendini nasıl hissediyorsun? Tek kelime.",
+    kelimeYer: "tek kelime…",
+    puanSoru: "Bu kamp seni ne kadar değiştirdi?",
+    gonder: "Bu anı mühürle",
+    gonderiliyor: "Mühürleniyor…",
+    tesekkur: "✓ Bu anı sakladım. 30 gün sonra sana geri getireceğim.",
+    hata: "Kaydedilemedi, tekrar dene.",
+  },
   // PUSULA AÇILIŞI — "Nedenini Bul" sinematik giriş (ses + perde perde + mühür).
   // replik.* metinleri HEM ekranda gösterilir HEM de /api/ayna-ses ile AYNA
   // sesiyle seslendirilir (tek doğruluk kaynağı).
