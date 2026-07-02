@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { SenaryoUstKontrol, SenaryoSatirKontrol } from "./SenaryoKontrol";
 
 export const metadata = { title: "Kamp Senaryosu — Liderlik Aynası" };
 export const revalidate = 15;
@@ -38,15 +39,18 @@ export default async function SenaryoPage() {
   if (!session || session.rol !== "admin") redirect("/admin/giris");
 
   const db = supabaseAdmin();
-  const [{ data: satirlar }, { data: baslangicAyar }] = await Promise.all([
+  const [{ data: satirlar }, { data: kontrolAyar }] = await Promise.all([
     db
       .from("kamp_senaryosu")
       .select("id, olay_kodu, tetik_tipi, gun, saat, baz_olay, sonra_dk, eylem_tipi, eylem_hedef, eylem_deger, durum, atesleme_zamani, sira")
       .order("sira", { ascending: true }),
-    db.from("settings").select("value").eq("key", "ayna_baslangic").maybeSingle(),
+    db.from("settings").select("key, value").in("key", ["ayna_baslangic", "orkestrator_durduruldu", "senaryo_kaydirma_dk"]),
   ]);
   const satir = satirlar ?? [];
-  const kampBasladi = !!baslangicAyar?.value;
+  const kontrol = new Map((kontrolAyar ?? []).map((a) => [a.key, a.value]));
+  const kampBasladi = !!kontrol.get("ayna_baslangic");
+  const durduruldu = kontrol.get("orkestrator_durduruldu") === "true";
+  const kaydirmaDk = Number(kontrol.get("senaryo_kaydirma_dk")) || 0;
   const bekleyen = satir.filter((r) => r.durum === "bekliyor").length;
   const atesLenen = satir.filter((r) => r.durum === "atesledi").length;
 
@@ -66,8 +70,10 @@ export default async function SenaryoPage() {
       >
         {kampBasladi
           ? `Kamp başladı. ${atesLenen} olay ateşlendi, ${bekleyen} bekliyor.`
-          : `Kamp henüz başlamadı — hiçbir satır ateşlenmedi. "Kampı Başlat" ile ayna_baslangic yazıldığında çizelge canlanır. (${satir.length} satır hazır.)`}
+          : `Kamp henüz başlamadı — hiçbir satır ateşlenmedi. AYNA Kontrol Odası'ndan "uyandır" (ayna_baslangic) yazıldığında çizelge canlanır. (${satir.length} satır hazır.)`}
       </div>
+
+      <SenaryoUstKontrol durduruldu={durduruldu} kaydirmaDk={kaydirmaDk} />
 
       <ol className="space-y-2">
         {satir.map((r) => {
@@ -81,7 +87,11 @@ export default async function SenaryoPage() {
                   {tetikOzet(r)} · {eylemOzet(r)}
                 </span>
               </span>
-              <span className={`shrink-0 text-xs font-medium ${d.renk}`}>{d.ad}</span>
+              {r.durum === "bekliyor" ? (
+                <SenaryoSatirKontrol id={r.id} />
+              ) : (
+                <span className={`shrink-0 text-xs font-medium ${d.renk}`}>{d.ad}</span>
+              )}
             </li>
           );
         })}

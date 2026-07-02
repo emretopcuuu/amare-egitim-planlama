@@ -41,6 +41,24 @@ function kampGorelliZaman(baslangic: Date, gun: number, saat: number): number {
  * ikinci program fazlarında buraya eklenecek. */
 const FONKSIYONLAR: Record<string, (db: Db) => Promise<void>> = {};
 
+/** Tek bir senaryo satırının eylemini uygular (settings/push/fonksiyon).
+ * Hem otomatik akış hem admin "şimdi ateşle" bunu kullanır. */
+export async function satirEylemiUygula(
+  db: Db,
+  s: Pick<SenaryoSatiri, "eylem_tipi" | "eylem_hedef" | "eylem_baslik" | "eylem_deger">
+): Promise<void> {
+  if (s.eylem_tipi === "ayar_ac" || s.eylem_tipi === "ayar_kapat") {
+    await db
+      .from("settings")
+      .upsert({ key: s.eylem_hedef, value: s.eylem_tipi === "ayar_ac" ? "true" : "false" });
+  } else if (s.eylem_tipi === "push") {
+    await herkeseBildir(db, s.eylem_baslik ?? "AYNA", s.eylem_deger ?? "", "/");
+  } else if (s.eylem_tipi === "fonksiyon") {
+    const fn = FONKSIYONLAR[s.eylem_hedef];
+    if (fn) await fn(db);
+  }
+}
+
 export type OrkestratorSonuc = { atesLenen: number; olaylar: string[] };
 
 export async function orkestratoduIsle(
@@ -52,6 +70,16 @@ export async function orkestratoduIsle(
   // Kamp başlamadıysa orkestratör sessiz — hiçbir satır ateşlenmez.
   if (!baslangicIso) return sonuc;
   const baslangic = new Date(baslangicIso);
+
+  // [9.4] Kumanda kontrolleri: DURDUR anahtarı + tüm bekleyenleri öteleyen
+  // genel kaydırma (dk). Admin /admin/senaryo'dan yönetir.
+  const { data: kontrolAyar } = await db
+    .from("settings")
+    .select("key, value")
+    .in("key", ["orkestrator_durduruldu", "senaryo_kaydirma_dk"]);
+  const kontrol = new Map((kontrolAyar ?? []).map((a) => [a.key, a.value]));
+  if (kontrol.get("orkestrator_durduruldu") === "true") return sonuc;
+  const kaydirmaMs = (Number(kontrol.get("senaryo_kaydirma_dk")) || 0) * 60_000;
 
   const { data: satirlar } = await db
     .from("kamp_senaryosu")
@@ -84,7 +112,8 @@ export async function orkestratoduIsle(
       const bazMs = atesZaman.get(s.baz_olay);
       if (bazMs != null) hedefMs = bazMs + s.sonra_dk * 60_000;
     }
-    if (hedefMs == null || simdiMs < hedefMs) continue;
+    if (hedefMs == null) continue;
+    if (simdiMs < hedefMs + kaydirmaMs) continue; // [9.4] genel öteleme
 
     // SAHİPLEN (idempotent yarış guard'ı): yalnız hâlâ 'bekliyor' ise al.
     const { data: sahiplenilen } = await db
@@ -98,16 +127,7 @@ export async function orkestratoduIsle(
 
     // EYLEMİ UYGULA
     try {
-      if (s.eylem_tipi === "ayar_ac" || s.eylem_tipi === "ayar_kapat") {
-        await db
-          .from("settings")
-          .upsert({ key: s.eylem_hedef, value: s.eylem_tipi === "ayar_ac" ? "true" : "false" });
-      } else if (s.eylem_tipi === "push") {
-        await herkeseBildir(db, s.eylem_baslik ?? "AYNA", s.eylem_deger ?? "", "/");
-      } else if (s.eylem_tipi === "fonksiyon") {
-        const fn = FONKSIYONLAR[s.eylem_hedef];
-        if (fn) await fn(db);
-      }
+      await satirEylemiUygula(db, s);
       await yazAuditLog(db, null, "orkestrator_atesle", {
         olay_kodu: s.olay_kodu,
         eylem_tipi: s.eylem_tipi,
