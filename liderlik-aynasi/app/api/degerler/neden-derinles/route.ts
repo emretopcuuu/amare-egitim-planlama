@@ -57,13 +57,16 @@ export async function POST(req: Request) {
     // MALİYET: bu çağrı kişi başı en fazla 6 kez tetiklenir (3 değer × tur 2-3)
     // — düşük hacim, kalite önemli. Haiku'nun ürettiği sorularda ton kaçması
     // (resmi "-sunuz" çoğul hitap, garip gramer) görüldü; Sonnet'e yükseltildi.
+    // Not: "Sevginin seni en çok kim hissettiriyor?" gibi iki yönlü okunabilen
+    // sorular (kişi sevildiğini mi soruyor yoksa kendi sevdiklerini mi anlamıyor)
+    // canlı kampta katılımcıyı durdurdu — netlik kuralı bunun için eklendi.
     const msg = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 80,
       messages: [
         {
           role: "user",
-          content: `Sen AYNA'sın — sıcak, meraklı bir koç. "${deger}" değeri hakkındaki bu cevapları oku:\n${gecmis}\n\n${turTalimat}\n\nKurallar: Türkçe, DOĞRU DİLBİLGİSİ, en fazla 10 kelime, soru işaretiyle bitsin. Kişiye MUTLAKA tekil "sen" diliyle hitap et — "-sunuz/-nız" gibi resmi çoğul ekler ASLA kullanma. Belirsiz ya da soyut olma; net ve somut bir soru sor. Sadece soruyu yaz, başka hiçbir şey ekleme.`,
+          content: `Sen AYNA'sın — sıcak, meraklı bir koç. "${deger}" değeri hakkındaki bu cevapları oku:\n${gecmis}\n\n${turTalimat}\n\nKurallar: Türkçe, DOĞRU DİLBİLGİSİ, en fazla 10 kelime, soru işaretiyle bitsin. Kişiye MUTLAKA tekil "sen" diliyle hitap et — "-sunuz/-nız" gibi resmi çoğul ekler ASLA kullanma. Soru TEK bir açık anlamla okunmalı — kişi "bunu nasıl yani, ne demek istiyorsun?" diye sormak zorunda kalmamalı. Aynı anda birden fazla yöne çekilebilecek soyut/şiirsel kalıplardan kaçın (örn. "X'i sana en çok kim hissettiriyor?" gibi kimin kimi etkilediği belirsiz kurgular). Doğrudan, somut ve tek anlamlı sor — gerekiyorsa "sen" özneli düz bir cümle kur. Sadece soruyu yaz, başka hiçbir şey ekleme.`,
         },
       ],
     });

@@ -5,8 +5,8 @@ import { yazAuditLog } from "@/lib/auditLog";
 import { tr } from "@/lib/i18n/tr";
 
 // FAZ 9.4 — KUMANDA: orkestratör senaryosuna admin müdahalesi.
-// islem: 'atesle' (şimdi ateşle) | 'atla' | 'kaydir' (+dakika tüm bekleyenler) |
-//        'durdur' | 'devam'.
+// islem: 'atesle' (şimdi ateşle / 'hata' durumundaysa yeniden dene) | 'atla' |
+//        'kaydir' (+dakika tüm bekleyenler) | 'durdur' | 'devam'.
 export async function POST(req: Request) {
   if (!(await adminOturumu())) {
     return Response.json({ hata: tr.admin.yetkisiz }, { status: 403 });
@@ -24,25 +24,34 @@ export async function POST(req: Request) {
       .select("id, olay_kodu, eylem_tipi, eylem_hedef, eylem_baslik, eylem_deger, durum")
       .eq("id", body.id)
       .maybeSingle();
-    if (!satir || satir.durum !== "bekliyor") {
-      return Response.json({ hata: "Satır bekliyor durumunda değil." }, { status: 409 });
+    const isleneblirDurumlar = islem === "atla" ? ["bekliyor"] : ["bekliyor", "hata"];
+    if (!satir || !isleneblirDurumlar.includes(satir.durum)) {
+      return Response.json({ hata: "Satır bu işlem için uygun durumda değil." }, { status: 409 });
     }
     if (islem === "atla") {
       await db.from("kamp_senaryosu").update({ durum: "atlandi" }).eq("id", satir.id).eq("durum", "bekliyor");
       await yazAuditLog(db, null, "senaryo_atla", { olay_kodu: satir.olay_kodu });
       return Response.json({ ok: true });
     }
-    // atesle: sahiplen → eylemi uygula → audit
+    // atesle: sahiplen (bekliyor VEYA hata'dan) → eylemi uygula → audit
     const { data: alindi } = await db
       .from("kamp_senaryosu")
       .update({ durum: "atesledi", atesleme_zamani: simdi })
       .eq("id", satir.id)
-      .eq("durum", "bekliyor")
+      .in("durum", ["bekliyor", "hata"])
       .select("id")
       .maybeSingle();
     if (!alindi) return Response.json({ hata: "Satır çoktan işlendi." }, { status: 409 });
-    await satirEylemiUygula(db, satir);
-    await yazAuditLog(db, null, "senaryo_manuel_atesle", { olay_kodu: satir.olay_kodu });
+    try {
+      await satirEylemiUygula(db, satir);
+    } catch {
+      await db.from("kamp_senaryosu").update({ durum: "hata" }).eq("id", satir.id);
+      await yazAuditLog(db, null, "orkestrator_hata", { olay_kodu: satir.olay_kodu });
+      return Response.json({ hata: "Eylem yine başarısız oldu." }, { status: 500 });
+    }
+    await yazAuditLog(db, null, satir.durum === "hata" ? "senaryo_yeniden_dene" : "senaryo_manuel_atesle", {
+      olay_kodu: satir.olay_kodu,
+    });
     return Response.json({ ok: true });
   }
 

@@ -218,7 +218,9 @@ export async function orkestratoduIsle(
       sonuc.olaylar.push(s.olay_kodu);
       atesZaman.set(s.olay_kodu, simdiMs); // aynı tikte olay_gorelli zincirleri
     } catch {
-      // Eylem düşse bile satır 'atesledi' kaldı (tekrar denemez). Audit'e hata yaz.
+      // Satırı 'hata'ya düşür ki admin /admin/senaryo'dan görüp yeniden denesin
+      // — eskiden 'atesledi' kalıp sessizce bir daha hiç denenmiyordu.
+      await db.from("kamp_senaryosu").update({ durum: "hata" }).eq("id", s.id);
       await yazAuditLog(db, null, "orkestrator_hata", { olay_kodu: s.olay_kodu });
     }
   }
