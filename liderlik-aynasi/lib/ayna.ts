@@ -10,6 +10,8 @@ import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
 import { kariyerHalKisidenTuret, personaBlogu, personaYolculukOdak, KARIYER_RANK, KARIYER_ETIKET } from "@/lib/persona";
 import { aiHataYakala } from "@/lib/uyari";
 import { vinyetSec, type LiderKas } from "@/lib/liderlikVinyetleri";
+import { karsilasmaBul } from "@/lib/karsilasma";
+import { eslesmeHedefiSec, ESLESMELI_TURLER, type EslesmeAday } from "@/lib/gorevEslesme";
 import {
   fazBul,
   zorlukSec,
@@ -295,6 +297,9 @@ export type UretilenGorev = {
   donusBicimi: string | null;
   /** FAZ 1.1 — somutluk şablonu: gövdeyi 5 satırlık checklist'e ayrıştırır */
   somutluk: { kim: string | null; ne: string; nerede: string; neZaman: string; kanit: string } | null;
+  /** FAZ 2.1 — bu görev bir eşleşme hedefine bağlıysa (isimli ya da isimsiz),
+   * tik.ts mission insert sonrası eslesmeKaydet() ile gorev_eslesme'ye yazar. */
+  eslesme: { hedefId: string; isimli: boolean } | null;
 };
 
 // #7 geçerli dönüş biçimleri (şema enum'ı ile aynı).
@@ -427,7 +432,11 @@ export async function gorevUret(
   bitenEtkinlik: ProgramMaddesi | null = null,
   gorevIpucu: string | null = null,
   siradakiEtkinlik: ProgramMaddesi | null = null,
-  yorgunMu = false
+  yorgunMu = false,
+  // FAZ 2.2 — mekân-farkında eşleştirme: çağıran (tik.ts), o an aynı
+  // mekânda/boşta olan adayları biliyorsa geçer. null/undefined = filtre yok
+  // (mod !== kamp gün 2 gibi mekân verisi olmayan durumlar).
+  mekanFarkindaAdaylar: EslesmeAday[] | null = null
 ): Promise<UretilenGorev | null> {
   const [
     ozellikler,
@@ -674,7 +683,22 @@ export async function gorevUret(
   const bugunTurleri = onceki
     .filter((o) => Date.now() - new Date(o.issued_at).getTime() < 86_400_000)
     .map((o) => o.kind);
-  const tur = turSec(gun, saat, bugunTurleri, mod, undefined, etkinlik?.tur, kapaliTurler);
+  let tur = turSec(gun, saat, bugunTurleri, mod, undefined, etkinlik?.tur, kapaliTurler);
+
+  // FAZ 2.1 — GÜNLÜK EŞLEŞME KOTASI: bugünün görevlerinin ≥%50'si eşleşmeli
+  // (bag ve FAZ 3'te eklenecek tanık/çift türleri) olsun. turSec'in seçtiği
+  // tür zaten eşleşmeli değilse ve oran hedefin altındaysa "bag"a çevir —
+  // admin bag'i kapattıysa (kapaliTurler) dokunma.
+  if (
+    mod === "kamp" &&
+    !kapaliTurler.includes("bag") &&
+    bugunTurleri.length > 0 &&
+    !ESLESMELI_TURLER.includes(tur)
+  ) {
+    const eslesmeliOran =
+      bugunTurleri.filter((t) => ESLESMELI_TURLER.includes(t)).length / bugunTurleri.length;
+    if (eslesmeliOran < 0.5) tur = "bag";
+  }
 
   // Zorluk hesabı (eustress motoru)
   const kapananlar = onceki.filter(
@@ -761,6 +785,41 @@ export async function gorevUret(
         Date.now() - new Date(o.issued_at).getTime() < 86_400_000
     ) ?? null;
 
+  // FAZ 2.1 — İSİMLİ EŞLEŞME ÇEKİRDEĞİ: tur "bag" ise gerçek bir hedef seç.
+  // Persona-tamamlayıcı eşleşme (karsilasma.ts) tercih edilir; dengeleyici
+  // (lib/gorevEslesme.ts) kota/geçmiş/admin-engeli kısıtlarını uygular.
+  // Mekân-farkında adaylar verildiyse (FAZ 2.2, Gün 2 grup bağlamı) yalnız
+  // o an aynı mekânda/boşta olanlardan seçilir.
+  let eslesmeHedef: EslesmeAday | null = null;
+  let eslesmeIsimliMi = false;
+  if (tur === "bag") {
+    const { data: rosterHam } = await db
+      .from("participants")
+      .select("id, full_name, team")
+      .eq("role", "participant");
+    let adaylar: EslesmeAday[] = (rosterHam ?? []).filter((p) => p.id !== katilimci.id);
+    if (mekanFarkindaAdaylar) {
+      const mekanIdler = new Set(mekanFarkindaAdaylar.map((a) => a.id));
+      adaylar = adaylar.filter((a) => mekanIdler.has(a.id));
+    }
+    if (adaylar.length > 0) {
+      const tercih = await karsilasmaBul(db, katilimci.id);
+      eslesmeHedef = await eslesmeHedefiSec(db, katilimci.id, adaylar, new Date(), tercih?.partnerId ?? null);
+    }
+    if (eslesmeHedef) {
+      // Bugün bu kişinin eşleşmeli görevlerinin kaçı isimliydi — oran ≥%50 kalsın.
+      const gunBasiIso = new Date(Date.now() - 24 * 3_600_000).toISOString();
+      const { data: bugunEslesmeler } = await db
+        .from("gorev_eslesme")
+        .select("isimli")
+        .eq("kaynak_id", katilimci.id)
+        .gte("created_at", gunBasiIso);
+      const toplamBugun = bugunEslesmeler?.length ?? 0;
+      const isimliSayisi = (bugunEslesmeler ?? []).filter((e) => e.isimli).length;
+      eslesmeIsimliMi = toplamBugun === 0 || isimliSayisi / toplamBugun < 0.5;
+    }
+  }
+
   // --- Tüm yeni yönergeleri oluştur ---
   const yeniYonergeler = [
     // #1 Algoritmik özellik hedefleme
@@ -783,9 +842,11 @@ export async function gorevUret(
       : "",
     // #7 Ses tonu
     tonOnerisi ? `AYNA SES TONU (kişiye özel): ${tonOnerisi}` : "",
-    // #4 Bağ görevi
+    // #4 / FAZ 2.1 Bağ görevi — isimli (gerçek eşleşme hedefi) ya da isimsiz
     tur === "bag"
-      ? `BAĞ GÖREVİ: Adayı takımından veya kamptan gerçek bir insanla bağlantı kurmaya yönlendir. İsim verme; "az tanıdığın biri", "farklı bir takımdan biri", "sohbet etmek isteyip ertelediğin biri" gibi ifadeler kullan. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
+      ? eslesmeHedef && eslesmeIsimliMi
+        ? `BAĞ GÖREVİ (İSİMLİ EŞLEŞME): Adayı doğrudan "${eslesmeHedef.full_name}" isimli kişiye yönlendir — adını göreve AÇIKÇA yaz (ör. "${eslesmeHedef.full_name}'i bul..."), varsa takımını da belirtebilirsin. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin.`
+        : `BAĞ GÖREVİ: Adayı takımından veya kamptan gerçek bir insanla bağlantı kurmaya yönlendir. İsim verme; "az tanıdığın biri", "farklı bir takımdan biri", "sohbet etmek isteyip ertelediğin biri" gibi ifadeler kullan. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
       : "",
     // #8 Micro-sprint
     microSprint
@@ -1099,6 +1160,8 @@ ${yeniYonergeler}${ekstraYonerge}`,
         neZaman: (veri.ne_zaman ?? "").trim().slice(0, 100),
         kanit: (veri.kanit ?? "").trim().slice(0, 160),
       },
+      // FAZ 2.1 — eşleşme kaydı (tik.ts insert sonrası gorev_eslesme'ye yazar)
+      eslesme: eslesmeHedef ? { hedefId: eslesmeHedef.id, isimli: eslesmeIsimliMi } : null,
     };
   } catch (e) {
     await aiHataYakala(db, "gorev_uretimi", e);
@@ -1835,6 +1898,9 @@ export async function mentorlukGorevUret(
       neZaman: "bugün",
       kanit: "kimin yanına gittiğin, ne sorduğun ve ne götürdüğün",
     },
+    // Mentorluk kendi eşleştirme kaydını mentorluk_kayit'ta tutar; gorev_eslesme
+    // dengeleyicisi yalnız "bag" türü içindir.
+    eslesme: null,
     // #9 takip: önerilen 3 adayın id'leri (mentorluk_kayit'a yazılır)
     adayIdler: secilen.map((k) => k.id),
   };

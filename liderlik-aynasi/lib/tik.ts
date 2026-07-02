@@ -56,7 +56,9 @@ import {
   grupAktifBlok,
   grupBitenBlok,
   grupAzOnceFiziksel,
+  grupBostaMi,
 } from "@/lib/cumartesiProgrami";
+import { eslesmeKaydet, type EslesmeAday } from "@/lib/gorevEslesme";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
 import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
@@ -351,10 +353,28 @@ export async function tikCalistir(
         if (grupAzOnceFiziksel(grupNo, gunDk)) kYorgun = true;
       }
     }
+    // FAZ 2.2 — MEKÂN-FARKINDA EŞLEŞTİRME: yalnız Gün 2 (Cumartesi grup programı
+    // var), o an kişinin kendi grubunda olan ya da o an boşta (grupBostaMi) olan
+    // adaylarla sınırlı. Program bilgisi yoksa null → mekân filtresi uygulanmaz.
+    let kMekanFarkindaAdaylar: EslesmeAday[] | null = null;
+    if (mod === "kamp" && gun === 2) {
+      const kendiGrupNo = grupNoCozumle(k.team);
+      if (kendiGrupNo) {
+        kMekanFarkindaAdaylar = (kisiler ?? [])
+          .filter((p) => p.id !== k.id)
+          .filter((p) => {
+            const pGrupNo = grupNoCozumle(p.team);
+            if (!pGrupNo) return false;
+            return pGrupNo === kendiGrupNo || grupBostaMi(pGrupNo, gunDk);
+          })
+          .map((p) => ({ id: p.id, full_name: p.full_name, team: p.team }));
+      }
+    }
     // Sıradaki köprüsünü yalnız kişi ŞU AN bir etkinliğin içinde DEĞİLken kur
     // (etkinlikteyse görev zaten ona bağlanıyor; çift bağlam karıştırır).
     const gorev = await gorevUret(
-      db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu, kEtkinlik ? null : kSiradaki, kYorgun
+      db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu, kEtkinlik ? null : kSiradaki, kYorgun,
+      kMekanFarkindaAdaylar
     );
     if (!gorev) continue;
     // #8 micro_sprint: sure_saat 0.5 = 30 dk
@@ -385,6 +405,11 @@ export async function tikCalistir(
       .select("id")
       .single();
     if (error || !yeniGorev) continue;
+    // FAZ 2.1 — eşleşme kaydı: "aynı çift kampta bir kez" ve günlük hedef
+    // kotası bu deftere dayanır; isimli olsun olmasın her eşleşme yazılır.
+    if (gorev.eslesme) {
+      await eslesmeKaydet(db, yeniGorev.id, k.id, gorev.eslesme.hedefId, gorev.eslesme.isimli);
+    }
     ozet.uretilen++;
     await katilimciyaBildir(
       db,
