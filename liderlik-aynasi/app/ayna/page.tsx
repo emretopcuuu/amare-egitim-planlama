@@ -208,14 +208,30 @@ export default async function AynaPage() {
       metin: t.hikayeGelisen(rapor.enGelisen.ad, rapor.enGelisen.fark.toFixed(1)),
       tema: "royal",
     });
-  if ((takdirler ?? []).length > 0)
+  // [2] GÖRÜLME ANI — takdirleri tek bir slaytta özetlemek yerine, her birine
+  // ayrı bir dramatik "görülme" beat'i ver: önce "N kişi senin hakkında yazdı"
+  // açılışı, sonra her takdir kendi slaytında (anonim — isim YOK, sinema anında
+  // saf "görüldüm" hissi). En fazla 4 takdir sahnede akar; gerisi rapor gövdesinde
+  // isimli listede zaten görünür.
+  const takdirListe = takdirler ?? [];
+  if (takdirListe.length > 0) {
     slaytlar.push({
-      ikon: "💛",
+      ikon: "👁",
       ust: tr.takdir.gelenlerBaslik,
-      baslik: t.hikayeTakdirBaslik((takdirler ?? []).length),
-      metin: `“${takdirler![0].message}”`,
+      baslik: t.hikayeTakdirBaslik(takdirListe.length),
+      metin: t.hikayeGorulmeAcilis,
       tema: "gold",
     });
+    for (const tk of takdirListe.slice(0, 4)) {
+      slaytlar.push({
+        ikon: "💛",
+        ust: tr.takdir.gelenlerBaslik,
+        baslik: t.hikayeGorulmeKart,
+        metin: `“${tk.message}”`,
+        tema: "gold",
+      });
+    }
+  }
   slaytlar.push({
     ikon: "🌟",
     ust: "",
