@@ -279,7 +279,11 @@ export default function OnFarkindalikAkis({
           {t.girisUst}
         </p>
         <h1 className="prizma-serif ay-metin mt-2 text-3xl font-semibold leading-tight">{t.girisBaslik}</h1>
-        <p className="mx-auto mt-5 max-w-md text-lg leading-relaxed text-slate-300"><DurustVurgu metin={t.girisMetin} /></p>
+        {/* [UX4] Süre beklentisi */}
+        <p className="mx-auto mt-3 inline-block rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-400">
+          ⏱ ~5 dk sürer
+        </p>
+        <p className="mx-auto mt-4 max-w-md text-lg leading-relaxed text-slate-300"><DurustVurgu metin={t.girisMetin} /></p>
         {/* UX #4: sonunda ne kazanacağın — "neden buradayım" çerçevesi + ödül önizlemesi */}
         <ul className="mx-auto mt-6 max-w-md space-y-2 text-left">
           {t.girisKazanimlar.map((k, i) => (

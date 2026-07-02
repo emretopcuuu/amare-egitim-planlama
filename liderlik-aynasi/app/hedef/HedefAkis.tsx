@@ -87,6 +87,10 @@ export default function HedefAkis({
           </p>
         )}
         <p className="mt-3 text-base leading-relaxed text-slate-300">{t.acilisMetin}</p>
+        {/* [UX4] Süre beklentisi */}
+        <p className="mt-3 inline-block rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-400">
+          ⏱ ~8 dk sürer
+        </p>
         <button
           onClick={() => setFaz("baslangic")}
           className="btn-kor parilti mt-7 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold"
