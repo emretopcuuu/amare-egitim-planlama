@@ -4077,6 +4077,12 @@ export const tr = {
   muhurZinciri: {
     teyitHata: "Teyit kaydedilemedi.",
   },
+  isVerisi: {
+    kayitHata: "Sayılar kaydedilemedi.",
+  },
+  eylulAynasi: {
+    kayitHata: "Yanıt kaydedilemedi.",
+  },
   ortak: {
     oturumGerekli: "Oturum gerekli.",
     genelHata: "Bir şeyler ters gitti, tekrar dener misin?",
