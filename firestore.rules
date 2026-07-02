@@ -187,6 +187,14 @@ service cloud.firestore {
         allow write: if isSignedIn() && request.auth.uid == uid;
       }
 
+      // İzlenmeler subcollection — "en çok izlenen" sayacının dedup kaydı.
+      // Yalnız /.netlify/functions/izlenme-kaydet (admin SDK) yazar; client asla
+      // doğrudan yazamaz (yoksa parent izlenmeSayisi'nı client tetikleyip manipüle edebilir
+      // — aynı 2026-06-05 puan-manipülasyon dersi). Okuma bile gerekmiyor, kapalı.
+      match /izlenmeler/{uid} {
+        allow read, write: if false;
+      }
+
       // Reactions — emoji tepkileri (sadece kendi)
       match /reactions/{uid} {
         allow read: if true;

@@ -57,8 +57,30 @@ export function updateProgress(videoId, t, duration) {
     } catch {}
   }
 
+  // "En çok izlenen" sayacı — ciddi izleme sayılır (%30+), kullanıcı başına TEK kez.
+  // Sunucu-taraflı (izlenme-kaydet.mjs) dedup + doğrulama yapar; burada sadece tetikler.
+  if (eskiPct < IZLENME_ESIK_PCT && yeniPct >= IZLENME_ESIK_PCT) {
+    izlenmeKaydet(videoId);
+  }
+
   // Debounced Firestore sync
   firestoreSyncDebounced();
+}
+
+const IZLENME_ESIK_PCT = 30;
+async function izlenmeKaydet(videoId) {
+  try {
+    const user = auth?.currentUser;
+    if (!user) return;
+    const idToken = await user.getIdToken();
+    await fetch('/.netlify/functions/izlenme-kaydet', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ vimeoId: videoId }),
+    });
+  } catch (e) {
+    console.warn('[watchProgress] izlenme kaydı hata:', e.message);
+  }
 }
 
 // ─── FIRESTORE SYNC (cross-device + analytics) ────────────────────────────
