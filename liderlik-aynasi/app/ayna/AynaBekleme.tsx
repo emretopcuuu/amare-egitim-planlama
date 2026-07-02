@@ -9,21 +9,22 @@ const YOKLAMA_MS = 5000;
 // Senkronize "Ayna Anı": admin reports_visible'ı açtığında salondaki tüm
 // telefonlar bir sonraki yoklamada aynı anda rapora geçer. GECE GÖLÜ
 // evreninde bekleyiş, suyun durulmasını izlemektir — ayna olmasını bekler.
-export default function AynaBekleme() {
+export default function AynaBekleme({ onbellekUrl }: { onbellekUrl?: string }) {
   const router = useRouter();
   const durdu = useRef(false);
 
-  // [E1-c] Reveal ÖNCESİ kendi mektup sesini service worker'a önbellet — reveal
+  // [E1-c/A3] Reveal ÖNCESİ kendi mektup sesini service worker'a önbellet — reveal
   // anında 29 telefon aynı anda açsa bile ses ağdan değil önbellekten çalar.
+  // URL kişiye özel (?u=pid): kullanıcı değişiminde yanlış ses çalınmaz.
   useEffect(() => {
-    if (!("serviceWorker" in navigator)) return;
+    if (!onbellekUrl || !("serviceWorker" in navigator)) return;
     navigator.serviceWorker.ready
       .then((reg) => {
         const hedef = reg.active ?? navigator.serviceWorker.controller;
-        hedef?.postMessage({ tip: "la-onbellek", url: "/api/mektup-ses" });
+        hedef?.postMessage({ tip: "la-onbellek", url: onbellekUrl });
       })
       .catch(() => {});
-  }, []);
+  }, [onbellekUrl]);
 
   useEffect(() => {
     durdu.current = false;

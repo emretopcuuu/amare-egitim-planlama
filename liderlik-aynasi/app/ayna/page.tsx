@@ -47,7 +47,9 @@ export default async function AynaPage() {
   const db = supabaseAdmin();
 
   if (!(await raporlarGorunurMu(db))) {
-    return <AynaBekleme />;
+    // [E1-c/A3] SW ön-yükleme URL'si KİŞİYE ÖZEL anahtarlanır (?u=): aynı
+    // telefonda kullanıcı değişirse eski kullanıcının sesi önbellekten çalınmasın.
+    return <AynaBekleme onbellekUrl={`/api/mektup-ses?u=${session.sub}`} />;
   }
 
   const rapor = await raporHesapla(db, session.sub);
@@ -123,14 +125,14 @@ export default async function AynaPage() {
     muhurSesUrl = imzali?.signedUrl ?? null;
   }
 
-  // YANSIMAN sesleri: kısa ömürlü imzalı URL'ler (özel bucket)
-  let mektupSesUrl: string | null = null;
-  if (mevcutMektup?.voice_path) {
-    const { data: imzali } = await db.storage
-      .from("sesler")
-      .createSignedUrl(mevcutMektup.voice_path, 3600);
-    mektupSesUrl = imzali?.signedUrl ?? null;
-  }
+  // YANSIMAN sesleri: kısa ömürlü imzalı URL'ler (özel bucket).
+  // [E1-c/A3] MEKTUP sesi İSTİSNA: imzalı URL her seferinde değiştiği için SW
+  // ön-yüklemesi hiç isabet etmiyordu. Stabil uç (/api/mektup-ses?u=pid) hem
+  // reveal'de önbellekten çalar (29 telefon → ~0 yük) hem kişiye özel anahtar
+  // aynı telefonda kullanıcı değişiminde yanlış sesi engeller.
+  const mektupSesUrl: string | null = mevcutMektup?.voice_path
+    ? `/api/mektup-ses?u=${session.sub}`
+    : null;
   let sozSesUrl: string | null = null;
   if (sesProfili?.soz_path) {
     const { data: imzali } = await db.storage

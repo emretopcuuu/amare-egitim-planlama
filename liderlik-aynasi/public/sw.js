@@ -15,10 +15,14 @@ const ONBELLEK_YOLLARI = ["/api/mektup-ses"];
 self.addEventListener("message", (event) => {
   const veri = event.data || {};
   if (veri.tip === "la-onbellek" && typeof veri.url === "string") {
+    // Yalnız izinli yollar önbelleklenir; ?u=pid sorgu parametresi önbellek
+    // anahtarını KİŞİYE ÖZEL yapar (kullanıcı değişiminde yanlış ses çalınmaz).
+    const url = new URL(veri.url, self.location.origin);
+    if (!ONBELLEK_YOLLARI.includes(url.pathname)) return;
     event.waitUntil(
       caches
         .open(VARLIK_ONBELLEK)
-        .then((c) => c.add(new Request(veri.url, { credentials: "include" })))
+        .then((c) => c.add(new Request(url.href, { credentials: "include" })))
         .catch(() => {}) // ses yoksa (404) sessiz geç
     );
   }
