@@ -3,6 +3,7 @@ import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { bekleyenTaahhutler } from "@/lib/ilk72";
 import { katilimciyaBildir } from "@/lib/push";
+import { cesaretPushGonder } from "@/lib/cesaret";
 
 // Vercel Cron: her dakika çalışır, ateşlenecek scheduled_events'i işler.
 // CRON_SECRET env değişkeni yoksa da çalışır (Vercel cron Bearer ile çağırır).
@@ -57,7 +58,10 @@ export async function GET(req: NextRequest) {
     taahhutPush++;
   }
 
-  return NextResponse.json({ islem, taahhutPush });
+  // [E5] Başladım → ~60 sn sonra cesaret fısıltısı push'u (arkaplandaki telefona).
+  const cesaretPush = await cesaretPushGonder(db);
+
+  return NextResponse.json({ islem, taahhutPush, cesaretPush });
 }
 
 // Admin panelinden manuel tetikleme — cron secret olmadan, admin oturumuyla

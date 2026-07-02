@@ -3379,7 +3379,7 @@ export const tr = {
       "Yanıtın bana ulaştı ve emeğini gördüm — bu görevi tamamladın. Yola devam. ⚡",
     bekliyorTekrar: "Sonuç gelmedi mi? Tekrar gönder",
     // UX #1 — "Başladım": saha görevi gerçek zaman alır
-    basladim: "✋ Başladım, üzerinde çalışıyorum",
+    basladim: "🎯 Şimdi yapıyorum",
     basladimRozet: "✋ Üzerinde çalışıyorsun",
     // FAZ 6.1 — "Başladım" canlı modu: 60-90 sn sonra tek cümlelik cesaret
     // fısıltısı (şablon havuzu, LLM yok). gorevId tohumlu seçilir.
