@@ -3660,7 +3660,10 @@ export const tr = {
     hikayeGizliMetin:
       "Kendine az verdin ama başkaları çok gördü — sandığından güçlüsün.",
     hikayeYolculukBaslik: "Nereden nereye",
-    hikayeTakdirBaslik: (n: number) => `${n} kişi sana güzel şeyler yazdı`,
+    hikayeTakdirBaslik: (n: number) => `${n} kişi senin hakkında yazdı`,
+    // [2] Görülme Anı — takdir sahnesi (anonim, tek tek akar)
+    hikayeGorulmeAcilis: "Sen görülmedin sanıyordun belki. Ama onlar seni gördü. İşte kelimeleri:",
+    hikayeGorulmeKart: "Biri seni böyle gördü",
     hikayeKapanis: "İşte sen.",
     hikayeKapanisMetin: "Bu yansıma senin. Aşağıda her detayı seni bekliyor.",
     // #4 Ayna Filmi (kutlama/yolculuk)
