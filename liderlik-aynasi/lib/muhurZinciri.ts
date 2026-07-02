@@ -24,14 +24,19 @@ export type ZincirHalka = {
 
 export type ZincirDurumu = {
   soz: string | null; // ilk halka: kamptaki söz
+  // [7] GELECEĞE ÇAPA — kamp doruğunda işaretlenen tek kelime + 0-10 his
+  // (zirve_olcum). +30 halkasında geri çalınır: "o gün şunu hissetmiştin".
+  zirveKelime: string | null;
+  zirvePuan: number | null;
   halkalar: ZincirHalka[];
 };
 
 export async function zincirDurumu(db: Db, pid: string): Promise<ZincirDurumu> {
-  const [{ data: soz }, { data: ayarlar }, { data: teyitler }] = await Promise.all([
+  const [{ data: soz }, { data: ayarlar }, { data: teyitler }, { data: zirve }] = await Promise.all([
     db.from("soz").select("metin").eq("participant_id", pid).maybeSingle(),
     db.from("settings").select("key, value").in("key", Object.values(BAYRAK)),
     db.from("muhur_zinciri").select("halka, teyit, created_at").eq("participant_id", pid),
+    db.from("zirve_olcum").select("kelime, puan").eq("participant_id", pid).maybeSingle(),
   ]);
 
   const acikMap = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
@@ -47,7 +52,12 @@ export async function zincirDurumu(db: Db, pid: string): Promise<ZincirDurumu> {
     };
   });
 
-  return { soz: soz?.metin ?? null, halkalar };
+  return {
+    soz: soz?.metin ?? null,
+    zirveKelime: zirve?.kelime ?? null,
+    zirvePuan: zirve?.puan ?? null,
+    halkalar,
+  };
 }
 
 // Kişi bir halkayı teyit eder. Yalnız AÇIK ve henüz teyit edilmemiş halka için.

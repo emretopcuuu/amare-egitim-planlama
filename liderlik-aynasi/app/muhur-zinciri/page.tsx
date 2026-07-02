@@ -26,7 +26,12 @@ export default async function MuhurZinciriPage() {
             Kampta bir söz mühürledin. Her ay onu yeniden oku, tek cümleyle teyit et — zincirin uzasın.
           </p>
         </header>
-        <MuhurZinciri soz={durum.soz} halkalar={durum.halkalar} />
+        <MuhurZinciri
+          soz={durum.soz}
+          zirveKelime={durum.zirveKelime}
+          zirvePuan={durum.zirvePuan}
+          halkalar={durum.halkalar}
+        />
       </div>
     </main>
   );

@@ -15,9 +15,13 @@ type Halka = {
 // kapalı halka kilitli görünür.
 export default function MuhurZinciri({
   soz,
+  zirveKelime = null,
+  zirvePuan = null,
   halkalar,
 }: {
   soz: string | null;
+  zirveKelime?: string | null;
+  zirvePuan?: number | null;
   halkalar: Halka[];
 }) {
   const [durum, setDurum] = useState<Halka[]>(halkalar);
@@ -82,6 +86,24 @@ export default function MuhurZinciri({
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                 +{h.halka} gün ara mühür
               </p>
+
+              {/* [7] GELECEĞE ÇAPA — +30 halkası açılınca kamp doruğunda
+                  işaretlenen tek kelime geri çalınır: "o gün bunu hissettin". */}
+              {h.halka === 30 && h.acik && !mühürlü && zirveKelime && (
+                <div className="mt-2 rounded-xl border border-gold/25 bg-gold/[0.06] px-3 py-2.5">
+                  <p className="text-[0.65rem] font-semibold uppercase tracking-widest text-slate-500">
+                    ⚓ Kampın zirvesinde tek kelimen şuydu
+                  </p>
+                  <p className="prizma-serif mt-1 text-xl font-bold text-gold-light">
+                    “{zirveKelime}”
+                    {zirvePuan != null && (
+                      <span className="ml-2 align-middle font-sans text-xs font-semibold text-slate-400">
+                        his: {zirvePuan}/10
+                      </span>
+                    )}
+                  </p>
+                </div>
+              )}
 
               {mühürlü ? (
                 <p className="mt-2 text-sm leading-relaxed text-emerald-100">🔒 {h.teyit}</p>
