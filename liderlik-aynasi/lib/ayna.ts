@@ -90,8 +90,28 @@ const GOREV_SEMASI = {
       description:
         "YALNIZ bağlamda 'düşük puan sonrası derinleştirme/tekrar' dendiyse: kişinin BU SEFER daha iyi yapması için 2 KISA, somut tavsiye (her biri tek cümle, eyleme dönük). Aksi halde boş dizi [].",
     },
+    // Öneri #7 — DÖNÜŞ BİÇİMİ: görevin kişiden ne tür bir "dönüş" istediği. Kaydedilip
+    // bağlama geri verilir → model son N görevin biçimini görüp tekdüzeliği kırar.
+    donus_bicimi: {
+      type: "string" as const,
+      enum: ["yaz", "sesli", "grup", "foto", "tek_kelime"],
+      description:
+        "Bu görevin dönüş biçimi: 'yaz' (bana yaz), 'sesli' (sesle anlat), 'grup' (grupla/biriyle etkileş), 'foto' (kanıt fotoğrafı), 'tek_kelime' (tek kelime/tek cümle). Bağlamdaki 'sonDonusBicimleri'nden FARKLI seç — art arda aynı biçim tekdüzeliktir.",
+    },
+    // Öneri #6 — ÜRETİM ANI ÖZ-DENETİMİ: model kendi çıktısını denetler; başarısızsa
+    // görev katılımcıya ulaşmadan reddedilip yeniden üretilir.
+    baglam_kullanildi: {
+      type: "boolean" as const,
+      description:
+        "Bu görev, bağlamdaki kişiye-özel verilerden (pusula/onFarkindalik/değerler/hedef/sonYanitları/akranYorumlari) EN AZ BİRİNE gerçekten demirlendi mi? Jenerik/herkese uyan bir görevse false.",
+    },
+    tekrar_degil: {
+      type: "boolean" as const,
+      description:
+        "Bu görev 'oncekiGorevBasliklari'ndaki hiçbirinin tekrarı/çok benzeri DEĞİL mi (farklı kas/eylem/dönüş)? Benzer bir egzersizse false.",
+    },
   },
-  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden", "fayda", "ipuclari"],
+  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden", "fayda", "ipuclari", "donus_bicimi", "baglam_kullanildi", "tekrar_degil"],
   additionalProperties: false,
 };
 
@@ -174,7 +194,12 @@ export type UretilenGorev = {
   micro_sprint: boolean;
   /** #4b görev yayı aktifken üretildi mi — yay aşaması bu işaretli görevlerden sayılır */
   yayGorevi: boolean;
+  /** #7 dönüş biçimi (yaz/sesli/grup/foto/tek_kelime) — çeşitlilik izlemesi */
+  donusBicimi: string | null;
 };
+
+// #7 geçerli dönüş biçimleri (şema enum'ı ile aynı).
+export const DONUS_BICIMLERI = ["yaz", "sesli", "grup", "foto", "tek_kelime"];
 
 // Ön Farkındalık profilini görev üretimi için sıkıştırır.
 const OZ_ALAN_AD: Record<string, string> = {
@@ -335,7 +360,7 @@ export async function gorevUret(
       .from("missions")
       // response_text + ai_comment eklendi (öneri #1: kişinin gerçek cümleleri,
       // #9: AYNA'nın verdiği son tavsiyeyi sonraki göreve taşımak için)
-      .select("kind, title, body, issued_at, status, ai_score, ai_comment, lightened_at, responded_at, response_tags, response_text")
+      .select("kind, title, body, issued_at, status, ai_score, ai_comment, lightened_at, responded_at, response_tags, response_text, donus_bicimi")
       .eq("participant_id", katilimci.id)
       .order("issued_at", { ascending: false })
       .limit(10), // genişletildi: streak ve pik pencere için
@@ -517,6 +542,12 @@ export async function gorevUret(
     .map((k) => k.message?.trim())
     .filter((m): m is string => !!m)
     .slice(0, 4);
+
+  // Öneri #7 — son görevlerin dönüş biçimleri (model tekdüzeliği görsün/kırsın).
+  const sonDonusBicimleri = onceki
+    .map((o) => (o as { donus_bicimi?: string | null }).donus_bicimi)
+    .filter((b): b is string => !!b)
+    .slice(0, 3);
 
   const bugunTurleri = onceki
     .filter((o) => Date.now() - new Date(o.issued_at).getTime() < 86_400_000)
@@ -790,6 +821,8 @@ export async function gorevUret(
       digerlerininOrtalamasi: ort(ozet.get(o.id)?.dis ?? []),
     })),
     oncekiGorevBasliklari: onceki.map((o) => o.title),
+    // #7 son dönüş biçimleri — art arda aynısını seçme (donus_bicimi'ni farklı seç).
+    sonDonusBicimleri: sonDonusBicimleri.length > 0 ? sonDonusBicimleri : null,
     yonerge:
       gun === 1
         ? "İlk gün: tanışma ve buz kırma odaklı, veriye fazla yaslanma."
@@ -828,7 +861,9 @@ GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lid
 4) DÖNÜŞ — bana ne getireceğini söyle ve ÇEŞİTLENDİR: her görev "bana yaz" olmasın; kimi yap-ve-anlat, kimi grupla etkileş, kimi tek cümle/tek kelime. Birine BELİRLİ bir cümleyi birebir söylemesini istiyorsan ("şunu söyle", "de ki" vb.) o cümlenin TAM METNİNİ tırnak içinde MUTLAKA yaz — asla ":" ile bitirip alıntıyı boş bırakma.
 "ozellik_id"yi bu kasla uyumlu seç (cesaret→Cesaret, devretme→Sorumluluk/Takım Ruhu, zor_konusma→Dürüstlük, vizyon→Vizyonerlik, dinleme→İletişim, baglanti→Takım Ruhu/Pozitif Enerji vb.).
 
-ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz.
+ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz. "donus_bicimi" alanını doldur ve bağlamdaki "sonDonusBicimleri"nden FARKLI bir biçim seç (art arda hep "yaz" olmasın — sesli/grup/foto/tek_kelime ile çeşitlendir).
+
+ÖZ-DENETİM (ZORUNLU): Görevi ürettikten sonra kendini denetle ve "baglam_kullanildi" + "tekrar_degil" alanlarını DÜRÜSTÇE doldur. tekrar_degil, görev "oncekiGorevBasliklari"ndan birinin tekrarı/çok benzeriyse false olmalı — bu durumda görev reddedilip yeniden üretilir, o yüzden gerçekten FARKLI bir görev üret.
 ${personaMetni ? `\n${personaMetni}\n` : ""}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
 
@@ -861,6 +896,9 @@ ${yeniYonergeler}`,
       neden?: string;
       fayda?: string;
       ipuclari?: unknown;
+      donus_bicimi?: string;
+      baglam_kullanildi?: boolean;
+      tekrar_degil?: boolean;
     }>(yanit);
     if (!veri?.baslik || !veri.govde) return null;
     // Savunma: model bazen "...yalnızca şunu söyle:" diyip asıl alıntıyı yazmadan
@@ -871,6 +909,14 @@ ${yeniYonergeler}`,
       yanit.stop_reason === "max_tokens" || /[:,;—-]\s*$/.test(veri.govde.trim());
     if (govdeYarim) {
       await aiHataYakala(db, "gorev_uretimi", new Error(`Yarım kalan govde: "${veri.govde.slice(-60)}"`));
+      return null;
+    }
+    // Öneri #6 — ÜRETİM ANI ÖZ-DENETİMİ: model kendi çıktısını "önceki görevlerin
+    // tekrarı mı" diye denetledi. Açıkça tekrar (tekrar_degil === false) ise görevi
+    // katılımcıya gösterme — reddet, bir sonraki tick'te temiz üretilir. (baglam_
+    // kullanildi tek başına red sebebi değil: Gün 1 jenerik görevler meşru.)
+    if (veri.tekrar_degil === false) {
+      await aiHataYakala(db, "gorev_uretimi", new Error(`Tekrar görev reddedildi: "${veri.baslik}"`));
       return null;
     }
 
@@ -904,6 +950,10 @@ ${yeniYonergeler}`,
         : [],
       micro_sprint: microSprint,
       yayGorevi: yay !== null,
+      // Öneri #7 — dönüş biçimi (çeşitlilik izlemesi için missions'a kaydedilir)
+      donusBicimi: DONUS_BICIMLERI.includes(veri.donus_bicimi as string)
+        ? (veri.donus_bicimi as string)
+        : null,
     };
   } catch (e) {
     await aiHataYakala(db, "gorev_uretimi", e);
@@ -1616,6 +1666,7 @@ export async function mentorlukGorevUret(
     ipuclari: [],
     micro_sprint: false,
     yayGorevi: false,
+    donusBicimi: "grup", // mentorluk hep biriyle etkileşim
     // #9 takip: önerilen 3 adayın id'leri (mentorluk_kayit'a yazılır)
     adayIdler: secilen.map((k) => k.id),
   };

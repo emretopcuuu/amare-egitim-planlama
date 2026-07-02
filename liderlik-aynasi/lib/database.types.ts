@@ -1218,6 +1218,7 @@ export type Database = {
           body: string
           carried_at: string | null
           difficulty: number
+          donus_bicimi: string | null
           due_at: string
           ertelenme_sayisi: number
           fayda: string | null
@@ -1253,6 +1254,7 @@ export type Database = {
           body: string
           carried_at?: string | null
           difficulty?: number
+          donus_bicimi?: string | null
           due_at: string
           ertelenme_sayisi?: number
           fayda?: string | null
@@ -1288,6 +1290,7 @@ export type Database = {
           body?: string
           carried_at?: string | null
           difficulty?: number
+          donus_bicimi?: string | null
           due_at?: string
           ertelenme_sayisi?: number
           fayda?: string | null
