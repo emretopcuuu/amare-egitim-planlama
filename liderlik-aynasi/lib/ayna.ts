@@ -194,6 +194,11 @@ export async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | 
     katman3?: { ritim?: string };
     katman4?: Record<string, string | null>;
     katman5?: { aciklik?: number | null };
+    // Öneri #2: korNoktaGuncelle'nin milestone'larda (5/10/15 görev) yazdığı
+    // kamp-içi derinleşen tema. Eskiden YAZILIYOR ama HİÇ OKUNMUYORDU (ölü
+    // döngü) — artık gorevUret bağlamına taşınır, en pahalı geri besleme
+    // mekanizmasının çıktısı görevleri şekillendirir.
+    kampici_guncelleme?: { milestone?: number; yeniTema?: string; aciklama?: string } | null;
   } | null;
   if (!p || !p.katman1) return null;
   const k4 = p.katman4 ?? {};
@@ -202,11 +207,15 @@ export async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | 
     kalkan: k4["k4.kalkan"] ?? null,
     varsayim: k4["k4.varsayim"] ?? null,
   };
+  const kg = p.kampici_guncelleme;
+  const kampBoyuncaDerinlesenTema =
+    kg?.yeniTema ? { tema: kg.yeniTema, aciklama: kg.aciklama ?? null } : null;
   const dolu =
     p.katman1.enZayif ||
     (p.katman2?.enBuyukIki?.length ?? 0) > 0 ||
     korNokta.tersDavranis ||
-    korNokta.kalkan;
+    korNokta.kalkan ||
+    kampBoyuncaDerinlesenTema;
   if (!dolu) return null;
   return {
     enZayifAlan: p.katman1.enZayif ? OZ_ALAN_AD[p.katman1.enZayif] ?? p.katman1.enZayif : null,
@@ -216,6 +225,9 @@ export async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | 
     korNokta,
     ritim: p.katman3?.ritim ?? null,
     geriBildirimAcikligi: p.katman5?.aciklik ?? null,
+    // Kamp ilerledikçe açığa çıkan gerçek örüntü (varsa kamp-öncesi profilden
+    // daha isabetli — görevleri buna göre demirle).
+    kampBoyuncaDerinlesenTema,
   };
 }
 
@@ -315,17 +327,21 @@ export async function gorevUret(
     kariyerSonuc,
     // Değerler çalışması — kişinin seçtiği 3 temel değer + neden cümlesi.
     degerlerSonuc,
+    // Öneri #3: alınan takdirler (sosyal kanıt / güç).
+    alinanTakdirlerSonuc,
   ] = await Promise.all([
     aktifOzellikler(db),
     db
       .from("missions")
-      .select("kind, title, issued_at, status, ai_score, lightened_at, responded_at, response_tags")
+      // response_text + ai_comment eklendi (öneri #1: kişinin gerçek cümleleri,
+      // #9: AYNA'nın verdiği son tavsiyeyi sonraki göreve taşımak için)
+      .select("kind, title, body, issued_at, status, ai_score, ai_comment, lightened_at, responded_at, response_tags, response_text")
       .eq("participant_id", katilimci.id)
       .order("issued_at", { ascending: false })
       .limit(10), // genişletildi: streak ve pik pencere için
     db
       .from("ratings")
-      .select("trait_id, score, is_self")
+      .select("trait_id, score, is_self, comment, is_hidden")
       .eq("target_id", katilimci.id),
     pusulaOzeti(db, katilimci.id),
     pusulaCekirdek(db, katilimci.id),
@@ -366,6 +382,16 @@ export async function gorevUret(
       .select("secilen_uc, neden_cumlesi")
       .eq("participant_id", katilimci.id)
       .maybeSingle(),
+    // Öneri #3: kişinin ALDIĞI takdirler (kudos) — görev yalnız zayıflığı değil,
+    // sosyal kanıtla gelen GÜCÜ de kullanabilsin ("arkadaşların sende şunu
+    // görüyor, bugün onu bilerek kullan").
+    db
+      .from("kudos")
+      .select("message")
+      .eq("to_id", katilimci.id)
+      .eq("is_hidden", false)
+      .order("created_at", { ascending: false })
+      .limit(5),
   ]);
 
   // Değerler: kişinin seçtiği 3 temel değer + neden cümlesi → görev bunları
@@ -462,6 +488,35 @@ export async function gorevUret(
     )
     .slice(0, 3)
     .flatMap((o) => o.response_tags as string[]);
+
+  // Öneri #1 — KİŞİNİN GERÇEK CÜMLELERİ: son puanlı görevlerin ham yanıt metni
+  // (etiket değil, kişinin kendi kelimeleri). Görev bu ana demirlenirse "beni
+  // gerçekten dinliyor" hissi doğar — sahiplenmenin en güçlü tetikleyicisi.
+  const sonYanitAlintilari = onceki
+    .filter((o) => o.status === "scored" && (o.response_text as string | null)?.trim())
+    .slice(0, 2)
+    .map((o) => ({
+      gorev: o.title,
+      yanit: (o.response_text as string).trim().slice(0, 240),
+    }));
+
+  // Öneri #9 — AYNA'NIN SON TAVSİYESİ: en son puanlı görevin ai_comment'i.
+  // Sonraki görev bunun takipçisi olsun ("geçen sefer sana X demiştim, bugün
+  // deneme zamanı") → kopuk atışlar bir koçluk konuşmasına dönüşür.
+  const sonAynaTavsiyesi =
+    onceki.find((o) => o.status === "scored" && (o.ai_comment as string | null)?.trim())
+      ?.ai_comment as string | undefined;
+
+  // Öneri #3 — SOSYAL KANIT: akranların bu kişi hakkında yazdığı yorumlar +
+  // aldığı takdirler. Görev güçten de beslenebilsin (yalnız kör noktadan değil).
+  const akranYorumlari = (puanlar as { comment?: string | null; is_hidden?: boolean }[])
+    .filter((p) => p.comment && p.comment.trim() && !p.is_hidden)
+    .slice(0, 4)
+    .map((p) => (p.comment as string).trim().slice(0, 160));
+  const alinanTakdirler = ((alinanTakdirlerSonuc.data ?? []) as { message: string }[])
+    .map((k) => k.message?.trim())
+    .filter((m): m is string => !!m)
+    .slice(0, 4);
 
   const bugunTurleri = onceki
     .filter((o) => Date.now() - new Date(o.issued_at).getTime() < 86_400_000)
@@ -708,6 +763,13 @@ export async function gorevUret(
     birincilHedefler: deltalar.length > 0 ? deltalar : null,
     // #2
     oncekiYanitTemalari: oncekiYanitTemalari.length > 0 ? oncekiYanitTemalari : null,
+    // Öneri #1 — kişinin son görevlerde YAZDIĞI gerçek cümleler (etiket değil).
+    sonYanitlari: sonYanitAlintilari.length > 0 ? sonYanitAlintilari : null,
+    // Öneri #9 — AYNA'nın son verdiği tavsiye (yeni görev bunun takipçisi olsun).
+    sonAynaTavsiyesi: sonAynaTavsiyesi ? sonAynaTavsiyesi.slice(0, 240) : null,
+    // Öneri #3 — sosyal kanıt: akran yorumları + alınan takdirler (güç kaynağı).
+    akranYorumlari: akranYorumlari.length > 0 ? akranYorumlari : null,
+    alinanTakdirler: alinanTakdirler.length > 0 ? alinanTakdirler : null,
     // #3
     streak,
     pikYanitSaati,
@@ -772,7 +834,13 @@ PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki b
 
 DEĞER KİŞİSELLEŞTİRMESİ: Bağlamda "degerler" doluysa görevi kişinin seçtiği temel değerlerinden (temelDegerler) BİRİNİ bugün somut bir eylemle YAŞAMA meydan okumasına bağla — değeri soyut anmakla kalma, o değerin gerektirdiği gerçek bir lider hamlesini istet (örn. değeri "Dürüstlük" ise bugün kaçındığı zor bir doğruyu söyle; "Cesaret" ise ertelediği ilk adımı at; "Takım Ruhu" ise geride kalan birine uzan). Görevi tek bir değere demirle (hepsini birden sıralama), değeri başlıkta ya da dönüşte kişinin diliyle çağır. Uygun olduğunda değer ile çalışılan lider kasını örtüştür. Değer yoksa bu bağı atla.
 
-HEDEF BAĞLANTISI: Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.
+HEDEF BAĞLANTISI: Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. onFarkindalik.kampBoyuncaDerinlesenTema doluysa ONA öncelik ver (kamp-öncesi profilden daha taze/isabetli). Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.
+
+KİŞİNİN KENDİ SÖZLERİ (çok güçlü): Bağlamda "sonYanitlari" doluysa, görevi kişinin SON yazdığı gerçek cümleye demirle — onun kendi kelimesini/anını hatırla ("geçen sefer '…' demiştin") ama birebir uzun alıntı yapma, bir-iki kelime dokun yeter. Bu "beni gerçekten dinliyor" hissini kurar.
+
+KONUŞMANIN DEVAMI: Bağlamda "sonAynaTavsiyesi" doluysa, yeni görev o tavsiyenin TAKİPÇİSİ olsun ("Geçen sefer sana şunu önermiştim — bugün onu deneme zamanı"). Görevler kopuk atışlar değil, süren bir koçluk konuşması gibi hissettir.
+
+SOSYAL KANIT / GÜÇ: Bağlamda "akranYorumlari" ya da "alinanTakdirler" doluysa, ARADA BİR görevi kişinin zayıflığına değil GÜCÜNE bağla — arkadaşlarının onda gördüğü bir yanı hatırlat ve bugün onu bilerek kullanmasını istet ("Arkadaşların sende '…' görüyor; bugün onu bir kez daha, bilerek göster"). Her görev güç-temelli olmasın; kör nokta ile denge kur.
 
 ANLIK RUH HÂLİ (adaptif ton — persona hâlinin ÜZERİNE binen ince ayar): Bağlamdaki "ruhHali" alanı "zorlaniyor" ise tonu belirgin yumuşat, görevi küçült ve nefes aldır (baskı kurma, kişiyi onaylayarak küçük bir adım iste); "guclu" ise güvenini onurlandırıp bir tık daha meydan oku; "akista" ya da boş ise olağan tonunda devam et. Persona hâlini EZME — yalnız tonu o anki duruma göre yumuşat/sertleştir.
 
