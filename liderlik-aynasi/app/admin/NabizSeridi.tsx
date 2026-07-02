@@ -11,7 +11,7 @@ export default async function NabizSeridi() {
   // Tik 5 dk'da bir; 12 dk sessizlik = alarm. Olaylar dakikalık; 5 dk = alarm.
   const tikAlarm = n.tikDk === null || n.tikDk > 12;
   const olayAlarm = n.olaylarDk === null || n.olaylarDk > 5;
-  const alarm = (n.kampAcik && (tikAlarm || olayAlarm)) || n.durduruldu || !!n.sonHata;
+  const alarm = (n.kampAcik && (tikAlarm || olayAlarm)) || n.durduruldu || !!n.sonHata || n.hataSatirSayisi > 0;
 
   const dkYazi = (dk: number | null) => (dk === null ? "hiç" : dk === 0 ? "şimdi" : `${dk} dk önce`);
 
@@ -35,7 +35,10 @@ export default async function NabizSeridi() {
       </span>
       <span>senaryo: {n.bekleyen} bekliyor</span>
       {n.durduruldu && <span className="font-semibold text-amber-300">⏸ orkestratör DURDURULDU</span>}
-      {n.sonHata && <span className="font-semibold text-rose-300">⚠ hata: {n.sonHata}</span>}
+      {n.hataSatirSayisi > 0 && (
+        <span className="font-semibold text-rose-300">✕ {n.hataSatirSayisi} satır hata verdi — yeniden dene</span>
+      )}
+      {n.hataSatirSayisi === 0 && n.sonHata && <span className="font-semibold text-rose-300">⚠ hata: {n.sonHata}</span>}
     </Link>
   );
 }
