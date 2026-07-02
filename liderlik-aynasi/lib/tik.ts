@@ -374,6 +374,7 @@ export async function tikCalistir(
         micro_sprint: gorev.micro_sprint,
         yay_gorevi: gorev.yayGorevi,
         donus_bicimi: gorev.donusBicimi, // #7 çeşitlilik izlemesi
+        somutluk: gorev.somutluk, // FAZ 1.1 — kim/ne/nerede/ne_zaman/kanit checklist
         // KRİTİK: issued_at motorun kullandığı saate (prova'da SANAL saat) eşit
         // olmalı. Aksi halde sonGorevler penceresi + bugunSayisi + sonVerilis +
         // bekleyen kontrolleri kayıyor ve prova'da her tik görev üretip sel oluyor.

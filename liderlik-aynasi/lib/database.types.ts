@@ -558,6 +558,58 @@ export type Database = {
           },
         ]
       }
+      gorev_eslesme: {
+        Row: {
+          created_at: string
+          gercek_miydi: number | null
+          hedef_id: string
+          id: string
+          isimli: boolean
+          kaynak_id: string
+          mission_id: string
+        }
+        Insert: {
+          created_at?: string
+          gercek_miydi?: number | null
+          hedef_id: string
+          id?: string
+          isimli?: boolean
+          kaynak_id: string
+          mission_id: string
+        }
+        Update: {
+          created_at?: string
+          gercek_miydi?: number | null
+          hedef_id?: string
+          id?: string
+          isimli?: boolean
+          kaynak_id?: string
+          mission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gorev_eslesme_hedef_id_fkey"
+            columns: ["hedef_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gorev_eslesme_kaynak_id_fkey"
+            columns: ["kaynak_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gorev_eslesme_mission_id_fkey"
+            columns: ["mission_id"]
+            isOneToOne: true
+            referencedRelation: "missions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gorev_tanik: {
         Row: {
           confirmed_at: string | null
@@ -1240,6 +1292,7 @@ export type Database = {
           response_tags: string[] | null
           response_text: string | null
           scored_at: string | null
+          somutluk: Json | null
           spark_points: number
           started_at: string | null
           status: string
@@ -1276,6 +1329,7 @@ export type Database = {
           response_tags?: string[] | null
           response_text?: string | null
           scored_at?: string | null
+          somutluk?: Json | null
           spark_points?: number
           started_at?: string | null
           status?: string
@@ -1312,6 +1366,7 @@ export type Database = {
           response_tags?: string[] | null
           response_text?: string | null
           scored_at?: string | null
+          somutluk?: Json | null
           spark_points?: number
           started_at?: string | null
           status?: string

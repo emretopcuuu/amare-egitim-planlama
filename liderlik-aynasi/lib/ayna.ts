@@ -90,6 +90,32 @@ const GOREV_SEMASI = {
       description:
         "YALNIZ bağlamda 'düşük puan sonrası derinleştirme/tekrar' dendiyse: kişinin BU SEFER daha iyi yapması için 2 KISA, somut tavsiye (her biri tek cümle, eyleme dönük). Aksi halde boş dizi [].",
     },
+    // FAZ 1.1 — SOMUTLUK ŞABLONU: görev metninin gövdesinde anlatılanı 5 satırlık
+    // bir checklist'e ayrıştırır (kim/ne/nerede/ne_zaman/kanit). UI'da ayrı bir
+    // kutuda gösterilir — katılımcı görev metnini yorumlamak zorunda kalmaz.
+    kim: {
+      type: "string" as const,
+      description:
+        "Görev belirli bir kişiyi hedefliyorsa o kişinin adı/tanımı (ör. 'Zeynep Kaya' ya da 'takımından biri'). Kişi belirtilmiyorsa boş string.",
+    },
+    ne: {
+      type: "string" as const,
+      description:
+        "Yapılacak TEK somut eylem, kısa fiil öbeği (ör. 'ona tek soru sor', 'gördüğün anı yaz'). Görev metninden çıkar, tekrar etme.",
+    },
+    nerede: {
+      type: "string" as const,
+      description:
+        "Görevin yapılacağı kamp mekânı/bağlamı (ör. 'yemek çadırında', 'serbest zamanda', 'telefonundan'). Belirsizse 'kampta herhangi bir yerde'.",
+    },
+    ne_zaman: {
+      type: "string" as const,
+      description: "Görevin yapılması gereken zaman aralığı (ör. 'bugün akşam yemeğine kadar', 'önümüzdeki 1 saat içinde').",
+    },
+    kanit: {
+      type: "string" as const,
+      description: "Teslimde AYNA'ya ne getireceği: yazacağı/söyleyeceği/göstereceği şey (ör. 'onun cevabından bir cümle', 'tek kelime').",
+    },
     // Öneri #7 — DÖNÜŞ BİÇİMİ: görevin kişiden ne tür bir "dönüş" istediği. Kaydedilip
     // bağlama geri verilir → model son N görevin biçimini görüp tekdüzeliği kırar.
     donus_bicimi: {
@@ -111,9 +137,80 @@ const GOREV_SEMASI = {
         "Bu görev 'oncekiGorevBasliklari'ndaki hiçbirinin tekrarı/çok benzeri DEĞİL mi (farklı kas/eylem/dönüş)? Benzer bir egzersizse false.",
     },
   },
-  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden", "fayda", "ipuclari", "donus_bicimi", "baglam_kullanildi", "tekrar_degil"],
+  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden", "fayda", "ipuclari", "kim", "ne", "nerede", "ne_zaman", "kanit", "donus_bicimi", "baglam_kullanildi", "tekrar_degil"],
   additionalProperties: false,
 };
+
+// FAZ 1.2 — KALİTE DENETÇİSİ: üretilen görevi ucuz bir Haiku geçişinden
+// otomatik geçirir. gorevKaliteDenetle'nin döndürdüğü 4 kritere göre.
+const KALITE_SEMASI = {
+  type: "object" as const,
+  properties: {
+    anlasilir: {
+      type: "boolean" as const,
+      description: "Katılımcı bu görevi TEK OKUMADA anlıyor mu (ne yapacağı + sana ne yazacağı net mi)?",
+    },
+    somut: {
+      type: "boolean" as const,
+      description: "İstenen eylem SOMUT mu? Soyut/şiirsel/muğlak bir istek ('kendini yokla' gibi) değil mi?",
+    },
+    isimNet: {
+      type: "boolean" as const,
+      description: "Görev belirli bir kişiyi hedefliyorsa (hedefKisi doluysa) isim VE onu nerede/nasıl bulacağı net mi? Görev isimsizse otomatik true.",
+    },
+    tekrarDegil: {
+      type: "boolean" as const,
+      description: "Bu görev, verilen son 10 görev başlığının hiçbirine belirgin şekilde benzemiyor mu (farklı eylem/tema)?",
+    },
+    sebep: {
+      type: "string" as const,
+      description: "Yukarıdakilerden biri false ise TEK kısa cümlelik sebep. Hepsi true ise boş string.",
+    },
+  },
+  required: ["anlasilir", "somut", "isimNet", "tekrarDegil", "sebep"],
+  additionalProperties: false,
+};
+
+/** FAZ 1.2 — otomatik kalite denetçisi (Haiku, ucuz). API düşerse ya da
+ * ayrıştırılamazsa FAIL-OPEN döner (görevi engellemez) — bu bir güvenlik
+ * kapısı değil, kalite iyileştirmesidir; maliyeti sıcak yolu bloklamamalı. */
+export async function gorevKaliteDenetle(
+  gorev: { title: string; body: string; kind: string; hedefKisi?: string | null },
+  sonGorevBasliklari: string[]
+): Promise<{ gecti: boolean; sebep: string | null }> {
+  try {
+    const client = new Anthropic();
+    const yanit = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 300,
+      thinking: { type: "disabled" },
+      output_config: { format: { type: "json_schema", schema: KALITE_SEMASI } },
+      system:
+        "Bir liderlik kampı görev metnini denetliyorsun. 4 kriteri dürüstçe değerlendir: (1) anlasilir, (2) somut, (3) isimNet (hedefKisi boşsa otomatik true), (4) tekrarDegil (sonGorevBasliklari ile karşılaştır). Yalnızca JSON döndür.",
+      messages: [
+        {
+          role: "user",
+          content: JSON.stringify({
+            gorev: { baslik: gorev.title, metin: gorev.body, tur: gorev.kind, hedefKisi: gorev.hedefKisi ?? null },
+            sonGorevBasliklari: sonGorevBasliklari.slice(0, 10),
+          }),
+        },
+      ],
+    });
+    const veri = jsonCoz<{
+      anlasilir: boolean;
+      somut: boolean;
+      isimNet: boolean;
+      tekrarDegil: boolean;
+      sebep: string;
+    }>(yanit);
+    if (!veri) return { gecti: true, sebep: null };
+    const gecti = veri.anlasilir && veri.somut && veri.isimNet && veri.tekrarDegil;
+    return { gecti, sebep: gecti ? null : (veri.sebep || "kalite denetiminden geçemedi") };
+  } catch {
+    return { gecti: true, sebep: null };
+  }
+}
 
 const PUAN_SEMASI = {
   type: "object" as const,
@@ -196,6 +293,8 @@ export type UretilenGorev = {
   yayGorevi: boolean;
   /** #7 dönüş biçimi (yaz/sesli/grup/foto/tek_kelime) — çeşitlilik izlemesi */
   donusBicimi: string | null;
+  /** FAZ 1.1 — somutluk şablonu: gövdeyi 5 satırlık checklist'e ayrıştırır */
+  somutluk: { kim: string | null; ne: string; nerede: string; neZaman: string; kanit: string } | null;
 };
 
 // #7 geçerli dönüş biçimleri (şema enum'ı ile aynı).
@@ -854,6 +953,10 @@ export async function gorevUret(
         : "Veriye yaslan: düşük öz puanlı ya da öz/dış farkı büyük bir özelliği hedefleyen görev üret. Önceki görevleri tekrarlama.",
   };
 
+  // FAZ 1.2 — üretim, kalite denetiminden geçmezse BİR kez daha denenebilsin
+  // diye ayrı bir kapanışa alındı (aynı `baglam`'ı kullanır, context yeniden
+  // çekilmez — yalnız API çağrısı tekrarlanır).
+  async function tekUretimDenemesi(ekstraYonerge: string): Promise<UretilenGorev | null> {
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
@@ -908,7 +1011,9 @@ ODANIN ENERJİSİ (kolektif ton): Bağlamdaki "odaSicakligi" "dusuk" ise (oda yo
 
 DİL NETLİĞİ (çok önemli): Görev metni SADE ve anlaşılır olmalı — katılımcı tek okumada (1) ne yapacağını ve (2) sana ne yazacağını net anlamalı. Kısa, gerçek cümleler kur. Şu hatalardan kaçın: iç içe geçmiş uzun cümleler, art arda tire (—) ile uzayan eklemeler, küçültme ekleri ('ricacık'), bulanık şiirsel ifadeler ('içinde ne koptu'). Yukarıdaki davranışsal kalıplar (FUN FAILURE, EUSTRESS vb.) PUANLAMA/teşvik tonu içindir; görev metnini süslemek için değil. Önce ne yapacağını söyle, sonra tek bir soruyla geri bildirimi iste.
 
-${yeniYonergeler}`,
+SOMUTLUK ŞABLONU (ZORUNLU): "kim"/"ne"/"nerede"/"ne_zaman"/"kanit" alanlarını gövdeden ÇIKARARAK doldur — yeni bilgi uydurma, gövdede zaten anlattığını 5 satıra ayrıştır. "kim" görev kişiyi hedeflemiyorsa boş string olabilir; diğer 4 alan HER ZAMAN dolu olmalı.
+
+${yeniYonergeler}${ekstraYonerge}`,
         },
       ],
       messages: [{ role: "user", content: JSON.stringify(baglam) }],
@@ -923,6 +1028,11 @@ ${yeniYonergeler}`,
       neden?: string;
       fayda?: string;
       ipuclari?: unknown;
+      kim?: string;
+      ne?: string;
+      nerede?: string;
+      ne_zaman?: string;
+      kanit?: string;
       donus_bicimi?: string;
       baglam_kullanildi?: boolean;
       tekrar_degil?: boolean;
@@ -981,11 +1091,35 @@ ${yeniYonergeler}`,
       donusBicimi: DONUS_BICIMLERI.includes(veri.donus_bicimi as string)
         ? (veri.donus_bicimi as string)
         : null,
+      // FAZ 1.1 — somutluk şablonu (checklist UI için)
+      somutluk: {
+        kim: veri.kim && veri.kim.trim().length > 1 ? veri.kim.trim().slice(0, 80) : null,
+        ne: (veri.ne ?? "").trim().slice(0, 160),
+        nerede: (veri.nerede ?? "").trim().slice(0, 100),
+        neZaman: (veri.ne_zaman ?? "").trim().slice(0, 100),
+        kanit: (veri.kanit ?? "").trim().slice(0, 160),
+      },
     };
   } catch (e) {
     await aiHataYakala(db, "gorev_uretimi", e);
     return null;
   }
+  }
+
+  const ilkDeneme = await tekUretimDenemesi("");
+  if (!ilkDeneme) return null;
+  // FAZ 1.2 — kalite denetçisi: ilk denemeyi ucuz bir Haiku geçişinden geçir.
+  // Geçerse yayınla; geçmezse BİR kez daha dene (aynı context, ek uyarı ile) —
+  // ikinci deneme sonucu ne olursa olsun yayınlanır (sonsuz döngü yok).
+  const denetim = await gorevKaliteDenetle(
+    { title: ilkDeneme.title, body: ilkDeneme.body, kind: ilkDeneme.kind, hedefKisi: ilkDeneme.somutluk?.kim ?? null },
+    onceki.map((o) => o.title)
+  );
+  if (denetim.gecti) return ilkDeneme;
+  const ikinciDeneme = await tekUretimDenemesi(
+    `\n\nÖNCEKİ DENEMEN KALİTE DENETİMİNDEN GEÇEMEDİ (${denetim.sebep}) — bu sefer bunu MUTLAKA düzelt, farklı ve daha somut bir görev üret.`
+  );
+  return ikinciDeneme ?? ilkDeneme;
 }
 
 // #2 Yanıt madenciliği + puanlama — paralel çalışarak ek gecikme olmaz.
@@ -1694,6 +1828,13 @@ export async function mentorlukGorevUret(
     micro_sprint: false,
     yayGorevi: false,
     donusBicimi: "grup", // mentorluk hep biriyle etkileşim
+    somutluk: {
+      kim: isimler.join(" / "),
+      ne: "seçtiğin mentorla en az 15 dk konuş",
+      nerede: "kampta uygun bir yerde",
+      neZaman: "bugün",
+      kanit: "kimin yanına gittiğin, ne sorduğun ve ne götürdüğün",
+    },
     // #9 takip: önerilen 3 adayın id'leri (mentorluk_kayit'a yazılır)
     adayIdler: secilen.map((k) => k.id),
   };
