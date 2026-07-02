@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { pazartesiRaporu, churnMerdiveni, eylulKapisi } from "@/lib/kapanisPanel";
+import { sozMuhurDurumu } from "@/lib/sozMuhur";
 
 export const revalidate = 30;
 export const metadata = { title: "Kapanış — Liderlik Aynası" };
@@ -13,11 +14,17 @@ export default async function KapanisPage() {
   if (!session || session.rol !== "admin") redirect("/admin/giris");
 
   const db = supabaseAdmin();
-  const [rapor, churn, kapi] = await Promise.all([
+  // [FAZ3] E-serisi sayaçları: söz mühür N/M + İlk-72 taahhüt yapılan/toplam —
+  // kapanış gecesinin iki kritik "herkes tamam mı" göstergesi bu panele taşındı.
+  const [rapor, churn, kapi, soz, { data: taahhutler }] = await Promise.all([
     pazartesiRaporu(db),
     churnMerdiveni(db),
     eylulKapisi(db),
+    sozMuhurDurumu(db),
+    db.from("taahhut").select("durum"),
   ]);
+  const taahhutToplam = (taahhutler ?? []).length;
+  const taahhutYapilan = (taahhutler ?? []).filter((t) => t.durum === "yapildi").length;
 
   const churnRenk: Record<number, string> = {
     0: "text-slate-400",
@@ -43,6 +50,8 @@ export default async function KapanisPage() {
             { ad: "Kıvılcım (7g)", v: rapor.kivilcim7 },
             { ad: "Ara mühür teyit", v: rapor.muhurTeyit },
             { ad: "İş verisi giren", v: `${rapor.isVerisiGiren}/${rapor.toplam}` },
+            { ad: "Söz mühürlü", v: `${soz.muhurlu}/${soz.sozVeren}` },
+            { ad: "İlk-72 taahhüt ✓", v: `${taahhutYapilan}/${taahhutToplam}` },
           ].map((k) => (
             <div key={k.ad} className="rounded-2xl border border-white/10 bg-midnight-card/50 p-3 text-center">
               <div className="font-display text-2xl font-bold text-slate-100">{k.v}</div>

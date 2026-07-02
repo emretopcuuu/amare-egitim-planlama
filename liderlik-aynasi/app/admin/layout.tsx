@@ -31,6 +31,7 @@ export default async function AdminLayout({
     { count: bekleyenFoto },
     { data: dalgaAcilis },
     bekleyenMesaj,
+    { count: kayipSayisi },
   ] = await Promise.all([
     acikDalga(db),
     db.from("settings").select("value").eq("key", "ayna_aktif").maybeSingle(),
@@ -40,6 +41,8 @@ export default async function AdminLayout({
     db.from("photos").select("id", { count: "exact", head: true }).eq("status", "pending"),
     db.from("waves").select("opened_at").eq("is_open", true).order("id", { ascending: false }).limit(1).maybeSingle(),
     adminOkunmamis(db),
+    // [FAZ3] Kayıp radarı rozeti: insan dokunuşu bekleyen kişi sayısı nav'da.
+    db.from("churn_radar").select("participant_id", { count: "exact", head: true }).not("admin_alerted_at", "is", null),
   ]);
   const provaAcik = provaAyari?.value === "true";
 
@@ -70,6 +73,7 @@ export default async function AdminLayout({
         muhurAcik={muhurAyari?.value === "true"}
         moderasyonBekleyen={bekleyenFoto ?? 0}
         mesajBekleyen={bekleyenMesaj}
+        kayipBekleyen={kayipSayisi ?? 0}
       />
       {/* [FAZ1-B] Otomasyon nabzı: her admin sayfasında sistemin kalp atışı */}
       <NabizSeridi />
