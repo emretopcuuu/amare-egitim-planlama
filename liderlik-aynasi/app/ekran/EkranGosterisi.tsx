@@ -980,6 +980,15 @@ export default function EkranGosterisi() {
                         </p>
                       </div>
                     )}
+                    {/* [1.5] Salon Daveti sayacı — bu salondan çıkan davetler */}
+                    {veri.salonDavetSayisi > 0 && (
+                      <div className="kart-3d rounded-2xl border border-emerald-400/25 bg-emerald-400/[0.06] p-5 text-center sm:col-span-2">
+                        <p className="text-3xl" aria-hidden>🕊️</p>
+                        <p className="mt-1 text-lg font-semibold text-emerald-300">
+                          Bu salondan {veri.salonDavetSayisi} davet çıktı
+                        </p>
+                      </div>
+                    )}
                     {/* FAZ 5.2 — altın görev kutlaması: isimli (bilinçli — kutlama) */}
                     {veri.altinKazananlar.length > 0 && (
                       <div className="kart-3d rounded-2xl border border-gold/40 bg-gold/[0.10] p-5 text-center sm:col-span-2">
