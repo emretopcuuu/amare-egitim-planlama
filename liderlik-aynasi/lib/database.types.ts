@@ -610,6 +610,30 @@ export type Database = {
           },
         ]
       }
+      grup_odev_tamam: {
+        Row: {
+          created_at: string
+          id: string
+          kanit: string
+          kapatan_id: string
+          odev_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kanit: string
+          kapatan_id: string
+          odev_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kanit?: string
+          kapatan_id?: string
+          odev_id?: string
+        }
+        Relationships: []
+      }
       grup_odev: {
         Row: {
           aktif: boolean

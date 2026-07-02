@@ -8,6 +8,7 @@ import GeriButonu from "@/components/GeriButonu";
 import { kampGunleri } from "@/lib/kampProgrami";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { grupUyeleri, YONETIM } from "@/lib/icMesaj";
+import GrupOdevTamam from "@/components/GrupOdevTamam";
 
 export const metadata = { title: "Grubunun Ödevi — Liderlik Aynası" };
 
@@ -26,11 +27,11 @@ export default async function GrupSayfa() {
     .eq("id", session.sub)
     .maybeSingle();
 
-  let odevler: { tip: string; baslik: string; govde: string; hedef: string | null }[] = [];
+  let odevler: { id: string; tip: string; baslik: string; govde: string; hedef: string | null }[] = [];
   if (kisi?.team) {
     const { data } = await db
       .from("grup_odev")
-      .select("tip, baslik, govde, hedef")
+      .select("id, tip, baslik, govde, hedef")
       .eq("takim", kisi.team)
       .eq("aktif", true)
       .order("created_at", { ascending: false });
@@ -129,6 +130,9 @@ export default async function GrupSayfa() {
               </p>
               <h2 className="mt-2 text-xl font-semibold text-slate-100">{o.baslik}</h2>
               <p className="mt-2 text-base leading-relaxed text-slate-300">{o.govde}</p>
+              {/* Öneri #4: grup ödevi artık kapatılabilir — "biz bunu yaptık" +
+                  kısa kanıt → gruba toplu kıvılcım (çıkmaz sokak değil). */}
+              <GrupOdevTamam odevId={o.id} />
             </section>
           ))}
         </div>
