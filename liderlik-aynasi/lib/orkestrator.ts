@@ -2,7 +2,8 @@ import "server-only";
 import type { supabaseAdmin } from "@/lib/supabase/server";
 import { yazAuditLog } from "@/lib/auditLog";
 import { herkeseBildir } from "@/lib/push";
-import { p72Gun1, p72Gun2, p72Gun3, odev10Gun, odev15Gun, agustosOdev } from "@/lib/kampSonrasi";
+import { p72Gun1, p72Gun2, p72Gun3, odev10Gun, odev15Gun, agustosOdev, agustosGrupOdev } from "@/lib/kampSonrasi";
+import { kampArkadasiAta, kampArkadasiHatirlat } from "@/lib/kampArkadasi";
 
 type Db = ReturnType<typeof supabaseAdmin>;
 
@@ -48,6 +49,11 @@ const FONKSIYONLAR: Record<string, (db: Db) => Promise<void>> = {
   odev_10gun: odev10Gun,
   odev_15gun: odev15Gun,
   agustos_odev: agustosOdev,
+  // FAZ 3.1 — kamp arkadaşı hattı
+  kamp_arkadasi_ata: kampArkadasiAta,
+  kamp_arkadasi_hatirlat: kampArkadasiHatirlat,
+  // FAZ 4.3 — Ağustos grup ödevi (her takıma isimli grup-birlikte ödevi)
+  agustos_grup_odev: agustosGrupOdev,
 };
 
 /** Tek bir senaryo satırının eylemini uygular (settings/push/fonksiyon).

@@ -1,6 +1,8 @@
 import "server-only";
 import type { supabaseAdmin } from "@/lib/supabase/server";
 import { odevPaketiGonder } from "@/lib/odevPaketi";
+import { grupOdevUret } from "@/lib/grupOdev";
+import { herkeseBildir } from "@/lib/push";
 
 type Db = ReturnType<typeof supabaseAdmin>;
 
@@ -62,4 +64,30 @@ export async function agustosOdev(db: Db): Promise<void> {
       "Ağustos katlama ayın. Bu ay tek bir kişiyi 'kopyalanabilir' hale getirmeye odaklan: kime, neyi öğreteceksin? İlk adımı yaz.",
     gunSonra: 5,
   });
+}
+
+// [4.3] AĞUSTOS GRUP ÖDEVİ — kamp gruplarını Ağustos'ta yeniden çalıştırır.
+// Her takım için grupOdevUret ile tek bir "grup-birlikte" ödevi (isimli
+// eşleştirmeli) üretir; sonra herkese tek çağrı gönderir. Grup ödevleri /grup
+// sayfasında görünür ve bir üye tamamlayınca gruba toplu kıvılcım düşer.
+export async function agustosGrupOdev(db: Db): Promise<void> {
+  const { data: kisiler } = await db
+    .from("participants")
+    .select("team")
+    .eq("role", "participant")
+    .not("team", "is", null);
+  const takimlar = [...new Set((kisiler ?? []).map((k) => k.team).filter((t): t is string => !!t))];
+  let uretildi = 0;
+  for (const takim of takimlar) {
+    const sonuc = await grupOdevUret(db, takim, "grup_birlikte");
+    if (sonuc) uretildi++;
+  }
+  if (uretildi > 0) {
+    await herkeseBildir(
+      db,
+      "👥 Ağustos grup ödeviniz hazır",
+      "Grubunuz için isimli bir eşleşme ödevi düştü. Birlikte tamamlayın — kıvılcım hepinizin: /grup",
+      "/grup"
+    );
+  }
 }

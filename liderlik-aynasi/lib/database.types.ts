@@ -49,6 +49,60 @@ export type Database = {
           },
         ]
       }
+      kamp_arkadasi: {
+        Row: {
+          created_at: string
+          id: string
+          uyeler: string[]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          uyeler: string[]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          uyeler?: string[]
+        }
+        Relationships: []
+      }
+      kamp_arkadasi_checkin: {
+        Row: {
+          arkadaslik_id: string
+          created_at: string
+          id: string
+          participant_id: string
+        }
+        Insert: {
+          arkadaslik_id: string
+          created_at?: string
+          id?: string
+          participant_id: string
+        }
+        Update: {
+          arkadaslik_id?: string
+          created_at?: string
+          id?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kamp_arkadasi_checkin_arkadaslik_id_fkey"
+            columns: ["arkadaslik_id"]
+            isOneToOne: false
+            referencedRelation: "kamp_arkadasi"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kamp_arkadasi_checkin_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kamp_senaryosu: {
         Row: {
           atesleme_zamani: string | null
@@ -1177,6 +1231,38 @@ export type Database = {
           success?: boolean
         }
         Relationships: []
+      }
+      muhur_zinciri: {
+        Row: {
+          created_at: string
+          halka: number
+          id: string
+          participant_id: string
+          teyit: string
+        }
+        Insert: {
+          created_at?: string
+          halka: number
+          id?: string
+          participant_id: string
+          teyit: string
+        }
+        Update: {
+          created_at?: string
+          halka?: number
+          id?: string
+          participant_id?: string
+          teyit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "muhur_zinciri_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       mentorluk_kayit: {
         Row: {
