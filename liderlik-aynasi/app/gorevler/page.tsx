@@ -51,6 +51,7 @@ import TelafiSayac from "./TelafiSayac";
 import UnvanKutlama from "@/components/UnvanKutlama";
 import SomutlukChecklist from "./SomutlukChecklist";
 import GercekMiydiSoru from "./GercekMiydiSoru";
+import KapiSecimi from "./KapiSecimi";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -70,7 +71,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id, somutluk"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id, somutluk, altin, secim_grubu, kapi_etiket"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -79,6 +80,10 @@ export default async function GorevlerPage() {
   const kampBaslangic = await kampBaslangicGetir(db);
 
   const aktif = (gorevler ?? []).filter((g) => g.status === "pending");
+  // FAZ 5.4 — İKİ KAPI: seçim bekleyen kapı görevleri (secim_grubu'na göre).
+  const kapiAdaylari = (gorevler ?? []).filter(
+    (g) => g.status === "secim_bekliyor" && (g as { kapi_etiket?: string | null }).kapi_etiket
+  );
   // Kamp boyu sıra numarası (en eskiden en yeniye 1, 2, 3…) — katılımcı isteği:
   // "1. ödevin, 2. ödevin" diye numara görsün. `gorevler` en yeniden en eskiye
   // sıralı geldiği için ters çevirip numaralıyoruz (limit 50 — 3 günlük kampta
@@ -237,6 +242,12 @@ export default async function GorevlerPage() {
     const kalanMs = new Date(sonGorevZamani).getTime() + aralik * 60_000 - simdiMs;
     siradakiDk = kalanMs > 60_000 ? Math.ceil(kalanMs / 60_000) : 0;
   }
+  // FAZ 5.1 — GÖREV FRAGMANI: kişi+bugünkü görev sayısı tohumlu, deterministik
+  // ama gün içinde değişen jenerik ipucu (gerçek içeriği asla açık etmez).
+  const ipucuHavuzu = t.fragmanIpucuHavuzu;
+  let ipucuTohum = 0;
+  for (const ch of `${session.sub}:${bugunGorev}`) ipucuTohum = (ipucuTohum * 31 + ch.charCodeAt(0)) % ipucuHavuzu.length;
+  const fragmanIpucu = ipucuHavuzu[ipucuTohum];
 
   // (Geçmiş zaman çizelgesi gruplaması artık GorevGecmisi client bileşeninde —
   // filtre + özet için.)
@@ -245,12 +256,19 @@ export default async function GorevlerPage() {
   // için, vurgu=true) hem akordeonun kapalı satırı açılınca (vurgu=false)
   // kullanılır. Aynı işi iki yerde tekrar yazmamak için fonksiyona çıkarıldı.
   function GorevKarti({ g, vurgu }: { g: (typeof aktif)[number]; vurgu: boolean }) {
-    const atm = atmosferBul(g.kind);
+    const altinMi = !!(g as { altin?: boolean }).altin;
+    const atm = atmosferBul(g.kind, altinMi);
     const zorluk = (g.difficulty as Zorluk) ?? 2;
     return (
       <section
         className={`gorev-giris relative overflow-hidden kart-3d rounded-2xl ${atm.arka} p-5 pt-6 shadow-xl ring-1 ${atm.halka} backdrop-blur`}
       >
+        {/* FAZ 5.2 — ALTIN GÖREV rozeti: nadir, 3x kıvılcım */}
+        {altinMi && (
+          <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-gold/30 px-3 py-1 text-xs font-bold uppercase tracking-widest text-gold-light ring-1 ring-gold/50">
+            ⚡ Altın Görev · 3× kıvılcım
+          </p>
+        )}
         {/* UX #6: üst kenarda boşalan sayaç şeridi (türe göre değil zamana göre) */}
         <SayacSerit baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
         {/* UX #1 (tasarım): türe özel üst atmosfer parıltısı */}
@@ -422,6 +440,16 @@ export default async function GorevlerPage() {
         aktifVar={aktif.length > 0}
       />
 
+      {/* FAZ 5.4 — İKİ KAPI: seçim bekleyen kapılar (aktif görevden önce) */}
+      {kapiAdaylari.length > 0 && (
+        <KapiSecimi
+          kapilar={kapiAdaylari.map((g) => ({
+            id: g.id,
+            etiket: (g as { kapi_etiket?: string | null }).kapi_etiket ?? "Kapı",
+          }))}
+        />
+      )}
+
       {/* FAZ 1.3 — teslim ettiğin eşleşmeli görev(ler) için "gerçek miydi?" sorusu */}
       {gercekMiydiBekleyen.length > 0 && (
         <section className="space-y-2">
@@ -497,7 +525,7 @@ export default async function GorevlerPage() {
           </div>
         </section>
       ) : aktif.length === 0 ? (
-        <BosGorevDurumu siradakiDk={siradakiDk} />
+        <BosGorevDurumu siradakiDk={siradakiDk} fragmanIpucu={fragmanIpucu} />
       ) : (
         <>
           {/* En son gelen görev — TEK odak, tam açık. */}

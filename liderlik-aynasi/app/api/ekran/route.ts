@@ -66,6 +66,8 @@ export type EkranVerisi = {
   yansimalar: string[];
   // FAZ 3.5 — kamp zinciri: en uzun aktif zincirin ulaştığı halka sayısı.
   zincir: { uzunluk: number } | null;
+  // FAZ 5.2 — bugün altın görevi tamamlayanlar (isimli kutlama).
+  altinKazananlar: string[];
   // Sahne olayları: /ekran'ın bir kez oynatacağı taze sinyaller (≤4 dk)
   sahne: {
     fiero: { id: string; ad: string; sesUrl: string | null } | null;
@@ -185,6 +187,20 @@ export async function GET() {
   for (const z of zincirSatirlari ?? []) {
     if ((z.zincir_sira ?? 0) > zincirUzunluk) zincirUzunluk = z.zincir_sira ?? 0;
   }
+
+  // FAZ 5.2 — ALTIN GÖREV KUTLAMASI: bugün altın görevi TAMAMLAYAN kişiler,
+  // İSİMLİ (bilinçli istisna — bu bir kutlama, ifşa değil; başkalarının
+  // puanı/yorumu değil kişinin kendi başarısı gösterilir).
+  const { data: altinKazananHam } = await db
+    .from("missions")
+    .select("participant_id")
+    .eq("altin", true)
+    .eq("status", "scored")
+    .gte("scored_at", gunBasi);
+  const altinKazananIdler = [...new Set((altinKazananHam ?? []).map((m) => m.participant_id))];
+  const altinKazananlar = altinKazananIdler
+    .map((id) => kisilerSonuc.data?.find((k) => k.id === id)?.full_name)
+    .filter((ad): ad is string => !!ad);
 
   // CANLI OLAY AKIŞI — son 45 dk'lık aktivite. Kişinin EYLEMİ görünür ama
   // YAPTIĞININ İÇERİĞİ/HEDEFİ değil: görev başlığı yazılmaz; peer eylemler
@@ -524,6 +540,7 @@ export async function GET() {
       enCokBuyuyenOzellik,
     },
     zincir: zincirUzunluk > 0 ? { uzunluk: zincirUzunluk } : null,
+    altinKazananlar,
     sahne: await (async () => {
       const ayar = new Map((sahneAyarSonuc.data ?? []).map((a) => [a.key, a.value]));
       const taze = (deger: string | undefined, dakika: number) => {

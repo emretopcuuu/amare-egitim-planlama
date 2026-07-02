@@ -55,7 +55,7 @@ export async function POST(req: Request) {
   const guvenlikEk = kriz ? `\n\n${KRIZ_YONLENDIRME}` : "";
   const { data: gorev, error } = await db
     .from("missions")
-    .select("id, kind, title, body, status, due_at, trait_id, kaynak_id, baglanti_id, zincir_id, zincir_sira")
+    .select("id, kind, title, body, status, due_at, trait_id, kaynak_id, baglanti_id, zincir_id, zincir_sira, altin")
     .eq("id", gorevId)
     .eq("participant_id", session.sub)
     .maybeSingle();
@@ -122,13 +122,29 @@ export async function POST(req: Request) {
         spark_points: SENKRON_KIVILCIMI,
       })
       .eq("id", gorev.id);
+    // FAZ 5.3 — SENKRON KÜME reveal: aynı baglanti_id'li kümedeki diğer
+    // katılımcıların ilk adları mini-duvar olarak döner ("birlikte yaptın").
+    let kume: string[] = [];
+    if (gorev.baglanti_id) {
+      const { data: kumeUyeleri } = await db
+        .from("missions")
+        .select("participant_id, participants!missions_participant_id_fkey(full_name)")
+        .eq("baglanti_id", gorev.baglanti_id);
+      kume = (kumeUyeleri ?? [])
+        .filter((m) => m.participant_id !== session.sub)
+        .map((m) => (m.participants as unknown as { full_name: string } | null)?.full_name?.split(" ")[0])
+        .filter((ad): ad is string => !!ad);
+    }
     const toplam = await toplamKivilcim(db, session.sub);
+    const kumeReveal =
+      kume.length > 0 ? `\n\n💫 Bu anı şunlarla birlikte yaşadın: ${kume.join(", ")}.` : "";
     return Response.json({
       senkron: true,
-      yorum: tr.gorevler.senkronTesekkur + guvenlikEk,
+      yorum: tr.gorevler.senkronTesekkur + kumeReveal + guvenlikEk,
       kivilcim: SENKRON_KIVILCIMI,
       toplam,
       unvan: unvanBul(toplam).mevcut.ad,
+      ...(kume.length > 0 ? { kume } : {}),
       ...(kriz ? { guvenlik: true } : {}),
     });
   }
@@ -167,9 +183,11 @@ export async function POST(req: Request) {
     }
   }
   // Telafi (süresi geçmiş): kıvılcım yarıya iner — yine de yapmak değerli.
-  const kivilcim = telafi
+  const temelKivilcim = telafi
     ? Math.max(1, Math.ceil(kivilcimHesapla(sonuc.puan, false, streak) / 2))
     : kivilcimHesapla(sonuc.puan, zamaninda, streak);
+  // FAZ 5.2 — ALTIN GÖREV: 3x kıvılcım.
+  const kivilcim = gorev.altin ? temelKivilcim * 3 : temelKivilcim;
   await db
     .from("missions")
     .update({

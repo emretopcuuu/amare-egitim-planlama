@@ -1267,6 +1267,7 @@ export type Database = {
         Row: {
           ai_comment: string | null
           ai_score: number | null
+          altin: boolean
           baglanti_id: string | null
           body: string
           carried_at: string | null
@@ -1284,6 +1285,7 @@ export type Database = {
           lightened_at: string | null
           micro_sprint: boolean
           neden: string | null
+          kapi_etiket: string | null
           participant_id: string
           reflected_at: string | null
           reflection_reply: string | null
@@ -1293,6 +1295,7 @@ export type Database = {
           response_tags: string[] | null
           response_text: string | null
           scored_at: string | null
+          secim_grubu: string | null
           somutluk: Json | null
           spark_points: number
           started_at: string | null
@@ -1307,6 +1310,7 @@ export type Database = {
         Insert: {
           ai_comment?: string | null
           ai_score?: number | null
+          altin?: boolean
           baglanti_id?: string | null
           body: string
           carried_at?: string | null
@@ -1324,6 +1328,7 @@ export type Database = {
           lightened_at?: string | null
           micro_sprint?: boolean
           neden?: string | null
+          kapi_etiket?: string | null
           participant_id: string
           reflected_at?: string | null
           reflection_reply?: string | null
@@ -1333,6 +1338,7 @@ export type Database = {
           response_tags?: string[] | null
           response_text?: string | null
           scored_at?: string | null
+          secim_grubu?: string | null
           somutluk?: Json | null
           spark_points?: number
           started_at?: string | null
@@ -1347,6 +1353,7 @@ export type Database = {
         Update: {
           ai_comment?: string | null
           ai_score?: number | null
+          altin?: boolean
           baglanti_id?: string | null
           body?: string
           carried_at?: string | null
@@ -1364,6 +1371,7 @@ export type Database = {
           lightened_at?: string | null
           micro_sprint?: boolean
           neden?: string | null
+          kapi_etiket?: string | null
           participant_id?: string
           reflected_at?: string | null
           reflection_reply?: string | null
@@ -1373,6 +1381,7 @@ export type Database = {
           response_tags?: string[] | null
           response_text?: string | null
           scored_at?: string | null
+          secim_grubu?: string | null
           somutluk?: Json | null
           spark_points?: number
           started_at?: string | null

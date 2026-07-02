@@ -3279,6 +3279,18 @@ export const tr = {
     bosHerAn: "Sıradaki görev her an gelebilir.",
     bosSiradaki: (dk: number) => `Sıradaki görev ~${dk} dk içinde gelebilir.`,
     bosMerak: "AYNA bir sonraki adımını senin için hazırlıyor.",
+    // FAZ 5.1 — GÖREV FRAGMANI: teslimden sonra kilitli bir ipucu kartı.
+    // Gerçek görev içeriğini asla açık etmez — yalnız merak uyandıran, jenerik
+    // bir teaser havuzundan seçilir (kişi+gün tohumlu, deterministik).
+    fragmanBaslik: "🔒 Sıradaki",
+    fragmanIpucuHavuzu: [
+      "bir isim ve bir soru",
+      "tek kelime yeter",
+      "birlikte yapılacak bir şey",
+      "kısa ama gerçek bir cevap",
+      "gözünle gördüğün bir an",
+      "sesini duyacağım bir şey",
+    ] as string[],
     unvanZirve: "Zirvedesin",
     gununRitmi: "Bugün",
     bosKocu: "Ayna Koçu'na danış",

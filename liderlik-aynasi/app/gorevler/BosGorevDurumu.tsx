@@ -9,7 +9,13 @@ const t = tr.gorevler;
 // UX #1/#8/#9/#10: "Şu an görevin yok" pasif ekranı yerine YAŞAYAN boş durum:
 // nefes alan AYNA gözü + sıradaki görev tahmini + merak tohumu + tek net
 // birincil eylem (Ayna Koçu). Ekstra görev ikincil kalır (#5).
-export default function BosGorevDurumu({ siradakiDk }: { siradakiDk: number | null }) {
+export default function BosGorevDurumu({
+  siradakiDk,
+  fragmanIpucu,
+}: {
+  siradakiDk: number | null;
+  fragmanIpucu?: string;
+}) {
   const bekleme =
     siradakiDk == null || siradakiDk <= 0 ? t.bosHerAn : t.bosSiradaki(siradakiDk);
 
@@ -48,6 +54,14 @@ export default function BosGorevDurumu({ siradakiDk }: { siradakiDk: number | nu
         <span className="ekran-canli-nokta inline-block h-1.5 w-1.5 rounded-full bg-gold/70" aria-hidden />
         {t.bosMerak}
       </p>
+
+      {/* FAZ 5.1 — GÖREV FRAGMANI: kilitli kart, gerçek içeriği asla açık etmez */}
+      {fragmanIpucu && (
+        <div className="mx-auto mt-4 w-full max-w-sm rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+          <p className="text-xs font-bold uppercase tracking-widest text-slate-500">{t.fragmanBaslik}</p>
+          <p className="mt-1 text-sm text-slate-300">İpucu: {fragmanIpucu}</p>
+        </div>
+      )}
 
       <div className="mx-auto mt-6 grid w-full max-w-sm gap-2.5">
         {/* UX #10: boşken en değerli birincil eylem = Ayna Koçu */}

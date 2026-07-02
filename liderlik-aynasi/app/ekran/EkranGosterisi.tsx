@@ -980,6 +980,18 @@ export default function EkranGosterisi() {
                         </p>
                       </div>
                     )}
+                    {/* FAZ 5.2 — altın görev kutlaması: isimli (bilinçli — kutlama) */}
+                    {veri.altinKazananlar.length > 0 && (
+                      <div className="kart-3d rounded-2xl border border-gold/40 bg-gold/[0.10] p-5 text-center sm:col-span-2">
+                        <p className="text-3xl" aria-hidden>⚡</p>
+                        <p className="mt-1 text-lg font-semibold text-gold-light">
+                          Bugünün Altın Görev kahramanları
+                        </p>
+                        <p className="mt-1 text-sm text-slate-200">
+                          {veri.altinKazananlar.join(" · ")}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
