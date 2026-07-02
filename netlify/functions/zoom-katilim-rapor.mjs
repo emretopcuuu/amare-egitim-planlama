@@ -66,12 +66,13 @@ const parseTarih = (t) => {
   const d = new Date(p[2], p[1] - 1, p[0]);
   return isNaN(d.getTime()) ? null : d;
 };
+const istParcala = (isoStr) => new Date(new Date(isoStr).getTime() + 3 * 3600 * 1000); // UTC+3 İstanbul
 const ayniGunMu = (isoStr, gun) => {
-  // Zoom start_time UTC ISO; İstanbul gününe çevirip kıyasla (±1 gün toleransla eşleşen en yakını zaten seçiyoruz)
-  const d = new Date(isoStr);
-  const ist = new Date(d.getTime() + 3 * 3600 * 1000); // UTC+3
+  const ist = istParcala(isoStr);
   return ist.getUTCFullYear() === gun.getFullYear() && ist.getUTCMonth() === gun.getMonth() && ist.getUTCDate() === gun.getDate();
 };
+// Aynı gün + aynı salonda birden çok eğitim olabilir → oturumu eğitimin SAATİNE en yakın olana göre seç
+const saatDk = (s) => { const [h = 0, m = 0] = String(s || '').split(':').map(n => parseInt(n, 10)); return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0); };
 
 export const handler = async (event) => {
   if (!yetkiliMi(event)) return { statusCode: 403, body: 'forbidden' };
@@ -98,7 +99,7 @@ export const handler = async (event) => {
     if (e.zoomGercekKatilim != null) return; // zaten işlenmiş
     const m = (e.yer || '').match(/(\d[\d\s]{6,})/);
     if (!m) return; // Zoom ID yok
-    adaylar.push({ id: d.id, egitim: e.egitim, tarih: e.tarih, zoomId: m[1].replace(/\s/g, '') });
+    adaylar.push({ id: d.id, egitim: e.egitim, tarih: e.tarih, saat: e.saat, zoomId: m[1].replace(/\s/g, '') });
   });
   if (!adaylar.length) return { statusCode: 200, body: 'işlenecek eğitim yok' };
 
@@ -109,8 +110,14 @@ export const handler = async (event) => {
       // Aynı Zoom salonu birçok eğitimde kullanılıyor → doğru OTURUMU tarihle seç
       const inst = await zoomGet(token, `/past_meetings/${a.zoomId}/instances`);
       const gun = parseTarih(a.tarih);
-      const oturum = (inst.meetings || []).filter(x => ayniGunMu(x.start_time, gun))
-        .sort((x, y) => new Date(y.start_time) - new Date(x.start_time))[0];
+      const ogunkuler = (inst.meetings || []).filter(x => ayniGunMu(x.start_time, gun));
+      // Eğitimin planlanan saatine en yakın oturumu seç (aynı salonda gün içi çok eğitim olabilir)
+      const hedefDk = saatDk(a.saat);
+      const oturum = ogunkuler.sort((x, y) => {
+        const dx = Math.abs((istParcala(x.start_time).getUTCHours() * 60 + istParcala(x.start_time).getUTCMinutes()) - hedefDk);
+        const dy = Math.abs((istParcala(y.start_time).getUTCHours() * 60 + istParcala(y.start_time).getUTCMinutes()) - hedefDk);
+        return dx - dy;
+      })[0];
       if (!oturum) { sonuclar.push(`${a.egitim}: o güne ait Zoom oturumu yok`); continue; }
 
       // Katılımcılar (sayfalı)
