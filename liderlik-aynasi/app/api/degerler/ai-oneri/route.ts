@@ -2,6 +2,7 @@ import "server-only";
 import { getSession } from "@/lib/auth/session";
 import Anthropic from "@anthropic-ai/sdk";
 import { DEGER_LISTESI } from "@/lib/degerler";
+import { aiLimitYaniti } from "@/lib/aiLimit";
 
 export const maxDuration = 30;
 
@@ -15,13 +16,25 @@ function doluMetin(cevaplar: Record<string, string>): string {
 }
 
 export async function POST(req: Request) {
-  if (!(await getSession())) return Response.json({ hata: "yetkisiz" }, { status: 401 });
+  const session = await getSession();
+  if (!session || session.rol !== "participant") {
+    return Response.json({ hata: "yetkisiz" }, { status: 401 });
+  }
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return Response.json({ degerler: [] });
   }
 
-  const { cevaplar } = (await req.json()) as { cevaplar: Record<string, string> };
+  // Maliyet sigortası (bkz. lib/aiLimit.ts).
+  const limit = await aiLimitYaniti(session.sub, "degerler-ai-oneri");
+  if (limit) return limit;
+
+  // Bozuk/eksik JSON'da ham 500 yerine boş öneri dön (istemci zaten boşa dayanıklı).
+  const body = (await req.json().catch(() => null)) as { cevaplar?: unknown } | null;
+  const cevaplar =
+    body && typeof body.cevaplar === "object" && body.cevaplar !== null
+      ? (body.cevaplar as Record<string, string>)
+      : {};
   const topluMetin = doluMetin(cevaplar);
 
   if (!topluMetin) return Response.json({ degerler: [] });

@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { pusulaTuru, pusulaDurum, pusulaGecmis, onceliklerKaydet, pusulaSifirla, pusulaGeriAl, kariyerKaydet } from "@/lib/pusula";
 import { krizDiliVarMi, krizUyarisiGonder, KRIZ_YONLENDIRME } from "@/lib/guvenlik";
+import { aiLimitYaniti } from "@/lib/aiLimit";
 import { tr } from "@/lib/i18n/tr";
 
 // FAZ 0 Nedenler — GET: devam (durum + geçmiş + rıza). POST: rıza / liste / tur.
@@ -92,6 +93,10 @@ export async function POST(req: Request) {
   // 3) Sohbet turu (eleme → boşluk → engel).
   const mesaj =
     typeof govde.mesaj === "string" && govde.mesaj.trim() ? govde.mesaj : null;
+
+  // Maliyet sigortası: kullanıcı başına AI çağrı tavanı (bkz. lib/aiLimit.ts).
+  const limit = await aiLimitYaniti(session.sub, "pusula");
+  if (limit) return limit;
 
   // GÜVENLİK SINIRI: Pusula "neden/boşluk/engel" sohbeti derin duygusal bir
   // yüzeydir. Gerçek kriz/umutsuzluk sinyali → admin bayrağı + kişiye

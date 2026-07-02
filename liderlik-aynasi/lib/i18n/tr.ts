@@ -4023,6 +4023,8 @@ export const tr = {
   },
   ortak: {
     oturumGerekli: "Oturum gerekli.",
+    // AI çağrı limiti (lib/aiLimit.ts) aşılınca gösterilir.
+    cokHizli: "Çok hızlı gidiyorsun 🙂 Birkaç dakika soluklan, sonra devam edelim.",
     // Akran ikilisi (sorumluluk ortağı) sayfası
     baslik: "🤝 Ortağın",
     altBaslik:

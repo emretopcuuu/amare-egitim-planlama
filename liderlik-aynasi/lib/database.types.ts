@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_istek_log: {
+        Row: {
+          created_at: string
+          id: number
+          kaynak: string
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          kaynak: string
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          kaynak?: string
+          participant_id?: string
+        }
+        Relationships: []
+      }
       assignments: {
         Row: {
           created_at: string
