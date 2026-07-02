@@ -1568,6 +1568,7 @@ export type Database = {
           baglanti_id: string | null
           body: string
           carried_at: string | null
+          cesaret_push: boolean
           difficulty: number
           donus_bicimi: string | null
           due_at: string
@@ -1612,6 +1613,7 @@ export type Database = {
           baglanti_id?: string | null
           body: string
           carried_at?: string | null
+          cesaret_push?: boolean
           difficulty?: number
           donus_bicimi?: string | null
           due_at: string
@@ -1656,6 +1658,7 @@ export type Database = {
           baglanti_id?: string | null
           body?: string
           carried_at?: string | null
+          cesaret_push?: boolean
           difficulty?: number
           donus_bicimi?: string | null
           due_at?: string
