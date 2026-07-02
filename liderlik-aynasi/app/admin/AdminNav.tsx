@@ -90,6 +90,7 @@ export default function AdminNav({
   muhurAcik = false,
   moderasyonBekleyen = 0,
   mesajBekleyen = 0,
+  kayipBekleyen = 0,
 }: {
   ad: string;
   dalgaAdi: string | null;
@@ -101,6 +102,7 @@ export default function AdminNav({
   muhurAcik?: boolean;
   moderasyonBekleyen?: number;
   mesajBekleyen?: number;
+  kayipBekleyen?: number;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -289,6 +291,15 @@ export default function AdminNav({
             className="shrink-0 rounded-full bg-gold/20 px-2.5 py-1 text-xs font-semibold text-gold-light transition-colors hover:bg-gold/30"
           >
             💬 {k.mesaj(mesajBekleyen)}
+          </Link>
+        )}
+        {/* [FAZ3] Kayıp radarı rozeti — insan dokunuşu bekleyen kişi varsa KIRMIZI */}
+        {kayipBekleyen > 0 && (
+          <Link
+            href="/admin/kayip-radari"
+            className="shrink-0 rounded-full bg-rose-500/20 px-2.5 py-1 text-xs font-semibold text-rose-300 transition-colors hover:bg-rose-500/30"
+          >
+            🛟 {kayipBekleyen} kayıp
           </Link>
         )}
         <span className="hidden shrink-0 text-xs text-slate-400 sm:block">{ad}</span>
