@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      kamp_senaryosu: {
+        Row: {
+          atesleme_zamani: string | null
+          baz_olay: string | null
+          created_at: string
+          durum: string
+          eylem_baslik: string | null
+          eylem_deger: string | null
+          eylem_hedef: string
+          eylem_tipi: string
+          gun: number | null
+          id: string
+          olay_kodu: string
+          on_kosul: string | null
+          saat: number | null
+          sira: number
+          sonra_dk: number | null
+          tetik_tipi: string
+        }
+        Insert: {
+          atesleme_zamani?: string | null
+          baz_olay?: string | null
+          created_at?: string
+          durum?: string
+          eylem_baslik?: string | null
+          eylem_deger?: string | null
+          eylem_hedef: string
+          eylem_tipi: string
+          gun?: number | null
+          id?: string
+          olay_kodu: string
+          on_kosul?: string | null
+          saat?: number | null
+          sira?: number
+          sonra_dk?: number | null
+          tetik_tipi: string
+        }
+        Update: {
+          atesleme_zamani?: string | null
+          baz_olay?: string | null
+          created_at?: string
+          durum?: string
+          eylem_baslik?: string | null
+          eylem_deger?: string | null
+          eylem_hedef?: string
+          eylem_tipi?: string
+          gun?: number | null
+          id?: string
+          olay_kodu?: string
+          on_kosul?: string | null
+          saat?: number | null
+          sira?: number
+          sonra_dk?: number | null
+          tetik_tipi?: string
+        }
+        Relationships: []
+      }
       akran_kurtarma: {
         Row: {
           aktif_id: string

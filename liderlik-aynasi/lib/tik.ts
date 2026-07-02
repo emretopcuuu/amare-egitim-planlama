@@ -59,6 +59,7 @@ import {
   grupBostaMi,
 } from "@/lib/cumartesiProgrami";
 import { eslesmeHedefiSec, eslesmeKaydet, type EslesmeAday } from "@/lib/gorevEslesme";
+import { orkestratoduIsle } from "@/lib/orkestrator";
 import { johariCaprazGorevUret } from "@/lib/johariCapraz";
 import { gizliEsGorevMetni, tanikGoreviMetni, miniKonseyMetinleri } from "@/lib/eslesmeWow";
 import { zincirBaslat } from "@/lib/kampZinciri";
@@ -105,6 +106,7 @@ export async function tikCalistir(
     senkron: 0,
     durtulen: 0,
     momentum: 0,
+    orkestratorAtes: 0,
   };
 
   // 1) Süresi dolan görevleri kapat (her durumda, sessiz saatte bile)
@@ -127,6 +129,16 @@ export async function tikCalistir(
 
   if (ayar.get("ayna_aktif") !== "true") {
     return { ozet: "AYNA uyuyor (pasif)", ...ozet };
+  }
+
+  // FAZ 9 — ORKESTRATÖR: zamanı gelmiş senaryo satırlarını ateşle (idempotent).
+  // Kamp başlamadıysa (ayna_baslangic yok) sessizdir. Her tikin başında çalışır
+  // ki bayrak açılışları görev üretiminden ÖNCE etkili olsun.
+  try {
+    const ork = await orkestratoduIsle(db, simdi, ayar.get("ayna_baslangic"));
+    ozet.orkestratorAtes = ork.atesLenen;
+  } catch {
+    // orkestratör düşse bile tik akışını bozma
   }
 
   const mod: SistemModu =
