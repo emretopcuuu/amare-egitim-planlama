@@ -48,6 +48,7 @@ import {
   geceSesi,
   markaAnons,
 } from "@/lib/yansima";
+import { kampKayipWhatsApp } from "@/lib/kayipRadar";
 import {
   grupNoCozumle,
   cumartesiGrupEtkinligi,
@@ -266,7 +267,7 @@ export async function tikCalistir(
 
   const [{ data: kisiler }, { data: sonGorevler }, { data: yanitGecmisi }] =
     await Promise.all([
-      db.from("participants").select("id, full_name, team, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak").eq("role", "participant"),
+      db.from("participants").select("id, full_name, team, phone, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak").eq("role", "participant"),
       db
         .from("missions")
         .select("participant_id, status, issued_at, kind")
@@ -1061,7 +1062,7 @@ export async function tikCalistir(
           .select("participant_id, responded_at")
           .gte("responded_at", yedi),
         db.from("ratings").select("rater_id, created_at").gte("created_at", yedi),
-        db.from("churn_radar").select("participant_id, nudged_at, admin_alerted_at"),
+        db.from("churn_radar").select("participant_id, nudged_at, admin_alerted_at, wa_sent_at"),
         // FAZ 2 re-entry: nüks anında geri çalınacak yeni cümleler
         db.from("bosluk_ani").select("participant_id, yeni_cumle").not("yeni_cumle", "is", null),
       ]);
@@ -1094,11 +1095,20 @@ export async function tikCalistir(
         // Sahne sessizliğinde kişiye dürtme ertelenir (sonraki saate sarkar);
         // lider uyarısı sessiz kayıttır, sahnede de işlenebilir.
         const durtulebilir = karar.nudge && !sahneSessiz;
-        if (durtulebilir || karar.alert) {
+        // [E8] KAMP İÇİ KAYIP RADARI: kamp modunda drift onaylanınca (alert) +
+        // telefon varsa + daha önce gönderilmediyse "seni özledik" WhatsApp'ı
+        // (giden Meta-onaylı şablon; webhook'a dokunulmaz). Tek seferlik (wa_sent_at).
+        let waGonderildi = false;
+        const kTel = (k as { phone?: string | null }).phone ?? null;
+        if (karar.alert && mod === "kamp" && !iz?.wa_sent_at && kTel) {
+          waGonderildi = await kampKayipWhatsApp(db, k.full_name, kTel).catch(() => false);
+        }
+        if (durtulebilir || karar.alert || waGonderildi) {
           await db.from("churn_radar").upsert({
             participant_id: k.id,
             ...(durtulebilir ? { nudged_at: simdi.toISOString() } : {}),
             ...(karar.alert ? { admin_alerted_at: simdi.toISOString() } : {}),
+            ...(waGonderildi ? { wa_sent_at: simdi.toISOString() } : {}),
             updated_at: simdi.toISOString(),
           });
         }

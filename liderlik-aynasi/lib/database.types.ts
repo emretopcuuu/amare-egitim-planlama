@@ -502,6 +502,7 @@ export type Database = {
           participant_id: string
           updated_at: string
           voice_path: string | null
+          wa_sent_at: string | null
         }
         Insert: {
           admin_alerted_at?: string | null
@@ -509,6 +510,7 @@ export type Database = {
           participant_id: string
           updated_at?: string
           voice_path?: string | null
+          wa_sent_at?: string | null
         }
         Update: {
           admin_alerted_at?: string | null
@@ -516,6 +518,7 @@ export type Database = {
           participant_id?: string
           updated_at?: string
           voice_path?: string | null
+          wa_sent_at?: string | null
         }
         Relationships: [
           {
