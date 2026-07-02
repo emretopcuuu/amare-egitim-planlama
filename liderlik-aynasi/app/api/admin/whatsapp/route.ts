@@ -7,6 +7,7 @@ import {
   sablonSidGetir,
   whatsAppAdresi,
 } from "@/lib/whatsapp";
+import { yazAuditLog } from "@/lib/auditLog";
 import { tr } from "@/lib/i18n/tr";
 
 export const maxDuration = 60;
@@ -112,6 +113,10 @@ export async function POST(req: Request) {
   let basarili = 0;
   let basarisiz = 0;
   let kodGonderildi = 0;
+  // [M1] Kişi bazlı teslim doğrulaması: hangi mesaj kime ULAŞMADI — admin bu
+  // isimleri görüp WhatsApp'tan elle takip eder (toplam sayı yetmiyordu).
+  const davetUlasmayan: string[] = [];
+  const kodUlasmayan: string[] = [];
   // Twilio hız sınırını zorlamamak için küçük gruplar halinde gönder.
   const PARCA = 20;
   for (let i = 0; i < gecerli.length; i += PARCA) {
@@ -125,24 +130,42 @@ export async function POST(req: Request) {
         )
       )
     );
-    for (const ok of sonuclar) {
+    sonuclar.forEach((ok, j) => {
       if (ok) basarili++;
-      else basarisiz++;
-    }
+      else {
+        basarisiz++;
+        davetUlasmayan.push(dilim[j].full_name);
+      }
+    });
     // Davetin hemen ardından kamp kodu (OTP) — ContentVariables {"1": kod}.
     if (ikiAsamali && kodSid) {
       const kodSonuc = await Promise.all(
         dilim.map((k) => whatsAppGonder(k.phone!, kodSid!, { "1": k.login_code }))
       );
-      for (const ok of kodSonuc) if (ok) kodGonderildi++;
+      kodSonuc.forEach((ok, j) => {
+        if (ok) kodGonderildi++;
+        else kodUlasmayan.push(dilim[j].full_name);
+      });
     }
   }
+
+  // [M1] Denetim izi: hangi şablon kaç kişiye gitti, kimlere ulaşmadı.
+  await yazAuditLog(db, null, "whatsapp_gonderim", {
+    sablon: sablon.anahtar,
+    hedefTipi: body?.hedefTipi,
+    basarili,
+    basarisiz,
+    telefonsuz,
+    ...(ikiAsamali ? { kodGonderildi, kodUlasmayan } : {}),
+    davetUlasmayan,
+  });
 
   return Response.json({
     ok: true,
     basarili,
     basarisiz,
     telefonsuz,
-    ...(ikiAsamali ? { kodGonderildi, kodKayitsiz: !kodSid } : {}),
+    davetUlasmayan,
+    ...(ikiAsamali ? { kodGonderildi, kodUlasmayan, kodKayitsiz: !kodSid } : {}),
   });
 }

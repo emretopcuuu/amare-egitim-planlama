@@ -49,6 +49,9 @@ export default function WhatsAppGonder({
   const [mesaj, setMesaj] = useState("");
   const [onayAcik, setOnayAcik] = useState(false);
   const [gonderiliyor, setGonderiliyor] = useState(false);
+  // [M1] Kişi bazlı teslim sonucu — tost kaybolur, bu panel kalır: kim davet
+  // alamadı, kim kamp kodu alamadı → admin WhatsApp'tan elle takip eder.
+  const [ulasmayanlar, setUlasmayanlar] = useState<{ davet: string[]; kod: string[] } | null>(null);
 
   const sablon = WA_SABLONLAR.find((s) => s.anahtar === sablonAnahtar) ?? null;
   const telefonluToplam = kisiler.filter((k) => k.telefonVar).length;
@@ -113,6 +116,9 @@ export default function WhatsAppGonder({
             : ` · ${veri.kodGonderildi} kamp kodu gönderildi`
           : "";
       tost(t.sonuc(veri.basarili, veri.basarisiz, veri.telefonsuz) + kodNot, "basari");
+      const davetKacan: string[] = Array.isArray(veri.davetUlasmayan) ? veri.davetUlasmayan : [];
+      const kodKacan: string[] = Array.isArray(veri.kodUlasmayan) ? veri.kodUlasmayan : [];
+      setUlasmayanlar(davetKacan.length > 0 || kodKacan.length > 0 ? { davet: davetKacan, kod: kodKacan } : null);
       setOnayAcik(false);
       router.refresh();
     } catch {
@@ -124,6 +130,36 @@ export default function WhatsAppGonder({
 
   return (
     <section className="kart-3d space-y-5 rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
+      {/* [M1] Teslim doğrulaması — ulaşamayan davet/kod isimleri kalıcı panelde */}
+      {ulasmayanlar && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4">
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-sm font-semibold text-amber-200">⚠ Son gönderimde herkese ulaşılamadı</p>
+            <button
+              onClick={() => setUlasmayanlar(null)}
+              className="shrink-0 rounded-lg px-2 py-0.5 text-xs text-slate-400 hover:bg-white/10"
+              aria-label="Kapat"
+            >
+              ✕
+            </button>
+          </div>
+          {ulasmayanlar.davet.length > 0 && (
+            <p className="mt-2 text-xs leading-relaxed text-amber-100/90">
+              <span className="font-semibold">Davet ulaşmadı:</span> {ulasmayanlar.davet.join(", ")}
+            </p>
+          )}
+          {ulasmayanlar.kod.length > 0 && (
+            <p className="mt-1.5 text-xs leading-relaxed text-amber-100/90">
+              <span className="font-semibold">Kamp kodu ulaşmadı:</span> {ulasmayanlar.kod.join(", ")}
+              <span className="text-amber-200/70"> (davetteki buton linki kodu içerir — yine de giriş yapabilirler)</span>
+            </p>
+          )}
+          <p className="mt-2 text-xs text-slate-400">
+            Bu kişileri WhatsApp&apos;tan elle kontrol et; telefon numarası hatalı olabilir.
+          </p>
+        </div>
+      )}
+
       {/* 1) Şablon seçimi */}
       <div>
         <h2 className="text-sm font-semibold text-gold-light">{t.adim1}</h2>

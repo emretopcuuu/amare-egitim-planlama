@@ -9,6 +9,7 @@ import { tr } from "@/lib/i18n/tr";
 import PusulaSohbet from "./PusulaSohbet";
 import PusulaGiris from "./PusulaGiris";
 import HazirlikAkis from "./HazirlikAkis";
+import OnKosulKapisi from "@/components/OnKosulKapisi";
 import CanliAyna from "@/components/CanliAyna";
 import GeriSayim from "@/components/GeriSayim";
 import Konfeti from "@/components/Konfeti";
@@ -32,7 +33,7 @@ export default async function PusulaSayfa() {
   if (session.rol !== "participant") redirect("/");
 
   const db = supabaseAdmin();
-  const [durum, gecmis, { data: kisi }, { data: pus }, kampBaslangic] = await Promise.all([
+  const [durum, gecmis, { data: kisi }, { data: pus }, kampBaslangic, { data: degerlerRow }] = await Promise.all([
     pusulaDurum(db, session.sub),
     pusulaGecmis(db, session.sub),
     db
@@ -42,7 +43,22 @@ export default async function PusulaSayfa() {
       .maybeSingle(),
     db.from("pusula").select("oncelikler, slogan").eq("participant_id", session.sub).maybeSingle(),
     kampBaslangicGetir(db),
+    db.from("degerler_calismasi").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
   ]);
+
+  // [M6] ÖN KOŞUL: Değerler bitmeden Pusula'ya (derin-linkle) girene nazik yön.
+  // Yalnız Pusula'ya HENÜZ başlamamış + Değerler'i bitirmemiş kişide fire eder —
+  // normal akışta ana sayfa zaten önce /degerler'e yolladığı için görülmez.
+  if (!durum.tamam && !degerlerRow?.tamamlandi_at) {
+    return (
+      <OnKosulKapisi
+        baslik={tr.onKosul.degerlerBaslik}
+        metin={tr.onKosul.degerlerMetin}
+        dugmeMetin={tr.onKosul.degerlerDugme}
+        dugmeYol="/degerler"
+      />
+    );
+  }
 
   // Kamp açık VE pusula TAMAM ise hub'da/mühür ekranında oyalanma — kamp akışına
   // gönder. ÖNEMLİ: pusula henüz bitmemişse kamp açık olsa bile burada KAL (zorunlu
