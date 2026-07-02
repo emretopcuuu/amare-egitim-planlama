@@ -2,8 +2,7 @@
 import React, { useState } from 'react';
 import { X, Mail, CheckCircle2, Loader2, AlertCircle, Newspaper } from 'lucide-react';
 import { db } from '../utils/firebase';
-import { collection, addDoc, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { guvenliGetDocs } from '../utils/guvenliVeri';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 
 const BultenModal = ({ onClose }) => {
   const [email, setEmail] = useState('');
@@ -20,12 +19,14 @@ const BultenModal = ({ onClose }) => {
     setYukleniyor(true);
     setHata(null);
     try {
-      // Duplicate kontrol
-      try {
-        const q = query(collection(db, 'bulten_aboneleri'), where('email', '==', email.trim().toLowerCase()));
-        const snap = await guvenliGetDocs(q);
-        if (!snap.empty) { setBasarili(true); return; }
-      } catch {}
+      // 2026-07-02: Duplicate-check sorgusu kaldırıldı. bulten_aboneleri rules'ı
+      // "read/list: isAdmin()" — anonim kullanıcı bu sorguyu HİÇBİR ZAMAN
+      // yapamıyordu (her seferinde permission-denied, sessizce yutulup addDoc'a
+      // devam ediliyordu). Yani bu blok fiilen hiç çalışmıyordu, sadece 3x retry
+      // + Sentry gürültüsü üretiyordu (NODE-Q, seen 15+). Davranış DEĞİŞMİYOR —
+      // aynı email tekrar abone olursa zaten öncesinde de (query hep exception
+      // yediği için) 2. doküman oluşuyordu. Bu ayrı, önceden var olan bir konu
+      // (haftalık-bülten.mjs email bazlı dedup yapmıyor) — kapsam dışı, ayrı ele alınmalı.
       await addDoc(collection(db, 'bulten_aboneleri'), {
         email: email.trim().toLowerCase(),
         ad: ad.trim() || '',

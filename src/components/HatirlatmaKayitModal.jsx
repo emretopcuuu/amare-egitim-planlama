@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { X, Bell, Clock, Mail, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
 import { db } from '../utils/firebase';
-import { collection, addDoc, query, where, getDocs, Timestamp } from 'firebase/firestore';
-import { guvenliGetDocs } from '../utils/guvenliVeri';
+import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { useTranslation } from '../context/LanguageContext';
 import confetti from 'canvas-confetti';
 
@@ -70,22 +69,14 @@ const HatirlatmaKayitModal = ({ egitim, onClose }) => {
         const zaman = ZAMAN_KEYS.find(z => z.id === zamanId);
         const gonderilecekZaman = new Date(egitimBaslangic.getTime() - zaman.dk * 60000);
 
-        // Duplicate kontrolü — sadece admin okuyabildiği için anonim kullanıcıda
-        // bu sorgu PERMISSION_DENIED dönebilir. Hatayı yutup kaydı yine yapıyoruz;
-        // çift kayıt olursa Cloud Function gönderim sırasında deduplicate eder.
-        try {
-          const q = query(
-            collection(db, 'hatirlatmalar'),
-            where('egitimId', '==', egitim.id),
-            where('email', '==', email.trim().toLowerCase()),
-            where('hatirlatmaZamani', '==', zamanId)
-          );
-          const existing = await guvenliGetDocs(q);
-          if (!existing.empty) continue;
-        } catch (qErr) {
-          // anonim read kapalı — sessizce devam, kayıt yapılır
-        }
-
+        // 2026-07-02: Duplicate-check sorgusu kaldırıldı. hatirlatmalar rules'ı
+        // "read/list: isAdmin()" — anonim kullanıcı bu sorguyu HİÇBİR ZAMAN
+        // yapamıyordu (her seferinde permission-denied, sessizce yutulup addDoc'a
+        // devam ediliyordu). Yani bu blok fiilen hiç çalışmıyordu, sadece 3x retry
+        // + Sentry gürültüsü üretiyordu (NODE-Q). Davranış DEĞİŞMİYOR — aynı
+        // email+zaman tekrar kaydedilirse zaten öncesinde de (query hep exception
+        // yediği için) 2. doküman oluşuyordu. hatirlatma-gonder.mjs de email/zaman
+        // bazlı dedup yapmıyor — ayrı, önceden var olan bir konu, kapsam dışı.
         await addDoc(collection(db, 'hatirlatmalar'), {
           egitimId: egitim.id,
           egitimAdi: egitim.egitim,
