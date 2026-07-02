@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/auth/session";
+import { bayatOturumYaniti } from "@/lib/auth/bayatOturum";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { MINI360_IFADELER } from "@/lib/onFarkindalik";
 import { tr } from "@/lib/i18n/tr";
@@ -25,6 +26,10 @@ export async function POST(req: Request) {
   const { error } = await db
     .from("mini360_oz")
     .upsert(satir as never, { onConflict: "participant_id,tur" });
-  if (error) return Response.json({ hata: tr.mini360.hata }, { status: 500 });
+  if (error) {
+    const bayat = await bayatOturumYaniti(error);
+    if (bayat) return bayat;
+    return Response.json({ hata: tr.mini360.hata }, { status: 500 });
+  }
   return Response.json({ ok: true });
 }

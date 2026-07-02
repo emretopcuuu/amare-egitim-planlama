@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/auth/session";
+import { bayatOturumYaniti } from "@/lib/auth/bayatOturum";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { katilimciyaBildir } from "@/lib/push";
 import { tr } from "@/lib/i18n/tr";
@@ -40,12 +41,41 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.takdir.hata }, { status: 404 });
   }
 
+  // İDEMPOTENSİ + SPAM KAPAĞI: çift dokunuş aynı takdiri iki kez yazmasın;
+  // aynı hedefe günde en fazla 5 takdir (bildirim yağmuru koruması).
+  const sonIkiDk = new Date(Date.now() - 2 * 60_000).toISOString();
+  const gunBasi = new Date(Date.now() - 24 * 3_600_000).toISOString();
+  const [{ data: ayni }, { count: bugunSayisi }] = await Promise.all([
+    db
+      .from("kudos")
+      .select("id")
+      .eq("from_id", session.sub)
+      .eq("to_id", hedefId)
+      .eq("message", mesaj)
+      .gte("created_at", sonIkiDk)
+      .limit(1),
+    db
+      .from("kudos")
+      .select("id", { count: "exact", head: true })
+      .eq("from_id", session.sub)
+      .eq("to_id", hedefId)
+      .gte("created_at", gunBasi),
+  ]);
+  if (ayni && ayni.length > 0) {
+    return Response.json({ ok: true }); // çift dokunuş — ilk kayıt geçerli
+  }
+  if ((bugunSayisi ?? 0) >= 5) {
+    return Response.json({ hata: tr.takdir.hata }, { status: 429 });
+  }
+
   const { error } = await db.from("kudos").insert({
     from_id: session.sub,
     to_id: hedefId,
     message: mesaj,
   });
   if (error) {
+    const bayat = await bayatOturumYaniti(error);
+    if (bayat) return bayat;
     return Response.json({ hata: tr.takdir.hata }, { status: 500 });
   }
   // Takdir alan kişiye bildirim — geri gelmesi + "vav" için.

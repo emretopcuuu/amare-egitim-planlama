@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/auth/session";
+import { bayatOturumYaniti } from "@/lib/auth/bayatOturum";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 
@@ -25,15 +26,21 @@ export async function POST(req: Request) {
     }
     const kayit = Math.max(0, Math.floor(Number(govde.kayit) || 0));
     const gorusme = Math.max(0, Math.floor(Number(govde.gorusme) || 0));
-    const { error } = await db
+    const { data: guncellenen, error } = await db
       .from("pledges")
       .update({
         kayit_yapilan: kayit,
         gorusme_yapilan: gorusme,
         updated_at: new Date().toISOString(),
       })
-      .eq("participant_id", session.sub);
+      .eq("participant_id", session.sub)
+      .select("participant_id");
     if (error) return Response.json({ hata: tr.kapanisSoz.hata }, { status: 500 });
+    // Henüz söz vermemiş kişiye sahte "kaydedildi" deme — 0 satır güncellendiyse
+    // sessiz veri kaybı yerine gerçek durumu söyle.
+    if (!guncellenen || guncellenen.length === 0) {
+      return Response.json({ hata: tr.kapanisSoz.hata }, { status: 404 });
+    }
     return Response.json({ ok: true });
   }
 
@@ -66,6 +73,10 @@ export async function POST(req: Request) {
     },
     { onConflict: "participant_id" }
   );
-  if (error) return Response.json({ hata: tr.kapanisSoz.hata }, { status: 500 });
+  if (error) {
+    const bayat = await bayatOturumYaniti(error);
+    if (bayat) return bayat;
+    return Response.json({ hata: tr.kapanisSoz.hata }, { status: 500 });
+  }
   return Response.json({ ok: true });
 }
