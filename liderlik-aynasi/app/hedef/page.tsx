@@ -1,10 +1,12 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { tr } from "@/lib/i18n/tr";
 import { hedefDurum, hedefGecmis } from "@/lib/hedef";
 import { pusulaCekirdek } from "@/lib/pusula";
 import HedefAkis from "./HedefAkis";
 import OnboardingRayi from "@/components/OnboardingRayi";
+import OnKosulKapisi from "@/components/OnKosulKapisi";
 
 export const metadata = { title: "Hedefin — Liderlik Aynası" };
 
@@ -17,11 +19,26 @@ export default async function HedefSayfa() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
-  const [durum, gecmis, cekirdek] = await Promise.all([
+  const [durum, gecmis, cekirdek, { data: degerlerRow }] = await Promise.all([
     hedefDurum(db, session.sub),
     hedefGecmis(db, session.sub),
     pusulaCekirdek(db, session.sub),
+    db.from("degerler_calismasi").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
   ]);
+
+  // [M6] ÖN KOŞUL: Değerler bitmeden Hedef'e (derin-linkle) girene nazik yön.
+  // Hedef'e HENÜZ başlamamış + Değerler'i bitirmemiş kişide fire eder; normal
+  // akış zaten Değerler → Pusula → Hedef sırasını uyguluyor.
+  if (!durum.tamam && !degerlerRow?.tamamlandi_at) {
+    return (
+      <OnKosulKapisi
+        baslik={tr.onKosul.degerlerBaslik}
+        metin={tr.onKosul.degerlerMetin}
+        dugmeMetin={tr.onKosul.degerlerDugme}
+        dugmeYol="/degerler"
+      />
+    );
+  }
 
   const neden = cekirdek?.cekirdek_neden?.[0] ?? null;
 
