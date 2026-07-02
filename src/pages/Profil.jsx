@@ -14,8 +14,7 @@ import {
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../utils/firebase';
-import { collection, query, where, getDocs, doc, getDoc, deleteDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
-import { guvenliGetDocs } from '../utils/guvenliVeri';
+import { getDocs, doc, getDoc, onSnapshot, setDoc, serverTimestamp } from 'firebase/firestore';
 import { useAuth } from '../context/AuthContext';
 import { useData } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
@@ -318,38 +317,48 @@ const Profil = () => {
     return () => { cancelled = true; };
   }, [currentUser, isAnonymous, uid, userDoc?.amareId]);
 
-  // Firestore — bülten + hatırlatmalar (email ile filtreli)
+  // Bülten + hatırlatmalar — abonelik-durumu.mjs üzerinden (admin SDK).
+  // 2026-07-02: bulten_aboneleri/hatirlatmalar rules'ı "read/list/delete: isAdmin()"
+  // oldu (spam koruması) ama bu sayfa doğrudan client SDK ile kendi email'iyle
+  // okuyordu -> her normal kullanıcı "Missing or insufficient permissions"
+  // alıyordu (Sentry NODE-Q). Artık admin-yetkili serverless function'dan geçiyor.
   // Web push: Notification.permission ile kontrol (browser tabanlı, email değil)
   useEffect(() => {
-    if (!email) return;
+    if (!email || !currentUser) return;
     (async () => {
       try {
-        const [bultenSnap, hatSnap] = await Promise.all([
-          guvenliGetDocs(query(collection(db, 'bulten_aboneleri'), where('email', '==', email))),
-          guvenliGetDocs(query(collection(db, 'hatirlatmalar'), where('email', '==', email))),
-        ]);
-        const bultenDoc = bultenSnap.docs[0];
+        const idToken = await currentUser.getIdToken();
+        const res = await fetch('/.netlify/functions/abonelik-durumu', {
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        if (!res.ok) throw new Error(`abonelik-durumu ${res.status}`);
+        const data = await res.json();
         const pushIzin = webPushDestekli() && webPushIzinDurumu() === 'granted';
         setAbonelikler({
-          bulten: !!bultenDoc,
-          bultenDocId: bultenDoc?.id || null,
+          bulten: !!data.bulten?.abone,
+          bultenDocId: data.bulten?.docId || null,
           push: pushIzin,
           takip: takipSet.size,
         });
-        setHatirlatmalar(hatSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+        setHatirlatmalar(data.hatirlatmalar || []);
       } catch (e) {
         console.warn('[profil] abonelik fetch:', e.message);
       }
     })();
-  }, [email, takipSet.size]);
+  }, [email, currentUser, takipSet.size]);
 
   // Bülten toggle
   const toggleBulten = async () => {
-    if (abonelikler.bulten && abonelikler.bultenDocId) {
+    if (abonelikler.bulten) {
       // Aboneliği iptal et
       if (!window.confirm('Haftalık bülten aboneliğini iptal etmek istediğinden emin misin?')) return;
       try {
-        await deleteDoc(doc(db, 'bulten_aboneleri', abonelikler.bultenDocId));
+        const idToken = await currentUser.getIdToken();
+        const res = await fetch('/.netlify/functions/abonelik-durumu?action=bulten-iptal', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${idToken}` },
+        });
+        if (!res.ok) throw new Error(`bulten-iptal ${res.status}`);
         setAbonelikler(prev => ({ ...prev, bulten: false, bultenDocId: null }));
       } catch (e) {
         toast('Aboneliği kapatamadık, tekrar dener misin?', { type: 'error' });
@@ -381,12 +390,16 @@ const Profil = () => {
   // Bülten modal kapandığında durumu refresh et
   const handleBultenClose = () => {
     setBultenModalAcik(false);
-    // Email ile yeniden sorgu
-    if (email) {
-      guvenliGetDocs(query(collection(db, 'bulten_aboneleri'), where('email', '==', email)))
-        .then(snap => {
-          const bd = snap.docs[0];
-          setAbonelikler(prev => ({ ...prev, bulten: !!bd, bultenDocId: bd?.id || null }));
+    // abonelik-durumu.mjs ile yeniden sorgu (admin SDK — 2026-07-02 NODE-Q fix)
+    if (email && currentUser) {
+      currentUser.getIdToken()
+        .then(idToken => fetch('/.netlify/functions/abonelik-durumu', {
+          headers: { Authorization: `Bearer ${idToken}` },
+        }))
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (!data) return;
+          setAbonelikler(prev => ({ ...prev, bulten: !!data.bulten?.abone, bultenDocId: data.bulten?.docId || null }));
         })
         .catch(() => {});
     }
