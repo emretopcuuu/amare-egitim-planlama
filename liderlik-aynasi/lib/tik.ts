@@ -336,8 +336,26 @@ export async function tikCalistir(
       "mini_konsey_acik",
       "kamp_zinciri_acik",
       "tahmin_sapmasi_acik",
+      "altin_gorev_acik",
+      "kume_gorev_acik",
+      "iki_kapi_acik",
     ]);
   const wowAcikMi = new Map((wowBayraklariHam ?? []).map((s) => [s.key, s.value === "true"]));
+
+  // FAZ 5.2 — ALTIN GÖREV: gün başına kamp geneli en fazla 3. Bu tik'te kaç
+  // altın görev kaldığını bugünkü sayaçtan çıkar (settings kilidi yerine
+  // gerçek missions sayımı — idempotent + prova uyumlu).
+  const ALTIN_GUNLUK_UST = 3;
+  let altinBugunKalan = 0;
+  if (mod === "kamp" && wowAcikMi.get("altin_gorev_acik")) {
+    const gunBasiUtc = new Date(`${bugun}T00:00:00+03:00`).toISOString();
+    const { count: altinBugun } = await db
+      .from("missions")
+      .select("id", { count: "exact", head: true })
+      .eq("altin", true)
+      .gte("issued_at", gunBasiUtc);
+    altinBugunKalan = Math.max(0, ALTIN_GUNLUK_UST - (altinBugun ?? 0));
+  }
 
   // BU TİKTE GÖREV ALANLAR — `durumlar` haritası tik başında bir kez kurulur ve
   // görev eklendikçe GÜNCELLENMEZ (bayat kalır). Aynı tik içindeki sonraki
@@ -405,6 +423,51 @@ export async function tikCalistir(
       johariOverride = await johariCaprazGorevUret(db, k, simdi);
     }
 
+    // FAZ 5.4 — İKİ KAPI: ara sıra (bayrak açık + %15) tek görev yerine bir
+    // SEÇİM sun — Kapı A = üretilen görev (doğal türü), Kapı B = karşıt lezzette
+    // statik bir görev (cesaret↔bağ). İkisi de status="secim_bekliyor" +
+    // ortak secim_grubu; kişi birini seçince öteki 'expired' olur (bkz.
+    // /api/kapi-sec). secim_bekliyor bir aktif/bekleyen görev SAYILMAZ.
+    if (
+      wowAcikMi.get("iki_kapi_acik") &&
+      !johariOverride &&
+      Math.random() < 0.15
+    ) {
+      const secimGrubu = crypto.randomUUID();
+      const kapiDueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
+      const kapiAEtiket = gorev.kind === "cesaret" ? "🔥 bir eşik" : "🤝 bir isim";
+      const kapiB =
+        gorev.kind === "cesaret"
+          ? { kind: "bag", etiket: "🤝 bir isim", title: "Bir isim", body: "Bugün az tanıdığın birine git; ona içten bir soru sor ya da gerçek bir takdir söyle. Konuştuklarınızdan bir cümleyi bana yaz." }
+          : { kind: "cesaret", etiket: "🔥 bir eşik", title: "Bir eşik", body: "Bugün ertelediğin, seni biraz zorlayan bir ilk adımı at. Ne yaptığını ve nasıl hissettiğini tek cümleyle bana yaz." };
+      const kapilar = [
+        { participant_id: k.id, kind: gorev.kind, title: gorev.title, body: gorev.body, kapi_etiket: kapiAEtiket, somutluk: gorev.somutluk },
+        { participant_id: k.id, kind: kapiB.kind, title: kapiB.title, body: kapiB.body, kapi_etiket: kapiB.etiket, somutluk: null },
+      ];
+      let kapiYazildi = false;
+      for (const kapi of kapilar) {
+        const { error: kapiHata } = await db.from("missions").insert({
+          ...kapi,
+          difficulty: gorev.difficulty,
+          status: "secim_bekliyor",
+          secim_grubu: secimGrubu,
+          issued_at: simdi.toISOString(),
+          due_at: kapiDueAt.toISOString(),
+        });
+        if (!kapiHata) kapiYazildi = true;
+      }
+      if (kapiYazildi) {
+        ozet.uretilen++;
+        await katilimciyaBildir(db, k.id, "🚪 AYNA sana bir seçim sunuyor", "İki kapı açıldı — birini seç.", "/gorevler");
+      }
+      continue; // normal görev insert'ini atla
+    }
+
+    // FAZ 5.2 — ALTIN GÖREV: bu görev nadir "altın" varyantı mı? Gün kotası
+    // (altinBugunKalan) doluysa ve %25 şansla. (gorevUret yalnız normal görev
+    // türleri üretir — senkron/soz/mentorluk zaten ayrı akışlardan gelir.)
+    const altinMi = altinBugunKalan > 0 && Math.random() < 0.25;
+
     // #8 micro_sprint: sure_saat 0.5 = 30 dk
     const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
     const { data: yeniGorev, error } = await db
@@ -423,6 +486,7 @@ export async function tikCalistir(
         yay_gorevi: gorev.yayGorevi,
         donus_bicimi: gorev.donusBicimi, // #7 çeşitlilik izlemesi
         somutluk: gorev.somutluk, // FAZ 1.1 — kim/ne/nerede/ne_zaman/kanit checklist
+        altin: altinMi, // FAZ 5.2 — nadir altın görev (3x kıvılcım)
         // KRİTİK: issued_at motorun kullandığı saate (prova'da SANAL saat) eşit
         // olmalı. Aksi halde sonGorevler penceresi + bugunSayisi + sonVerilis +
         // bekleyen kontrolleri kayıyor ve prova'da her tik görev üretip sel oluyor.
@@ -433,6 +497,17 @@ export async function tikCalistir(
       .select("id")
       .single();
     if (error || !yeniGorev) continue;
+    // FAZ 5.2 — altın görev düştüyse: kotayı düş + HERKESE heyecan push'u
+    // (kimde olduğu değil — yalnız "az önce birine düştü").
+    if (altinMi) {
+      altinBugunKalan--;
+      await herkeseBildir(
+        db,
+        "⚡ Altın görev az önce birine düştü",
+        "Kampta nadir bir altın görev belirdi. Belki sıradaki sende…",
+        "/gorevler"
+      );
+    }
     // FAZ 2.1 / 3.2 — eşleşme kaydı: "aynı çift kampta bir kez" ve günlük hedef
     // kotası bu deftere dayanır; isimli olsun olmasın her eşleşme yazılır.
     const eslesmeIsimliMi = johariOverride ? true : (gorev.eslesme?.isimli ?? false);
@@ -1451,6 +1526,47 @@ export async function tikCalistir(
         ozet.uretilen++;
         await katilimciyaBildir(db, k.id, "🔮 AYNA'dan yeni görev", sapma.body.slice(0, 120), "/gorevler");
         verilenSayisi++;
+      }
+    }
+  }
+
+  // 6a-hepta) SENKRONİZE KÜME GÖREVİ (FAZ 5.3) — aynı anda birden çok kişiye
+  // düşen ÖZDEŞ mikro görev; ortak baglanti_id ile gruplanır. Görev metni "şu
+  // an N kişiye daha düştü, kimler olduğunu teslimde göreceksin" der; teslimde
+  // /api/gorev-yanit küme reveal'i mini-duvarı gösterir. Varsayılan KAPALI;
+  // günde bir kez, boşta 3-6 kişilik bir kümeye.
+  if (mod === "kamp" && !sahneSessiz && wowAcikMi.get("kume_gorev_acik")) {
+    const kilitAnahtari = `kume_gorev_${bugun}`;
+    const { data: yapildi } = await db.from("settings").select("key").eq("key", kilitAnahtari).maybeSingle();
+    if (!yapildi) {
+      // Boşta (bekleyen görevi olmayan) kişiler.
+      const bostakiler = (kisiler ?? []).filter((k) => !durumlar.get(k.id)?.bekleyen);
+      if (bostakiler.length >= 3) {
+        await db.from("settings").upsert({ key: kilitAnahtari, value: "1" });
+        const kume = bostakiler.slice(0, Math.min(6, bostakiler.length));
+        const baglantiId = crypto.randomUUID();
+        const kumeDueAt = new Date(simdi.getTime() + 60 * 60_000);
+        const govde = `Bu görev şu anda ${kume.length} kişiye birden düştü. Hepiniz aynı şeyi yapıyorsunuz: durduğun yerde derin bir nefes al ve bugün minnettar olduğun tek şeyi bana yaz. Kimlerle birlikte yaptığını teslimde göreceksin.`;
+        for (const k of kume) {
+          const { data: yeni } = await db
+            .from("missions")
+            .insert({
+              participant_id: k.id,
+              kind: "senkron",
+              title: "Aynı anda, birlikte",
+              body: govde,
+              difficulty: 1,
+              baglanti_id: baglantiId,
+              issued_at: simdi.toISOString(),
+              due_at: kumeDueAt.toISOString(),
+            })
+            .select("id")
+            .single();
+          if (yeni) {
+            ozet.uretilen++;
+            await katilimciyaBildir(db, k.id, "⏱ Senkron küme görevi", "Şu anda birkaç kişiyle aynı şeyi yapıyorsun.", "/gorevler");
+          }
+        }
       }
     }
   }

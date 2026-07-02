@@ -89,6 +89,17 @@ export const GOREV_ATMOSFER: Record<string, GorevAtmosfer> = {
   },
 };
 
-export function atmosferBul(kind: string): GorevAtmosfer {
+// FAZ 5.2 — ALTIN GÖREV: günde kamp geneli 2-3 kişiye düşen nadir varyant.
+// Kind'dan bağımsız — herhangi bir görev üzerine "parlatılır" (missions.altin).
+export const ALTIN_GOREV_ATMOSFER: GorevAtmosfer = {
+  ikon: "⚡",
+  rozet: "bg-gold/30 text-gold-light",
+  serit: "from-gold via-gold/40 to-transparent",
+  halka: "ring-gold/70",
+  arka: "bg-gold/[0.08]",
+};
+
+export function atmosferBul(kind: string, altinMi = false): GorevAtmosfer {
+  if (altinMi) return ALTIN_GOREV_ATMOSFER;
   return GOREV_ATMOSFER[kind] ?? ALTIN;
 }
