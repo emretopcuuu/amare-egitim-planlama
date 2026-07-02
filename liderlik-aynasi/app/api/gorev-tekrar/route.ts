@@ -73,6 +73,16 @@ export async function POST(req: Request) {
   const gorev = await gorevUret(db, kisi, gun, saat, mod, null, null, ipucu);
   if (!gorev) return Response.json({ hata: tr.gorevler.benzeriOlmaz }, { status: 503 });
 
+  // YARIŞ DARALTMA: AI üretimi sürerken çift dokunuş/tik görev eklemiş olabilir.
+  const { count: sonKontrol } = await db
+    .from("missions")
+    .select("id", { count: "exact", head: true })
+    .eq("participant_id", session.sub)
+    .eq("status", "pending");
+  if ((sonKontrol ?? 0) > 0) {
+    return Response.json({ hata: tr.gorevler.benzeriOlmaz }, { status: 409 });
+  }
+
   const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
   const { error } = await db.from("missions").insert({
     participant_id: kisi.id,

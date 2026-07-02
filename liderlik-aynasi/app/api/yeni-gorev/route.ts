@@ -55,6 +55,17 @@ export async function POST() {
   const gorev = await gorevUret(db, kisi, gun, saat, mod, null);
   if (!gorev) return Response.json({ hata: tr.gorevler.benzeriOlmaz }, { status: 503 });
 
+  // YARIŞ DARALTMA: AI üretimi saniyeler sürer — çift dokunuş/ağ retry'ı bu
+  // pencerede ikinci bir isteği sokabilir. Insert'ten hemen önce yeniden bak.
+  const { count: sonKontrol } = await db
+    .from("missions")
+    .select("id", { count: "exact", head: true })
+    .eq("participant_id", session.sub)
+    .eq("status", "pending");
+  if ((sonKontrol ?? 0) > 0) {
+    return Response.json({ hata: tr.gorevler.zatenGorevVar, kod: "var" }, { status: 409 });
+  }
+
   const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
   const { error } = await db.from("missions").insert({
     participant_id: kisi.id,

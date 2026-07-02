@@ -3348,6 +3348,11 @@ export const tr = {
     },
     sozTesekkur:
       "Sözünü sakladım. 90 gün sonra sana hatırlatacağım. — AYNA",
+    // Kurtarma güvencesi: AI puanlaması uzun süre başarısız kalırsa görev asla
+    // limbo'da bırakılmaz — varsayılan sıcak yorumla mühürlenir.
+    kurtarmaYorum:
+      "Yanıtın bana ulaştı ve emeğini gördüm — bu görevi tamamladın. Yola devam. ⚡",
+    bekliyorTekrar: "Sonuç gelmedi mi? Tekrar gönder",
     // UX #1 — "Başladım": saha görevi gerçek zaman alır
     basladim: "✋ Başladım, üzerinde çalışıyorum",
     basladimRozet: "✋ Üzerinde çalışıyorsun",

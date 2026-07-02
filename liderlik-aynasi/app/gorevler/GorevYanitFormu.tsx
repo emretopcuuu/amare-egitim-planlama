@@ -193,6 +193,16 @@ export default function GorevYanitFormu({
             {sonuc.yorum && (
               <p className="mt-3 text-sm leading-relaxed text-amber-200">{sonuc.yorum}</p>
             )}
+            {/* Limbo çıkışı: puanlama düştüyse (202) kişi elle tekrar gönderebilir —
+                sunucu artık "submitted" görevi yeniden kabul ediyor. */}
+            <button
+              type="button"
+              onClick={() => void sunucuyaGonder(yanit)}
+              disabled={gonderiliyor}
+              className="mt-4 rounded-xl border border-gold/40 px-4 py-2 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-50"
+            >
+              {gonderiliyor ? t.gonderiliyor : t.bekliyorTekrar}
+            </button>
           </>
         ) : (
           <>
