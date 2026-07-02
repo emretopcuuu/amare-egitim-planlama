@@ -49,6 +49,7 @@ import {
   markaAnons,
 } from "@/lib/yansima";
 import { kampKayipWhatsApp } from "@/lib/kayipRadar";
+import { nabizVur, NABIZ_TIK } from "@/lib/nabiz";
 import {
   grupNoCozumle,
   cumartesiGrupEtkinligi,
@@ -109,6 +110,10 @@ export async function tikCalistir(
     momentum: 0,
     orkestratorAtes: 0,
   };
+
+  // [FAZ1-B] Nabız damgası: tik her koştuğunda (AYNA pasif olsa bile) iz bırakır —
+  // NabizSeridi "son tik X dk önce"yi buradan okur; cron durursa şerit kırmızı yanar.
+  await nabizVur(db, NABIZ_TIK);
 
   // 1) Süresi dolan görevleri kapat (her durumda, sessiz saatte bile)
   await db

@@ -10,6 +10,7 @@ import { tr } from "@/lib/i18n/tr";
 import { kampGunu, kampGunleri } from "@/lib/kampProgrami";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import FunnelOmurga from "./FunnelOmurga";
+import BugunPaneli from "./BugunPaneli";
 import OtoYenile from "./OtoYenile";
 import GununAkisi from "./GununAkisi";
 import CanliOzet from "./CanliOzet";
@@ -274,6 +275,9 @@ export default async function AdminPanel() {
         </div>
         <OtoYenile />
       </div>
+
+      {/* [FAZ1-A] Bugün Paneli — tek bakışta: sırada ne var, son ne oldu, dikkat */}
+      <BugunPaneli />
 
       <FunnelOmurga aktif={aktifAsama} zamanlar={asamaZaman} />
 

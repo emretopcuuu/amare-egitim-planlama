@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga } from "@/lib/degerlendirme";
 import { adminOkunmamis } from "@/lib/icMesaj";
 import AdminNav from "./AdminNav";
+import NabizSeridi from "./NabizSeridi";
 import AdminTost from "./AdminTost";
 import AdminTuru from "./AdminTuru";
 import CanliOlayAkisi from "./CanliOlayAkisi";
@@ -70,6 +71,8 @@ export default async function AdminLayout({
         moderasyonBekleyen={bekleyenFoto ?? 0}
         mesajBekleyen={bekleyenMesaj}
       />
+      {/* [FAZ1-B] Otomasyon nabzı: her admin sayfasında sistemin kalp atışı */}
+      <NabizSeridi />
       {children}
       <AdminTost />
       {/* UX #7: panele ilk giren yöneticiye tek seferlik tur */}

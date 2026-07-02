@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { bekleyenTaahhutler } from "@/lib/ilk72";
 import { katilimciyaBildir } from "@/lib/push";
 import { cesaretPushGonder } from "@/lib/cesaret";
+import { nabizVur, NABIZ_OLAYLAR } from "@/lib/nabiz";
 
 // Supabase pg_cron DAKİKADA BİR çağırır ('ayna-olaylar' job'u — bkz. migration
 // 0110; Netlify'da Vercel cron YOK, buradaki zamanlayıcı pg_cron'dur). İşler:
@@ -19,6 +20,9 @@ export async function GET(req: NextRequest) {
 
   const db = supabaseAdmin();
   const simdi = new Date().toISOString();
+
+  // [FAZ1-B] Nabız damgası — NabizSeridi "son olaylar-cron X dk önce"yi okur.
+  await nabizVur(db, NABIZ_OLAYLAR);
 
   // Ateşlenecek olayları al (geçmişi de yakala: sunucu gecikme durumu)
   const { data: olaylar, error } = await db
