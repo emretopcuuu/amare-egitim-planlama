@@ -58,7 +58,11 @@ import {
   grupAzOnceFiziksel,
   grupBostaMi,
 } from "@/lib/cumartesiProgrami";
-import { eslesmeKaydet, type EslesmeAday } from "@/lib/gorevEslesme";
+import { eslesmeHedefiSec, eslesmeKaydet, type EslesmeAday } from "@/lib/gorevEslesme";
+import { johariCaprazGorevUret } from "@/lib/johariCapraz";
+import { gizliEsGorevMetni, tanikGoreviMetni, miniKonseyMetinleri } from "@/lib/eslesmeWow";
+import { zincirBaslat } from "@/lib/kampZinciri";
+import { karsilasmaBul } from "@/lib/karsilasma";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
 import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
@@ -320,6 +324,19 @@ export async function tikCalistir(
     // Prova kampında zaman hızlandırılmış: 25 kişiye çabuk dağıtım için limit açılır.
     .slice(0, provaModu ? 40 : 3);
 
+  // FAZ 3 — EŞLEŞME WOW KATMANI bayrakları (varsayılan kapalı, tek sorguda).
+  const { data: wowBayraklariHam } = await db
+    .from("settings")
+    .select("key, value")
+    .in("key", [
+      "johari_capraz_acik",
+      "cift_gizli_gorev_acik",
+      "tanik_gorevi_acik",
+      "mini_konsey_acik",
+      "kamp_zinciri_acik",
+    ]);
+  const wowAcikMi = new Map((wowBayraklariHam ?? []).map((s) => [s.key, s.value === "true"]));
+
   // BU TİKTE GÖREV ALANLAR — `durumlar` haritası tik başında bir kez kurulur ve
   // görev eklendikçe GÜNCELLENMEZ (bayat kalır). Aynı tik içindeki sonraki
   // dağıtımlar (garantili, mentorluk) bu kümeye bakarak çift görev vermesin.
@@ -377,16 +394,25 @@ export async function tikCalistir(
       kMekanFarkindaAdaylar
     );
     if (!gorev) continue;
+
+    // FAZ 3.2 — JOHARI ÇAPRAZ EŞLEŞTİRME: kota "bag" seçtiyse ve bayrak açıksa,
+    // AI'lı görevin yerine deterministik/statik Johari görevini kullan (ucuz,
+    // kör noktayı asla yüzüne vurmaz — yalnız hedefin gücünden söz eder).
+    let johariOverride: Awaited<ReturnType<typeof johariCaprazGorevUret>> = null;
+    if (gorev.kind === "bag" && wowAcikMi.get("johari_capraz_acik")) {
+      johariOverride = await johariCaprazGorevUret(db, k, simdi);
+    }
+
     // #8 micro_sprint: sure_saat 0.5 = 30 dk
     const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
     const { data: yeniGorev, error } = await db
       .from("missions")
       .insert({
         participant_id: k.id,
-        trait_id: gorev.trait_id,
+        trait_id: johariOverride ? johariOverride.traitId : gorev.trait_id,
         kind: gorev.kind,
-        title: gorev.title,
-        body: gorev.body,
+        title: johariOverride ? johariOverride.title : gorev.title,
+        body: johariOverride ? johariOverride.body : gorev.body,
         difficulty: gorev.difficulty,
         neden: gorev.neden,
         fayda: gorev.fayda,
@@ -405,11 +431,77 @@ export async function tikCalistir(
       .select("id")
       .single();
     if (error || !yeniGorev) continue;
-    // FAZ 2.1 — eşleşme kaydı: "aynı çift kampta bir kez" ve günlük hedef
+    // FAZ 2.1 / 3.2 — eşleşme kaydı: "aynı çift kampta bir kez" ve günlük hedef
     // kotası bu deftere dayanır; isimli olsun olmasın her eşleşme yazılır.
-    if (gorev.eslesme) {
-      await eslesmeKaydet(db, yeniGorev.id, k.id, gorev.eslesme.hedefId, gorev.eslesme.isimli);
+    const eslesmeIsimliMi = johariOverride ? true : (gorev.eslesme?.isimli ?? false);
+    const eslesmeHedefId = johariOverride ? johariOverride.hedefId : (gorev.eslesme?.hedefId ?? null);
+    if (eslesmeHedefId) {
+      await eslesmeKaydet(db, yeniGorev.id, k.id, eslesmeHedefId, eslesmeIsimliMi);
     }
+
+    // FAZ 3.1 — ÇİFT TARAFLI ASİMETRİK GİZLİ GÖREV: isimli bir eşleşme
+    // görevi verildiyse, hedefe eş zamanlı gizli bir "beklenmedik soru"
+    // görevi düşer. İkisi de diğerinin görevde olduğunu bilmez.
+    if (eslesmeIsimliMi && eslesmeHedefId && wowAcikMi.get("cift_gizli_gorev_acik")) {
+      const baglantiId = crypto.randomUUID();
+      const { error: baglaHata } = await db
+        .from("missions")
+        .update({ baglanti_id: baglantiId })
+        .eq("id", yeniGorev.id);
+      if (!baglaHata) {
+        const gizliMetin = gizliEsGorevMetni();
+        const gizliDueAt = new Date(simdi.getTime() + 2 * 3_600_000);
+        await db.from("missions").insert({
+          participant_id: eslesmeHedefId,
+          kind: "gizli",
+          title: gizliMetin.title,
+          body: gizliMetin.body,
+          difficulty: gorev.difficulty,
+          baglanti_id: baglantiId,
+          issued_at: simdi.toISOString(),
+          due_at: gizliDueAt.toISOString(),
+        });
+      }
+    }
+
+    // FAZ 3.3 — TANIK GÖREVİ: A'ya (k) cesaret görevi düştüyse ve mekân bilgisi
+    // varsa (Gün 2), aynı mekândaki B'ye eşzamanlı "uzaktan izle" görevi düşer.
+    // B'nin cevabı mevcut kanit_gorevi akışıyla A'ya anonim takdir olur.
+    if (
+      gorev.kind === "cesaret" &&
+      wowAcikMi.get("tanik_gorevi_acik") &&
+      kMekanFarkindaAdaylar &&
+      kMekanFarkindaAdaylar.length > 0
+    ) {
+      const tanik = await eslesmeHedefiSec(db, k.id, kMekanFarkindaAdaylar, simdi);
+      if (tanik) {
+        const tanikMetin = tanikGoreviMetni(k.full_name.split(" ")[0]);
+        const tanikDueAt = new Date(simdi.getTime() + 3_600_000);
+        const { data: tanikGorevi } = await db
+          .from("missions")
+          .insert({
+            participant_id: tanik.id,
+            kind: "gozlem",
+            title: tanikMetin.title,
+            body: tanikMetin.body,
+            difficulty: 1,
+            issued_at: simdi.toISOString(),
+            due_at: tanikDueAt.toISOString(),
+          })
+          .select("id")
+          .single();
+        if (tanikGorevi) {
+          await eslesmeKaydet(db, tanikGorevi.id, k.id, tanik.id, true);
+          await db.from("kanit_gorevi").insert({
+            mission_id: tanikGorevi.id,
+            gozlemci_id: tanik.id,
+            hedef_id: k.id,
+            hedef_ad: k.full_name,
+          });
+        }
+      }
+    }
+
     ozet.uretilen++;
     await katilimciyaBildir(
       db,
@@ -1211,6 +1303,116 @@ export async function tikCalistir(
           ozet.uretilen += sonuc.uretilen;
         } catch {
           // sigorta düşse bile tik akışını bozma
+        }
+      }
+    }
+  }
+
+  // 6a-quat) ÜÇLÜ MİNİ-KONSEY (FAZ 3.4) — kişinin gerçek gündemi (kör nokta)
+  // üzerinden 3 kişilik buluşma: A dert sahibi, B o konuda dış puanı en yüksek
+  // (Johari gizli gücü), C tamamlayıcı persona (karsilasma.ts). Varsayılan
+  // KAPALI; kişi başı kamp boyunca bir kez (mini_konsey_<id> kilidi).
+  if (mod === "kamp" && gun === 2 && saat === 11 && !sahneSessiz && wowAcikMi.get("mini_konsey_acik")) {
+    let verilenSayisi = 0;
+    for (const k of kisiler ?? []) {
+      if (verilenSayisi >= 3) break; // tik başına flood koruması
+      const kilitAnahtari = `mini_konsey_${k.id}`;
+      const { data: yapildi } = await db.from("settings").select("key").eq("key", kilitAnahtari).maybeSingle();
+      if (yapildi) continue;
+      const johari = await johariCaprazGorevUret(db, k, simdi);
+      if (!johari) continue;
+      const tercih = await karsilasmaBul(db, k.id);
+      if (!tercih || tercih.partnerId === johari.hedefId) continue; // C, B'den farklı olmalı
+      const [{ data: bKisi }, { data: traitAdData }] = await Promise.all([
+        db.from("participants").select("full_name").eq("id", johari.hedefId).maybeSingle(),
+        db.from("traits").select("name").eq("id", johari.traitId).maybeSingle(),
+      ]);
+      if (!bKisi || !traitAdData) continue;
+      await db.from("settings").upsert({ key: kilitAnahtari, value: "1" });
+      const baglantiId = crypto.randomUUID();
+      const metinler = miniKonseyMetinleri(
+        k.full_name.split(" ")[0],
+        bKisi.full_name.split(" ")[0],
+        tercih.partnerAd.split(" ")[0],
+        traitAdData.name
+      );
+      const konseyDueAt = new Date(simdi.getTime() + 3 * 3_600_000);
+      const satirlar = [
+        { participantId: k.id, body: metinler.aBody },
+        { participantId: johari.hedefId, body: metinler.bBody },
+        { participantId: tercih.partnerId, body: metinler.cBody },
+      ];
+      for (const s of satirlar) {
+        const { data: yeni } = await db
+          .from("missions")
+          .insert({
+            participant_id: s.participantId,
+            kind: "bag",
+            title: "Üçlü Konsey",
+            body: s.body,
+            difficulty: 2,
+            baglanti_id: baglantiId,
+            issued_at: simdi.toISOString(),
+            due_at: konseyDueAt.toISOString(),
+          })
+          .select("id")
+          .single();
+        if (yeni) {
+          ozet.uretilen++;
+          await katilimciyaBildir(
+            db,
+            s.participantId,
+            "🤝 AYNA'dan özel bir davet",
+            "Üçlü Konsey seni bekliyor.",
+            "/gorevler"
+          );
+        }
+      }
+      verilenSayisi++;
+    }
+  }
+
+  // 6a-penta) KAMP ZİNCİRİ (FAZ 3.5) — sabah tek kişiye ilk halka düşer;
+  // zincir tamamlanınca (bkz. /api/gorev-yanit) otomatik bir sonraki halkaya
+  // geçer. Varsayılan KAPALI; günde bir kez başlatılır (kilit).
+  if (mod === "kamp" && saat === 9 && !sahneSessiz && wowAcikMi.get("kamp_zinciri_acik")) {
+    const kilitAnahtari = `kamp_zinciri_baslat_${bugun}`;
+    const { data: yapildi } = await db.from("settings").select("key").eq("key", kilitAnahtari).maybeSingle();
+    if (!yapildi && (kisiler ?? []).length >= 2) {
+      await db.from("settings").upsert({ key: kilitAnahtari, value: "1" });
+      const roster = kisiler ?? [];
+      const rastgeleKaynak = roster[Math.floor(Math.random() * roster.length)];
+      const adaylar: EslesmeAday[] = roster
+        .filter((p) => p.id !== rastgeleKaynak.id)
+        .map((p) => ({ id: p.id, full_name: p.full_name, team: p.team }));
+      const baslangic = await zincirBaslat(db, rastgeleKaynak, adaylar, simdi);
+      if (baslangic) {
+        const zincirDueAt = new Date(simdi.getTime() + 3 * 3_600_000);
+        const { data: yeni } = await db
+          .from("missions")
+          .insert({
+            participant_id: rastgeleKaynak.id,
+            kind: "bag",
+            title: baslangic.title,
+            body: baslangic.body,
+            difficulty: 2,
+            zincir_id: baslangic.zincirId,
+            zincir_sira: 1,
+            issued_at: simdi.toISOString(),
+            due_at: zincirDueAt.toISOString(),
+          })
+          .select("id")
+          .single();
+        if (yeni) {
+          await eslesmeKaydet(db, yeni.id, rastgeleKaynak.id, baslangic.hedef.id, true);
+          ozet.uretilen++;
+          await katilimciyaBildir(
+            db,
+            rastgeleKaynak.id,
+            "🔗 Zincirin ilk halkasısın",
+            baslangic.body.slice(0, 120),
+            "/gorevler"
+          );
         }
       }
     }

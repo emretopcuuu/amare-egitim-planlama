@@ -1267,6 +1267,7 @@ export type Database = {
         Row: {
           ai_comment: string | null
           ai_score: number | null
+          baglanti_id: string | null
           body: string
           carried_at: string | null
           difficulty: number
@@ -1300,10 +1301,13 @@ export type Database = {
           trait_id: number | null
           voice_path: string | null
           yay_gorevi: boolean
+          zincir_id: string | null
+          zincir_sira: number | null
         }
         Insert: {
           ai_comment?: string | null
           ai_score?: number | null
+          baglanti_id?: string | null
           body: string
           carried_at?: string | null
           difficulty?: number
@@ -1337,10 +1341,13 @@ export type Database = {
           trait_id?: number | null
           voice_path?: string | null
           yay_gorevi?: boolean
+          zincir_id?: string | null
+          zincir_sira?: number | null
         }
         Update: {
           ai_comment?: string | null
           ai_score?: number | null
+          baglanti_id?: string | null
           body?: string
           carried_at?: string | null
           difficulty?: number
@@ -1374,6 +1381,8 @@ export type Database = {
           trait_id?: number | null
           voice_path?: string | null
           yay_gorevi?: boolean
+          zincir_id?: string | null
+          zincir_sira?: number | null
         }
         Relationships: [
           {

@@ -64,6 +64,8 @@ export type EkranVerisi = {
   // #8 Anonim sosyal kıvılcım: yüksek puanlı (≥8), gizlenmemiş, öz-olmayan
   // yorum metinleri — KİMLİKSİZ. Kim kime yazdı taşınmaz; sadece olumlu söz.
   yansimalar: string[];
+  // FAZ 3.5 — kamp zinciri: en uzun aktif zincirin ulaştığı halka sayısı.
+  zincir: { uzunluk: number } | null;
   // Sahne olayları: /ekran'ın bir kez oynatacağı taze sinyaller (≤4 dk)
   sahne: {
     fiero: { id: string; ad: string; sesUrl: string | null } | null;
@@ -172,6 +174,17 @@ export async function GET() {
     fiero: kumFiero.count ?? 0,
     anlar: kumAnlar.count ?? 0,
   };
+
+  // FAZ 3.5 — KAMP ZİNCİRİ: en uzun aktif zincirin şu ana dek ulaştığı halka
+  // sayısı. İsimsiz — yalnız sayı, kimin zincirde olduğu asla açığa çıkmaz.
+  const { data: zincirSatirlari } = await db
+    .from("missions")
+    .select("zincir_id, zincir_sira")
+    .not("zincir_id", "is", null);
+  let zincirUzunluk = 0;
+  for (const z of zincirSatirlari ?? []) {
+    if ((z.zincir_sira ?? 0) > zincirUzunluk) zincirUzunluk = z.zincir_sira ?? 0;
+  }
 
   // CANLI OLAY AKIŞI — son 45 dk'lık aktivite. Kişinin EYLEMİ görünür ama
   // YAPTIĞININ İÇERİĞİ/HEDEFİ değil: görev başlığı yazılmaz; peer eylemler
@@ -510,6 +523,7 @@ export async function GET() {
       korNoktaOrneklem: ornekSayisi,
       enCokBuyuyenOzellik,
     },
+    zincir: zincirUzunluk > 0 ? { uzunluk: zincirUzunluk } : null,
     sahne: await (async () => {
       const ayar = new Map((sahneAyarSonuc.data ?? []).map((a) => [a.key, a.value]));
       const taze = (deger: string | undefined, dakika: number) => {
