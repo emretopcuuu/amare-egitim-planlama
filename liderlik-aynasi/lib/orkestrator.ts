@@ -6,8 +6,15 @@ import { p72Gun1, p72Gun2, p72Gun3, odev10Gun, odev15Gun, agustosOdev, agustosGr
 import { kampArkadasiAta, kampArkadasiHatirlat } from "@/lib/kampArkadasi";
 import { eylulKanit1, eylulKanit2, eylulKanit3 } from "@/lib/eylulKanit";
 import { pazartesiRaporuGonder } from "@/lib/kapanisPanel";
+import { zirveHazirlikOnUcus, zirveHazirlikUyar } from "@/lib/zirveHazirlik";
 
 type Db = ReturnType<typeof supabaseAdmin>;
+
+// [E1-b] Ön-uçuş penceresi: kritik satır ateşlenmeden bu kadar dk önce ön-koşul
+// denetlenir + eksik varlıklar (mektup/ses) otomatik üretilmeye başlanır.
+const ONUCUS_DK = 45;
+// Uyarı penceresi: ateşlemeye bu kadar dk kala hâlâ hazır değilse admin'e push.
+const ONUCUS_UYARI_DK = 15;
 
 // FAZ 9 — OTOMATİK KAMP ORKESTRATÖRÜ (çekirdek motor).
 // /api/tik her atışta çağırır. Zamanı gelmiş 'bekliyor' senaryo satırlarını
@@ -27,9 +34,24 @@ export type SenaryoSatiri = {
   eylem_hedef: string;
   eylem_baslik: string | null;
   eylem_deger: string | null;
+  on_kosul: string | null;
   durum: string;
   atesleme_zamani: string | null;
   sira: number;
+};
+
+/** [E1-b] Ön-koşul denetçileri. Bir senaryo satırının on_kosul'u bu kayıttaki bir
+ * anahtarsa, orkestratör satır ateşlenmeden ONUCUS_DK önce ilgili denetçiyi
+ * çalıştırır: eksik varlıkları üretmeye başlar ve hazır olup olmadığını döner. */
+const ON_KOSULLAR: Record<string, (db: Db) => Promise<{ hazir: boolean; mesaj: string }>> = {
+  // Reveal öncesi: tüm Ayna Mektupları + sesleri hazır mı? Değilse üretmeye başla.
+  raporlar_hazir: async (db) => {
+    const durum = await zirveHazirlikOnUcus(db, 3);
+    return {
+      hazir: durum.hazir,
+      mesaj: `Mektup ${durum.mektupVar}/${durum.toplam}, ses ${durum.sesVar}/${durum.klonlu}. Reveal öncesi eksik var — /admin/zirveye-hazirlik'ten tamamla.`,
+    };
+  },
 };
 
 /** Bir kamp_gorelli satırın ateşlenme zamanını hesaplar (ms epoch). */
@@ -62,6 +84,17 @@ const FONKSIYONLAR: Record<string, (db: Db) => Promise<void>> = {
   eylul_kanit3: eylulKanit3,
   // FAZ 6.1 — pazartesi komuta raporu (adminlere)
   pazartesi_rapor: pazartesiRaporuGonder,
+  // E1-b — zirve hazırlık son kontrolü: satır ateşlenince eksik varlıkları
+  // son kez üret + hâlâ eksikse admin'e uyar.
+  zirve_hazirlik_kontrol: async (db: Db) => {
+    const durum = await zirveHazirlikOnUcus(db, 5);
+    if (!durum.hazir) {
+      await zirveHazirlikUyar(
+        db,
+        `Kapanış anı geldi ama hazırlık eksik: mektup ${durum.mektupVar}/${durum.toplam}, ses ${durum.sesVar}/${durum.klonlu}.`
+      );
+    }
+  },
 };
 
 /** Tek bir senaryo satırının eylemini uygular (settings/push/fonksiyon).
@@ -108,7 +141,7 @@ export async function orkestratoduIsle(
   const { data: satirlar } = await db
     .from("kamp_senaryosu")
     .select(
-      "id, olay_kodu, tetik_tipi, gun, saat, baz_olay, sonra_dk, eylem_tipi, eylem_hedef, eylem_baslik, eylem_deger, durum, atesleme_zamani, sira"
+      "id, olay_kodu, tetik_tipi, gun, saat, baz_olay, sonra_dk, eylem_tipi, eylem_hedef, eylem_baslik, eylem_deger, on_kosul, durum, atesleme_zamani, sira"
     )
     .eq("durum", "bekliyor")
     .order("sira", { ascending: true });
@@ -126,6 +159,25 @@ export async function orkestratoduIsle(
   );
 
   const simdiMs = simdi.getTime();
+
+  // [E1-b] ÖN-UÇUŞ: on_kosul'u olan bekleyen satırlar için, ateşlemeden ONUCUS_DK
+  // önce ön-koşulu denetle + eksik varlıkları üretmeye başla. Hâlâ hazır değilse
+  // ve ateşlemeye ONUCUS_UYARI_DK kaldıysa admin'e uyar. (Yalnız kamp_gorelli.)
+  for (const s of satirlar as SenaryoSatiri[]) {
+    if (!s.on_kosul || !ON_KOSULLAR[s.on_kosul]) continue;
+    if (s.tetik_tipi !== "kamp_gorelli" || s.gun == null || s.saat == null) continue;
+    const hedef = kampGorelliZaman(baslangic, s.gun, s.saat) + kaydirmaMs;
+    const kalanDk = (hedef - simdiMs) / 60_000;
+    if (kalanDk <= 0 || kalanDk > ONUCUS_DK) continue; // yalnız pencere içinde
+    try {
+      const kontrol = await ON_KOSULLAR[s.on_kosul](db);
+      if (!kontrol.hazir && kalanDk <= ONUCUS_UYARI_DK) {
+        await zirveHazirlikUyar(db, `${s.olay_kodu} ~${Math.round(kalanDk)} dk sonra: ${kontrol.mesaj}`);
+      }
+    } catch {
+      // ön-uçuş düşse bile ateşleme akışını bozma
+    }
+  }
 
   for (const s of satirlar as SenaryoSatiri[]) {
     // Zamanı geldi mi?

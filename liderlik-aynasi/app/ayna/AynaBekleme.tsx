@@ -13,6 +13,18 @@ export default function AynaBekleme() {
   const router = useRouter();
   const durdu = useRef(false);
 
+  // [E1-c] Reveal ÖNCESİ kendi mektup sesini service worker'a önbellet — reveal
+  // anında 29 telefon aynı anda açsa bile ses ağdan değil önbellekten çalar.
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.ready
+      .then((reg) => {
+        const hedef = reg.active ?? navigator.serviceWorker.controller;
+        hedef?.postMessage({ tip: "la-onbellek", url: "/api/mektup-ses" });
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     durdu.current = false;
     const zamanlayici = setInterval(async () => {
