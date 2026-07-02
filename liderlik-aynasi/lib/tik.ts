@@ -62,6 +62,7 @@ import { eslesmeHedefiSec, eslesmeKaydet, type EslesmeAday } from "@/lib/gorevEs
 import { johariCaprazGorevUret } from "@/lib/johariCapraz";
 import { gizliEsGorevMetni, tanikGoreviMetni, miniKonseyMetinleri } from "@/lib/eslesmeWow";
 import { zincirBaslat } from "@/lib/kampZinciri";
+import { tahminSapmasiGorevUret } from "@/lib/tahminSapmasi";
 import { karsilasmaBul } from "@/lib/karsilasma";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
@@ -334,6 +335,7 @@ export async function tikCalistir(
       "tanik_gorevi_acik",
       "mini_konsey_acik",
       "kamp_zinciri_acik",
+      "tahmin_sapmasi_acik",
     ]);
   const wowAcikMi = new Map((wowBayraklariHam ?? []).map((s) => [s.key, s.value === "true"]));
 
@@ -1414,6 +1416,41 @@ export async function tikCalistir(
             "/gorevler"
           );
         }
+      }
+    }
+  }
+
+  // 6a-hexa) TAHMİN-GERÇEK SAPMASI (FAZ 4.3) — Gün 2'de, kişinin tahmin
+  // görevi yanıtı biriken gerçek dış puan profiliyle belirgin çelişiyorsa
+  // merak uyandıran bir görev üretilir. Varsayılan KAPALI; kişi başı bir kez.
+  if (mod === "kamp" && gun === 2 && saat === 16 && !sahneSessiz && wowAcikMi.get("tahmin_sapmasi_acik")) {
+    let verilenSayisi = 0;
+    for (const k of kisiler ?? []) {
+      if (verilenSayisi >= 3) break;
+      const kilitAnahtari = `tahmin_sapmasi_${k.id}`;
+      const { data: yapildi } = await db.from("settings").select("key").eq("key", kilitAnahtari).maybeSingle();
+      if (yapildi) continue;
+      const sapma = await tahminSapmasiGorevUret(db, k);
+      await db.from("settings").upsert({ key: kilitAnahtari, value: "1" });
+      if (!sapma) continue;
+      const dueAt = new Date(simdi.getTime() + 3 * 3_600_000);
+      const { data: yeni } = await db
+        .from("missions")
+        .insert({
+          participant_id: k.id,
+          kind: "tahmin",
+          title: sapma.title,
+          body: sapma.body,
+          difficulty: 2,
+          issued_at: simdi.toISOString(),
+          due_at: dueAt.toISOString(),
+        })
+        .select("id")
+        .single();
+      if (yeni) {
+        ozet.uretilen++;
+        await katilimciyaBildir(db, k.id, "🔮 AYNA'dan yeni görev", sapma.body.slice(0, 120), "/gorevler");
+        verilenSayisi++;
       }
     }
   }
