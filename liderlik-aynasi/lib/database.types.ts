@@ -2325,6 +2325,10 @@ export type Database = {
     }
     Functions: {
       yeni_kamp_hazirla: { Args: never; Returns: undefined }
+      grup_ata: {
+        Args: { p_participant: string; p_adaylar: string[] }
+        Returns: string | null
+      }
     }
     Enums: {
       [_ in never]: never

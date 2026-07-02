@@ -41,38 +41,20 @@ export async function POST(req: NextRequest) {
   }
   const adayAdlari = adaylar.map((g) => grupAdi(g));
 
-  // Aday gruplardaki doluluk → en boş gruba ata (dengeli; eşitlikte rastgele).
-  const { data: doluluk } = await db
-    .from("participants")
-    .select("team")
-    .eq("role", "participant")
-    .in("team", adayAdlari);
-  const sayim = new Map<string, number>(adayAdlari.map((a) => [a, 0]));
-  for (const r of doluluk ?? []) {
-    if (r.team) sayim.set(r.team, (sayim.get(r.team) ?? 0) + 1);
+  // ATOMİK ATAMA (migration 0079): seçim + yazım DB fonksiyonunda, advisory
+  // lock ile sıralaşır. Eski oku-hesapla-yaz akışında eşzamanlı seçenler aynı
+  // "en boş" grubu görüp tek gruba yığılabiliyordu (kamp açılış yarışı).
+  const { data: atanmis, error } = await db.rpc("grup_ata", {
+    p_participant: session.sub,
+    p_adaylar: adayAdlari,
+  });
+  if (error) {
+    // Ham DB hatasını sızdırma — jenerik mesaj yeter.
+    return NextResponse.json({ hata: "Atama yapılamadı, tekrar dene." }, { status: 500 });
   }
-  const enAz = Math.min(...adayAdlari.map((a) => sayim.get(a) ?? 0));
-  const enBoslar = adayAdlari.filter((a) => (sayim.get(a) ?? 0) === enAz);
-  const hedefGrup = enBoslar[Math.floor(Math.random() * enBoslar.length)];
-
-  // Yarış koruması: yalnız hâlâ atanmamışsa yaz.
-  const { data: yazildi, error } = await db
-    .from("participants")
-    .update({ team: hedefGrup })
-    .eq("id", session.sub)
-    .is("team", null)
-    .select("team")
-    .maybeSingle();
-  if (error) return NextResponse.json({ hata: error.message }, { status: 500 });
-  if (!yazildi) {
-    // Eşzamanlı bir istek araya girdiyse güncel grubu döndür.
-    const { data: tekrar } = await db
-      .from("participants")
-      .select("team")
-      .eq("id", session.sub)
-      .maybeSingle();
-    return NextResponse.json({ tamam: true, grup: tekrar?.team ?? hedefGrup, degismedi: true });
+  if (!atanmis) {
+    return NextResponse.json({ hata: "Bu oyun ikilisi için uygun grup yok." }, { status: 400 });
   }
 
-  return NextResponse.json({ tamam: true, grup: hedefGrup });
+  return NextResponse.json({ tamam: true, grup: atanmis });
 }
