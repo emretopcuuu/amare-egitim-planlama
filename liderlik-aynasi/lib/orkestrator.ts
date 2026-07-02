@@ -54,12 +54,17 @@ const ON_KOSULLAR: Record<string, (db: Db) => Promise<{ hazir: boolean; mesaj: s
   },
 };
 
-/** Bir kamp_gorelli satırın ateşlenme zamanını hesaplar (ms epoch). */
+/** Bir kamp_gorelli satırın ateşlenme zamanını hesaplar (ms epoch).
+ * ÇIPA: başlangıç gününün İSTANBUL GECE YARISI. Böylece "Gün N · SS:00" satırı,
+ * "Kampı Başlat"a HANGİ SAATTE basılırsa basılsın, İstanbul duvar saatiyle tam
+ * SS:00'da ateşlenir. (Eski hâli başlatma ANINA ekliyordu → tüm senaryo başlatma
+ * saati kadar kayıyordu.) Türkiye kalıcı UTC+3, DST yok → +03:00 sabiti güvenli.
+ * Not: kamp gün ortası başlatılırsa, o günün geçmiş-saatli satırları ilk tikte
+ * hemen ateşlenir (yetişme davranışı — bayrak açılışları için doğru). */
 function kampGorelliZaman(baslangic: Date, gun: number, saat: number): number {
-  // Gün 1 = başlangıç günü. İstanbul'da saat:00'a denk gelmesi için başlangıç
-  // gününün yerel gün başını al, (gun-1) gün + saat saat ekle. Basitlik için
-  // baslangic UTC'sine göre hesaplıyoruz; kamp saatleri ±birkaç dk tolere edilir.
-  return baslangic.getTime() + (gun - 1) * 86_400_000 + saat * 3_600_000;
+  const tarih = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(baslangic);
+  const gunBasi = Date.parse(`${tarih}T00:00:00+03:00`);
+  return gunBasi + (gun - 1) * 86_400_000 + saat * 3_600_000;
 }
 
 /** Adlandırılmış fonksiyon eylemleri kaydı. Bilinmeyen ad → atlanır (loglanır).

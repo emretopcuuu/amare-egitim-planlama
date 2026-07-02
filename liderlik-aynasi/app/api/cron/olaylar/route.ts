@@ -5,8 +5,10 @@ import { bekleyenTaahhutler } from "@/lib/ilk72";
 import { katilimciyaBildir } from "@/lib/push";
 import { cesaretPushGonder } from "@/lib/cesaret";
 
-// Vercel Cron: her dakika çalışır, ateşlenecek scheduled_events'i işler.
-// CRON_SECRET env değişkeni yoksa da çalışır (Vercel cron Bearer ile çağırır).
+// Supabase pg_cron DAKİKADA BİR çağırır ('ayna-olaylar' job'u — bkz. migration
+// 0110; Netlify'da Vercel cron YOK, buradaki zamanlayıcı pg_cron'dur). İşler:
+// scheduled_events (dalga/rapor zamanlama) + E2 taahhut kişisel push'ları +
+// E5 cesaret fısıltısı push'ları. CRON_SECRET yoksa da çalışır.
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;
   if (secret) {
