@@ -419,6 +419,18 @@ export default async function AdminPanel() {
         <span className="shrink-0 text-sm font-medium text-gold-light">Hazırla →</span>
       </Link>
 
+      {/* [E8] Kamp İçi Kayıp Radarı — sessizleşenler + önerilen insan dokunuşu */}
+      <Link
+        href="/admin/kayip-radari"
+        className="flex items-center justify-between gap-4 rounded-2xl bg-midnight-card/60 px-5 py-4 ring-1 ring-royal/30 transition-colors hover:bg-midnight-card/80"
+      >
+        <div>
+          <p className="text-sm font-semibold text-slate-200">🛟 Kayıp Radarı</p>
+          <p className="mt-0.5 text-xs text-slate-400">Sessizleşenler + önerilen insan dokunuşu</p>
+        </div>
+        <span className="shrink-0 text-sm font-medium text-gold-light">Aç →</span>
+      </Link>
+
       {/* Sistem özeti — sorun varsa göster, yoksa yön gösterici. */}
       {tamYetki && ((bekleyenFoto ?? 0) > 0 || silmeBekleyen > 0) ? (
         <div className="flex flex-wrap gap-2">
