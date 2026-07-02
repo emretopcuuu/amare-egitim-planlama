@@ -57,6 +57,28 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
     altRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mesajlar, yaziyor]);
 
+  // iOS klavye düzeltmesi: klavye açılınca iOS Safari layout viewport'u
+  // KÜÇÜLTMEZ (100dvh sabit kalır) — yazı kutusu klavyenin arkasında
+  // kalabiliyordu. Görünür alan (visualViewport) değişince kabın yüksekliğini
+  // ona sabitle + en alta kaydır; klavye kapanınca normale dön.
+  const [kapYukseklik, setKapYukseklik] = useState<string | null>(null);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const guncelle = () => {
+      const klavyeAcik = vv.height < window.innerHeight - 60;
+      setKapYukseklik(
+        klavyeAcik ? `calc(${Math.round(vv.height)}px - env(safe-area-inset-top, 0px) - 3.5rem)` : null
+      );
+      if (klavyeAcik) {
+        window.scrollTo(0, 0); // iOS'un sayfayı kaydırmasını geri al
+        altRef.current?.scrollIntoView({ block: "end" });
+      }
+    };
+    vv.addEventListener("resize", guncelle);
+    return () => vv.removeEventListener("resize", guncelle);
+  }, []);
+
   useEffect(() => {
     const el = alanRef.current;
     if (!el) return;
@@ -131,7 +153,7 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
     // hesaplanan yükseklik kullanılır.
     <div
       className="flex flex-col"
-      style={{ height: "calc(100dvh - env(safe-area-inset-top, 0px) - 3.5rem)" }}
+      style={{ height: kapYukseklik ?? "calc(100dvh - env(safe-area-inset-top, 0px) - 3.5rem)" }}
     >
       <header className="sticky top-0 z-10 flex shrink-0 items-center gap-2 border-b border-white/10 bg-midnight/90 px-3 py-2.5 backdrop-blur">
         <Link
