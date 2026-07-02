@@ -2373,6 +2373,27 @@ export type Database = {
           },
         ]
       }
+      zirve_olcum: {
+        Row: {
+          created_at: string
+          kelime: string
+          participant_id: string
+          puan: number
+        }
+        Insert: {
+          created_at?: string
+          kelime: string
+          participant_id: string
+          puan: number
+        }
+        Update: {
+          created_at?: string
+          kelime?: string
+          participant_id?: string
+          puan?: number
+        }
+        Relationships: []
+      }
       waves: {
         Row: {
           closed_at: string | null
