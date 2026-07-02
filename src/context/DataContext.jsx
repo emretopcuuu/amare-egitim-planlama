@@ -219,6 +219,18 @@ export const DataProvider = ({ children }) => {
   // getDocs retry — merkezî sigortalı okuma katmanına delege (utils/guvenliVeri)
   const getDocsRetry = (ref) => guvenliGetDocs(ref);
 
+  // SON ÇARE: kendi domain'imiz üzerinden veri proxy'si.
+  // Bazı ISS'lerde firestore.googleapis.com çözümlenemiyor (IPv6/DNS arızası) —
+  // hem REST hem SDK aynı host'a gittiği için ikisi de ölüyor. Proxy, Netlify
+  // sunucusundan okur; istemci yalnız kendi sitemize bağlanır.
+  const proxyFetch = async (col) => {
+    const res = await fetch(`/.netlify/functions/veri-proxy?col=${encodeURIComponent(col)}`);
+    if (!res.ok) throw new Error(`proxy ${res.status}`);
+    const { docs } = await res.json();
+    if (!Array.isArray(docs)) throw new Error('proxy format');
+    return docs;
+  };
+
   // Tek doc full fetch (gorselUrl/fotoURL dahil)
   const fetchSingleDoc = async (collection, id) => {
     try {
@@ -261,25 +273,50 @@ export const DataProvider = ({ children }) => {
       lightTakvimData = takvimLight.value.map(t => ({ ...t, _light: true }));
       setTakvim(lightTakvimData);
     } else {
-      // REST light başarısız → SDK ile anında dene (takvim boş kalmasın)
-      console.warn('[loadData] takvim LIGHT başarısız, SDK fallback:', takvimLight.reason?.message);
+      // REST light başarısız → önce KENDİ domain proxy'miz (ISS googleapis kesse bile çalışır), sonra SDK
+      console.warn('[loadData] takvim LIGHT başarısız, fallback zinciri:', takvimLight.reason?.message);
       try {
-        const snap = await getDocsRetry(collection(db, 'takvim'));
-        lightTakvimData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        lightTakvimData = (await proxyFetch('takvim')).map(t => ({ ...t, _light: true }));
         if (lightTakvimData.length) setTakvim(lightTakvimData);
-      } catch (e) {
-        console.error('[loadData] takvim SDK fallback de başarısız:', e?.message);
-        try { (await import('../utils/sentry')).Sentry?.captureException?.(e, { tags: { yer: 'takvim-load-fallback' } }); } catch {}
+      } catch (pe) {
+        console.warn('[loadData] takvim proxy fallback başarısız, SDK deneniyor:', pe?.message);
+        try {
+          const snap = await getDocsRetry(collection(db, 'takvim'));
+          lightTakvimData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          if (lightTakvimData.length) setTakvim(lightTakvimData);
+        } catch (e) {
+          console.error('[loadData] takvim tüm fallback\'ler başarısız:', e?.message);
+          try { (await import('../utils/sentry')).Sentry?.captureException?.(e, { tags: { yer: 'takvim-load-fallback' } }); } catch {}
+        }
       }
     }
-    if (konusmacilarLight.status === 'fulfilled') {
+    const konusmacilarDedupe = (liste) => {
       const coreMap = new Map();
-      for (const k of konusmacilarLight.value) {
+      for (const k of liste) {
         const cid = makeCoreId(k.ad || k.id);
         if (!coreMap.has(cid)) coreMap.set(cid, { ...k, _light: true });
       }
-      lightKonusmacilarData = [...coreMap.values()];
+      return [...coreMap.values()];
+    };
+    if (konusmacilarLight.status === 'fulfilled') {
+      lightKonusmacilarData = konusmacilarDedupe(konusmacilarLight.value);
       setKonusmacilar(lightKonusmacilarData);
+    } else {
+      // REST başarısız → proxy → SDK (konuşmacılar/lider sayfaları boş kalmasın)
+      console.warn('[loadData] konuşmacılar LIGHT başarısız, fallback zinciri:', konusmacilarLight.reason?.message);
+      try {
+        lightKonusmacilarData = konusmacilarDedupe(await proxyFetch('konusmacilar'));
+        if (lightKonusmacilarData.length) setKonusmacilar(lightKonusmacilarData);
+      } catch (pe) {
+        try {
+          const snap = await getDocsRetry(collection(db, 'konusmacilar'));
+          lightKonusmacilarData = konusmacilarDedupe(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+          if (lightKonusmacilarData.length) setKonusmacilar(lightKonusmacilarData);
+        } catch (e) {
+          console.error('[loadData] konuşmacılar tüm fallback\'ler başarısız:', e?.message);
+          try { (await import('../utils/sentry')).Sentry?.captureException?.(e, { tags: { yer: 'konusmacilar-load-fallback' } }); } catch {}
+        }
+      }
     }
     if (settingsResult.status === 'fulfilled') {
       const snap = settingsResult.value;

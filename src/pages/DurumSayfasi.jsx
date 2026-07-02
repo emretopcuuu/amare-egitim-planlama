@@ -15,6 +15,13 @@ const KONTROLLER = [
     },
   },
   {
+    key: 'proxy', ad: 'Veri Proxy (kendi sunucumuz)', desc: 'Veritabanına doğrudan erişilemezse devreye giren yedek yol',
+    test: async () => {
+      const r = await fetch('/.netlify/functions/veri-proxy?col=settings');
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    },
+  },
+  {
     key: 'functions', ad: 'Backend (Netlify Functions)', desc: 'Formlar, bildirimler, kısa linkler',
     test: async () => {
       // kisalt fonksiyonu geçersiz kodda bile cevap verir — 5xx değilse ayakta

@@ -359,6 +359,20 @@ const KayitliEgitimlerSayfasi = () => {
           if (i < 2) await new Promise(r => setTimeout(r, 600 * (i + 1)));
         }
       }
+      // SDK 3 denemede de başarısız → kendi domain proxy'miz (ISS googleapis'i kesse bile çalışır)
+      try {
+        const res = await fetch('/.netlify/functions/veri-proxy?col=kayitli');
+        if (!res.ok) throw new Error(`proxy ${res.status}`);
+        const { docs } = await res.json();
+        if (Array.isArray(docs) && docs.length) {
+          const data = docs.map(v => ({ ...v, dil: detectDil(v) }));
+          setTumVideolar(data);
+          setYuklemeHatasi(false);
+          try { localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: Date.now(), data })); } catch {}
+          setLoading(false);
+          return;
+        }
+      } catch (pe) { console.warn('[kayitli_egitimler] proxy fallback da başarısız:', pe?.message); }
       console.error('[kayitli_egitimler] fetch 3 denemede de başarısız:', sonHata?.message);
       try { (await import('../utils/sentry')).Sentry?.captureException?.(sonHata, { tags: { yer: 'kayitli-egitimler-load' } }); } catch {}
       setYuklemeHatasi(true); // mevcut (cache) veriyi EZME, hatayı işaretle
