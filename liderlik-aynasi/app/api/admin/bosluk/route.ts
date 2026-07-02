@@ -13,13 +13,14 @@ export async function GET() {
   if (!session) return NextResponse.json({ hata: "Yetkisiz" }, { status: 401 });
 
   const db = supabaseAdmin();
-  const [parts, rcmt, mcmt, kud, bos, ayar] = await Promise.all([
+  const [parts, rcmt, mcmt, kud, bos, ayar, kanitAyar] = await Promise.all([
     db.from("participants").select("id").eq("role", "participant"),
     db.from("ratings").select("target_id").eq("is_hidden", false).not("comment", "is", null),
     db.from("missions").select("participant_id").not("ai_comment", "is", null),
     db.from("kudos").select("to_id").eq("is_hidden", false),
     db.from("bosluk_ani").select("participant_id").not("yeni_cumle", "is", null),
     db.from("settings").select("value").eq("key", "bosluk_acik").maybeSingle(),
+    db.from("settings").select("value").eq("key", "kanit_garantisi_acik").maybeSingle(),
   ]);
 
   const say = new Map<string, number>();
@@ -33,6 +34,7 @@ export async function GET() {
 
   return NextResponse.json({
     acik: ayar.data?.value === "true",
+    kanitGarantisi: kanitAyar.data?.value === "true",
     toplam: ids.length,
     tamam: (bos.data ?? []).length,
     kanitsiz,
@@ -44,10 +46,23 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ hata: "Yetkisiz" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
+  const db = supabaseAdmin();
+
+  // Kanıt Garantisi bayrağı (varsayılan kapalı): açıkken tik Gün 2 akşamı (21:00)
+  // kanıtsızları tespit edip akranlara gözlem görevi verir.
+  if (typeof body?.kanitGarantisi === "boolean") {
+    const { error } = await db.from("settings").upsert(
+      { key: "kanit_garantisi_acik", value: body.kanitGarantisi ? "true" : "false", updated_at: new Date().toISOString() },
+      { onConflict: "key" }
+    );
+    if (error) return NextResponse.json({ hata: error.message }, { status: 500 });
+    await yazAuditLog(db, session.sub, body.kanitGarantisi ? "kanit_garantisi_acildi" : "kanit_garantisi_kapatildi", {}, req);
+    return NextResponse.json({ tamam: true });
+  }
+
   if (typeof body?.acik !== "boolean") {
     return NextResponse.json({ hata: "Geçersiz" }, { status: 400 });
   }
-  const db = supabaseAdmin();
   const { error } = await db.from("settings").upsert(
     { key: "bosluk_acik", value: body.acik ? "true" : "false", updated_at: new Date().toISOString() },
     { onConflict: "key" }

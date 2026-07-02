@@ -42,6 +42,7 @@ import {
   gunProgrami,
   dakikaCevir,
   suankiMadde,
+  yaklasanEtkinlik,
   sahneSessizMi,
   sabahPenceresiMi,
   kampSenkronAnahtari,
@@ -51,6 +52,7 @@ import {
   aynaAniMetni,
 } from "../lib/kampProgrami";
 import { kampOncesiAdim, type AkisDurum } from "../lib/akis";
+import { GARANTILI_GOREVLER, siradakiGarantiliGorev } from "../lib/garantiliGorevler";
 import {
   KARIYER_BASAMAKLARI,
   GUNLUK_SAAT_SECENEKLERI,
@@ -584,6 +586,11 @@ console.log("\n■ 8) KAMP PROGRAMI — Sapanca akışı ve zaman pencereleri");
   iddia(!sabahPenceresiMi(2, 6, 39) && sabahPenceresiMi(2, 6, 40), "Gün 2 sabah penceresi 06:40'ta açılır");
   iddia(sabahPenceresiMi(2, 7, 59) && !sabahPenceresiMi(2, 8, 0), "Gün 2 penceresi 08:00'de kapanır");
   iddia(sabahPenceresiMi(3, 7, 0) && sabahPenceresiMi(3, 8, 59) && !sabahPenceresiMi(3, 9, 0), "Gün 3 penceresi 07:00-08:59");
+
+  // Program hatırlatması: yaklaşan deneyimsel etkinlik (≤12 dk), nötr bloklar hariç
+  iddia(yaklasanEtkinlik(1, dakikaCevir("20:50"), 12)?.tur === "sahne", "Gün 1 20:50 → 21:00 sahne açılışını 10 dk kala yakalar");
+  iddia(yaklasanEtkinlik(1, dakikaCevir("20:45"), 12) === null, "Gün 1 20:45 → 15 dk kala pencere dışı (null)");
+  iddia(yaklasanEtkinlik(1, dakikaCevir("12:50"), 12) === null, "Gün 1 12:50 → yaklaşan yemek hatırlatılmaz (null)");
   iddia(!sabahPenceresiMi(1, 7, 30), "Gün 1 sabah yoklaması yok");
 
   // Görev türü etkinlik yanlılığı: oyun saatinde gözlem, molada yansıma artar
@@ -637,35 +644,77 @@ console.log("\n■ 8) KAMP PROGRAMI — Sapanca akışı ve zaman pencereleri");
 }
 
 // ---------------------------------------------------------------
+// ---------------------------------------------------------------
+console.log("\n■ 8c) GARANTİLİ GÖREVLER — kamp boyunca herkese tam bir kez, sırayla");
+{
+  const verilen = new Set<string>();
+  // Hiç verilmemiş → liste sırasıyla ilk görev gelir, hepsi farklı.
+  for (let i = 0; i < GARANTILI_GOREVLER.length; i++) {
+    const g = siradakiGarantiliGorev(verilen);
+    iddia(g !== null, `garantili görev ${i + 1} verilebilir`);
+    iddia(g!.kod === GARANTILI_GOREVLER[i].kod, `garantili görevler liste sırasıyla verilir (#${i + 1})`);
+    verilen.add(g!.kod);
+  }
+  // Hepsi verildiyse artık null (aynı kişiye iki kez gitmez).
+  iddia(siradakiGarantiliGorev(verilen) === null, "tüm garantili görevler verilince tekrar verilmez");
+  // Kodlar tekil (çift kayıt/karışıklık olmasın).
+  const kodlar = GARANTILI_GOREVLER.map((g) => g.kod);
+  iddia(new Set(kodlar).size === kodlar.length, "garantili görev kodları tekil");
+}
+
+// ---------------------------------------------------------------
 console.log("\n■ 9) FAZ A AKIŞ SIRASI — kamp öncesi onboarding kapıları");
 // ---------------------------------------------------------------
 {
   // Tüm pencereler açık, kişi sıfırdan başlıyor: her aşamada doğru sonraki adım.
   const taban: AkisDurum = {
+    rizaVar: true, // KVKK/hazırlık rızası verilmiş varsay — diğer kapı testleri bozulmasın
+    sesSecildi: true, // AYNA sesi seçilmiş varsay — diğer kapı testleri bozulmasın
     sesVar: false,
     team: null,
     campUnlocked: false,
+    degerlerTamam: true, // değerler adımı varsayılan "bitti" — diğer kapı testleri bozulmasın
     pusulaTamam: false,
     hedefTamam: false,
     ofTamam: false,
     oyunSecimiAcik: true,
+    degerlerAcik: true,
     pusulaAcik: true,
     onFarkindalikAcik: true,
     kampIciHedefKapisi: false,
   };
 
-  // 1) Ses ritüeli her şeyden önce gelir.
-  iddia(kampOncesiAdim(taban).tip === "rituel", "ses kaydı yokken ritüel gösterilir");
+  // 0) KVKK/hazırlık rızası yoksa her şeyden önce hazırlık ekranı gelir.
+  iddia(
+    kampOncesiAdim({ ...taban, rizaVar: false }).tip === "hazirlik",
+    "rıza yokken kutsal-alan hazırlık ekranı gösterilir"
+  );
+
+  // 0b) Rıza var ama AYNA sesi henüz seçilmemişse ritüelden önce ses seçimi gelir.
+  iddia(
+    kampOncesiAdim({ ...taban, sesSecildi: false }).tip === "sesSecimi",
+    "rıza sonrası ses seçilmemişse ses seçimi ekranı gösterilir"
+  );
+
+  // 1) Ses ritüeli rıza + ses seçiminden sonra gelir.
+  iddia(kampOncesiAdim(taban).tip === "rituel", "ses seçimi sonrası ses kaydı yokken ritüel gösterilir");
 
   // 2) Ses bitti → oyun seçimi (grup yok).
   const sesli = { ...taban, sesVar: true };
   const a2 = kampOncesiAdim(sesli);
   iddia(a2.tip === "yonlendir" && a2.yol === "/oyun-secimi", "ses sonrası oyun seçimine gider");
 
-  // 3) Grup atandı → pusula.
+  // 2b) ★ Değerler çalışması Pusula'daki nedenlerden ÖNCE gelir.
+  const degersiz = kampOncesiAdim({ ...sesli, team: "Kartallar", degerlerTamam: false });
+  iddia(
+    degersiz.tip === "yonlendir" && degersiz.yol === "/degerler",
+    "grup sonrası önce değerler çalışmasına gider"
+  );
+
+  // 3) Grup atandı + değerler bitti → pusula.
   const gruplu = { ...sesli, team: "Kartallar" };
   const a3 = kampOncesiAdim(gruplu);
-  iddia(a3.tip === "yonlendir" && a3.yol === "/pusula", "grup sonrası pusulaya gider");
+  iddia(a3.tip === "yonlendir" && a3.yol === "/pusula", "değerler sonrası pusulaya gider");
 
   // 3b) ★ KRİTİK: pusula (neden keşfi) biter bitmez HEDEF gelir — ön farkındalıktan ÖNCE.
   const pusulali = { ...gruplu, pusulaTamam: true };
@@ -709,6 +758,7 @@ console.log("\n■ 9) FAZ A AKIŞ SIRASI — kamp öncesi onboarding kapıları"
     sesVar: true,
     team: "Kartallar",
     oyunSecimiAcik: false,
+    degerlerAcik: false,
     pusulaAcik: false,
     onFarkindalikAcik: false,
   };
@@ -730,20 +780,54 @@ console.log("\n■ 9) FAZ A AKIŞ SIRASI — kamp öncesi onboarding kapıları"
     "pusula tamamsa hedef, pusula_acik bayrağından bağımsız devreye girer"
   );
 
-  // Kamp açıldıysa pusula yarım bile olsa kamp öncesi kapı kişiyi geri çekmez.
-  const yarimAmaKampta: AkisDurum = {
+  // ★ ZORUNLU ONBOARDING: kamp açık/girilmiş olsa BİLE (sonradan katılan dahil)
+  // onboarding tamamlanmadan kampa girilemez — her aşama zorla yaptırılır.
+  const kamptaPusulaYarim: AkisDurum = {
     ...taban,
     sesVar: true,
     team: "Kartallar",
     campUnlocked: true,
     pusulaTamam: false,
   };
+  const aZ1 = kampOncesiAdim(kamptaPusulaYarim);
   iddia(
-    kampOncesiAdim(yarimAmaKampta).tip === "devam",
-    "kamp açıldıysa yarım pusula kişiyi geri çekmez"
+    aZ1.tip === "yonlendir" && aZ1.yol === "/pusula",
+    "kamp açık olsa bile pusula yapılmadan kampa girilemez (zorunlu onboarding)"
   );
 
-  console.log("  Akış sırası: ses → oyun → pusula → HEDEF → ön farkındalık → mühür → kamp doğrulandı");
+  const kamptaHedefYarim: AkisDurum = {
+    ...kamptaPusulaYarim,
+    pusulaTamam: true,
+    hedefTamam: false,
+  };
+  const aZ2 = kampOncesiAdim(kamptaHedefYarim);
+  iddia(
+    aZ2.tip === "yonlendir" && aZ2.yol === "/hedef",
+    "kamp açık olsa bile hedef yapılmadan kampa girilemez"
+  );
+
+  const kamptaOfYarim: AkisDurum = {
+    ...kamptaHedefYarim,
+    hedefTamam: true,
+    ofTamam: false,
+  };
+  const aZ3 = kampOncesiAdim(kamptaOfYarim);
+  iddia(
+    aZ3.tip === "yonlendir" && aZ3.yol === "/on-farkindalik",
+    "kamp açık olsa bile ön farkındalık yapılmadan kampa girilemez"
+  );
+
+  // Onboarding'in TAMAMI bitmiş + kampa girmiş kişi normal akışa devam eder.
+  const kamptaHepsiTamam: AkisDurum = {
+    ...kamptaOfYarim,
+    ofTamam: true,
+  };
+  iddia(
+    kampOncesiAdim(kamptaHepsiTamam).tip === "devam",
+    "onboarding'in tamamı bitince kampa girmiş kişi normal akışa devam eder"
+  );
+
+  console.log("  Akış sırası: ses → oyun → pusula → HEDEF → ön farkındalık → mühür → kamp (ZORUNLU) doğrulandı");
 }
 
 // ---------------------------------------------------------------

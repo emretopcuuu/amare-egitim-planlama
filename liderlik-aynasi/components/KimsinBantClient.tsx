@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
+import YaziBoyu from "./YaziBoyu";
+import TemaSecimi from "./TemaSecimi";
+import SesSecimiEkrani from "./SesSecimiEkrani";
 
 // Üst-orta kimlik çipi + YARDIM. Çip her zaman en tepede sabit durur; ALTINDAKİ
 // boşluk gerçek yüksekliği kadar yer ayırır (sayfa onun altından başlar, çakışma
@@ -37,13 +41,20 @@ export default function KimsinBantClient({
   avatarUrl,
   ilkHarf,
   okunmamis = 0,
+  aynaSes = "erkek",
 }: {
   ad: string;
   avatarUrl: string | null;
   ilkHarf: string;
   okunmamis?: number;
+  aynaSes?: "erkek" | "kadin";
 }) {
   const [acik, setAcik] = useState(false);
+  const [ayarlarAcik, setAyarlarAcik] = useState(false);
+  const [sesDegistirAcik, setSesDegistirAcik] = useState(false);
+  // KIOSK: büyük ekran/sahne rotalarında kimlik çipi görünmez (sahne kromsuz).
+  const pathname = usePathname();
+  const kiosk = pathname === "/ekran" || pathname.startsWith("/ekran/") || pathname.startsWith("/sahne");
 
   // CANLI ROZET: okunmamış sayısını periyodik + sekme/uygulama öne gelince yokla
   // (sayfa yenilemeden güncellensin). Başlangıç sunucudan gelen değer.
@@ -73,6 +84,8 @@ export default function KimsinBantClient({
     };
   }, []);
 
+  if (kiosk) return null;
+
   return (
     <>
       {/* Akışta yer kaplayan boşluk — çip içeriği örtmesin (gerçek yükseklik). */}
@@ -82,10 +95,15 @@ export default function KimsinBantClient({
         style={{ height: "calc(env(safe-area-inset-top, 0px) + 3.5rem)" }}
       />
       <div
-        className="fixed inset-x-0 z-50 flex justify-center px-4 print:hidden"
+        // pointer-events-none: bu şerit inset-x-0 ile TAM EKRAN GENİŞLİĞİNDE
+        // görünmez bir kutu — z-50 olduğu için altındaki sayfaların kendi
+        // başlıklarındaki (ör. Ayna Koçu'nun "←" geri butonu) dokunuşları
+        // yutuyordu (buton orada görünmese de kutunun sınırları içindeydi).
+        // İçerideki gerçek çip/zil/dişli pointer-events-auto ile geri açılır.
+        className="kimsin-bant pointer-events-none fixed inset-x-0 z-50 flex justify-center px-4 print:hidden"
         style={{ top: "max(0.5rem, env(safe-area-inset-top, 0px))" }}
       >
-        <div className="flex items-center gap-1.5">
+        <div className="pointer-events-auto flex items-center gap-1.5">
           <div className="relative">
           {/* Çip = yardım tetikleyici. Dokununca SSS açılır. */}
           <button
@@ -159,7 +177,7 @@ export default function KimsinBantClient({
           )}
           </div>
 
-          {/* Zil — bildirim gelen kutusu; okunmamış sayısı rozette (soru işaretinin yanında) */}
+          {/* Zil — bildirim gelen kutusu */}
           <Link
             href="/bildirimler"
             aria-label={`Bildirimler${sayi > 0 ? ` (${sayi} okunmamış)` : ""}`}
@@ -182,8 +200,119 @@ export default function KimsinBantClient({
               </span>
             )}
           </Link>
+
+          {/* Dişli — görünüm ayarları (yazı boyu + tema) */}
+          <button
+            onClick={() => setAyarlarAcik(true)}
+            aria-label="Görünüm ayarları"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gold/30 bg-midnight-card/90 text-slate-200 shadow-lg backdrop-blur-md transition-colors hover:border-gold/50"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={1.8}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-[1.05rem] w-[1.05rem]"
+              aria-hidden
+            >
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
+            </svg>
+          </button>
         </div>
       </div>
+
+      {/* Görünüm ayarları çekmecesi */}
+      {ayarlarAcik && (
+        <>
+          <button
+            aria-label="Kapat"
+            onClick={() => setAyarlarAcik(false)}
+            className="fixed inset-0 z-40 cursor-default bg-black/50"
+          />
+          <div
+            role="dialog"
+            aria-label="Görünüm ayarları"
+            className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-3xl border border-white/10 bg-[#1a1035] px-5 pb-8 pt-4 sm:bottom-4 sm:rounded-3xl"
+          >
+            <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
+            <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+              Görünüm
+            </p>
+            <div className="space-y-3">
+              <YaziBoyu />
+              <TemaSecimi />
+            </div>
+
+            {/* Ayna Sesi — kişi istediği an erkek/kadın tercihini değiştirebilir. */}
+            <div className="mt-5 border-t border-white/10 pt-4">
+              <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+                Aynanın Sesi
+              </p>
+              <button
+                onClick={() => setSesDegistirAcik(true)}
+                className="flex w-full items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3 text-sm text-slate-200 transition-colors hover:bg-white/[0.06]"
+              >
+                <span>🔊 Şu an: {aynaSes === "kadin" ? "Kadın ses" : "Erkek ses"} — değiştir</span>
+                <span aria-hidden className="text-slate-500">›</span>
+              </button>
+            </div>
+
+            {/* KVKK / Gizlilik — verilerine hâkim ol: dilediğin an çık ya da sil. */}
+            <div className="mt-5 border-t border-white/10 pt-4">
+              <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+                Gizlilik ve Verilerim
+              </p>
+              <Link
+                href="/gizlilik"
+                onClick={() => setAyarlarAcik(false)}
+                className="flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3 text-sm text-slate-200 transition-colors hover:bg-white/[0.06]"
+              >
+                <span>🛡️ KVKK · Verilerimi görüntüle / sil</span>
+                <span aria-hidden className="text-slate-500">›</span>
+              </Link>
+              <a
+                href="/api/cikis"
+                className="mt-2 flex items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3 text-sm text-slate-300 transition-colors hover:bg-red-500/10 hover:text-red-300"
+              >
+                <span>🚪 Çıkış yap</span>
+                <span aria-hidden className="text-slate-500">›</span>
+              </a>
+            </div>
+
+            <button
+              onClick={() => setAyarlarAcik(false)}
+              className="mt-4 w-full rounded-xl py-3 text-sm text-slate-400 transition-colors hover:text-slate-200"
+            >
+              Kapat
+            </button>
+          </div>
+        </>
+      )}
+
+      {/* Ayna sesi değiştirme alt-modalı */}
+      {sesDegistirAcik && (
+        <>
+          <button
+            aria-label="Kapat"
+            onClick={() => setSesDegistirAcik(false)}
+            className="fixed inset-0 z-[60] cursor-default bg-black/60"
+          />
+          <div
+            role="dialog"
+            aria-label="Aynanın sesini değiştir"
+            className="fixed left-1/2 top-1/2 z-[61] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/10 bg-[#1a1035] py-6"
+          >
+            <SesSecimiEkrani
+              mevcutSes={aynaSes}
+              ayarModu
+              onKapat={() => setSesDegistirAcik(false)}
+            />
+          </div>
+        </>
+      )}
     </>
   );
 }

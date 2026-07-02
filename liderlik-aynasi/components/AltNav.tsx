@@ -86,7 +86,7 @@ const SEKMELER: { href: string; ikon: IkonAd; etiket: string }[] = [
 // Bu önekler katılımcı deneyimi değil (admin/büyük ekran/tam ekran) — çubuk yok.
 // /pusula tam ekran FAZ 0 akışıdır (Nedenler + "kampta görüşürüz" beklemesi);
 // kamp açılmadan görev/değerlendirme sekmeleri görünmesin.
-const GIZLI = ["/giris", "/admin", "/ekran", "/sahne", "/yansiman", "/pusula", "/on-farkindalik", "/hedef", "/sozum", "/takip", "/sahitlik", "/mini360", "/ayna-esi", "/kocu"];
+const GIZLI = ["/giris", "/admin", "/ekran", "/sahne", "/yansiman", "/pusula", "/degerler", "/on-farkindalik", "/hedef", "/sozum", "/takip", "/sahitlik", "/mini360", "/ayna-esi", "/kocu", "/grup/sohbet"];
 
 type Kivilcim = {
   toplam: number;
@@ -137,12 +137,10 @@ export default function AltNav() {
   useEffect(() => {
     if (gizli) return;
     let sonY = -1;
-    function onScroll(e: Event) {
-      const hedef = e.target as HTMLElement | Document;
-      const y =
-        hedef === document || hedef === (document.scrollingElement as unknown)
-          ? window.scrollY
-          : (hedef as HTMLElement).scrollTop ?? window.scrollY;
+    let bekleyen = false;
+    // Scroll her karede onlarca kez tetiklenir; setKompakt'ı rAF'a sıkıştır →
+    // ana iş parçacığı dokunuşa daha hızlı yanıt verir (akış pürüzsüzleşir).
+    function isle(y: number) {
       if (sonY < 0) {
         sonY = y;
         return;
@@ -150,6 +148,19 @@ export default function AltNav() {
       if (y > sonY + 8 && y > 56) setKompakt(true); // aşağı → küçül
       else if (y < sonY - 8) setKompakt(false); // yukarı → büyü
       sonY = y;
+    }
+    function onScroll(e: Event) {
+      const hedef = e.target as HTMLElement | Document;
+      const y =
+        hedef === document || hedef === (document.scrollingElement as unknown)
+          ? window.scrollY
+          : (hedef as HTMLElement).scrollTop ?? window.scrollY;
+      if (bekleyen) return;
+      bekleyen = true;
+      requestAnimationFrame(() => {
+        bekleyen = false;
+        isle(y);
+      });
     }
     window.addEventListener("scroll", onScroll, { capture: true, passive: true });
     return () => window.removeEventListener("scroll", onScroll, { capture: true } as EventListenerOptions);
@@ -172,7 +183,7 @@ export default function AltNav() {
 
   return (
     <div
-      className="fixed inset-x-0 z-40 flex flex-col items-center gap-2 px-3 print:hidden"
+      className="alt-nav fixed inset-x-0 z-40 flex flex-col items-center gap-2 px-3 print:hidden"
       style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 0.55rem)" }}
     >
       {/* Bekleyen görev dürtüsü — kapsülün üstünde yüzen küçük pill */}

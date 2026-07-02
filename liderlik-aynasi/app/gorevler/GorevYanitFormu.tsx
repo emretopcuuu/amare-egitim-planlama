@@ -31,6 +31,9 @@ type Sonuc = {
   soz?: boolean;
   senkron?: boolean;
   bekliyor?: boolean;
+  // FAZ 6.2 — Fiero sahnesi: bu görevin çalıştırdığı kas + kaçıncı kez.
+  kasSayaci?: { ad: string; kez: number };
+  altin?: boolean;
 };
 
 // Görev yanıtı: gönderim AYNA'nın anlık puanını bekler (5-15 sn) —
@@ -38,12 +41,10 @@ type Sonuc = {
 export default function GorevYanitFormu({
   gorevId,
   gorevBaslik,
-  ekip = [],
   baslangicYanit = "",
 }: {
   gorevId: string;
   gorevBaslik?: string;
-  ekip?: { id: string; ad: string }[];
   baslangicYanit?: string; // "geliştir ve yeniden gönder"de önceki yanıtla doldur
 }) {
   const router = useRouter();
@@ -195,11 +196,34 @@ export default function GorevYanitFormu({
             {sonuc.yorum && (
               <p className="mt-3 text-sm leading-relaxed text-amber-200">{sonuc.yorum}</p>
             )}
+            {/* Limbo çıkışı: puanlama düştüyse (202) kişi elle tekrar gönderebilir —
+                sunucu artık "submitted" görevi yeniden kabul ediyor. */}
+            <button
+              type="button"
+              onClick={() => void sunucuyaGonder(yanit)}
+              disabled={gonderiliyor}
+              className="mt-4 rounded-xl border border-gold/40 px-4 py-2 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-50"
+            >
+              {gonderiliyor ? t.gonderiliyor : t.bekliyorTekrar}
+            </button>
           </>
         ) : (
           <>
+            {/* FAZ 6.2 — altın görev tamamlandıysa sahnenin başında parlar */}
+            {sonuc.altin && (
+              <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-gold/30 px-3 py-1 text-xs font-bold uppercase tracking-widest text-gold-light ring-1 ring-gold/50">
+                ⚡ Altın Görev · 3× kıvılcım
+              </p>
+            )}
             {sonuc.puan !== undefined && <PuanAcilisi puan={sonuc.puan} />}
             {sonuc.kivilcim !== undefined && <KivilcimSayac kazanim={sonuc.kivilcim} />}
+            {/* FAZ 6.2 — kas ilerleme halkası: "bu görevle X kasın N. kez çalıştı" */}
+            {sonuc.kasSayaci && (
+              <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-royal-light/30 bg-royal/15 px-4 py-1.5 text-sm font-medium text-royal-light">
+                <span aria-hidden>💪</span>
+                Bu görevle <b className="text-slate-100">{sonuc.kasSayaci.ad}</b> kasın bu kampta {sonuc.kasSayaci.kez}. kez çalıştı
+              </p>
+            )}
             {sonuc.yorum && (
               <div className="mt-3 text-left">
                 <AynaBalon baslik="AYNA">{sonuc.yorum}</AynaBalon>
@@ -222,10 +246,6 @@ export default function GorevYanitFormu({
         {/* #1 Yansıma Kapanışı: görülen içgörü — foto kanıtından önce gelir */}
         {!sonuc.bekliyor && !sonuc.soz && !sonuc.senkron && (
           <YansimaKapanisi gorevId={gorevId} />
-        )}
-        {/* #5 Tanık göster: görevi yanında gören ekip arkadaşını çağır */}
-        {!sonuc.bekliyor && !sonuc.soz && !sonuc.senkron && ekip.length > 0 && (
-          <TanikGoster gorevId={gorevId} ekip={ekip} />
         )}
         {/* #4 Kanıt Duvarı: görevi foto kanıtıyla kapat → duvara taşı */}
         {!sonuc.bekliyor && !sonuc.soz && <KanitEkle gorevBaslik={gorevBaslik} />}
@@ -278,9 +298,16 @@ export default function GorevYanitFormu({
           </div>
         </div>
       )}
-      {/* #9 Akıllı ipucu: yazının uzunluğuna göre nazik yönlendirme */}
+      {/* #9 Akıllı ipucu: yazının uzunluğuna göre nazik yönlendirme.
+          İSTİSNA: soru sayısal bir cevap istiyorsa ("kaç kişi…?") ya da yazılan
+          zaten sayısalsa (örn. "5") kısa diye uyarma — doğru cevabı eleştirmiş
+          oluyordu. */}
       {(() => {
-        const n = yanit.trim().length;
+        const yaziTemiz = yanit.trim();
+        const n = yaziTemiz.length;
+        const sayisalCevap = /^\d+([.,]\d+)?\s*%?$/.test(yaziTemiz);
+        const sayisalSoru = gorevBaslik ? /\bkaç\b/i.test(gorevBaslik) : false;
+        if (sayisalCevap || sayisalSoru) return null;
         if (n >= 2 && n < 25)
           return <p className="mt-2 text-xs text-amber-300/90">{t.ipucuKisa}</p>;
         if (n >= 60)
@@ -417,72 +444,6 @@ function YansimaKapanisi({ gorevId }: { gorevId: string }) {
       >
         {t.yansimaAtla}
       </button>
-    </div>
-  );
-}
-
-// #5 Tanık göster: görevi yanında gören bir ekip arkadaşını seç → ona bildirim
-// gider, tek cümlelik gözlemini bırakır (adaya anonim görünür).
-function TanikGoster({
-  gorevId,
-  ekip,
-}: {
-  gorevId: string;
-  ekip: { id: string; ad: string }[];
-}) {
-  const [secili, setSecili] = useState("");
-  const [gonderiliyor, setGonderiliyor] = useState(false);
-  const [bitti, setBitti] = useState(false);
-
-  async function gonder() {
-    if (!secili || gonderiliyor) return;
-    setGonderiliyor(true);
-    try {
-      const res = await fetch("/api/gorev-tanik", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ gorevId, tanikId: secili }),
-      });
-      if (res.ok) {
-        titret([10, 30, 10]);
-        setBitti(true);
-      }
-    } catch {
-    } finally {
-      setGonderiliyor(false);
-    }
-  }
-
-  if (bitti) {
-    return <p className="mt-3 text-xs font-medium text-emerald-400">{t.tanikGonderildi}</p>;
-  }
-  return (
-    <div className="mt-3 rounded-xl border border-royal-light/25 bg-midnight/40 p-3 text-left">
-      <p className="text-sm font-semibold text-slate-100">{t.tanikGosterBaslik}</p>
-      <p className="mt-0.5 text-xs leading-relaxed text-slate-400">{t.tanikGosterAciklama}</p>
-      <div className="mt-2 flex gap-2">
-        <select
-          value={secili}
-          onChange={(e) => setSecili(e.target.value)}
-          disabled={gonderiliyor}
-          className="h-11 flex-1 rounded-xl border border-royal-light/30 bg-midnight-soft px-3 text-sm text-slate-100 outline-none focus:border-gold"
-        >
-          <option value="">{t.tanikSec}</option>
-          {ekip.map((k) => (
-            <option key={k.id} value={k.id}>
-              {k.ad}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={gonder}
-          disabled={!secili || gonderiliyor}
-          className="h-11 shrink-0 rounded-xl border border-gold/40 px-4 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/10 disabled:opacity-40"
-        >
-          {gonderiliyor ? t.tanikGonderiliyor : t.tanikGonder}
-        </button>
-      </div>
     </div>
   );
 }

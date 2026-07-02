@@ -13,7 +13,7 @@ export default async function KimsinBant() {
   const db = supabaseAdmin();
   const { data: kisi } = await db
     .from("participants")
-    .select("full_name, profil_foto_path")
+    .select("full_name, profil_foto_path, ayna_ses")
     .eq("id", session.sub)
     .maybeSingle();
 
@@ -36,6 +36,7 @@ export default async function KimsinBant() {
       avatarUrl={avatarUrl}
       ilkHarf={ilkHarf}
       okunmamis={okunmamis}
+      aynaSes={kisi.ayna_ses === "kadin" ? "kadin" : "erkek"}
     />
   );
 }

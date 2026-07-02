@@ -30,6 +30,8 @@ export type GecmisGorev = {
   trait_id: number | null;
   gozlem: string | null;
   response_text: string | null;
+  neden: string | null;
+  fayda: string | null;
 };
 
 type Filtre = "tum" | "yuksek" | "kacan";
@@ -223,47 +225,72 @@ export default function GorevGecmisi({
                               </span>
                             )}
                           </div>
-                          <p className="mt-1.5 text-sm font-medium text-slate-100">{g.title}</p>
-                          {/* A2: çalıştırılan liderlik kası */}
-                          {g.trait_id != null && ozellikAd[g.trait_id] && (
-                            <p className="mt-1 text-xs text-royal-light/80">
-                              💪 {ozellikAd[g.trait_id]}
-                            </p>
-                          )}
-                          {g.ai_comment && (
-                            <p className="mt-2 rounded-xl bg-midnight-soft p-3 text-sm italic text-slate-300">
-                              “{g.ai_comment}”
-                            </p>
-                          )}
-                          {g.gozlem && (
-                            <p className="mt-2 rounded-xl border border-royal-light/25 bg-midnight/40 p-3 text-sm text-slate-200">
-                              <span className="mr-1 text-xs font-semibold text-royal-light">
-                                {t.tanikGelenEtiket}
-                              </span>
-                              “{g.gozlem}”
-                            </p>
-                          )}
-                          {/* Geliştir ve yeniden gönder — puanı artırmak için aynı görevi
-                              tekrar dene (söz/senkron hariç puanlanmış görevler). */}
-                          {g.status === "scored" && g.kind !== "soz" && g.kind !== "senkron" && (
-                            gelistirId === g.id ? (
-                              <div className="mt-3">
-                                <GorevYanitFormu
-                                  gorevId={g.id}
-                                  gorevBaslik={g.title}
-                                  baslangicYanit={g.response_text ?? ""}
-                                />
-                              </div>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => setGelistirId(g.id)}
-                                className="mt-3 w-full text-center text-xs font-medium text-gold-light/80 underline-offset-4 transition-colors hover:text-gold-light"
+                          {/* Katılımcı isteği: kart kapalı gelsin, dokununca detaylar
+                              (neden/fayda/yorum/gözlem) açılsın — başlık her zaman görünür. */}
+                          <details className="group mt-1.5">
+                            <summary className="flex cursor-pointer list-none items-center justify-between gap-2">
+                              <span className="text-sm font-medium text-slate-100">{g.title}</span>
+                              <span
+                                className="shrink-0 text-slate-500 transition-transform group-open:rotate-180"
+                                aria-hidden
                               >
-                                🔁 {t.gelistirYeniden}
-                              </button>
-                            )
-                          )}
+                                ▾
+                              </span>
+                            </summary>
+                            <div className="mt-1.5 space-y-1.5">
+                              {/* A2: çalıştırılan liderlik kası */}
+                              {g.trait_id != null && ozellikAd[g.trait_id] && (
+                                <p className="text-xs text-royal-light/80">💪 {ozellikAd[g.trait_id]}</p>
+                              )}
+                              {/* Neden sen + fayda: geçmişte de görünür kalır (süre geçse de anlam kaybolmaz) */}
+                              {g.neden && (
+                                <div className="rounded-xl border border-gold/25 bg-gold/[0.07] px-3 py-2">
+                                  <p className="text-[0.65rem] font-bold uppercase tracking-widest text-gold/80">✨ Neden sana?</p>
+                                  <p className="mt-0.5 text-xs leading-relaxed text-slate-300">{g.neden}</p>
+                                </div>
+                              )}
+                              {g.fayda && (
+                                <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/[0.06] px-3 py-2">
+                                  <p className="text-[0.65rem] font-bold uppercase tracking-widest text-emerald-400/80">💡 Katkısı</p>
+                                  <p className="mt-0.5 text-xs leading-relaxed text-slate-300">{g.fayda}</p>
+                                </div>
+                              )}
+                              {g.ai_comment && (
+                                <p className="rounded-xl bg-midnight-soft p-3 text-sm italic text-slate-300">
+                                  “{g.ai_comment}”
+                                </p>
+                              )}
+                              {g.gozlem && (
+                                <p className="rounded-xl border border-royal-light/25 bg-midnight/40 p-3 text-sm text-slate-200">
+                                  <span className="mr-1 text-xs font-semibold text-royal-light">
+                                    {t.tanikGelenEtiket}
+                                  </span>
+                                  “{g.gozlem}”
+                                </p>
+                              )}
+                              {/* Geliştir ve yeniden gönder — puanı artırmak için aynı görevi
+                                  tekrar dene (söz/senkron hariç puanlanmış görevler). */}
+                              {g.status === "scored" && g.kind !== "soz" && g.kind !== "senkron" && (
+                                gelistirId === g.id ? (
+                                  <div>
+                                    <GorevYanitFormu
+                                      gorevId={g.id}
+                                      gorevBaslik={g.title}
+                                      baslangicYanit={g.response_text ?? ""}
+                                    />
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => setGelistirId(g.id)}
+                                    className="w-full text-center text-xs font-medium text-gold-light/80 underline-offset-4 transition-colors hover:text-gold-light"
+                                  >
+                                    🔁 {t.gelistirYeniden}
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          </details>
                         </div>
                       </li>
                     ))}

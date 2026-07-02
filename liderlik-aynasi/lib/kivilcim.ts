@@ -19,8 +19,18 @@ export function unvanBul(kivilcim: number) {
 }
 
 /** Görev Kıvılcımı: taban 10 + AYNA puanı + zamanında bitirme bonusu 5. */
-export function kivilcimHesapla(aiPuan: number, zamaninda: boolean): number {
-  return 10 + aiPuan + (zamaninda ? 5 : 0);
+export function kivilcimHesapla(aiPuan: number, zamaninda: boolean, streak = 0): number {
+  return 10 + aiPuan + (zamaninda ? 5 : 0) + streakBonus(streak);
+}
+
+/** Ard arda tamamlama (streak) basamak bonusu — momentum SOMUT ödüllenir
+ *  (öneri #5). Eskiden streak yalnız prompt tonunu değiştiriyordu, kıvılcıma
+ *  hiç etkisi yoktu. Basamaklı: 3→+3, 5→+6, 7+→+10. streak=0 → bonus yok. */
+export function streakBonus(streak: number): number {
+  if (streak >= 7) return 10;
+  if (streak >= 5) return 6;
+  if (streak >= 3) return 3;
+  return 0;
 }
 
 export const SOZ_KIVILCIMI = 25;

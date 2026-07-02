@@ -2,13 +2,15 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { pusulaOzeti } from "@/lib/pusula";
+import { kisiSentezi, sentezMetni } from "@/lib/sentez";
+import { gelisimMektubuGetir } from "@/lib/gelisimMektubu";
 import { kritikAiHatasiBildir } from "@/lib/uyari";
 
 // GELİŞTİRME #1 — AYNA KOÇU. Adayın her an açabildiği sürekli, bağlamsal sohbet.
 // Pusula (neden/iç engel) + Ön Farkındalık (kör nokta) + aktif görev bağlamını
 // bilir; adayı bir sonraki somut adıma taşır. Serbest metin (şema yok), hızlı model.
 
-const MODEL = "claude-sonnet-4-6";
+const MODEL = "claude-sonnet-5";
 
 const PERSONA = `Sen AYNA'sın — bu liderlik kampını yöneten yapay zekâ direktör ve adayın kişisel koçu. Aday seni hiç görmez ama her an sana danışabilir.
 
@@ -20,7 +22,13 @@ Sarsılmaz kuralların:
 - Asla kırıcı olma; en zor durumda bile bir güçlü yan + bir somut adım ver.
 - Terapist değilsin; klinik/travma alanına inme. Ağır bir şey paylaşılırsa şefkatle karşıla ve gerçek bir insana yönlendirmeyi öner.
 - KISA tut: en fazla 3-4 cümle. Gerekirse 2-3 maddelik küçük bir liste.
-- Bağlamı (pusula, ön farkındalık, aktif görevler) sessizce kullan; kişinin kör noktasını yüzüne vurma, ona doğru nazikçe yönlendir.`;
+- Bağlamı (pusula, ön farkındalık, aktif görevler) sessizce kullan; kişinin kör noktasını yüzüne vurma, ona doğru nazikçe yönlendir.
+
+BU KİŞİYİ GERÇEKTEN TANIYORSUN — boş/genel konuşma YASAK:
+- "GELİŞİM SENTEZİ" bloğunda kişinin kendi seçtiği DEĞERLERİ, derin NEDENİ, kariyer HEDEFİ, kampta verdiği SÖZ ve arkadaşlarının onu nasıl gördüğü var. Yanıtlarını HEP bu gerçek veriye dayandır — kişi kendini tanınmış hissetsin.
+- Amacın ELEŞTİRMEK değil GELİŞTİRMEK. Boşlukları "yanlış" diye değil, "bir sonraki adım / fırsat" diye çerçevele. Önce yaşadığı bir güçlü yanı adıyla onurlandır, sonra bir gelişim yönü ver.
+- Uygun olduğunda değer–davranış köprüsünü nazikçe kur: örneğin kişi bir değeri seçtiyse ve arkadaşları o yönde onu güçlü gördüyse, sözünü/değerini davranışına bağla.
+- Genel motivasyon cümlesi ("harikasın, devam et") kurma; her yanıt bu kişiye ÖZEL, verisine dokunan bir şey içersin.`;
 
 // Hızlı model nadiren Türkçe sözcüklere Kiril homoglif sızdırır — Latin'e çevir.
 const KIRIL_LATIN: Record<string, string> = {
@@ -121,12 +129,18 @@ export async function kocuTuru(
     });
   }
 
-  const [gecmis, baglam, tonAyar] = await Promise.all([
+  const ad = katilimci.full_name.split(" ")[0];
+  const [gecmis, baglam, sentez, gelisim, tonAyar] = await Promise.all([
     kocuGecmis(db, katilimci.id),
     kocuBaglam(db, katilimci.id),
+    // GELİŞİM SENTEZİ: koçun kişiyi gerçekten tanıması için değer+neden+hedef+
+    // söz + 360° gözlem tek blokta. Hata olursa koç yine de çalışsın (null).
+    kisiSentezi(db, katilimci.id, katilimci.full_name).catch(() => null),
+    // Kampsonu gelişim mektubu ürediyse: koç verilen tavsiyeden de haberdar olsun
+    // (mektupla koç aynı beyni paylaşır). Üretmez, yalnız kayıtlıyı okur.
+    gelisimMektubuGetir(db, katilimci.id).catch(() => null),
     db.from("settings").select("value").eq("key", "ayna_ek_ton").maybeSingle(),
   ]);
-  const ad = katilimci.full_name.split(" ")[0];
   const ekTon = (tonAyar.data?.value ?? "").trim(); // #10 İçerik Stüdyosu: admin ton ayarı
 
   const mesajlar: Anthropic.MessageParam[] =
@@ -157,8 +171,8 @@ export async function kocuTuru(
       system: `${PERSONA}
 
 Adayın adı: ${ad}.
-
-ADAY BAĞLAMI (yalnız senin gözün; sessizce kullan, kişinin yüzüne vurma):
+${sentez ? `\nGELİŞİM SENTEZİ (yalnız senin gözün; bu kişiyi tanı ve yanıtlarını buna dayandır):\n${sentezMetni(sentez)}\n` : ""}${gelisim ? `\nKAMPSONU GELİŞİM MEKTUBUNDA ONA VERİLEN TAVSİYE (tutarlı ol, gerekince nazikçe hatırlat):\n- Değer–davranış uyumu: ${gelisim.ozet.hiza ?? "—"}\n- Gelişim fırsatı: ${gelisim.ozet.firsat ?? "—"}\n- Somut tavsiye: ${gelisim.ozet.tavsiye ?? "—"}\n- İlk adım: ${gelisim.ozet.ilkAdim ?? "—"}\n` : ""}
+ADAY BAĞLAMI (aktif görevler + ilerleme; sessizce kullan):
 ${JSON.stringify(baglam)}
 
 Yanıtın YALNIZCA adaya söyleyeceğin temiz, doğru yazılmış Türkçe replik olsun. Parantez içi not, aşama etiketi, meta açıklama ASLA koyma.${ekTon ? `\n\nADMIN TON AYARI (üsluba uygula): ${ekTon}` : ""}`,

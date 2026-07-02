@@ -216,6 +216,14 @@ export default function OnFarkindalikAkis({
       });
       const v = await res.json().catch(() => null);
       if (!res.ok) {
+        if (v?.oturumBayat) {
+          // Oturum artık geçersiz bir katılımcıya bağlı (bkz. route.ts) — tekrar
+          // denemek asla başarılı olmaz; kişiyi doğrudan /giris'e yönlendir.
+          // localStorage taslağı zaten var, /giris sonrası kaldığı yerden devam eder.
+          setHata(v.hata);
+          setTimeout(() => router.push("/giris"), 2200);
+          return false;
+        }
         setHata(v?.hata ?? t.hata);
         return false;
       }
@@ -228,10 +236,21 @@ export default function OnFarkindalikAkis({
     }
   }
 
+  const [kaydedildi, setKaydedildi] = useState(false);
+
   async function kaydetVeCik() {
     if (await kaydet()) {
-      router.refresh();
-      router.push("/");
+      if (yapilan === TOPLAM) {
+        router.refresh();
+        router.push("/");
+        return;
+      }
+      // KISMİ KAYIT TUZAĞI DÜZELTMESİ: ÖF zorunlu onboarding kapısı — ana sayfa
+      // tamamlanmadan kişiyi ANINDA buraya geri fırlatır. Sahte bir "çıkışa"
+      // gönderip sektirmek yerine kayıt onayı veren özet ekranına al: kişi
+      // uygulamayı gönül rahatlığıyla kapatabilir, dönünce kaldığı yerden sürer.
+      setKaydedildi(true);
+      setAdim(TOPLAM);
     }
   }
 
@@ -297,6 +316,12 @@ export default function OnFarkindalikAkis({
         <p className="mx-auto mt-4 max-w-md text-lg leading-relaxed text-slate-300">
           {tamamMi ? t.tamamMetin : t.devamMetin}
         </p>
+        {/* Kısmi kayıt onayı: kişi mola verebileceğini NET bilsin */}
+        {kaydedildi && !tamamMi && (
+          <p className="mx-auto mt-4 max-w-md rounded-2xl border border-emerald-400/30 bg-emerald-500/[0.08] px-4 py-3 text-sm font-medium leading-relaxed text-emerald-300">
+            {t.kaydedildiNot}
+          </p>
+        )}
         <p className="mt-4 text-sm text-slate-400">{t.ilerleme(yapilan, TOPLAM)}</p>
         {/* #10 Veri dürüstlüğü: düz-çizgi cevap sezilirse nazik, özel bir yansıma */}
         {katman1Tutarlilik(yanitlar).dusukVaryans && (
@@ -417,9 +442,17 @@ export default function OnFarkindalikAkis({
         </button>
       )}
 
-      {/* key={adim} → her geçişte yeniden monte; .of-adim zarif giriş animasyonu
-          verir (sayfanın değiştiği net hissedilir). py daraltıldı: tek ekrana sığ. */}
-      <div key={adim} className="of-adim flex flex-1 flex-col justify-center py-4">
+      {/* key={adim} → her geçişte yeniden monte; .of-adim giriş animasyonu + .of-parla
+          parlama → sorunun DEĞİŞTİĞİ net hissedilir (aynı soruda kaldı sanılmasın). */}
+      <div key={adim} className="of-adim relative flex flex-1 flex-col justify-center py-4">
+        {/* Geçiş parlaması — yeni soruda kısa altın bir ışıma çakar */}
+        <span className="of-parla" aria-hidden />
+        {/* Kaçıncı sorudasın — her sorunun başında net numara */}
+        <div className="of-soru-no mb-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-gold/30 bg-gold/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-gold-light">
+          {t.soruEtiket}
+          <span className="font-mono text-sm text-gold">{adim + 1}</span>
+          <span className="text-gold-light/55">/ {TOPLAM}</span>
+        </div>
         {a.tip === "likert5" && (
           <>
             <h1 className="prizma-serif text-xl font-semibold leading-snug text-slate-50">{a.metin}</h1>

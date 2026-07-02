@@ -40,6 +40,41 @@ export default function TelefonaKur() {
     })();
   }, [acik]);
 
+  // iOS görsel rehber: emoji yok (eski cihazda □ riski), SVG ile her yerde birebir.
+  // Paylaş ⃫ ikonu → Ana Ekrana Ekle ⊞; altta zıplayan ok "düğme aşağıda" der.
+  function IosGorsel() {
+    return (
+      <div className="rounded-xl bg-black/25 p-4 text-center">
+        <div className="flex items-center justify-center gap-3">
+          <div className="flex flex-col items-center gap-1">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-gold-light ring-1 ring-gold/30">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M12 15V3" />
+                <path d="M8 7l4-4 4 4" />
+                <path d="M5 12v7a1 1 0 001 1h12a1 1 0 001-1v-7" />
+              </svg>
+            </span>
+            <span className="text-[11px] font-medium text-slate-400">{t.iosGorselPaylas}</span>
+          </div>
+          <span className="text-2xl text-gold-light/70" aria-hidden>→</span>
+          <div className="flex flex-col items-center gap-1">
+            <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 text-gold-light ring-1 ring-gold/30">
+              <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <rect x="3" y="3" width="18" height="18" rx="4" />
+                <path d="M12 8v8M8 12h8" />
+              </svg>
+            </span>
+            <span className="text-[11px] font-medium text-slate-400">{t.iosGorselEkle}</span>
+          </div>
+        </div>
+        <div className="mt-3 flex items-center justify-center gap-1.5 text-gold-light">
+          <span className="animate-bounce text-2xl leading-none" aria-hidden>↓</span>
+          <span className="text-xs text-slate-300">{t.iosGorselAlt}</span>
+        </div>
+      </div>
+    );
+  }
+
   function Adimlar({ baslik, adimlar }: { baslik: string; adimlar: readonly string[] }) {
     return (
       <div className="rounded-xl bg-black/20 p-3">
@@ -98,6 +133,7 @@ export default function TelefonaKur() {
 
       {/* Ana ekrana ekleme adımları — algılanan platform öne, diğeri de görünür */}
       <div className="mt-4 space-y-3">
+        {!android && <IosGorsel />}
         {!android && (
           <Adimlar baslik={t.telefonIosBaslik} adimlar={t.telefonIosAdimlar} />
         )}

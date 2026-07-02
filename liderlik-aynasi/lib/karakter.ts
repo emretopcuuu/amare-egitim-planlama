@@ -9,6 +9,12 @@ import {
 type Db = ReturnType<typeof supabaseAdmin>;
 
 const ACI_SIRA = ["duz", "sag", "sol"]; // referansta önce cepheden
+// Bilinmeyen açı (ör. "ekstra" — kişinin eklediği ek fotoğraflar) sırayı
+// bozmasın diye zorunlu 3 açının HER ZAMAN arkasına sıralanır.
+function aciSirasi(aci: string): number {
+  const i = ACI_SIRA.indexOf(aci);
+  return i === -1 ? ACI_SIRA.length : i;
+}
 const IMZA_OMRU = 3600;
 
 export type YuzKare = { aci: string; path: string };
@@ -40,7 +46,7 @@ export async function karakterReferans(db: Db, pid: string): Promise<KarakterRef
   const kareler = ham
     .filter((k) => k && typeof k.path === "string")
     .slice()
-    .sort((a, b) => ACI_SIRA.indexOf(a.aci) - ACI_SIRA.indexOf(b.aci));
+    .sort((a, b) => aciSirasi(a.aci) - aciSirasi(b.aci));
 
   return {
     selfiePath: kisi?.profil_foto_path ?? null,

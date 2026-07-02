@@ -106,7 +106,13 @@ export default function WhatsAppGonder({
         tost(veri?.hata ?? t.api.hedefYok, "hata");
         return;
       }
-      tost(t.sonuc(veri.basarili, veri.basarisiz, veri.telefonsuz), "basari");
+      const kodNot =
+        typeof veri.kodGonderildi === "number"
+          ? veri.kodKayitsiz
+            ? " · ⚠ kamp kodu şablonu kayıtsız, kod gönderilmedi"
+            : ` · ${veri.kodGonderildi} kamp kodu gönderildi`
+          : "";
+      tost(t.sonuc(veri.basarili, veri.basarisiz, veri.telefonsuz) + kodNot, "basari");
       setOnayAcik(false);
       router.refresh();
     } catch {

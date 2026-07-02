@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/auth/session";
+import { bayatOturumYaniti } from "@/lib/auth/bayatOturum";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 
@@ -73,18 +74,26 @@ export async function POST(req: Request) {
     const { error } = await db
       .from("gunluk_checkin")
       .upsert({ participant_id: session.sub, tarih, trait_id: traitId, notu }, { onConflict: "participant_id,tarih" });
-    if (error) return Response.json({ hata: error.message }, { status: 500 });
+    if (error) {
+      const bayat = await bayatOturumYaniti(error);
+      if (bayat) return bayat;
+      // Ham DB hata mesajını istemciye sızdırma.
+      return Response.json({ hata: tr.gunluk.hata }, { status: 500 });
+    }
   } else {
     // Serbest-metin "Tek Cümle": mevcut trait'i clobber etmeden notu'yu yaz.
+    // Upsert yalnız payload'daki sütunları günceller (merge-duplicates) —
+    // trait_id korunur; eski oku-sonra-yaz deseninin çift-satır/çakışma
+    // yarışı da ortadan kalkar.
     if (!notu) return Response.json({ hata: tr.gunluk.hata }, { status: 400 });
-    const { data: mevcut } = await db
+    const { error } = await db
       .from("gunluk_checkin")
-      .select("id")
-      .eq("participant_id", session.sub)
-      .eq("tarih", tarih)
-      .maybeSingle();
-    if (mevcut) await db.from("gunluk_checkin").update({ notu }).eq("id", mevcut.id);
-    else await db.from("gunluk_checkin").insert({ participant_id: session.sub, tarih, notu });
+      .upsert({ participant_id: session.sub, tarih, notu }, { onConflict: "participant_id,tarih" });
+    if (error) {
+      const bayat = await bayatOturumYaniti(error);
+      if (bayat) return bayat;
+      return Response.json({ hata: tr.gunluk.hata }, { status: 500 });
+    }
   }
 
   const { data } = await db

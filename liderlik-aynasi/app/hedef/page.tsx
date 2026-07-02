@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { hedefDurum, hedefGecmis } from "@/lib/hedef";
 import { pusulaCekirdek } from "@/lib/pusula";
 import HedefAkis from "./HedefAkis";
+import OnboardingRayi from "@/components/OnboardingRayi";
 
 export const metadata = { title: "Hedefin — Liderlik Aynası" };
 
@@ -26,6 +27,9 @@ export default async function HedefSayfa() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
+      <div className="mx-auto w-full max-w-md pt-[calc(env(safe-area-inset-top,0px)+3.5rem+0.5rem)]">
+        <OnboardingRayi />
+      </div>
       <HedefAkis
         durum={durum}
         gecmis={gecmis}

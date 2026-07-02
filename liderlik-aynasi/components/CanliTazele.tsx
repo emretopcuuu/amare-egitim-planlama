@@ -14,20 +14,33 @@ import { usePathname, useRouter } from "next/navigation";
 // Admin ve büyük ekran kendi yenilemesine sahip — orada çalışmaz.
 const ARALIK_MS = 12_000;
 const EN_KISA_MS = 3_000; // arka arkaya yenilemeyi yumuşat
+const DOKUNUS_BEKLE_MS = 1_200; // kişi parmağıyla etkileşimdeyken yenilemeyi ertele
 
 export default function CanliTazele() {
   const router = useRouter();
   const yol = usePathname();
   const sonImza = useRef<string | null>(null);
   const sonTazele = useRef(0);
+  const sonDokunus = useRef(0);
+  const ertelenmis = useRef<ReturnType<typeof setTimeout> | null>(null);
   const kapali = useRef(false);
 
   // Admin paneli ve büyük ekran kendi tazeleme mantığına sahip → burada devre dışı.
   const etkin = !yol.startsWith("/admin") && !yol.startsWith("/ekran");
 
+  // router.refresh() ağacı yeniden render eder; tam o anda parmağını basmış
+  // kişinin dokunuşu DÜŞEBİLİR ("2-3 kere basmam gerekiyor" şikâyeti). Kişi son
+  // ~1.2 sn içinde dokunduysa yenilemeyi o pencere geçene kadar ERTELE — veri
+  // kaybı yok, sadece birkaç yüz ms sonra gelir.
   const tazele = useCallback(() => {
     const simdi = Date.now();
     if (simdi - sonTazele.current < EN_KISA_MS) return;
+    const dokunusGec = simdi - sonDokunus.current;
+    if (dokunusGec < DOKUNUS_BEKLE_MS) {
+      if (ertelenmis.current) clearTimeout(ertelenmis.current);
+      ertelenmis.current = setTimeout(tazele, DOKUNUS_BEKLE_MS - dokunusGec + 50);
+      return;
+    }
     sonTazele.current = simdi;
     router.refresh();
   }, [router]);
@@ -87,12 +100,20 @@ export default function CanliTazele() {
       void yokla();
     }
 
+    // Parmak dokunuşunu izle: yenileme bu pencerede ertelenecek (yukarı bkz.).
+    function onDokunus() {
+      sonDokunus.current = Date.now();
+    }
+
     document.addEventListener("visibilitychange", onGorunur);
     window.addEventListener("focus", onOdak);
+    document.addEventListener("pointerdown", onDokunus, { passive: true, capture: true });
     return () => {
       clearInterval(aralik);
+      if (ertelenmis.current) clearTimeout(ertelenmis.current);
       document.removeEventListener("visibilitychange", onGorunur);
       window.removeEventListener("focus", onOdak);
+      document.removeEventListener("pointerdown", onDokunus, { capture: true } as EventListenerOptions);
     };
   }, [etkin, yokla, tazele]);
 

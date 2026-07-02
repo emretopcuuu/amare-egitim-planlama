@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga, aktifOzellikler } from "@/lib/degerlendirme";
 import { unvanBul } from "@/lib/kivilcim";
 import { arketipBul } from "@/lib/arketip";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 
 // Büyük ekran verisi — bu uç HERKESE AÇIK (sahne bilgisayarı giriş yapmaz).
 // Bu yüzden yalnızca isimsiz agregalar döner: sayılar, özellik ortalamaları
@@ -31,6 +32,17 @@ export type EkranVerisi = {
     enGuclu: string | null;
   }[];
   takimLigi: { takim: string; kivilcim: number }[];
+  // Bugünün canlı sayaçları (Istanbul günü) — salonun enerjisini görünür kılar.
+  bugun: { gorev: number; gozlem: number; takdir: number; fiero: number };
+  // KÜMÜLATİF kamp efsanesi — sahne asla "0/ölü" görünmesin; toplam kahraman sayaç.
+  kumulatif: { kivilcim: number; gorev: number; takdir: number; fiero: number; anlar: number };
+  // Kampın 1. gününün Istanbul tarihi ("YYYY-MM-DD") — ŞİMDİ/SIRADA program
+  // slaytı bunu kullanır (sahne bilgisayarı oturumsuz; gün/blok bundan türer).
+  kampGun1: string | null;
+  // CANLI OLAY AKIŞI: AYNA'nın o an ne yaptığının kanıtı (ticker + karar anı).
+  // Gizlilik: görev/fiero/takdir İSİMLE (AYNA'nın eylemi / olumlu), gözlem
+  // ANONİM (kim kimi gözledi sızmaz). tur: "gorev" anı karar-flash'ı tetikler.
+  olaylar: { tur: string; ikon: string; metin: string; ts: string }[];
   // Senkron An canlı katılımı (aktif pencere yoksa null)
   senkron: { baslik: string; yanit: number; toplam: number; kalanSn: number } | null;
   // Sahne Vitrini (DJ): host belirli bir slaydı sabitlediyse onun indeksi,
@@ -38,9 +50,26 @@ export type EkranVerisi = {
   vitrin: number | null;
   // Onaylı anı duvarı fotoğraflarının imzalı URL'leri (en yeni)
   anilar: string[];
+  // [9] SALON MOZAİĞİ — kolektif dönüşüm haritası. Tamamen İSİMSİZ: her katılımcı
+  // için yalnız arketip ikon+ad döner (sıra karışık — kimin hangisi olduğu
+  // eşleştirilemez). körNoktaKapananOran: dalga-dalga öz/dış açığı daralan
+  // kişilerin oranı (yeterli veri olan kişiler arasında). enCokBuyuyenOzellik:
+  // kamp genelinde ilk→son dalga dış-puan ortalaması en çok yükselen özellik.
+  mozaik: {
+    arketipler: { simge: string; ad: string }[];
+    korNoktaKapananOran: number | null;
+    korNoktaOrneklem: number;
+    enCokBuyuyenOzellik: { ad: string; fark: number } | null;
+  };
   // #8 Anonim sosyal kıvılcım: yüksek puanlı (≥8), gizlenmemiş, öz-olmayan
   // yorum metinleri — KİMLİKSİZ. Kim kime yazdı taşınmaz; sadece olumlu söz.
   yansimalar: string[];
+  // FAZ 3.5 — kamp zinciri: en uzun aktif zincirin ulaştığı halka sayısı.
+  zincir: { uzunluk: number } | null;
+  // FAZ 5.2 — bugün altın görevi tamamlayanlar (isimli kutlama).
+  altinKazananlar: string[];
+  // [1.5] Salon Daveti: bu salondan çıkan (gönderildi işaretli) davet sayısı.
+  salonDavetSayisi: number;
   // Sahne olayları: /ekran'ın bir kez oynatacağı taze sinyaller (≤4 dk)
   sahne: {
     fiero: { id: string; ad: string; sesUrl: string | null } | null;
@@ -72,7 +101,7 @@ export async function GET() {
         .from("participants")
         .select("id, full_name, team")
         .eq("role", "participant"),
-      db.from("ratings").select("rater_id, target_id, trait_id, score, is_self"),
+      db.from("ratings").select("rater_id, target_id, trait_id, score, is_self, wave"),
       db
         .from("missions")
         .select("participant_id, spark_points")
@@ -117,6 +146,105 @@ export async function GET() {
     return Response.json({ hata: "Veri alınamadı." }, { status: 500 });
   }
 
+  // Bugünün canlı sayaçları (Istanbul günü başından beri).
+  const bugunIst = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Istanbul",
+  }).format(simdi);
+  const gunBasi = new Date(`${bugunIst}T00:00:00+03:00`).toISOString();
+  const [bgGorev, bgGozlem, bgTakdir, bgFiero] = await Promise.all([
+    db.from("missions").select("id", { count: "exact", head: true }).eq("status", "scored").gte("scored_at", gunBasi),
+    db.from("ratings").select("id", { count: "exact", head: true }).eq("is_self", false).gte("created_at", gunBasi),
+    db.from("kudos").select("id", { count: "exact", head: true }).eq("is_hidden", false).gte("created_at", gunBasi),
+    db.from("missions").select("id", { count: "exact", head: true }).eq("ai_score", 10).gte("scored_at", gunBasi),
+  ]);
+  const bugun = {
+    gorev: bgGorev.count ?? 0,
+    gozlem: bgGozlem.count ?? 0,
+    takdir: bgTakdir.count ?? 0,
+    fiero: bgFiero.count ?? 0,
+  };
+
+  // KÜMÜLATİF: kampın bugüne dek toplam efsanesi (sahne hero sayaç).
+  const [kumGorev, kumTakdir, kumFiero, kumAnlar] = await Promise.all([
+    db.from("missions").select("id", { count: "exact", head: true }).eq("status", "scored"),
+    db.from("kudos").select("id", { count: "exact", head: true }).eq("is_hidden", false),
+    db.from("missions").select("id", { count: "exact", head: true }).eq("ai_score", 10),
+    db.from("photos").select("id", { count: "exact", head: true }).eq("status", "approved"),
+  ]);
+  const kumulatif = {
+    kivilcim: (gorevSonuc.data ?? []).reduce((s, g) => s + (g.spark_points ?? 0), 0),
+    gorev: kumGorev.count ?? 0,
+    takdir: kumTakdir.count ?? 0,
+    fiero: kumFiero.count ?? 0,
+    anlar: kumAnlar.count ?? 0,
+  };
+
+  // FAZ 3.5 — KAMP ZİNCİRİ: en uzun aktif zincirin şu ana dek ulaştığı halka
+  // sayısı. İsimsiz — yalnız sayı, kimin zincirde olduğu asla açığa çıkmaz.
+  const { data: zincirSatirlari } = await db
+    .from("missions")
+    .select("zincir_id, zincir_sira")
+    .not("zincir_id", "is", null);
+  let zincirUzunluk = 0;
+  for (const z of zincirSatirlari ?? []) {
+    if ((z.zincir_sira ?? 0) > zincirUzunluk) zincirUzunluk = z.zincir_sira ?? 0;
+  }
+
+  // FAZ 5.2 — ALTIN GÖREV KUTLAMASI: bugün altın görevi TAMAMLAYAN kişiler,
+  // İSİMLİ (bilinçli istisna — bu bir kutlama, ifşa değil; başkalarının
+  // puanı/yorumu değil kişinin kendi başarısı gösterilir).
+  const { data: altinKazananHam } = await db
+    .from("missions")
+    .select("participant_id")
+    .eq("altin", true)
+    .eq("status", "scored")
+    .gte("scored_at", gunBasi);
+  const altinKazananIdler = [...new Set((altinKazananHam ?? []).map((m) => m.participant_id))];
+  const altinKazananlar = altinKazananIdler
+    .map((id) => kisilerSonuc.data?.find((k) => k.id === id)?.full_name)
+    .filter((ad): ad is string => !!ad);
+
+  // [1.5] Salon Daveti sayacı — bu salondan çıkan davetler (isimsiz, yalnız sayı).
+  const { count: salonDavetCount } = await db
+    .from("salon_daveti")
+    .select("id", { count: "exact", head: true })
+    .not("gonderildi_at", "is", null);
+  const salonDavetSayisi = salonDavetCount ?? 0;
+
+  // CANLI OLAY AKIŞI — son 45 dk'lık aktivite. Kişinin EYLEMİ görünür ama
+  // YAPTIĞININ İÇERİĞİ/HEDEFİ değil: görev başlığı yazılmaz; peer eylemler
+  // (değerlendirme/takdir) "kim kimi" sızdırmadan anonim ("biri ...").
+  const olayBasi = new Date(simdi.getTime() - 45 * 60_000).toISOString();
+  const [sonGorevler, sonTamamlanan, sonKudos, sonGozlemler] = await Promise.all([
+    db
+      .from("missions")
+      .select("participant_id, kind, issued_at")
+      .gte("issued_at", olayBasi)
+      .order("issued_at", { ascending: false })
+      .limit(20),
+    db
+      .from("missions")
+      .select("participant_id, ai_score, scored_at")
+      .not("scored_at", "is", null)
+      .gte("scored_at", olayBasi)
+      .order("scored_at", { ascending: false })
+      .limit(20),
+    db
+      .from("kudos")
+      .select("created_at")
+      .eq("is_hidden", false)
+      .gte("created_at", olayBasi)
+      .order("created_at", { ascending: false })
+      .limit(8),
+    db
+      .from("ratings")
+      .select("created_at")
+      .eq("is_self", false)
+      .gte("created_at", olayBasi)
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
+
   // Onaylı anı duvarı fotoğrafları — büyük ekran slaytı için imzalı URL'ler
   const anilar = (
     await Promise.all(
@@ -130,6 +258,36 @@ export async function GET() {
   const kisiler = kisilerSonuc.data;
   const puanlar = puanlarSonuc.data;
   const ozellikSayisi = ozellikler.length;
+  const ozellikAd = new Map(ozellikler.map((o) => [o.id, o.name]));
+
+  // Kişinin EYLEMİ görünür, içeriği/hedefi GİZLİ. Görev = AYNA→kişi (isimli,
+  // başlıksız). Tamamlama/fiero = kişinin kendi eylemi (isimli). Peer eylemler
+  // (değerlendirme/takdir) ANONİM — kim kimi sızmaz ("biri ...").
+  const adOf = (id: string) =>
+    (kisiler.find((k) => k.id === id)?.full_name ?? "Biri").split(" ")[0];
+  const olaylar: EkranVerisi["olaylar"] = [];
+  // Yeni görev aldı (başlık yok)
+  for (const g of sonGorevler.data ?? []) {
+    if (g.kind === "senkron" || g.kind === "soz") continue;
+    olaylar.push({ tur: "gorev", ikon: "🤖", metin: `${adOf(g.participant_id)} → yeni görev aldı`, ts: g.issued_at });
+  }
+  // Görev tamamladı / 10'da 10 (fiero) — içerik yok
+  for (const m of sonTamamlanan.data ?? []) {
+    if (!m.scored_at) continue;
+    if (m.ai_score === 10) {
+      olaylar.push({ tur: "fiero", ikon: "⭐", metin: `${adOf(m.participant_id)} → aynayı parlattı`, ts: m.scored_at });
+    } else {
+      olaylar.push({ tur: "tamam", ikon: "✅", metin: `${adOf(m.participant_id)} → bir görev tamamladı`, ts: m.scored_at });
+    }
+  }
+  // Peer eylemler — ANONİM (kim kimi yok)
+  for (const k of sonKudos.data ?? []) {
+    olaylar.push({ tur: "takdir", ikon: "💛", metin: "biri bir takdir yazdı", ts: k.created_at });
+  }
+  for (const r of sonGozlemler.data ?? []) {
+    olaylar.push({ tur: "gozlem", ikon: "👁", metin: "biri birini değerlendirdi", ts: r.created_at });
+  }
+  olaylar.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
 
   // #8 Olumlu yansımalar: kısa, anlamlı, isimsiz sözler. Çok kısa/çok uzun
   // olanları ele, en yeni 60'tan deterministik bir karışımla 14 tanesini al.
@@ -192,6 +350,113 @@ export async function GET() {
     (n) => n >= ozellikSayisi
   ).length;
 
+  // [9] SALON MOZAİĞİ — kolektif dönüşüm haritası için ek toplamalar.
+  // Kişi başına öz puan (trait), kişi başına dalga-bazlı dış ortalama (trait) ve
+  // kamp geneli dalga-bazlı dış ortalama (trait) — hepsi tek geçişte.
+  const ozPuanlari = new Map<string, Map<number, { t: number; n: number }>>();
+  const hedefOzellikDalga = new Map<string, Map<number, Map<number, { t: number; n: number }>>>();
+  const kampDalgaOzellik = new Map<number, Map<number, { t: number; n: number }>>();
+  for (const p of puanlar) {
+    if (p.is_self) {
+      const om = ozPuanlari.get(p.target_id) ?? new Map<number, { t: number; n: number }>();
+      const ok = om.get(p.trait_id) ?? { t: 0, n: 0 };
+      ok.t += p.score;
+      ok.n += 1;
+      om.set(p.trait_id, ok);
+      ozPuanlari.set(p.target_id, om);
+      continue;
+    }
+    if (p.wave === null) continue;
+    const hd = hedefOzellikDalga.get(p.target_id) ?? new Map<number, Map<number, { t: number; n: number }>>();
+    const hdw = hd.get(p.trait_id) ?? new Map<number, { t: number; n: number }>();
+    const hdk = hdw.get(p.wave) ?? { t: 0, n: 0 };
+    hdk.t += p.score;
+    hdk.n += 1;
+    hdw.set(p.wave, hdk);
+    hd.set(p.trait_id, hdw);
+    hedefOzellikDalga.set(p.target_id, hd);
+
+    const kd = kampDalgaOzellik.get(p.wave) ?? new Map<number, { t: number; n: number }>();
+    const kdk = kd.get(p.trait_id) ?? { t: 0, n: 0 };
+    kdk.t += p.score;
+    kdk.n += 1;
+    kd.set(p.trait_id, kdk);
+    kampDalgaOzellik.set(p.wave, kd);
+  }
+
+  // Arketip mozaiği: her yeterli-verili kişi için isimsiz {simge, ad} — sıralama
+  // KARIŞIK (kimin hangisi olduğu eşleştirilemez, spotlight'tan bağımsız hesap).
+  const arketipMozaik = kisiler
+    .map((k) => {
+      const ho = hedefOzellik.get(k.id);
+      if (!ho || ho.size === 0) return null;
+      const satirlar = ozellikler.map((o) => {
+        const kk = ho.get(o.id);
+        return { ad: o.name, dis: kk ? kk.t / kk.n : null, oz: null };
+      });
+      const ark = arketipBul(satirlar);
+      return { simge: ark.simge, ad: ark.ad };
+    })
+    .filter((x): x is { simge: string; ad: string } => x !== null)
+    .sort(() => Math.random() - 0.5);
+
+  // Kör nokta kapanma oranı: kişi başına en büyük |öz-dış| açığına sahip trait'i
+  // bul, o trait'in dalga-dalga dış ortalamasına bak (rapor.ts ile aynı mantık,
+  // toplu). ≥2 dalga verisi olanlar örneklem; son açık ilk açıktan küçükse kapandı.
+  let kapananSayisi = 0;
+  let ornekSayisi = 0;
+  for (const k of kisiler) {
+    const om = ozPuanlari.get(k.id);
+    const ho = hedefOzellik.get(k.id);
+    const hd = hedefOzellikDalga.get(k.id);
+    if (!om || !ho || !hd) continue;
+    let enFark = -1;
+    let korTrait: number | null = null;
+    for (const [traitId, ok] of om) {
+      const dis = ho.get(traitId);
+      if (!dis) continue;
+      const oz = ok.t / ok.n;
+      const disOrt = dis.t / dis.n;
+      const fark = Math.abs(oz - disOrt);
+      if (fark > enFark) {
+        enFark = fark;
+        korTrait = traitId;
+      }
+    }
+    if (korTrait === null) continue;
+    const oz = om.get(korTrait)!;
+    const ozDeger = oz.t / oz.n;
+    const dalgaVerisi = hd.get(korTrait);
+    if (!dalgaVerisi) continue;
+    const dalgalarSirali = [...dalgaVerisi.entries()].sort((a, b) => a[0] - b[0]);
+    if (dalgalarSirali.length < 2) continue;
+    const ilkFark = Math.abs(ozDeger - dalgalarSirali[0][1].t / dalgalarSirali[0][1].n);
+    const sonFark = Math.abs(
+      ozDeger - dalgalarSirali[dalgalarSirali.length - 1][1].t / dalgalarSirali[dalgalarSirali.length - 1][1].n
+    );
+    ornekSayisi++;
+    if (sonFark < ilkFark) kapananSayisi++;
+  }
+
+  // En çok büyüyen özellik (kamp geneli): ilk→son dalga dış-puan ortalaması
+  // farkı en büyük özellik (bireysel değil, tüm katılımcıların toplamı).
+  let enCokBuyuyenOzellik: { ad: string; fark: number } | null = null;
+  {
+    const dalgaSirali = [...kampDalgaOzellik.keys()].sort((a, b) => a - b);
+    if (dalgaSirali.length >= 2) {
+      const ilkDalga = kampDalgaOzellik.get(dalgaSirali[0])!;
+      const sonDalga = kampDalgaOzellik.get(dalgaSirali[dalgaSirali.length - 1])!;
+      for (const [traitId, sonK] of sonDalga) {
+        const ilkK = ilkDalga.get(traitId);
+        if (!ilkK) continue;
+        const fark = sonK.t / sonK.n - ilkK.t / ilkK.n;
+        if (fark > 0 && (!enCokBuyuyenOzellik || fark > enCokBuyuyenOzellik.fark)) {
+          enCokBuyuyenOzellik = { ad: ozellikAd.get(traitId) ?? "", fark: Number(fark.toFixed(1)) };
+        }
+      }
+    }
+  }
+
   // Kıvılcım Ligi
   const kivilcimlar = new Map<string, number>();
   for (const g of gorevSonuc.data) {
@@ -210,7 +475,6 @@ export async function GET() {
     .filter((k) => k.kivilcim > 0)
     .sort((a, b) => b.kivilcim - a.kivilcim);
   // UX #8 — bir kişinin arketip + en güçlü yönünü dış-puanlarından çıkar.
-  const ozellikAd = new Map(ozellikler.map((o) => [o.id, o.name]));
   const spotlight = (kisiId: string) => {
     const ho = hedefOzellik.get(kisiId);
     if (!ho || ho.size === 0) return { arketip: null, enGuclu: null };
@@ -230,10 +494,28 @@ export async function GET() {
     const ark = arketipBul(satirlar);
     return { arketip: { ad: ark.ad, simge: ark.simge }, enGuclu };
   };
-  const takimToplam = new Map<string, number>();
+  // FAZ 7.7 — TAKIM ÇEKİMİ: takım skoru ham kıvılcım toplamı DEĞİL, üyelerin
+  // TAMAMLAMA ORANIYLA çarpılmış hâli. Böylece tek kişinin 300'ü, 5 kişinin
+  // 60'ından az eder — "birlikte tamamlayan" takım kazanır, tek yıldız değil.
+  const takimHam = new Map<string, number>();
   for (const k of lig) {
     if (!k.takim) continue;
-    takimToplam.set(k.takim, (takimToplam.get(k.takim) ?? 0) + k.kivilcim);
+    takimHam.set(k.takim, (takimHam.get(k.takim) ?? 0) + k.kivilcim);
+  }
+  const takimUye = new Map<string, number>();
+  const takimAktif = new Map<string, number>();
+  const kivilcimliIdler = new Set(lig.filter((k) => k.kivilcim > 0).map((k) => k.id));
+  for (const k of kisiler) {
+    if (!k.team) continue;
+    takimUye.set(k.team, (takimUye.get(k.team) ?? 0) + 1);
+    if (kivilcimliIdler.has(k.id)) takimAktif.set(k.team, (takimAktif.get(k.team) ?? 0) + 1);
+  }
+  const takimToplam = new Map<string, number>();
+  for (const [takim, ham] of takimHam) {
+    const uye = takimUye.get(takim) ?? 1;
+    const aktif = takimAktif.get(takim) ?? 0;
+    const oran = uye > 0 ? aktif / uye : 0; // tamamlama genişliği
+    takimToplam.set(takim, Math.round(ham * oran));
   }
 
   // Sahne Vitrini (DJ): host sabitlediği slayt indeksi (30 dk taze) ya da null
@@ -277,6 +559,16 @@ export async function GET() {
     takimLigi: [...takimToplam.entries()]
       .map(([takim, kivilcim]) => ({ takim, kivilcim }))
       .sort((a, b) => b.kivilcim - a.kivilcim),
+    mozaik: {
+      arketipler: arketipMozaik,
+      korNoktaKapananOran:
+        ornekSayisi > 0 ? Math.round((kapananSayisi / ornekSayisi) * 100) : null,
+      korNoktaOrneklem: ornekSayisi,
+      enCokBuyuyenOzellik,
+    },
+    zincir: zincirUzunluk > 0 ? { uzunluk: zincirUzunluk } : null,
+    altinKazananlar,
+    salonDavetSayisi,
     sahne: await (async () => {
       const ayar = new Map((sahneAyarSonuc.data ?? []).map((a) => [a.key, a.value]));
       const taze = (deger: string | undefined, dakika: number) => {
@@ -348,6 +640,10 @@ export async function GET() {
     })(),
     anilar,
     yansimalar,
+    bugun,
+    kumulatif,
+    kampGun1: (await kampBaslangicGetir(db)) ?? null,
+    olaylar: olaylar.slice(0, 16),
   };
 
   return Response.json(veri);

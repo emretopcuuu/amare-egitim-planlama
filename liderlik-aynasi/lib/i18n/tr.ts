@@ -101,6 +101,58 @@ export const tr = {
     kivilcimIpucu: "Görev tamamla +10 XP · Değerlendirme yap +5 XP · Duvar paylaşımı +3 XP",
   },
   // #1 İlk açılış mikro-turu (AYNA kendini tanıtır)
+  // KUTSAL ALAN / HAZIRLIK — onboarding'in en başı: tonu kurar + KVKK rızası.
+  hazirlik: {
+    ust: "Başlamadan önce",
+    baslik: (ad: string) => `${ad}, bu sıradan bir form değil.`,
+    giris:
+      "Birazdan kendinle çok özel bir yolculuğa çıkacaksın. Sana sorulacak sorular basit görünebilir ama cevapların, kim olduğunu ve nereye gittiğini gösterecek bir aynaya dönüşecek. Bu yüzden acele etme.",
+    deger:
+      "Bu birkaç dakika, üst düzey bir mentorluk seansının değerini taşıyor. Farkı: fatura yok, rehber sadece senin kendi iç sesin.",
+    kosullar: [
+      {
+        ikon: "🤫",
+        baslik: "Yalnız ve sakin bir an seç",
+        metin: "Kimsenin seni bölmeyeceği, kendine dönebileceğin sessiz bir yer bul.",
+      },
+      {
+        ikon: "⏳",
+        baslik: "Kendine en az bir saat ayır",
+        metin: "Yarıda kalırsan sorun değil — kaldığın yerden devam edebilirsin. Ama mümkünse tek nefeste, dalarak yaşa.",
+      },
+      {
+        ikon: "🫀",
+        baslik: "Keyifle ve dürüstçe cevapla",
+        metin: "Doğru cevap yok; yalnız senin cevabın var. Ne kadar açılırsan, ayna seni o kadar net gösterir.",
+      },
+    ],
+    // Bold vurgusu için 3 parçaya bölündü — "admin dahil kimse görmeyecek"
+    // kısmı katılımcıya güven vermesi için kalın gösteriliyor (bkz. HazirlikEkrani).
+    kvkkOnayOn: "Verdiğim cevapları ",
+    kvkkOnayKalin: "admin dahil hiç kimse görmeyecek",
+    kvkkOnayOrta:
+      " — yalnızca yapay zeka bunları işleyip bana daha güzel bir deneyim sunmak için kullanacak. Dilediğim an tüm verilerimi silebileceğimi biliyorum. ",
+    kvkkLink: "KVKK Aydınlatma Metni",
+    kvkkSon: "’ni okudum.",
+    dugme: "Hazırım, başlıyorum →",
+    basliyor: "Hazırlanıyor…",
+    hata: "Bir şey ters gitti — tekrar dene.",
+    dipnot: "Bu onay yalnız bir kez istenir; sonra kaldığın yerden devam edersin.",
+  },
+  // AYNA SESİ SEÇİMİ — hazırlıktan hemen sonra, ritüelden önce. Bu andan
+  // itibaren AYNA'nın tüm kişisel seslendirmeleri seçilen sesle konuşur.
+  sesSecimi: {
+    ust: "Son bir şey",
+    baslik: "Aynanın sesi nasıl olsun?",
+    aciklama: "AYNA seninle konuşurken hangi sesle seslensin? Dilediğin an değiştirebilirsin.",
+    erkek: "Erkek ses",
+    kadin: "Kadın ses",
+    dinle: "Dinle",
+    dinleniyor: "Çalıyor…",
+    dugme: "Bu sesle devam et →",
+    varsayilanNot: "Varsayılan: Erkek ses",
+    hata: "Bir şey ters gitti — tekrar dene.",
+  },
   karsilama: {
     atla: "Geç",
     ileri: "İleri",
@@ -116,7 +168,7 @@ export const tr = {
         ikon: "👁",
         baslik: "Sen, başkalarının gözünden",
         metin:
-          "Kendini nasıl gördüğünle, başkalarının seni nasıl gördüğünü yan yana koyacağım. Kapanışta aynan açılır — çoğu insan kendini orada ilk kez görür.",
+          "Kendini nasıl gördüğünü, başkalarının seni nasıl gördüğüyle yan yana koyacağım. Kapanışta aynan açılır — çoğu insan kendini orada ilk kez görür.",
       },
       {
         ikon: "✨",
@@ -157,23 +209,6 @@ export const tr = {
     otomatikSimdi: (etkin: string) => `Otomatik · şu an ${etkin}`,
     geceKisa: "🌙 Gece",
     gunduzKisa: "☀️ Gündüz",
-  },
-  // #5 "Sen neredesin" yolculuk şeridi: kampın neresindeyiz?
-  yolculuk: {
-    hazirlik: "Kamp yaklaşıyor",
-    gun: (n: number) => `Kamp · Gün ${n}/3`,
-    sonrasi: "90 günlük yolculuk",
-    // Kişisel faz haritası (YolculukHaritasi)
-    sirada: "sırada",
-    faz: {
-      rituel: "Ritüel",
-      oyun: "Oyun",
-      pusula: "Pusula",
-      hedef: "Hedef",
-      farkindalik: "Farkındalık",
-      kamp: "Kamp",
-      rapor: "Ayna",
-    },
   },
   // İlk girişte tek seferlik 30 saniyelik mini tanıtım (büyük yazı, az yazı)
   tanitim: {
@@ -256,7 +291,7 @@ export const tr = {
     takipBaslik: "90 günlük yolun",
     takipMetin: "Sözünü verdin. Şimdi her gün bir adım — bugün adımını işaretle.",
     takipDugme: "Bugünün adımı",
-    takipAyna: "🪞 Aynanı tekrar gör",
+    takipAyna: "Aynanı tekrar gör",
     takipSahitlik: (n: number) => `🤝 Şahit olduğun ${n} lideri takip et`,
     dalgaDevamBaslik: (dalga: string) => `${dalga} açık`,
     dalgaDevamMetin: "Şimdi gözlemlediğin kişileri puanlama zamanı.",
@@ -291,21 +326,36 @@ export const tr = {
     sozTakipDugme: "İlerlememi Gör",
     // Üst menü (ayarlar): ikincil işler buradan
     menuBaslik: "Menü",
-    menuBirincilBaslik: "Senin için",
-    menuEkstraBaslik: "Sosyal & Daha fazla",
+    menuBirincilBaslik: "Sana özel",
+    menuEkstraBaslik: "Paylaş & keşfet",
+    menuAyarlarBaslik: "Ayarlar",
     menuOzDuzenle: "Kendi puanlarımı düzenle",
     menuDegerlendir: "Değerlendirme",
     menuGorevler: "AYNA'nın Görevleri",
     menuProgram: "Kamp Programı",
     menuYansiman: "Yansımanı izle",
     menuRapor: "Ayna Raporum",
-    menuKocu: "👁 Ayna Koçu",
-    menuGunluk: "✍️ Tek Cümle",
+    menuKocu: "Ayna Koçu",
+    menuGunluk: "Tek Cümle",
     menuPlan: "🧭 90 Günlük Yolculuk",
-    menuBen: "👤 Profilim",
-    menuGrup: "👥 Grup Ödevi",
+    menuBen: "Profilim",
+    menuGrup: "Grup Ödevi",
+    // Menü maddelerinin alt açıklamaları (ne işe yaradığı bir bakışta anlaşılsın)
+    menuAltKocu: "Seninle konuşan AI rehberin",
+    menuAltAnaliz: "AYNA'nın sana dair analizleri",
+    menuAltSoz: "Kampı bitirirken verdiğin söz",
+    menuAltOzDuzenle: "Kendi puanlarını gözden geçir",
+    menuAltRapor: "Sana dair toplanan ayna",
+    menuAltYansiman: "Sana özel kısa yansıma",
+    menuAltBen: "Bilgilerin ve kariyer konumun",
+    menuAltGunluk: "Bugünü tek cümlede yakala",
+    menuAltGrup: "Grubunla ve yönetimle yaz",
+    menuAltAynaEsi: "Sana eşlenen yol arkadaşın",
+    menuAltTakdir: "Herkesin takdirlerinin duvarı",
+    menuAltGizlilik: "Verin ve KVKK hakların",
+    menuYeniRozet: "yeni",
     // Kamp öncesi adımlar — tamamlandıktan sonra da düzenlenebilir kalsın
-    menuFarkindalik: "🪞 Ön Farkındalık",
+    menuFarkindalik: "Ön Farkındalık",
     menuPusula: "🧭 Pusulam",
     menuHedef: "🎯 Hedefim",
     menuMini360: "👁 Ekip Aynası",
@@ -1170,6 +1220,23 @@ export const tr = {
     sifirlaniyor: "Sıfırlanıyor…",
   },
   // Grup ödevi (katılımcı görünümü)
+  elmas: {
+    baslik: "Kimlik Elmasın",
+    dokun: "dokun → fasetlerin",
+    ac: "Kimlik elmasını aç",
+    kapat: "Kapat",
+    ilk: "İlk görevini tamamla — elmasının ilk faseti ışısın.",
+    isiyanOzet: (n: number) => `${n}/10 faset ışıdı — kimliğin parlıyor.`,
+    sonIsiyan: (ad: string, n: number) => `Son ışıyan: ${ad} · ${n}/10 faset parlıyor`,
+    aciklama:
+      "Yaptığın her görev, Presidential Diamond yolculuğunda kendi kimliğine bir yatırımdır. Her görev bir liderlik özelliğini (faseti) çalıştırır ve ışıtır. Elması sen yontuyorsun.",
+    gorev: "görev",
+    faset: "faset",
+    puan: "ort. puan",
+    yatirim: (n: number) => `${n} yatırım`,
+    motivasyon:
+      "Her tamamladığın görevle yeni bir farkındalık, yeni bir yetenek ekliyorsun. Bu kamp bittiğinde elindeki elmas — senin gelişmiş liderliğin — kalıcı olacak.",
+  },
   grup: {
     baslik: "Grubunun Ödevi",
     altBaslik: (takim: string) => `${takim} · birlikte çalışın`,
@@ -1178,6 +1245,25 @@ export const tr = {
     grupBirlikte: "🔗 Grup-birlikte",
     hedefEtiket: "Odak",
     takimsiz: "Henüz bir gruba atanmadın.",
+    // Öneri #4 — grup ödevi kapanışı
+    tamamButon: "✅ Biz bunu yaptık",
+    tamamYerTutucu: "Nasıl yaptınız? Tek cümle yeter — grubun kanıtı.",
+    tamamGonder: "Gönder, ödevi kapat",
+    tamamGonderiliyor: "Gönderiliyor…",
+    tamamVazgec: "Vazgeç",
+    tamamOldu: "🎉 Ödev kapandı — kıvılcım tüm gruba yazıldı!",
+    tamamTesekkur: "Grubun birlikte başardı. Bu kıvılcım hepinizin.",
+    tamamHata: "Kapatılamadı, tekrar dene.",
+    // İç mesajlaşma
+    arkadaslarBaslik: "Grup Arkadaşların",
+    arkadaslarAlt: "Bir arkadaşına dokun, mesaj yaz — bildirim olarak ulaşır.",
+    uyeYok: "Grubunda şu an başka kişi görünmüyor.",
+    mesajRozet: (n: number) => (n > 0 ? `${n} yeni mesaj` : ""),
+    yonetimBaslik: "Kamp Yönetimi",
+    yonetimAlt: "Soru, ihtiyaç ya da bir mesaj — doğrudan yönetime yaz.",
+    yonetimYaz: "Yönetime yaz",
+    sohbetGeri: "← Grubum",
+    yonetimSohbetBaslik: "Kamp Yönetimi",
   },
   // AYNA KOÇU — adayın her an danışabildiği bağlamsal sohbet
   kocu: {
@@ -1348,6 +1434,7 @@ export const tr = {
       5: "Her zaman",
     } as Record<number, string>,
     blokGiris: (ad: string) => `${ad}`,
+    soruEtiket: "SORU",
     blokAlt:
       "Son birkaç ayını düşün. İçinden geçeni değil, gerçekten yaptığını işaretle.",
     // Katman 2 (açık analizi) — ikili 1-10
@@ -1372,12 +1459,19 @@ export const tr = {
     kismiNot: "İstediğin kadarını şimdi yap; kaldığın yerden devam edersin. Yeter ki kamp başlamadan tamamla.",
     enAzBir: "Kaydetmek için en az bir madde işaretle.",
     hata: "Kaydedilemedi. Lütfen tekrar dene.",
+    // Oturumun artık geçersiz bir katılımcıya bağlı olduğu (ör. kamp sıfırlaması
+    // sonrası eski çerez) durumunda: sonsuz "tekrar dene" yerine net bir çıkış yolu.
+    oturumBayat: "Oturumun eskimiş görünüyor. Tekrar giriş yapman gerekiyor — cevapların kaybolmadı, kod ile girince kaldığın yerden devam edeceksin.",
+    oturumBayatDugme: "Tekrar giriş yap",
     // Tamam ekranı
     tamamBaslik: "Bu bölümü tamamladın 👁",
     tamamMetin:
       "Hepsini tamamladın. Kampta sana özel görevler bu cevaplara göre şekillenecek — kamp başlamadan bitirdiğin için hazırsın.",
     devamBaslik: "Kaldığın yerden devam",
     devamMetin: "Hepsini bir oturuşta bitirmek zorunda değilsin — kaldığın yerden devam et. Yeter ki kamp başlamadan tamamla.",
+    // Kısmi "kaydet & çık" onayı — kişi mola verebileceğini net bilsin.
+    kaydedildiNot:
+      "✓ Cevapların kaydedildi. İstersen şimdi mola ver — uygulamayı kapatabilirsin; döndüğünde tam kaldığın yerden devam edeceksin.",
     guvenBaslik: "Buradayım, sana yardımcı olmak için 🤝",
     guvenMetin:
       "Bu çalışma seni yargılamak için değil — sana gerçekten yardımcı olabilmem için. Ne kadar açık olursan, kampta sana o kadar isabetli eşlik edebilirim. Acelesi yok; ne zaman hazır hissedersen, istersen bu maddelerin üzerinden birlikte yeniden geçeriz.",
@@ -1440,6 +1534,18 @@ export const tr = {
     desteklenmiyor:
       "Bu tarayıcıda kamera açılamıyor. Linki Safari ya da Chrome'da aç (uygulama içi tarayıcı kamerayı engeller).",
     hata: "Gönderilemedi, tekrar dene.",
+    // Ekstra referans fotoğrafları — 3 zorunlu açıdan SONRA, isteğe bağlı.
+    // Video üretim motoru çoklu referans kabul ediyor: ne kadar çok fotoğraf,
+    // o kadar gerçekçi video.
+    ekstraBaslik: "Videonu daha da güçlendir",
+    ekstraAciklama:
+      "İstersen profilden, yukarıdan ya da boydan birkaç fotoğraf daha ekle — ne kadar çok fotoğraf yüklersen, videon o kadar gerçekçi çıkar.",
+    ekstraSec: "📷 Fotoğraf ekle",
+    ekstraYukleniyor: "Yükleniyor…",
+    ekstraEklendi: (n: number) => `${n} fotoğraf eklendi ✓`,
+    ekstraHata: "Yüklenemedi, tekrar dene.",
+    ekstraDoluHata: "Yeterince fotoğrafın var — daha fazlasına gerek yok.",
+    devamEt: "Devam Et",
   },
   // FAZ 3 — Reddi Kutla (Go-for-No / Fun Failure)
   red: {
@@ -1520,6 +1626,7 @@ export const tr = {
       grupOdev: "Grup Ödevleri",
       elmas: "Elmas Seçimi",
       moderasyon: "Moderasyon",
+      mesajlar: "Ekip Mesajları",
       komutan: "Komutan",
       sahne: "Sahne",
 
@@ -1629,6 +1736,7 @@ export const tr = {
         muhurAcik: "Mühür açık",
         muhurKapali: "Mühür kapalı",
         moderasyon: (n: number) => `${n} moderasyon`,
+        mesaj: (n: number) => `${n} mesaj`,
       },
       // #1 + #4 Komut paleti / hızlı eylem
       palet: {
@@ -3162,8 +3270,29 @@ export const tr = {
     ipucuKisa: "Biraz daha açabilir misin? Tek satır AYNA'ya az gelir.",
     ipucuYeterli: "Güçlü — AYNA'nın görmesi için yeterince derin. Dilersen gönder.",
     altBaslik: "Kampı yöneten yapay zekâ, sana özel görevler veriyor.",
+    // Aktif görev akordeonu: en son gelen görev açık, gerisi numaralı+kapalı.
+    digerBekleyen: (n: number) => `Bekleyen ${n} görevin daha var — açmak için dokun`,
+    odevNo: (n: number) => `Ödev #${n}`,
     aktifYokBaslik: "Şu an görevin yok",
     aktifYok: "AYNA yanında — yeni bir görev her an gelebilir.",
+    bosIzliyor: "AYNA seni izliyor",
+    bosHerAn: "Sıradaki görev her an gelebilir.",
+    bosSiradaki: (dk: number) => `Sıradaki görev ~${dk} dk içinde gelebilir.`,
+    bosMerak: "AYNA bir sonraki adımını senin için hazırlıyor.",
+    // FAZ 5.1 — GÖREV FRAGMANI: teslimden sonra kilitli bir ipucu kartı.
+    // Gerçek görev içeriğini asla açık etmez — yalnız merak uyandıran, jenerik
+    // bir teaser havuzundan seçilir (kişi+gün tohumlu, deterministik).
+    fragmanBaslik: "🔒 Sıradaki",
+    fragmanIpucuHavuzu: [
+      "bir isim ve bir soru",
+      "tek kelime yeter",
+      "birlikte yapılacak bir şey",
+      "kısa ama gerçek bir cevap",
+      "gözünle gördüğün bir an",
+      "sesini duyacağım bir şey",
+    ] as string[],
+    unvanZirve: "Zirvedesin",
+    gununRitmi: "Bugün",
     bosKocu: "Ayna Koçu'na danış",
     bosTakdir: "Birine takdir bırak",
     // #4 Günün özeti: gün sonu kapanış kartı
@@ -3196,13 +3325,9 @@ export const tr = {
     zorlastiriliyor: "AYNA zoru kuruyor…",
     zorlastirIpucu: "Hazır hissediyorsan AYNA bu görevi senin için cesurlaştırsın.",
     zorlastirOlmaz: "Bu görev daha fazla zorlaştırılamaz.",
-    // #5 Tanıklı görev: adayın tanık gösterme + tanığın onay/gözlem akışı
-    tanikGosterBaslik: "Bunu biri gördü mü?",
-    tanikGosterAciklama: "Görevi yanında yapan bir ekip arkadaşını tanık göster — sana bir cümle gözlem bırakır (anonim).",
-    tanikSec: "Tanık seç…",
-    tanikGonder: "Tanık çağır",
-    tanikGonderiliyor: "Çağrılıyor…",
-    tanikGonderildi: "✓ Tanığın çağrıldı — gözlemini bekliyoruz.",
+    // #5 Tanıklık: tanığın onay/gözlem akışı (kendi göreve tanık ÇAĞIRMA
+    // widget'ı kart kalabalığı yarattığı için kaldırıldı — bu, gelen tarafın
+    // metinleri).
     tanikBildirimBaslik: "👁 Tanıklık",
     tanikBildirimGovde: (ad: string) => `${ad} seni bir göreve tanık gösterdi — tek cümleyle ne gördüğünü yaz.`,
     tanikBekleyenBaslik: "👁 Senden bir tanıklık bekleniyor",
@@ -3247,9 +3372,24 @@ export const tr = {
     },
     sozTesekkur:
       "Sözünü sakladım. 90 gün sonra sana hatırlatacağım. — AYNA",
+    // Kurtarma güvencesi: AI puanlaması uzun süre başarısız kalırsa görev asla
+    // limbo'da bırakılmaz — varsayılan sıcak yorumla mühürlenir.
+    kurtarmaYorum:
+      "Yanıtın bana ulaştı ve emeğini gördüm — bu görevi tamamladın. Yola devam. ⚡",
+    bekliyorTekrar: "Sonuç gelmedi mi? Tekrar gönder",
     // UX #1 — "Başladım": saha görevi gerçek zaman alır
     basladim: "✋ Başladım, üzerinde çalışıyorum",
     basladimRozet: "✋ Üzerinde çalışıyorsun",
+    // FAZ 6.1 — "Başladım" canlı modu: 60-90 sn sonra tek cümlelik cesaret
+    // fısıltısı (şablon havuzu, LLM yok). gorevId tohumlu seçilir.
+    cesaretFisiltilari: [
+      "Kapıdasın. İlk cümle en zoru — onu söyle, gerisi gelir.",
+      "Şu an tam da olması gereken yerdesin. Nefes al, başla.",
+      "Mükemmel olmasına gerek yok; gerçek olması yeter.",
+      "Bir adım. Sadece bir adım. Ben buradayım.",
+      "Korku ile heyecan aynı şeydir — sen heyecanlısın.",
+      "Bu anı sonra hatırlayacaksın. Şimdi cesur ol.",
+    ] as string[],
     // UX #2 — Ertele
     ertele: "Şimdi uygun değilim",
     erteleniyor: "Erteleniyor…",
@@ -3290,10 +3430,21 @@ export const tr = {
     siradakiGorev: "Sıradaki göreve geç →",
     // A5 — benzerini tekrar dene
     gelistirYeniden: "Geliştir ve yeniden gönder",
+    // "Bana ekstra görev ver" — boş zamanda puanını artırma
+    ekstraIste: "Bana ekstra görev ver",
+    ekstraUretiliyor: "AYNA hazırlıyor…",
+    ekstraHazir: "✓ Ekstra görevin hazır.",
+    ekstraOlmadi: "Şu an üretilemedi — birazdan tekrar dene.",
+    ekstraBekleyenVar: "Önce mevcut görevini bitir.",
+    ekstraNot: "Boş zamanın mı var? Ekstra görevle kıvılcımını artır.",
     benzeriIste: "Bu konuda bir görev daha ver",
     benzeriUretiliyor: "AYNA hazırlıyor…",
     benzeriHazir: "✓ Yeni görevin hazır — yukarı kaydır.",
     benzeriOlmaz: "Şu an yeni görev üretilemedi.",
+    // "Yeni görev iste" butonu
+    yeniGorevIste: "🤖 Yeni görev iste",
+    yeniGorevUretiliyor: "AYNA hazırlıyor…",
+    zatenGorevVar: "Önce bekleyen görevini bitir.",
     // A10 — görevi netleştir
     netlestir: "Bu görevi netleştir",
     netlestiriliyor: "AYNA açıklıyor…",
@@ -3410,6 +3561,10 @@ export const tr = {
       "“Ana ekrana ekle” / “Uygulamayı yükle”yi seç.",
       "Uygulamayı ana ekrandan aç → “Bildirimlere izin ver”.",
     ] as const,
+    // iOS görsel rehber (Apple otomatik kurmayı engeller → netlik tek silah)
+    iosGorselPaylas: "Paylaş",
+    iosGorselEkle: "Ana Ekrana Ekle",
+    iosGorselAlt: "Paylaş düğmesi Safari'de ekranın altındadır",
   },
   ses: {
     baslat: "Sesle Yaz",
@@ -3527,7 +3682,10 @@ export const tr = {
     hikayeGizliMetin:
       "Kendine az verdin ama başkaları çok gördü — sandığından güçlüsün.",
     hikayeYolculukBaslik: "Nereden nereye",
-    hikayeTakdirBaslik: (n: number) => `${n} kişi sana güzel şeyler yazdı`,
+    hikayeTakdirBaslik: (n: number) => `${n} kişi senin hakkında yazdı`,
+    // [2] Görülme Anı — takdir sahnesi (anonim, tek tek akar)
+    hikayeGorulmeAcilis: "Sen görülmedin sanıyordun belki. Ama onlar seni gördü. İşte kelimeleri:",
+    hikayeGorulmeKart: "Biri seni böyle gördü",
     hikayeKapanis: "İşte sen.",
     hikayeKapanisMetin: "Bu yansıma senin. Aşağıda her detayı seni bekliyor.",
     // #4 Ayna Filmi (kutlama/yolculuk)
@@ -3684,7 +3842,7 @@ export const tr = {
   // #10 Paylaşılabilir Ayna Kartı — raporun kapanışında kişinin tüm ayna anını
   // (arketip + en güçlü 3 yan + en çok gelişen) tek görselde özetler.
   aynaKarti: {
-    baslik: "🪞 Ayna Kartın",
+    baslik: "Ayna Kartın",
     aciklama: "Kampın sana bıraktığı iz — tek karede. İndir, paylaş.",
     kartUst: "Bu kampta ben",
     gucluUst: "En güçlü yanlarım",
@@ -3777,6 +3935,13 @@ export const tr = {
     senkronBaslik: "SENKRON AN",
     // UX #9 — anons görsel bandı (ses kapalı odada da görünür)
     anonsBant: "Program anonsu",
+    // [9] Salon Mozaiği — kolektif dönüşüm haritası. Tamamen isimsiz.
+    mozaikBaslik: "🧩 Salon Mozaiği",
+    mozaikAciklama: "Bu salondaki herkesin ruhu — kimin hangisi olduğu gizli.",
+    mozaikBos: "Mozaik yakında — yeterli gözlem toplandığında burası dolacak.",
+    mozaikKorNokta: (oran: number) => `Salonun %${oran}'i kör noktasını daraltıyor`,
+    mozaikKorNoktaAciklama: "Öz görüşle aynadaki görüş arasındaki fark küçülüyor",
+    mozaikBuyuyen: (ad: string) => `En çok büyüyen: ${ad}`,
   },
   // A2 — Mühür Açılışı: kamp sonunda onboarding'de mühürlenen söz açılır
   muhur: {
@@ -3805,21 +3970,22 @@ export const tr = {
   rituel: {
     baslik: "Aynaya kendini tanıt",
     aciklama: "Aynan seninle kendi sesinle konuşacak.",
-    onayBaslik: "İzin veriyor musun?",
-    onay: "Sesin ve fotoğrafın sadece SANA özel deneyim için kullanılır. İstediğin zaman tek tuşla sildirebilirsin.",
-    onayla: "Onaylıyorum, başla",
     basla: "Ritüeli başlat",
-    fotoBaslik: "Aynaya yüzünü göster",
-    fotoAciklama:
-      "Bir fotoğraf çek — aynan onu suya yansıyan hayalet bir silüete çevirecek. Yüzün tanınmaz; sadece izin kalır.",
-    fotoCek: "📷 Fotoğraf çek",
-    fotoYeniden: "↺ Tekrar çek",
-    fotoDevam: "Beğendim, devam et",
-    fotoAtla: "Fotoğrafsız devam et",
+    // Canlı Ayna (yüz yakalama) — ses ritüelinin EN SONUNDA: kişi önce sesiyle
+    // tanışır, sonra aynaya yüzünü gösterir. Zorunlu değil: kişi isterse geçip
+    // Pusula hub'ında sonradan yapabilir.
+    yuzYakalaBaslik: "Şimdi aynana yüzünü göster",
+    yuzYakalaAciklama:
+      "Düz, sağ ve sol — üç kısa kare. Bu kareler senin avatarın ve kişisel yansıma videonun temeli olacak.",
+    yuzYakalaAtla: "Şimdilik geç",
     sessiz: "Sessiz ayna istiyorum",
+    // Sessiz tercih sunucuya yazılamazsa (ağ/sunucu hatası) gösterilir —
+    // sessizce kapatıp ritüele geri düşürmek yerine dürüstçe söyle.
+    sessizHata:
+      "Tercihin kaydedilemedi — bağlantını kontrol edip tekrar dene. (Cevapların güvende, sadece bu seçim iletilmedi.)",
     yeminHazirlikBaslik: "Birazdan sesini kaydedeceğiz",
     yeminHazirlikAciklama:
-      "Acele yok. Önce aşağıdaki yemini bir oku. Hazır olduğunda 🎤 düğmesine bas — kayıt tam o an başlar.",
+      "Acele yok. Kaydı başlattığında sıradaki ekranda kısa bir taahhüt göreceksin — onu doğal bir sesle okuyacaksın. Hazır olduğunda 🎤 düğmesine bas.",
     // Daha iyi ses klonu için kayıt ipuçları (kalite puanını yükseltir)
     ipuclariBaslik: "Daha net bir ses için:",
     ipuclari: [
@@ -3830,7 +3996,7 @@ export const tr = {
     kayitBaslat: "Kaydı başlat",
     kayitHenuzBaslamadi: "Kayıt henüz başlamadı — hazır olunca sen başlatırsın.",
     kaydediliyor: "Kaydediliyor",
-    yeminYonerge: "Aşağıdaki yemini doğal bir sesle, acele etmeden oku:",
+    yeminYonerge: "Aşağıdaki taahhüdü doğal bir sesle, acele etmeden oku:",
     yemin:
       "Ben, bu üç gün boyunca kendime dürüst olmaya söz veriyorum. Gördüğümü açıkça söyleyeceğim, duyduğumu adil tartacağım. Arkadaşlarımı yargılamak için değil, anlamak için izleyeceğim. Zor anlarda kolay olanı değil, doğru olanı seçeceğim. Suya baktığımda yalnızca yüzümü değil, yönümü de göreceğim. Bugün burada başlayan yolculuk, kamptan sonra da benimle gelecek. Hazırım: aynanın karşısına çıkıyorum ve yansımamdan saklanmıyorum.",
     soru: "Son bir mühür: geleceğine söz bırak",
@@ -3877,6 +4043,18 @@ export const tr = {
     kaliteSessiz: "Ses tespit edilemedi. Mikrofon kapalı ya da çok uzakta olabilir.",
     kaliteUyari: "Yeniden kayıt önerilir",
   },
+  // [10] Zirveyi Ölç — kamp doruğunun ardından tek kelime + slider (peak ölçümü).
+  zirve: {
+    baslik: "Şu an, tek kelimeyle.",
+    altBaslik: "Bu anı sonra sana hatırlatacağım. Aklına ilk geleni yaz.",
+    kelimeSoru: "Şu an kendini nasıl hissediyorsun? Tek kelime.",
+    kelimeYer: "tek kelime…",
+    puanSoru: "Bu kamp seni ne kadar değiştirdi?",
+    gonder: "Bu anı mühürle",
+    gonderiliyor: "Mühürleniyor…",
+    tesekkur: "✓ Bu anı sakladım. 30 gün sonra sana geri getireceğim.",
+    hata: "Kaydedilemedi, tekrar dene.",
+  },
   // PUSULA AÇILIŞI — "Nedenini Bul" sinematik giriş (ses + perde perde + mühür).
   // replik.* metinleri HEM ekranda gösterilir HEM de /api/ayna-ses ile AYNA
   // sesiyle seslendirilir (tek doğruluk kaynağı).
@@ -3898,6 +4076,9 @@ export const tr = {
   },
   ortak: {
     oturumGerekli: "Oturum gerekli.",
+    genelHata: "Bir şeyler ters gitti, tekrar dener misin?",
+    // AI çağrı limiti (lib/aiLimit.ts) aşılınca gösterilir.
+    cokHizli: "Çok hızlı gidiyorsun 🙂 Birkaç dakika soluklan, sonra devam edelim.",
     // Akran ikilisi (sorumluluk ortağı) sayfası
     baslik: "🤝 Ortağın",
     altBaslik:

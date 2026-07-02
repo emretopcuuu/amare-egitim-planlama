@@ -7,18 +7,19 @@ import { ortuAc, ortuKapat } from "@/lib/ortu";
 import AynaIkon from "@/components/AynaIkon";
 import AynaSesi from "@/components/AynaSesi";
 import MuhurIkon from "@/components/MuhurIkon";
+import CanliAyna from "@/components/CanliAyna";
 
 const t = tr.rituel;
 
 // SES RİTÜELİ — YANSIMAN'ın doğum anı, TAM EKRAN sihirbaz.
 // UX ilkesi: her ekranda TEK iş, az yazı, BÜYÜK yazı, tek ana buton.
-// Akış: davet → onay (iki dev buton) → yemin → soru → uyanış → ses.
-// NOT: Açılış selfie'si KALDIRILDI — avatar artık Canlı Ayna'nın "düz" karesinden
-// gelir (tek yüz anı). Tek fotoğraf, hem avatar hem video referansı.
+// Akış: davet → onay (iki dev buton) → YÜZ YAKALA (Canlı Ayna, gömülü) → yemin
+// → soru → uyanış → ses. Kimliğin doğuşu artık TEK törende: yüz + ses birlikte.
+// Yüz yakalama zorunlu değil — atlayan kişi Pusula hub'ında sonradan yapabilir.
 
 type Asama =
   | "giris"
-  | "onay"
+  | "yuzYakala"
   | "yeminHazirlik"
   | "kayit"
   | "soru"
@@ -400,18 +401,26 @@ export default function AynaRituel() {
     }
   }
 
+  const sessizGonderiliyor = useRef(false);
   async function sessizSec() {
+    if (sessizGonderiliyor.current) return;
+    sessizGonderiliyor.current = true;
     try {
       const form = new FormData();
       form.append("onay", "0");
       const res = await fetch("/api/ses-rituel", { method: "POST", body: form });
       if (!res.ok) throw new Error("api-hatasi");
+      setAsama("kapandi");
     } catch {
-      // Ağ/sunucu hatası: sessiz tercih kaydedilemedi — yine de devam et.
-      // Sayfa yenilenmeden voice_profiles yazılamasa da uygulama "kapandi"
-      // sonrası /api/cikis'e ya da "/" ye gidiyor; kötü durumda giriş tekrar sorulur.
+      // Tercih SUNUCUYA yazılamadıysa "kapandi"ya geçmek görünmez bir döngü
+      // yaratıyordu: ana sayfa voice_profiles'ı boş görüp ritüeli yeniden
+      // açıyor, kişi neden döndüğünü hiç anlamıyordu. Artık hatayı söylüyor
+      // ve tekrar denemesine izin veriyoruz.
+      setHataMesaji(t.sessizHata);
+      setAsama("hata");
+    } finally {
+      sessizGonderiliyor.current = false;
     }
-    setAsama("kapandi");
   }
 
   function dinle() {
@@ -443,7 +452,10 @@ export default function AynaRituel() {
               <AynaSesi kod="rituelGiris" />
             </div>
             <div className="mt-2">
-              <DevButon onClick={() => setAsama("onay")}>{t.basla}</DevButon>
+              {/* KVKK rızası Hazırlık ekranında zaten alındı — burada tekrar
+                  "izin veriyor musun?" sormaya gerek yok, doğrudan devam.
+                  Sıra: önce ses kaydı, yüz yakalama en sona (kayıttan sonra). */}
+              <DevButon onClick={() => setAsama("yeminHazirlik")}>{t.basla}</DevButon>
             </div>
             <button
               onClick={sessizSec}
@@ -451,21 +463,6 @@ export default function AynaRituel() {
             >
               {t.sessiz}
             </button>
-          </div>
-        )}
-
-        {asama === "onay" && (
-          <div className="text-center">
-            <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
-              {t.onayBaslik}
-            </h1>
-            <p className="mt-6 text-xl leading-relaxed text-slate-200">{t.onay}</p>
-            <div className="mt-10 space-y-4">
-              <DevButon onClick={() => setAsama("yeminHazirlik")}>{t.onayla}</DevButon>
-              <DevButon onClick={sessizSec} ikincil>
-                {t.sessiz}
-              </DevButon>
-            </div>
           </div>
         )}
 
@@ -477,8 +474,8 @@ export default function AynaRituel() {
             <p className="mt-4 text-center text-lg leading-relaxed text-slate-300">
               {t.yeminHazirlikAciklama}
             </p>
-            {/* Kaydı başlat YEMİNİN ÜSTÜNDE: küçük ekranda uzun yemini kaydırmadan
-                tuşa ulaşılır; hazır olunca basılır, kayıt tam o an başlar. */}
+            {/* Taahhüt metni artık BU ekranda yok (kalabalık yapıyordu) — yalnız
+                kayıt sırasında "kayit" ekranında görünür. */}
             <div className="mt-6">
               <DevButon onClick={sesBasla}>🎤 {t.kayitBaslat}</DevButon>
             </div>
@@ -499,12 +496,6 @@ export default function AynaRituel() {
                 ))}
               </ul>
             </div>
-            <p className="mt-6 text-sm uppercase tracking-widest text-slate-400">
-              {t.yeminYonerge}
-            </p>
-            <p className="prizma-serif mt-3 text-2xl leading-relaxed text-slate-50">
-              “{t.yemin}”
-            </p>
           </div>
         )}
 
@@ -686,7 +677,7 @@ export default function AynaRituel() {
                   {t.tekrarDinle}
                 </button>
                 <div className="mt-6">
-                  <DevButon onClick={() => setAsama("kapandi")}>{t.kapat}</DevButon>
+                  <DevButon onClick={() => setAsama("yuzYakala")}>{t.kapat}</DevButon>
                 </div>
                 {/* Klonu beğenmediyse: baştan kaydedip yeniden üret */}
                 <button
@@ -708,8 +699,31 @@ export default function AynaRituel() {
             <p className="text-2xl leading-relaxed text-slate-100">{t.sonra}</p>
             <MuhurRozet />
             <div className="mt-10">
-              <DevButon onClick={() => setAsama("kapandi")}>{t.kapat}</DevButon>
+              <DevButon onClick={() => setAsama("yuzYakala")}>{t.kapat}</DevButon>
             </div>
+          </div>
+        )}
+
+        {/* Yüz yakalama artık ses ritüelinin EN SONUNDA — kişi önce sesiyle
+            tanışır, sonra aynaya yüzünü gösterir. Zorunlu değil, atlanabilir. */}
+        {asama === "yuzYakala" && (
+          <div className="text-center">
+            <AynaIkon className="mx-auto h-12 w-12 text-gold/85" />
+            <h1 className="prizma-serif ay-metin mt-4 text-3xl font-semibold leading-tight">
+              {t.yuzYakalaBaslik}
+            </h1>
+            <p className="mt-4 text-lg leading-relaxed text-slate-300">
+              {t.yuzYakalaAciklama}
+            </p>
+            <div className="mt-8">
+              <CanliAyna gomulu onTamam={() => setAsama("kapandi")} />
+            </div>
+            <button
+              onClick={() => setAsama("kapandi")}
+              className="mt-6 text-base text-slate-500 underline-offset-4 hover:underline"
+            >
+              {t.yuzYakalaAtla}
+            </button>
           </div>
         )}
 

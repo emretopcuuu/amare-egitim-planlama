@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { pusulaDurum, pusulaGecmis } from "@/lib/pusula";
+import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { tr } from "@/lib/i18n/tr";
 import PusulaSohbet from "./PusulaSohbet";
@@ -17,6 +18,8 @@ import GunProgramKarti from "@/components/GunProgramKarti";
 import AynaAnalizDeneyim from "@/components/AynaAnalizDeneyim";
 import MuhurIkon from "@/components/MuhurIkon";
 import HazirlikYeniden from "@/components/HazirlikYeniden";
+import CanliAynaOzetSatiri from "@/components/CanliAynaOzetSatiri";
+import OnboardingRayi from "@/components/OnboardingRayi";
 
 const t = tr.pusula;
 
@@ -29,7 +32,7 @@ export default async function PusulaSayfa() {
   if (session.rol !== "participant") redirect("/");
 
   const db = supabaseAdmin();
-  const [durum, gecmis, { data: kisi }, { data: pus }] = await Promise.all([
+  const [durum, gecmis, { data: kisi }, { data: pus }, kampBaslangic] = await Promise.all([
     pusulaDurum(db, session.sub),
     pusulaGecmis(db, session.sub),
     db
@@ -38,24 +41,25 @@ export default async function PusulaSayfa() {
       .eq("id", session.sub)
       .maybeSingle(),
     db.from("pusula").select("oncelikler, slogan").eq("participant_id", session.sub).maybeSingle(),
+    kampBaslangicGetir(db),
   ]);
 
-  // Kamp açıldıysa (oda QR'ı okutuldu ya da görevli elle açtı) Pusula
-  // hub'ında/mühür ekranında oyalanma — doğrudan kamp akışına gönder.
-  if (kisi?.camp_unlocked_at) redirect("/");
+  // Kamp açık VE pusula TAMAM ise hub'da/mühür ekranında oyalanma — kamp akışına
+  // gönder. ÖNEMLİ: pusula henüz bitmemişse kamp açık olsa bile burada KAL (zorunlu
+  // onboarding). Aksi halde ana sayfa "/pusula"ya yollar, burası "/"ye geri yollar →
+  // sonsuz yönlendirme (ERR_TOO_MANY_REDIRECTS) olur.
+  if (kisi?.camp_unlocked_at && durum.tamam) redirect("/");
 
-  // Pusula tamamsa ama ÖN FARKINDALIK penceresi açık ve bitmemişse, hub'dan ÖNCE
-  // oraya gönder. Ana sayfa kapısı (pusula → ön farkındalık → bekleme) ile aynı
-  // sıra: aksi halde masaüstü hub'da "takılı" görünüp telefonda ÖF çıkıyor,
-  // ikisi tutarsız oluyordu.
+  // Pusula tamamsa akış sırasını (lib/akis.ts: pusula → HEDEF → ön farkındalık)
+  // burada da koru. Eskiden hedef hiç kontrol edilmeden doğrudan ÖF'ye
+  // gönderiliyordu — tamamlanmış "Pusula" rayına tıklayan kişi Hedef adımını
+  // atlayıp sıranın dışına düşüyordu.
   if (durum.tamam) {
-    // Ön Farkındalık onboarding'in HEP AÇIK bir adımı — ayrı bir admin penceresi
-    // gerektirmez. Pusula bitti ama ÖF bitmediyse hub'dan önce oraya gönder.
-    const { data: ofDurum } = await db
-      .from("on_farkindalik")
-      .select("tamamlandi_at")
-      .eq("participant_id", session.sub)
-      .maybeSingle();
+    const [{ data: hedefDurum }, { data: ofDurum }] = await Promise.all([
+      db.from("hedef").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+      db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+    ]);
+    if (!hedefDurum?.tamamlandi_at) redirect("/hedef");
     if (!ofDurum?.tamamlandi_at) redirect("/on-farkindalik");
   }
 
@@ -90,12 +94,13 @@ export default async function PusulaSayfa() {
       tamam: boolean;
       href: string | null;
       yeniden?: "ses" | "nedenler";
+      foto?: boolean;
     }[] = [
       { ad: t.ozetSes, tamam: sesVar, href: null, yeniden: "ses" },
       { ad: t.ozetNedenler, tamam: durum.tamam, href: null, yeniden: "nedenler" },
       { ad: t.ozetHedef, tamam: hedefTamam, href: "/hedef" },
       { ad: t.ozetFarkindalik, tamam: ofTamam, href: "/on-farkindalik" },
-      { ad: t.ozetFoto, tamam: yuzVar, href: null },
+      { ad: t.ozetFoto, tamam: yuzVar, href: null, foto: true },
       { ad: t.ozetLiderlik, tamam: ozTamam, href: `/degerlendir/${session.sub}` },
     ];
 
@@ -176,54 +181,77 @@ export default async function PusulaSayfa() {
           </p>
           <p className="mt-1 text-xs leading-relaxed text-slate-500">{t.ozetAciklama}</p>
           <ul className="mt-3 space-y-1.5">
-            {ozetAdimlar.map((a) => (
-              <li
-                key={a.ad}
-                className="flex items-center gap-3 rounded-xl bg-black/20 px-3 py-2.5"
-              >
-                <span
-                  className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                    a.tamam ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"
-                  }`}
-                  aria-hidden
+            {ozetAdimlar.map((a) =>
+              a.foto ? (
+                <li key={a.ad}>
+                  <details className="group rounded-xl bg-black/20">
+                    <summary className="flex cursor-pointer list-none items-center gap-3 px-3 py-2.5">
+                      <span
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                          a.tamam ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"
+                        }`}
+                        aria-hidden
+                      >
+                        {a.tamam ? "✓" : "!"}
+                      </span>
+                      <span className="flex-1 text-sm text-slate-200">{a.ad}</span>
+                      <span className="shrink-0 text-xs font-semibold text-gold-light underline-offset-4 group-hover:underline">
+                        {a.tamam ? "Değiştir / Ekle" : t.ozetYap} →
+                      </span>
+                    </summary>
+                    <div className="border-t border-white/10 px-3 py-3">
+                      <CanliAynaOzetSatiri yuzVar={a.tamam} />
+                    </div>
+                  </details>
+                </li>
+              ) : (
+                <li
+                  key={a.ad}
+                  className="flex items-center gap-3 rounded-xl bg-black/20 px-3 py-2.5"
                 >
-                  {a.tamam ? "✓" : "!"}
-                </span>
-                <span className="flex-1 text-sm text-slate-200">{a.ad}</span>
-                {a.yeniden ? (
-                  <HazirlikYeniden
-                    ne={a.yeniden}
-                    uyari={
-                      a.yeniden === "ses"
-                        ? "Ses ritüelini sıfırlayıp yeniden kaydedeceksin."
-                        : "Nedenler (Pusula) sohbetini sıfırlayıp baştan yapacaksın."
-                    }
-                  />
-                ) : a.href ? (
-                  <Link
-                    href={a.href}
-                    className="shrink-0 text-xs font-semibold text-gold-light underline-offset-4 hover:underline"
+                  <span
+                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                      a.tamam ? "bg-emerald-500/20 text-emerald-300" : "bg-amber-500/20 text-amber-300"
+                    }`}
+                    aria-hidden
                   >
-                    {a.tamam ? t.ozetDuzelt : t.ozetYap} →
-                  </Link>
-                ) : (
-                  <span className="shrink-0 text-xs text-slate-500">
-                    {a.tamam ? t.ozetTamam : t.ozetEksik}
+                    {a.tamam ? "✓" : "!"}
                   </span>
-                )}
-              </li>
-            ))}
+                  <span className="flex-1 text-sm text-slate-200">{a.ad}</span>
+                  {a.yeniden ? (
+                    <HazirlikYeniden
+                      ne={a.yeniden}
+                      uyari={
+                        a.yeniden === "ses"
+                          ? "Ses ritüelini sıfırlayıp yeniden kaydedeceksin."
+                          : "Nedenler (Pusula) sohbetini sıfırlayıp baştan yapacaksın."
+                      }
+                    />
+                  ) : a.href ? (
+                    <Link
+                      href={a.href}
+                      className="shrink-0 text-xs font-semibold text-gold-light underline-offset-4 hover:underline"
+                    >
+                      {a.tamam ? t.ozetDuzelt : t.ozetYap} →
+                    </Link>
+                  ) : (
+                    <span className="shrink-0 text-xs text-slate-500">
+                      {a.tamam ? t.ozetTamam : t.ozetEksik}
+                    </span>
+                  )}
+                </li>
+              )
+            )}
           </ul>
         </div>
 
         {/* Telefona kurulum koçu — yanlış tarayıcı yakala + görsel adım adım rehber */}
         <TelefonaKurKocu />
 
-        {/* Bildirim izni — hatırlatmaların çalışması için */}
-        <div className="rounded-2xl bg-midnight-card/40 p-4 ring-1 ring-royal/20">
-          <p className="mb-2 text-sm font-semibold text-slate-200">🔔 {t.bildirimBaslik}</p>
-          <AynaKurulum />
-        </div>
+        {/* Bildirim izni — hatırlatmaların çalışması için. Kendi başlığı zaten
+            "AYNA seni dürtebilsin mi?" — üstüne ayrı bir genel başlık koymuyoruz,
+            kişi tam olarak neye basması gerektiğini net görsün (katılımcı isteği). */}
+        <AynaKurulum />
 
         {/* Kamp rehberi — bilgi */}
         <Link
@@ -236,12 +264,15 @@ export default async function PusulaSayfa() {
         </Link>
 
         {/* 3 günlük kamp programı — mühür açılmadan da görünsün */}
-        <GunProgramKarti takim={kisi?.team ?? null} />
+        <GunProgramKarti takim={kisi?.team ?? null} baslangic={kampBaslangic} />
       </div>
     );
 
     return (
       <main className="koyu-alan flex min-h-dvh flex-col overflow-y-auto">
+        <div className="mx-auto w-full max-w-md pt-[calc(env(safe-area-inset-top,0px)+3.5rem+0.5rem)]">
+          <OnboardingRayi />
+        </div>
         <div className="mx-auto my-auto w-full max-w-md px-5 py-8">
           <HazirlikAkis adimlar={adimlar} bekleIcerik={bekleIcerik} />
         </div>

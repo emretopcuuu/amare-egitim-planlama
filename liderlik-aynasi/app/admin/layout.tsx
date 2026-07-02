@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { acikDalga } from "@/lib/degerlendirme";
+import { adminOkunmamis } from "@/lib/icMesaj";
 import AdminNav from "./AdminNav";
 import AdminTost from "./AdminTost";
 import AdminTuru from "./AdminTuru";
@@ -28,6 +29,7 @@ export default async function AdminLayout({
     { data: muhurAyari },
     { count: bekleyenFoto },
     { data: dalgaAcilis },
+    bekleyenMesaj,
   ] = await Promise.all([
     acikDalga(db),
     db.from("settings").select("value").eq("key", "ayna_aktif").maybeSingle(),
@@ -36,6 +38,7 @@ export default async function AdminLayout({
     db.from("settings").select("value").eq("key", "muhur_acik").maybeSingle(),
     db.from("photos").select("id", { count: "exact", head: true }).eq("status", "pending"),
     db.from("waves").select("opened_at").eq("is_open", true).order("id", { ascending: false }).limit(1).maybeSingle(),
+    adminOkunmamis(db),
   ]);
   const provaAcik = provaAyari?.value === "true";
 
@@ -65,6 +68,7 @@ export default async function AdminLayout({
         raporAcik={raporAyari?.value === "true"}
         muhurAcik={muhurAyari?.value === "true"}
         moderasyonBekleyen={bekleyenFoto ?? 0}
+        mesajBekleyen={bekleyenMesaj}
       />
       {children}
       <AdminTost />

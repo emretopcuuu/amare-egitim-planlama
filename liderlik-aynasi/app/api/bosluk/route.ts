@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { boslukGetirVeyaUret, yeniCumleKaydet } from "@/lib/bosluk";
+import { krizDiliVarMi, krizUyarisiGonder, KRIZ_YONLENDIRME } from "@/lib/guvenlik";
 import { tr } from "@/lib/i18n/tr";
 
 // FAZ 1 Boşluk Anı — demolisyon getir/üret (GET) + yeni cümleyi mühürle (POST).
@@ -27,8 +28,18 @@ export async function POST(req: Request) {
   if (typeof cumle !== "string" || !cumle.trim()) {
     return Response.json({ hata: tr.bosluk.hata }, { status: 400 });
   }
-  const ok = await yeniCumleKaydet(supabaseAdmin(), session.sub, cumle);
+  const db = supabaseAdmin();
+
+  // GÜVENLİK SINIRI: Boşluk Anı iç engelle yüzleşmedir — duygusal maruziyeti
+  // yüksek bir yüzey. Kişinin yeniden çerçevelediği cümlede gerçek kriz sinyali
+  // varsa admin bayrağı (Presidential Diamond) düşer; kişiye insan yönlendirmesi döner.
+  const kriz = krizDiliVarMi(cumle);
+  if (kriz) {
+    await krizUyarisiGonder(db, session.sub, session.ad, "bosluk", cumle);
+  }
+
+  const ok = await yeniCumleKaydet(db, session.sub, cumle);
   return ok
-    ? Response.json({ tamam: true })
+    ? Response.json({ tamam: true, ...(kriz ? { guvenlik: true, yonlendirme: KRIZ_YONLENDIRME } : {}) })
     : Response.json({ hata: tr.bosluk.hata }, { status: 500 });
 }

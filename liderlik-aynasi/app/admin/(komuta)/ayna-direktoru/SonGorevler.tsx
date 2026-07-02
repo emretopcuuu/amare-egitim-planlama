@@ -78,7 +78,9 @@ export default function SonGorevler({ gorevler }: { gorevler: GorevSatir[] }) {
                     </span>
                     {g.kisi}
                   </td>
-                  <td className="max-w-56 truncate py-2 pr-3 text-slate-300">{g.baslik}</td>
+                  <td className="py-2 pr-3 align-top text-slate-300">
+                    <span className="line-clamp-2 min-w-[11rem] max-w-[20rem]">{g.baslik}</span>
+                  </td>
                   <td className="py-2 pr-3 text-slate-400">{turEtiket(g.tur)}</td>
                   <td className="py-2 pr-3 text-slate-400">{durumEtiket(g.durum)}</td>
                   <td className="py-2 text-right font-mono text-gold-light">

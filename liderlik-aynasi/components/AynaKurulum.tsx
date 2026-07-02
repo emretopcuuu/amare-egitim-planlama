@@ -26,6 +26,12 @@ export default function AynaKurulum() {
   const [durum, setDurum] = useState<Durum>("yukleniyor");
   const [hata, setHata] = useState(false);
   const [masaustu, setMasaustu] = useState(false);
+  // Kullanıcı isteği: en başta SADECE "AYNA seni dürtebilsin mi?" kartı görünsün
+  // — "Telefonuna kur" gibi alt bölümler dikkat dağıtmasın. Kişi butona basmayı
+  // (izin verse de vermese de) DENEYENE kadar gizli kalır; "reddedildi"/"abone"
+  // zaten bir deneme sonrası ulaşılan durumlar olduğu için otomatik açılır.
+  const [denendi, setDenendi] = useState(false);
+  const herSeyiGoster = denendi || durum === "reddedildi" || durum === "abone";
 
   // Masaüstü mü? (telefona taşıma yönergesini öne çıkarmak için)
   useEffect(() => {
@@ -81,6 +87,7 @@ export default function AynaKurulum() {
 
   async function izinVer() {
     setHata(false);
+    setDenendi(true);
     try {
       const izin = await Notification.requestPermission();
       if (izin !== "granted") {
@@ -188,9 +195,11 @@ export default function AynaKurulum() {
       )}
 
       {/* Masaüstünde: "telefonundan da alabilirsin" + ana ekrana ekleme yolu.
-          iOS-kurulum durumu zaten ana ekrana eklemeyi anlatıyor — orada tekrar etme. */}
-      {masaustu && <p className="mt-4 text-sm text-slate-300">{t.masaustuNot}</p>}
-      {durum !== "ios-kurulum" && <TelefonaKur />}
+          iOS-kurulum durumu zaten ana ekrana eklemeyi anlatıyor — orada tekrar etme.
+          İlk karşılaşmada (henüz denenmedi) gizli — kişi önce yukarıdaki tek
+          karta odaklansın, karmaşa olmasın. */}
+      {masaustu && herSeyiGoster && <p className="mt-4 text-sm text-slate-300">{t.masaustuNot}</p>}
+      {durum !== "ios-kurulum" && herSeyiGoster && <TelefonaKur />}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
@@ -16,7 +16,19 @@ const ADIMLAR = [
 
 // Selfie sonrası "Canlı Ayna": çemberde düz/sağ/sol yüz kareleri (KYC hissi).
 // Video üretiminde mimik malzemesi için. Kamera tam ekran sihirbaz.
-export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
+//
+// `gomulu`: Ritüel'in kendi adım akışına gömülü kullanıldığında (ses kaydından
+// ÖNCE) sayfa yenilemez — akışı Ritüel'in kendi state'i yönetir, `onTamam`
+// çağrılır. Bağımsız kullanımda (Pusula hub'ı) eskisi gibi router.refresh().
+export default function CanliAyna({
+  varMi = false,
+  gomulu = false,
+  onTamam,
+}: {
+  varMi?: boolean;
+  gomulu?: boolean;
+  onTamam?: () => void;
+}) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const akisRef = useRef<MediaStream | null>(null);
@@ -26,6 +38,11 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const [bitti, setBitti] = useState(varMi);
+  // Ekstra referans fotoğrafları (opsiyonel, 3 zorunlu açıdan sonra) — video
+  // üretiminin çoklu-referans girdisini büyütüp kaliteyi yükseltir.
+  const [ekstraYukleniyor, setEkstraYukleniyor] = useState(false);
+  const [ekstraSayisi, setEkstraSayisi] = useState(0);
+  const [ekstraHata, setEkstraHata] = useState<string | null>(null);
   useEsc(acik, () => kapat());
 
   function durdur() {
@@ -102,11 +119,37 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
       durdur();
       setAcik(false);
       setBitti(true);
-      router.refresh();
+      // Gömülüyken hemen ileri atlama — kişi isterse ekstra fotoğraf ekleyip
+      // "Devam Et" ile kendi kararıyla geçer. Bağımsız kullanımda (Pusula
+      // hub'ı) dış "tamam" durumu güncellensin diye sayfa tazelenir.
+      if (!gomulu) router.refresh();
     } catch {
       setHata(t.hata);
     } finally {
       setMesgul(false);
+    }
+  }
+
+  async function ekstraSec(e: ChangeEvent<HTMLInputElement>) {
+    const dosyalar = Array.from(e.target.files ?? []);
+    e.target.value = ""; // aynı dosyayı tekrar seçebilsin diye sıfırla
+    if (dosyalar.length === 0) return;
+    setEkstraYukleniyor(true);
+    setEkstraHata(null);
+    try {
+      const form = new FormData();
+      for (const f of dosyalar) form.append("foto", f);
+      const res = await fetch("/api/yuz-ekstra", { method: "POST", body: form });
+      const veri = await res.json().catch(() => null);
+      if (!res.ok) {
+        setEkstraHata(veri?.hata ?? t.ekstraHata);
+        return;
+      }
+      setEkstraSayisi((n) => n + (veri?.sayi ?? dosyalar.length));
+    } catch {
+      setEkstraHata(t.ekstraHata);
+    } finally {
+      setEkstraYukleniyor(false);
     }
   }
 
@@ -116,7 +159,46 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
   }
 
   if (bitti && !acik) {
-    return <p className="text-sm font-medium text-emerald-400">{t.tamam}</p>;
+    return (
+      <div className="space-y-3 text-left">
+        <p className="text-sm font-medium text-emerald-400">{t.tamam}</p>
+        {/* Ekstra referans fotoğrafları — opsiyonel, video kalitesini artırır. */}
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <p className="text-sm font-semibold text-gold-light">{t.ekstraBaslik}</p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-400">{t.ekstraAciklama}</p>
+          <label
+            className={`mt-3 flex h-11 w-full items-center justify-center rounded-xl border-2 border-dashed text-sm font-semibold transition-colors ${
+              ekstraYukleniyor
+                ? "cursor-not-allowed border-white/10 text-slate-500"
+                : "cursor-pointer border-white/20 text-slate-200 hover:border-gold/50"
+            }`}
+          >
+            {ekstraYukleniyor ? t.ekstraYukleniyor : t.ekstraSec}
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              className="hidden"
+              onChange={ekstraSec}
+              disabled={ekstraYukleniyor}
+            />
+          </label>
+          {ekstraSayisi > 0 && (
+            <p className="mt-2 text-xs font-medium text-emerald-400">{t.ekstraEklendi(ekstraSayisi)}</p>
+          )}
+          {ekstraHata && <p className="mt-2 text-xs text-red-400">{ekstraHata}</p>}
+        </div>
+        {/* Gömülüyken (Ritüel içinde) ilerlemek kişinin kendi kararı olsun. */}
+        {gomulu && (
+          <button
+            onClick={() => onTamam?.()}
+            className="btn-kor parilti flex h-12 w-full items-center justify-center rounded-2xl text-base font-bold"
+          >
+            {t.devamEt} →
+          </button>
+        )}
+      </div>
+    );
   }
 
   if (!acik) {
@@ -153,14 +235,42 @@ export default function CanliAyna({ varMi = false }: { varMi?: boolean }) {
       </div>
       <p className="mt-1.5 text-sm font-medium text-slate-400">{t.adimSayac(adim + 1, ADIMLAR.length)}</p>
 
-      <div className="relative my-5 h-72 w-72 overflow-hidden rounded-full ring-4 ring-gold/60">
-        <video
-          ref={videoRef}
-          muted
-          playsInline
-          autoPlay
-          className="h-full w-full -scale-x-100 object-cover"
-        />
+      <div className="relative my-5 h-72 w-72">
+        <div className="h-full w-full overflow-hidden rounded-full ring-4 ring-gold/60">
+          <video
+            ref={videoRef}
+            muted
+            playsInline
+            autoPlay
+            className="h-full w-full -scale-x-100 object-cover"
+          />
+        </div>
+        {/* Yön oku — hangi tarafa döneceğini net gösterir (emoji değil, SVG:
+            yazı tipine göre bozuk görünme riski yok, bkz. AynaIkon deseni).
+            Çemberin İÇİNDE, kenara yakın: dışa taşırsak dar telefon
+            ekranlarında viewport'tan kesilir. */}
+        {ADIMLAR[adim].aci !== "duz" && (
+          <div
+            aria-hidden
+            className={`pointer-events-none absolute inset-y-0 flex items-center ${
+              ADIMLAR[adim].aci === "sag" ? "right-3" : "left-3"
+            }`}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth={3}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className={`h-10 w-10 text-gold drop-shadow-[0_0_10px_rgba(212,175,55,0.65)] ${
+                ADIMLAR[adim].aci === "sag" ? "yon-oku-sag" : "yon-oku-sol"
+              }`}
+            >
+              <path d="M9 6l6 6-6 6" />
+            </svg>
+          </div>
+        )}
       </div>
 
       <div className="flex gap-1.5">

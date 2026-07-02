@@ -23,8 +23,11 @@ import ArketipKarti from "./ArketipKarti";
 import AynaKarti from "./AynaKarti";
 import KelimeKarti from "./KelimeKarti";
 import MektupBolumu from "./MektupBolumu";
+import GelisimMektubuBolumu from "./GelisimMektubuBolumu";
+import { gelisimMektubuGetir } from "@/lib/gelisimMektubu";
 import TekCumleBolumu from "./TekCumleBolumu";
 import SeninIcinBolumu from "./SeninIcinBolumu";
+import ZirveOlcum from "./ZirveOlcum";
 import AynalarMeclisiBolumu from "./AynalarMeclisiBolumu";
 import { aynalarMeclisi } from "@/lib/aynalarMeclisi";
 import SesCal from "@/components/SesCal";
@@ -63,7 +66,7 @@ export default async function AynaPage() {
     .select("id", { count: "exact", head: true })
     .eq("rater_id", session.sub);
 
-  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik, hedefC, oyunP, pusC, sozAcikV2, sozKaydi, { data: mevcutCumle }, { data: mevcutSeninIcin }] =
+  const [{ data: mevcutMektup }, { data: sesProfili }, { data: takdirler }, muhurAcik, hedefC, oyunP, pusC, sozAcikV2, sozKaydi, { data: mevcutCumle }, { data: mevcutSeninIcin }, { data: mevcutZirve }] =
     await Promise.all([
       db
         .from("mirror_letters")
@@ -95,6 +98,12 @@ export default async function AynaPage() {
       db
         .from("senin_icin")
         .select("metin")
+        .eq("participant_id", session.sub)
+        .maybeSingle(),
+      // [10] Zirveyi Ölç — daha önce işaretlendi mi (bir kez göster).
+      db
+        .from("zirve_olcum")
+        .select("participant_id")
         .eq("participant_id", session.sub)
         .maybeSingle(),
     ]);
@@ -142,6 +151,10 @@ export default async function AynaPage() {
     rapor.tahmin &&
     rapor.gercekTopId !== null &&
     rapor.tahmin.topId === rapor.gercekTopId;
+
+  // GELİŞİM MEKTUBU (kampsonu tavsiye): kayıtlıysa server'dan gelir; yoksa
+  // bölüm istek üzerine üretir (opus çağrısı ağır — rapor render'ını yavaşlatma).
+  const gelisimKaydi = await gelisimMektubuGetir(db, session.sub);
 
   // #3 Story slaytları — en kritik içgörüler (kör nokta doruk noktası)
   const slaytlar: Slayt[] = [
@@ -202,14 +215,30 @@ export default async function AynaPage() {
       metin: t.hikayeGelisen(rapor.enGelisen.ad, rapor.enGelisen.fark.toFixed(1)),
       tema: "royal",
     });
-  if ((takdirler ?? []).length > 0)
+  // [2] GÖRÜLME ANI — takdirleri tek bir slaytta özetlemek yerine, her birine
+  // ayrı bir dramatik "görülme" beat'i ver: önce "N kişi senin hakkında yazdı"
+  // açılışı, sonra her takdir kendi slaytında (anonim — isim YOK, sinema anında
+  // saf "görüldüm" hissi). En fazla 4 takdir sahnede akar; gerisi rapor gövdesinde
+  // isimli listede zaten görünür.
+  const takdirListe = takdirler ?? [];
+  if (takdirListe.length > 0) {
     slaytlar.push({
-      ikon: "💛",
+      ikon: "👁",
       ust: tr.takdir.gelenlerBaslik,
-      baslik: t.hikayeTakdirBaslik((takdirler ?? []).length),
-      metin: `“${takdirler![0].message}”`,
+      baslik: t.hikayeTakdirBaslik(takdirListe.length),
+      metin: t.hikayeGorulmeAcilis,
       tema: "gold",
     });
+    for (const tk of takdirListe.slice(0, 4)) {
+      slaytlar.push({
+        ikon: "💛",
+        ust: tr.takdir.gelenlerBaslik,
+        baslik: t.hikayeGorulmeKart,
+        metin: `“${tk.message}”`,
+        tema: "gold",
+      });
+    }
+  }
   slaytlar.push({
     ikon: "🌟",
     ust: "",
@@ -303,6 +332,14 @@ export default async function AynaPage() {
           />
         </div>
       </header>
+
+      {/* [10] Zirveyi Ölç — doruğun (mühür + sinema) hemen ardından, henüz
+          ölçmemiş kişiye tek kelime + slider. Peak-End "peak" ölçümü; bir kez. */}
+      {muhurAcik && !mevcutZirve && (
+        <div className="yazdir-gizle">
+          <ZirveOlcum />
+        </div>
+      )}
 
       {/* S7: Rapor Haritası kaldırıldı; tek "başla" linki yeterli */}
       <div className="yazdir-gizle text-center">
@@ -747,6 +784,15 @@ export default async function AynaPage() {
           mevcutMektup={mevcutMektup?.content ?? null}
           sesUrl={mektupSesUrl}
           videoUrl={yansimaVideoUrl}
+        />
+      </div>
+
+      {/* GELİŞİM MEKTUBU — değerler + kamp eylemi + arkadaş gözlemi sentezi:
+          değer–davranış uyumu + fırsat + somut tavsiye + 90 gün ilk adım. */}
+      <div id="r-gelisim" className="scroll-mt-4">
+        <GelisimMektubuBolumu
+          mevcutMektup={gelisimKaydi?.mektup ?? null}
+          mevcutOzet={gelisimKaydi?.ozet ?? null}
         />
       </div>
 

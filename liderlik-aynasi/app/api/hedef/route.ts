@@ -8,6 +8,7 @@ import {
   hedefSifirla,
   kariyerPlaniKaydet,
 } from "@/lib/hedef";
+import { aiLimitYaniti } from "@/lib/aiLimit";
 import { tr } from "@/lib/i18n/tr";
 
 // FAZ A Hedef — GET: durum + geçmiş. POST: başlangıç / sohbet turu / kariyer / sıfırla.
@@ -96,6 +97,9 @@ export async function POST(req: Request) {
   }
 
   // 3) Isınma sohbeti turu: açılış (mesaj yok) veya kullanıcı yanıtı.
+  // Maliyet sigortası: kullanıcı başına AI çağrı tavanı (bkz. lib/aiLimit.ts).
+  const limit = await aiLimitYaniti(session.sub, "hedef");
+  if (limit) return limit;
   const mesaj = typeof govde.mesaj === "string" ? govde.mesaj : null;
   const tur = await hedefTuru(db, katilimci, mesaj);
   if (!tur) return Response.json({ hata: tr.hedef.aiHata }, { status: 503 });

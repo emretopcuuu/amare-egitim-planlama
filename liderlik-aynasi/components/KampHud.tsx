@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import {
-  KAMP_GUNLERI,
+  kampGunleri,
   kampGunu,
   gunProgrami,
   dakikaCevir,
@@ -18,8 +18,6 @@ import {
 } from "@/lib/cumartesiProgrami";
 
 const t = tr.hud;
-const ILK = KAMP_GUNLERI[0];
-const SON = KAMP_GUNLERI[KAMP_GUNLERI.length - 1];
 
 type Blok = { bas: number; bit: number; baslik: string; simge: string };
 
@@ -41,8 +39,17 @@ function istanbulDakika(): number {
 // Kamp gününde: o anki blok + kalan süre + sırada ne var. Kamp öncesi: geri sayım.
 // CUMARTESİ (Gün 2): herkesin programı farklı — grup üyesine GRUBUNUN gerçek o anki
 // bloğunu gösterir (jenerik "Oyunlar 09:30-19:30" yerine). 20 sn'de tazelenir.
-export default function KampHud({ takim }: { takim?: string | null }) {
+export default function KampHud({
+  takim,
+  baslangic,
+}: {
+  takim?: string | null;
+  // Kampın 1. günü (Istanbul YYYY-MM-DD); kamp başlatma tarihinden türetilir.
+  baslangic?: string;
+}) {
   const [an, setAn] = useState<{ tarih: string; dk: number } | null>(null);
+  // Kamp günleri dinamik: sabit Temmuz takvimi değil, başlatılan tarih.
+  const [ILK, , SON] = kampGunleri(baslangic);
 
   useEffect(() => {
     const guncelle = () => setAn({ tarih: istanbulTarih(), dk: istanbulDakika() });
@@ -54,7 +61,7 @@ export default function KampHud({ takim }: { takim?: string | null }) {
   // SSR/ilk render: an=null → boş (hidrasyon güvenli, sunucu saatine güvenmez)
   if (!an) return null;
 
-  const gun = kampGunu(an.tarih);
+  const gun = kampGunu(an.tarih, baslangic);
 
   // Kamp öncesi: geri sayım + görsel ilerleme çubuğu
   if (!gun) {

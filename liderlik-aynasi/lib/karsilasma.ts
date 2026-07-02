@@ -31,7 +31,7 @@ function tohum(s: string): number {
   return h >>> 0;
 }
 
-export type Karsilasma = { partnerAd: string };
+export type Karsilasma = { partnerId: string; partnerAd: string };
 
 export async function karsilasmaBul(db: Db, pid: string): Promise<Karsilasma | null> {
   const { data } = await db
@@ -62,7 +62,7 @@ export async function karsilasmaBul(db: Db, pid: string): Promise<Karsilasma | n
   for (const havuz of havuzlar) {
     if (havuz.length > 0) {
       const secilen = havuz[tohum(pid) % havuz.length];
-      return { partnerAd: secilen.full_name };
+      return { partnerId: secilen.id, partnerAd: secilen.full_name };
     }
   }
   return null;

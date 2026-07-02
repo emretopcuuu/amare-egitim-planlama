@@ -21,22 +21,26 @@ export async function GET(req: Request) {
   if (!metin) return new Response("bilinmeyen replik", { status: 404 });
   if (!sesYapilandirildiMi()) return new Response("ses kapalı", { status: 503 });
 
-  // Kişinin klonu varsa onu kullan (yansıman = kendi sesin); yoksa AYNA sesi.
+  // Kişinin klonu varsa onu kullan (yansıman = kendi sesin); yoksa AYNA sesi
+  // (kişinin seçtiği erkek/kadın tercihine göre).
   const db = supabaseAdmin();
-  const { data: profil } = await db
-    .from("voice_profiles")
-    .select("voice_id, status")
-    .eq("participant_id", session.sub)
-    .maybeSingle();
+  const [{ data: profil }, { data: kisi }] = await Promise.all([
+    db.from("voice_profiles").select("voice_id, status").eq("participant_id", session.sub).maybeSingle(),
+    db.from("participants").select("ayna_ses").eq("id", session.sub).maybeSingle(),
+  ]);
   const voiceId =
-    profil?.status === "klonlandi" && profil.voice_id ? profil.voice_id : aynaSesId();
+    profil?.status === "klonlandi" && profil.voice_id
+      ? profil.voice_id
+      : aynaSesId(kisi?.ayna_ses === "kadin" ? "kadin" : "erkek");
 
   try {
     const buf = await seslendir(voiceId, metin);
     return new Response(buf, {
       headers: {
         "content-type": "audio/mpeg",
-        "cache-control": "private, max-age=3600",
+        // Kişi ses tercihini istediği an değiştirebilir — kısa TTL, uzun/immutable
+        // önbellek verirsek tercih değişikliği tarayıcıya yansımaz (bkz. ayna-ses).
+        "cache-control": "private, max-age=120",
       },
     });
   } catch {

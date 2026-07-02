@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
+import AynaIkon from "@/components/AynaIkon";
 
 const t = tr.analiz;
 
@@ -45,6 +46,14 @@ export default function AynaAnalizDeneyim({
       ses.current?.pause();
     };
   }, []);
+
+  // Tam ekran sahne açıkken global çubuklar (üstte KimsinBant, altta AltNav)
+  // katmanın üstüne binmesin / X'i kapatmasın: mevcut "ortu-acik" mekanizması
+  // ikisini de CSS ile gizler. Kapanış/unmount'ta temizle.
+  useEffect(() => {
+    document.body.classList.toggle("ortu-acik", acik);
+    return () => document.body.classList.remove("ortu-acik");
+  }, [acik]);
 
   async function ac() {
     titret(8);
@@ -138,9 +147,9 @@ export default function AynaAnalizDeneyim({
       {/* TETİK — mühür kartı ya da liste öğesi */}
       <button
         onClick={ac}
-        className="group flex w-full items-center gap-3 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 to-midnight-card/60 p-4 text-left transition-colors hover:border-gold/55"
+        className="ayna-vurgu group relative flex w-full items-center gap-3 overflow-hidden rounded-2xl border border-gold/40 bg-gradient-to-br from-gold/10 to-midnight-card/60 p-4 text-left transition-colors hover:border-gold/55"
       >
-        <span className="text-2xl" aria-hidden>🪞</span>
+        <AynaIkon className="h-6 w-6 text-gold-light" />
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-semibold text-gold-light">{etiket}</span>
           {altEtiket && <span className="mt-0.5 block text-xs text-slate-400">{altEtiket}</span>}
@@ -159,20 +168,20 @@ export default function AynaAnalizDeneyim({
               loop
               autoPlay
               playsInline
-              className="ayna-doner h-full w-full object-cover opacity-30"
+              className="h-full w-full object-cover opacity-30"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-[#04101c]/70 via-[#04101c]/40 to-[#04101c]/90" />
           </div>
 
-          {/* Kapat */}
-          <div className="relative z-10 flex shrink-0 items-center justify-between px-5 pt-[calc(0.75rem+env(safe-area-inset-top))]">
+          {/* Kapat — büyük, net dokunma hedefi; her şeyin üstünde (z-20) */}
+          <div className="relative z-20 flex shrink-0 items-center justify-between px-5 pt-[calc(0.75rem+env(safe-area-inset-top))]">
             <span className="text-xs font-semibold uppercase tracking-[0.3em] text-gold-light/70">
               {t.asamaAd[asama]}
             </span>
             <button
               onClick={kapat}
               aria-label={t.kapat}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-white/10 text-2xl text-slate-200 hover:bg-white/20"
+              className="flex h-14 w-14 items-center justify-center rounded-full bg-white/15 text-3xl text-slate-100 shadow-lg ring-1 ring-white/20 transition-colors hover:bg-white/25 active:bg-white/30"
             >
               ✕
             </button>
@@ -182,7 +191,7 @@ export default function AynaAnalizDeneyim({
           <div className="relative z-10 flex min-h-0 flex-1 flex-col px-5">
             {yukleniyor && (
               <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-                <span className="text-5xl" aria-hidden>🪞</span>
+                <AynaIkon className="h-12 w-12 text-gold-light" />
                 <p className="prizma-serif ay-metin text-lg">{t.yukleniyor}</p>
                 <span className="flex gap-1.5">
                   <span className="h-2 w-2 animate-bounce rounded-full bg-gold [animation-delay:-0.3s]" />

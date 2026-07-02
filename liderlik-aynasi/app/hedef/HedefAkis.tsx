@@ -118,6 +118,7 @@ export default function HedefAkis({
         mesgul={mesgul}
         hata={hata}
         onSifirla={sifirla}
+        onGeri={() => setFaz("acilis")}
       />
     );
   }
@@ -130,6 +131,7 @@ export default function HedefAkis({
         istek={istek}
         onBitti={() => setFaz("wizard")}
         onSifirla={sifirla}
+        onGeri={() => setFaz("baslangic")}
       />
     );
   }
@@ -198,11 +200,13 @@ function BaslangicFormu({
   mesgul,
   hata,
   onSifirla,
+  onGeri,
 }: {
   onKaydet: (kariyer: string, ay: number | null, detay: string | null, ov: number, vol: number) => void;
   mesgul: boolean;
   hata: string | null;
   onSifirla: () => void;
+  onGeri: () => void;
 }) {
   const [kariyer, setKariyer] = useState("");
   const [ay, setAy] = useState("");
@@ -211,11 +215,20 @@ function BaslangicFormu({
   const [vol, setVol] = useState("");
   const ovNum = Number(ov);
   const volNum = Number(vol);
-  const ovGecerli = ov.length > 0 && ovNum > 0;
-  const volGecerli = vol.length > 0 && volNum > 0;
+  // 0 GEÇERLİ: 3 ay pasif kalmış (OV/VOL = 0) biri de ilerleyebilmeli. Şart,
+  // "0'dan büyük" değil "boş değil" — alan rakam girilince geçerli (0 dahil).
+  const ovGecerli = ov.length > 0 && ovNum >= 0;
+  const volGecerli = vol.length > 0 && volNum >= 0;
   const gecerli = !!kariyer && ovGecerli && volGecerli;
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
+      <button
+        type="button"
+        onClick={onGeri}
+        className="-mb-1 flex items-center gap-1 text-sm text-slate-400 transition-colors hover:text-slate-200"
+      >
+        ← {t.geri}
+      </button>
       <header>
         <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.noktaBaslik}</h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.noktaAciklama}</p>
@@ -307,11 +320,13 @@ function Sohbet({
   istek,
   onBitti,
   onSifirla,
+  onGeri,
 }: {
   baslangic: Mesaj[];
   istek: (g: Record<string, unknown>) => Promise<{ mesaj?: string; bitti?: boolean; hata?: string } | null>;
   onBitti: () => void;
   onSifirla: () => void;
+  onGeri: () => void;
 }) {
   const [mesajlar, setMesajlar] = useState<Mesaj[]>(baslangic);
   const [girdi, setGirdi] = useState("");
@@ -376,7 +391,14 @@ function Sohbet({
       style={{ height: "calc(100dvh - env(safe-area-inset-top, 0px) - 3.5rem)" }}
     >
       <div aria-hidden className="pusula-okur-zemin pointer-events-none absolute inset-0 -z-10" />
-      <header className="shrink-0 pb-3 text-center">
+      <header className="relative shrink-0 pb-3 text-center">
+        <button
+          type="button"
+          onClick={onGeri}
+          className="absolute left-0 top-0 flex items-center gap-1 text-sm text-slate-400 transition-colors hover:text-slate-200"
+        >
+          ← {t.geri}
+        </button>
         <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
           {tr.app.name}
         </p>
@@ -630,8 +652,10 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
         <thead>
           <tr className="kariyer-cizgi kariyer-baslik border-b text-[0.6rem] font-semibold uppercase tracking-wide">
             <th className="px-2.5 py-2.5 font-semibold">{t.tabloKariyer}</th>
-            <th className="px-1.5 py-2.5 text-right font-semibold">{t.tabloEnDusuk}</th>
-            <th className="px-1.5 py-2.5 text-right font-semibold">{t.tabloEnYuksek}</th>
+            {/* Dar ekranda (telefon) detay sütunları gizlenir → tablo yatay
+                kaydırma gerektirmeden sığar; sm+ (tablet/masaüstü) hepsi görünür. */}
+            <th className="hidden px-1.5 py-2.5 text-right font-semibold sm:table-cell">{t.tabloEnDusuk}</th>
+            <th className="hidden px-1.5 py-2.5 text-right font-semibold sm:table-cell">{t.tabloEnYuksek}</th>
             <th className="px-2.5 py-2.5 text-right font-semibold">{t.tabloOrtalama}</th>
           </tr>
         </thead>
@@ -653,10 +677,10 @@ function KariyerTablosu({ onSec }: { onSec: (i: number) => void }) {
                   )}
                 </span>
               </td>
-              <td className="whitespace-nowrap px-1.5 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+              <td className="hidden whitespace-nowrap px-1.5 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400 sm:table-cell">
                 {r.enDusuk != null ? tlFormat(r.enDusuk) : "—"}
               </td>
-              <td className="whitespace-nowrap px-1.5 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400">
+              <td className="hidden whitespace-nowrap px-1.5 py-2.5 text-right font-mono text-xs tabular-nums text-slate-400 sm:table-cell">
                 {r.enYuksek != null ? tlFormat(r.enYuksek) : "—"}
               </td>
               <td className="kariyer-vurgu whitespace-nowrap px-2.5 py-2.5 text-right font-mono text-sm font-bold tabular-nums">

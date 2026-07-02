@@ -6,19 +6,20 @@ import { acikDalga, aktifOzellikler, ozPuanTamamMi } from "@/lib/degerlendirme";
 import { raporlarGorunurMu } from "@/lib/rapor";
 import { hedefKapisiAcik } from "@/lib/hedef";
 import { kampOncesiAdim } from "@/lib/akis";
-import { kampGunu } from "@/lib/kampProgrami";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { sozTakipAktif, sahitSayim } from "@/lib/sozTakip";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
 import TelefonaKurKocu from "@/components/TelefonaKurKocu";
 import AynaRituel from "@/components/AynaRituel";
+import HazirlikEkrani from "@/components/HazirlikEkrani";
+import SesSecimiEkrani from "@/components/SesSecimiEkrani";
 import EgilenKart from "@/components/EgilenKart";
 import GeriSayim from "@/components/GeriSayim";
 import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
 import MuhurTuru from "@/components/MuhurTuru";
-import YolculukHaritasi from "@/components/YolculukHaritasi";
+import OnboardingRayi from "@/components/OnboardingRayi";
 import KampHud from "@/components/KampHud";
 import GorusmeSimdi from "@/components/GorusmeSimdi";
 import KonusanYansima from "@/components/KonusanYansima";
@@ -29,6 +30,10 @@ import KarsilasmaKarti from "@/components/KarsilasmaKarti";
 import { karsilasmaBul } from "@/lib/karsilasma";
 import UstMenu from "@/components/UstMenu";
 import { SiradakiOnizleme } from "@/components/AsamaRayi";
+import YeniGorevButonu from "@/components/YeniGorevButonu";
+import KimlikElmasi from "@/components/elmas/KimlikElmasi";
+import { kimlikElmasiVerisi } from "@/lib/elmas";
+import { okunmamisMesaj } from "@/lib/icMesaj";
 
 const t = tr.anaSayfa;
 
@@ -44,14 +49,14 @@ function Sayfa({
   program?: React.ReactNode;
   kurulum?: boolean;
 }) {
-  // Mobil öncelikli düzen kuralı: başlık üstte sabit, tek kart kalan boşlukta
-  // DİKEY ORTALANIR, kurulum ipucu altta. `my-auto` az içerikte ekranı
-  // ortalar; çok içerik olursa kırpmadan kayar (asla yarım ekran hissi yok).
+  // Mobil öncelikli düzen: başlık üstte, içerik onun ALTINDA üstten hizalı.
+  // (Eskiden `my-auto` ile dikey ortalanıyordu; içerik ekrandan uzunsa Chrome
+  // ortalayıp üstünü kırpıyor → sayfa "ortadan" açılıyordu. Artık hep en tepede.)
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <IlkTanitim />
       <div className="mx-auto w-full max-w-md shrink-0 px-5 pt-5">{ust}</div>
-      <div className="mx-auto my-auto w-full max-w-md px-5 py-5">
+      <div className="mx-auto w-full max-w-md px-5 py-5">
         <div className="sahne-giris space-y-5">
           {children}
           {program}
@@ -139,9 +144,9 @@ export default async function AnaSayfa({
   // yapmamış katılımcı kamp öncesi yolculuğu yapar. Sıra: önce ÖN FARKINDALIK
   // (ayna katmanları — bayrak açıksa ve bitmediyse), sonra PUSULA (derin neden +
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
-  const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }, { data: hedefErken }] =
+  const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }, { data: hedefErken }, { data: degerlerDurum }] =
     await Promise.all([
-      db.from("participants").select("camp_unlocked_at, team").eq("id", session.sub).maybeSingle(),
+      db.from("participants").select("camp_unlocked_at, team, consent_at, ayna_ses_secildi_at").eq("id", session.sub).maybeSingle(),
       db
         .from("settings")
         .select("key, value")
@@ -152,6 +157,8 @@ export default async function AnaSayfa({
       db.from("pusula").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
       // Hedef kapısı (kamp öncesi 3b): Pusula biter bitmez devreye girer.
       db.from("hedef").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+      // Değerler çalışması (2b): Pusula'dan hemen önce + ana sayfa kimlik çapası.
+      db.from("degerler_calismasi").select("tamamlandi_at, secilen_uc, neden_cumlesi").eq("participant_id", session.sub).maybeSingle(),
     ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
   const gununCumlesi = (ayar.get("gunun_cumlesi") ?? "").trim();
@@ -159,6 +166,20 @@ export default async function AnaSayfa({
   // Güvenlik: katılımcı DB'de silinmiş ama JWT hâlâ geçerli → sonsuz döngü yaşanır.
   // Çerez temizle ve yeniden giriş yaptır.
   if (!kisi) redirect("/api/cikis");
+
+  // KİMLİK ELMASI verisi (yalnız kamp içindeyken) — ana sayfanın kalbindeki
+  // canlı 3B elmasını besler: her tamamlanan görev bir faseti ışıtır.
+  const elmasVeri = kisi.camp_unlocked_at ? await kimlikElmasiVerisi(db, session.sub) : null;
+
+  // Menü rozetleri: okunmamış iç mesaj sayısı + analiz sayısı ("yeni" noktası).
+  const [okunmamisMesajSayisi, analizSayisi] = await Promise.all([
+    okunmamisMesaj(db, session.sub),
+    db
+      .from("ayna_analiz")
+      .select("id", { count: "exact", head: true })
+      .eq("participant_id", session.sub)
+      .then((r) => r.count ?? 0),
+  ]);
 
   // SIRA (kamp öncesi onboarding) — tek doğruluk kaynağı: lib/akis.ts.
   // 1) SES RİTÜELİ → 2) OYUN SEÇİMİ → 3) PUSULA → 3b) HEDEF → 4) ÖN FARKINDALIK
@@ -170,17 +191,32 @@ export default async function AnaSayfa({
     ? await hedefKapisiAcik(db, session.sub)
     : false;
   const adim = kampOncesiAdim({
+    rizaVar: !!kisi?.consent_at,
+    sesSecildi: !!kisi?.ayna_ses_secildi_at,
     sesVar: !!sesVarRow,
     team: kisi?.team ?? null,
     campUnlocked: !!kisi?.camp_unlocked_at,
+    degerlerTamam: !!degerlerDurum?.tamamlandi_at,
     pusulaTamam: !!pusulaErken?.tamamlandi_at,
     hedefTamam: !!hedefErken?.tamamlandi_at,
     ofTamam: !!ofDurum?.tamamlandi_at,
     oyunSecimiAcik: true,
+    degerlerAcik: true,
     pusulaAcik: true,
     onFarkindalikAcik: true,
     kampIciHedefKapisi,
   });
+  if (adim.tip === "hazirlik") {
+    // KUTSAL ALAN / HAZIRLIK — onboarding'in en başı. Tonu kurar (yalnız,
+    // sakin, ~1 saat, kendine dönüş) + KVKK rızasını kayıtla alır. Rıza
+    // verilene dek veri toplayan hiçbir adım açılmaz.
+    return <HazirlikEkrani ad={session.ad} />;
+  }
+  if (adim.tip === "sesSecimi") {
+    // AYNA SESİ SEÇİMİ — hazırlıktan hemen sonra, ritüelden önce. Bu andan
+    // itibaren AYNA'nın kişisel seslendirmeleri seçilen sesle konuşur.
+    return <SesSecimiEkrani />;
+  }
   if (adim.tip === "rituel") {
     // FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Tamamlanana (ya da "sessiz"
     // seçilene) dek grup ve sorular dahil başka hiçbir kapı açılmaz.
@@ -324,9 +360,8 @@ export default async function AnaSayfa({
   const bugunIst = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/Istanbul",
   }).format(new Date());
-  // Kamp günü etiketi: kampın başlatıldığı tarihten türetilir (sabit takvim değil).
+  // Kamp başlangıcı: KampHud kendi gün hesabını buradan türetir.
   const kampBaslangic = await kampBaslangicGetir(db);
-  const kampGunNo = kampGunu(bugunIst, kampBaslangic);
   // eslint-disable-next-line react-hooks/purity
   const istekAni = Date.now();
 
@@ -418,6 +453,11 @@ export default async function AnaSayfa({
           raporlarAcik={raporlarAcik}
           yansimanHazir={yansimanHazir}
           ozHedefId={session.sub}
+          ad={session.ad}
+          unvanAd={elmasVeri?.unvanAd ?? null}
+          kivilcim={elmasVeri?.kivilcim ?? 0}
+          okunmamisMesaj={okunmamisMesajSayisi}
+          analizSayisi={analizSayisi}
           pusulaTamam={!!pusulaErken?.tamamlandi_at}
           hedefTamam={!!hedefErken?.tamamlandi_at}
           ofTamam={!!ofDurum?.tamamlandi_at}
@@ -429,30 +469,53 @@ export default async function AnaSayfa({
           &ldquo;{kisiSlogan}&rdquo;
         </p>
       )}
+      {/* DEĞERLER ÇAPASI — değerler çalışmasından çıkan 3 temel değer + neden cümlesi */}
+      {degerlerDurum?.secilen_uc && degerlerDurum.secilen_uc.length === 3 && (
+        <div className="mt-3 rounded-2xl border border-gold/20 bg-white/[0.02] p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[0.7rem] font-semibold uppercase tracking-wide text-slate-400">
+              Temel değerlerim
+            </span>
+            {degerlerDurum.secilen_uc.map((d) => (
+              <span key={d} className="rounded-full bg-gold/15 px-2.5 py-0.5 text-sm font-semibold text-gold-light">
+                {d}
+              </span>
+            ))}
+          </div>
+          {degerlerDurum.neden_cumlesi && (
+            <p className="prizma-serif ay-metin mt-2 text-sm italic leading-snug text-gold-light/90">
+              {degerlerDurum.neden_cumlesi}
+            </p>
+          )}
+        </div>
+      )}
+      {/* KİMLİK ELMASI — kampın kalbi: her görevle parlayan canlı 3B artefakt */}
+      {elmasVeri && (
+        <div className="mt-3">
+          <KimlikElmasi
+            tamamlanan={elmasVeri.tamamlanan}
+            parlaklik={elmasVeri.parlaklik}
+            ortalamaPuan={elmasVeri.ortalamaPuan}
+            facetler={elmasVeri.facetler}
+            sonFacet={elmasVeri.sonFacet}
+            asama={elmasVeri.asama}
+          />
+        </div>
+      )}
       {/* S1: YolculukSeridi kaldırıldı; gün etiketi haritanın içine taşındı.
           UX: Faz merdiveni HAZIRLIK göstergesidir — kamp açıldıktan sonra
           (kişi içerideyken) görev + programın önüne geçen ikincil gürültüdür.
           Bu yüzden YALNIZ kamp öncesinde gösterilir; kamp boyunca gizlenir. */}
       {!kisi?.camp_unlocked_at && (
         <div className="mt-2">
-          <YolculukHaritasi
-            siradaEtiket={tr.yolculuk.sirada}
-            gunEtiketi={kampGunNo ? `Gün ${kampGunNo}` : undefined}
-            fazlar={[
-              { ad: tr.yolculuk.faz.rituel, tamam: !!sesVarRow },
-              { ad: tr.yolculuk.faz.oyun, tamam: !!kisi?.team },
-              { ad: tr.yolculuk.faz.pusula, tamam: !!pusulaErken?.tamamlandi_at },
-              { ad: tr.yolculuk.faz.hedef, tamam: !!hedefErken?.tamamlandi_at },
-              { ad: tr.yolculuk.faz.farkindalik, tamam: !!ofDurum?.tamamlandi_at },
-              { ad: tr.yolculuk.faz.kamp, tamam: !!kisi?.camp_unlocked_at },
-              { ad: tr.yolculuk.faz.rapor, tamam: raporlarAcik },
-            ]}
-          />
+          {/* ONBOARDING RAYI — tüm 6 faz + Kamp tek bakışta; bitirdiğin faza
+              tıklayıp geri dönebilirsin, henüz açmadığına atlayamazsın. */}
+          <OnboardingRayi />
         </div>
       )}
       {/* S8: KampHud + GorusmeSimdi tek "şu an" bloğu */}
       <div className="space-y-1.5">
-        <KampHud takim={takim} />
+        <KampHud takim={takim} baslangic={kampBaslangic} />
         <GorusmeSimdi gorusmeler={gorusmeListe} />
       </div>
       {/* S2: Pano sadeleşti — sadece Günün Cümlesi (admin seçimi) inline kalır */}
@@ -647,8 +710,10 @@ export default async function AnaSayfa({
         {/* #4 Sıradaki dalgaya geri sayım: yalnızca zamanlama ayarlıysa */}
         {sonrakiDalgaZamani && <GeriSayim hedefZaman={sonrakiDalgaZamani} />}
         <div className="mt-4 space-y-3">
+          {/* Beklemeden, kişi AYNA'dan o an taze bir görev çekebilir. */}
+          <YeniGorevButonu vurgu />
           {/* S10: dalga kapalıyken Koç zaten alt çubukta — burada tek öneri yeterli */}
-          <SicakAdim href="/kocu" etiket={t.bekleKocu} vurgu />
+          <SicakAdim href="/kocu" etiket={t.bekleKocu} />
           {(bugunTakdir ?? 0) > 0 && (
             <SicakAdim href="/takdir" etiket={t.bekleEylem} />
           )}

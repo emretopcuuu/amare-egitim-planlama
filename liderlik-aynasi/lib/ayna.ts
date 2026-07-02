@@ -10,6 +10,8 @@ import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
 import { kariyerHalKisidenTuret, personaBlogu, personaYolculukOdak, KARIYER_RANK, KARIYER_ETIKET } from "@/lib/persona";
 import { aiHataYakala } from "@/lib/uyari";
 import { vinyetSec, type LiderKas } from "@/lib/liderlikVinyetleri";
+import { karsilasmaBul } from "@/lib/karsilasma";
+import { eslesmeHedefiSec, ESLESMELI_TURLER, type EslesmeAday } from "@/lib/gorevEslesme";
 import {
   fazBul,
   zorlukSec,
@@ -57,7 +59,7 @@ const GOREV_SEMASI = {
     govde: {
       type: "string" as const,
       description:
-        "AYNA'nın ağzından görev metni. SADE, gündelik Türkçe; kısa ve net cümleler. Yapı: (1) tek bir somut eylem — ne yapacağı tek okumada anlaşılsın, (2) sonra sana ne yazacağı — tek net soru. En fazla 3 cümle. Süslü mecaz, küçültme eki ('ricacık' gibi), iç içe yan cümle ve şiirsel/bulanık ifade ('içinde ne koptu' gibi) KULLANMA.",
+        "AYNA'nın ağzından görev metni, gündelik Türkçe, kısa ve net cümleler (sistem promptundaki GÖREV DNA'SI yapısına uy — hikaye + ayna + meydan okuma + dönüş, toplam ~5 cümle). Süslü mecaz, küçültme eki ('ricacık' gibi), iç içe yan cümle ve şiirsel/bulanık ifade ('içinde ne koptu' gibi) KULLANMA. KRİTİK: metin YARIM BIRAKILAMAZ — birine belirli bir sözü/cümleyi söylemesini istiyorsan o sözün TAM METNİNİ tırnak içinde mutlaka yaz; ':' ya da 'şunu söyle:' gibi bir ifadeyle bitirip alıntıyı boş bırakma. Her zaman tam, noktalanmış bir cümleyle bitir.",
     },
     ozellik_id: {
       type: "integer" as const,
@@ -79,10 +81,138 @@ const GOREV_SEMASI = {
       description:
         "Bu görevin neden ÖZELLİKLE BU kişiye verildiğine dair TEK kısa cümle (en fazla 16 kelime), adayın göreceği sıcak bir dille. Pusula doluysa nedeni orada geçen çekirdek neden/iç engele bağla ama doğrudan alıntı yapma. Ham veri/puan/teknik terim YOK; kör noktayı yüzüne vurma. Yoksa boş string.",
     },
+    fayda: {
+      type: "string" as const,
+      description:
+        "'Bu ödev neden önemli?' — bu görevi yapmanın kişinin LİDERLİĞİNE ve SAHADA işini (network marketing) kurarken NE KATACAĞINI anlatan 1-2 cümle. ŞU İKİSİNİ birleştir: (a) hangi farkındalığı/yeteneği besler (ör. zor konuşmayı yönetme, soğuk pazarda ilk adım, ekip güveni), (b) sahada somut karşılığı (ör. ekibini büyütürken, lider yetiştirirken, itiraz karşılarken). Sıcak, motive edici, ikinci tekil ('sana/işine'); genel-geçer klişe değil BU göreve özel. Ham veri/puan/teknik terim YOK.",
+    },
+    ipuclari: {
+      type: "array" as const,
+      items: { type: "string" as const },
+      description:
+        "YALNIZ bağlamda 'düşük puan sonrası derinleştirme/tekrar' dendiyse: kişinin BU SEFER daha iyi yapması için 2 KISA, somut tavsiye (her biri tek cümle, eyleme dönük). Aksi halde boş dizi [].",
+    },
+    // FAZ 1.1 — SOMUTLUK ŞABLONU: görev metninin gövdesinde anlatılanı 5 satırlık
+    // bir checklist'e ayrıştırır (kim/ne/nerede/ne_zaman/kanit). UI'da ayrı bir
+    // kutuda gösterilir — katılımcı görev metnini yorumlamak zorunda kalmaz.
+    kim: {
+      type: "string" as const,
+      description:
+        "Görev belirli bir kişiyi hedefliyorsa o kişinin adı/tanımı (ör. 'Zeynep Kaya' ya da 'takımından biri'). Kişi belirtilmiyorsa boş string.",
+    },
+    ne: {
+      type: "string" as const,
+      description:
+        "Yapılacak TEK somut eylem, kısa fiil öbeği (ör. 'ona tek soru sor', 'gördüğün anı yaz'). Görev metninden çıkar, tekrar etme.",
+    },
+    nerede: {
+      type: "string" as const,
+      description:
+        "Görevin yapılacağı kamp mekânı/bağlamı (ör. 'yemek çadırında', 'serbest zamanda', 'telefonundan'). Belirsizse 'kampta herhangi bir yerde'.",
+    },
+    ne_zaman: {
+      type: "string" as const,
+      description: "Görevin yapılması gereken zaman aralığı (ör. 'bugün akşam yemeğine kadar', 'önümüzdeki 1 saat içinde').",
+    },
+    kanit: {
+      type: "string" as const,
+      description: "Teslimde AYNA'ya ne getireceği: yazacağı/söyleyeceği/göstereceği şey (ör. 'onun cevabından bir cümle', 'tek kelime').",
+    },
+    // Öneri #7 — DÖNÜŞ BİÇİMİ: görevin kişiden ne tür bir "dönüş" istediği. Kaydedilip
+    // bağlama geri verilir → model son N görevin biçimini görüp tekdüzeliği kırar.
+    donus_bicimi: {
+      type: "string" as const,
+      enum: ["yaz", "sesli", "grup", "foto", "tek_kelime"],
+      description:
+        "Bu görevin dönüş biçimi: 'yaz' (bana yaz), 'sesli' (sesle anlat), 'grup' (grupla/biriyle etkileş), 'foto' (kanıt fotoğrafı), 'tek_kelime' (tek kelime/tek cümle). Bağlamdaki 'sonDonusBicimleri'nden FARKLI seç — art arda aynı biçim tekdüzeliktir.",
+    },
+    // Öneri #6 — ÜRETİM ANI ÖZ-DENETİMİ: model kendi çıktısını denetler; başarısızsa
+    // görev katılımcıya ulaşmadan reddedilip yeniden üretilir.
+    baglam_kullanildi: {
+      type: "boolean" as const,
+      description:
+        "Bu görev, bağlamdaki kişiye-özel verilerden (pusula/onFarkindalik/değerler/hedef/sonYanitları/akranYorumlari) EN AZ BİRİNE gerçekten demirlendi mi? Jenerik/herkese uyan bir görevse false.",
+    },
+    tekrar_degil: {
+      type: "boolean" as const,
+      description:
+        "Bu görev 'oncekiGorevBasliklari'ndaki hiçbirinin tekrarı/çok benzeri DEĞİL mi (farklı kas/eylem/dönüş)? Benzer bir egzersizse false.",
+    },
   },
-  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden"],
+  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden", "fayda", "ipuclari", "kim", "ne", "nerede", "ne_zaman", "kanit", "donus_bicimi", "baglam_kullanildi", "tekrar_degil"],
   additionalProperties: false,
 };
+
+// FAZ 1.2 — KALİTE DENETÇİSİ: üretilen görevi ucuz bir Haiku geçişinden
+// otomatik geçirir. gorevKaliteDenetle'nin döndürdüğü 4 kritere göre.
+const KALITE_SEMASI = {
+  type: "object" as const,
+  properties: {
+    anlasilir: {
+      type: "boolean" as const,
+      description: "Katılımcı bu görevi TEK OKUMADA anlıyor mu (ne yapacağı + sana ne yazacağı net mi)?",
+    },
+    somut: {
+      type: "boolean" as const,
+      description: "İstenen eylem SOMUT mu? Soyut/şiirsel/muğlak bir istek ('kendini yokla' gibi) değil mi?",
+    },
+    isimNet: {
+      type: "boolean" as const,
+      description: "Görev belirli bir kişiyi hedefliyorsa (hedefKisi doluysa) isim VE onu nerede/nasıl bulacağı net mi? Görev isimsizse otomatik true.",
+    },
+    tekrarDegil: {
+      type: "boolean" as const,
+      description: "Bu görev, verilen son 10 görev başlığının hiçbirine belirgin şekilde benzemiyor mu (farklı eylem/tema)?",
+    },
+    sebep: {
+      type: "string" as const,
+      description: "Yukarıdakilerden biri false ise TEK kısa cümlelik sebep. Hepsi true ise boş string.",
+    },
+  },
+  required: ["anlasilir", "somut", "isimNet", "tekrarDegil", "sebep"],
+  additionalProperties: false,
+};
+
+/** FAZ 1.2 — otomatik kalite denetçisi (Haiku, ucuz). API düşerse ya da
+ * ayrıştırılamazsa FAIL-OPEN döner (görevi engellemez) — bu bir güvenlik
+ * kapısı değil, kalite iyileştirmesidir; maliyeti sıcak yolu bloklamamalı. */
+export async function gorevKaliteDenetle(
+  gorev: { title: string; body: string; kind: string; hedefKisi?: string | null },
+  sonGorevBasliklari: string[]
+): Promise<{ gecti: boolean; sebep: string | null }> {
+  try {
+    const client = new Anthropic();
+    const yanit = await client.messages.create({
+      model: "claude-haiku-4-5",
+      max_tokens: 300,
+      thinking: { type: "disabled" },
+      output_config: { format: { type: "json_schema", schema: KALITE_SEMASI } },
+      system:
+        "Bir liderlik kampı görev metnini denetliyorsun. 4 kriteri dürüstçe değerlendir: (1) anlasilir, (2) somut, (3) isimNet (hedefKisi boşsa otomatik true), (4) tekrarDegil (sonGorevBasliklari ile karşılaştır). Yalnızca JSON döndür.",
+      messages: [
+        {
+          role: "user",
+          content: JSON.stringify({
+            gorev: { baslik: gorev.title, metin: gorev.body, tur: gorev.kind, hedefKisi: gorev.hedefKisi ?? null },
+            sonGorevBasliklari: sonGorevBasliklari.slice(0, 10),
+          }),
+        },
+      ],
+    });
+    const veri = jsonCoz<{
+      anlasilir: boolean;
+      somut: boolean;
+      isimNet: boolean;
+      tekrarDegil: boolean;
+      sebep: string;
+    }>(yanit);
+    if (!veri) return { gecti: true, sebep: null };
+    const gecti = veri.anlasilir && veri.somut && veri.isimNet && veri.tekrarDegil;
+    return { gecti, sebep: gecti ? null : (veri.sebep || "kalite denetiminden geçemedi") };
+  } catch {
+    return { gecti: true, sebep: null };
+  }
+}
 
 const PUAN_SEMASI = {
   type: "object" as const,
@@ -155,11 +285,25 @@ export type UretilenGorev = {
   itiraz: string | null;
   /** "bu görev neden SANA özel" — kısa, sıcak; ham veri ifşa etmez */
   neden: string | null;
+  /** "Bu ödev neden önemli?" — hangi farkındalık/yetenek + sahada faydası (1-2 cümle) */
+  fayda: string | null;
+  /** düşük-puan derinleştirme görevlerinde: bu sefer daha iyi yapması için 2 somut ipucu */
+  ipuclari: string[];
   /** #8 micro-sprint: true ise due_at 30 dakika olarak hesaplanır */
   micro_sprint: boolean;
   /** #4b görev yayı aktifken üretildi mi — yay aşaması bu işaretli görevlerden sayılır */
   yayGorevi: boolean;
+  /** #7 dönüş biçimi (yaz/sesli/grup/foto/tek_kelime) — çeşitlilik izlemesi */
+  donusBicimi: string | null;
+  /** FAZ 1.1 — somutluk şablonu: gövdeyi 5 satırlık checklist'e ayrıştırır */
+  somutluk: { kim: string | null; ne: string; nerede: string; neZaman: string; kanit: string } | null;
+  /** FAZ 2.1 — bu görev bir eşleşme hedefine bağlıysa (isimli ya da isimsiz),
+   * tik.ts mission insert sonrası eslesmeKaydet() ile gorev_eslesme'ye yazar. */
+  eslesme: { hedefId: string; isimli: boolean } | null;
 };
+
+// #7 geçerli dönüş biçimleri (şema enum'ı ile aynı).
+export const DONUS_BICIMLERI = ["yaz", "sesli", "grup", "foto", "tek_kelime"];
 
 // Ön Farkındalık profilini görev üretimi için sıkıştırır.
 const OZ_ALAN_AD: Record<string, string> = {
@@ -179,6 +323,18 @@ export async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | 
     katman3?: { ritim?: string };
     katman4?: Record<string, string | null>;
     katman5?: { aciklik?: number | null };
+    // Öneri #2: korNoktaGuncelle'nin milestone'larda (5/10/15 görev) yazdığı
+    // kamp-içi derinleşen tema. Eskiden YAZILIYOR ama HİÇ OKUNMUYORDU (ölü
+    // döngü) — artık gorevUret bağlamına taşınır, en pahalı geri besleme
+    // mekanizmasının çıktısı görevleri şekillendirir.
+    // FAZ 4.1: sosyalTema — akran yorumları + takdirlerin TEMA DÜZEYİNDE
+    // damıtılmış özeti (asla birebir alıntı).
+    kampici_guncelleme?: {
+      milestone?: number;
+      yeniTema?: string;
+      aciklama?: string;
+      sosyalTema?: string;
+    } | null;
   } | null;
   if (!p || !p.katman1) return null;
   const k4 = p.katman4 ?? {};
@@ -187,11 +343,17 @@ export async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | 
     kalkan: k4["k4.kalkan"] ?? null,
     varsayim: k4["k4.varsayim"] ?? null,
   };
+  const kg = p.kampici_guncelleme;
+  const kampBoyuncaDerinlesenTema =
+    kg?.yeniTema ? { tema: kg.yeniTema, aciklama: kg.aciklama ?? null } : null;
+  const sosyalTema = kg?.sosyalTema ?? null;
   const dolu =
     p.katman1.enZayif ||
     (p.katman2?.enBuyukIki?.length ?? 0) > 0 ||
     korNokta.tersDavranis ||
-    korNokta.kalkan;
+    korNokta.kalkan ||
+    kampBoyuncaDerinlesenTema ||
+    sosyalTema;
   if (!dolu) return null;
   return {
     enZayifAlan: p.katman1.enZayif ? OZ_ALAN_AD[p.katman1.enZayif] ?? p.katman1.enZayif : null,
@@ -201,6 +363,11 @@ export async function onFarkindalikOzeti(db: Db, pid: string): Promise<object | 
     korNokta,
     ritim: p.katman3?.ritim ?? null,
     geriBildirimAcikligi: p.katman5?.aciklik ?? null,
+    // Kamp ilerledikçe açığa çıkan gerçek örüntü (varsa kamp-öncesi profilden
+    // daha isabetli — görevleri buna göre demirle).
+    kampBoyuncaDerinlesenTema,
+    // FAZ 4.1 — akran yorumları + takdirlerden damıtılmış tek tema etiketi.
+    sosyalTema,
   };
 }
 
@@ -228,7 +395,7 @@ async function temalarCikar(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 256,
       thinking: { type: "disabled" },
       output_config: {
@@ -276,7 +443,14 @@ export async function gorevUret(
   bitenEtkinlik: ProgramMaddesi | null = null,
   gorevIpucu: string | null = null,
   siradakiEtkinlik: ProgramMaddesi | null = null,
-  yorgunMu = false
+  yorgunMu = false,
+  // FAZ 2.2 — mekân-farkında eşleştirme: çağıran (tik.ts), o an aynı
+  // mekânda/boşta olan adayları biliyorsa geçer. null/undefined = filtre yok
+  // (mod !== kamp gün 2 gibi mekân verisi olmayan durumlar).
+  mekanFarkindaAdaylar: EslesmeAday[] | null = null,
+  // FAZ 7 — AKTİVASYON: kişinin son kaçırma sebebi (7.2 sebep motoru) ve
+  // yeniden giriş basamağı (7.3 merdiven). tik.ts geçirir.
+  aktivasyon: { sonKacirmaSebebi?: string | null; girisBasamak?: number } = {}
 ): Promise<UretilenGorev | null> {
   const [
     ozellikler,
@@ -298,17 +472,25 @@ export async function gorevUret(
     baglantıCountSonuc,
     // Kariyer momentumu (persona ekseni)
     kariyerSonuc,
+    // Değerler çalışması — kişinin seçtiği 3 temel değer + neden cümlesi.
+    degerlerSonuc,
+    // Öneri #3: alınan takdirler (sosyal kanıt / güç).
+    alinanTakdirlerSonuc,
+    // FAZ 4.2 — kamp öncesi kendi sesiyle bıraktığı beklenti cümlesi.
+    beklentiSonuc,
   ] = await Promise.all([
     aktifOzellikler(db),
     db
       .from("missions")
-      .select("kind, title, issued_at, status, ai_score, lightened_at, responded_at, response_tags")
+      // response_text + ai_comment eklendi (öneri #1: kişinin gerçek cümleleri,
+      // #9: AYNA'nın verdiği son tavsiyeyi sonraki göreve taşımak için)
+      .select("kind, title, body, issued_at, status, ai_score, ai_comment, lightened_at, responded_at, response_tags, response_text, donus_bicimi")
       .eq("participant_id", katilimci.id)
       .order("issued_at", { ascending: false })
       .limit(10), // genişletildi: streak ve pik pencere için
     db
       .from("ratings")
-      .select("trait_id, score, is_self")
+      .select("trait_id, score, is_self, comment, is_hidden")
       .eq("target_id", katilimci.id),
     pusulaOzeti(db, katilimci.id),
     pusulaCekirdek(db, katilimci.id),
@@ -337,12 +519,45 @@ export async function gorevUret(
       .select("id", { count: "exact", head: true })
       .eq("observer_id", katilimci.id),
     // Kariyer momentumu (persona ekseni) — A/B/C türetmesi için ham veriler.
+    // gorulen_vinyetler aynı sorguya bindirildi: kişinin daha önce gördüğü
+    // açılış hikayeleri — "aynı hikaye asla iki kez" kuralı için.
     db
       .from("participants")
-      .select("kariyer_seviyesi, en_yuksek_kariyer, gecen_ay_kariyer, kidem_ay")
+      .select("kariyer_seviyesi, en_yuksek_kariyer, gecen_ay_kariyer, kidem_ay, gorulen_vinyetler")
       .eq("id", katilimci.id)
       .maybeSingle(),
+    db
+      .from("degerler_calismasi")
+      .select("secilen_uc, neden_cumlesi")
+      .eq("participant_id", katilimci.id)
+      .maybeSingle(),
+    // Öneri #3: kişinin ALDIĞI takdirler (kudos) — görev yalnız zayıflığı değil,
+    // sosyal kanıtla gelen GÜCÜ de kullanabilsin ("arkadaşların sende şunu
+    // görüyor, bugün onu bilerek kullan").
+    db
+      .from("kudos")
+      .select("message")
+      .eq("to_id", katilimci.id)
+      .eq("is_hidden", false)
+      .order("created_at", { ascending: false })
+      .limit(5),
+    // FAZ 4.2 — kamp öncesi kaydettiği beklenti cümlesi ("bu kamptan ne
+    // bekliyorsun?"). Görevler bunu kişinin KENDİ SÖZÜ olarak geri çalabilir.
+    db
+      .from("voice_profiles")
+      .select("beklenti")
+      .eq("participant_id", katilimci.id)
+      .maybeSingle(),
   ]);
+
+  // Değerler: kişinin seçtiği 3 temel değer + neden cümlesi → görev bunları
+  // "yaşama" meydan okumasına dönüşür (değer soyut kalmaz, eyleme geçer).
+  const degerlerVeri = degerlerSonuc.data;
+  const secilenDegerler = (degerlerVeri?.secilen_uc as string[] | null) ?? [];
+  const degerler =
+    secilenDegerler.length > 0
+      ? { temelDegerler: secilenDegerler, nedenCumlesi: degerlerVeri?.neden_cumlesi ?? null }
+      : null;
 
   // Kariyer hâlini türet ve prompt bloğunu hazırla (veri yoksa boş → jenerik).
   const persona = kariyerSonuc.data ? kariyerHalKisidenTuret(kariyerSonuc.data) : null;
@@ -430,10 +645,84 @@ export async function gorevUret(
     .slice(0, 3)
     .flatMap((o) => o.response_tags as string[]);
 
+  // Öneri #1 / FAZ 4.4 — KİŞİNİN GERÇEK CÜMLELERİ + DEVAM EDEN HİKÂYE: son
+  // puanlı görevlerin ham yanıt metni (etiket değil, kişinin kendi kelimeleri).
+  // 3'e çıkarıldı (öneri #1'de 2'ydi) — görevler birbirine referans verip
+  // kopuk atışlar değil, süren bir hikâye gibi hissettirsin.
+  const sonYanitAlintilari = onceki
+    .filter((o) => o.status === "scored" && (o.response_text as string | null)?.trim())
+    .slice(0, 3)
+    .map((o) => ({
+      gorev: o.title,
+      yanit: (o.response_text as string).trim().slice(0, 240),
+    }));
+
+  // Öneri #9 — AYNA'NIN SON TAVSİYESİ: en son puanlı görevin ai_comment'i.
+  // Sonraki görev bunun takipçisi olsun ("geçen sefer sana X demiştim, bugün
+  // deneme zamanı") → kopuk atışlar bir koçluk konuşmasına dönüşür.
+  const sonAynaTavsiyesi =
+    onceki.find((o) => o.status === "scored" && (o.ai_comment as string | null)?.trim())
+      ?.ai_comment as string | undefined;
+
+  // Öneri #3 — SOSYAL KANIT: akranların bu kişi hakkında yazdığı yorumlar +
+  // aldığı takdirler. Görev güçten de beslenebilsin (yalnız kör noktadan değil).
+  const akranYorumlari = (puanlar as { comment?: string | null; is_hidden?: boolean }[])
+    .filter((p) => p.comment && p.comment.trim() && !p.is_hidden)
+    .slice(0, 4)
+    .map((p) => (p.comment as string).trim().slice(0, 160));
+  const alinanTakdirler = ((alinanTakdirlerSonuc.data ?? []) as { message: string }[])
+    .map((k) => k.message?.trim())
+    .filter((m): m is string => !!m)
+    .slice(0, 4);
+
+  // Öneri #7 — son görevlerin dönüş biçimleri (model tekdüzeliği görsün/kırsın).
+  const sonDonusBicimleri = onceki
+    .map((o) => (o as { donus_bicimi?: string | null }).donus_bicimi)
+    .filter((b): b is string => !!b)
+    .slice(0, 3);
+
+  // Öneri #8 — ODA SICAKLIĞI: görev yalnız bireyin değil ODANIN duygu ritmine
+  // de otursun. Son 2 saatte kamp GENELİNDE puanlanan görevlerin ortalaması,
+  // odanın enerjisini verir: düşükse tonu toparlayıcı yap, yüksekse iddialaştır.
+  // Yalnız kamp modunda + yeterli sinyalde (≥5 teslim); aksi halde null → nötr.
+  let odaSicakligi: "dusuk" | "yuksek" | null = null;
+  if (mod === "kamp") {
+    const ikiSaatOnce = new Date(Date.now() - 2 * 3_600_000).toISOString();
+    const { data: odaSon } = await db
+      .from("missions")
+      .select("ai_score")
+      .eq("status", "scored")
+      .not("ai_score", "is", null)
+      .gte("scored_at", ikiSaatOnce);
+    const puanlar2s = (odaSon ?? [])
+      .map((m) => m.ai_score)
+      .filter((s): s is number => typeof s === "number");
+    if (puanlar2s.length >= 5) {
+      const ortalama = puanlar2s.reduce((a, b) => a + b, 0) / puanlar2s.length;
+      if (ortalama <= 5) odaSicakligi = "dusuk";
+      else if (ortalama >= 7.5) odaSicakligi = "yuksek";
+    }
+  }
+
   const bugunTurleri = onceki
     .filter((o) => Date.now() - new Date(o.issued_at).getTime() < 86_400_000)
     .map((o) => o.kind);
-  const tur = turSec(gun, saat, bugunTurleri, mod, undefined, etkinlik?.tur, kapaliTurler);
+  let tur = turSec(gun, saat, bugunTurleri, mod, undefined, etkinlik?.tur, kapaliTurler);
+
+  // FAZ 2.1 — GÜNLÜK EŞLEŞME KOTASI: bugünün görevlerinin ≥%50'si eşleşmeli
+  // (bag ve FAZ 3'te eklenecek tanık/çift türleri) olsun. turSec'in seçtiği
+  // tür zaten eşleşmeli değilse ve oran hedefin altındaysa "bag"a çevir —
+  // admin bag'i kapattıysa (kapaliTurler) dokunma.
+  if (
+    mod === "kamp" &&
+    !kapaliTurler.includes("bag") &&
+    bugunTurleri.length > 0 &&
+    !ESLESMELI_TURLER.includes(tur)
+  ) {
+    const eslesmeliOran =
+      bugunTurleri.filter((t) => ESLESMELI_TURLER.includes(t)).length / bugunTurleri.length;
+    if (eslesmeliOran < 0.5) tur = "bag";
+  }
 
   // Zorluk hesabı (eustress motoru)
   const kapananlar = onceki.filter(
@@ -520,6 +809,41 @@ export async function gorevUret(
         Date.now() - new Date(o.issued_at).getTime() < 86_400_000
     ) ?? null;
 
+  // FAZ 2.1 — İSİMLİ EŞLEŞME ÇEKİRDEĞİ: tur "bag" ise gerçek bir hedef seç.
+  // Persona-tamamlayıcı eşleşme (karsilasma.ts) tercih edilir; dengeleyici
+  // (lib/gorevEslesme.ts) kota/geçmiş/admin-engeli kısıtlarını uygular.
+  // Mekân-farkında adaylar verildiyse (FAZ 2.2, Gün 2 grup bağlamı) yalnız
+  // o an aynı mekânda/boşta olanlardan seçilir.
+  let eslesmeHedef: EslesmeAday | null = null;
+  let eslesmeIsimliMi = false;
+  if (tur === "bag") {
+    const { data: rosterHam } = await db
+      .from("participants")
+      .select("id, full_name, team")
+      .eq("role", "participant");
+    let adaylar: EslesmeAday[] = (rosterHam ?? []).filter((p) => p.id !== katilimci.id);
+    if (mekanFarkindaAdaylar) {
+      const mekanIdler = new Set(mekanFarkindaAdaylar.map((a) => a.id));
+      adaylar = adaylar.filter((a) => mekanIdler.has(a.id));
+    }
+    if (adaylar.length > 0) {
+      const tercih = await karsilasmaBul(db, katilimci.id);
+      eslesmeHedef = await eslesmeHedefiSec(db, katilimci.id, adaylar, new Date(), tercih?.partnerId ?? null);
+    }
+    if (eslesmeHedef) {
+      // Bugün bu kişinin eşleşmeli görevlerinin kaçı isimliydi — oran ≥%50 kalsın.
+      const gunBasiIso = new Date(Date.now() - 24 * 3_600_000).toISOString();
+      const { data: bugunEslesmeler } = await db
+        .from("gorev_eslesme")
+        .select("isimli")
+        .eq("kaynak_id", katilimci.id)
+        .gte("created_at", gunBasiIso);
+      const toplamBugun = bugunEslesmeler?.length ?? 0;
+      const isimliSayisi = (bugunEslesmeler ?? []).filter((e) => e.isimli).length;
+      eslesmeIsimliMi = toplamBugun === 0 || isimliSayisi / toplamBugun < 0.5;
+    }
+  }
+
   // --- Tüm yeni yönergeleri oluştur ---
   const yeniYonergeler = [
     // #1 Algoritmik özellik hedefleme
@@ -542,9 +866,11 @@ export async function gorevUret(
       : "",
     // #7 Ses tonu
     tonOnerisi ? `AYNA SES TONU (kişiye özel): ${tonOnerisi}` : "",
-    // #4 Bağ görevi
+    // #4 / FAZ 2.1 Bağ görevi — isimli (gerçek eşleşme hedefi) ya da isimsiz
     tur === "bag"
-      ? `BAĞ GÖREVİ: Adayı takımından veya kamptan gerçek bir insanla bağlantı kurmaya yönlendir. İsim verme; "az tanıdığın biri", "farklı bir takımdan biri", "sohbet etmek isteyip ertelediğin biri" gibi ifadeler kullan. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
+      ? eslesmeHedef && eslesmeIsimliMi
+        ? `BAĞ GÖREVİ (İSİMLİ EŞLEŞME): Adayı doğrudan "${eslesmeHedef.full_name}" isimli kişiye yönlendir — adını göreve AÇIKÇA yaz (ör. "${eslesmeHedef.full_name}'i bul..."), varsa takımını da belirtebilirsin. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin.`
+        : `BAĞ GÖREVİ: Adayı takımından veya kamptan gerçek bir insanla bağlantı kurmaya yönlendir. İsim verme; "az tanıdığın biri", "farklı bir takımdan biri", "sohbet etmek isteyip ertelediğin biri" gibi ifadeler kullan. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
       : "",
     // #8 Micro-sprint
     microSprint
@@ -585,6 +911,22 @@ export async function gorevUret(
     gorevIpucu
       ? `ETKİNLİĞE ÖZEL YÖNERGE (MUTLAKA kat): ${gorevIpucu}`
       : "",
+    // FAZ 7.2 — SEBEP MOTORU: kişi son görevini şu sebeple kaçırdı → görevi ona göre biçimle.
+    aktivasyon.sonKacirmaSebebi === "anlamadim"
+      ? "KAÇIRMA SEBEBİ 'ANLAMADIM': Bu görevi AŞIRI SOMUT ve basit yaz — tek cümlelik tek bir eylem, hiç mecaz yok, ne yapacağı ve sana ne yazacağı çocukça net olsun."
+      : aktivasyon.sonKacirmaSebebi === "cekindim"
+        ? "KAÇIRMA SEBEBİ 'ÇEKİNDİM': ŞEFKAT MODU — küçük, güvenli, düşük-riskli, kimsenin önünde olmayan bir ilk adım. Baskı yok; 'kendi hızında' güvencesi ver."
+        : aktivasyon.sonKacirmaSebebi === "vakit"
+          ? "KAÇIRMA SEBEBİ 'VAKİT YOKTU': Bu görev TAM 10 DAKİKADA bitebilmeli — tek atomik eylem. 'Şimdi, kısacık' tonu."
+          : aktivasyon.sonKacirmaSebebi === "ilgi_yok"
+            ? "KAÇIRMA SEBEBİ 'İLGİMİ ÇEKMEDİ': FARKLI bir kas + farklı bir tür + farklı bir dönüş biçimi seç; öncekine hiç benzemesin, taze bir açı getir."
+            : "",
+    // FAZ 7.3 — YENİDEN GİRİŞ MERDİVENİ: sessizleşip dönen kişiye önce en küçük adım.
+    aktivasyon.girisBasamak === 0
+      ? "YENİDEN GİRİŞ (BASAMAK 0): Bu kişi bir süre sessizdi, yeni dönüyor. Görev TEK DOKUNUŞLUK olsun — tek kelime ya da tek cümlelik bir yanıt yeter; eşiği yerde tut, 'tekrar buradasın, bu kadarı harika' hissi ver. sure_saat=1."
+      : aktivasyon.girisBasamak === 1
+        ? "YENİDEN GİRİŞ (BASAMAK 1): Yeni döndü, ısınıyor. Görev en fazla 20 dakikalık, küçük ve garantili başarılabilir olsun; güveni tazele."
+        : "",
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -607,7 +949,26 @@ export async function gorevUret(
   const hedefKas = KAS_DONGU[(((tamamSayisi + gun + kisiKaymasi) % L) + L) % L];
   // Vinyet seçimine de kişi kaymasını kat → aynı kasa düşen iki kişi farklı
   // küratörlü hikâyeyle açılsın (aynı kas + aynı vinyet çakışması da kırılır).
-  const secilenVinyet = vinyetSec(hedefKas, tamamSayisi + kisiKaymasi);
+  // Kişi isteği: AYNI HİKAYE bir kişiye ASLA iki kez gösterilmesin — daha önce
+  // görülen vinyet kodları hariç tutulur (kariyerSonuc sorgusuna bindirildi).
+  const gorulenVinyetler = new Set(
+    (kariyerSonuc.data as { gorulen_vinyetler?: string[] } | null)?.gorulen_vinyetler ?? []
+  );
+  const secilenVinyet = vinyetSec(hedefKas, tamamSayisi + kisiKaymasi, gorulenVinyetler);
+  // Yeni (hiç görülmemiş) bir vinyet seçildiyse kişinin görülen listesine ekle
+  // — sonraki üretimlerde tekrar seçilmesin. Serverless'te un-awaited yazma
+  // response gönderilince öldürülebileceği için AWAIT edilir; ama hatası görev
+  // üretimini bloklamasın diye yutulur (en kötü ihtimalle nadir bir tekrar olur).
+  if (secilenVinyet && !gorulenVinyetler.has(secilenVinyet.kod)) {
+    try {
+      await db
+        .from("participants")
+        .update({ gorulen_vinyetler: [...gorulenVinyetler, secilenVinyet.kod] })
+        .eq("id", katilimci.id);
+    } catch {
+      // best-effort — yazım başarısız olsa bile görev üretimi devam eder
+    }
+  }
 
   const baglam = {
     ad: katilimci.full_name.split(" ")[0],
@@ -618,6 +979,7 @@ export async function gorevUret(
       : null,
     takim: katilimci.team,
     pusula: pusula ?? null,
+    degerler: degerler ?? null,
     hedef: hedef ?? null,
     onFarkindalik: onFarkindalik ?? null,
     kocuPaylasimlari: kocuPaylasim ?? null,
@@ -655,6 +1017,15 @@ export async function gorevUret(
     birincilHedefler: deltalar.length > 0 ? deltalar : null,
     // #2
     oncekiYanitTemalari: oncekiYanitTemalari.length > 0 ? oncekiYanitTemalari : null,
+    // Öneri #1 — kişinin son görevlerde YAZDIĞI gerçek cümleler (etiket değil).
+    sonYanitlari: sonYanitAlintilari.length > 0 ? sonYanitAlintilari : null,
+    // Öneri #9 — AYNA'nın son verdiği tavsiye (yeni görev bunun takipçisi olsun).
+    sonAynaTavsiyesi: sonAynaTavsiyesi ? sonAynaTavsiyesi.slice(0, 240) : null,
+    // Öneri #3 — sosyal kanıt: akran yorumları + alınan takdirler (güç kaynağı).
+    akranYorumlari: akranYorumlari.length > 0 ? akranYorumlari : null,
+    alinanTakdirler: alinanTakdirler.length > 0 ? alinanTakdirler : null,
+    // FAZ 4.2 — kamp öncesi kendi sesiyle bıraktığı beklenti cümlesi.
+    beklentiSozu: beklentiSonuc?.data?.beklenti?.trim().slice(0, 240) || null,
     // #3
     streak,
     pikYanitSaati,
@@ -675,18 +1046,27 @@ export async function gorevUret(
       digerlerininOrtalamasi: ort(ozet.get(o.id)?.dis ?? []),
     })),
     oncekiGorevBasliklari: onceki.map((o) => o.title),
+    // #7 son dönüş biçimleri — art arda aynısını seçme (donus_bicimi'ni farklı seç).
+    sonDonusBicimleri: sonDonusBicimleri.length > 0 ? sonDonusBicimleri : null,
+    // #8 odanın o anki enerjisi (kamp geneli son 2 saat).
+    odaSicakligi,
     yonerge:
       gun === 1
         ? "İlk gün: tanışma ve buz kırma odaklı, veriye fazla yaslanma."
         : "Veriye yaslan: düşük öz puanlı ya da öz/dış farkı büyük bir özelliği hedefleyen görev üret. Önceki görevleri tekrarlama.",
   };
 
+  // FAZ 1.2 — üretim, kalite denetiminden geçmezse BİR kez daha denenebilsin
+  // diye ayrı bir kapanışa alındı (aynı `baglam`'ı kullanır, context yeniden
+  // çekilmez — yalnız API çağrısı tekrarlanır).
+  async function tekUretimDenemesi(ekstraYonerge: string): Promise<UretilenGorev | null> {
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      // MALİYET: görev üretimi sıcak yolun ana sürücüsü. Opus yerine Sonnet 4.6
-      // (~%40 ucuz, kalite çok yakın); çıktı kısa olduğu için max_tokens kırpıldı.
-      model: "claude-sonnet-4-6",
+      // Görev üretimi kampın en sık çalışan, en kritik parçası — güncel
+      // Sonnet 5'e yükseltildi (kullanıcı isteği). Opus yerine Sonnet seçimi
+      // hâlâ geçerli: çıktı kısa olduğu için max_tokens kırpıldı.
+      model: "claude-sonnet-5",
       max_tokens: 1024,
       thinking: { type: "adaptive" },
       output_config: {
@@ -709,20 +1089,36 @@ GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lid
 1) HİKÂYE — gövdenin başında "acilisHikayesi"ni KISA (2-3 cümle) ve SADIK anlat. Uydurma, yalnız verileni kullan. Başlığı bu hikâyeyle ilişkilendir (birebir kopyalama).
 2) AYNA — kişinin pusula/kör nokta/hedefiyle AÇIK bağ kur: "sen … demiştin / … istiyorsun". Hikâyedeki eşik, tam da onun eşiği olsun.
 3) MEYDAN OKUMA — o anki kamp anına demirli, GERÇEKTEN zorlayan ama yapılabilir TEK bir lider hamlesi (kasla uyumlu: devret / ilk adımı at / zor konuş / yardım iste / söz ver / sorumluluğu üstlen…). Yumuşak "birini izle/gözlemle" DEĞİL.
-4) DÖNÜŞ — bana ne getireceğini söyle ve ÇEŞİTLENDİR: her görev "bana yaz" olmasın; kimi yap-ve-anlat, kimi grupla etkileş, kimi tek cümle/tek kelime.
+4) DÖNÜŞ — bana ne getireceğini söyle ve ÇEŞİTLENDİR: her görev "bana yaz" olmasın; kimi yap-ve-anlat, kimi grupla etkileş, kimi tek cümle/tek kelime. Birine BELİRLİ bir cümleyi birebir söylemesini istiyorsan ("şunu söyle", "de ki" vb.) o cümlenin TAM METNİNİ tırnak içinde MUTLAKA yaz — asla ":" ile bitirip alıntıyı boş bırakma.
 "ozellik_id"yi bu kasla uyumlu seç (cesaret→Cesaret, devretme→Sorumluluk/Takım Ruhu, zor_konusma→Dürüstlük, vizyon→Vizyonerlik, dinleme→İletişim, baglanti→Takım Ruhu/Pozitif Enerji vb.).
 
-ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz.
+ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz. "donus_bicimi" alanını doldur ve bağlamdaki "sonDonusBicimleri"nden FARKLI bir biçim seç (art arda hep "yaz" olmasın — sesli/grup/foto/tek_kelime ile çeşitlendir).
+
+ÖZ-DENETİM (ZORUNLU): Görevi ürettikten sonra kendini denetle ve "baglam_kullanildi" + "tekrar_degil" alanlarını DÜRÜSTÇE doldur. tekrar_degil, görev "oncekiGorevBasliklari"ndan birinin tekrarı/çok benzeriyse false olmalı — bu durumda görev reddedilip yeniden üretilir, o yüzden gerçekten FARKLI bir görev üret.
 ${personaMetni ? `\n${personaMetni}\n` : ""}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
 
-HEDEF BAĞLANTISI: Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.
+DEĞER KİŞİSELLEŞTİRMESİ: Bağlamda "degerler" doluysa görevi kişinin seçtiği temel değerlerinden (temelDegerler) BİRİNİ bugün somut bir eylemle YAŞAMA meydan okumasına bağla — değeri soyut anmakla kalma, o değerin gerektirdiği gerçek bir lider hamlesini istet (örn. değeri "Dürüstlük" ise bugün kaçındığı zor bir doğruyu söyle; "Cesaret" ise ertelediği ilk adımı at; "Takım Ruhu" ise geride kalan birine uzan). Görevi tek bir değere demirle (hepsini birden sıralama), değeri başlıkta ya da dönüşte kişinin diliyle çağır. Uygun olduğunda değer ile çalışılan lider kasını örtüştür. Değer yoksa bu bağı atla.
+
+HEDEF BAĞLANTISI: Bağlamda "hedef" doluysa görevi kişinin kariyer hedefine hizmet eden somut bir saha adımına bağla. Bağlamda "onFarkindalik" doluysa görevi enZayifAlan, enBuyukAciklar ve korNokta'ya göre hedefle — kör noktayı ASLA açıkça yüzüne vurma. onFarkindalik.kampBoyuncaDerinlesenTema doluysa ONA öncelik ver (kamp-öncesi profilden daha taze/isabetli). Bağlamda "kocuPaylasimlari" doluysa görevi onun ŞU AN dert ettiği gerçek gündemine demirle. Zorluk yönergesine MUTLAKA uy.
+
+KİŞİNİN KENDİ SÖZLERİ / FAZ 4.4 DEVAM EDEN HİKÂYE (çok güçlü): Bağlamda "sonYanitlari" doluysa (son 2-3 görev yanıtı), görevi kişinin SON yazdığı gerçek cümleye demirle — onun kendi kelimesini/anını hatırla ("geçen sefer '…' demiştin") ama birebir uzun alıntı yapma, bir-iki kelime dokun yeter. Birden fazla yanıt varsa aralarında bir İLERLEME/İP UCU gör ve yeni görevi onun doğal devamı yap ("dünkü konuşman seni buraya getirdi, bugün bir adım daha ileri taşı") — görevler kopuk atışlar değil, süren bir hikâye gibi hissettirsin. Bu "beni gerçekten dinliyor" hissini kurar.
+
+KONUŞMANIN DEVAMI: Bağlamda "sonAynaTavsiyesi" doluysa, yeni görev o tavsiyenin TAKİPÇİSİ olsun ("Geçen sefer sana şunu önermiştim — bugün onu deneme zamanı"). Görevler kopuk atışlar değil, süren bir koçluk konuşması gibi hissettir.
+
+FAZ 4.2 — KENDİ SÖZÜNÜ GERİ ÇALMA: Bağlamda "beklentiSozu" doluysa (kişinin kamp BAŞLAMADAN ÖNCE kendi sesiyle bıraktığı "bu kamptan ne bekliyorum" cümlesi), ARADA BİR görevi ona bağla: "Kamptan önce bana '…' demiştin — bugün ona bir adım daha yaklaş." Bu, kişinin kendi niyetiyle yüzleşmesinin en güçlü anıdır; birebir uzun alıntı yapma, özünü yakala.
+
+SOSYAL KANIT / GÜÇ: Bağlamda "onFarkindalik.sosyalTema" doluysa (akran yorumları + takdirlerden BAĞIMSIZ birden çok kaynakta tekrar eden, tema düzeyinde damıtılmış tek güç — asla birebir yorum alıntısı), bunu en güçlü kanca olarak kullan: "Kamptaki birden fazla göz sende [sosyalTema]'yı görüyor — bugün onu bilerek, bir kez daha göster." Yoksa bağlamdaki "akranYorumlari"/"alinanTakdirler" ARADA BİR görevi kişinin zayıflığına değil GÜCÜNE bağlamak için kullanılabilir — ama asla birebir alıntı yapma, yalnız özünü paraphrase et. Her görev güç-temelli olmasın; kör nokta ile denge kur.
 
 ANLIK RUH HÂLİ (adaptif ton — persona hâlinin ÜZERİNE binen ince ayar): Bağlamdaki "ruhHali" alanı "zorlaniyor" ise tonu belirgin yumuşat, görevi küçült ve nefes aldır (baskı kurma, kişiyi onaylayarak küçük bir adım iste); "guclu" ise güvenini onurlandırıp bir tık daha meydan oku; "akista" ya da boş ise olağan tonunda devam et. Persona hâlini EZME — yalnız tonu o anki duruma göre yumuşat/sertleştir.
 
+ODANIN ENERJİSİ (kolektif ton): Bağlamdaki "odaSicakligi" "dusuk" ise (oda yorgun/kırık) görevi toparlayıcı, birleştirici ve biraz daha hafif yap — "hep birlikte" hissi ver; "yuksek" ise (oda coşkulu) momentumu kullanıp bir tık daha iddialı, cesur bir hamle istet. Bu bireysel ruhHali'nin üstünde ince bir kolektif ayardır; boşsa dikkate alma.
+
 DİL NETLİĞİ (çok önemli): Görev metni SADE ve anlaşılır olmalı — katılımcı tek okumada (1) ne yapacağını ve (2) sana ne yazacağını net anlamalı. Kısa, gerçek cümleler kur. Şu hatalardan kaçın: iç içe geçmiş uzun cümleler, art arda tire (—) ile uzayan eklemeler, küçültme ekleri ('ricacık'), bulanık şiirsel ifadeler ('içinde ne koptu'). Yukarıdaki davranışsal kalıplar (FUN FAILURE, EUSTRESS vb.) PUANLAMA/teşvik tonu içindir; görev metnini süslemek için değil. Önce ne yapacağını söyle, sonra tek bir soruyla geri bildirimi iste.
 
-${yeniYonergeler}`,
+SOMUTLUK ŞABLONU (ZORUNLU): "kim"/"ne"/"nerede"/"ne_zaman"/"kanit" alanlarını gövdeden ÇIKARARAK doldur — yeni bilgi uydurma, gövdede zaten anlattığını 5 satıra ayrıştır. "kim" görev kişiyi hedeflemiyorsa boş string olabilir; diğer 4 alan HER ZAMAN dolu olmalı.
+
+${yeniYonergeler}${ekstraYonerge}`,
         },
       ],
       messages: [{ role: "user", content: JSON.stringify(baglam) }],
@@ -735,8 +1131,36 @@ ${yeniYonergeler}`,
       sure_saat: number;
       itiraz?: string;
       neden?: string;
+      fayda?: string;
+      ipuclari?: unknown;
+      kim?: string;
+      ne?: string;
+      nerede?: string;
+      ne_zaman?: string;
+      kanit?: string;
+      donus_bicimi?: string;
+      baglam_kullanildi?: boolean;
+      tekrar_degil?: boolean;
     }>(yanit);
     if (!veri?.baslik || !veri.govde) return null;
+    // Savunma: model bazen "...yalnızca şunu söyle:" diyip asıl alıntıyı yazmadan
+    // cümleyi yarıda bırakıyor (bkz. görev sistemi olayı). max_tokens'ta kesilmiş
+    // ya da ':'/bağlaçla asılı kalmış bir gövdeyi ASLA katılımcıya gösterme —
+    // reddet, bir sonraki tick'te temiz bir görev yeniden üretilir.
+    const govdeYarim =
+      yanit.stop_reason === "max_tokens" || /[:,;—-]\s*$/.test(veri.govde.trim());
+    if (govdeYarim) {
+      await aiHataYakala(db, "gorev_uretimi", new Error(`Yarım kalan govde: "${veri.govde.slice(-60)}"`));
+      return null;
+    }
+    // Öneri #6 — ÜRETİM ANI ÖZ-DENETİMİ: model kendi çıktısını "önceki görevlerin
+    // tekrarı mı" diye denetledi. Açıkça tekrar (tekrar_degil === false) ise görevi
+    // katılımcıya gösterme — reddet, bir sonraki tick'te temiz üretilir. (baglam_
+    // kullanildi tek başına red sebebi değil: Gün 1 jenerik görevler meşru.)
+    if (veri.tekrar_degil === false) {
+      await aiHataYakala(db, "gorev_uretimi", new Error(`Tekrar görev reddedildi: "${veri.baslik}"`));
+      return null;
+    }
 
     const gecerliIdler = new Set(ozellikler.map((o) => o.id));
     // #8 micro-sprint: sure_saat 0.5 = 30 dk
@@ -756,13 +1180,53 @@ ${yeniYonergeler}`,
         veri.neden && veri.neden.trim().length > 3
           ? veri.neden.trim().slice(0, 200)
           : null,
+      fayda:
+        veri.fayda && veri.fayda.trim().length > 3
+          ? veri.fayda.trim().slice(0, 400)
+          : null,
+      ipuclari: Array.isArray(veri.ipuclari)
+        ? veri.ipuclari
+            .filter((x): x is string => typeof x === "string" && x.trim().length > 2)
+            .slice(0, 2)
+            .map((x) => x.trim().slice(0, 200))
+        : [],
       micro_sprint: microSprint,
       yayGorevi: yay !== null,
+      // Öneri #7 — dönüş biçimi (çeşitlilik izlemesi için missions'a kaydedilir)
+      donusBicimi: DONUS_BICIMLERI.includes(veri.donus_bicimi as string)
+        ? (veri.donus_bicimi as string)
+        : null,
+      // FAZ 1.1 — somutluk şablonu (checklist UI için)
+      somutluk: {
+        kim: veri.kim && veri.kim.trim().length > 1 ? veri.kim.trim().slice(0, 80) : null,
+        ne: (veri.ne ?? "").trim().slice(0, 160),
+        nerede: (veri.nerede ?? "").trim().slice(0, 100),
+        neZaman: (veri.ne_zaman ?? "").trim().slice(0, 100),
+        kanit: (veri.kanit ?? "").trim().slice(0, 160),
+      },
+      // FAZ 2.1 — eşleşme kaydı (tik.ts insert sonrası gorev_eslesme'ye yazar)
+      eslesme: eslesmeHedef ? { hedefId: eslesmeHedef.id, isimli: eslesmeIsimliMi } : null,
     };
   } catch (e) {
     await aiHataYakala(db, "gorev_uretimi", e);
     return null;
   }
+  }
+
+  const ilkDeneme = await tekUretimDenemesi("");
+  if (!ilkDeneme) return null;
+  // FAZ 1.2 — kalite denetçisi: ilk denemeyi ucuz bir Haiku geçişinden geçir.
+  // Geçerse yayınla; geçmezse BİR kez daha dene (aynı context, ek uyarı ile) —
+  // ikinci deneme sonucu ne olursa olsun yayınlanır (sonsuz döngü yok).
+  const denetim = await gorevKaliteDenetle(
+    { title: ilkDeneme.title, body: ilkDeneme.body, kind: ilkDeneme.kind, hedefKisi: ilkDeneme.somutluk?.kim ?? null },
+    onceki.map((o) => o.title)
+  );
+  if (denetim.gecti) return ilkDeneme;
+  const ikinciDeneme = await tekUretimDenemesi(
+    `\n\nÖNCEKİ DENEMEN KALİTE DENETİMİNDEN GEÇEMEDİ (${denetim.sebep}) — bu sefer bunu MUTLAKA düzelt, farklı ve daha somut bir görev üret.`
+  );
+  return ikinciDeneme ?? ilkDeneme;
 }
 
 // #2 Yanıt madenciliği + puanlama — paralel çalışarak ek gecikme olmaz.
@@ -1183,13 +1647,23 @@ export async function korNoktaGuncelle(
     .order("scored_at", { ascending: false })
     .limit(5);
 
-  if (!yanitlar?.length) return;
+  // FAZ 4.1 — YORUM + TAKDİR MADENCİLİĞİ: akranların bu kişi hakkında yazdığı
+  // yorumlar + aldığı takdirler TEMA DÜZEYİNDE damıtılır (asla birebir alıntı,
+  // asla kim yazdı) — "üç ayrı göz sende aynı şeyi gördü" kancasının kaynağı.
+  const [{ data: akranYorumHam }, { data: takdirHam }] = await Promise.all([
+    db.from("ratings").select("comment").eq("target_id", pid).eq("is_hidden", false).not("comment", "is", null),
+    db.from("kudos").select("message").eq("to_id", pid).eq("is_hidden", false),
+  ]);
+  const akranYorumSayisi = akranYorumHam?.length ?? 0;
+  const takdirSayisi = takdirHam?.length ?? 0;
+
+  if (!yanitlar?.length && akranYorumSayisi === 0 && takdirSayisi === 0) return;
 
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 300,
+      model: "claude-sonnet-5",
+      max_tokens: 400,
       thinking: { type: "disabled" },
       output_config: {
         effort: "low",
@@ -1207,38 +1681,48 @@ export async function korNoktaGuncelle(
                 type: "string",
                 description: "Neden bu temayı gördün? 1 cümle.",
               },
+              sosyalTema: {
+                type: "string",
+                description:
+                  "Akran yorumları + takdirlerde TEKRAR EDEN tek bir güç/tema (en fazla 4 kelime, Türkçe, ör. 'sakin liderlik', 'gerçek dinleme'). Yalnız en az 2-3 ayrı kaynakta bağımsız olarak görülüyorsa yaz; tek bir yorumdan çıkarma. Yoksa boş string.",
+              },
             },
-            required: ["yeniTema", "aciklama"],
+            required: ["yeniTema", "aciklama", "sosyalTema"],
             additionalProperties: false,
           },
         },
       },
       system:
-        "Bir liderlik kampı katılımcısının son görev yanıtlarını analiz et. Kamp öncesi profilinden farklılaşan, kamp boyunca öne çıkan yeni veya derinleşen psikolojik temayı tespit et. Yalnızca gerçekten belirgin bir tema varsa yaz; yoksa boş string döndür.",
+        "Bir liderlik kampı katılımcısını analiz ediyorsun. (1) Son görev yanıtlarından kamp öncesi profilinden farklılaşan yeni/derinleşen psikolojik temayı bul. (2) Akranlarının onun hakkında yazdığı yorumlar + aldığı takdirlerde BAĞIMSIZ olarak TEKRAR EDEN tek bir gücü/temayı bul — bu, hiçbir yorumu birebir alıntılamadan, yalnız ÖZÜNÜ tek bir tema etiketiyle yakala. Yalnızca gerçekten belirgin olanları yaz; yoksa boş string döndür.",
       messages: [
         {
           role: "user",
           content: JSON.stringify({
-            son5Yanit: yanitlar.map((y) => ({
+            son5Yanit: (yanitlar ?? []).map((y) => ({
               gorev: y.title,
               yanit: (y.response_text as string | null)?.slice(0, 300),
               temalar: y.response_tags,
             })),
+            // Kimlik taşınmaz — yalnız metin içeriği, kim yazdığı hiç gönderilmez.
+            akranYorumlari: (akranYorumHam ?? []).map((r) => (r.comment ?? "").slice(0, 200)),
+            takdirler: (takdirHam ?? []).map((k) => (k.message ?? "").slice(0, 200)),
           }),
         },
       ],
     });
 
-    const veri = jsonCoz<{ yeniTema: string; aciklama: string }>(yanit);
-    if (!veri?.yeniTema) return;
+    const veri = jsonCoz<{ yeniTema: string; aciklama: string; sosyalTema: string }>(yanit);
+    if (!veri?.yeniTema && !veri?.sosyalTema) return;
 
     // on_farkindalik.profil'e ekle (merge)
     const guncellenmis = {
       ...mevcutProfil,
       kampici_guncelleme: {
         milestone: toplamTamamlanan,
-        yeniTema: veri.yeniTema.trim().slice(0, 80),
-        aciklama: veri.aciklama.trim().slice(0, 200),
+        ...(veri.yeniTema
+          ? { yeniTema: veri.yeniTema.trim().slice(0, 80), aciklama: veri.aciklama.trim().slice(0, 200) }
+          : {}),
+        ...(veri.sosyalTema ? { sosyalTema: veri.sosyalTema.trim().slice(0, 60) } : {}),
       },
     };
     await db
@@ -1278,7 +1762,7 @@ export async function senkronGorevUret(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 1024,
       thinking: { type: "adaptive" },
       output_config: {
@@ -1327,7 +1811,7 @@ async function mentorlukBodyKisisel(
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 400,
       thinking: { type: "disabled" },
       output_config: { effort: "low" },
@@ -1465,8 +1949,22 @@ export async function mentorlukGorevUret(
     difficulty: 2 as const,
     itiraz: null,
     neden: "Seni bir adım öne taşıyacak sohbet başkasının deneyiminde saklı.",
+    fayda:
+      "Doğru kişiye doğru soruyu sormak, sahada lider yetiştirmenin temelidir; bugün kurduğun bu köprü, yarın kendi ekibine rehberlik etme kasını güçlendirir.",
+    ipuclari: [],
     micro_sprint: false,
     yayGorevi: false,
+    donusBicimi: "grup", // mentorluk hep biriyle etkileşim
+    somutluk: {
+      kim: isimler.join(" / "),
+      ne: "seçtiğin mentorla en az 15 dk konuş",
+      nerede: "kampta uygun bir yerde",
+      neZaman: "bugün",
+      kanit: "kimin yanına gittiğin, ne sorduğun ve ne götürdüğün",
+    },
+    // Mentorluk kendi eşleştirme kaydını mentorluk_kayit'ta tutar; gorev_eslesme
+    // dengeleyicisi yalnız "bag" türü içindir.
+    eslesme: null,
     // #9 takip: önerilen 3 adayın id'leri (mentorluk_kayit'a yazılır)
     adayIdler: secilen.map((k) => k.id),
   };
@@ -1496,7 +1994,7 @@ export async function gorevNetlestir(gorev: {
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 600,
       thinking: { type: "disabled" },
       output_config: { effort: "low", format: { type: "json_schema", schema: SEMA } },

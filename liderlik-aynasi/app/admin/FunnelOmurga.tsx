@@ -11,7 +11,7 @@ const ASAMALAR: { no: number; anahtar: keyof typeof f.asamalar; ikon: string; hr
   { no: 1, anahtar: "hazirlik", ikon: "🧰", href: "/admin/kurulum" },
   { no: 2, anahtar: "katilim", ikon: "🎯", href: "#fazsifir" },
   { no: 3, anahtar: "canli", ikon: "🎛", href: "#ilerleme" },
-  { no: 4, anahtar: "final", ikon: "🪞", href: "#muhur" },
+  { no: 4, anahtar: "final", ikon: "👁", href: "#muhur" },
   { no: 5, anahtar: "sonrasi", ikon: "📦", href: "#araclar" },
 ];
 

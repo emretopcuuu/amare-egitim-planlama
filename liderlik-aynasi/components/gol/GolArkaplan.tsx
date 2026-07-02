@@ -83,10 +83,13 @@ export default function GolArkaplan() {
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: "url(/gunduz-gol.webp)" }}
           />
-          {/* OKUNABİLİRLİK PERDESİ: fotoğraf üstünde metin okunabilsin diye
-              hafif karartma — gece kadar ağır değil, gündüz hissi korunsun. */}
-          <div className="absolute inset-0 bg-[radial-gradient(140%_110%_at_50%_15%,rgba(5,14,24,0.05)_0%,rgba(5,14,24,0.18)_58%,rgba(3,10,18,0.42)_100%)]" />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#06121e]/8 via-[#06121e]/12 to-[#040e18]/45" />
+          {/* MÜREKKEP CAM perdesi: göl, opak mürekkep-cam kartların ARASINDA
+              "alacakaranlık gölü" olarak yaşar. Zemin, üstündeki açık metinli
+              koyu kartları taşıyacak kadar koyu — böylece yazı asla parlak
+              fotoğrafla boğuşmaz (okunabilirlik yapısal olarak garanti), ama
+              göl yine de net görünür ve elektrik/elit hava korunur. */}
+          <div className="absolute inset-0 bg-[radial-gradient(140%_120%_at_50%_12%,rgba(4,12,22,0.34)_0%,rgba(4,12,22,0.52)_55%,rgba(2,8,16,0.76)_100%)]" />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#05101c]/48 via-[#05101c]/54 to-[#030b15]/84" />
         </>
       ) : (
         <>

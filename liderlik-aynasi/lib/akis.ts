@@ -11,14 +11,18 @@
 
 export type AkisDurum = {
   // Katılımcı durumu
+  rizaVar: boolean; // KVKK/kutsal-alan hazırlık rızası verildi mi (consent_at)
+  sesSecildi: boolean; // AYNA'nın erkek/kadın sesi seçildi mi (ayna_ses_secildi_at)
   sesVar: boolean; // ses/foto ritüeli kaydı var mı (ya da "sessiz" seçildi)
   team: string | null; // atanmış grup
   campUnlocked: boolean; // kampa fiziksel giriş yapıldı mı
+  degerlerTamam: boolean; // değerler çalışması (değer keşfi + neden) tamamlandı mı
   pusulaTamam: boolean; // pusula (neden keşfi) tamamlandı mı
   hedefTamam: boolean; // kariyer hedefi mühürlendi mi
   ofTamam: boolean; // ön farkındalık tamamlandı mı
   // Admin pencereleri (settings)
   oyunSecimiAcik: boolean;
+  degerlerAcik: boolean;
   pusulaAcik: boolean;
   onFarkindalikAcik: boolean;
   // Kamp içi hedef penceresi açık + kişi henüz bitirmemiş (hedefKapisiAcik sonucu)
@@ -26,31 +30,53 @@ export type AkisDurum = {
 };
 
 export type AkisAdim =
+  | { tip: "hazirlik" } // kutsal-alan hazırlık + KVKK rızası ekranını göster (render)
+  | { tip: "sesSecimi" } // AYNA'nın erkek/kadın sesini seç (render)
   | { tip: "rituel" } // ses/foto ritüelini göster (redirect değil, render)
   | { tip: "yonlendir"; yol: string } // bu yola yönlendir
   | { tip: "devam" }; // kapı yok — ana akışa (durum makinesi) devam et
 
 // Kişinin yolculuğunun neresinde olduğuna göre TEK bir sonraki adımı döndürür.
 export function kampOncesiAdim(d: AkisDurum): AkisAdim {
-  // 1) FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Her şeyden önce gelir.
+  // 0) HAZIRLIK / KUTSAL ALAN — her şeyden ÖNCE. Kişi tonu (yalnız, sakin, ~1
+  // saat, kendine dönüş) kavrar ve KVKK rızasını verir. Rıza olmadan hiçbir
+  // veri toplayan adım açılmaz. (consent_at daha önce Pusula'da alınıyordu;
+  // artık en başta — daha güçlü, kayıtlı KVKK onayı.)
+  if (!d.rizaVar) return { tip: "hazirlik" };
+
+  // 0b) AYNA SESİ SEÇİMİ — hazırlıktan hemen sonra, ritüelden önce. AYNA'nın
+  // tüm kişisel seslendirmeleri (bu andan itibaren) seçilen sesle konuşur.
+  if (!d.sesSecildi) return { tip: "sesSecimi" };
+
+  // 1) FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Rızadan/ses seçiminden sonra gelir.
   if (!d.sesVar) return { tip: "rituel" };
 
   // 2) OYUN SEÇİMİ — seçim açıkken grubu olmayan kişi önce oyununu seçer.
   if (d.oyunSecimiAcik && !d.team) return { tip: "yonlendir", yol: "/oyun-secimi" };
 
+  // 2b) DEĞERLER ÇALIŞMASI — Pusula'daki nedenlerden HEMEN ÖNCE. Değer keşfi +
+  //     5-neden derinleşmesi. ZORUNLU: kamp açık olsa bile atlanamaz.
+  if (d.degerlerAcik && !d.degerlerTamam) {
+    return { tip: "yonlendir", yol: "/degerler" };
+  }
+
   // 3) PUSULA — 10 öncelik → eleme → neden keşfi. Tamamlanana dek bu kapıda kalır.
-  if (d.pusulaAcik && !d.campUnlocked && !d.pusulaTamam) {
+  //    ZORUNLU: kamp açık/girilmiş olsa BİLE (sonradan katılan dahil) bu adım
+  //    atlanamaz — onboarding'ini yapmadan kimse kampa giremez.
+  if (d.pusulaAcik && !d.pusulaTamam) {
     return { tip: "yonlendir", yol: "/pusula" };
   }
 
   // 3b) HEDEF (kamp öncesi, otomatik) — Pusula neden keşfi biter bitmez ayrı
   // admin bayrağı gerekmeksizin devreye girer. Bitene dek bu kapıda kalır.
-  if (d.pusulaTamam && !d.campUnlocked && !d.hedefTamam) {
+  // ZORUNLU: kamp açık olsa bile tamamlanmadan geçilemez.
+  if (d.pusulaTamam && !d.hedefTamam) {
     return { tip: "yonlendir", yol: "/hedef" };
   }
 
   // 4) ÖN FARKINDALIK — Pusula + Hedef tamamlandıktan sonra.
-  if (d.onFarkindalikAcik && !d.campUnlocked && !d.ofTamam) {
+  // ZORUNLU: kamp açık olsa bile tamamlanmadan geçilemez.
+  if (d.onFarkindalikAcik && !d.ofTamam) {
     return { tip: "yonlendir", yol: "/on-farkindalik" };
   }
 

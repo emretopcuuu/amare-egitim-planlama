@@ -19,7 +19,11 @@ type KurulumOlayi = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 };
 
-const KAPAT_ANAHTAR = "la_pwa_kur_kapat_v1";
+// "Şimdilik geç" artık KALICI gizlemez — sadece erteler. 3 günlük kampta kişi
+// ilk seferde kurmazsa birkaç saat sonra nazikçe yine sorulur (ana ekran kurulumu
+// kampın bel kemiği: kamera/bildirim ancak kurulu uygulamada tam çalışır).
+const ERTELE_ANAHTAR = "la_pwa_kur_ertele_v1";
+const ERTELE_MS = 6 * 60 * 60 * 1000; // 6 saat
 // Admin/ekran/giriş gibi katılımcı-dışı yüzeylerde banner gösterme.
 const GIZLI_ONEK = ["/admin", "/ekran", "/sahne", "/giris"];
 
@@ -39,7 +43,8 @@ export default function PwaKur() {
       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
     if (standalone) return;
     try {
-      if (localStorage.getItem(KAPAT_ANAHTAR) === "1") return;
+      const ertelenmis = localStorage.getItem(ERTELE_ANAHTAR);
+      if (ertelenmis && Date.now() < Number(ertelenmis)) return;
     } catch {}
 
     function yakala(e: Event) {
@@ -75,7 +80,7 @@ export default function PwaKur() {
   function kapat() {
     setGorunur(false);
     try {
-      localStorage.setItem(KAPAT_ANAHTAR, "1");
+      localStorage.setItem(ERTELE_ANAHTAR, String(Date.now() + ERTELE_MS));
     } catch {}
   }
 

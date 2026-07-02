@@ -138,6 +138,15 @@ export const VINYETLER: Vinyet[] = [
       "Kennedy, teknolojisi daha yokken 'Bu on yıl bitmeden aya gideceğiz' dedi. Hedefi kolay olduğu için değil, insanları büyüttüğü için seçti.",
   },
   {
+    // "Üç yıl sonrası" görevini herkese taşıyan küratörlü çapa: AYNA bu vinyetle
+    // vizyon görevini geleceği CANLI hayal edip ANLATMA egzersizine yöneltir.
+    kod: "uc_yil_sonrasi",
+    kas: "vizyon",
+    baslik: "Önce Zihinde Yaşanır",
+    metin:
+      "Büyük liderler geleceği önce zihinlerinde yaşar: üç yıl sonraki bir sabahı, nerede uyandıklarını, ekiplerinin kaç kişi olduğunu net görürler. Sonra o günü başkalarına anlatırlar — ve insanlar henüz var olmayan o geleceğe katılır.",
+  },
+  {
     kod: "uc_tas_ustasi",
     kas: "vizyon",
     baslik: "Üç Taş Ustası",
@@ -252,14 +261,6 @@ export const VINYETLER: Vinyet[] = [
     metin:
       "Eski bir komutanın, binlerce askerinin çoğunun adını bildiği anlatılır. Savaşı kazandıran strateji kadar, herkesin 'beni tanıyor' hissiydi.",
   },
-  {
-    kod: "iskender_su",
-    kas: "baglanti",
-    baslik: "Kuma Dökülen Su",
-    metin:
-      "Anlatılır ki çölde tek bardak su İskender'e uzatıldığında, askerleri içemezken o da içmedi; suyu kuma döktü. Susuzluğu paylaşmak, emirden güçlüydü.",
-  },
-
   // ══ TÜRK & DÜNYA KÖKLERİ — tarihî ve çağdaş ═══════════════════════════════
   // Kültürel kök: katılımcı kendi tarihinden / sevdiği çağdaş bir isimden bir an
   // görünce bağ daha güçlü kurulur. Yalnız yaygın kabul gören, doğru anlar/sözler.
@@ -497,11 +498,20 @@ export const VINYETLER: Vinyet[] = [
   },
 ];
 
-// Bir kasa ait vinyetler arasında dönerek seçer (tohum = tamamlanan görev sayısı
-// gibi artan bir değer → aynı kişide aynı vinyet üst üste gelmez).
-export function vinyetSec(kas: LiderKas, tohum: number): Vinyet | null {
-  const havuz = VINYETLER.filter((v) => v.kas === kas);
-  if (havuz.length === 0) return null;
+// Bir kasa ait vinyetler arasında dönerek seçer. `gorulenKodlar` verilirse
+// (kişinin daha önce gördüğü vinyet kodları) önce onlar HARİÇ tutulur — katılımcı
+// isteği: "aynı kişiye aynı hikaye asla iki kere". Kasın tüm vinyetleri
+// tükenmişse (60 vinyetlik havuzda 3 günlük kampta pratikte olmaz) eski dönen
+// davranışa düşülür ki hikaye hiç eksik kalmasın.
+export function vinyetSec(
+  kas: LiderKas,
+  tohum: number,
+  gorulenKodlar: ReadonlySet<string> = new Set()
+): Vinyet | null {
+  const tumHavuz = VINYETLER.filter((v) => v.kas === kas);
+  if (tumHavuz.length === 0) return null;
+  const gorulmemis = tumHavuz.filter((v) => !gorulenKodlar.has(v.kod));
+  const havuz = gorulmemis.length > 0 ? gorulmemis : tumHavuz;
   const i = ((tohum % havuz.length) + havuz.length) % havuz.length;
   return havuz[i];
 }
