@@ -27,6 +27,28 @@ const TABLOLAR = [
   "settings",
 ] as const;
 
+// KVKK: katılımcının PAYLAŞTIĞI ham içerik (yanıtlar, yorumlar, mektup metni,
+// ikili sohbet) admin'in indirdiği yedekte YER ALMAZ — "[KVKK]" ile maskelenir.
+// Yedeğin amacı yapı+skor kurtarma; içerik zaten canlı DB'de yaşar.
+const GIZLI_ALANLAR: Record<string, string[]> = {
+  ratings: ["comment"],
+  missions: ["response_text", "reflection_text", "reflection_reply", "kacirma_sebebi"],
+  mirror_letters: ["content"],
+  pair_messages: ["message"],
+};
+
+function kvkkMaskele(tablo: string, satirlar: unknown[]): unknown[] {
+  const alanlar = GIZLI_ALANLAR[tablo];
+  if (!alanlar) return satirlar;
+  return satirlar.map((s) => {
+    const kopya = { ...(s as Record<string, unknown>) };
+    for (const a of alanlar) {
+      if (kopya[a] != null) kopya[a] = "[KVKK]";
+    }
+    return kopya;
+  });
+}
+
 export async function GET() {
   if (!(await adminOturumu())) {
     return Response.json({ hata: tr.admin.yetkisiz }, { status: 403 });
@@ -41,9 +63,10 @@ export async function GET() {
   // yedeklerdi — felaket sigortasında kabul edilemez.
   for (const tablo of TABLOLAR) {
     try {
-      yedek[tablo] = await tumKayitlar<unknown>((bas, son) =>
+      const satirlar = await tumKayitlar<unknown>((bas, son) =>
         db.from(tablo).select("*").range(bas, son)
       );
+      yedek[tablo] = kvkkMaskele(tablo, satirlar);
     } catch (e) {
       const mesaj = e instanceof Error ? e.message : "bilinmeyen hata";
       return Response.json(

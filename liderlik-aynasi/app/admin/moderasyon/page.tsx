@@ -125,8 +125,10 @@ export default async function ModerasyonPage({
                 </span>
                 <span className="font-medium text-slate-300">{y.trait.name}</span>
                 <span className="font-bold text-gold-light">{y.score}/10</span>
+                {/* KVKK: değerlendiren kimliği ADMIN DAHİL kimseye sızmaz —
+                    moderasyon için hedef + içerik yeterli. */}
                 <span>
-                  {t.kimden}: {y.rater.full_name} → {t.kime}: {y.target.full_name}
+                  {t.kime}: {y.target.full_name}
                 </span>
                 {y.is_hidden && (
                   <span className="rounded-md bg-red-500/20 px-2 py-0.5 font-medium text-red-400">

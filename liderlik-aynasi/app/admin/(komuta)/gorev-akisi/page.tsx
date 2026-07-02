@@ -19,7 +19,7 @@ export default async function GorevAkisiPage() {
     db
       .from("missions")
       .select(
-        "id, kind, title, body, status, ai_score, ai_comment, spark_points, difficulty, response_text, issued_at, trait:traits(name), katilimci:participants!missions_participant_id_fkey(full_name)"
+        "id, kind, title, body, status, ai_score, spark_points, difficulty, issued_at, trait:traits(name), katilimci:participants!missions_participant_id_fkey(full_name)"
       )
       .order("issued_at", { ascending: false })
       .limit(5000),
@@ -36,8 +36,6 @@ export default async function GorevAkisiPage() {
     puan: g.ai_score,
     kivilcim: g.spark_points ?? 0,
     govde: g.body,
-    yanit: g.response_text,
-    aiYorum: g.ai_comment,
     zorluk: g.difficulty,
     ozellik: g.trait?.name ?? null,
     tarih: g.issued_at,

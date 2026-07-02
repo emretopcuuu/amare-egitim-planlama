@@ -11,7 +11,7 @@ interface KisiOzet {
   loginKodu: string;
   kampAcik: boolean;
   ofTamam: boolean;
-  pusulaCekirdek: string | null;
+  pusulaTamam: boolean;
   momentum: number | null;
   gorevTamam: number;
   takdir: number;
@@ -91,7 +91,7 @@ export default function KisiSlideOver({
                   {ozet.ofTamam && (
                     <span className="rounded-full bg-royal/20 px-2.5 py-1 font-medium text-royal-light">ÖF ✓</span>
                   )}
-                  {ozet.pusulaCekirdek && (
+                  {ozet.pusulaTamam && (
                     <span className="rounded-full bg-gold/10 px-2.5 py-1 font-medium text-gold-light">Pusula ✓</span>
                   )}
                 </div>
@@ -119,12 +119,7 @@ export default function KisiSlideOver({
                 </p>
               )}
 
-              {ozet.pusulaCekirdek && (
-                <div className="rounded-xl bg-midnight-card/60 p-4 ring-1 ring-royal/20">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gold-light mb-2">Pusula Özeti</p>
-                  <p className="text-sm leading-relaxed text-slate-200">{ozet.pusulaCekirdek}</p>
-                </div>
-              )}
+              {/* KVKK: pusula İÇERİĞİ admin'e görünmez — üstteki "Pusula ✓" rozeti yeterli. */}
             </>
           )}
         </div>
