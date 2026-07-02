@@ -1,4 +1,5 @@
 import { getSession } from "@/lib/auth/session";
+import { bayatOturumYaniti } from "@/lib/auth/bayatOturum";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { cekirdekTamam, nedenCumlesiKur } from "@/lib/degerler";
 import { krizDiliVarMi, krizUyarisiGonder } from "@/lib/guvenlik";
@@ -65,7 +66,9 @@ export async function POST(req: Request) {
   // eski cevaplar tekrar taranmaz) → varsa admin bayrağı düşer.
   for (const v of Object.values(gelen)) {
     if (typeof v === "string" && krizDiliVarMi(v)) {
-      await krizUyarisiGonder(db, session.sub, session.ad, "degerler", v);
+      // BEST-EFFORT: uyarı hattı düşerse kişinin yansıma metni yine de kaydedilir
+      // (eskiden buradaki bir hata tüm kaydı 500'e düşürüyordu).
+      await krizUyarisiGonder(db, session.sub, session.ad, "degerler", v).catch(() => {});
       break;
     }
   }
@@ -89,6 +92,8 @@ export async function POST(req: Request) {
     { onConflict: "participant_id" }
   );
   if (error) {
+    const bayat = await bayatOturumYaniti(error);
+    if (bayat) return bayat;
     return Response.json({ hata: "Kaydedilemedi." }, { status: 500 });
   }
   return Response.json({ ok: true, tamam });
