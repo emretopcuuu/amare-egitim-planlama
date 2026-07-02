@@ -65,7 +65,11 @@ export async function POST(req: Request) {
   // gönderilebilir → AYNA yeniden puanlar, kıvılcım güncellenir (toplam görevlerden
   // türediği için kendiliğinden düzelir).
   const yenidenScored = gorev.status === "scored" && gorev.kind !== "soz" && gorev.kind !== "senkron";
-  if (gorev.status !== "pending" && !telafi && !yenidenScored) {
+  // "submitted" LİMBO DEĞİL: puanlama düşmüşse (AI hatası/reddi) kişi yeniden
+  // gönderebilmeli — eskiden 409 dönüyordu ve görev sonsuza dek puansız kalıyordu
+  // (tik kurtarması da aynı AI'da takılınca tek çıkış yolu yoktu).
+  const yenidenSubmitted = gorev.status === "submitted";
+  if (gorev.status !== "pending" && !telafi && !yenidenScored && !yenidenSubmitted) {
     return Response.json({ hata: tr.gorevler.durumlar.expired }, { status: 409 });
   }
   if (telafi) {
@@ -172,14 +176,21 @@ export async function POST(req: Request) {
   }
 
   // FIERO: 10/10 anında büyük ekran AYNA'nın sesiyle alkışlar; yansıması
-  // da kişiye kendi sesiyle konuşur (ana sayfadaki Konuşan Yansıma kartı)
+  // da kişiye kendi sesiyle konuşur (ana sayfadaki Konuşan Yansıma kartı).
+  // BEST-EFFORT: puan zaten DB'ye yazıldı — ses üretimi düşerse kullanıcıya
+  // 500 dönmemeli (eskiden dönüyordu: istemci retry → görev "scored" olduğu
+  // için yenidenScored dalına girip her seferinde YENİDEN puanlıyordu).
   if (sonuc.puan === 10) {
-    await markaAnons(
-      db,
-      `anons/fiero-${gorev.id}.mp3`,
-      `${session.ad.split(" ")[0]}, az önce aynayı parlattı. On üzerinden on.`
-    );
-    await fieroSesi(db, session.sub, session.ad);
+    try {
+      await markaAnons(
+        db,
+        `anons/fiero-${gorev.id}.mp3`,
+        `${session.ad.split(" ")[0]}, az önce aynayı parlattı. On üzerinden on.`
+      );
+      await fieroSesi(db, session.sub, session.ad);
+    } catch {
+      // ses/anons üretilemedi — puanlama sonucu yine de döner
+    }
   }
 
   const toplam = await toplamKivilcim(db, session.sub);
@@ -233,6 +244,18 @@ async function dusukPuanTelafiYarat(
     .eq("status", "pending");
   if ((bekleyen ?? 0) > 0) return;
 
+  // GÜNLÜK KOTA: tik motorunun uyguladığı günde 7 görev tavanını otomatik
+  // derinleştirme de delmesin (eskiden deliyordu — 7. görevden düşük puan
+  // alan kişiye 8. görev gidiyordu). Senkron kotaya sayılmaz (tik ile aynı kural).
+  const bugunTarih = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
+  const { count: bugunSayisi } = await db
+    .from("missions")
+    .select("id", { count: "exact", head: true })
+    .eq("participant_id", pid)
+    .neq("kind", "senkron")
+    .gte("issued_at", `${bugunTarih}T00:00:00+03:00`);
+  if ((bugunSayisi ?? 0) >= 7) return;
+
   const [{ data: kisi }, ozellikler] = await Promise.all([
     db.from("participants").select("id, full_name, team").eq("id", pid).maybeSingle(),
     aktifOzellikler(db),
@@ -258,6 +281,16 @@ async function dusukPuanTelafiYarat(
   const gunNo = kampGunu(bugun, kampBaslangic);
   const gorev = await gorevUret(db, kisi, gunNo ?? 1, saat, gunNo ? "kamp" : "yolculuk", null, null, ipucu);
   if (!gorev) return;
+
+  // YARIŞ DARALTMA: AI üretimi saniyeler sürer — bu sırada başka bir istek
+  // (tik, çift dokunuş) görev eklemiş olabilir. Insert'ten hemen önce yeniden
+  // bak; bekleyen oluştuysa üretilen görevi sessizce at (kota/yağmur koruması).
+  const { count: sonKontrol } = await db
+    .from("missions")
+    .select("id", { count: "exact", head: true })
+    .eq("participant_id", pid)
+    .eq("status", "pending");
+  if ((sonKontrol ?? 0) > 0) return;
 
   const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
   await db.from("missions").insert({

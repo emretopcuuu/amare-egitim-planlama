@@ -62,6 +62,7 @@ import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
 import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
 import { sablonBul, ilkAd } from "@/lib/whatsappSablonlari";
 import { gunlukSoz } from "@/lib/ozluSozler";
+import { tr } from "@/lib/i18n/tr";
 
 type Db = ReturnType<typeof supabaseAdmin>;
 
@@ -146,16 +147,27 @@ export async function tikCalistir(
     ? bitenMadde(kampGunuBugun, saat * 60 + dakika)
     : null;
 
-  // 2) Gecikmiş puanlama — normalde yanıt anında puanlanır; bu, kurtarma hattı
+  // 2) Gecikmiş puanlama — normalde yanıt anında puanlanır; bu, kurtarma hattı.
+  // Limit 25: bir AI kesintisinde tüm kampın yanıtları "submitted"e düşebilir;
+  // eski limit (2/tik) drenajı saatlerce uzatıyordu.
   const { data: bekleyenler } = await db
     .from("missions")
     .select("id, participant_id, kind, title, body, response_text, responded_at, due_at")
     .eq("status", "submitted")
-    .limit(2);
+    .limit(25);
   for (const g of bekleyenler ?? []) {
     if (!g.response_text) continue;
-    const sonuc = await gorevPuanla(g, g.response_text);
-    if (!sonuc) continue;
+    let sonuc = await gorevPuanla(g, g.response_text);
+    if (!sonuc) {
+      // LİMBO GÜVENCESİ: puanlama 30+ dakikadır başarısızsa (model reddi /
+      // kalıcı bozuk çıktı) görevi varsayılan sıcak yorumla mühürle — kişi
+      // sonsuza dek "AYNA okuyor" ekranında bırakılmaz.
+      const bekliyorMs = g.responded_at
+        ? simdi.getTime() - new Date(g.responded_at).getTime()
+        : 0;
+      if (bekliyorMs < 30 * 60_000) continue;
+      sonuc = { puan: 7, yorum: tr.gorevler.kurtarmaYorum, response_tags: [] };
+    }
     const zamaninda =
       !!g.responded_at && new Date(g.responded_at) <= new Date(g.due_at);
     const kivilcim = kivilcimHesapla(sonuc.puan, zamaninda);
@@ -305,6 +317,11 @@ export async function tikCalistir(
     // Prova kampında zaman hızlandırılmış: 25 kişiye çabuk dağıtım için limit açılır.
     .slice(0, provaModu ? 40 : 3);
 
+  // BU TİKTE GÖREV ALANLAR — `durumlar` haritası tik başında bir kez kurulur ve
+  // görev eklendikçe GÜNCELLENMEZ (bayat kalır). Aynı tik içindeki sonraki
+  // dağıtımlar (garantili, mentorluk) bu kümeye bakarak çift görev vermesin.
+  const buTikGorevAlan = new Set<string>(uygunlar.map((u) => u.id));
+
   for (const k of uygunlar) {
     // Slice 3 — CUMARTESİ ETKİNLİK FARKINDALIĞI: Gün 2'de grup üyesine, grubunun
     // O ANKİ etkinliğine (David seansı, bowling, hazine avı, yemek...) özel görev
@@ -391,7 +408,6 @@ export async function tikCalistir(
   if (!sahneSessiz && GARANTILI_GOREVLER.length > 0) {
     const GARANTI_ARALIK_MS = 3 * 3_600_000; // aynı kişiye iki garantili görev arası min
     const GARANTI_TIK_UST = 4; // tik başına en fazla (bildirim seli olmasın)
-    const buTikSet = new Set(uygunlar.map((u) => u.id));
     const aktifIdler = (kisiler ?? []).map((k) => k.id);
     if (aktifIdler.length > 0) {
       const { data: kayitlar } = await db
@@ -409,7 +425,7 @@ export async function tikCalistir(
       let garantiVerilen = 0;
       for (const k of (kisiler ?? []) as { id: string }[]) {
         if (garantiVerilen >= GARANTI_TIK_UST) break;
-        if (buTikSet.has(k.id)) continue; // bu tikte zaten normal görev seçildi
+        if (buTikGorevAlan.has(k.id)) continue; // bu tikte zaten görev seçildi
         const d = durumlar.get(k.id);
         if (d?.bekleyen || (d?.bugunSayisi ?? 0) >= gunlukUst) continue;
         const v = verilen.get(k.id) ?? { kodlar: new Set<string>(), son: 0 };
@@ -446,6 +462,7 @@ export async function tikCalistir(
           await db.from("missions").delete().eq("id", yeni.id);
           continue;
         }
+        buTikGorevAlan.add(k.id); // sonraki dağıtımlar (mentorluk) çift görev vermesin
         garantiVerilen++;
         ozet.uretilen++;
         await katilimciyaBildir(
@@ -1099,6 +1116,10 @@ export async function tikCalistir(
         // Bekleyen görev varsa veya günlük görev kotası dolduysa mentorluk verme
         // (#6: mentorluk da eylem görevidir; "7 görev + mentorluk = 8" taşmasını
         // önler — telefon görev yağmuruna dönmesin).
+        // NOT: `durumlar` tik başında kurulur ve BAYATTIR — bu tikte normal/
+        // garantili görev alanlar orada görünmez; buTikGorevAlan onları yakalar
+        // (eskiden aynı tikte normal + mentorluk üst üste binebiliyordu).
+        if (buTikGorevAlan.has(k.id)) continue;
         const d = durumlar.get(k.id);
         if (d?.bekleyen || (d?.bugunSayisi ?? 0) >= gunlukUst) continue;
         const gorev = await mentorlukGorevUret(db, k, gun, tumKatilimcilar);
