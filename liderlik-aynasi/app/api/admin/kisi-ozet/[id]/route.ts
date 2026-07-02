@@ -15,7 +15,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const db = supabaseAdmin();
   const { data: kisi } = await db
     .from("participants")
-    .select("full_name, team, city, login_code, camp_unlocked_at")
+    .select("full_name, team, city, phone, login_code, camp_unlocked_at")
     .eq("id", id)
     .eq("role", "participant")
     .maybeSingle();
@@ -51,6 +51,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
     ad: kisi.full_name,
     takim: kisi.team,
     sehir: kisi.city,
+    // [ADMIN-UX9] wa.me hızlı eylemi için — admin telefonları listede zaten görüyor.
+    telefon: kisi.phone,
     loginKodu: kisi.login_code,
     kampAcik: !!kisi.camp_unlocked_at,
     ofTamam: !!ofRow?.tamamlandi_at,

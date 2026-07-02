@@ -66,7 +66,8 @@ export default function OtoYenile({ saniye = 25 }: { saniye?: number }) {
               : `bg-emerald-400 ${atim ? "scale-150" : "animate-pulse"} transition-transform`
           }`}
         />
-        <span className="hidden sm:inline">{duraklat ? t.duraklatildi : gecenMetin}</span>
+        {/* [ADMIN-UX10] Tazelik etiketi mobilde de görünür — kamp anında "bu sayı şimdiki mi?" güvensizliği bitsin. */}
+        <span>{duraklat ? t.duraklatildi : gecenMetin}</span>
       </span>
       <button
         onClick={yenile}

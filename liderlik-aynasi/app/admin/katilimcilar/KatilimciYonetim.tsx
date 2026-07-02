@@ -58,14 +58,30 @@ type Kisi = {
 export default function KatilimciYonetim({
   kisiler,
   kayanIdler,
+  degerlerTamamIdler,
+  pushluIdler,
 }: {
   kisiler: Kisi[];
   kayanIdler?: string[];
+  degerlerTamamIdler?: string[];
+  pushluIdler?: string[];
 }) {
   const router = useRouter();
 
   // UX #2 (2.tur): sessizleşen (dürtülmüş) adaylar — listede kırmızı risk işareti.
   const kayanSet = useMemo(() => new Set(kayanIdler ?? []), [kayanIdler]);
+  // [ADMIN-UX5] Mini durum rozetleri: slide-over açmadan kimin nesi eksik görünsün.
+  const degerlerSet = useMemo(() => new Set(degerlerTamamIdler ?? []), [degerlerTamamIdler]);
+  const pushluSet = useMemo(() => new Set(pushluIdler ?? []), [pushluIdler]);
+
+  // [ADMIN-UX5] 💎 değerler · 🎲 oyun(=takım) · 🔔 push — eksik olan kırmızı yanar.
+  const durumRozetleri = (k: Kisi) => (
+    <span className="ml-1 inline-flex shrink-0 items-center gap-0.5 text-[0.65rem]" aria-hidden>
+      <span className={degerlerSet.has(k.id) ? "opacity-35" : "rounded bg-rose-500/20 px-0.5"} title={degerlerSet.has(k.id) ? "Değerler ✓" : "Değerler eksik"}>💎</span>
+      <span className={k.team ? "opacity-35" : "rounded bg-rose-500/20 px-0.5"} title={k.team ? "Oyun ✓" : "Oyun seçmedi"}>🎲</span>
+      <span className={pushluSet.has(k.id) ? "opacity-35" : "rounded bg-amber-500/20 px-0.5"} title={pushluSet.has(k.id) ? "Push ✓" : "Push izni yok"}>🔔</span>
+    </span>
+  );
 
   // ortak
   const giris =
@@ -448,6 +464,7 @@ export default function KatilimciYonetim({
                             <span className="h-2 w-2 shrink-0 rounded-full bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.7)]" aria-label={t.riskIsaret} title={t.riskIsaret} />
                           )}
                           {k.full_name}
+                          {durumRozetleri(k)}
                         </button>
                       </td>
                       <td className="py-2 pr-3 text-slate-400">{k.team ?? "—"}</td>
@@ -496,6 +513,7 @@ export default function KatilimciYonetim({
                         <span className="h-2 w-2 shrink-0 rounded-full bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.7)]" aria-label={t.riskIsaret} title={t.riskIsaret} />
                       )}
                       <span className="truncate">{k.full_name}</span>
+                      {durumRozetleri(k)}
                     </button>
                     <p className="mt-0.5 truncate text-xs text-slate-400">
                       {[k.team, k.city].filter(Boolean).join(" · ") || "—"}
