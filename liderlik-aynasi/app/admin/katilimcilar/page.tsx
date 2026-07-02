@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import KatilimciYonetim from "./KatilimciYonetim";
 import OyunSecimiPanel from "./OyunSecimiPanel";
+import OnboardingRadari from "./OnboardingRadari";
 import Ipucu from "../Ipucu";
 import Katlanir from "../Katlanir";
 import FazSifirKontrol from "../FazSifirKontrol";
@@ -40,7 +41,9 @@ export default async function KatilimcilarPage() {
 
       {/* Hazırlık ilerleme — Pusula + Ön Farkındalık + Hedef tamamlanma durumu */}
       <section id="hazirlik" className="scroll-mt-24">
-        <Katlanir baslik="Hazırlık Durumu" aciklama="Pusula + Ön Farkındalık + Hedef ilerleme" ikon="🧰" yardim={tr.admin.yardim.fazSifir}>
+        <Katlanir baslik="Hazırlık Durumu" aciklama="Değerler + Oyun + Push + Pusula + Ön Farkındalık + Hedef" ikon="🧰" yardim={tr.admin.yardim.fazSifir}>
+          {/* [M2/M3/M9] En kritik üç sinyal en üstte — kim hazır değil, tek bakışta. */}
+          <OnboardingRadari />
           <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
             <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
               {tr.admin.fazSifir.baslik}

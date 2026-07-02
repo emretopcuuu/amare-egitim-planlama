@@ -12,6 +12,9 @@ interface KisiOzet {
   kampAcik: boolean;
   ofTamam: boolean;
   pusulaTamam: boolean;
+  degerlerTamam: boolean;
+  oyunSecti: boolean;
+  pushVar: boolean;
   momentum: number | null;
   gorevTamam: number;
   takdir: number;
@@ -94,6 +97,16 @@ export default function KisiSlideOver({
                   {ozet.pusulaTamam && (
                     <span className="rounded-full bg-gold/10 px-2.5 py-1 font-medium text-gold-light">Pusula ✓</span>
                   )}
+                  {/* [M2/M3/M9] Eksik olanlar KIRMIZI görünür ki operatör hemen fark etsin. */}
+                  <span className={`rounded-full px-2.5 py-1 font-medium ${ozet.degerlerTamam ? "bg-gold/10 text-gold-light" : "bg-rose-500/15 text-rose-300"}`}>
+                    Değerler {ozet.degerlerTamam ? "✓" : "✗"}
+                  </span>
+                  <span className={`rounded-full px-2.5 py-1 font-medium ${ozet.oyunSecti ? "bg-royal/20 text-royal-light" : "bg-rose-500/15 text-rose-300"}`}>
+                    Oyun {ozet.oyunSecti ? "✓" : "✗"}
+                  </span>
+                  <span className={`rounded-full px-2.5 py-1 font-medium ${ozet.pushVar ? "bg-emerald-400/15 text-emerald-400" : "bg-amber-500/15 text-amber-300"}`}>
+                    Push {ozet.pushVar ? "✓" : "✗"}
+                  </span>
                 </div>
               </div>
 
