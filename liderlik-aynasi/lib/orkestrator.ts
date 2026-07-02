@@ -2,6 +2,7 @@ import "server-only";
 import type { supabaseAdmin } from "@/lib/supabase/server";
 import { yazAuditLog } from "@/lib/auditLog";
 import { herkeseBildir } from "@/lib/push";
+import { p72Gun1, p72Gun2, p72Gun3, odev10Gun, odev15Gun, agustosOdev } from "@/lib/kampSonrasi";
 
 type Db = ReturnType<typeof supabaseAdmin>;
 
@@ -37,9 +38,17 @@ function kampGorelliZaman(baslangic: Date, gun: number, saat: number): number {
 }
 
 /** Adlandırılmış fonksiyon eylemleri kaydı. Bilinmeyen ad → atlanır (loglanır).
- * FAZ 9 çekirdeğinde boş; toplu ön-üretim / söz dağıtımı gibi fonksiyonlar
- * ikinci program fazlarında buraya eklenecek. */
-const FONKSIYONLAR: Record<string, (db: Db) => Promise<void>> = {};
+ * Senaryo satırı eylem_tipi='fonksiyon' + eylem_hedef=bu anahtar. */
+const FONKSIYONLAR: Record<string, (db: Db) => Promise<void>> = {
+  // FAZ 2.2 — 72 saat protokolü
+  p72_gun1: p72Gun1,
+  p72_gun2: p72Gun2,
+  p72_gun3: p72Gun3,
+  // FAZ 2.4 — ödev paketleri
+  odev_10gun: odev10Gun,
+  odev_15gun: odev15Gun,
+  agustos_odev: agustosOdev,
+};
 
 /** Tek bir senaryo satırının eylemini uygular (settings/push/fonksiyon).
  * Hem otomatik akış hem admin "şimdi ateşle" bunu kullanır. */
@@ -48,9 +57,10 @@ export async function satirEylemiUygula(
   s: Pick<SenaryoSatiri, "eylem_tipi" | "eylem_hedef" | "eylem_baslik" | "eylem_deger">
 ): Promise<void> {
   if (s.eylem_tipi === "ayar_ac" || s.eylem_tipi === "ayar_kapat") {
-    await db
-      .from("settings")
-      .upsert({ key: s.eylem_hedef, value: s.eylem_tipi === "ayar_ac" ? "true" : "false" });
+    // eylem_deger verilmişse onu yaz (ör. sistem_modu='yolculuk'); yoksa
+    // ayar_ac → 'true', ayar_kapat → 'false' varsayılanı.
+    const deger = s.eylem_deger ?? (s.eylem_tipi === "ayar_ac" ? "true" : "false");
+    await db.from("settings").upsert({ key: s.eylem_hedef, value: deger });
   } else if (s.eylem_tipi === "push") {
     await herkeseBildir(db, s.eylem_baslik ?? "AYNA", s.eylem_deger ?? "", "/");
   } else if (s.eylem_tipi === "fonksiyon") {

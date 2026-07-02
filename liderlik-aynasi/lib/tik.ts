@@ -124,6 +124,7 @@ export async function tikCalistir(
       "ayna_baslangic",
       "sistem_modu",
       "yolculuk_baslangic",
+      "gorev_uretimi_durduruldu",
     ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
 
@@ -139,6 +140,15 @@ export async function tikCalistir(
     ozet.orkestratorAtes = ork.atesLenen;
   } catch {
     // orkestratör düşse bile tik akışını bozma
+  }
+
+  // FAZ 2.1 — 24 SAAT SESSİZLİK: kamp kapanışından (Gün 3 13:10) ilk yolculuk
+  // görevine (kamp+~44s) kadar AYNA tüm görev/push üretimini durdurur. Bayrağı
+  // orkestratör çevirir (kapanis_sessizlik_basla/bitir satırları); orkestratör
+  // yukarıda ZATEN çalıştı, o yüzden "sessizliği bitir" ateşlenebildi. Son ekran
+  // push'u ayrı bir orkestratör push satırıdır → o da orkestratörde ateşlenir.
+  if (ayar.get("gorev_uretimi_durduruldu") === "true") {
+    return { ozet: "Kamp sonrası sessizlik — üretim durduruldu", ...ozet };
   }
 
   const mod: SistemModu =
