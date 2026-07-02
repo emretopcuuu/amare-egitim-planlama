@@ -13,6 +13,7 @@ const SEKMELER = [
   { href: "/admin/ayna-direktoru", ad: k.direktor },
   { href: "/admin/saglik", ad: k.komutan },
   { href: "/admin/sahne", ad: k.sahne },
+  { href: "/admin/kapanis", ad: k.kapanis },
 ];
 
 export default function KomutaSekme() {
