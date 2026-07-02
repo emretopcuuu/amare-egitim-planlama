@@ -50,18 +50,16 @@ export default async function PusulaSayfa() {
   // sonsuz yönlendirme (ERR_TOO_MANY_REDIRECTS) olur.
   if (kisi?.camp_unlocked_at && durum.tamam) redirect("/");
 
-  // Pusula tamamsa ama ÖN FARKINDALIK penceresi açık ve bitmemişse, hub'dan ÖNCE
-  // oraya gönder. Ana sayfa kapısı (pusula → ön farkındalık → bekleme) ile aynı
-  // sıra: aksi halde masaüstü hub'da "takılı" görünüp telefonda ÖF çıkıyor,
-  // ikisi tutarsız oluyordu.
+  // Pusula tamamsa akış sırasını (lib/akis.ts: pusula → HEDEF → ön farkındalık)
+  // burada da koru. Eskiden hedef hiç kontrol edilmeden doğrudan ÖF'ye
+  // gönderiliyordu — tamamlanmış "Pusula" rayına tıklayan kişi Hedef adımını
+  // atlayıp sıranın dışına düşüyordu.
   if (durum.tamam) {
-    // Ön Farkındalık onboarding'in HEP AÇIK bir adımı — ayrı bir admin penceresi
-    // gerektirmez. Pusula bitti ama ÖF bitmediyse hub'dan önce oraya gönder.
-    const { data: ofDurum } = await db
-      .from("on_farkindalik")
-      .select("tamamlandi_at")
-      .eq("participant_id", session.sub)
-      .maybeSingle();
+    const [{ data: hedefDurum }, { data: ofDurum }] = await Promise.all([
+      db.from("hedef").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+      db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+    ]);
+    if (!hedefDurum?.tamamlandi_at) redirect("/hedef");
     if (!ofDurum?.tamamlandi_at) redirect("/on-farkindalik");
   }
 
