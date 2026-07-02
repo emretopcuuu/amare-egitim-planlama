@@ -2,7 +2,10 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { KARIYER_ETIKET, KARIYER_SECENEKLER } from "@/lib/persona";
 
 export const metadata = { title: "PD2026 — Kolektif Taahhüt" };
-export const revalidate = 20;
+// 2 Tem 2026: revalidate=20 (ISR) build-time prerender istiyordu; Docker image
+// build'inde SUPABASE_URL env yok -> "supabaseUrl is required" -> Railway build fail.
+// Sahne slaytı tek ekranda oynar, trafik ~0 — force-dynamic (her istekte render) yeterli.
+export const dynamic = "force-dynamic";
 
 // [1.3] PD2026 KOLEKTİF TAAHHÜT EKRANI — Gün 3 sahne slaytı. Hedef tablosundan
 // salon toplamı: kimin hangi rütbeyi hedeflediği İSİMSİZ, yalnız agregalar.

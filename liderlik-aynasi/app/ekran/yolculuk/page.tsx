@@ -2,7 +2,9 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { pusulaCekirdek } from "@/lib/pusula";
 
 export const metadata = { title: "Canlı Yolculuk" };
-export const revalidate = 15;
+// 2 Tem 2026: revalidate ISR'ı build-time prerender tetikliyordu; Docker build'de
+// SUPABASE_URL yok -> build fail (pd2026 ile aynı vaka). Sahne ekranı, force-dynamic yeterli.
+export const dynamic = "force-dynamic";
 
 // [1.4] CANLI YOLCULUK SAHNE GÖRÜNÜMÜ — admin'in seçtiği TEK katılımcının 3 günlük
 // yolculuğu: pusula cümlesi → seçili görev yanıtları → dış puan değişimi → yeni
