@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminOturumu } from "@/lib/auth/admin";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { bekleyenTaahhutler } from "@/lib/ilk72";
+import { katilimciyaBildir } from "@/lib/push";
 
 // Vercel Cron: her dakika çalışır, ateşlenecek scheduled_events'i işler.
 // CRON_SECRET env değişkeni yoksa da çalışır (Vercel cron Bearer ile çağırır).
@@ -24,10 +26,9 @@ export async function GET(req: NextRequest) {
     .lte("fire_at", simdi);
 
   if (error) return NextResponse.json({ hata: error.message }, { status: 500 });
-  if (!olaylar?.length) return NextResponse.json({ islem: 0 });
 
   let islem = 0;
-  for (const olay of olaylar) {
+  for (const olay of olaylar ?? []) {
     try {
       await atesle(db, olay);
       await db
@@ -40,7 +41,23 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ islem });
+  // [E2] İlk 72 Saat kişisel taahhütleri: zamanı gelmiş, gönderilmemiş olanları
+  // push'la. push_gonderildi'yi ÖNCE işaretle (yarış/çift push guard'ı), sonra gönder.
+  let taahhutPush = 0;
+  for (const t of await bekleyenTaahhutler(db)) {
+    const { data: sahiplenilen } = await db
+      .from("taahhut")
+      .update({ push_gonderildi: true })
+      .eq("id", t.id)
+      .eq("push_gonderildi", false)
+      .select("id")
+      .maybeSingle();
+    if (!sahiplenilen) continue; // başka bir tik aldı
+    await katilimciyaBildir(db, t.participant_id, "⏰ Kendine söz vermiştin", t.metin, "/gorevler").catch(() => {});
+    taahhutPush++;
+  }
+
+  return NextResponse.json({ islem, taahhutPush });
 }
 
 // Admin panelinden manuel tetikleme — cron secret olmadan, admin oturumuyla

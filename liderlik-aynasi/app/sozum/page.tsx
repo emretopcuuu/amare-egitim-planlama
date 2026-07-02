@@ -42,6 +42,9 @@ export default async function SozumSayfa() {
       .order("full_name"),
   ]);
 
+  // [E2] Söz mühürlendiyse (kendi sesiyle okundu) İlk 72 Saat kartına yönlendir.
+  const sozMuhurlu = !!soz?.voice_path || soz?.durum === "onaylandi";
+
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <SozV2Akis
@@ -50,6 +53,20 @@ export default async function SozumSayfa() {
         bekleyenImzalar={bekleyen}
         liderler={(liderler ?? []).map((l) => ({ id: l.id, ad: l.full_name, takim: l.team }))}
       />
+      {sozMuhurlu && (
+        <div className="mx-auto w-full max-w-md px-5 pb-8">
+          <Link
+            href="/ilk-72-saat"
+            className="flex items-center justify-between gap-4 rounded-2xl border border-gold/40 bg-gold/[0.08] px-5 py-4 transition-colors hover:bg-gold/[0.14]"
+          >
+            <div>
+              <p className="text-sm font-semibold text-gold-light">⏳ İlk 72 Saat</p>
+              <p className="mt-0.5 text-xs text-slate-300">Sözünü sahaya indir — üç adımı ne zaman yapacağını seç.</p>
+            </div>
+            <span className="shrink-0 text-sm font-medium text-gold-light">Aç →</span>
+          </Link>
+        </div>
+      )}
     </main>
   );
 }

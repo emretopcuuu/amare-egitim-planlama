@@ -2773,6 +2773,47 @@ export type Database = {
         }
         Relationships: []
       }
+      taahhut: {
+        Row: {
+          adim: number
+          created_at: string
+          durum: string
+          id: string
+          metin: string
+          participant_id: string
+          planlanan_zaman: string
+          push_gonderildi: boolean
+        }
+        Insert: {
+          adim: number
+          created_at?: string
+          durum?: string
+          id?: string
+          metin: string
+          participant_id: string
+          planlanan_zaman: string
+          push_gonderildi?: boolean
+        }
+        Update: {
+          adim?: number
+          created_at?: string
+          durum?: string
+          id?: string
+          metin?: string
+          participant_id?: string
+          planlanan_zaman?: string
+          push_gonderildi?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "taahhut_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       waves: {
         Row: {
           closed_at: string | null

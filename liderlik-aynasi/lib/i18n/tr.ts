@@ -4084,6 +4084,9 @@ export const tr = {
   eylulAynasi: {
     kayitHata: "Yanıt kaydedilemedi.",
   },
+  ilk72: {
+    kayitHata: "Adımlar kaydedilemedi.",
+  },
   ortak: {
     oturumGerekli: "Oturum gerekli.",
     genelHata: "Bir şeyler ters gitti, tekrar dener misin?",
