@@ -871,6 +871,36 @@ export type Database = {
           },
         ]
       }
+      kanit_gorevi: {
+        Row: {
+          created_at: string
+          gozlemci_id: string
+          hedef_ad: string
+          hedef_id: string
+          id: string
+          mission_id: string
+          takdir_yazildi_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          gozlemci_id: string
+          hedef_ad: string
+          hedef_id: string
+          id?: string
+          mission_id: string
+          takdir_yazildi_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          gozlemci_id?: string
+          hedef_ad?: string
+          hedef_id?: string
+          id?: string
+          mission_id?: string
+          takdir_yazildi_at?: string | null
+        }
+        Relationships: []
+      }
       kudos: {
         Row: {
           created_at: string

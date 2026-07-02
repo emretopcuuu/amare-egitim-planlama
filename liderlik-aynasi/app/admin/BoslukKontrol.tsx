@@ -9,6 +9,7 @@ const t = tr.admin.fazBir;
 // FAZ 1 admin: Boşluk Anı penceresi + derinlik panosu ("kim kanıtsız?").
 export default function BoslukKontrol() {
   const [acik, setAcik] = useState(false);
+  const [kanitGarantisi, setKanitGarantisi] = useState(false);
   const [toplam, setToplam] = useState(0);
   const [tamam, setTamam] = useState(0);
   const [kanitsiz, setKanitsiz] = useState(0);
@@ -21,6 +22,7 @@ export default function BoslukKontrol() {
       const v = await res.json().catch(() => null);
       if (res.ok && v) {
         setAcik(!!v.acik);
+        setKanitGarantisi(!!v.kanitGarantisi);
         setToplam(v.toplam ?? 0);
         setTamam(v.tamam ?? 0);
         setKanitsiz(v.kanitsiz ?? 0);
@@ -29,6 +31,26 @@ export default function BoslukKontrol() {
       setYuklendi(true);
     }
   }, []);
+
+  async function kanitCevir() {
+    setMesgul(true);
+    try {
+      const res = await fetch("/api/admin/bosluk", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ kanitGarantisi: !kanitGarantisi }),
+      });
+      if (!res.ok) {
+        tost(t.hata, "hata");
+        return;
+      }
+      await yukle();
+    } catch {
+      tost(t.hata, "hata");
+    } finally {
+      setMesgul(false);
+    }
+  }
 
   useEffect(() => {
     void yukle();
@@ -92,6 +114,31 @@ export default function BoslukKontrol() {
       >
         {t.kanitsizUyari(kanitsiz)}
       </p>
+
+      {/* KANIT GARANTİSİ (otomatik sigorta): açıkken tik Gün 2 akşamı 21:00'de
+          kanıtsızlara akranlarından gözlem görevi yönlendirir → yanıtlar anonim
+          takdire dönüşür → kanıtsız sayısı kendiliğinden düşer. */}
+      <div className="rounded-xl border border-royal/25 bg-midnight-soft/60 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-sm font-semibold text-slate-200">🛡 Kanıt Garantisi</p>
+            <p className="mt-0.5 text-xs leading-relaxed text-slate-400">
+              Gün 2 akşamı otomatik: kanıtsızlara akran gözlem görevi → anonim takdir.
+            </p>
+          </div>
+          <button
+            onClick={() => void kanitCevir()}
+            disabled={mesgul}
+            className={`shrink-0 rounded-xl px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
+              kanitGarantisi
+                ? "border border-emerald-400/40 text-emerald-300 hover:bg-midnight-soft"
+                : "bg-gold text-[#1a1206] hover:bg-gold-light"
+            }`}
+          >
+            {kanitGarantisi ? "Açık — kapat" : "Kapalı — aç"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

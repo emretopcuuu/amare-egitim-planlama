@@ -175,6 +175,30 @@ export async function POST(req: Request) {
       .eq("mentee_id", session.sub);
   }
 
+  // KANIT GARANTİSİ: bu görev bir "X'i gözle" mikro görevi ise, yanıtı HEDEFE
+  // anonim takdir (kudos) olarak yaz → hedefin kanıt sayacı yükselir (Boşluk Anı
+  // içi boş kalmaz). Yalnız bir kez (takdir_yazildi_at guard'ı).
+  if (gorev.kind === "gozlem") {
+    const { data: kg } = await db
+      .from("kanit_gorevi")
+      .select("hedef_id, takdir_yazildi_at")
+      .eq("mission_id", gorev.id)
+      .maybeSingle();
+    if (kg && !kg.takdir_yazildi_at && yanitMetni.trim().length >= 2) {
+      const { error: kudosHata } = await db.from("kudos").insert({
+        from_id: session.sub,
+        to_id: kg.hedef_id,
+        message: yanitMetni.slice(0, 280),
+      });
+      if (!kudosHata) {
+        await db
+          .from("kanit_gorevi")
+          .update({ takdir_yazildi_at: new Date().toISOString() })
+          .eq("mission_id", gorev.id);
+      }
+    }
+  }
+
   // FIERO: 10/10 anında büyük ekran AYNA'nın sesiyle alkışlar; yansıması
   // da kişiye kendi sesiyle konuşur (ana sayfadaki Konuşan Yansıma kartı).
   // BEST-EFFORT: puan zaten DB'ye yazıldı — ses üretimi düşerse kullanıcıya

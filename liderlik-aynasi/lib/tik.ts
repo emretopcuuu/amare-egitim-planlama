@@ -62,6 +62,7 @@ import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
 import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
 import { sablonBul, ilkAd } from "@/lib/whatsappSablonlari";
 import { gunlukSoz } from "@/lib/ozluSozler";
+import { kanitGarantisiDagit } from "@/lib/kanitGarantisi";
 import { tr } from "@/lib/i18n/tr";
 
 type Db = ReturnType<typeof supabaseAdmin>;
@@ -1155,6 +1156,35 @@ export async function tikCalistir(
           "/"
         );
         ozet.uretilen++;
+      }
+    }
+  }
+
+  // 6a-ter) KANIT GARANTİSİ — Gün 2 akşamı (21:00) sigortası. Kanıtsız kişileri
+  // tespit edip akranlarına "onu gözle, güçlü yanını yaz" mikro görevi verir;
+  // tamamlanınca yanıt hedefe anonim takdir olur → Boşluk Anı içi boş kalmaz.
+  // Varsayılan KAPALI (kanit_garantisi_acik); tek-sefer kilitli (gün başına bir).
+  if (mod === "kamp" && gun === 2 && saat === 21 && !sahneSessiz) {
+    const { data: bayrak } = await db
+      .from("settings")
+      .select("value")
+      .eq("key", "kanit_garantisi_acik")
+      .maybeSingle();
+    if (bayrak?.value === "true") {
+      const kilitAnahtari = `kanit_garantisi_${bugun}`;
+      const { data: yapildi } = await db
+        .from("settings")
+        .select("key")
+        .eq("key", kilitAnahtari)
+        .maybeSingle();
+      if (!yapildi) {
+        await db.from("settings").upsert({ key: kilitAnahtari, value: "1" });
+        try {
+          const sonuc = await kanitGarantisiDagit(db, simdi);
+          ozet.uretilen += sonuc.uretilen;
+        } catch {
+          // sigorta düşse bile tik akışını bozma
+        }
       }
     }
   }
