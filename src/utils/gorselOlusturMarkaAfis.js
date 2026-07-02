@@ -637,7 +637,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   if (notSatirlari.length) {
     const uyariRenk = palet.acik ? '#9c2b2b' : '#f0b3b3'; // soft kırmızı (uyarı hissi)
     const nlH = Math.round(W * 0.026);
-    const amareUst = H - Math.round(H * 0.032) - Math.round(H * 0.018);
+    const amareUst = CANVAS_H - Math.round(H * 0.032) - Math.round(H * 0.018); // uzayan afişte EN ALTA otur (H değil CANVAS_H)
     const baslangic = amareUst - notSatirlari.length * nlH - Math.round(H * 0.006);
     ctx.textAlign = 'center';
     ctx.font = `600 ${Math.round(W * 0.021)}px ${FF.govde}`;
@@ -652,7 +652,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   try {
     const amare = await urlToImage('/logos/AmareBPLogo-Horizontal-White-TR.png');
     const ah = Math.round(H * 0.032), aw = Math.round(ah * (amare.width / amare.height));
-    const ax = Math.round((W - aw) / 2), ay = H - ah - Math.round(H * 0.018);
+    const ax = Math.round((W - aw) / 2), ay = CANVAS_H - ah - Math.round(H * 0.018); // uzayan afişte EN ALTA otur
     if (palet.acik) {
       // beyaz logoyu koyu renge boya (krem zeminde görünür olsun)
       const oc = document.createElement('canvas'); oc.width = aw; oc.height = ah;
@@ -678,7 +678,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     if (qr) {
       try {
         const qi = await urlToImage(qr);
-        const qx = qrSol, qy = H - qs - qpad, b = Math.round(qs * 0.06);
+        const qx = qrSol, qy = CANVAS_H - qs - qpad, b = Math.round(qs * 0.06); // uzayan afişte EN ALTA otur
         ctx.fillStyle = '#fff'; ctx.fillRect(qx - b, qy - b, qs + 2 * b, qs + 2 * b);
         ctx.drawImage(qi, qx, qy, qs, qs);
       } catch {}
