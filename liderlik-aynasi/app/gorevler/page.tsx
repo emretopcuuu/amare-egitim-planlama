@@ -42,7 +42,7 @@ import SayacSerit from "./SayacSerit";
 import MentorSec from "./MentorSec";
 import { atmosferBul } from "@/lib/gorevTasarim";
 import SesCal from "@/components/SesCal";
-import OkuButonu from "@/components/OkuButonu";
+import GorevSesButonu from "@/components/GorevSesButonu";
 import BosGorevDurumu from "./BosGorevDurumu";
 import DurumSeridi from "./DurumSeridi";
 import EkstraGorev from "./EkstraGorev";
@@ -330,7 +330,7 @@ export default async function GorevlerPage() {
             etiket={g.kind === "simulasyon" ? t.dinleItiraz : t.dinle}
           />
         ) : (
-          <OkuButonu metin={`${g.title}. ${g.body}`} />
+          <GorevSesButonu gorevId={g.id} metin={`${g.title}. ${g.body}`} />
         )}
         {/* #9: mentorluk görevinde 3 adaydan yapılandırılmış seçim */}
         {g.kind === "mentorluk" && mentorVeri.has(g.id) && (
