@@ -3867,6 +3867,13 @@ export const tr = {
     yokMetin: "Bu an için yansıman hazırlanmadı. Merak etme — raporunda seni bekleyen çok şey var.",
     geriDon: "← Ana sayfaya dön",
   },
+  // [M6] Değerler ön koşul kapısı — Pusula/Hedef'e sırası gelmeden girene nazik yön.
+  onKosul: {
+    degerlerBaslik: "Önce değerlerini keşfet",
+    degerlerMetin:
+      "Buraya geçmeden önce Değerler çalışmanı tamamlaman gerekiyor — pusulan ve hedefin, seçtiğin temel değerlerin üzerine kurulur.",
+    degerlerDugme: "Değerler çalışmasına git →",
+  },
   sahne: {
     ipucu: "Ayna Anı'nı başlatmak için tıkla",
   },
