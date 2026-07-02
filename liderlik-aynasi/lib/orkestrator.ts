@@ -5,6 +5,7 @@ import { herkeseBildir } from "@/lib/push";
 import { p72Gun1, p72Gun2, p72Gun3, odev10Gun, odev15Gun, agustosOdev, agustosGrupOdev } from "@/lib/kampSonrasi";
 import { kampArkadasiAta, kampArkadasiHatirlat } from "@/lib/kampArkadasi";
 import { eylulKanit1, eylulKanit2, eylulKanit3 } from "@/lib/eylulKanit";
+import { pazartesiRaporuGonder } from "@/lib/kapanisPanel";
 
 type Db = ReturnType<typeof supabaseAdmin>;
 
@@ -59,6 +60,8 @@ const FONKSIYONLAR: Record<string, (db: Db) => Promise<void>> = {
   eylul_kanit1: eylulKanit1,
   eylul_kanit2: eylulKanit2,
   eylul_kanit3: eylulKanit3,
+  // FAZ 6.1 — pazartesi komuta raporu (adminlere)
+  pazartesi_rapor: pazartesiRaporuGonder,
 };
 
 /** Tek bir senaryo satırının eylemini uygular (settings/push/fonksiyon).

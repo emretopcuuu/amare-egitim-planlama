@@ -1714,6 +1714,7 @@ export const tr = {
       direktor: "🤖 AYNA Direktörü",
       komutan: "📡 Komutan",
       sahne: "🎬 Sahne",
+      kapanis: "🚪 Kapanış",
     },
     // Admin UX paketi (2026): kokpit hızı, güveni, hata payı
     ux: {
