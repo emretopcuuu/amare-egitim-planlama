@@ -59,9 +59,16 @@ export default async function GrupSayfa() {
       {kisi?.team && (
         <section className="space-y-3">
           <div>
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-gold-light/80">
-              {t.arkadaslarBaslik}
-            </h2>
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-gold-light/80">
+                {t.arkadaslarBaslik}
+              </h2>
+              {/* "Bu grupta kimler var" — üye sayısı (kendini dahil). Görev grup
+                  referansı verdiğinde kişi buraya bakıp kimi seçeceğini görür. */}
+              <span className="shrink-0 rounded-full bg-white/5 px-2.5 py-0.5 text-xs font-medium text-slate-300 ring-1 ring-white/10">
+                {t.uyeSayisi(uyeler.length)}
+              </span>
+            </div>
             <p className="mt-0.5 text-sm text-slate-400">{t.arkadaslarAlt}</p>
           </div>
 
@@ -114,7 +121,18 @@ export default async function GrupSayfa() {
       )}
 
       {!kisi?.team ? (
-        <p className="text-sm text-slate-400">{t.takimsiz}</p>
+        // Grubu olmayan kişi: boş bir satır yerine oyun seçimine yönlendiren kart.
+        <div className="kart-cam rounded-3xl p-8 text-center">
+          <p className="text-5xl" aria-hidden>👥</p>
+          <h2 className="mt-4 text-lg font-semibold text-slate-100">{t.takimsizBaslik}</h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.takimsizMetin}</p>
+          <Link
+            href="/oyun-secimi"
+            className="btn-kor mt-5 inline-flex h-11 items-center justify-center rounded-xl px-6 font-semibold"
+          >
+            {t.takimsizButon}
+          </Link>
+        </div>
       ) : odevler.length === 0 ? (
         <div className="kart-cam rounded-3xl p-8 text-center">
           <p className="text-5xl" aria-hidden>👥</p>
