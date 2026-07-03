@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { tost } from "@/lib/tost";
 
 interface KisiOzet {
   id: string;
   ad: string;
   takim: string | null;
   sehir: string | null;
+  telefon: string | null;
   loginKodu: string;
   kampAcik: boolean;
   ofTamam: boolean;
@@ -30,7 +32,30 @@ export default function KisiSlideOver({
 }) {
   const [ozet, setOzet] = useState<KisiOzet | null>(null);
   const [yukleniyor, setYukleniyor] = useState(true);
+  const [durtuluyor, setDurtuluyor] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  // [ADMIN-UX9] Tek kişiye hatırlatma — mevcut duyuru API'sinin "kisi:" hedefi.
+  async function hatirlat() {
+    if (!ozet || durtuluyor) return;
+    setDurtuluyor(true);
+    try {
+      const r = await fetch("/api/admin/duyuru", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          baslik: "AYNA seni bekliyor 👁",
+          govde: "Yolculuğunda eksik kalan bir adım var — birkaç dakika ayır, tamamla.",
+          hedef: `kisi:${ozet.id}`,
+        }),
+      });
+      tost(r.ok ? `${ozet.ad.split(" ")[0]} dürtüldü 🔔` : "Gönderilemedi", r.ok ? "basari" : "hata");
+    } catch {
+      tost("Gönderilemedi", "hata");
+    } finally {
+      setDurtuluyor(false);
+    }
+  }
 
   useEffect(() => {
     setYukleniyor(true);
@@ -138,6 +163,41 @@ export default function KisiSlideOver({
         </div>
 
         <div className="border-t border-royal/20 px-5 py-4">
+          {/* [ADMIN-UX9] Hızlı eylemler — bakmaktan eyleme sayfa değiştirmeden */}
+          {ozet && (
+            <div className="mb-3 grid grid-cols-3 gap-2">
+              {ozet.telefon ? (
+                <a
+                  href={`https://wa.me/${ozet.telefon.replace(/\D/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-2 py-2 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-400/20"
+                >
+                  📲 WhatsApp
+                </a>
+              ) : (
+                <span className="flex items-center justify-center rounded-xl border border-white/10 px-2 py-2 text-xs text-slate-600">
+                  telefon yok
+                </span>
+              )}
+              <button
+                onClick={() => void hatirlat()}
+                disabled={durtuluyor}
+                className="flex items-center justify-center gap-1 rounded-xl border border-gold/30 bg-gold/10 px-2 py-2 text-xs font-semibold text-gold-light transition-colors hover:bg-gold/20 disabled:opacity-50"
+              >
+                🔔 {durtuluyor ? "…" : "Hatırlat"}
+              </button>
+              <button
+                onClick={() => {
+                  void navigator.clipboard?.writeText(ozet.loginKodu).catch(() => {});
+                  tost(`Kod kopyalandı: ${ozet.loginKodu}`, "bilgi");
+                }}
+                className="flex items-center justify-center gap-1 rounded-xl border border-white/15 px-2 py-2 text-xs font-semibold text-slate-200 transition-colors hover:bg-white/[0.06]"
+              >
+                📋 Kod
+              </button>
+            </div>
+          )}
           <Link
             href={`/admin/kisi/${kisiId}`}
             className="block w-full rounded-xl bg-royal/30 px-4 py-2.5 text-center text-sm font-semibold text-gold-light hover:bg-royal/40 transition-colors"

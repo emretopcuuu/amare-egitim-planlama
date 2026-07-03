@@ -1,7 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+
+// [ADMIN-UX3] Sayfa açılınca ŞİMDİ ayracını ortaya getir — uzun çizelgede
+// operatör "şu an neredeyiz"i aramasın. Yalnız ilk yüklemede bir kez.
+export function SimdiyeKaydir() {
+  useEffect(() => {
+    const el = document.getElementById("senaryo-simdi");
+    if (el) el.scrollIntoView({ block: "center", behavior: "instant" as ScrollBehavior });
+  }, []);
+  return null;
+}
 
 // FAZ 9.4 — KUMANDA kontrolleri: bekleyen satırlar için "şimdi ateşle" / "atla";
 // üstte tüm bekleyenleri öteleyen "+15 dk" ve DURDUR/DEVAM.

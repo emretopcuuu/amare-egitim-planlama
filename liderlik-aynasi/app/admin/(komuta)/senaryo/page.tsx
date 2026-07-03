@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { kampGorelliZaman } from "@/lib/orkestrator";
-import { SenaryoUstKontrol, SenaryoSatirKontrol } from "./SenaryoKontrol";
+import { SenaryoUstKontrol, SenaryoSatirKontrol, SimdiyeKaydir } from "./SenaryoKontrol";
 
 export const metadata = { title: "Kamp Senaryosu — Liderlik Aynası" };
 export const revalidate = 15;
@@ -114,12 +114,32 @@ export default async function SenaryoPage() {
 
       <SenaryoUstKontrol durduruldu={durduruldu} kaydirmaDk={kaydirmaDk} />
 
+      {/* [ADMIN-UX3] ŞİMDİ ayracı: ilk bekleyen satırın önüne İstanbul saatiyle
+          çizgi + sayfa açılışında oraya otomatik kaydırma. */}
+      {kampBasladi && <SimdiyeKaydir />}
       <ol className="space-y-2">
-        {satir.map((r) => {
+        {(() => {
+          const ilkBekleyenIdx = kampBasladi ? satir.findIndex((r) => r.durum === "bekliyor") : -1;
+          const saatYazi = new Intl.DateTimeFormat("tr-TR", {
+            timeZone: "Europe/Istanbul",
+            hour: "2-digit",
+            minute: "2-digit",
+          }).format(new Date());
+          return satir.flatMap((r, idx) => {
           const d = DURUM_ETIKET[r.durum] ?? DURUM_ETIKET.bekliyor;
           const geriSayimYazi = geriSayim(r, baslangic, kaydirmaDk);
           const gecikti = geriSayimYazi === "gecikti";
-          return (
+          const simdiAyraci =
+            idx === ilkBekleyenIdx ? (
+              <li key="simdi" id="senaryo-simdi" className="flex items-center gap-3 py-1" aria-hidden>
+                <span className="h-px flex-1 bg-gold/50" />
+                <span className="shrink-0 rounded-full bg-gold/15 px-3 py-0.5 font-mono text-xs font-bold text-gold-light">
+                  ŞİMDİ · {saatYazi} İst
+                </span>
+                <span className="h-px flex-1 bg-gold/50" />
+              </li>
+            ) : null;
+          const satirOgesi = (
             <li
               key={r.id}
               className={`flex items-center gap-3 rounded-xl border p-3 ${
@@ -150,7 +170,9 @@ export default async function SenaryoPage() {
               )}
             </li>
           );
-        })}
+          return simdiAyraci ? [simdiAyraci, satirOgesi] : [satirOgesi];
+          });
+        })()}
         {satir.length === 0 && (
           <li className="rounded-xl border border-white/10 bg-midnight-card/50 p-4 text-center text-sm text-slate-400">
             Henüz senaryo satırı yok.

@@ -204,8 +204,23 @@ export default function AynaRituel() {
       titret([20, 60, 20]); // kayıt başladı: net fiziksel onay
       setAsama("kayit");
       // Geri sayım YOK: kayıt sürer; kişi yemini bitirince "Devam →" ile geçer.
-    } catch {
-      setHataMesaji(t.mikrofonYok);
+    } catch (err) {
+      // [UX8] İzin reddi ile "mikrofon yok"u ayır: reddedende genel hata yerine
+      // tarayıcıya göre "izni nasıl açarsın" yönergesi göster (kişi çıkmaza
+      // düşmesin; sessiz devam butonu hata ekranında zaten var).
+      const izinReddi =
+        err instanceof DOMException &&
+        (err.name === "NotAllowedError" || err.name === "PermissionDeniedError");
+      if (izinReddi) {
+        const iOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        setHataMesaji(
+          iOS
+            ? "Mikrofon izni verilmedi. Adres çubuğundaki 'AA' → Web Sitesi Ayarları → Mikrofon → İzin Ver, sonra tekrar dene."
+            : "Mikrofon izni verilmedi. Adres çubuğundaki kilit 🔒 simgesine dokun → Mikrofon → İzin Ver, sonra tekrar dene."
+        );
+      } else {
+        setHataMesaji(t.mikrofonYok);
+      }
       setAsama("hata");
     }
   }
@@ -729,7 +744,16 @@ export default function AynaRituel() {
 
         {asama === "hata" && (
           <div className="text-center">
-            <p className="text-2xl font-semibold text-red-300">{hataMesaji ?? t.hata}</p>
+            {/* [UX8] Uzun yönerge metinleri (izin kurtarma) küçük puntoyla okunur */}
+            <p
+              className={
+                (hataMesaji ?? "").length > 60
+                  ? "mx-auto max-w-sm text-base leading-relaxed text-red-200"
+                  : "text-2xl font-semibold text-red-300"
+              }
+            >
+              {hataMesaji ?? t.hata}
+            </p>
             <div className="mt-10 space-y-4">
               <DevButon onClick={sesBasla}>{t.tekrar}</DevButon>
               <DevButon onClick={sessizSec} ikincil>

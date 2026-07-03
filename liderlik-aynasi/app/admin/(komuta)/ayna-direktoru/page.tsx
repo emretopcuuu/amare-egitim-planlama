@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import AynaDirektorKontrol from "./AynaDirektorKontrol";
+import OnUcusKarti from "./OnUcusKarti";
 import SonGorevler from "./SonGorevler";
 import Ipucu from "../../Ipucu";
 import Katlanir from "../../Katlanir";
@@ -74,6 +75,9 @@ export default async function AynaDirektorPage() {
         </div>
         <span className="shrink-0 text-2xl text-gold-light">→</span>
       </Link>
+
+      {/* [ADMIN-UX1] Uyandırmadan önce sistemin röntgeni — yalnız kamp kapalıyken */}
+      <OnUcusKarti />
 
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-gold/40 backdrop-blur">
         <AynaDirektorKontrol

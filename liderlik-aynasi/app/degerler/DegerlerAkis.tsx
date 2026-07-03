@@ -15,6 +15,7 @@ import {
 } from "@/lib/degerler";
 import AsamaRayi, { type RayAsama } from "@/components/AsamaRayi";
 import Konfeti from "@/components/Konfeti";
+import { titret } from "@/lib/his";
 
 // DEĞERLER ÇALIŞMASI sihirbazı — adım-adım, kaydet-devam, geri tuşlu, user-friendly.
 // Çekirdek (3 değer + 1. neden + cümleler + final) zorunlu; gerisi teşvik.
@@ -97,6 +98,25 @@ const NEDEN_YEDEK: Record<number, string> = {
   2: "Peki bu sana neden bu kadar önemli? Daha derine git — gerçek nedeni bul.",
   3: "Bu değer olmadan nasıl biri olurdun? Hayatında ne eksik kalırdı?",
 };
+
+// [UX1] KALDIĞIN YERDEN DEVAM — bir adımın "cevaplandı" sayılıp sayılmadığı.
+// Sayfa yenilenince adım 0'a düşmek yerine ilk eksik adıma atlanır.
+function adimTamamMi(a: Adim, cevaplar: Record<string, unknown>, secilenUc: string[]): boolean {
+  const metinDolu = (kod: string) =>
+    typeof cevaplar[kod] === "string" && (cevaplar[kod] as string).trim().length > 0;
+  const diziBoyu = (kod: string) =>
+    Array.isArray(cevaplar[kod]) ? (cevaplar[kod] as string[]).length : 0;
+  if (a.tip === "intro") return true;
+  if (a.tip === "ai_oneri") return secilenUc.length === 3;
+  if (a.tip === "sec") return (a.kod === "sec3" ? secilenUc.length : diziBoyu(a.kod)) >= a.adet;
+  if (a.tip === "metin") {
+    if (a.degerSecimi) return a.cokSecim ? diziBoyu(a.kod) >= 1 : metinDolu(a.kod);
+    return metinDolu(a.kod);
+  }
+  if (a.tip === "cumle" || a.tip === "neden_soru") return metinDolu(a.kod);
+  if (a.tip === "neden") return metinDolu(`neden_${a.degerIndeks}_1`);
+  return true;
+}
 
 // AYNA'nın ElevenLabs sesiyle intro metnini okutan buton.
 // /api/ayna-ses?k=degerler_<kod> → mp3; ses yoksa 503 → sessizce gizlenir.
@@ -251,6 +271,12 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
   // gösterilir — Pusula/Hedef/Farkındalık'taki kanıtlı desenle aynı: kişinin
   // en ağır soruyu yanıtladığı an bir törenle kapanır, sessizce atılmaz.
   const [kapanisGoster, setKapanisGoster] = useState(false);
+  // [UX1] Yenilemeden sonra ilk eksik adıma atlandıysa tek seferlik bilgi notu.
+  const [kaldiginYerden, setKaldiginYerden] = useState(false);
+  // [UX3] "✓ kaydedildi" mikro göstergesi — İleri'ye basınca 1.5 sn görünür.
+  const [kaydedildiGoster, setKaydedildiGoster] = useState(false);
+  // [UX5] Bölüm bitince kısa kutlama beat'i (tamamlanan bölümün adı).
+  const [bolumKutlama, setBolumKutlama] = useState<string | null>(null);
   const ustRef = useRef<HTMLDivElement | null>(null);
   const contentRef = useRef<HTMLElement | null>(null);
 
@@ -263,9 +289,22 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
           const d = await r.json();
           if (!iptal) {
             const yuklenen = (d.cevaplar as Record<string, unknown>) ?? {};
+            const yuklenenUc = (d.secilenUc as string[]) ?? [];
             // DB verisi temel alınır ama kullanıcının zaten yazdıkları korunur
             setCevaplar((prev) => ({ ...yuklenen, ...prev }));
-            setSecilenUc((prev) => prev.length > 0 ? prev : ((d.secilenUc as string[]) ?? []));
+            setSecilenUc((prev) => prev.length > 0 ? prev : yuklenenUc);
+            // [UX1] İlk eksik adıma atla: 41 adımı yeniden tıklamak yok.
+            let ilkEksik = 0;
+            while (
+              ilkEksik < TOPLAM - 1 &&
+              adimTamamMi(ADIMLAR[ilkEksik], yuklenen, yuklenenUc)
+            )
+              ilkEksik++;
+            if (ilkEksik > 0) {
+              setAdim(ilkEksik);
+              setKaldiginYerden(true);
+              setTimeout(() => setKaldiginYerden(false), 6000);
+            }
           }
         }
       } catch {}
@@ -383,28 +422,45 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
   async function kaydet() {
     setKaydediliyor(true);
     try {
-      await fetch("/api/degerler", {
+      const r = await fetch("/api/degerler", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ cevaplar, secilenUc }),
       });
+      // [UX3] Görünür güven: kayıt gerçekten başarılıysa kısa "✓ kaydedildi".
+      if (r.ok) {
+        setKaydedildiGoster(true);
+        setTimeout(() => setKaydedildiGoster(false), 1500);
+      }
     } catch {}
     finally { setKaydediliyor(false); }
   }
 
+  // [UX2] HİÇBİR ADIM BOŞ GEÇİLMEZ — her yanıt adımı zorunlu (eskiden yalnız
+  // a.zorunlu işaretliler engelliyordu; "dilersen geç" kaldırıldı).
   function ilerlenebilir(a: Adim): string | null {
     if (a.tip === "ai_oneri" && aiYukleniyor) return "Analiz tamamlanıyor…";
     if (a.tip === "sec") {
       const n = secGuncel(a).length;
       if (n !== a.adet) return `Tam ${a.adet} değer seç (şu an ${n}).`;
     }
-    if (a.tip === "neden" && a.zorunlu) {
+    if (a.tip === "neden") {
       const ilk = metin(`neden_${a.degerIndeks}_1`).trim();
       if (!ilk) return 'En az ilk "neden?" cevabını yaz.';
     }
-    if (a.tip === "cumle" && a.zorunlu && !metin(a.kod).trim()) return "Bu cümleyi tamamla.";
-    if (a.tip === "metin" && a.zorunlu && !metin(a.kod).trim()) return "Bu soruyu yanıtla.";
-    if (a.tip === "neden_soru" && a.zorunlu && !metin(a.kod).trim()) return "Bu soruyu yanıtla.";
+    if (a.tip === "cumle" && !metin(a.kod).trim()) return "Bu cümleyi tamamla.";
+    if (a.tip === "metin") {
+      if (a.degerSecimi) {
+        const dolu = a.cokSecim
+          ? Array.isArray(cevaplar[a.kod]) && (cevaplar[a.kod] as string[]).length > 0
+          : !!metin(a.kod).trim();
+        if (!dolu) return "Bir değer seç.";
+      } else if (!metin(a.kod).trim()) {
+        return "Bu soruyu yanıtla — bu yolculukta hiçbir adım boş geçilmez.";
+      }
+    }
+    if (a.tip === "neden_soru" && !metin(a.kod).trim())
+      return "Bu soruyu yanıtla — bu yolculukta hiçbir adım boş geçilmez.";
     return null;
   }
 
@@ -434,6 +490,14 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
     if (hata) { setUyari(hata); return; }
     await kaydet();
     if (adim < TOPLAM - 1) {
+      // [UX5] Bölüm bitişi: sıradaki adım başka bölümdeyse kısa kutlama beat'i.
+      const suanki = bolumIndeksi(a.kod);
+      const sonrakiKod = ADIMLAR[adim + 1].kod;
+      if (bolumIndeksi(sonrakiKod) > suanki) {
+        setBolumKutlama(`Bölüm ${suanki + 1}/5 tamam — ${BOLUM_ADLARI[suanki]} ✓`);
+        titret([15, 40, 15]);
+        setTimeout(() => setBolumKutlama(null), 1600);
+      }
       gecisYap(() => setAdim((x) => x + 1));
     } else {
       // Son (en ağır) soru yanıtlandı — sessizce ana sayfaya atmak yerine
@@ -496,9 +560,26 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
       {/* Göl arka planını sihirbaz sayfasında kapat — içerik odağı için */}
       <div className="fixed inset-0 z-0 bg-[#06121e]" aria-hidden />
 
+      {/* [UX5] Bölüm bitiş beat'i — 1.6 sn, tıklamayı engellemez */}
+      {bolumKutlama && (
+        <div className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center" aria-hidden>
+          <div className="sahne-giris rounded-2xl border border-gold/50 bg-[#0a1826]/95 px-6 py-4 text-center shadow-2xl">
+            <p className="text-3xl">🌟</p>
+            <p className="mt-1 text-base font-bold text-gold-light">{bolumKutlama}</p>
+          </div>
+        </div>
+      )}
+
       <main ref={(el) => { contentRef.current = el; }} className="relative z-10 mx-auto w-full max-w-xl px-5 pb-10 pt-[calc(env(safe-area-inset-top,0px)+3.5rem+1rem)]">
         <div ref={ustRef} />
         {ustRay && <div className="mb-3">{ustRay}</div>}
+
+        {/* [UX1] Kaldığın yerden devam notu — 6 sn sonra kendiliğinden kaybolur */}
+        {kaldiginYerden && (
+          <p className="mb-3 rounded-xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-2.5 text-sm font-medium text-emerald-200">
+            ▶ Kaldığın yerden devam ediyorsun — önceki cevapların kayıtlı.
+          </p>
+        )}
 
         {/* İlerleme — "Adım 23/41" yerine 5 bölümlük ray + bölüm-içi ilerleme.
             "40 adım" korkusunu, bütünsel ve sindirilir bir haritaya çevirir. */}
@@ -537,6 +618,12 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
               <h1 className="prizma-serif ay-metin text-3xl font-bold leading-tight">
                 {a.vurgu ? vurguRender(a.baslik, a.vurgu) : a.baslik}
               </h1>
+              {/* [UX4] Süre beklentisi — bilinmezlik yarıda bırakmanın 1 numaralı sebebi */}
+              {adim === 0 && (
+                <p className="mt-3 inline-block rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-400">
+                  ⏱ ~15 dk sürer · cevapların her adımda kaydedilir
+                </p>
+              )}
               {a.paragrafVurgu && (
                 <p className="mt-5 text-lg font-semibold leading-relaxed text-gold-light">{a.paragrafVurgu}</p>
               )}
@@ -674,7 +761,7 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
                     value={metin(a.kod)}
                     onChange={(e) => metinDegis(a.kod, e.target.value)}
                     rows={5}
-                    placeholder={a.zorunlu ? "Buraya yaz…" : "Dilersen yaz, dilersen geç…"}
+                    placeholder="Buraya yaz…"
                     className="mt-4 w-full resize-y rounded-2xl border border-white/15 bg-white/[0.04] p-4 text-base leading-relaxed text-slate-100 outline-none focus:border-gold/50"
                   />
                   <SesliYazButonu onEkle={(t) => metinEkle(a.kod, t)} />
@@ -802,7 +889,7 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
                       value={metin(a.kod)}
                       onChange={(e) => metinDegis(a.kod, e.target.value)}
                       rows={4}
-                      placeholder={a.zorunlu ? "Buraya yaz…" : "Dilersen yaz, dilersen geç…"}
+                      placeholder="Buraya yaz…"
                       className="w-full resize-y rounded-2xl border border-white/15 bg-white/[0.04] p-4 text-base leading-relaxed text-slate-100 outline-none focus:border-gold/50"
                     />
                     <SesliYazButonu onEkle={(t) => metinEkle(a.kod, t)} />
@@ -866,24 +953,37 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
 
         {uyari && <p className="mt-3 text-sm font-medium text-amber-300">{uyari}</p>}
 
-        {/* Geri / İleri butonları — içeriğin hemen altında, sayfayla birlikte akar */}
-        <div className="mt-8 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={geri}
-            disabled={adim === 0}
-            className="flex h-12 items-center justify-center rounded-xl border border-white/15 px-5 text-base font-medium text-slate-300 transition-colors hover:bg-white/5 disabled:opacity-30"
+        {/* [UX7] Geri / İleri çubuğu YAPIŞKAN: mobilde klavye kapanınca buton
+            hep görünür, aşağı kaydırma derdi yok. Zemin gradyanı içerikle
+            çakışmayı yumuşatır. */}
+        <div className="sticky bottom-0 z-20 -mx-5 mt-8 bg-gradient-to-t from-[#06121e] via-[#06121e]/95 to-transparent px-5 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pt-4">
+          {/* [UX3] Görünür kayıt güveni */}
+          <p
+            aria-live="polite"
+            className={`mb-1.5 text-center text-xs font-semibold text-emerald-300 transition-opacity duration-300 ${
+              kaydedildiGoster ? "opacity-100" : "opacity-0"
+            }`}
           >
-            ← Geri
-          </button>
-          <button
-            type="button"
-            onClick={ileri}
-            disabled={kaydediliyor}
-            className="btn-kor flex h-12 flex-1 items-center justify-center rounded-xl text-base font-bold disabled:opacity-60"
-          >
-            {a.tip === "ai_oneri" ? (aiYukleniyor ? "Analiz ediliyor…" : "Devam →") : a.tip === "intro" && "dugme" in a ? a.dugme : sonAdim ? "Tamamla →" : "İleri →"}
-          </button>
+            ✓ kaydedildi
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={geri}
+              disabled={adim === 0}
+              className="flex h-12 items-center justify-center rounded-xl border border-white/15 px-5 text-base font-medium text-slate-300 transition-colors hover:bg-white/5 disabled:opacity-30"
+            >
+              ← Geri
+            </button>
+            <button
+              type="button"
+              onClick={ileri}
+              disabled={kaydediliyor}
+              className="btn-kor flex h-12 flex-1 items-center justify-center rounded-xl text-base font-bold disabled:opacity-60"
+            >
+              {a.tip === "ai_oneri" ? (aiYukleniyor ? "Analiz ediliyor…" : "Devam →") : a.tip === "intro" && "dugme" in a ? a.dugme : sonAdim ? "Tamamla →" : "İleri →"}
+            </button>
+          </div>
         </div>
       </main>
     </>

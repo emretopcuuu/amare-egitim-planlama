@@ -234,7 +234,11 @@ export default function PusulaAcilis({
           <p className="prizma-serif ay-metin text-3xl font-semibold leading-snug sm:text-4xl">
             {R.p0}
           </p>
-          <span className="mt-10 inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-base text-slate-200">
+          {/* [UX4] Süre beklentisi */}
+          <span className="mt-4 rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-400">
+            ⏱ ~10 dk sürer
+          </span>
+          <span className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-2.5 text-base text-slate-200">
             <span className="h-2.5 w-2.5 animate-ping rounded-full bg-gold" />
             {t.dokun}
           </span>

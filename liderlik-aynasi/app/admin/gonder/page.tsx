@@ -5,6 +5,7 @@ import { tr } from "@/lib/i18n/tr";
 import { WA_SABLONLAR } from "@/lib/whatsappSablonlari";
 import { whatsAppYapilandirildiMi, sablonSidleri } from "@/lib/whatsapp";
 import Katlanir from "../Katlanir";
+import SonGonderimler from "./SonGonderimler";
 import DuyuruGonder from "../duyuru/DuyuruGonder";
 import DuyuruSablonlari from "../DuyuruSablonlari";
 import WhatsAppGonder from "../whatsapp/WhatsAppGonder";
@@ -57,6 +58,9 @@ export default async function GonderPage() {
           Uygulama bildirimi veya WhatsApp — tüm yayın kanalları bir arada.
         </p>
       </div>
+
+      {/* [ADMIN-UX8] "az önce ne gönderdim?" — çift gönderme korkusuna son */}
+      <SonGonderimler />
 
       <Katlanir baslik={tr.admin.yayin.baslik} ikon="🔔" varsayilanAcik>
         <DuyuruGonder takimlar={takimlar} kisiler={tumKisiler} />

@@ -67,6 +67,20 @@ export async function katilimciyaBildir(
   await Promise.all(data.map((a) => aboneyeGonder(db, a, yuk)));
 }
 
+// [ADMIN-UX6] Tüm adminlere push + gelen kutusu. zirveHazirlikUyar'daki elle
+// tekrarlanan kalıbın ortak hali — sistem sağlığı alarmları da bunu kullanır.
+export async function adminlereBildir(
+  db: Db,
+  baslik: string,
+  govde: string,
+  url = "/admin"
+): Promise<void> {
+  const { data: adminler } = await db.from("participants").select("id").eq("role", "admin");
+  for (const a of adminler ?? []) {
+    await katilimciyaBildir(db, a.id, baslik, govde, url).catch(() => {});
+  }
+}
+
 export async function herkeseBildir(
   db: Db,
   baslik: string,
