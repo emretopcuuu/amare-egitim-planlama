@@ -175,7 +175,8 @@ export default function UstMenu({
 
   async function cikis() {
     await fetch("/api/cikis", { method: "POST" });
-    window.location.href = "/giris";
+    try { localStorage.removeItem("la_giris_kod"); } catch {}
+    window.location.href = "/giris?cikis=1";
   }
 
   const ilkHarf = (ad?.trim()?.charAt(0) || "?").toUpperCase();
