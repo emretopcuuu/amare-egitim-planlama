@@ -7,6 +7,7 @@ import { raporlarGorunurMu } from "@/lib/rapor";
 import { yolculukOlaylari } from "@/lib/yolculuk";
 import { tr } from "@/lib/i18n/tr";
 import Avatar from "@/components/Avatar";
+import FotoDegistirBlok from "@/components/FotoDegistirBlok";
 import BenKarti from "./BenKarti";
 import GeriButonu from "@/components/GeriButonu";
 import Rozet from "@/components/Rozet";
@@ -37,7 +38,7 @@ export default async function BenPage() {
   ] = await Promise.all([
     db
       .from("participants")
-      .select("full_name, team, profil_foto_path")
+      .select("full_name, team, profil_foto_path, yuz_fotolari")
       .eq("id", session.sub)
       .maybeSingle(),
     db
@@ -132,6 +133,13 @@ export default async function BenPage() {
           <span className="parilti mt-2 rounded-full bg-gold/15 px-3 py-1 text-sm font-bold text-gold-light">
             {unvan.mevcut.ad}
           </span>
+          {/* Fotoğrafını değiştir — katılımcının avatarını yenilemek için
+              bakacağı doğal yer. Açılınca CanliAyna paneli (yeniden çek). */}
+          <div className="mt-3">
+            <FotoDegistirBlok
+              yuzVar={Array.isArray(kisi?.yuz_fotolari) && (kisi.yuz_fotolari as unknown[]).length > 0}
+            />
+          </div>
         </header>
 
         {/* Kıvılcım ilerlemesi */}

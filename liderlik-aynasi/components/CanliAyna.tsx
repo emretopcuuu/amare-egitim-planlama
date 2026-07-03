@@ -158,6 +158,15 @@ export default function CanliAyna({
     setAcik(false);
   }
 
+  // Yeniden çekim: mevcut Canlı Aynadan memnun olmayan kişi 3 açıyı baştan çeker.
+  // Sunucu-reset'e (hazirlik-sifirla) ya da kamp kilidine BAĞLI DEĞİL — kişinin
+  // kendi yüzü, her an değiştirilebilir. gonder() yeni "düz" kareyle avatarı da
+  // günceller (bkz. /api/yuz-yakala).
+  function yenidenCek() {
+    setBitti(false);
+    baslat();
+  }
+
   if (bitti && !acik) {
     return (
       <div className="space-y-3 text-left">
@@ -197,6 +206,20 @@ export default function CanliAyna({
             {t.devamEt} →
           </button>
         )}
+
+        {/* Fotoğrafından memnun değilse 3 açıyı baştan çeksin — her an, kamp
+            kilidinden bağımsız. Yeni "düz" kare avatarı da günceller. */}
+        <div className="pt-1">
+          <button
+            type="button"
+            onClick={yenidenCek}
+            disabled={mesgul}
+            className="text-sm font-medium text-amber-300 underline-offset-4 hover:underline disabled:opacity-50"
+          >
+            {t.yenidenCek}
+          </button>
+          <p className="mt-1 text-xs text-slate-500">{t.yenidenCekNot}</p>
+        </div>
       </div>
     );
   }

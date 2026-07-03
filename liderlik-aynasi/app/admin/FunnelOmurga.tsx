@@ -28,7 +28,11 @@ export default function FunnelOmurga({
       <p className="mb-2 px-1 text-[0.7rem] font-semibold uppercase tracking-wide text-slate-500">
         {f.baslik}
       </p>
-      <ol className="flex items-stretch gap-1.5 overflow-x-auto">
+      {/* Yatay kaydırılabilir şerit. Her aşama SABİT genişlikte bir kutu; li'ler
+          küçülmez (shrink-0) — böylece dar mobil ekranda kutular birbirinin
+          üstüne binmez, taşan kısım kaydırılır. sm+ ekranda kutular esneyip
+          (flex-1) satırı doldurur. */}
+      <ol className="flex items-stretch gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {ASAMALAR.map((a, i) => {
           const durum = a.no < aktif ? "tamam" : a.no === aktif ? "simdi" : "bekliyor";
           const renk =
@@ -38,20 +42,20 @@ export default function FunnelOmurga({
                 ? "border-emerald-400/30 bg-emerald-400/[0.06] text-emerald-300/90"
                 : "border-white/10 bg-white/[0.02] text-slate-400";
           return (
-            <li key={a.no} className="flex min-w-0 flex-1 items-center gap-1.5">
+            <li key={a.no} className="flex shrink-0 items-center gap-1.5 sm:min-w-0 sm:flex-1">
               <Link
                 href={a.href}
-                className={`flex min-w-[7rem] flex-1 flex-col rounded-xl border px-3 py-2 transition-colors hover:brightness-125 ${renk}`}
+                className={`flex w-[8.5rem] min-w-0 flex-col rounded-xl border px-3 py-2 transition-colors hover:brightness-125 sm:w-auto sm:flex-1 ${renk}`}
               >
                 <span className="flex items-center gap-1.5 text-sm font-semibold">
                   <span aria-hidden>{durum === "tamam" ? "✓" : a.ikon}</span>
                   <span className="truncate">{f.asamalar[a.anahtar]}</span>
                 </span>
-                <span className="mt-0.5 text-[0.65rem] font-medium uppercase tracking-wide opacity-80">
+                <span className="mt-0.5 truncate text-[0.65rem] font-medium uppercase tracking-wide opacity-80">
                   {durum === "simdi" ? f.simdi : durum === "tamam" ? f.tamam : f.bekliyor}
                 </span>
                 {zamanlar[a.no] && (
-                  <span className="mt-0.5 text-[0.6rem] font-medium tabular-nums opacity-70">
+                  <span className="mt-0.5 truncate text-[0.6rem] font-medium tabular-nums opacity-70">
                     🕒 {zamanlar[a.no]}
                   </span>
                 )}
