@@ -10,7 +10,7 @@
 
 export const BAGLANTI_TABANI = "https://ayna.oneteamglobal.ai";
 
-export type WaSablonAnahtar = "giris" | "giris_hatirlatma" | "odev" | "duyuru";
+export type WaSablonAnahtar = "giris" | "giris_hatirlatma" | "odev" | "duyuru" | "degerlendirme";
 export type WaKategori = "UTILITY" | "MARKETING";
 
 export type WaButon = {
@@ -100,6 +100,23 @@ export const WA_SABLONLAR: WaSablon[] = [
     ornek: { "1": "Mehmet", "2": "427813" },
   },
   {
+    anahtar: "degerlendirme",
+    ikon: "🪞",
+    etiket: "Kamp değerlendirmesi hatırlatma",
+    aciklama: "Kamp değerlendirmesini (360°) henüz tamamlamamış katılımcılara Gün 3 sabahı dürtme.",
+    friendlyName: "pd101_degerlendirme_hatirlatma",
+    dil: "tr",
+    kategori: "UTILITY",
+    ayarAnahtari: "wa_tpl_degerlendirme",
+    govde:
+      "Merhaba {{1}}, kamp değerlendirmen henüz eksik. 🪞\n\n" +
+      "3 gün birlikte olduğun arkadaşlarını senin gözünden yansıtman için son şans — onlar görülmeyi hak ediyor, sen de tam Ayna Raporunu ancak böyle alırsın. Birkaç dakika yeter.\n\n" +
+      "— AYNA",
+    buton: { baslik: "Değerlendirmeye Git", url: `${BAGLANTI_TABANI}/giris?kod={{2}}` },
+    serbestMi: false,
+    ornek: { "1": "Mehmet", "2": "427813" },
+  },
+  {
     anahtar: "duyuru",
     ikon: "📢",
     etiket: "Genel duyuru",
@@ -139,6 +156,7 @@ export function degiskenleriUret(
     case "giris":
     case "giris_hatirlatma":
     case "odev":
+    case "degerlendirme":
       return { "1": ad, "2": kisi.kod };
     case "duyuru":
       return { "1": ad, "2": (serbestMesaj ?? "").trim() };
