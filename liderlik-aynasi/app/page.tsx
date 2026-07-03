@@ -21,6 +21,7 @@ import IlkTanitim from "@/components/IlkTanitim";
 import MuhurTuru from "@/components/MuhurTuru";
 import OnboardingRayi from "@/components/OnboardingRayi";
 import RozetSeridi from "@/components/RozetSeridi";
+import BildirimAcUyari from "@/components/BildirimAcUyari";
 import KampHud from "@/components/KampHud";
 import GorusmeSimdi from "@/components/GorusmeSimdi";
 import KonusanYansima from "@/components/KonusanYansima";
@@ -464,6 +465,12 @@ export default async function AnaSayfa({
           ofTamam={!!ofDurum?.tamamlandi_at}
         />
       </header>
+      {/* [KURULUM] Kurulu ama bildirim kapalı → tepede büyük "Bildirimleri Aç"
+          kartı. Kampın kalbi push; bu kişiyi altta küçük kartla değil burada
+          yakalarız. Abone olunca / desteklenmeyen ortamda kendini gizler. */}
+      <div className="mt-3">
+        <BildirimAcUyari />
+      </div>
       {/* B3: Pusula sloganı — her gün görünür kimlik çapası */}
       {kisiSlogan && (
         <p className="prizma-serif ay-metin mt-2 text-sm font-medium italic leading-snug text-gold-light/90">
