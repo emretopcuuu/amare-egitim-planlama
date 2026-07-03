@@ -233,6 +233,55 @@ const Ekibim = () => {
         </div>
       )}
 
+      {/* Sistemi Kullananlar — ekipten üye girişi yapıp aktif kullananlar */}
+      {veri?.ekip && (() => {
+        const kullananlar = veri.ekip
+          .filter(u => u.siteSet)
+          .sort((a, b) => (a.sonAktiviteGun ?? 9999) - (b.sonAktiviteGun ?? 9999));
+        if (!kullananlar.length) return null;
+        const sonAktiviteMetni = (g) => g == null ? 'giriş yaptı' : g === 0 ? 'bugün aktif' : g === 1 ? 'dün aktifti' : `${g} gün önce`;
+        return (
+          <div className="max-w-5xl mx-auto px-4 mb-5">
+            <div className="bg-white/5 border border-emerald-400/25 rounded-2xl p-4">
+              <div className="flex items-center justify-between mb-1">
+                <h2 className="text-white font-extrabold text-sm inline-flex items-center gap-2">
+                  🖥️ Sistemi Kullananlar
+                  <span className="px-2 py-0.5 rounded-full text-[11px] bg-emerald-400/20 text-emerald-300 border border-emerald-400/30">{kullananlar.length} / {veri.toplam}</span>
+                </h2>
+              </div>
+              <p className="text-purple-200/60 text-[11px] mb-3">Ekibinden eğitim sistemine giriş yapmış üyeler — en son aktif olan en üstte. Yeşil: son 7 günde aktif.</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                {kullananlar.slice(0, 12).map(u => {
+                  const yesil = u.sonAktiviteGun != null && u.sonAktiviteGun <= 7;
+                  return (
+                    <div key={u.amareId} className="flex items-center gap-2.5 bg-white/5 rounded-xl px-3 py-2">
+                      <div className="relative flex-shrink-0">
+                        {u.fotoURL
+                          ? <img src={u.fotoURL} alt="" className="w-9 h-9 rounded-full object-cover" />
+                          : <div className="w-9 h-9 rounded-full bg-purple-500/40 flex items-center justify-center text-xs font-bold text-white">{(u.adSoyad || '?')[0]}</div>}
+                        <span className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-purple-950 ${yesil ? 'bg-emerald-400' : 'bg-gray-500'}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-white font-bold text-xs truncate">{u.adSoyad}</div>
+                        <div className="text-[10px] text-purple-300/70 truncate">
+                          {sonAktiviteMetni(u.sonAktiviteGun)}
+                          {u.izlemeSaat > 0 && <> · ~{u.izlemeSaat} sa izleme</>}
+                          {u.curriculumPct != null && <> · müfredat %{u.curriculumPct}</>}
+                        </div>
+                      </div>
+                      {u.rank && <span className="text-[9px] font-bold text-amber-300/80 flex-shrink-0 uppercase">{u.rank}</span>}
+                    </div>
+                  );
+                })}
+              </div>
+              {kullananlar.length > 12 && (
+                <p className="text-purple-300/50 text-[11px] text-center mt-2">+{kullananlar.length - 12} kişi daha sistemi kullanıyor — tam liste aşağıda.</p>
+              )}
+            </div>
+          </div>
+        );
+      })()}
+
       {/* Bildirim ayarı + PDF rapor */}
       <div className="max-w-5xl mx-auto px-4 mb-5 grid grid-cols-1 md:grid-cols-2 gap-3">
         <EkipBildirimAyar />
