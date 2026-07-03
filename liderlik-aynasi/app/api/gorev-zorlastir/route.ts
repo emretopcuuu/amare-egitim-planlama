@@ -48,7 +48,13 @@ export async function POST(req: Request) {
 
   await db
     .from("missions")
-    .update({ title: yeni.title, body: yeni.body, difficulty: yeniZorluk })
+    .update({
+      title: yeni.title,
+      body: yeni.body,
+      difficulty: yeniZorluk,
+      // Özellik 7 — zorluk merdiveni izi: kişi kendi isteğiyle dozu artırdı.
+      zorluk_ayar: "zorlastirildi",
+    })
     .eq("id", gorev.id)
     .eq("status", "pending");
 
