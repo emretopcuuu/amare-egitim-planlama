@@ -46,8 +46,15 @@ export default function GirisForm() {
         if (!res.ok) {
           setHata(veri?.hata ?? tr.giris.hataSunucu);
           setKod("");
-          // Hatırlanan kod artık geçersizse temizle (yoksa açılışta döngüye girer).
-          try { localStorage.removeItem(KOD_ANAHTAR); } catch {}
+          // Hatırlanan kodu YALNIZ o kod artık geçersizse temizle (yoksa açılışta
+          // sessiz-giriş döngüsüne girer). Elle girilen yanlış bir deneme, daha önce
+          // hatırlanan DOĞRU kodu SİLMESİN — yoksa tek yanlış tuş, kalıcı girişi bozar
+          // ve kişi her açılışta yeniden kod sormak zorunda kalır.
+          try {
+            if (localStorage.getItem(KOD_ANAHTAR) === deger) {
+              localStorage.removeItem(KOD_ANAHTAR);
+            }
+          } catch {}
           return;
         }
         // [OTURUM] Kodu cihazda hatırla — sonraki açılışta sessiz giriş için.
