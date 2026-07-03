@@ -9,24 +9,28 @@
   "background_color": "#3D1734",
   "theme_color": "#5F2756",
   "lang": "tr",
-  "categories": ["education", "productivity", "business"],
+  "categories": [
+    "education",
+    "productivity",
+    "business"
+  ],
   "icons": [
     {
-      "src": "/logos/oneteam logo.JPG",
+      "src": "/logos/icon-192.png",
       "sizes": "192x192",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/logos/oneteam logo.JPG",
+      "src": "/logos/icon-512.png",
       "sizes": "512x512",
-      "type": "image/jpeg",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/logos/oneteam logo.JPG",
-      "sizes": "192x192",
-      "type": "image/jpeg",
+      "src": "/logos/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "maskable"
     }
   ],
