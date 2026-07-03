@@ -1555,6 +1555,12 @@ export const tr = {
     ekstraHata: "Yüklenemedi, tekrar dene.",
     ekstraDoluHata: "Yeterince fotoğrafın var — daha fazlasına gerek yok.",
     devamEt: "Devam Et",
+    // Yeniden çekim: kişi mevcut Canlı Aynasından memnun değilse 3 açıyı baştan
+    // çeker; yeni "düz" karesi hem avatarı hem video referansını günceller.
+    yenidenCek: "🔄 Fotoğrafımı yeniden çek",
+    yenidenCekNot: "3 açıyı baştan çekersin; avatarın ve video referansın yenisiyle değişir.",
+    degistir: "📷 Fotoğrafını değiştir",
+    degistirKapat: "Kapat",
   },
   // FAZ 3 — Reddi Kutla (Go-for-No / Fun Failure)
   red: {
