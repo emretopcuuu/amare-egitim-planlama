@@ -78,10 +78,15 @@ export const handler = async (event) => {
   const ref = db.collection('takvim').doc(egitimId);
 
   try {
-    if (payload.event === 'meeting.participant_joined') {
-      await ref.set({ canliKisi: admin.firestore.FieldValue.increment(1) }, { merge: true });
-    } else if (payload.event === 'meeting.participant_left') {
-      await ref.set({ canliKisi: admin.firestore.FieldValue.increment(-1) }, { merge: true });
+    if (payload.event === 'meeting.participant_joined' || payload.event === 'meeting.participant_left') {
+      // increment yerine clamp'li transaction: kaçan join eventleri (örn. secret
+      // deploy'undan önceki 401'ler) sayacı NEGATİFE düşürüyordu (-23 vakası).
+      const delta = payload.event === 'meeting.participant_joined' ? 1 : -1;
+      await db.runTransaction(async (tx) => {
+        const snap = await tx.get(ref);
+        const cur = Math.max(0, snap.data()?.canliKisi || 0);
+        tx.set(ref, { canliKisi: Math.max(0, cur + delta) }, { merge: true });
+      });
     } else if (payload.event === 'meeting.ended') {
       await ref.set({ canliKisi: 0 }, { merge: true });
     }
