@@ -21,6 +21,7 @@ import { signOut } from 'firebase/auth';
 import { auth, db } from '../utils/firebase';
 import { doc as fsDoc, onSnapshot } from 'firebase/firestore';
 import { katilTikla } from '../utils/katilim';
+import { trackEvent } from '../utils/analytics';
 // jsPDF + html2canvas dinamik import — sadece PDF indir butonu tıklandığında yüklenir
 // İlk yükleme süresinden ~400KB tasarruf
 
@@ -476,6 +477,13 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
                   <a href={`https://zoom.us/j/${zoomId}`} target="_blank" rel="noopener noreferrer" onClick={() => katilTikla(egitim)}
                     className={`flex-1 md:flex-none inline-flex items-center justify-center gap-2 ${isFirst ? 'px-3 md:px-6 py-2.5 md:py-3 text-sm md:text-base' : 'px-3 py-2 text-xs'} bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-xl shadow-lg transition-all spring-tap`}>
                     <Wifi className={`${isFirst ? 'w-4 h-4 md:w-5 md:h-5' : 'w-3.5 h-3.5'}`} />{t('cal_join_meeting')}
+                  </a>
+                )}
+                {!online && (
+                  <a href="https://katlama.oneteamglobal.ai/" target="_blank" rel="noopener noreferrer"
+                    onClick={() => { try { trackEvent('rezervasyon_tikla', { egitimId: egitim.id, egitimAdi: egitim.egitim || '' }); } catch {} }}
+                    className={`flex-1 md:flex-none inline-flex items-center justify-center gap-2 ${isFirst ? 'px-3 md:px-6 py-2.5 md:py-3 text-sm md:text-base' : 'px-3 py-2 text-xs'} bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl shadow-lg transition-all spring-tap`}>
+                    <CalendarDays className={`${isFirst ? 'w-4 h-4 md:w-5 md:h-5' : 'w-3.5 h-3.5'}`} />Rezervasyon Yap
                   </a>
                 )}
                 <button onClick={()=>onHatirlatma?.(egitim)}
@@ -1081,6 +1089,14 @@ const TakvimView = () => {
                     {egitim.katilTiklamaSayisi > 0 && <span className="inline-flex items-center gap-1 mt-2 text-[11px] font-bold text-red-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />{egitim.katilTiklamaSayisi} kişi katıldı</span>}
                   </span>
                 ) : null; })()}
+                {/* Fiziki etkinlik → Katlama rezervasyon (farkındalık: tıklama sayılır) */}
+                {!online && !gecmis && (
+                  <a href="https://katlama.oneteamglobal.ai/" target="_blank" rel="noopener noreferrer"
+                    onClick={() => { try { trackEvent('rezervasyon_tikla', { egitimId: egitim.id, egitimAdi: egitim.egitim || '' }); } catch {} }}
+                    className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg shadow hover:shadow-md transition-all">
+                    <CalendarDays className="w-3.5 h-3.5" />Rezervasyon Yap
+                  </a>
+                )}
               </div>
               <div className="hidden md:flex items-start gap-1.5 flex-shrink-0 justify-end max-w-[280px]">
                 {konusmacilar2.slice(0, 4).map(ad => <KonusmaciAvatar key={ad} ad={ad} konusmacilar={konusmacilar||[]} onClick={acLider} />)}

@@ -13,6 +13,7 @@ import HatirlatmaKayitModal from '../components/HatirlatmaKayitModal';
 import LoadingProgress from '../components/LoadingProgress';
 import { katilTikla } from '../utils/katilim';
 import { useAuth } from '../context/AuthContext';
+import { trackEvent } from '../utils/analytics';
 
 const parseTarih = (t) => {
   if (!t) return null;
@@ -340,6 +341,13 @@ const EgitimDetay = () => {
                       </span>
                     )}
                   </span>
+                )}
+                {!isOnline && (
+                  <a href="https://katlama.oneteamglobal.ai/" target="_blank" rel="noopener noreferrer"
+                    onClick={() => { try { trackEvent('rezervasyon_tikla', { egitimId: egitim.id, egitimAdi: egitim.egitim || '' }); } catch {} }}
+                    className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all spring-tap">
+                    📅 Rezervasyon Yap
+                  </a>
                 )}
                 <button onClick={() => setHatirlatmaModal(true)}
                   className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all spring-tap">
