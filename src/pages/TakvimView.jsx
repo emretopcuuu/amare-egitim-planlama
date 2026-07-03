@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { ArrowLeft, Download, Clock, AlertCircle, Loader2, MapPin, Tag, User, Wifi, Building2, X, Mail, Search, List, LayoutGrid, Table2, Timer, Bell, ChevronUp, ChevronLeft, ChevronRight, CalendarDays, Calendar as CalendarIcon, Users as UsersIcon, Rss, Video, RotateCw, LogIn, LogOut, UserCircle } from 'lucide-react';
@@ -1311,6 +1311,12 @@ const TakvimView = () => {
                 placeholder={t('cal_search_placeholder')}
                 className="w-full bg-white/15 backdrop-blur border-2 border-white/20 focus:border-amber-400 text-white placeholder-purple-300 rounded-xl pl-12 pr-10 py-3.5 text-base focus:outline-none focus:ring-2 focus:ring-amber-400/30 transition-all" />
               {arama && <button onClick={()=>setArama('')} aria-label="Aramayı temizle" className="absolute right-3 top-1/2 -translate-y-1/2 text-purple-300 hover:text-white spring-tap"><X className="w-4 h-4" /></button>}
+              {/* Derin arama: video arşivi + konuşma metinleri (/ara) */}
+              <Link to={arama.trim() ? `/ara?q=${encodeURIComponent(arama.trim())}` : '/ara'}
+                className="absolute right-10 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-amber-300/80 hover:text-amber-200 px-2 py-1 rounded-lg hover:bg-white/10 transition-all"
+                title="Video arşivi ve konuşma metinlerinde ara">
+                Derin Ara →
+              </Link>
             </div>
 
             {/* Hızlı zaman filtreleri + Bugün + Sıfırla */}
