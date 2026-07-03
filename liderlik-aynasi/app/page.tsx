@@ -20,6 +20,7 @@ import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
 import MuhurTuru from "@/components/MuhurTuru";
 import OnboardingRayi from "@/components/OnboardingRayi";
+import RozetSeridi from "@/components/RozetSeridi";
 import KampHud from "@/components/KampHud";
 import GorusmeSimdi from "@/components/GorusmeSimdi";
 import KonusanYansima from "@/components/KonusanYansima";
@@ -502,6 +503,8 @@ export default async function AnaSayfa({
           />
         </div>
       )}
+      {/* [KURULUM 7/8] Rozetler (İlk Işık/El Ele) + "yanındakiyle el ele" girişi */}
+      <RozetSeridi />
       {/* S1: YolculukSeridi kaldırıldı; gün etiketi haritanın içine taşındı.
           UX: Faz merdiveni HAZIRLIK göstergesidir — kamp açıldıktan sonra
           (kişi içerideyken) görev + programın önüne geçen ikincil gürültüdür.

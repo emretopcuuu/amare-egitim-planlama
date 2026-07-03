@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { katilimciyaBildir } from "@/lib/push";
+import { rozetVer, ROZETLER } from "@/lib/rozet";
 import { tr } from "@/lib/i18n/tr";
 
 // PWA push aboneliği kaydı. Aynı endpoint yeniden gelirse sahibi güncellenir
@@ -54,6 +55,9 @@ export async function POST(req: Request) {
 
   // [KUR-2] İzin verilen saniyede ilk push düşer: soyut bir ayar değil, büyülü
   // bir an — kişi push'un ÇALIŞTIĞINI o an görür (sessizce bozuk izin de yakalanır).
+  // [KUR-7] İlk Işık rozeti + kıvılcım — ilk aboneliğe bir kez (rozetVer idempotent;
+  // aboneliği silip tekrar açsa da tekrar kıvılcım vermez).
+  let ilkIsik: { ad: string; ikon: string; kivilcim: number } | null = null;
   if ((mevcutAbonelik ?? 0) === 0) {
     const ilkAd = session.ad.split(" ")[0];
     await katilimciyaBildir(
@@ -63,8 +67,17 @@ export async function POST(req: Request) {
       "Bildirimlerin açık. Yolculuk boyunca sana buradan fısıldayacağım.",
       "/"
     ).catch(() => {});
+    try {
+      const { yeni } = await rozetVer(db, session.sub, "ilk_isik");
+      if (yeni) {
+        const r = ROZETLER.ilk_isik;
+        ilkIsik = { ad: r.ad, ikon: r.ikon, kivilcim: r.kivilcim };
+      }
+    } catch {
+      /* rozet verilemezse abonelik yine de başarılı */
+    }
   }
-  return Response.json({ ok: true });
+  return Response.json({ ok: true, ilkIsik });
 }
 
 // Aboneliği kaldır (menüdeki "Bildirimler: Kapat"). Yalnız kişinin kendi
