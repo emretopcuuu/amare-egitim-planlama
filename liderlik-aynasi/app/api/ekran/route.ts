@@ -37,6 +37,9 @@ export type EkranVerisi = {
   bugun: { gorev: number; gozlem: number; takdir: number; fiero: number };
   // KÜMÜLATİF kamp efsanesi — sahne asla "0/ölü" görünmesin; toplam kahraman sayaç.
   kumulatif: { kivilcim: number; gorev: number; takdir: number; fiero: number; anlar: number };
+  // [KURULUM 3] Canlı kurulum sayacı — "kaç kişi telefonuna aldı/bildirim açtı".
+  // Salon ritüelinde sahnede gösterilir; her yükseldiğinde salon alkışlar.
+  kurulum: { kuranlar: number; toplam: number };
   // Kampın 1. gününün Istanbul tarihi ("YYYY-MM-DD") — ŞİMDİ/SIRADA program
   // slaytı bunu kullanır (sahne bilgisayarı oturumsuz; gün/blok bundan türer).
   kampGun1: string | null;
@@ -216,6 +219,13 @@ export async function GET() {
 
   // [E3] Kolektif söz mühür sayacı (büyük ekran için).
   const sozMuhurEkran = await sozMuhurDurumu(db);
+
+  // [KURULUM 3] Bildirim/kurulum sayacı — kaç DISTINCT kişi push aboneliği açtı.
+  const { data: aboneHam } = await db.from("push_subscriptions").select("participant_id");
+  const kurulum = {
+    kuranlar: new Set((aboneHam ?? []).map((a) => a.participant_id)).size,
+    toplam: kisilerSonuc.data?.length ?? 0,
+  };
 
   // CANLI OLAY AKIŞI — son 45 dk'lık aktivite. Kişinin EYLEMİ görünür ama
   // YAPTIĞININ İÇERİĞİ/HEDEFİ değil: görev başlığı yazılmaz; peer eylemler
@@ -649,6 +659,7 @@ export async function GET() {
     yansimalar,
     bugun,
     kumulatif,
+    kurulum,
     kampGun1: (await kampBaslangicGetir(db)) ?? null,
     olaylar: olaylar.slice(0, 16),
   };

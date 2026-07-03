@@ -1037,6 +1037,31 @@ export default function EkranGosterisi() {
         </div>
       )}
 
+      {/* [KURULUM 3] CANLI KURULUM SAYACI (sağ-alt) — salon ritüeli: "kaç kişi
+          bildirimini açtı". Herkes açınca yeşile döner + "hepimiz hazırız". Her
+          yükseldiğinde salon alkışlar; sosyal baskı tek tek ikna etmekten güçlü.
+          Yalnız eksik varken görünür (tamamlanınca 8 sn kutlar sonra kaybolur). */}
+      {veri && veri.kurulum && veri.kurulum.toplam > 0 && (
+        <div
+          className={`absolute bottom-16 right-6 z-20 rounded-2xl border p-4 text-center shadow-2xl backdrop-blur ${
+            veri.kurulum.kuranlar >= veri.kurulum.toplam
+              ? "border-emerald-400/50 bg-emerald-500/15"
+              : "border-gold/30 bg-[#04101c]/85"
+          }`}
+        >
+          <p className="text-sm font-semibold uppercase tracking-wide text-gold-light/80">🔔 Bildirim hazır</p>
+          <p className="mt-0.5 text-5xl font-black tabular-nums text-slate-50">
+            {veri.kurulum.kuranlar}
+            <span className="text-2xl text-slate-400">/{veri.kurulum.toplam}</span>
+          </p>
+          <p className="mt-1 text-sm font-medium text-slate-300">
+            {veri.kurulum.kuranlar >= veri.kurulum.toplam
+              ? "🎉 Hepimiz hazırız!"
+              : "Ana ekrana ekle + bildirime izin ver"}
+          </p>
+        </div>
+      )}
+
       {/* AYNA imzası — her slaytta dönen kısa fısıltı (sinematik kabuk) */}
       <p className="relative z-10 mt-4 text-center text-sm font-medium uppercase tracking-[0.4em] text-gold-light/40">
         — {["AYNA gözlemliyor", "AYNA görüyor", "AYNA dinliyor", "AYNA hatırlıyor", "AYNA yönetiyor"][slayt % 5]} —
