@@ -6,8 +6,10 @@ export async function POST() {
   return Response.json({ ok: true });
 }
 
-// GET: sunucu bileşeninden redirect ile çağrılabilir (çerez silme için)
+// GET: sunucu bileşeninden redirect ile çağrılabilir (çerez silme için).
+// ?cikis=1 → GirisForm hatırlanan kodu siler + sessiz yeniden girişi atlar
+// (yoksa çıkış yapan kişi anında geri girer).
 export async function GET() {
   await clearSession();
-  redirect("/giris");
+  redirect("/giris?cikis=1");
 }
