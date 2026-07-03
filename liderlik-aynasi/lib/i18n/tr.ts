@@ -1139,8 +1139,8 @@ export const tr = {
     // OV + VOL alanları (Son 3 ay ortalaması, ikisi de zorunlu)
     ovEtiket: "Son 3 ayın ortalama OV'si (zorunlu)",
     ovYer: "Örn: 2500",
-    ovZorunlu: "OV ve VOL gerekli — bu rakamlar planını kişiselleştirir.",
-    volEtiket: "Son 3 ayın ortalama VOL'si (zorunlu)",
+    ovZorunlu: "OV ve VOLL gerekli — bu rakamlar planını kişiselleştirir.",
+    volEtiket: "Son 3 ayın ortalama VOLL'si (zorunlu)",
     volYer: "Örn: 1500",
     noktaDevam: "Devam et",
     // OV simülasyonu
