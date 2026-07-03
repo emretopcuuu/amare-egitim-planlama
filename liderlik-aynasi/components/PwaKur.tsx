@@ -31,6 +31,10 @@ export default function PwaKur() {
   const pathname = usePathname();
   const [olay, setOlay] = useState<KurulumOlayi | null>(null);
   const [gorunur, setGorunur] = useState(false);
+  // [KUR-1] iOS'ta beforeinstallprompt YOK — Safari'de tarayıcıdan açan iPhone
+  // kullanıcısı bugüne dek hiç istem görmüyordu (en büyük kurulum kaybı).
+  // Aynı tam ekran istem, iOS'a özel 2 adımlı görsel yönergeyle gösterilir.
+  const [iosGorunur, setIosGorunur] = useState(false);
 
   useEffect(() => {
     // SW'yi global kaydet (kurulabilirlik kriteri her sayfada sağlansın).
@@ -53,6 +57,12 @@ export default function PwaKur() {
       setGorunur(true);
     }
     window.addEventListener("beforeinstallprompt", yakala);
+    // [KUR-1] iOS Safari: prompt olayı hiç gelmez — 2.5 sn sonra (ilk ekranla
+    // çakışmasın) iOS yönergeli istemi göster.
+    const iOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const iosZamanlayici = iOS
+      ? window.setTimeout(() => setIosGorunur(true), 2500)
+      : null;
     // Kurulum tamamlanınca banner'ı kaldır.
     function kuruldu() {
       setGorunur(false);
@@ -62,6 +72,7 @@ export default function PwaKur() {
     return () => {
       window.removeEventListener("beforeinstallprompt", yakala);
       window.removeEventListener("appinstalled", kuruldu);
+      if (iosZamanlayici) window.clearTimeout(iosZamanlayici);
     };
   }, []);
 
@@ -79,12 +90,14 @@ export default function PwaKur() {
 
   function kapat() {
     setGorunur(false);
+    setIosGorunur(false);
     try {
       localStorage.setItem(ERTELE_ANAHTAR, String(Date.now() + ERTELE_MS));
     } catch {}
   }
 
-  if (!gorunur || !olay) return null;
+  const androidIstem = gorunur && !!olay;
+  if (!androidIstem && !iosGorunur) return null;
   if (GIZLI_ONEK.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null;
 
   // İlk aynayı açar gibi — ortada, logolu, belirgin tam ekran istem.
@@ -107,12 +120,34 @@ export default function PwaKur() {
         />
         <p className="text-lg font-bold text-slate-50">{t.pwaIlkBaslik}</p>
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.pwaIlkAlt}</p>
-        <button
-          onClick={kur}
-          className="mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-gold text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light"
-        >
-          {t.pwaIlkEkle}
-        </button>
+        {androidIstem ? (
+          <button
+            onClick={kur}
+            className="mt-5 flex h-12 w-full items-center justify-center rounded-xl bg-gold text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light"
+          >
+            {t.pwaIlkEkle}
+          </button>
+        ) : (
+          <>
+            {/* [KUR-1] iOS: sistem istemi yok — 2 adımlı görsel yönerge */}
+            <div className="mt-4 space-y-2 text-left">
+              <p className="flex items-center gap-2.5 rounded-xl bg-white/[0.05] px-3.5 py-2.5 text-sm text-slate-200">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gold/20 text-xs font-bold text-gold-light">1</span>
+                Alttaki <span className="mx-0.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/20 text-sky-300" aria-hidden>⎋</span> <span className="font-semibold">Paylaş</span> düğmesine dokun
+              </p>
+              <p className="flex items-center gap-2.5 rounded-xl bg-white/[0.05] px-3.5 py-2.5 text-sm text-slate-200">
+                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gold/20 text-xs font-bold text-gold-light">2</span>
+                <span className="font-semibold">Ana Ekrana Ekle</span> <span className="mx-0.5 inline-flex h-6 w-6 items-center justify-center rounded-md bg-white/10" aria-hidden>⊞</span> seç
+              </p>
+            </div>
+            <button
+              onClick={kapat}
+              className="mt-4 flex h-12 w-full items-center justify-center rounded-xl bg-gold text-sm font-bold text-[#1a1206] transition-colors hover:bg-gold-light"
+            >
+              Anladım, ekliyorum ✓
+            </button>
+          </>
+        )}
         <button
           onClick={kapat}
           className="mt-2 w-full py-2 text-sm text-slate-400 hover:text-slate-200"
