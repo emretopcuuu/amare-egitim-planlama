@@ -1,6 +1,7 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { unvanBul, UNVANLAR } from "@/lib/kivilcim";
+import { rozetKivilcimi } from "@/lib/rozet";
 
 // KİMLİK ELMASI — katılımcının ana sayfasındaki canlı 3B elmasını besleyen veri.
 // Her tamamlanan görev, o görevin çalıştırdığı liderlik özelliğine (trait) denk
@@ -30,7 +31,7 @@ const FASET_DOYUM = 2;
 const PARLAK_HEDEF = 9;
 
 export async function kimlikElmasiVerisi(db: Db, pid: string): Promise<ElmasVeri> {
-  const [{ data: traits }, { data: gorevler }] = await Promise.all([
+  const [{ data: traits }, { data: gorevler }, rozetKiv] = await Promise.all([
     db.from("traits").select("id, name").order("sort_order", { ascending: true }),
     db
       .from("missions")
@@ -38,6 +39,9 @@ export async function kimlikElmasiVerisi(db: Db, pid: string): Promise<ElmasVeri
       .eq("participant_id", pid)
       .in("status", ["submitted", "scored"])
       .order("scored_at", { ascending: true }),
+    // [KUR-7] Rozet kıvılcımı (İlk Işık, El Ele) kişinin kimlik toplamına eklenir;
+    // rekabetçi /ekran ligi görev-tabanlı kalır (orada rozet SAYILMAZ).
+    rozetKivilcimi(db, pid),
   ]);
 
   const traitListe = (traits ?? []) as { id: number; name: string }[];
@@ -66,6 +70,8 @@ export async function kimlikElmasiVerisi(db: Db, pid: string): Promise<ElmasVeri
     }
     toplamKivilcim += g.spark_points ?? 0;
   }
+  // Rozet kıvılcımını toplam kimlik kıvılcımına ekle (unvan/aşama bunu görür).
+  toplamKivilcim += rozetKiv;
 
   const facetler: Facet[] = traitListe.map((tr) => {
     const n = sayac.get(tr.id) ?? 0;
