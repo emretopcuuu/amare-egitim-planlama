@@ -30,6 +30,20 @@ export function AuthProvider({ children }) {
           import('../utils/ssoBridge')
             .then((m) => m.bridgeToSupabase(user))
             .catch(() => {});
+          // sonGiris tazeleme: eskiden yalnız yeniden-login'de yazılıyordu →
+          // oturumu açık kalan üye Ekibim'de aylarca "pasif" görünüyordu.
+          // Her ziyarette güncelle (günde en fazla 1 yazma — localStorage throttle).
+          try {
+            const key = `amare_songiris_${user.uid}`;
+            const son = parseInt(localStorage.getItem(key) || '0', 10);
+            if (Date.now() - son > 20 * 3600 * 1000) {
+              localStorage.setItem(key, String(Date.now()));
+              const [{ doc, setDoc, serverTimestamp }, { db }] = await Promise.all([
+                import('firebase/firestore'), import('../utils/firebase'),
+              ]);
+              setDoc(doc(db, 'users', user.uid), { sonGiris: serverTimestamp() }, { merge: true }).catch(() => {});
+            }
+          } catch {}
         }
       } else {
         // Hiçbir kullanıcı yok → otomatik anonim signIn
