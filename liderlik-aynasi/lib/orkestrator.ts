@@ -7,6 +7,7 @@ import { kampArkadasiAta, kampArkadasiHatirlat } from "@/lib/kampArkadasi";
 import { eylulKanit1, eylulKanit2, eylulKanit3 } from "@/lib/eylulKanit";
 import { pazartesiRaporuGonder } from "@/lib/kapanisPanel";
 import { zirveHazirlikOnUcus, zirveHazirlikUyar } from "@/lib/zirveHazirlik";
+import { degerlendirmeAc, degerlendirmeHatirlat, revealAc } from "@/lib/kampDegerlendirme";
 
 type Db = ReturnType<typeof supabaseAdmin>;
 
@@ -89,6 +90,11 @@ const FONKSIYONLAR: Record<string, (db: Db) => Promise<void>> = {
   eylul_kanit3: eylulKanit3,
   // FAZ 6.1 — pazartesi komuta raporu (adminlere)
   pazartesi_rapor: pazartesiRaporuGonder,
+  // [KAMP OTOMASYON] Değerlendirme dalgası aç (Gün 2 21:00) + Gün 3 09:00 dürtme
+  // + Gün 3 13:00 reveal güvenlik ağı. İstanbul-çıpalı, elle dokunuş gerekmez.
+  degerlendirme_ac: degerlendirmeAc,
+  degerlendirme_hatirlat: degerlendirmeHatirlat,
+  reveal_ac: revealAc,
   // E1-b — zirve hazırlık son kontrolü: satır ateşlenince eksik varlıkları
   // son kez üret + hâlâ eksikse admin'e uyar.
   zirve_hazirlik_kontrol: async (db: Db) => {
