@@ -1257,7 +1257,16 @@ export const tr = {
     // İç mesajlaşma
     arkadaslarBaslik: "Grup Arkadaşların",
     arkadaslarAlt: "Bir arkadaşına dokun, mesaj yaz — bildirim olarak ulaşır.",
+    // "Bu grupta kimler var" cevabı: bir görev grubundan birine yönlendirirse
+    // kişi buraya bakıp kimi seçeceğini görür (üye sayısı + kendini işaretle).
+    uyeSayisi: (n: number) => (n === 1 ? "Sen + 1 kişi" : `Sen + ${n} kişi`),
+    sensin: "sen",
     uyeYok: "Grubunda şu an başka kişi görünmüyor.",
+    // Grubu olmayan kişi için CTA: oyun seçtiğinde otomatik atanır.
+    takimsizBaslik: "Henüz bir grubun yok",
+    takimsizMetin:
+      "Cumartesi oyunlarını seçtiğinde otomatik olarak bir gruba (Grup 1–15) atanacaksın. Grubun ve üyeleri o zaman burada görünecek.",
+    takimsizButon: "Oyunları seç",
     mesajRozet: (n: number) => (n > 0 ? `${n} yeni mesaj` : ""),
     yonetimBaslik: "Kamp Yönetimi",
     yonetimAlt: "Soru, ihtiyaç ya da bir mesaj — doğrudan yönetime yaz.",

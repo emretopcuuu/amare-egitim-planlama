@@ -837,18 +837,12 @@ export async function gorevUret(
       const tercih = await karsilasmaBul(db, katilimci.id);
       eslesmeHedef = await eslesmeHedefiSec(db, katilimci.id, adaylar, new Date(), tercih?.partnerId ?? null);
     }
-    if (eslesmeHedef) {
-      // Bugün bu kişinin eşleşmeli görevlerinin kaçı isimliydi — oran ≥%50 kalsın.
-      const gunBasiIso = new Date(Date.now() - 24 * 3_600_000).toISOString();
-      const { data: bugunEslesmeler } = await db
-        .from("gorev_eslesme")
-        .select("isimli")
-        .eq("kaynak_id", katilimci.id)
-        .gte("created_at", gunBasiIso);
-      const toplamBugun = bugunEslesmeler?.length ?? 0;
-      const isimliSayisi = (bugunEslesmeler ?? []).filter((e) => e.isimli).length;
-      eslesmeIsimliMi = toplamBugun === 0 || isimliSayisi / toplamBugun < 0.5;
-    }
+    // İSİMLİ ZORUNLU (kullanıcı isteği): eşleşme hedefi bulunduysa görev HER
+    // ZAMAN isimli olur. Eski %50 kotası kaldırıldı — anonim "Grup N'de biri"
+    // gibi referanslar kişinin görmediği bir listeye işaret ediyordu; artık
+    // aday varsa daima gerçek bir isme yönlendiriyoruz (bkz. anonim branşı: yalnız
+    // hiç aday yoksa devreye girer ve grup numarası vermesi yasak).
+    if (eslesmeHedef) eslesmeIsimliMi = true;
   }
 
   // --- Tüm yeni yönergeleri oluştur ---
@@ -877,7 +871,7 @@ export async function gorevUret(
     tur === "bag"
       ? eslesmeHedef && eslesmeIsimliMi
         ? `BAĞ GÖREVİ (İSİMLİ EŞLEŞME): Adayı doğrudan "${eslesmeHedef.full_name}" isimli kişiye yönlendir — adını göreve AÇIKÇA yaz (ör. "${eslesmeHedef.full_name}'i bul..."), varsa takımını da belirtebilirsin. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin.`
-        : `BAĞ GÖREVİ: Adayı takımından veya kamptan gerçek bir insanla bağlantı kurmaya yönlendir. İsim verme; "az tanıdığın biri", "farklı bir takımdan biri", "sohbet etmek isteyip ertelediğin biri" gibi ifadeler kullan. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
+        : `BAĞ GÖREVİ (isimsiz — bu kişi için şu an uygun eşleşme adayı yok): Adayı KENDİ SEÇECEĞİ gerçek bir insanla bağlantı kurmaya yönlendir. Kişinin KENDİSİNİN belirleyebileceği ifadeler kullan: "az tanıdığın biri", "sohbet etmek isteyip ertelediğin biri", "bugün gözüne çarpan biri". YASAK: numaralı grup / takım referansı verme — "Grup 4'ten biri", "3. gruptan biri" gibi ifadeler ASLA kullanma (kişi o grupta kimlerin olduğunu ezbere bilmiyor, görev boşta kalır). Kimi seçeceğine kişinin kendisi karar verebilmeli. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
       : "",
     // #8 Micro-sprint
     microSprint
@@ -1122,6 +1116,10 @@ ANLIK RUH HÂLİ (adaptif ton — persona hâlinin ÜZERİNE binen ince ayar): B
 ODANIN ENERJİSİ (kolektif ton): Bağlamdaki "odaSicakligi" "dusuk" ise (oda yorgun/kırık) görevi toparlayıcı, birleştirici ve biraz daha hafif yap — "hep birlikte" hissi ver; "yuksek" ise (oda coşkulu) momentumu kullanıp bir tık daha iddialı, cesur bir hamle istet. Bu bireysel ruhHali'nin üstünde ince bir kolektif ayardır; boşsa dikkate alma.
 
 DİL NETLİĞİ (çok önemli): Görev metni SADE ve anlaşılır olmalı — katılımcı tek okumada (1) ne yapacağını ve (2) sana ne yazacağını net anlamalı. Kısa, gerçek cümleler kur. Şu hatalardan kaçın: iç içe geçmiş uzun cümleler, art arda tire (—) ile uzayan eklemeler, küçültme ekleri ('ricacık'), bulanık şiirsel ifadeler ('içinde ne koptu'). Yukarıdaki davranışsal kalıplar (FUN FAILURE, EUSTRESS vb.) PUANLAMA/teşvik tonu içindir; görev metnini süslemek için değil. Önce ne yapacağını söyle, sonra tek bir soruyla geri bildirimi iste.
+
+GÖVDE BİÇİMİ (ZORUNLU — okunabilirlik): "govde"yi TEK BİR paragraf blok olarak yazma. Mantıksal adımları AYRI SATIRLARA böl; satır aralarına gerçek satır sonu (\n) koy. Tipik akış: kısa hikâye/ayna (1-2 satır) → boş satır → asıl eylem (1 satır) → dönüş isteği (1 satır). Uzun tek blok metin okunmaz; kısa satırlar madde madde okunur.
+
+MUĞLAKLIK YASAĞI (ZORUNLU): Görev ne yapılacağını SOMUT söylemeli. Şu tür bulanık ifadeler YASAK: "bir şey yap", "bir şeyler paylaş", "odaya yerleşme işi", "o işi hallet", "gereğini yap", "birine git" (kim olduğu belirsizse). Her eylemde NE yapılacağı (somut fiil + somut nesne), gerekirse NEREDE ve NE ZAMAN net olmalı. Kişiyi hedefliyorsan ya gerçek bir isim ver ya da kişinin kendisinin seçebileceği net bir tarif ver ("bugün yanında oturan kişi" gibi) — "birileri", "biri" gibi kimliği havada bırakan ifadeler tek başına yeterli değil.
 
 SOMUTLUK ŞABLONU (ZORUNLU): "kim"/"ne"/"nerede"/"ne_zaman"/"kanit" alanlarını gövdeden ÇIKARARAK doldur — yeni bilgi uydurma, gövdede zaten anlattığını 5 satıra ayrıştır. "kim" görev kişiyi hedeflemiyorsa boş string olabilir; diğer 4 alan HER ZAMAN dolu olmalı.
 
