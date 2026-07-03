@@ -45,6 +45,8 @@ export const handler = async (event) => {
 
   try {
     // Özel mod: kayıtlı eğitimler (sabit sorgu — sayfanın kendi sorgusuyla birebir)
+    // transcriptChunks da striplenir — 918 doc'ta Whisper chunk'ları yanıtı
+    // Lambda 6MB limitinin üstüne itiyordu (ResponseSizeTooLarge).
     if (col === 'kayitli') {
       const snap = await db.collection('kayitli_egitimler')
         .where('kayeneFiltrelendi', '==', false)
@@ -52,9 +54,20 @@ export const handler = async (event) => {
         .limit(2500)
         .get();
       const docs = snap.docs.map(d => {
-        const { transcript, ...rest } = d.data();
+        const { transcript, transcriptChunks, ...rest } = d.data();
         return { id: d.id, ...rest };
       });
+      return { statusCode: 200, headers, body: JSON.stringify({ docs }) };
+    }
+
+    // Özel mod: /ara sayfası için ULTRA hafif video listesi (yalnız arama alanları)
+    if (col === 'kayitli-lite') {
+      const snap = await db.collection('kayitli_egitimler')
+        .where('kayeneFiltrelendi', '==', false)
+        .select('baslik', 'egitmenAdlari', 'kategoriler', 'tarih', 'ozet.anaTema', 'transcriptVar')
+        .limit(2500)
+        .get();
+      const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       return { statusCode: 200, headers, body: JSON.stringify({ docs }) };
     }
 

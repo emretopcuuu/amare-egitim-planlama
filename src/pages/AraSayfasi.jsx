@@ -38,7 +38,7 @@ export default function AraSayfasi() {
   useEffect(() => {
     (async () => {
       try {
-        const r = await fetch('/.netlify/functions/veri-proxy?col=kayitli');
+        const r = await fetch('/.netlify/functions/veri-proxy?col=kayitli-lite');
         const j = await r.json();
         setVideolar(Array.isArray(j.docs) ? j.docs : []);
       } catch { setVideolar([]); }
