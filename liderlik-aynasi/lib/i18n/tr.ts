@@ -126,15 +126,42 @@ export const tr = {
         metin: "Doğru cevap yok; yalnız senin cevabın var. Ne kadar açılırsan, ayna seni o kadar net gösterir.",
       },
     ],
-    // Bold vurgusu için 3 parçaya bölündü — "admin dahil kimse görmeyecek"
-    // kısmı katılımcıya güven vermesi için kalın gösteriliyor (bkz. HazirlikEkrani).
-    kvkkOnayOn: "Verdiğim cevapları ",
-    kvkkOnayKalin: "admin dahil hiç kimse görmeyecek",
-    kvkkOnayOrta:
-      " — yalnızca yapay zeka bunları işleyip bana daha güzel bir deneyim sunmak için kullanacak. Dilediğim an tüm verilerimi silebileceğimi biliyorum. ",
-    kvkkLink: "KVKK Aydınlatma Metni",
-    kvkkSon: "’ni okudum.",
-    dugme: "Hazırım, başlıyorum →",
+    devamDugme: "Devam et →",
+    // ADIM 2 — KVKK güven ekranı. Kendi sayfası: mesaj ilk sayfanın uzun
+    // metninde kaybolmasın, "kimse görmeyecek" güveni KOCAMAN kurulsun diye
+    // (insanlar "bunu kim okuyacak?" çekincesiyle yüzeysel cevap veriyordu).
+    kvkk: {
+      ust: "Başlamadan son bir şey",
+      baslikBuyuk: "Cevaplarını kimse görmeyecek.",
+      baslikVurgu: "Admin dahil hiç kimse.",
+      maddeler: [
+        {
+          ikon: "🔒",
+          baslik: "Hiçbir insan okumaz",
+          metin:
+            "Burada yazdıkların sır gibi saklanır. Ne ekip arkadaşların, ne liderlerin, ne de sistemi yöneten kişi — hiçbir insan cevaplarını görmez.",
+        },
+        {
+          ikon: "✨",
+          baslik: "Sadece senin için işlenir",
+          metin:
+            "Cevaplarını yalnızca yapay zeka işler — sana daha kişisel, daha anlamlı bir deneyim kurmak için. Başka hiçbir amaçla kullanılmaz.",
+        },
+        {
+          ikon: "🗑️",
+          baslik: "İstediğin an silinir",
+          metin:
+            "Dilediğin an tüm verilerinin kalıcı olarak silinmesini isteyebilirsin — tek dokunuşla, soru sorulmadan.",
+        },
+      ],
+      davet:
+        "Bu güven sana, kendine tamamen dürüst olma özgürlüğü versin. Ne kadar açık olursan, ayna seni o kadar net gösterir.",
+      linkOn: "Detayları merak ediyorsan ",
+      link: "KVKK Aydınlatma Metni",
+      linkSon: "’ni okuyabilirsin.",
+      kabul: "Okudum, kabul ediyorum →",
+      geri: "← Geri",
+    },
     basliyor: "Hazırlanıyor…",
     hata: "Bir şey ters gitti — tekrar dene.",
     dipnot: "Bu onay yalnız bir kez istenir; sonra kaldığın yerden devam edersin.",
