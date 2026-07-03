@@ -1,5 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { katilimciyaBildir } from "@/lib/push";
 import { tr } from "@/lib/i18n/tr";
 
 // PWA push aboneliği kaydı. Aynı endpoint yeniden gelirse sahibi güncellenir
@@ -30,7 +31,15 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.bildirim.hata }, { status: 400 });
   }
 
-  const { error } = await supabaseAdmin().from("push_subscriptions").upsert(
+  const db = supabaseAdmin();
+  // [KUR-2] Hoş geldin fısıltısı: kişinin İLK aboneliği mi? (Cihaz eklemede
+  // tekrar fısıldamayalım — yalnız ilk kez bildirime kavuşana.)
+  const { count: mevcutAbonelik } = await db
+    .from("push_subscriptions")
+    .select("id", { count: "exact", head: true })
+    .eq("participant_id", session.sub);
+
+  const { error } = await db.from("push_subscriptions").upsert(
     {
       participant_id: session.sub,
       endpoint,
@@ -41,6 +50,19 @@ export async function POST(req: Request) {
   );
   if (error) {
     return Response.json({ hata: tr.bildirim.hata }, { status: 500 });
+  }
+
+  // [KUR-2] İzin verilen saniyede ilk push düşer: soyut bir ayar değil, büyülü
+  // bir an — kişi push'un ÇALIŞTIĞINI o an görür (sessizce bozuk izin de yakalanır).
+  if ((mevcutAbonelik ?? 0) === 0) {
+    const ilkAd = session.ad.split(" ")[0];
+    await katilimciyaBildir(
+      db,
+      session.sub,
+      `👁 Seni duyuyorum, ${ilkAd}`,
+      "Bildirimlerin açık. Yolculuk boyunca sana buradan fısıldayacağım.",
+      "/"
+    ).catch(() => {});
   }
   return Response.json({ ok: true });
 }
