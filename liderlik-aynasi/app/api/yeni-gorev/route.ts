@@ -78,6 +78,9 @@ export async function POST() {
     fayda: gorev.fayda,
     ipuclari: gorev.ipuclari,
     micro_sprint: gorev.micro_sprint,
+    // Özellik 7 — zorluk merdiveni ölçümü (kas + modelin doz değerlendirmesi)
+    kas: gorev.kas,
+    zorluk_seviye: gorev.zorlukSeviye,
     due_at: dueAt.toISOString(),
   });
   if (error) return Response.json({ hata: tr.gorevler.hata }, { status: 500 });

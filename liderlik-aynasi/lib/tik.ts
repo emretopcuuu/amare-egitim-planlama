@@ -586,6 +586,10 @@ export async function tikCalistir(
         donus_bicimi: gorev.donusBicimi, // #7 çeşitlilik izlemesi
         somutluk: gorev.somutluk, // FAZ 1.1 — kim/ne/nerede/ne_zaman/kanit checklist
         altin: altinMi, // FAZ 5.2 — nadir altın görev (3x kıvılcım)
+        // Özellik 7 — zorluk merdiveni ölçümü: görevin kası + modelin doz ölçümü.
+        // Johari override AI görevinin yerine geçer — o zaman kas izi yazılmaz.
+        kas: johariOverride ? null : gorev.kas,
+        zorluk_seviye: johariOverride ? null : gorev.zorlukSeviye,
         // KRİTİK: issued_at motorun kullandığı saate (prova'da SANAL saat) eşit
         // olmalı. Aksi halde sonGorevler penceresi + bugunSayisi + sonVerilis +
         // bekleyen kontrolleri kayıyor ve prova'da her tik görev üretip sel oluyor.

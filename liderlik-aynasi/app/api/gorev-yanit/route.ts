@@ -10,6 +10,7 @@ import { katilimciyaBildir } from "@/lib/push";
 import { eslesmeKaydet } from "@/lib/gorevEslesme";
 import { zincirDevamEttir } from "@/lib/kampZinciri";
 import { gorevFragmani } from "@/lib/fragman";
+import { pusulaCekirdek } from "@/lib/pusula";
 import {
   kivilcimHesapla,
   SOZ_KIVILCIMI,
@@ -381,6 +382,25 @@ export async function POST(req: Request) {
     korNoktaGuncelle(db, session.sub, tamamlananSayi).catch(() => {});
   }
 
+  // Özellik 6 — ÇEKİRDEK NEDEN NABZI: her 5. puanlanan görevden sonra tek soru:
+  // "Bu görev seni '<çekirdek neden>' hedefine yaklaştırdı mı?" (1-5). Yalnız
+  // pusulası tamamlanmış (çekirdek nedeni olan) kişiye sorulur; cevap
+  // /api/neden-nabiz ile bu görevin neden_nabiz kolonuna yazılır.
+  let nabizSor = false;
+  let nabizNeden: string | null = null;
+  if (tamamlananSayi && tamamlananSayi % 5 === 0) {
+    try {
+      const cekirdek = await pusulaCekirdek(db, session.sub);
+      const cekirdekNeden = cekirdek?.cekirdek_neden?.[0]?.trim() || null;
+      if (cekirdekNeden) {
+        nabizSor = true;
+        nabizNeden = cekirdekNeden;
+      }
+    } catch {
+      // nabız sorusu kritik değil — okuma düşerse sormadan geç
+    }
+  }
+
   // DÜŞÜK PUAN → DERİNLEŞTİRME: kişi bu konuda zorlandıysa, AYNI kası FARKLI ve
   // daha erişilebilir bir açıdan + 2 somut ipucuyla tekrar çalıştıran hızlı bir
   // ek görev üret (büyüme döngüsü). Yalnız ilk-gerçek tamamlamada, koçlanabilir
@@ -407,6 +427,9 @@ export async function POST(req: Request) {
     ...(kasSayaci ? { kasSayaci } : {}),
     ...(gorev.altin ? { altin: true } : {}),
     ...(kriz ? { guvenlik: true } : {}),
+    // Özellik 6 — nabız kartı: 5. puanlı görev + çekirdek neden varsa sor.
+    nabizSor,
+    nabizNeden,
     fragman,
   });
 }
@@ -486,6 +509,9 @@ async function dusukPuanTelafiYarat(
     ipuclari: gorev.ipuclari,
     micro_sprint: gorev.micro_sprint,
     kaynak_id: kaynak.id,
+    // Özellik 7 — zorluk merdiveni ölçümü (kas + modelin doz değerlendirmesi)
+    kas: gorev.kas,
+    zorluk_seviye: gorev.zorlukSeviye,
     due_at: dueAt.toISOString(),
   });
 }

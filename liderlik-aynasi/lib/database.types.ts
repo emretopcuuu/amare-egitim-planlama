@@ -1594,11 +1594,13 @@ export type Database = {
           issued_at: string
           kacirma_sebebi: string | null
           kapi_etiket: string | null
+          kas: string | null
           kaynak_id: string | null
           kind: string
           lightened_at: string | null
           micro_sprint: boolean
           neden: string | null
+          neden_nabiz: number | null
           participant_id: string
           reflected_at: string | null
           reflection_reply: string | null
@@ -1619,6 +1621,8 @@ export type Database = {
           yay_gorevi: boolean
           zincir_id: string | null
           zincir_sira: number | null
+          zorluk_ayar: string | null
+          zorluk_seviye: number | null
         }
         Insert: {
           ai_comment?: string | null
@@ -1639,11 +1643,13 @@ export type Database = {
           issued_at?: string
           kacirma_sebebi?: string | null
           kapi_etiket?: string | null
+          kas?: string | null
           kaynak_id?: string | null
           kind: string
           lightened_at?: string | null
           micro_sprint?: boolean
           neden?: string | null
+          neden_nabiz?: number | null
           participant_id: string
           reflected_at?: string | null
           reflection_reply?: string | null
@@ -1664,6 +1670,8 @@ export type Database = {
           yay_gorevi?: boolean
           zincir_id?: string | null
           zincir_sira?: number | null
+          zorluk_ayar?: string | null
+          zorluk_seviye?: number | null
         }
         Update: {
           ai_comment?: string | null
@@ -1684,11 +1692,13 @@ export type Database = {
           issued_at?: string
           kacirma_sebebi?: string | null
           kapi_etiket?: string | null
+          kas?: string | null
           kaynak_id?: string | null
           kind?: string
           lightened_at?: string | null
           micro_sprint?: boolean
           neden?: string | null
+          neden_nabiz?: number | null
           participant_id?: string
           reflected_at?: string | null
           reflection_reply?: string | null
@@ -1709,6 +1719,8 @@ export type Database = {
           yay_gorevi?: boolean
           zincir_id?: string | null
           zincir_sira?: number | null
+          zorluk_ayar?: string | null
+          zorluk_seviye?: number | null
         }
         Relationships: [
           {
@@ -1992,6 +2004,7 @@ export type Database = {
           consent_at: string | null
           created_at: string
           deletion_requested_at: string | null
+          donusum_karsilastirma: Json | null
           email: string | null
           en_yuksek_kariyer: string | null
           first_login_at: string | null
@@ -2022,6 +2035,7 @@ export type Database = {
           consent_at?: string | null
           created_at?: string
           deletion_requested_at?: string | null
+          donusum_karsilastirma?: Json | null
           email?: string | null
           en_yuksek_kariyer?: string | null
           first_login_at?: string | null
@@ -2052,6 +2066,7 @@ export type Database = {
           consent_at?: string | null
           created_at?: string
           deletion_requested_at?: string | null
+          donusum_karsilastirma?: Json | null
           email?: string | null
           en_yuksek_kariyer?: string | null
           first_login_at?: string | null

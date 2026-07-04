@@ -52,6 +52,8 @@ export async function POST(req: Request) {
       body: yeni.body,
       difficulty: yeniZorluk,
       lightened_at: new Date().toISOString(),
+      // Özellik 7 — zorluk merdiveni izi: "aşağı" sinyalinin girdisi.
+      zorluk_ayar: "hafifletildi",
     })
     .eq("id", gorev.id)
     .eq("status", "pending");

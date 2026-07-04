@@ -11,6 +11,7 @@ import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
 import { kariyerHalKisidenTuret, personaBlogu, personaYolculukOdak, KARIYER_RANK, KARIYER_ETIKET } from "@/lib/persona";
 import { aiHataYakala } from "@/lib/uyari";
 import { vinyetSec, type LiderKas } from "@/lib/liderlikVinyetleri";
+import { zorlukSeviyesiHesapla, type MerdivenGorev } from "@/lib/zorlukMerdiveni";
 import { karsilasmaBul } from "@/lib/karsilasma";
 import { eslesmeHedefiSec, ESLESMELI_TURLER, type EslesmeAday } from "@/lib/gorevEslesme";
 import {
@@ -139,8 +140,17 @@ const GOREV_SEMASI = {
       description:
         "Bu görev 'oncekiGorevBasliklari'ndaki hiçbirinin tekrarı/çok benzeri DEĞİL mi (farklı kas/eylem/dönüş)? Benzer bir egzersizse false.",
     },
+    // Özellik 7 — ZORLUK MERDİVENİ ölçümü: modelin kendi değerlendirmesiyle
+    // görevin gerçek dozu. missions.zorluk_seviye'ye yazılır; kişi × kas
+    // konfor sınırı kalibrasyonu bu ölçüme dayanır.
+    zorluk_seviye: {
+      type: "integer" as const,
+      enum: [1, 2, 3, 4, 5],
+      description:
+        "SENİN değerlendirmenle bu görevin gerçek zorluk dozu: 1=konfor içi/çok kolay, 2=hafif esneme, 3=gerçek ama güvenli meydan okuma, 4=belirgin cesaret isteyen, 5=büyük sahne/yüksek risk. Dürüst ölç — süsleme.",
+    },
   },
-  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden", "fayda", "ipuclari", "kim", "ne", "nerede", "ne_zaman", "kanit", "donus_bicimi", "baglam_kullanildi", "tekrar_degil"],
+  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden", "fayda", "ipuclari", "kim", "ne", "nerede", "ne_zaman", "kanit", "donus_bicimi", "baglam_kullanildi", "tekrar_degil", "zorluk_seviye"],
   additionalProperties: false,
 };
 
@@ -301,6 +311,12 @@ export type UretilenGorev = {
   /** FAZ 2.1 — bu görev bir eşleşme hedefine bağlıysa (isimli ya da isimsiz),
    * tik.ts mission insert sonrası eslesmeKaydet() ile gorev_eslesme'ye yazar. */
   eslesme: { hedefId: string; isimli: boolean } | null;
+  /** Özellik 7 — bu görevin çalıştırdığı lider kası (KAS_DONGU'dan deterministik).
+   * missions.kas'a yazılır; zorluk merdiveni kişi × kas sınırını bundan öğrenir.
+   * Statik üretimlerde (ör. mentorluk) null. */
+  kas: string | null;
+  /** Özellik 7 — modelin kendi değerlendirmesiyle görevin dozu (1-5), ölçüm için. */
+  zorlukSeviye: number | null;
 };
 
 // #7 geçerli dönüş biçimleri (şema enum'ı ile aynı).
@@ -479,13 +495,18 @@ export async function gorevUret(
     alinanTakdirlerSonuc,
     // FAZ 4.2 — kamp öncesi kendi sesiyle bıraktığı beklenti cümlesi.
     beklentiSonuc,
+    // Özellik 7 — zorluk merdiveni penceresi: son ~15 görevin kas/puan/geri-adım
+    // özeti (onceki'den ayrı: davranışı değiştirmemek için 10'luk pencereye
+    // dokunulmaz, merdiven kendi genişliğinde okur).
+    zorlukPencereSonuc,
   ] = await Promise.all([
     aktifOzellikler(db),
     db
       .from("missions")
       // response_text + ai_comment eklendi (öneri #1: kişinin gerçek cümleleri,
       // #9: AYNA'nın verdiği son tavsiyeyi sonraki göreve taşımak için)
-      .select("kind, title, body, issued_at, status, ai_score, ai_comment, lightened_at, responded_at, response_tags, response_text, donus_bicimi")
+      // neden_nabiz eklendi (özellik 6: çekirdek neden nabzı geri beslemesi)
+      .select("kind, title, body, issued_at, status, ai_score, ai_comment, lightened_at, responded_at, response_tags, response_text, donus_bicimi, neden_nabiz")
       .eq("participant_id", katilimci.id)
       .order("issued_at", { ascending: false })
       .limit(10), // genişletildi: streak ve pik pencere için
@@ -549,6 +570,13 @@ export async function gorevUret(
       .select("beklenti")
       .eq("participant_id", katilimci.id)
       .maybeSingle(),
+    // Özellik 7 — zorluk merdiveni: son 15 görevin sinyal özeti.
+    db
+      .from("missions")
+      .select("kas, ai_score, status, lightened_at, zorluk_ayar")
+      .eq("participant_id", katilimci.id)
+      .order("issued_at", { ascending: false })
+      .limit(15),
   ]);
 
   // Değerler: kişinin seçtiği 3 temel değer + neden cümlesi → görev bunları
@@ -670,6 +698,21 @@ export async function gorevUret(
   const sonAynaTavsiyesi =
     onceki.find((o) => o.status === "scored" && (o.ai_comment as string | null)?.trim())
       ?.ai_comment as string | undefined;
+
+  // Özellik 6 — ÇEKİRDEK NEDEN NABZI: kişinin son 3 nabız cevabının (1-5)
+  // ortalaması. Düşen trend (≤2.5) motoru yön değiştirmeye zorlar: görev
+  // kişinin çekirdek nedenine AÇIKÇA bağlanır. Yüksek trend (≥4) mevcut
+  // yönü korur. Sinyal yoksa null → davranış eskisi gibi.
+  const nabizDegerleri = onceki
+    .map((o) => (o as { neden_nabiz?: number | null }).neden_nabiz)
+    .filter((n): n is number => typeof n === "number")
+    .slice(0, 3);
+  const nedenNabziOrt =
+    nabizDegerleri.length > 0
+      ? Number(
+          (nabizDegerleri.reduce((a, b) => a + b, 0) / nabizDegerleri.length).toFixed(1)
+        )
+      : null;
 
   // Öneri #3 — SOSYAL KANIT: akranların bu kişi hakkında yazdığı yorumlar +
   // aldığı takdirler. Görev güçten de beslenebilsin (yalnız kör noktadan değil).
@@ -867,6 +910,12 @@ export async function gorevUret(
       : "",
     // #7 Ses tonu
     tonOnerisi ? `AYNA SES TONU (kişiye özel): ${tonOnerisi}` : "",
+    // Özellik 6 — Çekirdek Neden Nabzı geri beslemesi
+    nedenNabziOrt !== null && nedenNabziOrt <= 2.5 && pusulaCekirdekSonuc?.cekirdek_neden?.[0]
+      ? `ÇEKİRDEK NEDEN NABZI DÜŞÜK (son cevaplar ort. ${nedenNabziOrt}/5): Kişi son görevlerin onu kendi çekirdek nedenine YAKLAŞTIRMADIĞINI söylüyor — yön değiştir. Bu görev kişinin çekirdek nedenine ("${pusulaCekirdekSonuc.cekirdek_neden[0]}") AÇIKÇA bağlanmalı ve bu bağ görevin içinde BİR CÜMLEYLE söylenmeli (ör. "bu adım seni ... hedefine bir adım yaklaştırır" ruhunda, kendi kelimelerinle). Bağı ima etmekle yetinme, görünür yap.`
+      : nedenNabziOrt !== null && nedenNabziOrt >= 4
+        ? `ÇEKİRDEK NEDEN NABZI GÜÇLÜ (son cevaplar ort. ${nedenNabziOrt}/5): Görevler kişinin çekirdek nedenine iyi oturuyor — mevcut yönü ve tema seçimini KORU, gereksiz yön değiştirme.`
+        : "",
     // #4 / FAZ 2.1 Bağ görevi — isimli (gerçek eşleşme hedefi) ya da isimsiz
     tur === "bag"
       ? eslesmeHedef && eslesmeIsimliMi
@@ -971,6 +1020,17 @@ export async function gorevUret(
     }
   }
 
+  // Özellik 7 — ZORLUK MERDİVENİ: kişinin son ~15 görevinden hedef kas için
+  // "yukarı / aşağı / koru" sinyali (saf fonksiyon, lib/zorlukMerdiveni.ts).
+  // "koru"da direktif enjekte edilmez — mevcut zorluk mekanizması aynen sürer.
+  const merdivenSinyal = zorlukSeviyesiHesapla(
+    ((zorlukPencereSonuc.data ?? []) as MerdivenGorev[]),
+    hedefKas
+  );
+  const merdivenYonergesi = merdivenSinyal.aciklama
+    ? `\n\n${merdivenSinyal.aciklama}`
+    : "";
+
   const baglam = {
     ad: katilimci.full_name.split(" ")[0],
     // Bu görevin çalıştıracağı lider kası + açılış hikâyesi (küratörlü, doğru).
@@ -991,6 +1051,10 @@ export async function gorevUret(
     istenenGorevTuru: tur,
     zorlukSeviyesi: zorluk,
     zorlukYonergesi: ZORLUK_YONERGESI[zorluk],
+    // Özellik 7 — kişi × kas konfor sınırı sinyali (yukari/asagi/koru).
+    zorlukMerdiveni: merdivenSinyal.yon,
+    // Özellik 6 — son nabız cevaplarının ortalaması (görev ↔ çekirdek neden bağı).
+    nedenNabziOrt,
     yenidenBagla: kayan,
     naziklesir,
     gununTemasi: gununTemasi || null,
@@ -1123,7 +1187,7 @@ MUĞLAKLIK YASAĞI (ZORUNLU): Görev ne yapılacağını SOMUT söylemeli. Şu t
 
 SOMUTLUK ŞABLONU (ZORUNLU): "kim"/"ne"/"nerede"/"ne_zaman"/"kanit" alanlarını gövdeden ÇIKARARAK doldur — yeni bilgi uydurma, gövdede zaten anlattığını 5 satıra ayrıştır. "kim" görev kişiyi hedeflemiyorsa boş string olabilir; diğer 4 alan HER ZAMAN dolu olmalı.
 
-${yeniYonergeler}${ekstraYonerge}`,
+${yeniYonergeler}${merdivenYonergesi}${ekstraYonerge}`,
         },
       ],
       messages: [{ role: "user", content: JSON.stringify(baglam) }],
@@ -1146,6 +1210,7 @@ ${yeniYonergeler}${ekstraYonerge}`,
       donus_bicimi?: string;
       baglam_kullanildi?: boolean;
       tekrar_degil?: boolean;
+      zorluk_seviye?: number;
     }>(yanit);
     if (!veri?.baslik || !veri.govde) return null;
     // Savunma: model bazen "...yalnızca şunu söyle:" diyip asıl alıntıyı yazmadan
@@ -1211,6 +1276,14 @@ ${yeniYonergeler}${ekstraYonerge}`,
       },
       // FAZ 2.1 — eşleşme kaydı (tik.ts insert sonrası gorev_eslesme'ye yazar)
       eslesme: eslesmeHedef ? { hedefId: eslesmeHedef.id, isimli: eslesmeIsimliMi } : null,
+      // Özellik 7 — kas + modelin zorluk ölçümü (missions.kas / zorluk_seviye)
+      kas: hedefKas,
+      zorlukSeviye:
+        Number.isInteger(veri.zorluk_seviye) &&
+        (veri.zorluk_seviye as number) >= 1 &&
+        (veri.zorluk_seviye as number) <= 5
+          ? (veri.zorluk_seviye as number)
+          : null,
     };
   } catch (e) {
     await aiHataYakala(db, "gorev_uretimi", e);
@@ -1970,6 +2043,9 @@ export async function mentorlukGorevUret(
     // Mentorluk kendi eşleştirme kaydını mentorluk_kayit'ta tutar; gorev_eslesme
     // dengeleyicisi yalnız "bag" türü içindir.
     eslesme: null,
+    // Özellik 7 — statik üretim: kas rotasyonundan gelmez, merdiven izi tutulmaz.
+    kas: null,
+    zorlukSeviye: null,
     // #9 takip: önerilen 3 adayın id'leri (mentorluk_kayit'a yazılır)
     adayIdler: secilen.map((k) => k.id),
   };

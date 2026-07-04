@@ -9,6 +9,7 @@ import Konfeti from "@/components/Konfeti";
 import PuanAcilisi from "@/components/PuanAcilisi";
 import KivilcimSayac from "@/components/KivilcimSayac";
 import AynaBalon from "@/components/AynaBalon";
+import NedenNabzi from "./NedenNabzi";
 
 const t = tr.gorevler;
 
@@ -36,6 +37,9 @@ type Sonuc = {
   altin?: boolean;
   // E4 — Görev fragmanı: sıradaki program anı + kilitli ipucu.
   fragman?: { saat: string | null; ipucu: string };
+  // Özellik 6 — Çekirdek Neden Nabzı: 5. puanlı görevde tek soru (1-5).
+  nabizSor?: boolean;
+  nabizNeden?: string | null;
 };
 
 // Görev yanıtı: gönderim AYNA'nın anlık puanını bekler (5-15 sn) —
@@ -251,6 +255,11 @@ export default function GorevYanitFormu({
               </p>
             )}
           </>
+        )}
+        {/* Özellik 6 — Çekirdek Neden Nabzı: her 5. puanlı görevden sonra
+            kişinin KENDİ çekirdek neden cümlesiyle tek dokunuşluk 1-5 sorusu */}
+        {!sonuc.bekliyor && sonuc.nabizSor && sonuc.nabizNeden && (
+          <NedenNabzi gorevId={gorevId} neden={sonuc.nabizNeden} />
         )}
         {/* #1 Yansıma Kapanışı: görülen içgörü — foto kanıtından önce gelir */}
         {!sonuc.bekliyor && !sonuc.soz && !sonuc.senkron && (

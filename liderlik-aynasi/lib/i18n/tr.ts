@@ -3497,6 +3497,13 @@ export const tr = {
     // Tasarım turu — ikincil eylemler tek menüde
     secenekler: "Seçenekler",
     kasHaritasi: "Çalıştırdığın liderlik kasları",
+    // Özellik 6 — Çekirdek Neden Nabzı (her 5. puanlı görevden sonra)
+    nabizUst: "Pusula kontrolü",
+    nabizSoru: (neden: string) =>
+      `Bu görev seni “${neden}” hedefine yaklaştırdı mı? (1-5)`,
+    nabizUzak: "1 · hiç yaklaştırmadı",
+    nabizYakin: "5 · çok yaklaştırdı",
+    nabizTesekkur: "Not ettim — pusulan sıradaki görevlere yön veriyor. Teşekkürler.",
   },
   kivilcim: {
     ad: "Kıvılcım",
@@ -4027,6 +4034,15 @@ export const tr = {
     adAciklama:
       "Bu, başkalarının gözünde bıraktığın izdir. Sen baştan beri buydun — kamp onu görünür kıldı.",
     bak: "Aynama bak →",
+  },
+  // Özellik 10 — Dönüşüm Karşılaştırması: mühür ekranında "Gün 1 sen vs Gün 3
+  // sen" — kişinin ilk ve son görev yanıtından birer alıntı + AI'nın fark cümlesi.
+  donusum48: {
+    ust: "İKİ SATIR, İKİ SEN",
+    baslik: "Gün 1'deki sen · Gün 3'teki sen",
+    gun1Etiket: "GÜN 1 — İLK YANITIN",
+    gun3Etiket: "GÜN 3 — SON YANITIN",
+    kapanis: "Bunu yazan da sensin, bunu yazan da. Aradaki fark 48 saat.",
   },
   rituel: {
     baslik: "Aynaya kendini tanıt",
