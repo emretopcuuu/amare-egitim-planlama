@@ -67,9 +67,12 @@ bağımsız olarak **`liderlik-aynasi/`** alt klasöründe yaşar.
 
 ## Kampın mevcut durumu (değişince güncelle)
 
-- 29 katılımcı. Takım yok, kamp kilidi yok, açık dalga yok. **Sıfırlanmış ve
-  kullanıcının "kampı aç" demesini bekliyor.** İnsanlar oyun seçtikçe gruplara
-  otomatik atanacak.
+- **KAMP AÇIK VE CANLI.** 29 katılımcı, Sapanca kampı. `ayna_baslangic =
+  2026-07-03 ~09:10 İst` → Gün 1 = 3 Temmuz, Gün 2 = 4 Temmuz, Gün 3 = 5 Temmuz.
+  Kilit kodu `SAPANCA2026`. Görev motoru (tik) aktif; insanlara görev düşüyor.
+  **Merge edilen her şey doğrudan canlı kampı etkiler — ona göre dikkatli ol.**
+- Senaryoda bekleyen özel olaylar: Gün 2 21:00 sesli mektup (`gun2_sesli_mektup_ac`),
+  Gün 3 10:00 domino (`gun3_domino_ac`).
 
 ## Son tamamlanan işler
 
