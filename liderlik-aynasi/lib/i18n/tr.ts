@@ -3754,6 +3754,10 @@ export const tr = {
     // kişi "çalışıyor" hissini İLK kelimeden alır (bkz. MikrofonButonu).
     konusIpucu: "Konuş — söylediklerin burada belirecek…",
     duyamiyorum: "Seni duyamıyorum — telefonu biraz yaklaştır ve konuş.",
+    // Faz 2 — Scribe kayıt modu: kayıt cihazda, çeviri sunucuda (ElevenLabs).
+    kayitIpucu: "Konuş — bitirince düğmeye tekrar dokun.",
+    cevriliyor: "✍️ Yazıya çevriliyor…",
+    cevirihata: "Çevrilemedi — tekrar dene ya da elle yaz.",
     hata: {
       izin: "Mikrofon izni gerekli. Adres çubuğundaki 🎙 simgesine dokunup izin ver, sonra tekrar dene.",
       mesgul:
