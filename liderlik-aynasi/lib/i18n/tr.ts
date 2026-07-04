@@ -3623,6 +3623,10 @@ export const tr = {
     baslat: "Sesle Yaz",
     dinliyor: "Dinliyorum… durdurmak için dokun",
     dinliyorKisa: "Dinliyorum",
+    // Canlı önizleme şeridi: konuşurken ara (interim) sonuçlar burada akar —
+    // kişi "çalışıyor" hissini İLK kelimeden alır (bkz. MikrofonButonu).
+    konusIpucu: "Konuş — söylediklerin burada belirecek…",
+    duyamiyorum: "Seni duyamıyorum — telefonu biraz yaklaştır ve konuş.",
     hata: {
       izin: "Mikrofon izni gerekli. Adres çubuğundaki 🎙 simgesine dokunup izin ver, sonra tekrar dene.",
       mesgul:
