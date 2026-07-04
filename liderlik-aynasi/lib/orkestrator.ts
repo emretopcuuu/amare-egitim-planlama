@@ -8,6 +8,8 @@ import { eylulKanit1, eylulKanit2, eylulKanit3 } from "@/lib/eylulKanit";
 import { pazartesiRaporuGonder } from "@/lib/kapanisPanel";
 import { zirveHazirlikOnUcus, zirveHazirlikUyar } from "@/lib/zirveHazirlik";
 import { degerlendirmeAc, degerlendirmeHatirlat, revealAc } from "@/lib/kampDegerlendirme";
+import { sesliMektupAc } from "@/lib/sesliMektup";
+import { dominoAc } from "@/lib/domino";
 
 type Db = ReturnType<typeof supabaseAdmin>;
 
@@ -95,6 +97,10 @@ const FONKSIYONLAR: Record<string, (db: Db) => Promise<void>> = {
   degerlendirme_ac: degerlendirmeAc,
   degerlendirme_hatirlat: degerlendirmeHatirlat,
   reveal_ac: revealAc,
+  // Özellik 4 — Gün 2 21:00: herkese "90 gün sonraki sana" sesli mektup görevi
+  gun2_sesli_mektup_ac: sesliMektupAc,
+  // Özellik 9 — Gün 3 10:00: herkese domino görevi (içgörüyü kamp dışına taşı)
+  gun3_domino_ac: dominoAc,
   // E1-b — zirve hazırlık son kontrolü: satır ateşlenince eksik varlıkları
   // son kez üret + hâlâ eksikse admin'e uyar.
   zirve_hazirlik_kontrol: async (db: Db) => {

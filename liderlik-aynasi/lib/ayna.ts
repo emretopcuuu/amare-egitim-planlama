@@ -162,11 +162,13 @@ const KALITE_SEMASI = {
   properties: {
     anlasilir: {
       type: "boolean" as const,
-      description: "Katılımcı bu görevi TEK OKUMADA anlıyor mu (ne yapacağı + sana ne yazacağı net mi)?",
+      description:
+        "12 YAŞ TESTİ: 12 yaşındaki biri bu görevi okusa, yapacaklarını SIRAYLA sayabilir mi (ne yapacak + sana ne yazacak)? Adımlar birden fazlaysa numaralı ve sıralı mı? Kafa karıştıran katmanlı/felsefi soru varsa false.",
     },
     somut: {
       type: "boolean" as const,
-      description: "İstenen eylem SOMUT mu? Soyut/şiirsel/muğlak bir istek ('kendini yokla' gibi) değil mi?",
+      description:
+        "İstenen eylem SOMUT mu? Eylem satırlarında mecaz, soyut iç-sorgulama ya da şiirsel istek ('kendini yokla', 'bu ses karar mı kaçış mı' gibi) varsa false. Mecaz yalnız açılış hikâyesinde kabul edilir.",
     },
     isimNet: {
       type: "boolean" as const,
@@ -1237,7 +1239,9 @@ ODANIN ENERJİSİ (kolektif ton): Bağlamdaki "odaSicakligi" "dusuk" ise (oda yo
 
 DİL NETLİĞİ (çok önemli): Görev metni SADE ve anlaşılır olmalı — katılımcı tek okumada (1) ne yapacağını ve (2) sana ne yazacağını net anlamalı. Kısa, gerçek cümleler kur. Şu hatalardan kaçın: iç içe geçmiş uzun cümleler, art arda tire (—) ile uzayan eklemeler, küçültme ekleri ('ricacık'), bulanık şiirsel ifadeler ('içinde ne koptu'). Yukarıdaki davranışsal kalıplar (FUN FAILURE, EUSTRESS vb.) PUANLAMA/teşvik tonu içindir; görev metnini süslemek için değil. Önce ne yapacağını söyle, sonra tek bir soruyla geri bildirimi iste.
 
-GÖVDE BİÇİMİ (ZORUNLU — okunabilirlik): "govde"yi TEK BİR paragraf blok olarak yazma. Mantıksal adımları AYRI SATIRLARA böl; satır aralarına gerçek satır sonu (\n) koy. Tipik akış: kısa hikâye/ayna (1-2 satır) → boş satır → asıl eylem (1 satır) → dönüş isteği (1 satır). Uzun tek blok metin okunmaz; kısa satırlar madde madde okunur.
+12 YAŞ TESTİ (ZORUNLU): Gövdeyi yazdıktan sonra kendine sor: "12 yaşındaki biri bunu okusa, ne yapacağını SIRAYLA sayabilir mi?" Sayamıyorsa gövdeyi sadeleştir. Mecaz ve hikâye YALNIZ açılıştaki 1-2 satırda yaşayabilir; EYLEM satırlarında mecaz, felsefi soru ve soyut iç-sorgulama YASAK ("bu ses gerçek bir karar mı yoksa alışkanlıktan geri çekilme mi?" gibi katmanlı sorular kafa karıştırır). İç gözlem isteyeceksen onu da tek, somut, cevabı kolay bir soruya indir.
+
+GÖVDE BİÇİMİ (ZORUNLU — okunabilirlik): "govde"yi TEK BİR paragraf blok olarak yazma. Mantıksal adımları AYRI SATIRLARA böl; satır aralarına gerçek satır sonu (\n) koy. Tipik akış: kısa hikâye/ayna (1-2 satır) → boş satır → asıl eylem → dönüş isteği (1 satır). EYLEM BİRDEN FAZLA ADIMSA adımları "1)" "2)" "3)" diye NUMARALA (en fazla 3 adım) — her adım tek eylem, tek cümle. Kişi ekrana dönüp "şimdi hangisindeydim?" diye bakabilmeli. Uzun tek blok metin okunmaz; kısa numaralı satırlar okunur.
 
 MUĞLAKLIK YASAĞI (ZORUNLU): Görev ne yapılacağını SOMUT söylemeli. Şu tür bulanık ifadeler YASAK: "bir şey yap", "bir şeyler paylaş", "odaya yerleşme işi", "o işi hallet", "gereğini yap", "birine git" (kim olduğu belirsizse). Her eylemde NE yapılacağı (somut fiil + somut nesne), gerekirse NEREDE ve NE ZAMAN net olmalı. Kişiyi hedefliyorsan ya gerçek bir isim ver ya da kişinin kendisinin seçebileceği net bir tarif ver ("bugün yanında oturan kişi" gibi) — "birileri", "biri" gibi kimliği havada bırakan ifadeler tek başına yeterli değil.
 

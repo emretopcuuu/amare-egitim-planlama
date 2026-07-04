@@ -1625,6 +1625,7 @@ export type Database = {
           carried_at: string | null
           cesaret_push: boolean
           difficulty: number
+          domino: boolean
           donus_bicimi: string | null
           due_at: string
           ertelenme_sayisi: number
@@ -1675,6 +1676,7 @@ export type Database = {
           carried_at?: string | null
           cesaret_push?: boolean
           difficulty?: number
+          domino?: boolean
           donus_bicimi?: string | null
           due_at: string
           ertelenme_sayisi?: number
@@ -1725,6 +1727,7 @@ export type Database = {
           carried_at?: string | null
           cesaret_push?: boolean
           difficulty?: number
+          domino?: boolean
           donus_bicimi?: string | null
           due_at?: string
           ertelenme_sayisi?: number
@@ -2685,6 +2688,44 @@ export type Database = {
             foreignKeyName: "senin_icin_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sesli_mektuplar: {
+        Row: {
+          acilis_at: string
+          audio_path: string
+          created_at: string | null
+          dinlendi_at: string | null
+          id: string
+          participant_id: string
+          sure_sn: number | null
+        }
+        Insert: {
+          acilis_at: string
+          audio_path: string
+          created_at?: string | null
+          dinlendi_at?: string | null
+          id?: string
+          participant_id: string
+          sure_sn?: number | null
+        }
+        Update: {
+          acilis_at?: string
+          audio_path?: string
+          created_at?: string | null
+          dinlendi_at?: string | null
+          id?: string
+          participant_id?: string
+          sure_sn?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sesli_mektuplar_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
             referencedRelation: "participants"
             referencedColumns: ["id"]
           },

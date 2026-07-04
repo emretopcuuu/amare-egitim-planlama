@@ -37,3 +37,7 @@ export const SOZ_KIVILCIMI = 25;
 
 /** Senkron An: kolektif ana katılmanın kendisi ödüldür — AI puanlaması yok. */
 export const SENKRON_KIVILCIMI = 8;
+
+/** Sesli Mektup: 90 güne mühürlenen ses kaydının kendisi ödüldür — söz gibi
+ *  sabit Kıvılcım, AI puanlaması yok. */
+export const MEKTUP_KIVILCIMI = 25;

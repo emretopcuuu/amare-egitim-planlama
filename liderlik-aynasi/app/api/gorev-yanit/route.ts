@@ -18,6 +18,7 @@ import { sicakAnYakala } from "@/lib/sicakAn";
 import { zincirDevamEttir } from "@/lib/kampZinciri";
 import { gorevFragmani } from "@/lib/fragman";
 import { pusulaCekirdek } from "@/lib/pusula";
+import { sesliMektupGoreviMi } from "@/lib/sesliMektup";
 import {
   kivilcimHesapla,
   SOZ_KIVILCIMI,
@@ -70,6 +71,10 @@ export async function POST(req: Request) {
     .maybeSingle();
   if (error) return Response.json({ hata: tr.gorevler.hata }, { status: 500 });
   if (!gorev) return Response.json({ hata: tr.gorevler.hata }, { status: 404 });
+  // Özellik 4 — sesli mektup görevi yazıyla yanıtlanmaz; tek yolu /api/sesli-mektup.
+  if (sesliMektupGoreviMi(gorev)) {
+    return Response.json({ hata: tr.gorevler.hata }, { status: 409 });
+  }
   // UX #3 — TELAFİ: süresi geçen görev de yapılabilir (yakın zamanda geçtiyse).
   // Kıvılcım yarıya iner; söz/senkron telafi edilmez (zaman-bağlı anlar).
   const telafi = gorev.status === "expired";
