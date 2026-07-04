@@ -21,6 +21,7 @@ import { pusulaCekirdek } from "@/lib/pusula";
 import { sesliMektupGoreviMi } from "@/lib/sesliMektup";
 import {
   kivilcimHesapla,
+  kivilcimDokumHesapla,
   SOZ_KIVILCIMI,
   SENKRON_KIVILCIMI,
   unvanBul,
@@ -219,6 +220,23 @@ export async function POST(req: Request) {
     : kivilcimHesapla(sonuc.puan, zamaninda, streak);
   // FAZ 5.2 — ALTIN GÖREV: 3x kıvılcım.
   const kivilcim = gorev.altin ? temelKivilcim * 3 : temelKivilcim;
+
+  // D6 — KIVILCIM DÖKÜMÜ: sonuç ekranı kalemleri sırayla saydırsın diye
+  // matematik kalem kalem döner (kalemlerin toplamı her zaman `kivilcim`e eşit).
+  const dokum = kivilcimDokumHesapla(sonuc.puan, telafi ? false : zamaninda, streak);
+  const dokumKalemler: { etiket: string; deger: number }[] = [
+    { etiket: tr.gorevler.dokum.taban, deger: dokum.taban },
+    { etiket: tr.gorevler.dokum.ayna, deger: dokum.ai },
+  ];
+  if (dokum.zamaninda > 0)
+    dokumKalemler.push({ etiket: tr.gorevler.dokum.zamaninda, deger: dokum.zamaninda });
+  if (dokum.seri > 0)
+    dokumKalemler.push({ etiket: tr.gorevler.dokum.seri(streak), deger: dokum.seri });
+  if (telafi)
+    dokumKalemler.push({ etiket: tr.gorevler.dokum.telafi, deger: temelKivilcim - dokum.toplam });
+  if (gorev.altin)
+    dokumKalemler.push({ etiket: tr.gorevler.dokum.altin, deger: kivilcim - temelKivilcim });
+  const kivilcimDokum = { kalemler: dokumKalemler, toplam: kivilcim };
   await db
     .from("missions")
     .update({
@@ -505,6 +523,8 @@ export async function POST(req: Request) {
     puan: sonuc.puan,
     yorum: sonuc.yorum + guvenlikEk,
     kivilcim,
+    // D6 — sonuç ekranında kalem kalem sayılan döküm
+    kivilcimDokum,
     toplam,
     unvan: unvanBul(toplam).mevcut.ad,
     ...(kasSayaci ? { kasSayaci } : {}),

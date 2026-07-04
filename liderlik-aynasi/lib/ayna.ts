@@ -82,12 +82,12 @@ const GOREV_SEMASI = {
     neden: {
       type: "string" as const,
       description:
-        "Bu görevin neden ÖZELLİKLE BU kişiye verildiğine dair TEK kısa cümle (en fazla 16 kelime), adayın göreceği sıcak bir dille. Pusula doluysa nedeni orada geçen çekirdek neden/iç engele bağla ama doğrudan alıntı yapma. Ham veri/puan/teknik terim YOK; kör noktayı yüzüne vurma. Yoksa boş string.",
+        "Bu görevin neden ÖZELLİKLE BU kişiye verildiğine dair TEK kısa ve SADE cümle (en fazla 16 kelime), adayın göreceği sıcak bir dille. Pusula doluysa nedeni orada geçen çekirdek neden/iç engele bağla ama doğrudan alıntı yapma. KURAL: Bu alan yeni talimat/eylem İÇEREMEZ — kime ne yapılacağını YALNIZ gövde söyler; burada eylemi genişletir ya da değiştirirsen kişi 'kimi seçeceğim şimdi?' diye kafası karışır. Ham veri/puan/teknik terim YOK; kör noktayı yüzüne vurma. Yoksa boş string.",
     },
     fayda: {
       type: "string" as const,
       description:
-        "'Bu ödev neden önemli?' — bu görevi yapmanın kişinin LİDERLİĞİNE ve SAHADA işini (network marketing) kurarken NE KATACAĞINI anlatan 1-2 cümle. ŞU İKİSİNİ birleştir: (a) hangi farkındalığı/yeteneği besler (ör. zor konuşmayı yönetme, soğuk pazarda ilk adım, ekip güveni), (b) sahada somut karşılığı (ör. ekibini büyütürken, lider yetiştirirken, itiraz karşılarken). Sıcak, motive edici, ikinci tekil ('sana/işine'); genel-geçer klişe değil BU göreve özel. Ham veri/puan/teknik terim YOK.",
+        "'Bu ödev neden önemli?' — bu görevin kişinin LİDERLİĞİNE ve SAHADA işine ne katacağını anlatan EN FAZLA 2 KISA cümle (her cümle tek fikir; iç içe yan cümleler ve 'kendi refleksini tanımak, kalıcılığı inşa etmek' gibi soyut zincirler YASAK — 12 yaşındaki biri de anlamalı). KURAL: Bu alan yeni talimat/eylem/hedef kişi İÇEREMEZ ve gövdedeki eylemle çelişemez — görev 'aklına gelen ilk kişiyi seç' diyorsa burada 'vazgeçmek üzere olanı fark et' gibi farklı bir seçim ölçütü verme; sadece görevin sahadaki karşılığını söyle. Sıcak, ikinci tekil; klişe değil BU göreve özel. Ham veri/puan/jargon ('katlama' vb.) YOK.",
     },
     ipuclari: {
       type: "array" as const,
@@ -191,7 +191,17 @@ const KALITE_SEMASI = {
  * ayrıştırılamazsa FAIL-OPEN döner (görevi engellemez) — bu bir güvenlik
  * kapısı değil, kalite iyileştirmesidir; maliyeti sıcak yolu bloklamamalı. */
 export async function gorevKaliteDenetle(
-  gorev: { title: string; body: string; kind: string; hedefKisi?: string | null },
+  gorev: {
+    title: string;
+    body: string;
+    kind: string;
+    hedefKisi?: string | null;
+    // Görev kartındaki "neden sana verildi" / "işine nasıl katkı sağlar"
+    // açıklamaları — gövdeyle ÇELİŞMEDİKLERİ de denetlenir (saha: açıklama
+    // farklı bir seçim ölçütü verince kişi "kimi seçeceğim?" diye karışıyordu).
+    neden?: string | null;
+    fayda?: string | null;
+  },
   sonGorevBasliklari: string[]
 ): Promise<{ gecti: boolean; sebep: string | null }> {
   try {
@@ -202,12 +212,19 @@ export async function gorevKaliteDenetle(
       thinking: { type: "disabled" },
       output_config: { format: { type: "json_schema", schema: KALITE_SEMASI } },
       system:
-        "Bir liderlik kampı görev metnini denetliyorsun. 4 kriteri dürüstçe değerlendir: (1) anlasilir, (2) somut, (3) isimNet (hedefKisi boşsa otomatik true), (4) tekrarDegil (sonGorevBasliklari ile karşılaştır). Yalnızca JSON döndür.",
+        "Bir liderlik kampı görev metnini denetliyorsun. 4 kriteri dürüstçe değerlendir: (1) anlasilir — 12 yaşındaki biri okusa yapacaklarını sırayla sayabilir mi; ayrıca 'neden'/'fayda' açıklamaları gövdedeki eylemle çelişiyor ya da yeni talimat/farklı seçim ölçütü ekliyorsa anlasilir=false, (2) somut, (3) isimNet (hedefKisi boşsa otomatik true), (4) tekrarDegil (sonGorevBasliklari ile karşılaştır). Yalnızca JSON döndür.",
       messages: [
         {
           role: "user",
           content: JSON.stringify({
-            gorev: { baslik: gorev.title, metin: gorev.body, tur: gorev.kind, hedefKisi: gorev.hedefKisi ?? null },
+            gorev: {
+              baslik: gorev.title,
+              metin: gorev.body,
+              tur: gorev.kind,
+              hedefKisi: gorev.hedefKisi ?? null,
+              neden: gorev.neden ?? null,
+              fayda: gorev.fayda ?? null,
+            },
             sonGorevBasliklari: sonGorevBasliklari.slice(0, 10),
           }),
         },
@@ -1360,7 +1377,14 @@ ${yeniYonergeler}${merdivenYonergesi}${ekstraYonerge}`,
   // Geçerse yayınla; geçmezse BİR kez daha dene (aynı context, ek uyarı ile) —
   // ikinci deneme sonucu ne olursa olsun yayınlanır (sonsuz döngü yok).
   const denetim = await gorevKaliteDenetle(
-    { title: ilkDeneme.title, body: ilkDeneme.body, kind: ilkDeneme.kind, hedefKisi: ilkDeneme.somutluk?.kim ?? null },
+    {
+      title: ilkDeneme.title,
+      body: ilkDeneme.body,
+      kind: ilkDeneme.kind,
+      hedefKisi: ilkDeneme.somutluk?.kim ?? null,
+      neden: ilkDeneme.neden,
+      fayda: ilkDeneme.fayda,
+    },
     onceki.map((o) => o.title)
   );
   let nihai = ilkDeneme;

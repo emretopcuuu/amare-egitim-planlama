@@ -89,6 +89,17 @@ export const tr = {
       `${ad} ile 10 dakika konuş. Seni AYNA eşledi — onda senin için bir şey var, sende onun için.`,
     not: "Neden bu kişi olduğunu Gün 3'te anlayacaksın.",
   },
+  // D7 — Eşleşme kişi kartı: kişiye yönlendiren her yüzeyde (görev hedefi,
+  // Bugünün Karşılaşması) dokununca tam ekran büyüyen tanıtım kartı.
+  kisiKarti: {
+    buyut: "Dokun — tam ekran gör",
+    ipucu: "Salonda ara — bu yüzü göster.",
+    waYaz: "WhatsApp'tan yaz →",
+    waMesaj: (ad: string) => `Merhaba ${ad}, AYNA bizi eşleştirdi 🙂 Neredesin?`,
+    takim: (takim: string) => `Takım: ${takim}`,
+    takimYok: "Takım bilgisi henüz yok",
+    kapat: "Kapat",
+  },
   altNav: {
     ana: "Ana sayfa",
     degerlendir: "Değerlendir",
@@ -3305,7 +3316,6 @@ export const tr = {
     dinleItiraz: "🗣 İtirazı dinle",
     oku: "AYNA'dan dinle",
     okumaDurdur: "Durdur",
-    sesliIpucu: "🎤 Yazmak istemiyorsan dokun ve AYNA'ya anlat.",
     durdur: "■ Durdur",
     senkronTesekkur:
       "Tam zamanında. Şu anda onlarca kişi seninle aynı şeyi yaptı — kolektif enerji böyle kurulur. +8 ⚡",
@@ -3324,6 +3334,9 @@ export const tr = {
     bosIzliyor: "AYNA seni izliyor",
     bosHerAn: "Sıradaki görev her an gelebilir.",
     bosSiradaki: (dk: number) => `Sıradaki görev ~${dk} dk içinde gelebilir.`,
+    // D9 — boş durum fragman sahnesi: dakika yerine somut saat çıpası + hazırlık
+    bosSiradakiSaat: (saat: string) => `Sıradaki tur ~${saat} civarı gelebilir.`,
+    bosHazirlan: "Hazırlan: telefonun sesi açık olsun, gözün çevrende.",
     bosMerak: "AYNA bir sonraki adımını senin için hazırlıyor.",
     // FAZ 5.1 — GÖREV FRAGMANI: teslimden sonra kilitli bir ipucu kartı.
     // Gerçek görev içeriğini asla açık etmez — yalnız merak uyandıran, jenerik
@@ -3349,8 +3362,13 @@ export const tr = {
       }`,
     sonTarih: (saat: string) => `Son: ${saat}`,
     suresiGecti: "Süresi geçti",
+    // D2 — programa bağlı süre: due_at bir program etkinliğine yakınsa sayaç
+    // "3 sa kaldı" yerine somut çıpayı söyler.
+    cipaOnce: (etkinlik: string) => `${etkinlik} başlamadan önce`,
     yanitEtiket: "Yanıtın",
-    yanitPlaceholder: "Ne yaptın, ne gözlemledin, ne hissettin? Birkaç cümle yeter.",
+    // D11 — yanıt yönergesi artık YALNIZ placeholder'da yaşar (mükerrer satır yok).
+    yanitPlaceholder:
+      "Kiminle, ne oldu, ne hissettin, ne götürdün? Birkaç cümle yeter.",
     // #1 Yansıma Kapanışı: görevden sonra tek cümlelik iç-yansıma → AYNA ayna tutar
     yansimaBaslik: "Bir saniye dur 👁",
     yansimaSoru: "Bunu yaparken içinde ne zorladı ya da ne değişti?",
@@ -3442,20 +3460,16 @@ export const tr = {
     erteleniyor: "Erteleniyor…",
     erteleNot: "+2 saat ileri aldım — sen hazır olunca buradayım.",
     erteleBitti: "Bu görevi daha fazla erteleyemezsin — bugün sıra onda.",
-    // UX #3 — Telafi (süresi geçti ama yine de yapılabilir)
-    telafiRozet: "Süresi geçti — ama kapı açık",
-    telafiAciklama:
-      "Kaçırmış olman bir son değil. Yine de yap; kıvılcımın yarısı senin, asıl kazanç görevin kendisi.",
-    telafiYap: "Yine de yap",
-    // UX #3 — Telafi penceresi geri sayımı
-    telafiKalan: (sure: string) => `Telafi penceresi: ${sure} kaldı`,
+    // UX #3 + D8/D11 — Telafi (süresi geçti ama yine de yapılabilir): pasif
+    // "kaçtı" dili yerine belirgin çağrı + TEK kompakt sayaç şeridi.
+    telafiCta: "Telafi et — yarı kıvılcım",
+    telafiSerit: (sure: string) => `⏳ Telafi · ${sure} kaldı · yarı kıvılcım`,
+    telafiNot: "Kaçırmak son değil — asıl kazanç görevin kendisi.",
     telafiBitti: "Telafi penceresi kapandı.",
     // UX #6 — Günün görev haritası / beklenti
     gunHaritasi: "AYNA gün boyu sana görev verir — birini bitirince bir sonraki gelir.",
     gunHaritasiSayi: (n: number) =>
       n > 0 ? `Bugün ${n} görev tamamladın.` : "Bugün ilk görevini bekliyorum.",
-    // UX #8 — Yanıt iskelesi (boş sayfa felcine karşı)
-    yanitIskele: "Şunları yaz: kiminle / ne oldu / ne hissettin / ne götürdün.",
     // UX #9 — Düşük puanı büyüme çerçevesiyle yumuşatma
     dusukPuanNot: "Bu bir başlangıç — önemli olan yapmış olman. AYNA bir sonraki adımı gösteriyor.",
     // A1 — seri kırılma riski (kayıp kaçınması)
@@ -3498,6 +3512,38 @@ export const tr = {
     // Tasarım turu — ikincil eylemler tek menüde
     secenekler: "Seçenekler",
     kasHaritasi: "Çalıştırdığın liderlik kasları",
+    // D1 — perde perde açılış: uzun görev gövdesi tek duvar metin düşmez
+    devaminiGor: "Devamını gör",
+    devaminiGizle: "Daralt",
+    // D4 — görev kası rozeti: missions.kas → Türkçe etiket (lib/ayna.ts KAS_DONGU)
+    kaslar: {
+      cesaret: "Cesaret",
+      devretme: "Devretme",
+      zor_konusma: "Zor Konuşma",
+      baglanti: "Bağ Kurma",
+      vizyon: "Vizyon",
+      yardim_iste: "Yardım İsteme",
+      dinleme: "Dinleme",
+      sorumluluk: "Sorumluluk",
+      ornek_olma: "Örnek Olma",
+      dayaniklilik: "Dayanıklılık",
+    } as Record<string, string>,
+    kasRozet: (kas: string, n: number) => `${kas} kası · ${n}. antrenman`,
+    // D5 — zorluk alevi (missions.zorluk_seviye 1-5) + doz ayarı
+    zorlukAlevi: (n: number) => `Zorluk dozu ${n}/5`,
+    dozAyarla: "Doz sana göre değilse ayarla:",
+    // D6 — kıvılcım dökümü: sonuç ekranında kalem kalem sayılır
+    dokum: {
+      taban: "Taban",
+      ayna: "AYNA puanı",
+      zamaninda: "Zamanında bonusu",
+      seri: (n: number) => `Seri bonusu (${n} üst üste)`,
+      telafi: "Telafi · yarı",
+      altin: "⚡ Altın Görev · 3×",
+      toplam: "Toplam",
+    },
+    // D7 — eşleşmeli görevde hedef kişi kartı başlığı
+    gorevKisisi: "Görevin kişisi",
     // Özellik 6 — Çekirdek Neden Nabzı (her 5. puanlı görevden sonra)
     nabizUst: "Pusula kontrolü",
     nabizSoru: (neden: string) =>

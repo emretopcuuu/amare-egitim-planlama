@@ -17,14 +17,15 @@ const RENKLER = [
   "from-rose-500 to-orange-400",
 ];
 
-function basHarfler(ad: string): string {
+// KisiKarti (D7) da aynı baş harf/renk dilini kullansın diye dışa açık.
+export function basHarfler(ad: string): string {
   const p = ad.trim().split(/\s+/).filter(Boolean);
   if (p.length === 0) return "?";
   if (p.length === 1) return p[0].slice(0, 2).toLocaleUpperCase("tr-TR");
   return (p[0][0] + p[p.length - 1][0]).toLocaleUpperCase("tr-TR");
 }
 
-function renkSec(ad: string): string {
+export function renkSec(ad: string): string {
   let h = 0;
   for (let i = 0; i < ad.length; i++) h = (h * 31 + ad.charCodeAt(i)) >>> 0;
   return RENKLER[h % RENKLER.length];
