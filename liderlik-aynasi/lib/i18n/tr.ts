@@ -3415,6 +3415,7 @@ export const tr = {
       senkron: "⏱ Senkron An",
       bag: "🤝 Bağ",
       soz: "🤝 Söz",
+      sahit: "👁 Şahit",
     },
     sozTesekkur:
       "Sözünü sakladım. 90 gün sonra sana hatırlatacağım. — AYNA",
@@ -3504,6 +3505,71 @@ export const tr = {
     nabizUzak: "1 · hiç yaklaştırmadı",
     nabizYakin: "5 · çok yaklaştırdı",
     nabizTesekkur: "Not ettim — pusulan sıradaki görevlere yön veriyor. Teşekkürler.",
+    // Özellik 5 — Şahit Perspektifi: eşleşme hedefini 10 dk sessizce gözle,
+    // onda gördüğün (muhtemelen kendisinin görmediği) BİR gücü tek cümleyle yaz.
+    // Statik şablon (AI'sız); yanıt hedefin sonraki görevinin açılış cümlesi olur.
+    sahitGorevBaslik: "Görünmez şahit",
+    sahitGorevGovde: (ad: string) =>
+      `Önümüzdeki 10 dakika ${ad} isimli kişiyi uzaktan, belli etmeden gözle.\n\nOnda gördüğün, muhtemelen KENDİSİNİN görmediği BİR gücü yakala — bir duruş, bir dokunuş, bir cümle.\n\nO gücü tek cümleyle bana yaz. Sözün, kimden geldiğini asla söylemeden, yarın onun aynasında belirecek.`,
+    // Özellik 2 — Kimlik yüzleşmesi: her 10. puanlı görevde, biriken
+    // karşı-kanıtlarla kişinin kendini sınırlayan cümlesi yüzüne tutulur.
+    kimlikUst: "Ayna bir cümleni hatırlıyor",
+    kimlikKanitBaslik: "Ama ben şunları gördüm:",
+    kimlikSoru: "Bunu hâlâ söyleyebilir misin?",
+    kimlikBirak: "Artık söyleyemem 🔥",
+    kimlikBirakiliyor: "Mühürleniyor…",
+    kimlikBirakildi: "🔥 O cümle artık senin değil — aynadan silindi.",
+    // Özellik 4 — Sesli Mektup: Gün 2 akşamı kişi 90 gün sonraki kendine 60 sn
+    // sesli mektup kaydeder (statik şablon; fısıltılar hedef + iç engel
+    // verisinden değişkenle kurulur — AI çağrısı yok). Başlık aynı zamanda
+    // görevin TANIMA anahtarıdır (kind='yansima' + bu başlık → özel ses kartı).
+    sesliMektupBaslik: "90 gün sonraki sana",
+    sesliMektupGovde: (fisiltilar: string[]) =>
+      `Bu görev yazılmaz — söylenir.\n\n90 gün sonraki kendine 60 saniyelik bir sesli mektup bırak. Kaydını mühürleyeceğim; 90. günde, sen unutmuşken, sana geri getireceğim.\n\nBaşlamadan önce üç fısıltı:\n${fisiltilar.map((f) => `• ${f}`).join("\n")}`,
+    mektupFisiltiHedef: (rutbe: string) =>
+      `90. günde "${rutbe}" yolunda nerede olacaksın? Ona söyle.`,
+    mektupFisiltiHedefGenel: "90. günde nerede olmak istiyorsun? Ona söyle.",
+    mektupFisiltiEngel: (engel: string) =>
+      `Bugün seni tutan "${engel}" — o gün hâlâ konuşuyor mu? Ona sor.`,
+    mektupFisiltiEngelGenel: "Bugün seni en çok tutan şey o gün hâlâ orada mı? Ona sor.",
+    mektupFisiltiNeden: (neden: string) =>
+      `"${neden}" — bu neden için o güne kadar ne yapmış olacaksın?`,
+    mektupFisiltiNedenGenel: "Bu yola neden çıktığını ona bir cümleyle hatırlat.",
+    mektupTesekkur:
+      "Mektubunu mühürledim. 90. günde, tam zamanında, sana geri getireceğim. — AYNA",
+    mektupYanitMetni: "🎙️ 90 güne sesli mektup kaydedildi.",
+    mektupPush: {
+      baslik: "🎙️ Bu akşam özel bir görev var",
+      govde: "90 gün sonraki kendine 60 saniyelik bir sesli mektup bırak — AYNA saklayacak.",
+    },
+    // SesliMektup bileşeni (kayıt kartı) metinleri
+    mektupKart: {
+      baslat: "🎤 Mektubu kaydet",
+      kaydediliyor: "Kaydediliyor",
+      durdur: "■ Bitir",
+      ipucu: "En fazla 60 saniye — tek nefeste, kendi sesinle.",
+      dinle: "▶ Kaydı dinle",
+      dinleDurdur: "■ Durdur",
+      tekrar: "Yeniden kaydet",
+      gonder: "Mektubu mühürle →",
+      gonderiliyor: "Mühürleniyor…",
+      mikrofonYok: "Mikrofona ulaşamadım. Tarayıcı izinlerini kontrol edip tekrar dene.",
+      hata: "Gönderilemedi — bağlantını kontrol edip tekrar dene.",
+    },
+    // Özellik 9 — Domino Görevi: Gün 3'te herkese TEK görev — kampın en güçlü
+    // içgörüsünü BUGÜN kamp DIŞINDAN birine telefonla söyle/uygula. İçgörü
+    // kişi başı tek Haiku çağrısıyla kişiselleşir; düşerse genel şablon.
+    dominoBaslik: "Domino: ilk taş bugün düşüyor",
+    dominoGovde: (icgoru: string | null) =>
+      `${
+        icgoru
+          ? `Bu kampta sana dair en güçlü içgörü şuydu:\n\n“${icgoru}”`
+          : "Bu kampta kendinle ilgili öğrendiğin EN GÜÇLÜ şeyi seç — seni en çok sarsan, en gerçek olanı."
+      }\n\nKamp yarın bitiyor; bu içgörü burada kalırsa kaybolur. Bugün onu kampın DIŞINA taşı: eşini, bir ekip arkadaşını ya da bir adayını BUGÜN telefonla ara — bu içgörüyü ona söyle ya da onunla uygula.\n\nKanıtın: karşı tarafın tek cümlelik tepkisi. Onu bana yaz.`,
+    dominoPush: {
+      baslik: "🁢 Domino görevi düştü",
+      govde: "Kamptaki en güçlü içgörünü BUGÜN kamp dışından birine taşı. İlk taş sende.",
+    },
   },
   kivilcim: {
     ad: "Kıvılcım",
@@ -3512,6 +3578,21 @@ export const tr = {
     sonrakiUnvan: (unvan: string, kalan: number) =>
       `${unvan} unvanına ${kalan} Kıvılcım kaldı`,
     zirve: "Zirvedesin — Efsane! 🏆",
+  },
+  // 90-gün follow-up yüzeyi (Eylül Aynası) ek kartları: Sesli Mektup dönüşü +
+  // Domino köprüsü. (Sayfanın kendi metinleri tarihsel olarak sayfada kaldı;
+  // yeni kartlar tek kaynaktan buradan okur.)
+  eylulAynasi: {
+    kayitHata: "Yanıt kaydedilemedi.",
+    mektupBaslik: "Geçmişten mektubun var 🎧",
+    mektupMetin:
+      "Kampın 2. gecesi 90 gün sonraki kendine bir sesli mektup bırakmıştın. O gün geldi — mühür açıldı.",
+    mektupDinle: "▶ Mektubunu dinle",
+    mektupYukleniyor: "Mühür açılıyor…",
+    mektupHata: "Mektup şu an açılamadı — birazdan tekrar dene.",
+    dominoBaslik: "🁢 Dominonun izi",
+    dominoSoru:
+      "Kampın son günü bu içgörüyü kamp dışından birine söylemiştin. O gün başlattığın domino ne oldu — taş taşı devirdi mi?",
   },
   program: {
     baslik: "Kamp Programı",
@@ -4160,9 +4241,6 @@ export const tr = {
   },
   isVerisi: {
     kayitHata: "Sayılar kaydedilemedi.",
-  },
-  eylulAynasi: {
-    kayitHata: "Yanıt kaydedilemedi.",
   },
   ilk72: {
     kayitHata: "Adımlar kaydedilemedi.",

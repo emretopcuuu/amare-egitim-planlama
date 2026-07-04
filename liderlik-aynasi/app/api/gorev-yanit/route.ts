@@ -8,9 +8,17 @@ import { krizDiliVarMi, krizUyarisiGonder, KRIZ_YONLENDIRME } from "@/lib/guvenl
 import { markaAnons, fieroSesi } from "@/lib/yansima";
 import { katilimciyaBildir } from "@/lib/push";
 import { eslesmeKaydet } from "@/lib/gorevEslesme";
+import {
+  kimlikCumlesiIsle,
+  kimlikKanitEkle,
+  kimlikYuzlesmeSec,
+  type KimlikYuzlesme,
+} from "@/lib/kimlik";
+import { sicakAnYakala } from "@/lib/sicakAn";
 import { zincirDevamEttir } from "@/lib/kampZinciri";
 import { gorevFragmani } from "@/lib/fragman";
 import { pusulaCekirdek } from "@/lib/pusula";
+import { sesliMektupGoreviMi } from "@/lib/sesliMektup";
 import {
   kivilcimHesapla,
   SOZ_KIVILCIMI,
@@ -57,12 +65,16 @@ export async function POST(req: Request) {
   const guvenlikEk = kriz ? `\n\n${KRIZ_YONLENDIRME}` : "";
   const { data: gorev, error } = await db
     .from("missions")
-    .select("id, kind, title, body, status, due_at, trait_id, kaynak_id, baglanti_id, zincir_id, zincir_sira, altin")
+    .select("id, kind, title, body, status, due_at, trait_id, kaynak_id, baglanti_id, zincir_id, zincir_sira, altin, kimlik_cumle_id")
     .eq("id", gorevId)
     .eq("participant_id", session.sub)
     .maybeSingle();
   if (error) return Response.json({ hata: tr.gorevler.hata }, { status: 500 });
   if (!gorev) return Response.json({ hata: tr.gorevler.hata }, { status: 404 });
+  // Özellik 4 — sesli mektup görevi yazıyla yanıtlanmaz; tek yolu /api/sesli-mektup.
+  if (sesliMektupGoreviMi(gorev)) {
+    return Response.json({ hata: tr.gorevler.hata }, { status: 409 });
+  }
   // UX #3 — TELAFİ: süresi geçen görev de yapılabilir (yakın zamanda geçtiyse).
   // Kıvılcım yarıya iner; söz/senkron telafi edilmez (zaman-bağlı anlar).
   const telafi = gorev.status === "expired";
@@ -161,8 +173,25 @@ export async function POST(req: Request) {
     })
     .eq("id", gorev.id);
 
+  // Özellik 2 + 3 — puanlamaya PARALEL ucuz Haiku sinyalleri (fail-open, kendi
+  // içlerinde hatayı yutar): kendini-sınırlayan kimlik cümlesi damıtma + sıcak
+  // duygu anı yakalama. Kriz tespit edilen metinden sıcak an ÜRETİLMEZ (kriz
+  // akışı ayrı ve dokunulmaz). Serverless'ta yanıt dönmeden ölmesinler diye
+  // dönüşten önce await edilirler.
+  const kimlikDamitmaP = kimlikCumlesiIsle(
+    db,
+    session.sub,
+    gorev.id,
+    { title: gorev.title, kind: gorev.kind },
+    yanitMetni
+  );
+  const sicakAnP = kriz
+    ? Promise.resolve()
+    : sicakAnYakala(db, session.sub, "gorev", yanitMetni);
+
   const sonuc = await gorevPuanla(gorev, yanitMetni);
   if (!sonuc) {
+    await Promise.all([kimlikDamitmaP, sicakAnP]);
     return Response.json({ bekliyor: true, ...(kriz ? { guvenlik: true, yorum: KRIZ_YONLENDIRME } : {}) }, { status: 202 });
   }
 
@@ -321,6 +350,44 @@ export async function POST(req: Request) {
     }
   }
 
+  // Özellik 5 — ŞAHİT PERSPEKTİFİ: bu görev "10 dk onu gözle" şahit göreviyse,
+  // yanıt hedefin gözlem defterine yazılır → hedefin SONRAKİ görevi bu cümleyle
+  // açılır ("Dün biri sende şunu gördü: …"). Hedef, eşleşme kaydından okunur;
+  // yalnız bir kez (yeniden gönderim çift kayıt üretmez). Kıvılcım normal işler.
+  if (gorev.kind === "sahit" && !yenidenScored) {
+    const { data: sahitEslesme } = await db
+      .from("gorev_eslesme")
+      .select("hedef_id")
+      .eq("mission_id", gorev.id)
+      .maybeSingle();
+    if (sahitEslesme?.hedef_id) {
+      const { count: gozlemVar } = await db
+        .from("sahit_gozlemleri")
+        .select("id", { count: "exact", head: true })
+        .eq("mission_id", gorev.id);
+      if (!gozlemVar) {
+        await db.from("sahit_gozlemleri").insert({
+          gozleyen_id: session.sub,
+          hedef_id: sahitEslesme.hedef_id,
+          gozlem: yanitMetni.slice(0, 500),
+          mission_id: gorev.id,
+        });
+      }
+    }
+  }
+
+  // Özellik 2 — KARŞI-KANIT: bu görev bir kimlik cümlesini çürütmek için
+  // kurulmuştu (kimlik_cumle_id) ve kişi ≥7 aldıysa, yanıttan tek cümlelik
+  // kanıt özeti damıtılıp cümlenin defterine eklenir (fail-open).
+  if (sonuc.puan >= 7 && gorev.kimlik_cumle_id && !yenidenScored) {
+    await kimlikKanitEkle(
+      db,
+      gorev.kimlik_cumle_id,
+      { title: gorev.title, body: gorev.body },
+      yanitMetni
+    );
+  }
+
   // FIERO: 10/10 anında büyük ekran AYNA'nın sesiyle alkışlar; yansıması
   // da kişiye kendi sesiyle konuşur (ana sayfadaki Konuşan Yansıma kartı).
   // BEST-EFFORT: puan zaten DB'ye yazıldı — ses üretimi düşerse kullanıcıya
@@ -401,6 +468,18 @@ export async function POST(req: Request) {
     }
   }
 
+  // Özellik 2 — KİMLİK YÜZLEŞMESİ: kişinin her 10. puanlı görevinde, ≥2
+  // karşı-kanıt biriktirmiş en eski aktif cümle yüzüne tutulur ("Bunu hâlâ
+  // söyleyebilir misin?"). Seçim yuzlesme_at'ı damgalar — bir cümle bir kez.
+  let kimlikYuzlesme: KimlikYuzlesme | null = null;
+  if (tamamlananSayi && tamamlananSayi % 10 === 0) {
+    try {
+      kimlikYuzlesme = await kimlikYuzlesmeSec(db, session.sub);
+    } catch {
+      // yüzleşme kritik değil — düşerse sessizce geç
+    }
+  }
+
   // DÜŞÜK PUAN → DERİNLEŞTİRME: kişi bu konuda zorlandıysa, AYNI kası FARKLI ve
   // daha erişilebilir bir açıdan + 2 somut ipucuyla tekrar çalıştıran hızlı bir
   // ek görev üret (büyüme döngüsü). Yalnız ilk-gerçek tamamlamada, koçlanabilir
@@ -418,6 +497,10 @@ export async function POST(req: Request) {
   // [E4] Görev fragmanı: sıradaki program anı + kilitli ipucu (merak köprüsü).
   const fragman = await gorevFragmani(db, simdi);
 
+  // Özellik 2 + 3 — paralel başlatılan sinyaller yanıt dönmeden tamamlansın
+  // (serverless yürütmesi yanıtla birlikte ölebilir; her ikisi de fail-open).
+  await Promise.all([kimlikDamitmaP, sicakAnP]);
+
   return Response.json({
     puan: sonuc.puan,
     yorum: sonuc.yorum + guvenlikEk,
@@ -430,6 +513,8 @@ export async function POST(req: Request) {
     // Özellik 6 — nabız kartı: 5. puanlı görev + çekirdek neden varsa sor.
     nabizSor,
     nabizNeden,
+    // Özellik 2 — yüzleşme kartı: 10. puanlı görevde cümle + karşı-kanıtlar.
+    kimlikYuzlesme,
     fragman,
   });
 }
@@ -512,6 +597,8 @@ async function dusukPuanTelafiYarat(
     // Özellik 7 — zorluk merdiveni ölçümü (kas + modelin doz değerlendirmesi)
     kas: gorev.kas,
     zorluk_seviye: gorev.zorlukSeviye,
+    // Özellik 2 — kimlik çürütme izi (derinleştirme de kanıt toplayabilir)
+    kimlik_cumle_id: gorev.kimlikCumleId,
     due_at: dueAt.toISOString(),
   });
 }

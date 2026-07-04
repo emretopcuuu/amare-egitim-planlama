@@ -1256,6 +1256,47 @@ export type Database = {
           },
         ]
       }
+      kimlik_cumleleri: {
+        Row: {
+          birakildi_at: string | null
+          created_at: string | null
+          cumle: string
+          id: string
+          karsit_kanitlar: Json
+          kaynak_mission_id: string | null
+          participant_id: string
+          yuzlesme_at: string | null
+        }
+        Insert: {
+          birakildi_at?: string | null
+          created_at?: string | null
+          cumle: string
+          id?: string
+          karsit_kanitlar?: Json
+          kaynak_mission_id?: string | null
+          participant_id: string
+          yuzlesme_at?: string | null
+        }
+        Update: {
+          birakildi_at?: string | null
+          created_at?: string | null
+          cumle?: string
+          id?: string
+          karsit_kanitlar?: Json
+          kaynak_mission_id?: string | null
+          participant_id?: string
+          yuzlesme_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kimlik_cumleleri_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kocu_mesajlar: {
         Row: {
           created_at: string
@@ -1584,6 +1625,7 @@ export type Database = {
           carried_at: string | null
           cesaret_push: boolean
           difficulty: number
+          domino: boolean
           donus_bicimi: string | null
           due_at: string
           ertelenme_sayisi: number
@@ -1596,6 +1638,7 @@ export type Database = {
           kapi_etiket: string | null
           kas: string | null
           kaynak_id: string | null
+          kimlik_cumle_id: string | null
           kind: string
           lightened_at: string | null
           micro_sprint: boolean
@@ -1633,6 +1676,7 @@ export type Database = {
           carried_at?: string | null
           cesaret_push?: boolean
           difficulty?: number
+          domino?: boolean
           donus_bicimi?: string | null
           due_at: string
           ertelenme_sayisi?: number
@@ -1645,6 +1689,7 @@ export type Database = {
           kapi_etiket?: string | null
           kas?: string | null
           kaynak_id?: string | null
+          kimlik_cumle_id?: string | null
           kind: string
           lightened_at?: string | null
           micro_sprint?: boolean
@@ -1682,6 +1727,7 @@ export type Database = {
           carried_at?: string | null
           cesaret_push?: boolean
           difficulty?: number
+          domino?: boolean
           donus_bicimi?: string | null
           due_at?: string
           ertelenme_sayisi?: number
@@ -1694,6 +1740,7 @@ export type Database = {
           kapi_etiket?: string | null
           kas?: string | null
           kaynak_id?: string | null
+          kimlik_cumle_id?: string | null
           kind?: string
           lightened_at?: string | null
           micro_sprint?: boolean
@@ -2020,6 +2067,7 @@ export type Database = {
           profil_foto_path: string | null
           role: string
           sahne_onay: boolean
+          sicak_an: Json | null
           simulasyon: boolean
           team: string | null
           yeniden_giris_basamak: number
@@ -2051,6 +2099,7 @@ export type Database = {
           profil_foto_path?: string | null
           role?: string
           sahne_onay?: boolean
+          sicak_an?: Json | null
           simulasyon?: boolean
           team?: string | null
           yeniden_giris_basamak?: number
@@ -2082,6 +2131,7 @@ export type Database = {
           profil_foto_path?: string | null
           role?: string
           sahne_onay?: boolean
+          sicak_an?: Json | null
           simulasyon?: boolean
           team?: string | null
           yeniden_giris_basamak?: number
@@ -2463,6 +2513,51 @@ export type Database = {
           },
         ]
       }
+      sahit_gozlemleri: {
+        Row: {
+          created_at: string | null
+          gozlem: string
+          gozleyen_id: string
+          hedef_id: string
+          id: string
+          kullanildi_at: string | null
+          mission_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          gozlem: string
+          gozleyen_id: string
+          hedef_id: string
+          id?: string
+          kullanildi_at?: string | null
+          mission_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          gozlem?: string
+          gozleyen_id?: string
+          hedef_id?: string
+          id?: string
+          kullanildi_at?: string | null
+          mission_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sahit_gozlemleri_gozleyen_id_fkey"
+            columns: ["gozleyen_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sahit_gozlemleri_hedef_id_fkey"
+            columns: ["hedef_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       salon_daveti: {
         Row: {
           created_at: string
@@ -2593,6 +2688,44 @@ export type Database = {
             foreignKeyName: "senin_icin_participant_id_fkey"
             columns: ["participant_id"]
             isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sesli_mektuplar: {
+        Row: {
+          acilis_at: string
+          audio_path: string
+          created_at: string | null
+          dinlendi_at: string | null
+          id: string
+          participant_id: string
+          sure_sn: number | null
+        }
+        Insert: {
+          acilis_at: string
+          audio_path: string
+          created_at?: string | null
+          dinlendi_at?: string | null
+          id?: string
+          participant_id: string
+          sure_sn?: number | null
+        }
+        Update: {
+          acilis_at?: string
+          audio_path?: string
+          created_at?: string | null
+          dinlendi_at?: string | null
+          id?: string
+          participant_id?: string
+          sure_sn?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sesli_mektuplar_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
             referencedRelation: "participants"
             referencedColumns: ["id"]
           },

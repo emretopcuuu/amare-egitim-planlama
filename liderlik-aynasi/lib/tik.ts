@@ -61,6 +61,7 @@ import {
   grupBostaMi,
 } from "@/lib/cumartesiProgrami";
 import { eslesmeHedefiSec, eslesmeKaydet, type EslesmeAday } from "@/lib/gorevEslesme";
+import { sicakAnTaze, sicakAnTemizle } from "@/lib/sicakAn";
 import { orkestratoduIsle } from "@/lib/orkestrator";
 import { johariCaprazGorevUret } from "@/lib/johariCapraz";
 import { gizliEsGorevMetni, tanikGoreviMetni, miniKonseyMetinleri } from "@/lib/eslesmeWow";
@@ -84,6 +85,20 @@ function istanbulTarihi(an: Date): string {
     month: "2-digit",
     day: "2-digit",
   }).format(an);
+}
+
+// Özellik 5 — şahit varyantı zarı: kişi + hedef + gün tohumlu DETERMİNİSTİK %12.
+// Math.random yerine tohum: prova/gerçek koşumda aynı eşleşme aynı kararı verir,
+// ve hedef değiştikçe zar tazelenir (aynı kişiye gün boyu hep şahit düşmez).
+const SAHIT_OLASILIK_YUZDE = 12;
+function sahitVaryantiMi(pid: string, hedefId: string, gunTarihi: string): boolean {
+  const s = `${pid}|${hedefId}|${gunTarihi}|sahit`;
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) % 100 < SAHIT_OLASILIK_YUZDE;
 }
 
 // AYNA'nın kalp atışı — TEK gerçek kaynak burada. Üretimde Supabase pg_cron
@@ -274,7 +289,7 @@ export async function tikCalistir(
 
   const [{ data: kisiler }, { data: sonGorevler }, { data: yanitGecmisi }] =
     await Promise.all([
-      db.from("participants").select("id, full_name, team, phone, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak").eq("role", "participant"),
+      db.from("participants").select("id, full_name, team, phone, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak, sicak_an").eq("role", "participant"),
       db
         .from("missions")
         .select("participant_id, status, issued_at, kind")
@@ -320,6 +335,10 @@ export async function tikCalistir(
   // Yolculuk modunda ritim sakindir: günde TEK görev, 09-11 sabah penceresi
   const gunlukUst = mod === "yolculuk" ? 1 : 7;
   const yolculukPenceresi = mod !== "yolculuk" || (saat >= 9 && saat < 11);
+  // Özellik 3 — SICAK AN: taze (<45 dk) duygu sinyali olan kişi öncelik alır ve
+  // görev aralığı/pik-saat kısıtlarını atlar (günlük kota, bekleyen-görev-yok,
+  // sessiz saat/sahne sessizliği/David oturumu kapıları GEÇERLİ kalır).
+  const sicakMi = (k: { sicak_an?: unknown }) => sicakAnTaze(k.sicak_an, simdi) !== null;
   const uygunlar = (kisiler ?? [])
     .filter((k) => {
       if (!yolculukPenceresi || sahneSessiz) return false;
@@ -331,6 +350,8 @@ export async function tikCalistir(
       const d = durumlar.get(k.id);
       if (!d) return true; // hiç görev almamış
       if (d.bekleyen || d.bugunSayisi >= gunlukUst) return false;
+      // Özellik 3 — duygu sıcakken (~15 dk hedefi) aralık/pik bekletmez.
+      if (sicakMi(k)) return true;
       // #3 Fırsat penceresi: az önce deneyimsel bir etkinlik bittiyse (genel kamp
       // veya grup) duygu sıcakken yakala — min aralık yarıya iner.
       const firsat =
@@ -345,7 +366,11 @@ export async function tikCalistir(
     })
     // #6 Adalet: önce bugün EN AZ görev alan (taban eşitliği), sonra en uzun
     // süredir görev almayan. Sürekli yanıt veren biri herkesin önüne geçmesin.
+    // Özellik 3 — sıcak an sahibi sırayı deler: an soğumadan (slice 3'e takılmadan) yakala.
     .sort((a, b) => {
+      const sa = sicakMi(a);
+      const sb = sicakMi(b);
+      if (sa !== sb) return sa ? -1 : 1;
       const da = durumlar.get(a.id);
       const db = durumlar.get(b.id);
       const fark = (da?.bugunSayisi ?? 0) - (db?.bugunSayisi ?? 0);
@@ -393,6 +418,11 @@ export async function tikCalistir(
   const buTikGorevAlan = new Set<string>(uygunlar.map((u) => u.id));
 
   for (const k of uygunlar) {
+    // Özellik 3 — sıcak an: tazeyse görev üretimine bağlam olur; soğumuşsa
+    // (45 dk+) tüketilmeden temizlenir (bayat duyguya görev kurulmaz).
+    const kSicakHam = (k as { sicak_an?: unknown }).sicak_an;
+    const kSicak = sicakAnTaze(kSicakHam, simdi);
+    if (kSicakHam && !kSicak) await sicakAnTemizle(db, k.id);
     // Slice 3 — CUMARTESİ ETKİNLİK FARKINDALIĞI: Gün 2'de grup üyesine, grubunun
     // O ANKİ etkinliğine (David seansı, bowling, hazine avı, yemek...) özel görev
     // ver. AYNA etkinlik sırasında susmaz; göreve etkinliği katar (David'le foto/
@@ -510,9 +540,13 @@ export async function tikCalistir(
     const gorev = await gorevUret(
       db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu, kEtkinlik ? null : kSiradaki, kYorgun,
       kMekanFarkindaAdaylar,
-      { sonKacirmaSebebi: sonKacirma?.kacirma_sebebi ?? null, girisBasamak }
+      { sonKacirmaSebebi: sonKacirma?.kacirma_sebebi ?? null, girisBasamak },
+      kSicak // Özellik 3 — sıcak an bağlamı (mikro-görev + duyguya dokunuş)
     );
     if (!gorev) continue;
+    // Özellik 3 — sıcak an bu üretimde tüketildi: hangi insert dalına girilirse
+    // girilsin an bir kez kullanılır; önbelleği hemen temizle.
+    if (kSicak) await sicakAnTemizle(db, k.id);
 
     // FAZ 3.2 — JOHARI ÇAPRAZ EŞLEŞTİRME: kota "bag" seçtiyse ve bayrak açıksa,
     // AI'lı görevin yerine deterministik/statik Johari görevini kullan (ucuz,
@@ -522,14 +556,38 @@ export async function tikCalistir(
       johariOverride = await johariCaprazGorevUret(db, k, simdi);
     }
 
+    // Özellik 5 — ŞAHİT PERSPEKTİFİ: isimli bir bağ eşleşmesi çıktıysa,
+    // kişi+hedef+gün tohumlu deterministik %12 ile görev şahit varyantına
+    // dönüşür: "10 dk [Ad]'ı gözle; onda gördüğün, muhtemelen kendisinin
+    // görmediği BİR gücü yaz." Yanıt sahit_gozlemleri'ne yazılır (gorev-yanit)
+    // ve hedefin SONRAKİ görevinin açılış cümlesi olur (gorevUret). Statik
+    // şablon (AI'sız, tr.ts); eşleşme kaydı normal bağ gibi işler.
+    let sahitOverride: { title: string; body: string } | null = null;
+    if (
+      gorev.kind === "bag" &&
+      gorev.eslesme?.isimli &&
+      !johariOverride &&
+      sahitVaryantiMi(k.id, gorev.eslesme.hedefId, bugun)
+    ) {
+      const sahitHedef = (kisiler ?? []).find((p) => p.id === gorev.eslesme!.hedefId);
+      if (sahitHedef) {
+        sahitOverride = {
+          title: tr.gorevler.sahitGorevBaslik,
+          body: tr.gorevler.sahitGorevGovde(sahitHedef.full_name),
+        };
+      }
+    }
+
     // FAZ 5.4 — İKİ KAPI: ara sıra (bayrak açık + %15) tek görev yerine bir
     // SEÇİM sun — Kapı A = üretilen görev (doğal türü), Kapı B = karşıt lezzette
     // statik bir görev (cesaret↔bağ). İkisi de status="secim_bekliyor" +
     // ortak secim_grubu; kişi birini seçince öteki 'expired' olur (bkz.
     // /api/kapi-sec). secim_bekliyor bir aktif/bekleyen görev SAYILMAZ.
+    // Şahit varyantı seçilmişse kapıya çevrilmez (gözlem anı seçime kurban gitmesin).
     if (
       wowAcikMi.get("iki_kapi_acik") &&
       !johariOverride &&
+      !sahitOverride &&
       Math.random() < 0.15
     ) {
       const secimGrubu = crypto.randomUUID();
@@ -565,31 +623,43 @@ export async function tikCalistir(
     // FAZ 5.2 — ALTIN GÖREV: bu görev nadir "altın" varyantı mı? Gün kotası
     // (altinBugunKalan) doluysa ve %25 şansla. (gorevUret yalnız normal görev
     // türleri üretir — senkron/soz/mentorluk zaten ayrı akışlardan gelir.)
-    const altinMi = altinBugunKalan > 0 && Math.random() < 0.25;
+    // Şahit varyantı altınlaşmaz (sessiz gözlem görevi sahne ışığı istemez).
+    const altinMi = altinBugunKalan > 0 && !sahitOverride && Math.random() < 0.25;
 
-    // #8 micro_sprint: sure_saat 0.5 = 30 dk
-    const dueAt = new Date(simdi.getTime() + gorev.sure_saat * 3_600_000);
+    // Özellik 5 — override zinciri: johari ve şahit birbirini dışlar (yukarıda
+    // şahit yalnız !johariOverride iken kurulur). Statik şablonlar AI görevinin
+    // kişisel alanlarını (neden/fayda/somutluk/kas...) taşımaz.
+    const nihaiTitle = johariOverride?.title ?? sahitOverride?.title ?? gorev.title;
+    const nihaiBody = johariOverride?.body ?? sahitOverride?.body ?? gorev.body;
+
+    // #8 micro_sprint: sure_saat 0.5 = 30 dk. Şahit görevi sabit 2 saatlik.
+    const dueAt = new Date(
+      simdi.getTime() + (sahitOverride ? 2 : gorev.sure_saat) * 3_600_000
+    );
     const { data: yeniGorev, error } = await db
       .from("missions")
       .insert({
         participant_id: k.id,
-        trait_id: johariOverride ? johariOverride.traitId : gorev.trait_id,
-        kind: gorev.kind,
-        title: johariOverride ? johariOverride.title : gorev.title,
-        body: johariOverride ? johariOverride.body : gorev.body,
-        difficulty: gorev.difficulty,
-        neden: gorev.neden,
-        fayda: gorev.fayda,
-        ipuclari: gorev.ipuclari,
-        micro_sprint: gorev.micro_sprint,
-        yay_gorevi: gorev.yayGorevi,
-        donus_bicimi: gorev.donusBicimi, // #7 çeşitlilik izlemesi
-        somutluk: gorev.somutluk, // FAZ 1.1 — kim/ne/nerede/ne_zaman/kanit checklist
+        trait_id: johariOverride ? johariOverride.traitId : sahitOverride ? null : gorev.trait_id,
+        kind: sahitOverride ? "sahit" : gorev.kind,
+        title: nihaiTitle,
+        body: nihaiBody,
+        difficulty: sahitOverride ? 1 : gorev.difficulty,
+        neden: sahitOverride ? null : gorev.neden,
+        fayda: sahitOverride ? null : gorev.fayda,
+        ipuclari: sahitOverride ? [] : gorev.ipuclari,
+        micro_sprint: sahitOverride ? false : gorev.micro_sprint,
+        yay_gorevi: sahitOverride ? false : gorev.yayGorevi,
+        donus_bicimi: sahitOverride ? "yaz" : gorev.donusBicimi, // #7 çeşitlilik izlemesi
+        somutluk: sahitOverride ? null : gorev.somutluk, // FAZ 1.1 — kim/ne/nerede/ne_zaman/kanit checklist
         altin: altinMi, // FAZ 5.2 — nadir altın görev (3x kıvılcım)
         // Özellik 7 — zorluk merdiveni ölçümü: görevin kası + modelin doz ölçümü.
-        // Johari override AI görevinin yerine geçer — o zaman kas izi yazılmaz.
-        kas: johariOverride ? null : gorev.kas,
-        zorluk_seviye: johariOverride ? null : gorev.zorlukSeviye,
+        // Johari/şahit override AI görevinin yerine geçer — o zaman kas izi yazılmaz.
+        kas: johariOverride || sahitOverride ? null : gorev.kas,
+        zorluk_seviye: johariOverride || sahitOverride ? null : gorev.zorlukSeviye,
+        // Özellik 2 — bu görev hangi kimlik cümlesini çürütmek için kurgulandı
+        // (statik override'larda direktif prompta girmedi → iz yazılmaz).
+        kimlik_cumle_id: johariOverride || sahitOverride ? null : gorev.kimlikCumleId,
         // KRİTİK: issued_at motorun kullandığı saate (prova'da SANAL saat) eşit
         // olmalı. Aksi halde sonGorevler penceresi + bugunSayisi + sonVerilis +
         // bekleyen kontrolleri kayıyor ve prova'da her tik görev üretip sel oluyor.
@@ -622,7 +692,9 @@ export async function tikCalistir(
     // FAZ 3.1 — ÇİFT TARAFLI ASİMETRİK GİZLİ GÖREV: isimli bir eşleşme
     // görevi verildiyse, hedefe eş zamanlı gizli bir "beklenmedik soru"
     // görevi düşer. İkisi de diğerinin görevde olduğunu bilmez.
-    if (eslesmeIsimliMi && eslesmeHedefId && wowAcikMi.get("cift_gizli_gorev_acik")) {
+    // Şahit varyantında KURULMAZ: gözlenen kişiye o an görev düşerse doğal
+    // hâli bozulur — şahit tam da kendiliğinden davranışı yakalamalı.
+    if (eslesmeIsimliMi && eslesmeHedefId && !sahitOverride && wowAcikMi.get("cift_gizli_gorev_acik")) {
       const baglantiId = crypto.randomUUID();
       const { error: baglaHata } = await db
         .from("missions")
@@ -686,15 +758,16 @@ export async function tikCalistir(
     await katilimciyaBildir(
       db,
       k.id,
-      `🤖 AYNA'dan yeni görev: ${gorev.title}`,
-      gorev.body.length > 120 ? gorev.body.slice(0, 117) + "…" : gorev.body,
+      `🤖 AYNA'dan yeni görev: ${nihaiTitle}`,
+      nihaiBody.length > 120 ? nihaiBody.slice(0, 117) + "…" : nihaiBody,
       "/gorevler" // A3: bildirimden doğrudan görev ekranına
     );
     // Ses katmanı: simülasyonda İTİRAZCI konuşur (stok ses, herkese);
-    // gizli/cesarette YANSIMAN fısıldar (klon, bütçeli)
+    // gizli/cesarette YANSIMAN fısıldar (klon, bütçeli). Şahit override'ı
+    // yalnız "bag" türünden doğar — bu dallara zaten girmez.
     if (gorev.kind === "simulasyon" && gorev.itiraz) {
       await itirazSesi(db, k.id, yeniGorev.id, gorev.itiraz);
-    } else if (gorev.kind === "gizli" || gorev.kind === "cesaret") {
+    } else if (!sahitOverride && (gorev.kind === "gizli" || gorev.kind === "cesaret")) {
       await gorevSeslendir(db, k.id, yeniGorev.id, gorev.title, gorev.body);
     }
   }

@@ -53,6 +53,8 @@ import SomutlukChecklist from "./SomutlukChecklist";
 import GercekMiydiSoru from "./GercekMiydiSoru";
 import KapiSecimi from "./KapiSecimi";
 import NedenButonlari from "./NedenButonlari";
+import SesliMektup from "./SesliMektup";
+import { sesliMektupGoreviMi } from "@/lib/sesliMektup";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -200,14 +202,19 @@ export default async function GorevlerPage() {
   for (const g of gelenHam ?? []) if (g.observation) gelenGozlem.set(g.mission_id, g.observation);
 
   // FAZ 1.3 — eşleşme dengeleyici: teslim edilmiş (scored) eşleşmeli görevler
-  // için henüz cevaplanmamış "gerçek miydi?" sorusu.
+  // için henüz cevaplanmamış "gerçek miydi?" sorusu. Özellik 5 — şahit görevi
+  // sessiz bir gözlemdir, konuşma değil: "bu konuşma gerçek miydi?" sorulmaz.
   const { data: gercekMiydiHam } = await db
     .from("gorev_eslesme")
     .select("mission_id")
     .eq("kaynak_id", session.sub)
     .is("gercek_miydi", null);
   const gercekMiydiBekleyen = (gercekMiydiHam ?? [])
-    .map((r) => (gorevler ?? []).find((g) => g.id === r.mission_id && g.status === "scored"))
+    .map((r) =>
+      (gorevler ?? []).find(
+        (g) => g.id === r.mission_id && g.status === "scored" && g.kind !== "sahit"
+      )
+    )
     .filter((g): g is NonNullable<typeof g> => !!g);
 
   // #4 Bugünün özeti
@@ -258,6 +265,8 @@ export default async function GorevlerPage() {
   // kullanılır. Aynı işi iki yerde tekrar yazmamak için fonksiyona çıkarıldı.
   function GorevKarti({ g, vurgu }: { g: (typeof aktif)[number]; vurgu: boolean }) {
     const altinMi = !!(g as { altin?: boolean }).altin;
+    // Özellik 4 — sesli mektup görevi: yanıt yazılmaz, mikrofonla kaydedilir.
+    const mektupMu = sesliMektupGoreviMi(g);
     const atm = atmosferBul(g.kind, altinMi);
     const zorluk = (g.difficulty as Zorluk) ?? 2;
     return (
@@ -378,14 +387,19 @@ export default async function GorevlerPage() {
             secilen={mentorVeri.get(g.id)!.secilen}
           />
         )}
-        {/* UX #1: "Başladım" — birincil-yakını, görünür kalır (söz/senkron hariç) */}
-        {g.kind !== "soz" && g.kind !== "senkron" && (
+        {/* UX #1: "Başladım" — birincil-yakını, görünür kalır (söz/senkron/mektup hariç) */}
+        {g.kind !== "soz" && g.kind !== "senkron" && !mektupMu && (
           <BaslaButonu gorevId={g.id} basladiMi={!!g.started_at} />
         )}
         {/* UX #2 (tasarım): birincil eylem (yanıt) baskın; ikincil eylemler
-            tek "⋯ Seçenekler" altında toplanır — kart dağınıklığı biter. */}
-        <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
-        {g.kind !== "soz" && g.kind !== "senkron" && (
+            tek "⋯ Seçenekler" altında toplanır — kart dağınıklığı biter.
+            Özellik 4 — sesli mektupta yazı formu yerine kayıt kartı. */}
+        {mektupMu ? (
+          <SesliMektup gorevId={g.id} />
+        ) : (
+          <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
+        )}
+        {g.kind !== "soz" && g.kind !== "senkron" && !mektupMu && (
           <details className="group mt-3">
             <summary className="flex cursor-pointer list-none items-center justify-center gap-1 text-xs font-medium text-slate-500 transition-colors hover:text-slate-300">
               ⋯ {t.secenekler}
@@ -506,7 +520,12 @@ export default async function GorevlerPage() {
               </p>
               {/* UX #3 — telafi penceresinin canlı geri sayımı (due_at + 24sa) */}
               <TelafiSayac bitis={new Date(new Date(g.due_at).getTime() + 24 * 3_600_000).toISOString()} />
-              <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
+              {/* Özellik 4 — sesli mektup telafide de sesle gönderilir */}
+              {sesliMektupGoreviMi(g) ? (
+                <SesliMektup gorevId={g.id} />
+              ) : (
+                <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
+              )}
               {/* FAZ 7.2 — "Neden?" tek dokunuş: sonraki görevi kişiye göre biçimler */}
               <NedenButonlari gorevId={g.id} />
             </div>

@@ -10,6 +10,7 @@ import PuanAcilisi from "@/components/PuanAcilisi";
 import KivilcimSayac from "@/components/KivilcimSayac";
 import AynaBalon from "@/components/AynaBalon";
 import NedenNabzi from "./NedenNabzi";
+import KimlikYuzlesme from "./KimlikYuzlesme";
 
 const t = tr.gorevler;
 
@@ -40,6 +41,8 @@ type Sonuc = {
   // Özellik 6 — Çekirdek Neden Nabzı: 5. puanlı görevde tek soru (1-5).
   nabizSor?: boolean;
   nabizNeden?: string | null;
+  // Özellik 2 — Kimlik yüzleşmesi: 10. puanlı görevde cümle + karşı-kanıtlar.
+  kimlikYuzlesme?: { id: string; cumle: string; kanitlar: string[] } | null;
 };
 
 // Görev yanıtı: gönderim AYNA'nın anlık puanını bekler (5-15 sn) —
@@ -260,6 +263,11 @@ export default function GorevYanitFormu({
             kişinin KENDİ çekirdek neden cümlesiyle tek dokunuşluk 1-5 sorusu */}
         {!sonuc.bekliyor && sonuc.nabizSor && sonuc.nabizNeden && (
           <NedenNabzi gorevId={gorevId} neden={sonuc.nabizNeden} />
+        )}
+        {/* Özellik 2 — Kimlik yüzleşmesi: her 10. puanlı görevde, kişinin kendini
+            sınırlayan cümlesi + AYNA'nın biriktirdiği karşı-kanıtlarla yüzleşme */}
+        {!sonuc.bekliyor && sonuc.kimlikYuzlesme && (
+          <KimlikYuzlesme veri={sonuc.kimlikYuzlesme} />
         )}
         {/* #1 Yansıma Kapanışı: görülen içgörü — foto kanıtından önce gelir */}
         {!sonuc.bekliyor && !sonuc.soz && !sonuc.senkron && (
