@@ -3415,6 +3415,7 @@ export const tr = {
       senkron: "⏱ Senkron An",
       bag: "🤝 Bağ",
       soz: "🤝 Söz",
+      sahit: "👁 Şahit",
     },
     sozTesekkur:
       "Sözünü sakladım. 90 gün sonra sana hatırlatacağım. — AYNA",
@@ -3504,6 +3505,20 @@ export const tr = {
     nabizUzak: "1 · hiç yaklaştırmadı",
     nabizYakin: "5 · çok yaklaştırdı",
     nabizTesekkur: "Not ettim — pusulan sıradaki görevlere yön veriyor. Teşekkürler.",
+    // Özellik 5 — Şahit Perspektifi: eşleşme hedefini 10 dk sessizce gözle,
+    // onda gördüğün (muhtemelen kendisinin görmediği) BİR gücü tek cümleyle yaz.
+    // Statik şablon (AI'sız); yanıt hedefin sonraki görevinin açılış cümlesi olur.
+    sahitGorevBaslik: "Görünmez şahit",
+    sahitGorevGovde: (ad: string) =>
+      `Önümüzdeki 10 dakika ${ad} isimli kişiyi uzaktan, belli etmeden gözle.\n\nOnda gördüğün, muhtemelen KENDİSİNİN görmediği BİR gücü yakala — bir duruş, bir dokunuş, bir cümle.\n\nO gücü tek cümleyle bana yaz. Sözün, kimden geldiğini asla söylemeden, yarın onun aynasında belirecek.`,
+    // Özellik 2 — Kimlik yüzleşmesi: her 10. puanlı görevde, biriken
+    // karşı-kanıtlarla kişinin kendini sınırlayan cümlesi yüzüne tutulur.
+    kimlikUst: "Ayna bir cümleni hatırlıyor",
+    kimlikKanitBaslik: "Ama ben şunları gördüm:",
+    kimlikSoru: "Bunu hâlâ söyleyebilir misin?",
+    kimlikBirak: "Artık söyleyemem 🔥",
+    kimlikBirakiliyor: "Mühürleniyor…",
+    kimlikBirakildi: "🔥 O cümle artık senin değil — aynadan silindi.",
   },
   kivilcim: {
     ad: "Kıvılcım",

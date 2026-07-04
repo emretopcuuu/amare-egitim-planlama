@@ -1,6 +1,8 @@
 import { getSession } from "@/lib/auth/session";
 import { bayatOturumYaniti } from "@/lib/auth/bayatOturum";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { krizDiliVarMi } from "@/lib/guvenlik";
+import { sicakAnYakala } from "@/lib/sicakAn";
 import { tr } from "@/lib/i18n/tr";
 
 // #5 + GELİŞTİRME #8 (2.tur): Günlük check-in / "Tek Cümle".
@@ -96,11 +98,20 @@ export async function POST(req: Request) {
     }
   }
 
+  // Özellik 3 — SICAK AN: check-in notundaki güçlü duygu sinyalini yakala
+  // (fail-open; kriz dili taşıyan metinden sıcak an ÜRETİLMEZ — kriz akışına
+  // dokunulmaz, yalnız kapı kurulur). Seri sorgusuna paralel koşar.
+  const sicakAnP =
+    notu && !krizDiliVarMi(notu)
+      ? sicakAnYakala(db, session.sub, "checkin", notu)
+      : Promise.resolve();
+
   const { data } = await db
     .from("gunluk_checkin")
     .select("tarih")
     .eq("participant_id", session.sub)
     .order("tarih", { ascending: false })
     .limit(120);
+  await sicakAnP; // serverless: yanıt dönmeden tamamlansın
   return Response.json({ ok: true, seri: seriHesapla((data ?? []).map((r) => r.tarih), tarih) });
 }

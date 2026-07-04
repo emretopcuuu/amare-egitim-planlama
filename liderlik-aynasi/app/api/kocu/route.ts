@@ -2,6 +2,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { kocuGecmis, kocuTuru } from "@/lib/kocu";
 import { krizDiliVarMi, krizUyarisiGonder, KRIZ_YONLENDIRME } from "@/lib/guvenlik";
+import { sicakAnYakala } from "@/lib/sicakAn";
 import { aiLimitYaniti } from "@/lib/aiLimit";
 import { tr } from "@/lib/i18n/tr";
 
@@ -39,11 +40,18 @@ export async function POST(req: Request) {
     await krizUyarisiGonder(db, session.sub, session.ad, "kocu", mesaj!);
   }
 
+  // Özellik 3 — SICAK AN: koç sohbetindeki güçlü duygu sinyali, koç yanıtına
+  // PARALEL yakalanır (fail-open, kendi hatasını yutar). Kriz metninden sıcak
+  // an üretilmez — kriz akışı yukarıda ayrı işledi ve dokunulmaz.
+  const sicakAnP =
+    !kriz && mesaj ? sicakAnYakala(db, session.sub, "kocu", mesaj) : Promise.resolve();
+
   const tur = await kocuTuru(
     db,
     { id: session.sub, full_name: session.ad },
     mesaj
   );
+  await sicakAnP; // serverless: yanıt dönmeden tamamlansın
   if (!tur) return Response.json({ hata: tr.kocu.uretilemedi }, { status: 503 });
   return Response.json(
     kriz ? { ...tur, mesaj: `${tur.mesaj}\n\n${KRIZ_YONLENDIRME}`, guvenlik: true } : tur

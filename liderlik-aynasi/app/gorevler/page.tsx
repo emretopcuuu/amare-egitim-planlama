@@ -200,14 +200,19 @@ export default async function GorevlerPage() {
   for (const g of gelenHam ?? []) if (g.observation) gelenGozlem.set(g.mission_id, g.observation);
 
   // FAZ 1.3 — eşleşme dengeleyici: teslim edilmiş (scored) eşleşmeli görevler
-  // için henüz cevaplanmamış "gerçek miydi?" sorusu.
+  // için henüz cevaplanmamış "gerçek miydi?" sorusu. Özellik 5 — şahit görevi
+  // sessiz bir gözlemdir, konuşma değil: "bu konuşma gerçek miydi?" sorulmaz.
   const { data: gercekMiydiHam } = await db
     .from("gorev_eslesme")
     .select("mission_id")
     .eq("kaynak_id", session.sub)
     .is("gercek_miydi", null);
   const gercekMiydiBekleyen = (gercekMiydiHam ?? [])
-    .map((r) => (gorevler ?? []).find((g) => g.id === r.mission_id && g.status === "scored"))
+    .map((r) =>
+      (gorevler ?? []).find(
+        (g) => g.id === r.mission_id && g.status === "scored" && g.kind !== "sahit"
+      )
+    )
     .filter((g): g is NonNullable<typeof g> => !!g);
 
   // #4 Bugünün özeti
