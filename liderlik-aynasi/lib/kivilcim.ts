@@ -23,6 +23,34 @@ export function kivilcimHesapla(aiPuan: number, zamaninda: boolean, streak = 0):
   return 10 + aiPuan + (zamaninda ? 5 : 0) + streakBonus(streak);
 }
 
+/** Kıvılcım DÖKÜMÜ — kivilcimHesapla ile aynı matematik, kalem kalem.
+ *  Sonuç ekranında "taban +10 → AYNA +N → zamanında +5 → seri +M" animasyonu
+ *  için; mevcut kivilcimHesapla davranışına DOKUNMAZ (toplamlar birebir eşit). */
+export type KivilcimDokumu = {
+  taban: number;
+  ai: number;
+  zamaninda: number; // 5 ya da 0
+  seri: number; // streakBonus
+  toplam: number;
+};
+
+export function kivilcimDokumHesapla(
+  aiPuan: number,
+  zamaninda: boolean,
+  streak = 0
+): KivilcimDokumu {
+  const taban = 10;
+  const zamanindaBonus = zamaninda ? 5 : 0;
+  const seri = streakBonus(streak);
+  return {
+    taban,
+    ai: aiPuan,
+    zamaninda: zamanindaBonus,
+    seri,
+    toplam: taban + aiPuan + zamanindaBonus + seri,
+  };
+}
+
 /** Ard arda tamamlama (streak) basamak bonusu — momentum SOMUT ödüllenir
  *  (öneri #5). Eskiden streak yalnız prompt tonunu değiştiriyordu, kıvılcıma
  *  hiç etkisi yoktu. Basamaklı: 3→+3, 5→+6, 7+→+10. streak=0 → bonus yok. */

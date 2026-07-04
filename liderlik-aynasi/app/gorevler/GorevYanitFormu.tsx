@@ -11,6 +11,7 @@ import KivilcimSayac from "@/components/KivilcimSayac";
 import AynaBalon from "@/components/AynaBalon";
 import NedenNabzi from "./NedenNabzi";
 import KimlikYuzlesme from "./KimlikYuzlesme";
+import KivilcimDokum, { type KivilcimDokumVeri } from "./KivilcimDokum";
 
 const t = tr.gorevler;
 
@@ -28,6 +29,8 @@ type Sonuc = {
   puan?: number;
   yorum?: string;
   kivilcim?: number;
+  // D6 — kıvılcım dökümü: kalemler sırayla sayılarak eklenir (animasyon).
+  kivilcimDokum?: KivilcimDokumVeri;
   toplam?: number;
   unvan?: string;
   soz?: boolean;
@@ -192,7 +195,7 @@ export default function GorevYanitFormu({
     return (
       <>
         {buyukKazanim && <Konfeti />}
-        <div className="mt-4 rounded-xl bg-midnight-soft p-4 text-center">
+        <div className="mt-3 rounded-xl bg-midnight-soft p-4 text-center">
         {sonuc.bekliyor ? (
           <>
             {/* UX #5: markalı shimmer — yapay zekânın "okuduğunu" hissettirir */}
@@ -225,7 +228,13 @@ export default function GorevYanitFormu({
               </p>
             )}
             {sonuc.puan !== undefined && <PuanAcilisi puan={sonuc.puan} />}
-            {sonuc.kivilcim !== undefined && <KivilcimSayac kazanim={sonuc.kivilcim} />}
+            {/* D6 — döküm geldiyse kalem kalem animasyon; yoksa (söz/senkron)
+                eski tek-sayı sayacı */}
+            {sonuc.kivilcimDokum ? (
+              <KivilcimDokum veri={sonuc.kivilcimDokum} />
+            ) : (
+              sonuc.kivilcim !== undefined && <KivilcimSayac kazanim={sonuc.kivilcim} />
+            )}
             {/* FAZ 6.2 — kas ilerleme halkası: "bu görevle X kasın N. kez çalıştı" */}
             {sonuc.kasSayaci && (
               <p className="mt-3 inline-flex items-center gap-2 rounded-full border border-royal-light/30 bg-royal/15 px-4 py-1.5 text-sm font-medium text-royal-light">
@@ -290,12 +299,9 @@ export default function GorevYanitFormu({
   }
 
   return (
-    <form onSubmit={gonder} className="mt-4">
-      <label htmlFor={`yanit-${gorevId}`} className="text-xs font-medium text-slate-300">
-        {t.yanitEtiket}
-      </label>
-      {/* UX #8 — yanıt iskelesi: boş sayfa felcine karşı nazik çatı */}
-      <p className="mt-0.5 text-xs leading-relaxed text-slate-500">{t.yanitIskele}</p>
+    <form onSubmit={gonder} className="mt-3">
+      {/* D11 — "Yanıtın" başlığı + iskele satırı kaldırıldı: yönerge YALNIZ
+          placeholder'da yaşar; erişilebilir ad aria-label ile korunur. */}
       <textarea
         id={`yanit-${gorevId}`}
         ref={yanitRef}
@@ -304,8 +310,9 @@ export default function GorevYanitFormu({
         rows={4}
         maxLength={1500}
         disabled={gonderiliyor}
+        aria-label={t.yanitEtiket}
         placeholder={t.yanitPlaceholder}
-        className="mt-1 max-h-[320px] min-h-[6rem] w-full resize-none rounded-xl border border-royal-light/30 bg-midnight-soft p-3 text-base text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
+        className="max-h-[320px] min-h-[6rem] w-full resize-none rounded-xl border border-royal-light/30 bg-midnight-soft p-3 text-base text-slate-100 outline-none transition-colors placeholder:text-slate-500 focus:border-gold"
       />
       {hata && (
         <div
@@ -340,8 +347,8 @@ export default function GorevYanitFormu({
           return <p className="mt-2 text-xs text-emerald-300/90">{t.ipucuYeterli}</p>;
         return null;
       })()}
-      <p className="mt-2 text-xs text-slate-500">{t.sesliIpucu}</p>
-      <div className="mt-1 flex gap-2">
+      {/* D11 — "🎤 Yazmak istemiyorsan…" satırı kaldırıldı: Sesle Yaz butonu yeterli */}
+      <div className="mt-2 flex gap-2">
         <MikrofonButonu
           disabled={gonderiliyor}
           onMetin={(parca) =>

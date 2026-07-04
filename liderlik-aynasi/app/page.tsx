@@ -696,6 +696,35 @@ export default async function AnaSayfa({
           karsilasmaBul(db, session.sub),
         ])
       : [null, null];
+  // D7 — karşılaşma partnerinin kişi kartı verisi: foto (imzalı URL) + takım +
+  // telefon. Telefon YALNIZ bu tek eşleşme hedefi için sunucudan iner — genel
+  // roster istemciye sızmaz.
+  let karsilasmaPartner: {
+    ad: string;
+    takim: string | null;
+    telefon: string | null;
+    fotoUrl: string | null;
+  } | null = null;
+  if (karsilasma) {
+    const { data: partnerKisi } = await db
+      .from("participants")
+      .select("full_name, team, phone, profil_foto_path")
+      .eq("id", karsilasma.partnerId)
+      .maybeSingle();
+    let fotoUrl: string | null = null;
+    if (partnerKisi?.profil_foto_path) {
+      const { data: imzali } = await db.storage
+        .from("sesler")
+        .createSignedUrl(partnerKisi.profil_foto_path, 3600);
+      fotoUrl = imzali?.signedUrl ?? null;
+    }
+    karsilasmaPartner = {
+      ad: partnerKisi?.full_name ?? karsilasma.partnerAd,
+      takim: partnerKisi?.team ?? null,
+      telefon: partnerKisi?.phone ?? null,
+      fotoUrl,
+    };
+  }
   return (
     <Sayfa ust={ust}>
       {/* Program artık alt menüdeki "Program" sekmesinde (kişisel, katlanır).
@@ -705,7 +734,9 @@ export default async function AnaSayfa({
       {koprusu && <AlgiKoprusuKarti veri={koprusu} />}
 
       {/* Karşılaşma — AYNA'nın eşlediği tamamlayıcı kişiyle konuşma daveti */}
-      {karsilasma && <KarsilasmaKarti partnerAd={karsilasma.partnerAd} />}
+      {karsilasma && (
+        <KarsilasmaKarti partnerAd={karsilasma.partnerAd} partner={karsilasmaPartner} />
+      )}
 
       {/* İkincil sakin durum — küçük, programın altında akar */}
       <div className="kart-cam relative overflow-hidden rounded-2xl p-5 text-center">
