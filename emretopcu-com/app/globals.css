@@ -24,6 +24,13 @@
   --color-gri: #8f8f99;
   --color-kobalt: #4655e8;
 
+  /* Varyant D "Zirve": abanoz + tek altın vurgu */
+  --color-abanoz: #0b0a09;
+  --color-abanoz-2: #14120f;
+  --color-fildisi: #f3f0e9;
+  --color-duman: #9a948a;
+  --color-altin: #d4b06a;
+
   --font-sahne: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
   --font-editoryal: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
   --font-kinetik: var(--font-space), ui-sans-serif, system-ui, sans-serif;
@@ -64,6 +71,33 @@ html {
 .reveal.gorunur {
   opacity: 1;
   transform: none;
+}
+
+/* Zirve varyantı: nefes alan altın ışık yıkaması */
+.aurora {
+  background:
+    radial-gradient(
+      780px 520px at 78% 12%,
+      rgba(212, 176, 106, 0.13),
+      transparent 62%
+    ),
+    radial-gradient(
+      620px 480px at 8% 92%,
+      rgba(212, 176, 106, 0.06),
+      transparent 58%
+    );
+  animation: nefes 8s ease-in-out infinite alternate;
+}
+
+@keyframes nefes {
+  from {
+    opacity: 0.55;
+    transform: scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.12);
+  }
 }
 
 /* Kinetik varyant: tek marquee bandı */
