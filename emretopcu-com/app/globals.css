@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* Tek tema: koyu "sahne" paleti. Vurgu rengi tek: buz mavisi (diamond). */
+  /* Varyant A "Sahne": koyu zemin + tek buz mavisi vurgu */
   --color-ink: #0b0e13;
   --color-ink-2: #10141c;
   --color-ink-3: #171d27;
@@ -9,25 +9,28 @@
   --color-mist: #939eb0;
   --color-buz: #86c9e8;
 
-  --font-sans: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
-}
+  /* Varyant B "Editoryal ışık": kırık beyaz + mürekkep + orman yeşili */
+  --color-kagit: #f6f6f2;
+  --color-kagit-2: #efefe9;
+  --color-murekkep: #181c22;
+  --color-kursun: #5d6673;
+  --color-orman: #1f5f3c;
+  --color-orman-acik: #e7efe9;
 
-:root {
-  color-scheme: dark;
+  /* Varyant C "Kinetik ajans": off-black + kobalt */
+  --color-gece: #0a0a0c;
+  --color-gece-2: #121216;
+  --color-kar: #f5f5f3;
+  --color-gri: #8f8f99;
+  --color-kobalt: #4655e8;
+
+  --font-sahne: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-editoryal: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
+  --font-kinetik: var(--font-space), ui-sans-serif, system-ui, sans-serif;
 }
 
 html {
   scroll-behavior: smooth;
-}
-
-body {
-  background-color: var(--color-ink);
-  color: var(--color-bone);
-}
-
-::selection {
-  background-color: var(--color-buz);
-  color: var(--color-ink);
 }
 
 /* Sayfa açılışı: hero elemanları sırayla yükselir */
@@ -63,6 +66,22 @@ body {
   transform: none;
 }
 
+/* Kinetik varyant: tek marquee bandı */
+.marquee-band {
+  display: flex;
+  width: max-content;
+  animation: kaydir 36s linear infinite;
+}
+
+@keyframes kaydir {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -75,5 +94,8 @@ body {
     opacity: 1;
     transform: none;
     transition: none;
+  }
+  .marquee-band {
+    animation: none;
   }
 }
