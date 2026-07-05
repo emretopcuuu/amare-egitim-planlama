@@ -169,6 +169,16 @@ export async function sozTakipAktif(db: Db, pid: string): Promise<boolean> {
   return data?.durum === "sesli";
 }
 
+// Kişinin KENDİ sözüne seçtiği şahit sayısı (imza şart değil, seçim yeterli).
+// 90 gün yolculuğu bu sayı hedefe ulaşmadan AÇILMAZ — şahit adımı zorunlu.
+export async function secilenSahitSayisi(db: Db, pid: string): Promise<number> {
+  const { count } = await db
+    .from("soz_tanik")
+    .select("id", { count: "exact", head: true })
+    .eq("soz_sahibi", pid);
+  return count ?? 0;
+}
+
 // Kişinin şahit olduğu (imzaladığı) kişi sayısı — şahit paneli linki için.
 export async function sahitSayim(db: Db, witnessId: string): Promise<number> {
   const { count } = await db
