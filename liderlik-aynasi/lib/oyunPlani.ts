@@ -26,6 +26,7 @@ Plan kuralları:
 - Network/doğrudan satış alanının diliyle konuş (davet, sunum, kapanış, liste, katlama). KATILIMCI EVRENİ'ndeki gerçek tıkanmalara hitap et.
 - Planı kişinin GÜÇLÜ yanına yasla (onu kaldıraç yap) ve KÖR NOKTASINI/gelişim alanını sessizce çalıştır — ama açıkça yüzüne vurma.
 - Hedef rakamlarını planın iskeletine bağla ama kuru kuruya tekrarlama.
+- ÖLÇÜTLER CESUR AMA GERÇEKÇİ OLSUN — momentum hacimle gelir, çekingen sayı ilerletmez. Bir kişiye/adaya "davet/aktivite çıkart" derken TEK adet yetmez; anlamlı bir taban koy (ör. "her adayın kendi listesinden EN AZ 3 davet çıkarmasını sağla"). Düşük/ürkek hedeflerden kaçın; kişinin temposuna göre iddialı ama ulaşılabilir bir çıta koy.
 - "ozet": planın ruhunu 1-2 cümlede, nedenle hedefi birleştirerek.`;
 
 const PLAN_MADDE = {
