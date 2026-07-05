@@ -619,6 +619,74 @@ const YapiskanKatilBar = ({ egitim, onAktifDegisti }) => {
 };
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// MOBİL yapışkan gün-nav (#1,#6,#7) — AYRI bileşen: kendi scroll state'i var, böylece
+// scroll sırasında dev eğitim listesini yeniden render ETMEZ (eskiden setGorunenGun
+// TakvimView'ı her scroll frame'inde render edip kartlarda titreme yaratıyordu).
+// Konumlandırma: position:fixed (sticky, üstteki overflow-x-hidden sarmalayıcı yüzünden
+// bu sayfada pinlenmiyor; fixed ise animate-page-in transform'u kaldırıldığı için artık çalışır).
+// ═══════════════════════════════════════════════════════════════════════════════
+const MobilGunNav = ({ sonrakiEgitim, gunSeridi }) => {
+  const [gorunenGun, setGorunenGun] = useState(null);
+  const [gorunur, setGorunur] = useState(false);
+  useEffect(() => {
+    let raf = 0;
+    const onScroll = () => {
+      setGorunur(window.scrollY > 300); // göster/gizle: ucuz, anında (rAF bekleme)
+      if (raf) return;
+      raf = requestAnimationFrame(() => { // pahalı kart taraması: throttle
+        raf = 0;
+        const kartlar = document.querySelectorAll('[data-tarih]');
+        let aktif = null;
+        for (const k of kartlar) {
+          if (k.getBoundingClientRect().top <= 150) aktif = k.getAttribute('data-tarih');
+          else break;
+        }
+        setGorunenGun(prev => (prev === aktif ? prev : aktif));
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => { window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
+  }, []);
+
+  if (gunSeridi.length <= 1 && !sonrakiEgitim) return null;
+  return (
+    <div className={`md:hidden fixed top-0 left-0 right-0 z-40 bg-purple-950 border-b border-white/10 px-4 py-2 shadow-xl transition-transform duration-200 ${gorunur ? 'translate-y-0' : '-translate-y-full pointer-events-none'}`} data-no-pdf>
+      <div className="container mx-auto max-w-7xl">
+        {(gorunenGun || sonrakiEgitim) && (
+          <div className="flex items-center justify-between gap-2 mb-1.5 text-[11px]">
+            <span className="text-purple-200/80 font-bold truncate">
+              {gorunenGun ? `📍 ${(() => { const d = parseTarih(gorunenGun); return d ? d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' }) : gorunenGun; })()}` : ''}
+            </span>
+            {sonrakiEgitim && (() => {
+              const cd = getCountdown(sonrakiEgitim);
+              const canli = cd?.durum === 'canli';
+              return (
+                <button onClick={() => document.getElementById(`egitim-${sonrakiEgitim.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  className={`flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-full font-bold ${canli ? 'bg-green-500/25 text-green-200 border border-green-400/40' : 'bg-white/10 text-amber-200 border border-white/15'}`}>
+                  {canli ? '🔴 CANLI' : '⏭'} {(sonrakiEgitim.egitim || '').slice(0, 18)}{(sonrakiEgitim.egitim || '').length > 18 ? '…' : ''}{!canli && cd?.durum === 'yakin' ? ` · ${cd.dakika}dk` : ''}
+                </button>
+              );
+            })()}
+          </div>
+        )}
+        {gunSeridi.length > 1 && (
+          <div className="flex gap-1.5 overflow-x-auto -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
+            {gunSeridi.map(g => (
+              <button key={g.tarih}
+                onClick={() => { const el = document.querySelector(`[data-tarih="${g.tarih}"]`); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}
+                className={`flex-shrink-0 flex flex-col items-center px-2.5 py-1 rounded-xl border transition-all ${g.bugun ? 'bg-amber-400 text-purple-900 border-amber-300 font-extrabold shadow' : 'bg-white/8 text-white/80 border-white/15'}`}>
+                <span className="text-[9px] uppercase leading-none opacity-80">{g.gunAd}</span>
+                <span className="text-sm font-bold leading-tight">{g.gunNo}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // ANA BİLEŞEN
 // ═══════════════════════════════════════════════════════════════════════════════
 const TakvimView = () => {
@@ -664,30 +732,14 @@ const TakvimView = () => {
     window.location.reload();
   });
 
-  // Scroll-to-top floating button + görünen gün takibi (mobil sticky gün başlığı)
-  const [gorunenGun, setGorunenGun] = useState(null);
+  // Scroll-to-top floating buton görünürlüğü. (Görünen-gün takibi artık MobilGunNav'ın
+  // KENDİ içinde — büyük listeyi her scroll'da render etmemek için ayrıldı.)
   const [mobilMenuAcik, setMobilMenuAcik] = useState(false);
   const [swipeIpucu, setSwipeIpucu] = useState(() => { try { return !localStorage.getItem('amare_swipe_ipucu'); } catch { return false; } });
   useEffect(() => {
-    let raf = 0;
-    const onScroll = () => {
-      setShowScrollTop(window.scrollY > 400);
-      // Görünen günü tespit et (throttle: rAF) — viewport üst bandına en yakın kart
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        const kartlar = document.querySelectorAll('[data-tarih]');
-        let aktif = null;
-        for (const k of kartlar) {
-          const top = k.getBoundingClientRect().top;
-          if (top <= 190) aktif = k.getAttribute('data-tarih');
-          else break;
-        }
-        setGorunenGun(aktif);
-      });
-    };
+    const onScroll = () => setShowScrollTop(window.scrollY > 400);
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => { window.removeEventListener('scroll', onScroll); if (raf) cancelAnimationFrame(raf); };
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   // Sıradaki eğitim (şu andan sonraki en yakın) — mobil "Sıradaki" bandı için
@@ -1047,7 +1099,7 @@ const TakvimView = () => {
 
     if (gorunum === 'kart') {
       return (
-        <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`relative bg-white rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+        <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`relative scroll-mt-24 md:scroll-mt-4 bg-white rounded-2xl shadow-lg hover:shadow-2xl hover:-translate-y-1 transition-all duration-200 overflow-hidden flex flex-col ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
           {/* Yurtdışı rozeti — z-20 (poster üstünde) */}
           {yurtdisi && (
             <div className="absolute top-2 right-2 z-20 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg">
@@ -1172,7 +1224,7 @@ const TakvimView = () => {
       ? 'bg-gradient-to-b from-blue-600 to-blue-800'
       : 'bg-gradient-to-b from-purple-700 to-purple-900';
     return (
-      <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`relative bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
+      <div key={egitim.id} id={`egitim-${egitim.id}`} data-tarih={egitim.tarih} {...swipeProps(egitim, gecmis)} className={`relative scroll-mt-24 md:scroll-mt-4 bg-white rounded-xl shadow-lg hover:shadow-2xl hover:-translate-y-0.5 transition-all duration-200 overflow-hidden ${gecmis ? 'past-event' : 'hover-lift'} ${yurtdisi ? 'ring-2 ring-amber-400/40' : ''}`}>
         {/* Yurtdışı rozeti — kartın sağ üst köşesinde */}
         {yurtdisi && (
           <div className="absolute top-2 right-2 z-10 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-extrabold bg-gradient-to-r from-amber-400 to-orange-500 text-gray-900 shadow-lg gold-glow">
@@ -1456,42 +1508,13 @@ const TakvimView = () => {
           </div>
         )}
 
-        {/* Arama + Filtreler + Görünüm — sticky on scroll */}
-        <div className="sticky top-0 z-30 bg-gradient-to-b from-purple-900/95 to-purple-900/85 backdrop-blur-md border-b border-white/10 px-4 py-3 shadow-lg" data-no-pdf>
+        {/* MOBİL yapışkan gün-nav (#1,#6,#7) — ayrı bileşen (kendi scroll state'i;
+            listeyi render etmez → titreme yok). Scroll'da üstte belirir. */}
+        <MobilGunNav sonrakiEgitim={sonrakiEgitim} gunSeridi={gunSeridi} />
+
+        {/* Arama + Filtreler + Görünüm — masaüstünde yapışkan, MOBİLDE AKAR */}
+        <div className="md:sticky md:top-0 z-20 bg-gradient-to-b from-purple-900/95 to-purple-900/85 backdrop-blur-md border-b border-white/10 px-4 py-3 shadow-lg" data-no-pdf>
           <div className="container mx-auto max-w-7xl">
-            {/* MOBİL: görünen gün + sıradaki eğitim ince bandı (#6+#7) */}
-            {(gorunenGun || sonrakiEgitim) && (
-              <div className="md:hidden flex items-center justify-between gap-2 mb-2 -mt-1 text-[11px]">
-                <span className="text-purple-200/80 font-bold truncate">
-                  {gorunenGun ? `📍 ${(() => { const d = parseTarih(gorunenGun); return d ? d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' }) : gorunenGun; })()}` : ''}
-                </span>
-                {sonrakiEgitim && (() => {
-                  const cd = getCountdown(sonrakiEgitim);
-                  const canli = cd?.durum === 'canli';
-                  return (
-                    <button onClick={() => document.getElementById(`egitim-${sonrakiEgitim.id}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-                      className={`flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded-full font-bold ${canli ? 'bg-green-500/25 text-green-200 border border-green-400/40' : 'bg-white/10 text-amber-200 border border-white/15'}`}>
-                      {canli ? '🔴 CANLI' : '⏭'} {(sonrakiEgitim.egitim || '').slice(0, 18)}{(sonrakiEgitim.egitim || '').length > 18 ? '…' : ''}{!canli && cd?.durum === 'yakin' ? ` · ${cd.dakika}dk` : ''}
-                    </button>
-                  );
-                })()}
-              </div>
-            )}
-
-            {/* MOBİL: yatay gün şeridi (#1) — dokun, o güne zıpla */}
-            {gunSeridi.length > 1 && (
-              <div className="md:hidden flex gap-1.5 overflow-x-auto mb-2 pb-1 -mx-1 px-1" style={{ scrollbarWidth: 'none' }}>
-                {gunSeridi.map(g => (
-                  <button key={g.tarih}
-                    onClick={() => { const el = document.querySelector(`[data-tarih="${g.tarih}"]`); if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } }}
-                    className={`flex-shrink-0 flex flex-col items-center px-2.5 py-1 rounded-xl border transition-all ${g.bugun ? 'bg-amber-400 text-purple-900 border-amber-300 font-extrabold shadow' : 'bg-white/8 text-white/80 border-white/15'}`}>
-                    <span className="text-[9px] uppercase leading-none opacity-80">{g.gunAd}</span>
-                    <span className="text-sm font-bold leading-tight">{g.gunNo}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-
             {/* Arama — daha belirgin */}
             <div className="relative mb-3">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-purple-300" />

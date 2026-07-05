@@ -101,13 +101,16 @@ html {
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ── Page-in (route transition) — kısa, hızlı, native hissi ── */
+  /* ── Page-in (route transition) — kısa, hızlı, native hissi ──
+     NOT: transform KULLANMA. Sarmalayıcıda kalıcı transform, içindeki tüm
+     position:fixed / sticky elemanları tuzağa düşürür (yüzen "Bugün" pili,
+     yapışkan bar vs. sabitlenmez). Sadece opacity ile geçiş yap. */
   .animate-page-in {
     animation: pageIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   }
   @keyframes pageIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
 
   /* ── #1 Sinematik Logo Açılışı ──────────────────────────── */
