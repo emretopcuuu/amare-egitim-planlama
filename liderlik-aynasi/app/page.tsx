@@ -709,6 +709,9 @@ export default async function AnaSayfa({
           vurgu
         />
         <div className="mt-4 space-y-3">
+          {/* Kişinin KENDİ sözü + seçtiği şahitler (imza durumu, QR ile toplama,
+              düzenleme) — yolculuğa geçtikten sonra da erişilebilir olmalı. */}
+          <SicakAdim href="/sozum" etiket="🤝 Sözün ve şahitlerin" />
           {sahitSayisi > 0 && (
             <SicakAdim href="/sahitlik" etiket={t.takipSahitlik(sahitSayisi)} vurgu />
           )}
