@@ -1483,8 +1483,7 @@ const TakvimView = () => {
                   <div className="absolute left-0 top-12 bottom-4 w-1 rounded-full bg-gradient-to-b from-amber-400/40 via-purple-400/30 to-transparent hidden lg:block" />
 
                   <div className="flex items-center gap-3 mb-4 lg:pl-6">
-                    <div className="bg-white text-purple-800 rounded-xl px-4 py-2 font-extrabold text-lg shadow gold-glow font-display">{t('cal_week')} {ayIciHaftaNo[haftaKey] || idx+1}</div>
-                    <div className="text-amber-200 text-sm font-medium">{aralik}</div>
+                    <div className="bg-white text-purple-800 rounded-xl px-4 py-2 font-extrabold text-lg md:text-xl shadow gold-glow font-display whitespace-nowrap">{aralik}</div>
                     <div className="flex-1 h-px bg-gradient-to-r from-white/20 via-amber-400/30 to-transparent" />
                     <div className="text-purple-300 text-sm">{haftaEgitimleri.length} {t('cal_trainings')}</div>
                   </div>
