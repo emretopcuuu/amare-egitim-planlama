@@ -1,30 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  /* Varyant A "Sahne": koyu zemin + tek buz mavisi vurgu */
-  --color-ink: #0b0e13;
-  --color-ink-2: #10141c;
-  --color-ink-3: #171d27;
-  --color-bone: #eef1f6;
-  --color-mist: #939eb0;
-  --color-buz: #86c9e8;
-
-  /* Varyant B "Editoryal ışık": kırık beyaz + mürekkep + orman yeşili */
-  --color-kagit: #f6f6f2;
-  --color-kagit-2: #efefe9;
-  --color-murekkep: #181c22;
-  --color-kursun: #5d6673;
-  --color-orman: #1f5f3c;
-  --color-orman-acik: #e7efe9;
-
-  /* Varyant C "Kinetik ajans": off-black + kobalt */
-  --color-gece: #0a0a0c;
-  --color-gece-2: #121216;
-  --color-kar: #f5f5f3;
-  --color-gri: #8f8f99;
-  --color-kobalt: #4655e8;
-
-  /* Varyant D "Zirve": abanoz + tek altın vurgu */
+  /* "Zirve" paleti: abanoz zemin + tek altın vurgu */
   --color-abanoz: #0b0a09;
   --color-abanoz-2: #14120f;
   --color-fildisi: #f3f0e9;
@@ -32,104 +9,23 @@
   --color-altin: #d4b06a;
 
   --font-sahne: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
-  --font-editoryal: var(--font-schibsted), ui-sans-serif, system-ui, sans-serif;
-  --font-kinetik: var(--font-space), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: dark;
 }
 
 html {
   scroll-behavior: smooth;
 }
 
-/* Sayfa açılışı: hero elemanları sırayla yükselir */
-.yukselen {
-  opacity: 0;
-  animation: yuksel 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-delay: var(--d, 0s);
-}
-
-@keyframes yuksel {
-  from {
-    opacity: 0;
-    transform: translateY(28px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-/* Scroll ile görünür olan bloklar (IntersectionObserver sınıf ekler) */
-.reveal {
-  opacity: 0;
-  transform: translateY(24px);
-  transition:
-    opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
-  transition-delay: var(--reveal-delay, 0s);
-}
-
-.reveal.gorunur {
-  opacity: 1;
-  transform: none;
-}
-
-/* Zirve varyantı: nefes alan altın ışık yıkaması */
-.aurora {
-  background:
-    radial-gradient(
-      780px 520px at 78% 12%,
-      rgba(212, 176, 106, 0.13),
-      transparent 62%
-    ),
-    radial-gradient(
-      620px 480px at 8% 92%,
-      rgba(212, 176, 106, 0.06),
-      transparent 58%
-    );
-  animation: nefes 8s ease-in-out infinite alternate;
-}
-
-@keyframes nefes {
-  from {
-    opacity: 0.55;
-    transform: scale(1);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1.12);
-  }
-}
-
-/* Kinetik varyant: tek marquee bandı */
-.marquee-band {
-  display: flex;
-  width: max-content;
-  animation: kaydir 36s linear infinite;
-}
-
-@keyframes kaydir {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(-50%);
-  }
+body {
+  background-color: var(--color-abanoz);
+  color: var(--color-fildisi);
 }
 
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
-  }
-  .yukselen {
-    animation: none;
-    opacity: 1;
-  }
-  .reveal {
-    opacity: 1;
-    transform: none;
-    transition: none;
-  }
-  .marquee-band {
-    animation: none;
   }
 }

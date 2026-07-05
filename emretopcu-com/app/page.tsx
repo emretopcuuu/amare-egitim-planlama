@@ -1,5 +1,5 @@
-import Sahne from "@/components/varyantlar/Sahne";
+import Zirve from "@/components/varyantlar/Zirve";
 
 export default function AnaSayfa() {
-  return <Sahne />;
+  return <Zirve />;
 }

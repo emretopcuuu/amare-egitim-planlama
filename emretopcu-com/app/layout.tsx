@@ -1,22 +1,10 @@
 import type { Metadata } from "next";
-import { Outfit, Schibsted_Grotesk, Space_Grotesk } from "next/font/google";
+import { Outfit } from "next/font/google";
 import "./globals.css";
 
 const outfit = Outfit({
   subsets: ["latin", "latin-ext"],
   variable: "--font-outfit",
-  display: "swap",
-});
-
-const schibsted = Schibsted_Grotesk({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-schibsted",
-  display: "swap",
-});
-
-const space = Space_Grotesk({
-  subsets: ["latin", "latin-ext"],
-  variable: "--font-space",
   display: "swap",
 });
 
@@ -40,10 +28,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html
-      lang="tr"
-      className={`${outfit.variable} ${schibsted.variable} ${space.variable}`}
-    >
+    <html lang="tr" className={outfit.variable}>
       <body className="antialiased">{children}</body>
     </html>
   );
