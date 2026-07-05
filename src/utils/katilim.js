@@ -9,6 +9,7 @@ import { trackEvent } from './analytics';
 export function katilTikla(egitim) {
   try {
     if (!egitim?.id) return;
+    try { navigator.vibrate?.(20); } catch {} // dokunuş onayı (mobil)
     trackEvent('zoom_katil', { egitimId: egitim.id, egitimAdi: egitim.egitim || '' });
     (async () => {
       try {
