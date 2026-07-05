@@ -9,7 +9,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://emretopcu.com"),
+  metadataBase: new URL("https://emretopcu.ai"),
   title: "Emre Topçu | Liderlik, ekip ve sistem",
   description:
     "One Team Global lideri Emre Topçu. Ekipler kuran, liderler yetiştiren ve bu işi sistemle yapan bir network marketing lideri.",
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     title: "Emre Topçu | Liderlik, ekip ve sistem",
     description:
       "Ekipler kuran, liderler yetiştiren ve bu işi sistemle yapan bir network marketing lideri.",
-    url: "https://emretopcu.com",
+    url: "https://emretopcu.ai",
     siteName: "Emre Topçu",
     locale: "tr_TR",
     type: "website",

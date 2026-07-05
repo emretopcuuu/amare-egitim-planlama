@@ -11,8 +11,10 @@ liderlik değerlendirme + kişisel gelişim uygulaması. ~29 aktif katılımcı.
 Repo kökündeki eski Vite+Firebase uygulamasına **dokunulmaz**; bu uygulama
 bağımsız olarak **`liderlik-aynasi/`** alt klasöründe yaşar.
 Repo'da ayrıca **`emretopcu-com/`** var: Emre'nin kişisel marka sitesi
-(emretopcu.com, Next.js 16 + Tailwind v4, tek sayfa, Türkçe). Kampla ilgisi
-yok; Netlify yayın adımları ve içerik TODO'ları kendi README'sinde.
+(**emretopcu.ai** — emretopcu.com başka bir adaşın çıktı; domain Cloudflare
+Registrar'dan alındı). Next.js 16 + Tailwind v4 + three.js, tek sayfa,
+Türkçe, sinematik 3D tasarım. Kampla ilgisi yok; Cloudflare Pages yayın
+adımları ve içerik TODO'ları kendi README'sinde.
 
 - **Stack:** Next.js 14+ (App Router) + TypeScript + Tailwind
 - **Deploy:** Netlify (production = `main` branch). Proje: `marvelous-pasca-fbfa40`.
@@ -79,9 +81,11 @@ yok; Netlify yayın adımları ve içerik TODO'ları kendi README'sinde.
 
 ## Son tamamlanan işler
 
-- emretopcu.com kişisel marka sitesi ilk sürüm, `emretopcu-com/` klasörü
-  (PR #612, merged). Portre fotoğrafı, Instagram linki ve metin revizyonu
-  içerik olarak bekleniyor; Netlify'da site henüz açılmadı.
+- Kişisel marka sitesi: 4 tasarım varyantı sunuldu, seçilen final =
+  sinematik 3D "video scroll" (Zirve, PR #614) + Instagram linki
+  @emretopcu_official (PR #615-616). Domain **emretopcu.ai** alındı
+  (Cloudflare Registrar); Cloudflare Pages deploy'u API token bekliyor.
+  Portre fotoğrafı içerikten bekleniyor. (İlk sürüm PR #612.)
 - Kariyer seviyeleri 8 basamağa düzeltildi (PR #313, merged).
 - Ses Ritüeli'nden foto adımı kaldırıldı (PR #312, merged).
 - Pusula kariyer formu: DB CHECK constraint 8 basamağa genişletildi

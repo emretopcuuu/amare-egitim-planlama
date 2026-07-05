@@ -1,8 +1,13 @@
-# emretopcu.com
+# emretopcu.ai
 
-Emre Topçu'nun kişisel marka sitesi. Tek sayfa, Türkçe, koyu tema.
+Emre Topçu'nun kişisel marka sitesi. Tek sayfa, Türkçe, sinematik 3D
+"video scroll" deneyimi (sayfa boyu WebGL sahnesi: pırlanta + altın
+parçacık alanı; scroll kamerayı sahneye daldırır).
 
-- **Stack:** Next.js 16 (App Router) + TypeScript + Tailwind v4
+- **Stack:** Next.js 16 (App Router) + TypeScript + Tailwind v4 +
+  Motion (`motion/react`) + three.js / React Three Fiber
+- **Çıktı:** Statik (`output: "export"` → `out/`)
+- **Yayın:** Cloudflare Pages (domain: `emretopcu.ai`, Cloudflare Registrar'da)
 - **Konum:** Repo içinde bağımsız proje, `emretopcu-com/` klasörü
   (liderlik-aynasi ile aynı desen; repo kökündeki eski uygulamaya dokunmaz)
 
@@ -13,25 +18,25 @@ cd emretopcu-com
 npm install
 npm run dev        # http://localhost:3000
 npx tsc --noEmit   # tip kontrolü
-npm run build      # production build
+npm run build      # statik çıktı: out/
 ```
 
-## Yayına alma (Netlify)
+## Yayına alma (Cloudflare Pages)
 
-1. Netlify'da **yeni site** oluştur: "Import from Git" ile bu repoyu seç.
-2. **Base directory:** `emretopcu-com` (build komutu ve publish klasörü
-   `netlify.toml`'dan otomatik gelir).
-3. Site açıldıktan sonra **Domain settings > Add custom domain** ile
-   `emretopcu.com` ekle; domain sağlayıcında Netlify'ın verdiği DNS
-   kayıtlarını (veya Netlify DNS'i) tanımla. SSL otomatik.
+```bash
+cd emretopcu-com
+npm run build
+CLOUDFLARE_API_TOKEN=... npx wrangler pages deploy out --project-name=emretopcu-ai
+```
+
+- Token izinleri: Account > Cloudflare Pages: Edit, Zone > DNS: Edit,
+  Zone > Zone: Read.
+- Custom domain (`emretopcu.ai` + `www`) Pages projesine bir kez bağlanır;
+  zone aynı hesapta olduğundan DNS ve SSL otomatik yönetilir.
 
 ## Yapılacaklar (içerik)
 
-- [ ] `public/portre.jpg` (1200x1500): gerçek portre fotoğrafı ekle ve
-      `app/page.tsx` içindeki hero monogram panelini `next/image` ile değiştir
-      (TODO yorumu mevcut).
-- [ ] Instagram linkini doğrula (`app/page.tsx`, Iletisim bölümündeki TODO).
-- [ ] İletişim e-postasını istersen `iletisim@emretopcu.com` gibi bir domain
-      adresiyle değiştir (`EPOSTA` sabiti, `app/page.tsx`).
-- [ ] Hakkımda ve Yolculuk metinlerini kendi ağzından geç; taslak metinler
-      repo verilerinden (gerçek eğitim başlıkları, kamp bilgileri) derlendi.
+- [ ] Portre fotoğrafı: kullanıcıdan gelince hero/hakkımda bölümüne
+      `next/image` ile eklenecek.
+- [ ] İletişim e-postası istenirse `iletisim@emretopcu.ai` gibi bir domain
+      adresine taşınabilir (`EPOSTA` sabiti, `lib/icerik.ts`).
