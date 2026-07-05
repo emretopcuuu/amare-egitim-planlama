@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
+import { ufukAyEtiket } from "@/lib/planTakvim";
 
 const t = tr.takip;
 
@@ -25,6 +26,7 @@ export default function TakipAkis({
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   const [not, setNot] = useState("");
   const [mesgul, setMesgul] = useState(false);
+  const [now] = useState(() => new Date());
 
   async function checkin(yapildi: boolean) {
     setMesgul(true);
@@ -148,7 +150,7 @@ export default function TakipAkis({
             {aksiyonlar.map((a, i) => (
               <li key={i} className="flex items-start gap-2 text-sm text-slate-200">
                 <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.6rem] font-bold text-emerald-300">
-                  {tr.sozV2.ufukEtiket(a.ufuk)}
+                  {ufukAyEtiket(a.ufuk, now)}
                 </span>
                 <span>{a.metin}</span>
               </li>

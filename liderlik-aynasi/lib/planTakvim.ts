@@ -21,3 +21,12 @@ export function aySonunaGun(now: Date, offset: number): number {
   const gun = Math.round((hedefAySonu.getTime() - bugun.getTime()) / 86_400_000);
   return Math.max(0, gun);
 }
+
+// Söz adımının ufku → ay etiketi. Eski gün kodlarını (10/40/90) da destekler,
+// böylece daha önce şekillenmiş sözler de doğru (ay bazlı) görünür.
+export function ufukAyEtiket(ufuk: string, now: Date): string {
+  if (ufuk === "ilk_72_saat" || ufuk === "72") return "İlk 72 Saat";
+  if (ufuk === "kirk_gun" || ufuk === "40") return ayAdi(now, 1);
+  if (ufuk === "doksan_gun" || ufuk === "90") return ayAdi(now, 2);
+  return ayAdi(now, 0);
+}
