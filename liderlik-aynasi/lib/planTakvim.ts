@@ -30,3 +30,21 @@ export function ufukAyEtiket(ufuk: string, now: Date): string {
   if (ufuk === "doksan_gun" || ufuk === "90") return ayAdi(now, 2);
   return ayAdi(now, 0);
 }
+
+// AKTİF UFUK — plan onaylandığı (söz verildiği) ANA göre "şu an hangi ufuktayız".
+// Ufuk etiketleri render anında değil, onaylandi_at'e SABİTLENİR: kişi haftalar
+// sonra plana bakınca "on_gun" kaymasın (o hep sözün verildiği ayı işaret eder).
+// İlk 3 gün ilk_72_saat; sonra ay farkına göre on_gun(0)/kirk_gun(1)/doksan_gun(2+).
+export function aktifUfuk(
+  onaylandiAt: Date | null,
+  now: Date
+): "ilk_72_saat" | "on_gun" | "kirk_gun" | "doksan_gun" {
+  if (!onaylandiAt) return "ilk_72_saat";
+  const gunFarki = Math.floor((now.getTime() - onaylandiAt.getTime()) / 86_400_000);
+  if (gunFarki < 3) return "ilk_72_saat";
+  const ayFarki =
+    (now.getFullYear() - onaylandiAt.getFullYear()) * 12 + (now.getMonth() - onaylandiAt.getMonth());
+  if (ayFarki <= 0) return "on_gun";
+  if (ayFarki === 1) return "kirk_gun";
+  return "doksan_gun";
+}

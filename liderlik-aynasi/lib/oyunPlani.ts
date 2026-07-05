@@ -73,6 +73,7 @@ export type OyunPlani = {
   doksan_gun: PlanMadde[];
   ozet: string | null;
   durum: "taslak" | "onaylandi";
+  onaylandiAt: string | null;
 };
 
 function maddeDizi(v: unknown): PlanMadde[] {
@@ -82,7 +83,7 @@ function maddeDizi(v: unknown): PlanMadde[] {
 export async function oyunPlaniGetir(db: Db, pid: string): Promise<OyunPlani | null> {
   const { data } = await db
     .from("oyun_plani")
-    .select("ilk_72_saat, on_gun, kirk_gun, doksan_gun, ozet, durum")
+    .select("ilk_72_saat, on_gun, kirk_gun, doksan_gun, ozet, durum, onaylandi_at")
     .eq("participant_id", pid)
     .maybeSingle();
   if (!data) return null;
@@ -93,6 +94,7 @@ export async function oyunPlaniGetir(db: Db, pid: string): Promise<OyunPlani | n
     doksan_gun: maddeDizi(data.doksan_gun),
     ozet: data.ozet,
     durum: (data.durum as "taslak" | "onaylandi") ?? "taslak",
+    onaylandiAt: data.onaylandi_at ?? null,
   };
 }
 
@@ -201,6 +203,7 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
       doksan_gun: isaretle(ham.doksan_gun),
       ozet: ham.ozet ?? null,
       durum: "taslak",
+      onaylandiAt: null,
     };
 
     const { error } = await db.from("oyun_plani").insert({
