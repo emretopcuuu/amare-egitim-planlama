@@ -41,7 +41,7 @@ export default function SozAcKapat({ acik }: { acik: boolean }) {
             : "btn-3d bg-gold text-[#1a1206] hover:bg-gold-light"
         }`}
       >
-        {calisiyor ? <Bekle /> : acik ? "Kapanış Sözünü Kapat" : "Kapanış Sözünü Aç"}
+        {calisiyor ? <Bekle /> : acik ? "Kamp Sözünü Kapat" : "Kamp Sözünü Aç"}
       </button>
       {hata && <p className="mt-2 text-sm font-medium text-red-400">İşlem başarısız.</p>}
     </div>
