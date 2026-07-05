@@ -3524,10 +3524,13 @@ export const tr = {
     seriRiski: (n: number) => `${n}'lik serin sürüyor — bugün bir görevle koru, kırma.`,
     // A6 — zor görevde koça köprü
     koctanYardim: "Takıldın mı? Ayna Koçu'na danış →",
-    // A7 — aşırı yük koruması
+    // A7 — aşırı yük koruması. DİKKAT: gunlukUst (lib/tik.ts) 7 iken bu ekran
+    // 5'te tetiklenir — yani "yarın görüşürüz" gibi kesin bir söz VERME; sistem
+    // bugün 1-2 görev daha düşürebilir ve o zaman mesaj yalan çıkıyordu (saha
+    // geri bildirimi: "dün de böyle yazdı, sonra yine görev verdi").
     yeterinceBaslik: "Bugün yeterince yaptın",
     yeterinceMetin: (n: number) =>
-      `Bugün ${n} görev kapattın — bu güçlü bir gün. Şimdi dinlen; yarın yine buradayım.`,
+      `Bugün ${n} görev kapattın — bu güçlü bir gün. İstersen burada dur; devam etmek istersen birazdan yeni bir görev de gelebilir.`,
     // A8 — geçmiş filtre + özet
     gecmisOzet: (tamam: number, ort: number | null, kacan: number) =>
       `${tamam} tamamlandı${ort != null ? ` · ort. ${ort.toFixed(1)}` : ""}${kacan > 0 ? ` · ${kacan} kaçan` : ""}`,
