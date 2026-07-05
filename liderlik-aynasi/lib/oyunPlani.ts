@@ -113,7 +113,7 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-5",
+      model: "claude-opus-4-8",
       max_tokens: 2048,
       thinking: { type: "adaptive" },
       output_config: { effort: "medium", format: { type: "json_schema", schema: PLAN_SEMASI } },
