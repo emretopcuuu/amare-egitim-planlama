@@ -8,6 +8,8 @@ import { hedefKapisiAcik } from "@/lib/hedef";
 import { kampOncesiAdim } from "@/lib/akis";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { sozTakipAktif, sahitSayim } from "@/lib/sozTakip";
+import { sozV2KapisiAcik } from "@/lib/soz";
+import { planOnayliMi } from "@/lib/oyunPlani";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
 import TelefonaKurKocu from "@/components/TelefonaKurKocu";
@@ -304,8 +306,6 @@ export default async function AnaSayfa({
     { count: aktifGorev },
     { data: sesProfili },
     { data: kayma },
-    { data: sozAyar },
-    { data: soz },
     { data: dalgaZamanAyar },
     { data: boslukAyar },
     { data: pusulaKisi },
@@ -329,12 +329,6 @@ export default async function AnaSayfa({
       db
         .from("churn_radar")
         .select("nudged_at, voice_path")
-        .eq("participant_id", session.sub)
-        .maybeSingle(),
-      db.from("settings").select("value").eq("key", "kapanis_soz_acik").maybeSingle(),
-      db
-        .from("pledges")
-        .select("participant_id")
         .eq("participant_id", session.sub)
         .maybeSingle(),
       db.from("settings").select("value").eq("key", "sonraki_dalga_zamani").maybeSingle(),
@@ -361,9 +355,12 @@ export default async function AnaSayfa({
     ]);
   // FAZ B: söz mühürlüyse (sesli) ana ekran 90-gün yolculuğuna geçer; ayrıca
   // kişi başkalarına şahitse şahit paneline erişir.
-  const [takipAktif, sahitSayisi] = await Promise.all([
+  const [takipAktif, sahitSayisi, sozV2Acik, planOnayli] = await Promise.all([
     sozTakipAktif(db, session.sub),
     sahitSayim(db, session.sub),
+    // FAZ 1 (tek söz): kapanış artık SÖZ v2 (plandan doğan söz) üstünden yürür.
+    sozV2KapisiAcik(db),
+    planOnayliMi(db, session.sub),
   ]);
   const takim = kisi?.team ?? null;
 
@@ -404,8 +401,6 @@ export default async function AnaSayfa({
     typeof siradakiGorevSatir?.title === "string" ? siradakiGorevSatir.title : null;
   // B3: kişinin Pusula sloganı — hub'da kimlik çapası.
   const kisiSlogan = (pusulaKisi as { slogan?: string | null } | null)?.slogan ?? null;
-  const sozAcik = sozAyar?.value === "true";
-  const sozVar = !!soz;
   // FAZ 1: pusulasını kuran kişi, pencere açıkken iç engeliyle yüzleşir.
   const boslukGoster =
     boslukAyar?.value === "true" &&
@@ -627,15 +622,33 @@ export default async function AnaSayfa({
     );
   }
 
-  // 2b) KAPANIŞ SÖZÜ — kamp kapanışında açıldı ve henüz söz verilmedi
-  if (sozAcik && !sozVar) {
+  // 2b) KAPANIŞ AKIŞI (FAZ 1 — tek söz) — kapanış tetiklenince (soz_v2_acik) ve
+  // söz henüz mühürlenmemişken: önce "90 Günlük Oyun Planını Kur" (kişi kendi
+  // kararıyla plan yapar), plan onaylanınca "Sözünü Ver". Söz mühürlenince aşağıda
+  // 2d takip akışı devralır. Rapor okunmadan (reports_visible) buraya gelinmez.
+  if (sozV2Acik && !takipAktif) {
+    if (!planOnayli) {
+      return (
+        <Sayfa ust={ust}>
+          <BuyukKart
+            baslik="90 Günlük Oyun Planını Kur"
+            metin="Raporunu okudun. Şimdi kamptan sonrası için planını birlikte kuralım — kararlar senin, ben danışmanın."
+            href="/oyun-planim"
+            dugme="Planımı Kur"
+            ikon="🧭"
+            vurgu
+            sonraki={{ ad: "Sözünü Ver", kilitli: true, not: "planını onaylayınca açılır" }}
+          />
+        </Sayfa>
+      );
+    }
     return (
       <Sayfa ust={ust}>
         <BuyukKart
-          baslik={t.sozGerekBaslik}
-          metin={t.sozGerekMetin}
-          href="/soz"
-          dugme={t.sozGerekDugme}
+          baslik="Sözünü Ver"
+          metin="Planın hazır. Şimdi onu kendi sözüne dönüştür — sesinle mühürle."
+          href="/sozum"
+          dugme="Sözünü Ver"
           ikon="🤝"
           vurgu
         />

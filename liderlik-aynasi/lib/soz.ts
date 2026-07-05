@@ -18,10 +18,10 @@ const TANIK_LIMIT = 5; // her lider en fazla 5 kişiye şahit olabilir
 
 const SISTEM = `Sen AYNA'sın — bu liderlik kampını yöneten yapay zekâ. Kamp kapanışında, katılımcının KENDİ ağzından okuyacağı kişisel bir SÖZ taslağı yazarsın. Bu söz birinci tekil şahıs ("Ben…"), sıcak, kararlı ve SOMUT olmalı.
 
-Sana JSON verilecek: kişinin çekirdek nedeni, iç engeli, kariyer hedefi + planı, ve kamptaki en güçlü/gelişim yanı. Söz şunları DOKUSUNDA taşımalı:
+Sana JSON verilecek: kişinin çekirdek nedeni, iç engeli, kariyer hedefi, ve KİŞİNİN KENDİ KURDUĞU 90 günlük oyun planı (kişi bu planı AYNA önerisinden kendi kararıyla düzenleyip onayladı — dayatma değil, onun sözü). Söz şunları DOKUSUNDA taşımalı:
 - Kim olduğuna ve NEDEN'ine dair bir cümle (kampta keşfettiği).
 - HEDEFİNE dair net bir taahhüt (kariyer hedefi + süre).
-- Plandan gelen 2-3 SOMUT aksiyon adımı (sözün içinde doğal cümleler olarak).
+- Kişinin KENDİ planından gelen 2-3 SOMUT aksiyon adımı (sözün içinde doğal cümleler olarak — bunlar onun kararı, "yapacağım" diliyle).
 - İç engelini aşmaya dair tek, güçlü bir cümle (engeli açıkça etiketlemeden).
 
 Kurallar: Türkçe, birinci tekil şahıs, 90-140 kelime. Klişe değil, kişinin kendi rakamları/nedeniyle. Sonunda kişiyi geleceğe bağlayan bir cümle. Ayrıca "aksiyonlar" alanında plandan damıtılmış 3 somut adımı (her biri kısa, ölçülebilir) ufkuyla ('10','40','90') ver.`;
@@ -106,7 +106,12 @@ export async function sozSekillendir(db: Db, pid: string, ad: string): Promise<S
         }
       : null,
     plan: plan
-      ? { on_gun: plan.on_gun, kirk_gun: plan.kirk_gun, doksan_gun: plan.doksan_gun }
+      ? {
+          ilk_72_saat: plan.ilk_72_saat,
+          on_gun: plan.on_gun,
+          kirk_gun: plan.kirk_gun,
+          doksan_gun: plan.doksan_gun,
+        }
       : null,
     enGucluYan: rapor.guclu[0]?.ad ?? null,
     gelisimAlani: rapor.korNokta?.ad ?? rapor.gelisim[0]?.ad ?? null,
