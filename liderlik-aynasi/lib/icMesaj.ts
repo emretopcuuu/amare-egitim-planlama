@@ -23,6 +23,8 @@ export type GrupUye = {
   id: string;
   full_name: string;
   kariyer_seviyesi: string | null;
+  profil_foto_path: string | null; // KisiKarti fotoğrafı için (sunucu imzalı URL'e çevirir)
+  phone: string | null; // WhatsApp köprüsü için
   okunmamis: number; // bu üyeden gelen okunmamış mesaj sayısı
 };
 
@@ -35,7 +37,7 @@ function onizleme(govde: string): string {
 export async function grupUyeleri(db: Db, takim: string, benId: string): Promise<GrupUye[]> {
   const { data: uyeler } = await db
     .from("participants")
-    .select("id, full_name, kariyer_seviyesi")
+    .select("id, full_name, kariyer_seviyesi, profil_foto_path, phone")
     .eq("team", takim)
     .eq("role", "participant")
     .neq("id", benId)

@@ -183,19 +183,23 @@ export default async function GorevlerPage() {
     );
   }
 
-  // D7 — EŞLEŞME KİŞİ KARTI: aktif görev isimli bir eşleşmeye bağlıysa hedef
-  // kişinin foto (imzalı URL) + takım + telefonunu karta taşı. Telefon YALNIZ
-  // eşleşme hedefi için iner (genel roster istemciye sızmaz); "sahit" görevi
-  // sessiz gözlemdir — hedefe WhatsApp köprüsü verilmez (takım satırı kalır).
+  // D7 — EŞLEŞME KİŞİ KARTI: isimli bir eşleşmeye bağlı görev hedef kişinin foto
+  // (imzalı URL) + takım + telefonunu karta taşır. Telefon YALNIZ eşleşme hedefi
+  // için iner (genel roster istemciye sızmaz); "sahit" görevi sessiz gözlemdir —
+  // hedefe WhatsApp köprüsü verilmez (takım satırı kalır). Yalnız AKTİF değil,
+  // TELAFİ (kaçırılmış, geç yapılan) görevler de isimli olabilir — ikisi de dahil
+  // edilmezse "Kemal'i bul" diyen bir görev hedefsiz kalır (saha geri bildirimi:
+  // 150 kişilik organizasyonda ismi bilmek yetmiyor, foto+WhatsApp şart).
   const hedefKisiler = new Map<
     string,
     { ad: string; takim: string | null; telefon: string | null; fotoUrl: string | null }
   >();
-  if (aktif.length > 0) {
+  const kisiKartiGorevler = [...aktif, ...telafiGorevler];
+  if (kisiKartiGorevler.length > 0) {
     const { data: eslesmeler } = await db
       .from("gorev_eslesme")
       .select("mission_id, hedef_id")
-      .in("mission_id", aktif.map((g) => g.id))
+      .in("mission_id", kisiKartiGorevler.map((g) => g.id))
       .eq("kaynak_id", session.sub)
       .eq("isimli", true);
     const hedefIdler = [...new Set((eslesmeler ?? []).map((e) => e.hedef_id))];
@@ -208,7 +212,7 @@ export default async function GorevlerPage() {
       for (const e of eslesmeler ?? []) {
         if (!e.mission_id) continue;
         const k = hedefMap.get(e.hedef_id);
-        const g = aktif.find((a) => a.id === e.mission_id);
+        const g = kisiKartiGorevler.find((a) => a.id === e.mission_id);
         if (!k || !g) continue;
         let fotoUrl: string | null = null;
         if (k.profil_foto_path) {
@@ -458,7 +462,7 @@ export default async function GorevlerPage() {
 
         {/* D7 — EŞLEŞME KİŞİ KARTI: görev bir kişiye yönlendiriyorsa, o kişi
             dokunulabilir kartta (tam ekran foto + WhatsApp köprüsü). */}
-        {hedefKisiler.has(g.id) && (
+        {hedefKisiler.has(g.id) ? (
           <div className="mt-2.5">
             <p className="px-1 text-xs font-bold uppercase tracking-widest text-slate-500">
               🤝 {t.gorevKisisi}
@@ -467,7 +471,13 @@ export default async function GorevlerPage() {
               <KisiKarti {...hedefKisiler.get(g.id)!} />
             </div>
           </div>
-        )}
+        ) : g.kind === "bag" ? (
+          // Görev isimsiz bir grup referansı verebilir ("Grup 7'den biri") —
+          // kişi kimin kim olduğunu bilmeyebilir; roster'a yönlendir.
+          <Link href="/grup" className="mt-2.5 inline-block text-sm text-gold-light underline-offset-2 hover:underline">
+            {t.ekibiniGor}
+          </Link>
+        ) : null}
 
         {/* D1 — perde perde açılış: uzun gövde katlanır, açılış hep görünür */}
         <GovdeAcilis metin={g.body} />
@@ -664,6 +674,20 @@ export default async function GorevlerPage() {
                   <p className="mt-1 text-sm leading-relaxed text-slate-100">{g.fayda}</p>
                 </div>
               )}
+              {hedefKisiler.has(g.id) ? (
+                <div className="mt-2.5">
+                  <p className="px-1 text-xs font-bold uppercase tracking-widest text-slate-500">
+                    🤝 {t.gorevKisisi}
+                  </p>
+                  <div className="mt-1.5">
+                    <KisiKarti {...hedefKisiler.get(g.id)!} />
+                  </div>
+                </div>
+              ) : g.kind === "bag" ? (
+                <Link href="/grup" className="mt-2.5 inline-block text-sm text-gold-light underline-offset-2 hover:underline">
+                  {t.ekibiniGor}
+                </Link>
+              ) : null}
               <p className="mt-3 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
                 {g.body}
               </p>

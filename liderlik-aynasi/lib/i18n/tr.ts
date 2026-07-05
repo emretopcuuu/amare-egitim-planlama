@@ -3595,6 +3595,9 @@ export const tr = {
     },
     // D7 — eşleşmeli görevde hedef kişi kartı başlığı
     gorevKisisi: "Görevin kişisi",
+    // Görev isimsiz bir grup referansı verdiğinde ("Grup 7'den biri" gibi) —
+    // kişi kimin kim olduğunu bilmeyebilir; roster'a (foto + WhatsApp) yönlendir.
+    ekibiniGor: "🤝 Kimin kim olduğunu bilmiyorsan → Ekibini gör",
     // Özellik 6 — Çekirdek Neden Nabzı (her 5. puanlı görevden sonra)
     nabizUst: "Pusula kontrolü",
     nabizSoru: (neden: string) =>
