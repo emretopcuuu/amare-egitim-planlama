@@ -10,6 +10,9 @@ import Konfeti from "@/components/Konfeti";
 import YaziBoyu from "@/components/YaziBoyu";
 import AynaLogo from "@/components/AynaLogo";
 import AsamaRayi, { type RayAsama } from "@/components/AsamaRayi";
+import KayitRozeti from "@/components/KayitRozeti";
+import GizlilikMuhru from "@/components/GizlilikMuhru";
+import { ONBOARDING_SURE_DK } from "@/lib/onboardingSure";
 import { ADIMLAR, adimDolu, katman1Tutarlilik, SONUC_KARTI } from "@/lib/onFarkindalik";
 
 // Adımları "grup" (bölüm/katman) sırasına göre ardışık kümele — aşama rayı için.
@@ -87,6 +90,10 @@ export default function OnFarkindalikAkis({
   const [sayiGirdi, setSayiGirdi] = useState("");
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
+  // [E8] Sessiz adım kayıtları için köşe rozeti: başarıda kısa "✓ Kaydedildi",
+  // hatada kalıcı amber uyarı (localStorage yedeği olsa da kişi bilsin).
+  const [kayitBasari, setKayitBasari] = useState(0);
+  const [kayitHata, setKayitHata] = useState(false);
   const ilerleZam = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Dürüstlük telkini: hangi eşikler gösterildi + o anki mesaj.
   const [telkin, setTelkin] = useState<string | null>(null);
@@ -178,13 +185,20 @@ export default function OnFarkindalikAkis({
     ];
     if (gonderilecek.length === 0) return;
     try {
-      await fetch("/api/on-farkindalik", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ yanitlar: gonderilecek }),
-      });
+      // Sessiz yedek de dayanıklı gönderimden geçer — zayıf bağlantıda köşede
+      // gereksiz amber "kaydedilemedi" titremesin.
+      const res = await dayanikliGonder(gonderilecek);
+      // [E8] Sonucu köşe rozetine bildir (akışa dokunma — invaziv değil).
+      if (res.ok) {
+        setKayitBasari((n) => n + 1);
+        setKayitHata(false);
+      } else {
+        setKayitHata(true);
+      }
     } catch {
-      // sessiz: localStorage yedeği zaten var, sonraki adımda yine denenir
+      // localStorage yedeği zaten var, sonraki adımda yine denenir — ama kişi
+      // sunucuya yazılamadığını köşedeki amber satırdan görür. [E8]
+      setKayitHata(true);
     }
   }
 
@@ -193,6 +207,32 @@ export default function OnFarkindalikAkis({
     setHata(null);
     void kaydetSessiz(); // her adımda sunucuya sessiz yedekle
     setAdim((a) => Math.min(a + 1, TOPLAM));
+  }
+
+  // Geçici ağ/sunucu hatasına dayanıklı gönderim: hareket hâlinde (araç,
+  // asansör) tek deneme yetmiyor ve kişi 28/28'i bitirmişken "Kaydedilemedi"
+  // görüyordu (saha: Gün 3 sabahı). 3 deneme, artan bekleme; 4xx'te (gerçek
+  // doğrulama hatası) yeniden denenmez. Upsert idempotent — tekrar güvenli.
+  async function dayanikliGonder(
+    gonderilecek: { kod: string; deger?: number; metin?: string }[]
+  ): Promise<Response> {
+    let son: Response | null = null;
+    for (let deneme = 0; deneme < 3; deneme++) {
+      if (deneme > 0) await new Promise((r) => setTimeout(r, deneme === 1 ? 800 : 2200));
+      try {
+        const res = await fetch("/api/on-farkindalik", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ yanitlar: gonderilecek }),
+        });
+        if (res.ok || (res.status < 500 && res.status !== 429)) return res;
+        son = res;
+      } catch {
+        son = null; // ağ hatası — bir sonraki denemeye
+      }
+    }
+    if (son) return son;
+    throw new Error("ag-hatasi");
   }
 
   async function kaydet(): Promise<boolean> {
@@ -209,12 +249,13 @@ export default function OnFarkindalikAkis({
     setKaydediliyor(true);
     setHata(null);
     try {
-      const res = await fetch("/api/on-farkindalik", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ yanitlar: gonderilecek }),
-      });
+      const res = await dayanikliGonder(gonderilecek);
       const v = await res.json().catch(() => null);
+      if (res.ok) {
+        // [E8] açık kaydet de köşe rozetini besler
+        setKayitBasari((n) => n + 1);
+        setKayitHata(false);
+      }
       if (!res.ok) {
         if (v?.oturumBayat) {
           // Oturum artık geçersiz bir katılımcıya bağlı (bkz. route.ts) — tekrar
@@ -279,9 +320,9 @@ export default function OnFarkindalikAkis({
           {t.girisUst}
         </p>
         <h1 className="prizma-serif ay-metin mt-2 text-3xl font-semibold leading-tight">{t.girisBaslik}</h1>
-        {/* [UX4] Süre beklentisi */}
+        {/* [UX4/E2] Süre beklentisi — merkezi haritadan */}
         <p className="mx-auto mt-3 inline-block rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-400">
-          ⏱ ~5 dk sürer
+          ⏱ ~{ONBOARDING_SURE_DK.onFarkindalik} dk sürer
         </p>
         <p className="mx-auto mt-4 max-w-md text-lg leading-relaxed text-slate-300"><DurustVurgu metin={t.girisMetin} /></p>
         {/* UX #4: sonunda ne kazanacağın — "neden buradayım" çerçevesi + ödül önizlemesi */}
@@ -381,6 +422,8 @@ export default function OnFarkindalikAkis({
 
   return (
     <div className="flex min-h-[82vh] flex-col">
+      {/* [E8] Sessiz adım kayıtlarının görünür güvencesi (köşe rozeti) */}
+      <KayitRozeti basari={kayitBasari} hata={kayitHata} />
       {/* SABİT BAŞLIK — ilerleme + bölüm rayı (Öz Saygı, Öz Güven…) kaydırınca da
           hep en tepede çakılı kalır; -mx/-mt ile kenarlara taşar, üst boşluğu örter. */}
       <header className="sticky top-0 z-20 -mx-5 -mt-5 bg-midnight/92 px-5 pb-2.5 pt-4 backdrop-blur-md">
@@ -419,6 +462,11 @@ export default function OnFarkindalikAkis({
           className="mt-2"
         />
       </header>
+
+      {/* Gizlilik mührü — mahrem soruların hemen üstünde kalıcı güven imzası */}
+      <div className="mt-1">
+        <GizlilikMuhru />
+      </div>
 
       {/* Gözden geçirme modunda: tek tuşla bitiş ekranına dön (sona git) */}
       {gozdenMod && (

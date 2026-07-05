@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import AynaIkon from "@/components/AynaIkon";
+import { sureRozeti } from "@/lib/onboardingSure";
 
 const t = tr.hazirlik;
 
@@ -137,6 +138,12 @@ export default function HazirlikEkrani({ ad }: { ad: string }) {
         <h1 className="prizma-serif ay-metin mt-3 text-center text-3xl font-bold leading-tight sm:text-4xl">
           {t.baslik(ilkAd)}
         </h1>
+        {/* [E2] Süre beklentisi rozeti — merkezi haritadan */}
+        <p className="mt-2 text-center">
+          <span className="inline-block rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-400">
+            {sureRozeti("hazirlik")}
+          </span>
+        </p>
 
         <div className="mt-6 space-y-4 text-lg leading-relaxed text-slate-300">
           <p>{t.giris}</p>

@@ -44,19 +44,20 @@ export const WA_SABLONLAR: WaSablon[] = [
   {
     anahtar: "giris",
     ikon: "🔑",
-    etiket: "Giriş daveti (+ kamp kodu)",
+    etiket: "Giriş kodu (tek mesaj)",
     aciklama:
-      "Aynayla tanışma daveti — link butonda. Kamp kodu HEMEN ARDINDAN ayrı (onaylı OTP) mesajla gider.",
+      "Kişiye YALNIZ kamp giriş kodu gider — linksiz, kopyalanabilir tek mesaj. (Davet metni gönderilmez.)",
     friendlyName: "pd101_giris_v5",
     dil: "tr",
     kategori: "MARKETING",
     ayarAnahtari: "wa_tpl_giris",
     // ÖNEMLİ — kodu davet GÖVDESİNE koymak Meta'da imkânsız: v3/v6/v7 hepsi
     // INCORRECT_CATEGORY ile reddedildi (görünür kod = OTP sayılıyor).
-    // Çözüm: davet (bu, canlı onaylı v5 — kod yalnız butonun URL'sinde) + kamp
-    // kodu HEMEN ARDINDAN ayrı bir AUTHENTICATION/OTP şablonuyla (pd101_kamp_kodu,
-    // settings.wa_tpl_kod) görünür+kopyalanabilir gelir. İki mesaj birlikte gönderilir
-    // (app/api/admin/whatsapp/route.ts). Bu govde = canlı v5 gövdesi (önizleme dürüst).
+    // GÜNCEL KARAR (kullanıcı): davet mesajı ARTIK GÖNDERİLMİYOR — "giris"
+    // seçilince yalnız onaylı AUTHENTICATION/OTP kod şablonu (pd101_kamp_kodu,
+    // settings.wa_tpl_kod) gider: tek mesaj, linksiz, kopyalanabilir kod.
+    // Bu şablon tanımı Twilio kaydı bozulmasın diye duruyor; gönderimde
+    // kullanılmıyor (app/api/admin/whatsapp/route.ts).
     govde:
       "Merhaba {{1}}, PD101 Liderlik Aynası kampına hoş geldin! 🪞\n\n" +
       "Kampa hazırlanmak için aşağıdaki butona dokun, seni bekleyen ilk adımları keşfet.\n\n" +

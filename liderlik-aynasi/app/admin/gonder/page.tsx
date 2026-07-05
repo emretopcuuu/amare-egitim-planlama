@@ -20,10 +20,11 @@ export default async function GonderPage() {
   const db = supabaseAdmin();
   const yapilandirildi = whatsAppYapilandirildiMi();
 
-  const [{ data: kisiler }, { data: bekleyen }, sidler] = await Promise.all([
+  const [{ data: kisiler }, { data: bekleyen }, sidler, { data: kodSidAyar }] = await Promise.all([
     db.from("participants").select("id, full_name, team, phone").eq("role", "participant"),
     db.from("missions").select("participant_id").eq("status", "pending"),
     sablonSidleri(db),
+    db.from("settings").select("value").eq("key", "wa_tpl_kod").maybeSingle(),
   ]);
 
   const takimlar = [
@@ -85,6 +86,7 @@ export default async function GonderPage() {
           odevYapmayanSayisi={odevYapmayanSayisi}
           telefonsuz={telefonsuz}
           kayitliAnahtarlar={kayitliAnahtarlar}
+          kodKayitli={!!kodSidAyar?.value}
         />
       </Katlanir>
     </main>

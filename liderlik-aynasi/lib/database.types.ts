@@ -2063,6 +2063,8 @@ export type Database = {
           kariyer_seviyesi: string | null
           kidem_ay: number | null
           login_code: string
+          onboarding_hatirlatma_at: string | null
+          onboarding_toren_at: string | null
           phone: string | null
           profil_foto_path: string | null
           role: string
@@ -2095,6 +2097,8 @@ export type Database = {
           kariyer_seviyesi?: string | null
           kidem_ay?: number | null
           login_code: string
+          onboarding_hatirlatma_at?: string | null
+          onboarding_toren_at?: string | null
           phone?: string | null
           profil_foto_path?: string | null
           role?: string
@@ -2127,6 +2131,8 @@ export type Database = {
           kariyer_seviyesi?: string | null
           kidem_ay?: number | null
           login_code?: string
+          onboarding_hatirlatma_at?: string | null
+          onboarding_toren_at?: string | null
           phone?: string | null
           profil_foto_path?: string | null
           role?: string
