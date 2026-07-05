@@ -7,8 +7,8 @@ import { raporlarGorunurMu } from "@/lib/rapor";
 import { hedefKapisiAcik } from "@/lib/hedef";
 import { kampOncesiAdim } from "@/lib/akis";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
-import { sozTakipAktif, sahitSayim } from "@/lib/sozTakip";
-import { sozV2KapisiAcik } from "@/lib/soz";
+import { sozTakipAktif, sahitSayim, secilenSahitSayisi } from "@/lib/sozTakip";
+import { sozV2KapisiAcik, TANIK_HEDEF } from "@/lib/soz";
 import { planOnayliMi } from "@/lib/oyunPlani";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
@@ -355,13 +355,17 @@ export default async function AnaSayfa({
     ]);
   // FAZ B: söz mühürlüyse (sesli) ana ekran 90-gün yolculuğuna geçer; ayrıca
   // kişi başkalarına şahitse şahit paneline erişir.
-  const [takipAktif, sahitSayisi, sozV2Acik, planOnayli] = await Promise.all([
+  const [takipAktif, sahitSayisi, sozV2Acik, planOnayli, secilenSahit] = await Promise.all([
     sozTakipAktif(db, session.sub),
     sahitSayim(db, session.sub),
     // FAZ 1 (tek söz): kapanış artık SÖZ v2 (plandan doğan söz) üstünden yürür.
     sozV2KapisiAcik(db),
     planOnayliMi(db, session.sub),
+    secilenSahitSayisi(db, session.sub),
   ]);
+  // Şahit adımı ZORUNLU: söz mühürlü ama 5 şahit seçilmemişse 90 gün yolculuğu
+  // açılmaz; kişi şahit seçimine geri gönderilir (/sozum tanik fazına düşer).
+  const sahitEksik = takipAktif && secilenSahit < TANIK_HEDEF;
   const takim = kisi?.team ?? null;
 
   // Ayna Eşin görüşmeleri (canlı "şimdi görüşmen" şeridi için) — yalnız açıkken.
@@ -667,6 +671,24 @@ export default async function AnaSayfa({
           href="/bosluk"
           dugme={t.boslukDugme}
           ikon="👁"
+          vurgu
+        />
+      </Sayfa>
+    );
+  }
+
+  // 2c-b) ŞAHİT KAPISI (ZORUNLU) — söz mühürlü ama 5 şahit seçilmemişse 90 gün
+  // yolculuğu yerine önce şahit seçtirilir. /sozum durum 'sesli' + eksik şahitte
+  // doğrudan tanik (şahit seçimi) fazını açar.
+  if (sahitEksik) {
+    return (
+      <Sayfa ust={ust}>
+        <BuyukKart
+          baslik="Şahitlerini Seç"
+          metin="Sözünü verdin. 90 güne başlamadan önce 5 lider şahit seç — onlar sözünü görecek, imzalayacak ve yolda seni takip edip gerektiğinde dürtecek. Bu adım zorunlu."
+          href="/sozum"
+          dugme={`Şahit Seç (${secilenSahit}/${TANIK_HEDEF})`}
+          ikon="🤝"
           vurgu
         />
       </Sayfa>

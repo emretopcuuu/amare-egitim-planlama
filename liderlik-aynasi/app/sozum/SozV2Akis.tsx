@@ -3,9 +3,19 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import { ayAdi } from "@/lib/planTakvim";
 import SesKaydedici from "@/app/soz/SesKaydedici";
 
 const t = tr.sozV2;
+
+// Söz adımının ufku → ay etiketi. Eski gün kodlarını (10/40/90) da destekler,
+// böylece daha önce şekillenmiş sözler de doğru (ay bazlı) görünür.
+function ufukAyEtiket(ufuk: string, now: Date): string {
+  if (ufuk === "ilk_72_saat" || ufuk === "72") return "İlk 72 Saat";
+  if (ufuk === "kirk_gun" || ufuk === "40") return ayAdi(now, 1);
+  if (ufuk === "doksan_gun" || ufuk === "90") return ayAdi(now, 2);
+  return ayAdi(now, 0);
+}
 
 type Aksiyon = { metin: string; ufuk: string };
 type Soz = { metin: string | null; aksiyonlar: Aksiyon[]; voice_path: string | null; durum: string } | null;
@@ -46,6 +56,8 @@ export default function SozV2Akis({
   const [faz, setFaz] = useState<Faz>(ilkFaz(soz, tanikBaslangic.length));
   const [metin, setMetin] = useState(soz?.metin ?? "");
   const [aksiyonlar] = useState<Aksiyon[]>(soz?.aksiyonlar ?? []);
+  const [now] = useState(() => new Date());
+  const [sesBlob, setSesBlob] = useState<Blob | null>(null);
   const [taniklar, setTaniklar] = useState<Tanik[]>(tanikBaslangic);
   const [bekleyen, setBekleyen] = useState<Bekleyen[]>(bekleyenBaslangic);
   const [mesgul, setMesgul] = useState(false);
@@ -134,7 +146,7 @@ export default function SozV2Akis({
               {aksiyonlar.map((a, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-slate-200">
                   <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.6rem] font-bold text-emerald-300">
-                    {t.ufukEtiket(a.ufuk)}
+                    {ufukAyEtiket(a.ufuk, now)}
                   </span>
                   <span>{a.metin}</span>
                 </li>
@@ -175,20 +187,39 @@ export default function SozV2Akis({
             {metin}
           </p>
         </div>
+        {/* Kaydet → dinle → beğenmezsen "Yeniden kaydet" (SesKaydedici içinde).
+            Ses ancak "Bu sesi kullan" ile yüklenir — önizlemeden önce kilit yok. */}
         <SesKaydedici
-          onKayit={async (blob) => {
-            if (!blob) return;
-            setMesgul(true);
+          onKayit={(blob) => {
+            setSesBlob(blob);
             setHata(null);
-            const fd = new FormData();
-            fd.append("ses", blob, "soz-v2.webm");
-            const res = await fetch("/api/soz-v2/ses", { method: "POST", body: fd });
-            setMesgul(false);
-            if (res.ok) setFaz("tanik");
-            else setHata(t.kapali);
           }}
         />
-        {mesgul && <p className="text-center text-sm text-slate-400">{t.sesYukleniyor}</p>}
+        {sesBlob ? (
+          <button
+            onClick={async () => {
+              setMesgul(true);
+              setHata(null);
+              const fd = new FormData();
+              fd.append("ses", sesBlob, "soz-v2.webm");
+              const res = await fetch("/api/soz-v2/ses", { method: "POST", body: fd });
+              setMesgul(false);
+              if (res.ok) {
+                setSesBlob(null);
+                setFaz("tanik");
+                router.refresh();
+              } else setHata(t.kapali);
+            }}
+            disabled={mesgul}
+            className="btn-kor parilti flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
+          >
+            {mesgul ? t.sesYukleniyor : "Bu sesi kullan → devam et"}
+          </button>
+        ) : (
+          <p className="text-center text-xs text-slate-500">
+            Kaydet, dinle; beğenmezsen &ldquo;Yeniden kaydet&rdquo;. Beğendiğinde &ldquo;Bu sesi kullan&rdquo;a bas.
+          </p>
+        )}
         {hata && <p className="text-center text-sm text-red-400">{hata}</p>}
         <button
           onClick={() => setFaz("tanik")}
@@ -222,6 +253,10 @@ export default function SozV2Akis({
           setHata(null);
         }}
         onDevam={() => setFaz("tamam")}
+        onSesYeniden={() => {
+          setSesBlob(null);
+          setFaz("ses");
+        }}
         hata={hata}
       />
     );
@@ -255,6 +290,15 @@ export default function SozV2Akis({
         >
           {t.devam}
         </button>
+        <button
+          onClick={() => {
+            setSesBlob(null);
+            setFaz("ses");
+          }}
+          className="mx-auto mt-3 block text-sm text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+        >
+          🎤 Sesi yeniden kaydet
+        </button>
       </div>
     </Sarmal>
   );
@@ -268,6 +312,7 @@ function TanikSecimi({
   onEkle,
   onSil,
   onDevam,
+  onSesYeniden,
   hata,
 }: {
   imzaBandi: React.ReactNode;
@@ -276,6 +321,7 @@ function TanikSecimi({
   onEkle: (id: string) => void;
   onSil: (id: string) => void;
   onDevam: () => void;
+  onSesYeniden: () => void;
   hata: string | null;
 }) {
   const [arama, setArama] = useState("");
@@ -354,6 +400,12 @@ function TanikSecimi({
         className="btn-kor parilti flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold disabled:opacity-50"
       >
         {dolu ? t.devam : t.tanikSecili(taniklar.length)}
+      </button>
+      <button
+        onClick={onSesYeniden}
+        className="mx-auto block text-sm text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+      >
+        🎤 Sesi yeniden kaydet
       </button>
     </div>
   );
