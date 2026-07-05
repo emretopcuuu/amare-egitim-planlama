@@ -7,6 +7,7 @@ import { pusulaCekirdek } from "@/lib/pusula";
 import { hedefCekirdek } from "@/lib/hedef";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { tlFormat } from "@/lib/kariyer";
+import { birUstKariyerEtiket } from "@/lib/persona";
 
 // FAZ 1 (Kamp sonrası motor) — "90 GÜNLÜK OYUN PLANI" (Plan Atölyesi). AI planı
 // DAYATMAZ; kişinin verisinden 4 ufuklu (İlk 72 saat · 10 · 40 · 90 gün) bir
@@ -23,7 +24,7 @@ Plan kuralları:
 - DÖRT ufuk: "ilk_72_saat" (kamptan çıkınca ilk 3 gün — çok küçük, hemen yapılabilir kıvılcım adımları), "on_gun" (ilk momentum/aktivasyon), "kirk_gun" (tempo + ilk ekip/kilometre taşı), "doksan_gun" (ana hedefe varış).
 - Her ufukta EN AZ 1, EN FAZLA 3 madde. Her madde: kısa "baslik", net "aksiyon" (o ufukta yapılabilir, ölçülebilir saha eylemi), ve "olcut" (nasıl takip edilir — sayı/sıklık).
 - ZORUNLU: "ilk_72_saat" maddelerinden BİRİ mutlaka somut bir RANDEVU/KAYIT alma görevi olsun. Kişiyi ajandasını doldurup hızlı kayıt almaya yönlendir. Çerçevesi şu ruhta olsun: "Şimdiye kadar aramadığın ama arasan kaydını alabileceğini bildiğin 3 kişiyi hemen yaz; bu hafta liderliğini göster — bu 72 saatte en az birinin kaydını al." Motive edici ama net bir dil kullan (ör. "odaklanırsan yaparsın"). Ölçüt: 3 isim yazılır + en az 1 kayıt/randevu.
-- ZORUNLU: "on_gun" maddelerinden BİRİ mutlaka kişisel KAYIT alma hedefi olsun: ay bitmeden ŞAHSEN en az 1, mümkünse 2 kayıt. Bu maddeyi yüksek bir çıtayla, hayati bir odak gibi kur — sanki hayatta kalman ve Presidential Diamond olman bu aya bağlıymış gibi, "bu ay Presidential Diamond oluyormuşsun gibi buna odaklan" ruhuyla. Ölçüt: ay sonuna kadar en az 1 (hedef 2) kişisel kayıt.
+- ZORUNLU: "on_gun" maddelerinden BİRİ mutlaka kişisel KAYIT alma hedefi olsun: ay bitmeden ŞAHSEN en az 1, mümkünse 2 kayıt. Bu maddeyi yüksek bir çıtayla, hayati bir odak gibi kur. Motivasyon çıtası olarak SABİT bir rütbe yazma; JSON'daki "birUstKariyer" alanını kullan — "sanki bu ay {birUstKariyer} oluyormuşsun gibi buna odaklan; hayatta kalman ve {birUstKariyer} olman bu aya bağlıymış gibi" ruhuyla (metinde birUstKariyer değerini aynen geçir). Ölçüt: ay sonuna kadar en az 1 (hedef 2) kişisel kayıt.
 - Network/doğrudan satış alanının diliyle konuş (davet, sunum, kapanış, liste, katlama). KATILIMCI EVRENİ'ndeki gerçek tıkanmalara hitap et.
 - Planı kişinin GÜÇLÜ yanına yasla (onu kaldıraç yap) ve KÖR NOKTASINI/gelişim alanını sessizce çalıştır — ama açıkça yüzüne vurma.
 - Hedef rakamlarını planın iskeletine bağla ama kuru kuruya tekrarlama.
@@ -116,15 +117,20 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
 
   if (!process.env.ANTHROPIC_API_KEY) return { durum: "anahtar-yok" };
 
-  const [rapor, pusula, hedef] = await Promise.all([
+  const [rapor, pusula, hedef, { data: kisi }] = await Promise.all([
     raporHesapla(db, pid),
     pusulaCekirdek(db, pid),
     hedefCekirdek(db, pid),
+    db.from("participants").select("kariyer_seviyesi").eq("id", pid).maybeSingle(),
   ]);
+
+  // Motivasyon çıtası: kişinin bir üst kariyeri (diamond altı → Diamond; üstü → +1).
+  const birUstKariyer = birUstKariyerEtiket(kisi?.kariyer_seviyesi ?? null);
 
   const veri = {
     cekirdekNeden: pusula?.cekirdek_neden ?? null,
     icEngel: pusula?.ic_engel ?? null,
+    birUstKariyer,
     hedef: hedef?.plan
       ? {
           rutbe: hedef.plan.rutbe,
