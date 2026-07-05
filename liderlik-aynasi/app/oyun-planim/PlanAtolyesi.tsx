@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Bekle from "@/components/Bekle";
+import AynaDusunuyor from "@/components/AynaDusunuyor";
+import { tr } from "@/lib/i18n/tr";
 import type { OyunPlani, PlanMadde, PlanUfuk } from "@/lib/oyunPlani";
 
 // PLAN ATÖLYESİ — kişi karar verir, AYNA danışman. AI önerisi "öneri" olarak
@@ -29,16 +31,85 @@ function planiCikar(p: OyunPlani): PlanDurumu {
   };
 }
 
-export default function PlanAtolyesi({ plan }: { plan: OyunPlani }) {
+const BOS: PlanDurumu = { ilk_72_saat: [], on_gun: [], kirk_gun: [], doksan_gun: [] };
+
+export default function PlanAtolyesi({ ilkPlan }: { ilkPlan: OyunPlani | null }) {
   const router = useRouter();
-  const [durum, setDurum] = useState(plan.durum);
-  const [veri, setVeri] = useState<PlanDurumu>(planiCikar(plan));
+  const [plan, setPlan] = useState<OyunPlani | null>(ilkPlan);
+  const [durum, setDurum] = useState<"taslak" | "onaylandi">(ilkPlan?.durum ?? "taslak");
+  const [veri, setVeri] = useState<PlanDurumu>(ilkPlan ? planiCikar(ilkPlan) : BOS);
+  const [uretiliyor, setUretiliyor] = useState(!ilkPlan);
+  const [uretimHata, setUretimHata] = useState(false);
   const [duzenlenen, setDuzenlenen] = useState<string | null>(null); // "ufuk:idx"
   const [danisAcik, setDanisAcik] = useState<{ ufuk: PlanUfuk; idx: number } | null>(null);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
 
+  // Plan yoksa CLIENT'ta üret (Opus ~10-20 sn) — yükleme göstergesiyle, timeout
+  // riski olmadan. Bir kez dener; hata olursa kişi "tekrar dene" ile yeniden.
+  const denendi = useRef(false);
+  async function uret() {
+    setUretiliyor(true);
+    setUretimHata(false);
+    try {
+      const res = await fetch("/api/oyun-plani", { method: "POST" });
+      const v = await res.json().catch(() => null);
+      if (res.ok && v?.durum === "hazir") {
+        const p = v.plan as OyunPlani;
+        setPlan(p);
+        setDurum(p.durum);
+        setVeri(planiCikar(p));
+      } else {
+        setUretimHata(true);
+      }
+    } catch {
+      setUretimHata(true);
+    } finally {
+      setUretiliyor(false);
+    }
+  }
+  useEffect(() => {
+    if (plan || denendi.current) return;
+    denendi.current = true;
+    void uret();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const toplamMadde = UFUKLAR.reduce((t, u) => t + veri[u.key].length, 0);
+
+  // ---- ÜRETİM: yükleme / hata ----
+  if (uretiliyor) {
+    return (
+      <div className="space-y-5">
+        <header>
+          <h1 className="prizma-serif ay-metin text-2xl font-semibold leading-tight">
+            90 Günlük Oyun Planım
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-slate-300">
+            AYNA senin verinden bir başlangıç önerisi hazırlıyor — birazdan hepsini sen düzenleyeceksin.
+          </p>
+        </header>
+        <AynaDusunuyor satirlar={tr.dusunuyor.mektup} />
+      </div>
+    );
+  }
+  if (!plan) {
+    return (
+      <div className="kart-cam rounded-3xl p-8 text-center">
+        <p className="text-5xl" aria-hidden>🧭</p>
+        <h1 className="prizma-serif ay-metin mt-4 text-xl font-semibold">Plan bu an kurulamadı</h1>
+        <p className="mt-2 text-sm leading-relaxed text-slate-300">
+          {uretimHata ? "Bir aksilik oldu — verilerin duruyor. Tekrar dene." : "Birazdan tekrar dene."}
+        </p>
+        <button
+          onClick={uret}
+          className="btn-kor mt-5 inline-flex h-11 items-center justify-center rounded-xl px-6 font-semibold"
+        >
+          Tekrar dene
+        </button>
+      </div>
+    );
+  }
 
   function maddeGuncelle(ufuk: PlanUfuk, idx: number, alan: keyof PlanMadde, deger: string) {
     setVeri((v) => {
