@@ -81,11 +81,13 @@ adımları ve içerik TODO'ları kendi README'sinde.
 
 ## Son tamamlanan işler
 
-- Kişisel marka sitesi: 4 tasarım varyantı sunuldu, seçilen final =
-  sinematik 3D "video scroll" (Zirve, PR #614) + Instagram linki
-  @emretopcu_official (PR #615-616). Domain **emretopcu.ai** alındı
-  (Cloudflare Registrar); Cloudflare Pages deploy'u API token bekliyor.
-  Portre fotoğrafı içerikten bekleniyor. (İlk sürüm PR #612.)
+- Kişisel marka sitesi **CANLIDA: https://emretopcu.ai** (Cloudflare Pages,
+  proje `emretopcu-ai`, hesap s.emretopcu@gmail.com; apex+www proxied CNAME
+  → emretopcu-ai.pages.dev). Seçilen tasarım: sinematik 3D "video scroll"
+  (Zirve, PR #614); Instagram @emretopcu_official (PR #615-616); .ai geçişi
+  + statik export PR #618. Yeniden deploy: README'deki tek wrangler komutu
+  (yeni CF token gerekir; ilk token kullanıcıda, silinebilir). Bekleyen
+  içerik: portre fotoğrafı. (İlk sürüm PR #612.)
 - Kariyer seviyeleri 8 basamağa düzeltildi (PR #313, merged).
 - Ses Ritüeli'nden foto adımı kaldırıldı (PR #312, merged).
 - Pusula kariyer formu: DB CHECK constraint 8 basamağa genişletildi
