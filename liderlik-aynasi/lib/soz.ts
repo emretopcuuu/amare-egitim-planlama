@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
+import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { raporHesapla } from "@/lib/rapor";
 import { pusulaCekirdek } from "@/lib/pusula";
 import { hedefCekirdek } from "@/lib/hedef";
@@ -118,7 +119,7 @@ export async function sozSekillendir(db: Db, pid: string, ad: string): Promise<S
       max_tokens: 2048,
       thinking: { type: "adaptive" },
       output_config: { effort: "medium", format: { type: "json_schema", schema: SOZ_SEMASI } },
-      system: `${SISTEM}\n\n${KATILIMCI_EVRENI}`,
+      system: `${SISTEM}\n\n${KATILIMCI_EVRENI}\n\n${DIL_KALITESI}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
     if (yanit.stop_reason === "refusal") return { durum: "hata" };

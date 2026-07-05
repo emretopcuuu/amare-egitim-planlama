@@ -3465,6 +3465,11 @@ export const tr = {
     cevrimdisiTekrar: "Şimdi tekrar dene",
     gecmisBaslik: "Görev Geçmişin",
     gecmisYok: "Henüz tamamlanmış görevin yok.",
+    // Geçmişte açılan kart bazen dolduracak veri (kas/neden/katkı/yorum) hiç
+    // yoksa boş kalıyordu ("bazısı hiç açılmıyor" — saha geri bildirimi).
+    // Kaçan/notu-olmayan görevde açılınca en az bir açıklayıcı satır göstersin.
+    gecmisNotYokKacan: "Bu görevi kaçırdın — ek bir not oluşmadı.",
+    gecmisNotYok: "Bu görev için ek not yok.",
     durumlar: {
       pending: "Bekliyor",
       submitted: "AYNA okuyor",

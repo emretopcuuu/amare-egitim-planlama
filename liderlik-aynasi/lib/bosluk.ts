@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
+import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { pusulaCekirdek } from "@/lib/pusula";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
@@ -164,7 +165,7 @@ export async function boslukGetirVeyaUret(db: Db, pid: string): Promise<BoslukSo
         effort: "low",
         format: { type: "json_schema", schema: DEMOLISYON_SEMASI },
       },
-      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\nGörevin: aşağıdaki veriden Boşluk Anı'nı kur. "icEngel" kişinin çürütülecek inancı; "kanitlar" onu çürütebilecek GERÇEK anlar. Yalnız iç engeli doğrudan çürüten kanıtları seç (3-5). Hiçbirini uydurma; verilenlerle sınırlı kal. Kişinin engelini kendi evreninin diliyle (davet, sunum, hayır, eşik, momentum) anla; ama stok/ürün krizi gibi dışsal koşulu ona karşı kanıt gibi kullanma.`,
+      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\nGörevin: aşağıdaki veriden Boşluk Anı'nı kur. "icEngel" kişinin çürütülecek inancı; "kanitlar" onu çürütebilecek GERÇEK anlar. Yalnız iç engeli doğrudan çürüten kanıtları seç (3-5). Hiçbirini uydurma; verilenlerle sınırlı kal. Kişinin engelini kendi evreninin diliyle (davet, sunum, hayır, eşik, momentum) anla; ama stok/ürün krizi gibi dışsal koşulu ona karşı kanıt gibi kullanma.\n\n${DIL_KALITESI}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
     const demolisyon = jsonCoz<Demolisyon>(yanit);

@@ -268,6 +268,20 @@ export default function GorevGecmisi({
                                   “{g.gozlem}”
                                 </p>
                               )}
+                              {/* Görev türüne göre neden/fayda/yorum/kas hiçbiri
+                                  dolmamış olabilir (statik şablonlu türler: söz,
+                                  senkron, şahit, mentorluk, serbest, domino, sesli
+                                  mektup — kaçan görevde zaten yorum hiç oluşmaz).
+                                  Panel asla boş kalmasın — en az bir satır göster. */}
+                              {!(g.trait_id != null && ozellikAd[g.trait_id]) &&
+                                !g.neden &&
+                                !g.fayda &&
+                                !g.ai_comment &&
+                                !g.gozlem && (
+                                  <p className="text-xs text-slate-500">
+                                    {g.status === "expired" ? t.gecmisNotYokKacan : t.gecmisNotYok}
+                                  </p>
+                                )}
                               {/* Geliştir ve yeniden gönder — puanı artırmak için aynı görevi
                                   tekrar dene (söz/senkron hariç puanlanmış görevler). */}
                               {g.status === "scored" && g.kind !== "soz" && g.kind !== "senkron" && (

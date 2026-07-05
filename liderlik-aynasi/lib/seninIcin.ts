@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
+import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { raporHesapla } from "@/lib/rapor";
 import { pusulaCekirdek } from "@/lib/pusula";
 
@@ -80,7 +81,7 @@ export async function seninIcinGetirVeyaUret(
       model: "claude-haiku-4-5",
       max_tokens: 500,
       thinking: { type: "disabled" },
-      system: SISTEM,
+      system: `${SISTEM}\n\n${DIL_KALITESI}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
     if (yanit.stop_reason === "refusal") return { durum: "hata" };
