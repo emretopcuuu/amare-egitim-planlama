@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
+import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { seslendir, sesYapilandirildiMi } from "@/lib/eleven";
 
 // YANSIMAN'ın ilk selamlaması: katılımcının kendi sesiyle, kendi
@@ -40,7 +41,7 @@ export async function selamUret(ad: string, beklenti: string | null): Promise<st
         effort: "low",
         format: { type: "json_schema", schema: SELAM_SEMASI },
       },
-      system: SISTEM,
+      system: `${SISTEM}\n\n${DIL_KALITESI}`,
       messages: [
         {
           role: "user",

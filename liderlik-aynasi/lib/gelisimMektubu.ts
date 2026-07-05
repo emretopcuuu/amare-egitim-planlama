@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
+import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { kisiSentezi, sentezMetni, type Sentez } from "@/lib/sentez";
 
 // GELİŞİM (TAVSİYE) MEKTUBU — kampsonu. lib/sentez.ts'in ürettiği sentezden
@@ -101,7 +102,7 @@ export async function gelisimMektubuGetirVeyaUret(
       max_tokens: 4096,
       thinking: { type: "adaptive" },
       output_config: { effort: "low" },
-      system: SISTEM,
+      system: `${SISTEM}\n\n${DIL_KALITESI}`,
       messages: [{ role: "user", content: sentezMetni(sentez) }],
     });
     if (yanit.stop_reason === "refusal") return { durum: "hata" };

@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
+import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { pusulaCekirdek, pusulaOzeti } from "@/lib/pusula";
 import { hedefOzeti } from "@/lib/hedef";
 import { onFarkindalikOzeti } from "@/lib/ayna";
@@ -197,7 +198,7 @@ async function metinUret(
         effort: "medium",
         format: { type: "json_schema", schema: SEMA },
       },
-      system: `${PERSONA}\n\nAŞAMA: ${ASAMA_CERCEVE[asama]}\n\n${TALIMAT}${oncekiNot}${yenidenNot}`,
+      system: `${PERSONA}\n\nAŞAMA: ${ASAMA_CERCEVE[asama]}\n\n${TALIMAT}${oncekiNot}${yenidenNot}\n\n${DIL_KALITESI}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
     const o = jsonCoz(yanit);
