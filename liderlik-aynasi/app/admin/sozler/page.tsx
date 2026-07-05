@@ -15,7 +15,7 @@ export default async function SozlerPage() {
 
   const db = supabaseAdmin();
   const [{ data: ayar }, { data: sozler }] = await Promise.all([
-    db.from("settings").select("value").eq("key", "kapanis_soz_acik").maybeSingle(),
+    db.from("settings").select("value").eq("key", "soz_v2_acik").maybeSingle(),
     db
       .from("pledges")
       .select(
