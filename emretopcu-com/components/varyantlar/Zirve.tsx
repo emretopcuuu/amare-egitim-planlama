@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
+import Image from "next/image";
 import {
   motion,
   useInView,
@@ -272,6 +273,25 @@ function Manifesto() {
   return (
     <section id="manifesto" className="scroll-mt-24 py-28 md:py-40">
       <div className="mx-auto max-w-4xl px-6" ref={ref}>
+        <motion.div
+          initial={azalt ? false : { opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: GECIS }}
+          className="mb-12 flex items-center gap-5"
+        >
+          <Image
+            src="/portre.jpg"
+            alt="Emre Topçu"
+            width={88}
+            height={88}
+            className="rounded-full border-2 border-altin/50"
+          />
+          <div>
+            <p className="text-xl font-semibold tracking-tight">Emre Topçu</p>
+            <p className="text-sm text-duman">{HAKKIMDA.unvan}</p>
+          </div>
+        </motion.div>
         <p className="text-2xl leading-snug font-medium tracking-tight text-fildisi md:text-4xl md:leading-snug">
           {azalt
             ? HAKKIMDA.paragraflar[0]

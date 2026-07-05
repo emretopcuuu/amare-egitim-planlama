@@ -8,19 +8,32 @@ export const HERO = {
   baslikSatir2: "aynada başlar.",
   altMetin:
     "One Team Global bünyesinde ekipler kuruyor, liderler yetiştiriyor ve bu işi sistemle yapıyorum.",
-  konum: "Ankara, Türkiye",
-  rol: "One Team Global lideri",
+  konum: "İstanbul, Türkiye",
+  rol: "Presidential Diamond | One Team Global",
 };
 
 export const HAKKIMDA = {
   baslik: "İşim insan, aracım sistem.",
+  unvan: "Presidential Diamond | One Team Global",
   paragraflar: [
-    "Yıllardır network marketing sahasındayım. Ankara merkezli ekibimle One Team Global çatısı altında çalışıyorum. Bu işte en çok inandığım şey şu: kalıcı büyüme karizmayla değil, herkesin uygulayabildiği net bir sistemle olur.",
-    "2020'den beri yüzlerce eğitim verdim, liderlik kampları tasarladım ve ekibim için kendi dijital araçlarımızı geliştirdim. Sahnede anlattığım her şeyi önce kendi ekibimde denerim; işe yaramayanı anlatmam.",
+    "2013'ten beri doğrudan satış sahasındayım. Yedi ayda Diamond, üç buçuk yılda Presidential Diamond oldum. Bu yolda en çok inandığım şey şu: kalıcı büyüme karizmayla değil, herkesin uygulayabildiği net bir sistemle olur.",
+    "Kocaeli Üniversitesi Uluslararası İlişkiler mezunuyum; yazarım, evli ve iki çocuk babasıyım. 27 yıldır iş hayatının içindeyim, 17 yıldır kendi işlerimi yapıyorum. 38 ülke gezdim; 4 kıtada 220.000 kişilik bir müşteri ağının kurulmasına vesile oldum. Amerika'dan İngiltere'ye birçok ülkede kişisel gelişim eğitimleri verdim; bugün İstanbul'da yaşıyor, iş insanlarına başarı koçluğu yapıyorum.",
   ],
 };
 
 export const YOLCULUK = [
+  {
+    yil: "2013",
+    baslik: "Yedi ayda Diamond",
+    aciklama:
+      "Şubat'ta başladım, Eylül'de Diamond oldum; aynı yılın sonunda 1 Star Diamond. Hız, doğru sistemin ilk kanıtıydı.",
+  },
+  {
+    yil: "2016",
+    baslik: "Presidential Diamond",
+    aciklama:
+      "Üç buçuk yılda şirketin en üst liderlik seviyesine ulaştım. Asıl iş o gün başladı: aynı yolu ekibime açmak.",
+  },
   {
     yil: "2020",
     baslik: "Online sisteme geçiş",
@@ -28,28 +41,16 @@ export const YOLCULUK = [
       "Pandemi döneminde ekibin tamamını online çalışma prensipleriyle uzaktan işleyen bir düzene taşıdım.",
   },
   {
-    yil: "2024",
-    baslik: "Eğitim serileri",
-    aciklama:
-      "Görüşme, ihtiyaç tespiti ve sunum üzerine düzenli eğitim serileri; ekip içi eğitim kütüphanesinin temeli.",
-  },
-  {
-    yil: "2025",
-    baslik: "Diamond yolculuğu",
-    aciklama:
-      "4 Ayda Diamond ve Hızlı Kariyer anlatımlarıyla kariyer planlamasını ekip kültürünün merkezine koydum.",
-  },
-  {
     yil: "2026",
     baslik: "Sapanca liderlik kampı ve Liderlik Aynası",
     aciklama:
-      "29 liderle 3 günlük PD101 kampı; kamp için sıfırdan geliştirdiğimiz 360° liderlik uygulaması sahada çalıştı.",
+      "29 liderle 3 günlük kamp; kamp için sıfırdan geliştirdiğimiz 360° liderlik uygulaması sahada çalıştı.",
   },
   {
     yil: "Sırada",
-    baslik: "PD2026",
+    baslik: "Çoğalan liderler",
     aciklama:
-      "Hedef belli: Presidential Diamond yolculuğu ve kendi ekibini kuran daha çok lider.",
+      "Sıradaki hedef kendi kariyerim değil: ekibimden yeni Diamond'lar ve Presidential Diamond'lar çıkarmak.",
   },
 ];
 
