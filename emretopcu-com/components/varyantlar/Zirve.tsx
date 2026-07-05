@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import {
   motion,
   useInView,
@@ -36,6 +37,9 @@ import {
 
 const GECIS = [0.16, 1, 0.3, 1] as const;
 
+// 3D elmas yalnızca tarayıcıda yüklenir (WebGL, SSR'de çalışmaz).
+const Elmas = dynamic(() => import("./Elmas"), { ssr: false });
+
 const NAV_LINKLER = [
   { href: "#manifesto", etiket: "Hakkımda" },
   { href: "#yolculuk", etiket: "Yolculuk" },
@@ -67,6 +71,48 @@ function Manyetik({ children }: { children: ReactNode }) {
         y.set(0);
       }}
       className="inline-flex"
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* 3D eğilme kartı: imleç üzerindeyken kart perspektifle eğilir. */
+function TiltKart({
+  children,
+  className = "",
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  const azalt = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const rx = useMotionValue(0);
+  const ry = useMotionValue(0);
+  const srx = useSpring(rx, { stiffness: 180, damping: 16 });
+  const sry = useSpring(ry, { stiffness: 180, damping: 16 });
+
+  return (
+    <motion.div
+      ref={ref}
+      style={
+        azalt
+          ? undefined
+          : { rotateX: srx, rotateY: sry, transformPerspective: 900 }
+      }
+      onPointerMove={(e) => {
+        if (azalt || !ref.current) return;
+        const k = ref.current.getBoundingClientRect();
+        const px = (e.clientX - k.left) / k.width - 0.5;
+        const py = (e.clientY - k.top) / k.height - 0.5;
+        rx.set(py * -8);
+        ry.set(px * 10);
+      }}
+      onPointerLeave={() => {
+        rx.set(0);
+        ry.set(0);
+      }}
+      className={className}
     >
       {children}
     </motion.div>
@@ -143,45 +189,55 @@ function Hero() {
       <div aria-hidden className="aurora pointer-events-none absolute inset-0" />
       <motion.div
         style={azalt ? undefined : { y, opacity: sonuklesme }}
-        className="relative mx-auto w-full max-w-6xl px-6 pt-24 pb-16"
+        className="relative mx-auto grid w-full max-w-6xl gap-10 px-6 pt-24 pb-16 md:grid-cols-12 md:items-center"
       >
-        <h1 className="text-5xl leading-[1.05] font-semibold tracking-tight md:text-7xl">
-          <PerdeSatir gecikme={0.1}>{HERO.baslikSatir1}</PerdeSatir>
-          <PerdeSatir gecikme={0.24}>
-            <span className="text-altin">{HERO.baslikSatir2}</span>
-          </PerdeSatir>
-        </h1>
-        <motion.p
-          initial={azalt ? false : { opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.5, ease: GECIS }}
-          className="mt-8 max-w-[46ch] text-lg leading-relaxed text-duman md:text-xl"
-        >
-          {HERO.altMetin}
-        </motion.p>
+        <div className="md:col-span-7">
+          <h1 className="text-5xl leading-[1.05] font-semibold tracking-tight md:text-7xl">
+            <PerdeSatir gecikme={0.1}>{HERO.baslikSatir1}</PerdeSatir>
+            <PerdeSatir gecikme={0.24}>
+              <span className="text-altin">{HERO.baslikSatir2}</span>
+            </PerdeSatir>
+          </h1>
+          <motion.p
+            initial={azalt ? false : { opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5, ease: GECIS }}
+            className="mt-8 max-w-[46ch] text-lg leading-relaxed text-duman md:text-xl"
+          >
+            {HERO.altMetin}
+          </motion.p>
+          <motion.div
+            initial={azalt ? false : { opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.66, ease: GECIS }}
+            className="mt-10 flex flex-wrap items-center gap-4"
+          >
+            <Manyetik>
+              <a
+                href={`mailto:${EPOSTA}`}
+                className="inline-flex items-center gap-2 rounded-full bg-altin px-7 py-3.5 font-medium text-abanoz transition-transform active:scale-[0.98]"
+              >
+                <EnvelopeSimple size={18} weight="bold" />
+                Bana yaz
+              </a>
+            </Manyetik>
+            <Manyetik>
+              <a
+                href="#manifesto"
+                className="inline-flex items-center gap-2 rounded-full border border-white/15 px-7 py-3.5 text-fildisi transition-colors hover:border-white/40 active:scale-[0.98]"
+              >
+                Hikayeyi gör
+              </a>
+            </Manyetik>
+          </motion.div>
+        </div>
         <motion.div
-          initial={azalt ? false : { opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.66, ease: GECIS }}
-          className="mt-10 flex flex-wrap items-center gap-4"
+          initial={azalt ? false : { opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.1, delay: 0.35, ease: GECIS }}
+          className="h-[320px] md:col-span-5 md:h-[520px]"
         >
-          <Manyetik>
-            <a
-              href={`mailto:${EPOSTA}`}
-              className="inline-flex items-center gap-2 rounded-full bg-altin px-7 py-3.5 font-medium text-abanoz transition-transform active:scale-[0.98]"
-            >
-              <EnvelopeSimple size={18} weight="bold" />
-              Bana yaz
-            </a>
-          </Manyetik>
-          <Manyetik>
-            <a
-              href="#manifesto"
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-7 py-3.5 text-fildisi transition-colors hover:border-white/40 active:scale-[0.98]"
-            >
-              Hikayeyi gör
-            </a>
-          </Manyetik>
+          <Elmas hareket={!azalt} />
         </motion.div>
       </motion.div>
     </section>
@@ -394,24 +450,25 @@ function Egitimler() {
           className="mt-12 flex w-max gap-6 pl-6 md:pl-[max(1.5rem,calc((100vw-72rem)/2))]"
         >
           {EGITIMLER.map((egitim, i) => (
-            <article
-              key={egitim.baslik}
-              className={`flex h-[320px] w-[300px] shrink-0 flex-col justify-between rounded-2xl border border-white/10 p-8 md:h-[360px] md:w-[420px] ${
-                i % 3 === 0
-                  ? "bg-gradient-to-br from-altin/15 to-abanoz-2"
-                  : "bg-abanoz-2"
-              }`}
-            >
-              <p className="text-sm text-duman">{egitim.yil}</p>
-              <div>
-                <h3 className="text-2xl font-semibold tracking-tight text-fildisi md:text-3xl">
-                  {egitim.baslik}
-                </h3>
-                <p className="mt-4 max-w-[40ch] leading-relaxed text-duman">
-                  {egitim.ozet}
-                </p>
-              </div>
-            </article>
+            <TiltKart key={egitim.baslik} className="shrink-0">
+              <article
+                className={`flex h-[320px] w-[300px] flex-col justify-between rounded-2xl border border-white/10 p-8 md:h-[360px] md:w-[420px] ${
+                  i % 3 === 0
+                    ? "bg-gradient-to-br from-altin/15 to-abanoz-2"
+                    : "bg-abanoz-2"
+                }`}
+              >
+                <p className="text-sm text-duman">{egitim.yil}</p>
+                <div>
+                  <h3 className="text-2xl font-semibold tracking-tight text-fildisi md:text-3xl">
+                    {egitim.baslik}
+                  </h3>
+                  <p className="mt-4 max-w-[40ch] leading-relaxed text-duman">
+                    {egitim.ozet}
+                  </p>
+                </div>
+              </article>
+            </TiltKart>
           ))}
         </motion.div>
       </div>
