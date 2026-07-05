@@ -10,6 +10,9 @@
 liderlik değerlendirme + kişisel gelişim uygulaması. ~29 aktif katılımcı.
 Repo kökündeki eski Vite+Firebase uygulamasına **dokunulmaz**; bu uygulama
 bağımsız olarak **`liderlik-aynasi/`** alt klasöründe yaşar.
+Repo'da ayrıca **`emretopcu-com/`** var: Emre'nin kişisel marka sitesi
+(emretopcu.com, Next.js 16 + Tailwind v4, tek sayfa, Türkçe). Kampla ilgisi
+yok; Netlify yayın adımları ve içerik TODO'ları kendi README'sinde.
 
 - **Stack:** Next.js 14+ (App Router) + TypeScript + Tailwind
 - **Deploy:** Netlify (production = `main` branch). Proje: `marvelous-pasca-fbfa40`.
@@ -76,6 +79,9 @@ bağımsız olarak **`liderlik-aynasi/`** alt klasöründe yaşar.
 
 ## Son tamamlanan işler
 
+- emretopcu.com kişisel marka sitesi ilk sürüm, `emretopcu-com/` klasörü
+  (PR #612, merged). Portre fotoğrafı, Instagram linki ve metin revizyonu
+  içerik olarak bekleniyor; Netlify'da site henüz açılmadı.
 - Kariyer seviyeleri 8 basamağa düzeltildi (PR #313, merged).
 - Ses Ritüeli'nden foto adımı kaldırıldı (PR #312, merged).
 - Pusula kariyer formu: DB CHECK constraint 8 basamağa genişletildi
