@@ -9,6 +9,7 @@ import { kampGunleri } from "@/lib/kampProgrami";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { grupUyeleri, YONETIM } from "@/lib/icMesaj";
 import GrupOdevTamam from "@/components/GrupOdevTamam";
+import GrupUyeFoto from "@/components/GrupUyeFoto";
 
 export const metadata = { title: "Grubunun Ödevi — Liderlik Aynası" };
 
@@ -40,6 +41,22 @@ export default async function GrupSayfa() {
 
   // Grup arkadaşları (ben hariç) + her birinden gelen okunmamış mesaj sayısı.
   const uyeler = kisi?.team ? await grupUyeleri(db, kisi.team, session.sub) : [];
+
+  // Saha isteği: 150 kişilik organizasyonda isimden tanımak yetmiyor — her
+  // üyenin gerçek fotoğrafı (imzalı URL) + WhatsApp'a dokunma imkânı olsun.
+  // Foto yoksa GrupUyeFoto zaten baş harf bloğuna zarifçe düşer.
+  const fotoUrlHarita = new Map<string, string>();
+  const fotolular = uyeler.filter((u) => u.profil_foto_path);
+  if (fotolular.length > 0) {
+    await Promise.all(
+      fotolular.map(async (u) => {
+        const { data } = await db.storage
+          .from("sesler")
+          .createSignedUrl(u.profil_foto_path!, 3600);
+        if (data?.signedUrl) fotoUrlHarita.set(u.id, data.signedUrl);
+      })
+    );
+  }
 
   // Cumartesi (Gün 2) tarihi kampın başlatıldığı tarihten türetilir (sabit değil).
   const cumartesiTarih = kampGunleri(await kampBaslangicGetir(db))[1];
@@ -82,9 +99,12 @@ export default async function GrupSayfa() {
                     href={`/grup/sohbet/${u.id}`}
                     className="flex items-center gap-3 rounded-2xl border border-white/12 bg-midnight-card/60 p-3 transition-colors hover:border-gold/40 active:scale-[0.99]"
                   >
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gold/15 text-lg font-bold text-gold-light ring-1 ring-gold/30">
-                      {u.full_name.trim().charAt(0).toLocaleUpperCase("tr")}
-                    </span>
+                    <GrupUyeFoto
+                      ad={u.full_name}
+                      takim={kisi.team}
+                      telefon={u.phone}
+                      fotoUrl={fotoUrlHarita.get(u.id) ?? null}
+                    />
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-base font-semibold text-slate-100">
                         {u.full_name}
