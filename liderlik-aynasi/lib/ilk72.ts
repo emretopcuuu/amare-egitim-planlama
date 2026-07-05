@@ -17,7 +17,11 @@ const VARSAYILAN_ADIMLAR = [
 // aksiyonları, o da yoksa varsayılan. Her zaman tam 3 döner.
 export async function ilk72Adimlar(db: Db, pid: string): Promise<string[]> {
   const plan = await oyunPlaniGetir(db, pid);
-  const planAdim = (plan?.on_gun ?? []).map((m) => m.aksiyon).filter(Boolean);
+  // İlk 72 Saat artık planın kendi ufku — önce onu kullan, yetmezse 10 gün'le tamamla.
+  const planAdim = [
+    ...(plan?.ilk_72_saat ?? []).map((m) => m.aksiyon),
+    ...(plan?.on_gun ?? []).map((m) => m.aksiyon),
+  ].filter(Boolean);
   if (planAdim.length >= 3) return planAdim.slice(0, 3);
 
   const soz = await sozGetir(db, pid);

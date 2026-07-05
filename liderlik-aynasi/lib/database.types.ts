@@ -1931,8 +1931,11 @@ export type Database = {
         Row: {
           created_at: string
           doksan_gun: Json
+          durum: string
+          ilk_72_saat: Json
           kirk_gun: Json
           on_gun: Json
+          onaylandi_at: string | null
           ozet: string | null
           participant_id: string
           updated_at: string
@@ -1940,8 +1943,11 @@ export type Database = {
         Insert: {
           created_at?: string
           doksan_gun?: Json
+          durum?: string
+          ilk_72_saat?: Json
           kirk_gun?: Json
           on_gun?: Json
+          onaylandi_at?: string | null
           ozet?: string | null
           participant_id: string
           updated_at?: string
@@ -1949,8 +1955,11 @@ export type Database = {
         Update: {
           created_at?: string
           doksan_gun?: Json
+          durum?: string
+          ilk_72_saat?: Json
           kirk_gun?: Json
           on_gun?: Json
+          onaylandi_at?: string | null
           ozet?: string | null
           participant_id?: string
           updated_at?: string
