@@ -290,15 +290,23 @@ export default function SozV2Akis({
         >
           {t.devam}
         </button>
-        <button
-          onClick={() => {
-            setSesBlob(null);
-            setFaz("ses");
-          }}
-          className="mx-auto mt-3 block text-sm text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
-        >
-          🎤 Sesi yeniden kaydet
-        </button>
+        <div className="mt-3 flex flex-col items-center gap-2">
+          <button
+            onClick={() => setFaz("tanik")}
+            className="text-sm text-slate-400 underline-offset-2 hover:text-gold-light hover:underline"
+          >
+            🤝 Şahitlerimi düzenle
+          </button>
+          <button
+            onClick={() => {
+              setSesBlob(null);
+              setFaz("ses");
+            }}
+            className="text-sm text-slate-500 underline-offset-2 hover:text-slate-300 hover:underline"
+          >
+            🎤 Sesi yeniden kaydet
+          </button>
+        </div>
       </div>
     </Sarmal>
   );

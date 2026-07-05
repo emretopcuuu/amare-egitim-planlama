@@ -1,5 +1,6 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { katilimciyaBildir } from "@/lib/push";
 import {
   sozGetir,
   sozSekillendir,
@@ -71,6 +72,20 @@ export async function POST(req: Request) {
 
   if (typeof g.tanikEkle === "string") {
     const r = await tanikEkle(db, session.sub, g.tanikEkle);
+    if (r.ok) {
+      // Seçilen şahide ANINDA haber ver — uygulamayı açmasa da yakalansın.
+      try {
+        await katilimciyaBildir(
+          db,
+          g.tanikEkle,
+          "🤝 Bir söze şahit gösterildin",
+          `${session.ad} seni sözüne şahit gösterdi. Sözünü aç, gör ve imzala.`,
+          "/sahitlik"
+        );
+      } catch {
+        // yut — bildirim düşse de şahitlik kaydı durur
+      }
+    }
     return Response.json(r, { status: r.ok ? 200 : 409 });
   }
 
