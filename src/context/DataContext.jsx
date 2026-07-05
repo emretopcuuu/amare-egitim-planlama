@@ -740,7 +740,17 @@ export const DataProvider = ({ children }) => {
         return isNaN(dt.getTime()) ? null : dt;
       };
 
-      const yeniSlotSet = new Set(yeniTakvim.map(e => e.slot));
+      // MÜKERRER ÖNLEME: eşleştirmeyi slot (tarih_saat metni) yerine
+      // TARİH + İSİM BENZERLİĞİ ile yap. Slot yöntemi, aynı etkinlik elle
+      // saatsiz girilip sonra Excel'de saatiyle gelince ("no-time" ≠ "15:30")
+      // eşleşmiyor, çift kayıt oluşuyordu (2026-07 Temmuz vakası).
+      const padTarih = (t) => { const p = String(t || '').split('.'); return p.length === 3 ? `${p[0].padStart(2, '0')}.${p[1].padStart(2, '0')}.${p[2]}` : String(t || ''); };
+      const normAd = (s) => String(s || '').toLocaleUpperCase('tr-TR').replace(/[^A-ZÇĞİÖŞÜ0-9]+/g, ' ').trim().replace(/\s+/g, ' ');
+      const adTokens = (s) => new Set(normAd(s).split(' ').filter(w => w.length > 2));
+      const adBenzer = (a, b) => { const A = adTokens(a), B = adTokens(b); if (!A.size || !B.size) return 0; let k = 0; for (const w of A) if (B.has(w)) k++; return k / Math.max(A.size, B.size); };
+      // Yeni etkinlikleri tarihe göre indexle
+      const yeniByTarih = new Map();
+      for (const e of yeniTakvim) { const t = padTarih(e.tarih); if (!yeniByTarih.has(t)) yeniByTarih.set(t, []); yeniByTarih.get(t).push(e); }
 
       const takvimSnapshot = await guvenliGetDocs(collection(db, 'takvim'));
       const arsivlenecek = [];
@@ -749,8 +759,10 @@ export const DataProvider = ({ children }) => {
         const data = d.data();
         const egitimTarihi = parseTr(data.tarih);
         const isGecmis = egitimTarihi && egitimTarihi < today;
-        const sameSlot = yeniSlotSet.has(data.slot);
-        if (isGecmis || sameSlot) {
+        // Excel'de aynı tarih+isim(≥%60) eşleşmesi var mı → aynı etkinliğin yeni hali → arşivle (değiştir)
+        const ayniGun = yeniByTarih.get(padTarih(data.tarih)) || [];
+        const ayniEtkinlik = ayniGun.some(e => adBenzer(e.egitim, data.egitim) >= 0.6);
+        if (isGecmis || ayniEtkinlik) {
           arsivlenecek.push(d);
         } else {
           korunan++;
