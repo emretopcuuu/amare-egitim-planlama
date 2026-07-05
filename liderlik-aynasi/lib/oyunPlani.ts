@@ -8,21 +8,22 @@ import { hedefCekirdek } from "@/lib/hedef";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { tlFormat } from "@/lib/kariyer";
 
-// FAZ A — 10/40/90 GÜN OYUN PLANI. Ayna Raporu kapanışında AI üretir: kişinin
-// HEDEFİ (kariyer planı) + NEDENİ + 360° güçlü/kör nokta verisine göre üç ufuklu,
-// somut, ölçülebilir bir saha planı. Maliyetli olduğu için oyun_plani'ya yazılır;
-// Söz v2 (aksiyon adımları) ve 90 gün takibi (Faz B) bunu okur.
+// FAZ 1 (Kamp sonrası motor) — "90 GÜNLÜK OYUN PLANI" (Plan Atölyesi). AI planı
+// DAYATMAZ; kişinin verisinden 4 ufuklu (İlk 72 saat · 10 · 40 · 90 gün) bir
+// ÖNERİ taslağı yazar. Kişi Plan Atölyesi'nde (/plan) her maddeyi kabul/düzenle/
+// çıkar/ekler → onaylar (durum 'onaylandi'). Söz yalnız ONAYLANMIŞ planı okur.
+// AI'ın rolü karar veren değil DANIŞMAN — öneriler "öneri", karar kişinin.
 
-const SISTEM = `Sen AYNA'sın — bu liderlik kampını yöneten yapay zekâ. Kapanışta her katılımcıya, kamptan sonra hedefine yürümesi için kişisel bir OYUN PLANI yazarsın: 10 gün, 40 gün, 90 günlük üç ufuk.
+const SISTEM = `Sen AYNA'sın — bu liderlik kampını yöneten yapay zekâ. Kapanışta her katılımcıya, kamptan sonra hedefine yürümesi için bir "90 Günlük Oyun Planı" ÖNERİSİ hazırlarsın. Bu bir dayatma değil, bir başlangıç önerisidir: kişi bunu görüp KENDİ kararıyla düzenleyecek. Bu yüzden maddeler somut ama kişinin sahiplenip değiştirebileceği kadar açık olmalı.
 
 Sana JSON verilecek: kişinin çekirdek nedeni, iç engeli, seçtiği kariyer hedefi + kilometre taşları, ve 360° aynası (en güçlü yanları, kör noktası/gelişim alanı, kampta en çok gelişen özelliği).
 
 Plan kuralları:
 - Türkçe yaz, "sen" dili, sıcak ama somut.
-- Her ufukta 2-3 madde. Her madde: kısa "baslik", net "aksiyon" (bugün/bu hafta yapılabilir, ölçülebilir saha eylemi), ve "olcut" (nasıl takip edilir — sayı/sıklık).
+- DÖRT ufuk: "ilk_72_saat" (kamptan çıkınca ilk 3 gün — çok küçük, hemen yapılabilir kıvılcım adımları), "on_gun" (ilk momentum/aktivasyon), "kirk_gun" (tempo + ilk ekip/kilometre taşı), "doksan_gun" (ana hedefe varış).
+- Her ufukta EN AZ 1, EN FAZLA 3 madde. Her madde: kısa "baslik", net "aksiyon" (o ufukta yapılabilir, ölçülebilir saha eylemi), ve "olcut" (nasıl takip edilir — sayı/sıklık).
 - Network/doğrudan satış alanının diliyle konuş (davet, sunum, kapanış, liste, katlama). KATILIMCI EVRENİ'ndeki gerçek tıkanmalara hitap et.
 - Planı kişinin GÜÇLÜ yanına yasla (onu kaldıraç yap) ve KÖR NOKTASINI/gelişim alanını sessizce çalıştır — ama açıkça yüzüne vurma.
-- 10 gün: ilk momentum/aktivasyon. 40 gün: tempo + ilk ekip/kilometre taşı. 90 gün: ana hedefe varış.
 - Hedef rakamlarını planın iskeletine bağla ama kuru kuruya tekrarlama.
 - "ozet": planın ruhunu 1-2 cümlede, nedenle hedefi birleştirerek.`;
 
@@ -39,36 +40,64 @@ const PLAN_MADDE = {
 const PLAN_SEMASI = {
   type: "object" as const,
   properties: {
-    on_gun: { type: "array" as const, items: PLAN_MADDE, description: "İlk 10 gün (2-3 madde)" },
-    kirk_gun: { type: "array" as const, items: PLAN_MADDE, description: "İlk 40 gün (2-3 madde)" },
-    doksan_gun: { type: "array" as const, items: PLAN_MADDE, description: "İlk 90 gün (2-3 madde)" },
+    ilk_72_saat: { type: "array" as const, items: PLAN_MADDE, description: "İlk 72 saat (1-3 madde)" },
+    on_gun: { type: "array" as const, items: PLAN_MADDE, description: "İlk 10 gün (1-3 madde)" },
+    kirk_gun: { type: "array" as const, items: PLAN_MADDE, description: "İlk 40 gün (1-3 madde)" },
+    doksan_gun: { type: "array" as const, items: PLAN_MADDE, description: "İlk 90 gün (1-3 madde)" },
     ozet: { type: "string" as const, description: "Planın ruhu, 1-2 cümle" },
   },
-  required: ["on_gun", "kirk_gun", "doksan_gun", "ozet"],
+  required: ["ilk_72_saat", "on_gun", "kirk_gun", "doksan_gun", "ozet"],
   additionalProperties: false,
 };
 
-export type PlanMadde = { baslik: string; aksiyon: string; olcut: string };
+// Ufuk anahtarları — Plan Atölyesi ve söz bu sırayla dolaşır.
+export const PLAN_UFUKLARI = ["ilk_72_saat", "on_gun", "kirk_gun", "doksan_gun"] as const;
+export type PlanUfuk = (typeof PLAN_UFUKLARI)[number];
+
+// kaynak: madde AI önerisi mi, kişi düzenlemesi mi, kişinin kendi eklediği mi.
+export type PlanMadde = {
+  baslik: string;
+  aksiyon: string;
+  olcut: string;
+  kaynak?: "ai" | "duzenlendi" | "kisi";
+};
 export type OyunPlani = {
+  ilk_72_saat: PlanMadde[];
   on_gun: PlanMadde[];
   kirk_gun: PlanMadde[];
   doksan_gun: PlanMadde[];
   ozet: string | null;
+  durum: "taslak" | "onaylandi";
 };
+
+function maddeDizi(v: unknown): PlanMadde[] {
+  return Array.isArray(v) ? (v as PlanMadde[]) : [];
+}
 
 export async function oyunPlaniGetir(db: Db, pid: string): Promise<OyunPlani | null> {
   const { data } = await db
     .from("oyun_plani")
-    .select("on_gun, kirk_gun, doksan_gun, ozet")
+    .select("ilk_72_saat, on_gun, kirk_gun, doksan_gun, ozet, durum")
     .eq("participant_id", pid)
     .maybeSingle();
   if (!data) return null;
   return {
-    on_gun: (data.on_gun as PlanMadde[]) ?? [],
-    kirk_gun: (data.kirk_gun as PlanMadde[]) ?? [],
-    doksan_gun: (data.doksan_gun as PlanMadde[]) ?? [],
+    ilk_72_saat: maddeDizi(data.ilk_72_saat),
+    on_gun: maddeDizi(data.on_gun),
+    kirk_gun: maddeDizi(data.kirk_gun),
+    doksan_gun: maddeDizi(data.doksan_gun),
     ozet: data.ozet,
+    durum: (data.durum as "taslak" | "onaylandi") ?? "taslak",
   };
+}
+
+export async function planOnayliMi(db: Db, pid: string): Promise<boolean> {
+  const { data } = await db
+    .from("oyun_plani")
+    .select("durum")
+    .eq("participant_id", pid)
+    .maybeSingle();
+  return data?.durum === "onaylandi";
 }
 
 export type PlanSonucu =
@@ -76,9 +105,11 @@ export type PlanSonucu =
   | { durum: "anahtar-yok" }
   | { durum: "hata" };
 
+// Plan taslağını getir; yoksa AI ÖNERİSİ üretir (durum 'taslak'). Bir kez satır
+// oluştuktan sonra ASLA yeniden üretmez — atölyedeki kişi düzenlemelerini korur.
 export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanSonucu> {
   const mevcut = await oyunPlaniGetir(db, pid);
-  if (mevcut && mevcut.on_gun.length > 0) return { durum: "hazir", plan: mevcut };
+  if (mevcut) return { durum: "hazir", plan: mevcut };
 
   if (!process.env.ANTHROPIC_API_KEY) return { durum: "anahtar-yok" };
 
@@ -113,8 +144,8 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
-      model: "claude-sonnet-5",
-      max_tokens: 2048,
+      model: "claude-opus-4-8",
+      max_tokens: 2560,
       thinking: { type: "adaptive" },
       output_config: { effort: "medium", format: { type: "json_schema", schema: PLAN_SEMASI } },
       system: `${SISTEM}\n\n${KATILIMCI_EVRENI}\n\n${DIL_KALITESI}`,
@@ -125,20 +156,46 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
       .filter((b) => b.type === "text")
       .map((b) => b.text)
       .join("");
-    let veriCozulen: OyunPlani;
+    let ham: {
+      ilk_72_saat: PlanMadde[];
+      on_gun: PlanMadde[];
+      kirk_gun: PlanMadde[];
+      doksan_gun: PlanMadde[];
+      ozet: string | null;
+    };
     try {
-      veriCozulen = JSON.parse(metin) as OyunPlani;
+      ham = JSON.parse(metin);
     } catch {
       return { durum: "hata" };
     }
-    if (!veriCozulen?.on_gun?.length) return { durum: "hata" };
+    if (!ham?.on_gun?.length && !ham?.ilk_72_saat?.length) return { durum: "hata" };
+
+    // AI önerisi → her madde kaynak 'ai' etiketiyle işaretlenir.
+    const isaretle = (dizi: PlanMadde[] | undefined): PlanMadde[] =>
+      (dizi ?? []).slice(0, 3).map((m) => ({
+        baslik: m.baslik,
+        aksiyon: m.aksiyon,
+        olcut: m.olcut,
+        kaynak: "ai" as const,
+      }));
+
+    const plan: OyunPlani = {
+      ilk_72_saat: isaretle(ham.ilk_72_saat),
+      on_gun: isaretle(ham.on_gun),
+      kirk_gun: isaretle(ham.kirk_gun),
+      doksan_gun: isaretle(ham.doksan_gun),
+      ozet: ham.ozet ?? null,
+      durum: "taslak",
+    };
 
     const { error } = await db.from("oyun_plani").insert({
       participant_id: pid,
-      on_gun: veriCozulen.on_gun as never,
-      kirk_gun: veriCozulen.kirk_gun as never,
-      doksan_gun: veriCozulen.doksan_gun as never,
-      ozet: veriCozulen.ozet ?? null,
+      ilk_72_saat: plan.ilk_72_saat as never,
+      on_gun: plan.on_gun as never,
+      kirk_gun: plan.kirk_gun as never,
+      doksan_gun: plan.doksan_gun as never,
+      ozet: plan.ozet,
+      durum: "taslak",
     });
     if (error) {
       // Eşzamanlı üretim yarışı: önce yazan kazandı, onu döndür.
@@ -148,8 +205,70 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
       }
       return { durum: "hata" };
     }
-    return { durum: "hazir", plan: veriCozulen };
+    return { durum: "hazir", plan };
   } catch {
     return { durum: "hata" };
   }
+}
+
+// ---- PLAN ATÖLYESİ: kişinin kararları ----
+
+// En fazla 3 madde/ufuk; başlıksız/aksiyonsuz maddeler düşer.
+function ufkuTemizle(dizi: PlanMadde[] | undefined): PlanMadde[] {
+  return (dizi ?? [])
+    .map((m) => ({
+      baslik: (m.baslik ?? "").trim().slice(0, 120),
+      aksiyon: (m.aksiyon ?? "").trim().slice(0, 400),
+      olcut: (m.olcut ?? "").trim().slice(0, 200),
+      kaynak: (m.kaynak === "kisi" || m.kaynak === "duzenlendi" ? m.kaynak : "ai") as PlanMadde["kaynak"],
+    }))
+    .filter((m) => m.baslik && m.aksiyon)
+    .slice(0, 3);
+}
+
+export type PlanGirdi = {
+  ilk_72_saat: PlanMadde[];
+  on_gun: PlanMadde[];
+  kirk_gun: PlanMadde[];
+  doksan_gun: PlanMadde[];
+};
+
+// Kişinin düzenlemelerini kaydeder (durum 'taslak' kalır). Onaylanmış plan
+// ("söz anında kilitlenir") ancak "gözden geçir" ile tekrar taslağa döner.
+export async function planKaydet(db: Db, pid: string, girdi: PlanGirdi): Promise<boolean> {
+  const { error } = await db
+    .from("oyun_plani")
+    .update({
+      ilk_72_saat: ufkuTemizle(girdi.ilk_72_saat) as never,
+      on_gun: ufkuTemizle(girdi.on_gun) as never,
+      kirk_gun: ufkuTemizle(girdi.kirk_gun) as never,
+      doksan_gun: ufkuTemizle(girdi.doksan_gun) as never,
+      durum: "taslak",
+      updated_at: new Date().toISOString(),
+    })
+    .eq("participant_id", pid);
+  return !error;
+}
+
+// Kişi "Planım hazır" dedi → onaylanır. En az bir madde şart.
+export async function planOnayla(db: Db, pid: string): Promise<{ ok: boolean; sebep?: string }> {
+  const plan = await oyunPlaniGetir(db, pid);
+  if (!plan) return { ok: false, sebep: "yok" };
+  const toplam =
+    plan.ilk_72_saat.length + plan.on_gun.length + plan.kirk_gun.length + plan.doksan_gun.length;
+  if (toplam === 0) return { ok: false, sebep: "bos" };
+  const { error } = await db
+    .from("oyun_plani")
+    .update({ durum: "onaylandi", onaylandi_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq("participant_id", pid);
+  return error ? { ok: false, sebep: "hata" } : { ok: true };
+}
+
+// "Planımı gözden geçir" — onaylı planı bilinçli olarak yeniden düzenlemeye açar.
+export async function planGozdenGecir(db: Db, pid: string): Promise<boolean> {
+  const { error } = await db
+    .from("oyun_plani")
+    .update({ durum: "taslak", updated_at: new Date().toISOString() })
+    .eq("participant_id", pid);
+  return !error;
 }
