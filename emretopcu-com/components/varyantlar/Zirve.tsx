@@ -37,8 +37,8 @@ import {
 
 const GECIS = [0.16, 1, 0.3, 1] as const;
 
-// 3D elmas yalnızca tarayıcıda yüklenir (WebGL, SSR'de çalışmaz).
-const Elmas = dynamic(() => import("./Elmas"), { ssr: false });
+// 3D sahne yalnızca tarayıcıda yüklenir (WebGL, SSR'de çalışmaz).
+const Sahne3D = dynamic(() => import("./Sahne3D"), { ssr: false });
 
 const NAV_LINKLER = [
   { href: "#manifesto", etiket: "Hakkımda" },
@@ -178,39 +178,43 @@ function Hero() {
     target: ref,
     offset: ["start start", "end start"],
   });
-  const y = useTransform(scrollYProgress, [0, 1], [0, 140]);
-  const sonuklesme = useTransform(scrollYProgress, [0, 0.9], [1, 0]);
+  const y = useTransform(scrollYProgress, [0, 1], [0, 160]);
+  const sonuklesme = useTransform(scrollYProgress, [0, 0.85], [1, 0]);
 
   return (
     <section
       ref={ref}
-      className="relative flex min-h-[100dvh] items-center overflow-hidden"
+      className="relative flex min-h-[100dvh] items-end overflow-hidden"
     >
-      <div aria-hidden className="aurora pointer-events-none absolute inset-0" />
+      {/* 3D sahne üstünde okunabilirlik için alt scrim */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-abanoz/85 to-transparent"
+      />
       <motion.div
         style={azalt ? undefined : { y, opacity: sonuklesme }}
-        className="relative mx-auto grid w-full max-w-6xl gap-10 px-6 pt-24 pb-16 md:grid-cols-12 md:items-center"
+        className="relative mx-auto w-full max-w-6xl px-6 pt-24 pb-14 md:pb-20"
       >
-        <div className="md:col-span-7">
-          <h1 className="text-5xl leading-[1.05] font-semibold tracking-tight md:text-7xl">
-            <PerdeSatir gecikme={0.1}>{HERO.baslikSatir1}</PerdeSatir>
-            <PerdeSatir gecikme={0.24}>
-              <span className="text-altin">{HERO.baslikSatir2}</span>
-            </PerdeSatir>
-          </h1>
+        <h1 className="text-[17vw] leading-[0.92] font-semibold tracking-tighter uppercase md:text-[10.5rem]">
+          <PerdeSatir gecikme={0.1}>Emre</PerdeSatir>
+          <PerdeSatir gecikme={0.22}>
+            <span className="text-altin">Topçu</span>
+          </PerdeSatir>
+        </h1>
+        <div className="mt-8 flex flex-wrap items-end justify-between gap-8">
           <motion.p
             initial={azalt ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5, ease: GECIS }}
-            className="mt-8 max-w-[46ch] text-lg leading-relaxed text-duman md:text-xl"
+            transition={{ duration: 0.8, delay: 0.48, ease: GECIS }}
+            className="max-w-[38ch] text-lg leading-relaxed text-fildisi/85 md:text-xl"
           >
-            {HERO.altMetin}
+            {HERO.baslikSatir1} {HERO.baslikSatir2}
           </motion.p>
           <motion.div
             initial={azalt ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.66, ease: GECIS }}
-            className="mt-10 flex flex-wrap items-center gap-4"
+            transition={{ duration: 0.8, delay: 0.62, ease: GECIS }}
+            className="flex flex-wrap items-center gap-4"
           >
             <Manyetik>
               <a
@@ -224,21 +228,13 @@ function Hero() {
             <Manyetik>
               <a
                 href="#manifesto"
-                className="inline-flex items-center gap-2 rounded-full border border-white/15 px-7 py-3.5 text-fildisi transition-colors hover:border-white/40 active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-full border border-white/20 px-7 py-3.5 text-fildisi transition-colors hover:border-white/45 active:scale-[0.98]"
               >
                 Hikayeyi gör
               </a>
             </Manyetik>
           </motion.div>
         </div>
-        <motion.div
-          initial={azalt ? false : { opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 1.1, delay: 0.35, ease: GECIS }}
-          className="h-[320px] md:col-span-5 md:h-[520px]"
-        >
-          <Elmas hareket={!azalt} />
-        </motion.div>
       </motion.div>
     </section>
   );
@@ -303,8 +299,8 @@ function Manifesto() {
   );
 }
 
-/* Yapışkan kart destesi: her yıl bir kart, üstüne yenisi bindikçe eskisi küçülür. */
-function DesteKarti({
+/* Film bölümü: sabit ekranda, scroll ilerledikçe beliren/kaybolan sahne. */
+function FilmBolumu({
   adim,
   indeks,
   toplam,
@@ -315,64 +311,78 @@ function DesteKarti({
   toplam: number;
   ilerleme: MotionValue<number>;
 }) {
-  const azalt = useReducedMotion();
-  const scale = useTransform(
+  const bas = indeks / toplam;
+  const son = (indeks + 1) / toplam;
+  const kenar = 0.3 / toplam;
+  const opacity = useTransform(
     ilerleme,
-    [indeks / toplam, (indeks + 1) / toplam],
-    [1, 0.92],
+    [bas, bas + kenar, son - kenar, son],
+    [0, 1, 1, indeks === toplam - 1 ? 1 : 0],
   );
-  const karartma = useTransform(
-    ilerleme,
-    [indeks / toplam, (indeks + 1) / toplam],
-    [1, 0.45],
-  );
+  const y = useTransform(ilerleme, [bas, son], [60, -60]);
 
   return (
-    <div
-      className="sticky mb-6"
-      style={{ top: `calc(6rem + ${indeks * 1.25}rem)` }}
+    <motion.div
+      style={{ opacity, y }}
+      className="absolute inset-0 flex items-center"
     >
-      <motion.article
-        style={azalt ? undefined : { scale, opacity: karartma }}
-        className="overflow-hidden rounded-2xl border border-white/10 bg-abanoz-2 p-8 md:p-14"
-      >
-        <p className="text-5xl font-semibold tracking-tighter text-altin md:text-7xl">
+      <div className="relative mx-auto w-full max-w-5xl px-6">
+        <p
+          aria-hidden
+          className="pointer-events-none absolute -top-24 left-0 text-[34vw] leading-none font-semibold tracking-tighter text-white/[0.05] select-none md:-top-40 md:text-[22rem]"
+        >
           {adim.yil}
         </p>
-        <h3 className="mt-6 text-2xl font-semibold tracking-tight text-fildisi md:text-4xl">
+        <p className="text-sm font-medium tracking-widest text-altin uppercase">
+          {adim.yil}
+        </p>
+        <h3 className="mt-4 max-w-[16ch] text-4xl font-semibold tracking-tight text-fildisi md:text-6xl">
           {adim.baslik}
         </h3>
-        <p className="mt-4 max-w-[56ch] text-lg leading-relaxed text-duman">
+        <p className="mt-6 max-w-[48ch] text-lg leading-relaxed text-fildisi/75 md:text-xl">
           {adim.aciklama}
         </p>
-      </motion.article>
-    </div>
+      </div>
+    </motion.div>
   );
 }
 
 function Yolculuk() {
+  const azalt = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end end"],
   });
 
+  if (azalt) {
+    return (
+      <section id="yolculuk" className="scroll-mt-24 py-24">
+        <div className="mx-auto max-w-4xl space-y-16 px-6">
+          <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
+            Yolculuk
+          </h2>
+          {YOLCULUK.map((adim) => (
+            <div key={adim.baslik}>
+              <p className="text-sm font-medium tracking-widest text-altin uppercase">
+                {adim.yil}
+              </p>
+              <h3 className="mt-3 text-3xl font-semibold">{adim.baslik}</h3>
+              <p className="mt-4 max-w-[52ch] text-lg text-duman">
+                {adim.aciklama}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section id="yolculuk" className="scroll-mt-24 py-24 md:py-32">
-      <div className="mx-auto max-w-4xl px-6">
-        <motion.h2
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.7, ease: GECIS }}
-          className="text-3xl font-semibold tracking-tight md:text-5xl"
-        >
-          Yolculuk
-        </motion.h2>
-      </div>
-      <div ref={ref} className="mx-auto mt-12 max-w-4xl px-6">
+    <section id="yolculuk" ref={ref} className="relative h-[520vh]">
+      <div className="sticky top-0 h-[100dvh] overflow-hidden">
         {YOLCULUK.map((adim, i) => (
-          <DesteKarti
+          <FilmBolumu
             key={adim.baslik}
             adim={adim}
             indeks={i}
@@ -410,7 +420,7 @@ function Egitimler() {
 
   if (azalt) {
     return (
-      <section id="egitimler" className="scroll-mt-24 py-24">
+      <section id="egitimler" className="scroll-mt-24 bg-abanoz py-24">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
             Sahneden seçmeler
@@ -434,7 +444,7 @@ function Egitimler() {
 
   return (
     <section id="egitimler" ref={ref} className="relative h-[320vh]">
-      <div className="sticky top-0 flex h-[100dvh] flex-col justify-center overflow-hidden">
+      <div className="sticky top-0 flex h-[100dvh] flex-col justify-center overflow-hidden bg-abanoz">
         <div className="mx-auto w-full max-w-6xl px-6">
           <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
             Sahneden seçmeler
@@ -516,7 +526,7 @@ const AYNA_SAYACLAR = [
 
 function Ayna() {
   return (
-    <section id="ayna" className="scroll-mt-24 py-24 md:py-32">
+    <section id="ayna" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
         <motion.div
           initial={{ opacity: 0, y: 32 }}
@@ -572,7 +582,7 @@ function Ayna() {
 
 function Ilkeler() {
   return (
-    <section className="py-24 md:py-32">
+    <section className="bg-abanoz py-24 md:py-32">
       <div className="mx-auto max-w-5xl px-6">
         <motion.h2
           initial={{ opacity: 0, y: 24 }}
@@ -658,7 +668,7 @@ function Iletisim() {
 
 function Footer() {
   return (
-    <footer className="border-t border-white/5 py-10">
+    <footer className="border-t border-white/5 bg-abanoz py-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-duman md:flex-row">
         <p>© 2026 Emre Topçu</p>
         <a
@@ -675,11 +685,16 @@ function Footer() {
 }
 
 export default function Zirve() {
+  const azalt = useReducedMotion();
+  const { scrollYProgress } = useScroll();
+
   return (
     <div
-      className="min-h-[100dvh] bg-abanoz font-sahne text-fildisi selection:bg-altin selection:text-abanoz"
+      className="relative z-0 min-h-[100dvh] bg-abanoz font-sahne text-fildisi selection:bg-altin selection:text-abanoz"
       style={{ colorScheme: "dark" }}
     >
+      {/* Tüm sayfanın arkasında yaşayan sinematik 3D sahne */}
+      <Sahne3D ilerleme={scrollYProgress} hareket={!azalt} />
       <Nav />
       <main>
         <Hero />
