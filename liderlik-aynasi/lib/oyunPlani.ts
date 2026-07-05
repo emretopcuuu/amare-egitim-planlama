@@ -272,3 +272,38 @@ export async function planGozdenGecir(db: Db, pid: string): Promise<boolean> {
     .eq("participant_id", pid);
   return !error;
 }
+
+// ---- ÖN-ISITMA (sahne öncesi) ----
+// Pusula + hedef tamamlamış ama planı henüz olmayan katılımcılar. Bunların
+// taslağı sahnede atölyeye girince üretilir; admin isterse önceden ısıtır.
+export async function planEksikKatilimcilar(db: Db): Promise<string[]> {
+  const [{ data: kat }, { data: pus }, { data: hed }, { data: plan }] = await Promise.all([
+    db.from("participants").select("id").eq("role", "participant"),
+    db.from("pusula").select("participant_id").not("tamamlandi_at", "is", null),
+    db.from("hedef").select("participant_id").not("tamamlandi_at", "is", null),
+    db.from("oyun_plani").select("participant_id"),
+  ]);
+  const pusSet = new Set((pus ?? []).map((r) => r.participant_id));
+  const hedSet = new Set((hed ?? []).map((r) => r.participant_id));
+  const planSet = new Set((plan ?? []).map((r) => r.participant_id));
+  return (kat ?? [])
+    .map((r) => r.id)
+    .filter((id) => pusSet.has(id) && hedSet.has(id) && !planSet.has(id));
+}
+
+// Eksik planlardan en fazla `limit` tanesini üretir (sıralı — timeout güvenliği).
+// Admin sahne öncesi birkaç kez basar; kalan atölyede üretilir.
+export async function planOnIsit(db: Db, limit = 4): Promise<{ uretildi: number; kalan: number }> {
+  const eksik = await planEksikKatilimcilar(db);
+  const parti = eksik.slice(0, Math.max(1, limit));
+  let uretildi = 0;
+  for (const pid of parti) {
+    try {
+      const s = await oyunPlaniGetirVeyaUret(db, pid);
+      if (s.durum === "hazir") uretildi++;
+    } catch {
+      // tek kişi düşerse diğerleri devam etsin
+    }
+  }
+  return { uretildi, kalan: Math.max(0, eksik.length - uretildi) };
+}
