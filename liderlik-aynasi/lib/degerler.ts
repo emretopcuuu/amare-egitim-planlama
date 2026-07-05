@@ -29,6 +29,32 @@ export const DEGER_LISTESI: string[] = [
   "Yaşam dengesi",
 ];
 
+// [E5] Her temel değerin "yaşayan örneği" — tek cümlelik, somut bir saha
+// davranışı (network-marketing günlüğünden). Değer kartlarının altında soluk
+// ve küçük gösterilir: değer soyut bir kelime değil, bir davranış olarak kalsın.
+export const DEGER_ORNEK: Record<string, string> = {
+  "Sevgi": "Zor bir günde ekibinden birini işini sormadan, sadece hâlini sormak için arar.",
+  "Aile": "Akşam yemeği saatine toplantı koymaz — görüşmeyi güne, aileyi masaya alır.",
+  "Sağlık": "Yoğun haftada bile yürüyüşünü iptal etmez; enerjisi en güçlü sunum aracıdır.",
+  "Özgürlük": "Takvimini kendi kurar; 'müsait misin?' sorusuna kendi saatini teklif eder.",
+  "Güven": "Küçük sözleri de tutar — 'akşam dönerim' dediyse akşam döner.",
+  "Dürüstlük": "Ürünün yapamayacağını vaat etmez; 'bunu bilmiyorum, öğrenip döneyim' der.",
+  "Başarı": "Ay sonunu beklemez; haftalık rakamını pazartesi masaya koyar.",
+  "Gelişim": "Her 'hayır'dan sonra bir cümlesini değiştirir ve yeniden dener.",
+  "Saygı": "Karşısındaki 'hayır' dediğinde ikna turuna girmez; kararı duyduğunu gösterir.",
+  "Huzur": "Gerilen bir konuşmada sesi yükselen değil, tempoyu düşüren kişi olur.",
+  "Anlam": "Listeye isim eklerken 'bu kişinin hayatında ne değişir?' diye sorar.",
+  "Mutluluk": "Küçük ilerlemeyi kutlar — ekibin ilk satışını kendi satışı gibi duyurur.",
+  "Öğrenme": "Kaybettiği görüşmeden sonra 'nerede kaybettim?' diye not alır.",
+  "Bağımsızlık": "Kimse hatırlatmadan günlük hedefini kendisi belirler ve açıklar.",
+  "Katkı sağlamak": "Yeni başlayanın ilk görüşmesine birlikte girer, sahneyi ona bırakır.",
+  "Adalet": "Emeği görünmeyeni toplantıda adıyla anar; başarıyı tek başına sahiplenmez.",
+  "Sorumluluk": "Hedef tutmayınca sebep listesi yapmaz; 'benim payım ne?' diye başlar.",
+  "Liderlik": "En zor telefonu önce kendi açar, sonra ekibine 'gördün mü, oluyor' der.",
+  "Yaratıcılık": "Aynı mesajı herkese atmaz; her davetin cümlesini kişiye göre kurar.",
+  "Yaşam dengesi": "Telefonu her akşam aynı saatte kapatır — yarının enerjisi bugünden korunur.",
+};
+
 export type Adim =
   // Tanıtım/geçiş paragrafı
   | { kod: string; tip: "intro"; baslik: string; vurgu?: string; paragrafVurgu?: string; paragraf: string; dugme: string }

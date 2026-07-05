@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   ADIMLAR,
   DEGER_LISTESI,
+  DEGER_ORNEK,
   nedenKodlari,
   nedenCumlesiKur,
   BOLUM_ADLARI,
@@ -15,6 +16,9 @@ import {
 } from "@/lib/degerler";
 import AsamaRayi, { type RayAsama } from "@/components/AsamaRayi";
 import Konfeti from "@/components/Konfeti";
+import KayitRozeti from "@/components/KayitRozeti";
+import GizlilikMuhru from "@/components/GizlilikMuhru";
+import { ONBOARDING_SURE_DK } from "@/lib/onboardingSure";
 import { titret } from "@/lib/his";
 
 // DEĞERLER ÇALIŞMASI sihirbazı — adım-adım, kaydet-devam, geri tuşlu, user-friendly.
@@ -273,8 +277,10 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
   const [kapanisGoster, setKapanisGoster] = useState(false);
   // [UX1] Yenilemeden sonra ilk eksik adıma atlandıysa tek seferlik bilgi notu.
   const [kaldiginYerden, setKaldiginYerden] = useState(false);
-  // [UX3] "✓ kaydedildi" mikro göstergesi — İleri'ye basınca 1.5 sn görünür.
-  const [kaydedildiGoster, setKaydedildiGoster] = useState(false);
+  // [UX3+E8] Kayıt mikro güvencesi — ortak KayitRozeti bileşenine bağlanır:
+  // başarı sayacı her artışta 1.5 sn "✓ Kaydedildi", hata kalıcı amber uyarı.
+  const [kayitBasari, setKayitBasari] = useState(0);
+  const [kayitHata, setKayitHata] = useState(false);
   // [UX5] Bölüm bitince kısa kutlama beat'i (tamamlanan bölümün adı).
   const [bolumKutlama, setBolumKutlama] = useState<string | null>(null);
   const ustRef = useRef<HTMLDivElement | null>(null);
@@ -427,13 +433,19 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ cevaplar, secilenUc }),
       });
-      // [UX3] Görünür güven: kayıt gerçekten başarılıysa kısa "✓ kaydedildi".
+      // [UX3+E8] Görünür güven: başarıda kısa "✓ Kaydedildi"; hatada kalıcı
+      // amber "kaydedilemedi" (bir sonraki başarılı kayıtta kendiliğinden söner).
       if (r.ok) {
-        setKaydedildiGoster(true);
-        setTimeout(() => setKaydedildiGoster(false), 1500);
+        setKayitBasari((n) => n + 1);
+        setKayitHata(false);
+      } else {
+        setKayitHata(true);
       }
-    } catch {}
-    finally { setKaydediliyor(false); }
+    } catch {
+      setKayitHata(true);
+    } finally {
+      setKaydediliyor(false);
+    }
   }
 
   // [UX2] HİÇBİR ADIM BOŞ GEÇİLMEZ — her yanıt adımı zorunlu (eskiden yalnız
@@ -621,7 +633,7 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
               {/* [UX4] Süre beklentisi — bilinmezlik yarıda bırakmanın 1 numaralı sebebi */}
               {adim === 0 && (
                 <p className="mt-3 inline-block rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-400">
-                  ⏱ ~15 dk sürer · cevapların her adımda kaydedilir
+                  ⏱ ~{ONBOARDING_SURE_DK.degerler} dk sürer · cevapların her adımda kaydedilir
                 </p>
               )}
               {a.paragrafVurgu && (
@@ -657,6 +669,9 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
                     const barGenislik = [100, 85, 72, 61, 52][i] ?? 50;
                     const emoji = DEGER_EMOJI[d] ?? "✦";
                     const etiket = DEGER_ETIKET[d] ?? "";
+                    // [E5] Yaşayan örnek: değer kartının altında soluk, tek
+                    // cümlelik somut davranış — değer soyut bir kelime kalmasın.
+                    const ornek = DEGER_ORNEK[d];
                     if (i === 0) return (
                       <div key={d} className="rounded-2xl border border-gold bg-gradient-to-br from-[#1a1206] to-[#271a07] px-5 py-4 shadow-[0_0_24px_#d4af3720]">
                         <div className="mb-3 flex items-center gap-3">
@@ -670,6 +685,11 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
                         <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
                           <div className="h-full w-full rounded-full bg-gradient-to-r from-[#b8891e] to-[#d4af37]" />
                         </div>
+                        {ornek && (
+                          <p className="mt-2.5 text-xs italic leading-relaxed text-slate-400">
+                            {ornek}
+                          </p>
+                        )}
                       </div>
                     );
                     return (
@@ -685,6 +705,11 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
                         <div className="h-1 w-full overflow-hidden rounded-full bg-white/10">
                           <div className="h-full rounded-full bg-gradient-to-r from-[#b8891e]/70 to-[#d4af37]/70" style={{ width: `${barGenislik}%` }} />
                         </div>
+                        {ornek && (
+                          <p className="mt-2 text-[0.7rem] italic leading-relaxed text-slate-500">
+                            {ornek}
+                          </p>
+                        )}
                       </div>
                     );
                   })}
@@ -957,15 +982,10 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
             hep görünür, aşağı kaydırma derdi yok. Zemin gradyanı içerikle
             çakışmayı yumuşatır. */}
         <div className="sticky bottom-0 z-20 -mx-5 mt-8 bg-gradient-to-t from-[#06121e] via-[#06121e]/95 to-transparent px-5 pb-[max(env(safe-area-inset-bottom,0px),0.75rem)] pt-4">
-          {/* [UX3] Görünür kayıt güveni */}
-          <p
-            aria-live="polite"
-            className={`mb-1.5 text-center text-xs font-semibold text-emerald-300 transition-opacity duration-300 ${
-              kaydedildiGoster ? "opacity-100" : "opacity-0"
-            }`}
-          >
-            ✓ kaydedildi
-          </p>
+          {/* [UX3+E8] Görünür kayıt güveni — ortak köşe rozeti */}
+          <KayitRozeti basari={kayitBasari} hata={kayitHata} />
+          {/* Gizlilik mührü — kişisel değer seçimlerinde sakin güven imzası */}
+          <GizlilikMuhru />
           <div className="flex items-center gap-3">
             <button
               type="button"

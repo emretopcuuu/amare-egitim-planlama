@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import TelefonaGecKoprusu from "@/components/TelefonaGecKoprusu";
+import { ONBOARDING_SURE_DK } from "@/lib/onboardingSure";
 
 // ONBOARDING RAYI — kamp öncesi TÜM 6 fazı (+ Kamp) tek bakışta gösteren,
 // her sayfada (ana sayfa + her fazın içinde) görünen kalıcı harita.
@@ -13,9 +14,18 @@ type FazDurum = "tamam" | "simdi" | "kilitli";
 type FazNode = { ad: string; kisaAd: string; href: string | null; durum: FazDurum };
 
 const FAZ_ADLARI = ["Ritüel", "Oyun", "Değerler", "Pusula", "Hedef", "Farkındalık", "Kamp"] as const;
-// [UX4] Faz başına tahmini süre (dk) — bilinmezlik yarıda bırakmanın 1 numaralı
-// sebebi. "Kamp" için süre anlamsız (0 = gösterme).
-const FAZ_SURE_DK = [3, 1, 15, 10, 8, 5, 0] as const;
+// [UX4/E2] Faz başına tahmini süre (dk) — bilinmezlik yarıda bırakmanın 1 numaralı
+// sebebi. Sayılar artık MERKEZİ haritadan (lib/onboardingSure.ts) gelir; adım
+// başlıklarındaki rozetlerle hep aynı söylenir. "Kamp" için süre anlamsız (0).
+const FAZ_SURE_DK = [
+  ONBOARDING_SURE_DK.rituel,
+  ONBOARDING_SURE_DK.oyun,
+  ONBOARDING_SURE_DK.degerler,
+  ONBOARDING_SURE_DK.pusula,
+  ONBOARDING_SURE_DK.hedef,
+  ONBOARDING_SURE_DK.onFarkindalik,
+  0,
+] as const;
 
 // Şu anki faz DB'deki tamamlanma durumundan kendiliğinden hesaplanır (bir
 // önceki tamamlanan faz gerçekleşince rail otomatik ilerler) — çağıran

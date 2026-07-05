@@ -25,6 +25,7 @@ export default function WhatsAppGonder({
   telefonsuz,
   kayitliAnahtarlar,
   sadeceSablonlar,
+  kodKayitli = false,
 }: {
   yapilandirildi: boolean;
   takimlar: string[];
@@ -34,6 +35,9 @@ export default function WhatsAppGonder({
   telefonsuz: number;
   kayitliAnahtarlar: string[];
   sadeceSablonlar?: WaSablonAnahtar[];
+  // "giris" tek-mesaj kod modu: onaylı OTP kod şablonu (settings.wa_tpl_kod)
+  // kayıtlı mı — davet şablonu artık gönderilmediği için gönderilebilirlik buna bakar.
+  kodKayitli?: boolean;
 }) {
   const gosterilecekSablonlar = sadeceSablonlar
     ? WA_SABLONLAR.filter((s) => sadeceSablonlar.includes(s.anahtar))
@@ -68,8 +72,13 @@ export default function WhatsAppGonder({
     return 0;
   }, [hedefTipi, takim, seciliKisiler, kisiler, telefonluToplam, odevYapmayanSayisi, girisYapmamisSayisi]);
 
+  // "giris" tek-mesaj kod modu: önizleme, gerçekte gidecek TEK mesajı (onaylı
+  // OTP kod şablonu) gösterir — davet metni artık gönderilmiyor.
+  const kodModu = sablon?.anahtar === "giris";
   const onizlemeMetni = sablon
-    ? onizleme(sablon, degiskenleriUret(sablon, { ad: sablon.ornek["1"], kod: sablon.ornek["2"] }, mesaj || sablon.ornek["2"]))
+    ? kodModu
+      ? t.kodOnizleme(sablon.ornek["2"])
+      : onizleme(sablon, degiskenleriUret(sablon, { ad: sablon.ornek["1"], kod: sablon.ornek["2"] }, mesaj || sablon.ornek["2"]))
     : "";
 
   function kisiSec(id: string) {
@@ -84,7 +93,7 @@ export default function WhatsAppGonder({
   const gonderilebilir =
     !!sablon &&
     yapilandirildi &&
-    kayitliAnahtarlar.includes(sablon.anahtar) &&
+    (kodModu ? kodKayitli : kayitliAnahtarlar.includes(sablon.anahtar)) &&
     hedefSayisi > 0 &&
     (!sablon.serbestMi || mesaj.trim().length > 0) &&
     !gonderiliyor;
@@ -109,16 +118,9 @@ export default function WhatsAppGonder({
         tost(veri?.hata ?? t.api.hedefYok, "hata");
         return;
       }
-      const kodNot =
-        typeof veri.kodGonderildi === "number"
-          ? veri.kodKayitsiz
-            ? " · ⚠ kamp kodu şablonu kayıtsız, kod gönderilmedi"
-            : ` · ${veri.kodGonderildi} kamp kodu gönderildi`
-          : "";
-      tost(t.sonuc(veri.basarili, veri.basarisiz, veri.telefonsuz) + kodNot, "basari");
-      const davetKacan: string[] = Array.isArray(veri.davetUlasmayan) ? veri.davetUlasmayan : [];
-      const kodKacan: string[] = Array.isArray(veri.kodUlasmayan) ? veri.kodUlasmayan : [];
-      setUlasmayanlar(davetKacan.length > 0 || kodKacan.length > 0 ? { davet: davetKacan, kod: kodKacan } : null);
+      tost(t.sonuc(veri.basarili, veri.basarisiz, veri.telefonsuz), "basari");
+      const kacan: string[] = Array.isArray(veri.davetUlasmayan) ? veri.davetUlasmayan : [];
+      setUlasmayanlar(kacan.length > 0 ? { davet: kacan, kod: [] } : null);
       setOnayAcik(false);
       router.refresh();
     } catch {
@@ -145,13 +147,7 @@ export default function WhatsAppGonder({
           </div>
           {ulasmayanlar.davet.length > 0 && (
             <p className="mt-2 text-xs leading-relaxed text-amber-100/90">
-              <span className="font-semibold">Davet ulaşmadı:</span> {ulasmayanlar.davet.join(", ")}
-            </p>
-          )}
-          {ulasmayanlar.kod.length > 0 && (
-            <p className="mt-1.5 text-xs leading-relaxed text-amber-100/90">
-              <span className="font-semibold">Kamp kodu ulaşmadı:</span> {ulasmayanlar.kod.join(", ")}
-              <span className="text-amber-200/70"> (davetteki buton linki kodu içerir — yine de giriş yapabilirler)</span>
+              <span className="font-semibold">{t.ulasmadiBaslik}</span> {ulasmayanlar.davet.join(", ")}
             </p>
           )}
           <p className="mt-2 text-xs text-slate-400">
@@ -165,7 +161,7 @@ export default function WhatsAppGonder({
         <h2 className="text-sm font-semibold text-gold-light">{t.adim1}</h2>
         <div className="mt-3 grid gap-2 sm:grid-cols-3">
           {gosterilecekSablonlar.map((s) => {
-            const kayitli = kayitliAnahtarlar.includes(s.anahtar);
+            const kayitli = s.anahtar === "giris" ? kodKayitli : kayitliAnahtarlar.includes(s.anahtar);
             const secili = sablonAnahtar === s.anahtar;
             return (
               <button
@@ -277,12 +273,18 @@ export default function WhatsAppGonder({
             )}
           </div>
 
-          {/* 4) Önizleme */}
+          {/* 4) Önizleme — kod modunda gerçekte gidecek TEK mesaj gösterilir */}
           <div>
             <h2 className="text-sm font-semibold text-gold-light">{t.onizlemeBaslik}</h2>
+            {kodModu && (
+              <p className="mt-1 text-xs font-medium text-emerald-300">{t.kodTekMesajNot}</p>
+            )}
             <pre className="mt-2 whitespace-pre-wrap rounded-xl border border-emerald-400/20 bg-[#0b141a] p-4 font-sans text-sm leading-relaxed text-slate-100">
               {onizlemeMetni}
             </pre>
+            {kodModu && (
+              <p className="mt-1 text-xs text-slate-500">{t.kodOnizlemeDipnot}</p>
+            )}
           </div>
 
           {/* 5) Gönder */}

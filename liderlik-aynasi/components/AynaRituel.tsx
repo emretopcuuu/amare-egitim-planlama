@@ -8,6 +8,7 @@ import AynaIkon from "@/components/AynaIkon";
 import AynaSesi from "@/components/AynaSesi";
 import MuhurIkon from "@/components/MuhurIkon";
 import CanliAyna from "@/components/CanliAyna";
+import { sureRozeti } from "@/lib/onboardingSure";
 
 const t = tr.rituel;
 
@@ -21,6 +22,7 @@ type Asama =
   | "giris"
   | "yuzYakala"
   | "yeminHazirlik"
+  | "mikProva"
   | "kayit"
   | "soru"
   | "inceleme"
@@ -108,6 +110,19 @@ export default function AynaRituel() {
   // yanlışlıkla yazılmasın diye yalnız bu açıkken (manuel) konuşma tanınır.
   const [dinleniyor, setDinleniyor] = useState(false);
 
+  // [E3] Mikrofon ön-provası — asıl kayıttan önce isteğe bağlı 5 sn'lik test.
+  // Test kaydı SUNUCUYA GİTMEZ: blob yalnız bellekte/URL'de yaşar, ekrandan
+  // çıkınca serbest bırakılır. Asıl kayıt akışına (kayitci/parcalar) dokunmaz.
+  const [provaDurum, setProvaDurum] = useState<"hazir" | "kayit" | "dinle">("hazir");
+  const [provaKalan, setProvaKalan] = useState(5);
+  const [provaUrl, setProvaUrl] = useState<string | null>(null);
+  const [provaCaliyor, setProvaCaliyor] = useState(false);
+  const provaKayitci = useRef<MediaRecorder | null>(null);
+  const provaAkis = useRef<MediaStream | null>(null);
+  const provaParcalar = useRef<Blob[]>([]);
+  const provaSayac = useRef<ReturnType<typeof setInterval> | null>(null);
+  const provaSes = useRef<HTMLAudioElement | null>(null);
+
   const kayitci = useRef<MediaRecorder | null>(null);
   const parcalar = useRef<Blob[]>([]);
   const kayitVerisi = useRef<{ blob: Blob; tip: string } | null>(null);
@@ -139,6 +154,11 @@ export default function AynaRituel() {
       onizlemeSes.current?.pause();
       if (kayitci.current?.state === "recording") kayitci.current.stop();
       akis.current?.getTracks().forEach((iz) => iz.stop());
+      // [E3] prova kaynakları
+      if (provaSayac.current) clearInterval(provaSayac.current);
+      provaSes.current?.pause();
+      if (provaKayitci.current?.state === "recording") provaKayitci.current.stop();
+      provaAkis.current?.getTracks().forEach((iz) => iz.stop());
     };
   }, []);
 
@@ -223,6 +243,116 @@ export default function AynaRituel() {
       }
       setAsama("hata");
     }
+  }
+
+  // ---- [E3] Mikrofon ön-provası ----
+  // 5 sn kayıt → dalga animasyonu → kendi kaydını dinle → "net ✓ devam" / tekrar.
+  const provaUrlRef = useRef<string | null>(null);
+
+  function provaTemizle() {
+    if (provaSayac.current) clearInterval(provaSayac.current);
+    provaSayac.current = null;
+    provaSes.current?.pause();
+    provaSes.current = null;
+    setProvaCaliyor(false);
+    if (provaUrlRef.current) URL.revokeObjectURL(provaUrlRef.current);
+    provaUrlRef.current = null;
+    setProvaUrl(null);
+    provaAkis.current?.getTracks().forEach((iz) => iz.stop());
+    provaAkis.current = null;
+    provaKayitci.current = null;
+    setProvaDurum("hazir");
+    setProvaKalan(5);
+  }
+
+  async function provaBasla() {
+    provaTemizle();
+    if (typeof MediaRecorder === "undefined") {
+      setHataMesaji(t.mikrofonYok);
+      setAsama("hata");
+      return;
+    }
+    try {
+      const ses = await navigator.mediaDevices.getUserMedia({ audio: true });
+      provaAkis.current = ses;
+      const tip = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
+        ? "audio/webm;codecs=opus"
+        : MediaRecorder.isTypeSupported("audio/mp4")
+          ? "audio/mp4"
+          : "";
+      const kaydedici = tip ? new MediaRecorder(ses, { mimeType: tip }) : new MediaRecorder(ses);
+      provaParcalar.current = [];
+      kaydedici.ondataavailable = (e) => {
+        if (e.data.size > 0) provaParcalar.current.push(e.data);
+      };
+      kaydedici.onstop = () => {
+        ses.getTracks().forEach((iz) => iz.stop());
+        provaAkis.current = null;
+        if (provaSayac.current) clearInterval(provaSayac.current);
+        provaSayac.current = null;
+        const blob = new Blob(provaParcalar.current, {
+          type: kaydedici.mimeType.includes("mp4") ? "audio/mp4" : "audio/webm",
+        });
+        const url = URL.createObjectURL(blob);
+        provaUrlRef.current = url;
+        setProvaUrl(url);
+        setProvaDurum("dinle");
+      };
+      provaKayitci.current = kaydedici;
+      kaydedici.start(250);
+      titret([20]);
+      setProvaKalan(5);
+      setProvaDurum("kayit");
+      // 5 sn geri sayım; sıfırda kayıt kendiliğinden biter.
+      provaSayac.current = setInterval(() => {
+        setProvaKalan((k) => {
+          if (k <= 1) {
+            if (provaKayitci.current?.state === "recording") provaKayitci.current.stop();
+            return 0;
+          }
+          return k - 1;
+        });
+      }, 1000);
+    } catch (err) {
+      // İzin reddi/donanım hatası: asıl kayıttaki hata kurtarma ekranına düş
+      // (orada "Tekrar dene" + "Sessiz ayna" seçenekleri zaten var).
+      const izinReddi =
+        err instanceof DOMException &&
+        (err.name === "NotAllowedError" || err.name === "PermissionDeniedError");
+      if (izinReddi) {
+        const iOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        setHataMesaji(
+          iOS
+            ? "Mikrofon izni verilmedi. Adres çubuğundaki 'AA' → Web Sitesi Ayarları → Mikrofon → İzin Ver, sonra tekrar dene."
+            : "Mikrofon izni verilmedi. Adres çubuğundaki kilit 🔒 simgesine dokun → Mikrofon → İzin Ver, sonra tekrar dene."
+        );
+      } else {
+        setHataMesaji(t.mikrofonYok);
+      }
+      setAsama("hata");
+    }
+  }
+
+  function provayiDinle() {
+    if (!provaUrl) return;
+    if (provaCaliyor) {
+      provaSes.current?.pause();
+      setProvaCaliyor(false);
+      return;
+    }
+    const ses = new Audio(provaUrl);
+    provaSes.current = ses;
+    ses.onended = () => setProvaCaliyor(false);
+    void ses
+      .play()
+      .then(() => setProvaCaliyor(true))
+      .catch(() => setProvaCaliyor(false));
+  }
+
+  // "Sesim net ✓" → prova kaynakları bırakılır, ASIL kayıt hemen başlar.
+  function provadanKayda() {
+    provaTemizle();
+    void sesBasla();
   }
 
   // "Devam →": yemin okundu → KAYIT BİTER (ses örneği = yemin okuması). Söz
@@ -462,6 +592,12 @@ export default function AynaRituel() {
             <h1 className="prizma-serif ay-metin mt-3 text-4xl font-semibold leading-tight">
               {t.baslik}
             </h1>
+            {/* [E2] Süre beklentisi rozeti — merkezi haritadan */}
+            <p className="mt-2">
+              <span className="inline-block rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-400">
+                {sureRozeti("rituel")}
+              </span>
+            </p>
             <p className="mt-6 text-xl leading-relaxed text-slate-200">{t.aciklama}</p>
             <div className="mt-8 text-left">
               <AynaSesi kod="rituelGiris" />
@@ -497,6 +633,16 @@ export default function AynaRituel() {
             <p className="mt-2 text-center text-sm text-slate-500">
               {t.kayitHenuzBaslamadi}
             </p>
+            {/* [E3] İsteğe bağlı mikrofon ön-provası — atlanabilir, zorlamaz */}
+            <button
+              onClick={() => {
+                provaTemizle();
+                setAsama("mikProva");
+              }}
+              className="mx-auto mt-4 block text-base font-medium text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline"
+            >
+              {t.provaLink}
+            </button>
             {/* Kayıt ipuçları — daha net ses = daha iyi klon */}
             <div className="mt-5 rounded-2xl border border-white/10 bg-white/[0.04] p-4">
               <p className="text-xs font-semibold uppercase tracking-wide text-gold-light">
@@ -511,6 +657,75 @@ export default function AynaRituel() {
                 ))}
               </ul>
             </div>
+          </div>
+        )}
+
+        {/* [E3] MİKROFON ÖN-PROVASI — 5 sn test kaydı, yalnız yerelde çalınır */}
+        {asama === "mikProva" && (
+          <div className="text-center">
+            <h1 className="prizma-serif ay-metin text-3xl font-semibold leading-tight">
+              🎙 {t.provaBaslik}
+            </h1>
+            <p className="mt-4 text-lg leading-relaxed text-slate-300">{t.provaAciklama}</p>
+
+            {provaDurum === "hazir" && (
+              <div className="mt-8 space-y-4">
+                <DevButon onClick={provaBasla}>{t.provaBaslat}</DevButon>
+                <button
+                  onClick={() => {
+                    provaTemizle();
+                    setAsama("yeminHazirlik");
+                  }}
+                  className="mx-auto block text-base text-slate-500 underline-offset-4 hover:underline"
+                >
+                  {t.provaGeri}
+                </button>
+              </div>
+            )}
+
+            {provaDurum === "kayit" && (
+              <div className="mt-8">
+                <div className="flex items-center justify-between gap-3 rounded-2xl border border-red-500/40 bg-red-500/10 px-4 py-3">
+                  <span className="flex shrink-0 items-center gap-2 text-base font-bold text-red-300">
+                    <span className="h-3 w-3 animate-pulse rounded-full bg-red-500 shadow-[0_0_10px_2px_rgba(239,68,68,0.7)]" />
+                    {t.provaKalan(provaKalan)}
+                  </span>
+                  {/* Canlı dalga animasyonu (PusulaSohbet'teki ses-cubuk deseni) */}
+                  <div className="flex h-8 flex-1 items-center justify-center gap-[3px]" aria-hidden>
+                    {[0, 0.12, 0.24, 0.36, 0.18, 0.06, 0.3, 0.42, 0.2, 0.1, 0.34, 0.16].map(
+                      (g, i) => (
+                        <span key={i} className="ses-cubuk" style={{ animationDelay: `${g}s` }} />
+                      )
+                    )}
+                  </div>
+                </div>
+                <p className="mt-4 text-base text-slate-300">{t.provaKonus}</p>
+              </div>
+            )}
+
+            {provaDurum === "dinle" && (
+              <div className="mt-8 space-y-4">
+                <DevButon onClick={provayiDinle} ikincil>
+                  {provaCaliyor ? t.provaDurdur : t.provaDinle}
+                </DevButon>
+                <DevButon onClick={provadanKayda}>{t.provaNet}</DevButon>
+                <button
+                  onClick={provaBasla}
+                  className="mx-auto block text-base font-semibold text-gold-light underline-offset-4 hover:underline"
+                >
+                  {t.provaTekrar}
+                </button>
+                <button
+                  onClick={() => {
+                    provaTemizle();
+                    setAsama("yeminHazirlik");
+                  }}
+                  className="mx-auto block text-sm text-slate-500 underline-offset-4 hover:underline"
+                >
+                  {t.provaGeri}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

@@ -177,6 +177,16 @@ export const tr = {
     hata: "Bir şey ters gitti — tekrar dene.",
     dipnot: "Bu onay yalnız bir kez istenir; sonra kaldığın yerden devam edersin.",
   },
+  // GİZLİLİK MÜHRÜ — tüm onboarding ekranlarında görünen sakin güven imzası.
+  // İnsanlar mahrem cevap yazarken "bunu kim okuyacak?" tereddüdü yaşıyordu;
+  // KVKK ekranındaki söz her mahrem yüzeyde küçük bir mühür olarak tekrar eder.
+  gizlilikMuhru: {
+    satir: "Cevapların sana özel — admin dahil kimse okuyamaz",
+    baslik: "Cevapların kimde?",
+    kapat: "Anladım",
+    linkOn: "Detaylar: ",
+    link: "KVKK Aydınlatma Metni",
+  },
   // AYNA SESİ SEÇİMİ — hazırlıktan hemen sonra, ritüelden önce. Bu andan
   // itibaren AYNA'nın tüm kişisel seslendirmeleri seçilen sesle konuşur.
   sesSecimi: {
@@ -190,6 +200,13 @@ export const tr = {
     dugme: "Bu sesle devam et →",
     varsayilanNot: "Varsayılan: Erkek ses",
     hata: "Bir şey ters gitti — tekrar dene.",
+    // [E7] Seçimden hemen sonra AYNA'nın seçilen sesle kişisel karşılaması.
+    // Metin sunucuda /api/karsilama içinde seslendirilir (sabit + ilk ad).
+    karsilamaMetni: (ad: string) =>
+      `Merhaba ${ad}. Ben Aynan. Önümüzdeki üç gün boyunca yanındayım.`,
+    karsilamaBaslik: "Aynan seninle tanışıyor…",
+    karsilamaAlt: "Seçtiğin sesle ilk kez konuşuyor.",
+    karsilamaGec: "Geç →",
   },
   karsilama: {
     atla: "Geç",
@@ -406,6 +423,19 @@ export const tr = {
     menuSoz: "Kapanış Sözüm",
     menuGizlilik: "Gizlilik ve KVKK",
     menuKapat: "Kapat",
+    // [E1] Onboarding'i yarıda bırakıp dönen kişiye "kaldığın yerden devam" kartı
+    devamKartBaslik: (adim: string) => `${adim} yarıda kaldı`,
+    devamKartMetin:
+      "Bıraktığın yerden aynen devam edersin — önceki cevapların kayıtlı.",
+    devamKartDugme: (dk: number) => `⏸ Kaldığın yerden devam et (~${dk} dk)`,
+    // [E10] Onboarding bitiş töreni — checklist'in tamamı ilk kez yeşil olduğunda
+    torenUst: "Kurulum tamam",
+    torenBaslik: "Aynan kuruldu ✨",
+    torenGenel:
+      "Nedenlerin, değerlerin ve hedefin artık aynanda. Bundan sonrası yaşamak.",
+    torenSloganEtiket: "Senin sözün",
+    torenKapanis: "Kampta görüşürüz. 👁",
+    torenDevam: "Devam et →",
   },
   // Kapanış Sözü: kamp sonunda iki somut sayı + kendi sesiyle söz + 90 gün takip
   kapanisSoz: {
@@ -951,7 +981,10 @@ export const tr = {
     kopruBasla: "Sohbete başla",
     // Sohbet ilerleme göstergesi
     ilerlemeEtiket: "Sohbet ilerlemesi",
-    ilerlemeSonuna: "Neredeyse bitti — son birkaç soru.",
+    // [E4] Son aşama sinyali — soru sayısı AI'ya bağlı (dinamik) olduğundan
+    // "soru 3/7" gibi yanlış bir beklenti KURULMAZ; sinyal faz bilgisinden gelir.
+    ilerlemeSonuna: "✨ Son aşama — neredeyse bitti, son birkaç soru.",
+    sohbetAsamaSayac: (n: number, toplam: number) => `Aşama ${n}/${toplam}`,
     sohbetAsamalar: { eleme: "Eleme", bosluk: "Boşluk", engel: "İç engel" } as Record<string, string>,
     // Bitiş ekranı — otomatik atlamaz, kişi okuyup devam eder
     bittiDevam: "Devam et →",
@@ -1180,6 +1213,11 @@ export const tr = {
     ovZorunlu: "OV ve VOLL gerekli — bu rakamlar planını kişiselleştirir.",
     volEtiket: "Son 3 ayın ortalama VOLL'si (zorunlu)",
     volYer: "Örn: 1500",
+    // [E9] ⓘ yardımcıları — tek cümle tanım + rakamı nereden bulacağı
+    ovIpucu:
+      "OV (Organizasyon Volümü): senin ve tüm organizasyonunun bir aydaki toplam satış hacmi puanı. Son 3 ay ortalamanı ofis panelindeki raporundan görebilirsin.",
+    volIpucu:
+      "VOLL (Volume of Own Line Levels): kariyer hesabında sayılan, kendi hatlarından (kollarından) gelen aylık hacim. Son 3 ay ortalamanı ofis panelindeki raporundan görebilirsin.",
     noktaDevam: "Devam et",
     // OV simülasyonu
     simulasyonBaslik: "OV büyüme simülasyonu",
@@ -2572,6 +2610,16 @@ export const tr = {
       hedefKisiler: "Seçili kişiler",
       telefonYok: "telefon yok",
       onizlemeBaslik: "Önizleme",
+      // Giriş daveti artık TEK mesajdır: yalnız onaylı kod (OTP) şablonu gider —
+      // linke gerek yok, kod tek başına yeterli (kullanıcı kararı).
+      kodTekMesajNot: "Tek mesaj gönderilir — yalnız giriş kodu, link yok.",
+      kodOnizleme: (kod: string) =>
+        `🔑 ${kod} — Liderlik Aynası kamp giriş kodun.\n\n[ Kodu Kopyala ]`,
+      kodOnizlemeDipnot:
+        "Temsilî görünüm — birebir metin, Meta onaylı kod şablonundaki gibidir.",
+      kodSablonKayitsiz:
+        "Kod şablonu (wa_tpl_kod) kayıtlı değil — önce scripts/whatsappKaydet.ts ile kaydet.",
+      ulasmadiBaslik: "Mesaj ulaşmadı:",
       hedefOzet: (n: number) => `Bu mesaj ${n} kişiye gidecek.`,
       telefonsuzNot: (n: number) => `${n} kişinin telefonu kayıtlı değil, onlara gitmeyecek.`,
       gonder: "Gönder",
@@ -4207,6 +4255,20 @@ export const tr = {
     ] as string[],
     kayitBaslat: "Kaydı başlat",
     kayitHenuzBaslamadi: "Kayıt henüz başlamadı — hazır olunca sen başlatırsın.",
+    // [E3] Mikrofon ön-provası — asıl kayıttan önce isteğe bağlı 5 sn'lik test.
+    // Test kaydı SUNUCUYA GİTMEZ: yalnız bu cihazda, bellekte çalınır.
+    provaLink: "🎙 Önce mikrofonu dene (5 sn)",
+    provaBaslik: "Mikrofonu dene",
+    provaAciklama:
+      "5 saniyelik kısa bir deneme yap: konuş, sonra kendi sesini dinle. Bu kayıt hiçbir yere gönderilmez — yalnız sen duyarsın.",
+    provaBaslat: "🎤 5 saniyelik deneme kaydı",
+    provaKonus: "Konuş — birkaç kelime yeter…",
+    provaKalan: (sn: number) => `${sn} sn`,
+    provaDinle: "▶ Deneme kaydını dinle",
+    provaDurdur: "■ Durdur",
+    provaNet: "Sesim net ✓ — kayda geç",
+    provaTekrar: "↺ Tekrar dene",
+    provaGeri: "← Geri",
     kaydediliyor: "Kaydediliyor",
     yeminYonerge: "Aşağıdaki taahhüdü doğal bir sesle, acele etmeden oku:",
     yemin:
@@ -4289,6 +4351,14 @@ export const tr = {
   muhurZinciri: {
     teyitHata: "Teyit kaydedilemedi.",
   },
+  // [E6] Onboarding'i yarıda bırakana hatırlatma (push katılımcıya; WhatsApp
+  // metni admin'in wa.me linkinde hazır gelir — otomatik gönderim yok).
+  onboardingTakip: {
+    pushBaslik: "⏸ Aynan seni bekliyor",
+    pushGovde: "5 dakikan var mı? Kaldığın yerden devam et — cevapların kayıtlı.",
+    waMesaj: (ad: string, adim: string, link: string) =>
+      `Merhaba ${ad} 👋 Ayna kurulumun ${adim} adımında yarıda kalmış — 5 dakikanı ayırırsan tamamlayalım: ${link}`,
+  },
   isVerisi: {
     kayitHata: "Sayılar kaydedilemedi.",
   },
@@ -4298,6 +4368,9 @@ export const tr = {
   ortak: {
     oturumGerekli: "Oturum gerekli.",
     genelHata: "Bir şeyler ters gitti, tekrar dener misin?",
+    // [E8] Ortak kayıt mikro güvencesi (components/KayitRozeti.tsx)
+    kaydedildi: "✓ Kaydedildi",
+    kaydedilemedi: "⚠ Kaydedilemedi — bağlantını kontrol et",
     // AI çağrı limiti (lib/aiLimit.ts) aşılınca gösterilir.
     cokHizli: "Çok hızlı gidiyorsun 🙂 Birkaç dakika soluklan, sonra devam edelim.",
     // Akran ikilisi (sorumluluk ortağı) sayfası

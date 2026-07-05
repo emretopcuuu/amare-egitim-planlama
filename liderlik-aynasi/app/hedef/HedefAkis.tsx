@@ -7,6 +7,10 @@ import { kutla } from "@/lib/his";
 import KivilcimPatlama from "@/components/KivilcimPatlama";
 import MikrofonButonu from "@/components/MikrofonButonu";
 import HedefPlanKarti from "@/components/HedefPlanKarti";
+import BilgiIpucu from "@/components/BilgiIpucu";
+import KayitRozeti from "@/components/KayitRozeti";
+import GizlilikMuhru from "@/components/GizlilikMuhru";
+import { ONBOARDING_SURE_DK } from "@/lib/onboardingSure";
 import {
   KARIYER_BASAMAKLARI,
   TEMPO_SECENEKLERI,
@@ -62,6 +66,8 @@ export default function HedefAkis({
   const [plan, setPlan] = useState<KariyerPlani | null>(durum.plan);
   const [ov0, setOv0] = useState<number | null>(durum.baslangicOv ?? null);
   const [kutlama, setKutlama] = useState(0); // hedef mühürlenince kıvılcım patlaması
+  // [E8] Kariyer/OV formu ve mühür başarıyla kaydedilince köşede "✓ Kaydedildi".
+  const [kayitBasari, setKayitBasari] = useState(0);
 
   async function istek(govde: Record<string, unknown>) {
     const res = await fetch("/api/hedef", {
@@ -87,9 +93,9 @@ export default function HedefAkis({
           </p>
         )}
         <p className="mt-3 text-base leading-relaxed text-slate-300">{t.acilisMetin}</p>
-        {/* [UX4] Süre beklentisi */}
+        {/* [UX4/E2] Süre beklentisi — merkezi haritadan */}
         <p className="mt-3 inline-block rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-400">
-          ⏱ ~8 dk sürer
+          ⏱ ~{ONBOARDING_SURE_DK.hedef} dk sürer
         </p>
         <button
           onClick={() => setFaz("baslangic")}
@@ -116,6 +122,7 @@ export default function HedefAkis({
             setHata(v?.hata ?? t.hata);
             return;
           }
+          setKayitBasari((n) => n + 1); // [E8] görünür güven
           setOv0(ov);
           setFaz("sohbet");
         }}
@@ -130,13 +137,19 @@ export default function HedefAkis({
   // ---- KISA ISINMA SOHBETİ ----
   if (faz === "sohbet") {
     return (
-      <Sohbet
-        baslangic={gecmis}
-        istek={istek}
-        onBitti={() => setFaz("wizard")}
-        onSifirla={sifirla}
-        onGeri={() => setFaz("baslangic")}
-      />
+      <>
+        {/* [E8] Başlangıç formu az önce kaydedildiyse kısa görünür güven */}
+        <KayitRozeti basari={kayitBasari} />
+        <Sohbet
+          baslangic={gecmis}
+          istek={istek}
+          onBitti={() => setFaz("wizard")}
+          onSifirla={sifirla}
+          onGeri={() => setFaz("baslangic")}
+        />
+        {/* Gizlilik mührü — kariyer/gelir gibi hassas verilerde güven imzası */}
+        <GizlilikMuhru />
+      </>
     );
   }
 
@@ -155,6 +168,7 @@ export default function HedefAkis({
             setHata(v?.hata ?? t.hata);
             return;
           }
+          setKayitBasari((n) => n + 1); // [E8] görünür güven
           setPlan(v.plan as KariyerPlani);
           setFaz("tamam");
           kutla(); // dokunsal + su dalgası
@@ -170,6 +184,7 @@ export default function HedefAkis({
   // ---- TAMAM: mühürlenmiş plan ----
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
+      <KayitRozeti basari={kayitBasari} />
       <KivilcimPatlama tetik={kutlama} />
       <div className="text-center">
         <p className="text-5xl" aria-hidden>
@@ -255,7 +270,11 @@ function BaslangicFormu({
       </div>
       {/* OV — Son 3 ay ortalaması (zorunlu) */}
       <div className="space-y-2">
-        <label className="block text-xs font-medium text-slate-400">{t.ovEtiket}</label>
+        <label className="block text-xs font-medium text-slate-400">
+          {t.ovEtiket}
+          {/* [E9] OV nedir + rakamı nereden bulur */}
+          <BilgiIpucu metin={t.ovIpucu} etiket="OV nedir?" />
+        </label>
         <input
           inputMode="numeric"
           value={ov}
@@ -268,7 +287,11 @@ function BaslangicFormu({
       </div>
       {/* VOL — Son 3 ay ortalaması (zorunlu), kariyerin/OV'nin hemen altında */}
       <div className="space-y-2">
-        <label className="block text-xs font-medium text-slate-400">{t.volEtiket}</label>
+        <label className="block text-xs font-medium text-slate-400">
+          {t.volEtiket}
+          {/* [E9] VOLL nedir + rakamı nereden bulur */}
+          <BilgiIpucu metin={t.volIpucu} etiket="VOLL nedir?" />
+        </label>
         <input
           inputMode="numeric"
           value={vol}

@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { bekleyenTaahhutler } from "@/lib/ilk72";
 import { katilimciyaBildir } from "@/lib/push";
 import { cesaretPushGonder } from "@/lib/cesaret";
+import { onboardingHatirlat } from "@/lib/onboardingTakip";
 import { nabizVur, nabizBekcisi, NABIZ_OLAYLAR, NABIZ_TIK } from "@/lib/nabiz";
 
 // Supabase pg_cron DAKİKADA BİR çağırır ('ayna-olaylar' job'u — bkz. migration
@@ -69,7 +70,12 @@ export async function GET(req: NextRequest) {
   // [E5] Başladım → ~60 sn sonra cesaret fısıltısı push'u (arkaplandaki telefona).
   const cesaretPush = await cesaretPushGonder(db);
 
-  return NextResponse.json({ islem, taahhutPush, cesaretPush });
+  // [E6] Onboarding'i yarıda bırakana tek seferlik hatırlatma. Saat başı en
+  // fazla bir tarama (kendi settings damgasıyla korunur) ve KAMP AÇIKKEN
+  // (ayna_aktif=true) hiç çalışmaz — yalnız kamp öncesi dönemin dürtmesi.
+  const onboardingPush = await onboardingHatirlat(db).catch(() => 0);
+
+  return NextResponse.json({ islem, taahhutPush, cesaretPush, onboardingPush });
 }
 
 // Admin panelinden manuel tetikleme — cron secret olmadan, admin oturumuyla

@@ -14,9 +14,12 @@ export default async function DavetPage() {
   const db = supabaseAdmin();
   const yapilandirildi = whatsAppYapilandirildiMi();
 
-  const [{ data: kisiler }, sidler] = await Promise.all([
+  const [{ data: kisiler }, sidler, { data: kodSidAyar }] = await Promise.all([
     db.from("participants").select("id, full_name, team, phone, first_login_at").eq("role", "participant").order("full_name"),
     sablonSidleri(db),
+    // "giris" artık tek-mesaj kod modu: gönderilebilirlik onaylı OTP kod
+    // şablonunun (wa_tpl_kod) kayıtlı olmasına bağlı.
+    db.from("settings").select("value").eq("key", "wa_tpl_kod").maybeSingle(),
   ]);
 
   const takimlar = [
@@ -65,6 +68,7 @@ export default async function DavetPage() {
           telefonsuz={tumKisiler.filter((k) => !k.telefonVar).length}
           kayitliAnahtarlar={kayitliAnahtarlar}
           sadeceSablonlar={["giris", "giris_hatirlatma"]}
+          kodKayitli={!!kodSidAyar?.value}
         />
       </Katlanir>
     </main>
