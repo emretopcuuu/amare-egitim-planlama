@@ -279,6 +279,21 @@ const TEMA_SEMASI = {
   additionalProperties: false,
 };
 
+// Bkz. gorevUret içindeki "DETERMİNİSTİK GÜVENLİK AĞI" notu — model bazen
+// eşleşme hedefinin takımını görevi alan kişinin KENDİ takımıyla karıştırıyor.
+// Metindeki "Grup N" referansını gerçek takımla değiştirir; gerçek takım
+// bilinmiyorsa referansı tamamen kaldırır (yanlış gruba göndermektense sessiz kalır).
+function takimReferansiDuzelt(metin: string, gercekTakim: string | null): string {
+  const duzeltilmis = metin.replace(/[Gg]rup\s*\d+(?:'?(?:den|dan|ten|tan|de|da))?/g, (tam) => {
+    const sayi = tam.match(/\d+/)?.[0];
+    const gercekSayi = gercekTakim?.match(/\d+/)?.[0] ?? null;
+    if (sayi && gercekSayi && sayi === gercekSayi) return tam; // zaten doğru
+    if (!gercekTakim) return ""; // gerçek takım bilinmiyor — uydurma referansı kaldır
+    return `${gercekTakim}'den`;
+  });
+  return duzeltilmis.replace(/\s{2,}/g, " ").trim();
+}
+
 function jsonCoz<T>(yanit: Anthropic.Message): T | null {
   if (yanit.stop_reason === "refusal") return null;
   const metin = yanit.content
@@ -988,7 +1003,7 @@ export async function gorevUret(
     // #4 / FAZ 2.1 Bağ görevi — isimli (gerçek eşleşme hedefi) ya da isimsiz
     tur === "bag"
       ? eslesmeHedef && eslesmeIsimliMi
-        ? `BAĞ GÖREVİ (İSİMLİ EŞLEŞME): Adayı doğrudan "${eslesmeHedef.full_name}" isimli kişiye yönlendir — adını göreve AÇIKÇA yaz (ör. "${eslesmeHedef.full_name}'i bul..."), varsa takımını da belirtebilirsin. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin.`
+        ? `BAĞ GÖREVİ (İSİMLİ EŞLEŞME): Adayı doğrudan "${eslesmeHedef.full_name}" isimli kişiye yönlendir — adını göreve AÇIKÇA yaz (ör. "${eslesmeHedef.full_name}'i bul..."). ${eslesmeHedef.team ? `Bu kişinin GERÇEK takımı: "${eslesmeHedef.team}" — takımdan bahsedeceksen SADECE bu ismi kullan, başka bir takım adı UYDURMA.` : "Bu kişinin takımı sistemde kayıtlı değil — takım adı UYDURMA, hiç takım/grup numarası yazma."} ÖNEMLİ UYARI: Eşleşmeler kamp genelinde yapılır, bu kişi görevi alan adayla AYNI takımda OLMAYABİLİR — adayın kendi takımını ("${katilimci.team ?? "bilinmiyor"}") bu kişinin takımıymış gibi YAZMA; bu ikisini karıştırmak kişiyi yanlış gruba gönderir. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin.`
         : `BAĞ GÖREVİ (isimsiz — bu kişi için şu an uygun eşleşme adayı yok): Adayı KENDİ SEÇECEĞİ gerçek bir insanla bağlantı kurmaya yönlendir. Kişinin KENDİSİNİN belirleyebileceği ifadeler kullan: "az tanıdığın biri", "sohbet etmek isteyip ertelediğin biri", "bugün gözüne çarpan biri". YASAK: numaralı grup / takım referansı verme — "Grup 4'ten biri", "3. gruptan biri" gibi ifadeler ASLA kullanma (kişi o grupta kimlerin olduğunu ezbere bilmiyor, görev boşta kalır). Kimi seçeceğine kişinin kendisi karar verebilmeli. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
       : "",
     // #8 Micro-sprint
@@ -1373,6 +1388,19 @@ ${yeniYonergeler}${merdivenYonergesi}${ekstraYonerge}`,
 
   const ilkDeneme = await tekUretimDenemesi("");
   if (!ilkDeneme) return null;
+
+  // DETERMİNİSTİK GÜVENLİK AĞI (saha bug'ı): eşleşmeler kamp genelinde yapılır,
+  // hedef HER ZAMAN görevi alan kişiden farklı bir takımda olabilir. Prompt
+  // uyarısı ("kendi takımınla karıştırma") tek başına yeterli olmadı — model
+  // yine de görevi alan kişinin takımını hedefe yakıştırabiliyordu ("Grup
+  // 7'den Mehmet'i bul" derken Mehmet aslında Grup 12'deydi). AI'nın diline
+  // güvenmek yerine metindeki "Grup N" referansını GERÇEK veriyle burada
+  // zorla düzeltiyoruz — asla yanlış gruba göndermeyelim.
+  if (eslesmeHedef && eslesmeIsimliMi) {
+    ilkDeneme.title = takimReferansiDuzelt(ilkDeneme.title, eslesmeHedef.team);
+    ilkDeneme.body = takimReferansiDuzelt(ilkDeneme.body, eslesmeHedef.team);
+  }
+
   // FAZ 1.2 — kalite denetçisi: ilk denemeyi ucuz bir Haiku geçişinden geçir.
   // Geçerse yayınla; geçmezse BİR kez daha dene (aynı context, ek uyarı ile) —
   // ikinci deneme sonucu ne olursa olsun yayınlanır (sonsuz döngü yok).
