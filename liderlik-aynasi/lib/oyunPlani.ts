@@ -21,10 +21,11 @@ Sana JSON verilecek: kişinin çekirdek nedeni, iç engeli, seçtiği kariyer he
 
 Plan kuralları:
 - Türkçe yaz, "sen" dili, sıcak ama somut.
-- DÖRT ufuk: "ilk_72_saat" (kamptan çıkınca ilk 3 gün — çok küçük, hemen yapılabilir kıvılcım adımları), "on_gun" (ilk momentum/aktivasyon), "kirk_gun" (tempo + ilk ekip/kilometre taşı), "doksan_gun" (ana hedefe varış).
+- DÖRT ufuk artık TAKVİM AYI mantığıyla düşünülür: "ilk_72_saat" (kamptan çıkınca ilk 3 gün — küçük kıvılcımlar), "on_gun" = İÇİNDE BULUNULAN AY (bu ayın kalanı; ilk momentum/aktivasyon), "kirk_gun" = GELECEK AY (tempo + ekip ritmi), "doksan_gun" = ONDAN SONRAKİ AY (ana hedefe varış). Metinde ay ADI yazma; "bu ay / gelecek ay / sonraki ay" gibi genel dille konuş.
 - Her ufukta EN AZ 1, EN FAZLA 3 madde. Her madde: kısa "baslik", net "aksiyon" (o ufukta yapılabilir, ölçülebilir saha eylemi), ve "olcut" (nasıl takip edilir — sayı/sıklık).
 - ZORUNLU: "ilk_72_saat" maddelerinden BİRİ mutlaka somut bir RANDEVU/KAYIT alma görevi olsun. Kişiyi ajandasını doldurup hızlı kayıt almaya yönlendir. Çerçevesi şu ruhta olsun: "Şimdiye kadar aramadığın ama arasan kaydını alabileceğini bildiğin 3 kişiyi hemen yaz; bu hafta liderliğini göster — bu 72 saatte en az birinin kaydını al." Motive edici ama net bir dil kullan (ör. "odaklanırsan yaparsın"). Ölçüt: 3 isim yazılır + en az 1 kayıt/randevu.
-- ZORUNLU: "on_gun" maddelerinden BİRİ mutlaka kişisel KAYIT alma hedefi olsun: ay bitmeden ŞAHSEN en az 1, mümkünse 2 kayıt. Bu maddeyi yüksek bir çıtayla, hayati bir odak gibi kur. Motivasyon çıtası olarak SABİT bir rütbe yazma; JSON'daki "birUstKariyer" alanını kullan — "sanki bu ay {birUstKariyer} oluyormuşsun gibi buna odaklan; hayatta kalman ve {birUstKariyer} olman bu aya bağlıymış gibi" ruhuyla (metinde birUstKariyer değerini aynen geçir). Ölçüt: ay sonuna kadar en az 1 (hedef 2) kişisel kayıt.
+- ZORUNLU: "on_gun" (bu ay) maddelerinden BİRİ mutlaka kişisel KAYIT alma hedefi olsun: ay bitmeden ŞAHSEN en az 1, mümkünse 2 kayıt. Bu maddeyi yüksek bir çıtayla, hayati bir odak gibi kur. Motivasyon çıtası olarak SABİT bir rütbe yazma; JSON'daki "birUstKariyer" alanını kullan — "sanki bu ay {birUstKariyer} oluyormuşsun gibi buna odaklan; hayatta kalman ve {birUstKariyer} olman bu aya bağlıymış gibi" ruhuyla (metinde birUstKariyer değerini aynen geçir). Ölçüt: ay sonuna kadar en az 1 (hedef 2) kişisel kayıt.
+- ZORUNLU: "kirk_gun" (gelecek ay) maddeleri şu SAHA RİTMİNİ kursun (2-3 maddeye yay): (a) her gün ajandanın dolu olması + günde en az 1 saati ajanda doldurmaya/randevu almaya ayırmak; (b) her gün ekibinden biriyle onun NEDENİNE inen kısa bir sohbet; (c) EN ÖNEMLİSİ haftalık GÖRÜŞME KOTASI — "bu hafta sonuna kadar toplam ŞU KADAR görüşmenin içinde olacağım (şahsi + ekip toplam)". Kotayı SEN net bir sayı olarak ver: JSON'daki "haftalikGorusme" değerini kullan (yoksa haftalikSaat/1.5'i aşağı yuvarla; o da yoksa makul bir taban). O maddeye "istersen bu sayıyı kendine göre değiştirebilirsin — her 1,5 saat ≈ 1 görüşme" notunu ekle. Bu ufkun ruhuna "bu ayın hızı, bütün kariyerinin hızını belirler" mesajını da kat.
 - Network/doğrudan satış alanının diliyle konuş (davet, sunum, kapanış, liste, katlama). KATILIMCI EVRENİ'ndeki gerçek tıkanmalara hitap et.
 - Planı kişinin GÜÇLÜ yanına yasla (onu kaldıraç yap) ve KÖR NOKTASINI/gelişim alanını sessizce çalıştır — ama açıkça yüzüne vurma.
 - Hedef rakamlarını planın iskeletine bağla ama kuru kuruya tekrarlama.
@@ -126,11 +127,16 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
 
   // Motivasyon çıtası: kişinin bir üst kariyeri (diamond altı → Diamond; üstü → +1).
   const birUstKariyer = birUstKariyerEtiket(kisi?.kariyer_seviyesi ?? null);
+  // Haftalık görüşme kotası: her 1.5 saat = 1 görüşme (kişinin ayırdığı saatten).
+  const haftalikSaat = hedef?.plan?.haftalikSaat ?? null;
+  const haftalikGorusme = haftalikSaat ? Math.max(1, Math.floor(haftalikSaat / 1.5)) : null;
 
   const veri = {
     cekirdekNeden: pusula?.cekirdek_neden ?? null,
     icEngel: pusula?.ic_engel ?? null,
     birUstKariyer,
+    haftalikSaat,
+    haftalikGorusme,
     hedef: hedef?.plan
       ? {
           rutbe: hedef.plan.rutbe,

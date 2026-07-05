@@ -6,19 +6,41 @@ import Link from "next/link";
 import Bekle from "@/components/Bekle";
 import AynaDusunuyor from "@/components/AynaDusunuyor";
 import { tr } from "@/lib/i18n/tr";
+import { ayAdi, aySonunaGun } from "@/lib/planTakvim";
 import type { OyunPlani, PlanMadde, PlanUfuk } from "@/lib/oyunPlani";
 
 // PLAN ATÖLYESİ — kişi karar verir, AYNA danışman. AI önerisi "öneri" olarak
 // gelir; kişi her maddeyi kabul/düzenle/çıkar, kendi maddesini ekler, takıldığı
 // yerde AYNA'ya danışır. "Planım hazır" → onaylanır (kilit) → Sözünü Ver açılır.
 
-type UfukTanim = { key: PlanUfuk; etiket: string; kisa: string; alt: string; ikon: string };
-const UFUKLAR: UfukTanim[] = [
-  { key: "ilk_72_saat", etiket: "İlk 72 Saat", kisa: "72 Saat", alt: "Kamptan çıkınca ilk 3 gün — küçük ama net kıvılcımlar", ikon: "⚡" },
-  { key: "on_gun", etiket: "İlk 10 Gün", kisa: "10 Gün", alt: "İlk momentum, aktivasyon", ikon: "🌱" },
-  { key: "kirk_gun", etiket: "İlk 40 Gün", kisa: "40 Gün", alt: "Tempo + ilk ekip hamlesi", ikon: "🔥" },
-  { key: "doksan_gun", etiket: "İlk 90 Gün", kisa: "90 Gün", alt: "Ana hedefe varış", ikon: "🏔️" },
+type UfukGorunum = { key: PlanUfuk; etiket: string; kisa: string; alt: string; ikon: string };
+// Ufuklar takvim ayına bağlı: 72 saat sabit, sonrakiler bu ay / gelecek ay /
+// sonraki ay + "ayın bitmesine X gün" canlı sayacı (ayAdi/aySonunaGun ile).
+const UFUK_TABAN: { key: PlanUfuk; ikon: string; ay: number | null }[] = [
+  { key: "ilk_72_saat", ikon: "⚡", ay: null },
+  { key: "on_gun", ikon: "🌱", ay: 0 },
+  { key: "kirk_gun", ikon: "🔥", ay: 1 },
+  { key: "doksan_gun", ikon: "🏔️", ay: 2 },
 ];
+function ufuklariKur(now: Date): UfukGorunum[] {
+  return UFUK_TABAN.map((t) =>
+    t.ay === null
+      ? {
+          key: t.key,
+          ikon: t.ikon,
+          etiket: "İlk 72 Saat",
+          kisa: "72 Saat",
+          alt: "Kamptan çıkınca ilk 3 gün — küçük ama net kıvılcımlar",
+        }
+      : {
+          key: t.key,
+          ikon: t.ikon,
+          etiket: ayAdi(now, t.ay),
+          kisa: ayAdi(now, t.ay),
+          alt: `${ayAdi(now, t.ay)} ayının bitmesine ${aySonunaGun(now, t.ay)} gün`,
+        }
+  );
+}
 
 type PlanDurumu = Record<PlanUfuk, PlanMadde[]>;
 
@@ -40,7 +62,10 @@ export default function PlanAtolyesi({ ilkPlan }: { ilkPlan: OyunPlani | null })
   const [veri, setVeri] = useState<PlanDurumu>(ilkPlan ? planiCikar(ilkPlan) : BOS);
   const [uretiliyor, setUretiliyor] = useState(!ilkPlan);
   const [uretimHata, setUretimHata] = useState(false);
+  const [now] = useState(() => new Date());
   const [adim, setAdim] = useState(0); // sihirbaz aşaması (0..3)
+  const ufuklar = ufuklariKur(now);
+  const toplamGun = aySonunaGun(now, 2);
   const [duzenlenen, setDuzenlenen] = useState<string | null>(null); // "ufuk:idx"
   const [danisAcik, setDanisAcik] = useState<{ ufuk: PlanUfuk; idx: number } | null>(null);
   const [gonderiliyor, setGonderiliyor] = useState(false);
@@ -76,7 +101,7 @@ export default function PlanAtolyesi({ ilkPlan }: { ilkPlan: OyunPlani | null })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const toplamMadde = UFUKLAR.reduce((t, u) => t + veri[u.key].length, 0);
+  const toplamMadde = ufuklar.reduce((t, u) => t + veri[u.key].length, 0);
 
   // ---- ÜRETİM: yükleme / hata ----
   if (uretiliyor) {
@@ -192,7 +217,7 @@ export default function PlanAtolyesi({ ilkPlan }: { ilkPlan: OyunPlani | null })
             Bu senin kararın. Sözünü verince taahhüdün olur.
           </p>
         </header>
-        {UFUKLAR.map((u) =>
+        {ufuklar.map((u) =>
           veri[u.key].length === 0 ? null : (
             <section key={u.key} className="kart-cam rounded-2xl p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-gold-light/80">
@@ -230,8 +255,8 @@ export default function PlanAtolyesi({ ilkPlan }: { ilkPlan: OyunPlani | null })
   }
 
   // ---- ATÖLYE (SİHİRBAZ: ufuk ufuk) ----
-  const sonAdim = UFUKLAR.length - 1;
-  const u = UFUKLAR[adim];
+  const sonAdim = ufuklar.length - 1;
+  const u = ufuklar[adim];
 
   async function tasla() {
     // İlerlerken taslağı sessizce kaydet (kişi çıkıp dönse bile durur).
@@ -262,14 +287,17 @@ export default function PlanAtolyesi({ ilkPlan }: { ilkPlan: OyunPlani | null })
         <h1 className="prizma-serif ay-metin text-2xl font-semibold leading-tight">
           90 Günlük Oyun Planım
         </h1>
-        <p className="mt-1 text-xs text-slate-400">
-          Aşama aşama kur — kararlar senin, ben danışmanın.
-        </p>
+        <div className="mt-1.5 flex flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-gold/10 px-3 py-1 text-xs font-semibold text-gold-light ring-1 ring-gold/25">
+            🎯 {ayAdi(now, 2)} sonuna {toplamGun} gün
+          </span>
+          <span className="text-xs text-slate-400">Aşama aşama kur — kararlar senin.</span>
+        </div>
       </header>
 
       {/* AŞAMALAR — tepede. Tamamladığın aşamaya geri dönebilirsin. */}
       <div className="flex items-center gap-1.5">
-        {UFUKLAR.map((uf, i) => {
+        {ufuklar.map((uf, i) => {
           const aktif = i === adim;
           const gecildi = i < adim;
           return (
@@ -411,7 +439,7 @@ export default function PlanAtolyesi({ ilkPlan }: { ilkPlan: OyunPlani | null })
         {adim < sonAdim ? (
           <>
             <p className="text-center text-xs text-slate-500">
-              {adim + 1}/{UFUKLAR.length} — {u.etiket}. Tamamla, sonraki aşamaya geç.
+              {adim + 1}/{ufuklar.length} — {u.etiket}. Tamamla, sonraki aşamaya geç.
             </p>
             <div className="flex gap-2">
               {adim > 0 && (

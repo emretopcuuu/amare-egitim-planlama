@@ -1,4 +1,5 @@
 import { tr } from "@/lib/i18n/tr";
+import { ayAdi } from "@/lib/planTakvim";
 import type { OyunPlani, PlanMadde } from "@/lib/oyunPlani";
 
 const t = tr.oyunPlani;
@@ -9,12 +10,13 @@ const t = tr.oyunPlani;
 // salt-okunur gösterir. Sahne koreografisini bozmamak için buradan atlama linki YOK.
 export default function OyunPlaniBolumu({ mevcutPlan }: { mevcutPlan: OyunPlani | null }) {
   const onayli = mevcutPlan?.durum === "onaylandi";
+  const now = new Date();
   const ufuklar: { etiket: string; maddeler: PlanMadde[] }[] = onayli
     ? [
         { etiket: "İlk 72 saat", maddeler: mevcutPlan!.ilk_72_saat },
-        { etiket: t.onGun, maddeler: mevcutPlan!.on_gun },
-        { etiket: t.kirkGun, maddeler: mevcutPlan!.kirk_gun },
-        { etiket: t.doksanGun, maddeler: mevcutPlan!.doksan_gun },
+        { etiket: ayAdi(now, 0), maddeler: mevcutPlan!.on_gun },
+        { etiket: ayAdi(now, 1), maddeler: mevcutPlan!.kirk_gun },
+        { etiket: ayAdi(now, 2), maddeler: mevcutPlan!.doksan_gun },
       ].filter((u) => u.maddeler.length > 0)
     : [];
 
