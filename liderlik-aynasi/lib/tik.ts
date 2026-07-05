@@ -671,13 +671,17 @@ export async function tikCalistir(
       .single();
     if (error || !yeniGorev) continue;
     // FAZ 5.2 — altın görev düştüyse: kotayı düş + HERKESE heyecan push'u
-    // (kimde olduğu değil — yalnız "az önce birine düştü").
+    // (kimde olduğu değil — yalnız "az önce birine düştü"). METİN KURALI:
+    // "sıradaki sende" gibi kişiye özel bir vaat KURMA — bu broadcast'i alan
+    // kişinin şu an görevi olmayabilir; tıklayınca boş ekran gelirse "yalan
+    // söyledi" hissi yaratıyordu (saha geri bildirimi). Yalnız FOMO/sosyal
+    // kanıt ver, kendi görevine bak daveti yap — kesinlik iması yok.
     if (altinMi) {
       altinBugunKalan--;
       await herkeseBildir(
         db,
-        "⚡ Altın görev az önce birine düştü",
-        "Kampta nadir bir altın görev belirdi. Belki sıradaki sende…",
+        "⚡ Kampta bir altın görev çıktı",
+        "Nadir bir altın görev birine düştü. Kendi görevlerine bir göz at.",
         "/gorevler"
       );
     }

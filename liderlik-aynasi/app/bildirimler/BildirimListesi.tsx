@@ -18,6 +18,12 @@ function turBul(b: Bildirim): Tur {
     return { ikon: "⏰", renk: "text-amber-300", serit: "bg-amber-400", cta: "Programı aç" };
   if (u.startsWith("/analizlerim") || s.includes("derinleş") || s.includes("analiz"))
     return { ikon: "🌀", renk: "text-gold-light", serit: "bg-gold", cta: "Dinle" };
+  // Altın görev DUYURUSU — herkese giden hype broadcast'i (bkz. lib/tik.ts),
+  // alıcının KENDİ görevi olduğu anlamına gelmez. "Göreve git" (kesin vaat)
+  // yerine nötr bir CTA — tıklayınca boş ekran gelince "yalan söyledi" hissi
+  // yaratmasın (saha geri bildirimi). Genel /gorevler dalından ÖNCE kontrol edilmeli.
+  if (s.includes("altın görev") && s.includes("çıktı"))
+    return { ikon: "⚡", renk: "text-gold-light", serit: "bg-gold", cta: "Görevlerine bak" };
   if (u.startsWith("/gorevler") || s.includes("görev"))
     return { ikon: "🤖", renk: "text-sky-300", serit: "bg-sky-400", cta: "Göreve git" };
   if (u.startsWith("/degerlendir") || s.includes("değerlendir") || s.includes("fısılt"))
