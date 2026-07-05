@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  /* "Zirve" paleti: abanoz zemin + tek altın vurgu */
+  --color-abanoz: #0b0a09;
+  --color-abanoz-2: #14120f;
+  --color-fildisi: #f3f0e9;
+  --color-duman: #9a948a;
+  --color-altin: #d4b06a;
+
+  --font-sahne: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-abanoz);
+  color: var(--color-fildisi);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}

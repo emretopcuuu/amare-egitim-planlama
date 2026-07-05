@@ -3,8 +3,12 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { eylulOzet, eylulKayitGetir, eylulAynasiAcikMi } from "@/lib/eylulAynasi";
 import { jetonlarGetir } from "@/lib/eylulDis";
+import { acikMektup } from "@/lib/sesliMektup";
+import { dominoAlintisi } from "@/lib/domino";
+import { tr } from "@/lib/i18n/tr";
 import EylulAynasiForm from "./EylulAynasiForm";
 import EylulDisDavet from "./EylulDisDavet";
+import GecmisMektup from "./GecmisMektup";
 
 export const metadata = { title: "Eylül Aynası — Liderlik Aynası" };
 export const revalidate = 0;
@@ -17,11 +21,15 @@ export default async function EylulAynasiPage() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
-  const [acik, ozet, kayit, jetonlar] = await Promise.all([
+  const [acik, ozet, kayit, jetonlar, mektup, dominoAlinti] = await Promise.all([
     eylulAynasiAcikMi(db),
     eylulOzet(db, session.sub),
     eylulKayitGetir(db, session.sub),
     jetonlarGetir(db, session.sub),
+    // Özellik 4 — 90. günde açılan, henüz dinlenmemiş sesli mektup
+    acikMektup(db, session.sub),
+    // Özellik 9 — domino görevinin yanıtından tek satır alıntı (köprü kartı)
+    dominoAlintisi(db, session.sub),
   ]);
 
   const kartlar = [
@@ -51,6 +59,26 @@ export default async function EylulAynasiPage() {
             </div>
           ))}
         </div>
+
+        {/* Özellik 4 — 90. gün: mührü açılmış, henüz dinlenmemiş sesli mektup.
+            eylul_kanit_modu bayrağından bağımsız — açılışı acilis_at belirler. */}
+        {mektup && <GecmisMektup />}
+
+        {/* Özellik 9 — domino köprüsü: kampın son günü kamp dışına taşınan
+            içgörünün izi. Kişinin o günkü yanıtından tek satır + takip sorusu. */}
+        {dominoAlinti && (
+          <section className="rounded-2xl border border-white/10 bg-midnight-card/50 p-5">
+            <h2 className="font-display text-lg font-bold text-gold-light">
+              {tr.eylulAynasi.dominoBaslik}
+            </h2>
+            <p className="mt-2 text-sm italic leading-relaxed text-slate-200">
+              “{dominoAlinti}”
+            </p>
+            <p className="mt-2 text-sm leading-relaxed text-slate-400">
+              {tr.eylulAynasi.dominoSoru}
+            </p>
+          </section>
+        )}
 
         {acik ? (
           <>

@@ -12,8 +12,9 @@ export default function CikisButonu() {
     setYukleniyor(true);
     try {
       await fetch("/api/cikis", { method: "POST" });
+      try { localStorage.removeItem("la_giris_kod"); } catch {}
     } finally {
-      router.replace("/giris");
+      router.replace("/giris?cikis=1");
       router.refresh();
     }
   }

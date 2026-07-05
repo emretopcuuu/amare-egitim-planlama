@@ -11,7 +11,9 @@ import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
 import { kariyerHalKisidenTuret, personaBlogu, personaYolculukOdak, KARIYER_RANK, KARIYER_ETIKET } from "@/lib/persona";
 import { aiHataYakala } from "@/lib/uyari";
 import { vinyetSec, type LiderKas } from "@/lib/liderlikVinyetleri";
+import { zorlukSeviyesiHesapla, type MerdivenGorev } from "@/lib/zorlukMerdiveni";
 import { karsilasmaBul } from "@/lib/karsilasma";
+import type { SicakAn } from "@/lib/sicakAn";
 import { eslesmeHedefiSec, ESLESMELI_TURLER, type EslesmeAday } from "@/lib/gorevEslesme";
 import {
   fazBul,
@@ -80,12 +82,12 @@ const GOREV_SEMASI = {
     neden: {
       type: "string" as const,
       description:
-        "Bu görevin neden ÖZELLİKLE BU kişiye verildiğine dair TEK kısa cümle (en fazla 16 kelime), adayın göreceği sıcak bir dille. Pusula doluysa nedeni orada geçen çekirdek neden/iç engele bağla ama doğrudan alıntı yapma. Ham veri/puan/teknik terim YOK; kör noktayı yüzüne vurma. Yoksa boş string.",
+        "Bu görevin neden ÖZELLİKLE BU kişiye verildiğine dair TEK kısa ve SADE cümle (en fazla 16 kelime), adayın göreceği sıcak bir dille. Pusula doluysa nedeni orada geçen çekirdek neden/iç engele bağla ama doğrudan alıntı yapma. KURAL: Bu alan yeni talimat/eylem İÇEREMEZ — kime ne yapılacağını YALNIZ gövde söyler; burada eylemi genişletir ya da değiştirirsen kişi 'kimi seçeceğim şimdi?' diye kafası karışır. Ham veri/puan/teknik terim YOK; kör noktayı yüzüne vurma. Yoksa boş string.",
     },
     fayda: {
       type: "string" as const,
       description:
-        "'Bu ödev neden önemli?' — bu görevi yapmanın kişinin LİDERLİĞİNE ve SAHADA işini (network marketing) kurarken NE KATACAĞINI anlatan 1-2 cümle. ŞU İKİSİNİ birleştir: (a) hangi farkındalığı/yeteneği besler (ör. zor konuşmayı yönetme, soğuk pazarda ilk adım, ekip güveni), (b) sahada somut karşılığı (ör. ekibini büyütürken, lider yetiştirirken, itiraz karşılarken). Sıcak, motive edici, ikinci tekil ('sana/işine'); genel-geçer klişe değil BU göreve özel. Ham veri/puan/teknik terim YOK.",
+        "'Bu ödev neden önemli?' — bu görevin kişinin LİDERLİĞİNE ve SAHADA işine ne katacağını anlatan EN FAZLA 2 KISA cümle (her cümle tek fikir; iç içe yan cümleler ve 'kendi refleksini tanımak, kalıcılığı inşa etmek' gibi soyut zincirler YASAK — 12 yaşındaki biri de anlamalı). KURAL: Bu alan yeni talimat/eylem/hedef kişi İÇEREMEZ ve gövdedeki eylemle çelişemez — görev 'aklına gelen ilk kişiyi seç' diyorsa burada 'vazgeçmek üzere olanı fark et' gibi farklı bir seçim ölçütü verme; sadece görevin sahadaki karşılığını söyle. Sıcak, ikinci tekil; klişe değil BU göreve özel. Ham veri/puan/jargon ('katlama' vb.) YOK.",
     },
     ipuclari: {
       type: "array" as const,
@@ -139,8 +141,17 @@ const GOREV_SEMASI = {
       description:
         "Bu görev 'oncekiGorevBasliklari'ndaki hiçbirinin tekrarı/çok benzeri DEĞİL mi (farklı kas/eylem/dönüş)? Benzer bir egzersizse false.",
     },
+    // Özellik 7 — ZORLUK MERDİVENİ ölçümü: modelin kendi değerlendirmesiyle
+    // görevin gerçek dozu. missions.zorluk_seviye'ye yazılır; kişi × kas
+    // konfor sınırı kalibrasyonu bu ölçüme dayanır.
+    zorluk_seviye: {
+      type: "integer" as const,
+      enum: [1, 2, 3, 4, 5],
+      description:
+        "SENİN değerlendirmenle bu görevin gerçek zorluk dozu: 1=konfor içi/çok kolay, 2=hafif esneme, 3=gerçek ama güvenli meydan okuma, 4=belirgin cesaret isteyen, 5=büyük sahne/yüksek risk. Dürüst ölç — süsleme.",
+    },
   },
-  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden", "fayda", "ipuclari", "kim", "ne", "nerede", "ne_zaman", "kanit", "donus_bicimi", "baglam_kullanildi", "tekrar_degil"],
+  required: ["baslik", "govde", "ozellik_id", "sure_saat", "itiraz", "neden", "fayda", "ipuclari", "kim", "ne", "nerede", "ne_zaman", "kanit", "donus_bicimi", "baglam_kullanildi", "tekrar_degil", "zorluk_seviye"],
   additionalProperties: false,
 };
 
@@ -151,11 +162,13 @@ const KALITE_SEMASI = {
   properties: {
     anlasilir: {
       type: "boolean" as const,
-      description: "Katılımcı bu görevi TEK OKUMADA anlıyor mu (ne yapacağı + sana ne yazacağı net mi)?",
+      description:
+        "12 YAŞ TESTİ: 12 yaşındaki biri bu görevi okusa, yapacaklarını SIRAYLA sayabilir mi (ne yapacak + sana ne yazacak)? Adımlar birden fazlaysa numaralı ve sıralı mı? Kafa karıştıran katmanlı/felsefi soru varsa false.",
     },
     somut: {
       type: "boolean" as const,
-      description: "İstenen eylem SOMUT mu? Soyut/şiirsel/muğlak bir istek ('kendini yokla' gibi) değil mi?",
+      description:
+        "İstenen eylem SOMUT mu? Eylem satırlarında mecaz, soyut iç-sorgulama ya da şiirsel istek ('kendini yokla', 'bu ses karar mı kaçış mı' gibi) varsa false. Mecaz yalnız açılış hikâyesinde kabul edilir.",
     },
     isimNet: {
       type: "boolean" as const,
@@ -178,7 +191,17 @@ const KALITE_SEMASI = {
  * ayrıştırılamazsa FAIL-OPEN döner (görevi engellemez) — bu bir güvenlik
  * kapısı değil, kalite iyileştirmesidir; maliyeti sıcak yolu bloklamamalı. */
 export async function gorevKaliteDenetle(
-  gorev: { title: string; body: string; kind: string; hedefKisi?: string | null },
+  gorev: {
+    title: string;
+    body: string;
+    kind: string;
+    hedefKisi?: string | null;
+    // Görev kartındaki "neden sana verildi" / "işine nasıl katkı sağlar"
+    // açıklamaları — gövdeyle ÇELİŞMEDİKLERİ de denetlenir (saha: açıklama
+    // farklı bir seçim ölçütü verince kişi "kimi seçeceğim?" diye karışıyordu).
+    neden?: string | null;
+    fayda?: string | null;
+  },
   sonGorevBasliklari: string[]
 ): Promise<{ gecti: boolean; sebep: string | null }> {
   try {
@@ -189,12 +212,19 @@ export async function gorevKaliteDenetle(
       thinking: { type: "disabled" },
       output_config: { format: { type: "json_schema", schema: KALITE_SEMASI } },
       system:
-        "Bir liderlik kampı görev metnini denetliyorsun. 4 kriteri dürüstçe değerlendir: (1) anlasilir, (2) somut, (3) isimNet (hedefKisi boşsa otomatik true), (4) tekrarDegil (sonGorevBasliklari ile karşılaştır). Yalnızca JSON döndür.",
+        "Bir liderlik kampı görev metnini denetliyorsun. 4 kriteri dürüstçe değerlendir: (1) anlasilir — 12 yaşındaki biri okusa yapacaklarını sırayla sayabilir mi; ayrıca 'neden'/'fayda' açıklamaları gövdedeki eylemle çelişiyor ya da yeni talimat/farklı seçim ölçütü ekliyorsa anlasilir=false, (2) somut, (3) isimNet (hedefKisi boşsa otomatik true), (4) tekrarDegil (sonGorevBasliklari ile karşılaştır). Yalnızca JSON döndür.",
       messages: [
         {
           role: "user",
           content: JSON.stringify({
-            gorev: { baslik: gorev.title, metin: gorev.body, tur: gorev.kind, hedefKisi: gorev.hedefKisi ?? null },
+            gorev: {
+              baslik: gorev.title,
+              metin: gorev.body,
+              tur: gorev.kind,
+              hedefKisi: gorev.hedefKisi ?? null,
+              neden: gorev.neden ?? null,
+              fayda: gorev.fayda ?? null,
+            },
             sonGorevBasliklari: sonGorevBasliklari.slice(0, 10),
           }),
         },
@@ -301,6 +331,16 @@ export type UretilenGorev = {
   /** FAZ 2.1 — bu görev bir eşleşme hedefine bağlıysa (isimli ya da isimsiz),
    * tik.ts mission insert sonrası eslesmeKaydet() ile gorev_eslesme'ye yazar. */
   eslesme: { hedefId: string; isimli: boolean } | null;
+  /** Özellik 7 — bu görevin çalıştırdığı lider kası (KAS_DONGU'dan deterministik).
+   * missions.kas'a yazılır; zorluk merdiveni kişi × kas sınırını bundan öğrenir.
+   * Statik üretimlerde (ör. mentorluk) null. */
+  kas: string | null;
+  /** Özellik 7 — modelin kendi değerlendirmesiyle görevin dozu (1-5), ölçüm için. */
+  zorlukSeviye: number | null;
+  /** Özellik 2 — bu görev hangi kimlik cümlesini çürütmek üzere kurgulandı.
+   * Çağıran, mission insert'inde missions.kimlik_cumle_id'ye yazar; puan ≥7
+   * yanıtlardan karşı-kanıt bu iz üzerinden toplanır. */
+  kimlikCumleId: string | null;
 };
 
 // #7 geçerli dönüş biçimleri (şema enum'ı ile aynı).
@@ -451,7 +491,10 @@ export async function gorevUret(
   mekanFarkindaAdaylar: EslesmeAday[] | null = null,
   // FAZ 7 — AKTİVASYON: kişinin son kaçırma sebebi (7.2 sebep motoru) ve
   // yeniden giriş basamağı (7.3 merdiven). tik.ts geçirir.
-  aktivasyon: { sonKacirmaSebebi?: string | null; girisBasamak?: number } = {}
+  aktivasyon: { sonKacirmaSebebi?: string | null; girisBasamak?: number } = {},
+  // Özellik 3 — SICAK AN: kişi az önce güçlü bir duygu sinyali verdi (tik.ts
+  // taze <45 dk ise geçirir). Görev MİKRO olur ve o duyguya dokunarak açılır.
+  sicakAn: SicakAn | null = null
 ): Promise<UretilenGorev | null> {
   const [
     ozellikler,
@@ -479,13 +522,23 @@ export async function gorevUret(
     alinanTakdirlerSonuc,
     // FAZ 4.2 — kamp öncesi kendi sesiyle bıraktığı beklenti cümlesi.
     beklentiSonuc,
+    // Özellik 7 — zorluk merdiveni penceresi: son ~15 görevin kas/puan/geri-adım
+    // özeti (onceki'den ayrı: davranışı değiştirmemek için 10'luk pencereye
+    // dokunulmaz, merdiven kendi genişliğinde okur).
+    zorlukPencereSonuc,
+    // Özellik 2 — çürütme hedefi: EN ESKİ aktif kimlik cümlesi (kod seçer).
+    kimlikSonuc,
+    // Özellik 5 — şahit perspektifi: hedefi bu kişi olan, henüz kullanılmamış
+    // EN TAZE gözlem (yeni görevin açılış cümlesi olur).
+    sahitSonuc,
   ] = await Promise.all([
     aktifOzellikler(db),
     db
       .from("missions")
       // response_text + ai_comment eklendi (öneri #1: kişinin gerçek cümleleri,
       // #9: AYNA'nın verdiği son tavsiyeyi sonraki göreve taşımak için)
-      .select("kind, title, body, issued_at, status, ai_score, ai_comment, lightened_at, responded_at, response_tags, response_text, donus_bicimi")
+      // neden_nabiz eklendi (özellik 6: çekirdek neden nabzı geri beslemesi)
+      .select("kind, title, body, issued_at, status, ai_score, ai_comment, lightened_at, responded_at, response_tags, response_text, donus_bicimi, neden_nabiz")
       .eq("participant_id", katilimci.id)
       .order("issued_at", { ascending: false })
       .limit(10), // genişletildi: streak ve pik pencere için
@@ -549,6 +602,30 @@ export async function gorevUret(
       .select("beklenti")
       .eq("participant_id", katilimci.id)
       .maybeSingle(),
+    // Özellik 7 — zorluk merdiveni: son 15 görevin sinyal özeti.
+    db
+      .from("missions")
+      .select("kas, ai_score, status, lightened_at, zorluk_ayar")
+      .eq("participant_id", katilimci.id)
+      .order("issued_at", { ascending: false })
+      .limit(15),
+    // Özellik 2 — aktif (yüzleşilmemiş + bırakılmamış) kimlik cümleleri, en eskisi önce.
+    db
+      .from("kimlik_cumleleri")
+      .select("id, cumle")
+      .eq("participant_id", katilimci.id)
+      .is("yuzlesme_at", null)
+      .is("birakildi_at", null)
+      .order("created_at", { ascending: true })
+      .limit(1),
+    // Özellik 5 — bu kişi hakkında yazılmış, henüz görevle geri verilmemiş gözlem.
+    db
+      .from("sahit_gozlemleri")
+      .select("id, gozlem")
+      .eq("hedef_id", katilimci.id)
+      .is("kullanildi_at", null)
+      .order("created_at", { ascending: false })
+      .limit(1),
   ]);
 
   // Değerler: kişinin seçtiği 3 temel değer + neden cümlesi → görev bunları
@@ -670,6 +747,21 @@ export async function gorevUret(
   const sonAynaTavsiyesi =
     onceki.find((o) => o.status === "scored" && (o.ai_comment as string | null)?.trim())
       ?.ai_comment as string | undefined;
+
+  // Özellik 6 — ÇEKİRDEK NEDEN NABZI: kişinin son 3 nabız cevabının (1-5)
+  // ortalaması. Düşen trend (≤2.5) motoru yön değiştirmeye zorlar: görev
+  // kişinin çekirdek nedenine AÇIKÇA bağlanır. Yüksek trend (≥4) mevcut
+  // yönü korur. Sinyal yoksa null → davranış eskisi gibi.
+  const nabizDegerleri = onceki
+    .map((o) => (o as { neden_nabiz?: number | null }).neden_nabiz)
+    .filter((n): n is number => typeof n === "number")
+    .slice(0, 3);
+  const nedenNabziOrt =
+    nabizDegerleri.length > 0
+      ? Number(
+          (nabizDegerleri.reduce((a, b) => a + b, 0) / nabizDegerleri.length).toFixed(1)
+        )
+      : null;
 
   // Öneri #3 — SOSYAL KANIT: akranların bu kişi hakkında yazdığı yorumlar +
   // aldığı takdirler. Görev güçten de beslenebilsin (yalnız kör noktadan değil).
@@ -803,8 +895,16 @@ export async function gorevUret(
   // #4 BAĞ GÖREVİ — eşleşme bağlantı sayısı
   const baglantıSayisi = baglantıCountSonuc?.count ?? 0;
 
-  // #8 MİKRO-SPRINT — streak≥3, zorluk=3, %20 olasılık
-  const microSprint = streak >= 3 && zorluk === 3 && Math.random() < 0.2;
+  // Özellik 2 — çürütme hedefi (kod seçer: en eski aktif kimlik cümlesi).
+  const hedefKimlikCumle = (kimlikSonuc.data ?? [])[0] ?? null;
+  // Özellik 5 — bu kişiye açılış cümlesi olacak, kullanılmamış en taze gözlem.
+  const sahitGozlem = (sahitSonuc.data ?? [])[0] ?? null;
+
+  // #8 MİKRO-SPRINT — streak≥3, zorluk=3, %20 olasılık.
+  // Özellik 3 — sıcak an her zaman mikro-sprint: duygu sıcakken ~15-30 dk'lık
+  // tek atomik dokunuş (due_at 30 dk'ya iner).
+  const microSprint =
+    !!sicakAn || (streak >= 3 && zorluk === 3 && Math.random() < 0.2);
 
   // #10 Kamp olayı bağlamı: görevi kampın canlı akışına demirle —
   // son fiero (10/10 zafer) ve son senkron (kolektif an) son 10 görevden çekilir.
@@ -837,18 +937,12 @@ export async function gorevUret(
       const tercih = await karsilasmaBul(db, katilimci.id);
       eslesmeHedef = await eslesmeHedefiSec(db, katilimci.id, adaylar, new Date(), tercih?.partnerId ?? null);
     }
-    if (eslesmeHedef) {
-      // Bugün bu kişinin eşleşmeli görevlerinin kaçı isimliydi — oran ≥%50 kalsın.
-      const gunBasiIso = new Date(Date.now() - 24 * 3_600_000).toISOString();
-      const { data: bugunEslesmeler } = await db
-        .from("gorev_eslesme")
-        .select("isimli")
-        .eq("kaynak_id", katilimci.id)
-        .gte("created_at", gunBasiIso);
-      const toplamBugun = bugunEslesmeler?.length ?? 0;
-      const isimliSayisi = (bugunEslesmeler ?? []).filter((e) => e.isimli).length;
-      eslesmeIsimliMi = toplamBugun === 0 || isimliSayisi / toplamBugun < 0.5;
-    }
+    // İSİMLİ ZORUNLU (kullanıcı isteği): eşleşme hedefi bulunduysa görev HER
+    // ZAMAN isimli olur. Eski %50 kotası kaldırıldı — anonim "Grup N'de biri"
+    // gibi referanslar kişinin görmediği bir listeye işaret ediyordu; artık
+    // aday varsa daima gerçek bir isme yönlendiriyoruz (bkz. anonim branşı: yalnız
+    // hiç aday yoksa devreye girer ve grup numarası vermesi yasak).
+    if (eslesmeHedef) eslesmeIsimliMi = true;
   }
 
   // --- Tüm yeni yönergeleri oluştur ---
@@ -873,11 +967,29 @@ export async function gorevUret(
       : "",
     // #7 Ses tonu
     tonOnerisi ? `AYNA SES TONU (kişiye özel): ${tonOnerisi}` : "",
+    // Özellik 6 — Çekirdek Neden Nabzı geri beslemesi
+    nedenNabziOrt !== null && nedenNabziOrt <= 2.5 && pusulaCekirdekSonuc?.cekirdek_neden?.[0]
+      ? `ÇEKİRDEK NEDEN NABZI DÜŞÜK (son cevaplar ort. ${nedenNabziOrt}/5): Kişi son görevlerin onu kendi çekirdek nedenine YAKLAŞTIRMADIĞINI söylüyor — yön değiştir. Bu görev kişinin çekirdek nedenine ("${pusulaCekirdekSonuc.cekirdek_neden[0]}") AÇIKÇA bağlanmalı ve bu bağ görevin içinde BİR CÜMLEYLE söylenmeli (ör. "bu adım seni ... hedefine bir adım yaklaştırır" ruhunda, kendi kelimelerinle). Bağı ima etmekle yetinme, görünür yap.`
+      : nedenNabziOrt !== null && nedenNabziOrt >= 4
+        ? `ÇEKİRDEK NEDEN NABZI GÜÇLÜ (son cevaplar ort. ${nedenNabziOrt}/5): Görevler kişinin çekirdek nedenine iyi oturuyor — mevcut yönü ve tema seçimini KORU, gereksiz yön değiştirme.`
+        : "",
+    // Özellik 3 — Sıcak an: az önce yakalanan güçlü duyguya ~15 dk içinde dokun.
+    sicakAn
+      ? `SICAK AN (ŞİMDİ — en güçlü kanca): Kişi az önce (${{ checkin: "günlük check-in'inde", gorev: "görev yanıtında", kocu: "AYNA Koçu'na yazarken" }[sicakAn.kaynak] ?? "az önce"}) güçlü bir ${{ kirilganlik: "KIRILGANLIK", cosku: "COŞKU", hayal_kirikligi: "HAYAL KIRIKLIĞI" }[sicakAn.tur] ?? "duygu"} sinyali verdi: "${sicakAn.ozet}". Bu görev KISA (10-15 dakikalık, tek atomik eylem) bir MİKRO-GÖREV olmalı ve TAM O DUYGUYA dokunarak açılmalı — duyguyu adıyla teşhis etme, sıcaklığını kullan (kırılganlıksa: güvenli, onurlandıran küçük bir adım; coşkuysa: momentumu hemen bir cesaret hamlesine çevir; hayal kırıklığıysa: 'Hayır' verisini işleyen, toparlayan bir dokunuş). Uzun/iddialı görev YASAK; an soğumadan yakala. sure_saat=1 döndür.`
+      : "",
+    // Özellik 2 — Kimlik çürütme: inanç tartışılmaz, davranışla yanlışlanır.
+    hedefKimlikCumle
+      ? `KİMLİK ÇÜRÜTME (sessiz görev): Kişi kendini şu cümleyle sınırlıyor: "${hedefKimlikCumle.cumle}". Görev FIRSAT BULURSA bu inancı DAVRANIŞLA çürütecek somut bir deneyim kursun — kişi, görevi yaptığında bu cümlenin tersini bizzat yaşamış olsun. KRİTİK: cümleyi kişiye ASLA söyleme, ima etme, "sen kendine ... diyorsun" deme — kanıt sessizce biriksin. Görevin ana teması/kası ile doğal örtüşmüyorsa zorlama, o zaman bu direktifi atla.`
+      : "",
+    // Özellik 5 — Şahit perspektifi: birinin onda gördüğü güç, görevin kapısı olur.
+    sahitGozlem
+      ? `ŞAHİT AÇILIŞI (ZORUNLU): Dün/az önce bir kamp arkadaşı bu kişiyi sessizce gözledi ve onda şu gücü gördü: "${sahitGozlem.gozlem}". Bu görevde gövdenin İLK cümlesi TAM ŞÖYLE başlasın: 'Dün biri sende şunu gördü: "..."' — gözlemi kısaltıp kendi kelimelerinle tırnak içinde ver, gözleyenin KİM olduğunu asla söyleme/ima etme. Bu açılış, bağlamdaki "acilisHikayesi"nin YERİNE geçer (bu seferlik hikâyeyi atla); görevin meydan okuması da mümkünse bu görülen gücü bilerek kullanmak üzerine kurulsun.`
+      : "",
     // #4 / FAZ 2.1 Bağ görevi — isimli (gerçek eşleşme hedefi) ya da isimsiz
     tur === "bag"
       ? eslesmeHedef && eslesmeIsimliMi
         ? `BAĞ GÖREVİ (İSİMLİ EŞLEŞME): Adayı doğrudan "${eslesmeHedef.full_name}" isimli kişiye yönlendir — adını göreve AÇIKÇA yaz (ör. "${eslesmeHedef.full_name}'i bul..."), varsa takımını da belirtebilirsin. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin.`
-        : `BAĞ GÖREVİ: Adayı takımından veya kamptan gerçek bir insanla bağlantı kurmaya yönlendir. İsim verme; "az tanıdığın biri", "farklı bir takımdan biri", "sohbet etmek isteyip ertelediğin biri" gibi ifadeler kullan. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
+        : `BAĞ GÖREVİ (isimsiz — bu kişi için şu an uygun eşleşme adayı yok): Adayı KENDİ SEÇECEĞİ gerçek bir insanla bağlantı kurmaya yönlendir. Kişinin KENDİSİNİN belirleyebileceği ifadeler kullan: "az tanıdığın biri", "sohbet etmek isteyip ertelediğin biri", "bugün gözüne çarpan biri". YASAK: numaralı grup / takım referansı verme — "Grup 4'ten biri", "3. gruptan biri" gibi ifadeler ASLA kullanma (kişi o grupta kimlerin olduğunu ezbere bilmiyor, görev boşta kalır). Kimi seçeceğine kişinin kendisi karar verebilmeli. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
       : "",
     // #8 Micro-sprint
     microSprint
@@ -977,6 +1089,17 @@ export async function gorevUret(
     }
   }
 
+  // Özellik 7 — ZORLUK MERDİVENİ: kişinin son ~15 görevinden hedef kas için
+  // "yukarı / aşağı / koru" sinyali (saf fonksiyon, lib/zorlukMerdiveni.ts).
+  // "koru"da direktif enjekte edilmez — mevcut zorluk mekanizması aynen sürer.
+  const merdivenSinyal = zorlukSeviyesiHesapla(
+    ((zorlukPencereSonuc.data ?? []) as MerdivenGorev[]),
+    hedefKas
+  );
+  const merdivenYonergesi = merdivenSinyal.aciklama
+    ? `\n\n${merdivenSinyal.aciklama}`
+    : "";
+
   const baglam = {
     ad: katilimci.full_name.split(" ")[0],
     // Bu görevin çalıştıracağı lider kası + açılış hikâyesi (küratörlü, doğru).
@@ -997,6 +1120,16 @@ export async function gorevUret(
     istenenGorevTuru: tur,
     zorlukSeviyesi: zorluk,
     zorlukYonergesi: ZORLUK_YONERGESI[zorluk],
+    // Özellik 7 — kişi × kas konfor sınırı sinyali (yukari/asagi/koru).
+    zorlukMerdiveni: merdivenSinyal.yon,
+    // Özellik 6 — son nabız cevaplarının ortalaması (görev ↔ çekirdek neden bağı).
+    nedenNabziOrt,
+    // Özellik 3 — az önce yakalanan sıcak duygu anı (varsa görev mikro olur).
+    sicakAn: sicakAn ? { tur: sicakAn.tur, ozet: sicakAn.ozet } : null,
+    // Özellik 2 — çürütülecek kimlik cümlesi (kişiye ASLA söylenmez).
+    kimlikCurutmeHedefi: hedefKimlikCumle?.cumle ?? null,
+    // Özellik 5 — görevin açılış cümlesi olacak şahit gözlemi (anonim).
+    sahitGozlemi: sahitGozlem?.gozlem ?? null,
     yenidenBagla: kayan,
     naziklesir,
     gununTemasi: gununTemasi || null,
@@ -1123,9 +1256,15 @@ ODANIN ENERJİSİ (kolektif ton): Bağlamdaki "odaSicakligi" "dusuk" ise (oda yo
 
 DİL NETLİĞİ (çok önemli): Görev metni SADE ve anlaşılır olmalı — katılımcı tek okumada (1) ne yapacağını ve (2) sana ne yazacağını net anlamalı. Kısa, gerçek cümleler kur. Şu hatalardan kaçın: iç içe geçmiş uzun cümleler, art arda tire (—) ile uzayan eklemeler, küçültme ekleri ('ricacık'), bulanık şiirsel ifadeler ('içinde ne koptu'). Yukarıdaki davranışsal kalıplar (FUN FAILURE, EUSTRESS vb.) PUANLAMA/teşvik tonu içindir; görev metnini süslemek için değil. Önce ne yapacağını söyle, sonra tek bir soruyla geri bildirimi iste.
 
+12 YAŞ TESTİ (ZORUNLU): Gövdeyi yazdıktan sonra kendine sor: "12 yaşındaki biri bunu okusa, ne yapacağını SIRAYLA sayabilir mi?" Sayamıyorsa gövdeyi sadeleştir. Mecaz ve hikâye YALNIZ açılıştaki 1-2 satırda yaşayabilir; EYLEM satırlarında mecaz, felsefi soru ve soyut iç-sorgulama YASAK ("bu ses gerçek bir karar mı yoksa alışkanlıktan geri çekilme mi?" gibi katmanlı sorular kafa karıştırır). İç gözlem isteyeceksen onu da tek, somut, cevabı kolay bir soruya indir.
+
+GÖVDE BİÇİMİ (ZORUNLU — okunabilirlik): "govde"yi TEK BİR paragraf blok olarak yazma. Mantıksal adımları AYRI SATIRLARA böl; satır aralarına gerçek satır sonu (\n) koy. Tipik akış: kısa hikâye/ayna (1-2 satır) → boş satır → asıl eylem → dönüş isteği (1 satır). EYLEM BİRDEN FAZLA ADIMSA adımları "1)" "2)" "3)" diye NUMARALA (en fazla 3 adım) — her adım tek eylem, tek cümle. Kişi ekrana dönüp "şimdi hangisindeydim?" diye bakabilmeli. Uzun tek blok metin okunmaz; kısa numaralı satırlar okunur.
+
+MUĞLAKLIK YASAĞI (ZORUNLU): Görev ne yapılacağını SOMUT söylemeli. Şu tür bulanık ifadeler YASAK: "bir şey yap", "bir şeyler paylaş", "odaya yerleşme işi", "o işi hallet", "gereğini yap", "birine git" (kim olduğu belirsizse). Her eylemde NE yapılacağı (somut fiil + somut nesne), gerekirse NEREDE ve NE ZAMAN net olmalı. Kişiyi hedefliyorsan ya gerçek bir isim ver ya da kişinin kendisinin seçebileceği net bir tarif ver ("bugün yanında oturan kişi" gibi) — "birileri", "biri" gibi kimliği havada bırakan ifadeler tek başına yeterli değil.
+
 SOMUTLUK ŞABLONU (ZORUNLU): "kim"/"ne"/"nerede"/"ne_zaman"/"kanit" alanlarını gövdeden ÇIKARARAK doldur — yeni bilgi uydurma, gövdede zaten anlattığını 5 satıra ayrıştır. "kim" görev kişiyi hedeflemiyorsa boş string olabilir; diğer 4 alan HER ZAMAN dolu olmalı.
 
-${yeniYonergeler}${ekstraYonerge}`,
+${yeniYonergeler}${merdivenYonergesi}${ekstraYonerge}`,
         },
       ],
       messages: [{ role: "user", content: JSON.stringify(baglam) }],
@@ -1148,6 +1287,7 @@ ${yeniYonergeler}${ekstraYonerge}`,
       donus_bicimi?: string;
       baglam_kullanildi?: boolean;
       tekrar_degil?: boolean;
+      zorluk_seviye?: number;
     }>(yanit);
     if (!veri?.baslik || !veri.govde) return null;
     // Savunma: model bazen "...yalnızca şunu söyle:" diyip asıl alıntıyı yazmadan
@@ -1213,6 +1353,17 @@ ${yeniYonergeler}${ekstraYonerge}`,
       },
       // FAZ 2.1 — eşleşme kaydı (tik.ts insert sonrası gorev_eslesme'ye yazar)
       eslesme: eslesmeHedef ? { hedefId: eslesmeHedef.id, isimli: eslesmeIsimliMi } : null,
+      // Özellik 7 — kas + modelin zorluk ölçümü (missions.kas / zorluk_seviye)
+      kas: hedefKas,
+      zorlukSeviye:
+        Number.isInteger(veri.zorluk_seviye) &&
+        (veri.zorluk_seviye as number) >= 1 &&
+        (veri.zorluk_seviye as number) <= 5
+          ? (veri.zorluk_seviye as number)
+          : null,
+      // Özellik 2 — bu görev hangi kimlik cümlesini çürütmek için kurgulandı
+      // (çağıran missions.kimlik_cumle_id'ye yazar).
+      kimlikCumleId: hedefKimlikCumle?.id ?? null,
     };
   } catch (e) {
     await aiHataYakala(db, "gorev_uretimi", e);
@@ -1226,14 +1377,38 @@ ${yeniYonergeler}${ekstraYonerge}`,
   // Geçerse yayınla; geçmezse BİR kez daha dene (aynı context, ek uyarı ile) —
   // ikinci deneme sonucu ne olursa olsun yayınlanır (sonsuz döngü yok).
   const denetim = await gorevKaliteDenetle(
-    { title: ilkDeneme.title, body: ilkDeneme.body, kind: ilkDeneme.kind, hedefKisi: ilkDeneme.somutluk?.kim ?? null },
+    {
+      title: ilkDeneme.title,
+      body: ilkDeneme.body,
+      kind: ilkDeneme.kind,
+      hedefKisi: ilkDeneme.somutluk?.kim ?? null,
+      neden: ilkDeneme.neden,
+      fayda: ilkDeneme.fayda,
+    },
     onceki.map((o) => o.title)
   );
-  if (denetim.gecti) return ilkDeneme;
-  const ikinciDeneme = await tekUretimDenemesi(
-    `\n\nÖNCEKİ DENEMEN KALİTE DENETİMİNDEN GEÇEMEDİ (${denetim.sebep}) — bu sefer bunu MUTLAKA düzelt, farklı ve daha somut bir görev üret.`
-  );
-  return ikinciDeneme ?? ilkDeneme;
+  let nihai = ilkDeneme;
+  if (!denetim.gecti) {
+    const ikinciDeneme = await tekUretimDenemesi(
+      `\n\nÖNCEKİ DENEMEN KALİTE DENETİMİNDEN GEÇEMEDİ (${denetim.sebep}) — bu sefer bunu MUTLAKA düzelt, farklı ve daha somut bir görev üret.`
+    );
+    nihai = ikinciDeneme ?? ilkDeneme;
+  }
+  // Özellik 5 — şahit gözlemi bu görevin metnine gömüldü: aynı gözlemin bir
+  // sonraki üretimde tekrar açılış olmaması için hemen mühürle. gorulen_vinyetler
+  // deseniyle aynı gerekçeyle AWAIT edilir; hatası görevi bloklamasın diye yutulur
+  // (en kötü ihtimalle gözlem bir kez daha kullanılır ya da nadiren boşa yanar).
+  if (sahitGozlem) {
+    try {
+      await db
+        .from("sahit_gozlemleri")
+        .update({ kullanildi_at: new Date().toISOString() })
+        .eq("id", sahitGozlem.id);
+    } catch {
+      // best-effort
+    }
+  }
+  return nihai;
 }
 
 // #2 Yanıt madenciliği + puanlama — paralel çalışarak ek gecikme olmaz.
@@ -1972,6 +2147,11 @@ export async function mentorlukGorevUret(
     // Mentorluk kendi eşleştirme kaydını mentorluk_kayit'ta tutar; gorev_eslesme
     // dengeleyicisi yalnız "bag" türü içindir.
     eslesme: null,
+    // Özellik 7 — statik üretim: kas rotasyonundan gelmez, merdiven izi tutulmaz.
+    kas: null,
+    zorlukSeviye: null,
+    // Özellik 2 — mentorluk statik akış: kimlik çürütme direktifi taşımaz.
+    kimlikCumleId: null,
     // #9 takip: önerilen 3 adayın id'leri (mentorluk_kayit'a yazılır)
     adayIdler: secilen.map((k) => k.id),
   };

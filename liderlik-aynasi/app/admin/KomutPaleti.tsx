@@ -51,7 +51,7 @@ const SAYFALAR: Hedef[] = [
 // #11 Funnel kontrol komutları — aşama-aksiyonları doğrudan ⌘K'dan.
 const KONTROLLER: Hedef[] = [
   { tip: "kontrol", etiket: "🎯 Pusula penceresi / Oda QR", href: "/admin#fazsifir" },
-  { tip: "kontrol", etiket: "🔓 Toplu kampı aç", href: "/admin#fazsifir" },
+  { tip: "kontrol", etiket: "🔓 Toplu kampı aç", href: "/admin/katilimcilar#hazirlik" },
   { tip: "kontrol", etiket: "🌊 Dalga kontrolü", href: "/admin#dalga" },
   { tip: "kontrol", etiket: "📊 İlerleme / toplu eylem", href: "/admin#ilerleme" },
   { tip: "kontrol", etiket: "👁 Boşluk Anı penceresi", href: "/admin#fazbir" },

@@ -89,6 +89,17 @@ export const tr = {
       `${ad} ile 10 dakika konuş. Seni AYNA eşledi — onda senin için bir şey var, sende onun için.`,
     not: "Neden bu kişi olduğunu Gün 3'te anlayacaksın.",
   },
+  // D7 — Eşleşme kişi kartı: kişiye yönlendiren her yüzeyde (görev hedefi,
+  // Bugünün Karşılaşması) dokununca tam ekran büyüyen tanıtım kartı.
+  kisiKarti: {
+    buyut: "Dokun — tam ekran gör",
+    ipucu: "Salonda ara — bu yüzü göster.",
+    waYaz: "WhatsApp'tan yaz →",
+    waMesaj: (ad: string) => `Merhaba ${ad}, AYNA bizi eşleştirdi 🙂 Neredesin?`,
+    takim: (takim: string) => `Takım: ${takim}`,
+    takimYok: "Takım bilgisi henüz yok",
+    kapat: "Kapat",
+  },
   altNav: {
     ana: "Ana sayfa",
     degerlendir: "Değerlendir",
@@ -126,18 +137,55 @@ export const tr = {
         metin: "Doğru cevap yok; yalnız senin cevabın var. Ne kadar açılırsan, ayna seni o kadar net gösterir.",
       },
     ],
-    // Bold vurgusu için 3 parçaya bölündü — "admin dahil kimse görmeyecek"
-    // kısmı katılımcıya güven vermesi için kalın gösteriliyor (bkz. HazirlikEkrani).
-    kvkkOnayOn: "Verdiğim cevapları ",
-    kvkkOnayKalin: "admin dahil hiç kimse görmeyecek",
-    kvkkOnayOrta:
-      " — yalnızca yapay zeka bunları işleyip bana daha güzel bir deneyim sunmak için kullanacak. Dilediğim an tüm verilerimi silebileceğimi biliyorum. ",
-    kvkkLink: "KVKK Aydınlatma Metni",
-    kvkkSon: "’ni okudum.",
-    dugme: "Hazırım, başlıyorum →",
+    devamDugme: "Devam et →",
+    // ADIM 2 — KVKK güven ekranı. Kendi sayfası: mesaj ilk sayfanın uzun
+    // metninde kaybolmasın, "kimse görmeyecek" güveni KOCAMAN kurulsun diye
+    // (insanlar "bunu kim okuyacak?" çekincesiyle yüzeysel cevap veriyordu).
+    kvkk: {
+      ust: "Başlamadan son bir şey",
+      baslikBuyuk: "Cevaplarını kimse görmeyecek.",
+      baslikVurgu: "Admin dahil hiç kimse.",
+      maddeler: [
+        {
+          ikon: "🔒",
+          baslik: "Hiçbir insan okumaz",
+          metin:
+            "Burada yazdıkların sır gibi saklanır. Ne ekip arkadaşların, ne liderlerin, ne de sistemi yöneten kişi — hiçbir insan cevaplarını görmez.",
+        },
+        {
+          ikon: "✨",
+          baslik: "Sadece senin için işlenir",
+          metin:
+            "Cevaplarını yalnızca yapay zeka işler — sana daha kişisel, daha anlamlı bir deneyim kurmak için. Başka hiçbir amaçla kullanılmaz.",
+        },
+        {
+          ikon: "🗑️",
+          baslik: "İstediğin an silinir",
+          metin:
+            "Dilediğin an tüm verilerinin kalıcı olarak silinmesini isteyebilirsin — tek dokunuşla, soru sorulmadan.",
+        },
+      ],
+      davet:
+        "Bu güven sana, kendine tamamen dürüst olma özgürlüğü versin. Ne kadar açık olursan, ayna seni o kadar net gösterir.",
+      linkOn: "Detayları merak ediyorsan ",
+      link: "KVKK Aydınlatma Metni",
+      linkSon: "’ni okuyabilirsin.",
+      kabul: "Okudum, kabul ediyorum →",
+      geri: "← Geri",
+    },
     basliyor: "Hazırlanıyor…",
     hata: "Bir şey ters gitti — tekrar dene.",
     dipnot: "Bu onay yalnız bir kez istenir; sonra kaldığın yerden devam edersin.",
+  },
+  // GİZLİLİK MÜHRÜ — tüm onboarding ekranlarında görünen sakin güven imzası.
+  // İnsanlar mahrem cevap yazarken "bunu kim okuyacak?" tereddüdü yaşıyordu;
+  // KVKK ekranındaki söz her mahrem yüzeyde küçük bir mühür olarak tekrar eder.
+  gizlilikMuhru: {
+    satir: "Cevapların sana özel — admin dahil kimse okuyamaz",
+    baslik: "Cevapların kimde?",
+    kapat: "Anladım",
+    linkOn: "Detaylar: ",
+    link: "KVKK Aydınlatma Metni",
   },
   // AYNA SESİ SEÇİMİ — hazırlıktan hemen sonra, ritüelden önce. Bu andan
   // itibaren AYNA'nın tüm kişisel seslendirmeleri seçilen sesle konuşur.
@@ -152,6 +200,13 @@ export const tr = {
     dugme: "Bu sesle devam et →",
     varsayilanNot: "Varsayılan: Erkek ses",
     hata: "Bir şey ters gitti — tekrar dene.",
+    // [E7] Seçimden hemen sonra AYNA'nın seçilen sesle kişisel karşılaması.
+    // Metin sunucuda /api/karsilama içinde seslendirilir (sabit + ilk ad).
+    karsilamaMetni: (ad: string) =>
+      `Merhaba ${ad}. Ben Aynan. Önümüzdeki üç gün boyunca yanındayım.`,
+    karsilamaBaslik: "Aynan seninle tanışıyor…",
+    karsilamaAlt: "Seçtiğin sesle ilk kez konuşuyor.",
+    karsilamaGec: "Geç →",
   },
   karsilama: {
     atla: "Geç",
@@ -368,6 +423,19 @@ export const tr = {
     menuSoz: "Kapanış Sözüm",
     menuGizlilik: "Gizlilik ve KVKK",
     menuKapat: "Kapat",
+    // [E1] Onboarding'i yarıda bırakıp dönen kişiye "kaldığın yerden devam" kartı
+    devamKartBaslik: (adim: string) => `${adim} yarıda kaldı`,
+    devamKartMetin:
+      "Bıraktığın yerden aynen devam edersin — önceki cevapların kayıtlı.",
+    devamKartDugme: (dk: number) => `⏸ Kaldığın yerden devam et (~${dk} dk)`,
+    // [E10] Onboarding bitiş töreni — checklist'in tamamı ilk kez yeşil olduğunda
+    torenUst: "Kurulum tamam",
+    torenBaslik: "Aynan kuruldu ✨",
+    torenGenel:
+      "Nedenlerin, değerlerin ve hedefin artık aynanda. Bundan sonrası yaşamak.",
+    torenSloganEtiket: "Senin sözün",
+    torenKapanis: "Kampta görüşürüz. 👁",
+    torenDevam: "Devam et →",
   },
   // Kapanış Sözü: kamp sonunda iki somut sayı + kendi sesiyle söz + 90 gün takip
   kapanisSoz: {
@@ -913,7 +981,10 @@ export const tr = {
     kopruBasla: "Sohbete başla",
     // Sohbet ilerleme göstergesi
     ilerlemeEtiket: "Sohbet ilerlemesi",
-    ilerlemeSonuna: "Neredeyse bitti — son birkaç soru.",
+    // [E4] Son aşama sinyali — soru sayısı AI'ya bağlı (dinamik) olduğundan
+    // "soru 3/7" gibi yanlış bir beklenti KURULMAZ; sinyal faz bilgisinden gelir.
+    ilerlemeSonuna: "✨ Son aşama — neredeyse bitti, son birkaç soru.",
+    sohbetAsamaSayac: (n: number, toplam: number) => `Aşama ${n}/${toplam}`,
     sohbetAsamalar: { eleme: "Eleme", bosluk: "Boşluk", engel: "İç engel" } as Record<string, string>,
     // Bitiş ekranı — otomatik atlamaz, kişi okuyup devam eder
     bittiDevam: "Devam et →",
@@ -1139,9 +1210,14 @@ export const tr = {
     // OV + VOL alanları (Son 3 ay ortalaması, ikisi de zorunlu)
     ovEtiket: "Son 3 ayın ortalama OV'si (zorunlu)",
     ovYer: "Örn: 2500",
-    ovZorunlu: "OV ve VOL gerekli — bu rakamlar planını kişiselleştirir.",
-    volEtiket: "Son 3 ayın ortalama VOL'si (zorunlu)",
+    ovZorunlu: "OV ve VOLL gerekli — bu rakamlar planını kişiselleştirir.",
+    volEtiket: "Son 3 ayın ortalama VOLL'si (zorunlu)",
     volYer: "Örn: 1500",
+    // [E9] ⓘ yardımcıları — tek cümle tanım + rakamı nereden bulacağı
+    ovIpucu:
+      "OV (Organizasyon Volümü): senin ve tüm organizasyonunun bir aydaki toplam satış hacmi puanı. Son 3 ay ortalamanı ofis panelindeki raporundan görebilirsin.",
+    volIpucu:
+      "VOLL (Volume of Own Line Levels): kariyer hesabında sayılan, kendi hatlarından (kollarından) gelen aylık hacim. Son 3 ay ortalamanı ofis panelindeki raporundan görebilirsin.",
     noktaDevam: "Devam et",
     // OV simülasyonu
     simulasyonBaslik: "OV büyüme simülasyonu",
@@ -1257,7 +1333,16 @@ export const tr = {
     // İç mesajlaşma
     arkadaslarBaslik: "Grup Arkadaşların",
     arkadaslarAlt: "Bir arkadaşına dokun, mesaj yaz — bildirim olarak ulaşır.",
+    // "Bu grupta kimler var" cevabı: bir görev grubundan birine yönlendirirse
+    // kişi buraya bakıp kimi seçeceğini görür (üye sayısı + kendini işaretle).
+    uyeSayisi: (n: number) => (n === 1 ? "Sen + 1 kişi" : `Sen + ${n} kişi`),
+    sensin: "sen",
     uyeYok: "Grubunda şu an başka kişi görünmüyor.",
+    // Grubu olmayan kişi için CTA: oyun seçtiğinde otomatik atanır.
+    takimsizBaslik: "Henüz bir grubun yok",
+    takimsizMetin:
+      "Cumartesi oyunlarını seçtiğinde otomatik olarak bir gruba (Grup 1–15) atanacaksın. Grubun ve üyeleri o zaman burada görünecek.",
+    takimsizButon: "Oyunları seç",
     mesajRozet: (n: number) => (n > 0 ? `${n} yeni mesaj` : ""),
     yonetimBaslik: "Kamp Yönetimi",
     yonetimAlt: "Soru, ihtiyaç ya da bir mesaj — doğrudan yönetime yaz.",
@@ -1546,6 +1631,12 @@ export const tr = {
     ekstraHata: "Yüklenemedi, tekrar dene.",
     ekstraDoluHata: "Yeterince fotoğrafın var — daha fazlasına gerek yok.",
     devamEt: "Devam Et",
+    // Yeniden çekim: kişi mevcut Canlı Aynasından memnun değilse 3 açıyı baştan
+    // çeker; yeni "düz" karesi hem avatarı hem video referansını günceller.
+    yenidenCek: "🔄 Fotoğrafımı yeniden çek",
+    yenidenCekNot: "3 açıyı baştan çekersin; avatarın ve video referansın yenisiyle değişir.",
+    degistir: "📷 Fotoğrafını değiştir",
+    degistirKapat: "Kapat",
   },
   // FAZ 3 — Reddi Kutla (Go-for-No / Fun Failure)
   red: {
@@ -2519,6 +2610,16 @@ export const tr = {
       hedefKisiler: "Seçili kişiler",
       telefonYok: "telefon yok",
       onizlemeBaslik: "Önizleme",
+      // Giriş daveti artık TEK mesajdır: yalnız onaylı kod (OTP) şablonu gider —
+      // linke gerek yok, kod tek başına yeterli (kullanıcı kararı).
+      kodTekMesajNot: "Tek mesaj gönderilir — yalnız giriş kodu, link yok.",
+      kodOnizleme: (kod: string) =>
+        `🔑 ${kod} — Liderlik Aynası kamp giriş kodun.\n\n[ Kodu Kopyala ]`,
+      kodOnizlemeDipnot:
+        "Temsilî görünüm — birebir metin, Meta onaylı kod şablonundaki gibidir.",
+      kodSablonKayitsiz:
+        "Kod şablonu (wa_tpl_kod) kayıtlı değil — önce scripts/whatsappKaydet.ts ile kaydet.",
+      ulasmadiBaslik: "Mesaj ulaşmadı:",
       hedefOzet: (n: number) => `Bu mesaj ${n} kişiye gidecek.`,
       telefonsuzNot: (n: number) => `${n} kişinin telefonu kayıtlı değil, onlara gitmeyecek.`,
       gonder: "Gönder",
@@ -3263,7 +3364,6 @@ export const tr = {
     dinleItiraz: "🗣 İtirazı dinle",
     oku: "AYNA'dan dinle",
     okumaDurdur: "Durdur",
-    sesliIpucu: "🎤 Yazmak istemiyorsan dokun ve AYNA'ya anlat.",
     durdur: "■ Durdur",
     senkronTesekkur:
       "Tam zamanında. Şu anda onlarca kişi seninle aynı şeyi yaptı — kolektif enerji böyle kurulur. +8 ⚡",
@@ -3282,6 +3382,9 @@ export const tr = {
     bosIzliyor: "AYNA seni izliyor",
     bosHerAn: "Sıradaki görev her an gelebilir.",
     bosSiradaki: (dk: number) => `Sıradaki görev ~${dk} dk içinde gelebilir.`,
+    // D9 — boş durum fragman sahnesi: dakika yerine somut saat çıpası + hazırlık
+    bosSiradakiSaat: (saat: string) => `Sıradaki tur ~${saat} civarı gelebilir.`,
+    bosHazirlan: "Hazırlan: telefonun sesi açık olsun, gözün çevrende.",
     bosMerak: "AYNA bir sonraki adımını senin için hazırlıyor.",
     // FAZ 5.1 — GÖREV FRAGMANI: teslimden sonra kilitli bir ipucu kartı.
     // Gerçek görev içeriğini asla açık etmez — yalnız merak uyandıran, jenerik
@@ -3307,8 +3410,13 @@ export const tr = {
       }`,
     sonTarih: (saat: string) => `Son: ${saat}`,
     suresiGecti: "Süresi geçti",
+    // D2 — programa bağlı süre: due_at bir program etkinliğine yakınsa sayaç
+    // "3 sa kaldı" yerine somut çıpayı söyler.
+    cipaOnce: (etkinlik: string) => `${etkinlik} başlamadan önce`,
     yanitEtiket: "Yanıtın",
-    yanitPlaceholder: "Ne yaptın, ne gözlemledin, ne hissettin? Birkaç cümle yeter.",
+    // D11 — yanıt yönergesi artık YALNIZ placeholder'da yaşar (mükerrer satır yok).
+    yanitPlaceholder:
+      "Kiminle, ne oldu, ne hissettin, ne götürdün? Birkaç cümle yeter.",
     // #1 Yansıma Kapanışı: görevden sonra tek cümlelik iç-yansıma → AYNA ayna tutar
     yansimaBaslik: "Bir saniye dur 👁",
     yansimaSoru: "Bunu yaparken içinde ne zorladı ya da ne değişti?",
@@ -3373,6 +3481,7 @@ export const tr = {
       senkron: "⏱ Senkron An",
       bag: "🤝 Bağ",
       soz: "🤝 Söz",
+      sahit: "👁 Şahit",
     },
     sozTesekkur:
       "Sözünü sakladım. 90 gün sonra sana hatırlatacağım. — AYNA",
@@ -3399,30 +3508,29 @@ export const tr = {
     erteleniyor: "Erteleniyor…",
     erteleNot: "+2 saat ileri aldım — sen hazır olunca buradayım.",
     erteleBitti: "Bu görevi daha fazla erteleyemezsin — bugün sıra onda.",
-    // UX #3 — Telafi (süresi geçti ama yine de yapılabilir)
-    telafiRozet: "Süresi geçti — ama kapı açık",
-    telafiAciklama:
-      "Kaçırmış olman bir son değil. Yine de yap; kıvılcımın yarısı senin, asıl kazanç görevin kendisi.",
-    telafiYap: "Yine de yap",
-    // UX #3 — Telafi penceresi geri sayımı
-    telafiKalan: (sure: string) => `Telafi penceresi: ${sure} kaldı`,
+    // UX #3 + D8/D11 — Telafi (süresi geçti ama yine de yapılabilir): pasif
+    // "kaçtı" dili yerine belirgin çağrı + TEK kompakt sayaç şeridi.
+    telafiCta: "Telafi et — yarı kıvılcım",
+    telafiSerit: (sure: string) => `⏳ Telafi · ${sure} kaldı · yarı kıvılcım`,
+    telafiNot: "Kaçırmak son değil — asıl kazanç görevin kendisi.",
     telafiBitti: "Telafi penceresi kapandı.",
     // UX #6 — Günün görev haritası / beklenti
     gunHaritasi: "AYNA gün boyu sana görev verir — birini bitirince bir sonraki gelir.",
     gunHaritasiSayi: (n: number) =>
       n > 0 ? `Bugün ${n} görev tamamladın.` : "Bugün ilk görevini bekliyorum.",
-    // UX #8 — Yanıt iskelesi (boş sayfa felcine karşı)
-    yanitIskele: "Şunları yaz: kiminle / ne oldu / ne hissettin / ne götürdün.",
     // UX #9 — Düşük puanı büyüme çerçevesiyle yumuşatma
     dusukPuanNot: "Bu bir başlangıç — önemli olan yapmış olman. AYNA bir sonraki adımı gösteriyor.",
     // A1 — seri kırılma riski (kayıp kaçınması)
     seriRiski: (n: number) => `${n}'lik serin sürüyor — bugün bir görevle koru, kırma.`,
     // A6 — zor görevde koça köprü
     koctanYardim: "Takıldın mı? Ayna Koçu'na danış →",
-    // A7 — aşırı yük koruması
+    // A7 — aşırı yük koruması. DİKKAT: gunlukUst (lib/tik.ts) 7 iken bu ekran
+    // 5'te tetiklenir — yani "yarın görüşürüz" gibi kesin bir söz VERME; sistem
+    // bugün 1-2 görev daha düşürebilir ve o zaman mesaj yalan çıkıyordu (saha
+    // geri bildirimi: "dün de böyle yazdı, sonra yine görev verdi").
     yeterinceBaslik: "Bugün yeterince yaptın",
     yeterinceMetin: (n: number) =>
-      `Bugün ${n} görev kapattın — bu güçlü bir gün. Şimdi dinlen; yarın yine buradayım.`,
+      `Bugün ${n} görev kapattın — bu güçlü bir gün. İstersen burada dur; devam etmek istersen birazdan yeni bir görev de gelebilir.`,
     // A8 — geçmiş filtre + özet
     gecmisOzet: (tamam: number, ort: number | null, kacan: number) =>
       `${tamam} tamamlandı${ort != null ? ` · ort. ${ort.toFixed(1)}` : ""}${kacan > 0 ? ` · ${kacan} kaçan` : ""}`,
@@ -3455,6 +3563,110 @@ export const tr = {
     // Tasarım turu — ikincil eylemler tek menüde
     secenekler: "Seçenekler",
     kasHaritasi: "Çalıştırdığın liderlik kasları",
+    // D1 — perde perde açılış: uzun görev gövdesi tek duvar metin düşmez
+    devaminiGor: "Devamını gör",
+    devaminiGizle: "Daralt",
+    // D4 — görev kası rozeti: missions.kas → Türkçe etiket (lib/ayna.ts KAS_DONGU)
+    kaslar: {
+      cesaret: "Cesaret",
+      devretme: "Devretme",
+      zor_konusma: "Zor Konuşma",
+      baglanti: "Bağ Kurma",
+      vizyon: "Vizyon",
+      yardim_iste: "Yardım İsteme",
+      dinleme: "Dinleme",
+      sorumluluk: "Sorumluluk",
+      ornek_olma: "Örnek Olma",
+      dayaniklilik: "Dayanıklılık",
+    } as Record<string, string>,
+    kasRozet: (kas: string, n: number) => `${kas} kası · ${n}. antrenman`,
+    // D5 — zorluk alevi (missions.zorluk_seviye 1-5) + doz ayarı
+    zorlukAlevi: (n: number) => `Zorluk dozu ${n}/5`,
+    dozAyarla: "Doz sana göre değilse ayarla:",
+    // D6 — kıvılcım dökümü: sonuç ekranında kalem kalem sayılır
+    dokum: {
+      taban: "Taban",
+      ayna: "AYNA puanı",
+      zamaninda: "Zamanında bonusu",
+      seri: (n: number) => `Seri bonusu (${n} üst üste)`,
+      telafi: "Telafi · yarı",
+      altin: "⚡ Altın Görev · 3×",
+      toplam: "Toplam",
+    },
+    // D7 — eşleşmeli görevde hedef kişi kartı başlığı
+    gorevKisisi: "Görevin kişisi",
+    // Özellik 6 — Çekirdek Neden Nabzı (her 5. puanlı görevden sonra)
+    nabizUst: "Pusula kontrolü",
+    nabizSoru: (neden: string) =>
+      `Bu görev seni “${neden}” hedefine yaklaştırdı mı? (1-5)`,
+    nabizUzak: "1 · hiç yaklaştırmadı",
+    nabizYakin: "5 · çok yaklaştırdı",
+    nabizTesekkur: "Not ettim — pusulan sıradaki görevlere yön veriyor. Teşekkürler.",
+    // Özellik 5 — Şahit Perspektifi: eşleşme hedefini 10 dk sessizce gözle,
+    // onda gördüğün (muhtemelen kendisinin görmediği) BİR gücü tek cümleyle yaz.
+    // Statik şablon (AI'sız); yanıt hedefin sonraki görevinin açılış cümlesi olur.
+    sahitGorevBaslik: "Görünmez şahit",
+    sahitGorevGovde: (ad: string) =>
+      `Önümüzdeki 10 dakika ${ad} isimli kişiyi uzaktan, belli etmeden gözle.\n\nOnda gördüğün, muhtemelen KENDİSİNİN görmediği BİR gücü yakala — bir duruş, bir dokunuş, bir cümle.\n\nO gücü tek cümleyle bana yaz. Sözün, kimden geldiğini asla söylemeden, yarın onun aynasında belirecek.`,
+    // Özellik 2 — Kimlik yüzleşmesi: her 10. puanlı görevde, biriken
+    // karşı-kanıtlarla kişinin kendini sınırlayan cümlesi yüzüne tutulur.
+    kimlikUst: "Ayna bir cümleni hatırlıyor",
+    kimlikKanitBaslik: "Ama ben şunları gördüm:",
+    kimlikSoru: "Bunu hâlâ söyleyebilir misin?",
+    kimlikBirak: "Artık söyleyemem 🔥",
+    kimlikBirakiliyor: "Mühürleniyor…",
+    kimlikBirakildi: "🔥 O cümle artık senin değil — aynadan silindi.",
+    // Özellik 4 — Sesli Mektup: Gün 2 akşamı kişi 90 gün sonraki kendine 60 sn
+    // sesli mektup kaydeder (statik şablon; fısıltılar hedef + iç engel
+    // verisinden değişkenle kurulur — AI çağrısı yok). Başlık aynı zamanda
+    // görevin TANIMA anahtarıdır (kind='yansima' + bu başlık → özel ses kartı).
+    sesliMektupBaslik: "90 gün sonraki sana",
+    sesliMektupGovde: (fisiltilar: string[]) =>
+      `Bu görev yazılmaz — söylenir.\n\n90 gün sonraki kendine 60 saniyelik bir sesli mektup bırak. Kaydını mühürleyeceğim; 90. günde, sen unutmuşken, sana geri getireceğim.\n\nBaşlamadan önce üç fısıltı:\n${fisiltilar.map((f) => `• ${f}`).join("\n")}`,
+    mektupFisiltiHedef: (rutbe: string) =>
+      `90. günde "${rutbe}" yolunda nerede olacaksın? Ona söyle.`,
+    mektupFisiltiHedefGenel: "90. günde nerede olmak istiyorsun? Ona söyle.",
+    mektupFisiltiEngel: (engel: string) =>
+      `Bugün seni tutan "${engel}" — o gün hâlâ konuşuyor mu? Ona sor.`,
+    mektupFisiltiEngelGenel: "Bugün seni en çok tutan şey o gün hâlâ orada mı? Ona sor.",
+    mektupFisiltiNeden: (neden: string) =>
+      `"${neden}" — bu neden için o güne kadar ne yapmış olacaksın?`,
+    mektupFisiltiNedenGenel: "Bu yola neden çıktığını ona bir cümleyle hatırlat.",
+    mektupTesekkur:
+      "Mektubunu mühürledim. 90. günde, tam zamanında, sana geri getireceğim. — AYNA",
+    mektupYanitMetni: "🎙️ 90 güne sesli mektup kaydedildi.",
+    mektupPush: {
+      baslik: "🎙️ Bu akşam özel bir görev var",
+      govde: "90 gün sonraki kendine 60 saniyelik bir sesli mektup bırak — AYNA saklayacak.",
+    },
+    // SesliMektup bileşeni (kayıt kartı) metinleri
+    mektupKart: {
+      baslat: "🎤 Mektubu kaydet",
+      kaydediliyor: "Kaydediliyor",
+      durdur: "■ Bitir",
+      ipucu: "En fazla 60 saniye — tek nefeste, kendi sesinle.",
+      dinle: "▶ Kaydı dinle",
+      dinleDurdur: "■ Durdur",
+      tekrar: "Yeniden kaydet",
+      gonder: "Mektubu mühürle →",
+      gonderiliyor: "Mühürleniyor…",
+      mikrofonYok: "Mikrofona ulaşamadım. Tarayıcı izinlerini kontrol edip tekrar dene.",
+      hata: "Gönderilemedi — bağlantını kontrol edip tekrar dene.",
+    },
+    // Özellik 9 — Domino Görevi: Gün 3'te herkese TEK görev — kampın en güçlü
+    // içgörüsünü BUGÜN kamp DIŞINDAN birine telefonla söyle/uygula. İçgörü
+    // kişi başı tek Haiku çağrısıyla kişiselleşir; düşerse genel şablon.
+    dominoBaslik: "Domino: ilk taş bugün düşüyor",
+    dominoGovde: (icgoru: string | null) =>
+      `${
+        icgoru
+          ? `Bu kampta sana dair en güçlü içgörü şuydu:\n\n“${icgoru}”`
+          : "Bu kampta kendinle ilgili öğrendiğin EN GÜÇLÜ şeyi seç — seni en çok sarsan, en gerçek olanı."
+      }\n\nKamp yarın bitiyor; bu içgörü burada kalırsa kaybolur. Bugün onu kampın DIŞINA taşı: eşini, bir ekip arkadaşını ya da bir adayını BUGÜN telefonla ara — bu içgörüyü ona söyle ya da onunla uygula.\n\nKanıtın: karşı tarafın tek cümlelik tepkisi. Onu bana yaz.`,
+    dominoPush: {
+      baslik: "🁢 Domino görevi düştü",
+      govde: "Kamptaki en güçlü içgörünü BUGÜN kamp dışından birine taşı. İlk taş sende.",
+    },
   },
   kivilcim: {
     ad: "Kıvılcım",
@@ -3463,6 +3675,21 @@ export const tr = {
     sonrakiUnvan: (unvan: string, kalan: number) =>
       `${unvan} unvanına ${kalan} Kıvılcım kaldı`,
     zirve: "Zirvedesin — Efsane! 🏆",
+  },
+  // 90-gün follow-up yüzeyi (Eylül Aynası) ek kartları: Sesli Mektup dönüşü +
+  // Domino köprüsü. (Sayfanın kendi metinleri tarihsel olarak sayfada kaldı;
+  // yeni kartlar tek kaynaktan buradan okur.)
+  eylulAynasi: {
+    kayitHata: "Yanıt kaydedilemedi.",
+    mektupBaslik: "Geçmişten mektubun var 🎧",
+    mektupMetin:
+      "Kampın 2. gecesi 90 gün sonraki kendine bir sesli mektup bırakmıştın. O gün geldi — mühür açıldı.",
+    mektupDinle: "▶ Mektubunu dinle",
+    mektupYukleniyor: "Mühür açılıyor…",
+    mektupHata: "Mektup şu an açılamadı — birazdan tekrar dene.",
+    dominoBaslik: "🁢 Dominonun izi",
+    dominoSoru:
+      "Kampın son günü bu içgörüyü kamp dışından birine söylemiştin. O gün başlattığın domino ne oldu — taş taşı devirdi mi?",
   },
   program: {
     baslik: "Kamp Programı",
@@ -3574,6 +3801,14 @@ export const tr = {
     baslat: "Sesle Yaz",
     dinliyor: "Dinliyorum… durdurmak için dokun",
     dinliyorKisa: "Dinliyorum",
+    // Canlı önizleme şeridi: konuşurken ara (interim) sonuçlar burada akar —
+    // kişi "çalışıyor" hissini İLK kelimeden alır (bkz. MikrofonButonu).
+    konusIpucu: "Konuş — söylediklerin burada belirecek…",
+    duyamiyorum: "Seni duyamıyorum — telefonu biraz yaklaştır ve konuş.",
+    // Faz 2 — Scribe kayıt modu: kayıt cihazda, çeviri sunucuda (ElevenLabs).
+    kayitIpucu: "Konuş — bitirince düğmeye tekrar dokun.",
+    cevriliyor: "✍️ Yazıya çevriliyor…",
+    cevirihata: "Çevrilemedi — tekrar dene ya da elle yaz.",
     hata: {
       izin: "Mikrofon izni gerekli. Adres çubuğundaki 🎙 simgesine dokunup izin ver, sonra tekrar dene.",
       mesgul:
@@ -3986,6 +4221,15 @@ export const tr = {
       "Bu, başkalarının gözünde bıraktığın izdir. Sen baştan beri buydun — kamp onu görünür kıldı.",
     bak: "Aynama bak →",
   },
+  // Özellik 10 — Dönüşüm Karşılaştırması: mühür ekranında "Gün 1 sen vs Gün 3
+  // sen" — kişinin ilk ve son görev yanıtından birer alıntı + AI'nın fark cümlesi.
+  donusum48: {
+    ust: "İKİ SATIR, İKİ SEN",
+    baslik: "Gün 1'deki sen · Gün 3'teki sen",
+    gun1Etiket: "GÜN 1 — İLK YANITIN",
+    gun3Etiket: "GÜN 3 — SON YANITIN",
+    kapanis: "Bunu yazan da sensin, bunu yazan da. Aradaki fark 48 saat.",
+  },
   rituel: {
     baslik: "Aynaya kendini tanıt",
     aciklama: "Aynan seninle kendi sesinle konuşacak.",
@@ -4014,6 +4258,20 @@ export const tr = {
     ] as string[],
     kayitBaslat: "Kaydı başlat",
     kayitHenuzBaslamadi: "Kayıt henüz başlamadı — hazır olunca sen başlatırsın.",
+    // [E3] Mikrofon ön-provası — asıl kayıttan önce isteğe bağlı 5 sn'lik test.
+    // Test kaydı SUNUCUYA GİTMEZ: yalnız bu cihazda, bellekte çalınır.
+    provaLink: "🎙 Önce mikrofonu dene (5 sn)",
+    provaBaslik: "Mikrofonu dene",
+    provaAciklama:
+      "5 saniyelik kısa bir deneme yap: konuş, sonra kendi sesini dinle. Bu kayıt hiçbir yere gönderilmez — yalnız sen duyarsın.",
+    provaBaslat: "🎤 5 saniyelik deneme kaydı",
+    provaKonus: "Konuş — birkaç kelime yeter…",
+    provaKalan: (sn: number) => `${sn} sn`,
+    provaDinle: "▶ Deneme kaydını dinle",
+    provaDurdur: "■ Durdur",
+    provaNet: "Sesim net ✓ — kayda geç",
+    provaTekrar: "↺ Tekrar dene",
+    provaGeri: "← Geri",
     kaydediliyor: "Kaydediliyor",
     yeminYonerge: "Aşağıdaki taahhüdü doğal bir sesle, acele etmeden oku:",
     yemin:
@@ -4096,11 +4354,16 @@ export const tr = {
   muhurZinciri: {
     teyitHata: "Teyit kaydedilemedi.",
   },
+  // [E6] Onboarding'i yarıda bırakana hatırlatma (push katılımcıya; WhatsApp
+  // metni admin'in wa.me linkinde hazır gelir — otomatik gönderim yok).
+  onboardingTakip: {
+    pushBaslik: "⏸ Aynan seni bekliyor",
+    pushGovde: "5 dakikan var mı? Kaldığın yerden devam et — cevapların kayıtlı.",
+    waMesaj: (ad: string, adim: string, link: string) =>
+      `Merhaba ${ad} 👋 Ayna kurulumun ${adim} adımında yarıda kalmış — 5 dakikanı ayırırsan tamamlayalım: ${link}`,
+  },
   isVerisi: {
     kayitHata: "Sayılar kaydedilemedi.",
-  },
-  eylulAynasi: {
-    kayitHata: "Yanıt kaydedilemedi.",
   },
   ilk72: {
     kayitHata: "Adımlar kaydedilemedi.",
@@ -4108,6 +4371,9 @@ export const tr = {
   ortak: {
     oturumGerekli: "Oturum gerekli.",
     genelHata: "Bir şeyler ters gitti, tekrar dener misin?",
+    // [E8] Ortak kayıt mikro güvencesi (components/KayitRozeti.tsx)
+    kaydedildi: "✓ Kaydedildi",
+    kaydedilemedi: "⚠ Kaydedilemedi — bağlantını kontrol et",
     // AI çağrı limiti (lib/aiLimit.ts) aşılınca gösterilir.
     cokHizli: "Çok hızlı gidiyorsun 🙂 Birkaç dakika soluklan, sonra devam edelim.",
     // Akran ikilisi (sorumluluk ortağı) sayfası

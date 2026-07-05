@@ -10,6 +10,11 @@
 liderlik değerlendirme + kişisel gelişim uygulaması. ~29 aktif katılımcı.
 Repo kökündeki eski Vite+Firebase uygulamasına **dokunulmaz**; bu uygulama
 bağımsız olarak **`liderlik-aynasi/`** alt klasöründe yaşar.
+Repo'da ayrıca **`emretopcu-com/`** var: Emre'nin kişisel marka sitesi
+(**emretopcu.ai** — emretopcu.com başka bir adaşın çıktı; domain Cloudflare
+Registrar'dan alındı). Next.js 16 + Tailwind v4 + three.js, tek sayfa,
+Türkçe, sinematik 3D tasarım. Kampla ilgisi yok; Cloudflare Pages yayın
+adımları ve içerik TODO'ları kendi README'sinde.
 
 - **Stack:** Next.js 14+ (App Router) + TypeScript + Tailwind
 - **Deploy:** Netlify (production = `main` branch). Proje: `marvelous-pasca-fbfa40`.
@@ -67,12 +72,22 @@ bağımsız olarak **`liderlik-aynasi/`** alt klasöründe yaşar.
 
 ## Kampın mevcut durumu (değişince güncelle)
 
-- 29 katılımcı. Takım yok, kamp kilidi yok, açık dalga yok. **Sıfırlanmış ve
-  kullanıcının "kampı aç" demesini bekliyor.** İnsanlar oyun seçtikçe gruplara
-  otomatik atanacak.
+- **KAMP AÇIK VE CANLI.** 29 katılımcı, Sapanca kampı. `ayna_baslangic =
+  2026-07-03 ~09:10 İst` → Gün 1 = 3 Temmuz, Gün 2 = 4 Temmuz, Gün 3 = 5 Temmuz.
+  Kilit kodu `SAPANCA2026`. Görev motoru (tik) aktif; insanlara görev düşüyor.
+  **Merge edilen her şey doğrudan canlı kampı etkiler — ona göre dikkatli ol.**
+- Senaryoda bekleyen özel olaylar: Gün 2 21:00 sesli mektup (`gun2_sesli_mektup_ac`),
+  Gün 3 10:00 domino (`gun3_domino_ac`).
 
 ## Son tamamlanan işler
 
+- Kişisel marka sitesi **CANLIDA: https://emretopcu.ai** (Cloudflare Pages,
+  proje `emretopcu-ai`, hesap s.emretopcu@gmail.com; apex+www proxied CNAME
+  → emretopcu-ai.pages.dev). Seçilen tasarım: sinematik 3D "video scroll"
+  (Zirve, PR #614); Instagram @emretopcu_official (PR #615-616); .ai geçişi
+  + statik export PR #618. Yeniden deploy: README'deki tek wrangler komutu
+  (yeni CF token gerekir; ilk token kullanıcıda, silinebilir). Bekleyen
+  içerik: portre fotoğrafı. (İlk sürüm PR #612.)
 - Kariyer seviyeleri 8 basamağa düzeltildi (PR #313, merged).
 - Ses Ritüeli'nden foto adımı kaldırıldı (PR #312, merged).
 - Pusula kariyer formu: DB CHECK constraint 8 basamağa genişletildi

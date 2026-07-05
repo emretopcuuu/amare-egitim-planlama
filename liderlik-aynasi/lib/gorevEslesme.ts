@@ -14,7 +14,8 @@ const GUNLUK_HEDEF_UST = 2;
 
 // FAZ 2.1 — eşleşmeli sayılan görev türleri (kota hesaplarında kullanılır).
 // FAZ 3, "tanik"/"cift" gibi yeni türler eklediğinde bu listeye katılır.
-export const ESLESMELI_TURLER: readonly string[] = ["bag"];
+// Özellik 5 — "sahit": bag eşleşmesinin şahit varyantı da eşleşmeli sayılır.
+export const ESLESMELI_TURLER: readonly string[] = ["bag", "sahit"];
 
 /** Verilen aday havuzundan dengeli kotalara uyan bir "hedef" seçer.
  * `tercihEdilenId` verilirse (ör. karsilasma.ts'in tamamlayıcı persona

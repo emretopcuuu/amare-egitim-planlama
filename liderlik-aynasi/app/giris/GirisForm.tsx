@@ -1,12 +1,20 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import CodeInput from "@/components/ui/CodeInput";
 import EgilenKart from "@/components/EgilenKart";
 import { guvenliNext } from "@/lib/guvenliNext";
 import { tr } from "@/lib/i18n/tr";
+
+// [OTURUM] iOS'ta ana ekrana eklenen PWA, HttpOnly oturum çerezini her kapanışta
+// düşürüyor (WebKit davranışı) — kişi her açılışta kod soruyor sanıyor. Çözüm:
+// başarılı girişte 6 haneli kamp kodunu cihazda hatırla (la_giris_kod), açılışta
+// oturum yoksa SESSİZCE yeniden giriş yap. Bu kod düşük hassasiyet (zaten kişinin
+// WhatsApp'ında, RLS her yerde deny-all, admin erişimi yok). Admin şifresi ASLA
+// saklanmaz — bu yalnız katılımcı kamp kodu.
+const KOD_ANAHTAR = "la_giris_kod";
 
 export default function GirisForm() {
   const router = useRouter();
@@ -19,10 +27,12 @@ export default function GirisForm() {
   const [kod, setKod] = useState(initialKod);
   const [hata, setHata] = useState<string | null>(null);
   const [yukleniyor, setYukleniyor] = useState(false);
+  // Hatırlanan kodla sessiz yeniden giriş denenirken formu gizle ("bağlanıyor").
+  const [sessizDeniyor, setSessizDeniyor] = useState(false);
   const autoSubmitted = useRef(false);
 
   const submit = useCallback(
-    async (deger: string) => {
+    async (deger: string, hatirla = true) => {
       if (yukleniyor) return;
       setYukleniyor(true);
       setHata(null);
@@ -36,8 +46,19 @@ export default function GirisForm() {
         if (!res.ok) {
           setHata(veri?.hata ?? tr.giris.hataSunucu);
           setKod("");
+          // Hatırlanan kodu YALNIZ o kod artık geçersizse temizle (yoksa açılışta
+          // sessiz-giriş döngüsüne girer). Elle girilen yanlış bir deneme, daha önce
+          // hatırlanan DOĞRU kodu SİLMESİN — yoksa tek yanlış tuş, kalıcı girişi bozar
+          // ve kişi her açılışta yeniden kod sormak zorunda kalır.
+          try {
+            if (localStorage.getItem(KOD_ANAHTAR) === deger) {
+              localStorage.removeItem(KOD_ANAHTAR);
+            }
+          } catch {}
           return;
         }
+        // [OTURUM] Kodu cihazda hatırla — sonraki açılışta sessiz giriş için.
+        if (hatirla) { try { localStorage.setItem(KOD_ANAHTAR, deger); } catch {} }
         router.replace(hedef);
       } catch {
         setHata(tr.giris.hataSunucu);
@@ -57,6 +78,40 @@ export default function GirisForm() {
     },
     [submit]
   );
+
+  // [OTURUM] Açılışta sessiz yeniden giriş: URL'de kod yoksa ama cihazda
+  // hatırlanan geçerli bir kod varsa, formu göstermeden otomatik gir.
+  useEffect(() => {
+    // Çıkış yapıldıysa hatırlanan kodu sil + sessiz girişi atla (yoksa geri girer).
+    if (params.get("cikis")) {
+      try { localStorage.removeItem(KOD_ANAHTAR); } catch {}
+      return;
+    }
+    if (urlKod || autoSubmitted.current) return;
+    let hatirlanan: string | null = null;
+    try { hatirlanan = localStorage.getItem(KOD_ANAHTAR); } catch {}
+    if (hatirlanan && /^[0-9]{6}$/.test(hatirlanan)) {
+      autoSubmitted.current = true;
+      setSessizDeniyor(true);
+      void submit(hatirlanan).finally(() => setSessizDeniyor(false));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Sessiz giriş sürerken minimal "bağlanıyor" ekranı — kod formu yanıp sönmesin.
+  if (sessizDeniyor) {
+    return (
+      <EgilenKart className="w-full max-w-sm rounded-3xl">
+        <div className="kart-cam relative w-full overflow-hidden rounded-3xl p-8 text-center">
+          <h1 className="prizma-serif ay-metin text-4xl font-semibold tracking-tight">AYNA</h1>
+          <p className="mt-4 flex items-center justify-center gap-2 text-sm text-slate-300">
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-600 border-t-gold" aria-hidden />
+            Seni hatırlıyorum, bağlanıyorsun…
+          </p>
+        </div>
+      </EgilenKart>
+    );
+  }
 
   return (
     <EgilenKart className="w-full max-w-sm rounded-3xl">

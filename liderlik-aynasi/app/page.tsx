@@ -20,7 +20,10 @@ import IlkAdimIpucu from "@/components/IlkAdimIpucu";
 import IlkTanitim from "@/components/IlkTanitim";
 import MuhurTuru from "@/components/MuhurTuru";
 import OnboardingRayi from "@/components/OnboardingRayi";
+import OnboardingToren from "@/components/OnboardingToren";
+import { ONBOARDING_ADIM_AD, ONBOARDING_SURE_DK } from "@/lib/onboardingSure";
 import RozetSeridi from "@/components/RozetSeridi";
+import BildirimAcUyari from "@/components/BildirimAcUyari";
 import KampHud from "@/components/KampHud";
 import GorusmeSimdi from "@/components/GorusmeSimdi";
 import KonusanYansima from "@/components/KonusanYansima";
@@ -147,7 +150,7 @@ export default async function AnaSayfa({
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
   const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }, { data: hedefErken }, { data: degerlerDurum }] =
     await Promise.all([
-      db.from("participants").select("camp_unlocked_at, team, consent_at, ayna_ses_secildi_at").eq("id", session.sub).maybeSingle(),
+      db.from("participants").select("camp_unlocked_at, team, consent_at, ayna_ses_secildi_at, onboarding_toren_at").eq("id", session.sub).maybeSingle(),
       db
         .from("settings")
         .select("key, value")
@@ -155,7 +158,7 @@ export default async function AnaSayfa({
       db.from("on_farkindalik").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
       // Ses/foto ritüeli kapısı için erken kontrol — akışın EN BAŞINA gelir.
       db.from("voice_profiles").select("participant_id").eq("participant_id", session.sub).maybeSingle(),
-      db.from("pusula").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
+      db.from("pusula").select("tamamlandi_at, slogan").eq("participant_id", session.sub).maybeSingle(),
       // Hedef kapısı (kamp öncesi 3b): Pusula biter bitmez devreye girer.
       db.from("hedef").select("tamamlandi_at").eq("participant_id", session.sub).maybeSingle(),
       // Değerler çalışması (2b): Pusula'dan hemen önce + ana sayfa kimlik çapası.
@@ -207,6 +210,30 @@ export default async function AnaSayfa({
     onFarkindalikAcik: true,
     kampIciHedefKapisi,
   });
+  // [E10] BİTİŞ TÖRENİ — onboarding checklist'inin tamamı (ritüel + oyun +
+  // değerler + pusula + hedef + ön farkındalık) İLK KEZ yeşile döndüğünde tam
+  // ekran "Aynan kuruldu" töreni. Tek seferlik: damga render sırasında atılır
+  // (POST'a gerek yok; POST düşerse kişi törende sıkışırdı). Mevcut kamptaki
+  // herkes migration 0117'de geriye dönük damgalandı — tören yalnız bundan
+  // sonra tamamlayanlar (ör. geç katılan) için bir kez çalışır.
+  const onboardingTamam =
+    !!kisi.consent_at &&
+    !!kisi.ayna_ses_secildi_at &&
+    !!sesVarRow &&
+    !!kisi.team &&
+    !!degerlerDurum?.tamamlandi_at &&
+    !!pusulaErken?.tamamlandi_at &&
+    !!hedefErken?.tamamlandi_at &&
+    !!ofDurum?.tamamlandi_at;
+  if (onboardingTamam && !kisi.onboarding_toren_at) {
+    await db
+      .from("participants")
+      .update({ onboarding_toren_at: new Date().toISOString() })
+      .eq("id", session.sub)
+      .is("onboarding_toren_at", null);
+    return <OnboardingToren slogan={pusulaErken?.slogan ?? null} />;
+  }
+
   if (adim.tip === "hazirlik") {
     // KUTSAL ALAN / HAZIRLIK — onboarding'in en başı. Tonu kurar (yalnız,
     // sakin, ~1 saat, kendine dönüş) + KVKK rızasını kayıtla alır. Rıza
@@ -228,7 +255,44 @@ export default async function AnaSayfa({
     // bitmemişken) anlamlı — yönlendirmede kaybolmasın diye taşı.
     if (adim.yol === "/pusula" && !pusulaErken?.tamamlandi_at) {
       const intro = (await searchParams).intro !== undefined;
-      redirect(intro ? "/pusula?intro=1" : "/pusula");
+      if (intro) redirect("/pusula?intro=1");
+    }
+    // [E1] "KALDIĞIN YERDEN DEVAM" KARTI — hedef adım daha önce BAŞLAMIŞ ama
+    // bitmemişse (satırı var, tamamlanmamış) sessiz yönlendirme yerine tek
+    // dokunuşluk büyük kart göster: dönen kişi nereye ışınlandığını anlar.
+    // Adım hiç başlamamışsa mevcut akış aynen yönlendirir (akış içi zincir
+    // bozulmaz); mühür kapısı (/pusula, tamamlanmış) ve oyun seçimi (kısmi
+    // durumu olmayan tek dokunuş) karta girmez.
+    const yarimAdim =
+      adim.yol === "/degerler" && degerlerDurum && !degerlerDurum.tamamlandi_at
+        ? ("degerler" as const)
+        : adim.yol === "/pusula" && pusulaErken && !pusulaErken.tamamlandi_at
+          ? ("pusula" as const)
+          : adim.yol === "/hedef" && hedefErken && !hedefErken.tamamlandi_at
+            ? ("hedef" as const)
+            : adim.yol === "/on-farkindalik" && ofDurum && !ofDurum.tamamlandi_at
+              ? ("onFarkindalik" as const)
+              : null;
+    if (yarimAdim) {
+      return (
+        // Tam ekran odak (öz-puan kapısı deseni): kamp içeriği sızmaz, tek iş.
+        <main className="gece-ada fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[#04101c] p-6">
+          <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center">
+            {/* Mevcut harita/checklist kalır — kart onun altında tek eylem */}
+            <div className="mb-3">
+              <OnboardingRayi />
+            </div>
+            <BuyukKart
+              baslik={t.devamKartBaslik(ONBOARDING_ADIM_AD[yarimAdim])}
+              metin={t.devamKartMetin}
+              href={adim.yol}
+              dugme={t.devamKartDugme(ONBOARDING_SURE_DK[yarimAdim])}
+              ikon="⏸"
+              vurgu
+            />
+          </div>
+        </main>
+      );
     }
     redirect(adim.yol);
   }
@@ -464,6 +528,12 @@ export default async function AnaSayfa({
           ofTamam={!!ofDurum?.tamamlandi_at}
         />
       </header>
+      {/* [KURULUM] Kurulu ama bildirim kapalı → tepede büyük "Bildirimleri Aç"
+          kartı. Kampın kalbi push; bu kişiyi altta küçük kartla değil burada
+          yakalarız. Abone olunca / desteklenmeyen ortamda kendini gizler. */}
+      <div className="mt-3">
+        <BildirimAcUyari />
+      </div>
       {/* B3: Pusula sloganı — her gün görünür kimlik çapası */}
       {kisiSlogan && (
         <p className="prizma-serif ay-metin mt-2 text-sm font-medium italic leading-snug text-gold-light/90">
@@ -689,6 +759,35 @@ export default async function AnaSayfa({
           karsilasmaBul(db, session.sub),
         ])
       : [null, null];
+  // D7 — karşılaşma partnerinin kişi kartı verisi: foto (imzalı URL) + takım +
+  // telefon. Telefon YALNIZ bu tek eşleşme hedefi için sunucudan iner — genel
+  // roster istemciye sızmaz.
+  let karsilasmaPartner: {
+    ad: string;
+    takim: string | null;
+    telefon: string | null;
+    fotoUrl: string | null;
+  } | null = null;
+  if (karsilasma) {
+    const { data: partnerKisi } = await db
+      .from("participants")
+      .select("full_name, team, phone, profil_foto_path")
+      .eq("id", karsilasma.partnerId)
+      .maybeSingle();
+    let fotoUrl: string | null = null;
+    if (partnerKisi?.profil_foto_path) {
+      const { data: imzali } = await db.storage
+        .from("sesler")
+        .createSignedUrl(partnerKisi.profil_foto_path, 3600);
+      fotoUrl = imzali?.signedUrl ?? null;
+    }
+    karsilasmaPartner = {
+      ad: partnerKisi?.full_name ?? karsilasma.partnerAd,
+      takim: partnerKisi?.team ?? null,
+      telefon: partnerKisi?.phone ?? null,
+      fotoUrl,
+    };
+  }
   return (
     <Sayfa ust={ust}>
       {/* Program artık alt menüdeki "Program" sekmesinde (kişisel, katlanır).
@@ -698,7 +797,9 @@ export default async function AnaSayfa({
       {koprusu && <AlgiKoprusuKarti veri={koprusu} />}
 
       {/* Karşılaşma — AYNA'nın eşlediği tamamlayıcı kişiyle konuşma daveti */}
-      {karsilasma && <KarsilasmaKarti partnerAd={karsilasma.partnerAd} />}
+      {karsilasma && (
+        <KarsilasmaKarti partnerAd={karsilasma.partnerAd} partner={karsilasmaPartner} />
+      )}
 
       {/* İkincil sakin durum — küçük, programın altında akar */}
       <div className="kart-cam relative overflow-hidden rounded-2xl p-5 text-center">

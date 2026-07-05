@@ -9,6 +9,7 @@ import {
   OYUN_BILGI,
   type CmtTur,
 } from "@/lib/cumartesiProgrami";
+import { sureRozeti } from "@/lib/onboardingSure";
 
 // Kişi Bowling dışındaki 3 oyundan 2'sini seçer; onaylayınca /api/oyun-secimi
 // uygun gruba atar. Tam 2 seçilmeden onay açılmaz.
@@ -62,6 +63,12 @@ export default function OyunSecici() {
           🎲
         </p>
         <h1 className="prizma-serif ay-metin mt-3 text-2xl font-semibold">Oyununu Seç</h1>
+        {/* [E2] Süre beklentisi rozeti — merkezi haritadan */}
+        <p className="mt-2">
+          <span className="inline-block rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-400">
+            {sureRozeti("oyun")}
+          </span>
+        </p>
       </header>
 
       {/* Kural kartı — mobil için büyük, net, madde madde */}

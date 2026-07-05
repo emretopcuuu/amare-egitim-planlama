@@ -8,7 +8,7 @@ import { gorevAraligiDk } from "@/lib/ayna";
 import { unvanBul, UNVANLAR } from "@/lib/kivilcim";
 import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
-import { kampGunu } from "@/lib/kampProgrami";
+import { kampGunu, gunProgrami, dakikaCevir } from "@/lib/kampProgrami";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { tr } from "@/lib/i18n/tr";
 
@@ -29,6 +29,33 @@ function gelisZamani(iso: string, baslangic?: string): string {
     weekday: "long",
   }).format(d);
   return `${gunAd} · ${saat}`;
+}
+
+// D2 — PROGRAMA BAĞLI SÜRE: due_at, o günkü kamp programındaki bir etkinliğin
+// başlangıcına yakınsa (±30 dk) sayaç "3 sa kaldı" yerine o çıpayı söyler
+// ("Akşam Yemeği başlamadan önce"). Kamp günü dışındaysa null → mevcut sayaç.
+function programCipasi(dueIso: string, baslangic?: string): string | null {
+  const d = new Date(dueIso);
+  const tarih = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(d);
+  const gun = kampGunu(tarih, baslangic);
+  if (!gun) return null;
+  const [saat, dk] = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/Istanbul",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  })
+    .format(d)
+    .split(":")
+    .map(Number);
+  const dueDk = saat * 60 + dk;
+  for (const m of gunProgrami(gun)) {
+    if (Math.abs(dakikaCevir(m.baslangic) - dueDk) <= 30) {
+      // Uzun blok adlarının ilk parçası yeter ("Oyunlar & Öğle Yemeği & …" → "Oyunlar")
+      return m.baslik.split("&")[0].trim();
+    }
+  }
+  return null;
 }
 import GorevYanitFormu from "./GorevYanitFormu";
 import TanikOnay from "./TanikOnay";
@@ -53,6 +80,10 @@ import SomutlukChecklist from "./SomutlukChecklist";
 import GercekMiydiSoru from "./GercekMiydiSoru";
 import KapiSecimi from "./KapiSecimi";
 import NedenButonlari from "./NedenButonlari";
+import SesliMektup from "./SesliMektup";
+import GovdeAcilis from "./GovdeAcilis";
+import KisiKarti from "@/components/KisiKarti";
+import { sesliMektupGoreviMi } from "@/lib/sesliMektup";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -72,7 +103,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id, somutluk, altin, secim_grubu, kapi_etiket"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id, somutluk, altin, secim_grubu, kapi_etiket, kas, zorluk_seviye"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -140,6 +171,62 @@ export default async function GorevlerPage() {
       .createSignedUrl(g.voice_path, 3600);
     if (imzali) sesUrller.set(g.id, imzali.signedUrl);
   }
+  // D4 — KAS ANTRENMAN SAYACI: aktif görevin kası (missions.kas) doluysa,
+  // kişinin o kastan kaçıncı görevi olduğunu say (yüklü 50 görev listesinden —
+  // 3 günlük kampta kişi başı görev sayısı bunu aşmaz, ekstra sorgu gerekmez).
+  const kasAntrenmanNo = new Map<string, number>();
+  for (const g of aktif) {
+    if (!g.kas) continue;
+    kasAntrenmanNo.set(
+      g.id,
+      (gorevler ?? []).filter((x) => x.kas === g.kas && x.issued_at <= g.issued_at).length
+    );
+  }
+
+  // D7 — EŞLEŞME KİŞİ KARTI: aktif görev isimli bir eşleşmeye bağlıysa hedef
+  // kişinin foto (imzalı URL) + takım + telefonunu karta taşı. Telefon YALNIZ
+  // eşleşme hedefi için iner (genel roster istemciye sızmaz); "sahit" görevi
+  // sessiz gözlemdir — hedefe WhatsApp köprüsü verilmez (takım satırı kalır).
+  const hedefKisiler = new Map<
+    string,
+    { ad: string; takim: string | null; telefon: string | null; fotoUrl: string | null }
+  >();
+  if (aktif.length > 0) {
+    const { data: eslesmeler } = await db
+      .from("gorev_eslesme")
+      .select("mission_id, hedef_id")
+      .in("mission_id", aktif.map((g) => g.id))
+      .eq("kaynak_id", session.sub)
+      .eq("isimli", true);
+    const hedefIdler = [...new Set((eslesmeler ?? []).map((e) => e.hedef_id))];
+    if (hedefIdler.length > 0) {
+      const { data: hedefler } = await db
+        .from("participants")
+        .select("id, full_name, team, phone, profil_foto_path")
+        .in("id", hedefIdler);
+      const hedefMap = new Map((hedefler ?? []).map((k) => [k.id, k]));
+      for (const e of eslesmeler ?? []) {
+        if (!e.mission_id) continue;
+        const k = hedefMap.get(e.hedef_id);
+        const g = aktif.find((a) => a.id === e.mission_id);
+        if (!k || !g) continue;
+        let fotoUrl: string | null = null;
+        if (k.profil_foto_path) {
+          const { data: imzali } = await db.storage
+            .from("sesler")
+            .createSignedUrl(k.profil_foto_path, 3600);
+          fotoUrl = imzali?.signedUrl ?? null;
+        }
+        hedefKisiler.set(e.mission_id, {
+          ad: k.full_name,
+          takim: k.team,
+          telefon: g.kind === "sahit" ? null : k.phone,
+          fotoUrl,
+        });
+      }
+    }
+  }
+
   // Haftalık Momentum (varsa) — davranış eğilimi katılımcıya da görünür
   const { data: momentum } = await db
     .from("momentum_scores")
@@ -200,14 +287,19 @@ export default async function GorevlerPage() {
   for (const g of gelenHam ?? []) if (g.observation) gelenGozlem.set(g.mission_id, g.observation);
 
   // FAZ 1.3 — eşleşme dengeleyici: teslim edilmiş (scored) eşleşmeli görevler
-  // için henüz cevaplanmamış "gerçek miydi?" sorusu.
+  // için henüz cevaplanmamış "gerçek miydi?" sorusu. Özellik 5 — şahit görevi
+  // sessiz bir gözlemdir, konuşma değil: "bu konuşma gerçek miydi?" sorulmaz.
   const { data: gercekMiydiHam } = await db
     .from("gorev_eslesme")
     .select("mission_id")
     .eq("kaynak_id", session.sub)
     .is("gercek_miydi", null);
   const gercekMiydiBekleyen = (gercekMiydiHam ?? [])
-    .map((r) => (gorevler ?? []).find((g) => g.id === r.mission_id && g.status === "scored"))
+    .map((r) =>
+      (gorevler ?? []).find(
+        (g) => g.id === r.mission_id && g.status === "scored" && g.kind !== "sahit"
+      )
+    )
     .filter((g): g is NonNullable<typeof g> => !!g);
 
   // #4 Bugünün özeti
@@ -238,10 +330,20 @@ export default async function GorevlerPage() {
   const GUNLUK_KOTA = 7;
   const sonGorevZamani = (gorevler ?? [])[0]?.issued_at ?? null;
   let siradakiDk: number | null = null;
+  // D9 — fragman sahnesi: "~N dk" yerine somut saat çıpası ("~14:35 civarı").
+  let siradakiSaat: string | null = null;
   if (sonGorevZamani) {
     const aralik = gorevAraligiDk(session.sub, bugunGorev, false);
-    const kalanMs = new Date(sonGorevZamani).getTime() + aralik * 60_000 - simdiMs;
+    const hedefMs = new Date(sonGorevZamani).getTime() + aralik * 60_000;
+    const kalanMs = hedefMs - simdiMs;
     siradakiDk = kalanMs > 60_000 ? Math.ceil(kalanMs / 60_000) : 0;
+    if (kalanMs > 60_000) {
+      siradakiSaat = new Intl.DateTimeFormat("tr-TR", {
+        timeZone: "Europe/Istanbul",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(hedefMs));
+    }
   }
   // FAZ 5.1 — GÖREV FRAGMANI: kişi+bugünkü görev sayısı tohumlu, deterministik
   // ama gün içinde değişen jenerik ipucu (gerçek içeriği asla açık etmez).
@@ -258,6 +360,8 @@ export default async function GorevlerPage() {
   // kullanılır. Aynı işi iki yerde tekrar yazmamak için fonksiyona çıkarıldı.
   function GorevKarti({ g, vurgu }: { g: (typeof aktif)[number]; vurgu: boolean }) {
     const altinMi = !!(g as { altin?: boolean }).altin;
+    // Özellik 4 — sesli mektup görevi: yanıt yazılmaz, mikrofonla kaydedilir.
+    const mektupMu = sesliMektupGoreviMi(g);
     const atm = atmosferBul(g.kind, altinMi);
     const zorluk = (g.difficulty as Zorluk) ?? 2;
     return (
@@ -268,6 +372,12 @@ export default async function GorevlerPage() {
         {altinMi && (
           <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-gold/30 px-3 py-1 text-xs font-bold uppercase tracking-widest text-gold-light ring-1 ring-gold/50">
             ⚡ Altın Görev · 3× kıvılcım
+          </p>
+        )}
+        {/* D4 — KAS ROZETİ: bu görevin çalıştırdığı lider kası + kaçıncı antrenman */}
+        {g.kas && t.kaslar[g.kas] && (
+          <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-orange-500/15 px-3 py-1 text-xs font-bold text-orange-300 ring-1 ring-orange-400/30">
+            🔥 {t.kasRozet(t.kaslar[g.kas], kasAntrenmanNo.get(g.id) ?? 1)}
           </p>
         )}
         {/* UX #6: üst kenarda boşalan sayaç şeridi (türe göre değil zamana göre) */}
@@ -288,24 +398,33 @@ export default async function GorevlerPage() {
             <span aria-hidden>{atm.ikon}</span>
             {t.turler[g.kind as keyof typeof t.turler] ?? g.kind}
           </span>
-          <GorevSayac baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
+          {/* D2 — due bir program etkinliğine yakınsa somut çıpa söylenir */}
+          <GorevSayac
+            baslangic={g.issued_at}
+            bitis={g.due_at}
+            sakin={!!g.started_at}
+            cipa={programCipasi(g.due_at, kampBaslangic)}
+          />
         </div>
         {/* Görevin geldiği gün + saat (katılımcı isteği) */}
         <p className="mt-1.5 text-xs font-medium text-slate-400">
           📅 {gelisZamani(g.issued_at, kampBaslangic)} geldi
         </p>
-        {/* UX #3: zorluk sembol (pip) + kas + mikro-sprint */}
+        {/* UX #3: zorluk sembol (pip) + kas + mikro-sprint.
+            D5 — zorluk_seviye doluysa pip yerine aşağıdaki alev göstergesi konuşur. */}
         <div className="mt-2 flex flex-wrap items-center gap-2 text-sm">
-          <span className="inline-flex items-center gap-1" title={ZORLUK_ETIKETI[zorluk]}>
-            {[1, 2, 3].map((n) => (
-              <span
-                key={n}
-                className={`h-2 w-2 rounded-full ${n <= zorluk ? "bg-sky-300" : "bg-white/15"}`}
-                aria-hidden
-              />
-            ))}
-            <span className="ml-1 text-xs text-slate-400">{ZORLUK_ETIKETI[zorluk]}</span>
-          </span>
+          {g.zorluk_seviye == null && (
+            <span className="inline-flex items-center gap-1" title={ZORLUK_ETIKETI[zorluk]}>
+              {[1, 2, 3].map((n) => (
+                <span
+                  key={n}
+                  className={`h-2 w-2 rounded-full ${n <= zorluk ? "bg-sky-300" : "bg-white/15"}`}
+                  aria-hidden
+                />
+              ))}
+              <span className="ml-1 text-xs text-slate-400">{ZORLUK_ETIKETI[zorluk]}</span>
+            </span>
+          )}
           {g.trait_id && ozellikAd.has(g.trait_id) && (
             <span className="inline-block rounded-full bg-royal/30 px-2 py-0.5 text-xs font-medium text-royal-light">
               💪 {ozellikAd.get(g.trait_id)}
@@ -323,7 +442,7 @@ export default async function GorevlerPage() {
         {/* ✨ NEDEN SEN — başlığın hemen altında, her zaman açık, gold kart.
             Kişiye özel motivasyon; görev isteğini doğrudan artırır. */}
         {g.neden && (
-          <div className="mt-3 rounded-2xl border border-gold/40 bg-gold/[0.10] p-4 shadow-[0_0_20px_-6px_rgba(212,175,55,0.25)]">
+          <div className="mt-2.5 rounded-2xl border border-gold/40 bg-gold/[0.10] p-4 shadow-[0_0_20px_-6px_rgba(212,175,55,0.25)]">
             <p className="text-xs font-bold uppercase tracking-widest text-gold">✨ Bu görev neden sana verildi?</p>
             <p className="mt-1.5 text-sm leading-relaxed text-slate-100">{g.neden}</p>
           </div>
@@ -331,24 +450,63 @@ export default async function GorevlerPage() {
 
         {/* 💡 İŞİNE KATKISI — neden'in hemen altında, her zaman açık, emerald kart. */}
         {g.fayda && (
-          <div className="mt-3 rounded-2xl border border-emerald-400/35 bg-emerald-400/[0.09] p-4">
+          <div className="mt-2.5 rounded-2xl border border-emerald-400/35 bg-emerald-400/[0.09] p-4">
             <p className="text-xs font-bold uppercase tracking-widest text-emerald-300">💡 İşine nasıl katkı sağlar?</p>
             <p className="mt-1.5 text-sm leading-relaxed text-slate-100">{g.fayda}</p>
           </div>
         )}
 
-        <p className="mt-4 whitespace-pre-wrap text-base leading-relaxed text-slate-100">
-          {g.body}
-        </p>
+        {/* D7 — EŞLEŞME KİŞİ KARTI: görev bir kişiye yönlendiriyorsa, o kişi
+            dokunulabilir kartta (tam ekran foto + WhatsApp köprüsü). */}
+        {hedefKisiler.has(g.id) && (
+          <div className="mt-2.5">
+            <p className="px-1 text-xs font-bold uppercase tracking-widest text-slate-500">
+              🤝 {t.gorevKisisi}
+            </p>
+            <div className="mt-1.5">
+              <KisiKarti {...hedefKisiler.get(g.id)!} />
+            </div>
+          </div>
+        )}
+
+        {/* D1 — perde perde açılış: uzun gövde katlanır, açılış hep görünür */}
+        <GovdeAcilis metin={g.body} />
         {/* FAZ 1.1: gövdeyi 5 satırlık somutluk checklist'ine ayrıştırır */}
         <SomutlukChecklist
           somutluk={
             g.somutluk as { kim: string | null; ne: string; nerede: string; neZaman: string; kanit: string } | null
           }
         />
+        {/* D5 — ZORLUK ALEVİ: modelin doz değerlendirmesi (1-5) + doz ayarı.
+            Hafiflet/Zorlaştır butonları göstergenin hemen altında yaşar. */}
+        {g.zorluk_seviye != null && (
+          <div className="mt-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+            <div className="flex items-center justify-between">
+              <span
+                className="inline-flex items-center gap-0.5 text-base"
+                role="img"
+                aria-label={t.zorlukAlevi(g.zorluk_seviye)}
+              >
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <span
+                    key={n}
+                    className={n <= (g.zorluk_seviye ?? 0) ? "" : "opacity-25 grayscale"}
+                    aria-hidden
+                  >
+                    🔥
+                  </span>
+                ))}
+              </span>
+              <span className="text-xs text-slate-400">{t.zorlukAlevi(g.zorluk_seviye)}</span>
+            </div>
+            <p className="mt-1 text-xs text-slate-500">{t.dozAyarla}</p>
+            {(g.difficulty ?? 2) < 3 && <ZorlastirButonu gorevId={g.id} />}
+            <HafifletButonu gorevId={g.id} />
+          </div>
+        )}
         {/* Düşük puan sonrası derinleştirme görevi: "bu sefer şunu dene" ipuçları */}
         {Array.isArray(g.ipuclari) && g.ipuclari.length > 0 && (
-          <div className="mt-4 rounded-2xl border border-sky-400/30 bg-sky-400/[0.08] p-4">
+          <div className="mt-3 rounded-2xl border border-sky-400/30 bg-sky-400/[0.08] p-4">
             <p className="text-xs font-bold uppercase tracking-widest text-sky-300">
               🎯 Bu sefer şunu dene
             </p>
@@ -378,15 +536,20 @@ export default async function GorevlerPage() {
             secilen={mentorVeri.get(g.id)!.secilen}
           />
         )}
-        {/* UX #1: "Başladım" — birincil-yakını, görünür kalır (söz/senkron hariç) */}
-        {g.kind !== "soz" && g.kind !== "senkron" && (
+        {/* UX #1: "Başladım" — birincil-yakını, görünür kalır (söz/senkron/mektup hariç) */}
+        {g.kind !== "soz" && g.kind !== "senkron" && !mektupMu && (
           <BaslaButonu gorevId={g.id} basladiMi={!!g.started_at} />
         )}
         {/* UX #2 (tasarım): birincil eylem (yanıt) baskın; ikincil eylemler
-            tek "⋯ Seçenekler" altında toplanır — kart dağınıklığı biter. */}
-        <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
-        {g.kind !== "soz" && g.kind !== "senkron" && (
-          <details className="group mt-3">
+            tek "⋯ Seçenekler" altında toplanır — kart dağınıklığı biter.
+            Özellik 4 — sesli mektupta yazı formu yerine kayıt kartı. */}
+        {mektupMu ? (
+          <SesliMektup gorevId={g.id} />
+        ) : (
+          <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
+        )}
+        {g.kind !== "soz" && g.kind !== "senkron" && !mektupMu && (
+          <details className="group mt-2">
             <summary className="flex cursor-pointer list-none items-center justify-center gap-1 text-xs font-medium text-slate-500 transition-colors hover:text-slate-300">
               ⋯ {t.secenekler}
               <span className="transition-transform group-open:rotate-180" aria-hidden>▾</span>
@@ -394,10 +557,12 @@ export default async function GorevlerPage() {
             <div className="mt-2 space-y-1">
               {/* A10: belirsiz görevde netleştirme */}
               <NetlestirButonu gorevId={g.id} />
-              {/* #6 Zorlaştır — üst kademede değilse */}
-              {(g.difficulty ?? 2) < 3 && <ZorlastirButonu gorevId={g.id} />}
-              {/* #8 "ağır geldi" → yumuşat */}
-              <HafifletButonu gorevId={g.id} />
+              {/* D5 — zorluk alevi bloğu varsa doz butonları oraya taşındı;
+                  yoksa eski yerlerinde (bu menüde) kalırlar. */}
+              {g.zorluk_seviye == null && (g.difficulty ?? 2) < 3 && (
+                <ZorlastirButonu gorevId={g.id} />
+              )}
+              {g.zorluk_seviye == null && <HafifletButonu gorevId={g.id} />}
               {/* UX #2: ertele (en fazla 2 kez) */}
               <ErteleButonu gorevId={g.id} kalanHak={2 - (g.ertelenme_sayisi ?? 0)} />
               {/* A6: takılan kişi için Koç köprüsü */}
@@ -474,16 +639,17 @@ export default async function GorevlerPage() {
         </section>
       )}
 
-      {/* UX #3: Telafi — süresi yeni geçmiş görev(ler) forma açık kalır */}
+      {/* UX #3 + D8: Telafi — pasif "kaçtı" yerine şefkatli, belirgin dönüş
+          çağrısı; kart amber tonda öne çıkar, sayaç tek kompakt şerit. */}
       {telafiGorevler.length > 0 && (
         <section className="space-y-4">
           {telafiGorevler.map((g) => (
             <div
               key={g.id}
-              className="kart-3d rounded-2xl border border-amber-400/30 bg-amber-500/[0.06] p-5"
+              className="kart-3d rounded-2xl border border-amber-400/50 bg-amber-500/[0.09] p-5 shadow-[0_0_24px_-8px_rgba(251,191,36,0.35)]"
             >
-              <p className="inline-block rounded-full bg-amber-500/20 px-3 py-1 text-xs font-bold tracking-wide text-amber-300">
-                ⏳ {t.telafiRozet}
+              <p className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/90 px-3 py-1.5 text-xs font-bold tracking-wide text-amber-950">
+                🔥 {t.telafiCta}
               </p>
               <h2 className="mt-2 text-xl font-bold leading-snug text-amber-100">{g.title}</h2>
               {g.neden && (
@@ -501,12 +667,15 @@ export default async function GorevlerPage() {
               <p className="mt-3 whitespace-pre-wrap text-base leading-relaxed text-slate-200">
                 {g.body}
               </p>
-              <p className="mt-3 rounded-xl border border-amber-400/20 bg-midnight/30 p-3 text-sm leading-relaxed text-amber-200/90">
-                {t.telafiAciklama}
-              </p>
-              {/* UX #3 — telafi penceresinin canlı geri sayımı (due_at + 24sa) */}
+              {/* D11 — motivasyon paragrafı + ayrı sayaç satırı TEK kompakt
+                  şeride indi (şerit + tek soluk satır TelafiSayac içinde) */}
               <TelafiSayac bitis={new Date(new Date(g.due_at).getTime() + 24 * 3_600_000).toISOString()} />
-              <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
+              {/* Özellik 4 — sesli mektup telafide de sesle gönderilir */}
+              {sesliMektupGoreviMi(g) ? (
+                <SesliMektup gorevId={g.id} />
+              ) : (
+                <GorevYanitFormu gorevId={g.id} gorevBaslik={g.title} />
+              )}
               {/* FAZ 7.2 — "Neden?" tek dokunuş: sonraki görevi kişiye göre biçimler */}
               <NedenButonlari gorevId={g.id} />
             </div>
@@ -528,7 +697,11 @@ export default async function GorevlerPage() {
           </div>
         </section>
       ) : aktif.length === 0 ? (
-        <BosGorevDurumu siradakiDk={siradakiDk} fragmanIpucu={fragmanIpucu} />
+        <BosGorevDurumu
+          siradakiDk={siradakiDk}
+          siradakiSaat={siradakiSaat}
+          fragmanIpucu={fragmanIpucu}
+        />
       ) : (
         <>
           {/* En son gelen görev — TEK odak, tam açık. */}

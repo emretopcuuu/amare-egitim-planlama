@@ -33,8 +33,10 @@ export async function POST(req: Request) {
 
   const db = supabaseAdmin();
 
+  // "giris" tek-mesaj kod modunda davet şablonu kullanılmaz — contentSid şartı
+  // yalnız diğer şablonlar için (kod şablonu sid'i aşağıda ayrıca çözülür).
   const contentSid = await sablonSidGetir(db, sablon);
-  if (!contentSid) {
+  if (!contentSid && sablon.anahtar !== "giris") {
     return Response.json({ hata: t.api.sablonKayitsiz(sablon.etiket) }, { status: 400 });
   }
 
@@ -100,34 +102,39 @@ export async function POST(req: Request) {
   const gecerli = kisiler.filter((k) => whatsAppAdresi(k.phone) !== null);
   const telefonsuz = kisiler.length - gecerli.length;
 
-  // "giris" davetinde kamp kodu HEMEN ARDINDAN ayrı (onaylı AUTHENTICATION/OTP)
-  // mesajla gider: davet metninde kod gösterilemiyor (Meta OTP sayıp reddediyor),
-  // bu yüzden kod görünür+kopyalanabilir şekilde kendi onaylı şablonuyla gelir.
-  const ikiAsamali = sablon.anahtar === "giris";
+  // "giris" daveti artık TEK mesajdır (kullanıcı kararı): davet (marketing)
+  // şablonu GÖNDERİLMEZ; yalnız onaylı AUTHENTICATION/OTP kod şablonu gider —
+  // linksiz, kopyalanabilir kamp kodu. (Kodu davet gövdesine koymak Meta'da
+  // imkânsızdı; iki ayrı mesaj da kafa karıştırıyordu.)
+  const sadeceKod = sablon.anahtar === "giris";
   let kodSid: string | null = null;
-  if (ikiAsamali) {
+  if (sadeceKod) {
     const { data } = await db.from("settings").select("value").eq("key", "wa_tpl_kod").maybeSingle();
     kodSid = data?.value || null;
+    if (!kodSid) {
+      return Response.json({ hata: tr.admin.whatsapp.kodSablonKayitsiz }, { status: 400 });
+    }
   }
 
   let basarili = 0;
   let basarisiz = 0;
-  let kodGonderildi = 0;
-  // [M1] Kişi bazlı teslim doğrulaması: hangi mesaj kime ULAŞMADI — admin bu
+  // [M1] Kişi bazlı teslim doğrulaması: mesaj kime ULAŞMADI — admin bu
   // isimleri görüp WhatsApp'tan elle takip eder (toplam sayı yetmiyordu).
   const davetUlasmayan: string[] = [];
-  const kodUlasmayan: string[] = [];
   // Twilio hız sınırını zorlamamak için küçük gruplar halinde gönder.
   const PARCA = 20;
   for (let i = 0; i < gecerli.length; i += PARCA) {
     const dilim = gecerli.slice(i, i + PARCA);
     const sonuclar = await Promise.all(
       dilim.map((k) =>
-        whatsAppGonder(
-          k.phone!,
-          contentSid,
-          degiskenleriUret(sablon, { ad: k.full_name, kod: k.login_code }, mesaj)
-        )
+        sadeceKod
+          ? // Kod (OTP) şablonu — ContentVariables {"1": kod}.
+            whatsAppGonder(k.phone!, kodSid!, { "1": k.login_code })
+          : whatsAppGonder(
+              k.phone!,
+              contentSid!,
+              degiskenleriUret(sablon, { ad: k.full_name, kod: k.login_code }, mesaj)
+            )
       )
     );
     sonuclar.forEach((ok, j) => {
@@ -137,16 +144,6 @@ export async function POST(req: Request) {
         davetUlasmayan.push(dilim[j].full_name);
       }
     });
-    // Davetin hemen ardından kamp kodu (OTP) — ContentVariables {"1": kod}.
-    if (ikiAsamali && kodSid) {
-      const kodSonuc = await Promise.all(
-        dilim.map((k) => whatsAppGonder(k.phone!, kodSid!, { "1": k.login_code }))
-      );
-      kodSonuc.forEach((ok, j) => {
-        if (ok) kodGonderildi++;
-        else kodUlasmayan.push(dilim[j].full_name);
-      });
-    }
   }
 
   // [M1] Denetim izi: hangi şablon kaç kişiye gitti, kimlere ulaşmadı.
@@ -156,7 +153,7 @@ export async function POST(req: Request) {
     basarili,
     basarisiz,
     telefonsuz,
-    ...(ikiAsamali ? { kodGonderildi, kodUlasmayan } : {}),
+    ...(sadeceKod ? { sadeceKod: true } : {}),
     davetUlasmayan,
   });
 
@@ -166,6 +163,5 @@ export async function POST(req: Request) {
     basarisiz,
     telefonsuz,
     davetUlasmayan,
-    ...(ikiAsamali ? { kodGonderildi, kodUlasmayan, kodKayitsiz: !kodSid } : {}),
   });
 }

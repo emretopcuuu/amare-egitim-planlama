@@ -4,6 +4,9 @@ import { useEffect, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import AsamaRayi, { type RayAsama } from "@/components/AsamaRayi";
+import KayitRozeti from "@/components/KayitRozeti";
+import GizlilikMuhru from "@/components/GizlilikMuhru";
+import { sureRozeti } from "@/lib/onboardingSure";
 
 const t = tr.pusula;
 const BLANK_SAYISI = 10;
@@ -313,6 +316,8 @@ export default function PusulaSohbet({
   const [sifirliyor, setSifirliyor] = useState(false);
   const [geriAliniyor, setGeriAliniyor] = useState(false); // son elemeyi geri alma
   const [bittiBekliyor, setBittiBekliyor] = useState(false); // son analiz okunsun, sonra devam
+  // [E8] Öncelik listesi sunucuya başarıyla yazıldığında köşede "✓ Kaydedildi".
+  const [kayitBasari, setKayitBasari] = useState(0);
   const [mesgul, setMesgul] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
   const altRef = useRef<HTMLDivElement>(null);
@@ -422,6 +427,7 @@ export default function PusulaSohbet({
     acilisRef.current = true; // açılış zaten geldi
     setMesajlar([{ rol: "ayna", icerik: v.mesaj }]);
     if (v.asama) setAsama(v.asama);
+    setKayitBasari((n) => n + 1); // [E8] liste sunucuda — görünür güven
     // Doğrudan sohbete atlamak yerine önce köprü ekranı: ne olacağını net anlat.
     setFaz("kopru");
   }
@@ -493,6 +499,12 @@ export default function PusulaSohbet({
   if (faz === "riza") {
     return (
       <Kapak ikon="🧭" baslik={t.rizaBaslik}>
+        {/* [E2] Süre beklentisi rozeti — merkezi haritadan */}
+        <p className="mt-2">
+          <span className="inline-block rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-400">
+            {sureRozeti("pusula")}
+          </span>
+        </p>
         <p className="mt-3 text-base leading-relaxed text-slate-300">{t.rizaMetin}</p>
         <p className="mt-3 text-xs text-slate-500">{t.rizaNot}</p>
         <button
@@ -651,6 +663,8 @@ export default function PusulaSohbet({
   if (faz === "kopru") {
     return (
       <Kapak ikon="💬" baslik={t.kopruBaslik}>
+        {/* [E8] Liste az önce sunucuya yazıldı — köşede kısa görünür güven */}
+        <KayitRozeti basari={kayitBasari} />
         <p className="mt-3 text-base leading-relaxed text-slate-300">{t.kopruMetin}</p>
         <ol className="mt-4 space-y-2 text-left">
           {t.kopruAdimlar.map((adim, i) => (
@@ -777,10 +791,21 @@ export default function PusulaSohbet({
           </div>
           <SifirlaButon sor={sifirlaSor} setSor={setSifirlaSor} sifirla={sifirla} mesgul={sifirliyor} />
         </div>
-        {/* İlerleme — kişi sona ne kadar kaldığını her soruda görür */}
+        {/* İlerleme — kişi sona ne kadar kaldığını her soruda görür.
+            [E4] Soru sayısı AI'ya bağlı (dinamik) olduğundan "soru 3/7" gibi
+            yanlış bir beklenti kurulmaz; aşama sayacı + son aşama ✨ sinyali
+            sunucunun döndürdüğü gerçek faz bilgisinden türetilir. */}
         <div className="mt-3">
           <div className="flex items-center justify-between text-[0.7rem] font-medium text-slate-400">
-            <span>{t.ilerlemeEtiket}</span>
+            <span>
+              {t.ilerlemeEtiket} ·{" "}
+              {t.sohbetAsamaSayac(
+                asama === "tamam"
+                  ? SOHBET_ASAMALARI.length
+                  : Math.max(0, SOHBET_ASAMALARI.indexOf(asama as (typeof SOHBET_ASAMALARI)[number])) + 1,
+                SOHBET_ASAMALARI.length
+              )}
+            </span>
             <span className="text-gold-light">%{ilerleme}</span>
           </div>
           <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
@@ -955,6 +980,8 @@ export default function PusulaSohbet({
               {t.gonder}
             </button>
           </div>
+          {/* Gizlilik mührü — mahrem sohbetin hemen altında sakin güven imzası */}
+          <GizlilikMuhru />
         </>
       )}
     </main>

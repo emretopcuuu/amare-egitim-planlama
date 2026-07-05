@@ -11,6 +11,7 @@ import { tlFormat } from "@/lib/kariyer";
 import OyunPlaniBolumu from "./OyunPlaniBolumu";
 import { arketipBul } from "@/lib/arketip";
 import { muhurAcikMi, donusumAdlandir } from "@/lib/muhur";
+import { donusumKarsilastirmaUret } from "@/lib/donusum";
 import { unvanBul } from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
 import Konfeti from "@/components/Konfeti";
@@ -117,6 +118,11 @@ export default async function AynaPage() {
   // A2 Mühür Açılışı: kamp sonu before/after. Onboarding'de mühürlenen söz
   // (kendi sesi + yazısı) açılır; "kampa ___ geldin, ___ dönüyorsun" adlandırması.
   const donusum = donusumAdlandir(rapor.satirlar);
+  // Özellik 10 — Dönüşüm Karşılaştırması: kişinin İLK ve SON görev yanıtından
+  // birer alıntı + AI'nın tek cümlelik fark tespiti. İlk görüntülemede üretilir,
+  // participants.donusum_karsilastirma'ya önbelleklenir; üretilemezse (az veri /
+  // AI hatası) null döner ve bölüm sessizce gizlenir — mühür ekranı bloklanmaz.
+  const donusum48 = muhurAcik ? await donusumKarsilastirmaUret(db, session.sub) : null;
   let muhurSesUrl: string | null = null;
   if (muhurAcik && sesProfili?.sample_path) {
     const { data: imzali } = await db.storage
@@ -341,6 +347,39 @@ export default async function AynaPage() {
         <div className="yazdir-gizle">
           <ZirveOlcum />
         </div>
+      )}
+
+      {/* Özellik 10 — Dönüşüm Karşılaştırması: Gün 1 sen vs Gün 3 sen.
+          İlk yanıt soluk, son yanıt altın vurgulu; arada AYNA'nın fark cümlesi. */}
+      {muhurAcik && donusum48 && (
+        <section className="kart-cam rounded-2xl bg-gradient-to-br from-gold/10 to-midnight-card/60 p-5 shadow-xl ring-1 ring-gold/30 backdrop-blur">
+          <p className="prizma-serif text-xs uppercase tracking-[0.35em] text-slate-400">
+            {tr.donusum48.ust}
+          </p>
+          <h2 className="mt-1 font-semibold text-gold-light">{tr.donusum48.baslik}</h2>
+          <div className="mt-4 space-y-3">
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] p-4 opacity-70">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-slate-500">
+                {tr.donusum48.gun1Etiket}
+              </p>
+              <p className="mt-1.5 text-sm italic leading-relaxed text-slate-300">
+                “{donusum48.ilkAlinti}”
+              </p>
+            </div>
+            <div className="rounded-xl border border-gold/40 bg-gold/[0.08] p-4">
+              <p className="text-[0.65rem] font-semibold uppercase tracking-wide text-gold-light/80">
+                {tr.donusum48.gun3Etiket}
+              </p>
+              <p className="mt-1.5 text-sm italic leading-relaxed text-gold-light">
+                “{donusum48.sonAlinti}”
+              </p>
+            </div>
+          </div>
+          <p className="mt-4 text-sm leading-relaxed text-slate-200">{donusum48.fark}</p>
+          <p className="prizma-serif ay-metin mt-3 text-center text-base font-semibold">
+            {tr.donusum48.kapanis}
+          </p>
+        </section>
       )}
 
       {/* S7: Rapor Haritası kaldırıldı; tek "başla" linki yeterli */}

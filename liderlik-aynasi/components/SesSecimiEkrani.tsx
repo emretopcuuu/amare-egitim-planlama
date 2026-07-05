@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import AynaIkon from "@/components/AynaIkon";
+import { sureRozeti } from "@/lib/onboardingSure";
 
 const t = tr.sesSecimi;
 
@@ -28,7 +29,42 @@ export default function SesSecimiEkrani({
   const [calan, setCalan] = useState<Ses | null>(null);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState(false);
+  // [E7] Seçim kaydedildikten sonra AYNA'nın seçilen sesle kişisel karşılaması
+  // çalarken gösterilen ara durum (yalnız onboarding akışında, ayar modunda değil).
+  const [karsilamaCaliyor, setKarsilamaCaliyor] = useState(false);
   const sesRef = useRef<HTMLAudioElement | null>(null);
+  const karsilamaRef = useRef<HTMLAudioElement | null>(null);
+
+  // [E7] Karşılamayı çal; ses altyapısı yoksa/hata olursa SESSİZCE atla —
+  // akış her koşulda router.refresh() ile sıradaki adıma (ritüel) geçer.
+  async function karsilamaCalVeDevamEt() {
+    try {
+      // Üretim birkaç saniye sürebilir — kişi bu sırada boş/disabled buton
+      // yerine "Aynan seninle tanışıyor…" ekranını görür (Geç ile atlanabilir).
+      setKarsilamaCaliyor(true);
+      const r = await fetch("/api/karsilama");
+      if (r.ok) {
+        const blob = await r.blob();
+        const url = URL.createObjectURL(blob);
+        const el = new Audio(url);
+        karsilamaRef.current = el;
+        await new Promise<void>((coz) => {
+          el.onended = () => coz();
+          el.onerror = () => coz();
+          el.play().catch(() => coz());
+        });
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      // karşılama süs — çalmazsa akış bozulmaz
+    }
+    router.refresh();
+  }
+
+  function karsilamayiGec() {
+    karsilamaRef.current?.pause();
+    router.refresh();
+  }
 
   async function dinle(ses: Ses) {
     if (calan === ses) {
@@ -71,7 +107,9 @@ export default function SesSecimiEkrani({
       if (ayarModu && onKapat) {
         onKapat();
       } else {
-        router.refresh();
+        // [E7] Onboarding akışı: yönlendirmeden önce AYNA seçilen sesle kısa
+        // kişisel karşılamasını yapar (çalamazsa sessizce devam eder).
+        await karsilamaCalVeDevamEt();
       }
     } catch {
       setHata(true);
@@ -95,6 +133,14 @@ export default function SesSecimiEkrani({
       <h1 className="prizma-serif ay-metin mt-3 text-center text-2xl font-bold leading-tight sm:text-3xl">
         {t.baslik}
       </h1>
+      {/* [E2] Süre beklentisi rozeti — merkezi haritadan */}
+      {!ayarModu && (
+        <p className="mt-2 text-center">
+          <span className="inline-block rounded-full bg-white/[0.06] px-3 py-1 text-xs font-semibold text-slate-400">
+            {sureRozeti("sesSecimi")}
+          </span>
+        </p>
+      )}
       <p className="mx-auto mt-3 max-w-sm text-center text-base leading-relaxed text-slate-300">
         {t.aciklama}
       </p>
@@ -163,11 +209,33 @@ export default function SesSecimiEkrani({
     </div>
   );
 
+  // [E7] Karşılama çalarken tek işlik sakin ekran — bitince (ya da Geç ile)
+  // akış kendiliğinden ritüele ilerler.
+  const karsilamaEkrani = (
+    <div className="mx-auto w-full max-w-lg px-6 text-center">
+      <div className="mb-6 flex justify-center">
+        <span className="ayna-halka flex h-20 w-20 items-center justify-center">
+          <AynaIkon className="h-10 w-10 text-gold" />
+        </span>
+      </div>
+      <h1 className="prizma-serif ay-metin text-2xl font-bold leading-tight">
+        {t.karsilamaBaslik}
+      </h1>
+      <p className="mt-3 text-base leading-relaxed text-slate-300">{t.karsilamaAlt}</p>
+      <button
+        onClick={karsilamayiGec}
+        className="mt-8 text-sm text-slate-500 underline-offset-4 hover:underline"
+      >
+        {t.karsilamaGec}
+      </button>
+    </div>
+  );
+
   if (ayarModu) return kart;
 
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center bg-[#06121e] py-10">
-      {kart}
+      {karsilamaCaliyor ? karsilamaEkrani : kart}
     </main>
   );
 }

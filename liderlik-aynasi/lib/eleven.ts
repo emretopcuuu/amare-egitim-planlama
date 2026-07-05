@@ -32,6 +32,28 @@ export async function sesKlonla(ad: string, ses: Blob, dosyaAdi: string): Promis
   return veri.voice_id;
 }
 
+/** Sesle Yaz Faz 2 — Scribe ile ses→metin. Cihaz tanımasından (Web Speech)
+ * belirgin daha isabetli Türkçe; WhatsApp-içi tarayıcı gibi Web Speech'in hiç
+ * olmadığı ortamlarda da çalışır. Hata fırlatır — çağıran fail-open ele alır
+ * (istemci telefon motoruna geri düşer). */
+export async function sesYaziyaCevir(ses: Blob, dosyaAdi: string): Promise<string> {
+  const form = new FormData();
+  form.append("file", ses, dosyaAdi);
+  form.append("model_id", "scribe_v1");
+  form.append("language_code", "tr");
+  // Etkinlik etiketleri ([gülüşme] vb.) yazı kutusuna girmesin.
+  form.append("tag_audio_events", "false");
+  const res = await fetch(`${TABAN}/speech-to-text`, {
+    method: "POST",
+    headers: { "xi-api-key": anahtar() },
+    body: form,
+  });
+  if (!res.ok) throw new Error(`ElevenLabs ses→metin ${res.status}`);
+  const veri = (await res.json()) as { text?: string };
+  if (typeof veri.text !== "string") throw new Error("ElevenLabs metin dönmedi");
+  return veri.text.trim();
+}
+
 /** Metni verilen sesle mp3'e çevirir (Türkçe destekli turbo model). */
 export async function seslendir(voiceId: string, metin: string): Promise<ArrayBuffer> {
   const res = await fetch(
