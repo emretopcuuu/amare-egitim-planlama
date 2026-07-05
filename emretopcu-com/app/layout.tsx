@@ -12,11 +12,11 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://emretopcu.ai"),
   title: "Emre Topçu | Liderlik, ekip ve sistem",
   description:
-    "One Team Global lideri Emre Topçu. Ekipler kuran, liderler yetiştiren ve bu işi sistemle yapan bir network marketing lideri.",
+    "One Team Global Presidential Diamond lideri Emre Topçu. Ekipler kuran, liderler yetiştiren ve bu işi sistemle yapan bir doğrudan satış lideri.",
   openGraph: {
     title: "Emre Topçu | Liderlik, ekip ve sistem",
     description:
-      "Ekipler kuran, liderler yetiştiren ve bu işi sistemle yapan bir network marketing lideri.",
+      "Ekipler kuran, liderler yetiştiren ve bu işi sistemle yapan bir doğrudan satış lideri.",
     url: "https://emretopcu.ai",
     siteName: "Emre Topçu",
     locale: "tr_TR",
