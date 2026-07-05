@@ -35,22 +35,23 @@ function initFirebase() {
   return admin.firestore();
 }
 
-const yetkiliMi = (event) => {
+const yetkiliMi = (bodyText, req) => {
   try {
-    const body = event.body ? JSON.parse(event.body) : null;
-    if (body && (body.next_run || body.last_run)) return true; // Netlify cron payload
+    const b = bodyText ? JSON.parse(bodyText) : null;
+    if (b && (b.next_run || b.last_run)) return true; // Netlify cron payload
   } catch {}
   const secret = process.env.RUTBE_TRIGGER_SECRET;
-  return !!secret && event.headers?.['x-trigger-secret'] === secret;
+  return !!secret && req.headers.get('x-trigger-secret') === secret;
 };
 
-export const handler = async (event) => {
-  if (!yetkiliMi(event)) return { statusCode: 403, body: 'forbidden' };
+export default async (req) => {
+  const bodyText = await req.text().catch(() => ''); // cron payload / manuel gövde
+  if (!yetkiliMi(bodyText, req)) return new Response('forbidden', { status: 403 });
 
   const db = initFirebase();
   const SB_URL = process.env.SUPABASE_URL;
   const SB_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
-  if (!SB_URL || !SB_KEY) return { statusCode: 500, body: 'supabase env eksik' };
+  if (!SB_URL || !SB_KEY) return new Response('supabase env eksik', { status: 500 });
 
   // 1) Email'i olan liderler
   const snap = await db.collection('konusmacilar').get();
@@ -59,7 +60,7 @@ export const handler = async (event) => {
     const k = d.data();
     if (k.email) liderler.push({ id: d.id, ad: k.ad || d.id, email: String(k.email).trim().toLowerCase(), kariyerGecmis: Array.isArray(k.kariyerGecmis) ? k.kariyerGecmis : [] });
   });
-  if (!liderler.length) return { statusCode: 200, body: 'email kayıtlı lider yok' };
+  if (!liderler.length) return new Response('email kayıtlı lider yok', { status: 200 });
 
   // 2) Amare güncel rank (email in-filter; aynı email'in çoklu kaydında EN YÜKSEK rank)
   const emails = [...new Set(liderler.map(l => l.email))];
@@ -136,5 +137,5 @@ export const handler = async (event) => {
     });
   }
 
-  return { statusCode: 200, body: JSON.stringify({ lider: liderler.length, eslesen: amareRank.size, terfi: terfiler.length, dusme: dusmeler.length }) };
+  return new Response(JSON.stringify({ lider: liderler.length, eslesen: amareRank.size, terfi: terfiler.length, dusme: dusmeler.length }), { status: 200 });
 };

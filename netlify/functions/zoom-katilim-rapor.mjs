@@ -31,13 +31,13 @@ function initFirebase() {
   return admin.firestore();
 }
 
-const yetkiliMi = (event) => {
+const yetkiliMi = (bodyText, req) => {
   try {
-    const body = event.body ? JSON.parse(event.body) : null;
-    if (body && (body.next_run || body.last_run)) return true;
+    const b = bodyText ? JSON.parse(bodyText) : null;
+    if (b && (b.next_run || b.last_run)) return true;
   } catch {}
   const secret = process.env.RUTBE_TRIGGER_SECRET;
-  return !!secret && event.headers?.['x-trigger-secret'] === secret;
+  return !!secret && req.headers.get('x-trigger-secret') === secret;
 };
 
 // Zoom S2S OAuth token
@@ -74,13 +74,14 @@ const ayniGunMu = (isoStr, gun) => {
 // Aynı gün + aynı salonda birden çok eğitim olabilir → oturumu eğitimin SAATİNE en yakın olana göre seç
 const saatDk = (s) => { const [h = 0, m = 0] = String(s || '').split(':').map(n => parseInt(n, 10)); return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0); };
 
-export const handler = async (event) => {
-  if (!yetkiliMi(event)) return { statusCode: 403, body: 'forbidden' };
+export default async (req) => {
+  const bodyText = await req.text().catch(() => '');
+  if (!yetkiliMi(bodyText, req)) return new Response('forbidden', { status: 403 });
 
   const { ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET } = process.env;
   if (!ZOOM_ACCOUNT_ID || !ZOOM_CLIENT_ID || !ZOOM_CLIENT_SECRET) {
     console.log('[zoom-rapor] Zoom env eksik — atlanıyor (kurulum bekleniyor)');
-    return { statusCode: 200, body: 'zoom env eksik, atlandı' };
+    return new Response('zoom env eksik, atlandı', { status: 200 });
   }
 
   const db = initFirebase();
@@ -101,7 +102,7 @@ export const handler = async (event) => {
     if (!m) return; // Zoom ID yok
     adaylar.push({ id: d.id, egitim: e.egitim, tarih: e.tarih, saat: e.saat, zoomId: m[1].replace(/\s/g, '') });
   });
-  if (!adaylar.length) return { statusCode: 200, body: 'işlenecek eğitim yok' };
+  if (!adaylar.length) return new Response('işlenecek eğitim yok', { status: 200 });
 
   const token = await zoomToken();
   const sonuclar = [];
@@ -172,5 +173,5 @@ export const handler = async (event) => {
   }
 
   console.log('[zoom-rapor]', sonuclar.join(' | '));
-  return { statusCode: 200, body: JSON.stringify({ islenen: adaylar.length, sonuclar }) };
+  return new Response(JSON.stringify({ islenen: adaylar.length, sonuclar }), { status: 200 });
 };

@@ -48,33 +48,34 @@ async function egitimBul(db, meetingId) {
   return enIyi;
 }
 
-export const handler = async (event) => {
+// Modern Netlify Functions API (Web Request/Response) — 4KB env limitine tabi değil.
+export default async (req) => {
   const secret = process.env.ZOOM_WEBHOOK_SECRET;
-  if (!secret) return { statusCode: 200, body: 'webhook secret tanımsız' };
-  const body = event.body || '';
+  if (!secret) return new Response('webhook secret tanımsız', { status: 200 });
+  const body = await req.text().catch(() => ''); // HAM gövde — HMAC imza için birebir gerekli
 
   // İmza doğrulama (url_validation dahil her istekte gelir)
-  const ts = event.headers?.['x-zm-request-timestamp'] || '';
-  const imza = event.headers?.['x-zm-signature'] || '';
+  const ts = req.headers.get('x-zm-request-timestamp') || '';
+  const imza = req.headers.get('x-zm-signature') || '';
   const beklenen = 'v0=' + crypto.createHmac('sha256', secret).update(`v0:${ts}:${body}`).digest('hex');
-  if (imza !== beklenen) return { statusCode: 401, body: 'imza geçersiz' };
+  if (imza !== beklenen) return new Response('imza geçersiz', { status: 401 });
 
   let payload;
-  try { payload = JSON.parse(body); } catch { return { statusCode: 400, body: 'json' }; }
+  try { payload = JSON.parse(body); } catch { return new Response('json', { status: 400 }); }
 
   // Zoom kurulum challenge'ı
   if (payload.event === 'endpoint.url_validation') {
     const plain = payload.payload?.plainToken || '';
     const enc = crypto.createHmac('sha256', secret).update(plain).digest('hex');
-    return { statusCode: 200, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plainToken: plain, encryptedToken: enc }) };
+    return new Response(JSON.stringify({ plainToken: plain, encryptedToken: enc }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }
 
   const meetingId = payload.payload?.object?.id;
-  if (!meetingId) return { statusCode: 200, body: 'id yok' };
+  if (!meetingId) return new Response('id yok', { status: 200 });
 
   const db = initFirebase();
   const egitimId = await egitimBul(db, meetingId);
-  if (!egitimId) return { statusCode: 200, body: 'eşleşen eğitim yok' };
+  if (!egitimId) return new Response('eşleşen eğitim yok', { status: 200 });
   const ref = db.collection('takvim').doc(egitimId);
 
   try {
@@ -92,5 +93,5 @@ export const handler = async (event) => {
     }
   } catch (e) { console.warn('[zoom-webhook]', e.message); }
 
-  return { statusCode: 200, body: 'ok' };
+  return new Response('ok', { status: 200 });
 };

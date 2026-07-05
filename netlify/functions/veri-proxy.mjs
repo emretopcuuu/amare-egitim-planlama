@@ -34,8 +34,12 @@ const filtrele = (data, alanlar) => {
   return out;
 };
 
-export const handler = async (event) => {
-  const col = event.queryStringParameters?.col || '';
+// Modern Netlify Functions API (Web Request/Response) — Lambda-compat DEĞİL,
+// böylece 4KB env limiti uygulanmaz. Yardımcı: JSON yanıtı üret.
+const jsonRes = (obj, status, headers) => new Response(typeof obj === 'string' ? obj : JSON.stringify(obj), { status, headers });
+
+export default async (req) => {
+  const col = new URL(req.url).searchParams.get('col') || '';
   const db = initFirebase();
   const headers = {
     'Content-Type': 'application/json',
@@ -57,7 +61,7 @@ export const handler = async (event) => {
         const { transcript, transcriptChunks, ...rest } = d.data();
         return { id: d.id, ...rest };
       });
-      return { statusCode: 200, headers, body: JSON.stringify({ docs }) };
+      return jsonRes({ docs }, 200, headers);
     }
 
     // Özel mod: /ara sayfası için ULTRA hafif video listesi (yalnız arama alanları)
@@ -68,15 +72,15 @@ export const handler = async (event) => {
         .limit(2500)
         .get();
       const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      return { statusCode: 200, headers, body: JSON.stringify({ docs }) };
+      return jsonRes({ docs }, 200, headers);
     }
 
-    if (!(col in WHITELIST)) return { statusCode: 403, headers, body: '{"error":"col"}' };
+    if (!(col in WHITELIST)) return jsonRes('{"error":"col"}', 403, headers);
     const snap = await db.collection(col).limit(500).get();
     const docs = snap.docs.map(d => ({ id: d.id, ...filtrele(d.data(), WHITELIST[col]) }));
-    return { statusCode: 200, headers, body: JSON.stringify({ docs }) };
+    return jsonRes({ docs }, 200, headers);
   } catch (e) {
     console.error('[veri-proxy]', col, e?.message);
-    return { statusCode: 500, headers, body: JSON.stringify({ error: e?.message || 'hata' }) };
+    return jsonRes({ error: e?.message || 'hata' }, 500, headers);
   }
 };

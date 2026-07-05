@@ -32,13 +32,13 @@ function initFirebase() {
   return admin.firestore();
 }
 
-const yetkiliMi = (event) => {
+const yetkiliMi = (bodyText, req) => {
   try {
-    const body = event.body ? JSON.parse(event.body) : null;
-    if (body && (body.next_run || body.last_run)) return true;
+    const b = bodyText ? JSON.parse(bodyText) : null;
+    if (b && (b.next_run || b.last_run)) return true;
   } catch {}
   const secret = process.env.RUTBE_TRIGGER_SECRET;
-  return !!secret && event.headers?.['x-trigger-secret'] === secret;
+  return !!secret && req.headers.get('x-trigger-secret') === secret;
 };
 
 async function zoomToken() {
@@ -67,10 +67,11 @@ function vttToText(vtt) {
 
 const parseTarih = (t) => { const p = String(t || '').split('.').map(Number); if (p.length !== 3 || p.some(isNaN)) return null; const d = new Date(p[2], p[1] - 1, p[0]); return isNaN(d.getTime()) ? null : d; };
 
-export const handler = async (event) => {
-  if (!yetkiliMi(event)) return { statusCode: 403, body: 'forbidden' };
+export default async (req) => {
+  const bodyText = await req.text().catch(() => '');
+  if (!yetkiliMi(bodyText, req)) return new Response('forbidden', { status: 403 });
   const { ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID, ZOOM_CLIENT_SECRET } = process.env;
-  if (!ZOOM_ACCOUNT_ID || !ZOOM_CLIENT_ID || !ZOOM_CLIENT_SECRET) return { statusCode: 200, body: 'zoom env eksik' };
+  if (!ZOOM_ACCOUNT_ID || !ZOOM_CLIENT_ID || !ZOOM_CLIENT_SECRET) return new Response('zoom env eksik', { status: 200 });
 
   const db = initFirebase();
   // Son 3 günün zoomUuid'li eğitimleri (transkript geç hazır olabilir → tekrar dene)
@@ -87,7 +88,7 @@ export const handler = async (event) => {
     if (!dt || dt < alt) return;
     adaylar.push({ id: d.id, egitim: e.egitim, tarih: e.tarih, egitmen: e.egitmen || '', uuid: e.zoomUuid });
   });
-  if (!adaylar.length) return { statusCode: 200, body: 'aday yok' };
+  if (!adaylar.length) return new Response('aday yok', { status: 200 });
 
   const token = await zoomToken();
   const sonuclar = [];
@@ -116,5 +117,5 @@ export const handler = async (event) => {
     } catch (e) { sonuclar.push(`${a.egitim}: HATA ${e.message}`); }
   }
   console.log('[zoom-transkript]', sonuclar.join(' | '));
-  return { statusCode: 200, body: JSON.stringify({ islenen: adaylar.length, sonuclar }) };
+  return new Response(JSON.stringify({ islenen: adaylar.length, sonuclar }), { status: 200 });
 };
