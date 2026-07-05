@@ -650,7 +650,7 @@ function Iletisim() {
           </Manyetik>
           <Manyetik>
             <a
-              href="https://instagram.com/eetopcu"
+              href="https://instagram.com/emretopcu_official"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full border border-white/15 px-8 py-4 text-lg text-fildisi transition-colors hover:border-white/40 active:scale-[0.98]"
