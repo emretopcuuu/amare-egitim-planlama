@@ -43,6 +43,7 @@ function milestoneBul(durum: Durum, hafta: Hafta, kota: number | null): Mileston
 export default function TakipAkis({
   durum: durumBaslangic,
   aksiyonlar,
+  tamamlananAksiyonlar,
   hafta: haftaBaslangic,
   kota,
   sozSesUrl,
@@ -51,6 +52,7 @@ export default function TakipAkis({
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
+  tamamlananAksiyonlar: number[];
   hafta: Hafta;
   kota: number | null;
   sozSesUrl: string | null;
@@ -58,6 +60,38 @@ export default function TakipAkis({
   ortakMomentum: { cevreToplam: number; buHaftaAktif: number } | null;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
+  // [FAZ 6 · Yaşayan Plan] Tamamlanan aksiyon index'leri — checkbox ile toggle.
+  const [tamamlanan, setTamamlanan] = useState<Set<number>>(() => new Set(tamamlananAksiyonlar));
+  const [aksMesgul, setAksMesgul] = useState<number | null>(null);
+  async function aksiyonToggle(i: number) {
+    if (aksMesgul !== null) return;
+    const yeni = !tamamlanan.has(i);
+    setAksMesgul(i);
+    setTamamlanan((s) => {
+      const k = new Set(s);
+      if (yeni) k.add(i);
+      else k.delete(i);
+      return k;
+    });
+    try {
+      const res = await fetch("/api/soz-aksiyon", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ index: i, tamam: yeni }),
+      });
+      if (!res.ok) {
+        // geri al
+        setTamamlanan((s) => {
+          const k = new Set(s);
+          if (yeni) k.delete(i);
+          else k.add(i);
+          return k;
+        });
+      }
+    } finally {
+      setAksMesgul(null);
+    }
+  }
   const [hafta, setHafta] = useState<Hafta>(haftaBaslangic);
   const [not, setNot] = useState("");
   const [gorusme, setGorusme] = useState("");
@@ -296,21 +330,46 @@ export default function TakipAkis({
         </section>
       )}
 
-      {/* Sözündeki adımlar */}
+      {/* Sözündeki adımlar — [FAZ 6] artık işaretlenebilir yaşayan kontrol listesi */}
       {aksiyonlar.length > 0 && (
         <section className="kart-cam rounded-2xl p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            {t.aksiyonHatirlatma}
-          </p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+              {t.aksiyonHatirlatma}
+            </p>
+            <span className="text-[0.7rem] font-semibold text-emerald-300">
+              {tamamlanan.size}/{aksiyonlar.length}
+            </span>
+          </div>
           <ul className="mt-2 space-y-1.5">
-            {aksiyonlar.map((a, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-slate-200">
-                <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.6rem] font-bold text-emerald-300">
-                  {ufukAyEtiket(a.ufuk, now)}
-                </span>
-                <span>{a.metin}</span>
-              </li>
-            ))}
+            {aksiyonlar.map((a, i) => {
+              const bitti = tamamlanan.has(i);
+              return (
+                <li key={i}>
+                  <button
+                    onClick={() => aksiyonToggle(i)}
+                    disabled={aksMesgul !== null}
+                    className="flex w-full items-start gap-2 text-left text-sm disabled:opacity-60"
+                  >
+                    <span
+                      className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[0.6rem] ${
+                        bitti
+                          ? "border-emerald-400 bg-emerald-500/80 text-white"
+                          : "border-white/30 bg-transparent text-transparent"
+                      }`}
+                    >
+                      ✓
+                    </span>
+                    <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.6rem] font-bold text-emerald-300">
+                      {ufukAyEtiket(a.ufuk, now)}
+                    </span>
+                    <span className={bitti ? "text-slate-500 line-through" : "text-slate-200"}>
+                      {a.metin}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </section>
       )}
