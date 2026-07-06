@@ -286,12 +286,15 @@ export async function kariyerDurum(
   return { var: !!data?.kariyer_seviyesi, suanki: data?.kariyer_seviyesi ?? null };
 }
 
-// Pusula'yı en baştan başlat: sohbet, öncelikler ve rızayı temizler. Kişi
-// yanlış bir şey yaptıysa (yanlış liste, yanlış eleme) sıfırdan başlayabilsin.
+// Pusula'yı en baştan başlat: sohbet + öncelikleri temizler. Kişi yanlış bir
+// şey yaptıysa (yanlış liste, yanlış eleme) sıfırdan başlayabilsin.
+// DİKKAT: KVKK rızası (consent_at) artık en baştaki Hazırlık adımında alınıyor,
+// Pusula'da DEĞİL — o yüzden burada SİLİNMEZ. (Eskiden rıza Pusula'da alınırdı;
+// silmek bir kalıntıydı ve "nedenleri yeniden yap" diyen kişiyi en baştaki KVKK
+// ekranına düşürüp tüm onboarding'i sıfır noktasına atıyordu.)
 export async function pusulaSifirla(db: Db, pid: string): Promise<void> {
   await db.from("pusula_mesajlar").delete().eq("participant_id", pid);
   await db.from("pusula").delete().eq("participant_id", pid);
-  await db.from("participants").update({ consent_at: null }).eq("id", pid);
 }
 
 // Son elemeyi GERİ AL: en son (kullanıcı eleme → AYNA yanıtı) çiftini sil.

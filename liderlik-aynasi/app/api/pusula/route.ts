@@ -45,7 +45,8 @@ export async function POST(req: Request) {
     return Response.json({ ok: true });
   }
 
-  // 0) Sıfırla: kişi baştan başlamak isterse sohbet+öncelik+rızayı temizle.
+  // 0) Sıfırla: kişi baştan başlamak isterse sohbet+öncelikleri temizle.
+  // (KVKK rızası Hazırlık'ta alınır, burada dokunulmaz — bkz. pusulaSifirla.)
   if (govde.sifirla === true) {
     await pusulaSifirla(db, session.sub);
     return Response.json({ ok: true });
