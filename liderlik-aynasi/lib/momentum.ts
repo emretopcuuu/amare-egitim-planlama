@@ -2,7 +2,7 @@ import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { momentumPuanla, momentumMesaji } from "@/lib/davranis";
 import { katilimciyaBildir } from "@/lib/push";
-import { haftalikSayilar } from "@/lib/sozTakip";
+import { haftalikSayilar, kotaDolduBildir } from "@/lib/sozTakip";
 import { hedefCekirdek } from "@/lib/hedef";
 import { haftalikGorusmeKotasi } from "@/lib/oyunPlani";
 
@@ -34,7 +34,7 @@ export async function momentumHesaplaVeYaz(
 
   const [{ data: kisiler }, { data: gorevler }, { data: puanlar }, { data: onceki }, { data: modAyar }] =
     await Promise.all([
-      db.from("participants").select("id").eq("role", "participant"),
+      db.from("participants").select("id, full_name").eq("role", "participant"),
       db
         .from("missions")
         .select("participant_id, status, ai_score, issued_at, responded_at, due_at")
@@ -112,6 +112,11 @@ export async function momentumHesaplaVeYaz(
       momentumMesaji(sonuc.skor, oncekiSkor.get(k.id) ?? null),
       "/gorevler"
     );
+    // [FAZ 8 · Madde 16] Bu hafta görüşme kotasını dolduran kişinin şahitlerine
+    // pozitif haber — şahide giden haber dengesini iyiye çevir.
+    if (yolculukKatilim?.kota && yolculukKatilim.gorusmeToplam >= yolculukKatilim.kota) {
+      await kotaDolduBildir(db, k.id, k.full_name);
+    }
   }
   return { yazilan };
 }
