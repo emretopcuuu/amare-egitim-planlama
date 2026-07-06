@@ -22,7 +22,8 @@ export type OnboardingKisi = {
   eksikAdim: OnboardingAdimKod | null; // null = onboarding tamam
   eksikAdimAd: string;
   sonIlerlemeAt: string | null; // son onboarding ilerlemesinin zamanı
-  hatirlatildiAt: string | null; // tek seferlik push damgası
+  hatirlatildiAt: string | null; // en son ne zaman dürtüldü (null = hiç)
+  hatirlatmaSayi: number; // kaç kez dürtüldü (en fazla HATIRLATMA_LIMIT)
 };
 
 function enYeni(...tarihler: (string | null | undefined)[]): string | null {
@@ -46,7 +47,7 @@ export async function onboardingDurumlari(db: Db): Promise<OnboardingKisi[]> {
     db
       .from("participants")
       .select(
-        "id, full_name, phone, login_code, consent_at, ayna_ses_secildi_at, team, onboarding_hatirlatma_at"
+        "id, full_name, phone, login_code, consent_at, ayna_ses_secildi_at, team, onboarding_hatirlatma_at, onboarding_hatirlatma_sayi"
       )
       .eq("role", "participant"),
     db.from("voice_profiles").select("participant_id, updated_at"),
@@ -102,6 +103,7 @@ export async function onboardingDurumlari(db: Db): Promise<OnboardingKisi[]> {
         of?.updated_at
       ),
       hatirlatildiAt: k.onboarding_hatirlatma_at,
+      hatirlatmaSayi: k.onboarding_hatirlatma_sayi ?? 0,
     };
   });
 }
@@ -111,10 +113,16 @@ export async function onboardingDurumlari(db: Db): Promise<OnboardingKisi[]> {
 const KONTROL_ANAHTARI = "onboarding_hatirlatma_kontrol_at";
 const KONTROL_ARALIK_MS = 60 * 60_000; // 1 saat
 const SESSIZLIK_ESIGI_MS = 3 * 60 * 60_000; // son ilerlemeden > 3 saat
+// [U7] Tekrarlanabilir hatırlatma: iki dürtme arası en az ~20 saat, toplam en
+// fazla 3 kez. Böylece admin düşenleri elle kovalamaz; sistem otomatik ~+3s,
+// ~+1gün, ~+2gün ritmiyle nazikçe geri çağırır, sonra susar (spam olmaz).
+const HATIRLATMA_ARALIK_MS = 20 * 60 * 60_000; // iki dürtme arası min 20 saat
+const HATIRLATMA_LIMIT = 3; // toplam en fazla 3 dürtme
 
 /**
- * [E6] Yarıda bırakana tek seferlik push: consent verilmiş AMA onboarding
- * bitmemiş + son ilerlemeden >3 saat geçmiş + daha önce hatırlatılmamış.
+ * [E6/U7] Yarıda bırakana TEKRARLANABİLİR push: consent verilmiş AMA onboarding
+ * bitmemiş + son ilerlemeden >3 saat geçmiş + (hiç dürtülmemiş VEYA son
+ * dürtmeden >20 saat geçmiş) + toplam dürtme < 3.
  * KAMP AÇIKKEN (ayna_aktif=true) HİÇ ÇALIŞMAZ — kamp içinde onboarding
  * hatırlatması gürültüdür; yalnız kamp öncesi dönem içindir.
  * Dönüş: gönderilen push sayısı.
@@ -142,14 +150,21 @@ export async function onboardingHatirlat(db: Db): Promise<number> {
   const durumlar = await onboardingDurumlari(db);
   let gonderilen = 0;
   for (const d of durumlar) {
-    if (!d.rizaVar || !d.eksikAdim || d.hatirlatildiAt) continue;
+    if (!d.rizaVar || !d.eksikAdim || d.hatirlatmaSayi >= HATIRLATMA_LIMIT) continue;
     if (!d.sonIlerlemeAt || simdi - Date.parse(d.sonIlerlemeAt) < SESSIZLIK_ESIGI_MS) continue;
-    // Damgayı ÖNCE at (yarış/çift push guard'ı — taahhüt push deseni).
+    // Daha önce dürtüldüyse iki dürtme arası min süre (20s) geçmeli.
+    if (d.hatirlatildiAt && simdi - Date.parse(d.hatirlatildiAt) < HATIRLATMA_ARALIK_MS) continue;
+    // Damgayı + sayacı ÖNCE artır (yarış/çift push guard'ı): yalnız OKUDUĞUMUZ
+    // sayaç hâlâ aynıysa güncelle (compare-and-swap) — böylece iki tik aynı
+    // kişiye çift push atmaz.
     const { data: sahiplenilen } = await db
       .from("participants")
-      .update({ onboarding_hatirlatma_at: new Date().toISOString() })
+      .update({
+        onboarding_hatirlatma_at: new Date().toISOString(),
+        onboarding_hatirlatma_sayi: d.hatirlatmaSayi + 1,
+      })
       .eq("id", d.id)
-      .is("onboarding_hatirlatma_at", null)
+      .eq("onboarding_hatirlatma_sayi", d.hatirlatmaSayi)
       .select("id")
       .maybeSingle();
     if (!sahiplenilen) continue; // başka bir tik aldı
