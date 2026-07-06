@@ -397,6 +397,19 @@ export default async function AnaSayfa({
     }
   }
 
+  // [FAZ 9 · U2] Yetim yolculuk sayfalarına menüden erişim — İkinci Ayna ve
+  // Mühür Zinciri eskiden yalnız push ile açılıyordu (push kaçarsa ulaşılamazdı).
+  const { data: menuAyarlar } = await db
+    .from("settings")
+    .select("key, value")
+    .in("key", ["ikinci_ayna_acik", "muhur_plus30_acik", "muhur_plus60_acik", "muhur_plus90_acik"]);
+  const menuAyar = new Map((menuAyarlar ?? []).map((a) => [a.key, a.value]));
+  const ikinciAynaAcik = menuAyar.get("ikinci_ayna_acik") === "true";
+  const muhurZinciriAcik =
+    menuAyar.get("muhur_plus30_acik") === "true" ||
+    menuAyar.get("muhur_plus60_acik") === "true" ||
+    menuAyar.get("muhur_plus90_acik") === "true";
+
   const momentumSkor =
     typeof momentumSatirlar?.[0]?.score === "number" ? momentumSatirlar[0].score : null;
   const momentumOnceki =
@@ -525,6 +538,8 @@ export default async function AnaSayfa({
           pusulaTamam={!!pusulaErken?.tamamlandi_at}
           hedefTamam={!!hedefErken?.tamamlandi_at}
           ofTamam={!!ofDurum?.tamamlandi_at}
+          ikinciAynaAcik={ikinciAynaAcik}
+          muhurZinciriAcik={muhurZinciriAcik}
         />
       </header>
       {/* [KURULUM] Kurulu ama bildirim kapalı → tepede büyük "Bildirimleri Aç"
