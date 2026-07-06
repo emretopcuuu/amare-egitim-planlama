@@ -4,6 +4,7 @@ import { ArrowLeft, Download, Link2, Loader2, Sparkles, ImageIcon, AlertCircle, 
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { afisTuru, etiketSec } from '../utils/egitmenEtiket';
 import { uploadGorsel } from '../utils/uploadGorsel';
+import { auth } from '../utils/firebase';
 import { gorselOlusturMarkaAfis } from '../utils/gorselOlusturMarkaAfis';
 import { gorselOlusturProgramAfis } from '../utils/gorselOlusturProgramAfis';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
@@ -283,11 +284,14 @@ export default function GorselStudyo() {
         });
         res = await gorselOlusturProgramAfis({ egitim, programSatirlari, ekPrompt: markaEkIstek(markaSecim), baslik: baslikOzel });
       } else {
-        if (!geminiApiKey) throw new Error('AI Afiş için Gemini API anahtarı gerekli (Ayarlar → AI API Anahtarları).');
+        // Anahtar sunucuda (gemini-afis fonksiyonu, admin ID token ile) → admin ayrı anahtar girmeden çalışır.
+        // Admin kendi anahtarını girdiyse o kullanılır (client-side).
+        const idToken = await auth?.currentUser?.getIdToken?.().catch(() => null);
+        if (!geminiApiKey && !idToken) throw new Error('AI Afiş için admin girişi gerekli (ya da Ayarlar → AI API Anahtarları).');
         // Her üretimde farklı çıksın: rastgele stil yönlendirmesi + kullanıcının ek isteği
         const varyasyon = aiVaryasyonSec();
         const aiEk = [ekIstek.trim(), varyasyon].filter(Boolean).join(' ');
-        res = await gorselOlusturAiAfis({ geminiApiKey, openaiApiKey, egitim, egitmenler: speakers, ekPrompt: aiEk, format: 'portrait' });
+        res = await gorselOlusturAiAfis({ geminiApiKey, openaiApiKey, idToken, egitim, egitmenler: speakers, ekPrompt: aiEk, format: 'portrait' });
       }
       dosyaRef.current = null; // üretilen görsel bağlanacak (yüklü dosya varsa iptal)
       sonB64.current = res.base64;

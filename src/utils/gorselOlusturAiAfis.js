@@ -94,6 +94,20 @@ const arkaPlanGemini = async (geminiKey, egitim, palet, ekPrompt = '') => {
   return await urlToImage(`data:${part.inlineData.mimeType};base64,${part.inlineData.data}`);
 };
 
+// Gemini — SUNUCU PROXY (anahtar sunucuda; admin ID token ile). Client anahtarı
+// yoksa varsayılan yol budur → admin ayrı anahtar girmeden AI Afiş çalışır.
+const arkaPlanGeminiProxy = async (idToken, egitim, palet, ekPrompt = '') => {
+  const res = await fetch('/.netlify/functions/gemini-afis', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+    body: JSON.stringify({ prompt: arkaPlanPrompt(egitim, palet, ekPrompt) }),
+  });
+  if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error || `gemini-afis ${res.status}`); }
+  const data = await res.json();
+  if (!data?.b64) throw new Error('Sunucu Gemini görseli döndürmedi.');
+  return await urlToImage(`data:${data.mimeType || 'image/png'};base64,${data.b64}`);
+};
+
 // OpenAI (sunucu proxy üzerinden — tarayıcı api.openai.com'a CORS ile erişemez)
 const arkaPlanOpenAI = async (openaiKey, egitim, palet, openaiSize, ekPrompt = '') => {
   const res = await fetch('/.netlify/functions/openai-gorsel', {
@@ -106,7 +120,7 @@ const arkaPlanOpenAI = async (openaiKey, egitim, palet, openaiSize, ekPrompt = '
   return await urlToImage('data:image/png;base64,' + data.b64);
 };
 
-export const gorselOlusturAiAfis = async ({ geminiApiKey, openaiApiKey, egitim, egitmenler = [], ekPrompt = '', format = 'portrait' }) => {
+export const gorselOlusturAiAfis = async ({ geminiApiKey, openaiApiKey, idToken, egitim, egitmenler = [], ekPrompt = '', format = 'portrait' }) => {
   const palet = paletSec(egitim);
 
   // Boyut — etkinlik posteri için dikey varsayılan
@@ -118,15 +132,21 @@ export const gorselOlusturAiAfis = async ({ geminiApiKey, openaiApiKey, egitim, 
   // Zemin motoru: Gemini ÖNCELİK (tarayıcıdan çalışır), olmazsa OpenAI sunucu proxy.
   let arkaPlanImg = null;
   const hatalar = [];
+  // 1) Admin kendi anahtarını girdiyse → doğrudan (tarayıcıdan googleapis)
   if (geminiApiKey) {
     try { arkaPlanImg = await arkaPlanGemini(geminiApiKey, egitim, palet, ekPrompt); }
     catch (e) { hatalar.push('Gemini: ' + e.message); }
+  }
+  // 2) Anahtar yoksa → SUNUCU PROXY (anahtar sunucuda; admin ID token ile). Varsayılan yol.
+  if (!arkaPlanImg && idToken) {
+    try { arkaPlanImg = await arkaPlanGeminiProxy(idToken, egitim, palet, ekPrompt); }
+    catch (e) { hatalar.push('Sunucu Gemini: ' + e.message); }
   }
   if (!arkaPlanImg && openaiApiKey) {
     try { arkaPlanImg = await arkaPlanOpenAI(openaiApiKey, egitim, palet, dims.os, ekPrompt); }
     catch (e) { hatalar.push('OpenAI: ' + e.message); }
   }
-  if (!arkaPlanImg) throw new Error('AI Afiş arka planı üretilemedi. ' + (hatalar.join(' | ') || 'Gemini ya da OpenAI anahtarı gerekli.'));
+  if (!arkaPlanImg) throw new Error('AI Afiş arka planı üretilemedi. ' + (hatalar.join(' | ') || 'Sunucu anahtarı ya da admin anahtarı gerekli.'));
 
   const canvas = document.createElement('canvas');
   canvas.width = W; canvas.height = H;
