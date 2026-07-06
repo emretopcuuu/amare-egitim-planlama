@@ -512,6 +512,19 @@ export default async function AnaSayfa({
     if (data) sesKart = { baslik: t.sabahBaslik, renk: "text-amber-300", url: data.signedUrl };
   }
 
+  // Grup ödevi keşfedilebilirliği: kişi menüden tesadüfen bulmasın — takımının
+  // aktif grup ödevi varsa ana ekranda öne çıkan bir kart göster (/grup'a gider).
+  const grupOdevVar =
+    kisi?.camp_unlocked_at && kisi?.team
+      ? ((
+          await db
+            .from("grup_odev")
+            .select("id", { count: "exact", head: true })
+            .eq("takim", kisi.team)
+            .eq("aktif", true)
+        ).count ?? 0) > 0
+      : false;
+
   const ust = (
     <div>
       {/* B9: mühür açıldıysa tek seferlik kısa tur (kendi içinde localStorage ile gated) */}
@@ -542,6 +555,7 @@ export default async function AnaSayfa({
           ofTamam={!!ofDurum?.tamamlandi_at}
           ikinciAynaAcik={ikinciAynaAcik}
           muhurZinciriAcik={muhurZinciriAcik}
+          grupOdevVar={grupOdevVar}
         />
       </header>
       {/* [KURULUM] Kurulu ama bildirim kapalı → tepede büyük "Bildirimleri Aç"
@@ -550,6 +564,25 @@ export default async function AnaSayfa({
       <div className="mt-3">
         <BildirimAcUyari />
       </div>
+      {/* Grup ödevi promptu — menüde gömülü kalmasın; aktif ödev varken burada
+          öne çıkar, dokununca /grup'a gider. */}
+      {grupOdevVar && (
+        <Link
+          href="/grup"
+          className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-royal-light/40 bg-gradient-to-br from-royal/20 to-midnight-card/60 px-4 py-3.5 ring-1 ring-royal/30 transition-colors hover:from-royal/30"
+        >
+          <span className="flex items-center gap-3">
+            <span className="text-2xl" aria-hidden>🤝</span>
+            <span className="min-w-0">
+              <span className="block font-semibold text-slate-100">Grup ödevin var</span>
+              <span className="block text-xs text-slate-400">
+                Grubunla birlikte yap — dokun ve gör
+              </span>
+            </span>
+          </span>
+          <span aria-hidden className="shrink-0 text-slate-400">›</span>
+        </Link>
+      )}
       {/* B3: Pusula sloganı — her gün görünür kimlik çapası */}
       {kisiSlogan && (
         <p className="prizma-serif ay-metin mt-2 text-sm font-medium italic leading-snug text-gold-light/90">

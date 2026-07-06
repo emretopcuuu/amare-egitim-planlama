@@ -30,6 +30,7 @@ type Props = {
   // [FAZ 9 · U2] Yetim yolculuk sayfaları — açıkken menüden erişilebilsin.
   ikinciAynaAcik?: boolean;
   muhurZinciriAcik?: boolean;
+  grupOdevVar?: boolean;
 };
 
 // Çizgi-ikon seti — EMOJİ DEĞİL (eski cihazda □ tofu riski yok), her yerde birebir.
@@ -84,6 +85,7 @@ export default function UstMenu({
   ofTamam: _ofTamam = false,
   ikinciAynaAcik = false,
   muhurZinciriAcik = false,
+  grupOdevVar = false,
 }: Props) {
   const [acik, setAcik] = useState(false);
   const [analizYeni, setAnalizYeni] = useState(false);
@@ -179,7 +181,9 @@ export default function UstMenu({
       etiket: t.menuGrup,
       alt: t.menuAltGrup,
       ikon: IK.grup,
-      rozet: sayiRozet(okunmamisMesaj),
+      // Grup ödevi varken nokta öne çıksın (menüde kaybolmasın); yoksa okunmamış
+      // grup-sohbet mesajı sayısını göster.
+      rozet: grupOdevVar ? noktaRozet : sayiRozet(okunmamisMesaj),
     },
     { href: "/ayna-esi", etiket: t.menuAynaEsi, alt: t.menuAltAynaEsi, ikon: IK.aynaEsi },
     { href: "/takdir", etiket: t.menuTakdir, alt: t.menuAltTakdir, ikon: IK.takdir },
