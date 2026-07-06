@@ -87,6 +87,23 @@ export async function kayitBildir(db: Db, pid: string, ad: string): Promise<void
   }
 }
 
+// [FAZ 8 · Madde 16] ŞAHİDE İYİ HABER: kişi haftalık görüşme kotasını doldurunca
+// şahitlerine POZİTİF haber. Mevcut şahit push'ları çoğunlukla "takıldı/sessiz"
+// idi; dengeyi iyi habere çevirir. Haftada bir (Cuma momentum bloğundan).
+export async function kotaDolduBildir(db: Db, pid: string, ad: string): Promise<void> {
+  const ilkAd = ad.split(" ")[0];
+  const tanikList = await taniklar(db, pid);
+  for (const t of tanikList) {
+    await katilimciyaBildir(
+      db,
+      t.witness_id,
+      "🎯 Şahidin hedefte",
+      `${ilkAd} bu hafta görüşme kotasını doldurdu — şahidi olduğun sözde güçlü ilerliyor.`,
+      "/sahitlik"
+    ).catch(() => {});
+  }
+}
+
 export async function takipDurum(db: Db, pid: string): Promise<TakipDurum> {
   const { data } = await db
     .from("soz_takip")
