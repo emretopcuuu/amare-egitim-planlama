@@ -11,6 +11,7 @@ import { raporHesapla } from "@/lib/rapor";
 import { yeniCumleOku } from "@/lib/bosluk";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
+import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { kariyerHalKisidenTuret, personaBlogu, personaYolculukOdak, KARIYER_RANK, KARIYER_ETIKET } from "@/lib/persona";
 import { aiHataYakala } from "@/lib/uyari";
 import { vinyetSec, type LiderKas } from "@/lib/liderlikVinyetleri";
@@ -1266,7 +1267,7 @@ export async function gorevUret(
       system: [
         {
           type: "text" as const,
-          text: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\n${BASARI_STRATEJISI}\n\n`,
+          text: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\n${BASARI_STRATEJISI}\n\n${DIL_KALITESI}\n\n`,
           cache_control: { type: "ephemeral" as const },
         },
         {
