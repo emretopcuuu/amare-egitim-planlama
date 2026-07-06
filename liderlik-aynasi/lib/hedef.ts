@@ -10,7 +10,7 @@ import {
   KARIYER_BASAMAKLARI,
   GUNLUK_SAAT_SECENEKLERI,
   TEMPO_SECENEKLERI,
-  tempoSure,
+  planSuresi,
   kariyerPlaniHesapla,
   tlFormat,
   type KariyerPlani,
@@ -371,14 +371,17 @@ export async function kariyerPlaniKaydet(
   const rutbe = KARIYER_BASAMAKLARI[hedefIndex];
   if (!tempo || !saat || !rutbe) return null;
 
-  // Süre, kişinin Son 3 ay ortalama OV'sinden seçtiği tempoyla TÜRETİLİR.
+  // Süre, seçilen tempoyla bağlayıcı kapıdan (OV VEYA VOLL) TÜRETİLİR. Kayıt
+  // kariyeri için gereken OV zaten fazlaysa süreyi VOLL belirler; Diamond+ ta
+  // büyüme yarılanır (bkz. planKapisi). "Surplus OV → 1 ayda PD" yanılgısı biter.
   const { data: h } = await db
     .from("hedef")
-    .select("baslangic_ov")
+    .select("baslangic_ov, baslangic_vol")
     .eq("participant_id", katilimci.id)
     .maybeSingle();
   const ov0 = (h?.baslangic_ov as number | null) ?? 0;
-  const sureAy = tempoSure(ov0, rutbe.ov, tempo.buyume);
+  const vol0 = (h?.baslangic_vol as number | null) ?? 0;
+  const sureAy = planSuresi(ov0, vol0, hedefIndex, tempo.buyume);
 
   const plan = kariyerPlaniHesapla(hedefIndex, sureAy, saat.gunluk, saat.etiket);
   if (!plan) return null;
@@ -467,10 +470,10 @@ export async function hedefCekirdek(db: Db, pid: string): Promise<HedefCekirdek 
 export async function hedefDurum(
   db: Db,
   pid: string
-): Promise<{ asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null; yeniBaslangic: boolean }> {
+): Promise<{ asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null; baslangicVol: number | null; yeniBaslangic: boolean }> {
   const { data } = await db
     .from("hedef")
-    .select("asama, tamamlandi_at, baslangic_noktasi, plan, baslangic_ov")
+    .select("asama, tamamlandi_at, baslangic_noktasi, plan, baslangic_ov, baslangic_vol")
     .eq("participant_id", pid)
     .maybeSingle();
   return {
@@ -479,6 +482,7 @@ export async function hedefDurum(
     baslangicVar: !!data?.baslangic_noktasi,
     plan: (data?.plan as KariyerPlani | null) ?? null,
     baslangicOv: (data?.baslangic_ov as number | null) ?? null,
+    baslangicVol: (data?.baslangic_vol as number | null) ?? null,
     // Yeni başlayan (0-3 ay) işaretlediyse → Hızlı Başlangıç (HBB) bonusları gösterilir.
     yeniBaslangic: data?.baslangic_noktasi === "yeni",
   };
