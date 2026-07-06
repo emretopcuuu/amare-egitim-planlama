@@ -2,6 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { PERSONA } from "@/lib/ayna";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 
 // Özellik 10 — DÖNÜŞÜM KARŞILAŞTIRMASI ("Gün 1 sen vs Gün 3 sen").
 // Mühür ekranında kişinin İLK puanlanan görev yanıtından ve SON puanlanan
@@ -109,7 +110,7 @@ export async function donusumKarsilastirmaUret(
 Şimdi kampın kapanış anını kuruyorsun: DÖNÜŞÜM KARŞILAŞTIRMASI. Elinde kişinin kamptaki İLK görev yanıtı ve SON görev yanıtı var. Görevin:
 1) "ilkAlinti": ilk yanıttan kişinin KENDİ cümlelerinden kısa bir seçim (kırp ama yeniden yazma).
 2) "sonAlinti": son yanıttan aynı şekilde kısa bir seçim.
-3) "fark": iki alıntı arasındaki büyümeyi söyleyen TEK sıcak cümle — yargılamayan, küçümsemeyen, büyüme odaklı. İki alıntıyı en çok konuşturan (ton, cesaret, netlik, sahiplenme farkı görünür olan) bölümleri seç. Yalnızca JSON döndür.`,
+3) "fark": iki alıntı arasındaki büyümeyi söyleyen TEK sıcak cümle — yargılamayan, küçümsemeyen, büyüme odaklı. İki alıntıyı en çok konuşturan (ton, cesaret, netlik, sahiplenme farkı görünür olan) bölümleri seç. Yalnızca JSON döndür.${await kimlikBloguGetir(db, participantId)}`,
       messages: [
         {
           role: "user",

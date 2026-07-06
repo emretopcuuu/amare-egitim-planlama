@@ -5,6 +5,7 @@ import { pusulaOzeti } from "@/lib/pusula";
 import { kisiSentezi, sentezMetni } from "@/lib/sentez";
 import { gelisimMektubuGetir } from "@/lib/gelisimMektubu";
 import { kritikAiHatasiBildir } from "@/lib/uyari";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 
 // GELİŞTİRME #1 — AYNA KOÇU. Adayın her an açabildiği sürekli, bağlamsal sohbet.
 // Pusula (neden/iç engel) + Ön Farkındalık (kör nokta) + aktif görev bağlamını
@@ -175,7 +176,7 @@ ${sentez ? `\nGELİŞİM SENTEZİ (yalnız senin gözün; bu kişiyi tanı ve ya
 ADAY BAĞLAMI (aktif görevler + ilerleme; sessizce kullan):
 ${JSON.stringify(baglam)}
 
-Yanıtın YALNIZCA adaya söyleyeceğin temiz, doğru yazılmış Türkçe replik olsun. Parantez içi not, aşama etiketi, meta açıklama ASLA koyma.${ekTon ? `\n\nADMIN TON AYARI (üsluba uygula): ${ekTon}` : ""}`,
+Yanıtın YALNIZCA adaya söyleyeceğin temiz, doğru yazılmış Türkçe replik olsun. Parantez içi not, aşama etiketi, meta açıklama ASLA koyma.${ekTon ? `\n\nADMIN TON AYARI (üsluba uygula): ${ekTon}` : ""}${await kimlikBloguGetir(db, katilimci.id)}`,
       messages: mesajlar,
     });
     if (yanit.stop_reason === "refusal") return null;

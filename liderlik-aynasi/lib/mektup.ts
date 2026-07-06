@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 import { raporHesapla } from "@/lib/rapor";
 import { pusulaOzeti } from "@/lib/pusula";
 import { hedefOzeti } from "@/lib/hedef";
@@ -97,7 +98,7 @@ export async function mektupGetirVeyaUret(
       max_tokens: 4096,
       thinking: { type: "adaptive" },
       output_config: { effort: "low" },
-      system: `${SISTEM}\n\n${KATILIMCI_EVRENI}\n\n${DIL_KALITESI}`,
+      system: `${SISTEM}\n\n${KATILIMCI_EVRENI}\n\n${DIL_KALITESI}${await kimlikBloguGetir(db, katilimciId)}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
 

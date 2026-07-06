@@ -4250,6 +4250,22 @@ export const tr = {
     baslik: "Aynaya kendini tanıt",
     aciklama: "Aynan seninle kendi sesinle konuşacak.",
     basla: "Ritüeli başlat",
+    // KİMLİK adımı — ritüelin en başı: cinsiyet + yaş. Aynan (ve tüm yapay zekâ
+    // rehberliği) sana doğru hitap edebilsin, dilini yaşına göre kurabilsin diye.
+    kimlik: {
+      baslik: "Seni doğru tanıyayım",
+      aciklama:
+        "Aynan sana doğru seslenebilsin ve dilini sana göre kursun diye iki kısa şey soruyorum.",
+      cinsiyetSoru: "Cinsiyetin",
+      kadin: "Kadın",
+      erkek: "Erkek",
+      diger: "Belirtmek istemiyorum",
+      yasSoru: "Yaşın",
+      yasYer: "Örn: 38",
+      devam: "Devam et",
+      hata: "Kaydedilemedi — bağlantını kontrol edip tekrar dene.",
+      gizlilik: "Bu bilgi yalnız aynanın sana doğru hitap etmesi için kullanılır.",
+    },
     // Canlı Ayna (yüz yakalama) — ses ritüelinin EN SONUNDA: kişi önce sesiyle
     // tanışır, sonra aynaya yüzünü gösterir. Zorunlu değil: kişi isterse geçip
     // Pusula hub'ında sonradan yapabilir.

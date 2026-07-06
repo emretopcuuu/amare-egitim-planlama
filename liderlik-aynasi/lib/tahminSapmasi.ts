@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 
 // FAZ 4.3 — TAHMİN-GERÇEK SAPMASI. Kişinin "tahmin" görevine verdiği serbest
 // metin yanıtı ile kampta biriken GERÇEK dış puan profili karşılaştırılır.
@@ -74,7 +75,8 @@ export async function tahminSapmasiGorevUret(
       thinking: { type: "disabled" },
       output_config: { format: { type: "json_schema", schema: SEMA } },
       system:
-        "Bir liderlik kampı katılımcısının 'tahmin' görevine yazdığı serbest metni, kampta biriken GERÇEK dış puan profiliyle karşılaştır. Kişi kendi hakkında bir öngörüde bulunmuştu (hangi özellikte güçlü/zayıf görüneceği gibi); bu öngörü gerçek profille BELİRGİN şekilde çelişiyorsa sapmaVar=true yap ve merak uyandıran bir görev yaz — ama SONUCU asla açık etme, yalnız 'şaşıracaksın' hissi ver.",
+        "Bir liderlik kampı katılımcısının 'tahmin' görevine yazdığı serbest metni, kampta biriken GERÇEK dış puan profiliyle karşılaştır. Kişi kendi hakkında bir öngörüde bulunmuştu (hangi özellikte güçlü/zayıf görüneceği gibi); bu öngörü gerçek profille BELİRGİN şekilde çelişiyorsa sapmaVar=true yap ve merak uyandıran bir görev yaz — ama SONUCU asla açık etme, yalnız 'şaşıracaksın' hissi ver." +
+        (await kimlikBloguGetir(db, kisi.id)),
       messages: [
         {
           role: "user",
