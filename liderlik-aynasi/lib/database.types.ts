@@ -35,52 +35,6 @@ export type Database = {
         }
         Relationships: []
       }
-      akran_kurtarma: {
-        Row: {
-          aktif_id: string
-          created_at: string
-          id: string
-          mission_id: string
-          sessiz_id: string
-        }
-        Insert: {
-          aktif_id: string
-          created_at?: string
-          id?: string
-          mission_id: string
-          sessiz_id: string
-        }
-        Update: {
-          aktif_id?: string
-          created_at?: string
-          id?: string
-          mission_id?: string
-          sessiz_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "akran_kurtarma_aktif_id_fkey"
-            columns: ["aktif_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "akran_kurtarma_mission_id_fkey"
-            columns: ["mission_id"]
-            isOneToOne: true
-            referencedRelation: "missions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "akran_kurtarma_sessiz_id_fkey"
-            columns: ["sessiz_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       assignments: {
         Row: {
           created_at: string
