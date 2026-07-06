@@ -30,6 +30,8 @@ type Props = {
   // [FAZ 9 · U2] Yetim yolculuk sayfaları — açıkken menüden erişilebilsin.
   ikinciAynaAcik?: boolean;
   muhurZinciriAcik?: boolean;
+  grupOdevVar?: boolean;
+  planOnayli?: boolean;
 };
 
 // Çizgi-ikon seti — EMOJİ DEĞİL (eski cihazda □ tofu riski yok), her yerde birebir.
@@ -63,6 +65,7 @@ const IK = {
   aynaEsi: <Ikon cocuk={<><path d="M8 13l2 2 4-4" /><path d="M12 21C7 17 3 13 3 8a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 1.2-.3 2.3-.8 3.3" /></>} />,
   takdir: <Ikon cocuk={<><path d="M12 21s-7-4.5-9-9a4 4 0 0 1 7-2.5A4 4 0 0 1 21 12c-2 4.5-9 9-9 9Z" /></>} />,
   gizlilik: <Ikon cocuk={<><path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6l7-3Z" /><path d="M9 12l2 2 4-4" /></>} />,
+  plan: <Ikon cocuk={<><path d="M9 4h6a2 2 0 0 1 2 2v13a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" /><path d="M9 4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2" /><path d="M9 12l1.5 1.5L13 11M9 16h4" /></>} />,
 };
 
 // Üst menü: açılış ekranı tek işe odaklanır; ikincil her şey buradan açılır.
@@ -84,6 +87,8 @@ export default function UstMenu({
   ofTamam: _ofTamam = false,
   ikinciAynaAcik = false,
   muhurZinciriAcik = false,
+  grupOdevVar = false,
+  planOnayli = false,
 }: Props) {
   const [acik, setAcik] = useState(false);
   const [analizYeni, setAnalizYeni] = useState(false);
@@ -158,6 +163,10 @@ export default function UstMenu({
     });
   if (raporlarAcik)
     sanaOzel.push({ href: "/ayna", etiket: t.menuRapor, alt: t.menuAltRapor, ikon: IK.rapor });
+  // 90 günlük oyun planı onaylandıysa, tam plana her an dön (eskiden yalnız Ayna
+  // Raporu içinde gömülüydü, kişi tekrar bulamıyordu).
+  if (planOnayli)
+    sanaOzel.push({ href: "/oyun-planim", etiket: t.menuPlan, alt: t.menuAltPlan, ikon: IK.plan });
   if (yansimanHazir)
     sanaOzel.push({ href: "/yansiman", etiket: t.menuYansiman, alt: t.menuAltYansiman, ikon: IK.yansiman });
   // [FAZ 5 · Tek Söz birleşmesi] Eski v1 "/soz" (pledges) menü girişi KALDIRILDI —
@@ -179,7 +188,9 @@ export default function UstMenu({
       etiket: t.menuGrup,
       alt: t.menuAltGrup,
       ikon: IK.grup,
-      rozet: sayiRozet(okunmamisMesaj),
+      // Grup ödevi varken nokta öne çıksın (menüde kaybolmasın); yoksa okunmamış
+      // grup-sohbet mesajı sayısını göster.
+      rozet: grupOdevVar ? noktaRozet : sayiRozet(okunmamisMesaj),
     },
     { href: "/ayna-esi", etiket: t.menuAynaEsi, alt: t.menuAltAynaEsi, ikon: IK.aynaEsi },
     { href: "/takdir", etiket: t.menuTakdir, alt: t.menuAltTakdir, ikon: IK.takdir },

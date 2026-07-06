@@ -194,6 +194,54 @@ export function tempoSure(ov0: number, ovHedef: number, buyume: number): number 
   return Math.max(1, Math.ceil(Math.log(ovHedef / ov0) / Math.log(1 + buyume)));
 }
 
+// ─── KARİYER KAPISI: OV + VOLL birlikte (Aytug Gönül geri bildirimi) ─────────
+// Bir kariyer basamağının şartı hem OV hem VOLL (dengeli hacim). Kayıt kariyeri
+// için gereken OV zaten fazlasıyla varsa (surplus OV), asıl darboğaz VOLL'dür —
+// süre ve simülasyon VOLL'ye göre kurulur. Ayrıca Diamond ve üstünde aylık %20+
+// büyüme yüksek ciroda sürdürülemez; seçilen tempo yarılanır (%20 → ~%10 ort.).
+
+export const DIAMOND_INDEX = KARIYER_BASAMAKLARI.findIndex((r) => r.ad === "Diamond");
+export const VOLL_SIM_SINIR = 300_000; // Presidential Diamond VOLL şartı
+
+// Diamond ve üstünde seçilen tempoyu yarıya indir (gerçekçi yüksek-hacim büyüme).
+export function etkinBuyume(hedefIndex: number, buyume: number): number {
+  return hedefIndex >= DIAMOND_INDEX ? buyume / 2 : buyume;
+}
+
+export type PlanKapisi = {
+  metrik: "OV" | "VOLL";
+  baslangic: number;
+  hedef: number;
+  buyume: number; // etkin (Diamond+ yarılanmış) büyüme
+  sinir: number; // simülasyon üst sınırı (OV: 1M, VOLL: 300k)
+  sureAy: number;
+};
+
+// Bağlayıcı (daha uzun süren) kapıyı bul: OV zaten fazlaysa VOLL, aksi halde OV.
+export function planKapisi(
+  ov0: number,
+  vol0: number,
+  hedefIndex: number,
+  buyume: number
+): PlanKapisi {
+  const rutbe = KARIYER_BASAMAKLARI[hedefIndex];
+  const g = etkinBuyume(hedefIndex, buyume);
+  const ovSure = rutbe ? tempoSure(ov0, rutbe.ov, g) : 1;
+  const volHedef = rutbe?.voll ?? null;
+  const volSure = volHedef ? tempoSure(vol0, volHedef, g) : 1;
+  // VOLL kapısı en az OV kapısı kadar bağlayıcıysa (>=) VOLL'yi esas al: yüksek
+  // basamakta dengeli hacim asıl darboğazdır, kişi "1 ayda PD" yanılgısı görmesin.
+  if (volHedef && volSure >= ovSure) {
+    return { metrik: "VOLL", baslangic: vol0, hedef: volHedef, buyume: g, sinir: VOLL_SIM_SINIR, sureAy: Math.max(1, volSure) };
+  }
+  return { metrik: "OV", baslangic: ov0, hedef: rutbe?.ov ?? 0, buyume: g, sinir: OV_SIM_SINIR, sureAy: Math.max(1, ovSure) };
+}
+
+// Kariyer hedefine ulaşma süresi — bağlayıcı kapıdan (OV veya VOLL) türetilir.
+export function planSuresi(ov0: number, vol0: number, hedefIndex: number, buyume: number): number {
+  return planKapisi(ov0, vol0, hedefIndex, buyume).sureAy;
+}
+
 // Simülasyon tablosu 1.000.000 OV'yi geçince afaki büyümeyi GÖSTERMESİN: sınırı
 // ilk geçtiği aya kadar olan ayları döndür (o ay dahil), en fazla maxAy.
 export const OV_SIM_SINIR = 1_000_000;

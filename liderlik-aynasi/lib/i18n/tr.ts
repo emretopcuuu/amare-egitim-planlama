@@ -390,9 +390,9 @@ export const tr = {
     menuProgram: "Kamp Programı",
     menuYansiman: "Yansımanı izle",
     menuRapor: "Ayna Raporum",
+    menuPlan: "90 Günlük Planım",
     menuKocu: "Ayna Koçu",
     menuGunluk: "Tek Cümle",
-    menuPlan: "🧭 90 Günlük Yolculuk",
     menuBen: "Profilim",
     menuGrup: "Grup Ödevi",
     // Menü maddelerinin alt açıklamaları (ne işe yaradığı bir bakışta anlaşılsın)
@@ -401,6 +401,7 @@ export const tr = {
     menuAltSoz: "Kampı bitirirken verdiğin söz",
     menuAltOzDuzenle: "Kendi puanlarını gözden geçir",
     menuAltRapor: "Sana dair toplanan ayna",
+    menuAltPlan: "Onayladığın 90 günlük oyun planına dön",
     menuAltYansiman: "Sana özel kısa yansıma",
     menuAltBen: "Bilgilerin ve kariyer konumun",
     menuAltGunluk: "Bugünü tek cümlede yakala",
@@ -1220,14 +1221,16 @@ export const tr = {
       "VOLL (Volume of Own Line Levels): kariyer hesabında sayılan, kendi hatlarından (kollarından) gelen aylık hacim. Son 3 ay ortalamanı ofis panelindeki raporundan görebilirsin.",
     noktaDevam: "Devam et",
     // OV simülasyonu
-    simulasyonBaslik: "OV büyüme simülasyonu",
+    simulasyonBaslik: (metrik: string) => `${metrik} büyüme simülasyonu`,
     simulasyonUyari:
       "Bu tablodaki rakamlar varsayımsal senaryolardır — gelir garantisi değildir. Gerçek sonuçlar kişiden kişiye önemli ölçüde farklılık gösterir.",
     simulasyonAyEtiket: (ay: number) => `${ay}. ay`,
     simulasyonGerekliTempo: (oran: string) => `Hedef için gereken tempo: aylık ${oran}`,
     simulasyonMakul: (ay: number) => `%20 büyümeyle tahmini süre: ${ay} ay`,
-    simulasyonSinirNot:
-      "1.000.000 OV sonrası gösterilmedi — sağlıklı ve sürdürülebilir büyümeye odaklan.",
+    simulasyonSinirNot: (metrik: string) =>
+      metrik === "VOLL"
+        ? "300.000 VOLL sonrası gösterilmedi — dengeli ve sürdürülebilir hacme odaklan."
+        : "1.000.000 OV sonrası gösterilmedi — sağlıklı ve sürdürülebilir büyümeye odaklan.",
     // Kampta + sonraki 90 gün destek vaadi (plan ekranı)
     destek90Baslik: "Yalnız değilsin",
     destek90Metin:
@@ -1255,7 +1258,7 @@ export const tr = {
     tabloEnDusuk: "EN DÜŞÜK",
     tabloEnYuksek: "EN YÜKSEK",
     tabloOrtalama: "ORTALAMA",
-    q2Baslik: "Hangi tempoda büyümek istersin? (aylık OV artışı)",
+    q2Baslik: "Hangi tempoda büyümek istersin? (aylık büyüme temposu)",
     q3Baslik: "Bu gelire ulaşacağını yüzde yüz bilsen — günde maksimum kaç saat ayırabilirsin?",
     hedefinEtiket: "Hedefin",
     suresiEtiket: "Süresi",
