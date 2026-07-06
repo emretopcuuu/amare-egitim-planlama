@@ -96,6 +96,7 @@ type Kivilcim = {
   yuzde: number;
   dalgaAcik?: boolean;
   gorevBekleyen?: number;
+  mod?: "kamp" | "yolculuk";
 };
 
 export default function AltNav() {
@@ -175,11 +176,15 @@ export default function AltNav() {
   // B1: bağlam-duyarlı çubuk. Dalga kapalıyken "Değerlendir" sekmesi ölü kalır;
   // onun yerine her zaman değerli olan "Ayna Koçu"nu göster. Dalga açıkken
   // (yükleme dahil değilse) değerlendirme öne döner.
-  const sekmeler = SEKMELER.map((s) =>
-    s.href === "/degerlendir" && kiv && kiv.dalgaAcik === false
-      ? { href: "/kocu", ikon: "koc" as IkonAd, etiket: t.koc }
-      : s
-  );
+  const sekmeler = SEKMELER.map((s) => {
+    if (s.href === "/degerlendir" && kiv && kiv.dalgaAcik === false)
+      return { href: "/kocu", ikon: "koc" as IkonAd, etiket: t.koc };
+    // [FAZ 9 · U1] Yolculuk modunda "Program" (bitmiş kamp takvimi) ölü kalır;
+    // onun yerine günlük yolculuk ekranı "Takip"i göster.
+    if (s.href === "/program" && kiv?.mod === "yolculuk")
+      return { href: "/takip", ikon: s.ikon, etiket: "Takip" };
+    return s;
+  });
 
   return (
     <div
