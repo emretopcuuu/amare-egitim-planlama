@@ -13,10 +13,13 @@ type Kisi = {
   seri: number;
   kacirilanGun: number;
   sonAdim: string | null;
+  haftaGorusme: number;
+  haftaKota: number | null;
 };
 
 export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
   const [gonderilen, setGonderilen] = useState<Record<string, boolean>>({});
+  const [alkislanan, setAlkislanan] = useState<Record<string, boolean>>({});
   const [mesgul, setMesgul] = useState<string | null>(null);
 
   async function durt(sahibi: string, tip: string) {
@@ -27,7 +30,9 @@ export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ sahibi, tip }),
       });
-      if (res.ok) setGonderilen((g) => ({ ...g, [sahibi]: true }));
+      if (!res.ok) return;
+      if (tip === "alkis") setAlkislanan((g) => ({ ...g, [sahibi]: true }));
+      else setGonderilen((g) => ({ ...g, [sahibi]: true }));
     } finally {
       setMesgul(null);
     }
@@ -48,6 +53,7 @@ export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
           {kisiler.map((k) => {
             const takildi = k.kacirilanGun >= 2;
             const gonder = gonderilen[k.sahibiId];
+            const alkislandi = alkislanan[k.sahibiId];
             return (
               <li
                 key={k.sahibiId}
@@ -63,6 +69,25 @@ export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
                     </p>
                   </div>
                 </div>
+                {/* [Faz 9] Şahit Karnesi — haftalık kota gerçekleşmesi. */}
+                {k.haftaKota != null && (
+                  <div className="mt-2 rounded-xl bg-white/[0.03] px-3 py-2">
+                    <div className="flex items-center justify-between text-[0.7rem] text-slate-400">
+                      <span>📞 Bu hafta görüşme</span>
+                      <span className="font-semibold text-slate-200">
+                        {k.haftaGorusme} / {k.haftaKota}
+                      </span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+                      <div
+                        className="h-full rounded-full bg-emerald-400"
+                        style={{
+                          width: `${Math.min(100, Math.round((k.haftaGorusme / k.haftaKota) * 100))}%`,
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {gonder ? (
                     <span className="text-sm font-medium text-emerald-300">{t.gonderildi}</span>
@@ -83,6 +108,18 @@ export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
                         {t.tesvik}
                       </button>
                     </>
+                  )}
+                  {/* [Faz 10] Şahit Alkışı — dürtme değil, tek dokunuşluk takdir. */}
+                  {alkislandi ? (
+                    <span className="text-sm font-medium text-gold-light">👏 Alkışlandı</span>
+                  ) : (
+                    <button
+                      onClick={() => durt(k.sahibiId, "alkis")}
+                      disabled={mesgul !== null}
+                      className="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-sm font-medium text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50"
+                    >
+                      👏 Alkışla
+                    </button>
                   )}
                   {k.telefon && (
                     <a

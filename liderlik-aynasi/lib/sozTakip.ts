@@ -3,6 +3,8 @@ import type { Db } from "@/lib/degerlendirme";
 import { katilimciyaBildir } from "@/lib/push";
 import { taniklar } from "@/lib/soz";
 import { haftaBaslangici } from "@/lib/momentum";
+import { hedefCekirdek } from "@/lib/hedef";
+import { haftalikGorusmeKotasi } from "@/lib/oyunPlani";
 import {
   bugunTr,
   takipDurumHesapla,
@@ -102,6 +104,9 @@ export type TakipEdilen = {
   seri: number;
   kacirilanGun: number;
   sonAdim: string | null;
+  // [Faz 9] Şahit Karnesi — haftalık kota gerçekleşmesi (varsa).
+  haftaGorusme: number;
+  haftaKota: number | null;
 };
 
 // Bir liderin şahit olduğu kişiler + ilerlemeleri (şahit paneli).
@@ -114,7 +119,11 @@ export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipE
   const rows = tanikRows ?? [];
   const sonuc: TakipEdilen[] = [];
   for (const r of rows) {
-    const durum = await takipDurum(db, r.soz_sahibi);
+    const [durum, hafta, hedef] = await Promise.all([
+      takipDurum(db, r.soz_sahibi),
+      haftalikSayilar(db, r.soz_sahibi),
+      hedefCekirdek(db, r.soz_sahibi),
+    ]);
     const sahip = r.sahip as { full_name: string; phone: string | null } | null;
     const sonAdim = durum.son14.filter((g) => g.yapildi).slice(-1)[0]?.gun ?? null;
     sonuc.push({
@@ -124,6 +133,8 @@ export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipE
       seri: durum.seri,
       kacirilanGun: durum.kacirilanGun,
       sonAdim,
+      haftaGorusme: hafta.gorusmeToplam,
+      haftaKota: haftalikGorusmeKotasi(hedef?.plan?.haftalikSaat ?? null),
     });
   }
   return sonuc.sort((a, b) => b.kacirilanGun - a.kacirilanGun);
