@@ -120,6 +120,8 @@ export type TakipEdilen = {
   // [Şahitlik geliştirme #5] Bugün bu kişiye dürtme/teşvik gönderildi mi —
   // sunucudan (sayfa yenilense de kalıcı; client state'e güvenmez).
   bugunGonderildi: boolean;
+  // [Şahitlik geliştirme #3] Son 14 gün mini şerit — /takip'teki aynı veri.
+  son14: { gun: string; yapildi: boolean | null }[];
 };
 
 // Bir liderin şahit olduğu kişiler + ilerlemeleri (şahit paneli).
@@ -168,6 +170,7 @@ export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipE
       sozAksiyonlari: soz?.aksiyonlar ?? [],
       haftaKayit: hafta.kayitToplam,
       bugunGonderildi: bugunGonderildiSet.has(r.soz_sahibi),
+      son14: durum.son14,
     });
   }
   return sonuc.sort((a, b) => b.kacirilanGun - a.kacirilanGun);
