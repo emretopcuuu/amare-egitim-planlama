@@ -203,7 +203,7 @@ export const tr = {
     // [E7] Seçimden hemen sonra AYNA'nın seçilen sesle kişisel karşılaması.
     // Metin sunucuda /api/karsilama içinde seslendirilir (sabit + ilk ad).
     karsilamaMetni: (ad: string) =>
-      `Merhaba ${ad}. Ben Aynan. Önümüzdeki üç gün boyunca yanındayım.`,
+      `Merhaba ${ad}. Ben Aynan. Bu yolculuğun her adımında yanındayım.`,
     karsilamaBaslik: "Aynan seninle tanışıyor…",
     karsilamaAlt: "Seçtiğin sesle ilk kez konuşuyor.",
     karsilamaGec: "Geç →",
