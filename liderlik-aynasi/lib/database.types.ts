@@ -2102,6 +2102,7 @@ export type Database = {
           kidem_ay: number | null
           login_code: string
           onboarding_hatirlatma_at: string | null
+          onboarding_hatirlatma_sayi: number
           onboarding_toren_at: string | null
           phone: string | null
           profil_foto_path: string | null
@@ -2136,6 +2137,7 @@ export type Database = {
           kidem_ay?: number | null
           login_code: string
           onboarding_hatirlatma_at?: string | null
+          onboarding_hatirlatma_sayi?: number
           onboarding_toren_at?: string | null
           phone?: string | null
           profil_foto_path?: string | null
@@ -2170,6 +2172,7 @@ export type Database = {
           kidem_ay?: number | null
           login_code?: string
           onboarding_hatirlatma_at?: string | null
+          onboarding_hatirlatma_sayi?: number
           onboarding_toren_at?: string | null
           phone?: string | null
           profil_foto_path?: string | null
