@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { supabaseAdmin } from "@/lib/supabase/server";
 import { herkeseBildir } from "@/lib/push";
 import { onFarkindalikOzeti } from "@/lib/ayna";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 import { tr } from "@/lib/i18n/tr";
 
 type Db = ReturnType<typeof supabaseAdmin>;
@@ -67,7 +68,8 @@ async function dominoIcgoru(db: Db, pid: string): Promise<string | null> {
       thinking: { type: "disabled" },
       output_config: { format: { type: "json_schema", schema: ICGORU_SEMASI } },
       system:
-        "Bir liderlik kampı katılımcısının 3 günde biriken farkındalık profilini okuyorsun (kamp boyunca derinleşen tema, kör nokta, sosyal tema). Görevin: bu kamptan kişinin yanına kalması gereken EN GÜÇLÜ TEK içgörüyü tek kısa cümleye damıtmak — 'sen' diliyle, sıcak ama net, klişesiz. Kör noktayı kırıcı biçimde yüzüne vurma; gücü ve dönüşümü öne al. Yalnızca JSON döndür.",
+        "Bir liderlik kampı katılımcısının 3 günde biriken farkındalık profilini okuyorsun (kamp boyunca derinleşen tema, kör nokta, sosyal tema). Görevin: bu kamptan kişinin yanına kalması gereken EN GÜÇLÜ TEK içgörüyü tek kısa cümleye damıtmak — 'sen' diliyle, sıcak ama net, klişesiz. Kör noktayı kırıcı biçimde yüzüne vurma; gücü ve dönüşümü öne al. Yalnızca JSON döndür." +
+        (await kimlikBloguGetir(db, pid)),
       messages: [{ role: "user", content: JSON.stringify(profil) }],
     });
     const veri = jsonCoz<{ icgoru: string }>(yanit);

@@ -152,7 +152,7 @@ export default async function AnaSayfa({
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
   const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }, { data: hedefErken }, { data: degerlerDurum }] =
     await Promise.all([
-      db.from("participants").select("camp_unlocked_at, team, consent_at, ayna_ses_secildi_at, onboarding_toren_at").eq("id", session.sub).maybeSingle(),
+      db.from("participants").select("camp_unlocked_at, team, consent_at, ayna_ses_secildi_at, onboarding_toren_at, cinsiyet").eq("id", session.sub).maybeSingle(),
       db
         .from("settings")
         .select("key, value")
@@ -250,7 +250,9 @@ export default async function AnaSayfa({
   if (adim.tip === "rituel") {
     // FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Tamamlanana (ya da "sessiz"
     // seçilene) dek grup ve sorular dahil başka hiçbir kapı açılmaz.
-    return <AynaRituel />;
+    // Ritüelin en başında kişinin cinsiyeti + yaşı sorulur (AI doğru hitap etsin
+    // diye); zaten yanıtlamışsa (cinsiyet dolu) o adım atlanır.
+    return <AynaRituel kimlikTamam={!!kisi.cinsiyet} />;
   }
   if (adim.tip === "yonlendir") {
     // ?intro=1 (tanıtım testi) yalnız ilk Pusula kapısında (neden keşfi henüz

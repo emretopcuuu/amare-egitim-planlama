@@ -129,7 +129,13 @@ export async function POST(req: Request) {
       ses,
       `ornek.${uzanti}`
     );
-    const metin = await selamUret(session.ad, beklenti);
+    // Kimlik (cinsiyet + yaş) ritüel başında alındı — YANSIMAN doğru hitap etsin.
+    const { data: kimlik } = await db
+      .from("participants")
+      .select("cinsiyet, yas")
+      .eq("id", session.sub)
+      .maybeSingle();
+    const metin = await selamUret(session.ad, beklenti, kimlik?.cinsiyet, kimlik?.yas);
     const mp3 = await seslendir(voiceId, metin);
 
     const selamYolu = `${session.sub}/selam.mp3`;

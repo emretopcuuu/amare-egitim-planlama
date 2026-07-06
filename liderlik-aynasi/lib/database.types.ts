@@ -2039,6 +2039,8 @@ export type Database = {
           ayna_ses_secildi_at: string | null
           camp_unlock_token: string | null
           camp_unlocked_at: string | null
+          cinsiyet: string | null
+          yas: number | null
           city: string | null
           consent_at: string | null
           created_at: string
@@ -2074,6 +2076,8 @@ export type Database = {
           ayna_ses?: string
           ayna_ses_secildi_at?: string | null
           camp_unlock_token?: string | null
+          cinsiyet?: string | null
+          yas?: number | null
           camp_unlocked_at?: string | null
           city?: string | null
           consent_at?: string | null
@@ -2110,6 +2114,8 @@ export type Database = {
           ayna_ses?: string
           ayna_ses_secildi_at?: string | null
           camp_unlock_token?: string | null
+          cinsiyet?: string | null
+          yas?: number | null
           camp_unlocked_at?: string | null
           city?: string | null
           consent_at?: string | null

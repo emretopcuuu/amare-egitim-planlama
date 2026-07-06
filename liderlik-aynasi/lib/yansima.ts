@@ -2,6 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
+import { kimlikBlogu } from "@/lib/kisiKimligi";
 import { seslendir, sesYapilandirildiMi } from "@/lib/eleven";
 
 // YANSIMAN'ın ilk selamlaması: katılımcının kendi sesiyle, kendi
@@ -29,7 +30,12 @@ export function selamVarsayilan(ad: string): string {
   return `Merhaba ${ad}. Ben senin yansımanım. Üç gün boyunca seni izleyeceğim — su her durulduğunda burada olacağım.`;
 }
 
-export async function selamUret(ad: string, beklenti: string | null): Promise<string> {
+export async function selamUret(
+  ad: string,
+  beklenti: string | null,
+  cinsiyet?: string | null,
+  yas?: number | null
+): Promise<string> {
   if (!process.env.ANTHROPIC_API_KEY) return selamVarsayilan(ad);
   try {
     const client = new Anthropic();
@@ -41,7 +47,7 @@ export async function selamUret(ad: string, beklenti: string | null): Promise<st
         effort: "low",
         format: { type: "json_schema", schema: SELAM_SEMASI },
       },
-      system: `${SISTEM}\n\n${DIL_KALITESI}`,
+      system: `${SISTEM}\n\n${DIL_KALITESI}${kimlikBlogu(cinsiyet, yas)}`,
       messages: [
         {
           role: "user",

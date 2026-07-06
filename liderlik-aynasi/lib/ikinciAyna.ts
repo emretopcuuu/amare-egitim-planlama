@@ -4,6 +4,7 @@ import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { kisiHafizasiGetir } from "@/lib/kisiHafizasi";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 import { eylulOzet, eylulKayitGetir } from "@/lib/eylulAynasi";
 
 // FAZ 13 (kamp sonrası motor #20) — 90. GÜN FİNALİ: "İKİNCİ AYNA". Kamptaki
@@ -84,7 +85,7 @@ export async function ikinciAynaGetirVeyaUret(
       max_tokens: 4096,
       thinking: { type: "adaptive" },
       output_config: { effort: "low" },
-      system: `${SISTEM}\n\n${KATILIMCI_EVRENI}\n\n${DIL_KALITESI}`,
+      system: `${SISTEM}\n\n${KATILIMCI_EVRENI}\n\n${DIL_KALITESI}${await kimlikBloguGetir(db, pid)}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
     if (yanit.stop_reason === "refusal") return { durum: "hata" };

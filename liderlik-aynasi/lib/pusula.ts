@@ -2,6 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 import { kritikAiHatasiBildir, type AiHataDetay } from "@/lib/uyari";
 import { KARIYER_RANK, kariyerHalTuret } from "@/lib/persona";
 
@@ -372,6 +373,7 @@ export async function pusulaTuru(
   ];
 
   const client = new Anthropic();
+  const kimlikM = await kimlikBloguGetir(db, katilimci.id);
   let tur: PusulaTur | null = null;
   try {
     const yanit = await yenidenDene(
@@ -396,7 +398,7 @@ ${listeMetni(satir.oncelikler)}
 
 TEMPO: Bu kişiden şu ana dek ${kullaniciTur} yanıt aldın. Sohbeti gereksiz uzatma — toplam 5-6 turda bitir. ${kullaniciTur >= 4 ? "Artık toparla: hızla engel aşamasına gel, ilk 3 nedeni şefkatle yansıt, teyit alıp bitti=true ver." : "Her turda bir adım ilerlet; aynı noktada dönüp durma."}
 
-ÇIKTI KURALI: "mesaj" alanına YALNIZCA kişiye söyleyeceğin tek, temiz, doğru yazılmış Türkçe cümle/soru yaz. Her cümle büyük harfle başlasın, noktalama doğru olsun. Parantez, köşeli parantez, aşama notu, kendine not, meta açıklama ASLA koyma. "asama" ve "bitti" alanlarını ayrıca doldur.`,
+ÇIKTI KURALI: "mesaj" alanına YALNIZCA kişiye söyleyeceğin tek, temiz, doğru yazılmış Türkçe cümle/soru yaz. Her cümle büyük harfle başlasın, noktalama doğru olsun. Parantez, köşeli parantez, aşama notu, kendine not, meta açıklama ASLA koyma. "asama" ve "bitti" alanlarını ayrıca doldur.${kimlikM}`,
       messages: mesajlar,
         }),
       "sohbet turu"

@@ -6,6 +6,7 @@ import { raporHesapla } from "@/lib/rapor";
 import { pusulaCekirdek } from "@/lib/pusula";
 import { hedefCekirdek } from "@/lib/hedef";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 import { tlFormat } from "@/lib/kariyer";
 import { birUstKariyerEtiket } from "@/lib/persona";
 
@@ -179,7 +180,7 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
       max_tokens: 2560,
       thinking: { type: "adaptive" },
       output_config: { effort: "medium", format: { type: "json_schema", schema: PLAN_SEMASI } },
-      system: `${SISTEM}\n\n${KATILIMCI_EVRENI}\n\n${DIL_KALITESI}`,
+      system: `${SISTEM}\n\n${KATILIMCI_EVRENI}\n\n${DIL_KALITESI}${await kimlikBloguGetir(db, pid)}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
     if (yanit.stop_reason === "refusal") return { durum: "hata" };

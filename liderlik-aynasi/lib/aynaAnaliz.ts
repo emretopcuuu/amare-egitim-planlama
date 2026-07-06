@@ -2,6 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
+import { kimlikBlogu } from "@/lib/kisiKimligi";
 import { pusulaCekirdek, pusulaOzeti } from "@/lib/pusula";
 import { hedefOzeti } from "@/lib/hedef";
 import { onFarkindalikOzeti } from "@/lib/ayna";
@@ -134,7 +135,7 @@ async function veriTopla(db: Db, pid: string, ad: string, asama: AsamaKod) {
     pusulaOzeti(db, pid),
     hedefOzeti(db, pid),
     onFarkindalikOzeti(db, pid),
-    db.from("participants").select("kariyer_seviyesi, kariyer_durumu").eq("id", pid).maybeSingle(),
+    db.from("participants").select("kariyer_seviyesi, kariyer_durumu, cinsiyet, yas").eq("id", pid).maybeSingle(),
     db.from("pusula").select("slogan, oncelikler").eq("participant_id", pid).maybeSingle(),
   ]);
 
@@ -163,6 +164,9 @@ async function veriTopla(db: Db, pid: string, ad: string, asama: AsamaKod) {
     hedefOzeti: hOzet,
     onFarkindalik: ofOzet,
     kampKaniti: kanit,
+    // Doğru hitap/ton (kadına "baba" deme, dili yaşa göre kur) — modele veri
+    // olarak da geçer; sistem promptu bu alanı gözetmeli.
+    hitapKurali: kimlikBlogu(kisi.data?.cinsiyet, kisi.data?.yas),
   };
 }
 
