@@ -11,6 +11,7 @@ import {
   tanikImzala,
   bekleyenImzalar,
   sozV2KapisiAcik,
+  TANIK_HEDEF,
   type SozAksiyon,
 } from "@/lib/soz";
 
@@ -97,6 +98,27 @@ export async function POST(req: Request) {
   // İmza: oturum sahibi (lider), kendisini şahit gösteren kişinin sözünü imzalar.
   if (typeof g.imza === "string") {
     const ok = await tanikImzala(db, g.imza, session.sub);
+    // [FAZ 8 · Madde 15] İMZA ANI: imza başarılıysa söz SAHİBİNE haber ver —
+    // en güçlü sosyal-taahhüt anı eskiden sessiz geçiyordu. 5/5 imza tamamlanınca
+    // "sözün tam mühürlendi" töreni push'u.
+    if (ok) {
+      const ilkAd = session.ad.split(" ")[0];
+      const { count: imzali } = await db
+        .from("soz_tanik")
+        .select("id", { count: "exact", head: true })
+        .eq("soz_sahibi", g.imza)
+        .not("imza_at", "is", null);
+      const tumu = (imzali ?? 0) >= TANIK_HEDEF;
+      await katilimciyaBildir(
+        db,
+        g.imza,
+        tumu ? "🔒 Sözün mühürlendi" : "🤝 Bir şahidin imza attı",
+        tumu
+          ? `${ilkAd} de imzaladı — ${TANIK_HEDEF} şahidin tamamlandı. Sözün artık tam mühürlü.`
+          : `${ilkAd} sözüne şahit oldu ve imza attı. Mührün güçleniyor.`,
+        "/sozum"
+      ).catch(() => {});
+    }
     return Response.json({ ok });
   }
 
