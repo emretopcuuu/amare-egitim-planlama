@@ -154,7 +154,12 @@ export default function KimsinBantClient({
               <div
                 role="dialog"
                 aria-label="Yardım"
-                className="absolute left-1/2 top-full z-50 mt-2 max-h-[70vh] w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-y-auto rounded-2xl border border-royal/40 bg-midnight-card p-4 text-left shadow-2xl"
+                // EKRANA (viewport) göre ortalanır — çipe göre değil. Çip sola
+                // yakın durduğu için "absolute + çipe göre ortala" bazı dar
+                // telefonlarda paneli sol kenardan taşırıyordu. fixed + viewport
+                // ortası + max-w ile her genişlikte iki yanda 1rem boşlukla sığar.
+                style={{ top: "calc(env(safe-area-inset-top, 0px) + 3.75rem)" }}
+                className="fixed left-1/2 z-50 max-h-[70vh] w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-y-auto rounded-2xl border border-royal/40 bg-midnight-card p-4 text-left shadow-2xl"
               >
                 <p className="mb-2 text-sm font-bold text-gold-light">🛟 Yardım</p>
                 <div className="space-y-1.5">
