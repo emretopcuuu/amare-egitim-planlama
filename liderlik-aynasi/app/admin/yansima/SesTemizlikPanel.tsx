@@ -14,6 +14,8 @@ type Tarama = {
   toplamSes: number;
   klonSayisi: number;
   yetimSayisi: number;
+  voiceLimit?: number | null; // hesabın gerçek slot limiti (Pro=160 vb.)
+  tier?: string | null;
   klonlar: Klon[];
 };
 
@@ -94,7 +96,8 @@ export default function SesTemizlikPanel() {
   }
 
   const dolu = tarama ? tarama.klonSayisi : 0;
-  const sinir = 30; // Creator planı
+  // Gerçek plan limitini API'den al; gelmezse eski Creator varsayımına (30) düş.
+  const sinir = tarama?.voiceLimit && tarama.voiceLimit > 0 ? tarama.voiceLimit : 30;
   const doluYuzde = Math.min(100, Math.round((dolu / sinir) * 100));
 
   return (
@@ -127,6 +130,14 @@ export default function SesTemizlikPanel() {
             <div className="flex items-center justify-between text-xs">
               <span className="text-slate-300">
                 Klon slotu: <span className="font-semibold text-slate-100">{dolu}</span> / {sinir}
+                {tarama.tier && (
+                  <span className="ml-1.5 rounded bg-emerald-500/15 px-1.5 py-0.5 text-[0.65rem] font-medium uppercase text-emerald-300">
+                    {tarama.tier}
+                  </span>
+                )}
+                {tarama.voiceLimit == null && (
+                  <span className="ml-1.5 text-[0.65rem] text-slate-500">(limit okunamadı — varsayım 30)</span>
+                )}
               </span>
               <span className={dolu >= sinir ? "text-rose-400 font-semibold" : "text-slate-400"}>
                 {dolu >= sinir ? "DOLU — yeni klon açılamıyor" : `${sinir - dolu} slot boş`}

@@ -134,6 +134,30 @@ export async function sesSilDogrula(voiceId: string): Promise<boolean> {
   return res.ok;
 }
 
+export type ElevenAbonelik = {
+  tier: string | null;
+  voiceLimit: number | null; // hesabın izin verdiği toplam ses (klon) slotu
+};
+
+/** Hesabın gerçek plan bilgisi — ses SLOT LİMİTİ dahil. Panel eskiden 30'u sabit
+ * varsayıyordu (Creator); Pro/Scale yükseltmesinden sonra gerçek limiti buradan
+ * okuyup gösteriyoruz. Hata olursa {null,null} döner (panel güvenli fallback'e düşer). */
+export async function abonelikBilgisi(): Promise<ElevenAbonelik> {
+  try {
+    const res = await fetch(`${TABAN}/user/subscription`, {
+      headers: { "xi-api-key": anahtar() },
+    });
+    if (!res.ok) return { tier: null, voiceLimit: null };
+    const v = (await res.json()) as { tier?: string; voice_limit?: number };
+    return {
+      tier: typeof v.tier === "string" ? v.tier : null,
+      voiceLimit: typeof v.voice_limit === "number" ? v.voice_limit : null,
+    };
+  } catch {
+    return { tier: null, voiceLimit: null };
+  }
+}
+
 export type AynaSesCinsiyeti = "erkek" | "kadin";
 
 /** AYNA'nın marka sesi: katılımcı klonu değil, kampın imza sesi. Kişi
