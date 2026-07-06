@@ -1,6 +1,6 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
-import { katilimciyaBildir } from "@/lib/push";
+import { katilimciyaBildir, adminlereBildir } from "@/lib/push";
 import { taniklar } from "@/lib/soz";
 import { haftaBaslangici } from "@/lib/momentum";
 import { hedefCekirdek } from "@/lib/hedef";
@@ -214,6 +214,19 @@ export async function eskalasyonTara(db: Db): Promise<{ kisi: number; tanik: num
         .update({ son_tanik_uyari_at: new Date().toISOString() })
         .eq("participant_id", s.participant_id);
       tanikSayi++;
+
+      // [Faz 11 — 90 gün motoru #15] 14+ gün sessizlik: kapanış panelindeki
+      // "elle ara" basamağı (churnMerdiveni) yalnız admin BAKARSA görünüyordu —
+      // artık aynı taramada (aynı throttle penceresiyle) admin'e OTOMATİK haber
+      // gider. Mevcut churn panelini tekrar yazmaz, yalnız otomatik uyarı katar.
+      if (kacti >= 14) {
+        await adminlereBildir(
+          db,
+          "🚨 14+ gün sessizlik",
+          `${ad} ${kacti} gündür sözüne adım atmadı, şahitleri de yanıtsız. Elle ara.`,
+          "/admin/kapanis"
+        );
+      }
     }
   }
   return { kisi: kisiSayi, tanik: tanikSayi };
