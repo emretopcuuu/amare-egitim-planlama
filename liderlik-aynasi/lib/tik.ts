@@ -1,6 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { eskalasyonTara, sahitOzetiGonder, checkinCipasi } from "@/lib/sozTakip";
+import { ufukToreniTara } from "@/lib/ufukToren";
 import {
   gorevUret,
   gorevPuanla,
@@ -125,6 +126,7 @@ export async function tikCalistir(
     momentum: 0,
     sahitOzeti: 0,
     checkinCipa: 0,
+    ufukToren: 0,
     orkestratorAtes: 0,
   };
 
@@ -1246,6 +1248,18 @@ export async function tikCalistir(
         const sonuc = await momentumHesaplaVeYaz(db, simdi);
         ozet.momentum = sonuc.yazilan;
       }
+    }
+  }
+
+  // [FAZ 8 · Madde 8] UFUK GEÇİŞ TÖRENİ: yolculuk modunda sabah 09:00-09:09'da,
+  // günde bir kez (settings kilidi), aktif plan ufku değişen kişilere kutlama push'u.
+  if (mod === "yolculuk" && saat === 9 && dakika < 10) {
+    const { error: ufukKilit } = await db
+      .from("settings")
+      .insert({ key: `ufuk_toren_kontrol_${bugun}`, value: "1" });
+    if (!ufukKilit) {
+      const sonuc = await ufukToreniTara(db);
+      ozet.ufukToren = sonuc.gonderilen;
     }
   }
 
