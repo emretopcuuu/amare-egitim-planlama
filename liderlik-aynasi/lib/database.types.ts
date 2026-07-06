@@ -1336,6 +1336,7 @@ export type Database = {
           id: string
           is_hidden: boolean
           message: string
+          tesekkur_edildi: boolean
           to_id: string
         }
         Insert: {
@@ -1344,6 +1345,7 @@ export type Database = {
           id?: string
           is_hidden?: boolean
           message: string
+          tesekkur_edildi?: boolean
           to_id: string
         }
         Update: {
@@ -1352,6 +1354,7 @@ export type Database = {
           id?: string
           is_hidden?: boolean
           message?: string
+          tesekkur_edildi?: boolean
           to_id?: string
         }
         Relationships: [

@@ -26,7 +26,19 @@ type Kisi = {
   son14: { gun: string; yapildi: boolean | null }[];
 };
 
-export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
+type KendiDurum = {
+  bugunYapildi: boolean | null;
+  seri: number;
+  kacirilanGun: number;
+};
+
+export default function SahitlikPanel({
+  kisiler,
+  kendiDurum,
+}: {
+  kisiler: Kisi[];
+  kendiDurum: KendiDurum;
+}) {
   // [Şahitlik geliştirme #5] Sunucudan gelen "bugün gönderildi" durumuyla
   // başlar — sayfa yenilense de "Gönderildi ✓" kaybolmaz, spam da önlenir.
   const [gonderilen, setGonderilen] = useState<Record<string, boolean>>(() =>
@@ -223,6 +235,21 @@ export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
         <h1 className="prizma-serif ay-metin mt-2 text-2xl font-semibold">{t.baslik}</h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.aciklama}</p>
       </header>
+
+      {/* [Şahitlik geliştirme #9] Önce kendi adımın — başkasını dürtmeden önce
+          şahit kendi aynasına baksın. */}
+      {kendiDurum.bugunYapildi === null ? (
+        <Link
+          href="/takip"
+          className="block rounded-xl border border-gold/30 bg-gold/[0.08] px-4 py-3 text-center text-sm font-medium text-gold-light hover:bg-gold/[0.14]"
+        >
+          Önce kendi adımını işaretle →
+        </Link>
+      ) : (
+        <p className="text-center text-xs text-slate-400">
+          Senin serin: <span className="font-semibold text-emerald-300">{kendiDurum.seri} gün</span> ✓
+        </p>
+      )}
 
       {kisiler.length === 0 ? (
         <p className="rounded-2xl bg-midnight-soft/60 p-6 text-center text-sm text-slate-400">{t.bos}</p>

@@ -4,6 +4,7 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
 import TakdirGonder from "./TakdirGonder";
+import TesekkurButonu from "./TesekkurButonu";
 import Avatar from "@/components/Avatar";
 import GeriButonu from "@/components/GeriButonu";
 
@@ -17,7 +18,7 @@ export default async function TakdirPage() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
-  const [{ data: kisiler }, { data: gelenler }] = await Promise.all([
+  const [{ data: kisiler }, { data: gelenler }, { data: sahitRows }] = await Promise.all([
     db
       .from("participants")
       .select("id, full_name, team")
@@ -27,12 +28,16 @@ export default async function TakdirPage() {
     db
       .from("kudos")
       .select(
-        "id, message, created_at, gonderen:participants!kudos_from_id_fkey(full_name, profil_foto_path)"
+        "id, message, created_at, tesekkur_edildi, from_id, gonderen:participants!kudos_from_id_fkey(full_name, profil_foto_path)"
       )
       .eq("to_id", session.sub)
       .eq("is_hidden", false)
       .order("created_at", { ascending: false }),
+    // [Şahitlik geliştirme #10] Alkışa tepki — yalnız gerçek şahitlerden gelen
+    // kudos'a "Teşekkür et" gösterilsin.
+    db.from("soz_tanik").select("witness_id").eq("soz_sahibi", session.sub),
   ]);
+  const sahitIdSet = new Set((sahitRows ?? []).map((r) => r.witness_id));
 
   // Gönderen avatarları için imzalı URL'ler
   const gonderenYollar = [
@@ -80,19 +85,31 @@ export default async function TakdirPage() {
                   <p className="text-base leading-relaxed text-slate-100">
                     “{g.message}”
                   </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <Avatar
-                      ad={g.gonderen?.full_name ?? "?"}
-                      url={
-                        g.gonderen?.profil_foto_path
-                          ? fotoUrl.get(g.gonderen.profil_foto_path) ?? null
-                          : null
-                      }
-                      boyut="sm"
-                    />
-                    <p className="text-sm font-semibold text-gold-light">
-                      {t.kimden(g.gonderen?.full_name ?? "Bir arkadaşın")}
-                    </p>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <Avatar
+                        ad={g.gonderen?.full_name ?? "?"}
+                        url={
+                          g.gonderen?.profil_foto_path
+                            ? fotoUrl.get(g.gonderen.profil_foto_path) ?? null
+                            : null
+                        }
+                        boyut="sm"
+                      />
+                      <p className="truncate text-sm font-semibold text-gold-light">
+                        {t.kimden(g.gonderen?.full_name ?? "Bir arkadaşın")}
+                      </p>
+                    </div>
+                    {sahitIdSet.has(g.from_id) &&
+                      (g.tesekkur_edildi ? (
+                        <span className="shrink-0 text-xs font-medium text-emerald-300">
+                          🙏 Teşekkür edildi
+                        </span>
+                      ) : (
+                        <div className="shrink-0">
+                          <TesekkurButonu kudosId={g.id} />
+                        </div>
+                      ))}
                   </div>
                 </li>
               ))}
