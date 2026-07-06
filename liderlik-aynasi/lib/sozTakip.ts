@@ -294,3 +294,37 @@ export async function sahitSayim(db: Db, witnessId: string): Promise<number> {
     .not("imza_at", "is", null);
   return count ?? 0;
 }
+
+// [Şahitlik geliştirme #8] PAZARTESİ ŞAHİT ÖZETİ — tik tarafından haftalık
+// (bir kez, kilit deseniyle) çağrılır. Her şahide TEK bir push: takip ettiği
+// kişilerden kaçı bu hafta kotasını doldurdu + kim birkaç gündür sessiz.
+// Şahitliği "imza günü unutulan" bir kâğıttan haftalık 2 dakikalık aktif role
+// çevirir.
+export async function sahitOzetiGonder(db: Db): Promise<{ gonderilen: number }> {
+  const { data: sahitRows } = await db
+    .from("soz_tanik")
+    .select("witness_id")
+    .not("imza_at", "is", null);
+  const witnessIds = [...new Set((sahitRows ?? []).map((r) => r.witness_id))];
+
+  let gonderilen = 0;
+  for (const wid of witnessIds) {
+    const kisiler = await takipEttiklerim(db, wid);
+    if (kisiler.length === 0) continue;
+
+    const kotaDolduran = kisiler.filter(
+      (k) => k.haftaKota != null && k.haftaGorusme >= k.haftaKota
+    ).length;
+    const takilanlar = kisiler.filter((k) => k.kacirilanGun >= 2);
+
+    let govde = `Şahit olduğun ${kisiler.length} kişiden ${kotaDolduran} tanesi bu hafta kotasını doldurdu.`;
+    if (takilanlar.length > 0) {
+      const isimler = takilanlar.map((k) => k.ad.split(" ")[0]).join(", ");
+      govde += ` ${isimler} birkaç gündür sessiz — bu hafta bir ara.`;
+    }
+
+    await katilimciyaBildir(db, wid, "📋 Haftalık Şahit Özeti", govde, "/sahitlik");
+    gonderilen++;
+  }
+  return { gonderilen };
+}
