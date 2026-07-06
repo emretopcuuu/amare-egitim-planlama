@@ -33,15 +33,19 @@ export default async function TakipSayfa() {
     );
   }
 
-  const [durum, soz, hafta, hedef, degerDavranisi, ortakMomentum] = await Promise.all([
-    takipDurum(db, session.sub),
-    sozGetir(db, session.sub),
-    haftalikSayilar(db, session.sub),
-    hedefCekirdek(db, session.sub),
-    degerDavranisiGetir(db, session.sub),
-    ortakMomentumGetir(db, session.sub),
-  ]);
+  const [durum, soz, hafta, hedef, degerDavranisi, ortakMomentum, { data: aksTamam }] =
+    await Promise.all([
+      takipDurum(db, session.sub),
+      sozGetir(db, session.sub),
+      haftalikSayilar(db, session.sub),
+      hedefCekirdek(db, session.sub),
+      degerDavranisiGetir(db, session.sub),
+      ortakMomentumGetir(db, session.sub),
+      // [FAZ 6] Tamamlanmış aksiyon adımlarının index'leri (Yaşayan Plan).
+      db.from("soz_aksiyon_tamam").select("aksiyon_index").eq("participant_id", session.sub),
+    ]);
   const kota = haftalikGorusmeKotasi(hedef?.plan?.haftalikSaat ?? null);
+  const tamamlananAksiyonlar = (aksTamam ?? []).map((a) => a.aksiyon_index);
 
   // [Faz 6] "Bunu sen söyledin" — milestone anlarında kendi sesini (mühürlü
   // sözü) dinletmek için imzalı URL. Söz hiç kaydedilmemişse null.
@@ -56,6 +60,7 @@ export default async function TakipSayfa() {
       <TakipAkis
         durum={durum}
         aksiyonlar={soz?.aksiyonlar ?? []}
+        tamamlananAksiyonlar={tamamlananAksiyonlar}
         hafta={hafta}
         kota={kota}
         sozSesUrl={sozSesUrl}

@@ -2800,6 +2800,35 @@ export type Database = {
           },
         ]
       }
+      soz_aksiyon_tamam: {
+        Row: {
+          aksiyon_index: number
+          id: string
+          participant_id: string
+          tamamlandi_at: string
+        }
+        Insert: {
+          aksiyon_index: number
+          id?: string
+          participant_id: string
+          tamamlandi_at?: string
+        }
+        Update: {
+          aksiyon_index?: number
+          id?: string
+          participant_id?: string
+          tamamlandi_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "soz_aksiyon_tamam_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       soz_durtme: {
         Row: {
           created_at: string
