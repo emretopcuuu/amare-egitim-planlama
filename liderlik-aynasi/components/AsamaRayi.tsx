@@ -5,7 +5,9 @@ import { tr } from "@/lib/i18n/tr";
 // geri-dönüş düğmeleri her akışın kendi içinde. Kilitli aşama bile ADIYLA
 // görünür ("şu an açık değil ama sırada bu var").
 export type RayDurum = "tamam" | "simdi" | "siradaki" | "bekliyor" | "kilitli";
-export type RayAsama = { ad: string; durum: RayDurum };
+// onTikla verilirse o aşama tıklanabilir olur (ör. tamamlanmış bir bölüme geri
+// dönüp düzeltmek için). Verilmezse aşama salt görsel kalır (eski davranış).
+export type RayAsama = { ad: string; durum: RayDurum; onTikla?: () => void };
 
 const t = tr.asama;
 
@@ -40,8 +42,8 @@ export default function AsamaRayi({
     >
       {asamalar.map((a, i) => {
         const ilk = i === 0;
-        return (
-          <div key={`${a.ad}-${i}`} className="flex min-w-0 flex-1 flex-col items-center">
+        const icerik = (
+          <>
             <div className="flex w-full items-center">
               {/* sol bağlantı çizgisi */}
               <span
@@ -61,6 +63,22 @@ export default function AsamaRayi({
             <span className={`mt-1 line-clamp-2 text-center text-[0.6rem] leading-tight ${ETIKET[a.durum]}`}>
               {a.ad}
             </span>
+          </>
+        );
+        // Tıklanabilir aşama: buton olarak render (dokunma hedefi + geri dönüş).
+        return a.onTikla ? (
+          <button
+            key={`${a.ad}-${i}`}
+            type="button"
+            onClick={a.onTikla}
+            aria-label={`${a.ad} bölümüne dön`}
+            className="flex min-w-0 flex-1 cursor-pointer flex-col items-center rounded-lg transition-opacity hover:opacity-80 focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/50"
+          >
+            {icerik}
+          </button>
+        ) : (
+          <div key={`${a.ad}-${i}`} className="flex min-w-0 flex-1 flex-col items-center">
+            {icerik}
           </div>
         );
       })}

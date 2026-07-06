@@ -1504,11 +1504,11 @@ export const tr = {
     girisUst: "SIRADA · KAMP ÖNCESİ",
     girisBaslik: "Sırada: Öz Farkındalık",
     girisMetin:
-      "Nedenlerini çıkardın — şimdi sıra kendini biraz daha yakından tanımakta. Bu bir kişilik testi değil, bir ayna: ne düşündüğünü değil, ne yaptığını gösterir. Amacı, kampa gelmeden nerede tıkandığını sana göstermek. Gücü tek şeye bağlı: dürüstlüğüne. Tek oturuşta bitirmek zorunda değilsin — cevapların kaydedilir, dilediğin an kaldığın yerden devam edersin. Önemli olan: kamp başlamadan tamamlaman.",
+      "Nedenlerini çıkardın — sırada seni yakından tanımak var. Neden mi? Kamp boyunca alacağın görevleri KİŞİYE ÖZEL kurabilmek için; buradaki cevapların o motorun yakıtı. Ne kadar dürüst ve gerçekçi olursan, kampta o kadar sana uygun, gerçekten ihtiyacın olan görevler alırsın. Bu bir kişilik testi değil, bir ayna: ne düşündüğünü değil, ne yaptığını gösterir. Tek oturuşta bitirmek zorunda değilsin — cevapların kaydedilir, kaldığın yerden devam edersin. Önemli olan: kamp başlamadan tamamlaman.",
     girisKazanimlar: [
+      "Kampta sana özel görevler tam da bu cevaplara göre, ihtiyacına uygun şekillenecek.",
+      "Ne kadar dürüst cevaplarsan, görevlerin o kadar isabetli olur.",
       "Güçlü alanını ve kör noktanı net göreceksin.",
-      "Kampta sana özel görevler bu cevaplara göre şekillenecek.",
-      "Tek seferde bitirmek zorunda değilsin — kaldığın yerden devam edersin.",
     ],
     girisDevam: "Hazırım, başla →",
     olcek: {

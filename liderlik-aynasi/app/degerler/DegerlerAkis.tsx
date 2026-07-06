@@ -597,10 +597,18 @@ export default function DegerlerAkis({ ustRay }: { ustRay?: React.ReactNode } = 
             "40 adım" korkusunu, bütünsel ve sindirilir bir haritaya çevirir. */}
         {(() => {
           const suankiBolum = bolumIndeksi(a.kod);
-          const rayAsamalar: RayAsama[] = BOLUM_ADLARI.map((ad, i) => ({
-            ad,
-            durum: i < suankiBolum ? "tamam" : i === suankiBolum ? "simdi" : "bekliyor",
-          }));
+          const rayAsamalar: RayAsama[] = BOLUM_ADLARI.map((ad, i) => {
+            const durum: RayAsama["durum"] =
+              i < suankiBolum ? "tamam" : i === suankiBolum ? "simdi" : "bekliyor";
+            // Tamamlanmış/içinde olunan bölüme dokununca o bölümün ilk adımına
+            // dön (geri geri gitmeden düzelt). İleri (bekleyen) bölüme atlama yok.
+            const basIdx = ADIMLAR.findIndex((s) => bolumIndeksi(s.kod) === i);
+            return {
+              ad,
+              durum,
+              onTikla: durum === "bekliyor" || basIdx < 0 ? undefined : () => setAdim(basIdx),
+            };
+          });
           const localSira = bolumIcindekiSira(adim);
           const localToplam = bolumToplamAdim(suankiBolum);
           return (
