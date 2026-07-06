@@ -1300,36 +1300,11 @@ export async function tikCalistir(
     }
   }
 
-  // 3g) HAFTALIK SÖZ HATIRLATMA: yolculuk modunda Çarşamba 10:00-10:09'da
-  // hedefine ulaşmamış söz sahiplerine kendi sözünü hatırlat (haftada bir).
-  if (mod === "yolculuk") {
-    const carsambaMi =
-      new Intl.DateTimeFormat("en-US", {
-        timeZone: "Europe/Istanbul",
-        weekday: "short",
-      }).format(simdi) === "Wed";
-    if (carsambaMi && saat === 10 && dakika < 10) {
-      const { error: sozKilit } = await db
-        .from("settings")
-        .insert({ key: `soz_hatirlatma_${bugun}`, value: "1" });
-      if (!sozKilit) {
-        const { data: sozler } = await db
-          .from("pledges")
-          .select("participant_id, agustos_gorusme, gorusme_yapilan");
-        for (const s of sozler ?? []) {
-          if (s.gorusme_yapilan >= s.agustos_gorusme) continue;
-          const kalan = s.agustos_gorusme - s.gorusme_yapilan;
-          await katilimciyaBildir(
-            db,
-            s.participant_id,
-            "🤝 Sözünü hatırla",
-            `Ağustos görüşme sözüne ${kalan} kaldı. İlerlemeni gir, hedefe yürü.`,
-            "/soz"
-          );
-        }
-      }
-    }
-  }
+  // 3g) [FAZ 5 · Tek Söz birleşmesi] KALDIRILDI: eski v1 (pledges) haftalık
+  // Çarşamba söz hatırlatması — "Ağustos görüşme sözü" dili + ölü /soz ekranına
+  // yönlendiriyordu. SÖZ v2'ye (soz/soz_takip + şahitler) geçince bu iş zaten
+  // sozTakip tarafından yapılıyor (Pazartesi akran check-in + eskalasyon).
+  // Mükerrer + yanlış-hedefli v1 hatırlatması kaldırıldı.
 
   // 4) Teslim hatırlatması — bitiş süresine ~15 dk kala, HENÜZ YAPILMAMIŞ
   // görev(ler) için KİŞİ BAŞINA TEK hatırlatma: push (abone ise) + WhatsApp
@@ -1504,7 +1479,9 @@ export async function tikCalistir(
   // 6aa) MENTORLUK GÖREVİ: 10:00-11:00 arasında, günde bir kez, her katılımcıya
   // kariyer seviyesine göre 3 mentor adayı içeren görev verilir.
   // Normal görev kotasının dışındadır — kendi kilidiyle ayrı çalışır.
-  if (saat === 10 && !sahneSessiz) {
+  // [FAZ 5] YALNIZ KAMP: kamp roster'ından günlük mentor ataması kamp-içi bir
+  // sosyal mekaniktir; yolculukta (90 gün) her gün tekrar etmesi gürültüdür.
+  if (mod === "kamp" && saat === 10 && !sahneSessiz) {
     const mentorlukAnahtari = `mentorluk_${bugun}`;
     const { data: mentorlukGonderilmis } = await db
       .from("settings")
@@ -1782,7 +1759,10 @@ export async function tikCalistir(
   }
 
   // 6) Günlük fısıltı (13-14 ve 20-21 aralığında birer kez): "bugün N göz seni puanladı"
-  if ((saat === 13 || saat === 20) && !sahneSessiz) {
+  // [FAZ 5 · U19] YALNIZ KAMP: fısıltı 360° değerlendirmeye ("Gün 3'te aynanda",
+  // /degerlendir) demirli — bu yalnız kampta olur. Yolculukta ratings sorgusu boş
+  // döner ama yine de kamp diliyle ateşleme riski + gereksiz sorgu; mod'a gate'lendi.
+  if (mod === "kamp" && (saat === 13 || saat === 20) && !sahneSessiz) {
     const dilim = saat === 13 ? "ogle" : "aksam";
     const anahtar = `fisilti_${bugun}_${dilim}`;
     const { data: gonderilmis } = await db
