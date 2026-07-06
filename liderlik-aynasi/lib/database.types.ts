@@ -2057,6 +2057,7 @@ export type Database = {
           login_code: string
           onboarding_hatirlatma_at: string | null
           onboarding_hatirlatma_sayi: number
+          son_ufuk_toren: string | null
           onboarding_toren_at: string | null
           phone: string | null
           profil_foto_path: string | null
@@ -2092,6 +2093,7 @@ export type Database = {
           login_code: string
           onboarding_hatirlatma_at?: string | null
           onboarding_hatirlatma_sayi?: number
+          son_ufuk_toren?: string | null
           onboarding_toren_at?: string | null
           phone?: string | null
           profil_foto_path?: string | null
@@ -2127,6 +2129,7 @@ export type Database = {
           login_code?: string
           onboarding_hatirlatma_at?: string | null
           onboarding_hatirlatma_sayi?: number
+          son_ufuk_toren?: string | null
           onboarding_toren_at?: string | null
           phone?: string | null
           profil_foto_path?: string | null
