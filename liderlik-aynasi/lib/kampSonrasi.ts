@@ -70,6 +70,24 @@ export async function agustosOdev(db: Db): Promise<void> {
 // Her takım için grupOdevUret ile tek bir "grup-birlikte" ödevi (isimli
 // eşleştirmeli) üretir; sonra herkese tek çağrı gönderir. Grup ödevleri /grup
 // sayfasında görünür ve bir üye tamamlayınca gruba toplu kıvılcım düşer.
+// [Faz 13 — 90 gün motoru #20] 90. GÜN FİNALİ — İkinci Ayna penceresini açar +
+// herkese davet push'u. Üretim TOPLU değil, kişi /ikinci-ayna'yı açtığında
+// (mektup.ts deseniyle) tetiklenir — Gün 90'da 100+ kişi için aynı anda AI
+// çağrısı furyası yapmaz.
+export async function ikinciAynaDaveti(db: Db): Promise<void> {
+  await db.from("settings").upsert({
+    key: "ikinci_ayna_acik",
+    value: "true",
+    updated_at: new Date().toISOString(),
+  });
+  await herkeseBildir(
+    db,
+    "🌊 İkinci Aynan Hazır",
+    "90 gün önce bir söz vermiştin. AYNA şimdi o sözden bugüne yürüdüğün yola bakıyor — aç ve gör.",
+    "/ikinci-ayna"
+  );
+}
+
 export async function agustosGrupOdev(db: Db): Promise<void> {
   const { data: kisiler } = await db
     .from("participants")

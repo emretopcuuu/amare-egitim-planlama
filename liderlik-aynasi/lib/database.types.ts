@@ -1927,6 +1927,32 @@ export type Database = {
           },
         ]
       }
+      ikinci_ayna: {
+        Row: {
+          participant_id: string
+          content: string
+          created_at: string
+        }
+        Insert: {
+          participant_id: string
+          content: string
+          created_at?: string
+        }
+        Update: {
+          participant_id?: string
+          content?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ikinci_ayna_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oyun_plani: {
         Row: {
           created_at: string
