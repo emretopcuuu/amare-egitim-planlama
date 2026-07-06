@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import SesCal from "@/components/SesCal";
-import KutlamaSeridi from "@/components/KutlamaSeridi";
+import MezuniyetKutlama from "@/components/MezuniyetKutlama";
 
 const t = tr.kapanisSoz;
 
@@ -94,7 +94,9 @@ export default function SozDurum({
 
   return (
     <>
-      <KutlamaSeridi ad={ad} mesaj={t.kutlamaMesaj} anahtar="kapanis-soz-muhur" />
+      {/* Kampı bitirme kutlaması — kapanış sözü mühürlendiğinde bir kez patlar
+          (görsel şölen + kişisel özet + AYNA sesli tebrik). */}
+      <MezuniyetKutlama anahtar="kapanis-soz" />
 
       {/* Sözün */}
       <section className="kart-cam relative overflow-hidden rounded-3xl bg-gradient-to-br from-gold/10 to-midnight-card/60 p-5 text-center ring-1 ring-gold/30">

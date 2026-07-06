@@ -20,6 +20,7 @@ const REPLIK: Record<string, string> = {
   ...tr.pusulaAcilis.replik,
   rituelGiris: tr.aynaSesMomentleri.rituelGiris,
   raporAcilis: tr.aynaSesMomentleri.raporAcilis,
+  mezuniyet: tr.aynaSesMomentleri.mezuniyet,
   ...DEGERLER_GIRIS,
 };
 

@@ -15,7 +15,7 @@ import { donusumKarsilastirmaUret } from "@/lib/donusum";
 import { unvanBul } from "@/lib/kivilcim";
 import { tr } from "@/lib/i18n/tr";
 import Konfeti from "@/components/Konfeti";
-import MuhurAcilis from "@/components/MuhurAcilis";
+import AynaFinali from "@/components/AynaFinali";
 import KristalPortre from "./KristalPortre";
 import RaporKaydet from "./RaporKaydet";
 import AynaHikaye, { type Slayt } from "./AynaHikaye";
@@ -305,7 +305,7 @@ export default async function AynaPage() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-x-hidden overflow-y-auto">
-      <MuhurAcilis
+      <AynaFinali
         aktif={muhurAcik}
         sesUrl={muhurSesUrl}
         beklenti={sesProfili?.beklenti ?? null}

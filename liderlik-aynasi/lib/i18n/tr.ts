@@ -4521,9 +4521,24 @@ export const tr = {
       "Hoş geldin. Bu ritüel, sesin izini bırakmak için. Kampın sonunda, aynandan kendi sesini duyacaksın. Hazır olduğunda, kaydı başlat.",
     raporAcilis:
       "Bu kamp boyunca başkaları seni gözlemledi. Şimdi aynadaki yansımana bakma zamanı. Bu sayfa sana ait.",
+    mezuniyet:
+      "Kampı tamamladın. Üç gün boyunca aynaya baktın, sözünü verdin, kendi sesini duydun. Bugün buradan çıkan sen, geldiğin kişi değilsin. Bununla gurur duy — ben duyuyorum. Yolun açık olsun.",
     dinle: "AYNA'yı Dinle",
     durdur: "Durdur",
     sesHata: "Ses yüklenemedi",
+  } as const,
+  // Kamp bitiş kutlaması (mezuniyet) — rapor/mühür finali + kapanış sözü anında.
+  mezuniyet: {
+    ust: "KAMPI TAMAMLADIN",
+    baslik: (ad: string) => `Tebrikler ${ad}! 🏆`,
+    altMetin:
+      "Üç günü sonuna kadar yaşadın. Aynaya baktın, sözünü verdin, yolunu buldun.",
+    gunEtiket: "gün",
+    gorevEtiket: "görev",
+    kivilcimEtiket: "kıvılcım",
+    unvanEtiket: "ünvan",
+    sesDinle: "AYNA'nın tebriğini dinle",
+    kapat: "Devam et →",
   } as const,
   // #9 Akıllı zamanlı bildirimler — bağlama duyarlı, kişiye özel dürtmeler.
   // Genel toplu dürtme yerine "bugün seni kaç kişi gözledi" gibi gerçek veriye
