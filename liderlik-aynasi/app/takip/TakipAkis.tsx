@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import { ufukAyEtiket } from "@/lib/planTakvim";
 import Konfeti from "@/components/Konfeti";
+import KonusanYansima from "@/components/KonusanYansima";
 
 const t = tr.takip;
 
@@ -18,16 +19,39 @@ type Durum = {
 type Aksiyon = { metin: string; ufuk: string };
 type Hafta = { gorusmeToplam: number; kayitToplam: number };
 
+// [Faz 6 — 90 gün motoru #11] "BUNU SEN SÖYLEDİN" — milestone anlarında
+// kişinin mühürlü sözünü (kendi sesi) dinletir. En güçlü motivasyon aracı:
+// hiçbir AI metni kişinin kendi sesiyle verdiği sözle yarışamaz. sessionStorage
+// ile oturum başına bir kez (aynı milestone'u art arda göstermez).
+type Milestone = { anahtar: string; baslik: string; metin: string };
+function milestoneBul(durum: Durum, hafta: Hafta, kota: number | null): Milestone | null {
+  if (durum.seri === 7) {
+    return { anahtar: "seri7", baslik: "7 gün önce bunu SEN söylemiştin", metin: "Bir hafta önce verdiğin sözü dinle — tam da bunu yaşıyorsun." };
+  }
+  if (durum.kacirilanGun === 1) {
+    return { anahtar: `kacirma-${durum.toplam}`, baslik: "Düşmek bitmek değil", metin: "Bir gün kaçırdın, olur. Sözünü hatırla — yarın devam." };
+  }
+  if (durum.toplam === 30) {
+    return { anahtar: "gun30", baslik: "30 gündür yürüyorsun", metin: "Kampta ne demiştin? Kendi sesini dinle." };
+  }
+  if (kota && hafta.gorusmeToplam >= kota) {
+    return { anahtar: "kota-tamam", baslik: "Bu hafta sözünü tuttun", metin: "Kotanı doldurdun — sen bunu SEN söylemiştin." };
+  }
+  return null;
+}
+
 export default function TakipAkis({
   durum: durumBaslangic,
   aksiyonlar,
   hafta: haftaBaslangic,
   kota,
+  sozSesUrl,
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
   hafta: Hafta;
   kota: number | null;
+  sozSesUrl: string | null;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   const [hafta, setHafta] = useState<Hafta>(haftaBaslangic);
@@ -37,6 +61,21 @@ export default function TakipAkis({
   const [mesgul, setMesgul] = useState(false);
   const [now] = useState(() => new Date());
   const [ziliGoster, setZiliGoster] = useState(false);
+  const [milestone, setMilestone] = useState<Milestone | null>(null);
+
+  useEffect(() => {
+    if (!sozSesUrl) return;
+    const m = milestoneBul(durum, hafta, kota);
+    if (!m) return;
+    try {
+      if (sessionStorage.getItem(`milestone-${m.anahtar}`)) return;
+      sessionStorage.setItem(`milestone-${m.anahtar}`, "1");
+    } catch {
+      // depolama kapalı: yine de göster
+    }
+    setMilestone(m);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [durum.seri, durum.kacirilanGun, durum.toplam, hafta.gorusmeToplam]);
 
   async function checkin(yapildi: boolean) {
     setMesgul(true);
@@ -92,6 +131,18 @@ export default function TakipAkis({
         <h1 className="prizma-serif ay-metin mt-1 text-2xl font-semibold">{t.baslik}</h1>
         <p className="mt-2 text-sm text-slate-300">{t.aciklama}</p>
       </header>
+
+      {/* [Faz 6] "Bunu sen söyledin" — milestone anında kendi sesini dinlet. */}
+      {milestone && sozSesUrl && (
+        <div className="kart-cam rounded-2xl border border-gold/30 p-5 text-center">
+          <p className="text-3xl" aria-hidden>🎙️</p>
+          <h2 className="prizma-serif ay-metin mt-2 text-lg font-bold text-gold-light">{milestone.baslik}</h2>
+          <p className="mt-1 text-sm text-slate-300">{milestone.metin}</p>
+          <div className="mt-3">
+            <KonusanYansima videoUrl={null} sesUrl={sozSesUrl} etiket="Sözünü dinle" />
+          </div>
+        </div>
+      )}
 
       {/* Seri + toplam */}
       <div className="flex gap-3">

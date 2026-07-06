@@ -39,9 +39,23 @@ export default async function TakipSayfa() {
   ]);
   const kota = haftalikGorusmeKotasi(hedef?.plan?.haftalikSaat ?? null);
 
+  // [Faz 6] "Bunu sen söyledin" — milestone anlarında kendi sesini (mühürlü
+  // sözü) dinletmek için imzalı URL. Söz hiç kaydedilmemişse null.
+  let sozSesUrl: string | null = null;
+  if (soz?.voice_path) {
+    const { data } = await db.storage.from("sesler").createSignedUrl(soz.voice_path, 3600);
+    sozSesUrl = data?.signedUrl ?? null;
+  }
+
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
-      <TakipAkis durum={durum} aksiyonlar={soz?.aksiyonlar ?? []} hafta={hafta} kota={kota} />
+      <TakipAkis
+        durum={durum}
+        aksiyonlar={soz?.aksiyonlar ?? []}
+        hafta={hafta}
+        kota={kota}
+        sozSesUrl={sozSesUrl}
+      />
     </main>
   );
 }
