@@ -5,6 +5,21 @@ import { tr } from "@/lib/i18n/tr";
 // KİŞİ KİMLİĞİ — katılımcının kendi cinsiyeti + yaşı. Ses ritüelinin başında
 // sorulur; ayarlar çekmecesinden de değiştirilebilir (idempotent update).
 // Tüm AI motorları bunu okuyup doğru hitap eder (bkz. lib/kisiKimligi.ts).
+
+// Ayarlar çekmecesindeki düzenleyici mevcut değerleri buradan yükler.
+export async function GET() {
+  const session = await getSession();
+  if (!session || session.rol !== "participant") {
+    return Response.json({ hata: tr.ortak.oturumGerekli }, { status: 401 });
+  }
+  const { data } = await supabaseAdmin()
+    .from("participants")
+    .select("cinsiyet, yas")
+    .eq("id", session.sub)
+    .maybeSingle();
+  return Response.json({ cinsiyet: data?.cinsiyet ?? null, yas: data?.yas ?? null });
+}
+
 export async function POST(req: Request) {
   const session = await getSession();
   if (!session || session.rol !== "participant") {
