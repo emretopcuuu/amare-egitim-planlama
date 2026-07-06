@@ -62,6 +62,11 @@ export type MomentumGirdisi = {
   puanlar: number[]; // bu haftaki AYNA puanları
   oncekiPuanlar: number[]; // önceki haftanın AYNA puanları
   degerlendirme: number; // bu hafta verdiği puan (rating) sayısı
+  // [Faz 5 — 90 gün motoru #7] Yolculuk modunda "katılım" artık değerlendirme
+  // (rating) dalgalarından DEĞİL, haftalık görüşme kotası gerçekleşmesi +
+  // kayıt bonusundan gelir — kamp bitince ratings sinyali kalıcı ölür.
+  // undefined ise davranış birebir eskisi gibi (kamp modu / geriye uyumlu).
+  yolculukKatilim?: { gorusmeToplam: number; kota: number | null; kayitToplam: number } | null;
 };
 
 export type MomentumSonucu = {
@@ -76,11 +81,26 @@ const ort = (d: number[]) =>
  * Skor = teslim(35) + hız(20) + katılım(25) + eğilim(20).
  * Ciroyu değil davranışı ölçer; veri yoksa bileşen nötr puanına düşer.
  */
+// Yolculuk modu katılım bileşeni: kota gerçekleşmesi (ağırlık %70) + kayıt
+// bonusu (en fazla %30 ek). Kota tanımsızsa (plan yoksa) 10 görüşmelik makul
+// bir tabanla oranlanır — sıfıra düşmesin.
+function yolculukKatilimHesapla(y: {
+  gorusmeToplam: number;
+  kota: number | null;
+  kayitToplam: number;
+}): number {
+  const kotaOrani = y.kota ? Math.min(1, y.gorusmeToplam / y.kota) : Math.min(1, y.gorusmeToplam / 10);
+  const kayitBonus = Math.min(1, y.kayitToplam / 2) * 0.3;
+  return Math.min(1, kotaOrani * 0.7 + kayitBonus) * 25;
+}
+
 export function momentumPuanla(g: MomentumGirdisi): MomentumSonucu {
   const teslim =
     g.verilen > 0 ? Math.min(1, g.teslim / g.verilen) * 35 : 18;
   const hiz = g.teslim > 0 ? Math.min(1, g.zamaninda / g.teslim) * 20 : 10;
-  const katilim = Math.min(1, g.degerlendirme / 20) * 25;
+  const katilim = g.yolculukKatilim
+    ? yolculukKatilimHesapla(g.yolculukKatilim)
+    : Math.min(1, g.degerlendirme / 20) * 25;
   const bu = ort(g.puanlar);
   const onceki = ort(g.oncekiPuanlar);
   let egilim = 10;

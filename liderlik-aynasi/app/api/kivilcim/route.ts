@@ -11,7 +11,7 @@ export async function GET() {
     return Response.json({ toplam: 0 }, { status: 401 });
   }
   const db = supabaseAdmin();
-  const [{ data }, dalga, { count: gorevBekleyen }] = await Promise.all([
+  const [{ data }, dalga, { count: gorevBekleyen }, { data: modAyar }] = await Promise.all([
     db
       .from("missions")
       .select("spark_points")
@@ -25,6 +25,8 @@ export async function GET() {
       .select("id", { count: "exact", head: true })
       .eq("participant_id", session.sub)
       .eq("status", "pending"),
+    // [FAZ 9 · U1] Sistem modu — alt çubuk yolculukta "Program"ı "Planım"a çevirsin.
+    db.from("settings").select("value").eq("key", "sistem_modu").maybeSingle(),
   ]);
   const toplam = (data ?? []).reduce((t, g) => t + (g.spark_points ?? 0), 0);
   const u = unvanBul(toplam);
@@ -36,5 +38,6 @@ export async function GET() {
     yuzde: u.sonraki ? Math.min(100, Math.round((toplam / u.sonraki.esik) * 100)) : 100,
     dalgaAcik: !!dalga,
     gorevBekleyen: gorevBekleyen ?? 0,
+    mod: modAyar?.value === "yolculuk" ? "yolculuk" : "kamp",
   });
 }

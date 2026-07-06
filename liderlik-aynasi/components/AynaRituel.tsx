@@ -19,6 +19,7 @@ const t = tr.rituel;
 // Yüz yakalama zorunlu değil — atlayan kişi Pusula hub'ında sonradan yapabilir.
 
 type Asama =
+  | "kimlik"
   | "giris"
   | "yuzYakala"
   | "yeminHazirlik"
@@ -96,8 +97,15 @@ function MuhurRozet() {
 
 type SesKalitesi = "iyi" | "kisa" | "sessiz" | null;
 
-export default function AynaRituel() {
-  const [asama, setAsama] = useState<Asama>("giris");
+export default function AynaRituel({ kimlikTamam = false }: { kimlikTamam?: boolean }) {
+  // Kimlik (cinsiyet + yaş) daha önce verilmişse doğrudan ritüel girişine; yoksa
+  // önce kısa kimlik adımı (AI doğru hitap edebilsin diye).
+  const [asama, setAsama] = useState<Asama>(kimlikTamam ? "giris" : "kimlik");
+  // KİMLİK adımı yerel durumu
+  const [cinsiyet, setCinsiyet] = useState<"kadin" | "erkek" | "diger" | null>(null);
+  const [yas, setYas] = useState("");
+  const [kimlikKaydediliyor, setKimlikKaydediliyor] = useState(false);
+  const [kimlikHata, setKimlikHata] = useState(false);
   const [beklenti, setBeklenti] = useState("");
   const [sesUrl, setSesUrl] = useState<string | null>(null);
   const [calindi, setCalindi] = useState(false);
@@ -170,6 +178,29 @@ export default function AynaRituel() {
       window.location.href = "/";
     }
   }, [asama]);
+
+  // KİMLİK adımı: cinsiyet (zorunlu) + yaş (opsiyonel) kaydet, ritüele geç.
+  async function kimlikKaydet() {
+    if (kimlikKaydediliyor || !cinsiyet) return;
+    setKimlikKaydediliyor(true);
+    setKimlikHata(false);
+    try {
+      const res = await fetch("/api/kimlik", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ cinsiyet, yas: yas.trim() === "" ? null : Number(yas) }),
+      });
+      if (!res.ok) {
+        setKimlikHata(true);
+        return;
+      }
+      setAsama("giris");
+    } catch {
+      setKimlikHata(true);
+    } finally {
+      setKimlikKaydediliyor(false);
+    }
+  }
 
   async function sesBasla() {
     setHataMesaji(null);
@@ -583,6 +614,75 @@ export default function AynaRituel() {
     // eziyordu — overlay'de KULLANILMAZ; zemin/metin rengi elle verilir
     <div className="gece-ada fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[#04101c]/95 p-6 text-[#e6edf4] backdrop-blur-md">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-8">
+        {asama === "kimlik" && (
+          <div>
+            <AynaIkon className="mx-auto h-12 w-12 text-gold/85" />
+            <h1 className="prizma-serif ay-metin mt-4 text-center text-3xl font-semibold leading-tight">
+              {t.kimlik.baslik}
+            </h1>
+            <p className="mt-4 text-center text-lg leading-relaxed text-slate-300">
+              {t.kimlik.aciklama}
+            </p>
+
+            <p className="mt-8 text-sm font-semibold uppercase tracking-wide text-gold-light/80">
+              {t.kimlik.cinsiyetSoru}
+            </p>
+            <div className="mt-3 space-y-3">
+              {(["kadin", "erkek", "diger"] as const).map((secenek) => {
+                const secili = cinsiyet === secenek;
+                return (
+                  <button
+                    key={secenek}
+                    type="button"
+                    onClick={() => {
+                      setCinsiyet(secenek);
+                      setKimlikHata(false);
+                      titret(10);
+                    }}
+                    className={`flex h-14 w-full items-center rounded-2xl border-2 px-5 text-left text-lg font-semibold transition-colors ${
+                      secili
+                        ? "border-gold bg-gold/10 text-gold-light"
+                        : "border-white/20 bg-white/[0.04] text-slate-200 hover:border-gold/50"
+                    }`}
+                  >
+                    {t.kimlik[secenek]}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="mt-7 text-sm font-semibold uppercase tracking-wide text-gold-light/80">
+              {t.kimlik.yasSoru}
+            </p>
+            <input
+              type="number"
+              inputMode="numeric"
+              min={13}
+              max={120}
+              value={yas}
+              onChange={(e) => {
+                setYas(e.target.value);
+                setKimlikHata(false);
+              }}
+              placeholder={t.kimlik.yasYer}
+              className="mt-3 h-14 w-full rounded-2xl border-2 border-white/20 bg-white/[0.04] px-5 text-center text-2xl font-bold text-slate-50 outline-none focus:border-gold"
+            />
+
+            {kimlikHata && (
+              <p role="alert" className="mt-4 text-center text-sm font-medium text-amber-300">
+                {t.kimlik.hata}
+              </p>
+            )}
+
+            <div className="mt-8">
+              <DevButon onClick={kimlikKaydet}>
+                {kimlikKaydediliyor ? "…" : t.kimlik.devam} →
+              </DevButon>
+            </div>
+            <p className="mt-4 text-center text-xs text-slate-500">{t.kimlik.gizlilik}</p>
+          </div>
+        )}
+
         {asama === "giris" && (
           <div className="text-center">
             <p className="prizma-serif text-sm uppercase tracking-[0.4em] text-slate-400">

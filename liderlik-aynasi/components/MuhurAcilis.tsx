@@ -23,6 +23,7 @@ export default function MuhurAcilis({
   gelis,
   donus,
   ayni,
+  onKapat,
 }: {
   aktif: boolean;
   sesUrl: string | null;
@@ -30,6 +31,7 @@ export default function MuhurAcilis({
   gelis: string;
   donus: string;
   ayni: boolean;
+  onKapat?: () => void;
 }) {
   const [asama, setAsama] = useState<Asama>("kapandi");
   const [caliyor, setCaliyor] = useState(false);
@@ -87,6 +89,7 @@ export default function MuhurAcilis({
     } catch {}
     ses.current?.pause();
     setAsama("kapandi");
+    onKapat?.();
   }
 
   if (asama === "kapandi") return null;

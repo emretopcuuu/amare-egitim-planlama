@@ -27,6 +27,9 @@ type Props = {
   pusulaTamam?: boolean;
   hedefTamam?: boolean;
   ofTamam?: boolean;
+  // [FAZ 9 · U2] Yetim yolculuk sayfaları — açıkken menüden erişilebilsin.
+  ikinciAynaAcik?: boolean;
+  muhurZinciriAcik?: boolean;
 };
 
 // Çizgi-ikon seti — EMOJİ DEĞİL (eski cihazda □ tofu riski yok), her yerde birebir.
@@ -79,6 +82,8 @@ export default function UstMenu({
   pusulaTamam: _pusulaTamam = false,
   hedefTamam: _hedefTamam = false,
   ofTamam: _ofTamam = false,
+  ikinciAynaAcik = false,
+  muhurZinciriAcik = false,
 }: Props) {
   const [acik, setAcik] = useState(false);
   const [analizYeni, setAnalizYeni] = useState(false);
@@ -155,7 +160,15 @@ export default function UstMenu({
     sanaOzel.push({ href: "/ayna", etiket: t.menuRapor, alt: t.menuAltRapor, ikon: IK.rapor });
   if (yansimanHazir)
     sanaOzel.push({ href: "/yansiman", etiket: t.menuYansiman, alt: t.menuAltYansiman, ikon: IK.yansiman });
-  sanaOzel.push({ href: "/soz", etiket: t.menuSoz, alt: t.menuAltSoz, ikon: IK.soz });
+  // [FAZ 5 · Tek Söz birleşmesi] Eski v1 "/soz" (pledges) menü girişi KALDIRILDI —
+  // koşulsuz görünüyordu ve SÖZ v2 (/sozum, şahitler) ile çift-söz karmaşası
+  // yaratıyordu. v2 söz ana sayfadaki 90 günlük yolculuk kartından erişilir.
+  // [FAZ 9 · U2] Yetim yolculuk sayfaları — açıkken menüden erişilebilsin
+  // (eskiden yalnız push ile ulaşılıyordu; push kaçarsa kayıptı).
+  if (muhurZinciriAcik)
+    sanaOzel.push({ href: "/muhur-zinciri", etiket: "Mühür Zinciri", alt: "Sözünü yeniden teyit et", ikon: IK.soz });
+  if (ikinciAynaAcik)
+    sanaOzel.push({ href: "/ikinci-ayna", etiket: "İkinci Ayna", alt: "90 günün kapanış mektubu", ikon: IK.rapor });
 
   // PAYLAŞ & KEŞFET (mor şerit)
   const paylas: Oge[] = [

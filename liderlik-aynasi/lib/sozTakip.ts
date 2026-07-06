@@ -1,6 +1,10 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
-import { katilimciyaBildir } from "@/lib/push";
+import { katilimciyaBildir, adminlereBildir } from "@/lib/push";
+import { taniklar, sozGetir } from "@/lib/soz";
+import { haftaBaslangici } from "@/lib/momentum";
+import { hedefCekirdek } from "@/lib/hedef";
+import { haftalikGorusmeKotasi } from "@/lib/oyunPlani";
 import {
   bugunTr,
   takipDurumHesapla,
@@ -17,12 +21,16 @@ import {
 export { bugunTr };
 export type { TakipDurum };
 
-// Günlük check-in: "bugün sözüme/hedefime yönelik bir adım attım mı?"
+// Günlük check-in: "bugün sözüme/hedefime yönelik bir adım attım mı?" +
+// (FAZ 3/4) kaç görüşme yapıldı (haftalık kota barı) + kaç kişisel KAYIT
+// alındı (Kayıt Zili — kutlama + şahitlere müjde push'u, bkz. kayitBildir).
 export async function checkin(
   db: Db,
   pid: string,
   yapildi: boolean,
-  notlar: string | null
+  notlar: string | null,
+  gorusmeSayisi?: number | null,
+  kayitSayisi?: number
 ): Promise<boolean> {
   const { error } = await db.from("soz_takip").upsert(
     {
@@ -30,10 +38,70 @@ export async function checkin(
       gun: bugunTr(),
       yapildi,
       notlar: (notlar ?? "").trim().slice(0, 500) || null,
+      gorusme_sayisi:
+        typeof gorusmeSayisi === "number" && gorusmeSayisi >= 0
+          ? Math.min(999, Math.round(gorusmeSayisi))
+          : null,
+      kayit_sayisi:
+        typeof kayitSayisi === "number" && kayitSayisi >= 0 ? Math.min(99, Math.round(kayitSayisi)) : 0,
     },
     { onConflict: "participant_id,gun" }
   );
   return !error;
+}
+
+// Bu haftanın (Pazartesi'den bugüne) toplam görüşme + kayıt sayısı — haftalık
+// kota barı ve momentum hesabı için TEK doğruluk kaynağı.
+export async function haftalikSayilar(
+  db: Db,
+  pid: string
+): Promise<{ gorusmeToplam: number; kayitToplam: number }> {
+  const haftaBasi = haftaBaslangici(new Date());
+  const { data } = await db
+    .from("soz_takip")
+    .select("gorusme_sayisi, kayit_sayisi")
+    .eq("participant_id", pid)
+    .gte("gun", haftaBasi);
+  let gorusmeToplam = 0;
+  let kayitToplam = 0;
+  for (const r of data ?? []) {
+    gorusmeToplam += r.gorusme_sayisi ?? 0;
+    kayitToplam += r.kayit_sayisi ?? 0;
+  }
+  return { gorusmeToplam, kayitToplam };
+}
+
+// KAYIT ZİLİ (#6) — kişi kayıt aldığında şahitlerine ANINDA müjde push'u.
+// İmza şartı yok: henüz imzalamamış şahit de haberi almalı.
+export async function kayitBildir(db: Db, pid: string, ad: string): Promise<void> {
+  const ilkAd = ad.split(" ")[0];
+  const tanikList = await taniklar(db, pid);
+  for (const t of tanikList) {
+    await katilimciyaBildir(
+      db,
+      t.witness_id,
+      "🔔 Kayıt Zili",
+      `${ilkAd} yeni bir kayıt aldı! Şahidi olduğun sözünde ilerliyor.`,
+      "/sahitlik"
+    );
+  }
+}
+
+// [FAZ 8 · Madde 16] ŞAHİDE İYİ HABER: kişi haftalık görüşme kotasını doldurunca
+// şahitlerine POZİTİF haber. Mevcut şahit push'ları çoğunlukla "takıldı/sessiz"
+// idi; dengeyi iyi habere çevirir. Haftada bir (Cuma momentum bloğundan).
+export async function kotaDolduBildir(db: Db, pid: string, ad: string): Promise<void> {
+  const ilkAd = ad.split(" ")[0];
+  const tanikList = await taniklar(db, pid);
+  for (const t of tanikList) {
+    await katilimciyaBildir(
+      db,
+      t.witness_id,
+      "🎯 Şahidin hedefte",
+      `${ilkAd} bu hafta görüşme kotasını doldurdu — şahidi olduğun sözde güçlü ilerliyor.`,
+      "/sahitlik"
+    ).catch(() => {});
+  }
 }
 
 export async function takipDurum(db: Db, pid: string): Promise<TakipDurum> {
@@ -53,20 +121,56 @@ export type TakipEdilen = {
   seri: number;
   kacirilanGun: number;
   sonAdim: string | null;
+  // [Faz 9] Şahit Karnesi — haftalık kota gerçekleşmesi (varsa).
+  haftaGorusme: number;
+  haftaKota: number | null;
+  // [Şahitlik geliştirme #1] Foto (henüz imzalanmamış storage path — page.tsx
+  // imzalar) — "150 kişilik organizasyonda isimden tanımıyorum" isteğinin devamı.
+  profilFotoPath: string | null;
+  // [Şahitlik geliştirme #2] Kişinin mühürlü sözü — şahit KİME şahit olduğunu
+  // ve neye söz verdiğini unutmasın. Ses path'i de page.tsx imzalar.
+  sozMetni: string | null;
+  sozSesPath: string | null;
+  sozAksiyonlari: { metin: string; ufuk: string }[];
+  // [Şahitlik geliştirme #4] Bu hafta alınan kayıt sayısı.
+  haftaKayit: number;
+  // [Şahitlik geliştirme #5] Bugün bu kişiye dürtme/teşvik gönderildi mi —
+  // sunucudan (sayfa yenilense de kalıcı; client state'e güvenmez).
+  bugunGonderildi: boolean;
+  // [Şahitlik geliştirme #3] Son 14 gün mini şerit — /takip'teki aynı veri.
+  son14: { gun: string; yapildi: boolean | null }[];
 };
 
 // Bir liderin şahit olduğu kişiler + ilerlemeleri (şahit paneli).
 export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipEdilen[]> {
-  const { data: tanikRows } = await db
-    .from("soz_tanik")
-    .select("soz_sahibi, sahip:participants!soz_tanik_soz_sahibi_fkey(full_name, phone)")
-    .eq("witness_id", witnessId)
-    .not("imza_at", "is", null);
+  const [{ data: tanikRows }, { data: bugunDurtmeler }] = await Promise.all([
+    db
+      .from("soz_tanik")
+      .select(
+        "soz_sahibi, sahip:participants!soz_tanik_soz_sahibi_fkey(full_name, phone, profil_foto_path)"
+      )
+      .eq("witness_id", witnessId)
+      .not("imza_at", "is", null),
+    db
+      .from("soz_durtme")
+      .select("sahibi")
+      .eq("gonderen", witnessId)
+      .in("tip", ["hatirlatma", "tesvik"])
+      .gte("created_at", new Date(`${bugunTr()}T00:00:00+03:00`).toISOString()),
+  ]);
+  const bugunGonderildiSet = new Set((bugunDurtmeler ?? []).map((d) => d.sahibi));
   const rows = tanikRows ?? [];
   const sonuc: TakipEdilen[] = [];
   for (const r of rows) {
-    const durum = await takipDurum(db, r.soz_sahibi);
-    const sahip = r.sahip as { full_name: string; phone: string | null } | null;
+    const [durum, hafta, hedef, soz] = await Promise.all([
+      takipDurum(db, r.soz_sahibi),
+      haftalikSayilar(db, r.soz_sahibi),
+      hedefCekirdek(db, r.soz_sahibi),
+      sozGetir(db, r.soz_sahibi),
+    ]);
+    const sahip = r.sahip as
+      | { full_name: string; phone: string | null; profil_foto_path: string | null }
+      | null;
     const sonAdim = durum.son14.filter((g) => g.yapildi).slice(-1)[0]?.gun ?? null;
     sonuc.push({
       sahibiId: r.soz_sahibi,
@@ -75,6 +179,15 @@ export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipE
       seri: durum.seri,
       kacirilanGun: durum.kacirilanGun,
       sonAdim,
+      haftaGorusme: hafta.gorusmeToplam,
+      haftaKota: haftalikGorusmeKotasi(hedef?.plan?.haftalikSaat ?? null),
+      profilFotoPath: sahip?.profil_foto_path ?? null,
+      sozMetni: soz?.metin ?? null,
+      sozSesPath: soz?.voice_path ?? null,
+      sozAksiyonlari: soz?.aksiyonlar ?? [],
+      haftaKayit: hafta.kayitToplam,
+      bugunGonderildi: bugunGonderildiSet.has(r.soz_sahibi),
+      son14: durum.son14,
     });
   }
   return sonuc.sort((a, b) => b.kacirilanGun - a.kacirilanGun);
@@ -154,6 +267,19 @@ export async function eskalasyonTara(db: Db): Promise<{ kisi: number; tanik: num
         .update({ son_tanik_uyari_at: new Date().toISOString() })
         .eq("participant_id", s.participant_id);
       tanikSayi++;
+
+      // [Faz 11 — 90 gün motoru #15] 14+ gün sessizlik: kapanış panelindeki
+      // "elle ara" basamağı (churnMerdiveni) yalnız admin BAKARSA görünüyordu —
+      // artık aynı taramada (aynı throttle penceresiyle) admin'e OTOMATİK haber
+      // gider. Mevcut churn panelini tekrar yazmaz, yalnız otomatik uyarı katar.
+      if (kacti >= 14) {
+        await adminlereBildir(
+          db,
+          "🚨 14+ gün sessizlik",
+          `${ad} ${kacti} gündür sözüne adım atmadı, şahitleri de yanıtsız. Elle ara.`,
+          "/admin/kapanis"
+        );
+      }
     }
   }
   return { kisi: kisiSayi, tanik: tanikSayi };
@@ -169,6 +295,46 @@ export async function sozTakipAktif(db: Db, pid: string): Promise<boolean> {
   return data?.durum === "sesli";
 }
 
+// [FAZ 7 · Madde 10] AKŞAM ÇEKİN ÇIPASI — 90 gün motorunun #1 boşluğu: günlük
+// check-in için tek POZİTİF hatırlatma yoktu (yalnız 2+ gün kaçırınca ceza
+// gelirdi). Akşam, mühürlü sözü olan ama BUGÜN henüz işaretlememiş herkese
+// nazik bir "bugünü işaretle" push'u — ceza motorundan ÖNCE gelen yapıcı dokunuş.
+export async function checkinCipasi(db: Db): Promise<{ gonderilen: number }> {
+  const bugun = bugunTr();
+  const { data: sozler } = await db.from("soz").select("participant_id").eq("durum", "sesli");
+  const aktifler = (sozler ?? []).map((s) => s.participant_id);
+  if (aktifler.length === 0) return { gonderilen: 0 };
+  const { data: bugunler } = await db
+    .from("soz_takip")
+    .select("participant_id")
+    .eq("gun", bugun)
+    .in("participant_id", aktifler);
+  const yapanSet = new Set((bugunler ?? []).map((b) => b.participant_id));
+  let gonderilen = 0;
+  for (const pid of aktifler) {
+    if (yapanSet.has(pid)) continue;
+    await katilimciyaBildir(
+      db,
+      pid,
+      "🌙 Bugünü işaretle",
+      "Bugün sözüne yönelik bir adım attın mı? Aynana tek dokunuşla işaretle.",
+      "/takip"
+    ).catch(() => {});
+    gonderilen++;
+  }
+  return { gonderilen };
+}
+
+// Kişinin KENDİ sözüne seçtiği şahit sayısı (imza şart değil, seçim yeterli).
+// 90 gün yolculuğu bu sayı hedefe ulaşmadan AÇILMAZ — şahit adımı zorunlu.
+export async function secilenSahitSayisi(db: Db, pid: string): Promise<number> {
+  const { count } = await db
+    .from("soz_tanik")
+    .select("id", { count: "exact", head: true })
+    .eq("soz_sahibi", pid);
+  return count ?? 0;
+}
+
 // Kişinin şahit olduğu (imzaladığı) kişi sayısı — şahit paneli linki için.
 export async function sahitSayim(db: Db, witnessId: string): Promise<number> {
   const { count } = await db
@@ -177,4 +343,38 @@ export async function sahitSayim(db: Db, witnessId: string): Promise<number> {
     .eq("witness_id", witnessId)
     .not("imza_at", "is", null);
   return count ?? 0;
+}
+
+// [Şahitlik geliştirme #8] PAZARTESİ ŞAHİT ÖZETİ — tik tarafından haftalık
+// (bir kez, kilit deseniyle) çağrılır. Her şahide TEK bir push: takip ettiği
+// kişilerden kaçı bu hafta kotasını doldurdu + kim birkaç gündür sessiz.
+// Şahitliği "imza günü unutulan" bir kâğıttan haftalık 2 dakikalık aktif role
+// çevirir.
+export async function sahitOzetiGonder(db: Db): Promise<{ gonderilen: number }> {
+  const { data: sahitRows } = await db
+    .from("soz_tanik")
+    .select("witness_id")
+    .not("imza_at", "is", null);
+  const witnessIds = [...new Set((sahitRows ?? []).map((r) => r.witness_id))];
+
+  let gonderilen = 0;
+  for (const wid of witnessIds) {
+    const kisiler = await takipEttiklerim(db, wid);
+    if (kisiler.length === 0) continue;
+
+    const kotaDolduran = kisiler.filter(
+      (k) => k.haftaKota != null && k.haftaGorusme >= k.haftaKota
+    ).length;
+    const takilanlar = kisiler.filter((k) => k.kacirilanGun >= 2);
+
+    let govde = `Şahit olduğun ${kisiler.length} kişiden ${kotaDolduran} tanesi bu hafta kotasını doldurdu.`;
+    if (takilanlar.length > 0) {
+      const isimler = takilanlar.map((k) => k.ad.split(" ")[0]).join(", ");
+      govde += ` ${isimler} birkaç gündür sessiz — bu hafta bir ara.`;
+    }
+
+    await katilimciyaBildir(db, wid, "📋 Haftalık Şahit Özeti", govde, "/sahitlik");
+    gonderilen++;
+  }
+  return { gonderilen };
 }

@@ -5,6 +5,9 @@ import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { pusulaCekirdek } from "@/lib/pusula";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
+import { herkeseBildir } from "@/lib/push";
+import { yazAuditLog } from "@/lib/auditLog";
 
 // FAZ 1 — BOŞLUK ANI. Kişinin kamp ÖNCESİ yakalanan iç engelini (pusula.ic_engel),
 // kamp BOYUNCA biriken somut, tanıklı kanıtla çürüten zirve. Ego okşamak değil —
@@ -165,7 +168,7 @@ export async function boslukGetirVeyaUret(db: Db, pid: string): Promise<BoslukSo
         effort: "low",
         format: { type: "json_schema", schema: DEMOLISYON_SEMASI },
       },
-      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\nGörevin: aşağıdaki veriden Boşluk Anı'nı kur. "icEngel" kişinin çürütülecek inancı; "kanitlar" onu çürütebilecek GERÇEK anlar. Yalnız iç engeli doğrudan çürüten kanıtları seç (3-5). Hiçbirini uydurma; verilenlerle sınırlı kal. Kişinin engelini kendi evreninin diliyle (davet, sunum, hayır, eşik, momentum) anla; ama stok/ürün krizi gibi dışsal koşulu ona karşı kanıt gibi kullanma.\n\n${DIL_KALITESI}`,
+      system: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\nGörevin: aşağıdaki veriden Boşluk Anı'nı kur. "icEngel" kişinin çürütülecek inancı; "kanitlar" onu çürütebilecek GERÇEK anlar. Yalnız iç engeli doğrudan çürüten kanıtları seç (3-5). Hiçbirini uydurma; verilenlerle sınırlı kal. Kişinin engelini kendi evreninin diliyle (davet, sunum, hayır, eşik, momentum) anla; ama stok/ürün krizi gibi dışsal koşulu ona karşı kanıt gibi kullanma.\n\n${DIL_KALITESI}${await kimlikBloguGetir(db, pid)}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
     const demolisyon = jsonCoz<Demolisyon>(yanit);
@@ -180,6 +183,25 @@ export async function boslukGetirVeyaUret(db: Db, pid: string): Promise<BoslukSo
   } catch {
     return { durum: "hata" };
   }
+}
+
+// [FAZ A · B2] Boşluk Anı'nı OTOMATİK aç (orkestratör, Gün 3 14:00). Bayrağı açar
+// + herkese keşif push'u atar ("telefonda kişisel an" — insanların haberi olsun).
+// Kişi başına içerik /bosluk'ta üret-bir-kez; kanıtı olmayan sakin bir mesaj görür
+// (boş an riski yok, kendi kendini gate'ler). Admin elle açmak zorunda kalmaz.
+export async function boslukAc(db: Db): Promise<void> {
+  await db.from("settings").upsert({
+    key: "bosluk_acik",
+    value: "true",
+    updated_at: new Date().toISOString(),
+  });
+  await herkeseBildir(
+    db,
+    "🪞 Boşluk Anı açıldı",
+    "Üç gün önce kendine koyduğun sınırı hatırlıyor musun? Aynan onu, kampta gerçekten olanla yüzleştiriyor.",
+    "/bosluk"
+  );
+  await yazAuditLog(db, null, "bosluk_otomatik_acildi", {});
 }
 
 // FAZ 2 re-entry: kişinin Boşluk Anı'nda yazdığı yeni cümle (kimlik çapası).

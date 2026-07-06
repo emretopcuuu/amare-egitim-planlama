@@ -2,6 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 import { pusulaCekirdek } from "@/lib/pusula";
 import { KARIYER_RANK, kariyerHalTuret } from "@/lib/persona";
 import { kritikAiHatasiBildir, type AiHataDetay } from "@/lib/uyari";
@@ -284,6 +285,7 @@ export async function hedefTuru(
   ];
 
   const client = new Anthropic();
+  const kimlikM = await kimlikBloguGetir(db, katilimci.id);
   let tur: HedefTur | null = null;
   try {
     const yanit = await yenidenDene(
@@ -316,7 +318,7 @@ Başlangıç noktası: ${noktaCerceve}
 
 TEMPO: Bu kişiden şu ana dek ${kullaniciTur} yanıt aldın. ${kullaniciTur >= 3 ? "Artık devret: kısa, sıcak bir cümleyle 'gel, birkaç şeyi netleştirelim; birazdan bunu somut bir kariyer hedefine çevireceğiz' de ve bitti=true ver." : "Bir adım daha ilerlet; nedeni hayale bağla, acele etme. bitti=false."}
 
-ÇIKTI KURALI: "mesaj" alanına YALNIZCA kişiye söyleyeceğin tek, temiz, doğru yazılmış Türkçe cümle/soru yaz. Parantez, köşeli parantez, meta açıklama ASLA koyma. "bitti" alanını ayrıca doldur.`,
+ÇIKTI KURALI: "mesaj" alanına YALNIZCA kişiye söyleyeceğin tek, temiz, doğru yazılmış Türkçe cümle/soru yaz. Parantez, köşeli parantez, meta açıklama ASLA koyma. "bitti" alanını ayrıca doldur.${kimlikM}`,
             },
           ],
           messages: mesajlar,
@@ -420,7 +422,7 @@ async function ozetUret(db: Db, pid: string, plan: KariyerPlani): Promise<string
       max_tokens: 1024,
       thinking: { type: "disabled" },
       output_config: { effort: "low", format: { type: "json_schema", schema: OZET_SEMASI } },
-      system: `${PERSONA}\n\nGörevin: kişinin çekirdek nedeni ile seçtiği kariyer planını tek bir sıcak özette birleştir. Plan rakamlarını uydurma; verilenleri kullan.\n\n${nedenMetni}\n\n${planMetni}`,
+      system: `${PERSONA}\n\nGörevin: kişinin çekirdek nedeni ile seçtiği kariyer planını tek bir sıcak özette birleştir. Plan rakamlarını uydurma; verilenleri kullan.\n\n${nedenMetni}\n\n${planMetni}${await kimlikBloguGetir(db, pid)}`,
       messages: [{ role: "user", content: "Özeti üret." }],
     });
     const veri = jsonCoz<{ ozet: string }>(yanit);

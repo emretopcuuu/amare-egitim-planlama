@@ -32,6 +32,10 @@ export type GecmisGorev = {
   response_text: string | null;
   neden: string | null;
   fayda: string | null;
+  // [FAZ 3 · U18] Yansıma turu: kişinin yazdığı + AYNA'nın cevabı. Gönderim anında
+  // zaten görünüyordu; tekrar ziyarette kaybolmasın diye geçmişte de gösterilir.
+  reflection_text: string | null;
+  reflection_reply: string | null;
 };
 
 type Filtre = "tum" | "yuksek" | "kacan";
@@ -268,6 +272,20 @@ export default function GorevGecmisi({
                                   “{g.gozlem}”
                                 </p>
                               )}
+                              {/* [FAZ 3 · U18] Yansıma turu — kişinin yansıması + AYNA'nın cevabı. */}
+                              {g.reflection_text && (
+                                <div className="space-y-1.5 rounded-xl border border-royal/25 bg-midnight-soft/50 p-3">
+                                  <p className="text-sm text-slate-200">
+                                    <span className="mr-1 text-xs font-semibold text-slate-400">Yansıman:</span>
+                                    “{g.reflection_text}”
+                                  </p>
+                                  {g.reflection_reply && (
+                                    <p className="text-sm italic leading-relaxed text-royal-light/90">
+                                      🪞 {g.reflection_reply}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
                               {/* Görev türüne göre neden/fayda/yorum/kas hiçbiri
                                   dolmamış olabilir (statik şablonlu türler: söz,
                                   senkron, şahit, mentorluk, serbest, domino, sesli
@@ -277,7 +295,8 @@ export default function GorevGecmisi({
                                 !g.neden &&
                                 !g.fayda &&
                                 !g.ai_comment &&
-                                !g.gozlem && (
+                                !g.gozlem &&
+                                !g.reflection_text && (
                                   <p className="text-xs text-slate-500">
                                     {g.status === "expired" ? t.gecmisNotYokKacan : t.gecmisNotYok}
                                   </p>

@@ -5,10 +5,15 @@ import { aktifOzellikler } from "@/lib/degerlendirme";
 import { pusulaOzeti, pusulaCekirdek } from "@/lib/pusula";
 import { hedefOzeti, hedefCekirdek } from "@/lib/hedef";
 import { yolculukKarmaMetni } from "@/lib/yolculukKarma";
+import { oyunPlaniGetir } from "@/lib/oyunPlani";
+import { aktifUfuk } from "@/lib/planTakvim";
+import { raporHesapla } from "@/lib/rapor";
 import { yeniCumleOku } from "@/lib/bosluk";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
+import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { kariyerHalKisidenTuret, personaBlogu, personaYolculukOdak, KARIYER_RANK, KARIYER_ETIKET } from "@/lib/persona";
+import { kimlikBlogu } from "@/lib/kisiKimligi";
 import { aiHataYakala } from "@/lib/uyari";
 import { vinyetSec, type LiderKas } from "@/lib/liderlikVinyetleri";
 import { zorlukSeviyesiHesapla, type MerdivenGorev } from "@/lib/zorlukMerdiveni";
@@ -592,7 +597,7 @@ export async function gorevUret(
     // açılış hikayeleri — "aynı hikaye asla iki kez" kuralı için.
     db
       .from("participants")
-      .select("kariyer_seviyesi, en_yuksek_kariyer, gecen_ay_kariyer, kidem_ay, gorulen_vinyetler")
+      .select("kariyer_seviyesi, en_yuksek_kariyer, gecen_ay_kariyer, kidem_ay, gorulen_vinyetler, cinsiyet, yas")
       .eq("id", katilimci.id)
       .maybeSingle(),
     db
@@ -655,6 +660,8 @@ export async function gorevUret(
   // Kariyer hâlini türet ve prompt bloğunu hazırla (veri yoksa boş → jenerik).
   const persona = kariyerSonuc.data ? kariyerHalKisidenTuret(kariyerSonuc.data) : null;
   const personaMetni = personaBlogu(persona);
+  // Kişinin cinsiyeti + yaşı → doğru hitap/ton (kadına "baba" deme vb.).
+  const kimlikMetni = kimlikBlogu(kariyerSonuc.data?.cinsiyet, kariyerSonuc.data?.yas);
   // Kamp sonrası yolculukta hâle özel 90 günlük odak.
   const yolculukOdak = mod === "yolculuk" ? personaYolculukOdak(persona) : "";
   // [E10] Yolculukta haftalık görev karması kişinin HEDEFİNDEN oranlanır
@@ -663,6 +670,38 @@ export async function gorevUret(
     mod === "yolculuk"
       ? yolculukKarmaMetni((await hedefCekirdek(db, katilimci.id))?.plan ?? null)
       : "";
+
+  // [Faz 2 — 90 gün motoru #1] Yolculukta günün görevi kişinin KENDİ onayladığı
+  // 90 Günlük Oyun Planından beslenir (dayatma değil — kişi kendi kurdu, kendi
+  // sözünde). Aktif ufuktaki maddelerden biri (gün bazlı dönerek) o günün
+  // somutlaştırma hedefi olur; AI maddeyi AYNEN kopyalamaz, o taahhüde giden
+  // TEK GÜNLÜK küçük hamleyi üretir.
+  let yolculukPlan = "";
+  // [Faz 2 — #18] ~7 günde bir, 360° raporun kör noktasını sessizce hedefleyen
+  // bir vurgu ekle (yüzüne vurmadan — mevcut PUSULA/HEDEF bağlama kuralı gibi).
+  let yolculukKorNokta = "";
+  if (mod === "yolculuk") {
+    const plan = await oyunPlaniGetir(db, katilimci.id);
+    if (plan?.durum === "onaylandi") {
+      const ufuk = aktifUfuk(plan.onaylandiAt ? new Date(plan.onaylandiAt) : null, new Date());
+      const maddeler = plan[ufuk] ?? [];
+      if (maddeler.length > 0) {
+        const secilen = maddeler[gun % maddeler.length];
+        yolculukPlan = `KİŞİNİN KENDİ PLANI (bu ufuktaki taahhüdü — AI'ın değil, kendi onayladığı söz): "${secilen.baslik}" — ${secilen.aksiyon} (ölçüt: ${secilen.olcut}). Bugünün görevi bu taahhüdü SOMUT, TEK GÜNLÜK bir adıma indirgesin; taahhüdü aynen kopyalama veya tekrarlama, o taahhüde giden bugünkü küçük hamleyi üret.`;
+      }
+    }
+    if (gun % 7 === 0) {
+      try {
+        const rapor = await raporHesapla(db, katilimci.id);
+        const kn = rapor.korNokta?.ad ?? rapor.gelisim[0]?.ad;
+        if (kn) {
+          yolculukKorNokta = `HAFTALIK KÖR NOKTA ANTRENMANI: Kampındaki 360° aynada "${kn}" gelişim alanı olarak çıktı. Bugünkü görevi (ana temayı bozmadan) bu özelliği SESSİZCE çalıştıracak şekilde kur — özelliği adıyla ASLA anma, yüzüne vurma.`;
+        }
+      } catch {
+        // rapor henüz hazır değilse sessizce atla
+      }
+    }
+  }
 
   const icerik = new Map((icerikAyar?.data ?? []).map((s) => [s.key, s.value]));
   const aynaEkTon = (icerik.get("ayna_ek_ton") ?? "").trim();
@@ -1231,7 +1270,7 @@ export async function gorevUret(
       system: [
         {
           type: "text" as const,
-          text: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\n${BASARI_STRATEJISI}\n\n`,
+          text: `${PERSONA}\n\n${KATILIMCI_EVRENI}\n\n${BASARI_STRATEJISI}\n\n${DIL_KALITESI}\n\n`,
           cache_control: { type: "ephemeral" as const },
         },
         {
@@ -1250,7 +1289,7 @@ GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lid
 ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz. "donus_bicimi" alanını doldur ve bağlamdaki "sonDonusBicimleri"nden FARKLI bir biçim seç (art arda hep "yaz" olmasın — sesli/grup/foto/tek_kelime ile çeşitlendir).
 
 ÖZ-DENETİM (ZORUNLU): Görevi ürettikten sonra kendini denetle ve "baglam_kullanildi" + "tekrar_degil" alanlarını DÜRÜSTÇE doldur. tekrar_degil, görev "oncekiGorevBasliklari"ndan birinin tekrarı/çok benzeriyse false olmalı — bu durumda görev reddedilip yeniden üretilir, o yüzden gerçekten FARKLI bir görev üret.
-${personaMetni ? `\n${personaMetni}\n` : ""}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}
+${personaMetni ? `\n${personaMetni}\n` : ""}${kimlikMetni}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}${yolculukPlan ? `\n${yolculukPlan}\n` : ""}${yolculukKorNokta ? `\n${yolculukKorNokta}\n` : ""}
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
 
 DEĞER KİŞİSELLEŞTİRMESİ: Bağlamda "degerler" doluysa görevi kişinin seçtiği temel değerlerinden (temelDegerler) BİRİNİ bugün somut bir eylemle YAŞAMA meydan okumasına bağla — değeri soyut anmakla kalma, o değerin gerektirdiği gerçek bir lider hamlesini istet (örn. değeri "Dürüstlük" ise bugün kaçındığı zor bir doğruyu söyle; "Cesaret" ise ertelediği ilk adımı at; "Takım Ruhu" ise geride kalan birine uzan). Görevi tek bir değere demirle (hepsini birden sıralama), değeri başlıkta ya da dönüşte kişinin diliyle çağır. Uygun olduğunda değer ile çalışılan lider kasını örtüştür. Değer yoksa bu bağı atla.

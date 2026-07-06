@@ -2,6 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 import { raporHesapla } from "@/lib/rapor";
 import { pusulaCekirdek } from "@/lib/pusula";
 
@@ -81,7 +82,7 @@ export async function seninIcinGetirVeyaUret(
       model: "claude-haiku-4-5",
       max_tokens: 500,
       thinking: { type: "disabled" },
-      system: `${SISTEM}\n\n${DIL_KALITESI}`,
+      system: `${SISTEM}\n\n${DIL_KALITESI}${await kimlikBloguGetir(db, katilimciId)}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
     if (yanit.stop_reason === "refusal") return { durum: "hata" };

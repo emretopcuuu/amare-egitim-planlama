@@ -2,6 +2,8 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
+import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 import { raporHesapla } from "@/lib/rapor";
 import { pusulaOzeti } from "@/lib/pusula";
 import { hedefOzeti } from "@/lib/hedef";
@@ -18,6 +20,7 @@ Mektup kuralları:
 - Türkçe yaz, "Sevgili {ad}," diye başla, 150-220 kelime tut.
 - Veride "pusula" doluysa (kişinin kamp öncesi nedeni + iç engeli): mektubu onun NEDENİNE bağla; kampta gösterdiklerinin bu nedenle ilişkisini kur. İç engeli varsa, kampın ona dair ne gösterdiğini nazikçe ima et — ama engeli açıkça yüzüne vurma.
 - Veride "hedef" doluysa (kişinin kariyer hedefi + 90 günlük planı): mektubu o hedefe köprüle — en güçlü yanının bu hedefe nasıl hizmet edeceğini, gelişim alanının önünde nasıl durduğunu nazikçe göster. Hedefi nedenle birleştir; rakamları kuru kuruya sayma.
+- Veride "degerler" doluysa (kişinin onboarding'de KENDİ seçtiği 3 temel değer + neden cümlesi): kampta gösterdiklerinin bu değerlerle nasıl örtüştüğünü tek bir yerde onurlandır — "sen şu değeri seçmiştin, kampta tam da onu yaşadın" tonunda. Değerleri liste gibi sıralama, dokuya işle.
 - Katılımcıya "sen" diye hitap et.
 - Verideki 2-3 somut örüntüye dayan: en güçlü özellik, varsa gizli güç (başkaları seni kendinden yüksek görüyor) veya kör nokta (tersi), dalgalar içinde yükselen bir özellik, yorumlardaki ortak tema.
 - Yorumları ASLA birebir alıntılama ve kimin yazdığı sezilecek ayrıntı verme; temaları kendi cümlelerinle özetle.
@@ -46,11 +49,15 @@ export async function mektupGetirVeyaUret(
 
   if (!process.env.ANTHROPIC_API_KEY) return { durum: "anahtar-yok" };
 
-  const [rapor, pusula, hedef] = await Promise.all([
+  const [rapor, pusula, hedef, degerlerRow] = await Promise.all([
     raporHesapla(db, katilimciId),
     pusulaOzeti(db, katilimciId),
     hedefOzeti(db, katilimciId),
+    // [FAZ 4] Değerler çalışması: en emek verilen onboarding adımı eskiden
+    // kapanış mektubuna HİÇ akmıyordu. Kişinin seçtiği temel değerleri mektuba bağla.
+    db.from("degerler_calismasi").select("secilen_uc, neden_cumlesi").eq("participant_id", katilimciId).maybeSingle(),
   ]);
+  const secilenDegerler = (degerlerRow.data?.secilen_uc as string[] | null) ?? [];
 
   // Modele giden veri: kimlik sızdırmayan, sayısal özet + isimsiz yorumlar
   const veri = {
@@ -60,6 +67,11 @@ export async function mektupGetirVeyaUret(
     pusula: pusula ?? null,
     // FAZ A Hedef: kişinin kariyer hedefi + planı — mektubu hedefe köprüle.
     hedef: hedef ?? null,
+    // [FAZ 4] Değerler: kişinin seçtiği 3 temel değer + neden cümlesi. Mektup
+    // bunları onurlandırsın — "kampta gördüğün, senin seçtiğin değerlerle örtüşüyor".
+    degerler: secilenDegerler.length
+      ? { temelDegerler: secilenDegerler, nedenCumlesi: degerlerRow.data?.neden_cumlesi ?? null }
+      : null,
     ozellikler: rapor.satirlar.map((s) => ({
       ozellik: s.ad,
       ozPuan: s.oz === null ? null : Number(s.oz.toFixed(1)),
@@ -86,7 +98,7 @@ export async function mektupGetirVeyaUret(
       max_tokens: 4096,
       thinking: { type: "adaptive" },
       output_config: { effort: "low" },
-      system: `${SISTEM}\n\n${DIL_KALITESI}`,
+      system: `${SISTEM}\n\n${KATILIMCI_EVRENI}\n\n${DIL_KALITESI}${await kimlikBloguGetir(db, katilimciId)}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
 

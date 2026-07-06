@@ -203,7 +203,7 @@ export const tr = {
     // [E7] Seçimden hemen sonra AYNA'nın seçilen sesle kişisel karşılaması.
     // Metin sunucuda /api/karsilama içinde seslendirilir (sabit + ilk ad).
     karsilamaMetni: (ad: string) =>
-      `Merhaba ${ad}. Ben Aynan. Önümüzdeki üç gün boyunca yanındayım.`,
+      `Merhaba ${ad}. Ben Aynan. Bu yolculuğun her adımında yanındayım.`,
     karsilamaBaslik: "Aynan seninle tanışıyor…",
     karsilamaAlt: "Seçtiğin sesle ilk kez konuşuyor.",
     karsilamaGec: "Geç →",
@@ -1504,11 +1504,11 @@ export const tr = {
     girisUst: "SIRADA · KAMP ÖNCESİ",
     girisBaslik: "Sırada: Öz Farkındalık",
     girisMetin:
-      "Nedenlerini çıkardın — şimdi sıra kendini biraz daha yakından tanımakta. Bu bir kişilik testi değil, bir ayna: ne düşündüğünü değil, ne yaptığını gösterir. Amacı, kampa gelmeden nerede tıkandığını sana göstermek. Gücü tek şeye bağlı: dürüstlüğüne. Tek oturuşta bitirmek zorunda değilsin — cevapların kaydedilir, dilediğin an kaldığın yerden devam edersin. Önemli olan: kamp başlamadan tamamlaman.",
+      "Nedenlerini çıkardın — sırada seni yakından tanımak var. Neden mi? Kamp boyunca alacağın görevleri KİŞİYE ÖZEL kurabilmek için; buradaki cevapların o motorun yakıtı. Ne kadar dürüst ve gerçekçi olursan, kampta o kadar sana uygun, gerçekten ihtiyacın olan görevler alırsın. Bu bir kişilik testi değil, bir ayna: ne düşündüğünü değil, ne yaptığını gösterir. Tek oturuşta bitirmek zorunda değilsin — cevapların kaydedilir, kaldığın yerden devam edersin. Önemli olan: kamp başlamadan tamamlaman.",
     girisKazanimlar: [
+      "Kampta sana özel görevler tam da bu cevaplara göre, ihtiyacına uygun şekillenecek.",
+      "Ne kadar dürüst cevaplarsan, görevlerin o kadar isabetli olur.",
       "Güçlü alanını ve kör noktanı net göreceksin.",
-      "Kampta sana özel görevler bu cevaplara göre şekillenecek.",
-      "Tek seferde bitirmek zorunda değilsin — kaldığın yerden devam edersin.",
     ],
     girisDevam: "Hazırım, başla →",
     olcek: {
@@ -4116,6 +4116,14 @@ export const tr = {
     degerlerMetin:
       "Buraya geçmeden önce Değerler çalışmanı tamamlaman gerekiyor — pusulan ve hedefin, seçtiğin temel değerlerin üzerine kurulur.",
     degerlerDugme: "Değerler çalışmasına git →",
+    pusulaBaslik: "Önce pusulanı bul",
+    pusulaMetin:
+      "Hedefini koymadan önce Pusula'nı tamamlaman gerekiyor — hedefin, keşfettiğin çekirdek nedenin üzerine kurulur.",
+    pusulaDugme: "Pusula'ya git →",
+    hedefBaslik: "Önce hedefini koy",
+    hedefMetin:
+      "Bu adıma geçmeden önce kariyer hedefini mühürlemen gerekiyor — ön farkındalık, koyduğun hedefin üzerine oturur.",
+    hedefDugme: "Hedefine git →",
   },
   sahne: {
     ipucu: "Ayna Anı'nı başlatmak için tıkla",
@@ -4242,6 +4250,22 @@ export const tr = {
     baslik: "Aynaya kendini tanıt",
     aciklama: "Aynan seninle kendi sesinle konuşacak.",
     basla: "Ritüeli başlat",
+    // KİMLİK adımı — ritüelin en başı: cinsiyet + yaş. Aynan (ve tüm yapay zekâ
+    // rehberliği) sana doğru hitap edebilsin, dilini yaşına göre kurabilsin diye.
+    kimlik: {
+      baslik: "Seni doğru tanıyayım",
+      aciklama:
+        "Aynan sana doğru seslenebilsin ve dilini sana göre kursun diye iki kısa şey soruyorum.",
+      cinsiyetSoru: "Cinsiyetin",
+      kadin: "Kadın",
+      erkek: "Erkek",
+      diger: "Belirtmek istemiyorum",
+      yasSoru: "Yaşın",
+      yasYer: "Örn: 38",
+      devam: "Devam et",
+      hata: "Kaydedilemedi — bağlantını kontrol edip tekrar dene.",
+      gizlilik: "Bu bilgi yalnız aynanın sana doğru hitap etmesi için kullanılır.",
+    },
     // Canlı Ayna (yüz yakalama) — ses ritüelinin EN SONUNDA: kişi önce sesiyle
     // tanışır, sonra aynaya yüzünü gösterir. Zorunlu değil: kişi isterse geçip
     // Pusula hub'ında sonradan yapabilir.
@@ -4497,9 +4521,24 @@ export const tr = {
       "Hoş geldin. Bu ritüel, sesin izini bırakmak için. Kampın sonunda, aynandan kendi sesini duyacaksın. Hazır olduğunda, kaydı başlat.",
     raporAcilis:
       "Bu kamp boyunca başkaları seni gözlemledi. Şimdi aynadaki yansımana bakma zamanı. Bu sayfa sana ait.",
+    mezuniyet:
+      "Kampı tamamladın. Üç gün boyunca aynaya baktın, sözünü verdin, kendi sesini duydun. Bugün buradan çıkan sen, geldiğin kişi değilsin. Bununla gurur duy — ben duyuyorum. Yolun açık olsun.",
     dinle: "AYNA'yı Dinle",
     durdur: "Durdur",
     sesHata: "Ses yüklenemedi",
+  } as const,
+  // Kamp bitiş kutlaması (mezuniyet) — rapor/mühür finali + kapanış sözü anında.
+  mezuniyet: {
+    ust: "KAMPI TAMAMLADIN",
+    baslik: (ad: string) => `Tebrikler ${ad}! 🏆`,
+    altMetin:
+      "Üç günü sonuna kadar yaşadın. Aynaya baktın, sözünü verdin, yolunu buldun.",
+    gunEtiket: "gün",
+    gorevEtiket: "görev",
+    kivilcimEtiket: "kıvılcım",
+    unvanEtiket: "ünvan",
+    sesDinle: "AYNA'nın tebriğini dinle",
+    kapat: "Devam et →",
   } as const,
   // #9 Akıllı zamanlı bildirimler — bağlama duyarlı, kişiye özel dürtmeler.
   // Genel toplu dürtme yerine "bugün seni kaç kişi gözledi" gibi gerçek veriye

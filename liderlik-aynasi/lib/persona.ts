@@ -42,6 +42,17 @@ export const KARIYER_SECENEKLER = [
   "presidential_diamond",
 ] as const;
 
+// Motivasyon çıtası: kişinin "bir üst kariyeri". Diamond ALTINDAysa hedef her
+// zaman Diamond'dır; Diamond ve üstündeyse bir basamak yukarı (Presidential'da
+// tavan). Oyun planı "sanki bu ay X oluyormuşsun gibi odaklan" çerçevesi bunu
+// kullanır. Kariyer bilinmiyorsa güvenli varsayılan: Diamond.
+export function birUstKariyerEtiket(mevcut: string | null | undefined): string {
+  const rank = mevcut ? (KARIYER_RANK[mevcut] ?? 0) : 0;
+  const hedefRank = rank < 4 ? 4 : Math.min(rank + 1, 8);
+  const key = KARIYER_SECENEKLER.find((k) => KARIYER_RANK[k] === hedefRank);
+  return key ? KARIYER_ETIKET[key] : "Diamond";
+}
+
 export type KariyerHal = "test_edilmemis" | "duraksama" | "gerileme" | "yukselis";
 export type TonAnahtari = "hazirlayici" | "dedektif" | "tanik_stratejist";
 

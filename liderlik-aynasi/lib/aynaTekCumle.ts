@@ -2,6 +2,7 @@ import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 import { raporHesapla } from "@/lib/rapor";
 import { pusulaCekirdek } from "@/lib/pusula";
 
@@ -82,7 +83,7 @@ export async function tekCumleGetirVeyaUret(
       max_tokens: 400,
       thinking: { type: "disabled" },
       output_config: { effort: "low" },
-      system: `${SISTEM}\n\n${DIL_KALITESI}`,
+      system: `${SISTEM}\n\n${DIL_KALITESI}${await kimlikBloguGetir(db, katilimciId)}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
     if (yanit.stop_reason === "refusal") return { durum: "hata" };

@@ -35,52 +35,6 @@ export type Database = {
         }
         Relationships: []
       }
-      akran_kurtarma: {
-        Row: {
-          aktif_id: string
-          created_at: string
-          id: string
-          mission_id: string
-          sessiz_id: string
-        }
-        Insert: {
-          aktif_id: string
-          created_at?: string
-          id?: string
-          mission_id: string
-          sessiz_id: string
-        }
-        Update: {
-          aktif_id?: string
-          created_at?: string
-          id?: string
-          mission_id?: string
-          sessiz_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "akran_kurtarma_aktif_id_fkey"
-            columns: ["aktif_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "akran_kurtarma_mission_id_fkey"
-            columns: ["mission_id"]
-            isOneToOne: true
-            referencedRelation: "missions"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "akran_kurtarma_sessiz_id_fkey"
-            columns: ["sessiz_id"]
-            isOneToOne: false
-            referencedRelation: "participants"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       assignments: {
         Row: {
           created_at: string
@@ -1336,6 +1290,7 @@ export type Database = {
           id: string
           is_hidden: boolean
           message: string
+          tesekkur_edildi: boolean
           to_id: string
         }
         Insert: {
@@ -1344,6 +1299,7 @@ export type Database = {
           id?: string
           is_hidden?: boolean
           message: string
+          tesekkur_edildi?: boolean
           to_id: string
         }
         Update: {
@@ -1352,6 +1308,7 @@ export type Database = {
           id?: string
           is_hidden?: boolean
           message?: string
+          tesekkur_edildi?: boolean
           to_id?: string
         }
         Relationships: [
@@ -1927,6 +1884,32 @@ export type Database = {
           },
         ]
       }
+      ikinci_ayna: {
+        Row: {
+          participant_id: string
+          content: string
+          created_at: string
+        }
+        Insert: {
+          participant_id: string
+          content: string
+          created_at?: string
+        }
+        Update: {
+          participant_id?: string
+          content?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ikinci_ayna_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       oyun_plani: {
         Row: {
           created_at: string
@@ -2056,6 +2039,8 @@ export type Database = {
           ayna_ses_secildi_at: string | null
           camp_unlock_token: string | null
           camp_unlocked_at: string | null
+          cinsiyet: string | null
+          yas: number | null
           city: string | null
           consent_at: string | null
           created_at: string
@@ -2073,6 +2058,8 @@ export type Database = {
           kidem_ay: number | null
           login_code: string
           onboarding_hatirlatma_at: string | null
+          onboarding_hatirlatma_sayi: number
+          son_ufuk_toren: string | null
           onboarding_toren_at: string | null
           phone: string | null
           profil_foto_path: string | null
@@ -2089,6 +2076,8 @@ export type Database = {
           ayna_ses?: string
           ayna_ses_secildi_at?: string | null
           camp_unlock_token?: string | null
+          cinsiyet?: string | null
+          yas?: number | null
           camp_unlocked_at?: string | null
           city?: string | null
           consent_at?: string | null
@@ -2107,6 +2096,8 @@ export type Database = {
           kidem_ay?: number | null
           login_code: string
           onboarding_hatirlatma_at?: string | null
+          onboarding_hatirlatma_sayi?: number
+          son_ufuk_toren?: string | null
           onboarding_toren_at?: string | null
           phone?: string | null
           profil_foto_path?: string | null
@@ -2123,6 +2114,8 @@ export type Database = {
           ayna_ses?: string
           ayna_ses_secildi_at?: string | null
           camp_unlock_token?: string | null
+          cinsiyet?: string | null
+          yas?: number | null
           camp_unlocked_at?: string | null
           city?: string | null
           consent_at?: string | null
@@ -2141,6 +2134,8 @@ export type Database = {
           kidem_ay?: number | null
           login_code?: string
           onboarding_hatirlatma_at?: string | null
+          onboarding_hatirlatma_sayi?: number
+          son_ufuk_toren?: string | null
           onboarding_toren_at?: string | null
           phone?: string | null
           profil_foto_path?: string | null
@@ -2814,6 +2809,35 @@ export type Database = {
           },
         ]
       }
+      soz_aksiyon_tamam: {
+        Row: {
+          aksiyon_index: number
+          id: string
+          participant_id: string
+          tamamlandi_at: string
+        }
+        Insert: {
+          aksiyon_index: number
+          id?: string
+          participant_id: string
+          tamamlandi_at?: string
+        }
+        Update: {
+          aksiyon_index?: number
+          id?: string
+          participant_id?: string
+          tamamlandi_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "soz_aksiyon_tamam_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       soz_durtme: {
         Row: {
           created_at: string
@@ -2859,24 +2883,30 @@ export type Database = {
       soz_takip: {
         Row: {
           created_at: string
+          gorusme_sayisi: number | null
           gun: string
           id: string
+          kayit_sayisi: number
           notlar: string | null
           participant_id: string
           yapildi: boolean
         }
         Insert: {
           created_at?: string
+          gorusme_sayisi?: number | null
           gun: string
           id?: string
+          kayit_sayisi?: number
           notlar?: string | null
           participant_id: string
           yapildi?: boolean
         }
         Update: {
           created_at?: string
+          gorusme_sayisi?: number | null
           gun?: string
           id?: string
+          kayit_sayisi?: number
           notlar?: string | null
           participant_id?: string
           yapildi?: boolean

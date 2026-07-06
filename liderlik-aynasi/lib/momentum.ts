@@ -2,6 +2,9 @@ import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { momentumPuanla, momentumMesaji } from "@/lib/davranis";
 import { katilimciyaBildir } from "@/lib/push";
+import { haftalikSayilar, kotaDolduBildir } from "@/lib/sozTakip";
+import { hedefCekirdek } from "@/lib/hedef";
+import { haftalikGorusmeKotasi } from "@/lib/oyunPlani";
 
 // HAFTALIK MOMENTUM ENDEKSİ: ciroyu değil davranış eğilimini ölçer.
 // Cuma akşamları tik tetikler; skorlar momentum_scores'a yazılır ve
@@ -29,9 +32,9 @@ export async function momentumHesaplaVeYaz(
   const buHaftaBasi = new Date(`${hafta}T00:00:00+03:00`);
   const oncekiHaftaBasi = new Date(buHaftaBasi.getTime() - 7 * 86_400_000);
 
-  const [{ data: kisiler }, { data: gorevler }, { data: puanlar }, { data: onceki }] =
+  const [{ data: kisiler }, { data: gorevler }, { data: puanlar }, { data: onceki }, { data: modAyar }] =
     await Promise.all([
-      db.from("participants").select("id").eq("role", "participant"),
+      db.from("participants").select("id, full_name").eq("role", "participant"),
       db
         .from("missions")
         .select("participant_id, status, ai_score, issued_at, responded_at, due_at")
@@ -44,7 +47,11 @@ export async function momentumHesaplaVeYaz(
         .from("momentum_scores")
         .select("participant_id, score")
         .eq("week_start", new Date(oncekiHaftaBasi).toISOString().slice(0, 10)),
+      db.from("settings").select("value").eq("key", "sistem_modu").maybeSingle(),
     ]);
+  // [Faz 5] Yolculuk modunda katılım ratings yerine haftalık kota +
+  // kayıttan gelir (ratings dalgaları kamp bitince kalıcı ölür).
+  const yolculukModu = modAyar?.value === "yolculuk";
 
   const oncekiSkor = new Map((onceki ?? []).map((o) => [o.participant_id, o.score]));
   const puanSayisi = new Map<string, number>();
@@ -62,6 +69,18 @@ export async function momentumHesaplaVeYaz(
       (g) => new Date(g.issued_at) < buHaftaBasi
     );
     const teslimler = buHafta.filter((g) => g.responded_at !== null);
+    let yolculukKatilim: { gorusmeToplam: number; kota: number | null; kayitToplam: number } | null = null;
+    if (yolculukModu) {
+      const [hafta, hedef] = await Promise.all([
+        haftalikSayilar(db, k.id),
+        hedefCekirdek(db, k.id),
+      ]);
+      yolculukKatilim = {
+        gorusmeToplam: hafta.gorusmeToplam,
+        kota: haftalikGorusmeKotasi(hedef?.plan?.haftalikSaat ?? null),
+        kayitToplam: hafta.kayitToplam,
+      };
+    }
     const sonuc = momentumPuanla({
       verilen: buHafta.length,
       teslim: teslimler.length,
@@ -75,6 +94,7 @@ export async function momentumHesaplaVeYaz(
         .filter((g) => g.ai_score !== null)
         .map((g) => g.ai_score as number),
       degerlendirme: puanSayisi.get(k.id) ?? 0,
+      yolculukKatilim,
     });
 
     const { error } = await db.from("momentum_scores").upsert({
@@ -92,6 +112,11 @@ export async function momentumHesaplaVeYaz(
       momentumMesaji(sonuc.skor, oncekiSkor.get(k.id) ?? null),
       "/gorevler"
     );
+    // [FAZ 8 · Madde 16] Bu hafta görüşme kotasını dolduran kişinin şahitlerine
+    // pozitif haber — şahide giden haber dengesini iyiye çevir.
+    if (yolculukKatilim?.kota && yolculukKatilim.gorusmeToplam >= yolculukKatilim.kota) {
+      await kotaDolduBildir(db, k.id, k.full_name);
+    }
   }
   return { yazilan };
 }

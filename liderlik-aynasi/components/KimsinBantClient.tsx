@@ -6,6 +6,7 @@ import Link from "next/link";
 import YaziBoyu from "./YaziBoyu";
 import TemaSecimi from "./TemaSecimi";
 import SesSecimiEkrani from "./SesSecimiEkrani";
+import KimlikDuzenle from "./KimlikDuzenle";
 
 // Üst-orta kimlik çipi + YARDIM. Çip her zaman en tepede sabit durur; ALTINDAKİ
 // boşluk gerçek yüksekliği kadar yer ayırır (sayfa onun altından başlar, çakışma
@@ -52,6 +53,7 @@ export default function KimsinBantClient({
   const [acik, setAcik] = useState(false);
   const [ayarlarAcik, setAyarlarAcik] = useState(false);
   const [sesDegistirAcik, setSesDegistirAcik] = useState(false);
+  const [kimlikDegistirAcik, setKimlikDegistirAcik] = useState(false);
   // KIOSK: büyük ekran/sahne rotalarında kimlik çipi görünmez (sahne kromsuz).
   const pathname = usePathname();
   const kiosk = pathname === "/ekran" || pathname.startsWith("/ekran/") || pathname.startsWith("/sahne");
@@ -152,7 +154,12 @@ export default function KimsinBantClient({
               <div
                 role="dialog"
                 aria-label="Yardım"
-                className="absolute left-1/2 top-full z-50 mt-2 max-h-[70vh] w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-y-auto rounded-2xl border border-royal/40 bg-midnight-card p-4 text-left shadow-2xl"
+                // EKRANA (viewport) göre ortalanır — çipe göre değil. Çip sola
+                // yakın durduğu için "absolute + çipe göre ortala" bazı dar
+                // telefonlarda paneli sol kenardan taşırıyordu. fixed + viewport
+                // ortası + max-w ile her genişlikte iki yanda 1rem boşlukla sığar.
+                style={{ top: "calc(env(safe-area-inset-top, 0px) + 3.75rem)" }}
+                className="fixed left-1/2 z-50 max-h-[70vh] w-80 max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-y-auto rounded-2xl border border-royal/40 bg-midnight-card p-4 text-left shadow-2xl"
               >
                 <p className="mb-2 text-sm font-bold text-gold-light">🛟 Yardım</p>
                 <div className="space-y-1.5">
@@ -260,6 +267,20 @@ export default function KimsinBantClient({
               </button>
             </div>
 
+            {/* Cinsiyet & Yaş — aynanın sana doğru hitap etmesi için; istenince güncellenir. */}
+            <div className="mt-5 border-t border-white/10 pt-4">
+              <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+                Seni Tanıması
+              </p>
+              <button
+                onClick={() => setKimlikDegistirAcik(true)}
+                className="flex w-full items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3 text-sm text-slate-200 transition-colors hover:bg-white/[0.06]"
+              >
+                <span>🪞 Cinsiyet ve yaşımı düzenle</span>
+                <span aria-hidden className="text-slate-500">›</span>
+              </button>
+            </div>
+
             {/* KVKK / Gizlilik — verilerine hâkim ol: dilediğin an çık ya da sil. */}
             <div className="mt-5 border-t border-white/10 pt-4">
               <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
@@ -310,6 +331,24 @@ export default function KimsinBantClient({
               ayarModu
               onKapat={() => setSesDegistirAcik(false)}
             />
+          </div>
+        </>
+      )}
+
+      {/* Cinsiyet & yaş düzenleme alt-modalı */}
+      {kimlikDegistirAcik && (
+        <>
+          <button
+            aria-label="Kapat"
+            onClick={() => setKimlikDegistirAcik(false)}
+            className="fixed inset-0 z-[60] cursor-default bg-black/60"
+          />
+          <div
+            role="dialog"
+            aria-label="Cinsiyet ve yaşını düzenle"
+            className="fixed left-1/2 top-1/2 z-[61] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/10 bg-[#1a1035] py-6"
+          >
+            <KimlikDuzenle onKapat={() => setKimlikDegistirAcik(false)} />
           </div>
         </>
       )}

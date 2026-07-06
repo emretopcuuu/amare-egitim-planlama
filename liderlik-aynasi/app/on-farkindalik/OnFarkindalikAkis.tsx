@@ -453,12 +453,20 @@ export default function OnFarkindalikAkis({
             style={{ width: `${yuzde}%` }}
           />
         </div>
-        {/* BÖLÜM RAYI — hangi katmandasın + sıradaki bölümler adıyla görünür */}
+        {/* BÖLÜM RAYI — hangi katmandasın + sıradaki bölümler adıyla görünür.
+            Tamamlanmış/içinde olunan bölüme DOKUNUNCA o bölümün ilk adımına döner
+            (geri geri gitmeden düzelt); ileri (bekleyen) bölüme atlama yok —
+            zorunlu adımlar atlanmasın. Cevaplar zaten kayıtlı, kayıp olmaz. */}
         <AsamaRayi
-          asamalar={BOLUMLER.map<RayAsama>((b) => ({
-            ad: b.ad,
-            durum: adim > b.sonIdx ? "tamam" : b.ad === a.grup ? "simdi" : "bekliyor",
-          }))}
+          asamalar={BOLUMLER.map<RayAsama>((b, k) => {
+            const durum = adim > b.sonIdx ? "tamam" : b.ad === a.grup ? "simdi" : "bekliyor";
+            const basIdx = k === 0 ? 0 : BOLUMLER[k - 1].sonIdx + 1;
+            return {
+              ad: b.ad,
+              durum,
+              onTikla: durum === "bekliyor" ? undefined : () => setAdim(basIdx),
+            };
+          })}
           className="mt-2"
         />
       </header>

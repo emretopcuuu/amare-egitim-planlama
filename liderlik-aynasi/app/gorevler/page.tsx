@@ -103,7 +103,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id, somutluk, altin, secim_grubu, kapi_etiket, kas, zorluk_seviye"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, reflection_text, reflection_reply, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id, somutluk, altin, secim_grubu, kapi_etiket, kas, zorluk_seviye"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -786,6 +786,8 @@ export default async function GorevlerPage() {
           response_text: g.response_text,
           neden: g.neden ?? null,
           fayda: g.fayda ?? null,
+          reflection_text: g.reflection_text ?? null,
+          reflection_reply: g.reflection_reply ?? null,
         }))}
         ozellikAd={Object.fromEntries(ozellikAd)}
       />

@@ -7,8 +7,8 @@ import { raporlarGorunurMu } from "@/lib/rapor";
 import { hedefKapisiAcik } from "@/lib/hedef";
 import { kampOncesiAdim } from "@/lib/akis";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
-import { sozTakipAktif, sahitSayim } from "@/lib/sozTakip";
-import { sozV2KapisiAcik } from "@/lib/soz";
+import { sozTakipAktif, sahitSayim, secilenSahitSayisi } from "@/lib/sozTakip";
+import { sozV2KapisiAcik, TANIK_HEDEF } from "@/lib/soz";
 import { planOnayliMi } from "@/lib/oyunPlani";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
@@ -152,7 +152,7 @@ export default async function AnaSayfa({
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
   const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }, { data: hedefErken }, { data: degerlerDurum }] =
     await Promise.all([
-      db.from("participants").select("camp_unlocked_at, team, consent_at, ayna_ses_secildi_at, onboarding_toren_at").eq("id", session.sub).maybeSingle(),
+      db.from("participants").select("camp_unlocked_at, team, consent_at, ayna_ses_secildi_at, onboarding_toren_at, cinsiyet").eq("id", session.sub).maybeSingle(),
       db
         .from("settings")
         .select("key, value")
@@ -250,7 +250,9 @@ export default async function AnaSayfa({
   if (adim.tip === "rituel") {
     // FOTO + SES RİTÜELİ — Yansıman'ın doğuşu. Tamamlanana (ya da "sessiz"
     // seçilene) dek grup ve sorular dahil başka hiçbir kapı açılmaz.
-    return <AynaRituel />;
+    // Ritüelin en başında kişinin cinsiyeti + yaşı sorulur (AI doğru hitap etsin
+    // diye); zaten yanıtlamışsa (cinsiyet dolu) o adım atlanır.
+    return <AynaRituel kimlikTamam={!!kisi.cinsiyet} />;
   }
   if (adim.tip === "yonlendir") {
     // ?intro=1 (tanıtım testi) yalnız ilk Pusula kapısında (neden keşfi henüz
@@ -355,13 +357,17 @@ export default async function AnaSayfa({
     ]);
   // FAZ B: söz mühürlüyse (sesli) ana ekran 90-gün yolculuğuna geçer; ayrıca
   // kişi başkalarına şahitse şahit paneline erişir.
-  const [takipAktif, sahitSayisi, sozV2Acik, planOnayli] = await Promise.all([
+  const [takipAktif, sahitSayisi, sozV2Acik, planOnayli, secilenSahit] = await Promise.all([
     sozTakipAktif(db, session.sub),
     sahitSayim(db, session.sub),
     // FAZ 1 (tek söz): kapanış artık SÖZ v2 (plandan doğan söz) üstünden yürür.
     sozV2KapisiAcik(db),
     planOnayliMi(db, session.sub),
+    secilenSahitSayisi(db, session.sub),
   ]);
+  // Şahit adımı ZORUNLU: söz mühürlü ama 5 şahit seçilmemişse 90 gün yolculuğu
+  // açılmaz; kişi şahit seçimine geri gönderilir (/sozum tanik fazına düşer).
+  const sahitEksik = takipAktif && secilenSahit < TANIK_HEDEF;
   const takim = kisi?.team ?? null;
 
   // Ayna Eşin görüşmeleri (canlı "şimdi görüşmen" şeridi için) — yalnız açıkken.
@@ -392,6 +398,19 @@ export default async function AnaSayfa({
       });
     }
   }
+
+  // [FAZ 9 · U2] Yetim yolculuk sayfalarına menüden erişim — İkinci Ayna ve
+  // Mühür Zinciri eskiden yalnız push ile açılıyordu (push kaçarsa ulaşılamazdı).
+  const { data: menuAyarlar } = await db
+    .from("settings")
+    .select("key, value")
+    .in("key", ["ikinci_ayna_acik", "muhur_plus30_acik", "muhur_plus60_acik", "muhur_plus90_acik"]);
+  const menuAyar = new Map((menuAyarlar ?? []).map((a) => [a.key, a.value]));
+  const ikinciAynaAcik = menuAyar.get("ikinci_ayna_acik") === "true";
+  const muhurZinciriAcik =
+    menuAyar.get("muhur_plus30_acik") === "true" ||
+    menuAyar.get("muhur_plus60_acik") === "true" ||
+    menuAyar.get("muhur_plus90_acik") === "true";
 
   const momentumSkor =
     typeof momentumSatirlar?.[0]?.score === "number" ? momentumSatirlar[0].score : null;
@@ -521,6 +540,8 @@ export default async function AnaSayfa({
           pusulaTamam={!!pusulaErken?.tamamlandi_at}
           hedefTamam={!!hedefErken?.tamamlandi_at}
           ofTamam={!!ofDurum?.tamamlandi_at}
+          ikinciAynaAcik={ikinciAynaAcik}
+          muhurZinciriAcik={muhurZinciriAcik}
         />
       </header>
       {/* [KURULUM] Kurulu ama bildirim kapalı → tepede büyük "Bildirimleri Aç"
@@ -673,6 +694,24 @@ export default async function AnaSayfa({
     );
   }
 
+  // 2c-b) ŞAHİT KAPISI (ZORUNLU) — söz mühürlü ama 5 şahit seçilmemişse 90 gün
+  // yolculuğu yerine önce şahit seçtirilir. /sozum durum 'sesli' + eksik şahitte
+  // doğrudan tanik (şahit seçimi) fazını açar.
+  if (sahitEksik) {
+    return (
+      <Sayfa ust={ust}>
+        <BuyukKart
+          baslik="Şahitlerini Seç"
+          metin="Sözünü verdin. 90 güne başlamadan önce 5 lider şahit seç — onlar sözünü görecek, imzalayacak ve yolda seni takip edip gerektiğinde dürtecek. Bu adım zorunlu."
+          href="/sozum"
+          dugme={`Şahit Seç (${secilenSahit}/${TANIK_HEDEF})`}
+          ikon="🤝"
+          vurgu
+        />
+      </Sayfa>
+    );
+  }
+
   // 2d) 90 GÜN YOLCULUĞU — söz mühürlüyse (sesli) ana ekran takibe geçer.
   // Rapor hâlâ üst menüden + buradaki linkten erişilir.
   if (takipAktif) {
@@ -687,6 +726,9 @@ export default async function AnaSayfa({
           vurgu
         />
         <div className="mt-4 space-y-3">
+          {/* Kişinin KENDİ sözü + seçtiği şahitler (imza durumu, QR ile toplama,
+              düzenleme) — yolculuğa geçtikten sonra da erişilebilir olmalı. */}
+          <SicakAdim href="/sozum" etiket="🤝 Sözün ve şahitlerin" />
           {sahitSayisi > 0 && (
             <SicakAdim href="/sahitlik" etiket={t.takipSahitlik(sahitSayisi)} vurgu />
           )}

@@ -193,6 +193,7 @@ export default function KatilimciYonetim({
 
   // ---- sayfalama ----
   const [sayfa, setSayfa] = useState(0);
+  const [telefonsuzFiltre, setTelefonsuzFiltre] = useState(false);
 
   // ---- seçim ----
   const [secili, setSecili] = useState<Set<string>>(new Set());
@@ -399,11 +400,16 @@ export default function KatilimciYonetim({
     }
   }
 
+  // Telefonu olmayan katılımcılar — CSV/import sonrası telefonu sonra eklenecek
+  // kişileri admin net görsün + "sadece bunları göster" filtresiyle takip etsin.
+  const telefonsuzSayi = useMemo(() => kisiler.filter((k) => !k.phone).length, [kisiler]);
+  const listelenecek = telefonsuzFiltre ? kisiler.filter((k) => !k.phone) : kisiler;
+
   // Sayfalama: liste 160+ kişiyle çok uzuyor → 10'arlı sayfalar, ileri/geri.
-  const sayfaSayisi = Math.max(1, Math.ceil(kisiler.length / SAYFA_BOYU));
+  const sayfaSayisi = Math.max(1, Math.ceil(listelenecek.length / SAYFA_BOYU));
   const guvenliSayfa = Math.min(sayfa, sayfaSayisi - 1);
   const baslangicIdx = guvenliSayfa * SAYFA_BOYU;
-  const gosterilen = kisiler.slice(baslangicIdx, baslangicIdx + SAYFA_BOYU);
+  const gosterilen = listelenecek.slice(baslangicIdx, baslangicIdx + SAYFA_BOYU);
 
   return (
     <div className="space-y-4">
@@ -411,6 +417,23 @@ export default function KatilimciYonetim({
       <section className="kart-3d rounded-2xl bg-midnight-card/60 p-6 shadow-xl ring-1 ring-royal/30 backdrop-blur">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-gold-light">{t.toplam(kisiler.length)}</h2>
+          {telefonsuzSayi > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                setTelefonsuzFiltre((v) => !v);
+                setSayfa(0);
+              }}
+              title="Telefonu olmayan katılımcılar — sonra telefonlarını ekle"
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold transition-colors ${
+                telefonsuzFiltre
+                  ? "bg-amber-500/25 text-amber-200 ring-1 ring-amber-400/50"
+                  : "bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
+              }`}
+            >
+              📵 {telefonsuzSayi} kişi telefonsuz{telefonsuzFiltre ? " — filtre açık" : ""}
+            </button>
+          )}
           {secili.size > 0 && (
             <span className="rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-gold-light">
               {t.seciliSayi(secili.size)}
@@ -469,7 +492,16 @@ export default function KatilimciYonetim({
                       </td>
                       <td className="py-2 pr-3 text-slate-400">{k.team ?? "—"}</td>
                       <td className="py-2 pr-3 text-slate-400">{k.city ?? "—"}</td>
-                      <td className="py-2 pr-3 text-slate-400">{k.phone ?? "—"}</td>
+                      <td className="py-2 pr-3 text-slate-400">
+                        {k.phone ?? (
+                          <span
+                            title="Bu kişinin telefonu yok — sonra ekle"
+                            className="inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[0.7rem] font-semibold text-amber-300"
+                          >
+                            📵 telefon eklenecek
+                          </span>
+                        )}
+                      </td>
                       <td className="py-2 pr-3">
                         <KodKopyala kod={k.login_code} />
                       </td>
@@ -519,6 +551,11 @@ export default function KatilimciYonetim({
                       {[k.team, k.city].filter(Boolean).join(" · ") || "—"}
                       {k.phone ? ` · ${k.phone}` : ""}
                     </p>
+                    {!k.phone && (
+                      <span className="mt-1 inline-flex items-center gap-1 rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[0.65rem] font-semibold text-amber-300">
+                        📵 telefon eklenecek
+                      </span>
+                    )}
                   </div>
                   <KodKopyala kod={k.login_code} />
                   <button

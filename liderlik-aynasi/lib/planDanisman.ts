@@ -5,6 +5,7 @@ import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { pusulaCekirdek } from "@/lib/pusula";
 import { hedefCekirdek } from "@/lib/hedef";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
+import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 import { tlFormat } from "@/lib/kariyer";
 import type { PlanMadde, PlanUfuk } from "@/lib/oyunPlani";
 
@@ -86,7 +87,7 @@ export async function planMaddesineDanis(
       max_tokens: 1024,
       thinking: { type: "adaptive" },
       output_config: { effort: "low", format: { type: "json_schema", schema: DANIS_SEMASI } },
-      system: `${SISTEM}\n\n${KATILIMCI_EVRENI}\n\n${DIL_KALITESI}`,
+      system: `${SISTEM}\n\n${KATILIMCI_EVRENI}\n\n${DIL_KALITESI}${await kimlikBloguGetir(db, pid)}`,
       messages: [{ role: "user", content: JSON.stringify(veri) }],
     });
     if (yanit.stop_reason === "refusal") return { durum: "hata" };

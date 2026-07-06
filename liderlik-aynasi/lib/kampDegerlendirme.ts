@@ -30,8 +30,13 @@ export async function degerlendirmeAc(db: Db): Promise<void> {
   const dalga = await degerlendirmeDalgasi(db);
   if (!dalga) return;
   // Aynı anda tek dalga açık kuralı: diğerlerini kapat, bunu aç.
+  const simdiIso = new Date().toISOString();
   await db.from("waves").update({ is_open: false }).neq("id", dalga.id);
-  await db.from("waves").update({ is_open: true, opened_at: new Date().toISOString() }).eq("id", dalga.id);
+  await db.from("waves").update({ is_open: true, opened_at: simdiIso }).eq("id", dalga.id);
+  // [FAZ A · B4] Sahne sinyali — otomatik dalga açılışı da /ekran sinematiğini
+  // tetiklesin (elle admin dalga açışıyla aynı: settings.sahne_dalga). Eskiden
+  // yalnız admin route yazıyordu; otomatik açılışta büyük ekran efekti kaçıyordu.
+  await db.from("settings").upsert({ key: "sahne_dalga", value: `${dalga.id}:${simdiIso}`, updated_at: simdiIso });
   await herkeseBildir(
     db,
     "🪞 Kamp Değerlendirmesi açıldı",
