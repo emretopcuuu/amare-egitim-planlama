@@ -46,12 +46,14 @@ export default function TakipAkis({
   hafta: haftaBaslangic,
   kota,
   sozSesUrl,
+  degerDavranisi,
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
   hafta: Hafta;
   kota: number | null;
   sozSesUrl: string | null;
+  degerDavranisi: string | null;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   const [hafta, setHafta] = useState<Hafta>(haftaBaslangic);
@@ -268,6 +270,17 @@ export default function TakipAkis({
           ))}
         </div>
       </section>
+
+      {/* [Faz 7] Değer-Davranış Aynası — kampta seçtiğin değer bu haftaki
+          gerçek verinle buluşuyor. AI çağrısı yok, haftada bir değişir. */}
+      {degerDavranisi && (
+        <section className="kart-cam rounded-2xl border border-royal-light/25 p-5">
+          <p className="text-xs font-semibold uppercase tracking-wide text-royal-light/80">
+            ✨ Değerin bu hafta
+          </p>
+          <p className="mt-2 text-sm leading-relaxed text-slate-200">{degerDavranisi}</p>
+        </section>
+      )}
 
       {/* Sözündeki adımlar */}
       {aksiyonlar.length > 0 && (
