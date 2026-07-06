@@ -278,6 +278,36 @@ export async function sozTakipAktif(db: Db, pid: string): Promise<boolean> {
   return data?.durum === "sesli";
 }
 
+// [FAZ 7 · Madde 10] AKŞAM ÇEKİN ÇIPASI — 90 gün motorunun #1 boşluğu: günlük
+// check-in için tek POZİTİF hatırlatma yoktu (yalnız 2+ gün kaçırınca ceza
+// gelirdi). Akşam, mühürlü sözü olan ama BUGÜN henüz işaretlememiş herkese
+// nazik bir "bugünü işaretle" push'u — ceza motorundan ÖNCE gelen yapıcı dokunuş.
+export async function checkinCipasi(db: Db): Promise<{ gonderilen: number }> {
+  const bugun = bugunTr();
+  const { data: sozler } = await db.from("soz").select("participant_id").eq("durum", "sesli");
+  const aktifler = (sozler ?? []).map((s) => s.participant_id);
+  if (aktifler.length === 0) return { gonderilen: 0 };
+  const { data: bugunler } = await db
+    .from("soz_takip")
+    .select("participant_id")
+    .eq("gun", bugun)
+    .in("participant_id", aktifler);
+  const yapanSet = new Set((bugunler ?? []).map((b) => b.participant_id));
+  let gonderilen = 0;
+  for (const pid of aktifler) {
+    if (yapanSet.has(pid)) continue;
+    await katilimciyaBildir(
+      db,
+      pid,
+      "🌙 Bugünü işaretle",
+      "Bugün sözüne yönelik bir adım attın mı? Aynana tek dokunuşla işaretle.",
+      "/takip"
+    ).catch(() => {});
+    gonderilen++;
+  }
+  return { gonderilen };
+}
+
 // Kişinin KENDİ sözüne seçtiği şahit sayısı (imza şart değil, seçim yeterli).
 // 90 gün yolculuğu bu sayı hedefe ulaşmadan AÇILMAZ — şahit adımı zorunlu.
 export async function secilenSahitSayisi(db: Db, pid: string): Promise<number> {

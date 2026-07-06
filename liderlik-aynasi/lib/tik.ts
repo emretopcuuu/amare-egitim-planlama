@@ -1,6 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { eskalasyonTara, sahitOzetiGonder } from "@/lib/sozTakip";
+import { eskalasyonTara, sahitOzetiGonder, checkinCipasi } from "@/lib/sozTakip";
 import {
   gorevUret,
   gorevPuanla,
@@ -124,6 +124,7 @@ export async function tikCalistir(
     durtulen: 0,
     momentum: 0,
     sahitOzeti: 0,
+    checkinCipa: 0,
     orkestratorAtes: 0,
   };
 
@@ -1245,6 +1246,20 @@ export async function tikCalistir(
         const sonuc = await momentumHesaplaVeYaz(db, simdi);
         ozet.momentum = sonuc.yazilan;
       }
+    }
+  }
+
+  // [FAZ 7 · Madde 10] AKŞAM ÇEKİN ÇIPASI: yolculuk modunda 20:30'dan sonra,
+  // günde bir kez, mühürlü sözü olan ama BUGÜN henüz işaretlememiş herkese nazik
+  // "bugünü işaretle" push'u — ceza motorundan (eskalasyon) önce gelen tek pozitif
+  // günlük hatırlatma. settings kilidiyle bir kez.
+  if (mod === "yolculuk" && saat === 20 && dakika >= 30) {
+    const { error: cipaKilit } = await db
+      .from("settings")
+      .insert({ key: `checkin_cipa_${bugun}`, value: "1" });
+    if (!cipaKilit) {
+      const sonuc = await checkinCipasi(db);
+      ozet.checkinCipa = sonuc.gonderilen;
     }
   }
 
