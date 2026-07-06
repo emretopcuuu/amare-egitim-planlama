@@ -182,6 +182,18 @@ export default function TakipAkis({
         </div>
       )}
 
+      {/* [FAZ 7 · Madde 11] Nazik seri — seri kırılınca ceza/sessizlik yerine
+          cesaret. Bugün işaretlenmemiş + yakında ara verilmişse yumuşak çerçeve. */}
+      {durum.bugunYapildi !== true && durum.kacirilanGun >= 1 && durum.kacirilanGun < 900 && (
+        <div className="rounded-2xl border border-royal/30 bg-royal/[0.08] p-4 text-center">
+          <p className="text-sm leading-relaxed text-slate-200">
+            {durum.kacirilanGun === 1
+              ? "Dün bir adım atmadın — sorun değil. Seri bir yarış değil; önemli olan bugün geri dönmen. Yeni serin tek bir işaretle başlar."
+              : `${durum.kacirilanGun} gündür ara verdin — kendini yargılama. Yol uzun; yeni serin bugün, tek bir işaretle başlar.`}
+          </p>
+        </div>
+      )}
+
       {/* Seri + toplam */}
       <div className="flex gap-3">
         <div className="flex-1 rounded-2xl bg-gold/10 p-4 text-center">
