@@ -1,7 +1,7 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { katilimciyaBildir, adminlereBildir } from "@/lib/push";
-import { taniklar } from "@/lib/soz";
+import { taniklar, sozGetir } from "@/lib/soz";
 import { haftaBaslangici } from "@/lib/momentum";
 import { hedefCekirdek } from "@/lib/hedef";
 import { haftalikGorusmeKotasi } from "@/lib/oyunPlani";
@@ -107,24 +107,39 @@ export type TakipEdilen = {
   // [Faz 9] Şahit Karnesi — haftalık kota gerçekleşmesi (varsa).
   haftaGorusme: number;
   haftaKota: number | null;
+  // [Şahitlik geliştirme #1] Foto (henüz imzalanmamış storage path — page.tsx
+  // imzalar) — "150 kişilik organizasyonda isimden tanımıyorum" isteğinin devamı.
+  profilFotoPath: string | null;
+  // [Şahitlik geliştirme #2] Kişinin mühürlü sözü — şahit KİME şahit olduğunu
+  // ve neye söz verdiğini unutmasın. Ses path'i de page.tsx imzalar.
+  sozMetni: string | null;
+  sozSesPath: string | null;
+  sozAksiyonlari: { metin: string; ufuk: string }[];
+  // [Şahitlik geliştirme #4] Bu hafta alınan kayıt sayısı.
+  haftaKayit: number;
 };
 
 // Bir liderin şahit olduğu kişiler + ilerlemeleri (şahit paneli).
 export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipEdilen[]> {
   const { data: tanikRows } = await db
     .from("soz_tanik")
-    .select("soz_sahibi, sahip:participants!soz_tanik_soz_sahibi_fkey(full_name, phone)")
+    .select(
+      "soz_sahibi, sahip:participants!soz_tanik_soz_sahibi_fkey(full_name, phone, profil_foto_path)"
+    )
     .eq("witness_id", witnessId)
     .not("imza_at", "is", null);
   const rows = tanikRows ?? [];
   const sonuc: TakipEdilen[] = [];
   for (const r of rows) {
-    const [durum, hafta, hedef] = await Promise.all([
+    const [durum, hafta, hedef, soz] = await Promise.all([
       takipDurum(db, r.soz_sahibi),
       haftalikSayilar(db, r.soz_sahibi),
       hedefCekirdek(db, r.soz_sahibi),
+      sozGetir(db, r.soz_sahibi),
     ]);
-    const sahip = r.sahip as { full_name: string; phone: string | null } | null;
+    const sahip = r.sahip as
+      | { full_name: string; phone: string | null; profil_foto_path: string | null }
+      | null;
     const sonAdim = durum.son14.filter((g) => g.yapildi).slice(-1)[0]?.gun ?? null;
     sonuc.push({
       sahibiId: r.soz_sahibi,
@@ -135,6 +150,11 @@ export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipE
       sonAdim,
       haftaGorusme: hafta.gorusmeToplam,
       haftaKota: haftalikGorusmeKotasi(hedef?.plan?.haftalikSaat ?? null),
+      profilFotoPath: sahip?.profil_foto_path ?? null,
+      sozMetni: soz?.metin ?? null,
+      sozSesPath: soz?.voice_path ?? null,
+      sozAksiyonlari: soz?.aksiyonlar ?? [],
+      haftaKayit: hafta.kayitToplam,
     });
   }
   return sonuc.sort((a, b) => b.kacirilanGun - a.kacirilanGun);
