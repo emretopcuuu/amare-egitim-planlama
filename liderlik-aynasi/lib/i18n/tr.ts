@@ -390,9 +390,9 @@ export const tr = {
     menuProgram: "Kamp Programı",
     menuYansiman: "Yansımanı izle",
     menuRapor: "Ayna Raporum",
+    menuPlan: "90 Günlük Planım",
     menuKocu: "Ayna Koçu",
     menuGunluk: "Tek Cümle",
-    menuPlan: "🧭 90 Günlük Yolculuk",
     menuBen: "Profilim",
     menuGrup: "Grup Ödevi",
     // Menü maddelerinin alt açıklamaları (ne işe yaradığı bir bakışta anlaşılsın)
@@ -401,6 +401,7 @@ export const tr = {
     menuAltSoz: "Kampı bitirirken verdiğin söz",
     menuAltOzDuzenle: "Kendi puanlarını gözden geçir",
     menuAltRapor: "Sana dair toplanan ayna",
+    menuAltPlan: "Onayladığın 90 günlük oyun planına dön",
     menuAltYansiman: "Sana özel kısa yansıma",
     menuAltBen: "Bilgilerin ve kariyer konumun",
     menuAltGunluk: "Bugünü tek cümlede yakala",
