@@ -5,6 +5,7 @@ import { takipDurum, sozTakipAktif, haftalikSayilar } from "@/lib/sozTakip";
 import { sozGetir } from "@/lib/soz";
 import { hedefCekirdek } from "@/lib/hedef";
 import { haftalikGorusmeKotasi } from "@/lib/oyunPlani";
+import { degerDavranisiGetir } from "@/lib/degerDavranisi";
 import TakipAkis from "./TakipAkis";
 import { tr } from "@/lib/i18n/tr";
 import Link from "next/link";
@@ -31,11 +32,12 @@ export default async function TakipSayfa() {
     );
   }
 
-  const [durum, soz, hafta, hedef] = await Promise.all([
+  const [durum, soz, hafta, hedef, degerDavranisi] = await Promise.all([
     takipDurum(db, session.sub),
     sozGetir(db, session.sub),
     haftalikSayilar(db, session.sub),
     hedefCekirdek(db, session.sub),
+    degerDavranisiGetir(db, session.sub),
   ]);
   const kota = haftalikGorusmeKotasi(hedef?.plan?.haftalikSaat ?? null);
 
@@ -55,6 +57,7 @@ export default async function TakipSayfa() {
         hafta={hafta}
         kota={kota}
         sozSesUrl={sozSesUrl}
+        degerDavranisi={degerDavranisi}
       />
     </main>
   );
