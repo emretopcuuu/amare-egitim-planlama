@@ -2859,24 +2859,30 @@ export type Database = {
       soz_takip: {
         Row: {
           created_at: string
+          gorusme_sayisi: number | null
           gun: string
           id: string
+          kayit_sayisi: number
           notlar: string | null
           participant_id: string
           yapildi: boolean
         }
         Insert: {
           created_at?: string
+          gorusme_sayisi?: number | null
           gun: string
           id?: string
+          kayit_sayisi?: number
           notlar?: string | null
           participant_id: string
           yapildi?: boolean
         }
         Update: {
           created_at?: string
+          gorusme_sayisi?: number | null
           gun?: string
           id?: string
+          kayit_sayisi?: number
           notlar?: string | null
           participant_id?: string
           yapildi?: boolean

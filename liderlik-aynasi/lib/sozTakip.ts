@@ -1,6 +1,8 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { katilimciyaBildir } from "@/lib/push";
+import { taniklar } from "@/lib/soz";
+import { haftaBaslangici } from "@/lib/momentum";
 import {
   bugunTr,
   takipDurumHesapla,
@@ -17,12 +19,16 @@ import {
 export { bugunTr };
 export type { TakipDurum };
 
-// Günlük check-in: "bugün sözüme/hedefime yönelik bir adım attım mı?"
+// Günlük check-in: "bugün sözüme/hedefime yönelik bir adım attım mı?" +
+// (FAZ 3/4) kaç görüşme yapıldı (haftalık kota barı) + kaç kişisel KAYIT
+// alındı (Kayıt Zili — kutlama + şahitlere müjde push'u, bkz. kayitBildir).
 export async function checkin(
   db: Db,
   pid: string,
   yapildi: boolean,
-  notlar: string | null
+  notlar: string | null,
+  gorusmeSayisi?: number | null,
+  kayitSayisi?: number
 ): Promise<boolean> {
   const { error } = await db.from("soz_takip").upsert(
     {
@@ -30,10 +36,53 @@ export async function checkin(
       gun: bugunTr(),
       yapildi,
       notlar: (notlar ?? "").trim().slice(0, 500) || null,
+      gorusme_sayisi:
+        typeof gorusmeSayisi === "number" && gorusmeSayisi >= 0
+          ? Math.min(999, Math.round(gorusmeSayisi))
+          : null,
+      kayit_sayisi:
+        typeof kayitSayisi === "number" && kayitSayisi >= 0 ? Math.min(99, Math.round(kayitSayisi)) : 0,
     },
     { onConflict: "participant_id,gun" }
   );
   return !error;
+}
+
+// Bu haftanın (Pazartesi'den bugüne) toplam görüşme + kayıt sayısı — haftalık
+// kota barı ve momentum hesabı için TEK doğruluk kaynağı.
+export async function haftalikSayilar(
+  db: Db,
+  pid: string
+): Promise<{ gorusmeToplam: number; kayitToplam: number }> {
+  const haftaBasi = haftaBaslangici(new Date());
+  const { data } = await db
+    .from("soz_takip")
+    .select("gorusme_sayisi, kayit_sayisi")
+    .eq("participant_id", pid)
+    .gte("gun", haftaBasi);
+  let gorusmeToplam = 0;
+  let kayitToplam = 0;
+  for (const r of data ?? []) {
+    gorusmeToplam += r.gorusme_sayisi ?? 0;
+    kayitToplam += r.kayit_sayisi ?? 0;
+  }
+  return { gorusmeToplam, kayitToplam };
+}
+
+// KAYIT ZİLİ (#6) — kişi kayıt aldığında şahitlerine ANINDA müjde push'u.
+// İmza şartı yok: henüz imzalamamış şahit de haberi almalı.
+export async function kayitBildir(db: Db, pid: string, ad: string): Promise<void> {
+  const ilkAd = ad.split(" ")[0];
+  const tanikList = await taniklar(db, pid);
+  for (const t of tanikList) {
+    await katilimciyaBildir(
+      db,
+      t.witness_id,
+      "🔔 Kayıt Zili",
+      `${ilkAd} yeni bir kayıt aldı! Şahidi olduğun sözünde ilerliyor.`,
+      "/sahitlik"
+    );
+  }
 }
 
 export async function takipDurum(db: Db, pid: string): Promise<TakipDurum> {
