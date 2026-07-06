@@ -17,7 +17,7 @@ import { birUstKariyerEtiket } from "@/lib/persona";
 
 const SISTEM = `Sen AYNA'sın — bu liderlik kampını yöneten yapay zekâ. Kapanışta her katılımcıya, kamptan sonra hedefine yürümesi için bir "90 Günlük Oyun Planı" ÖNERİSİ hazırlarsın. Bu bir dayatma değil, bir başlangıç önerisidir: kişi bunu görüp KENDİ kararıyla düzenleyecek. Bu yüzden maddeler somut ama kişinin sahiplenip değiştirebileceği kadar açık olmalı.
 
-Sana JSON verilecek: kişinin çekirdek nedeni, iç engeli, seçtiği kariyer hedefi + kilometre taşları, ve 360° aynası (en güçlü yanları, kör noktası/gelişim alanı, kampta en çok gelişen özelliği).
+Sana JSON verilecek: kişinin çekirdek nedeni, iç engeli, seçtiği kariyer hedefi + kilometre taşları, 360° aynası (en güçlü yanları, kör noktası/gelişim alanı, kampta en çok gelişen özelliği) ve onboarding'de KENDİ seçtiği temel değerler (degerler).
 
 Plan kuralları:
 - Türkçe yaz, "sen" dili, sıcak ama somut.
@@ -28,6 +28,7 @@ Plan kuralları:
 - ZORUNLU: "kirk_gun" (gelecek ay) maddeleri şu SAHA RİTMİNİ kursun (2-3 maddeye yay): (a) her gün ajandanın dolu olması + günde en az 1 saati ajanda doldurmaya/randevu almaya ayırmak; (b) her gün ekibinden biriyle onun NEDENİNE inen kısa bir sohbet; (c) EN ÖNEMLİSİ haftalık GÖRÜŞME KOTASI — "bu hafta sonuna kadar toplam ŞU KADAR görüşmenin içinde olacağım (şahsi + ekip toplam)". Kotayı SEN net bir sayı olarak ver: JSON'daki "haftalikGorusme" değerini kullan (yoksa haftalikSaat/1.5'i aşağı yuvarla; o da yoksa makul bir taban). O maddeye "istersen bu sayıyı kendine göre değiştirebilirsin — her 1,5 saat ≈ 1 görüşme" notunu ekle. Bu ufkun ruhuna "bu ayın hızı, bütün kariyerinin hızını belirler" mesajını da kat.
 - Network/doğrudan satış alanının diliyle konuş (davet, sunum, kapanış, liste, katlama). KATILIMCI EVRENİ'ndeki gerçek tıkanmalara hitap et.
 - Planı kişinin GÜÇLÜ yanına yasla (onu kaldıraç yap) ve KÖR NOKTASINI/gelişim alanını sessizce çalıştır — ama açıkça yüzüne vurma.
+- Veride "degerler" doluysa: en az bir plan maddesini kişinin KENDİ seçtiği temel değere bağla — o değeri sahada yaşatan somut bir eylem olsun ("{deger} senin seçtiğin değerdi; bu ay onu şöyle yaşat"). Değerleri liste gibi sıralama, uygun maddeye doğal işle.
 - Hedef rakamlarını planın iskeletine bağla ama kuru kuruya tekrarlama.
 - ÖLÇÜTLER CESUR AMA GERÇEKÇİ OLSUN — momentum hacimle gelir, çekingen sayı ilerletmez. Bir kişiye/adaya "davet/aktivite çıkart" derken TEK adet yetmez; anlamlı bir taban koy (ör. "her adayın kendi listesinden EN AZ 3 davet çıkarmasını sağla"). Düşük/ürkek hedeflerden kaçın; kişinin temposuna göre iddialı ama ulaşılabilir bir çıta koy.
 - "ozet": planın ruhunu 1-2 cümlede, nedenle hedefi birleştirerek.`;
@@ -126,12 +127,15 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
 
   if (!process.env.ANTHROPIC_API_KEY) return { durum: "anahtar-yok" };
 
-  const [rapor, pusula, hedef, { data: kisi }] = await Promise.all([
+  const [rapor, pusula, hedef, { data: kisi }, { data: degerlerRow }] = await Promise.all([
     raporHesapla(db, pid),
     pusulaCekirdek(db, pid),
     hedefCekirdek(db, pid),
     db.from("participants").select("kariyer_seviyesi").eq("id", pid).maybeSingle(),
+    // [FAZ 4b] Değerler: plan maddeleri kişinin KENDİ seçtiği değerlere dokunsun.
+    db.from("degerler_calismasi").select("secilen_uc, neden_cumlesi").eq("participant_id", pid).maybeSingle(),
   ]);
+  const secilenDegerler = (degerlerRow?.secilen_uc as string[] | null) ?? [];
 
   // Motivasyon çıtası: kişinin bir üst kariyeri (diamond altı → Diamond; üstü → +1).
   const birUstKariyer = birUstKariyerEtiket(kisi?.kariyer_seviyesi ?? null);
@@ -162,6 +166,10 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
     enGucluYanlar: rapor.guclu.map((s) => s.ad),
     korNoktaVeyaGelisim: rapor.korNokta?.ad ?? rapor.gelisim[0]?.ad ?? null,
     enGelisenOzellik: rapor.enGelisen?.ad ?? null,
+    // [FAZ 4b] Kişinin KENDİ seçtiği temel değerler — plan maddeleri bunlara dokunsun.
+    degerler: secilenDegerler.length
+      ? { temelDegerler: secilenDegerler, nedenCumlesi: degerlerRow?.neden_cumlesi ?? null }
+      : null,
   };
 
   try {
