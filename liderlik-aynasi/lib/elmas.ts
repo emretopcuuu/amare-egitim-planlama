@@ -26,12 +26,15 @@ export type ElmasVeri = {
 };
 
 // Bir faset "tam dolu" sayılması için gereken tamamlanmış görev (yumuşak eğri).
-const FASET_DOYUM = 2;
-// Elmasın tam parlaması için hedef toplam görev (3 günde makul üst sınır).
-const PARLAK_HEDEF = 9;
+// Kamp (3 gün) ve yolculuk (90 gün) için AYRI kalibrasyon: yolculukta sabit
+// kamp değerleriyle elmas ilk haftada tavan yapıp geri kalan ~85 günü "ölü"
+// bırakırdı — [Faz 8] kişi kampta olduğu kadar yolculukta da ilerleme hissetsin.
+const FASET_DOYUM: Record<"kamp" | "yolculuk", number> = { kamp: 2, yolculuk: 6 };
+// Elmasın tam parlaması için hedef toplam görev.
+const PARLAK_HEDEF: Record<"kamp" | "yolculuk", number> = { kamp: 9, yolculuk: 45 };
 
 export async function kimlikElmasiVerisi(db: Db, pid: string): Promise<ElmasVeri> {
-  const [{ data: traits }, { data: gorevler }, rozetKiv] = await Promise.all([
+  const [{ data: traits }, { data: gorevler }, rozetKiv, { data: modAyar }] = await Promise.all([
     db.from("traits").select("id, name").order("sort_order", { ascending: true }),
     db
       .from("missions")
@@ -42,7 +45,11 @@ export async function kimlikElmasiVerisi(db: Db, pid: string): Promise<ElmasVeri
     // [KUR-7] Rozet kıvılcımı (İlk Işık, El Ele) kişinin kimlik toplamına eklenir;
     // rekabetçi /ekran ligi görev-tabanlı kalır (orada rozet SAYILMAZ).
     rozetKivilcimi(db, pid),
+    db.from("settings").select("value").eq("key", "sistem_modu").maybeSingle(),
   ]);
+  const mod: "kamp" | "yolculuk" = modAyar?.value === "yolculuk" ? "yolculuk" : "kamp";
+  const faset_doyum = FASET_DOYUM[mod];
+  const parlak_hedef = PARLAK_HEDEF[mod];
 
   const traitListe = (traits ?? []) as { id: number; name: string }[];
   const tamamlar = (gorevler ?? []) as {
@@ -75,14 +82,14 @@ export async function kimlikElmasiVerisi(db: Db, pid: string): Promise<ElmasVeri
 
   const facetler: Facet[] = traitListe.map((tr) => {
     const n = sayac.get(tr.id) ?? 0;
-    return { ad: tr.name, deger: Math.min(1, n / FASET_DOYUM), gorevSayisi: n };
+    return { ad: tr.name, deger: Math.min(1, n / faset_doyum), gorevSayisi: n };
   });
 
   const tamamlanan = tamamlar.length;
   // Genel parlaklık: hem toplam sayı hem faset YAYGINLIĞI (kaç farklı özellik
   // ışıdı) birlikte — tek özelliği tekrar etmek elması tam parlatmasın.
   const yaygin = facetler.filter((f) => f.deger > 0).length / Math.max(1, traitListe.length);
-  const sayiOran = Math.min(1, tamamlanan / PARLAK_HEDEF);
+  const sayiOran = Math.min(1, tamamlanan / parlak_hedef);
   const parlaklik = Math.min(1, sayiOran * 0.65 + yaygin * 0.35);
 
   // AŞAMA — 5 unvan (Çırak→Efsane) = 5 elmas görseli. unvan indeksi + 1 (1..5).
