@@ -46,11 +46,18 @@ export async function ikinciAynaGetirVeyaUret(
 
   if (!process.env.ANTHROPIC_API_KEY) return { durum: "anahtar-yok" };
 
-  const [hafiza, ozet, eylulKayit] = await Promise.all([
+  // [FAZ 3 · Madde 5] Prompt "mühür teyit sayısı + kıvılcım toplamı" vaat ediyor;
+  // eskiden bu veri modele HİÇ gönderilmiyordu (halüsinasyon daveti). Gerçek
+  // kaynaklardan çekiyoruz: mühür teyit = muhur_zinciri satır sayısı, kıvılcım =
+  // missions.spark_points toplamı.
+  const [hafiza, ozet, eylulKayit, { count: muhurTeyit }, { data: sparkRows }] = await Promise.all([
     kisiHafizasiGetir(db, pid),
     eylulOzet(db, pid),
     eylulKayitGetir(db, pid),
+    db.from("muhur_zinciri").select("id", { count: "exact", head: true }).eq("participant_id", pid),
+    db.from("missions").select("spark_points").eq("participant_id", pid),
   ]);
+  const kivilcim = (sparkRows ?? []).reduce((t, m) => t + (m.spark_points ?? 0), 0);
 
   const veri = {
     ad,
@@ -61,6 +68,8 @@ export async function ikinciAynaGetirVeyaUret(
     takip: hafiza.takip,
     eylulOzet: ozet,
     eylulKayit,
+    muhurTeyit: muhurTeyit ?? 0,
+    kivilcim,
   };
 
   try {
