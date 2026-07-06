@@ -2,7 +2,7 @@ import "server-only";
 import type { supabaseAdmin } from "@/lib/supabase/server";
 import { yazAuditLog } from "@/lib/auditLog";
 import { herkeseBildir, adminlereBildir } from "@/lib/push";
-import { p72Gun1, p72Gun2, p72Gun3, odev10Gun, odev15Gun, agustosOdev, agustosGrupOdev } from "@/lib/kampSonrasi";
+import { p72Gun1, p72Gun2, p72Gun3, odev10Gun, odev15Gun, agustosOdev, agustosGrupOdev, ikinciAynaDaveti } from "@/lib/kampSonrasi";
 import { kampArkadasiAta, kampArkadasiHatirlat } from "@/lib/kampArkadasi";
 import { eylulKanit1, eylulKanit2, eylulKanit3 } from "@/lib/eylulKanit";
 import { pazartesiRaporuGonder } from "@/lib/kapanisPanel";
@@ -101,6 +101,8 @@ const FONKSIYONLAR: Record<string, (db: Db) => Promise<void>> = {
   gun2_sesli_mektup_ac: sesliMektupAc,
   // Özellik 9 — Gün 3 10:00: herkese domino görevi (içgörüyü kamp dışına taşı)
   gun3_domino_ac: dominoAc,
+  // [Faz 13] 90. Gün Finali — İkinci Ayna penceresini açar + herkese davet push'u.
+  ikinci_ayna_daveti: ikinciAynaDaveti,
   // E1-b — zirve hazırlık son kontrolü: satır ateşlenince eksik varlıkları
   // son kez üret + hâlâ eksikse admin'e uyar.
   zirve_hazirlik_kontrol: async (db: Db) => {
