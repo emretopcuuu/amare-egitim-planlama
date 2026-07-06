@@ -5,6 +5,7 @@ import {
   sesleriListele,
   sesSilDogrula,
   sesYapilandirildiMi,
+  abonelikBilgisi,
 } from "@/lib/eleven";
 
 export const maxDuration = 60;
@@ -32,6 +33,9 @@ export async function GET() {
     const mesaj = err instanceof Error ? err.message : String(err);
     return NextResponse.json({ hata: mesaj }, { status: 502 });
   }
+
+  // Gerçek plan slot limiti (Pro/Scale sonrası). Hata olursa null → panel 30'a düşer.
+  const abonelik = await abonelikBilgisi();
 
   // DB'de hâlâ bir katılımcıya bağlı voice_id'ler — bunları "kullanımda" işaretle
   const db = supabaseAdmin();
@@ -61,6 +65,8 @@ export async function GET() {
     toplamSes: sesler.length, // hesaptaki TÜM sesler (premade dahil)
     klonSayisi: klonlar.length,
     yetimSayisi: klonlar.filter((k) => k.yetim).length,
+    voiceLimit: abonelik.voiceLimit, // gerçek slot limiti (null → panel 30'a düşer)
+    tier: abonelik.tier,
     klonlar,
   });
 }
