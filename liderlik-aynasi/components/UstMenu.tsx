@@ -155,7 +155,9 @@ export default function UstMenu({
     sanaOzel.push({ href: "/ayna", etiket: t.menuRapor, alt: t.menuAltRapor, ikon: IK.rapor });
   if (yansimanHazir)
     sanaOzel.push({ href: "/yansiman", etiket: t.menuYansiman, alt: t.menuAltYansiman, ikon: IK.yansiman });
-  sanaOzel.push({ href: "/soz", etiket: t.menuSoz, alt: t.menuAltSoz, ikon: IK.soz });
+  // [FAZ 5 · Tek Söz birleşmesi] Eski v1 "/soz" (pledges) menü girişi KALDIRILDI —
+  // koşulsuz görünüyordu ve SÖZ v2 (/sozum, şahitler) ile çift-söz karmaşası
+  // yaratıyordu. v2 söz ana sayfadaki 90 günlük yolculuk kartından erişilir.
 
   // PAYLAŞ & KEŞFET (mor şerit)
   const paylas: Oge[] = [
