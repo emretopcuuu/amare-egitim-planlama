@@ -3,6 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
+import GrupUyeFoto from "@/components/GrupUyeFoto";
+import KonusanYansima from "@/components/KonusanYansima";
 
 const t = tr.sahitlik;
 
@@ -15,12 +17,18 @@ type Kisi = {
   sonAdim: string | null;
   haftaGorusme: number;
   haftaKota: number | null;
+  haftaKayit: number;
+  fotoUrl: string | null;
+  sozMetni: string | null;
+  sozSesUrl: string | null;
+  sozAksiyonlari: { metin: string; ufuk: string }[];
 };
 
 export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
   const [gonderilen, setGonderilen] = useState<Record<string, boolean>>({});
   const [alkislanan, setAlkislanan] = useState<Record<string, boolean>>({});
   const [mesgul, setMesgul] = useState<string | null>(null);
+  const [sozAcik, setSozAcik] = useState<Record<string, boolean>>({});
 
   async function durt(sahibi: string, tip: string) {
     setMesgul(sahibi + tip);
@@ -54,6 +62,7 @@ export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
             const takildi = k.kacirilanGun >= 2;
             const gonder = gonderilen[k.sahibiId];
             const alkislandi = alkislanan[k.sahibiId];
+            const sozGoster = sozAcik[k.sahibiId];
             return (
               <li
                 key={k.sahibiId}
@@ -61,14 +70,49 @@ export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
                   takildi ? "border-amber-400/40 bg-amber-500/[0.06]" : "border-royal/30 bg-midnight-card/60"
                 }`}
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="font-semibold text-slate-100">{k.ad}</p>
+                <div className="flex items-center gap-3">
+                  {/* [Şahitlik geliştirme #1] Foto + tam ekran büyütme + WhatsApp. */}
+                  <GrupUyeFoto ad={k.ad} takim={null} telefon={k.telefon} fotoUrl={k.fotoUrl} />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-semibold text-slate-100">{k.ad}</p>
                     <p className={`text-xs ${takildi ? "text-amber-300" : "text-emerald-300"}`}>
                       {takildi ? t.kacirdi(k.kacirilanGun) : t.guncel} · {t.seri(k.seri)}
                     </p>
                   </div>
                 </div>
+
+                {/* [Şahitlik geliştirme #2] Sözünü dinle — şahit KİME şahit
+                    olduğunu ve neye söz verdiğini unutmasın. */}
+                {k.sozMetni && (
+                  <div className="mt-3">
+                    <button
+                      onClick={() => setSozAcik((s) => ({ ...s, [k.sahibiId]: !s[k.sahibiId] }))}
+                      className="text-xs font-medium text-royal-light underline-offset-2 hover:underline"
+                    >
+                      {sozGoster ? "▲ Sözünü gizle" : "▼ Sözünü ve adımlarını gör"}
+                    </button>
+                    {sozGoster && (
+                      <div className="mt-2 space-y-2 rounded-xl bg-white/[0.03] p-3">
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
+                          {k.sozMetni}
+                        </p>
+                        {k.sozSesUrl && (
+                          <KonusanYansima videoUrl={null} sesUrl={k.sozSesUrl} etiket="Sözünü dinle" />
+                        )}
+                        {k.sozAksiyonlari.length > 0 && (
+                          <ul className="space-y-1 pt-1">
+                            {k.sozAksiyonlari.map((a, i) => (
+                              <li key={i} className="text-xs text-slate-400">
+                                📌 {a.metin}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* [Faz 9] Şahit Karnesi — haftalık kota gerçekleşmesi. */}
                 {k.haftaKota != null && (
                   <div className="mt-2 rounded-xl bg-white/[0.03] px-3 py-2">
@@ -88,6 +132,7 @@ export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
                     </div>
                   </div>
                 )}
+
                 <div className="mt-3 flex flex-wrap gap-2">
                   {gonder ? (
                     <span className="text-sm font-medium text-emerald-300">{t.gonderildi}</span>
