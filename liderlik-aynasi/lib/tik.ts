@@ -1,6 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { eskalasyonTara } from "@/lib/sozTakip";
+import { eskalasyonTara, sahitOzetiGonder } from "@/lib/sozTakip";
 import {
   gorevUret,
   gorevPuanla,
@@ -123,6 +123,7 @@ export async function tikCalistir(
     senkron: 0,
     durtulen: 0,
     momentum: 0,
+    sahitOzeti: 0,
     orkestratorAtes: 0,
   };
 
@@ -1243,6 +1244,26 @@ export async function tikCalistir(
       if (!momentumKilit) {
         const sonuc = await momentumHesaplaVeYaz(db, simdi);
         ozet.momentum = sonuc.yazilan;
+      }
+    }
+  }
+
+  // [Şahitlik geliştirme #8] PAZARTESİ ŞAHİT ÖZETİ: yolculuk modunda Pazartesi
+  // 08:00-08:09'da (ortak check-in'den önce, çakışmasın) her şahide takip
+  // ettiği kişilerin haftalık özetini gönderir (settings kilidiyle bir kez).
+  if (mod === "yolculuk") {
+    const pazartesiMiOzet =
+      new Intl.DateTimeFormat("en-US", {
+        timeZone: "Europe/Istanbul",
+        weekday: "short",
+      }).format(simdi) === "Mon";
+    if (pazartesiMiOzet && saat === 8 && dakika < 10) {
+      const { error: ozetKilit } = await db
+        .from("settings")
+        .insert({ key: `sahit_ozeti_${bugun}`, value: "1" });
+      if (!ozetKilit) {
+        const sonuc = await sahitOzetiGonder(db);
+        ozet.sahitOzeti = sonuc.gonderilen;
       }
     }
   }
