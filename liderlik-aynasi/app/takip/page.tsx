@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { takipDurum, sozTakipAktif } from "@/lib/sozTakip";
+import { takipDurum, sozTakipAktif, haftalikSayilar } from "@/lib/sozTakip";
 import { sozGetir } from "@/lib/soz";
+import { hedefCekirdek } from "@/lib/hedef";
+import { haftalikGorusmeKotasi } from "@/lib/oyunPlani";
 import TakipAkis from "./TakipAkis";
 import { tr } from "@/lib/i18n/tr";
 import Link from "next/link";
@@ -29,11 +31,17 @@ export default async function TakipSayfa() {
     );
   }
 
-  const [durum, soz] = await Promise.all([takipDurum(db, session.sub), sozGetir(db, session.sub)]);
+  const [durum, soz, hafta, hedef] = await Promise.all([
+    takipDurum(db, session.sub),
+    sozGetir(db, session.sub),
+    haftalikSayilar(db, session.sub),
+    hedefCekirdek(db, session.sub),
+  ]);
+  const kota = haftalikGorusmeKotasi(hedef?.plan?.haftalikSaat ?? null);
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
-      <TakipAkis durum={durum} aksiyonlar={soz?.aksiyonlar ?? []} />
+      <TakipAkis durum={durum} aksiyonlar={soz?.aksiyonlar ?? []} hafta={hafta} kota={kota} />
     </main>
   );
 }

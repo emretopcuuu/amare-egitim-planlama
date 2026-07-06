@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import { ufukAyEtiket } from "@/lib/planTakvim";
+import Konfeti from "@/components/Konfeti";
 
 const t = tr.takip;
 
@@ -15,31 +16,53 @@ type Durum = {
   kacirilanGun: number;
 };
 type Aksiyon = { metin: string; ufuk: string };
+type Hafta = { gorusmeToplam: number; kayitToplam: number };
 
 export default function TakipAkis({
   durum: durumBaslangic,
   aksiyonlar,
+  hafta: haftaBaslangic,
+  kota,
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
+  hafta: Hafta;
+  kota: number | null;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
+  const [hafta, setHafta] = useState<Hafta>(haftaBaslangic);
   const [not, setNot] = useState("");
+  const [gorusme, setGorusme] = useState("");
+  const [kayit, setKayit] = useState("");
   const [mesgul, setMesgul] = useState(false);
   const [now] = useState(() => new Date());
+  const [ziliGoster, setZiliGoster] = useState(false);
 
   async function checkin(yapildi: boolean) {
     setMesgul(true);
     try {
+      const kayitSayisi = Math.max(0, Math.round(Number(kayit) || 0));
       const res = await fetch("/api/soz-takip", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ yapildi, notlar: not }),
+        body: JSON.stringify({
+          yapildi,
+          notlar: not,
+          gorusmeSayisi: gorusme.trim() ? Number(gorusme) : null,
+          kayitSayisi,
+        }),
       });
       const v = await res.json().catch(() => null);
       if (res.ok && v?.durum) {
         setDurum(v.durum);
+        if (v.hafta) setHafta(v.hafta);
         setNot("");
+        setGorusme("");
+        setKayit("");
+        if (v.kayitZili) {
+          setZiliGoster(true);
+          setTimeout(() => setZiliGoster(false), 2600);
+        }
       }
     } finally {
       setMesgul(false);
@@ -47,9 +70,21 @@ export default function TakipAkis({
   }
 
   const isaretli = durum.bugunYapildi !== null;
+  const kotaOrani = kota ? Math.min(100, Math.round((hafta.gorusmeToplam / kota) * 100)) : null;
 
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
+      {ziliGoster && <Konfeti key={Date.now()} />}
+      {ziliGoster && (
+        <div className="fixed inset-0 z-[56] flex items-center justify-center bg-black/60 p-6">
+          <div className="kart-cam rounded-3xl p-8 text-center">
+            <p className="text-5xl" aria-hidden>🔔</p>
+            <h2 className="prizma-serif ay-metin mt-3 text-2xl font-bold text-gold-light">Kayıt Zili!</h2>
+            <p className="mt-2 text-sm text-slate-300">Şahitlerine haber gitti — liderliğini gösterdin.</p>
+          </div>
+        </div>
+      )}
+
       <header className="text-center">
         <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
           {tr.app.name}
@@ -84,6 +119,27 @@ export default function TakipAkis({
         </div>
       </div>
 
+      {/* [Faz 3] Haftalık görüşme kotası — planındaki hedeften türer. */}
+      {kota != null && (
+        <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.06] p-4">
+          <div className="flex items-center justify-between text-xs font-medium text-slate-300">
+            <span>📞 Bu hafta görüşme kotan</span>
+            <span className="text-emerald-300">
+              {hafta.gorusmeToplam} / {kota}
+            </span>
+          </div>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-emerald-400 transition-all duration-700"
+              style={{ width: `${kotaOrani ?? 0}%` }}
+            />
+          </div>
+          {hafta.kayitToplam > 0 && (
+            <p className="mt-2 text-xs text-gold-light">🔔 Bu hafta {hafta.kayitToplam} kayıt aldın</p>
+          )}
+        </div>
+      )}
+
       {/* Bugünün check-in'i */}
       <section className="kart-cam rounded-2xl p-5">
         {isaretli ? (
@@ -91,12 +147,34 @@ export default function TakipAkis({
         ) : (
           <>
             <p className="text-base font-medium text-slate-100">{t.bugunSoru}</p>
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              <label className="block">
+                <span className="text-xs text-slate-400">Kaç görüşme?</span>
+                <input
+                  inputMode="numeric"
+                  value={gorusme}
+                  onChange={(e) => setGorusme(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="0"
+                  className="mt-1 w-full rounded-xl border border-royal-light/30 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs text-slate-400">Kaç kayıt?</span>
+                <input
+                  inputMode="numeric"
+                  value={kayit}
+                  onChange={(e) => setKayit(e.target.value.replace(/[^0-9]/g, ""))}
+                  placeholder="0"
+                  className="mt-1 w-full rounded-xl border border-gold/30 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
+                />
+              </label>
+            </div>
             <textarea
               value={not}
               onChange={(e) => setNot(e.target.value.slice(0, 500))}
               rows={2}
               placeholder={t.notYer}
-              className="mt-3 w-full resize-none rounded-xl border border-royal-light/30 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
+              className="mt-2 w-full resize-none rounded-xl border border-royal-light/30 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
             />
             <div className="mt-3 flex gap-2">
               <button

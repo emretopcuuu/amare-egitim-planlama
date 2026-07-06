@@ -59,6 +59,12 @@ const PLAN_SEMASI = {
 export const PLAN_UFUKLARI = ["ilk_72_saat", "on_gun", "kirk_gun", "doksan_gun"] as const;
 export type PlanUfuk = (typeof PLAN_UFUKLARI)[number];
 
+// Haftalık görüşme kotası — TEK doğruluk kaynağı (plan üretim prompt'u ve
+// takip/momentum ekranları aynı sayıyı kullanır). Her 1,5 saat ≈ 1 görüşme.
+export function haftalikGorusmeKotasi(haftalikSaat: number | null | undefined): number | null {
+  return haftalikSaat ? Math.max(1, Math.floor(haftalikSaat / 1.5)) : null;
+}
+
 // kaynak: madde AI önerisi mi, kişi düzenlemesi mi, kişinin kendi eklediği mi.
 export type PlanMadde = {
   baslik: string;
@@ -131,7 +137,7 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
   const birUstKariyer = birUstKariyerEtiket(kisi?.kariyer_seviyesi ?? null);
   // Haftalık görüşme kotası: her 1.5 saat = 1 görüşme (kişinin ayırdığı saatten).
   const haftalikSaat = hedef?.plan?.haftalikSaat ?? null;
-  const haftalikGorusme = haftalikSaat ? Math.max(1, Math.floor(haftalikSaat / 1.5)) : null;
+  const haftalikGorusme = haftalikGorusmeKotasi(haftalikSaat);
 
   const veri = {
     cekirdekNeden: pusula?.cekirdek_neden ?? null,
