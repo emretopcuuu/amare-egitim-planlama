@@ -14,14 +14,14 @@ import { ONBOARDING_SURE_DK } from "@/lib/onboardingSure";
 import {
   KARIYER_BASAMAKLARI,
   TEMPO_SECENEKLERI,
-  tempoSure,
+  planKapisi,
+  type PlanKapisi,
   GUNLUK_SAAT_SECENEKLERI,
   kariyerPlaniHesapla,
   tlFormat,
   type KariyerPlani,
   ovSimulasyonu,
   simulasyonSinirliAylar,
-  OV_SIM_SINIR,
   HBB_AYLAR,
   HBB_TOPLAM,
   HBB_BONUS_TOPLAM,
@@ -30,7 +30,7 @@ import {
 const t = tr.hedef;
 
 type Mesaj = { rol: string; icerik: string };
-type Durum = { asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null; yeniBaslangic: boolean };
+type Durum = { asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null; baslangicVol: number | null; yeniBaslangic: boolean };
 type Faz = "acilis" | "baslangic" | "sohbet" | "wizard" | "tamam";
 
 // Kariyer basamakları — 8 seviye (Pusula başından buraya taşındı).
@@ -65,6 +65,7 @@ export default function HedefAkis({
   const [hata, setHata] = useState<string | null>(null);
   const [plan, setPlan] = useState<KariyerPlani | null>(durum.plan);
   const [ov0, setOv0] = useState<number | null>(durum.baslangicOv ?? null);
+  const [vol0, setVol0] = useState<number | null>(durum.baslangicVol ?? null);
   const [kutlama, setKutlama] = useState(0); // hedef mühürlenince kıvılcım patlaması
   // [E8] Kariyer/OV formu ve mühür başarıyla kaydedilince köşede "✓ Kaydedildi".
   const [kayitBasari, setKayitBasari] = useState(0);
@@ -124,6 +125,7 @@ export default function HedefAkis({
           }
           setKayitBasari((n) => n + 1); // [E8] görünür güven
           setOv0(ov);
+          setVol0(vol);
           setFaz("sohbet");
         }}
         mesgul={mesgul}
@@ -158,6 +160,7 @@ export default function HedefAkis({
     return (
       <Wizard
         ov0={ov0}
+        vol0={vol0}
         yeniBaslangic={durum.yeniBaslangic}
         onMuhur={async (hedefIndex, tempo, gunluk) => {
           setMesgul(true);
@@ -500,6 +503,7 @@ function Sohbet({
 // ---------- Somutlaştırma wizard'ı (3 soru) ----------
 function Wizard({
   ov0,
+  vol0,
   yeniBaslangic,
   onMuhur,
   mesgul,
@@ -507,6 +511,7 @@ function Wizard({
   onSifirla,
 }: {
   ov0: number | null;
+  vol0: number | null;
   yeniBaslangic: boolean;
   onMuhur: (hedefIndex: number, tempo: string, gunluk: string) => void;
   mesgul: boolean;
@@ -521,9 +526,14 @@ function Wizard({
   const hedefRutbe = hedefIndex != null ? KARIYER_BASAMAKLARI[hedefIndex] : null;
   const tempoObj = TEMPO_SECENEKLERI.find((tp) => tp.anahtar === tempo);
   const saatObj = GUNLUK_SAAT_SECENEKLERI.find((g) => g.anahtar === gunluk);
-  // Süre, seçilen tempoyla OV₀'dan hedef OV'ye TÜRETİLİR (sabit "1/3/6/12 ay" yok).
-  const sureAy =
-    hedefRutbe && tempoObj ? tempoSure(ov0 ?? 0, hedefRutbe.ov, tempoObj.buyume) : null;
+  // Süre, seçilen tempoyla bağlayıcı kapıdan (OV VEYA VOLL) TÜRETİLİR. Kayıt
+  // kariyeri için gereken OV zaten fazlaysa süreyi VOLL belirler (Diamond+ ta
+  // büyüme yarılanır) — "surplus OV → 1 ayda hedef" yanılgısı olmaz.
+  const kapi =
+    hedefIndex != null && tempoObj
+      ? planKapisi(ov0 ?? 0, vol0 ?? 0, hedefIndex, tempoObj.buyume)
+      : null;
+  const sureAy = kapi?.sureAy ?? null;
   const plan =
     hedefIndex != null && sureAy && saatObj
       ? kariyerPlaniHesapla(hedefIndex, sureAy, saatObj.gunluk, saatObj.etiket)
@@ -590,7 +600,9 @@ function Wizard({
           <h2 className="mt-1 text-lg font-semibold text-slate-100">{t.q2Baslik}</h2>
           <div className="mt-4 space-y-2.5">
             {TEMPO_SECENEKLERI.map((tp) => {
-              const ay = tempoSure(ov0 ?? 0, hedefRutbe.ov, tp.buyume);
+              const ay = hedefIndex != null
+                ? planKapisi(ov0 ?? 0, vol0 ?? 0, hedefIndex, tp.buyume).sureAy
+                : 1;
               return (
                 <button
                   key={tp.anahtar}
@@ -619,9 +631,10 @@ function Wizard({
       {adim === 4 && plan && (
         <section className="space-y-4">
           <p className="text-center text-sm font-semibold text-gold-light">{t.planUstBaslik}</p>
-          {/* OV büyüme simülasyonu: SEÇİLEN tempoyla ay ay; 1M'i geçince durur. */}
-          {ov0 && ov0 > 0 && hedefRutbe && tempoObj && sureAy && (
-            <OvSimKarti ov0={ov0} ovHedef={hedefRutbe.ov} buyume={tempoObj.buyume} sureAy={sureAy} />
+          {/* Büyüme simülasyonu: bağlayıcı kapı (OV/VOLL), etkin tempoyla ay ay;
+              üst sınırı geçince durur. Aytug: yüksek basamakta VOLL'yi göster. */}
+          {kapi && kapi.baslangic > 0 && sureAy && (
+            <OvSimKarti kapi={kapi} sureAy={sureAy} />
           )}
           <HedefPlanKarti plan={plan} />
           {/* Kampta + sonraki 90 gün destek vaadi */}
@@ -816,39 +829,30 @@ function Secenekler({
   );
 }
 
-// ---------- OV büyüme simülasyon kartı (seçilen tek tempo, 1M sınırlı) ----------
-function OvSimKarti({
-  ov0,
-  ovHedef,
-  buyume,
-  sureAy,
-}: {
-  ov0: number;
-  ovHedef: number;
-  buyume: number;
-  sureAy: number;
-}) {
-  // 1M'i geçince afaki büyümeyi gösterme: tablo o ayda durur.
-  const aylar = simulasyonSinirliAylar(ov0, buyume, sureAy);
-  const sonOv = ovSimulasyonu(ov0, aylar[aylar.length - 1], buyume);
-  const siniraUlasti = sonOv >= OV_SIM_SINIR && sureAy > aylar.length;
+// ---------- Büyüme simülasyon kartı (bağlayıcı kapı: OV/VOLL, sınırlı) ----------
+function OvSimKarti({ kapi, sureAy }: { kapi: PlanKapisi; sureAy: number }) {
+  const { metrik, baslangic, hedef, buyume, sinir } = kapi;
+  // Üst sınırı (OV:1M / VOLL:300k) geçince afaki büyümeyi gösterme: tablo durur.
+  const aylar = simulasyonSinirliAylar(baslangic, buyume, sureAy, sinir);
+  const sonDeger = ovSimulasyonu(baslangic, aylar[aylar.length - 1], buyume);
+  const siniraUlasti = sonDeger >= sinir && sureAy > aylar.length;
   return (
     <div className="kart-cam overflow-hidden rounded-2xl shadow-[0_22px_55px_-26px_rgba(15,30,50,0.45)]">
       <div className="kariyer-cizgi border-b px-4 py-2.5">
-        <p className="kariyer-baslik text-xs font-semibold uppercase tracking-wide">{t.simulasyonBaslik}</p>
+        <p className="kariyer-baslik text-xs font-semibold uppercase tracking-wide">{t.simulasyonBaslik(metrik)}</p>
       </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs">
           <thead>
             <tr className="kariyer-cizgi kariyer-baslik border-b">
               <th className="px-3 py-2 text-left font-semibold">Ay</th>
-              <th className="px-3 py-2 text-right font-semibold">{`%${Math.round(buyume * 100)} / ay`}</th>
+              <th className="px-3 py-2 text-right font-semibold">{`${metrik} · %${Math.round(buyume * 100)} / ay`}</th>
             </tr>
           </thead>
           <tbody className="kariyer-bol">
             {aylar.map((ay) => {
-              const ov = ovSimulasyonu(ov0, ay, buyume);
-              const ulasmis = ov >= ovHedef;
+              const ov = ovSimulasyonu(baslangic, ay, buyume);
+              const ulasmis = ov >= hedef;
               return (
                 <tr key={ay} className={ulasmis ? "bg-gold/5" : ""}>
                   <td className="px-3 py-2 font-semibold text-slate-300">{t.simulasyonAyEtiket(ay)}</td>
@@ -863,7 +867,7 @@ function OvSimKarti({
       </div>
       {siniraUlasti && (
         <div className="kariyer-cizgi border-t px-4 py-2.5">
-          <p className="kariyer-baslik text-xs">{t.simulasyonSinirNot}</p>
+          <p className="kariyer-baslik text-xs">{t.simulasyonSinirNot(metrik)}</p>
         </div>
       )}
       <div className="kariyer-cizgi border-t px-4 py-2.5">
