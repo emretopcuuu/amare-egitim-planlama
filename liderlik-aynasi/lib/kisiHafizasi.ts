@@ -28,17 +28,35 @@ export type KisiHafizasi = {
   sozMuhurlu: boolean;
   sozOzeti: string | null;
   takip: { seri: number; kacirilanGun: number; toplam: number };
+  // [FAZ 4] Kamptan biriken ama eskiden 90-gün motoruna akmayan sinyaller:
+  // en emek verilen onboarding adımı (Değerler), sosyal kanıt (kudos), aidiyet
+  // (takım). Additive — mevcut alanları değiştirmez.
+  degerler: { secilenUc: string[]; nedenCumlesi: string | null } | null;
+  kudoslar: string[];
+  takim: string | null;
 };
 
 export async function kisiHafizasiGetir(db: Db, pid: string): Promise<KisiHafizasi> {
-  const [pusula, hedef, rapor, plan, soz, takip] = await Promise.all([
-    pusulaCekirdek(db, pid),
-    hedefCekirdek(db, pid),
-    raporHesapla(db, pid),
-    oyunPlaniGetir(db, pid),
-    sozGetir(db, pid),
-    takipDurum(db, pid),
-  ]);
+  const [pusula, hedef, rapor, plan, soz, takip, degerlerRow, kudosRows, kisiRow] =
+    await Promise.all([
+      pusulaCekirdek(db, pid),
+      hedefCekirdek(db, pid),
+      raporHesapla(db, pid),
+      oyunPlaniGetir(db, pid),
+      sozGetir(db, pid),
+      takipDurum(db, pid),
+      db.from("degerler_calismasi").select("secilen_uc, neden_cumlesi").eq("participant_id", pid).maybeSingle(),
+      db
+        .from("kudos")
+        .select("message")
+        .eq("to_id", pid)
+        .eq("is_hidden", false)
+        .order("created_at", { ascending: false })
+        .limit(5),
+      db.from("participants").select("team").eq("id", pid).maybeSingle(),
+    ]);
+
+  const secilenUc = (degerlerRow.data?.secilen_uc as string[] | null) ?? [];
 
   const now = new Date(`${bugunTr()}T12:00:00+03:00`);
   const onaylandiAt =
@@ -63,5 +81,10 @@ export async function kisiHafizasiGetir(db: Db, pid: string): Promise<KisiHafiza
     sozMuhurlu: soz?.durum === "sesli",
     sozOzeti: soz?.metin ? soz.metin.slice(0, 400) : null,
     takip: { seri: takip.seri, kacirilanGun: takip.kacirilanGun, toplam: takip.son14.filter((g) => g.yapildi).length },
+    degerler: secilenUc.length
+      ? { secilenUc, nedenCumlesi: degerlerRow.data?.neden_cumlesi ?? null }
+      : null,
+    kudoslar: (kudosRows.data ?? []).map((k) => k.message),
+    takim: kisiRow.data?.team ?? null,
   };
 }
