@@ -47,6 +47,7 @@ export default function TakipAkis({
   kota,
   sozSesUrl,
   degerDavranisi,
+  ortakMomentum,
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
@@ -54,6 +55,7 @@ export default function TakipAkis({
   kota: number | null;
   sozSesUrl: string | null;
   degerDavranisi: string | null;
+  ortakMomentum: { cevreToplam: number; buHaftaAktif: number } | null;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   const [hafta, setHafta] = useState<Hafta>(haftaBaslangic);
@@ -270,6 +272,18 @@ export default function TakipAkis({
           ))}
         </div>
       </section>
+
+      {/* [Faz 12] Ortak Momentum — söz çevren (şahitlerin + şahidi olduğun
+          kişiler) bu hafta ne durumda. Akran baskısı, hafif ve tek bakışlık. */}
+      {ortakMomentum && (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3 text-center">
+          <p className="text-sm text-slate-300">
+            🌐 Çevrende {ortakMomentum.cevreToplam} kişiden{" "}
+            <span className="font-semibold text-emerald-300">{ortakMomentum.buHaftaAktif}</span>{" "}
+            şu an sözünü tutuyor.
+          </p>
+        </div>
+      )}
 
       {/* [Faz 7] Değer-Davranış Aynası — kampta seçtiğin değer bu haftaki
           gerçek verinle buluşuyor. AI çağrısı yok, haftada bir değişir. */}
