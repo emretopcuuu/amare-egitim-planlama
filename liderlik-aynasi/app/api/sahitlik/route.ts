@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { takipEttiklerim, durtmeGonder } from "@/lib/sozTakip";
+import { katilimciyaBildir } from "@/lib/push";
 
 // Şahit paneli — GET: şahit olunan kişiler + ilerlemeleri. POST: dürtme gönder.
 export async function GET() {
@@ -36,6 +37,31 @@ export async function POST(req: Request) {
     .eq("witness_id", session.sub)
     .maybeSingle();
   if (!tanik) return Response.json({ hata: "yetkisiz" }, { status: 403 });
+
+  // [Faz 10] ŞAHİT ALKIŞI — dürtme değil, takdir. kudos'a yazılır (mevcut
+  // takdir/geri bildirim akışına akar) + kişiye anında sıcak bir push.
+  if (g.tip === "alkis") {
+    const ilkAd = session.ad.split(" ")[0];
+    const { error } = await db.from("kudos").insert({
+      from_id: session.sub,
+      to_id: g.sahibi,
+      message: `${ilkAd} (şahidin) seni alkışlıyor — gidişin güzel!`,
+    });
+    if (!error) {
+      try {
+        await katilimciyaBildir(
+          db,
+          g.sahibi,
+          "👏 Şahidin seni alkışlıyor",
+          `${ilkAd} ilerlemeni gördü ve seni alkışlıyor.`,
+          "/takdir"
+        );
+      } catch {
+        // push yapılandırılmamış olabilir — takdir yine de kaydedildi
+      }
+    }
+    return Response.json({ ok: !error });
+  }
 
   await durtmeGonder(
     db,
