@@ -4116,6 +4116,14 @@ export const tr = {
     degerlerMetin:
       "Buraya geçmeden önce Değerler çalışmanı tamamlaman gerekiyor — pusulan ve hedefin, seçtiğin temel değerlerin üzerine kurulur.",
     degerlerDugme: "Değerler çalışmasına git →",
+    pusulaBaslik: "Önce pusulanı bul",
+    pusulaMetin:
+      "Hedefini koymadan önce Pusula'nı tamamlaman gerekiyor — hedefin, keşfettiğin çekirdek nedenin üzerine kurulur.",
+    pusulaDugme: "Pusula'ya git →",
+    hedefBaslik: "Önce hedefini koy",
+    hedefMetin:
+      "Bu adıma geçmeden önce kariyer hedefini mühürlemen gerekiyor — ön farkındalık, koyduğun hedefin üzerine oturur.",
+    hedefDugme: "Hedefine git →",
   },
   sahne: {
     ipucu: "Ayna Anı'nı başlatmak için tıkla",

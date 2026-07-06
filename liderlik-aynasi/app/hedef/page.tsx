@@ -40,6 +40,21 @@ export default async function HedefSayfa() {
     );
   }
 
+  // ÖN KOŞUL 2: Pusula bitmeden Hedef'e girene nazik yön. `cekirdek` yalnız
+  // Pusula tamamlanmışsa dolu döner (pusulaCekirdek, tamamlandi_at yoksa null) —
+  // yani cekirdek===null demek Pusula henüz bitmedi demek. Hedef'e başlamamış +
+  // Pusula'sız kişide fire eder; hedef, keşfedilmemiş bir nedenin üstüne kurulmasın.
+  if (!durum.tamam && !cekirdek) {
+    return (
+      <OnKosulKapisi
+        baslik={tr.onKosul.pusulaBaslik}
+        metin={tr.onKosul.pusulaMetin}
+        dugmeMetin={tr.onKosul.pusulaDugme}
+        dugmeYol="/pusula"
+      />
+    );
+  }
+
   const neden = cekirdek?.cekirdek_neden?.[0] ?? null;
 
   return (
