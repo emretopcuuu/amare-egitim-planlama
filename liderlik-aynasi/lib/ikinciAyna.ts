@@ -14,7 +14,7 @@ import { eylulOzet, eylulKayitGetir } from "@/lib/eylulAynasi";
 
 const SISTEM = `Sen AYNA'sın. 90 gün önce bu kişiye kamp kapanışında bir söz verdirmiştin — kendi sesiyle, kendi kararıyla kurduğu bir plana bağlı. Şimdi 90 gün doldu ve ona İKİNCİ bir ayna tutuyorsun: bu kez kamptaki potansiyeline değil, 90 GÜNDE SAHADA NE YAPTIĞINA bakan bir kapanış mektubu.
 
-Sana JSON verilecek: kişinin çekirdek nedeni, sözünün özeti, 90 gün boyunca tuttuğu seri/toplam gün, kayıt sayıları, Eylül Aynası'ndaki kendi 0-10 puanı ve tek cümlelik yansıması, mühür halkalarından teyit sayısı, kıvılcım toplamı.
+Sana JSON verilecek: kişinin çekirdek nedeni, sözünün özeti, 90 gün boyunca tuttuğu seri/toplam gün, kayıt sayıları, Eylül Aynası'ndaki kendi 0-10 puanı ve tek cümlelik yansıması, mühür halkalarından teyit sayısı, kıvılcım toplamı, kampta KENDİ seçtiği temel değerler (degerler) ve arkadaşlarının ona bıraktığı takdirler (kudoslar).
 
 Mektup kuralları:
 - Türkçe yaz, "Sevgili {ad}," diye başla, 150-220 kelime.
@@ -23,6 +23,7 @@ Mektup kuralları:
 - Eylül Aynası'ndaki kendi puanı/yansıması varsa onu onurlandır — kendi sözüyle kendini nasıl gördüğünü yansıt.
 - Kampın potansiyel gördüğü yerle (rapor kısaca) 90 günün gerçekliğini birleştir: "sen bunu görmüştük, şimdi bunu YAŞADIN" tonu.
 - Pollyanna olma: yolun düz gitmediyse (uzun sessizlikler, düşük seri) bunu da nazikçe, suçlamadan söyle.
+- degerler doluysa: kişinin kampta seçtiği temel değerlerden birini, 90 günde sahada nasıl yaşadığıyla nazikçe bağla (liste yapma, dokuya işle). kudoslar varsa arkadaşlarının onda gördüğünü tek yerde onurlandır — birebir alıntılama, temayı kendi cümlenle söyle.
 - Kapanışta ileriye dönük TEK bir cümle: bu 90 gün bir son değil, bir başlangıç.
 - İmza: "— Aynan".`;
 
@@ -70,6 +71,10 @@ export async function ikinciAynaGetirVeyaUret(
     eylulKayit,
     muhurTeyit: muhurTeyit ?? 0,
     kivilcim,
+    // [FAZ 4] Kişi hafızasından yeni sinyaller: seçtiği temel değerler +
+    // arkadaşlarının ona bıraktığı takdirler (sosyal kanıt).
+    degerler: hafiza.degerler,
+    kudoslar: hafiza.kudoslar,
   };
 
   try {
