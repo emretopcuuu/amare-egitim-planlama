@@ -556,6 +556,7 @@ export default async function AnaSayfa({
           ikinciAynaAcik={ikinciAynaAcik}
           muhurZinciriAcik={muhurZinciriAcik}
           grupOdevVar={grupOdevVar}
+          planOnayli={planOnayli}
         />
       </header>
       {/* [KURULUM] Kurulu ama bildirim kapalı → tepede büyük "Bildirimleri Aç"
