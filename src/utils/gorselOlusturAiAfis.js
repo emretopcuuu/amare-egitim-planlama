@@ -59,7 +59,8 @@ const paletSec = (egitim) => {
 };
 
 // Temalı dekoratif arka plan prompt'u (her iki motor için ortak; yazı/yüz/logo YOK)
-const arkaPlanPrompt = (egitim, palet) => {
+// ekPrompt: kullanıcının "Tasarıma ek istek"i + varyasyon yönlendirmesi (her üretimde farklı).
+const arkaPlanPrompt = (egitim, palet, ekPrompt = '') => {
   const sehir = (egitim?.sehir && egitim.sehir !== 'Online') ? egitim.sehir : '';
   return `Profesyonel bir etkinlik posteri için SADECE DEKORATİF ARKA PLAN üret. ` +
     `Tema: ${palet.bgTema}. ` +
@@ -67,15 +68,16 @@ const arkaPlanPrompt = (egitim, palet) => {
     `Üst bölge AÇIK/aydınlık olsun (büyük başlık oraya gelecek), alt-orta bölge sade kalsın. ` +
     `Renkler: krem/açık zemin + ${palet.teal} teal vurgular + ${palet.navy} koyu detaylar. ` +
     `Düz/vektör illüstrasyon stili, premium, ferah, ÇOK bol beyaz/boş alan. ` +
+    (ekPrompt ? `EK YÖNLENDİRME (uygula, ama yazı/yüz/logo yine YASAK): ${ekPrompt} ` : '') +
     `MUTLAK YASAK (bunlardan HİÇBİRİ olmayacak): insan, yüz, portre, vücut, silüet, kişi; ` +
     `yazı, harf, sayı, kelime; logo, amblem, marka. ` +
     `Sadece soyut dekoratif zemin + (varsa) şehir landmark line-art. İnsan figürü görürsen YANLIŞ.`;
 };
 
 // Gemini (nano-banana) ile — tarayıcıdan SORUNSUZ çalışır (googleapis CORS'a izin verir)
-const arkaPlanGemini = async (geminiKey, egitim, palet) => {
+const arkaPlanGemini = async (geminiKey, egitim, palet, ekPrompt = '') => {
   const body = {
-    contents: [{ role: 'user', parts: [{ text: arkaPlanPrompt(egitim, palet) }] }],
+    contents: [{ role: 'user', parts: [{ text: arkaPlanPrompt(egitim, palet, ekPrompt) }] }],
     generationConfig: { responseModalities: ['IMAGE', 'TEXT'] },
   };
   const ctrl = new AbortController();
@@ -93,10 +95,10 @@ const arkaPlanGemini = async (geminiKey, egitim, palet) => {
 };
 
 // OpenAI (sunucu proxy üzerinden — tarayıcı api.openai.com'a CORS ile erişemez)
-const arkaPlanOpenAI = async (openaiKey, egitim, palet, openaiSize) => {
+const arkaPlanOpenAI = async (openaiKey, egitim, palet, openaiSize, ekPrompt = '') => {
   const res = await fetch('/.netlify/functions/openai-gorsel', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ apiKey: openaiKey, prompt: arkaPlanPrompt(egitim, palet), size: openaiSize, quality: 'low' }),
+    body: JSON.stringify({ apiKey: openaiKey, prompt: arkaPlanPrompt(egitim, palet, ekPrompt), size: openaiSize, quality: 'low' }),
   });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error || `OpenAI proxy ${res.status}`); }
   const data = await res.json();
@@ -117,11 +119,11 @@ export const gorselOlusturAiAfis = async ({ geminiApiKey, openaiApiKey, egitim, 
   let arkaPlanImg = null;
   const hatalar = [];
   if (geminiApiKey) {
-    try { arkaPlanImg = await arkaPlanGemini(geminiApiKey, egitim, palet); }
+    try { arkaPlanImg = await arkaPlanGemini(geminiApiKey, egitim, palet, ekPrompt); }
     catch (e) { hatalar.push('Gemini: ' + e.message); }
   }
   if (!arkaPlanImg && openaiApiKey) {
-    try { arkaPlanImg = await arkaPlanOpenAI(openaiApiKey, egitim, palet, dims.os); }
+    try { arkaPlanImg = await arkaPlanOpenAI(openaiApiKey, egitim, palet, dims.os, ekPrompt); }
     catch (e) { hatalar.push('OpenAI: ' + e.message); }
   }
   if (!arkaPlanImg) throw new Error('AI Afiş arka planı üretilemedi. ' + (hatalar.join(' | ') || 'Gemini ya da OpenAI anahtarı gerekli.'));

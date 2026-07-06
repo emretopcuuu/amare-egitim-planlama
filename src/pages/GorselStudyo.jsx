@@ -46,7 +46,23 @@ const METOTLAR = [
   { id: 'marka-afis', ad: '🏆 Marka Afiş', not: 'Konuşmacı afişi · tema seç', stil: null, ai: false },
   { id: 'program-icerigi', ad: '📋 Program İçeriği', not: 'Zaman çizelgesi · siyah & altın', stil: null, ai: false },
   { id: 'ai-afis', ad: '🎨 AI Afiş', not: 'Gemini · ~$0.08 · yavaş', stil: null, ai: true },
+  { id: 'dosya-yukle', ad: '📎 Dosya Yükle', not: 'Kendi afişini yükle · bağla', stil: null, ai: false },
 ];
+
+// AI Afiş'te "her üretimde farklı çıksın" için rastgele stil yönlendirmeleri.
+// Her üretimde birini seçip arka plan prompt'una ekleriz → belirgin varyasyon.
+const AI_VARYASYON = [
+  'Kompozisyonu değiştir: dekoratif motifleri sol üst köşede yoğunlaştır, sağ alt sade kalsın.',
+  'Daha minimal ve ferah: çok bol boş alan, yalnızca ince tek-çizgi motifler.',
+  'Daha zengin dekoratif desen: katmanlı geometrik dokular (üst bölge yine açık kalsın).',
+  'Şehir landmark line-art’ını büyük ve merkeze yakın işle, arka planda soluk tut.',
+  'İnce altın art-deco çerçeve ve köşe süslemeleri ekle.',
+  'Yumuşak organik dalga ve akışkan formlar kullan.',
+  'Işık huzmeleri / gün doğumu ışıması ile dramatik premium hava ver.',
+  'İzometrik ince-çizgi öğeler, modern editorial his.',
+  'Zemin degrade tonunu farklılaştır, vurgu rengini biraz daha baskın yap.',
+];
+const aiVaryasyonSec = () => AI_VARYASYON[Math.floor(Math.random() * AI_VARYASYON.length)];
 
 const b64ToUrl = (b64, mime = 'image/png') => {
   const std = b64.replace(/-/g, '+').replace(/_/g, '/');
@@ -102,6 +118,9 @@ export default function GorselStudyo() {
   const [programSatir, setProgramSatir] = useState([]); // Program İçeriği afişi satırları
   const [resultUrl, setResultUrl] = useState(null);
   const sonB64 = useRef(null);
+  const dosyaRef = useRef(null);       // Dosya Yükle: seçilen File (base64 yerine bunu bağlarız)
+  const [dosyaAdi, setDosyaAdi] = useState('');
+  const [aiGecmis, setAiGecmis] = useState([]); // AI Afiş: son üretilenler {url, b64} — seçip bağla
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState(null);
   const [baglandi, setBaglandi] = useState(false);
@@ -116,6 +135,7 @@ export default function GorselStudyo() {
   // eğitim değişince konuşmacıları çöz
   useEffect(() => {
     setSpeakers(cozEgitmenler(egitim)); setBaglandi(false); setAltNot(''); setBaslikOzel('');
+    dosyaRef.current = null; setDosyaAdi(''); setAiGecmis([]); // yeni eğitim → yükleme/geçmiş sıfır
     // Program satırlarını eğitimin programAkışından başlat
     const pa = Array.isArray(egitim?.programAkisi) ? egitim.programAkisi : [];
     setProgramSatir(pa.map(p => ({
@@ -130,6 +150,8 @@ export default function GorselStudyo() {
   const aktifMetot = METOTLAR.find(m => m.id === aiModel) || METOTLAR[0];
   const markaModu = aiModel === 'marka-afis';
   const programModu = aiModel === 'program-icerigi';
+  const aiModu = aiModel === 'ai-afis';
+  const dosyaModu = aiModel === 'dosya-yukle';
   const canliModu = markaModu || programModu; // deterministik → otomatik canlı önizleme
 
   // ── Konuşmacı yönetimi (ekle/çıkar → hem görsele hem sisteme yazılır) ──
@@ -262,17 +284,46 @@ export default function GorselStudyo() {
         res = await gorselOlusturProgramAfis({ egitim, programSatirlari, ekPrompt: markaEkIstek(markaSecim), baslik: baslikOzel });
       } else {
         if (!geminiApiKey) throw new Error('AI Afiş için Gemini API anahtarı gerekli (Ayarlar → AI API Anahtarları).');
-        res = await gorselOlusturAiAfis({ geminiApiKey, openaiApiKey, egitim, egitmenler: speakers, ekPrompt: ekIstek, format: 'portrait' });
+        // Her üretimde farklı çıksın: rastgele stil yönlendirmesi + kullanıcının ek isteği
+        const varyasyon = aiVaryasyonSec();
+        const aiEk = [ekIstek.trim(), varyasyon].filter(Boolean).join(' ');
+        res = await gorselOlusturAiAfis({ geminiApiKey, openaiApiKey, egitim, egitmenler: speakers, ekPrompt: aiEk, format: 'portrait' });
       }
+      dosyaRef.current = null; // üretilen görsel bağlanacak (yüklü dosya varsa iptal)
       sonB64.current = res.base64;
-      if (resultUrl) URL.revokeObjectURL(resultUrl);
-      setResultUrl(b64ToUrl(res.base64, res.mimeType));
+      const yeniUrl = b64ToUrl(res.base64, res.mimeType);
+      // AI geçmişindeki URL'ler thumbnail'de duruyor → onları revoke etme (yalnız geçmişte olmayanı)
+      if (resultUrl && !aiGecmis.some(g => g.url === resultUrl)) URL.revokeObjectURL(resultUrl);
+      setResultUrl(yeniUrl);
+      if (aiModu) setAiGecmis(prev => [{ url: yeniUrl, b64: res.base64 }, ...prev].slice(0, 6));
       if (canliModu) { setGuncellendi(true); setTimeout(() => setGuncellendi(false), 1100); }
     } catch (e) {
       setError(e.message || 'Üretim başarısız.');
     } finally {
       setGenerating(false);
     }
+  };
+
+  // Dosya Yükle: dış afişi seç → önizle (bağlama Eğitime Bağla ile)
+  const dosyaSec = (file) => {
+    if (!file) return;
+    if (!file.type?.startsWith('image/')) { setError('Lütfen bir görsel dosyası seç (PNG/JPG/WebP).'); return; }
+    if (file.size > 10 * 1024 * 1024) { setError('Dosya 10MB’tan küçük olmalı.'); return; }
+    setError(null);
+    dosyaRef.current = file;
+    sonB64.current = null;
+    setDosyaAdi(file.name);
+    if (resultUrl && !aiGecmis.some(g => g.url === resultUrl)) URL.revokeObjectURL(resultUrl);
+    setResultUrl(URL.createObjectURL(file));
+    setBaglandi(false);
+  };
+
+  // AI geçmişinden bir afişi seç (önizle + bağlamaya hazırla)
+  const gecmistenSec = (g) => {
+    dosyaRef.current = null;
+    sonB64.current = g.b64;
+    setResultUrl(g.url);
+    setBaglandi(false);
   };
 
   // CANLI ÖNİZLEME — deterministik modlarda (Marka + Program) değişiklikte otomatik üret. AI manuel.
@@ -288,16 +339,20 @@ export default function GorselStudyo() {
     const a = document.createElement('a');
     a.href = resultUrl;
     const ad = (egitim?.egitim || 'gorsel').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    a.download = `${ad}_${egitim?.tarih || ''}.png`;
+    // Yüklenen dosyada orijinal uzantıyı koru; üretilende png
+    const uzanti = (dosyaModu && dosyaAdi.includes('.')) ? dosyaAdi.split('.').pop() : 'png';
+    a.download = `${ad}_${egitim?.tarih || ''}.${uzanti}`;
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
   };
 
   const bagla = async () => {
-    if (!sonB64.current || !egitim) return;
+    if (!egitim) return;
+    // Kaynak: yüklenen dosya (File) veya üretilen görsel (base64)
+    const kaynak = dosyaRef.current || (sonB64.current ? `data:image/png;base64,${sonB64.current}` : null);
+    if (!kaynak) return;
     setBaglaniyor(true); setError(null);
     try {
-      const dataUrl = `data:image/png;base64,${sonB64.current}`;
-      const url = await uploadGorsel(egitim.id, dataUrl);
+      const url = await uploadGorsel(egitim.id, kaynak);
       const r = await egitimGuncelle(egitim.id, { gorselUrl: url });
       if (!r.success) throw new Error(r.error);
       setBaglandi(true);
@@ -383,8 +438,8 @@ export default function GorselStudyo() {
               </div>
             )}
 
-            {/* Konuşmacı etiketleri + ekle/çıkar (sisteme de yazılır) — program modunda gizli */}
-            {!programModu && (
+            {/* Konuşmacı etiketleri + ekle/çıkar (sisteme de yazılır) — program & dosya modunda gizli */}
+            {!programModu && !dosyaModu && (
             <div className="bg-white border border-gray-200 rounded-xl p-3">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-semibold text-gray-700">KONUŞMACI ETİKETLERİ</span>
@@ -527,16 +582,51 @@ export default function GorselStudyo() {
                 ))}
                 <p className="text-[11px] text-gray-500 pt-0.5">Çipe bas → sağda <b>otomatik canlı önizleme</b>. 🎲 sürpriz · 💾 stilini kaydet · ↶ geri al.</p>
               </div>
-            ) : !programModu ? (
+            ) : aiModu ? (
               <div className="bg-white border border-gray-200 rounded-xl p-3">
                 <label className="text-xs font-semibold text-gray-700 mb-1 block">Tasarıma ek istek</label>
                 <textarea value={ekIstek} onChange={(e) => setEkIstek(e.target.value)} rows={3}
                   placeholder="Örn: arka planı koyu mor yap, üstte ışık efekti…"
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
-                <button onClick={uret} disabled={generating}
-                  className="mt-2 w-full py-2.5 rounded-lg font-bold text-white bg-amare-purple hover:bg-amare-dark transition flex items-center justify-center gap-2 disabled:opacity-50">
-                  {generating ? <><Loader2 className="w-4 h-4 animate-spin" /> Üretiliyor…</> : <><Sparkles className="w-4 h-4" /> AI Afiş Üret</>}
-                </button>
+                <div className="flex gap-2 mt-2">
+                  <button onClick={uret} disabled={generating}
+                    className="flex-1 py-2.5 rounded-lg font-bold text-white bg-amare-purple hover:bg-amare-dark transition flex items-center justify-center gap-2 disabled:opacity-50">
+                    {generating ? <><Loader2 className="w-4 h-4 animate-spin" /> Üretiliyor…</> : <><Sparkles className="w-4 h-4" /> AI Afiş Üret</>}
+                  </button>
+                  {resultUrl && (
+                    <button onClick={uret} disabled={generating} title="Aynı eğitimden farklı bir tasarım üret"
+                      className="px-3 py-2.5 rounded-lg font-bold text-amare-purple bg-purple-50 hover:bg-purple-100 border border-amare-purple/30 transition flex items-center justify-center gap-1.5 disabled:opacity-50">
+                      <Dices className="w-4 h-4" /> Farklı Üret
+                    </button>
+                  )}
+                </div>
+                <p className="text-[11px] text-gray-500 mt-1.5">Her üretim <b>farklı</b> bir tasarımdır. Beğendiğini sağdan seçip <b>Eğitime Bağla</b>’ya bas.</p>
+                {aiGecmis.length > 1 && (
+                  <div className="mt-2.5 pt-2.5 border-t border-gray-100">
+                    <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide mb-1.5">Son üretilenler — birini seç</div>
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {aiGecmis.map((g, i) => (
+                        <button key={i} onClick={() => gecmistenSec(g)}
+                          className={`flex-shrink-0 w-16 rounded-lg overflow-hidden border-2 transition ${resultUrl === g.url ? 'border-amare-purple ring-2 ring-amare-purple/30' : 'border-gray-200 hover:border-amare-purple/50'}`}>
+                          <img src={g.url} alt={`Seçenek ${i + 1}`} className="w-full aspect-[4/5] object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : dosyaModu ? (
+              <div className="bg-white border border-gray-200 rounded-xl p-3">
+                <label className="text-xs font-semibold text-gray-700 mb-1.5 block">📎 Kendi afişini yükle</label>
+                <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-gray-300 hover:border-amare-purple rounded-xl px-4 py-8 cursor-pointer transition text-center"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => { e.preventDefault(); dosyaSec(e.dataTransfer.files?.[0]); }}>
+                  <Plus className="w-6 h-6 text-amare-purple" />
+                  <span className="text-sm font-semibold text-gray-700">{dosyaAdi || 'Görsel seç veya sürükle-bırak'}</span>
+                  <span className="text-[11px] text-gray-400">PNG · JPG · WebP · en fazla 10MB</span>
+                  <input type="file" accept="image/*" className="hidden" onChange={(e) => dosyaSec(e.target.files?.[0])} />
+                </label>
+                <p className="text-[11px] text-gray-500 mt-2">Yüklediğin afiş sağda görünür. <b>Eğitime Bağla</b> ile bu eğitimin afişi olur — İndir/paylaş her yerde bunu kullanır.</p>
               </div>
             ) : null}
 
@@ -560,7 +650,7 @@ export default function GorselStudyo() {
                   <img src={resultUrl} alt="Önizleme" className="w-full rounded-lg" />
                 ) : (
                   <div className="text-gray-400 text-sm py-20 text-center px-4">
-                    {canliModu ? 'Önizleme hazırlanıyor…' : 'AI Afiş için "Üret"e bas.'}
+                    {canliModu ? 'Önizleme hazırlanıyor…' : dosyaModu ? 'Soldan bir görsel yükle.' : 'AI Afiş için "Üret"e bas.'}
                   </div>
                 )}
                 {generating && (
