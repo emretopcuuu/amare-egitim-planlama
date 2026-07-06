@@ -22,25 +22,37 @@ type Kisi = {
   sozMetni: string | null;
   sozSesUrl: string | null;
   sozAksiyonlari: { metin: string; ufuk: string }[];
+  bugunGonderildi: boolean;
 };
 
 export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
-  const [gonderilen, setGonderilen] = useState<Record<string, boolean>>({});
+  // [Şahitlik geliştirme #5] Sunucudan gelen "bugün gönderildi" durumuyla
+  // başlar — sayfa yenilense de "Gönderildi ✓" kaybolmaz, spam da önlenir.
+  const [gonderilen, setGonderilen] = useState<Record<string, boolean>>(() =>
+    Object.fromEntries(kisiler.filter((k) => k.bugunGonderildi).map((k) => [k.sahibiId, true]))
+  );
   const [alkislanan, setAlkislanan] = useState<Record<string, boolean>>({});
   const [mesgul, setMesgul] = useState<string | null>(null);
   const [sozAcik, setSozAcik] = useState<Record<string, boolean>>({});
+  // [Şahitlik geliştirme #6] İsteğe bağlı kişisel mesaj — API zaten destekliyordu,
+  // UI eksikti. Boşsa durtmeGonder kendi varsayılan metnini kullanır.
+  const [mesajlar, setMesajlar] = useState<Record<string, string>>({});
 
   async function durt(sahibi: string, tip: string) {
     setMesgul(sahibi + tip);
     try {
+      const mesaj = mesajlar[sahibi]?.trim() || undefined;
       const res = await fetch("/api/sahitlik", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ sahibi, tip }),
+        body: JSON.stringify({ sahibi, tip, mesaj }),
       });
       if (!res.ok) return;
       if (tip === "alkis") setAlkislanan((g) => ({ ...g, [sahibi]: true }));
-      else setGonderilen((g) => ({ ...g, [sahibi]: true }));
+      else {
+        setGonderilen((g) => ({ ...g, [sahibi]: true }));
+        setMesajlar((m) => ({ ...m, [sahibi]: "" }));
+      }
     } finally {
       setMesgul(null);
     }
@@ -133,6 +145,14 @@ export default function SahitlikPanel({ kisiler }: { kisiler: Kisi[] }) {
                   </div>
                 )}
 
+                {!gonder && (
+                  <input
+                    value={mesajlar[k.sahibiId] ?? ""}
+                    onChange={(e) => setMesajlar((m) => ({ ...m, [k.sahibiId]: e.target.value.slice(0, 300) }))}
+                    placeholder="İsteğe bağlı kişisel mesaj…"
+                    className="mt-3 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-gold/40"
+                  />
+                )}
                 <div className="mt-3 flex flex-wrap gap-2">
                   {gonder ? (
                     <span className="text-sm font-medium text-emerald-300">{t.gonderildi}</span>

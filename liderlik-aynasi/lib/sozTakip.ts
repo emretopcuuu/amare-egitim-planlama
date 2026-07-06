@@ -117,17 +117,29 @@ export type TakipEdilen = {
   sozAksiyonlari: { metin: string; ufuk: string }[];
   // [Şahitlik geliştirme #4] Bu hafta alınan kayıt sayısı.
   haftaKayit: number;
+  // [Şahitlik geliştirme #5] Bugün bu kişiye dürtme/teşvik gönderildi mi —
+  // sunucudan (sayfa yenilense de kalıcı; client state'e güvenmez).
+  bugunGonderildi: boolean;
 };
 
 // Bir liderin şahit olduğu kişiler + ilerlemeleri (şahit paneli).
 export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipEdilen[]> {
-  const { data: tanikRows } = await db
-    .from("soz_tanik")
-    .select(
-      "soz_sahibi, sahip:participants!soz_tanik_soz_sahibi_fkey(full_name, phone, profil_foto_path)"
-    )
-    .eq("witness_id", witnessId)
-    .not("imza_at", "is", null);
+  const [{ data: tanikRows }, { data: bugunDurtmeler }] = await Promise.all([
+    db
+      .from("soz_tanik")
+      .select(
+        "soz_sahibi, sahip:participants!soz_tanik_soz_sahibi_fkey(full_name, phone, profil_foto_path)"
+      )
+      .eq("witness_id", witnessId)
+      .not("imza_at", "is", null),
+    db
+      .from("soz_durtme")
+      .select("sahibi")
+      .eq("gonderen", witnessId)
+      .in("tip", ["hatirlatma", "tesvik"])
+      .gte("created_at", new Date(`${bugunTr()}T00:00:00+03:00`).toISOString()),
+  ]);
+  const bugunGonderildiSet = new Set((bugunDurtmeler ?? []).map((d) => d.sahibi));
   const rows = tanikRows ?? [];
   const sonuc: TakipEdilen[] = [];
   for (const r of rows) {
@@ -155,6 +167,7 @@ export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipE
       sozSesPath: soz?.voice_path ?? null,
       sozAksiyonlari: soz?.aksiyonlar ?? [],
       haftaKayit: hafta.kayitToplam,
+      bugunGonderildi: bugunGonderildiSet.has(r.soz_sahibi),
     });
   }
   return sonuc.sort((a, b) => b.kacirilanGun - a.kacirilanGun);
