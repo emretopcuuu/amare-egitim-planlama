@@ -9,10 +9,10 @@ const f = tr.admin.funnel;
 // yere (sayfa ya da panel bölümü) atlar. Operatör tüm süreci buradan sürer.
 const ASAMALAR: { no: number; anahtar: keyof typeof f.asamalar; ikon: string; href: string }[] = [
   { no: 1, anahtar: "hazirlik", ikon: "🧰", href: "/admin/kurulum" },
-  { no: 2, anahtar: "katilim", ikon: "🎯", href: "#fazsifir" },
+  { no: 2, anahtar: "katilim", ikon: "🎯", href: "/admin/katilimcilar#hazirlik" },
   { no: 3, anahtar: "canli", ikon: "🎛", href: "#ilerleme" },
-  { no: 4, anahtar: "final", ikon: "👁", href: "#muhur" },
-  { no: 5, anahtar: "sonrasi", ikon: "📦", href: "#araclar" },
+  { no: 4, anahtar: "final", ikon: "👁", href: "/admin/final#muhur" },
+  { no: 5, anahtar: "sonrasi", ikon: "📦", href: "/admin/sistem#araclar" },
 ];
 
 export default function FunnelOmurga({
