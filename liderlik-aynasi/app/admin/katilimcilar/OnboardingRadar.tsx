@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tost } from "@/lib/tost";
 import { basHarfler, renkSec } from "@/components/Avatar";
@@ -13,6 +13,7 @@ export type RadarKisi = {
   foto: string | null;
   telefon: string | null;
   kod: string;
+  girisYapti: boolean;
   eksikKod: OnboardingAdimKod | "tamam";
   eksikAd: string;
   bitti: boolean;
@@ -75,6 +76,17 @@ export default function OnboardingRadar({
   const [filtre, setFiltre] = useState<"hepsi" | "telefonsuz" | "pushsuz">("hepsi");
   const [asamaFiltre, setAsamaFiltre] = useState<string>("hepsi");
   const [onizlemeAcik, setOnizlemeAcik] = useState(false);
+  const listeRef = useRef<HTMLDivElement | null>(null);
+
+  // Huni çubuğu → liste filtresi. "giris" çubuğu GİRMEYENLERİ (__girissiz) süzer;
+  // diğer aşamalar tam o adımda TAKILANLARI (eksikKod) süzer. Aktif çubuğa tekrar
+  // basınca filtre sıfırlanır. Süzünce listeye doğru kaydır (grup önüne gelsin).
+  const asamaFiltreDegeri = (kod: string) => (kod === "giris" ? "__girissiz" : kod);
+  function asamayaGit(kod: string) {
+    const hedef = asamaFiltreDegeri(kod);
+    setAsamaFiltre((cur) => (cur === hedef ? "hepsi" : hedef));
+    setTimeout(() => listeRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  }
   // [#10] Canlı: 30 sn'de bir sunucuyu tazele (yenilemeden sayılar güncellensin).
   const [simdi, setSimdi] = useState(0);
   useEffect(() => {
@@ -142,7 +154,8 @@ export default function OnboardingRadar({
       if (q && !k.ad.toLocaleLowerCase("tr").includes(q)) return false;
       if (filtre === "telefonsuz" && k.telefon) return false;
       if (filtre === "pushsuz" && k.pushVar) return false;
-      if (asamaFiltre === "__bitti") { if (!k.bitti) return false; }
+      if (asamaFiltre === "__girissiz") { if (k.girisYapti) return false; }
+      else if (asamaFiltre === "__bitti") { if (!k.bitti) return false; }
       else if (asamaFiltre !== "hepsi" && k.eksikKod !== asamaFiltre) return false;
       return true;
     });
@@ -187,21 +200,45 @@ export default function OnboardingRadar({
           : "🤖 Kamp canlı olduğu için otomatik onboarding hatırlatması durakladı (kamp içinde gürültü olmasın diye)."}
       </p>
 
-      {/* [#7] HUNİ */}
-      <div className="mb-4 space-y-1.5">
+      {/* [#7] HUNİ — her çubuk tıklanabilir: o gruba göre listeyi süzer + kaydırır.
+          En tepede "Giriş yaptı" (huninin ağzı); tıklanınca girmeyenleri getirir. */}
+      <div className="mb-1 flex items-center justify-between">
+        <p className="text-[0.65rem] text-slate-500">👇 Bir çubuğa dokun → o grubu aşağıda listeler</p>
+        {asamaFiltre !== "hepsi" && (
+          <button onClick={() => setAsamaFiltre("hepsi")} className="text-[0.65rem] text-gold-light underline hover:text-gold">
+            süzmeyi kaldır
+          </button>
+        )}
+      </div>
+      <div className="mb-4 space-y-1">
         {asamalar.map((a) => {
           const oran = a.toplam > 0 ? Math.round((a.tamam / a.toplam) * 100) : 0;
           const tam = a.tamam === a.toplam;
+          const giris = a.kod === "giris";
+          const eksik = a.toplam - a.tamam;
+          const aktif = asamaFiltre === asamaFiltreDegeri(a.kod);
           return (
-            <div key={a.kod} className="flex items-center gap-2">
-              <span className="w-28 shrink-0 text-xs text-slate-300">{a.ad}</span>
-              <span className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
-                <span className={`block h-full rounded-full ${tam ? "bg-emerald-400" : "bg-gradient-to-r from-gold-dim to-gold"}`} style={{ width: `${oran}%` }} />
+            <button
+              key={a.kod}
+              onClick={() => asamayaGit(a.kod)}
+              title={giris
+                ? `${eksik} kişi henüz giriş yapmadı — dokun, listele`
+                : tam ? "Herkes tamamladı" : `${eksik} kişi bu adımda takılı — dokun, listele`}
+              className={`flex w-full items-center gap-2 rounded-lg px-2 py-1 text-left transition-colors ${
+                aktif ? "bg-gold/15 ring-1 ring-gold/40" : "hover:bg-white/5"
+              }`}
+            >
+              <span className={`flex w-28 shrink-0 items-center gap-1 text-xs ${aktif ? "text-gold-light" : "text-slate-300"}`}>
+                {giris && <span aria-hidden>🚪</span>}
+                <span className="truncate">{a.ad}</span>
               </span>
-              <span className={`w-14 shrink-0 text-right font-mono text-xs font-bold ${tam ? "text-emerald-300" : "text-slate-400"}`}>
+              <span className="h-2 flex-1 overflow-hidden rounded-full bg-white/10">
+                <span className={`block h-full rounded-full ${giris ? "bg-gradient-to-r from-sky-500 to-sky-300" : tam ? "bg-emerald-400" : "bg-gradient-to-r from-gold-dim to-gold"}`} style={{ width: `${oran}%` }} />
+              </span>
+              <span className={`w-14 shrink-0 text-right font-mono text-xs font-bold ${tam ? "text-emerald-300" : aktif ? "text-gold-light" : "text-slate-400"}`}>
                 {a.tamam}/{a.toplam}{tam ? " ✓" : ""}
               </span>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -256,7 +293,7 @@ export default function OnboardingRadar({
         <p className="rounded-lg bg-emerald-500/10 px-3 py-2 text-sm text-emerald-200">🎉 Takılan kimse yok — herkes yolunda.</p>
       ) : (
         <>
-          <div className="mb-2 flex flex-wrap items-center gap-2">
+          <div ref={listeRef} className="mb-2 flex scroll-mt-4 flex-wrap items-center gap-2">
             <input
               value={ara}
               onChange={(e) => setAra(e.target.value)}
@@ -278,6 +315,7 @@ export default function OnboardingRadar({
               className="h-8 rounded-lg border border-royal-light/30 bg-midnight-soft px-2 text-[0.7rem] text-slate-200 outline-none focus:border-gold"
             >
               <option value="hepsi">Tüm aşamalar</option>
+              <option value="__girissiz">🚪 Giriş yapmadı</option>
               {[...new Set(kisiler.filter((k) => !k.bitti).map((k) => k.eksikKod))].map((k) => (
                 <option key={k} value={k}>{kisiler.find((x) => x.eksikKod === k)?.eksikAd}</option>
               ))}
@@ -314,7 +352,11 @@ export default function OnboardingRadar({
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-medium text-slate-100">{k.ad}</span>
                     <span className="flex flex-wrap items-center gap-x-1.5 truncate text-[0.65rem] text-amber-200/90">
-                      <span>{k.eksikAd} · {sessizlik(k.sonIlerlemeAt, simdi)} sessiz</span>
+                      <span>
+                        {k.girisYapti
+                          ? `${k.eksikAd} · ${sessizlik(k.sonIlerlemeAt, simdi)} sessiz`
+                          : "🚪 Henüz hiç giriş yapmadı"}
+                      </span>
                       {!k.pushVar && <span className="text-amber-300" title="Push izni yok — bu kişiye ancak WhatsApp ulaşır">🔕</span>}
                       {k.otoNudgeSayi > 0 && <span className="text-slate-400" title={`Sistem otomatik ${k.otoNudgeSayi} kez dürttü`}>🤖{k.otoNudgeSayi}</span>}
                       {k.bildirimSayi > 0 && <span className="text-sky-300" title={`Senin uygulama-içi/push dürtün: ${k.bildirimSayi} kez`}>🔔{k.bildirimSayi}</span>}

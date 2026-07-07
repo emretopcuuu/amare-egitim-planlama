@@ -18,6 +18,7 @@ export type OnboardingKisi = {
   ad: string;
   telefon: string | null;
   loginKod: string;
+  girisYapti: boolean; // first_login_at dolu mu (koduyla en az bir kez girdi mi)
   rizaVar: boolean; // consent_at dolu mu (onboarding'e başladı mı)
   eksikAdim: OnboardingAdimKod | null; // null = onboarding tamam
   eksikAdimAd: string;
@@ -47,7 +48,7 @@ export async function onboardingDurumlari(db: Db): Promise<OnboardingKisi[]> {
     db
       .from("participants")
       .select(
-        "id, full_name, phone, login_code, consent_at, ayna_ses_secildi_at, team, onboarding_hatirlatma_at, onboarding_hatirlatma_sayi"
+        "id, full_name, phone, login_code, first_login_at, consent_at, ayna_ses_secildi_at, team, onboarding_hatirlatma_at, onboarding_hatirlatma_sayi"
       )
       .eq("role", "participant"),
     db.from("voice_profiles").select("participant_id, updated_at"),
@@ -90,6 +91,7 @@ export async function onboardingDurumlari(db: Db): Promise<OnboardingKisi[]> {
       ad: k.full_name,
       telefon: k.phone,
       loginKod: k.login_code,
+      girisYapti: !!k.first_login_at,
       rizaVar: !!k.consent_at,
       eksikAdim: eksik,
       eksikAdimAd: eksik ? ONBOARDING_ADIM_AD[eksik] : "",
