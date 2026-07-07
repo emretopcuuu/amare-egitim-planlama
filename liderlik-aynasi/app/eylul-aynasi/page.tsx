@@ -9,6 +9,7 @@ import { tr } from "@/lib/i18n/tr";
 import EylulAynasiForm from "./EylulAynasiForm";
 import EylulDisDavet from "./EylulDisDavet";
 import GecmisMektup from "./GecmisMektup";
+import SesTetik from "@/components/SesTetik";
 
 export const metadata = { title: "Eylül Aynası — Liderlik Aynası" };
 export const revalidate = 0;
@@ -68,6 +69,7 @@ export default async function EylulAynasiPage() {
             içgörünün izi. Kişinin o günkü yanıtından tek satır + takip sorusu. */}
         {dominoAlinti && (
           <section className="rounded-2xl border border-white/10 bg-midnight-card/50 p-5">
+            <SesTetik ses="domino" />
             <h2 className="font-display text-lg font-bold text-gold-light">
               {tr.eylulAynasi.dominoBaslik}
             </h2>

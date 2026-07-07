@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { sesCal } from "@/lib/sesEfekti";
 
 // Kısa altın kıvılcım patlaması — bir başarı anında (hedef mühürlendi, görev
 // tamam) ekran ortasından dışa saçılır ve söner. `tetik` her arttığında bir kez
@@ -11,6 +12,7 @@ export default function KivilcimPatlama({ tetik }: { tetik: number }) {
   useEffect(() => {
     if (tetik === 0) return;
     setGorunur(true);
+    sesCal("kivilcim");
     const z = setTimeout(() => setGorunur(false), 950);
     return () => clearTimeout(z);
   }, [tetik]);

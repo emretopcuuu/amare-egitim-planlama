@@ -67,6 +67,8 @@ export async function proxy(req: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|svg|jpg|jpeg|webp|ico)).*)",
+    // Statik varlıklar (görsel + ses efektleri) proxy'yi atlar → public /ekran,
+    // /sahne dahil her yerde oturumsuz yüklenir. mp3/wav/ogg: public/sfx sesleri.
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|svg|jpg|jpeg|webp|ico|mp3|wav|ogg)).*)",
   ],
 };

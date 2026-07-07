@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { sesCal } from "@/lib/sesEfekti";
 
 export type Kapi = { id: string; etiket: string };
 
@@ -16,6 +17,7 @@ export default function KapiSecimi({ kapilar }: { kapilar: Kapi[] }) {
   async function sec(gorevId: string) {
     if (secilen) return;
     setSecilen(gorevId); // seçileni işaretle → diğerleri sönmeye başlar
+    sesCal("kart-ac");
     try {
       const r = await fetch("/api/kapi-sec", {
         method: "POST",

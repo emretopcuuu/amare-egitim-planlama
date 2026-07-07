@@ -8,6 +8,7 @@ import TemaSecimi from "./TemaSecimi";
 import SesSecimiEkrani from "./SesSecimiEkrani";
 import KimlikDuzenle from "./KimlikDuzenle";
 import BildirimAnahtari from "./BildirimAnahtari";
+import { sesAcik, sesAyarla, sesCal } from "@/lib/sesEfekti";
 
 // Üst-orta kimlik çipi + YARDIM. Çip her zaman en tepede sabit durur; ALTINDAKİ
 // boşluk gerçek yüksekliği kadar yer ayırır (sayfa onun altından başlar, çakışma
@@ -89,6 +90,18 @@ export default function KimsinBantClient({
       window.removeEventListener("focus", cek);
     };
   }, []);
+
+  // Ses efektleri aç/kapa (varsayılan AÇIK). Çekmece açılınca localStorage'dan tazele.
+  const [sesEfektiAcik, setSesEfektiAcik] = useState(true);
+  useEffect(() => {
+    if (ayarlarAcik) setSesEfektiAcik(sesAcik());
+  }, [ayarlarAcik]);
+  function sesEfektiDegistir() {
+    const yeni = !sesEfektiAcik;
+    setSesEfektiAcik(yeni);
+    sesAyarla(yeni);
+    if (yeni) sesCal("kayit-zili"); // açınca kısa örnek — nasıl olduğunu duysun
+  }
 
   // Bildirim durumunu yokla — kapalıysa dişlide kırmızı uyarı belirsin. Çekmece
   // her açıldığında da tazele (kullanıcı içeride açınca nokta hemen sönsün).
@@ -304,6 +317,31 @@ export default function KimsinBantClient({
                 </p>
               )}
               <BildirimAnahtari vurgulu />
+            </div>
+
+            {/* Ses efektleri — varsayılan AÇIK; istediğin an kapatabilirsin.
+                (Telefonun sesi kısıksa zaten duymazsın; bu tümden susturur.) */}
+            <div className="mb-5">
+              <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+                Ses
+              </p>
+              <div className="flex items-center justify-between rounded-2xl border border-white/12 bg-white/[0.03] px-4 py-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-slate-100">Ses efektleri</p>
+                  <p className="mt-0.5 text-xs text-slate-400">
+                    {sesEfektiAcik ? "Kıvılcım, mühür, tamamlama sesleri açık." : "Tüm efekt sesleri kapalı."}
+                  </p>
+                </div>
+                <button
+                  onClick={sesEfektiDegistir}
+                  role="switch"
+                  aria-checked={sesEfektiAcik}
+                  aria-label={sesEfektiAcik ? "Ses efektlerini kapat" : "Ses efektlerini aç"}
+                  className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${sesEfektiAcik ? "bg-gold" : "bg-white/20"}`}
+                >
+                  <span className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${sesEfektiAcik ? "translate-x-5" : "translate-x-0"}`} />
+                </button>
+              </div>
             </div>
 
             <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
