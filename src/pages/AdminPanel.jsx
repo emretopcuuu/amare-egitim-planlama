@@ -15,6 +15,7 @@ import {
   Video, Play, Award, ChevronUp, ChevronDown, BarChart3,
   Mail, MapPin,
 } from 'lucide-react';
+import { auth } from '../utils/firebase';
 import DuyuruModal from '../components/DuyuruModal';
 import HatirlatmaModal from '../components/HatirlatmaModal';
 import SablonTasarimModal from '../components/SablonTasarimModal';
@@ -314,6 +315,52 @@ const AdminPanel = () => {
   const [duzenleModal, setDuzenleModal] = useState(null);
   const [duzenleForm, setDuzenleForm] = useState({});
   const [duzenleKaydediliyor, setDuzenleKaydediliyor] = useState(false);
+
+  // Eğitmenlere WhatsApp hatırlatma
+  const [waModal, setWaModal] = useState(null);
+  const [waOnizleme, setWaOnizleme] = useState(null);
+  const [waYukleniyor, setWaYukleniyor] = useState(false);
+  const [waSecili, setWaSecili] = useState(new Set());
+  const [waGonderiliyor, setWaGonderiliyor] = useState(false);
+  const [waSonuc, setWaSonuc] = useState(null);
+  const [waHata, setWaHata] = useState(null);
+
+  const waEtkinlikVeri = (e) => ({
+    egitim: e.egitim || '',
+    tarih: `${e.tarih || ''}${e.gun ? ' ' + e.gun : ''}`.trim(),
+    saat: e.saat || '',
+    konu: e.kategori || e.aciklama || 'Eğitim',
+    egitmen: e.egitmen || '',
+  });
+  const handleWaAc = async (egitim) => {
+    setWaModal(egitim); setWaOnizleme(null); setWaSonuc(null); setWaHata(null); setWaSecili(new Set()); setWaYukleniyor(true);
+    try {
+      const idToken = await auth?.currentUser?.getIdToken?.();
+      const res = await fetch('/.netlify/functions/egitmen-wa', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ mode: 'onizleme', ...waEtkinlikVeri(egitim) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Önizleme alınamadı');
+      setWaOnizleme(data);
+      setWaSecili(new Set((data.detay || []).filter(d => d.durum === 'hazır' && d.guven === 'kesin').map(d => d.ad)));
+    } catch (e) { setWaHata(e.message); } finally { setWaYukleniyor(false); }
+  };
+  const waSecToggle = (ad) => setWaSecili(prev => { const n = new Set(prev); n.has(ad) ? n.delete(ad) : n.add(ad); return n; });
+  const handleWaGonder = async () => {
+    if (!waModal || !waSecili.size) return;
+    setWaGonderiliyor(true); setWaHata(null);
+    try {
+      const idToken = await auth?.currentUser?.getIdToken?.();
+      const res = await fetch('/.netlify/functions/egitmen-wa', {
+        method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ mode: 'gonder', onayli: [...waSecili], payload: waEtkinlikVeri(waModal) }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gönderilemedi');
+      setWaSonuc(data);
+    } catch (e) { setWaHata(e.message); } finally { setWaGonderiliyor(false); }
+  };
 
   // Ekleme
   const [ekleModal, setEkleModal] = useState(false);
@@ -912,6 +959,7 @@ const AdminPanel = () => {
           <div className="flex gap-1 mt-2 flex-wrap">
             <button onClick={() => handleGorselAc(egitim)} className="text-xs bg-amare-purple text-white px-2 py-0.5 rounded-lg">Görsel</button>
             <button onClick={() => setDuyuruModal(egitim)} className="text-xs bg-green-600 text-white px-2 py-0.5 rounded-lg">Duyuru</button>
+            {egitim.egitmen && <button onClick={() => handleWaAc(egitim)} title="Eğitmenlere WhatsApp hatırlatma" className="text-xs bg-teal-600 text-white px-2 py-0.5 rounded-lg">📲 Hatırlat</button>}
             {zoomVar && <button onClick={() => handleQrAc(egitim)} className="text-xs bg-blue-500 text-white px-2 py-0.5 rounded-lg">QR</button>}
             <button onClick={() => handleDuzenleAc(egitim)} className="text-xs bg-gray-600 text-white px-2 py-0.5 rounded-lg">Düzenle</button>
             <button onClick={() => handleTamamlaToggle(egitim)}
@@ -1758,6 +1806,73 @@ const AdminPanel = () => {
       </div>
 
       {/* ===== MODALLER ===== */}
+
+      {/* Eğitmenlere WhatsApp Hatırlatma */}
+      {waModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => !waGonderiliyor && setWaModal(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between p-5 border-b">
+              <h2 className="text-lg font-bold text-gray-800">📲 Eğitmenlere Hatırlatma</h2>
+              <button onClick={() => setWaModal(null)} disabled={waGonderiliyor} className="text-gray-400 hover:text-gray-600 disabled:opacity-40"><X className="w-6 h-6" /></button>
+            </div>
+            <div className="p-5 space-y-3">
+              <div className="text-sm text-gray-600">
+                <div className="font-semibold text-gray-800">{waModal.egitim}</div>
+                <div>{waModal.tarih}{waModal.gun ? ' ' + waModal.gun : ''}{waModal.saat ? ' • ' + waModal.saat : ''}</div>
+              </div>
+
+              {waYukleniyor && <div className="py-8 text-center text-gray-500 text-sm">Eğitmenler eşleştiriliyor…</div>}
+              {waHata && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-2.5">{waHata}</div>}
+
+              {waSonuc ? (
+                <div className="text-center py-6">
+                  <div className="text-3xl mb-2">✅</div>
+                  <p className="font-bold text-gray-800">{waSonuc.tetiklendi} eğitmene gönderim başlatıldı</p>
+                  <p className="text-xs text-gray-500 mt-1">{waSonuc.mesaj}</p>
+                  <button onClick={() => setWaModal(null)} className="mt-4 px-5 py-2 rounded-lg bg-amare-purple text-white font-bold text-sm">Kapat</button>
+                </div>
+              ) : waOnizleme && (
+                <>
+                  <div className="space-y-1.5">
+                    {waOnizleme.detay.map((d, i) => {
+                      const hazir = d.durum === 'hazır';
+                      const secili = waSecili.has(d.ad);
+                      const durumEt = { 'eşleşme_yok': 'Datada bulunamadı', 'telefon_yok': 'Telefon yok/geçersiz' }[d.durum];
+                      return (
+                        <label key={i} className={`flex items-center gap-2.5 p-2 rounded-lg border ${!hazir ? 'bg-gray-50 border-gray-200 opacity-70' : secili ? 'bg-teal-50 border-teal-300' : 'bg-white border-gray-200'} ${hazir ? 'cursor-pointer' : 'cursor-not-allowed'}`}>
+                          <input type="checkbox" disabled={!hazir} checked={secili} onChange={() => waSecToggle(d.ad)} className="w-4 h-4 accent-teal-600" />
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-semibold text-gray-800 truncate">{d.ad}</div>
+                            <div className="text-xs text-gray-500 truncate">
+                              {hazir ? <>→ {d.eslesen} · {d.telefon}</> : (durumEt || d.durum)}
+                            </div>
+                          </div>
+                          {hazir && (d.guven === 'kesin'
+                            ? <span className="text-[10px] font-bold text-green-700 bg-green-100 px-1.5 py-0.5 rounded-full">kesin</span>
+                            : <span className="text-[10px] font-bold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full">olası — kontrol et</span>)}
+                        </label>
+                      );
+                    })}
+                  </div>
+                  {waOnizleme.detay.some(d => d.durum === 'hazır' && d.guven === 'olası') && (
+                    <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2">
+                      🟡 "olası" eşleşmeler farklı kişi olabilir (aynı soyad). Emin değilsen işaretleme.
+                    </p>
+                  )}
+                  <p className="text-[11px] text-gray-400">Not: WhatsApp şablonu Meta onayı tamamlanınca gönderim aktifleşir.</p>
+                  <div className="flex gap-2 pt-1">
+                    <button onClick={() => setWaModal(null)} className="flex-1 py-2.5 rounded-lg font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 text-sm">İptal</button>
+                    <button onClick={handleWaGonder} disabled={!waSecili.size || waGonderiliyor}
+                      className="flex-1 py-2.5 rounded-lg font-bold text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-sm">
+                      {waGonderiliyor ? 'Gönderiliyor…' : `Gönder (${waSecili.size})`}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Eğitim Düzenleme */}
       {duzenleModal && (
