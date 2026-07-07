@@ -391,7 +391,7 @@ const onlineHap = (ctx, cx, y, text, fontSize, palet, fontAd = 'Arial') => {
   return y + h;
 };
 
-export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', baslik = '', baslikVurgu = { adet: 1, yon: 'son' } }) => {
+export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', altNotRenk = 'kirmizi', baslik = '', baslikVurgu = { adet: 1, yon: 'son' } }) => {
   // Marka Afiş HER ZAMAN dikey (kare/story selektöründen bağımsız) — referanslar dikey,
   // kare alan fotoları sıkıştırıyordu.
   const W = 1080, H = 1350;
@@ -664,9 +664,12 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   }
   // ── ALT NOT / UYARI (kullanıcının serbest metni) — amare logosunun üstünde ──
   if (notSatirlari.length) {
-    const uyariRenk = palet.acik ? '#9c2b2b' : '#f0b3b3'; // soft kırmızı (uyarı hissi)
+    // Alt not rengi — kullanıcı seçer (program saatleri için kırmızı yanıltıcıydı).
+    const altNotRenkMap = { altin: palet.gold, beyaz: palet.metin, kirmizi: (palet.acik ? '#9c2b2b' : '#f0b3b3') };
+    const uyariRenk = altNotRenkMap[altNotRenk] || altNotRenkMap.kirmizi;
     const nlH = Math.round(W * 0.026);
-    const amareUst = CANVAS_H - Math.round(H * 0.032) - Math.round(H * 0.018); // uzayan afişte EN ALTA otur (H değil CANVAS_H)
+    // Logo ile alt-not YAZISI arasına belirgin boşluk (eskiden bitişikti) — logo üstü + ekstra pay.
+    const amareUst = CANVAS_H - Math.round(H * 0.032) - Math.round(H * 0.018) - Math.round(H * 0.03);
     const baslangic = amareUst - notSatirlari.length * nlH - Math.round(H * 0.006);
     ctx.textAlign = 'center';
     ctx.font = `600 ${Math.round(W * 0.021)}px ${FF.govde}`;

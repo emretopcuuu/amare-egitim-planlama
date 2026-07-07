@@ -113,6 +113,7 @@ export default function GorselStudyo() {
   });
   const [ekIstek, setEkIstek] = useState('');
   const [altNot, setAltNot] = useState(''); // afiş altına serbest not/uyarı
+  const [altNotRenk, setAltNotRenk] = useState('kirmizi'); // alt not yazı rengi (kirmizi/altin/beyaz)
   const [baslikOzel, setBaslikOzel] = useState(''); // özel başlık (boş = otomatik)
   const [vurguKelime, setVurguKelime] = useState(1); // iki renkli başlıkta vurgulu kelime sayısı
   const [vurguYon, setVurguYon] = useState('son');   // 'son' | 'bas'
@@ -271,7 +272,7 @@ export default function GorselStudyo() {
     try {
       let res;
       if (markaModu) {
-        res = await gorselOlusturMarkaAfis({ egitim, egitmenler: speakers, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil, altNot, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon } });
+        res = await gorselOlusturMarkaAfis({ egitim, egitmenler: speakers, format: 'portrait', ekPrompt: markaEkIstek(markaSecim), stil: aktifMetot.stil, altNot, altNotRenk, baslik: baslikOzel, baslikVurgu: { adet: vurguKelime, yon: vurguYon } });
       } else if (programModu) {
         const tur = afisTuru(egitim);
         const programSatirlari = programSatir.map(r => {
@@ -336,7 +337,7 @@ export default function GorselStudyo() {
     const id = setTimeout(() => { uret(); }, 450);
     return () => clearTimeout(id);
     // eslint-disable-next-line
-  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan])), altNot, baslikOzel, vurguKelime, vurguYon, JSON.stringify(programSatir)]);
+  }, [egitimId, aiModel, JSON.stringify(markaSecim), JSON.stringify(speakers.map(s => [s.ad, s.unvan])), altNot, altNotRenk, baslikOzel, vurguKelime, vurguYon, JSON.stringify(programSatir)]);
 
   const indir = () => {
     if (!resultUrl) return;
@@ -648,6 +649,15 @@ export default function GorselStudyo() {
                   placeholder="Her satır afişte ayrı görünür — Enter'a bas, alt satıra geç. Örn:&#10;Özel Eğitim: 12:00 - 13:00&#10;Seminer: 13:00 - 14:00&#10;Soru & Cevap: 14:00 - 14:30"
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
                 <p className="text-[10px] text-gray-400 mt-1"><b>Enter</b> ile alt satıra geç — her satır afişte ayrı yazılır (en fazla 6 satır). Satır arttıkça afiş otomatik uzar, taşmaz. Sağda canlı işlenir.</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide">Renk:</span>
+                  {[{k:'kirmizi',ad:'Kırmızı',dot:'#e05a5a'},{k:'altin',ad:'Altın',dot:'#caa64e'},{k:'beyaz',ad:'Beyaz',dot:'#f3f1ea'}].map(r => (
+                    <button key={r.k} onClick={() => setAltNotRenk(r.k)}
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-semibold border transition ${altNotRenk===r.k ? 'border-amare-purple bg-purple-50 text-amare-purple' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                      <span className="w-2.5 h-2.5 rounded-full border border-black/20" style={{ background: r.dot }} />{r.ad}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
           </div>
