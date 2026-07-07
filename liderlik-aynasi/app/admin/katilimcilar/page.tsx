@@ -21,7 +21,7 @@ export default async function KatilimcilarPage() {
   const [{ data: kisiler, error }, { data: churnlar }, { data: degerlerTamam }, { data: aboneler }] = await Promise.all([
     db
       .from("participants")
-      .select("id, full_name, team, city, phone, login_code, kariyer_seviyesi, en_yuksek_kariyer, gecen_ay_kariyer, kidem_ay, kariyer_durumu")
+      .select("id, full_name, team, city, phone, login_code, kariyer_seviyesi, en_yuksek_kariyer, gecen_ay_kariyer, kidem_ay, kariyer_durumu, profil_foto_path")
       .eq("role", "participant")
       .order("full_name"),
     // UX #2: sessizleşen (dürtülmüş) adayları listede kırmızı işaretlemek için.
@@ -34,6 +34,21 @@ export default async function KatilimcilarPage() {
   const kayanIdler = (churnlar ?? []).map((c) => c.participant_id);
   const degerlerTamamIdler = (degerlerTamam ?? []).map((r) => r.participant_id);
   const pushluIdler = [...new Set((aboneler ?? []).map((a) => a.participant_id))];
+
+  // Saha isteği: 142 kişilik listede isimden tanımak zor — fotoğrafını yükleyen
+  // herkesin gerçek fotoğrafı (imzalı URL) satırda görünsün. Foto yoksa Avatar
+  // zaten baş harf bloğuna zarifçe düşer. Tek batch imzalama (verimli).
+  const fotoUrller: Record<string, string> = {};
+  const fotolular = (kisiler ?? []).filter((k) => k.profil_foto_path);
+  if (fotolular.length > 0) {
+    const yollar = fotolular.map((k) => k.profil_foto_path as string);
+    const { data: imzali } = await db.storage.from("sesler").createSignedUrls(yollar, 3600);
+    const yolUrl = new Map((imzali ?? []).map((s) => [s.path, s.signedUrl]));
+    for (const k of fotolular) {
+      const url = yolUrl.get(k.profil_foto_path as string);
+      if (url) fotoUrller[k.id] = url;
+    }
+  }
 
   const t = tr.admin.katilimcilar;
 
@@ -78,6 +93,7 @@ export default async function KatilimcilarPage() {
 
       <KatilimciYonetim
         kisiler={kisiler}
+        fotoUrller={fotoUrller}
         kayanIdler={kayanIdler}
         degerlerTamamIdler={degerlerTamamIdler}
         pushluIdler={pushluIdler}
