@@ -57,6 +57,17 @@ adımları ve içerik TODO'ları kendi README'sinde.
   o da avatar + video referansı olur).
 - **Kriz akışı:** umutsuzluk/kriz dili görülürse uyarı **Presidential Diamond
   upline'a** `KRIZ_EPOSTA` env ile gider. 112 vb. **kullanma**.
+- **Ses efektleri:** kısa foley'ler `liderlik-aynasi/public/sfx/*.mp3` (ElevenLabs
+  Text-to-SFX; kullanıcı üretip onaylar). Tek yardımcı `lib/sesEfekti.ts` →
+  `sesCal("<ad>")`; ses başına 2.5s soğuma + iki ses arası 350ms aralık →
+  "rahatsız edici tekrar" olmaz. Aç/kapa **ayarlar çekmecesinde**
+  (`KimsinBantClient`), varsayılan AÇIK (`localStorage la_ses_efektleri`).
+  11 ses tetikleyicilere bağlı (kivilcim/fiero/muhur/kart-ac/rituel-yemin/
+  kayit-zili/streak/gorev-basla/mozaik/sesli-mektup/domino). **ÖNEMLİ:** statik
+  ses uzantıları (mp3/wav/ogg) `proxy.ts` matcher'ında negatif-lookahead'e dahil
+  — public `/ekran`,`/sahne` sesleri auth'suz yüklensin diye; yeni ses/varlık
+  eklerken bu deseni bozma. Server bileşenlerinde `components/SesTetik.tsx`
+  (mount'ta çalar).
 
 ## Çalışma kuralları (kullanıcının kalıcı talimatları)
 
@@ -81,6 +92,17 @@ adımları ve içerik TODO'ları kendi README'sinde.
 
 ## Son tamamlanan işler
 
+- **Ayna ses efektleri** (PR #700, merged): 11 ElevenLabs SFX + `lib/sesEfekti.ts`
+  + ayarlarda aç/kapa (varsayılan açık) + `proxy.ts` statik-ses muafiyeti.
+  11/11 tarayıcıda çalar test edildi. (Bkz. Önemli akışlar → Ses efektleri.)
+- **/hedef ara hedef ayı düzeltmesi** (PR #701, merged): kilometreTaslari ara
+  hedefleri sabit 1/3–2/3 yerine OV/VOLL **simülasyonundan** türetiliyor; artık
+  ekrandaki tabloyla tutarlı (katılımcı bildirimi "6. ay 2 Star tutmuyor" → ~10.
+  ay). `kariyerPlaniHesapla`'ya opsiyonel `kapi` param.
+- **Onboarding Radarı** (PR #696/#697/#699, merged): 142 kişinin hepsi listede;
+  "Giriş yaptı" hunisi + tıklanabilir çubuklar; seçip **toplu WhatsApp kuyruğu**
+  veya **toplu dürtme** ("hiç dürtülmemişe" filtresiyle). Bildirim izni yoksa
+  onboarding ayar dişlisinde kırmızı uyarı + büyük "Bildirimleri Aç" (PR #696).
 - Kişisel marka sitesi **CANLIDA: https://emretopcu.ai** (Cloudflare Pages,
   proje `emretopcu-ai`, hesap s.emretopcu@gmail.com; apex+www proxied CNAME
   → emretopcu-ai.pages.dev). Seçilen tasarım: sinematik 3D "video scroll"
