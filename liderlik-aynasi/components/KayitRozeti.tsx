@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import { sesCal } from "@/lib/sesEfekti";
 
 // [E8] "✓ Kaydedildi" MİKRO GÜVENCESİ — onboarding formlarının ortak, köşede
 // yaşayan küçük kayıt rozetleri:
@@ -25,6 +26,7 @@ export default function KayitRozeti({
     // Rozetin görünürlüğü dışarıdaki sayaca senkronlanır (bilinçli desen).
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setGoster(true);
+    sesCal("kayit-zili");
     const id = setTimeout(() => setGoster(false), 1500);
     return () => clearTimeout(id);
   }, [basari]);

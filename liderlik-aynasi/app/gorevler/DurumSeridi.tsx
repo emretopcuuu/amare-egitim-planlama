@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import KampNabzi from "./KampNabzi";
+import { sesCal } from "@/lib/sesEfekti";
 
 // DURUM ŞERİDİ — eskiden 3 ayrı kart (unvan/ilerleme + kampın nabzı + bugün
 // özeti) üst üste geliyordu. Hepsi TEK sakin, nötr şeride indi: özet satırı her
@@ -35,6 +36,19 @@ export default function DurumSeridi({
   aktifVar,
 }: Props) {
   const [acik, setAcik] = useState(!aktifVar);
+
+  // Seri ateşi sesi: her ziyarette DEĞİL, yalnız seri metni bir öncekinden
+  // farklıysa (yani seri büyüdüyse/yeni oluştuysa) bir kez çal. Böylece aynı
+  // seriyle sayfayı tekrar açınca rahatsız edici tekrar olmaz.
+  useEffect(() => {
+    if (seriRiski || !seriMetin) return;
+    try {
+      if (localStorage.getItem("la_son_seri") !== seriMetin) {
+        sesCal("streak");
+        localStorage.setItem("la_son_seri", seriMetin);
+      }
+    } catch {}
+  }, [seriMetin, seriRiski]);
 
   return (
     <section className="overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
