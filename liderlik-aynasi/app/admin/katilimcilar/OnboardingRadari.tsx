@@ -45,11 +45,17 @@ export default async function OnboardingRadari() {
     eksik === null ? SIRA.length : SIRA.indexOf(eksik);
 
   // Funnel: her aşamayı GEÇMİŞ (tamamlamış) kişi sayısı.
-  const asamalar: RadarAsama[] = HUNI.map((h) => {
-    const hIdx = SIRA.indexOf(h.kod);
-    const tamam = durumlar.filter((d) => eksikIdx(d.eksikAdim) > hIdx).length;
-    return { kod: h.kod, ad: h.ad, tamam, toplam };
-  });
+  // EN TEPEDE: koduyla en az bir kez GİRİŞ yapan kişi sayısı (huninin ağzı —
+  // kaç kişiye kod ulaştı ve uygulamayı açtı). Tıklanınca girmeyenleri süzer.
+  const girisSayi = durumlar.filter((d) => d.girisYapti).length;
+  const asamalar: RadarAsama[] = [
+    { kod: "giris", ad: "Giriş yaptı", tamam: girisSayi, toplam },
+    ...HUNI.map((h) => {
+      const hIdx = SIRA.indexOf(h.kod);
+      const tamam = durumlar.filter((d) => eksikIdx(d.eksikAdim) > hIdx).length;
+      return { kod: h.kod, ad: h.ad, tamam, toplam };
+    }),
+  ];
 
   // HERKES (142) listede — bitmemişler aksiyon için üstte, bitirenler ✓ ile
   // en altta. Böylece tüm kampı tek listeden takip edersin (kim nerede kaldı).
@@ -105,6 +111,7 @@ export default async function OnboardingRadari() {
         foto: fotoUrller[k.id] ?? null,
         telefon: k.telefon,
         kod: k.loginKod,
+        girisYapti: k.girisYapti,
         eksikKod: (bitti ? "tamam" : (k.eksikAdim as OnboardingAdimKod)) as OnboardingAdimKod | "tamam",
         eksikAd: bitti ? "Tamamladı" : k.eksikAdimAd,
         bitti,
