@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import { MEKTUP_KIVILCIMI } from "@/lib/kivilcim";
+import { sesCal } from "@/lib/sesEfekti";
 
 const t = tr.gorevler.mektupKart;
 
@@ -34,6 +35,11 @@ export default function SesliMektup({ gorevId }: { gorevId: string }) {
   const sayac = useRef<ReturnType<typeof setInterval> | null>(null);
   const baslangic = useRef(0);
   const bitiriliyor = useRef(false);
+
+  // Mektup kartı ilk göründüğünde zarf açılış sesi (mount'ta bir kez).
+  useEffect(() => {
+    sesCal("sesli-mektup");
+  }, []);
 
   // unmount temizliği: mikrofon + sayaç serbest bırakılır
   useEffect(() => {

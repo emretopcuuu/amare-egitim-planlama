@@ -6,6 +6,7 @@ import { titret } from "@/lib/his";
 import { useEsc } from "@/lib/useEsc";
 import { tr } from "@/lib/i18n/tr";
 import MuhurIkon from "@/components/MuhurIkon";
+import { sesCal as sesEfektiCal } from "@/lib/sesEfekti";
 
 const ANAHTAR = "la_muhur_v1";
 const t = tr.muhur;
@@ -55,6 +56,7 @@ export default function MuhurAcilis({
 
   function ac() {
     titret([15, 40, 20]);
+    sesEfektiCal("muhur"); // mühür açılış korosu
     // Ne ses ne yazı varsa doğrudan adlandırmaya geç
     setAsama(sesUrl || beklenti ? "ses" : "ad");
   }

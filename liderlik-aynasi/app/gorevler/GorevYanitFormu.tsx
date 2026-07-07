@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { titret, suDalgasi, cal } from "@/lib/his";
+import { sesCal } from "@/lib/sesEfekti";
 import MikrofonButonu from "@/components/MikrofonButonu";
 import Konfeti from "@/components/Konfeti";
 import PuanAcilisi from "@/components/PuanAcilisi";
@@ -120,7 +121,10 @@ export default function GorevYanitFormu({
         const buyuk = (veri?.puan ?? 0) >= 8 || !!veri?.soz;
         titret(buyuk ? [15, 40, 15, 40, 30] : [12, 40, 12]);
         suDalgasi();
-        cal(buyuk ? "kazanim" : "teslim");
+        // Büyük kazanım: ElevenLabs "fiero" foley'i (synth kazanım yerine).
+        // Küçük teslim: eski sıcak synth notası kalır.
+        if (buyuk) sesCal("fiero");
+        else cal("teslim");
         setSonuc(veri);
       } catch {
         // Ağ hatası: yanıtı cihazda sakla, bağlantı gelince otomatik gider

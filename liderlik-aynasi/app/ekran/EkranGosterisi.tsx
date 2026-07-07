@@ -12,6 +12,7 @@ import {
   dakikaCevir,
   ETKINLIK_SIMGESI,
 } from "@/lib/kampProgrami";
+import { sesCal } from "@/lib/sesEfekti";
 
 const t = tr.ekran;
 const VERI_YOKLAMA_MS = 10_000;
@@ -177,6 +178,7 @@ export default function EkranGosterisi() {
   const tercihSlaytRef = useRef<number | null>(null);
   const tourRef = useRef(0);
   const slaytSayacRef = useRef(0);
+  const sonMozaikRef = useRef<number | null>(null);
   const [aktifBlok, setAktifBlok] = useState<string | null>(null);
 
   useEffect(() => {
@@ -188,6 +190,14 @@ export default function EkranGosterisi() {
         const yeni = (await res.json()) as EkranVerisi;
         if (iptal) return;
         setVeri(yeni);
+
+        // Salon Mozaiği: yeni bir arketip parçası belirince nazik "döşeme" sesi.
+        // İlk yüklemede çalmaz; sesEfekti'nin soğuması art arda gelenleri yutar.
+        const mozaikSayi = yeni.mozaik?.arketipler?.length ?? 0;
+        if (sonMozaikRef.current !== null && mozaikSayi > sonMozaikRef.current) {
+          sesCal("mozaik");
+        }
+        sonMozaikRef.current = mozaikSayi;
 
         // CANLI ENERJİ: bugünkü toplam aktivitenin (görev+gözlem+takdir) son
         // yoklamadan beri artışı → AYNA gözünün nabzını/parlaklığını canlandırır.

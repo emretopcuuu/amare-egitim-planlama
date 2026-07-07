@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
+import { sesCal } from "@/lib/sesEfekti";
 
 const t = tr.gorevler;
 
@@ -70,6 +71,7 @@ export default function BaslaButonu({
       });
       if (res.ok) {
         titret([8, 30]);
+        sesCal("gorev-basla");
         router.refresh();
       } else {
         setCalisiyor(false);

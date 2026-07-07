@@ -9,6 +9,7 @@ import AynaSesi from "@/components/AynaSesi";
 import MuhurIkon from "@/components/MuhurIkon";
 import CanliAyna from "@/components/CanliAyna";
 import { sureRozeti } from "@/lib/onboardingSure";
+import { sesCal } from "@/lib/sesEfekti";
 
 const t = tr.rituel;
 
@@ -706,7 +707,7 @@ export default function AynaRituel({ kimlikTamam = false }: { kimlikTamam?: bool
               {/* KVKK rızası Hazırlık ekranında zaten alındı — burada tekrar
                   "izin veriyor musun?" sormaya gerek yok, doğrudan devam.
                   Sıra: önce ses kaydı, yüz yakalama en sona (kayıttan sonra). */}
-              <DevButon onClick={() => setAsama("yeminHazirlik")}>{t.basla}</DevButon>
+              <DevButon onClick={() => { sesCal("rituel-yemin"); setAsama("yeminHazirlik"); }}>{t.basla}</DevButon>
             </div>
             <button
               onClick={sessizSec}
