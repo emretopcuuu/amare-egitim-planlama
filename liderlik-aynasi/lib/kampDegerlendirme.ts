@@ -40,7 +40,7 @@ export async function degerlendirmeAc(db: Db): Promise<void> {
   await herkeseBildir(
     db,
     "🪞 Kamp Değerlendirmesi açıldı",
-    "3 gündür yanında olan arkadaşlarını 10 liderlik özelliğinde puanla — onları sen de yansıt. Yarın sabaha kadar açık.",
+    "3 gündür yanındaki arkadaşlarını 10 liderlik özelliğinde puanla. Puanların ve yazdıkların GİZLİ — gözlemlediğin kişi kimin ne verdiğini asla görmez, o yüzden dürüst ol. Yarın sabaha kadar açık.",
     "/degerlendir"
   );
   await yazAuditLog(db, null, "degerlendirme_acildi", { wave_id: dalga.id });
