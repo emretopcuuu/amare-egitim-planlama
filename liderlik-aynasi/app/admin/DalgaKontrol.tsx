@@ -7,7 +7,7 @@ import { tost } from "@/lib/tost";
 import OnayliDugme from "./OnayliDugme";
 import Bekle from "@/components/Bekle";
 
-type Dalga = { id: number; ad: string; acik: boolean };
+type Dalga = { id: number; ad: string; acik: boolean; otomatik?: string | null };
 
 export default function DalgaKontrol({
   dalgalar,
@@ -91,6 +91,10 @@ export default function DalgaKontrol({
                   {tr.admin.dalga.puanlamayan(puanlamayan)}
                 </p>
               )}
+              {/* Otomatik açılış bilgisi — kapalıysa ne zaman kendiliğinden açılacağı */}
+              {!d.acik && d.otomatik && (
+                <p className="mt-1 text-xs font-medium text-emerald-300/90">{d.otomatik}</p>
+              )}
             </div>
             {d.acik ? (
               // Dalgayı kapatmak akışı durdurur → güvenli geri-alma onayı
@@ -110,9 +114,14 @@ export default function DalgaKontrol({
               <button
                 onClick={() => degistir(d.id, true)}
                 disabled={bekleyen !== null}
-                className="rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
+                title={d.otomatik ? "Zamanı gelince kendi açılır; bu yalnızca erken açmak için." : undefined}
+                className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
+                  d.otomatik
+                    ? "border border-royal-light/40 text-slate-300 hover:bg-midnight-soft"
+                    : "bg-gold text-[#1a1206] hover:bg-gold-light"
+                }`}
               >
-                {bekleyen === d.id ? <Bekle /> : tr.admin.dalga.ac}
+                {bekleyen === d.id ? <Bekle /> : d.otomatik ? "Erken aç" : tr.admin.dalga.ac}
               </button>
             )}
           </li>
