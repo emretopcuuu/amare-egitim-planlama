@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import KodKopyala from "./KodKopyala";
 import KisiSlideOver from "./KisiSlideOver";
+import Avatar from "@/components/Avatar";
 
 const t = tr.admin.katilimcilar;
 
@@ -57,16 +58,19 @@ type Kisi = {
 // Tek sayfa yönetimi: liste EN ÜSTTE ve açık; diğer her şey katlanır (kapalı) bölüm.
 export default function KatilimciYonetim({
   kisiler,
+  fotoUrller,
   kayanIdler,
   degerlerTamamIdler,
   pushluIdler,
 }: {
   kisiler: Kisi[];
+  fotoUrller?: Record<string, string>;
   kayanIdler?: string[];
   degerlerTamamIdler?: string[];
   pushluIdler?: string[];
 }) {
   const router = useRouter();
+  const fotoOf = (id: string) => fotoUrller?.[id] ?? null;
 
   // UX #2 (2.tur): sessizleşen (dürtülmüş) adaylar — listede kırmızı risk işareti.
   const kayanSet = useMemo(() => new Set(kayanIdler ?? []), [kayanIdler]);
@@ -194,6 +198,18 @@ export default function KatilimciYonetim({
   // ---- sayfalama ----
   const [sayfa, setSayfa] = useState(0);
   const [telefonsuzFiltre, setTelefonsuzFiltre] = useState(false);
+
+  // ---- sıralama (Ad / Takım, tıklayınca yön değişir) ----
+  const [siralama, setSiralama] = useState<{ alan: "ad" | "takim"; yon: "asc" | "desc" }>({
+    alan: "ad",
+    yon: "asc",
+  });
+  function siralaTikla(alan: "ad" | "takim") {
+    setSayfa(0);
+    setSiralama((s) => (s.alan === alan ? { alan, yon: s.yon === "asc" ? "desc" : "asc" } : { alan, yon: "asc" }));
+  }
+  const siralaOk = (alan: "ad" | "takim") =>
+    siralama.alan === alan ? (siralama.yon === "asc" ? " ↑" : " ↓") : "";
 
   // ---- seçim ----
   const [secili, setSecili] = useState<Set<string>>(new Set());
@@ -403,7 +419,24 @@ export default function KatilimciYonetim({
   // Telefonu olmayan katılımcılar — CSV/import sonrası telefonu sonra eklenecek
   // kişileri admin net görsün + "sadece bunları göster" filtresiyle takip etsin.
   const telefonsuzSayi = useMemo(() => kisiler.filter((k) => !k.phone).length, [kisiler]);
-  const listelenecek = telefonsuzFiltre ? kisiler.filter((k) => !k.phone) : kisiler;
+  const listelenecek = useMemo(() => {
+    const suzulmus = telefonsuzFiltre ? kisiler.filter((k) => !k.phone) : kisiler;
+    const yon = siralama.yon === "asc" ? 1 : -1;
+    // Takımı olmayanlar takıma göre sıralarken hep sona düşsün. "Grup 2" < "Grup 10"
+    // olması için numeric karşılaştırma.
+    return [...suzulmus].sort((a, b) => {
+      if (siralama.alan === "takim") {
+        const at = a.team ?? "";
+        const bt = b.team ?? "";
+        if (!at && bt) return 1;
+        if (at && !bt) return -1;
+        const c = at.localeCompare(bt, "tr", { numeric: true });
+        if (c !== 0) return yon * c;
+        return a.full_name.localeCompare(b.full_name, "tr"); // eşitlikte isim
+      }
+      return yon * a.full_name.localeCompare(b.full_name, "tr", { numeric: true });
+    });
+  }, [kisiler, telefonsuzFiltre, siralama]);
 
   // Sayfalama: liste 160+ kişiyle çok uzuyor → 10'arlı sayfalar, ileri/geri.
   const sayfaSayisi = Math.max(1, Math.ceil(listelenecek.length / SAYFA_BOYU));
@@ -458,8 +491,24 @@ export default function KatilimciYonetim({
                         className="h-4 w-4 accent-gold"
                       />
                     </th>
-                    <th className="py-2 pr-3">{t.tablo.ad}</th>
-                    <th className="py-2 pr-3">{t.tablo.takim}</th>
+                    <th className="py-2 pr-3">
+                      <button
+                        onClick={() => siralaTikla("ad")}
+                        className="inline-flex items-center uppercase tracking-wide transition-colors hover:text-gold-light"
+                        title="İsme göre sırala"
+                      >
+                        {t.tablo.ad}{siralaOk("ad")}
+                      </button>
+                    </th>
+                    <th className="py-2 pr-3">
+                      <button
+                        onClick={() => siralaTikla("takim")}
+                        className="inline-flex items-center uppercase tracking-wide transition-colors hover:text-gold-light"
+                        title="Takıma göre sırala"
+                      >
+                        {t.tablo.takim}{siralaOk("takim")}
+                      </button>
+                    </th>
                     <th className="py-2 pr-3">{t.tablo.sehir}</th>
                     <th className="py-2 pr-3">{t.tablo.telefon}</th>
                     <th className="py-2 pr-3">{t.tablo.kod}</th>
@@ -479,16 +528,19 @@ export default function KatilimciYonetim({
                         />
                       </td>
                       <td className="py-2 pr-3 font-medium">
-                        <button
-                          onClick={() => setSlideoverId(k.id)}
-                          className="inline-flex items-center gap-1.5 text-slate-100 underline-offset-4 hover:text-gold-light hover:underline"
-                        >
-                          {kayanSet.has(k.id) && (
-                            <span className="h-2 w-2 shrink-0 rounded-full bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.7)]" aria-label={t.riskIsaret} title={t.riskIsaret} />
-                          )}
-                          {k.full_name}
-                          {durumRozetleri(k)}
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <Avatar ad={k.full_name} url={fotoOf(k.id)} boyut="sm" />
+                          <button
+                            onClick={() => setSlideoverId(k.id)}
+                            className="inline-flex items-center gap-1.5 text-slate-100 underline-offset-4 hover:text-gold-light hover:underline"
+                          >
+                            {kayanSet.has(k.id) && (
+                              <span className="h-2 w-2 shrink-0 rounded-full bg-red-400 shadow-[0_0_6px_rgba(248,113,113,0.7)]" aria-label={t.riskIsaret} title={t.riskIsaret} />
+                            )}
+                            {k.full_name}
+                            {durumRozetleri(k)}
+                          </button>
+                        </div>
                       </td>
                       <td className="py-2 pr-3 text-slate-400">{k.team ?? "—"}</td>
                       <td className="py-2 pr-3 text-slate-400">{k.city ?? "—"}</td>
@@ -536,6 +588,7 @@ export default function KatilimciYonetim({
                     aria-label={k.full_name}
                     className="h-4 w-4 shrink-0 accent-gold"
                   />
+                  <Avatar ad={k.full_name} url={fotoOf(k.id)} boyut="sm" />
                   <div className="min-w-0 flex-1">
                     <button
                       onClick={() => setSlideoverId(k.id)}
