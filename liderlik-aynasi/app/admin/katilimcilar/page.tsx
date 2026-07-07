@@ -9,7 +9,6 @@ import Ipucu from "../Ipucu";
 import Katlanir from "../Katlanir";
 import FazSifirKontrol from "../FazSifirKontrol";
 import OnFarkindalikKontrol from "../OnFarkindalikKontrol";
-import HedefKontrol from "../HedefKontrol";
 
 export const metadata = { title: "Katılımcılar — Liderlik Aynası" };
 
@@ -76,12 +75,6 @@ export default async function KatilimcilarPage() {
               {tr.admin.onFark.baslik}
             </h2>
             <OnFarkindalikKontrol />
-          </div>
-          <div id="hedef" className="scroll-mt-24 rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              🎯 {tr.admin.hedef.baslik}
-            </h2>
-            <HedefKontrol />
           </div>
         </Katlanir>
       </section>
