@@ -243,7 +243,7 @@ const AdminEmailDuzeltTab = () => {
                 </tbody>
               </table>
             </div>
-            {kySonuc.kilit && <div className="text-[11px] text-purple-700 bg-purple-50 border border-purple-200 rounded-lg px-2.5 py-1.5 inline-flex items-center gap-1.5"><ShieldCheck className="w-3.5 h-3.5" />Kilitli: <b>{kySonuc.kilit.email}</b> {kySonuc.kilit.duzelten ? `· ${kySonuc.kilit.duzelten}` : ''}</div>}
+            {kySonuc.kilit && <div className="text-[11px] text-purple-700 bg-purple-50 border border-purple-200 rounded-lg px-2.5 py-1.5 inline-flex items-center gap-1.5 flex-wrap"><ShieldCheck className="w-3.5 h-3.5 flex-shrink-0" /><span>Bu e-posta <b>kilitli</b> (re-sync ezmez): <b>{kySonuc.kilit.email}</b></span>{kySonuc.kilit.duzelten && <span className="text-purple-400">— kilitleyen: {kySonuc.kilit.duzelten}</span>}</div>}
             <div className="flex gap-2 flex-wrap items-center pt-1">
               <input value={kyYeniEmail} onChange={e => setKyYeniEmail(e.target.value)} type="email" placeholder="doğru@email.com"
                 className="flex-1 min-w-[240px] border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500/30" />
