@@ -197,6 +197,9 @@ export default async function DegerlendirPage() {
         <p className="mt-1.5 text-sm leading-relaxed text-slate-300">
           {tr.degerlendir.dalgaCerceve(dalga.id)}
         </p>
+        <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-emerald-500/10 px-3 py-2 text-xs font-medium leading-relaxed text-emerald-200">
+          {tr.degerlendir.gizlilikSatiri}
+        </p>
       </div>
 
       {/* Öz-puan kapısı */}

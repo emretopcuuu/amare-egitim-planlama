@@ -712,6 +712,8 @@ export const tr = {
       dalgaId === 4
         ? "90 gün geçti. Bu kişiyi kamptan bugüne yaşadığı değişimle değerlendir. Pencere kapanana dek puanlarını güncelleyebilirsin."
         : "Kampta tanıdığın haliyle algını dürüstçe yansıt. Bu, kampın liderlik değerlendirmesi; pencere kapanana dek puanlarını değiştirebilirsin.",
+    // Kalıcı gizlilik güvencesi (dürüstlük için her zaman görünür).
+    gizlilikSatiri: "🔒 Puanların ve yazdıkların gizli — puanladığın kişi kimin ne verdiğini asla görmez. Rahatça dürüst ol.",
   },
   puanlama: {
     geri: "Geri",
