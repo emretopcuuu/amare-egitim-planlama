@@ -1,120 +1,135 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
-import OnboardingHatirlat from "./OnboardingHatirlat";
+import { onboardingDurumlari } from "@/lib/onboardingTakip";
+import { ONBOARDING_ADIM_AD, type OnboardingAdimKod } from "@/lib/onboardingSure";
+import { tr } from "@/lib/i18n/tr";
+import { BAGLANTI_TABANI } from "@/lib/whatsappSablonlari";
+import OnboardingRadar, { type RadarKisi, type RadarAsama } from "./OnboardingRadar";
 
-// [M2/M3/M9] ONBOARDING RADARI — üç kritik hazırlık sinyalini kişi bazında tek
-// bakışta: Değerler bitti mi, oyununu seçti mi (grup atandı mı), push izni var mı.
-// KVKK: yalnız SONUÇ gösterilir (bitti/bitmedi + isim), paylaşılan içerik değil.
-// Eksik kalanların isimleri operatör için listelenir; Değerler/Oyun için tek tık
-// hatırlatma (push izni olmayan uygulama içi gelen kutusundan görür).
+// [Radar v2] ONBOARDING RADARI — kim hazır, kim eksik + tek-tık hatırlatma.
+// Zengin kişi-bazlı funnel (onboardingDurumlari) + kanal-farkında dürtme + wa.me
+// + otomatik hatırlatma durumu. KVKK: yalnız sonuç (hangi adımda takıldı), içerik değil.
 
-type Satir = {
-  ikon: string;
-  ad: string;
-  tamam: number;
-  toplam: number;
-  eksikAdlar: string[];
-  hatirlatHedef?: "degerler" | "oyun";
-  pushNotu?: boolean; // push için "hatırlatılamaz" notu
-};
-
-function RadarSatiri({ s }: { s: Satir }) {
-  const eksik = s.eksikAdlar.length;
-  const oran = s.toplam > 0 ? Math.round((s.tamam / s.toplam) * 100) : 0;
-  const tumTamam = eksik === 0;
-  return (
-    <div className="rounded-xl bg-midnight-soft/60 p-3">
-      <div className="flex items-center gap-3">
-        <span className="text-lg" aria-hidden>{s.ikon}</span>
-        <span className="min-w-0 flex-1">
-          <span className="block text-sm font-semibold text-slate-100">{s.ad}</span>
-          <span className="mt-1 block h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-            <span
-              className={`block h-full rounded-full ${tumTamam ? "bg-emerald-400" : "bg-gradient-to-r from-gold-dim to-gold"}`}
-              style={{ width: `${oran}%` }}
-            />
-          </span>
-        </span>
-        <span className={`shrink-0 font-mono text-sm font-bold ${tumTamam ? "text-emerald-300" : "text-slate-300"}`}>
-          {s.tamam}/{s.toplam}
-        </span>
-        {s.hatirlatHedef && <OnboardingHatirlat hedef={s.hatirlatHedef} eksik={eksik} />}
-      </div>
-      {eksik > 0 && (
-        <details className="mt-2">
-          <summary className="cursor-pointer text-xs text-amber-300/90 [&::-webkit-details-marker]:hidden">
-            {eksik} kişi eksik{s.pushNotu ? " — bunlara push gidemez, WhatsApp'tan takip et" : ""} · göster
-          </summary>
-          <p className="mt-1.5 flex flex-wrap gap-1.5">
-            {s.eksikAdlar.map((ad, i) => (
-              <span key={i} className="rounded-md bg-white/5 px-2 py-0.5 text-[0.7rem] text-slate-300">
-                {ad}
-              </span>
-            ))}
-          </p>
-        </details>
-      )}
-    </div>
-  );
-}
+// Funnel'da gösterilecek aşamalar (akis.ts sırasına sadık, anlamlı olanlar).
+const HUNI: { kod: OnboardingAdimKod; ad: string }[] = [
+  { kod: "rituel", ad: "Ritüel (ses)" },
+  { kod: "oyun", ad: "Oyun / grup" },
+  { kod: "degerler", ad: "Değerler" },
+  { kod: "pusula", ad: "Pusula" },
+  { kod: "hedef", ad: "Hedef" },
+  { kod: "onFarkindalik", ad: "Ön Farkındalık" },
+];
+const SIRA: OnboardingAdimKod[] = [
+  "hazirlik", "sesSecimi", "rituel", "oyun", "degerler", "pusula", "hedef", "onFarkindalik",
+];
 
 export default async function OnboardingRadari() {
   const db = supabaseAdmin();
-  const [{ data: kisiler }, { data: degerlerTamam }, { data: aboneler }] = await Promise.all([
-    db.from("participants").select("id, full_name, team").eq("role", "participant").order("full_name"),
-    db.from("degerler_calismasi").select("participant_id").not("tamamlandi_at", "is", null),
+  // onboarding_hatirlatma migration 0134'te eklendi; üretilmiş tipler henüz
+  // içermediği için bu tabloya erişimde bilinçli cast (hedef.ts deseni).
+  type GecmisSatir = { participant_id: string; hedef: string; created_at: string };
+  const [durumlar, { data: aboneler }, { data: ayarRow }, { data: gecmisHam }] = await Promise.all([
+    onboardingDurumlari(db),
     db.from("push_subscriptions").select("participant_id"),
+    db.from("settings").select("value").eq("key", "ayna_aktif").maybeSingle(),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (db as any).from("onboarding_hatirlatma").select("participant_id, hedef, created_at"),
   ]);
+  const gecmis = (gecmisHam ?? []) as GecmisSatir[];
 
-  const kisi = kisiler ?? [];
-  const toplam = kisi.length;
-  const degerlerSet = new Set((degerlerTamam ?? []).map((r) => r.participant_id));
+  const toplam = durumlar.length;
   const pushSet = new Set((aboneler ?? []).map((a) => a.participant_id));
-  const ad = (k: { full_name: string }) => k.full_name.split(" ")[0];
+  // Otomatik hatırlatma yalnız kamp KAPALIYKEN (ayna_aktif≠true) çalışır.
+  const otoAcik = ayarRow?.value !== "true";
 
-  const degerlerEksik = kisi.filter((k) => !degerlerSet.has(k.id));
-  const oyunEksik = kisi.filter((k) => !k.team);
-  const pushEksik = kisi.filter((k) => !pushSet.has(k.id));
+  const eksikIdx = (eksik: OnboardingAdimKod | null) =>
+    eksik === null ? SIRA.length : SIRA.indexOf(eksik);
 
-  const satirlar: Satir[] = [
-    {
-      ikon: "💎",
-      ad: "Değerler çalışması",
-      tamam: toplam - degerlerEksik.length,
-      toplam,
-      eksikAdlar: degerlerEksik.map(ad),
-      hatirlatHedef: "degerler",
-    },
-    {
-      ikon: "🎲",
-      ad: "Oyun seçimi / grup",
-      tamam: toplam - oyunEksik.length,
-      toplam,
-      eksikAdlar: oyunEksik.map(ad),
-      hatirlatHedef: "oyun",
-    },
-    {
-      ikon: "🔔",
-      ad: "Push izni",
-      tamam: toplam - pushEksik.length,
-      toplam,
-      eksikAdlar: pushEksik.map(ad),
-      pushNotu: true,
-    },
-  ];
+  // Funnel: her aşamayı GEÇMİŞ (tamamlamış) kişi sayısı.
+  const asamalar: RadarAsama[] = HUNI.map((h) => {
+    const hIdx = SIRA.indexOf(h.kod);
+    const tamam = durumlar.filter((d) => eksikIdx(d.eksikAdim) > hIdx).length;
+    return { kod: h.kod, ad: h.ad, tamam, toplam };
+  });
+
+  // Fotoğraflar (imzalı) — yalnız takılan (rıza vermiş + bitmemiş) kişiler için.
+  const takilanlar = durumlar.filter((d) => d.rizaVar && d.eksikAdim !== null);
+  const fotoUrller: Record<string, string> = {};
+  if (takilanlar.length > 0) {
+    const { data: fotoRows } = await db
+      .from("participants")
+      .select("id, profil_foto_path")
+      .in("id", takilanlar.map((t) => t.id))
+      .not("profil_foto_path", "is", null);
+    const yollar = (fotoRows ?? []).map((r) => r.profil_foto_path as string);
+    if (yollar.length > 0) {
+      const { data: imzali } = await db.storage.from("sesler").createSignedUrls(yollar, 3600);
+      const yolUrl = new Map((imzali ?? []).map((s) => [s.path, s.signedUrl]));
+      for (const r of fotoRows ?? []) {
+        const u = yolUrl.get(r.profil_foto_path as string);
+        if (u) fotoUrller[r.id] = u;
+      }
+    }
+  }
+
+  // Son hatırlatma zamanı (bu araç, onboarding_hatirlatma) — kişi bazlı en yeni.
+  const sonHatirlat = new Map<string, string>();
+  for (const g of gecmis ?? []) {
+    const v = sonHatirlat.get(g.participant_id);
+    if (!v || g.created_at > v) sonHatirlat.set(g.participant_id, g.created_at);
+  }
+
+  const kisiler: RadarKisi[] = takilanlar
+    .sort((a, b) => ((a.sonIlerlemeAt ?? "") < (b.sonIlerlemeAt ?? "") ? -1 : 1))
+    .map((k) => {
+      const ilkAd = k.ad.split(" ")[0];
+      const girisLink = `${BAGLANTI_TABANI}/giris?kod=${k.loginKod}`;
+      const mesaj = tr.onboardingTakip.waMesaj(ilkAd, k.eksikAdimAd, girisLink);
+      const waLink = k.telefon
+        ? `https://wa.me/${k.telefon.replace(/\D/g, "")}?text=${encodeURIComponent(mesaj)}`
+        : null;
+      return {
+        id: k.id,
+        ad: k.ad,
+        foto: fotoUrller[k.id] ?? null,
+        telefon: k.telefon,
+        kod: k.loginKod,
+        eksikKod: k.eksikAdim as OnboardingAdimKod,
+        eksikAd: k.eksikAdimAd,
+        sonIlerlemeAt: k.sonIlerlemeAt,
+        pushVar: pushSet.has(k.id),
+        otoNudgeSayi: k.hatirlatmaSayi,
+        sonHatirlatAt: sonHatirlat.get(k.id) ?? null,
+        waLink,
+      };
+    });
+
+  // Dönüşüm: bu araçla hatırlatılan kişilerden kaçı ilgili aşamayı GEÇTİ.
+  const gectiMi = (id: string, hedef: "degerler" | "oyun") => {
+    const d = durumlar.find((x) => x.id === id);
+    if (!d) return false;
+    const hedefIdx = SIRA.indexOf(hedef);
+    return eksikIdx(d.eksikAdim) > hedefIdx;
+  };
+  const donusum = { degerler: { hatirlatilan: 0, tamamlayan: 0 }, oyun: { hatirlatilan: 0, tamamlayan: 0 } };
+  const gorulen = { degerler: new Set<string>(), oyun: new Set<string>() };
+  for (const g of gecmis ?? []) {
+    const h = g.hedef as "degerler" | "oyun";
+    if (h !== "degerler" && h !== "oyun") continue;
+    if (gorulen[h].has(g.participant_id)) continue;
+    gorulen[h].add(g.participant_id);
+    donusum[h].hatirlatilan++;
+    if (gectiMi(g.participant_id, h)) donusum[h].tamamlayan++;
+  }
 
   return (
-    <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-      <h2 className="mb-1 flex items-center gap-2 text-base font-semibold text-slate-100">
-        📡 Onboarding Radarı
-      </h2>
-      <p className="mb-3 text-xs text-slate-500">
-        Değerler · oyun seçimi · push izni — kim hazır, kim eksik. (İçerik değil, yalnız sonuç.)
-      </p>
-      <div className="space-y-2.5">
-        {satirlar.map((s) => (
-          <RadarSatiri key={s.ad} s={s} />
-        ))}
-      </div>
-    </div>
+    <OnboardingRadar
+      toplam={toplam}
+      pushVarSayi={pushSet.size}
+      asamalar={asamalar}
+      kisiler={kisiler}
+      donusum={donusum}
+      otoAcik={otoAcik}
+      adimAdlari={ONBOARDING_ADIM_AD}
+    />
   );
 }
