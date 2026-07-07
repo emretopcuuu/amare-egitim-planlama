@@ -24,7 +24,6 @@ import OneriButonu from "./OneriButonu";
 import BasitEylem from "./BasitEylem";
 import GecisHazirlik from "./GecisHazirlik";
 import HazirlikPaneli from "./HazirlikPaneli";
-import OnboardingTakilanlar from "./OnboardingTakilanlar";
 import Link from "next/link";
 
 export const metadata = { title: "Yönetim Paneli — Liderlik Aynası" };
@@ -349,9 +348,9 @@ export default async function AdminPanel() {
         </Katlanir>
       )}
 
-      {/* [E6] Onboarding'de takılanlar — kayıp radarı deseni, kamp öncesi
-          sürümü: takılan kimse yoksa kendini hiç göstermez. */}
-      <OnboardingTakilanlar />
+      {/* Onboarding'de takılanlar tablosu KALDIRILDI — tekrarı önlemek için tek
+          kaynak: /admin/katilimcilar#hazirlik'teki Onboarding Radarı (aynı bilgi
+          + kanal sayaçları + kod + filtre). Yukarıdaki "Hazırlık Hunisine Git" oraya götürür. */}
 
       {/* GENEL DURUM: canlı özet rakamları */}
       <section className="kart-3d space-y-4 rounded-2xl bg-midnight-card/60 p-5 shadow-xl ring-1 ring-royal/30 backdrop-blur">

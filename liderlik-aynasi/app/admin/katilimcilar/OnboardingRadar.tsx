@@ -18,6 +18,8 @@ export type RadarKisi = {
   sonIlerlemeAt: string | null;
   pushVar: boolean;
   otoNudgeSayi: number;
+  bildirimSayi: number;
+  whatsappSayi: number;
   sonHatirlatAt: string | null;
   waLink: string | null;
 };
@@ -118,6 +120,18 @@ export default function OnboardingRadar({
       () => tost(`Kod kopyalandı: ${kod}`, "basari"),
       () => tost("Kopyalanamadı", "hata")
     );
+  }
+
+  // WhatsApp linkine tıklanınca: dış uygulama zaten açılıyor; burada kişi başı
+  // WhatsApp sayacını kaydet (kanal='whatsapp') → "kime kaç kez WhatsApp" görünür.
+  function waKaydet(kisiId: string, asama: string) {
+    fetch("/api/admin/onboarding-hatirlat", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ whatsapp: true, kisiId, asama }),
+    })
+      .then(() => setTimeout(() => router.refresh(), 400))
+      .catch(() => {});
   }
 
   // [#9] Arama + filtre
@@ -267,7 +281,14 @@ export default function OnboardingRadar({
               ))}
             </select>
           </div>
-          <p className="mb-1.5 text-[0.65rem] text-slate-500">{gosterilen.length} kişi gösteriliyor</p>
+          <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[0.65rem] text-slate-500">
+            <span>{gosterilen.length} kişi gösteriliyor</span>
+            <span className="flex flex-wrap items-center gap-x-2.5">
+              <span title="Sistemin otomatik gönderdiği dürtme sayısı">🤖 otomatik</span>
+              <span title="Senin gönderdiğin uygulama-içi/push dürtme sayısı">🔔 senin dürtün</span>
+              <span title="Senin WhatsApp'a tıklama (mesaj) sayın">💬 WhatsApp</span>
+            </span>
+          </div>
           <ul className="max-h-96 space-y-1 overflow-y-auto">
             {gosterilen.map((k) => {
               const hedef: "degerler" | "oyun" | null =
@@ -279,16 +300,26 @@ export default function OnboardingRadar({
                   <MiniAvatar ad={k.ad} url={k.foto} />
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-xs font-medium text-slate-100">{k.ad}</span>
-                    <span className="block truncate text-[0.65rem] text-amber-200/90">
-                      {k.eksikAd} · {sessizlik(k.sonIlerlemeAt, simdi)} sessiz
-                      {k.otoNudgeSayi > 0 ? ` · 🤖${k.otoNudgeSayi}` : ""}
-                      {cd ? " · dürtüldü" : ""}
+                    <span className="flex flex-wrap items-center gap-x-1.5 truncate text-[0.65rem] text-amber-200/90">
+                      <span>{k.eksikAd} · {sessizlik(k.sonIlerlemeAt, simdi)} sessiz</span>
+                      {!k.pushVar && <span className="text-amber-300" title="Push izni yok — bu kişiye ancak WhatsApp ulaşır">🔕</span>}
+                      {k.otoNudgeSayi > 0 && <span className="text-slate-400" title={`Sistem otomatik ${k.otoNudgeSayi} kez dürttü`}>🤖{k.otoNudgeSayi}</span>}
+                      {k.bildirimSayi > 0 && <span className="text-sky-300" title={`Senin uygulama-içi/push dürtün: ${k.bildirimSayi} kez`}>🔔{k.bildirimSayi}</span>}
+                      {k.whatsappSayi > 0 && <span className="text-emerald-300" title={`WhatsApp'a ${k.whatsappSayi} kez tıkladın`}>💬{k.whatsappSayi}</span>}
+                      {cd && <span className="text-slate-500" title="Son 2 saatte dürtüldü (soğuma)">· dürtüldü</span>}
                     </span>
                   </span>
                   {k.waLink ? (
-                    <a href={k.waLink} target="_blank" rel="noreferrer" className="shrink-0 rounded-md bg-emerald-500/15 px-2 py-1 text-[0.65rem] font-bold text-emerald-300 transition-colors hover:bg-emerald-500/25" title="Hazır metinli WhatsApp">💬</a>
+                    <a
+                      href={k.waLink}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={() => waKaydet(k.id, k.eksikKod)}
+                      className="shrink-0 rounded-md bg-emerald-500/15 px-2 py-1 text-[0.65rem] font-bold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+                      title="Hazır metinli WhatsApp gönder (sayılır)"
+                    >💬</a>
                   ) : (
-                    <span className="shrink-0 text-[0.6rem] text-slate-600" title="Telefon yok">📵</span>
+                    <span className="shrink-0 text-[0.6rem] text-slate-600" title="Telefon yok — WhatsApp gönderilemez">📵</span>
                   )}
                   <button onClick={() => kodKopyala(k.kod)} className="shrink-0 rounded-md bg-white/5 px-2 py-1 text-[0.65rem] font-mono text-slate-300 transition-colors hover:bg-white/10" title="Giriş kodunu kopyala">{k.kod}</button>
                   {hedef && enDurtulebilir ? (
