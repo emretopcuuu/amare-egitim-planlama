@@ -21,7 +21,9 @@ function base64ToUint8(base64: string): Uint8Array {
   return Uint8Array.from(ham, (c) => c.charCodeAt(0));
 }
 
-export default function BildirimAnahtari() {
+// vurgulu: onboarding'de ayar çekmecesinde büyük, dikkat çeken "Bildirimleri Aç"
+// butonu olarak render eder (izin yoksa). İzin varsa/kapatılamazsa kompakt hâl.
+export default function BildirimAnahtari({ vurgulu = false }: { vurgulu?: boolean }) {
   const [durum, setDurum] = useState<Durum>("yukleniyor");
   const [mesgul, setMesgul] = useState(false);
 
@@ -103,6 +105,20 @@ export default function BildirimAnahtari() {
   // yön gösteren küçük ipucu satırı.
   const acilamaz = durum === "ios-kurulum" || durum === "reddedildi";
   const acik = durum === "abone";
+
+  // Onboarding çekmecesi: izin yokken BÜYÜK, tek dokunuşluk açma butonu.
+  if (vurgulu && durum === "kapali") {
+    return (
+      <button
+        onClick={degistir}
+        disabled={mesgul}
+        className="btn-kor parilti flex w-full items-center justify-center gap-2.5 rounded-2xl px-5 py-4 text-base font-bold transition-transform hover:scale-[1.01] disabled:opacity-60"
+      >
+        <span aria-hidden className="text-xl">🔔</span>
+        {mesgul ? "Açılıyor…" : "Bildirimleri Aç"}
+      </button>
+    );
+  }
 
   return (
     <div className="flex items-center justify-between rounded-2xl border border-white/12 bg-white/[0.03] px-4 py-3">

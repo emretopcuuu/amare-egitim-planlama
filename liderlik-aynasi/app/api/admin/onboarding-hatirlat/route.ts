@@ -30,8 +30,63 @@ export async function POST(req: Request) {
     return Response.json({ hata: "Yetkisiz" }, { status: 401 });
   }
   const body = (await req.json().catch(() => null)) as
-    | { hedef?: string; kisiId?: string; kisiIds?: unknown }
+    | { hedef?: string; kisiId?: string; kisiIds?: unknown; whatsapp?: boolean; asama?: string; genel?: boolean }
     | null;
+
+  // [TOPLU DÜRT] Aşama fark etmeksizin seçili kişilere tek nazik hatırlatma
+  // (uygulama-içi + push). Soğumada (son 2 saatte push/uygulama kanalından
+  // dürtülmüş) olanlar atlanır — çift dürtme guard'ı. "Hiç dürtülmemişe gönder"
+  // asıl elemesi UI'da yapılır; bu sunucu tarafı emniyet süpabı.
+  if (body?.genel && Array.isArray(body?.kisiIds)) {
+    const db = supabaseAdmin();
+    const ids = body.kisiIds.filter((x): x is string => typeof x === "string").slice(0, 300);
+    if (ids.length === 0) return Response.json({ ok: true, gonderildi: 0, pushlu: 0, uygulama: 0, atlanan: 0 });
+    const [{ data: aboneler }, { data: gecmis }] = await Promise.all([
+      db.from("push_subscriptions").select("participant_id").in("participant_id", ids),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (db as any)
+        .from("onboarding_hatirlatma")
+        .select("participant_id")
+        .in("participant_id", ids)
+        .in("kanal", ["push", "uygulama"])
+        .gte("created_at", new Date(Date.now() - COOLDOWN_MS).toISOString()),
+    ]);
+    const pushluSet = new Set((aboneler ?? []).map((a) => a.participant_id));
+    const sogumada = new Set(((gecmis ?? []) as { participant_id: string }[]).map((g) => g.participant_id));
+    const baslik = "Kampa hazırlanıyoruz 🌅";
+    const govde = "Hazırlık adımların seni bekliyor — birkaç dakika ayır, kaldığın yerden devam et.";
+    let gonderildi = 0, pushlu = 0, atlanan = 0;
+    const kayitlar: { participant_id: string; hedef: string; kanal: string }[] = [];
+    for (const id of ids) {
+      if (sogumada.has(id)) { atlanan++; continue; }
+      await katilimciyaBildir(db, id, baslik, govde, "/").catch(() => {});
+      const pv = pushluSet.has(id);
+      if (pv) pushlu++;
+      kayitlar.push({ participant_id: id, hedef: "genel", kanal: pv ? "push" : "uygulama" });
+      gonderildi++;
+    }
+    if (kayitlar.length > 0) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await (db as any).from("onboarding_hatirlatma").insert(kayitlar);
+    }
+    await yazAuditLog(db, session.sub, "onboarding_hatirlat", {
+      hedef: "genel", gonderildi, pushlu, uygulama: gonderildi - pushlu, atlanan, toplu: true,
+    });
+    return Response.json({ ok: true, gonderildi, pushlu, uygulama: gonderildi - pushlu, atlanan });
+  }
+
+  // WhatsApp tıklaması: dış uygulama açılıyor; burada yalnız "gönderildi" niyetini
+  // kayda alırız (kanal='whatsapp') — kişi başı WhatsApp sayacı için. Push YOK.
+  if (body?.whatsapp && typeof body.kisiId === "string") {
+    const db2 = supabaseAdmin();
+    const asama = typeof body.asama === "string" && body.asama ? body.asama.slice(0, 40) : "genel";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db2 as any)
+      .from("onboarding_hatirlatma")
+      .insert({ participant_id: body.kisiId, hedef: asama, kanal: "whatsapp" });
+    return Response.json({ ok: true, whatsapp: 1 });
+  }
+
   const hedef = body?.hedef;
   if (hedef !== "degerler" && hedef !== "oyun") {
     return Response.json({ hata: "Geçersiz hedef." }, { status: 400 });

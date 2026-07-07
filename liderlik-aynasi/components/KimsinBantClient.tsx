@@ -7,6 +7,7 @@ import YaziBoyu from "./YaziBoyu";
 import TemaSecimi from "./TemaSecimi";
 import SesSecimiEkrani from "./SesSecimiEkrani";
 import KimlikDuzenle from "./KimlikDuzenle";
+import BildirimAnahtari from "./BildirimAnahtari";
 
 // Üst-orta kimlik çipi + YARDIM. Çip her zaman en tepede sabit durur; ALTINDAKİ
 // boşluk gerçek yüksekliği kadar yer ayırır (sayfa onun altından başlar, çakışma
@@ -54,6 +55,9 @@ export default function KimsinBantClient({
   const [ayarlarAcik, setAyarlarAcik] = useState(false);
   const [sesDegistirAcik, setSesDegistirAcik] = useState(false);
   const [kimlikDegistirAcik, setKimlikDegistirAcik] = useState(false);
+  // Bildirim izni AÇIK mı? Değilse dişlide kırmızı nokta + çekmecede büyük
+  // "Bildirimleri Aç" butonu gösterilir (onboarding'de kaçırılmasın diye).
+  const [bildirimGerek, setBildirimGerek] = useState(false);
   // KIOSK: büyük ekran/sahne rotalarında kimlik çipi görünmez (sahne kromsuz).
   const pathname = usePathname();
   const kiosk = pathname === "/ekran" || pathname.startsWith("/ekran/") || pathname.startsWith("/sahne");
@@ -85,6 +89,36 @@ export default function KimsinBantClient({
       window.removeEventListener("focus", cek);
     };
   }, []);
+
+  // Bildirim durumunu yokla — kapalıysa dişlide kırmızı uyarı belirsin. Çekmece
+  // her açıldığında da tazele (kullanıcı içeride açınca nokta hemen sönsün).
+  useEffect(() => {
+    let durdu = false;
+    async function bak() {
+      try {
+        if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
+          // iOS'te ana ekrana eklenmeden push yok; kurulmamışsa uyarma (kafa karıştırmasın).
+          const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+          const kurulu = window.matchMedia("(display-mode: standalone)").matches;
+          if (!durdu) setBildirimGerek(ios && kurulu ? true : false);
+          return;
+        }
+        if (Notification.permission === "denied") {
+          if (!durdu) setBildirimGerek(false); // tarayıcı reddetti: buton çare olmaz, uyarma.
+          return;
+        }
+        const kayit = await navigator.serviceWorker.getRegistration();
+        const abone = kayit ? await kayit.pushManager.getSubscription() : null;
+        if (!durdu) setBildirimGerek(!(abone && Notification.permission === "granted"));
+      } catch {
+        if (!durdu) setBildirimGerek(false);
+      }
+    }
+    void bak();
+    return () => {
+      durdu = true;
+    };
+  }, [ayarlarAcik]);
 
   if (kiosk) return null;
 
@@ -208,11 +242,13 @@ export default function KimsinBantClient({
             )}
           </Link>
 
-          {/* Dişli — görünüm ayarları (yazı boyu + tema) */}
+          {/* Dişli — görünüm + bildirim ayarları */}
           <button
             onClick={() => setAyarlarAcik(true)}
-            aria-label="Görünüm ayarları"
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gold/30 bg-midnight-card/90 text-slate-200 shadow-lg backdrop-blur-md transition-colors hover:border-gold/50"
+            aria-label={bildirimGerek ? "Ayarlar — bildirimler kapalı" : "Görünüm ayarları"}
+            className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full border bg-midnight-card/90 text-slate-200 shadow-lg backdrop-blur-md transition-colors ${
+              bildirimGerek ? "border-red-400/70 hover:border-red-400" : "border-gold/30 hover:border-gold/50"
+            }`}
           >
             <svg
               viewBox="0 0 24 24"
@@ -227,6 +263,15 @@ export default function KimsinBantClient({
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
             </svg>
+            {bildirimGerek && (
+              <span
+                aria-hidden
+                className="absolute -right-0.5 -top-0.5 flex h-3 w-3 items-center justify-center"
+              >
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400/70" />
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full border border-[#1a1035] bg-red-500" />
+              </span>
+            )}
           </button>
         </div>
       </div>
@@ -245,6 +290,22 @@ export default function KimsinBantClient({
             className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-3xl border border-white/10 bg-[#1a1035] px-5 pb-8 pt-4 sm:bottom-4 sm:rounded-3xl"
           >
             <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
+
+            {/* Bildirimler — kapalıysa EN ÜSTTE, büyük ve dikkat çeken açma butonu.
+                Görev/anons kaçmasın diye onboarding'de buraya yönlendiriyoruz. */}
+            <div className="mb-5">
+              <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
+                Bildirimler
+              </p>
+              {bildirimGerek && (
+                <p className="mb-3 rounded-2xl border border-red-400/40 bg-red-500/10 px-4 py-3 text-sm leading-relaxed text-red-100">
+                  🔔 Bildirimlerin <span className="font-semibold">kapalı</span>. Kampta sana özel
+                  görevler, davetler ve önemli anlar buradan gelir — kaçırmamak için aç.
+                </p>
+              )}
+              <BildirimAnahtari vurgulu />
+            </div>
+
             <p className="mb-4 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
               Görünüm
             </p>

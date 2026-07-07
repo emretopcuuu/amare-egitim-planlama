@@ -26,13 +26,13 @@ export default async function OnboardingRadari() {
   const db = supabaseAdmin();
   // onboarding_hatirlatma migration 0134'te eklendi; üretilmiş tipler henüz
   // içermediği için bu tabloya erişimde bilinçli cast (hedef.ts deseni).
-  type GecmisSatir = { participant_id: string; hedef: string; created_at: string };
+  type GecmisSatir = { participant_id: string; hedef: string; created_at: string; kanal: string };
   const [durumlar, { data: aboneler }, { data: ayarRow }, { data: gecmisHam }] = await Promise.all([
     onboardingDurumlari(db),
     db.from("push_subscriptions").select("participant_id"),
     db.from("settings").select("value").eq("key", "ayna_aktif").maybeSingle(),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (db as any).from("onboarding_hatirlatma").select("participant_id, hedef, created_at"),
+    (db as any).from("onboarding_hatirlatma").select("participant_id, hedef, created_at, kanal"),
   ]);
   const gecmis = (gecmisHam ?? []) as GecmisSatir[];
 
@@ -45,14 +45,21 @@ export default async function OnboardingRadari() {
     eksik === null ? SIRA.length : SIRA.indexOf(eksik);
 
   // Funnel: her aşamayı GEÇMİŞ (tamamlamış) kişi sayısı.
-  const asamalar: RadarAsama[] = HUNI.map((h) => {
-    const hIdx = SIRA.indexOf(h.kod);
-    const tamam = durumlar.filter((d) => eksikIdx(d.eksikAdim) > hIdx).length;
-    return { kod: h.kod, ad: h.ad, tamam, toplam };
-  });
+  // EN TEPEDE: koduyla en az bir kez GİRİŞ yapan kişi sayısı (huninin ağzı —
+  // kaç kişiye kod ulaştı ve uygulamayı açtı). Tıklanınca girmeyenleri süzer.
+  const girisSayi = durumlar.filter((d) => d.girisYapti).length;
+  const asamalar: RadarAsama[] = [
+    { kod: "giris", ad: "Giriş yaptı", tamam: girisSayi, toplam },
+    ...HUNI.map((h) => {
+      const hIdx = SIRA.indexOf(h.kod);
+      const tamam = durumlar.filter((d) => eksikIdx(d.eksikAdim) > hIdx).length;
+      return { kod: h.kod, ad: h.ad, tamam, toplam };
+    }),
+  ];
 
-  // Fotoğraflar (imzalı) — yalnız takılan (rıza vermiş + bitmemiş) kişiler için.
-  const takilanlar = durumlar.filter((d) => d.rizaVar && d.eksikAdim !== null);
+  // HERKES (142) listede — bitmemişler aksiyon için üstte, bitirenler ✓ ile
+  // en altta. Böylece tüm kampı tek listeden takip edersin (kim nerede kaldı).
+  const takilanlar = durumlar;
   const fotoUrller: Record<string, string> = {};
   if (takilanlar.length > 0) {
     const { data: fotoRows } = await db
@@ -71,19 +78,30 @@ export default async function OnboardingRadari() {
     }
   }
 
-  // Son hatırlatma zamanı (bu araç, onboarding_hatirlatma) — kişi bazlı en yeni.
+  // Son hatırlatma zamanı + kişi başı KANAL sayaçları (senin dürtülerin):
+  //   bildirim = uygulama-içi/push manuel dürtme · whatsapp = WhatsApp tıklaması.
   const sonHatirlat = new Map<string, string>();
+  const bildirimSayi = new Map<string, number>();
+  const whatsappSayi = new Map<string, number>();
   for (const g of gecmis ?? []) {
     const v = sonHatirlat.get(g.participant_id);
     if (!v || g.created_at > v) sonHatirlat.set(g.participant_id, g.created_at);
+    if (g.kanal === "whatsapp") whatsappSayi.set(g.participant_id, (whatsappSayi.get(g.participant_id) ?? 0) + 1);
+    else bildirimSayi.set(g.participant_id, (bildirimSayi.get(g.participant_id) ?? 0) + 1);
   }
 
   const kisiler: RadarKisi[] = takilanlar
-    .sort((a, b) => ((a.sonIlerlemeAt ?? "") < (b.sonIlerlemeAt ?? "") ? -1 : 1))
+    // Bitmemişler önce (aksiyon gereken), en sessizden başlayarak; bitirenler EN ALTTA.
+    .sort((a, b) => {
+      const af = a.eksikAdim === null, bf = b.eksikAdim === null;
+      if (af !== bf) return af ? 1 : -1;
+      return (a.sonIlerlemeAt ?? "") < (b.sonIlerlemeAt ?? "") ? -1 : 1;
+    })
     .map((k) => {
+      const bitti = k.eksikAdim === null;
       const ilkAd = k.ad.split(" ")[0];
       const girisLink = `${BAGLANTI_TABANI}/giris?kod=${k.loginKod}`;
-      const mesaj = tr.onboardingTakip.waMesaj(ilkAd, k.eksikAdimAd, girisLink);
+      const mesaj = tr.onboardingTakip.waMesaj(ilkAd, k.eksikAdimAd || "hazırlık", girisLink);
       const waLink = k.telefon
         ? `https://wa.me/${k.telefon.replace(/\D/g, "")}?text=${encodeURIComponent(mesaj)}`
         : null;
@@ -93,11 +111,15 @@ export default async function OnboardingRadari() {
         foto: fotoUrller[k.id] ?? null,
         telefon: k.telefon,
         kod: k.loginKod,
-        eksikKod: k.eksikAdim as OnboardingAdimKod,
-        eksikAd: k.eksikAdimAd,
+        girisYapti: k.girisYapti,
+        eksikKod: (bitti ? "tamam" : (k.eksikAdim as OnboardingAdimKod)) as OnboardingAdimKod | "tamam",
+        eksikAd: bitti ? "Tamamladı" : k.eksikAdimAd,
+        bitti,
         sonIlerlemeAt: k.sonIlerlemeAt,
         pushVar: pushSet.has(k.id),
         otoNudgeSayi: k.hatirlatmaSayi,
+        bildirimSayi: bildirimSayi.get(k.id) ?? 0,
+        whatsappSayi: whatsappSayi.get(k.id) ?? 0,
         sonHatirlatAt: sonHatirlat.get(k.id) ?? null,
         waLink,
       };
