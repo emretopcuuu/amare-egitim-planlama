@@ -2,6 +2,23 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { basHarfler, renkSec } from "@/components/Avatar";
+
+// Chip içinde minik avatar: foto varsa foto, yoksa baş harf (deterministik renk).
+function MiniAvatar({ ad, url }: { ad: string; url?: string | null }) {
+  if (url) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={url} alt="" className="h-5 w-5 shrink-0 rounded-full object-cover ring-1 ring-white/15" />;
+  }
+  return (
+    <span
+      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${renkSec(ad)} text-[0.5rem] font-bold text-white`}
+      aria-hidden
+    >
+      {basHarfler(ad)}
+    </span>
+  );
+}
 
 // İnteraktif grup panosu: kim hangi grupta görünür + sürükle-bırak (veya mobilde
 // "dokun → buraya taşı") ile kişi taşınır. Taşıma tek kişilik PATCH ile yazılır.
@@ -16,11 +33,14 @@ export type PanoKombo = { etiket: string; gruplar: number[] };
 export default function GrupPanosu({
   uyeler: propUyeler,
   kombolar,
+  fotoUrller,
 }: {
   uyeler: PanoUye[];
   kombolar: PanoKombo[];
+  fotoUrller?: Record<string, string>;
 }) {
   const router = useRouter();
+  const foto = (id: string) => fotoUrller?.[id] ?? null;
   const [uyeler, setUyeler] = useState<PanoUye[]>(propUyeler);
   const [secili, setSecili] = useState<string | null>(null);
   const [suruklenen, setSuruklenen] = useState<string | null>(null);
@@ -133,13 +153,14 @@ export default function GrupPanosu({
               onDragEnd={() => setSuruklenen(null)}
               onClick={() => setSecili((s) => (s === u.id ? null : u.id))}
               title="Sürükle veya dokun → hedef grupta 'Buraya taşı'"
-              className={`cursor-grab select-none truncate rounded-md px-2 py-1 text-[0.72rem] font-medium ring-1 transition-colors active:cursor-grabbing ${
+              className={`flex cursor-grab select-none items-center gap-1.5 rounded-md px-1.5 py-1 text-[0.72rem] font-medium ring-1 transition-colors active:cursor-grabbing ${
                 secili === u.id
                   ? "bg-gold/25 text-gold-light ring-gold/50"
                   : "bg-royal/15 text-slate-200 ring-white/5 hover:bg-royal/25"
               }`}
             >
-              {u.ad}
+              <MiniAvatar ad={u.ad} url={foto(u.id)} />
+              <span className="truncate">{u.ad}</span>
             </li>
           ))}
           {liste.length === 0 && <li className="px-1 py-2 text-[0.65rem] text-slate-600">boş</li>}
@@ -190,13 +211,14 @@ export default function GrupPanosu({
                 }}
                 onDragEnd={() => setSuruklenen(null)}
                 onClick={() => setSecili((s) => (s === u.id ? null : u.id))}
-                className={`cursor-grab select-none truncate rounded-md px-2 py-1 text-[0.72rem] font-medium ring-1 transition-colors active:cursor-grabbing ${
+                className={`flex cursor-grab select-none items-center gap-1.5 rounded-md px-1.5 py-1 text-[0.72rem] font-medium ring-1 transition-colors active:cursor-grabbing ${
                   secili === u.id
                     ? "bg-gold/25 text-gold-light ring-gold/50"
                     : "bg-royal/15 text-slate-200 ring-white/5 hover:bg-royal/25"
                 }`}
               >
-                {u.ad}
+                <MiniAvatar ad={u.ad} url={foto(u.id)} />
+                <span className="truncate">{u.ad}</span>
               </li>
             ))}
           </ul>
