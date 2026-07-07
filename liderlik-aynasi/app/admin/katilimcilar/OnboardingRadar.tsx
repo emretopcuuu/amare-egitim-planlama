@@ -13,8 +13,9 @@ export type RadarKisi = {
   foto: string | null;
   telefon: string | null;
   kod: string;
-  eksikKod: OnboardingAdimKod;
+  eksikKod: OnboardingAdimKod | "tamam";
   eksikAd: string;
+  bitti: boolean;
   sonIlerlemeAt: string | null;
   pushVar: boolean;
   otoNudgeSayi: number;
@@ -141,7 +142,8 @@ export default function OnboardingRadar({
       if (q && !k.ad.toLocaleLowerCase("tr").includes(q)) return false;
       if (filtre === "telefonsuz" && k.telefon) return false;
       if (filtre === "pushsuz" && k.pushVar) return false;
-      if (asamaFiltre !== "hepsi" && k.eksikKod !== asamaFiltre) return false;
+      if (asamaFiltre === "__bitti") { if (!k.bitti) return false; }
+      else if (asamaFiltre !== "hepsi" && k.eksikKod !== asamaFiltre) return false;
       return true;
     });
   }, [kisiler, ara, filtre, asamaFiltre]);
@@ -276,9 +278,10 @@ export default function OnboardingRadar({
               className="h-8 rounded-lg border border-royal-light/30 bg-midnight-soft px-2 text-[0.7rem] text-slate-200 outline-none focus:border-gold"
             >
               <option value="hepsi">Tüm aşamalar</option>
-              {[...new Set(kisiler.map((k) => k.eksikKod))].map((k) => (
+              {[...new Set(kisiler.filter((k) => !k.bitti).map((k) => k.eksikKod))].map((k) => (
                 <option key={k} value={k}>{kisiler.find((x) => x.eksikKod === k)?.eksikAd}</option>
               ))}
+              <option value="__bitti">✓ Tamamlayanlar</option>
             </select>
           </div>
           <div className="mb-1.5 flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-[0.65rem] text-slate-500">
@@ -295,6 +298,16 @@ export default function OnboardingRadar({
                 k.eksikKod === "degerler" ? "degerler" : k.eksikKod === "oyun" ? "oyun" : null;
               const enDurtulebilir = hedef !== null;
               const cd = cooldownda(k);
+              // Bitirenler: yeşil ✓, aksiyon yok (takip için listede kalır, en altta).
+              if (k.bitti) {
+                return (
+                  <li key={k.id} className="flex items-center gap-2 rounded-lg bg-emerald-500/[0.05] px-2 py-1.5 opacity-80">
+                    <MiniAvatar ad={k.ad} url={k.foto} />
+                    <span className="min-w-0 flex-1 truncate text-xs font-medium text-slate-200">{k.ad}</span>
+                    <span className="shrink-0 rounded-md bg-emerald-500/15 px-2 py-1 text-[0.65rem] font-bold text-emerald-300">✓ Tamamladı</span>
+                  </li>
+                );
+              }
               return (
                 <li key={k.id} className="flex items-center gap-2 rounded-lg bg-white/[0.03] px-2 py-1.5">
                   <MiniAvatar ad={k.ad} url={k.foto} />
