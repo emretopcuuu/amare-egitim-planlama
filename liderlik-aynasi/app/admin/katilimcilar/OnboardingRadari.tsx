@@ -27,19 +27,22 @@ export default async function OnboardingRadari() {
   // onboarding_hatirlatma migration 0134'te eklendi; üretilmiş tipler henüz
   // içermediği için bu tabloya erişimde bilinçli cast (hedef.ts deseni).
   type GecmisSatir = { participant_id: string; hedef: string; created_at: string; kanal: string };
-  const [durumlar, { data: aboneler }, { data: ayarRow }, { data: gecmisHam }] = await Promise.all([
+  const [durumlar, { data: aboneler }, { data: ayarlar }, { data: gecmisHam }] = await Promise.all([
     onboardingDurumlari(db),
     db.from("push_subscriptions").select("participant_id"),
-    db.from("settings").select("value").eq("key", "ayna_aktif").maybeSingle(),
+    db.from("settings").select("key, value").in("key", ["ayna_aktif", "onboarding_wa_oto"]),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (db as any).from("onboarding_hatirlatma").select("participant_id, hedef, created_at, kanal"),
   ]);
   const gecmis = (gecmisHam ?? []) as GecmisSatir[];
+  const ayarMap = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
 
   const toplam = durumlar.length;
   const pushSet = new Set((aboneler ?? []).map((a) => a.participant_id));
   // Otomatik hatırlatma yalnız kamp KAPALIYKEN (ayna_aktif≠true) çalışır.
-  const otoAcik = ayarRow?.value !== "true";
+  const otoAcik = ayarMap.get("ayna_aktif") !== "true";
+  // Otomatik onboarding WhatsApp: admin açtıysa (varsayılan kapalı).
+  const waOtoAcik = ayarMap.get("onboarding_wa_oto") === "true";
 
   const eksikIdx = (eksik: OnboardingAdimKod | null) =>
     eksik === null ? SIRA.length : SIRA.indexOf(eksik);
@@ -83,10 +86,12 @@ export default async function OnboardingRadari() {
   const sonHatirlat = new Map<string, string>();
   const bildirimSayi = new Map<string, number>();
   const whatsappSayi = new Map<string, number>();
+  const otoWaSayi = new Map<string, number>(); // otomatik gönderilen WhatsApp (whatsapp_oto)
   for (const g of gecmis ?? []) {
     const v = sonHatirlat.get(g.participant_id);
     if (!v || g.created_at > v) sonHatirlat.set(g.participant_id, g.created_at);
     if (g.kanal === "whatsapp") whatsappSayi.set(g.participant_id, (whatsappSayi.get(g.participant_id) ?? 0) + 1);
+    else if (g.kanal === "whatsapp_oto") otoWaSayi.set(g.participant_id, (otoWaSayi.get(g.participant_id) ?? 0) + 1);
     else bildirimSayi.set(g.participant_id, (bildirimSayi.get(g.participant_id) ?? 0) + 1);
   }
 
@@ -120,6 +125,7 @@ export default async function OnboardingRadari() {
         otoNudgeSayi: k.hatirlatmaSayi,
         bildirimSayi: bildirimSayi.get(k.id) ?? 0,
         whatsappSayi: whatsappSayi.get(k.id) ?? 0,
+        otoWaSayi: otoWaSayi.get(k.id) ?? 0,
         sonHatirlatAt: sonHatirlat.get(k.id) ?? null,
         waLink,
       };
@@ -151,6 +157,7 @@ export default async function OnboardingRadari() {
       kisiler={kisiler}
       donusum={donusum}
       otoAcik={otoAcik}
+      waOtoAcik={waOtoAcik}
       adimAdlari={ONBOARDING_ADIM_AD}
     />
   );
