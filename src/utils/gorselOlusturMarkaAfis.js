@@ -429,7 +429,10 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   // 3 sıra taban afişe rahat sığar; üstüne her sıra için boy uzat (aralık geniş → biraz daha)
   const ROWS_FIT = 3;
   const extraPerRow = Math.round(H * 0.16) * (ayar.aralik === 'genis' ? 1.3 : ayar.aralik === 'siki' ? 0.9 : 1);
-  const extra = Math.max(0, rows - ROWS_FIT) * extraPerRow;
+  // Alt not / uyarı satırları (Enter → alt satır; en fazla 6). 2'den fazlaysa afiş AŞAĞI uzasın → taşma yok, hep sığar.
+  const notSatirlari = String(altNot || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 6);
+  const notExtra = Math.max(0, notSatirlari.length - 2) * Math.round(H * 0.045);
+  const extra = Math.max(0, rows - ROWS_FIT) * extraPerRow + notExtra;
   const CANVAS_H = H + extra; // fiziksel yükseklik; oranlar hâlâ H=1350 tabanlı
 
   const canvas = document.createElement('canvas');
@@ -512,8 +515,7 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
 
   // ── ZONE: program bandı + footer rezervi ──
   const prog = (Array.isArray(egitim.programAkisi) ? egitim.programAkisi : []).filter(p => p && (p.baslik || p.baslangic));
-  // Alt not / uyarı satırları (kullanıcının serbest metni) — en fazla 3 satır
-  const notSatirlari = String(altNot || '').split('\n').map(s => s.trim()).filter(Boolean).slice(0, 3);
+  // notSatirlari yukarıda (canvas yüksekliği için) hesaplandı.
   const footerH = Math.round(H * (0.135 + (notSatirlari.length ? 0.03 * notSatirlari.length : 0)));
   const footerTop = CANVAS_H - footerH; // uzayan canvas'ın altına otur
   // Program girilmişse her afişte göster (online dahil) — fiziki şartı kaldırıldı.

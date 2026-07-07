@@ -644,10 +644,10 @@ export default function GorselStudyo() {
             {markaModu && (
               <div className="bg-white border border-gray-200 rounded-xl p-3">
                 <label className="text-xs font-semibold text-gray-700 mb-1 flex items-center gap-1.5">📝 Alt not / uyarı</label>
-                <textarea value={altNot} onChange={(e) => setAltNot(e.target.value)} rows={2} maxLength={140}
-                  placeholder="Örn: Saat 14:00'ten sonra salona giriş yapılamaz.&#10;Etkinliğe 18 yaşından küçükler katılamaz."
+                <textarea value={altNot} onChange={(e) => setAltNot(e.target.value)} rows={5} maxLength={400}
+                  placeholder="Her satır afişte ayrı görünür — Enter'a bas, alt satıra geç. Örn:&#10;Özel Eğitim: 12:00 - 13:00&#10;Seminer: 13:00 - 14:00&#10;Soru & Cevap: 14:00 - 14:30"
                   className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
-                <p className="text-[10px] text-gray-400 mt-1">Her satır afişin altında ayrı görünür (en fazla 3 satır). Yazdıkça sağda canlı işlenir.</p>
+                <p className="text-[10px] text-gray-400 mt-1"><b>Enter</b> ile alt satıra geç — her satır afişte ayrı yazılır (en fazla 6 satır). Satır arttıkça afiş otomatik uzar, taşmaz. Sağda canlı işlenir.</p>
               </div>
             )}
           </div>
