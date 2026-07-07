@@ -9,6 +9,7 @@ import {
   gunProgrami,
 } from "@/lib/kampProgrami";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
+import { dalgaSenaryolari, dalgaOtomatikMetin } from "@/lib/dalgaOtomatik";
 import { tr } from "@/lib/i18n/tr";
 import Katlanir from "../../Katlanir";
 import Ipucu from "../../Ipucu";
@@ -52,6 +53,7 @@ export default async function SahnePage() {
   ]);
   if (error) throw error;
   const kampBaslangic = await kampBaslangicGetir(db);
+  const { senaryolar, baslangic } = await dalgaSenaryolari(db);
 
   let vitrin: number | null = null;
   const vh = vitrinAyar?.value;
@@ -79,6 +81,7 @@ export default async function SahnePage() {
             id: d.id,
             ad: d.name,
             acik: d.is_open,
+            otomatik: dalgaOtomatikMetin(d.name, baslangic, senaryolar),
           }))}
         />
       </Katlanir>
