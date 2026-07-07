@@ -536,7 +536,7 @@ function Wizard({
   const sureAy = kapi?.sureAy ?? null;
   const plan =
     hedefIndex != null && sureAy && saatObj
-      ? kariyerPlaniHesapla(hedefIndex, sureAy, saatObj.gunluk, saatObj.etiket)
+      ? kariyerPlaniHesapla(hedefIndex, sureAy, saatObj.gunluk, saatObj.etiket, kapi)
       : null;
 
   return (

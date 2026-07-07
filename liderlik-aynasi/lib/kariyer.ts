@@ -88,12 +88,17 @@ export type KariyerPlani = {
 };
 
 // Kişisel kariyer planını hesapla (ekrandaki "Kişisel kariyer planın" kartı).
-// Ara hedefler: hedefin hemen altındaki iki basamak, sürenin 1/3 ve 2/3'ünde.
+// Ara hedefler: hedefin hemen altındaki iki basamak. `kapi` verilirse ara hedef
+// AYLARI, bağlayıcı metriğin (OV/VOLL) o basamağın şartına SİMÜLASYONDA hangi ay
+// ulaştığından türetilir → ekrandaki OV/VOLL tablosuyla birebir tutar. (Eskiden
+// sürenin 1/3–2/3'ü sabit alınıyordu; bu, tabloyla çelişip "6. ay 2 Star ama
+// tutmuyor" gibi tutarsızlık veriyordu.) `kapi` yoksa eski 1/3–2/3 davranışı.
 export function kariyerPlaniHesapla(
   hedefIndex: number,
   sureAy: number,
   gunlukSaat: number,
-  gunlukSaatEtiket: string
+  gunlukSaatEtiket: string,
+  kapi?: PlanKapisi | null
 ): KariyerPlani | null {
   const hedef = KARIYER_BASAMAKLARI[hedefIndex];
   if (!hedef || sureAy <= 0 || gunlukSaat <= 0) return null;
@@ -103,20 +108,30 @@ export function kariyerPlaniHesapla(
   // Hedefin altındaki iki basamağı ara hedef yap (varsa).
   const alt2 = KARIYER_BASAMAKLARI[hedefIndex - 2];
   const alt1 = KARIYER_BASAMAKLARI[hedefIndex - 1];
-  if (alt2)
-    kilometreTaslari.push({
-      ay: Math.max(1, Math.round(sureAy / 3)),
-      rutbe: alt2.ad,
-      gelir: alt2.ortalama,
-      arti: alt2.arti,
-    });
-  if (alt1)
-    kilometreTaslari.push({
-      ay: Math.max(1, Math.round((2 * sureAy) / 3)),
-      rutbe: alt1.ad,
-      gelir: alt1.ortalama,
-      arti: alt1.arti,
-    });
+  const ustSinir = Math.max(1, sureAy - 1); // ara hedefler hedeften önce görünsün
+
+  // Bir ara basamağın gerçekleşme ayı: mümkünse simülasyondan, değilse oransal.
+  const araAy = (alt: KariyerRutbe, oran: number): number => {
+    const oransal = Math.min(ustSinir, Math.max(1, Math.round(sureAy * oran)));
+    if (!kapi) return oransal;
+    const sart = kapi.metrik === "VOLL" ? alt.voll : alt.ov;
+    if (!sart || sart <= 0) return oransal;
+    // Bağlayıcı metrik bu basamağın şartına kaç ayda ulaşıyor (aynı başlangıç +
+    // etkin büyüme). Şart zaten karşılanıyorsa tempoSure 1 döner.
+    const ay = tempoSure(kapi.baslangic, sart, kapi.buyume);
+    return Math.min(ustSinir, Math.max(1, ay));
+  };
+
+  let alt2Ay = 0;
+  if (alt2) {
+    alt2Ay = araAy(alt2, 1 / 3);
+    kilometreTaslari.push({ ay: alt2Ay, rutbe: alt2.ad, gelir: alt2.ortalama, arti: alt2.arti });
+  }
+  if (alt1) {
+    // Monotonluk: 2. ara hedef, 1.'den önce görünemez.
+    const alt1Ay = Math.max(araAy(alt1, 2 / 3), alt2Ay || 1);
+    kilometreTaslari.push({ ay: alt1Ay, rutbe: alt1.ad, gelir: alt1.ortalama, arti: alt1.arti });
+  }
   kilometreTaslari.push({ ay: sureAy, rutbe: hedef.ad, gelir: hedef.ortalama, arti: hedef.arti });
 
   const toplamSaat = Math.round(haftalikSaat * sureAy * HAFTA_PER_AY);
