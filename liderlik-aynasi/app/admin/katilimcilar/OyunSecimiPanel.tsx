@@ -1,30 +1,43 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
-import {
-  oyunKombolari,
-  grupAdi,
-  grupNoCozumle,
-  OYUN_BILGI,
-} from "@/lib/cumartesiProgrami";
+import { oyunKombolari, grupNoCozumle, OYUN_BILGI } from "@/lib/cumartesiProgrami";
 import Katlanir from "../Katlanir";
+import GrupPanosu, { type PanoUye, type PanoKombo } from "./GrupPanosu";
 
-const GRUP_KAPASITE = 10;
-
-// Admin: oyun seçimi ile dağıtım paneli. Her oyun ikilisinin grup doluluklarını
-// tek bakışta gösterir (atanmamış kişi dahil). Seçim her zaman açıktır.
+// Admin: oyun seçimi ile dağıtım paneli. Kim hangi grupta — isim isim — görünür
+// ve sürükle-bırak (mobilde dokun-taşı) ile kişiler gruplar arasında taşınır.
+// Kombinasyonlar CUMARTESI_PROGRAMI'ndan türetilir.
 export default async function OyunSecimiPanel() {
   const db = supabaseAdmin();
-  const { data: kisiler } = await db.from("participants").select("team").eq("role", "participant");
+  const { data: kisiler } = await db
+    .from("participants")
+    .select("id, full_name, team, profil_foto_path")
+    .eq("role", "participant");
 
-  const sayim = new Map<number, number>();
-  let atanmamis = 0;
-  let toplam = 0;
-  for (const k of kisiler ?? []) {
-    toplam++;
-    const g = grupNoCozumle(k.team);
-    if (g) sayim.set(g, (sayim.get(g) ?? 0) + 1);
-    else atanmamis++;
+  const uyeler: PanoUye[] = (kisiler ?? []).map((k) => ({
+    id: k.id,
+    ad: k.full_name,
+    grup: grupNoCozumle(k.team),
+  }));
+  const toplam = uyeler.length;
+  const atanmamis = uyeler.filter((u) => u.grup == null).length;
+
+  // Minik fotoğraflar (imzalı URL, sesler bucket, tek batch) → daha iyi gözlem.
+  const fotoUrller: Record<string, string> = {};
+  const fotolular = (kisiler ?? []).filter((k) => k.profil_foto_path);
+  if (fotolular.length > 0) {
+    const yollar = fotolular.map((k) => k.profil_foto_path as string);
+    const { data: imzali } = await db.storage.from("sesler").createSignedUrls(yollar, 3600);
+    const yolUrl = new Map((imzali ?? []).map((s) => [s.path, s.signedUrl]));
+    for (const k of fotolular) {
+      const url = yolUrl.get(k.profil_foto_path as string);
+      if (url) fotoUrller[k.id] = url;
+    }
   }
-  const kombolar = oyunKombolari();
+
+  const kombolar: PanoKombo[] = oyunKombolari().map((k) => ({
+    etiket: `Bowling + ${k.oyunlar.map((o) => `${OYUN_BILGI[o].simge} ${OYUN_BILGI[o].ad}`).join(" + ")}`,
+    gruplar: k.gruplar,
+  }));
 
   return (
     <Katlanir
@@ -35,53 +48,13 @@ export default async function OyunSecimiPanel() {
       <div className="space-y-4">
         <p className="text-xs leading-relaxed text-slate-400">
           Grubu olmayan her katılımcı girişte 2 oyun seçer ve o ikiliyi oynayan
-          gruplardan en boş olanına atanır. Atama tek seferliktir. Toplam{" "}
-          <span className="font-semibold text-slate-200">{toplam}</span> kişi ·{" "}
+          gruplardan en boş olanına atanır. Aşağıda kim hangi grupta görünür;
+          sürükle-bırakla (mobilde dokunup “Buraya taşı”) elle değiştirebilirsin.
+          Toplam <span className="font-semibold text-slate-200">{toplam}</span> kişi ·{" "}
           <span className="font-semibold text-amber-300">{atanmamis}</span> henüz atanmadı.
         </p>
 
-        <div className="space-y-3">
-          {kombolar.map((k) => {
-            const dolu = k.gruplar.reduce((t, g) => t + (sayim.get(g) ?? 0), 0);
-            const kapasite = k.gruplar.length * GRUP_KAPASITE;
-            return (
-              <div key={k.oyunlar.join("+")} className="rounded-xl bg-midnight-soft/60 p-3">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-semibold text-slate-100">
-                    🎳 Bowling +{" "}
-                    {k.oyunlar.map((o) => `${OYUN_BILGI[o].simge} ${OYUN_BILGI[o].ad}`).join(" + ")}
-                  </p>
-                  <span
-                    className={`shrink-0 font-mono text-xs font-bold ${
-                      dolu > kapasite ? "text-amber-300" : "text-slate-400"
-                    }`}
-                  >
-                    {dolu}/{kapasite}
-                  </span>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {k.gruplar.map((g) => {
-                    const n = sayim.get(g) ?? 0;
-                    return (
-                      <span
-                        key={g}
-                        className={`rounded-md px-2 py-0.5 text-[0.7rem] font-medium ${
-                          n >= GRUP_KAPASITE
-                            ? "bg-amber-500/20 text-amber-200"
-                            : n > 0
-                              ? "bg-royal/25 text-royal-light"
-                              : "bg-white/5 text-slate-500"
-                        }`}
-                      >
-                        {grupAdi(g)}: {n}/{GRUP_KAPASITE}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <GrupPanosu uyeler={uyeler} kombolar={kombolar} fotoUrller={fotoUrller} />
       </div>
     </Katlanir>
   );
