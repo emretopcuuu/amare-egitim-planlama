@@ -51,9 +51,9 @@ export default async function OnboardingRadari() {
     return { kod: h.kod, ad: h.ad, tamam, toplam };
   });
 
-  // Onboarding'i BİTİRMEMİŞ herkes (hiç başlamamış dahil) — bitmemiş herkese
-  // ulaşman lazım; hiç açmayanlara WhatsApp+kod tek yol, o yüzden onlar da listede.
-  const takilanlar = durumlar.filter((d) => d.eksikAdim !== null);
+  // HERKES (142) listede — bitmemişler aksiyon için üstte, bitirenler ✓ ile
+  // en altta. Böylece tüm kampı tek listeden takip edersin (kim nerede kaldı).
+  const takilanlar = durumlar;
   const fotoUrller: Record<string, string> = {};
   if (takilanlar.length > 0) {
     const { data: fotoRows } = await db
@@ -85,11 +85,17 @@ export default async function OnboardingRadari() {
   }
 
   const kisiler: RadarKisi[] = takilanlar
-    .sort((a, b) => ((a.sonIlerlemeAt ?? "") < (b.sonIlerlemeAt ?? "") ? -1 : 1))
+    // Bitmemişler önce (aksiyon gereken), en sessizden başlayarak; bitirenler EN ALTTA.
+    .sort((a, b) => {
+      const af = a.eksikAdim === null, bf = b.eksikAdim === null;
+      if (af !== bf) return af ? 1 : -1;
+      return (a.sonIlerlemeAt ?? "") < (b.sonIlerlemeAt ?? "") ? -1 : 1;
+    })
     .map((k) => {
+      const bitti = k.eksikAdim === null;
       const ilkAd = k.ad.split(" ")[0];
       const girisLink = `${BAGLANTI_TABANI}/giris?kod=${k.loginKod}`;
-      const mesaj = tr.onboardingTakip.waMesaj(ilkAd, k.eksikAdimAd, girisLink);
+      const mesaj = tr.onboardingTakip.waMesaj(ilkAd, k.eksikAdimAd || "hazırlık", girisLink);
       const waLink = k.telefon
         ? `https://wa.me/${k.telefon.replace(/\D/g, "")}?text=${encodeURIComponent(mesaj)}`
         : null;
@@ -99,8 +105,9 @@ export default async function OnboardingRadari() {
         foto: fotoUrller[k.id] ?? null,
         telefon: k.telefon,
         kod: k.loginKod,
-        eksikKod: k.eksikAdim as OnboardingAdimKod,
-        eksikAd: k.eksikAdimAd,
+        eksikKod: (bitti ? "tamam" : (k.eksikAdim as OnboardingAdimKod)) as OnboardingAdimKod | "tamam",
+        eksikAd: bitti ? "Tamamladı" : k.eksikAdimAd,
+        bitti,
         sonIlerlemeAt: k.sonIlerlemeAt,
         pushVar: pushSet.has(k.id),
         otoNudgeSayi: k.hatirlatmaSayi,
