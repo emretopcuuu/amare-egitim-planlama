@@ -516,7 +516,8 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   // ── ZONE: program bandı + footer rezervi ──
   const prog = (Array.isArray(egitim.programAkisi) ? egitim.programAkisi : []).filter(p => p && (p.baslik || p.baslangic));
   // notSatirlari yukarıda (canvas yüksekliği için) hesaplandı.
-  const footerH = Math.round(H * (0.135 + (notSatirlari.length ? 0.03 * notSatirlari.length : 0)));
+  // Footer: (üstte) program saatleri + (altta) adres + logo → iki blok için pay.
+  const footerH = Math.round(H * (0.15 + (notSatirlari.length ? 0.038 * notSatirlari.length : 0)));
   const footerTop = CANVAS_H - footerH; // uzayan canvas'ın altına otur
   // Program girilmişse her afişte göster (online dahil) — fiziki şartı kaldırıldı.
   const bandH = (prog.length && ayar.program) ? Math.round(H * 0.085) : 0;
@@ -636,18 +637,31 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   const adresCX = qrVar ? Math.round((M + metinSagSinir) / 2) : Math.round(W / 2);
   const adresW = qrVar ? (metinSagSinir - M) : (W - M * 2);
   ctx.textAlign = 'center';
+  // ── 1) PROGRAM SAATLERİ / ALT NOT — footer ÜSTÜNDE (kullanıcı: adres en alta) ──
+  if (notSatirlari.length) {
+    const altNotRenkMap = { altin: palet.gold, beyaz: palet.metin, kirmizi: (palet.acik ? '#9c2b2b' : '#f0b3b3') };
+    const uyariRenk = altNotRenkMap[altNotRenk] || altNotRenkMap.kirmizi;
+    const nlH = Math.round(W * 0.026);
+    ctx.font = `600 ${Math.round(W * 0.021)}px ${FF.govde}`;
+    notSatirlari.forEach((ln, i) => {
+      ctx.fillStyle = uyariRenk;
+      ctx.fillText(ln, adresCX, footerTop + Math.round(H * 0.032) + i * nlH, adresW);
+    });
+  }
+  // ── 2) ADRES (fiziki) / ZOOM (online) — EN ALTTA, amare logosunun hemen üstünde (boşlukla) ──
+  const logoUstu = CANVAS_H - Math.round(H * 0.032) - Math.round(H * 0.018); // logonun üst kenarı
+  const adresBlokTop = logoUstu - Math.round(H * 0.028) - Math.round(H * 0.085); // gap + blok payı
   if (fiziki) {
-    // Mekan adı (gold). Şehir üstte rozette zaten var → burada TEKRAR ETME (sehir fallback yok).
+    // Mekan adı (gold). Şehir üstte rozette zaten var → burada TEKRAR ETME.
     const mekan = (egitim.mekanAdi || '').toLocaleUpperCase('tr-TR');
     const adresMetni = (egitim.acikAdres || egitim.yer || '').trim();
     if (mekan) {
       ctx.fillStyle = palet.gold; ctx.font = `800 ${Math.round(W * 0.03)}px ${FF.govde}`;
-      ctx.fillText(mekan, adresCX, footerTop + Math.round(H * 0.026), adresW);
+      ctx.fillText(mekan, adresCX, adresBlokTop + Math.round(H * 0.028), adresW);
     }
     if (adresMetni) {
       ctx.fillStyle = palet.alt; ctx.font = `400 ${Math.round(W * 0.021)}px ${FF.govde}`;
-      // mekan yoksa adres tek başına biraz yukarı/ortalı; varsa altında
-      const adresY = footerTop + Math.round(H * (mekan ? 0.05 : 0.038));
+      const adresY = adresBlokTop + Math.round(H * (mekan ? 0.056 : 0.04));
       wrapText(ctx, adresMetni, adresCX, adresY, adresW, Math.round(W * 0.026), 2);
     }
   } else {
@@ -657,26 +671,10 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
     const zw = ctx.measureText(zPill).width + Math.round(W * 0.06);
     const zh = Math.round(H * 0.05);
     ctx.fillStyle = palet.gold;
-    roundRect(ctx, (W - zw) / 2, footerTop + Math.round(H * 0.01), zw, zh, zh / 2); ctx.fill();
+    roundRect(ctx, (W - zw) / 2, adresBlokTop + Math.round(H * 0.02), zw, zh, zh / 2); ctx.fill();
     ctx.fillStyle = palet.pillText; ctx.textBaseline = 'middle';
-    ctx.fillText(zPill, W / 2, footerTop + Math.round(H * 0.01) + zh / 2);
+    ctx.fillText(zPill, W / 2, adresBlokTop + Math.round(H * 0.02) + zh / 2);
     ctx.textBaseline = 'alphabetic';
-  }
-  // ── ALT NOT / UYARI (kullanıcının serbest metni) — amare logosunun üstünde ──
-  if (notSatirlari.length) {
-    // Alt not rengi — kullanıcı seçer (program saatleri için kırmızı yanıltıcıydı).
-    const altNotRenkMap = { altin: palet.gold, beyaz: palet.metin, kirmizi: (palet.acik ? '#9c2b2b' : '#f0b3b3') };
-    const uyariRenk = altNotRenkMap[altNotRenk] || altNotRenkMap.kirmizi;
-    const nlH = Math.round(W * 0.026);
-    // Logo ile alt-not YAZISI arasına belirgin boşluk (eskiden bitişikti) — logo üstü + ekstra pay.
-    const amareUst = CANVAS_H - Math.round(H * 0.032) - Math.round(H * 0.018) - Math.round(H * 0.03);
-    const baslangic = amareUst - notSatirlari.length * nlH - Math.round(H * 0.006);
-    ctx.textAlign = 'center';
-    ctx.font = `600 ${Math.round(W * 0.021)}px ${FF.govde}`;
-    notSatirlari.forEach((ln, i) => {
-      ctx.fillStyle = uyariRenk;
-      ctx.fillText(ln, adresCX, baslangic + (i + 1) * nlH, adresW);
-    });
   }
 
   // amare logosu (en alt orta) — HER ZAMAN düzgün yatay beyaz logo (1426x292).
