@@ -11,6 +11,7 @@ import { degerlendirmeAc, degerlendirmeHatirlat, revealAc } from "@/lib/kampDege
 import { sesliMektupAc } from "@/lib/sesliMektup";
 import { dominoAc } from "@/lib/domino";
 import { boslukAc } from "@/lib/bosluk";
+import { eslestirmeyiOtoTamamla } from "@/lib/eslestirmeOto";
 
 type Db = ReturnType<typeof supabaseAdmin>;
 
@@ -95,6 +96,20 @@ const FONKSIYONLAR: Record<string, (db: Db) => Promise<void>> = {
   pazartesi_rapor: pazartesiRaporuGonder,
   // [KAMP OTOMASYON] Değerlendirme dalgası aç (Gün 2 21:00) + Gün 3 09:00 dürtme
   // + Gün 3 13:00 reveal güvenlik ağı. İstanbul-çıpalı, elle dokunuş gerekmez.
+  // [KAMP OTOMASYON] Değerlendirme dalgası açılmadan hemen önce (Gün 2 20:00)
+  // gözlem eşleştirmelerini otomatik tamamla: gruplar oturduktan sonra çalışır,
+  // "Eksikleri Tamamla" ile aynı — admin elle basmasın. Dışlama listesi korunur.
+  eslestirme_tamamla: async (db: Db) => {
+    const n = await eslestirmeyiOtoTamamla(db);
+    if (n > 0) {
+      await adminlereBildir(
+        db,
+        "🔗 Eşleştirmeler otomatik tamamlandı",
+        `${n} yeni gözlem ataması eklendi (grup-içi + grup-dışı).`,
+        "/admin/eslestirmeler"
+      );
+    }
+  },
   degerlendirme_ac: degerlendirmeAc,
   degerlendirme_hatirlat: degerlendirmeHatirlat,
   reveal_ac: revealAc,
