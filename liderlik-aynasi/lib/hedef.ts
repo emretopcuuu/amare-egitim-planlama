@@ -10,7 +10,7 @@ import {
   KARIYER_BASAMAKLARI,
   GUNLUK_SAAT_SECENEKLERI,
   TEMPO_SECENEKLERI,
-  planSuresi,
+  planKapisi,
   kariyerPlaniHesapla,
   tlFormat,
   type KariyerPlani,
@@ -381,9 +381,12 @@ export async function kariyerPlaniKaydet(
     .maybeSingle();
   const ov0 = (h?.baslangic_ov as number | null) ?? 0;
   const vol0 = (h?.baslangic_vol as number | null) ?? 0;
-  const sureAy = planSuresi(ov0, vol0, hedefIndex, tempo.buyume);
+  // Bağlayıcı kapı (OV/VOLL) — hem süreyi hem ara hedef aylarını verir; ara
+  // hedefler simülasyon tablosuyla tutarlı olsun diye kapı da geçilir.
+  const kapi = planKapisi(ov0, vol0, hedefIndex, tempo.buyume);
+  const sureAy = kapi.sureAy;
 
-  const plan = kariyerPlaniHesapla(hedefIndex, sureAy, saat.gunluk, saat.etiket);
+  const plan = kariyerPlaniHesapla(hedefIndex, sureAy, saat.gunluk, saat.etiket, kapi);
   if (!plan) return null;
 
   const ozet = await ozetUret(db, katilimci.id, plan);
