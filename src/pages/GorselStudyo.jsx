@@ -278,7 +278,7 @@ export default function GorselStudyo() {
           let k = null;
           if (r.konusmaciAd) {
             const kk = konusmaciBul(r.konusmaciAd);
-            k = { ad: kk?.ad || r.konusmaciAd, unvan: etiketSec(kk, tur), fotoURL: kk?.fotoURL || null, notlar: (r.notlar || '').split('\n').map(s => s.trim()).filter(Boolean) };
+            k = { ad: kk?.ad || r.konusmaciAd, unvan: (r.unvan && r.unvan.trim()) ? r.unvan.trim() : etiketSec(kk, tur), fotoURL: kk?.fotoURL || null, notlar: (r.notlar || '').split('\n').map(s => s.trim()).filter(Boolean) };
           }
           return { saat: r.saat, baslik: r.baslik, konusmaci: k };
         });
@@ -512,9 +512,15 @@ export default function GorselStudyo() {
                         {tumKonusmacilar.filter(k => !speakers.some(s => makeCoreId(s.ad) === makeCoreId(k.ad))).map(k => <option key={k.ad} value={k.ad}>{k.ad}{k.fotoURL ? ' ★' : ''}</option>)}
                       </select>
                       {r.konusmaciAd && (
-                        <textarea value={r.notlar} onChange={(e) => upd('notlar', e.target.value)} rows={2}
-                          placeholder="Alt isimler (panelistler), her satıra bir isim — opsiyonel"
-                          className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
+                        <>
+                          {/* Unvan/meslek — ELLE gir; boş bırakınca otomatik Amare kariyeri/etiket kullanılır */}
+                          <input value={r.unvan || ''} onChange={(e) => upd('unvan', e.target.value)}
+                            placeholder={`Unvan / meslek — boş = otomatik (${etiketSec(konusmaciBul(r.konusmaciAd), afisTuru(egitim)) || '—'})`}
+                            className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+                          <textarea value={r.notlar} onChange={(e) => upd('notlar', e.target.value)} rows={2}
+                            placeholder="Alt isimler (panelistler), her satıra bir isim — opsiyonel"
+                            className="w-full border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-amare-purple/30 resize-y" />
+                        </>
                       )}
                     </div>
                   );
