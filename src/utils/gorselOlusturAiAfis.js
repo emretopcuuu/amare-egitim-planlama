@@ -109,10 +109,11 @@ const arkaPlanGeminiProxy = async (idToken, egitim, palet, ekPrompt = '') => {
 };
 
 // OpenAI (sunucu proxy üzerinden — tarayıcı api.openai.com'a CORS ile erişemez)
-const arkaPlanOpenAI = async (openaiKey, egitim, palet, openaiSize, ekPrompt = '') => {
+const arkaPlanOpenAI = async (openaiKey, egitim, palet, openaiSize, ekPrompt = '', idToken = '') => {
   const res = await fetch('/.netlify/functions/openai-gorsel', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ apiKey: openaiKey, prompt: arkaPlanPrompt(egitim, palet, ekPrompt), size: openaiSize, quality: 'low' }),
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}) },
+    body: JSON.stringify({ apiKey: openaiKey || undefined, prompt: arkaPlanPrompt(egitim, palet, ekPrompt), size: openaiSize, quality: 'low' }),
   });
   if (!res.ok) { const e = await res.json().catch(() => ({})); throw new Error(e?.error || `OpenAI proxy ${res.status}`); }
   const data = await res.json();
@@ -142,8 +143,9 @@ export const gorselOlusturAiAfis = async ({ geminiApiKey, openaiApiKey, idToken,
     try { arkaPlanImg = await arkaPlanGeminiProxy(idToken, egitim, palet, ekPrompt); }
     catch (e) { hatalar.push('Sunucu Gemini: ' + e.message); }
   }
-  if (!arkaPlanImg && openaiApiKey) {
-    try { arkaPlanImg = await arkaPlanOpenAI(openaiApiKey, egitim, palet, dims.os, ekPrompt); }
+  // 3) Gemini olmadı → OpenAI (gpt-image). Client anahtarı VEYA sunucu OPENAI_API_KEY (admin token ile).
+  if (!arkaPlanImg && (openaiApiKey || idToken)) {
+    try { arkaPlanImg = await arkaPlanOpenAI(openaiApiKey, egitim, palet, dims.os, ekPrompt, idToken); }
     catch (e) { hatalar.push('OpenAI: ' + e.message); }
   }
   if (!arkaPlanImg) throw new Error('AI Afiş arka planı üretilemedi. ' + (hatalar.join(' | ') || 'Sunucu anahtarı ya da admin anahtarı gerekli.'));
