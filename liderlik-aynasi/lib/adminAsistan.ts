@@ -67,7 +67,7 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
         baslik: "Pusula penceresini aç",
         aciklama: `${d.katilimciSayisi} katılımcı hazır. Pusula penceresini aç ki katılımcılar kamp öncesi hazırlığa (ses, pusula, ön farkındalık) başlasın.`,
         butonEtiket: "Pusula Penceresini Aç",
-        href: "#fazsifir",
+        href: "/admin/katilimcilar#hazirlik",
         vurgu: true,
         eylem: "pusula-ac",
         basari: "Pusula penceresi açıldı. Katılımcılar artık hazırlığa başlayabilir.",
@@ -82,7 +82,7 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
         aciklama:
           "Pusula penceresi açık. Sıradaki aşama Ön Farkındalık — bu pencereyi açmazsan adaylar oraya hiç giremez. Pusulayı bitirenler buraya geçsin.",
         butonEtiket: "Ön Farkındalık'ı Aç",
-        href: "#onfark",
+        href: "/admin/katilimcilar#hazirlik",
         vurgu: true,
         eylem: "of-ac",
         basari: "Ön Farkındalık penceresi açıldı. Pusulayı bitirenler buraya geçebilir.",
@@ -96,7 +96,7 @@ export function adminOnerisi(d: AsistanDurum): AdminOneri {
         baslik: "Hazırlığı eksik olanları dürt",
         aciklama: `${d.hazirTamam}/${d.katilimciSayisi} kişi hazırlığını bitirdi. Eksik olanlara hatırlatma gönder — kampa hazır gelsinler.`,
         butonEtiket: "Hazırlık Hunisine Git",
-        href: "#fazsifir",
+        href: "/admin/katilimcilar#hazirlik",
         vurgu: false,
       };
     }
