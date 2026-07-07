@@ -411,18 +411,28 @@ export default async (req) => {
     // MARKA TEMİZLİĞİ — "üye" → "Marka Ortağı", "network marketing" → "Doğrudan Satış"
     const html = metinTemizle(htmlRaw);
     const subject = metinTemizle(subjectRaw);
-    await resend.emails.send({
+    // Resend SONUCUNU KONTROL ET — sessiz başarısızlık yok (eskiden hata yutulup
+    // "gönderildi" deniyordu; kullanıcı mail gelmeden ekranda kod bekliyordu).
+    const { data: sendData, error: sendError } = await resend.emails.send({
       from: 'One Team <noreply@oneteamglobal.ai>',
       to: uye.email,
       subject,
       html,
     });
+    if (sendError || !sendData?.id) {
+      console.error('[uye-giris-link] Resend gönderim hatası:', JSON.stringify(sendError || 'no-id'), '→', maskEmail(uye.email));
+      return new Response(JSON.stringify({
+        error: 'Giriş maili şu an gönderilemedi. Lütfen 1-2 dakika sonra tekrar dene.',
+        detail: (sendError?.message || 'gonderim_basarisiz').slice(0, 160),
+      }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+    }
 
-    // Idempotency log — sonGonderim kaydet (60sn cooldown için)
+    // Idempotency log — SADECE gönderim GERÇEKTEN gidince (başarısızlık retry'yi bloklamasın)
     try {
       await admin.firestore().doc(`giris_link_log/${uye.amare_id}`).set({
         sonGonderim: admin.firestore.FieldValue.serverTimestamp(),
         emailMask: maskEmail(uye.email),
+        resendId: sendData.id,
         sayaclar: admin.firestore.FieldValue.increment(1),
       }, { merge: true });
     } catch (e) { console.warn('[uye-giris-link] log err:', e.message); }
