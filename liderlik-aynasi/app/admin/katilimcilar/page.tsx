@@ -8,8 +8,6 @@ import OnboardingRadari from "./OnboardingRadari";
 import Ipucu from "../Ipucu";
 import Katlanir from "../Katlanir";
 import CapaAcici from "../CapaAcici";
-import FazSifirKontrol from "../FazSifirKontrol";
-import OnFarkindalikKontrol from "../OnFarkindalikKontrol";
 
 export const metadata = { title: "Katılımcılar — Liderlik Aynası" };
 
@@ -66,21 +64,10 @@ export default async function KatilimcilarPage() {
           AÇAR (eski hâlde id sarmalayıcı section'daydı, katlanır kapalı kalıyordu). */}
       <section>
         <Katlanir id="hazirlik" baslik="Hazırlık Durumu" aciklama="Değerler + Oyun + Push + Pusula + Ön Farkındalık + Hedef" ikon="🧰" yardim={tr.admin.yardim.fazSifir}>
-          {/* [M2/M3/M9] En kritik üç sinyal en üstte — kim hazır değil, tek bakışta. */}
+          {/* Tek kaynak: Onboarding Radarı. Pusula + Ön Farkındalık dahil tüm
+              aşamalar hunide (tıklanınca o grubu süzer); ayrı sayı kartlarına
+              gerek yok — tekrarı kaldırdık. */}
           <OnboardingRadari />
-          <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.fazSifir.baslik}
-              <Ipucu {...tr.admin.yardim.fazSifir} />
-            </h2>
-            <FazSifirKontrol />
-          </div>
-          <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">
-            <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-slate-100">
-              {tr.admin.onFark.baslik}
-            </h2>
-            <OnFarkindalikKontrol />
-          </div>
         </Katlanir>
       </section>
 
