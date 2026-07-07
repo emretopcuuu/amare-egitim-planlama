@@ -368,6 +368,29 @@ const altinHap = (ctx, cx, y, text, fontSize, palet, fontAd = 'Arial') => {
   return y + h;
 };
 
+// Online eğitim rozeti — altın şehir hapından KASITLI farklı (teal + kırmızı canlı noktası).
+// Amaç: Vizyon Günü (altın şehir) ile online eğitimi afişte tek bakışta ayırmak.
+const onlineHap = (ctx, cx, y, text, fontSize, palet, fontAd = 'Arial') => {
+  ctx.font = `800 ${fontSize}px ${fontAd}`;
+  const label = (text || '').toLocaleUpperCase('tr-TR');
+  const tw = ctx.measureText(label).width;
+  const h = Math.round(fontSize * 1.7), padX = Math.round(fontSize * 0.75);
+  const dot = Math.round(fontSize * 0.42), gap = Math.round(fontSize * 0.45);
+  const w = tw + padX * 2 + dot + gap;
+  const x0 = cx - w / 2;
+  const grad = ctx.createLinearGradient(x0, 0, x0 + w, 0);
+  grad.addColorStop(0, '#0e7f74'); grad.addColorStop(1, '#12a594');
+  ctx.fillStyle = grad;
+  roundRect(ctx, x0, y, w, h, Math.round(h * 0.28)); ctx.fill();
+  ctx.fillStyle = '#ff5a5a';
+  ctx.beginPath(); ctx.arc(x0 + padX + dot / 2, y + h / 2, dot / 2, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillText(label, x0 + padX + dot + gap, y + h / 2);
+  ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+  return y + h;
+};
+
 export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format = 'portrait', ekPrompt = '', stil = null, altNot = '', baslik = '', baslikVurgu = { adet: 1, yon: 'son' } }) => {
   // Marka Afiş HER ZAMAN dikey (kare/story selektöründen bağımsız) — referanslar dikey,
   // kare alan fotoları sıkıştırıyordu.
@@ -448,10 +471,14 @@ export const gorselOlusturMarkaAfis = async ({ egitim, egitmenler = [], format =
   ctx.fillStyle = akc; ctx.fillRect(W / 2 - akcW, y, akcW * 2, 3);
   y += Math.round(H * 0.012);
 
-  // ── Altın şehir rozeti (fiziki) ──
+  // ── Şehir rozeti (fiziki/Vizyon Günü = altın şehir) · Online = belirgin "ONLINE" rozeti ──
+  //    Vizyon Günü ile online eğitimi afişte GÖRSEL olarak ayırır (online'da şehir yerine tip).
   if (fiziki && egitim.sehir) {
     y += Math.round(H * 0.005);
     y = altinHap(ctx, W / 2, y, egitim.sehir, Math.round(W * 0.034 * ayar.yazi), palet, FF.govde) + Math.round(H * 0.012);
+  } else if (!fiziki) {
+    y += Math.round(H * 0.005);
+    y = onlineHap(ctx, W / 2, y, 'ONLINE CANLI YAYIN', Math.round(W * 0.030 * ayar.yazi), palet, FF.govde) + Math.round(H * 0.012);
   } else {
     y += Math.round(H * 0.018);
   }
