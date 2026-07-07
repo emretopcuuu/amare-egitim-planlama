@@ -6,6 +6,7 @@ import Ipucu from "./Ipucu";
 // odaklanılır; derine inmek isteyen "Tüm araçlar"ı açar. Native <details>
 // kullanır (JS'siz, erişilebilir, sağlam).
 export default function Katlanir({
+  id,
   baslik,
   aciklama,
   ikon = "🧰",
@@ -13,6 +14,7 @@ export default function Katlanir({
   yardim,
   children,
 }: {
+  id?: string;
   baslik: string;
   aciklama?: string;
   ikon?: string;
@@ -22,8 +24,9 @@ export default function Katlanir({
 }) {
   return (
     <details
+      id={id}
       open={varsayilanAcik}
-      className="kart-3d group rounded-2xl bg-midnight-card/40 shadow-xl ring-1 ring-royal/20 backdrop-blur [&[open]>summary_.ok]:rotate-90"
+      className="kart-3d group scroll-mt-24 rounded-2xl bg-midnight-card/40 shadow-xl ring-1 ring-royal/20 backdrop-blur [&[open]>summary_.ok]:rotate-90"
     >
       <summary className="flex cursor-pointer list-none items-center gap-3 p-5 [&::-webkit-details-marker]:hidden">
         <span className="text-xl" aria-hidden>

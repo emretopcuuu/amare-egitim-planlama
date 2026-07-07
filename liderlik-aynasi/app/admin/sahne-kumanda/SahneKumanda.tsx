@@ -6,7 +6,7 @@ import { tr } from "@/lib/i18n/tr";
 
 const t = tr.admin.sahne;
 
-type Dalga = { id: number; ad: string; acik: boolean };
+type Dalga = { id: number; ad: string; acik: boolean; otomatik?: string | null };
 
 export default function SahneKumanda({
   aynaAktif,
@@ -138,12 +138,17 @@ export default function SahneKumanda({
               key={d.id}
               className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5"
             >
-              <span className="text-sm text-slate-200">
-                {d.ad}
-                {d.acik && (
-                  <span className="ml-2 rounded-md bg-emerald-400/15 px-2 py-0.5 text-xs font-semibold text-emerald-300">
-                    {t.dalgaAcik}
-                  </span>
+              <span className="min-w-0 text-sm text-slate-200">
+                <span>
+                  {d.ad}
+                  {d.acik && (
+                    <span className="ml-2 rounded-md bg-emerald-400/15 px-2 py-0.5 text-xs font-semibold text-emerald-300">
+                      {t.dalgaAcik}
+                    </span>
+                  )}
+                </span>
+                {!d.acik && d.otomatik && (
+                  <span className="mt-0.5 block text-xs font-medium text-emerald-300/90">{d.otomatik}</span>
                 )}
               </span>
               <button
@@ -154,17 +159,22 @@ export default function SahneKumanda({
                   })
                 }
                 disabled={mesgul !== null}
+                title={!d.acik && d.otomatik ? "Zamanı gelince kendi açılır; bu yalnızca erken açmak için." : undefined}
                 className={`shrink-0 rounded-lg px-4 py-2 text-sm font-bold transition-colors disabled:opacity-50 ${
                   d.acik
                     ? "border border-amber-400/50 text-amber-300 hover:bg-amber-400/10"
-                    : "btn-3d bg-gold text-[#1a1206] hover:bg-gold-light"
+                    : d.otomatik
+                      ? "border border-royal-light/40 text-slate-300 hover:bg-midnight-soft"
+                      : "btn-3d bg-gold text-[#1a1206] hover:bg-gold-light"
                 }`}
               >
                 {mesgul === `dalga-${d.id}`
                   ? t.calisiyor
                   : d.acik
                     ? t.dalgaKapat
-                    : t.dalgaAc}
+                    : d.otomatik
+                      ? "Erken aç"
+                      : t.dalgaAc}
               </button>
             </li>
           ))}

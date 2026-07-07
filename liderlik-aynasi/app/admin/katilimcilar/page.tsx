@@ -7,6 +7,7 @@ import OyunSecimiPanel from "./OyunSecimiPanel";
 import OnboardingRadari from "./OnboardingRadari";
 import Ipucu from "../Ipucu";
 import Katlanir from "../Katlanir";
+import CapaAcici from "../CapaAcici";
 import FazSifirKontrol from "../FazSifirKontrol";
 import OnFarkindalikKontrol from "../OnFarkindalikKontrol";
 
@@ -53,14 +54,18 @@ export default async function KatilimcilarPage() {
 
   return (
     <main className="mx-auto w-full max-w-4xl flex-1 space-y-6 p-6">
+      {/* #hazirlik gibi çapayla gelindiğinde ilgili katlanır bölümü aç + kaydır. */}
+      <CapaAcici />
       <div className="flex items-center gap-2">
         <h1 className="text-2xl font-bold text-gold">{t.baslik}</h1>
         <Ipucu {...tr.admin.yardim.katilimcilar} />
       </div>
 
-      {/* Hazırlık ilerleme — Pusula + Ön Farkındalık + Hedef tamamlanma durumu */}
-      <section id="hazirlik" className="scroll-mt-24">
-        <Katlanir baslik="Hazırlık Durumu" aciklama="Değerler + Oyun + Push + Pusula + Ön Farkındalık + Hedef" ikon="🧰" yardim={tr.admin.yardim.fazSifir}>
+      {/* Hazırlık ilerleme — Pusula + Ön Farkındalık + Hedef tamamlanma durumu.
+          id doğrudan katlanırda: #hazirlik çapasıyla gelince CapaAcici bölümü
+          AÇAR (eski hâlde id sarmalayıcı section'daydı, katlanır kapalı kalıyordu). */}
+      <section>
+        <Katlanir id="hazirlik" baslik="Hazırlık Durumu" aciklama="Değerler + Oyun + Push + Pusula + Ön Farkındalık + Hedef" ikon="🧰" yardim={tr.admin.yardim.fazSifir}>
           {/* [M2/M3/M9] En kritik üç sinyal en üstte — kim hazır değil, tek bakışta. */}
           <OnboardingRadari />
           <div className="rounded-xl bg-midnight-card/60 p-5 ring-1 ring-royal/30">

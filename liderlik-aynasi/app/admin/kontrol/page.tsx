@@ -6,7 +6,7 @@ import { tr } from "@/lib/i18n/tr";
 import Ipucu from "../Ipucu";
 import OtoYenile from "../OtoYenile";
 import DalgaKontrol from "../DalgaKontrol";
-import { kampGorelliZaman } from "@/lib/orkestrator";
+import { dalgaSenaryolari, dalgaOtomatikMetin } from "@/lib/dalgaOtomatik";
 
 export const metadata = { title: "Kamp Canlı — Liderlik Aynası" };
 
@@ -17,41 +17,15 @@ export default async function KontrolPage() {
   if (!session || session.rol !== "admin") redirect("/admin/giris");
 
   const db = supabaseAdmin();
-  const [{ data: dalgalar, error }, ozellikler, { data: baslangicRow }, { data: senaryolar }] =
-    await Promise.all([
-      db.from("waves").select("id, name, is_open").order("id"),
-      aktifOzellikler(db),
-      db.from("settings").select("value").eq("key", "ayna_baslangic").maybeSingle(),
-      db
-        .from("kamp_senaryosu")
-        .select("olay_kodu, gun, saat, durum")
-        .in("olay_kodu", ["degerlendirme_ac", "ikinci_ayna_daveti"]),
-    ]);
+  const [{ data: dalgalar, error }, ozellikler, { senaryolar, baslangic }] = await Promise.all([
+    db.from("waves").select("id, name, is_open").order("id"),
+    aktifOzellikler(db),
+    dalgaSenaryolari(db),
+  ]);
   if (error) throw error;
 
   const acik = (dalgalar ?? []).find((d) => d.is_open) ?? null;
-
-  // Bu dalga hangi otomatik senaryo olayıyla açılıyor? (isimden eşle)
-  const olayKodu = (ad: string): string | null =>
-    /değerlend/i.test(ad) ? "degerlendirme_ac" : /90/.test(ad) ? "ikinci_ayna_daveti" : null;
-  const senaryoHarita = new Map((senaryolar ?? []).map((s) => [s.olay_kodu, s]));
-  const baslangic = baslangicRow?.value ? new Date(baslangicRow.value) : null;
-  const gunAy = (ms: number) =>
-    new Intl.DateTimeFormat("tr-TR", {
-      timeZone: "Europe/Istanbul",
-      day: "numeric", month: "short", hour: "2-digit", minute: "2-digit",
-    }).format(new Date(ms));
-  // Bir dalganın "otomatik açılır" bilgisini üret (elle beklemene gerek yok mesajı).
-  function otomatikMetin(ad: string): string | null {
-    const kod = olayKodu(ad);
-    if (!kod) return null;
-    const s = senaryoHarita.get(kod);
-    if (!s || s.gun == null || s.saat == null) return null;
-    if (s.durum && s.durum !== "bekliyor") return null; // zaten ateşlendi
-    const ss = `${String(s.saat).padStart(2, "0")}:00`;
-    if (baslangic) return `🕒 Otomatik açılır: ${gunAy(kampGorelliZaman(baslangic, s.gun, s.saat))} — elle açmana gerek yok`;
-    return `🕒 Otomatik açılır: kamp Gün ${s.gun} · ${ss} — elle açmana gerek yok`;
-  }
+  const otomatikMetin = (ad: string) => dalgaOtomatikMetin(ad, baslangic, senaryolar);
 
   // Açık değerlendirmede hiç puanlamamış kişi sayısı (kapatma uyarısı için)
   let puanlamayan = 0;
