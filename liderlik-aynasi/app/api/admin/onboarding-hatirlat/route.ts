@@ -30,8 +30,21 @@ export async function POST(req: Request) {
     return Response.json({ hata: "Yetkisiz" }, { status: 401 });
   }
   const body = (await req.json().catch(() => null)) as
-    | { hedef?: string; kisiId?: string; kisiIds?: unknown }
+    | { hedef?: string; kisiId?: string; kisiIds?: unknown; whatsapp?: boolean; asama?: string }
     | null;
+
+  // WhatsApp tıklaması: dış uygulama açılıyor; burada yalnız "gönderildi" niyetini
+  // kayda alırız (kanal='whatsapp') — kişi başı WhatsApp sayacı için. Push YOK.
+  if (body?.whatsapp && typeof body.kisiId === "string") {
+    const db2 = supabaseAdmin();
+    const asama = typeof body.asama === "string" && body.asama ? body.asama.slice(0, 40) : "genel";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db2 as any)
+      .from("onboarding_hatirlatma")
+      .insert({ participant_id: body.kisiId, hedef: asama, kanal: "whatsapp" });
+    return Response.json({ ok: true, whatsapp: 1 });
+  }
+
   const hedef = body?.hedef;
   if (hedef !== "degerler" && hedef !== "oyun") {
     return Response.json({ hata: "Geçersiz hedef." }, { status: 400 });
