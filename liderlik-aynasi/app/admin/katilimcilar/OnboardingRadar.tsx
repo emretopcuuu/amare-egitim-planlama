@@ -22,6 +22,7 @@ export type RadarKisi = {
   otoNudgeSayi: number;
   bildirimSayi: number;
   whatsappSayi: number;
+  otoWaSayi: number;
   sonHatirlatAt: string | null;
   waLink: string | null;
 };
@@ -61,6 +62,7 @@ export default function OnboardingRadar({
   kisiler,
   donusum,
   otoAcik,
+  waOtoAcik,
 }: {
   toplam: number;
   pushVarSayi: number;
@@ -68,10 +70,72 @@ export default function OnboardingRadar({
   kisiler: RadarKisi[];
   donusum: Donusum;
   otoAcik: boolean;
+  waOtoAcik: boolean;
   adimAdlari: Record<string, string>;
 }) {
   const router = useRouter();
   const [mesgul, setMesgul] = useState<string | null>(null);
+  const [waOto, setWaOto] = useState(waOtoAcik);
+  // Açmadan önce "kime/kaç kişiye/ne mesaj" önizlemesi + onay. Kapatma anında.
+  type WaOnizleme = {
+    kampAcik: boolean;
+    waHazir: boolean;
+    sablonHazir: boolean;
+    adaySayi: number;
+    ilkTurSayi: number;
+    ornekListe: { ad: string; eksikAdimAd: string }[];
+    ornekMetin: string;
+    kurallar: { limit: number; aralikSaat: number; sessizlikSaat: number; turTavani: number };
+  };
+  const [waOnizleme, setWaOnizleme] = useState<WaOnizleme | null>(null);
+  const [waYukleniyor, setWaYukleniyor] = useState(false);
+  const [waOnayliyor, setWaOnayliyor] = useState(false);
+
+  async function waYaz(acik: boolean) {
+    const r = await fetch("/api/admin/onboarding-wa-oto", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ acik }),
+    });
+    if (!r.ok) throw new Error();
+  }
+  // Anahtara basınca: KAPATMA hemen; AÇMA → önce önizleme penceresi.
+  async function waOtoTikla() {
+    if (waOto) {
+      setWaOto(false); // iyimser
+      try {
+        await waYaz(false);
+        tost("Otomatik WhatsApp kapatıldı", "hata");
+      } catch {
+        setWaOto(true);
+        tost("Değiştirilemedi", "hata");
+      }
+      return;
+    }
+    setWaYukleniyor(true);
+    try {
+      const r = await fetch("/api/admin/onboarding-wa-oto");
+      if (!r.ok) throw new Error();
+      setWaOnizleme((await r.json()) as WaOnizleme);
+    } catch {
+      tost("Önizleme alınamadı", "hata");
+    } finally {
+      setWaYukleniyor(false);
+    }
+  }
+  async function waOnayla() {
+    setWaOnayliyor(true);
+    try {
+      await waYaz(true);
+      setWaOto(true);
+      setWaOnizleme(null);
+      tost("Otomatik WhatsApp AÇILDI", "basari");
+    } catch {
+      tost("Açılamadı", "hata");
+    } finally {
+      setWaOnayliyor(false);
+    }
+  }
   const [ara, setAra] = useState("");
   const [filtre, setFiltre] = useState<"hepsi" | "telefonsuz" | "pushsuz">("hepsi");
   const [asamaFiltre, setAsamaFiltre] = useState<string>("hepsi");
@@ -285,6 +349,113 @@ export default function OnboardingRadar({
           : "🤖 Kamp canlı olduğu için otomatik onboarding hatırlatması durakladı (kamp içinde gürültü olmasın diye)."}
       </p>
 
+      {/* [WA-OTO] Otomatik WhatsApp: girmiş ama bitirmemişe. Varsayılan KAPALI;
+          buradan açılır. Push izni gerektirmez — asıl ulaşan kanal. */}
+      <div className={`mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2.5 ${waOto ? "bg-emerald-500/10" : "bg-white/5"}`}>
+        <div className="min-w-0">
+          <p className={`text-xs font-semibold ${waOto ? "text-emerald-200" : "text-slate-300"}`}>
+            💬 Otomatik WhatsApp {waOto ? "AÇIK" : "kapalı"}
+          </p>
+          <p className="mt-0.5 text-[0.68rem] leading-relaxed text-slate-400">
+            Girmiş ama onboarding&apos;i bitirmemişe, 3+ saat sessizse otomatik WhatsApp gider
+            (onaylı şablon, kişi başı en fazla 3 kez ~20 saat arayla). {otoAcik ? "" : "Kamp açıkken çalışmaz. "}
+            Push izni gerektirmez.
+          </p>
+        </div>
+        <button
+          onClick={waOtoTikla}
+          disabled={waYukleniyor}
+          role="switch"
+          aria-checked={waOto}
+          aria-label={waOto ? "Otomatik WhatsApp'ı kapat" : "Otomatik WhatsApp'ı aç"}
+          className={`relative h-7 w-12 shrink-0 rounded-full transition-colors disabled:opacity-50 ${waOto ? "bg-emerald-500" : "bg-white/20"}`}
+        >
+          <span className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${waYukleniyor ? "animate-pulse" : ""} ${waOto ? "translate-x-5" : "translate-x-0"}`} />
+        </button>
+      </div>
+
+      {/* [WA-OTO] Açma öncesi önizleme + onay penceresi — "başıma ne gelecek" */}
+      {waOnizleme && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 p-3 sm:items-center"
+          onClick={() => !waOnayliyor && setWaOnizleme(null)}
+        >
+          <div
+            className="max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-slate-900 p-4 ring-1 ring-white/10"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-bold text-white">💬 Otomatik WhatsApp&apos;ı açmak üzeresin</h3>
+            <p className="mt-1 text-xs text-slate-400">Açarsan ne olacağını aşağıda gör. Onaylamadan hiçbir mesaj gitmez.</p>
+
+            {/* Kaç kişi */}
+            <div className="mt-3 rounded-xl bg-emerald-500/10 p-3">
+              <p className="text-sm text-emerald-100">
+                Şu an <b className="text-emerald-300">{waOnizleme.adaySayi} kişi</b> uygun (girmiş, bitirmemiş, telefonu var, {waOnizleme.kurallar.sessizlikSaat}+ saat sessiz).
+              </p>
+              {waOnizleme.adaySayi > waOnizleme.ilkTurSayi ? (
+                <p className="mt-1 text-xs text-emerald-200/80">
+                  İlk saatlik taramada <b>{waOnizleme.ilkTurSayi} kişiye</b> gider (ani patlama koruması), kalanı sonraki saatlerde.
+                </p>
+              ) : waOnizleme.adaySayi > 0 ? (
+                <p className="mt-1 text-xs text-emerald-200/80">Hepsi ilk saatlik taramada gider.</p>
+              ) : (
+                <p className="mt-1 text-xs text-amber-200/90">Şu an uygun kimse yok — açsan da hemen kimseye gitmez; biri {waOnizleme.kurallar.sessizlikSaat}+ saat takılınca devreye girer.</p>
+              )}
+            </div>
+
+            {/* Örnek mesaj */}
+            <p className="mt-3 text-xs font-semibold text-slate-300">Gidecek mesaj (örnek):</p>
+            <pre className="mt-1 whitespace-pre-wrap rounded-xl bg-black/40 p-3 text-xs leading-relaxed text-slate-200 ring-1 ring-white/5">{waOnizleme.ornekMetin}</pre>
+            <p className="mt-1 text-[0.68rem] text-slate-500">Ad ve “bekleyen adım” her kişiye göre değişir; gerisi sabit (onaylı şablon).</p>
+
+            {/* İlk gidecekler */}
+            {waOnizleme.ornekListe.length > 0 && (
+              <>
+                <p className="mt-3 text-xs font-semibold text-slate-300">İlk gidecekler:</p>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {waOnizleme.ornekListe.map((k, i) => (
+                    <span key={i} className="rounded-full bg-white/5 px-2 py-1 text-[0.68rem] text-slate-300">
+                      {k.ad} <span className="text-slate-500">· {k.eksikAdimAd}</span>
+                    </span>
+                  ))}
+                  {waOnizleme.adaySayi > waOnizleme.ornekListe.length && (
+                    <span className="rounded-full bg-white/5 px-2 py-1 text-[0.68rem] text-slate-400">+{waOnizleme.adaySayi - waOnizleme.ornekListe.length} kişi daha</span>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Kurallar */}
+            <ul className="mt-3 space-y-1 text-[0.72rem] text-slate-400">
+              <li>• Kişi başı en fazla <b className="text-slate-200">{waOnizleme.kurallar.limit} kez</b>, ~{waOnizleme.kurallar.aralikSaat} saat arayla.</li>
+              <li>• Saatte bir tarar; adım tamamlanınca o kişiye durur.</li>
+              <li>• Kamp açılınca (canlı gün) otomatik susar.</li>
+            </ul>
+
+            {/* Uyarılar */}
+            {waOnizleme.kampAcik && <p className="mt-2 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-200">⚠️ Kamp şu an AÇIK — motor kamp içinde çalışmaz, açsan da mesaj gitmez.</p>}
+            {(!waOnizleme.waHazir || !waOnizleme.sablonHazir) && <p className="mt-2 rounded-lg bg-red-500/10 px-3 py-2 text-xs text-red-200">⚠️ WhatsApp/şablon yapılandırılmamış — gönderilemez. Önce onu tamamla.</p>}
+
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => setWaOnizleme(null)}
+                disabled={waOnayliyor}
+                className="flex-1 rounded-xl bg-white/10 py-2.5 text-sm font-semibold text-slate-200 disabled:opacity-50"
+              >
+                Vazgeç
+              </button>
+              <button
+                onClick={waOnayla}
+                disabled={waOnayliyor}
+                className="flex-1 rounded-xl bg-emerald-500 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+              >
+                {waOnayliyor ? "Açılıyor…" : waOnizleme.adaySayi > 0 ? `Aç ve ${waOnizleme.ilkTurSayi} kişiye başla` : "Yine de aç"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* [#7] HUNİ — her çubuk tıklanabilir: o gruba göre listeyi süzer + kaydırır.
           En tepede "Giriş yaptı" (huninin ağzı); tıklanınca girmeyenleri getirir. */}
       <div className="mb-1 flex items-center justify-between">
@@ -494,6 +665,7 @@ export default function OnboardingRadar({
                       {k.otoNudgeSayi > 0 && <span className="text-slate-400" title={`Sistem otomatik ${k.otoNudgeSayi} kez dürttü`}>🤖{k.otoNudgeSayi}</span>}
                       {k.bildirimSayi > 0 && <span className="text-sky-300" title={`Senin uygulama-içi/push dürtün: ${k.bildirimSayi} kez`}>🔔{k.bildirimSayi}</span>}
                       {k.whatsappSayi > 0 && <span className="text-emerald-300" title={`WhatsApp'a ${k.whatsappSayi} kez tıkladın`}>💬{k.whatsappSayi}</span>}
+                      {k.otoWaSayi > 0 && <span className="text-emerald-400" title={`Sistem otomatik ${k.otoWaSayi} kez WhatsApp gönderdi`}>🤖💬{k.otoWaSayi}</span>}
                       {cd && <span className="text-slate-500" title="Son 2 saatte dürtüldü (soğuma)">· dürtüldü</span>}
                     </span>
                   </span>
