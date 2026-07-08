@@ -127,6 +127,7 @@ export default function GorselStudyo() {
   const [error, setError] = useState(null);
   const [baglandi, setBaglandi] = useState(false);
   const [baglaniyor, setBaglaniyor] = useState(false);
+  const [hedefSlot, setHedefSlot] = useState('1'); // '1' Ana Afiş | '2' Program İçeriği — hangi görsel yuvasına bağlanacak
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
   const [guncellendi, setGuncellendi] = useState(false); // canlı yenileme mikro-geri bildirim
@@ -148,6 +149,8 @@ export default function GorselStudyo() {
   }, [egitimId, konusmacilar]);
   // stil hafızası
   useEffect(() => { try { localStorage.setItem('markaSecim', JSON.stringify(markaSecim)); } catch {} }, [markaSecim]);
+  // Hedef görsel yuvası — yöntem Program İçeriği'yse akıllı varsayılan "2. görsel"; kullanıcı elle değiştirebilir.
+  useEffect(() => { setHedefSlot(aiModel === 'program-icerigi' ? '2' : '1'); }, [aiModel, egitimId]);
 
   const aktifMetot = METOTLAR.find(m => m.id === aiModel) || METOTLAR[0];
   const markaModu = aiModel === 'marka-afis';
@@ -358,7 +361,8 @@ export default function GorselStudyo() {
     setBaglaniyor(true); setError(null);
     try {
       const url = await uploadGorsel(egitim.id, kaynak);
-      const r = await egitimGuncelle(egitim.id, { gorselUrl: url });
+      const alan = hedefSlot === '2' ? 'gorselUrl2' : 'gorselUrl';
+      const r = await egitimGuncelle(egitim.id, { [alan]: url });
       if (!r.success) throw new Error(r.error);
       setBaglandi(true);
     } catch (e) { setError('Bağlanamadı: ' + e.message); }
@@ -684,12 +688,26 @@ export default function GorselStudyo() {
                   <AlertCircle className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />{error}
                 </div>
               )}
-              <div className="flex gap-2 mt-3">
+              {/* Hangi görsel yuvasına bağlanacak — bu eğitimin ana afişi mi, program içeriği mi.
+                  Geniş programlı eğitimlerde ikisi birlikte tutulur; ana ekranlarda tek görsel + "2 görsel"
+                  rozeti gösterilir, kullanıcı sağ/sol kaydırıp ikincisini görür. */}
+              <div className="mt-3">
+                <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-1">Bağlanacak yuva</div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  {[{k:'1',ad:'1. Ana Afiş',dolu:!!egitim.gorselUrl},{k:'2',ad:'2. Program İçeriği',dolu:!!egitim.gorselUrl2}].map(s => (
+                    <button key={s.k} onClick={() => setHedefSlot(s.k)}
+                      className={`px-2 py-1.5 rounded-lg text-xs font-semibold border transition flex items-center justify-center gap-1.5 ${hedefSlot===s.k ? 'border-amare-purple bg-purple-50 text-amare-purple' : 'border-gray-200 text-gray-600 hover:border-gray-300'}`}>
+                      {s.ad}{s.dolu && <span className="w-1.5 h-1.5 rounded-full bg-green-500" title="dolu" />}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex gap-2 mt-2">
                 <button onClick={indir} disabled={!resultUrl} className="flex-1 py-2.5 rounded-lg font-bold text-white bg-green-600 hover:bg-green-700 transition flex items-center justify-center gap-2 disabled:opacity-40">
                   <Download className="w-4 h-4" /> İndir
                 </button>
                 <button onClick={bagla} disabled={!resultUrl || baglaniyor || baglandi} className="flex-1 py-2.5 rounded-lg font-bold text-white bg-amare-purple hover:bg-amare-dark transition flex items-center justify-center gap-2 disabled:opacity-40">
-                  {baglandi ? <><CheckCircle2 className="w-4 h-4" /> Bağlandı</> : baglaniyor ? <><Loader2 className="w-4 h-4 animate-spin" /> …</> : <><Link2 className="w-4 h-4" /> Eğitime Bağla</>}
+                  {baglandi ? <><CheckCircle2 className="w-4 h-4" /> Bağlandı</> : baglaniyor ? <><Loader2 className="w-4 h-4 animate-spin" /> …</> : <><Link2 className="w-4 h-4" /> {hedefSlot==='2' ? '2. Görsel Olarak Bağla' : 'Eğitime Bağla'}</>}
                 </button>
               </div>
               {/* Canlı modlarda otomatik üretildiği için "Yeniden üret" kaldırıldı.

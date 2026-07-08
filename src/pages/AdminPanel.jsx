@@ -35,6 +35,7 @@ import { gorselOlustur } from '../utils/gorselOlustur';
 import { gorselOlusturOpenAIPro } from '../utils/gorselOlusturOpenAIPro';
 import { uploadGorsel } from '../utils/uploadGorsel';
 import { afisTuru, etiketSec } from '../utils/egitmenEtiket';
+import PosterCarouselModal from '../components/PosterCarouselModal';
 
 // ── Sabitler ────────────────────────────────────────────────────────────────
 const DURUM_RENKLER = {
@@ -295,8 +296,8 @@ const AdminPanel = () => {
   const [linkKopyalandi, setLinkKopyalandi] = useState(false);
 
   // Görsel
-  // Lightbox (poster önizleme)
-  const [lightboxUrl, setLightboxUrl] = useState(null);
+  // Lightbox (poster önizleme) — {urls:[ana afiş, program içeriği], baslik}
+  const [lightboxData, setLightboxData] = useState(null);
 
   // Duyuru
   const [duyuruModal, setDuyuruModal] = useState(null);
@@ -908,6 +909,7 @@ const AdminPanel = () => {
                       )}
                       <div className="font-semibold text-gray-800 line-clamp-2">
                         {egitim.gorselUrl && <ImageIcon className="w-3.5 h-3.5 text-green-500 inline mr-1" />}
+                        {egitim.gorselUrl2 && <span className="text-[9px] font-bold text-amare-purple align-super mr-0.5">2</span>}
                         {egitim.egitim}
                       </div>
                       {egitim.saat && <div className="text-gray-500 mt-1">🕐 {egitim.saat}{egitim.bitisSaati ? `-${egitim.bitisSaati}` : ''}</div>}
@@ -983,15 +985,16 @@ const AdminPanel = () => {
         )}
         {/* Poster thumbnail — tıklanınca lightbox */}
         {egitim.gorselUrl && (
-          <div className="flex-shrink-0 mr-3">
+          <div className="relative flex-shrink-0 mr-3">
             <button
               type="button"
-              onClick={(e) => { e.stopPropagation(); setLightboxUrl(egitim.gorselUrl); }}
+              onClick={(e) => { e.stopPropagation(); setLightboxData({ urls: [egitim.gorselUrl, egitim.gorselUrl2].filter(Boolean), baslik: egitim.egitim }); }}
               className="block w-14 h-14 rounded-lg overflow-hidden border border-gray-200 shadow-sm hover:ring-2 hover:ring-amare-purple transition cursor-zoom-in"
               title="Görseli büyüt"
             >
               <img src={egitim.gorselUrl} alt="" className="w-full h-full object-cover" />
             </button>
+            {egitim.gorselUrl2 && <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amare-purple text-white text-[9px] font-bold flex items-center justify-center" title="2 görsel">2</span>}
           </div>
         )}
         <div className="flex-1 min-w-0">
@@ -2110,38 +2113,9 @@ const AdminPanel = () => {
         />
       )}
 
-      {/* Görsel Oluşturma Modal */}
-      {/* Lightbox — poster önizleme */}
-      {lightboxUrl && (
-        <div
-          className="fixed inset-0 bg-black/90 z-[60] flex items-center justify-center p-4 cursor-zoom-out"
-          onClick={() => setLightboxUrl(null)}
-        >
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setLightboxUrl(null); }}
-            className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white"
-            title="Kapat"
-          >
-            <X className="w-6 h-6" />
-          </button>
-          <a
-            href={lightboxUrl}
-            download="poster.png"
-            onClick={(e) => e.stopPropagation()}
-            className="absolute top-4 right-16 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white"
-            title="İndir"
-          >
-            <Download className="w-6 h-6" />
-          </a>
-          <img
-            src={lightboxUrl}
-            alt="Poster"
-            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
-      )}
+      {/* Lightbox — poster önizleme (ana afiş + varsa program içeriği, sağ/sol) */}
+      <PosterCarouselModal acik={!!lightboxData} urls={lightboxData?.urls} baslik={lightboxData?.baslik}
+        onClose={() => setLightboxData(null)} indirLabel="İndir" />
 
 
       {/* Hatırlatma Modal */}

@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
-import { ArrowLeft, Clock, MapPin, Wifi, Tag, User, Bell, Share2, Loader2, Calendar as CalendarIcon, Timer, Navigation, Users as UsersIcon } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Wifi, Tag, User, Bell, Share2, Loader2, Calendar as CalendarIcon, Timer, Navigation, Users as UsersIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import EventActions from '../components/EventActions';
 import AddToCalendarButton from '../components/AddToCalendarButton';
@@ -68,6 +68,8 @@ const EgitimDetay = () => {
   const { t, locale, tDynamic } = useTranslation();
   const [hatirlatmaModal, setHatirlatmaModal] = useState(false);
   const [konusmaciModal, setKonusmaciModal] = useState(null);
+  const [posterIdx, setPosterIdx] = useState(0); // 0=ana afiş, 1=program içeriği (varsa)
+  useEffect(() => { setPosterIdx(0); }, [id]);
 
   const egitim = useMemo(() => takvim.find(e => e.id === id), [takvim, id]);
   const cd = useCountdown(egitim);
@@ -194,12 +196,32 @@ const EgitimDetay = () => {
 
           {/* Ana kart */}
           <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-            {/* Poster (varsa) */}
-            {egitim.gorselUrl && (
-              <div className="bg-gray-100 max-h-[500px] flex items-center justify-center overflow-hidden">
-                <img src={egitim.gorselUrl} alt={egitim.egitim} className="w-full h-auto max-h-[500px] object-contain" />
-              </div>
-            )}
+            {/* Poster (varsa) — ana afiş + (varsa) program içeriği arası sağ/sol geçiş */}
+            {egitim.gorselUrl && (() => {
+              const posterler = [egitim.gorselUrl, egitim.gorselUrl2].filter(Boolean);
+              const cokluMu = posterler.length > 1;
+              const gecerliIdx = posterIdx < posterler.length ? posterIdx : 0;
+              return (
+                <div className="relative bg-gray-100 max-h-[500px] flex items-center justify-center overflow-hidden">
+                  <img src={posterler[gecerliIdx]} alt={egitim.egitim} className="w-full h-auto max-h-[500px] object-contain" />
+                  {cokluMu && (
+                    <>
+                      <button onClick={() => setPosterIdx(i => (i - 1 + posterler.length) % posterler.length)} aria-label="Önceki görsel"
+                        className="absolute left-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1.5"><ChevronLeft className="w-5 h-5" /></button>
+                      <button onClick={() => setPosterIdx(i => (i + 1) % posterler.length)} aria-label="Sonraki görsel"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 text-white rounded-full p-1.5"><ChevronRight className="w-5 h-5" /></button>
+                      <span className="absolute top-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-full">{gecerliIdx === 0 ? 'Ana Afiş' : 'Program İçeriği'}</span>
+                      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+                        {posterler.map((_, i) => (
+                          <button key={i} onClick={() => setPosterIdx(i)} aria-label={`Görsel ${i + 1}`}
+                            className={`w-2 h-2 rounded-full ${i === gecerliIdx ? 'bg-white' : 'bg-white/40'}`} />
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })()}
 
             <div className="p-6 md:p-8">
               {/* Başlık + kategori */}

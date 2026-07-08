@@ -12,6 +12,7 @@ import { EmptySearch, EmptyCompleted } from '../components/EmptyState';
 import LoadingProgress from '../components/LoadingProgress';
 import KeyboardShortcutsHelp from '../components/KeyboardShortcutsHelp';
 import UyeGirisModal from '../components/UyeGirisModal';
+import PosterCarouselModal from '../components/PosterCarouselModal';
 import { DayMotif } from '../utils/dayIcon.jsx';
 import { useKeyboardShortcuts } from '../utils/useKeyboardShortcuts';
 import { usePullToRefresh } from '../utils/usePullToRefresh';
@@ -402,11 +403,12 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
       {egitim.gorselUrl && (
         <div className="md:hidden relative">
           {/* Poster — 1. için tam kare, 2-3 için daha kısa (4:3) */}
-          <button onClick={()=>onPoster?.({url:egitim.gorselUrl,baslik:egitim.egitim})}
-            className={`block w-full ${isFirst ? 'aspect-square' : 'aspect-[4/3]'} overflow-hidden bg-black/20`}>
+          <button onClick={()=>onPoster?.({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})}
+            className={`relative block w-full ${isFirst ? 'aspect-square' : 'aspect-[4/3]'} overflow-hidden bg-black/20`}>
             <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
               onError={(e) => { e.currentTarget.style.display = 'none'; }}
               className="w-full h-full object-cover" />
+            {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
           </button>
           {/* Üst overlay — label + rozetler */}
           <div className="absolute top-0 left-0 right-0 p-3 flex items-center gap-2 flex-wrap bg-gradient-to-b from-black/60 to-transparent">
@@ -523,10 +525,11 @@ const HeroBolum = ({ egitim, konusmacilar, onKonusmaci, onPoster, onHatirlatma, 
 
           {/* DESKTOP poster — sağda (mobilde üstte gösterildi) */}
           {egitim.gorselUrl && (
-            <button onClick={()=>onPoster?.({url:egitim.gorselUrl,baslik:egitim.egitim})} className="hidden md:block flex-shrink-0 hover:scale-105 transition-transform">
+            <button onClick={()=>onPoster?.({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})} className="hidden md:block flex-shrink-0 hover:scale-105 transition-transform relative">
               <img src={egitim.gorselUrl} alt="Poster" loading="lazy"
                 onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
                 className={`${posterSize} rounded-xl shadow-2xl border-2 border-white/20`} />
+              {egitim.gorselUrl2 && <span className="absolute bottom-2 right-2 z-10 bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
             </button>
           )}
         </div>
@@ -1112,7 +1115,7 @@ const TakvimView = () => {
 
           {/* SİNEMA POSTERİ TASARIMI — poster aspect-square + gradient overlay altta */}
           {egitim.gorselUrl ? (
-            <button onClick={()=>setPosterModal({url:egitim.gorselUrl,baslik:egitim.egitim})}
+            <button onClick={()=>setPosterModal({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})}
               className="relative w-full aspect-square overflow-hidden group bg-gray-100">
               <img src={egitim.gorselUrl} alt={egitim.egitim} loading="lazy"
                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
@@ -1123,6 +1126,7 @@ const TakvimView = () => {
                   {online ? '🌐 Online' : '📍 ' + (getSehir(egitim) || 'Yer')}
                 </span>
                 <CountdownBadge egitim={egitim} />
+                {egitim.gorselUrl2 && <span className="bg-black/60 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">📋 2 görsel</span>}
               </div>
               {/* Alt gradient — başlık okunurluğu için */}
               <div className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/90 via-black/60 to-transparent pointer-events-none" />
@@ -1295,10 +1299,11 @@ const TakvimView = () => {
             </div>
           </div>
           {egitim.gorselUrl && (
-            <button onClick={()=>setPosterModal({url:egitim.gorselUrl,baslik:egitim.egitim})} className="hidden sm:flex w-14 flex-shrink-0 border-l border-gray-100 hover:opacity-80 transition cursor-pointer items-center justify-center p-1">
+            <button onClick={()=>setPosterModal({urls:[egitim.gorselUrl,egitim.gorselUrl2].filter(Boolean),baslik:egitim.egitim})} className="relative hidden sm:flex w-14 flex-shrink-0 border-l border-gray-100 hover:opacity-80 transition cursor-pointer items-center justify-center p-1">
               <img src={egitim.gorselUrl} alt="Afiş" loading="lazy"
                 onError={(e) => { e.currentTarget.parentElement.style.display = 'none'; }}
                 className="w-full rounded shadow-sm object-cover" />
+              {egitim.gorselUrl2 && <span className="absolute top-0.5 right-0.5 w-3.5 h-3.5 rounded-full bg-amare-purple text-white text-[8px] font-bold flex items-center justify-center" title="2 görsel">2</span>}
             </button>
           )}
         </div>
@@ -1726,17 +1731,8 @@ const TakvimView = () => {
         <div className="border-t border-white/10 py-6 text-center text-white/40 text-sm">{t('copyright')}</div>
       </div>
 
-      {posterModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={()=>setPosterModal(null)}>
-          <div className="relative max-w-lg w-full animate-scaleIn" onClick={e=>e.stopPropagation()}>
-            <button onClick={()=>setPosterModal(null)} className="absolute -top-10 right-0 text-white/70 hover:text-white"><X className="w-6 h-6" /></button>
-            <img src={posterModal.url} alt={posterModal.baslik} className="w-full rounded-xl shadow-2xl" />
-            <div className="mt-3 flex justify-center">
-              <a href={posterModal.url} download={`${(posterModal.baslik||'poster').replace(/[^a-z0-9]/gi,'_')}.png`} className="flex items-center gap-2 bg-white text-purple-800 px-5 py-2.5 rounded-xl font-semibold hover:bg-purple-50 transition shadow"><Download className="w-4 h-4" />{t('cal_download_poster')}</a>
-            </div>
-          </div>
-        </div>
-      )}
+      <PosterCarouselModal acik={!!posterModal} urls={posterModal?.urls} baslik={posterModal?.baslik}
+        onClose={() => setPosterModal(null)} indirLabel={t('cal_download_poster')} />
       {hatirlatmaModal && <HatirlatmaKayitModal egitim={hatirlatmaModal} onClose={()=>setHatirlatmaModal(null)} />}
 
       <KeyboardShortcutsHelp acik={yardimAcik} onClose={() => setYardimAcik(false)} />
