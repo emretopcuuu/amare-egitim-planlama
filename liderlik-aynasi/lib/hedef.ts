@@ -278,10 +278,12 @@ export async function hedefTuru(
           ? "(Kişi başlangıç noktasını yeni belirledi. Isınma sohbetini başlat — çekirdek nedeni yansıtıp hayali canlandır.)"
           : "(Sohbet sürüyor — aşağıdaki konuşmayı dikkate alarak devam et.)",
     },
-    ...gecmis.map((m) => ({
-      role: m.rol === "ayna" ? ("assistant" as const) : ("user" as const),
-      content: m.icerik,
-    })),
+    ...gecmis
+      .filter((m) => m.icerik.trim()) // savunma: geçmişte boşluk-only kayıt kalmışsa API'yi kırma
+      .map((m) => ({
+        role: m.rol === "ayna" ? ("assistant" as const) : ("user" as const),
+        content: m.icerik,
+      })),
   ];
 
   const client = new Anthropic();
@@ -326,7 +328,7 @@ TEMPO: Bu kişiden şu ana dek ${kullaniciTur} yanıt aldın. ${kullaniciTur >= 
       "sohbet turu"
     );
     tur = jsonCoz<HedefTur>(yanit);
-    if (!tur?.mesaj) {
+    if (!tur?.mesaj?.trim()) {
       await hedefHataKaydet(db, "json", {
         stop_reason: yanit.stop_reason,
         ham: yanit.content
