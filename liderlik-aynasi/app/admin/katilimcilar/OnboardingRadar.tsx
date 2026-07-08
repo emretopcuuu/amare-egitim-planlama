@@ -22,6 +22,7 @@ export type RadarKisi = {
   otoNudgeSayi: number;
   bildirimSayi: number;
   whatsappSayi: number;
+  otoWaSayi: number;
   sonHatirlatAt: string | null;
   waLink: string | null;
 };
@@ -61,6 +62,7 @@ export default function OnboardingRadar({
   kisiler,
   donusum,
   otoAcik,
+  waOtoAcik,
 }: {
   toplam: number;
   pushVarSayi: number;
@@ -68,10 +70,28 @@ export default function OnboardingRadar({
   kisiler: RadarKisi[];
   donusum: Donusum;
   otoAcik: boolean;
+  waOtoAcik: boolean;
   adimAdlari: Record<string, string>;
 }) {
   const router = useRouter();
   const [mesgul, setMesgul] = useState<string | null>(null);
+  const [waOto, setWaOto] = useState(waOtoAcik);
+  async function waOtoDegistir() {
+    const yeni = !waOto;
+    setWaOto(yeni); // iyimser
+    try {
+      const r = await fetch("/api/admin/onboarding-wa-oto", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ acik: yeni }),
+      });
+      if (!r.ok) throw new Error();
+      tost(yeni ? "Otomatik WhatsApp AÇILDI" : "Otomatik WhatsApp kapatıldı", yeni ? "basari" : "hata");
+    } catch {
+      setWaOto(!yeni); // geri al
+      tost("Değiştirilemedi", "hata");
+    }
+  }
   const [ara, setAra] = useState("");
   const [filtre, setFiltre] = useState<"hepsi" | "telefonsuz" | "pushsuz">("hepsi");
   const [asamaFiltre, setAsamaFiltre] = useState<string>("hepsi");
@@ -285,6 +305,30 @@ export default function OnboardingRadar({
           : "🤖 Kamp canlı olduğu için otomatik onboarding hatırlatması durakladı (kamp içinde gürültü olmasın diye)."}
       </p>
 
+      {/* [WA-OTO] Otomatik WhatsApp: girmiş ama bitirmemişe. Varsayılan KAPALI;
+          buradan açılır. Push izni gerektirmez — asıl ulaşan kanal. */}
+      <div className={`mb-3 flex flex-wrap items-center justify-between gap-2 rounded-lg px-3 py-2.5 ${waOto ? "bg-emerald-500/10" : "bg-white/5"}`}>
+        <div className="min-w-0">
+          <p className={`text-xs font-semibold ${waOto ? "text-emerald-200" : "text-slate-300"}`}>
+            💬 Otomatik WhatsApp {waOto ? "AÇIK" : "kapalı"}
+          </p>
+          <p className="mt-0.5 text-[0.68rem] leading-relaxed text-slate-400">
+            Girmiş ama onboarding&apos;i bitirmemişe, 3+ saat sessizse otomatik WhatsApp gider
+            (onaylı şablon, kişi başı en fazla 3 kez ~20 saat arayla). {otoAcik ? "" : "Kamp açıkken çalışmaz. "}
+            Push izni gerektirmez.
+          </p>
+        </div>
+        <button
+          onClick={waOtoDegistir}
+          role="switch"
+          aria-checked={waOto}
+          aria-label={waOto ? "Otomatik WhatsApp'ı kapat" : "Otomatik WhatsApp'ı aç"}
+          className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${waOto ? "bg-emerald-500" : "bg-white/20"}`}
+        >
+          <span className={`absolute left-1 top-1 h-5 w-5 rounded-full bg-white shadow transition-transform ${waOto ? "translate-x-5" : "translate-x-0"}`} />
+        </button>
+      </div>
+
       {/* [#7] HUNİ — her çubuk tıklanabilir: o gruba göre listeyi süzer + kaydırır.
           En tepede "Giriş yaptı" (huninin ağzı); tıklanınca girmeyenleri getirir. */}
       <div className="mb-1 flex items-center justify-between">
@@ -494,6 +538,7 @@ export default function OnboardingRadar({
                       {k.otoNudgeSayi > 0 && <span className="text-slate-400" title={`Sistem otomatik ${k.otoNudgeSayi} kez dürttü`}>🤖{k.otoNudgeSayi}</span>}
                       {k.bildirimSayi > 0 && <span className="text-sky-300" title={`Senin uygulama-içi/push dürtün: ${k.bildirimSayi} kez`}>🔔{k.bildirimSayi}</span>}
                       {k.whatsappSayi > 0 && <span className="text-emerald-300" title={`WhatsApp'a ${k.whatsappSayi} kez tıkladın`}>💬{k.whatsappSayi}</span>}
+                      {k.otoWaSayi > 0 && <span className="text-emerald-400" title={`Sistem otomatik ${k.otoWaSayi} kez WhatsApp gönderdi`}>🤖💬{k.otoWaSayi}</span>}
                       {cd && <span className="text-slate-500" title="Son 2 saatte dürtüldü (soğuma)">· dürtüldü</span>}
                     </span>
                   </span>

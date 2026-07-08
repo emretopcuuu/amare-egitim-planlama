@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { bekleyenTaahhutler } from "@/lib/ilk72";
 import { katilimciyaBildir } from "@/lib/push";
 import { cesaretPushGonder } from "@/lib/cesaret";
-import { onboardingHatirlat } from "@/lib/onboardingTakip";
+import { onboardingHatirlat, onboardingWhatsAppHatirlat } from "@/lib/onboardingTakip";
 import { nabizVur, nabizBekcisi, NABIZ_OLAYLAR, NABIZ_TIK } from "@/lib/nabiz";
 
 // Supabase pg_cron DAKİKADA BİR çağırır ('ayna-olaylar' job'u — bkz. migration
@@ -75,7 +75,11 @@ export async function GET(req: NextRequest) {
   // (ayna_aktif=true) hiç çalışmaz — yalnız kamp öncesi dönemin dürtmesi.
   const onboardingPush = await onboardingHatirlat(db).catch(() => 0);
 
-  return NextResponse.json({ islem, taahhutPush, cesaretPush, onboardingPush });
+  // Girmiş ama onboarding'i bitirmemişe otomatik WhatsApp — VARSAYILAN KAPALI,
+  // yalnız admin `onboarding_wa_oto`=true yaptıysa çalışır (kamp öncesi dönem).
+  const onboardingWa = await onboardingWhatsAppHatirlat(db).catch(() => 0);
+
+  return NextResponse.json({ islem, taahhutPush, cesaretPush, onboardingPush, onboardingWa });
 }
 
 // Admin panelinden manuel tetikleme — cron secret olmadan, admin oturumuyla

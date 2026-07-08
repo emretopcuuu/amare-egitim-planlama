@@ -1,6 +1,8 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { katilimciyaBildir } from "@/lib/push";
+import { whatsAppYapilandirildiMi, whatsAppGonder, sablonSidleri } from "@/lib/whatsapp";
+import { ilkAd } from "@/lib/whatsappSablonlari";
 import { tr } from "@/lib/i18n/tr";
 import {
   ONBOARDING_ADIM_AD,
@@ -19,6 +21,7 @@ export type OnboardingKisi = {
   telefon: string | null;
   loginKod: string;
   girisYapti: boolean; // first_login_at dolu mu (koduyla en az bir kez girdi mi)
+  ilkGirisAt: string | null; // ilk giriş zamanı (sessizlik referansı)
   rizaVar: boolean; // consent_at dolu mu (onboarding'e başladı mı)
   eksikAdim: OnboardingAdimKod | null; // null = onboarding tamam
   eksikAdimAd: string;
@@ -92,6 +95,7 @@ export async function onboardingDurumlari(db: Db): Promise<OnboardingKisi[]> {
       telefon: k.phone,
       loginKod: k.login_code,
       girisYapti: !!k.first_login_at,
+      ilkGirisAt: (k.first_login_at as string | null) ?? null,
       rizaVar: !!k.consent_at,
       eksikAdim: eksik,
       eksikAdimAd: eksik ? ONBOARDING_ADIM_AD[eksik] : "",
@@ -177,6 +181,87 @@ export async function onboardingHatirlat(db: Db): Promise<number> {
       tr.onboardingTakip.pushGovde,
       "/"
     ).catch(() => {});
+    gonderilen++;
+  }
+  return gonderilen;
+}
+
+// ─── OTOMATİK ONBOARDING WHATSAPP (girmiş ama devam etmemişe) ───────────────
+// Kullanıcı isteği: koduyla GİRMİŞ ama onboarding'i bitirmemiş kişilere, elle
+// uğraşmadan WhatsApp dürtmesi. Push'un aksine WhatsApp push izni istemez —
+// asıl ulaşılabilir kanal budur. GÜVENLİK: yalnız admin `onboarding_wa_oto`
+// ayarını "true" yaptıysa çalışır (VARSAYILAN KAPALI — deploy ile kimseye
+// mesaj gitmez). Kamp AÇIKKEN (ayna_aktif=true) susar (kamp öncesi dürtmesi).
+// Onaylı `duyuru` şablonuyla (Meta) gider; kişi başı en fazla 3 kez, ~20 saat
+// arayla, son ilerlemeden/giriş­ten >3 saat sessizse. Kanal geçmişi
+// onboarding_hatirlatma'ya kanal='whatsapp_oto' olarak yazılır (sayaç + soğuma).
+const WA_OTO_LIMIT = 3; // kişi başı en fazla otomatik WhatsApp
+const WA_OTO_ARALIK_MS = 20 * 60 * 60_000; // iki gönderim arası min
+const WA_OTO_SESSIZLIK_MS = 3 * 60 * 60_000; // son aktiviteden/girişten min sessizlik
+const WA_OTO_KONTROL_ANAHTARI = "onboarding_wa_kontrol_at"; // saat başı koruma
+const WA_OTO_KONTROL_ARALIK_MS = 60 * 60_000;
+const WA_OTO_AYAR_ANAHTARI = "onboarding_wa_oto"; // "true" = admin açtı
+const WA_OTO_TUR_TAVANI = 40; // bir taramada en fazla (Meta/ani patlama koruması)
+
+export async function onboardingWhatsAppHatirlat(db: Db): Promise<number> {
+  if (!whatsAppYapilandirildiMi()) return 0;
+  const { data: ayarlar } = await db
+    .from("settings")
+    .select("key, value")
+    .in("key", ["ayna_aktif", WA_OTO_AYAR_ANAHTARI, WA_OTO_KONTROL_ANAHTARI]);
+  const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
+  if (ayar.get(WA_OTO_AYAR_ANAHTARI) !== "true") return 0; // admin açmadıysa sus (varsayılan)
+  if (ayar.get("ayna_aktif") === "true") return 0; // kamp açıkken sus
+
+  const simdi = Date.now();
+  const sonKontrol = ayar.get(WA_OTO_KONTROL_ANAHTARI);
+  if (sonKontrol && simdi - Date.parse(sonKontrol) < WA_OTO_KONTROL_ARALIK_MS) return 0;
+  await db
+    .from("settings")
+    .upsert(
+      { key: WA_OTO_KONTROL_ANAHTARI, value: new Date(simdi).toISOString(), updated_at: new Date(simdi).toISOString() },
+      { onConflict: "key" }
+    );
+
+  const sid = (await sablonSidleri(db))["duyuru"];
+  if (!sid) return 0; // onaylı serbest-metin şablonu yoksa gönderme
+
+  const durumlar = await onboardingDurumlari(db);
+  // Otomatik WA geçmişi: kişi başı sayı + son gönderim (kanal='whatsapp_oto').
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: gecmisHam } = await (db as any)
+    .from("onboarding_hatirlatma")
+    .select("participant_id, created_at")
+    .eq("kanal", "whatsapp_oto");
+  const gecmis = (gecmisHam ?? []) as { participant_id: string; created_at: string }[];
+  const waSayac = new Map<string, number>();
+  const waSon = new Map<string, string>();
+  for (const g of gecmis) {
+    waSayac.set(g.participant_id, (waSayac.get(g.participant_id) ?? 0) + 1);
+    const v = waSon.get(g.participant_id);
+    if (!v || g.created_at > v) waSon.set(g.participant_id, g.created_at);
+  }
+
+  let gonderilen = 0;
+  for (const d of durumlar) {
+    if (gonderilen >= WA_OTO_TUR_TAVANI) break;
+    // Girmiş (first_login) + onboarding bitmemiş + telefonu var.
+    if (!d.girisYapti || !d.eksikAdim || !d.telefon) continue;
+    if ((waSayac.get(d.id) ?? 0) >= WA_OTO_LIMIT) continue;
+    const sonWa = waSon.get(d.id);
+    if (sonWa && simdi - Date.parse(sonWa) < WA_OTO_ARALIK_MS) continue;
+    // Sessizlik: son ilerleme YA DA ilk giriş referans; >3 saattir kıpırdamadıysa.
+    const ref = enYeni(d.sonIlerlemeAt, d.ilkGirisAt);
+    if (!ref || simdi - Date.parse(ref) < WA_OTO_SESSIZLIK_MS) continue;
+
+    const govde = `Uygulamada seni bekleyen bir adım var: ${d.eksikAdimAd || "hazırlık"}. Birkaç dakika yeter, kaldığın yerden devam et. 🪞`;
+    const ok = await whatsAppGonder(d.telefon, sid, { "1": ilkAd(d.ad), "2": govde }).catch(() => false);
+    if (!ok) continue;
+    // Yalnız başarılı gönderimi kayda al (sayaç + soğuma + radar görünürlüğü).
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (db as any)
+      .from("onboarding_hatirlatma")
+      .insert({ participant_id: d.id, hedef: "onboarding", kanal: "whatsapp_oto" });
     gonderilen++;
   }
   return gonderilen;
