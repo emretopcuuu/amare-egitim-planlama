@@ -10,6 +10,7 @@ import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { grupUyeleri, YONETIM } from "@/lib/icMesaj";
 import GrupOdevTamam from "@/components/GrupOdevTamam";
 import GrupUyeFoto from "@/components/GrupUyeFoto";
+import BildirimSerit from "@/components/BildirimSerit";
 
 export const metadata = { title: "Grubunun Ödevi — Liderlik Aynası" };
 
@@ -64,6 +65,8 @@ export default async function GrupSayfa() {
   return (
     <main className="mx-auto w-full max-w-md flex-1 space-y-5 p-5">
       <GeriButonu />
+      {/* [#8] Nazik bildirim şeridi — grup mesajları/dürtmeleri kaçmasın */}
+      <BildirimSerit yer="grup" />
       <header>
         <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.baslik}</h1>
         {kisi?.team && <p className="mt-1 text-sm text-slate-400">{t.altBaslik(kisi.team)}</p>}
