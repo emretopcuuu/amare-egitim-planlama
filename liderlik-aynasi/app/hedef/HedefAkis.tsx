@@ -10,6 +10,7 @@ import HedefPlanKarti from "@/components/HedefPlanKarti";
 import BilgiIpucu from "@/components/BilgiIpucu";
 import KayitRozeti from "@/components/KayitRozeti";
 import GizlilikMuhru from "@/components/GizlilikMuhru";
+import AynaYaziyor from "@/components/AynaYaziyor";
 import { ONBOARDING_SURE_DK } from "@/lib/onboardingSure";
 import {
   KARIYER_BASAMAKLARI,
@@ -448,13 +449,7 @@ function Sohbet({
             </p>
           </div>
         ))}
-        {mesgul && (
-          <div className="flex justify-start">
-            <p className="kart-cam max-w-[85%] rounded-2xl px-4 py-2.5 text-sm text-slate-400">
-              {t.dusunuyor}
-            </p>
-          </div>
-        )}
+        {mesgul && <AynaYaziyor etiket={t.dusunuyor} />}
         <div ref={altRef} />
       </div>
       {hata && <p className="pb-2 text-center text-sm text-red-400">{hata}</p>}

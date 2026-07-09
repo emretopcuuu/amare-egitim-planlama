@@ -5,6 +5,7 @@ import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import MikrofonButonu from "@/components/MikrofonButonu";
+import AynaYaziyor from "@/components/AynaYaziyor";
 
 const t = tr.kocu;
 
@@ -234,15 +235,7 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
           </div>
         ))}
 
-        {yaziyor && (
-          <div className="flex justify-start">
-            <div className="flex gap-1 rounded-2xl rounded-tl-sm bg-midnight-card/90 px-4 py-3 ring-1 ring-royal/25 backdrop-blur-md">
-              <span className="h-2 w-2 animate-bounce rounded-full bg-slate-300 [animation-delay:-0.3s]" />
-              <span className="h-2 w-2 animate-bounce rounded-full bg-slate-300 [animation-delay:-0.15s]" />
-              <span className="h-2 w-2 animate-bounce rounded-full bg-slate-300" />
-            </div>
-          </div>
-        )}
+        {yaziyor && <AynaYaziyor />}
 
         {hata && (
           <div role="alert" className="text-center">
