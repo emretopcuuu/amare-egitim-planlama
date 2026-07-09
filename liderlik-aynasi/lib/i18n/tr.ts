@@ -3726,6 +3726,11 @@ export const tr = {
       "AYNA görevlerini, program anlarını ve sana özel fısıltıları bildirimle ulaştırır — kampta bir an bile kaçırma. Gece seni rahatsız etmez (AYNA da uyur) ve istediğin an tek dokunuşla kapatabilirsin.",
     izinVer: "Bildirimlere İzin Ver",
     izinVerildi: "🔔 AYNA seninle — bildirimler açık.",
+    // Nazik + kapatılabilir şerit (#8): izin yoksa birçok yüzeyde ince bir çağrı.
+    seritMetin: "AYNA'nın görevleri ve fısıltıları sana ulaşsın mı?",
+    seritAc: "Aç",
+    seritKapat: "Şimdilik kapat",
+    seritAciliyor: "Açılıyor…",
     izinReddedildi:
       "Bildirimler şu an kapalı. Yanlışlıkla kapattıysan tekrar açabilirsin — görevlerin ve fısıltıların cebine düşsün.",
     izinTekrarBaslik: "🔕 Bildirimler kapalı",
