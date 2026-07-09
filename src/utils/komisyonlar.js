@@ -148,28 +148,6 @@ export const isGlobalKomisyonAdmin = (email) =>
   GLOBAL_KOMISYON_ADMINS.includes(normEmail(email));
 
 // Bir kullanıcı bu komisyonu düzenleyebilir mi?
-// - Global admin: tüm komisyonlara YES
-// - Komisyon üyesi (icerik.uyeler içinde email eşleşiyorsa): YES
-// - Diğer: NO
-export const canEditKomisyon = (email, icerik) => {
-  const e = normEmail(email);
-  if (!e) return false;
-  if (isGlobalKomisyonAdmin(e)) return true;
-  if (icerik?.uyeler && Array.isArray(icerik.uyeler)) {
-    return icerik.uyeler.some(u => normEmail(u.email) === e);
-  }
-  if (icerik?.adminEmails && Array.isArray(icerik.adminEmails)) {
-    return icerik.adminEmails.some(em => normEmail(em) === e);
-  }
-  return false;
-};
-
-// uyeler array'inden adminEmails listesi türet (Firestore rules için)
-export const turetAdminEmails = (uyeler) => {
-  const set = new Set(GLOBAL_KOMISYON_ADMINS.map(normEmail));
-  (uyeler || []).forEach(u => {
-    const e = normEmail(u.email);
-    if (e) set.add(e);
-  });
-  return [...set];
-};
+// 2026-07-10 KVKK: eski email-bazlı üye/adminEmails eşleşmesi KALDIRILDI (public doc'ta email tutulmuyor artık).
+// Düzenleme yalnız global komisyon admin'lerine (= site admin'leri, Firestore rules isAdmin ile hizalı).
+export const canEditKomisyon = (email) => isGlobalKomisyonAdmin(email);

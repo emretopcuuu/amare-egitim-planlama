@@ -17,8 +17,8 @@ import { useData, makeCoreId } from '../context/DataContext';
 import { useTranslation } from '../context/LanguageContext';
 import { db, auth, googleProvider } from '../utils/firebase';
 import { signInWithPopup, signOut } from 'firebase/auth';
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { getKomisyon, canEditKomisyon, turetAdminEmails } from '../utils/komisyonlar';
+import { doc, getDoc, setDoc, serverTimestamp, deleteField } from 'firebase/firestore';
+import { getKomisyon, canEditKomisyon } from '../utils/komisyonlar';
 import { useSmartBack } from '../utils/navigation';
 
 const I18N = {
@@ -248,7 +248,7 @@ const KomisyonDetay = () => {
   const [freshFotolar, setFreshFotolar] = useState({});
 
   // Yetki kontrolü artık komisyon içeriğine de bakar (uyeler.email)
-  const duzenleyebilir = canEditKomisyon(user?.email, icerik);
+  const duzenleyebilir = canEditKomisyon(user?.email);
 
   // Firestore'dan içerik yükle
   useEffect(() => {
@@ -335,11 +335,14 @@ const KomisyonDetay = () => {
     setKaydediliyor(true);
     setMesaj(null);
     try {
-      // adminEmails'i uyeler.email'lerinden otomatik türet (Firestore rules için)
-      const adminEmails = turetAdminEmails(icerik.uyeler);
-      const yeniIcerik = { ...icerik, adminEmails };
+      // 2026-07-10 KVKK: public komisyon doc'una email/telefon/adminEmails ASLA yazma.
+      // Üye iletişim bilgisi (varsa) admin-only komisyon_iletisim'de tutulur; burada temiz yaz.
+      const { adminEmails: _ae, ...icerikTemiz } = icerik;
+      const temizUyeler = (icerikTemiz.uyeler || []).map(({ email, telefon, ...u }) => u);
+      const yeniIcerik = { ...icerikTemiz, uyeler: temizUyeler };
       await setDoc(doc(db, 'komisyonlar', id), {
         ...yeniIcerik,
+        adminEmails: deleteField(), // eski PII alanı kalmışsa temizle
         guncellemeTarihi: serverTimestamp(),
         guncelleyenEmail: user?.email,
       }, { merge: true });
@@ -658,19 +661,8 @@ const KomisyonDetay = () => {
                               placeholder={tr.unvanPlaceholder}
                               className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-purple-200 text-xs placeholder-purple-300/40 outline-none focus:border-amber-400/60"
                             />
-                            <input
-                              value={u.telefon || ''}
-                              onChange={(e) => uyeGuncelle(i, 'telefon', e.target.value)}
-                              placeholder={tr.telefonPlaceholder}
-                              className="w-full bg-white/5 border border-white/20 rounded px-2 py-1 text-purple-200 text-xs placeholder-purple-300/40 outline-none focus:border-amber-400/60"
-                            />
-                            <input
-                              type="email"
-                              value={u.email || ''}
-                              onChange={(e) => uyeGuncelle(i, 'email', e.target.value)}
-                              placeholder={tr.emailPlaceholder}
-                              className="w-full bg-white/5 border border-amber-300/30 rounded px-2 py-1 text-amber-100 text-xs placeholder-amber-300/40 outline-none focus:border-amber-400/80"
-                            />
+                            {/* 2026-07-10 KVKK: üye email/telefon input'ları kaldırıldı —
+                                iletişim bilgisi admin-only komisyon_iletisim'de arşivde. */}
                             <input
                               value={u.fotoURL || ''}
                               onChange={(e) => uyeGuncelle(i, 'fotoURL', e.target.value)}

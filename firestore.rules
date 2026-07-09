@@ -259,18 +259,19 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // OneTeam Komisyonlar — public read, komisyon yetkili user'ları write
-    // Yetki: ADMIN_EMAILS (genel admin) VEYA komisyon doc'undaki adminEmails listesinde olmak
-    // adminEmails: KomisyonDetay save sırasında uyeler.email'lerinden + 3 global admin'den türetilir
+    // OneTeam Komisyonlar — public read, SADECE admin yazar.
+    // 2026-07-10 KVKK: eski email-bazlı komisyon yetkilisi write yolu KALDIRILDI
+    // (adminEmails + uyeler[].email public dökülüyordu; ayrıca yazma yetkisi veriyordu).
+    // Veri gösterdi: hiçbir komisyon başkanı UI'dan self-edit yapmamış (hepsi global admin/CLI).
+    // Email/telefon admin-only konusmaci_iletisim benzeri komisyon_iletisim'e taşındı (altta).
     match /komisyonlar/{komisyonId} {
       allow read: if true;
-      allow write: if isAdmin()
-        || (isSignedIn()
-            && resource != null
-            && resource.data.adminEmails is list
-            && request.auth.token.email in resource.data.adminEmails);
-      // İlk oluşturma: sadece isAdmin (resource null olduğunda yukarıdaki kontrol bypass olur)
-      allow create: if isAdmin();
+      allow write: if isAdmin();
+    }
+
+    // Komisyon iletişim (adminEmails + üye email/telefon) — KVKK: public read KAPALI, sadece admin.
+    match /komisyon_iletisim/{komisyonId} {
+      allow read, write: if isAdmin();
     }
 
     // Site içerik (hakkimizda misyon/vizyon, yurutmekurulu üye listesi vb.)
