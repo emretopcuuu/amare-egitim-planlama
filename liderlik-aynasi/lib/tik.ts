@@ -381,8 +381,14 @@ export async function tikCalistir(
       if (fark !== 0) return fark;
       return (da?.sonVerilis ?? 0) - (db?.sonVerilis ?? 0);
     })
-    // Prova kampında zaman hızlandırılmış: 25 kişiye çabuk dağıtım için limit açılır.
-    .slice(0, provaModu ? 40 : 3);
+    // Tik başına AI görev üretim tavanı. Sıralı üretildiği (her biri ~2 AI
+    // çağrısı) ve tik route'u maxDuration=60s olduğu için tavan bilinçli düşük.
+    // #9 (150 kişi ölçeği): kamp modunda 3→5 — bir etkinlik bitince aynı anda
+    // uygun hâle gelen kalabalığa görev dağıtım gecikmesi (sıcak an soğuması)
+    // yarı yarıya azalır; toplam kapasite zaten yeterli, mesele patlama hızıydı.
+    // NOT: kamp öncesi prova/yük testinde tik süresini ölç — 5'te 60s'yi zorlarsa
+    // düşür. Prova kampında zaman hızlı: 25-40 kişiye çabuk dağıtım için 40.
+    .slice(0, provaModu ? 40 : mod === "kamp" ? 5 : 3);
 
   // FAZ 3 — EŞLEŞME WOW KATMANI bayrakları (varsayılan kapalı, tek sorguda).
   const { data: wowBayraklariHam } = await db

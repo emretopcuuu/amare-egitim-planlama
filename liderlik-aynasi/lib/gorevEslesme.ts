@@ -33,7 +33,7 @@ export async function eslesmeHedefiSec(
   if (havuz.length === 0) return null;
 
   const gunBasiIso = new Date(simdi.getTime() - 24 * 3_600_000).toISOString();
-  const [gecmisSonuc, disliSonuc, gunlukSonuc, tumZamanlarSonuc] = await Promise.all([
+  const [gecmisSonuc, disliSonuc, gunlukSonuc, tumZamanlarSonuc, dusukGercekSonuc] = await Promise.all([
     // Bu kaynağın kampta şimdiye kadar eşleştiği herkes — aynı çift bir kez.
     db.from("gorev_eslesme").select("hedef_id").eq("kaynak_id", kaynakId),
     // Admin'in kalıcı olarak dışladığı çiftler (çift yönlü).
@@ -45,6 +45,14 @@ export async function eslesmeHedefiSec(
       .from("gorev_eslesme")
       .select("hedef_id")
       .in("hedef_id", havuz.map((a) => a.id)),
+    // #9 GERÇEKLİK GERİ BESLEMESİ: bu adaylara gönderilip "gerçek değildi"
+    // (gercek_miydi ≤ 2) işareti alan eşleşmeler — hedefe ulaşılamıyor sinyali.
+    // 2+ kez böyle işaretlenen aday geçici elenir; 1 işaret sıralamada düşürür.
+    db
+      .from("gorev_eslesme")
+      .select("hedef_id")
+      .in("hedef_id", havuz.map((a) => a.id))
+      .lte("gercek_miydi", 2),
   ]);
 
   const gecmisSet = new Set((gecmisSonuc.data ?? []).map((r) => r.hedef_id));
@@ -59,12 +67,19 @@ export async function eslesmeHedefiSec(
   for (const r of tumZamanlarSonuc.data ?? []) {
     toplamSayac.set(r.hedef_id, (toplamSayac.get(r.hedef_id) ?? 0) + 1);
   }
+  // #9 Ulaşılamama sinyali: hedef başına "gerçek değildi" işareti sayısı.
+  const dusukGercekSayac = new Map<string, number>();
+  for (const r of dusukGercekSonuc.data ?? []) {
+    dusukGercekSayac.set(r.hedef_id, (dusukGercekSayac.get(r.hedef_id) ?? 0) + 1);
+  }
 
   const uygunlar = havuz.filter(
     (a) =>
       !gecmisSet.has(a.id) &&
       !disliSet.has(a.id) &&
-      (gunlukSayac.get(a.id) ?? 0) < GUNLUK_HEDEF_UST
+      (gunlukSayac.get(a.id) ?? 0) < GUNLUK_HEDEF_UST &&
+      // 2+ kez "gerçek değildi" alan aday geçici elenir (ulaşılamıyor).
+      (dusukGercekSayac.get(a.id) ?? 0) < 2
   );
   if (uygunlar.length === 0) return null;
 
@@ -86,6 +101,10 @@ export async function eslesmeHedefiSec(
     return h >>> 0;
   };
   const siraliUygunlar = [...uygunlar].sort((a, b) => {
+    // Önce "gerçek değildi" işareti az olan (ulaşılabilir), sonra en az eşleşmiş,
+    // sonra deterministik hash — kalite + dengeli dağıtım birlikte.
+    const gercekFark = (dusukGercekSayac.get(a.id) ?? 0) - (dusukGercekSayac.get(b.id) ?? 0);
+    if (gercekFark !== 0) return gercekFark;
     const fark = (toplamSayac.get(a.id) ?? 0) - (toplamSayac.get(b.id) ?? 0);
     if (fark !== 0) return fark;
     return tohum(kaynakId + a.id) - tohum(kaynakId + b.id);

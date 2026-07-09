@@ -978,10 +978,15 @@ export async function gorevUret(
   let eslesmeHedef: EslesmeAday | null = null;
   let eslesmeIsimliMi = false;
   if (tur === "bag") {
+    // #9 AKTİFLİK FİLTRESİ (150 kişi ölçeği): isimli eşleşme hedefi yalnız
+    // uygulamaya EN AZ BİR KEZ girmiş (first_login_at dolu) kişilerden seçilir.
+    // Kayıtlı ama kampa gelmemiş/uygulamayı hiç açmamış kişilere "git konuş"
+    // görevi verilmesin — "aradım, bulamadım" oranı düşsün.
     const { data: rosterHam } = await db
       .from("participants")
       .select("id, full_name, team")
-      .eq("role", "participant");
+      .eq("role", "participant")
+      .not("first_login_at", "is", null);
     let adaylar: EslesmeAday[] = (rosterHam ?? []).filter((p) => p.id !== katilimci.id);
     if (mekanFarkindaAdaylar) {
       const mekanIdler = new Set(mekanFarkindaAdaylar.map((a) => a.id));
