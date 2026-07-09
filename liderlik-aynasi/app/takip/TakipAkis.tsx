@@ -6,6 +6,7 @@ import { tr } from "@/lib/i18n/tr";
 import { ufukAyEtiket } from "@/lib/planTakvim";
 import Konfeti from "@/components/Konfeti";
 import KonusanYansima from "@/components/KonusanYansima";
+import BildirimSerit from "@/components/BildirimSerit";
 
 const t = tr.takip;
 
@@ -169,6 +170,9 @@ export default function TakipAkis({
         <h1 className="prizma-serif ay-metin mt-1 text-2xl font-semibold">{t.baslik}</h1>
         <p className="mt-2 text-sm text-slate-300">{t.aciklama}</p>
       </header>
+
+      {/* [#8] Nazik bildirim şeridi — 90 gün takibinde şahit alkışı/hatırlatma kaçmasın */}
+      <BildirimSerit yer="takip" />
 
       {/* [Faz 6] "Bunu sen söyledin" — milestone anında kendi sesini dinlet. */}
       {milestone && sozSesUrl && (
