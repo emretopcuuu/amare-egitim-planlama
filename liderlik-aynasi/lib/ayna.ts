@@ -12,7 +12,7 @@ import { yeniCumleOku } from "@/lib/bosluk";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
-import { kariyerHalKisidenTuret, personaBlogu, personaYolculukOdak, KARIYER_RANK, KARIYER_ETIKET } from "@/lib/persona";
+import { kariyerHalKisidenTuret, personaBlogu, personaYolculukOdak, KARIYER_RANK, KARIYER_ETIKET, birUstKariyerEtiket } from "@/lib/persona";
 import { kimlikBlogu } from "@/lib/kisiKimligi";
 import { aiHataYakala } from "@/lib/uyari";
 import { vinyetSec, type LiderKas } from "@/lib/liderlikVinyetleri";
@@ -662,6 +662,20 @@ export async function gorevUret(
   const personaMetni = personaBlogu(persona);
   // Kişinin cinsiyeti + yaşı → doğru hitap/ton (kadına "baba" deme vb.).
   const kimlikMetni = kimlikBlogu(kariyerSonuc.data?.cinsiyet, kariyerSonuc.data?.yas);
+  // #1 KARİYER DNA'SI: görev DNA'sındaki eski SABİT "lider veya üzeri" cümlesi
+  // herkese aynı gidiyordu. Kişinin GERÇEK basamağı (KARIYER_ETIKET) + bir üst
+  // basamağı (birUstKariyerEtiket) prompt'a girsin ki görev o seviyeye ölçeklensin
+  // ve kampta "bir üst basamağın davranışını prova et" hamlesine dönebilsin.
+  const kSeviye = kariyerSonuc.data?.kariyer_seviyesi as string | null | undefined;
+  const kSeviyeEtiket = kSeviye ? KARIYER_ETIKET[kSeviye] : null;
+  const kUstEtiket = birUstKariyerEtiket(kSeviye);
+  const kariyerDNA = kSeviyeEtiket
+    ? `KARİYER SEVİYESİ (GERÇEK — göreve ölçek ver): Bu kişinin şu anki basamağı: ${kSeviyeEtiket}. Bir üst basamak: ${kUstEtiket}. Görevi bu GERÇEK seviyeye göre ölçekle — yeni başlayan düzeyi DEĞİL, ama herkese aynı "üst düzey" de değil.${
+        mod === "kamp"
+          ? ` Fırsat bulursan görevi "bir üst basamağın (${kUstEtiket}) davranışını BUGÜN kampta prova et" biçiminde kur (o basamak ekip önünde durur / devreder / zor karar verir / birini yetiştirir).`
+          : ""
+      } Katlama, lider yetiştirme, devretme, üst seviye etki gibi konuları hedefle.`
+    : `KARİYER SEVİYESİ: Bu kişi lider veya üzeri kariyer basamağında — görev yeni başlayan düzeyi değil, LİDER düzeyi olmalı. Katlama, lider yetiştirme, devretme, ekip önünde duruş, zor kararlar, üst seviye etki gibi konuları hedefle.`;
   // Kamp sonrası yolculukta hâle özel 90 günlük odak.
   const yolculukOdak = mod === "yolculuk" ? personaYolculukOdak(persona) : "";
   // [E10] Yolculukta haftalık görev karması kişinin HEDEFİNDEN oranlanır
@@ -1277,7 +1291,7 @@ export async function gorevUret(
           type: "text" as const,
           text: `Görevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı.
 
-KARİYER SEVİYESİ: Bu kişi lider veya üzeri kariyer basamağında — görev yeni başlayan düzeyi değil, LİDER düzeyi olmalı. Katlama, lider yetiştirme, devretme, ekip önünde duruş, zor kararlar, üst seviye etki gibi konuları hedefle.
+${kariyerDNA}
 
 GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lider kasını çalıştırır ve bağlamdaki "acilisHikayesi" ile AÇILIR. Yapı (toplam ~5 cümle, UZUN OLMASIN):
 1) HİKÂYE — gövdenin başında "acilisHikayesi"ni KISA (2-3 cümle) ve SADIK anlat. Uydurma, yalnız verileni kullan. Başlığı bu hikâyeyle ilişkilendir (birebir kopyalama).
