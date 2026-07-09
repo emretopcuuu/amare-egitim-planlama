@@ -21,6 +21,16 @@ export const tr = {
     dusunuyor: "AYNA düşünüyor…",
     uzunSurdu: "Yanıt birkaç saniye sürebilir, buradayım…",
   },
+  // [#6] Telefon geri tuşu güvenliği — çok adımlı kritik akışta (ritüel) geri
+  // tuşuna basınca akış aniden bozulmasın; nazik bir "çıkmak istiyor musun?"
+  // onayı çıkar. "Devam et" öne çıkar; "Çık" gerçekten izin verir (kilitlemez).
+  geriCikis: {
+    baslik: "Çıkmak istiyor musun?",
+    metin: "İlerlemen kaybolabilir.",
+    rituelMetin: "Ritüel yarım kalır — verdiğin an kaybolabilir.",
+    kal: "Devam et",
+    cik: "Çık",
+  },
   // Görünür internet kalkanı: aday "verim kayboldu mu?" korkusu yaşamasın
   baglanti: {
     cevrimdisi: "İnternet yok — verilerin bu cihazda güvende. Bağlanınca otomatik gönderilecek.",

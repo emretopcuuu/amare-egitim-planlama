@@ -8,6 +8,7 @@ import AynaIkon from "@/components/AynaIkon";
 import AynaSesi from "@/components/AynaSesi";
 import MuhurIkon from "@/components/MuhurIkon";
 import CanliAyna from "@/components/CanliAyna";
+import GeriCikisOnayi from "@/components/GeriCikisOnayi";
 import { sureRozeti } from "@/lib/onboardingSure";
 import { sesCal } from "@/lib/sesEfekti";
 
@@ -614,6 +615,9 @@ export default function AynaRituel({ kimlikTamam = false }: { kimlikTamam?: bool
     // not: evren-gol sınıfı position:relative tanımladığı için fixed'i
     // eziyordu — overlay'de KULLANILMAZ; zemin/metin rengi elle verilir
     <div className="gece-ada fixed inset-0 z-50 flex flex-col overflow-y-auto bg-[#04101c]/95 p-6 text-[#e6edf4] backdrop-blur-md">
+      {/* [#6] Geri tuşu güvenliği — ses verilene dek (hazir/sonra hariç) nazik
+          çıkış onayı; ritüel yarım kalıp verilen an kaybolmasın. */}
+      <GeriCikisOnayi aktif={asama !== "hazir" && asama !== "sonra"} metin={tr.geriCikis.rituelMetin} />
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center py-8">
         {asama === "kimlik" && (
           <div>
