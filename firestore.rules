@@ -63,16 +63,19 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
-    // Konuşmacılar — herkes görür; admin yazar VEYA lider kendi kaydını (email eşleşmeli) günceller.
-    // Self-edit: giriş yapan e-posta doc'taki email ile aynıysa ve email alanı değiştirilmiyorsa.
+    // Konuşmacılar — herkes görür, SADECE admin yazar.
+    // 2026-07-10 KVKK: email public doc'tan çıkarıldı (44 e-posta public dökülüyordu).
+    // Eski email-bazlı self-edit yolu kaldırıldı; düzenleme yalnız admin'de.
+    // İletişim (email) admin-only konusmaci_iletisim koleksiyonuna taşındı (altta).
     match /konusmacilar/{docId} {
       allow read: if true;
       allow write: if isAdmin();
-      allow update: if isSignedIn()
-        && resource != null
-        && resource.data.email is string
-        && request.auth.token.email == resource.data.email
-        && request.resource.data.email == resource.data.email;
+    }
+
+    // Konuşmacı iletişim bilgisi (email) — KVKK: public read KAPALI, sadece admin.
+    // konusmacilar public doc'undan taşınan email'ler burada tutulur.
+    match /konusmaci_iletisim/{docId} {
+      allow read, write: if isAdmin();
     }
 
     // Şablonlar — herkes görür (poster üretimi için), sadece admin yazar

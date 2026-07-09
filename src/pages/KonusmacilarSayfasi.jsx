@@ -4,7 +4,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { coreIdFuzzyEslesir, gecerliEgitmenMi } from '../utils/egitmenFotoMatch';
 import { useTranslation } from '../context/LanguageContext';
-import { useAuth } from '../context/AuthContext';
 import { ArrowLeft, User, Search, X, Loader2, Star, RotateCw, SlidersHorizontal, ArrowDownUp, LayoutGrid, List, Sparkles, ArrowRight, Calendar, Eye, TrendingUp, Zap, MapPin, ChevronLeft, ChevronRight } from 'lucide-react';
 import LanguageSwitcher from '../components/LanguageSwitcher';
 import LoadingProgress from '../components/LoadingProgress';
@@ -97,7 +96,6 @@ const KonusmacilarSayfasi = () => {
   const aramaRef = useRef(null);
   const { takipSet, toggle: takipToggle, count: favSayisi } = useTakipEgitmenler();
   const { toast } = useToast();
-  const { email: girisEmail } = useAuth();
 
   // Klavye kısayolları
   useKeyboardShortcuts({
@@ -581,7 +579,7 @@ const KonusmacilarSayfasi = () => {
                 const isFav = cid && takipSet.has(cid);
                 const sonEg = sonEgitimMap.get(cid);
                 const info = kariyerMap.get(cid);
-                const benim = !!girisEmail && !!kayit?.email && girisEmail.toLowerCase() === String(kayit.email).toLowerCase();
+                const benim = false; // 2026-07-10 KVKK: konuşmacı self-edit kaldırıldı, email public doc'tan çıkarıldı
                 return (
                   <button key={ad} onClick={() => navigate(`/lider/${makeCoreId(ad)}`)}
                     className={`relative w-full rounded-xl p-3 sm:p-4 transition-all spring-tap text-left flex items-center gap-3 sm:gap-4 group focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${benim ? 'bg-amber-400/10 border-2 border-amber-400/70' : 'bg-white/5 hover:bg-white/12 border border-white/10 hover:border-amber-400/60'}`}>
@@ -639,7 +637,7 @@ const KonusmacilarSayfasi = () => {
                     const sonEg = sonEgitimMap.get(cid);
                     const isHovered = hoverId === cid;
                     const info = kariyerMap.get(cid);
-                    const benim = !!girisEmail && !!kayit?.email && girisEmail.toLowerCase() === String(kayit.email).toLowerCase();
+                    const benim = false; // 2026-07-10 KVKK: konuşmacı self-edit kaldırıldı, email public doc'tan çıkarıldı
                     // #7 — Rütbe sıralamasında kademe başlıkları
                     if (siralama === 'rutbe') {
                       const tb = tierBilgi(info?.rankIdx);

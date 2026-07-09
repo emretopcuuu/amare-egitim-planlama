@@ -2,7 +2,7 @@
 // Cache: anasayfa shell + son ziyaret edilen sayfalar
 // Strategy: network-first (her zaman fresh data dene, yoksa cache fallback)
 
-const CACHE_VERSION = 'oneteam-v19';
+const CACHE_VERSION = 'oneteam-v20';
 const SHELL_CACHE = `${CACHE_VERSION}-shell`;
 const RUNTIME_CACHE = `${CACHE_VERSION}-runtime`;
 
