@@ -15,7 +15,7 @@ import { guvenliGetDocs } from '../utils/guvenliVeri';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { onAuthStateChanged, signInWithPopup, signOut } from 'firebase/auth';
 import { takvimOlustur } from '../utils/takvimAlgoritma';
-import { isAdminEmail, userIsAdmin } from '../constants';
+import { userIsAdmin } from '../constants';
 
 // Türkçe karakterleri ASCII'ye çevirip güvenli ID oluştur
 export const makeSafeId = (ad) => {
@@ -1060,8 +1060,8 @@ export const DataProvider = ({ children }) => {
           claims: idTokenResult.claims,
         }));
       } catch (e) {
-        // Token sorunsa eski email kontrolüne düş
-        setIsAdmin(isAdminEmail(user?.email));
+        // Token okunamıyorsa admin DEĞİL (güvenli varsayılan; email fallback kaldırıldı)
+        setIsAdmin(false);
       }
       setAuthLoading(false);
       // Eski localStorage isAdmin flag'ini bypass için artık güvenmiyoruz; sil
