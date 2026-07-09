@@ -6,6 +6,7 @@ import { tr } from "@/lib/i18n/tr";
 import AsamaRayi, { type RayAsama } from "@/components/AsamaRayi";
 import KayitRozeti from "@/components/KayitRozeti";
 import GizlilikMuhru from "@/components/GizlilikMuhru";
+import AynaYaziyor from "@/components/AynaYaziyor";
 import { sureRozeti } from "@/lib/onboardingSure";
 
 const t = tr.pusula;
@@ -869,13 +870,7 @@ export default function PusulaSohbet({
             </p>
           </div>
         ))}
-        {mesgul && (
-          <div className="flex justify-start">
-            <p className="kart-cam max-w-[85%] rounded-2xl px-4 py-2.5 text-sm text-slate-400">
-              {t.dusunuyor}
-            </p>
-          </div>
-        )}
+        {mesgul && <AynaYaziyor etiket={t.dusunuyor} />}
         <div ref={altRef} />
       </div>
 

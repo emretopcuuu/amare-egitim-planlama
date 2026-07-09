@@ -13,6 +13,14 @@ export const tr = {
     name: "Liderlik Aynası",
     tagline: "Kendini başkalarının gözünden gör.",
   },
+  // Ortak "AYNA yazıyor…" göstergesi (Pusula/Hedef/Koçu sohbetleri). Yanıt
+  // birkaç saniye sürebildiği için, uzarsa nazik bir bekleme ipucu çıkar —
+  // kişi ekrana dokunup çıkmasın diye (#2 UX).
+  aynaYaziyor: {
+    etiket: "AYNA yazıyor…",
+    dusunuyor: "AYNA düşünüyor…",
+    uzunSurdu: "Yanıt birkaç saniye sürebilir, buradayım…",
+  },
   // Görünür internet kalkanı: aday "verim kayboldu mu?" korkusu yaşamasın
   baglanti: {
     cevrimdisi: "İnternet yok — verilerin bu cihazda güvende. Bağlanınca otomatik gönderilecek.",
