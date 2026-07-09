@@ -1019,6 +1019,8 @@ export const tr = {
     elenenlerBaslik: "Bıraktıkların",
     geriAlSon: "↩ Son bıraktığını geri al",
     geriAliniyor: "Geri alınıyor…",
+    geriAlToast: (metin: string) => `"${metin}" bırakıldı`,
+    geriAlToastButon: "↩ Geri al",
     // Sohbet bitince son analiz mesajı okunsun, sonra mühür/devam
     analizDevamSlogan: "Pusulama mühür vur →",
     analizDevamBitti: "Devam et →",

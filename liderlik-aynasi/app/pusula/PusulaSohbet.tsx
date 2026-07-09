@@ -316,6 +316,10 @@ export default function PusulaSohbet({
   const [sifirlaSor, setSifirlaSor] = useState(false);
   const [sifirliyor, setSifirliyor] = useState(false);
   const [geriAliniyor, setGeriAliniyor] = useState(false); // son elemeyi geri alma
+  // [#3] Eleme sonrası birkaç saniye beliren belirgin "geri al" toast'u —
+  // yanlış maddeyi eleyeni ilk anda yakalar (kalıcı küçük link'ten daha görünür).
+  const [geriAlToast, setGeriAlToast] = useState<string | null>(null);
+  const geriAlZamanRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [bittiBekliyor, setBittiBekliyor] = useState(false); // son analiz okunsun, sonra devam
   // [E8] Öncelik listesi sunucuya başarıyla yazıldığında köşede "✓ Kaydedildi".
   const [kayitBasari, setKayitBasari] = useState(0);
@@ -461,6 +465,8 @@ export default function PusulaSohbet({
     }
     setMesajlar((m) => [...m, { rol: "ayna", icerik: v.mesaj! }]);
     if (v.asama) setAsama(v.asama);
+    // [#3] Bir madde elendiyse birkaç saniyelik belirgin geri-al toast'u aç.
+    if (elenen) geriAlToastAc(elenen);
     if (v.bitti) {
       setAsama("tamam");
       if (v.sloganAdaylar?.length) setSloganAdaylar(v.sloganAdaylar);
@@ -469,6 +475,16 @@ export default function PusulaSohbet({
       setBittiBekliyor(true);
     }
   }
+
+  // [#3] Toast'u aç ve birkaç saniye sonra kendiliğinden kapat.
+  function geriAlToastAc(metin: string) {
+    setGeriAlToast(metin);
+    if (geriAlZamanRef.current) clearTimeout(geriAlZamanRef.current);
+    geriAlZamanRef.current = setTimeout(() => setGeriAlToast(null), 6000);
+  }
+  useEffect(() => () => {
+    if (geriAlZamanRef.current) clearTimeout(geriAlZamanRef.current);
+  }, []);
 
   // Son elemeyi geri al: sunucudan son (kullanıcı eleme + AYNA yanıtı) çiftini
   // sildir, istemcide de son iki mesajı ve son eleneni çıkar.
@@ -485,6 +501,7 @@ export default function PusulaSohbet({
     setElenenler((e) => e.slice(0, -1));
     setAsama("eleme");
     setHata(null);
+    setGeriAlToast(null); // toast'tan geldiyse kapat
   }
 
   async function sloganKaydet(secilen: string) {
@@ -978,6 +995,24 @@ export default function PusulaSohbet({
           {/* Gizlilik mührü — mahrem sohbetin hemen altında sakin güven imzası */}
           <GizlilikMuhru />
         </>
+      )}
+
+      {/* [#3] Eleme sonrası birkaç saniye beliren geri-al toast'u (viewport altı) */}
+      {geriAlToast && asama === "eleme" && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-4 z-30 flex justify-center px-4">
+          <div className="pointer-events-auto flex items-center gap-3 rounded-full border border-royal-light/30 bg-midnight-card/95 py-2 pl-4 pr-2 shadow-xl backdrop-blur">
+            <span className="max-w-[12rem] truncate text-sm text-slate-300">
+              {t.geriAlToast(geriAlToast)}
+            </span>
+            <button
+              onClick={sonElemeyiGeriAl}
+              disabled={geriAliniyor}
+              className="shrink-0 rounded-full bg-gold/20 px-3 py-1 text-sm font-bold text-gold-light transition-colors hover:bg-gold/30 disabled:opacity-50"
+            >
+              {geriAliniyor ? t.geriAliniyor : t.geriAlToastButon}
+            </button>
+          </div>
+        </div>
       )}
     </main>
   );
