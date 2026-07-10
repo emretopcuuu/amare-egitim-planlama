@@ -3664,6 +3664,11 @@ export const tr = {
     sahitGorevBaslik: "Görünmez şahit",
     sahitGorevGovde: (ad: string) =>
       `Önümüzdeki 10 dakika ${ad} isimli kişiyi uzaktan, belli etmeden gözle.\n\nOnda gördüğün, muhtemelen KENDİSİNİN görmediği BİR gücü yakala — bir duruş, bir dokunuş, bir cümle.\n\nO gücü tek cümleyle bana yaz. Sözün, kimden geldiğini asla söylemeden, yarın onun aynasında belirecek.`,
+    // #7 Oyun-rolü şahidi: bir oyun az önce bittiğinde, takım arkadaşının oyundaki
+    // liderlik rolünü gözlet — yanıt gözlenenin sonraki görev açılışına taşınır.
+    sahitOyunBaslik: "Sahada gördüğün lider",
+    sahitOyunGovde: (ad: string, oyun: string) =>
+      `Az önce grubunla ${oyun} oynadınız. Şimdi ${ad} isimli arkadaşını düşün: oyunda nasıl bir lider oldu?\n\nKim yön verdi, kim düşeni topladı, kim enerjiyi taşıdı, kim sessizce köprü kurdu? Onda gördüğün, belki KENDİSİNİN fark etmediği BİR liderlik gücünü tek cümleyle bana yaz.\n\nSözün, kimden geldiğini asla söylemeden, onun aynasında belirecek.`,
     // Özellik 2 — Kimlik yüzleşmesi: her 10. puanlı görevde, biriken
     // karşı-kanıtlarla kişinin kendini sınırlayan cümlesi yüzüne tutulur.
     kimlikUst: "Ayna bir cümleni hatırlıyor",
