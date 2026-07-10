@@ -2,7 +2,10 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { tikCalistir } from "@/lib/tik";
 import { provaDurum, provaSanalSaat } from "@/lib/prova";
 
-export const maxDuration = 60;
+// #4: kümelenmiş paralel dağıtım (lib/tik.ts) tik'i 60s içinde tutmayı hedefler
+// ama etkinlik-sonrası patlamada bir küme yavaş AI'ya denk gelirse pay kalsın
+// diye 120s. Netlify standart fonksiyon tavanına (bkz. plan) kadar geçerli.
+export const maxDuration = 120;
 
 // AYNA'nın kalp atışı. Supabase pg_cron 5 dakikada bir çağırır (gizli başlıkla).
 // GERÇEK zamanla çalışır; mantık lib/tik.ts'te (admin prova yolu da onu kullanır).
