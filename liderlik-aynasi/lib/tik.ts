@@ -381,14 +381,20 @@ export async function tikCalistir(
       if (fark !== 0) return fark;
       return (da?.sonVerilis ?? 0) - (db?.sonVerilis ?? 0);
     })
-    // Tik başına AI görev üretim tavanı. Sıralı üretildiği (her biri ~2 AI
-    // çağrısı) ve tik route'u maxDuration=60s olduğu için tavan bilinçli düşük.
-    // #9 (150 kişi ölçeği): kamp modunda 3→5 — bir etkinlik bitince aynı anda
-    // uygun hâle gelen kalabalığa görev dağıtım gecikmesi (sıcak an soğuması)
-    // yarı yarıya azalır; toplam kapasite zaten yeterli, mesele patlama hızıydı.
-    // NOT: kamp öncesi prova/yük testinde tik süresini ölç — 5'te 60s'yi zorlarsa
-    // düşür. Prova kampında zaman hızlı: 25-40 kişiye çabuk dağıtım için 40.
-    .slice(0, provaModu ? 40 : mod === "kamp" ? 5 : 3);
+    // Tik başına AI görev üretim tavanı. #4 (150 kişi ölçeği): görev üretimi
+    // artık SIRALI değil, ES_ZAMAN'lık kümelerle PARALEL (aşağıdaki chunk
+    // döngüsü). Her görev ~2 AI çağrısı (~3-6s) sürer; sıralıyken tavan 5'ti
+    // (bir etkinlik bitince 30-40 kişi aynı anda uygun olunca 6-8 tik = ~35 dk
+    // kuyruk). Paralel: ~24 kişi/tik, 4 küme × ~6s ≈ 24s (60s içinde). Kişi
+    // başına görev sayısı/kalitesi DEĞİŞMEZ — yalnız duvar-saati düşer, patlama
+    // gecikmesi ~35 dk → ~1-2 tik. NOT: prova/yük testinde tik süresini ölç;
+    // 24'te 60s'yi zorlarsa tavanı ya da ES_ZAMAN'ı düşür. Prova: 40 (hızlı zaman).
+    .slice(0, provaModu ? 40 : mod === "kamp" ? 24 : 3);
+  // #4 eşzamanlılık tavanı: bir kümede kaç görev paralel üretilir. Düşük
+  // tutuluyor çünkü eslesmeHedefiSec dengeleyicisi DB'den "bu kişiye kaç kez
+  // eşleşildi"yi okur; çok yüksek eşzamanlılıkta iki üretim aynı hedefi kapıp
+  // hafif dengesizlik yapabilir. 6, patlamayı erittiği hâlde bu yarışı küçük tutar.
+  const ES_ZAMAN = 6;
 
   // FAZ 3 — EŞLEŞME WOW KATMANI bayrakları (varsayılan kapalı, tek sorguda).
   const { data: wowBayraklariHam } = await db
@@ -427,7 +433,12 @@ export async function tikCalistir(
   // dağıtımlar (garantili, mentorluk) bu kümeye bakarak çift görev vermesin.
   const buTikGorevAlan = new Set<string>(uygunlar.map((u) => u.id));
 
-  for (const k of uygunlar) {
+  // #4 — tek kişiye görev dağıtım gövdesi. Eski `for (const k of uygunlar)`
+  // döngüsü aynen buraya taşındı; `continue` → `return` oldu. Aşağıda
+  // ES_ZAMAN'lık kümelerle Promise.all üzerinden PARALEL çağrılır. Kapatıcılar
+  // (ozet, altinBugunKalan) JS tek-iş-parçacıklı olduğu için await'ler arası
+  // atomiktir; altın kotası await'ten ÖNCE eşzamanlı düşülür (aşağıya bkz).
+  const kisiyeGorevDagit = async (k: (typeof uygunlar)[number]) => {
     // Özellik 3 — sıcak an: tazeyse görev üretimine bağlam olur; soğumuşsa
     // (45 dk+) tüketilmeden temizlenir (bayat duyguya görev kurulmaz).
     const kSicakHam = (k as { sicak_an?: unknown }).sicak_an;
@@ -553,7 +564,7 @@ export async function tikCalistir(
           await katilimciyaBildir(db, k.id, "🎴 Bir görev çek", "Üç kart açık — birini çek, gerisi sönsün.", "/gorevler");
         }
       }
-      continue; // yeniden giriş: bu tik AI görevi üretme, çek sun
+      return; // yeniden giriş: bu tik AI görevi üretme, çek sun
     }
 
     // Sıradaki köprüsünü yalnız kişi ŞU AN bir etkinliğin içinde DEĞİLken kur
@@ -564,7 +575,7 @@ export async function tikCalistir(
       { sonKacirmaSebebi: sonKacirma?.kacirma_sebebi ?? null, girisBasamak },
       kSicak // Özellik 3 — sıcak an bağlamı (mikro-görev + duyguya dokunuş)
     );
-    if (!gorev) continue;
+    if (!gorev) return;
     // Özellik 3 — sıcak an bu üretimde tüketildi: hangi insert dalına girilirse
     // girilsin an bir kez kullanılır; önbelleği hemen temizle.
     if (kSicak) await sicakAnTemizle(db, k.id);
@@ -669,7 +680,7 @@ export async function tikCalistir(
         ozet.uretilen++;
         await katilimciyaBildir(db, k.id, "🚪 AYNA sana bir seçim sunuyor", "İki kapı açıldı — birini seç.", "/gorevler");
       }
-      continue; // normal görev insert'ini atla
+      return; // normal görev insert'ini atla
     }
 
     // FAZ 5.2 — ALTIN GÖREV: bu görev nadir "altın" varyantı mı? Gün kotası
@@ -677,6 +688,9 @@ export async function tikCalistir(
     // türleri üretir — senkron/soz/mentorluk zaten ayrı akışlardan gelir.)
     // Şahit varyantı altınlaşmaz (sessiz gözlem görevi sahne ışığı istemez).
     const altinMi = altinBugunKalan > 0 && !sahitOverride && Math.random() < 0.25;
+    // #4 paralel güvenlik: altın kotasını KARAR ANINDA (await'ten önce) düş —
+    // aksi halde aynı kümedeki iki üretim kotayı beraber görüp aşabilir.
+    if (altinMi) altinBugunKalan--;
 
     // Özellik 5 — override zinciri: johari ve şahit birbirini dışlar (yukarıda
     // şahit yalnız !johariOverride iken kurulur). Statik şablonlar AI görevinin
@@ -725,7 +739,7 @@ export async function tikCalistir(
       })
       .select("id")
       .single();
-    if (error || !yeniGorev) continue;
+    if (error || !yeniGorev) return;
     // FAZ 5.2 — altın görev düştüyse: kotayı düş + HERKESE heyecan push'u
     // (kimde olduğu değil — yalnız "az önce birine düştü"). METİN KURALI:
     // "sıradaki sende" gibi kişiye özel bir vaat KURMA — bu broadcast'i alan
@@ -733,7 +747,6 @@ export async function tikCalistir(
     // söyledi" hissi yaratıyordu (saha geri bildirimi). Yalnız FOMO/sosyal
     // kanıt ver, kendi görevine bak daveti yap — kesinlik iması yok.
     if (altinMi) {
-      altinBugunKalan--;
       await herkeseBildir(
         db,
         "⚡ Kampta bir altın görev çıktı",
@@ -830,6 +843,13 @@ export async function tikCalistir(
     } else if (!sahitOverride && (gorev.kind === "gizli" || gorev.kind === "cesaret")) {
       await gorevSeslendir(db, k.id, yeniGorev.id, gorev.title, gorev.body);
     }
+  };
+
+  // #4 — kümelenmiş paralel dağıtım: ES_ZAMAN kadar kişiye görev aynı anda
+  // üretilir, küme bitince sıradaki küme. Duvar-saati sum-of-sequential yerine
+  // ~(N/ES_ZAMAN)×per-task olur; 60s tik penceresine daha çok kişi sığar.
+  for (let i = 0; i < uygunlar.length; i += ES_ZAMAN) {
+    await Promise.all(uygunlar.slice(i, i + ES_ZAMAN).map(kisiyeGorevDagit));
   }
 
   // 3a-bis) GARANTİLİ GÖREVLER — kamp boyunca HER katılımcıya tam bir kez verilen
