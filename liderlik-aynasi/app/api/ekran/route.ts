@@ -74,6 +74,9 @@ export type EkranVerisi = {
   altinKazananlar: string[];
   // [1.5] Salon Daveti: bu salondan çıkan (gönderildi işaretli) davet sayısı.
   salonDavetSayisi: number;
+  // [#10/#3] Salon kariyer kolektif: toplam görüşme sözü (taahhüt) + sıcak listede
+  // atılan ilk adım (temas+) + kayıt — "bu salon şu kadar hareket üretti".
+  salonKariyer: { gorusmeSozu: number; ilkAdim: number; kayit: number };
   // [E3] Kolektif söz finali: mühürlenen söz sayısı / söz veren sayısı.
   sozMuhur: { muhurlu: number; sozVeren: number } | null;
   // Sahne olayları: /ekran'ın bir kez oynatacağı taze sinyaller (≤4 dk)
@@ -216,6 +219,24 @@ export async function GET() {
     .select("id", { count: "exact", head: true })
     .not("gonderildi_at", "is", null);
   const salonDavetSayisi = salonDavetCount ?? 0;
+
+  // [#10/#3] SALON KARİYER KOLEKTİF SAYAÇLARI — "bu salon N görüşme sözü verdi ·
+  // N ilk adım attı · N kayıt". Taahhüt defteri (#10) + sıcak liste durumları (#3).
+  const [{ data: taahhutHam }, { data: sicakHam }] = await Promise.all([
+    db.from("kamp_taahhut").select("tur, sayi"),
+    db.from("sicak_liste").select("durum"),
+  ]);
+  let gorusmeSozu = 0;
+  for (const tt of taahhutHam ?? []) {
+    if (tt.tur === "gorusme" || tt.tur === "arama" || tt.tur === "randevu") gorusmeSozu += tt.sayi ?? 0;
+  }
+  let ilkAdim = 0;
+  let kayitSayi = 0;
+  for (const s of sicakHam ?? []) {
+    if (s.durum === "temas" || s.durum === "randevu" || s.durum === "kayit") ilkAdim++;
+    if (s.durum === "kayit") kayitSayi++;
+  }
+  const salonKariyer = { gorusmeSozu, ilkAdim, kayit: kayitSayi };
 
   // [E3] Kolektif söz mühür sayacı (büyük ekran için).
   const sozMuhurEkran = await sozMuhurDurumu(db);
@@ -585,6 +606,7 @@ export async function GET() {
     zincir: zincirUzunluk > 0 ? { uzunluk: zincirUzunluk } : null,
     altinKazananlar,
     salonDavetSayisi,
+    salonKariyer,
     sozMuhur: sozMuhurEkran.sozVeren > 0 ? { muhurlu: sozMuhurEkran.muhurlu, sozVeren: sozMuhurEkran.sozVeren } : null,
     sahne: await (async () => {
       const ayar = new Map((sahneAyarSonuc.data ?? []).map((a) => [a.key, a.value]));

@@ -1010,6 +1010,18 @@ export default function EkranGosterisi() {
                         </p>
                       </div>
                     )}
+                    {/* [#10/#3] Salon kariyer kolektifi — görüşme sözü + ilk adım + kayıt */}
+                    {(veri.salonKariyer.gorusmeSozu > 0 || veri.salonKariyer.ilkAdim > 0) && (
+                      <div className="kart-3d rounded-2xl border border-royal-light/30 bg-royal-light/[0.07] p-5 text-center sm:col-span-2">
+                        <p className="text-3xl" aria-hidden>🚀</p>
+                        <p className="mt-1 text-lg font-semibold text-royal-light">
+                          Bu salon
+                          {veri.salonKariyer.gorusmeSozu > 0 && ` ${veri.salonKariyer.gorusmeSozu} görüşme sözü verdi`}
+                          {veri.salonKariyer.ilkAdim > 0 && ` · ${veri.salonKariyer.ilkAdim} ilk adım attı`}
+                          {veri.salonKariyer.kayit > 0 && ` · ${veri.salonKariyer.kayit} kayıt 🎉`}
+                        </p>
+                      </div>
+                    )}
                     {/* FAZ 5.2 — altın görev kutlaması: isimli (bilinçli — kutlama) */}
                     {veri.altinKazananlar.length > 0 && (
                       <div className="kart-3d rounded-2xl border border-gold/40 bg-gold/[0.10] p-5 text-center sm:col-span-2">
