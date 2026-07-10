@@ -83,12 +83,20 @@ adımları ve içerik TODO'ları kendi README'sinde.
 
 ## Kampın mevcut durumu (değişince güncelle)
 
-- **KAMP AÇIK VE CANLI.** 29 katılımcı, Sapanca kampı. `ayna_baslangic =
-  2026-07-03 ~09:10 İst` → Gün 1 = 3 Temmuz, Gün 2 = 4 Temmuz, Gün 3 = 5 Temmuz.
-  Kilit kodu `SAPANCA2026`. Görev motoru (tik) aktif; insanlara görev düşüyor.
-  **Merge edilen her şey doğrudan canlı kampı etkiler — ona göre dikkatli ol.**
-- Senaryoda bekleyen özel olaylar: Gün 2 21:00 sesli mektup (`gun2_sesli_mektup_ac`),
-  Gün 3 10:00 domino (`gun3_domino_ac`).
+- **KAMP HENÜZ AÇILMADI — ONBOARDING DÖNEMİ.** Sıradaki kamp **17-19 Temmuz 2026**
+  (Sapanca), **~150 katılımcı**. Şu an katılımcılar gerçek onboarding aşamasında
+  (kod alma, değerler, pusula/hedef, ön farkındalık, ses ritüeli). Kilit kodu
+  `SAPANCA2026`. `settings.kamp_tarihi = 2026-07-17T10:00+03`.
+- **`ayna_baslangic` HENÜZ SET DEĞİL** → `kampGunu` null → `mod=kamp` görev
+  üretimi UYKUDA. tik her 5 dk çalışıyor ama yalnız onboarding dürtmesi/olaylar
+  için; insanlara kamp görevi DÜŞMÜYOR. Kamp, kullanıcı "kampı aç" deyince /
+  `ayna_baslangic` set edilince başlar (17 Temmuz).
+- **BUNUN ANLAMI:** `mod=kamp` görev motoru (ayna.ts/davranis.ts/tik.ts kamp
+  dalları) şu an güvenle geliştirilebilir — canlı bir kampı bozmaz; 17 Temmuz'da
+  devreye girer. Ama onboarding/olaylar hot-path'ine (her 5 dk çalışıyor) cerrahi
+  dokun. Yine de **kampı kullanıcı istemeden AÇMA** (bkz. çalışma kuralları).
+- Senaryoda bekleyen özel olaylar (kamp açılınca): Gün 2 21:00 sesli mektup
+  (`gun2_sesli_mektup_ac`), Gün 3 10:00 domino (`gun3_domino_ac`).
 
 ## Son tamamlanan işler
 
