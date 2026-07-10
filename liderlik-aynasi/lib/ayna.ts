@@ -2114,7 +2114,10 @@ async function mentorlukBodyKisisel(
   db: Db,
   pid: string,
   ad: string,
-  isimler: string[]
+  isimler: string[],
+  // #5 Kariyer kapısı bağlamı: kişinin şu anki basamağı + hedeflediği bir üst
+  // basamak. Sohbet "o basamağın kapısı"na (OV/ekip/ilk 90 gün) demirlenir.
+  kariyerBaglam?: { seviye: string | null; hedef: string }
 ): Promise<string | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   const [cekirdek, onFark] = await Promise.all([
@@ -2131,7 +2134,7 @@ async function mentorlukBodyKisisel(
     of?.enZayifAlan ??
     of?.korNokta?.tersDavranis ??
     null;
-  if (!takildigi) return null;
+  // #5: Kariyer kapısı sohbeti iç engel olmadan da anlamlı — artık zorunlu değil.
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
@@ -2139,13 +2142,15 @@ async function mentorlukBodyKisisel(
       max_tokens: 400,
       thinking: { type: "disabled" },
       output_config: { effort: "low" },
-      system: `${PERSONA}\n\nGörevin: bir MENTORLUK görevi metni yaz. Kişi bugün 3 mentor adayından birini seçip en az 15 dk konuşacak. Metni kişinin ŞU AN takıldığı gerçek konuya nazikçe demirle — ama yüzüne vurma. Kurallar:\n- 2-3 kısa, sade cümle. "Sen" dili, doğru Türkçe.\n- Verilen 3 ismi metinde MUTLAKA kalın (**İsim**) olarak ver.\n- Sonunda akşam sana ne yazacağını iste: kimin yanına gitti, ne sordu, ne götürdü.\n- Süslü/şiirsel değil; net ve davetkâr ol.`,
+      system: `${PERSONA}\n\nGörevin: bir MENTORLUK görevi metni yaz. Kişi bugün 3 mentor adayından (parantez içinde kariyer basamakları var) birini seçip en az 15 dk konuşacak. ANA ÇERÇEVE — KARİYER KAPISI: kişi, hedeflediği bir üst basamağı ("${kariyerBaglam?.hedef ?? "bir üst basamak"}") ZATEN GEÇMİŞ bir mentorla o basamağın KAPISINI konuşsun — o basamağa somut nasıl çıkıldığını sorsun: OV/hacim nasıl kuruldu, ekip nasıl büyütüldü/katlandı, ilk 90 günde ne yapıldı, hangi alışkanlık fark yarattı. Kişinin şu an takıldığı gerçek konu varsa ona da nazikçe bağla ama YÜZÜNE VURMA. Kurallar:\n- 2-3 kısa, sade cümle. "Sen" dili, doğru Türkçe.\n- Verilen 3 ismi metinde MUTLAKA kalın (**İsim (basamak)**) olarak ver; mümkünse basamağı yüksek olanı işaret et.\n- Sonunda akşam sana ne yazacağını iste: kimin yanına gitti, o basamağın kapısı için ne sordu, ne somut adım götürdü.\n- Süslü/şiirsel değil; net ve davetkâr ol.`,
       messages: [
         {
           role: "user",
           content: JSON.stringify({
             ad,
             mentorAdaylari: isimler,
+            seninBasamagin: kariyerBaglam?.seviye ?? null,
+            hedeflediginBasamak: kariyerBaglam?.hedef ?? null,
             suAnTakildigi: takildigi,
           }),
         },
@@ -2257,12 +2262,20 @@ export async function mentorlukGorevUret(
     return seviyeEtiketi ? `${k.full_name} (${seviyeEtiketi})` : k.full_name;
   });
 
-  // Statik metin (güvenli düşüş) — isimler doğrudan gömülü.
-  const statikBody = `${ad}, bugün bir mentor seç: **${isimler[0]}**, **${isimler[1]}**${isimler[2] ? ` veya **${isimler[2]}**` : ""}. Birini bul, en az 15 dakika konuş — konu: şu an işinde en çok takıldığın bir şey. Akşam bana yaz: kimin yanına gittin, ne sordun ve ne götürdün?`;
+  // #5 Kariyer kapısı bağlamı — kişinin basamağı + hedeflediği bir üst basamak.
+  const benSeviyeEtiket = KARIYER_ETIKET[katilimci.kariyer_seviyesi ?? ""] ?? null;
+  const benHedefEtiket = birUstKariyerEtiket(katilimci.kariyer_seviyesi);
 
-  // #9 KİŞİSELLEŞTİRME: kişinin pusula nedeni / iç engeli / kör noktası varsa
-  // mentorluk metni o gerçek gündeme demirlenir (AI ile). AI düşerse statik metin.
-  const body = (await mentorlukBodyKisisel(db, katilimci.id, ad, isimler)) ?? statikBody;
+  // Statik metin (güvenli düşüş) — isimler doğrudan gömülü, kariyer kapısı çerçevesi.
+  const statikBody = `${ad}, bugün bir mentor seç: **${isimler[0]}**, **${isimler[1]}**${isimler[2] ? ` veya **${isimler[2]}**` : ""}. Hedeflediğin **${benHedefEtiket}** basamağını geçmiş birini bul, en az 15 dakika konuş — konu: o basamağın kapısı. Sor: oraya somut nasıl çıktın (OV, ekip, ilk 90 gün)? Akşam bana yaz: kimin yanına gittin, ne sordun ve ne somut adım götürdün?`;
+
+  // #5 KARİYER KAPISI: mentorluk metni artık kişinin hedeflediği bir üst basamağı
+  // geçmiş mentorla o basamağın kapısını (OV/ekip/ilk 90 gün) konuşmaya demirlenir.
+  const body =
+    (await mentorlukBodyKisisel(db, katilimci.id, ad, isimler, {
+      seviye: benSeviyeEtiket,
+      hedef: benHedefEtiket,
+    })) ?? statikBody;
 
   return {
     kind: "mentorluk",
