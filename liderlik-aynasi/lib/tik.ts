@@ -448,6 +448,9 @@ export async function tikCalistir(
     // #7 oyun→şahit: Gün 2'de bir fiziksel oyun (bowling/atv/bubble/hazine) az
     // önce bittiyse, isimli bağı ZORLA oyun-rolü şahit gözlemine çevir.
     let kOyunBitti = false;
+    // #4 David yakalama: Gün 2'de David (CEO) oturumu az önce (≤30 dk) bittiyse,
+    // görevi "ne sordun, ne aldın?" yakalama görevine çevir (tek sefer).
+    let kDavidBitti = false;
     if (mod === "kamp" && gun === 2) {
       const grupNo = grupNoCozumle(k.team);
       if (grupNo) {
@@ -464,6 +467,8 @@ export async function tikCalistir(
           kYorgun = true;
           kOyunBitti = true;
         }
+        // David oturumu ≤30 dk önce bittiyse yakalama penceresi açık.
+        if (grupBitenBlok(grupNo, gunDk, 30)?.tur === "david_toplanti") kDavidBitti = true;
       }
     }
     // FAZ 2.2 — MEKÂN-FARKINDA EŞLEŞTİRME: yalnız Gün 2 (Cumartesi grup programı
@@ -604,6 +609,27 @@ export async function tikCalistir(
       }
     }
 
+    // #4 DAVID YAKALAMA (öncelikli, kendine-görev): David oturumu ≤30 dk önce
+    // bittiyse ve kişi daha önce yakalamadıysa, görevi "ne sordun, ne aldın?"
+    // yakalama görevine çevir. Yanıt david_yakalama=true ile işaretlenir →
+    // sonraki görevlere/rapora akar (davidNotuGetir).
+    let davidOverride: { title: string; body: string } | null = null;
+    if (kDavidBitti && !johariOverride && !sahitOverride) {
+      const { data: oncekiDavid } = await db
+        .from("missions")
+        .select("id")
+        .eq("participant_id", k.id)
+        .eq("david_yakalama", true)
+        .limit(1)
+        .maybeSingle();
+      if (!oncekiDavid) {
+        davidOverride = {
+          title: tr.gorevler.davidYakalamaBaslik,
+          body: tr.gorevler.davidYakalamaGovde,
+        };
+      }
+    }
+
     // FAZ 5.4 — İKİ KAPI: ara sıra (bayrak açık + %15) tek görev yerine bir
     // SEÇİM sun — Kapı A = üretilen görev (doğal türü), Kapı B = karşıt lezzette
     // statik bir görev (cesaret↔bağ). İkisi de status="secim_bekliyor" +
@@ -655,29 +681,33 @@ export async function tikCalistir(
     // Özellik 5 — override zinciri: johari ve şahit birbirini dışlar (yukarıda
     // şahit yalnız !johariOverride iken kurulur). Statik şablonlar AI görevinin
     // kişisel alanlarını (neden/fayda/somutluk/kas...) taşımaz.
-    const nihaiTitle = johariOverride?.title ?? sahitOverride?.title ?? gorev.title;
-    const nihaiBody = johariOverride?.body ?? sahitOverride?.body ?? gorev.body;
+    const nihaiTitle = davidOverride?.title ?? johariOverride?.title ?? sahitOverride?.title ?? gorev.title;
+    const nihaiBody = davidOverride?.body ?? johariOverride?.body ?? sahitOverride?.body ?? gorev.body;
+    // #4 David yakalama + #7 şahit: statik override → AI görevinin kişisel
+    // alanları (neden/fayda/somutluk/kas) taşınmaz.
+    const statikOverride = !!davidOverride || !!sahitOverride;
 
     // #8 micro_sprint: sure_saat 0.5 = 30 dk. Şahit görevi sabit 2 saatlik.
     const dueAt = new Date(
-      simdi.getTime() + (sahitOverride ? 2 : gorev.sure_saat) * 3_600_000
+      simdi.getTime() + (statikOverride ? 2 : gorev.sure_saat) * 3_600_000
     );
     const { data: yeniGorev, error } = await db
       .from("missions")
       .insert({
         participant_id: k.id,
-        trait_id: johariOverride ? johariOverride.traitId : sahitOverride ? null : gorev.trait_id,
-        kind: sahitOverride ? "sahit" : gorev.kind,
+        trait_id: johariOverride ? johariOverride.traitId : statikOverride ? null : gorev.trait_id,
+        kind: davidOverride ? "yansima" : sahitOverride ? "sahit" : gorev.kind,
+        david_yakalama: !!davidOverride, // #4 rapor/görev köprüsü işareti
         title: nihaiTitle,
         body: nihaiBody,
-        difficulty: sahitOverride ? 1 : gorev.difficulty,
-        neden: sahitOverride ? null : gorev.neden,
-        fayda: sahitOverride ? null : gorev.fayda,
-        ipuclari: sahitOverride ? [] : gorev.ipuclari,
-        micro_sprint: sahitOverride ? false : gorev.micro_sprint,
-        yay_gorevi: sahitOverride ? false : gorev.yayGorevi,
-        donus_bicimi: sahitOverride ? "yaz" : gorev.donusBicimi, // #7 çeşitlilik izlemesi
-        somutluk: sahitOverride ? null : gorev.somutluk, // FAZ 1.1 — kim/ne/nerede/ne_zaman/kanit checklist
+        difficulty: statikOverride ? 1 : gorev.difficulty,
+        neden: statikOverride ? null : gorev.neden,
+        fayda: statikOverride ? null : gorev.fayda,
+        ipuclari: statikOverride ? [] : gorev.ipuclari,
+        micro_sprint: statikOverride ? false : gorev.micro_sprint,
+        yay_gorevi: statikOverride ? false : gorev.yayGorevi,
+        donus_bicimi: statikOverride ? "yaz" : gorev.donusBicimi, // #7 çeşitlilik izlemesi
+        somutluk: statikOverride ? null : gorev.somutluk, // FAZ 1.1 — kim/ne/nerede/ne_zaman/kanit checklist
         altin: altinMi, // FAZ 5.2 — nadir altın görev (3x kıvılcım)
         // Özellik 7 — zorluk merdiveni ölçümü: görevin kası + modelin doz ölçümü.
         // Johari/şahit override AI görevinin yerine geçer — o zaman kas izi yazılmaz.

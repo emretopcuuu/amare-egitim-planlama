@@ -3669,6 +3669,10 @@ export const tr = {
     sahitOyunBaslik: "Sahada gördüğün lider",
     sahitOyunGovde: (ad: string, oyun: string) =>
       `Az önce grubunla ${oyun} oynadınız. Şimdi ${ad} isimli arkadaşını düşün: oyunda nasıl bir lider oldu?\n\nKim yön verdi, kim düşeni topladı, kim enerjiyi taşıdı, kim sessizce köprü kurdu? Onda gördüğün, belki KENDİSİNİN fark etmediği BİR liderlik gücünü tek cümleyle bana yaz.\n\nSözün, kimden geldiğini asla söylemeden, onun aynasında belirecek.`,
+    // #4 David yakalama — CEO oturumu bitince "ne sordun, ne aldın?" (kariyer hazinesi)
+    davidYakalamaBaslik: "David'den kalan",
+    davidYakalamaGovde:
+      "David Chung ile aynı odadaydın — bu, çoğu insanın hayatında bir kez yaşadığı bir an.\n\nSıcağı sıcağına yaz: Ona ne sordun (ya da sormak istedin)? Aldığın tek cümlelik cevap / en çok aklında kalan şey neydi?\n\nBunu kaydediyorum — kampın sana kalan hazinesi. Kariyer yolculuğunda buna geri döneceğiz.",
     // Özellik 2 — Kimlik yüzleşmesi: her 10. puanlı görevde, biriken
     // karşı-kanıtlarla kişinin kendini sınırlayan cümlesi yüzüne tutulur.
     kimlikUst: "Ayna bir cümleni hatırlıyor",
