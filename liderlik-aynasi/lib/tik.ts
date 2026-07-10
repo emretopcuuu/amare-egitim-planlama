@@ -223,7 +223,7 @@ export async function tikCalistir(
         ? simdi.getTime() - new Date(g.responded_at).getTime()
         : 0;
       if (bekliyorMs < 30 * 60_000) continue;
-      sonuc = { puan: 7, yorum: tr.gorevler.kurtarmaYorum, response_tags: [] };
+      sonuc = { puan: 7, yorum: tr.gorevler.kurtarmaYorum, response_tags: [], taahhut: null };
     }
     const zamaninda =
       !!g.responded_at && new Date(g.responded_at) <= new Date(g.due_at);

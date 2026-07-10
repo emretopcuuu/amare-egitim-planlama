@@ -1,6 +1,7 @@
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { gorevPuanla, korNoktaGuncelle, gorevUret } from "@/lib/ayna";
+import { kampTaahhutYaz } from "@/lib/kampTaahhut";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { kampGunu } from "@/lib/kampProgrami";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
@@ -252,6 +253,10 @@ export async function POST(req: Request) {
         : {}),
     })
     .eq("id", gorev.id);
+
+  // #10 KAMP TAAHHÜT DEFTERİ: yanıtta somut iş taahhüdü (kaç görüşme/arama/…)
+  // çıktıysa yapılandırılmış kaydet — kapanış kolektif anı + Gün 3 SÖZ/plan için.
+  if (sonuc.taahhut) await kampTaahhutYaz(db, session.sub, gorev.id, sonuc.taahhut);
 
   // FAZ 3.1 — ÇİFT TARAFLI ASİMETRİK GİZLİ GÖREV reveal: bu görev bir gizli
   // bağa (baglanti_id) sahipse ve KARŞI TARAF da tamamladıysa, ikisine de
