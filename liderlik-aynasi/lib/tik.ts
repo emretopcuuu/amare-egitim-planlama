@@ -445,6 +445,9 @@ export async function tikCalistir(
       mod === "kamp" && kampGunuBugun ? siradakiMadde(kampGunuBugun, gunDk) : null;
     // #7 fiziksel yorgunluk: genel doğa bloğu veya Gün 2 grup fiziksel oyunu sonrası
     let kYorgun = bitenEtkinlik?.tur === "doga";
+    // #7 oyun→şahit: Gün 2'de bir fiziksel oyun (bowling/atv/bubble/hazine) az
+    // önce bittiyse, isimli bağı ZORLA oyun-rolü şahit gözlemine çevir.
+    let kOyunBitti = false;
     if (mod === "kamp" && gun === 2) {
       const grupNo = grupNoCozumle(k.team);
       if (grupNo) {
@@ -457,7 +460,10 @@ export async function tikCalistir(
         if (cmtBiten) kBiten = cmtBiten;
         const cmtSiradaki = cumartesiGrupSiradakiEtkinlik(grupNo, gunDk);
         if (cmtSiradaki) kSiradaki = cmtSiradaki;
-        if (grupAzOnceFiziksel(grupNo, gunDk)) kYorgun = true;
+        if (grupAzOnceFiziksel(grupNo, gunDk)) {
+          kYorgun = true;
+          kOyunBitti = true;
+        }
       }
     }
     // FAZ 2.2 — MEKÂN-FARKINDA EŞLEŞTİRME: yalnız Gün 2 (Cumartesi grup programı
@@ -577,14 +583,24 @@ export async function tikCalistir(
       gorev.kind === "bag" &&
       gorev.eslesme?.isimli &&
       !johariOverride &&
-      sahitVaryantiMi(k.id, gorev.eslesme.hedefId, bugun)
+      // #7: oyun az önce bittiyse ZORLA şahit (rasgele %12'yi bekleme); değilse
+      // normal deterministik %12 şahit varyantı.
+      (kOyunBitti || sahitVaryantiMi(k.id, gorev.eslesme.hedefId, bugun))
     ) {
       const sahitHedef = (kisiler ?? []).find((p) => p.id === gorev.eslesme!.hedefId);
       if (sahitHedef) {
-        sahitOverride = {
-          title: tr.gorevler.sahitGorevBaslik,
-          body: tr.gorevler.sahitGorevGovde(sahitHedef.full_name),
-        };
+        sahitOverride =
+          kOyunBitti && kBiten?.baslik
+            ? {
+                // #7 Oyun-rolü gözlemi: gözleyenin yanıtı sahit_gozlemleri'ne yazılır
+                // → gözlenenin sonraki görevi "biri sende şunu gördü" ile açılır.
+                title: tr.gorevler.sahitOyunBaslik,
+                body: tr.gorevler.sahitOyunGovde(sahitHedef.full_name, kBiten.baslik),
+              }
+            : {
+                title: tr.gorevler.sahitGorevBaslik,
+                body: tr.gorevler.sahitGorevGovde(sahitHedef.full_name),
+              };
       }
     }
 
