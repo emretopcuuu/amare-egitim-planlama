@@ -915,6 +915,14 @@ export async function gorevUret(
     .map((o) => (o as { donus_bicimi?: string | null }).donus_bicimi)
     .filter((b): b is string => !!b)
     .slice(0, 3);
+  // Öneri #16 — ROTASYON KURALI (tavsiye değil, kural): son İKİ AI görevi aynı
+  // dönüş biçimindeyse (ör. yaz+yaz) üçüncüsünde o biçim YASAK. Prompt'a sert
+  // yönerge gider; model yine de aynı biçimi dönerse görev tekrar_degil deseni
+  // gibi REDDEDİLİR (sonraki tikte farklı üretilir). Tekdüzelik = sıkıcılık.
+  const yasakDonusBicimi =
+    sonDonusBicimleri.length >= 2 && sonDonusBicimleri[0] === sonDonusBicimleri[1]
+      ? sonDonusBicimleri[0]
+      : null;
 
   // Öneri #8 — ODA SICAKLIĞI: görev yalnız bireyin değil ODANIN duygu ritmine
   // de otursun. Son 2 saatte kamp GENELİNDE puanlanan görevlerin ortalaması,
@@ -1359,6 +1367,8 @@ export async function gorevUret(
     oncekiGorevBasliklari: onceki.map((o) => o.title),
     // #7 son dönüş biçimleri — art arda aynısını seçme (donus_bicimi'ni farklı seç).
     sonDonusBicimleri: sonDonusBicimleri.length > 0 ? sonDonusBicimleri : null,
+    // #16 rotasyon kuralı: bu biçim BU görevde yasak (son iki görev hep buydu).
+    yasakDonusBicimi,
     // #8 odanın o anki enerjisi (kamp geneli son 2 saat).
     odaSicakligi,
     yonerge:
@@ -1403,7 +1413,7 @@ GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lid
 4) DÖNÜŞ — bana ne getireceğini söyle ve ÇEŞİTLENDİR: her görev "bana yaz" olmasın; kimi yap-ve-anlat, kimi grupla etkileş, kimi tek cümle/tek kelime. Birine BELİRLİ bir cümleyi birebir söylemesini istiyorsan ("şunu söyle", "de ki" vb.) o cümlenin TAM METNİNİ tırnak içinde MUTLAKA yaz — asla ":" ile bitirip alıntıyı boş bırakma.
 "ozellik_id"yi bu kasla uyumlu seç (cesaret→Cesaret, devretme→Sorumluluk/Takım Ruhu, zor_konusma→Dürüstlük, vizyon→Vizyonerlik, dinleme→İletişim, baglanti→Takım Ruhu/Pozitif Enerji vb.).
 
-ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz. "donus_bicimi" alanını doldur ve bağlamdaki "sonDonusBicimleri"nden FARKLI bir biçim seç (art arda hep "yaz" olmasın — sesli/grup/foto/tek_kelime ile çeşitlendir).
+ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz. "donus_bicimi" alanını doldur ve bağlamdaki "sonDonusBicimleri"nden FARKLI bir biçim seç (art arda hep "yaz" olmasın — sesli/grup/foto/tek_kelime ile çeşitlendir). Bağlamda "yasakDonusBicimi" doluysa bu bir KURALDIR: bu görevin donus_bicimi o biçim OLAMAZ ve görevin gövdesi de o biçimde dönüş istememeli — o biçimde üretirsen görev reddedilir; kalan biçimlerden görevin doğasına en uygun olanı seç.
 
 ÖZ-DENETİM (ZORUNLU): Görevi ürettikten sonra kendini denetle ve "baglam_kullanildi" + "tekrar_degil" alanlarını DÜRÜSTÇE doldur. tekrar_degil, görev "oncekiGorevBasliklari"ndan birinin tekrarı/çok benzeriyse false olmalı — bu durumda görev reddedilip yeniden üretilir, o yüzden gerçekten FARKLI bir görev üret.
 ${personaMetni ? `\n${personaMetni}\n` : ""}${kimlikMetni}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${sicakListeMetni ? `\n${sicakListeMetni}\n` : ""}${davidNotuMetni ? `\n${davidNotuMetni}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}${yolculukPlan ? `\n${yolculukPlan}\n` : ""}${yolculukKorNokta ? `\n${yolculukKorNokta}\n` : ""}
@@ -1477,6 +1487,17 @@ ${yeniYonergeler}${merdivenYonergesi}${ekstraYonerge}`,
     // kullanildi tek başına red sebebi değil: Gün 1 jenerik görevler meşru.)
     if (veri.tekrar_degil === false) {
       await aiHataYakala(db, "gorev_uretimi", new Error(`Tekrar görev reddedildi: "${veri.baslik}"`));
+      return null;
+    }
+    // Öneri #16 — ROTASYON KURALI: son iki AI görevi ile aynı dönüş biçiminde
+    // üçüncü görev katılımcıya gösterilmez (prompt'taki sert yönergeye rağmen
+    // model aynı biçimi döndüyse). Reddet — bir sonraki tikte farklı üretilir.
+    if (yasakDonusBicimi && veri.donus_bicimi === yasakDonusBicimi) {
+      await aiHataYakala(
+        db,
+        "gorev_uretimi",
+        new Error(`Rotasyon ihlali reddedildi (3× ${yasakDonusBicimi}): "${veri.baslik}"`)
+      );
       return null;
     }
 
