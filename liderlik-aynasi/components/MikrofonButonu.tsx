@@ -92,12 +92,16 @@ export default function MikrofonButonu({
   onMetin,
   disabled,
   ikon = false,
+  belirgin = false,
 }: {
   onMetin: (parca: string) => void;
   disabled?: boolean;
   // Kompakt ikon modu: dar giriş satırlarında (Hedef/Pusula sohbeti gibi)
   // textarea + Gönder ile aynı hizada duran kare ikon düğme.
   ikon?: boolean;
+  // Öneri #9 — "Anlat, ben yazayım": açık uçlu onboarding alanlarında konuşma
+  // BİRİNCİL eylem olsun diye büyük, tam genişlik, birincil stilli düğme.
+  belirgin?: boolean;
 }) {
   const [motor, setMotor] = useState<"yok" | "scribe" | "tarayici">("yok");
   const [dinliyor, setDinliyor] = useState(false);
@@ -439,7 +443,7 @@ export default function MikrofonButonu({
       ? motor === "scribe"
         ? `⏺ ${tr.ses.dinliyorKisa} ${sureYazi(kayitSn)}`
         : `⏺ ${tr.ses.dinliyorKisa}`
-      : `🎙 ${tr.ses.baslat}`;
+      : `🎙 ${belirgin ? tr.ses.anlatYazayim : tr.ses.baslat}`;
 
   // Canlı şerit: scribe modunda kayıt/sessizlik ipucu; tarayıcı modunda ara metin.
   const canliSerit = dinliyor ? (
@@ -515,8 +519,8 @@ export default function MikrofonButonu({
   }
 
   return (
-    <div className="flex flex-col items-start gap-2">
-      <div className="flex items-center gap-3">
+    <div className={`flex flex-col items-start gap-2 ${belirgin ? "w-full" : ""}`}>
+      <div className={`flex items-center gap-3 ${belirgin ? "w-full" : ""}`}>
         <button
           type="button"
           onClick={degistir}
@@ -524,10 +528,16 @@ export default function MikrofonButonu({
           aria-pressed={dinliyor}
           aria-label={dinliyor ? tr.ses.dinliyor : tr.ses.baslat}
           title={dinliyor ? tr.ses.dinliyor : undefined}
-          className={`bas-his flex h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 text-sm font-semibold transition-colors disabled:opacity-40 ${
+          className={`bas-his flex shrink-0 items-center justify-center gap-2 whitespace-nowrap transition-colors disabled:opacity-40 ${
+            belirgin
+              ? "h-12 flex-1 rounded-2xl px-4 text-base font-bold"
+              : "h-11 rounded-xl px-4 text-sm font-semibold"
+          } ${
             dinliyor
               ? "bg-red-500/80 text-white ring-2 ring-red-400/40"
-              : "border border-royal-light/40 text-slate-200 hover:bg-midnight-soft"
+              : belirgin
+                ? "btn-kor"
+                : "border border-royal-light/40 text-slate-200 hover:bg-midnight-soft"
           }`}
         >
           {etiketKisa}
