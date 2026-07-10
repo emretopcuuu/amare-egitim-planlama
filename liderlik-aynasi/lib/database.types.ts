@@ -1192,6 +1192,44 @@ export type Database = {
         }
         Relationships: []
       }
+      kamp_taahhut: {
+        Row: {
+          created_at: string
+          id: number
+          mission_id: string | null
+          ozet: string
+          participant_id: string
+          sayi: number | null
+          tur: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          mission_id?: string | null
+          ozet: string
+          participant_id: string
+          sayi?: number | null
+          tur?: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          mission_id?: string | null
+          ozet?: string
+          participant_id?: string
+          sayi?: number | null
+          tur?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kamp_taahhut_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kanit_gorevi: {
         Row: {
           created_at: string

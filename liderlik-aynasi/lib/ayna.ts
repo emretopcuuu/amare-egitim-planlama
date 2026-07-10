@@ -5,6 +5,7 @@ import { aktifOzellikler } from "@/lib/degerlendirme";
 import { pusulaOzeti, pusulaCekirdek } from "@/lib/pusula";
 import { hedefOzeti, hedefCekirdek } from "@/lib/hedef";
 import { sicakListeAktifIsimler } from "@/lib/sicakListe";
+import type { CikanTaahhut } from "@/lib/kampTaahhut";
 import { yolculukKarmaMetni } from "@/lib/yolculukKarma";
 import { oyunPlaniGetir } from "@/lib/oyunPlani";
 import { aktifUfuk } from "@/lib/planTakvim";
@@ -280,8 +281,27 @@ const TEMA_SEMASI = {
         "2-3 kısa psikolojik tema etiketi (en fazla 3 kelime, Türkçe). Örn: 'ret korkusu', 'öz şüphe', 'bağ kurma isteği'",
       maxItems: 3,
     },
+    // #10 SOMUT İŞ TAAHHÜDÜ: kişi yanıtta net bir kariyer/iş sözü verdiyse
+    // (kaç görüşme/arama/randevu/kişi/kayıt yapacağını söylediyse) çıkar; yoksa boş.
+    taahhutVar: {
+      type: "boolean" as const,
+      description: "Yanıt SOMUT bir iş/kariyer taahhüdü içeriyor mu (bir sayı + eylem)?",
+    },
+    taahhutTur: {
+      type: "string" as const,
+      enum: ["gorusme", "arama", "randevu", "liste", "kayit", "diger"],
+      description: "Taahhüdün türü (taahhutVar=true ise).",
+    },
+    taahhutSayi: {
+      type: "integer" as const,
+      description: "Taahhüt edilen adet; sayı belirtilmediyse 0.",
+    },
+    taahhutOzet: {
+      type: "string" as const,
+      description: "Taahhüdün kısa cümlesi (taahhutVar=true ise), ör. 'pazartesi 3 kişiyi arayacak'.",
+    },
   },
-  required: ["temalar"],
+  required: ["temalar", "taahhutVar", "taahhutTur", "taahhutSayi", "taahhutOzet"],
   additionalProperties: false,
 };
 
@@ -453,7 +473,7 @@ async function kocuOzeti(db: Db, pid: string): Promise<string[] | null> {
 async function temalarCikar(
   gorev: { title: string; body: string; kind: string },
   yanitMetni: string
-): Promise<string[]> {
+): Promise<{ temalar: string[]; taahhut: CikanTaahhut | null }> {
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
@@ -465,7 +485,7 @@ async function temalarCikar(
         format: { type: "json_schema", schema: TEMA_SEMASI },
       },
       system:
-        "Bir liderlik kampı görev yanıtını analiz et. Kişinin yanıtında öne çıkan 2-3 psikolojik tema, duygu veya örüntüyü kısa etiket olarak çıkar. Örnekler: 'ret korkusu', 'öz güven eksikliği', 'bağ kurma isteği', 'mükemmeliyetçilik', 'söz vermekten kaçınma'. Yalnızca JSON döndür.",
+        "Bir liderlik kampı görev yanıtını analiz et. (1) Kişinin yanıtında öne çıkan 2-3 psikolojik tema/duygu/örüntüyü kısa etiket olarak çıkar (ör. 'ret korkusu', 'bağ kurma isteği'). (2) Kişi SOMUT bir iş/kariyer taahhüdü verdiyse (kaç görüşme/arama/randevu/kişi/kayıt yapacağını söylediyse) taahhutVar=true yap ve tür/sayı/özet doldur; net bir taahhüt yoksa taahhutVar=false ve alanları boş/0 bırak. Uydurma — yalnız kişinin AÇIKÇA söylediğini al. Yalnızca JSON döndür.",
       messages: [
         {
           role: "user",
@@ -477,13 +497,24 @@ async function temalarCikar(
         },
       ],
     });
-    const veri = jsonCoz<{ temalar: string[] }>(yanit);
-    return (veri?.temalar ?? [])
+    const veri = jsonCoz<{
+      temalar: string[];
+      taahhutVar?: boolean;
+      taahhutTur?: string;
+      taahhutSayi?: number;
+      taahhutOzet?: string;
+    }>(yanit);
+    const temalar = (veri?.temalar ?? [])
       .slice(0, 3)
       .map((t) => String(t).trim().slice(0, 40))
       .filter((t) => t.length > 0);
+    const taahhut =
+      veri?.taahhutVar && veri.taahhutOzet?.trim()
+        ? { tur: veri.taahhutTur ?? "diger", sayi: veri.taahhutSayi ?? null, ozet: veri.taahhutOzet }
+        : null;
+    return { temalar, taahhut };
   } catch {
-    return [];
+    return { temalar: [], taahhut: null };
   }
 }
 
@@ -1514,13 +1545,13 @@ ${yeniYonergeler}${merdivenYonergesi}${ekstraYonerge}`,
 export async function gorevPuanla(
   gorev: { title: string; body: string; kind: string },
   yanitMetni: string
-): Promise<{ puan: number; yorum: string; response_tags: string[] } | null> {
+): Promise<{ puan: number; yorum: string; response_tags: string[]; taahhut: CikanTaahhut | null } | null> {
   try {
     const client = new Anthropic();
     // Puanlama (Haiku) ve tema çıkarımı (Haiku) paralel başlar.
     // MALİYET: puanlama yanıt başına çalışır; Haiku 4.5 (5× ucuz) yeterli.
     // Haiku effort'u desteklemiyor → output_config'de yalnız format.
-    const [yanit, temalar] = await Promise.all([
+    const [yanit, tema] = await Promise.all([
       client.messages.create({
         model: "claude-haiku-4-5",
         max_tokens: 768,
@@ -1557,7 +1588,8 @@ export async function gorevPuanla(
     return {
       puan: Math.min(10, Math.max(1, veri.puan)),
       yorum: (veri.yorum ?? "").slice(0, 400),
-      response_tags: temalar, // #2
+      response_tags: tema.temalar, // #2
+      taahhut: tema.taahhut, // #10 somut iş taahhüdü (varsa)
     };
   } catch {
     return null;
