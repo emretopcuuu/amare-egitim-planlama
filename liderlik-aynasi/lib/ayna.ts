@@ -1059,6 +1059,7 @@ export async function gorevUret(
   // o an aynı mekânda/boşta olanlardan seçilir.
   let eslesmeHedef: EslesmeAday | null = null;
   let eslesmeIsimliMi = false;
+  let ikinciBulusma = false; // #5 aynı (yüksek-gerçeklik) partnerle Gün 3 derinleşmesi
   if (tur === "bag") {
     // #9 AKTİFLİK FİLTRESİ (150 kişi ölçeği): isimli eşleşme hedefi yalnız
     // uygulamaya EN AZ BİR KEZ girmiş (first_login_at dolu) kişilerden seçilir.
@@ -1074,7 +1075,25 @@ export async function gorevUret(
       const mekanIdler = new Set(mekanFarkindaAdaylar.map((a) => a.id));
       adaylar = adaylar.filter((a) => mekanIdler.has(a.id));
     }
-    if (adaylar.length > 0) {
+    // #5 İKİNCİ BULUŞMA: Gün 3'te, ilk konuşması GERÇEK olan (gercek_miydi≥4) bir
+    // partnerle YENİDEN eşleş — bu sefer daha derin. Balancer'ın "aynı çift bir
+    // kez" kuralını bu çift için bilinçli deler; derinleşme yayı kurulur.
+    if (gun >= 3 && adaylar.length > 0) {
+      const { data: gercekCiftler } = await db
+        .from("gorev_eslesme")
+        .select("hedef_id, gercek_miydi, created_at")
+        .eq("kaynak_id", katilimci.id)
+        .gte("gercek_miydi", 4)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const partnerId = gercekCiftler?.[0]?.hedef_id as string | undefined;
+      const partner = partnerId ? adaylar.find((a) => a.id === partnerId) : null;
+      if (partner) {
+        eslesmeHedef = partner;
+        ikinciBulusma = true;
+      }
+    }
+    if (!eslesmeHedef && adaylar.length > 0) {
       const tercih = await karsilasmaBul(db, katilimci.id);
       eslesmeHedef = await eslesmeHedefiSec(db, katilimci.id, adaylar, new Date(), tercih?.partnerId ?? null);
     }
@@ -1131,6 +1150,10 @@ export async function gorevUret(
       ? eslesmeHedef && eslesmeIsimliMi
         ? `BAĞ GÖREVİ (İSİMLİ EŞLEŞME): Adayı doğrudan "${eslesmeHedef.full_name}" isimli kişiye yönlendir — adını göreve AÇIKÇA yaz (ör. "${eslesmeHedef.full_name}'i bul..."). ${eslesmeHedef.team ? `Bu kişinin GERÇEK takımı: "${eslesmeHedef.team}" — takımdan bahsedeceksen SADECE bu ismi kullan, başka bir takım adı UYDURMA.` : "Bu kişinin takımı sistemde kayıtlı değil — takım adı UYDURMA, hiç takım/grup numarası yazma."} ÖNEMLİ UYARI: Eşleşmeler kamp genelinde yapılır, bu kişi görevi alan adayla AYNI takımda OLMAYABİLİR — adayın kendi takımını ("${katilimci.team ?? "bilinmiyor"}") bu kişinin takımıymış gibi YAZMA; bu ikisini karıştırmak kişiyi yanlış gruba gönderir. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin.`
         : `BAĞ GÖREVİ (isimsiz — bu kişi için şu an uygun eşleşme adayı yok): Adayı KENDİ SEÇECEĞİ gerçek bir insanla bağlantı kurmaya yönlendir. Kişinin KENDİSİNİN belirleyebileceği ifadeler kullan: "az tanıdığın biri", "sohbet etmek isteyip ertelediğin biri", "bugün gözüne çarpan biri". YASAK: numaralı grup / takım referansı verme — "Grup 4'ten biri", "3. gruptan biri" gibi ifadeler ASLA kullanma (kişi o grupta kimlerin olduğunu ezbere bilmiyor, görev boşta kalır). Kimi seçeceğine kişinin kendisi karar verebilmeli. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
+      : "",
+    // #5 İKİNCİ BULUŞMA — aynı (ilk konuşması gerçek olan) partnerle derinleşme.
+    tur === "bag" && ikinciBulusma && eslesmeHedef && eslesmeIsimliMi
+      ? `İKİNCİ BULUŞMA (DERİNLEŞME — ZORUNLU çerçeve): "${eslesmeHedef.full_name}" ile ilk konuşmanız GERÇEKTİ; bugün onunla İKİNCİ kez, bir adım DAHA DERİN buluşsun. Yüzeysel tanışma DEĞİL: ilk konuşmadan ileri git — birbirinize gerçek hedefinizi ya da en büyük engelinizi paylaşın, ya da KARŞILIKLI küçük bir taahhüt verin ("birbirimize şunu söz verelim"). Görev bunu açıkça istesin ve ilk buluşmaya nazikçe atıf yapsın.`
       : "",
     // #8 Micro-sprint
     microSprint
