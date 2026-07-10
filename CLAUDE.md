@@ -100,6 +100,16 @@ adımları ve içerik TODO'ları kendi README'sinde.
 
 ## Son tamamlanan işler
 
+- **Kamp görev motoru #4 — kümelenmiş-paralel dağıtım** (PR #732, merged):
+  `lib/tik.ts` dağıtım döngüsü sıralıydı (her `gorevUret` ~2 AI çağrısı,
+  birbirini bekliyordu, kamp tavanı 5/tik) → etkinlik-sonrası patlamada 30-40
+  kişiye görev ~35 dk kuyrukta damlıyordu. Gövde `kisiyeGorevDagit(k)`'e alındı
+  (`continue`→`return`), `ES_ZAMAN=6` eşzamanlılıkla kümelenmiş `Promise.all` ile
+  dağıtılıyor; kamp tavanı 5→24. Kişi başına görev sayısı/kalitesi DEĞİŞMEZ,
+  yalnız duvar-saati düşer (~6× hızlanma, patlama gecikmesi ~35 dk→~1-2 tik).
+  Altın kotası `await`'ten önce eşzamanlı düşülür; eşzamanlılık 6'da tutuldu
+  (`eslesmeHedefiSec` DB yarışı küçük kalsın). `app/api/tik` `maxDuration` 60→120.
+  Tahmini kamp günlük AI maliyeti ~$25-32/gün (3 gün ≈ $80-105).
 - **Ayna ses efektleri** (PR #700, merged): 11 ElevenLabs SFX + `lib/sesEfekti.ts`
   + ayarlarda aç/kapa (varsayılan açık) + `proxy.ts` statik-ses muafiyeti.
   11/11 tarayıcıda çalar test edildi. (Bkz. Önemli akışlar → Ses efektleri.)
