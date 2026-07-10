@@ -31,6 +31,26 @@ export const tr = {
     kal: "Devam et",
     cik: "Çık",
   },
+  // [#2] Sıcak liste — kişinin gerçek aday listesi (kamp görevleri bunu kullanır).
+  sicakListe: {
+    geri: "Geri",
+    baslik: "Sıcak Liste",
+    aciklama:
+      "Hayatının değişeceğini bilse ilk kimin bilmesini isterdin? Aklına gelen isimleri yaz — kampta AYNA görevlerin bu isimlerle çalışır, kapanışta planına akar.",
+    isimYer: "Bir isim yaz…",
+    ekle: "Ekle",
+    sil: "Sil",
+    bos: "Henüz isim yok. İlk aklına geleni yaz — mükemmel liste değil, ilk 3 isim yeter.",
+    sayac: (n: number) => `${n} isim`,
+    kayitSayac: (n: number) => `${n} kayıt 🎉`,
+    durum: {
+      aday: "Aday",
+      temas: "Temas",
+      randevu: "Randevu",
+      kayit: "Kayıt ✓",
+      pas: "Pas",
+    } as Record<string, string>,
+  },
   // Görünür internet kalkanı: aday "verim kayboldu mu?" korkusu yaşamasın
   baglanti: {
     cevrimdisi: "İnternet yok — verilerin bu cihazda güvende. Bağlanınca otomatik gönderilecek.",

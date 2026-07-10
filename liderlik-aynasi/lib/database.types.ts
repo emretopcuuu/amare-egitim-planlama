@@ -33,7 +33,15 @@ export type Database = {
           kaynak?: string
           participant_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ai_istek_log_participant_fk"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       assignments: {
         Row: {
@@ -1006,6 +1014,32 @@ export type Database = {
           },
         ]
       }
+      ikinci_ayna: {
+        Row: {
+          content: string
+          created_at: string
+          participant_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          participant_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          participant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ikinci_ayna_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: true
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       is_verisi: {
         Row: {
           created_at: string
@@ -1884,27 +1918,33 @@ export type Database = {
           },
         ]
       }
-      ikinci_ayna: {
+      onboarding_hatirlatma: {
         Row: {
-          participant_id: string
-          content: string
           created_at: string
+          hedef: string
+          id: number
+          kanal: string
+          participant_id: string
         }
         Insert: {
-          participant_id: string
-          content: string
           created_at?: string
+          hedef: string
+          id?: never
+          kanal?: string
+          participant_id: string
         }
         Update: {
-          participant_id?: string
-          content?: string
           created_at?: string
+          hedef?: string
+          id?: never
+          kanal?: string
+          participant_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "ikinci_ayna_participant_id_fkey"
+            foreignKeyName: "onboarding_hatirlatma_participant_id_fkey"
             columns: ["participant_id"]
-            isOneToOne: true
+            isOneToOne: false
             referencedRelation: "participants"
             referencedColumns: ["id"]
           },
@@ -2040,7 +2080,6 @@ export type Database = {
           camp_unlock_token: string | null
           camp_unlocked_at: string | null
           cinsiyet: string | null
-          yas: number | null
           city: string | null
           consent_at: string | null
           created_at: string
@@ -2059,7 +2098,6 @@ export type Database = {
           login_code: string
           onboarding_hatirlatma_at: string | null
           onboarding_hatirlatma_sayi: number
-          son_ufuk_toren: string | null
           onboarding_toren_at: string | null
           phone: string | null
           profil_foto_path: string | null
@@ -2067,7 +2105,9 @@ export type Database = {
           sahne_onay: boolean
           sicak_an: Json | null
           simulasyon: boolean
+          son_ufuk_toren: string | null
           team: string | null
+          yas: number | null
           yeniden_giris_basamak: number
           yuz_fotolari: Json
         }
@@ -2076,9 +2116,8 @@ export type Database = {
           ayna_ses?: string
           ayna_ses_secildi_at?: string | null
           camp_unlock_token?: string | null
-          cinsiyet?: string | null
-          yas?: number | null
           camp_unlocked_at?: string | null
+          cinsiyet?: string | null
           city?: string | null
           consent_at?: string | null
           created_at?: string
@@ -2097,7 +2136,6 @@ export type Database = {
           login_code: string
           onboarding_hatirlatma_at?: string | null
           onboarding_hatirlatma_sayi?: number
-          son_ufuk_toren?: string | null
           onboarding_toren_at?: string | null
           phone?: string | null
           profil_foto_path?: string | null
@@ -2105,7 +2143,9 @@ export type Database = {
           sahne_onay?: boolean
           sicak_an?: Json | null
           simulasyon?: boolean
+          son_ufuk_toren?: string | null
           team?: string | null
+          yas?: number | null
           yeniden_giris_basamak?: number
           yuz_fotolari?: Json
         }
@@ -2114,9 +2154,8 @@ export type Database = {
           ayna_ses?: string
           ayna_ses_secildi_at?: string | null
           camp_unlock_token?: string | null
-          cinsiyet?: string | null
-          yas?: number | null
           camp_unlocked_at?: string | null
+          cinsiyet?: string | null
           city?: string | null
           consent_at?: string | null
           created_at?: string
@@ -2135,7 +2174,6 @@ export type Database = {
           login_code?: string
           onboarding_hatirlatma_at?: string | null
           onboarding_hatirlatma_sayi?: number
-          son_ufuk_toren?: string | null
           onboarding_toren_at?: string | null
           phone?: string | null
           profil_foto_path?: string | null
@@ -2143,7 +2181,9 @@ export type Database = {
           sahne_onay?: boolean
           sicak_an?: Json | null
           simulasyon?: boolean
+          son_ufuk_toren?: string | null
           team?: string | null
+          yas?: number | null
           yeniden_giris_basamak?: number
           yuz_fotolari?: Json
         }
@@ -2758,6 +2798,47 @@ export type Database = {
           value?: string
         }
         Relationships: []
+      }
+      sicak_liste: {
+        Row: {
+          aciklama: string | null
+          created_at: string
+          durum: string
+          id: number
+          isim: string
+          participant_id: string
+          sira: number
+          updated_at: string
+        }
+        Insert: {
+          aciklama?: string | null
+          created_at?: string
+          durum?: string
+          id?: never
+          isim: string
+          participant_id: string
+          sira?: number
+          updated_at?: string
+        }
+        Update: {
+          aciklama?: string | null
+          created_at?: string
+          durum?: string
+          id?: never
+          isim?: string
+          participant_id?: string
+          sira?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sicak_liste_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "participants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       soz: {
         Row: {
