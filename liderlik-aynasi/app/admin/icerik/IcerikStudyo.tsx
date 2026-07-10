@@ -139,16 +139,21 @@ export default function IcerikStudyo({
   ekTon,
   gununTemasi,
   gununCumlesi = "",
+  dersKavrami = "",
 }: {
   ekTon: string;
   gununTemasi: string;
   gununCumlesi?: string;
+  dersKavrami?: string;
 }) {
   return (
     <div className="space-y-4">
       <GununCumlesiSecici baslangic={gununCumlesi} />
       <Alan anahtar="ayna_ek_ton" etiket={t.ekTonBaslik} ipucu={t.ekTonIpucu} yer={t.ekTonYer} baslangic={ekTon} />
       <Alan anahtar="gunun_temasi" etiket={t.temaBaslik} ipucu={t.temaIpucu} yer={t.temaYer} baslangic={gununTemasi} />
+      {/* #4 Ders kavramı — sahnede işlenen dersin anahtar kavramı; görev bunu
+          "30 dk içinde davranışa çevir" hamlesine bağlar (oturum bitince güçlü). */}
+      <Alan anahtar="ders_kavrami" etiket={t.dersKavramiBaslik} ipucu={t.dersKavramiIpucu} yer={t.dersKavramiYer} baslangic={dersKavrami} />
     </div>
   );
 }
