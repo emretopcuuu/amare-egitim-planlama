@@ -100,6 +100,25 @@ adımları ve içerik TODO'ları kendi README'sinde.
 
 ## Son tamamlanan işler
 
+- **Eğlence/sürtünme paketi (saha geri bildirimi: "en sıkıcı şey" + "sesli
+  yazma duymuyor")** — 3 PR, merged:
+  - **PR #734 sesli yazma güvenilirliği:** `MikrofonButonu` boş kayıt/boş
+    çeviriyi artık SESSİZ geçmiyor; başarısız çeviride kayıt saklanır +
+    "↻ Tekrar gönder"; 429'da motor tarayıcıya DÜŞÜRÜLMEZ (yalnız 503 veya
+    üst üste 2 serviste); AnalyserNode ile GERÇEK VU metre + 4 sn gerçek
+    sessizlikte "mikrofon ses almıyor" uyarısı. Yeni tr.ses metinleri.
+  - **PR #735 "Anlat, ben yazayım":** `MikrofonButonu`'na `belirgin` modu
+    (büyük birincil düğme). Ön farkındalıkta mikrofon textarea'nın ÜSTÜNDE,
+    değerlendirme yorumunda belirgin. Pusula'nın YEREL salt-Web-Speech
+    SesButonu'su kaldırıldı (iOS'ta "duymuyor"un muhtemel kaynağı) → ortak
+    MikrofonButonu (ikon, Scribe destekli).
+  - **PR #736 dönüş biçimi rotasyonu:** son İKİ AI görevi aynı
+    `donus_bicimi`ndeyse üçüncüde o biçim YASAK (`yasakDonusBicimi` bağlam +
+    sert prompt kuralı + kod tarafı ret, `tekrar_degil` deseni).
+  - Bekleyen eğlence önerileri (kullanıcı 26'lık listeden 1-9-16'yı seçti;
+    gerisi yapılmadı): yeni-gelen modu, kart destesi/swipe değerlendirme,
+    zarf+mühür, verdikçe açılır, tahmin katmanı, kamp bileti, QR noktaları,
+    kamp radyosu vb.
 - **Kamp görev motoru #4 — kümelenmiş-paralel dağıtım** (PR #732, merged):
   `lib/tik.ts` dağıtım döngüsü sıralıydı (her `gorevUret` ~2 AI çağrısı,
   birbirini bekliyordu, kamp tavanı 5/tik) → etkinlik-sonrası patlamada 30-40
