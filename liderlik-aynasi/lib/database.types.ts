@@ -1653,6 +1653,7 @@ export type Database = {
           body: string
           carried_at: string | null
           cesaret_push: boolean
+          david_yakalama: boolean
           difficulty: number
           domino: boolean
           donus_bicimi: string | null
@@ -1704,6 +1705,7 @@ export type Database = {
           body: string
           carried_at?: string | null
           cesaret_push?: boolean
+          david_yakalama?: boolean
           difficulty?: number
           domino?: boolean
           donus_bicimi?: string | null
@@ -1755,6 +1757,7 @@ export type Database = {
           body?: string
           carried_at?: string | null
           cesaret_push?: boolean
+          david_yakalama?: boolean
           difficulty?: number
           domino?: boolean
           donus_bicimi?: string | null
