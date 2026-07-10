@@ -3879,6 +3879,13 @@ export const tr = {
     kayitIpucu: "Konuş — bitirince düğmeye tekrar dokun.",
     cevriliyor: "✍️ Yazıya çevriliyor…",
     cevirihata: "Çevrilemedi — tekrar dene ya da elle yaz.",
+    // Güvenilirlik paketi: boş sonuç / kısa kayıt / limit / gerçek sessizlik
+    // durumlarında SESSİZ kalma — kişiye ne olduğunu ve ne yapacağını söyle.
+    duyamadim: "Kayıtta konuşma bulamadım — telefona biraz daha yakın ve uzun konuşur musun?",
+    kisaKayit: "Kayıt çok kısa oldu — düğmeye dokun, bir-iki cümle konuş, sonra durdur.",
+    yogun: "Şu an çok yoğunum. Birkaç saniye bekleyip 'Tekrar gönder'e dokun — kaydın bende.",
+    tekrarGonder: "↻ Tekrar gönder",
+    mikSesYok: "Mikrofon ses almıyor gibi — telefonu yaklaştır; olmadı mikrofon iznini kontrol et.",
     hata: {
       izin: "Mikrofon izni gerekli. Adres çubuğundaki 🎙 simgesine dokunup izin ver, sonra tekrar dene.",
       mesgul:
