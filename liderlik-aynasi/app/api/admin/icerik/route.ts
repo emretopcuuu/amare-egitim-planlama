@@ -7,7 +7,7 @@ export const maxDuration = 30;
 // GELİŞTİRME #10 (2.tur): İçerik Stüdyosu. Admin, koda dokunmadan kampı uyarlar.
 // Yalnız beyaz-listedeki anahtarlar düzenlenebilir; değerler settings'e yazılır
 // ve AYNA üretimine canlı yansır.
-const DUZENLENEBILIR = new Set(["ayna_ek_ton", "gunun_temasi", "gunun_cumlesi"]);
+const DUZENLENEBILIR = new Set(["ayna_ek_ton", "gunun_temasi", "gunun_cumlesi", "ders_kavrami"]);
 
 export async function POST(req: Request) {
   if (!(await adminOturumu())) {

@@ -604,7 +604,7 @@ export async function gorevUret(
     onFarkindalikOzeti(db, katilimci.id),
     kocuOzeti(db, katilimci.id),
     db.from("settings").select("value").eq("key", "kapali_gorev_turleri").maybeSingle(),
-    db.from("settings").select("key, value").in("key", ["ayna_ek_ton", "gunun_temasi"]),
+    db.from("settings").select("key, value").in("key", ["ayna_ek_ton", "gunun_temasi", "ders_kavrami"]),
     db
       .from("missions")
       .select("id", { count: "exact", head: true })
@@ -764,6 +764,10 @@ export async function gorevUret(
   const icerik = new Map((icerikAyar?.data ?? []).map((s) => [s.key, s.value]));
   const aynaEkTon = (icerik.get("ayna_ek_ton") ?? "").trim();
   const gununTemasi = (icerik.get("gunun_temasi") ?? "").trim();
+  // #4 DERS KAVRAMI: admin sahnede işlenen dersin 2-3 anahtar kavramını girer;
+  // görev o kavramı "30 dk içinde davranışa çevir" hamlesine bağlar (bir oturum
+  // az önce bittiyse daha güçlü). Ders içeriği ile görev içeriği arası köprü.
+  const dersKavrami = mod === "kamp" ? (icerik.get("ders_kavrami") ?? "").trim() : "";
   let kapaliTurler: string[] = [];
   try {
     if (kapaliAyar?.data?.value) kapaliTurler = JSON.parse(kapaliAyar.data.value);
@@ -1143,6 +1147,13 @@ export async function gorevUret(
       ? `KOLEKTİF AN: Az önce tüm salon aynı anda "${sonKolektif.title}" senkron görevini yaptı. İSTERSEN kişisel görevi o ortak enerjinin doğal devamına bağla — zorunlu değil.`
       : "",
     gununTemasi ? `GÜNÜN TEMASI (görevi mümkünse buna dik): ${gununTemasi}` : "",
+    dersKavrami
+      ? `DERS KAVRAMI (ŞU AN SAHNEDE İŞLENEN — çok güçlü, göreve MUTLAKA kat): "${dersKavrami}". ${
+          bitenEtkinlik
+            ? "Az önce bir oturum bitti; görevi bu kavramı ÖĞRENDİĞİNİ 30 DK İÇİNDE somut bir DAVRANIŞA çeviren tek bir lider hamlesine bağla."
+            : "Görevi bu kavramı bugün yaşatan somut bir lider hamlesine bağla."
+        }`
+      : "",
     aynaEkTon ? `ADMIN TON AYARI: ${aynaEkTon}` : "",
     gorevIpucu
       ? `ETKİNLİĞE ÖZEL YÖNERGE (MUTLAKA kat): ${gorevIpucu}`

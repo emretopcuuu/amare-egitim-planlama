@@ -18,7 +18,7 @@ export default async function IcerikPage() {
   const { data } = await db
     .from("settings")
     .select("key, value")
-    .in("key", ["ayna_ek_ton", "gunun_temasi", "gunun_cumlesi"]);
+    .in("key", ["ayna_ek_ton", "gunun_temasi", "gunun_cumlesi", "ders_kavrami"]);
   const harita = new Map((data ?? []).map((s) => [s.key, s.value]));
 
   return (
@@ -31,6 +31,7 @@ export default async function IcerikPage() {
         ekTon={harita.get("ayna_ek_ton") ?? ""}
         gununTemasi={harita.get("gunun_temasi") ?? ""}
         gununCumlesi={harita.get("gunun_cumlesi") ?? ""}
+        dersKavrami={harita.get("ders_kavrami") ?? ""}
       />
     </main>
   );
