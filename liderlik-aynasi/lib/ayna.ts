@@ -4,6 +4,7 @@ import type { Db } from "@/lib/degerlendirme";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { pusulaOzeti, pusulaCekirdek } from "@/lib/pusula";
 import { hedefOzeti, hedefCekirdek } from "@/lib/hedef";
+import { sicakListeAktifIsimler } from "@/lib/sicakListe";
 import { yolculukKarmaMetni } from "@/lib/yolculukKarma";
 import { oyunPlaniGetir } from "@/lib/oyunPlani";
 import { aktifUfuk } from "@/lib/planTakvim";
@@ -676,6 +677,18 @@ export async function gorevUret(
           : ""
       } Katlama, lider yetiştirme, devretme, üst seviye etki gibi konuları hedefle.`
     : `KARİYER SEVİYESİ: Bu kişi lider veya üzeri kariyer basamağında — görev yeni başlayan düzeyi değil, LİDER düzeyi olmalı. Katlama, lider yetiştirme, devretme, ekip önünde duruş, zor kararlar, üst seviye etki gibi konuları hedefle.`;
+  // #3 SICAK LİSTE → GÖREV: kişinin gerçek aday isimleri (kamp modunda) prompt'a
+  // girsin; görev soyut "birini ara" değil GERÇEK bir isme demirlensin. Gün 1-2
+  // hazırlık (düşündür/planlat, kamp alanında kal), Gün 3 aksiyon (buradan ilk
+  // adım — küçük mesaj/arama). Liste boşsa metin boş → davranış değişmez.
+  const sicakIsimler = mod === "kamp" ? await sicakListeAktifIsimler(db, katilimci.id) : [];
+  const sicakListeMetni = sicakIsimler.length
+    ? `SICAK LİSTE (kişinin GERÇEK aday isimleri — kullan): ${sicakIsimler.join(", ")}. ${
+        gun >= 3
+          ? "GÜN 3 AKSİYON: Uygunsa görevi bu isimlerden GERÇEK birine BUGÜN buradan atılan KÜÇÜK bir ilk adım olarak kur — tek içten bir mesaj at ya da kısa bir arama; abartma, 'satış' yaptırma, sadece ilk teması/randevu isteğini kur. Kişinin adını kullan."
+          : "GÜN 1-2 HAZIRLIK: Görevi bu isimlerden BİRİNİ düşündürecek/planlatacak biçimde kur (kampta öğrendiğinle ona nasıl gerçek değer katarsın) — eylem KAMP ALANINDA kalsın, henüz 'onu ara' DEME."
+      }`
+    : "";
   // Kamp sonrası yolculukta hâle özel 90 günlük odak.
   const yolculukOdak = mod === "yolculuk" ? personaYolculukOdak(persona) : "";
   // [E10] Yolculukta haftalık görev karması kişinin HEDEFİNDEN oranlanır
@@ -1308,7 +1321,7 @@ GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lid
 ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz. "donus_bicimi" alanını doldur ve bağlamdaki "sonDonusBicimleri"nden FARKLI bir biçim seç (art arda hep "yaz" olmasın — sesli/grup/foto/tek_kelime ile çeşitlendir).
 
 ÖZ-DENETİM (ZORUNLU): Görevi ürettikten sonra kendini denetle ve "baglam_kullanildi" + "tekrar_degil" alanlarını DÜRÜSTÇE doldur. tekrar_degil, görev "oncekiGorevBasliklari"ndan birinin tekrarı/çok benzeriyse false olmalı — bu durumda görev reddedilip yeniden üretilir, o yüzden gerçekten FARKLI bir görev üret.
-${personaMetni ? `\n${personaMetni}\n` : ""}${kimlikMetni}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}${yolculukPlan ? `\n${yolculukPlan}\n` : ""}${yolculukKorNokta ? `\n${yolculukKorNokta}\n` : ""}
+${personaMetni ? `\n${personaMetni}\n` : ""}${kimlikMetni}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${sicakListeMetni ? `\n${sicakListeMetni}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}${yolculukPlan ? `\n${yolculukPlan}\n` : ""}${yolculukKorNokta ? `\n${yolculukKorNokta}\n` : ""}
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
 
 DEĞER KİŞİSELLEŞTİRMESİ: Bağlamda "degerler" doluysa görevi kişinin seçtiği temel değerlerinden (temelDegerler) BİRİNİ bugün somut bir eylemle YAŞAMA meydan okumasına bağla — değeri soyut anmakla kalma, o değerin gerektirdiği gerçek bir lider hamlesini istet (örn. değeri "Dürüstlük" ise bugün kaçındığı zor bir doğruyu söyle; "Cesaret" ise ertelediği ilk adımı at; "Takım Ruhu" ise geride kalan birine uzan). Görevi tek bir değere demirle (hepsini birden sıralama), değeri başlıkta ya da dönüşte kişinin diliyle çağır. Uygun olduğunda değer ile çalışılan lider kasını örtüştür. Değer yoksa bu bağı atla.
