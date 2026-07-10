@@ -7,6 +7,10 @@ import { tr } from "@/lib/i18n/tr";
 // "biz bunu yaptık" der + kısa kanıt yazar → ödev kapanır, gruptaki HERKESE
 // toplu kıvılcım yazılır (senkron görev deseni). Kolektif başarı hissi.
 const GRUP_ODEV_KIVILCIMI = 12;
+// #8 bireysel katkı: ödevi FİİLEN yapıp kanıtı yazan (kapatan) kişiye liderlik
+// bonusu — herkese eşit dağıtımın "bedavacılık" tarafını dengeler; adım atan
+// ödüllenir, kolektif taban korunur.
+const KAPATAN_BONUSU = 10;
 const KANIT_MAX = 400;
 
 export async function POST(req: Request) {
@@ -52,18 +56,24 @@ export async function POST(req: Request) {
     .eq("team", ben.team)
     .eq("role", "participant");
   const simdi = new Date().toISOString();
-  const satirlar = (uyeler ?? []).map((u) => ({
-    participant_id: u.id,
-    kind: "senkron" as const,
-    title: `Grup ödevi tamam: ${odev.baslik}`.slice(0, 120),
-    body: "Grubun birlikte bir şey başardı. Bu kıvılcım hepinizin.",
-    status: "scored" as const,
-    spark_points: GRUP_ODEV_KIVILCIMI,
-    scored_at: simdi,
-    issued_at: simdi,
-    due_at: simdi, // senkron/anlık — deadline'ı yok, şimdiye eşitle
-    ai_comment: tr.grup.tamamTesekkur,
-  }));
+  const satirlar = (uyeler ?? []).map((u) => {
+    // #8 Kapatan (fiilen yapan) → liderlik bonusu + kişisel tebrik; diğerleri taban.
+    const kapatanMi = u.id === session.sub;
+    return {
+      participant_id: u.id,
+      kind: "senkron" as const,
+      title: `Grup ödevi tamam: ${odev.baslik}`.slice(0, 120),
+      body: kapatanMi
+        ? "Adımı sen attın — grubunu sırtladın. Bu liderlik bonusu senin."
+        : "Grubun birlikte bir şey başardı. Bu kıvılcım hepinizin.",
+      status: "scored" as const,
+      spark_points: kapatanMi ? GRUP_ODEV_KIVILCIMI + KAPATAN_BONUSU : GRUP_ODEV_KIVILCIMI,
+      scored_at: simdi,
+      issued_at: simdi,
+      due_at: simdi, // senkron/anlık — deadline'ı yok, şimdiye eşitle
+      ai_comment: tr.grup.tamamTesekkur,
+    };
+  });
   if (satirlar.length > 0) {
     await db.from("missions").insert(satirlar);
     for (const u of uyeler ?? []) {
