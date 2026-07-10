@@ -3869,6 +3869,8 @@ export const tr = {
   },
   ses: {
     baslat: "Sesle Yaz",
+    // Öneri #9 — açık uçlu alanlarda konuşma birincil eylem (belirgin mod).
+    anlatYazayim: "Anlat, ben yazayım",
     dinliyor: "Dinliyorum… durdurmak için dokun",
     dinliyorKisa: "Dinliyorum",
     // Canlı önizleme şeridi: konuşurken ara (interim) sonuçlar burada akar —
