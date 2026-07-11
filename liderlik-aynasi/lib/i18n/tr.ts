@@ -3428,6 +3428,8 @@ export const tr = {
     aktifYokBaslik: "Şu an görevin yok",
     aktifYok: "AYNA yanında — yeni bir görev her an gelebilir.",
     bosIzliyor: "AYNA seni izliyor",
+    // Faz 3 — İDDİA: görev AYNA-İtirazcı bahsi çerçevesinde geldi.
+    bahisRozet: "AYNA–İtirazcı bahsi · hakem sensin",
     bosHerAn: "Sıradaki görev her an gelebilir.",
     bosSiradaki: (dk: number) => `Sıradaki görev ~${dk} dk içinde gelebilir.`,
     // D9 — boş durum fragman sahnesi: dakika yerine somut saat çıpası + hazırlık

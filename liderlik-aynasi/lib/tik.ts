@@ -572,7 +572,9 @@ export async function tikCalistir(
     const gorev = await gorevUret(
       db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu, kEtkinlik ? null : kSiradaki, kYorgun,
       kMekanFarkindaAdaylar,
-      { sonKacirmaSebebi: sonKacirma?.kacirma_sebebi ?? null, girisBasamak },
+      // Faz 3 — bahisIzin: yalnız tik dağıtımı bahis bayrağını yazdığı için
+      // bahis çerçevesi de yalnız burada üretilebilir (metin/bayrak tutarlı).
+      { sonKacirmaSebebi: sonKacirma?.kacirma_sebebi ?? null, girisBasamak, bahisIzin: true },
       kSicak // Özellik 3 — sıcak an bağlamı (mikro-görev + duyguya dokunuş)
     );
     if (!gorev) return;
@@ -651,6 +653,7 @@ export async function tikCalistir(
       wowAcikMi.get("iki_kapi_acik") &&
       !johariOverride &&
       !sahitOverride &&
+      !gorev.bahis && // Faz 3 — bahis görevi seçim kapısına dönüşmez
       Math.random() < 0.15
     ) {
       const secimGrubu = crypto.randomUUID();
@@ -723,6 +726,8 @@ export async function tikCalistir(
         donus_bicimi: statikOverride ? "yaz" : gorev.donusBicimi, // #7 çeşitlilik izlemesi
         somutluk: statikOverride ? null : gorev.somutluk, // FAZ 1.1 — kim/ne/nerede/ne_zaman/kanit checklist
         altin: altinMi, // FAZ 5.2 — nadir altın görev (3x kıvılcım)
+        // Faz 3 — bahis: johari/şahit override AI metnini değiştirir → bahis düşer.
+        bahis: johariOverride || sahitOverride ? false : gorev.bahis,
         // Özellik 7 — zorluk merdiveni ölçümü: görevin kası + modelin doz ölçümü.
         // Johari/şahit override AI görevinin yerine geçer — o zaman kas izi yazılmaz.
         kas: johariOverride || sahitOverride ? null : gorev.kas,
