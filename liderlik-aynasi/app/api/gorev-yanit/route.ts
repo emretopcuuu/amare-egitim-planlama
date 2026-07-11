@@ -8,6 +8,7 @@ import {
   rastgeleLaf,
   lakapUret,
   BARISMA_METINLERI,
+  BAHIS_ZAFER_METINLERI,
 } from "@/lib/aynaKarakter";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { kampGunu } from "@/lib/kampProgrami";
@@ -74,7 +75,7 @@ export async function POST(req: Request) {
   const guvenlikEk = kriz ? `\n\n${KRIZ_YONLENDIRME}` : "";
   const { data: gorev, error } = await db
     .from("missions")
-    .select("id, kind, title, body, status, due_at, trait_id, kaynak_id, baglanti_id, zincir_id, zincir_sira, altin, kimlik_cumle_id")
+    .select("id, kind, title, body, status, due_at, trait_id, kaynak_id, baglanti_id, zincir_id, zincir_sira, altin, bahis, kimlik_cumle_id")
     .eq("id", gorevId)
     .eq("participant_id", session.sub)
     .maybeSingle();
@@ -250,8 +251,12 @@ export async function POST(req: Request) {
   // Öyleyse yorumun başına abartılı barışma cümlesi (karakter anı) eklenir.
   // Kriz dilinde mizah TAMAMEN kapalı; kill switch kapalıysa hiç çalışmaz.
   let barismaEk = "";
+  let bahisEk = "";
   try {
     if (!kriz && (await aynaKarakterAcikMi(db))) {
+      // Faz 3 — BAHİS ÇÖZÜLDÜ: görev bahis çerçevesindeydi ve tamamlandı →
+      // AYNA kazandı (kaybeden İtirazcı; katılımcı daima kazanan taraf).
+      if (gorev.bahis) bahisEk = `\n\n${rastgeleLaf(BAHIS_ZAFER_METINLERI)}`;
       const { data: oncekiYanit } = await db
         .from("missions")
         .select("responded_at")
@@ -277,7 +282,7 @@ export async function POST(req: Request) {
     .update({
       status: "scored",
       ai_score: sonuc.puan,
-      ai_comment: barismaEk + sonuc.yorum,
+      ai_comment: barismaEk + sonuc.yorum + bahisEk,
       scored_at: new Date().toISOString(),
       spark_points: kivilcim,
       ...(telafi ? { gec_tamamlandi: true } : {}),
@@ -582,7 +587,7 @@ export async function POST(req: Request) {
 
   return Response.json({
     puan: sonuc.puan,
-    yorum: barismaEk + sonuc.yorum + guvenlikEk,
+    yorum: barismaEk + sonuc.yorum + bahisEk + guvenlikEk,
     kivilcim,
     // D6 — sonuç ekranında kalem kalem sayılan döküm
     kivilcimDokum,

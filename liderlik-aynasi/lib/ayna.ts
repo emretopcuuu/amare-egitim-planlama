@@ -366,6 +366,8 @@ export type UretilenGorev = {
   micro_sprint: boolean;
   /** #4b görev yayı aktifken üretildi mi — yay aşaması bu işaretli görevlerden sayılır */
   yayGorevi: boolean;
+  /** Faz 3 — görev AYNA-İtirazcı bahsi çerçevesinde mi üretildi (missions.bahis) */
+  bahis: boolean;
   /** #7 dönüş biçimi (yaz/sesli/grup/foto/tek_kelime) — çeşitlilik izlemesi */
   donusBicimi: string | null;
   /** FAZ 1.1 — somutluk şablonu: gövdeyi 5 satırlık checklist'e ayrıştırır */
@@ -544,7 +546,7 @@ export async function gorevUret(
   mekanFarkindaAdaylar: EslesmeAday[] | null = null,
   // FAZ 7 — AKTİVASYON: kişinin son kaçırma sebebi (7.2 sebep motoru) ve
   // yeniden giriş basamağı (7.3 merdiven). tik.ts geçirir.
-  aktivasyon: { sonKacirmaSebebi?: string | null; girisBasamak?: number } = {},
+  aktivasyon: { sonKacirmaSebebi?: string | null; girisBasamak?: number; bahisIzin?: boolean } = {},
   // Özellik 3 — SICAK AN: kişi az önce güçlü bir duygu sinyali verdi (tik.ts
   // taze <45 dk ise geçirir). Görev MİKRO olur ve o duyguya dokunarak açılır.
   sicakAn: SicakAn | null = null
@@ -800,6 +802,11 @@ export async function gorevUret(
   // Karakter ANI (açık şaka/iddia) ~%15 — kod belirler ki model dozu kaçırmasın.
   const karakterAcik = await aynaKarakterAcikMi(db);
   const karakterAni = karakterAcik && Math.random() < 0.15;
+  // Faz 3 — İDDİA: karakter anlarının yarısı kamp modunda BAHİS çerçevesine
+  // döner (yalnız tik dağıtımı izin verdiğinde — bahisIzin; diğer üretim yolları
+  // bahis bayrağını yazmadığı için orada bahis metni de üretilmez).
+  const bahisAni =
+    karakterAni && mod === "kamp" && aktivasyon.bahisIzin === true && Math.random() < 0.5;
   // Faz 2 — ilişki durumu (son görev yanıtından deterministik) + lakap satırı.
   const sonYanitZamani = onceki.find((o) => o.responded_at)?.responded_at ?? null;
   const { data: lakapVeri } = karakterAcik
@@ -807,7 +814,9 @@ export async function gorevUret(
     : { data: null };
   const karakterMetni = karakterAcik
     ? `\n${AYNA_KARAKTER_TAM}\n${iliskiPromptSatiri(aynaIliskiDurumu(sonYanitZamani))}${lakapPromptSatiri(lakapVeri?.ayna_lakap)}${
-        karakterAni
+        bahisAni
+          ? `BU GÖREV BİR BAHİS: görevi AYNA (sen) ile İtirazcı arasındaki bir bahis olarak çerçevele. Açılışta 2-3 satırlık mini diyalog: İtirazcı kişinin bunu yapamayacağına dair KISA bir itiraz atar (itiraz KİŞİYİ küçümsemez, sadece senin iyimserliğinle dalga geçer), sen karşı iddiaya girersin ("Çerçeveme bahse girerim"). Kapanışta tek cümle: bahsi kişinin karara bağlayacağını söyle. Diyalog dışında görevin eylem satırlarının netliğini asla bozma.`
+          : karakterAni
           ? `BU GÖREVDE BİR KARAKTER ANI YAP: göreve kısa bir iddia ("bence bunu yapamazsın — yanılt beni" tarzı), muzip tek satır ya da running gag dokunuşu kat. En fazla 1-2 cümle ve YALNIZ açılış veya kapanış cümlesinde — eylem satırlarının netliğini asla bozma.`
           : `Bu görevde AÇIK şaka/iddia YAPMA; karakter yalnız kelime seçiminde hafifçe hissedilsin.`
       }\n`
@@ -1548,6 +1557,8 @@ ${yeniYonergeler}${merdivenYonergesi}${ekstraYonerge}`,
         : [],
       micro_sprint: microSprint,
       yayGorevi: yay !== null,
+      bahis: bahisAni, // Faz 3 — tik insert missions.bahis'e yazar
+
       // Öneri #7 — dönüş biçimi (çeşitlilik izlemesi için missions'a kaydedilir)
       donusBicimi: DONUS_BICIMLERI.includes(veri.donus_bicimi as string)
         ? (veri.donus_bicimi as string)
@@ -2373,6 +2384,7 @@ export async function mentorlukGorevUret(
     micro_sprint: false,
     yayGorevi: false,
     donusBicimi: "grup", // mentorluk hep biriyle etkileşim
+    bahis: false, // Faz 3 — mentorluk statik akış, bahis çerçevesi yok
     somutluk: {
       kim: isimler.join(" / "),
       ne: "seçtiğin mentorla en az 15 dk konuş",

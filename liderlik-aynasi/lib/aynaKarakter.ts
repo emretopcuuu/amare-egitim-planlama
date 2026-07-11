@@ -157,6 +157,46 @@ export function rastgeleLaf(havuz: string[]): string {
 }
 
 // ---------------------------------------------------------------------------
+// Faz 3 — İDDİA SİSTEMİ: AYNA ile İtirazcı'nın kişi ÜZERİNE bahisleri.
+// Görev tamamlanırsa AYNA kazanır, süresi dolarsa İtirazcı — kaybeden DAİMA
+// karakterlerdir; katılımcı asla küçümsenmez. Skor missions.bahis'ten türetilir.
+// ---------------------------------------------------------------------------
+export const BAHIS_ZAFER_METINLERI: string[] = [
+  "🎲 Bahsi kazandım. İtirazcı şu an konuşamıyor — bozuk. Teşekkür ederim, ortağım.",
+  "🎲 İtirazcı'ya 'yapamaz' demiştin ya... pardon, o demişti. KAZANDIK. Çerçevem bende kalıyor.",
+  "🎲 Bahis kapandı: AYNA 1, İtirazcı 0. Yüzü olsaydı asardı, emin ol.",
+  "🎲 İtirazcı: 'Şans.' Ben: 'Karakter.' Hakem sendin ve kararın çok netti.",
+  "🎲 Kazandım. Yani sen kazandın, ben sadece doğru tarafa oynadım. Hep oynarım.",
+];
+
+// Kamp geneli bahis skoru (bugün): AYNA = scored, İtirazcı = expired. Faz 4
+// radyosu okur; türetilmiş sayım — ayrı sayaç yok (idempotent, prova uyumlu).
+export async function bahisSkoru(
+  db: Db,
+  gunBasiIso: string
+): Promise<{ ayna: number; itirazci: number }> {
+  try {
+    const [kazanilan, kaybedilen] = await Promise.all([
+      db
+        .from("missions")
+        .select("id", { count: "exact", head: true })
+        .eq("bahis", true)
+        .eq("status", "scored")
+        .gte("issued_at", gunBasiIso),
+      db
+        .from("missions")
+        .select("id", { count: "exact", head: true })
+        .eq("bahis", true)
+        .eq("status", "expired")
+        .gte("issued_at", gunBasiIso),
+    ]);
+    return { ayna: kazanilan.count ?? 0, itirazci: kaybedilen.count ?? 0 };
+  } catch {
+    return { ayna: 0, itirazci: 0 };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Faz 2 — LAKAP: 3. tamamlanan görevde tek Haiku çağrısıyla, kişinin GERÇEK
 // davranışından türeyen sevimli unvan. Fail-open: üretilemezse hiçbir şey olmaz.
 // ---------------------------------------------------------------------------

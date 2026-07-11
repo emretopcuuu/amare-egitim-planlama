@@ -1650,6 +1650,7 @@ export type Database = {
           ai_score: number | null
           altin: boolean
           baglanti_id: string | null
+          bahis: boolean
           body: string
           carried_at: string | null
           cesaret_push: boolean
@@ -1702,6 +1703,7 @@ export type Database = {
           ai_score?: number | null
           altin?: boolean
           baglanti_id?: string | null
+          bahis?: boolean
           body: string
           carried_at?: string | null
           cesaret_push?: boolean
@@ -1754,6 +1756,7 @@ export type Database = {
           ai_score?: number | null
           altin?: boolean
           baglanti_id?: string | null
+          bahis?: boolean
           body?: string
           carried_at?: string | null
           cesaret_push?: boolean

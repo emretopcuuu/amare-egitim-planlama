@@ -112,7 +112,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, reflection_text, reflection_reply, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id, somutluk, altin, secim_grubu, kapi_etiket, kas, zorluk_seviye"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, reflection_text, reflection_reply, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id, somutluk, altin, secim_grubu, kapi_etiket, kas, zorluk_seviye, bahis"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -392,6 +392,7 @@ export default async function GorevlerPage() {
   // kullanılır. Aynı işi iki yerde tekrar yazmamak için fonksiyona çıkarıldı.
   function GorevKarti({ g, vurgu }: { g: (typeof aktif)[number]; vurgu: boolean }) {
     const altinMi = !!(g as { altin?: boolean }).altin;
+    const bahisMi = !!(g as { bahis?: boolean }).bahis; // Faz 3 — AYNA-İtirazcı bahsi
     // Özellik 4 — sesli mektup görevi: yanıt yazılmaz, mikrofonla kaydedilir.
     const mektupMu = sesliMektupGoreviMi(g);
     const atm = atmosferBul(g.kind, altinMi);
@@ -404,6 +405,12 @@ export default async function GorevlerPage() {
         {altinMi && (
           <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-gold/30 px-3 py-1 text-xs font-bold uppercase tracking-widest text-gold-light ring-1 ring-gold/50">
             ⚡ Altın Görev · 3× kıvılcım
+          </p>
+        )}
+        {/* Faz 3 — İDDİA: bu görev AYNA ile İtirazcı arasındaki bir bahsin hakemi */}
+        {bahisMi && (
+          <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-purple-500/20 px-3 py-1 text-xs font-bold uppercase tracking-widest text-purple-200 ring-1 ring-purple-400/40">
+            🎲 {t.bahisRozet}
           </p>
         )}
         {/* D4 — KAS ROZETİ: bu görevin çalıştırdığı lider kası + kaçıncı antrenman */}

@@ -126,8 +126,15 @@ asset üretimi), uygulama = sahne (kampta CANLI üretim YOK). Kill switch:
   → participants.ayna_lakap (migration 0140, canlıda) + push duyurusu +
   görev/koçu prompt'unda "arada bir kullan". Admin düzenleme UI'ı YOK
   (gerekirse SQL); istenirse sonra eklenir.
-- ⬜ **Faz 3**: iddia sistemi (AYNA vs İtirazcı bahisleri; kaybeden DAİMA
-  karakter, asla katılımcı). ⬜ **Faz 4**: Kamp Radyosu (07:30 + 21:30, 20 dk
+- ✅ **Faz 3** (PR #742): iddia sistemi — kamp modunda karakter anlarının
+  yarısı BAHİS çerçevesi (net ~%7-8 görev; yalnız tik dağıtımında,
+  `bahisIzin` + missions.bahis, migration 0141 canlıda). Görev kartında mor
+  "🎲 AYNA–İtirazcı bahsi · hakem sensin" rozeti; tamamlanınca yorum sonuna
+  zafer metni (BAHIS_ZAFER_METINLERI); süresi dolarsa İtirazcı kazanır —
+  yalnız SKORDA görünür (kaçıran kişiye laf edilmez; kaybeden DAİMA karakter).
+  Skor `bahisSkoru(db, gunBasi)` ile türetilir (scored=AYNA, expired=İtirazcı)
+  — Faz 4 radyosu okuyacak. Johari/şahit override ve İki Kapı bahisle çakışmaz.
+  ⬜ **Faz 4**: Kamp Radyosu (07:30 + 21:30, 20 dk
   önce üret + önceden kayıtlı 3 yedek anons fallback; dedikodu bülteni yalnız
   isimsiz+olumlu). ⬜ **Faz 5**: prova + 16 Tem donma. ⬜ **Faz 6**: kamp
   sonrası (haftalık bülten, mezuniyet videoları — Higgsfield canlı burada).
