@@ -17,10 +17,21 @@ Türkçe, sinematik 3D tasarım. Kampla ilgisi yok; Cloudflare Pages yayın
 adımları ve içerik TODO'ları kendi README'sinde.
 
 - **Stack:** Next.js 14+ (App Router) + TypeScript + Tailwind
-- **Deploy:** Netlify (production = `main` branch). Proje: `marvelous-pasca-fbfa40`.
-  Canlı adres: `ayna.oneteamglobal.ai`
-- **CI:** Gerçek/bloklayan CI **yok**. Sadece Netlify deploy preview (bloklamaz).
-  Doğrulama için `cd liderlik-aynasi && npx tsc --noEmit` kullan.
+- **Deploy:** Netlify (production = `main` branch). Canlı adres:
+  `ayna.oneteamglobal.ai` (kamp uygulaması, base dir = `liderlik-aynasi/`).
+  ⚠️ **DÜZELTME (11 Tem):** `marvelous-pasca-fbfa40` Netlify sitesi kamp
+  uygulaması DEĞİL — o site `s-emretopcu` hesabındaki **egitimtakvimi.
+  oneteamglobal.ai** (repo KÖKÜNDEKİ eski Vite+Firebase takvim app'i,
+  base dir = root, `netlify/functions/` firebase-admin kullanır). Kamp
+  uygulaması (ayna.oneteamglobal.ai) o hesapta GÖRÜNMÜYOR — farklı bir
+  Netlify hesabında/token'ında. Netlify env (AYNA_SES_ID gibi) veya
+  fonksiyon değişikliği yaparken hangi siteye dokunduğunu MUTLAKA
+  `custom_domain` ile doğrula; kök `FIREBASE_*` değişkenleri egitimtakvimi
+  fonksiyonları için ZORUNLU (functions kapsamı), kaldırma.
+- **CI:** Bloklayan CI **yok** ama `.github/workflows/deploy-bekcisi.yml`
+  var — her main push'unda egitimtakvimi'yi smoke-test eder (kisalt fonksiyonu
+  dahil); kırıksa e-posta gönderir. Kamp app doğrulaması için
+  `cd liderlik-aynasi && npx tsc --noEmit`.
 
 ## Veritabanı (Supabase)
 
