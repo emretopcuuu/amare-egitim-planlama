@@ -98,6 +98,34 @@ adımları ve içerik TODO'ları kendi README'sinde.
 - Senaryoda bekleyen özel olaylar (kamp açılınca): Gün 2 21:00 sesli mektup
   (`gun2_sesli_mektup_ac`), Gün 3 10:00 domino (`gun3_domino_ac`).
 
+## AYNA KARAKTER PROJESİ (sürüyor — faz faz)
+
+AYNA "bilge koç"tan **kampın şovmenine** dönüşüyor: egolu-kırılgan, iddiacı,
+küsen, running gag'li (bowling korkusu, Sapanca Gölü rekabeti, KVKK, 4. duvar)
+ama ASLA katılımcıyı kırmayan karakter. Higgsfield = stüdyo (kamp öncesi statik
+asset üretimi), uygulama = sahne (kampta CANLI üretim YOK). Kill switch:
+`settings.ayna_karakter_acik="false"` → nötr ton. Plan (16 Tem akşamı kod donması):
+
+- ✅ **Faz 0** (PR #738, merged): `lib/aynaKarakter.ts` karakter anayasası
+  (TAM/HAFİF doz + mizah güvenlik kuralları) → gorevUret (%15 karakter anı,
+  kod seçer) + koçu (tam) + pusula (hafif) enjeksiyonu; boş ekranda "günün
+  lafı" (statik havuz). Küs/barışma metin havuzları Faz 2 için hazır.
+- ✅ **Faz 1** (PR #739, merged): güneş-çerçeveli ayna maskotu (kullanıcı 3
+  aday arasından #3'ü seçti; Higgsfield nano_banana_pro + bg remove + sharp).
+  `public/ayna/*.webp` 8 poz (notr/konusuyor/etkilenmis/kus/korkmus/gururlu/
+  saskin/kutlama, 512px ~65KB) + `components/AynaYuzu.tsx`. Koçu başlığı,
+  boş görev ekranı, aktif görev kartı köşesine yerleşti. Referans job id
+  (yeni poz üretmek için): Higgsfield b4e54156-a4d4-4d5a-948b-b8646915f33d.
+- ⬜ **Faz 2**: küslük modu (son etkileşimden deterministik sicak/serin/kus
+  durumu, statik soğuk metinler, barışmada abartılı sevinç) + lakaplar
+  (3. tamamlanan görevde tek Haiku çağrısı → participants.ayna_lakap, admin
+  panelde değiştirilebilir).
+- ⬜ **Faz 3**: iddia sistemi (AYNA vs İtirazcı bahisleri; kaybeden DAİMA
+  karakter, asla katılımcı). ⬜ **Faz 4**: Kamp Radyosu (07:30 + 21:30, 20 dk
+  önce üret + önceden kayıtlı 3 yedek anons fallback; dedikodu bülteni yalnız
+  isimsiz+olumlu). ⬜ **Faz 5**: prova + 16 Tem donma. ⬜ **Faz 6**: kamp
+  sonrası (haftalık bülten, mezuniyet videoları — Higgsfield canlı burada).
+
 ## Son tamamlanan işler
 
 - **Eğlence/sürtünme paketi (saha geri bildirimi: "en sıkıcı şey" + "sesli
