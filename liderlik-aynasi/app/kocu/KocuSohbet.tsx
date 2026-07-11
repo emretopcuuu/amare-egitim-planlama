@@ -6,6 +6,7 @@ import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import MikrofonButonu from "@/components/MikrofonButonu";
 import AynaYaziyor from "@/components/AynaYaziyor";
+import AynaYuzu from "@/components/AynaYuzu";
 
 const t = tr.kocu;
 
@@ -165,7 +166,8 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
           ←
         </Link>
         <div className="flex items-center gap-2">
-          <span className="text-2xl" aria-hidden>👁</span>
+          {/* Faz 1 — AYNA'nın yüzü: koçun başlığında karakter avatarı (👁 yerine) */}
+          <AynaYuzu durum="notr" boyut={36} sinif="shrink-0" />
           <div>
             <p className="prizma-serif ay-metin text-base font-semibold leading-none">{t.baslik}</p>
             <p className="mt-0.5 text-[0.7rem] text-slate-500">{t.altBaslik}</p>
