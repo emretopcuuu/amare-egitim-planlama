@@ -80,6 +80,28 @@ body.ortu-acik .kimsin-bant {
   .ayna-goz, .ayna-goz-iris { animation: none; }
 }
 
+/* Faz 1.5 — AYNA maskotunun poz bazlı mikro-animasyonları (AynaYuzu).
+   Yalnız transform/filter (GPU ucuz); reduced-motion'da tümü kapanır. */
+@keyframes ayna-mikro-nefes { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+@keyframes ayna-mikro-konus { 0%, 100% { transform: rotate(-2deg); } 50% { transform: rotate(2deg); } }
+@keyframes ayna-mikro-kus { 0%, 100% { transform: rotate(-5deg) translateX(-2%); } 50% { transform: rotate(-3deg) translateX(-2%); } }
+@keyframes ayna-mikro-kork { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px) rotate(-1deg); } 75% { transform: translateX(2px) rotate(1deg); } }
+@keyframes ayna-mikro-kutla { 0%, 100% { transform: translateY(0) scale(1); } 30% { transform: translateY(-6%) scale(1.05); } 55% { transform: translateY(0) scale(1); } 75% { transform: translateY(-3%) scale(1.02); } }
+@keyframes ayna-mikro-gurur { 0%, 100% { transform: rotate(0deg) scale(1); } 50% { transform: rotate(2deg) scale(1.03); } }
+@keyframes ayna-mikro-saskin { 0%, 8% { transform: scale(1); } 14% { transform: scale(1.09); } 22%, 100% { transform: scale(1); } }
+@keyframes ayna-mikro-etkilen { 0%, 100% { transform: scale(1); filter: brightness(1); } 50% { transform: scale(1.05); filter: brightness(1.18); } }
+.ayna-anim-notr { animation: ayna-mikro-nefes 5s ease-in-out infinite; }
+.ayna-anim-konusuyor { animation: ayna-mikro-konus 1.6s ease-in-out infinite; transform-origin: 50% 80%; }
+.ayna-anim-kus { animation: ayna-mikro-kus 4s ease-in-out infinite; }
+.ayna-anim-korkmus { animation: ayna-mikro-kork 0.35s linear infinite; }
+.ayna-anim-kutlama { animation: ayna-mikro-kutla 1.4s ease-in-out infinite; }
+.ayna-anim-gururlu { animation: ayna-mikro-gurur 3.5s ease-in-out infinite; }
+.ayna-anim-saskin { animation: ayna-mikro-saskin 4s ease-in-out infinite; }
+.ayna-anim-etkilenmis { animation: ayna-mikro-etkilen 2.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  [class^="ayna-anim-"], [class*=" ayna-anim-"] { animation: none; }
+}
+
 /* KİMLİK ELMASI (aşamalı görsel) — hafif nefes; tam statik durmasın. */
 @keyframes elmas-asama-nefes {
   0%, 100% { transform: scale(1); }

@@ -43,11 +43,14 @@ export default function AynaYuzu({
   durum = "notr",
   boyut = 80,
   sinif = "",
+  hareketli = true,
 }: {
   durum?: AynaDurum;
   /** Piksel cinsinden kare kenar uzunluğu */
   boyut?: number;
   sinif?: string;
+  /** Faz 1.5 — poz bazlı mikro-animasyon (globals.css; reduced-motion'da kapalı) */
+  hareketli?: boolean;
 }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -58,7 +61,7 @@ export default function AynaYuzu({
       height={boyut}
       loading="lazy"
       decoding="async"
-      className={`select-none ${sinif}`}
+      className={`select-none ${hareketli ? `ayna-anim-${durum}` : ""} ${sinif}`}
       draggable={false}
     />
   );
