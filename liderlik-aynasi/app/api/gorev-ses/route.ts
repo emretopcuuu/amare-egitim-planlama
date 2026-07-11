@@ -52,7 +52,7 @@ export async function GET(req: Request) {
 
   try {
     const metin = `${gorev.title}. ${gorev.body}`.slice(0, 900);
-    const mp3 = await seslendir(aynaSesId(cinsiyet), metin);
+    const mp3 = await seslendir(aynaSesId(), metin);
     const yukleme = await db.storage
       .from("sesler")
       .upload(yol, Buffer.from(mp3), { contentType: "audio/mpeg", upsert: true });

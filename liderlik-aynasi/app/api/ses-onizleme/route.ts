@@ -18,7 +18,7 @@ export async function GET(req: Request) {
   }
   if (!sesYapilandirildiMi()) return new Response("ses kapalı", { status: 503 });
   try {
-    const buf = await seslendir(aynaSesId(ses), ONIZLEME_METNI);
+    const buf = await seslendir(aynaSesId(), ONIZLEME_METNI);
     return new Response(buf, {
       headers: {
         "content-type": "audio/mpeg",

@@ -158,18 +158,14 @@ export async function abonelikBilgisi(): Promise<ElevenAbonelik> {
   }
 }
 
-export type AynaSesCinsiyeti = "erkek" | "kadin";
-
-/** AYNA'nın marka sesi: katılımcı klonu değil, kampın imza sesi. Kişi
- * onboarding'in başında erkek/kadın seçer (varsayılan erkek); kişiye özel
- * seslendirmeler (ayna-ses, acilis-ses) bu tercihe göre sese düşer. Genel
- * anonslar (büyük ekran) her zaman erkek/varsayılan sesle kalır — o ortak
- * bir yayın, kişiye özel değil.
- * Env ile geçersiz kılınabilir: AYNA_SES_ID (erkek), AYNA_SES_KADIN_ID (kadın). */
-export function aynaSesId(cinsiyet: AynaSesCinsiyeti = "erkek"): string {
-  if (cinsiyet === "kadin") {
-    return process.env.AYNA_SES_KADIN_ID || "LYfSi2g3Frvxg50fRl91";
-  }
+/** AYNA'nın TEK resmî sesi (karakter kararı: tek yüz, tek ses — kişi başına
+ * erkek/kadın tercihi kaldırıldı; ortak yüzeyler (radyo/sahne) ile kişisel
+ * seslendirmeler artık aynı karakter sesinden çıkar; dudak senkronlu videolar
+ * da yayın başına tek üretimle mümkün olur). Eski tercih verisi
+ * (participants.ayna_ses) tarihsel olarak durur, kod okumaz; daha önce
+ * üretilmiş kişisel ses dosyalarına dokunulmaz.
+ * Env ile geçersiz kılınabilir: AYNA_SES_ID. */
+export function aynaSesId(): string {
   return process.env.AYNA_SES_ID || "j82ax9yhzfYwq9lDvRWL";
 }
 

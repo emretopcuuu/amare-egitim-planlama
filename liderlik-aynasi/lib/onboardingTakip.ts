@@ -81,7 +81,6 @@ export async function onboardingDurumlari(db: Db): Promise<OnboardingKisi[]> {
     // oyun → değerler → pusula → hedef → ön farkındalık.
     let eksik: OnboardingAdimKod | null = null;
     if (!k.consent_at) eksik = "hazirlik";
-    else if (!k.ayna_ses_secildi_at) eksik = "sesSecimi";
     else if (!ses) eksik = "rituel";
     else if (!k.team) eksik = "oyun";
     else if (!deger?.tamamlandi_at) eksik = "degerler";
