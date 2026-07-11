@@ -3,6 +3,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { kimlikBloguGetir } from "@/lib/kisiKimligi";
+import { AYNA_KARAKTER_HAFIF, aynaKarakterAcikMi } from "@/lib/aynaKarakter";
 import { kritikAiHatasiBildir, type AiHataDetay } from "@/lib/uyari";
 import { KARIYER_RANK, kariyerHalTuret } from "@/lib/persona";
 
@@ -376,6 +377,9 @@ export async function pusulaTuru(
 
   const client = new Anthropic();
   const kimlikM = await kimlikBloguGetir(db, katilimci.id);
+  // Faz 0 — AYNA karakteri: pusula derin duygusal sohbet → HAFİF doz (renk var,
+  // şov yok; eleme/engel aşamalarında mizah blok içinde zaten yasak).
+  const karakterAcik = await aynaKarakterAcikMi(db);
   let tur: PusulaTur | null = null;
   try {
     const yanit = await yenidenDene(
@@ -391,7 +395,7 @@ export async function pusulaTuru(
         format: { type: "json_schema", schema: SOHBET_SEMASI },
       },
       system: `${PERSONA}
-
+${karakterAcik ? `\n${AYNA_KARAKTER_HAFIF}\n` : ""}
 Kişinin adı: ${ad}.
 Kişinin yazdığı öncelikler:
 ${listeMetni(satir.oncelikler)}
