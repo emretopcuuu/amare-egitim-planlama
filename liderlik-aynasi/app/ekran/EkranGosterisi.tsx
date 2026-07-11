@@ -501,8 +501,9 @@ export default function EkranGosterisi() {
       )}
       <header className="relative z-10 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         {/* Faz 1.5 — canlı AYNA maskotu: bekleme döngüsü sahnede sürekli döner */}
+        {/* Görsel paket #7 — fiero anında kutlama, radyo çalarken konuşma */}
         <AynaSahneLoop
-          mod={radyoKonusuyor ? "konusma" : "bekleme"}
+          mod={radyoKonusuyor ? "konusma" : fieroGoster ? "kutlama" : "bekleme"}
           boyut={120}
           sinif="hidden shrink-0 sm:block"
         />

@@ -3436,6 +3436,15 @@ export const tr = {
     radyoAksam: "Akşam bülteni — dedikodu köşesi ve skorlar",
     radyoDinle: "Yayını dinle",
     radyoMetin: "Yayın metnini oku",
+    // Görsel paket #4 — maskota dokununca arada bir çıkan laf balonu.
+    tiklamaLaflari: [
+      "Dokunma, parmak izi kalıyor.",
+      "Evet, gerçeğim. Hayır, gıdıklanmıyorum.",
+      "Bunu kaç kişinin denediğini bilsen şaşarsın. Ben biliyorum.",
+      "Camımı silmişler, teşekkür ederim. Sen değildin biliyorum.",
+    ],
+    // Görsel paket #5 — sessiz saatlerde uyuyan AYNA'nın tek lafı.
+    uykuLafi: "Şşşt. Ben de şarj oluyorum. Sabah görüşürüz.",
     bosHerAn: "Sıradaki görev her an gelebilir.",
     bosSiradaki: (dk: number) => `Sıradaki görev ~${dk} dk içinde gelebilir.`,
     // D9 — boş durum fragman sahnesi: dakika yerine somut saat çıpası + hazırlık

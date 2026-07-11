@@ -8,12 +8,19 @@ import { tr } from "@/lib/i18n/tr";
 export default function SesCal({
   url,
   etiket,
+  onCaliyor,
 }: {
   url: string;
   etiket?: string;
+  /** Görsel paket #10 — çalma durumunu dışarı bildir (radyo kartındaki canlı maskot). */
+  onCaliyor?: (caliyor: boolean) => void;
 }) {
   const ses = useRef<HTMLAudioElement | null>(null);
-  const [caliyor, setCaliyor] = useState(false);
+  const [caliyor, setCaliyorHam] = useState(false);
+  const setCaliyor = (c: boolean) => {
+    setCaliyorHam(c);
+    onCaliyor?.(c);
+  };
 
   useEffect(() => {
     return () => ses.current?.pause();
