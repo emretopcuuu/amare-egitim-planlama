@@ -142,8 +142,33 @@ asset üretimi), uygulama = sahne (kampta CANLI üretim YOK). Kill switch:
   ŞABLON metin (gerçek sayılarla), TTS düşerse salt-metin — radyo asla susmaz.
   Ses: aynaSesId() marka sesi → sesler/radyo/*.mp3. Tablo radyo_yayin
   (migration 0142, canlıda; unique(tarih,slot) idempotent). /gorevler'de çalma
-  kartı (SesCal + metin); yayında herkese push. /ekran oto-çalma YAPILMADI
-  (Faz 5 cilası olabilir). ⬜ **Faz 5**: prova + 16 Tem donma. ⬜ **Faz 6**: kamp
+  kartı (SesCal + metin); yayında herkese push.
+- ✅ **Faz 1.5** (PR #744): 8 poza CSS mikro-animasyon (nefes/sallanma/titreme/
+  zıplama vb, `ayna-anim-*` sınıfları, reduced-motion'da kapanır).
+  ✅ **Faz 1.5b** (PR #745): 3 Higgsfield video loop'u (bekleme/konuşma/kutlama,
+  5sn 720p statik MP4, `public/ayna/loop-*.mp4`) → `components/AynaSahneLoop.tsx`
+  (video oynamazsa statik poza düşer), /ekran başlığında sürekli bekleme
+  döngüsü. proxy.ts istisnasına mp4|webm eklendi.
+  ✅ **Faz 4.5** (PR #747): /ekran radyo yayınına geçince GERÇEK sesi otomatik
+  çalar (`ekranSinyali()`, ≤4dk taze, fiero/anons deseniyle aynı), ses
+  sürdüğünce maskot "konusma" pozunda (onplay/onended ile AynaSahneLoop mod
+  geçişi) — maskot yalnız gerçekten sesi varken konuşur gibi görünür.
+  **BİLİNÇLİ YAPILMADI:** yayın başına gerçek dudak-senkronlu video (Higgsfield
+  canlı çağrısı) — deploy edilmiş sunucudan canlı üretim isteği "kampta canlı
+  üretim yok" ilkesini bozar; onaylı jenerik loop + gerçek ses kombinasyonu
+  yeterli kabul edildi. Tekrar gündeme GETİRME.
+- ✅ **AYNA tek resmî ses** (PR #746): erkek/kadın ses seçimi onboarding'den
+  kaldırıldı (bir adım kısaldı) — karakterin artık TEK sesi var. `aynaSesId()`
+  paramsız. Kullanıcı seçtiği ElevenLabs "Roman" sesini klonlattı (Instant
+  Voice Clone, 3 örnek dosyayla) → **Voice ID `ETJ6UWphnI0eywAW0rIS`**,
+  Netlify env `AYNA_SES_ID`'ye yazıldı ve deploy edildi (canlıda).
+  Yan bulgu düzeltildi: Netlify fonksiyon paketi 4KB sınırını aşıp TÜM
+  deploy'ları bloke ediyordu (`FIREBASE_PRIVATE_KEY` vb. kullanılmayan eski
+  değişkenler ~1700 bayt kaplıyordu — bu kod tabanında hiç referans yok, ayrı
+  eski Vite+Firebase app'ten kalma). Bu üç değişkenin "functions" kapsamı
+  kaldırıldı (değer silinmedi, yalnız fonksiyon paketinden çıkarıldı) — kalıcı
+  düzeltme, gelecekteki deploy'ları da kurtarır.
+- ⬜ **Faz 5**: prova + 16 Tem donma. ⬜ **Faz 6**: kamp
   sonrası (haftalık bülten, mezuniyet videoları — Higgsfield canlı burada).
 
 ## Son tamamlanan işler
