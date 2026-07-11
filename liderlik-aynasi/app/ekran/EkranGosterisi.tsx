@@ -1,5 +1,6 @@
 "use client";
 
+import AynaSahneLoop from "@/components/AynaSahneLoop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import type { EkranVerisi } from "@/app/api/ekran/route";
@@ -484,6 +485,8 @@ export default function EkranGosterisi() {
         </div>
       )}
       <header className="relative z-10 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        {/* Faz 1.5 — canlı AYNA maskotu: bekleme döngüsü sahnede sürekli döner */}
+        <AynaSahneLoop mod="bekleme" boyut={120} sinif="hidden shrink-0 sm:block" />
         <div className="min-w-0">
           <p className="flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.3em] text-royal-light sm:text-lg">
             <span className="ekran-canli-nokta inline-block h-3 w-3 rounded-full bg-red-500" aria-hidden />
