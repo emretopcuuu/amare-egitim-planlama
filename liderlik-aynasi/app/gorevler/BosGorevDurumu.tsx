@@ -39,7 +39,7 @@ export default function BosGorevDurumu({
     <section className="kart-cam relative overflow-hidden rounded-3xl px-6 py-8 text-center">
       {/* Faz 1 — AYNA'nın yüzü: soyut göz yerine maskotun kendisi. Nefes alma
           animasyonu (ayna-goz) korunur. Faz 2: küs moddaysa küs poz. */}
-      <div className="ayna-goz mx-auto mb-3 h-28 w-28">
+      <div className="mx-auto mb-3 h-28 w-28">
         <AynaYuzu
           durum={aynaDurum === "kus" ? "kus" : "notr"}
           boyut={112}
