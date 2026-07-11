@@ -6,6 +6,7 @@ import { tr } from "@/lib/i18n/tr";
 import { titret, suDalgasi, cal } from "@/lib/his";
 import { sesCal } from "@/lib/sesEfekti";
 import MikrofonButonu from "@/components/MikrofonButonu";
+import AynaYuzu from "@/components/AynaYuzu";
 import Konfeti from "@/components/Konfeti";
 import PuanAcilisi from "@/components/PuanAcilisi";
 import KivilcimSayac from "@/components/KivilcimSayac";
@@ -29,6 +30,9 @@ function taslakAnahtari(gorevId: string) {
 type Sonuc = {
   puan?: number;
   yorum?: string;
+  // Görsel paket #8 — sonuç ekranındaki AYNA pozunu seçer.
+  bahisKazanildi?: boolean;
+  barisma?: boolean;
   kivilcim?: number;
   // D6 — kıvılcım dökümü: kalemler sırayla sayılarak eklenir (animasyon).
   kivilcimDokum?: KivilcimDokumVeri;
@@ -225,6 +229,22 @@ export default function GorevYanitFormu({
           </>
         ) : (
           <>
+            {/* Görsel paket #8 — AYNA'nın puana/ana göre tepkisi: 10 → etkilenmiş,
+                bahis kazanıldı/barışma → kutlama, 7-9 → gururlu, gerisi → konuşuyor.
+                Karakterin "9'u ucuza vermem" tavrı görselleşir. */}
+            <AynaYuzu
+              durum={
+                sonuc.bahisKazanildi || sonuc.barisma
+                  ? "kutlama"
+                  : (sonuc.puan ?? 0) >= 10
+                    ? "etkilenmis"
+                    : (sonuc.puan ?? 0) >= 7
+                      ? "gururlu"
+                      : "konusuyor"
+              }
+              boyut={72}
+              sinif="mx-auto mb-2"
+            />
             {/* FAZ 6.2 — altın görev tamamlandıysa sahnenin başında parlar */}
             {sonuc.altin && (
               <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-gold/30 px-3 py-1 text-xs font-bold uppercase tracking-widest text-gold-light ring-1 ring-gold/50">

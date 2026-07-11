@@ -1,4 +1,5 @@
 import Link from "next/link";
+import AynaYuzu from "@/components/AynaYuzu";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -159,7 +160,8 @@ export default async function PusulaSayfa() {
         {/* HERO — mühür kilidi: ekranın merkez, en baskın öğesi */}
         <div className="relative overflow-hidden rounded-3xl border-2 border-gold/45 bg-gradient-to-b from-gold/12 to-midnight-card/70 p-7 text-center shadow-xl">
           <span className="altin-tel" />
-          <MuhurIkon className="mx-auto h-16 w-16 text-gold-light" />
+          {/* Görsel paket #1 — kampı bekleyen AYNA: "ben de senin kadar sabırsızım" */}
+          <AynaYuzu durum="heyecanli" boyut={104} sinif="mx-auto drop-shadow-[0_0_24px_rgba(212,175,55,0.3)]" />
           <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-gold/15 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-gold-light">
             <MuhurIkon className="h-3.5 w-3.5" />
             {t.muhurRozet}

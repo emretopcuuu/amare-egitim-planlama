@@ -8,6 +8,7 @@ import KayitRozeti from "@/components/KayitRozeti";
 import GizlilikMuhru from "@/components/GizlilikMuhru";
 import AynaYaziyor from "@/components/AynaYaziyor";
 import MikrofonButonu from "@/components/MikrofonButonu";
+import AynaYuzu from "@/components/AynaYuzu";
 import { sureRozeti } from "@/lib/onboardingSure";
 
 const t = tr.pusula;
@@ -644,6 +645,8 @@ export default function PusulaSohbet({
       <div aria-hidden className="pusula-okur-zemin pointer-events-none absolute inset-0 -z-10" />
       <header className="shrink-0 pb-3">
         <div className="flex items-start justify-between gap-3">
+          {/* Görsel paket #3 — onboarding'in en uzun sohbetinde AYNA'nın yüzü */}
+          <AynaYuzu durum="notr" boyut={40} sinif="shrink-0" />
           <div className="min-w-0 flex-1 text-center">
             <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
               {tr.app.name}

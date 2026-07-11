@@ -94,6 +94,7 @@ import GovdeAcilis from "./GovdeAcilis";
 import KisiKarti from "@/components/KisiKarti";
 import { sesliMektupGoreviMi } from "@/lib/sesliMektup";
 import { sonYayinGetir } from "@/lib/kampRadyosu";
+import RadyoCanli from "@/components/RadyoCanli";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -385,8 +386,16 @@ export default async function GorevlerPage() {
       .maybeSingle();
     aynaDurum = aynaIliskiDurumu(sonYanit?.responded_at ?? null);
   }
+  // Görsel paket #5 — gece kuşağında (23:00-07:00 Istanbul) AYNA uyur.
+  const istSaat = Number(
+    new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Istanbul", hour: "2-digit", hour12: false })
+      .format(new Date())
+  );
+  const gece = istSaat >= 23 || istSaat < 7;
   const aynaLafi = karakterAcik
-    ? gunlukLaf(aynaDurum === "kus" ? KUS_MODU_METINLERI : BOS_EKRAN_LAFLARI, session.sub)
+    ? gece
+      ? t.uykuLafi
+      : gunlukLaf(aynaDurum === "kus" ? KUS_MODU_METINLERI : BOS_EKRAN_LAFLARI, session.sub)
     : null;
 
   // (Geçmiş zaman çizelgesi gruplaması artık GorevGecmisi client bileşeninde —
@@ -415,7 +424,12 @@ export default async function GorevlerPage() {
         {/* Faz 3 — İDDİA: bu görev AYNA ile İtirazcı arasındaki bir bahsin hakemi */}
         {bahisMi && (
           <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-purple-500/20 px-3 py-1 text-xs font-bold uppercase tracking-widest text-purple-200 ring-1 ring-purple-400/40">
-            🎲 {t.bahisRozet}
+            {/* Görsel paket #9 — bahsin iki tarafı yüz yüze */}
+            <AynaYuzu durum="gururlu" boyut={20} hareketli={false} sinif="shrink-0" />
+            <span aria-hidden>⚔️</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/ayna/itirazci.webp" alt="İtirazcı" width={20} height={20} className="shrink-0 select-none" draggable={false} />
+            {t.bahisRozet}
           </p>
         )}
         {/* D4 — KAS ROZETİ: bu görevin çalıştırdığı lider kası + kaçıncı antrenman */}
@@ -664,18 +678,8 @@ export default async function GorevlerPage() {
       {/* Faz 4 — KAMP RADYOSU: bugünün yayını (ses varsa çal, yoksa salt metin) */}
       {radyo && (
         <section className="kart-cam rounded-2xl p-4">
-          <div className="flex items-center gap-3">
-            <AynaYuzu durum="konusuyor" boyut={44} sinif="shrink-0" />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold uppercase tracking-widest text-gold-light/80">
-                📻 {t.radyoBaslik}
-              </p>
-              <p className="text-sm text-slate-400">
-                {radyo.slot === "sabah" ? t.radyoSabah : t.radyoAksam}
-              </p>
-            </div>
-            {radyo.sesUrl && <SesCal url={radyo.sesUrl} etiket={t.radyoDinle} />}
-          </div>
+          {/* Görsel paket #10 — ses çalarken maskot konuşma loop'una geçer */}
+          <RadyoCanli slot={radyo.slot} sesUrl={radyo.sesUrl} />
           <details className="mt-2">
             <summary className="cursor-pointer text-xs font-medium text-slate-500">
               {t.radyoMetin}
@@ -798,6 +802,7 @@ export default async function GorevlerPage() {
           fragmanIpucu={fragmanIpucu}
           aynaLafi={aynaLafi}
           aynaDurum={aynaDurum}
+          gece={gece}
         />
       ) : (
         <>

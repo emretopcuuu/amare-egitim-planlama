@@ -1,8 +1,10 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
-import AynaYuzu from "@/components/AynaYuzu";
+import { sesCal } from "@/lib/sesEfekti";
+import AynaYuzu, { type AynaDurum } from "@/components/AynaYuzu";
 import EkstraGorev from "./EkstraGorev";
 
 const t = tr.gorevler;
@@ -18,6 +20,7 @@ export default function BosGorevDurumu({
   fragmanIpucu,
   aynaLafi,
   aynaDurum = "sicak",
+  gece = false,
 }: {
   siradakiDk: number | null;
   // D9: sıradaki turun yaklaşık Istanbul saati ("HH:MM") — sunucu hesaplar.
@@ -27,7 +30,32 @@ export default function BosGorevDurumu({
   aynaLafi?: string | null;
   // Faz 2 — ilişki durumu: küs ise poz da laf da soğur (oyunlu küslük).
   aynaDurum?: "sicak" | "serin" | "kus";
+  // Görsel paket #5 — gece kuşağı: AYNA uyur (uykuda pozu + uyku lafı).
+  gece?: boolean;
 }) {
+  // Görsel paket #4 — dokununca tepki: kısa poz değişimi + SFX + arada laf balonu.
+  const [tepkiPoz, setTepkiPoz] = useState<AynaDurum | null>(null);
+  const [balon, setBalon] = useState<string | null>(null);
+  const tepkiZamanlayici = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tiklamaSayac = useRef(0);
+
+  function maskotaDokun() {
+    if (gece) return; // uyuyan AYNA uyandırılmaz — o ayrı bir şaka
+    tiklamaSayac.current += 1;
+    const pozlar: AynaDurum[] = ["saskin", "gururlu", "etkilenmis"];
+    setTepkiPoz(pozlar[tiklamaSayac.current % pozlar.length]);
+    sesCal("kivilcim");
+    // Her 2-3 dokunuşta bir laf balonu (sürekli konuşan maskot yorucu olur).
+    if (tiklamaSayac.current % 3 === 1) {
+      const laflar = t.tiklamaLaflari;
+      setBalon(laflar[tiklamaSayac.current % laflar.length]);
+    }
+    if (tepkiZamanlayici.current) clearTimeout(tepkiZamanlayici.current);
+    tepkiZamanlayici.current = setTimeout(() => {
+      setTepkiPoz(null);
+      setBalon(null);
+    }, 2200);
+  }
   const bekleme =
     siradakiDk == null || siradakiDk <= 0
       ? t.bosHerAn
@@ -37,14 +65,26 @@ export default function BosGorevDurumu({
 
   return (
     <section className="kart-cam relative overflow-hidden rounded-3xl px-6 py-8 text-center">
-      {/* Faz 1 — AYNA'nın yüzü: soyut göz yerine maskotun kendisi. Nefes alma
-          animasyonu (ayna-goz) korunur. Faz 2: küs moddaysa küs poz. */}
-      <div className="mx-auto mb-3 h-28 w-28">
-        <AynaYuzu
-          durum={aynaDurum === "kus" ? "kus" : "notr"}
-          boyut={112}
-          sinif="mx-auto drop-shadow-[0_0_24px_rgba(212,175,55,0.25)]"
-        />
+      {/* Faz 1/2 + görsel paket #4/#5 — AYNA'nın yüzü: dokununca tepki verir,
+          gece uyur, küs moddaysa somurtur. */}
+      <div className="relative mx-auto mb-3 h-28 w-28">
+        <button
+          type="button"
+          onClick={maskotaDokun}
+          aria-label="AYNA'ya dokun"
+          className="cursor-pointer"
+        >
+          <AynaYuzu
+            durum={tepkiPoz ?? (gece ? "uykuda" : aynaDurum === "kus" ? "kus" : "notr")}
+            boyut={112}
+            sinif="mx-auto drop-shadow-[0_0_24px_rgba(212,175,55,0.25)]"
+          />
+        </button>
+        {balon && (
+          <p className="absolute -top-2 left-1/2 w-max max-w-[15rem] -translate-x-1/2 -translate-y-full rounded-2xl border border-gold/30 bg-midnight px-3 py-1.5 text-xs italic leading-relaxed text-gold-light shadow-lg">
+            {balon}
+          </p>
+        )}
       </div>
 
       <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-light/70">

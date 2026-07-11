@@ -588,6 +588,9 @@ export async function POST(req: Request) {
   return Response.json({
     puan: sonuc.puan,
     yorum: barismaEk + sonuc.yorum + bahisEk + guvenlikEk,
+    // Görsel paket #8 — sonuç ekranındaki AYNA pozu bu bayraklardan seçilir.
+    bahisKazanildi: !!bahisEk,
+    barisma: !!barismaEk,
     kivilcim,
     // D6 — sonuç ekranında kalem kalem sayılan döküm
     kivilcimDokum,
