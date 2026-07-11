@@ -241,6 +241,38 @@ async function yayinla(db: Db, id: string, slot: Slot): Promise<void> {
   ).catch(() => {});
 }
 
+// /ekran sahne sinyali: yayına YENİ geçmiş bir yayın varsa (≤4 dk taze —
+// fiero/anons ile aynı konvansiyon), gerçek sesle birlikte döner. EkranGosterisi
+// bunu bir kez otomatik çalar (host "Sesi Aç" dediyse) ve ses sürerken maskotu
+// "konusma" pozuna geçirir — gerçek dudak senkronu değil ama gerçek SES + genel
+// konuşma hareketi birlikte sahne mesafesinde ikna edici (bkz. Faz 1.5b).
+export async function ekranSinyali(
+  db: Db,
+  simdi: Date
+): Promise<{ id: string; sesUrl: string | null } | null> {
+  try {
+    const { data } = await db
+      .from("radyo_yayin")
+      .select("id, ses_path, yayinlanan_at")
+      .eq("durum", "yayinda")
+      .not("yayinlanan_at", "is", null)
+      .order("yayinlanan_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!data?.yayinlanan_at) return null;
+    const taze = simdi.getTime() - new Date(data.yayinlanan_at).getTime() <= 4 * 60_000;
+    if (!taze) return null;
+    let sesUrl: string | null = null;
+    if (data.ses_path) {
+      const { data: imza } = await db.storage.from(BUCKET).createSignedUrl(data.ses_path, 600);
+      sesUrl = imza?.signedUrl ?? null;
+    }
+    return { id: data.id, sesUrl };
+  } catch {
+    return null;
+  }
+}
+
 // /gorevler kartı için: bugünün son yayını (varsa) + imzalı ses URL'i.
 export async function sonYayinGetir(
   db: Db,
