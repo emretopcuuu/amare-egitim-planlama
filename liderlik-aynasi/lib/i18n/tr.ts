@@ -3430,6 +3430,12 @@ export const tr = {
     bosIzliyor: "AYNA seni izliyor",
     // Faz 3 — İDDİA: görev AYNA-İtirazcı bahsi çerçevesinde geldi.
     bahisRozet: "AYNA–İtirazcı bahsi · hakem sensin",
+    // Faz 4 — Kamp Radyosu çalma kartı.
+    radyoBaslik: "Kamp Radyosu",
+    radyoSabah: "Sabah yayını — AYNA mikrofonda",
+    radyoAksam: "Akşam bülteni — dedikodu köşesi ve skorlar",
+    radyoDinle: "Yayını dinle",
+    radyoMetin: "Yayın metnini oku",
     bosHerAn: "Sıradaki görev her an gelebilir.",
     bosSiradaki: (dk: number) => `Sıradaki görev ~${dk} dk içinde gelebilir.`,
     // D9 — boş durum fragman sahnesi: dakika yerine somut saat çıpası + hazırlık

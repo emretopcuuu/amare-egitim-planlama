@@ -134,9 +134,16 @@ asset üretimi), uygulama = sahne (kampta CANLI üretim YOK). Kill switch:
   yalnız SKORDA görünür (kaçıran kişiye laf edilmez; kaybeden DAİMA karakter).
   Skor `bahisSkoru(db, gunBasi)` ile türetilir (scored=AYNA, expired=İtirazcı)
   — Faz 4 radyosu okuyacak. Johari/şahit override ve İki Kapı bahisle çakışmaz.
-  ⬜ **Faz 4**: Kamp Radyosu (07:30 + 21:30, 20 dk
-  önce üret + önceden kayıtlı 3 yedek anons fallback; dedikodu bülteni yalnız
-  isimsiz+olumlu). ⬜ **Faz 5**: prova + 16 Tem donma. ⬜ **Faz 6**: kamp
+  ✅ **Faz 4** (PR #743): Kamp Radyosu — `lib/kampRadyosu.ts`, tik'ten çağrılır
+  (yalnız mod=kamp). Sabah 07:30 (program + İDDİALI TAHMİN, radyo_yayin.tahmin'e
+  saklanır) + akşam 21:30 (isimsiz dedikodu — prompt'a YALNIZ toplam sayılar
+  girer, kişisel veri sızamaz — + günün bahis skoru + sabah tahminiyle
+  yüzleşme). Üretim yayından 20 dk önce; fallback zinciri: AI script düşerse
+  ŞABLON metin (gerçek sayılarla), TTS düşerse salt-metin — radyo asla susmaz.
+  Ses: aynaSesId() marka sesi → sesler/radyo/*.mp3. Tablo radyo_yayin
+  (migration 0142, canlıda; unique(tarih,slot) idempotent). /gorevler'de çalma
+  kartı (SesCal + metin); yayında herkese push. /ekran oto-çalma YAPILMADI
+  (Faz 5 cilası olabilir). ⬜ **Faz 5**: prova + 16 Tem donma. ⬜ **Faz 6**: kamp
   sonrası (haftalık bülten, mezuniyet videoları — Higgsfield canlı burada).
 
 ## Son tamamlanan işler
