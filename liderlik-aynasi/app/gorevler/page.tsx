@@ -6,6 +6,7 @@ import { kampKilitliMi } from "@/lib/pusula";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { gorevAraligiDk } from "@/lib/ayna";
 import { aynaKarakterAcikMi, gunlukLaf, BOS_EKRAN_LAFLARI } from "@/lib/aynaKarakter";
+import AynaYuzu from "@/components/AynaYuzu";
 import { unvanBul, UNVANLAR } from "@/lib/kivilcim";
 import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
@@ -394,9 +395,14 @@ export default async function GorevlerPage() {
         />
         <div className="relative">
         {vurgu && (
-          <p className="mb-2 inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-bold tracking-wide text-gold-light">
-            {tr.degerlendir.simdiSira}
-          </p>
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <p className="inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-bold tracking-wide text-gold-light">
+              {tr.degerlendir.simdiSira}
+            </p>
+            {/* Faz 1 — görevi anlatan AYNA: ana kartın köşesinde karakter.
+                Altın görevde etkilenmiş poz (nadir an, ışıltı hak ediyor). */}
+            <AynaYuzu durum={altinMi ? "etkilenmis" : "konusuyor"} boyut={44} sinif="-mt-1 shrink-0" />
+          </div>
         )}
         <div className="flex items-center justify-between text-xs">
           <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium ${atm.rozet}`}>

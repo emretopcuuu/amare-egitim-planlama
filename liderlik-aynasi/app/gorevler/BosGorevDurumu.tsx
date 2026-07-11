@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
+import AynaYuzu from "@/components/AynaYuzu";
 import EkstraGorev from "./EkstraGorev";
 
 const t = tr.gorevler;
@@ -33,28 +34,11 @@ export default function BosGorevDurumu({
 
   return (
     <section className="kart-cam relative overflow-hidden rounded-3xl px-6 py-8 text-center">
-      {/* Yaşayan AYNA gözü — nefes alır, iris döner (marka tutarlılığı) */}
-      <div className="mx-auto mb-3 h-24 w-24">
-        <div className="ayna-goz relative h-24 w-24 rounded-full">
-          <span
-            className="absolute inset-0 rounded-full"
-            style={{
-              background:
-                "radial-gradient(circle, transparent 28%, rgba(212,175,55,0.5) 46%, rgba(78,124,166,0.42) 62%, transparent 75%)",
-            }}
-            aria-hidden
-          />
-          <span
-            className="ayna-goz-iris absolute inset-[16%] rounded-full"
-            style={{
-              background:
-                "conic-gradient(from 0deg, rgba(212,175,55,0.32), transparent 12%, rgba(78,124,166,0.32) 24%, transparent 36%, rgba(212,175,55,0.32) 48%, transparent 60%, rgba(78,124,166,0.32) 72%, transparent 84%, rgba(212,175,55,0.32) 96%, transparent)",
-            }}
-            aria-hidden
-          />
-          <span className="absolute inset-[38%] rounded-full bg-[#01060c] shadow-[inset_0_0_28px_rgba(0,0,0,0.85)]" aria-hidden />
-          <span className="absolute left-[42%] top-[40%] h-[7%] w-[7%] rounded-full bg-white/70 blur-[1px]" aria-hidden />
-        </div>
+      {/* Faz 1 — AYNA'nın yüzü: soyut göz yerine maskotun kendisi. Nefes alma
+          animasyonu (ayna-goz) korunur; günün lafı varsa poz da laconik uyum
+          için nötr kalır. */}
+      <div className="ayna-goz mx-auto mb-3 h-28 w-28">
+        <AynaYuzu durum="notr" boyut={112} sinif="mx-auto drop-shadow-[0_0_24px_rgba(212,175,55,0.25)]" />
       </div>
 
       <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-light/70">
