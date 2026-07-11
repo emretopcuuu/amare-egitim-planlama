@@ -20,13 +20,31 @@ export async function POST(req: Request) {
   if (!(await adminOturumu())) {
     return Response.json({ hata: "Yetkisiz" }, { status: 403 });
   }
-  const govde = (await req.json().catch(() => ({}))) as { eylem?: string };
+  const govde = (await req.json().catch(() => ({}))) as {
+    eylem?: string;
+    katilimciId?: string;
+  };
   const db = supabaseAdmin();
   const simdi = new Date();
 
   if (govde.eylem === "baslat") {
-    await provaBaslat(db, simdi);
-    return Response.json({ ok: true, gun: 1 });
+    // GÜVENLİK KİLİDİ: katılımcı seçilmeden prova başlatılamaz — bkz.
+    // lib/prova.ts provaBaslat + lib/tik.ts (tek katılımcıya sabitleme).
+    const katilimciId = typeof govde.katilimciId === "string" ? govde.katilimciId.trim() : "";
+    if (!katilimciId) {
+      return Response.json({ hata: "Prova için bir katılımcı seçmelisin." }, { status: 400 });
+    }
+    const { data: kisi } = await db
+      .from("participants")
+      .select("id, full_name")
+      .eq("id", katilimciId)
+      .eq("role", "participant")
+      .maybeSingle();
+    if (!kisi) {
+      return Response.json({ hata: "Katılımcı bulunamadı." }, { status: 404 });
+    }
+    await provaBaslat(db, simdi, katilimciId);
+    return Response.json({ ok: true, gun: 1, katilimciAd: kisi.full_name });
   }
 
   if (govde.eylem === "gunGec") {

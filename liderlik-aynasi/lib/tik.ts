@@ -153,11 +153,22 @@ export async function tikCalistir(
       "sistem_modu",
       "yolculuk_baslangic",
       "gorev_uretimi_durduruldu",
+      "prova_katilimci_id",
     ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
 
   if (ayar.get("ayna_aktif") !== "true") {
     return { ozet: "AYNA uyuyor (pasif)", ...ozet };
+  }
+
+  // GÜVENLİK KİLİDİ: prova modundaysak tek bir katılımcıyla sınırlıyız —
+  // katılımcı seçilmemişse (olması gerekmeyen bir durum, savunma amaçlı) tik'i
+  // tamamen durdur. Bu olmadan prova tüm gerçek onboarding'deki kişilere
+  // görev/bildirim gönderirdi (bkz. lib/prova.ts provaBaslat — artık zorunlu
+  // katilimciId parametresi alıyor).
+  const provaKatilimciId = ayar.get("prova_katilimci_id") ?? null;
+  if (provaModu && !provaKatilimciId) {
+    return { ozet: "Prova: katılımcı seçilmemiş — güvenlik nedeniyle durduruldu", ...ozet };
   }
 
   // FAZ 9 — ORKESTRATÖR: zamanı gelmiş senaryo satırlarını ateşle (idempotent).
@@ -292,9 +303,16 @@ export async function tikCalistir(
             )
           : 1));
 
+  // GÜVENLİK KİLİDİ (devam): prova'daysak sorgu TEK katılımcıya sabitlenir.
+  let kisilerSorgu = db
+    .from("participants")
+    .select("id, full_name, team, phone, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak, sicak_an")
+    .eq("role", "participant");
+  if (provaModu && provaKatilimciId) kisilerSorgu = kisilerSorgu.eq("id", provaKatilimciId);
+
   const [{ data: kisiler }, { data: sonGorevler }, { data: yanitGecmisi }] =
     await Promise.all([
-      db.from("participants").select("id, full_name, team, phone, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak, sicak_an").eq("role", "participant"),
+      kisilerSorgu,
       db
         .from("missions")
         .select("participant_id, status, issued_at, kind")
