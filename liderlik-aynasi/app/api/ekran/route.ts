@@ -4,6 +4,7 @@ import { unvanBul } from "@/lib/kivilcim";
 import { arketipBul } from "@/lib/arketip";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { sozMuhurDurumu } from "@/lib/sozMuhur";
+import { ekranSinyali } from "@/lib/kampRadyosu";
 
 // Büyük ekran verisi — bu uç HERKESE AÇIK (sahne bilgisayarı giriş yapmaz).
 // Bu yüzden yalnızca isimsiz agregalar döner: sayılar, özellik ortalamaları
@@ -86,6 +87,9 @@ export type EkranVerisi = {
     anons: { id: string; sesUrl: string | null } | null;
     // Host'un sahne kumandasından gönderdiği anlık serbest duyuru (≤3 dk taze)
     duyuru: { metin: string } | null;
+    // Faz 4 — Kamp Radyosu yayına yeni geçtiyse (≤4 dk taze): maskot gerçek
+    // sesle "konusma" pozuna geçer (bkz. lib/kampRadyosu.ts ekranSinyali).
+    radyo: { id: string; sesUrl: string | null } | null;
   };
 };
 
@@ -657,6 +661,7 @@ export async function GET() {
               sesUrl: await imzali(`anons/program-${anonsTaze.id}.mp3`),
             }
           : null,
+        radyo: await ekranSinyali(db, simdi),
         duyuru,
       };
     })(),

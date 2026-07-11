@@ -151,6 +151,10 @@ export default function EkranGosterisi() {
   const [dalgaVideo, setDalgaVideo] = useState<number | null>(null);
   // UX #9 — anons görsel bandı: ses kapalıyken bile salon "anons var" görsün.
   const [anonsGoster, setAnonsGoster] = useState(false);
+  // Faz 4/1.5b — Kamp Radyosu yayına geçince gerçek ses çalar; ses SÜRDÜĞÜ
+  // müddetçe maskot "konusma" pozunda (bkz. AynaSahneLoop). Ses bitince/hiç
+  // çalmadıysa "bekleme" — maskot yalnız GERÇEKTEN sesi varken konuşur gibi görünür.
+  const [radyoKonusuyor, setRadyoKonusuyor] = useState(false);
   const sesAcikRef = useRef(false);
   const oynanan = useRef<Set<string>>(new Set());
   // Sahne Vitrini (DJ): host bir slayt sabitlediyse otomatik döngü durur.
@@ -281,6 +285,17 @@ export default function EkranGosterisi() {
           setTimeout(() => setAnonsGoster(false), 8000);
           if (sesAcikRef.current && s.anons.sesUrl) {
             void new Audio(s.anons.sesUrl).play().catch(() => {});
+          }
+        }
+        // Faz 4/1.5b — Kamp Radyosu: gerçek ses çalarken maskot "konusma" pozunda.
+        if (s?.radyo && !oynanan.current.has(`r${s.radyo.id}`)) {
+          oynanan.current.add(`r${s.radyo.id}`);
+          if (sesAcikRef.current && s.radyo.sesUrl) {
+            const ses = new Audio(s.radyo.sesUrl);
+            ses.onplay = () => setRadyoKonusuyor(true);
+            ses.onended = () => setRadyoKonusuyor(false);
+            ses.onerror = () => setRadyoKonusuyor(false);
+            void ses.play().catch(() => setRadyoKonusuyor(false));
           }
         }
       } catch {
@@ -486,7 +501,11 @@ export default function EkranGosterisi() {
       )}
       <header className="relative z-10 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
         {/* Faz 1.5 — canlı AYNA maskotu: bekleme döngüsü sahnede sürekli döner */}
-        <AynaSahneLoop mod="bekleme" boyut={120} sinif="hidden shrink-0 sm:block" />
+        <AynaSahneLoop
+          mod={radyoKonusuyor ? "konusma" : "bekleme"}
+          boyut={120}
+          sinif="hidden shrink-0 sm:block"
+        />
         <div className="min-w-0">
           <p className="flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.3em] text-royal-light sm:text-lg">
             <span className="ekran-canli-nokta inline-block h-3 w-3 rounded-full bg-red-500" aria-hidden />
