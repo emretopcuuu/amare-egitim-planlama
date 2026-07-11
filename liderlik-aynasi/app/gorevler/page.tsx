@@ -5,6 +5,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { kampKilitliMi } from "@/lib/pusula";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { gorevAraligiDk } from "@/lib/ayna";
+import { aynaKarakterAcikMi, gunlukLaf, BOS_EKRAN_LAFLARI } from "@/lib/aynaKarakter";
 import { unvanBul, UNVANLAR } from "@/lib/kivilcim";
 import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
@@ -725,6 +726,11 @@ export default async function GorevlerPage() {
           siradakiDk={siradakiDk}
           siradakiSaat={siradakiSaat}
           fragmanIpucu={fragmanIpucu}
+          aynaLafi={
+            // Faz 0 — AYNA karakteri: boş ekranda günün lafı (statik havuz,
+            // kişi+gün deterministik; kill switch kapalıysa gösterilmez).
+            (await aynaKarakterAcikMi(db)) ? gunlukLaf(BOS_EKRAN_LAFLARI, session.sub) : null
+          }
         />
       ) : (
         <>

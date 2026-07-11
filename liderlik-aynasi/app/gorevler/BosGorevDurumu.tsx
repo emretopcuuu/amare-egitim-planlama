@@ -15,11 +15,14 @@ export default function BosGorevDurumu({
   siradakiDk,
   siradakiSaat,
   fragmanIpucu,
+  aynaLafi,
 }: {
   siradakiDk: number | null;
   // D9: sıradaki turun yaklaşık Istanbul saati ("HH:MM") — sunucu hesaplar.
   siradakiSaat?: string | null;
   fragmanIpucu?: string;
+  // Faz 0 — AYNA karakteri: günün lafı (statik havuzdan, sunucu seçer).
+  aynaLafi?: string | null;
 }) {
   const bekleme =
     siradakiDk == null || siradakiDk <= 0
@@ -63,6 +66,13 @@ export default function BosGorevDurumu({
         <span className="ekran-canli-nokta inline-block h-1.5 w-1.5 rounded-full bg-gold/70" aria-hidden />
         {t.bosMerak}
       </p>
+
+      {/* Faz 0 — AYNA'nın günün lafı: karakter boş anda da yaşar */}
+      {aynaLafi && (
+        <p className="mx-auto mt-4 max-w-sm text-sm italic leading-relaxed text-gold-light/80">
+          “{aynaLafi}”
+        </p>
+      )}
 
       {/* FAZ 5.1 + D9 — GÖREV FRAGMANI: kilitli kart, gerçek içeriği asla açık
           etmez + tek cümlelik "hazırlan" önerisi */}
