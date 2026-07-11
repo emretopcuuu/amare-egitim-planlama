@@ -39,7 +39,7 @@ export async function GET() {
   const ilkAd = kisi.full_name.split(" ")[0];
   const cinsiyet = kisi.ayna_ses === "kadin" ? ("kadin" as const) : ("erkek" as const);
   try {
-    const buf = await seslendir(aynaSesId(cinsiyet), tr.sesSecimi.karsilamaMetni(ilkAd));
+    const buf = await seslendir(aynaSesId(), tr.sesSecimi.karsilamaMetni(ilkAd));
     return new Response(buf, {
       headers: {
         "content-type": "audio/mpeg",

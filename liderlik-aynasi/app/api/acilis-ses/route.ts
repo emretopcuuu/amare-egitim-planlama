@@ -31,7 +31,7 @@ export async function GET(req: Request) {
   const voiceId =
     profil?.status === "klonlandi" && profil.voice_id
       ? profil.voice_id
-      : aynaSesId(kisi?.ayna_ses === "kadin" ? "kadin" : "erkek");
+      : aynaSesId();
 
   try {
     const buf = await seslendir(voiceId, metin);
