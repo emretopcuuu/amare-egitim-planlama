@@ -2481,6 +2481,45 @@ export type Database = {
           },
         ]
       }
+      radyo_yayin: {
+        Row: {
+          created_at: string
+          durum: string
+          gun: number | null
+          id: string
+          metin: string
+          ses_path: string | null
+          slot: string
+          tahmin: string | null
+          tarih: string
+          yayinlanan_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          durum?: string
+          gun?: number | null
+          id?: string
+          metin: string
+          ses_path?: string | null
+          slot: string
+          tahmin?: string | null
+          tarih: string
+          yayinlanan_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          durum?: string
+          gun?: number | null
+          id?: string
+          metin?: string
+          ses_path?: string | null
+          slot?: string
+          tahmin?: string | null
+          tarih?: string
+          yayinlanan_at?: string | null
+        }
+        Relationships: []
+      }
       ratings: {
         Row: {
           comment: string | null

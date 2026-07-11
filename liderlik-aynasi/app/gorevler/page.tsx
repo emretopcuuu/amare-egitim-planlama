@@ -93,6 +93,7 @@ import SesliMektup from "./SesliMektup";
 import GovdeAcilis from "./GovdeAcilis";
 import KisiKarti from "@/components/KisiKarti";
 import { sesliMektupGoreviMi } from "@/lib/sesliMektup";
+import { sonYayinGetir } from "@/lib/kampRadyosu";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -364,6 +365,10 @@ export default async function GorevlerPage() {
   let ipucuTohum = 0;
   for (const ch of `${session.sub}:${bugunGorev}`) ipucuTohum = (ipucuTohum * 31 + ch.charCodeAt(0)) % ipucuHavuzu.length;
   const fragmanIpucu = ipucuHavuzu[ipucuTohum];
+
+  // Faz 4 — Kamp Radyosu: bugünün son yayını (varsa çalma kartı gösterilir).
+  const bugunTarih = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
+  const radyo = await sonYayinGetir(db, bugunTarih);
 
   // Faz 2 — AYNA ilişki durumu: son görev yanıtından deterministik türetilir.
   // Küs moddayken boş ekranda küs poz + soğuk (ama oyunlu) laf havuzu konuşur.
@@ -655,6 +660,32 @@ export default async function GorevlerPage() {
         seriRiski={seriRiski}
         aktifVar={aktif.length > 0}
       />
+
+      {/* Faz 4 — KAMP RADYOSU: bugünün yayını (ses varsa çal, yoksa salt metin) */}
+      {radyo && (
+        <section className="kart-cam rounded-2xl p-4">
+          <div className="flex items-center gap-3">
+            <AynaYuzu durum="konusuyor" boyut={44} sinif="shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold uppercase tracking-widest text-gold-light/80">
+                📻 {t.radyoBaslik}
+              </p>
+              <p className="text-sm text-slate-400">
+                {radyo.slot === "sabah" ? t.radyoSabah : t.radyoAksam}
+              </p>
+            </div>
+            {radyo.sesUrl && <SesCal url={radyo.sesUrl} etiket={t.radyoDinle} />}
+          </div>
+          <details className="mt-2">
+            <summary className="cursor-pointer text-xs font-medium text-slate-500">
+              {t.radyoMetin}
+            </summary>
+            <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-slate-300">
+              {radyo.metin}
+            </p>
+          </details>
+        </section>
+      )}
 
       {/* FAZ 5.4 — İKİ KAPI: seçim bekleyen kapılar (aktif görevden önce) */}
       {kapiAdaylari.length > 0 && (

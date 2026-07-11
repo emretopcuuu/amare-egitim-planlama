@@ -71,6 +71,7 @@ import { tahminSapmasiGorevUret } from "@/lib/tahminSapmasi";
 import { karsilasmaBul } from "@/lib/karsilasma";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
+import { radyoTik } from "@/lib/kampRadyosu";
 import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
 import { sablonBul, ilkAd } from "@/lib/whatsappSablonlari";
 import { gunlukSoz } from "@/lib/ozluSozler";
@@ -1868,6 +1869,10 @@ export async function tikCalistir(
   // [FAZ 5 · U19] YALNIZ KAMP: fısıltı 360° değerlendirmeye ("Gün 3'te aynanda",
   // /degerlendir) demirli — bu yalnız kampta olur. Yolculukta ratings sorgusu boş
   // döner ama yine de kamp diliyle ateşleme riski + gereksiz sorgu; mod'a gate'lendi.
+  // Faz 4 — KAMP RADYOSU: sabah 07:30 + akşam 21:30 (üretim ~20 dk önce başlar).
+  // Kendi hatasını yutar, tik'i asla düşürmez; kill switch radyoyu da kapatır.
+  if (mod === "kamp") await radyoTik(db, gun, gunDk, bugun);
+
   if (mod === "kamp" && (saat === 13 || saat === 20) && !sahneSessiz) {
     const dilim = saat === 13 ? "ogle" : "aksam";
     const anahtar = `fisilti_${bugun}_${dilim}`;
