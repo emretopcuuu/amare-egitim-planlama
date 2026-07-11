@@ -116,10 +116,16 @@ asset üretimi), uygulama = sahne (kampta CANLI üretim YOK). Kill switch:
   saskin/kutlama, 512px ~65KB) + `components/AynaYuzu.tsx`. Koçu başlığı,
   boş görev ekranı, aktif görev kartı köşesine yerleşti. Referans job id
   (yeni poz üretmek için): Higgsfield b4e54156-a4d4-4d5a-948b-b8646915f33d.
-- ⬜ **Faz 2**: küslük modu (son etkileşimden deterministik sicak/serin/kus
-  durumu, statik soğuk metinler, barışmada abartılı sevinç) + lakaplar
-  (3. tamamlanan görevde tek Haiku çağrısı → participants.ayna_lakap, admin
-  panelde değiştirilebilir).
+- ✅ **Faz 2** (PR #741): küslük modu — `aynaIliskiDurumu` son görev yanıtından
+  DETERMİNİSTİK (36s serin / 72s küs; hiç yanıt yoksa sıcak — yeni gelen küs
+  karşılanmaz; kampta 72s dolmayacağı için küslük fiilen onboarding/90-gün
+  mekaniği). Küs: boş ekran + koçu başlığında küs poz + soğuk laf havuzu +
+  görev/koçu prompt satırı; barışma: gorev-yanit'ta önceki yanıt küs eşiğini
+  aştıysa yorumun başına abartılı barışma cümlesi (krizde kapalı). Lakap:
+  3. scored görevde tek Haiku çağrısı (`lakapUret`, katı kurallar, fail-open)
+  → participants.ayna_lakap (migration 0140, canlıda) + push duyurusu +
+  görev/koçu prompt'unda "arada bir kullan". Admin düzenleme UI'ı YOK
+  (gerekirse SQL); istenirse sonra eklenir.
 - ⬜ **Faz 3**: iddia sistemi (AYNA vs İtirazcı bahisleri; kaybeden DAİMA
   karakter, asla katılımcı). ⬜ **Faz 4**: Kamp Radyosu (07:30 + 21:30, 20 dk
   önce üret + önceden kayıtlı 3 yedek anons fallback; dedikodu bülteni yalnız

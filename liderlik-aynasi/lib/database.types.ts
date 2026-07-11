@@ -2116,6 +2116,7 @@ export type Database = {
       participants: {
         Row: {
           amare_puan: number | null
+          ayna_lakap: string | null
           ayna_ses: string
           ayna_ses_secildi_at: string | null
           camp_unlock_token: string | null
@@ -2154,6 +2155,7 @@ export type Database = {
         }
         Insert: {
           amare_puan?: number | null
+          ayna_lakap?: string | null
           ayna_ses?: string
           ayna_ses_secildi_at?: string | null
           camp_unlock_token?: string | null
@@ -2192,6 +2194,7 @@ export type Database = {
         }
         Update: {
           amare_puan?: number | null
+          ayna_lakap?: string | null
           ayna_ses?: string
           ayna_ses_secildi_at?: string | null
           camp_unlock_token?: string | null

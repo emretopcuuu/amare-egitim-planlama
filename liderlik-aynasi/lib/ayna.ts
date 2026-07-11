@@ -16,7 +16,7 @@ import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { kariyerHalKisidenTuret, personaBlogu, personaYolculukOdak, KARIYER_RANK, KARIYER_ETIKET, birUstKariyerEtiket } from "@/lib/persona";
 import { kimlikBlogu } from "@/lib/kisiKimligi";
-import { AYNA_KARAKTER_TAM, aynaKarakterAcikMi } from "@/lib/aynaKarakter";
+import { AYNA_KARAKTER_TAM, aynaKarakterAcikMi, aynaIliskiDurumu, iliskiPromptSatiri, lakapPromptSatiri } from "@/lib/aynaKarakter";
 import { aiHataYakala } from "@/lib/uyari";
 import { vinyetSec, type LiderKas } from "@/lib/liderlikVinyetleri";
 import { zorlukSeviyesiHesapla, type MerdivenGorev } from "@/lib/zorlukMerdiveni";
@@ -693,17 +693,6 @@ export async function gorevUret(
   // Kariyer hâlini türet ve prompt bloğunu hazırla (veri yoksa boş → jenerik).
   const persona = kariyerSonuc.data ? kariyerHalKisidenTuret(kariyerSonuc.data) : null;
   const personaMetni = personaBlogu(persona);
-  // Faz 0 — AYNA KARAKTERİ: şovmen kişilik katmanı. Kill switch kapalıysa boş.
-  // Karakter ANI (açık şaka/iddia) ~%15 — kod belirler ki model dozu kaçırmasın.
-  const karakterAcik = await aynaKarakterAcikMi(db);
-  const karakterAni = karakterAcik && Math.random() < 0.15;
-  const karakterMetni = karakterAcik
-    ? `\n${AYNA_KARAKTER_TAM}\n${
-        karakterAni
-          ? `BU GÖREVDE BİR KARAKTER ANI YAP: göreve kısa bir iddia ("bence bunu yapamazsın — yanılt beni" tarzı), muzip tek satır ya da running gag dokunuşu kat. En fazla 1-2 cümle ve YALNIZ açılış veya kapanış cümlesinde — eylem satırlarının netliğini asla bozma.`
-          : `Bu görevde AÇIK şaka/iddia YAPMA; karakter yalnız kelime seçiminde hafifçe hissedilsin.`
-      }\n`
-    : "";
   // Kişinin cinsiyeti + yaşı → doğru hitap/ton (kadına "baba" deme vb.).
   const kimlikMetni = kimlikBlogu(kariyerSonuc.data?.cinsiyet, kariyerSonuc.data?.yas);
   // #1 KARİYER DNA'SI: görev DNA'sındaki eski SABİT "lider veya üzeri" cümlesi
@@ -807,6 +796,22 @@ export async function gorevUret(
     kapaliTurler = [];
   }
   const onceki = oncekilerSonuc.data ?? [];
+  // Faz 0 — AYNA KARAKTERİ: şovmen kişilik katmanı. Kill switch kapalıysa boş.
+  // Karakter ANI (açık şaka/iddia) ~%15 — kod belirler ki model dozu kaçırmasın.
+  const karakterAcik = await aynaKarakterAcikMi(db);
+  const karakterAni = karakterAcik && Math.random() < 0.15;
+  // Faz 2 — ilişki durumu (son görev yanıtından deterministik) + lakap satırı.
+  const sonYanitZamani = onceki.find((o) => o.responded_at)?.responded_at ?? null;
+  const { data: lakapVeri } = karakterAcik
+    ? await db.from("participants").select("ayna_lakap").eq("id", katilimci.id).maybeSingle()
+    : { data: null };
+  const karakterMetni = karakterAcik
+    ? `\n${AYNA_KARAKTER_TAM}\n${iliskiPromptSatiri(aynaIliskiDurumu(sonYanitZamani))}${lakapPromptSatiri(lakapVeri?.ayna_lakap)}${
+        karakterAni
+          ? `BU GÖREVDE BİR KARAKTER ANI YAP: göreve kısa bir iddia ("bence bunu yapamazsın — yanılt beni" tarzı), muzip tek satır ya da running gag dokunuşu kat. En fazla 1-2 cümle ve YALNIZ açılış veya kapanış cümlesinde — eylem satırlarının netliğini asla bozma.`
+          : `Bu görevde AÇIK şaka/iddia YAPMA; karakter yalnız kelime seçiminde hafifçe hissedilsin.`
+      }\n`
+    : "";
   const puanlar = puanlarSonuc.data ?? [];
   const yeniCumle = mod === "yolculuk" ? await yeniCumleOku(db, katilimci.id) : null;
 
