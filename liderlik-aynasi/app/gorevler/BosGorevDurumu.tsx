@@ -17,6 +17,7 @@ export default function BosGorevDurumu({
   siradakiSaat,
   fragmanIpucu,
   aynaLafi,
+  aynaDurum = "sicak",
 }: {
   siradakiDk: number | null;
   // D9: sıradaki turun yaklaşık Istanbul saati ("HH:MM") — sunucu hesaplar.
@@ -24,6 +25,8 @@ export default function BosGorevDurumu({
   fragmanIpucu?: string;
   // Faz 0 — AYNA karakteri: günün lafı (statik havuzdan, sunucu seçer).
   aynaLafi?: string | null;
+  // Faz 2 — ilişki durumu: küs ise poz da laf da soğur (oyunlu küslük).
+  aynaDurum?: "sicak" | "serin" | "kus";
 }) {
   const bekleme =
     siradakiDk == null || siradakiDk <= 0
@@ -35,10 +38,13 @@ export default function BosGorevDurumu({
   return (
     <section className="kart-cam relative overflow-hidden rounded-3xl px-6 py-8 text-center">
       {/* Faz 1 — AYNA'nın yüzü: soyut göz yerine maskotun kendisi. Nefes alma
-          animasyonu (ayna-goz) korunur; günün lafı varsa poz da laconik uyum
-          için nötr kalır. */}
+          animasyonu (ayna-goz) korunur. Faz 2: küs moddaysa küs poz. */}
       <div className="ayna-goz mx-auto mb-3 h-28 w-28">
-        <AynaYuzu durum="notr" boyut={112} sinif="mx-auto drop-shadow-[0_0_24px_rgba(212,175,55,0.25)]" />
+        <AynaYuzu
+          durum={aynaDurum === "kus" ? "kus" : "notr"}
+          boyut={112}
+          sinif="mx-auto drop-shadow-[0_0_24px_rgba(212,175,55,0.25)]"
+        />
       </div>
 
       <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-light/70">

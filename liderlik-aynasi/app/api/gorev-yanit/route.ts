@@ -2,6 +2,13 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { gorevPuanla, korNoktaGuncelle, gorevUret } from "@/lib/ayna";
 import { kampTaahhutYaz } from "@/lib/kampTaahhut";
+import {
+  aynaKarakterAcikMi,
+  aynaIliskiDurumu,
+  rastgeleLaf,
+  lakapUret,
+  BARISMA_METINLERI,
+} from "@/lib/aynaKarakter";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { kampGunu } from "@/lib/kampProgrami";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
@@ -238,12 +245,39 @@ export async function POST(req: Request) {
   if (gorev.altin)
     dokumKalemler.push({ etiket: tr.gorevler.dokum.altin, deger: kivilcim - temelKivilcim });
   const kivilcimDokum = { kalemler: dokumKalemler, toplam: kivilcim };
+
+  // Faz 2 — KÜSLÜK BARIŞMASI: bu yanıttan ÖNCEKİ son yanıta göre küs müydük?
+  // Öyleyse yorumun başına abartılı barışma cümlesi (karakter anı) eklenir.
+  // Kriz dilinde mizah TAMAMEN kapalı; kill switch kapalıysa hiç çalışmaz.
+  let barismaEk = "";
+  try {
+    if (!kriz && (await aynaKarakterAcikMi(db))) {
+      const { data: oncekiYanit } = await db
+        .from("missions")
+        .select("responded_at")
+        .eq("participant_id", session.sub)
+        .neq("id", gorev.id)
+        .not("responded_at", "is", null)
+        .order("responded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (
+        oncekiYanit?.responded_at &&
+        aynaIliskiDurumu(oncekiYanit.responded_at) === "kus"
+      ) {
+        barismaEk = `${rastgeleLaf(BARISMA_METINLERI)}\n\n`;
+      }
+    }
+  } catch {
+    // karakter süs katmanı — puanlama akışını asla kesmez
+  }
+
   await db
     .from("missions")
     .update({
       status: "scored",
       ai_score: sonuc.puan,
-      ai_comment: sonuc.yorum,
+      ai_comment: barismaEk + sonuc.yorum,
       scored_at: new Date().toISOString(),
       spark_points: kivilcim,
       ...(telafi ? { gec_tamamlandi: true } : {}),
@@ -257,6 +291,28 @@ export async function POST(req: Request) {
   // #10 KAMP TAAHHÜT DEFTERİ: yanıtta somut iş taahhüdü (kaç görüşme/arama/…)
   // çıktıysa yapılandırılmış kaydet — kapanış kolektif anı + Gün 3 SÖZ/plan için.
   if (sonuc.taahhut) await kampTaahhutYaz(db, session.sub, gorev.id, sonuc.taahhut);
+
+  // Faz 2 — LAKAP: 3+ tamamlanan görev ve henüz lakap yoksa tek Haiku çağrısıyla
+  // üret (fail-open; push ile sürpriz duyurulur). Krizde karakter sessiz.
+  try {
+    if (!kriz && (await aynaKarakterAcikMi(db))) {
+      const { data: kisi } = await db
+        .from("participants")
+        .select("ayna_lakap, full_name")
+        .eq("id", session.sub)
+        .maybeSingle();
+      if (kisi && !kisi.ayna_lakap) {
+        const { count: tamamSayisi } = await db
+          .from("missions")
+          .select("id", { count: "exact", head: true })
+          .eq("participant_id", session.sub)
+          .eq("status", "scored");
+        if ((tamamSayisi ?? 0) >= 3) await lakapUret(db, session.sub, kisi.full_name);
+      }
+    }
+  } catch {
+    // lakap süs — akışı asla kesmez
+  }
 
   // FAZ 3.1 — ÇİFT TARAFLI ASİMETRİK GİZLİ GÖREV reveal: bu görev bir gizli
   // bağa (baglanti_id) sahipse ve KARŞI TARAF da tamamladıysa, ikisine de
@@ -526,7 +582,7 @@ export async function POST(req: Request) {
 
   return Response.json({
     puan: sonuc.puan,
-    yorum: sonuc.yorum + guvenlikEk,
+    yorum: barismaEk + sonuc.yorum + guvenlikEk,
     kivilcim,
     // D6 — sonuç ekranında kalem kalem sayılan döküm
     kivilcimDokum,

@@ -5,7 +5,14 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { kampKilitliMi } from "@/lib/pusula";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { gorevAraligiDk } from "@/lib/ayna";
-import { aynaKarakterAcikMi, gunlukLaf, BOS_EKRAN_LAFLARI } from "@/lib/aynaKarakter";
+import {
+  aynaKarakterAcikMi,
+  aynaIliskiDurumu,
+  gunlukLaf,
+  BOS_EKRAN_LAFLARI,
+  KUS_MODU_METINLERI,
+  type AynaIliski,
+} from "@/lib/aynaKarakter";
 import AynaYuzu from "@/components/AynaYuzu";
 import { unvanBul, UNVANLAR } from "@/lib/kivilcim";
 import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
@@ -357,6 +364,25 @@ export default async function GorevlerPage() {
   let ipucuTohum = 0;
   for (const ch of `${session.sub}:${bugunGorev}`) ipucuTohum = (ipucuTohum * 31 + ch.charCodeAt(0)) % ipucuHavuzu.length;
   const fragmanIpucu = ipucuHavuzu[ipucuTohum];
+
+  // Faz 2 — AYNA ilişki durumu: son görev yanıtından deterministik türetilir.
+  // Küs moddayken boş ekranda küs poz + soğuk (ama oyunlu) laf havuzu konuşur.
+  const karakterAcik = await aynaKarakterAcikMi(db);
+  let aynaDurum: AynaIliski = "sicak";
+  if (karakterAcik) {
+    const { data: sonYanit } = await db
+      .from("missions")
+      .select("responded_at")
+      .eq("participant_id", session.sub)
+      .not("responded_at", "is", null)
+      .order("responded_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    aynaDurum = aynaIliskiDurumu(sonYanit?.responded_at ?? null);
+  }
+  const aynaLafi = karakterAcik
+    ? gunlukLaf(aynaDurum === "kus" ? KUS_MODU_METINLERI : BOS_EKRAN_LAFLARI, session.sub)
+    : null;
 
   // (Geçmiş zaman çizelgesi gruplaması artık GorevGecmisi client bileşeninde —
   // filtre + özet için.)
@@ -732,11 +758,8 @@ export default async function GorevlerPage() {
           siradakiDk={siradakiDk}
           siradakiSaat={siradakiSaat}
           fragmanIpucu={fragmanIpucu}
-          aynaLafi={
-            // Faz 0 — AYNA karakteri: boş ekranda günün lafı (statik havuz,
-            // kişi+gün deterministik; kill switch kapalıysa gösterilmez).
-            (await aynaKarakterAcikMi(db)) ? gunlukLaf(BOS_EKRAN_LAFLARI, session.sub) : null
-          }
+          aynaLafi={aynaLafi}
+          aynaDurum={aynaDurum}
         />
       ) : (
         <>

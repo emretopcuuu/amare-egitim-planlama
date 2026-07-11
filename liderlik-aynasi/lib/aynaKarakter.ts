@@ -1,5 +1,7 @@
 import "server-only";
+import Anthropic from "@anthropic-ai/sdk";
 import type { Db } from "@/lib/degerlendirme";
+import { katilimciyaBildir } from "@/lib/push";
 
 // ============================================================================
 // AYNA KARAKTER ANAYASASI (Faz 0)
@@ -117,4 +119,107 @@ export function gunlukLaf(havuz: string[], tohum: string): string {
   const anahtar = `${tohum}|${bugun}`;
   for (let i = 0; i < anahtar.length; i++) h = (h * 31 + anahtar.charCodeAt(i)) >>> 0;
   return havuz[h % havuz.length];
+}
+
+// ---------------------------------------------------------------------------
+// Faz 2 — KÜSLÜK MODU: ilişki durumu son görev yanıtından DETERMİNİSTİK
+// hesaplanır (motor durumuna hiçbir şey yazılmaz; okuma anında türetilir).
+// Küslük "suçluluk" değil OYUN: soğukluk tatlı, dönüş hep ödüllenir.
+// ---------------------------------------------------------------------------
+export type AynaIliski = "sicak" | "serin" | "kus";
+const SERIN_ESIK_SAAT = 36;
+const KUS_ESIK_SAAT = 72;
+
+export function aynaIliskiDurumu(
+  sonEtkilesim: string | null,
+  simdi: Date = new Date()
+): AynaIliski {
+  // Hiç etkileşim yoksa henüz tanışıyoruz — yeni gelen KÜS AYNA ile karşılanmaz.
+  if (!sonEtkilesim) return "sicak";
+  const saat = (simdi.getTime() - new Date(sonEtkilesim).getTime()) / 3_600_000;
+  if (saat >= KUS_ESIK_SAAT) return "kus";
+  if (saat >= SERIN_ESIK_SAAT) return "serin";
+  return "sicak";
+}
+
+// İlişki durumunun AI prompt'una eklenen tek satırı (kill switch üstte denetlenir).
+export function iliskiPromptSatiri(durum: AynaIliski): string {
+  if (durum === "kus")
+    return `\nİLİŞKİ DURUMU: Kişi bir süredir ortalıkta yoktu — sen (AYNA) hafif KÜSSÜN. Alıngan ama seven, oyunlu bir soğuklukla yaklaş ("Not aldım." tonunda, en fazla bir cümle); kişi bir şey yapar/paylaşırsa küslüğü ABARTILI bir sevinçle boz. ASLA suçlama, ağır serzeniş ya da suçluluk yükleme — bu bir oyun, dönüş her zaman ödüllenir.\n`;
+  if (durum === "serin")
+    return `\nİLİŞKİ DURUMU: Kişi bir süredir az uğruyor — kırgın DEĞİLSİN ama "özledim sayılır" tonunda tatlı bir sitem tek cümlede yaşayabilir.\n`;
+  return "";
+}
+
+// Barışma anı için rastgele seçim (an bir kez yaşanır; günlük sabitlik gerekmez).
+export function rastgeleLaf(havuz: string[]): string {
+  return havuz[Math.floor(Math.random() * havuz.length)];
+}
+
+// ---------------------------------------------------------------------------
+// Faz 2 — LAKAP: 3. tamamlanan görevde tek Haiku çağrısıyla, kişinin GERÇEK
+// davranışından türeyen sevimli unvan. Fail-open: üretilemezse hiçbir şey olmaz.
+// ---------------------------------------------------------------------------
+const LAKAP_MODEL = "claude-haiku-4-5";
+
+export async function lakapUret(
+  db: Db,
+  participantId: string,
+  ad: string
+): Promise<string | null> {
+  try {
+    const { data: yanitlar } = await db
+      .from("missions")
+      .select("kind, title, response_text")
+      .eq("participant_id", participantId)
+      .eq("status", "scored")
+      .not("response_text", "is", null)
+      .order("responded_at", { ascending: false })
+      .limit(4);
+    const malzeme = (yanitlar ?? [])
+      .map((y) => `- [${y.kind}] ${y.title}: ${String(y.response_text).slice(0, 200)}`)
+      .join("\n");
+    if (!malzeme) return null;
+
+    const client = new Anthropic();
+    const yanit = await client.messages.create({
+      model: LAKAP_MODEL,
+      max_tokens: 60,
+      system: `Sen AYNA'sın — bir liderlik kampının şovmen karakteri. Kişiye, aşağıdaki GERÇEK görev yanıtlarından türeyen tek bir LAKAP takacaksın.
+KURALLAR (pazarlıksız):
+- 2-4 kelime, Türkçe, büyük harfle başlayan unvan biçiminde (ör. "Sabah Yedi Kahramanı", "Masaya Yürüyen Kadın", "Tek Cümlede Anlatan").
+- Lakap kişinin DAVRANIŞINDAKİ bir güçten doğar — onurlandırır, asla alay etmez.
+- Din, siyaset, beden, kilo, yaş, para, aile göndermesi YASAK. Kişinin adını lakabın içinde KULLANMA.
+- YALNIZ lakabı yaz; tırnak, açıklama, noktalama ekleme.`,
+      messages: [{ role: "user", content: `Kişi: ${ad}\nSon görev yanıtları:\n${malzeme}` }],
+    });
+    const lakap = yanit.content
+      .filter((b) => b.type === "text")
+      .map((b) => b.text)
+      .join("")
+      .trim()
+      .replace(/^["'“”]+|["'“”.]+$/g, "")
+      .slice(0, 40);
+    if (lakap.length < 3) return null;
+
+    await db.from("participants").update({ ayna_lakap: lakap }).eq("id", participantId);
+    // Lakabı kişiye sürpriz olarak duyur — karakterin "seni gördüm" anı.
+    await katilimciyaBildir(
+      db,
+      participantId,
+      "🪞 AYNA sana bir lakap taktı",
+      `Bundan sonra sana arada '${lakap}' diyebilirim. Hak ettin.`,
+      "/gorevler"
+    ).catch(() => {});
+    return lakap;
+  } catch {
+    return null; // fail-open: lakap süs, deneyimi asla kesmez
+  }
+}
+
+// Lakabın AI prompt'una eklenen satırı (görev + koçu bağlamları).
+export function lakapPromptSatiri(lakap: string | null | undefined): string {
+  return lakap
+    ? `\nKİŞİYE TAKTIĞIN LAKAP: "${lakap}" — arada bir (her seferinde DEĞİL) doğal biçimde kullan; kişi bu lakabı senden kazandı.\n`
+    : "";
 }

@@ -12,7 +12,14 @@ const t = tr.kocu;
 
 type Mesaj = { rol: string; icerik: string };
 
-export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }) {
+export default function KocuSohbet({
+  hafiza = null,
+  aynaDurum = "sicak",
+}: {
+  hafiza?: string | null;
+  // Faz 2 — başlıktaki AYNA pozu (küs ise küs poz; sunucu hesaplar).
+  aynaDurum?: "sicak" | "serin" | "kus";
+}) {
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
   const [girdi, setGirdi] = useState("");
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -167,7 +174,7 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
         </Link>
         <div className="flex items-center gap-2">
           {/* Faz 1 — AYNA'nın yüzü: koçun başlığında karakter avatarı (👁 yerine) */}
-          <AynaYuzu durum="notr" boyut={36} sinif="shrink-0" />
+          <AynaYuzu durum={aynaDurum === "kus" ? "kus" : "notr"} boyut={36} sinif="shrink-0" />
           <div>
             <p className="prizma-serif ay-metin text-base font-semibold leading-none">{t.baslik}</p>
             <p className="mt-0.5 text-[0.7rem] text-slate-500">{t.altBaslik}</p>
