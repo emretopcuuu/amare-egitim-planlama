@@ -151,7 +151,9 @@ export default async function PusulaSayfa() {
     // EN BÜYÜK mesaj: "mührü kaldırmadan devam edemezsin" (kampta QR okut).
     // Aday bundan sonra nasıl ilerleyeceğini buradan anlar; gerisi etrafında.
     const bekleIcerik = (
-      <div className="space-y-5">
+      // Kademeli giriş: mühür kartı → ilk analiz → hazırlık özeti → gerisi,
+      // sırayla belirir (katılımcı isteği — "bir bir çıksa"). reduced-motion'da kapanır.
+      <div className="sahne-giris space-y-5">
         {hepsiTamam && <Konfeti anahtar="hazirlik-tamam" />}
 
         {/* HERO — mühür kilidi: ekranın merkez, en baskın öğesi */}
@@ -196,7 +198,7 @@ export default async function PusulaSayfa() {
             ✅ {t.ozetBaslik}
           </p>
           <p className="mt-1 text-xs leading-relaxed text-slate-500">{t.ozetAciklama}</p>
-          <ul className="mt-3 space-y-1.5">
+          <ul className="sahne-giris mt-3 space-y-1.5">
             {ozetAdimlar.map((a) =>
               a.foto ? (
                 <li key={a.ad}>
