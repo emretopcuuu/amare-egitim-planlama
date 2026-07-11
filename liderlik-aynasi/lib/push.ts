@@ -87,25 +87,49 @@ export async function herkeseBildir(
   govde: string,
   url = "/program"
 ): Promise<void> {
-  // 1) GELEN KUTUSU: tüm katılımcılara kalıcı kaydet (push'tan bağımsız).
+  // GÜVENLİK KİLİDİ: prova aktifse "herkese" duyuru gerçek onboarding'deki
+  // kişilere GİTMEZ — yalnız prova'nın tek sabitlendiği katılımcıya düşer.
+  // Merkezi burada (tek yerde) çünkü tik.ts/kampRadyosu.ts'teki her
+  // herkeseBildir çağrısı otomatik bu korumayı miras alır (yeni çağrı
+  // eklense bile tek tek hatırlamaya gerek kalmaz).
+  let hedefKisiIdler: string[] | null = null; // null = herkes (normal davranış)
   try {
-    const { data: kisiler } = await db
-      .from("participants")
-      .select("id")
-      .eq("role", "participant");
-    if (kisiler?.length) {
+    const { data: provaAyar } = await db
+      .from("settings")
+      .select("key, value")
+      .in("key", ["prova_aktif", "prova_katilimci_id"]);
+    const m = new Map((provaAyar ?? []).map((a) => [a.key, a.value]));
+    if (m.get("prova_aktif") === "true") {
+      const pid = m.get("prova_katilimci_id");
+      hedefKisiIdler = pid ? [pid] : []; // katılımcı yoksa kimseye gitmesin
+    }
+  } catch {
+    // prova durumu okunamadıysa normal (herkese) davranışa düş
+  }
+
+  // 1) GELEN KUTUSU: kalıcı kaydet (push'tan bağımsız).
+  try {
+    let kisiIdler = hedefKisiIdler;
+    if (kisiIdler === null) {
+      const { data: kisiler } = await db
+        .from("participants")
+        .select("id")
+        .eq("role", "participant");
+      kisiIdler = (kisiler ?? []).map((k) => k.id);
+    }
+    if (kisiIdler.length) {
       await db
         .from("bildirimler")
-        .insert(kisiler.map((k) => ({ participant_id: k.id, baslik, govde, url })));
+        .insert(kisiIdler.map((id) => ({ participant_id: id, baslik, govde, url })));
     }
   } catch {
     // kayıt başarısızsa push'u yine de dene
   }
   // 2) Anlık push.
   if (!hazirla()) return;
-  const { data } = await db
-    .from("push_subscriptions")
-    .select("id, endpoint, p256dh, auth");
+  let sorgu = db.from("push_subscriptions").select("id, endpoint, p256dh, auth");
+  if (hedefKisiIdler !== null) sorgu = sorgu.in("participant_id", hedefKisiIdler);
+  const { data } = await sorgu;
   if (!data?.length) return;
   const yuk = JSON.stringify({ baslik, govde, url });
   // Kamp ölçeğinde (≤ ~100 abone) paralel gönderim sorunsuz

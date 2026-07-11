@@ -26,15 +26,27 @@ export default async function ProvaPage() {
 
   const eslesmeVar = (eslesmeSayisi ?? 0) > 0;
 
+  // Prova zaten aktifse (veya son kez hangi kişiyle koşulduysa) adını göster.
+  let secilenKatilimciAd: string | null = null;
+  if (durum.katilimciId) {
+    const { data } = await db
+      .from("participants")
+      .select("full_name")
+      .eq("id", durum.katilimciId)
+      .maybeSingle();
+    secilenKatilimciAd = data?.full_name ?? null;
+  }
+
   return (
     <main className="mx-auto w-full max-w-3xl flex-1 space-y-6 p-6">
       <div>
         <h1 className="text-2xl font-bold text-gold">🎭 Prova Kampı</h1>
         <p className="mt-1 text-sm text-slate-400">
-          Gerçek kayıtlı kişilerle 3 günlük kampı hızlandırılmış yaşatır. Başlat
-          dediğinde sanal saat Gün 1 sabahından akmaya başlar; AYNA o güne göre
-          gerçek görev, ses ve bildirimleri telefonlara gönderir. Günler arası
-          geçişi sen onaylarsın — her gün istediğin kadar uzar.
+          Seçtiğin TEK bir katılımcıyla 3 günlük kampı hızlandırılmış yaşatır —
+          diğer herkes onboarding'de olduğu gibi kalır, hiçbir görev/bildirim
+          gitmez. Başlat dediğinde sanal saat Gün 1 sabahından akmaya başlar;
+          AYNA o güne göre gerçek görev, ses ve bildirimleri yalnızca seçtiğin
+          kişinin telefonuna gönderir. Günler arası geçişi sen onaylarsın.
         </p>
       </div>
 
@@ -51,6 +63,8 @@ export default async function ProvaPage() {
           baslangicAktif={durum.aktif}
           baslangicGun={durum.gun}
           katilimciSayisi={katilimciSayisi ?? 0}
+          baslangicKatilimciId={durum.katilimciId}
+          baslangicKatilimciAd={secilenKatilimciAd}
         />
       </section>
 
