@@ -333,3 +333,43 @@ export async function sonYayinGetir(
     return null;
   }
 }
+
+// ============================================================================
+// G7 — RADYO KITLIĞI (canlı yayın penceresi). Mevcut radyoya DOKUNMADAN, bayrak
+// açıkken bir "5 dakika açık, sonra kaybolur" kıtlık katmanı ekler. Bayrak
+// kapalıyken (varsayılan) mevcut kalıcı radyo kartı/arşivi birebir korunur.
+// ============================================================================
+const RADYO_KITLIK_PENCERE_MS = 5 * 60_000;
+
+export async function radyoKitlikAcikMi(db: Db): Promise<boolean> {
+  const { data } = await db.from("settings").select("value").eq("key", "radyo_kitlik_acik").maybeSingle();
+  return data?.value === "true";
+}
+
+// O an CANLI (yayına ≤5 dk önce geçmiş) yayın — yoksa null. kalanSn geri sayım.
+export async function kitlikYayini(
+  db: Db,
+  simdi: Date
+): Promise<{ id: string; metin: string; sesUrl: string | null; kalanSn: number } | null> {
+  try {
+    const { data } = await db
+      .from("radyo_yayin")
+      .select("id, metin, ses_path, yayinlanan_at")
+      .eq("durum", "yayinda")
+      .not("yayinlanan_at", "is", null)
+      .order("yayinlanan_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!data?.yayinlanan_at) return null;
+    const gecen = simdi.getTime() - new Date(data.yayinlanan_at).getTime();
+    if (gecen < 0 || gecen > RADYO_KITLIK_PENCERE_MS) return null; // pencere kapandı → kaybolur
+    let sesUrl: string | null = null;
+    if (data.ses_path) {
+      const { data: imza } = await db.storage.from(BUCKET).createSignedUrl(data.ses_path, 600);
+      sesUrl = imza?.signedUrl ?? null;
+    }
+    return { id: data.id, metin: data.metin, sesUrl, kalanSn: Math.max(0, Math.ceil((RADYO_KITLIK_PENCERE_MS - gecen) / 1000)) };
+  } catch {
+    return null;
+  }
+}

@@ -15,6 +15,7 @@ const BAYRAKLAR: { key: string; ad: string; aciklama: string }[] = [
   { key: "cift_serisi_acik", ad: "🔥 Çift Serisi", aciklama: "Kamp arkadaşı grubu aynı gün beslerse ortak alev büyür (kül→yeniden doğuş)." },
   { key: "fisilti_acik", ad: "🔒 Fısıltı Postası", aciklama: "Günde 1 sesli takdir; alıcı görev tamamlayınca açılır; anonimde tahmin oyunu (KVKK: gerçek ses)." },
   { key: "hamle_acik", ad: "♟ Hamle Sırası", aciklama: "Eşleşmeli görevde karşılıklılık + kilitli reveal; ikisi de yazınca açılır." },
+  { key: "radyo_kitlik_acik", ad: "📻 Radyo Kıtlığı", aciklama: "Kamp Radyosu yayını 5 dk canlı kalır sonra kaybolur (mevcut kalıcı radyoya dokunmaz)." },
 ];
 
 export default async function OyunlastirmaPage() {
