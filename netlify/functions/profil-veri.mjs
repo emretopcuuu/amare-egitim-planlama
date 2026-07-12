@@ -115,6 +115,24 @@ export default async (req) => {
     const amare = (amareRows && amareRows[0]) || null;
     const member = (memberRows && memberRows[0]) || null;
 
+    // 4a. amare_raw_members.rank bazı hesaplarda salt SAYISAL bir iç kod (ör. "62") —
+    // gerçek kariyer rütbesi DEĞİL (Amare'nin kendi hacim/puan seviyesi; kariyer
+    // rütbesiyle korelasyonu yok — 2026-07-11 doğrulandı, ~6800 hesabı etkiliyordu).
+    // Böyle durumda crm_members.career_rank (normalize, insan-okunur) fallback'tır.
+    if (amare && amare.rank && /^\d+$/.test(String(amare.rank).trim())) {
+      amare.rank_raw = amare.rank; // orijinal ham değer saklanır (denetim amaçlı)
+      try {
+        const crmRows = await supabaseGet(
+          `crm_members?select=career_rank&amare_id=eq.${encodeURIComponent(amareIdStr)}&limit=1`
+        );
+        const temizRutbe = crmRows?.[0]?.career_rank;
+        amare.rank = (temizRutbe && String(temizRutbe).trim()) || null;
+      } catch (e) {
+        console.warn('[profil-veri] career_rank fallback err:', e.message);
+        amare.rank = null;
+      }
+    }
+
     // members.bio: yeni format JSON { yas, meslek, heyecan, tanitim, bio_metin, v:1 }
     // eski format: düz string. Backward-compatible parse:
     if (member && member.bio && typeof member.bio === 'string') {

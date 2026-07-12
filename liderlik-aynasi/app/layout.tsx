@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Playfair_Display, Fraunces } from "next/font/google"
 import { supabaseAdmin } from "@/lib/supabase/server";
 import GolArkaplan from "@/components/gol/GolArkaplan";
 import AltNav from "@/components/AltNav";
+import KayipNokta from "@/components/KayipNokta";
 import BaglantiDurumu from "@/components/BaglantiDurumu";
 import CanliTazele from "@/components/CanliTazele";
 import AcilisSplash from "@/components/AcilisSplash";
@@ -121,6 +122,8 @@ export default async function RootLayout({
         {/* GECE GÖLÜ tüm evrenin zemini: her ekran canlı gölün üstünde yaşar */}
         <GolArkaplan />
         {children}
+        {/* G8 — kayıp eşya: aktif turun konumunda köşede gizli parlayan nokta */}
+        <KayipNokta />
         <AltNav />
         {/* Alt nav gizli içerik sayfalarında sabit "← Ana sayfa" */}
         <YuzenGeri />

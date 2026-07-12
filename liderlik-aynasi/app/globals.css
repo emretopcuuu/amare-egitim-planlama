@@ -1740,3 +1740,31 @@ html[data-admin-kontrast="yuksek"] .admin-kok .text-slate-500 {
   .ayna-maske { -webkit-mask-image: none; mask-image: none; }
   .ayna-doner { animation: none; }
 }
+
+/* G2 — Gizemli sandık animasyonları (reduced-motion'da susar; JS de gate eder). */
+@keyframes sandik-salla { 0%, 92%, 100% { transform: rotate(0deg); } 94% { transform: rotate(-7deg); } 96% { transform: rotate(7deg); } 98% { transform: rotate(-4deg); } }
+@keyframes sandik-titre { 0%, 100% { transform: translateX(0) rotate(0); } 20% { transform: translateX(-3px) rotate(-4deg); } 40% { transform: translateX(3px) rotate(4deg); } 60% { transform: translateX(-2px) rotate(-3deg); } 80% { transform: translateX(2px) rotate(3deg); } }
+@keyframes sandik-patla { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); } }
+.sandik-salla { animation: sandik-salla 3s ease-in-out infinite; transform-origin: bottom center; }
+.sandik-titre { animation: sandik-titre 0.35s ease-in-out infinite; }
+.sandik-patla { animation: sandik-patla 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .sandik-salla, .sandik-titre, .sandik-patla { animation: none; transform: none; }
+}
+
+/* G4 — çift serisi alevi (reduced-motion'da sabit). */
+@keyframes alev-yan { 0%, 100% { transform: scale(1) rotate(-2deg); filter: brightness(1); } 50% { transform: scale(1.12) rotate(2deg); filter: brightness(1.25); } }
+.alev-yan { animation: alev-yan 1.4s ease-in-out infinite; transform-origin: bottom center; }
+@media (prefers-reduced-motion: reduce) { .alev-yan { animation: none; transform: none; } }
+
+/* G8 — kayıp eşya parlayan nokta (reduced-motion'da sabit). */
+@keyframes kayip-parla { 0%, 100% { opacity: 0.55; transform: scale(1); } 50% { opacity: 1; transform: scale(1.25); } }
+.kayip-parla { animation: kayip-parla 2.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .kayip-parla { animation: none; opacity: 0.8; } }
+
+/* G9 — elmas buğusu + silme parıltısı (reduced-motion'da sabit/anında). */
+@keyframes elmas-bugu-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes elmas-parilti { 0% { opacity: 0; transform: translate(-50%,-50%) scale(0.4); } 40% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%,-50%) scale(1); } }
+.elmas-bugu { animation: elmas-bugu-in 1.2s ease-out both; }
+.elmas-parilti { animation: elmas-parilti 0.75s ease-out both; }
+@media (prefers-reduced-motion: reduce) { .elmas-bugu { animation: none; opacity: 1; } .elmas-parilti { animation: none; } }
