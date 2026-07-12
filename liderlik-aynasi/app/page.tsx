@@ -40,6 +40,7 @@ import KimlikElmasi from "@/components/elmas/KimlikElmasi";
 import { kimlikElmasiVerisi } from "@/lib/elmas";
 import { elmasRengiGetir, marketAcikMi } from "@/lib/market";
 import { sandikDurumu, sandikAcikMi } from "@/lib/sandik";
+import { rekorlarAcikMi } from "@/lib/rekorlar";
 import SandikKarti from "./SandikKarti";
 import { okunmamisMesaj } from "@/lib/icMesaj";
 
@@ -180,9 +181,9 @@ export default async function AnaSayfa({
   const elmasVeri = kisi.camp_unlocked_at ? await kimlikElmasiVerisi(db, session.sub) : null;
 
   // G1 — market: elmas ışık rengi (kişiselleştirme) + market bayrağı (giriş linki).
-  const [elmasRengi, marketAcik] = kisi.camp_unlocked_at
-    ? await Promise.all([elmasRengiGetir(db, session.sub), marketAcikMi(db)])
-    : [null, false];
+  const [elmasRengi, marketAcik, rekorAcik] = kisi.camp_unlocked_at
+    ? await Promise.all([elmasRengiGetir(db, session.sub), marketAcikMi(db), rekorlarAcikMi(db)])
+    : [null, false, false];
 
   // G2 — gizemli sandık: açıksa bekleyen sandık hakkı sayısı.
   const sandikBekleyen =
@@ -630,15 +631,25 @@ export default async function AnaSayfa({
           />
           {/* G2 — Gizemli sandık (bekleyen hak varsa) */}
           <SandikKarti bekleyen={sandikBekleyen} />
-          {/* G1 — Market girişi (yalnız market açıkken) */}
-          {marketAcik && (
-            <Link
-              href="/market"
-              className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-gold/30 bg-gold/[0.06] py-2.5 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/[0.12]"
-            >
-              🏪 Kıvılcım Marketi
-            </Link>
-          )}
+          {/* G1/G3 — Market + Rekorlar girişleri (yalnız açıkken) */}
+          <div className="mt-3 grid gap-2">
+            {marketAcik && (
+              <Link
+                href="/market"
+                className="flex items-center justify-center gap-2 rounded-xl border border-gold/30 bg-gold/[0.06] py-2.5 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/[0.12]"
+              >
+                🏪 Kıvılcım Marketi
+              </Link>
+            )}
+            {rekorAcik && (
+              <Link
+                href="/rekorlar"
+                className="flex items-center justify-center gap-2 rounded-xl border border-royal/30 bg-royal/[0.1] py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-royal/20"
+              >
+                🏆 Rekorlar
+              </Link>
+            )}
+          </div>
         </div>
       )}
       {/* [KURULUM 7/8] Rozetler (İlk Işık/El Ele) + "yanındakiyle el ele" girişi */}

@@ -1683,6 +1683,27 @@ export type Database = {
         }
         Relationships: []
       }
+      rekorlar: {
+        Row: {
+          deger: number
+          kategori: string
+          participant_id: string | null
+          tarih: string
+        }
+        Insert: {
+          deger: number
+          kategori: string
+          participant_id?: string | null
+          tarih?: string
+        }
+        Update: {
+          deger?: number
+          kategori?: string
+          participant_id?: string | null
+          tarih?: string
+        }
+        Relationships: []
+      }
       sandik_gecmisi: {
         Row: {
           acildi_at: string
