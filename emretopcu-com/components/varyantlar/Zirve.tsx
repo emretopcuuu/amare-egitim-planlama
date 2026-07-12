@@ -16,32 +16,20 @@ import {
 } from "motion/react";
 import {
   ArrowUpRight,
-  EnvelopeSimple,
   InstagramLogo,
   PlayCircle,
   WhatsappLogo,
 } from "@phosphor-icons/react";
 import {
-  AYNA,
   AYNA_URL,
-  EGITIMLER,
-  EPOSTA,
-  HAKKIMDA,
-  HERO,
-  ILETISIM,
-  DEYINCE_KELIMELER,
-  DEYINCE_SOZLER,
-  ILKELER,
   INSTAGRAM_URL,
-  KONUSMALAR,
   LIDER_PROFIL_URL,
-  RAKAMLAR,
-  SOZLER,
   TRIBUTE_VIDEO_ID,
-  VAAT,
   WHATSAPP_URL,
-  YOLCULUK,
+  type Dil,
+  type Icerik,
 } from "@/lib/icerik";
+import { DilProvider, useC, useDil } from "./dil";
 
 // Varyant D "Zirve": scroll koreografili ödül-sitesi seviyesi tasarım.
 // Abanoz zemin + tek altın vurgu. Yapışkan kart destesi, yatay kaydırma,
@@ -53,12 +41,33 @@ const GECIS = [0.16, 1, 0.3, 1] as const;
 // 3D sahne yalnızca tarayıcıda yüklenir (WebGL, SSR'de çalışmaz).
 const Ag3D = dynamic(() => import("./Ag3D"), { ssr: false });
 
-const NAV_LINKLER = [
-  { href: "#manifesto", etiket: "Hakkımda" },
-  { href: "#yolculuk", etiket: "Yolculuk" },
-  { href: "#egitimler", etiket: "Eğitimler" },
-  { href: "#ayna", etiket: "Liderlik Aynası" },
-];
+/* Dil değiştirici: TR / EN arasında geçiş (statik route'lara link). */
+function DilSecici() {
+  const dil = useDil();
+  return (
+    <div className="flex items-center gap-1 text-sm">
+      <a
+        href="/"
+        aria-current={dil === "tr" ? "true" : undefined}
+        className={
+          dil === "tr" ? "font-semibold text-altin" : "text-duman hover:text-fildisi"
+        }
+      >
+        TR
+      </a>
+      <span className="text-white/20">/</span>
+      <a
+        href="/en"
+        aria-current={dil === "en" ? "true" : undefined}
+        className={
+          dil === "en" ? "font-semibold text-altin" : "text-duman hover:text-fildisi"
+        }
+      >
+        EN
+      </a>
+    </div>
+  );
+}
 
 /* Manyetik buton: imlece doğru hafifçe kayar, ayrılınca yayla geri döner. */
 function Manyetik({ children }: { children: ReactNode }) {
@@ -133,6 +142,7 @@ function TiltKart({
 }
 
 function Nav() {
+  const c = useC();
   return (
     <header className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-abanoz/70 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
@@ -140,7 +150,7 @@ function Nav() {
           Emre Topçu
         </a>
         <nav className="hidden items-center gap-8 md:flex">
-          {NAV_LINKLER.map((link) => (
+          {c.nav.map((link) => (
             <a
               key={link.href}
               href={link.href}
@@ -150,15 +160,18 @@ function Nav() {
             </a>
           ))}
         </nav>
-        <a
-          href={WHATSAPP_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-full border border-altin/40 px-4 py-1.5 text-sm text-altin transition-colors hover:bg-altin hover:text-abanoz active:scale-[0.98]"
-        >
-          <WhatsappLogo size={15} weight="fill" />
-          Benimle çalış
-        </a>
+        <div className="flex items-center gap-4">
+          <DilSecici />
+          <a
+            href={WHATSAPP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-full border border-altin/40 px-4 py-1.5 text-sm text-altin transition-colors hover:bg-altin hover:text-abanoz active:scale-[0.98]"
+          >
+            <WhatsappLogo size={15} weight="fill" />
+            {c.ui.calis}
+          </a>
+        </div>
       </div>
     </header>
   );
@@ -188,6 +201,7 @@ function PerdeSatir({
 }
 
 function Hero() {
+  const c = useC();
   const azalt = useReducedMotion();
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
@@ -217,12 +231,12 @@ function Hero() {
           transition={{ duration: 0.7, delay: 0.05, ease: GECIS }}
           className="mb-6 text-sm font-medium tracking-[0.2em] text-altin uppercase"
         >
-          {HERO.isim} <span className="text-duman">— {HERO.rol}</span>
+          {c.hero.isim} <span className="text-duman">— {c.hero.rol}</span>
         </motion.p>
         <h1 className="text-[16vw] leading-[0.9] font-semibold tracking-tighter uppercase md:text-[9.5rem]">
-          <PerdeSatir gecikme={0.15}>{HERO.baslikSatir1}</PerdeSatir>
+          <PerdeSatir gecikme={0.15}>{c.hero.baslikSatir1}</PerdeSatir>
           <PerdeSatir gecikme={0.28}>
-            <span className="text-altin">{HERO.baslikSatir2}</span>
+            <span className="text-altin">{c.hero.baslikSatir2}</span>
           </PerdeSatir>
         </h1>
         <div className="mt-8 flex flex-wrap items-end justify-between gap-8">
@@ -232,7 +246,7 @@ function Hero() {
             transition={{ duration: 0.8, delay: 0.55, ease: GECIS }}
             className="max-w-[44ch] text-lg leading-relaxed text-fildisi/80 md:text-xl"
           >
-            {HERO.altMetin}
+            {c.hero.altMetin}
           </motion.p>
           <motion.div
             initial={azalt ? false : { opacity: 0, y: 24 }}
@@ -248,7 +262,7 @@ function Hero() {
                 className="inline-flex items-center gap-2 rounded-full bg-altin px-7 py-3.5 font-medium text-abanoz transition-transform active:scale-[0.98]"
               >
                 <WhatsappLogo size={18} weight="fill" />
-                Benimle çalış
+                {c.ui.calis}
               </a>
             </Manyetik>
             <Manyetik>
@@ -256,7 +270,7 @@ function Hero() {
                 href="#manifesto"
                 className="inline-flex items-center gap-2 rounded-full border border-white/20 px-7 py-3.5 text-fildisi transition-colors hover:border-white/45 active:scale-[0.98]"
               >
-                Hikayeyi gör
+                {c.ui.hikaye}
               </a>
             </Manyetik>
           </motion.div>
@@ -287,13 +301,14 @@ function Kelime({
 }
 
 function Manifesto() {
+  const c = useC();
   const azalt = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start 0.8", "end 0.45"],
   });
-  const kelimeler = HAKKIMDA.paragraflar[0].split(" ");
+  const kelimeler = c.hakkimda.paragraflar[0].split(" ");
 
   return (
     <section id="manifesto" className="scroll-mt-24 py-28 md:py-40">
@@ -314,12 +329,12 @@ function Manifesto() {
           />
           <div>
             <p className="text-xl font-semibold tracking-tight">Emre Topçu</p>
-            <p className="text-sm text-duman">{HAKKIMDA.unvan}</p>
+            <p className="text-sm text-duman">{c.hakkimda.unvan}</p>
           </div>
         </motion.div>
         <p className="text-2xl leading-snug font-medium tracking-tight text-fildisi md:text-4xl md:leading-snug">
           {azalt
-            ? HAKKIMDA.paragraflar[0]
+            ? c.hakkimda.paragraflar[0]
             : kelimeler.map((kelime, i) => (
                 <Kelime
                   key={i}
@@ -337,7 +352,7 @@ function Manifesto() {
           transition={{ duration: 0.7, ease: GECIS }}
           className="mt-10 max-w-[56ch] text-lg leading-relaxed text-duman"
         >
-          {HAKKIMDA.paragraflar[1]}
+          {c.hakkimda.paragraflar[1]}
         </motion.p>
       </div>
     </section>
@@ -351,7 +366,7 @@ function FilmBolumu({
   toplam,
   ilerleme,
 }: {
-  adim: (typeof YOLCULUK)[number];
+  adim: Icerik["yolculuk"][number];
   indeks: number;
   toplam: number;
   ilerleme: MotionValue<number>;
@@ -393,6 +408,7 @@ function FilmBolumu({
 }
 
 function Yolculuk() {
+  const c = useC();
   const azalt = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
@@ -405,9 +421,9 @@ function Yolculuk() {
       <section id="yolculuk" className="scroll-mt-24 py-24">
         <div className="mx-auto max-w-4xl space-y-16 px-6">
           <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-            Yolculuk
+            {c.ui.yolculukBaslik}
           </h2>
-          {YOLCULUK.map((adim) => (
+          {c.yolculuk.map((adim) => (
             <div key={adim.baslik}>
               <p className="text-sm font-medium tracking-widest text-altin uppercase">
                 {adim.yil}
@@ -426,12 +442,12 @@ function Yolculuk() {
   return (
     <section id="yolculuk" ref={ref} className="relative h-[520vh]">
       <div className="sticky top-0 h-[100dvh] overflow-hidden">
-        {YOLCULUK.map((adim, i) => (
+        {c.yolculuk.map((adim, i) => (
           <FilmBolumu
             key={adim.baslik}
             adim={adim}
             indeks={i}
-            toplam={YOLCULUK.length}
+            toplam={c.yolculuk.length}
             ilerleme={scrollYProgress}
           />
         ))}
@@ -442,6 +458,7 @@ function Yolculuk() {
 
 /* Dikey scroll'u yatay yolculuğa çeviren eğitim rafı. */
 function Egitimler() {
+  const c = useC();
   const azalt = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const rayRef = useRef<HTMLDivElement>(null);
@@ -468,10 +485,10 @@ function Egitimler() {
       <section id="egitimler" className="scroll-mt-24 bg-abanoz py-24">
         <div className="mx-auto max-w-6xl px-6">
           <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-            Sahneden seçmeler
+            {c.ui.egitimlerBaslik}
           </h2>
           <div className="mt-10 grid gap-5 md:grid-cols-2">
-            {EGITIMLER.map((egitim) => (
+            {c.egitimler.map((egitim) => (
               <article
                 key={egitim.baslik}
                 className="rounded-2xl border border-white/10 bg-abanoz-2 p-7"
@@ -492,19 +509,16 @@ function Egitimler() {
       <div className="sticky top-0 flex h-[100dvh] flex-col justify-center overflow-hidden bg-abanoz">
         <div className="mx-auto w-full max-w-6xl px-6">
           <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-            Sahneden seçmeler
+            {c.ui.egitimlerBaslik}
           </h2>
-          <p className="mt-3 max-w-[52ch] text-duman">
-            Ekip içi eğitim arşivinden bazı başlıklar. Hepsi sahada denenmiş
-            içerik.
-          </p>
+          <p className="mt-3 max-w-[52ch] text-duman">{c.ui.egitimlerAlt}</p>
         </div>
         <motion.div
           ref={rayRef}
           style={{ x }}
           className="mt-12 flex w-max gap-6 pl-6 md:pl-[max(1.5rem,calc((100vw-72rem)/2))]"
         >
-          {EGITIMLER.map((egitim, i) => (
+          {c.egitimler.map((egitim, i) => (
             <TiltKart key={egitim.baslik} className="shrink-0">
               <article
                 className={`flex h-[320px] w-[300px] flex-col justify-between rounded-2xl border border-white/10 p-8 md:h-[360px] md:w-[420px] ${
@@ -562,14 +576,8 @@ function Sayac({ hedef, ek }: { hedef: number; ek: string }) {
   );
 }
 
-const AYNA_SAYACLAR = [
-  { etiket: "Katılımcı", hedef: 29, ek: " lider" },
-  { etiket: "Süre", hedef: 3, ek: " gün" },
-  { etiket: "Değerlendirme", hedef: 360, ek: "°" },
-  { etiket: "Kuruluş", hedef: 2026, ek: "" },
-];
-
 function Ayna() {
+  const c = useC();
   return (
     <section id="ayna" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
@@ -591,10 +599,10 @@ function Ayna() {
           <div className="relative grid gap-12 md:grid-cols-2 md:items-center">
             <div>
               <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-                {AYNA.baslik}
+                {c.ayna.baslik}
               </h2>
               <p className="mt-5 max-w-[46ch] leading-relaxed text-duman">
-                {AYNA.aciklama}
+                {c.ayna.aciklama}
               </p>
               <Manyetik>
                 <a
@@ -609,7 +617,7 @@ function Ayna() {
               </Manyetik>
             </div>
             <dl className="grid grid-cols-2 gap-x-8 gap-y-10">
-              {AYNA_SAYACLAR.map((s) => (
+              {c.ayna.sayaclar.map((s) => (
                 <div key={s.etiket}>
                   <dt className="text-sm text-duman">{s.etiket}</dt>
                   <dd className="mt-1 text-4xl font-semibold tracking-tight text-fildisi">
@@ -627,6 +635,7 @@ function Ayna() {
 
 /* Kanıt: büyük sayan rakamlar. Arkadaki ağ görünür kalsın diye yarı saydam. */
 function Rakamlar() {
+  const c = useC();
   return (
     <section className="scroll-mt-24 py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
@@ -637,10 +646,10 @@ function Rakamlar() {
           transition={{ duration: 0.6, ease: GECIS }}
           className="mb-14 max-w-[30ch] text-2xl leading-snug font-medium tracking-tight text-fildisi md:text-4xl"
         >
-          Rakamlar konuşur, gerisi teferruat.
+          {c.ui.rakamlarBaslik}
         </motion.p>
         <div className="grid grid-cols-2 gap-x-8 gap-y-14 md:grid-cols-4">
-          {RAKAMLAR.map((r, i) => (
+          {c.rakamlar.map((r, i) => (
             <motion.div
               key={r.etiket}
               initial={{ opacity: 0, y: 28 }}
@@ -673,11 +682,12 @@ function Rakamlar() {
 
 /* Felsefe: kendi sözleri, dev puntolarla scroll ile sırayla belirir. */
 function Sozler() {
+  const c = useC();
   return (
     <section className="py-24 md:py-40">
       <div className="mx-auto max-w-5xl px-6">
         <div className="space-y-16 md:space-y-28">
-          {SOZLER.map((soz, i) => (
+          {c.sozler.map((soz, i) => (
             <motion.blockquote
               key={soz}
               initial={{ opacity: 0, y: 40 }}
@@ -701,6 +711,7 @@ function Sozler() {
 
 /* Benimle çalışmak: 3 vaat. */
 function Vaat() {
+  const c = useC();
   return (
     <section id="calis" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
@@ -711,10 +722,10 @@ function Vaat() {
           transition={{ duration: 0.7, ease: GECIS }}
           className="max-w-[16ch] text-3xl font-semibold tracking-tight md:text-5xl"
         >
-          {VAAT.baslik}
+          {c.vaat.baslik}
         </motion.h2>
         <div className="mt-14 grid gap-6 md:grid-cols-3">
-          {VAAT.maddeler.map((m, i) => (
+          {c.vaat.maddeler.map((m, i) => (
             <motion.div
               key={m.baslik}
               initial={{ opacity: 0, y: 28 }}
@@ -745,6 +756,7 @@ function Vaat() {
 }
 
 function Ilkeler() {
+  const c = useC();
   return (
     <section className="bg-abanoz py-24 md:py-32">
       <div className="mx-auto max-w-5xl px-6">
@@ -755,10 +767,10 @@ function Ilkeler() {
           transition={{ duration: 0.7, ease: GECIS }}
           className="text-3xl font-semibold tracking-tight md:text-5xl"
         >
-          Üç ilke
+          {c.ui.ilkelerBaslik}
         </motion.h2>
         <div className="mt-10">
-          {ILKELER.map((ilke, i) => (
+          {c.ilkeler.map((ilke, i) => (
             <motion.div
               key={ilke.baslik}
               initial={{ opacity: 0, y: 28 }}
@@ -784,6 +796,7 @@ function Ilkeler() {
 /* YouTube facade: tıklanana kadar sadece kapak görseli (gerçek yüz) + oynat
    düğmesi yüklenir; tıklayınca iframe gelir. Performans + gerçek yüz kapağı. */
 function VideoKapak({ id }: { id: string }) {
+  const c = useC();
   const [oynat, setOynat] = useState(false);
   return (
     <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-abanoz-2">
@@ -810,7 +823,7 @@ function VideoKapak({ id }: { id: string }) {
           <div className="absolute inset-0 bg-gradient-to-t from-abanoz/70 to-transparent" />
           <span className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-3 rounded-full bg-altin/90 px-6 py-3 font-medium text-abanoz backdrop-blur transition-transform group-hover:scale-105">
             <PlayCircle size={24} weight="fill" />
-            İzle
+            {c.ui.izle}
           </span>
         </button>
       )}
@@ -820,6 +833,7 @@ function VideoKapak({ id }: { id: string }) {
 
 /* Öne çıkan konuşmalar — imza keynote'lar. */
 function Konusmalar() {
+  const c = useC();
   return (
     <section id="konusmalar" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
@@ -832,11 +846,10 @@ function Konusmalar() {
         >
           <div>
             <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-              Öne çıkan konuşmalar
+              {c.ui.konusmalarBaslik}
             </h2>
             <p className="mt-4 max-w-[52ch] text-duman">
-              Yıllardır sahnede anlattığım, ekibimin defalarca dinlediği imza
-              konuşmalar.
+              {c.ui.konusmalarAlt}
             </p>
           </div>
           <Manyetik>
@@ -846,13 +859,13 @@ function Konusmalar() {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full border border-altin/40 px-5 py-2.5 text-sm font-medium text-altin transition-colors hover:bg-altin hover:text-abanoz"
             >
-              Tüm konuşmalar
+              {c.ui.tumKonusmalar}
               <ArrowUpRight size={16} weight="bold" />
             </a>
           </Manyetik>
         </motion.div>
         <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {KONUSMALAR.map((k, i) => (
+          {c.konusmalar.map((k, i) => (
             <motion.article
               key={k.baslik}
               initial={{ opacity: 0, y: 28 }}
@@ -885,6 +898,7 @@ function Konusmalar() {
 /* "Emre Topçu deyince..." — tribute videosundaki gerçek, kolektif ifadeler.
    Öne çıkan sözler + tekrar eden kelimelerden oluşan otantik sosyal kanıt. */
 function Deyince() {
+  const c = useC();
   return (
     <section className="bg-abanoz py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
@@ -895,9 +909,9 @@ function Deyince() {
           transition={{ duration: 0.7, ease: GECIS }}
           className="max-w-[20ch] text-3xl font-semibold tracking-tight md:text-5xl"
         >
-          &quot;Emre Topçu&quot; deyince
+          {c.deyince.baslik1}
           <br />
-          <span className="text-altin">akla ne geliyor?</span>
+          <span className="text-altin">{c.deyince.baslik2}</span>
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 16 }}
@@ -906,8 +920,7 @@ function Deyince() {
           transition={{ duration: 0.6, delay: 0.1, ease: GECIS }}
           className="mt-4 max-w-[52ch] text-duman"
         >
-          Aşağıdakiler bizim iddiamız değil; onu tanıyanların kendi
-          cümleleri.
+          {c.deyince.altMetin}
         </motion.p>
 
         {/* Tribute videosu — gerçek yüzler */}
@@ -920,14 +933,13 @@ function Deyince() {
         >
           <VideoKapak id={TRIBUTE_VIDEO_ID} />
           <p className="text-lg leading-relaxed text-duman">
-            Bu sözler bir doğum günü için, onu tanıyanlar tarafından çekildi.
-            Rakamların anlatamadığını, bu yüzler anlatıyor.
+            {c.deyince.videoAciklama}
           </p>
         </motion.div>
 
         {/* Öne çıkan sözler */}
         <div className="mt-14 grid gap-6 md:grid-cols-2">
-          {DEYINCE_SOZLER.map((soz, i) => (
+          {c.deyince.sozler.map((soz, i) => (
             <motion.blockquote
               key={soz}
               initial={{ opacity: 0, y: 24 }}
@@ -951,7 +963,7 @@ function Deyince() {
           transition={{ duration: 0.7, delay: 0.1, ease: GECIS }}
           className="mt-10 flex flex-wrap gap-3"
         >
-          {DEYINCE_KELIMELER.map((k) => (
+          {c.deyince.kelimeler.map((k) => (
             <span
               key={k}
               className="rounded-full border border-altin/25 bg-altin/5 px-5 py-2 text-sm font-medium text-altin md:text-base"
@@ -966,6 +978,7 @@ function Deyince() {
 }
 
 function Iletisim() {
+  const c = useC();
   return (
     <section id="iletisim" className="relative scroll-mt-24 py-28 md:py-40">
       {/* metnin okunması için ağın üstünde yumuşak karartma */}
@@ -985,9 +998,9 @@ function Iletisim() {
           transition={{ duration: 0.8, ease: GECIS }}
           className="text-4xl font-semibold tracking-tight md:text-6xl"
         >
-          {ILETISIM.baslikSatir1}
+          {c.iletisim.baslikSatir1}
           <br />
-          <span className="text-altin">{ILETISIM.baslikSatir2}</span>
+          <span className="text-altin">{c.iletisim.baslikSatir2}</span>
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -996,7 +1009,7 @@ function Iletisim() {
           transition={{ duration: 0.7, delay: 0.1, ease: GECIS }}
           className="mx-auto mt-8 max-w-[48ch] text-lg leading-relaxed text-duman"
         >
-          {ILETISIM.altMetin}
+          {c.iletisim.altMetin}
         </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -1013,7 +1026,7 @@ function Iletisim() {
               className="inline-flex items-center gap-2 rounded-full bg-altin px-8 py-4 text-lg font-medium text-abanoz transition-transform active:scale-[0.98]"
             >
               <WhatsappLogo size={20} weight="fill" />
-              Benimle çalış
+              {c.ui.calis}
             </a>
           </Manyetik>
           <Manyetik>
@@ -1024,7 +1037,7 @@ function Iletisim() {
               className="inline-flex items-center gap-2 rounded-full border border-white/15 px-8 py-4 text-lg text-fildisi transition-colors hover:border-white/40 active:scale-[0.98]"
             >
               <InstagramLogo size={20} weight="bold" />
-              Instagram
+              {c.ui.instagram}
             </a>
           </Manyetik>
         </motion.div>
@@ -1034,6 +1047,7 @@ function Iletisim() {
 }
 
 function Footer() {
+  const c = useC();
   return (
     <footer className="border-t border-white/5 bg-abanoz py-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-duman md:flex-row">
@@ -1044,19 +1058,22 @@ function Footer() {
           rel="noopener noreferrer"
           className="transition-colors hover:text-fildisi"
         >
-          Liderlik Aynası
+          {c.ui.aynaLink}
         </a>
       </div>
     </footer>
   );
 }
 
-export default function Zirve() {
+/* Sayfa gövdesi — dil context'i içinde çalışır. */
+function ZirveIc() {
+  const dil = useDil();
   const azalt = useReducedMotion();
   const { scrollYProgress } = useScroll();
 
   return (
     <div
+      lang={dil}
       className="relative z-0 min-h-[100dvh] bg-abanoz font-sahne text-fildisi selection:bg-altin selection:text-abanoz"
       style={{ colorScheme: "dark" }}
     >
@@ -1079,5 +1096,13 @@ export default function Zirve() {
       </main>
       <Footer />
     </div>
+  );
+}
+
+export default function Zirve({ dil = "tr" }: { dil?: Dil }) {
+  return (
+    <DilProvider dil={dil}>
+      <ZirveIc />
+    </DilProvider>
   );
 }
