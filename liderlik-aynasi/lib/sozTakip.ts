@@ -325,6 +325,50 @@ export async function checkinCipasi(db: Db): Promise<{ gonderilen: number }> {
   return { gonderilen };
 }
 
+// KAPANIŞ Faz D · öneri 10 — SÖZ KARNESİ: kampta verilen sözlerin 90 gün
+// boyunca nasıl tutulduğunu HAFTALIK olarak Emre'ye (adminlere) raporlar. Zincirin
+// son halkası: 3 gün → eğitim → söz → 90 gün → Emre'ye geri ölçüm. Verimli
+// (2 sorgu, agregat); tik'ten haftada bir (Pazartesi, kilit deseniyle) çağrılır.
+export async function sozKarnesiGonder(db: Db): Promise<{ gonderildi: boolean }> {
+  try {
+    const { data: sozler } = await db.from("soz").select("participant_id").eq("durum", "sesli");
+    const aktifler = (sozler ?? []).map((s) => s.participant_id);
+    if (aktifler.length === 0) return { gonderildi: false };
+
+    const yediGunOnce = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
+    const { data: takipler } = await db
+      .from("soz_takip")
+      .select("participant_id, gun, yapildi")
+      .in("participant_id", aktifler)
+      .gte("gun", yediGunOnce);
+
+    const adimAtan = new Set<string>(); // bu hafta en az 1 gün "yaptım"
+    const sonAktivite = new Map<string, string>(); // pid → en son işaretlenen gün
+    for (const t of takipler ?? []) {
+      if (t.yapildi) adimAtan.add(t.participant_id);
+      const onceki = sonAktivite.get(t.participant_id);
+      if (!onceki || t.gun > onceki) sonAktivite.set(t.participant_id, t.gun);
+    }
+    const dortGunOnce = new Date(Date.now() - 4 * 86_400_000).toISOString().slice(0, 10);
+    const sessiz = aktifler.filter((pid) => {
+      const son = sonAktivite.get(pid);
+      return !son || son < dortGunOnce;
+    }).length;
+
+    const toplam = aktifler.length;
+    const tutan = adimAtan.size;
+    const oran = Math.round((tutan / toplam) * 100);
+    const govde =
+      `Kapanışta verilen ${toplam} söz 90 günde yaşıyor. Bu hafta ${tutan} kişi (%${oran}) sözüne en az bir adım attı` +
+      (sessiz > 0 ? `; ${sessiz} kişi 4+ gündür sessiz.` : ".");
+
+    await adminlereBildir(db, "📊 Söz Karnesi (haftalık)", govde, "/admin/kapanis");
+    return { gonderildi: true };
+  } catch {
+    return { gonderildi: false };
+  }
+}
+
 // Kişinin KENDİ sözüne seçtiği şahit sayısı (imza şart değil, seçim yeterli).
 // 90 gün yolculuğu bu sayı hedefe ulaşmadan AÇILMAZ — şahit adımı zorunlu.
 export async function secilenSahitSayisi(db: Db, pid: string): Promise<number> {

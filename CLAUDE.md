@@ -156,8 +156,17 @@ sonra, sahneden ~20 dk önce). Radyo (Faz 4) deseniyle üretim teslimden ~20 dk 
   kamp kanıt anı (fiero 10/10 > en yüksek puanlı görev > verdiği taahhütler —
   KODLA, uydurma yok) → `/sozum` "Bu sözü verebilirsin, çünkü…" kartı (SozV2Akis,
   söz veren her fazda görür). Migration yok.
-- ⬜ **Faz D**: 90 gün (öneri 9 eğitim → 90-gün müfredatı: Emre 3-5 ilke girer →
-  yolculuk görevleri; öneri 10 söz karnesi: haftalık Emre'ye rapor).
+- ✅ **Faz D** (bu PR): **90 gün** (öneriler 9-10) — zincir kapandı. Öneri 9:
+  Emre `/admin/kapanis` → "90-Gün Müfredatı" bölümünde 3-5 ilke girer →
+  `settings.kapanis_ilkeler` (JSON). `gorevUret` (`lib/ayna.ts`) yolculuk modunda
+  her gün bir ilkeyi (`gun % n`) sahada yaşatan prompt fragmanı enjekte eder
+  (icerikAyar `.in`'e `kapanis_ilkeler` eklendi — ek sorgu yok; bozuk JSON →
+  atla). Öneri 10: `sozKarnesiGonder` (`lib/sozTakip.ts`, 2-sorgu agregat) —
+  haftalık söz-tutma raporu Emre'ye/adminlere; tik'ten Pazartesi 08:00 penceresi
+  (sahit özeti yanında, `soz_karnesi_<tarih>` kilidi). **10/10 öneri tamam.**
+
+**ZİNCİR TAM:** 3 gün → sahne öncesi brif (A) → canlı sahne + Emre'nin Sorusu (B)
+→ veriden söz + kanıt (C) → 90-gün müfredatı + söz karnesi (D) → Emre'ye geri ölçüm.
 
 ## AYNA KARAKTER PROJESİ (sürüyor — faz faz)
 

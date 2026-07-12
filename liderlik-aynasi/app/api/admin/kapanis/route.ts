@@ -6,14 +6,30 @@ import { brifUret } from "@/lib/kapanis";
 
 export const maxDuration = 60;
 
-// KAPANIŞ BRİFİ — elle üretim/yenileme. Yalnız admin. Kamp açık olmasa bile
-// (onboarding / prova) eldeki veriyle brifi hazırlar; Emre sahne öncesi test
-// edip hazırlanabilsin. Otomatik teslim (Gün 3 07:30 + 11:20) tik'ten gelir.
-export async function POST() {
+// KAPANIŞ paneli — yalnız admin. İki eylem:
+//  (varsayılan) brif üret/yenile — kamp kapalıyken bile eldeki veriyle.
+//  eylem="ilkeler" — Emre'nin 90-gün müfredat ilkelerini kaydet (öneri 9).
+export async function POST(req: Request) {
   if (!(await adminOturumu())) {
     return Response.json({ hata: "Yetkisiz" }, { status: 403 });
   }
   const db = supabaseAdmin();
+  const govde = (await req.json().catch(() => ({}))) as { eylem?: string; ilkeler?: unknown };
+
+  // Öneri 9 — 90-gün müfredat ilkeleri (3-5 madde) settings'e yazılır; yolculuk
+  // görev motoru (lib/ayna.ts) her gün bir ilkeyi sahada yaşatır.
+  if (govde.eylem === "ilkeler") {
+    const ilkeler = Array.isArray(govde.ilkeler)
+      ? govde.ilkeler.map((x) => String(x).trim()).filter(Boolean).slice(0, 5)
+      : [];
+    await db.from("settings").upsert({
+      key: "kapanis_ilkeler",
+      value: JSON.stringify(ilkeler),
+      updated_at: new Date().toISOString(),
+    });
+    return Response.json({ ok: true, ilkeler });
+  }
+
   const baslangic = await kampBaslangicGetir(db);
   // Istanbul tarihi (TZ-güvenli).
   const bugun = new Intl.DateTimeFormat("en-CA", {

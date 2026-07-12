@@ -6,6 +6,7 @@ import { sozMuhurDurumu } from "@/lib/sozMuhur";
 import { brifGetir } from "@/lib/kapanis";
 import KapanisBrif from "./KapanisBrif";
 import CanliSahneKontrol from "./CanliSahneKontrol";
+import IlkelerKontrol from "./IlkelerKontrol";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Kapanış — Liderlik Aynası" };
@@ -27,6 +28,20 @@ export default async function KapanisPage() {
     db.from("taahhut").select("durum"),
     brifGetir(db),
   ]);
+
+  // Öneri 9 — mevcut 90-gün müfredat ilkeleri.
+  const { data: ilkeAyar } = await db
+    .from("settings")
+    .select("value")
+    .eq("key", "kapanis_ilkeler")
+    .maybeSingle();
+  let ilkeler: string[] = [];
+  try {
+    const parsed = ilkeAyar?.value ? JSON.parse(ilkeAyar.value) : [];
+    if (Array.isArray(parsed)) ilkeler = parsed.map(String);
+  } catch {
+    ilkeler = [];
+  }
   const taahhutToplam = (taahhutler ?? []).length;
   const taahhutYapilan = (taahhutler ?? []).filter((t) => t.durum === "yapildi").length;
 
@@ -86,6 +101,9 @@ export default async function KapanisPage() {
           Kapanıştan sonra kohort sağlığı, churn müdahalesi ve Eylül kapısı kararları.
         </p>
       </div>
+
+      {/* Öneri 9 — 90-gün müfredatı: Emre'nin ilkeleri → yolculuk görevlerine */}
+      <IlkelerKontrol baslangic={ilkeler} />
 
       {/* [6.1] PAZARTESİ KOMUTA RAPORU */}
       <section>

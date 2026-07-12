@@ -1,6 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { eskalasyonTara, sahitOzetiGonder, checkinCipasi } from "@/lib/sozTakip";
+import { eskalasyonTara, sahitOzetiGonder, checkinCipasi, sozKarnesiGonder } from "@/lib/sozTakip";
 import { ufukToreniTara } from "@/lib/ufukToren";
 import {
   gorevUret,
@@ -1391,6 +1391,12 @@ export async function tikCalistir(
         const sonuc = await sahitOzetiGonder(db);
         ozet.sahitOzeti = sonuc.gonderilen;
       }
+      // KAPANIŞ Faz D · öneri 10 — SÖZ KARNESİ: aynı Pazartesi penceresinde
+      // Emre'ye (adminlere) haftalık söz-tutma raporu (kendi settings kilidi).
+      const { error: karneKilit } = await db
+        .from("settings")
+        .insert({ key: `soz_karnesi_${bugun}`, value: "1" });
+      if (!karneKilit) await sozKarnesiGonder(db).catch(() => {});
     }
   }
 
