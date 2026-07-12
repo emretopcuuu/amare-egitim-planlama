@@ -149,10 +149,15 @@ sonra, sahneden ~20 dk önce). Radyo (Faz 4) deseniyle üretim teslimden ~20 dk 
   kullanıcısı test sorusunu görmez). **NOT:** `/admin/kapanis` zaten vardı
   (`(komuta)/kapanis`, Faz 6 kamp-sonrası panosu); Faz A+B onun ÜSTÜNE eklendi
   → tek "kapanış komuta merkezi" (sahne hazırlık + canlı + 90 gün panosu).
-  ⬜ **Faz C**: söz zenginleştirme
-  (7 veriden söz taslağı, 8 "bu sözü verebilirsin çünkü…" kanıt anı). ⬜ **Faz D**:
-  90 gün (9 eğitim → 90-gün müfredatı: Emre 3-5 ilke girer → yolculuk görevleri;
-  10 söz karnesi: haftalık Emre'ye rapor).
+- ✅ **Faz C** (bu PR): **söz zenginleştirme** (öneriler 7-8). Öneri 7: `sozSekillendir`
+  (`lib/soz.ts`) artık `tohumYanitiGetir` ile "Emre'nin Sorusu"na verilen cevabı
+  okuyup söz taslağının KALBİ yapar (SISTEM prompt'una kural eklendi; yalnız YENİ
+  taslağı etkiler, mevcut sözler korunur). Öneri 8: `sozKaniti(db,pid)` gerçek
+  kamp kanıt anı (fiero 10/10 > en yüksek puanlı görev > verdiği taahhütler —
+  KODLA, uydurma yok) → `/sozum` "Bu sözü verebilirsin, çünkü…" kartı (SozV2Akis,
+  söz veren her fazda görür). Migration yok.
+- ⬜ **Faz D**: 90 gün (öneri 9 eğitim → 90-gün müfredatı: Emre 3-5 ilke girer →
+  yolculuk görevleri; öneri 10 söz karnesi: haftalık Emre'ye rapor).
 
 ## AYNA KARAKTER PROJESİ (sürüyor — faz faz)
 

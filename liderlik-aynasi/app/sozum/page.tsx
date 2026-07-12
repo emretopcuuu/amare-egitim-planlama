@@ -4,7 +4,7 @@ import Link from "next/link";
 import QRCode from "qrcode";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { sozGetir, taniklar, bekleyenImzalar, sozV2KapisiAcik } from "@/lib/soz";
+import { sozGetir, taniklar, bekleyenImzalar, sozV2KapisiAcik, sozKaniti } from "@/lib/soz";
 import { sozMuhurDurumu } from "@/lib/sozMuhur";
 import { tr } from "@/lib/i18n/tr";
 import SozV2Akis from "./SozV2Akis";
@@ -34,7 +34,7 @@ export default async function SozumSayfa() {
     );
   }
 
-  const [soz, tanikList, bekleyen, { data: liderler }, { data: ben }, muhurDurum] =
+  const [soz, tanikList, bekleyen, { data: liderler }, { data: ben }, muhurDurum, kanit] =
     await Promise.all([
       sozGetir(db, session.sub),
       taniklar(db, session.sub),
@@ -47,6 +47,7 @@ export default async function SozumSayfa() {
         .order("full_name"),
       db.from("participants").select("camp_unlock_token").eq("id", session.sub).maybeSingle(),
       sozMuhurDurumu(db),
+      sozKaniti(db, session.sub), // öneri 8 — "bu sözü verebilirsin, çünkü…"
     ]);
 
   // [E3] Yüz yüze şahitlik QR'ı: şahitler bunu okutup söze imza atar.
@@ -73,6 +74,7 @@ export default async function SozumSayfa() {
         taniklar={tanikList}
         bekleyenImzalar={bekleyen}
         liderler={(liderler ?? []).map((l) => ({ id: l.id, ad: l.full_name, takim: l.team }))}
+        kanit={kanit}
       />
       {sozMuhurlu && qrSvg && <SozMuhurFinal qrSvg={qrSvg} ilkDurum={muhurDurum} />}
       {sozMuhurlu && (
