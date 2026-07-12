@@ -68,8 +68,14 @@ export async function turBaslat(db: Db, konum: string, ipucu: string, simdi: Dat
 
 export type KayipDurum = { konum: string; faz: "gizli" | "bulundu_pay"; benAldim: boolean } | null;
 
-// KayipNokta için: aktif tur konumu + faz + kişi pay aldı mı.
+// KayipNokta için: aktif tur konumu + faz + kişi pay aldı mı. Mekanik
+// kapalıyken KayipNokta yine de 45s'de bir /api/kayip-esya'ya poll atar
+// (global layout'ta mount edilir, sayfa bazlı flag-gate mümkün değil) — bu
+// yüzden burada ERKEN çıkış şart: bayrak kapalıyken tek ucuz settings okuması
+// yeterli, kayip_esya tablosuna hiç dokunulmaz (denetimde canlı loglardan
+// bulundu — 142 onboarding kullanıcısının açık sekmeleri gereksiz sorgu atıyordu).
 export async function kayipDurum(db: Db, pid: string, simdi: Date): Promise<KayipDurum> {
+  if (!(await kayipAcikMi(db))) return null;
   const tur = await aktifTur(db);
   if (!tur) return null;
   let faz: "gizli" | "bulundu_pay";
