@@ -5,7 +5,7 @@ export const maxDuration = 15;
 
 // Oyunlaştırma mekaniği bayrakları — hepsi varsayılan KAPALI, kamp günü açılır.
 // Yeni mekanik eklendikçe bu listeye anahtarı ekle (whitelist güvenliği).
-export const OYUN_BAYRAKLARI = ["market_acik", "sandik_acik", "rekorlar_acik", "cift_serisi_acik", "fisilti_acik", "hamle_acik", "radyo_kitlik_acik", "kayip_esya_acik"];
+export const OYUN_BAYRAKLARI = ["market_acik", "sandik_acik", "rekorlar_acik", "cift_serisi_acik", "fisilti_acik", "hamle_acik", "radyo_kitlik_acik", "kayip_esya_acik", "bugu_acik"];
 
 export async function POST(req: Request) {
   if (!(await adminOturumu())) {
