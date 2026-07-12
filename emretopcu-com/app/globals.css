@@ -1,18 +1,20 @@
 @import "tailwindcss";
 
 @theme {
-  /* "Zirve" paleti: abanoz zemin + tek altın vurgu */
-  --color-abanoz: #0b0a09;
-  --color-abanoz-2: #14120f;
-  --color-fildisi: #f3f0e9;
-  --color-duman: #9a948a;
-  --color-altin: #d4b06a;
+  /* "Zirve" — aydınlık elit palet: porselen zemin + mürekkep metin +
+     derin altın vurgu. (Değişken adları korundu; değerler açık temaya göre.)
+     abanoz = zemin (açık), abanoz-2 = kart (beyaz), fildisi = metin (mürekkep). */
+  --color-abanoz: #f1efe9;
+  --color-abanoz-2: #ffffff;
+  --color-fildisi: #1a1a1d;
+  --color-duman: #6f6c66;
+  --color-altin: #9a7a2c;
 
   --font-sahne: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html {

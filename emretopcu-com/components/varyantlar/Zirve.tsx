@@ -55,7 +55,7 @@ function DilSecici() {
       >
         TR
       </a>
-      <span className="text-white/20">/</span>
+      <span className="text-black/20">/</span>
       <a
         href="/en"
         aria-current={dil === "en" ? "true" : undefined}
@@ -144,7 +144,7 @@ function TiltKart({
 function Nav() {
   const c = useC();
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-white/5 bg-abanoz/70 backdrop-blur-md">
+    <header className="fixed inset-x-0 top-0 z-50 border-b border-black/5 bg-abanoz/70 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
         <a href="#" className="text-base font-semibold tracking-tight">
           Emre Topçu
@@ -166,7 +166,7 @@ function Nav() {
             href={WHATSAPP_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-altin/40 px-4 py-1.5 text-sm text-altin transition-colors hover:bg-altin hover:text-abanoz active:scale-[0.98]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-altin/40 px-4 py-1.5 text-sm text-altin transition-colors hover:bg-altin hover:text-fildisi active:scale-[0.98]"
           >
             <WhatsappLogo size={15} weight="fill" />
             {c.ui.calis}
@@ -259,7 +259,7 @@ function Hero() {
                 href={WHATSAPP_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-altin px-7 py-3.5 font-medium text-abanoz transition-transform active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-full bg-altin px-7 py-3.5 font-medium text-fildisi transition-transform active:scale-[0.98]"
               >
                 <WhatsappLogo size={18} weight="fill" />
                 {c.ui.calis}
@@ -268,7 +268,7 @@ function Hero() {
             <Manyetik>
               <a
                 href="#manifesto"
-                className="inline-flex items-center gap-2 rounded-full border border-white/20 px-7 py-3.5 text-fildisi transition-colors hover:border-white/45 active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-full border border-black/20 px-7 py-3.5 text-fildisi transition-colors hover:border-black/45 active:scale-[0.98]"
               >
                 {c.ui.hikaye}
               </a>
@@ -389,7 +389,7 @@ function FilmBolumu({
       <div className="relative mx-auto w-full max-w-5xl px-6">
         <p
           aria-hidden
-          className="pointer-events-none absolute -top-24 left-0 text-[34vw] leading-none font-semibold tracking-tighter text-white/[0.05] select-none md:-top-40 md:text-[22rem]"
+          className="pointer-events-none absolute -top-24 left-0 text-[34vw] leading-none font-semibold tracking-tighter text-black/[0.04] select-none md:-top-40 md:text-[22rem]"
         >
           {adim.yil}
         </p>
@@ -491,7 +491,7 @@ function Egitimler() {
             {c.egitimler.map((egitim) => (
               <article
                 key={egitim.baslik}
-                className="rounded-2xl border border-white/10 bg-abanoz-2 p-7"
+                className="rounded-2xl border border-black/10 bg-abanoz-2 p-7"
               >
                 <p className="text-sm text-duman">{egitim.yil}</p>
                 <h3 className="mt-3 text-2xl font-semibold">{egitim.baslik}</h3>
@@ -521,7 +521,7 @@ function Egitimler() {
           {c.egitimler.map((egitim, i) => (
             <TiltKart key={egitim.baslik} className="shrink-0">
               <article
-                className={`flex h-[320px] w-[300px] flex-col justify-between rounded-2xl border border-white/10 p-8 md:h-[360px] md:w-[420px] ${
+                className={`flex h-[320px] w-[300px] flex-col justify-between rounded-2xl border border-black/10 p-8 md:h-[360px] md:w-[420px] ${
                   i % 3 === 0
                     ? "bg-gradient-to-br from-altin/15 to-abanoz-2"
                     : "bg-abanoz-2"
@@ -609,7 +609,7 @@ function Ayna() {
                   href={AYNA_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-8 inline-flex items-center gap-2 rounded-full border border-altin/50 px-6 py-3 font-medium text-altin transition-colors hover:bg-altin hover:text-abanoz active:scale-[0.98]"
+                  className="mt-8 inline-flex items-center gap-2 rounded-full border border-altin/50 px-6 py-3 font-medium text-altin transition-colors hover:bg-altin hover:text-fildisi active:scale-[0.98]"
                 >
                   ayna.oneteamglobal.ai
                   <ArrowUpRight size={18} weight="bold" />
@@ -659,7 +659,7 @@ function Rakamlar() {
             >
               <p
                 className="text-5xl font-semibold tracking-tighter text-altin md:text-7xl"
-                style={{ textShadow: "0 2px 24px rgba(11,10,9,0.95)" }}
+                style={{ textShadow: "0 2px 24px rgba(241,239,233,0.92)" }}
               >
                 {r.deger}
                 <span className="text-2xl text-altin/70 md:text-3xl">
@@ -668,7 +668,7 @@ function Rakamlar() {
               </p>
               <p
                 className="mt-3 text-sm leading-snug text-fildisi/70 md:text-base"
-                style={{ textShadow: "0 1px 12px rgba(11,10,9,0.95)" }}
+                style={{ textShadow: "0 1px 12px rgba(241,239,233,0.92)" }}
               >
                 {r.etiket}
               </p>
@@ -732,7 +732,7 @@ function Vaat() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
               transition={{ duration: 0.7, delay: i * 0.1, ease: GECIS }}
-              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-abanoz-2 p-8 transition-colors hover:border-altin/40"
+              className="group relative overflow-hidden rounded-2xl border border-black/10 bg-abanoz-2 p-8 transition-colors hover:border-altin/40"
             >
               <div
                 aria-hidden
@@ -777,7 +777,7 @@ function Ilkeler() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
               transition={{ duration: 0.7, delay: i * 0.08, ease: GECIS }}
-              className="group border-t border-white/10 py-12 last:border-b md:py-14"
+              className="group border-t border-black/10 py-12 last:border-b md:py-14"
             >
               <h3 className="text-3xl font-semibold tracking-tight text-fildisi transition-colors group-hover:text-altin md:text-5xl">
                 {ilke.baslik}
@@ -799,7 +799,7 @@ function VideoKapak({ id }: { id: string }) {
   const c = useC();
   const [oynat, setOynat] = useState(false);
   return (
-    <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-abanoz-2">
+    <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-black/10 bg-abanoz-2">
       {oynat ? (
         <iframe
           className="absolute inset-0 h-full w-full"
@@ -821,7 +821,7 @@ function VideoKapak({ id }: { id: string }) {
             className="absolute inset-0 h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-abanoz/70 to-transparent" />
-          <span className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-3 rounded-full bg-altin/90 px-6 py-3 font-medium text-abanoz backdrop-blur transition-transform group-hover:scale-105">
+          <span className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-3 rounded-full bg-altin/90 px-6 py-3 font-medium text-fildisi backdrop-blur transition-transform group-hover:scale-105">
             <PlayCircle size={24} weight="fill" />
             {c.ui.izle}
           </span>
@@ -857,7 +857,7 @@ function Konusmalar() {
               href={LIDER_PROFIL_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-altin/40 px-5 py-2.5 text-sm font-medium text-altin transition-colors hover:bg-altin hover:text-abanoz"
+              className="inline-flex items-center gap-2 rounded-full border border-altin/40 px-5 py-2.5 text-sm font-medium text-altin transition-colors hover:bg-altin hover:text-fildisi"
             >
               {c.ui.tumKonusmalar}
               <ArrowUpRight size={16} weight="bold" />
@@ -872,7 +872,7 @@ function Konusmalar() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: GECIS }}
-              className={`group flex min-h-[220px] flex-col justify-between rounded-2xl border border-white/10 p-7 transition-colors hover:border-altin/40 ${
+              className={`group flex min-h-[220px] flex-col justify-between rounded-2xl border border-black/10 p-7 transition-colors hover:border-altin/40 ${
                 i === 0
                   ? "bg-gradient-to-br from-altin/15 to-abanoz-2 md:col-span-2 lg:col-span-1"
                   : "bg-abanoz-2"
@@ -946,7 +946,7 @@ function Deyince() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
               transition={{ duration: 0.6, delay: (i % 2) * 0.08, ease: GECIS }}
-              className="rounded-2xl border border-white/10 bg-abanoz-2 p-7 text-xl leading-snug font-medium tracking-tight text-fildisi/90 md:text-2xl"
+              className="rounded-2xl border border-black/10 bg-abanoz-2 p-7 text-xl leading-snug font-medium tracking-tight text-fildisi/90 md:text-2xl"
             >
               <span className="text-altin/50">“</span>
               {soz}
@@ -987,7 +987,7 @@ function Iletisim() {
         className="pointer-events-none absolute top-1/2 left-1/2 h-[520px] w-[820px] max-w-[95vw] -translate-x-1/2 -translate-y-1/2"
         style={{
           background:
-            "radial-gradient(ellipse at center, rgba(11,10,9,0.9) 0%, rgba(11,10,9,0.7) 45%, transparent 72%)",
+            "radial-gradient(ellipse at center, rgba(241,239,233,0.94) 0%, rgba(241,239,233,0.72) 45%, transparent 72%)",
         }}
       />
       <div className="relative mx-auto max-w-4xl px-6 text-center">
@@ -1023,7 +1023,7 @@ function Iletisim() {
               href={WHATSAPP_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-altin px-8 py-4 text-lg font-medium text-abanoz transition-transform active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-full bg-altin px-8 py-4 text-lg font-medium text-fildisi transition-transform active:scale-[0.98]"
             >
               <WhatsappLogo size={20} weight="fill" />
               {c.ui.calis}
@@ -1034,7 +1034,7 @@ function Iletisim() {
               href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 rounded-full border border-white/15 px-8 py-4 text-lg text-fildisi transition-colors hover:border-white/40 active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-full border border-black/15 px-8 py-4 text-lg text-fildisi transition-colors hover:border-black/40 active:scale-[0.98]"
             >
               <InstagramLogo size={20} weight="bold" />
               {c.ui.instagram}
@@ -1049,7 +1049,7 @@ function Iletisim() {
 function Footer() {
   const c = useC();
   return (
-    <footer className="border-t border-white/5 bg-abanoz py-10">
+    <footer className="border-t border-black/5 bg-abanoz py-10">
       <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-duman md:flex-row">
         <p>© 2026 Emre Topçu</p>
         <a
@@ -1074,8 +1074,8 @@ function ZirveIc() {
   return (
     <div
       lang={dil}
-      className="relative z-0 min-h-[100dvh] bg-abanoz font-sahne text-fildisi selection:bg-altin selection:text-abanoz"
-      style={{ colorScheme: "dark" }}
+      className="relative z-0 min-h-[100dvh] bg-abanoz font-sahne text-fildisi selection:bg-altin selection:text-fildisi"
+      style={{ colorScheme: "light" }}
     >
       {/* Tüm sayfanın arkasında yaşayan sinematik 3D sahne */}
       <Ag3D ilerleme={scrollYProgress} hareket={!azalt} />
