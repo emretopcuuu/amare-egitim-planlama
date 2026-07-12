@@ -140,18 +140,18 @@ function Ag({
 
   return (
     <group ref={grup}>
-      {/* ince küre teli — ağın "dünya" hissi */}
+      {/* ince küre teli — ağın "dünya" hissi (açık zeminde soluk altın) */}
       <mesh>
         <sphereGeometry args={[YARICAP * 0.985, 32, 24]} />
         <meshBasicMaterial
-          color="#3a2f1c"
+          color="#c9b78a"
           wireframe
           transparent
-          opacity={0.12}
+          opacity={0.14}
         />
       </mesh>
 
-      {/* bağlantı ışıkları */}
+      {/* bağlantı iplikleri — açık zeminde koyu altın, normal harmanlama */}
       <lineSegments frustumCulled={false}>
         <bufferGeometry ref={cizgiGeo}>
           <bufferAttribute
@@ -161,15 +161,14 @@ function Ag({
           />
         </bufferGeometry>
         <lineBasicMaterial
-          color="#d4b06a"
+          color="#a07f36"
           transparent
-          opacity={0.32}
-          blending={THREE.AdditiveBlending}
+          opacity={0.28}
           depthWrite={false}
         />
       </lineSegments>
 
-      {/* düğümler */}
+      {/* düğümler — derin altın, açık zeminde okunur */}
       <points frustumCulled={false}>
         <bufferGeometry ref={noktaGeo}>
           <bufferAttribute
@@ -179,12 +178,11 @@ function Ag({
           />
         </bufferGeometry>
         <pointsMaterial
-          color="#f0d9a6"
-          size={0.055}
+          color="#8a6d24"
+          size={0.05}
           sizeAttenuation
           transparent
-          opacity={0.95}
-          blending={THREE.AdditiveBlending}
+          opacity={0.85}
           depthWrite={false}
         />
       </points>
@@ -206,8 +204,8 @@ export default function Ag3D({
         dpr={[1, 1.75]}
         gl={{ antialias: true, alpha: false }}
       >
-        <color attach="background" args={["#0b0a09"]} />
-        <fog attach="fog" args={["#0b0a09", 7, 15]} />
+        <color attach="background" args={["#f1efe9"]} />
+        <fog attach="fog" args={["#f1efe9", 8, 16]} />
         <Ag ilerleme={ilerleme} hareket={hareket} />
       </Canvas>
     </div>
