@@ -1683,6 +1683,72 @@ export type Database = {
         }
         Relationships: []
       }
+      kayip_esya: {
+        Row: {
+          bulan_ilk: string | null
+          bulundu_at: string | null
+          created_at: string
+          durum: string
+          hafta: string
+          id: string
+          ipucu: string
+          ipucu_at: string | null
+          konum: string
+          myth_at: string | null
+        }
+        Insert: {
+          bulan_ilk?: string | null
+          bulundu_at?: string | null
+          created_at?: string
+          durum?: string
+          hafta: string
+          id?: string
+          ipucu?: string
+          ipucu_at?: string | null
+          konum: string
+          myth_at?: string | null
+        }
+        Update: {
+          bulan_ilk?: string | null
+          bulundu_at?: string | null
+          created_at?: string
+          durum?: string
+          hafta?: string
+          id?: string
+          ipucu?: string
+          ipucu_at?: string | null
+          konum?: string
+          myth_at?: string | null
+        }
+        Relationships: []
+      }
+      kayip_esya_pay: {
+        Row: {
+          at: string
+          deger: number
+          id: string
+          ilk: boolean
+          kayip_id: string
+          participant_id: string
+        }
+        Insert: {
+          at?: string
+          deger?: number
+          id?: string
+          ilk?: boolean
+          kayip_id: string
+          participant_id: string
+        }
+        Update: {
+          at?: string
+          deger?: number
+          id?: string
+          ilk?: boolean
+          kayip_id?: string
+          participant_id?: string
+        }
+        Relationships: []
+      }
       hamle: {
         Row: {
           created_at: string

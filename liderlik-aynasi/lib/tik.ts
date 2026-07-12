@@ -75,6 +75,7 @@ import { radyoTik } from "@/lib/kampRadyosu";
 import { rekorTara, rekorlarAcikMi } from "@/lib/rekorlar";
 import { ciftSerisiDegerlendir, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
 import { hamleTaraOlustur, hamleHatirlat, hamleAcikMi } from "@/lib/hamle";
+import { kayipBakimTik, kayipAcikMi } from "@/lib/kayipEsya";
 import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
 import { sablonBul, ilkAd } from "@/lib/whatsappSablonlari";
 import { gunlukSoz } from "@/lib/ozluSozler";
@@ -1909,6 +1910,10 @@ export async function tikCalistir(
     await hamleTaraOlustur(db, simdi);
     if (saat === 20 && dakika >= 30) await hamleHatirlat(db, simdi);
   }
+
+  // G8 — KAYIP EŞYA bakımı: 48s bulunmayan tura ipucu, biten pay penceresini
+  // kapat. Bayrak açıkken (mod bağımsız — keşif kampta da yolculukta da olabilir).
+  if (await kayipAcikMi(db)) await kayipBakimTik(db, simdi);
 
   if (mod === "kamp" && (saat === 13 || saat === 20) && !sahneSessiz) {
     const dilim = saat === 13 ? "ogle" : "aksam";
