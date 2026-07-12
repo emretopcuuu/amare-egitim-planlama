@@ -74,6 +74,7 @@ import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
 import { radyoTik } from "@/lib/kampRadyosu";
 import { rekorTara, rekorlarAcikMi } from "@/lib/rekorlar";
 import { ciftSerisiDegerlendir, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
+import { hamleTaraOlustur, hamleHatirlat, hamleAcikMi } from "@/lib/hamle";
 import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
 import { sablonBul, ilkAd } from "@/lib/whatsappSablonlari";
 import { gunlukSoz } from "@/lib/ozluSozler";
@@ -1901,6 +1902,13 @@ export async function tikCalistir(
   // 20:00 nazik hatırlatma. Kendi hatasını yutar.
   if (mod === "kamp" && (await ciftSerisiAcikMi(db)))
     await ciftSerisiDegerlendir(db, simdi, saat, dakika);
+
+  // G6 — HAMLE SIRASI: kamp modunda, bayrak açıkken tamamlanmış eşleşmeli
+  // görevlerden hamle üret + 20:30 nazik hatırlatma. Kendi hatasını yutar.
+  if (mod === "kamp" && (await hamleAcikMi(db))) {
+    await hamleTaraOlustur(db, simdi);
+    if (saat === 20 && dakika >= 30) await hamleHatirlat(db, simdi);
+  }
 
   if (mod === "kamp" && (saat === 13 || saat === 20) && !sahneSessiz) {
     const dilim = saat === 13 ? "ogle" : "aksam";

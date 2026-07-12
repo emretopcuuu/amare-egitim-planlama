@@ -1683,6 +1683,42 @@ export type Database = {
         }
         Relationships: []
       }
+      hamle: {
+        Row: {
+          created_at: string
+          hedef_cumle: string | null
+          hedef_id: string
+          hedef_yanit_at: string | null
+          id: string
+          kaynak_cumle: string
+          kaynak_id: string
+          mission_id: string
+          sure_bitis: string
+        }
+        Insert: {
+          created_at?: string
+          hedef_cumle?: string | null
+          hedef_id: string
+          hedef_yanit_at?: string | null
+          id?: string
+          kaynak_cumle: string
+          kaynak_id: string
+          mission_id: string
+          sure_bitis: string
+        }
+        Update: {
+          created_at?: string
+          hedef_cumle?: string | null
+          hedef_id?: string
+          hedef_yanit_at?: string | null
+          id?: string
+          kaynak_cumle?: string
+          kaynak_id?: string
+          mission_id?: string
+          sure_bitis?: string
+        }
+        Relationships: []
+      }
       fisilti: {
         Row: {
           acildi_at: string | null
