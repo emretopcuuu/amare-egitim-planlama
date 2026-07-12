@@ -1683,6 +1683,69 @@ export type Database = {
         }
         Relationships: []
       }
+      fisilti: {
+        Row: {
+          acildi_at: string | null
+          alici: string
+          anonim: boolean
+          bilirse_ogrensin: boolean
+          created_at: string
+          gonderen: string
+          id: string
+          kilit: boolean
+          ses_path: string
+          tahmin_dogru: boolean | null
+        }
+        Insert: {
+          acildi_at?: string | null
+          alici: string
+          anonim?: boolean
+          bilirse_ogrensin?: boolean
+          created_at?: string
+          gonderen: string
+          id?: string
+          kilit?: boolean
+          ses_path: string
+          tahmin_dogru?: boolean | null
+        }
+        Update: {
+          acildi_at?: string | null
+          alici?: string
+          anonim?: boolean
+          bilirse_ogrensin?: boolean
+          created_at?: string
+          gonderen?: string
+          id?: string
+          kilit?: boolean
+          ses_path?: string
+          tahmin_dogru?: boolean | null
+        }
+        Relationships: []
+      }
+      kivilcim_bonus: {
+        Row: {
+          created_at: string
+          deger: number
+          id: string
+          kaynak: string
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          deger?: number
+          id?: string
+          kaynak: string
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          deger?: number
+          id?: string
+          kaynak?: string
+          participant_id?: string
+        }
+        Relationships: []
+      }
       cift_serisi: {
         Row: {
           arkadasi_id: string
