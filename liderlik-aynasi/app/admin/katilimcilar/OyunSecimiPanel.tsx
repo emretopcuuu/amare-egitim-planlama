@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { oyunKombolari, grupNoCozumle, OYUN_BILGI } from "@/lib/cumartesiProgrami";
+import { oyunKombolari, oyunAnahtar, grupNoCozumle, OYUN_BILGI } from "@/lib/cumartesiProgrami";
+import { kapaliKombolar } from "@/lib/oyunKapasite";
 import Katlanir from "../Katlanir";
 import GrupPanosu, { type PanoUye, type PanoKombo } from "./GrupPanosu";
 
@@ -34,10 +35,16 @@ export default async function OyunSecimiPanel() {
     }
   }
 
-  const kombolar: PanoKombo[] = oyunKombolari().map((k) => ({
-    etiket: `Bowling + ${k.oyunlar.map((o) => `${OYUN_BILGI[o].simge} ${OYUN_BILGI[o].ad}`).join(" + ")}`,
-    gruplar: k.gruplar,
-  }));
+  const kapali = await kapaliKombolar(db);
+  const kombolar: PanoKombo[] = oyunKombolari().map((k) => {
+    const anahtar = oyunAnahtar(k.oyunlar);
+    return {
+      anahtar,
+      etiket: `Bowling + ${k.oyunlar.map((o) => `${OYUN_BILGI[o].simge} ${OYUN_BILGI[o].ad}`).join(" + ")}`,
+      gruplar: k.gruplar,
+      kapali: kapali.includes(anahtar),
+    };
+  });
 
   return (
     <Katlanir

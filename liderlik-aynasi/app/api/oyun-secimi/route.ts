@@ -4,9 +4,12 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import {
   oyunSecimiGecerli,
   oyunlardanGruplar,
+  oyunAnahtar,
   grupAdi,
+  OYUN_BILGI,
   type CmtTur,
 } from "@/lib/cumartesiProgrami";
+import { kapaliKombolar } from "@/lib/oyunKapasite";
 
 // Oyun seçimi → grup atama (giriş akışının "kodlu formülü"). Kişi 2 seçmeli oyun
 // seçer; o ikiliyi oynayan gruplardan EN BOŞ olanına (eşitlikte rastgele) atanır.
@@ -25,7 +28,9 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin();
 
-  // Zaten atanmışsa mevcut grubu döndür (tekrar atama yok).
+  // Zaten atanmışsa mevcut grubu döndür (tekrar atama yok). Bu kontrol
+  // kapasite kontrolünden ÖNCE gelir — eski (belki artık kapalı) ikilisiyle
+  // yeniden POST atan zaten-atanmış biri yanlışlıkla "dolu" hatası almasın.
   const { data: ben } = await db
     .from("participants")
     .select("team")
@@ -33,6 +38,17 @@ export async function POST(req: NextRequest) {
     .maybeSingle();
   if (ben?.team) {
     return NextResponse.json({ tamam: true, grup: ben.team, degismedi: true });
+  }
+
+  // Kombinasyon kapasitesi: admin bu ikiliyi kapattıysa (gruplar dolduysa) YENİ
+  // seçim reddedilir. Zaten atanmış kişiler yukarıdaki kontrolle etkilenmez.
+  const kapali = await kapaliKombolar(db);
+  if (kapali.includes(oyunAnahtar(secilen))) {
+    const isimler = secilen.map((o) => OYUN_BILGI[o]?.ad ?? o).join(" + ");
+    return NextResponse.json(
+      { hata: `${isimler} ikilisi şu an dolu. Lütfen farklı bir ikili seç.` },
+      { status: 400 }
+    );
   }
 
   const adaylar = oyunlardanGruplar(secilen);
