@@ -35,24 +35,35 @@ const AdminEmailDuzeltTab = () => {
     if (!res.ok) throw new Error(data.error || `Hata (${res.status})`);
     return data;
   };
-  const kyAra = async () => {
-    if (!/^\d{4,12}$/.test(kyId.trim())) { setKyHata('Geçerli bir Amare ID gir (rakam).'); return; }
-    setKyYukleniyor(true); setKyHata(''); setKySonuc(null); setKyKayitSonuc(null);
+  // Faz 2: ID + email + telefon + isim ile arama.
+  // 4-9 haneli rakam → doğrudan ID detayı; 10+ rakam → telefon; @ / harf → email veya isim (aday listesi).
+  const [kyAdaylar, setKyAdaylar] = useState(null);
+  const kyAra = async (idParam) => {
+    const giris = String(typeof idParam === 'string' ? idParam : kyId).trim();
+    setKyYukleniyor(true); setKyHata(''); setKySonuc(null); setKyKayitSonuc(null); setKyAdaylar(null);
     try {
-      const d = await kyCall({ mode: 'ara', amareId: kyId.trim() });
-      setKySonuc(d);
-      // varsayılan yeni email: mevcut (varsa kilitli, yoksa raw/crm) — admin düzenler
-      const mevcut = d.kilit?.email || d.sistemler?.find(s => s.email)?.email || '';
-      setKyYeniEmail(mevcut);
+      if (/^\d{4,9}$/.test(giris)) {
+        const d = await kyCall({ mode: 'ara', amareId: giris });
+        setKySonuc(d);
+        // varsayılan yeni email: mevcut (varsa kilitli, yoksa raw/crm) — admin düzenler
+        const mevcut = d.kilit?.email || d.sistemler?.find(s => s.email)?.email || '';
+        setKyYeniEmail(mevcut);
+      } else {
+        if (giris.length < 3) throw new Error('Amare ID, email, telefon veya isim gir (en az 3 karakter).');
+        const d = await kyCall({ mode: 'bul', q: giris });
+        if (!d.adaylar?.length) throw new Error('Eşleşen kayıt bulunamadı.');
+        if (d.adaylar.length === 1) { setKyId(d.adaylar[0].amareId); return kyAra(d.adaylar[0].amareId); }
+        setKyAdaylar(d.adaylar);
+      }
     } catch (e) { setKyHata(e.message); } finally { setKyYukleniyor(false); }
   };
   const kyKaydet = async () => {
     if (!kySonuc?.bulundu) return;
     setKyKaydediliyor(true); setKyHata('');
     try {
-      const d = await kyCall({ mode: 'kaydet', amareId: kyId.trim(), yeniEmail: kyYeniEmail.trim() });
+      const d = await kyCall({ mode: 'kaydet', amareId: kySonuc.amareId, yeniEmail: kyYeniEmail.trim() });
       setKyKayitSonuc(d);
-      await kyAra(); // tabloyu tazele
+      await kyAra(kySonuc.amareId); // tabloyu tazele
     } catch (e) { setKyHata(e.message); } finally { setKyKaydediliyor(false); }
   };
 
@@ -208,17 +219,31 @@ const AdminEmailDuzeltTab = () => {
           <Hash className="w-6 h-6 text-amare-purple" />
           <h2 className="text-xl font-bold text-gray-800">Kimlik / Email Yönetimi</h2>
         </div>
-        <p className="text-sm text-gray-500 mb-4">Amare ID gir → kişinin tüm sistemlerdeki email'ini gör, düzelt, <b>Hepsine Kaydet</b>. Kilitlenir, re-sync ezmez.</p>
+        <p className="text-sm text-gray-500 mb-4">Amare ID, <b>email</b>, <b>telefon</b> veya isim gir → kişinin tüm sistemlerdeki email'ini gör, düzelt, <b>Hepsine Kaydet</b>. Kilitlenir, re-sync ezmez.</p>
         <div className="flex gap-2 flex-wrap items-center">
-          <input value={kyId} onChange={e => setKyId(e.target.value.replace(/\D/g, ''))} onKeyDown={e => e.key === 'Enter' && kyAra()}
-            placeholder="Amare ID (örn. 727614)" inputMode="numeric"
-            className="w-52 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
-          <button onClick={kyAra} disabled={kyYukleniyor || !kyId.trim()}
+          <input value={kyId} onChange={e => setKyId(e.target.value)} onKeyDown={e => e.key === 'Enter' && kyAra()}
+            placeholder="ID, email, telefon veya isim"
+            className="w-72 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30" />
+          <button onClick={() => kyAra()} disabled={kyYukleniyor || !kyId.trim()}
             className="px-4 py-2 rounded-lg font-bold text-white bg-amare-purple hover:bg-amare-dark text-sm disabled:opacity-40 inline-flex items-center gap-1.5">
             {kyYukleniyor ? <Loader2 className="w-4 h-4 animate-spin" /> : <User className="w-4 h-4" />} Ara
           </button>
         </div>
         {kyHata && <div className="mt-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg p-2.5 flex items-start gap-1.5"><AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />{kyHata}</div>}
+        {kyAdaylar && (
+          <div className="mt-3 rounded-xl border border-gray-200 overflow-hidden">
+            <div className="bg-gray-50 px-3 py-2 text-xs text-gray-500 uppercase font-semibold">{kyAdaylar.length} eşleşme — birini seç</div>
+            {kyAdaylar.map(a => (
+              <button key={a.amareId} onClick={() => { setKyId(a.amareId); kyAra(a.amareId); }}
+                className="w-full text-left px-3 py-2 border-t border-gray-100 hover:bg-purple-50 transition flex items-center gap-3 text-sm">
+                <span className="font-mono text-xs text-gray-400 w-20 flex-shrink-0">{a.amareId}</span>
+                <span className="font-semibold text-gray-800 flex-1 truncate">{a.isim || '—'}</span>
+                <span className="text-gray-500 truncate hidden sm:inline">{a.email || ''}</span>
+                {a.telefonSon4 && <span className="text-[11px] text-gray-400 flex-shrink-0">…{a.telefonSon4}</span>}
+              </button>
+            ))}
+          </div>
+        )}
         {kySonuc && !kySonuc.bulundu && (
           <div className="mt-3 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-3">Bu Amare ID hiçbir sistemde bulunamadı ({kySonuc.amareId}).</div>
         )}

@@ -37,13 +37,21 @@ const filtrele = (data, alanlar) => {
 // Modern Netlify Functions API (Web Request/Response) — Lambda-compat DEĞİL,
 // böylece 4KB env limiti uygulanmaz. Yardımcı: JSON yanıtı üret.
 const jsonRes = (obj, status, headers) => new Response(typeof obj === 'string' ? obj : JSON.stringify(obj), { status, headers });
+// Hata yanıtları için cache'siz header seti (403/500 CDN'e yapışmasın)
+const hataHeaders = (h) => ({ ...h, 'Cache-Control': 'no-store', 'Netlify-CDN-Cache-Control': 'no-store' });
 
 export default async (req) => {
   const col = new URL(req.url).searchParams.get('col') || '';
   const db = initFirebase();
   const headers = {
     'Content-Type': 'application/json',
-    'Cache-Control': 'public, max-age=120', // CDN 2dk cache — Firestore okuma maliyeti düşük kalır
+    // Tarayıcı 2dk. CDN cache'i plain Cache-Control'e BAKMAZ — onun için
+    // Netlify-CDN-Cache-Control şart: 5dk taze + 10dk stale-while-revalidate
+    // (bayat kopya anında döner, arka planda tazelenir). durable = node'lar arası
+    // paylaşımlı cache → cold start + tam koleksiyon okuması (~4sn) kullanıcıya yansımaz.
+    // Yalnız public-read whitelist verisi servis edildiği için CDN cache güvenli.
+    'Cache-Control': 'public, max-age=120',
+    'Netlify-CDN-Cache-Control': 'public, durable, s-maxage=300, stale-while-revalidate=600',
     'Access-Control-Allow-Origin': 'https://egitimtakvimi.oneteamglobal.ai',
   };
 
@@ -75,12 +83,13 @@ export default async (req) => {
       return jsonRes({ docs }, 200, headers);
     }
 
-    if (!(col in WHITELIST)) return jsonRes('{"error":"col"}', 403, headers);
+    if (!(col in WHITELIST)) return jsonRes('{"error":"col"}', 403, hataHeaders(headers));
     const snap = await db.collection(col).limit(500).get();
     const docs = snap.docs.map(d => ({ id: d.id, ...filtrele(d.data(), WHITELIST[col]) }));
     return jsonRes({ docs }, 200, headers);
   } catch (e) {
     console.error('[veri-proxy]', col, e?.message);
-    return jsonRes({ error: e?.message || 'hata' }, 500, headers);
+    // Hata yanıtı CDN'de CACHE'LENMEZ — yoksa geçici bir Firestore arızası 5dk yapışır kalır
+    return jsonRes({ error: e?.message || 'hata' }, 500, hataHeaders(headers));
   }
 };

@@ -68,6 +68,37 @@ export default async (req) => {
 
   let body;
   try { body = await req.json(); } catch { return jr({ error: 'Geçersiz gövde' }, 400); }
+
+  // Faz 2 — serbest arama: email / telefon / isim → aday listesi (ID'yi bilmeden bul)
+  if (body.mode === 'bul') {
+    const q = String(body.q || '').trim();
+    if (q.length < 3) return jr({ error: 'En az 3 karakter gir.' }, 400);
+    const SELECT = 'amare_id,full_name,email,phone';
+    let filter;
+    if (q.includes('@')) {
+      filter = `email=ilike.${encodeURIComponent('*' + q + '*')}`;
+    } else if (/^[\d\s+()-]+$/.test(q) && q.replace(/\D/g, '').length >= 7) {
+      // Telefon: DB'de +90/0090/0 önekleri karışık → son 10 hane suffix eşleşmesi
+      const rakamlar = q.replace(/\D/g, '').slice(-10);
+      filter = `phone=ilike.${encodeURIComponent('*' + rakamlar)}`;
+    } else {
+      filter = `full_name=ilike.${encodeURIComponent('*' + q + '*')}`;
+    }
+    const [raw, crm] = await Promise.all([
+      sbGet(`amare_raw_members?${filter}&select=${SELECT}&limit=15`),
+      sbGet(`crm_members?${filter}&select=${SELECT}&limit=15`),
+    ]);
+    const map = new Map();
+    [...raw, ...crm].forEach(r => {
+      const id = String(r.amare_id || '');
+      if (id && !map.has(id)) map.set(id, {
+        amareId: id, isim: r.full_name || '', email: r.email || '',
+        telefonSon4: String(r.phone || '').replace(/\D/g, '').slice(-4),
+      });
+    });
+    return jr({ adaylar: [...map.values()].slice(0, 20) });
+  }
+
   const amareId = String(body.amareId || '').trim();
   if (!/^\d{4,12}$/.test(amareId)) return jr({ error: 'Geçerli bir Amare ID gir (rakam).' }, 400);
 

@@ -4,7 +4,8 @@ import { ArrowLeft, Download, Link2, Loader2, Sparkles, ImageIcon, AlertCircle, 
 import { useData, makeSafeId, makeCoreId } from '../context/DataContext';
 import { afisTuru, etiketSec } from '../utils/egitmenEtiket';
 import { uploadGorsel } from '../utils/uploadGorsel';
-import { auth } from '../utils/firebase';
+import { auth, db } from '../utils/firebase';
+import { doc, getDoc, deleteField } from 'firebase/firestore';
 import { gorselOlusturMarkaAfis } from '../utils/gorselOlusturMarkaAfis';
 import { gorselOlusturProgramAfis } from '../utils/gorselOlusturProgramAfis';
 import { gorselOlusturAiAfis } from '../utils/gorselOlusturAiAfis';
@@ -128,6 +129,8 @@ export default function GorselStudyo() {
   const [baglandi, setBaglandi] = useState(false);
   const [baglaniyor, setBaglaniyor] = useState(false);
   const [hedefSlot, setHedefSlot] = useState('1'); // '1' Ana Afiş | '2' Program İçeriği — hangi görsel yuvasına bağlanacak
+  const [taslak, setTaslak] = useState(null);       // Firestore'daki kayıtlı program taslağı {satirlar, baslik, kaydeden, tarih}
+  const [taslakIslem, setTaslakIslem] = useState(''); // '', 'kaydediliyor', 'kaydedildi', 'hata'
   const [undoStack, setUndoStack] = useState([]);
   const [redoStack, setRedoStack] = useState([]);
   const [guncellendi, setGuncellendi] = useState(false); // canlı yenileme mikro-geri bildirim
@@ -151,6 +154,45 @@ export default function GorselStudyo() {
   useEffect(() => { try { localStorage.setItem('markaSecim', JSON.stringify(markaSecim)); } catch {} }, [markaSecim]);
   // Hedef görsel yuvası — yöntem Program İçeriği'yse akıllı varsayılan "2. görsel"; kullanıcı elle değiştirebilir.
   useEffect(() => { setHedefSlot(aiModel === 'program-icerigi' ? '2' : '1'); }, [aiModel, egitimId]);
+
+  // ── Program taslağı (Faz B) ──
+  // Taslak takvim doc'unun programTaslak alanında yaşar (admin-only write, cihazlar arası senkron).
+  // DataContext LIGHT fetch bu alanı getirmediği için stüdyo açılınca doc'tan taze okunur.
+  useEffect(() => {
+    setTaslak(null); setTaslakIslem('');
+    if (!egitimId || aiModel !== 'program-icerigi') return;
+    let iptal = false;
+    getDoc(doc(db, 'takvim', egitimId))
+      .then(snap => { if (!iptal && snap.exists()) setTaslak(snap.data().programTaslak || null); })
+      .catch(() => {});
+    return () => { iptal = true; };
+  }, [egitimId, aiModel]);
+
+  const taslagiKaydet = async () => {
+    if (!egitim) return;
+    setTaslakIslem('kaydediliyor');
+    const yeni = {
+      satirlar: programSatir,
+      baslik: baslikOzel || '',
+      kaydeden: auth.currentUser?.email || '',
+      tarih: new Date().toISOString(),
+    };
+    const r = await egitimGuncelle(egitim.id, { programTaslak: yeni });
+    if (r?.success) { setTaslak(yeni); setTaslakIslem('kaydedildi'); setTimeout(() => setTaslakIslem(''), 2500); }
+    else setTaslakIslem('hata');
+  };
+
+  const taslagiYukle = () => {
+    if (!taslak) return;
+    setProgramSatir(Array.isArray(taslak.satirlar) ? taslak.satirlar : []);
+    if (taslak.baslik) setBaslikOzel(taslak.baslik);
+  };
+
+  const taslagiSil = async () => {
+    if (!egitim) return;
+    const r = await egitimGuncelle(egitim.id, { programTaslak: deleteField() });
+    if (r?.success) setTaslak(null);
+  };
 
   const aktifMetot = METOTLAR.find(m => m.id === aiModel) || METOTLAR[0];
   const markaModu = aiModel === 'marka-afis';
@@ -495,9 +537,29 @@ export default function GorselStudyo() {
               <div className="bg-white border border-gray-200 rounded-xl p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-gray-700">📋 Program satırları</span>
-                  <button onClick={() => setProgramSatir(prev => [...prev, { saat: '', baslik: '', konusmaciAd: '', notlar: '' }])}
-                    className="text-[11px] text-amare-purple hover:underline flex items-center gap-0.5"><Plus className="w-3 h-3" /> satır ekle</button>
+                  <div className="flex items-center gap-2.5">
+                    <button onClick={taslagiKaydet} disabled={taslakIslem === 'kaydediliyor'}
+                      title="Program satırlarını taslak olarak kaydet — sonra kaldığın yerden devam et"
+                      className="text-[11px] font-semibold text-amber-600 hover:underline flex items-center gap-0.5 disabled:opacity-50">
+                      <Save className="w-3 h-3" />
+                      {taslakIslem === 'kaydediliyor' ? '…' : taslakIslem === 'kaydedildi' ? '✓ kaydedildi' : taslakIslem === 'hata' ? 'hata — tekrar dene' : 'taslağı kaydet'}
+                    </button>
+                    <button onClick={() => setProgramSatir(prev => [...prev, { saat: '', baslik: '', konusmaciAd: '', notlar: '' }])}
+                      className="text-[11px] text-amare-purple hover:underline flex items-center gap-0.5"><Plus className="w-3 h-3" /> satır ekle</button>
+                  </div>
                 </div>
+                {taslak && (
+                  <div className="flex items-center justify-between gap-2 bg-amber-50 border border-amber-200 rounded-lg px-2.5 py-1.5">
+                    <span className="text-[11px] text-amber-800 truncate">
+                      📝 Kayıtlı taslak — {taslak.tarih ? new Date(taslak.tarih).toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : ''}
+                      {taslak.kaydeden ? ` · ${taslak.kaydeden.split('@')[0]}` : ''}
+                    </span>
+                    <span className="flex items-center gap-2 flex-shrink-0">
+                      <button onClick={taslagiYukle} className="text-[11px] font-bold text-amber-700 hover:underline">Yükle</button>
+                      <button onClick={taslagiSil} className="text-[11px] text-gray-400 hover:text-red-500">Sil</button>
+                    </span>
+                  </div>
+                )}
                 {programSatir.length === 0 && <div className="text-[11px] text-gray-400">Bu eğitimde program akışı yok. "+ satır ekle" ile oluştur.</div>}
                 {programSatir.map((r, i) => {
                   const upd = (alan, val) => setProgramSatir(prev => prev.map((x, idx) => idx === i ? { ...x, [alan]: val } : x));
