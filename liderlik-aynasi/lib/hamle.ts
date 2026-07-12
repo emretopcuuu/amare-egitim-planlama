@@ -157,19 +157,24 @@ export async function hamleYanitla(db: Db, pid: string, hamleId: string, cumle: 
 }
 
 // 20:30 — bugün süresi dolacak, cevaplanmamış hamlelerde hedefe tek nazik
-// hatırlatma (settings kilidiyle bir kez).
+// hatırlatma (settings kilidiyle bir kez). Kendi hatasını yutar — tik'i
+// asla düşürmez (kardeş fonksiyonlarla aynı desen).
 export async function hamleHatirlat(db: Db, simdi: Date): Promise<void> {
-  const bugun = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(simdi);
-  const { error: kilit } = await db.from("settings").insert({ key: `hamle_hatirlat_${bugun}`, value: "1" });
-  if (kilit) return;
-  const yarinBasi = new Date(`${bugun}T21:00:00+03:00`).toISOString();
-  const { data: aciklar } = await db
-    .from("hamle")
-    .select("hedef_id")
-    .is("hedef_cumle", null)
-    .gte("sure_bitis", simdi.toISOString())
-    .lte("sure_bitis", yarinBasi);
-  for (const h of aciklar ?? []) {
-    await katilimciyaBildir(db, h.hedef_id, "♟ Hamle sırası sende", "Bir cümlelik karşılık yeter — 21:00'e kadar açık.", "/hamle").catch(() => {});
+  try {
+    const bugun = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(simdi);
+    const { error: kilit } = await db.from("settings").insert({ key: `hamle_hatirlat_${bugun}`, value: "1" });
+    if (kilit) return;
+    const yarinBasi = new Date(`${bugun}T21:00:00+03:00`).toISOString();
+    const { data: aciklar } = await db
+      .from("hamle")
+      .select("hedef_id")
+      .is("hedef_cumle", null)
+      .gte("sure_bitis", simdi.toISOString())
+      .lte("sure_bitis", yarinBasi);
+    for (const h of aciklar ?? []) {
+      await katilimciyaBildir(db, h.hedef_id, "♟ Hamle sırası sende", "Bir cümlelik karşılık yeter — 21:00'e kadar açık.", "/hamle").catch(() => {});
+    }
+  } catch {
+    /* tik'i asla düşürme */
   }
 }
