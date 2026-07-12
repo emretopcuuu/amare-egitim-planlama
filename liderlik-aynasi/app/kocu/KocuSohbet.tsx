@@ -95,8 +95,12 @@ export default function KocuSohbet({
     el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
   }, [girdi]);
 
-  // GELİŞTİRME #7: AYNA yanıtını sesli oku (tarayıcı TTS, tr-TR) — hands-free koç.
-  function seslendir(metin: string) {
+  // GELİŞTİRME #7 + UX paketi #4: AYNA yanıtını KENDİ resmî sesiyle oku
+  // (ElevenLabs, sunucudan). Üretilemezse tarayıcı TTS'ine zarifçe düşer —
+  // sesli mod hiç susmaz. Tek Audio referansı: kapatınca çalan ses durur.
+  const romanSes = useRef<HTMLAudioElement | null>(null);
+
+  function tarayiciTts(metin: string) {
     try {
       const ss = window.speechSynthesis;
       if (!ss) return;
@@ -107,6 +111,25 @@ export default function KocuSohbet({
       if (trSes) u.voice = trSes;
       ss.speak(u);
     } catch {}
+  }
+
+  async function seslendir(metin: string) {
+    try {
+      romanSes.current?.pause();
+      const res = await fetch("/api/kocu-ses", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ metin }),
+      });
+      if (!res.ok) throw new Error("ses yok");
+      const blob = await res.blob();
+      const a = new Audio(URL.createObjectURL(blob));
+      a.onended = () => URL.revokeObjectURL(a.src);
+      romanSes.current = a;
+      await a.play();
+    } catch {
+      tarayiciTts(metin); // zarif geri çekilme: robotik ama sessiz kalmaz
+    }
   }
 
   async function karsila() {
@@ -121,7 +144,7 @@ export default function KocuSohbet({
       const d = r.ok ? await r.json() : null;
       if (d?.mesaj) {
         setMesajlar((m) => [...m, { rol: "ayna", icerik: d.mesaj }]);
-        if (sesli) seslendir(d.mesaj);
+        if (sesli) void seslendir(d.mesaj);
       } else setHata(t.uretilemedi);
     } catch {
       setHata(t.hata);
@@ -147,7 +170,7 @@ export default function KocuSohbet({
       const d = r.ok ? await r.json() : null;
       if (d?.mesaj) {
         setMesajlar((m) => [...m, { rol: "ayna", icerik: d.mesaj }]);
-        if (sesli) seslendir(d.mesaj);
+        if (sesli) void seslendir(d.mesaj);
       } else setHata(t.uretilemedi);
     } catch {
       setHata(t.hata);
@@ -184,7 +207,10 @@ export default function KocuSohbet({
         <button
           onClick={() => {
             setSesli((s) => {
-              if (s) try { window.speechSynthesis?.cancel(); } catch {}
+              if (s) {
+                try { window.speechSynthesis?.cancel(); } catch {}
+                romanSes.current?.pause();
+              }
               return !s;
             });
           }}

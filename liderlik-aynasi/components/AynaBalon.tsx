@@ -1,8 +1,11 @@
 import type { ReactNode } from "react";
+import AynaYuzu from "@/components/AynaYuzu";
 
 // UX #4 — Tutarlı AYNA varlığı. AYNA'nın konuştuğu HER yerde aynı görsel dil:
-// göz avatarı + altın aksanlı konuşma balonu. Görev nedeni, koç, fısıltı,
-// rapor… hepsi aynı "varlık" hissini taşısın. Saf sunucu/istemci-uyumlu.
+// karakter avatarı + altın aksanlı konuşma balonu. Görev nedeni, koç, fısıltı,
+// rapor… hepsi aynı "varlık" hissini taşısın.
+// UX paketi #7: 👁 emoji avatarı MASKOTLA değiştirildi — bu bileşeni kullanan
+// her yüzey (görev nedeni, koç kartları, fısıltılar) otomatik karakter kazandı.
 export default function AynaBalon({
   baslik,
   children,
@@ -16,13 +19,8 @@ export default function AynaBalon({
 }) {
   return (
     <div className="flex items-start gap-3">
-      {/* AYNA göz avatarı — marka işareti */}
-      <span
-        className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-gold/30 to-royal/30 text-lg ring-1 ring-gold/40"
-        aria-hidden
-      >
-        👁
-      </span>
+      {/* AYNA'nın yüzü — marka işareti (Faz 1 maskotu) */}
+      <AynaYuzu durum="konusuyor" boyut={36} hareketli={false} sinif="mt-0.5 shrink-0" />
       <div
         className={`min-w-0 flex-1 rounded-2xl rounded-tl-sm border p-4 ${
           vurgu

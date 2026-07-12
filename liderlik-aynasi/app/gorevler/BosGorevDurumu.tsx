@@ -5,6 +5,7 @@ import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import { sesCal } from "@/lib/sesEfekti";
 import AynaYuzu, { type AynaDurum } from "@/components/AynaYuzu";
+import AynaLaf from "@/components/AynaLaf";
 import EkstraGorev from "./EkstraGorev";
 
 const t = tr.gorevler;
@@ -81,9 +82,11 @@ export default function BosGorevDurumu({
           />
         </button>
         {balon && (
-          <p className="absolute -top-2 left-1/2 w-max max-w-[15rem] -translate-x-1/2 -translate-y-full rounded-2xl border border-gold/30 bg-midnight px-3 py-1.5 text-xs italic leading-relaxed text-gold-light shadow-lg">
-            {balon}
-          </p>
+          <AynaLaf
+            metin={balon}
+            kuyruk="alt"
+            sinif="absolute -top-2 left-1/2 w-max -translate-x-1/2 -translate-y-full"
+          />
         )}
       </div>
 

@@ -3436,6 +3436,12 @@ export const tr = {
     radyoAksam: "Akşam bülteni — dedikodu köşesi ve skorlar",
     radyoDinle: "Yayını dinle",
     radyoMetin: "Yayın metnini oku",
+    // UX paketi #10 — önceki yayınlar arşivi
+    radyoOnceki: "Önceki yayınlar",
+    // UX paketi #8 — ilk sesli içerikte tek seferlik ipucu
+    sesIpucu: "🔊 AYNA sesli konuşur — telefonun sesini açmayı unutma.",
+    // UX paketi #9 — görev kartındaki AYNA'ya dokununca varsayılan yardım
+    aynaIpucuVarsayilan: "Takıldıysan aşağıdaki 'Netleştir' düğmesi tam bunun için var.",
     // Görsel paket #4 — maskota dokununca arada bir çıkan laf balonu.
     tiklamaLaflari: [
       "Dokunma, parmak izi kalıyor.",
@@ -3883,6 +3889,12 @@ export const tr = {
     iosGorselPaylas: "Paylaş",
     iosGorselEkle: "Ana Ekrana Ekle",
     iosGorselAlt: "Paylaş düğmesi Safari'de ekranın altındadır",
+  },
+  aynaTanis: {
+    // UX paketi #1 — mühür ekranında AYNA'nın sesiyle ilk tanışma
+    baslik: "AYNA sana bir şey söylemek istiyor",
+    metin: "Kampta seni karşılayacak sesle şimdiden tanış.",
+    dinle: "▶ Dinle",
   },
   ses: {
     baslat: "Sesle Yaz",

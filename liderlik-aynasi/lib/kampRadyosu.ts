@@ -273,6 +273,41 @@ export async function ekranSinyali(
   }
 }
 
+// UX paketi #10 — yayın arşivi: son N yayın (en yenisi dahil), /gorevler kartı
+// ana yayın + "önceki yayınlar" listesini bundan kurar. Sabahı kaçıran akşam
+// dinleyebilsin; dünün tahmin/dedikodusu kaybolmasın.
+export type ArsivYayin = {
+  id: string;
+  tarih: string;
+  slot: string;
+  metin: string;
+  sesUrl: string | null;
+};
+
+export async function yayinArsiviGetir(db: Db, adet = 3): Promise<ArsivYayin[]> {
+  try {
+    const { data } = await db
+      .from("radyo_yayin")
+      .select("id, tarih, slot, metin, ses_path")
+      .eq("durum", "yayinda")
+      .order("yayinlanan_at", { ascending: false })
+      .limit(adet);
+    if (!data?.length) return [];
+    return await Promise.all(
+      data.map(async (y) => {
+        let sesUrl: string | null = null;
+        if (y.ses_path) {
+          const { data: imza } = await db.storage.from(BUCKET).createSignedUrl(y.ses_path, 3600);
+          sesUrl = imza?.signedUrl ?? null;
+        }
+        return { id: y.id, tarih: y.tarih, slot: y.slot, metin: y.metin, sesUrl };
+      })
+    );
+  } catch {
+    return [];
+  }
+}
+
 // /gorevler kartı için: bugünün son yayını (varsa) + imzalı ses URL'i.
 export async function sonYayinGetir(
   db: Db,
