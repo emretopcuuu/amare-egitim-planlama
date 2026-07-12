@@ -1740,3 +1740,14 @@ html[data-admin-kontrast="yuksek"] .admin-kok .text-slate-500 {
   .ayna-maske { -webkit-mask-image: none; mask-image: none; }
   .ayna-doner { animation: none; }
 }
+
+/* G2 — Gizemli sandık animasyonları (reduced-motion'da susar; JS de gate eder). */
+@keyframes sandik-salla { 0%, 92%, 100% { transform: rotate(0deg); } 94% { transform: rotate(-7deg); } 96% { transform: rotate(7deg); } 98% { transform: rotate(-4deg); } }
+@keyframes sandik-titre { 0%, 100% { transform: translateX(0) rotate(0); } 20% { transform: translateX(-3px) rotate(-4deg); } 40% { transform: translateX(3px) rotate(4deg); } 60% { transform: translateX(-2px) rotate(-3deg); } 80% { transform: translateX(2px) rotate(3deg); } }
+@keyframes sandik-patla { 0% { transform: scale(0.4); opacity: 0; } 60% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); } }
+.sandik-salla { animation: sandik-salla 3s ease-in-out infinite; transform-origin: bottom center; }
+.sandik-titre { animation: sandik-titre 0.35s ease-in-out infinite; }
+.sandik-patla { animation: sandik-patla 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .sandik-salla, .sandik-titre, .sandik-patla { animation: none; transform: none; }
+}

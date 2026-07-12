@@ -1683,6 +1683,33 @@ export type Database = {
         }
         Relationships: []
       }
+      sandik_gecmisi: {
+        Row: {
+          acildi_at: string
+          deger: number
+          id: string
+          meta: Json
+          participant_id: string
+          tur: string
+        }
+        Insert: {
+          acildi_at?: string
+          deger?: number
+          id?: string
+          meta?: Json
+          participant_id: string
+          tur: string
+        }
+        Update: {
+          acildi_at?: string
+          deger?: number
+          id?: string
+          meta?: Json
+          participant_id?: string
+          tur?: string
+        }
+        Relationships: []
+      }
       missions: {
         Row: {
           ai_comment: string | null
