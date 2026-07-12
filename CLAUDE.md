@@ -111,6 +111,37 @@ adımları ve içerik TODO'ları kendi README'sinde.
 - Senaryoda bekleyen özel olaylar (kamp açılınca): Gün 2 21:00 sesli mektup
   (`gun2_sesli_mektup_ac`), Gün 3 10:00 domino (`gun3_domino_ac`).
 
+## KAPANIŞ ZİNCİRİ PROJESİ (sürüyor — Emre'nin kapanış eğitimine bağlı)
+
+Kampın kapanışı Emre'nin **kapanış eğitimi** etrafında kurgulanıyor. Zincir:
+**3 günlük yaşanmış deneyim → Emre'nin kapanış eğitimi → verilen sözler → 90 gün
+→ Emre'ye geri ölçüm.** Kullanıcı 10 ileri-seviye öneriyi onayladı; ayrı bir
+admin bölümü + kamp son günü Emre SAHNEYE ÇIKMADAN ÖNCE veri teslimi istedi.
+
+**TESLİM ZAMANI (kullanıcının "saat kaçta?" sorusunun cevabı) — Gün 3 (19 Tem):**
+Emre'nin kapanış eğitimi = **11:40 zirve** (`11:40–13:10 PD101 ... AYNA Kamp
+Analizi`, `lib/kampProgrami.ts`). Değerlendirme (tek liderlik puanlaması) 07:15
+açılır, ~11:15 kapanır. Bu yüzden **iki teslim**: **07:30 ana brif** (değerlendirme
+dışı her şey — bol hazırlık) + **11:20 güncel brif** (değerlendirme işlendikten
+sonra, sahneden ~20 dk önce). Radyo (Faz 4) deseniyle üretim teslimden ~20 dk önce.
+
+- ✅ **Faz A** (bu PR): **"Salonun Röntgeni" sahne öncesi brifi** (öneriler 1-3).
+  `lib/kapanis.ts` (radyo desenini izler: generate-ahead, unique(tarih,slot)
+  idempotent, AI düşerse ŞABLON — brif asla boş kalmaz). `kapanisBrifTik` tik'ten
+  (yalnız mod=kamp, Gün 3, 07:30+11:20). Tablo `kapanis_brif` (migration 0143,
+  canlıda). Yeni admin bölümü **`/admin/kapanis`** (Final grubu): AI düzyazı brif
+  (İSİMSİZ: röntgen + konuşma malzemesi + eğitime köprü) + ham sayı çipleri +
+  **İSİMLİ "dokunulacaklar"** (parlayanlar/geride kalanlar — KODLA hesaplanır,
+  AI'dan GEÇMEZ; radyo "isim asla geçmez" ilkesi) + isimsiz alıntı havuzu. Elle
+  "Brifi Üret/Yenile" (`/api/admin/kapanis`) — kamp kapalıyken (onboarding/prova)
+  eldeki veriyle test edilebilir. GİZLİLİK: AI'ya yalnız toplam sayılar + isimsiz
+  alıntılar gider.
+- ⬜ **Faz B**: canlı sahne katmanı (öneri 4 canlı kanıt ekranı /sahne, 5 canlı
+  nabız sorusu, 6 Emre'nin Sorusu → söz tohumu). ⬜ **Faz C**: söz zenginleştirme
+  (7 veriden söz taslağı, 8 "bu sözü verebilirsin çünkü…" kanıt anı). ⬜ **Faz D**:
+  90 gün (9 eğitim → 90-gün müfredatı: Emre 3-5 ilke girer → yolculuk görevleri;
+  10 söz karnesi: haftalık Emre'ye rapor).
+
 ## AYNA KARAKTER PROJESİ (sürüyor — faz faz)
 
 AYNA "bilge koç"tan **kampın şovmenine** dönüşüyor: egolu-kırılgan, iddiacı,

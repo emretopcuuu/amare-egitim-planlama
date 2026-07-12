@@ -2481,6 +2481,39 @@ export type Database = {
           },
         ]
       }
+      kapanis_brif: {
+        Row: {
+          created_at: string
+          durum: string
+          gun: number | null
+          id: string
+          metin: string
+          slot: string
+          tarih: string
+          veri: Json
+        }
+        Insert: {
+          created_at?: string
+          durum?: string
+          gun?: number | null
+          id?: string
+          metin: string
+          slot: string
+          tarih: string
+          veri?: Json
+        }
+        Update: {
+          created_at?: string
+          durum?: string
+          gun?: number | null
+          id?: string
+          metin?: string
+          slot?: string
+          tarih?: string
+          veri?: Json
+        }
+        Relationships: []
+      }
       radyo_yayin: {
         Row: {
           created_at: string
