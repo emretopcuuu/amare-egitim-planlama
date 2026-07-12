@@ -45,6 +45,7 @@ import { ciftSeriDurum, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
 import { fisiltiAcikMi, bekleyenFisiltiSayisi } from "@/lib/fisilti";
 import { hamleAcikMi, bekleyenHamleSayisi } from "@/lib/hamle";
 import { radyoKitlikAcikMi } from "@/lib/kampRadyosu";
+import { buguAcikMi } from "@/lib/bugu";
 import RadyoKitlik from "./RadyoKitlik";
 import SandikKarti from "./SandikKarti";
 import CiftAlevi from "./CiftAlevi";
@@ -161,7 +162,7 @@ export default async function AnaSayfa({
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
   const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }, { data: hedefErken }, { data: degerlerDurum }] =
     await Promise.all([
-      db.from("participants").select("camp_unlocked_at, team, consent_at, ayna_ses_secildi_at, onboarding_toren_at, cinsiyet").eq("id", session.sub).maybeSingle(),
+      db.from("participants").select("camp_unlocked_at, team, consent_at, ayna_ses_secildi_at, onboarding_toren_at, cinsiyet, son_gorulme").eq("id", session.sub).maybeSingle(),
       db
         .from("settings")
         .select("key, value")
@@ -213,6 +214,19 @@ export default async function AnaSayfa({
 
   // G7 — radyo kıtlığı: bayrak açıksa canlı yayın kartını (poll) mount et.
   const radyoKitlikAcik = kisi.camp_unlocked_at ? await radyoKitlikAcikMi(db) : false;
+
+  // G9 — elmas buğusu: bayrak açık + 24s girilmediyse buğu (suçlama YOK). ÖNCE
+  // eski son_gorulme'ye göre hesapla, SONRA now'a damgala (boşluk son ziyaretten).
+  let elmasBugulu = false;
+  if (kisi.camp_unlocked_at && (await buguAcikMi(db))) {
+    const sg = (kisi as { son_gorulme?: string | null }).son_gorulme;
+    elmasBugulu = !!sg && Date.now() - Date.parse(sg) > 24 * 3_600_000;
+    await db
+      .from("participants")
+      .update({ son_gorulme: new Date().toISOString() })
+      .eq("id", session.sub)
+      .then(() => {}, () => {}); // fire-and-forget; akışı bloklamaz
+  }
 
   // Menü rozetleri: okunmamış iç mesaj sayısı + analiz sayısı ("yeni" noktası).
   const [okunmamisMesajSayisi, analizSayisi] = await Promise.all([
@@ -651,6 +665,7 @@ export default async function AnaSayfa({
             sonFacet={elmasVeri.sonFacet}
             asama={elmasVeri.asama}
             isikRengi={elmasRengi ?? undefined}
+            bugulu={elmasBugulu}
           />
           {/* G7 — Canlı radyo kıtlık kartı (5 dk, sonra kaybolur) */}
           {radyoKitlikAcik && <RadyoKitlik />}

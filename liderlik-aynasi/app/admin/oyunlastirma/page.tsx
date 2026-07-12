@@ -19,6 +19,7 @@ const BAYRAKLAR: { key: string; ad: string; aciklama: string }[] = [
   { key: "hamle_acik", ad: "♟ Hamle Sırası", aciklama: "Eşleşmeli görevde karşılıklılık + kilitli reveal; ikisi de yazınca açılır." },
   { key: "radyo_kitlik_acik", ad: "📻 Radyo Kıtlığı", aciklama: "Kamp Radyosu yayını 5 dk canlı kalır sonra kaybolur (mevcut kalıcı radyoya dokunmaz)." },
   { key: "kayip_esya_acik", ad: "🔍 Kayıp Eşya Bürosu", aciklama: "Gizli parlayan nokta; ilk bulan +50⚡, 24s dokunanlar pay alır." },
+  { key: "bugu_acik", ad: "💎 Elmas Buğusu", aciklama: "24s girilmezse elmasa nazik buğu (suçlama yok); tek dokunuşla silinir." },
 ];
 
 export default async function OyunlastirmaPage() {
