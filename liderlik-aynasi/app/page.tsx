@@ -41,7 +41,9 @@ import { kimlikElmasiVerisi } from "@/lib/elmas";
 import { elmasRengiGetir, marketAcikMi } from "@/lib/market";
 import { sandikDurumu, sandikAcikMi } from "@/lib/sandik";
 import { rekorlarAcikMi } from "@/lib/rekorlar";
+import { ciftSeriDurum, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
 import SandikKarti from "./SandikKarti";
+import CiftAlevi from "./CiftAlevi";
 import { okunmamisMesaj } from "@/lib/icMesaj";
 
 const t = tr.anaSayfa;
@@ -190,6 +192,12 @@ export default async function AnaSayfa({
     kisi.camp_unlocked_at && (await sandikAcikMi(db))
       ? (await sandikDurumu(db, session.sub)).bekleyen
       : 0;
+
+  // G4 — çift serisi: açıksa grup alevi durumu.
+  const ciftDurum =
+    kisi.camp_unlocked_at && (await ciftSerisiAcikMi(db))
+      ? await ciftSeriDurum(db, session.sub)
+      : null;
 
   // Menü rozetleri: okunmamış iç mesaj sayısı + analiz sayısı ("yeni" noktası).
   const [okunmamisMesajSayisi, analizSayisi] = await Promise.all([
@@ -631,6 +639,8 @@ export default async function AnaSayfa({
           />
           {/* G2 — Gizemli sandık (bekleyen hak varsa) */}
           <SandikKarti bekleyen={sandikBekleyen} />
+          {/* G4 — Çift serisi ortak alevi */}
+          {ciftDurum && <CiftAlevi durum={ciftDurum} />}
           {/* G1/G3 — Market + Rekorlar girişleri (yalnız açıkken) */}
           <div className="mt-3 grid gap-2">
             {marketAcik && (

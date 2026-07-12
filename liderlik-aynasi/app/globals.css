@@ -1751,3 +1751,8 @@ html[data-admin-kontrast="yuksek"] .admin-kok .text-slate-500 {
 @media (prefers-reduced-motion: reduce) {
   .sandik-salla, .sandik-titre, .sandik-patla { animation: none; transform: none; }
 }
+
+/* G4 — çift serisi alevi (reduced-motion'da sabit). */
+@keyframes alev-yan { 0%, 100% { transform: scale(1) rotate(-2deg); filter: brightness(1); } 50% { transform: scale(1.12) rotate(2deg); filter: brightness(1.25); } }
+.alev-yan { animation: alev-yan 1.4s ease-in-out infinite; transform-origin: bottom center; }
+@media (prefers-reduced-motion: reduce) { .alev-yan { animation: none; transform: none; } }
