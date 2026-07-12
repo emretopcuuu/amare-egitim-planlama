@@ -38,6 +38,16 @@ import { SiradakiOnizleme } from "@/components/AsamaRayi";
 import YeniGorevButonu from "@/components/YeniGorevButonu";
 import KimlikElmasi from "@/components/elmas/KimlikElmasi";
 import { kimlikElmasiVerisi } from "@/lib/elmas";
+import { elmasRengiGetir, marketAcikMi } from "@/lib/market";
+import { sandikDurumu, sandikAcikMi } from "@/lib/sandik";
+import { rekorlarAcikMi } from "@/lib/rekorlar";
+import { ciftSeriDurum, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
+import { fisiltiAcikMi, bekleyenFisiltiSayisi } from "@/lib/fisilti";
+import { hamleAcikMi, bekleyenHamleSayisi } from "@/lib/hamle";
+import { radyoKitlikAcikMi } from "@/lib/kampRadyosu";
+import RadyoKitlik from "./RadyoKitlik";
+import SandikKarti from "./SandikKarti";
+import CiftAlevi from "./CiftAlevi";
 import { okunmamisMesaj } from "@/lib/icMesaj";
 
 const t = tr.anaSayfa;
@@ -175,6 +185,34 @@ export default async function AnaSayfa({
   // KİMLİK ELMASI verisi (yalnız kamp içindeyken) — ana sayfanın kalbindeki
   // canlı 3B elmasını besler: her tamamlanan görev bir faseti ışıtır.
   const elmasVeri = kisi.camp_unlocked_at ? await kimlikElmasiVerisi(db, session.sub) : null;
+
+  // G1 — market: elmas ışık rengi (kişiselleştirme) + market bayrağı (giriş linki).
+  const [elmasRengi, marketAcik, rekorAcik] = kisi.camp_unlocked_at
+    ? await Promise.all([elmasRengiGetir(db, session.sub), marketAcikMi(db), rekorlarAcikMi(db)])
+    : [null, false, false];
+
+  // G2 — gizemli sandık: açıksa bekleyen sandık hakkı sayısı.
+  const sandikBekleyen =
+    kisi.camp_unlocked_at && (await sandikAcikMi(db))
+      ? (await sandikDurumu(db, session.sub)).bekleyen
+      : 0;
+
+  // G4 — çift serisi: açıksa grup alevi durumu.
+  const ciftDurum =
+    kisi.camp_unlocked_at && (await ciftSerisiAcikMi(db))
+      ? await ciftSeriDurum(db, session.sub)
+      : null;
+
+  // G5 — fısıltı: açıksa bekleyen fısıltı sayısı (giriş rozeti).
+  const fisiltiAcik = kisi.camp_unlocked_at ? await fisiltiAcikMi(db) : false;
+  const bekleyenFisilti = fisiltiAcik ? await bekleyenFisiltiSayisi(db, session.sub) : 0;
+
+  // G6 — hamle sırası: açıksa cevap bekleyen hamle sayısı.
+  const hamleAcik = kisi.camp_unlocked_at ? await hamleAcikMi(db) : false;
+  const bekleyenHamle = hamleAcik ? await bekleyenHamleSayisi(db, session.sub) : 0;
+
+  // G7 — radyo kıtlığı: bayrak açıksa canlı yayın kartını (poll) mount et.
+  const radyoKitlikAcik = kisi.camp_unlocked_at ? await radyoKitlikAcikMi(db) : false;
 
   // Menü rozetleri: okunmamış iç mesaj sayısı + analiz sayısı ("yeni" noktası).
   const [okunmamisMesajSayisi, analizSayisi] = await Promise.all([
@@ -612,7 +650,53 @@ export default async function AnaSayfa({
             facetler={elmasVeri.facetler}
             sonFacet={elmasVeri.sonFacet}
             asama={elmasVeri.asama}
+            isikRengi={elmasRengi ?? undefined}
           />
+          {/* G7 — Canlı radyo kıtlık kartı (5 dk, sonra kaybolur) */}
+          {radyoKitlikAcik && <RadyoKitlik />}
+          {/* G2 — Gizemli sandık (bekleyen hak varsa) */}
+          <SandikKarti bekleyen={sandikBekleyen} />
+          {/* G4 — Çift serisi ortak alevi */}
+          {ciftDurum && <CiftAlevi durum={ciftDurum} />}
+          {/* G1/G3 — Market + Rekorlar girişleri (yalnız açıkken) */}
+          <div className="mt-3 grid gap-2">
+            {marketAcik && (
+              <Link
+                href="/market"
+                className="flex items-center justify-center gap-2 rounded-xl border border-gold/30 bg-gold/[0.06] py-2.5 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/[0.12]"
+              >
+                🏪 Kıvılcım Marketi
+              </Link>
+            )}
+            {rekorAcik && (
+              <Link
+                href="/rekorlar"
+                className="flex items-center justify-center gap-2 rounded-xl border border-royal/30 bg-royal/[0.1] py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-royal/20"
+              >
+                🏆 Rekorlar
+              </Link>
+            )}
+            {fisiltiAcik && (
+              <Link
+                href="/fisilti"
+                className="flex items-center justify-center gap-2 rounded-xl border border-royal/30 bg-royal/[0.1] py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-royal/20"
+              >
+                🔒 Fısıltı
+                {bekleyenFisilti > 0 && (
+                  <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-bold text-[#1a1206]">{bekleyenFisilti}</span>
+                )}
+              </Link>
+            )}
+            {hamleAcik && bekleyenHamle > 0 && (
+              <Link
+                href="/hamle"
+                className="flex items-center justify-center gap-2 rounded-xl border border-gold/40 bg-gold/[0.08] py-2.5 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/[0.14]"
+              >
+                ♟ Hamle sırası sende
+                <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-bold text-[#1a1206]">{bekleyenHamle}</span>
+              </Link>
+            )}
+          </div>
         </div>
       )}
       {/* [KURULUM 7/8] Rozetler (İlk Işık/El Ele) + "yanındakiyle el ele" girişi */}

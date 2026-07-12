@@ -1644,6 +1644,222 @@ export type Database = {
           },
         ]
       }
+      market_islem: {
+        Row: {
+          created_at: string
+          fiziksel: boolean
+          id: string
+          participant_id: string
+          reyon: string
+          teslim_at: string | null
+          teslim_durumu: string | null
+          tutar: number
+          urun_kod: string
+          varyant: string | null
+        }
+        Insert: {
+          created_at?: string
+          fiziksel?: boolean
+          id?: string
+          participant_id: string
+          reyon: string
+          teslim_at?: string | null
+          teslim_durumu?: string | null
+          tutar: number
+          urun_kod: string
+          varyant?: string | null
+        }
+        Update: {
+          created_at?: string
+          fiziksel?: boolean
+          id?: string
+          participant_id?: string
+          reyon?: string
+          teslim_at?: string | null
+          teslim_durumu?: string | null
+          tutar?: number
+          urun_kod?: string
+          varyant?: string | null
+        }
+        Relationships: []
+      }
+      hamle: {
+        Row: {
+          created_at: string
+          hedef_cumle: string | null
+          hedef_id: string
+          hedef_yanit_at: string | null
+          id: string
+          kaynak_cumle: string
+          kaynak_id: string
+          mission_id: string
+          sure_bitis: string
+        }
+        Insert: {
+          created_at?: string
+          hedef_cumle?: string | null
+          hedef_id: string
+          hedef_yanit_at?: string | null
+          id?: string
+          kaynak_cumle: string
+          kaynak_id: string
+          mission_id: string
+          sure_bitis: string
+        }
+        Update: {
+          created_at?: string
+          hedef_cumle?: string | null
+          hedef_id?: string
+          hedef_yanit_at?: string | null
+          id?: string
+          kaynak_cumle?: string
+          kaynak_id?: string
+          mission_id?: string
+          sure_bitis?: string
+        }
+        Relationships: []
+      }
+      fisilti: {
+        Row: {
+          acildi_at: string | null
+          alici: string
+          anonim: boolean
+          bilirse_ogrensin: boolean
+          created_at: string
+          gonderen: string
+          id: string
+          kilit: boolean
+          ses_path: string
+          tahmin_dogru: boolean | null
+        }
+        Insert: {
+          acildi_at?: string | null
+          alici: string
+          anonim?: boolean
+          bilirse_ogrensin?: boolean
+          created_at?: string
+          gonderen: string
+          id?: string
+          kilit?: boolean
+          ses_path: string
+          tahmin_dogru?: boolean | null
+        }
+        Update: {
+          acildi_at?: string | null
+          alici?: string
+          anonim?: boolean
+          bilirse_ogrensin?: boolean
+          created_at?: string
+          gonderen?: string
+          id?: string
+          kilit?: boolean
+          ses_path?: string
+          tahmin_dogru?: boolean | null
+        }
+        Relationships: []
+      }
+      kivilcim_bonus: {
+        Row: {
+          created_at: string
+          deger: number
+          id: string
+          kaynak: string
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          deger?: number
+          id?: string
+          kaynak: string
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          deger?: number
+          id?: string
+          kaynak?: string
+          participant_id?: string
+        }
+        Relationships: []
+      }
+      cift_serisi: {
+        Row: {
+          arkadasi_id: string
+          gun_sayisi: number
+          id: string
+          kul: boolean
+          kul_gun_sayac: number
+          son_besleme: string | null
+          updated_at: string
+        }
+        Insert: {
+          arkadasi_id: string
+          gun_sayisi?: number
+          id?: string
+          kul?: boolean
+          kul_gun_sayac?: number
+          son_besleme?: string | null
+          updated_at?: string
+        }
+        Update: {
+          arkadasi_id?: string
+          gun_sayisi?: number
+          id?: string
+          kul?: boolean
+          kul_gun_sayac?: number
+          son_besleme?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rekorlar: {
+        Row: {
+          deger: number
+          kategori: string
+          participant_id: string | null
+          tarih: string
+        }
+        Insert: {
+          deger: number
+          kategori: string
+          participant_id?: string | null
+          tarih?: string
+        }
+        Update: {
+          deger?: number
+          kategori?: string
+          participant_id?: string | null
+          tarih?: string
+        }
+        Relationships: []
+      }
+      sandik_gecmisi: {
+        Row: {
+          acildi_at: string
+          deger: number
+          id: string
+          meta: Json
+          participant_id: string
+          tur: string
+        }
+        Insert: {
+          acildi_at?: string
+          deger?: number
+          id?: string
+          meta?: Json
+          participant_id: string
+          tur: string
+        }
+        Update: {
+          acildi_at?: string
+          deger?: number
+          id?: string
+          meta?: Json
+          participant_id?: string
+          tur?: string
+        }
+        Relationships: []
+      }
       missions: {
         Row: {
           ai_comment: string | null

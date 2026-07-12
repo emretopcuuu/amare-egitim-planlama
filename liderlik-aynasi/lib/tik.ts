@@ -72,6 +72,9 @@ import { karsilasmaBul } from "@/lib/karsilasma";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
 import { radyoTik } from "@/lib/kampRadyosu";
+import { rekorTara, rekorlarAcikMi } from "@/lib/rekorlar";
+import { ciftSerisiDegerlendir, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
+import { hamleTaraOlustur, hamleHatirlat, hamleAcikMi } from "@/lib/hamle";
 import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
 import { sablonBul, ilkAd } from "@/lib/whatsappSablonlari";
 import { gunlukSoz } from "@/lib/ozluSozler";
@@ -1890,6 +1893,22 @@ export async function tikCalistir(
   // Faz 4 — KAMP RADYOSU: sabah 07:30 + akşam 21:30 (üretim ~20 dk önce başlar).
   // Kendi hatasını yutar, tik'i asla düşürmez; kill switch radyoyu da kapatır.
   if (mod === "kamp") await radyoTik(db, gun, gunDk, bugun);
+
+  // G3 — REKORLAR taraması: kamp modunda, bayrak açıkken mevcut verilerden
+  // rekorları hesaplar, kırılanı herkese duyurur. Kendi hatasını yutar.
+  if (mod === "kamp" && (await rekorlarAcikMi(db))) await rekorTara(db);
+
+  // G4 — ÇİFT SERİSİ: kamp modunda, bayrak açıkken ortak alevleri besle/söndür +
+  // 20:00 nazik hatırlatma. Kendi hatasını yutar.
+  if (mod === "kamp" && (await ciftSerisiAcikMi(db)))
+    await ciftSerisiDegerlendir(db, simdi, saat, dakika);
+
+  // G6 — HAMLE SIRASI: kamp modunda, bayrak açıkken tamamlanmış eşleşmeli
+  // görevlerden hamle üret + 20:30 nazik hatırlatma. Kendi hatasını yutar.
+  if (mod === "kamp" && (await hamleAcikMi(db))) {
+    await hamleTaraOlustur(db, simdi);
+    if (saat === 20 && dakika >= 30) await hamleHatirlat(db, simdi);
+  }
 
   if (mod === "kamp" && (saat === 13 || saat === 20) && !sahneSessiz) {
     const dilim = saat === 13 ? "ogle" : "aksam";

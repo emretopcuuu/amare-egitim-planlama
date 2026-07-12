@@ -14,6 +14,8 @@ export type ElmasProps = {
   facetler: ElmasFacet[];
   sonFacet: string | null;
   asama: number; // 1..5 — unvana göre elmas aşaması
+  // G1 — market'ten alınan elmas ışık rengi (RGB "r,g,b"); yoksa altın varsayılan.
+  isikRengi?: string;
 };
 
 // Ana sayfanın kalbindeki CANLI kimlik elması + dokununca faset dökümü.
@@ -26,6 +28,7 @@ export default function KimlikElmasi({
   facetler,
   sonFacet,
   asama,
+  isikRengi = "212,175,55",
 }: ElmasProps) {
   const [hareketli, setHareketli] = useState(true);
   const [acik, setAcik] = useState(false);
@@ -62,7 +65,7 @@ export default function KimlikElmasi({
             aria-hidden
             className="pointer-events-none absolute left-1/2 top-1/2 h-52 w-52 -translate-x-1/2 -translate-y-1/2 rounded-full blur-2xl"
             style={{
-              background: `radial-gradient(circle, rgba(212,175,55,${0.08 + parlaklik * 0.26}) 0%, rgba(212,175,55,0) 64%)`,
+              background: `radial-gradient(circle, rgba(${isikRengi},${0.08 + parlaklik * 0.26}) 0%, rgba(${isikRengi},0) 64%)`,
             }}
           />
           {/* kendi ekseninde dönen kusursuz loop video; siyah-ez + screen blend
