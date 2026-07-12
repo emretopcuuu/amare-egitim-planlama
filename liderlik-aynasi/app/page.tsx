@@ -39,6 +39,8 @@ import YeniGorevButonu from "@/components/YeniGorevButonu";
 import KimlikElmasi from "@/components/elmas/KimlikElmasi";
 import { kimlikElmasiVerisi } from "@/lib/elmas";
 import { elmasRengiGetir, marketAcikMi } from "@/lib/market";
+import { sandikDurumu, sandikAcikMi } from "@/lib/sandik";
+import SandikKarti from "./SandikKarti";
 import { okunmamisMesaj } from "@/lib/icMesaj";
 
 const t = tr.anaSayfa;
@@ -181,6 +183,12 @@ export default async function AnaSayfa({
   const [elmasRengi, marketAcik] = kisi.camp_unlocked_at
     ? await Promise.all([elmasRengiGetir(db, session.sub), marketAcikMi(db)])
     : [null, false];
+
+  // G2 — gizemli sandık: açıksa bekleyen sandık hakkı sayısı.
+  const sandikBekleyen =
+    kisi.camp_unlocked_at && (await sandikAcikMi(db))
+      ? (await sandikDurumu(db, session.sub)).bekleyen
+      : 0;
 
   // Menü rozetleri: okunmamış iç mesaj sayısı + analiz sayısı ("yeni" noktası).
   const [okunmamisMesajSayisi, analizSayisi] = await Promise.all([
@@ -620,6 +628,8 @@ export default async function AnaSayfa({
             asama={elmasVeri.asama}
             isikRengi={elmasRengi ?? undefined}
           />
+          {/* G2 — Gizemli sandık (bekleyen hak varsa) */}
+          <SandikKarti bekleyen={sandikBekleyen} />
           {/* G1 — Market girişi (yalnız market açıkken) */}
           {marketAcik && (
             <Link

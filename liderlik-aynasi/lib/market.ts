@@ -20,15 +20,17 @@ export async function marketAcikMi(db: Db): Promise<boolean> {
   return data?.value === "true";
 }
 
-// KAZANÇ TOPLAMI (rank-only) — mevcut kimlik toplamıyla aynı: scored görev
-// kıvılcımı + rozet kıvılcımı. Harcama bunu ASLA düşürmez.
+// KAZANÇ TOPLAMI (rank-only) — scored görev kıvılcımı + rozet kıvılcımı +
+// (G2) sandık kıvılcımı. Hepsi AKTİVİTEyle kazanılır; harcama bunu ASLA düşürmez.
 export async function kazancToplami(db: Db, pid: string): Promise<number> {
-  const [{ data: gorevler }, rozet] = await Promise.all([
+  const [{ data: gorevler }, rozet, { data: sandik }] = await Promise.all([
     db.from("missions").select("spark_points").eq("participant_id", pid).eq("status", "scored"),
     rozetKivilcimi(db, pid).catch(() => 0),
+    db.from("sandik_gecmisi").select("deger").eq("participant_id", pid),
   ]);
   const gorevKiv = (gorevler ?? []).reduce((t, g) => t + (g.spark_points ?? 0), 0);
-  return gorevKiv + (rozet ?? 0);
+  const sandikKiv = (sandik ?? []).reduce((t, r) => t + (r.deger ?? 0), 0);
+  return gorevKiv + (rozet ?? 0) + sandikKiv;
 }
 
 async function harcamaToplami(db: Db, pid: string): Promise<number> {

@@ -49,6 +49,7 @@ const GRUPLAR: { ad: string; ikon: string; linkler: NavLink[] }[] = [
       { href: "/admin/mesajlar", etiket: n.mesajlar },
       { href: "/admin/canli-ayna", etiket: n.canliAyna },
       { href: "/admin/market", etiket: n.market },
+      { href: "/admin/oyunlastirma", etiket: n.oyunlastirma },
       { href: "/admin/saglik", etiket: n.saglik },
       { href: "/admin/mentorluk", etiket: n.mentorluk },
     ],
