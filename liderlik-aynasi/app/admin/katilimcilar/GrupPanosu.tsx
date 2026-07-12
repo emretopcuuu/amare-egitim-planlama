@@ -28,7 +28,7 @@ function MiniAvatar({ ad, url }: { ad: string; url?: string | null }) {
 const GRUP_KAPASITE = 10;
 
 export type PanoUye = { id: string; ad: string; grup: number | null };
-export type PanoKombo = { etiket: string; gruplar: number[] };
+export type PanoKombo = { anahtar: string; etiket: string; gruplar: number[]; kapali: boolean };
 
 export default function GrupPanosu({
   uyeler: propUyeler,
@@ -47,9 +47,43 @@ export default function GrupPanosu({
   const [mesgul, setMesgul] = useState(false);
   const [mesaj, setMesaj] = useState<string | null>(null);
   const [hata, setHata] = useState<string | null>(null);
+  const [kapaliDurum, setKapaliDurum] = useState<Record<string, boolean>>(
+    Object.fromEntries(kombolar.map((k) => [k.anahtar, k.kapali]))
+  );
+  const [kapatiliyor, setKapatiliyor] = useState<string | null>(null);
 
   // Sunucu yeniden hesaplayınca (router.refresh) yerel durumu DB gerçeğiyle eşle.
   useEffect(() => setUyeler(propUyeler), [propUyeler]);
+  useEffect(
+    () => setKapaliDurum(Object.fromEntries(kombolar.map((k) => [k.anahtar, k.kapali]))),
+    [kombolar]
+  );
+
+  async function kombinasyonDegistir(anahtar: string, kapali: boolean) {
+    setKapatiliyor(anahtar);
+    setHata(null);
+    // İyimser güncelle.
+    setKapaliDurum((d) => ({ ...d, [anahtar]: kapali }));
+    try {
+      const res = await fetch("/api/admin/oyun-kombinasyon", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ anahtar, kapali }),
+      });
+      if (!res.ok) {
+        setKapaliDurum((d) => ({ ...d, [anahtar]: !kapali })); // geri al
+        setHata("Değiştirilemedi, tekrar dene.");
+        return;
+      }
+      setMesaj(kapali ? "🔒 İkili kapatıldı — yeni seçim yönlendirilecek." : "🔓 İkili yeniden açıldı.");
+      router.refresh();
+    } catch {
+      setKapaliDurum((d) => ({ ...d, [anahtar]: !kapali }));
+      setHata("Değiştirilemedi, tekrar dene.");
+    } finally {
+      setKapatiliyor(null);
+    }
+  }
 
   const grupUyeleri = useMemo(() => {
     const m = new Map<number | "yok", PanoUye[]>();
@@ -228,13 +262,39 @@ export default function GrupPanosu({
       {/* Oyun ikilisine göre gruplar */}
       {kombolar.map((k) => {
         const dolu = k.gruplar.reduce((t, g) => t + (grupUyeleri.get(g)?.length ?? 0), 0);
+        const hedef = k.gruplar.length * GRUP_KAPASITE;
+        const tasan = dolu > hedef;
+        const kombiKapali = kapaliDurum[k.anahtar] ?? k.kapali;
         return (
-          <div key={k.etiket} className="rounded-xl bg-midnight-soft/50 p-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-slate-100">🎳 {k.etiket}</p>
-              <span className="shrink-0 font-mono text-xs font-bold text-slate-400">
-                {dolu}/{k.gruplar.length * GRUP_KAPASITE}
-              </span>
+          <div
+            key={k.etiket}
+            className={`rounded-xl p-3 ${kombiKapali ? "bg-red-500/[0.06] ring-1 ring-red-500/25" : "bg-midnight-soft/50"}`}
+          >
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <p className="text-sm font-semibold text-slate-100">
+                🎳 {k.etiket}
+                {kombiKapali && (
+                  <span className="ml-2 rounded-full bg-red-500/20 px-2 py-0.5 text-[0.65rem] font-bold uppercase text-red-300">
+                    kapalı
+                  </span>
+                )}
+              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className={`font-mono text-xs font-bold ${tasan ? "text-red-300" : "text-slate-400"}`}>
+                  {dolu}/{hedef}
+                </span>
+                <button
+                  onClick={() => kombinasyonDegistir(k.anahtar, !kombiKapali)}
+                  disabled={kapatiliyor === k.anahtar}
+                  className={`rounded-lg px-2.5 py-1 text-[0.65rem] font-bold transition-colors disabled:opacity-40 ${
+                    kombiKapali
+                      ? "border border-emerald-400/40 text-emerald-300 hover:bg-emerald-400/10"
+                      : "border border-red-400/40 text-red-300 hover:bg-red-400/10"
+                  }`}
+                >
+                  {kapatiliyor === k.anahtar ? "…" : kombiKapali ? "🔓 Aç" : "🔒 Kapat"}
+                </button>
+              </div>
             </div>
             <div className="flex flex-wrap gap-2">
               {k.gruplar.map((g) => (

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { grupNoCozumle, grupSecmeliOyunlari, grupAdi, OYUN_BILGI } from "@/lib/cumartesiProgrami";
+import { kapaliKombolar } from "@/lib/oyunKapasite";
 import OyunSecici from "./OyunSecici";
 import KurulumGecidi from "@/components/KurulumGecidi";
 import OnboardingRayi from "@/components/OnboardingRayi";
@@ -58,6 +59,8 @@ export default async function OyunSecimiSayfa() {
     );
   }
 
+  const kapali = await kapaliKombolar(db);
+
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       <div className="mx-auto w-full max-w-md pt-[calc(env(safe-area-inset-top,0px)+3.5rem+0.5rem)]">
@@ -66,7 +69,7 @@ export default async function OyunSecimiSayfa() {
       <div className="mx-auto my-auto w-full max-w-md p-5">
         {/* Oyun seçiminden ÖNCE: telefona kurulum geçidi (atlanabilir). */}
         <KurulumGecidi>
-          <OyunSecici />
+          <OyunSecici kapaliKombolar={kapali} />
         </KurulumGecidi>
       </div>
     </main>
