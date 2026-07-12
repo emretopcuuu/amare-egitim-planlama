@@ -30,6 +30,9 @@ import {
   ILETISIM,
   ILKELER,
   INSTAGRAM_URL,
+  RAKAMLAR,
+  SOZLER,
+  VAAT,
   WHATSAPP_URL,
   YOLCULUK,
 } from "@/lib/icerik";
@@ -142,10 +145,13 @@ function Nav() {
           ))}
         </nav>
         <a
-          href={`mailto:${EPOSTA}`}
-          className="rounded-full border border-altin/40 px-4 py-1.5 text-sm text-altin transition-colors hover:bg-altin hover:text-abanoz active:scale-[0.98]"
+          href={WHATSAPP_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-full border border-altin/40 px-4 py-1.5 text-sm text-altin transition-colors hover:bg-altin hover:text-abanoz active:scale-[0.98]"
         >
-          Bana yaz
+          <WhatsappLogo size={15} weight="fill" />
+          Benimle çalış
         </a>
       </div>
     </header>
@@ -613,6 +619,125 @@ function Ayna() {
   );
 }
 
+/* Kanıt: büyük sayan rakamlar. Arkadaki ağ görünür kalsın diye yarı saydam. */
+function Rakamlar() {
+  return (
+    <section className="scroll-mt-24 py-24 md:py-32">
+      <div className="mx-auto max-w-6xl px-6">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="mb-14 max-w-[30ch] text-2xl leading-snug font-medium tracking-tight text-fildisi md:text-4xl"
+        >
+          Rakamlar konuşur, gerisi teferruat.
+        </motion.p>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-14 md:grid-cols-4">
+          {RAKAMLAR.map((r, i) => (
+            <motion.div
+              key={r.etiket}
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.6 }}
+              transition={{ duration: 0.7, delay: i * 0.1, ease: GECIS }}
+            >
+              <p
+                className="text-5xl font-semibold tracking-tighter text-altin md:text-7xl"
+                style={{ textShadow: "0 2px 24px rgba(11,10,9,0.95)" }}
+              >
+                {r.deger}
+                <span className="text-2xl text-altin/70 md:text-3xl">
+                  {r.ek}
+                </span>
+              </p>
+              <p
+                className="mt-3 text-sm leading-snug text-fildisi/70 md:text-base"
+                style={{ textShadow: "0 1px 12px rgba(11,10,9,0.95)" }}
+              >
+                {r.etiket}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* Felsefe: kendi sözleri, dev puntolarla scroll ile sırayla belirir. */
+function Sozler() {
+  return (
+    <section className="py-24 md:py-40">
+      <div className="mx-auto max-w-5xl px-6">
+        <div className="space-y-16 md:space-y-28">
+          {SOZLER.map((soz, i) => (
+            <motion.blockquote
+              key={soz}
+              initial={{ opacity: 0, y: 40 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.7 }}
+              transition={{ duration: 0.8, ease: GECIS }}
+              className={`max-w-[20ch] text-3xl leading-[1.15] font-semibold tracking-tight md:text-6xl ${
+                i % 2 === 1 ? "ml-auto text-right" : ""
+              }`}
+            >
+              <span className="text-altin/40">“</span>
+              {soz}
+              <span className="text-altin/40">”</span>
+            </motion.blockquote>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* Benimle çalışmak: 3 vaat. */
+function Vaat() {
+  return (
+    <section id="calis" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
+      <div className="mx-auto max-w-6xl px-6">
+        <motion.h2
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: GECIS }}
+          className="max-w-[16ch] text-3xl font-semibold tracking-tight md:text-5xl"
+        >
+          {VAAT.baslik}
+        </motion.h2>
+        <div className="mt-14 grid gap-6 md:grid-cols-3">
+          {VAAT.maddeler.map((m, i) => (
+            <motion.div
+              key={m.baslik}
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.7, delay: i * 0.1, ease: GECIS }}
+              className="group relative overflow-hidden rounded-2xl border border-white/10 bg-abanoz-2 p-8 transition-colors hover:border-altin/40"
+            >
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -top-16 -right-16 h-40 w-40 rounded-full bg-altin/10 blur-2xl transition-opacity duration-500 group-hover:opacity-100 md:opacity-0"
+              />
+              <p className="relative text-4xl font-semibold tracking-tighter text-altin/30">
+                0{i + 1}
+              </p>
+              <h3 className="relative mt-5 text-xl font-semibold tracking-tight text-fildisi md:text-2xl">
+                {m.baslik}
+              </h3>
+              <p className="relative mt-3 leading-relaxed text-duman">
+                {m.aciklama}
+              </p>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Ilkeler() {
   return (
     <section className="bg-abanoz py-24 md:py-32">
@@ -652,8 +777,17 @@ function Ilkeler() {
 
 function Iletisim() {
   return (
-    <section id="iletisim" className="scroll-mt-24 py-28 md:py-40">
-      <div className="mx-auto max-w-4xl px-6 text-center">
+    <section id="iletisim" className="relative scroll-mt-24 py-28 md:py-40">
+      {/* metnin okunması için ağın üstünde yumuşak karartma */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute top-1/2 left-1/2 h-[520px] w-[820px] max-w-[95vw] -translate-x-1/2 -translate-y-1/2"
+        style={{
+          background:
+            "radial-gradient(ellipse at center, rgba(11,10,9,0.9) 0%, rgba(11,10,9,0.7) 45%, transparent 72%)",
+        }}
+      />
+      <div className="relative mx-auto max-w-4xl px-6 text-center">
         <motion.h2
           initial={{ opacity: 0, y: 32 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -665,25 +799,36 @@ function Iletisim() {
           <br />
           <span className="text-altin">{ILETISIM.baslikSatir2}</span>
         </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, delay: 0.1, ease: GECIS }}
+          className="mx-auto mt-8 max-w-[48ch] text-lg leading-relaxed text-duman"
+        >
+          {ILETISIM.altMetin}
+        </motion.p>
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.7, delay: 0.12, ease: GECIS }}
+          transition={{ duration: 0.7, delay: 0.2, ease: GECIS }}
           className="mt-12 flex flex-wrap items-center justify-center gap-4"
         >
           <Manyetik>
             <a
-              href={`mailto:${EPOSTA}`}
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full bg-altin px-8 py-4 text-lg font-medium text-abanoz transition-transform active:scale-[0.98]"
             >
-              <EnvelopeSimple size={20} weight="bold" />
-              Bana yaz
+              <WhatsappLogo size={20} weight="fill" />
+              Benimle çalış
             </a>
           </Manyetik>
           <Manyetik>
             <a
-              href="https://instagram.com/emretopcu_official"
+              href={INSTAGRAM_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full border border-white/15 px-8 py-4 text-lg text-fildisi transition-colors hover:border-white/40 active:scale-[0.98]"
@@ -731,9 +876,12 @@ export default function Zirve() {
       <main>
         <Hero />
         <Manifesto />
+        <Rakamlar />
         <Yolculuk />
+        <Sozler />
         <Egitimler />
         <Ayna />
+        <Vaat />
         <Ilkeler />
         <Iletisim />
       </main>
