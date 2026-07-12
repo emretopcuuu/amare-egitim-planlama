@@ -1644,6 +1644,45 @@ export type Database = {
           },
         ]
       }
+      market_islem: {
+        Row: {
+          created_at: string
+          fiziksel: boolean
+          id: string
+          participant_id: string
+          reyon: string
+          teslim_at: string | null
+          teslim_durumu: string | null
+          tutar: number
+          urun_kod: string
+          varyant: string | null
+        }
+        Insert: {
+          created_at?: string
+          fiziksel?: boolean
+          id?: string
+          participant_id: string
+          reyon: string
+          teslim_at?: string | null
+          teslim_durumu?: string | null
+          tutar: number
+          urun_kod: string
+          varyant?: string | null
+        }
+        Update: {
+          created_at?: string
+          fiziksel?: boolean
+          id?: string
+          participant_id?: string
+          reyon?: string
+          teslim_at?: string | null
+          teslim_durumu?: string | null
+          tutar?: number
+          urun_kod?: string
+          varyant?: string | null
+        }
+        Relationships: []
+      }
       missions: {
         Row: {
           ai_comment: string | null
