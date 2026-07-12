@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 const BAYRAKLAR: { key: string; ad: string; aciklama: string }[] = [
   { key: "market_acik", ad: "🏪 Kıvılcım Marketi", aciklama: "Katılımcılar kıvılcım cüzdanını harcayabilir (5 reyon)." },
   { key: "sandik_acik", ad: "🎁 Gizemli Sandık", aciklama: "Her 3 puanlanan görevde bir sandık hakkı doğar." },
+  { key: "rekorlar_acik", ad: "🏆 Rekorlar", aciklama: "12 kategoride kişisel + kamp rekorları; kırılınca herkese push." },
 ];
 
 export default async function OyunlastirmaPage() {

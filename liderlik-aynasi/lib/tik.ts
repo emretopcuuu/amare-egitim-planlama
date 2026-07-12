@@ -72,6 +72,7 @@ import { karsilasmaBul } from "@/lib/karsilasma";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
 import { radyoTik } from "@/lib/kampRadyosu";
+import { rekorTara, rekorlarAcikMi } from "@/lib/rekorlar";
 import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
 import { sablonBul, ilkAd } from "@/lib/whatsappSablonlari";
 import { gunlukSoz } from "@/lib/ozluSozler";
@@ -1890,6 +1891,10 @@ export async function tikCalistir(
   // Faz 4 — KAMP RADYOSU: sabah 07:30 + akşam 21:30 (üretim ~20 dk önce başlar).
   // Kendi hatasını yutar, tik'i asla düşürmez; kill switch radyoyu da kapatır.
   if (mod === "kamp") await radyoTik(db, gun, gunDk, bugun);
+
+  // G3 — REKORLAR taraması: kamp modunda, bayrak açıkken mevcut verilerden
+  // rekorları hesaplar, kırılanı herkese duyurur. Kendi hatasını yutar.
+  if (mod === "kamp" && (await rekorlarAcikMi(db))) await rekorTara(db);
 
   if (mod === "kamp" && (saat === 13 || saat === 20) && !sahneSessiz) {
     const dilim = saat === 13 ? "ogle" : "aksam";
