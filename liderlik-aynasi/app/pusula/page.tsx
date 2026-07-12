@@ -1,5 +1,6 @@
 import Link from "next/link";
 import AynaYuzu from "@/components/AynaYuzu";
+import SesCal from "@/components/SesCal";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -185,6 +186,19 @@ export default async function PusulaSayfa() {
           </p>
           <p className="mt-4 text-sm font-semibold text-gold-light">{t.muhurHeroNot}</p>
           {kampTarihi && <GeriSayim hedefZaman={kampTarihi} etiket={t.kampaKalan} />}
+        </div>
+
+        {/* UX paketi #1 — AYNA'nın sesiyle tanışma: kampta karşılayacak ses,
+            beklerken duyulur (statik mp3 — public/ayna/tanis.mp3, Roman sesi) */}
+        <div className="rounded-2xl border border-royal/25 bg-midnight-card/40 p-4">
+          <div className="flex items-center gap-3">
+            <AynaYuzu durum="konusuyor" boyut={44} sinif="shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-slate-200">{tr.aynaTanis.baslik}</p>
+              <p className="mt-0.5 text-xs text-slate-500">{tr.aynaTanis.metin}</p>
+            </div>
+          </div>
+          <SesCal url="/ayna/tanis.mp3" etiket={tr.aynaTanis.dinle} />
         </div>
 
         {/* AYNA'NIN İLK ANALİZİ — checklist'in tepesinde, kendi sesiyle okunan ilk ayna */}

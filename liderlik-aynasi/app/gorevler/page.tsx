@@ -93,8 +93,9 @@ import SesliMektup from "./SesliMektup";
 import GovdeAcilis from "./GovdeAcilis";
 import KisiKarti from "@/components/KisiKarti";
 import { sesliMektupGoreviMi } from "@/lib/sesliMektup";
-import { sonYayinGetir } from "@/lib/kampRadyosu";
+import { yayinArsiviGetir } from "@/lib/kampRadyosu";
 import RadyoCanli from "@/components/RadyoCanli";
+import GorevAynaIpucu from "@/components/GorevAynaIpucu";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -367,9 +368,10 @@ export default async function GorevlerPage() {
   for (const ch of `${session.sub}:${bugunGorev}`) ipucuTohum = (ipucuTohum * 31 + ch.charCodeAt(0)) % ipucuHavuzu.length;
   const fragmanIpucu = ipucuHavuzu[ipucuTohum];
 
-  // Faz 4 — Kamp Radyosu: bugünün son yayını (varsa çalma kartı gösterilir).
-  const bugunTarih = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
-  const radyo = await sonYayinGetir(db, bugunTarih);
+  // Faz 4 + UX #10 — Kamp Radyosu: son yayın (ana kart) + önceki yayınlar arşivi.
+  const yayinlar = await yayinArsiviGetir(db, 3);
+  const radyo = yayinlar[0] ?? null;
+  const radyoArsiv = yayinlar.slice(1);
 
   // Faz 2 — AYNA ilişki durumu: son görev yanıtından deterministik türetilir.
   // Küs moddayken boş ekranda küs poz + soğuk (ama oyunlu) laf havuzu konuşur.
@@ -451,9 +453,12 @@ export default async function GorevlerPage() {
             <p className="inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-bold tracking-wide text-gold-light">
               {tr.degerlendir.simdiSira}
             </p>
-            {/* Faz 1 — görevi anlatan AYNA: ana kartın köşesinde karakter.
-                Altın görevde etkilenmiş poz (nadir an, ışıltı hak ediyor). */}
-            <AynaYuzu durum={altinMi ? "etkilenmis" : "konusuyor"} boyut={44} sinif="-mt-1 shrink-0" />
+            {/* Faz 1 + UX #9 — köşedeki AYNA artık işlevsel: dokununca görevin
+                ilk ipucunu söyler. Altın görevde etkilenmiş poz. */}
+            <GorevAynaIpucu
+              durum={altinMi ? "etkilenmis" : "konusuyor"}
+              ipucu={Array.isArray(g.ipuclari) ? (g.ipuclari as string[])[0] : null}
+            />
           </div>
         )}
         <div className="flex items-center justify-between text-xs">
@@ -680,7 +685,12 @@ export default async function GorevlerPage() {
         <section className="kart-cam rounded-2xl p-4">
           {/* Görsel paket #10 — ses çalarken maskot konuşma loop'una geçer */}
           <RadyoCanli slot={radyo.slot} sesUrl={radyo.sesUrl} />
-          <details className="mt-2">
+          {/* UX #5 — transkript önizlemesi: sessiz ortamdaki kişi ilk cümleyi
+              her zaman görür; tamamı açılır bölümde. */}
+          <p className="mt-2 text-sm italic leading-relaxed text-slate-400">
+            “{(radyo.metin.match(/^[^.!?]*[.!?]/)?.[0] ?? radyo.metin.slice(0, 90)).trim()}”
+          </p>
+          <details className="mt-1">
             <summary className="cursor-pointer text-xs font-medium text-slate-500">
               {t.radyoMetin}
             </summary>
@@ -688,6 +698,30 @@ export default async function GorevlerPage() {
               {radyo.metin}
             </p>
           </details>
+          {/* UX #10 — önceki yayınlar: sabahı kaçıran akşam dinleyebilsin */}
+          {radyoArsiv.length > 0 && (
+            <details className="mt-2 border-t border-white/10 pt-2">
+              <summary className="cursor-pointer text-xs font-medium text-slate-500">
+                {t.radyoOnceki} ({radyoArsiv.length})
+              </summary>
+              <div className="mt-2 space-y-3">
+                {radyoArsiv.map((y) => (
+                  <div key={y.id} className="rounded-xl bg-black/20 p-3">
+                    <p className="text-xs font-semibold text-slate-400">
+                      {y.slot === "sabah" ? t.radyoSabah : t.radyoAksam} ·{" "}
+                      {new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long" }).format(
+                        new Date(`${y.tarih}T12:00:00+03:00`)
+                      )}
+                    </p>
+                    {y.sesUrl && <SesCal url={y.sesUrl} etiket={t.radyoDinle} />}
+                    <p className="mt-1.5 whitespace-pre-line text-xs leading-relaxed text-slate-400">
+                      {y.metin}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
         </section>
       )}
 
