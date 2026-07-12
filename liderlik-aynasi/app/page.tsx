@@ -44,6 +44,8 @@ import { rekorlarAcikMi } from "@/lib/rekorlar";
 import { ciftSeriDurum, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
 import { fisiltiAcikMi, bekleyenFisiltiSayisi } from "@/lib/fisilti";
 import { hamleAcikMi, bekleyenHamleSayisi } from "@/lib/hamle";
+import { radyoKitlikAcikMi } from "@/lib/kampRadyosu";
+import RadyoKitlik from "./RadyoKitlik";
 import SandikKarti from "./SandikKarti";
 import CiftAlevi from "./CiftAlevi";
 import { okunmamisMesaj } from "@/lib/icMesaj";
@@ -208,6 +210,9 @@ export default async function AnaSayfa({
   // G6 — hamle sırası: açıksa cevap bekleyen hamle sayısı.
   const hamleAcik = kisi.camp_unlocked_at ? await hamleAcikMi(db) : false;
   const bekleyenHamle = hamleAcik ? await bekleyenHamleSayisi(db, session.sub) : 0;
+
+  // G7 — radyo kıtlığı: bayrak açıksa canlı yayın kartını (poll) mount et.
+  const radyoKitlikAcik = kisi.camp_unlocked_at ? await radyoKitlikAcikMi(db) : false;
 
   // Menü rozetleri: okunmamış iç mesaj sayısı + analiz sayısı ("yeni" noktası).
   const [okunmamisMesajSayisi, analizSayisi] = await Promise.all([
@@ -647,6 +652,8 @@ export default async function AnaSayfa({
             asama={elmasVeri.asama}
             isikRengi={elmasRengi ?? undefined}
           />
+          {/* G7 — Canlı radyo kıtlık kartı (5 dk, sonra kaybolur) */}
+          {radyoKitlikAcik && <RadyoKitlik />}
           {/* G2 — Gizemli sandık (bekleyen hak varsa) */}
           <SandikKarti bekleyen={sandikBekleyen} />
           {/* G4 — Çift serisi ortak alevi */}
