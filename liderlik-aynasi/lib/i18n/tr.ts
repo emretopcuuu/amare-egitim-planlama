@@ -1153,6 +1153,10 @@ export const tr = {
     ozetEksik: "Eksik",
     ozetDuzelt: "Düzelt",
     ozetYap: "Yap",
+    // Mühür ekranı — fotoğraf değiştirme açıklaması (kişi "kilitlendi mi?"
+    // diye tereddüt etmesin diye net anlatım; bkz. CanliAynaOzetSatiri).
+    fotoDegistirAciklama:
+      "Fotoğrafını istediğin zaman değiştirebilirsin — kilitli değil. Aşağıdan 3 açıyı (düz, sağ, sol) yeniden çek; yeni fotoğraf hem avatarını hem AYNA'nın video referansını günceller.",
   },
   // AYNA'NIN ANALİZLERİ — kişiye dair, zaman içinde biriken, kendi sesiyle okunan
   // derin analiz (dönen ayna + Star Wars akışı).
