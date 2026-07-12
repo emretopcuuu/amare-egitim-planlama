@@ -1683,6 +1683,36 @@ export type Database = {
         }
         Relationships: []
       }
+      cift_serisi: {
+        Row: {
+          arkadasi_id: string
+          gun_sayisi: number
+          id: string
+          kul: boolean
+          kul_gun_sayac: number
+          son_besleme: string | null
+          updated_at: string
+        }
+        Insert: {
+          arkadasi_id: string
+          gun_sayisi?: number
+          id?: string
+          kul?: boolean
+          kul_gun_sayac?: number
+          son_besleme?: string | null
+          updated_at?: string
+        }
+        Update: {
+          arkadasi_id?: string
+          gun_sayisi?: number
+          id?: string
+          kul?: boolean
+          kul_gun_sayac?: number
+          son_besleme?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rekorlar: {
         Row: {
           deger: number
