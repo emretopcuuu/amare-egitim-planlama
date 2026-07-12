@@ -18,6 +18,7 @@ import {
   ArrowUpRight,
   EnvelopeSimple,
   InstagramLogo,
+  PlayCircle,
   WhatsappLogo,
 } from "@phosphor-icons/react";
 import {
@@ -32,8 +33,11 @@ import {
   DEYINCE_SOZLER,
   ILKELER,
   INSTAGRAM_URL,
+  KONUSMALAR,
+  LIDER_PROFIL_URL,
   RAKAMLAR,
   SOZLER,
+  TRIBUTE_VIDEO_ID,
   VAAT,
   WHATSAPP_URL,
   YOLCULUK,
@@ -777,6 +781,107 @@ function Ilkeler() {
   );
 }
 
+/* YouTube facade: tıklanana kadar sadece kapak görseli (gerçek yüz) + oynat
+   düğmesi yüklenir; tıklayınca iframe gelir. Performans + gerçek yüz kapağı. */
+function VideoKapak({ id }: { id: string }) {
+  const [oynat, setOynat] = useState(false);
+  return (
+    <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 bg-abanoz-2">
+      {oynat ? (
+        <iframe
+          className="absolute inset-0 h-full w-full"
+          src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
+          title="Emre Topçu"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      ) : (
+        <button
+          type="button"
+          onClick={() => setOynat(true)}
+          className="group absolute inset-0 h-full w-full cursor-pointer"
+          aria-label="Videoyu oynat"
+        >
+          <img
+            src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`}
+            alt="Emre Topçu — tanıyanların gözünden"
+            className="absolute inset-0 h-full w-full object-cover opacity-80 transition-opacity group-hover:opacity-100"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-abanoz/70 to-transparent" />
+          <span className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-3 rounded-full bg-altin/90 px-6 py-3 font-medium text-abanoz backdrop-blur transition-transform group-hover:scale-105">
+            <PlayCircle size={24} weight="fill" />
+            İzle
+          </span>
+        </button>
+      )}
+    </div>
+  );
+}
+
+/* Öne çıkan konuşmalar — imza keynote'lar. */
+function Konusmalar() {
+  return (
+    <section id="konusmalar" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
+      <div className="mx-auto max-w-6xl px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: GECIS }}
+          className="flex flex-wrap items-end justify-between gap-6"
+        >
+          <div>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
+              Öne çıkan konuşmalar
+            </h2>
+            <p className="mt-4 max-w-[52ch] text-duman">
+              Yıllardır sahnede anlattığım, ekibimin defalarca dinlediği imza
+              konuşmalar.
+            </p>
+          </div>
+          <Manyetik>
+            <a
+              href={LIDER_PROFIL_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-full border border-altin/40 px-5 py-2.5 text-sm font-medium text-altin transition-colors hover:bg-altin hover:text-abanoz"
+            >
+              Tüm konuşmalar
+              <ArrowUpRight size={16} weight="bold" />
+            </a>
+          </Manyetik>
+        </motion.div>
+        <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {KONUSMALAR.map((k, i) => (
+            <motion.article
+              key={k.baslik}
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: GECIS }}
+              className={`group flex min-h-[220px] flex-col justify-between rounded-2xl border border-white/10 p-7 transition-colors hover:border-altin/40 ${
+                i === 0
+                  ? "bg-gradient-to-br from-altin/15 to-abanoz-2 md:col-span-2 lg:col-span-1"
+                  : "bg-abanoz-2"
+              }`}
+            >
+              <p className="text-4xl font-semibold tracking-tighter text-altin/30">
+                0{i + 1}
+              </p>
+              <div>
+                <h3 className="text-2xl font-semibold tracking-tight text-fildisi">
+                  {k.baslik}
+                </h3>
+                <p className="mt-3 leading-relaxed text-duman">{k.ozet}</p>
+              </div>
+            </motion.article>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* "Emre Topçu deyince..." — tribute videosundaki gerçek, kolektif ifadeler.
    Öne çıkan sözler + tekrar eden kelimelerden oluşan otantik sosyal kanıt. */
 function Deyince() {
@@ -804,6 +909,21 @@ function Deyince() {
           Aşağıdakiler bizim iddiamız değil; onu tanıyanların kendi
           cümleleri.
         </motion.p>
+
+        {/* Tribute videosu — gerçek yüzler */}
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.7, delay: 0.1, ease: GECIS }}
+          className="mt-12 grid gap-8 md:grid-cols-[1.4fr_1fr] md:items-center"
+        >
+          <VideoKapak id={TRIBUTE_VIDEO_ID} />
+          <p className="text-lg leading-relaxed text-duman">
+            Bu sözler bir doğum günü için, onu tanıyanlar tarafından çekildi.
+            Rakamların anlatamadığını, bu yüzler anlatıyor.
+          </p>
+        </motion.div>
 
         {/* Öne çıkan sözler */}
         <div className="mt-14 grid gap-6 md:grid-cols-2">
@@ -949,6 +1069,7 @@ export default function Zirve() {
         <Rakamlar />
         <Yolculuk />
         <Sozler />
+        <Konusmalar />
         <Egitimler />
         <Ayna />
         <Vaat />

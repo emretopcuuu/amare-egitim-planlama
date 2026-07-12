@@ -10,6 +10,11 @@ export const WHATSAPP_MESAJ =
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMARA}?text=${encodeURIComponent(
   WHATSAPP_MESAJ,
 )}`;
+// Kendisi için çekilen tribute videosu (gerçek yüzler, gerçek sözler).
+export const TRIBUTE_VIDEO_ID = "WioG82pd_m8";
+// Eğitim arşivindeki lider profili (üyeler tüm konuşmaları burada izler).
+export const LIDER_PROFIL_URL =
+  "https://egitimtakvimi.oneteamglobal.ai/lider/emre_topcu";
 
 export const HERO = {
   isim: "Emre Topçu",
@@ -93,6 +98,30 @@ export const EGITIMLER = [
     yil: "2025",
     baslik: "Eklemeden Katlamaya Geçmek",
     ozet: "Tek tek üye eklemekten, çoğalan liderler yetiştirmeye geçiş.",
+  },
+];
+
+// Öne çıkan konuşmalar — imza keynote'lar (transkriptlerden özleriyle).
+export const KONUSMALAR = [
+  {
+    baslik: "Eklemeden Katlamaya",
+    ozet: "Tek tek üye eklemekten, çoğalan liderler yetiştirmeye geçişin haritası.",
+  },
+  {
+    baslik: "Neden – İnanç – Plan",
+    ozet: "Nedenini keşfeden insanın nasılına ihtiyacı kalmaz. İnancın plana dönüşmesi.",
+  },
+  {
+    baslik: "Başarı Döngüsü",
+    ozet: "Kimse tek başına başarmadı. Takımı büyüten, kendini çoğaltan sistem.",
+  },
+  {
+    baslik: "Cesur Adımlar",
+    ozet: "Kazancına göre yaşamak mı, yaşamak istediğin hayata göre kazanmak mı?",
+  },
+  {
+    baslik: "%100 Başarının Formülü",
+    ozet: "Motivasyon 72 saatte biter; geriye kalan irade, disiplin ve 90 günlük dönüşüm.",
   },
 ];
 
