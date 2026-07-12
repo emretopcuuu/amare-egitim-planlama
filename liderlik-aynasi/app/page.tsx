@@ -43,6 +43,7 @@ import { sandikDurumu, sandikAcikMi } from "@/lib/sandik";
 import { rekorlarAcikMi } from "@/lib/rekorlar";
 import { ciftSeriDurum, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
 import { fisiltiAcikMi, bekleyenFisiltiSayisi } from "@/lib/fisilti";
+import { hamleAcikMi, bekleyenHamleSayisi } from "@/lib/hamle";
 import SandikKarti from "./SandikKarti";
 import CiftAlevi from "./CiftAlevi";
 import { okunmamisMesaj } from "@/lib/icMesaj";
@@ -203,6 +204,10 @@ export default async function AnaSayfa({
   // G5 — fısıltı: açıksa bekleyen fısıltı sayısı (giriş rozeti).
   const fisiltiAcik = kisi.camp_unlocked_at ? await fisiltiAcikMi(db) : false;
   const bekleyenFisilti = fisiltiAcik ? await bekleyenFisiltiSayisi(db, session.sub) : 0;
+
+  // G6 — hamle sırası: açıksa cevap bekleyen hamle sayısı.
+  const hamleAcik = kisi.camp_unlocked_at ? await hamleAcikMi(db) : false;
+  const bekleyenHamle = hamleAcik ? await bekleyenHamleSayisi(db, session.sub) : 0;
 
   // Menü rozetleri: okunmamış iç mesaj sayısı + analiz sayısı ("yeni" noktası).
   const [okunmamisMesajSayisi, analizSayisi] = await Promise.all([
@@ -673,6 +678,15 @@ export default async function AnaSayfa({
                 {bekleyenFisilti > 0 && (
                   <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-bold text-[#1a1206]">{bekleyenFisilti}</span>
                 )}
+              </Link>
+            )}
+            {hamleAcik && bekleyenHamle > 0 && (
+              <Link
+                href="/hamle"
+                className="flex items-center justify-center gap-2 rounded-xl border border-gold/40 bg-gold/[0.08] py-2.5 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/[0.14]"
+              >
+                ♟ Hamle sırası sende
+                <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-bold text-[#1a1206]">{bekleyenHamle}</span>
               </Link>
             )}
           </div>
