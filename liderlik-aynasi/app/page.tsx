@@ -42,6 +42,7 @@ import { elmasRengiGetir, marketAcikMi } from "@/lib/market";
 import { sandikDurumu, sandikAcikMi } from "@/lib/sandik";
 import { rekorlarAcikMi } from "@/lib/rekorlar";
 import { ciftSeriDurum, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
+import { fisiltiAcikMi, bekleyenFisiltiSayisi } from "@/lib/fisilti";
 import SandikKarti from "./SandikKarti";
 import CiftAlevi from "./CiftAlevi";
 import { okunmamisMesaj } from "@/lib/icMesaj";
@@ -198,6 +199,10 @@ export default async function AnaSayfa({
     kisi.camp_unlocked_at && (await ciftSerisiAcikMi(db))
       ? await ciftSeriDurum(db, session.sub)
       : null;
+
+  // G5 — fısıltı: açıksa bekleyen fısıltı sayısı (giriş rozeti).
+  const fisiltiAcik = kisi.camp_unlocked_at ? await fisiltiAcikMi(db) : false;
+  const bekleyenFisilti = fisiltiAcik ? await bekleyenFisiltiSayisi(db, session.sub) : 0;
 
   // Menü rozetleri: okunmamış iç mesaj sayısı + analiz sayısı ("yeni" noktası).
   const [okunmamisMesajSayisi, analizSayisi] = await Promise.all([
@@ -657,6 +662,17 @@ export default async function AnaSayfa({
                 className="flex items-center justify-center gap-2 rounded-xl border border-royal/30 bg-royal/[0.1] py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-royal/20"
               >
                 🏆 Rekorlar
+              </Link>
+            )}
+            {fisiltiAcik && (
+              <Link
+                href="/fisilti"
+                className="flex items-center justify-center gap-2 rounded-xl border border-royal/30 bg-royal/[0.1] py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-royal/20"
+              >
+                🔒 Fısıltı
+                {bekleyenFisilti > 0 && (
+                  <span className="rounded-full bg-gold px-2 py-0.5 text-xs font-bold text-[#1a1206]">{bekleyenFisilti}</span>
+                )}
               </Link>
             )}
           </div>
