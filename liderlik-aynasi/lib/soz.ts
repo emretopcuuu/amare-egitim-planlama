@@ -8,6 +8,7 @@ import { hedefCekirdek } from "@/lib/hedef";
 import { oyunPlaniGetir } from "@/lib/oyunPlani";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { tlFormat } from "@/lib/kariyer";
+import { tohumYanitiGetir } from "@/lib/canliSoru";
 
 // FAZ A — SÖZ v2. Kamp kapanışında: AI keşifler + hedef + neden + plandan bir söz
 // TASLAĞI şekillendirir; kişi düzenleyip onaylar; sonra KENDİ SESİYLE okur/kaydeder.
@@ -23,6 +24,8 @@ Sana JSON verilecek: kişinin çekirdek nedeni, iç engeli, kariyer hedefi, ve K
 - HEDEFİNE dair net bir taahhüt (kariyer hedefi + süre).
 - Kişinin KENDİ planından gelen 2-3 SOMUT aksiyon adımı (sözün içinde doğal cümleler olarak — bunlar onun kararı, "yapacağım" diliyle).
 - İç engelini aşmaya dair tek, güçlü bir cümle (engeli açıkça etiketlemeden).
+
+ÖNEMLİ: Eğer veride "emreninSorusuCevabi" DOLUYSA, bu kişinin kapanış eğitiminde Emre'nin canlı sorusuna KENDİ ağzından verdiği cevaptır — sözün KALBİ bu olmalı. Sözü bu cevabın etrafında, onun kendi kelimelerini onurlandırarak ör; o an hissettiğini geleceğe taşı. Cevabı aynen kopyalama, sözün dokusuna işle.
 
 Kurallar: Türkçe, birinci tekil şahıs, 90-140 kelime. Klişe değil, kişinin kendi rakamları/nedeniyle. Sonunda kişiyi geleceğe bağlayan bir cümle. Ayrıca "aksiyonlar" alanında plandan damıtılmış 3 somut adımı (her biri kısa, ölçülebilir) ufkuyla ('10','40','90') ver.`;
 
@@ -87,15 +90,18 @@ export async function sozSekillendir(db: Db, pid: string, ad: string): Promise<S
   }
   if (!process.env.ANTHROPIC_API_KEY) return { durum: "anahtar-yok" };
 
-  const [rapor, pusula, hedef, plan] = await Promise.all([
+  const [rapor, pusula, hedef, plan, emreCevap] = await Promise.all([
     raporHesapla(db, pid),
     pusulaCekirdek(db, pid),
     hedefCekirdek(db, pid),
     oyunPlaniGetir(db, pid),
+    tohumYanitiGetir(db, pid), // Faz C · öneri 7 — "Emre'nin Sorusu"na verdiği cevap
   ]);
 
   const veri = {
     ad,
+    // Öneri 7: kapanış eğitiminde Emre'nin canlı sorusuna verdiği cevap = sözün kalbi.
+    emreninSorusuCevabi: emreCevap,
     cekirdekNeden: pusula?.cekirdek_neden ?? null,
     icEngel: pusula?.ic_engel ?? null,
     hedef: hedef?.plan
@@ -154,6 +160,45 @@ export async function sozSekillendir(db: Db, pid: string, ad: string): Promise<S
     return { durum: "hazir", metin: cikti.metin, aksiyonlar: cikti.aksiyonlar ?? [] };
   } catch {
     return { durum: "hata" };
+  }
+}
+
+// ---- Faz C · öneri 8 — "BU SÖZÜ VEREBİLİRSİN, ÇÜNKÜ…" ----
+// Söze eklenen GERÇEK kamp kanıt anı: kişinin bu sözü tutabileceğinin delili,
+// çünkü kampta zaten benzerini yaptı. Kodla hesaplanır (uydurma yok); en güçlü
+// kanıt seçilir: fiero (10/10) > en yüksek puanlı görev > verdiği somut sözler.
+export type SozKaniti = { tur: "fiero" | "gorev" | "taahhut"; metin: string };
+
+export async function sozKaniti(db: Db, pid: string): Promise<SozKaniti | null> {
+  try {
+    const { data: gorevler } = await db
+      .from("missions")
+      .select("title, ai_score")
+      .eq("participant_id", pid)
+      .eq("status", "scored")
+      .not("ai_score", "is", null)
+      .order("ai_score", { ascending: false })
+      .limit(1);
+    const enIyi = (gorevler ?? [])[0] as { title: string; ai_score: number } | undefined;
+    if (enIyi && enIyi.ai_score >= 10) {
+      return { tur: "fiero", metin: `Kampta "${enIyi.title}" görevini tam 10/10 ile tamamladın.` };
+    }
+    if (enIyi && enIyi.ai_score >= 6) {
+      return { tur: "gorev", metin: `Kampta "${enIyi.title}" görevini ${enIyi.ai_score}/10 ile başardın.` };
+    }
+    const { count: taahhutSayi } = await db
+      .from("kamp_taahhut")
+      .select("id", { count: "exact", head: true })
+      .eq("participant_id", pid);
+    if ((taahhutSayi ?? 0) > 0) {
+      return { tur: "taahhut", metin: `Kampta ${taahhutSayi} somut söz verdin ve arkasında durdun.` };
+    }
+    if (enIyi) {
+      return { tur: "gorev", metin: `Kampta "${enIyi.title}" görevini tamamladın.` };
+    }
+    return null;
+  } catch {
+    return null;
   }
 }
 

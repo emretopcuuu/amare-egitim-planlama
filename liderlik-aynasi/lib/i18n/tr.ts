@@ -1771,6 +1771,7 @@ export const tr = {
       market: "Market",
       oyunlastirma: "Oyunlaştırma",
       sozler: "Sözler",
+      kapanis: "Kapanış",
       test: "Prova",
       kurulum: "Kurulum",
       analiz: "Analiz",
