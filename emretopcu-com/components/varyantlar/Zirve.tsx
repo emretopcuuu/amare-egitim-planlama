@@ -31,6 +31,7 @@ import {
   ILKELER,
   INSTAGRAM_URL,
   RAKAMLAR,
+  REFERANSLAR,
   SOZLER,
   VAAT,
   WHATSAPP_URL,
@@ -775,6 +776,50 @@ function Ilkeler() {
   );
 }
 
+/* Referanslar — GÜVENLİK: gerçek isim girilmeden (isim === "…") bölüm gizli.
+   Sahte sosyal kanıtın yanlışlıkla yayınlanmasını önler. */
+function Referanslar() {
+  const gecerli = REFERANSLAR.filter((r) => r.isim && r.isim !== "…");
+  if (gecerli.length === 0) return null;
+  return (
+    <section className="bg-abanoz py-24 md:py-32">
+      <div className="mx-auto max-w-6xl px-6">
+        <motion.h2
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: GECIS }}
+          className="max-w-[18ch] text-3xl font-semibold tracking-tight md:text-5xl"
+        >
+          Onlar ne diyor?
+        </motion.h2>
+        <div className="mt-14 grid gap-6 md:grid-cols-3">
+          {gecerli.map((r, i) => (
+            <motion.blockquote
+              key={i}
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.7, delay: i * 0.1, ease: GECIS }}
+              className="flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-abanoz-2 p-8"
+            >
+              <p className="text-lg leading-relaxed text-fildisi/90">
+                <span className="text-altin/50">“</span>
+                {r.soz}
+                <span className="text-altin/50">”</span>
+              </p>
+              <footer className="mt-6 border-t border-white/10 pt-5">
+                <p className="font-semibold text-fildisi">{r.isim}</p>
+                <p className="text-sm text-duman">{r.unvan}</p>
+              </footer>
+            </motion.blockquote>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function Iletisim() {
   return (
     <section id="iletisim" className="relative scroll-mt-24 py-28 md:py-40">
@@ -883,6 +928,7 @@ export default function Zirve() {
         <Ayna />
         <Vaat />
         <Ilkeler />
+        <Referanslar />
         <Iletisim />
       </main>
       <Footer />

@@ -167,6 +167,26 @@ export const VAAT = {
   ],
 };
 
+// TASLAK referanslar — kullanıcı gerçek isim + unvanla onaylayınca canlıya girer.
+// (Sahte sosyal kanıt riskini önlemek için isimler bilerek "…" placeholder.)
+export const REFERANSLAR = [
+  {
+    soz: "Emre'nin en büyük farkı, sahnede anlattığını önce kendi ekibinde yaşamış olması. Onun sistemini uyguladığım gün işim değişti.",
+    isim: "…",
+    unvan: "Ekibinden bir lider",
+  },
+  {
+    soz: "Bana balık vermedi, balık tutmayı öğretti. Bugün kendi ekibimi kuruyorsam, o 'eklemeden katlamaya' dediği içindir.",
+    isim: "…",
+    unvan: "İş ortağı",
+  },
+  {
+    soz: "Motivasyon değil, disiplin ve inanç kazandırdı. Yıllar sonra hâlâ onun çerçevesiyle çalışıyorum.",
+    isim: "…",
+    unvan: "Ekip lideri",
+  },
+];
+
 export const ILETISIM = {
   baslikSatir1: "Bir sonraki adımını",
   baslikSatir2: "birlikte planlayalım.",
