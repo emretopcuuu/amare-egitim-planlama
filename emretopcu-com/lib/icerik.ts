@@ -3,12 +3,13 @@
 export const EPOSTA = "s.emretopcu@gmail.com";
 export const AYNA_URL = "https://ayna.oneteamglobal.ai";
 export const INSTAGRAM_URL = "https://instagram.com/emretopcu_official";
-// WhatsApp numarası kullanıcıdan gelince güncellenecek (uluslararası, + ve 0 yok).
-export const WHATSAPP_NUMARA = "";
-export const WHATSAPP_MESAJ = "Merhaba Emre Bey, siteniz üzerinden ulaşıyorum.";
-export const WHATSAPP_URL = WHATSAPP_NUMARA
-  ? `https://wa.me/${WHATSAPP_NUMARA}?text=${encodeURIComponent(WHATSAPP_MESAJ)}`
-  : INSTAGRAM_URL;
+// Ön görüşme randevusu hattı (Mehmet Akif Topçu). Uluslararası, + ve boşluk yok.
+export const WHATSAPP_NUMARA = "905425090744";
+export const WHATSAPP_MESAJ =
+  "Merhaba, Emre Topçu ile ön görüşme randevusu almak istiyorum.";
+export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMARA}?text=${encodeURIComponent(
+  WHATSAPP_MESAJ,
+)}`;
 
 export const HERO = {
   isim: "Emre Topçu",
@@ -167,29 +168,38 @@ export const VAAT = {
   ],
 };
 
-// TASLAK referanslar — kullanıcı gerçek isim + unvanla onaylayınca canlıya girer.
-// (Sahte sosyal kanıt riskini önlemek için isimler bilerek "…" placeholder.)
-export const REFERANSLAR = [
-  {
-    soz: "Emre'nin en büyük farkı, sahnede anlattığını önce kendi ekibinde yaşamış olması. Onun sistemini uyguladığım gün işim değişti.",
-    isim: "…",
-    unvan: "Ekibinden bir lider",
-  },
-  {
-    soz: "Bana balık vermedi, balık tutmayı öğretti. Bugün kendi ekibimi kuruyorsam, o 'eklemeden katlamaya' dediği içindir.",
-    isim: "…",
-    unvan: "İş ortağı",
-  },
-  {
-    soz: "Motivasyon değil, disiplin ve inanç kazandırdı. Yıllar sonra hâlâ onun çerçevesiyle çalışıyorum.",
-    isim: "…",
-    unvan: "Ekip lideri",
-  },
+// "Emre Topçu deyince..." — kendisi için çekilen tribute videosundaki
+// GERÇEK ifadeler (onlarca kişi, kendi ağzından). İsim atfedilmez; kolektif
+// ve otantik bir sosyal kanıt. Öne çıkan sözler + tekrar eden kelimeler.
+export const DEYINCE_SOZLER = [
+  "Google'a 'adam' yazınca ismi çıkan şahsiyet.",
+  "İstatistiksel olarak yüz binde bir çıkıyorsun.",
+  "Büyük bir topluluğa ne anlatmak istediğini nokta atışı yapan adam.",
+  "İnsanları etkileme ve dost kazanma sanatı.",
+  "Onu kelimelerle tarif etmek mümkün değil.",
+  "Gerçek bir lider.",
+];
+export const DEYINCE_KELIMELER = [
+  "Samimiyet",
+  "Dürüstlük",
+  "Dirayet",
+  "Liderlik",
+  "Adanmışlık",
+  "Çalışkanlık",
+  "Güven",
+  "Adamlık",
+  "Dostluk",
+  "Yardımseverlik",
+  "Mütevazilik",
+  "Özveri",
+  "İnanmışlık",
+  "Doğallık",
+  "Vazgeçmemek",
 ];
 
 export const ILETISIM = {
   baslikSatir1: "Bir sonraki adımını",
   baslikSatir2: "birlikte planlayalım.",
   altMetin:
-    "Herkesle çalışmıyorum. Ama gözündeki inancı gören biriysen, WhatsApp'tan bir mesaj at; gerisini konuşuruz.",
+    "Ön görüşme randevusu için WhatsApp'tan yaz. Bana doğrudan ulaşmak istersen Instagram'dan mesaj at.",
 };

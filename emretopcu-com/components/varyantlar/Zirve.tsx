@@ -28,10 +28,11 @@ import {
   HAKKIMDA,
   HERO,
   ILETISIM,
+  DEYINCE_KELIMELER,
+  DEYINCE_SOZLER,
   ILKELER,
   INSTAGRAM_URL,
   RAKAMLAR,
-  REFERANSLAR,
   SOZLER,
   VAAT,
   WHATSAPP_URL,
@@ -776,11 +777,9 @@ function Ilkeler() {
   );
 }
 
-/* Referanslar — GÜVENLİK: gerçek isim girilmeden (isim === "…") bölüm gizli.
-   Sahte sosyal kanıtın yanlışlıkla yayınlanmasını önler. */
-function Referanslar() {
-  const gecerli = REFERANSLAR.filter((r) => r.isim && r.isim !== "…");
-  if (gecerli.length === 0) return null;
+/* "Emre Topçu deyince..." — tribute videosundaki gerçek, kolektif ifadeler.
+   Öne çıkan sözler + tekrar eden kelimelerden oluşan otantik sosyal kanıt. */
+function Deyince() {
   return (
     <section className="bg-abanoz py-24 md:py-32">
       <div className="mx-auto max-w-6xl px-6">
@@ -789,32 +788,58 @@ function Referanslar() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.5 }}
           transition={{ duration: 0.7, ease: GECIS }}
-          className="max-w-[18ch] text-3xl font-semibold tracking-tight md:text-5xl"
+          className="max-w-[20ch] text-3xl font-semibold tracking-tight md:text-5xl"
         >
-          Onlar ne diyor?
+          &quot;Emre Topçu&quot; deyince
+          <br />
+          <span className="text-altin">akla ne geliyor?</span>
         </motion.h2>
-        <div className="mt-14 grid gap-6 md:grid-cols-3">
-          {gecerli.map((r, i) => (
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: GECIS }}
+          className="mt-4 max-w-[52ch] text-duman"
+        >
+          Aşağıdakiler bizim iddiamız değil; onu tanıyanların kendi
+          cümleleri.
+        </motion.p>
+
+        {/* Öne çıkan sözler */}
+        <div className="mt-14 grid gap-6 md:grid-cols-2">
+          {DEYINCE_SOZLER.map((soz, i) => (
             <motion.blockquote
-              key={i}
-              initial={{ opacity: 0, y: 28 }}
+              key={soz}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.7, delay: i * 0.1, ease: GECIS }}
-              className="flex h-full flex-col justify-between rounded-2xl border border-white/10 bg-abanoz-2 p-8"
+              transition={{ duration: 0.6, delay: (i % 2) * 0.08, ease: GECIS }}
+              className="rounded-2xl border border-white/10 bg-abanoz-2 p-7 text-xl leading-snug font-medium tracking-tight text-fildisi/90 md:text-2xl"
             >
-              <p className="text-lg leading-relaxed text-fildisi/90">
-                <span className="text-altin/50">“</span>
-                {r.soz}
-                <span className="text-altin/50">”</span>
-              </p>
-              <footer className="mt-6 border-t border-white/10 pt-5">
-                <p className="font-semibold text-fildisi">{r.isim}</p>
-                <p className="text-sm text-duman">{r.unvan}</p>
-              </footer>
+              <span className="text-altin/50">“</span>
+              {soz}
+              <span className="text-altin/50">”</span>
             </motion.blockquote>
           ))}
         </div>
+
+        {/* Tekrar eden kelimeler — etiket bulutu */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.3 }}
+          transition={{ duration: 0.7, delay: 0.1, ease: GECIS }}
+          className="mt-10 flex flex-wrap gap-3"
+        >
+          {DEYINCE_KELIMELER.map((k) => (
+            <span
+              key={k}
+              className="rounded-full border border-altin/25 bg-altin/5 px-5 py-2 text-sm font-medium text-altin md:text-base"
+            >
+              {k}
+            </span>
+          ))}
+        </motion.div>
       </div>
     </section>
   );
@@ -928,7 +953,7 @@ export default function Zirve() {
         <Ayna />
         <Vaat />
         <Ilkeler />
-        <Referanslar />
+        <Deyince />
         <Iletisim />
       </main>
       <Footer />
