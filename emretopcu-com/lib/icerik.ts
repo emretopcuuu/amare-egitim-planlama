@@ -2,12 +2,20 @@
 
 export const EPOSTA = "s.emretopcu@gmail.com";
 export const AYNA_URL = "https://ayna.oneteamglobal.ai";
+export const INSTAGRAM_URL = "https://instagram.com/emretopcu_official";
+// WhatsApp numarası kullanıcıdan gelince güncellenecek (uluslararası, + ve 0 yok).
+export const WHATSAPP_NUMARA = "";
+export const WHATSAPP_MESAJ = "Merhaba Emre Bey, siteniz üzerinden ulaşıyorum.";
+export const WHATSAPP_URL = WHATSAPP_NUMARA
+  ? `https://wa.me/${WHATSAPP_NUMARA}?text=${encodeURIComponent(WHATSAPP_MESAJ)}`
+  : INSTAGRAM_URL;
 
 export const HERO = {
-  baslikSatir1: "Liderlik sahnede değil,",
-  baslikSatir2: "aynada başlar.",
+  isim: "Emre Topçu",
+  baslikSatir1: "Ekleme değil,",
+  baslikSatir2: "katlama.",
   altMetin:
-    "One Team Global bünyesinde ekipler kuruyor, liderler yetiştiriyor ve bu işi sistemle yapıyorum.",
+    "Tek tek üye eklemeyi değil, kendi ekibini kuran liderler yetiştirmeyi öğretiyorum. Kimse, ama kimse tek başına başarmadı.",
   konum: "İstanbul, Türkiye",
   rol: "Presidential Diamond | One Team Global",
 };
@@ -101,23 +109,87 @@ export const AYNA = {
 
 export const ILKELER = [
   {
-    baslik: "Önce ayna.",
+    baslik: "Sır, lider üretmektir.",
     aciklama:
-      "Kendine dürüst bakamayan lider, ekibine yön veremez. Gelişim her zaman içeriden başlar.",
+      "Avcı değil, çiftçi ol. Büyüme üye saymak değildir; kendi ekibini kuran liderler yetiştirdiğinde iş katlanır.",
   },
   {
-    baslik: "Sistem kişiyi taşır.",
+    baslik: "Nedenin güçlüyse, nasılın önemi kalmaz.",
     aciklama:
-      "Motivasyon dalgalanır, sistem her gün çalışır. Duyguya değil, kurulu düzene güvenirim.",
+      "Nedenini keşfettiğin insana dağları deldirirsin. Her şey inançla başlar, inançla biter.",
   },
   {
-    baslik: "Eklemeden katlamaya.",
+    baslik: "İnsanlar sözlerini değil, seni takip eder.",
     aciklama:
-      "Büyüme üye saymak değildir. Kendi ekibini kuran liderler yetiştirdiğinde iş katlanır.",
+      "Ne yaparsan yap, kopyalanır. Yapmadığım şeyi anlatmam; önce yaşar, sonra öğretirim.",
+  },
+];
+
+// Felsefe bölümünde akan sözler — hepsi transkriptlerden, kendi ağzından.
+export const SOZLER = [
+  "Kayıt olduğun gün değil, karar verdiğin gün başlarsın.",
+  "Kimse, ama kimse tek başına başarmadı.",
+  "Motivasyon 72 saatte biter; geriye kalan iradedir.",
+  "Bir fırsat, herkes farkındayken fırsat değildir.",
+  "Bir şeyin nasıl çalıştığını biliyorsan, onu yönetebilirsin.",
+  "Seni durduran, yine sensin.",
+  "Daha çok değil, daha akıllı çalış.",
+  "Her gün %1, bir yılda %365.",
+];
+
+// Rakamlar bölümü — kanıt.
+export const RAKAMLAR = [
+  { deger: "7", ek: " ay", etiket: "Diamond'a giden süre" },
+  { deger: "220.000", ek: "", etiket: "Kişilik müşteri ağı" },
+  { deger: "4", ek: " kıta", etiket: "Ulaşılan coğrafya" },
+  { deger: "38", ek: " ülke", etiket: "Gezilen, eğitim verilen" },
+];
+
+// "Benimle çalışmak" — 3 vaat.
+export const VAAT = {
+  baslik: "Benimle çalışmak ne demek?",
+  maddeler: [
+    {
+      baslik: "Kanıtlanmış sistem",
+      aciklama:
+        "Karizmaya değil, herkesin uygulayabildiği net bir düzene güvenirsin. Benim yolumu açan adımların aynısını sana veririm.",
+    },
+    {
+      baslik: "Güçlü ekip kültürü",
+      aciklama:
+        "Kamplar, eğitimler ve Liderlik Aynası gibi araçlarla yaşayan bir topluluğun parçası olursun. Tek başına değil, birlikte büyürüz.",
+    },
+    {
+      baslik: "Global fırsat",
+      aciklama:
+        "4 kıtaya yayılmış bir ağın içinde uluslararası büyüme imkânı bulursun. Sınır, haritada değil; kararında.",
+    },
+  ],
+};
+
+// TASLAK referanslar — kullanıcı gerçek isim + unvanla onaylayınca canlıya girer.
+// (Sahte sosyal kanıt riskini önlemek için isimler bilerek "…" placeholder.)
+export const REFERANSLAR = [
+  {
+    soz: "Emre'nin en büyük farkı, sahnede anlattığını önce kendi ekibinde yaşamış olması. Onun sistemini uyguladığım gün işim değişti.",
+    isim: "…",
+    unvan: "Ekibinden bir lider",
+  },
+  {
+    soz: "Bana balık vermedi, balık tutmayı öğretti. Bugün kendi ekibimi kuruyorsam, o 'eklemeden katlamaya' dediği içindir.",
+    isim: "…",
+    unvan: "İş ortağı",
+  },
+  {
+    soz: "Motivasyon değil, disiplin ve inanç kazandırdı. Yıllar sonra hâlâ onun çerçevesiyle çalışıyorum.",
+    isim: "…",
+    unvan: "Ekip lideri",
   },
 ];
 
 export const ILETISIM = {
   baslikSatir1: "Bir sonraki adımını",
   baslikSatir2: "birlikte planlayalım.",
+  altMetin:
+    "Herkesle çalışmıyorum. Ama gözündeki inancı gören biriysen, WhatsApp'tan bir mesaj at; gerisini konuşuruz.",
 };
