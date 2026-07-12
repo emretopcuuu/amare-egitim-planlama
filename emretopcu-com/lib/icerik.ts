@@ -37,11 +37,17 @@ const TR = {
   hakkimda: {
     unvan: "Presidential Diamond | One Team Global",
     paragraflar: [
-      "2013'ten beri doğrudan satış sahasındayım. Yedi ayda Diamond, üç buçuk yılda Presidential Diamond oldum. Bu yolda en çok inandığım şey şu: kalıcı büyüme karizmayla değil, herkesin uygulayabildiği net bir sistemle olur.",
+      "Doğrudan satışla tanışıklığım 2003'e, üniversite yıllarıma kadar uzanır; bir aloe vera markasının distribütörü olarak katalogla çalışmayı öğrendim. Bugünkü işime Şubat 2013'te başladım: yedi ayda Diamond, üç buçuk yılda Presidential Diamond oldum. Bu yolda en çok inandığım şey şu: kalıcı büyüme karizmayla değil, herkesin uygulayabildiği net bir sistemle olur.",
       "Kocaeli Üniversitesi Uluslararası İlişkiler mezunuyum; yazarım, evli ve iki çocuk babasıyım. 27 yıldır iş hayatının içindeyim, 17 yıldır kendi işlerimi yapıyorum. 38 ülke gezdim; 4 kıtada 220.000 kişilik bir müşteri ağının kurulmasına vesile oldum. Amerika'dan İngiltere'ye birçok ülkede kişisel gelişim eğitimleri verdim; bugün İstanbul'da yaşıyor, iş insanlarına başarı koçluğu yapıyorum.",
     ],
   },
   yolculuk: [
+    {
+      yil: "2003",
+      baslik: "Doğrudan satışla ilk tanışma",
+      aciklama:
+        "Üniversite yıllarında bir aloe vera markasının distribütörlüğünü yaptım. Katalog modelini sevmedim ama bu dünyanın büyük işler çıkarabileceğini o yıllarda gördüm.",
+    },
     {
       yil: "2013",
       baslik: "Yedi ayda Diamond",
@@ -269,11 +275,17 @@ const EN: Icerik = {
   hakkimda: {
     unvan: "Presidential Diamond | One Team Global",
     paragraflar: [
-      "I've been in direct sales since 2013. Diamond in seven months, Presidential Diamond in three and a half years. What I believe most on this path: lasting growth comes not from charisma, but from a clear system anyone can apply.",
+      "My history with direct sales goes back to 2003, my university years, when I distributed an aloe vera brand through a catalog model. I started my current business in February 2013: Diamond in seven months, Presidential Diamond in three and a half years. What I believe most on this path: lasting growth comes not from charisma, but from a clear system anyone can apply.",
       "I'm a graduate of International Relations at Kocaeli University; a writer, married, father of two. I've been in business for 27 years, running my own ventures for 17. I've traveled to 38 countries and helped build a customer network of 220,000 people across 4 continents. I've given personal-development trainings in many countries from the US to the UK; today I live in Istanbul and coach business people toward success.",
     ],
   },
   yolculuk: [
+    {
+      yil: "2003",
+      baslik: "First encounter with direct sales",
+      aciklama:
+        "During university I distributed an aloe vera brand through a catalog model. I didn't love that model, but I saw then what this world could build.",
+    },
     {
       yil: "2013",
       baslik: "Diamond in seven months",
