@@ -18,6 +18,7 @@ import {
   ArrowUpRight,
   EnvelopeSimple,
   InstagramLogo,
+  WhatsappLogo,
 } from "@phosphor-icons/react";
 import {
   AYNA,
@@ -28,6 +29,8 @@ import {
   HERO,
   ILETISIM,
   ILKELER,
+  INSTAGRAM_URL,
+  WHATSAPP_URL,
   YOLCULUK,
 } from "@/lib/icerik";
 
@@ -39,7 +42,7 @@ import {
 const GECIS = [0.16, 1, 0.3, 1] as const;
 
 // 3D sahne yalnızca tarayıcıda yüklenir (WebGL, SSR'de çalışmaz).
-const Sahne3D = dynamic(() => import("./Sahne3D"), { ssr: false });
+const Ag3D = dynamic(() => import("./Ag3D"), { ssr: false });
 
 const NAV_LINKLER = [
   { href: "#manifesto", etiket: "Hakkımda" },
@@ -196,34 +199,44 @@ function Hero() {
         style={azalt ? undefined : { y, opacity: sonuklesme }}
         className="relative mx-auto w-full max-w-6xl px-6 pt-24 pb-14 md:pb-20"
       >
-        <h1 className="text-[17vw] leading-[0.92] font-semibold tracking-tighter uppercase md:text-[10.5rem]">
-          <PerdeSatir gecikme={0.1}>Emre</PerdeSatir>
-          <PerdeSatir gecikme={0.22}>
-            <span className="text-altin">Topçu</span>
+        <motion.p
+          initial={azalt ? false : { opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.05, ease: GECIS }}
+          className="mb-6 text-sm font-medium tracking-[0.2em] text-altin uppercase"
+        >
+          {HERO.isim} <span className="text-duman">— {HERO.rol}</span>
+        </motion.p>
+        <h1 className="text-[16vw] leading-[0.9] font-semibold tracking-tighter uppercase md:text-[9.5rem]">
+          <PerdeSatir gecikme={0.15}>{HERO.baslikSatir1}</PerdeSatir>
+          <PerdeSatir gecikme={0.28}>
+            <span className="text-altin">{HERO.baslikSatir2}</span>
           </PerdeSatir>
         </h1>
         <div className="mt-8 flex flex-wrap items-end justify-between gap-8">
           <motion.p
             initial={azalt ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.48, ease: GECIS }}
-            className="max-w-[38ch] text-lg leading-relaxed text-fildisi/85 md:text-xl"
+            transition={{ duration: 0.8, delay: 0.55, ease: GECIS }}
+            className="max-w-[44ch] text-lg leading-relaxed text-fildisi/80 md:text-xl"
           >
-            {HERO.baslikSatir1} {HERO.baslikSatir2}
+            {HERO.altMetin}
           </motion.p>
           <motion.div
             initial={azalt ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.62, ease: GECIS }}
+            transition={{ duration: 0.8, delay: 0.68, ease: GECIS }}
             className="flex flex-wrap items-center gap-4"
           >
             <Manyetik>
               <a
-                href={`mailto:${EPOSTA}`}
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full bg-altin px-7 py-3.5 font-medium text-abanoz transition-transform active:scale-[0.98]"
               >
-                <EnvelopeSimple size={18} weight="bold" />
-                Bana yaz
+                <WhatsappLogo size={18} weight="fill" />
+                Benimle çalış
               </a>
             </Manyetik>
             <Manyetik>
@@ -713,7 +726,7 @@ export default function Zirve() {
       style={{ colorScheme: "dark" }}
     >
       {/* Tüm sayfanın arkasında yaşayan sinematik 3D sahne */}
-      <Sahne3D ilerleme={scrollYProgress} hareket={!azalt} />
+      <Ag3D ilerleme={scrollYProgress} hareket={!azalt} />
       <Nav />
       <main>
         <Hero />

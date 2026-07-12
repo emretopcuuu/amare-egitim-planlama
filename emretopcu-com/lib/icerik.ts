@@ -2,12 +2,20 @@
 
 export const EPOSTA = "s.emretopcu@gmail.com";
 export const AYNA_URL = "https://ayna.oneteamglobal.ai";
+export const INSTAGRAM_URL = "https://instagram.com/emretopcu_official";
+// WhatsApp numarası kullanıcıdan gelince güncellenecek (uluslararası, + ve 0 yok).
+export const WHATSAPP_NUMARA = "";
+export const WHATSAPP_MESAJ = "Merhaba Emre Bey, siteniz üzerinden ulaşıyorum.";
+export const WHATSAPP_URL = WHATSAPP_NUMARA
+  ? `https://wa.me/${WHATSAPP_NUMARA}?text=${encodeURIComponent(WHATSAPP_MESAJ)}`
+  : INSTAGRAM_URL;
 
 export const HERO = {
-  baslikSatir1: "Liderlik sahnede değil,",
-  baslikSatir2: "aynada başlar.",
+  isim: "Emre Topçu",
+  baslikSatir1: "Ekleme değil,",
+  baslikSatir2: "katlama.",
   altMetin:
-    "One Team Global bünyesinde ekipler kuruyor, liderler yetiştiriyor ve bu işi sistemle yapıyorum.",
+    "Tek tek üye eklemeyi değil, kendi ekibini kuran liderler yetiştirmeyi öğretiyorum. Kimse, ama kimse tek başına başarmadı.",
   konum: "İstanbul, Türkiye",
   rol: "Presidential Diamond | One Team Global",
 };
