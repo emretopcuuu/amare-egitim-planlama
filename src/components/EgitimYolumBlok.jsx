@@ -85,10 +85,13 @@ const EgitimYolumBlok = ({ uid, isAnonymous, kullaniciRankString }) => {
   };
 
   if (!aktifRankKey) {
+    // Rütbe eşleşmedi (Amare kaydında henüz kariyer rütbesi yok/senkron olmadı).
+    // "belirleniyor..." sonsuza kadar yükleniyormuş izlenimi veriyordu — dürüst mesaja çevrildi.
     return (
       <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 text-center">
         <Award className="w-10 h-10 text-amber-400 mx-auto mb-3 opacity-50" />
-        <p className="text-purple-200 text-sm">Eğitim yolun belirleniyor...</p>
+        <p className="text-purple-200 text-sm">Rütbe bilgin henüz sistemde eşleşmedi.</p>
+        <p className="text-purple-300/60 text-xs mt-1.5">Amare hesabın senkronize olduğunda burası otomatik dolar.</p>
       </div>
     );
   }
