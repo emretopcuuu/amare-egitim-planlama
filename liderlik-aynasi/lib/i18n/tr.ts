@@ -4511,6 +4511,9 @@ export const tr = {
     kaydedilemedi: "⚠ Kaydedilemedi — bağlantını kontrol et",
     // AI çağrı limiti (lib/aiLimit.ts) aşılınca gösterilir.
     cokHizli: "Çok hızlı gidiyorsun 🙂 Birkaç dakika soluklan, sonra devam edelim.",
+    // Ekip sloganı — sahada zaten kullanılan söz. İlerleme anlarında (iyi puanlı
+    // görev, unvan atlaması) ARA ARA gösterilir (bkz. lib/iyisinDevam.ts).
+    iyisinDevam: "İyisin devam 👍",
     // Akran ikilisi (sorumluluk ortağı) sayfası
     baslik: "🤝 Ortağın",
     altBaslik:
