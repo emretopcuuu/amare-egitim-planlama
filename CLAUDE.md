@@ -136,8 +136,20 @@ sonra, sahneden ~20 dk önce). Radyo (Faz 4) deseniyle üretim teslimden ~20 dk 
   "Brifi Üret/Yenile" (`/api/admin/kapanis`) — kamp kapalıyken (onboarding/prova)
   eldeki veriyle test edilebilir. GİZLİLİK: AI'ya yalnız toplam sayılar + isimsiz
   alıntılar gider.
-- ⬜ **Faz B**: canlı sahne katmanı (öneri 4 canlı kanıt ekranı /sahne, 5 canlı
-  nabız sorusu, 6 Emre'nin Sorusu → söz tohumu). ⬜ **Faz C**: söz zenginleştirme
+- ✅ **Faz B** (bu PR): **canlı sahne katmanı** (öneriler 4-5-6). Tek mekanizma
+  `lib/canliSoru.ts`: 'nabiz' (seçenekli, /ekran'da canlı toplam) + 'tohum'
+  ("Emre'nin Sorusu", açık uçlu → cevap kişinin SÖZ tohumu, `tohumYanitiGetir`
+  Faz C'de okunacak). Tablolar `canli_soru`+`canli_soru_yanit` (migration 0144,
+  canlıda). Öneri 4 "kanıt anı": `lib/kapanis.ts` `kanitVeri` (ic_engel/kas/
+  taahhut/bahis, İSİMSİZ) → `settings.sahne_kanit` → `/ekran` tam-ekran overlay
+  (EkranVerisi.sahne.kanit + .canliNabiz eklendi). Telefon: `CanliSoruDinleyici`
+  (/gorevler, 6s poll, tam-ekran kart). Emre'nin kontrolleri `/admin/kapanis`'e
+  eklendi (CanliSahneKontrol). GÜVENLİK: canlı soru yalnız KAMP AÇIKKEN herkese;
+  kapalıyken YALNIZ prova katılımcısına görünür + push atılmaz (142 onboarding
+  kullanıcısı test sorusunu görmez). **NOT:** `/admin/kapanis` zaten vardı
+  (`(komuta)/kapanis`, Faz 6 kamp-sonrası panosu); Faz A+B onun ÜSTÜNE eklendi
+  → tek "kapanış komuta merkezi" (sahne hazırlık + canlı + 90 gün panosu).
+  ⬜ **Faz C**: söz zenginleştirme
   (7 veriden söz taslağı, 8 "bu sözü verebilirsin çünkü…" kanıt anı). ⬜ **Faz D**:
   90 gün (9 eğitim → 90-gün müfredatı: Emre 3-5 ilke girer → yolculuk görevleri;
   10 söz karnesi: haftalık Emre'ye rapor).

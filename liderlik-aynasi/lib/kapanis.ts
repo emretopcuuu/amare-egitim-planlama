@@ -193,6 +193,55 @@ export async function brifVeriTopla(
   };
 }
 
+// ---- Faz B · öneri 4 — CANLI KANIT EKRANI ----
+// Emre eğitim sırasında admin panelinden bir "kanıt anı" tetikler; /ekran
+// İSİMSİZ agregatı tam-ekran gösterir. Hafif, tek-iki sorgu; hepsi isimsiz.
+export type KanitId = "ic_engel" | "kas" | "taahhut" | "bahis";
+export type Kanit = { id: KanitId; baslik: string; altBaslik: string; satirlar: { etiket: string; deger: number }[] };
+
+const KANIT_BASLIK: Record<KanitId, { baslik: string; altBaslik: string }> = {
+  ic_engel: { baslik: "Salonun iç engelleri", altBaslik: "3 günde en çok tekrar eden" },
+  kas: { baslik: "En çok çalışan kaslar", altBaslik: "3 günde büyüyen" },
+  taahhut: { baslik: "Verilen sözler", altBaslik: "somut taahhüt" },
+  bahis: { baslik: "AYNA – İtirazcı", altBaslik: "günün bahis skoru" },
+};
+
+export async function kanitVeri(db: Db, id: KanitId, bugun: string): Promise<Kanit | null> {
+  try {
+    const meta = KANIT_BASLIK[id];
+    let satirlar: { etiket: string; deger: number }[] = [];
+    if (id === "ic_engel") {
+      const { data } = await db.from("missions").select("kacirma_sebebi").not("kacirma_sebebi", "is", null);
+      satirlar = enCok((data ?? []).map((r) => (r as { kacirma_sebebi: string | null }).kacirma_sebebi), 5).map((e) => ({
+        etiket: e.ad,
+        deger: e.adet,
+      }));
+    } else if (id === "kas") {
+      const { data } = await db.from("missions").select("kas").eq("status", "scored").not("kas", "is", null);
+      satirlar = enCok((data ?? []).map((r) => (r as { kas: string | null }).kas), 5).map((e) => ({
+        etiket: e.ad,
+        deger: e.adet,
+      }));
+    } else if (id === "taahhut") {
+      const ozet = await kampTaahhutOzeti(db).catch(() => ({ toplamKisi: 0, toplamTaahhut: 0 }));
+      satirlar = [
+        { etiket: "söz veren kişi", deger: ozet.toplamKisi },
+        { etiket: "toplam taahhüt", deger: ozet.toplamTaahhut },
+      ];
+    } else {
+      const gunBasiUtc = new Date(`${bugun}T00:00:00+03:00`).toISOString();
+      const b = await bahisSkoru(db, gunBasiUtc).catch(() => ({ ayna: 0, itirazci: 0 }));
+      satirlar = [
+        { etiket: "AYNA", deger: b.ayna },
+        { etiket: "İtirazcı", deger: b.itirazci },
+      ];
+    }
+    return { id, baslik: meta.baslik, altBaslik: meta.altBaslik, satirlar };
+  } catch {
+    return null;
+  }
+}
+
 // AI ile Emre'nin sahne öncesi brifi — düzyazı, İSİMSİZ. Düşerse null (şablon).
 async function brifMetinUret(v: BrifVeri): Promise<string | null> {
   try {

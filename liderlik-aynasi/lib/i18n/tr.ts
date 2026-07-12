@@ -1769,7 +1769,7 @@ export const tr = {
       foto: "Fotoğraf",
       canliAyna: "Canlı Ayna",
       sozler: "Sözler",
-      kapanis: "Kapanış Brifi",
+      kapanis: "Kapanış",
       test: "Prova",
       kurulum: "Kurulum",
       analiz: "Analiz",

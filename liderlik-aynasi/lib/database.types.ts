@@ -2481,6 +2481,60 @@ export type Database = {
           },
         ]
       }
+      canli_soru: {
+        Row: {
+          created_at: string
+          durum: string
+          id: string
+          kapandi_at: string | null
+          secenekler: Json | null
+          soru: string
+          tip: string
+        }
+        Insert: {
+          created_at?: string
+          durum?: string
+          id?: string
+          kapandi_at?: string | null
+          secenekler?: Json | null
+          soru: string
+          tip: string
+        }
+        Update: {
+          created_at?: string
+          durum?: string
+          id?: string
+          kapandi_at?: string | null
+          secenekler?: Json | null
+          soru?: string
+          tip?: string
+        }
+        Relationships: []
+      }
+      canli_soru_yanit: {
+        Row: {
+          created_at: string
+          id: string
+          participant_id: string
+          soru_id: string
+          yanit: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          participant_id: string
+          soru_id: string
+          yanit: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          participant_id?: string
+          soru_id?: string
+          yanit?: string
+        }
+        Relationships: []
+      }
       kapanis_brif: {
         Row: {
           created_at: string
