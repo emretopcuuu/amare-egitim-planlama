@@ -1768,6 +1768,7 @@ export const tr = {
 
       foto: "Fotoğraf",
       canliAyna: "Canlı Ayna",
+      market: "Market",
       sozler: "Sözler",
       test: "Prova",
       kurulum: "Kurulum",

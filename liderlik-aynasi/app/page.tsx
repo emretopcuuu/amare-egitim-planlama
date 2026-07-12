@@ -38,6 +38,7 @@ import { SiradakiOnizleme } from "@/components/AsamaRayi";
 import YeniGorevButonu from "@/components/YeniGorevButonu";
 import KimlikElmasi from "@/components/elmas/KimlikElmasi";
 import { kimlikElmasiVerisi } from "@/lib/elmas";
+import { elmasRengiGetir, marketAcikMi } from "@/lib/market";
 import { okunmamisMesaj } from "@/lib/icMesaj";
 
 const t = tr.anaSayfa;
@@ -175,6 +176,11 @@ export default async function AnaSayfa({
   // KİMLİK ELMASI verisi (yalnız kamp içindeyken) — ana sayfanın kalbindeki
   // canlı 3B elmasını besler: her tamamlanan görev bir faseti ışıtır.
   const elmasVeri = kisi.camp_unlocked_at ? await kimlikElmasiVerisi(db, session.sub) : null;
+
+  // G1 — market: elmas ışık rengi (kişiselleştirme) + market bayrağı (giriş linki).
+  const [elmasRengi, marketAcik] = kisi.camp_unlocked_at
+    ? await Promise.all([elmasRengiGetir(db, session.sub), marketAcikMi(db)])
+    : [null, false];
 
   // Menü rozetleri: okunmamış iç mesaj sayısı + analiz sayısı ("yeni" noktası).
   const [okunmamisMesajSayisi, analizSayisi] = await Promise.all([
@@ -612,7 +618,17 @@ export default async function AnaSayfa({
             facetler={elmasVeri.facetler}
             sonFacet={elmasVeri.sonFacet}
             asama={elmasVeri.asama}
+            isikRengi={elmasRengi ?? undefined}
           />
+          {/* G1 — Market girişi (yalnız market açıkken) */}
+          {marketAcik && (
+            <Link
+              href="/market"
+              className="mt-3 flex items-center justify-center gap-2 rounded-xl border border-gold/30 bg-gold/[0.06] py-2.5 text-sm font-semibold text-gold-light transition-colors hover:bg-gold/[0.12]"
+            >
+              🏪 Kıvılcım Marketi
+            </Link>
+          )}
         </div>
       )}
       {/* [KURULUM 7/8] Rozetler (İlk Işık/El Ele) + "yanındakiyle el ele" girişi */}
