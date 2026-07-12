@@ -6,6 +6,7 @@ import { kisiSentezi, sentezMetni } from "@/lib/sentez";
 import { gelisimMektubuGetir } from "@/lib/gelisimMektubu";
 import { kritikAiHatasiBildir } from "@/lib/uyari";
 import { kimlikBloguGetir } from "@/lib/kisiKimligi";
+import { AYNA_KARAKTER_TAM, aynaKarakterAcikMi, aynaIliskiDurumu, iliskiPromptSatiri, lakapPromptSatiri } from "@/lib/aynaKarakter";
 
 // GELİŞTİRME #1 — AYNA KOÇU. Adayın her an açabildiği sürekli, bağlamsal sohbet.
 // Pusula (neden/iç engel) + Ön Farkındalık (kör nokta) + aktif görev bağlamını
@@ -143,6 +144,26 @@ export async function kocuTuru(
     db.from("settings").select("value").eq("key", "ayna_ek_ton").maybeSingle(),
   ]);
   const ekTon = (tonAyar.data?.value ?? "").trim(); // #10 İçerik Stüdyosu: admin ton ayarı
+  // Faz 0 — AYNA karakteri (şovmen katman). Kill switch kapalıysa nötr ton.
+  const karakterAcik = await aynaKarakterAcikMi(db);
+  // Faz 2 — ilişki durumu (son görev yanıtından) + lakap satırı.
+  let karakterEk = "";
+  if (karakterAcik) {
+    const [sonYanit, kisiVeri] = await Promise.all([
+      db
+        .from("missions")
+        .select("responded_at")
+        .eq("participant_id", katilimci.id)
+        .not("responded_at", "is", null)
+        .order("responded_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
+      db.from("participants").select("ayna_lakap").eq("id", katilimci.id).maybeSingle(),
+    ]);
+    karakterEk =
+      iliskiPromptSatiri(aynaIliskiDurumu(sonYanit.data?.responded_at ?? null)) +
+      lakapPromptSatiri(kisiVeri.data?.ayna_lakap);
+  }
 
   const mesajlar: Anthropic.MessageParam[] =
     gecmis.length === 0
@@ -170,7 +191,7 @@ export async function kocuTuru(
       // Sade sohbet çağrısı: thinking/output_config gibi ek parametreler
       // sohbet için gereksiz ve bazı kombinasyonlarda 400'e yol açabiliyor.
       system: `${PERSONA}
-
+${karakterAcik ? `\n${AYNA_KARAKTER_TAM}\n${karakterEk}` : ""}
 Adayın adı: ${ad}.
 ${sentez ? `\nGELİŞİM SENTEZİ (yalnız senin gözün; bu kişiyi tanı ve yanıtlarını buna dayandır):\n${sentezMetni(sentez)}\n` : ""}${gelisim ? `\nKAMPSONU GELİŞİM MEKTUBUNDA ONA VERİLEN TAVSİYE (tutarlı ol, gerekince nazikçe hatırlat):\n- Değer–davranış uyumu: ${gelisim.ozet.hiza ?? "—"}\n- Gelişim fırsatı: ${gelisim.ozet.firsat ?? "—"}\n- Somut tavsiye: ${gelisim.ozet.tavsiye ?? "—"}\n- İlk adım: ${gelisim.ozet.ilkAdim ?? "—"}\n` : ""}
 ADAY BAĞLAMI (aktif görevler + ilerleme; sessizce kullan):

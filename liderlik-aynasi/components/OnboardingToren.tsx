@@ -4,7 +4,7 @@ import { useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import { kutla } from "@/lib/his";
 import Konfeti from "@/components/Konfeti";
-import AynaIkon from "@/components/AynaIkon";
+import AynaSahneLoop from "@/components/AynaSahneLoop";
 
 const t = tr.anaSayfa;
 
@@ -32,7 +32,9 @@ export default function OnboardingToren({ slogan }: { slogan: string | null }) {
         <p className="prizma-serif text-xs font-semibold uppercase tracking-[0.4em] text-slate-500">
           {t.torenUst}
         </p>
-        <AynaIkon className="mt-6 h-16 w-16 text-gold" />
+        {/* Görsel paket #2 — onboarding'in duygusal zirvesinde kutlayan AYNA
+            (konfetili video loop; oynamazsa statik kutlama pozuna düşer) */}
+        <AynaSahneLoop mod="kutlama" boyut={150} sinif="mt-6" />
         <h1 className="prizma-serif ay-metin mt-5 text-4xl font-bold leading-tight">
           {t.torenBaslik}
         </h1>

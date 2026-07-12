@@ -141,6 +141,13 @@ export default function UstMenu({
   // SANA ÖZEL (altın şerit)
   const sanaOzel: Oge[] = [];
   sanaOzel.push({ href: "/kocu", etiket: t.menuKocu, alt: t.menuAltKocu, ikon: IK.kocu });
+  // #2 Sıcak liste — kişinin gerçek aday listesi (kamp görevleri bunu kullanır).
+  sanaOzel.push({
+    href: "/sicak-liste",
+    etiket: "Sıcak Liste",
+    alt: "Aday listeni çıkar",
+    ikon: <span aria-hidden className="text-lg">🔥</span>,
+  });
   sanaOzel.push({
     href: "/analizlerim",
     etiket: tr.analiz.menuLink,

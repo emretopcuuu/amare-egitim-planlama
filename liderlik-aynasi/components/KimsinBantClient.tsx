@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import YaziBoyu from "./YaziBoyu";
 import TemaSecimi from "./TemaSecimi";
-import SesSecimiEkrani from "./SesSecimiEkrani";
 import KimlikDuzenle from "./KimlikDuzenle";
 import BildirimAnahtari from "./BildirimAnahtari";
 import { sesAcik, sesAyarla, sesCal } from "@/lib/sesEfekti";
@@ -54,7 +53,6 @@ export default function KimsinBantClient({
 }) {
   const [acik, setAcik] = useState(false);
   const [ayarlarAcik, setAyarlarAcik] = useState(false);
-  const [sesDegistirAcik, setSesDegistirAcik] = useState(false);
   const [kimlikDegistirAcik, setKimlikDegistirAcik] = useState(false);
   // Bildirim izni AÇIK mı? Değilse dişlide kırmızı nokta + çekmecede büyük
   // "Bildirimleri Aç" butonu gösterilir (onboarding'de kaçırılmasın diye).
@@ -352,19 +350,6 @@ export default function KimsinBantClient({
               <TemaSecimi />
             </div>
 
-            {/* Ayna Sesi — kişi istediği an erkek/kadın tercihini değiştirebilir. */}
-            <div className="mt-5 border-t border-white/10 pt-4">
-              <p className="mb-2 text-center text-xs font-semibold uppercase tracking-widest text-slate-500">
-                Aynanın Sesi
-              </p>
-              <button
-                onClick={() => setSesDegistirAcik(true)}
-                className="flex w-full items-center justify-between rounded-xl bg-white/[0.03] px-4 py-3 text-sm text-slate-200 transition-colors hover:bg-white/[0.06]"
-              >
-                <span>🔊 Şu an: {aynaSes === "kadin" ? "Kadın ses" : "Erkek ses"} — değiştir</span>
-                <span aria-hidden className="text-slate-500">›</span>
-              </button>
-            </div>
 
             {/* Cinsiyet & Yaş — aynanın sana doğru hitap etmesi için; istenince güncellenir. */}
             <div className="mt-5 border-t border-white/10 pt-4">
@@ -412,27 +397,6 @@ export default function KimsinBantClient({
         </>
       )}
 
-      {/* Ayna sesi değiştirme alt-modalı */}
-      {sesDegistirAcik && (
-        <>
-          <button
-            aria-label="Kapat"
-            onClick={() => setSesDegistirAcik(false)}
-            className="fixed inset-0 z-[60] cursor-default bg-black/60"
-          />
-          <div
-            role="dialog"
-            aria-label="Aynanın sesini değiştir"
-            className="fixed left-1/2 top-1/2 z-[61] w-[calc(100vw-2rem)] max-w-md -translate-x-1/2 -translate-y-1/2 rounded-3xl border border-white/10 bg-[#1a1035] py-6"
-          >
-            <SesSecimiEkrani
-              mevcutSes={aynaSes}
-              ayarModu
-              onKapat={() => setSesDegistirAcik(false)}
-            />
-          </div>
-        </>
-      )}
 
       {/* Cinsiyet & yaş düzenleme alt-modalı */}
       {kimlikDegistirAcik && (

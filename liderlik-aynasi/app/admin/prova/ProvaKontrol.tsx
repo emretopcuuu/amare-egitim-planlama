@@ -8,7 +8,12 @@ type Props = {
   baslangicAktif: boolean;
   baslangicGun: number;
   katilimciSayisi: number;
+  // GÜVENLİK KİLİDİ: prova tek katılımcıya sabitlenir (bkz. lib/prova.ts).
+  baslangicKatilimciId: string | null;
+  baslangicKatilimciAd: string | null;
 };
+
+type AramaSonucu = { id: string; full_name: string; team: string | null };
 
 const GUN_AD = ["", "Gün 1 — Cuma", "Gün 2 — Cumartesi", "Gün 3 — Pazar"];
 
@@ -25,6 +30,8 @@ export default function ProvaKontrol({
   baslangicAktif,
   baslangicGun,
   katilimciSayisi,
+  baslangicKatilimciId,
+  baslangicKatilimciAd,
 }: Props) {
   const router = useRouter();
   const [aktif, setAktif] = useState(baslangicAktif);
@@ -33,6 +40,38 @@ export default function ProvaKontrol({
   const [bekle, setBekle] = useState<string | null>(null);
   const [son, setSon] = useState<string | null>(null);
   const iptalRef = useRef(false);
+
+  // GÜVENLİK KİLİDİ: prova başlamadan önce TEK katılımcı seçilmeli.
+  const [secilenId, setSecilenId] = useState<string | null>(baslangicKatilimciId);
+  const [secilenAd, setSecilenAd] = useState<string | null>(baslangicKatilimciAd);
+  const [arama, setArama] = useState("");
+  const [aramaSonuc, setAramaSonuc] = useState<AramaSonucu[]>([]);
+  const [aramaYukleniyor, setAramaYukleniyor] = useState(false);
+  const aramaZamanlayici = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function aramaDegisti(deger: string) {
+    setArama(deger);
+    setAramaSonuc([]);
+    if (aramaZamanlayici.current) clearTimeout(aramaZamanlayici.current);
+    if (deger.trim().length < 2) return;
+    aramaZamanlayici.current = setTimeout(async () => {
+      setAramaYukleniyor(true);
+      try {
+        const res = await fetch(`/api/admin/prova/ara?q=${encodeURIComponent(deger.trim())}`);
+        const d = await res.json().catch(() => null);
+        setAramaSonuc(d?.sonuclar ?? []);
+      } finally {
+        setAramaYukleniyor(false);
+      }
+    }, 300);
+  }
+
+  function katilimciSec(k: AramaSonucu) {
+    setSecilenId(k.id);
+    setSecilenAd(k.full_name);
+    setArama("");
+    setAramaSonuc([]);
+  }
 
   const tik = useCallback(async () => {
     try {
@@ -72,16 +111,22 @@ export default function ProvaKontrol({
   }, [aktif, gun, tik]);
 
   async function eylem(e: "baslat" | "gunGec" | "bitir", onayMetni?: string) {
+    if (e === "baslat" && !secilenId) return; // güvenlik kilidi: katılımcısız başlatılamaz
     if (onayMetni && !window.confirm(onayMetni)) return;
     setBekle(e);
     try {
       const res = await fetch("/api/admin/prova", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ eylem: e }),
+        body: JSON.stringify(
+          e === "baslat" ? { eylem: e, katilimciId: secilenId } : { eylem: e }
+        ),
       });
       const d = await res.json().catch(() => null);
-      if (!d?.ok) return;
+      if (!d?.ok) {
+        if (d?.hata) window.alert(d.hata);
+        return;
+      }
       if (e === "baslat") {
         setGun(1);
         setSanal(null);
@@ -124,12 +169,68 @@ export default function ProvaKontrol({
           </>
         )}
         <span className="rounded-full bg-midnight-card/60 px-3 py-1.5 text-slate-400 ring-1 ring-royal/20">
-          👤 {katilimciSayisi} kişi
+          {katilimciSayisi} kayıtlı katılımcı (kampa hiçbiri etkilenmez)
         </span>
       </div>
 
       {aktif && son && (
         <p className="text-sm text-emerald-400">Son tur: {son}</p>
+      )}
+
+      {/* GÜVENLİK KİLİDİ: prova YALNIZ seçilen tek katılımcıyla koşar. */}
+      {!aktif && (
+        <div className="rounded-xl border border-gold/30 bg-gold/[0.04] p-4">
+          <p className="text-sm font-semibold text-gold-light">
+            🔒 Prova katılımcısı — zorunlu
+          </p>
+          <p className="mt-1 text-xs text-slate-400">
+            Yalnızca seçtiğin kişiye görev/ses/bildirim gider; başka hiç kimse
+            (gerçek onboarding'deki kimse) etkilenmez.
+          </p>
+          {secilenId ? (
+            <div className="mt-3 flex items-center justify-between rounded-lg bg-emerald-400/10 px-3 py-2 ring-1 ring-emerald-400/20">
+              <span className="text-sm font-medium text-emerald-300">
+                ✓ Seçili: {secilenAd}
+              </span>
+              <button
+                onClick={() => {
+                  setSecilenId(null);
+                  setSecilenAd(null);
+                }}
+                className="text-xs text-slate-400 underline hover:text-slate-200"
+              >
+                değiştir
+              </button>
+            </div>
+          ) : (
+            <div className="relative mt-3">
+              <input
+                type="text"
+                value={arama}
+                onChange={(e) => aramaDegisti(e.target.value)}
+                placeholder="Katılımcı adı ara (en az 2 harf)…"
+                className="w-full rounded-lg border border-royal-light/30 bg-midnight-soft px-3 py-2 text-sm text-slate-100 outline-none focus:border-gold"
+              />
+              {aramaYukleniyor && (
+                <p className="mt-1 text-xs text-slate-500">Aranıyor…</p>
+              )}
+              {aramaSonuc.length > 0 && (
+                <div className="mt-1 max-h-56 space-y-1 overflow-y-auto rounded-lg border border-royal-light/20 bg-midnight-card p-1.5">
+                  {aramaSonuc.map((k) => (
+                    <button
+                      key={k.id}
+                      onClick={() => katilimciSec(k)}
+                      className="flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-sm text-slate-200 hover:bg-white/5"
+                    >
+                      <span>{k.full_name}</span>
+                      {k.team && <span className="text-xs text-slate-500">{k.team}</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* Eylemler */}
@@ -138,13 +239,17 @@ export default function ProvaKontrol({
           onClick={() =>
             eylem(
               "baslat",
-              `Prova kampını başlat?\n\nGün 1'den itibaren ${katilimciSayisi} kişiye gerçek görev/ses/bildirim gitmeye başlayacak (hızlandırılmış). Devam?`
+              `Prova kampını başlat?\n\nGün 1'den itibaren YALNIZ "${secilenAd}" kişisine gerçek görev/ses/bildirim gitmeye başlayacak (hızlandırılmış). Başka kimse etkilenmez. Devam?`
             )
           }
-          disabled={bekle !== null}
+          disabled={bekle !== null || !secilenId}
           className="rounded-xl bg-gold px-6 py-3 font-bold text-[#1a1206] shadow-lg shadow-gold/20 transition-colors hover:bg-gold-light disabled:opacity-50"
         >
-          {bekle === "baslat" ? <Bekle /> : "▶ Prova Kampını Başlat (Gün 1)"}
+          {bekle === "baslat"
+            ? <Bekle />
+            : secilenId
+              ? `▶ Prova Kampını Başlat (Gün 1) — ${secilenAd}`
+              : "▶ Önce bir katılımcı seç"}
         </button>
       ) : (
         <div className="flex flex-wrap gap-3">

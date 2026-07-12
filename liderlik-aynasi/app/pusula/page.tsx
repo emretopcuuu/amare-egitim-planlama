@@ -1,4 +1,6 @@
 import Link from "next/link";
+import AynaYuzu from "@/components/AynaYuzu";
+import SesCal from "@/components/SesCal";
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -151,13 +153,16 @@ export default async function PusulaSayfa() {
     // EN BÜYÜK mesaj: "mührü kaldırmadan devam edemezsin" (kampta QR okut).
     // Aday bundan sonra nasıl ilerleyeceğini buradan anlar; gerisi etrafında.
     const bekleIcerik = (
-      <div className="space-y-5">
+      // Kademeli giriş: mühür kartı → ilk analiz → hazırlık özeti → gerisi,
+      // sırayla belirir (katılımcı isteği — "bir bir çıksa"). reduced-motion'da kapanır.
+      <div className="sahne-giris space-y-5">
         {hepsiTamam && <Konfeti anahtar="hazirlik-tamam" />}
 
         {/* HERO — mühür kilidi: ekranın merkez, en baskın öğesi */}
         <div className="relative overflow-hidden rounded-3xl border-2 border-gold/45 bg-gradient-to-b from-gold/12 to-midnight-card/70 p-7 text-center shadow-xl">
           <span className="altin-tel" />
-          <MuhurIkon className="mx-auto h-16 w-16 text-gold-light" />
+          {/* Görsel paket #1 — kampı bekleyen AYNA: "ben de senin kadar sabırsızım" */}
+          <AynaYuzu durum="heyecanli" boyut={104} sinif="mx-auto drop-shadow-[0_0_24px_rgba(212,175,55,0.3)]" />
           <p className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-gold/15 px-3 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-gold-light">
             <MuhurIkon className="h-3.5 w-3.5" />
             {t.muhurRozet}
@@ -183,6 +188,19 @@ export default async function PusulaSayfa() {
           {kampTarihi && <GeriSayim hedefZaman={kampTarihi} etiket={t.kampaKalan} />}
         </div>
 
+        {/* UX paketi #1 — AYNA'nın sesiyle tanışma: kampta karşılayacak ses,
+            beklerken duyulur (statik mp3 — public/ayna/tanis.mp3, Roman sesi) */}
+        <div className="rounded-2xl border border-royal/25 bg-midnight-card/40 p-4">
+          <div className="flex items-center gap-3">
+            <AynaYuzu durum="konusuyor" boyut={44} sinif="shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-slate-200">{tr.aynaTanis.baslik}</p>
+              <p className="mt-0.5 text-xs text-slate-500">{tr.aynaTanis.metin}</p>
+            </div>
+          </div>
+          <SesCal url="/ayna/tanis.mp3" etiket={tr.aynaTanis.dinle} />
+        </div>
+
         {/* AYNA'NIN İLK ANALİZİ — checklist'in tepesinde, kendi sesiyle okunan ilk ayna */}
         <AynaAnalizDeneyim
           asama="kamp_oncesi"
@@ -196,7 +214,7 @@ export default async function PusulaSayfa() {
             ✅ {t.ozetBaslik}
           </p>
           <p className="mt-1 text-xs leading-relaxed text-slate-500">{t.ozetAciklama}</p>
-          <ul className="mt-3 space-y-1.5">
+          <ul className="sahne-giris mt-3 space-y-1.5">
             {ozetAdimlar.map((a) =>
               a.foto ? (
                 <li key={a.ad}>

@@ -21,6 +21,36 @@ export const tr = {
     dusunuyor: "AYNA düşünüyor…",
     uzunSurdu: "Yanıt birkaç saniye sürebilir, buradayım…",
   },
+  // [#6] Telefon geri tuşu güvenliği — çok adımlı kritik akışta (ritüel) geri
+  // tuşuna basınca akış aniden bozulmasın; nazik bir "çıkmak istiyor musun?"
+  // onayı çıkar. "Devam et" öne çıkar; "Çık" gerçekten izin verir (kilitlemez).
+  geriCikis: {
+    baslik: "Çıkmak istiyor musun?",
+    metin: "İlerlemen kaybolabilir.",
+    rituelMetin: "Ritüel yarım kalır — verdiğin an kaybolabilir.",
+    kal: "Devam et",
+    cik: "Çık",
+  },
+  // [#2] Sıcak liste — kişinin gerçek aday listesi (kamp görevleri bunu kullanır).
+  sicakListe: {
+    geri: "Geri",
+    baslik: "Sıcak Liste",
+    aciklama:
+      "Hayatının değişeceğini bilse ilk kimin bilmesini isterdin? Aklına gelen isimleri yaz — kampta AYNA görevlerin bu isimlerle çalışır, kapanışta planına akar.",
+    isimYer: "Bir isim yaz…",
+    ekle: "Ekle",
+    sil: "Sil",
+    bos: "Henüz isim yok. İlk aklına geleni yaz — mükemmel liste değil, ilk 3 isim yeter.",
+    sayac: (n: number) => `${n} isim`,
+    kayitSayac: (n: number) => `${n} kayıt 🎉`,
+    durum: {
+      aday: "Aday",
+      temas: "Temas",
+      randevu: "Randevu",
+      kayit: "Kayıt ✓",
+      pas: "Pas",
+    } as Record<string, string>,
+  },
   // Görünür internet kalkanı: aday "verim kayboldu mu?" korkusu yaşamasın
   baglanti: {
     cevrimdisi: "İnternet yok — verilerin bu cihazda güvende. Bağlanınca otomatik gönderilecek.",
@@ -3210,6 +3240,9 @@ export const tr = {
       temaBaslik: "Günün teması",
       temaIpucu: "Bugünkü görevlerin merkezine alınacak tema (ör. 'cesaret', 'takım ruhu', 'ilk temas').",
       temaYer: "Bugünün teması…",
+      dersKavramiBaslik: "Ders kavramı (sahnede işlenen)",
+      dersKavramiIpucu: "Şu an sahnede işlenen dersin 2-3 anahtar kavramı — görev bunu '30 dk içinde davranışa çevir' hamlesine bağlar. Oturum bitince daha güçlü. Ders değişince güncelle.",
+      dersKavramiYer: "Ör. 'katlama', 'liderin 5 rolü', 'ilk 90 gün'…",
       kaydet: "Kaydet",
       kaydediliyor: "Kaydediliyor…",
       kaydedildi: "✓ Kaydedildi — AYNA artık buna göre üretir.",
@@ -3395,6 +3428,29 @@ export const tr = {
     aktifYokBaslik: "Şu an görevin yok",
     aktifYok: "AYNA yanında — yeni bir görev her an gelebilir.",
     bosIzliyor: "AYNA seni izliyor",
+    // Faz 3 — İDDİA: görev AYNA-İtirazcı bahsi çerçevesinde geldi.
+    bahisRozet: "AYNA–İtirazcı bahsi · hakem sensin",
+    // Faz 4 — Kamp Radyosu çalma kartı.
+    radyoBaslik: "Kamp Radyosu",
+    radyoSabah: "Sabah yayını — AYNA mikrofonda",
+    radyoAksam: "Akşam bülteni — dedikodu köşesi ve skorlar",
+    radyoDinle: "Yayını dinle",
+    radyoMetin: "Yayın metnini oku",
+    // UX paketi #10 — önceki yayınlar arşivi
+    radyoOnceki: "Önceki yayınlar",
+    // UX paketi #8 — ilk sesli içerikte tek seferlik ipucu
+    sesIpucu: "🔊 AYNA sesli konuşur — telefonun sesini açmayı unutma.",
+    // UX paketi #9 — görev kartındaki AYNA'ya dokununca varsayılan yardım
+    aynaIpucuVarsayilan: "Takıldıysan aşağıdaki 'Netleştir' düğmesi tam bunun için var.",
+    // Görsel paket #4 — maskota dokununca arada bir çıkan laf balonu.
+    tiklamaLaflari: [
+      "Dokunma, parmak izi kalıyor.",
+      "Evet, gerçeğim. Hayır, gıdıklanmıyorum.",
+      "Bunu kaç kişinin denediğini bilsen şaşarsın. Ben biliyorum.",
+      "Camımı silmişler, teşekkür ederim. Sen değildin biliyorum.",
+    ],
+    // Görsel paket #5 — sessiz saatlerde uyuyan AYNA'nın tek lafı.
+    uykuLafi: "Şşşt. Ben de şarj oluyorum. Sabah görüşürüz.",
     bosHerAn: "Sıradaki görev her an gelebilir.",
     bosSiradaki: (dk: number) => `Sıradaki görev ~${dk} dk içinde gelebilir.`,
     // D9 — boş durum fragman sahnesi: dakika yerine somut saat çıpası + hazırlık
@@ -3631,6 +3687,15 @@ export const tr = {
     sahitGorevBaslik: "Görünmez şahit",
     sahitGorevGovde: (ad: string) =>
       `Önümüzdeki 10 dakika ${ad} isimli kişiyi uzaktan, belli etmeden gözle.\n\nOnda gördüğün, muhtemelen KENDİSİNİN görmediği BİR gücü yakala — bir duruş, bir dokunuş, bir cümle.\n\nO gücü tek cümleyle bana yaz. Sözün, kimden geldiğini asla söylemeden, yarın onun aynasında belirecek.`,
+    // #7 Oyun-rolü şahidi: bir oyun az önce bittiğinde, takım arkadaşının oyundaki
+    // liderlik rolünü gözlet — yanıt gözlenenin sonraki görev açılışına taşınır.
+    sahitOyunBaslik: "Sahada gördüğün lider",
+    sahitOyunGovde: (ad: string, oyun: string) =>
+      `Az önce grubunla ${oyun} oynadınız. Şimdi ${ad} isimli arkadaşını düşün: oyunda nasıl bir lider oldu?\n\nKim yön verdi, kim düşeni topladı, kim enerjiyi taşıdı, kim sessizce köprü kurdu? Onda gördüğün, belki KENDİSİNİN fark etmediği BİR liderlik gücünü tek cümleyle bana yaz.\n\nSözün, kimden geldiğini asla söylemeden, onun aynasında belirecek.`,
+    // #4 David yakalama — CEO oturumu bitince "ne sordun, ne aldın?" (kariyer hazinesi)
+    davidYakalamaBaslik: "David'den kalan",
+    davidYakalamaGovde:
+      "David Chung ile aynı odadaydın — bu, çoğu insanın hayatında bir kez yaşadığı bir an.\n\nSıcağı sıcağına yaz: Ona ne sordun (ya da sormak istedin)? Aldığın tek cümlelik cevap / en çok aklında kalan şey neydi?\n\nBunu kaydediyorum — kampın sana kalan hazinesi. Kariyer yolculuğunda buna geri döneceğiz.",
     // Özellik 2 — Kimlik yüzleşmesi: her 10. puanlı görevde, biriken
     // karşı-kanıtlarla kişinin kendini sınırlayan cümlesi yüzüne tutulur.
     kimlikUst: "Ayna bir cümleni hatırlıyor",
@@ -3825,8 +3890,16 @@ export const tr = {
     iosGorselEkle: "Ana Ekrana Ekle",
     iosGorselAlt: "Paylaş düğmesi Safari'de ekranın altındadır",
   },
+  aynaTanis: {
+    // UX paketi #1 — mühür ekranında AYNA'nın sesiyle ilk tanışma
+    baslik: "AYNA sana bir şey söylemek istiyor",
+    metin: "Kampta seni karşılayacak sesle şimdiden tanış.",
+    dinle: "▶ Dinle",
+  },
   ses: {
     baslat: "Sesle Yaz",
+    // Öneri #9 — açık uçlu alanlarda konuşma birincil eylem (belirgin mod).
+    anlatYazayim: "Anlat, ben yazayım",
     dinliyor: "Dinliyorum… durdurmak için dokun",
     dinliyorKisa: "Dinliyorum",
     // Canlı önizleme şeridi: konuşurken ara (interim) sonuçlar burada akar —
@@ -3837,6 +3910,13 @@ export const tr = {
     kayitIpucu: "Konuş — bitirince düğmeye tekrar dokun.",
     cevriliyor: "✍️ Yazıya çevriliyor…",
     cevirihata: "Çevrilemedi — tekrar dene ya da elle yaz.",
+    // Güvenilirlik paketi: boş sonuç / kısa kayıt / limit / gerçek sessizlik
+    // durumlarında SESSİZ kalma — kişiye ne olduğunu ve ne yapacağını söyle.
+    duyamadim: "Kayıtta konuşma bulamadım — telefona biraz daha yakın ve uzun konuşur musun?",
+    kisaKayit: "Kayıt çok kısa oldu — düğmeye dokun, bir-iki cümle konuş, sonra durdur.",
+    yogun: "Şu an çok yoğunum. Birkaç saniye bekleyip 'Tekrar gönder'e dokun — kaydın bende.",
+    tekrarGonder: "↻ Tekrar gönder",
+    mikSesYok: "Mikrofon ses almıyor gibi — telefonu yaklaştır; olmadı mikrofon iznini kontrol et.",
     hata: {
       izin: "Mikrofon izni gerekli. Adres çubuğundaki 🎙 simgesine dokunup izin ver, sonra tekrar dene.",
       mesgul:

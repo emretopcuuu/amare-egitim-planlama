@@ -19,7 +19,7 @@ const HUNI: { kod: OnboardingAdimKod; ad: string }[] = [
   { kod: "onFarkindalik", ad: "Ön Farkındalık" },
 ];
 const SIRA: OnboardingAdimKod[] = [
-  "hazirlik", "sesSecimi", "rituel", "oyun", "degerler", "pusula", "hedef", "onFarkindalik",
+  "hazirlik", "rituel", "oyun", "degerler", "pusula", "hedef", "onFarkindalik",
 ];
 
 export default async function OnboardingRadari() {

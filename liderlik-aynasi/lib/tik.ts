@@ -71,6 +71,7 @@ import { tahminSapmasiGorevUret } from "@/lib/tahminSapmasi";
 import { karsilasmaBul } from "@/lib/karsilasma";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
+import { radyoTik } from "@/lib/kampRadyosu";
 import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
 import { sablonBul, ilkAd } from "@/lib/whatsappSablonlari";
 import { gunlukSoz } from "@/lib/ozluSozler";
@@ -152,11 +153,22 @@ export async function tikCalistir(
       "sistem_modu",
       "yolculuk_baslangic",
       "gorev_uretimi_durduruldu",
+      "prova_katilimci_id",
     ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
 
   if (ayar.get("ayna_aktif") !== "true") {
     return { ozet: "AYNA uyuyor (pasif)", ...ozet };
+  }
+
+  // GÜVENLİK KİLİDİ: prova modundaysak tek bir katılımcıyla sınırlıyız —
+  // katılımcı seçilmemişse (olması gerekmeyen bir durum, savunma amaçlı) tik'i
+  // tamamen durdur. Bu olmadan prova tüm gerçek onboarding'deki kişilere
+  // görev/bildirim gönderirdi (bkz. lib/prova.ts provaBaslat — artık zorunlu
+  // katilimciId parametresi alıyor).
+  const provaKatilimciId = ayar.get("prova_katilimci_id") ?? null;
+  if (provaModu && !provaKatilimciId) {
+    return { ozet: "Prova: katılımcı seçilmemiş — güvenlik nedeniyle durduruldu", ...ozet };
   }
 
   // FAZ 9 — ORKESTRATÖR: zamanı gelmiş senaryo satırlarını ateşle (idempotent).
@@ -223,7 +235,7 @@ export async function tikCalistir(
         ? simdi.getTime() - new Date(g.responded_at).getTime()
         : 0;
       if (bekliyorMs < 30 * 60_000) continue;
-      sonuc = { puan: 7, yorum: tr.gorevler.kurtarmaYorum, response_tags: [] };
+      sonuc = { puan: 7, yorum: tr.gorevler.kurtarmaYorum, response_tags: [], taahhut: null };
     }
     const zamaninda =
       !!g.responded_at && new Date(g.responded_at) <= new Date(g.due_at);
@@ -291,9 +303,16 @@ export async function tikCalistir(
             )
           : 1));
 
+  // GÜVENLİK KİLİDİ (devam): prova'daysak sorgu TEK katılımcıya sabitlenir.
+  let kisilerSorgu = db
+    .from("participants")
+    .select("id, full_name, team, phone, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak, sicak_an")
+    .eq("role", "participant");
+  if (provaModu && provaKatilimciId) kisilerSorgu = kisilerSorgu.eq("id", provaKatilimciId);
+
   const [{ data: kisiler }, { data: sonGorevler }, { data: yanitGecmisi }] =
     await Promise.all([
-      db.from("participants").select("id, full_name, team, phone, kariyer_seviyesi, kariyer_durumu, yeniden_giris_basamak, sicak_an").eq("role", "participant"),
+      kisilerSorgu,
       db
         .from("missions")
         .select("participant_id, status, issued_at, kind")
@@ -381,8 +400,20 @@ export async function tikCalistir(
       if (fark !== 0) return fark;
       return (da?.sonVerilis ?? 0) - (db?.sonVerilis ?? 0);
     })
-    // Prova kampında zaman hızlandırılmış: 25 kişiye çabuk dağıtım için limit açılır.
-    .slice(0, provaModu ? 40 : 3);
+    // Tik başına AI görev üretim tavanı. #4 (150 kişi ölçeği): görev üretimi
+    // artık SIRALI değil, ES_ZAMAN'lık kümelerle PARALEL (aşağıdaki chunk
+    // döngüsü). Her görev ~2 AI çağrısı (~3-6s) sürer; sıralıyken tavan 5'ti
+    // (bir etkinlik bitince 30-40 kişi aynı anda uygun olunca 6-8 tik = ~35 dk
+    // kuyruk). Paralel: ~24 kişi/tik, 4 küme × ~6s ≈ 24s (60s içinde). Kişi
+    // başına görev sayısı/kalitesi DEĞİŞMEZ — yalnız duvar-saati düşer, patlama
+    // gecikmesi ~35 dk → ~1-2 tik. NOT: prova/yük testinde tik süresini ölç;
+    // 24'te 60s'yi zorlarsa tavanı ya da ES_ZAMAN'ı düşür. Prova: 40 (hızlı zaman).
+    .slice(0, provaModu ? 40 : mod === "kamp" ? 24 : 3);
+  // #4 eşzamanlılık tavanı: bir kümede kaç görev paralel üretilir. Düşük
+  // tutuluyor çünkü eslesmeHedefiSec dengeleyicisi DB'den "bu kişiye kaç kez
+  // eşleşildi"yi okur; çok yüksek eşzamanlılıkta iki üretim aynı hedefi kapıp
+  // hafif dengesizlik yapabilir. 6, patlamayı erittiği hâlde bu yarışı küçük tutar.
+  const ES_ZAMAN = 6;
 
   // FAZ 3 — EŞLEŞME WOW KATMANI bayrakları (varsayılan kapalı, tek sorguda).
   const { data: wowBayraklariHam } = await db
@@ -421,7 +452,12 @@ export async function tikCalistir(
   // dağıtımlar (garantili, mentorluk) bu kümeye bakarak çift görev vermesin.
   const buTikGorevAlan = new Set<string>(uygunlar.map((u) => u.id));
 
-  for (const k of uygunlar) {
+  // #4 — tek kişiye görev dağıtım gövdesi. Eski `for (const k of uygunlar)`
+  // döngüsü aynen buraya taşındı; `continue` → `return` oldu. Aşağıda
+  // ES_ZAMAN'lık kümelerle Promise.all üzerinden PARALEL çağrılır. Kapatıcılar
+  // (ozet, altinBugunKalan) JS tek-iş-parçacıklı olduğu için await'ler arası
+  // atomiktir; altın kotası await'ten ÖNCE eşzamanlı düşülür (aşağıya bkz).
+  const kisiyeGorevDagit = async (k: (typeof uygunlar)[number]) => {
     // Özellik 3 — sıcak an: tazeyse görev üretimine bağlam olur; soğumuşsa
     // (45 dk+) tüketilmeden temizlenir (bayat duyguya görev kurulmaz).
     const kSicakHam = (k as { sicak_an?: unknown }).sicak_an;
@@ -439,6 +475,12 @@ export async function tikCalistir(
       mod === "kamp" && kampGunuBugun ? siradakiMadde(kampGunuBugun, gunDk) : null;
     // #7 fiziksel yorgunluk: genel doğa bloğu veya Gün 2 grup fiziksel oyunu sonrası
     let kYorgun = bitenEtkinlik?.tur === "doga";
+    // #7 oyun→şahit: Gün 2'de bir fiziksel oyun (bowling/atv/bubble/hazine) az
+    // önce bittiyse, isimli bağı ZORLA oyun-rolü şahit gözlemine çevir.
+    let kOyunBitti = false;
+    // #4 David yakalama: Gün 2'de David (CEO) oturumu az önce (≤30 dk) bittiyse,
+    // görevi "ne sordun, ne aldın?" yakalama görevine çevir (tek sefer).
+    let kDavidBitti = false;
     if (mod === "kamp" && gun === 2) {
       const grupNo = grupNoCozumle(k.team);
       if (grupNo) {
@@ -451,7 +493,12 @@ export async function tikCalistir(
         if (cmtBiten) kBiten = cmtBiten;
         const cmtSiradaki = cumartesiGrupSiradakiEtkinlik(grupNo, gunDk);
         if (cmtSiradaki) kSiradaki = cmtSiradaki;
-        if (grupAzOnceFiziksel(grupNo, gunDk)) kYorgun = true;
+        if (grupAzOnceFiziksel(grupNo, gunDk)) {
+          kYorgun = true;
+          kOyunBitti = true;
+        }
+        // David oturumu ≤30 dk önce bittiyse yakalama penceresi açık.
+        if (grupBitenBlok(grupNo, gunDk, 30)?.tur === "david_toplanti") kDavidBitti = true;
       }
     }
     // FAZ 2.2 — MEKÂN-FARKINDA EŞLEŞTİRME: yalnız Gün 2 (Cumartesi grup programı
@@ -536,7 +583,7 @@ export async function tikCalistir(
           await katilimciyaBildir(db, k.id, "🎴 Bir görev çek", "Üç kart açık — birini çek, gerisi sönsün.", "/gorevler");
         }
       }
-      continue; // yeniden giriş: bu tik AI görevi üretme, çek sun
+      return; // yeniden giriş: bu tik AI görevi üretme, çek sun
     }
 
     // Sıradaki köprüsünü yalnız kişi ŞU AN bir etkinliğin içinde DEĞİLken kur
@@ -544,10 +591,12 @@ export async function tikCalistir(
     const gorev = await gorevUret(
       db, k, gun, saat, mod, kEtkinlik, kBiten, kIpucu, kEtkinlik ? null : kSiradaki, kYorgun,
       kMekanFarkindaAdaylar,
-      { sonKacirmaSebebi: sonKacirma?.kacirma_sebebi ?? null, girisBasamak },
+      // Faz 3 — bahisIzin: yalnız tik dağıtımı bahis bayrağını yazdığı için
+      // bahis çerçevesi de yalnız burada üretilebilir (metin/bayrak tutarlı).
+      { sonKacirmaSebebi: sonKacirma?.kacirma_sebebi ?? null, girisBasamak, bahisIzin: true },
       kSicak // Özellik 3 — sıcak an bağlamı (mikro-görev + duyguya dokunuş)
     );
-    if (!gorev) continue;
+    if (!gorev) return;
     // Özellik 3 — sıcak an bu üretimde tüketildi: hangi insert dalına girilirse
     // girilsin an bir kez kullanılır; önbelleği hemen temizle.
     if (kSicak) await sicakAnTemizle(db, k.id);
@@ -571,13 +620,44 @@ export async function tikCalistir(
       gorev.kind === "bag" &&
       gorev.eslesme?.isimli &&
       !johariOverride &&
-      sahitVaryantiMi(k.id, gorev.eslesme.hedefId, bugun)
+      // #7: oyun az önce bittiyse ZORLA şahit (rasgele %12'yi bekleme); değilse
+      // normal deterministik %12 şahit varyantı.
+      (kOyunBitti || sahitVaryantiMi(k.id, gorev.eslesme.hedefId, bugun))
     ) {
       const sahitHedef = (kisiler ?? []).find((p) => p.id === gorev.eslesme!.hedefId);
       if (sahitHedef) {
-        sahitOverride = {
-          title: tr.gorevler.sahitGorevBaslik,
-          body: tr.gorevler.sahitGorevGovde(sahitHedef.full_name),
+        sahitOverride =
+          kOyunBitti && kBiten?.baslik
+            ? {
+                // #7 Oyun-rolü gözlemi: gözleyenin yanıtı sahit_gozlemleri'ne yazılır
+                // → gözlenenin sonraki görevi "biri sende şunu gördü" ile açılır.
+                title: tr.gorevler.sahitOyunBaslik,
+                body: tr.gorevler.sahitOyunGovde(sahitHedef.full_name, kBiten.baslik),
+              }
+            : {
+                title: tr.gorevler.sahitGorevBaslik,
+                body: tr.gorevler.sahitGorevGovde(sahitHedef.full_name),
+              };
+      }
+    }
+
+    // #4 DAVID YAKALAMA (öncelikli, kendine-görev): David oturumu ≤30 dk önce
+    // bittiyse ve kişi daha önce yakalamadıysa, görevi "ne sordun, ne aldın?"
+    // yakalama görevine çevir. Yanıt david_yakalama=true ile işaretlenir →
+    // sonraki görevlere/rapora akar (davidNotuGetir).
+    let davidOverride: { title: string; body: string } | null = null;
+    if (kDavidBitti && !johariOverride && !sahitOverride) {
+      const { data: oncekiDavid } = await db
+        .from("missions")
+        .select("id")
+        .eq("participant_id", k.id)
+        .eq("david_yakalama", true)
+        .limit(1)
+        .maybeSingle();
+      if (!oncekiDavid) {
+        davidOverride = {
+          title: tr.gorevler.davidYakalamaBaslik,
+          body: tr.gorevler.davidYakalamaGovde,
         };
       }
     }
@@ -592,6 +672,7 @@ export async function tikCalistir(
       wowAcikMi.get("iki_kapi_acik") &&
       !johariOverride &&
       !sahitOverride &&
+      !gorev.bahis && // Faz 3 — bahis görevi seçim kapısına dönüşmez
       Math.random() < 0.15
     ) {
       const secimGrubu = crypto.randomUUID();
@@ -621,7 +702,7 @@ export async function tikCalistir(
         ozet.uretilen++;
         await katilimciyaBildir(db, k.id, "🚪 AYNA sana bir seçim sunuyor", "İki kapı açıldı — birini seç.", "/gorevler");
       }
-      continue; // normal görev insert'ini atla
+      return; // normal görev insert'ini atla
     }
 
     // FAZ 5.2 — ALTIN GÖREV: bu görev nadir "altın" varyantı mı? Gün kotası
@@ -629,34 +710,43 @@ export async function tikCalistir(
     // türleri üretir — senkron/soz/mentorluk zaten ayrı akışlardan gelir.)
     // Şahit varyantı altınlaşmaz (sessiz gözlem görevi sahne ışığı istemez).
     const altinMi = altinBugunKalan > 0 && !sahitOverride && Math.random() < 0.25;
+    // #4 paralel güvenlik: altın kotasını KARAR ANINDA (await'ten önce) düş —
+    // aksi halde aynı kümedeki iki üretim kotayı beraber görüp aşabilir.
+    if (altinMi) altinBugunKalan--;
 
     // Özellik 5 — override zinciri: johari ve şahit birbirini dışlar (yukarıda
     // şahit yalnız !johariOverride iken kurulur). Statik şablonlar AI görevinin
     // kişisel alanlarını (neden/fayda/somutluk/kas...) taşımaz.
-    const nihaiTitle = johariOverride?.title ?? sahitOverride?.title ?? gorev.title;
-    const nihaiBody = johariOverride?.body ?? sahitOverride?.body ?? gorev.body;
+    const nihaiTitle = davidOverride?.title ?? johariOverride?.title ?? sahitOverride?.title ?? gorev.title;
+    const nihaiBody = davidOverride?.body ?? johariOverride?.body ?? sahitOverride?.body ?? gorev.body;
+    // #4 David yakalama + #7 şahit: statik override → AI görevinin kişisel
+    // alanları (neden/fayda/somutluk/kas) taşınmaz.
+    const statikOverride = !!davidOverride || !!sahitOverride;
 
     // #8 micro_sprint: sure_saat 0.5 = 30 dk. Şahit görevi sabit 2 saatlik.
     const dueAt = new Date(
-      simdi.getTime() + (sahitOverride ? 2 : gorev.sure_saat) * 3_600_000
+      simdi.getTime() + (statikOverride ? 2 : gorev.sure_saat) * 3_600_000
     );
     const { data: yeniGorev, error } = await db
       .from("missions")
       .insert({
         participant_id: k.id,
-        trait_id: johariOverride ? johariOverride.traitId : sahitOverride ? null : gorev.trait_id,
-        kind: sahitOverride ? "sahit" : gorev.kind,
+        trait_id: johariOverride ? johariOverride.traitId : statikOverride ? null : gorev.trait_id,
+        kind: davidOverride ? "yansima" : sahitOverride ? "sahit" : gorev.kind,
+        david_yakalama: !!davidOverride, // #4 rapor/görev köprüsü işareti
         title: nihaiTitle,
         body: nihaiBody,
-        difficulty: sahitOverride ? 1 : gorev.difficulty,
-        neden: sahitOverride ? null : gorev.neden,
-        fayda: sahitOverride ? null : gorev.fayda,
-        ipuclari: sahitOverride ? [] : gorev.ipuclari,
-        micro_sprint: sahitOverride ? false : gorev.micro_sprint,
-        yay_gorevi: sahitOverride ? false : gorev.yayGorevi,
-        donus_bicimi: sahitOverride ? "yaz" : gorev.donusBicimi, // #7 çeşitlilik izlemesi
-        somutluk: sahitOverride ? null : gorev.somutluk, // FAZ 1.1 — kim/ne/nerede/ne_zaman/kanit checklist
+        difficulty: statikOverride ? 1 : gorev.difficulty,
+        neden: statikOverride ? null : gorev.neden,
+        fayda: statikOverride ? null : gorev.fayda,
+        ipuclari: statikOverride ? [] : gorev.ipuclari,
+        micro_sprint: statikOverride ? false : gorev.micro_sprint,
+        yay_gorevi: statikOverride ? false : gorev.yayGorevi,
+        donus_bicimi: statikOverride ? "yaz" : gorev.donusBicimi, // #7 çeşitlilik izlemesi
+        somutluk: statikOverride ? null : gorev.somutluk, // FAZ 1.1 — kim/ne/nerede/ne_zaman/kanit checklist
         altin: altinMi, // FAZ 5.2 — nadir altın görev (3x kıvılcım)
+        // Faz 3 — bahis: johari/şahit override AI metnini değiştirir → bahis düşer.
+        bahis: johariOverride || sahitOverride ? false : gorev.bahis,
         // Özellik 7 — zorluk merdiveni ölçümü: görevin kası + modelin doz ölçümü.
         // Johari/şahit override AI görevinin yerine geçer — o zaman kas izi yazılmaz.
         kas: johariOverride || sahitOverride ? null : gorev.kas,
@@ -673,7 +763,7 @@ export async function tikCalistir(
       })
       .select("id")
       .single();
-    if (error || !yeniGorev) continue;
+    if (error || !yeniGorev) return;
     // FAZ 5.2 — altın görev düştüyse: kotayı düş + HERKESE heyecan push'u
     // (kimde olduğu değil — yalnız "az önce birine düştü"). METİN KURALI:
     // "sıradaki sende" gibi kişiye özel bir vaat KURMA — bu broadcast'i alan
@@ -681,7 +771,6 @@ export async function tikCalistir(
     // söyledi" hissi yaratıyordu (saha geri bildirimi). Yalnız FOMO/sosyal
     // kanıt ver, kendi görevine bak daveti yap — kesinlik iması yok.
     if (altinMi) {
-      altinBugunKalan--;
       await herkeseBildir(
         db,
         "⚡ Kampta bir altın görev çıktı",
@@ -778,6 +867,13 @@ export async function tikCalistir(
     } else if (!sahitOverride && (gorev.kind === "gizli" || gorev.kind === "cesaret")) {
       await gorevSeslendir(db, k.id, yeniGorev.id, gorev.title, gorev.body);
     }
+  };
+
+  // #4 — kümelenmiş paralel dağıtım: ES_ZAMAN kadar kişiye görev aynı anda
+  // üretilir, küme bitince sıradaki küme. Duvar-saati sum-of-sequential yerine
+  // ~(N/ES_ZAMAN)×per-task olur; 60s tik penceresine daha çok kişi sığar.
+  for (let i = 0; i < uygunlar.length; i += ES_ZAMAN) {
+    await Promise.all(uygunlar.slice(i, i + ES_ZAMAN).map(kisiyeGorevDagit));
   }
 
   // 3a-bis) GARANTİLİ GÖREVLER — kamp boyunca HER katılımcıya tam bir kez verilen
@@ -1791,6 +1887,10 @@ export async function tikCalistir(
   // [FAZ 5 · U19] YALNIZ KAMP: fısıltı 360° değerlendirmeye ("Gün 3'te aynanda",
   // /degerlendir) demirli — bu yalnız kampta olur. Yolculukta ratings sorgusu boş
   // döner ama yine de kamp diliyle ateşleme riski + gereksiz sorgu; mod'a gate'lendi.
+  // Faz 4 — KAMP RADYOSU: sabah 07:30 + akşam 21:30 (üretim ~20 dk önce başlar).
+  // Kendi hatasını yutar, tik'i asla düşürmez; kill switch radyoyu da kapatır.
+  if (mod === "kamp") await radyoTik(db, gun, gunDk, bugun);
+
   if (mod === "kamp" && (saat === 13 || saat === 20) && !sahneSessiz) {
     const dilim = saat === 13 ? "ogle" : "aksam";
     const anahtar = `fisilti_${bugun}_${dilim}`;

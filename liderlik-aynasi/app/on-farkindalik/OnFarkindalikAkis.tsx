@@ -661,17 +661,22 @@ function MetinAdim({
           </button>
         </div>
       )}
+      {/* Öneri #9 — konuşmak birincil eylem: büyük "Anlat, ben yazayım" önce,
+          klavye isteyen textarea'dan devam eder. */}
+      <div className="mt-4">
+        <MikrofonButonu
+          belirgin
+          onMetin={(p) => onDegis(deger.trim() ? `${deger.trim()} ${p}` : p)}
+        />
+      </div>
       <textarea
         ref={ref}
         value={deger}
         onChange={(e) => onDegis(e.target.value)}
         rows={3}
         placeholder={t.metinYer}
-        className="mt-4 max-h-[180px] min-h-[4.5rem] w-full resize-none rounded-2xl border-2 border-white/20 bg-white/[0.04] p-4 text-base leading-relaxed text-slate-100 outline-none placeholder:text-slate-500 focus:border-gold"
+        className="mt-3 max-h-[180px] min-h-[4.5rem] w-full resize-none rounded-2xl border-2 border-white/20 bg-white/[0.04] p-4 text-base leading-relaxed text-slate-100 outline-none placeholder:text-slate-500 focus:border-gold"
       />
-      <div className="mt-3">
-        <MikrofonButonu onMetin={(p) => onDegis(deger.trim() ? `${deger.trim()} ${p}` : p)} />
-      </div>
     </>
   );
 }

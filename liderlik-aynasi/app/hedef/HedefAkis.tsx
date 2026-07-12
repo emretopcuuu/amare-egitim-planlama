@@ -30,6 +30,10 @@ import {
 
 const t = tr.hedef;
 
+// [#5] Başlangıç formu taslağı — telefon kilitlenir/sekme değişirse girilen
+// kariyer/OV/VOL/detay uçmasın (diğer formlardaki taslak deseniyle aynı).
+const BASLANGIC_TASLAK = "la_hedef_baslangic_taslak_v1";
+
 type Mesaj = { rol: string; icerik: string };
 type Durum = { asama: string; tamam: boolean; baslangicVar: boolean; plan: KariyerPlani | null; baslangicOv: number | null; baslangicVol: number | null; yeniBaslangic: boolean };
 type Faz = "acilis" | "baslangic" | "sohbet" | "wizard" | "tamam";
@@ -125,6 +129,11 @@ export default function HedefAkis({
             return;
           }
           setKayitBasari((n) => n + 1); // [E8] görünür güven
+          try {
+            localStorage.removeItem(BASLANGIC_TASLAK); // [#5] kaydedildi → taslağı temizle
+          } catch {
+            /* yut */
+          }
           setOv0(ov);
           setVol0(vol);
           setFaz("sohbet");
@@ -236,6 +245,37 @@ function BaslangicFormu({
   const [detay, setDetay] = useState("");
   const [ov, setOv] = useState("");
   const [vol, setVol] = useState("");
+  const taslakYuklendi = useRef(false);
+  // Mount'ta taslağı geri yükle (varsa) — hydration sonrası tek seferlik.
+  useEffect(() => {
+    try {
+      const ham = localStorage.getItem(BASLANGIC_TASLAK);
+      if (ham) {
+        const d = JSON.parse(ham) as Partial<Record<"kariyer" | "ay" | "detay" | "ov" | "vol", string>>;
+        if (d.kariyer) setKariyer(d.kariyer);
+        if (d.ay) setAy(d.ay);
+        if (d.detay) setDetay(d.detay);
+        if (d.ov) setOv(d.ov);
+        if (d.vol) setVol(d.vol);
+      }
+    } catch {
+      /* bozuk/kapalı depolama yok sayılır */
+    }
+    taslakYuklendi.current = true;
+  }, []);
+  // Değişince taslağı yaz (yalnız ilk yükleme bittikten sonra — restore'u ezmesin).
+  useEffect(() => {
+    if (!taslakYuklendi.current) return;
+    try {
+      if (kariyer || ay || detay || ov || vol) {
+        localStorage.setItem(BASLANGIC_TASLAK, JSON.stringify({ kariyer, ay, detay, ov, vol }));
+      } else {
+        localStorage.removeItem(BASLANGIC_TASLAK);
+      }
+    } catch {
+      /* yut */
+    }
+  }, [kariyer, ay, detay, ov, vol]);
   const ovNum = Number(ov);
   const volNum = Number(vol);
   // 0 GEÇERLİ: 3 ay pasif kalmış (OV/VOL = 0) biri de ilerleyebilmeli. Şart,

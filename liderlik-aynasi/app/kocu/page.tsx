@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { pusulaOzeti } from "@/lib/pusula";
+import { aynaKarakterAcikMi, aynaIliskiDurumu, type AynaIliski } from "@/lib/aynaKarakter";
 import KocuSohbet from "./KocuSohbet";
 
 export const metadata = { title: "Ayna Koçu — Liderlik Aynası" };
@@ -21,12 +22,28 @@ export default async function KocuSayfa() {
 
   // #4 Hafıza şeridi: AYNA'nın kişi hakkında bildiği çekirdek (Pusula özeti).
   // "Seni hatırlıyorum" hissi — sohbete güvenle başlatır.
-  const ozet = await pusulaOzeti(supabaseAdmin(), session.sub);
+  const db = supabaseAdmin();
+  const ozet = await pusulaOzeti(db, session.sub);
   const hafiza = ozet ? ilkCumle(ozet) : null;
+
+  // Faz 2 — başlıktaki AYNA pozu ilişki durumuna göre (küs → küs poz; sohbete
+  // yazınca prompt tarafı zaten barışma tonuyla karşılar).
+  let aynaDurum: AynaIliski = "sicak";
+  if (await aynaKarakterAcikMi(db)) {
+    const { data: sonYanit } = await db
+      .from("missions")
+      .select("responded_at")
+      .eq("participant_id", session.sub)
+      .not("responded_at", "is", null)
+      .order("responded_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    aynaDurum = aynaIliskiDurumu(sonYanit?.responded_at ?? null);
+  }
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col">
-      <KocuSohbet hafiza={hafiza} />
+      <KocuSohbet hafiza={hafiza} aynaDurum={aynaDurum} />
     </main>
   );
 }

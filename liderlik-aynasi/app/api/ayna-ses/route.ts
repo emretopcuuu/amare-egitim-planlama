@@ -39,7 +39,7 @@ export async function GET(req: Request) {
       .select("ayna_ses")
       .eq("id", session.sub)
       .maybeSingle();
-    const buf = await seslendir(aynaSesId(kisi?.ayna_ses === "kadin" ? "kadin" : "erkek"), metin);
+    const buf = await seslendir(aynaSesId(), metin);
     return new Response(buf, {
       headers: {
         "content-type": "audio/mpeg",

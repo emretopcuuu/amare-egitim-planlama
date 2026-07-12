@@ -7,6 +7,8 @@ import AsamaRayi, { type RayAsama } from "@/components/AsamaRayi";
 import KayitRozeti from "@/components/KayitRozeti";
 import GizlilikMuhru from "@/components/GizlilikMuhru";
 import AynaYaziyor from "@/components/AynaYaziyor";
+import MikrofonButonu from "@/components/MikrofonButonu";
+import AynaYuzu from "@/components/AynaYuzu";
 import { sureRozeti } from "@/lib/onboardingSure";
 
 const t = tr.pusula;
@@ -48,156 +50,6 @@ function elenenEslesme(metin: string, liste: string[]): string | null {
     const no = normMetin(o);
     return no.includes(n) || n.includes(no);
   }) ?? null;
-}
-
-// Web Speech API — sesle yazma (Türkçe). Desteklenmiyorsa buton görünmez.
-type TanimaSonuc = ArrayLike<{ transcript: string }> & { isFinal: boolean };
-type SesTaniyici = {
-  lang: string;
-  interimResults: boolean;
-  continuous: boolean;
-  onresult:
-    | ((e: { resultIndex: number; results: ArrayLike<TanimaSonuc> }) => void)
-    | null;
-  onerror: (() => void) | null;
-  onend: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-};
-function sesTaniyiciKur(): SesTaniyici | null {
-  if (typeof window === "undefined") return null;
-  const w = window as unknown as {
-    webkitSpeechRecognition?: new () => SesTaniyici;
-    SpeechRecognition?: new () => SesTaniyici;
-  };
-  const Sinif = w.SpeechRecognition ?? w.webkitSpeechRecognition;
-  return Sinif ? new Sinif() : null;
-}
-
-// Kayıt sürerken görünen canlı ses dalgası (çubuklar farklı gecikmeyle dalgalanır).
-function SesDalga() {
-  const cubuklar = [0, 0.12, 0.24, 0.36, 0.18, 0.06, 0.3, 0.42, 0.2, 0.1, 0.34, 0.16];
-  return (
-    <div className="flex h-8 flex-1 items-center justify-center gap-[3px]" aria-hidden>
-      {cubuklar.map((g, i) => (
-        <span key={i} className="ses-cubuk" style={{ animationDelay: `${g}s` }} />
-      ))}
-    </div>
-  );
-}
-
-// Mikrofon: konuşulanı Türkçe metne çevirip hedef alana ekler. Tıkla-başlat /
-// tıkla-durdur. Duraklamalarda (sessizlik) tanıma kendiliğinden biterse, kullanıcı
-// durdurana dek otomatik yeniden başlatılır — böylece mola verince kesilmez.
-function SesButonu({
-  onParca,
-  dinleyince,
-  boyutSinif = "h-11 w-11 rounded-xl",
-}: {
-  onParca: (metin: string) => void;
-  dinleyince?: (aktif: boolean) => void;
-  // Satırdaki diğer kontrollerle hizalansın diye boyut dışarıdan verilebilir.
-  boyutSinif?: string;
-}) {
-  const [dinliyor, setDinliyor] = useState(false);
-  const [sesVar, setSesVar] = useState(false);
-  const taniyiciRef = useRef<SesTaniyici | null>(null);
-  const isterRef = useRef(false); // kullanıcı kaydı sürdürmek istiyor mu
-  const onParcaRef = useRef(onParca);
-  const dinleyinceRef = useRef(dinleyince);
-  useEffect(() => {
-    onParcaRef.current = onParca;
-    dinleyinceRef.current = dinleyince;
-  });
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (sesTaniyiciKur()) setSesVar(true);
-    return () => {
-      isterRef.current = false;
-      taniyiciRef.current?.stop();
-    };
-  }, []);
-
-  function durumGuncelle(aktif: boolean) {
-    setDinliyor(aktif);
-    dinleyinceRef.current?.(aktif);
-  }
-
-  // Taze bir tanıyıcı kurar. Her (yeniden) başlatmada YENİ örnek kullanılır;
-  // böylece sessizlik sonrası restart'ta eski oturumun final sonuçları yeniden
-  // EKLENMEZ (Android Chrome'da kümülatif tekrar yazma hatasının kökü buydu).
-  function kur(): SesTaniyici | null {
-    const tan = sesTaniyiciKur();
-    if (!tan) return null;
-    tan.lang = "tr-TR";
-    tan.interimResults = false;
-    tan.continuous = true;
-    tan.onresult = (e) => {
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        const sonuc = e.results[i];
-        const metin = sonuc?.[0]?.transcript ?? "";
-        if (sonuc?.isFinal && metin.trim()) onParcaRef.current(metin.trim());
-      }
-    };
-    tan.onerror = () => {};
-    tan.onend = () => {
-      if (!isterRef.current) {
-        durumGuncelle(false);
-        return;
-      }
-      const yeni = kur();
-      if (!yeni) {
-        isterRef.current = false;
-        durumGuncelle(false);
-        return;
-      }
-      taniyiciRef.current = yeni;
-      try {
-        yeni.start();
-      } catch {
-        isterRef.current = false;
-        durumGuncelle(false);
-      }
-    };
-    return tan;
-  }
-
-  function basla() {
-    const tan = kur();
-    if (!tan) return;
-    taniyiciRef.current = tan;
-    isterRef.current = true;
-    durumGuncelle(true);
-    try {
-      tan.start();
-    } catch {
-      isterRef.current = false;
-      durumGuncelle(false);
-    }
-  }
-
-  function durdur() {
-    isterRef.current = false;
-    taniyiciRef.current?.stop();
-    durumGuncelle(false);
-  }
-
-  if (!sesVar) return null;
-  return (
-    <button
-      type="button"
-      onClick={() => (dinliyor ? durdur() : basla())}
-      aria-label={dinliyor ? t.sesDurdur : t.sesYaz}
-      aria-pressed={dinliyor}
-      className={`flex ${boyutSinif} shrink-0 items-center justify-center text-xl transition-colors ${
-        dinliyor
-          ? "bg-red-500/80 text-white ring-2 ring-red-400/50"
-          : "bg-midnight-soft text-slate-300 hover:text-slate-100"
-      }`}
-    >
-      {dinliyor ? "■" : "🎤"}
-    </button>
-  );
 }
 
 // Otomatik büyüyen metin alanı — uzun yazınca tek satırda kaymaz, aşağı doğru
@@ -294,8 +146,6 @@ export default function PusulaSohbet({
   const [maddeGirdi, setMaddeGirdi] = useState("");
   const [ornekAcik, setOrnekAcik] = useState(false); // örnek listesi genişledi mi
   const [girdi, setGirdi] = useState("");
-  const [listeDinliyor, setListeDinliyor] = useState(false);
-  const [sohbetDinliyor, setSohbetDinliyor] = useState(false);
   // Elenenleri sunucudaki geçmişten yeniden kur: kişinin önceliklerden seçtiği
   // (yazdığı) maddeler. Böylece sayfa yenilenince elenenler geri gelmez.
   const [elenenler, setElenenler] = useState<string[]>(() => {
@@ -595,18 +445,12 @@ export default function PusulaSohbet({
                 otoOdak
                 disRef={maddeRef}
               />
-              {listeDinliyor && (
-                <div className="flex items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/5 px-3 py-2">
-                  <SesDalga />
-                  <span className="shrink-0 text-xs font-medium text-red-200">
-                    {t.sesDinleniyor}
-                  </span>
-                </div>
-              )}
               <div className="flex items-center gap-2">
-                <SesButonu
-                  onParca={(m) => setMaddeGirdi((g) => (g ? `${g} ${m}` : m))}
-                  dinleyince={setListeDinliyor}
+                {/* Öneri #9/#1 — Scribe destekli sağlam mikrofon (eski salt
+                    Web Speech düğmesi kaldırıldı; iOS'ta "duymuyor"du). */}
+                <MikrofonButonu
+                  ikon
+                  onMetin={(m) => setMaddeGirdi((g) => (g.trim() ? `${g.trim()} ${m}` : m))}
                 />
                 <button
                   onClick={maddeEkle}
@@ -801,6 +645,8 @@ export default function PusulaSohbet({
       <div aria-hidden className="pusula-okur-zemin pointer-events-none absolute inset-0 -z-10" />
       <header className="shrink-0 pb-3">
         <div className="flex items-start justify-between gap-3">
+          {/* Görsel paket #3 — onboarding'in en uzun sohbetinde AYNA'nın yüzü */}
+          <AynaYuzu durum="notr" boyut={40} sinif="shrink-0" />
           <div className="min-w-0 flex-1 text-center">
             <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
               {tr.app.name}
@@ -963,12 +809,6 @@ export default function PusulaSohbet({
             </div>
           )}
 
-          {sohbetDinliyor && (
-            <div className="mb-2 flex shrink-0 items-center gap-2 rounded-2xl border border-red-400/30 bg-red-500/5 px-3 py-2">
-              <SesDalga />
-              <span className="shrink-0 text-xs font-medium text-red-200">{t.sesDinleniyor}</span>
-            </div>
-          )}
           <div className="flex shrink-0 items-end gap-2">
             <div className="min-w-0 flex-1">
               <OtoTextarea
@@ -979,10 +819,11 @@ export default function PusulaSohbet({
                 ariaLabel={t.girisYer}
               />
             </div>
-            <SesButonu
-              onParca={(m) => setGirdi((g) => (g ? `${g} ${m}` : m))}
-              dinleyince={setSohbetDinliyor}
-              boyutSinif="h-12 w-12 rounded-2xl"
+            {/* Öneri #9/#1 — Scribe destekli sağlam mikrofon (eski salt
+                Web Speech düğmesi kaldırıldı; iOS'ta "duymuyor"du). */}
+            <MikrofonButonu
+              ikon
+              onMetin={(m) => setGirdi((g) => (g.trim() ? `${g.trim()} ${m}` : m))}
             />
             <button
               onClick={() => gonder()}

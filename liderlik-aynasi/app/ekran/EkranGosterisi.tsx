@@ -1,5 +1,6 @@
 "use client";
 
+import AynaSahneLoop from "@/components/AynaSahneLoop";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import type { EkranVerisi } from "@/app/api/ekran/route";
@@ -150,6 +151,10 @@ export default function EkranGosterisi() {
   const [dalgaVideo, setDalgaVideo] = useState<number | null>(null);
   // UX #9 — anons görsel bandı: ses kapalıyken bile salon "anons var" görsün.
   const [anonsGoster, setAnonsGoster] = useState(false);
+  // Faz 4/1.5b — Kamp Radyosu yayına geçince gerçek ses çalar; ses SÜRDÜĞÜ
+  // müddetçe maskot "konusma" pozunda (bkz. AynaSahneLoop). Ses bitince/hiç
+  // çalmadıysa "bekleme" — maskot yalnız GERÇEKTEN sesi varken konuşur gibi görünür.
+  const [radyoKonusuyor, setRadyoKonusuyor] = useState(false);
   const sesAcikRef = useRef(false);
   const oynanan = useRef<Set<string>>(new Set());
   // Sahne Vitrini (DJ): host bir slayt sabitlediyse otomatik döngü durur.
@@ -280,6 +285,17 @@ export default function EkranGosterisi() {
           setTimeout(() => setAnonsGoster(false), 8000);
           if (sesAcikRef.current && s.anons.sesUrl) {
             void new Audio(s.anons.sesUrl).play().catch(() => {});
+          }
+        }
+        // Faz 4/1.5b — Kamp Radyosu: gerçek ses çalarken maskot "konusma" pozunda.
+        if (s?.radyo && !oynanan.current.has(`r${s.radyo.id}`)) {
+          oynanan.current.add(`r${s.radyo.id}`);
+          if (sesAcikRef.current && s.radyo.sesUrl) {
+            const ses = new Audio(s.radyo.sesUrl);
+            ses.onplay = () => setRadyoKonusuyor(true);
+            ses.onended = () => setRadyoKonusuyor(false);
+            ses.onerror = () => setRadyoKonusuyor(false);
+            void ses.play().catch(() => setRadyoKonusuyor(false));
           }
         }
       } catch {
@@ -484,6 +500,13 @@ export default function EkranGosterisi() {
         </div>
       )}
       <header className="relative z-10 flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+        {/* Faz 1.5 — canlı AYNA maskotu: bekleme döngüsü sahnede sürekli döner */}
+        {/* Görsel paket #7 — fiero anında kutlama, radyo çalarken konuşma */}
+        <AynaSahneLoop
+          mod={radyoKonusuyor ? "konusma" : fieroGoster ? "kutlama" : "bekleme"}
+          boyut={120}
+          sinif="hidden shrink-0 sm:block"
+        />
         <div className="min-w-0">
           <p className="flex items-center gap-2.5 text-sm font-semibold uppercase tracking-[0.3em] text-royal-light sm:text-lg">
             <span className="ekran-canli-nokta inline-block h-3 w-3 rounded-full bg-red-500" aria-hidden />
@@ -1007,6 +1030,18 @@ export default function EkranGosterisi() {
                         <p className="text-3xl" aria-hidden>📜</p>
                         <p className="mt-1 text-2xl font-bold text-gold-light">
                           {veri.sozMuhur.muhurlu} / {veri.sozMuhur.sozVeren} söz mühürlendi
+                        </p>
+                      </div>
+                    )}
+                    {/* [#10/#3] Salon kariyer kolektifi — görüşme sözü + ilk adım + kayıt */}
+                    {(veri.salonKariyer.gorusmeSozu > 0 || veri.salonKariyer.ilkAdim > 0) && (
+                      <div className="kart-3d rounded-2xl border border-royal-light/30 bg-royal-light/[0.07] p-5 text-center sm:col-span-2">
+                        <p className="text-3xl" aria-hidden>🚀</p>
+                        <p className="mt-1 text-lg font-semibold text-royal-light">
+                          Bu salon
+                          {veri.salonKariyer.gorusmeSozu > 0 && ` ${veri.salonKariyer.gorusmeSozu} görüşme sözü verdi`}
+                          {veri.salonKariyer.ilkAdim > 0 && ` · ${veri.salonKariyer.ilkAdim} ilk adım attı`}
+                          {veri.salonKariyer.kayit > 0 && ` · ${veri.salonKariyer.kayit} kayıt 🎉`}
                         </p>
                       </div>
                     )}

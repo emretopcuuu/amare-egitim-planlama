@@ -567,8 +567,10 @@ export default function PuanlamaFormu({
                   {tr.puanlama.yorumZorunlu}
                 </p>
               )}
+              {/* Öneri #9 — konuşmak birincil eylem: büyük "Anlat, ben yazayım". */}
               <div className="mt-2">
                 <MikrofonButonu
+                  belirgin
                   onMetin={(p) =>
                     guncelle(o.id, {
                       yorum: (g.yorum.trim() ? `${g.yorum.trim()} ` : "") + p,

@@ -5,6 +5,15 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { kampKilitliMi } from "@/lib/pusula";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { gorevAraligiDk } from "@/lib/ayna";
+import {
+  aynaKarakterAcikMi,
+  aynaIliskiDurumu,
+  gunlukLaf,
+  BOS_EKRAN_LAFLARI,
+  KUS_MODU_METINLERI,
+  type AynaIliski,
+} from "@/lib/aynaKarakter";
+import AynaYuzu from "@/components/AynaYuzu";
 import { unvanBul, UNVANLAR } from "@/lib/kivilcim";
 import { ZORLUK_ETIKETI, type Zorluk } from "@/lib/davranis";
 import { haftaBaslangici } from "@/lib/momentum";
@@ -84,6 +93,9 @@ import SesliMektup from "./SesliMektup";
 import GovdeAcilis from "./GovdeAcilis";
 import KisiKarti from "@/components/KisiKarti";
 import { sesliMektupGoreviMi } from "@/lib/sesliMektup";
+import { yayinArsiviGetir } from "@/lib/kampRadyosu";
+import RadyoCanli from "@/components/RadyoCanli";
+import GorevAynaIpucu from "@/components/GorevAynaIpucu";
 
 export const metadata = { title: "AYNA'nın Görevleri — Liderlik Aynası" };
 
@@ -103,7 +115,7 @@ export default async function GorevlerPage() {
   const { data: gorevler, error } = await db
     .from("missions")
     .select(
-      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, reflection_text, reflection_reply, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id, somutluk, altin, secim_grubu, kapi_etiket, kas, zorluk_seviye"
+      "id, kind, title, body, status, issued_at, due_at, scored_at, response_text, reflection_text, reflection_reply, ai_score, ai_comment, spark_points, voice_path, difficulty, neden, fayda, ipuclari, micro_sprint, started_at, ertelenme_sayisi, gec_tamamlandi, trait_id, somutluk, altin, secim_grubu, kapi_etiket, kas, zorluk_seviye, bahis"
     )
     .eq("participant_id", session.sub)
     .order("issued_at", { ascending: false })
@@ -356,6 +368,38 @@ export default async function GorevlerPage() {
   for (const ch of `${session.sub}:${bugunGorev}`) ipucuTohum = (ipucuTohum * 31 + ch.charCodeAt(0)) % ipucuHavuzu.length;
   const fragmanIpucu = ipucuHavuzu[ipucuTohum];
 
+  // Faz 4 + UX #10 — Kamp Radyosu: son yayın (ana kart) + önceki yayınlar arşivi.
+  const yayinlar = await yayinArsiviGetir(db, 3);
+  const radyo = yayinlar[0] ?? null;
+  const radyoArsiv = yayinlar.slice(1);
+
+  // Faz 2 — AYNA ilişki durumu: son görev yanıtından deterministik türetilir.
+  // Küs moddayken boş ekranda küs poz + soğuk (ama oyunlu) laf havuzu konuşur.
+  const karakterAcik = await aynaKarakterAcikMi(db);
+  let aynaDurum: AynaIliski = "sicak";
+  if (karakterAcik) {
+    const { data: sonYanit } = await db
+      .from("missions")
+      .select("responded_at")
+      .eq("participant_id", session.sub)
+      .not("responded_at", "is", null)
+      .order("responded_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    aynaDurum = aynaIliskiDurumu(sonYanit?.responded_at ?? null);
+  }
+  // Görsel paket #5 — gece kuşağında (23:00-07:00 Istanbul) AYNA uyur.
+  const istSaat = Number(
+    new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Istanbul", hour: "2-digit", hour12: false })
+      .format(new Date())
+  );
+  const gece = istSaat >= 23 || istSaat < 7;
+  const aynaLafi = karakterAcik
+    ? gece
+      ? t.uykuLafi
+      : gunlukLaf(aynaDurum === "kus" ? KUS_MODU_METINLERI : BOS_EKRAN_LAFLARI, session.sub)
+    : null;
+
   // (Geçmiş zaman çizelgesi gruplaması artık GorevGecmisi client bileşeninde —
   // filtre + özet için.)
 
@@ -364,6 +408,7 @@ export default async function GorevlerPage() {
   // kullanılır. Aynı işi iki yerde tekrar yazmamak için fonksiyona çıkarıldı.
   function GorevKarti({ g, vurgu }: { g: (typeof aktif)[number]; vurgu: boolean }) {
     const altinMi = !!(g as { altin?: boolean }).altin;
+    const bahisMi = !!(g as { bahis?: boolean }).bahis; // Faz 3 — AYNA-İtirazcı bahsi
     // Özellik 4 — sesli mektup görevi: yanıt yazılmaz, mikrofonla kaydedilir.
     const mektupMu = sesliMektupGoreviMi(g);
     const atm = atmosferBul(g.kind, altinMi);
@@ -376,6 +421,17 @@ export default async function GorevlerPage() {
         {altinMi && (
           <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-gold/30 px-3 py-1 text-xs font-bold uppercase tracking-widest text-gold-light ring-1 ring-gold/50">
             ⚡ Altın Görev · 3× kıvılcım
+          </p>
+        )}
+        {/* Faz 3 — İDDİA: bu görev AYNA ile İtirazcı arasındaki bir bahsin hakemi */}
+        {bahisMi && (
+          <p className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-purple-500/20 px-3 py-1 text-xs font-bold uppercase tracking-widest text-purple-200 ring-1 ring-purple-400/40">
+            {/* Görsel paket #9 — bahsin iki tarafı yüz yüze */}
+            <AynaYuzu durum="gururlu" boyut={20} hareketli={false} sinif="shrink-0" />
+            <span aria-hidden>⚔️</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/ayna/itirazci.webp" alt="İtirazcı" width={20} height={20} className="shrink-0 select-none" draggable={false} />
+            {t.bahisRozet}
           </p>
         )}
         {/* D4 — KAS ROZETİ: bu görevin çalıştırdığı lider kası + kaçıncı antrenman */}
@@ -393,9 +449,17 @@ export default async function GorevlerPage() {
         />
         <div className="relative">
         {vurgu && (
-          <p className="mb-2 inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-bold tracking-wide text-gold-light">
-            {tr.degerlendir.simdiSira}
-          </p>
+          <div className="mb-2 flex items-start justify-between gap-2">
+            <p className="inline-block rounded-full bg-gold/20 px-3 py-1 text-xs font-bold tracking-wide text-gold-light">
+              {tr.degerlendir.simdiSira}
+            </p>
+            {/* Faz 1 + UX #9 — köşedeki AYNA artık işlevsel: dokununca görevin
+                ilk ipucunu söyler. Altın görevde etkilenmiş poz. */}
+            <GorevAynaIpucu
+              durum={altinMi ? "etkilenmis" : "konusuyor"}
+              ipucu={Array.isArray(g.ipuclari) ? (g.ipuclari as string[])[0] : null}
+            />
+          </div>
         )}
         <div className="flex items-center justify-between text-xs">
           <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium ${atm.rozet}`}>
@@ -616,6 +680,51 @@ export default async function GorevlerPage() {
         aktifVar={aktif.length > 0}
       />
 
+      {/* Faz 4 — KAMP RADYOSU: bugünün yayını (ses varsa çal, yoksa salt metin) */}
+      {radyo && (
+        <section className="kart-cam rounded-2xl p-4">
+          {/* Görsel paket #10 — ses çalarken maskot konuşma loop'una geçer */}
+          <RadyoCanli slot={radyo.slot} sesUrl={radyo.sesUrl} />
+          {/* UX #5 — transkript önizlemesi: sessiz ortamdaki kişi ilk cümleyi
+              her zaman görür; tamamı açılır bölümde. */}
+          <p className="mt-2 text-sm italic leading-relaxed text-slate-400">
+            “{(radyo.metin.match(/^[^.!?]*[.!?]/)?.[0] ?? radyo.metin.slice(0, 90)).trim()}”
+          </p>
+          <details className="mt-1">
+            <summary className="cursor-pointer text-xs font-medium text-slate-500">
+              {t.radyoMetin}
+            </summary>
+            <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-slate-300">
+              {radyo.metin}
+            </p>
+          </details>
+          {/* UX #10 — önceki yayınlar: sabahı kaçıran akşam dinleyebilsin */}
+          {radyoArsiv.length > 0 && (
+            <details className="mt-2 border-t border-white/10 pt-2">
+              <summary className="cursor-pointer text-xs font-medium text-slate-500">
+                {t.radyoOnceki} ({radyoArsiv.length})
+              </summary>
+              <div className="mt-2 space-y-3">
+                {radyoArsiv.map((y) => (
+                  <div key={y.id} className="rounded-xl bg-black/20 p-3">
+                    <p className="text-xs font-semibold text-slate-400">
+                      {y.slot === "sabah" ? t.radyoSabah : t.radyoAksam} ·{" "}
+                      {new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long" }).format(
+                        new Date(`${y.tarih}T12:00:00+03:00`)
+                      )}
+                    </p>
+                    {y.sesUrl && <SesCal url={y.sesUrl} etiket={t.radyoDinle} />}
+                    <p className="mt-1.5 whitespace-pre-line text-xs leading-relaxed text-slate-400">
+                      {y.metin}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </details>
+          )}
+        </section>
+      )}
+
       {/* FAZ 5.4 — İKİ KAPI: seçim bekleyen kapılar (aktif görevden önce) */}
       {kapiAdaylari.length > 0 && (
         <KapiSecimi
@@ -725,6 +834,9 @@ export default async function GorevlerPage() {
           siradakiDk={siradakiDk}
           siradakiSaat={siradakiSaat}
           fragmanIpucu={fragmanIpucu}
+          aynaLafi={aynaLafi}
+          aynaDurum={aynaDurum}
+          gece={gece}
         />
       ) : (
         <>

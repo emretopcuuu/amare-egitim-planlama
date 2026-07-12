@@ -23,18 +23,23 @@ export type ProvaDurum = {
   aktif: boolean;
   gun: number; // 1-3
   gunBaslangic: string | null; // bu sanal günün gerçek başladığı an (ISO)
+  // GÜVENLİK KİLİDİ: prova artık yalnız TEK bir katılımcıyla koşar. Tik'in
+  // katılımcı sorgusu bu id'ye sabitlenir — gerçek onboarding'deki herkese
+  // görev/bildirim gitmesin diye (bkz. lib/tik.ts provaModu dalı).
+  katilimciId: string | null;
 };
 
 export async function provaDurum(db: Db): Promise<ProvaDurum> {
   const { data } = await db
     .from("settings")
     .select("key, value")
-    .in("key", ["prova_aktif", "prova_gun", "prova_gun_baslangic"]);
+    .in("key", ["prova_aktif", "prova_gun", "prova_gun_baslangic", "prova_katilimci_id"]);
   const m = new Map((data ?? []).map((r) => [r.key, r.value]));
   return {
     aktif: m.get("prova_aktif") === "true",
     gun: Math.min(3, Math.max(1, Number(m.get("prova_gun") ?? "1") || 1)),
     gunBaslangic: m.get("prova_gun_baslangic") ?? null,
+    katilimciId: m.get("prova_katilimci_id") ?? null,
   };
 }
 
@@ -60,12 +65,15 @@ async function kilitleriTemizle(db: Db) {
   await db.from("settings").delete().or(KILIT_DESENLERI);
 }
 
-/** Provayı başlat: Gün 1, sanal saat şimdiden akmaya başlar, motor uyanır, kilitler temiz. */
-export async function provaBaslat(db: Db, simdi: Date) {
+/** Provayı başlat: Gün 1, sanal saat şimdiden akmaya başlar, motor uyanır, kilitler temiz.
+ * katilimciId ZORUNLU — prova artık yalnız bu tek kişiyle koşar (gerçek
+ * onboarding'deki diğer herkes tik'in katılımcı sorgusunda elenir). */
+export async function provaBaslat(db: Db, simdi: Date, katilimciId: string) {
   await kilitleriTemizle(db);
   await ayar(db, "prova_aktif", "true");
   await ayar(db, "prova_gun", "1");
   await ayar(db, "prova_gun_baslangic", simdi.toISOString());
+  await ayar(db, "prova_katilimci_id", katilimciId);
   await ayar(db, "ayna_aktif", "true");
   await ayar(db, "sistem_modu", "kamp");
 }
@@ -83,4 +91,5 @@ export async function provaGunGec(db: Db, simdi: Date): Promise<number> {
 /** Provayı bitir (motor durmaz; sadece sanal saat devre dışı → gerçek zamana döner). */
 export async function provaBitir(db: Db) {
   await ayar(db, "prova_aktif", "false");
+  await db.from("settings").delete().eq("key", "prova_katilimci_id");
 }

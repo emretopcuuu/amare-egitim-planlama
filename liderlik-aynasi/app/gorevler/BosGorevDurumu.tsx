@@ -1,7 +1,11 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
+import { sesCal } from "@/lib/sesEfekti";
+import AynaYuzu, { type AynaDurum } from "@/components/AynaYuzu";
+import AynaLaf from "@/components/AynaLaf";
 import EkstraGorev from "./EkstraGorev";
 
 const t = tr.gorevler;
@@ -15,12 +19,44 @@ export default function BosGorevDurumu({
   siradakiDk,
   siradakiSaat,
   fragmanIpucu,
+  aynaLafi,
+  aynaDurum = "sicak",
+  gece = false,
 }: {
   siradakiDk: number | null;
   // D9: sıradaki turun yaklaşık Istanbul saati ("HH:MM") — sunucu hesaplar.
   siradakiSaat?: string | null;
   fragmanIpucu?: string;
+  // Faz 0 — AYNA karakteri: günün lafı (statik havuzdan, sunucu seçer).
+  aynaLafi?: string | null;
+  // Faz 2 — ilişki durumu: küs ise poz da laf da soğur (oyunlu küslük).
+  aynaDurum?: "sicak" | "serin" | "kus";
+  // Görsel paket #5 — gece kuşağı: AYNA uyur (uykuda pozu + uyku lafı).
+  gece?: boolean;
 }) {
+  // Görsel paket #4 — dokununca tepki: kısa poz değişimi + SFX + arada laf balonu.
+  const [tepkiPoz, setTepkiPoz] = useState<AynaDurum | null>(null);
+  const [balon, setBalon] = useState<string | null>(null);
+  const tepkiZamanlayici = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tiklamaSayac = useRef(0);
+
+  function maskotaDokun() {
+    if (gece) return; // uyuyan AYNA uyandırılmaz — o ayrı bir şaka
+    tiklamaSayac.current += 1;
+    const pozlar: AynaDurum[] = ["saskin", "gururlu", "etkilenmis"];
+    setTepkiPoz(pozlar[tiklamaSayac.current % pozlar.length]);
+    sesCal("kivilcim");
+    // Her 2-3 dokunuşta bir laf balonu (sürekli konuşan maskot yorucu olur).
+    if (tiklamaSayac.current % 3 === 1) {
+      const laflar = t.tiklamaLaflari;
+      setBalon(laflar[tiklamaSayac.current % laflar.length]);
+    }
+    if (tepkiZamanlayici.current) clearTimeout(tepkiZamanlayici.current);
+    tepkiZamanlayici.current = setTimeout(() => {
+      setTepkiPoz(null);
+      setBalon(null);
+    }, 2200);
+  }
   const bekleme =
     siradakiDk == null || siradakiDk <= 0
       ? t.bosHerAn
@@ -30,28 +66,28 @@ export default function BosGorevDurumu({
 
   return (
     <section className="kart-cam relative overflow-hidden rounded-3xl px-6 py-8 text-center">
-      {/* Yaşayan AYNA gözü — nefes alır, iris döner (marka tutarlılığı) */}
-      <div className="mx-auto mb-3 h-24 w-24">
-        <div className="ayna-goz relative h-24 w-24 rounded-full">
-          <span
-            className="absolute inset-0 rounded-full"
-            style={{
-              background:
-                "radial-gradient(circle, transparent 28%, rgba(212,175,55,0.5) 46%, rgba(78,124,166,0.42) 62%, transparent 75%)",
-            }}
-            aria-hidden
+      {/* Faz 1/2 + görsel paket #4/#5 — AYNA'nın yüzü: dokununca tepki verir,
+          gece uyur, küs moddaysa somurtur. */}
+      <div className="relative mx-auto mb-3 h-28 w-28">
+        <button
+          type="button"
+          onClick={maskotaDokun}
+          aria-label="AYNA'ya dokun"
+          className="cursor-pointer"
+        >
+          <AynaYuzu
+            durum={tepkiPoz ?? (gece ? "uykuda" : aynaDurum === "kus" ? "kus" : "notr")}
+            boyut={112}
+            sinif="mx-auto drop-shadow-[0_0_24px_rgba(212,175,55,0.25)]"
           />
-          <span
-            className="ayna-goz-iris absolute inset-[16%] rounded-full"
-            style={{
-              background:
-                "conic-gradient(from 0deg, rgba(212,175,55,0.32), transparent 12%, rgba(78,124,166,0.32) 24%, transparent 36%, rgba(212,175,55,0.32) 48%, transparent 60%, rgba(78,124,166,0.32) 72%, transparent 84%, rgba(212,175,55,0.32) 96%, transparent)",
-            }}
-            aria-hidden
+        </button>
+        {balon && (
+          <AynaLaf
+            metin={balon}
+            kuyruk="alt"
+            sinif="absolute -top-2 left-1/2 w-max -translate-x-1/2 -translate-y-full"
           />
-          <span className="absolute inset-[38%] rounded-full bg-[#01060c] shadow-[inset_0_0_28px_rgba(0,0,0,0.85)]" aria-hidden />
-          <span className="absolute left-[42%] top-[40%] h-[7%] w-[7%] rounded-full bg-white/70 blur-[1px]" aria-hidden />
-        </div>
+        )}
       </div>
 
       <p className="text-xs font-semibold uppercase tracking-[0.25em] text-gold-light/70">
@@ -63,6 +99,13 @@ export default function BosGorevDurumu({
         <span className="ekran-canli-nokta inline-block h-1.5 w-1.5 rounded-full bg-gold/70" aria-hidden />
         {t.bosMerak}
       </p>
+
+      {/* Faz 0 — AYNA'nın günün lafı: karakter boş anda da yaşar */}
+      {aynaLafi && (
+        <p className="mx-auto mt-4 max-w-sm text-sm italic leading-relaxed text-gold-light/80">
+          “{aynaLafi}”
+        </p>
+      )}
 
       {/* FAZ 5.1 + D9 — GÖREV FRAGMANI: kilitli kart, gerçek içeriği asla açık
           etmez + tek cümlelik "hazırlan" önerisi */}

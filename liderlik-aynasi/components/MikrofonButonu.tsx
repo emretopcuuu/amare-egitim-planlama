@@ -10,8 +10,16 @@ import { tr } from "@/lib/i18n/tr";
 //    belirgin isabetli ve WhatsApp-içi tarayıcı gibi Web Speech'in HİÇ olmadığı
 //    ortamlarda da çalışır (yalnız mikrofon kaydı gerekir).
 // 2) YEDEK (Faz 1, "tarayici"): tarayıcının yerleşik tanıması (Web Speech) —
-//    canlı önizleme + otomatik yeniden başlatma. Scribe ucu düşerse (503/502)
-//    sonraki denemeler bu motora döner; MediaRecorder yoksa baştan bu moddur.
+//    canlı önizleme + otomatik yeniden başlatma. Scribe SERVİSİ yoksa (503)
+//    ya da üst üste düşerse sonraki denemeler bu motora döner; MediaRecorder
+//    yoksa baştan bu moddur.
+//
+// GÜVENİLİRLİK (saha geri bildirimi "her zaman duymuyor"):
+// - Boş kayıt / boş çeviri artık SESSİZ geçilmez — kişiye ne olduğu söylenir.
+// - Başarısız çeviride kayıt atılmaz: "Tekrar gönder" aynı kaydı yeniden dener.
+// - 429 (AI limiti) GEÇİCİDİR: motor tarayıcıya düşürülmez, bekle-yeniden-gönder.
+// - Kayıt sırasında GERÇEK mikrofon seviyesi (AnalyserNode) çizilir; ses hiç
+//   gelmiyorsa 4 sn'de dürüst "mikrofon ses almıyor" uyarısı çıkar.
 //
 // İki motor da yoksa düğme hiç görünmez.
 
@@ -34,8 +42,11 @@ type Tanima = {
 
 // Kayıt/dinleme tavanları.
 const AZAMI_KAYIT_SN = 120; // Scribe kaydı — maliyet ve istek boyutu sınırı
-const AZAMI_DINLEME_MS = 90_000; // Web Speech oturam tavanı (yedek motor)
+const AZAMI_DINLEME_MS = 90_000; // Web Speech oturum tavanı (yedek motor)
 const SESSIZLIK_IPUCU_MS = 5_000;
+const VU_SESSIZLIK_MS = 4_000; // gerçek seviye bu kadar süre sıfırsa uyar
+const KISA_KAYIT_BAYT = 1024; // altı: kayıt fiilen boş (iOS anlık dokunuşları)
+const SCRIBE_DUSME_ESIGI = 2; // üst üste bu kadar servis hatasında tarayıcıya dön
 
 function hataMesaji(kod: string | undefined): string {
   switch (kod) {
@@ -81,12 +92,16 @@ export default function MikrofonButonu({
   onMetin,
   disabled,
   ikon = false,
+  belirgin = false,
 }: {
   onMetin: (parca: string) => void;
   disabled?: boolean;
   // Kompakt ikon modu: dar giriş satırlarında (Hedef/Pusula sohbeti gibi)
   // textarea + Gönder ile aynı hizada duran kare ikon düğme.
   ikon?: boolean;
+  // Öneri #9 — "Anlat, ben yazayım": açık uçlu onboarding alanlarında konuşma
+  // BİRİNCİL eylem olsun diye büyük, tam genişlik, birincil stilli düğme.
+  belirgin?: boolean;
 }) {
   const [motor, setMotor] = useState<"yok" | "scribe" | "tarayici">("yok");
   const [dinliyor, setDinliyor] = useState(false);
@@ -95,6 +110,8 @@ export default function MikrofonButonu({
   const [araMetin, setAraMetin] = useState("");
   const [sessizIpucu, setSessizIpucu] = useState(false);
   const [kayitSn, setKayitSn] = useState(0);
+  // Başarısız çeviri sonrası aynı kaydı yeniden gönderme imkânı (render tetikler).
+  const [tekrarVar, setTekrarVar] = useState(false);
 
   const onMetinRef = useRef(onMetin);
   useEffect(() => {
@@ -108,6 +125,13 @@ export default function MikrofonButonu({
   const sayacRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // Kayıt vazgeçilerek mi durdu (unmount) — çeviriye gönderme.
   const vazgecildiRef = useRef(false);
+  // Son başarısız kayıt: "Tekrar gönder" bunu yeniden dener (yeniden konuşturma).
+  const sonKayitRef = useRef<{ blob: Blob; tip: string } | null>(null);
+  // Üst üste Scribe SERVİS hatası sayacı (429 sayılmaz — o geçici).
+  const scribeHataRef = useRef(0);
+  // Gerçek seviye ölçümü (VU) — süsleme değil: "duyuyor mu?" sorusunun cevabı.
+  const vuRef = useRef<{ ctx: AudioContext; raf: number } | null>(null);
+  const cubukRef = useRef<(HTMLSpanElement | null)[]>([]);
 
   // — Web Speech (yedek) durumu —
   const tanimaRef = useRef<Tanima | null>(null);
@@ -126,6 +150,7 @@ export default function MikrofonButonu({
       istekliDurdurmaRef.current = true;
       if (sayacRef.current) clearInterval(sayacRef.current);
       if (ipucuZamanlayiciRef.current) clearTimeout(ipucuZamanlayiciRef.current);
+      vuDurdur();
       kayitciRef.current?.stream.getTracks().forEach((iz) => iz.stop());
       akisRef.current?.getTracks().forEach((iz) => iz.stop());
       const t = tanimaRef.current;
@@ -135,14 +160,74 @@ export default function MikrofonButonu({
         t.stop();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (motor === "yok") return null;
+
+  // ————— GERÇEK SEVİYE (VU) —————
+
+  function vuBaslat(akis: MediaStream) {
+    try {
+      const AC =
+        window.AudioContext ??
+        (window as unknown as { webkitAudioContext?: typeof AudioContext })
+          .webkitAudioContext;
+      if (!AC) return;
+      const ctx = new AC();
+      const analiz = ctx.createAnalyser();
+      analiz.fftSize = 256;
+      ctx.createMediaStreamSource(akis).connect(analiz);
+      const veri = new Uint8Array(analiz.frequencyBinCount);
+      // Konuşma enerjisi alt bantlarda — üst %40'ı atla (boş tiz gürültüsü).
+      const ustSinir = Math.floor(veri.length * 0.6);
+      let sonSesMs = Date.now();
+      const dongu = () => {
+        analiz.getByteFrequencyData(veri);
+        for (let b = 0; b < cubukRef.current.length; b++) {
+          const el = cubukRef.current[b];
+          if (!el) continue;
+          const bas = Math.floor((b / cubukRef.current.length) * ustSinir);
+          const son = Math.floor(((b + 1) / cubukRef.current.length) * ustSinir);
+          let toplam = 0;
+          for (let i = bas; i < son; i++) toplam += veri[i];
+          const oran = toplam / Math.max(1, son - bas) / 255;
+          el.style.animation = "none"; // CSS süs animasyonunu gerçek seviye ezer
+          el.style.transformOrigin = "center";
+          el.style.transform = `scaleY(${Math.max(0.15, Math.min(1, oran * 2.4))})`;
+        }
+        let genelToplam = 0;
+        for (let i = 0; i < ustSinir; i++) genelToplam += veri[i];
+        const genel = genelToplam / ustSinir / 255;
+        if (genel > 0.02) {
+          sonSesMs = Date.now();
+          setSessizIpucu(false);
+        } else if (Date.now() - sonSesMs > VU_SESSIZLIK_MS) {
+          setSessizIpucu(true);
+        }
+        if (vuRef.current) vuRef.current.raf = requestAnimationFrame(dongu);
+      };
+      vuRef.current = { ctx, raf: requestAnimationFrame(dongu) };
+    } catch {
+      // VU ölçümü düşerse kayıt etkilenmez — çubuklar CSS animasyonunda kalır.
+    }
+  }
+
+  function vuDurdur() {
+    const v = vuRef.current;
+    if (!v) return;
+    vuRef.current = null;
+    cancelAnimationFrame(v.raf);
+    void v.ctx.close().catch(() => {});
+  }
 
   // ————— SCRIBE (birincil) —————
 
   async function kayitBaslat() {
     setHata(null);
+    setTekrarVar(false);
+    setSessizIpucu(false);
+    sonKayitRef.current = null;
     vazgecildiRef.current = false;
     try {
       const ses = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -161,10 +246,23 @@ export default function MikrofonButonu({
         ses.getTracks().forEach((iz) => iz.stop());
         akisRef.current = null;
         if (sayacRef.current) clearInterval(sayacRef.current);
-        if (!vazgecildiRef.current) void cevir(kaydedici.mimeType);
+        vuDurdur();
+        setSessizIpucu(false);
+        if (vazgecildiRef.current) return;
+        const blobTip = kaydedici.mimeType.includes("mp4") ? "audio/mp4" : "audio/webm";
+        const blob = new Blob(parcalarRef.current, { type: blobTip });
+        parcalarRef.current = [];
+        // Eskiden boş kayıt SESSİZCE yutuluyordu → "duymadı" algısı. Artık söyle.
+        if (blob.size < KISA_KAYIT_BAYT) {
+          setHata(blob.size === 0 ? tr.ses.hata.sessiz : tr.ses.kisaKayit);
+          return;
+        }
+        sonKayitRef.current = { blob, tip: blobTip };
+        void cevir(blob, blobTip);
       };
       kayitciRef.current = kaydedici;
       kaydedici.start(1000);
+      vuBaslat(ses);
       setDinliyor(true);
       setKayitSn(0);
       sayacRef.current = setInterval(() => {
@@ -185,32 +283,61 @@ export default function MikrofonButonu({
     if (k && k.state !== "inactive") k.stop(); // onstop → cevir()
   }
 
-  async function cevir(mime: string) {
+  async function cevir(blob: Blob, tip: string) {
     setCevriliyor(true);
     setHata(null);
+    setTekrarVar(false);
     try {
-      const tip = mime.includes("mp4") ? "audio/mp4" : "audio/webm";
-      const blob = new Blob(parcalarRef.current, { type: tip });
-      parcalarRef.current = [];
-      if (blob.size === 0) return;
       const form = new FormData();
       form.append("ses", blob, tip.includes("mp4") ? "kayit.mp4" : "kayit.webm");
       const res = await fetch("/api/ses-yaz", { method: "POST", body: form });
       const veri = await res.json().catch(() => null);
-      if (res.ok && veri?.metin) {
-        if (veri.metin.trim()) onMetinRef.current(veri.metin.trim());
+      if (res.ok && typeof veri?.metin === "string") {
+        scribeHataRef.current = 0;
+        if (veri.metin.trim()) {
+          sonKayitRef.current = null;
+          onMetinRef.current(veri.metin.trim());
+        } else {
+          // Scribe kayıtta konuşma bulamadı — aynı kaydı yeniden denemek boşuna.
+          sonKayitRef.current = null;
+          setHata(tr.ses.duyamadim);
+        }
         return;
       }
-      // Scribe düştü (anahtar yok / servis hatası): sonraki denemeler için
-      // tarayıcı motoruna geç (varsa) — bu kayıt kurtarılamaz, kişiye söyle.
-      if (tanimaOlustur()) setMotor("tarayici");
+      // 429 = AI limit penceresi, GEÇİCİ: motoru düşürme, kaydı sakla, beklet.
+      if (res.status === 429) {
+        setHata(tr.ses.yogun);
+        setTekrarVar(true);
+        return;
+      }
+      // 503 = servis yapılandırılmamış (anahtar yok): kalıcı — tarayıcıya dön.
+      if (res.status === 503) {
+        if (tanimaOlustur()) setMotor("tarayici");
+        setHata(tr.ses.cevirihata);
+        return;
+      }
+      // 502/diğer: geçici servis hatası olabilir — kaydı tut, tekrar dene imkânı
+      // ver; ancak üst üste düşüyorsa tarayıcı motoruna dön (varsa).
+      scribeHataRef.current++;
+      if (scribeHataRef.current >= SCRIBE_DUSME_ESIGI && tanimaOlustur()) {
+        setMotor("tarayici");
+        setHata(tr.ses.cevirihata);
+        return;
+      }
       setHata(tr.ses.cevirihata);
+      setTekrarVar(true);
     } catch {
-      if (tanimaOlustur()) setMotor("tarayici");
-      setHata(tr.ses.cevirihata);
+      // Ağ hatası: kayıt elimizde — bağlantı gelince yeniden gönderilebilir.
+      setHata(tr.ses.hata.ag);
+      setTekrarVar(true);
     } finally {
       setCevriliyor(false);
     }
+  }
+
+  function tekrarGonder() {
+    const s = sonKayitRef.current;
+    if (s && !cevriliyor) void cevir(s.blob, s.tip);
   }
 
   // ————— WEB SPEECH (yedek — Faz 1 davranışı) —————
@@ -316,9 +443,9 @@ export default function MikrofonButonu({
       ? motor === "scribe"
         ? `⏺ ${tr.ses.dinliyorKisa} ${sureYazi(kayitSn)}`
         : `⏺ ${tr.ses.dinliyorKisa}`
-      : `🎙 ${tr.ses.baslat}`;
+      : `🎙 ${belirgin ? tr.ses.anlatYazayim : tr.ses.baslat}`;
 
-  // Canlı şerit: scribe modunda kayıt ipucu; tarayıcı modunda ara metin/ipucu.
+  // Canlı şerit: scribe modunda kayıt/sessizlik ipucu; tarayıcı modunda ara metin.
   const canliSerit = dinliyor ? (
     <p
       role="status"
@@ -332,10 +459,24 @@ export default function MikrofonButonu({
       }`}
     >
       {motor === "scribe"
-        ? tr.ses.kayitIpucu
+        ? sessizIpucu
+          ? tr.ses.mikSesYok
+          : tr.ses.kayitIpucu
         : araMetin || (sessizIpucu ? tr.ses.duyamiyorum : tr.ses.konusIpucu)}
     </p>
   ) : null;
+
+  // Başarısız çeviri sonrası aynı kaydı yeniden gönderme düğmesi.
+  const tekrarDugmesi =
+    tekrarVar && !dinliyor && !cevriliyor ? (
+      <button
+        type="button"
+        onClick={tekrarGonder}
+        className="rounded-lg border border-amber-400/40 px-2.5 py-1 text-xs font-semibold text-amber-200 hover:bg-amber-400/10"
+      >
+        {tr.ses.tekrarGonder}
+      </button>
+    ) : null;
 
   if (ikon) {
     return (
@@ -356,11 +497,14 @@ export default function MikrofonButonu({
           {cevriliyor ? "✍️" : dinliyor ? "⏹" : "🎤"}
         </button>
         {(dinliyor || cevriliyor || hata) && (
-          <div className="absolute bottom-full right-0 mb-2 w-max max-w-[16rem] rounded-lg bg-midnight px-3 py-1.5 shadow-lg ring-1 ring-royal-light/25">
+          <div className="absolute bottom-full right-0 mb-2 w-max max-w-[16rem] space-y-1.5 rounded-lg bg-midnight px-3 py-1.5 shadow-lg ring-1 ring-royal-light/25">
             {hata ? (
-              <p role="status" className="text-xs leading-relaxed text-amber-300/90">
-                {hata}
-              </p>
+              <>
+                <p role="status" className="text-xs leading-relaxed text-amber-300/90">
+                  {hata}
+                </p>
+                {tekrarDugmesi}
+              </>
             ) : cevriliyor ? (
               <p role="status" className="text-xs leading-relaxed text-slate-300">
                 {tr.ses.cevriliyor}
@@ -375,8 +519,8 @@ export default function MikrofonButonu({
   }
 
   return (
-    <div className="flex flex-col items-start gap-2">
-      <div className="flex items-center gap-3">
+    <div className={`flex flex-col items-start gap-2 ${belirgin ? "w-full" : ""}`}>
+      <div className={`flex items-center gap-3 ${belirgin ? "w-full" : ""}`}>
         <button
           type="button"
           onClick={degistir}
@@ -384,19 +528,33 @@ export default function MikrofonButonu({
           aria-pressed={dinliyor}
           aria-label={dinliyor ? tr.ses.dinliyor : tr.ses.baslat}
           title={dinliyor ? tr.ses.dinliyor : undefined}
-          className={`bas-his flex h-11 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-xl px-4 text-sm font-semibold transition-colors disabled:opacity-40 ${
+          className={`bas-his flex shrink-0 items-center justify-center gap-2 whitespace-nowrap transition-colors disabled:opacity-40 ${
+            belirgin
+              ? "h-12 flex-1 rounded-2xl px-4 text-base font-bold"
+              : "h-11 rounded-xl px-4 text-sm font-semibold"
+          } ${
             dinliyor
               ? "bg-red-500/80 text-white ring-2 ring-red-400/40"
-              : "border border-royal-light/40 text-slate-200 hover:bg-midnight-soft"
+              : belirgin
+                ? "btn-kor"
+                : "border border-royal-light/40 text-slate-200 hover:bg-midnight-soft"
           }`}
         >
           {etiketKisa}
         </button>
-        {/* Dinlerken canlı ses dalgası */}
+        {/* Dinlerken canlı ses dalgası — scribe modunda GERÇEK mikrofon
+            seviyesi (VU), analizör kurulamazsa CSS süs animasyonu kalır. */}
         {dinliyor && (
           <div className="flex h-8 items-center gap-[3px]" aria-hidden>
             {[0, 0.12, 0.24, 0.36, 0.18, 0.06, 0.3, 0.2].map((g, i) => (
-              <span key={i} className="ses-cubuk" style={{ animationDelay: `${g}s` }} />
+              <span
+                key={i}
+                ref={(el) => {
+                  cubukRef.current[i] = el;
+                }}
+                className="ses-cubuk"
+                style={{ animationDelay: `${g}s` }}
+              />
             ))}
           </div>
         )}
@@ -412,6 +570,7 @@ export default function MikrofonButonu({
           {hata}
         </p>
       )}
+      {tekrarDugmesi}
     </div>
   );
 }

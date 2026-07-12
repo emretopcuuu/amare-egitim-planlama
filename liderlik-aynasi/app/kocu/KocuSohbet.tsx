@@ -6,12 +6,20 @@ import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import MikrofonButonu from "@/components/MikrofonButonu";
 import AynaYaziyor from "@/components/AynaYaziyor";
+import AynaYuzu from "@/components/AynaYuzu";
 
 const t = tr.kocu;
 
 type Mesaj = { rol: string; icerik: string };
 
-export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }) {
+export default function KocuSohbet({
+  hafiza = null,
+  aynaDurum = "sicak",
+}: {
+  hafiza?: string | null;
+  // Faz 2 — başlıktaki AYNA pozu (küs ise küs poz; sunucu hesaplar).
+  aynaDurum?: "sicak" | "serin" | "kus";
+}) {
   const [mesajlar, setMesajlar] = useState<Mesaj[]>([]);
   const [girdi, setGirdi] = useState("");
   const [yukleniyor, setYukleniyor] = useState(true);
@@ -87,8 +95,12 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
     el.style.height = `${Math.min(el.scrollHeight, 140)}px`;
   }, [girdi]);
 
-  // GELİŞTİRME #7: AYNA yanıtını sesli oku (tarayıcı TTS, tr-TR) — hands-free koç.
-  function seslendir(metin: string) {
+  // GELİŞTİRME #7 + UX paketi #4: AYNA yanıtını KENDİ resmî sesiyle oku
+  // (ElevenLabs, sunucudan). Üretilemezse tarayıcı TTS'ine zarifçe düşer —
+  // sesli mod hiç susmaz. Tek Audio referansı: kapatınca çalan ses durur.
+  const romanSes = useRef<HTMLAudioElement | null>(null);
+
+  function tarayiciTts(metin: string) {
     try {
       const ss = window.speechSynthesis;
       if (!ss) return;
@@ -99,6 +111,25 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
       if (trSes) u.voice = trSes;
       ss.speak(u);
     } catch {}
+  }
+
+  async function seslendir(metin: string) {
+    try {
+      romanSes.current?.pause();
+      const res = await fetch("/api/kocu-ses", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ metin }),
+      });
+      if (!res.ok) throw new Error("ses yok");
+      const blob = await res.blob();
+      const a = new Audio(URL.createObjectURL(blob));
+      a.onended = () => URL.revokeObjectURL(a.src);
+      romanSes.current = a;
+      await a.play();
+    } catch {
+      tarayiciTts(metin); // zarif geri çekilme: robotik ama sessiz kalmaz
+    }
   }
 
   async function karsila() {
@@ -113,7 +144,7 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
       const d = r.ok ? await r.json() : null;
       if (d?.mesaj) {
         setMesajlar((m) => [...m, { rol: "ayna", icerik: d.mesaj }]);
-        if (sesli) seslendir(d.mesaj);
+        if (sesli) void seslendir(d.mesaj);
       } else setHata(t.uretilemedi);
     } catch {
       setHata(t.hata);
@@ -139,7 +170,7 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
       const d = r.ok ? await r.json() : null;
       if (d?.mesaj) {
         setMesajlar((m) => [...m, { rol: "ayna", icerik: d.mesaj }]);
-        if (sesli) seslendir(d.mesaj);
+        if (sesli) void seslendir(d.mesaj);
       } else setHata(t.uretilemedi);
     } catch {
       setHata(t.hata);
@@ -165,7 +196,8 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
           ←
         </Link>
         <div className="flex items-center gap-2">
-          <span className="text-2xl" aria-hidden>👁</span>
+          {/* Faz 1 — AYNA'nın yüzü: koçun başlığında karakter avatarı (👁 yerine) */}
+          <AynaYuzu durum={aynaDurum === "kus" ? "kus" : "notr"} boyut={36} sinif="shrink-0" />
           <div>
             <p className="prizma-serif ay-metin text-base font-semibold leading-none">{t.baslik}</p>
             <p className="mt-0.5 text-[0.7rem] text-slate-500">{t.altBaslik}</p>
@@ -175,7 +207,10 @@ export default function KocuSohbet({ hafiza = null }: { hafiza?: string | null }
         <button
           onClick={() => {
             setSesli((s) => {
-              if (s) try { window.speechSynthesis?.cancel(); } catch {}
+              if (s) {
+                try { window.speechSynthesis?.cancel(); } catch {}
+                romanSes.current?.pause();
+              }
               return !s;
             });
           }}

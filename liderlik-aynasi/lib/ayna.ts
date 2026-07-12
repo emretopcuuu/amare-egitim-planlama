@@ -4,6 +4,8 @@ import type { Db } from "@/lib/degerlendirme";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { pusulaOzeti, pusulaCekirdek } from "@/lib/pusula";
 import { hedefOzeti, hedefCekirdek } from "@/lib/hedef";
+import { sicakListeAktifIsimler } from "@/lib/sicakListe";
+import type { CikanTaahhut } from "@/lib/kampTaahhut";
 import { yolculukKarmaMetni } from "@/lib/yolculukKarma";
 import { oyunPlaniGetir } from "@/lib/oyunPlani";
 import { aktifUfuk } from "@/lib/planTakvim";
@@ -12,8 +14,9 @@ import { yeniCumleOku } from "@/lib/bosluk";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { BASARI_STRATEJISI } from "@/lib/basariStratejisi";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
-import { kariyerHalKisidenTuret, personaBlogu, personaYolculukOdak, KARIYER_RANK, KARIYER_ETIKET } from "@/lib/persona";
+import { kariyerHalKisidenTuret, personaBlogu, personaYolculukOdak, KARIYER_RANK, KARIYER_ETIKET, birUstKariyerEtiket } from "@/lib/persona";
 import { kimlikBlogu } from "@/lib/kisiKimligi";
+import { AYNA_KARAKTER_TAM, aynaKarakterAcikMi, aynaIliskiDurumu, iliskiPromptSatiri, lakapPromptSatiri } from "@/lib/aynaKarakter";
 import { aiHataYakala } from "@/lib/uyari";
 import { vinyetSec, type LiderKas } from "@/lib/liderlikVinyetleri";
 import { zorlukSeviyesiHesapla, type MerdivenGorev } from "@/lib/zorlukMerdiveni";
@@ -279,8 +282,27 @@ const TEMA_SEMASI = {
         "2-3 kısa psikolojik tema etiketi (en fazla 3 kelime, Türkçe). Örn: 'ret korkusu', 'öz şüphe', 'bağ kurma isteği'",
       maxItems: 3,
     },
+    // #10 SOMUT İŞ TAAHHÜDÜ: kişi yanıtta net bir kariyer/iş sözü verdiyse
+    // (kaç görüşme/arama/randevu/kişi/kayıt yapacağını söylediyse) çıkar; yoksa boş.
+    taahhutVar: {
+      type: "boolean" as const,
+      description: "Yanıt SOMUT bir iş/kariyer taahhüdü içeriyor mu (bir sayı + eylem)?",
+    },
+    taahhutTur: {
+      type: "string" as const,
+      enum: ["gorusme", "arama", "randevu", "liste", "kayit", "diger"],
+      description: "Taahhüdün türü (taahhutVar=true ise).",
+    },
+    taahhutSayi: {
+      type: "integer" as const,
+      description: "Taahhüt edilen adet; sayı belirtilmediyse 0.",
+    },
+    taahhutOzet: {
+      type: "string" as const,
+      description: "Taahhüdün kısa cümlesi (taahhutVar=true ise), ör. 'pazartesi 3 kişiyi arayacak'.",
+    },
   },
-  required: ["temalar"],
+  required: ["temalar", "taahhutVar", "taahhutTur", "taahhutSayi", "taahhutOzet"],
   additionalProperties: false,
 };
 
@@ -344,6 +366,8 @@ export type UretilenGorev = {
   micro_sprint: boolean;
   /** #4b görev yayı aktifken üretildi mi — yay aşaması bu işaretli görevlerden sayılır */
   yayGorevi: boolean;
+  /** Faz 3 — görev AYNA-İtirazcı bahsi çerçevesinde mi üretildi (missions.bahis) */
+  bahis: boolean;
   /** #7 dönüş biçimi (yaz/sesli/grup/foto/tek_kelime) — çeşitlilik izlemesi */
   donusBicimi: string | null;
   /** FAZ 1.1 — somutluk şablonu: gövdeyi 5 satırlık checklist'e ayrıştırır */
@@ -452,7 +476,7 @@ async function kocuOzeti(db: Db, pid: string): Promise<string[] | null> {
 async function temalarCikar(
   gorev: { title: string; body: string; kind: string },
   yanitMetni: string
-): Promise<string[]> {
+): Promise<{ temalar: string[]; taahhut: CikanTaahhut | null }> {
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
@@ -464,7 +488,7 @@ async function temalarCikar(
         format: { type: "json_schema", schema: TEMA_SEMASI },
       },
       system:
-        "Bir liderlik kampı görev yanıtını analiz et. Kişinin yanıtında öne çıkan 2-3 psikolojik tema, duygu veya örüntüyü kısa etiket olarak çıkar. Örnekler: 'ret korkusu', 'öz güven eksikliği', 'bağ kurma isteği', 'mükemmeliyetçilik', 'söz vermekten kaçınma'. Yalnızca JSON döndür.",
+        "Bir liderlik kampı görev yanıtını analiz et. (1) Kişinin yanıtında öne çıkan 2-3 psikolojik tema/duygu/örüntüyü kısa etiket olarak çıkar (ör. 'ret korkusu', 'bağ kurma isteği'). (2) Kişi SOMUT bir iş/kariyer taahhüdü verdiyse (kaç görüşme/arama/randevu/kişi/kayıt yapacağını söylediyse) taahhutVar=true yap ve tür/sayı/özet doldur; net bir taahhüt yoksa taahhutVar=false ve alanları boş/0 bırak. Uydurma — yalnız kişinin AÇIKÇA söylediğini al. Yalnızca JSON döndür.",
       messages: [
         {
           role: "user",
@@ -476,13 +500,24 @@ async function temalarCikar(
         },
       ],
     });
-    const veri = jsonCoz<{ temalar: string[] }>(yanit);
-    return (veri?.temalar ?? [])
+    const veri = jsonCoz<{
+      temalar: string[];
+      taahhutVar?: boolean;
+      taahhutTur?: string;
+      taahhutSayi?: number;
+      taahhutOzet?: string;
+    }>(yanit);
+    const temalar = (veri?.temalar ?? [])
       .slice(0, 3)
       .map((t) => String(t).trim().slice(0, 40))
       .filter((t) => t.length > 0);
+    const taahhut =
+      veri?.taahhutVar && veri.taahhutOzet?.trim()
+        ? { tur: veri.taahhutTur ?? "diger", sayi: veri.taahhutSayi ?? null, ozet: veri.taahhutOzet }
+        : null;
+    return { temalar, taahhut };
   } catch {
-    return [];
+    return { temalar: [], taahhut: null };
   }
 }
 
@@ -511,7 +546,7 @@ export async function gorevUret(
   mekanFarkindaAdaylar: EslesmeAday[] | null = null,
   // FAZ 7 — AKTİVASYON: kişinin son kaçırma sebebi (7.2 sebep motoru) ve
   // yeniden giriş basamağı (7.3 merdiven). tik.ts geçirir.
-  aktivasyon: { sonKacirmaSebebi?: string | null; girisBasamak?: number } = {},
+  aktivasyon: { sonKacirmaSebebi?: string | null; girisBasamak?: number; bahisIzin?: boolean } = {},
   // Özellik 3 — SICAK AN: kişi az önce güçlü bir duygu sinyali verdi (tik.ts
   // taze <45 dk ise geçirir). Görev MİKRO olur ve o duyguya dokunarak açılır.
   sicakAn: SicakAn | null = null
@@ -572,7 +607,7 @@ export async function gorevUret(
     onFarkindalikOzeti(db, katilimci.id),
     kocuOzeti(db, katilimci.id),
     db.from("settings").select("value").eq("key", "kapali_gorev_turleri").maybeSingle(),
-    db.from("settings").select("key, value").in("key", ["ayna_ek_ton", "gunun_temasi"]),
+    db.from("settings").select("key, value").in("key", ["ayna_ek_ton", "gunun_temasi", "ders_kavrami"]),
     db
       .from("missions")
       .select("id", { count: "exact", head: true })
@@ -662,6 +697,52 @@ export async function gorevUret(
   const personaMetni = personaBlogu(persona);
   // Kişinin cinsiyeti + yaşı → doğru hitap/ton (kadına "baba" deme vb.).
   const kimlikMetni = kimlikBlogu(kariyerSonuc.data?.cinsiyet, kariyerSonuc.data?.yas);
+  // #1 KARİYER DNA'SI: görev DNA'sındaki eski SABİT "lider veya üzeri" cümlesi
+  // herkese aynı gidiyordu. Kişinin GERÇEK basamağı (KARIYER_ETIKET) + bir üst
+  // basamağı (birUstKariyerEtiket) prompt'a girsin ki görev o seviyeye ölçeklensin
+  // ve kampta "bir üst basamağın davranışını prova et" hamlesine dönebilsin.
+  const kSeviye = kariyerSonuc.data?.kariyer_seviyesi as string | null | undefined;
+  const kSeviyeEtiket = kSeviye ? KARIYER_ETIKET[kSeviye] : null;
+  const kUstEtiket = birUstKariyerEtiket(kSeviye);
+  const kariyerDNA = kSeviyeEtiket
+    ? `KARİYER SEVİYESİ (GERÇEK — göreve ölçek ver): Bu kişinin şu anki basamağı: ${kSeviyeEtiket}. Bir üst basamak: ${kUstEtiket}. Görevi bu GERÇEK seviyeye göre ölçekle — yeni başlayan düzeyi DEĞİL, ama herkese aynı "üst düzey" de değil.${
+        mod === "kamp"
+          ? ` Fırsat bulursan görevi "bir üst basamağın (${kUstEtiket}) davranışını BUGÜN kampta prova et" biçiminde kur (o basamak ekip önünde durur / devreder / zor karar verir / birini yetiştirir).`
+          : ""
+      } Katlama, lider yetiştirme, devretme, üst seviye etki gibi konuları hedefle.`
+    : `KARİYER SEVİYESİ: Bu kişi lider veya üzeri kariyer basamağında — görev yeni başlayan düzeyi değil, LİDER düzeyi olmalı. Katlama, lider yetiştirme, devretme, ekip önünde duruş, zor kararlar, üst seviye etki gibi konuları hedefle.`;
+  // #3 SICAK LİSTE → GÖREV: kişinin gerçek aday isimleri (kamp modunda) prompt'a
+  // girsin; görev soyut "birini ara" değil GERÇEK bir isme demirlensin. Gün 1-2
+  // hazırlık (düşündür/planlat, kamp alanında kal), Gün 3 aksiyon (buradan ilk
+  // adım — küçük mesaj/arama). Liste boşsa metin boş → davranış değişmez.
+  const sicakIsimler = mod === "kamp" ? await sicakListeAktifIsimler(db, katilimci.id) : [];
+  const sicakListeMetni = sicakIsimler.length
+    ? `SICAK LİSTE (kişinin GERÇEK aday isimleri — kullan): ${sicakIsimler.join(", ")}. ${
+        gun >= 3
+          ? "GÜN 3 AKSİYON: Uygunsa görevi bu isimlerden GERÇEK birine BUGÜN buradan atılan KÜÇÜK bir ilk adım olarak kur — tek içten bir mesaj at ya da kısa bir arama; abartma, 'satış' yaptırma, sadece ilk teması/randevu isteğini kur. Kişinin adını kullan."
+          : "GÜN 1-2 HAZIRLIK: Görevi bu isimlerden BİRİNİ düşündürecek/planlatacak biçimde kur (kampta öğrendiğinle ona nasıl gerçek değer katarsın) — eylem KAMP ALANINDA kalsın, henüz 'onu ara' DEME."
+      }`
+    : "";
+  // #4 DAVID NOTU: kişi CEO oturumundan ne götürdüyse (david_yakalama yanıtı)
+  // sonraki görevlere bağlam olsun — tek seferlik anı sürekli kariyer malzemesine
+  // çevir. Yalnız kamp modunda, yanıt varsa.
+  let davidNotu: string | null = null;
+  if (mod === "kamp") {
+    const { data: dNot } = await db
+      .from("missions")
+      .select("response_text")
+      .eq("participant_id", katilimci.id)
+      .eq("david_yakalama", true)
+      .not("response_text", "is", null)
+      .order("responded_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    const m = (dNot?.response_text ?? "").trim();
+    davidNotu = m ? m.slice(0, 200) : null;
+  }
+  const davidNotuMetni = davidNotu
+    ? `DAVID NOTU (kişi CEO David oturumundan şunu götürdü — görevi UYGUN OLDUĞUNDA buna nazikçe bağla, kariyerine köprü kur): "${davidNotu}"`
+    : "";
   // Kamp sonrası yolculukta hâle özel 90 günlük odak.
   const yolculukOdak = mod === "yolculuk" ? personaYolculukOdak(persona) : "";
   // [E10] Yolculukta haftalık görev karması kişinin HEDEFİNDEN oranlanır
@@ -706,6 +787,10 @@ export async function gorevUret(
   const icerik = new Map((icerikAyar?.data ?? []).map((s) => [s.key, s.value]));
   const aynaEkTon = (icerik.get("ayna_ek_ton") ?? "").trim();
   const gununTemasi = (icerik.get("gunun_temasi") ?? "").trim();
+  // #4 DERS KAVRAMI: admin sahnede işlenen dersin 2-3 anahtar kavramını girer;
+  // görev o kavramı "30 dk içinde davranışa çevir" hamlesine bağlar (bir oturum
+  // az önce bittiyse daha güçlü). Ders içeriği ile görev içeriği arası köprü.
+  const dersKavrami = mod === "kamp" ? (icerik.get("ders_kavrami") ?? "").trim() : "";
   let kapaliTurler: string[] = [];
   try {
     if (kapaliAyar?.data?.value) kapaliTurler = JSON.parse(kapaliAyar.data.value);
@@ -713,6 +798,29 @@ export async function gorevUret(
     kapaliTurler = [];
   }
   const onceki = oncekilerSonuc.data ?? [];
+  // Faz 0 — AYNA KARAKTERİ: şovmen kişilik katmanı. Kill switch kapalıysa boş.
+  // Karakter ANI (açık şaka/iddia) ~%15 — kod belirler ki model dozu kaçırmasın.
+  const karakterAcik = await aynaKarakterAcikMi(db);
+  const karakterAni = karakterAcik && Math.random() < 0.15;
+  // Faz 3 — İDDİA: karakter anlarının yarısı kamp modunda BAHİS çerçevesine
+  // döner (yalnız tik dağıtımı izin verdiğinde — bahisIzin; diğer üretim yolları
+  // bahis bayrağını yazmadığı için orada bahis metni de üretilmez).
+  const bahisAni =
+    karakterAni && mod === "kamp" && aktivasyon.bahisIzin === true && Math.random() < 0.5;
+  // Faz 2 — ilişki durumu (son görev yanıtından deterministik) + lakap satırı.
+  const sonYanitZamani = onceki.find((o) => o.responded_at)?.responded_at ?? null;
+  const { data: lakapVeri } = karakterAcik
+    ? await db.from("participants").select("ayna_lakap").eq("id", katilimci.id).maybeSingle()
+    : { data: null };
+  const karakterMetni = karakterAcik
+    ? `\n${AYNA_KARAKTER_TAM}\n${iliskiPromptSatiri(aynaIliskiDurumu(sonYanitZamani))}${lakapPromptSatiri(lakapVeri?.ayna_lakap)}${
+        bahisAni
+          ? `BU GÖREV BİR BAHİS: görevi AYNA (sen) ile İtirazcı arasındaki bir bahis olarak çerçevele. Açılışta 2-3 satırlık mini diyalog: İtirazcı kişinin bunu yapamayacağına dair KISA bir itiraz atar (itiraz KİŞİYİ küçümsemez, sadece senin iyimserliğinle dalga geçer), sen karşı iddiaya girersin ("Çerçeveme bahse girerim"). Kapanışta tek cümle: bahsi kişinin karara bağlayacağını söyle. Diyalog dışında görevin eylem satırlarının netliğini asla bozma.`
+          : karakterAni
+          ? `BU GÖREVDE BİR KARAKTER ANI YAP: göreve kısa bir iddia ("bence bunu yapamazsın — yanılt beni" tarzı), muzip tek satır ya da running gag dokunuşu kat. En fazla 1-2 cümle ve YALNIZ açılış veya kapanış cümlesinde — eylem satırlarının netliğini asla bozma.`
+          : `Bu görevde AÇIK şaka/iddia YAPMA; karakter yalnız kelime seçiminde hafifçe hissedilsin.`
+      }\n`
+    : "";
   const puanlar = puanlarSonuc.data ?? [];
   const yeniCumle = mod === "yolculuk" ? await yeniCumleOku(db, katilimci.id) : null;
 
@@ -833,6 +941,14 @@ export async function gorevUret(
     .map((o) => (o as { donus_bicimi?: string | null }).donus_bicimi)
     .filter((b): b is string => !!b)
     .slice(0, 3);
+  // Öneri #16 — ROTASYON KURALI (tavsiye değil, kural): son İKİ AI görevi aynı
+  // dönüş biçimindeyse (ör. yaz+yaz) üçüncüsünde o biçim YASAK. Prompt'a sert
+  // yönerge gider; model yine de aynı biçimi dönerse görev tekrar_degil deseni
+  // gibi REDDEDİLİR (sonraki tikte farklı üretilir). Tekdüzelik = sıkıcılık.
+  const yasakDonusBicimi =
+    sonDonusBicimleri.length >= 2 && sonDonusBicimleri[0] === sonDonusBicimleri[1]
+      ? sonDonusBicimleri[0]
+      : null;
 
   // Öneri #8 — ODA SICAKLIĞI: görev yalnız bireyin değil ODANIN duygu ritmine
   // de otursun. Son 2 saatte kamp GENELİNDE puanlanan görevlerin ortalaması,
@@ -977,17 +1093,41 @@ export async function gorevUret(
   // o an aynı mekânda/boşta olanlardan seçilir.
   let eslesmeHedef: EslesmeAday | null = null;
   let eslesmeIsimliMi = false;
+  let ikinciBulusma = false; // #5 aynı (yüksek-gerçeklik) partnerle Gün 3 derinleşmesi
   if (tur === "bag") {
+    // #9 AKTİFLİK FİLTRESİ (150 kişi ölçeği): isimli eşleşme hedefi yalnız
+    // uygulamaya EN AZ BİR KEZ girmiş (first_login_at dolu) kişilerden seçilir.
+    // Kayıtlı ama kampa gelmemiş/uygulamayı hiç açmamış kişilere "git konuş"
+    // görevi verilmesin — "aradım, bulamadım" oranı düşsün.
     const { data: rosterHam } = await db
       .from("participants")
       .select("id, full_name, team")
-      .eq("role", "participant");
+      .eq("role", "participant")
+      .not("first_login_at", "is", null);
     let adaylar: EslesmeAday[] = (rosterHam ?? []).filter((p) => p.id !== katilimci.id);
     if (mekanFarkindaAdaylar) {
       const mekanIdler = new Set(mekanFarkindaAdaylar.map((a) => a.id));
       adaylar = adaylar.filter((a) => mekanIdler.has(a.id));
     }
-    if (adaylar.length > 0) {
+    // #5 İKİNCİ BULUŞMA: Gün 3'te, ilk konuşması GERÇEK olan (gercek_miydi≥4) bir
+    // partnerle YENİDEN eşleş — bu sefer daha derin. Balancer'ın "aynı çift bir
+    // kez" kuralını bu çift için bilinçli deler; derinleşme yayı kurulur.
+    if (gun >= 3 && adaylar.length > 0) {
+      const { data: gercekCiftler } = await db
+        .from("gorev_eslesme")
+        .select("hedef_id, gercek_miydi, created_at")
+        .eq("kaynak_id", katilimci.id)
+        .gte("gercek_miydi", 4)
+        .order("created_at", { ascending: false })
+        .limit(1);
+      const partnerId = gercekCiftler?.[0]?.hedef_id as string | undefined;
+      const partner = partnerId ? adaylar.find((a) => a.id === partnerId) : null;
+      if (partner) {
+        eslesmeHedef = partner;
+        ikinciBulusma = true;
+      }
+    }
+    if (!eslesmeHedef && adaylar.length > 0) {
       const tercih = await karsilasmaBul(db, katilimci.id);
       eslesmeHedef = await eslesmeHedefiSec(db, katilimci.id, adaylar, new Date(), tercih?.partnerId ?? null);
     }
@@ -1045,6 +1185,10 @@ export async function gorevUret(
         ? `BAĞ GÖREVİ (İSİMLİ EŞLEŞME): Adayı doğrudan "${eslesmeHedef.full_name}" isimli kişiye yönlendir — adını göreve AÇIKÇA yaz (ör. "${eslesmeHedef.full_name}'i bul..."). ${eslesmeHedef.team ? `Bu kişinin GERÇEK takımı: "${eslesmeHedef.team}" — takımdan bahsedeceksen SADECE bu ismi kullan, başka bir takım adı UYDURMA.` : "Bu kişinin takımı sistemde kayıtlı değil — takım adı UYDURMA, hiç takım/grup numarası yazma."} ÖNEMLİ UYARI: Eşleşmeler kamp genelinde yapılır, bu kişi görevi alan adayla AYNI takımda OLMAYABİLİR — adayın kendi takımını ("${katilimci.team ?? "bilinmiyor"}") bu kişinin takımıymış gibi YAZMA; bu ikisini karıştırmak kişiyi yanlış gruba gönderir. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin.`
         : `BAĞ GÖREVİ (isimsiz — bu kişi için şu an uygun eşleşme adayı yok): Adayı KENDİ SEÇECEĞİ gerçek bir insanla bağlantı kurmaya yönlendir. Kişinin KENDİSİNİN belirleyebileceği ifadeler kullan: "az tanıdığın biri", "sohbet etmek isteyip ertelediğin biri", "bugün gözüne çarpan biri". YASAK: numaralı grup / takım referansı verme — "Grup 4'ten biri", "3. gruptan biri" gibi ifadeler ASLA kullanma (kişi o grupta kimlerin olduğunu ezbere bilmiyor, görev boşta kalır). Kimi seçeceğine kişinin kendisi karar verebilmeli. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
       : "",
+    // #5 İKİNCİ BULUŞMA — aynı (ilk konuşması gerçek olan) partnerle derinleşme.
+    tur === "bag" && ikinciBulusma && eslesmeHedef && eslesmeIsimliMi
+      ? `İKİNCİ BULUŞMA (DERİNLEŞME — ZORUNLU çerçeve): "${eslesmeHedef.full_name}" ile ilk konuşmanız GERÇEKTİ; bugün onunla İKİNCİ kez, bir adım DAHA DERİN buluşsun. Yüzeysel tanışma DEĞİL: ilk konuşmadan ileri git — birbirinize gerçek hedefinizi ya da en büyük engelinizi paylaşın, ya da KARŞILIKLI küçük bir taahhüt verin ("birbirimize şunu söz verelim"). Görev bunu açıkça istesin ve ilk buluşmaya nazikçe atıf yapsın.`
+      : "",
     // #8 Micro-sprint
     microSprint
       ? "MİKRO-SPRINT: Bu görev tam 30 dakikada, tek atomik bir eylemle tamamlanabilmeli. 'Şimdi yap, erteleme' tonuyla yaz — anlık ve tetikleyici olsun. sure_saat=1 döndür."
@@ -1080,6 +1224,13 @@ export async function gorevUret(
       ? `KOLEKTİF AN: Az önce tüm salon aynı anda "${sonKolektif.title}" senkron görevini yaptı. İSTERSEN kişisel görevi o ortak enerjinin doğal devamına bağla — zorunlu değil.`
       : "",
     gununTemasi ? `GÜNÜN TEMASI (görevi mümkünse buna dik): ${gununTemasi}` : "",
+    dersKavrami
+      ? `DERS KAVRAMI (ŞU AN SAHNEDE İŞLENEN — çok güçlü, göreve MUTLAKA kat): "${dersKavrami}". ${
+          bitenEtkinlik
+            ? "Az önce bir oturum bitti; görevi bu kavramı ÖĞRENDİĞİNİ 30 DK İÇİNDE somut bir DAVRANIŞA çeviren tek bir lider hamlesine bağla."
+            : "Görevi bu kavramı bugün yaşatan somut bir lider hamlesine bağla."
+        }`
+      : "",
     aynaEkTon ? `ADMIN TON AYARI: ${aynaEkTon}` : "",
     gorevIpucu
       ? `ETKİNLİĞE ÖZEL YÖNERGE (MUTLAKA kat): ${gorevIpucu}`
@@ -1242,6 +1393,8 @@ export async function gorevUret(
     oncekiGorevBasliklari: onceki.map((o) => o.title),
     // #7 son dönüş biçimleri — art arda aynısını seçme (donus_bicimi'ni farklı seç).
     sonDonusBicimleri: sonDonusBicimleri.length > 0 ? sonDonusBicimleri : null,
+    // #16 rotasyon kuralı: bu biçim BU görevde yasak (son iki görev hep buydu).
+    yasakDonusBicimi,
     // #8 odanın o anki enerjisi (kamp geneli son 2 saat).
     odaSicakligi,
     yonerge:
@@ -1277,7 +1430,7 @@ export async function gorevUret(
           type: "text" as const,
           text: `Görevin: verilen bağlama göre TEK bir görev üret. Tür "${tur}" olmalı.
 
-KARİYER SEVİYESİ: Bu kişi lider veya üzeri kariyer basamağında — görev yeni başlayan düzeyi değil, LİDER düzeyi olmalı. Katlama, lider yetiştirme, devretme, ekip önünde duruş, zor kararlar, üst seviye etki gibi konuları hedefle.
+${kariyerDNA}
 
 GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lider kasını çalıştırır ve bağlamdaki "acilisHikayesi" ile AÇILIR. Yapı (toplam ~5 cümle, UZUN OLMASIN):
 1) HİKÂYE — gövdenin başında "acilisHikayesi"ni KISA (2-3 cümle) ve SADIK anlat. Uydurma, yalnız verileni kullan. Başlığı bu hikâyeyle ilişkilendir (birebir kopyalama).
@@ -1286,10 +1439,10 @@ GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lid
 4) DÖNÜŞ — bana ne getireceğini söyle ve ÇEŞİTLENDİR: her görev "bana yaz" olmasın; kimi yap-ve-anlat, kimi grupla etkileş, kimi tek cümle/tek kelime. Birine BELİRLİ bir cümleyi birebir söylemesini istiyorsan ("şunu söyle", "de ki" vb.) o cümlenin TAM METNİNİ tırnak içinde MUTLAKA yaz — asla ":" ile bitirip alıntıyı boş bırakma.
 "ozellik_id"yi bu kasla uyumlu seç (cesaret→Cesaret, devretme→Sorumluluk/Takım Ruhu, zor_konusma→Dürüstlük, vizyon→Vizyonerlik, dinleme→İletişim, baglanti→Takım Ruhu/Pozitif Enerji vb.).
 
-ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz. "donus_bicimi" alanını doldur ve bağlamdaki "sonDonusBicimleri"nden FARKLI bir biçim seç (art arda hep "yaz" olmasın — sesli/grup/foto/tek_kelime ile çeşitlendir).
+ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz. "donus_bicimi" alanını doldur ve bağlamdaki "sonDonusBicimleri"nden FARKLI bir biçim seç (art arda hep "yaz" olmasın — sesli/grup/foto/tek_kelime ile çeşitlendir). Bağlamda "yasakDonusBicimi" doluysa bu bir KURALDIR: bu görevin donus_bicimi o biçim OLAMAZ ve görevin gövdesi de o biçimde dönüş istememeli — o biçimde üretirsen görev reddedilir; kalan biçimlerden görevin doğasına en uygun olanı seç.
 
 ÖZ-DENETİM (ZORUNLU): Görevi ürettikten sonra kendini denetle ve "baglam_kullanildi" + "tekrar_degil" alanlarını DÜRÜSTÇE doldur. tekrar_degil, görev "oncekiGorevBasliklari"ndan birinin tekrarı/çok benzeriyse false olmalı — bu durumda görev reddedilip yeniden üretilir, o yüzden gerçekten FARKLI bir görev üret.
-${personaMetni ? `\n${personaMetni}\n` : ""}${kimlikMetni}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}${yolculukPlan ? `\n${yolculukPlan}\n` : ""}${yolculukKorNokta ? `\n${yolculukKorNokta}\n` : ""}
+${personaMetni ? `\n${personaMetni}\n` : ""}${kimlikMetni}${karakterMetni}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${sicakListeMetni ? `\n${sicakListeMetni}\n` : ""}${davidNotuMetni ? `\n${davidNotuMetni}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}${yolculukPlan ? `\n${yolculukPlan}\n` : ""}${yolculukKorNokta ? `\n${yolculukKorNokta}\n` : ""}
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
 
 DEĞER KİŞİSELLEŞTİRMESİ: Bağlamda "degerler" doluysa görevi kişinin seçtiği temel değerlerinden (temelDegerler) BİRİNİ bugün somut bir eylemle YAŞAMA meydan okumasına bağla — değeri soyut anmakla kalma, o değerin gerektirdiği gerçek bir lider hamlesini istet (örn. değeri "Dürüstlük" ise bugün kaçındığı zor bir doğruyu söyle; "Cesaret" ise ertelediği ilk adımı at; "Takım Ruhu" ise geride kalan birine uzan). Görevi tek bir değere demirle (hepsini birden sıralama), değeri başlıkta ya da dönüşte kişinin diliyle çağır. Uygun olduğunda değer ile çalışılan lider kasını örtüştür. Değer yoksa bu bağı atla.
@@ -1362,6 +1515,17 @@ ${yeniYonergeler}${merdivenYonergesi}${ekstraYonerge}`,
       await aiHataYakala(db, "gorev_uretimi", new Error(`Tekrar görev reddedildi: "${veri.baslik}"`));
       return null;
     }
+    // Öneri #16 — ROTASYON KURALI: son iki AI görevi ile aynı dönüş biçiminde
+    // üçüncü görev katılımcıya gösterilmez (prompt'taki sert yönergeye rağmen
+    // model aynı biçimi döndüyse). Reddet — bir sonraki tikte farklı üretilir.
+    if (yasakDonusBicimi && veri.donus_bicimi === yasakDonusBicimi) {
+      await aiHataYakala(
+        db,
+        "gorev_uretimi",
+        new Error(`Rotasyon ihlali reddedildi (3× ${yasakDonusBicimi}): "${veri.baslik}"`)
+      );
+      return null;
+    }
 
     const gecerliIdler = new Set(ozellikler.map((o) => o.id));
     // #8 micro-sprint: sure_saat 0.5 = 30 dk
@@ -1393,6 +1557,8 @@ ${yeniYonergeler}${merdivenYonergesi}${ekstraYonerge}`,
         : [],
       micro_sprint: microSprint,
       yayGorevi: yay !== null,
+      bahis: bahisAni, // Faz 3 — tik insert missions.bahis'e yazar
+
       // Öneri #7 — dönüş biçimi (çeşitlilik izlemesi için missions'a kaydedilir)
       donusBicimi: DONUS_BICIMLERI.includes(veri.donus_bicimi as string)
         ? (veri.donus_bicimi as string)
@@ -1482,13 +1648,13 @@ ${yeniYonergeler}${merdivenYonergesi}${ekstraYonerge}`,
 export async function gorevPuanla(
   gorev: { title: string; body: string; kind: string },
   yanitMetni: string
-): Promise<{ puan: number; yorum: string; response_tags: string[] } | null> {
+): Promise<{ puan: number; yorum: string; response_tags: string[]; taahhut: CikanTaahhut | null } | null> {
   try {
     const client = new Anthropic();
     // Puanlama (Haiku) ve tema çıkarımı (Haiku) paralel başlar.
     // MALİYET: puanlama yanıt başına çalışır; Haiku 4.5 (5× ucuz) yeterli.
     // Haiku effort'u desteklemiyor → output_config'de yalnız format.
-    const [yanit, temalar] = await Promise.all([
+    const [yanit, tema] = await Promise.all([
       client.messages.create({
         model: "claude-haiku-4-5",
         max_tokens: 768,
@@ -1525,7 +1691,8 @@ export async function gorevPuanla(
     return {
       puan: Math.min(10, Math.max(1, veri.puan)),
       yorum: (veri.yorum ?? "").slice(0, 400),
-      response_tags: temalar, // #2
+      response_tags: tema.temalar, // #2
+      taahhut: tema.taahhut, // #10 somut iş taahhüdü (varsa)
     };
   } catch {
     return null;
@@ -2039,7 +2206,10 @@ async function mentorlukBodyKisisel(
   db: Db,
   pid: string,
   ad: string,
-  isimler: string[]
+  isimler: string[],
+  // #5 Kariyer kapısı bağlamı: kişinin şu anki basamağı + hedeflediği bir üst
+  // basamak. Sohbet "o basamağın kapısı"na (OV/ekip/ilk 90 gün) demirlenir.
+  kariyerBaglam?: { seviye: string | null; hedef: string }
 ): Promise<string | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   const [cekirdek, onFark] = await Promise.all([
@@ -2056,7 +2226,7 @@ async function mentorlukBodyKisisel(
     of?.enZayifAlan ??
     of?.korNokta?.tersDavranis ??
     null;
-  if (!takildigi) return null;
+  // #5: Kariyer kapısı sohbeti iç engel olmadan da anlamlı — artık zorunlu değil.
   try {
     const client = new Anthropic();
     const yanit = await client.messages.create({
@@ -2064,13 +2234,15 @@ async function mentorlukBodyKisisel(
       max_tokens: 400,
       thinking: { type: "disabled" },
       output_config: { effort: "low" },
-      system: `${PERSONA}\n\nGörevin: bir MENTORLUK görevi metni yaz. Kişi bugün 3 mentor adayından birini seçip en az 15 dk konuşacak. Metni kişinin ŞU AN takıldığı gerçek konuya nazikçe demirle — ama yüzüne vurma. Kurallar:\n- 2-3 kısa, sade cümle. "Sen" dili, doğru Türkçe.\n- Verilen 3 ismi metinde MUTLAKA kalın (**İsim**) olarak ver.\n- Sonunda akşam sana ne yazacağını iste: kimin yanına gitti, ne sordu, ne götürdü.\n- Süslü/şiirsel değil; net ve davetkâr ol.`,
+      system: `${PERSONA}\n\nGörevin: bir MENTORLUK görevi metni yaz. Kişi bugün 3 mentor adayından (parantez içinde kariyer basamakları var) birini seçip en az 15 dk konuşacak. ANA ÇERÇEVE — KARİYER KAPISI: kişi, hedeflediği bir üst basamağı ("${kariyerBaglam?.hedef ?? "bir üst basamak"}") ZATEN GEÇMİŞ bir mentorla o basamağın KAPISINI konuşsun — o basamağa somut nasıl çıkıldığını sorsun: OV/hacim nasıl kuruldu, ekip nasıl büyütüldü/katlandı, ilk 90 günde ne yapıldı, hangi alışkanlık fark yarattı. Kişinin şu an takıldığı gerçek konu varsa ona da nazikçe bağla ama YÜZÜNE VURMA. Kurallar:\n- 2-3 kısa, sade cümle. "Sen" dili, doğru Türkçe.\n- Verilen 3 ismi metinde MUTLAKA kalın (**İsim (basamak)**) olarak ver; mümkünse basamağı yüksek olanı işaret et.\n- Sonunda akşam sana ne yazacağını iste: kimin yanına gitti, o basamağın kapısı için ne sordu, ne somut adım götürdü.\n- Süslü/şiirsel değil; net ve davetkâr ol.`,
       messages: [
         {
           role: "user",
           content: JSON.stringify({
             ad,
             mentorAdaylari: isimler,
+            seninBasamagin: kariyerBaglam?.seviye ?? null,
+            hedeflediginBasamak: kariyerBaglam?.hedef ?? null,
             suAnTakildigi: takildigi,
           }),
         },
@@ -2182,12 +2354,20 @@ export async function mentorlukGorevUret(
     return seviyeEtiketi ? `${k.full_name} (${seviyeEtiketi})` : k.full_name;
   });
 
-  // Statik metin (güvenli düşüş) — isimler doğrudan gömülü.
-  const statikBody = `${ad}, bugün bir mentor seç: **${isimler[0]}**, **${isimler[1]}**${isimler[2] ? ` veya **${isimler[2]}**` : ""}. Birini bul, en az 15 dakika konuş — konu: şu an işinde en çok takıldığın bir şey. Akşam bana yaz: kimin yanına gittin, ne sordun ve ne götürdün?`;
+  // #5 Kariyer kapısı bağlamı — kişinin basamağı + hedeflediği bir üst basamak.
+  const benSeviyeEtiket = KARIYER_ETIKET[katilimci.kariyer_seviyesi ?? ""] ?? null;
+  const benHedefEtiket = birUstKariyerEtiket(katilimci.kariyer_seviyesi);
 
-  // #9 KİŞİSELLEŞTİRME: kişinin pusula nedeni / iç engeli / kör noktası varsa
-  // mentorluk metni o gerçek gündeme demirlenir (AI ile). AI düşerse statik metin.
-  const body = (await mentorlukBodyKisisel(db, katilimci.id, ad, isimler)) ?? statikBody;
+  // Statik metin (güvenli düşüş) — isimler doğrudan gömülü, kariyer kapısı çerçevesi.
+  const statikBody = `${ad}, bugün bir mentor seç: **${isimler[0]}**, **${isimler[1]}**${isimler[2] ? ` veya **${isimler[2]}**` : ""}. Hedeflediğin **${benHedefEtiket}** basamağını geçmiş birini bul, en az 15 dakika konuş — konu: o basamağın kapısı. Sor: oraya somut nasıl çıktın (OV, ekip, ilk 90 gün)? Akşam bana yaz: kimin yanına gittin, ne sordun ve ne somut adım götürdün?`;
+
+  // #5 KARİYER KAPISI: mentorluk metni artık kişinin hedeflediği bir üst basamağı
+  // geçmiş mentorla o basamağın kapısını (OV/ekip/ilk 90 gün) konuşmaya demirlenir.
+  const body =
+    (await mentorlukBodyKisisel(db, katilimci.id, ad, isimler, {
+      seviye: benSeviyeEtiket,
+      hedef: benHedefEtiket,
+    })) ?? statikBody;
 
   return {
     kind: "mentorluk",
@@ -2204,6 +2384,7 @@ export async function mentorlukGorevUret(
     micro_sprint: false,
     yayGorevi: false,
     donusBicimi: "grup", // mentorluk hep biriyle etkileşim
+    bahis: false, // Faz 3 — mentorluk statik akış, bahis çerçevesi yok
     somutluk: {
       kim: isimler.join(" / "),
       ne: "seçtiğin mentorla en az 15 dk konuş",
