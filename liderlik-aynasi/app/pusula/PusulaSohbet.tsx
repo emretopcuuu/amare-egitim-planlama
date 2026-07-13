@@ -218,12 +218,22 @@ export default function PusulaSohbet({
     hata?: string;
     ok?: boolean;
   } | null> {
-    const res = await fetch("/api/pusula", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(govde),
-    });
-    return res.json().catch(() => null);
+    // ÖNEMLİ: fetch ASLA throw etmemeli. Ağ hatası (bağlantı koptu, DNS,
+    // zaman aşımı) fetch()'i reddedebilir; bunu yutmazsak çağıran fonksiyonlarda
+    // (gonder/listeyiTamamla/vb.) `await istek(...)`'ten SONRAKİ `setMesgul(false)`
+    // hiç çalışmaz ve "AYNA düşünüyor..." ekranda SONSUZA KADAR asılı kalır —
+    // sayfa yenilemeden kurtulunamaz. Canlı bir vakada tam bu yaşandı; artık
+    // ağ hatası da null döner, çağıranlar zaten null'ı "hata" olarak ele alıyor.
+    try {
+      const res = await fetch("/api/pusula", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(govde),
+      });
+      return await res.json().catch(() => null);
+    } catch {
+      return null;
+    }
   }
 
   // Sohbette listeden geldiyse (mesaj yoksa) açılış repliğini getir.
