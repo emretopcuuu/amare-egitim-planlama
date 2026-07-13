@@ -53,6 +53,10 @@ export async function POST(req: NextRequest) {
 
   const adaylar = oyunlardanGruplar(secilen);
   if (adaylar.length === 0) {
+    await db.from("audit_log").insert({
+      eylem: "oyun_secimi_adaysiz",
+      detay: { katilimci: session.sub, secilen },
+    });
     return NextResponse.json({ hata: "Bu oyun ikilisi için uygun grup yok." }, { status: 400 });
   }
   const adayAdlari = adaylar.map((g) => grupAdi(g));
@@ -65,10 +69,19 @@ export async function POST(req: NextRequest) {
     p_adaylar: adayAdlari,
   });
   if (error) {
-    // Ham DB hatasını sızdırma — jenerik mesaj yeter.
+    // Teşhis için ham hatayı audit_log'a yaz (Railway loglarına erişmeden görülsün);
+    // istemciye jenerik mesaj yeter, ham DB hatasını sızdırma.
+    await db.from("audit_log").insert({
+      eylem: "oyun_secimi_rpc_hata",
+      detay: { katilimci: session.sub, secilen, adayAdlari, hata: error.message },
+    });
     return NextResponse.json({ hata: "Atama yapılamadı, tekrar dene." }, { status: 500 });
   }
   if (!atanmis) {
+    await db.from("audit_log").insert({
+      eylem: "oyun_secimi_atama_bos",
+      detay: { katilimci: session.sub, secilen, adayAdlari },
+    });
     return NextResponse.json({ hata: "Bu oyun ikilisi için uygun grup yok." }, { status: 400 });
   }
 

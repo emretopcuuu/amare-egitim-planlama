@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 
@@ -35,6 +35,12 @@ export default function PwaKur() {
   // kullanıcısı bugüne dek hiç istem görmüyordu (en büyük kurulum kaybı).
   // Aynı tam ekran istem, iOS'a özel 2 adımlı görsel yönergeyle gösterilir.
   const [iosGorunur, setIosGorunur] = useState(false);
+  // "Şimdilik geç" bu session içinde ANINDA etkili olsun diye ref'te de tutulur:
+  // Chrome aynı sayfa yüklemesinde beforeinstallprompt'u BİRDEN FAZLA kez
+  // ateşleyebiliyor (ör. kullanıcı etkileşimine göre yeniden değerlendirme) —
+  // yalnız mount anındaki localStorage kontrolü bunu yakalayamaz, her yeni olay
+  // ertelemeyi görmezden gelip banner'ı hemen geri açardı.
+  const ertelendiRef = useRef(false);
 
   useEffect(() => {
     // SW'yi global kaydet (kurulabilirlik kriteri her sayfada sağlansın).
@@ -48,11 +54,15 @@ export default function PwaKur() {
     if (standalone) return;
     try {
       const ertelenmis = localStorage.getItem(ERTELE_ANAHTAR);
-      if (ertelenmis && Date.now() < Number(ertelenmis)) return;
+      if (ertelenmis && Date.now() < Number(ertelenmis)) {
+        ertelendiRef.current = true;
+        return;
+      }
     } catch {}
 
     function yakala(e: Event) {
       e.preventDefault();
+      if (ertelendiRef.current) return;
       setOlay(e as KurulumOlayi);
       setGorunur(true);
     }
@@ -89,6 +99,7 @@ export default function PwaKur() {
   }
 
   function kapat() {
+    ertelendiRef.current = true;
     setGorunur(false);
     setIosGorunur(false);
     try {
