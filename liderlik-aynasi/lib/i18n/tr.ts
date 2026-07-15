@@ -1081,6 +1081,10 @@ export const tr = {
     acBasariDugme: "Kampa gir →",
     acZatenBaslik: "Kampın zaten açık 🔓",
     acZatenMetin: "Mührün çoktan kalkmış. Devam edebilirsin.",
+    // Mühür kalkınca — anasayfa açılmadan önce izlenen karşılama videosu
+    hosgeldinOynatBaslik: "İzlemek için dokun",
+    hosgeldinMetin: "Kampa adım atmadan önce sana özel bir şey var.",
+    hosgeldinDevamDugme: "Devam et →",
     // Başkasının kişisel açma QR'ı okutulduğunda
     acYabanciBaslik: "Bu QR sana ait değil",
     acYabanciMetin:
