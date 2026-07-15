@@ -36,9 +36,18 @@ function istGun(ts: string): string {
   return new Date(Date.parse(ts) + IST_OFFSET).toISOString().slice(0, 10);
 }
 
+// Rekorlar KAMP BAŞLAYINCA KENDİLİĞİNDEN açılır: `ayna_baslangic` set edildiği an
+// (kampın başlatıldığı an) otomatik aktif — kimsenin bir düğmeye basması gerekmez.
+// Onboarding'de (ayna_baslangic yok) kapalı kalır ki yarım veriyle sıralama
+// görünmesin. `rekorlar_acik` manuel bayrağı yalnız PROVA/erken-test için ek kapı.
 export async function rekorlarAcikMi(db: Db): Promise<boolean> {
-  const { data } = await db.from("settings").select("value").eq("key", "rekorlar_acik").maybeSingle();
-  return data?.value === "true";
+  const { data } = await db
+    .from("settings")
+    .select("key, value")
+    .in("key", ["ayna_baslangic", "rekorlar_acik"]);
+  const ayar = new Map((data ?? []).map((r) => [r.key, r.value]));
+  if (ayar.get("ayna_baslangic")) return true; // kamp başladı → otomatik açık
+  return ayar.get("rekorlar_acik") === "true"; // prova/erken test için manuel kapı
 }
 
 // Her kategori için kişi-bazlı değerler (Map<pid, number>). Tek yerde hesaplanır;
@@ -184,13 +193,18 @@ export async function kampKursusu(db: Db): Promise<KursuSatiri[]> {
   });
 }
 
-// KİŞİSEL REKORLAR — kendi bestin + kamp rekoru + uzaklık.
+// KİŞİSEL REKORLAR — kendi bestin + kamp rekoru + uzaklık + CANLI SIRALAMA.
+// `sira`: bu kategoride kaçıncısın (1-bazlı; eşitlikte "benden kesin iyi olan
+// sayısı + 1" → beraberlikte aynı sıra). `toplam`: kategoride değeri olan kişi
+// sayısı (yarışın gerçek boyutu). Değerin yoksa sira=null.
 export type KisiselSatir = {
   kategori: Kategori;
   benim: number | null;
   rekor: number | null;
   liderMi: boolean;
   uzaklik: string | null;
+  sira: number | null;
+  toplam: number;
 };
 
 export async function kisiselRekorlar(db: Db, pid: string): Promise<KisiselSatir[]> {
@@ -200,15 +214,80 @@ export async function kisiselRekorlar(db: Db, pid: string): Promise<KisiselSatir
   ]);
   const rekor = new Map((rekorlar ?? []).map((r) => [r.kategori, r]));
   return KATEGORILER.map((kat) => {
-    const benim = h.get(kat.key)!.get(pid) ?? null;
+    const m = h.get(kat.key)!;
+    const benim = m.get(pid) ?? null;
     const r = rekor.get(kat.key);
     const rekorDeger = r ? r.deger : null;
     const liderMi = !!r && r.participant_id === pid;
+
+    // Canlı sıra: benden KESİN daha iyi kaç kişi var? (yön max→büyük iyi, min→küçük iyi)
+    const toplam = m.size;
+    let sira: number | null = null;
+    if (benim != null) {
+      let dahaIyi = 0;
+      for (const v of m.values()) {
+        if (kat.yon === "max" ? v > benim : v < benim) dahaIyi++;
+      }
+      sira = dahaIyi + 1;
+    }
+
     let uzaklik: string | null = null;
     if (benim != null && rekorDeger != null && !liderMi) {
       const fark = Math.abs(rekorDeger - benim);
       uzaklik = `${degerYazi(kat, Math.round(fark * 10) / 10)} uzağında`;
     }
-    return { kategori: kat, benim, rekor: rekorDeger, liderMi, uzaklik };
+    return { kategori: kat, benim, rekor: rekorDeger, liderMi, uzaklik, sira, toplam };
+  });
+}
+
+// ============================================================================
+// KÜRSÜ BRİFİ — "AYNA seni böyle seçti" sahne ödülleri (admin, İSİMLİ)
+// ============================================================================
+// Her kategorinin 1./2./3.'sü (isimle) + veriden türeyen kısa GEREKÇE. Sahnede
+// Emre "AYNA seni şu veriyle seçti" der — uydurma yok, hep gerçek sayı. 2. ve 3.
+// YEDEK: 1. kişi sahneye çıkmak istemezse Emre bir alttakini çağırır. Bu brif
+// YALNIZ admindir; salona isim okunması Emre'nin kararıdır (önce kişiden onay).
+
+const KURSU_GEREKCE: Record<string, (d: number) => string> = {
+  hizli_teslim: (d) => `En hızlı teslim: ${d} dk — tereddütsüz aksiyon.`,
+  gece_kusu: (d) => `Gece ${String(Math.floor(d)).padStart(2, "0")}:00'de sahadaydı — hiç durmadı.`,
+  erken_kalkan: (d) => `Sabah ${String(Math.floor(d)).padStart(2, "0")}:00'de başladı — en erken.`,
+  cok_gorev: (d) => `${d} görev tamamladı — kamptaki en üretken.`,
+  yuksek_puan: (d) => `En yüksek tek puan: ${d}/10 — zirveye dokundu.`,
+  tam_puan: (d) => `${d} kez 10/10 aldı — mükemmelliği tekrarladı.`,
+  istikrar: (d) => `${d} farklı gün aktif — hiç ara vermedi.`,
+  cok_kivilcim: (d) => `${d} kıvılcım topladı — enerjinin lideri.`,
+  comert_takdirci: (d) => `${d} kez başkasını takdir etti — en cömert.`,
+  takdir_alan: (d) => `${d} takdir aldı — en çok dokunan.`,
+  ret_cesuru: (d) => `${d} kez "ret"i göze aldı — en cesur.`,
+  cok_sandik: (d) => `${d} sandık açtı — en meraklı avcı.`,
+};
+
+export type BrifAday = { pid: string; ad: string; deger: number; sira: number; gerekce: string };
+export type KursuBrifSatiri = { kategori: Kategori; adaylar: BrifAday[] };
+
+export async function kursuBrifi(db: Db): Promise<KursuBrifSatiri[]> {
+  const h = await hesapla(db);
+  const pidSet = new Set<string>();
+  for (const m of h.values()) for (const p of m.keys()) pidSet.add(p);
+  const { data: kisiler } = pidSet.size
+    ? await db.from("participants").select("id, full_name").in("id", [...pidSet])
+    : { data: [] as { id: string; full_name: string }[] };
+  const adMap = new Map((kisiler ?? []).map((k) => [k.id, k.full_name]));
+
+  return KATEGORILER.map((kat) => {
+    const m = h.get(kat.key)!;
+    const sirali = [...m.entries()]
+      .sort((a, b) => (kat.yon === "max" ? b[1] - a[1] : a[1] - b[1]))
+      .slice(0, 3);
+    const gerekceFn = KURSU_GEREKCE[kat.key] ?? ((d: number) => degerYazi(kat, d));
+    const adaylar: BrifAday[] = sirali.map(([pid, deger], i) => ({
+      pid,
+      ad: adMap.get(pid) ?? "—",
+      deger,
+      sira: i + 1,
+      gerekce: gerekceFn(deger),
+    }));
+    return { kategori: kat, adaylar };
   });
 }
