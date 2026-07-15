@@ -607,7 +607,7 @@ export async function gorevUret(
     onFarkindalikOzeti(db, katilimci.id),
     kocuOzeti(db, katilimci.id),
     db.from("settings").select("value").eq("key", "kapali_gorev_turleri").maybeSingle(),
-    db.from("settings").select("key, value").in("key", ["ayna_ek_ton", "gunun_temasi", "ders_kavrami"]),
+    db.from("settings").select("key, value").in("key", ["ayna_ek_ton", "gunun_temasi", "ders_kavrami", "kapanis_ilkeler"]),
     db
       .from("missions")
       .select("id", { count: "exact", head: true })
@@ -791,6 +791,22 @@ export async function gorevUret(
   // görev o kavramı "30 dk içinde davranışa çevir" hamlesine bağlar (bir oturum
   // az önce bittiyse daha güçlü). Ders içeriği ile görev içeriği arası köprü.
   const dersKavrami = mod === "kamp" ? (icerik.get("ders_kavrami") ?? "").trim() : "";
+  // KAPANIŞ Faz D · öneri 9 — Emre'nin kapanış eğitiminin ilkeleri (3-5 madde,
+  // admin girer) 90 günlük müfredata dokunur: yolculukta görev günden güne
+  // dönen bir ilkeyi SAHADA yaşatır. Görevi bozmaz, o güne bir renk verir.
+  let kapanisIlke = "";
+  if (mod === "yolculuk") {
+    try {
+      const ham = (icerik.get("kapanis_ilkeler") ?? "").trim();
+      const ilkeler = ham ? (JSON.parse(ham) as unknown[]).map(String).map((s) => s.trim()).filter(Boolean) : [];
+      if (ilkeler.length > 0) {
+        const secilen = ilkeler[gun % ilkeler.length];
+        kapanisIlke = `KAPANIŞ EĞİTİMİ İLKESİ (Emre'nin kamp kapanışında verdiği ilke — 90 gün bu ilkelerin etrafında örülür): "${secilen}". Bugünkü görevi (ana temayı ve kişinin planını bozmadan) bu ilkeyi SAHADA yaşatacak biçimde renklendir; ilkeyi vaaz etme, eyleme çevir.`;
+      }
+    } catch {
+      // bozuk JSON → ilke enjeksiyonu atlanır (görev normal üretilir)
+    }
+  }
   let kapaliTurler: string[] = [];
   try {
     if (kapaliAyar?.data?.value) kapaliTurler = JSON.parse(kapaliAyar.data.value);
@@ -1442,7 +1458,7 @@ GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lid
 ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz. "donus_bicimi" alanını doldur ve bağlamdaki "sonDonusBicimleri"nden FARKLI bir biçim seç (art arda hep "yaz" olmasın — sesli/grup/foto/tek_kelime ile çeşitlendir). Bağlamda "yasakDonusBicimi" doluysa bu bir KURALDIR: bu görevin donus_bicimi o biçim OLAMAZ ve görevin gövdesi de o biçimde dönüş istememeli — o biçimde üretirsen görev reddedilir; kalan biçimlerden görevin doğasına en uygun olanı seç.
 
 ÖZ-DENETİM (ZORUNLU): Görevi ürettikten sonra kendini denetle ve "baglam_kullanildi" + "tekrar_degil" alanlarını DÜRÜSTÇE doldur. tekrar_degil, görev "oncekiGorevBasliklari"ndan birinin tekrarı/çok benzeriyse false olmalı — bu durumda görev reddedilip yeniden üretilir, o yüzden gerçekten FARKLI bir görev üret.
-${personaMetni ? `\n${personaMetni}\n` : ""}${kimlikMetni}${karakterMetni}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${sicakListeMetni ? `\n${sicakListeMetni}\n` : ""}${davidNotuMetni ? `\n${davidNotuMetni}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}${yolculukPlan ? `\n${yolculukPlan}\n` : ""}${yolculukKorNokta ? `\n${yolculukKorNokta}\n` : ""}
+${personaMetni ? `\n${personaMetni}\n` : ""}${kimlikMetni}${karakterMetni}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${sicakListeMetni ? `\n${sicakListeMetni}\n` : ""}${davidNotuMetni ? `\n${davidNotuMetni}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}${yolculukPlan ? `\n${yolculukPlan}\n` : ""}${yolculukKorNokta ? `\n${yolculukKorNokta}\n` : ""}${kapanisIlke ? `\n${kapanisIlke}\n` : ""}
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
 
 DEĞER KİŞİSELLEŞTİRMESİ: Bağlamda "degerler" doluysa görevi kişinin seçtiği temel değerlerinden (temelDegerler) BİRİNİ bugün somut bir eylemle YAŞAMA meydan okumasına bağla — değeri soyut anmakla kalma, o değerin gerektirdiği gerçek bir lider hamlesini istet (örn. değeri "Dürüstlük" ise bugün kaçındığı zor bir doğruyu söyle; "Cesaret" ise ertelediği ilk adımı at; "Takım Ruhu" ise geride kalan birine uzan). Görevi tek bir değere demirle (hepsini birden sıralama), değeri başlıkta ya da dönüşte kişinin diliyle çağır. Uygun olduğunda değer ile çalışılan lider kasını örtüştür. Değer yoksa bu bağı atla.

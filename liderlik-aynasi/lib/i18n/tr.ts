@@ -1153,6 +1153,10 @@ export const tr = {
     ozetEksik: "Eksik",
     ozetDuzelt: "Düzelt",
     ozetYap: "Yap",
+    // Mühür ekranı — fotoğraf değiştirme açıklaması (kişi "kilitlendi mi?"
+    // diye tereddüt etmesin diye net anlatım; bkz. CanliAynaOzetSatiri).
+    fotoDegistirAciklama:
+      "Fotoğrafını istediğin zaman değiştirebilirsin — kilitli değil. Aşağıdan 3 açıyı (düz, sağ, sol) yeniden çek; yeni fotoğraf hem avatarını hem AYNA'nın video referansını günceller.",
   },
   // AYNA'NIN ANALİZLERİ — kişiye dair, zaman içinde biriken, kendi sesiyle okunan
   // derin analiz (dönen ayna + Star Wars akışı).
@@ -1771,6 +1775,7 @@ export const tr = {
       market: "Market",
       oyunlastirma: "Oyunlaştırma",
       sozler: "Sözler",
+      kapanis: "Kapanış",
       test: "Prova",
       kurulum: "Kurulum",
       analiz: "Analiz",
@@ -4510,6 +4515,9 @@ export const tr = {
     kaydedilemedi: "⚠ Kaydedilemedi — bağlantını kontrol et",
     // AI çağrı limiti (lib/aiLimit.ts) aşılınca gösterilir.
     cokHizli: "Çok hızlı gidiyorsun 🙂 Birkaç dakika soluklan, sonra devam edelim.",
+    // Ekip sloganı — sahada zaten kullanılan söz. İlerleme anlarında (iyi puanlı
+    // görev, unvan atlaması) ARA ARA gösterilir (bkz. lib/iyisinDevam.ts).
+    iyisinDevam: "İyisin devam 👍",
     // Akran ikilisi (sorumluluk ortağı) sayfası
     baslik: "🤝 Ortağın",
     altBaslik:

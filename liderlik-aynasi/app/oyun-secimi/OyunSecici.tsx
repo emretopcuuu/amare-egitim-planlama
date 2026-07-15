@@ -7,17 +7,23 @@ import {
   SECMELI_OYUNLAR,
   SECILECEK_ADET,
   OYUN_BILGI,
+  oyunAnahtar,
   type CmtTur,
 } from "@/lib/cumartesiProgrami";
 import { sureRozeti } from "@/lib/onboardingSure";
 
 // Kişi Bowling dışındaki 3 oyundan 2'sini seçer; onaylayınca /api/oyun-secimi
-// uygun gruba atar. Tam 2 seçilmeden onay açılmaz.
-export default function OyunSecici() {
+// uygun gruba atar. Tam 2 seçilmeden onay açılmaz. kapaliKombolar: admin bazı
+// ikilileri (gruplar dolduğunda) kapatmış olabilir — seçili ikili kapalıysa
+// göndermeden ÖNCE burada net bir uyarı gösterilir (sunucu da ayrıca reddeder).
+export default function OyunSecici({ kapaliKombolar }: { kapaliKombolar: string[] }) {
   const router = useRouter();
   const [secili, setSecili] = useState<CmtTur[]>([]);
   const [yukleniyor, setYukleniyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
+
+  const guncelIkiliDolu =
+    secili.length === SECILECEK_ADET && kapaliKombolar.includes(oyunAnahtar(secili));
 
   function toggle(o: CmtTur) {
     setHata(null);
@@ -31,7 +37,7 @@ export default function OyunSecici() {
   }
 
   async function gonder() {
-    if (secili.length !== SECILECEK_ADET) return;
+    if (secili.length !== SECILECEK_ADET || guncelIkiliDolu) return;
     setYukleniyor(true);
     setHata(null);
     try {
@@ -148,16 +154,21 @@ export default function OyunSecici() {
 
       <p className="text-center text-sm font-medium text-slate-400">
         {secili.length}/{SECILECEK_ADET} seçildi
-        {secili.length === SECILECEK_ADET && (
+        {secili.length === SECILECEK_ADET && !guncelIkiliDolu && (
           <span className="ml-2 text-gold-light">✓ Hazır!</span>
         )}
       </p>
+      {guncelIkiliDolu && (
+        <p className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-4 py-3 text-center text-sm leading-relaxed text-amber-200">
+          Bu ikili şu an dolu 🙏 Lütfen birini değiştirip Big Bubble ile bir ikili dene.
+        </p>
+      )}
       {hata && <p className="text-center text-sm text-red-300">{hata}</p>}
 
       <button
         type="button"
         onClick={gonder}
-        disabled={secili.length !== SECILECEK_ADET || yukleniyor}
+        disabled={secili.length !== SECILECEK_ADET || yukleniyor || guncelIkiliDolu}
         className="btn-kor flex h-14 w-full items-center justify-center rounded-2xl text-lg font-bold transition-transform hover:scale-[1.01] disabled:opacity-40"
       >
         {yukleniyor ? "Grubun belirleniyor…" : "Seçimi Onayla"}

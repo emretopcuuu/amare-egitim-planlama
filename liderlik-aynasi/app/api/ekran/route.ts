@@ -5,6 +5,8 @@ import { arketipBul } from "@/lib/arketip";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { sozMuhurDurumu } from "@/lib/sozMuhur";
 import { ekranSinyali } from "@/lib/kampRadyosu";
+import { acikSoruGetir, nabizToplami } from "@/lib/canliSoru";
+import { kanitVeri, type KanitId } from "@/lib/kapanis";
 
 // Büyük ekran verisi — bu uç HERKESE AÇIK (sahne bilgisayarı giriş yapmaz).
 // Bu yüzden yalnızca isimsiz agregalar döner: sayılar, özellik ortalamaları
@@ -90,7 +92,11 @@ export type EkranVerisi = {
     // Faz 4 — Kamp Radyosu yayına yeni geçtiyse (≤4 dk taze): maskot gerçek
     // sesle "konusma" pozuna geçer (bkz. lib/kampRadyosu.ts ekranSinyali).
     radyo: { id: string; sesUrl: string | null } | null;
+    // Kapanış Faz B (öneri 4) — Emre'nin tetiklediği İSİMSİZ kanıt anı (≤90 sn).
+    kanit: { id: string; baslik: string; altBaslik: string; satirlar: { etiket: string; deger: number }[] } | null;
   };
+  // Kapanış Faz B (öneri 5) — açık nabız sorusu + canlı toplam (isimsiz).
+  canliNabiz: { soru: string; toplam: number; dagilim: { secenek: string; adet: number }[] } | null;
 };
 
 export async function GET() {
@@ -136,7 +142,7 @@ export async function GET() {
       db
         .from("settings")
         .select("key, value")
-        .in("key", ["sahne_dalga", "sahne_anons", "sahne_duyuru", "sahne_slayt"]),
+        .in("key", ["sahne_dalga", "sahne_anons", "sahne_duyuru", "sahne_slayt", "sahne_kanit"]),
       db
         .from("photos")
         .select("path")
@@ -650,6 +656,11 @@ export async function GET() {
           duyuru = { metin: duyuruHam.slice(ayrac + 1) };
         }
       }
+      // Kapanış Faz B — kanıt anı (≤90 sn taze): İSİMSİZ agregat tam-ekran.
+      const kanitTaze = taze(ayar.get("sahne_kanit"), 1.5);
+      const kanitBugun = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(simdi);
+      const kanit = kanitTaze ? await kanitVeri(db, kanitTaze.id as KanitId, kanitBugun) : null;
+
       return {
         fiero,
         dalga: dalgaTaze
@@ -663,7 +674,14 @@ export async function GET() {
           : null,
         radyo: await ekranSinyali(db, simdi),
         duyuru,
+        kanit: kanit ? { id: kanit.id, baslik: kanit.baslik, altBaslik: kanit.altBaslik, satirlar: kanit.satirlar } : null,
       };
+    })(),
+    canliNabiz: await (async () => {
+      const soru = await acikSoruGetir(db, "nabiz");
+      if (!soru) return null;
+      const t = await nabizToplami(db, soru);
+      return { soru: t.soru, toplam: t.toplam, dagilim: t.dagilim };
     })(),
     senkron: (() => {
       const aktifler = senkronSonuc.data ?? [];

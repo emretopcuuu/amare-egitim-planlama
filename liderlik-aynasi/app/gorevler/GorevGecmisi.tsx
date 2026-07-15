@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
+import { iyisinDevamGoster } from "@/lib/iyisinDevam";
 import GorevYanitFormu from "./GorevYanitFormu";
 
 const t = tr.gorevler;
@@ -220,6 +221,14 @@ export default function GorevGecmisi({
                             {g.status === "scored" && g.ai_score !== null ? (
                               <span className="font-bold text-gold">
                                 {t.puanin(g.ai_score)} · +{g.spark_points} ⚡
+                                {/* Ekip sloganı — iyi puanlı görevlerin bir kısmında ARA
+                                    ARA (bkz. lib/iyisinDevam.ts); her yerde göstermek
+                                    anlamını kaybettirir. Görev id'sine bağlı deterministik. */}
+                                {g.ai_score >= 8 && iyisinDevamGoster(g.id) && (
+                                  <span className="ml-1.5 font-semibold text-gold-light">
+                                    · {tr.ortak.iyisinDevam}
+                                  </span>
+                                )}
                               </span>
                             ) : g.status === "scored" ? (
                               <span className="font-bold text-gold">+{g.spark_points} ⚡</span>

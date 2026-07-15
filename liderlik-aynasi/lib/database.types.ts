@@ -1683,6 +1683,72 @@ export type Database = {
         }
         Relationships: []
       }
+      kayip_esya: {
+        Row: {
+          bulan_ilk: string | null
+          bulundu_at: string | null
+          created_at: string
+          durum: string
+          hafta: string
+          id: string
+          ipucu: string
+          ipucu_at: string | null
+          konum: string
+          myth_at: string | null
+        }
+        Insert: {
+          bulan_ilk?: string | null
+          bulundu_at?: string | null
+          created_at?: string
+          durum?: string
+          hafta: string
+          id?: string
+          ipucu?: string
+          ipucu_at?: string | null
+          konum: string
+          myth_at?: string | null
+        }
+        Update: {
+          bulan_ilk?: string | null
+          bulundu_at?: string | null
+          created_at?: string
+          durum?: string
+          hafta?: string
+          id?: string
+          ipucu?: string
+          ipucu_at?: string | null
+          konum?: string
+          myth_at?: string | null
+        }
+        Relationships: []
+      }
+      kayip_esya_pay: {
+        Row: {
+          at: string
+          deger: number
+          id: string
+          ilk: boolean
+          kayip_id: string
+          participant_id: string
+        }
+        Insert: {
+          at?: string
+          deger?: number
+          id?: string
+          ilk?: boolean
+          kayip_id: string
+          participant_id: string
+        }
+        Update: {
+          at?: string
+          deger?: number
+          id?: string
+          ilk?: boolean
+          kayip_id?: string
+          participant_id?: string
+        }
+        Relationships: []
+      }
       hamle: {
         Row: {
           created_at: string
@@ -2340,6 +2406,7 @@ export type Database = {
           ayna_ses_secildi_at: string | null
           camp_unlock_token: string | null
           camp_unlocked_at: string | null
+          son_gorulme: string | null
           cinsiyet: string | null
           city: string | null
           consent_at: string | null
@@ -2379,6 +2446,7 @@ export type Database = {
           ayna_ses_secildi_at?: string | null
           camp_unlock_token?: string | null
           camp_unlocked_at?: string | null
+          son_gorulme?: string | null
           cinsiyet?: string | null
           city?: string | null
           consent_at?: string | null
@@ -2418,6 +2486,7 @@ export type Database = {
           ayna_ses_secildi_at?: string | null
           camp_unlock_token?: string | null
           camp_unlocked_at?: string | null
+          son_gorulme?: string | null
           cinsiyet?: string | null
           city?: string | null
           consent_at?: string | null
@@ -2696,6 +2765,93 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      canli_soru: {
+        Row: {
+          created_at: string
+          durum: string
+          id: string
+          kapandi_at: string | null
+          secenekler: Json | null
+          soru: string
+          tip: string
+        }
+        Insert: {
+          created_at?: string
+          durum?: string
+          id?: string
+          kapandi_at?: string | null
+          secenekler?: Json | null
+          soru: string
+          tip: string
+        }
+        Update: {
+          created_at?: string
+          durum?: string
+          id?: string
+          kapandi_at?: string | null
+          secenekler?: Json | null
+          soru?: string
+          tip?: string
+        }
+        Relationships: []
+      }
+      canli_soru_yanit: {
+        Row: {
+          created_at: string
+          id: string
+          participant_id: string
+          soru_id: string
+          yanit: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          participant_id: string
+          soru_id: string
+          yanit: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          participant_id?: string
+          soru_id?: string
+          yanit?: string
+        }
+        Relationships: []
+      }
+      kapanis_brif: {
+        Row: {
+          created_at: string
+          durum: string
+          gun: number | null
+          id: string
+          metin: string
+          slot: string
+          tarih: string
+          veri: Json
+        }
+        Insert: {
+          created_at?: string
+          durum?: string
+          gun?: number | null
+          id?: string
+          metin: string
+          slot: string
+          tarih: string
+          veri?: Json
+        }
+        Update: {
+          created_at?: string
+          durum?: string
+          gun?: number | null
+          id?: string
+          metin?: string
+          slot?: string
+          tarih?: string
+          veri?: Json
+        }
+        Relationships: []
       }
       radyo_yayin: {
         Row: {

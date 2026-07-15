@@ -41,16 +41,20 @@ async function istek(govde: Record<string, unknown>) {
   return { ok: res.ok, veri: await res.json().catch(() => null) };
 }
 
+type Kanit = { tur: string; metin: string } | null;
+
 export default function SozV2Akis({
   soz,
   taniklar: tanikBaslangic,
   bekleyenImzalar: bekleyenBaslangic,
   liderler,
+  kanit = null,
 }: {
   soz: Soz;
   taniklar: Tanik[];
   bekleyenImzalar: Bekleyen[];
   liderler: Lider[];
+  kanit?: Kanit;
 }) {
   const router = useRouter();
   const [faz, setFaz] = useState<Faz>(ilkFaz(soz, tanikBaslangic.length));
@@ -85,10 +89,23 @@ export default function SozV2Akis({
       </div>
     ) : null;
 
+  // Öneri 8 — "Bu sözü verebilirsin, çünkü…": gerçek kamp kanıt anı. Söz veren
+  // her fazda görür (motivasyon: söz boşa değil, kampta zaten kanıtladın).
+  const kanitKarti =
+    kanit && faz !== "tamam" ? (
+      <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/[0.07] p-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-emerald-300">
+          Bu sözü verebilirsin, çünkü…
+        </p>
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-200">✅ {kanit.metin}</p>
+      </div>
+    ) : null;
+
   function Sarmal({ children }: { children: React.ReactNode }) {
     return (
       <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
         {imzaBandi}
+        {kanitKarti}
         {children}
       </div>
     );

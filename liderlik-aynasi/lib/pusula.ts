@@ -380,21 +380,30 @@ export async function pusulaTuru(
   // Faz 0 — AYNA karakteri: pusula derin duygusal sohbet → HAFİF doz (renk var,
   // şov yok; eleme/engel aşamalarında mizah blok içinde zaten yasak).
   const karakterAcik = await aynaKarakterAcikMi(db);
-  let tur: PusulaTur | null = null;
-  try {
-    const yanit = await yenidenDene(
-      () =>
-        client.messages.create({
-      model: SOHBET_MODEL,
-      // Replik yarıda kesilmesin: effort düşünme bütçesi + çıktı aynı tavanı
-      // paylaşır; tavanı yükseltip tam cümle garantile.
-      max_tokens: 2000,
-      thinking: { type: "disabled" },
-      output_config: {
-        effort: "medium",
-        format: { type: "json_schema", schema: SOHBET_SEMASI },
-      },
-      system: `${PERSONA}
+
+  // Tek bir model turu dene. Model bazen (nadiren ama canlı loglarda günler
+  // içinde TEKRAR TEKRAR görüldü) şema-geçerli, hatasız (stop_reason: end_turn)
+  // ama BOŞ "mesaj" alanıyla döner — üretim tuhaflığı, çağrı hatası değil. Bu
+  // durumu da "hata" sayıp bir üst katmanda yeniden deneriz.
+  async function birTurDene(): Promise<{
+    tur: PusulaTur | null;
+    hataAsama: "json" | "cagri" | null;
+    hataDetayi: Record<string, unknown>;
+  }> {
+    try {
+      const yanit = await yenidenDene(
+        () =>
+          client.messages.create({
+            model: SOHBET_MODEL,
+            // Replik yarıda kesilmesin: effort düşünme bütçesi + çıktı aynı tavanı
+            // paylaşır; tavanı yükseltip tam cümle garantile.
+            max_tokens: 2000,
+            thinking: { type: "disabled" },
+            output_config: {
+              effort: "medium",
+              format: { type: "json_schema", schema: SOHBET_SEMASI },
+            },
+            system: `${PERSONA}
 ${karakterAcik ? `\n${AYNA_KARAKTER_HAFIF}\n` : ""}
 Kişinin adı: ${ad}.
 Kişinin yazdığı öncelikler:
@@ -405,26 +414,38 @@ ${listeMetni(satir.oncelikler)}
 TEMPO — KISA TUT: Bu kişiden şu ana dek ${kullaniciTur} yanıt aldın. Akış nettir: listeyi 5'e indir (eleme) → TEK kapanış sorusu (engel) → bitir. Son 5'e inince fazladan eleme ya da ara soru EKLEME. ${kullaniciTur >= 5 ? "Artık kapat: kapanış sorusunu henüz sormadıysan onu sor; sorduysan ilk 3 önceliği + engeli yansıt, teyit alıp bitti=true ver." : "Listeyi 5'e indir; 5'e inince tek kapanış sorusuna geç."}
 
 ÇIKTI KURALI: "mesaj" alanına YALNIZCA kişiye söyleyeceğin tek, temiz, doğru yazılmış Türkçe cümle/soru yaz. Her cümle büyük harfle başlasın, noktalama doğru olsun. Parantez, köşeli parantez, aşama notu, kendine not, meta açıklama ASLA koyma. "asama" ve "bitti" alanlarını ayrıca doldur.${kimlikM}`,
-      messages: mesajlar,
-        }),
-      "sohbet turu"
-    );
-    tur = jsonCoz<PusulaTur>(yanit);
-    if (!tur?.mesaj?.trim()) {
-      await pusulaHataKaydet(db, "json", {
-        stop_reason: yanit.stop_reason,
-        ham: yanit.content
-          .filter((b) => b.type === "text")
-          .map((b) => b.text)
-          .join("")
-          .slice(0, 300),
-      });
-      return null;
+            messages: mesajlar,
+          }),
+        "sohbet turu"
+      );
+      const aday = jsonCoz<PusulaTur>(yanit);
+      if (aday?.mesaj?.trim()) return { tur: aday, hataAsama: null, hataDetayi: {} };
+      return {
+        tur: null,
+        hataAsama: "json",
+        hataDetayi: {
+          stop_reason: yanit.stop_reason,
+          ham: yanit.content
+            .filter((b) => b.type === "text")
+            .map((b) => b.text)
+            .join("")
+            .slice(0, 300),
+        },
+      };
+    } catch (e) {
+      return { tur: null, hataAsama: "cagri", hataDetayi: hataDetay(e) };
     }
-  } catch (e) {
-    await pusulaHataKaydet(db, "cagri", hataDetay(e));
+  }
+
+  // Boş "mesaj" (json) durumunda kullanıcıya hiç göstermeden SESSİZCE bir kez
+  // daha dene; ikisi de başarısızsa gerçek hatayı logla ve pes et.
+  let sonuc = await birTurDene();
+  if (!sonuc.tur) sonuc = await birTurDene();
+  if (!sonuc.tur) {
+    await pusulaHataKaydet(db, sonuc.hataAsama ?? "json", sonuc.hataDetayi);
     return null;
   }
+  const tur = sonuc.tur;
   tur.mesaj = temizMetin(tur.mesaj); // Kiril homoglif glitch'ini temizle
 
   await db.from("pusula_mesajlar").insert({
