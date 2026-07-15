@@ -58,10 +58,20 @@ export default function RekorGorunum({ kursu, kisisel }: { kursu: KursuSatiri[];
                 <span className="text-sm font-bold text-gold-light">{bicim(k.kategori, k.benim)}</span>
               </div>
               {!k.liderMi && (
-                <p className="mt-1 pl-7 text-xs text-slate-500">
-                  Rekor {bicim(k.kategori, k.rekor)}
-                  {k.uzaklik ? ` · ${k.uzaklik}` : k.benim == null ? " · ilk deneyen sen ol" : ""}
-                </p>
+                k.benim == null ? (
+                  <p className="mt-1 pl-7 text-xs text-slate-500">
+                    Rekor {bicim(k.kategori, k.rekor)} · ilk deneyen sen ol
+                  </p>
+                ) : k.sira != null && k.sira <= 10 ? (
+                  <p className="mt-1 pl-7 text-xs font-semibold text-gold-light/80">
+                    🏅 {k.sira}. sıra · {k.toplam} kişi içinde
+                    {k.uzaklik ? ` · rekora ${k.uzaklik}` : ""}
+                  </p>
+                ) : (
+                  <p className="mt-1 pl-7 text-xs text-royal-light/80">
+                    İlk 10&apos;a yaklaşıyorsun 💪 · rekor {bicim(k.kategori, k.rekor)}
+                  </p>
+                )
               )}
             </div>
           ))}

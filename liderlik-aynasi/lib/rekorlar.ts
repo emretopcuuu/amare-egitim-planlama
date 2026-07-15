@@ -36,9 +36,18 @@ function istGun(ts: string): string {
   return new Date(Date.parse(ts) + IST_OFFSET).toISOString().slice(0, 10);
 }
 
+// Rekorlar KAMP BAŞLAYINCA KENDİLİĞİNDEN açılır: `ayna_baslangic` set edildiği an
+// (kampın başlatıldığı an) otomatik aktif — kimsenin bir düğmeye basması gerekmez.
+// Onboarding'de (ayna_baslangic yok) kapalı kalır ki yarım veriyle sıralama
+// görünmesin. `rekorlar_acik` manuel bayrağı yalnız PROVA/erken-test için ek kapı.
 export async function rekorlarAcikMi(db: Db): Promise<boolean> {
-  const { data } = await db.from("settings").select("value").eq("key", "rekorlar_acik").maybeSingle();
-  return data?.value === "true";
+  const { data } = await db
+    .from("settings")
+    .select("key, value")
+    .in("key", ["ayna_baslangic", "rekorlar_acik"]);
+  const ayar = new Map((data ?? []).map((r) => [r.key, r.value]));
+  if (ayar.get("ayna_baslangic")) return true; // kamp başladı → otomatik açık
+  return ayar.get("rekorlar_acik") === "true"; // prova/erken test için manuel kapı
 }
 
 // Her kategori için kişi-bazlı değerler (Map<pid, number>). Tek yerde hesaplanır;
@@ -184,13 +193,18 @@ export async function kampKursusu(db: Db): Promise<KursuSatiri[]> {
   });
 }
 
-// KİŞİSEL REKORLAR — kendi bestin + kamp rekoru + uzaklık.
+// KİŞİSEL REKORLAR — kendi bestin + kamp rekoru + uzaklık + CANLI SIRALAMA.
+// `sira`: bu kategoride kaçıncısın (1-bazlı; eşitlikte "benden kesin iyi olan
+// sayısı + 1" → beraberlikte aynı sıra). `toplam`: kategoride değeri olan kişi
+// sayısı (yarışın gerçek boyutu). Değerin yoksa sira=null.
 export type KisiselSatir = {
   kategori: Kategori;
   benim: number | null;
   rekor: number | null;
   liderMi: boolean;
   uzaklik: string | null;
+  sira: number | null;
+  toplam: number;
 };
 
 export async function kisiselRekorlar(db: Db, pid: string): Promise<KisiselSatir[]> {
@@ -200,15 +214,28 @@ export async function kisiselRekorlar(db: Db, pid: string): Promise<KisiselSatir
   ]);
   const rekor = new Map((rekorlar ?? []).map((r) => [r.kategori, r]));
   return KATEGORILER.map((kat) => {
-    const benim = h.get(kat.key)!.get(pid) ?? null;
+    const m = h.get(kat.key)!;
+    const benim = m.get(pid) ?? null;
     const r = rekor.get(kat.key);
     const rekorDeger = r ? r.deger : null;
     const liderMi = !!r && r.participant_id === pid;
+
+    // Canlı sıra: benden KESİN daha iyi kaç kişi var? (yön max→büyük iyi, min→küçük iyi)
+    const toplam = m.size;
+    let sira: number | null = null;
+    if (benim != null) {
+      let dahaIyi = 0;
+      for (const v of m.values()) {
+        if (kat.yon === "max" ? v > benim : v < benim) dahaIyi++;
+      }
+      sira = dahaIyi + 1;
+    }
+
     let uzaklik: string | null = null;
     if (benim != null && rekorDeger != null && !liderMi) {
       const fark = Math.abs(rekorDeger - benim);
       uzaklik = `${degerYazi(kat, Math.round(fark * 10) / 10)} uzağında`;
     }
-    return { kategori: kat, benim, rekor: rekorDeger, liderMi, uzaklik };
+    return { kategori: kat, benim, rekor: rekorDeger, liderMi, uzaklik, sira, toplam };
   });
 }
