@@ -57,7 +57,12 @@ export default async function KursuBrifPanel() {
                       <span className="min-w-0">
                         <span className="text-sm font-semibold text-slate-100">{a.ad}</span>
                         {a.sira === 1 ? (
-                          <span className="mt-0.5 block text-xs text-slate-400">{a.gerekce}</span>
+                          <>
+                            <span className="mt-0.5 block text-xs text-slate-400">{a.gerekce}</span>
+                            <span className="mt-0.5 block text-xs italic text-gold-light">
+                              🎤 &quot;{s.kategori.onur}&quot;
+                            </span>
+                          </>
                         ) : (
                           <span className="ml-1 text-xs text-slate-500">(yedek)</span>
                         )}
