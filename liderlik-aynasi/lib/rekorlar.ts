@@ -239,3 +239,55 @@ export async function kisiselRekorlar(db: Db, pid: string): Promise<KisiselSatir
     return { kategori: kat, benim, rekor: rekorDeger, liderMi, uzaklik, sira, toplam };
   });
 }
+
+// ============================================================================
+// KÜRSÜ BRİFİ — "AYNA seni böyle seçti" sahne ödülleri (admin, İSİMLİ)
+// ============================================================================
+// Her kategorinin 1./2./3.'sü (isimle) + veriden türeyen kısa GEREKÇE. Sahnede
+// Emre "AYNA seni şu veriyle seçti" der — uydurma yok, hep gerçek sayı. 2. ve 3.
+// YEDEK: 1. kişi sahneye çıkmak istemezse Emre bir alttakini çağırır. Bu brif
+// YALNIZ admindir; salona isim okunması Emre'nin kararıdır (önce kişiden onay).
+
+const KURSU_GEREKCE: Record<string, (d: number) => string> = {
+  hizli_teslim: (d) => `En hızlı teslim: ${d} dk — tereddütsüz aksiyon.`,
+  gece_kusu: (d) => `Gece ${String(Math.floor(d)).padStart(2, "0")}:00'de sahadaydı — hiç durmadı.`,
+  erken_kalkan: (d) => `Sabah ${String(Math.floor(d)).padStart(2, "0")}:00'de başladı — en erken.`,
+  cok_gorev: (d) => `${d} görev tamamladı — kamptaki en üretken.`,
+  yuksek_puan: (d) => `En yüksek tek puan: ${d}/10 — zirveye dokundu.`,
+  tam_puan: (d) => `${d} kez 10/10 aldı — mükemmelliği tekrarladı.`,
+  istikrar: (d) => `${d} farklı gün aktif — hiç ara vermedi.`,
+  cok_kivilcim: (d) => `${d} kıvılcım topladı — enerjinin lideri.`,
+  comert_takdirci: (d) => `${d} kez başkasını takdir etti — en cömert.`,
+  takdir_alan: (d) => `${d} takdir aldı — en çok dokunan.`,
+  ret_cesuru: (d) => `${d} kez "ret"i göze aldı — en cesur.`,
+  cok_sandik: (d) => `${d} sandık açtı — en meraklı avcı.`,
+};
+
+export type BrifAday = { pid: string; ad: string; deger: number; sira: number; gerekce: string };
+export type KursuBrifSatiri = { kategori: Kategori; adaylar: BrifAday[] };
+
+export async function kursuBrifi(db: Db): Promise<KursuBrifSatiri[]> {
+  const h = await hesapla(db);
+  const pidSet = new Set<string>();
+  for (const m of h.values()) for (const p of m.keys()) pidSet.add(p);
+  const { data: kisiler } = pidSet.size
+    ? await db.from("participants").select("id, full_name").in("id", [...pidSet])
+    : { data: [] as { id: string; full_name: string }[] };
+  const adMap = new Map((kisiler ?? []).map((k) => [k.id, k.full_name]));
+
+  return KATEGORILER.map((kat) => {
+    const m = h.get(kat.key)!;
+    const sirali = [...m.entries()]
+      .sort((a, b) => (kat.yon === "max" ? b[1] - a[1] : a[1] - b[1]))
+      .slice(0, 3);
+    const gerekceFn = KURSU_GEREKCE[kat.key] ?? ((d: number) => degerYazi(kat, d));
+    const adaylar: BrifAday[] = sirali.map(([pid, deger], i) => ({
+      pid,
+      ad: adMap.get(pid) ?? "—",
+      deger,
+      sira: i + 1,
+      gerekce: gerekceFn(deger),
+    }));
+    return { kategori: kat, adaylar };
+  });
+}
