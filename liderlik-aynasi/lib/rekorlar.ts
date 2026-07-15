@@ -11,21 +11,79 @@ import { herkeseBildir } from "@/lib/push";
 // rekortmen kutlanır ve "rekora uzaklığın" pozitif hedef olarak gösterilir.
 
 export type Yon = "max" | "min";
-export type Kategori = { key: string; ad: string; ikon: string; yon: Yon; birim: string };
+export type Kategori = {
+  key: string;
+  ad: string;
+  ikon: string;
+  yon: Yon;
+  birim: string;
+  /** Kısa paragraf — /rekorlar'da kart açıklaması (neyi ölçtüğü, neden değerli). */
+  aciklama: string;
+  /** Onur cümlesi — Kürsü Brifi'nde rekortmen için sahnede okunacak tek satır. */
+  onur: string;
+};
 
 export const KATEGORILER: Kategori[] = [
-  { key: "hizli_teslim", ad: "En Hızlı Teslim", ikon: "⚡", yon: "min", birim: "dk" },
-  { key: "gece_kusu", ad: "Gece Kuşu", ikon: "🦉", yon: "max", birim: ":00" },
-  { key: "erken_kalkan", ad: "Erken Kalkan", ikon: "🌅", yon: "min", birim: ":00" },
-  { key: "cok_gorev", ad: "Görev Canavarı", ikon: "🎯", yon: "max", birim: "görev" },
-  { key: "yuksek_puan", ad: "Zirve Puanı", ikon: "💎", yon: "max", birim: "/10" },
-  { key: "tam_puan", ad: "On Numara", ikon: "🔟", yon: "max", birim: "kez" },
-  { key: "istikrar", ad: "İstikrar Ustası", ikon: "📅", yon: "max", birim: "gün" },
-  { key: "cok_kivilcim", ad: "Kıvılcım Lideri", ikon: "✨", yon: "max", birim: "⚡" },
-  { key: "comert_takdirci", ad: "En Cömert Takdirci", ikon: "💛", yon: "max", birim: "takdir" },
-  { key: "takdir_alan", ad: "En Çok Takdir Alan", ikon: "🤍", yon: "max", birim: "takdir" },
-  { key: "ret_cesuru", ad: "Ret Cesuru", ikon: "🔥", yon: "max", birim: "ret" },
-  { key: "cok_sandik", ad: "Sandık Avcısı", ikon: "🎁", yon: "max", birim: "sandık" },
+  {
+    key: "hizli_teslim", ad: "En Hızlı Teslim", ikon: "⚡", yon: "min", birim: "dk",
+    aciklama: "Bu rozet hızı değil, tereddütsüzlüğü ölçer. Zihninde 'ama'lar birikmeden harekete geçebilmek — bir görev geldiğinde onu ertelemeden, dosdoğru işe koyulmak.",
+    onur: "Kararsızlığın en büyük düşman olduğu anlarda bile, ilk adımı atan sensin.",
+  },
+  {
+    key: "gece_kusu", ad: "Gece Kuşu", ikon: "🦉", yon: "max", birim: ":00",
+    aciklama: "Herkes uykuya çekilirken hâlâ sahada olmak, motivasyonun değil disiplinin işidir. Günün en yorgun anında bile kendine verdiğin sözü erteleyenlerden değil, yerine getirenlerden yana olduğunu gösteriyor.",
+    onur: "Gece Kuşu, günün bittiğini bilir ama sözünün bitmediğini de bilir.",
+  },
+  {
+    key: "erken_kalkan", ad: "Erken Kalkan", ikon: "🌅", yon: "min", birim: ":00",
+    aciklama: "Kimse seni izlemezken, kimse alkışlamazken kendine verdiğin sözü tutmak — gerçek disiplin burada başlıyor. Günün kazanılmasının aslında gün doğmadan önce başladığını kanıtlıyor.",
+    onur: "Sen, güneş daha doğmadan harekete geçensin.",
+  },
+  {
+    key: "cok_gorev", ad: "Görev Canavarı", ikon: "🎯", yon: "max", birim: "görev",
+    aciklama: "Büyük değişim tek bir anda değil, küçük tekrarların üst üste binmesinde doğar. Ham hacmi değil, o hacmin ardındaki sebatı ölçüyor — her gün yeniden 'evet' diyebilme gücünü.",
+    onur: "Sen, büyük dönüşümün küçük adımlardan geldiğini yaşayarak kanıtlayansın.",
+  },
+  {
+    key: "yuksek_puan", ad: "Zirve Puanı", ikon: "💎", yon: "max", birim: "/10",
+    aciklama: "Bazen tek bir cümle, tek bir cevap, tek bir an her şeyi değiştirir. En iyi hâlinin bir hayal değil, gerçekten var olan ve bir kez bile olsa ona dokunulmuş bir yer olduğunu kanıtlıyor.",
+    onur: "En iyi hâlinin gerçek olduğunu, sen kanıtladın.",
+  },
+  {
+    key: "tam_puan", ad: "On Numara", ikon: "🔟", yon: "max", birim: "kez",
+    aciklama: "Bir kez mükemmel olmak şans olabilir; tekrar tekrar mükemmel olmak bir seçimdir. En yüksek anını tesadüften çıkarıp bir alışkanlığa dönüştürdüğünü gösteriyor.",
+    onur: "Mükemmelliğin senin için bir an değil, bir alışkanlık olduğunu gördük.",
+  },
+  {
+    key: "istikrar", ad: "İstikrar Ustası", ikon: "📅", yon: "max", birim: "gün",
+    aciklama: "Heves parlak ama kısa sürer; istikrar sessiz ama kalıcıdır. Motivasyonun düştüğü günlerde bile sahaya çıkmayı seçtiğini — gerçek liderliğin heyecanla değil kararlılıkla kurulduğunu gösteriyor.",
+    onur: "Sen, hevesin değil kararlılığın gerçek liderliği kurduğunu bize gösterdin.",
+  },
+  {
+    key: "cok_kivilcim", ad: "Kıvılcım Lideri", ikon: "✨", yon: "max", birim: "⚡",
+    aciklama: "Her küçük katılım, her deneme, her adım bir kıvılcım bırakır. O kıvılcımların en çok kimin etrafında biriktiğini — kimin enerjisinin en çok yayıldığını gösteriyor.",
+    onur: "Etrafındakileri en çok ısıtan ateş sende yandı.",
+  },
+  {
+    key: "comert_takdirci", ad: "En Cömert Takdirci", ikon: "💛", yon: "max", birim: "takdir",
+    aciklama: "Takdir etmek küçük bir eylem gibi görünür ama bencil olmayan bir dikkat ister — kendi başarına değil, başkasınınkine bakabilmeyi. Liderliğin aslında başkasını büyütmekle başladığını hatırlatıyor.",
+    onur: "Sen, başkasını büyüterek kendi liderliğini gösterdin.",
+  },
+  {
+    key: "takdir_alan", ad: "En Çok Takdir Alan", ikon: "🤍", yon: "max", birim: "takdir",
+    aciklama: "Bir performans ölçütü değil — sessizce etkilediğin insan sayısının kanıtı. Başkalarının senin hakkında konuşma ihtiyacı duyması, kendiliğinden oluşan gerçek bir etkinin işareti.",
+    onur: "Fark ettirmeden dokunduğun herkes, bugün bunu sana söylüyor.",
+  },
+  {
+    key: "ret_cesuru", ad: "Ret Cesuru", ikon: "🔥", yon: "max", birim: "ret",
+    aciklama: "Bu rozet bir kayıp saymıyor — tam tersini kutluyor. Reddi göze almak, 'evet' duyma ihtimaline inanmaktır; her 'hayır', aslında sahada olduğunun kanıtıdır.",
+    onur: "Sen, 'hayır' duymaktan korkmayarak zaten kazanmış olduğunu kanıtladın.",
+  },
+  {
+    key: "cok_sandik", ad: "Sandık Avcısı", ikon: "🎁", yon: "max", birim: "sandık",
+    aciklama: "Ciddiyetin karşıtı değil, tamamlayıcısı — büyük bir yolculuğun ortasında bile merakını, oyunbazlığını kaybetmemek. En derin dönüşüm bile bir gülümsemeyle daha hafif taşınır.",
+    onur: "Yolun ciddiyetinde bile neşeni kaybetmeyen sensin.",
+  },
 ];
 
 const IST_OFFSET = 3 * 3_600_000;
