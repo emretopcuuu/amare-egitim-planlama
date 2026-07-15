@@ -49,7 +49,7 @@ export const MARKET_URUNLERI: MarketUrun[] = [
   // — Prestij (FİZİKSEL — admin onaylı teslim) —
   { kod: "ad_anonsu", reyon: "prestij", fiyat: 150, fiziksel: true, ad: "Kapanışta ad anonsu", aciklama: "Kapanış sahnesinde adın anons edilir." },
   { kod: "on_sira", reyon: "prestij", fiyat: 100, fiziksel: true, ad: "Akşam oturumu ön sıra", aciklama: "Bir akşam oturumunda ön sıra koltuğu." },
-  { kod: "emre_birebir", reyon: "prestij", fiyat: 300, fiziksel: true, ad: "Emre ile 10 dk birebir", aciklama: "Emre Topçu ile 10 dakikalık birebir görüşme." },
+  { kod: "emre_birebir", reyon: "prestij", fiyat: 300, fiziksel: true, ad: "Emre ile 30 dk birebir", aciklama: "Emre Topçu ile 30 dakikalık birebir görüşme." },
 ];
 
 export function urunBul(kod: string): MarketUrun | null {
