@@ -1815,6 +1815,13 @@ export const tr = {
       sKvkk: "KVKK Silme Talepleri",
       sSimulasyon: "Kamp Prova Simülatörü",
       prova: "Prova Kampı (canlı)",
+      // Menüde/palette önceden linki olmayan sayfalar
+      sahneKisi: "Canlı Yolculuk — Sahne Kişisi",
+      gorevAkisi: "Tüm Görevler",
+      senaryo: "Kamp Senaryosu",
+      zirveHazirlik: "Zirveye Hazırlık",
+      kariyerSenkron: "Kariyer Senkron",
+      kayipRadari: "Kayıp Radarı",
     },
     // Funnel navigasyonu: türe göre değil, kampın YOLCULUĞUNA göre 4 aşama + Panel.
     // Operatör soldan sağa = zaman akışı; aradığı aracı süreçteki yerinden bulur.
