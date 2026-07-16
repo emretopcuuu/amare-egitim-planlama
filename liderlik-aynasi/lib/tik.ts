@@ -71,7 +71,7 @@ import { zincirBaslat } from "@/lib/kampZinciri";
 import { tahminSapmasiGorevUret } from "@/lib/tahminSapmasi";
 import { karsilasmaBul } from "@/lib/karsilasma";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
-import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
+import { katilimciyaBildir, herkeseBildir, adminlereBildir } from "@/lib/push";
 import { radyoTik } from "@/lib/kampRadyosu";
 import { kapanisBrifTik } from "@/lib/kapanis";
 import { rekorTara, rekorlarAcikMi } from "@/lib/rekorlar";
@@ -160,11 +160,33 @@ export async function tikCalistir(
       "yolculuk_baslangic",
       "gorev_uretimi_durduruldu",
       "prova_katilimci_id",
+      "ayna_otomatik_uyandir",
     ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
 
   if (ayar.get("ayna_aktif") !== "true") {
-    return { ozet: "AYNA uyuyor (pasif)", ...ozet };
+    // OTOMATİK UYANDIRMA: admin elle "uyandır"a basmasın diye — planlanan saat
+    // (ayna_otomatik_uyandir, ISO) geldiyse AYNA kendini aktive eder, gün sayacını
+    // başlatır ve adminlere haber verir. Erken açmak için manuel yol yine çalışır;
+    // plan değişirse ayar güncellenir/silinir. Yalnız gerçek-zaman tikinde (prova hariç).
+    const planIso = ayar.get("ayna_otomatik_uyandir");
+    const planMs = planIso ? new Date(planIso).getTime() : NaN;
+    if (!provaModu && Number.isFinite(planMs) && simdi.getTime() >= planMs) {
+      await db.from("settings").upsert({ key: "ayna_aktif", value: "true", updated_at: simdi.toISOString() });
+      ayar.set("ayna_aktif", "true");
+      if (!ayar.get("ayna_baslangic")) {
+        await db.from("settings").upsert({ key: "ayna_baslangic", value: simdi.toISOString(), updated_at: simdi.toISOString() });
+        ayar.set("ayna_baslangic", simdi.toISOString());
+      }
+      await adminlereBildir(
+        db,
+        "🌅 AYNA uyandı — kamp başladı",
+        "Planladığın saatte otomatik açıldı. Görev motoru ve senaryo devrede.",
+        "/admin"
+      ).catch(() => {});
+    } else {
+      return { ozet: "AYNA uyuyor (pasif)", ...ozet };
+    }
   }
 
   // GÜVENLİK KİLİDİ: prova modundaysak tek bir katılımcıyla sınırlıyız —
