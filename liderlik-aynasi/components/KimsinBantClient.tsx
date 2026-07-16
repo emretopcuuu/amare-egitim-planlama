@@ -298,9 +298,14 @@ export default function KimsinBantClient({
           <div
             role="dialog"
             aria-label="Görünüm ayarları"
-            className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-md rounded-t-3xl border border-white/10 bg-[#1a1035] px-5 pb-8 pt-4 sm:bottom-4 sm:rounded-3xl"
+            // max-h + overflow-y-auto ŞART: içerik (Bildirimler + Ses + Görünüm +
+            // Seni Tanıması + Gizlilik) kısa boylu telefonlarda ekrandan taşıyordu —
+            // taşan kısım (en üstteki Bildirimler dahil) kaybolup kayan bir alan da
+            // olmadığı için görünmüyordu. dvh: adres çubuğu açık/kapalı fark etmesin.
+            className="fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[85dvh] w-full max-w-md flex-col overflow-y-auto overscroll-contain rounded-t-3xl border border-white/10 bg-[#1a1035] px-5 pb-8 pt-4 sm:bottom-4 sm:max-h-[85vh] sm:rounded-3xl"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 2rem)" }}
           >
-            <div className="mx-auto mb-5 h-1 w-10 rounded-full bg-white/20" />
+            <div className="mx-auto mb-5 h-1 w-10 shrink-0 rounded-full bg-white/20" />
 
             {/* Bildirimler — kapalıysa EN ÜSTTE, büyük ve dikkat çeken açma butonu.
                 Görev/anons kaçmasın diye onboarding'de buraya yönlendiriyoruz. */}
