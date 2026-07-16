@@ -74,7 +74,6 @@ const TR = {
   kapanisCumlesi:
     "Bu benim hikâyem. Belki bugün senin hikâyenin başlangıcıdır.",
   katlamaSeridi: {
-    etiket: "Ekleme değil, katlama — rakamla",
     adimlar: [
       { deger: "5", etiket: "İlk ay el sıkıştığım kişi" },
       { deger: "19", etiket: "İlk ay sonu, ağ" },
@@ -96,22 +95,10 @@ const TR = {
         "Şubat'ta başladım, 8. ayda Diamond oldum; aynı yılın sonunda 1 Star Diamond. İlk ay 5 kişiyle el sıkıştım, ay sonunda 19 kişilik bir ağ oldu; ikinci ayda 88'e katlandı. Hız, doğru sistemin ilk kanıtıydı.",
     },
     {
-      yil: "2016",
-      baslik: "Presidential Diamond",
+      yil: "2016–2020",
+      baslik: "Presidential Diamond ve online'a geçiş",
       aciklama:
-        "Üç buçuk yılda şirketin en üst liderlik seviyesine ulaştım. Asıl iş o gün başladı: aynı yolu ekibime açmak.",
-    },
-    {
-      yil: "2020",
-      baslik: "Online sisteme geçiş",
-      aciklama:
-        "Pandemi döneminde ekibin tamamını online çalışma prensipleriyle uzaktan işleyen bir düzene taşıdım.",
-    },
-    {
-      yil: "2026",
-      baslik: "Sapanca liderlik kampı ve Liderlik Aynası",
-      aciklama:
-        "29 liderle 3 günlük kamp; kamp için sıfırdan geliştirdiğimiz 360° liderlik uygulaması sahada çalıştı.",
+        "Üç buçuk yılda şirketin en üst liderlik seviyesine ulaştım; asıl iş o gün başladı, aynı yolu ekibime açmak. Pandemi döneminde ekibin tamamını online çalışma prensipleriyle uzaktan işleyen bir düzene taşıdım.",
     },
     {
       yil: "Sırada",
@@ -127,7 +114,6 @@ const TR = {
     { deger: "38", ek: " ülke", etiket: "Gezilen, eğitim verilen" },
   ],
   gercekler: {
-    etiket: "Kimsenin söylemediği gerçekler",
     baslik: "Doğrudan satışı düşünüyorsan önce bunları bil.",
     altMetin:
       "Bunlar iddia değil; yıllardır sahnede anlattığım, kendi ekibime öğrettiğim gerçekler.",
@@ -143,14 +129,16 @@ const TR = {
           "İlk gün heyecan doruktadır, üçüncü gün unutmuşsundur. Bu normaldir. Motivasyonu değil, iradeyi ve alışkanlığı yönetmen gerekir.",
       },
       {
-        baslik: "İnsanlar işe hayır demez",
-        aciklama:
-          "İnsanlar sana, ürüne ya da firmaya hayır demez. Sana evet dediklerinde yapacakları şeye hayır derler. O şeyi nasıl yaptığın, işin prestijini belirler.",
-      },
-      {
         baslik: "Neyin işe yaradığı değil, neyin kopyalanabildiği önemlidir",
         aciklama:
           "Karizman, yeteneğin, network'ün işe yarayabilir — ama kopyalanamıyorsa ekibine öğretemezsin. Katlama, kopyalanabilirlikle başlar.",
+      },
+    ],
+    kartlarEk: [
+      {
+        baslik: "İnsanlar işe hayır demez",
+        aciklama:
+          "İnsanlar sana, ürüne ya da firmaya hayır demez. Sana evet dediklerinde yapacakları şeye hayır derler. O şeyi nasıl yaptığın, işin prestijini belirler.",
       },
       {
         baslik: "Asıl itibarsız olan iş değil, yapılış şeklidir",
@@ -163,6 +151,8 @@ const TR = {
           "Bir işte gelirin arttıkça eforun da artıyorsa, yanlış bir model kurmuşsundur. Doğru sistemde tam tersi olur.",
       },
     ],
+    daha: "Daha fazla gerçek gör",
+    az: "Daha az göster",
   },
   sss: {
     baslik: "Sorular ve cevaplar",
@@ -197,16 +187,10 @@ const TR = {
   },
   sozler: [
     "Kayıt olduğun gün değil, karar verdiğin gün başlarsın.",
-    "Kimse, ama kimse tek başına başarmadı.",
-    "Motivasyon 72 saatte biter; geriye kalan iradedir.",
-    "Bir fırsat, herkes farkındayken fırsat değildir.",
-    "Bir şeyin nasıl çalıştığını biliyorsan, onu yönetebilirsin.",
+    "Sır, lider üretmektir.",
+    "Nedenin güçlüyse, nasılın önemi kalmaz.",
     "Seni durduran, yine sensin.",
-    "Daha çok değil, daha akıllı çalış.",
-    "Her gün %1, bir yılda %365.",
-    "Ticaretin en büyük sırrı: eforun azaldıkça gelirin artmasıdır.",
-    "İnsanlar sana değil, evet dedikleri zaman yapacakları şeye hayır der.",
-    "Neyin işe yaradığı değil, neyin kopyalanabildiği önemlidir.",
+    "İnsanlar sözlerini değil, seni takip eder.",
   ],
   konusmalar: [
     {
@@ -273,7 +257,7 @@ const TR = {
       {
         baslik: "Güçlü ekip kültürü",
         aciklama:
-          "Kamplar, eğitimler ve Liderlik Aynası gibi araçlarla yaşayan bir topluluğun parçası olursun. Tek başına değil, birlikte büyürüz.",
+          "Kamplar, eğitimler ve kurduğumuz sistemlerle yaşayan bir topluluğun parçası olursun. Tek başına değil, birlikte büyürüz.",
       },
       {
         baslik: "Global fırsat",
@@ -282,23 +266,6 @@ const TR = {
       },
     ],
   },
-  ilkeler: [
-    {
-      baslik: "Sır, lider üretmektir.",
-      aciklama:
-        "Avcı değil, çiftçi ol. Büyüme üye saymak değildir; kendi ekibini kuran liderler yetiştirdiğinde iş katlanır.",
-    },
-    {
-      baslik: "Nedenin güçlüyse, nasılın önemi kalmaz.",
-      aciklama:
-        "Nedenini keşfettiğin insana dağları deldirirsin. Her şey inançla başlar, inançla biter.",
-    },
-    {
-      baslik: "İnsanlar sözlerini değil, seni takip eder.",
-      aciklama:
-        "Ne yaparsan yap, kopyalanır. Yapmadığım şeyi anlatmam; önce yaşar, sonra öğretirim.",
-    },
-  ],
   deyince: {
     baslik1: "“Emre Topçu” deyince",
     baslik2: "akla ne geliyor?",
@@ -308,28 +275,8 @@ const TR = {
       "Bu sözler bir doğum günü için, onu tanıyanlar tarafından çekildi. Rakamların anlatamadığını, bu yüzler anlatıyor.",
     sozler: [
       "Google'a 'adam' yazınca ismi çıkan şahsiyet.",
-      "İstatistiksel olarak yüz binde bir çıkıyorsun.",
-      "Büyük bir topluluğa ne anlatmak istediğini nokta atışı yapan adam.",
-      "İnsanları etkileme ve dost kazanma sanatı.",
       "Onu kelimelerle tarif etmek mümkün değil.",
       "Gerçek bir lider.",
-    ],
-    kelimeler: [
-      "Samimiyet",
-      "Dürüstlük",
-      "Dirayet",
-      "Liderlik",
-      "Adanmışlık",
-      "Çalışkanlık",
-      "Güven",
-      "Adamlık",
-      "Dostluk",
-      "Yardımseverlik",
-      "Mütevazilik",
-      "Özveri",
-      "İnanmışlık",
-      "Doğallık",
-      "Vazgeçmemek",
     ],
   },
   iletisim: {
@@ -340,17 +287,12 @@ const TR = {
   },
   ui: {
     calis: "Benimle çalış",
-    hikaye: "Hikayeyi gör",
     yolculukBaslik: "Yolculuk",
     rakamlarBaslik: "Rakamlar konuşur, gerisi teferruat.",
-    konusmalarBaslik: "Öne çıkan konuşmalar",
-    konusmalarAlt:
-      "Yıllardır sahnede anlattığım, ekibimin defalarca dinlediği imza konuşmalar.",
+    sahneBaslik: "Sahneden",
+    sahneAlt:
+      "Yıllardır sahnede anlattığım imza konuşmalar ve ekip içi eğitim arşivinden başlıklar.",
     tumKonusmalar: "Tüm konuşmalar",
-    egitimlerBaslik: "Sahneden seçmeler",
-    egitimlerAlt:
-      "Ekip içi eğitim arşivinden bazı başlıklar. Hepsi sahada denenmiş içerik.",
-    ilkelerBaslik: "Üç ilke",
     izle: "İzle",
     instagram: "Instagram",
   },
@@ -414,7 +356,6 @@ const EN: Icerik = {
   kapanisCumlesi:
     "This is my story. Maybe today it's the beginning of yours.",
   katlamaSeridi: {
-    etiket: "Not adding, multiplying — in numbers",
     adimlar: [
       { deger: "5", etiket: "People I shook hands with, month 1" },
       { deger: "19", etiket: "Network by end of month 1" },
@@ -436,22 +377,10 @@ const EN: Icerik = {
         "I started in February and became Diamond by month 8; 1 Star Diamond by year's end. In month one I shook hands with 5 people and closed the month with a network of 19; by month two it had multiplied to 88. Speed was the first proof of the right system.",
     },
     {
-      yil: "2016",
-      baslik: "Presidential Diamond",
+      yil: "2016–2020",
+      baslik: "Presidential Diamond & moving online",
       aciklama:
-        "In three and a half years I reached the company's highest leadership rank. The real work began that day: opening the same path for my team.",
-    },
-    {
-      yil: "2020",
-      baslik: "Moving the system online",
-      aciklama:
-        "During the pandemic I moved the entire team onto a remote-first system built on online working principles.",
-    },
-    {
-      yil: "2026",
-      baslik: "Sapanca leadership camp & Leadership Mirror",
-      aciklama:
-        "A 3-day camp with 29 leaders; the 360° leadership app we built from scratch ran live in the field.",
+        "In three and a half years I reached the company's highest leadership rank; the real work began that day, opening the same path for my team. During the pandemic I moved the entire team onto a remote-first system built on online working principles.",
     },
     {
       yil: "Next",
@@ -467,7 +396,6 @@ const EN: Icerik = {
     { deger: "38", ek: "", etiket: "Countries visited & taught" },
   ],
   gercekler: {
-    etiket: "What no one tells you",
     baslik: "If you're considering direct sales, know this first.",
     altMetin:
       "These aren't claims — they're what I've taught on stage for years, what I teach my own team.",
@@ -483,14 +411,16 @@ const EN: Icerik = {
           "Day one, excitement peaks. Day three, you've forgotten it. That's normal. You don't manage motivation — you manage willpower and habit.",
       },
       {
-        baslik: "People don't say no to the business",
-        aciklama:
-          "People don't say no to you, the product, or the company. They say no to what saying yes would require of them. How you ask determines the business's prestige.",
-      },
-      {
         baslik: "What matters isn't what works — it's what can be copied",
         aciklama:
           "Your charisma, talent, network — they might work for you. But if your team can't copy it, you can't teach it. Multiplying starts with copyability.",
+      },
+    ],
+    kartlarEk: [
+      {
+        baslik: "People don't say no to the business",
+        aciklama:
+          "People don't say no to you, the product, or the company. They say no to what saying yes would require of them. How you ask determines the business's prestige.",
       },
       {
         baslik: "It's not the business that lacks prestige — it's how it's done",
@@ -503,6 +433,8 @@ const EN: Icerik = {
           "If your income only grows when your effort grows too, you've built the wrong model. In the right system, it's the opposite.",
       },
     ],
+    daha: "See more truths",
+    az: "Show less",
   },
   sss: {
     baslik: "Questions and answers",
@@ -537,16 +469,10 @@ const EN: Icerik = {
   },
   sozler: [
     "You don't start the day you sign up; you start the day you decide.",
-    "No one, but no one, ever made it alone.",
-    "Motivation runs out in 72 hours; what remains is willpower.",
-    "An opportunity isn't one once everyone sees it.",
-    "If you know how something works, you can lead it.",
+    "The secret is producing leaders.",
+    "If your why is strong, the how doesn't matter.",
     "The one stopping you is you.",
-    "Don't work more; work smarter.",
-    "1% every day is 365% in a year.",
-    "The real secret of business: income rises as effort falls.",
-    "People don't say no to you — they say no to what saying yes would mean.",
-    "What matters isn't what works. It's what can be copied.",
+    "People follow you, not your words.",
   ],
   konusmalar: [
     {
@@ -613,7 +539,7 @@ const EN: Icerik = {
       {
         baslik: "A strong team culture",
         aciklama:
-          "You become part of a living community shaped by camps, trainings and tools like Leadership Mirror. We grow together, not alone.",
+          "You become part of a living community shaped by camps, trainings, and the systems we've built. We grow together, not alone.",
       },
       {
         baslik: "A global opportunity",
@@ -622,23 +548,6 @@ const EN: Icerik = {
       },
     ],
   },
-  ilkeler: [
-    {
-      baslik: "The secret is producing leaders.",
-      aciklama:
-        "Be a farmer, not a hunter. Growth isn't counting members; when you raise leaders who build their own teams, the work multiplies.",
-    },
-    {
-      baslik: "If your why is strong, the how doesn't matter.",
-      aciklama:
-        "Give someone their why and they'll move mountains. Everything begins with belief and ends with belief.",
-    },
-    {
-      baslik: "People follow you, not your words.",
-      aciklama:
-        "Whatever you do gets copied. I don't teach what I haven't lived; I live it first, then I teach it.",
-    },
-  ],
   deyince: {
     baslik1: "When you say “Emre Topçu”",
     baslik2: "what comes to mind?",
@@ -648,28 +557,8 @@ const EN: Icerik = {
       "These words were filmed for a birthday by the people who know him. What the numbers can't say, these faces do.",
     sozler: [
       "The person whose name comes up when you Google 'a real man'.",
-      "Statistically, you show up one in a hundred thousand.",
-      "A man who hits the exact point of what he wants to tell a large crowd.",
-      "The art of influencing people and winning friends.",
       "You can't describe him with words.",
       "A true leader.",
-    ],
-    kelimeler: [
-      "Sincerity",
-      "Honesty",
-      "Fortitude",
-      "Leadership",
-      "Dedication",
-      "Diligence",
-      "Trust",
-      "Integrity",
-      "Friendship",
-      "Helpfulness",
-      "Humility",
-      "Devotion",
-      "Conviction",
-      "Authenticity",
-      "Never giving up",
     ],
   },
   iletisim: {
@@ -680,17 +569,12 @@ const EN: Icerik = {
   },
   ui: {
     calis: "Work with me",
-    hikaye: "See the story",
     yolculukBaslik: "Journey",
     rakamlarBaslik: "The numbers speak. The rest is detail.",
-    konusmalarBaslik: "Featured talks",
-    konusmalarAlt:
-      "Signature talks I've given on stage for years, heard by my team over and over.",
+    sahneBaslik: "From the stage",
+    sahneAlt:
+      "Signature talks I've given on stage for years, plus titles from the internal training archive.",
     tumKonusmalar: "All talks",
-    egitimlerBaslik: "From the stage",
-    egitimlerAlt:
-      "A few titles from the internal training archive. All field-tested.",
-    ilkelerBaslik: "Three principles",
     izle: "Watch",
     instagram: "Instagram",
   },

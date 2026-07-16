@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import {
@@ -262,14 +262,6 @@ function Hero() {
                 {c.ui.calis}
               </a>
             </Manyetik>
-            <Manyetik>
-              <a
-                href="#manifesto"
-                className="inline-flex items-center gap-2 rounded-full border border-black/20 px-7 py-3.5 text-fildisi transition-colors hover:border-black/45 active:scale-[0.98]"
-              >
-                {c.ui.hikaye}
-              </a>
-            </Manyetik>
           </motion.div>
         </div>
       </motion.div>
@@ -434,7 +426,7 @@ function ImzaEgri({ tip }: { tip: number }) {
 function LiderTipleri() {
   const c = useC();
   return (
-    <section id="lider-tipleri" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
+    <section id="lider-tipleri" className="scroll-mt-24 bg-abanoz py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-6">
         <motion.h2
           initial={{ opacity: 0, y: 24 }}
@@ -490,20 +482,37 @@ function LiderTipleri() {
 }
 
 /* Sektör Gerçekleri — kimsenin söylemediği gerçekler, kart destesi. */
+function GercekKarti({
+  k,
+  i,
+}: {
+  k: { baslik: string; aciklama: string };
+  i: number;
+}) {
+  return (
+    <TiltKart>
+      <motion.article
+        initial={{ opacity: 0, y: 28 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.3 }}
+        transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: GECIS }}
+        className="flex h-full min-h-[220px] flex-col justify-between rounded-2xl border border-black/10 bg-abanoz-2 p-7 transition-colors hover:border-altin/40"
+      >
+        <h3 className="text-xl font-semibold tracking-tight text-fildisi md:text-2xl">
+          {k.baslik}
+        </h3>
+        <p className="mt-3 leading-relaxed text-duman">{k.aciklama}</p>
+      </motion.article>
+    </TiltKart>
+  );
+}
+
 function Gercekler() {
   const c = useC();
+  const [acik, setAcik] = useState(false);
   return (
-    <section id="gercekler" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
+    <section id="gercekler" className="scroll-mt-24 bg-abanoz py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-6">
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.6 }}
-          transition={{ duration: 0.6, ease: GECIS }}
-          className="mb-4 text-sm font-medium tracking-[0.2em] text-altin uppercase"
-        >
-          {c.gercekler.etiket}
-        </motion.p>
         <motion.h2
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -522,25 +531,26 @@ function Gercekler() {
         >
           {c.gercekler.altMetin}
         </motion.p>
-        <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-14 grid gap-5 md:grid-cols-3">
           {c.gercekler.kartlar.map((k, i) => (
-            <TiltKart key={k.baslik}>
-              <motion.article
-                initial={{ opacity: 0, y: 28 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: GECIS }}
-                className="flex h-full min-h-[220px] flex-col justify-between rounded-2xl border border-black/10 bg-abanoz-2 p-7 transition-colors hover:border-altin/40"
-              >
-                <h3 className="text-xl font-semibold tracking-tight text-fildisi md:text-2xl">
-                  {k.baslik}
-                </h3>
-                <p className="mt-3 leading-relaxed text-duman">
-                  {k.aciklama}
-                </p>
-              </motion.article>
-            </TiltKart>
+            <GercekKarti key={k.baslik} k={k} i={i} />
           ))}
+        </div>
+        {acik && (
+          <div className="mt-5 grid gap-5 md:grid-cols-3">
+            {c.gercekler.kartlarEk.map((k, i) => (
+              <GercekKarti key={k.baslik} k={k} i={i} />
+            ))}
+          </div>
+        )}
+        <div className="mt-10 text-center">
+          <button
+            type="button"
+            onClick={() => setAcik((v) => !v)}
+            className="inline-flex items-center gap-2 rounded-full border border-altin/40 px-5 py-2.5 text-sm font-medium text-altin transition-colors hover:bg-altin hover:text-fildisi"
+          >
+            {acik ? c.gercekler.az : c.gercekler.daha}
+          </button>
         </div>
       </div>
     </section>
@@ -552,7 +562,7 @@ function Sss() {
   const c = useC();
   const [acik, setAcik] = useState<number | null>(0);
   return (
-    <section className="py-24 md:py-32">
+    <section className="py-16 md:py-24">
       <div className="mx-auto max-w-4xl px-6">
         <motion.h2
           initial={{ opacity: 0, y: 24 }}
@@ -621,44 +631,6 @@ function Sss() {
   );
 }
 
-/* OneTeam konumlandırma perdesi — Vaat'ten önce köprü. */
-function OneTeamPerde() {
-  const c = useC();
-  return (
-    <section className="py-24 md:py-32">
-      <div className="mx-auto max-w-3xl px-6 text-center">
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.6 }}
-          transition={{ duration: 0.6, ease: GECIS }}
-          className="mb-6 text-sm font-medium tracking-[0.2em] text-altin uppercase"
-        >
-          {c.oneteamPerde.etiket}
-        </motion.p>
-        <motion.p
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.8, delay: 0.1, ease: GECIS }}
-          className="text-2xl leading-snug font-medium tracking-tight text-fildisi md:text-4xl"
-        >
-          {c.oneteamPerde.ana}
-        </motion.p>
-        <motion.p
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.7, delay: 0.2, ease: GECIS }}
-          className="mx-auto mt-8 max-w-[52ch] text-lg leading-relaxed text-duman"
-        >
-          {c.oneteamPerde.alt}
-        </motion.p>
-      </div>
-    </section>
-  );
-}
-
 /* Kapanış cümlesi — Deyince'den İletişim'e sinematik köprü. */
 function KapanisCumlesi() {
   const c = useC();
@@ -680,63 +652,6 @@ function KapanisCumlesi() {
 }
 
 /* Katlama şeridi — gerçek büyüme rakamları, ok işaretleriyle art arda. */
-function KatlamaSeridi() {
-  const c = useC();
-  return (
-    <section className="pb-20 md:pb-28">
-      <div className="mx-auto max-w-5xl px-6">
-        <motion.p
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true, amount: 0.6 }}
-          transition={{ duration: 0.6, ease: GECIS }}
-          className="mb-8 text-center text-sm font-medium tracking-[0.2em] text-altin uppercase"
-        >
-          {c.katlamaSeridi.etiket}
-        </motion.p>
-        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-8 md:gap-x-5">
-          {c.katlamaSeridi.adimlar.map((adim, i) => (
-            <div key={adim.etiket} className="flex items-center gap-x-3 md:gap-x-5">
-              <motion.div
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.6 }}
-                transition={{ duration: 0.6, delay: i * 0.12, ease: GECIS }}
-                className="text-center"
-              >
-                <p
-                  className={`font-semibold tracking-tighter ${
-                    i === c.katlamaSeridi.adimlar.length - 1
-                      ? "text-4xl text-altin md:text-6xl"
-                      : "text-2xl text-fildisi/70 md:text-4xl"
-                  }`}
-                >
-                  {adim.deger}
-                </p>
-                <p className="mt-2 max-w-[16ch] text-xs leading-snug text-duman md:text-sm">
-                  {adim.etiket}
-                </p>
-              </motion.div>
-              {i < c.katlamaSeridi.adimlar.length - 1 && (
-                <motion.span
-                  aria-hidden
-                  initial={{ opacity: 0 }}
-                  whileInView={{ opacity: 1 }}
-                  viewport={{ once: true, amount: 0.6 }}
-                  transition={{ duration: 0.5, delay: i * 0.12 + 0.1, ease: GECIS }}
-                  className="text-xl text-altin/40 md:text-2xl"
-                >
-                  →
-                </motion.span>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 /* Film bölümü: sabit ekranda, scroll ilerledikçe beliren/kaybolan sahne. */
 function FilmBolumu({
   adim,
@@ -818,7 +733,7 @@ function Yolculuk() {
   }
 
   return (
-    <section id="yolculuk" ref={ref} className="relative h-[520vh]">
+    <section id="yolculuk" ref={ref} className="relative h-[360vh]">
       <div className="sticky top-0 h-[100dvh] overflow-hidden">
         {c.yolculuk.map((adim, i) => (
           <FilmBolumu
@@ -835,94 +750,6 @@ function Yolculuk() {
 }
 
 /* Dikey scroll'u yatay yolculuğa çeviren eğitim rafı. */
-function Egitimler() {
-  const c = useC();
-  const azalt = useReducedMotion();
-  const ref = useRef<HTMLDivElement>(null);
-  const rayRef = useRef<HTMLDivElement>(null);
-  const [mesafe, setMesafe] = useState(0);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end end"],
-  });
-  const x = useTransform(scrollYProgress, [0, 1], [0, -mesafe]);
-
-  useEffect(() => {
-    const hesapla = () => {
-      const ray = rayRef.current;
-      if (!ray) return;
-      setMesafe(Math.max(0, ray.scrollWidth - window.innerWidth + 48));
-    };
-    hesapla();
-    window.addEventListener("resize", hesapla);
-    return () => window.removeEventListener("resize", hesapla);
-  }, []);
-
-  if (azalt) {
-    return (
-      <section id="egitimler" className="scroll-mt-24 bg-abanoz py-24">
-        <div className="mx-auto max-w-6xl px-6">
-          <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-            {c.ui.egitimlerBaslik}
-          </h2>
-          <div className="mt-10 grid gap-5 md:grid-cols-2">
-            {c.egitimler.map((egitim) => (
-              <article
-                key={egitim.baslik}
-                className="rounded-2xl border border-black/10 bg-abanoz-2 p-7"
-              >
-                <p className="text-sm text-duman">{egitim.yil}</p>
-                <h3 className="mt-3 text-2xl font-semibold">{egitim.baslik}</h3>
-                <p className="mt-3 text-duman">{egitim.ozet}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-    );
-  }
-
-  return (
-    <section id="egitimler" ref={ref} className="relative h-[320vh]">
-      <div className="sticky top-0 flex h-[100dvh] flex-col justify-center overflow-hidden bg-abanoz">
-        <div className="mx-auto w-full max-w-6xl px-6">
-          <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-            {c.ui.egitimlerBaslik}
-          </h2>
-          <p className="mt-3 max-w-[52ch] text-duman">{c.ui.egitimlerAlt}</p>
-        </div>
-        <motion.div
-          ref={rayRef}
-          style={{ x }}
-          className="mt-12 flex w-max gap-6 pl-6 md:pl-[max(1.5rem,calc((100vw-72rem)/2))]"
-        >
-          {c.egitimler.map((egitim, i) => (
-            <TiltKart key={egitim.baslik} className="shrink-0">
-              <article
-                className={`flex h-[320px] w-[300px] flex-col justify-between rounded-2xl border border-black/10 p-8 md:h-[360px] md:w-[420px] ${
-                  i % 3 === 0
-                    ? "bg-gradient-to-br from-altin/15 to-abanoz-2"
-                    : "bg-abanoz-2"
-                }`}
-              >
-                <p className="text-sm text-duman">{egitim.yil}</p>
-                <div>
-                  <h3 className="text-2xl font-semibold tracking-tight text-fildisi md:text-3xl">
-                    {egitim.baslik}
-                  </h3>
-                  <p className="mt-4 max-w-[40ch] leading-relaxed text-duman">
-                    {egitim.ozet}
-                  </p>
-                </div>
-              </article>
-            </TiltKart>
-          ))}
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
 /* Kanıt: büyük sayan rakamlar. Arkadaki ağ görünür kalsın diye yarı saydam. */
 function Rakamlar() {
   const c = useC();
@@ -965,6 +792,44 @@ function Rakamlar() {
             </motion.div>
           ))}
         </div>
+        <div className="mt-16 flex flex-wrap items-center justify-center gap-x-3 gap-y-8 border-t border-black/10 pt-14 md:gap-x-5">
+          {c.katlamaSeridi.adimlar.map((adim, i) => (
+            <div key={adim.etiket} className="flex items-center gap-x-3 md:gap-x-5">
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.6 }}
+                transition={{ duration: 0.6, delay: i * 0.12, ease: GECIS }}
+                className="text-center"
+              >
+                <p
+                  className={`font-semibold tracking-tighter ${
+                    i === c.katlamaSeridi.adimlar.length - 1
+                      ? "text-4xl text-altin md:text-6xl"
+                      : "text-2xl text-fildisi/70 md:text-4xl"
+                  }`}
+                >
+                  {adim.deger}
+                </p>
+                <p className="mt-2 max-w-[16ch] text-xs leading-snug text-duman md:text-sm">
+                  {adim.etiket}
+                </p>
+              </motion.div>
+              {i < c.katlamaSeridi.adimlar.length - 1 && (
+                <motion.span
+                  aria-hidden
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true, amount: 0.6 }}
+                  transition={{ duration: 0.5, delay: i * 0.12 + 0.1, ease: GECIS }}
+                  className="text-xl text-altin/40 md:text-2xl"
+                >
+                  →
+                </motion.span>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -1004,7 +869,36 @@ function Vaat() {
   const c = useC();
   return (
     <section id="calis" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
-      <div className="mx-auto max-w-6xl px-6">
+      <div className="mx-auto max-w-3xl px-6 text-center">
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="mb-6 text-sm font-medium tracking-[0.2em] text-altin uppercase"
+        >
+          {c.oneteamPerde.etiket}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.8, delay: 0.1, ease: GECIS }}
+          className="text-2xl leading-snug font-medium tracking-tight text-fildisi md:text-4xl"
+        >
+          {c.oneteamPerde.ana}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, delay: 0.2, ease: GECIS }}
+          className="mx-auto mt-8 max-w-[52ch] text-lg leading-relaxed text-duman"
+        >
+          {c.oneteamPerde.alt}
+        </motion.p>
+      </div>
+      <div className="mx-auto mt-20 max-w-6xl px-6">
         <motion.h2
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -1036,44 +930,6 @@ function Vaat() {
               </h3>
               <p className="relative mt-3 leading-relaxed text-duman">
                 {m.aciklama}
-              </p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function Ilkeler() {
-  const c = useC();
-  return (
-    <section className="bg-abanoz py-24 md:py-32">
-      <div className="mx-auto max-w-5xl px-6">
-        <motion.h2
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.7, ease: GECIS }}
-          className="text-3xl font-semibold tracking-tight md:text-5xl"
-        >
-          {c.ui.ilkelerBaslik}
-        </motion.h2>
-        <div className="mt-10">
-          {c.ilkeler.map((ilke, i) => (
-            <motion.div
-              key={ilke.baslik}
-              initial={{ opacity: 0, y: 28 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.4 }}
-              transition={{ duration: 0.7, delay: i * 0.08, ease: GECIS }}
-              className="group border-t border-black/10 py-12 last:border-b md:py-14"
-            >
-              <h3 className="text-3xl font-semibold tracking-tight text-fildisi transition-colors group-hover:text-altin md:text-5xl">
-                {ilke.baslik}
-              </h3>
-              <p className="mt-4 max-w-[56ch] text-lg leading-relaxed text-duman">
-                {ilke.aciklama}
               </p>
             </motion.div>
           ))}
@@ -1121,11 +977,15 @@ function VideoKapak({ id }: { id: string }) {
   );
 }
 
-/* Öne çıkan konuşmalar — imza keynote'lar. */
-function Konusmalar() {
+/* Sahneden — konuşmalar + eğitim arşivi, tek birleşik kart ızgarası. */
+function Arsiv() {
   const c = useC();
+  const tumler = [
+    ...c.konusmalar.map((k) => ({ ...k, etiket: undefined as string | undefined })),
+    ...c.egitimler.map((e) => ({ baslik: e.baslik, ozet: e.ozet, etiket: e.yil })),
+  ];
   return (
-    <section id="konusmalar" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
+    <section id="konusmalar" className="scroll-mt-24 bg-abanoz py-16 md:py-24">
       <div className="mx-auto max-w-6xl px-6">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
@@ -1136,11 +996,9 @@ function Konusmalar() {
         >
           <div>
             <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-              {c.ui.konusmalarBaslik}
+              {c.ui.sahneBaslik}
             </h2>
-            <p className="mt-4 max-w-[52ch] text-duman">
-              {c.ui.konusmalarAlt}
-            </p>
+            <p className="mt-4 max-w-[52ch] text-duman">{c.ui.sahneAlt}</p>
           </div>
           <Manyetik>
             <a
@@ -1155,22 +1013,20 @@ function Konusmalar() {
           </Manyetik>
         </motion.div>
         <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {c.konusmalar.map((k, i) => (
+          {tumler.map((k, i) => (
             <motion.article
               key={k.baslik}
               initial={{ opacity: 0, y: 28 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: GECIS }}
-              className={`group flex min-h-[220px] flex-col justify-between rounded-2xl border border-black/10 p-7 transition-colors hover:border-altin/40 ${
+              transition={{ duration: 0.6, delay: (i % 3) * 0.06, ease: GECIS }}
+              className={`group flex min-h-[200px] flex-col justify-between rounded-2xl border border-black/10 p-7 transition-colors hover:border-altin/40 ${
                 i === 0
                   ? "bg-gradient-to-br from-altin/15 to-abanoz-2 md:col-span-2 lg:col-span-1"
                   : "bg-abanoz-2"
               }`}
             >
-              <p className="text-4xl font-semibold tracking-tighter text-altin/30">
-                0{i + 1}
-              </p>
+              <p className="text-sm text-duman">{k.etiket ?? `0${i + 1}`}</p>
               <div>
                 <h3 className="text-2xl font-semibold tracking-tight text-fildisi">
                   {k.baslik}
@@ -1244,24 +1100,6 @@ function Deyince() {
             </motion.blockquote>
           ))}
         </div>
-
-        {/* Tekrar eden kelimeler — etiket bulutu */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.7, delay: 0.1, ease: GECIS }}
-          className="mt-10 flex flex-wrap gap-3"
-        >
-          {c.deyince.kelimeler.map((k) => (
-            <span
-              key={k}
-              className="rounded-full border border-altin/25 bg-altin/5 px-5 py-2 text-sm font-medium text-altin md:text-base"
-            >
-              {k}
-            </span>
-          ))}
-        </motion.div>
       </div>
     </section>
   );
@@ -1360,22 +1198,24 @@ function ZirveIc() {
     >
       {/* Tüm sayfanın arkasında yaşayan sinematik 3D sahne */}
       <Ag3D ilerleme={scrollYProgress} hareket={!azalt} />
+      {/* İnce altın scroll-ilerleme çizgisi */}
+      <motion.div
+        aria-hidden
+        style={azalt ? undefined : { scaleX: scrollYProgress }}
+        className="fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-altin"
+      />
       <Nav />
       <main>
         <Hero />
         <Manifesto />
         <Teori />
-        <KatlamaSeridi />
         <Rakamlar />
         <Yolculuk />
         <LiderTipleri />
         <Gercekler />
         <Sozler />
-        <Konusmalar />
-        <Egitimler />
-        <OneTeamPerde />
+        <Arsiv />
         <Vaat />
-        <Ilkeler />
         <Sss />
         <Deyince />
         <KapanisCumlesi />
