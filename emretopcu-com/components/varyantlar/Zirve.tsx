@@ -407,6 +407,33 @@ function Teori() {
 }
 
 /* Üç Çeşit Lider — kendini teşhis ettiren kart destesi. */
+// Üç lider tipinin kaderini kelimesiz anlatan imza eğrileri.
+const IMZA_EGRI_YOLLARI = [
+  "M2 10 C 20 4, 30 6, 38 16 C 44 24, 50 34, 58 36 L 96 36",
+  "M2 30 C 14 16, 20 30, 30 18 C 40 6, 46 26, 56 16 C 64 8, 70 26, 80 20 C 86 16, 90 26, 96 24",
+  "M2 36 C 24 34, 40 26, 54 16 C 68 6, 80 4, 96 2",
+];
+
+function ImzaEgri({ tip }: { tip: number }) {
+  const azalt = useReducedMotion();
+  return (
+    <svg viewBox="0 0 98 40" className="h-10 w-full" aria-hidden fill="none">
+      <motion.path
+        d={IMZA_EGRI_YOLLARI[tip]}
+        stroke={tip === 2 ? "var(--color-altin)" : "currentColor"}
+        strokeOpacity={tip === 2 ? 1 : 0.35}
+        strokeWidth={tip === 2 ? 2.5 : 2}
+        strokeLinecap="round"
+        strokeDasharray={tip === 0 ? "4 3" : undefined}
+        initial={azalt ? undefined : { pathLength: 0 }}
+        whileInView={{ pathLength: 1 }}
+        viewport={{ once: true, amount: 0.6 }}
+        transition={{ duration: 1.1, ease: GECIS, delay: 0.2 }}
+      />
+    </svg>
+  );
+}
+
 function LiderTipleri() {
   const c = useC();
   return (
@@ -453,6 +480,9 @@ function LiderTipleri() {
                 <p className="relative mt-3 leading-relaxed text-duman">
                   {t.aciklama}
                 </p>
+                <div className="relative mt-6 text-duman/60">
+                  <ImzaEgri tip={i} />
+                </div>
               </motion.div>
             </TiltKart>
           ))}
@@ -647,6 +677,64 @@ function KapanisCumlesi() {
         >
           {c.kapanisCumlesi}
         </motion.p>
+      </div>
+    </section>
+  );
+}
+
+/* Katlama şeridi — gerçek büyüme rakamları, ok işaretleriyle art arda. */
+function KatlamaSeridi() {
+  const c = useC();
+  return (
+    <section className="pb-20 md:pb-28">
+      <div className="mx-auto max-w-5xl px-6">
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="mb-8 text-center text-sm font-medium tracking-[0.2em] text-altin uppercase"
+        >
+          {c.katlamaSeridi.etiket}
+        </motion.p>
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-8 md:gap-x-5">
+          {c.katlamaSeridi.adimlar.map((adim, i) => (
+            <div key={adim.etiket} className="flex items-center gap-x-3 md:gap-x-5">
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.6 }}
+                transition={{ duration: 0.6, delay: i * 0.12, ease: GECIS }}
+                className="text-center"
+              >
+                <p
+                  className={`font-semibold tracking-tighter ${
+                    i === c.katlamaSeridi.adimlar.length - 1
+                      ? "text-4xl text-altin md:text-6xl"
+                      : "text-2xl text-fildisi/70 md:text-4xl"
+                  }`}
+                >
+                  {adim.deger}
+                </p>
+                <p className="mt-2 max-w-[16ch] text-xs leading-snug text-duman md:text-sm">
+                  {adim.etiket}
+                </p>
+              </motion.div>
+              {i < c.katlamaSeridi.adimlar.length - 1 && (
+                <motion.span
+                  aria-hidden
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true, amount: 0.6 }}
+                  transition={{ duration: 0.5, delay: i * 0.12 + 0.1, ease: GECIS }}
+                  className="text-xl text-altin/40 md:text-2xl"
+                >
+                  →
+                </motion.span>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -1377,6 +1465,7 @@ function ZirveIc() {
         <Hero />
         <Manifesto />
         <Teori />
+        <KatlamaSeridi />
         <Rakamlar />
         <Yolculuk />
         <LiderTipleri />

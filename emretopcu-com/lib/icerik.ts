@@ -75,6 +75,15 @@ const TR = {
   },
   kapanisCumlesi:
     "Bu benim hikâyem. Belki bugün senin hikâyenin başlangıcıdır.",
+  katlamaSeridi: {
+    etiket: "Ekleme değil, katlama — rakamla",
+    adimlar: [
+      { deger: "5", etiket: "İlk ay el sıkıştığım kişi" },
+      { deger: "19", etiket: "İlk ay sonu, ağ" },
+      { deger: "88", etiket: "İkinci ay, ağ" },
+      { deger: "250.000", etiket: "Bugün, ağ (2026)" },
+    ],
+  },
   yolculuk: [
     {
       yil: "2003",
@@ -419,6 +428,15 @@ const EN: Icerik = {
   },
   kapanisCumlesi:
     "This is my story. Maybe today it's the beginning of yours.",
+  katlamaSeridi: {
+    etiket: "Not adding, multiplying — in numbers",
+    adimlar: [
+      { deger: "5", etiket: "People I shook hands with, month 1" },
+      { deger: "19", etiket: "Network by end of month 1" },
+      { deger: "88", etiket: "Network by month 2" },
+      { deger: "250,000", etiket: "Network today (2026)" },
+    ],
+  },
   yolculuk: [
     {
       yil: "2003",
