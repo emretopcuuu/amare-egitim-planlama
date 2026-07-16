@@ -421,6 +421,65 @@ export default function EkranGosterisi() {
         </div>
       )}
 
+      {/* KAPANIŞ (öneri 4) — CANLI KANIT ANI: Emre'nin tetiklediği İSİMSİZ
+          agregat tam ekranı ele alır (≤90 sn taze; sunucu süre dolunca null
+          döndürür, bir sonraki yoklamada kapanır). */}
+      {veri?.sahne?.kanit && (
+        <div className="fixed inset-0 z-[48] flex flex-col items-center justify-center bg-[#020a12]/96 px-16 text-center">
+          <p className="text-2xl font-semibold uppercase tracking-[0.3em] text-gold-light/70">
+            {veri.sahne.kanit.altBaslik}
+          </p>
+          <h2 className="prizma-serif mt-3 font-display text-6xl font-bold text-gold">
+            {veri.sahne.kanit.baslik}
+          </h2>
+          <div className="mt-12 w-full max-w-4xl space-y-5">
+            {(() => {
+              const enB = Math.max(1, ...veri.sahne.kanit.satirlar.map((s) => s.deger));
+              return veri.sahne.kanit.satirlar.map((s, i) => (
+                <div key={i} className="text-left">
+                  <div className="mb-1 flex items-baseline justify-between">
+                    <span className="text-3xl font-semibold text-white">{s.etiket}</span>
+                    <span className="text-3xl font-bold text-gold-light">{s.deger}</span>
+                  </div>
+                  <div className="h-5 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-gold/80 to-gold-light"
+                      style={{ width: `${Math.round((s.deger / enB) * 100)}%` }}
+                    />
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* KAPANIŞ (öneri 5) — CANLI NABIZ: açık nabız sorusunun canlı toplamı
+          (isimsiz). Soru kapanınca sunucu null döndürür, panel iner. */}
+      {veri?.canliNabiz && (
+        <div className="fixed inset-x-0 bottom-0 z-[47] border-t-4 border-gold/50 bg-[#0a1420]/97 px-12 py-7 shadow-2xl">
+          <p className="font-display text-4xl font-bold text-white">⚡ {veri.canliNabiz.soru}</p>
+          <div className="mt-5 grid gap-3">
+            {(() => {
+              const enB = Math.max(1, ...veri.canliNabiz.dagilim.map((d) => d.adet));
+              return veri.canliNabiz.dagilim.map((d, i) => (
+                <div key={i} className="flex items-center gap-4">
+                  <span className="w-56 shrink-0 truncate text-2xl font-semibold text-gold-light">{d.secenek}</span>
+                  <div className="h-6 flex-1 overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-royal-light to-gold/80 transition-all duration-500"
+                      style={{ width: `${Math.round((d.adet / enB) * 100)}%` }}
+                    />
+                  </div>
+                  <span className="w-14 shrink-0 text-right text-2xl font-bold text-white">{d.adet}</span>
+                </div>
+              ));
+            })()}
+          </div>
+          <p className="mt-3 text-right text-xl text-slate-400">{veri.canliNabiz.toplam} yanıt</p>
+        </div>
+      )}
+
       {/* UX #9 — ANONS BANDI: program anonsu çalarken görsel işaret */}
       {anonsGoster && (
         <div className="fixed inset-x-0 top-0 z-40 bg-royal/95 px-10 py-5 text-center shadow-2xl">

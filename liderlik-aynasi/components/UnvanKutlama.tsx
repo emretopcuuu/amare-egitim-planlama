@@ -52,6 +52,8 @@ export default function UnvanKutlama({
         </p>
         <h2 className="prizma-serif ay-metin mt-2 text-4xl font-semibold">{t.terfi(unvan)}</h2>
         <p className="mt-3 max-w-sm text-base text-slate-300">{t.terfiMetin}</p>
+        {/* Ekip sloganı — unvan atlaması zaten seyrek/özel bir an, her seferinde görünür. */}
+        <p className="mt-2 text-sm font-semibold text-gold-light">{tr.ortak.iyisinDevam}</p>
         <button
           onClick={() => setTerfi(false)}
           className="btn-kor parilti mt-8 h-12 w-full max-w-xs rounded-2xl text-base font-bold"

@@ -91,6 +91,7 @@ export default async function AcSayfa({
         baslik={t.acBasariBaslik}
         metin={t.acBasariMetin}
         dugme={t.acBasariDugme}
+        dugmeHref="/ayna-hayalleri"
       />
     );
   }
@@ -106,11 +107,13 @@ function Sonuc({
   baslik,
   metin,
   dugme,
+  dugmeHref = "/",
 }: {
   ikon: string;
   baslik: string;
   metin: string;
   dugme: string;
+  dugmeHref?: string;
 }) {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
@@ -121,7 +124,7 @@ function Sonuc({
         <h1 className="prizma-serif ay-metin mt-4 text-2xl font-semibold">{baslik}</h1>
         <p className="mt-3 text-base leading-relaxed text-slate-300">{metin}</p>
         <Link
-          href="/"
+          href={dugmeHref}
           className="btn-kor parilti mt-6 inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold"
         >
           {dugme}

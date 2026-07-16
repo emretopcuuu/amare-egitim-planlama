@@ -62,8 +62,12 @@ const AdminEmailDuzeltTab = () => {
     setKyKaydediliyor(true); setKyHata('');
     try {
       const d = await kyCall({ mode: 'kaydet', amareId: kySonuc.amareId, yeniEmail: kyYeniEmail.trim() });
-      setKyKayitSonuc(d);
+      // ÖNEMLİ: kyAra kendi içinde setKyKayitSonuc(null) yapıyor (yeni arama = eski sonucu temizle).
+      // Bu yüzden tazeleme ÖNCE, başarı/hata mesajının set edilmesi SONRA olmalı — yoksa mesaj
+      // hiç görünmeden anında sıfırlanıyordu (React aynı anda iki update'i uyguluyor, kullanıcı
+      // "kaydedildi mi?" diye şüpheye düşüyordu — bildirilen sorun buydu).
       await kyAra(kySonuc.amareId); // tabloyu tazele
+      setKyKayitSonuc(d);
     } catch (e) { setKyHata(e.message); } finally { setKyKaydediliyor(false); }
   };
 

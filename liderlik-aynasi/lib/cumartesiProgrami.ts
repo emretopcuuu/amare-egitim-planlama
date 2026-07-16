@@ -455,7 +455,10 @@ export const OYUN_BILGI: Record<string, { ad: string; simge: string; aciklama: s
   },
 };
 
-function oyunAnahtar(oyunlar: CmtTur[]): string {
+// Kombinasyonun kanonik anahtarı (alfabetik sıralı, "+" ile birleşik — ör.
+// "atv+hazine_avi"). Kapasite yönetimi (lib/oyunKapasite.ts) bu anahtarı
+// settings'te saklar; sıra farkı olmadan aynı ikili her zaman aynı anahtarı üretir.
+export function oyunAnahtar(oyunlar: CmtTur[]): string {
   return [...oyunlar].sort().join("+");
 }
 

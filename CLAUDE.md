@@ -111,6 +111,63 @@ adımları ve içerik TODO'ları kendi README'sinde.
 - Senaryoda bekleyen özel olaylar (kamp açılınca): Gün 2 21:00 sesli mektup
   (`gun2_sesli_mektup_ac`), Gün 3 10:00 domino (`gun3_domino_ac`).
 
+## KAPANIŞ ZİNCİRİ PROJESİ (sürüyor — Emre'nin kapanış eğitimine bağlı)
+
+Kampın kapanışı Emre'nin **kapanış eğitimi** etrafında kurgulanıyor. Zincir:
+**3 günlük yaşanmış deneyim → Emre'nin kapanış eğitimi → verilen sözler → 90 gün
+→ Emre'ye geri ölçüm.** Kullanıcı 10 ileri-seviye öneriyi onayladı; ayrı bir
+admin bölümü + kamp son günü Emre SAHNEYE ÇIKMADAN ÖNCE veri teslimi istedi.
+
+**TESLİM ZAMANI (kullanıcının "saat kaçta?" sorusunun cevabı) — Gün 3 (19 Tem):**
+Emre'nin kapanış eğitimi = **11:40 zirve** (`11:40–13:10 PD101 ... AYNA Kamp
+Analizi`, `lib/kampProgrami.ts`). Değerlendirme (tek liderlik puanlaması) 07:15
+açılır, ~11:15 kapanır. Bu yüzden **iki teslim**: **07:30 ana brif** (değerlendirme
+dışı her şey — bol hazırlık) + **11:20 güncel brif** (değerlendirme işlendikten
+sonra, sahneden ~20 dk önce). Radyo (Faz 4) deseniyle üretim teslimden ~20 dk önce.
+
+- ✅ **Faz A** (bu PR): **"Salonun Röntgeni" sahne öncesi brifi** (öneriler 1-3).
+  `lib/kapanis.ts` (radyo desenini izler: generate-ahead, unique(tarih,slot)
+  idempotent, AI düşerse ŞABLON — brif asla boş kalmaz). `kapanisBrifTik` tik'ten
+  (yalnız mod=kamp, Gün 3, 07:30+11:20). Tablo `kapanis_brif` (migration 0143,
+  canlıda). Yeni admin bölümü **`/admin/kapanis`** (Final grubu): AI düzyazı brif
+  (İSİMSİZ: röntgen + konuşma malzemesi + eğitime köprü) + ham sayı çipleri +
+  **İSİMLİ "dokunulacaklar"** (parlayanlar/geride kalanlar — KODLA hesaplanır,
+  AI'dan GEÇMEZ; radyo "isim asla geçmez" ilkesi) + isimsiz alıntı havuzu. Elle
+  "Brifi Üret/Yenile" (`/api/admin/kapanis`) — kamp kapalıyken (onboarding/prova)
+  eldeki veriyle test edilebilir. GİZLİLİK: AI'ya yalnız toplam sayılar + isimsiz
+  alıntılar gider.
+- ✅ **Faz B** (bu PR): **canlı sahne katmanı** (öneriler 4-5-6). Tek mekanizma
+  `lib/canliSoru.ts`: 'nabiz' (seçenekli, /ekran'da canlı toplam) + 'tohum'
+  ("Emre'nin Sorusu", açık uçlu → cevap kişinin SÖZ tohumu, `tohumYanitiGetir`
+  Faz C'de okunacak). Tablolar `canli_soru`+`canli_soru_yanit` (migration 0144,
+  canlıda). Öneri 4 "kanıt anı": `lib/kapanis.ts` `kanitVeri` (ic_engel/kas/
+  taahhut/bahis, İSİMSİZ) → `settings.sahne_kanit` → `/ekran` tam-ekran overlay
+  (EkranVerisi.sahne.kanit + .canliNabiz eklendi). Telefon: `CanliSoruDinleyici`
+  (/gorevler, 6s poll, tam-ekran kart). Emre'nin kontrolleri `/admin/kapanis`'e
+  eklendi (CanliSahneKontrol). GÜVENLİK: canlı soru yalnız KAMP AÇIKKEN herkese;
+  kapalıyken YALNIZ prova katılımcısına görünür + push atılmaz (142 onboarding
+  kullanıcısı test sorusunu görmez). **NOT:** `/admin/kapanis` zaten vardı
+  (`(komuta)/kapanis`, Faz 6 kamp-sonrası panosu); Faz A+B onun ÜSTÜNE eklendi
+  → tek "kapanış komuta merkezi" (sahne hazırlık + canlı + 90 gün panosu).
+- ✅ **Faz C** (bu PR): **söz zenginleştirme** (öneriler 7-8). Öneri 7: `sozSekillendir`
+  (`lib/soz.ts`) artık `tohumYanitiGetir` ile "Emre'nin Sorusu"na verilen cevabı
+  okuyup söz taslağının KALBİ yapar (SISTEM prompt'una kural eklendi; yalnız YENİ
+  taslağı etkiler, mevcut sözler korunur). Öneri 8: `sozKaniti(db,pid)` gerçek
+  kamp kanıt anı (fiero 10/10 > en yüksek puanlı görev > verdiği taahhütler —
+  KODLA, uydurma yok) → `/sozum` "Bu sözü verebilirsin, çünkü…" kartı (SozV2Akis,
+  söz veren her fazda görür). Migration yok.
+- ✅ **Faz D** (bu PR): **90 gün** (öneriler 9-10) — zincir kapandı. Öneri 9:
+  Emre `/admin/kapanis` → "90-Gün Müfredatı" bölümünde 3-5 ilke girer →
+  `settings.kapanis_ilkeler` (JSON). `gorevUret` (`lib/ayna.ts`) yolculuk modunda
+  her gün bir ilkeyi (`gun % n`) sahada yaşatan prompt fragmanı enjekte eder
+  (icerikAyar `.in`'e `kapanis_ilkeler` eklendi — ek sorgu yok; bozuk JSON →
+  atla). Öneri 10: `sozKarnesiGonder` (`lib/sozTakip.ts`, 2-sorgu agregat) —
+  haftalık söz-tutma raporu Emre'ye/adminlere; tik'ten Pazartesi 08:00 penceresi
+  (sahit özeti yanında, `soz_karnesi_<tarih>` kilidi). **10/10 öneri tamam.**
+
+**ZİNCİR TAM:** 3 gün → sahne öncesi brif (A) → canlı sahne + Emre'nin Sorusu (B)
+→ veriden söz + kanıt (C) → 90-gün müfredatı + söz karnesi (D) → Emre'ye geri ölçüm.
+
 ## AYNA KARAKTER PROJESİ (sürüyor — faz faz)
 
 AYNA "bilge koç"tan **kampın şovmenine** dönüşüyor: egolu-kırılgan, iddiacı,

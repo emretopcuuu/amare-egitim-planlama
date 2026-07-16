@@ -541,6 +541,7 @@ export const tr = {
     linkRapor: "Ayna Raporum",
     linkGorevler: "Görevler",
     linkTakdir: "Takdir Duvarı",
+    linkVideo: "Karşılama Videon",
     kartBaslik: "📤 Profil Kartın",
     kartAciklama: "İndir ya da paylaş — kıvılcımını göster.",
   },
@@ -1081,6 +1082,10 @@ export const tr = {
     acBasariDugme: "Kampa gir →",
     acZatenBaslik: "Kampın zaten açık 🔓",
     acZatenMetin: "Mührün çoktan kalkmış. Devam edebilirsin.",
+    // Mühür kalkınca — anasayfa açılmadan önce izlenen karşılama videosu
+    hosgeldinOynatBaslik: "İzlemek için dokun",
+    hosgeldinMetin: "Kampa adım atmadan önce sana özel bir şey var.",
+    hosgeldinDevamDugme: "Devam et →",
     // Başkasının kişisel açma QR'ı okutulduğunda
     acYabanciBaslik: "Bu QR sana ait değil",
     acYabanciMetin:
@@ -1153,6 +1158,10 @@ export const tr = {
     ozetEksik: "Eksik",
     ozetDuzelt: "Düzelt",
     ozetYap: "Yap",
+    // Mühür ekranı — fotoğraf değiştirme açıklaması (kişi "kilitlendi mi?"
+    // diye tereddüt etmesin diye net anlatım; bkz. CanliAynaOzetSatiri).
+    fotoDegistirAciklama:
+      "Fotoğrafını istediğin zaman değiştirebilirsin — kilitli değil. Aşağıdan 3 açıyı (düz, sağ, sol) yeniden çek; yeni fotoğraf hem avatarını hem AYNA'nın video referansını günceller.",
   },
   // AYNA'NIN ANALİZLERİ — kişiye dair, zaman içinde biriken, kendi sesiyle okunan
   // derin analiz (dönen ayna + Star Wars akışı).
@@ -1771,6 +1780,7 @@ export const tr = {
       market: "Market",
       oyunlastirma: "Oyunlaştırma",
       sozler: "Sözler",
+      kapanis: "Kapanış",
       test: "Prova",
       kurulum: "Kurulum",
       analiz: "Analiz",
@@ -1810,6 +1820,13 @@ export const tr = {
       sKvkk: "KVKK Silme Talepleri",
       sSimulasyon: "Kamp Prova Simülatörü",
       prova: "Prova Kampı (canlı)",
+      // Menüde/palette önceden linki olmayan sayfalar
+      sahneKisi: "Canlı Yolculuk — Sahne Kişisi",
+      gorevAkisi: "Tüm Görevler",
+      senaryo: "Kamp Senaryosu",
+      zirveHazirlik: "Zirveye Hazırlık",
+      kariyerSenkron: "Kariyer Senkron",
+      kayipRadari: "Kayıp Radarı",
     },
     // Funnel navigasyonu: türe göre değil, kampın YOLCULUĞUNA göre 4 aşama + Panel.
     // Operatör soldan sağa = zaman akışı; aradığı aracı süreçteki yerinden bulur.
@@ -4510,6 +4527,9 @@ export const tr = {
     kaydedilemedi: "⚠ Kaydedilemedi — bağlantını kontrol et",
     // AI çağrı limiti (lib/aiLimit.ts) aşılınca gösterilir.
     cokHizli: "Çok hızlı gidiyorsun 🙂 Birkaç dakika soluklan, sonra devam edelim.",
+    // Ekip sloganı — sahada zaten kullanılan söz. İlerleme anlarında (iyi puanlı
+    // görev, unvan atlaması) ARA ARA gösterilir (bkz. lib/iyisinDevam.ts).
+    iyisinDevam: "İyisin devam 👍",
     // Akran ikilisi (sorumluluk ortağı) sayfası
     baslik: "🤝 Ortağın",
     altBaslik:

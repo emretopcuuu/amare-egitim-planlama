@@ -38,13 +38,11 @@ import { SiradakiOnizleme } from "@/components/AsamaRayi";
 import YeniGorevButonu from "@/components/YeniGorevButonu";
 import KimlikElmasi from "@/components/elmas/KimlikElmasi";
 import { kimlikElmasiVerisi } from "@/lib/elmas";
-import { elmasRengiGetir, marketAcikMi } from "@/lib/market";
-import { sandikDurumu, sandikAcikMi } from "@/lib/sandik";
-import { rekorlarAcikMi } from "@/lib/rekorlar";
-import { ciftSeriDurum, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
-import { fisiltiAcikMi, bekleyenFisiltiSayisi } from "@/lib/fisilti";
-import { hamleAcikMi, bekleyenHamleSayisi } from "@/lib/hamle";
-import { radyoKitlikAcikMi } from "@/lib/kampRadyosu";
+import { elmasRengiGetir } from "@/lib/market";
+import { sandikDurumu } from "@/lib/sandik";
+import { ciftSeriDurum } from "@/lib/ciftSerisi";
+import { bekleyenFisiltiSayisi } from "@/lib/fisilti";
+import { bekleyenHamleSayisi } from "@/lib/hamle";
 import RadyoKitlik from "./RadyoKitlik";
 import SandikKarti from "./SandikKarti";
 import CiftAlevi from "./CiftAlevi";
@@ -161,7 +159,7 @@ export default async function AnaSayfa({
   // iç engel). Bayraklar kapalıyken mevcut davranış birebir korunur.
   const [{ data: kisi }, { data: ayarlar }, { data: ofDurum }, { data: sesVarRow }, { data: pusulaErken }, { data: hedefErken }, { data: degerlerDurum }] =
     await Promise.all([
-      db.from("participants").select("camp_unlocked_at, team, consent_at, ayna_ses_secildi_at, onboarding_toren_at, cinsiyet").eq("id", session.sub).maybeSingle(),
+      db.from("participants").select("camp_unlocked_at, team, consent_at, ayna_ses_secildi_at, onboarding_toren_at, cinsiyet, son_gorulme").eq("id", session.sub).maybeSingle(),
       db
         .from("settings")
         .select("key, value")
@@ -186,33 +184,62 @@ export default async function AnaSayfa({
   // canlı 3B elmasını besler: her tamamlanan görev bir faseti ışıtır.
   const elmasVeri = kisi.camp_unlocked_at ? await kimlikElmasiVerisi(db, session.sub) : null;
 
-  // G1 — market: elmas ışık rengi (kişiselleştirme) + market bayrağı (giriş linki).
-  const [elmasRengi, marketAcik, rekorAcik] = kisi.camp_unlocked_at
-    ? await Promise.all([elmasRengiGetir(db, session.sub), marketAcikMi(db), rekorlarAcikMi(db)])
-    : [null, false, false];
+  // OYUNLAŞTIRMA BAYRAKLARI (G1-G9) — TEK sorguda (8 ayrı round-trip yerine;
+  // her biri kilit açıkken her ana sayfa yüklemesinde tetiklendiği için —
+  // performans optimizasyonu, denetimde bulundu). Elmas rengiyle paralel.
+  const OYUN_BAYRAK_ANAHTARLARI = [
+    "market_acik", "rekorlar_acik", "sandik_acik", "cift_serisi_acik",
+    "fisilti_acik", "hamle_acik", "radyo_kitlik_acik", "bugu_acik",
+  ];
+  let elmasRengi: string | null = null;
+  let marketAcik = false;
+  let rekorAcik = false;
+  let sandikBekleyen = 0;
+  let ciftDurum: Awaited<ReturnType<typeof ciftSeriDurum>> = null;
+  let fisiltiAcik = false;
+  let bekleyenFisilti = 0;
+  let hamleAcik = false;
+  let bekleyenHamle = 0;
+  let radyoKitlikAcik = false;
+  let elmasBugulu = false;
 
-  // G2 — gizemli sandık: açıksa bekleyen sandık hakkı sayısı.
-  const sandikBekleyen =
-    kisi.camp_unlocked_at && (await sandikAcikMi(db))
-      ? (await sandikDurumu(db, session.sub)).bekleyen
-      : 0;
+  if (kisi.camp_unlocked_at) {
+    const [bayrakSonuc, elmasRengiSonuc] = await Promise.all([
+      db.from("settings").select("key, value").in("key", OYUN_BAYRAK_ANAHTARLARI),
+      elmasRengiGetir(db, session.sub),
+    ]);
+    const bayrak = new Map((bayrakSonuc.data ?? []).map((s) => [s.key, s.value === "true"]));
+    elmasRengi = elmasRengiSonuc;
+    marketAcik = bayrak.get("market_acik") ?? false;
+    rekorAcik = bayrak.get("rekorlar_acik") ?? false;
+    fisiltiAcik = bayrak.get("fisilti_acik") ?? false;
+    hamleAcik = bayrak.get("hamle_acik") ?? false;
+    radyoKitlikAcik = bayrak.get("radyo_kitlik_acik") ?? false;
 
-  // G4 — çift serisi: açıksa grup alevi durumu.
-  const ciftDurum =
-    kisi.camp_unlocked_at && (await ciftSerisiAcikMi(db))
-      ? await ciftSeriDurum(db, session.sub)
-      : null;
+    // Bayrağı açık olanların detay sorguları PARALEL — yalnız gerekenler çalışır.
+    const [sandikSonuc, ciftSonuc, fisiltiSonuc, hamleSonuc] = await Promise.all([
+      bayrak.get("sandik_acik") ? sandikDurumu(db, session.sub) : Promise.resolve(null),
+      bayrak.get("cift_serisi_acik") ? ciftSeriDurum(db, session.sub) : Promise.resolve(null),
+      fisiltiAcik ? bekleyenFisiltiSayisi(db, session.sub) : Promise.resolve(0),
+      hamleAcik ? bekleyenHamleSayisi(db, session.sub) : Promise.resolve(0),
+    ]);
+    sandikBekleyen = sandikSonuc?.bekleyen ?? 0;
+    ciftDurum = ciftSonuc;
+    bekleyenFisilti = fisiltiSonuc;
+    bekleyenHamle = hamleSonuc;
 
-  // G5 — fısıltı: açıksa bekleyen fısıltı sayısı (giriş rozeti).
-  const fisiltiAcik = kisi.camp_unlocked_at ? await fisiltiAcikMi(db) : false;
-  const bekleyenFisilti = fisiltiAcik ? await bekleyenFisiltiSayisi(db, session.sub) : 0;
-
-  // G6 — hamle sırası: açıksa cevap bekleyen hamle sayısı.
-  const hamleAcik = kisi.camp_unlocked_at ? await hamleAcikMi(db) : false;
-  const bekleyenHamle = hamleAcik ? await bekleyenHamleSayisi(db, session.sub) : 0;
-
-  // G7 — radyo kıtlığı: bayrak açıksa canlı yayın kartını (poll) mount et.
-  const radyoKitlikAcik = kisi.camp_unlocked_at ? await radyoKitlikAcikMi(db) : false;
+    // G9 — elmas buğusu: bayrak açık + 24s girilmediyse buğu (suçlama YOK). ÖNCE
+    // eski son_gorulme'ye göre hesapla, SONRA now'a damgala (boşluk son ziyaretten).
+    if (bayrak.get("bugu_acik")) {
+      const sg = (kisi as { son_gorulme?: string | null }).son_gorulme;
+      elmasBugulu = !!sg && Date.now() - Date.parse(sg) > 24 * 3_600_000;
+      await db
+        .from("participants")
+        .update({ son_gorulme: new Date().toISOString() })
+        .eq("id", session.sub)
+        .then(() => {}, () => {}); // fire-and-forget; akışı bloklamaz
+    }
+  }
 
   // Menü rozetleri: okunmamış iç mesaj sayısı + analiz sayısı ("yeni" noktası).
   const [okunmamisMesajSayisi, analizSayisi] = await Promise.all([
@@ -651,6 +678,7 @@ export default async function AnaSayfa({
             sonFacet={elmasVeri.sonFacet}
             asama={elmasVeri.asama}
             isikRengi={elmasRengi ?? undefined}
+            bugulu={elmasBugulu}
           />
           {/* G7 — Canlı radyo kıtlık kartı (5 dk, sonra kaybolur) */}
           {radyoKitlikAcik && <RadyoKitlik />}

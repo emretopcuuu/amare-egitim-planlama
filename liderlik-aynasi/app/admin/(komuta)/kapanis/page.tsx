@@ -3,8 +3,13 @@ import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { pazartesiRaporu, churnMerdiveni, eylulKapisi } from "@/lib/kapanisPanel";
 import { sozMuhurDurumu } from "@/lib/sozMuhur";
+import { brifGetir } from "@/lib/kapanis";
+import KapanisBrif from "./KapanisBrif";
+import CanliSahneKontrol from "./CanliSahneKontrol";
+import KursuBrifPanel from "./KursuBrifPanel";
+import IlkelerKontrol from "./IlkelerKontrol";
 
-export const revalidate = 30;
+export const dynamic = "force-dynamic";
 export const metadata = { title: "Kapanış — Liderlik Aynası" };
 
 // FAZ 6 — ADMIN OTOMASYONU: [6.1] pazartesi raporu + [6.2] churn merdiveni +
@@ -16,13 +21,28 @@ export default async function KapanisPage() {
   const db = supabaseAdmin();
   // [FAZ3] E-serisi sayaçları: söz mühür N/M + İlk-72 taahhüt yapılan/toplam —
   // kapanış gecesinin iki kritik "herkes tamam mı" göstergesi bu panele taşındı.
-  const [rapor, churn, kapi, soz, { data: taahhutler }] = await Promise.all([
+  const [rapor, churn, kapi, soz, { data: taahhutler }, brif] = await Promise.all([
     pazartesiRaporu(db),
     churnMerdiveni(db),
     eylulKapisi(db),
     sozMuhurDurumu(db),
     db.from("taahhut").select("durum"),
+    brifGetir(db),
   ]);
+
+  // Öneri 9 — mevcut 90-gün müfredat ilkeleri.
+  const { data: ilkeAyar } = await db
+    .from("settings")
+    .select("value")
+    .eq("key", "kapanis_ilkeler")
+    .maybeSingle();
+  let ilkeler: string[] = [];
+  try {
+    const parsed = ilkeAyar?.value ? JSON.parse(ilkeAyar.value) : [];
+    if (Array.isArray(parsed)) ilkeler = parsed.map(String);
+  } catch {
+    ilkeler = [];
+  }
   const taahhutToplam = (taahhutler ?? []).length;
   const taahhutYapilan = (taahhutler ?? []).filter((t) => t.durum === "yapildi").length;
 
@@ -39,7 +59,55 @@ export default async function KapanisPage() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-4xl space-y-6 p-6">
+    <main className="mx-auto w-full max-w-4xl space-y-8 p-6">
+      {/* ============ KAPANIŞ — SAHNE HAZIRLIK (Emre'nin eğitimi) ============ */}
+      <section className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gold">👁 Kapanış — Sahne Hazırlık</h1>
+          <p className="mt-1 text-sm text-slate-400">
+            Üç günün yaşanmış verisi, senin kapanış eğitimine köprü olacak biçimde damıtılır. Bu
+            brifi <strong>yalnız sen</strong> görürsün; salona okunmaz.
+          </p>
+        </div>
+
+        {/* Teslim zamanı — "saat kaçta verecek?" sorusunun cevabı */}
+        <div className="rounded-2xl border border-gold/30 bg-gold/5 p-5 text-sm">
+          <p className="font-semibold text-gold-light">⏰ Kamp günü sana ne zaman gelir?</p>
+          <ul className="mt-2 space-y-1.5 text-slate-300">
+            <li>
+              <strong className="text-slate-100">07:30 · Ana brif</strong> — Gün 3 sabahı, sen daha
+              sahneye çıkmadan. Değerlendirme dışındaki her şey. Kahvaltı + checkout boyunca elinde.
+            </li>
+            <li>
+              <strong className="text-slate-100">11:20 · Güncel brif</strong> — Gün 3 liderlik
+              değerlendirmesi işlendikten sonra tazelenir; zirveden (~11:40) ~20 dk önce. Sahneye
+              bununla çık.
+            </li>
+          </ul>
+          <p className="mt-2 text-xs text-slate-500">
+            Her teslimde push düşer. Kamp açık değilken (şimdi / prova) aşağıdaki{" "}
+            <strong>"Brifi Üret"</strong> ile eldeki veriyle test edebilirsin.
+          </p>
+        </div>
+
+        <KapanisBrif guncel={brif.guncel} />
+
+        <CanliSahneKontrol />
+
+        <KursuBrifPanel />
+      </section>
+
+      {/* ============ KAMP SONRASI 90 GÜN — ADMIN KARAR YÜZEYİ (Faz 6) ============ */}
+      <div className="border-t border-royal/30 pt-6">
+        <h2 className="font-display text-xl font-bold text-gold">🗓 Kamp Sonrası — 90 Gün Panosu</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Kapanıştan sonra kohort sağlığı, churn müdahalesi ve Eylül kapısı kararları.
+        </p>
+      </div>
+
+      {/* Öneri 9 — 90-gün müfredatı: Emre'nin ilkeleri → yolculuk görevlerine */}
+      <IlkelerKontrol baslangic={ilkeler} />
+
       {/* [6.1] PAZARTESİ KOMUTA RAPORU */}
       <section>
         <h2 className="mb-3 font-display text-lg font-bold text-gold-light">📋 Pazartesi Komuta Raporu</h2>

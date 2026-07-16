@@ -16,6 +16,8 @@ export type ElmasProps = {
   asama: number; // 1..5 — unvana göre elmas aşaması
   // G1 — market'ten alınan elmas ışık rengi (RGB "r,g,b"); yoksa altın varsayılan.
   isikRengi?: string;
+  // G9 — 24 saat girilmediyse ince buğu (suçlama YOK; tek dokunuşla silinir).
+  bugulu?: boolean;
 };
 
 // Ana sayfanın kalbindeki CANLI kimlik elması + dokununca faset dökümü.
@@ -29,9 +31,14 @@ export default function KimlikElmasi({
   sonFacet,
   asama,
   isikRengi = "212,175,55",
+  bugulu = false,
 }: ElmasProps) {
   const [hareketli, setHareketli] = useState(true);
   const [acik, setAcik] = useState(false);
+  // G9 — buğu bu oturumda silindi mi + silme parıltısı.
+  const [buguSilindi, setBuguSilindi] = useState(false);
+  const [parilti, setParilti] = useState(false);
+  const buguVar = bugulu && !buguSilindi;
 
   useEffect(() => {
     setHareketli(!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
@@ -52,10 +59,18 @@ export default function KimlikElmasi({
     <>
       <button
         onClick={() => {
+          // G9 — buğu varsa ilk dokunuş onu siler (parıltıyla); detay açmaz.
+          if (buguVar) {
+            setBuguSilindi(true);
+            titret(12);
+            setParilti(true);
+            setTimeout(() => setParilti(false), 750);
+            return;
+          }
           titret(8);
           setAcik(true);
         }}
-        aria-label={t.ac}
+        aria-label={buguVar ? "Elması sil" : t.ac}
         className="relative block w-full"
       >
         {/* ELMAS — arkasında kutu/zemin YOK; göl/zemin üzerinde yüzer (screen
@@ -87,7 +102,31 @@ export default function KimlikElmasi({
               maskImage: "radial-gradient(closest-side, #000 78%, transparent 100%)",
             }}
           />
+          {/* G9 — BUĞU: 24s girilmediyse ince frosted katman (suçlama YOK). */}
+          {buguVar && (
+            <span
+              aria-hidden
+              className="elmas-bugu pointer-events-none absolute left-1/2 top-1/2 h-44 w-44 -translate-x-1/2 -translate-y-1/2 rounded-full"
+              style={{
+                background: "radial-gradient(closest-side, rgba(226,232,240,0.22) 40%, rgba(226,232,240,0) 82%)",
+                backdropFilter: "blur(1.5px)",
+                WebkitBackdropFilter: "blur(1.5px)",
+              }}
+            />
+          )}
+          {/* Silme parıltısı */}
+          {parilti && (
+            <span
+              aria-hidden
+              className="elmas-parilti pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-4xl"
+            >
+              ✨
+            </span>
+          )}
         </div>
+        {buguVar && (
+          <p className="mt-1 text-center text-xs text-slate-400">Elmasın seni özledi — dokun, sil.</p>
+        )}
 
         {/* YAZILAR — sade zemin SADECE bunların çevresinde (okunabilirlik) */}
         <div className="mx-auto mt-1 w-full max-w-xs rounded-2xl border border-white/10 bg-midnight-card/55 px-4 py-3 backdrop-blur">

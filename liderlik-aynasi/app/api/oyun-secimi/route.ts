@@ -4,9 +4,12 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import {
   oyunSecimiGecerli,
   oyunlardanGruplar,
+  oyunAnahtar,
   grupAdi,
+  OYUN_BILGI,
   type CmtTur,
 } from "@/lib/cumartesiProgrami";
+import { kapaliKombolar } from "@/lib/oyunKapasite";
 
 // Oyun seçimi → grup atama (giriş akışının "kodlu formülü"). Kişi 2 seçmeli oyun
 // seçer; o ikiliyi oynayan gruplardan EN BOŞ olanına (eşitlikte rastgele) atanır.
@@ -25,7 +28,9 @@ export async function POST(req: NextRequest) {
 
   const db = supabaseAdmin();
 
-  // Zaten atanmışsa mevcut grubu döndür (tekrar atama yok).
+  // Zaten atanmışsa mevcut grubu döndür (tekrar atama yok). Bu kontrol
+  // kapasite kontrolünden ÖNCE gelir — eski (belki artık kapalı) ikilisiyle
+  // yeniden POST atan zaten-atanmış biri yanlışlıkla "dolu" hatası almasın.
   const { data: ben } = await db
     .from("participants")
     .select("team")
@@ -35,8 +40,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ tamam: true, grup: ben.team, degismedi: true });
   }
 
+  // Kombinasyon kapasitesi: admin bu ikiliyi kapattıysa (gruplar dolduysa) YENİ
+  // seçim reddedilir. Zaten atanmış kişiler yukarıdaki kontrolle etkilenmez.
+  const kapali = await kapaliKombolar(db);
+  if (kapali.includes(oyunAnahtar(secilen))) {
+    const isimler = secilen.map((o) => OYUN_BILGI[o]?.ad ?? o).join(" + ");
+    return NextResponse.json(
+      { hata: `${isimler} ikilisi şu an dolu. Lütfen farklı bir ikili seç.` },
+      { status: 400 }
+    );
+  }
+
   const adaylar = oyunlardanGruplar(secilen);
   if (adaylar.length === 0) {
+    await db.from("audit_log").insert({
+      eylem: "oyun_secimi_adaysiz",
+      detay: { katilimci: session.sub, secilen },
+    });
     return NextResponse.json({ hata: "Bu oyun ikilisi için uygun grup yok." }, { status: 400 });
   }
   const adayAdlari = adaylar.map((g) => grupAdi(g));
@@ -49,10 +69,19 @@ export async function POST(req: NextRequest) {
     p_adaylar: adayAdlari,
   });
   if (error) {
-    // Ham DB hatasını sızdırma — jenerik mesaj yeter.
+    // Teşhis için ham hatayı audit_log'a yaz (Railway loglarına erişmeden görülsün);
+    // istemciye jenerik mesaj yeter, ham DB hatasını sızdırma.
+    await db.from("audit_log").insert({
+      eylem: "oyun_secimi_rpc_hata",
+      detay: { katilimci: session.sub, secilen, adayAdlari, hata: error.message },
+    });
     return NextResponse.json({ hata: "Atama yapılamadı, tekrar dene." }, { status: 500 });
   }
   if (!atanmis) {
+    await db.from("audit_log").insert({
+      eylem: "oyun_secimi_atama_bos",
+      detay: { katilimci: session.sub, secilen, adayAdlari },
+    });
     return NextResponse.json({ hata: "Bu oyun ikilisi için uygun grup yok." }, { status: 400 });
   }
 

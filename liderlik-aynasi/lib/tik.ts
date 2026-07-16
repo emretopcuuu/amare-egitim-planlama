@@ -1,6 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { eskalasyonTara, sahitOzetiGonder, checkinCipasi } from "@/lib/sozTakip";
+import { eskalasyonTara, sahitOzetiGonder, checkinCipasi, sozKarnesiGonder } from "@/lib/sozTakip";
 import { ufukToreniTara } from "@/lib/ufukToren";
 import {
   gorevUret,
@@ -72,9 +72,11 @@ import { karsilasmaBul } from "@/lib/karsilasma";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
 import { radyoTik } from "@/lib/kampRadyosu";
+import { kapanisBrifTik } from "@/lib/kapanis";
 import { rekorTara, rekorlarAcikMi } from "@/lib/rekorlar";
 import { ciftSerisiDegerlendir, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
 import { hamleTaraOlustur, hamleHatirlat, hamleAcikMi } from "@/lib/hamle";
+import { kayipBakimTik, kayipAcikMi } from "@/lib/kayipEsya";
 import { whatsAppGonder, sablonSidGetir, whatsAppYapilandirildiMi } from "@/lib/whatsapp";
 import { sablonBul, ilkAd } from "@/lib/whatsappSablonlari";
 import { gunlukSoz } from "@/lib/ozluSozler";
@@ -1393,6 +1395,12 @@ export async function tikCalistir(
         const sonuc = await sahitOzetiGonder(db);
         ozet.sahitOzeti = sonuc.gonderilen;
       }
+      // KAPANIŞ Faz D · öneri 10 — SÖZ KARNESİ: aynı Pazartesi penceresinde
+      // Emre'ye (adminlere) haftalık söz-tutma raporu (kendi settings kilidi).
+      const { error: karneKilit } = await db
+        .from("settings")
+        .insert({ key: `soz_karnesi_${bugun}`, value: "1" });
+      if (!karneKilit) await sozKarnesiGonder(db).catch(() => {});
     }
   }
 
@@ -1894,6 +1902,11 @@ export async function tikCalistir(
   // Kendi hatasını yutar, tik'i asla düşürmez; kill switch radyoyu da kapatır.
   if (mod === "kamp") await radyoTik(db, gun, gunDk, bugun);
 
+  // KAPANIŞ — "Salonun Röntgeni" sahne öncesi brifi: Gün 3'te 07:30 ana brif +
+  // 11:20 güncel (değerlendirme sonrası) sürüm. Üretim ~20 dk önce; teslimde
+  // admin'e push. Kendi hatasını yutar, tik'i asla düşürmez.
+  if (mod === "kamp") await kapanisBrifTik(db, gun, gunDk, bugun);
+
   // G3 — REKORLAR taraması: kamp modunda, bayrak açıkken mevcut verilerden
   // rekorları hesaplar, kırılanı herkese duyurur. Kendi hatasını yutar.
   if (mod === "kamp" && (await rekorlarAcikMi(db))) await rekorTara(db);
@@ -1909,6 +1922,10 @@ export async function tikCalistir(
     await hamleTaraOlustur(db, simdi);
     if (saat === 20 && dakika >= 30) await hamleHatirlat(db, simdi);
   }
+
+  // G8 — KAYIP EŞYA bakımı: 48s bulunmayan tura ipucu, biten pay penceresini
+  // kapat. Bayrak açıkken (mod bağımsız — keşif kampta da yolculukta da olabilir).
+  if (await kayipAcikMi(db)) await kayipBakimTik(db, simdi);
 
   if (mod === "kamp" && (saat === 13 || saat === 20) && !sahneSessiz) {
     const dilim = saat === 13 ? "ogle" : "aksam";

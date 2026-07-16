@@ -38,7 +38,7 @@ export default async function BenPage() {
   ] = await Promise.all([
     db
       .from("participants")
-      .select("full_name, team, profil_foto_path, yuz_fotolari")
+      .select("full_name, team, profil_foto_path, yuz_fotolari, camp_unlocked_at")
       .eq("id", session.sub)
       .maybeSingle(),
     db
@@ -293,6 +293,16 @@ export default async function BenPage() {
           >
             💛 {t.linkTakdir}
           </Link>
+          {/* Mühür kalktıktan sonra tek seferlik gösterilen karşılama videosu —
+              buradan istediği zaman tekrar izleyebilir. */}
+          {kisi?.camp_unlocked_at && (
+            <Link
+              href="/ayna-hayalleri"
+              className="flex h-12 items-center justify-center rounded-xl border border-royal-light/30 text-sm font-medium text-slate-200 hover:bg-white/5"
+            >
+              🎬 {t.linkVideo}
+            </Link>
+          )}
         </section>
 
       </div>
