@@ -15,6 +15,8 @@ export const TRIBUTE_VIDEO_ID = "WioG82pd_m8";
 // Eğitim arşivindeki lider profili (üyeler tüm konuşmaları burada izler).
 export const LIDER_PROFIL_URL =
   "https://egitimtakvimi.oneteamglobal.ai/lider/emre_topcu";
+// Resmi YouTube kanalı (haftalık kısa videolar).
+export const YOUTUBE_KANAL_URL = "https://www.youtube.com/@emretopcuofficial";
 
 export type Dil = "tr" | "en";
 
@@ -22,6 +24,7 @@ const TR = {
   nav: [
     { href: "#manifesto", etiket: "Hakkımda" },
     { href: "#yolculuk", etiket: "Yolculuk" },
+    { href: "#videolar", etiket: "Videolar" },
     { href: "#konusmalar", etiket: "Konuşmalar" },
   ],
   hero: {
@@ -279,6 +282,47 @@ const TR = {
       "Gerçek bir lider.",
     ],
   },
+  videolar: {
+    baslik: "Kamera karşısında",
+    altMetin:
+      "Sahnede ve stüdyoda; doğrudan satışın inceliklerini adım adım anlattığım eğitimler.",
+    kanalNot: "Her hafta yeni kısa videolar YouTube kanalımda.",
+    kanalEtiket: "YouTube kanalım",
+    liste: [
+      {
+        platform: "vimeo" as const,
+        id: "318263164",
+        gorsel: "/video/nedenleriniz.webp",
+        baslik: "Nedenleriniz",
+        ozet: "Neden bu işi yapıyorsun? Cevabı netleşen insanın nasıla ihtiyacı kalmaz.",
+        sure: "37 dk",
+      },
+      {
+        platform: "vimeo" as const,
+        id: "186525853",
+        gorsel: "/video/dogru-kapanis.webp",
+        baslik: "Doğru Kapanış",
+        ozet: "Görüşmeyi karar anına taşıyan, ısrarsız ve net kapanışın adımları.",
+        sure: "12 dk",
+      },
+      {
+        platform: "vimeo" as const,
+        id: "236547639",
+        gorsel: "/video/grup-olusturma.webp",
+        baslik: "Başarılı Grup Oluşturmanın Püf Noktaları",
+        ozet: "Ekleme değil katlama: kendi ekibini kuran liderleri nasıl yetiştirirsin?",
+        sure: "25 dk",
+      },
+      {
+        platform: "vimeo" as const,
+        id: "375546683",
+        gorsel: "/video/teknik-egitim.webp",
+        baslik: "Teknik Eğitim: Davet, Sunum, Kapanış, Takip",
+        ozet: "İşin dört temel adımını baştan sona işleyen kapsamlı saha eğitimi.",
+        sure: "78 dk",
+      },
+    ],
+  },
   iletisim: {
     baslikSatir1: "Bir sonraki adımını",
     baslikSatir2: "birlikte planlayalım.",
@@ -310,6 +354,7 @@ const EN: Icerik = {
   nav: [
     { href: "#manifesto", etiket: "About" },
     { href: "#yolculuk", etiket: "Journey" },
+    { href: "#videolar", etiket: "Videos" },
     { href: "#konusmalar", etiket: "Talks" },
   ],
   hero: {
@@ -565,6 +610,47 @@ const EN: Icerik = {
       "The person whose name comes up when you Google 'a real man'.",
       "You can't describe him with words.",
       "A true leader.",
+    ],
+  },
+  videolar: {
+    baslik: "On camera",
+    altMetin:
+      "On stage and in the studio — trainings where I walk through the craft of direct sales, step by step.",
+    kanalNot: "New short videos every week on my YouTube channel.",
+    kanalEtiket: "My YouTube channel",
+    liste: [
+      {
+        platform: "vimeo" as const,
+        id: "318263164",
+        gorsel: "/video/nedenleriniz.webp",
+        baslik: "Your Reasons",
+        ozet: "Why do you do this work? Once the answer is clear, you no longer need the how.",
+        sure: "37 min",
+      },
+      {
+        platform: "vimeo" as const,
+        id: "186525853",
+        gorsel: "/video/dogru-kapanis.webp",
+        baslik: "The Right Close",
+        ozet: "The steps of a clear, pressure-free close that carries the meeting to a decision.",
+        sure: "12 min",
+      },
+      {
+        platform: "vimeo" as const,
+        id: "236547639",
+        gorsel: "/video/grup-olusturma.webp",
+        baslik: "Keys to Building a Successful Group",
+        ozet: "Not adding but multiplying: how to raise leaders who build their own teams.",
+        sure: "25 min",
+      },
+      {
+        platform: "vimeo" as const,
+        id: "375546683",
+        gorsel: "/video/teknik-egitim.webp",
+        baslik: "Technical Training: Invite, Present, Close, Follow up",
+        ozet: "A comprehensive field training covering the four core steps end to end.",
+        sure: "78 min",
+      },
     ],
   },
   iletisim: {
