@@ -4,6 +4,7 @@ import { sablonBul, degiskenleriUret } from "@/lib/whatsappSablonlari";
 import {
   whatsAppYapilandirildiMi,
   whatsAppGonder,
+  whatsAppGonderDetayli,
   sablonSidGetir,
   whatsAppAdresi,
 } from "@/lib/whatsapp";
@@ -58,7 +59,13 @@ export async function POST(req: Request) {
       return Response.json({ hata: t.api.hedefYok }, { status: 400 });
     }
 
-    const detay: { takim: string; basarili: number; basarisiz: number; telefonsuz: number }[] = [];
+    const detay: {
+      takim: string;
+      basarili: number;
+      basarisiz: number;
+      telefonsuz: number;
+      hataOrnegi?: string;
+    }[] = [];
     let basariliToplam = 0;
     let basarisizToplam = 0;
     let telefonsuzToplam = 0;
@@ -77,27 +84,31 @@ export async function POST(req: Request) {
 
       let basarili = 0;
       let basarisiz = 0;
+      // Grubun İLK gerçek Twilio hatası — admin panelde görünür ki başarısızlık
+      // bir daha asla sebepsiz/kör kalmasın (canlıdaki %100 düşüş teşhis edilemedi).
+      let hataOrnegi: string | undefined;
       for (let i = 0; i < gecerli.length; i += PARCA_GRUP) {
         const dilim = gecerli.slice(i, i + PARCA_GRUP);
         const sonuclar = await Promise.all(
           dilim.map((k) =>
-            whatsAppGonder(
+            whatsAppGonderDetayli(
               k.phone!,
               contentSid!,
               degiskenleriUret(sablon, { ad: k.full_name, kod: k.login_code }, g.mesaj)
             )
           )
         );
-        sonuclar.forEach((ok, j) => {
-          if (ok) basarili++;
+        sonuclar.forEach((s, j) => {
+          if (s.ok) basarili++;
           else {
             basarisiz++;
             davetUlasmayanToplam.push(dilim[j].full_name);
+            if (!hataOrnegi && s.hata) hataOrnegi = s.hata;
           }
         });
       }
 
-      detay.push({ takim: g.takim, basarili, basarisiz, telefonsuz });
+      detay.push({ takim: g.takim, basarili, basarisiz, telefonsuz, hataOrnegi });
       basariliToplam += basarili;
       basarisizToplam += basarisiz;
       telefonsuzToplam += telefonsuz;
@@ -111,6 +122,7 @@ export async function POST(req: Request) {
       basarisiz: basarisizToplam,
       telefonsuz: telefonsuzToplam,
       davetUlasmayan: davetUlasmayanToplam,
+      hataOrnekleri: detay.filter((d) => d.hataOrnegi).map((d) => `${d.takim}: ${d.hataOrnegi}`),
     });
 
     return Response.json({

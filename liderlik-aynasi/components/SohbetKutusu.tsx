@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { titret } from "@/lib/his";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 export type SohbetMesaj = {
   id: string;
@@ -173,6 +174,10 @@ export default function SohbetKutusu({ benId, mod, anahtar, digerAd, baslangic }
           rows={1}
           placeholder={`${digerAd} kişisine yaz…`}
           className="max-h-32 min-h-[3rem] flex-1 resize-none rounded-2xl border border-white/15 bg-midnight-card/80 px-4 py-3 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-gold/50"
+        />
+        <MikrofonButonu
+          ikon
+          onMetin={(p) => setTaslak((g) => (g.trim() ? `${g.trim()} ${p}` : p))}
         />
         <button
           type="submit"

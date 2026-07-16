@@ -160,7 +160,10 @@ export function degiskenleriUret(
     case "degerlendirme":
       return { "1": ad, "2": kisi.kod };
     case "duyuru":
-      return { "1": ad, "2": (serbestMesaj ?? "").trim() };
+      // Meta kuralı: şablon değişkeninde satır sonu/sekme ve 4+ ardışık boşluk
+      // OLAMAZ — aksi halde Twilio isteği daha kapıda reddeder (canlıda tüm
+      // grup-linki gönderimi bu yüzden %100 düştü). Hepsini tek boşluğa indir.
+      return { "1": ad, "2": (serbestMesaj ?? "").replace(/\s+/g, " ").trim() };
   }
 }
 

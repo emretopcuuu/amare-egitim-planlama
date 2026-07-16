@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Bekle from "@/components/Bekle";
 import AynaDusunuyor from "@/components/AynaDusunuyor";
+import MikrofonButonu from "@/components/MikrofonButonu";
 import { tr } from "@/lib/i18n/tr";
 import { ayAdi, aySonunaGun } from "@/lib/planTakvim";
 import type { OyunPlani, PlanMadde, PlanUfuk } from "@/lib/oyunPlani";
@@ -362,6 +363,13 @@ export default function PlanAtolyesi({ ilkPlan }: { ilkPlan: OyunPlani | null })
                       rows={2}
                       className="w-full resize-none rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 text-sm text-slate-200 outline-none focus:border-gold/50"
                     />
+                    <MikrofonButonu
+                      ikon
+                      onMetin={(p) => {
+                        const g = m.aksiyon.trim();
+                        maddeGuncelle(u.key, i, "aksiyon", g ? `${g} ${p}` : p);
+                      }}
+                    />
                     <input
                       value={m.olcut}
                       onChange={(e) => maddeGuncelle(u.key, i, "olcut", e.target.value)}
@@ -539,6 +547,10 @@ function DanisPaneli({
             placeholder="Örn: Bu hafta gerçekçi kaç sunum yapabilirim?"
             rows={2}
             className="w-full resize-none rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 text-sm text-slate-200 outline-none focus:border-royal/50"
+          />
+          <MikrofonButonu
+            ikon
+            onMetin={(p) => setSoru((g) => (g.trim() ? `${g.trim()} ${p}` : p))}
           />
           {hata && <p className="text-xs font-medium text-red-400">Danışman şu an yanıt veremedi, tekrar dene.</p>}
           <div className="flex gap-2">

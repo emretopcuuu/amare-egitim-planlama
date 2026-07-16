@@ -372,6 +372,9 @@ function BaslangicFormu({
         placeholder={t.noktaDetayYer}
         className="w-full resize-none rounded-xl border border-royal-light/30 bg-midnight-soft px-4 py-2.5 text-base text-slate-100 outline-none focus:border-gold"
       />
+      <MikrofonButonu
+        onMetin={(p) => setDetay((g) => (g.trim() ? `${g.trim()} ${p}` : p).slice(0, 500))}
+      />
       {hata && <p className="text-center text-sm text-red-400">{hata}</p>}
       <button
         onClick={() => gecerli && onKaydet(kariyer, ay ? Number(ay) : null, detay || null, ovNum, volNum)}

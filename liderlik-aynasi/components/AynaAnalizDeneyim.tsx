@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
 import AynaIkon from "@/components/AynaIkon";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 const t = tr.analiz;
 
@@ -285,6 +286,11 @@ export default function AynaAnalizDeneyim({
                         placeholder={t.yenidenYer}
                         className="mt-2 w-full resize-none rounded-xl border border-white/15 bg-midnight-soft/50 px-3 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-gold"
                       />
+                      <div className="mt-2">
+                        <MikrofonButonu
+                          onMetin={(p) => setSebep((g) => (g.trim() ? `${g.trim()} ${p}` : p))}
+                        />
+                      </div>
                       <div className="mt-2 flex gap-2">
                         <button
                           onClick={() => {
