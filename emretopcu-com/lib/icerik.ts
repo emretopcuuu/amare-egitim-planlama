@@ -24,7 +24,6 @@ const TR = {
     { href: "#manifesto", etiket: "Hakkımda" },
     { href: "#yolculuk", etiket: "Yolculuk" },
     { href: "#konusmalar", etiket: "Konuşmalar" },
-    { href: "#ayna", etiket: "Liderlik Aynası" },
   ],
   hero: {
     isim: "Emre Topçu",
@@ -264,17 +263,6 @@ const TR = {
       ozet: "Tek tek üye eklemekten, çoğalan liderler yetiştirmeye geçiş.",
     },
   ],
-  ayna: {
-    baslik: "Liderlik Aynası",
-    aciklama:
-      "Sapanca kampı için sıfırdan geliştirdiğimiz 360° liderlik değerlendirme ve kişisel gelişim uygulaması. Üç gün boyunca 29 liderin cebinde çalıştı: görevler, gözlemler ve yapay zeka destekli kişisel pusula.",
-    sayaclar: [
-      { etiket: "Katılımcı", hedef: 29, ek: " lider" },
-      { etiket: "Süre", hedef: 3, ek: " gün" },
-      { etiket: "Değerlendirme", hedef: 360, ek: "°" },
-      { etiket: "Kuruluş", hedef: 2026, ek: "" },
-    ],
-  },
   vaat: {
     baslik: "Benimle çalışmak ne demek?",
     maddeler: [
@@ -377,7 +365,6 @@ const EN: Icerik = {
     { href: "#manifesto", etiket: "About" },
     { href: "#yolculuk", etiket: "Journey" },
     { href: "#konusmalar", etiket: "Talks" },
-    { href: "#ayna", etiket: "Leadership Mirror" },
   ],
   hero: {
     isim: "Emre Topçu",
@@ -617,17 +604,6 @@ const EN: Icerik = {
       ozet: "Moving from adding members one by one to raising multiplying leaders.",
     },
   ],
-  ayna: {
-    baslik: "Leadership Mirror",
-    aciklama:
-      "A 360° leadership assessment and personal-growth app we built from scratch for the Sapanca camp. For three days it lived in 29 leaders' pockets: missions, observations, and an AI-assisted personal compass.",
-    sayaclar: [
-      { etiket: "Participants", hedef: 29, ek: " leaders" },
-      { etiket: "Duration", hedef: 3, ek: " days" },
-      { etiket: "Assessment", hedef: 360, ek: "°" },
-      { etiket: "Founded", hedef: 2026, ek: "" },
-    ],
-  },
   vaat: {
     baslik: "What does working with me mean?",
     maddeler: [

@@ -5,13 +5,11 @@ import dynamic from "next/dynamic";
 import Image from "next/image";
 import {
   motion,
-  useInView,
   useMotionValue,
   useReducedMotion,
   useScroll,
   useSpring,
   useTransform,
-  animate,
   type MotionValue,
 } from "motion/react";
 import {
@@ -926,94 +924,6 @@ function Egitimler() {
   );
 }
 
-/* Görünür olunca sayan rakam. */
-function Sayac({ hedef, ek }: { hedef: number; ek: string }) {
-  const azalt = useReducedMotion();
-  const ref = useRef<HTMLSpanElement>(null);
-  const gorunur = useInView(ref, { once: true, amount: 0.6 });
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el || !gorunur) return;
-    if (azalt) {
-      el.textContent = `${hedef}`;
-      return;
-    }
-    const kontrol = animate(0, hedef, {
-      duration: 1.6,
-      ease: [0.16, 1, 0.3, 1],
-      onUpdate: (v) => {
-        el.textContent = `${Math.round(v)}`;
-      },
-    });
-    return () => kontrol.stop();
-  }, [gorunur, hedef, azalt]);
-
-  return (
-    <span>
-      <span ref={ref}>0</span>
-      {ek}
-    </span>
-  );
-}
-
-function Ayna() {
-  const c = useC();
-  return (
-    <section id="ayna" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
-      <div className="mx-auto max-w-6xl px-6">
-        <motion.div
-          initial={{ opacity: 0, y: 32 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={{ duration: 0.8, ease: GECIS }}
-          className="relative overflow-hidden rounded-3xl border border-altin/25 bg-abanoz-2 p-10 md:p-16"
-        >
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background:
-                "radial-gradient(700px 420px at 12% 0%, rgba(212, 176, 106, 0.14), transparent 60%)",
-            }}
-          />
-          <div className="relative grid gap-12 md:grid-cols-2 md:items-center">
-            <div>
-              <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-                {c.ayna.baslik}
-              </h2>
-              <p className="mt-5 max-w-[46ch] leading-relaxed text-duman">
-                {c.ayna.aciklama}
-              </p>
-              <Manyetik>
-                <a
-                  href={AYNA_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-8 inline-flex items-center gap-2 rounded-full border border-altin/50 px-6 py-3 font-medium text-altin transition-colors hover:bg-altin hover:text-fildisi active:scale-[0.98]"
-                >
-                  ayna.oneteamglobal.ai
-                  <ArrowUpRight size={18} weight="bold" />
-                </a>
-              </Manyetik>
-            </div>
-            <dl className="grid grid-cols-2 gap-x-8 gap-y-10">
-              {c.ayna.sayaclar.map((s) => (
-                <div key={s.etiket}>
-                  <dt className="text-sm text-duman">{s.etiket}</dt>
-                  <dd className="mt-1 text-4xl font-semibold tracking-tight text-fildisi">
-                    <Sayac hedef={s.hedef} ek={s.ek} />
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
 /* Kanıt: büyük sayan rakamlar. Arkadaki ağ görünür kalsın diye yarı saydam. */
 function Rakamlar() {
   const c = useC();
@@ -1473,7 +1383,6 @@ function ZirveIc() {
         <Sozler />
         <Konusmalar />
         <Egitimler />
-        <Ayna />
         <OneTeamPerde />
         <Vaat />
         <Ilkeler />
