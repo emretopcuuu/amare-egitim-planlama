@@ -7,6 +7,7 @@ import { ufukAyEtiket } from "@/lib/planTakvim";
 import Konfeti from "@/components/Konfeti";
 import KonusanYansima from "@/components/KonusanYansima";
 import BildirimSerit from "@/components/BildirimSerit";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 const t = tr.takip;
 
@@ -281,6 +282,11 @@ export default function TakipAkis({
               placeholder={t.notYer}
               className="mt-2 w-full resize-none rounded-xl border border-royal-light/30 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
             />
+            <div className="mt-2">
+              <MikrofonButonu
+                onMetin={(p) => setNot((g) => (g.trim() ? `${g.trim()} ${p}` : p).slice(0, 500))}
+              />
+            </div>
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => checkin(true)}

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { sesCal } from "@/lib/sesEfekti";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 type Hamle = {
   id: string;
@@ -68,6 +69,16 @@ export default function HamleAkis({ hamleler }: { hamleler: Hamle[] }) {
                 placeholder="Bu karşılaşmadan senin cümlen…"
                 className="mt-2 w-full resize-none rounded-xl border border-royal/40 bg-midnight/60 p-2.5 text-sm text-slate-100 outline-none focus:border-gold/50"
               />
+              <div className="mt-2">
+                <MikrofonButonu
+                  onMetin={(p) =>
+                    setMetinler((m) => {
+                      const g = (m[h.id] ?? "").trim();
+                      return { ...m, [h.id]: (g ? `${g} ${p}` : p).slice(0, 400) };
+                    })
+                  }
+                />
+              </div>
               <button
                 onClick={() => yanitla(h.id)}
                 disabled={mesgul === h.id || (metinler[h.id] ?? "").trim().length < 2}

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { sesCal } from "@/lib/sesEfekti";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 // KAPANIŞ Faz B — telefon canlı soru dinleyicisi. Emre eğitimde bir soru
 // açınca (nabız/tohum) telefonda tam-ekran kart belirir. Yanıtlayınca kapanır.
@@ -117,6 +118,12 @@ export default function CanliSoruDinleyici() {
               placeholder="Buraya yaz…"
               className="w-full resize-none rounded-xl border border-royal/40 bg-midnight/60 p-3 text-base text-slate-100 outline-none focus:border-gold/50"
             />
+            {/* Sahne anında telefonla yazmak zor — sesle yaz burada kritik. */}
+            <div className="mt-2">
+              <MikrofonButonu
+                onMetin={(p) => setMetin((g) => (g.trim() ? `${g.trim()} ${p}` : p).slice(0, 600))}
+              />
+            </div>
             <button
               onClick={() => yanitla(metin)}
               disabled={gonderiliyor || metin.trim().length < 1}
