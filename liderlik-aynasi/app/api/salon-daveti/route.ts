@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { pusulaOzeti } from "@/lib/pusula";
@@ -44,7 +45,7 @@ export async function POST(req: Request) {
 
   let taslak = "";
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 400,

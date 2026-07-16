@@ -1,11 +1,16 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
 // Mobil tarayıcılar sesli otomatik oynatmayı engeller — bu yüzden "dokun ve
 // izle" deseni: kullanıcı jesti olmadan video başlamaz. Video bozuksa/yüklenemezse
 // (onError) devam butonu HEMEN açılır — kapı önündeki sıra asla tıkanmasın.
+//
+// DAYANIKLILIK (kamp açılışında en olası arıza modu buffering): zayıf ağda video
+// donarsa onEnded/onError'ın HİÇBİRİ tetiklenmez. Bu yüzden oynat'a dokununca
+// 8 sn sonra HER KOŞULDA görünen bir "Geç ve devam et" çıkışı belirir; ayrıca
+// stall/waiting anında hemen görünür. Kimse siyah ekranda kilitli kalmaz.
 export default function AynaHayalleriVideo({
   src,
   oynatBaslik,
@@ -20,9 +25,21 @@ export default function AynaHayalleriVideo({
   const videoRef = useRef<HTMLVideoElement>(null);
   const [oynatildi, setOynatildi] = useState(false);
   const [bitti, setBitti] = useState(false);
+  // Video bitmese bile çıkışın görünür olduğu durum (stall / 8 sn güvenlik ağı).
+  const [gecGoster, setGecGoster] = useState(false);
+  const zamanlayiciRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (zamanlayiciRef.current) clearTimeout(zamanlayiciRef.current);
+    };
+  }, []);
 
   function oynat() {
     setOynatildi(true);
+    // 8 sn sonra geç butonu her koşulda belirsin (buffering ended/error atmaz).
+    if (zamanlayiciRef.current) clearTimeout(zamanlayiciRef.current);
+    zamanlayiciRef.current = setTimeout(() => setGecGoster(true), 8000);
     videoRef.current?.play().catch(() => setBitti(true));
   }
 
@@ -33,9 +50,12 @@ export default function AynaHayalleriVideo({
           ref={videoRef}
           src={src}
           playsInline
+          preload="none"
           controls={oynatildi}
           onEnded={() => setBitti(true)}
           onError={() => setBitti(true)}
+          onStalled={() => setGecGoster(true)}
+          onWaiting={() => setGecGoster(true)}
           className="h-full w-full object-cover"
         />
         {!oynatildi && (
@@ -53,13 +73,25 @@ export default function AynaHayalleriVideo({
         )}
       </div>
 
-      {bitti && (
+      {bitti ? (
         <Link
           href="/"
           className="btn-kor parilti mt-6 flex h-14 w-full items-center justify-center rounded-2xl text-lg font-semibold"
         >
           {devamDugme}
         </Link>
+      ) : (
+        // Video sürerken küçük, ikincil çıkış — yalnız oynatma başladıysa ve
+        // (8 sn geçti / video takıldı) görünür. Kimse kapıda kilitli kalmasın.
+        oynatildi &&
+        gecGoster && (
+          <Link
+            href="/"
+            className="mt-4 flex h-11 w-full items-center justify-center rounded-xl border border-white/20 text-sm font-medium text-slate-300 hover:bg-white/5"
+          >
+            Geç ve devam et →
+          </Link>
+        )
       )}
     </div>
   );

@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { kimlikBloguGetir } from "@/lib/kisiKimligi";
@@ -286,7 +287,7 @@ export async function hedefTuru(
       })),
   ];
 
-  const client = new Anthropic();
+  const client = aynaClient();
   const kimlikM = await kimlikBloguGetir(db, katilimci.id);
   let tur: HedefTur | null = null;
   try {
@@ -424,7 +425,7 @@ async function ozetUret(db: Db, pid: string, plan: KariyerPlani): Promise<string
   const planMetni = `Hedef: ${plan.sureAy} ayda ${plan.rutbe}, aylık ${tlFormat(plan.gelir, plan.gelirArti)} TL. Günlük ${plan.gunlukSaatEtiket} (haftalık ~${plan.haftalikSaat} saat). Ara hedefler: ${plan.kilometreTaslari.map((k) => `${k.ay}. ay ${k.rutbe}`).join(", ")}.`;
 
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: MODEL,
       max_tokens: 1024,

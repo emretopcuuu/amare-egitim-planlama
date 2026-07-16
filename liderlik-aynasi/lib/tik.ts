@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 import { eskalasyonTara, sahitOzetiGonder, checkinCipasi, sozKarnesiGonder } from "@/lib/sozTakip";
 import { ufukToreniTara } from "@/lib/ufukToren";
 import {
@@ -191,9 +192,10 @@ export async function tikCalistir(
   // orkestratör çevirir (kapanis_sessizlik_basla/bitir satırları); orkestratör
   // yukarıda ZATEN çalıştı, o yüzden "sessizliği bitir" ateşlenebildi. Son ekran
   // push'u ayrı bir orkestratör push satırıdır → o da orkestratörde ateşlenir.
-  if (ayar.get("gorev_uretimi_durduruldu") === "true") {
-    return { ozet: "Kamp sonrası sessizlik — üretim durduruldu", ...ozet };
-  }
+  // NOT: erken dönüş, bekleyen puanlama drenajının (aşağıda) SONRASINDA — böylece
+  // kapanış telaşında son dakika yanıt verip anlık puanlaması aksayanların görevi
+  // 'submitted'da donup kalmaz; puanları hesaplanır, yalnız YENİ görev üretilmez.
+  const uretimDurduruldu = ayar.get("gorev_uretimi_durduruldu") === "true";
 
   const mod: SistemModu =
     ayar.get("sistem_modu") === "yolculuk" ? "yolculuk" : "kamp";
@@ -287,6 +289,12 @@ export async function tikCalistir(
     }
   }
 
+  // Kapanış sessizliği: bekleyen puanlama yukarıda boşaltıldı; şimdi YENİ görev
+  // üretmeden dur (drenaj kaçırılmasın diye erken dönüş buraya taşındı).
+  if (uretimDurduruldu) {
+    return { ozet: "Kamp sonrası sessizlik — bekleyen puanlama boşaltıldı, üretim durduruldu", ...ozet };
+  }
+
   if (sessiz) {
     return { ozet: "Sessiz saat — AYNA fısıldamıyor", ...ozet };
   }
@@ -315,20 +323,34 @@ export async function tikCalistir(
     .eq("role", "participant");
   if (provaModu && provaKatilimciId) kisilerSorgu = kisilerSorgu.eq("id", provaKatilimciId);
 
-  const [{ data: kisiler }, { data: sonGorevler }, { data: yanitGecmisi }] =
-    await Promise.all([
-      kisilerSorgu,
-      db
-        .from("missions")
-        .select("participant_id, status, issued_at, kind")
-        .gte("issued_at", new Date(simdi.getTime() - 26 * 3_600_000).toISOString()),
-      // #2 Pik yanıt saati için son 3 günlük yanıt geçmişi (responded_at).
+  // sonGorevler (son 26 saatin TÜM görevleri) ve yanitGecmisi (son 3 gün) 150
+  // kişide 1000-satır PostgREST tavanını aşar; sayfalı çekilmezse kırpılan
+  // satırlara ait kişilerin "bekleyen görevi var mı / bugün kaç aldı" durumu
+  // yanlış görünür → çift görev / atlanan kişi. tumKayitlar tümünü birleştirir.
+  const gorevPencereBasi = new Date(simdi.getTime() - 26 * 3_600_000).toISOString();
+  const yanitPencereBasi = new Date(simdi.getTime() - 3 * 86_400_000).toISOString();
+  const [{ data: kisiler }, sonGorevler, yanitGecmisi] = await Promise.all([
+    kisilerSorgu,
+    tumKayitlar<{ participant_id: string; status: string; issued_at: string; kind: string | null }>(
+      (bas, son) =>
+        db
+          .from("missions")
+          .select("participant_id, status, issued_at, kind")
+          .gte("issued_at", gorevPencereBasi)
+          .order("id")
+          .range(bas, son)
+    ),
+    // #2 Pik yanıt saati için son 3 günlük yanıt geçmişi (responded_at).
+    tumKayitlar<{ participant_id: string; responded_at: string | null }>((bas, son) =>
       db
         .from("missions")
         .select("participant_id, responded_at")
         .not("responded_at", "is", null)
-        .gte("responded_at", new Date(simdi.getTime() - 3 * 86_400_000).toISOString()),
-    ]);
+        .gte("responded_at", yanitPencereBasi)
+        .order("id")
+        .range(bas, son)
+    ),
+  ]);
 
   // #2 Kişi başına pik yanıt saati (Istanbul). Yeterli/net veri yoksa null.
   const pikSaatleri = new Map<string, number | null>();

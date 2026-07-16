@@ -1,6 +1,7 @@
 import "server-only";
 import { getSession } from "@/lib/auth/session";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import { aiLimitYaniti } from "@/lib/aiLimit";
 
 export const maxDuration = 30;
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
   if (limit) return Response.json({ soru: YEDEK_SORULAR[tur] ?? null });
 
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const gecmis = oncekiCevaplar.map((c, i) => `${i + 1}. "${c}"`).join("\n");
     const turTalimat =
       tur === 2

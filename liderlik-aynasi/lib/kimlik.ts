@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 
 // Özellik 2 — KİMLİK CÜMLESİ TAKİBİ. Yanıtlardan kendini-sınırlayan kimlik
@@ -83,7 +84,7 @@ export async function kimlikCumlesiIsle(
       .is("birakildi_at", null);
     if ((aktifSayi ?? 0) >= AKTIF_CUMLE_UST) return;
 
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 300,
@@ -147,7 +148,7 @@ export async function kimlikKanitEkle(
       : [];
     if (mevcut.length >= KANIT_UST) return;
 
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 250,

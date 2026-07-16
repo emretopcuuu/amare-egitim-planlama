@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
@@ -92,7 +93,7 @@ export async function mektupGetirVeyaUret(
   };
 
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 4096,

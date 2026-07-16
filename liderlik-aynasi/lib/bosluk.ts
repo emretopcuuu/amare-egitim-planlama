@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { aktifOzellikler } from "@/lib/degerlendirme";
@@ -159,7 +160,7 @@ export async function boslukGetirVeyaUret(db: Db, pid: string): Promise<BoslukSo
   };
 
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: MODEL,
       max_tokens: 2048,

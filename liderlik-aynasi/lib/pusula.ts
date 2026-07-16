@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { KATILIMCI_EVRENI } from "@/lib/katilimciEvreni";
 import { kimlikBloguGetir } from "@/lib/kisiKimligi";
@@ -375,7 +376,7 @@ export async function pusulaTuru(
       })),
   ];
 
-  const client = new Anthropic();
+  const client = aynaClient();
   const kimlikM = await kimlikBloguGetir(db, katilimci.id);
   // Faz 0 — AYNA karakteri: pusula derin duygusal sohbet → HAFİF doz (renk var,
   // şov yok; eleme/engel aşamalarında mizah blok içinde zaten yasak).

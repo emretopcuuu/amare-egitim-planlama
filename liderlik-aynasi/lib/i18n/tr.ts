@@ -1076,6 +1076,11 @@ export const tr = {
     aiHata: "Şu an yanıt veremedim, az sonra tekrar dene.",
     acHataBaslik: "Kod geçersiz",
     acHataMetin: "Bu kod kampı açmıyor. Lütfen görevliyle iletişime geç.",
+    // Mühür açma yazması (nadiren) başarısız olursa — kısır döngüye düşmeden tekrar dene
+    acYazHataBaslik: "Bir saniye…",
+    acYazHataMetin:
+      "Mührü açarken bağlantı takıldı. QR'ını bir kez daha okut ya da aşağıdaki butona dokun — birazdan açılacak.",
+    acYazHataDugme: "Tekrar dene",
     // Oda QR'ı başarıyla okutulunca — açık onay ekranı
     acBasariBaslik: "Mühür kalktı 🔓",
     acBasariMetin: "Kampa hoş geldin. Aynan artık seninle — başlıyoruz.",

@@ -604,7 +604,7 @@ export default function PusulaSohbet({
               otoOdak
             />
             <MikrofonButonu
-              onMetin={(p) => setSloganGirdi(sloganGirdi.trim() ? `${sloganGirdi.trim()} ${p}` : p)}
+              onMetin={(p) => setSloganGirdi((g) => (g.trim() ? `${g.trim()} ${p}` : p))}
             />
             <button
               onClick={() => void sloganKaydet(sloganGirdi)}

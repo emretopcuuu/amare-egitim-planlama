@@ -80,11 +80,29 @@ export default async function AcSayfa({
   }
 
   if (acabilir) {
-    await db
+    const { error } = await db
       .from("participants")
       .update({ camp_unlocked_at: new Date().toISOString() })
       .eq("id", session.sub)
       .is("camp_unlocked_at", null);
+    // Yazma hatasında "başarı" gösterme: aksi halde kişi /ayna-hayalleri'ne gider,
+    // orada camp_unlocked_at hâlâ NULL olduğu için parametresiz /ac'a geri döner ve
+    // "Kod geçersiz"e düşer (kısır döngü). Bunun yerine aynı QR/kod linkiyle
+    // "tekrar dene" ekranı göster — kişi bir daha okutunca yazma çoğunlukla geçer.
+    if (error) {
+      const tekrarHref = verilenToken
+        ? `/ac?u=${encodeURIComponent(verilenToken)}`
+        : `/ac?k=${encodeURIComponent(verilenKod)}`;
+      return (
+        <Sonuc
+          ikon="⏳"
+          baslik={t.acYazHataBaslik}
+          metin={t.acYazHataMetin}
+          dugme={t.acYazHataDugme}
+          dugmeHref={tekrarHref}
+        />
+      );
+    }
     return (
       <Sonuc
         ikon="🔓"

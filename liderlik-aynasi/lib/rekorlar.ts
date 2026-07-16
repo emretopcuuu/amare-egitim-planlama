@@ -1,6 +1,7 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { herkeseBildir } from "@/lib/push";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 
 // ============================================================================
 // G3 — REKORLAR: kişisel bestler + kamp kürsüsü (çok kategori)
@@ -113,11 +114,33 @@ export async function rekorlarAcikMi(db: Db): Promise<boolean> {
 type KategoriHesap = Map<string, Map<string, number>>; // kategori.key → (pid → deger)
 
 async function hesapla(db: Db): Promise<KategoriHesap> {
-  const [{ data: gorevler }, { data: kudos }, { data: redler }, { data: sandik }] = await Promise.all([
-    db.from("missions").select("participant_id, issued_at, responded_at, ai_score, spark_points, status"),
-    db.from("kudos").select("from_id, to_id").eq("is_hidden", false),
-    db.from("redler").select("participant_id"),
-    db.from("sandik_gecmisi").select("participant_id"),
+  // missions/kudos 1000-satır PostgREST tavanını aşabilir (150 kişi × birçok
+  // görev); sayfalı çek, yoksa Gün 2'den itibaren kürsü sıralaması yanlış çıkar
+  // ve Gün 3'te Emre sahneye YANLIŞ kişiyi "Görev Canavarı" diye çağırabilir.
+  const [gorevler, kudos, redler, sandik] = await Promise.all([
+    tumKayitlar<{
+      participant_id: string;
+      issued_at: string | null;
+      responded_at: string | null;
+      ai_score: number | null;
+      spark_points: number | null;
+      status: string;
+    }>((bas, son) =>
+      db
+        .from("missions")
+        .select("participant_id, issued_at, responded_at, ai_score, spark_points, status")
+        .order("id")
+        .range(bas, son)
+    ),
+    tumKayitlar<{ from_id: string; to_id: string }>((bas, son) =>
+      db.from("kudos").select("from_id, to_id").eq("is_hidden", false).order("id").range(bas, son)
+    ),
+    tumKayitlar<{ participant_id: string }>((bas, son) =>
+      db.from("redler").select("participant_id").order("id").range(bas, son)
+    ),
+    tumKayitlar<{ participant_id: string }>((bas, son) =>
+      db.from("sandik_gecmisi").select("participant_id").order("id").range(bas, son)
+    ),
   ]);
 
   const h: KategoriHesap = new Map(KATEGORILER.map((k) => [k.key, new Map<string, number>()]));

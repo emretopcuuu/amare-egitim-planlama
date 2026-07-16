@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { kimlikBloguGetir } from "@/lib/kisiKimligi";
@@ -77,7 +78,7 @@ export async function tekCumleGetirVeyaUret(
   // 3) Üret — tek cümle, sade metin (aynaAniUret deseni).
   let cumle: string;
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 400,

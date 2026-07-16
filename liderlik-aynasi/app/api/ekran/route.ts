@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 import { acikDalga, aktifOzellikler } from "@/lib/degerlendirme";
 import { unvanBul } from "@/lib/kivilcim";
 import { arketipBul } from "@/lib/arketip";
@@ -102,12 +103,16 @@ export type EkranVerisi = {
 export async function GET() {
   const db = supabaseAdmin();
   const simdi = new Date();
+  // ratings ve scored-missions 1000-satır PostgREST tavanını aşar (150 kişi ×
+  // hedef × özellik ≈ binlerce satır) — sayfalı çek, yoksa projektör Gün 2'den
+  // itibaren donmuş/eksik veri gösterir (toplam puan 1000'de takılır, ligler
+  // yanlış sıralanır). tumKayitlar tüm sayfaları birleştirir.
   const [
     dalga,
     ozellikler,
     kisilerSonuc,
-    puanlarSonuc,
-    gorevSonuc,
+    puanlarData,
+    gorevData,
     senkronSonuc,
     fieroSonuc,
     sahneAyarSonuc,
@@ -120,11 +125,22 @@ export async function GET() {
         .from("participants")
         .select("id, full_name, team")
         .eq("role", "participant"),
-      db.from("ratings").select("rater_id, target_id, trait_id, score, is_self, wave"),
-      db
-        .from("missions")
-        .select("participant_id, spark_points")
-        .eq("status", "scored"),
+      tumKayitlar<{ rater_id: string; target_id: string; trait_id: number; score: number; is_self: boolean; wave: number | null }>(
+        (bas, son) =>
+          db
+            .from("ratings")
+            .select("rater_id, target_id, trait_id, score, is_self, wave")
+            .order("created_at")
+            .range(bas, son)
+      ),
+      tumKayitlar<{ participant_id: string; spark_points: number }>((bas, son) =>
+        db
+          .from("missions")
+          .select("participant_id, spark_points")
+          .eq("status", "scored")
+          .order("id")
+          .range(bas, son)
+      ),
       db
         .from("missions")
         .select("title, status, due_at")
@@ -161,7 +177,7 @@ export async function GET() {
         .order("created_at", { ascending: false })
         .limit(60),
     ]);
-  if (kisilerSonuc.error || puanlarSonuc.error || gorevSonuc.error) {
+  if (kisilerSonuc.error) {
     return Response.json({ hata: "Veri alınamadı." }, { status: 500 });
   }
 
@@ -191,7 +207,7 @@ export async function GET() {
     db.from("photos").select("id", { count: "exact", head: true }).eq("status", "approved"),
   ]);
   const kumulatif = {
-    kivilcim: (gorevSonuc.data ?? []).reduce((s, g) => s + (g.spark_points ?? 0), 0),
+    kivilcim: gorevData.reduce((s, g) => s + (g.spark_points ?? 0), 0),
     gorev: kumGorev.count ?? 0,
     takdir: kumTakdir.count ?? 0,
     fiero: kumFiero.count ?? 0,
@@ -303,7 +319,7 @@ export async function GET() {
   ).filter((u): u is string => u !== null);
 
   const kisiler = kisilerSonuc.data;
-  const puanlar = puanlarSonuc.data;
+  const puanlar = puanlarData;
   const ozellikSayisi = ozellikler.length;
   const ozellikAd = new Map(ozellikler.map((o) => [o.id, o.name]));
 
@@ -506,7 +522,7 @@ export async function GET() {
 
   // Kıvılcım Ligi
   const kivilcimlar = new Map<string, number>();
-  for (const g of gorevSonuc.data) {
+  for (const g of gorevData) {
     kivilcimlar.set(
       g.participant_id,
       (kivilcimlar.get(g.participant_id) ?? 0) + g.spark_points
