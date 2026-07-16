@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { kimlikBloguGetir } from "@/lib/kisiKimligi";
 
@@ -68,7 +69,7 @@ export async function tahminSapmasiGorevUret(
     .sort((a, b) => b.ortalama - a.ortalama);
 
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 400,

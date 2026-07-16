@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { raporHesapla } from "@/lib/rapor";
@@ -174,7 +175,7 @@ export async function oyunPlaniGetirVeyaUret(db: Db, pid: string): Promise<PlanS
   };
 
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 2560,

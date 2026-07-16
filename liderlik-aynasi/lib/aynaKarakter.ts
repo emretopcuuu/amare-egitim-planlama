@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { katilimciyaBildir } from "@/lib/push";
 
@@ -221,7 +222,7 @@ export async function lakapUret(
       .join("\n");
     if (!malzeme) return null;
 
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: LAKAP_MODEL,
       max_tokens: 60,

@@ -81,7 +81,6 @@ import SesCal from "@/components/SesCal";
 import GorevSesButonu from "@/components/GorevSesButonu";
 import BosGorevDurumu from "./BosGorevDurumu";
 import DurumSeridi from "./DurumSeridi";
-import CanliSoruDinleyici from "./CanliSoruDinleyici";
 import EkstraGorev from "./EkstraGorev";
 import GorevSayac from "./GorevSayac";
 import TelafiSayac from "./TelafiSayac";
@@ -657,8 +656,6 @@ export default async function GorevlerPage() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
-      {/* KAPANIŞ Faz B — Emre canlı soru açınca tam-ekran kart (nabız/tohum) */}
-      <CanliSoruDinleyici />
       <div className="sahne-giris mx-auto w-full max-w-md space-y-4 p-5">
       <UnvanKutlama unvan={unvan.mevcut.ad} seviye={unvanSeviye} />
       {/* Başlık sadeleşti: tek satır, alt açıklama kaldırıldı (geri butonu da —

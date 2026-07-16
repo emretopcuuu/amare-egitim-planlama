@@ -1,6 +1,7 @@
 import "server-only";
-import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 import type { Json } from "@/lib/database.types";
 import { AYNA_KARAKTER_TAM, bahisSkoru } from "@/lib/aynaKarakter";
 import { kampTaahhutOzeti } from "@/lib/kampTaahhut";
@@ -34,7 +35,10 @@ const MODEL = "claude-sonnet-5";
 // Teslim planı (gün içi dakika). Üretim teslimden ~20 dk önce başlar.
 export const KAPANIS_SLOTLARI = [
   { slot: "on" as const, uretimDk: 7 * 60 + 10, teslimDk: 7 * 60 + 30 },
-  { slot: "final" as const, uretimDk: 11 * 60 + 0, teslimDk: 11 * 60 + 20 },
+  // final üretimi 11:16'da başlar — liderlik değerlendirmesi ~11:15'te KAPANDIKTAN
+  // sonra. Eskiden 11:00'de üretilip bir daha tazelenmediği için son 15 dakikanın
+  // (kapanış telaşının en yoğun dilimi) puanları brife hiç girmiyordu.
+  { slot: "final" as const, uretimDk: 11 * 60 + 16, teslimDk: 11 * 60 + 20 },
 ];
 
 export type BrifSlot = "on" | "final" | "manuel";
@@ -86,27 +90,44 @@ export async function brifVeriTopla(
 ): Promise<BrifVeri> {
   const gunBasiUtc = new Date(`${bugun}T00:00:00+03:00`).toISOString();
 
+  // scored/kacirma/sonAktif missions sorguları 1000-satır PostgREST tavanını
+  // aşabilir (150 kişi × çok görev) — sayfalı çek, yoksa kürsü/parlayanlar
+  // sıralaması eksik veriyle hesaplanıp Emre sahnede yanlış kişiyi anabilir.
   const [
     kisilerRes,
-    scoredRes,
-    kacirmaRes,
+    scored,
+    kacirma,
     taahhut,
     bahis,
     degRes,
     alintiRes,
-    sonAktifRes,
+    sonAktifRows,
   ] = await Promise.all([
     db.from("participants").select("id, full_name").eq("role", "participant"),
     // Tamamlanan (puanlanan) görevler: kas, tür, puan, kıvılcım (parlayanlar için).
-    db
-      .from("missions")
-      .select("participant_id, kas, kind, ai_score, spark_points")
-      .eq("status", "scored"),
+    tumKayitlar<{
+      participant_id: string;
+      kas: string | null;
+      kind: string | null;
+      ai_score: number | null;
+      spark_points: number | null;
+    }>((bas, son) =>
+      db
+        .from("missions")
+        .select("participant_id, kas, kind, ai_score, spark_points")
+        .eq("status", "scored")
+        .order("id")
+        .range(bas, son)
+    ),
     // Kaçırma sebepleri = "iç engeller"; kaçırılan görev türü.
-    db
-      .from("missions")
-      .select("kind, kacirma_sebebi")
-      .not("kacirma_sebebi", "is", null),
+    tumKayitlar<{ kind: string | null; kacirma_sebebi: string | null }>((bas, son) =>
+      db
+        .from("missions")
+        .select("kind, kacirma_sebebi")
+        .not("kacirma_sebebi", "is", null)
+        .order("id")
+        .range(bas, son)
+    ),
     kampTaahhutOzeti(db).catch(() => ({ toplamKisi: 0, toplamTaahhut: 0, turBazli: {} as never })),
     bahisSkoru(db, gunBasiUtc).catch(() => ({ ayna: 0, itirazci: 0 })),
     // Gün 3 liderlik değerlendirmesi hacmi (final'de anlamlı dolar).
@@ -121,18 +142,17 @@ export async function brifVeriTopla(
       .order("ai_score", { ascending: false })
       .limit(14),
     // Kişi başına en son tamamlama (geride kalanlar için).
-    db.from("missions").select("participant_id, responded_at").not("responded_at", "is", null),
+    tumKayitlar<{ participant_id: string; responded_at: string | null }>((bas, son) =>
+      db
+        .from("missions")
+        .select("participant_id, responded_at")
+        .not("responded_at", "is", null)
+        .order("id")
+        .range(bas, son)
+    ),
   ]);
 
   const kisiler = (kisilerRes.data ?? []) as { id: string; full_name: string }[];
-  const scored = (scoredRes.data ?? []) as {
-    participant_id: string;
-    kas: string | null;
-    kind: string | null;
-    ai_score: number | null;
-    spark_points: number | null;
-  }[];
-  const kacirma = (kacirmaRes.data ?? []) as { kind: string | null; kacirma_sebebi: string | null }[];
 
   const aktifSet = new Set(scored.map((m) => m.participant_id));
   const puanlar = scored.map((m) => m.ai_score).filter((s): s is number => s != null);
@@ -141,7 +161,7 @@ export async function brifVeriTopla(
 
   // Geride kalanlar: en son tamamlaması en eski / hiç olmayan kişiler.
   const sonAktif = new Map<string, number>();
-  for (const m of (sonAktifRes.data ?? []) as { participant_id: string; responded_at: string | null }[]) {
+  for (const m of sonAktifRows) {
     if (!m.responded_at) continue;
     const t = Date.parse(m.responded_at);
     if (t > (sonAktif.get(m.participant_id) ?? 0)) sonAktif.set(m.participant_id, t);
@@ -245,7 +265,7 @@ export async function kanitVeri(db: Db, id: KanitId, bugun: string): Promise<Kan
 // AI ile Emre'nin sahne öncesi brifi — düzyazı, İSİMSİZ. Düşerse null (şablon).
 async function brifMetinUret(v: BrifVeri): Promise<string | null> {
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: MODEL,
       max_tokens: 1100,
@@ -364,8 +384,10 @@ export async function kapanisBrifTik(
         .eq("slot", plan.slot)
         .maybeSingle();
 
-      // 1) ÜRETİM — satır yoksa hazırla.
-      if (!mevcut) {
+      // 1) ÜRETİM — satır yoksa hazırla. 'final' slotu teslim saatine kadar HER
+      // tikte yeniden üretilir (upsert idempotent): 11:15'te kapanan değerlendirmenin
+      // son-dakika puanları da brife girsin (yoksa 11:16 build'i son 1-4 dk'yı kaçırır).
+      if (!mevcut || (plan.slot === "final" && gunDk < plan.teslimDk)) {
         await brifUret(db, { slot: plan.slot, gun, bugun });
       }
 
@@ -411,8 +433,10 @@ export async function brifGetir(db: Db): Promise<{
     created_at: string;
   }[];
   if (satirlar.length === 0) return { guncel: null, gecmis: [] };
-  // Öncelik: final varsa o, yoksa en yeni.
-  const oncelik = satirlar.find((s) => s.slot === "final") ?? satirlar[0];
+  // EN YENİ satır gösterilir (satırlar created_at DESC sıralı). Eskiden "final
+  // varsa hep onu göster" kuralı, Emre'nin elle "Brifi Üret/Yenile" ile ürettiği
+  // daha güncel 'manuel' brifi görünmez kılıyordu — artık en son üretilen kazanır.
+  const oncelik = satirlar[0];
   return {
     guncel: { ...oncelik.veri, metin: oncelik.metin, createdAt: oncelik.created_at, slot: oncelik.slot },
     gecmis: satirlar.map((s) => ({ id: s.id, slot: s.slot, createdAt: s.created_at })),

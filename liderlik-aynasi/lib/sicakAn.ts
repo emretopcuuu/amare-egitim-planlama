@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 
 // Özellik 3 — SICAK AN YAKALAMA. Check-in / görev yanıtı / koçu mesajındaki
@@ -88,7 +89,7 @@ export async function sicakAnYakala(
   try {
     const temiz = metin.trim();
     if (temiz.length < 10) return; // tek kelimelik yanıttan sinyal çıkmaz
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 300,

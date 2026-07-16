@@ -6,6 +6,7 @@ import AltNav from "@/components/AltNav";
 import KayipNokta from "@/components/KayipNokta";
 import BaglantiDurumu from "@/components/BaglantiDurumu";
 import CanliTazele from "@/components/CanliTazele";
+import CanliSoruDinleyici from "@/components/CanliSoruDinleyici";
 import AcilisSplash from "@/components/AcilisSplash";
 import IlkKarsilama from "@/components/IlkKarsilama";
 import AtlaBaglantisi from "@/components/AtlaBaglantisi";
@@ -133,6 +134,9 @@ export default async function RootLayout({
         <IlkKarsilama />
         <BaglantiDurumu />
         <CanliTazele />
+        {/* KAPANIŞ Faz B — Emre canlı soru açınca tam-ekran kart (nabız/tohum).
+            Kök layout'ta: salonun TAMAMI görür; kendi içinde /ekran,/admin hariç. */}
+        <CanliSoruDinleyici />
         {/* Geliştirme 1 — SW push'larını localStorage log'una kaydeder */}
         <BildirimLogDinleyici />
       </body>

@@ -1,6 +1,7 @@
 import "server-only";
 import { getSession } from "@/lib/auth/session";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import { DEGER_LISTESI } from "@/lib/degerler";
 import { aiLimitYaniti } from "@/lib/aiLimit";
 
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
   const liste = DEGER_LISTESI.join(", ");
 
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const msg = await client.messages.create({
       model: "claude-haiku-4-5-20251001",
       max_tokens: 256,

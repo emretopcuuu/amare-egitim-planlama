@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { supabaseAdmin } from "@/lib/supabase/server";
 import { herkeseBildir } from "@/lib/push";
 import { onFarkindalikOzeti } from "@/lib/ayna";
@@ -61,7 +62,7 @@ async function dominoIcgoru(db: Db, pid: string): Promise<string | null> {
   try {
     const profil = await onFarkindalikOzeti(db, pid);
     if (!profil) return null;
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 300,
