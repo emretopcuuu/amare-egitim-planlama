@@ -29,6 +29,7 @@ import {
   LIDER_PROFIL_URL,
   TRIBUTE_VIDEO_ID,
   WHATSAPP_URL,
+  YOUTUBE_KANAL_URL,
   type Dil,
   type Icerik,
 } from "@/lib/icerik";
@@ -38,6 +39,7 @@ import { DilProvider, useC, useDil } from "./dil";
 const BOLUM_IDLERI = [
   "manifesto",
   "yolculuk",
+  "videolar",
   "konusmalar",
   "iletisim",
 ] as const;
@@ -1021,6 +1023,124 @@ function Sozler() {
   );
 }
 
+/* Genel video kartı: kalıcı thumbnail (Vimeo/YouTube), tıklanınca oynatıcı.
+   Facade deseni: yüklenene kadar sadece görsel — performans + gizlilik. */
+function VideoKart({
+  v,
+}: {
+  v: Icerik["videolar"]["liste"][number];
+}) {
+  const c = useC();
+  const [oynat, setOynat] = useState(false);
+  const src =
+    v.platform === "vimeo"
+      ? `https://player.vimeo.com/video/${v.id}?autoplay=1&title=0&byline=0&portrait=0`
+      : `https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0`;
+  return (
+    <article className="group flex flex-col overflow-hidden rounded-2xl border border-black/10 bg-abanoz-2 transition-colors hover:border-altin/40">
+      <div className="relative aspect-video w-full overflow-hidden">
+        {oynat ? (
+          <iframe
+            className="absolute inset-0 h-full w-full"
+            src={src}
+            title={v.baslik}
+            allow="autoplay; fullscreen; picture-in-picture"
+            allowFullScreen
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setOynat(true)}
+            className="absolute inset-0 h-full w-full cursor-pointer"
+            aria-label={`${v.baslik} — ${c.ui.izle}`}
+          >
+            <Image
+              src={v.gorsel}
+              alt={v.baslik}
+              width={800}
+              height={450}
+              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
+            <span className="absolute right-3 bottom-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
+              {v.sure}
+            </span>
+            <span className="absolute top-1/2 left-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-altin/90 text-fildisi backdrop-blur transition-transform group-hover:scale-110">
+              <PlayCircle size={30} weight="fill" />
+            </span>
+          </button>
+        )}
+      </div>
+      <div className="flex flex-1 flex-col p-6">
+        <h3 className="text-xl font-semibold tracking-tight text-fildisi">
+          {v.baslik}
+        </h3>
+        <p className="mt-2 leading-relaxed text-duman">{v.ozet}</p>
+      </div>
+    </article>
+  );
+}
+
+/* Kamera karşısında — gerçek eğitim videoları (Vimeo/YouTube). */
+function Videolar() {
+  const c = useC();
+  return (
+    <section id="videolar" className="scroll-mt-24 py-24 md:py-32">
+      <div className="mx-auto max-w-6xl px-6">
+        <motion.h2
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: GECIS }}
+          className="text-3xl font-semibold tracking-tight md:text-5xl"
+        >
+          {c.videolar.baslik}
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: GECIS }}
+          className="mt-4 max-w-[54ch] text-duman"
+        >
+          {c.videolar.altMetin}
+        </motion.p>
+        <div className="mt-14 grid gap-6 md:grid-cols-2">
+          {c.videolar.liste.map((v, i) => (
+            <motion.div
+              key={v.id}
+              initial={{ opacity: 0, y: 28 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.2 }}
+              transition={{ duration: 0.6, delay: (i % 2) * 0.08, ease: GECIS }}
+            >
+              <VideoKart v={v} />
+            </motion.div>
+          ))}
+        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-2 text-duman"
+        >
+          <span>{c.videolar.kanalNot}</span>
+          <a
+            href={YOUTUBE_KANAL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 font-medium text-altin underline-offset-2 hover:underline"
+          >
+            {c.videolar.kanalEtiket}
+            <ArrowUpRight size={16} weight="bold" />
+          </a>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 /* Benimle çalışmak: 3 vaat. */
 function Vaat() {
   const c = useC();
@@ -1486,6 +1606,7 @@ function ZirveIc() {
         <Gercekler />
         <Sozler />
         <Arsiv />
+        <Videolar />
         <Vaat />
         <Sss />
         <Deyince />
