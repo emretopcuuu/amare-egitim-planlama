@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { tr } from "@/lib/i18n/tr";
 import GeriButonu from "@/components/GeriButonu";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 const t = tr.red;
 
@@ -73,6 +74,9 @@ export default function ReddiKutla({ toplam, hafta }: { toplam: number; hafta: n
               rows={2}
               placeholder={t.aciklamaYer}
               className="w-full resize-none rounded-2xl border border-royal-light/30 bg-midnight-soft px-4 py-3 text-base text-slate-100 outline-none focus:border-gold"
+            />
+            <MikrofonButonu
+              onMetin={(p) => setAciklama((g) => (g.trim() ? `${g.trim()} ${p}` : p))}
             />
             <div className="flex gap-2">
               <button

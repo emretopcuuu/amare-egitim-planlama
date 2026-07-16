@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 const t = tr.bosluk;
 
@@ -118,6 +119,11 @@ export default function BoslukDeneyim({
               placeholder={t.cumleYer}
               className="mt-6 w-full resize-none rounded-2xl border border-royal-light/30 bg-midnight-soft px-4 py-3 text-base text-slate-100 outline-none focus:border-gold"
             />
+            <div className="mt-2 flex justify-center">
+              <MikrofonButonu
+                onMetin={(p) => setCumle((g) => (g.trim() ? `${g.trim()} ${p}` : p))}
+              />
+            </div>
             {hata && <p className="mt-2 text-sm text-red-400">{hata}</p>}
             <button
               onClick={muhurle}

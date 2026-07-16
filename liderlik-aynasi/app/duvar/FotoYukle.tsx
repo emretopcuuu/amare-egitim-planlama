@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 const t = tr.duvar;
 
@@ -83,6 +84,11 @@ export default function FotoYukle() {
             placeholder={t.altYaziYer}
             className="mt-3 w-full rounded-xl border border-royal-light/30 bg-midnight-soft p-3 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-gold"
           />
+          <div className="mt-2">
+            <MikrofonButonu
+              onMetin={(p) => setAltYazi((g) => (g.trim() ? `${g.trim()} ${p}` : p).slice(0, 140))}
+            />
+          </div>
           <div className="mt-3 flex gap-3">
             <button
               onClick={() => dosyaGiris.current?.click()}
