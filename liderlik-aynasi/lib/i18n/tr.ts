@@ -541,6 +541,7 @@ export const tr = {
     linkRapor: "Ayna Raporum",
     linkGorevler: "Görevler",
     linkTakdir: "Takdir Duvarı",
+    linkVideo: "Karşılama Videon",
     kartBaslik: "📤 Profil Kartın",
     kartAciklama: "İndir ya da paylaş — kıvılcımını göster.",
   },
