@@ -26,6 +26,13 @@ body {
   color: var(--color-fildisi);
 }
 
+/* Klavyeyle gezenlere tutarlı altın odak halkası (fare tıklamasında görünmez). */
+:focus-visible {
+  outline: 2px solid var(--color-altin);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { MotionValue } from "motion/react";
@@ -10,8 +10,10 @@ import type { MotionValue } from "motion/react";
 // çok düğüm ve bağlantı belirir), kamera geri çekilip tüm ağı gösterir.
 // "Kimse tek başına başarmadı." — 4 kıtada 220.000 kişilik ağın metaforu.
 // prefers-reduced-motion durumunda salınım durur; ağ yine scroll'u izler.
+// Mobilde daha az düğüm; sekme arka plandayken render duraklar (pil).
 
-const DUGUM_SAYISI = 260;
+const DUGUM_MASAUSTU = 260;
+const DUGUM_MOBIL = 120;
 const YARICAP = 2.4;
 
 // Fibonacci küresi: düğümleri yüzeye düzgün dağıtır.
@@ -54,9 +56,11 @@ function baglantilar(noktalar: THREE.Vector3[]) {
 function Ag({
   ilerleme,
   hareket,
+  dugumSayisi,
 }: {
   ilerleme: MotionValue<number>;
   hareket: boolean;
+  dugumSayisi: number;
 }) {
   const grup = useRef<THREE.Group>(null);
   const cizgiGeo = useRef<THREE.BufferGeometry>(null);
@@ -64,7 +68,7 @@ function Ag({
   const isaretci = useRef({ x: 0, y: 0 });
 
   const { noktalar, ciz, cizgiKonum, noktaKonum, noktaTemel } = useMemo(() => {
-    const noktalar = kureNoktalari(DUGUM_SAYISI);
+    const noktalar = kureNoktalari(dugumSayisi);
     const ciz = baglantilar(noktalar);
     const cizgiKonum = new Float32Array(ciz.length * 6);
     const noktaKonum = new Float32Array(noktalar.length * 3);
@@ -76,7 +80,7 @@ function Ag({
       noktaTemel[i] = i / noktalar.length;
     });
     return { noktalar, ciz, cizgiKonum, noktaKonum, noktaTemel };
-  }, []);
+  }, [dugumSayisi]);
 
   useFrame((state, delta) => {
     const p = ilerleme.get(); // 0..1 sayfa scroll'u
@@ -197,16 +201,33 @@ export default function Ag3D({
   ilerleme: MotionValue<number>;
   hareket?: boolean;
 }) {
+  // Mobilde daha az düğüm; düşük dpr. İlk render'da ölç, sonra sabit tut.
+  const [mobil, setMobil] = useState(false);
+  // Sekme arka plandayken render'ı durdur (pil/CPU tasarrufu).
+  const [gorunur, setGorunur] = useState(true);
+
+  useEffect(() => {
+    setMobil(window.matchMedia("(max-width: 767px)").matches);
+    const gorunurluk = () => setGorunur(!document.hidden);
+    document.addEventListener("visibilitychange", gorunurluk);
+    return () => document.removeEventListener("visibilitychange", gorunurluk);
+  }, []);
+
   return (
     <div className="fixed inset-0 -z-10" aria-hidden>
       <Canvas
         camera={{ position: [0, 0, 6.2], fov: 45 }}
-        dpr={[1, 1.75]}
-        gl={{ antialias: true, alpha: false }}
+        dpr={mobil ? [1, 1.3] : [1, 1.75]}
+        gl={{ antialias: !mobil, alpha: false, powerPreference: "low-power" }}
+        frameloop={gorunur ? "always" : "never"}
       >
         <color attach="background" args={["#f1efe9"]} />
         <fog attach="fog" args={["#f1efe9", 8, 16]} />
-        <Ag ilerleme={ilerleme} hareket={hareket} />
+        <Ag
+          ilerleme={ilerleme}
+          hareket={hareket}
+          dugumSayisi={mobil ? DUGUM_MOBIL : DUGUM_MASAUSTU}
+        />
       </Canvas>
     </div>
   );
