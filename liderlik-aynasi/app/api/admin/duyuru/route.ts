@@ -32,12 +32,15 @@ export async function POST(req: Request) {
   const baslik = typeof body?.baslik === "string" ? body.baslik.trim().slice(0, 80) : "";
   const govde = typeof body?.govde === "string" ? body.govde.trim().slice(0, 300) : "";
   const hedef = typeof body?.hedef === "string" ? body.hedef : "herkes";
+  // Bildirime tıklayınca gidilecek yer — boşsa anasayfa. Dış link de olabilir
+  // (ör. WhatsApp grup daveti); "Aç →" CTA'sı ve tüm kart bu url'e gider.
+  const url = typeof body?.url === "string" && body.url.trim() ? body.url.trim().slice(0, 300) : "/";
   if (!baslik || !govde) {
     return Response.json({ hata: tr.admin.yayin.hata }, { status: 400 });
   }
 
   if (hedef === "herkes") {
-    await herkeseBildir(db, baslik, govde, "/");
+    await herkeseBildir(db, baslik, govde, url);
     await yazAuditLog(db, null, "duyuru_gonderildi", { baslik, hedef: "herkes" });
     return Response.json({ ok: true, hedef: tr.admin.yayin.herkes });
   }
@@ -45,7 +48,7 @@ export async function POST(req: Request) {
   // Tek kişi: "kisi:<uuid>"
   if (hedef.startsWith("kisi:")) {
     const kisiId = hedef.slice(5);
-    await katilimciyaBildir(db, kisiId, baslik, govde, "/");
+    await katilimciyaBildir(db, kisiId, baslik, govde, url);
     await yazAuditLog(db, null, "duyuru_gonderildi", { baslik, hedef: "kisi", sayi: 1 });
     return Response.json({ ok: true, sayi: 1 });
   }
@@ -60,7 +63,7 @@ export async function POST(req: Request) {
   if (idler.length === 0) {
     return Response.json({ hata: tr.admin.yayin.takimBos }, { status: 400 });
   }
-  await Promise.all(idler.map((id) => katilimciyaBildir(db, id, baslik, govde, "/")));
+  await Promise.all(idler.map((id) => katilimciyaBildir(db, id, baslik, govde, url)));
   await yazAuditLog(db, null, "duyuru_gonderildi", { baslik, hedef, sayi: idler.length });
   return Response.json({ ok: true, hedef, sayi: idler.length });
 }
