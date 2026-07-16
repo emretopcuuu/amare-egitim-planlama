@@ -18,6 +18,7 @@ import AsamaRayi, { type RayAsama } from "@/components/AsamaRayi";
 import Konfeti from "@/components/Konfeti";
 import KayitRozeti from "@/components/KayitRozeti";
 import GizlilikMuhru from "@/components/GizlilikMuhru";
+import MikrofonButonu from "@/components/MikrofonButonu";
 import { ONBOARDING_SURE_DK } from "@/lib/onboardingSure";
 import { titret } from "@/lib/his";
 
@@ -194,68 +195,13 @@ function AynaSesButonu({ anahtar }: { anahtar: string }) {
   );
 }
 
-// Web Speech API — Türkçe dikte. Her buton kendi kaydını yönetir.
+// Sesle yaz: ortak MikrofonButonu (kayıt→Scribe, duraklamada kesilmez; eski
+// yerel Web Speech dikte tek cümlede kapanıp "duymadı" hissi yaratıyordu).
 function SesliYazButonu({ onEkle }: { onEkle: (metin: string) => void }) {
-  const [destekleniyor, setDestekleniyor] = useState(false);
-  const [dinleniyor, setDinleniyor] = useState(false);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const taniciRef = useRef<any>(null);
-
-  useEffect(() => {
-    setDestekleniyor(
-      typeof window !== "undefined" &&
-        ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
-    );
-  }, []);
-
-  function togla() {
-    if (dinleniyor) {
-      taniciRef.current?.stop();
-      setDinleniyor(false);
-      return;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const w = window as any;
-    const SR = w.SpeechRecognition ?? w.webkitSpeechRecognition;
-    if (!SR) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const tanici: any = new SR();
-    tanici.lang = "tr-TR";
-    tanici.continuous = true;
-    tanici.interimResults = false;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    tanici.onresult = (e: any) => {
-      for (let i = e.resultIndex; i < e.results.length; i++) {
-        if (e.results[i].isFinal) onEkle(e.results[i][0].transcript.trim());
-      }
-    };
-    tanici.onerror = () => setDinleniyor(false);
-    tanici.onend = () => setDinleniyor(false);
-    taniciRef.current = tanici;
-    tanici.start();
-    setDinleniyor(true);
-  }
-
-  if (!destekleniyor) return null;
-
   return (
-    <button
-      type="button"
-      onClick={togla}
-      aria-label={dinleniyor ? "Kaydı durdur" : "Sesli yaz — mikrofona söyle"}
-      className={`mt-2.5 flex items-center gap-2 self-start rounded-full border px-3.5 py-1.5 text-sm font-medium transition-all active:scale-95 ${
-        dinleniyor
-          ? "border-red-400/60 bg-red-500/15 text-red-300 animate-pulse"
-          : "border-white/15 text-slate-400 hover:border-gold/40 hover:text-gold-light"
-      }`}
-    >
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
-        strokeLinecap="round" strokeLinejoin="round" aria-hidden className="h-4 w-4 shrink-0">
-        <rect x="9" y="2" width="6" height="11" rx="3" />
-        <path d="M5 10a7 7 0 0 0 14 0M12 19v3M9 22h6" />
-      </svg>
-      {dinleniyor ? "Dinleniyor… (durdurmak için dokun)" : "Sesli yaz"}
-    </button>
+    <div className="mt-2.5">
+      <MikrofonButonu onMetin={onEkle} />
+    </div>
   );
 }
 

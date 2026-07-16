@@ -9,6 +9,7 @@ import AynaSesi from "@/components/AynaSesi";
 import MuhurIkon from "@/components/MuhurIkon";
 import CanliAyna from "@/components/CanliAyna";
 import GeriCikisOnayi from "@/components/GeriCikisOnayi";
+import MikrofonButonu from "@/components/MikrofonButonu";
 import { sureRozeti } from "@/lib/onboardingSure";
 import { sesCal } from "@/lib/sesEfekti";
 
@@ -35,29 +36,6 @@ type Asama =
   | "sonra"
   | "hata"
   | "kapandi";
-
-type Taniyici = {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onresult:
-    | ((e: {
-        results: ArrayLike<ArrayLike<{ transcript: string }>>;
-      }) => void)
-    | null;
-  onerror: (() => void) | null;
-  start: () => void;
-  stop: () => void;
-};
-
-function taniyiciKur(): Taniyici | null {
-  const w = window as unknown as {
-    webkitSpeechRecognition?: new () => Taniyici;
-    SpeechRecognition?: new () => Taniyici;
-  };
-  const Sinif = w.SpeechRecognition ?? w.webkitSpeechRecognition;
-  return Sinif ? new Sinif() : null;
-}
 
 // Dev birincil buton: yaşlı gözler ve kalın parmaklar için
 function DevButon({
@@ -116,9 +94,8 @@ export default function AynaRituel({ kimlikTamam = false }: { kimlikTamam?: bool
   const [kayitCaliyor, setKayitCaliyor] = useState(false);
   const [sesKalitesi, setSesKalitesi] = useState<SesKalitesi>(null);
   const [kayitSuresi, setKayitSuresi] = useState(0);
-  // Sözü yazıya dökme: ARTIK OTOMATİK DEĞİL — kişi yemini okurken textarea'ya
-  // yanlışlıkla yazılmasın diye yalnız bu açıkken (manuel) konuşma tanınır.
-  const [dinleniyor, setDinleniyor] = useState(false);
+  // Sözü yazıya dökme: soru ekranındaki ortak MikrofonButonu (aşağıda) —
+  // eski yerel Web Speech dikte kaldırıldı (tek cümlede kesiliyordu).
 
   // [E3] Mikrofon ön-provası — asıl kayıttan önce isteğe bağlı 5 sn'lik test.
   // Test kaydı SUNUCUYA GİTMEZ: blob yalnız bellekte/URL'de yaşar, ekrandan
@@ -138,7 +115,6 @@ export default function AynaRituel({ kimlikTamam = false }: { kimlikTamam?: bool
   const kayitVerisi = useRef<{ blob: Blob; tip: string } | null>(null);
   const onizlemeSes = useRef<HTMLAudioElement | null>(null);
   const akis = useRef<MediaStream | null>(null);
-  const taniyici = useRef<Taniyici | null>(null);
   const zamanlayici = useRef<ReturnType<typeof setInterval> | null>(null);
   const bitiriliyor = useRef(false);
   // Ses kalite ölçümü
@@ -160,7 +136,6 @@ export default function AynaRituel({ kimlikTamam = false }: { kimlikTamam?: bool
       if (zamanlayici.current) clearInterval(zamanlayici.current);
       if (samplerRef.current) clearInterval(samplerRef.current);
       void audioCtxRef.current?.close().catch(() => {});
-      taniyici.current?.stop();
       onizlemeSes.current?.pause();
       if (kayitci.current?.state === "recording") kayitci.current.stop();
       akis.current?.getTracks().forEach((iz) => iz.stop());
@@ -396,39 +371,7 @@ export default function AynaRituel({ kimlikTamam = false }: { kimlikTamam?: bool
 
   // Söz ekranından "Sözümü mühürle": kayıt zaten bitti, doğrudan incelemeye geç.
   function sozuMuhurle() {
-    taniyici.current?.stop();
-    setDinleniyor(false);
     setAsama("inceleme");
-  }
-
-  // Manuel sesli yazma anahtarı (soru ekranı): yalnız basınca konuşma yazıya döker.
-  function sesliYazAnahtar() {
-    if (dinleniyor) {
-      taniyici.current?.stop();
-      setDinleniyor(false);
-      return;
-    }
-    const tan = taniyiciKur();
-    if (!tan) return;
-    tan.lang = "tr-TR";
-    tan.continuous = true;
-    tan.interimResults = true;
-    tan.onresult = (e) => {
-      let metin = "";
-      for (let i = 0; i < e.results.length; i++) {
-        metin += e.results[i][0]?.transcript ?? "";
-      }
-      setBeklenti(metin.trim().slice(0, 300));
-    };
-    tan.onerror = () => setDinleniyor(false);
-    try {
-      tan.start();
-      taniyici.current = tan;
-      setDinleniyor(true);
-    } catch {
-      taniyici.current = null;
-      setDinleniyor(false);
-    }
   }
 
   // Kaydı bitir ve `hedef` aşamasına geç. Yemin okunduğunda (Devam) çağrılır;
@@ -437,8 +380,6 @@ export default function AynaRituel({ kimlikTamam = false }: { kimlikTamam?: bool
     if (bitiriliyor.current) return;
     bitiriliyor.current = true;
     if (zamanlayici.current) clearInterval(zamanlayici.current);
-    taniyici.current?.stop();
-    setDinleniyor(false);
 
     const kaydedici = kayitci.current;
     if (!kaydedici) {
@@ -867,7 +808,10 @@ export default function AynaRituel({ kimlikTamam = false }: { kimlikTamam?: bool
               {t.soru}
             </h1>
             <p className="mt-3 text-base leading-relaxed text-slate-300">{t.soruAlt}</p>
-            {/* Söz kutusu — kenarında mikrofon: basınca konuşmayı yazıya döker */}
+            {/* Söz kutusu — kenarında mikrofon: ortak MikrofonButonu (kayıt→
+                Scribe, duraklamada kesilmez; eski yerel dikte tek cümlede
+                kapanıyordu). Kayıt bu aşamada ÇOKTAN bitti, akış serbest —
+                ikinci getUserMedia çakışması yok. */}
             <div className="relative mt-6">
               <textarea
                 value={beklenti}
@@ -876,26 +820,15 @@ export default function AynaRituel({ kimlikTamam = false }: { kimlikTamam?: bool
                 className="w-full rounded-2xl border-2 border-white/20 bg-white/[0.06] p-4 pr-16 text-xl text-slate-100 placeholder:text-slate-500 focus:border-sky-200/70 focus:outline-none"
                 placeholder={t.soruNot}
               />
-              <button
-                type="button"
-                onClick={sesliYazAnahtar}
-                aria-label={dinleniyor ? t.sesliYazDurdur : t.sesliYazBaslat}
-                aria-pressed={dinleniyor}
-                className={`absolute bottom-3 right-3 flex h-12 w-12 items-center justify-center rounded-xl border-2 text-2xl transition-colors ${
-                  dinleniyor
-                    ? "border-red-500/60 bg-red-500/20 text-red-200"
-                    : "border-white/25 bg-white/[0.06] text-slate-100 hover:bg-white/[0.12]"
-                }`}
-              >
-                {dinleniyor ? "■" : "🎤"}
-              </button>
+              <div className="absolute bottom-3 right-3">
+                <MikrofonButonu
+                  ikon
+                  onMetin={(p) =>
+                    setBeklenti((b) => (b.trim() ? `${b.trim()} ${p}` : p).slice(0, 300))
+                  }
+                />
+              </div>
             </div>
-            {dinleniyor && (
-              <p className="mt-2 flex items-center justify-center gap-2 text-sm font-medium text-red-300">
-                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-red-500" />
-                {t.sesliYazDinleniyor}
-              </p>
-            )}
             <div className="mt-6">
               <DevButon onClick={sozuMuhurle}>{t.bitir}</DevButon>
             </div>
