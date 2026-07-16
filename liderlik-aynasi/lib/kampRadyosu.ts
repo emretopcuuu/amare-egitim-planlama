@@ -183,6 +183,10 @@ export async function radyoTik(
     if (!(await aynaKarakterAcikMi(db))) return; // kill switch radyoyu da kapatır
     for (const plan of SLOTLAR) {
       if (gunDk < plan.uretimDk) continue;
+      // GÜN 1 = VARIŞ GÜNÜ: herkes ~12:00 odalara giriyor; AYNA öğleden sonra
+      // uyandırılıyor. Sabah 07:30 "günaydın" yayını öğlen catch-up ile çıkarsa
+      // tuhaf olur — Gün 1 sabah yayınını atla (akşam bülteni normal çalışır).
+      if (plan.slot === "sabah" && gun === 1) continue;
       const { data: mevcut } = await db
         .from("radyo_yayin")
         .select("id, durum")
