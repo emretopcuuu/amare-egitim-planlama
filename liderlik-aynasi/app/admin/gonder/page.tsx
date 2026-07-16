@@ -9,6 +9,7 @@ import SonGonderimler from "./SonGonderimler";
 import DuyuruGonder from "../duyuru/DuyuruGonder";
 import DuyuruSablonlari from "../DuyuruSablonlari";
 import WhatsAppGonder from "../whatsapp/WhatsAppGonder";
+import GrupLinkGonder from "../whatsapp/GrupLinkGonder";
 
 export const metadata = { title: "Mesaj Gönder — Liderlik Aynası" };
 
@@ -88,6 +89,13 @@ export default async function GonderPage() {
           kayitliAnahtarlar={kayitliAnahtarlar}
           kodKayitli={!!kodSidAyar?.value}
         />
+        <div className="mt-4 border-t border-white/10 pt-4">
+          <GrupLinkGonder
+            yapilandirildi={yapilandirildi}
+            kisiler={tumKisiler}
+            duyuruKayitli={kayitliAnahtarlar.includes("duyuru")}
+          />
+        </div>
       </Katlanir>
     </main>
   );

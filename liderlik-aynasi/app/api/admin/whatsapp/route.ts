@@ -40,6 +40,89 @@ export async function POST(req: Request) {
     return Response.json({ hata: t.api.sablonKayitsiz(sablon.etiket) }, { status: 400 });
   }
 
+  // GRUPLARA ÖZEL LİNK: her takıma KENDİ serbest metniyle ayrı bir gönderim —
+  // tek bir "mesaj" yerine {takim, mesaj} listesi. Yalnız serbest (duyuru)
+  // şablonla çalışır; her grup yalnızca kendi takımındaki kişilere gider.
+  if (body?.hedefTipi === "gruplar") {
+    if (!sablon.serbestMi) return Response.json({ hata: t.api.mesajBos }, { status: 400 });
+    const gruplarHam = Array.isArray(body?.gruplar) ? body.gruplar : [];
+    const gruplar = gruplarHam
+      .map((g: unknown) => {
+        const rec = g as { takim?: unknown; mesaj?: unknown };
+        const takim = typeof rec?.takim === "string" ? rec.takim.trim() : "";
+        const mesaj = typeof rec?.mesaj === "string" ? rec.mesaj.trim().slice(0, 600) : "";
+        return { takim, mesaj };
+      })
+      .filter((g: { takim: string; mesaj: string }) => g.takim && g.mesaj);
+    if (gruplar.length === 0) {
+      return Response.json({ hata: t.api.hedefYok }, { status: 400 });
+    }
+
+    const detay: { takim: string; basarili: number; basarisiz: number; telefonsuz: number }[] = [];
+    let basariliToplam = 0;
+    let basarisizToplam = 0;
+    let telefonsuzToplam = 0;
+    const davetUlasmayanToplam: string[] = [];
+    const PARCA_GRUP = 20;
+
+    for (const g of gruplar) {
+      const { data } = await db
+        .from("participants")
+        .select("id, full_name, phone, login_code, team")
+        .eq("role", "participant")
+        .eq("team", g.takim);
+      const kisiler = (data ?? []) as Kisi[];
+      const gecerli = kisiler.filter((k) => whatsAppAdresi(k.phone) !== null);
+      const telefonsuz = kisiler.length - gecerli.length;
+
+      let basarili = 0;
+      let basarisiz = 0;
+      for (let i = 0; i < gecerli.length; i += PARCA_GRUP) {
+        const dilim = gecerli.slice(i, i + PARCA_GRUP);
+        const sonuclar = await Promise.all(
+          dilim.map((k) =>
+            whatsAppGonder(
+              k.phone!,
+              contentSid!,
+              degiskenleriUret(sablon, { ad: k.full_name, kod: k.login_code }, g.mesaj)
+            )
+          )
+        );
+        sonuclar.forEach((ok, j) => {
+          if (ok) basarili++;
+          else {
+            basarisiz++;
+            davetUlasmayanToplam.push(dilim[j].full_name);
+          }
+        });
+      }
+
+      detay.push({ takim: g.takim, basarili, basarisiz, telefonsuz });
+      basariliToplam += basarili;
+      basarisizToplam += basarisiz;
+      telefonsuzToplam += telefonsuz;
+    }
+
+    await yazAuditLog(db, null, "whatsapp_gonderim", {
+      sablon: sablon.anahtar,
+      hedefTipi: "gruplar",
+      gruplar: gruplar.map((g: { takim: string }) => g.takim),
+      basarili: basariliToplam,
+      basarisiz: basarisizToplam,
+      telefonsuz: telefonsuzToplam,
+      davetUlasmayan: davetUlasmayanToplam,
+    });
+
+    return Response.json({
+      ok: true,
+      basarili: basariliToplam,
+      basarisiz: basarisizToplam,
+      telefonsuz: telefonsuzToplam,
+      davetUlasmayan: davetUlasmayanToplam,
+      detay,
+    });
+  }
+
   // Serbest metinli duyuruda mesaj zorunlu.
   const mesaj = typeof body?.mesaj === "string" ? body.mesaj.trim().slice(0, 600) : "";
   if (sablon.serbestMi && !mesaj) {

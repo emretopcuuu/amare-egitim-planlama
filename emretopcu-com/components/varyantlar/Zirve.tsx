@@ -749,7 +749,6 @@ function Yolculuk() {
   );
 }
 
-/* Dikey scroll'u yatay yolculuğa çeviren eğitim rafı. */
 /* Kanıt: büyük sayan rakamlar. Arkadaki ağ görünür kalsın diye yarı saydam. */
 function Rakamlar() {
   const c = useC();
