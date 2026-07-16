@@ -44,7 +44,13 @@ export default function GrupLinkGonder({
   const [onayAcik, setOnayAcik] = useState(false);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [sonuc, setSonuc] = useState<{
-    detay: { takim: string; basarili: number; basarisiz: number; telefonsuz: number }[];
+    detay: {
+      takim: string;
+      basarili: number;
+      basarisiz: number;
+      telefonsuz: number;
+      hataOrnegi?: string;
+    }[];
   } | null>(null);
   const [hata, setHata] = useState<string | null>(null);
 
@@ -75,9 +81,11 @@ export default function GrupLinkGonder({
     setGonderiliyor(true);
     setHata(null);
     try {
+      // Meta kuralı: şablon değişkeninde satır sonu YASAK — ön söz ile link
+      // tek boşlukla birleşir (sunucu da ayrıca temizler, çift emniyet).
       const gruplarGovde = onizlemeSatirlari.map((s) => ({
         takim: s.takim,
-        mesaj: (onSoz.trim() ? `${onSoz.trim()}\n${s.link}` : s.link),
+        mesaj: (onSoz.trim() ? `${onSoz.trim()} ${s.link}` : s.link),
       }));
       const res = await fetch("/api/admin/whatsapp", {
         method: "POST",
@@ -163,6 +171,11 @@ export default function GrupLinkGonder({
             {sonuc.detay.map((d) => (
               <li key={d.takim} className="text-xs text-emerald-100/90">
                 {t.sonucSatiri(d.takim, d.basarili, d.basarisiz, d.telefonsuz)}
+                {d.hataOrnegi && (
+                  <span className="block pl-3 text-[0.7rem] text-amber-300/90">
+                    ⚠ {d.hataOrnegi}
+                  </span>
+                )}
               </li>
             ))}
           </ul>
