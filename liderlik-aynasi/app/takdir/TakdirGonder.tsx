@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { titret, cal } from "@/lib/his";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 const t = tr.takdir;
 
@@ -86,6 +87,11 @@ export default function TakdirGonder({ kisiler }: { kisiler: Kisi[] }) {
         placeholder={t.mesajYer}
         className="mt-3 w-full rounded-xl border border-royal-light/30 bg-midnight-soft p-3 text-base text-slate-100 outline-none placeholder:text-slate-500 focus:border-gold"
       />
+      <div className="mt-2">
+        <MikrofonButonu
+          onMetin={(p) => setMesaj((g) => (g.trim() ? `${g.trim()} ${p}` : p).slice(0, 280))}
+        />
+      </div>
 
       <button
         onClick={gonder}

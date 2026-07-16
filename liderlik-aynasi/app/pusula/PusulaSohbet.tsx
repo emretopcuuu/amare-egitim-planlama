@@ -603,6 +603,9 @@ export default function PusulaSohbet({
               ariaLabel={t.sloganYazYer}
               otoOdak
             />
+            <MikrofonButonu
+              onMetin={(p) => setSloganGirdi(sloganGirdi.trim() ? `${sloganGirdi.trim()} ${p}` : p)}
+            />
             <button
               onClick={() => void sloganKaydet(sloganGirdi)}
               disabled={!sloganGirdi.trim() || sloganKaydediyor}

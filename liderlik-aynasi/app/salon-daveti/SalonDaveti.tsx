@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { titret } from "@/lib/his";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 // [1.5] SALON DAVETİ akışı: isim yaz → AYNA taslak üretir → düzenle → "Gönderdim".
 // Sistem mesaj GÖNDERMEZ; kişi kendi WhatsApp'ından atar. Bu ekran yalnız taslak
@@ -102,6 +103,11 @@ export default function SalonDaveti({ zatenGonderildi }: { zatenGonderildi: bool
             rows={5}
             className="mt-2 w-full rounded-xl border-2 border-white/15 bg-white/[0.04] p-3 text-sm leading-relaxed text-slate-100 outline-none focus:border-gold"
           />
+          <div className="mt-2">
+            <MikrofonButonu
+              onMetin={(p) => setTaslak((g) => (g.trim() ? `${g.trim()} ${p}` : p))}
+            />
+          </div>
           <div className="mt-3 flex flex-col gap-2">
             <a
               href={`https://wa.me/?text=${encodeURIComponent(taslak)}`}
