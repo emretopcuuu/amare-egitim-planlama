@@ -31,28 +31,62 @@ const TR = {
     baslikSatir1: "Ekleme değil,",
     baslikSatir2: "katlama.",
     altMetin:
-      "Tek tek üye eklemeyi değil, kendi ekibini kuran liderler yetiştirmeyi öğretiyorum. Kimse, ama kimse tek başına başarmadı.",
+      "Bu sektörde herkes eklemeyi bir şekilde keşfeder. Katlanacağını ise sadece umar — en büyük oyuncular dahil. Kimse, ama kimse tek başına başarmadı.",
     rol: "Presidential Diamond | One Team Global",
   },
   hakkimda: {
     unvan: "Presidential Diamond | One Team Global",
     paragraflar: [
-      "Doğrudan satışla tanışıklığım 2003'e, üniversite yıllarıma kadar uzanır; bir aloe vera markasının distribütörü olarak katalogla çalışmayı öğrendim. Bugünkü işime Şubat 2013'te başladım: yedi ayda Diamond, üç buçuk yılda Presidential Diamond oldum. Bu yolda en çok inandığım şey şu: kalıcı büyüme karizmayla değil, herkesin uygulayabildiği net bir sistemle olur.",
-      "Kocaeli Üniversitesi Uluslararası İlişkiler mezunuyum; yazarım, evli ve iki çocuk babasıyım. 27 yıldır iş hayatının içindeyim, 17 yıldır kendi işlerimi yapıyorum. 38 ülke gezdim; 4 kıtada 220.000 kişilik bir müşteri ağının kurulmasına vesile oldum. Amerika'dan İngiltere'ye birçok ülkede kişisel gelişim eğitimleri verdim; bugün İstanbul'da yaşıyor, iş insanlarına başarı koçluğu yapıyorum.",
+      "Doğrudan satışla tanışıklığım 2003'e, üniversite yıllarıma kadar uzanır; bir aloe vera markasının distribütörü olarak katalogla çalışmayı öğrendim. Bugünkü işime Şubat 2013'te başladım: sekiz ayda Diamond, üç buçuk yılda Presidential Diamond oldum. Bu yolda en çok inandığım şey şu: kalıcı büyüme karizmayla değil, herkesin uygulayabildiği net bir sistemle olur.",
+      "Kocaeli Üniversitesi Uluslararası İlişkiler mezunuyum; yazarım, evli ve iki çocuk babasıyım. 27 yıldır iş hayatının içindeyim, 17 yıldır kendi işlerimi yapıyorum. 38 ülke gezdim; 4 kıtada 250.000'e yakın kişilik bir müşteri ağının kurulmasına vesile oldum. Amerika'dan İngiltere'ye birçok ülkede kişisel gelişim eğitimleri verdim; bugün İstanbul'da yaşıyor, iş insanlarına başarı koçluğu yapıyorum.",
     ],
   },
+  teori: {
+    etiket: "Sektörün söylenmeyen gerçeği",
+    ana: "Bu iş ekleme işi değil, katlama işidir.",
+    alt: "Fakat eklemeyi öğrenmeden katlamayı başarma şansın olmaz. Bu sektörde çoğu insan işin sadece ekleme kısmını keşfeder; katlanacağını sadece umar. Buna sektörün en büyük oyuncuları da dahil.",
+    imza: "İlk 72 Saat, 2017",
+  },
+  liderTipleri: {
+    baslik: "Üç çeşit lider vardır.",
+    altMetin: "Hangisi olduğun, nereye varacağını belirler.",
+    tipler: [
+      {
+        baslik: "Şans eseri liderleşen",
+        aciklama:
+          "İşi bir şans oyunu zanneder. İşler ters gidince sektöre küser, uzaklaşır.",
+      },
+      {
+        baslik: "Aşırı çalışkanlıkla liderleşen",
+        aciklama:
+          "Farkında olmadan bazı doğruları yapar. Ama sorun çıkınca kendinde değil, firmada ya da üründe arar; itibarını harcar, yıllar içinde kendini yok eder.",
+      },
+      {
+        baslik: "Formülü bilen",
+        aciklama:
+          "Bir kere yapsa yüz kere de, bin kere de yapabilir. Sistem kurmayı ve nasıl işlediğini bilir. Sektörün vadettiği hayatı gerçekten bunlar yaşar.",
+      },
+    ],
+  },
+  oneteamPerde: {
+    etiket: "Yalnız gitmek",
+    ana: "Doğrudan satışı düşünüyorsan iki yolun var.",
+    alt: "Formülü yıllarını vererek kendin çözersin, ya da çözülmüş halinin içine doğarsın. Biz OneTeam'de sistemler kuruyoruz — başarı, kişinin kabiliyetine bağımlı olmasın diye.",
+  },
+  kapanisCumlesi:
+    "Bu benim hikâyem. Belki bugün senin hikâyenin başlangıcıdır.",
   yolculuk: [
     {
       yil: "2003",
       baslik: "Doğrudan satışla ilk tanışma",
       aciklama:
-        "Üniversite yıllarında bir aloe vera markasının distribütörlüğünü yaptım. Katalog modelini sevmedim ama bu dünyanın büyük işler çıkarabileceğini o yıllarda gördüm.",
+        "Üniversite birinci sınıftayken babam iflas etti; bu beni sorumluluk almaya zorladı. Kapı kapı su arıtma cihazı sattım, sonra bir aloe vera markasının distribütörlüğünü yaptım. Katalog modelini sevmedim ama bu dünyanın büyük işler çıkarabileceğini o yıllarda gördüm.",
     },
     {
       yil: "2013",
-      baslik: "Yedi ayda Diamond",
+      baslik: "Sekiz ayda Diamond",
       aciklama:
-        "Şubat'ta başladım, Eylül'de Diamond oldum; aynı yılın sonunda 1 Star Diamond. Hız, doğru sistemin ilk kanıtıydı.",
+        "Şubat'ta başladım, 8. ayda Diamond oldum; aynı yılın sonunda 1 Star Diamond. İlk ay 5 kişiyle el sıkıştım, ay sonunda 19 kişilik bir ağ oldu; ikinci ayda 88'e katlandı. Hız, doğru sistemin ilk kanıtıydı.",
     },
     {
       yil: "2016",
@@ -80,8 +114,8 @@ const TR = {
     },
   ],
   rakamlar: [
-    { deger: "7", ek: " ay", etiket: "Diamond'a giden süre" },
-    { deger: "220.000", ek: "", etiket: "Kişilik müşteri ağı" },
+    { deger: "8", ek: " ay", etiket: "Diamond'a giden süre" },
+    { deger: "250.000", ek: "", etiket: "Kişilik ağ (2026 itibarıyla)" },
     { deger: "4", ek: " kıta", etiket: "Ulaşılan coğrafya" },
     { deger: "38", ek: " ülke", etiket: "Gezilen, eğitim verilen" },
   ],
@@ -94,6 +128,9 @@ const TR = {
     "Seni durduran, yine sensin.",
     "Daha çok değil, daha akıllı çalış.",
     "Her gün %1, bir yılda %365.",
+    "Ticaretin en büyük sırrı: eforun azaldıkça gelirin artmasıdır.",
+    "İnsanlar sana değil, evet dedikleri zaman yapacakları şeye hayır der.",
+    "Neyin işe yaradığı değil, neyin kopyalanabildiği önemlidir.",
   ],
   konusmalar: [
     {
@@ -269,28 +306,62 @@ const EN: Icerik = {
     baslikSatir1: "Not adding.",
     baslikSatir2: "Multiplying.",
     altMetin:
-      "I don't teach adding members one by one; I raise leaders who build their own teams. No one, but no one, ever made it alone.",
+      "In this industry everyone discovers how to add sooner or later. Whether it multiplies, they only hope — even the biggest players. No one, but no one, ever made it alone.",
     rol: "Presidential Diamond | One Team Global",
   },
   hakkimda: {
     unvan: "Presidential Diamond | One Team Global",
     paragraflar: [
-      "My history with direct sales goes back to 2003, my university years, when I distributed an aloe vera brand through a catalog model. I started my current business in February 2013: Diamond in seven months, Presidential Diamond in three and a half years. What I believe most on this path: lasting growth comes not from charisma, but from a clear system anyone can apply.",
-      "I'm a graduate of International Relations at Kocaeli University; a writer, married, father of two. I've been in business for 27 years, running my own ventures for 17. I've traveled to 38 countries and helped build a customer network of 220,000 people across 4 continents. I've given personal-development trainings in many countries from the US to the UK; today I live in Istanbul and coach business people toward success.",
+      "My history with direct sales goes back to 2003, my university years, when I distributed an aloe vera brand through a catalog model. I started my current business in February 2013: Diamond in eight months, Presidential Diamond in three and a half years. What I believe most on this path: lasting growth comes not from charisma, but from a clear system anyone can apply.",
+      "I'm a graduate of International Relations at Kocaeli University; a writer, married, father of two. I've been in business for 27 years, running my own ventures for 17. I've traveled to 38 countries and helped build a customer network of nearly 250,000 people across 4 continents. I've given personal-development trainings in many countries from the US to the UK; today I live in Istanbul and coach business people toward success.",
     ],
   },
+  teori: {
+    etiket: "The industry's unspoken truth",
+    ana: "This isn't an adding business. It's a multiplying one.",
+    alt: "But you can't master multiplying until you've learned adding. Most people in this industry only ever discover the adding part; they just hope it multiplies. That includes the industry's biggest players.",
+    imza: "İlk 72 Saat (First 72 Hours), 2017",
+  },
+  liderTipleri: {
+    baslik: "There are three kinds of leaders.",
+    altMetin: "Which one you are decides where you end up.",
+    tipler: [
+      {
+        baslik: "The lucky one",
+        aciklama:
+          "Treats the business as a game of chance. When things go wrong, they get bitter and walk away.",
+      },
+      {
+        baslik: "The overworked one",
+        aciklama:
+          "Does some things right without knowing why. When something breaks, they blame the company or the product, burn their reputation, and wear themselves out over the years.",
+      },
+      {
+        baslik: "The one who knows the formula",
+        aciklama:
+          "If they can do it once, they can do it a hundred times, a thousand times. They know how to build a system and how it works. They're the ones who actually live what the industry promises.",
+      },
+    ],
+  },
+  oneteamPerde: {
+    etiket: "Going it alone",
+    ana: "If you're considering direct sales, you have two paths.",
+    alt: "Spend years solving the formula yourself, or be born into one that's already solved. At OneTeam we build systems — so success doesn't depend on any one person's talent.",
+  },
+  kapanisCumlesi:
+    "This is my story. Maybe today it's the beginning of yours.",
   yolculuk: [
     {
       yil: "2003",
       baslik: "First encounter with direct sales",
       aciklama:
-        "During university I distributed an aloe vera brand through a catalog model. I didn't love that model, but I saw then what this world could build.",
+        "In my first year of university my father went bankrupt; it forced me to take on responsibility. I sold water-purifier units door to door, then distributed an aloe vera brand. I didn't love the catalog model, but I saw then what this world could build.",
     },
     {
       yil: "2013",
-      baslik: "Diamond in seven months",
+      baslik: "Diamond in eight months",
       aciklama:
-        "I started in February and became Diamond by September; 1 Star Diamond by year's end. Speed was the first proof of the right system.",
+        "I started in February and became Diamond by month 8; 1 Star Diamond by year's end. In month one I shook hands with 5 people and closed the month with a network of 19; by month two it had multiplied to 88. Speed was the first proof of the right system.",
     },
     {
       yil: "2016",
@@ -318,8 +389,8 @@ const EN: Icerik = {
     },
   ],
   rakamlar: [
-    { deger: "7", ek: " mo", etiket: "Months to Diamond" },
-    { deger: "220,000", ek: "", etiket: "People in the network" },
+    { deger: "8", ek: " mo", etiket: "Months to Diamond" },
+    { deger: "250,000", ek: "", etiket: "People in the network (as of 2026)" },
     { deger: "4", ek: "", etiket: "Continents reached" },
     { deger: "38", ek: "", etiket: "Countries visited & taught" },
   ],
@@ -332,6 +403,9 @@ const EN: Icerik = {
     "The one stopping you is you.",
     "Don't work more; work smarter.",
     "1% every day is 365% in a year.",
+    "The real secret of business: income rises as effort falls.",
+    "People don't say no to you — they say no to what saying yes would mean.",
+    "What matters isn't what works. It's what can be copied.",
   ],
   konusmalar: [
     {

@@ -359,6 +359,167 @@ function Manifesto() {
   );
 }
 
+/* Sektörün söylenmeyen gerçeği — teori perdesi, kitaba (2017) tarihli imza. */
+function Teori() {
+  const c = useC();
+  return (
+    <section className="py-24 md:py-40">
+      <div className="mx-auto max-w-4xl px-6 text-center">
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="mb-6 text-sm font-medium tracking-[0.2em] text-altin uppercase"
+        >
+          {c.teori.etiket}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.8, delay: 0.1, ease: GECIS }}
+          className="text-3xl leading-tight font-semibold tracking-tight text-fildisi md:text-6xl"
+        >
+          {c.teori.ana}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, delay: 0.2, ease: GECIS }}
+          className="mx-auto mt-8 max-w-[54ch] text-lg leading-relaxed text-duman"
+        >
+          {c.teori.alt}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.35, ease: GECIS }}
+          className="mt-6 text-sm font-medium tracking-widest text-altin/70 uppercase"
+        >
+          — {c.teori.imza}
+        </motion.p>
+      </div>
+    </section>
+  );
+}
+
+/* Üç Çeşit Lider — kendini teşhis ettiren kart destesi. */
+function LiderTipleri() {
+  const c = useC();
+  return (
+    <section id="lider-tipleri" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
+      <div className="mx-auto max-w-6xl px-6">
+        <motion.h2
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: GECIS }}
+          className="max-w-[20ch] text-3xl font-semibold tracking-tight md:text-5xl"
+        >
+          {c.liderTipleri.baslik}
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: GECIS }}
+          className="mt-4 max-w-[52ch] text-duman"
+        >
+          {c.liderTipleri.altMetin}
+        </motion.p>
+        <div className="mt-14 grid gap-6 md:grid-cols-3">
+          {c.liderTipleri.tipler.map((t, i) => (
+            <TiltKart key={t.baslik}>
+              <motion.div
+                initial={{ opacity: 0, y: 28 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.7, delay: i * 0.1, ease: GECIS }}
+                className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border p-8 ${
+                  i === 2
+                    ? "border-altin/40 bg-gradient-to-br from-altin/15 to-abanoz-2"
+                    : "border-black/10 bg-abanoz-2"
+                }`}
+              >
+                <p className="text-4xl font-semibold tracking-tighter text-altin/30">
+                  0{i + 1}
+                </p>
+                <h3 className="relative mt-5 text-xl font-semibold tracking-tight text-fildisi md:text-2xl">
+                  {t.baslik}
+                </h3>
+                <p className="relative mt-3 leading-relaxed text-duman">
+                  {t.aciklama}
+                </p>
+              </motion.div>
+            </TiltKart>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* OneTeam konumlandırma perdesi — Vaat'ten önce köprü. */
+function OneTeamPerde() {
+  const c = useC();
+  return (
+    <section className="py-24 md:py-32">
+      <div className="mx-auto max-w-3xl px-6 text-center">
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="mb-6 text-sm font-medium tracking-[0.2em] text-altin uppercase"
+        >
+          {c.oneteamPerde.etiket}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.8, delay: 0.1, ease: GECIS }}
+          className="text-2xl leading-snug font-medium tracking-tight text-fildisi md:text-4xl"
+        >
+          {c.oneteamPerde.ana}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, delay: 0.2, ease: GECIS }}
+          className="mx-auto mt-8 max-w-[52ch] text-lg leading-relaxed text-duman"
+        >
+          {c.oneteamPerde.alt}
+        </motion.p>
+      </div>
+    </section>
+  );
+}
+
+/* Kapanış cümlesi — Deyince'den İletişim'e sinematik köprü. */
+function KapanisCumlesi() {
+  const c = useC();
+  return (
+    <section className="py-20 md:py-28">
+      <div className="mx-auto max-w-2xl px-6 text-center">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.8, ease: GECIS }}
+          className="text-2xl leading-snug font-medium tracking-tight text-fildisi md:text-4xl"
+        >
+          {c.kapanisCumlesi}
+        </motion.p>
+      </div>
+    </section>
+  );
+}
+
 /* Film bölümü: sabit ekranda, scroll ilerledikçe beliren/kaybolan sahne. */
 function FilmBolumu({
   adim,
@@ -1083,15 +1244,19 @@ function ZirveIc() {
       <main>
         <Hero />
         <Manifesto />
+        <Teori />
         <Rakamlar />
         <Yolculuk />
+        <LiderTipleri />
         <Sozler />
         <Konusmalar />
         <Egitimler />
         <Ayna />
+        <OneTeamPerde />
         <Vaat />
         <Ilkeler />
         <Deyince />
+        <KapanisCumlesi />
         <Iletisim />
       </main>
       <Footer />
