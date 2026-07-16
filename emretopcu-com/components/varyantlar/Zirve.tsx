@@ -462,6 +462,138 @@ function LiderTipleri() {
   );
 }
 
+/* Sektör Gerçekleri — kimsenin söylemediği gerçekler, kart destesi. */
+function Gercekler() {
+  const c = useC();
+  return (
+    <section id="gercekler" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
+      <div className="mx-auto max-w-6xl px-6">
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="mb-4 text-sm font-medium tracking-[0.2em] text-altin uppercase"
+        >
+          {c.gercekler.etiket}
+        </motion.p>
+        <motion.h2
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: GECIS }}
+          className="max-w-[24ch] text-3xl font-semibold tracking-tight md:text-5xl"
+        >
+          {c.gercekler.baslik}
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: GECIS }}
+          className="mt-4 max-w-[52ch] text-duman"
+        >
+          {c.gercekler.altMetin}
+        </motion.p>
+        <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {c.gercekler.kartlar.map((k, i) => (
+            <TiltKart key={k.baslik}>
+              <motion.article
+                initial={{ opacity: 0, y: 28 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: GECIS }}
+                className="flex h-full min-h-[220px] flex-col justify-between rounded-2xl border border-black/10 bg-abanoz-2 p-7 transition-colors hover:border-altin/40"
+              >
+                <h3 className="text-xl font-semibold tracking-tight text-fildisi md:text-2xl">
+                  {k.baslik}
+                </h3>
+                <p className="mt-3 leading-relaxed text-duman">
+                  {k.aciklama}
+                </p>
+              </motion.article>
+            </TiltKart>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* SSS — akordeon, en çok sorulan sorular. */
+function Sss() {
+  const c = useC();
+  const [acik, setAcik] = useState<number | null>(0);
+  return (
+    <section className="py-24 md:py-32">
+      <div className="mx-auto max-w-4xl px-6">
+        <motion.h2
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: GECIS }}
+          className="text-3xl font-semibold tracking-tight md:text-5xl"
+        >
+          {c.sss.baslik}
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: GECIS }}
+          className="mt-4 text-duman"
+        >
+          {c.sss.altMetin}
+        </motion.p>
+        <div className="mt-10">
+          {c.sss.sorular.map((s, i) => {
+            const secili = acik === i;
+            return (
+              <motion.div
+                key={s.soru}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.6, delay: i * 0.05, ease: GECIS }}
+                className="border-t border-black/10 py-6 last:border-b"
+              >
+                <button
+                  type="button"
+                  onClick={() => setAcik(secili ? null : i)}
+                  aria-expanded={secili}
+                  className="flex w-full items-center justify-between gap-6 text-left"
+                >
+                  <span className="text-lg font-semibold tracking-tight text-fildisi md:text-xl">
+                    {s.soru}
+                  </span>
+                  <span
+                    aria-hidden
+                    className={`shrink-0 text-2xl text-altin transition-transform duration-300 ${
+                      secili ? "rotate-45" : ""
+                    }`}
+                  >
+                    +
+                  </span>
+                </button>
+                <div
+                  className="grid transition-[grid-template-rows] duration-300 ease-out"
+                  style={{ gridTemplateRows: secili ? "1fr" : "0fr" }}
+                >
+                  <div className="overflow-hidden">
+                    <p className="mt-4 max-w-[64ch] leading-relaxed text-duman">
+                      {s.cevap}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* OneTeam konumlandırma perdesi — Vaat'ten önce köprü. */
 function OneTeamPerde() {
   const c = useC();
@@ -1248,6 +1380,7 @@ function ZirveIc() {
         <Rakamlar />
         <Yolculuk />
         <LiderTipleri />
+        <Gercekler />
         <Sozler />
         <Konusmalar />
         <Egitimler />
@@ -1255,6 +1388,7 @@ function ZirveIc() {
         <OneTeamPerde />
         <Vaat />
         <Ilkeler />
+        <Sss />
         <Deyince />
         <KapanisCumlesi />
         <Iletisim />

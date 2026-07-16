@@ -119,6 +119,75 @@ const TR = {
     { deger: "4", ek: " kıta", etiket: "Ulaşılan coğrafya" },
     { deger: "38", ek: " ülke", etiket: "Gezilen, eğitim verilen" },
   ],
+  gercekler: {
+    etiket: "Kimsenin söylemediği gerçekler",
+    baslik: "Doğrudan satışı düşünüyorsan önce bunları bil.",
+    altMetin:
+      "Bunlar iddia değil; yıllardır sahnede anlattığım, kendi ekibime öğrettiğim gerçekler.",
+    kartlar: [
+      {
+        baslik: "80 / 15 / 5",
+        aciklama:
+          "Zamanının %80'i görüşmeye, sunuma, takibe gider — sonucun sadece %5'i oradan gelir. Zamanının %5'i toplantıya, kampa gider — sonucun %80'i oradan gelir. Çoğu kişi bunu bilmediği için yanlış yerde çok çalışır.",
+      },
+      {
+        baslik: "Motivasyonun raf ömrü 72 saattir",
+        aciklama:
+          "İlk gün heyecan doruktadır, üçüncü gün unutmuşsundur. Bu normaldir. Motivasyonu değil, iradeyi ve alışkanlığı yönetmen gerekir.",
+      },
+      {
+        baslik: "İnsanlar işe hayır demez",
+        aciklama:
+          "İnsanlar sana, ürüne ya da firmaya hayır demez. Sana evet dediklerinde yapacakları şeye hayır derler. O şeyi nasıl yaptığın, işin prestijini belirler.",
+      },
+      {
+        baslik: "Neyin işe yaradığı değil, neyin kopyalanabildiği önemlidir",
+        aciklama:
+          "Karizman, yeteneğin, network'ün işe yarayabilir — ama kopyalanamıyorsa ekibine öğretemezsin. Katlama, kopyalanabilirlikle başlar.",
+      },
+      {
+        baslik: "Asıl itibarsız olan iş değil, yapılış şeklidir",
+        aciklama:
+          "Elinde katalogla avcı gibi peşinden koşmak eskidendi. Bu iş artık tavsiye ticareti; sen kimseyi rahatsız etmek zorunda değilsin.",
+      },
+      {
+        baslik: "Eforun azaldıkça gelirin artması gerekir",
+        aciklama:
+          "Bir işte gelirin arttıkça eforun da artıyorsa, yanlış bir model kurmuşsundur. Doğru sistemde tam tersi olur.",
+      },
+    ],
+  },
+  sss: {
+    baslik: "Sorular ve cevaplar",
+    altMetin: "Bunları herkes sorar. İşte kendi cevaplarım.",
+    sorular: [
+      {
+        soru: "Param yok, nasıl başlayayım?",
+        cevap:
+          "Seni anlıyorum, benim de başladığımda ciddi mali sıkıntılarım vardı. Ama şunu fark ettim: sorun hiçbir zaman gerçekten para değil. Öncelik sıralamanda yeterince üst sıradaysa, parayı bir şekilde bulursun.",
+      },
+      {
+        soru: "Çevrem yok, kiminle çalışacağım?",
+        cevap:
+          "Bu iş çevre işi değil. Kendi çevrende başlar, el sıkıştığın kişilerin çevresiyle katlanarak büyür. Ben ilk ay sadece 5 kişiyle el sıkıştım; bir yıl içinde bu ağ katlanarak büyüdü.",
+      },
+      {
+        soru: "Zamanım yok.",
+        cevap:
+          "Önce şunu sor kendine: bu işten minimum ne kadar kazansan gerçekten heyecanlanırdın? Sonra: buna ne kadar sürede ulaşmak isterdin? Cevap genelde zamanın olmadığı değil, önceliğin netleşmediğidir.",
+      },
+      {
+        soru: "Doğrudan satış mı, saadet zinciri mi? Nasıl ayırt ederim?",
+        cevap:
+          "Üç soru sor: Ortada gerçek, kullanılan bir ürün var mı? Kazanç, o ürünün gerçek tüketiminden mi geliyor? Yoksa yalnızca yeni kayıttan mı? Cevaplar netse korkacak bir şey yok; net değilse uzak dur.",
+      },
+      {
+        soru: "Bir işi nasıl değerlendirmeliyim?",
+        cevap:
+          "Ben her işe girerken beş şeye bakarım: Talep var mı? Kaliteli bir ürün var mı? Ortağıma güvenebilir miyim? Riskim ve yatırımım ne? Ve en önemlisi — bensiz de yürüyecek bir sistem var mı?",
+      },
+    ],
+  },
   sozler: [
     "Kayıt olduğun gün değil, karar verdiğin gün başlarsın.",
     "Kimse, ama kimse tek başına başarmadı.",
@@ -394,6 +463,75 @@ const EN: Icerik = {
     { deger: "4", ek: "", etiket: "Continents reached" },
     { deger: "38", ek: "", etiket: "Countries visited & taught" },
   ],
+  gercekler: {
+    etiket: "What no one tells you",
+    baslik: "If you're considering direct sales, know this first.",
+    altMetin:
+      "These aren't claims — they're what I've taught on stage for years, what I teach my own team.",
+    kartlar: [
+      {
+        baslik: "80 / 15 / 5",
+        aciklama:
+          "80% of your time goes to meetings, presentations, follow-ups — you get only 5% of your results from there. 5% of your time goes to meetings and camps — you get 80% of your results from there. Most people work hard in the wrong place because they don't know this.",
+      },
+      {
+        baslik: "Motivation has a 72-hour shelf life",
+        aciklama:
+          "Day one, excitement peaks. Day three, you've forgotten it. That's normal. You don't manage motivation — you manage willpower and habit.",
+      },
+      {
+        baslik: "People don't say no to the business",
+        aciklama:
+          "People don't say no to you, the product, or the company. They say no to what saying yes would require of them. How you ask determines the business's prestige.",
+      },
+      {
+        baslik: "What matters isn't what works — it's what can be copied",
+        aciklama:
+          "Your charisma, talent, network — they might work for you. But if your team can't copy it, you can't teach it. Multiplying starts with copyability.",
+      },
+      {
+        baslik: "It's not the business that lacks prestige — it's how it's done",
+        aciklama:
+          "Chasing people around with a catalog was the old way. This is referral commerce now; you're never obligated to bother anyone.",
+      },
+      {
+        baslik: "Income should rise as effort falls",
+        aciklama:
+          "If your income only grows when your effort grows too, you've built the wrong model. In the right system, it's the opposite.",
+      },
+    ],
+  },
+  sss: {
+    baslik: "Questions and answers",
+    altMetin: "Everyone asks these. Here are my own answers.",
+    sorular: [
+      {
+        soru: "I have no money — how do I start?",
+        cevap:
+          "I understand — I had serious financial pressure when I started too. But here's what I learned: money is never really the problem. If it's high enough on your priority list, you find a way.",
+      },
+      {
+        soru: "I don't have a network — who will I work with?",
+        cevap:
+          "This isn't a networking game. It starts with the people you already know and multiplies through the people they know. I shook hands with just 5 people in my first month; within a year that network had multiplied many times over.",
+      },
+      {
+        soru: "I don't have time.",
+        cevap:
+          "First ask yourself: what's the minimum you'd need to earn from this to be genuinely excited? Then: how soon would you want that? Usually it's not time that's missing — it's a clear priority.",
+      },
+      {
+        soru: "Direct sales or pyramid scheme — how do I tell the difference?",
+        cevap:
+          "Ask three questions: Is there a real product people actually use? Does the income come from real consumption of that product — or only from new sign-ups? If the answers are clear, there's nothing to fear. If they're not, stay away.",
+      },
+      {
+        soru: "How should I evaluate any business?",
+        cevap:
+          "I look at five things before entering any business: Is there real demand? Is there a quality product? Can I trust my partner? What's my risk and investment? And most importantly — is there a system that runs even without me?",
+      },
+    ],
+  },
   sozler: [
     "You don't start the day you sign up; you start the day you decide.",
     "No one, but no one, ever made it alone.",
