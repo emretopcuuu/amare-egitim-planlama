@@ -359,6 +359,387 @@ function Manifesto() {
   );
 }
 
+/* Sektörün söylenmeyen gerçeği — teori perdesi, kitaba (2017) tarihli imza. */
+function Teori() {
+  const c = useC();
+  return (
+    <section className="py-24 md:py-40">
+      <div className="mx-auto max-w-4xl px-6 text-center">
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="mb-6 text-sm font-medium tracking-[0.2em] text-altin uppercase"
+        >
+          {c.teori.etiket}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.8, delay: 0.1, ease: GECIS }}
+          className="text-3xl leading-tight font-semibold tracking-tight text-fildisi md:text-6xl"
+        >
+          {c.teori.ana}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, delay: 0.2, ease: GECIS }}
+          className="mx-auto mt-8 max-w-[54ch] text-lg leading-relaxed text-duman"
+        >
+          {c.teori.alt}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.35, ease: GECIS }}
+          className="mt-6 text-sm font-medium tracking-widest text-altin/70 uppercase"
+        >
+          — {c.teori.imza}
+        </motion.p>
+      </div>
+    </section>
+  );
+}
+
+/* Üç Çeşit Lider — kendini teşhis ettiren kart destesi. */
+// Üç lider tipinin kaderini kelimesiz anlatan imza eğrileri.
+const IMZA_EGRI_YOLLARI = [
+  "M2 10 C 20 4, 30 6, 38 16 C 44 24, 50 34, 58 36 L 96 36",
+  "M2 30 C 14 16, 20 30, 30 18 C 40 6, 46 26, 56 16 C 64 8, 70 26, 80 20 C 86 16, 90 26, 96 24",
+  "M2 36 C 24 34, 40 26, 54 16 C 68 6, 80 4, 96 2",
+];
+
+function ImzaEgri({ tip }: { tip: number }) {
+  const azalt = useReducedMotion();
+  return (
+    <svg viewBox="0 0 98 40" className="h-10 w-full" aria-hidden fill="none">
+      <motion.path
+        d={IMZA_EGRI_YOLLARI[tip]}
+        stroke={tip === 2 ? "var(--color-altin)" : "currentColor"}
+        strokeOpacity={tip === 2 ? 1 : 0.35}
+        strokeWidth={tip === 2 ? 2.5 : 2}
+        strokeLinecap="round"
+        strokeDasharray={tip === 0 ? "4 3" : undefined}
+        initial={azalt ? undefined : { pathLength: 0 }}
+        whileInView={{ pathLength: 1 }}
+        viewport={{ once: true, amount: 0.6 }}
+        transition={{ duration: 1.1, ease: GECIS, delay: 0.2 }}
+      />
+    </svg>
+  );
+}
+
+function LiderTipleri() {
+  const c = useC();
+  return (
+    <section id="lider-tipleri" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
+      <div className="mx-auto max-w-6xl px-6">
+        <motion.h2
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: GECIS }}
+          className="max-w-[20ch] text-3xl font-semibold tracking-tight md:text-5xl"
+        >
+          {c.liderTipleri.baslik}
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: GECIS }}
+          className="mt-4 max-w-[52ch] text-duman"
+        >
+          {c.liderTipleri.altMetin}
+        </motion.p>
+        <div className="mt-14 grid gap-6 md:grid-cols-3">
+          {c.liderTipleri.tipler.map((t, i) => (
+            <TiltKart key={t.baslik}>
+              <motion.div
+                initial={{ opacity: 0, y: 28 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.7, delay: i * 0.1, ease: GECIS }}
+                className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border p-8 ${
+                  i === 2
+                    ? "border-altin/40 bg-gradient-to-br from-altin/15 to-abanoz-2"
+                    : "border-black/10 bg-abanoz-2"
+                }`}
+              >
+                <p className="text-4xl font-semibold tracking-tighter text-altin/30">
+                  0{i + 1}
+                </p>
+                <h3 className="relative mt-5 text-xl font-semibold tracking-tight text-fildisi md:text-2xl">
+                  {t.baslik}
+                </h3>
+                <p className="relative mt-3 leading-relaxed text-duman">
+                  {t.aciklama}
+                </p>
+                <div className="relative mt-6 text-duman/60">
+                  <ImzaEgri tip={i} />
+                </div>
+              </motion.div>
+            </TiltKart>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* Sektör Gerçekleri — kimsenin söylemediği gerçekler, kart destesi. */
+function Gercekler() {
+  const c = useC();
+  return (
+    <section id="gercekler" className="scroll-mt-24 bg-abanoz py-24 md:py-32">
+      <div className="mx-auto max-w-6xl px-6">
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="mb-4 text-sm font-medium tracking-[0.2em] text-altin uppercase"
+        >
+          {c.gercekler.etiket}
+        </motion.p>
+        <motion.h2
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: GECIS }}
+          className="max-w-[24ch] text-3xl font-semibold tracking-tight md:text-5xl"
+        >
+          {c.gercekler.baslik}
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: GECIS }}
+          className="mt-4 max-w-[52ch] text-duman"
+        >
+          {c.gercekler.altMetin}
+        </motion.p>
+        <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+          {c.gercekler.kartlar.map((k, i) => (
+            <TiltKart key={k.baslik}>
+              <motion.article
+                initial={{ opacity: 0, y: 28 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: GECIS }}
+                className="flex h-full min-h-[220px] flex-col justify-between rounded-2xl border border-black/10 bg-abanoz-2 p-7 transition-colors hover:border-altin/40"
+              >
+                <h3 className="text-xl font-semibold tracking-tight text-fildisi md:text-2xl">
+                  {k.baslik}
+                </h3>
+                <p className="mt-3 leading-relaxed text-duman">
+                  {k.aciklama}
+                </p>
+              </motion.article>
+            </TiltKart>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* SSS — akordeon, en çok sorulan sorular. */
+function Sss() {
+  const c = useC();
+  const [acik, setAcik] = useState<number | null>(0);
+  return (
+    <section className="py-24 md:py-32">
+      <div className="mx-auto max-w-4xl px-6">
+        <motion.h2
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, ease: GECIS }}
+          className="text-3xl font-semibold tracking-tight md:text-5xl"
+        >
+          {c.sss.baslik}
+        </motion.h2>
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: GECIS }}
+          className="mt-4 text-duman"
+        >
+          {c.sss.altMetin}
+        </motion.p>
+        <div className="mt-10">
+          {c.sss.sorular.map((s, i) => {
+            const secili = acik === i;
+            return (
+              <motion.div
+                key={s.soru}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }}
+                transition={{ duration: 0.6, delay: i * 0.05, ease: GECIS }}
+                className="border-t border-black/10 py-6 last:border-b"
+              >
+                <button
+                  type="button"
+                  onClick={() => setAcik(secili ? null : i)}
+                  aria-expanded={secili}
+                  className="flex w-full items-center justify-between gap-6 text-left"
+                >
+                  <span className="text-lg font-semibold tracking-tight text-fildisi md:text-xl">
+                    {s.soru}
+                  </span>
+                  <span
+                    aria-hidden
+                    className={`shrink-0 text-2xl text-altin transition-transform duration-300 ${
+                      secili ? "rotate-45" : ""
+                    }`}
+                  >
+                    +
+                  </span>
+                </button>
+                <div
+                  className="grid transition-[grid-template-rows] duration-300 ease-out"
+                  style={{ gridTemplateRows: secili ? "1fr" : "0fr" }}
+                >
+                  <div className="overflow-hidden">
+                    <p className="mt-4 max-w-[64ch] leading-relaxed text-duman">
+                      {s.cevap}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* OneTeam konumlandırma perdesi — Vaat'ten önce köprü. */
+function OneTeamPerde() {
+  const c = useC();
+  return (
+    <section className="py-24 md:py-32">
+      <div className="mx-auto max-w-3xl px-6 text-center">
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="mb-6 text-sm font-medium tracking-[0.2em] text-altin uppercase"
+        >
+          {c.oneteamPerde.etiket}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.8, delay: 0.1, ease: GECIS }}
+          className="text-2xl leading-snug font-medium tracking-tight text-fildisi md:text-4xl"
+        >
+          {c.oneteamPerde.ana}
+        </motion.p>
+        <motion.p
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, delay: 0.2, ease: GECIS }}
+          className="mx-auto mt-8 max-w-[52ch] text-lg leading-relaxed text-duman"
+        >
+          {c.oneteamPerde.alt}
+        </motion.p>
+      </div>
+    </section>
+  );
+}
+
+/* Kapanış cümlesi — Deyince'den İletişim'e sinematik köprü. */
+function KapanisCumlesi() {
+  const c = useC();
+  return (
+    <section className="py-20 md:py-28">
+      <div className="mx-auto max-w-2xl px-6 text-center">
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.8, ease: GECIS }}
+          className="text-2xl leading-snug font-medium tracking-tight text-fildisi md:text-4xl"
+        >
+          {c.kapanisCumlesi}
+        </motion.p>
+      </div>
+    </section>
+  );
+}
+
+/* Katlama şeridi — gerçek büyüme rakamları, ok işaretleriyle art arda. */
+function KatlamaSeridi() {
+  const c = useC();
+  return (
+    <section className="pb-20 md:pb-28">
+      <div className="mx-auto max-w-5xl px-6">
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, ease: GECIS }}
+          className="mb-8 text-center text-sm font-medium tracking-[0.2em] text-altin uppercase"
+        >
+          {c.katlamaSeridi.etiket}
+        </motion.p>
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-8 md:gap-x-5">
+          {c.katlamaSeridi.adimlar.map((adim, i) => (
+            <div key={adim.etiket} className="flex items-center gap-x-3 md:gap-x-5">
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.6 }}
+                transition={{ duration: 0.6, delay: i * 0.12, ease: GECIS }}
+                className="text-center"
+              >
+                <p
+                  className={`font-semibold tracking-tighter ${
+                    i === c.katlamaSeridi.adimlar.length - 1
+                      ? "text-4xl text-altin md:text-6xl"
+                      : "text-2xl text-fildisi/70 md:text-4xl"
+                  }`}
+                >
+                  {adim.deger}
+                </p>
+                <p className="mt-2 max-w-[16ch] text-xs leading-snug text-duman md:text-sm">
+                  {adim.etiket}
+                </p>
+              </motion.div>
+              {i < c.katlamaSeridi.adimlar.length - 1 && (
+                <motion.span
+                  aria-hidden
+                  initial={{ opacity: 0 }}
+                  whileInView={{ opacity: 1 }}
+                  viewport={{ once: true, amount: 0.6 }}
+                  transition={{ duration: 0.5, delay: i * 0.12 + 0.1, ease: GECIS }}
+                  className="text-xl text-altin/40 md:text-2xl"
+                >
+                  →
+                </motion.span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 /* Film bölümü: sabit ekranda, scroll ilerledikçe beliren/kaybolan sahne. */
 function FilmBolumu({
   adim,
@@ -1083,15 +1464,22 @@ function ZirveIc() {
       <main>
         <Hero />
         <Manifesto />
+        <Teori />
+        <KatlamaSeridi />
         <Rakamlar />
         <Yolculuk />
+        <LiderTipleri />
+        <Gercekler />
         <Sozler />
         <Konusmalar />
         <Egitimler />
         <Ayna />
+        <OneTeamPerde />
         <Vaat />
         <Ilkeler />
+        <Sss />
         <Deyince />
+        <KapanisCumlesi />
         <Iletisim />
       </main>
       <Footer />

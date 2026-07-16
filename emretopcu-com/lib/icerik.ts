@@ -31,14 +31,57 @@ const TR = {
     baslikSatir1: "Ekleme değil,",
     baslikSatir2: "katlama.",
     altMetin:
-      "Tek tek üye eklemeyi değil, kendi ekibini kuran liderler yetiştirmeyi öğretiyorum. Kimse, ama kimse tek başına başarmadı.",
+      "Bu sektörde herkes eklemeyi bir şekilde keşfeder. Katlanacağını ise sadece umar — en büyük oyuncular dahil. Kimse, ama kimse tek başına başarmadı.",
     rol: "Presidential Diamond | One Team Global",
   },
   hakkimda: {
     unvan: "Presidential Diamond | One Team Global",
     paragraflar: [
-      "Doğrudan satışla tanışıklığım 2003'e, üniversite yıllarıma kadar uzanır; bir aloe vera markasının distribütörü olarak katalogla çalışmayı öğrendim. Bugünkü işime Şubat 2013'te başladım: yedi ayda Diamond, üç buçuk yılda Presidential Diamond oldum. Bu yolda en çok inandığım şey şu: kalıcı büyüme karizmayla değil, herkesin uygulayabildiği net bir sistemle olur.",
-      "Kocaeli Üniversitesi Uluslararası İlişkiler mezunuyum; yazarım, evli ve iki çocuk babasıyım. 27 yıldır iş hayatının içindeyim, 17 yıldır kendi işlerimi yapıyorum. 38 ülke gezdim; 4 kıtada 220.000 kişilik bir müşteri ağının kurulmasına vesile oldum. Amerika'dan İngiltere'ye birçok ülkede kişisel gelişim eğitimleri verdim; bugün İstanbul'da yaşıyor, iş insanlarına başarı koçluğu yapıyorum.",
+      "Doğrudan satışla tanışıklığım 2003'e, üniversite yıllarıma kadar uzanır; bir aloe vera markasının distribütörü olarak katalogla çalışmayı öğrendim. Bugünkü işime Şubat 2013'te başladım: sekiz ayda Diamond, üç buçuk yılda Presidential Diamond oldum. Bu yolda en çok inandığım şey şu: kalıcı büyüme karizmayla değil, herkesin uygulayabildiği net bir sistemle olur.",
+      "Kocaeli Üniversitesi Uluslararası İlişkiler mezunuyum; yazarım, evli ve iki çocuk babasıyım. 27 yıldır iş hayatının içindeyim, 17 yıldır kendi işlerimi yapıyorum. 38 ülke gezdim; 4 kıtada 250.000'e yakın kişilik bir müşteri ağının kurulmasına vesile oldum. Amerika'dan İngiltere'ye birçok ülkede kişisel gelişim eğitimleri verdim; bugün İstanbul'da yaşıyor, iş insanlarına başarı koçluğu yapıyorum.",
+    ],
+  },
+  teori: {
+    etiket: "Sektörün söylenmeyen gerçeği",
+    ana: "Bu iş ekleme işi değil, katlama işidir.",
+    alt: "Fakat eklemeyi öğrenmeden katlamayı başarma şansın olmaz. Bu sektörde çoğu insan işin sadece ekleme kısmını keşfeder; katlanacağını sadece umar. Buna sektörün en büyük oyuncuları da dahil.",
+    imza: "İlk 72 Saat, 2017",
+  },
+  liderTipleri: {
+    baslik: "Üç çeşit lider vardır.",
+    altMetin: "Hangisi olduğun, nereye varacağını belirler.",
+    tipler: [
+      {
+        baslik: "Şans eseri liderleşen",
+        aciklama:
+          "İşi bir şans oyunu zanneder. İşler ters gidince sektöre küser, uzaklaşır.",
+      },
+      {
+        baslik: "Aşırı çalışkanlıkla liderleşen",
+        aciklama:
+          "Farkında olmadan bazı doğruları yapar. Ama sorun çıkınca kendinde değil, firmada ya da üründe arar; itibarını harcar, yıllar içinde kendini yok eder.",
+      },
+      {
+        baslik: "Formülü bilen",
+        aciklama:
+          "Bir kere yapsa yüz kere de, bin kere de yapabilir. Sistem kurmayı ve nasıl işlediğini bilir. Sektörün vadettiği hayatı gerçekten bunlar yaşar.",
+      },
+    ],
+  },
+  oneteamPerde: {
+    etiket: "Yalnız gitmek",
+    ana: "Doğrudan satışı düşünüyorsan iki yolun var.",
+    alt: "Formülü yıllarını vererek kendin çözersin, ya da çözülmüş halinin içine doğarsın. Biz OneTeam'de sistemler kuruyoruz — başarı, kişinin kabiliyetine bağımlı olmasın diye.",
+  },
+  kapanisCumlesi:
+    "Bu benim hikâyem. Belki bugün senin hikâyenin başlangıcıdır.",
+  katlamaSeridi: {
+    etiket: "Ekleme değil, katlama — rakamla",
+    adimlar: [
+      { deger: "5", etiket: "İlk ay el sıkıştığım kişi" },
+      { deger: "19", etiket: "İlk ay sonu, ağ" },
+      { deger: "88", etiket: "İkinci ay, ağ" },
+      { deger: "250.000", etiket: "Bugün, ağ (2026)" },
     ],
   },
   yolculuk: [
@@ -46,13 +89,13 @@ const TR = {
       yil: "2003",
       baslik: "Doğrudan satışla ilk tanışma",
       aciklama:
-        "Üniversite yıllarında bir aloe vera markasının distribütörlüğünü yaptım. Katalog modelini sevmedim ama bu dünyanın büyük işler çıkarabileceğini o yıllarda gördüm.",
+        "Üniversite birinci sınıftayken babam iflas etti; bu beni sorumluluk almaya zorladı. Kapı kapı su arıtma cihazı sattım, sonra bir aloe vera markasının distribütörlüğünü yaptım. Katalog modelini sevmedim ama bu dünyanın büyük işler çıkarabileceğini o yıllarda gördüm.",
     },
     {
       yil: "2013",
-      baslik: "Yedi ayda Diamond",
+      baslik: "Sekiz ayda Diamond",
       aciklama:
-        "Şubat'ta başladım, Eylül'de Diamond oldum; aynı yılın sonunda 1 Star Diamond. Hız, doğru sistemin ilk kanıtıydı.",
+        "Şubat'ta başladım, 8. ayda Diamond oldum; aynı yılın sonunda 1 Star Diamond. İlk ay 5 kişiyle el sıkıştım, ay sonunda 19 kişilik bir ağ oldu; ikinci ayda 88'e katlandı. Hız, doğru sistemin ilk kanıtıydı.",
     },
     {
       yil: "2016",
@@ -80,11 +123,80 @@ const TR = {
     },
   ],
   rakamlar: [
-    { deger: "7", ek: " ay", etiket: "Diamond'a giden süre" },
-    { deger: "220.000", ek: "", etiket: "Kişilik müşteri ağı" },
+    { deger: "8", ek: " ay", etiket: "Diamond'a giden süre" },
+    { deger: "250.000", ek: "", etiket: "Kişilik ağ (2026 itibarıyla)" },
     { deger: "4", ek: " kıta", etiket: "Ulaşılan coğrafya" },
     { deger: "38", ek: " ülke", etiket: "Gezilen, eğitim verilen" },
   ],
+  gercekler: {
+    etiket: "Kimsenin söylemediği gerçekler",
+    baslik: "Doğrudan satışı düşünüyorsan önce bunları bil.",
+    altMetin:
+      "Bunlar iddia değil; yıllardır sahnede anlattığım, kendi ekibime öğrettiğim gerçekler.",
+    kartlar: [
+      {
+        baslik: "80 / 15 / 5",
+        aciklama:
+          "Zamanının %80'i görüşmeye, sunuma, takibe gider — sonucun sadece %5'i oradan gelir. Zamanının %5'i toplantıya, kampa gider — sonucun %80'i oradan gelir. Çoğu kişi bunu bilmediği için yanlış yerde çok çalışır.",
+      },
+      {
+        baslik: "Motivasyonun raf ömrü 72 saattir",
+        aciklama:
+          "İlk gün heyecan doruktadır, üçüncü gün unutmuşsundur. Bu normaldir. Motivasyonu değil, iradeyi ve alışkanlığı yönetmen gerekir.",
+      },
+      {
+        baslik: "İnsanlar işe hayır demez",
+        aciklama:
+          "İnsanlar sana, ürüne ya da firmaya hayır demez. Sana evet dediklerinde yapacakları şeye hayır derler. O şeyi nasıl yaptığın, işin prestijini belirler.",
+      },
+      {
+        baslik: "Neyin işe yaradığı değil, neyin kopyalanabildiği önemlidir",
+        aciklama:
+          "Karizman, yeteneğin, network'ün işe yarayabilir — ama kopyalanamıyorsa ekibine öğretemezsin. Katlama, kopyalanabilirlikle başlar.",
+      },
+      {
+        baslik: "Asıl itibarsız olan iş değil, yapılış şeklidir",
+        aciklama:
+          "Elinde katalogla avcı gibi peşinden koşmak eskidendi. Bu iş artık tavsiye ticareti; sen kimseyi rahatsız etmek zorunda değilsin.",
+      },
+      {
+        baslik: "Eforun azaldıkça gelirin artması gerekir",
+        aciklama:
+          "Bir işte gelirin arttıkça eforun da artıyorsa, yanlış bir model kurmuşsundur. Doğru sistemde tam tersi olur.",
+      },
+    ],
+  },
+  sss: {
+    baslik: "Sorular ve cevaplar",
+    altMetin: "Bunları herkes sorar. İşte kendi cevaplarım.",
+    sorular: [
+      {
+        soru: "Param yok, nasıl başlayayım?",
+        cevap:
+          "Seni anlıyorum, benim de başladığımda ciddi mali sıkıntılarım vardı. Ama şunu fark ettim: sorun hiçbir zaman gerçekten para değil. Öncelik sıralamanda yeterince üst sıradaysa, parayı bir şekilde bulursun.",
+      },
+      {
+        soru: "Çevrem yok, kiminle çalışacağım?",
+        cevap:
+          "Bu iş çevre işi değil. Kendi çevrende başlar, el sıkıştığın kişilerin çevresiyle katlanarak büyür. Ben ilk ay sadece 5 kişiyle el sıkıştım; bir yıl içinde bu ağ katlanarak büyüdü.",
+      },
+      {
+        soru: "Zamanım yok.",
+        cevap:
+          "Önce şunu sor kendine: bu işten minimum ne kadar kazansan gerçekten heyecanlanırdın? Sonra: buna ne kadar sürede ulaşmak isterdin? Cevap genelde zamanın olmadığı değil, önceliğin netleşmediğidir.",
+      },
+      {
+        soru: "Doğrudan satış mı, saadet zinciri mi? Nasıl ayırt ederim?",
+        cevap:
+          "Üç soru sor: Ortada gerçek, kullanılan bir ürün var mı? Kazanç, o ürünün gerçek tüketiminden mi geliyor? Yoksa yalnızca yeni kayıttan mı? Cevaplar netse korkacak bir şey yok; net değilse uzak dur.",
+      },
+      {
+        soru: "Bir işi nasıl değerlendirmeliyim?",
+        cevap:
+          "Ben her işe girerken beş şeye bakarım: Talep var mı? Kaliteli bir ürün var mı? Ortağıma güvenebilir miyim? Riskim ve yatırımım ne? Ve en önemlisi — bensiz de yürüyecek bir sistem var mı?",
+      },
+    ],
+  },
   sozler: [
     "Kayıt olduğun gün değil, karar verdiğin gün başlarsın.",
     "Kimse, ama kimse tek başına başarmadı.",
@@ -94,6 +206,9 @@ const TR = {
     "Seni durduran, yine sensin.",
     "Daha çok değil, daha akıllı çalış.",
     "Her gün %1, bir yılda %365.",
+    "Ticaretin en büyük sırrı: eforun azaldıkça gelirin artmasıdır.",
+    "İnsanlar sana değil, evet dedikleri zaman yapacakları şeye hayır der.",
+    "Neyin işe yaradığı değil, neyin kopyalanabildiği önemlidir.",
   ],
   konusmalar: [
     {
@@ -269,14 +384,57 @@ const EN: Icerik = {
     baslikSatir1: "Not adding.",
     baslikSatir2: "Multiplying.",
     altMetin:
-      "I don't teach adding members one by one; I raise leaders who build their own teams. No one, but no one, ever made it alone.",
+      "In this industry everyone discovers how to add sooner or later. Whether it multiplies, they only hope — even the biggest players. No one, but no one, ever made it alone.",
     rol: "Presidential Diamond | One Team Global",
   },
   hakkimda: {
     unvan: "Presidential Diamond | One Team Global",
     paragraflar: [
-      "My history with direct sales goes back to 2003, my university years, when I distributed an aloe vera brand through a catalog model. I started my current business in February 2013: Diamond in seven months, Presidential Diamond in three and a half years. What I believe most on this path: lasting growth comes not from charisma, but from a clear system anyone can apply.",
-      "I'm a graduate of International Relations at Kocaeli University; a writer, married, father of two. I've been in business for 27 years, running my own ventures for 17. I've traveled to 38 countries and helped build a customer network of 220,000 people across 4 continents. I've given personal-development trainings in many countries from the US to the UK; today I live in Istanbul and coach business people toward success.",
+      "My history with direct sales goes back to 2003, my university years, when I distributed an aloe vera brand through a catalog model. I started my current business in February 2013: Diamond in eight months, Presidential Diamond in three and a half years. What I believe most on this path: lasting growth comes not from charisma, but from a clear system anyone can apply.",
+      "I'm a graduate of International Relations at Kocaeli University; a writer, married, father of two. I've been in business for 27 years, running my own ventures for 17. I've traveled to 38 countries and helped build a customer network of nearly 250,000 people across 4 continents. I've given personal-development trainings in many countries from the US to the UK; today I live in Istanbul and coach business people toward success.",
+    ],
+  },
+  teori: {
+    etiket: "The industry's unspoken truth",
+    ana: "This isn't an adding business. It's a multiplying one.",
+    alt: "But you can't master multiplying until you've learned adding. Most people in this industry only ever discover the adding part; they just hope it multiplies. That includes the industry's biggest players.",
+    imza: "İlk 72 Saat (First 72 Hours), 2017",
+  },
+  liderTipleri: {
+    baslik: "There are three kinds of leaders.",
+    altMetin: "Which one you are decides where you end up.",
+    tipler: [
+      {
+        baslik: "The lucky one",
+        aciklama:
+          "Treats the business as a game of chance. When things go wrong, they get bitter and walk away.",
+      },
+      {
+        baslik: "The overworked one",
+        aciklama:
+          "Does some things right without knowing why. When something breaks, they blame the company or the product, burn their reputation, and wear themselves out over the years.",
+      },
+      {
+        baslik: "The one who knows the formula",
+        aciklama:
+          "If they can do it once, they can do it a hundred times, a thousand times. They know how to build a system and how it works. They're the ones who actually live what the industry promises.",
+      },
+    ],
+  },
+  oneteamPerde: {
+    etiket: "Going it alone",
+    ana: "If you're considering direct sales, you have two paths.",
+    alt: "Spend years solving the formula yourself, or be born into one that's already solved. At OneTeam we build systems — so success doesn't depend on any one person's talent.",
+  },
+  kapanisCumlesi:
+    "This is my story. Maybe today it's the beginning of yours.",
+  katlamaSeridi: {
+    etiket: "Not adding, multiplying — in numbers",
+    adimlar: [
+      { deger: "5", etiket: "People I shook hands with, month 1" },
+      { deger: "19", etiket: "Network by end of month 1" },
+      { deger: "88", etiket: "Network by month 2" },
+      { deger: "250,000", etiket: "Network today (2026)" },
     ],
   },
   yolculuk: [
@@ -284,13 +442,13 @@ const EN: Icerik = {
       yil: "2003",
       baslik: "First encounter with direct sales",
       aciklama:
-        "During university I distributed an aloe vera brand through a catalog model. I didn't love that model, but I saw then what this world could build.",
+        "In my first year of university my father went bankrupt; it forced me to take on responsibility. I sold water-purifier units door to door, then distributed an aloe vera brand. I didn't love the catalog model, but I saw then what this world could build.",
     },
     {
       yil: "2013",
-      baslik: "Diamond in seven months",
+      baslik: "Diamond in eight months",
       aciklama:
-        "I started in February and became Diamond by September; 1 Star Diamond by year's end. Speed was the first proof of the right system.",
+        "I started in February and became Diamond by month 8; 1 Star Diamond by year's end. In month one I shook hands with 5 people and closed the month with a network of 19; by month two it had multiplied to 88. Speed was the first proof of the right system.",
     },
     {
       yil: "2016",
@@ -318,11 +476,80 @@ const EN: Icerik = {
     },
   ],
   rakamlar: [
-    { deger: "7", ek: " mo", etiket: "Months to Diamond" },
-    { deger: "220,000", ek: "", etiket: "People in the network" },
+    { deger: "8", ek: " mo", etiket: "Months to Diamond" },
+    { deger: "250,000", ek: "", etiket: "People in the network (as of 2026)" },
     { deger: "4", ek: "", etiket: "Continents reached" },
     { deger: "38", ek: "", etiket: "Countries visited & taught" },
   ],
+  gercekler: {
+    etiket: "What no one tells you",
+    baslik: "If you're considering direct sales, know this first.",
+    altMetin:
+      "These aren't claims — they're what I've taught on stage for years, what I teach my own team.",
+    kartlar: [
+      {
+        baslik: "80 / 15 / 5",
+        aciklama:
+          "80% of your time goes to meetings, presentations, follow-ups — you get only 5% of your results from there. 5% of your time goes to meetings and camps — you get 80% of your results from there. Most people work hard in the wrong place because they don't know this.",
+      },
+      {
+        baslik: "Motivation has a 72-hour shelf life",
+        aciklama:
+          "Day one, excitement peaks. Day three, you've forgotten it. That's normal. You don't manage motivation — you manage willpower and habit.",
+      },
+      {
+        baslik: "People don't say no to the business",
+        aciklama:
+          "People don't say no to you, the product, or the company. They say no to what saying yes would require of them. How you ask determines the business's prestige.",
+      },
+      {
+        baslik: "What matters isn't what works — it's what can be copied",
+        aciklama:
+          "Your charisma, talent, network — they might work for you. But if your team can't copy it, you can't teach it. Multiplying starts with copyability.",
+      },
+      {
+        baslik: "It's not the business that lacks prestige — it's how it's done",
+        aciklama:
+          "Chasing people around with a catalog was the old way. This is referral commerce now; you're never obligated to bother anyone.",
+      },
+      {
+        baslik: "Income should rise as effort falls",
+        aciklama:
+          "If your income only grows when your effort grows too, you've built the wrong model. In the right system, it's the opposite.",
+      },
+    ],
+  },
+  sss: {
+    baslik: "Questions and answers",
+    altMetin: "Everyone asks these. Here are my own answers.",
+    sorular: [
+      {
+        soru: "I have no money — how do I start?",
+        cevap:
+          "I understand — I had serious financial pressure when I started too. But here's what I learned: money is never really the problem. If it's high enough on your priority list, you find a way.",
+      },
+      {
+        soru: "I don't have a network — who will I work with?",
+        cevap:
+          "This isn't a networking game. It starts with the people you already know and multiplies through the people they know. I shook hands with just 5 people in my first month; within a year that network had multiplied many times over.",
+      },
+      {
+        soru: "I don't have time.",
+        cevap:
+          "First ask yourself: what's the minimum you'd need to earn from this to be genuinely excited? Then: how soon would you want that? Usually it's not time that's missing — it's a clear priority.",
+      },
+      {
+        soru: "Direct sales or pyramid scheme — how do I tell the difference?",
+        cevap:
+          "Ask three questions: Is there a real product people actually use? Does the income come from real consumption of that product — or only from new sign-ups? If the answers are clear, there's nothing to fear. If they're not, stay away.",
+      },
+      {
+        soru: "How should I evaluate any business?",
+        cevap:
+          "I look at five things before entering any business: Is there real demand? Is there a quality product? Can I trust my partner? What's my risk and investment? And most importantly — is there a system that runs even without me?",
+      },
+    ],
+  },
   sozler: [
     "You don't start the day you sign up; you start the day you decide.",
     "No one, but no one, ever made it alone.",
@@ -332,6 +559,9 @@ const EN: Icerik = {
     "The one stopping you is you.",
     "Don't work more; work smarter.",
     "1% every day is 365% in a year.",
+    "The real secret of business: income rises as effort falls.",
+    "People don't say no to you — they say no to what saying yes would mean.",
+    "What matters isn't what works. It's what can be copied.",
   ],
   konusmalar: [
     {
