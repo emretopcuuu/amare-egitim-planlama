@@ -2,7 +2,6 @@
 // Dile bağlı olmayan sabitler üstte; dile bağlı içerik ICERIK altında.
 
 export const EPOSTA = "s.emretopcu@gmail.com";
-export const AYNA_URL = "https://ayna.oneteamglobal.ai";
 export const INSTAGRAM_URL = "https://instagram.com/emretopcu_official";
 // Ön görüşme randevusu hattı (Mehmet Akif Topçu). Uluslararası, + ve boşluk yok.
 export const WHATSAPP_NUMARA = "905425090744";
@@ -354,7 +353,6 @@ const TR = {
     ilkelerBaslik: "Üç ilke",
     izle: "İzle",
     instagram: "Instagram",
-    aynaLink: "Liderlik Aynası",
   },
 };
 
@@ -695,7 +693,6 @@ const EN: Icerik = {
     ilkelerBaslik: "Three principles",
     izle: "Watch",
     instagram: "Instagram",
-    aynaLink: "Leadership Mirror",
   },
 };
 

@@ -19,7 +19,6 @@ import {
   WhatsappLogo,
 } from "@phosphor-icons/react";
 import {
-  AYNA_URL,
   INSTAGRAM_URL,
   LIDER_PROFIL_URL,
   TRIBUTE_VIDEO_ID,
@@ -1338,19 +1337,10 @@ function Iletisim() {
 }
 
 function Footer() {
-  const c = useC();
   return (
     <footer className="border-t border-black/5 bg-abanoz py-10">
-      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-duman md:flex-row">
+      <div className="mx-auto flex max-w-6xl items-center justify-center px-6 text-sm text-duman">
         <p>© 2026 Emre Topçu</p>
-        <a
-          href={AYNA_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="transition-colors hover:text-fildisi"
-        >
-          {c.ui.aynaLink}
-        </a>
       </div>
     </footer>
   );
