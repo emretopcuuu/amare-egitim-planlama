@@ -2707,6 +2707,35 @@ export const tr = {
         odevYok: "Bekleyen görevi olan kimse yok.",
         hedefYok: "Hedef kitle seçilmedi.",
       },
+      grupLink: {
+        baslik: "🔗 Gruplara Özel Link Gönder",
+        aciklama:
+          "Her grubun kendi linkini (ör. WhatsApp grup daveti) yalnızca o gruptaki kişilere gönder. Aşağıya \"Grup 1\", \"Grup 2\" … ve altlarına linklerini yapıştır — sırayı biz çözeriz.",
+        yapistirEtiket: "Grup + link listesi",
+        yapistirYer:
+          "Grup 1\nhttps://chat.whatsapp.com/...\n\nGrup 2\nhttps://chat.whatsapp.com/...",
+        onSozEtiket: "Linkten önceki mesaj (opsiyonel)",
+        onSozYer: "ör. Kendi grubunun WhatsApp'ına katıl 👇",
+        onizlemeBaslik: "Ayrıştırılan gruplar",
+        eslesmedi: (n: number) => `${n} satır bir gruba eşleşmedi, yoksayıldı.`,
+        bulunamadi: "Hiç geçerli \"Grup N + link\" eşleşmesi bulunamadı.",
+        kisiSayisi: (n: number) => (n === 1 ? "1 kişi" : `${n} kişi`),
+        telefonsuz: (n: number) => ` (${n} telefonsuz)`,
+        gonder: "Gönder",
+        gonderEt: "Evet, hepsine gönder",
+        gonderiliyor: "Gönderiliyor…",
+        vazgec: "Vazgeç",
+        onaySoru: (grupSayisi: number, kisiSayisi: number) =>
+          `${grupSayisi} gruba, toplam ${kisiSayisi} kişiye kendi linkleri WhatsApp'tan gönderilsin mi?`,
+        sonucBaslik: "Sonuç",
+        sonucSatiri: (takim: string, basarili: number, basarisiz: number, telefonsuz: number) =>
+          `${takim}: ${basarili} gönderildi` +
+          (basarisiz > 0 ? `, ${basarisiz} başarısız` : "") +
+          (telefonsuz > 0 ? `, ${telefonsuz} telefonsuz` : ""),
+        hata: "Gönderilemedi.",
+        gruplarBos: "Ayrıştırılmış grup yok.",
+        sablonKayitsiz: "Duyuru şablonu henüz Twilio'ya kaydedilmedi/onaylanmadı.",
+      },
     },
     // #7 Tek bakış canlı özet (büyük rakamlar)
     ozet: {
