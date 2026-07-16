@@ -295,6 +295,12 @@ const TR = {
     tumKonusmalar: "Tüm konuşmalar",
     izle: "İzle",
     instagram: "Instagram",
+    whatsappNot: "Mesajın ön görüşme hattına düşer; aynı gün dönüş alırsın.",
+    videoSure: "2 dk",
+    basaDon: "Başa dön",
+    menuAc: "Menü",
+    menuKapat: "Kapat",
+    kaydir: "Kaydır",
   },
 };
 
@@ -577,6 +583,12 @@ const EN: Icerik = {
     tumKonusmalar: "All talks",
     izle: "Watch",
     instagram: "Instagram",
+    whatsappNot: "Your message reaches the intro line; you'll hear back the same day.",
+    videoSure: "2 min",
+    basaDon: "Back to top",
+    menuAc: "Menu",
+    menuKapat: "Close",
+    kaydir: "Scroll",
   },
 };
 

@@ -1,11 +1,13 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import {
+  AnimatePresence,
   motion,
   useMotionValue,
+  useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useSpring,
@@ -13,10 +15,14 @@ import {
   type MotionValue,
 } from "motion/react";
 import {
+  ArrowUp,
   ArrowUpRight,
+  CaretDown,
   InstagramLogo,
+  List,
   PlayCircle,
   WhatsappLogo,
+  X,
 } from "@phosphor-icons/react";
 import {
   INSTAGRAM_URL,
@@ -27,6 +33,36 @@ import {
   type Icerik,
 } from "@/lib/icerik";
 import { DilProvider, useC, useDil } from "./dil";
+
+// Sayfadaki tüm bölüm bağlantı hedefleri (scroll-spy için, sırayla).
+const BOLUM_IDLERI = [
+  "manifesto",
+  "yolculuk",
+  "konusmalar",
+  "iletisim",
+] as const;
+
+/* Sayfada hangi bölümde olduğumuzu döndürür (nav scroll-spy). */
+function useAktifBolum() {
+  const [aktif, setAktif] = useState<string | null>(null);
+  useEffect(() => {
+    const gozlemci = new IntersectionObserver(
+      (girisler) => {
+        const gorunur = girisler
+          .filter((g) => g.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+        if (gorunur[0]) setAktif(gorunur[0].target.id);
+      },
+      { rootMargin: "-45% 0px -45% 0px", threshold: [0, 0.25, 0.5, 1] },
+    );
+    for (const id of BOLUM_IDLERI) {
+      const el = document.getElementById(id);
+      if (el) gozlemci.observe(el);
+    }
+    return () => gozlemci.disconnect();
+  }, []);
+  return aktif;
+}
 
 // Varyant D "Zirve": scroll koreografili ödül-sitesi seviyesi tasarım.
 // Abanoz zemin + tek altın vurgu. Yapışkan kart destesi, yatay kaydırma,
@@ -140,37 +176,122 @@ function TiltKart({
 
 function Nav() {
   const c = useC();
+  const aktif = useAktifBolum();
+  const [menuAcik, setMenuAcik] = useState(false);
+
+  // Menü açıkken arka planın kaymasını engelle.
+  useEffect(() => {
+    document.body.style.overflow = menuAcik ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuAcik]);
+
   return (
-    <header className="fixed inset-x-0 top-0 z-50 border-b border-black/5 bg-abanoz/70 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
-        <a href="#" className="text-base font-semibold tracking-tight">
-          Emre Topçu
-        </a>
-        <nav className="hidden items-center gap-8 md:flex">
-          {c.nav.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              className="text-sm text-duman transition-colors hover:text-fildisi"
-            >
-              {link.etiket}
-            </a>
-          ))}
-        </nav>
-        <div className="flex items-center gap-4">
-          <DilSecici />
-          <a
-            href={WHATSAPP_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-altin/40 px-4 py-1.5 text-sm text-altin transition-colors hover:bg-altin hover:text-fildisi active:scale-[0.98]"
-          >
-            <WhatsappLogo size={15} weight="fill" />
-            {c.ui.calis}
+    <>
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-black/5 bg-abanoz/70 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+          <a href="#" className="text-base font-semibold tracking-tight">
+            Emre Topçu
           </a>
+          <nav className="hidden items-center gap-8 md:flex">
+            {c.nav.map((link) => {
+              const secili = aktif === link.href.replace("#", "");
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  aria-current={secili ? "true" : undefined}
+                  className={`text-sm transition-colors ${
+                    secili
+                      ? "font-medium text-altin"
+                      : "text-duman hover:text-fildisi"
+                  }`}
+                >
+                  {link.etiket}
+                </a>
+              );
+            })}
+          </nav>
+          <div className="flex items-center gap-3 md:gap-4">
+            <DilSecici />
+            <a
+              href={WHATSAPP_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hidden items-center gap-1.5 rounded-full border border-altin/40 px-4 py-1.5 text-sm text-altin transition-colors hover:bg-altin hover:text-fildisi active:scale-[0.98] sm:inline-flex"
+            >
+              <WhatsappLogo size={15} weight="fill" />
+              {c.ui.calis}
+            </a>
+            {/* Mobil menü düğmesi */}
+            <button
+              type="button"
+              onClick={() => setMenuAcik(true)}
+              aria-label={c.ui.menuAc}
+              className="-mr-1 inline-flex h-10 w-10 items-center justify-center rounded-full text-fildisi transition-colors hover:bg-black/5 md:hidden"
+            >
+              <List size={22} weight="bold" />
+            </button>
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Tam ekran mobil menü — header'ın DIŞINDA (header'ın backdrop-filter'ı
+          fixed çocuk için containing block oluşturduğundan burada tutulur). */}
+      <AnimatePresence>
+        {menuAcik && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25, ease: GECIS }}
+            className="fixed inset-0 z-[70] flex flex-col bg-abanoz md:hidden"
+          >
+            <div className="flex h-16 items-center justify-between px-6">
+              <span className="text-base font-semibold tracking-tight">
+                Emre Topçu
+              </span>
+              <button
+                type="button"
+                onClick={() => setMenuAcik(false)}
+                aria-label={c.ui.menuKapat}
+                className="-mr-1 inline-flex h-10 w-10 items-center justify-center rounded-full text-fildisi transition-colors hover:bg-black/5"
+              >
+                <X size={22} weight="bold" />
+              </button>
+            </div>
+            <nav className="flex flex-1 flex-col justify-center gap-2 px-6">
+              {c.nav.map((link, i) => (
+                <motion.a
+                  key={link.href}
+                  href={link.href}
+                  onClick={() => setMenuAcik(false)}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.08 + i * 0.06, ease: GECIS }}
+                  className="border-b border-black/10 py-5 text-3xl font-semibold tracking-tight text-fildisi"
+                >
+                  {link.etiket}
+                </motion.a>
+              ))}
+            </nav>
+            <div className="px-6 pb-10">
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setMenuAcik(false)}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-altin px-7 py-4 font-medium text-fildisi active:scale-[0.98]"
+              >
+                <WhatsappLogo size={18} weight="fill" />
+                {c.ui.calis}
+              </a>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
 
@@ -249,7 +370,7 @@ function Hero() {
             initial={azalt ? false : { opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.68, ease: GECIS }}
-            className="flex flex-wrap items-center gap-4"
+            className="flex flex-col items-start gap-2"
           >
             <Manyetik>
               <a
@@ -262,8 +383,28 @@ function Hero() {
                 {c.ui.calis}
               </a>
             </Manyetik>
+            <p className="max-w-[30ch] text-sm leading-snug text-duman">
+              {c.ui.whatsappNot}
+            </p>
           </motion.div>
         </div>
+      </motion.div>
+
+      {/* Kaydırma ipucu — ilk scroll'da yumuşakça kaybolur */}
+      <motion.div
+        aria-hidden
+        style={azalt ? undefined : { opacity: sonuklesme }}
+        className="pointer-events-none absolute bottom-6 left-1/2 flex -translate-x-1/2 flex-col items-center gap-1 text-duman"
+      >
+        <span className="text-[11px] font-medium tracking-[0.2em] uppercase">
+          {c.ui.kaydir}
+        </span>
+        <motion.span
+          animate={azalt ? undefined : { y: [0, 6, 0] }}
+          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <CaretDown size={18} weight="bold" />
+        </motion.span>
       </motion.div>
     </section>
   );
@@ -496,7 +637,7 @@ function GercekKarti({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, amount: 0.3 }}
         transition={{ duration: 0.6, delay: (i % 3) * 0.08, ease: GECIS }}
-        className="flex h-full min-h-[220px] flex-col justify-between rounded-2xl border border-black/10 bg-abanoz-2 p-7 transition-colors hover:border-altin/40"
+        className="flex h-full min-h-[220px] flex-col justify-between rounded-2xl border border-black/10 bg-abanoz-2 p-7 transition-[transform,border-color] hover:border-altin/40 active:scale-[0.99]"
       >
         <h3 className="text-xl font-semibold tracking-tight text-fildisi md:text-2xl">
           {k.baslik}
@@ -708,6 +849,11 @@ function Yolculuk() {
     target: ref,
     offset: ["start start", "end end"],
   });
+  const toplam = c.yolculuk.length;
+  const [aktifAdim, setAktifAdim] = useState(0);
+  useMotionValueEvent(scrollYProgress, "change", (p) => {
+    setAktifAdim(Math.min(toplam - 1, Math.floor(p * toplam)));
+  });
 
   if (azalt) {
     return (
@@ -740,10 +886,22 @@ function Yolculuk() {
             key={adim.baslik}
             adim={adim}
             indeks={i}
-            toplam={c.yolculuk.length}
+            toplam={toplam}
             ilerleme={scrollYProgress}
           />
         ))}
+        {/* İlerleme noktaları — kaçıncı sahnedeyiz */}
+        <div className="absolute top-1/2 right-6 flex -translate-y-1/2 flex-col items-center gap-3 md:right-10">
+          {c.yolculuk.map((adim, i) => (
+            <span
+              key={adim.baslik}
+              aria-hidden
+              className={`w-2 rounded-full transition-all duration-500 ${
+                i === aktifAdim ? "h-6 bg-altin" : "h-2 bg-fildisi/20"
+              }`}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );
@@ -969,6 +1127,7 @@ function VideoKapak({ id }: { id: string }) {
           <span className="absolute top-1/2 left-1/2 flex -translate-x-1/2 -translate-y-1/2 items-center gap-3 rounded-full bg-altin/90 px-6 py-3 font-medium text-fildisi backdrop-blur transition-transform group-hover:scale-105">
             <PlayCircle size={24} weight="fill" />
             {c.ui.izle}
+            <span className="text-fildisi/70">· {c.ui.videoSure}</span>
           </span>
         </button>
       )}
@@ -1019,7 +1178,7 @@ function Arsiv() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.6, delay: (i % 3) * 0.06, ease: GECIS }}
-              className={`group flex min-h-[200px] flex-col justify-between rounded-2xl border border-black/10 p-7 transition-colors hover:border-altin/40 ${
+              className={`group flex min-h-[200px] flex-col justify-between rounded-2xl border border-black/10 p-7 transition-[transform,border-color] hover:border-altin/40 active:scale-[0.99] ${
                 i === 0
                   ? "bg-gradient-to-br from-altin/15 to-abanoz-2 md:col-span-2 lg:col-span-1"
                   : "bg-abanoz-2"
@@ -1168,6 +1327,15 @@ function Iletisim() {
             </a>
           </Manyetik>
         </motion.div>
+        <motion.p
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true, amount: 0.5 }}
+          transition={{ duration: 0.7, delay: 0.35, ease: GECIS }}
+          className="mx-auto mt-6 max-w-[38ch] text-sm leading-snug text-duman"
+        >
+          {c.ui.whatsappNot}
+        </motion.p>
       </div>
     </section>
   );
@@ -1180,6 +1348,109 @@ function Footer() {
         <p>© 2026 Emre Topçu</p>
       </div>
     </footer>
+  );
+}
+
+/* Başa dön — ikinci ekrandan sonra sağ altta belirir. */
+function BasaDon() {
+  const c = useC();
+  const { scrollY } = useScroll();
+  const [gorunur, setGorunur] = useState(false);
+  useMotionValueEvent(scrollY, "change", (v) => {
+    setGorunur(v > (typeof window !== "undefined" ? window.innerHeight * 1.5 : 1200));
+  });
+  return (
+    <AnimatePresence>
+      {gorunur && (
+        <motion.button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+          aria-label={c.ui.basaDon}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.8 }}
+          transition={{ duration: 0.25, ease: GECIS }}
+          className="fixed right-5 bottom-5 z-40 inline-flex h-12 w-12 items-center justify-center rounded-full border border-altin/40 bg-abanoz/80 text-altin shadow-lg backdrop-blur transition-colors hover:bg-altin hover:text-fildisi md:right-8 md:bottom-8"
+        >
+          <ArrowUp size={20} weight="bold" />
+        </motion.button>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* Dil tercihini hatırlar; farklı dile alışkın ziyaretçiye ince bir şerit. */
+const DIL_ANAHTAR = "emretopcu_dil";
+function DilSeridi() {
+  const dil = useDil();
+  const [teklif, setTeklif] = useState(false);
+  useEffect(() => {
+    let kayitli: string | null = null;
+    try {
+      kayitli = localStorage.getItem(DIL_ANAHTAR);
+    } catch {
+      return;
+    }
+    if (kayitli && kayitli !== dil) {
+      setTeklif(true); // önceki tercihi henüz ezme; kullanıcı karar versin
+    } else {
+      try {
+        localStorage.setItem(DIL_ANAHTAR, dil);
+      } catch {
+        /* yoksay */
+      }
+    }
+  }, [dil]);
+
+  const kapat = () => {
+    try {
+      localStorage.setItem(DIL_ANAHTAR, dil);
+    } catch {
+      /* yoksay */
+    }
+    setTeklif(false);
+  };
+
+  // Hedef dil = mevcut olmayan; metin hedef dile göre.
+  const hedef = dil === "tr" ? "en" : "tr";
+  const link = hedef === "en" ? "/en" : "/";
+  const metin =
+    hedef === "en" ? "Continue in English?" : "Türkçe devam edilsin mi?";
+  const devam = hedef === "en" ? "Continue" : "Devam et";
+
+  return (
+    <AnimatePresence>
+      {teklif && (
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          transition={{ duration: 0.3, ease: GECIS }}
+          className="fixed inset-x-0 top-16 z-40 flex justify-center px-4"
+        >
+          <div className="flex items-center gap-4 rounded-full border border-altin/30 bg-abanoz-2/95 px-5 py-2.5 text-sm shadow-lg backdrop-blur">
+            <span className="text-fildisi" lang={hedef}>
+              {metin}
+            </span>
+            <a
+              href={link}
+              className="font-medium text-altin underline-offset-2 hover:underline"
+              lang={hedef}
+            >
+              {devam}
+            </a>
+            <button
+              type="button"
+              onClick={kapat}
+              aria-label={dil === "tr" ? "Kapat" : "Dismiss"}
+              className="inline-flex h-6 w-6 items-center justify-center rounded-full text-duman hover:bg-black/5 hover:text-fildisi"
+            >
+              <X size={14} weight="bold" />
+            </button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }
 
@@ -1204,6 +1475,7 @@ function ZirveIc() {
         className="fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-altin"
       />
       <Nav />
+      <DilSeridi />
       <main>
         <Hero />
         <Manifesto />
@@ -1221,6 +1493,7 @@ function ZirveIc() {
         <Iletisim />
       </main>
       <Footer />
+      <BasaDon />
     </div>
   );
 }
