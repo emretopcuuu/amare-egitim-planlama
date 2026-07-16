@@ -3214,6 +3214,8 @@ export const tr = {
       baslikYer: "ör. Şimdi sahneye!",
       govdeEtiket: "Mesaj",
       govdeYer: "ör. 5 dakika içinde ana çadırda buluşuyoruz.",
+      linkEtiket: "Link (opsiyonel)",
+      linkYer: "ör. https://chat.whatsapp.com/... — boş bırakılırsa ana sayfaya gider",
       hedefEtiket: "Kime",
       herkes: "Herkes",
       onayMetin: (hedef: string) => `Bu bildirim ${hedef} kişilerine anında gidecek — onaylıyorum.`,

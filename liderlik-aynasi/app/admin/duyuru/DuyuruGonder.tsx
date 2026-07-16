@@ -16,6 +16,7 @@ export default function DuyuruGonder({
 }) {
   const [baslik, setBaslik] = useState("");
   const [govde, setGovde] = useState("");
+  const [url, setUrl] = useState("");
   const [hedef, setHedef] = useState("herkes");
   const [onay, setOnay] = useState(false);
   const [gonderiliyor, setGonderiliyor] = useState(false);
@@ -40,7 +41,7 @@ export default function DuyuruGonder({
       const res = await fetch("/api/admin/duyuru", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ baslik: baslik.trim(), govde: govde.trim(), hedef }),
+        body: JSON.stringify({ baslik: baslik.trim(), govde: govde.trim(), url: url.trim(), hedef }),
       });
       const v = await res.json().catch(() => null);
       if (!res.ok) {
@@ -50,6 +51,7 @@ export default function DuyuruGonder({
       setSonuc({ ok: true, metin: t.gonderildi(hedefAd(), v?.sayi ?? null) });
       setBaslik("");
       setGovde("");
+      setUrl("");
       setOnay(false);
     } catch {
       setSonuc({ ok: false, metin: t.hata });
@@ -80,6 +82,16 @@ export default function DuyuruGonder({
             maxLength={300}
             placeholder={t.govdeYer}
             className="mt-1 w-full resize-none rounded-lg border border-white/15 bg-midnight p-3 text-sm text-slate-100 outline-none focus:border-gold"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-slate-400">{t.linkEtiket}</label>
+          <input
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            maxLength={300}
+            placeholder={t.linkYer}
+            className="mt-1 h-11 w-full rounded-lg border border-white/15 bg-midnight px-3 text-sm text-slate-100 outline-none focus:border-gold"
           />
         </div>
         <div>
