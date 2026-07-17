@@ -205,9 +205,23 @@ function lider(m: Map<string, number>, yon: Yon): { pid: string; deger: number }
   return best;
 }
 
+// Rekor duyurusu kategori başına en erken bu aralıkla tekrar edebilir.
+// Saha geri bildirimi (Gün 1 akşamı): aktif kampta lider her tikte kendi
+// rekorunu büyütüyor ve HER kırılma 154 kişiye push atıyordu — 1 saatte
+// aynı kategoriden 6 duyuru (367→419→…→597⚡) bildirim fırtınasına döndü.
+const REKOR_DUYURU_SOGUMA_MS = 3 * 3_600_000;
+
 // TARAMA — mevcut rekorları hesapla, tabloyla karşılaştır, kırılanı güncelle +
 // herkese push. İlk doldurmada (önceki kayıt yok) SESSİZ set eder (spam yok).
 // tik'ten (mod=kamp, bayrak açık) çağrılır. Kendi hatasını yutar.
+//
+// DUYURU FRENİ (spam kesici — rekor VERİSİ yine her tikte güncellenir, yalnız
+// push seyreltilir; kürsü//ekran/rekorlar sayfası hep günceldir):
+//  1) TAHT DEĞİŞİMİ KURALI: yalnız rekortmen DEĞİŞİNCE duyur. Liderin kendi
+//     rekorunu büyütmesi (aynı kişi 512→520→575) sessiz güncellenir — haber
+//     değeri taşıyan olay "koltuğun el değiştirmesi"dir.
+//  2) SOĞUMA: aynı kategori en erken 3 saatte bir duyurulur (settings zaman
+//     damgası kilidi) — taht sık el değiştirse bile telefonlar susmaz.
 export async function rekorTara(db: Db): Promise<{ kirilan: number }> {
   try {
     const [h, { data: mevcutlar }] = await Promise.all([
@@ -229,16 +243,31 @@ export async function rekorTara(db: Db): Promise<{ kirilan: number }> {
         deger: l.deger,
         tarih: new Date().toISOString(),
       });
-      // Yalnız MEVCUT bir rekor kırılınca duyur (ilk doldurma sessiz).
-      if (eski) {
-        kirilan++;
-        await herkeseBildir(
-          db,
-          `🏆 ${kat.ad} rekoru kırıldı!`,
-          `Yeni rekor: ${degerYazi(kat, l.deger)}. Sen de dene — belki sıradaki sensin.`,
-          "/rekorlar"
-        ).catch(() => {});
+      // Yalnız MEVCUT bir rekor kırılınca duyur (ilk doldurma sessiz)…
+      if (!eski) continue;
+      kirilan++;
+      // …ve yalnız TAHT DEĞİŞİNCE (kendi rekorunu büyüten lider sessiz).
+      if (eski.participant_id === l.pid) continue;
+      // …ve kategori soğuma penceresi dışındaysa (3 saatte en çok 1 duyuru).
+      const sogumaAnahtari = `rekor_duyuru_${kat.key}`;
+      const { data: sonDuyuru } = await db
+        .from("settings")
+        .select("value")
+        .eq("key", sogumaAnahtari)
+        .maybeSingle();
+      if (sonDuyuru?.value) {
+        const gecen = Date.now() - new Date(sonDuyuru.value).getTime();
+        if (Number.isFinite(gecen) && gecen >= 0 && gecen < REKOR_DUYURU_SOGUMA_MS) continue;
       }
+      await db
+        .from("settings")
+        .upsert({ key: sogumaAnahtari, value: new Date().toISOString() });
+      await herkeseBildir(
+        db,
+        `🏆 ${kat.ad} rekoru kırıldı!`,
+        `Yeni rekor: ${degerYazi(kat, l.deger)}. Sen de dene — belki sıradaki sensin.`,
+        "/rekorlar"
+      ).catch(() => {});
     }
     return { kirilan };
   } catch {
