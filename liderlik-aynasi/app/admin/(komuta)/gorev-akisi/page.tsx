@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import GorevAkisiTablo from "./GorevAkisiTablo";
 
@@ -15,17 +16,35 @@ export default async function GorevAkisiPage() {
   if (!session || session.rol !== "admin") redirect("/admin/giris");
 
   const db = supabaseAdmin();
-  const [{ data: gorevler, error }, baslangic] = await Promise.all([
-    db
-      .from("missions")
-      .select(
-        "id, kind, title, body, status, ai_score, spark_points, difficulty, issued_at, trait:traits(name), katilimci:participants!missions_participant_id_fkey(full_name)"
-      )
-      .order("issued_at", { ascending: false })
-      .limit(5000),
+  // PostgREST tek istekte ~1000 satır döndürür — .limit(5000) yazsak da 1000'de
+  // kırpılıyordu ve "Toplam 1000 görev" sayacı orada takılı kalıyordu (saha
+  // geri bildirimi, Gün 1 akşamı gerçek sayı 1481'e ulaşınca fark edildi).
+  // tumKayitlar sayfa sayfa çekip tamamını birleştirir; sayaç gerçek toplamı gösterir.
+  type GorevSatiri = {
+    id: string;
+    kind: string;
+    title: string;
+    body: string;
+    status: string;
+    ai_score: number | null;
+    spark_points: number | null;
+    difficulty: number | null;
+    issued_at: string;
+    trait: { name: string } | null;
+    katilimci: { full_name: string } | null;
+  };
+  const [gorevler, baslangic] = await Promise.all([
+    tumKayitlar<GorevSatiri>((bas, son) =>
+      db
+        .from("missions")
+        .select(
+          "id, kind, title, body, status, ai_score, spark_points, difficulty, issued_at, trait:traits(name), katilimci:participants!missions_participant_id_fkey(full_name)"
+        )
+        .order("issued_at", { ascending: false })
+        .range(bas, son)
+    ),
     kampBaslangicGetir(db),
   ]);
-  if (error) throw error;
 
   const satirlar = (gorevler ?? []).map((g) => ({
     id: g.id,
