@@ -1546,7 +1546,14 @@ ${yeniYonergeler}${merdivenYonergesi}${ekstraYonerge}`,
 
     const gecerliIdler = new Set(ozellikler.map((o) => o.id));
     // #8 micro-sprint: sure_saat 0.5 = 30 dk
-    const sureSaat = microSprint ? 0.5 : Math.min(3, Math.max(1, veri.sure_saat));
+    // KAMP TABANI 3 SAAT (Gün 1 verisi): 1-2 saatlik pencereler otel akşamında
+    // dar geldi — kaçırma bag %31 / cesaret %29, kaçıranların 1 numaralı beyanı
+    // "vakit yoktu". Micro-sprint bilinçli kısa kalır (30 dk mekaniği).
+    const sureSaat = microSprint
+      ? 0.5
+      : mod === "kamp"
+        ? Math.min(4, Math.max(3, veri.sure_saat))
+        : Math.min(3, Math.max(1, veri.sure_saat));
     return {
       kind: tur,
       title: veri.baslik.slice(0, 120),
@@ -1687,7 +1694,7 @@ export async function gorevPuanla(
           },
           {
             type: "text" as const,
-            text: `DİL KURALI (ZORUNLU, 'yorum' alanı için): kusursuz, sade Türkçe; var olmayan kelime/ek uydurma; her cümle dilbilgisi olarak tam ve anlaşılır olmalı.\n\n${gorev.kind === "simulasyon" ? "Görevin: SİMÜLASYON değerlendirmesi. Önce görevdeki müşteri/aday rolüne gir ve katılımcının cevabına o karakterin ağzından 1 cümlelik gerçekçi tepki ver (ikna olduysa yumuşa, olmadıysa nazikçe diren). Ardından AYNA olarak 1 cümle koçluk ekle: neyi iyi yaptı + bir sonraki denemede tek somut iyileştirme; koçluğu yukarıdaki saha tekniğine (feel-felt-found, ısınma, tempo, 1–10, ısrar=taciz) dayandır. İkisini birlikte 'yorum' alanına yaz. Puanı itirazı karşılama becerisine göre ver." : "Görevin: verdiğin görevin yanıtını puanla. Çabayı, samimiyeti ve somutluğu ödüllendir; boş/alaycı yanıta düşük puan ver ama yine de yapıcı kal. Yorum 1-2 cümle, AYNA'nın ağzından."}`,
+            text: `DİL KURALI (ZORUNLU, 'yorum' alanı için): kusursuz, sade Türkçe; var olmayan kelime/ek uydurma; her cümle dilbilgisi olarak tam ve anlaşılır olmalı.\n\n${gorev.kind === "simulasyon" ? "Görevin: SİMÜLASYON değerlendirmesi. Önce görevdeki müşteri/aday rolüne gir ve katılımcının cevabına o karakterin ağzından 1 cümlelik gerçekçi tepki ver (ikna olduysa yumuşa, olmadıysa nazikçe diren). Ardından AYNA olarak 1 cümle koçluk ekle: neyi iyi yaptı + bir sonraki denemede tek somut iyileştirme; koçluğu yukarıdaki saha tekniğine (feel-felt-found, ısınma, tempo, 1–10, ısrar=taciz) dayandır. İkisini birlikte 'yorum' alanına yaz. Puanı itirazı karşılama becerisine göre ver." : "Görevin: verdiğin görevin yanıtını puanla. Bu bir MOTİVASYON KAMPI — cetvel cömerttir, kararsız kaldığında BİR ÜST puanı ver.\nPUAN CETVELİ (ZORUNLU):\n- 9-10: görev yapılmış + somut detay (isim/an/yer) + gerçek bir içgörü ya da cesaret izi. Hak edene 10 vermekten ÇEKİNME — tam puan sahnede kutlanan bir moral anıdır.\n- 7-8: görev yapılmış, samimi anlatılmış; detay orta düzeyde.\n- 6: kısa ama samimi, gerçek bir çaba var. SAMİMİ HER DENEMENİN TABANI 6'DIR — görevi eksik anlamış ya da yarım yapmış olsa bile içten bir uğraş varsa 6'nın altına İNME.\n- 4-5: göreve ancak kısmen dokunmuş, çok yüzeysel.\n- 1-3: YALNIZ boş, alaycı, tek kelimelik geçiştirme ya da görevle tamamen ilgisiz yanıt.\nYorum 1-2 cümle, AYNA'nın ağzından; İLK cümle HER ZAMAN yanıttaki güçlü bir şeyi görüp onurlandırır, ikinci cümle (gerekiyorsa) tek bir büyüme dokunuşu ekler."}`,
           },
         ],
         messages: [
@@ -2391,7 +2398,10 @@ export async function mentorlukGorevUret(
     title: "Bugünün mentorunu seç",
     body,
     trait_id: null,
-    sure_saat: 1,
+    // Görev metni "akşam bana yaz" diyor — pencere de akşama uzanmalı (10:00
+    // dağıtım + 10 saat = 20:00). Eski 1 saatlik pencere oyun gününde herkeste
+    // kaçırılırdı (Gün 1'de blok hiç çalışmadığı için fark edilmedi).
+    sure_saat: 10,
     difficulty: 2 as const,
     itiraz: null,
     neden: "Seni bir adım öne taşıyacak sohbet başkasının deneyiminde saklı.",
