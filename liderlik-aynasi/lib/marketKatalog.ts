@@ -12,6 +12,9 @@ export type MarketUrun = {
   reyon: Reyon;
   fiziksel?: boolean; // prestij: admin teslim listesine düşer
   varyantlar?: { kod: string; ad: string; renk?: string }[]; // seçenekli ürün
+  // Satıştan kaldırıldı: markette listelenmez ve yeni satın alma reddedilir;
+  // tanım DURUR ki geçmiş işlemler (admin teslim listesi vb.) adıyla görünsün.
+  satistaDegil?: boolean;
 };
 
 export const REYON_BASLIK: Record<Reyon, { ad: string; ikon: string }> = {
@@ -49,8 +52,13 @@ export const MARKET_URUNLERI: MarketUrun[] = [
   // — Prestij (FİZİKSEL — admin onaylı teslim) —
   { kod: "ad_anonsu", reyon: "prestij", fiyat: 150, fiziksel: true, ad: "Kapanışta ad anonsu", aciklama: "Kapanış sahnesinde adın anons edilir." },
   { kod: "on_sira", reyon: "prestij", fiyat: 100, fiziksel: true, ad: "Akşam oturumu ön sıra", aciklama: "Bir akşam oturumunda ön sıra koltuğu." },
-  { kod: "emre_birebir", reyon: "prestij", fiyat: 300, fiziksel: true, ad: "Emre ile 30 dk birebir", aciklama: "Emre Topçu ile 30 dakikalık birebir görüşme." },
+  // Emre'nin talebiyle (Gün 1 akşamı) satıştan kaldırıldı — tanım, önceki tek
+  // satın almanın (teslim listesinde) adıyla görünmeye devam etmesi için duruyor.
+  { kod: "emre_birebir", reyon: "prestij", fiyat: 300, fiziksel: true, satistaDegil: true, ad: "Emre ile 30 dk birebir", aciklama: "Emre Topçu ile 30 dakikalık birebir görüşme." },
 ];
+
+// Markette listelenen (satın alınabilir) ürünler.
+export const SATISTAKI_URUNLER: MarketUrun[] = MARKET_URUNLERI.filter((u) => !u.satistaDegil);
 
 export function urunBul(kod: string): MarketUrun | null {
   return MARKET_URUNLERI.find((u) => u.kod === kod) ?? null;
