@@ -772,9 +772,10 @@ export async function tikCalistir(
     // alanları (neden/fayda/somutluk/kas) taşınmaz.
     const statikOverride = !!davidOverride || !!sahitOverride;
 
-    // #8 micro_sprint: sure_saat 0.5 = 30 dk. Şahit görevi sabit 2 saatlik.
+    // #8 micro_sprint: sure_saat 0.5 = 30 dk. Şahit görevi sabit 3 saatlik
+    // (Gün 1'de 2 saatle %42 kaçırma — türlerin en yükseği).
     const dueAt = new Date(
-      simdi.getTime() + (statikOverride ? 2 : gorev.sure_saat) * 3_600_000
+      simdi.getTime() + (statikOverride ? 3 : gorev.sure_saat) * 3_600_000
     );
     const { data: yeniGorev, error } = await db
       .from("missions")
