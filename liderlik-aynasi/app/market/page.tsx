@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { marketAcikMi, cuzdanBakiye, marketGecmisi } from "@/lib/market";
-import { MARKET_URUNLERI, REYON_BASLIK, type Reyon } from "@/lib/marketKatalog";
+import { SATISTAKI_URUNLER, REYON_BASLIK, type Reyon } from "@/lib/marketKatalog";
 import MarketReyonlar from "./MarketReyonlar";
 
 export const metadata = { title: "Market — Liderlik Aynası" };
@@ -63,7 +63,7 @@ export default async function MarketPage() {
 
       <MarketReyonlar
         cuzdan={bakiye.cuzdan}
-        urunler={MARKET_URUNLERI}
+        urunler={SATISTAKI_URUNLER}
         reyonlar={reyonlar}
       />
 

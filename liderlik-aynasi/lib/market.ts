@@ -63,6 +63,9 @@ export async function satinAl(
   if (!(await marketAcikMi(db))) return { ok: false, sebep: "kapali" };
   const urun = urunBul(kod);
   if (!urun) return { ok: false, sebep: "urun_yok" };
+  // Satıştan kaldırılan ürün (ör. emre_birebir): sunucu tarafı da reddeder —
+  // yalnız listeden gizlemek yetmez, eski sekmeden/istekten satın alınamasın.
+  if (urun.satistaDegil) return { ok: false, sebep: "urun_yok" };
   if (urun.varyantlar && urun.varyantlar.length > 0) {
     const ge = urun.varyantlar.some((v) => v.kod === varyant);
     if (!ge) return { ok: false, sebep: "varyant_gerekli" };
