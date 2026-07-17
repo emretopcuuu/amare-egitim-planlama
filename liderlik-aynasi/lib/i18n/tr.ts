@@ -339,6 +339,10 @@ export const tr = {
     hataGecersizBicim: "Geçersiz kod biçimi. 6 haneli sayı girmelisin.",
     hataKodHatali: "Kod hatalı. Lütfen tekrar dene.",
     hataCokFazlaDeneme: "Çok fazla deneme yapıldı. Lütfen birkaç dakika bekle.",
+    // Katılımcı girişi (salon tek Wi-Fi): 429 alan kişi yanlış kod yazmıştır —
+    // "kilitlendin" değil "kodunu kontrol et, doğrusuyla hemen girersin" yönünde.
+    hataCokFazlaDenemeKatilimci:
+      "Kodun yanlış görünüyor. WhatsApp'taki 6 haneli kodu bir kontrol et — doğrusunu yazınca hemen gireceksin.",
     hataSunucu: "Bir şeyler ters gitti. Lütfen tekrar dene.",
   },
   adminGiris: {

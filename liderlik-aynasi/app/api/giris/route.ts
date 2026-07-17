@@ -38,7 +38,11 @@ export async function POST(req: Request) {
   // Brute-force tahmini hâlâ yanlış-deneme tarafında 429 ile sınırlanır.
   if (!basarili) {
     if (await isRateLimited(ip)) {
-      return Response.json({ hata: tr.giris.hataCokFazlaDeneme }, { status: 429 });
+      // DOĞRU kod bu noktaya gelmez (yukarıda geçer) — 429'u gören kişi YANLIŞ kod
+      // yazmış demektir. Mesaj "kilitlendin" değil "kodunu kontrol et" yönünde:
+      // salon Wi-Fi'ında toplu deneme eşiği aşınca masum kişi kendi kodundan
+      // şüphelenmesin, WhatsApp'taki 6 haneye baksın.
+      return Response.json({ hata: tr.giris.hataCokFazlaDenemeKatilimci }, { status: 429 });
     }
     return Response.json({ hata: tr.giris.hataKodHatali }, { status: 401 });
   }
