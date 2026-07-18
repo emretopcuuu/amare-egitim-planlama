@@ -598,10 +598,10 @@ export default function EkranGosterisi() {
       {veri?.kumulatif && (
         <div className="relative z-10 mt-5 grid grid-cols-4 gap-3">
           {[
-            { ikon: "⚡", toplam: veri.kumulatif.kivilcim, bugun: null, etiket: "kıvılcım", renk: "text-gold" },
-            { ikon: "🤖", toplam: veri.kumulatif.gorev, bugun: veri.bugun?.gorev ?? 0, etiket: "görev", renk: "text-gold-light" },
-            { ikon: "💛", toplam: veri.kumulatif.takdir, bugun: veri.bugun?.takdir ?? 0, etiket: "takdir", renk: "text-pink-300" },
-            { ikon: "⭐", toplam: veri.kumulatif.fiero, bugun: veri.bugun?.fiero ?? 0, etiket: "fiero", renk: "text-amber-300" },
+            { ikon: "⚡", toplam: veri.kumulatif.kivilcim, bugun: null, altToplam: null as number | null, etiket: "kıvılcım", renk: "text-gold" },
+            { ikon: "🤖", toplam: veri.kumulatif.gorev, bugun: veri.bugun?.gorev ?? 0, altToplam: veri.kumulatif.gorevToplam, etiket: "görev", renk: "text-gold-light" },
+            { ikon: "💛", toplam: veri.kumulatif.takdir, bugun: veri.bugun?.takdir ?? 0, altToplam: null as number | null, etiket: "takdir", renk: "text-pink-300" },
+            { ikon: "⭐", toplam: veri.kumulatif.fiero, bugun: veri.bugun?.fiero ?? 0, altToplam: null as number | null, etiket: "fiero", renk: "text-amber-300" },
           ].map((s) => (
             <div
               key={s.etiket}
@@ -615,6 +615,9 @@ export default function EkranGosterisi() {
               </p>
               {s.bugun != null && s.bugun > 0 && (
                 <p className="mt-0.5 text-sm font-semibold text-emerald-300">bugün +{s.bugun}</p>
+              )}
+              {s.altToplam != null && s.altToplam > s.toplam && (
+                <p className="mt-0.5 text-xs font-medium text-slate-500">üretilen {s.altToplam}</p>
               )}
             </div>
           ))}
