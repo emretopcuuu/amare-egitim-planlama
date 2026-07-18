@@ -40,7 +40,7 @@ export type EkranVerisi = {
   // Bugünün canlı sayaçları (Istanbul günü) — salonun enerjisini görünür kılar.
   bugun: { gorev: number; gozlem: number; takdir: number; fiero: number };
   // KÜMÜLATİF kamp efsanesi — sahne asla "0/ölü" görünmesin; toplam kahraman sayaç.
-  kumulatif: { kivilcim: number; gorev: number; takdir: number; fiero: number; anlar: number };
+  kumulatif: { kivilcim: number; gorev: number; gorevToplam: number; takdir: number; fiero: number; anlar: number };
   // [KURULUM 3] Canlı kurulum sayacı — "kaç kişi telefonuna aldı/bildirim açtı".
   // Salon ritüelinde sahnede gösterilir; her yükseldiğinde salon alkışlar.
   kurulum: { kuranlar: number; toplam: number };
@@ -200,8 +200,11 @@ export async function GET() {
   };
 
   // KÜMÜLATİF: kampın bugüne dek toplam efsanesi (sahne hero sayaç).
-  const [kumGorev, kumTakdir, kumFiero, kumAnlar] = await Promise.all([
+  // gorev = BAŞARILAN (scored); gorevToplam = ÜRETİLEN tüm görev (bekleyen+kaçan
+  // dahil) — admin "Tüm Görevler" ile aynı taban.
+  const [kumGorev, kumGorevToplam, kumTakdir, kumFiero, kumAnlar] = await Promise.all([
     db.from("missions").select("id", { count: "exact", head: true }).eq("status", "scored"),
+    db.from("missions").select("id", { count: "exact", head: true }),
     db.from("kudos").select("id", { count: "exact", head: true }).eq("is_hidden", false),
     db.from("missions").select("id", { count: "exact", head: true }).eq("ai_score", 10),
     db.from("photos").select("id", { count: "exact", head: true }).eq("status", "approved"),
@@ -209,6 +212,7 @@ export async function GET() {
   const kumulatif = {
     kivilcim: gorevData.reduce((s, g) => s + (g.spark_points ?? 0), 0),
     gorev: kumGorev.count ?? 0,
+    gorevToplam: kumGorevToplam.count ?? 0,
     takdir: kumTakdir.count ?? 0,
     fiero: kumFiero.count ?? 0,
     anlar: kumAnlar.count ?? 0,
