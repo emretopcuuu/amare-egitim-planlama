@@ -11,20 +11,28 @@ export default function MarketReyonlar({
   cuzdan: cuzdanBaslangic,
   urunler,
   reyonlar,
+  kisiler = [],
 }: {
   cuzdan: number;
   urunler: MarketUrun[];
   reyonlar: Reyon[];
+  kisiler?: { id: string; ad: string }[];
 }) {
   const router = useRouter();
   const [cuzdan, setCuzdan] = useState(cuzdanBaslangic);
   const [mesgul, setMesgul] = useState<string | null>(null);
   const [hata, setHata] = useState<string | null>(null);
   const [varyantSecim, setVaryantSecim] = useState<MarketUrun | null>(null);
+  const [hediyeSecim, setHediyeSecim] = useState<MarketUrun | null>(null); // C3 alıcı seçimi
 
-  async function al(urun: MarketUrun, varyant?: string) {
+  async function al(urun: MarketUrun, varyant?: string, aliciId?: string) {
     if (urun.varyantlar && urun.varyantlar.length > 0 && !varyant) {
       setVaryantSecim(urun);
+      return;
+    }
+    // C3 — hediye ürünü: önce alıcı seç.
+    if (urun.hediye && !aliciId) {
+      setHediyeSecim(urun);
       return;
     }
     setMesgul(urun.kod);
@@ -33,13 +41,14 @@ export default function MarketReyonlar({
       const r = await fetch("/api/market", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kod: urun.kod, varyant }),
+        body: JSON.stringify({ kod: urun.kod, varyant, aliciId }),
       });
       const j = (await r.json().catch(() => ({}))) as { ok?: boolean; cuzdan?: number; hata?: string };
       if (r.ok && j.ok) {
         sesCal("kart-ac");
         if (typeof j.cuzdan === "number") setCuzdan(j.cuzdan);
         setVaryantSecim(null);
+        setHediyeSecim(null);
         router.refresh();
       } else {
         setHata(j.hata ?? "Satın alınamadı.");
@@ -101,6 +110,32 @@ export default function MarketReyonlar({
           </section>
         );
       })}
+
+      {/* C3 — Hediye alıcısı seçim çekmecesi */}
+      {hediyeSecim && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4" onClick={() => setHediyeSecim(null)}>
+          <div className="w-full max-w-md rounded-3xl border border-royal/40 bg-midnight-card p-5" onClick={(e) => e.stopPropagation()}>
+            <p className="text-sm font-semibold text-gold-light">{hediyeSecim.ad} — kime?</p>
+            <p className="mt-1 text-xs text-slate-400">{hediyeSecim.aciklama}</p>
+            <div className="mt-3 max-h-72 space-y-1.5 overflow-y-auto">
+              {kisiler.map((k) => (
+                <button
+                  key={k.id}
+                  onClick={() => al(hediyeSecim, undefined, k.id)}
+                  disabled={mesgul === hediyeSecim.kod}
+                  className="block w-full rounded-xl border border-royal/25 bg-midnight-card/40 px-3 py-2 text-left text-sm text-slate-100 hover:border-gold disabled:opacity-50"
+                >
+                  {k.ad}
+                </button>
+              ))}
+              {kisiler.length === 0 && (
+                <p className="text-center text-xs text-slate-500">Gönderilecek kişi bulunamadı.</p>
+              )}
+            </div>
+            <p className="mt-3 text-center text-xs text-slate-500">{hediyeSecim.fiyat}⚡ · cüzdan {cuzdan}</p>
+          </div>
+        </div>
+      )}
 
       {/* Varyant (elmas rengi) seçim çekmecesi */}
       {varyantSecim?.varyantlar && (

@@ -1657,6 +1657,7 @@ export type Database = {
         Row: {
           created_at: string
           fiziksel: boolean
+          hediye_alici_id: string | null
           id: string
           participant_id: string
           reyon: string
@@ -1669,6 +1670,7 @@ export type Database = {
         Insert: {
           created_at?: string
           fiziksel?: boolean
+          hediye_alici_id?: string | null
           id?: string
           participant_id: string
           reyon: string
@@ -1681,6 +1683,7 @@ export type Database = {
         Update: {
           created_at?: string
           fiziksel?: boolean
+          hediye_alici_id?: string | null
           id?: string
           participant_id?: string
           reyon?: string

@@ -11,6 +11,7 @@ const HATA: Record<string, string> = {
   urun_yok: "Ürün bulunamadı.",
   varyant_gerekli: "Bir seçenek seçmelisin.",
   yetersiz: "Cüzdanında yeterli kıvılcım yok.",
+  hedef_gerekli: "Hediyeyi göndereceğin kişiyi seçmelisin.",
 };
 
 export async function POST(req: Request) {
@@ -18,11 +19,11 @@ export async function POST(req: Request) {
   if (!session || session.rol !== "participant") {
     return Response.json({ hata: "Yetkisiz" }, { status: 401 });
   }
-  const g = (await req.json().catch(() => ({}))) as { kod?: string; varyant?: string };
+  const g = (await req.json().catch(() => ({}))) as { kod?: string; varyant?: string; aliciId?: string };
   if (typeof g.kod !== "string") return Response.json({ hata: "Eksik alan" }, { status: 400 });
 
   const db = supabaseAdmin();
-  const sonuc = await satinAl(db, session.sub, g.kod, g.varyant ?? null);
+  const sonuc = await satinAl(db, session.sub, g.kod, g.varyant ?? null, g.aliciId ?? null);
   if (!sonuc.ok) {
     return Response.json({ hata: HATA[sonuc.sebep] ?? "Satın alınamadı." }, { status: 400 });
   }

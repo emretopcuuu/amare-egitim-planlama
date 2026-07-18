@@ -34,7 +34,17 @@ export default async function MarketPage() {
     );
   }
 
-  const [bakiye, gecmis] = await Promise.all([cuzdanBakiye(db, session.sub), marketGecmisi(db, session.sub)]);
+  const [bakiye, gecmis, { data: kisilerHam }] = await Promise.all([
+    cuzdanBakiye(db, session.sub),
+    marketGecmisi(db, session.sub),
+    db
+      .from("participants")
+      .select("id, full_name")
+      .eq("role", "participant")
+      .neq("id", session.sub)
+      .order("full_name"),
+  ]);
+  const kisiler = (kisilerHam ?? []).map((k) => ({ id: k.id, ad: k.full_name }));
   const reyonlar = Object.keys(REYON_BASLIK) as Reyon[];
 
   return (
@@ -71,6 +81,7 @@ export default async function MarketPage() {
         cuzdan={bakiye.cuzdan}
         urunler={SATISTAKI_URUNLER}
         reyonlar={reyonlar}
+        kisiler={kisiler}
       />
 
       {gecmis.length > 0 && (

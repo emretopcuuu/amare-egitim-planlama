@@ -1,6 +1,7 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { rozetKivilcimi } from "@/lib/rozet";
+import { katilimciyaBildir } from "@/lib/push";
 import { ELMAS_RENKLERI, urunBul } from "@/lib/marketKatalog";
 
 // ============================================================================
@@ -50,15 +51,17 @@ export async function cuzdanBakiye(db: Db, pid: string): Promise<Cuzdan> {
 
 export type SatinAlmaSonuc =
   | { ok: true; cuzdan: number }
-  | { ok: false; sebep: "kapali" | "urun_yok" | "varyant_gerekli" | "yetersiz" };
+  | { ok: false; sebep: "kapali" | "urun_yok" | "varyant_gerekli" | "yetersiz" | "hedef_gerekli" };
 
 // Satın alma — cüzdandan düşer (kazanç/unvan DOKUNULMAZ). Bakiyeyi insert'ten
 // hemen önce yeniden okur (küçük ölçekte yeterli yarış koruması).
+// C3 — hediye ürünlerinde aliciId zorunlu: geçerli, kendisi olmayan katılımcı.
 export async function satinAl(
   db: Db,
   pid: string,
   kod: string,
-  varyant?: string | null
+  varyant?: string | null,
+  aliciId?: string | null
 ): Promise<SatinAlmaSonuc> {
   if (!(await marketAcikMi(db))) return { ok: false, sebep: "kapali" };
   const urun = urunBul(kod);
@@ -70,6 +73,21 @@ export async function satinAl(
     const ge = urun.varyantlar.some((v) => v.kod === varyant);
     if (!ge) return { ok: false, sebep: "varyant_gerekli" };
   }
+
+  // C3 — hediye: geçerli alıcı doğrula (katılımcı + kendisi değil).
+  let hediyeAlici: string | null = null;
+  if (urun.hediye) {
+    if (typeof aliciId !== "string" || aliciId === pid) return { ok: false, sebep: "hedef_gerekli" };
+    const { data: alici } = await db
+      .from("participants")
+      .select("id")
+      .eq("id", aliciId)
+      .eq("role", "participant")
+      .maybeSingle();
+    if (!alici) return { ok: false, sebep: "hedef_gerekli" };
+    hediyeAlici = aliciId;
+  }
+
   const { cuzdan } = await cuzdanBakiye(db, pid);
   if (cuzdan < urun.fiyat) return { ok: false, sebep: "yetersiz" };
 
@@ -81,8 +99,34 @@ export async function satinAl(
     fiziksel: !!urun.fiziksel,
     varyant: varyant ?? null,
     teslim_durumu: urun.fiziksel ? "bekliyor" : null,
+    hediye_alici_id: hediyeAlici,
   });
   if (error) return { ok: false, sebep: "yetersiz" };
+
+  // C3 — dijital hediye teslimi: alıcıya bonus kıvılcım + bildirim (best-effort).
+  if (urun.hediye === "kivilcim" && hediyeAlici && urun.hediyeDeger) {
+    try {
+      await db
+        .from("kivilcim_bonus")
+        .insert({ participant_id: hediyeAlici, deger: urun.hediyeDeger, kaynak: "hediye" });
+      const { data: veren } = await db
+        .from("participants")
+        .select("full_name")
+        .eq("id", pid)
+        .maybeSingle();
+      const ad = veren?.full_name?.split(" ")[0] ?? "Bir arkadaşın";
+      await katilimciyaBildir(
+        db,
+        hediyeAlici,
+        "🎁 Sana bir hediye geldi",
+        `${ad} sana ${urun.hediyeDeger} kıvılcım hediye etti.`,
+        "/market"
+      );
+    } catch {
+      // teslim best-effort — alım yine de geçerli
+    }
+  }
+
   return { ok: true, cuzdan: cuzdan - urun.fiyat };
 }
 
@@ -126,19 +170,27 @@ export type TeslimSatiri = { id: string; ad: string; urun: string; tutar: number
 export async function teslimBekleyenler(db: Db): Promise<TeslimSatiri[]> {
   const { data } = await db
     .from("market_islem")
-    .select("id, participant_id, urun_kod, tutar, created_at")
+    .select("id, participant_id, urun_kod, tutar, created_at, hediye_alici_id")
     .eq("teslim_durumu", "bekliyor")
     .order("created_at", { ascending: true });
-  const rows = (data ?? []) as { id: string; participant_id: string; urun_kod: string; tutar: number; created_at: string }[];
+  const rows = (data ?? []) as { id: string; participant_id: string; urun_kod: string; tutar: number; created_at: string; hediye_alici_id: string | null }[];
   if (rows.length === 0) return [];
+  const kimlikler = new Set<string>();
+  for (const r of rows) {
+    kimlikler.add(r.participant_id);
+    if (r.hediye_alici_id) kimlikler.add(r.hediye_alici_id);
+  }
   const { data: kisiler } = await db
     .from("participants")
     .select("id, full_name")
-    .in("id", [...new Set(rows.map((r) => r.participant_id))]);
+    .in("id", [...kimlikler]);
   const adMap = new Map((kisiler ?? []).map((k) => [k.id, k.full_name]));
   return rows.map((r) => ({
     id: r.id,
-    ad: adMap.get(r.participant_id) ?? "—",
+    // C3 — hediye ise "alan → hediye eden" (ekip kime teslim edeceğini görsün).
+    ad: r.hediye_alici_id
+      ? `${adMap.get(r.hediye_alici_id) ?? "—"} (${adMap.get(r.participant_id) ?? "—"} ısmarladı)`
+      : adMap.get(r.participant_id) ?? "—",
     urun: urunBul(r.urun_kod)?.ad ?? r.urun_kod,
     tutar: r.tutar,
     created_at: r.created_at,
