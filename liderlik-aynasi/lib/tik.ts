@@ -76,6 +76,7 @@ import { radyoTik } from "@/lib/kampRadyosu";
 import { kapanisBrifTik } from "@/lib/kapanis";
 import { takdirZarfiTik } from "@/lib/takdirZarfi";
 import { sessizKahramanTik } from "@/lib/sessizKahraman";
+import { seniIzledimAc } from "@/lib/seniIzledim";
 import { rekorTara, rekorlarAcikMi } from "@/lib/rekorlar";
 import { ciftSerisiDegerlendir, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
 import { hamleTaraOlustur, hamleHatirlat, hamleAcikMi } from "@/lib/hamle";
@@ -1724,6 +1725,22 @@ export async function tikCalistir(
           "/"
         );
         ozet.uretilen++;
+      }
+    }
+  }
+
+  // D10 — GÜN 3 "SENİ İZLEDİM" AYNASI: son gün sabah 09:00'da herkese AYNA'nın
+  // 3 günlük yansıması + tek soru ("90 gün sonra nerede?") → söz tohumu. Gün
+  // başına tek sefer (settings kilidi). Kendi hatasını yutar, tik'i düşürmez.
+  if (mod === "kamp" && gun === 3 && saat === 9 && !sahneSessiz) {
+    const { error: siKilit } = await db
+      .from("settings")
+      .insert({ key: `seni_izledim_${bugun}`, value: "1" });
+    if (!siKilit) {
+      try {
+        ozet.uretilen += await seniIzledimAc(db);
+      } catch {
+        // sessizce geç
       }
     }
   }

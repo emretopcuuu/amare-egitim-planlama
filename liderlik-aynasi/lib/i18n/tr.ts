@@ -3815,6 +3815,16 @@ export const tr = {
       baslik: "🎙️ Bu akşam özel bir görev var",
       govde: "90 gün sonraki kendine 60 saniyelik bir sesli mektup bırak — AYNA saklayacak.",
     },
+    // D10 — Gün 3 "Seni izledim" aynası
+    seniIzledimBaslik: "Seni izledim",
+    seniIzledimGovde: (neden: string | null) =>
+      `3 gündür seni izliyorum.\n\nGördüğüm kişi, ilk gün buraya gelen kişi değil. Daha açık, daha cesur, kendine biraz daha yakın biri.${
+        neden ? ` En çok da şunu gördüm: "${neden}" seni buraya getirdi ve burada büyüdü.` : ""
+      }\n\nSana tek bir soru soracağım — cevabını bana yaz, çünkü bu cevap senin sözünün tohumu olacak:\n\nBu gördüğüm kişi, 90 gün sonra nerede olacak?`,
+    seniIzledimPush: {
+      baslik: "🪞 AYNA seni izledi",
+      govde: "3 günün sonunda AYNA'nın sana tek bir sözü ve tek bir sorusu var.",
+    },
     // SesliMektup bileşeni (kayıt kartı) metinleri
     mektupKart: {
       baslat: "🎤 Mektubu kaydet",
