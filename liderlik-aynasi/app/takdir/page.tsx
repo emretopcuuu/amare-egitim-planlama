@@ -31,7 +31,7 @@ export default async function TakdirPage() {
     db
       .from("kudos")
       .select(
-        "id, message, created_at, tesekkur_edildi, kategori, from_id, gonderen:participants!kudos_from_id_fkey(full_name, profil_foto_path)"
+        "id, message, created_at, tesekkur_edildi, kategori, foto_path, ses_path, from_id, gonderen:participants!kudos_from_id_fkey(full_name, profil_foto_path)"
       )
       .eq("to_id", session.sub)
       .eq("is_hidden", false)
@@ -55,19 +55,18 @@ export default async function TakdirPage() {
     (g) => g.created_at >= `${bugunIso}T00:00:00+03:00`
   ).length;
 
-  // Gönderen avatarları için imzalı URL'ler
-  const gonderenYollar = [
+  // İmzalı URL'ler: gönderen avatarları + A9/A3 takdir medyası (foto + ses) —
+  // hepsi 'sesler' bucket'ında, tek çağrıda imzalanır.
+  const imzaliYollar = [
     ...new Set(
       (gelenler ?? [])
-        .map((g) => g.gonderen?.profil_foto_path)
+        .flatMap((g) => [g.gonderen?.profil_foto_path, g.foto_path, g.ses_path])
         .filter((p): p is string => !!p)
     ),
   ];
   const fotoUrl = new Map<string, string>();
-  if (gonderenYollar.length > 0) {
-    const { data: imzali } = await db.storage
-      .from("sesler")
-      .createSignedUrls(gonderenYollar, 3600);
+  if (imzaliYollar.length > 0) {
+    const { data: imzali } = await db.storage.from("sesler").createSignedUrls(imzaliYollar, 3600);
     for (const im of imzali ?? []) if (im.path && im.signedUrl) fotoUrl.set(im.path, im.signedUrl);
   }
 
@@ -123,9 +122,22 @@ export default async function TakdirPage() {
                       </span>
                     ) : null;
                   })()}
-                  <p className="text-base leading-relaxed text-slate-100">
-                    “{g.message}”
-                  </p>
+                  {g.message && (
+                    <p className="text-base leading-relaxed text-slate-100">“{g.message}”</p>
+                  )}
+                  {/* A9 — foto takdir */}
+                  {g.foto_path && fotoUrl.get(g.foto_path) && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={fotoUrl.get(g.foto_path)!}
+                      alt=""
+                      className="mt-2 max-h-64 w-full rounded-xl object-cover"
+                    />
+                  )}
+                  {/* A3 — sesli takdir */}
+                  {g.ses_path && fotoUrl.get(g.ses_path) && (
+                    <audio controls src={fotoUrl.get(g.ses_path)!} className="mt-2 w-full" />
+                  )}
                   <div className="mt-2 flex items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-2">
                       <Avatar

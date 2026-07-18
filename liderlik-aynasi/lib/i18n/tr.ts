@@ -655,6 +655,14 @@ export const tr = {
     mesajYer: "Örn: Bugünkü cesaretin bana ilham verdi.",
     cunkuIpucu:
       "İpucu: bir “çünkü” ekle — ne yaptığını gördün ve sana ne hissettirdi? Tek cümle bile yeter.",
+    fotoEkle: "Foto ekle",
+    fotoEklendi: "Foto eklendi",
+    sesEkle: "Ses ekle",
+    sesEklendi: "Ses eklendi",
+    sesDurdur: "Bitir",
+    medyaYukleniyor: "Yükleniyor…",
+    medyaHata: "Medya eklenemedi, tekrar dene.",
+    medyaBuyuk: "Dosya çok büyük.",
     muhurEtiket: "Bir mühür ekle (isteğe bağlı) — onu en çok neyde gördün?",
     muhurOzet: (emoji: string, ad: string) =>
       `İnsanlar sende en çok ${emoji} ${ad} görüyor.`,

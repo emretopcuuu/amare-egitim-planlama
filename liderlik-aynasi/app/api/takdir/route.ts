@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.takdir.hata }, { status: 403 });
   }
 
-  let govde: { hedefId?: unknown; mesaj?: unknown; muhur?: unknown };
+  let govde: { hedefId?: unknown; mesaj?: unknown; muhur?: unknown; fotoPath?: unknown; sesPath?: unknown };
   try {
     govde = await req.json();
   } catch {
@@ -30,7 +30,19 @@ export async function POST(req: Request) {
   const mesaj = typeof govde.mesaj === "string" ? govde.mesaj.trim().slice(0, MESAJ_MAX) : "";
   // A5 — mühür (kategori) OPSİYONEL: geçersiz/boşsa sessizce null (takdir yine gider).
   const muhur = gecerliMuhurMu(govde.muhur) ? govde.muhur : null;
-  if (typeof hedefId !== "string" || hedefId === session.sub || mesaj.length < 2) {
+  // A9/A3 — medya yolları OPSİYONEL: yalnız kendi yüklediği (takdir/{sub}-...) yol
+  // kabul edilir (başkasının yolunu iliştiremesin). Geçersizse sessizce null.
+  const kendiYolu = (v: unknown): string | null =>
+    typeof v === "string" && v.startsWith(`takdir/${session.sub}-`) && v.length < 200 ? v : null;
+  const fotoPath = kendiYolu(govde.fotoPath);
+  const sesPath = kendiYolu(govde.sesPath);
+  // Metin en az 2 karakter OLMALI — MEĞER ki foto/ses eklenmişse (sesli/fotolu
+  // takdir metinsiz de anlamlıdır).
+  if (
+    typeof hedefId !== "string" ||
+    hedefId === session.sub ||
+    (mesaj.length < 2 && !fotoPath && !sesPath)
+  ) {
     return Response.json({ hata: tr.takdir.hata }, { status: 400 });
   }
 
@@ -77,6 +89,8 @@ export async function POST(req: Request) {
     to_id: hedefId,
     message: mesaj,
     kategori: muhur,
+    foto_path: fotoPath,
+    ses_path: sesPath,
   });
   if (error) {
     const bayat = await bayatOturumYaniti(error);

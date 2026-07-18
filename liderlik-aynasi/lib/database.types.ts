@@ -1358,31 +1358,37 @@ export type Database = {
       kudos: {
         Row: {
           created_at: string
+          foto_path: string | null
           from_id: string
           id: string
           is_hidden: boolean
           kategori: string | null
           message: string
+          ses_path: string | null
           tesekkur_edildi: boolean
           to_id: string
         }
         Insert: {
           created_at?: string
+          foto_path?: string | null
           from_id: string
           id?: string
           is_hidden?: boolean
           kategori?: string | null
           message: string
+          ses_path?: string | null
           tesekkur_edildi?: boolean
           to_id: string
         }
         Update: {
           created_at?: string
+          foto_path?: string | null
           from_id?: string
           id?: string
           is_hidden?: boolean
           kategori?: string | null
           message?: string
+          ses_path?: string | null
           tesekkur_edildi?: boolean
           to_id?: string
         }
