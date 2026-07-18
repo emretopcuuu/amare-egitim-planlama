@@ -21,6 +21,19 @@
   color-scheme: light;
 }
 
+/* Gece modu: mürekkep laciverti zemin + sıcak altın. @theme değişkenlerini
+   ezdiğimiz için bg-abanoz / text-fildisi gibi tüm yardımcı sınıflar otomatik
+   döner; tek tek renk override'ı gerekmez. Ag3D sahnesi kendi rengini
+   lib/tema üzerinden ayrıca günceller. */
+:root[data-tema="gece"] {
+  --color-abanoz: #0f1220;
+  --color-abanoz-2: #171b29;
+  --color-fildisi: #f1eee6;
+  --color-duman: #9d9a92;
+  --color-altin: #d8b45a;
+  color-scheme: dark;
+}
+
 html {
   scroll-behavior: smooth;
 }

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
+import { jsonLd } from "@/lib/jsonld";
 
 const outfit = Outfit({
   subsets: ["latin", "latin-ext"],
@@ -26,9 +27,19 @@ const imza = localFont({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://emretopcu.ai"),
-  title: "Emre Topçu | Liderlik, ekip ve sistem",
+  title: "Emre Topçu | Doğrudan satış lideri",
   description:
     "One Team Global Presidential Diamond lideri Emre Topçu. Ekipler kuran, liderler yetiştiren ve bu işi sistemle yapan bir doğrudan satış lideri.",
+  keywords: [
+    "Emre Topçu",
+    "doğrudan satış",
+    "One Team Global",
+    "Presidential Diamond",
+    "liderlik",
+    "İlk 72 Saat",
+  ],
+  authors: [{ name: "Emre Topçu", url: "https://emretopcu.ai" }],
+  creator: "Emre Topçu",
   openGraph: {
     title: "Emre Topçu | Ekleme değil, katlama.",
     description:
@@ -53,7 +64,21 @@ export default function RootLayout({
       lang="tr"
       className={`${outfit.variable} ${fraunces.variable} ${imza.variable}`}
     >
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        {/* Google + AI araçları için yapılandırılmış veri (Person/Book/FAQ). */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd()) }}
+        />
+        {/* Tema, boyanmadan önce ayarlanır (FOUC yok). Kayıtlı tercih yoksa
+            gece 21:00–07:00 arası varsayılan gece; kullanıcı seçince sabitlenir. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var k='emretopcu_tema',v=localStorage.getItem(k);if(v!=='gunduz'&&v!=='gece'){var h=new Date().getHours();v=(h>=21||h<7)?'gece':'gunduz';}document.documentElement.dataset.tema=v;}catch(e){}})();`,
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }
