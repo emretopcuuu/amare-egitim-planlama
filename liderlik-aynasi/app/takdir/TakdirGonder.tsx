@@ -93,6 +93,16 @@ export default function TakdirGonder({ kisiler }: { kisiler: Kisi[] }) {
         />
       </div>
 
+      {/* A2 — "çünkü" ipucu: çok kısa ya da gerekçesiz takdirde nazikçe bir cümle
+          daha iste (niteliği büyütür). Engellemez; sadece görünür bir davet. */}
+      {mesaj.trim().length > 0 &&
+        mesaj.trim().length < 40 &&
+        !/çünkü|cunku|için|icin|sayende|olduğun|oldugun/i.test(mesaj) && (
+          <p className="mt-2 rounded-xl bg-gold/[0.06] px-3 py-2 text-[0.78rem] leading-relaxed text-gold-light/90">
+            {t.cunkuIpucu}
+          </p>
+        )}
+
       <button
         onClick={gonder}
         disabled={gonderiliyor || !hedef || mesaj.trim().length < 2}
