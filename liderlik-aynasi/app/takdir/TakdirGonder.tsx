@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { titret, cal } from "@/lib/his";
 import MikrofonButonu from "@/components/MikrofonButonu";
+import { TAKDIR_MUHURLERI } from "@/lib/takdirMuhur";
 
 const t = tr.takdir;
 
@@ -14,6 +15,7 @@ export default function TakdirGonder({ kisiler }: { kisiler: Kisi[] }) {
   const router = useRouter();
   const [hedef, setHedef] = useState("");
   const [mesaj, setMesaj] = useState("");
+  const [muhur, setMuhur] = useState<string | null>(null);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [gitti, setGitti] = useState(false);
   const [hata, setHata] = useState(false);
@@ -23,25 +25,27 @@ export default function TakdirGonder({ kisiler }: { kisiler: Kisi[] }) {
     // OPTİMİSTİK UI: gönderim biter bitmez kullanıcıya "gitti" hissini hemen ver
     // (kamp wifi'ı yavaş — bekleme hissi olmasın). Dokunsal + işitsel onay eşlik
     // eder. Sunucu hata dönerse mesajı geri yükleyip uyarı göster.
-    const yedek = { hedef, mesaj };
+    const yedek = { hedef, mesaj, muhur };
     titret([12, 30, 12]);
     cal("kazanim");
     setHata(false);
     setGonderiliyor(true);
     setMesaj("");
     setHedef("");
+    setMuhur(null);
     setGitti(true);
     setTimeout(() => setGitti(false), 4000);
     try {
       const res = await fetch("/api/takdir", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ hedefId: yedek.hedef, mesaj: yedek.mesaj.trim() }),
+        body: JSON.stringify({ hedefId: yedek.hedef, mesaj: yedek.mesaj.trim(), muhur: yedek.muhur }),
       });
       if (!res.ok) {
         setGitti(false);
         setHedef(yedek.hedef);
         setMesaj(yedek.mesaj);
+        setMuhur(yedek.muhur);
         setHata(true);
         return;
       }
@@ -50,6 +54,7 @@ export default function TakdirGonder({ kisiler }: { kisiler: Kisi[] }) {
       setGitti(false);
       setHedef(yedek.hedef);
       setMesaj(yedek.mesaj);
+      setMuhur(yedek.muhur);
       setHata(true);
     } finally {
       setGonderiliyor(false);
@@ -102,6 +107,31 @@ export default function TakdirGonder({ kisiler }: { kisiler: Kisi[] }) {
             {t.cunkuIpucu}
           </p>
         )}
+
+      {/* A5 — Mühür (kategori) seçimi: opsiyonel. Seçilirse takdir o mührü taşır
+          ve alan kişinin profilinde birikir ("en çok neyde görülüyorum"). */}
+      <div className="mt-3">
+        <p className="text-sm font-medium text-slate-300">{t.muhurEtiket}</p>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {TAKDIR_MUHURLERI.map((m) => {
+            const secili = muhur === m.kod;
+            return (
+              <button
+                key={m.kod}
+                type="button"
+                onClick={() => setMuhur(secili ? null : m.kod)}
+                className={`rounded-full border px-3 py-1.5 text-sm font-medium transition-colors ${
+                  secili
+                    ? "border-gold bg-gold/20 text-gold-light"
+                    : "border-royal-light/30 bg-midnight-soft text-slate-300 hover:border-gold/50"
+                }`}
+              >
+                {m.emoji} {m.ad}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <button
         onClick={gonder}

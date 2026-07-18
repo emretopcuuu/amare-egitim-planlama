@@ -1361,6 +1361,7 @@ export type Database = {
           from_id: string
           id: string
           is_hidden: boolean
+          kategori: string | null
           message: string
           tesekkur_edildi: boolean
           to_id: string
@@ -1370,6 +1371,7 @@ export type Database = {
           from_id: string
           id?: string
           is_hidden?: boolean
+          kategori?: string | null
           message: string
           tesekkur_edildi?: boolean
           to_id: string
@@ -1379,6 +1381,7 @@ export type Database = {
           from_id?: string
           id?: string
           is_hidden?: boolean
+          kategori?: string | null
           message?: string
           tesekkur_edildi?: boolean
           to_id?: string

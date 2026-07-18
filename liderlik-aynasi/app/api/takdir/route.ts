@@ -3,6 +3,7 @@ import { bayatOturumYaniti } from "@/lib/auth/bayatOturum";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { katilimciyaBildir } from "@/lib/push";
 import { tr } from "@/lib/i18n/tr";
+import { gecerliMuhurMu } from "@/lib/takdirMuhur";
 
 const MESAJ_MAX = 280;
 
@@ -17,7 +18,7 @@ export async function POST(req: Request) {
     return Response.json({ hata: tr.takdir.hata }, { status: 403 });
   }
 
-  let govde: { hedefId?: unknown; mesaj?: unknown };
+  let govde: { hedefId?: unknown; mesaj?: unknown; muhur?: unknown };
   try {
     govde = await req.json();
   } catch {
@@ -26,6 +27,8 @@ export async function POST(req: Request) {
 
   const hedefId = govde.hedefId;
   const mesaj = typeof govde.mesaj === "string" ? govde.mesaj.trim().slice(0, MESAJ_MAX) : "";
+  // A5 — mühür (kategori) OPSİYONEL: geçersiz/boşsa sessizce null (takdir yine gider).
+  const muhur = gecerliMuhurMu(govde.muhur) ? govde.muhur : null;
   if (typeof hedefId !== "string" || hedefId === session.sub || mesaj.length < 2) {
     return Response.json({ hata: tr.takdir.hata }, { status: 400 });
   }
@@ -72,6 +75,7 @@ export async function POST(req: Request) {
     from_id: session.sub,
     to_id: hedefId,
     message: mesaj,
+    kategori: muhur,
   });
   if (error) {
     const bayat = await bayatOturumYaniti(error);

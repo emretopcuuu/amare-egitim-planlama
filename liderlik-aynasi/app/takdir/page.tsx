@@ -7,6 +7,7 @@ import TakdirGonder from "./TakdirGonder";
 import TesekkurButonu from "./TesekkurButonu";
 import Avatar from "@/components/Avatar";
 import GeriButonu from "@/components/GeriButonu";
+import { muhurBul } from "@/lib/takdirMuhur";
 
 export const metadata = { title: "Takdir Duvarı — Liderlik Aynası" };
 
@@ -28,12 +29,21 @@ export default async function TakdirPage() {
     db
       .from("kudos")
       .select(
-        "id, message, created_at, tesekkur_edildi, from_id, gonderen:participants!kudos_from_id_fkey(full_name, profil_foto_path)"
+        "id, message, created_at, tesekkur_edildi, kategori, from_id, gonderen:participants!kudos_from_id_fkey(full_name, profil_foto_path)"
       )
       .eq("to_id", session.sub)
       .eq("is_hidden", false)
       .order("created_at", { ascending: false }),
   ]);
+
+  // A5 — "insanlar beni en çok neyde görüyor": gelen takdirlerdeki mühürleri say,
+  // en sık olanı üstte bir rozetle göster (hiç mühür yoksa gizli).
+  const muhurSayac = new Map<string, number>();
+  for (const g of gelenler ?? []) {
+    if (g.kategori) muhurSayac.set(g.kategori, (muhurSayac.get(g.kategori) ?? 0) + 1);
+  }
+  const enCokMuhur =
+    [...muhurSayac.entries()].sort((a, b) => b[1] - a[1]).map(([kod]) => muhurBul(kod))[0] ?? null;
 
   // Gönderen avatarları için imzalı URL'ler
   const gonderenYollar = [
@@ -72,12 +82,25 @@ export default async function TakdirPage() {
 
         <section className="kart-cam rounded-3xl p-5">
           <h2 className="font-semibold text-gold-light">{t.gelenlerBaslik}</h2>
+          {enCokMuhur && (
+            <p className="mt-2 rounded-xl bg-gold/[0.08] px-3 py-2 text-sm font-medium text-gold-light">
+              {t.muhurOzet(enCokMuhur.emoji, enCokMuhur.ad)}
+            </p>
+          )}
           {(gelenler ?? []).length === 0 ? (
             <p className="mt-3 text-base leading-relaxed text-slate-300">{t.gelenYok}</p>
           ) : (
             <ul className="mt-3 space-y-3">
               {(gelenler ?? []).map((g) => (
                 <li key={g.id} className="rounded-2xl bg-white/[0.04] p-4">
+                  {(() => {
+                    const m = muhurBul(g.kategori);
+                    return m ? (
+                      <span className="mb-2 inline-block rounded-full bg-gold/15 px-2.5 py-0.5 text-xs font-medium text-gold-light">
+                        {m.emoji} {m.ad}
+                      </span>
+                    ) : null;
+                  })()}
                   <p className="text-base leading-relaxed text-slate-100">
                     “{g.message}”
                   </p>

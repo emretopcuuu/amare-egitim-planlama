@@ -655,6 +655,9 @@ export const tr = {
     mesajYer: "Örn: Bugünkü cesaretin bana ilham verdi.",
     cunkuIpucu:
       "İpucu: bir “çünkü” ekle — ne yaptığını gördün ve sana ne hissettirdi? Tek cümle bile yeter.",
+    muhurEtiket: "Bir mühür ekle (isteğe bağlı) — onu en çok neyde gördün?",
+    muhurOzet: (emoji: string, ad: string) =>
+      `İnsanlar sende en çok ${emoji} ${ad} görüyor.`,
     gonder: "Takdiri Gönder",
     gonderiliyor: "Gönderiliyor…",
     gitti: "Takdirin gönderildi 💛",
