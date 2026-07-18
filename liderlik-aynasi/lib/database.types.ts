@@ -1938,6 +1938,30 @@ export type Database = {
         }
         Relationships: []
       }
+      mozaik_parca: {
+        Row: {
+          created_at: string
+          foto_path: string
+          grup: string
+          id: string
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          foto_path: string
+          grup: string
+          id?: string
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          foto_path?: string
+          grup?: string
+          id?: string
+          participant_id?: string
+        }
+        Relationships: []
+      }
       missions: {
         Row: {
           ai_comment: string | null

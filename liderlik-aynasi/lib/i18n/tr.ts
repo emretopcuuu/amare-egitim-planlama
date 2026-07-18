@@ -699,6 +699,21 @@ export const tr = {
     geriDon: "← Ana sayfaya dön",
     hata: "Gönderilemedi. Tekrar dene.",
   },
+  // B3 — Grup foto-mozaiği
+  mozaik: {
+    baslik: "🧩 Grubunuzun Mozaiği",
+    altBaslik: "Herkes bir parça ekliyor — birlikte bir tablo oluyorsunuz.",
+    parcaEkle: "📷 Parçanı ekle",
+    parcamGuncelle: "📷 Parçanı değiştir",
+    yukleniyor: "Yükleniyor…",
+    eklendi: "Parçan mozaiğe eklendi 🧩",
+    bosDurum: "Henüz kimse parça eklemedi. İlk parça senden olsun.",
+    grupYok: "Grubun henüz belli değil.",
+    kapali: "Mozaik şu an açık değil.",
+    buyuk: "Foto çok büyük.",
+    hata: "Eklenemedi, tekrar dene.",
+    geriDon: "← Ana sayfaya dön",
+  },
   // Takım turnuvası: takımların kıvılcım sıralaması, kendi telefonunda canlı
   turnuva: {
     baslik: "🏆 Takım Turnuvası",
