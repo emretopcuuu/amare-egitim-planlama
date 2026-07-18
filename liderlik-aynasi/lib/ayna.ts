@@ -1103,6 +1103,23 @@ export async function gorevUret(
         Date.now() - new Date(o.issued_at).getTime() < 86_400_000
     ) ?? null;
 
+  // GECE PAKETİ (Gün 1 retrosu) — "insanı kendisiyle duygulandır" fragmanları.
+  // Hepsi yeniYonergeler dizisine eklenir (yalnız prompt katmanı; motor/DB'ye
+  // dokunmaz). Kod düşük olasılıkla seçer ki doz kaçmasın ve üst üste binmesin.
+  // D8 — geçmiş zirveyi geri oynat: en son taze zafer (sonZafer) YOKKEN, daha
+  // önce (bugünkü son görev DEĞİL) yüksek puan aldığı bir anı hatırlat.
+  const gecmisZirve = !sonZafer
+    ? onceki.find((o, i) => i > 0 && typeof o.ai_score === "number" && (o.ai_score ?? 0) >= 9) ?? null
+    : null;
+  // D9 — düşüşü onurlandır: yarım kalmış (expired) bir görev ya da "zorlanıyor".
+  const sonExpire = onceki.find((o) => o.status === "expired") ?? null;
+  // D6 — bedel kartı: kamp modunda, ara sıra, sıcak/mikro an değilken.
+  const bedelAni = mod === "kamp" && !microSprint && !sicakAn && Math.random() < 0.12;
+  // A1 — kimse unutulmasın (hafif): formdaki kişiyi sessiz birini görmeye çağır.
+  const gorAni = mod === "kamp" && streak >= 2 && !bedelAni && Math.random() < 0.12;
+  // B7 — sessiz üye köprüsü (hafif): bağ görevini yanına birini alarak yaptır.
+  const kopruAni = tur === "bag" && Math.random() < 0.3;
+
   // FAZ 2.1 — İSİMLİ EŞLEŞME ÇEKİRDEĞİ: tur "bag" ise gerçek bir hedef seç.
   // Persona-tamamlayıcı eşleşme (karsilasma.ts) tercih edilir; dengeleyici
   // (lib/gorevEslesme.ts) kota/geçmiş/admin-engeli kısıtlarını uygular.
@@ -1239,6 +1256,26 @@ export async function gorevUret(
       : "",
     sonKolektif
       ? `KOLEKTİF AN: Az önce tüm salon aynı anda "${sonKolektif.title}" senkron görevini yaptı. İSTERSEN kişisel görevi o ortak enerjinin doğal devamına bağla — zorunlu değil.`
+      : "",
+    // D6 — BEDEL KARTI: burada olmanın bedelini evde biri ödüyor.
+    bedelAni
+      ? "BEDEL KARTI (duygusal — dikkatli kur): Kişiye şunu sessizce hatırlat: bu kampta olmasının bir bedelini evde/işte birileri ödüyor (eş, çocuk, ekip, ortak). Görev, o kişiye ŞİMDİ tek bir içten mesaj ya da 20 saniyelik ses göndermesini istesin — sonra o mesajın METNİNİ değil, gönderirken içinden geçeni sana yazsın. Suçluluk YÜKLEME; minnet ve farkındalık tonu. Tek atomik eylem."
+      : "",
+    // D8 — ZİRVEYİ GERİ OYNAT: kendi zirveni başkasının başlangıcı yap.
+    gecmisZirve
+      ? `ZİRVEYİ GERİ OYNAT: Bu kişi daha önce "${gecmisZirve.title}" görevinde parladı. Bugünkü görev o anı tek cümleyle hatırlatsın ("şurada ne yaptığını gördüm") ve o gücü BU KEZ BİR BAŞKASINA yaşatmasını istesin — kendi zirvesini başka birinin başlangıcı yapsın. Övgü değil, aktarma görevi.`
+      : "",
+    // D9 — DÜŞÜŞÜ ONURLANDIR (şefkat fragmanlarıyla çakışmasın diye dar kapı).
+    (sonExpire || ruhHali === "zorlaniyor") && !naziklesir && !kayan
+      ? "DÜŞÜŞÜ ONURLANDIR: Kişi son dönemde zorlandı ya da bir görevi yarım bıraktı. Utanç YOK: zorlanmanın yolun kendisi olduğunu TEK cümleyle onurlandır, sonra AYNI kası daha küçük bir ağırlıkla yeniden dene. 'Geride kaldın' hissi ASLA verme; 'buradasın ve bu yeter' tonu."
+      : "",
+    // A1 (hafif) — KİMSE UNUTULMASIN: formdaki kişiyi sessiz birini görmeye çağır.
+    gorAni
+      ? "KİMSE UNUTULMASIN: Bu kişi formda ve fark edebilecek durumda. Görevin küçük bir parçası olarak, bugün SESSİZ/geri planda duran bir kamp arkadaşını fark etmesini ve ona uygulamadaki Takdir'den içten bir takdir göndermesini istesin. Kimi seçeceğine kendisi karar versin; kimseyi 'kimsesiz/yalnız' diye ETİKETLEME."
+      : "",
+    // B7 (hafif) — SESSİZ ÜYE KÖPRÜSÜ: bağ görevini yanına birini alarak yaptır.
+    kopruAni && tur === "bag"
+      ? "SESSİZ ÜYE KÖPRÜSÜ: Mümkünse görevi, kişinin yanına DAHA sessiz/çekingen birini alarak yapmasına yönlendir — 'tek başına değil, birini de içine kat' ruhu. Kimseyi küçük düşürmeden, davet tonuyla."
       : "",
     gununTemasi ? `GÜNÜN TEMASI (görevi mümkünse buna dik): ${gununTemasi}` : "",
     dersKavrami

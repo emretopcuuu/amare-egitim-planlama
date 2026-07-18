@@ -653,6 +653,8 @@ export const tr = {
     kimEtiket: "Kime?",
     kimSec: "Kişi seç…",
     mesajYer: "Örn: Bugünkü cesaretin bana ilham verdi.",
+    cunkuIpucu:
+      "İpucu: bir “çünkü” ekle — ne yaptığını gördün ve sana ne hissettirdi? Tek cümle bile yeter.",
     gonder: "Takdiri Gönder",
     gonderiliyor: "Gönderiliyor…",
     gitti: "Takdirin gönderildi 💛",
