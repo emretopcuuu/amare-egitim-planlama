@@ -61,6 +61,12 @@ export default async function MarketPage() {
         </div>
       </div>
 
+      {/* C8 — Kıvılcım mirası: harcanmayan bakiye kaybolmaz, yolculukta seninle
+          kalır (cüzdan tüm-zaman kazanç − harcama; faz değişince silinmez). */}
+      <p className="rounded-xl bg-gold/[0.05] px-3 py-2 text-center text-xs leading-relaxed text-slate-400">
+        💎 Harcamadığın kıvılcım kaybolmaz — kamptan sonra 90 günlük yolculuğunda seninle kalır.
+      </p>
+
       <MarketReyonlar
         cuzdan={bakiye.cuzdan}
         urunler={SATISTAKI_URUNLER}

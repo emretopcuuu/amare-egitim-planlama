@@ -1119,6 +1119,18 @@ export async function gorevUret(
   const gorAni = mod === "kamp" && streak >= 2 && !bedelAni && Math.random() < 0.12;
   // B7 — sessiz üye köprüsü (hafif): bağ görevini yanına birini alarak yaptır.
   const kopruAni = tur === "bag" && Math.random() < 0.3;
+  // B4 — ROL KARTI: bağ/buluşma görevinde kişiye NET bir rol ver (içe dönük de
+  // sahneye net girsin). Kişi+güne göre deterministik döner. Köprü anıyla
+  // çakışmasın diye yalnız o yokken.
+  const ROLLER = [
+    { ad: "Başlatan", tarif: "sohbeti sen aç, ilk soruyu sen sor" },
+    { ad: "Dinleyen", tarif: "bu sefer az konuş, çok dinle; karşındakini gerçekten duy" },
+    { ad: "Cesaretlendiren", tarif: "karşındakinin güçlü bir yanını fark et ve yüksek sesle söyle" },
+    { ad: "Özetleyen", tarif: "konuşmanın sonunda ikinizin ortak bir cümlesini bul ve söyle" },
+  ];
+  let rolKay = 0;
+  for (const ch of katilimci.id) rolKay = (rolKay * 31 + ch.charCodeAt(0)) % ROLLER.length;
+  const rolKarti = tur === "bag" && !kopruAni ? ROLLER[(gun + rolKay) % ROLLER.length] : null;
 
   // FAZ 2.1 — İSİMLİ EŞLEŞME ÇEKİRDEĞİ: tur "bag" ise gerçek bir hedef seç.
   // Persona-tamamlayıcı eşleşme (karsilasma.ts) tercih edilir; dengeleyici
@@ -1276,6 +1288,10 @@ export async function gorevUret(
     // B7 (hafif) — SESSİZ ÜYE KÖPRÜSÜ: bağ görevini yanına birini alarak yaptır.
     kopruAni && tur === "bag"
       ? "SESSİZ ÜYE KÖPRÜSÜ: Mümkünse görevi, kişinin yanına DAHA sessiz/çekingen birini alarak yapmasına yönlendir — 'tek başına değil, birini de içine kat' ruhu. Kimseyi küçük düşürmeden, davet tonuyla."
+      : "",
+    // B4 — ROL KARTI: buluşmada kişiye net bir rol ver (içe dönük de sahneye net girer).
+    rolKarti
+      ? `ROL KARTI: Bu buluşmada kişiye NET bir rol ver — rolü "${rolKarti.ad}". Görevin bir cümlesi bu rolü açıkça söylesin: ${rolKarti.tarif}. Rol, kişinin ne yapacağını netleştirir; belirsizlik bırakma ama rolü bir yük değil, bir davet gibi ver.`
       : "",
     gununTemasi ? `GÜNÜN TEMASI (görevi mümkünse buna dik): ${gununTemasi}` : "",
     dersKavrami
