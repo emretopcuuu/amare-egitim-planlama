@@ -52,8 +52,8 @@ export async function POST(req: Request) {
       db,
       kudos.from_id,
       "🙏 Teşekkür geldi",
-      `${session.ad.split(" ")[0]} sana teşekkür etti.`,
-      "/sahitlik"
+      `${session.ad.split(" ")[0]} takdirin için sana teşekkür etti.`,
+      "/takdir"
     );
   } catch {
     // push yapılandırılmamış olabilir — teşekkür yine de işaretlendi

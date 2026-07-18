@@ -18,7 +18,7 @@ export default async function TakdirPage() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
-  const [{ data: kisiler }, { data: gelenler }, { data: sahitRows }] = await Promise.all([
+  const [{ data: kisiler }, { data: gelenler }] = await Promise.all([
     db
       .from("participants")
       .select("id, full_name, team")
@@ -33,11 +33,7 @@ export default async function TakdirPage() {
       .eq("to_id", session.sub)
       .eq("is_hidden", false)
       .order("created_at", { ascending: false }),
-    // [Şahitlik geliştirme #10] Alkışa tepki — yalnız gerçek şahitlerden gelen
-    // kudos'a "Teşekkür et" gösterilsin.
-    db.from("soz_tanik").select("witness_id").eq("soz_sahibi", session.sub),
   ]);
-  const sahitIdSet = new Set((sahitRows ?? []).map((r) => r.witness_id));
 
   // Gönderen avatarları için imzalı URL'ler
   const gonderenYollar = [
@@ -100,16 +96,17 @@ export default async function TakdirPage() {
                         {t.kimden(g.gonderen?.full_name ?? "Bir arkadaşın")}
                       </p>
                     </div>
-                    {sahitIdSet.has(g.from_id) &&
-                      (g.tesekkur_edildi ? (
-                        <span className="shrink-0 text-xs font-medium text-emerald-300">
-                          🙏 Teşekkür edildi
-                        </span>
-                      ) : (
-                        <div className="shrink-0">
-                          <TesekkurButonu kudosId={g.id} />
-                        </div>
-                      ))}
+                    {/* A4 — Cevap hakkı: gelen HER takdir karşılıksız kalmasın;
+                        tek dokunuşluk teşekkür gönderene anında push olarak gider. */}
+                    {g.tesekkur_edildi ? (
+                      <span className="shrink-0 text-xs font-medium text-emerald-300">
+                        🙏 Teşekkür edildi
+                      </span>
+                    ) : (
+                      <div className="shrink-0">
+                        <TesekkurButonu kudosId={g.id} />
+                      </div>
+                    )}
                   </div>
                 </li>
               ))}
