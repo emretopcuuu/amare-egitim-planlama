@@ -4,6 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase/server";
 import { katilimciyaBildir } from "@/lib/push";
 import { tr } from "@/lib/i18n/tr";
 import { gecerliMuhurMu } from "@/lib/takdirMuhur";
+import { takdirCaprazBonus } from "@/lib/takdirCapraz";
 
 const MESAJ_MAX = 280;
 
@@ -82,6 +83,14 @@ export async function POST(req: Request) {
     if (bayat) return bayat;
     return Response.json({ hata: tr.takdir.hata }, { status: 500 });
   }
+  // A6 — Çapraz-takım çarpanı: takım dışına giden takdir gönderene bonus kıvılcım
+  // (kill-switch'li, günlük tavanlı). Best-effort — takdiri asla düşürmez.
+  try {
+    await takdirCaprazBonus(db, session.sub, hedefId);
+  } catch {
+    // sessizce geç
+  }
+
   // Takdir alan kişiye bildirim — geri gelmesi + "vav" için.
   try {
     await katilimciyaBildir(
