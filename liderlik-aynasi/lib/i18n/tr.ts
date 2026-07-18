@@ -667,6 +667,11 @@ export const tr = {
     zarfAc: "Zarfı aç",
     zarfOzet: (n: number) =>
       n === 1 ? "Bugün 1 kişi seni gördü." : `Bugün ${n} kişi seni gördü.`,
+    sessizKahramanPush: {
+      baslik: "🤫 Seni gördüm",
+      govde:
+        "Sen çok kişiyi gördün, çok takdir gönderdin. Belki kimse söylemedi ama ben gördüm — görmek de bir liderliktir. Teşekkür ederim.",
+    },
     gonder: "Takdiri Gönder",
     gonderiliyor: "Gönderiliyor…",
     gitti: "Takdirin gönderildi 💛",

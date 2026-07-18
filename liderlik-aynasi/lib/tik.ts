@@ -75,6 +75,7 @@ import { katilimciyaBildir, herkeseBildir, adminlereBildir } from "@/lib/push";
 import { radyoTik } from "@/lib/kampRadyosu";
 import { kapanisBrifTik } from "@/lib/kapanis";
 import { takdirZarfiTik } from "@/lib/takdirZarfi";
+import { sessizKahramanTik } from "@/lib/sessizKahraman";
 import { rekorTara, rekorlarAcikMi } from "@/lib/rekorlar";
 import { ciftSerisiDegerlendir, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
 import { hamleTaraOlustur, hamleHatirlat, hamleAcikMi } from "@/lib/hamle";
@@ -137,6 +138,7 @@ export async function tikCalistir(
     ufukToren: 0,
     orkestratorAtes: 0,
     takdirZarfi: 0,
+    sessizKahraman: 0,
   };
 
   // [FAZ1-B] Nabız damgası: tik her koştuğunda (AYNA pasif olsa bile) iz bırakır —
@@ -1959,6 +1961,16 @@ export async function tikCalistir(
   if (mod === "kamp") {
     try {
       ozet.takdirZarfi = await takdirZarfiTik(db, gunDk, bugun);
+    } catch {
+      // sessizce geç
+    }
+  }
+
+  // A7 — SESSİZ KAHRAMAN: 19:00'da çok gönderip az alan kişiyi doğrudan onurlandır
+  // (radyoya dokunmadan, isimli anons değil — kişiye özel). Kill-switch'li.
+  if (mod === "kamp") {
+    try {
+      ozet.sessizKahraman = await sessizKahramanTik(db, gunDk, bugun);
     } catch {
       // sessizce geç
     }
