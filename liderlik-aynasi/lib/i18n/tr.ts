@@ -658,6 +658,15 @@ export const tr = {
     muhurEtiket: "Bir mühür ekle (isteğe bağlı) — onu en çok neyde gördün?",
     muhurOzet: (emoji: string, ad: string) =>
       `İnsanlar sende en çok ${emoji} ${ad} görüyor.`,
+    zarfPush: {
+      baslik: "🌙 Günün zarfı hazır",
+      govde: (n: number) =>
+        n === 1 ? "Bugün 1 kişi seni gördü — zarfını aç." : `Bugün ${n} kişi seni gördü — zarfını aç.`,
+    },
+    zarfBaslik: "🌙 Bugünün Zarfı",
+    zarfAc: "Zarfı aç",
+    zarfOzet: (n: number) =>
+      n === 1 ? "Bugün 1 kişi seni gördü." : `Bugün ${n} kişi seni gördü.`,
     gonder: "Takdiri Gönder",
     gonderiliyor: "Gönderiliyor…",
     gitti: "Takdirin gönderildi 💛",

@@ -74,6 +74,7 @@ import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir, adminlereBildir } from "@/lib/push";
 import { radyoTik } from "@/lib/kampRadyosu";
 import { kapanisBrifTik } from "@/lib/kapanis";
+import { takdirZarfiTik } from "@/lib/takdirZarfi";
 import { rekorTara, rekorlarAcikMi } from "@/lib/rekorlar";
 import { ciftSerisiDegerlendir, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
 import { hamleTaraOlustur, hamleHatirlat, hamleAcikMi } from "@/lib/hamle";
@@ -135,6 +136,7 @@ export async function tikCalistir(
     checkinCipa: 0,
     ufukToren: 0,
     orkestratorAtes: 0,
+    takdirZarfi: 0,
   };
 
   // [FAZ1-B] Nabız damgası: tik her koştuğunda (AYNA pasif olsa bile) iz bırakır —
@@ -1951,6 +1953,16 @@ export async function tikCalistir(
   // 11:20 güncel (değerlendirme sonrası) sürüm. Üretim ~20 dk önce; teslimde
   // admin'e push. Kendi hatasını yutar, tik'i asla düşürmez.
   if (mod === "kamp") await kapanisBrifTik(db, gun, gunDk, bugun);
+
+  // A8 — AKŞAM TAKDİR ZARFI: 22:00'de o gün takdir alan herkese "zarfını aç"
+  // push'u (gün başına tek sefer). Kendi hatasını yutar, tik'i düşürmez.
+  if (mod === "kamp") {
+    try {
+      ozet.takdirZarfi = await takdirZarfiTik(db, gunDk, bugun);
+    } catch {
+      // sessizce geç
+    }
+  }
 
   // G3 — REKORLAR taraması: kamp modunda, bayrak açıkken mevcut verilerden
   // rekorları hesaplar, kırılanı herkese duyurur. Kendi hatasını yutar.

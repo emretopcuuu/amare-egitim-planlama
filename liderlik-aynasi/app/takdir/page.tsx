@@ -3,8 +3,10 @@ import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tr } from "@/lib/i18n/tr";
+import { Suspense } from "react";
 import TakdirGonder from "./TakdirGonder";
 import TesekkurButonu from "./TesekkurButonu";
+import ZarfAcilis from "./ZarfAcilis";
 import Avatar from "@/components/Avatar";
 import GeriButonu from "@/components/GeriButonu";
 import { muhurBul } from "@/lib/takdirMuhur";
@@ -45,6 +47,14 @@ export default async function TakdirPage() {
   const enCokMuhur =
     [...muhurSayac.entries()].sort((a, b) => b[1] - a[1]).map(([kod]) => muhurBul(kod))[0] ?? null;
 
+  // A8 — bugün (Istanbul) gelen takdir sayısı: akşam zarfı için.
+  const bugunIso = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(
+    new Date()
+  );
+  const bugunGelen = (gelenler ?? []).filter(
+    (g) => g.created_at >= `${bugunIso}T00:00:00+03:00`
+  ).length;
+
   // Gönderen avatarları için imzalı URL'ler
   const gonderenYollar = [
     ...new Set(
@@ -71,6 +81,10 @@ export default async function TakdirPage() {
           </h1>
           <p className="mt-2 text-base leading-relaxed text-slate-300">{t.altBaslik}</p>
         </header>
+
+        <Suspense fallback={null}>
+          <ZarfAcilis sayi={bugunGelen} />
+        </Suspense>
 
         <TakdirGonder
           kisiler={(kisiler ?? []).map((k) => ({
