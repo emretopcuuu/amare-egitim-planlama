@@ -1,10 +1,26 @@
 import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const outfit = Outfit({
   subsets: ["latin", "latin-ext"],
   variable: "--font-outfit",
+  display: "swap",
+});
+
+// Lüks serif — başlıklar ve "beyan" cümleleri (Fraunces 600, TR subset'li).
+const fraunces = localFont({
+  src: "./fonts/fraunces-600.woff2",
+  weight: "600",
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
+// El yazısı — imza (gerçek imza SVG'siyle değiştirilebilir).
+const imza = localFont({
+  src: "./fonts/greatvibes.woff2",
+  variable: "--font-greatvibes",
   display: "swap",
 });
 
@@ -14,13 +30,18 @@ export const metadata: Metadata = {
   description:
     "One Team Global Presidential Diamond lideri Emre Topçu. Ekipler kuran, liderler yetiştiren ve bu işi sistemle yapan bir doğrudan satış lideri.",
   openGraph: {
-    title: "Emre Topçu | Liderlik, ekip ve sistem",
+    title: "Emre Topçu | Ekleme değil, katlama.",
     description:
       "Ekipler kuran, liderler yetiştiren ve bu işi sistemle yapan bir doğrudan satış lideri.",
     url: "https://emretopcu.ai",
     siteName: "Emre Topçu",
     locale: "tr_TR",
     type: "website",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Emre Topçu — Ekleme değil, katlama." }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    images: ["/og.png"],
   },
 };
 
@@ -28,7 +49,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="tr" className={outfit.variable}>
+    <html
+      lang="tr"
+      className={`${outfit.variable} ${fraunces.variable} ${imza.variable}`}
+    >
       <body className="antialiased">{children}</body>
     </html>
   );
