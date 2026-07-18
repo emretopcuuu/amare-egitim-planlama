@@ -156,6 +156,17 @@ export default function EkranGosterisi() {
   const tourRef = useRef(0);
   const slaytSayacRef = useRef(0);
   const sonMozaikRef = useRef<number | null>(null);
+
+  // Manuel slayt geçişi (sağ/sol oklar): slaytı ilerlet + otomatik turu senkronla
+  // (tourRef) ki bir sonraki otomatik geçiş buradan devam etsin, geri zıplamasın.
+  const gecis = (delta: number) => {
+    setSlayt((s) => {
+      const y = (s + delta + SLAYT_SAYISI) % SLAYT_SAYISI;
+      tourRef.current = y;
+      slaytSayacRef.current += 1;
+      return y;
+    });
+  };
   const [aktifBlok, setAktifBlok] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1150,13 +1161,36 @@ export default function EkranGosterisi() {
         — {["AYNA gözlemliyor", "AYNA görüyor", "AYNA dinliyor", "AYNA hatırlıyor", "AYNA yönetiyor"][slayt % 5]} —
       </p>
 
-      {/* Slayt göstergesi: tempo çubuğu + nokta + N/toplam */}
+      {/* Manuel geçiş — büyük sağ/sol oklar (kenarlarda, dikey ortada) */}
+      <button
+        onClick={() => gecis(-1)}
+        aria-label="Önceki slayt"
+        className="fixed left-4 top-1/2 z-40 -translate-y-1/2 rounded-full border border-white/15 bg-[#04101c]/70 p-4 text-4xl leading-none text-slate-200 shadow-2xl backdrop-blur transition-colors hover:bg-gold/25 hover:text-gold-light"
+      >
+        ‹
+      </button>
+      <button
+        onClick={() => gecis(1)}
+        aria-label="Sonraki slayt"
+        className="fixed right-4 top-1/2 z-40 -translate-y-1/2 rounded-full border border-white/15 bg-[#04101c]/70 p-4 text-4xl leading-none text-slate-200 shadow-2xl backdrop-blur transition-colors hover:bg-gold/25 hover:text-gold-light"
+      >
+        ›
+      </button>
+
+      {/* Slayt göstergesi: tempo çubuğu + nokta + N/toplam + geçiş okları */}
       <footer className="relative z-10 mt-3">
         <div className="mx-auto mb-3 h-1 w-64 overflow-hidden rounded-full bg-white/10">
           {/* key={slayt} → her slaytta baştan dolar (kalan süre görünür) */}
           <div key={slayt} className="ekran-ilerle h-full rounded-full bg-gold/70" />
         </div>
         <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => gecis(-1)}
+            aria-label="Önceki slayt"
+            className="mr-1 rounded-lg px-2 text-2xl leading-none text-slate-400 transition-colors hover:text-gold-light"
+          >
+            ‹
+          </button>
           {Array.from({ length: SLAYT_SAYISI }, (_, i) => (
             <button
               key={i}
@@ -1167,6 +1201,13 @@ export default function EkranGosterisi() {
               }`}
             />
           ))}
+          <button
+            onClick={() => gecis(1)}
+            aria-label="Sonraki slayt"
+            className="ml-1 rounded-lg px-2 text-2xl leading-none text-slate-400 transition-colors hover:text-gold-light"
+          >
+            ›
+          </button>
           <span className="ml-3 font-mono text-base text-slate-400">
             {slayt + 1}/{SLAYT_SAYISI}
           </span>
