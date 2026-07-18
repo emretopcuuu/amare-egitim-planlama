@@ -921,17 +921,38 @@ export default function EkranGosterisi() {
                   </p>
                 </div>
               ) : (
-                <div className="mt-6 grid grid-cols-3 gap-4 lg:grid-cols-4">
-                  {veri.anilar.map((url, i) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={i}
-                      src={url}
-                      alt=""
-                      className="aspect-square w-full rounded-2xl object-cover ring-1 ring-white/10"
-                    />
-                  ))}
-                </div>
+                // Sürekli akan iki fotoğraf şeridi (ters yönde). Her şerit içeriği
+                // İKİ kez basar → -50% kayınca dikişsiz döngü; tüm anılar geçer.
+                (() => {
+                  const orta = Math.ceil(veri.anilar.length / 2);
+                  const ust = veri.anilar.slice(0, orta);
+                  const alt = veri.anilar.slice(orta).length ? veri.anilar.slice(orta) : ust;
+                  const sure = (n: number) => `${Math.max(24, n * 6)}s`;
+                  const Serit = ({ liste, yon }: { liste: string[]; yon: "sol" | "sag" }) => (
+                    <div className="overflow-hidden">
+                      <div
+                        className={`ekran-serit ${yon === "sol" ? "ekran-serit-sol" : "ekran-serit-sag"} gap-4`}
+                        style={{ ["--sure" as string]: sure(liste.length) }}
+                      >
+                        {[...liste, ...liste].map((url, i) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            key={i}
+                            src={url}
+                            alt=""
+                            className="h-64 w-64 shrink-0 rounded-2xl object-cover ring-1 ring-white/10"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                  return (
+                    <div className="mt-6 flex flex-col gap-4">
+                      <Serit liste={ust} yon="sol" />
+                      <Serit liste={alt} yon="sag" />
+                    </div>
+                  );
+                })()
               )}
             </section>
 

@@ -164,7 +164,7 @@ export async function GET() {
         .select("path")
         .eq("status", "approved")
         .order("created_at", { ascending: false })
-        .limit(12),
+        .limit(40),
       // #8: SADECE yorum metni + skor seçilir — rater_id/target_id ASLA çekilmez
       // ki kimlik bu uçtan (herkese açık) sızamasın. Yüksek puan + gizlenmemiş.
       db
