@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import Link from "next/link";
 import {
   AnimatePresence,
   animate,
@@ -19,19 +20,29 @@ import {
   ArrowUp,
   ArrowUpRight,
   CaretDown,
+  CheckCircle,
+  Copy,
   InstagramLogo,
   List,
+  Moon,
   PlayCircle,
+  ShareNetwork,
+  Sun,
   WhatsappLogo,
   X,
   YoutubeLogo,
 } from "@phosphor-icons/react";
+import { useTema } from "@/lib/tema";
+import { sozKartiPaylas } from "@/lib/sozKart";
 import {
   INSTAGRAM_URL,
   LIDER_PROFIL_URL,
   TRIBUTE_VIDEO_ID,
   WHATSAPP_URL,
   YOUTUBE_KANAL_URL,
+  whatsappUrl,
+  kitapHaberUrl,
+  bultenMailto,
   type Dil,
   type Icerik,
 } from "@/lib/icerik";
@@ -134,6 +145,22 @@ function Imza({ className = "" }: { className?: string }) {
     >
       Emre Topçu
     </motion.span>
+  );
+}
+
+/* Doğrulama rozeti — resmî One Team Global lider profiline giden güven işareti. */
+function DogrulamaRozeti({ className = "" }: { className?: string }) {
+  const c = useC();
+  return (
+    <a
+      href={LIDER_PROFIL_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`inline-flex items-center gap-1.5 rounded-full border border-altin/30 bg-altin/5 px-3 py-1 text-xs font-medium text-altin transition-colors hover:bg-altin/10 ${className}`}
+    >
+      <CheckCircle size={14} weight="fill" />
+      {c.ui.dogrulamaKisa}
+    </a>
   );
 }
 
@@ -382,6 +409,36 @@ function KatlamaSim() {
 
 // 3D sahne yalnızca tarayıcıda yüklenir (WebGL, SSR'de çalışmaz).
 const Ag3D = dynamic(() => import("./Ag3D"), { ssr: false });
+const Dunya = dynamic(() => import("./Dunya"), { ssr: false });
+
+/* "4 kıta, 38 ülke" — İstanbul merkezli erişim küresi. */
+function DunyaBolum() {
+  const c = useC();
+  return (
+    <section className="relative overflow-hidden py-20 md:py-28">
+      <div className="mx-auto max-w-5xl px-6 text-center">
+        <H2Perde className="mx-auto max-w-[16ch] font-lux text-3xl font-semibold tracking-tight md:text-5xl">
+          {c.dunya.baslik}
+        </H2Perde>
+        <motion.p
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, amount: 0.6 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: GECIS }}
+          className="mx-auto mt-5 max-w-[52ch] text-duman"
+        >
+          {c.dunya.altMetin}
+        </motion.p>
+        <div className="relative mt-6 h-[360px] md:h-[520px]">
+          <Dunya />
+          <span className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 text-xs font-medium tracking-[0.15em] text-altin uppercase">
+            {c.dunya.merkez}
+          </span>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 /* Dil değiştirici: TR / EN arasında geçiş (statik route'lara link). */
 function DilSecici() {
@@ -408,6 +465,31 @@ function DilSecici() {
         EN
       </a>
     </div>
+  );
+}
+
+/* Gündüz/gece geçişi — tek dokunuşla mürekkep laciverti sinema salonu. */
+function TemaSecici() {
+  const dil = useDil();
+  const [tema, cevir] = useTema();
+  const gece = tema === "gece";
+  return (
+    <button
+      type="button"
+      onClick={cevir}
+      aria-label={
+        gece
+          ? dil === "tr"
+            ? "Gündüz moduna geç"
+            : "Switch to light mode"
+          : dil === "tr"
+            ? "Gece moduna geç"
+            : "Switch to dark mode"
+      }
+      className="inline-flex h-9 w-9 items-center justify-center rounded-full text-duman transition-colors hover:bg-altin/10 hover:text-altin"
+    >
+      {gece ? <Sun size={18} weight="fill" /> : <Moon size={18} weight="fill" />}
+    </button>
   );
 }
 
@@ -522,10 +604,11 @@ function Nav() {
               );
             })}
           </nav>
-          <div className="flex items-center gap-3 md:gap-4">
+          <div className="flex items-center gap-2 md:gap-3">
+            <TemaSecici />
             <DilSecici />
             <a
-              href={WHATSAPP_URL}
+              href={whatsappUrl("menü")}
               target="_blank"
               rel="noopener noreferrer"
               className="hidden items-center gap-1.5 rounded-full border border-altin/40 px-4 py-1.5 text-sm text-altin transition-colors hover:bg-altin hover:text-fildisi active:scale-[0.98] sm:inline-flex"
@@ -561,14 +644,17 @@ function Nav() {
               <span className="text-base font-semibold tracking-tight">
                 Emre Topçu
               </span>
-              <button
-                type="button"
-                onClick={() => setMenuAcik(false)}
-                aria-label={c.ui.menuKapat}
-                className="-mr-1 inline-flex h-10 w-10 items-center justify-center rounded-full text-fildisi transition-colors hover:bg-black/5"
-              >
-                <X size={22} weight="bold" />
-              </button>
+              <div className="-mr-1 flex items-center gap-1">
+                <TemaSecici />
+                <button
+                  type="button"
+                  onClick={() => setMenuAcik(false)}
+                  aria-label={c.ui.menuKapat}
+                  className="inline-flex h-10 w-10 items-center justify-center rounded-full text-fildisi transition-colors hover:bg-black/5"
+                >
+                  <X size={22} weight="bold" />
+                </button>
+              </div>
             </div>
             <nav className="flex flex-1 flex-col justify-center gap-2 px-6">
               {c.nav.map((link, i) => (
@@ -587,7 +673,7 @@ function Nav() {
             </nav>
             <div className="px-6 pb-10">
               <a
-                href={WHATSAPP_URL}
+                href={whatsappUrl("menü")}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setMenuAcik(false)}
@@ -683,7 +769,7 @@ function Hero() {
           >
             <Manyetik>
               <a
-                href={WHATSAPP_URL}
+                href={whatsappUrl("hero")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-full bg-altin px-7 py-3.5 font-medium text-fildisi transition-transform active:scale-[0.98]"
@@ -778,6 +864,7 @@ function Manifesto() {
             Emre Topçu
           </p>
           <p className="text-sm text-duman">{c.hakkimda.unvan}</p>
+          <DogrulamaRozeti className="mt-3" />
           <Imza className="mt-3 text-3xl" />
         </motion.div>
 
@@ -830,7 +917,7 @@ function Manifesto() {
 function Teori() {
   const c = useC();
   return (
-    <section className="py-24 md:py-40">
+    <section id="teori" className="scroll-mt-24 py-24 md:py-40">
       <div className="mx-auto max-w-4xl px-6 text-center">
         <motion.p
           initial={{ opacity: 0, y: 16 }}
@@ -1243,7 +1330,7 @@ function Yolculuk() {
 function Rakamlar() {
   const c = useC();
   return (
-    <section className="relative scroll-mt-24 overflow-hidden py-24 md:py-32">
+    <section id="rakamlar" className="relative scroll-mt-24 overflow-hidden py-24 md:py-32">
       {/* Rakamların yüzü: arka planda soluk portre silüeti */}
       <Image
         aria-hidden
@@ -1328,8 +1415,64 @@ function Rakamlar() {
             </div>
           ))}
         </div>
+        <KariyerKaydirici />
       </div>
     </section>
+  );
+}
+
+/* Kariyer zaman kaydırıcısı: 2013'ten bugüne gerçek kilometre taşları
+   (uydurma ağ sayısı yok — yalnız doğrulanmış kariyer basamakları). */
+function KariyerKaydirici() {
+  const c = useC();
+  const veri = c.kariyerZaman;
+  const [i, setI] = useState(veri.length - 1);
+  const akt = veri[i];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.4 }}
+      transition={{ duration: 0.7, ease: GECIS }}
+      className="mt-16 rounded-3xl border border-altin/15 bg-abanoz-2/50 p-8 backdrop-blur-sm md:p-10"
+    >
+      <p className="text-xs font-medium tracking-[0.2em] text-altin uppercase">
+        {c.ui.kariyerKaydirBaslik}
+      </p>
+      <div className="mt-6 flex items-baseline gap-3">
+        <span className="font-lux text-5xl leading-none text-fildisi md:text-7xl">
+          {akt.yil}
+        </span>
+        {akt.ay && <span className="text-lg text-duman">{akt.ay}</span>}
+      </div>
+      <p className="mt-3 font-lux text-2xl text-altin md:text-3xl">{akt.rutbe}</p>
+      <p className="mt-2 max-w-[46ch] text-duman">{akt.not}</p>
+      <input
+        type="range"
+        min={0}
+        max={veri.length - 1}
+        step={1}
+        value={i}
+        onChange={(e) => setI(Number(e.target.value))}
+        aria-label={c.ui.kariyerKaydirBaslik}
+        className="mt-8 w-full cursor-pointer accent-altin"
+      />
+      <div className="mt-2 flex justify-between">
+        {veri.map((v, k) => (
+          <button
+            key={`${v.yil}-${k}`}
+            type="button"
+            onClick={() => setI(k)}
+            aria-label={`${v.yil} ${v.rutbe}`}
+            className={`text-xs tabular-nums transition-colors ${
+              k === i ? "font-semibold text-altin" : "text-duman hover:text-fildisi"
+            }`}
+          >
+            {v.yil}
+          </button>
+        ))}
+      </div>
+    </motion.div>
   );
 }
 
@@ -1338,7 +1481,7 @@ function Sozler() {
   const c = useC();
   const [acik, setAcik] = useState<number | null>(null);
   return (
-    <section className="relative overflow-hidden py-24 md:py-40">
+    <section id="sozler" className="relative scroll-mt-24 overflow-hidden py-24 md:py-40">
       {/* Filigran tırnak */}
       <span
         aria-hidden
@@ -1398,6 +1541,16 @@ function Sozler() {
                       </motion.span>
                     )}
                   </AnimatePresence>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => sozKartiPaylas(s.soz)}
+                  className={`mt-4 inline-flex items-center gap-1.5 text-xs font-medium text-duman transition-colors hover:text-altin ${
+                    i % 2 === 1 ? "flex-row-reverse" : ""
+                  }`}
+                >
+                  <ShareNetwork size={15} weight="bold" />
+                  {c.ui.sozKartPaylas}
                 </button>
               </motion.blockquote>
             );
@@ -1475,124 +1628,6 @@ function Videolar() {
         <H2Perde className="font-lux text-3xl font-semibold tracking-tight md:text-5xl">
           {c.videolar.baslik}
         </H2Perde>
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.6, delay: 0.1, ease: GECIS }}
-          className="mt-4 max-w-[54ch] text-duman"
-        >
-          {c.videolar.altMetin}
-        </motion.p>
-        <div className="mt-14 grid gap-6 md:grid-cols-2">
-          {c.videolar.liste.map((v, i) => (
-            <motion.div
-              key={v.id}
-              initial={{ opacity: 0, y: 28 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.2 }}
-              transition={{ duration: 0.6, delay: (i % 2) * 0.08, ease: GECIS }}
-            >
-              <VideoKart v={v} />
-            </motion.div>
-          ))}
-        </div>
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.6, ease: GECIS }}
-          className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-2 text-duman"
-        >
-          <span>{c.videolar.kanalNot}</span>
-          <a
-            href={YOUTUBE_KANAL_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 font-medium text-altin underline-offset-2 hover:underline"
-          >
-            {c.videolar.kanalEtiket}
-            <ArrowUpRight size={16} weight="bold" />
-          </a>
-        </motion.div>
-      </div>
-    </section>
-  );
-}
-
-/* Genel video kartı: kalıcı thumbnail (Vimeo/YouTube), tıklanınca oynatıcı.
-   Facade deseni: yüklenene kadar sadece görsel — performans + gizlilik. */
-function VideoKart({
-  v,
-}: {
-  v: Icerik["videolar"]["liste"][number];
-}) {
-  const c = useC();
-  const [oynat, setOynat] = useState(false);
-  const src =
-    v.platform === "vimeo"
-      ? `https://player.vimeo.com/video/${v.id}?autoplay=1&title=0&byline=0&portrait=0`
-      : `https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0`;
-  return (
-    <article className="group flex flex-col overflow-hidden rounded-2xl border border-black/10 bg-abanoz-2 transition-colors hover:border-altin/40">
-      <div className="relative aspect-video w-full overflow-hidden">
-        {oynat ? (
-          <iframe
-            className="absolute inset-0 h-full w-full"
-            src={src}
-            title={v.baslik}
-            allow="autoplay; fullscreen; picture-in-picture"
-            allowFullScreen
-          />
-        ) : (
-          <button
-            type="button"
-            onClick={() => setOynat(true)}
-            className="absolute inset-0 h-full w-full cursor-pointer"
-            aria-label={`${v.baslik} — ${c.ui.izle}`}
-          >
-            <Image
-              src={v.gorsel}
-              alt={v.baslik}
-              width={800}
-              height={450}
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent" />
-            <span className="absolute right-3 bottom-3 rounded-full bg-black/60 px-2.5 py-1 text-xs font-medium text-white backdrop-blur">
-              {v.sure}
-            </span>
-            <span className="absolute top-1/2 left-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-altin/90 text-fildisi backdrop-blur transition-transform group-hover:scale-110">
-              <PlayCircle size={30} weight="fill" />
-            </span>
-          </button>
-        )}
-      </div>
-      <div className="flex flex-1 flex-col p-6">
-        <h3 className="text-xl font-semibold tracking-tight text-fildisi">
-          {v.baslik}
-        </h3>
-        <p className="mt-2 leading-relaxed text-duman">{v.ozet}</p>
-      </div>
-    </article>
-  );
-}
-
-/* Kamera karşısında — gerçek eğitim videoları (Vimeo/YouTube). */
-function Videolar() {
-  const c = useC();
-  return (
-    <section id="videolar" className="scroll-mt-24 py-24 md:py-32">
-      <div className="mx-auto max-w-6xl px-6">
-        <motion.h2
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, amount: 0.5 }}
-          transition={{ duration: 0.7, ease: GECIS }}
-          className="text-3xl font-semibold tracking-tight md:text-5xl"
-        >
-          {c.videolar.baslik}
-        </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -1912,7 +1947,7 @@ function Iletisim() {
         >
           <Manyetik>
             <a
-              href={WHATSAPP_URL}
+              href={whatsappUrl("iletişim")}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 rounded-full bg-altin px-8 py-4 text-lg font-medium text-fildisi transition-transform active:scale-[0.98]"
@@ -1942,6 +1977,48 @@ function Iletisim() {
         >
           {c.ui.whatsappNot}
         </motion.p>
+      </div>
+    </section>
+  );
+}
+
+/* Kitap ilgi listesi + Pazartesi Notları bülteni (backend yok; WhatsApp/e-posta). */
+function KitapBulten() {
+  const c = useC();
+  const dil = useDil();
+  return (
+    <section className="border-t border-black/5 bg-abanoz py-16 md:py-24">
+      <div className="mx-auto grid max-w-5xl gap-6 px-6 md:grid-cols-2">
+        <div className="rounded-3xl border border-altin/20 bg-abanoz-2/60 p-8">
+          <p className="text-xs font-medium tracking-[0.2em] text-altin uppercase">
+            {c.kitap.etiket}
+          </p>
+          <h3 className="mt-4 font-lux text-2xl font-semibold tracking-tight md:text-3xl">
+            {c.kitap.baslik}
+          </h3>
+          <p className="mt-3 text-duman">{c.kitap.metin}</p>
+          <a
+            href={kitapHaberUrl(dil)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 inline-flex items-center gap-2 rounded-full border border-altin/40 px-5 py-2.5 text-sm font-medium text-altin transition-colors hover:bg-altin hover:text-fildisi active:scale-[0.98]"
+          >
+            {c.kitap.dugme}
+            <ArrowUpRight size={16} weight="bold" />
+          </a>
+        </div>
+        <div className="rounded-3xl border border-altin/20 bg-abanoz-2/60 p-8">
+          <h3 className="font-lux text-2xl font-semibold tracking-tight md:text-3xl">
+            {c.bulten.baslik}
+          </h3>
+          <p className="mt-3 text-duman">{c.bulten.metin}</p>
+          <a
+            href={bultenMailto(c.bulten.konu, c.bulten.govde)}
+            className="mt-6 inline-flex items-center gap-2 rounded-full bg-altin px-5 py-2.5 text-sm font-medium text-fildisi active:scale-[0.98]"
+          >
+            {c.bulten.dugme}
+          </a>
+        </div>
       </div>
     </section>
   );
@@ -1988,6 +2065,15 @@ function Footer() {
             <YoutubeLogo size={22} weight="fill" />
           </a>
         </div>
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm text-duman">
+          <Link href="/dusunuyorum" className="transition-colors hover:text-altin">
+            {c.ui.dusunuyorumLink}
+          </Link>
+          <span className="text-black/15">·</span>
+          <Link href="/medya" className="transition-colors hover:text-altin">
+            {c.ui.medyaLink}
+          </Link>
+        </div>
         <p className="text-sm text-duman">© 2026 Emre Topçu</p>
       </div>
     </footer>
@@ -2017,6 +2103,80 @@ function BasaDon() {
         >
           <ArrowUp size={20} weight="bold" />
         </motion.button>
+      )}
+    </AnimatePresence>
+  );
+}
+
+/* İlk 72 saat sayacı — ilk ziyaret anını hatırlar; kitabın teorisine sessiz
+   bir gönderme ("motivasyonun raf ömrü 72 saat"). Kapatılınca bir daha çıkmaz. */
+const ILK_ZIYARET_ANAHTAR = "emretopcu_ilk";
+const SAAT_KAPALI_ANAHTAR = "emretopcu_saat_kapali";
+function SaatSayaci() {
+  const c = useC();
+  const { scrollY } = useScroll();
+  const [gorunur, setGorunur] = useState(false);
+  const [kapali, setKapali] = useState(true);
+  const [saat, setSaat] = useState(1);
+  const [doldu, setDoldu] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(SAAT_KAPALI_ANAHTAR)) return;
+      const simdi = Date.now();
+      let ilk = localStorage.getItem(ILK_ZIYARET_ANAHTAR);
+      if (!ilk) {
+        localStorage.setItem(ILK_ZIYARET_ANAHTAR, String(simdi));
+        ilk = String(simdi);
+      }
+      const gecen = Math.floor((simdi - Number(ilk)) / 3600000);
+      if (gecen >= 72) setDoldu(true);
+      else setSaat(Math.min(72, gecen + 1));
+      setKapali(false);
+    } catch {
+      /* yoksay */
+    }
+  }, []);
+
+  useMotionValueEvent(scrollY, "change", (v) => {
+    setGorunur(
+      v > (typeof window !== "undefined" ? window.innerHeight * 0.8 : 700),
+    );
+  });
+
+  if (kapali) return null;
+  const metin = doldu
+    ? c.ui.saatDoldu
+    : c.ui.saatIcinde.replace("{s}", String(saat));
+
+  return (
+    <AnimatePresence>
+      {gorunur && (
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 12 }}
+          transition={{ duration: 0.3, ease: GECIS }}
+          className="fixed bottom-5 left-5 z-40 flex max-w-[15.5rem] items-center gap-2.5 rounded-full border border-altin/25 bg-abanoz-2/90 py-2 pr-2 pl-3.5 text-xs shadow-lg backdrop-blur"
+        >
+          <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-altin" />
+          <span className="leading-snug text-fildisi/80">{metin}</span>
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                localStorage.setItem(SAAT_KAPALI_ANAHTAR, "1");
+              } catch {
+                /* yoksay */
+              }
+              setKapali(true);
+            }}
+            aria-label={c.ui.menuKapat}
+            className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-duman hover:bg-black/5 hover:text-fildisi"
+          >
+            <X size={12} weight="bold" />
+          </button>
+        </motion.div>
       )}
     </AnimatePresence>
   );
@@ -2097,6 +2257,112 @@ function DilSeridi() {
   );
 }
 
+/* Kitap gibi fasıl rayı — sol kenarda aktif bölüm + derin link kopyala.
+   Yalnız geniş ekranda; scroll-spy ile aktif fasılı büyütür. */
+const FASIL_IDLERI = [
+  "manifesto",
+  "teori",
+  "rakamlar",
+  "yolculuk",
+  "gercekler",
+  "sozler",
+  "konusmalar",
+  "videolar",
+  "iletisim",
+] as const;
+
+function useAktifFasil() {
+  const [aktif, setAktif] = useState(0);
+  useEffect(() => {
+    const gozlemci = new IntersectionObserver(
+      (girisler) => {
+        const g = girisler
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (g) {
+          const i = FASIL_IDLERI.indexOf(g.target.id as (typeof FASIL_IDLERI)[number]);
+          if (i >= 0) setAktif(i);
+        }
+      },
+      { rootMargin: "-45% 0px -45% 0px", threshold: [0, 0.2, 0.5, 1] },
+    );
+    for (const id of FASIL_IDLERI) {
+      const el = document.getElementById(id);
+      if (el) gozlemci.observe(el);
+    }
+    return () => gozlemci.disconnect();
+  }, []);
+  return aktif;
+}
+
+function FasilRayi() {
+  const c = useC();
+  const aktif = useAktifFasil();
+  const [kopyalandi, setKopyalandi] = useState(false);
+  const kopyala = () => {
+    try {
+      const id = FASIL_IDLERI[aktif];
+      const u = `${window.location.origin}${window.location.pathname}#${id}`;
+      navigator.clipboard?.writeText(u);
+      setKopyalandi(true);
+      window.setTimeout(() => setKopyalandi(false), 1600);
+    } catch {
+      /* yoksay */
+    }
+  };
+  return (
+    <div className="group fixed top-1/2 left-5 z-40 hidden -translate-y-1/2 flex-col gap-2.5 lg:flex">
+      {FASIL_IDLERI.map((id, i) => {
+        const s = i === aktif;
+        return (
+          <a key={id} href={`#${id}`} className="flex items-center gap-3">
+            <span
+              className={`font-lux text-[0.7rem] tabular-nums transition-colors ${
+                s ? "text-altin" : "text-duman/40"
+              }`}
+            >
+              {String(i + 1).padStart(2, "0")}
+            </span>
+            <span
+              className={`h-px transition-all duration-300 ${
+                s ? "w-7 bg-altin" : "w-3 bg-duman/30 group-hover:w-4"
+              }`}
+            />
+            <span
+              className={`whitespace-nowrap text-xs transition-all duration-300 ${
+                s
+                  ? "text-fildisi opacity-100"
+                  : "text-duman opacity-0 group-hover:opacity-60"
+              }`}
+            >
+              {c.ui.fasillar[i]}
+            </span>
+          </a>
+        );
+      })}
+      <button
+        type="button"
+        onClick={kopyala}
+        aria-label={c.ui.baglantiKopyala}
+        className="mt-1 inline-flex items-center gap-1.5 pl-[1.7rem] text-xs text-duman transition-colors hover:text-altin"
+      >
+        {kopyalandi ? (
+          <CheckCircle size={14} weight="fill" className="text-altin" />
+        ) : (
+          <Copy size={14} />
+        )}
+        <span
+          className={`whitespace-nowrap transition-opacity ${
+            kopyalandi ? "text-altin opacity-100" : "opacity-0 group-hover:opacity-60"
+          }`}
+        >
+          {kopyalandi ? c.ui.baglantiKopyalandi : c.ui.baglantiKopyala}
+        </span>
+      </button>
+    </div>
+  );
+}
+
 /* Sayfa gövdesi — dil context'i içinde çalışır. */
 function ZirveIc() {
   const dil = useDil();
@@ -2122,12 +2388,14 @@ function ZirveIc() {
         className="fixed inset-x-0 top-0 z-[60] h-[2px] origin-left bg-altin"
       />
       <Nav />
+      <FasilRayi />
       <DilSeridi />
       <main>
         <Hero />
         <Manifesto />
         <Teori />
         <Rakamlar />
+        <DunyaBolum />
         <Yolculuk />
         <LiderTipleri />
         <Gercekler />
@@ -2140,8 +2408,10 @@ function ZirveIc() {
         <KapanisCumlesi />
         <Iletisim />
       </main>
+      <KitapBulten />
       <Footer />
       <BasaDon />
+      <SaatSayaci />
     </div>
   );
 }

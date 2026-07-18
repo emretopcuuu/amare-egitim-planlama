@@ -1,9 +1,16 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { MotionValue } from "motion/react";
+import { useTema } from "@/lib/tema";
+
+// Sahne renkleri temaya göre (gündüz porselen / gece mürekkep laciverti).
+const PALET = {
+  gunduz: { zemin: "#f1efe9", kure: "#c9b78a", cizgi: "#a07f36", nokta: "#8a6d24" },
+  gece: { zemin: "#0f1220", kure: "#5b5330", cizgi: "#b8912f", nokta: "#e3c366" },
+} as const;
 
 // "Canlı Ağ": karanlıkta dönen bir küre; yüzeyine dağılmış altın düğümler ve
 // yakın düğümler arası ışık bağlantıları. Scroll ilerledikçe ağ büyür (daha
@@ -57,15 +64,31 @@ function Ag({
   ilerleme,
   hareket,
   dugumSayisi,
+  tema,
 }: {
   ilerleme: MotionValue<number>;
   hareket: boolean;
   dugumSayisi: number;
+  tema: "gunduz" | "gece";
 }) {
   const grup = useRef<THREE.Group>(null);
   const cizgiGeo = useRef<THREE.BufferGeometry>(null);
   const noktaGeo = useRef<THREE.BufferGeometry>(null);
+  const kureMat = useRef<THREE.MeshBasicMaterial>(null);
+  const cizgiMat = useRef<THREE.LineBasicMaterial>(null);
+  const noktaMat = useRef<THREE.PointsMaterial>(null);
   const isaretci = useRef({ x: 0, y: 0 });
+  const { scene } = useThree();
+
+  // Tema değişince sahne zemini, sisi ve malzeme renklerini güncelle.
+  useEffect(() => {
+    const p = PALET[tema];
+    scene.background = new THREE.Color(p.zemin);
+    if (scene.fog) scene.fog.color.set(p.zemin);
+    kureMat.current?.color.set(p.kure);
+    cizgiMat.current?.color.set(p.cizgi);
+    noktaMat.current?.color.set(p.nokta);
+  }, [tema, scene]);
 
   const { noktalar, ciz, cizgiKonum, noktaKonum, noktaTemel } = useMemo(() => {
     const noktalar = kureNoktalari(dugumSayisi);
@@ -152,6 +175,7 @@ function Ag({
       <mesh>
         <sphereGeometry args={[YARICAP * 0.985, 32, 24]} />
         <meshBasicMaterial
+          ref={kureMat}
           color="#c9b78a"
           wireframe
           transparent
@@ -169,6 +193,7 @@ function Ag({
           />
         </bufferGeometry>
         <lineBasicMaterial
+          ref={cizgiMat}
           color="#a07f36"
           transparent
           opacity={0.28}
@@ -186,6 +211,7 @@ function Ag({
           />
         </bufferGeometry>
         <pointsMaterial
+          ref={noktaMat}
           color="#8a6d24"
           size={0.05}
           sizeAttenuation
@@ -209,6 +235,7 @@ export default function Ag3D({
   const [mobil, setMobil] = useState(false);
   // Sekme arka plandayken render'ı durdur (pil/CPU tasarrufu).
   const [gorunur, setGorunur] = useState(true);
+  const [tema] = useTema();
 
   useEffect(() => {
     setMobil(window.matchMedia("(max-width: 767px)").matches);
@@ -216,6 +243,8 @@ export default function Ag3D({
     document.addEventListener("visibilitychange", gorunurluk);
     return () => document.removeEventListener("visibilitychange", gorunurluk);
   }, []);
+
+  const zemin = PALET[tema].zemin;
 
   return (
     <div className="fixed inset-0 -z-10" aria-hidden>
@@ -225,12 +254,13 @@ export default function Ag3D({
         gl={{ antialias: !mobil, alpha: false, powerPreference: "low-power" }}
         frameloop={gorunur ? "always" : "never"}
       >
-        <color attach="background" args={["#f1efe9"]} />
-        <fog attach="fog" args={["#f1efe9", 8, 16]} />
+        <color attach="background" args={[zemin]} />
+        <fog attach="fog" args={[zemin, 8, 16]} />
         <Ag
           ilerleme={ilerleme}
           hareket={hareket}
           dugumSayisi={mobil ? DUGUM_MOBIL : DUGUM_MASAUSTU}
+          tema={tema}
         />
       </Canvas>
     </div>

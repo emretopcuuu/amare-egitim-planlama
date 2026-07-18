@@ -40,3 +40,26 @@ CLOUDFLARE_API_TOKEN=... npx wrangler pages deploy out --project-name=emretopcu-
       `next/image` ile eklenecek.
 - [ ] İletişim e-postası istenirse `iletisim@emretopcu.ai` gibi bir domain
       adresine taşınabilir (`EPOSTA` sabiti, `lib/icerik.ts`).
+- [ ] **Ziyaretçi analitiği:** Cloudflare Pages panelinde `emretopcu-ai`
+      projesi > **Web Analytics**'i aç (kod gerekmez, çerezsiz). WhatsApp
+      CTA'ları zaten hangi bölümden gelindiğini mesaja `[bölüm]` etiketiyle
+      ekliyor (`whatsappUrl`, `lib/icerik.ts`) — hangi içeriğin ikna ettiğini
+      mesajlardan görebilirsin.
+- [ ] **Bülten/kitap ilgi listesi:** şimdilik backend'siz (Pazartesi Notları
+      e-posta ile, kitap "haber ver" WhatsApp ile). Kalıcı liste istenirse
+      Formspree/Buttondown gibi bir servise bağlanır (`bultenMailto`,
+      `kitapHaberUrl`, `lib/icerik.ts`).
+
+## Sayfalar
+
+- `/` (TR) ve `/en` (EN): tek sayfa sinematik deneyim (`components/varyantlar/Zirve.tsx`).
+- `/medya`: medya kiti (portreler, 3 uzunlukta bio, konuşma başlıkları, davet).
+- `/dusunuyorum`: 3 soruluk karar testi (`components/KararTesti.tsx`).
+- `/sitemap.xml`, `/robots.txt`, `/llms.txt`: SEO + AI görünürlüğü.
+
+## Tema
+
+Gündüz (porselen) / gece (mürekkep laciverti) teması `lib/tema.ts` ile
+yönetilir; `<html data-tema>` üzerinden. FOUC olmasın diye ilk değeri
+`app/layout.tsx`'teki satır-içi script boyar (21:00–07:00 arası varsayılan
+gece). Ag3D ve Dünya küresi renklerini temaya göre günceller.

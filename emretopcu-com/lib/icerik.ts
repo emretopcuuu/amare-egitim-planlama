@@ -10,6 +10,24 @@ export const WHATSAPP_MESAJ =
 export const WHATSAPP_URL = `https://wa.me/${WHATSAPP_NUMARA}?text=${encodeURIComponent(
   WHATSAPP_MESAJ,
 )}`;
+// Akıllı CTA: mesaja hangi bölümden gelindiğini ekler; Emre hangi içeriğin ikna
+// ettiğini görür (izleme çerezi yok, veri yalnızca mesajın kendisinde).
+export function whatsappUrl(kaynak?: string) {
+  const mesaj = kaynak ? `${WHATSAPP_MESAJ} [${kaynak}]` : WHATSAPP_MESAJ;
+  return `https://wa.me/${WHATSAPP_NUMARA}?text=${encodeURIComponent(mesaj)}`;
+}
+// Kitabın yeni baskısı için ilgi listesi (backend yok; WhatsApp üzerinden).
+export function kitapHaberUrl(dil: Dil = "tr") {
+  const m =
+    dil === "en"
+      ? "Hi, please let me know when the new edition of İlk 72 Saat is out."
+      : "Merhaba, 'İlk 72 Saat' yeni baskısı çıkınca haber vermeni isterim.";
+  return `https://wa.me/${WHATSAPP_NUMARA}?text=${encodeURIComponent(m)}`;
+}
+// Bülten kaydı (backend yok; e-posta ile). İleride bir form servisine bağlanabilir.
+export function bultenMailto(konu: string, govde: string) {
+  return `mailto:${EPOSTA}?subject=${encodeURIComponent(konu)}&body=${encodeURIComponent(govde)}`;
+}
 // Kendisi için çekilen tribute videosu (gerçek yüzler, gerçek sözler).
 export const TRIBUTE_VIDEO_ID = "WioG82pd_m8";
 // Eğitim arşivindeki lider profili (üyeler tüm konuşmaları burada izler).
@@ -372,7 +390,55 @@ const TR = {
     simSon: "İşte katlama. Ben bunu 250.000 kez yaşadım.",
     mektupNot: "Ön görüşme için tek mesaj yeter.",
     footerFelsefe: "Kimse, ama kimse tek başına başarmadı.",
+    fasillar: [
+      "Hakkımda",
+      "Teori",
+      "Rakamlar",
+      "Yolculuk",
+      "Gerçekler",
+      "Sözler",
+      "Konuşmalar",
+      "Videolar",
+      "İletişim",
+    ],
+    baglantiKopyala: "Bu bölümün bağlantısını kopyala",
+    baglantiKopyalandi: "Bağlantı kopyalandı",
+    saatIcinde: "İlk 72 saatinin {s}. saatindesin.",
+    saatDoldu: "İlk 72 saatin doldu. Kararı hâlâ sen verirsin.",
+    kariyerKaydirBaslik: "2013'ten bugüne — kaydır",
+    dogrulamaKisa: "Resmî lider profili",
+    sozKartPaylas: "Sözü paylaş",
+    sozKartIndir: "Kartı indir",
+    medyaLink: "Medya kiti",
+    dusunuyorumLink: "Doğrudan satışı mı düşünüyorsun?",
   },
+  dunya: {
+    baslik: "4 kıta, 38 ülke",
+    altMetin:
+      "İstanbul'dan başlayan bir ağ; dört kıtada 250.000'e yakın kişiye uzandı. Aşağıdaki noktalar bu erişimi temsil eder.",
+    merkez: "İstanbul",
+  },
+  kitap: {
+    etiket: "Kitap",
+    baslik: "İlk 72 Saat yeniden yazılıyor.",
+    metin: "Yeni baskı çıktığında ilk sen haberdar ol.",
+    dugme: "Çıkınca haber ver",
+  },
+  bulten: {
+    baslik: "Pazartesi Notları",
+    metin: "Haftada bir, iki dakikalık bir liderlik notu.",
+    dugme: "Kaydol",
+    konu: "Pazartesi Notları — kayıt",
+    govde: "Merhaba, Pazartesi Notları bültenine kaydolmak istiyorum.",
+  },
+  kariyerZaman: [
+    { yil: "2013", ay: "Şubat", rutbe: "Başladı", not: "İlk ay 5 kişiyle el sıkıştım." },
+    { yil: "2013", ay: "8. ay", rutbe: "Diamond", not: "Sekiz ayda Diamond oldum." },
+    { yil: "2013", ay: "Yıl sonu", rutbe: "1 Star Diamond", not: "Aynı yılın sonunda 1 Star Diamond." },
+    { yil: "2016", ay: "", rutbe: "Presidential Diamond", not: "Üç buçuk yılda şirketin en üst seviyesi." },
+    { yil: "2020", ay: "", rutbe: "Online sistem", not: "Ekibin tamamı uzaktan çalışan düzene geçti." },
+    { yil: "2026", ay: "", rutbe: "4 kıta", not: "250.000'e yakın kişilik bir ağ." },
+  ],
 };
 
 export type Icerik = typeof TR;
@@ -729,7 +795,55 @@ const EN: Icerik = {
     simSon: "That's multiplying. I lived it 250,000 times.",
     mektupNot: "One message is all it takes.",
     footerFelsefe: "No one, but no one, ever made it alone.",
+    fasillar: [
+      "About",
+      "Theory",
+      "Numbers",
+      "Journey",
+      "Truths",
+      "Quotes",
+      "Talks",
+      "Videos",
+      "Contact",
+    ],
+    baglantiKopyala: "Copy link to this section",
+    baglantiKopyalandi: "Link copied",
+    saatIcinde: "You're in hour {s} of your first 72.",
+    saatDoldu: "Your first 72 hours are up. The decision is still yours.",
+    kariyerKaydirBaslik: "From 2013 to today — drag",
+    dogrulamaKisa: "Official leader profile",
+    sozKartPaylas: "Share this quote",
+    sozKartIndir: "Download card",
+    medyaLink: "Media kit",
+    dusunuyorumLink: "Considering direct sales?",
   },
+  dunya: {
+    baslik: "4 continents, 38 countries",
+    altMetin:
+      "A network that began in Istanbul and reached nearly 250,000 people across four continents. The points below represent that reach.",
+    merkez: "Istanbul",
+  },
+  kitap: {
+    etiket: "Book",
+    baslik: "İlk 72 Saat is being rewritten.",
+    metin: "Be the first to know when the new edition is out.",
+    dugme: "Notify me",
+  },
+  bulten: {
+    baslik: "Monday Notes",
+    metin: "Once a week, a two-minute leadership note.",
+    dugme: "Sign up",
+    konu: "Monday Notes — sign up",
+    govde: "Hi, I'd like to sign up for the Monday Notes newsletter.",
+  },
+  kariyerZaman: [
+    { yil: "2013", ay: "February", rutbe: "Started", not: "Month one, I shook hands with 5 people." },
+    { yil: "2013", ay: "Month 8", rutbe: "Diamond", not: "Diamond in eight months." },
+    { yil: "2013", ay: "Year end", rutbe: "1 Star Diamond", not: "1 Star Diamond by the end of that year." },
+    { yil: "2016", ay: "", rutbe: "Presidential Diamond", not: "The company's top rank in three and a half years." },
+    { yil: "2020", ay: "", rutbe: "Online system", not: "The whole team moved to a remote-first way of working." },
+    { yil: "2026", ay: "", rutbe: "4 continents", not: "A network of nearly 250,000 people." },
+  ],
 };
 
 export const ICERIK: Record<Dil, Icerik> = { tr: TR, en: EN };
