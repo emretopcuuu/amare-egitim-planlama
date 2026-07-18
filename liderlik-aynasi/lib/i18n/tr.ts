@@ -672,6 +672,16 @@ export const tr = {
       govde:
         "Sen çok kişiyi gördün, çok takdir gönderdin. Belki kimse söylemedi ama ben gördüm — görmek de bir liderliktir. Teşekkür ederim.",
     },
+    mektupLink: "💌 Takdir Mektubun",
+    mektupBaslik: "💌 Takdir Mektubun",
+    mektupAltBaslik: (n: number) =>
+      n === 0
+        ? "Bu kampta sana yazılan her şey burada toplanır."
+        : `Bu kampta ${n} kez görüldün. Hepsi burada, senin.`,
+    mektupBos: "Henüz takdir almadın — ama kamp sürüyor. Bu sayfa dolacak.",
+    mektupGeriTakdir: "← Takdir Duvarı'na dön",
+    mektupSelam: (ad: string) => (ad ? `Sevgili ${ad},` : "Sevgili sen,"),
+    mektupImza: "— Kampın seni gören herkesi 💛",
     gonder: "Takdiri Gönder",
     gonderiliyor: "Gönderiliyor…",
     gitti: "Takdirin gönderildi 💛",

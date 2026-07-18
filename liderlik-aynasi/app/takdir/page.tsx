@@ -101,6 +101,14 @@ export default async function TakdirPage() {
               {t.muhurOzet(enCokMuhur.emoji, enCokMuhur.ad)}
             </p>
           )}
+          {(gelenler ?? []).length > 0 && (
+            <Link
+              href="/takdir/mektup"
+              className="mt-2 flex items-center justify-center rounded-xl border border-gold/30 bg-gold/[0.06] px-3 py-2 text-sm font-semibold text-gold-light hover:bg-gold/[0.12]"
+            >
+              {t.mektupLink}
+            </Link>
+          )}
           {(gelenler ?? []).length === 0 ? (
             <p className="mt-3 text-base leading-relaxed text-slate-300">{t.gelenYok}</p>
           ) : (
