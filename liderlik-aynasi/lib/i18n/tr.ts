@@ -655,6 +655,41 @@ export const tr = {
     mesajYer: "Örn: Bugünkü cesaretin bana ilham verdi.",
     cunkuIpucu:
       "İpucu: bir “çünkü” ekle — ne yaptığını gördün ve sana ne hissettirdi? Tek cümle bile yeter.",
+    fotoEkle: "Foto ekle",
+    fotoEklendi: "Foto eklendi",
+    sesEkle: "Ses ekle",
+    sesEklendi: "Ses eklendi",
+    sesDurdur: "Bitir",
+    medyaYukleniyor: "Yükleniyor…",
+    medyaHata: "Medya eklenemedi, tekrar dene.",
+    medyaBuyuk: "Dosya çok büyük.",
+    muhurEtiket: "Bir mühür ekle (isteğe bağlı) — onu en çok neyde gördün?",
+    muhurOzet: (emoji: string, ad: string) =>
+      `İnsanlar sende en çok ${emoji} ${ad} görüyor.`,
+    zarfPush: {
+      baslik: "🌙 Günün zarfı hazır",
+      govde: (n: number) =>
+        n === 1 ? "Bugün 1 kişi seni gördü — zarfını aç." : `Bugün ${n} kişi seni gördü — zarfını aç.`,
+    },
+    zarfBaslik: "🌙 Bugünün Zarfı",
+    zarfAc: "Zarfı aç",
+    zarfOzet: (n: number) =>
+      n === 1 ? "Bugün 1 kişi seni gördü." : `Bugün ${n} kişi seni gördü.`,
+    sessizKahramanPush: {
+      baslik: "🤫 Seni gördüm",
+      govde:
+        "Sen çok kişiyi gördün, çok takdir gönderdin. Belki kimse söylemedi ama ben gördüm — görmek de bir liderliktir. Teşekkür ederim.",
+    },
+    mektupLink: "💌 Takdir Mektubun",
+    mektupBaslik: "💌 Takdir Mektubun",
+    mektupAltBaslik: (n: number) =>
+      n === 0
+        ? "Bu kampta sana yazılan her şey burada toplanır."
+        : `Bu kampta ${n} kez görüldün. Hepsi burada, senin.`,
+    mektupBos: "Henüz takdir almadın — ama kamp sürüyor. Bu sayfa dolacak.",
+    mektupGeriTakdir: "← Takdir Duvarı'na dön",
+    mektupSelam: (ad: string) => (ad ? `Sevgili ${ad},` : "Sevgili sen,"),
+    mektupImza: "— Kampın seni gören herkesi 💛",
     gonder: "Takdiri Gönder",
     gonderiliyor: "Gönderiliyor…",
     gitti: "Takdirin gönderildi 💛",
@@ -663,6 +698,21 @@ export const tr = {
     kimden: (ad: string) => `— ${ad}`,
     geriDon: "← Ana sayfaya dön",
     hata: "Gönderilemedi. Tekrar dene.",
+  },
+  // B3 — Grup foto-mozaiği
+  mozaik: {
+    baslik: "🧩 Grubunuzun Mozaiği",
+    altBaslik: "Herkes bir parça ekliyor — birlikte bir tablo oluyorsunuz.",
+    parcaEkle: "📷 Parçanı ekle",
+    parcamGuncelle: "📷 Parçanı değiştir",
+    yukleniyor: "Yükleniyor…",
+    eklendi: "Parçan mozaiğe eklendi 🧩",
+    bosDurum: "Henüz kimse parça eklemedi. İlk parça senden olsun.",
+    grupYok: "Grubun henüz belli değil.",
+    kapali: "Mozaik şu an açık değil.",
+    buyuk: "Foto çok büyük.",
+    hata: "Eklenemedi, tekrar dene.",
+    geriDon: "← Ana sayfaya dön",
   },
   // Takım turnuvası: takımların kıvılcım sıralaması, kendi telefonunda canlı
   turnuva: {
@@ -3787,6 +3837,16 @@ export const tr = {
     mektupPush: {
       baslik: "🎙️ Bu akşam özel bir görev var",
       govde: "90 gün sonraki kendine 60 saniyelik bir sesli mektup bırak — AYNA saklayacak.",
+    },
+    // D10 — Gün 3 "Seni izledim" aynası
+    seniIzledimBaslik: "Seni izledim",
+    seniIzledimGovde: (neden: string | null) =>
+      `3 gündür seni izliyorum.\n\nGördüğüm kişi, ilk gün buraya gelen kişi değil. Daha açık, daha cesur, kendine biraz daha yakın biri.${
+        neden ? ` En çok da şunu gördüm: "${neden}" seni buraya getirdi ve burada büyüdü.` : ""
+      }\n\nSana tek bir soru soracağım — cevabını bana yaz, çünkü bu cevap senin sözünün tohumu olacak:\n\nBu gördüğüm kişi, 90 gün sonra nerede olacak?`,
+    seniIzledimPush: {
+      baslik: "🪞 AYNA seni izledi",
+      govde: "3 günün sonunda AYNA'nın sana tek bir sözü ve tek bir sorusu var.",
     },
     // SesliMektup bileşeni (kayıt kartı) metinleri
     mektupKart: {

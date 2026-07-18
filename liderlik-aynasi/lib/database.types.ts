@@ -1358,28 +1358,37 @@ export type Database = {
       kudos: {
         Row: {
           created_at: string
+          foto_path: string | null
           from_id: string
           id: string
           is_hidden: boolean
+          kategori: string | null
           message: string
+          ses_path: string | null
           tesekkur_edildi: boolean
           to_id: string
         }
         Insert: {
           created_at?: string
+          foto_path?: string | null
           from_id: string
           id?: string
           is_hidden?: boolean
+          kategori?: string | null
           message: string
+          ses_path?: string | null
           tesekkur_edildi?: boolean
           to_id: string
         }
         Update: {
           created_at?: string
+          foto_path?: string | null
           from_id?: string
           id?: string
           is_hidden?: boolean
+          kategori?: string | null
           message?: string
+          ses_path?: string | null
           tesekkur_edildi?: boolean
           to_id?: string
         }
@@ -1648,6 +1657,7 @@ export type Database = {
         Row: {
           created_at: string
           fiziksel: boolean
+          hediye_alici_id: string | null
           id: string
           participant_id: string
           reyon: string
@@ -1660,6 +1670,7 @@ export type Database = {
         Insert: {
           created_at?: string
           fiziksel?: boolean
+          hediye_alici_id?: string | null
           id?: string
           participant_id: string
           reyon: string
@@ -1672,6 +1683,7 @@ export type Database = {
         Update: {
           created_at?: string
           fiziksel?: boolean
+          hediye_alici_id?: string | null
           id?: string
           participant_id?: string
           reyon?: string
@@ -1923,6 +1935,30 @@ export type Database = {
           meta?: Json
           participant_id?: string
           tur?: string
+        }
+        Relationships: []
+      }
+      mozaik_parca: {
+        Row: {
+          created_at: string
+          foto_path: string
+          grup: string
+          id: string
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          foto_path: string
+          grup: string
+          id?: string
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          foto_path?: string
+          grup?: string
+          id?: string
+          participant_id?: string
         }
         Relationships: []
       }

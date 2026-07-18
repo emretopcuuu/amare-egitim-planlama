@@ -74,6 +74,9 @@ import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
 import { katilimciyaBildir, herkeseBildir, adminlereBildir } from "@/lib/push";
 import { radyoTik } from "@/lib/kampRadyosu";
 import { kapanisBrifTik } from "@/lib/kapanis";
+import { takdirZarfiTik } from "@/lib/takdirZarfi";
+import { sessizKahramanTik } from "@/lib/sessizKahraman";
+import { seniIzledimAc } from "@/lib/seniIzledim";
 import { rekorTara, rekorlarAcikMi } from "@/lib/rekorlar";
 import { ciftSerisiDegerlendir, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
 import { hamleTaraOlustur, hamleHatirlat, hamleAcikMi } from "@/lib/hamle";
@@ -135,6 +138,8 @@ export async function tikCalistir(
     checkinCipa: 0,
     ufukToren: 0,
     orkestratorAtes: 0,
+    takdirZarfi: 0,
+    sessizKahraman: 0,
   };
 
   // [FAZ1-B] Nabız damgası: tik her koştuğunda (AYNA pasif olsa bile) iz bırakır —
@@ -1724,6 +1729,22 @@ export async function tikCalistir(
     }
   }
 
+  // D10 — GÜN 3 "SENİ İZLEDİM" AYNASI: son gün sabah 09:00'da herkese AYNA'nın
+  // 3 günlük yansıması + tek soru ("90 gün sonra nerede?") → söz tohumu. Gün
+  // başına tek sefer (settings kilidi). Kendi hatasını yutar, tik'i düşürmez.
+  if (mod === "kamp" && gun === 3 && saat === 9 && !sahneSessiz) {
+    const { error: siKilit } = await db
+      .from("settings")
+      .insert({ key: `seni_izledim_${bugun}`, value: "1" });
+    if (!siKilit) {
+      try {
+        ozet.uretilen += await seniIzledimAc(db);
+      } catch {
+        // sessizce geç
+      }
+    }
+  }
+
   // 6a-ter) KANIT GARANTİSİ — Gün 2 akşamı (21:00) sigortası. Kanıtsız kişileri
   // tespit edip akranlarına "onu gözle, güçlü yanını yaz" mikro görevi verir;
   // tamamlanınca yanıt hedefe anonim takdir olur → Boşluk Anı içi boş kalmaz.
@@ -1951,6 +1972,26 @@ export async function tikCalistir(
   // 11:20 güncel (değerlendirme sonrası) sürüm. Üretim ~20 dk önce; teslimde
   // admin'e push. Kendi hatasını yutar, tik'i asla düşürmez.
   if (mod === "kamp") await kapanisBrifTik(db, gun, gunDk, bugun);
+
+  // A8 — AKŞAM TAKDİR ZARFI: 22:00'de o gün takdir alan herkese "zarfını aç"
+  // push'u (gün başına tek sefer). Kendi hatasını yutar, tik'i düşürmez.
+  if (mod === "kamp") {
+    try {
+      ozet.takdirZarfi = await takdirZarfiTik(db, gunDk, bugun);
+    } catch {
+      // sessizce geç
+    }
+  }
+
+  // A7 — SESSİZ KAHRAMAN: 19:00'da çok gönderip az alan kişiyi doğrudan onurlandır
+  // (radyoya dokunmadan, isimli anons değil — kişiye özel). Kill-switch'li.
+  if (mod === "kamp") {
+    try {
+      ozet.sessizKahraman = await sessizKahramanTik(db, gunDk, bugun);
+    } catch {
+      // sessizce geç
+    }
+  }
 
   // G3 — REKORLAR taraması: kamp modunda, bayrak açıkken mevcut verilerden
   // rekorları hesaplar, kırılanı herkese duyurur. Kendi hatasını yutar.
