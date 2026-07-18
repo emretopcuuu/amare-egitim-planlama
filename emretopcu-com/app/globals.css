@@ -11,6 +11,10 @@
   --color-altin: #9a7a2c;
 
   --font-sahne: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  /* Lüks serif: başlıklar ve beyan cümleleri. */
+  --font-lux: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  /* El yazısı imza. */
+  --font-imza: var(--font-greatvibes), cursive;
 }
 
 :root {
@@ -24,6 +28,27 @@ html {
 body {
   background-color: var(--color-abanoz);
   color: var(--color-fildisi);
+}
+
+/* Basılı davetiye hissi: çok hafif kağıt greni (feTurbulence, tek katman). */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Editoryal drop-cap: manifesto ilk harfi. */
+.harf-buyuk {
+  float: left;
+  font-family: var(--font-lux);
+  font-size: 3.1em;
+  line-height: 0.82;
+  padding-right: 0.09em;
+  color: var(--color-altin);
 }
 
 /* Klavyeyle gezenlere tutarlı altın odak halkası (fare tıklamasında görünmez). */

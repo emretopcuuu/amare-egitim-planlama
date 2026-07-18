@@ -92,6 +92,10 @@ function Ag({
     if (grup.current) {
       if (hareket) grup.current.rotation.y += delta * 0.12;
       grup.current.rotation.x = 0.12 + (hareket ? Math.sin(t * 0.3) * 0.05 : 0);
+      // Küre koreografisi: bölümlere göre sahnede yer değiştirir —
+      // giriş merkez → sağa süzülür → sola geçer → kapanışta merkeze döner.
+      grup.current.position.x = Math.sin(p * Math.PI * 2) * 1.15;
+      grup.current.position.y = Math.sin(p * Math.PI * 3) * 0.25;
     }
 
     // imleç paralaksı + scroll ile kamera geri çekilir

@@ -189,11 +189,26 @@ const TR = {
     ],
   },
   sozler: [
-    "Kayıt olduğun gün değil, karar verdiğin gün başlarsın.",
-    "Sır, lider üretmektir.",
-    "Nedenin güçlüyse, nasılın önemi kalmaz.",
-    "Seni durduran, yine sensin.",
-    "İnsanlar sözlerini değil, seni takip eder.",
+    {
+      soz: "Kayıt olduğun gün değil, karar verdiğin gün başlarsın.",
+      arka: "Büyük kararlar büyük toplantılarda alınır. İşe kayıt olduğun gün değil, o kararı verdiğin gün başlarsın. — İlk 72 Saat, 2017",
+    },
+    {
+      soz: "Sır, lider üretmektir.",
+      arka: "Avcı değil, çiftçi ol. Büyüme üye saymak değildir; kendi ekibini kuran liderler yetiştirdiğinde iş katlanır.",
+    },
+    {
+      soz: "Nedenin güçlüyse, nasılın önemi kalmaz.",
+      arka: "Nedenini keşfettiğin insana dağları deldirirsin. Her şey inançla başlar, inançla biter.",
+    },
+    {
+      soz: "Seni durduran, yine sensin.",
+      arka: "Engel nedeninden büyükse pes edersin; nedenin engelinden büyükse bir yolunu bulursun. — İlk 72 Saat, 2017",
+    },
+    {
+      soz: "İnsanlar sözlerini değil, seni takip eder.",
+      arka: "Ne yaparsan yap, kopyalanır. Yapmadığım şeyi anlatmam; önce yaşar, sonra öğretirim.",
+    },
   ],
   konusmalar: [
     {
@@ -249,23 +264,28 @@ const TR = {
       ozet: "Tek tek üye eklemekten, çoğalan liderler yetiştirmeye geçiş.",
     },
   ],
-  vaat: {
-    baslik: "Benimle çalışmak ne demek?",
-    maddeler: [
+  surec: {
+    baslik: "Benimle çalışmak nasıl başlar?",
+    adimlar: [
       {
-        baslik: "Kanıtlanmış sistem",
+        baslik: "Tanışma görüşmesi",
         aciklama:
-          "Karizmaya değil, herkesin uygulayabildiği net bir düzene güvenirsin. Benim yolumu açan adımların aynısını sana veririm.",
+          "WhatsApp'tan tek mesaj; 15-20 dakikalık, ısrarsız bir ön görüşme.",
       },
       {
-        baslik: "Güçlü ekip kültürü",
+        baslik: "Sistemi birlikte inceleriz",
         aciklama:
-          "Kamplar, eğitimler ve kurduğumuz sistemlerle yaşayan bir topluluğun parçası olursun. Tek başına değil, birlikte büyürüz.",
+          "Kampları, eğitim arşivini ve kurduğumuz araçları kendin görürsün. Karar tamamen senin.",
       },
       {
-        baslik: "Global fırsat",
+        baslik: "İlk 72 saat planın",
         aciklama:
-          "4 kıtaya yayılmış bir ağın içinde uluslararası büyüme imkânı bulursun. Sınır, haritada değil; kararında.",
+          "Başlarsan boşluğa düşmezsin: kitabını yazdığım başlangıç sistemiyle ilk adımların gün gün planlanır.",
+      },
+      {
+        baslik: "Sahaya birlikte çıkarız",
+        aciklama:
+          "İlk görüşmelerinde yalnız değilsin; ekip, toplantılar ve kamplarla momentum ilk aydan kurulur.",
       },
     ],
   },
@@ -345,6 +365,13 @@ const TR = {
     menuAc: "Menü",
     menuKapat: "Kapat",
     kaydir: "Kaydır",
+    sozIpucu: "Söze dokun",
+    simBasla: "Bir kişiyle el sıkış",
+    simKatla: "Katla",
+    simSifirla: "Baştan",
+    simSon: "İşte katlama. Ben bunu 250.000 kez yaşadım.",
+    mektupNot: "Ön görüşme için tek mesaj yeter.",
+    footerFelsefe: "Kimse, ama kimse tek başına başarmadı.",
   },
 };
 
@@ -519,11 +546,26 @@ const EN: Icerik = {
     ],
   },
   sozler: [
-    "You don't start the day you sign up; you start the day you decide.",
-    "The secret is producing leaders.",
-    "If your why is strong, the how doesn't matter.",
-    "The one stopping you is you.",
-    "People follow you, not your words.",
+    {
+      soz: "You don't start the day you sign up; you start the day you decide.",
+      arka: "Big decisions are made in big meetings. You don't start the day you register — you start the day you decide. — İlk 72 Saat, 2017",
+    },
+    {
+      soz: "The secret is producing leaders.",
+      arka: "Be a farmer, not a hunter. Growth isn't counting members; when you raise leaders who build their own teams, the work multiplies.",
+    },
+    {
+      soz: "If your why is strong, the how doesn't matter.",
+      arka: "Give someone their why and they'll move mountains. Everything begins with belief and ends with belief.",
+    },
+    {
+      soz: "The one stopping you is you.",
+      arka: "If the obstacle is bigger than your why, you quit; if your why is bigger than the obstacle, you find a way. — İlk 72 Saat, 2017",
+    },
+    {
+      soz: "People follow you, not your words.",
+      arka: "Whatever you do gets copied. I don't teach what I haven't lived; I live it first, then I teach it.",
+    },
   ],
   konusmalar: [
     {
@@ -579,23 +621,28 @@ const EN: Icerik = {
       ozet: "Moving from adding members one by one to raising multiplying leaders.",
     },
   ],
-  vaat: {
-    baslik: "What does working with me mean?",
-    maddeler: [
+  surec: {
+    baslik: "How does working with me begin?",
+    adimlar: [
       {
-        baslik: "A proven system",
+        baslik: "Intro call",
         aciklama:
-          "You rely on a clear system anyone can apply, not on charisma. I give you the exact steps that opened my own path.",
+          "One WhatsApp message; a 15-20 minute, zero-pressure intro call.",
       },
       {
-        baslik: "A strong team culture",
+        baslik: "We review the system together",
         aciklama:
-          "You become part of a living community shaped by camps, trainings, and the systems we've built. We grow together, not alone.",
+          "You see the camps, the training archive and the tools we've built — for yourself. The decision is entirely yours.",
       },
       {
-        baslik: "A global opportunity",
+        baslik: "Your first 72-hour plan",
         aciklama:
-          "You find international growth inside a network spread across 4 continents. The limit isn't on the map; it's in your decision.",
+          "If you start, you don't start into a void: the onboarding system I wrote the book on maps your first steps day by day.",
+      },
+      {
+        baslik: "We hit the field together",
+        aciklama:
+          "You're not alone in your first meetings; team, meetings and camps build momentum from month one.",
       },
     ],
   },
@@ -675,6 +722,13 @@ const EN: Icerik = {
     menuAc: "Menu",
     menuKapat: "Close",
     kaydir: "Scroll",
+    sozIpucu: "Tap a quote",
+    simBasla: "Shake hands with one person",
+    simKatla: "Multiply",
+    simSifirla: "Reset",
+    simSon: "That's multiplying. I lived it 250,000 times.",
+    mektupNot: "One message is all it takes.",
+    footerFelsefe: "No one, but no one, ever made it alone.",
   },
 };
 
