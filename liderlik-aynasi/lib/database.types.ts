@@ -2034,6 +2034,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pazar_karnesi: {
+        Row: {
+          created_at: string
+          davet: number
+          gorusme: number
+          hafta: string
+          id: string
+          participant_id: string
+          takip: number
+        }
+        Insert: {
+          created_at?: string
+          davet?: number
+          gorusme?: number
+          hafta: string
+          id?: string
+          participant_id: string
+          takip?: number
+        }
+        Update: {
+          created_at?: string
+          davet?: number
+          gorusme?: number
+          hafta?: string
+          id?: string
+          participant_id?: string
+          takip?: number
+        }
+        Relationships: []
+      }
       missions: {
         Row: {
           ai_comment: string | null
