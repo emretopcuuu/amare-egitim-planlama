@@ -21,6 +21,7 @@ import { AYNA_KARAKTER_TAM, aynaKarakterAcikMi, aynaIliskiDurumu, iliskiPromptSa
 import { aiHataYakala } from "@/lib/uyari";
 import { vinyetSec, type LiderKas } from "@/lib/liderlikVinyetleri";
 import { zorlukSeviyesiHesapla, type MerdivenGorev } from "@/lib/zorlukMerdiveni";
+import { gununPratigi } from "@/lib/protokolMotor";
 import { karsilasmaBul } from "@/lib/karsilasma";
 import type { SicakAn } from "@/lib/sicakAn";
 import { eslesmeHedefiSec, ESLESMELI_TURLER, type EslesmeAday } from "@/lib/gorevEslesme";
@@ -808,6 +809,19 @@ export async function gorevUret(
       // bozuk JSON → ilke enjeksiyonu atlanır (görev normal üretilir)
     }
   }
+  // 90 GÜN PROTOKOLÜ — yolculukta günün kişisel pratiği görevin ANA işidir.
+  // Kişinin aktif (kapatılmamış) pratiklerinden gün sayısına göre biri seçilir.
+  let protokolYonerge = "";
+  if (mod === "yolculuk") {
+    try {
+      const pratik = await gununPratigi(db, katilimci.id, gun);
+      if (pratik) {
+        protokolYonerge = `90 GÜN PROTOKOLÜ — BUGÜNÜN PRATİĞİ "${pratik.ad}": ${pratik.gorevYonerge} Görevi TAM bu pratiğe demirle; bu pratik bugünün ana işidir. Kısa ve baskısız tut (≤${pratik.sureDk} dk hedefi); suçluluk yükleme.`;
+      }
+    } catch {
+      // protokol kurulmamış/okunamıyorsa görev normal üretilir
+    }
+  }
   let kapaliTurler: string[] = [];
   try {
     if (kapaliAyar?.data?.value) kapaliTurler = JSON.parse(kapaliAyar.data.value);
@@ -1246,6 +1260,8 @@ export async function gorevUret(
       ? 'SİMÜLASYON: kısa bir sahne kur; itirazcının sözünü tırnak içinde (sese çevrilecek), katılımcıdan cevabını sana yazmasını iste.'
       : "",
     mod === "yolculuk" ? "Kamp değil, sahada (günlük hayat ve iş ortamı) yapılacak görev." : "",
+    // 90 GÜN PROTOKOLÜ — bugünün pratiği (yolculukta ana iş).
+    protokolYonerge,
     kayan
       ? "YENİDEN BAĞLAMA: Sessizleşti — sıcak, küçük, garantili bir başlangıç; suçluluk ya da baskı yükleme."
       : "",
