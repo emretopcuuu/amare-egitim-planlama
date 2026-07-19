@@ -1,6 +1,7 @@
 import "server-only";
 import type { supabaseAdmin } from "@/lib/supabase/server";
 import { pusulaCekirdek } from "@/lib/pusula";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 import {
   PRATIKLER,
   CEKIRDEK_PRATIKLER,
@@ -171,4 +172,60 @@ export async function protokolKartlari(
       toplam: toplam.get(a.kod) ?? 0,
     }))
     .sort((x, y) => (x.cekirdek === y.cekirdek ? 0 : x.cekirdek ? -1 : 1));
+}
+
+// ---- ADMIN ÖZET ----
+export type PratikOzet = { kod: PratikKodu; ad: string; aktif: number; kapatildi: number; tamamlama: number };
+export type ProtokolAdminOzet = {
+  kuranKisi: number;
+  pratikler: PratikOzet[];
+  enCokKapatilan: { ad: string; adet: number } | null;
+  buHaftaKarne: { kisi: number; davet: number; gorusme: number; takip: number };
+};
+
+/** Admin protokol paneli: pratik başına aktif/kapatıldı/tamamlama + en çok
+ * kapatılan (ürün sinyali) + bu haftanın karne toplamı. */
+export async function protokolAdminOzet(db: Db, buHafta: string): Promise<ProtokolAdminOzet> {
+  const [pratikRows, tamamRows, karneRows] = await Promise.all([
+    tumKayitlar<{ pratik_kodu: string; kapatildi: boolean; participant_id: string }>((b, s) =>
+      db.from("protokol_pratik").select("pratik_kodu, kapatildi, participant_id").order("id").range(b, s)
+    ),
+    tumKayitlar<{ pratik_kodu: string }>((b, s) =>
+      db.from("protokol_tamamlama").select("pratik_kodu").order("id").range(b, s)
+    ),
+    db.from("pazar_karnesi").select("davet, gorusme, takip").eq("hafta", buHafta),
+  ]);
+
+  const aktif = new Map<string, number>();
+  const kapali = new Map<string, number>();
+  const kuranSet = new Set<string>();
+  for (const r of pratikRows) {
+    kuranSet.add(r.participant_id);
+    if (r.kapatildi) kapali.set(r.pratik_kodu, (kapali.get(r.pratik_kodu) ?? 0) + 1);
+    else aktif.set(r.pratik_kodu, (aktif.get(r.pratik_kodu) ?? 0) + 1);
+  }
+  const tamamlama = new Map<string, number>();
+  for (const r of tamamRows) tamamlama.set(r.pratik_kodu, (tamamlama.get(r.pratik_kodu) ?? 0) + 1);
+
+  const pratikler: PratikOzet[] = (Object.keys(PRATIKLER) as PratikKodu[]).map((kod) => ({
+    kod,
+    ad: PRATIKLER[kod].ad,
+    aktif: aktif.get(kod) ?? 0,
+    kapatildi: kapali.get(kod) ?? 0,
+    tamamlama: tamamlama.get(kod) ?? 0,
+  }));
+  const enCok = [...kapali.entries()].sort((a, b) => b[1] - a[1])[0];
+
+  const karne = (karneRows.data ?? []) as { davet: number; gorusme: number; takip: number }[];
+  return {
+    kuranKisi: kuranSet.size,
+    pratikler,
+    enCokKapatilan: enCok ? { ad: PRATIKLER[enCok[0] as PratikKodu]?.ad ?? enCok[0], adet: enCok[1] } : null,
+    buHaftaKarne: {
+      kisi: karne.length,
+      davet: karne.reduce((t, k) => t + (k.davet ?? 0), 0),
+      gorusme: karne.reduce((t, k) => t + (k.gorusme ?? 0), 0),
+      takip: karne.reduce((t, k) => t + (k.takip ?? 0), 0),
+    },
+  };
 }

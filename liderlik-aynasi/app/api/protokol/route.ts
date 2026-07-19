@@ -24,6 +24,15 @@ export async function POST(req: Request) {
   if (g.aksiyon === "yapildi") {
     const bugun = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
     await pratikTamamla(db, session.sub, kod, bugun);
+    // P6 "Artı Üç" — İSİM GİRİLMEZ, yalnız günlük +3 sayacı (KVKK + düşük sürtünme).
+    if (kod === "P6") {
+      await db
+        .from("liste_sayaci")
+        .upsert(
+          { participant_id: session.sub, tarih: bugun, adet: 3 },
+          { onConflict: "participant_id,tarih" }
+        );
+    }
     return Response.json({ ok: true });
   }
   return Response.json({ hata: "Geçersiz aksiyon" }, { status: 400 });
