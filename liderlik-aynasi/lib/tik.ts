@@ -1486,6 +1486,65 @@ export async function tikCalistir(
     }
   }
 
+  // 3f-2) P10 PAZAR KARNESİ: yolculuk modunda Pazar 18:00'de herkese "karneni ver"
+  // dürtüsü (settings kilidiyle haftada bir). Karne /karne'de 3 sayı → kamp
+  // arkadaşına tanıklık raporu. Kendi hatasını yutar.
+  if (mod === "yolculuk") {
+    const pazarMi =
+      new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Istanbul", weekday: "short" }).format(simdi) === "Sun";
+    if (pazarMi && saat === 18 && dakika < 10) {
+      const { error: karneKilit } = await db
+        .from("settings")
+        .insert({ key: `pazar_karnesi_durtu_${bugun}`, value: "1" });
+      if (!karneKilit) {
+        try {
+          const { data: kisiler } = await db.from("participants").select("id").eq("role", "participant");
+          for (const k of kisiler ?? []) {
+            await katilimciyaBildir(
+              db,
+              k.id,
+              "📊 Pazar Karnesi zamanı",
+              "Bu haftanın üç sayısı: kaç davet, kaç görüşme, kaç takip? Karneni ver — kamp arkadaşın tanığın olsun.",
+              "/karne"
+            ).catch(() => {});
+          }
+        } catch {
+          // sessizce geç
+        }
+      }
+    }
+  }
+
+  // 3f-3) P1 KANIT DEFTERİ GERİ OKUMA: yolculuk 30/60/90. günde sabah, herkese
+  // "şu kadar kanıt biriktirdin" — inanç birikmiş kanıtla değişir. Milestone
+  // başına tek sefer (settings kilidi). Kendi hatasını yutar.
+  if (mod === "yolculuk" && [30, 60, 90].includes(gun) && saat === 9 && dakika < 10) {
+    const { error: kanitKilit } = await db
+      .from("settings")
+      .insert({ key: `kanit_geri_okuma_${gun}`, value: "1" });
+    if (!kanitKilit) {
+      try {
+        const kanitlar = await tumKayitlar<{ participant_id: string }>((b, s) =>
+          db.from("protokol_tamamlama").select("participant_id").eq("pratik_kodu", "P1").order("id").range(b, s)
+        );
+        const say = new Map<string, number>();
+        for (const k of kanitlar) say.set(k.participant_id, (say.get(k.participant_id) ?? 0) + 1);
+        for (const [pid, adet] of say) {
+          if (adet < 1) continue;
+          await katilimciyaBildir(
+            db,
+            pid,
+            `📓 ${gun}. gün — Kanıt Defterin`,
+            `${gun} günde ${adet} kanıt biriktirdin. Bunların hepsi senin — 'yetersizim' inancı bu defterin karşısında duramaz.`,
+            "/protokol"
+          ).catch(() => {});
+        }
+      } catch {
+        // sessizce geç
+      }
+    }
+  }
+
   // 3g) [FAZ 5 · Tek Söz birleşmesi] KALDIRILDI: eski v1 (pledges) haftalık
   // Çarşamba söz hatırlatması — "Ağustos görüşme sözü" dili + ölü /soz ekranına
   // yönlendiriyordu. SÖZ v2'ye (soz/soz_takip + şahitler) geçince bu iş zaten

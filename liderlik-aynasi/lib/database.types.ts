@@ -1962,6 +1962,108 @@ export type Database = {
         }
         Relationships: []
       }
+      protokol_pratik: {
+        Row: {
+          cekirdek: boolean
+          created_at: string
+          id: string
+          kapatildi: boolean
+          participant_id: string
+          pratik_kodu: string
+        }
+        Insert: {
+          cekirdek?: boolean
+          created_at?: string
+          id?: string
+          kapatildi?: boolean
+          participant_id: string
+          pratik_kodu: string
+        }
+        Update: {
+          cekirdek?: boolean
+          created_at?: string
+          id?: string
+          kapatildi?: boolean
+          participant_id?: string
+          pratik_kodu?: string
+        }
+        Relationships: []
+      }
+      protokol_tamamlama: {
+        Row: {
+          created_at: string
+          id: string
+          participant_id: string
+          pratik_kodu: string
+          tarih: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          participant_id: string
+          pratik_kodu: string
+          tarih: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          participant_id?: string
+          pratik_kodu?: string
+          tarih?: string
+        }
+        Relationships: []
+      }
+      liste_sayaci: {
+        Row: {
+          adet: number
+          id: string
+          participant_id: string
+          tarih: string
+        }
+        Insert: {
+          adet?: number
+          id?: string
+          participant_id: string
+          tarih: string
+        }
+        Update: {
+          adet?: number
+          id?: string
+          participant_id?: string
+          tarih?: string
+        }
+        Relationships: []
+      }
+      pazar_karnesi: {
+        Row: {
+          created_at: string
+          davet: number
+          gorusme: number
+          hafta: string
+          id: string
+          participant_id: string
+          takip: number
+        }
+        Insert: {
+          created_at?: string
+          davet?: number
+          gorusme?: number
+          hafta: string
+          id?: string
+          participant_id: string
+          takip?: number
+        }
+        Update: {
+          created_at?: string
+          davet?: number
+          gorusme?: number
+          hafta?: string
+          id?: string
+          participant_id?: string
+          takip?: number
+        }
+        Relationships: []
+      }
       missions: {
         Row: {
           ai_comment: string | null
