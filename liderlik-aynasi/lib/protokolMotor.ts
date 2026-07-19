@@ -93,7 +93,19 @@ export async function gununPratigi(
   pid: string,
   gun: number
 ): Promise<Pratik | null> {
-  const aktif = await aktifPratikler(db, pid);
+  let aktif = await aktifPratikler(db, pid);
+  // Tembel kurulum: protokolü olmayan kişi ilk yolculuk görevinde kurulur
+  // (kendini iyileştirir; ayrı senaryo satırına gerek kalmaz).
+  if (aktif.length === 0) {
+    const { count } = await db
+      .from("protokol_pratik")
+      .select("id", { count: "exact", head: true })
+      .eq("participant_id", pid);
+    if ((count ?? 0) === 0) {
+      await protokolKur(db, pid).catch(() => {});
+      aktif = await aktifPratikler(db, pid);
+    }
+  }
   const gunluk = aktif
     .map((a) => PRATIKLER[a.kod])
     .filter((p) => p.blok !== "haftalik")
@@ -124,4 +136,39 @@ export async function pratikKapat(db: Db, pid: string, kod: PratikKodu): Promise
     .update({ kapatildi: true })
     .eq("participant_id", pid)
     .eq("pratik_kodu", kod);
+}
+
+export type ProtokolKart = {
+  pratik: Pratik;
+  cekirdek: boolean;
+  bugunYapildi: boolean;
+  toplam: number; // bu pratiği kaç gün yaptı
+};
+
+/** /protokol sayfası için: kişinin açık pratikleri + bugün yapıldı mı + toplam. */
+export async function protokolKartlari(
+  db: Db,
+  pid: string,
+  bugun: string
+): Promise<ProtokolKart[]> {
+  const aktif = await aktifPratikler(db, pid);
+  if (aktif.length === 0) return [];
+  const { data: tamamlar } = await db
+    .from("protokol_tamamlama")
+    .select("pratik_kodu, tarih")
+    .eq("participant_id", pid);
+  const bugunSet = new Set<string>();
+  const toplam = new Map<string, number>();
+  for (const t of tamamlar ?? []) {
+    toplam.set(t.pratik_kodu, (toplam.get(t.pratik_kodu) ?? 0) + 1);
+    if (t.tarih === bugun) bugunSet.add(t.pratik_kodu);
+  }
+  return aktif
+    .map((a) => ({
+      pratik: PRATIKLER[a.kod],
+      cekirdek: a.cekirdek,
+      bugunYapildi: bugunSet.has(a.kod),
+      toplam: toplam.get(a.kod) ?? 0,
+    }))
+    .sort((x, y) => (x.cekirdek === y.cekirdek ? 0 : x.cekirdek ? -1 : 1));
 }
