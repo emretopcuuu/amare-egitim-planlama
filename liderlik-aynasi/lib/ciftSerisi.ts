@@ -133,8 +133,8 @@ async function besleHatirlat(db: Db, gruplar: Grup[], seriMap: Map<string, SeriR
       await katilimciyaBildir(
         db,
         u,
-        "🔥 Alevi söndürme",
-        `${besleyen} bugün alevi besledi. Tek bir adım yeter — seriniz sürsün.`,
+        "🔥 Seriyi kaçırma",
+        `${besleyen} bugün bir adım attı. Tek bir adım yeter — ortak seriniz sürsün.`,
         "/"
       ).catch(() => {});
     }
