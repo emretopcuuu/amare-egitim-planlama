@@ -1,6 +1,7 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { herkeseBildir } from "@/lib/push";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 
 // ============================================================================
 // G3 — REKORLAR: kişisel bestler + kamp kürsüsü (çok kategori)
@@ -11,21 +12,79 @@ import { herkeseBildir } from "@/lib/push";
 // rekortmen kutlanır ve "rekora uzaklığın" pozitif hedef olarak gösterilir.
 
 export type Yon = "max" | "min";
-export type Kategori = { key: string; ad: string; ikon: string; yon: Yon; birim: string };
+export type Kategori = {
+  key: string;
+  ad: string;
+  ikon: string;
+  yon: Yon;
+  birim: string;
+  /** Kısa paragraf — /rekorlar'da kart açıklaması (neyi ölçtüğü, neden değerli). */
+  aciklama: string;
+  /** Onur cümlesi — Kürsü Brifi'nde rekortmen için sahnede okunacak tek satır. */
+  onur: string;
+};
 
 export const KATEGORILER: Kategori[] = [
-  { key: "hizli_teslim", ad: "En Hızlı Teslim", ikon: "⚡", yon: "min", birim: "dk" },
-  { key: "gece_kusu", ad: "Gece Kuşu", ikon: "🦉", yon: "max", birim: ":00" },
-  { key: "erken_kalkan", ad: "Erken Kalkan", ikon: "🌅", yon: "min", birim: ":00" },
-  { key: "cok_gorev", ad: "Görev Canavarı", ikon: "🎯", yon: "max", birim: "görev" },
-  { key: "yuksek_puan", ad: "Zirve Puanı", ikon: "💎", yon: "max", birim: "/10" },
-  { key: "tam_puan", ad: "On Numara", ikon: "🔟", yon: "max", birim: "kez" },
-  { key: "istikrar", ad: "İstikrar Ustası", ikon: "📅", yon: "max", birim: "gün" },
-  { key: "cok_kivilcim", ad: "Kıvılcım Lideri", ikon: "✨", yon: "max", birim: "⚡" },
-  { key: "comert_takdirci", ad: "En Cömert Takdirci", ikon: "💛", yon: "max", birim: "takdir" },
-  { key: "takdir_alan", ad: "En Çok Takdir Alan", ikon: "🤍", yon: "max", birim: "takdir" },
-  { key: "ret_cesuru", ad: "Ret Cesuru", ikon: "🔥", yon: "max", birim: "ret" },
-  { key: "cok_sandik", ad: "Sandık Avcısı", ikon: "🎁", yon: "max", birim: "sandık" },
+  {
+    key: "hizli_teslim", ad: "En Hızlı Teslim", ikon: "⚡", yon: "min", birim: "dk",
+    aciklama: "Bu rozet hızı değil, tereddütsüzlüğü ölçer. Zihninde 'ama'lar birikmeden harekete geçebilmek — bir görev geldiğinde onu ertelemeden, dosdoğru işe koyulmak.",
+    onur: "Kararsızlığın en büyük düşman olduğu anlarda bile, ilk adımı atan sensin.",
+  },
+  {
+    key: "gece_kusu", ad: "Gece Kuşu", ikon: "🦉", yon: "max", birim: ":00",
+    aciklama: "Herkes uykuya çekilirken hâlâ sahada olmak, motivasyonun değil disiplinin işidir. Günün en yorgun anında bile kendine verdiğin sözü erteleyenlerden değil, yerine getirenlerden yana olduğunu gösteriyor.",
+    onur: "Gece Kuşu, günün bittiğini bilir ama sözünün bitmediğini de bilir.",
+  },
+  {
+    key: "erken_kalkan", ad: "Erken Kalkan", ikon: "🌅", yon: "min", birim: ":00",
+    aciklama: "Kimse seni izlemezken, kimse alkışlamazken kendine verdiğin sözü tutmak — gerçek disiplin burada başlıyor. Günün kazanılmasının aslında gün doğmadan önce başladığını kanıtlıyor.",
+    onur: "Sen, güneş daha doğmadan harekete geçensin.",
+  },
+  {
+    key: "cok_gorev", ad: "Görev Canavarı", ikon: "🎯", yon: "max", birim: "görev",
+    aciklama: "Büyük değişim tek bir anda değil, küçük tekrarların üst üste binmesinde doğar. Ham hacmi değil, o hacmin ardındaki sebatı ölçüyor — her gün yeniden 'evet' diyebilme gücünü.",
+    onur: "Sen, büyük dönüşümün küçük adımlardan geldiğini yaşayarak kanıtlayansın.",
+  },
+  {
+    key: "yuksek_puan", ad: "Zirve Puanı", ikon: "💎", yon: "max", birim: "/10",
+    aciklama: "Bazen tek bir cümle, tek bir cevap, tek bir an her şeyi değiştirir. En iyi hâlinin bir hayal değil, gerçekten var olan ve bir kez bile olsa ona dokunulmuş bir yer olduğunu kanıtlıyor.",
+    onur: "En iyi hâlinin gerçek olduğunu, sen kanıtladın.",
+  },
+  {
+    key: "tam_puan", ad: "On Numara", ikon: "🔟", yon: "max", birim: "kez",
+    aciklama: "Bir kez mükemmel olmak şans olabilir; tekrar tekrar mükemmel olmak bir seçimdir. En yüksek anını tesadüften çıkarıp bir alışkanlığa dönüştürdüğünü gösteriyor.",
+    onur: "Mükemmelliğin senin için bir an değil, bir alışkanlık olduğunu gördük.",
+  },
+  {
+    key: "istikrar", ad: "İstikrar Ustası", ikon: "📅", yon: "max", birim: "gün",
+    aciklama: "Heves parlak ama kısa sürer; istikrar sessiz ama kalıcıdır. Motivasyonun düştüğü günlerde bile sahaya çıkmayı seçtiğini — gerçek liderliğin heyecanla değil kararlılıkla kurulduğunu gösteriyor.",
+    onur: "Sen, hevesin değil kararlılığın gerçek liderliği kurduğunu bize gösterdin.",
+  },
+  {
+    key: "cok_kivilcim", ad: "Kıvılcım Lideri", ikon: "✨", yon: "max", birim: "⚡",
+    aciklama: "Her küçük katılım, her deneme, her adım bir kıvılcım bırakır. O kıvılcımların en çok kimin etrafında biriktiğini — kimin enerjisinin en çok yayıldığını gösteriyor.",
+    onur: "Etrafındakileri en çok ısıtan ateş sende yandı.",
+  },
+  {
+    key: "comert_takdirci", ad: "En Cömert Takdirci", ikon: "💛", yon: "max", birim: "takdir",
+    aciklama: "Takdir etmek küçük bir eylem gibi görünür ama bencil olmayan bir dikkat ister — kendi başarına değil, başkasınınkine bakabilmeyi. Liderliğin aslında başkasını büyütmekle başladığını hatırlatıyor.",
+    onur: "Sen, başkasını büyüterek kendi liderliğini gösterdin.",
+  },
+  {
+    key: "takdir_alan", ad: "En Çok Takdir Alan", ikon: "🤍", yon: "max", birim: "takdir",
+    aciklama: "Bir performans ölçütü değil — sessizce etkilediğin insan sayısının kanıtı. Başkalarının senin hakkında konuşma ihtiyacı duyması, kendiliğinden oluşan gerçek bir etkinin işareti.",
+    onur: "Fark ettirmeden dokunduğun herkes, bugün bunu sana söylüyor.",
+  },
+  {
+    key: "ret_cesuru", ad: "Ret Cesuru", ikon: "🔥", yon: "max", birim: "ret",
+    aciklama: "Bu rozet bir kayıp saymıyor — tam tersini kutluyor. Reddi göze almak, 'evet' duyma ihtimaline inanmaktır; her 'hayır', aslında sahada olduğunun kanıtıdır.",
+    onur: "Sen, 'hayır' duymaktan korkmayarak zaten kazanmış olduğunu kanıtladın.",
+  },
+  {
+    key: "cok_sandik", ad: "Sandık Avcısı", ikon: "🎁", yon: "max", birim: "sandık",
+    aciklama: "Ciddiyetin karşıtı değil, tamamlayıcısı — büyük bir yolculuğun ortasında bile merakını, oyunbazlığını kaybetmemek. En derin dönüşüm bile bir gülümsemeyle daha hafif taşınır.",
+    onur: "Yolun ciddiyetinde bile neşeni kaybetmeyen sensin.",
+  },
 ];
 
 const IST_OFFSET = 3 * 3_600_000;
@@ -36,9 +95,18 @@ function istGun(ts: string): string {
   return new Date(Date.parse(ts) + IST_OFFSET).toISOString().slice(0, 10);
 }
 
+// Rekorlar KAMP BAŞLAYINCA KENDİLİĞİNDEN açılır: `ayna_baslangic` set edildiği an
+// (kampın başlatıldığı an) otomatik aktif — kimsenin bir düğmeye basması gerekmez.
+// Onboarding'de (ayna_baslangic yok) kapalı kalır ki yarım veriyle sıralama
+// görünmesin. `rekorlar_acik` manuel bayrağı yalnız PROVA/erken-test için ek kapı.
 export async function rekorlarAcikMi(db: Db): Promise<boolean> {
-  const { data } = await db.from("settings").select("value").eq("key", "rekorlar_acik").maybeSingle();
-  return data?.value === "true";
+  const { data } = await db
+    .from("settings")
+    .select("key, value")
+    .in("key", ["ayna_baslangic", "rekorlar_acik"]);
+  const ayar = new Map((data ?? []).map((r) => [r.key, r.value]));
+  if (ayar.get("ayna_baslangic")) return true; // kamp başladı → otomatik açık
+  return ayar.get("rekorlar_acik") === "true"; // prova/erken test için manuel kapı
 }
 
 // Her kategori için kişi-bazlı değerler (Map<pid, number>). Tek yerde hesaplanır;
@@ -46,11 +114,33 @@ export async function rekorlarAcikMi(db: Db): Promise<boolean> {
 type KategoriHesap = Map<string, Map<string, number>>; // kategori.key → (pid → deger)
 
 async function hesapla(db: Db): Promise<KategoriHesap> {
-  const [{ data: gorevler }, { data: kudos }, { data: redler }, { data: sandik }] = await Promise.all([
-    db.from("missions").select("participant_id, issued_at, responded_at, ai_score, spark_points, status"),
-    db.from("kudos").select("from_id, to_id").eq("is_hidden", false),
-    db.from("redler").select("participant_id"),
-    db.from("sandik_gecmisi").select("participant_id"),
+  // missions/kudos 1000-satır PostgREST tavanını aşabilir (150 kişi × birçok
+  // görev); sayfalı çek, yoksa Gün 2'den itibaren kürsü sıralaması yanlış çıkar
+  // ve Gün 3'te Emre sahneye YANLIŞ kişiyi "Görev Canavarı" diye çağırabilir.
+  const [gorevler, kudos, redler, sandik] = await Promise.all([
+    tumKayitlar<{
+      participant_id: string;
+      issued_at: string | null;
+      responded_at: string | null;
+      ai_score: number | null;
+      spark_points: number | null;
+      status: string;
+    }>((bas, son) =>
+      db
+        .from("missions")
+        .select("participant_id, issued_at, responded_at, ai_score, spark_points, status")
+        .order("id")
+        .range(bas, son)
+    ),
+    tumKayitlar<{ from_id: string; to_id: string }>((bas, son) =>
+      db.from("kudos").select("from_id, to_id").eq("is_hidden", false).order("id").range(bas, son)
+    ),
+    tumKayitlar<{ participant_id: string }>((bas, son) =>
+      db.from("redler").select("participant_id").order("id").range(bas, son)
+    ),
+    tumKayitlar<{ participant_id: string }>((bas, son) =>
+      db.from("sandik_gecmisi").select("participant_id").order("id").range(bas, son)
+    ),
   ]);
 
   const h: KategoriHesap = new Map(KATEGORILER.map((k) => [k.key, new Map<string, number>()]));
@@ -115,9 +205,23 @@ function lider(m: Map<string, number>, yon: Yon): { pid: string; deger: number }
   return best;
 }
 
+// Rekor duyurusu kategori başına en erken bu aralıkla tekrar edebilir.
+// Saha geri bildirimi (Gün 1 akşamı): aktif kampta lider her tikte kendi
+// rekorunu büyütüyor ve HER kırılma 154 kişiye push atıyordu — 1 saatte
+// aynı kategoriden 6 duyuru (367→419→…→597⚡) bildirim fırtınasına döndü.
+const REKOR_DUYURU_SOGUMA_MS = 3 * 3_600_000;
+
 // TARAMA — mevcut rekorları hesapla, tabloyla karşılaştır, kırılanı güncelle +
 // herkese push. İlk doldurmada (önceki kayıt yok) SESSİZ set eder (spam yok).
 // tik'ten (mod=kamp, bayrak açık) çağrılır. Kendi hatasını yutar.
+//
+// DUYURU FRENİ (spam kesici — rekor VERİSİ yine her tikte güncellenir, yalnız
+// push seyreltilir; kürsü//ekran/rekorlar sayfası hep günceldir):
+//  1) TAHT DEĞİŞİMİ KURALI: yalnız rekortmen DEĞİŞİNCE duyur. Liderin kendi
+//     rekorunu büyütmesi (aynı kişi 512→520→575) sessiz güncellenir — haber
+//     değeri taşıyan olay "koltuğun el değiştirmesi"dir.
+//  2) SOĞUMA: aynı kategori en erken 3 saatte bir duyurulur (settings zaman
+//     damgası kilidi) — taht sık el değiştirse bile telefonlar susmaz.
 export async function rekorTara(db: Db): Promise<{ kirilan: number }> {
   try {
     const [h, { data: mevcutlar }] = await Promise.all([
@@ -139,16 +243,31 @@ export async function rekorTara(db: Db): Promise<{ kirilan: number }> {
         deger: l.deger,
         tarih: new Date().toISOString(),
       });
-      // Yalnız MEVCUT bir rekor kırılınca duyur (ilk doldurma sessiz).
-      if (eski) {
-        kirilan++;
-        await herkeseBildir(
-          db,
-          `🏆 ${kat.ad} rekoru kırıldı!`,
-          `Yeni rekor: ${degerYazi(kat, l.deger)}. Sen de dene — belki sıradaki sensin.`,
-          "/rekorlar"
-        ).catch(() => {});
+      // Yalnız MEVCUT bir rekor kırılınca duyur (ilk doldurma sessiz)…
+      if (!eski) continue;
+      kirilan++;
+      // …ve yalnız TAHT DEĞİŞİNCE (kendi rekorunu büyüten lider sessiz).
+      if (eski.participant_id === l.pid) continue;
+      // …ve kategori soğuma penceresi dışındaysa (3 saatte en çok 1 duyuru).
+      const sogumaAnahtari = `rekor_duyuru_${kat.key}`;
+      const { data: sonDuyuru } = await db
+        .from("settings")
+        .select("value")
+        .eq("key", sogumaAnahtari)
+        .maybeSingle();
+      if (sonDuyuru?.value) {
+        const gecen = Date.now() - new Date(sonDuyuru.value).getTime();
+        if (Number.isFinite(gecen) && gecen >= 0 && gecen < REKOR_DUYURU_SOGUMA_MS) continue;
       }
+      await db
+        .from("settings")
+        .upsert({ key: sogumaAnahtari, value: new Date().toISOString() });
+      await herkeseBildir(
+        db,
+        `🏆 ${kat.ad} rekoru kırıldı!`,
+        `Yeni rekor: ${degerYazi(kat, l.deger)}. Sen de dene — belki sıradaki sensin.`,
+        "/rekorlar"
+      ).catch(() => {});
     }
     return { kirilan };
   } catch {
@@ -184,13 +303,18 @@ export async function kampKursusu(db: Db): Promise<KursuSatiri[]> {
   });
 }
 
-// KİŞİSEL REKORLAR — kendi bestin + kamp rekoru + uzaklık.
+// KİŞİSEL REKORLAR — kendi bestin + kamp rekoru + uzaklık + CANLI SIRALAMA.
+// `sira`: bu kategoride kaçıncısın (1-bazlı; eşitlikte "benden kesin iyi olan
+// sayısı + 1" → beraberlikte aynı sıra). `toplam`: kategoride değeri olan kişi
+// sayısı (yarışın gerçek boyutu). Değerin yoksa sira=null.
 export type KisiselSatir = {
   kategori: Kategori;
   benim: number | null;
   rekor: number | null;
   liderMi: boolean;
   uzaklik: string | null;
+  sira: number | null;
+  toplam: number;
 };
 
 export async function kisiselRekorlar(db: Db, pid: string): Promise<KisiselSatir[]> {
@@ -200,15 +324,80 @@ export async function kisiselRekorlar(db: Db, pid: string): Promise<KisiselSatir
   ]);
   const rekor = new Map((rekorlar ?? []).map((r) => [r.kategori, r]));
   return KATEGORILER.map((kat) => {
-    const benim = h.get(kat.key)!.get(pid) ?? null;
+    const m = h.get(kat.key)!;
+    const benim = m.get(pid) ?? null;
     const r = rekor.get(kat.key);
     const rekorDeger = r ? r.deger : null;
     const liderMi = !!r && r.participant_id === pid;
+
+    // Canlı sıra: benden KESİN daha iyi kaç kişi var? (yön max→büyük iyi, min→küçük iyi)
+    const toplam = m.size;
+    let sira: number | null = null;
+    if (benim != null) {
+      let dahaIyi = 0;
+      for (const v of m.values()) {
+        if (kat.yon === "max" ? v > benim : v < benim) dahaIyi++;
+      }
+      sira = dahaIyi + 1;
+    }
+
     let uzaklik: string | null = null;
     if (benim != null && rekorDeger != null && !liderMi) {
       const fark = Math.abs(rekorDeger - benim);
       uzaklik = `${degerYazi(kat, Math.round(fark * 10) / 10)} uzağında`;
     }
-    return { kategori: kat, benim, rekor: rekorDeger, liderMi, uzaklik };
+    return { kategori: kat, benim, rekor: rekorDeger, liderMi, uzaklik, sira, toplam };
+  });
+}
+
+// ============================================================================
+// KÜRSÜ BRİFİ — "AYNA seni böyle seçti" sahne ödülleri (admin, İSİMLİ)
+// ============================================================================
+// Her kategorinin 1./2./3.'sü (isimle) + veriden türeyen kısa GEREKÇE. Sahnede
+// Emre "AYNA seni şu veriyle seçti" der — uydurma yok, hep gerçek sayı. 2. ve 3.
+// YEDEK: 1. kişi sahneye çıkmak istemezse Emre bir alttakini çağırır. Bu brif
+// YALNIZ admindir; salona isim okunması Emre'nin kararıdır (önce kişiden onay).
+
+const KURSU_GEREKCE: Record<string, (d: number) => string> = {
+  hizli_teslim: (d) => `En hızlı teslim: ${d} dk — tereddütsüz aksiyon.`,
+  gece_kusu: (d) => `Gece ${String(Math.floor(d)).padStart(2, "0")}:00'de sahadaydı — hiç durmadı.`,
+  erken_kalkan: (d) => `Sabah ${String(Math.floor(d)).padStart(2, "0")}:00'de başladı — en erken.`,
+  cok_gorev: (d) => `${d} görev tamamladı — kamptaki en üretken.`,
+  yuksek_puan: (d) => `En yüksek tek puan: ${d}/10 — zirveye dokundu.`,
+  tam_puan: (d) => `${d} kez 10/10 aldı — mükemmelliği tekrarladı.`,
+  istikrar: (d) => `${d} farklı gün aktif — hiç ara vermedi.`,
+  cok_kivilcim: (d) => `${d} kıvılcım topladı — enerjinin lideri.`,
+  comert_takdirci: (d) => `${d} kez başkasını takdir etti — en cömert.`,
+  takdir_alan: (d) => `${d} takdir aldı — en çok dokunan.`,
+  ret_cesuru: (d) => `${d} kez "ret"i göze aldı — en cesur.`,
+  cok_sandik: (d) => `${d} sandık açtı — en meraklı avcı.`,
+};
+
+export type BrifAday = { pid: string; ad: string; deger: number; sira: number; gerekce: string };
+export type KursuBrifSatiri = { kategori: Kategori; adaylar: BrifAday[] };
+
+export async function kursuBrifi(db: Db): Promise<KursuBrifSatiri[]> {
+  const h = await hesapla(db);
+  const pidSet = new Set<string>();
+  for (const m of h.values()) for (const p of m.keys()) pidSet.add(p);
+  const { data: kisiler } = pidSet.size
+    ? await db.from("participants").select("id, full_name").in("id", [...pidSet])
+    : { data: [] as { id: string; full_name: string }[] };
+  const adMap = new Map((kisiler ?? []).map((k) => [k.id, k.full_name]));
+
+  return KATEGORILER.map((kat) => {
+    const m = h.get(kat.key)!;
+    const sirali = [...m.entries()]
+      .sort((a, b) => (kat.yon === "max" ? b[1] - a[1] : a[1] - b[1]))
+      .slice(0, 3);
+    const gerekceFn = KURSU_GEREKCE[kat.key] ?? ((d: number) => degerYazi(kat, d));
+    const adaylar: BrifAday[] = sirali.map(([pid, deger], i) => ({
+      pid,
+      ad: adMap.get(pid) ?? "—",
+      deger,
+      sira: i + 1,
+      gerekce: gerekceFn(deger),
+    }));
+    return { kategori: kat, adaylar };
   });
 }

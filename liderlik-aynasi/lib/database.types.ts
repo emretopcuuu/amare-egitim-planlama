@@ -1358,28 +1358,37 @@ export type Database = {
       kudos: {
         Row: {
           created_at: string
+          foto_path: string | null
           from_id: string
           id: string
           is_hidden: boolean
+          kategori: string | null
           message: string
+          ses_path: string | null
           tesekkur_edildi: boolean
           to_id: string
         }
         Insert: {
           created_at?: string
+          foto_path?: string | null
           from_id: string
           id?: string
           is_hidden?: boolean
+          kategori?: string | null
           message: string
+          ses_path?: string | null
           tesekkur_edildi?: boolean
           to_id: string
         }
         Update: {
           created_at?: string
+          foto_path?: string | null
           from_id?: string
           id?: string
           is_hidden?: boolean
+          kategori?: string | null
           message?: string
+          ses_path?: string | null
           tesekkur_edildi?: boolean
           to_id?: string
         }
@@ -1648,6 +1657,7 @@ export type Database = {
         Row: {
           created_at: string
           fiziksel: boolean
+          hediye_alici_id: string | null
           id: string
           participant_id: string
           reyon: string
@@ -1660,6 +1670,7 @@ export type Database = {
         Insert: {
           created_at?: string
           fiziksel?: boolean
+          hediye_alici_id?: string | null
           id?: string
           participant_id: string
           reyon: string
@@ -1672,6 +1683,7 @@ export type Database = {
         Update: {
           created_at?: string
           fiziksel?: boolean
+          hediye_alici_id?: string | null
           id?: string
           participant_id?: string
           reyon?: string
@@ -1923,6 +1935,132 @@ export type Database = {
           meta?: Json
           participant_id?: string
           tur?: string
+        }
+        Relationships: []
+      }
+      mozaik_parca: {
+        Row: {
+          created_at: string
+          foto_path: string
+          grup: string
+          id: string
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          foto_path: string
+          grup: string
+          id?: string
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          foto_path?: string
+          grup?: string
+          id?: string
+          participant_id?: string
+        }
+        Relationships: []
+      }
+      protokol_pratik: {
+        Row: {
+          cekirdek: boolean
+          created_at: string
+          id: string
+          kapatildi: boolean
+          participant_id: string
+          pratik_kodu: string
+        }
+        Insert: {
+          cekirdek?: boolean
+          created_at?: string
+          id?: string
+          kapatildi?: boolean
+          participant_id: string
+          pratik_kodu: string
+        }
+        Update: {
+          cekirdek?: boolean
+          created_at?: string
+          id?: string
+          kapatildi?: boolean
+          participant_id?: string
+          pratik_kodu?: string
+        }
+        Relationships: []
+      }
+      protokol_tamamlama: {
+        Row: {
+          created_at: string
+          id: string
+          participant_id: string
+          pratik_kodu: string
+          tarih: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          participant_id: string
+          pratik_kodu: string
+          tarih: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          participant_id?: string
+          pratik_kodu?: string
+          tarih?: string
+        }
+        Relationships: []
+      }
+      liste_sayaci: {
+        Row: {
+          adet: number
+          id: string
+          participant_id: string
+          tarih: string
+        }
+        Insert: {
+          adet?: number
+          id?: string
+          participant_id: string
+          tarih: string
+        }
+        Update: {
+          adet?: number
+          id?: string
+          participant_id?: string
+          tarih?: string
+        }
+        Relationships: []
+      }
+      pazar_karnesi: {
+        Row: {
+          created_at: string
+          davet: number
+          gorusme: number
+          hafta: string
+          id: string
+          participant_id: string
+          takip: number
+        }
+        Insert: {
+          created_at?: string
+          davet?: number
+          gorusme?: number
+          hafta: string
+          id?: string
+          participant_id: string
+          takip?: number
+        }
+        Update: {
+          created_at?: string
+          davet?: number
+          gorusme?: number
+          hafta?: string
+          id?: string
+          participant_id?: string
+          takip?: number
         }
         Relationships: []
       }

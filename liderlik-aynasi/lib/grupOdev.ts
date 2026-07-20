@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 
 // FAZ D2: Grup ödevleri. Grubun Ön Farkındalık profillerini toplayıp baskın
@@ -153,7 +154,7 @@ export async function grupOdevUret(
   };
 
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       // Grup ödevi düşük hacimli (grup başına 1) — kalite için Sonnet, effort low.
       model: "claude-sonnet-5",

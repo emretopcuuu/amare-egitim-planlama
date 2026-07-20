@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { pusulaCekirdek } from "@/lib/pusula";
@@ -81,7 +82,7 @@ export async function planMaddesineDanis(
   };
 
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 1024,

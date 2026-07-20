@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { PERSONA } from "@/lib/ayna";
 import { kimlikBloguGetir } from "@/lib/kisiKimligi";
@@ -98,7 +99,7 @@ export async function donusumKarsilastirmaUret(
     }
 
     if (!process.env.ANTHROPIC_API_KEY) return null;
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       // MALİYET: kişi başına BİR kez çalışan kısa üretim → Haiku 4.5 yeterli.
       model: "claude-haiku-4-5",

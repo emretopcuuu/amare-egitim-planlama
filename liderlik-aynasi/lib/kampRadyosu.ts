@@ -1,9 +1,9 @@
 import "server-only";
-import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { seslendir, sesYapilandirildiMi, aynaSesId } from "@/lib/eleven";
 import { AYNA_KARAKTER_TAM, aynaKarakterAcikMi, bahisSkoru } from "@/lib/aynaKarakter";
-import { herkeseBildir } from "@/lib/push";
+import { herkeseBildir, adminlereBildir } from "@/lib/push";
 import { gunProgrami } from "@/lib/kampProgrami";
 import { aiHataYakala } from "@/lib/uyari";
 
@@ -105,7 +105,7 @@ async function veriTopla(db: Db, gun: number, bugun: string, slot: Slot): Promis
 // AI script — AYNA sunucu. Düşerse null (şablon devreye girer).
 async function scriptUret(veri: RadyoVeri, slot: Slot): Promise<string | null> {
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const gorevTanim =
       slot === "sabah"
         ? `SABAH YAYINI (07:30). İçerik sırası: (1) "Burası Kamp Radyosu, ben AYNA" tarzı açılış + güne enerjik günaydın, (2) bugünün programından şu iki başlığa heyecanlı tek cümle: ${veri.program.join(" ve ") || "sürpriz program"}, (3) İDDİALI TAHMİNİN: bugün kampta EN AZ ${veri.tahminHedef} görev tamamlanacağını iddia et ve "akşam yüzleşeceğiz, yazıyorum buraya" de, (4) tek cümlelik kapanış. Running gag'lerinden birine KISA dokunabilirsin (bowling programdaysa korkun tutabilir).`
@@ -183,6 +183,10 @@ export async function radyoTik(
     if (!(await aynaKarakterAcikMi(db))) return; // kill switch radyoyu da kapatır
     for (const plan of SLOTLAR) {
       if (gunDk < plan.uretimDk) continue;
+      // GÜN 1 = VARIŞ GÜNÜ: herkes ~12:00 odalara giriyor; AYNA öğleden sonra
+      // uyandırılıyor. Sabah 07:30 "günaydın" yayını öğlen catch-up ile çıkarsa
+      // tuhaf olur — Gün 1 sabah yayınını atla (akşam bülteni normal çalışır).
+      if (plan.slot === "sabah" && gun === 1) continue;
       const { data: mevcut } = await db
         .from("radyo_yayin")
         .select("id, durum")
@@ -208,7 +212,20 @@ export async function radyoTik(
           .single();
         if (error || !eklenen) continue;
         const sesYol = await sesUret(db, metin, bugun, plan.slot);
-        if (sesYol) await db.from("radyo_yayin").update({ ses_path: sesYol }).eq("id", eklenen.id);
+        if (sesYol) {
+          await db.from("radyo_yayin").update({ ses_path: sesYol }).eq("id", eklenen.id);
+        } else if (sesYapilandirildiMi()) {
+          // TTS yapılandırılmış ama üretim DÜŞTÜ (kota/ElevenLabs hatası): radyo
+          // salt-metin çıkacak, maskot konuşmayacak. Eskiden tamamen SESSİZDİ —
+          // artık adminlere tek push: sorun görünür olsun, kimse fark etmeden
+          // "radyo neden sessiz" diye sahne arkasında koşuşturmasın. Slot başına 1 kez.
+          await adminlereBildir(
+            db,
+            "🔇 Radyo sesi üretilemedi",
+            `${plan.slot === "sabah" ? "Sabah" : "Akşam"} yayını salt-metin çıktı (ses üretimi düştü — ElevenLabs kota/anahtar?). Metin yayında, maskot konuşmuyor.`,
+            "/admin"
+          ).catch(() => {});
+        }
         // Geç başlangıç (üretim penceresi kaçtıysa) aynı tikte yayına da düşsün.
         if (gunDk >= plan.yayinDk) await yayinla(db, eklenen.id, plan.slot);
         continue;

@@ -80,17 +80,36 @@ export default async function AcSayfa({
   }
 
   if (acabilir) {
-    await db
+    const { error } = await db
       .from("participants")
       .update({ camp_unlocked_at: new Date().toISOString() })
       .eq("id", session.sub)
       .is("camp_unlocked_at", null);
+    // Yazma hatasında "başarı" gösterme: aksi halde kişi /ayna-hayalleri'ne gider,
+    // orada camp_unlocked_at hâlâ NULL olduğu için parametresiz /ac'a geri döner ve
+    // "Kod geçersiz"e düşer (kısır döngü). Bunun yerine aynı QR/kod linkiyle
+    // "tekrar dene" ekranı göster — kişi bir daha okutunca yazma çoğunlukla geçer.
+    if (error) {
+      const tekrarHref = verilenToken
+        ? `/ac?u=${encodeURIComponent(verilenToken)}`
+        : `/ac?k=${encodeURIComponent(verilenKod)}`;
+      return (
+        <Sonuc
+          ikon="⏳"
+          baslik={t.acYazHataBaslik}
+          metin={t.acYazHataMetin}
+          dugme={t.acYazHataDugme}
+          dugmeHref={tekrarHref}
+        />
+      );
+    }
     return (
       <Sonuc
         ikon="🔓"
         baslik={t.acBasariBaslik}
         metin={t.acBasariMetin}
         dugme={t.acBasariDugme}
+        dugmeHref="/ayna-hayalleri"
       />
     );
   }
@@ -106,11 +125,13 @@ function Sonuc({
   baslik,
   metin,
   dugme,
+  dugmeHref = "/",
 }: {
   ikon: string;
   baslik: string;
   metin: string;
   dugme: string;
+  dugmeHref?: string;
 }) {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-6 text-center">
@@ -121,7 +142,7 @@ function Sonuc({
         <h1 className="prizma-serif ay-metin mt-4 text-2xl font-semibold">{baslik}</h1>
         <p className="mt-3 text-base leading-relaxed text-slate-300">{metin}</p>
         <Link
-          href="/"
+          href={dugmeHref}
           className="btn-kor parilti mt-6 inline-flex h-12 items-center justify-center rounded-xl px-6 text-base font-semibold"
         >
           {dugme}

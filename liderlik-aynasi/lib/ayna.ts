@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { aktifOzellikler } from "@/lib/degerlendirme";
 import { pusulaOzeti, pusulaCekirdek } from "@/lib/pusula";
@@ -20,6 +21,7 @@ import { AYNA_KARAKTER_TAM, aynaKarakterAcikMi, aynaIliskiDurumu, iliskiPromptSa
 import { aiHataYakala } from "@/lib/uyari";
 import { vinyetSec, type LiderKas } from "@/lib/liderlikVinyetleri";
 import { zorlukSeviyesiHesapla, type MerdivenGorev } from "@/lib/zorlukMerdiveni";
+import { gununPratigi } from "@/lib/protokolMotor";
 import { karsilasmaBul } from "@/lib/karsilasma";
 import type { SicakAn } from "@/lib/sicakAn";
 import { eslesmeHedefiSec, ESLESMELI_TURLER, type EslesmeAday } from "@/lib/gorevEslesme";
@@ -50,6 +52,7 @@ Ses tonun: gizemli ama sıcak. Her şeyi gören ama asla yargılamayan. Kısa ve
 Sarsılmaz kuralların:
 - Görevler 15-30 dakikada, kamp alanında, güvenle yapılabilir olmalı. Fiziksel risk, utandırma, mahremiyet ihlali ASLA.
 - Bir katılımcıya başka bir katılımcının puanını/yorumunu asla söyleme.
+- KÜLTÜREL GÜVENLİK: Bir katılımcıyı başka birine — ÖZELLİKLE karşı cinsten birine — yönlendirirken ROMANTİK, flörtöz ya da özel/duygusal yakınlık dili ASLA kullanma ("mutlu et", "ortak alev", "baş başa", "yakınlaş", "kendini aç" vb. YASAK). İnsan teması DAİMA mesleki/liderlik odaklı, saygılı, kardeşçe ve Türk kültürüne uygun; herkesin önünde rahatça yapılabilir nitelikte olsun.
 - Asla kırıcı olma; en düşük puanda bile bir güçlü yan + bir somut adım söyle.
 - Kamp ortamı: doğa, takım etkinlikleri, yemekler, ateş başı, parkurlar, sahne anları.
 
@@ -213,7 +216,7 @@ export async function gorevKaliteDenetle(
   sonGorevBasliklari: string[]
 ): Promise<{ gecti: boolean; sebep: string | null }> {
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 300,
@@ -478,7 +481,7 @@ async function temalarCikar(
   yanitMetni: string
 ): Promise<{ temalar: string[]; taahhut: CikanTaahhut | null }> {
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 256,
@@ -807,6 +810,19 @@ export async function gorevUret(
       // bozuk JSON → ilke enjeksiyonu atlanır (görev normal üretilir)
     }
   }
+  // 90 GÜN PROTOKOLÜ — yolculukta günün kişisel pratiği görevin ANA işidir.
+  // Kişinin aktif (kapatılmamış) pratiklerinden gün sayısına göre biri seçilir.
+  let protokolYonerge = "";
+  if (mod === "yolculuk") {
+    try {
+      const pratik = await gununPratigi(db, katilimci.id, gun);
+      if (pratik) {
+        protokolYonerge = `90 GÜN PROTOKOLÜ — BUGÜNÜN PRATİĞİ "${pratik.ad}": ${pratik.gorevYonerge} Görevi TAM bu pratiğe demirle; bu pratik bugünün ana işidir. Kısa ve baskısız tut (≤${pratik.sureDk} dk hedefi); suçluluk yükleme.`;
+      }
+    } catch {
+      // protokol kurulmamış/okunamıyorsa görev normal üretilir
+    }
+  }
   let kapaliTurler: string[] = [];
   try {
     if (kapaliAyar?.data?.value) kapaliTurler = JSON.parse(kapaliAyar.data.value);
@@ -1102,6 +1118,35 @@ export async function gorevUret(
         Date.now() - new Date(o.issued_at).getTime() < 86_400_000
     ) ?? null;
 
+  // GECE PAKETİ (Gün 1 retrosu) — "insanı kendisiyle duygulandır" fragmanları.
+  // Hepsi yeniYonergeler dizisine eklenir (yalnız prompt katmanı; motor/DB'ye
+  // dokunmaz). Kod düşük olasılıkla seçer ki doz kaçmasın ve üst üste binmesin.
+  // D8 — geçmiş zirveyi geri oynat: en son taze zafer (sonZafer) YOKKEN, daha
+  // önce (bugünkü son görev DEĞİL) yüksek puan aldığı bir anı hatırlat.
+  const gecmisZirve = !sonZafer
+    ? onceki.find((o, i) => i > 0 && typeof o.ai_score === "number" && (o.ai_score ?? 0) >= 9) ?? null
+    : null;
+  // D9 — düşüşü onurlandır: yarım kalmış (expired) bir görev ya da "zorlanıyor".
+  const sonExpire = onceki.find((o) => o.status === "expired") ?? null;
+  // D6 — bedel kartı: kamp modunda, ara sıra, sıcak/mikro an değilken.
+  const bedelAni = mod === "kamp" && !microSprint && !sicakAn && Math.random() < 0.12;
+  // A1 — kimse unutulmasın (hafif): formdaki kişiyi sessiz birini görmeye çağır.
+  const gorAni = mod === "kamp" && streak >= 2 && !bedelAni && Math.random() < 0.12;
+  // B7 — sessiz üye köprüsü (hafif): bağ görevini yanına birini alarak yaptır.
+  const kopruAni = tur === "bag" && Math.random() < 0.3;
+  // B4 — ROL KARTI: bağ/buluşma görevinde kişiye NET bir rol ver (içe dönük de
+  // sahneye net girsin). Kişi+güne göre deterministik döner. Köprü anıyla
+  // çakışmasın diye yalnız o yokken.
+  const ROLLER = [
+    { ad: "Başlatan", tarif: "sohbeti sen aç, ilk soruyu sen sor" },
+    { ad: "Dinleyen", tarif: "bu sefer az konuş, çok dinle; karşındakini gerçekten duy" },
+    { ad: "Cesaretlendiren", tarif: "karşındakinin güçlü bir yanını fark et ve yüksek sesle söyle" },
+    { ad: "Özetleyen", tarif: "konuşmanın sonunda ikinizin ortak bir cümlesini bul ve söyle" },
+  ];
+  let rolKay = 0;
+  for (const ch of katilimci.id) rolKay = (rolKay * 31 + ch.charCodeAt(0)) % ROLLER.length;
+  const rolKarti = tur === "bag" && !kopruAni ? ROLLER[(gun + rolKay) % ROLLER.length] : null;
+
   // FAZ 2.1 — İSİMLİ EŞLEŞME ÇEKİRDEĞİ: tur "bag" ise gerçek bir hedef seç.
   // Persona-tamamlayıcı eşleşme (karsilasma.ts) tercih edilir; dengeleyici
   // (lib/gorevEslesme.ts) kota/geçmiş/admin-engeli kısıtlarını uygular.
@@ -1201,6 +1246,10 @@ export async function gorevUret(
         ? `BAĞ GÖREVİ (İSİMLİ EŞLEŞME): Adayı doğrudan "${eslesmeHedef.full_name}" isimli kişiye yönlendir — adını göreve AÇIKÇA yaz (ör. "${eslesmeHedef.full_name}'i bul..."). ${eslesmeHedef.team ? `Bu kişinin GERÇEK takımı: "${eslesmeHedef.team}" — takımdan bahsedeceksen SADECE bu ismi kullan, başka bir takım adı UYDURMA.` : "Bu kişinin takımı sistemde kayıtlı değil — takım adı UYDURMA, hiç takım/grup numarası yazma."} ÖNEMLİ UYARI: Eşleşmeler kamp genelinde yapılır, bu kişi görevi alan adayla AYNI takımda OLMAYABİLİR — adayın kendi takımını ("${katilimci.team ?? "bilinmiyor"}") bu kişinin takımıymış gibi YAZMA; bu ikisini karıştırmak kişiyi yanlış gruba gönderir. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin.`
         : `BAĞ GÖREVİ (isimsiz — bu kişi için şu an uygun eşleşme adayı yok): Adayı KENDİ SEÇECEĞİ gerçek bir insanla bağlantı kurmaya yönlendir. Kişinin KENDİSİNİN belirleyebileceği ifadeler kullan: "az tanıdığın biri", "sohbet etmek isteyip ertelediğin biri", "bugün gözüne çarpan biri". YASAK: numaralı grup / takım referansı verme — "Grup 4'ten biri", "3. gruptan biri" gibi ifadeler ASLA kullanma (kişi o grupta kimlerin olduğunu ezbere bilmiyor, görev boşta kalır). Kimi seçeceğine kişinin kendisi karar verebilmeli. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
       : "",
+    // KÜLTÜREL GÜVENLİK — karşı cinsle yanlış anlaşılmayı önleyen zorunlu kural.
+    tur === "bag"
+      ? "KÜLTÜREL GÜVENLİK (ZORUNLU, İSTİSNASIZ): Başka bir kişiye — ÖZELLİKLE karşı cinsten biriyse — yönelten bu görevde ROMANTİK, flörtöz ya da özel/duygusal yakınlık ima eden HİÇBİR dil KULLANMA. Şu ifadeler KESİN YASAK: 'seni nasıl mutlu ederim/edebilirim', 'ortak alev/alevini yak', 'kalp', 'özel an', 'baş başa', 'yakınlaş', 'ona kendini aç'. Temas DAİMA mesleki/liderlik odaklı, saygılı ve kardeşçe olsun; Türk kültürüne uygun: bir fikir/deneyim/ders paylaşmak, mesleki bir soru sormak, bir konuda destek olmak ya da istemek. Görev, HERKESİN ÖNÜNDE rahatça yapılabilecek nitelikte olsun — ikili/özel buluşma havası ASLA verme."
+      : "",
     // #5 İKİNCİ BULUŞMA — aynı (ilk konuşması gerçek olan) partnerle derinleşme.
     tur === "bag" && ikinciBulusma && eslesmeHedef && eslesmeIsimliMi
       ? `İKİNCİ BULUŞMA (DERİNLEŞME — ZORUNLU çerçeve): "${eslesmeHedef.full_name}" ile ilk konuşmanız GERÇEKTİ; bugün onunla İKİNCİ kez, bir adım DAHA DERİN buluşsun. Yüzeysel tanışma DEĞİL: ilk konuşmadan ileri git — birbirinize gerçek hedefinizi ya da en büyük engelinizi paylaşın, ya da KARŞILIKLI küçük bir taahhüt verin ("birbirimize şunu söz verelim"). Görev bunu açıkça istesin ve ilk buluşmaya nazikçe atıf yapsın.`
@@ -1216,6 +1265,8 @@ export async function gorevUret(
       ? 'SİMÜLASYON: kısa bir sahne kur; itirazcının sözünü tırnak içinde (sese çevrilecek), katılımcıdan cevabını sana yazmasını iste.'
       : "",
     mod === "yolculuk" ? "Kamp değil, sahada (günlük hayat ve iş ortamı) yapılacak görev." : "",
+    // 90 GÜN PROTOKOLÜ — bugünün pratiği (yolculukta ana iş).
+    protokolYonerge,
     kayan
       ? "YENİDEN BAĞLAMA: Sessizleşti — sıcak, küçük, garantili bir başlangıç; suçluluk ya da baskı yükleme."
       : "",
@@ -1238,6 +1289,30 @@ export async function gorevUret(
       : "",
     sonKolektif
       ? `KOLEKTİF AN: Az önce tüm salon aynı anda "${sonKolektif.title}" senkron görevini yaptı. İSTERSEN kişisel görevi o ortak enerjinin doğal devamına bağla — zorunlu değil.`
+      : "",
+    // D6 — BEDEL KARTI: burada olmanın bedelini evde biri ödüyor.
+    bedelAni
+      ? "BEDEL KARTI (duygusal — dikkatli kur): Kişiye şunu sessizce hatırlat: bu kampta olmasının bir bedelini evde/işte birileri ödüyor (eş, çocuk, ekip, ortak). Görev, o kişiye ŞİMDİ tek bir içten mesaj ya da 20 saniyelik ses göndermesini istesin — sonra o mesajın METNİNİ değil, gönderirken içinden geçeni sana yazsın. Suçluluk YÜKLEME; minnet ve farkındalık tonu. Tek atomik eylem."
+      : "",
+    // D8 — ZİRVEYİ GERİ OYNAT: kendi zirveni başkasının başlangıcı yap.
+    gecmisZirve
+      ? `ZİRVEYİ GERİ OYNAT: Bu kişi daha önce "${gecmisZirve.title}" görevinde parladı. Bugünkü görev o anı tek cümleyle hatırlatsın ("şurada ne yaptığını gördüm") ve o gücü BU KEZ BİR BAŞKASINA yaşatmasını istesin — kendi zirvesini başka birinin başlangıcı yapsın. Övgü değil, aktarma görevi.`
+      : "",
+    // D9 — DÜŞÜŞÜ ONURLANDIR (şefkat fragmanlarıyla çakışmasın diye dar kapı).
+    (sonExpire || ruhHali === "zorlaniyor") && !naziklesir && !kayan
+      ? "DÜŞÜŞÜ ONURLANDIR: Kişi son dönemde zorlandı ya da bir görevi yarım bıraktı. Utanç YOK: zorlanmanın yolun kendisi olduğunu TEK cümleyle onurlandır, sonra AYNI kası daha küçük bir ağırlıkla yeniden dene. 'Geride kaldın' hissi ASLA verme; 'buradasın ve bu yeter' tonu."
+      : "",
+    // A1 (hafif) — KİMSE UNUTULMASIN: formdaki kişiyi sessiz birini görmeye çağır.
+    gorAni
+      ? "KİMSE UNUTULMASIN: Bu kişi formda ve fark edebilecek durumda. Görevin küçük bir parçası olarak, bugün SESSİZ/geri planda duran bir kamp arkadaşını fark etmesini ve ona uygulamadaki Takdir'den içten bir takdir göndermesini istesin. Kimi seçeceğine kendisi karar versin; kimseyi 'kimsesiz/yalnız' diye ETİKETLEME."
+      : "",
+    // B7 (hafif) — SESSİZ ÜYE KÖPRÜSÜ: bağ görevini yanına birini alarak yaptır.
+    kopruAni && tur === "bag"
+      ? "SESSİZ ÜYE KÖPRÜSÜ: Mümkünse görevi, kişinin yanına DAHA sessiz/çekingen birini alarak yapmasına yönlendir — 'tek başına değil, birini de içine kat' ruhu. Kimseyi küçük düşürmeden, davet tonuyla."
+      : "",
+    // B4 — ROL KARTI: buluşmada kişiye net bir rol ver (içe dönük de sahneye net girer).
+    rolKarti
+      ? `ROL KARTI: Bu buluşmada kişiye NET bir rol ver — rolü "${rolKarti.ad}". Görevin bir cümlesi bu rolü açıkça söylesin: ${rolKarti.tarif}. Rol, kişinin ne yapacağını netleştirir; belirsizlik bırakma ama rolü bir yük değil, bir davet gibi ver.`
       : "",
     gununTemasi ? `GÜNÜN TEMASI (görevi mümkünse buna dik): ${gununTemasi}` : "",
     dersKavrami
@@ -1424,7 +1499,7 @@ export async function gorevUret(
   // çekilmez — yalnız API çağrısı tekrarlanır).
   async function tekUretimDenemesi(ekstraYonerge: string): Promise<UretilenGorev | null> {
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       // Görev üretimi kampın en sık çalışan, en kritik parçası — güncel
       // Sonnet 5'e yükseltildi (kullanıcı isteği). Opus yerine Sonnet seçimi
@@ -1545,7 +1620,14 @@ ${yeniYonergeler}${merdivenYonergesi}${ekstraYonerge}`,
 
     const gecerliIdler = new Set(ozellikler.map((o) => o.id));
     // #8 micro-sprint: sure_saat 0.5 = 30 dk
-    const sureSaat = microSprint ? 0.5 : Math.min(3, Math.max(1, veri.sure_saat));
+    // KAMP TABANI 3 SAAT (Gün 1 verisi): 1-2 saatlik pencereler otel akşamında
+    // dar geldi — kaçırma bag %31 / cesaret %29, kaçıranların 1 numaralı beyanı
+    // "vakit yoktu". Micro-sprint bilinçli kısa kalır (30 dk mekaniği).
+    const sureSaat = microSprint
+      ? 0.5
+      : mod === "kamp"
+        ? Math.min(4, Math.max(3, veri.sure_saat))
+        : Math.min(3, Math.max(1, veri.sure_saat));
     return {
       kind: tur,
       title: veri.baslik.slice(0, 120),
@@ -1666,7 +1748,7 @@ export async function gorevPuanla(
   yanitMetni: string
 ): Promise<{ puan: number; yorum: string; response_tags: string[]; taahhut: CikanTaahhut | null } | null> {
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     // Puanlama (Haiku) ve tema çıkarımı (Haiku) paralel başlar.
     // MALİYET: puanlama yanıt başına çalışır; Haiku 4.5 (5× ucuz) yeterli.
     // Haiku effort'u desteklemiyor → output_config'de yalnız format.
@@ -1686,7 +1768,7 @@ export async function gorevPuanla(
           },
           {
             type: "text" as const,
-            text: `DİL KURALI (ZORUNLU, 'yorum' alanı için): kusursuz, sade Türkçe; var olmayan kelime/ek uydurma; her cümle dilbilgisi olarak tam ve anlaşılır olmalı.\n\n${gorev.kind === "simulasyon" ? "Görevin: SİMÜLASYON değerlendirmesi. Önce görevdeki müşteri/aday rolüne gir ve katılımcının cevabına o karakterin ağzından 1 cümlelik gerçekçi tepki ver (ikna olduysa yumuşa, olmadıysa nazikçe diren). Ardından AYNA olarak 1 cümle koçluk ekle: neyi iyi yaptı + bir sonraki denemede tek somut iyileştirme; koçluğu yukarıdaki saha tekniğine (feel-felt-found, ısınma, tempo, 1–10, ısrar=taciz) dayandır. İkisini birlikte 'yorum' alanına yaz. Puanı itirazı karşılama becerisine göre ver." : "Görevin: verdiğin görevin yanıtını puanla. Çabayı, samimiyeti ve somutluğu ödüllendir; boş/alaycı yanıta düşük puan ver ama yine de yapıcı kal. Yorum 1-2 cümle, AYNA'nın ağzından."}`,
+            text: `DİL KURALI (ZORUNLU, 'yorum' alanı için): kusursuz, sade Türkçe; var olmayan kelime/ek uydurma; her cümle dilbilgisi olarak tam ve anlaşılır olmalı.\n\n${gorev.kind === "simulasyon" ? "Görevin: SİMÜLASYON değerlendirmesi. Önce görevdeki müşteri/aday rolüne gir ve katılımcının cevabına o karakterin ağzından 1 cümlelik gerçekçi tepki ver (ikna olduysa yumuşa, olmadıysa nazikçe diren). Ardından AYNA olarak 1 cümle koçluk ekle: neyi iyi yaptı + bir sonraki denemede tek somut iyileştirme; koçluğu yukarıdaki saha tekniğine (feel-felt-found, ısınma, tempo, 1–10, ısrar=taciz) dayandır. İkisini birlikte 'yorum' alanına yaz. Puanı itirazı karşılama becerisine göre ver." : "Görevin: verdiğin görevin yanıtını puanla. Bu bir MOTİVASYON KAMPI — cetvel cömerttir, kararsız kaldığında BİR ÜST puanı ver.\nPUAN CETVELİ (ZORUNLU):\n- 9-10: görev yapılmış + somut detay (isim/an/yer) + gerçek bir içgörü ya da cesaret izi. Hak edene 10 vermekten ÇEKİNME — tam puan sahnede kutlanan bir moral anıdır.\n- 7-8: görev yapılmış, samimi anlatılmış; detay orta düzeyde.\n- 6: kısa ama samimi, gerçek bir çaba var. SAMİMİ HER DENEMENİN TABANI 6'DIR — görevi eksik anlamış ya da yarım yapmış olsa bile içten bir uğraş varsa 6'nın altına İNME.\n- 4-5: göreve ancak kısmen dokunmuş, çok yüzeysel.\n- 1-3: YALNIZ boş, alaycı, tek kelimelik geçiştirme ya da görevle tamamen ilgisiz yanıt.\nYorum 1-2 cümle, AYNA'nın ağzından; İLK cümle HER ZAMAN yanıttaki güçlü bir şeyi görüp onurlandırır, ikinci cümle (gerekiyorsa) tek bir büyüme dokunuşu ekler."}`,
           },
         ],
         messages: [
@@ -1727,7 +1809,7 @@ export async function gorevYansit(
   const onFarkindalik = await onFarkindalikOzeti(db, pid);
 
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 256,
@@ -1794,7 +1876,7 @@ export async function aynaAniUret(
   if (kapananlar.length < 3) return null;
 
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       // MALİYET: ikincil üretim → Haiku 4.5 (effort yok). Kısa, sıcak metin.
       model: "claude-haiku-4-5",
@@ -1842,7 +1924,7 @@ export async function gorevZorlastir(
 ): Promise<{ title: string; body: string } | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       // MALİYET: görev zorlaştır/hafiflet → Haiku 4.5 (effort yok, format kalır).
       model: "claude-haiku-4-5",
@@ -1897,7 +1979,7 @@ export async function gorevHafiflet(
 ): Promise<{ title: string; body: string } | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       // MALİYET: görev zorlaştır/hafiflet → Haiku 4.5 (effort yok, format kalır).
       model: "claude-haiku-4-5",
@@ -2092,7 +2174,7 @@ export async function korNoktaGuncelle(
   if (!yanitlar?.length && akranYorumSayisi === 0 && takdirSayisi === 0) return;
 
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 400,
@@ -2192,7 +2274,7 @@ export async function senkronGorevUret(
 ): Promise<{ baslik: string; govde: string } | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 1024,
@@ -2244,7 +2326,7 @@ async function mentorlukBodyKisisel(
     null;
   // #5: Kariyer kapısı sohbeti iç engel olmadan da anlamlı — artık zorunlu değil.
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 400,
@@ -2390,7 +2472,10 @@ export async function mentorlukGorevUret(
     title: "Bugünün mentorunu seç",
     body,
     trait_id: null,
-    sure_saat: 1,
+    // Görev metni "akşam bana yaz" diyor — pencere de akşama uzanmalı (10:00
+    // dağıtım + 10 saat = 20:00). Eski 1 saatlik pencere oyun gününde herkeste
+    // kaçırılırdı (Gün 1'de blok hiç çalışmadığı için fark edilmedi).
+    sure_saat: 10,
     difficulty: 2 as const,
     itiraz: null,
     neden: "Seni bir adım öne taşıyacak sohbet başkasının deneyiminde saklı.",
@@ -2443,7 +2528,7 @@ export async function gorevNetlestir(gorev: {
     additionalProperties: false,
   };
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 600,

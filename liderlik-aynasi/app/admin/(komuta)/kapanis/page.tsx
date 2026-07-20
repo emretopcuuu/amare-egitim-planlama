@@ -6,6 +6,7 @@ import { sozMuhurDurumu } from "@/lib/sozMuhur";
 import { brifGetir } from "@/lib/kapanis";
 import KapanisBrif from "./KapanisBrif";
 import CanliSahneKontrol from "./CanliSahneKontrol";
+import KursuBrifPanel from "./KursuBrifPanel";
 import IlkelerKontrol from "./IlkelerKontrol";
 
 export const dynamic = "force-dynamic";
@@ -92,6 +93,8 @@ export default async function KapanisPage() {
         <KapanisBrif guncel={brif.guncel} />
 
         <CanliSahneKontrol />
+
+        <KursuBrifPanel />
       </section>
 
       {/* ============ KAMP SONRASI 90 GÜN — ADMIN KARAR YÜZEYİ (Faz 6) ============ */}

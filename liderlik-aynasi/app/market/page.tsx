@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { marketAcikMi, cuzdanBakiye, marketGecmisi } from "@/lib/market";
-import { MARKET_URUNLERI, REYON_BASLIK, type Reyon } from "@/lib/marketKatalog";
+import { SATISTAKI_URUNLER, REYON_BASLIK, type Reyon } from "@/lib/marketKatalog";
 import MarketReyonlar from "./MarketReyonlar";
 
 export const metadata = { title: "Market — Liderlik Aynası" };
@@ -34,7 +34,17 @@ export default async function MarketPage() {
     );
   }
 
-  const [bakiye, gecmis] = await Promise.all([cuzdanBakiye(db, session.sub), marketGecmisi(db, session.sub)]);
+  const [bakiye, gecmis, { data: kisilerHam }] = await Promise.all([
+    cuzdanBakiye(db, session.sub),
+    marketGecmisi(db, session.sub),
+    db
+      .from("participants")
+      .select("id, full_name")
+      .eq("role", "participant")
+      .neq("id", session.sub)
+      .order("full_name"),
+  ]);
+  const kisiler = (kisilerHam ?? []).map((k) => ({ id: k.id, ad: k.full_name }));
   const reyonlar = Object.keys(REYON_BASLIK) as Reyon[];
 
   return (
@@ -61,10 +71,17 @@ export default async function MarketPage() {
         </div>
       </div>
 
+      {/* C8 — Kıvılcım mirası: harcanmayan bakiye kaybolmaz, yolculukta seninle
+          kalır (cüzdan tüm-zaman kazanç − harcama; faz değişince silinmez). */}
+      <p className="rounded-xl bg-gold/[0.05] px-3 py-2 text-center text-xs leading-relaxed text-slate-400">
+        💎 Harcamadığın kıvılcım kaybolmaz — kamptan sonra 90 günlük yolculuğunda seninle kalır.
+      </p>
+
       <MarketReyonlar
         cuzdan={bakiye.cuzdan}
-        urunler={MARKET_URUNLERI}
+        urunler={SATISTAKI_URUNLER}
         reyonlar={reyonlar}
+        kisiler={kisiler}
       />
 
       {gecmis.length > 0 && (

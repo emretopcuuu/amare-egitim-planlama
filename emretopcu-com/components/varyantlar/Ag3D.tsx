@@ -1,17 +1,26 @@
 "use client";
 
-import { useMemo, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import type { MotionValue } from "motion/react";
+import { useTema } from "@/lib/tema";
+
+// Sahne renkleri temaya göre (gündüz porselen / gece mürekkep laciverti).
+const PALET = {
+  gunduz: { zemin: "#f1efe9", kure: "#c9b78a", cizgi: "#a07f36", nokta: "#8a6d24" },
+  gece: { zemin: "#0f1220", kure: "#5b5330", cizgi: "#b8912f", nokta: "#e3c366" },
+} as const;
 
 // "Canlı Ağ": karanlıkta dönen bir küre; yüzeyine dağılmış altın düğümler ve
 // yakın düğümler arası ışık bağlantıları. Scroll ilerledikçe ağ büyür (daha
 // çok düğüm ve bağlantı belirir), kamera geri çekilip tüm ağı gösterir.
 // "Kimse tek başına başarmadı." — 4 kıtada 220.000 kişilik ağın metaforu.
 // prefers-reduced-motion durumunda salınım durur; ağ yine scroll'u izler.
+// Mobilde daha az düğüm; sekme arka plandayken render duraklar (pil).
 
-const DUGUM_SAYISI = 260;
+const DUGUM_MASAUSTU = 260;
+const DUGUM_MOBIL = 120;
 const YARICAP = 2.4;
 
 // Fibonacci küresi: düğümleri yüzeye düzgün dağıtır.
@@ -54,17 +63,35 @@ function baglantilar(noktalar: THREE.Vector3[]) {
 function Ag({
   ilerleme,
   hareket,
+  dugumSayisi,
+  tema,
 }: {
   ilerleme: MotionValue<number>;
   hareket: boolean;
+  dugumSayisi: number;
+  tema: "gunduz" | "gece";
 }) {
   const grup = useRef<THREE.Group>(null);
   const cizgiGeo = useRef<THREE.BufferGeometry>(null);
   const noktaGeo = useRef<THREE.BufferGeometry>(null);
+  const kureMat = useRef<THREE.MeshBasicMaterial>(null);
+  const cizgiMat = useRef<THREE.LineBasicMaterial>(null);
+  const noktaMat = useRef<THREE.PointsMaterial>(null);
   const isaretci = useRef({ x: 0, y: 0 });
+  const { scene } = useThree();
+
+  // Tema değişince sahne zemini, sisi ve malzeme renklerini güncelle.
+  useEffect(() => {
+    const p = PALET[tema];
+    scene.background = new THREE.Color(p.zemin);
+    if (scene.fog) scene.fog.color.set(p.zemin);
+    kureMat.current?.color.set(p.kure);
+    cizgiMat.current?.color.set(p.cizgi);
+    noktaMat.current?.color.set(p.nokta);
+  }, [tema, scene]);
 
   const { noktalar, ciz, cizgiKonum, noktaKonum, noktaTemel } = useMemo(() => {
-    const noktalar = kureNoktalari(DUGUM_SAYISI);
+    const noktalar = kureNoktalari(dugumSayisi);
     const ciz = baglantilar(noktalar);
     const cizgiKonum = new Float32Array(ciz.length * 6);
     const noktaKonum = new Float32Array(noktalar.length * 3);
@@ -76,7 +103,7 @@ function Ag({
       noktaTemel[i] = i / noktalar.length;
     });
     return { noktalar, ciz, cizgiKonum, noktaKonum, noktaTemel };
-  }, []);
+  }, [dugumSayisi]);
 
   useFrame((state, delta) => {
     const p = ilerleme.get(); // 0..1 sayfa scroll'u
@@ -88,6 +115,10 @@ function Ag({
     if (grup.current) {
       if (hareket) grup.current.rotation.y += delta * 0.12;
       grup.current.rotation.x = 0.12 + (hareket ? Math.sin(t * 0.3) * 0.05 : 0);
+      // Küre koreografisi: bölümlere göre sahnede yer değiştirir —
+      // giriş merkez → sağa süzülür → sola geçer → kapanışta merkeze döner.
+      grup.current.position.x = Math.sin(p * Math.PI * 2) * 1.15;
+      grup.current.position.y = Math.sin(p * Math.PI * 3) * 0.25;
     }
 
     // imleç paralaksı + scroll ile kamera geri çekilir
@@ -144,6 +175,7 @@ function Ag({
       <mesh>
         <sphereGeometry args={[YARICAP * 0.985, 32, 24]} />
         <meshBasicMaterial
+          ref={kureMat}
           color="#c9b78a"
           wireframe
           transparent
@@ -161,6 +193,7 @@ function Ag({
           />
         </bufferGeometry>
         <lineBasicMaterial
+          ref={cizgiMat}
           color="#a07f36"
           transparent
           opacity={0.28}
@@ -178,6 +211,7 @@ function Ag({
           />
         </bufferGeometry>
         <pointsMaterial
+          ref={noktaMat}
           color="#8a6d24"
           size={0.05}
           sizeAttenuation
@@ -197,16 +231,37 @@ export default function Ag3D({
   ilerleme: MotionValue<number>;
   hareket?: boolean;
 }) {
+  // Mobilde daha az düğüm; düşük dpr. İlk render'da ölç, sonra sabit tut.
+  const [mobil, setMobil] = useState(false);
+  // Sekme arka plandayken render'ı durdur (pil/CPU tasarrufu).
+  const [gorunur, setGorunur] = useState(true);
+  const [tema] = useTema();
+
+  useEffect(() => {
+    setMobil(window.matchMedia("(max-width: 767px)").matches);
+    const gorunurluk = () => setGorunur(!document.hidden);
+    document.addEventListener("visibilitychange", gorunurluk);
+    return () => document.removeEventListener("visibilitychange", gorunurluk);
+  }, []);
+
+  const zemin = PALET[tema].zemin;
+
   return (
     <div className="fixed inset-0 -z-10" aria-hidden>
       <Canvas
         camera={{ position: [0, 0, 6.2], fov: 45 }}
-        dpr={[1, 1.75]}
-        gl={{ antialias: true, alpha: false }}
+        dpr={mobil ? [1, 1.3] : [1, 1.75]}
+        gl={{ antialias: !mobil, alpha: false, powerPreference: "low-power" }}
+        frameloop={gorunur ? "always" : "never"}
       >
-        <color attach="background" args={["#f1efe9"]} />
-        <fog attach="fog" args={["#f1efe9", 8, 16]} />
-        <Ag ilerleme={ilerleme} hareket={hareket} />
+        <color attach="background" args={[zemin]} />
+        <fog attach="fog" args={[zemin, 8, 16]} />
+        <Ag
+          ilerleme={ilerleme}
+          hareket={hareket}
+          dugumSayisi={mobil ? DUGUM_MOBIL : DUGUM_MASAUSTU}
+          tema={tema}
+        />
       </Canvas>
     </div>
   );

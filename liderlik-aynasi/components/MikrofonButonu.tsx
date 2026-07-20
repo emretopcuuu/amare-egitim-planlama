@@ -163,6 +163,20 @@ export default function MikrofonButonu({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Canlı soru overlay'i açılınca (CanliSoruDinleyici 'la-kayit-durdur' yayınlar)
+  // altta süren kaydı durdur — kayıt görünmeyen formun içine akıp "mikrofonum
+  // takılı kaldı" paniği yaratmasın. Yalnız dinliyorken iş yapar.
+  useEffect(() => {
+    function durdur() {
+      if (!dinliyor) return;
+      if (motor === "scribe") kayitDurdur();
+      else tanimaDegistir(); // dinliyorken çağrı = durdurur
+    }
+    window.addEventListener("la-kayit-durdur", durdur);
+    return () => window.removeEventListener("la-kayit-durdur", durdur);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dinliyor, motor]);
+
   if (motor === "yok") return null;
 
   // ————— GERÇEK SEVİYE (VU) —————

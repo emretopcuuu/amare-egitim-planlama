@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { titret } from "@/lib/his";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 type Halka = {
   halka: number;
@@ -120,6 +121,16 @@ export default function MuhurZinciri({
                     placeholder="Örn. Hâlâ buradayım; bu ay ekibime bir kişi daha kazandırdım."
                     className="mt-3 w-full rounded-xl border-2 border-white/15 bg-white/[0.04] p-3 text-sm leading-relaxed text-slate-100 outline-none focus:border-gold"
                   />
+                  <div className="mt-2">
+                    <MikrofonButonu
+                      onMetin={(p) =>
+                        setGirdi((g) => {
+                          const mevcut = (g[h.halka] ?? "").trim();
+                          return { ...g, [h.halka]: (mevcut ? `${mevcut} ${p}` : p).slice(0, 500) };
+                        })
+                      }
+                    />
+                  </div>
                   {hata === h.halka && (
                     <p className="mt-2 text-sm text-rose-300">Teyit kaydedilemedi, tekrar dene.</p>
                   )}

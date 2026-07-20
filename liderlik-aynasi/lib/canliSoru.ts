@@ -125,10 +125,17 @@ export async function canliSoruYanitla(
   if (temiz.length < 1) return { ok: false };
   const { data: soru } = await db
     .from("canli_soru")
-    .select("id, durum")
+    .select("id, durum, kapandi_at")
     .eq("id", soruId)
     .maybeSingle();
-  if (!soru || soru.durum !== "acik") return { ok: false };
+  if (!soru) return { ok: false };
+  if (soru.durum !== "acik") {
+    // KAPANIŞ TOLERANSI: Emre soruyu kapatsa bile, yavaş yazan (uzun tohum
+    // cevabı) kişinin sözü kaybolmasın — kapanıştan sonra 3 dk içinde gelen
+    // geç yanıt kabul edilir (telefonda kart açık kalır, "yine de gönder").
+    const kapandiMs = soru.kapandi_at ? Date.now() - new Date(soru.kapandi_at).getTime() : Infinity;
+    if (kapandiMs > 3 * 60_000) return { ok: false };
+  }
   const { error } = await db
     .from("canli_soru_yanit")
     .upsert({ soru_id: soruId, participant_id: pid, yanit: temiz }, { onConflict: "soru_id,participant_id" });

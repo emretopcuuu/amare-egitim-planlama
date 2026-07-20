@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { titret } from "@/lib/his";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 // [5.2] EYLÜL AYNASI — istemci: tek cümle yansıma + 0-10 puan (before/after).
 export default function EylulAynasiForm({
@@ -51,6 +52,14 @@ export default function EylulAynasiForm({
         placeholder="Örn. Kamptan çekinen biri döndü; bugün ekibime ilk kez ben liderlik ediyorum."
         className="mt-2 w-full rounded-xl border-2 border-white/15 bg-white/[0.04] p-3 text-sm leading-relaxed text-slate-100 outline-none focus:border-gold"
       />
+      <div className="mt-2">
+        <MikrofonButonu
+          onMetin={(p) => {
+            setCevap((g) => (g.trim() ? `${g.trim()} ${p}` : p).slice(0, 800));
+            setDurum("bos");
+          }}
+        />
+      </div>
 
       <label className="mt-4 block text-sm font-medium text-slate-300">
         Bugünkü liderlik hâlin: <span className="font-bold text-gold-light">{puan}/10</span>

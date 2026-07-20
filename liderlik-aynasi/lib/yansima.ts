@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { kimlikBlogu } from "@/lib/kisiKimligi";
@@ -38,7 +39,7 @@ export async function selamUret(
 ): Promise<string> {
   if (!process.env.ANTHROPIC_API_KEY) return selamVarsayilan(ad);
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 1024,

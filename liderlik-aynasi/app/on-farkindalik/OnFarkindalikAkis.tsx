@@ -202,6 +202,22 @@ export default function OnFarkindalikAkis({
     }
   }
 
+  // Saha gözlemi: zayıf bağlantıda tek deneme (adım geçişinde) yetmiyor — kişi
+  // aynı ekranda dursa bile bir sonraki adıma geçene kadar yeniden denenmiyordu,
+  // bu da "hep aynı soruya takılıyorum" hissi yaratıyordu (aslında ilerliyordu,
+  // yalnız sunucuya hiç yazılmıyordu). Son deneme başarısızken 15 sn'de bir
+  // arka planda sessizce tekrar dener — kişi ekranda dururken bağlantı bir an
+  // düzelirse yakalanır, oturumu kapatmadan önce kaybı azaltır.
+  const kaydetSessizRef = useRef(kaydetSessiz);
+  useEffect(() => {
+    kaydetSessizRef.current = kaydetSessiz;
+  });
+  useEffect(() => {
+    if (!kayitHata) return;
+    const id = setInterval(() => void kaydetSessizRef.current(), 15_000);
+    return () => clearInterval(id);
+  }, [kayitHata]);
+
   function ilerle() {
     setSayiGirdi("");
     setHata(null);

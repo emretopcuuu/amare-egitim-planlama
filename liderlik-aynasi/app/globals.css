@@ -67,6 +67,17 @@ body.ortu-acik .kimsin-bant {
 }
 .ekran-canli-nokta { animation: ekran-canli-nabiz 1.6s ease-in-out infinite; }
 
+/* Anı Duvarı — sürekli akan fotoğraf şeridi (marquee). İçerik İKİ kez basılır;
+   -50% kayınca tam bir set kayar → dikişsiz sonsuz döngü. İki sıra ters yönde. */
+@keyframes ekran-kaydir-sol { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes ekran-kaydir-sag { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+.ekran-serit { display: flex; width: max-content; }
+.ekran-serit-sol { animation: ekran-kaydir-sol var(--sure, 60s) linear infinite; }
+.ekran-serit-sag { animation: ekran-kaydir-sag var(--sure, 60s) linear infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .ekran-serit-sol, .ekran-serit-sag { animation: none; }
+}
+
 /* AYNA'nın yaşayan gözü: nefes (ölçek) + irisin çok yavaş dönüşü. Nefes süresi
    bileşende enerjiye göre inline ayarlanır (sakin 6s → yüksek enerji 3s). */
 @keyframes ayna-goz-nefes {

@@ -81,7 +81,6 @@ import SesCal from "@/components/SesCal";
 import GorevSesButonu from "@/components/GorevSesButonu";
 import BosGorevDurumu from "./BosGorevDurumu";
 import DurumSeridi from "./DurumSeridi";
-import CanliSoruDinleyici from "./CanliSoruDinleyici";
 import EkstraGorev from "./EkstraGorev";
 import GorevSayac from "./GorevSayac";
 import TelafiSayac from "./TelafiSayac";
@@ -203,44 +202,84 @@ export default async function GorevlerPage() {
   // TELAFİ (kaçırılmış, geç yapılan) görevler de isimli olabilir — ikisi de dahil
   // edilmezse "Kemal'i bul" diyen bir görev hedefsiz kalır (saha geri bildirimi:
   // 150 kişilik organizasyonda ismi bilmek yetmiyor, foto+WhatsApp şart).
-  const hedefKisiler = new Map<
-    string,
-    { ad: string; takim: string | null; telefon: string | null; fotoUrl: string | null }
-  >();
+  // KÖK DÜZELTME (saha geri bildirimi: "bazı görevler kişiye yönlendiriyor ama
+  // ulaşma yolu vermiyor"): kart artık İKİ kaynaktan dolar —
+  //  (a) yapılandırılmış isimli eşleşme kaydı (gorev_eslesme.isimli=true),
+  //  (b) METİN İÇİ İSİM EŞLEME: görev başlığı/gövdesinde TAM ADI geçen her
+  //      katılımcı (mentorluk adayları, eşleşme kaydı yazmayan üreticiler ve
+  //      bu deploy'dan ÖNCE üretilmiş bekleyen görevler dahil) otomatik karta
+  //      dönüşür. Gizli eşleşmeler metinde isim taşımadığı için gizli kalır.
+  // Görev başına en çok 3 kart (mentorlukta 3 aday). "sahit" görevi sessiz
+  // gözlemdir — hedefe WhatsApp köprüsü verilmez (takım satırı kalır).
+  type KisiKartVeri = { ad: string; takim: string | null; telefon: string | null; fotoUrl: string | null };
+  const hedefKisiler = new Map<string, KisiKartVeri[]>();
   const kisiKartiGorevler = [...aktif, ...telafiGorevler];
   if (kisiKartiGorevler.length > 0) {
-    const { data: eslesmeler } = await db
-      .from("gorev_eslesme")
-      .select("mission_id, hedef_id")
-      .in("mission_id", kisiKartiGorevler.map((g) => g.id))
-      .eq("kaynak_id", session.sub)
-      .eq("isimli", true);
-    const hedefIdler = [...new Set((eslesmeler ?? []).map((e) => e.hedef_id))];
-    if (hedefIdler.length > 0) {
-      const { data: hedefler } = await db
+    const [{ data: eslesmeler }, { data: tumRoster }] = await Promise.all([
+      db
+        .from("gorev_eslesme")
+        .select("mission_id, hedef_id")
+        .in("mission_id", kisiKartiGorevler.map((g) => g.id))
+        .eq("kaynak_id", session.sub)
+        .eq("isimli", true),
+      db
         .from("participants")
         .select("id, full_name, team, phone, profil_foto_path")
-        .in("id", hedefIdler);
-      const hedefMap = new Map((hedefler ?? []).map((k) => [k.id, k]));
-      for (const e of eslesmeler ?? []) {
-        if (!e.mission_id) continue;
-        const k = hedefMap.get(e.hedef_id);
-        const g = kisiKartiGorevler.find((a) => a.id === e.mission_id);
-        if (!k || !g) continue;
+        .eq("role", "participant"),
+    ]);
+    const rosterMap = new Map((tumRoster ?? []).map((k) => [k.id, k]));
+
+    // Görev → hedef kişi id'leri (önce yapılandırılmış kayıtlar, sonra isim taraması).
+    const gorevHedefleri = new Map<string, string[]>();
+    const ekle = (missionId: string, kisiId: string) => {
+      const liste = gorevHedefleri.get(missionId) ?? [];
+      if (!liste.includes(kisiId)) liste.push(kisiId);
+      gorevHedefleri.set(missionId, liste);
+    };
+    for (const e of eslesmeler ?? []) {
+      if (e.mission_id && rosterMap.has(e.hedef_id)) ekle(e.mission_id, e.hedef_id);
+    }
+    for (const g of kisiKartiGorevler) {
+      const metin = `${g.title ?? ""} ${g.body ?? ""}`;
+      if (!metin.trim()) continue;
+      for (const k of tumRoster ?? []) {
+        if (k.id === session.sub) continue; // kendi adı kart olmasın
+        const tamAd = (k.full_name ?? "").trim();
+        // Tam ad (ad + soyad) araması: tek kelimelik yanlış eşleşme olmasın.
+        if (tamAd.length < 5 || !tamAd.includes(" ")) continue;
+        if (metin.includes(tamAd)) ekle(g.id, k.id);
+      }
+    }
+
+    // Fotoğraf imzalama kişi başına bir kez (aynı kişi birden çok görevde olabilir).
+    const fotoCache = new Map<string, string | null>();
+    for (const [missionId, kisiIdler] of gorevHedefleri) {
+      const g = kisiKartiGorevler.find((a) => a.id === missionId);
+      if (!g) continue;
+      const kartlar: KisiKartVeri[] = [];
+      for (const kisiId of kisiIdler.slice(0, 3)) {
+        const k = rosterMap.get(kisiId);
+        if (!k) continue;
         let fotoUrl: string | null = null;
         if (k.profil_foto_path) {
-          const { data: imzali } = await db.storage
-            .from("sesler")
-            .createSignedUrl(k.profil_foto_path, 3600);
-          fotoUrl = imzali?.signedUrl ?? null;
+          if (fotoCache.has(kisiId)) {
+            fotoUrl = fotoCache.get(kisiId) ?? null;
+          } else {
+            const { data: imzali } = await db.storage
+              .from("sesler")
+              .createSignedUrl(k.profil_foto_path, 3600);
+            fotoUrl = imzali?.signedUrl ?? null;
+            fotoCache.set(kisiId, fotoUrl);
+          }
         }
-        hedefKisiler.set(e.mission_id, {
+        kartlar.push({
           ad: k.full_name,
           takim: k.team,
           telefon: g.kind === "sahit" ? null : k.phone,
           fotoUrl,
         });
       }
+      if (kartlar.length > 0) hedefKisiler.set(missionId, kartlar);
     }
   }
 
@@ -525,16 +564,18 @@ export default async function GorevlerPage() {
           </div>
         )}
 
-        {/* D7 — EŞLEŞME KİŞİ KARTI: görev bir kişiye yönlendiriyorsa, o kişi
+        {/* D7 — EŞLEŞME KİŞİ KARTI: görev bir kişiye yönlendiriyorsa, o kişi(ler)
             dokunulabilir kartta (tam ekran foto + WhatsApp köprüsü). */}
         {hedefKisiler.has(g.id) ? (
           <div className="mt-2.5">
             <p className="px-1 text-xs font-bold uppercase tracking-widest text-slate-500">
               🤝 {t.gorevKisisi}
             </p>
-            <div className="mt-1.5">
-              <KisiKarti {...hedefKisiler.get(g.id)!} />
-            </div>
+            {hedefKisiler.get(g.id)!.map((kart, ki) => (
+              <div key={ki} className="mt-1.5">
+                <KisiKarti {...kart} />
+              </div>
+            ))}
           </div>
         ) : g.kind === "bag" ? (
           // Görev isimsiz bir grup referansı verebilir ("Grup 7'den biri") —
@@ -657,8 +698,6 @@ export default async function GorevlerPage() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
-      {/* KAPANIŞ Faz B — Emre canlı soru açınca tam-ekran kart (nabız/tohum) */}
-      <CanliSoruDinleyici />
       <div className="sahne-giris mx-auto w-full max-w-md space-y-4 p-5">
       <UnvanKutlama unvan={unvan.mevcut.ad} seviye={unvanSeviye} />
       {/* Başlık sadeleşti: tek satır, alt açıklama kaldırıldı (geri butonu da —
@@ -791,9 +830,11 @@ export default async function GorevlerPage() {
                   <p className="px-1 text-xs font-bold uppercase tracking-widest text-slate-500">
                     🤝 {t.gorevKisisi}
                   </p>
-                  <div className="mt-1.5">
-                    <KisiKarti {...hedefKisiler.get(g.id)!} />
-                  </div>
+                  {hedefKisiler.get(g.id)!.map((kart, ki) => (
+                    <div key={ki} className="mt-1.5">
+                      <KisiKarti {...kart} />
+                    </div>
+                  ))}
                 </div>
               ) : g.kind === "bag" ? (
                 <Link href="/grup" className="mt-2.5 inline-block text-sm text-gold-light underline-offset-2 hover:underline">

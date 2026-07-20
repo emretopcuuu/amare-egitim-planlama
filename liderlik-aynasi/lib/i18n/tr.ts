@@ -339,6 +339,10 @@ export const tr = {
     hataGecersizBicim: "Geçersiz kod biçimi. 6 haneli sayı girmelisin.",
     hataKodHatali: "Kod hatalı. Lütfen tekrar dene.",
     hataCokFazlaDeneme: "Çok fazla deneme yapıldı. Lütfen birkaç dakika bekle.",
+    // Katılımcı girişi (salon tek Wi-Fi): 429 alan kişi yanlış kod yazmıştır —
+    // "kilitlendin" değil "kodunu kontrol et, doğrusuyla hemen girersin" yönünde.
+    hataCokFazlaDenemeKatilimci:
+      "Kodun yanlış görünüyor. WhatsApp'taki 6 haneli kodu bir kontrol et — doğrusunu yazınca hemen gireceksin.",
     hataSunucu: "Bir şeyler ters gitti. Lütfen tekrar dene.",
   },
   adminGiris: {
@@ -541,6 +545,7 @@ export const tr = {
     linkRapor: "Ayna Raporum",
     linkGorevler: "Görevler",
     linkTakdir: "Takdir Duvarı",
+    linkVideo: "Karşılama Videon",
     kartBaslik: "📤 Profil Kartın",
     kartAciklama: "İndir ya da paylaş — kıvılcımını göster.",
   },
@@ -648,6 +653,43 @@ export const tr = {
     kimEtiket: "Kime?",
     kimSec: "Kişi seç…",
     mesajYer: "Örn: Bugünkü cesaretin bana ilham verdi.",
+    cunkuIpucu:
+      "İpucu: bir “çünkü” ekle — ne yaptığını gördün ve sana ne hissettirdi? Tek cümle bile yeter.",
+    fotoEkle: "Foto ekle",
+    fotoEklendi: "Foto eklendi",
+    sesEkle: "Ses ekle",
+    sesEklendi: "Ses eklendi",
+    sesDurdur: "Bitir",
+    medyaYukleniyor: "Yükleniyor…",
+    medyaHata: "Medya eklenemedi, tekrar dene.",
+    medyaBuyuk: "Dosya çok büyük.",
+    muhurEtiket: "Bir mühür ekle (isteğe bağlı) — onu en çok neyde gördün?",
+    muhurOzet: (emoji: string, ad: string) =>
+      `İnsanlar sende en çok ${emoji} ${ad} görüyor.`,
+    zarfPush: {
+      baslik: "🌙 Günün zarfı hazır",
+      govde: (n: number) =>
+        n === 1 ? "Bugün 1 kişi seni gördü — zarfını aç." : `Bugün ${n} kişi seni gördü — zarfını aç.`,
+    },
+    zarfBaslik: "🌙 Bugünün Zarfı",
+    zarfAc: "Zarfı aç",
+    zarfOzet: (n: number) =>
+      n === 1 ? "Bugün 1 kişi seni gördü." : `Bugün ${n} kişi seni gördü.`,
+    sessizKahramanPush: {
+      baslik: "🤫 Seni gördüm",
+      govde:
+        "Sen çok kişiyi gördün, çok takdir gönderdin. Belki kimse söylemedi ama ben gördüm — görmek de bir liderliktir. Teşekkür ederim.",
+    },
+    mektupLink: "💌 Takdir Mektubun",
+    mektupBaslik: "💌 Takdir Mektubun",
+    mektupAltBaslik: (n: number) =>
+      n === 0
+        ? "Bu kampta sana yazılan her şey burada toplanır."
+        : `Bu kampta ${n} kez görüldün. Hepsi burada, senin.`,
+    mektupBos: "Henüz takdir almadın — ama kamp sürüyor. Bu sayfa dolacak.",
+    mektupGeriTakdir: "← Takdir Duvarı'na dön",
+    mektupSelam: (ad: string) => (ad ? `Sevgili ${ad},` : "Sevgili sen,"),
+    mektupImza: "— Kampın seni gören herkesi 💛",
     gonder: "Takdiri Gönder",
     gonderiliyor: "Gönderiliyor…",
     gitti: "Takdirin gönderildi 💛",
@@ -656,6 +698,21 @@ export const tr = {
     kimden: (ad: string) => `— ${ad}`,
     geriDon: "← Ana sayfaya dön",
     hata: "Gönderilemedi. Tekrar dene.",
+  },
+  // B3 — Grup foto-mozaiği
+  mozaik: {
+    baslik: "🧩 Grubunuzun Mozaiği",
+    altBaslik: "Herkes bir parça ekliyor — birlikte bir tablo oluyorsunuz.",
+    parcaEkle: "📷 Parçanı ekle",
+    parcamGuncelle: "📷 Parçanı değiştir",
+    yukleniyor: "Yükleniyor…",
+    eklendi: "Parçan mozaiğe eklendi 🧩",
+    bosDurum: "Henüz kimse parça eklemedi. İlk parça senden olsun.",
+    grupYok: "Grubun henüz belli değil.",
+    kapali: "Mozaik şu an açık değil.",
+    buyuk: "Foto çok büyük.",
+    hata: "Eklenemedi, tekrar dene.",
+    geriDon: "← Ana sayfaya dön",
   },
   // Takım turnuvası: takımların kıvılcım sıralaması, kendi telefonunda canlı
   turnuva: {
@@ -1075,12 +1132,21 @@ export const tr = {
     aiHata: "Şu an yanıt veremedim, az sonra tekrar dene.",
     acHataBaslik: "Kod geçersiz",
     acHataMetin: "Bu kod kampı açmıyor. Lütfen görevliyle iletişime geç.",
+    // Mühür açma yazması (nadiren) başarısız olursa — kısır döngüye düşmeden tekrar dene
+    acYazHataBaslik: "Bir saniye…",
+    acYazHataMetin:
+      "Mührü açarken bağlantı takıldı. QR'ını bir kez daha okut ya da aşağıdaki butona dokun — birazdan açılacak.",
+    acYazHataDugme: "Tekrar dene",
     // Oda QR'ı başarıyla okutulunca — açık onay ekranı
     acBasariBaslik: "Mühür kalktı 🔓",
     acBasariMetin: "Kampa hoş geldin. Aynan artık seninle — başlıyoruz.",
     acBasariDugme: "Kampa gir →",
     acZatenBaslik: "Kampın zaten açık 🔓",
     acZatenMetin: "Mührün çoktan kalkmış. Devam edebilirsin.",
+    // Mühür kalkınca — anasayfa açılmadan önce izlenen karşılama videosu
+    hosgeldinOynatBaslik: "İzlemek için dokun",
+    hosgeldinMetin: "Kampa adım atmadan önce sana özel bir şey var.",
+    hosgeldinDevamDugme: "Devam et →",
     // Başkasının kişisel açma QR'ı okutulduğunda
     acYabanciBaslik: "Bu QR sana ait değil",
     acYabanciMetin:
@@ -1815,6 +1881,13 @@ export const tr = {
       sKvkk: "KVKK Silme Talepleri",
       sSimulasyon: "Kamp Prova Simülatörü",
       prova: "Prova Kampı (canlı)",
+      // Menüde/palette önceden linki olmayan sayfalar
+      sahneKisi: "Canlı Yolculuk — Sahne Kişisi",
+      gorevAkisi: "Tüm Görevler",
+      senaryo: "Kamp Senaryosu",
+      zirveHazirlik: "Zirveye Hazırlık",
+      kariyerSenkron: "Kariyer Senkron",
+      kayipRadari: "Kayıp Radarı",
     },
     // Funnel navigasyonu: türe göre değil, kampın YOLCULUĞUNA göre 4 aşama + Panel.
     // Operatör soldan sağa = zaman akışı; aradığı aracı süreçteki yerinden bulur.
@@ -2695,6 +2768,35 @@ export const tr = {
         odevYok: "Bekleyen görevi olan kimse yok.",
         hedefYok: "Hedef kitle seçilmedi.",
       },
+      grupLink: {
+        baslik: "🔗 Gruplara Özel Link Gönder",
+        aciklama:
+          "Her grubun kendi linkini (ör. WhatsApp grup daveti) yalnızca o gruptaki kişilere gönder. Aşağıya \"Grup 1\", \"Grup 2\" … ve altlarına linklerini yapıştır — sırayı biz çözeriz.",
+        yapistirEtiket: "Grup + link listesi",
+        yapistirYer:
+          "Grup 1\nhttps://chat.whatsapp.com/...\n\nGrup 2\nhttps://chat.whatsapp.com/...",
+        onSozEtiket: "Linkten önceki mesaj (opsiyonel)",
+        onSozYer: "ör. Kendi grubunun WhatsApp'ına katıl 👇",
+        onizlemeBaslik: "Ayrıştırılan gruplar",
+        eslesmedi: (n: number) => `${n} satır bir gruba eşleşmedi, yoksayıldı.`,
+        bulunamadi: "Hiç geçerli \"Grup N + link\" eşleşmesi bulunamadı.",
+        kisiSayisi: (n: number) => (n === 1 ? "1 kişi" : `${n} kişi`),
+        telefonsuz: (n: number) => ` (${n} telefonsuz)`,
+        gonder: "Gönder",
+        gonderEt: "Evet, hepsine gönder",
+        gonderiliyor: "Gönderiliyor…",
+        vazgec: "Vazgeç",
+        onaySoru: (grupSayisi: number, kisiSayisi: number) =>
+          `${grupSayisi} gruba, toplam ${kisiSayisi} kişiye kendi linkleri WhatsApp'tan gönderilsin mi?`,
+        sonucBaslik: "Sonuç",
+        sonucSatiri: (takim: string, basarili: number, basarisiz: number, telefonsuz: number) =>
+          `${takim}: ${basarili} gönderildi` +
+          (basarisiz > 0 ? `, ${basarisiz} başarısız` : "") +
+          (telefonsuz > 0 ? `, ${telefonsuz} telefonsuz` : ""),
+        hata: "Gönderilemedi.",
+        gruplarBos: "Ayrıştırılmış grup yok.",
+        sablonKayitsiz: "Duyuru şablonu henüz Twilio'ya kaydedilmedi/onaylanmadı.",
+      },
     },
     // #7 Tek bakış canlı özet (büyük rakamlar)
     ozet: {
@@ -3202,6 +3304,8 @@ export const tr = {
       baslikYer: "ör. Şimdi sahneye!",
       govdeEtiket: "Mesaj",
       govdeYer: "ör. 5 dakika içinde ana çadırda buluşuyoruz.",
+      linkEtiket: "Link (opsiyonel)",
+      linkYer: "ör. https://chat.whatsapp.com/... — boş bırakılırsa ana sayfaya gider",
       hedefEtiket: "Kime",
       herkes: "Herkes",
       onayMetin: (hedef: string) => `Bu bildirim ${hedef} kişilerine anında gidecek — onaylıyorum.`,
@@ -3733,6 +3837,16 @@ export const tr = {
     mektupPush: {
       baslik: "🎙️ Bu akşam özel bir görev var",
       govde: "90 gün sonraki kendine 60 saniyelik bir sesli mektup bırak — AYNA saklayacak.",
+    },
+    // D10 — Gün 3 "Seni izledim" aynası
+    seniIzledimBaslik: "Seni izledim",
+    seniIzledimGovde: (neden: string | null) =>
+      `3 gündür seni izliyorum.\n\nGördüğüm kişi, ilk gün buraya gelen kişi değil. Daha açık, daha cesur, kendine biraz daha yakın biri.${
+        neden ? ` En çok da şunu gördüm: "${neden}" seni buraya getirdi ve burada büyüdü.` : ""
+      }\n\nSana tek bir soru soracağım — cevabını bana yaz, çünkü bu cevap senin sözünün tohumu olacak:\n\nBu gördüğüm kişi, 90 gün sonra nerede olacak?`,
+    seniIzledimPush: {
+      baslik: "🪞 AYNA seni izledi",
+      govde: "3 günün sonunda AYNA'nın sana tek bir sözü ve tek bir sorusu var.",
     },
     // SesliMektup bileşeni (kayıt kartı) metinleri
     mektupKart: {

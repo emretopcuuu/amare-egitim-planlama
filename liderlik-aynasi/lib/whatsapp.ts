@@ -46,14 +46,16 @@ export function whatsAppAdresi(telefon: string | null | undefined): string | nul
   return t ? `whatsapp:${t}` : null;
 }
 
-// Tek bir onaylı şablon mesajı gönderir. Başarılıysa true.
-export async function whatsAppGonder(
+// Tek bir onaylı şablon mesajı gönderir; başarısızlıkta Twilio'nun gerçek hata
+// mesajını da döner (kör "başarısız" sayacı teşhis edilemiyordu — canlıda tüm
+// grup gönderimi sessizce düştü, sebep görünmüyordu).
+export async function whatsAppGonderDetayli(
   telefon: string,
   contentSid: string,
   degiskenler: Record<string, string>
-): Promise<boolean> {
+): Promise<{ ok: boolean; hata?: string }> {
   const adres = whatsAppAdresi(telefon);
-  if (!adres) return false;
+  if (!adres) return { ok: false, hata: "geçersiz telefon" };
 
   const sid = process.env.TWILIO_ACCOUNT_SID!;
   const token = process.env.TWILIO_AUTH_TOKEN!;
@@ -76,8 +78,25 @@ export async function whatsAppGonder(
         body: govde,
       }
     );
-    return res.ok;
+    if (res.ok) return { ok: true };
+    const veri = (await res.json().catch(() => null)) as
+      | { code?: number; message?: string }
+      | null;
+    const hata = veri?.message
+      ? `${veri.code ?? res.status}: ${veri.message}`.slice(0, 300)
+      : `HTTP ${res.status}`;
+    console.error("[whatsapp] gönderim reddedildi:", hata);
+    return { ok: false, hata };
   } catch {
-    return false;
+    return { ok: false, hata: "ağ hatası" };
   }
+}
+
+// Geriye dönük sade arayüz — mevcut çağrı yerleri boolean bekler.
+export async function whatsAppGonder(
+  telefon: string,
+  contentSid: string,
+  degiskenler: Record<string, string>
+): Promise<boolean> {
+  return (await whatsAppGonderDetayli(telefon, contentSid, degiskenler)).ok;
 }

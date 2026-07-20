@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 import { acikDalga, aktifOzellikler } from "@/lib/degerlendirme";
 import { unvanBul } from "@/lib/kivilcim";
 import { arketipBul } from "@/lib/arketip";
@@ -39,7 +40,7 @@ export type EkranVerisi = {
   // Bugünün canlı sayaçları (Istanbul günü) — salonun enerjisini görünür kılar.
   bugun: { gorev: number; gozlem: number; takdir: number; fiero: number };
   // KÜMÜLATİF kamp efsanesi — sahne asla "0/ölü" görünmesin; toplam kahraman sayaç.
-  kumulatif: { kivilcim: number; gorev: number; takdir: number; fiero: number; anlar: number };
+  kumulatif: { kivilcim: number; gorev: number; gorevToplam: number; takdir: number; fiero: number; anlar: number };
   // [KURULUM 3] Canlı kurulum sayacı — "kaç kişi telefonuna aldı/bildirim açtı".
   // Salon ritüelinde sahnede gösterilir; her yükseldiğinde salon alkışlar.
   kurulum: { kuranlar: number; toplam: number };
@@ -102,12 +103,16 @@ export type EkranVerisi = {
 export async function GET() {
   const db = supabaseAdmin();
   const simdi = new Date();
+  // ratings ve scored-missions 1000-satır PostgREST tavanını aşar (150 kişi ×
+  // hedef × özellik ≈ binlerce satır) — sayfalı çek, yoksa projektör Gün 2'den
+  // itibaren donmuş/eksik veri gösterir (toplam puan 1000'de takılır, ligler
+  // yanlış sıralanır). tumKayitlar tüm sayfaları birleştirir.
   const [
     dalga,
     ozellikler,
     kisilerSonuc,
-    puanlarSonuc,
-    gorevSonuc,
+    puanlarData,
+    gorevData,
     senkronSonuc,
     fieroSonuc,
     sahneAyarSonuc,
@@ -120,11 +125,22 @@ export async function GET() {
         .from("participants")
         .select("id, full_name, team")
         .eq("role", "participant"),
-      db.from("ratings").select("rater_id, target_id, trait_id, score, is_self, wave"),
-      db
-        .from("missions")
-        .select("participant_id, spark_points")
-        .eq("status", "scored"),
+      tumKayitlar<{ rater_id: string; target_id: string; trait_id: number; score: number; is_self: boolean; wave: number | null }>(
+        (bas, son) =>
+          db
+            .from("ratings")
+            .select("rater_id, target_id, trait_id, score, is_self, wave")
+            .order("created_at")
+            .range(bas, son)
+      ),
+      tumKayitlar<{ participant_id: string; spark_points: number }>((bas, son) =>
+        db
+          .from("missions")
+          .select("participant_id, spark_points")
+          .eq("status", "scored")
+          .order("id")
+          .range(bas, son)
+      ),
       db
         .from("missions")
         .select("title, status, due_at")
@@ -148,7 +164,7 @@ export async function GET() {
         .select("path")
         .eq("status", "approved")
         .order("created_at", { ascending: false })
-        .limit(12),
+        .limit(40),
       // #8: SADECE yorum metni + skor seçilir — rater_id/target_id ASLA çekilmez
       // ki kimlik bu uçtan (herkese açık) sızamasın. Yüksek puan + gizlenmemiş.
       db
@@ -161,7 +177,7 @@ export async function GET() {
         .order("created_at", { ascending: false })
         .limit(60),
     ]);
-  if (kisilerSonuc.error || puanlarSonuc.error || gorevSonuc.error) {
+  if (kisilerSonuc.error) {
     return Response.json({ hata: "Veri alınamadı." }, { status: 500 });
   }
 
@@ -184,15 +200,19 @@ export async function GET() {
   };
 
   // KÜMÜLATİF: kampın bugüne dek toplam efsanesi (sahne hero sayaç).
-  const [kumGorev, kumTakdir, kumFiero, kumAnlar] = await Promise.all([
+  // gorev = BAŞARILAN (scored); gorevToplam = ÜRETİLEN tüm görev (bekleyen+kaçan
+  // dahil) — admin "Tüm Görevler" ile aynı taban.
+  const [kumGorev, kumGorevToplam, kumTakdir, kumFiero, kumAnlar] = await Promise.all([
     db.from("missions").select("id", { count: "exact", head: true }).eq("status", "scored"),
+    db.from("missions").select("id", { count: "exact", head: true }),
     db.from("kudos").select("id", { count: "exact", head: true }).eq("is_hidden", false),
     db.from("missions").select("id", { count: "exact", head: true }).eq("ai_score", 10),
     db.from("photos").select("id", { count: "exact", head: true }).eq("status", "approved"),
   ]);
   const kumulatif = {
-    kivilcim: (gorevSonuc.data ?? []).reduce((s, g) => s + (g.spark_points ?? 0), 0),
+    kivilcim: gorevData.reduce((s, g) => s + (g.spark_points ?? 0), 0),
     gorev: kumGorev.count ?? 0,
+    gorevToplam: kumGorevToplam.count ?? 0,
     takdir: kumTakdir.count ?? 0,
     fiero: kumFiero.count ?? 0,
     anlar: kumAnlar.count ?? 0,
@@ -303,7 +323,7 @@ export async function GET() {
   ).filter((u): u is string => u !== null);
 
   const kisiler = kisilerSonuc.data;
-  const puanlar = puanlarSonuc.data;
+  const puanlar = puanlarData;
   const ozellikSayisi = ozellikler.length;
   const ozellikAd = new Map(ozellikler.map((o) => [o.id, o.name]));
 
@@ -506,7 +526,7 @@ export async function GET() {
 
   // Kıvılcım Ligi
   const kivilcimlar = new Map<string, number>();
-  for (const g of gorevSonuc.data) {
+  for (const g of gorevData) {
     kivilcimlar.set(
       g.participant_id,
       (kivilcimlar.get(g.participant_id) ?? 0) + g.spark_points

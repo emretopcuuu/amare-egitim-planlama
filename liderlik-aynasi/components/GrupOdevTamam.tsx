@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { titret } from "@/lib/his";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 const t = tr.grup;
 
@@ -65,6 +66,9 @@ export default function GrupOdevTamam({ odevId }: { odevId: string }) {
         rows={3}
         placeholder={t.tamamYerTutucu}
         className="w-full resize-none rounded-xl border-2 border-white/15 bg-white/[0.04] p-3 text-sm text-slate-100 outline-none placeholder:text-slate-500 focus:border-gold"
+      />
+      <MikrofonButonu
+        onMetin={(p) => setKanit((g) => (g.trim() ? `${g.trim()} ${p}` : p))}
       />
       {hata && <p className="text-xs text-red-400">{t.tamamHata}</p>}
       <div className="flex gap-2">

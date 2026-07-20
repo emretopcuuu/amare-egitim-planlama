@@ -1,5 +1,6 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
+import { aynaClient } from "@/lib/aynaClient";
 import type { Db } from "@/lib/degerlendirme";
 import { DIL_KALITESI } from "@/lib/dilKalitesi";
 import { kimlikBloguGetir } from "@/lib/kisiKimligi";
@@ -76,7 +77,7 @@ export async function seninIcinGetirVeyaUret(
   // 3) Üret.
   let metin: string;
   try {
-    const client = new Anthropic();
+    const client = aynaClient();
     const yanit = await client.messages.create({
       // MALİYET: kısa kişisel mesaj → Haiku 4.5 (effort yok).
       model: "claude-haiku-4-5",

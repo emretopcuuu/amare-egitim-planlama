@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { tr } from "@/lib/i18n/tr";
 import { ayAdi } from "@/lib/planTakvim";
 import SesKaydedici from "@/app/soz/SesKaydedici";
+import MikrofonButonu from "@/components/MikrofonButonu";
 
 const t = tr.sozV2;
 
@@ -155,6 +156,10 @@ export default function SozV2Akis({
           onChange={(e) => setMetin(e.target.value.slice(0, 4000))}
           rows={10}
           className="w-full resize-none rounded-2xl border border-royal-light/30 bg-midnight-soft px-4 py-3 font-serif text-base leading-relaxed text-slate-100 outline-none focus:border-gold"
+        />
+        <MikrofonButonu
+          belirgin
+          onMetin={(p) => setMetin((g) => (g.trim() ? `${g.trim()} ${p}` : p).slice(0, 4000))}
         />
         {aksiyonlar.length > 0 && (
           <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.06] p-4">

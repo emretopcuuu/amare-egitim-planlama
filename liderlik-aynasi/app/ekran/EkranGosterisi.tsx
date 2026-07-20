@@ -92,37 +92,9 @@ const BLOK_ETIKET: Record<string, string> = {
   gezi: "Gezi",
 };
 
-// QR aksiyon prompt'ları — slayta göre döner (insanları telefona/eyleme iter).
-const AKSIYONLAR = [
-  "Şimdi birini gözlemle 👁",
-  "Bir takdir yaz 💛",
-  "Bekleyen görevini yap 🤖",
-  "Kendi aynana bak",
-];
-
 export default function EkranGosterisi() {
   const [veri, setVeri] = useState<EkranVerisi | null>(null);
   const [slayt, setSlayt] = useState(0);
-  // QR — sahnedeki herkes telefonuyla anında uygulamaya girsin (client-side üret).
-  const [qr, setQr] = useState<string | null>(null);
-  useEffect(() => {
-    let iptal = false;
-    import("qrcode")
-      .then((m) =>
-        m.default.toDataURL("https://ayna.oneteamglobal.ai", {
-          margin: 1,
-          width: 220,
-          color: { dark: "#04101c", light: "#ffffff" },
-        })
-      )
-      .then((url) => {
-        if (!iptal) setQr(url);
-      })
-      .catch(() => {});
-    return () => {
-      iptal = true;
-    };
-  }, []);
   // ŞİMDİ/SIRADA program slaytı için Istanbul saati — 30 sn'de bir tazelenir.
   const [an, setAn] = useState<{ tarih: string; dk: number } | null>(null);
   useEffect(() => {
@@ -184,6 +156,17 @@ export default function EkranGosterisi() {
   const tourRef = useRef(0);
   const slaytSayacRef = useRef(0);
   const sonMozaikRef = useRef<number | null>(null);
+
+  // Manuel slayt geçişi (sağ/sol oklar): slaytı ilerlet + otomatik turu senkronla
+  // (tourRef) ki bir sonraki otomatik geçiş buradan devam etsin, geri zıplamasın.
+  const gecis = (delta: number) => {
+    setSlayt((s) => {
+      const y = (s + delta + SLAYT_SAYISI) % SLAYT_SAYISI;
+      tourRef.current = y;
+      slaytSayacRef.current += 1;
+      return y;
+    });
+  };
   const [aktifBlok, setAktifBlok] = useState<string | null>(null);
 
   useEffect(() => {
@@ -598,10 +581,10 @@ export default function EkranGosterisi() {
       {veri?.kumulatif && (
         <div className="relative z-10 mt-5 grid grid-cols-4 gap-3">
           {[
-            { ikon: "⚡", toplam: veri.kumulatif.kivilcim, bugun: null, etiket: "kıvılcım", renk: "text-gold" },
-            { ikon: "🤖", toplam: veri.kumulatif.gorev, bugun: veri.bugun?.gorev ?? 0, etiket: "görev", renk: "text-gold-light" },
-            { ikon: "💛", toplam: veri.kumulatif.takdir, bugun: veri.bugun?.takdir ?? 0, etiket: "takdir", renk: "text-pink-300" },
-            { ikon: "⭐", toplam: veri.kumulatif.fiero, bugun: veri.bugun?.fiero ?? 0, etiket: "fiero", renk: "text-amber-300" },
+            { ikon: "⚡", toplam: veri.kumulatif.kivilcim, bugun: null, altToplam: null as number | null, etiket: "kıvılcım", renk: "text-gold" },
+            { ikon: "🤖", toplam: veri.kumulatif.gorev, bugun: veri.bugun?.gorev ?? 0, altToplam: veri.kumulatif.gorevToplam, etiket: "görev", renk: "text-gold-light" },
+            { ikon: "💛", toplam: veri.kumulatif.takdir, bugun: veri.bugun?.takdir ?? 0, altToplam: null as number | null, etiket: "takdir", renk: "text-pink-300" },
+            { ikon: "⭐", toplam: veri.kumulatif.fiero, bugun: veri.bugun?.fiero ?? 0, altToplam: null as number | null, etiket: "fiero", renk: "text-amber-300" },
           ].map((s) => (
             <div
               key={s.etiket}
@@ -615,6 +598,9 @@ export default function EkranGosterisi() {
               </p>
               {s.bugun != null && s.bugun > 0 && (
                 <p className="mt-0.5 text-sm font-semibold text-emerald-300">bugün +{s.bugun}</p>
+              )}
+              {s.altToplam != null && s.altToplam > s.toplam && (
+                <p className="mt-0.5 text-xs font-medium text-slate-500">üretilen {s.altToplam}</p>
               )}
             </div>
           ))}
@@ -918,17 +904,38 @@ export default function EkranGosterisi() {
                   </p>
                 </div>
               ) : (
-                <div className="mt-6 grid grid-cols-3 gap-4 lg:grid-cols-4">
-                  {veri.anilar.map((url, i) => (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      key={i}
-                      src={url}
-                      alt=""
-                      className="aspect-square w-full rounded-2xl object-cover ring-1 ring-white/10"
-                    />
-                  ))}
-                </div>
+                // Sürekli akan iki fotoğraf şeridi (ters yönde). Her şerit içeriği
+                // İKİ kez basar → -50% kayınca dikişsiz döngü; tüm anılar geçer.
+                (() => {
+                  const orta = Math.ceil(veri.anilar.length / 2);
+                  const ust = veri.anilar.slice(0, orta);
+                  const alt = veri.anilar.slice(orta).length ? veri.anilar.slice(orta) : ust;
+                  const sure = (n: number) => `${Math.max(24, n * 6)}s`;
+                  const Serit = ({ liste, yon }: { liste: string[]; yon: "sol" | "sag" }) => (
+                    <div className="overflow-hidden">
+                      <div
+                        className={`ekran-serit ${yon === "sol" ? "ekran-serit-sol" : "ekran-serit-sag"} gap-4`}
+                        style={{ ["--sure" as string]: sure(liste.length) }}
+                      >
+                        {[...liste, ...liste].map((url, i) => (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            key={i}
+                            src={url}
+                            alt=""
+                            className="h-64 w-64 shrink-0 rounded-2xl object-cover ring-1 ring-white/10"
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  );
+                  return (
+                    <div className="mt-6 flex flex-col gap-4">
+                      <Serit liste={ust} yon="sol" />
+                      <Serit liste={alt} yon="sag" />
+                    </div>
+                  );
+                })()
               )}
             </section>
 
@@ -1124,23 +1131,6 @@ export default function EkranGosterisi() {
         )}
       </div>
 
-      {/* QR + AKSİYON ÇAĞRISI — salondaki herkesi telefona/eyleme iter (sol-alt) */}
-      {qr && (
-        <div className="absolute bottom-16 left-6 z-20 flex items-center gap-3 rounded-2xl border border-gold/30 bg-[#04101c]/85 p-3 shadow-2xl backdrop-blur">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qr} alt="Katıl" className="h-28 w-28 rounded-lg" />
-          <div className="max-w-[14rem]">
-            <p className="text-base font-semibold uppercase tracking-wide text-gold-light/80">
-              📲 Telefonunu çıkar
-            </p>
-            <p className="mt-0.5 text-2xl font-bold leading-tight text-slate-100">
-              {AKSIYONLAR[slayt % AKSIYONLAR.length]}
-            </p>
-            <p className="mt-1 font-mono text-sm text-slate-400">ayna.oneteamglobal.ai</p>
-          </div>
-        </div>
-      )}
-
       {/* [KURULUM 3] CANLI KURULUM SAYACI (sağ-alt) — salon ritüeli: "kaç kişi
           bildirimini açtı". Herkes açınca yeşile döner + "hepimiz hazırız". Her
           yükseldiğinde salon alkışlar; sosyal baskı tek tek ikna etmekten güçlü.
@@ -1171,13 +1161,36 @@ export default function EkranGosterisi() {
         — {["AYNA gözlemliyor", "AYNA görüyor", "AYNA dinliyor", "AYNA hatırlıyor", "AYNA yönetiyor"][slayt % 5]} —
       </p>
 
-      {/* Slayt göstergesi: tempo çubuğu + nokta + N/toplam */}
+      {/* Manuel geçiş — büyük sağ/sol oklar (kenarlarda, dikey ortada) */}
+      <button
+        onClick={() => gecis(-1)}
+        aria-label="Önceki slayt"
+        className="fixed left-4 top-1/2 z-40 -translate-y-1/2 rounded-full border border-white/15 bg-[#04101c]/70 p-4 text-4xl leading-none text-slate-200 shadow-2xl backdrop-blur transition-colors hover:bg-gold/25 hover:text-gold-light"
+      >
+        ‹
+      </button>
+      <button
+        onClick={() => gecis(1)}
+        aria-label="Sonraki slayt"
+        className="fixed right-4 top-1/2 z-40 -translate-y-1/2 rounded-full border border-white/15 bg-[#04101c]/70 p-4 text-4xl leading-none text-slate-200 shadow-2xl backdrop-blur transition-colors hover:bg-gold/25 hover:text-gold-light"
+      >
+        ›
+      </button>
+
+      {/* Slayt göstergesi: tempo çubuğu + nokta + N/toplam + geçiş okları */}
       <footer className="relative z-10 mt-3">
         <div className="mx-auto mb-3 h-1 w-64 overflow-hidden rounded-full bg-white/10">
           {/* key={slayt} → her slaytta baştan dolar (kalan süre görünür) */}
           <div key={slayt} className="ekran-ilerle h-full rounded-full bg-gold/70" />
         </div>
         <div className="flex items-center justify-center gap-3">
+          <button
+            onClick={() => gecis(-1)}
+            aria-label="Önceki slayt"
+            className="mr-1 rounded-lg px-2 text-2xl leading-none text-slate-400 transition-colors hover:text-gold-light"
+          >
+            ‹
+          </button>
           {Array.from({ length: SLAYT_SAYISI }, (_, i) => (
             <button
               key={i}
@@ -1188,6 +1201,13 @@ export default function EkranGosterisi() {
               }`}
             />
           ))}
+          <button
+            onClick={() => gecis(1)}
+            aria-label="Sonraki slayt"
+            className="ml-1 rounded-lg px-2 text-2xl leading-none text-slate-400 transition-colors hover:text-gold-light"
+          >
+            ›
+          </button>
           <span className="ml-3 font-mono text-base text-slate-400">
             {slayt + 1}/{SLAYT_SAYISI}
           </span>

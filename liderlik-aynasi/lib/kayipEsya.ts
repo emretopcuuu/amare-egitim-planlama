@@ -30,6 +30,15 @@ export async function kayipAcikMi(db: Db): Promise<boolean> {
   return data?.value === "true";
 }
 
+// Orkestratör — kampta otomatik tetiklenir (bayrağı açmak TEK BAŞINA yeterli
+// değil; nokta görünür olsun diye rastgele bir konuma tur da başlatılır).
+// turBaslat kendi mit-duyurusu push'unu zaten atıyor (bayrak açıkken).
+export async function kayipEsyaOtomatikBaslat(db: Db): Promise<void> {
+  await db.from("settings").upsert({ key: "kayip_esya_acik", value: "true" });
+  const konum = KONUM_SECENEKLER[Math.floor(Math.random() * KONUM_SECENEKLER.length)];
+  await turBaslat(db, konum.yol, "", new Date());
+}
+
 type Tur = { id: string; konum: string; ipucu: string; durum: string; bulundu_at: string | null; myth_at: string | null; ipucu_at: string | null; created_at: string };
 
 async function aktifTur(db: Db): Promise<Tur | null> {

@@ -1,5 +1,6 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 import { eskalasyonTara, sahitOzetiGonder, checkinCipasi, sozKarnesiGonder } from "@/lib/sozTakip";
 import { ufukToreniTara } from "@/lib/ufukToren";
 import {
@@ -70,9 +71,12 @@ import { zincirBaslat } from "@/lib/kampZinciri";
 import { tahminSapmasiGorevUret } from "@/lib/tahminSapmasi";
 import { karsilasmaBul } from "@/lib/karsilasma";
 import { higgsYapilandirildiMi, yansimaDurumu } from "@/lib/higgs";
-import { katilimciyaBildir, herkeseBildir } from "@/lib/push";
+import { katilimciyaBildir, herkeseBildir, adminlereBildir } from "@/lib/push";
 import { radyoTik } from "@/lib/kampRadyosu";
 import { kapanisBrifTik } from "@/lib/kapanis";
+import { takdirZarfiTik } from "@/lib/takdirZarfi";
+import { sessizKahramanTik } from "@/lib/sessizKahraman";
+import { seniIzledimAc } from "@/lib/seniIzledim";
 import { rekorTara, rekorlarAcikMi } from "@/lib/rekorlar";
 import { ciftSerisiDegerlendir, ciftSerisiAcikMi } from "@/lib/ciftSerisi";
 import { hamleTaraOlustur, hamleHatirlat, hamleAcikMi } from "@/lib/hamle";
@@ -134,6 +138,8 @@ export async function tikCalistir(
     checkinCipa: 0,
     ufukToren: 0,
     orkestratorAtes: 0,
+    takdirZarfi: 0,
+    sessizKahraman: 0,
   };
 
   // [FAZ1-B] Nabız damgası: tik her koştuğunda (AYNA pasif olsa bile) iz bırakır —
@@ -159,11 +165,33 @@ export async function tikCalistir(
       "yolculuk_baslangic",
       "gorev_uretimi_durduruldu",
       "prova_katilimci_id",
+      "ayna_otomatik_uyandir",
     ]);
   const ayar = new Map((ayarlar ?? []).map((a) => [a.key, a.value]));
 
   if (ayar.get("ayna_aktif") !== "true") {
-    return { ozet: "AYNA uyuyor (pasif)", ...ozet };
+    // OTOMATİK UYANDIRMA: admin elle "uyandır"a basmasın diye — planlanan saat
+    // (ayna_otomatik_uyandir, ISO) geldiyse AYNA kendini aktive eder, gün sayacını
+    // başlatır ve adminlere haber verir. Erken açmak için manuel yol yine çalışır;
+    // plan değişirse ayar güncellenir/silinir. Yalnız gerçek-zaman tikinde (prova hariç).
+    const planIso = ayar.get("ayna_otomatik_uyandir");
+    const planMs = planIso ? new Date(planIso).getTime() : NaN;
+    if (!provaModu && Number.isFinite(planMs) && simdi.getTime() >= planMs) {
+      await db.from("settings").upsert({ key: "ayna_aktif", value: "true", updated_at: simdi.toISOString() });
+      ayar.set("ayna_aktif", "true");
+      if (!ayar.get("ayna_baslangic")) {
+        await db.from("settings").upsert({ key: "ayna_baslangic", value: simdi.toISOString(), updated_at: simdi.toISOString() });
+        ayar.set("ayna_baslangic", simdi.toISOString());
+      }
+      await adminlereBildir(
+        db,
+        "🌅 AYNA uyandı — kamp başladı",
+        "Planladığın saatte otomatik açıldı. Görev motoru ve senaryo devrede.",
+        "/admin"
+      ).catch(() => {});
+    } else {
+      return { ozet: "AYNA uyuyor (pasif)", ...ozet };
+    }
   }
 
   // GÜVENLİK KİLİDİ: prova modundaysak tek bir katılımcıyla sınırlıyız —
@@ -191,9 +219,10 @@ export async function tikCalistir(
   // orkestratör çevirir (kapanis_sessizlik_basla/bitir satırları); orkestratör
   // yukarıda ZATEN çalıştı, o yüzden "sessizliği bitir" ateşlenebildi. Son ekran
   // push'u ayrı bir orkestratör push satırıdır → o da orkestratörde ateşlenir.
-  if (ayar.get("gorev_uretimi_durduruldu") === "true") {
-    return { ozet: "Kamp sonrası sessizlik — üretim durduruldu", ...ozet };
-  }
+  // NOT: erken dönüş, bekleyen puanlama drenajının (aşağıda) SONRASINDA — böylece
+  // kapanış telaşında son dakika yanıt verip anlık puanlaması aksayanların görevi
+  // 'submitted'da donup kalmaz; puanları hesaplanır, yalnız YENİ görev üretilmez.
+  const uretimDurduruldu = ayar.get("gorev_uretimi_durduruldu") === "true";
 
   const mod: SistemModu =
     ayar.get("sistem_modu") === "yolculuk" ? "yolculuk" : "kamp";
@@ -287,6 +316,12 @@ export async function tikCalistir(
     }
   }
 
+  // Kapanış sessizliği: bekleyen puanlama yukarıda boşaltıldı; şimdi YENİ görev
+  // üretmeden dur (drenaj kaçırılmasın diye erken dönüş buraya taşındı).
+  if (uretimDurduruldu) {
+    return { ozet: "Kamp sonrası sessizlik — bekleyen puanlama boşaltıldı, üretim durduruldu", ...ozet };
+  }
+
   if (sessiz) {
     return { ozet: "Sessiz saat — AYNA fısıldamıyor", ...ozet };
   }
@@ -315,20 +350,34 @@ export async function tikCalistir(
     .eq("role", "participant");
   if (provaModu && provaKatilimciId) kisilerSorgu = kisilerSorgu.eq("id", provaKatilimciId);
 
-  const [{ data: kisiler }, { data: sonGorevler }, { data: yanitGecmisi }] =
-    await Promise.all([
-      kisilerSorgu,
-      db
-        .from("missions")
-        .select("participant_id, status, issued_at, kind")
-        .gte("issued_at", new Date(simdi.getTime() - 26 * 3_600_000).toISOString()),
-      // #2 Pik yanıt saati için son 3 günlük yanıt geçmişi (responded_at).
+  // sonGorevler (son 26 saatin TÜM görevleri) ve yanitGecmisi (son 3 gün) 150
+  // kişide 1000-satır PostgREST tavanını aşar; sayfalı çekilmezse kırpılan
+  // satırlara ait kişilerin "bekleyen görevi var mı / bugün kaç aldı" durumu
+  // yanlış görünür → çift görev / atlanan kişi. tumKayitlar tümünü birleştirir.
+  const gorevPencereBasi = new Date(simdi.getTime() - 26 * 3_600_000).toISOString();
+  const yanitPencereBasi = new Date(simdi.getTime() - 3 * 86_400_000).toISOString();
+  const [{ data: kisiler }, sonGorevler, yanitGecmisi] = await Promise.all([
+    kisilerSorgu,
+    tumKayitlar<{ participant_id: string; status: string; issued_at: string; kind: string | null }>(
+      (bas, son) =>
+        db
+          .from("missions")
+          .select("participant_id, status, issued_at, kind")
+          .gte("issued_at", gorevPencereBasi)
+          .order("id")
+          .range(bas, son)
+    ),
+    // #2 Pik yanıt saati için son 3 günlük yanıt geçmişi (responded_at).
+    tumKayitlar<{ participant_id: string; responded_at: string | null }>((bas, son) =>
       db
         .from("missions")
         .select("participant_id, responded_at")
         .not("responded_at", "is", null)
-        .gte("responded_at", new Date(simdi.getTime() - 3 * 86_400_000).toISOString()),
-    ]);
+        .gte("responded_at", yanitPencereBasi)
+        .order("id")
+        .range(bas, son)
+    ),
+  ]);
 
   // #2 Kişi başına pik yanıt saati (Istanbul). Yeterli/net veri yoksa null.
   const pikSaatleri = new Map<string, number | null>();
@@ -728,9 +777,10 @@ export async function tikCalistir(
     // alanları (neden/fayda/somutluk/kas) taşınmaz.
     const statikOverride = !!davidOverride || !!sahitOverride;
 
-    // #8 micro_sprint: sure_saat 0.5 = 30 dk. Şahit görevi sabit 2 saatlik.
+    // #8 micro_sprint: sure_saat 0.5 = 30 dk. Şahit görevi sabit 3 saatlik
+    // (Gün 1'de 2 saatle %42 kaçırma — türlerin en yükseği).
     const dueAt = new Date(
-      simdi.getTime() + (statikOverride ? 2 : gorev.sure_saat) * 3_600_000
+      simdi.getTime() + (statikOverride ? 3 : gorev.sure_saat) * 3_600_000
     );
     const { data: yeniGorev, error } = await db
       .from("missions")
@@ -1436,6 +1486,65 @@ export async function tikCalistir(
     }
   }
 
+  // 3f-2) P10 PAZAR KARNESİ: yolculuk modunda Pazar 18:00'de herkese "karneni ver"
+  // dürtüsü (settings kilidiyle haftada bir). Karne /karne'de 3 sayı → kamp
+  // arkadaşına tanıklık raporu. Kendi hatasını yutar.
+  if (mod === "yolculuk") {
+    const pazarMi =
+      new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Istanbul", weekday: "short" }).format(simdi) === "Sun";
+    if (pazarMi && saat === 18 && dakika < 10) {
+      const { error: karneKilit } = await db
+        .from("settings")
+        .insert({ key: `pazar_karnesi_durtu_${bugun}`, value: "1" });
+      if (!karneKilit) {
+        try {
+          const { data: kisiler } = await db.from("participants").select("id").eq("role", "participant");
+          for (const k of kisiler ?? []) {
+            await katilimciyaBildir(
+              db,
+              k.id,
+              "📊 Pazar Karnesi zamanı",
+              "Bu haftanın üç sayısı: kaç davet, kaç görüşme, kaç takip? Karneni ver — kamp arkadaşın tanığın olsun.",
+              "/karne"
+            ).catch(() => {});
+          }
+        } catch {
+          // sessizce geç
+        }
+      }
+    }
+  }
+
+  // 3f-3) P1 KANIT DEFTERİ GERİ OKUMA: yolculuk 30/60/90. günde sabah, herkese
+  // "şu kadar kanıt biriktirdin" — inanç birikmiş kanıtla değişir. Milestone
+  // başına tek sefer (settings kilidi). Kendi hatasını yutar.
+  if (mod === "yolculuk" && [30, 60, 90].includes(gun) && saat === 9 && dakika < 10) {
+    const { error: kanitKilit } = await db
+      .from("settings")
+      .insert({ key: `kanit_geri_okuma_${gun}`, value: "1" });
+    if (!kanitKilit) {
+      try {
+        const kanitlar = await tumKayitlar<{ participant_id: string }>((b, s) =>
+          db.from("protokol_tamamlama").select("participant_id").eq("pratik_kodu", "P1").order("id").range(b, s)
+        );
+        const say = new Map<string, number>();
+        for (const k of kanitlar) say.set(k.participant_id, (say.get(k.participant_id) ?? 0) + 1);
+        for (const [pid, adet] of say) {
+          if (adet < 1) continue;
+          await katilimciyaBildir(
+            db,
+            pid,
+            `📓 ${gun}. gün — Kanıt Defterin`,
+            `${gun} günde ${adet} kanıt biriktirdin. Bunların hepsi senin — 'yetersizim' inancı bu defterin karşısında duramaz.`,
+            "/protokol"
+          ).catch(() => {});
+        }
+      } catch {
+        // sessizce geç
+      }
+    }
+  }
+
   // 3g) [FAZ 5 · Tek Söz birleşmesi] KALDIRILDI: eski v1 (pledges) haftalık
   // Çarşamba söz hatırlatması — "Ağustos görüşme sözü" dili + ölü /soz ekranına
   // yönlendiriyordu. SÖZ v2'ye (soz/soz_takip + şahitler) geçince bu iş zaten
@@ -1679,6 +1788,22 @@ export async function tikCalistir(
     }
   }
 
+  // D10 — GÜN 3 "SENİ İZLEDİM" AYNASI: son gün sabah 09:00'da herkese AYNA'nın
+  // 3 günlük yansıması + tek soru ("90 gün sonra nerede?") → söz tohumu. Gün
+  // başına tek sefer (settings kilidi). Kendi hatasını yutar, tik'i düşürmez.
+  if (mod === "kamp" && gun === 3 && saat === 9 && !sahneSessiz) {
+    const { error: siKilit } = await db
+      .from("settings")
+      .insert({ key: `seni_izledim_${bugun}`, value: "1" });
+    if (!siKilit) {
+      try {
+        ozet.uretilen += await seniIzledimAc(db);
+      } catch {
+        // sessizce geç
+      }
+    }
+  }
+
   // 6a-ter) KANIT GARANTİSİ — Gün 2 akşamı (21:00) sigortası. Kanıtsız kişileri
   // tespit edip akranlarına "onu gözle, güçlü yanını yaz" mikro görevi verir;
   // tamamlanınca yanıt hedefe anonim takdir olur → Boşluk Anı içi boş kalmaz.
@@ -1906,6 +2031,26 @@ export async function tikCalistir(
   // 11:20 güncel (değerlendirme sonrası) sürüm. Üretim ~20 dk önce; teslimde
   // admin'e push. Kendi hatasını yutar, tik'i asla düşürmez.
   if (mod === "kamp") await kapanisBrifTik(db, gun, gunDk, bugun);
+
+  // A8 — AKŞAM TAKDİR ZARFI: 22:00'de o gün takdir alan herkese "zarfını aç"
+  // push'u (gün başına tek sefer). Kendi hatasını yutar, tik'i düşürmez.
+  if (mod === "kamp") {
+    try {
+      ozet.takdirZarfi = await takdirZarfiTik(db, gunDk, bugun);
+    } catch {
+      // sessizce geç
+    }
+  }
+
+  // A7 — SESSİZ KAHRAMAN: 19:00'da çok gönderip az alan kişiyi doğrudan onurlandır
+  // (radyoya dokunmadan, isimli anons değil — kişiye özel). Kill-switch'li.
+  if (mod === "kamp") {
+    try {
+      ozet.sessizKahraman = await sessizKahramanTik(db, gunDk, bugun);
+    } catch {
+      // sessizce geç
+    }
+  }
 
   // G3 — REKORLAR taraması: kamp modunda, bayrak açıkken mevcut verilerden
   // rekorları hesaplar, kırılanı herkese duyurur. Kendi hatasını yutar.
