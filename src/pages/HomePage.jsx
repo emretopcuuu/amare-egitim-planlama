@@ -7,6 +7,7 @@ import BultenModal from '../components/BultenModal';
 import UyeGirisModal from '../components/UyeGirisModal';
 import LiveCounter from '../components/LiveCounter';
 import { useData, makeCoreId } from '../context/DataContext';
+import { getYurtdisi } from '../utils/yurtdisi';
 import { db } from '../utils/firebase';
 import { doc, getDoc, collection, getCountFromServer } from 'firebase/firestore';
 import { confetti } from '../components/Konfeti';
@@ -45,10 +46,30 @@ function gunRengi() {
   return { from: 'rgba(168, 85, 247, 0.18)', main: 'rgba(124, 58, 237, 0.20)' }; // gece mor
 }
 
+// dd.mm.yyyy → Date (takvim tarih formatı)
+const parseTarihStr = (t) => {
+  if (!t) return null;
+  const p = String(t).split('.').map(Number);
+  if (p.length !== 3 || p.some(isNaN)) return null;
+  const d = new Date(p[2], p[1] - 1, p[0]);
+  return isNaN(d.getTime()) ? null : d;
+};
+
 const HomePage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const { currentUser, takvim, konusmacilar } = useData();
+
+  // 🌍 Uluslararası etkinlikler (2026-07-12 talebi: Berlin kampı ana sayfada görünsün).
+  // Takvimdeki yurtdışı + gelecek tarihli etkinlikler; en yakın tarih önce, ilk 4.
+  const uluslararasi = useMemo(() => {
+    const dun = new Date(); dun.setDate(dun.getDate() - 1);
+    return (takvim || [])
+      .map(e => ({ ...e, _yd: getYurtdisi(e), _d: parseTarihStr(e.tarih) }))
+      .filter(e => e._yd && e._d && e._d >= dun)
+      .sort((a, b) => a._d - b._d)
+      .slice(0, 4);
+  }, [takvim]);
   const [bultenModal, setBultenModal] = useState(false);
   const [girisModal, setGirisModal] = useState(false);
   const [profilAdi, setProfilAdi] = useState('');
@@ -322,6 +343,56 @@ const HomePage = () => {
             </p>
           </button>
         </div>
+
+        {/* 🌍 ULUSLARARASI ETKİNLİKLER — yurtdışı + gelecek tarihli varsa görünür */}
+        {uluslararasi.length > 0 && (
+          <div className="max-w-5xl mx-auto mt-12 sm:mt-16">
+            <div className="flex items-center justify-center gap-3 mb-5">
+              <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
+              <span className="text-xs sm:text-sm uppercase tracking-[0.3em] font-semibold text-amber-300 whitespace-nowrap">🌍 Uluslararası Etkinlikler</span>
+              <div className="h-px w-10 sm:w-16 bg-amber-400/50" />
+            </div>
+            <div className={`grid gap-4 ${uluslararasi.length === 1 ? 'max-w-xl mx-auto' : 'sm:grid-cols-2'}`}>
+              {uluslararasi.map(e => (
+                <div key={e.id}
+                  onClick={() => navigate(`/e/${e.id}`)}
+                  role="button" tabIndex={0}
+                  onKeyDown={(ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); navigate(`/e/${e.id}`); } }}
+                  className="group bg-white/10 hover:bg-white/15 backdrop-blur-md border border-white/20 hover:border-amber-300/40 rounded-3xl overflow-hidden transition-all duration-300 spring-tap cursor-pointer text-left shadow-2xl">
+                  {e.gorselUrl && (
+                    <div className="h-40 sm:h-48 overflow-hidden bg-black/20">
+                      <img src={e.gorselUrl} alt={e.egitim} loading="lazy"
+                        onError={(ev) => { ev.currentTarget.parentElement.style.display = 'none'; }}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    </div>
+                  )}
+                  <div className="p-5">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-gradient-to-r ${e._yd.renk} text-white shadow`}>
+                        <span>{e._yd.bayrak}</span>{e._yd.kisa}
+                      </span>
+                      <span className="text-amber-300/90 text-xs font-bold">{e.tarih}</span>
+                    </div>
+                    <h3 className="text-white font-bold text-base sm:text-lg leading-snug line-clamp-2">{e.egitim}</h3>
+                    {e.yer && <p className="text-purple-200/70 text-xs mt-1.5 line-clamp-1">📍 {e.yer}</p>}
+                    <div className="flex items-center gap-2 mt-4">
+                      {e.biletLink && (
+                        <a href={e.biletLink} target="_blank" rel="noopener noreferrer"
+                          onClick={(ev) => ev.stopPropagation()}
+                          className="inline-flex items-center gap-1.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white text-sm font-bold px-4 py-2 rounded-xl shadow-lg transition-all spring-tap">
+                          🎟 Bilet Al
+                        </a>
+                      )}
+                      <span className="inline-flex items-center gap-1 text-purple-200/70 group-hover:text-amber-300 text-sm font-semibold transition">
+                        Detaylar <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-16 sm:mt-24 text-center">

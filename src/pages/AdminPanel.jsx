@@ -73,6 +73,8 @@ const BOŞ_FORM = {
   hafta: 1, kategori: '', aciklama: '', katilimSayisi: '', sehir: '',
   // Fiziki etkinlik (Vizyon Günü vb.) program detayları — opsiyonel
   etkinlikTuru: '', mekanAdi: '', acikAdres: '', sunucular: '', programAkisi: [],
+  // Önemli etkinliklerde bilet/satın alma linki (Eventbrite vb.) — opsiyonel (2026-07-12, Gamze talebi)
+  biletLink: '',
 };
 
 const inputCls = 'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-amare-purple/30';
@@ -166,6 +168,12 @@ const EgitimFormAlanlari = ({ form, setForm }) => {
           placeholder="0" className={inputCls} />
       </FormField>
     </div>
+    <FormField label="🎟 Bilet / Satın Alma Linki (opsiyonel)">
+      <input type="url" value={form.biletLink || ''}
+        onChange={e => setForm(f => ({ ...f, biletLink: e.target.value }))}
+        placeholder="https://www.eventbrite.de/e/... (Berlin kampı gibi biletli etkinlikler için)"
+        className={inputCls} />
+    </FormField>
 
     {/* Fiziki etkinlik program detayları — online/Zoom değilse açılır */}
     {fiziki && (
@@ -635,6 +643,7 @@ const AdminPanel = () => {
       etkinlikTuru: egitim.etkinlikTuru || '', mekanAdi: egitim.mekanAdi || '',
       acikAdres: egitim.acikAdres || '', sunucular: egitim.sunucular || '',
       programAkisi: Array.isArray(egitim.programAkisi) ? egitim.programAkisi : [],
+      biletLink: egitim.biletLink || '',
     });
     setDuzenleModal(egitim);
   };

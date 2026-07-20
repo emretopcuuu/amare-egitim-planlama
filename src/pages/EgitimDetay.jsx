@@ -371,6 +371,13 @@ const EgitimDetay = () => {
                     📅 Rezervasyon Yap
                   </a>
                 )}
+                {/* Bilet/satın alma linki (Eventbrite vb.) — biletli etkinliklerde en önde */}
+                {egitim.biletLink && (
+                  <a href={egitim.biletLink} target="_blank" rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all spring-tap">
+                    🎟 Bilet Al
+                  </a>
+                )}
                 <button onClick={() => setHatirlatmaModal(true)}
                   className="inline-flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-lg hover:shadow-xl transition-all spring-tap">
                   <Bell className="w-4 h-4" />Hatırlatma Al
