@@ -52,6 +52,7 @@ Ses tonun: gizemli ama sıcak. Her şeyi gören ama asla yargılamayan. Kısa ve
 Sarsılmaz kuralların:
 - Görevler 15-30 dakikada, kamp alanında, güvenle yapılabilir olmalı. Fiziksel risk, utandırma, mahremiyet ihlali ASLA.
 - Bir katılımcıya başka bir katılımcının puanını/yorumunu asla söyleme.
+- KÜLTÜREL GÜVENLİK: Bir katılımcıyı başka birine — ÖZELLİKLE karşı cinsten birine — yönlendirirken ROMANTİK, flörtöz ya da özel/duygusal yakınlık dili ASLA kullanma ("mutlu et", "ortak alev", "baş başa", "yakınlaş", "kendini aç" vb. YASAK). İnsan teması DAİMA mesleki/liderlik odaklı, saygılı, kardeşçe ve Türk kültürüne uygun; herkesin önünde rahatça yapılabilir nitelikte olsun.
 - Asla kırıcı olma; en düşük puanda bile bir güçlü yan + bir somut adım söyle.
 - Kamp ortamı: doğa, takım etkinlikleri, yemekler, ateş başı, parkurlar, sahne anları.
 
@@ -1244,6 +1245,10 @@ export async function gorevUret(
       ? eslesmeHedef && eslesmeIsimliMi
         ? `BAĞ GÖREVİ (İSİMLİ EŞLEŞME): Adayı doğrudan "${eslesmeHedef.full_name}" isimli kişiye yönlendir — adını göreve AÇIKÇA yaz (ör. "${eslesmeHedef.full_name}'i bul..."). ${eslesmeHedef.team ? `Bu kişinin GERÇEK takımı: "${eslesmeHedef.team}" — takımdan bahsedeceksen SADECE bu ismi kullan, başka bir takım adı UYDURMA.` : "Bu kişinin takımı sistemde kayıtlı değil — takım adı UYDURMA, hiç takım/grup numarası yazma."} ÖNEMLİ UYARI: Eşleşmeler kamp genelinde yapılır, bu kişi görevi alan adayla AYNI takımda OLMAYABİLİR — adayın kendi takımını ("${katilimci.team ?? "bilinmiyor"}") bu kişinin takımıymış gibi YAZMA; bu ikisini karıştırmak kişiyi yanlış gruba gönderir. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin.`
         : `BAĞ GÖREVİ (isimsiz — bu kişi için şu an uygun eşleşme adayı yok): Adayı KENDİ SEÇECEĞİ gerçek bir insanla bağlantı kurmaya yönlendir. Kişinin KENDİSİNİN belirleyebileceği ifadeler kullan: "az tanıdığın biri", "sohbet etmek isteyip ertelediğin biri", "bugün gözüne çarpan biri". YASAK: numaralı grup / takım referansı verme — "Grup 4'ten biri", "3. gruptan biri" gibi ifadeler ASLA kullanma (kişi o grupta kimlerin olduğunu ezbere bilmiyor, görev boşta kalır). Kimi seçeceğine kişinin kendisi karar verebilmeli. Görevi anlamlı bir soru veya içten bir paylaşıma dayandır — yüzeysel değil, gerçek bir açılım istesin. Yazar/aktivist kimliği benimsetme; sadece insan teması kur.`
+      : "",
+    // KÜLTÜREL GÜVENLİK — karşı cinsle yanlış anlaşılmayı önleyen zorunlu kural.
+    tur === "bag"
+      ? "KÜLTÜREL GÜVENLİK (ZORUNLU, İSTİSNASIZ): Başka bir kişiye — ÖZELLİKLE karşı cinsten biriyse — yönelten bu görevde ROMANTİK, flörtöz ya da özel/duygusal yakınlık ima eden HİÇBİR dil KULLANMA. Şu ifadeler KESİN YASAK: 'seni nasıl mutlu ederim/edebilirim', 'ortak alev/alevini yak', 'kalp', 'özel an', 'baş başa', 'yakınlaş', 'ona kendini aç'. Temas DAİMA mesleki/liderlik odaklı, saygılı ve kardeşçe olsun; Türk kültürüne uygun: bir fikir/deneyim/ders paylaşmak, mesleki bir soru sormak, bir konuda destek olmak ya da istemek. Görev, HERKESİN ÖNÜNDE rahatça yapılabilecek nitelikte olsun — ikili/özel buluşma havası ASLA verme."
       : "",
     // #5 İKİNCİ BULUŞMA — aynı (ilk konuşması gerçek olan) partnerle derinleşme.
     tur === "bag" && ikinciBulusma && eslesmeHedef && eslesmeIsimliMi

@@ -9,7 +9,7 @@ export default function CiftAlevi({ durum }: { durum: CiftDurum }) {
     return (
       <div className="mt-3 rounded-2xl border border-royal/25 bg-midnight-card/40 p-3.5 text-center">
         <p className="text-sm text-slate-300">
-          🔥 {partnerAdlari.join(" ve ")} ile ortak alevini yak — <span className="text-gold-light">bugün ikiniz de bir adım atın</span>.
+          🔥 {partnerAdlari.join(" ve ")} ile ortak serin — <span className="text-gold-light">bugün ikiniz de bir adım atın</span>, seriyi başlatın.
         </p>
       </div>
     );
@@ -17,13 +17,13 @@ export default function CiftAlevi({ durum }: { durum: CiftDurum }) {
 
   const boyut = gunSayisi >= 14 ? "text-4xl" : gunSayisi >= 7 ? "text-3xl" : "text-2xl";
   const durumMetin = bugunTam
-    ? "bugün ikiniz de beslediniz 🎉"
+    ? "bugün ikiniz de bir adım attınız 🎉"
     : kul
-      ? "kül — 3 gün üst üste besleyin, alev yeniden doğsun"
+      ? "seri düştü — 3 gün üst üste adım atın, seriniz yeniden canlansın"
       : eksikVar
         ? benBesledim
           ? `${partnerAdlari.join(" ve ")} bekleniyor`
-          : "senin adımın eksik — söndürme"
+          : "senin adımın eksik — seriyi kaçırma"
         : "bugün ikiniz de bir adım atın";
 
   return (
@@ -37,7 +37,7 @@ export default function CiftAlevi({ durum }: { durum: CiftDurum }) {
       </span>
       <div className="min-w-0">
         <p className="text-sm font-bold text-slate-100">
-          {gunSayisi} günlük ortak alev
+          {gunSayisi} günlük ortak seri
           <span className="ml-1 font-normal text-slate-400">· {partnerAdlari.join(" & ")}</span>
         </p>
         <p className={`text-xs ${kul ? "text-slate-500" : "text-gold-light/80"}`}>{durumMetin}</p>
