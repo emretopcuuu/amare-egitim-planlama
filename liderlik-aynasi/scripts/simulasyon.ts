@@ -936,7 +936,7 @@ console.log("\n■ 11) FAZ B — SÖZ TAKİBİ & DÜRTME ESKALASYONU");
   iddia(dunden.kacirilanGun === 1, "son adım dün → kaçırma 1");
   iddia(dunden.bugunYapildi === null, "bugün henüz işaretsiz");
 
-  // Araya 'yapılmadı' girince seri kırılır
+  // [C#22] SERİ SİGORTASI: tek kaçırılan günü ayın jokeri köprüler → seri kırılmaz
   const kirik = takipDurumHesapla(
     [
       { gun: gunOnce(0), yapildi: true },
@@ -945,8 +945,24 @@ console.log("\n■ 11) FAZ B — SÖZ TAKİBİ & DÜRTME ESKALASYONU");
     ],
     sabitBugun
   );
-  iddia(kirik.seri === 1, "dün 'yapılmadı' → seri bugünde durur (1)");
+  iddia(kirik.seri === 2, "sigorta: tek kaçırılan gün köprülenir → seri 2");
+  iddia(kirik.sigortaBuAyKullanildi === true, "sigorta: bu ay joker kullanıldı");
   iddia(kirik.toplam === 2, "toplam yalnız yapıldı günleri sayar (2)");
+
+  // [C#22] İki gün ÜST ÜSTE kaçırma → joker yalnız 1 günü kurtarır, seri durur
+  const cifteKirik = takipDurumHesapla(
+    [
+      { gun: gunOnce(0), yapildi: true },
+      { gun: gunOnce(1), yapildi: false },
+      { gun: gunOnce(2), yapildi: false },
+      { gun: gunOnce(3), yapildi: true },
+    ],
+    sabitBugun
+  );
+  iddia(cifteKirik.seri === 1, "sigorta: iki gün üst üste kaçırma → seri 1'de durur");
+
+  // Sigortasız temiz seri: joker kullanılmamış olmalı
+  iddia(seri3.sigortaBuAyKullanildi === false, "temiz 3 gün: sigorta kullanılmadı");
 
   // 5 gün sessizlik
   const sessiz = takipDurumHesapla([{ gun: gunOnce(5), yapildi: true }], sabitBugun);
