@@ -544,6 +544,25 @@ export async function sahitSayim(db: Db, witnessId: string): Promise<number> {
   return count ?? 0;
 }
 
+// [B#17] HAFTANIN ŞAHİDİ — son 7 günde en çok şahit-aksiyonu (dürtme/teşvik/tepki)
+// gönderen lider. Şahitliği canlı tutar (pasif imza değil, aktif rol). En az 3
+// aksiyon eşiği (tek dürtmeyle taç giymesin). Yoksa null.
+export async function haftaninSahidi(db: Db): Promise<{ witnessId: string; sayi: number } | null> {
+  const yediGunOnce = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const { data } = await db
+    .from("soz_durtme")
+    .select("gonderen")
+    .not("gonderen", "is", null)
+    .gte("created_at", yediGunOnce);
+  if (!data?.length) return null;
+  const say = new Map<string, number>();
+  for (const d of data) if (d.gonderen) say.set(d.gonderen, (say.get(d.gonderen) ?? 0) + 1);
+  let best: string | null = null;
+  let max = 0;
+  for (const [id, n] of say) if (n > max) ((max = n), (best = id));
+  return best && max >= 3 ? { witnessId: best, sayi: max } : null;
+}
+
 // [Şahitlik geliştirme #8] PAZARTESİ ŞAHİT ÖZETİ — tik tarafından haftalık
 // (bir kez, kilit deseniyle) çağrılır. Her şahide TEK bir push: takip ettiği
 // kişilerden kaçı bu hafta kotasını doldurdu + kim birkaç gündür sessiz.
