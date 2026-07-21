@@ -82,7 +82,12 @@ export default function TakipAkis({
   sozSesUrl: string | null;
   sessizSesUrl?: string | null;
   degerDavranisi: string | null;
-  ortakMomentum: { cevreToplam: number; buHaftaAktif: number } | null;
+  ortakMomentum: {
+    cevreToplam: number;
+    buHaftaAktif: number;
+    ligSira?: number | null;
+    ligToplam?: number;
+  } | null;
   // [UX] Hub başlığından taşınan ikincil bilgiler — "Yol detayları" akordeonunda.
   haftanGorev?: number;
   haftanKivilcim?: number;
@@ -561,13 +566,24 @@ export default function TakipAkis({
             </div>
           </div>
 
-          {/* Ortak momentum */}
+          {/* Ortak momentum + [C#25] nazik lig (yalnız kendi sıran, isimsiz) */}
           {ortakMomentum && (
-            <p className="text-xs text-slate-400">
-              🌐 Çevrende {ortakMomentum.cevreToplam} kişiden{" "}
-              <span className="font-semibold text-emerald-300">{ortakMomentum.buHaftaAktif}</span> şu an
-              sözünü tutuyor.
-            </p>
+            <div className="space-y-1">
+              <p className="text-xs text-slate-400">
+                🌐 Çevrende {ortakMomentum.cevreToplam} kişiden{" "}
+                <span className="font-semibold text-emerald-300">{ortakMomentum.buHaftaAktif}</span> şu an
+                sözünü tutuyor.
+              </p>
+              {ortakMomentum.ligSira != null && (
+                <p className="text-xs text-slate-400">
+                  🏅 Bu haftaki katılımda çevrende{" "}
+                  <span className="font-semibold text-gold-light">
+                    {ortakMomentum.ligSira}.
+                  </span>{" "}
+                  sıradasın ({ortakMomentum.ligToplam} kişi).
+                </p>
+              )}
+            </div>
           )}
 
           {/* Değerin bu hafta — kısaltılmış (3 satır) */}
