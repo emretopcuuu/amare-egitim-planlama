@@ -177,6 +177,10 @@ export default function AltNav() {
   // onun yerine her zaman değerli olan "Ayna Koçu"nu göster. Dalga açıkken
   // (yükleme dahil değilse) değerlendirme öne döner.
   const sekmeler = SEKMELER.map((s) => {
+    // [90 GÜN] Yolculuk modunda "Değerlendir" ölü kalır; onun yerine kişinin
+    // günlük pratik sayfası "Protokol"ü göster (dalga kuralından ÖNCE gelir).
+    if (s.href === "/degerlendir" && kiv?.mod === "yolculuk")
+      return { href: "/protokol", ikon: "duvar" as IkonAd, etiket: "Protokol" };
     if (s.href === "/degerlendir" && kiv && kiv.dalgaAcik === false)
       return { href: "/kocu", ikon: "koc" as IkonAd, etiket: t.koc };
     // [FAZ 9 · U1] Yolculuk modunda "Program" (bitmiş kamp takvimi) ölü kalır;
