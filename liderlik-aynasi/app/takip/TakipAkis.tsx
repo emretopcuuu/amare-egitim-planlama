@@ -7,6 +7,7 @@ import { ufukAyEtiket } from "@/lib/planTakvim";
 import { yolculukRutbeBul } from "@/lib/yolculukRutbe";
 import { haftaKocNotu } from "@/lib/haftaKoc";
 import { yolGunluguSec, gununSorusuSec } from "@/lib/aynaGunluk";
+import AyMektubuKarti from "@/components/AyMektubuKarti";
 import Konfeti from "@/components/Konfeti";
 import KonusanYansima from "@/components/KonusanYansima";
 import BildirimSerit from "@/components/BildirimSerit";
@@ -71,6 +72,7 @@ export default function TakipAkis({
   lakap = null,
   karakterAcik = true,
   mezuniyet = null,
+  mektupMilestone = 0,
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
@@ -92,6 +94,8 @@ export default function TakipAkis({
   karakterAcik?: boolean;
   // [G#47] 90. güne ulaşıldıysa mezuniyet verisi (yoksa null → normal ekran).
   mezuniyet?: { adimGun: number; gorusme: number; kayit: number } | null;
+  // [D#33] Ulaşılan ay dönümü (30/60/90; 0 → mektup kartı yok).
+  mektupMilestone?: number;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   // [FAZ 6 · Yaşayan Plan] Tamamlanan aksiyon index'leri — checkbox ile toggle.
@@ -294,6 +298,9 @@ export default function TakipAkis({
           </p>
         </section>
       )}
+
+      {/* [D#33] AY DÖNÜMÜ MEKTUBU — 30/60/90. günde AYNA'nın kişisel mektubu. */}
+      {mektupMilestone > 0 && <AyMektubuKarti milestone={mektupMilestone} />}
 
       {/* [E#41] AYNA'nın sessizliğine karşı kaydettiği kişisel ses mesajı —
           uzun aradan sonra en sıcak dokunuş; check-in'in hemen üstünde. */}

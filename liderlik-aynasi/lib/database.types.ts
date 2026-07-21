@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      ay_mektubu: {
+        Row: {
+          created_at: string
+          id: string
+          metin: string
+          milestone: number
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          metin: string
+          milestone: number
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          metin?: string
+          milestone?: number
+          participant_id?: string
+        }
+        Relationships: []
+      }
       ai_istek_log: {
         Row: {
           created_at: string
