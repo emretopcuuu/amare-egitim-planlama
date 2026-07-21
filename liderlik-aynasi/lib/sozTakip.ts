@@ -1,6 +1,8 @@
 import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { katilimciyaBildir, adminlereBildir } from "@/lib/push";
+import { seslendir, aynaSesId, sesYapilandirildiMi } from "@/lib/eleven";
+import { aynaKarakterAcikMi } from "@/lib/aynaKarakter";
 import { taniklar, sozGetir } from "@/lib/soz";
 import { haftaBaslangici } from "@/lib/momentum";
 import { hedefCekirdek } from "@/lib/hedef";
@@ -398,6 +400,77 @@ export async function reddedenSahitSayisi(db: Db, pid: string): Promise<number> 
     .eq("soz_sahibi", pid)
     .eq("durum", "ret");
   return count ?? 0;
+}
+
+// [E#41] SESSİZLEŞENE AYNA'NIN SESİNDEN KİŞİSEL MESAJ — 7+ gün adım atmayana,
+// markanın (AYNA'nın) gerçek sesinden kısa, SICAK, suçlamasız bir dönüş daveti.
+// "Küs değil özleyen" ton (aynaKarakter ilkesi). Haftada bir (tik, Çarşamba,
+// kilitle) + kişi başına 6 gün throttle (settings) + TTS maliyeti için CAP.
+// Kill switch: ayna_karakter_acik=false → çalışmaz. Ses yapılandırılmamışsa atlar.
+const SESSIZ_ESIK_GUN = 7;
+const SESSIZ_CAP = 10; // tik başına üst sınır (TTS süresi/maliyeti) — fazlası log'lanır
+
+function sessizDonusMetni(isim: string): string {
+  return `${isim}... Ben AYNA. Birkaç gündür buralarda yoktun ve fark ettim, çünkü seni takip ediyorum. Kızmadım — merak ettim, açıkçası biraz da özledim. Verdiğin söz hâlâ burada, tam da bıraktığın yerde seni bekliyor. Ben de buradayım. Bugün küçücük bir adım at, bu kadarı yeter. Serini yeniden başlat; gerisini birlikte hallederiz.`;
+}
+
+export async function sessizDonusSesi(db: Db): Promise<{ gonderilen: number; atlanan: number }> {
+  if (!sesYapilandirildiMi()) return { gonderilen: 0, atlanan: 0 };
+  if (!(await aynaKarakterAcikMi(db))) return { gonderilen: 0, atlanan: 0 };
+  const { data: sozluler } = await db.from("soz").select("participant_id").eq("durum", "sesli");
+  if (!sozluler?.length) return { gonderilen: 0, atlanan: 0 };
+
+  const simdi = Date.now();
+  const adaylar: { pid: string; gun: number }[] = [];
+  for (const s of sozluler) {
+    const durum = await takipDurum(db, s.participant_id);
+    if (durum.kacirilanGun < SESSIZ_ESIK_GUN || durum.kacirilanGun >= 900) continue;
+    // Haftalık throttle: son sesli mesajdan 6+ gün geçmiş olmalı.
+    const { data: son } = await db
+      .from("settings")
+      .select("value")
+      .eq("key", `sessiz_ses_${s.participant_id}`)
+      .maybeSingle();
+    if (son?.value && simdi - Date.parse(son.value) < 6 * 86_400_000) continue;
+    adaylar.push({ pid: s.participant_id, gun: durum.kacirilanGun });
+  }
+  if (adaylar.length === 0) return { gonderilen: 0, atlanan: 0 };
+  adaylar.sort((a, b) => b.gun - a.gun);
+  const secilen = adaylar.slice(0, SESSIZ_CAP);
+  const atlanan = Math.max(0, adaylar.length - SESSIZ_CAP);
+
+  const { data: kisiler } = await db
+    .from("participants")
+    .select("id, full_name")
+    .in("id", secilen.map((a) => a.pid));
+  const adMap = new Map((kisiler ?? []).map((k) => [k.id, (k.full_name ?? "").split(" ")[0] || "Lider"]));
+
+  let gonderilen = 0;
+  for (const a of secilen) {
+    const isim = adMap.get(a.pid) ?? "Lider";
+    try {
+      const buf = await seslendir(aynaSesId(), sessizDonusMetni(isim));
+      const yol = `${a.pid}/sessiz_donus.mp3`;
+      const { error } = await db.storage
+        .from("sesler")
+        .upload(yol, buf, { contentType: "audio/mpeg", upsert: true });
+      if (error) continue;
+      await db
+        .from("settings")
+        .upsert({ key: `sessiz_ses_${a.pid}`, value: new Date().toISOString() }, { onConflict: "key" });
+      await katilimciyaBildir(
+        db,
+        a.pid,
+        "🎧 AYNA senin için bir şey kaydetti",
+        `${isim}, seni özledim — 30 saniyeni ayır.`,
+        "/takip"
+      ).catch(() => {});
+      gonderilen++;
+    } catch {
+      // bu kişiyi atla, diğerlerine devam (tik'i asla düşürme)
+    }
+  }
+  return { gonderilen, atlanan };
 }
 
 // [B#11] ŞAHİT DAVET HATIRLATICISI — davet → kabul/ret akışında (PR #823) bir

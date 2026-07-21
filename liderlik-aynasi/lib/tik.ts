@@ -1,7 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tumKayitlar } from "@/lib/tumKayitlar";
-import { eskalasyonTara, sahitOzetiGonder, checkinCipasi, sozKarnesiGonder, sahitDavetHatirlat } from "@/lib/sozTakip";
+import { eskalasyonTara, sahitOzetiGonder, checkinCipasi, sozKarnesiGonder, sahitDavetHatirlat, sessizDonusSesi } from "@/lib/sozTakip";
 import { ufukToreniTara } from "@/lib/ufukToren";
 import {
   gorevUret,
@@ -1451,6 +1451,20 @@ export async function tikCalistir(
         .from("settings")
         .insert({ key: `soz_karnesi_${bugun}`, value: "1" });
       if (!karneKilit) await sozKarnesiGonder(db).catch(() => {});
+    }
+  }
+
+  // [E#41] SESSİZLEŞENE AYNA'NIN SESİ: yolculuk modunda Çarşamba 12:00-12:09'da
+  // (haftalık kilit) 7+ gün sessiz kalanlara markanın sesinden sıcak dönüş daveti.
+  // Kişi başına 6 gün throttle + CAP fonksiyon içinde; TTS yoksa/karakter kapalıysa atlar.
+  if (mod === "yolculuk" && saat === 12 && dakika < 10) {
+    const carsambaMi =
+      new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Istanbul", weekday: "short" }).format(simdi) === "Wed";
+    if (carsambaMi) {
+      const { error: sesKilit } = await db
+        .from("settings")
+        .insert({ key: `sessiz_ses_tarama_${bugun}`, value: "1" });
+      if (!sesKilit) await sessizDonusSesi(db).catch(() => {});
     }
   }
 
