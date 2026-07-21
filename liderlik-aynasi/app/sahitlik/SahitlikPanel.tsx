@@ -41,10 +41,12 @@ export default function SahitlikPanel({
   kisiler,
   kendiDurum,
   davetler = [],
+  haftaninSahidi = false,
 }: {
   kisiler: Kisi[];
   kendiDurum: KendiDurum;
   davetler?: Davet[];
+  haftaninSahidi?: boolean;
 }) {
   // [Şahitlik geliştirme #5] Sunucudan gelen "bugün gönderildi" durumuyla
   // başlar — sayfa yenilense de "Gönderildi ✓" kaybolmaz, spam da önlenir.
@@ -311,6 +313,16 @@ export default function SahitlikPanel({
         <h1 className="prizma-serif ay-metin mt-2 text-2xl font-semibold">{t.baslik}</h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.aciklama}</p>
       </header>
+
+      {/* [B#17] HAFTANIN ŞAHİDİ rozeti — geçen hafta en aktif şahit sensen. */}
+      {haftaninSahidi && (
+        <div className="rounded-2xl border border-gold/40 bg-gold/[0.10] px-4 py-3 text-center">
+          <p className="text-sm font-bold text-gold-light">🏅 Bu haftanın Şahidi sensin</p>
+          <p className="mt-0.5 text-xs text-slate-300">
+            Şahitlerine en çok sen dokundun — onları ayakta tutan sensin.
+          </p>
+        </div>
+      )}
 
       {/* SENİ ŞAHİT GÖSTERENLER — bekleyen davetler (kabul/ret). En üstte, çünkü
           önce kabul edip etmeyeceğine karar vermelisin. */}

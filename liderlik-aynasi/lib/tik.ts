@@ -1,7 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tumKayitlar } from "@/lib/tumKayitlar";
-import { eskalasyonTara, sahitOzetiGonder, checkinCipasi, sozKarnesiGonder, sahitDavetHatirlat, sessizDonusSesi } from "@/lib/sozTakip";
+import { eskalasyonTara, sahitOzetiGonder, checkinCipasi, sozKarnesiGonder, sahitDavetHatirlat, sessizDonusSesi, haftaninSahidi } from "@/lib/sozTakip";
 import { ufukToreniTara } from "@/lib/ufukToren";
 import {
   gorevUret,
@@ -1451,6 +1451,26 @@ export async function tikCalistir(
         .from("settings")
         .insert({ key: `soz_karnesi_${bugun}`, value: "1" });
       if (!karneKilit) await sozKarnesiGonder(db).catch(() => {});
+      // [B#17] HAFTANIN ŞAHİDİ: geçen haftanın en aktif şahidine tanınma push'u.
+      const { error: sahidiKilit } = await db
+        .from("settings")
+        .insert({ key: `haftanin_sahidi_${bugun}`, value: "1" });
+      if (!sahidiKilit) {
+        try {
+          const s = await haftaninSahidi(db);
+          if (s) {
+            await katilimciyaBildir(
+              db,
+              s.witnessId,
+              "🏅 Haftanın Şahidi sensin",
+              `Geçen hafta şahitlerine en çok sen dokundun (${s.sayi} kez). Sözünü tuttukları kadar, sen de onları tuttun. Teşekkürler.`,
+              "/sahitlik"
+            ).catch(() => {});
+          }
+        } catch {
+          // sessizce geç
+        }
+      }
     }
   }
 
