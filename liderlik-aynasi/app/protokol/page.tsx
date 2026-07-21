@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { protokolKartlari } from "@/lib/protokolMotor";
+import { protokolKartlari, protokolKur } from "@/lib/protokolMotor";
 import GeriButonu from "@/components/GeriButonu";
 import ProtokolKartlar from "./ProtokolKartlar";
 
@@ -17,6 +17,9 @@ export default async function ProtokolPage() {
 
   const db = supabaseAdmin();
   const bugun = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(new Date());
+  // Tembel kurulum: /protokol'e ilk girişte protokol yoksa hemen kurulur (kişi
+  // sabahki ilk görevi beklemeden pratiklerini görsün). protokolKur idempotent.
+  await protokolKur(db, session.sub).catch(() => {});
   const kartlar = await protokolKartlari(db, session.sub, bugun);
 
   const gunSayilari = kartlar.reduce((t, k) => t + k.toplam, 0);
