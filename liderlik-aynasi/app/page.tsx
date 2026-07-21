@@ -190,8 +190,10 @@ export default async function AnaSayfa({
   const OYUN_BAYRAK_ANAHTARLARI = [
     "market_acik", "rekorlar_acik", "sandik_acik", "cift_serisi_acik",
     "fisilti_acik", "hamle_acik", "radyo_kitlik_acik", "bugu_acik",
+    "sistem_modu",
   ];
   let elmasRengi: string | null = null;
+  let modYolculuk = false; // 90 gün yolculuk modu → /protokol kartı
   let marketAcik = false;
   let rekorAcik = false;
   let sandikBekleyen = 0;
@@ -209,6 +211,7 @@ export default async function AnaSayfa({
       elmasRengiGetir(db, session.sub),
     ]);
     const bayrak = new Map((bayrakSonuc.data ?? []).map((s) => [s.key, s.value === "true"]));
+    modYolculuk = (bayrakSonuc.data ?? []).find((s) => s.key === "sistem_modu")?.value === "yolculuk";
     elmasRengi = elmasRengiSonuc;
     marketAcik = bayrak.get("market_acik") ?? false;
     rekorAcik = bayrak.get("rekorlar_acik") ?? false;
@@ -682,6 +685,20 @@ export default async function AnaSayfa({
           />
           {/* G7 — Canlı radyo kıtlık kartı (5 dk, sonra kaybolur) */}
           {radyoKitlikAcik && <RadyoKitlik />}
+          {/* 90 GÜN PROTOKOLÜ — yolculuk modunda kişinin pratik sayfası kapısı. */}
+          {modYolculuk && (
+            <Link
+              href="/protokol"
+              className="mt-3 flex items-center gap-3 rounded-2xl border border-gold/40 bg-gradient-to-r from-gold/[0.12] to-transparent p-4 transition-colors hover:from-gold/20"
+            >
+              <span className="text-3xl" aria-hidden>🌱</span>
+              <div className="min-w-0">
+                <p className="text-base font-semibold text-gold-light">90 Gün Protokolün</p>
+                <p className="text-sm text-slate-300">Bugünün pratiklerini gör — kampta başlayan yolculuk sürüyor.</p>
+              </div>
+              <span className="ml-auto text-gold-light" aria-hidden>→</span>
+            </Link>
+          )}
           {/* G2 — Gizemli sandık (bekleyen hak varsa) */}
           <SandikKarti bekleyen={sandikBekleyen} />
           {/* G4 — Çift serisi ortak alevi */}
