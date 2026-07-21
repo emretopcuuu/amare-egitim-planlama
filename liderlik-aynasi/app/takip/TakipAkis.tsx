@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import { ufukAyEtiket } from "@/lib/planTakvim";
+import { yolculukRutbeBul } from "@/lib/yolculukRutbe";
 import Konfeti from "@/components/Konfeti";
 import KonusanYansima from "@/components/KonusanYansima";
 import BildirimSerit from "@/components/BildirimSerit";
@@ -35,6 +36,14 @@ function milestoneBul(durum: Durum, hafta: Hafta, kota: number | null): Mileston
   }
   if (durum.toplam === 30) {
     return { anahtar: "gun30", baslik: "30 gündür yürüyorsun", metin: "Kampta ne demiştin? Kendi sesini dinle." };
+  }
+  // [B#28] 66. gün — alışkanlık eşiği (araştırma: bir davranış ~66 günde otomatikleşir).
+  if (durum.toplam === 66) {
+    return {
+      anahtar: "gun66",
+      baslik: "66. gün — alışkanlık eşiği",
+      metin: "Bilim der ki bir davranış ortalama 66 günde alışkanlığa döner. Sen tam buradasın — artık bu sen'sin. Sözünü dinle.",
+    };
   }
   if (kota && hafta.gorusmeToplam >= kota) {
     return { anahtar: "kota-tamam", baslik: "Bu hafta sözünü tuttun", metin: "Kotanı doldurdun — sen bunu SEN söylemiştin." };
@@ -111,6 +120,8 @@ export default function TakipAkis({
   const [now] = useState(() => new Date());
   const [ziliGoster, setZiliGoster] = useState(false);
   const [milestone, setMilestone] = useState<Milestone | null>(null);
+  // [B#23] Geri dönüş kutlaması — 3+ gün aradan sonra bugün işaretleyene özel.
+  const [geriDonus, setGeriDonus] = useState(0); // kaç gün aradan döndü (0=gösterme)
 
   useEffect(() => {
     if (!sozSesUrl) return;
@@ -128,6 +139,8 @@ export default function TakipAkis({
 
   async function checkin(yapildi: boolean) {
     setMesgul(true);
+    // [B#23] Bu işaretlemeden ÖNCEKİ kaçırma — geri dönüş kutlaması için.
+    const oncekiKacirma = durum.kacirilanGun;
     try {
       const kayitSayisi = Math.max(0, Math.round(Number(kayit) || 0));
       const res = await fetch("/api/soz-takip", {
@@ -150,6 +163,10 @@ export default function TakipAkis({
         if (v.kayitZili) {
           setZiliGoster(true);
           setTimeout(() => setZiliGoster(false), 2600);
+        } else if (yapildi && oncekiKacirma >= 3 && oncekiKacirma < 900) {
+          // Kayıt zili yoksa ve uzun aradan dönüldüyse: geri dönüş kutlaması.
+          setGeriDonus(oncekiKacirma);
+          setTimeout(() => setGeriDonus(0), 3200);
         }
       }
     } finally {
@@ -159,6 +176,8 @@ export default function TakipAkis({
 
   const isaretli = durum.bugunYapildi !== null;
   const kotaOrani = kota ? Math.min(100, Math.round((hafta.gorusmeToplam / kota) * 100)) : null;
+  // [B#21] Yolculuk rütbesi — adım atılan gün sayısından (kamp unvanından ayrı).
+  const rutbe = yolculukRutbeBul(durum.toplam);
 
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
@@ -169,6 +188,22 @@ export default function TakipAkis({
             <p className="text-5xl" aria-hidden>🔔</p>
             <h2 className="prizma-serif ay-metin mt-3 text-2xl font-bold text-gold-light">Kayıt Zili!</h2>
             <p className="mt-2 text-sm text-slate-300">Şahitlerine haber gitti — liderliğini gösterdin.</p>
+          </div>
+        </div>
+      )}
+
+      {/* [B#23] Geri dönüş kutlaması — uzun aradan sonra dönmeyi ÖDÜLLENDİR
+          (kaçırmayı cezalandırma). Konfeti + sıcak, suçlamasız mesaj. */}
+      {geriDonus > 0 && <Konfeti key={`gd-${geriDonus}`} />}
+      {geriDonus > 0 && (
+        <div className="fixed inset-0 z-[56] flex items-center justify-center bg-black/60 p-6">
+          <div className="kart-cam rounded-3xl p-8 text-center">
+            <p className="text-5xl" aria-hidden>🔥</p>
+            <h2 className="prizma-serif ay-metin mt-3 text-2xl font-bold text-gold-light">Geri döndün!</h2>
+            <p className="mt-2 text-sm text-slate-300">
+              {geriDonus} günlük aradan sonra bugün geri döndün — asıl güç bu. Yeni serin
+              işte şimdi başlıyor. 🌱
+            </p>
           </div>
         </div>
       )}
@@ -257,8 +292,20 @@ export default function TakipAkis({
       {/* ═══ 2) TEK ÖZET SATIRI: seri + 90 gün (1. gün yumuşatma) ═══ */}
       {durum.toplam > 0 || durum.seri > 0 || isaretli ? (
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <div className="flex items-center justify-between text-sm">
-            <span className="font-semibold text-gold-light">
+          {/* [B#21] Rütbe satırı — mevcut unvan + sonraki eşiğe kalan gün */}
+          <div className="flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-sm font-bold text-gold-light">
+              <span className="text-base" aria-hidden>{rutbe.mevcut.ikon}</span>
+              {rutbe.mevcut.ad}
+            </span>
+            {rutbe.sonraki && (
+              <span className="text-[0.7rem] font-medium text-slate-400">
+                {rutbe.sonraki.ikon} {rutbe.sonraki.ad}&apos;e {rutbe.kalan} gün
+              </span>
+            )}
+          </div>
+          <div className="mt-2.5 flex items-center justify-between text-sm">
+            <span className="font-semibold text-slate-200">
               {durum.seri > 0 ? t.seri(durum.seri) : t.seriYok}
             </span>
             <span className="text-xs font-medium text-slate-400">
