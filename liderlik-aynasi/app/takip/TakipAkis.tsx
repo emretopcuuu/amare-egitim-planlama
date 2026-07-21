@@ -5,6 +5,7 @@ import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import { ufukAyEtiket } from "@/lib/planTakvim";
 import { yolculukRutbeBul } from "@/lib/yolculukRutbe";
+import { haftaKocNotu } from "@/lib/haftaKoc";
 import Konfeti from "@/components/Konfeti";
 import KonusanYansima from "@/components/KonusanYansima";
 import BildirimSerit from "@/components/BildirimSerit";
@@ -178,6 +179,17 @@ export default function TakipAkis({
   const kotaOrani = kota ? Math.min(100, Math.round((hafta.gorusmeToplam / kota) * 100)) : null;
   // [B#21] Yolculuk rütbesi — adım atılan gün sayısından (kamp unvanından ayrı).
   const rutbe = yolculukRutbeBul(durum.toplam);
+  // [E#37] Haftalık koç notu — bu haftanın verisinden deterministik değerlendirme
+  // + gelecek haftanın TEK odağı (AI yok). Son 7 günde kaç işaret var?
+  const son7Isaret = durum.son14.slice(-7).filter((g) => g.yapildi === true).length;
+  const kocNotu = haftaKocNotu({
+    son7Isaret,
+    seri: durum.seri,
+    kacirilanGun: durum.kacirilanGun,
+    gorusme: hafta.gorusmeToplam,
+    kota,
+    kayit: hafta.kayitToplam,
+  });
 
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
@@ -324,6 +336,16 @@ export default function TakipAkis({
           {t.baslamaGun}
         </p>
       )}
+
+      {/* [E#37] HAFTALIK KOÇ NOTU — bu haftanın değerlendirmesi + gelecek haftanın
+          TEK odağı. Deterministik (AI yok); Pazar push'u da buraya yönlendirir. */}
+      <section className="rounded-2xl border border-royal-light/25 bg-royal/[0.06] p-4">
+        <p className="text-xs font-bold uppercase tracking-wide text-royal-light/80">🧭 Koç notu</p>
+        <p className="mt-1.5 text-sm leading-relaxed text-slate-200">{kocNotu.ozet}</p>
+        <p className="mt-2 border-t border-white/10 pt-2 text-sm font-medium leading-relaxed text-gold-light">
+          {kocNotu.odak}
+        </p>
+      </section>
 
       {/* Nazik seri — tek cümle (yalnız bugün işaretlenmemiş + ara verilmişse) */}
       {durum.bugunYapildi !== true && durum.kacirilanGun >= 1 && durum.kacirilanGun < 900 && (

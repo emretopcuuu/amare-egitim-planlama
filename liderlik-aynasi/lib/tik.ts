@@ -1525,6 +1525,36 @@ export async function tikCalistir(
     }
   }
 
+  // [E#37] HAFTALIK KOÇ NOTU DÜRTÜSÜ: yolculuk modunda Pazar 19:00'da (karne
+  // dürtüsünden sonra) mühürlü sözü olan herkese "koç notun hazır" push'u —
+  // kişi /takip'te bu haftanın değerlendirmesini + gelecek haftanın tek odağını
+  // görür (not deterministik, /takip'te render edilir; tik'te AI/hesap yok).
+  if (mod === "yolculuk") {
+    const pazarMiKoc =
+      new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Istanbul", weekday: "short" }).format(simdi) === "Sun";
+    if (pazarMiKoc && saat === 19 && dakika < 10) {
+      const { error: kocKilit } = await db
+        .from("settings")
+        .insert({ key: `hafta_koc_${bugun}`, value: "1" });
+      if (!kocKilit) {
+        try {
+          const { data: sozluler } = await db.from("soz").select("participant_id").eq("durum", "sesli");
+          for (const s of sozluler ?? []) {
+            await katilimciyaBildir(
+              db,
+              s.participant_id,
+              "🧭 Haftalık koç notun hazır",
+              "Bu haftanın değerlendirmesi ve gelecek haftanın tek odağı seni bekliyor. Aç, gör.",
+              "/takip"
+            ).catch(() => {});
+          }
+        } catch {
+          // sessizce geç
+        }
+      }
+    }
+  }
+
   // 3f-3) P1 KANIT DEFTERİ GERİ OKUMA: yolculuk 30/60/90. günde sabah, herkese
   // "şu kadar kanıt biriktirdin" — inanç birikmiş kanıtla değişir. Milestone
   // başına tek sefer (settings kilidi). Kendi hatasını yutar.
