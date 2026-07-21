@@ -6,6 +6,7 @@ import { tr } from "@/lib/i18n/tr";
 import { ufukAyEtiket } from "@/lib/planTakvim";
 import { yolculukRutbeBul } from "@/lib/yolculukRutbe";
 import { haftaKocNotu } from "@/lib/haftaKoc";
+import { yolGunluguSec, gununSorusuSec } from "@/lib/aynaGunluk";
 import Konfeti from "@/components/Konfeti";
 import KonusanYansima from "@/components/KonusanYansima";
 import BildirimSerit from "@/components/BildirimSerit";
@@ -66,6 +67,8 @@ export default function TakipAkis({
   haftanKivilcim = 0,
   haftanCheckin = 0,
   kasAd = null,
+  lakap = null,
+  karakterAcik = true,
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
@@ -81,6 +84,10 @@ export default function TakipAkis({
   haftanKivilcim?: number;
   haftanCheckin?: number;
   kasAd?: string | null;
+  // [D#32] AYNA lakabı — kutlamalarda arada kullanılır (varsa).
+  lakap?: string | null;
+  // [D#36/#34] Karakter kill switch — kapalıysa AYNA renkli içeriği gizlenir.
+  karakterAcik?: boolean;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   // [FAZ 6 · Yaşayan Plan] Tamamlanan aksiyon index'leri — checkbox ile toggle.
@@ -192,6 +199,9 @@ export default function TakipAkis({
     kota,
     kayit: hafta.kayitToplam,
   });
+  // [D#34/#36] AYNA karakter içeriği — kill switch kapalıysa gizli.
+  const gunSorusu = karakterAcik ? gununSorusuSec(now) : null;
+  const aynaNotu = karakterAcik ? yolGunluguSec(now) : null;
 
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
@@ -213,7 +223,9 @@ export default function TakipAkis({
         <div className="fixed inset-0 z-[56] flex items-center justify-center bg-black/60 p-6">
           <div className="kart-cam rounded-3xl p-8 text-center">
             <p className="text-5xl" aria-hidden>🔥</p>
-            <h2 className="prizma-serif ay-metin mt-3 text-2xl font-bold text-gold-light">Geri döndün!</h2>
+            <h2 className="prizma-serif ay-metin mt-3 text-2xl font-bold text-gold-light">
+              Geri döndün{lakap ? `, ${lakap}` : ""}!
+            </h2>
             <p className="mt-2 text-sm text-slate-300">
               {geriDonus} günlük aradan sonra bugün geri döndün — asıl güç bu. Yeni serin
               işte şimdi başlıyor. 🌱
@@ -364,6 +376,21 @@ export default function TakipAkis({
         </p>
       </section>
 
+      {/* [D#34] GÜNÜN SORUSU — AYNA'nın her gün değişen tek yansıma sorusu.
+          İstersen /gunluk'a yaz; yazmasan da zihinde döner. */}
+      {gunSorusu && (
+        <section className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+          <p className="text-xs font-bold uppercase tracking-wide text-slate-500">🌙 Günün sorusu · AYNA</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-slate-200">{gunSorusu}</p>
+          <Link
+            href="/gunluk"
+            className="mt-2 inline-block text-xs font-medium text-royal-light underline-offset-2 hover:underline"
+          >
+            Günlüğüne yaz →
+          </Link>
+        </section>
+      )}
+
       {/* Nazik seri — tek cümle (yalnız bugün işaretlenmemiş + ara verilmişse) */}
       {durum.bugunYapildi !== true && durum.kacirilanGun >= 1 && durum.kacirilanGun < 900 && (
         <p className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3 text-center text-sm text-slate-300">
@@ -380,6 +407,14 @@ export default function TakipAkis({
           <span className="text-slate-500 transition-transform group-open:rotate-180" aria-hidden>▾</span>
         </summary>
         <div className="space-y-4 border-t border-white/10 p-4">
+          {/* [D#36] AYNA'NIN YOL GÜNLÜĞÜ — haftada bir değişen birinci-tekil not */}
+          {aynaNotu && (
+            <div className="rounded-xl border border-gold/20 bg-gold/[0.04] p-3">
+              <p className="text-xs font-bold uppercase tracking-wide text-gold-light/80">📻 AYNA&apos;dan</p>
+              <p className="mt-1 text-xs italic leading-relaxed text-slate-300">{aynaNotu}</p>
+            </div>
+          )}
+
           {/* Haftan özeti + çalışılan kas */}
           {(haftanGorev > 0 || haftanCheckin > 0) && (
             <div className="flex flex-wrap items-center gap-2">

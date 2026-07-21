@@ -13,6 +13,7 @@ import Link from "next/link";
 // [YOLCULUK #6/#9/#18/#20] 90-gün ekranını odaklayan sunucu blokları.
 import { fazBul, YOLCULUK_FAZLARI, yolculukGunuHesapla } from "@/lib/davranis";
 import { raporHesapla } from "@/lib/rapor";
+import { aynaKarakterAcikMi } from "@/lib/aynaKarakter";
 import YolculukFazSeridi from "@/components/YolculukFazSeridi";
 
 export const metadata = { title: "90 Gün Yolun — Liderlik Aynası" };
@@ -84,6 +85,13 @@ export default async function TakipSayfa() {
   }
   const y = tr.yolculukUx;
 
+  // [D#32/#34/#36] AYNA karakter içeriği için: lakap + kill switch.
+  const [{ data: benKisi }, karakterAcik] = await Promise.all([
+    db.from("participants").select("ayna_lakap").eq("id", session.sub).maybeSingle(),
+    aynaKarakterAcikMi(db),
+  ]);
+  const lakap = (benKisi as { ayna_lakap?: string | null } | null)?.ayna_lakap ?? null;
+
   // [Faz 6] "Bunu sen söyledin" — milestone anlarında kendi sesini (mühürlü
   // sözü) dinletmek için imzalı URL. Söz hiç kaydedilmemişse null.
   let sozSesUrl: string | null = null;
@@ -142,6 +150,8 @@ export default async function TakipSayfa() {
         haftanKivilcim={haftanKivilcim}
         haftanCheckin={haftanCheckin}
         kasAd={kasAd}
+        lakap={lakap}
+        karakterAcik={karakterAcik}
       />
     </main>
   );
