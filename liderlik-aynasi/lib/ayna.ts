@@ -863,11 +863,19 @@ export async function gorevUret(
   // Karakter ANI (açık şaka/iddia) ~%15 — kod belirler ki model dozu kaçırmasın.
   const karakterAcik = await aynaKarakterAcikMi(db);
   const karakterAni = karakterAcik && Math.random() < 0.15;
-  // Faz 3 — İDDİA: karakter anlarının yarısı kamp modunda BAHİS çerçevesine
-  // döner (yalnız tik dağıtımı izin verdiğinde — bahisIzin; diğer üretim yolları
-  // bahis bayrağını yazmadığı için orada bahis metni de üretilmez).
+  // Faz 3 — İDDİA: karakter anlarının yarısı BAHİS çerçevesine döner (yalnız tik
+  // dağıtımı izin verdiğinde — bahisIzin; diğer üretim yolları bahis bayrağını
+  // yazmadığı için orada bahis metni de üretilmez).
+  // [D#30] İTİRAZCI'NIN DÖNÜŞÜ: bahis artık YOLCULUKTA da çıkar (eskiden yalnız
+  // kamp). ~%15 karakter anı × %50 = net ~%7 görev; günde 1 görevde ~2 haftada
+  // bir İtirazcı bahsi → kampın sevilen mekaniği 90 günde de yaşar. Downstream
+  // (bahis rozeti, zafer metni) mod-bağımsız; İtirazcı süresi dolarsa yalnız
+  // SKORDA kazanır (kaçırana laf edilmez — kamptaki ilkeyle aynı).
   const bahisAni =
-    karakterAni && mod === "kamp" && aktivasyon.bahisIzin === true && Math.random() < 0.5;
+    karakterAni &&
+    (mod === "kamp" || mod === "yolculuk") &&
+    aktivasyon.bahisIzin === true &&
+    Math.random() < 0.5;
   // Faz 2 — ilişki durumu (son görev yanıtından deterministik) + lakap satırı.
   const sonYanitZamani = onceki.find((o) => o.responded_at)?.responded_at ?? null;
   const { data: lakapVeri } = karakterAcik
