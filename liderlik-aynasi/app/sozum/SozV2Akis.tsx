@@ -85,7 +85,12 @@ export default function SozV2Akis({
       </div>
     ) : null;
 
-  function Sarmal({ children }: { children: React.ReactNode }) {
+  // DÜZ FONKSİYON, JSX bileşeni DEĞİL — bilinçli. Render içinde tanımlı bir
+  // <Sarmal> bileşeni her render'da YENİ tip sayılır; React tüm alt ağacı söküp
+  // yeniden kurar → textarea her tuş vuruşunda imleci/odağı kaybeder (saha
+  // bildirimi: "bir harf yazınca imleç başa atıyor"). Fonksiyon çağrısı düz
+  // element döndürür, ağaç kimliği korunur, imleç yerinde kalır.
+  function sarmal(children: React.ReactNode) {
     return (
       <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
         {imzaBandi}
@@ -97,8 +102,8 @@ export default function SozV2Akis({
 
   // ---- ŞEKİLLENDİR ----
   if (faz === "sekil") {
-    return (
-      <Sarmal>
+    return sarmal(
+      <>
         <div className="kart-cam rounded-3xl p-7 text-center">
           <p className="text-5xl">📜</p>
           <h1 className="prizma-serif ay-metin mt-3 text-2xl font-semibold">{t.sekilBaslik}</h1>
@@ -122,14 +127,14 @@ export default function SozV2Akis({
             {mesgul ? t.dusunuyor : t.sekillendir}
           </button>
         </div>
-      </Sarmal>
+      </>
     );
   }
 
   // ---- DÜZENLE ----
   if (faz === "duzenle") {
-    return (
-      <Sarmal>
+    return sarmal(
+      <>
         <header>
           <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.duzenleBaslik}</h1>
           <p className="mt-2 text-sm text-slate-300">{t.duzenleMetin}</p>
@@ -175,14 +180,14 @@ export default function SozV2Akis({
         >
           {t.onayla}
         </button>
-      </Sarmal>
+      </>
     );
   }
 
   // ---- SES ----
   if (faz === "ses") {
-    return (
-      <Sarmal>
+    return sarmal(
+      <>
         <header>
           <h1 className="prizma-serif ay-metin text-2xl font-semibold">{t.sesBaslik}</h1>
           <p className="mt-2 text-sm text-slate-300">{t.sesMetin}</p>
@@ -232,7 +237,7 @@ export default function SozV2Akis({
         >
           {t.sesAtla}
         </button>
-      </Sarmal>
+      </>
     );
   }
 
@@ -270,8 +275,8 @@ export default function SozV2Akis({
   }
 
   // ---- TAMAM ----
-  return (
-    <Sarmal>
+  return sarmal(
+    <>
       <div className="kart-cam rounded-3xl p-8 text-center">
         <p className="text-5xl">🤝</p>
         <h1 className="prizma-serif ay-metin mt-3 text-2xl font-semibold">{t.tamamBaslik}</h1>
@@ -327,7 +332,7 @@ export default function SozV2Akis({
           </button>
         </div>
       </div>
-    </Sarmal>
+    </>
   );
 }
 
