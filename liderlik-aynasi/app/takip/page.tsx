@@ -117,6 +117,23 @@ export default async function TakipSayfa() {
     }
   }
 
+  // [G#47] MEZUNİYET — 90. güne ulaşan kişiye kapanış ekranı: söz-yüzleşme +
+  // sezon özeti. Yolculuğun kapstone anı (gün 90; ~aylar sonra, o güne dek uykuda).
+  let mezuniyet: { adimGun: number; gorusme: number; kayit: number } | null = null;
+  if (yolGun >= 90) {
+    const { data: tumTakip } = await db
+      .from("soz_takip")
+      .select("gorusme_sayisi, kayit_sayisi")
+      .eq("participant_id", session.sub);
+    let gToplam = 0;
+    let kToplam = 0;
+    for (const r of tumTakip ?? []) {
+      gToplam += r.gorusme_sayisi ?? 0;
+      kToplam += r.kayit_sayisi ?? 0;
+    }
+    mezuniyet = { adimGun: durum.toplam, gorusme: gToplam, kayit: kToplam };
+  }
+
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       {/* [UX] Sadeleştirildi: sayfa açılışında yalnız KİMLİK (gün + evre) görünür.
@@ -152,6 +169,7 @@ export default async function TakipSayfa() {
         kasAd={kasAd}
         lakap={lakap}
         karakterAcik={karakterAcik}
+        mezuniyet={mezuniyet}
       />
     </main>
   );
