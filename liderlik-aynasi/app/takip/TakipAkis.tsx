@@ -51,6 +51,10 @@ export default function TakipAkis({
   sozSesUrl,
   degerDavranisi,
   ortakMomentum,
+  haftanGorev = 0,
+  haftanKivilcim = 0,
+  haftanCheckin = 0,
+  kasAd = null,
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
@@ -60,6 +64,11 @@ export default function TakipAkis({
   sozSesUrl: string | null;
   degerDavranisi: string | null;
   ortakMomentum: { cevreToplam: number; buHaftaAktif: number } | null;
+  // [UX] Hub başlığından taşınan ikincil bilgiler — "Yol detayları" akordeonunda.
+  haftanGorev?: number;
+  haftanKivilcim?: number;
+  haftanCheckin?: number;
+  kasAd?: string | null;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   // [FAZ 6 · Yaşayan Plan] Tamamlanan aksiyon index'leri — checkbox ile toggle.
@@ -164,15 +173,10 @@ export default function TakipAkis({
         </div>
       )}
 
-      <header className="text-center">
-        <p className="prizma-serif text-[0.7rem] uppercase tracking-[0.35em] text-slate-400">
-          {tr.app.name}
-        </p>
-        <h1 className="prizma-serif ay-metin mt-1 text-2xl font-semibold">{t.baslik}</h1>
-        <p className="mt-2 text-sm text-slate-300">{t.aciklama}</p>
-      </header>
+      {/* Kimlik (gün + evre) page.tsx'te — burada tek satır başlık yeter. */}
+      <h1 className="prizma-serif ay-metin text-center text-xl font-semibold">{t.baslik}</h1>
 
-      {/* [#8] Nazik bildirim şeridi — 90 gün takibinde şahit alkışı/hatırlatma kaçmasın */}
+      {/* [#8] Nazik bildirim şeridi — şahit alkışı/hatırlatma kaçmasın */}
       <BildirimSerit yer="takip" />
 
       {/* [Faz 6] "Bunu sen söyledin" — milestone anında kendi sesini dinlet. */}
@@ -187,72 +191,15 @@ export default function TakipAkis({
         </div>
       )}
 
-      {/* [FAZ 7 · Madde 11] Nazik seri — seri kırılınca ceza/sessizlik yerine
-          cesaret. Bugün işaretlenmemiş + yakında ara verilmişse yumuşak çerçeve. */}
-      {durum.bugunYapildi !== true && durum.kacirilanGun >= 1 && durum.kacirilanGun < 900 && (
-        <div className="rounded-2xl border border-royal/30 bg-royal/[0.08] p-4 text-center">
-          <p className="text-sm leading-relaxed text-slate-200">
-            {durum.kacirilanGun === 1
-              ? "Dün bir adım atmadın — sorun değil. Seri bir yarış değil; önemli olan bugün geri dönmen. Yeni serin tek bir işaretle başlar."
-              : `${durum.kacirilanGun} gündür ara verdin — kendini yargılama. Yol uzun; yeni serin bugün, tek bir işaretle başlar.`}
-          </p>
-        </div>
-      )}
-
-      {/* Seri + toplam */}
-      <div className="flex gap-3">
-        <div className="flex-1 rounded-2xl bg-gold/10 p-4 text-center">
-          <p className="text-2xl font-bold text-gold">{durum.seri}</p>
-          <p className="text-xs text-slate-400">{durum.seri > 0 ? t.seri(durum.seri) : t.seriYok}</p>
-        </div>
-        <div className="flex-1 rounded-2xl bg-emerald-500/10 p-4 text-center">
-          <p className="text-2xl font-bold text-emerald-300">{durum.toplam}</p>
-          <p className="text-xs text-slate-400">{t.toplam(durum.toplam)}</p>
-        </div>
-      </div>
-
-      {/* B8: 90 günlük genel ilerleme — kaç gün tamamlandı, ne kadar kaldı */}
-      <div className="rounded-2xl border border-royal/25 bg-midnight-card/50 p-4">
-        <div className="flex items-center justify-between text-xs font-medium text-slate-400">
-          <span>{t.yolBaslik}</span>
-          <span className="text-gold-light">{t.yolGun(Math.min(durum.toplam, 90))}</span>
-        </div>
-        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-royal-light to-gold transition-all duration-700"
-            style={{ width: `${Math.min(100, Math.round((durum.toplam / 90) * 100))}%` }}
-          />
-        </div>
-      </div>
-
-      {/* [Faz 3] Haftalık görüşme kotası — planındaki hedeften türer. */}
-      {kota != null && (
-        <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/[0.06] p-4">
-          <div className="flex items-center justify-between text-xs font-medium text-slate-300">
-            <span>📞 Bu hafta görüşme kotan</span>
-            <span className="text-emerald-300">
-              {hafta.gorusmeToplam} / {kota}
-            </span>
-          </div>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
-            <div
-              className="h-full rounded-full bg-emerald-400 transition-all duration-700"
-              style={{ width: `${kotaOrani ?? 0}%` }}
-            />
-          </div>
-          {hafta.kayitToplam > 0 && (
-            <p className="mt-2 text-xs text-gold-light">🔔 Bu hafta {hafta.kayitToplam} kayıt aldın</p>
-          )}
-        </div>
-      )}
-
-      {/* Bugünün check-in'i */}
+      {/* ═══ 1) GÜNÜN TEK İŞİ: CHECK-IN — kahraman, en üstte ═══ */}
       <section className="kart-cam rounded-2xl p-5">
         {isaretli ? (
-          <p className="text-center text-base font-semibold text-emerald-300">{t.bugunTamam}</p>
+          <p className="text-center text-base font-semibold text-emerald-300">
+            {t.bugunKisa(durum.seri)}
+          </p>
         ) : (
           <>
-            <p className="text-base font-medium text-slate-100">{t.bugunSoru}</p>
+            <p className="text-base font-semibold text-slate-100">{t.bugunSoru}</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
               <label className="block">
                 <span className="text-xs text-slate-400">Kaç görüşme?</span>
@@ -261,7 +208,7 @@ export default function TakipAkis({
                   value={gorusme}
                   onChange={(e) => setGorusme(e.target.value.replace(/[^0-9]/g, ""))}
                   placeholder="0"
-                  className="mt-1 w-full rounded-xl border border-royal-light/30 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
                 />
               </label>
               <label className="block">
@@ -271,7 +218,7 @@ export default function TakipAkis({
                   value={kayit}
                   onChange={(e) => setKayit(e.target.value.replace(/[^0-9]/g, ""))}
                   placeholder="0"
-                  className="mt-1 w-full rounded-xl border border-gold/30 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
                 />
               </label>
             </div>
@@ -280,7 +227,7 @@ export default function TakipAkis({
               onChange={(e) => setNot(e.target.value.slice(0, 500))}
               rows={2}
               placeholder={t.notYer}
-              className="mt-2 w-full resize-none rounded-xl border border-royal-light/30 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
+              className="mt-2 w-full resize-none rounded-xl border border-white/15 bg-midnight-soft px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-gold"
             />
             <div className="mt-2">
               <MikrofonButonu
@@ -291,14 +238,14 @@ export default function TakipAkis({
               <button
                 onClick={() => checkin(true)}
                 disabled={mesgul}
-                className="btn-kor flex h-12 flex-1 items-center justify-center rounded-xl text-base font-bold disabled:opacity-50"
+                className="btn-kor parilti flex h-12 flex-1 items-center justify-center rounded-xl text-base font-bold disabled:opacity-50"
               >
                 {t.evet}
               </button>
               <button
                 onClick={() => checkin(false)}
                 disabled={mesgul}
-                className="flex h-12 flex-1 items-center justify-center rounded-xl border border-royal-light/40 text-sm font-medium text-slate-300 hover:bg-midnight-soft disabled:opacity-50"
+                className="flex h-12 flex-1 items-center justify-center rounded-xl border border-white/15 text-sm font-medium text-slate-400 hover:bg-midnight-soft disabled:opacity-50"
               >
                 {t.hayir}
               </button>
@@ -307,94 +254,173 @@ export default function TakipAkis({
         )}
       </section>
 
-      {/* Son 14 gün şeridi */}
-      <section className="kart-cam rounded-2xl p-5">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{t.son14}</p>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {durum.son14.map((g) => (
-            <span
-              key={g.gun}
-              title={g.gun}
-              className={`flex h-7 w-7 items-center justify-center rounded-md text-xs font-bold ${
-                g.yapildi === true
-                  ? "bg-emerald-500/80 text-[#04140c]"
-                  : g.yapildi === false
-                    ? "bg-red-500/30 text-red-200"
-                    : "bg-white/5 text-slate-600"
-              }`}
-            >
-              {g.yapildi === true ? "✓" : g.yapildi === false ? "·" : ""}
+      {/* ═══ 2) TEK ÖZET SATIRI: seri + 90 gün (1. gün yumuşatma) ═══ */}
+      {durum.toplam > 0 || durum.seri > 0 || isaretli ? (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="font-semibold text-gold-light">
+              {durum.seri > 0 ? t.seri(durum.seri) : t.seriYok}
             </span>
-          ))}
-        </div>
-      </section>
-
-      {/* [Faz 12] Ortak Momentum — söz çevren (şahitlerin + şahidi olduğun
-          kişiler) bu hafta ne durumda. Akran baskısı, hafif ve tek bakışlık. */}
-      {ortakMomentum && (
-        <div className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3 text-center">
-          <p className="text-sm text-slate-300">
-            🌐 Çevrende {ortakMomentum.cevreToplam} kişiden{" "}
-            <span className="font-semibold text-emerald-300">{ortakMomentum.buHaftaAktif}</span>{" "}
-            şu an sözünü tutuyor.
-          </p>
-        </div>
-      )}
-
-      {/* [Faz 7] Değer-Davranış Aynası — kampta seçtiğin değer bu haftaki
-          gerçek verinle buluşuyor. AI çağrısı yok, haftada bir değişir. */}
-      {degerDavranisi && (
-        <section className="kart-cam rounded-2xl border border-royal-light/25 p-5">
-          <p className="text-xs font-semibold uppercase tracking-wide text-royal-light/80">
-            ✨ Değerin bu hafta
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-slate-200">{degerDavranisi}</p>
-        </section>
-      )}
-
-      {/* Sözündeki adımlar — [FAZ 6] artık işaretlenebilir yaşayan kontrol listesi */}
-      {aksiyonlar.length > 0 && (
-        <section className="kart-cam rounded-2xl p-5">
-          <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              {t.aksiyonHatirlatma}
-            </p>
-            <span className="text-[0.7rem] font-semibold text-emerald-300">
-              {tamamlanan.size}/{aksiyonlar.length}
+            <span className="text-xs font-medium text-slate-400">
+              {t.ozetIlerleme(Math.min(durum.toplam, 90))}
             </span>
           </div>
-          <ul className="mt-2 space-y-1.5">
-            {aksiyonlar.map((a, i) => {
-              const bitti = tamamlanan.has(i);
-              return (
-                <li key={i}>
-                  <button
-                    onClick={() => aksiyonToggle(i)}
-                    disabled={aksMesgul !== null}
-                    className="flex w-full items-start gap-2 text-left text-sm disabled:opacity-60"
-                  >
-                    <span
-                      className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[0.6rem] ${
-                        bitti
-                          ? "border-emerald-400 bg-emerald-500/80 text-white"
-                          : "border-white/30 bg-transparent text-transparent"
-                      }`}
-                    >
-                      ✓
-                    </span>
-                    <span className="shrink-0 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.6rem] font-bold text-emerald-300">
-                      {ufukAyEtiket(a.ufuk, now)}
-                    </span>
-                    <span className={bitti ? "text-slate-500 line-through" : "text-slate-200"}>
-                      {a.metin}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
+          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-royal-light to-gold transition-all duration-700"
+              style={{ width: `${Math.min(100, Math.round((durum.toplam / 90) * 100))}%` }}
+            />
+          </div>
+        </div>
+      ) : (
+        <p className="rounded-2xl border border-gold/25 bg-gold/[0.06] px-4 py-3 text-center text-sm font-medium text-gold-light">
+          {t.baslamaGun}
+        </p>
       )}
+
+      {/* Nazik seri — tek cümle (yalnız bugün işaretlenmemiş + ara verilmişse) */}
+      {durum.bugunYapildi !== true && durum.kacirilanGun >= 1 && durum.kacirilanGun < 900 && (
+        <p className="rounded-2xl border border-white/10 bg-white/[0.02] px-4 py-3 text-center text-sm text-slate-300">
+          {durum.kacirilanGun === 1
+            ? "Dün ara verdin — sorun değil. Yeni serin bugün, tek işaretle başlar."
+            : `${durum.kacirilanGun} gündür ara verdin — yol uzun. Bugün tek işaretle geri dön.`}
+        </p>
+      )}
+
+      {/* ═══ 3) YOL DETAYLARI — ikincil her şey burada, varsayılan KAPALI ═══ */}
+      <details className="group rounded-2xl border border-white/10 bg-white/[0.02]">
+        <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-semibold text-slate-300">
+          <span>📂 {t.detaylar}</span>
+          <span className="text-slate-500 transition-transform group-open:rotate-180" aria-hidden>▾</span>
+        </summary>
+        <div className="space-y-4 border-t border-white/10 p-4">
+          {/* Haftan özeti + çalışılan kas */}
+          {(haftanGorev > 0 || haftanCheckin > 0) && (
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-semibold text-slate-300">
+                {tr.yolculukUx.haftanGorev(haftanGorev)}
+              </span>
+              <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-semibold text-slate-300">
+                {tr.yolculukUx.haftanKivilcim(haftanKivilcim)}
+              </span>
+              <span className="rounded-full bg-white/[0.06] px-2.5 py-0.5 text-xs font-semibold text-slate-300">
+                {tr.yolculukUx.haftanCheckin(haftanCheckin)}
+              </span>
+            </div>
+          )}
+          {kasAd && <p className="text-xs leading-relaxed text-slate-400">💪 {t.detayKas(kasAd)}</p>}
+
+          {/* Görüşme kotası */}
+          {kota != null && (
+            <div>
+              <div className="flex items-center justify-between text-xs font-medium text-slate-400">
+                <span>{t.detayGorusmeKota}</span>
+                <span className="text-slate-300">
+                  {hafta.gorusmeToplam} / {kota}
+                </span>
+              </div>
+              <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-white/10">
+                <div
+                  className="h-full rounded-full bg-emerald-400/70 transition-all duration-700"
+                  style={{ width: `${kotaOrani ?? 0}%` }}
+                />
+              </div>
+              {hafta.kayitToplam > 0 && (
+                <p className="mt-1.5 text-xs text-gold-light">🔔 Bu hafta {hafta.kayitToplam} kayıt aldın</p>
+              )}
+            </div>
+          )}
+
+          {/* Haftanın ritmi — tek ikon satırı (4 satır yerine) */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.detayRitim}</p>
+            <p className="mt-1 text-xs text-slate-400">🌙 Her akşam · 🤝 Pzt · 📊 Paz · 🏁 30/60/90</p>
+          </div>
+
+          {/* Son 14 gün — başlıksız ince şerit */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t.son14}</p>
+            <div className="mt-1.5 flex flex-wrap gap-1.5">
+              {durum.son14.map((g) => (
+                <span
+                  key={g.gun}
+                  title={g.gun}
+                  className={`flex h-6 w-6 items-center justify-center rounded-md text-xs font-bold ${
+                    g.yapildi === true
+                      ? "bg-emerald-500/70 text-[#04140c]"
+                      : g.yapildi === false
+                        ? "bg-white/10 text-slate-500"
+                        : "bg-white/5 text-slate-600"
+                  }`}
+                >
+                  {g.yapildi === true ? "✓" : g.yapildi === false ? "·" : ""}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Ortak momentum */}
+          {ortakMomentum && (
+            <p className="text-xs text-slate-400">
+              🌐 Çevrende {ortakMomentum.cevreToplam} kişiden{" "}
+              <span className="font-semibold text-emerald-300">{ortakMomentum.buHaftaAktif}</span> şu an
+              sözünü tutuyor.
+            </p>
+          )}
+
+          {/* Değerin bu hafta — kısaltılmış (3 satır) */}
+          {degerDavranisi && (
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">✨ Değerin bu hafta</p>
+              <p className="mt-1 line-clamp-3 text-xs leading-relaxed text-slate-400">{degerDavranisi}</p>
+            </div>
+          )}
+
+          {/* Sözündeki adımlar — işaretlenebilir kontrol listesi */}
+          {aksiyonlar.length > 0 && (
+            <div>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  {t.aksiyonHatirlatma}
+                </p>
+                <span className="text-[0.7rem] font-semibold text-emerald-300">
+                  {tamamlanan.size}/{aksiyonlar.length}
+                </span>
+              </div>
+              <ul className="mt-2 space-y-1.5">
+                {aksiyonlar.map((a, i) => {
+                  const bitti = tamamlanan.has(i);
+                  return (
+                    <li key={i}>
+                      <button
+                        onClick={() => aksiyonToggle(i)}
+                        disabled={aksMesgul !== null}
+                        className="flex w-full items-start gap-2 text-left text-sm disabled:opacity-60"
+                      >
+                        <span
+                          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border text-[0.6rem] ${
+                            bitti
+                              ? "border-emerald-400 bg-emerald-500/80 text-white"
+                              : "border-white/30 bg-transparent text-transparent"
+                          }`}
+                        >
+                          ✓
+                        </span>
+                        <span className="shrink-0 rounded-full bg-white/[0.06] px-2 py-0.5 text-[0.6rem] font-bold text-slate-400">
+                          {ufukAyEtiket(a.ufuk, now)}
+                        </span>
+                        <span className={bitti ? "text-slate-500 line-through" : "text-slate-300"}>
+                          {a.metin}
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </div>
+      </details>
 
       <p className="text-center">
         <Link href="/" className="text-sm text-slate-400 underline-offset-4 hover:text-slate-200 hover:underline">

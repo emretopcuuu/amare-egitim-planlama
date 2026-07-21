@@ -4360,10 +4360,20 @@ export const tr = {
     yolGun: (n: number) => `${n} / 90 gün`,
     toplam: (n: number) => `${n} gün adım attın`,
     bugunTamam: "Bugünün adımı işaretlendi ✓",
+    bugunKisa: (seri: number) =>
+      seri > 0 ? `Bugün ✓ · ${seri} günlük seri 🔥` : "Bugünün adımı işaretlendi ✓",
     son14: "Son 14 gün",
     aksiyonHatirlatma: "Sözündeki adımlar",
     gecmisGun: "—",
     anaSayfa: "← Ana sayfa",
+    // [UX] Sadeleştirme: tek özet satırı, "detaylar" akordeonu, 1. gün yumuşatma.
+    detaylar: "Yol detayları",
+    ozetGun: (n: number) => `${n}. gün`,
+    baslamaGun: "Bugün başlıyor — ilk adımını at 🌱",
+    ozetIlerleme: (n: number) => `${n}/90 gün`,
+    detayGorusmeKota: "📞 Bu hafta görüşme",
+    detayRitim: "Haftanın ritmi",
+    detayKas: (kas: string) => `Bu hafta çalıştığın kas: ${kas}`,
   },
   // FAZ B — Şahit paneli (lider, şahit olduğu kişileri takip eder)
   sahitlik: {

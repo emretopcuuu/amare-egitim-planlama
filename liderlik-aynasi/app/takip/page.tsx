@@ -94,8 +94,9 @@ export default async function TakipSayfa() {
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
-      {/* [YOLCULUK] Yolun neresindesin + bu haftanın ritmi + çalışılan kas +
-          haftan özeti — hepsi 90-gün odağını kurar (sunucu render, statik). */}
+      {/* [UX] Sadeleştirildi: sayfa açılışında yalnız KİMLİK (gün + evre) görünür.
+          Haftan özeti / kas / ritim gibi ikincil bilgiler artık TakipAkis içindeki
+          "Yol detayları" akordeonunda — ekran çok-yazıdan arındı, check-in öne geçti. */}
       <div className="mx-auto w-full max-w-md space-y-3 px-5 pt-5">
         {yolGun > 0 && (
           <p className="inline-block rounded-full bg-gold/12 px-3 py-1 text-sm font-semibold text-gold-light">
@@ -109,41 +110,6 @@ export default async function TakipSayfa() {
             aktifAd={yolcuFaz.ad}
           />
         )}
-        {/* [#20] Haftan özeti */}
-        {(haftanGorev > 0 || haftanCheckin > 0) && (
-          <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3">
-            <span className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-              {y.haftanBaslik}
-            </span>
-            <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-300">
-              {y.haftanGorev(haftanGorev)}
-            </span>
-            <span className="rounded-full bg-gold/15 px-2.5 py-0.5 text-xs font-semibold text-gold-light">
-              {y.haftanKivilcim(haftanKivilcim)}
-            </span>
-            <span className="rounded-full bg-royal/20 px-2.5 py-0.5 text-xs font-semibold text-royal-light">
-              {y.haftanCheckin(haftanCheckin)}
-            </span>
-          </div>
-        )}
-        {/* [#18] Bu hafta çalışılan kas — kör noktayı yüzüne vurmadan, kas adıyla */}
-        {kasAd && (
-          <p className="rounded-2xl border border-royal-light/25 bg-royal/[0.06] px-4 py-2.5 text-xs leading-relaxed text-royal-light/90">
-            💪 {y.kasCip(kasAd)}
-          </p>
-        )}
-        {/* [#9] Haftanın ritmi — Pzt/Paz/akşam/dönüm noktaları tek bakışta */}
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            {y.ritimBaslik}
-          </p>
-          <ul className="mt-2 space-y-1 text-xs text-slate-300">
-            <li>🌙 {y.ritimGunluk}</li>
-            <li>🤝 {y.ritimPzt}</li>
-            <li>📊 {y.ritimPazar}</li>
-            <li>🏁 {y.ritimKm}</li>
-          </ul>
-        </div>
       </div>
       <TakipAkis
         durum={durum}
@@ -154,6 +120,10 @@ export default async function TakipSayfa() {
         sozSesUrl={sozSesUrl}
         degerDavranisi={degerDavranisi}
         ortakMomentum={ortakMomentum}
+        haftanGorev={haftanGorev}
+        haftanKivilcim={haftanKivilcim}
+        haftanCheckin={haftanCheckin}
+        kasAd={kasAd}
       />
     </main>
   );
