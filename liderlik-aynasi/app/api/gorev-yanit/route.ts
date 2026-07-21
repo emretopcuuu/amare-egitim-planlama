@@ -585,7 +585,37 @@ export async function POST(req: Request) {
   // (serverless yürütmesi yanıtla birlikte ölebilir; her ikisi de fail-open).
   await Promise.all([kimlikDamitmaP, sicakAnP]);
 
+  // [A#1] GÖREV → CHECK-IN BİRLEŞİK: yolculuk modunda görevi tamamlayınca, bugün
+  // henüz "adımı attım" işareti yoksa sonuç ekranından tek dokunuşla işaretlenir
+  // (iki ayrı iş tek dokunuşa iner). Yalnız mühürlü sözü olan kişiye sorulur.
+  let yolculukCheckinSor = false;
+  try {
+    const { data: modAyar } = await db
+      .from("settings")
+      .select("value")
+      .eq("key", "sistem_modu")
+      .maybeSingle();
+    if (modAyar?.value === "yolculuk") {
+      const bugun = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul" }).format(
+        new Date()
+      );
+      const [{ data: bugunku }, { data: sozRow }] = await Promise.all([
+        db
+          .from("soz_takip")
+          .select("participant_id")
+          .eq("participant_id", session.sub)
+          .eq("gun", bugun)
+          .maybeSingle(),
+        db.from("soz").select("durum").eq("participant_id", session.sub).maybeSingle(),
+      ]);
+      if (!bugunku && sozRow?.durum === "sesli") yolculukCheckinSor = true;
+    }
+  } catch {
+    // check-in dürtüsü süs katmanı — puanlama akışını asla kesmez
+  }
+
   return Response.json({
+    yolculukCheckinSor,
     puan: sonuc.puan,
     yorum: barismaEk + sonuc.yorum + bahisEk + guvenlikEk,
     // Görsel paket #8 — sonuç ekranındaki AYNA pozu bu bayraklardan seçilir.

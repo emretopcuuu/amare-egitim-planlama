@@ -51,6 +51,8 @@ type Sonuc = {
   nabizNeden?: string | null;
   // Özellik 2 — Kimlik yüzleşmesi: 10. puanlı görevde cümle + karşı-kanıtlar.
   kimlikYuzlesme?: { id: string; cumle: string; kanitlar: string[] } | null;
+  // [A#1] Yolculukta görev tamamlandı + bugün check-in yoksa: tek dokunuş işaret.
+  yolculukCheckinSor?: boolean;
 };
 
 // Görev yanıtı: gönderim AYNA'nın anlık puanını bekler (5-15 sn) —
@@ -302,6 +304,9 @@ export default function GorevYanitFormu({
         {!sonuc.bekliyor && sonuc.kimlikYuzlesme && (
           <KimlikYuzlesme veri={sonuc.kimlikYuzlesme} />
         )}
+        {/* [A#1] Görev → check-in birleşik: yolculukta bugün henüz işaretlenmemişse
+            sonuç ekranından tek dokunuşla "adımı attım" — /takip'e gitmeye gerek yok */}
+        {!sonuc.bekliyor && sonuc.yolculukCheckinSor && <YolculukCheckin />}
         {/* #1 Yansıma Kapanışı: görülen içgörü — foto kanıtından önce gelir */}
         {!sonuc.bekliyor && !sonuc.soz && !sonuc.senkron && (
           <YansimaKapanisi gorevId={gorevId} />
@@ -324,6 +329,15 @@ export default function GorevYanitFormu({
 
   return (
     <form onSubmit={gonder} className="mt-3">
+      {/* [A#7] SESLİ YANIT ÖNCELİĞİ — sahada/araçta klavye zor; mikrofon birincil,
+          textarea'nın ÜSTÜNDE belirgin. Yazmak isteyen aşağıda yazar. */}
+      <div className="mb-2">
+        <MikrofonButonu
+          belirgin
+          disabled={gonderiliyor}
+          onMetin={(parca) => setYanit((y) => (y.trim() ? `${y.trim()} ${parca}` : parca))}
+        />
+      </div>
       {/* D11 — "Yanıtın" başlığı + iskele satırı kaldırıldı: yönerge YALNIZ
           placeholder'da yaşar; erişilebilir ad aria-label ile korunur. */}
       <textarea
@@ -371,23 +385,60 @@ export default function GorevYanitFormu({
           return <p className="mt-2 text-xs text-emerald-300/90">{t.ipucuYeterli}</p>;
         return null;
       })()}
-      {/* D11 — "🎤 Yazmak istemiyorsan…" satırı kaldırıldı: Sesle Yaz butonu yeterli */}
-      <div className="mt-2 flex gap-2">
-        <MikrofonButonu
-          disabled={gonderiliyor}
-          onMetin={(parca) =>
-            setYanit((y) => (y.trim() ? `${y.trim()} ${parca}` : parca))
-          }
-        />
+      {/* [A#7] Mikrofon artık üstte (belirgin); altta yalnız gönder butonu. */}
+      <div className="mt-2">
         <button
           type="submit"
           disabled={yanit.trim().length < 2 || gonderiliyor}
-          className="bas-his h-11 flex-1 btn-3d rounded-xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
+          className="bas-his h-11 w-full btn-3d rounded-xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-40"
         >
           {gonderiliyor ? t.gonderiliyor : t.gonder}
         </button>
       </div>
     </form>
+  );
+}
+
+// [A#1] GÖREV → CHECK-IN BİRLEŞİK: görev tamamlanınca yolculukta bugünün adımını
+// tek dokunuşla işaretle (sonuç ekranı içinde; /takip'e gitmeye gerek yok).
+function YolculukCheckin() {
+  const [durum, setDurum] = useState<"idle" | "gonderiliyor" | "bitti">("idle");
+  async function isaretle() {
+    if (durum !== "idle") return;
+    setDurum("gonderiliyor");
+    try {
+      const res = await fetch("/api/soz-takip", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ yapildi: true, notlar: null }),
+      });
+      if (res.ok) {
+        titret([12, 40, 12]);
+        setDurum("bitti");
+      } else setDurum("idle");
+    } catch {
+      setDurum("idle");
+    }
+  }
+  if (durum === "bitti") {
+    return (
+      <p className="mt-4 rounded-xl border border-emerald-400/30 bg-emerald-500/[0.08] p-3 text-center text-sm font-semibold text-emerald-300">
+        {t.bugunuIsaretledin}
+      </p>
+    );
+  }
+  return (
+    <div className="mt-4 rounded-xl border border-gold/30 bg-gold/[0.06] p-4 text-center">
+      <p className="text-sm font-medium text-slate-100">{t.checkinSoru}</p>
+      <button
+        type="button"
+        onClick={isaretle}
+        disabled={durum === "gonderiliyor"}
+        className="mt-3 flex h-11 w-full items-center justify-center rounded-xl bg-gold font-semibold text-[#1a1206] transition-colors hover:bg-gold-light disabled:opacity-50"
+      >
+        {durum === "gonderiliyor" ? t.gonderiliyor : t.checkinEvet}
+      </button>
+    </div>
   );
 }
 
