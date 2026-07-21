@@ -129,10 +129,13 @@ export default async function KapanisPage() {
         </div>
       </section>
 
-      {/* [6.2] CHURN MÜDAHALE MERDİVENİ */}
+      {/* [6.2] CHURN MÜDAHALE MERDİVENİ + [F#43] tek-tık WhatsApp */}
       <section>
         <h2 className="mb-1 font-display text-lg font-bold text-gold-light">🪜 Churn Müdahale Merdiveni</h2>
-        <p className="mb-3 text-xs text-slate-500">En riskliden en aktife. Basamak arttıkça müdahale kişiselleşir.</p>
+        <p className="mb-3 text-xs text-slate-500">
+          En riskliden en aktife. Basamak arttıkça müdahale kişiselleşir. Riskli olanlara tek dokunuşla
+          WhatsApp'tan yaz.
+        </p>
         <div className="overflow-hidden rounded-2xl border border-white/10">
           <table className="w-full text-sm">
             <thead className="bg-midnight-card/60 text-xs uppercase text-slate-400">
@@ -140,21 +143,45 @@ export default async function KapanisPage() {
                 <th className="px-3 py-2 text-left">Kişi</th>
                 <th className="px-3 py-2 text-left">Sessiz</th>
                 <th className="px-3 py-2 text-left">Öneri</th>
+                <th className="px-3 py-2 text-left">Ara</th>
               </tr>
             </thead>
             <tbody>
-              {churn.map((c) => (
-                <tr key={c.id} className="border-t border-white/5">
-                  <td className="px-3 py-2 text-slate-200">
-                    {c.ad}
-                    {c.takim && <span className="ml-1 text-xs text-slate-500">· {c.takim}</span>}
-                  </td>
-                  <td className={`px-3 py-2 font-mono ${churnRenk[c.basamak]}`}>
-                    {c.sessizGun == null ? "hiç" : `${c.sessizGun}g`}
-                  </td>
-                  <td className={`px-3 py-2 ${churnRenk[c.basamak]}`}>{c.oneri}</td>
-                </tr>
-              ))}
+              {churn.map((c) => {
+                const waTel = c.telefon ? c.telefon.replace(/\D/g, "") : null;
+                const waLink =
+                  waTel && c.basamak >= 1
+                    ? `https://wa.me/${waTel}?text=${encodeURIComponent(
+                        `Merhaba ${c.ad.split(" ")[0]}, birkaç gündür sözüne adım atmadığını gördüm — nasıl gidiyor? Yanındayım. 🌱`
+                      )}`
+                    : null;
+                return (
+                  <tr key={c.id} className="border-t border-white/5">
+                    <td className="px-3 py-2 text-slate-200">
+                      {c.ad}
+                      {c.takim && <span className="ml-1 text-xs text-slate-500">· {c.takim}</span>}
+                    </td>
+                    <td className={`px-3 py-2 font-mono ${churnRenk[c.basamak]}`}>
+                      {c.sessizGun == null ? "hiç" : `${c.sessizGun}g`}
+                    </td>
+                    <td className={`px-3 py-2 ${churnRenk[c.basamak]}`}>{c.oneri}</td>
+                    <td className="px-3 py-2">
+                      {waLink ? (
+                        <a
+                          href={waLink}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/25"
+                        >
+                          💬 Yaz
+                        </a>
+                      ) : (
+                        <span className="text-xs text-slate-600">—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
