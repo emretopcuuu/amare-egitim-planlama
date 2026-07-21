@@ -10,6 +10,7 @@ import {
   aynaIliskiDurumu,
   gunlukLaf,
   BOS_EKRAN_LAFLARI,
+  BOS_EKRAN_LAFLARI_YOLCULUK,
   KUS_MODU_METINLERI,
   type AynaIliski,
 } from "@/lib/aynaKarakter";
@@ -122,6 +123,15 @@ export default async function GorevlerPage() {
     .limit(50);
   if (error) throw error;
   const kampBaslangic = await kampBaslangicGetir(db);
+  // [YOLCULUK] Sistem modu — kamp bitince (mod=yolculuk) görev ekranı sadeleşir:
+  // günlük kota 7→1, sakin sayaç, gün-dilli seri, saha temalı havuzlar. Kamp
+  // modunda (mod=kamp) hiçbir şey değişmez — gelecek kamp kopyası aynen kalır.
+  const { data: modAyar } = await db
+    .from("settings")
+    .select("value")
+    .eq("key", "sistem_modu")
+    .maybeSingle();
+  const yolculuk = modAyar?.value === "yolculuk";
 
   const aktif = (gorevler ?? []).filter((g) => g.status === "pending");
   // FAZ 5.4 — İKİ KAPI: seçim bekleyen kapı görevleri (secim_grubu'na göre).
@@ -383,7 +393,9 @@ export default async function GorevlerPage() {
   const yeterince = aktif.length === 0 && bugunGorev >= 5;
 
   // UX #1/#3: günün ritmi + "sıradaki görev ~N dk" tahmini (boş durumu canlandırır).
-  const GUNLUK_KOTA = 7;
+  // [YOLCULUK #1] 90 günde günde TEK görev düşer (tik.ts gunlukUst=1); kamp kotası
+  // 7 yolculukta "0/7 yetersizsin" hissi verir — yolculukta kota 1'e iner.
+  const GUNLUK_KOTA = yolculuk ? 1 : 7;
   const sonGorevZamani = (gorevler ?? [])[0]?.issued_at ?? null;
   let siradakiDk: number | null = null;
   // D9 — fragman sahnesi: "~N dk" yerine somut saat çıpası ("~14:35 civarı").
@@ -403,15 +415,24 @@ export default async function GorevlerPage() {
   }
   // FAZ 5.1 — GÖREV FRAGMANI: kişi+bugünkü görev sayısı tohumlu, deterministik
   // ama gün içinde değişen jenerik ipucu (gerçek içeriği asla açık etmez).
-  const ipucuHavuzu = t.fragmanIpucuHavuzu;
+  // [YOLCULUK #17] Fragman ipuçları kamp göndermeleri taşır (bowling, salon) —
+  // 90 gün boyunca eskir; yolculukta saha/iş temalı havuz kullanılır.
+  const ipucuHavuzu = yolculuk ? t.fragmanIpucuHavuzuYolculuk : t.fragmanIpucuHavuzu;
   let ipucuTohum = 0;
   for (const ch of `${session.sub}:${bugunGorev}`) ipucuTohum = (ipucuTohum * 31 + ch.charCodeAt(0)) % ipucuHavuzu.length;
   const fragmanIpucu = ipucuHavuzu[ipucuTohum];
 
   // Faz 4 + UX #10 — Kamp Radyosu: son yayın (ana kart) + önceki yayınlar arşivi.
+  // [YOLCULUK #3] Kamp bitince yayın süresiz ana kartta durmasın: yolculukta 7
+  // günden eski yayın ana karttan iner, tümü "kamp radyosu arşivi"ne katlanır.
   const yayinlar = await yayinArsiviGetir(db, 3);
-  const radyo = yayinlar[0] ?? null;
-  const radyoArsiv = yayinlar.slice(1);
+  const sonYayin = yayinlar[0] ?? null;
+  const yayinTaze =
+    sonYayin != null &&
+    (!yolculuk ||
+      simdiMs - Date.parse(`${sonYayin.tarih}T12:00:00+03:00`) <= 7 * 86_400_000);
+  const radyo = yayinTaze ? sonYayin : null;
+  const radyoArsiv = radyo ? yayinlar.slice(1) : yayinlar;
 
   // Faz 2 — AYNA ilişki durumu: son görev yanıtından deterministik türetilir.
   // Küs moddayken boş ekranda küs poz + soğuk (ama oyunlu) laf havuzu konuşur.
@@ -434,10 +455,13 @@ export default async function GorevlerPage() {
       .format(new Date())
   );
   const gece = istSaat >= 23 || istSaat < 7;
+  // [YOLCULUK #17] Boş ekran lafı: küs modu her zaman öncelikli; değilse
+  // yolculukta saha/90-gün havuzu, kampta kamp havuzu.
+  const bosHavuz = yolculuk ? BOS_EKRAN_LAFLARI_YOLCULUK : BOS_EKRAN_LAFLARI;
   const aynaLafi = karakterAcik
     ? gece
       ? t.uykuLafi
-      : gunlukLaf(aynaDurum === "kus" ? KUS_MODU_METINLERI : BOS_EKRAN_LAFLARI, session.sub)
+      : gunlukLaf(aynaDurum === "kus" ? KUS_MODU_METINLERI : bosHavuz, session.sub)
     : null;
 
   // (Geçmiş zaman çizelgesi gruplaması artık GorevGecmisi client bileşeninde —
@@ -481,7 +505,9 @@ export default async function GorevlerPage() {
           </p>
         )}
         {/* UX #6: üst kenarda boşalan sayaç şeridi (türe göre değil zamana göre) */}
-        <SayacSerit baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at} />
+        {/* [YOLCULUK #5] Günde tek görevde panik geri sayımı stres üretir —
+            yolculukta sayaç daima sakin varyantta (kırmızılaşmaz, titremez). */}
+        <SayacSerit baslangic={g.issued_at} bitis={g.due_at} sakin={!!g.started_at || yolculuk} />
         {/* UX #1 (tasarım): türe özel üst atmosfer parıltısı */}
         <span
           className={`pointer-events-none absolute inset-x-0 top-0 h-20 bg-gradient-to-b ${atm.serit} opacity-60`}
@@ -510,7 +536,7 @@ export default async function GorevlerPage() {
           <GorevSayac
             baslangic={g.issued_at}
             bitis={g.due_at}
-            sakin={!!g.started_at}
+            sakin={!!g.started_at || yolculuk}
             cipa={programCipasi(g.due_at, kampBaslangic)}
           />
         </div>
@@ -717,9 +743,13 @@ export default async function GorevlerPage() {
         bugunGorev={bugunGorev}
         gunlukKota={GUNLUK_KOTA}
         ozetMetin={ozetVar ? t.bugunOzet(bugunGorev, bugunKivilcim, bugunTakdirSayi) : null}
-        seriMetin={seri >= 3 ? t.seriAtesi(seri) : null}
-        seriRiski={seriRiski}
+        seriMetin={seri >= 3 ? (yolculuk ? t.seriAtesiGun(seri) : t.seriAtesi(seri)) : null}
+        // [YOLCULUK #16] Seri kayıp riski akşam saatine bağlanır (çekin çıpası
+        // deseni); sabah "bugün henüz kapatmadın" uyarısı erken/haksız olur.
+        seriRiski={seriRiski && (!yolculuk || istSaat >= 18)}
         aktifVar={aktif.length > 0}
+        yolculuk={yolculuk}
+        seriRiskiMetin={yolculuk ? t.seriRiskiGun : undefined}
       />
 
       {/* Faz 4 — KAMP RADYOSU: bugünün yayını (ses varsa çal, yoksa salt metin) */}
@@ -765,6 +795,34 @@ export default async function GorevlerPage() {
             </details>
           )}
         </section>
+      )}
+
+      {/* [YOLCULUK #3] Radyo ana karttan indiyse (yolculukta 7 günden eski) ama
+          arşiv doluysa: yayın kaybolmasın, katlanır "kamp radyosu arşivi"nde dursun. */}
+      {!radyo && radyoArsiv.length > 0 && (
+        <details className="kart-cam rounded-2xl p-4">
+          <summary className="cursor-pointer">
+            <span className="text-sm font-semibold text-slate-200">{t.radyoArsivBaslik}</span>
+            <span className="ml-1 text-xs text-slate-500">({radyoArsiv.length})</span>
+            <p className="mt-1 text-xs text-slate-500">{t.radyoArsivAcikla}</p>
+          </summary>
+          <div className="mt-3 space-y-3">
+            {radyoArsiv.map((y) => (
+              <div key={y.id} className="rounded-xl bg-black/20 p-3">
+                <p className="text-xs font-semibold text-slate-400">
+                  {y.slot === "sabah" ? t.radyoSabah : t.radyoAksam} ·{" "}
+                  {new Intl.DateTimeFormat("tr-TR", { day: "numeric", month: "long" }).format(
+                    new Date(`${y.tarih}T12:00:00+03:00`)
+                  )}
+                </p>
+                {y.sesUrl && <SesCal url={y.sesUrl} etiket={t.radyoDinle} />}
+                <p className="mt-1.5 whitespace-pre-line text-xs leading-relaxed text-slate-400">
+                  {y.metin}
+                </p>
+              </div>
+            ))}
+          </div>
+        </details>
       )}
 
       {/* FAZ 5.4 — İKİ KAPI: seçim bekleyen kapılar (aktif görevden önce) */}
@@ -881,6 +939,9 @@ export default async function GorevlerPage() {
           aynaLafi={aynaLafi}
           aynaDurum={aynaDurum}
           gece={gece}
+          yolculukMetin={
+            yolculuk ? (bugunGorev > 0 ? t.bosYolculukBugun : t.bosYolculukBekle) : null
+          }
         />
       ) : (
         <>

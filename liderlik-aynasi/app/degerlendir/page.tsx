@@ -14,6 +14,7 @@ import SerbestListe from "./SerbestListe";
 import BosDurum from "@/components/BosDurum";
 import GeriButonu from "@/components/GeriButonu";
 import GeriSayim from "@/components/GeriSayim";
+import KampBittiKapisi from "@/components/KampBittiKapisi";
 
 export const metadata = { title: "Değerlendirme — Liderlik Aynası" };
 
@@ -28,6 +29,14 @@ export default async function DegerlendirPage() {
   const dalga = await acikDalga(db);
 
   if (!dalga) {
+    // [YOLCULUK #14] Değerlendirme dalgası kampa özel; kamp bitince (yolculuk)
+    // "dalga kapalı" beklemesi yerine nazik kapı — kişi 90-gün yoluna döner.
+    const { data: modAyar } = await db
+      .from("settings")
+      .select("value")
+      .eq("key", "sistem_modu")
+      .maybeSingle();
+    if (modAyar?.value === "yolculuk") return <KampBittiKapisi baslik="Değerlendirme kapandı" />;
     // UX #1 — kilit/bekleme şeffaflığı: "neden kapalı + ne zaman açılacak".
     // Admin sonraki dalga zamanını ayarladıysa canlı geri sayım gösterilir;
     // belirsizlik ("sistem mi bozuk?") yerine net bir bekleyiş kalır.

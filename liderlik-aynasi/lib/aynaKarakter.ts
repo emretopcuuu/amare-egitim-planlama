@@ -76,6 +76,18 @@ export const BOS_EKRAN_LAFLARI: string[] = [
   "Boşluk da programın parçası. Ben koydum oraya. Rica ederim.",
 ];
 
+// [YOLCULUK] Kamp bitince boş ekran lafları saha/90-gün diline döner —
+// kamp göndermeleri (sahne, perde) yerine yol/iş/momentum. mod'a göre seçilir.
+export const BOS_EKRAN_LAFLARI_YOLCULUK: string[] = [
+  "Bugünün görevini yaptın. Şimdi sahada yaşat — asıl sınav orada.",
+  "Görev yok ama yol duruyor. Bir sonraki adımını ben hazırlıyorum.",
+  "90 gün maraton, sprint değil. Bugünü kazandın, yarın yine buradayım.",
+  "Boş an mı? Aday listene bir isim ekle. Ben not alırım.",
+  "Sözünü hatırla. Ben hatırlıyorum — arada bir sana da hatırlatırım.",
+  "Dinlen. Uzun gidenler dinlenmesini bilenlerdir; binlerce lider gördüm.",
+  "Sıradaki görevin sabahı bekliyor. Sanat da acele sevmez, momentum da.",
+];
+
 // Faz 2 — küs modu (soğuk ama oyunlu; asla suçlayıcı değil).
 export const KUS_MODU_METINLERI: string[] = [
   "Görev: bir şey yap işte. Ne bileyim.",

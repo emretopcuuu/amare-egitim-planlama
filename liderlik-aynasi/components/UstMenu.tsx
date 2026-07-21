@@ -32,6 +32,9 @@ type Props = {
   muhurZinciriAcik?: boolean;
   grupOdevVar?: boolean;
   planOnayli?: boolean;
+  // [YOLCULUK #13] Yolculukta kamp-içi menü maddeleri (Grup/Ayna Eşi/Takdir)
+  // ayrı "🏕 Kamp" başlığına iner; sözle ilgili maddeler öne çıkar. Link SİLİNMEZ.
+  yolculuk?: boolean;
 };
 
 // Çizgi-ikon seti — EMOJİ DEĞİL (eski cihazda □ tofu riski yok), her yerde birebir.
@@ -89,6 +92,7 @@ export default function UstMenu({
   muhurZinciriAcik = false,
   grupOdevVar = false,
   planOnayli = false,
+  yolculuk = false,
 }: Props) {
   const [acik, setAcik] = useState(false);
   const [analizYeni, setAnalizYeni] = useState(false);
@@ -187,22 +191,28 @@ export default function UstMenu({
     sanaOzel.push({ href: "/ikinci-ayna", etiket: "İkinci Ayna", alt: "90 günün kapanış mektubu", ikon: IK.rapor });
 
   // PAYLAŞ & KEŞFET (mor şerit)
-  const paylas: Oge[] = [
+  const grup: Oge = {
+    href: "/grup",
+    etiket: t.menuGrup,
+    alt: t.menuAltGrup,
+    ikon: IK.grup,
+    // Grup ödevi varken nokta öne çıksın (menüde kaybolmasın); yoksa okunmamış
+    // grup-sohbet mesajı sayısını göster.
+    rozet: grupOdevVar ? noktaRozet : sayiRozet(okunmamisMesaj),
+  };
+  const aynaEsi: Oge = { href: "/ayna-esi", etiket: t.menuAynaEsi, alt: t.menuAltAynaEsi, ikon: IK.aynaEsi };
+  const takdir: Oge = { href: "/takdir", etiket: t.menuTakdir, alt: t.menuAltTakdir, ikon: IK.takdir };
+  const gizlilik: Oge = { href: "/gizlilik", etiket: t.menuGizlilik, alt: t.menuAltGizlilik, ikon: IK.gizlilik };
+  const benGunluk: Oge[] = [
     { href: "/ben", etiket: t.menuBen, alt: t.menuAltBen, ikon: IK.ben },
     { href: "/gunluk", etiket: t.menuGunluk, alt: t.menuAltGunluk, ikon: IK.gunluk },
-    {
-      href: "/grup",
-      etiket: t.menuGrup,
-      alt: t.menuAltGrup,
-      ikon: IK.grup,
-      // Grup ödevi varken nokta öne çıksın (menüde kaybolmasın); yoksa okunmamış
-      // grup-sohbet mesajı sayısını göster.
-      rozet: grupOdevVar ? noktaRozet : sayiRozet(okunmamisMesaj),
-    },
-    { href: "/ayna-esi", etiket: t.menuAynaEsi, alt: t.menuAltAynaEsi, ikon: IK.aynaEsi },
-    { href: "/takdir", etiket: t.menuTakdir, alt: t.menuAltTakdir, ikon: IK.takdir },
-    { href: "/gizlilik", etiket: t.menuGizlilik, alt: t.menuAltGizlilik, ikon: IK.gizlilik },
   ];
+  // [YOLCULUK #13] Kampta hepsi tek "Paylaş & keşfet" bloğunda; yolculukta
+  // kamp-içi maddeler (Grup/Ayna Eşi/Takdir) ayrı "🏕 Kamp" başlığına iner.
+  const paylas: Oge[] = yolculuk
+    ? [...benGunluk, gizlilik]
+    : [...benGunluk, grup, aynaEsi, takdir, gizlilik];
+  const kampAnilari: Oge[] = yolculuk ? [grup, aynaEsi, takdir] : [];
 
   async function cikis() {
     await fetch("/api/cikis", { method: "POST" });
@@ -304,6 +314,8 @@ export default function UstMenu({
               {/* Kategoriler — sol kenar renk şeridiyle */}
               <Bolum baslik={t.menuBirincilBaslik} ogeler={sanaOzel} seritRenk="border-l-gold/70" />
               <Bolum baslik={t.menuEkstraBaslik} ogeler={paylas} seritRenk="border-l-royal-light/70" />
+              {/* [YOLCULUK #13] Kamp-içi maddeler ayrı, sönük "🏕 Kamp" başlığında */}
+              <Bolum baslik="🏕 Kamp" ogeler={kampAnilari} seritRenk="border-l-slate-500/60" />
 
               {/* AYARLAR — ayrı, daha sönük kart */}
               <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-slate-400">

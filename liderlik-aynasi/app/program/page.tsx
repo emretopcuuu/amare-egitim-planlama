@@ -6,6 +6,7 @@ import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { tr } from "@/lib/i18n/tr";
 import GeriButonu from "@/components/GeriButonu";
 import GunProgramKarti from "@/components/GunProgramKarti";
+import KampBittiKapisi from "@/components/KampBittiKapisi";
 
 export const metadata = { title: "Program — Liderlik Aynası" };
 
@@ -23,10 +24,13 @@ export default async function ProgramPage() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
-  const [{ data: kisi }, kampBaslangic] = await Promise.all([
+  const [{ data: kisi }, kampBaslangic, { data: modAyar }] = await Promise.all([
     db.from("participants").select("team").eq("id", session.sub).maybeSingle(),
     kampBaslangicGetir(db),
+    db.from("settings").select("value").eq("key", "sistem_modu").maybeSingle(),
   ]);
+  // [YOLCULUK #14] Kamp takvimi kamp bitince ölü rota — nazik kapıya yönlendir.
+  if (modAyar?.value === "yolculuk") return <KampBittiKapisi baslik="Kamp programı tamamlandı" />;
 
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
