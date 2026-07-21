@@ -3756,6 +3756,10 @@ export const tr = {
     filtreBos: "Bu filtrede görev yok.",
     // A4 — tamamlayınca sıradaki görev
     siradakiGorev: "Sıradaki göreve geç →",
+    // [A#1] Görev → check-in birleşik (yolculuk)
+    checkinSoru: "Bu, bugünkü adımın mı? Tek dokunuşla işaretle.",
+    checkinEvet: "✓ Evet, bugünü işaretle",
+    bugunuIsaretledin: "Bugünün adımı işaretlendi ✓",
     // A5 — benzerini tekrar dene
     gelistirYeniden: "Geliştir ve yeniden gönder",
     // "Bana ekstra görev ver" — boş zamanda puanını artırma
