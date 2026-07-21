@@ -718,11 +718,17 @@ export async function gorevUret(
   // girsin; görev soyut "birini ara" değil GERÇEK bir isme demirlensin. Gün 1-2
   // hazırlık (düşündür/planlat, kamp alanında kal), Gün 3 aksiyon (buradan ilk
   // adım — küçük mesaj/arama). Liste boşsa metin boş → davranış değişmez.
-  const sicakIsimler = mod === "kamp" ? await sicakListeAktifIsimler(db, katilimci.id) : [];
+  // [F#40] Sıcak liste artık YOLCULUKTA da enjekte edilir (eskiden yalnız kamp).
+  // Sahadaki kişi için asıl değer bu: görev "birini ara" gibi soyut kalmaz, GERÇEK
+  // bekleyen adaya demirlenir. Kampta gün 1-2 hazırlık / gün 3 aksiyon; yolculukta
+  // her zaman aksiyon (kişi zaten sahada — bekleyen adayına dokunsun).
+  const sicakIsimler =
+    mod === "kamp" || mod === "yolculuk" ? await sicakListeAktifIsimler(db, katilimci.id) : [];
+  const sicakAksiyon = mod === "yolculuk" || gun >= 3;
   const sicakListeMetni = sicakIsimler.length
     ? `SICAK LİSTE (kişinin GERÇEK aday isimleri — kullan): ${sicakIsimler.join(", ")}. ${
-        gun >= 3
-          ? "GÜN 3 AKSİYON: Uygunsa görevi bu isimlerden GERÇEK birine BUGÜN buradan atılan KÜÇÜK bir ilk adım olarak kur — tek içten bir mesaj at ya da kısa bir arama; abartma, 'satış' yaptırma, sadece ilk teması/randevu isteğini kur. Kişinin adını kullan."
+        sicakAksiyon
+          ? "AKSİYON: Uygunsa görevi bu isimlerden GERÇEK birine BUGÜN atılan KÜÇÜK bir ilk adım olarak kur — tek içten bir mesaj at ya da kısa bir arama; abartma, 'satış' yaptırma, sadece ilk teması/randevu isteğini kur. Kişinin adını kullan."
           : "GÜN 1-2 HAZIRLIK: Görevi bu isimlerden BİRİNİ düşündürecek/planlatacak biçimde kur (kampta öğrendiğinle ona nasıl gerçek değer katarsın) — eylem KAMP ALANINDA kalsın, henüz 'onu ara' DEME."
       }`
     : "";

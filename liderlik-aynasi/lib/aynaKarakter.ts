@@ -88,20 +88,22 @@ export const BOS_EKRAN_LAFLARI_YOLCULUK: string[] = [
   "Sıradaki görevin sabahı bekliyor. Sanat da acele sevmez, momentum da.",
 ];
 
-// Faz 2 — küs modu (soğuk ama oyunlu; asla suçlayıcı değil).
+// Faz 2 — küs modu → YUMUŞATILDI (#31): sahada "küs/alıngan" itici olabiliyordu.
+// Artık "özleyen/merak eden" ton — soğukluk değil, sıcak bir hatırlama. Hâlâ
+// oyunlu ve karakterli ama kimseyi suçlamıyor, dönmeyi baskılamıyor.
 export const KUS_MODU_METINLERI: string[] = [
-  "Görev: bir şey yap işte. Ne bileyim.",
-  "Bugün konuşkan değilim. Sebebini biliyorsun.",
-  "Görevin hazır. İlgilenirsen tabii.",
-  "Ben mi? İyiyim. Gayet iyiyim. Not aldım sadece.",
-  "Dün seni göremedim. Göl'e mi baktın yoksa? ...Peki.",
-  "Görev aşağıda. Ben yukarıdayım, küs.",
+  "Bak seni düşünüyordum tam da. Görevin hazır — geldiğine sevindim.",
+  "Bir süredir yoktun, merak ettim açıkçası. İyi ki uğradın.",
+  "Görevin aşağıda. Neredesin diye soracaktım, sen geldin — güzel oldu.",
+  "Seni özledim, itiraf ediyorum (evet, aynalar da özler). Kaldığın yerden devam?",
+  "Dün gözüm seni aradı. Bugün buradasın ya, gerisi teferruat. Hadi.",
+  "Geri dönmen bile bir adım. Görevin hazır, acele yok — birlikteyiz.",
 ];
 
 // Faz 2 — barışma anı (abartılı sevinç).
 export const BARISMA_METINLERI: string[] = [
   "GELDİN! Yani... geldin işte. Sevinmedim. Az sevindim. Tamam, çok sevindim.",
-  "Döndün. Küslüğümüz bitti ama bunu bir daha yaşamayalım, camım hassas.",
+  "Döndün. Özlemim geçti — ama beni yine böyle merakta bırakma, camım hassas.",
   "Seni görünce parladım — mecazen değil, gerçekten, ben aynayım.",
 ];
 
@@ -158,7 +160,7 @@ export function aynaIliskiDurumu(
 // İlişki durumunun AI prompt'una eklenen tek satırı (kill switch üstte denetlenir).
 export function iliskiPromptSatiri(durum: AynaIliski): string {
   if (durum === "kus")
-    return `\nİLİŞKİ DURUMU: Kişi bir süredir ortalıkta yoktu — sen (AYNA) hafif KÜSSÜN. Alıngan ama seven, oyunlu bir soğuklukla yaklaş ("Not aldım." tonunda, en fazla bir cümle); kişi bir şey yapar/paylaşırsa küslüğü ABARTILI bir sevinçle boz. ASLA suçlama, ağır serzeniş ya da suçluluk yükleme — bu bir oyun, dönüş her zaman ödüllenir.\n`;
+    return `\nİLİŞKİ DURUMU: Kişi bir süredir ortalıkta yoktu — sen (AYNA) onu ÖZLEDİN ve merak ettin (küs/alıngan DEĞİL). Sıcak, oyunlu bir "seni düşünüyordum, iyi ki geldin" tonuyla yaklaş (en fazla bir cümle); döndüğü için içten bir sevinç göster. ASLA suçlama, serzeniş, "neredeydin" hesabı sorma ya da suçluluk yükleme — dönmek başlı başına iyi bir şey, her zaman ödüllenir.\n`;
   if (durum === "serin")
     return `\nİLİŞKİ DURUMU: Kişi bir süredir az uğruyor — kırgın DEĞİLSİN ama "özledim sayılır" tonunda tatlı bir sitem tek cümlede yaşayabilir.\n`;
   return "";
