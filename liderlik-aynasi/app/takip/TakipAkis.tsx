@@ -8,6 +8,7 @@ import { yolculukRutbeBul } from "@/lib/yolculukRutbe";
 import { haftaKocNotu } from "@/lib/haftaKoc";
 import { yolGunluguSec, gununSorusuSec } from "@/lib/aynaGunluk";
 import AyMektubuKarti from "@/components/AyMektubuKarti";
+import SozRevizeKarti from "@/components/SozRevizeKarti";
 import Konfeti from "@/components/Konfeti";
 import KonusanYansima from "@/components/KonusanYansima";
 import BildirimSerit from "@/components/BildirimSerit";
@@ -73,6 +74,7 @@ export default function TakipAkis({
   karakterAcik = true,
   mezuniyet = null,
   mektupMilestone = 0,
+  sozRevizeMetin = null,
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
@@ -101,6 +103,8 @@ export default function TakipAkis({
   mezuniyet?: { adimGun: number; gorusme: number; kayit: number } | null;
   // [D#33] Ulaşılan ay dönümü (30/60/90; 0 → mektup kartı yok).
   mektupMilestone?: number;
+  // [B#13] 30. günde söz yenileme uygunsa mevcut söz metni (yoksa null).
+  sozRevizeMetin?: string | null;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   // [FAZ 6 · Yaşayan Plan] Tamamlanan aksiyon index'leri — checkbox ile toggle.
@@ -306,6 +310,9 @@ export default function TakipAkis({
 
       {/* [D#33] AY DÖNÜMÜ MEKTUBU — 30/60/90. günde AYNA'nın kişisel mektubu. */}
       {mektupMilestone > 0 && <AyMektubuKarti milestone={mektupMilestone} />}
+
+      {/* [B#13] SÖZ REVİZYONU — 30. günde sözünü bir kez yenileme fırsatı. */}
+      {sozRevizeMetin && <SozRevizeKarti mevcutMetin={sozRevizeMetin} />}
 
       {/* [E#41] AYNA'nın sessizliğine karşı kaydettiği kişisel ses mesajı —
           uzun aradan sonra en sıcak dokunuş; check-in'in hemen üstünde. */}

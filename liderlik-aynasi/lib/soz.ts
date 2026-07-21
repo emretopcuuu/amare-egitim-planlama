@@ -61,12 +61,13 @@ export type SozKaydi = {
   aksiyonlar: SozAksiyon[];
   voice_path: string | null;
   durum: string;
+  revize_at: string | null; // [B#13] doluysa söz bir kez yenilendi
 };
 
 export async function sozGetir(db: Db, pid: string): Promise<SozKaydi | null> {
   const { data } = await db
     .from("soz")
-    .select("metin, aksiyonlar, voice_path, durum")
+    .select("metin, aksiyonlar, voice_path, durum, revize_at")
     .eq("participant_id", pid)
     .maybeSingle();
   if (!data) return null;
@@ -75,7 +76,27 @@ export async function sozGetir(db: Db, pid: string): Promise<SozKaydi | null> {
     aksiyonlar: (data.aksiyonlar as SozAksiyon[]) ?? [],
     voice_path: data.voice_path,
     durum: data.durum,
+    revize_at: (data as { revize_at?: string | null }).revize_at ?? null,
   };
+}
+
+// [B#13] SÖZ REVİZYONU — mühürlü sözün metnini BİR KEZ günceller (revize_at boşsa).
+// Ses korunur; yalnız metin değişir. Şahitlere haber çağıran taraf verir.
+export async function sozRevizeEt(db: Db, pid: string, metin: string): Promise<boolean> {
+  const temiz = (metin ?? "").trim().slice(0, 4000);
+  if (!temiz) return false;
+  const { data, error } = await db
+    .from("soz")
+    .update({
+      metin: temiz,
+      revize_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("participant_id", pid)
+    .eq("durum", "sesli")
+    .is("revize_at", null)
+    .select("participant_id");
+  return !error && (data?.length ?? 0) > 0;
 }
 
 export type SekilSonucu =
