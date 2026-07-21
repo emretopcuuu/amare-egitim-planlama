@@ -92,6 +92,23 @@ export default async function TakipSayfa() {
     sozSesUrl = data?.signedUrl ?? null;
   }
 
+  // [E#41] Sessizleşene AYNA'nın sesli dönüş mesajı — son 3 günde üretildiyse
+  // (settings damgasından taze), /takip'te oynatma kartı göster.
+  let sessizSesUrl: string | null = null;
+  {
+    const { data: sesDamga } = await db
+      .from("settings")
+      .select("value")
+      .eq("key", `sessiz_ses_${session.sub}`)
+      .maybeSingle();
+    if (sesDamga?.value && Date.now() - Date.parse(sesDamga.value) < 3 * 86_400_000) {
+      const { data } = await db.storage
+        .from("sesler")
+        .createSignedUrl(`${session.sub}/sessiz_donus.mp3`, 3600);
+      sessizSesUrl = data?.signedUrl ?? null;
+    }
+  }
+
   return (
     <main className="flex min-h-dvh flex-col overflow-y-auto">
       {/* [UX] Sadeleştirildi: sayfa açılışında yalnız KİMLİK (gün + evre) görünür.
@@ -118,6 +135,7 @@ export default async function TakipSayfa() {
         hafta={hafta}
         kota={kota}
         sozSesUrl={sozSesUrl}
+        sessizSesUrl={sessizSesUrl}
         degerDavranisi={degerDavranisi}
         ortakMomentum={ortakMomentum}
         haftanGorev={haftanGorev}

@@ -59,6 +59,7 @@ export default function TakipAkis({
   hafta: haftaBaslangic,
   kota,
   sozSesUrl,
+  sessizSesUrl = null,
   degerDavranisi,
   ortakMomentum,
   haftanGorev = 0,
@@ -72,6 +73,7 @@ export default function TakipAkis({
   hafta: Hafta;
   kota: number | null;
   sozSesUrl: string | null;
+  sessizSesUrl?: string | null;
   degerDavranisi: string | null;
   ortakMomentum: { cevreToplam: number; buHaftaAktif: number } | null;
   // [UX] Hub başlığından taşınan ikincil bilgiler — "Yol detayları" akordeonunda.
@@ -234,6 +236,21 @@ export default function TakipAkis({
           <p className="mt-1 text-sm text-slate-300">{milestone.metin}</p>
           <div className="mt-3">
             <KonusanYansima videoUrl={null} sesUrl={sozSesUrl} etiket="Sözünü dinle" />
+          </div>
+        </div>
+      )}
+
+      {/* [E#41] AYNA'nın sessizliğine karşı kaydettiği kişisel ses mesajı —
+          uzun aradan sonra en sıcak dokunuş; check-in'in hemen üstünde. */}
+      {sessizSesUrl && (
+        <div className="kart-cam rounded-2xl border border-gold/30 bg-gold/[0.05] p-5 text-center">
+          <p className="text-3xl" aria-hidden>🎧</p>
+          <h2 className="prizma-serif ay-metin mt-2 text-lg font-bold text-gold-light">
+            AYNA senin için bir şey kaydetti
+          </h2>
+          <p className="mt-1 text-sm text-slate-300">Bir süredir yoktun. 30 saniyeni ayır — sonra tek bir adım.</p>
+          <div className="mt-3">
+            <KonusanYansima videoUrl={null} sesUrl={sessizSesUrl} etiket="Dinle" />
           </div>
         </div>
       )}
