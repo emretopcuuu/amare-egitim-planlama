@@ -69,6 +69,7 @@ export default function TakipAkis({
   kasAd = null,
   lakap = null,
   karakterAcik = true,
+  mezuniyet = null,
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
@@ -88,6 +89,8 @@ export default function TakipAkis({
   lakap?: string | null;
   // [D#36/#34] Karakter kill switch — kapalıysa AYNA renkli içeriği gizlenir.
   karakterAcik?: boolean;
+  // [G#47] 90. güne ulaşıldıysa mezuniyet verisi (yoksa null → normal ekran).
+  mezuniyet?: { adimGun: number; gorusme: number; kayit: number } | null;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   // [FAZ 6 · Yaşayan Plan] Tamamlanan aksiyon index'leri — checkbox ile toggle.
@@ -250,6 +253,45 @@ export default function TakipAkis({
             <KonusanYansima videoUrl={null} sesUrl={sozSesUrl} etiket="Sözünü dinle" />
           </div>
         </div>
+      )}
+
+      {/* [G#47] MEZUNİYET — 90 günü tamamlayana kapstone: söz-yüzleşme + sezon
+          özeti + kendi sözünü dinletme. Yolculuğun en tepesinde, her şeyin üstünde. */}
+      {mezuniyet && (
+        <section className="kart-cam relative overflow-hidden rounded-3xl border border-gold/40 bg-gradient-to-b from-gold/[0.12] to-transparent p-6 text-center">
+          <Konfeti key="mezuniyet" />
+          <p className="text-5xl" aria-hidden>🎓</p>
+          <h2 className="prizma-serif altin-metin mt-2 text-2xl font-bold">
+            90 Günü Tamamladın{lakap ? `, ${lakap}` : ""}!
+          </h2>
+          <p className="mt-2 text-sm leading-relaxed text-slate-300">
+            Bir söz verdin ve 90 gün onun peşinde yürüdün. Bu, çoğu insanın yapamadığı şey.
+          </p>
+          <div className="mt-4 grid grid-cols-3 gap-2">
+            {[
+              { v: mezuniyet.adimGun, e: "gün adım" },
+              { v: mezuniyet.gorusme, e: "görüşme" },
+              { v: mezuniyet.kayit, e: "kayıt" },
+            ].map((s) => (
+              <div key={s.e} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="font-display text-2xl font-bold text-gold-light">{s.v}</div>
+                <div className="text-[0.7rem] text-slate-400">{s.e}</div>
+              </div>
+            ))}
+          </div>
+          {sozSesUrl && (
+            <div className="mt-4">
+              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                90 gün önce bunu SEN söylemiştin
+              </p>
+              <KonusanYansima videoUrl={null} sesUrl={sozSesUrl} etiket="Sözünü dinle" />
+            </div>
+          )}
+          <p className="mt-4 border-t border-white/10 pt-3 text-sm italic leading-relaxed text-gold-light">
+            O sözü verirken bugünkü sen&apos;i hayal etmiştin. İşte buradasın. Şimdi sıra bir sonraki
+            sözde — yolculuk bitmez, sadece yükselir.
+          </p>
+        </section>
       )}
 
       {/* [E#41] AYNA'nın sessizliğine karşı kaydettiği kişisel ses mesajı —
