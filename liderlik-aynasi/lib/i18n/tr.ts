@@ -4260,20 +4260,39 @@ export const tr = {
     tanikSecili: (n: number) => `${n}/5 şahit seçildi`,
     tanikEkle: "Şahit yap",
     tanikSil: "Kaldır",
-    tanikImzaBekliyor: "İmza bekleniyor",
-    tanikImzali: "İmzaladı ✓",
+    tanikImzaBekliyor: "Yanıt bekleniyor",
+    tanikImzali: "Kabul etti ✓",
+    tanikReddetti: "Kabul etmedi — yerine seç",
     tanikDolu: "5 şahit seçtin.",
     tanikLiderDolu: "Bu lider en fazla 5 kişiye şahit olabilir — doldu.",
+    tanikReddettiHata: "Bu lider davetini reddetti — başka birini seç.",
     tanikAra: "İsimle ara…",
     tamamBaslik: "Sözün mühürlendi 🤝",
     tamamMetin:
-      "Sözünü verdin, sesini kaydettin, liderlerin şahit oldu. 90 gün boyunca bu sözün peşinde olacağız.",
+      "Sözünü verdin, sesini kaydettin, liderlerini şahit gösterdin. Onlar kabul ettikçe mührün güçlenir; 90 gün boyunca bu sözün peşinde olacağız.",
     devam: "Bitir",
-    // Lider: imza bekleyenler
-    imzaBekleyenBaslik: "Sana güvenenler",
+    // Lider: sana gelen şahitlik davetleri (kabul/ret — /sozum imza bandı)
+    imzaBekleyenBaslik: "Seni şahit gösterenler",
     imzaBekleyenMetin: (ad: string) => `${ad} seni sözüne şahit gösterdi.`,
-    imzala: "Sözüne şahit ol (imzala)",
-    imzalandi: "İmzaladın ✓",
+    imzala: "Kabul et 🤝",
+    reddet: "Reddet",
+    imzalandi: "Kabul ettin ✓",
+  },
+  // BENİ ŞAHİT GÖSTERENLER — davet kabul/ret modülü (ana sayfa + /sahitlik).
+  sahitDavet: {
+    baslik: "Seni Şahit Gösterenler",
+    gosterdi: "seni 90 günlük sözüne şahit gösterdi.",
+    aciklamaBaslik: "Şahit olmak ne demek?",
+    aciklama: (ad: string) =>
+      `${ad}'in sözünü göreceksin ve 90 gün boyunca ilerlemesini takip edeceksin. Takılırsa dürtüp teşvik edecek, gerekirse arayacaksın. Kabul edersen onun yolculuğuna ortak olur, sözünü tutmasına yardım edersin. Kabul etmek zorunda değilsin.`,
+    sozBaslik: (ad: string) => `${ad}'in sözü`,
+    kabul: "Kabul et 🤝",
+    reddet: "Reddet",
+    gonderiliyor: "…",
+    retOnay: (ad: string) =>
+      `${ad}'e şahit olmayacaksın. Yerine başka bir lider seçmesi için haber gidecek. Emin misin?`,
+    retEvet: "Evet, reddet",
+    retVazgec: "Vazgeç",
   },
   // FAZ B — 90 gün takip (söz sahibi günlük check-in)
   // [YOLCULUK UX] Kamp bittikten sonra 90-gün yolculuğunu sadeleştiren,
@@ -4297,9 +4316,9 @@ export const tr = {
     hubDugme: "Yoluma Devam Et",
     // Şahit çipi
     sahitCip: (imzalayan: number, toplam: number) =>
-      `🤝 Şahitlerin: ${imzalayan}/${toplam} imzaladı`,
+      `🤝 Şahitlerin: ${imzalayan}/${toplam} kabul etti`,
     sahitCipTamam: (n: number) => `🤝 ${n} şahidin seninle — sözünü tutuyorlar`,
-    sahitHatirlat: "İmzalamayanları hatırlat →",
+    sahitHatirlat: "Bekleyenleri hatırlat →",
     // 30/60/90 dönüm töreni
     torenBaslik: (gun: number) => `${gun}. gün — bir dönüm noktası`,
     torenMetin:

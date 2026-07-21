@@ -3601,6 +3601,7 @@ export type Database = {
       soz_tanik: {
         Row: {
           created_at: string
+          durum: string
           id: string
           imza_at: string | null
           soz_sahibi: string
@@ -3608,6 +3609,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          durum?: string
           id?: string
           imza_at?: string | null
           soz_sahibi: string
@@ -3615,6 +3617,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          durum?: string
           id?: string
           imza_at?: string | null
           soz_sahibi?: string

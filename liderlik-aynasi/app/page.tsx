@@ -8,7 +8,8 @@ import { hedefKapisiAcik } from "@/lib/hedef";
 import { kampOncesiAdim } from "@/lib/akis";
 import { kampBaslangicGetir } from "@/lib/kampZaman";
 import { sozTakipAktif, sahitSayim, secilenSahitSayisi } from "@/lib/sozTakip";
-import { sozV2KapisiAcik, TANIK_HEDEF } from "@/lib/soz";
+import { sozV2KapisiAcik, TANIK_HEDEF, bekleyenImzalar } from "@/lib/soz";
+import SahitDavetleri from "@/components/SahitDavetleri";
 import { planOnayliMi } from "@/lib/oyunPlani";
 import { tr } from "@/lib/i18n/tr";
 import AynaKurulum from "@/components/AynaKurulum";
@@ -454,7 +455,7 @@ export default async function AnaSayfa({
     ]);
   // FAZ B: söz mühürlüyse (sesli) ana ekran 90-gün yolculuğuna geçer; ayrıca
   // kişi başkalarına şahitse şahit paneline erişir.
-  const [takipAktif, sahitSayisi, sozV2Acik, planOnayli, secilenSahit, imzalayanSahit] =
+  const [takipAktif, sahitSayisi, sozV2Acik, planOnayli, secilenSahit, imzalayanSahit, sahitDavetleri] =
     await Promise.all([
       sozTakipAktif(db, session.sub),
       sahitSayim(db, session.sub),
@@ -462,13 +463,15 @@ export default async function AnaSayfa({
       sozV2KapisiAcik(db),
       planOnayliMi(db, session.sub),
       secilenSahitSayisi(db, session.sub),
-      // [YOLCULUK #8] Kişinin KENDİ şahitlerinden kaçı imzaladı — ana ekran çipi.
+      // [YOLCULUK #8] Kişinin KENDİ şahitlerinden kaçı KABUL etti — ana ekran çipi.
       db
         .from("soz_tanik")
         .select("id", { count: "exact", head: true })
         .eq("soz_sahibi", session.sub)
-        .not("imza_at", "is", null)
+        .eq("durum", "kabul")
         .then((r) => r.count ?? 0),
+      // SENİ ŞAHİT GÖSTERENLER — bekleyen davetler (kabul/ret kartı, her durumda üstte).
+      bekleyenImzalar(db, session.sub),
     ]);
   // Şahit adımı ZORUNLU: söz mühürlü ama 5 şahit seçilmemişse 90 gün yolculuğu
   // açılmaz; kişi şahit seçimine geri gönderilir (/sozum tanik fazına düşer).
@@ -700,6 +703,14 @@ export default async function AnaSayfa({
       <div className="mt-3">
         <BildirimAcUyari />
       </div>
+      {/* SENİ ŞAHİT GÖSTERENLER — bir söz sahibi seni şahit gösterdiyse, önce
+          burada kabul/ret edersin (neyi kabul ettiğinin açıklamasıyla). Hangi
+          durumda olursan ol en üstte görünür — kaçırılmasın. */}
+      {sahitDavetleri.length > 0 && (
+        <div className="mt-3">
+          <SahitDavetleri davetler={sahitDavetleri} />
+        </div>
+      )}
       {/* Grup ödevi promptu — menüde gömülü kalmasın; aktif ödev varken burada
           öne çıkar, dokununca /grup'a gider. [YOLCULUK #12] Saf kamp-içi mekanik;
           yolculukta gizli. */}
