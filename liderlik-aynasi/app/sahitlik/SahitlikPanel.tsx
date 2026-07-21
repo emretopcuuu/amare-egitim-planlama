@@ -5,6 +5,7 @@ import Link from "next/link";
 import { tr } from "@/lib/i18n/tr";
 import GrupUyeFoto from "@/components/GrupUyeFoto";
 import KonusanYansima from "@/components/KonusanYansima";
+import SahitDavetleri, { type Davet } from "@/components/SahitDavetleri";
 
 const t = tr.sahitlik;
 
@@ -35,9 +36,11 @@ type KendiDurum = {
 export default function SahitlikPanel({
   kisiler,
   kendiDurum,
+  davetler = [],
 }: {
   kisiler: Kisi[];
   kendiDurum: KendiDurum;
+  davetler?: Davet[];
 }) {
   // [Şahitlik geliştirme #5] Sunucudan gelen "bugün gönderildi" durumuyla
   // başlar — sayfa yenilense de "Gönderildi ✓" kaybolmaz, spam da önlenir.
@@ -235,6 +238,10 @@ export default function SahitlikPanel({
         <h1 className="prizma-serif ay-metin mt-2 text-2xl font-semibold">{t.baslik}</h1>
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.aciklama}</p>
       </header>
+
+      {/* SENİ ŞAHİT GÖSTERENLER — bekleyen davetler (kabul/ret). En üstte, çünkü
+          önce kabul edip etmeyeceğine karar vermelisin. */}
+      <SahitDavetleri davetler={davetler} />
 
       {/* [Şahitlik geliştirme #9] Önce kendi adımın — başkasını dürtmeden önce
           şahit kendi aynasına baksın. */}

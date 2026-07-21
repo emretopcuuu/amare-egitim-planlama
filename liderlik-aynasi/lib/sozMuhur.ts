@@ -51,10 +51,11 @@ export async function sahitOl(
     .maybeSingle();
   if (!sahibi) return { ok: false, sebep: "bulunamadi" };
   if (sahibi.id === witnessId) return { ok: false, sebep: "kendine" };
+  // Yüz yüze QR okutma rızalıdır (şahit kendi tarar & onaylar) → doğrudan KABUL.
   const { error } = await db
     .from("soz_tanik")
     .upsert(
-      { soz_sahibi: sahibi.id, witness_id: witnessId, imza_at: new Date().toISOString() },
+      { soz_sahibi: sahibi.id, witness_id: witnessId, imza_at: new Date().toISOString(), durum: "kabul" },
       { onConflict: "soz_sahibi,witness_id" }
     );
   if (error) return { ok: false, sebep: "hata" };

@@ -75,7 +75,8 @@ export async function haftalikSayilar(
 // İmza şartı yok: henüz imzalamamış şahit de haberi almalı.
 export async function kayitBildir(db: Db, pid: string, ad: string): Promise<void> {
   const ilkAd = ad.split(" ")[0];
-  const tanikList = await taniklar(db, pid);
+  // Yalnız KABUL etmiş şahitler ilerleme haberini alır (bekleyen/reddeden değil).
+  const tanikList = (await taniklar(db, pid)).filter((t) => t.durum === "kabul");
   for (const t of tanikList) {
     await katilimciyaBildir(
       db,
@@ -92,7 +93,7 @@ export async function kayitBildir(db: Db, pid: string, ad: string): Promise<void
 // idi; dengeyi iyi habere çevirir. Haftada bir (Cuma momentum bloğundan).
 export async function kotaDolduBildir(db: Db, pid: string, ad: string): Promise<void> {
   const ilkAd = ad.split(" ")[0];
-  const tanikList = await taniklar(db, pid);
+  const tanikList = (await taniklar(db, pid)).filter((t) => t.durum === "kabul");
   for (const t of tanikList) {
     await katilimciyaBildir(
       db,
@@ -369,13 +370,26 @@ export async function sozKarnesiGonder(db: Db): Promise<{ gonderildi: boolean }>
   }
 }
 
-// Kişinin KENDİ sözüne seçtiği şahit sayısı (imza şart değil, seçim yeterli).
-// 90 gün yolculuğu bu sayı hedefe ulaşmadan AÇILMAZ — şahit adımı zorunlu.
+// Kişinin KENDİ sözüne seçtiği şahit sayısı — REDDEDENLER HARİÇ (bekliyor + kabul).
+// Kabul şart değil, davet yeterli; ama reddeden slot tutmaz → sahibi yerine yeni
+// birini seçer. 90 gün yolculuğu bu sayı hedefe ulaşmadan AÇILMAZ (şahit zorunlu).
 export async function secilenSahitSayisi(db: Db, pid: string): Promise<number> {
   const { count } = await db
     .from("soz_tanik")
     .select("id", { count: "exact", head: true })
-    .eq("soz_sahibi", pid);
+    .eq("soz_sahibi", pid)
+    .neq("durum", "ret");
+  return count ?? 0;
+}
+
+// Kişinin sözüne davet edilip REDDEDEN şahit sayısı — "biri kabul etmedi, yeni
+// şahit seç" uyarısı için (0 ise uyarı yok).
+export async function reddedenSahitSayisi(db: Db, pid: string): Promise<number> {
+  const { count } = await db
+    .from("soz_tanik")
+    .select("id", { count: "exact", head: true })
+    .eq("soz_sahibi", pid)
+    .eq("durum", "ret");
   return count ?? 0;
 }
 
