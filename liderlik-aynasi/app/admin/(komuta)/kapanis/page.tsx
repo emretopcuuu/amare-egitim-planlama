@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { pazartesiRaporu, churnMerdiveni, eylulKapisi } from "@/lib/kapanisPanel";
+import { pazartesiRaporu, churnMerdiveni, eylulKapisi, milestoneDurumu } from "@/lib/kapanisPanel";
 import { sozMuhurDurumu } from "@/lib/sozMuhur";
 import { brifGetir } from "@/lib/kapanis";
 import KapanisBrif from "./KapanisBrif";
@@ -21,13 +21,14 @@ export default async function KapanisPage() {
   const db = supabaseAdmin();
   // [FAZ3] E-serisi sayaçları: söz mühür N/M + İlk-72 taahhüt yapılan/toplam —
   // kapanış gecesinin iki kritik "herkes tamam mı" göstergesi bu panele taşındı.
-  const [rapor, churn, kapi, soz, { data: taahhutler }, brif] = await Promise.all([
+  const [rapor, churn, kapi, soz, { data: taahhutler }, brif, milestone] = await Promise.all([
     pazartesiRaporu(db),
     churnMerdiveni(db),
     eylulKapisi(db),
     sozMuhurDurumu(db),
     db.from("taahhut").select("durum"),
     brifGetir(db),
+    milestoneDurumu(db),
   ]);
 
   // Öneri 9 — mevcut 90-gün müfredat ilkeleri.
@@ -185,6 +186,33 @@ export default async function KapanisPage() {
             </tbody>
           </table>
         </div>
+      </section>
+
+      {/* [F#46] DÖNÜM NOKTASI ANONS LİSTESİ */}
+      <section>
+        <h2 className="mb-1 font-display text-lg font-bold text-gold-light">🏁 Dönüm Noktaları</h2>
+        <p className="mb-3 text-xs text-slate-500">
+          Adım günü sayısıyla 30/60/90 eşiğini geçenler — sahnede/Zoom'da gerçek dünyada tanı, kutla.
+        </p>
+        {milestone.every((m) => m.adlar.length === 0) ? (
+          <p className="rounded-2xl border border-white/10 bg-midnight-card/40 p-4 text-sm text-slate-400">
+            Henüz kimse 30. günü doldurmadı — yolun başındasınız.
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {milestone.map((m) =>
+              m.adlar.length === 0 ? null : (
+                <div key={m.esik} className="rounded-2xl border border-gold/25 bg-gold/[0.05] p-4">
+                  <p className="text-sm font-bold text-gold-light">
+                    {m.esik === 90 ? "🏆" : m.esik === 60 ? "🥈" : "🥉"} {m.esik}+ gün adım ·{" "}
+                    {m.adlar.length} kişi
+                  </p>
+                  <p className="mt-1.5 text-xs leading-relaxed text-slate-300">{m.adlar.join(", ")}</p>
+                </div>
+              )
+            )}
+          </div>
+        )}
       </section>
 
       {/* [6.3] EYLÜL KAPISI KARAR PANOSU */}

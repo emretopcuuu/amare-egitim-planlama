@@ -463,6 +463,31 @@ export default function TakipAkis({
           <span className="text-slate-500 transition-transform group-open:rotate-180" aria-hidden>▾</span>
         </summary>
         <div className="space-y-4 border-t border-white/10 p-4">
+          {/* [C#24] PAYLAŞILABİLİR YOLCULUK KARTI — ekran görüntüsü dostu özet.
+              Rütbe + üç sayı; kişi ekran görüntüsüyle ilerlemesini paylaşabilir. */}
+          <div className="overflow-hidden rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/[0.12] via-royal/[0.06] to-transparent p-4 text-center">
+            <p className="text-[0.6rem] font-bold uppercase tracking-[0.3em] text-slate-400">
+              Liderlik Aynası · 90 Gün
+            </p>
+            <p className="mt-1.5 flex items-center justify-center gap-1.5 text-lg font-bold text-gold-light">
+              <span className="text-xl" aria-hidden>{rutbe.mevcut.ikon}</span>
+              {rutbe.mevcut.ad}
+            </p>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {[
+                { v: durum.toplam, e: "gün adım" },
+                { v: durum.seri, e: "seri 🔥" },
+                { v: hafta.gorusmeToplam, e: "bu hafta görüşme" },
+              ].map((s) => (
+                <div key={s.e}>
+                  <div className="font-display text-xl font-bold text-slate-100">{s.v}</div>
+                  <div className="text-[0.6rem] leading-tight text-slate-400">{s.e}</div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2.5 text-[0.6rem] text-slate-500">📸 Ekran görüntüsü al, yolunu paylaş</p>
+          </div>
+
           {/* [D#36] AYNA'NIN YOL GÜNLÜĞÜ — haftada bir değişen birinci-tekil not */}
           {aynaNotu && (
             <div className="rounded-xl border border-gold/20 bg-gold/[0.04] p-3">

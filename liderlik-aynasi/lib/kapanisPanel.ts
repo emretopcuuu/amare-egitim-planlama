@@ -2,6 +2,7 @@ import "server-only";
 import type { Db } from "@/lib/degerlendirme";
 import { katilimciyaBildir } from "@/lib/push";
 import { yazAuditLog } from "@/lib/auditLog";
+import { tumKayitlar } from "@/lib/tumKayitlar";
 
 // FAZ 6 — ADMIN OTOMASYONU veri katmanı. Üç karar yüzeyi:
 //  [6.1] pazartesiRaporu  — haftalık kohort sağlık özeti
@@ -134,6 +135,34 @@ export async function churnMerdiveni(db: Db): Promise<ChurnSatiri[]> {
   return satirlar.sort(
     (a, b) => b.basamak - a.basamak || (b.sessizGun ?? 9999) - (a.sessizGun ?? 9999)
   );
+}
+
+// [F#46] DÖNÜM NOKTASI ANONS LİSTESİ — kişilerin ADIM ATTIĞI GÜN sayısına göre
+// 30/60/90 eşiklerini geçenler. Emre sahnede/Zoom'da onları gerçek dünyada
+// tanısın diye. Eşikler DIŞLAYAN (en yüksek ulaşılan seviye): 90+ / 60-89 / 30-59.
+// Tek soruşturmayla (sayfalı soz_takip agregatı) — kişi başına sorgu yok.
+export type MilestoneAnons = { esik: 30 | 60 | 90; adlar: string[] };
+
+export async function milestoneDurumu(db: Db): Promise<MilestoneAnons[]> {
+  const [ks, takipler] = await Promise.all([
+    kisiler(db),
+    tumKayitlar<{ participant_id: string; yapildi: boolean | null }>((b, s) =>
+      db.from("soz_takip").select("participant_id, yapildi").order("participant_id").range(b, s)
+    ),
+  ]);
+  const say = new Map<string, number>();
+  for (const t of takipler) if (t.yapildi) say.set(t.participant_id, (say.get(t.participant_id) ?? 0) + 1);
+  const adMap = new Map(ks.map((k) => [k.id, k.full_name]));
+  const adlar = (min: number, max: number) =>
+    [...say.entries()]
+      .filter(([, n]) => n >= min && n < max)
+      .map(([id]) => adMap.get(id) ?? "—")
+      .sort((a, b) => a.localeCompare(b, "tr"));
+  return [
+    { esik: 90, adlar: adlar(90, Infinity) },
+    { esik: 60, adlar: adlar(60, 90) },
+    { esik: 30, adlar: adlar(30, 60) },
+  ];
 }
 
 // ---- [6.3] EYLÜL KAPISI KARAR PANOSU ----
