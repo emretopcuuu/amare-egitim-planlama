@@ -18,10 +18,13 @@ export function gunFarki(a: string, b: string): number {
 
 export type TakipDurum = {
   bugunYapildi: boolean | null;
-  seri: number; // bugüne kadar kesintisiz "yapıldı" günü
+  seri: number; // bugüne kadar kesintisiz "yapıldı" günü (SERİ SİGORTASI dahil)
   toplam: number; // toplam yapıldı günü
   son14: { gun: string; yapildi: boolean | null }[];
   kacirilanGun: number; // son adımdan bu yana kaç gün geçti
+  // [C#22] SERİ SİGORTASI: bu takvim ayında joker kullanıldı mı (tek kaçırılan
+  // günü köprüleyip seriyi ayakta tuttu mu). false → bu ay hâlâ bir hakkın var.
+  sigortaBuAyKullanildi: boolean;
 };
 
 // soz_takip satırlarından (gün, yapildi) takip durumunu çıkar. `bugun` İstanbul
@@ -36,13 +39,37 @@ export function takipDurumHesapla(
   const toplam = satirlar.filter((s) => s.yapildi).length;
 
   // Seri: bugünden (ya da dünden) geriye kesintisiz "yapıldı".
+  // [C#22] SERİ SİGORTASI: her TAKVİM AYINDA bir "joker" — o ay içindeki TEK bir
+  // kaçırılan günü köprüler (seriyi kırmaz). Aynı ayda ikinci kaçırma köprülenmez.
+  // Joker geçmişten deterministik hesaplanır (ekstra kolon/DB yok); kural şeffaf.
   let seri = 0;
+  const jokerKullanilanAylar = new Set<string>();
+  let sigortaBuAyKullanildi = false;
+  const buAy = bugun.slice(0, 7); // YYYY-MM
+  // Köprü ancak bir SONRAKİ "yapıldı"ya bağlanırsa geçerli (provisional → commit).
+  // Serinin sonundaki boşluğa uzanan joker "kullanıldı" sayılmaz.
+  let bekleyenJokerAy: string | null = null;
   for (let i = 0; i < 120; i++) {
     const g = bugunTr(new Date(Date.parse(bugun) - i * 86_400_000));
     const v = harita.get(g);
-    if (v) seri++;
-    else if (i === 0) continue; // bugün henüz işaretlenmediyse seriyi kırma
-    else break;
+    if (v) {
+      seri++;
+      if (bekleyenJokerAy) {
+        // Bekleyen köprü gerçek bir "yapıldı"ya bağlandı → joker KESİN kullanıldı.
+        jokerKullanilanAylar.add(bekleyenJokerAy);
+        if (bekleyenJokerAy === buAy) sigortaBuAyKullanildi = true;
+        bekleyenJokerAy = null;
+      }
+      continue;
+    }
+    if (i === 0) continue; // bugün henüz işaretlenmediyse seriyi kırma
+    const ay = g.slice(0, 7);
+    // Bu ayın jokeri boş + o an bekleyen köprü yok → tek kaçırılan günü köprüle.
+    if (bekleyenJokerAy === null && !jokerKullanilanAylar.has(ay)) {
+      bekleyenJokerAy = ay; // provisional; sonraki "yapıldı" onaylar
+      continue;
+    }
+    break; // joker yok / arka arkaya ikinci boşluk → seri burada durur
   }
 
   // Son 14 gün şeridi.
@@ -59,7 +86,7 @@ export function takipDurumHesapla(
     : null;
   const kacirilanGun = sonYapildi ? gunFarki(bugun, sonYapildi) : 999;
 
-  return { bugunYapildi, seri, toplam, son14, kacirilanGun };
+  return { bugunYapildi, seri, toplam, son14, kacirilanGun, sigortaBuAyKullanildi };
 }
 
 // Eskalasyon eşikleri — tek yerde.

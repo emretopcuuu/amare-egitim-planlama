@@ -20,6 +20,7 @@ type Durum = {
   toplam: number;
   son14: { gun: string; yapildi: boolean | null }[];
   kacirilanGun: number;
+  sigortaBuAyKullanildi: boolean;
 };
 type Aksiyon = { metin: string; ufuk: string };
 type Hafta = { gorusmeToplam: number; kayitToplam: number };
@@ -401,6 +402,12 @@ export default function TakipAkis({
               style={{ width: `${Math.min(100, Math.round((durum.toplam / 90) * 100))}%` }}
             />
           </div>
+          {/* [C#22] Seri sigortası — ayda 1 joker; tek kaçırılan gün seriyi bozmaz */}
+          <p className="mt-2 text-xs text-slate-400">
+            {durum.sigortaBuAyKullanildi
+              ? "🛡 Seri sigortan bu ay kullanıldı — bir sonraki ay yenilenir."
+              : "🛡 Seri sigortan hazır: bu ay bir günü kaçırsan serin bozulmaz."}
+          </p>
         </div>
       ) : (
         <p className="rounded-2xl border border-gold/25 bg-gold/[0.06] px-4 py-3 text-center text-sm font-medium text-gold-light">
