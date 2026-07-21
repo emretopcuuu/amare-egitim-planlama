@@ -2081,6 +2081,7 @@ export type Database = {
           due_at: string
           ertelenme_sayisi: number
           fayda: string | null
+          yararli: boolean | null
           gec_tamamlandi: boolean
           id: string
           ipuclari: string[] | null
@@ -2134,6 +2135,7 @@ export type Database = {
           due_at: string
           ertelenme_sayisi?: number
           fayda?: string | null
+          yararli?: boolean | null
           gec_tamamlandi?: boolean
           id?: string
           ipuclari?: string[] | null
@@ -2187,6 +2189,7 @@ export type Database = {
           due_at?: string
           ertelenme_sayisi?: number
           fayda?: string | null
+          yararli?: boolean | null
           gec_tamamlandi?: boolean
           id?: string
           ipuclari?: string[] | null

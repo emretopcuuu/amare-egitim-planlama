@@ -732,6 +732,29 @@ export async function gorevUret(
           : "GÜN 1-2 HAZIRLIK: Görevi bu isimlerden BİRİNİ düşündürecek/planlatacak biçimde kur (kampta öğrendiğinle ona nasıl gerçek değer katarsın) — eylem KAMP ALANINDA kalsın, henüz 'onu ara' DEME."
       }`
     : "";
+  // [E#39] GÖREV FAYDASI GERİ BİLDİRİMİ: kişinin "işine yaradı mı?" oyları görev
+  // üretimini besler — yararsız bulduğu biçimlerden uzaklaş, yararlıya yaklaş.
+  let faydaMetni = "";
+  {
+    const { data: oylar } = await db
+      .from("missions")
+      .select("title, yararli")
+      .eq("participant_id", katilimci.id)
+      .not("yararli", "is", null)
+      .order("scored_at", { ascending: false })
+      .limit(8);
+    const yararli = (oylar ?? []).filter((o) => o.yararli).map((o) => `"${o.title}"`);
+    const yararsiz = (oylar ?? []).filter((o) => !o.yararli).map((o) => `"${o.title}"`);
+    if (yararli.length || yararsiz.length) {
+      faydaMetni =
+        "GÖREV FAYDASI GERİ BİLDİRİMİ (kişinin kendi oyları — üretimi buna göre ayarla): " +
+        (yararli.length ? `İŞİNE YARADI dediği görevler: ${yararli.join(", ")}. ` : "") +
+        (yararsiz.length
+          ? `YARAMADI dediği görevler: ${yararsiz.join(", ")}. Bu çizgideki görevlerden UZAK dur; yararlı bulduklarına yakın, somut ve sahada işe yarayan bir görev üret.`
+          : "Yararlı bulduğu çizgide devam et.");
+    }
+  }
+
   // #4 DAVID NOTU: kişi CEO oturumundan ne götürdüyse (david_yakalama yanıtı)
   // sonraki görevlere bağlam olsun — tek seferlik anı sürekli kariyer malzemesine
   // çevir. Yalnız kamp modunda, yanıt varsa.
@@ -1539,7 +1562,7 @@ GÖREV DNA'SI (KALİTEYİ BELİRLER — MUTLAKA uy): Bu görev "${hedefKas}" lid
 ÇEŞİTLİLİK (ZORUNLU): "oncekiGorevBasliklari"na bak — aynı egzersizi farklı başlıkla TEKRAR ÜRETME; farklı kas, farklı eylem türü, farklı dönüş biçimi seç. "neden" alanını da generic engel cümlesiyle değil BU göreve özel yaz. "donus_bicimi" alanını doldur ve bağlamdaki "sonDonusBicimleri"nden FARKLI bir biçim seç (art arda hep "yaz" olmasın — sesli/grup/foto/tek_kelime ile çeşitlendir). Bağlamda "yasakDonusBicimi" doluysa bu bir KURALDIR: bu görevin donus_bicimi o biçim OLAMAZ ve görevin gövdesi de o biçimde dönüş istememeli — o biçimde üretirsen görev reddedilir; kalan biçimlerden görevin doğasına en uygun olanı seç.
 
 ÖZ-DENETİM (ZORUNLU): Görevi ürettikten sonra kendini denetle ve "baglam_kullanildi" + "tekrar_degil" alanlarını DÜRÜSTÇE doldur. tekrar_degil, görev "oncekiGorevBasliklari"ndan birinin tekrarı/çok benzeriyse false olmalı — bu durumda görev reddedilip yeniden üretilir, o yüzden gerçekten FARKLI bir görev üret.
-${personaMetni ? `\n${personaMetni}\n` : ""}${kimlikMetni}${karakterMetni}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${sicakListeMetni ? `\n${sicakListeMetni}\n` : ""}${davidNotuMetni ? `\n${davidNotuMetni}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}${yolculukPlan ? `\n${yolculukPlan}\n` : ""}${yolculukKorNokta ? `\n${yolculukKorNokta}\n` : ""}${kapanisIlke ? `\n${kapanisIlke}\n` : ""}
+${personaMetni ? `\n${personaMetni}\n` : ""}${kimlikMetni}${karakterMetni}${mod === "kamp" && KAMP_YAY_TEMASI[gun] ? `\n${KAMP_YAY_TEMASI[gun]}\n` : ""}${sicakListeMetni ? `\n${sicakListeMetni}\n` : ""}${faydaMetni ? `\n${faydaMetni}\n` : ""}${davidNotuMetni ? `\n${davidNotuMetni}\n` : ""}${yolculukOdak ? `\n${yolculukOdak}\n` : ""}${yolculukKarma ? `\n${yolculukKarma}\n` : ""}${yolculukPlan ? `\n${yolculukPlan}\n` : ""}${yolculukKorNokta ? `\n${yolculukKorNokta}\n` : ""}${kapanisIlke ? `\n${kapanisIlke}\n` : ""}
 PUSULA KİŞİSELLEŞTİRMESİ: Bağlamda "pusula" doluysa göreve ZORUNLU iki bağ kur: (1) kişinin bildirdiği iç engeli (ic_engel) doğrudan ya da dolaylı zorlayan somut bir eylem, (2) kişinin mevcut boşluğunu (mevcut_bosluk) küçülten bir sonuç. Pusuladaki çekirdek nedeni (cekirdek_neden) görevin motor gücü yap — ama yüzüne vurma. Pusula yoksa genel lider bağlamında devam et.
 
 DEĞER KİŞİSELLEŞTİRMESİ: Bağlamda "degerler" doluysa görevi kişinin seçtiği temel değerlerinden (temelDegerler) BİRİNİ bugün somut bir eylemle YAŞAMA meydan okumasına bağla — değeri soyut anmakla kalma, o değerin gerektirdiği gerçek bir lider hamlesini istet (örn. değeri "Dürüstlük" ise bugün kaçındığı zor bir doğruyu söyle; "Cesaret" ise ertelediği ilk adımı at; "Takım Ruhu" ise geride kalan birine uzan). Görevi tek bir değere demirle (hepsini birden sıralama), değeri başlıkta ya da dönüşte kişinin diliyle çağır. Uygun olduğunda değer ile çalışılan lider kasını örtüştür. Değer yoksa bu bağı atla.
