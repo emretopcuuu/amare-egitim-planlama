@@ -140,11 +140,13 @@ export type TakipEdilen = {
   bugunGonderildi: boolean;
   // [Şahitlik geliştirme #3] Son 14 gün mini şerit — /takip'teki aynı veri.
   son14: { gun: string; yapildi: boolean | null }[];
+  // [B#18] Karşılıklı şahitlik — bu kişi de benim sözüme şahit.
+  karsilikli: boolean;
 };
 
 // Bir liderin şahit olduğu kişiler + ilerlemeleri (şahit paneli).
 export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipEdilen[]> {
-  const [{ data: tanikRows }, { data: bugunDurtmeler }] = await Promise.all([
+  const [{ data: tanikRows }, { data: bugunDurtmeler }, { data: banaSahitler }] = await Promise.all([
     db
       .from("soz_tanik")
       .select(
@@ -158,8 +160,11 @@ export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipE
       .eq("gonderen", witnessId)
       .in("tip", ["hatirlatma", "tesvik"])
       .gte("created_at", new Date(`${bugunTr()}T00:00:00+03:00`).toISOString()),
+    // [B#18] Karşılıklılık: BENİM sözüme şahit olan (kabul etmiş) kişiler.
+    db.from("soz_tanik").select("witness_id").eq("soz_sahibi", witnessId).not("imza_at", "is", null),
   ]);
   const bugunGonderildiSet = new Set((bugunDurtmeler ?? []).map((d) => d.sahibi));
+  const banaSahitSet = new Set((banaSahitler ?? []).map((r) => r.witness_id));
   const rows = tanikRows ?? [];
   const sonuc: TakipEdilen[] = [];
   for (const r of rows) {
@@ -189,6 +194,8 @@ export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipE
       haftaKayit: hafta.kayitToplam,
       bugunGonderildi: bugunGonderildiSet.has(r.soz_sahibi),
       son14: durum.son14,
+      // [B#18] Bu kişi de senin sözüne şahit → karşılıklı bağ (🔁 rozeti).
+      karsilikli: banaSahitSet.has(r.soz_sahibi),
     });
   }
   return sonuc.sort((a, b) => b.kacirilanGun - a.kacirilanGun);
@@ -391,6 +398,51 @@ export async function reddedenSahitSayisi(db: Db, pid: string): Promise<number> 
     .eq("soz_sahibi", pid)
     .eq("durum", "ret");
   return count ?? 0;
+}
+
+// [B#11] ŞAHİT DAVET HATIRLATICISI — davet → kabul/ret akışında (PR #823) bir
+// davet "bekliyor"da unutulabiliyor. Günde bir (tik'ten, kilitle) taranır:
+//  • 2 gün yanıtsız → ŞAHİDE nazik dürtme ("seni bekleyen bir söz var").
+//  • 5 gün yanıtsız → SAHİBE "yanıt vermedi, istersen yerine başka şahit seç" (#12).
+// Migration yok: eşikler created_at'ten gün farkıyla; tik günde bir çalıştığı için
+// her davet her eşiği tam bir kez geçer (spam yok, ekstra kolon gerekmez).
+export async function sahitDavetHatirlat(db: Db): Promise<{ sahit: number; sahibi: number }> {
+  const { data: bekleyenler } = await db
+    .from("soz_tanik")
+    .select("soz_sahibi, witness_id, created_at")
+    .eq("durum", "bekliyor");
+  if (!bekleyenler?.length) return { sahit: 0, sahibi: 0 };
+
+  const idler = [...new Set(bekleyenler.flatMap((b) => [b.soz_sahibi, b.witness_id]))];
+  const { data: kisiler } = await db.from("participants").select("id, full_name").in("id", idler);
+  const ilkAd = new Map((kisiler ?? []).map((k) => [k.id, (k.full_name ?? "").split(" ")[0] || "Bir lider"]));
+
+  const simdi = Date.now();
+  let sahit = 0;
+  let sahibi = 0;
+  for (const b of bekleyenler) {
+    const gun = (simdi - new Date(b.created_at).getTime()) / 86_400_000;
+    if (gun >= 2 && gun < 3) {
+      await katilimciyaBildir(
+        db,
+        b.witness_id,
+        "🤝 Bir söz seni bekliyor",
+        `${ilkAd.get(b.soz_sahibi)} seni sözüne şahit gösterdi. Sözünü aç, gör ve kabul/ret ver.`,
+        "/sahitlik"
+      ).catch(() => {});
+      sahit++;
+    } else if (gun >= 5 && gun < 6) {
+      await katilimciyaBildir(
+        db,
+        b.soz_sahibi,
+        "🤝 Şahidin henüz yanıt vermedi",
+        `${ilkAd.get(b.witness_id)} 5 gündür davetini yanıtlamadı. İstersen yerine başka bir lider seç.`,
+        "/sozum"
+      ).catch(() => {});
+      sahibi++;
+    }
+  }
+  return { sahit, sahibi };
 }
 
 // Kişinin şahit olduğu (imzaladığı) kişi sayısı — şahit paneli linki için.

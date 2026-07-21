@@ -1,7 +1,7 @@
 import "server-only";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { tumKayitlar } from "@/lib/tumKayitlar";
-import { eskalasyonTara, sahitOzetiGonder, checkinCipasi, sozKarnesiGonder } from "@/lib/sozTakip";
+import { eskalasyonTara, sahitOzetiGonder, checkinCipasi, sozKarnesiGonder, sahitDavetHatirlat } from "@/lib/sozTakip";
 import { ufukToreniTara } from "@/lib/ufukToren";
 import {
   gorevUret,
@@ -1452,6 +1452,16 @@ export async function tikCalistir(
         .insert({ key: `soz_karnesi_${bugun}`, value: "1" });
       if (!karneKilit) await sozKarnesiGonder(db).catch(() => {});
     }
+  }
+
+  // [B#11] ŞAHİT DAVET HATIRLATICISI: yolculuk modunda her gün 11:00-11:09'da
+  // (günlük settings kilidiyle bir kez) bekleyen davetleri tarar — 2 gün yanıtsız
+  // davet şahide, 5 gün yanıtsız sahibe hatırlatılır. Diğer pencerelerle çakışmaz.
+  if (mod === "yolculuk" && saat === 11 && dakika < 10) {
+    const { error: davetKilit } = await db
+      .from("settings")
+      .insert({ key: `sahit_davet_hatirlat_${bugun}`, value: "1" });
+    if (!davetKilit) await sahitDavetHatirlat(db).catch(() => {});
   }
 
   // 3f) HAFTALIK AKRAN CHECK-IN: yolculuk modunda Pazartesi 10:00-10:09'da
