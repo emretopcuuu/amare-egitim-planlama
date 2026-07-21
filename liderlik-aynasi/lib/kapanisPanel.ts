@@ -9,12 +9,12 @@ import { yazAuditLog } from "@/lib/auditLog";
 //  [6.3] eylulKapisi      — Eylül kapısı: kişi başına "devam/izle/risk" kararı
 // Hepsi salt-okunur agregat; ~29 kişi ölçeğinde uygulama katmanında hesaplanır.
 
-type Kisi = { id: string; full_name: string; team: string | null };
+type Kisi = { id: string; full_name: string; team: string | null; phone: string | null };
 
 async function kisiler(db: Db): Promise<Kisi[]> {
   const { data } = await db
     .from("participants")
-    .select("id, full_name, team")
+    .select("id, full_name, team, phone")
     .eq("role", "participant");
   return (data ?? []) as Kisi[];
 }
@@ -101,6 +101,7 @@ export type ChurnSatiri = {
   id: string;
   ad: string;
   takim: string | null;
+  telefon: string | null; // [F#43] tek-tık WhatsApp için (E.164)
   sessizGun: number | null; // null = hiç görev tamamlamamış
   basamak: 0 | 1 | 2 | 3;
   oneri: string;
@@ -127,7 +128,7 @@ export async function churnMerdiveni(db: Db): Promise<ChurnSatiri[]> {
     const t = son.get(k.id);
     const sessizGun = t == null ? null : Math.floor((now - t) / 86_400_000);
     const basamak = churnBasamak(sessizGun);
-    return { id: k.id, ad: k.full_name, takim: k.team, sessizGun, basamak, oneri: CHURN_ONERI[basamak] };
+    return { id: k.id, ad: k.full_name, takim: k.team, telefon: k.phone, sessizGun, basamak, oneri: CHURN_ONERI[basamak] };
   });
   // En riskliden en aktife (basamak desc, sonra sessizGun desc).
   return satirlar.sort(

@@ -345,17 +345,23 @@ export async function sozKarnesiGonder(db: Db): Promise<{ gonderildi: boolean }>
     const aktifler = (sozler ?? []).map((s) => s.participant_id);
     if (aktifler.length === 0) return { gonderildi: false };
 
+    // [F#45] Trend için 14 gün çek; bu hafta (son 7) ile geçen haftayı ayır.
     const yediGunOnce = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
+    const ondortGunOnce = new Date(Date.now() - 14 * 86_400_000).toISOString().slice(0, 10);
     const { data: takipler } = await db
       .from("soz_takip")
       .select("participant_id, gun, yapildi")
       .in("participant_id", aktifler)
-      .gte("gun", yediGunOnce);
+      .gte("gun", ondortGunOnce);
 
-    const adimAtan = new Set<string>(); // bu hafta en az 1 gün "yaptım"
+    const adimAtan = new Set<string>(); // bu hafta (son 7) en az 1 gün "yaptım"
+    const adimAtanGecen = new Set<string>(); // geçen hafta (8-14 gün önce)
     const sonAktivite = new Map<string, string>(); // pid → en son işaretlenen gün
     for (const t of takipler ?? []) {
-      if (t.yapildi) adimAtan.add(t.participant_id);
+      if (t.yapildi) {
+        if (t.gun >= yediGunOnce) adimAtan.add(t.participant_id);
+        else if (t.gun >= ondortGunOnce) adimAtanGecen.add(t.participant_id);
+      }
       const onceki = sonAktivite.get(t.participant_id);
       if (!onceki || t.gun > onceki) sonAktivite.set(t.participant_id, t.gun);
     }
@@ -368,9 +374,19 @@ export async function sozKarnesiGonder(db: Db): Promise<{ gonderildi: boolean }>
     const toplam = aktifler.length;
     const tutan = adimAtan.size;
     const oran = Math.round((tutan / toplam) * 100);
+    const oranGecen = Math.round((adimAtanGecen.size / toplam) * 100);
+    // Trend oku: geçen haftaya göre yön.
+    const fark = oran - oranGecen;
+    const trend =
+      fark > 3
+        ? ` 📈 Geçen hafta %${oranGecen} → bu hafta %${oran} (yükseliyor).`
+        : fark < -3
+          ? ` 📉 Geçen hafta %${oranGecen} → bu hafta %${oran} (düşüyor — dikkat).`
+          : ` ➡️ Geçen haftayla benzer (%${oranGecen}→%${oran}).`;
     const govde =
       `Kapanışta verilen ${toplam} söz 90 günde yaşıyor. Bu hafta ${tutan} kişi (%${oran}) sözüne en az bir adım attı` +
-      (sessiz > 0 ? `; ${sessiz} kişi 4+ gündür sessiz.` : ".");
+      (sessiz > 0 ? `; ${sessiz} kişi 4+ gündür sessiz.` : ".") +
+      trend;
 
     await adminlereBildir(db, "📊 Söz Karnesi (haftalık)", govde, "/admin/kapanis");
     return { gonderildi: true };
