@@ -14,6 +14,7 @@ import Link from "next/link";
 import { fazBul, YOLCULUK_FAZLARI, yolculukGunuHesapla } from "@/lib/davranis";
 import { raporHesapla } from "@/lib/rapor";
 import { aynaKarakterAcikMi } from "@/lib/aynaKarakter";
+import { hangiMilestone } from "@/lib/ayMektubu";
 import YolculukFazSeridi from "@/components/YolculukFazSeridi";
 
 export const metadata = { title: "90 Gün Yolun — Liderlik Aynası" };
@@ -170,6 +171,7 @@ export default async function TakipSayfa() {
         lakap={lakap}
         karakterAcik={karakterAcik}
         mezuniyet={mezuniyet}
+        mektupMilestone={hangiMilestone(yolGun)}
       />
     </main>
   );

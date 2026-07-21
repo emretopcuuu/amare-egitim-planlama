@@ -1599,6 +1599,31 @@ export async function tikCalistir(
     }
   }
 
+  // [D#33] AY DÖNÜMÜ MEKTUBU DUYURUSU: yolculuk 30/60/90. günde sabah 09:10-09:19
+  // (kanıt geri okumadan hemen sonra) mühürlü sözü olan herkese "mektubun hazır"
+  // push'u — mektup /takip'te AÇILINCA lazy üretilir (tik'te AI YOK, timeout yok).
+  if (mod === "yolculuk" && [30, 60, 90].includes(gun) && saat === 9 && dakika >= 10 && dakika < 20) {
+    const { error: mektupKilit } = await db
+      .from("settings")
+      .insert({ key: `ay_mektubu_duyuru_${gun}`, value: "1" });
+    if (!mektupKilit) {
+      try {
+        const { data: sozluler } = await db.from("soz").select("participant_id").eq("durum", "sesli");
+        for (const s of sozluler ?? []) {
+          await katilimciyaBildir(
+            db,
+            s.participant_id,
+            `📜 ${gun}. gün mektubun hazır`,
+            `AYNA, ${gun}. günü doldurduğun için sana özel bir mektup yazdı. Aç, oku.`,
+            "/takip"
+          ).catch(() => {});
+        }
+      } catch {
+        // sessizce geç
+      }
+    }
+  }
+
   // 3g) [FAZ 5 · Tek Söz birleşmesi] KALDIRILDI: eski v1 (pledges) haftalık
   // Çarşamba söz hatırlatması — "Ağustos görüşme sözü" dili + ölü /soz ekranına
   // yönlendiriyordu. SÖZ v2'ye (soz/soz_takip + şahitler) geçince bu iş zaten
