@@ -20,6 +20,11 @@ type Props = {
   seriMetin: string | null; // seri ateşi
   seriRiski: boolean;
   aktifVar: boolean;
+  // [YOLCULUK] 90 günde günde TEK görev → 0/7 nokta dizisi yanlış "yetersizsin"
+  // hissi verir. Yolculukta kota göstergesi "Bugün ✓ / bekliyor"a döner + kamp
+  // nabzı gizlenir. Kamp modunda hiçbir şey değişmez.
+  yolculuk?: boolean;
+  seriRiskiMetin?: string; // yolculukta gün-dili risk metni
 };
 
 export default function DurumSeridi({
@@ -34,6 +39,8 @@ export default function DurumSeridi({
   seriMetin,
   seriRiski,
   aktifVar,
+  yolculuk = false,
+  seriRiskiMetin,
 }: Props) {
   const [acik, setAcik] = useState(!aktifVar);
 
@@ -66,20 +73,34 @@ export default function DurumSeridi({
           <span className="text-xs text-gold-light/70" aria-hidden>⚡</span>
           <span className="text-sm font-medium text-slate-300">{unvanAd}</span>
         </span>
-        {/* Günün ritmi — kompakt nokta dizisi (tek ilerleme göstergesi) */}
+        {/* Günün ritmi — kamp: nokta dizisi. Yolculuk: tek "Bugün ✓/bekliyor" çipi. */}
         <span className="ml-auto flex items-center gap-1.5">
-          <span className="hidden items-center gap-1 sm:flex">
-            {Array.from({ length: gunlukKota }).map((_, i) => (
-              <span
-                key={i}
-                className={`h-1.5 w-1.5 rounded-full ${i < bugunGorev ? "bg-gold" : "bg-white/15"}`}
-                aria-hidden
-              />
-            ))}
-          </span>
-          <span className="text-xs font-semibold tabular-nums text-slate-400">
-            {Math.min(bugunGorev, gunlukKota)}/{gunlukKota}
-          </span>
+          {yolculuk ? (
+            <span
+              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                bugunGorev > 0
+                  ? "bg-emerald-500/15 text-emerald-300"
+                  : "bg-white/8 text-slate-300"
+              }`}
+            >
+              {bugunGorev > 0 ? "Bugün ✓" : "Bugünün görevi"}
+            </span>
+          ) : (
+            <>
+              <span className="hidden items-center gap-1 sm:flex">
+                {Array.from({ length: gunlukKota }).map((_, i) => (
+                  <span
+                    key={i}
+                    className={`h-1.5 w-1.5 rounded-full ${i < bugunGorev ? "bg-gold" : "bg-white/15"}`}
+                    aria-hidden
+                  />
+                ))}
+              </span>
+              <span className="text-xs font-semibold tabular-nums text-slate-400">
+                {Math.min(bugunGorev, gunlukKota)}/{gunlukKota}
+              </span>
+            </>
+          )}
           <span
             className={`text-slate-500 transition-transform ${acik ? "rotate-180" : ""}`}
             aria-hidden
@@ -96,7 +117,10 @@ export default function DurumSeridi({
             seriRiski ? "text-amber-300" : "text-orange-300/90"
           }`}
         >
-          🔥 {seriRiski ? "Serin sürüyor — bugün henüz görev kapatmadın." : seriMetin}
+          🔥{" "}
+          {seriRiski
+            ? seriRiskiMetin ?? "Serin sürüyor — bugün henüz görev kapatmadın."
+            : seriMetin}
         </p>
       )}
 
@@ -117,8 +141,8 @@ export default function DurumSeridi({
           </div>
           {/* Bugünün özeti — eski yeşil banner buraya gömüldü */}
           {ozetMetin && <p className="text-xs text-slate-400">{ozetMetin}</p>}
-          {/* Kampın nabzı (kendi verisini çeker) */}
-          <KampNabzi />
+          {/* Kampın nabzı — YALNIZ kamp modunda (yolculukta anlamsız kalabalık). */}
+          {!yolculuk && <KampNabzi />}
         </div>
       )}
     </section>

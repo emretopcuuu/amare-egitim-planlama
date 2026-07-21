@@ -7,6 +7,7 @@ import { kapaliKombolar } from "@/lib/oyunKapasite";
 import OyunSecici from "./OyunSecici";
 import KurulumGecidi from "@/components/KurulumGecidi";
 import OnboardingRayi from "@/components/OnboardingRayi";
+import KampBittiKapisi from "@/components/KampBittiKapisi";
 
 export const metadata = { title: "Oyun Seçimi — Liderlik Aynası" };
 
@@ -20,7 +21,12 @@ export default async function OyunSecimiSayfa() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
-  const { data: kisi } = await db.from("participants").select("team").eq("id", session.sub).maybeSingle();
+  const [{ data: kisi }, { data: modAyar }] = await Promise.all([
+    db.from("participants").select("team").eq("id", session.sub).maybeSingle(),
+    db.from("settings").select("value").eq("key", "sistem_modu").maybeSingle(),
+  ]);
+  // [YOLCULUK #14] Oyun seçimi kampa özel — kamp bitince nazik kapıya yönlendir.
+  if (modAyar?.value === "yolculuk") return <KampBittiKapisi baslik="Oyun seçimi kapandı" />;
 
   if (kisi?.team) {
     const grupNo = grupNoCozumle(kisi.team);

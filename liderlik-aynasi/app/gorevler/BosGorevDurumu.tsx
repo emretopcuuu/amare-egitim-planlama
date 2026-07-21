@@ -22,6 +22,7 @@ export default function BosGorevDurumu({
   aynaLafi,
   aynaDurum = "sicak",
   gece = false,
+  yolculukMetin = null,
 }: {
   siradakiDk: number | null;
   // D9: sıradaki turun yaklaşık Istanbul saati ("HH:MM") — sunucu hesaplar.
@@ -33,6 +34,9 @@ export default function BosGorevDurumu({
   aynaDurum?: "sicak" | "serin" | "kus";
   // Görsel paket #5 — gece kuşağı: AYNA uyur (uykuda pozu + uyku lafı).
   gece?: boolean;
+  // [YOLCULUK #2] 90 günde görev sabah penceresinde düşer — dakika tahmini
+  // yanlış olur. Sunucu doğru beklenti metnini verir; varsa onu kullan.
+  yolculukMetin?: string | null;
 }) {
   // Görsel paket #4 — dokununca tepki: kısa poz değişimi + SFX + arada laf balonu.
   const [tepkiPoz, setTepkiPoz] = useState<AynaDurum | null>(null);
@@ -58,11 +62,12 @@ export default function BosGorevDurumu({
     }, 2200);
   }
   const bekleme =
-    siradakiDk == null || siradakiDk <= 0
+    yolculukMetin ??
+    (siradakiDk == null || siradakiDk <= 0
       ? t.bosHerAn
       : siradakiSaat
         ? t.bosSiradakiSaat(siradakiSaat)
-        : t.bosSiradaki(siradakiDk);
+        : t.bosSiradaki(siradakiDk));
 
   return (
     <section className="kart-cam relative overflow-hidden rounded-3xl px-6 py-8 text-center">
