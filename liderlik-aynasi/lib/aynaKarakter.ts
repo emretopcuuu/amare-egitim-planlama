@@ -236,7 +236,7 @@ export async function lakapUret(
       .join("\n");
     if (!malzeme) return null;
 
-    const client = aynaClient();
+    const client = aynaClient("ayna-karakter");
     const yanit = await client.messages.create({
       model: LAKAP_MODEL,
       max_tokens: 60,

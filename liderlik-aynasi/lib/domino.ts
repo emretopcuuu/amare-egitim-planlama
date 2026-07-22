@@ -62,7 +62,7 @@ async function dominoIcgoru(db: Db, pid: string): Promise<string | null> {
   try {
     const profil = await onFarkindalikOzeti(db, pid);
     if (!profil) return null;
-    const client = aynaClient();
+    const client = aynaClient("domino");
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 300,

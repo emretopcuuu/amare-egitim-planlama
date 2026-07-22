@@ -115,22 +115,31 @@ export type Database = {
       }
       ai_istek_log: {
         Row: {
+          cikti_token: number | null
           created_at: string
+          girdi_token: number | null
           id: number
           kaynak: string
-          participant_id: string
+          model: string | null
+          participant_id: string | null
         }
         Insert: {
+          cikti_token?: number | null
           created_at?: string
+          girdi_token?: number | null
           id?: never
           kaynak: string
-          participant_id: string
+          model?: string | null
+          participant_id?: string | null
         }
         Update: {
+          cikti_token?: number | null
           created_at?: string
+          girdi_token?: number | null
           id?: never
           kaynak?: string
-          participant_id?: string
+          model?: string | null
+          participant_id?: string | null
         }
         Relationships: [
           {

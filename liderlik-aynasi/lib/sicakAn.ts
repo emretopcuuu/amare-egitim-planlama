@@ -89,7 +89,7 @@ export async function sicakAnYakala(
   try {
     const temiz = metin.trim();
     if (temiz.length < 10) return; // tek kelimelik yanıttan sinyal çıkmaz
-    const client = aynaClient();
+    const client = aynaClient("sicak-an");
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 300,

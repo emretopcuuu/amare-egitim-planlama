@@ -376,7 +376,7 @@ export async function pusulaTuru(
       })),
   ];
 
-  const client = aynaClient();
+  const client = aynaClient("pusula");
   const kimlikM = await kimlikBloguGetir(db, katilimci.id);
   // Faz 0 — AYNA karakteri: pusula derin duygusal sohbet → HAFİF doz (renk var,
   // şov yok; eleme/engel aşamalarında mizah blok içinde zaten yasak).

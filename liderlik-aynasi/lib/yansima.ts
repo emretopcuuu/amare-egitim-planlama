@@ -39,7 +39,7 @@ export async function selamUret(
 ): Promise<string> {
   if (!process.env.ANTHROPIC_API_KEY) return selamVarsayilan(ad);
   try {
-    const client = aynaClient();
+    const client = aynaClient("yansima");
     const yanit = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 1024,

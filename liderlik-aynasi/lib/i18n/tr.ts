@@ -1885,6 +1885,7 @@ export const tr = {
       sZamanlama: "Otomatik Zamanlama",
       sKod: "Kod Bul",
       sKvkk: "KVKK Silme Talepleri",
+      sToken: "AI Token & Maliyet",
       sSimulasyon: "Kamp Prova Simülatörü",
       prova: "Prova Kampı (canlı)",
       // Menüde/palette önceden linki olmayan sayfalar

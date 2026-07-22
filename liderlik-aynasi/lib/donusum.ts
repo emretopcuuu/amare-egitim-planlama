@@ -99,7 +99,7 @@ export async function donusumKarsilastirmaUret(
     }
 
     if (!process.env.ANTHROPIC_API_KEY) return null;
-    const client = aynaClient();
+    const client = aynaClient("donusum");
     const yanit = await client.messages.create({
       // MALİYET: kişi başına BİR kez çalışan kısa üretim → Haiku 4.5 yeterli.
       model: "claude-haiku-4-5",

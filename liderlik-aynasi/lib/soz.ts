@@ -148,7 +148,7 @@ export async function sozSekillendir(db: Db, pid: string, ad: string): Promise<S
   };
 
   try {
-    const client = aynaClient();
+    const client = aynaClient("soz");
     const yanit = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 2048,
