@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      haftalik_tahmin: {
+        Row: {
+          created_at: string
+          hafta_basi: string
+          id: string
+          participant_id: string
+          tahmin: number
+        }
+        Insert: {
+          created_at?: string
+          hafta_basi: string
+          id?: string
+          participant_id: string
+          tahmin: number
+        }
+        Update: {
+          created_at?: string
+          hafta_basi?: string
+          id?: string
+          participant_id?: string
+          tahmin?: number
+        }
+        Relationships: []
+      }
       ay_mektubu: {
         Row: {
           created_at: string

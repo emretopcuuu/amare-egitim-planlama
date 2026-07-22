@@ -9,6 +9,7 @@ import { haftaKocNotu } from "@/lib/haftaKoc";
 import { yolGunluguSec, gununSorusuSec } from "@/lib/aynaGunluk";
 import AyMektubuKarti from "@/components/AyMektubuKarti";
 import SozRevizeKarti from "@/components/SozRevizeKarti";
+import HaftalikTahmin from "@/components/HaftalikTahmin";
 import Konfeti from "@/components/Konfeti";
 import KonusanYansima from "@/components/KonusanYansima";
 import BildirimSerit from "@/components/BildirimSerit";
@@ -75,6 +76,8 @@ export default function TakipAkis({
   mezuniyet = null,
   mektupMilestone = 0,
   sozRevizeMetin = null,
+  haftalikTahmin = null,
+  pazarMi = false,
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
@@ -105,6 +108,9 @@ export default function TakipAkis({
   mektupMilestone?: number;
   // [B#13] 30. günde söz yenileme uygunsa mevcut söz metni (yoksa null).
   sozRevizeMetin?: string | null;
+  // [C#27] Bu haftanın görüşme tahmini (yoksa null → giriş kartı) + Pazar mı.
+  haftalikTahmin?: number | null;
+  pazarMi?: boolean;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   // [FAZ 6 · Yaşayan Plan] Tamamlanan aksiyon index'leri — checkbox ile toggle.
@@ -458,6 +464,9 @@ export default function TakipAkis({
           </Link>
         </section>
       )}
+
+      {/* [C#27] HAFTALIK TAHMİN — hedef gir / ilerleme / Pazar yüzleşme. */}
+      <HaftalikTahmin tahmin={haftalikTahmin} gorusme={hafta.gorusmeToplam} pazarMi={pazarMi} />
 
       {/* Nazik seri — tek cümle (yalnız bugün işaretlenmemiş + ara verilmişse) */}
       {durum.bugunYapildi !== true && durum.kacirilanGun >= 1 && durum.kacirilanGun < 900 && (
