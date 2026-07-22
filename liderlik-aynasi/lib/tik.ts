@@ -1603,13 +1603,33 @@ export async function tikCalistir(
         );
         const say = new Map<string, number>();
         for (const k of kanitlar) say.set(k.participant_id, (say.get(k.participant_id) ?? 0) + 1);
+        // [E#42] En parlak an — kişinin en yüksek puanlı görevi (8+). Tek sayfalı
+        // sorgu (kişi başına ek sorgu yok); mesaja somut bir gurur anı ekler.
+        const parlaklar = await tumKayitlar<{ participant_id: string; title: string; ai_score: number }>(
+          (b, s) =>
+            db
+              .from("missions")
+              .select("participant_id, title, ai_score")
+              .eq("status", "scored")
+              .gte("ai_score", 8)
+              .order("id")
+              .range(b, s)
+        );
+        const enIyi = new Map<string, { title: string; score: number }>();
+        for (const m of parlaklar) {
+          const cur = enIyi.get(m.participant_id);
+          if (m.title && (!cur || m.ai_score > cur.score))
+            enIyi.set(m.participant_id, { title: m.title, score: m.ai_score });
+        }
         for (const [pid, adet] of say) {
           if (adet < 1) continue;
+          const p = enIyi.get(pid);
+          const parlakSatir = p ? ` En parlak anın: "${p.title}" (${p.score}/10).` : "";
           await katilimciyaBildir(
             db,
             pid,
             `📓 ${gun}. gün — Kanıt Defterin`,
-            `${gun} günde ${adet} kanıt biriktirdin. Bunların hepsi senin — 'yetersizim' inancı bu defterin karşısında duramaz.`,
+            `${gun} günde ${adet} kanıt biriktirdin. Bunların hepsi senin — 'yetersizim' inancı bu defterin karşısında duramaz.${parlakSatir}`,
             "/protokol"
           ).catch(() => {});
         }
