@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      yol_arkadasi: {
+        Row: {
+          arkadas_id: string
+          created_at: string
+          secen_id: string
+        }
+        Insert: {
+          arkadas_id: string
+          created_at?: string
+          secen_id: string
+        }
+        Update: {
+          arkadas_id?: string
+          created_at?: string
+          secen_id?: string
+        }
+        Relationships: []
+      }
       ara_360: {
         Row: {
           created_at: string
