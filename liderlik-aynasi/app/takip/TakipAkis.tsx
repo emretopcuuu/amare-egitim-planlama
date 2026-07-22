@@ -11,6 +11,7 @@ import AyMektubuKarti from "@/components/AyMektubuKarti";
 import SozRevizeKarti from "@/components/SozRevizeKarti";
 import HaftalikTahmin from "@/components/HaftalikTahmin";
 import Ara360Karti from "@/components/Ara360Karti";
+import SozDuvariKarti from "@/components/SozDuvariKarti";
 import Konfeti from "@/components/Konfeti";
 import KonusanYansima from "@/components/KonusanYansima";
 import BildirimSerit from "@/components/BildirimSerit";
@@ -81,6 +82,8 @@ export default function TakipAkis({
   pazarMi = false,
   ara360Goster = false,
   ara360KorNokta = null,
+  duvarAlinti = [],
+  duvarda = false,
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
@@ -117,6 +120,9 @@ export default function TakipAkis({
   // [E#38] 45. gün ara-360 kartı gösterilsin mi + o anki kör nokta adı.
   ara360Goster?: boolean;
   ara360KorNokta?: string | null;
+  // [B#14] Söz duvarı isimsiz alıntıları + kişinin kendi opt-in durumu.
+  duvarAlinti?: string[];
+  duvarda?: boolean;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   // [FAZ 6 · Yaşayan Plan] Tamamlanan aksiyon index'leri — checkbox ile toggle.
@@ -525,6 +531,9 @@ export default function TakipAkis({
               <p className="mt-1 text-xs italic leading-relaxed text-slate-300">{aynaNotu}</p>
             </div>
           )}
+
+          {/* [B#14] SÖZ DUVARI — isimsiz ilham + kendi sözünü açma anahtarı */}
+          <SozDuvariKarti alintilar={duvarAlinti} duvarda={duvarda} />
 
           {/* Haftan özeti + çalışılan kas */}
           {(haftanGorev > 0 || haftanCheckin > 0) && (
