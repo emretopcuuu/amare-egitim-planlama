@@ -251,7 +251,9 @@ export default async function AnaSayfa({
     // saf kamp-içi mekaniği 90-gün ekranına sızmaz. Bayrak değerleri SİLİNMEZ;
     // yalnız görüntülenmez (kamp kopyasında aynen geri gelir). Gereksiz detay
     // sorguları da yolculukta hiç çalışmaz.
-    marketAcik = !modYolculuk && (bayrak.get("market_acik") ?? false);
+    // [C#26] Market yolculukta da açık (yolculuk rafı: kıvılcım hediye). Kampta
+    // eski bayrak. Diğer kamp-mekaniği girişleri (rekor/sandık/fısıltı) yolculukta gizli kalır.
+    marketAcik = modYolculuk ? true : (bayrak.get("market_acik") ?? false);
     rekorAcik = !modYolculuk && (bayrak.get("rekorlar_acik") ?? false);
     fisiltiAcik = !modYolculuk && (bayrak.get("fisilti_acik") ?? false);
     hamleAcik = !modYolculuk && (bayrak.get("hamle_acik") ?? false);

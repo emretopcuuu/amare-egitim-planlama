@@ -19,6 +19,10 @@ export type MarketUrun = {
   // (hediyeDeger) + push. "fiziksel" → admin teslim listesine alıcı adıyla düşer.
   hediye?: "kivilcim" | "fiziksel";
   hediyeDeger?: number; // hediye:"kivilcim" için alıcıya geçen kıvılcım
+  // [C#26] YOLCULUK RAFI: bu ürün 90-gün yolculuğunda da satılır. Yalnız etkisi
+  // kendine yeten / yolculuğa uygun ürünler işaretlenir (kamp mekaniğine bağlı
+  // olanlar — fragman, İki Kapı, elmas, sandık — yolculukta anlamsız, dışarıda).
+  yolculuk?: boolean;
 };
 
 export const REYON_BASLIK: Record<Reyon, { ad: string; ikon: string }> = {
@@ -49,7 +53,8 @@ export const MARKET_URUNLERI: MarketUrun[] = [
   { kod: "sandik_hediye", reyon: "sosyal", fiyat: 20, ad: "Arkadaşına sandık hediye et", aciklama: "Seçtiğin bir kişiye gizemli sandık gönder." },
   // C3 — Hediye rafı (alıcı seçilir). Kıvılcım hediyesi: verdiğinden azını alıcıya
   // geçirir (net kayıp → ekonomi kırılmaz, kıvılcım basılmaz), teşekkür jesti.
-  { kod: "kivilcim_hediye", reyon: "sosyal", fiyat: 12, hediye: "kivilcim", hediyeDeger: 10, ad: "Birine 10⚡ hediye et", aciklama: "Seçtiğin bir arkadaşına 10 kıvılcım gönder — cüzdanına düşer, bildirim gider." },
+  { kod: "kivilcim_hediye", reyon: "sosyal", fiyat: 12, hediye: "kivilcim", hediyeDeger: 10, yolculuk: true, ad: "Birine 10⚡ hediye et", aciklama: "Seçtiğin bir arkadaşına 10 kıvılcım gönder — cüzdanına düşer, bildirim gider." },
+  { kod: "kivilcim_hediye_buyuk", reyon: "sosyal", fiyat: 30, hediye: "kivilcim", hediyeDeger: 25, yolculuk: true, ad: "Birine 25⚡ hediye et", aciklama: "Bir yol arkadaşına 25 kıvılcım gönder — yolda ona güç ver." },
   { kod: "kahve_ismarla", reyon: "sosyal", fiyat: 15, fiziksel: true, hediye: "fiziksel", ad: "Birine kahve ısmarla", aciklama: "Seçtiğin bir kişiye kamp boyunca bir kahve — ekip teslim eder." },
   // — Kişiselleştirme —
   { kod: "elmas_rengi", reyon: "kisisel", fiyat: 25, ad: "Elmas ışık rengi", aciklama: "Elmasının ışığını 5 renkten biriyle değiştir.", varyantlar: ELMAS_RENKLERI },
@@ -67,6 +72,11 @@ export const MARKET_URUNLERI: MarketUrun[] = [
 
 // Markette listelenen (satın alınabilir) ürünler.
 export const SATISTAKI_URUNLER: MarketUrun[] = MARKET_URUNLERI.filter((u) => !u.satistaDegil);
+
+// [C#26] Yolculuk rafı — 90-gün yolculuğunda satılan (etkisi yolculuğa uygun) ürünler.
+export const YOLCULUK_URUNLERI: MarketUrun[] = MARKET_URUNLERI.filter(
+  (u) => u.yolculuk && !u.satistaDegil
+);
 
 export function urunBul(kod: string): MarketUrun | null {
   return MARKET_URUNLERI.find((u) => u.kod === kod) ?? null;

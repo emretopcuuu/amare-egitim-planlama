@@ -2,8 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { getSession } from "@/lib/auth/session";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { marketAcikMi, cuzdanBakiye, marketGecmisi } from "@/lib/market";
-import { SATISTAKI_URUNLER, REYON_BASLIK, type Reyon } from "@/lib/marketKatalog";
+import { marketErisim, cuzdanBakiye, marketGecmisi } from "@/lib/market";
+import { SATISTAKI_URUNLER, YOLCULUK_URUNLERI, REYON_BASLIK, type Reyon } from "@/lib/marketKatalog";
 import MarketReyonlar from "./MarketReyonlar";
 
 export const metadata = { title: "Market — Liderlik Aynası" };
@@ -17,7 +17,7 @@ export default async function MarketPage() {
   if (session.rol !== "participant") redirect("/admin");
 
   const db = supabaseAdmin();
-  const acik = await marketAcikMi(db);
+  const { acik, yolculuk } = await marketErisim(db);
 
   if (!acik) {
     return (
@@ -45,7 +45,10 @@ export default async function MarketPage() {
       .order("full_name"),
   ]);
   const kisiler = (kisilerHam ?? []).map((k) => ({ id: k.id, ad: k.full_name }));
-  const reyonlar = Object.keys(REYON_BASLIK) as Reyon[];
+  const gosterilenUrunler = yolculuk ? YOLCULUK_URUNLERI : SATISTAKI_URUNLER;
+  // Yalnız ürünü olan reyonlar (yolculukta boş reyon başlıkları görünmesin).
+  const reyonSirasi = Object.keys(REYON_BASLIK) as Reyon[];
+  const reyonlar = reyonSirasi.filter((r) => gosterilenUrunler.some((u) => u.reyon === r));
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-md flex-col gap-5 p-5">
@@ -77,9 +80,11 @@ export default async function MarketPage() {
         💎 Harcamadığın kıvılcım kaybolmaz — kamptan sonra 90 günlük yolculuğunda seninle kalır.
       </p>
 
+      {/* [C#26] Yolculukta yalnız "yolculuk rafı" (kamp mekaniğine bağlı ürünler
+          yolculukta anlamsız — hediye rafı kalır). Kampta tam katalog. */}
       <MarketReyonlar
         cuzdan={bakiye.cuzdan}
-        urunler={SATISTAKI_URUNLER}
+        urunler={gosterilenUrunler}
         reyonlar={reyonlar}
         kisiler={kisiler}
       />
