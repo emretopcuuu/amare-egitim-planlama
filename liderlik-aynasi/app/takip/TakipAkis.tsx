@@ -12,6 +12,7 @@ import SozRevizeKarti from "@/components/SozRevizeKarti";
 import HaftalikTahmin from "@/components/HaftalikTahmin";
 import Ara360Karti from "@/components/Ara360Karti";
 import SozDuvariKarti from "@/components/SozDuvariKarti";
+import YolArkadasiKarti from "@/components/YolArkadasiKarti";
 import Konfeti from "@/components/Konfeti";
 import KonusanYansima from "@/components/KonusanYansima";
 import BildirimSerit from "@/components/BildirimSerit";
@@ -84,6 +85,9 @@ export default function TakipAkis({
   ara360KorNokta = null,
   duvarAlinti = [],
   duvarda = false,
+  arkadas = null,
+  arkadasAlev = 0,
+  arkadasAdaylar = [],
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
@@ -123,6 +127,10 @@ export default function TakipAkis({
   // [B#14] Söz duvarı isimsiz alıntıları + kişinin kendi opt-in durumu.
   duvarAlinti?: string[];
   duvarda?: boolean;
+  // [B#19] Yol arkadaşı (varsa) + ortak alev + aday şahitler.
+  arkadas?: { id: string; ad: string } | null;
+  arkadasAlev?: number;
+  arkadasAdaylar?: { id: string; ad: string }[];
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   // [FAZ 6 · Yaşayan Plan] Tamamlanan aksiyon index'leri — checkbox ile toggle.
@@ -531,6 +539,9 @@ export default function TakipAkis({
               <p className="mt-1 text-xs italic leading-relaxed text-slate-300">{aynaNotu}</p>
             </div>
           )}
+
+          {/* [B#19] YOL ARKADAŞI — şahitlerden birini seç, ortak alevi büyüt */}
+          <YolArkadasiKarti arkadas={arkadas} alev={arkadasAlev} adaylar={arkadasAdaylar} />
 
           {/* [B#14] SÖZ DUVARI — isimsiz ilham + kendi sözünü açma anahtarı */}
           <SozDuvariKarti alintilar={duvarAlinti} duvarda={duvarda} />

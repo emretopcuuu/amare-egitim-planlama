@@ -18,6 +18,7 @@ import { hangiMilestone } from "@/lib/ayMektubu";
 import { tahminGetir } from "@/lib/haftalikTahmin";
 import { ara360Yapildi, ARA360_GUN } from "@/lib/ara360";
 import { duvarAlintilari } from "@/lib/sozDuvari";
+import { arkadasGetir, arkadasAdaylari, ortakAlev } from "@/lib/yolArkadasi";
 import { haftaBaslangici } from "@/lib/momentum";
 import YolculukFazSeridi from "@/components/YolculukFazSeridi";
 
@@ -115,6 +116,11 @@ export default async function TakipSayfa() {
   // [B#14] Söz duvarı: isimsiz ilham alıntıları (kendi sözü hariç).
   const duvarAlinti = await duvarAlintilari(db, session.sub, 3);
 
+  // [B#19] Yol arkadaşı: mevcut arkadaş + adaylar (şahitlerim) + ortak alev.
+  const arkadas = await arkadasGetir(db, session.sub);
+  const arkadasAdaylar = await arkadasAdaylari(db, session.sub, arkadas?.id ?? null);
+  const arkadasAlev = arkadas ? await ortakAlev(db, session.sub, arkadas.id) : 0;
+
   // [Faz 6] "Bunu sen söyledin" — milestone anlarında kendi sesini (mühürlü
   // sözü) dinletmek için imzalı URL. Söz hiç kaydedilmemişse null.
   let sozSesUrl: string | null = null;
@@ -201,6 +207,9 @@ export default async function TakipSayfa() {
         ara360KorNokta={kasAd}
         duvarAlinti={duvarAlinti}
         duvarda={soz?.duvarda ?? false}
+        arkadas={arkadas}
+        arkadasAlev={arkadasAlev}
+        arkadasAdaylar={arkadasAdaylar}
       />
     </main>
   );
