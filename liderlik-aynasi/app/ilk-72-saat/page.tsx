@@ -32,7 +32,7 @@ export default async function Ilk72SaatPage() {
         </header>
         <IlkYetmisIki
           adimlar={adimlar}
-          mevcut={mevcut.map((t) => ({ adim: t.adim, planlanan_zaman: t.planlanan_zaman }))}
+          mevcut={mevcut.map((t) => ({ adim: t.adim, planlanan_zaman: t.planlanan_zaman, durum: t.durum }))}
         />
       </div>
     </main>
