@@ -15,6 +15,8 @@ import { fazBul, YOLCULUK_FAZLARI, yolculukGunuHesapla } from "@/lib/davranis";
 import { raporHesapla } from "@/lib/rapor";
 import { aynaKarakterAcikMi } from "@/lib/aynaKarakter";
 import { hangiMilestone } from "@/lib/ayMektubu";
+import { tahminGetir } from "@/lib/haftalikTahmin";
+import { haftaBaslangici } from "@/lib/momentum";
 import YolculukFazSeridi from "@/components/YolculukFazSeridi";
 
 export const metadata = { title: "90 Gün Yolun — Liderlik Aynası" };
@@ -97,6 +99,14 @@ export default async function TakipSayfa() {
   const sozRevizeMetin =
     yolGun >= 30 && soz?.durum === "sesli" && !soz?.revize_at && soz?.metin ? soz.metin : null;
 
+  // [C#27] Haftalık tahmin: bu haftanın (Pazartesi) tahmini + Pazar mı?
+  const buHaftaBasi = haftaBaslangici(new Date());
+  const haftalikTahmin = await tahminGetir(db, session.sub, buHaftaBasi);
+  const pazarMi =
+    new Intl.DateTimeFormat("en-US", { timeZone: "Europe/Istanbul", weekday: "short" }).format(
+      new Date()
+    ) === "Sun";
+
   // [Faz 6] "Bunu sen söyledin" — milestone anlarında kendi sesini (mühürlü
   // sözü) dinletmek için imzalı URL. Söz hiç kaydedilmemişse null.
   let sozSesUrl: string | null = null;
@@ -177,6 +187,8 @@ export default async function TakipSayfa() {
         mezuniyet={mezuniyet}
         mektupMilestone={hangiMilestone(yolGun)}
         sozRevizeMetin={sozRevizeMetin}
+        haftalikTahmin={haftalikTahmin}
+        pazarMi={pazarMi}
       />
     </main>
   );
