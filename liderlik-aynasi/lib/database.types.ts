@@ -3525,6 +3525,7 @@ export type Database = {
           aksiyonlar: Json
           created_at: string
           durum: string
+          duvarda: boolean
           kayit_at: string | null
           metin: string | null
           participant_id: string
@@ -3539,6 +3540,7 @@ export type Database = {
           aksiyonlar?: Json
           created_at?: string
           durum?: string
+          duvarda?: boolean
           kayit_at?: string | null
           metin?: string | null
           participant_id: string
@@ -3553,6 +3555,7 @@ export type Database = {
           aksiyonlar?: Json
           created_at?: string
           durum?: string
+          duvarda?: boolean
           kayit_at?: string | null
           metin?: string | null
           participant_id?: string

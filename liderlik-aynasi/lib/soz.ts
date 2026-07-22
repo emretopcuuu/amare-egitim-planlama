@@ -62,12 +62,13 @@ export type SozKaydi = {
   voice_path: string | null;
   durum: string;
   revize_at: string | null; // [B#13] doluysa söz bir kez yenilendi
+  duvarda: boolean; // [B#14] söz duvarında görünmeyi kabul etti mi
 };
 
 export async function sozGetir(db: Db, pid: string): Promise<SozKaydi | null> {
   const { data } = await db
     .from("soz")
-    .select("metin, aksiyonlar, voice_path, durum, revize_at")
+    .select("metin, aksiyonlar, voice_path, durum, revize_at, duvarda")
     .eq("participant_id", pid)
     .maybeSingle();
   if (!data) return null;
@@ -77,6 +78,7 @@ export async function sozGetir(db: Db, pid: string): Promise<SozKaydi | null> {
     voice_path: data.voice_path,
     durum: data.durum,
     revize_at: (data as { revize_at?: string | null }).revize_at ?? null,
+    duvarda: !!(data as { duvarda?: boolean }).duvarda,
   };
 }
 
