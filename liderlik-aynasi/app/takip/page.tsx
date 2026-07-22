@@ -93,6 +93,10 @@ export default async function TakipSayfa() {
   ]);
   const lakap = (benKisi as { ayna_lakap?: string | null } | null)?.ayna_lakap ?? null;
 
+  // [B#13] Söz revizyon uygunluğu: 30. gün+, mühürlü söz, henüz yenilenmemiş.
+  const sozRevizeMetin =
+    yolGun >= 30 && soz?.durum === "sesli" && !soz?.revize_at && soz?.metin ? soz.metin : null;
+
   // [Faz 6] "Bunu sen söyledin" — milestone anlarında kendi sesini (mühürlü
   // sözü) dinletmek için imzalı URL. Söz hiç kaydedilmemişse null.
   let sozSesUrl: string | null = null;
@@ -172,6 +176,7 @@ export default async function TakipSayfa() {
         karakterAcik={karakterAcik}
         mezuniyet={mezuniyet}
         mektupMilestone={hangiMilestone(yolGun)}
+        sozRevizeMetin={sozRevizeMetin}
       />
     </main>
   );
