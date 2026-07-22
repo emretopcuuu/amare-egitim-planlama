@@ -4278,6 +4278,19 @@ export const tr = {
     tanikLiderDolu: "Bu lider en fazla 5 kişiye şahit olabilir — doldu.",
     tanikReddettiHata: "Bu lider davetini reddetti — başka birini seç.",
     tanikAra: "İsimle ara…",
+    // Şahit gizliliği — kişi, şahitlerinin sözün ne kadarını göreceğini seçer.
+    gizlilik: {
+      baslik: "🔒 Şahitlerin ne görecek?",
+      aciklama:
+        "Sözünün kalbi çok kişisel olabilir. Şahitlerin bütün metnini mi, yoksa rakamsız/mahremsiz sade halini mi görsün — sen seç. Adımların her iki durumda da görünür.",
+      sadeBaslik: "Sade (önerilen)",
+      sadeAlt: "Onurlu bir neden + adımların. Rakam, özel detay ve yara gitmez.",
+      tamBaslik: "Tam",
+      tamAlt: "Şahitlerin sözünün tam metnini görür.",
+      onizlemeBaslik: "Şahidin görecek:",
+      sadeBos: "Sade halde şahidin yalnız 90 gün adımlarını görür.",
+      adimNotu: (n: number) => `Ayrıca ${n} somut adımını görür.`,
+    },
     tamamBaslik: "Sözün mühürlendi 🤝",
     tamamMetin:
       "Sözünü verdin, sesini kaydettin, liderlerini şahit gösterdin. Onlar kabul ettikçe mührün güçlenir; 90 gün boyunca bu sözün peşinde olacağız.",

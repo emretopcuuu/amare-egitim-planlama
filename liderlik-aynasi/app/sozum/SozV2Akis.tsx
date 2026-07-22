@@ -20,7 +20,14 @@ function ufukAyEtiket(ufuk: string, now: Date): string {
 }
 
 type Aksiyon = { metin: string; ufuk: string };
-type Soz = { metin: string | null; aksiyonlar: Aksiyon[]; voice_path: string | null; durum: string } | null;
+type Soz = {
+  metin: string | null;
+  aksiyonlar: Aksiyon[];
+  voice_path: string | null;
+  durum: string;
+  sahit_gorunum?: "sade" | "tam";
+  sahit_metin?: string | null;
+} | null;
 type TanikDurum = "bekliyor" | "kabul" | "ret";
 type Tanik = { witness_id: string; ad: string; imzali: boolean; durum?: TanikDurum };
 type Lider = { id: string; ad: string; takim: string | null };
@@ -72,6 +79,62 @@ export default function SozV2Akis({
 
   // Seni şahit gösterenler — kabul/ret (her fazda görünür, kendi state'ini yönetir).
   const imzaBandi = <SahitDavetleri davetler={bekleyenBaslangic} />;
+
+  // ŞAHİT GİZLİLİĞİ — kişi, şahitlerinin sözün TAM metnini mi yoksa rakamsız/
+  // mahremsiz SADE sürümünü mü göreceğini seçer. Varsayılan sade (güvenli).
+  const [gorunum, setGorunum] = useState<"sade" | "tam">(soz?.sahit_gorunum ?? "sade");
+  const [gorunumMesgul, setGorunumMesgul] = useState(false);
+  async function gorunumSec(secim: "sade" | "tam") {
+    if (secim === gorunum || gorunumMesgul) return;
+    setGorunum(secim);
+    setGorunumMesgul(true);
+    await istek({ gorunum: secim });
+    setGorunumMesgul(false);
+    router.refresh();
+  }
+  const sahitOnizleme = gorunum === "tam" ? (soz?.metin ?? metin) : (soz?.sahit_metin ?? null);
+  const gizlilikKontrol = (
+    <div className="rounded-2xl border border-royal-light/25 bg-midnight-soft/50 p-4">
+      <p className="text-sm font-semibold text-gold-light">{t.gizlilik.baslik}</p>
+      <p className="mt-1 text-xs leading-relaxed text-slate-400">{t.gizlilik.aciklama}</p>
+      <div className="mt-3 flex gap-2">
+        {(["sade", "tam"] as const).map((secim) => (
+          <button
+            key={secim}
+            onClick={() => void gorunumSec(secim)}
+            disabled={gorunumMesgul}
+            className={`flex-1 rounded-xl border px-3 py-2.5 text-left transition-colors disabled:opacity-60 ${
+              gorunum === secim
+                ? "border-gold bg-gold/[0.12]"
+                : "border-white/12 bg-white/[0.02] hover:border-white/25"
+            }`}
+          >
+            <span className="block text-sm font-semibold text-slate-100">
+              {secim === "sade" ? t.gizlilik.sadeBaslik : t.gizlilik.tamBaslik}
+            </span>
+            <span className="mt-0.5 block text-[0.7rem] leading-snug text-slate-400">
+              {secim === "sade" ? t.gizlilik.sadeAlt : t.gizlilik.tamAlt}
+            </span>
+          </button>
+        ))}
+      </div>
+      <div className="mt-3 rounded-xl border border-white/10 bg-midnight/40 p-3">
+        <p className="text-[0.65rem] font-bold uppercase tracking-wider text-slate-500">
+          {t.gizlilik.onizlemeBaslik}
+        </p>
+        {sahitOnizleme ? (
+          <p className="mt-1 line-clamp-4 font-serif text-sm italic leading-relaxed text-slate-200">
+            &ldquo;{sahitOnizleme}&rdquo;
+          </p>
+        ) : (
+          <p className="mt-1 text-sm leading-relaxed text-slate-400">{t.gizlilik.sadeBos}</p>
+        )}
+        {aksiyonlar.length > 0 && (
+          <p className="mt-2 text-xs text-slate-500">{t.gizlilik.adimNotu(aksiyonlar.length)}</p>
+        )}
+      </div>
+    </div>
+  );
 
   // Öneri 8 — "Bu sözü verebilirsin, çünkü…": gerçek kamp kanıt anı. Söz veren
   // her fazda görür (motivasyon: söz boşa değil, kampta zaten kanıtladın).
@@ -247,6 +310,7 @@ export default function SozV2Akis({
     return (
       <TanikSecimi
         imzaBandi={imzaBandi}
+        gizlilikKontrol={gizlilikKontrol}
         taniklar={taniklar}
         liderler={liderler.filter((l) => !seciliIdler.has(l.id))}
         onEkle={async (id) => {
@@ -339,6 +403,7 @@ export default function SozV2Akis({
 // Şahit seçimi alt bileşeni (kendi arama state'iyle).
 function TanikSecimi({
   imzaBandi,
+  gizlilikKontrol,
   taniklar,
   liderler,
   onEkle,
@@ -348,6 +413,7 @@ function TanikSecimi({
   hata,
 }: {
   imzaBandi: React.ReactNode;
+  gizlilikKontrol: React.ReactNode;
   taniklar: Tanik[];
   liderler: Lider[];
   onEkle: (id: string) => void;
@@ -372,6 +438,9 @@ function TanikSecimi({
         <p className="mt-2 text-sm leading-relaxed text-slate-300">{t.tanikMetin}</p>
         <p className="mt-2 text-sm font-semibold text-gold-light">{t.tanikSecili(aktifTaniklar.length)}</p>
       </header>
+
+      {/* Şahitler ne görecek? — kişi burada, şahit seçerken karar verir. */}
+      {gizlilikKontrol}
 
       {taniklar.length > 0 && (
         <ul className="space-y-2">

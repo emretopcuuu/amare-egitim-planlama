@@ -3557,6 +3557,8 @@ export type Database = {
           metin: string | null
           participant_id: string
           revize_at?: string | null
+          sahit_gorunum: string
+          sahit_metin: string | null
           sekillendi_at: string | null
           son_durtme_at: string | null
           son_tanik_uyari_at: string | null
@@ -3572,6 +3574,8 @@ export type Database = {
           metin?: string | null
           participant_id: string
           revize_at?: string | null
+          sahit_gorunum?: string
+          sahit_metin?: string | null
           sekillendi_at?: string | null
           son_durtme_at?: string | null
           son_tanik_uyari_at?: string | null
@@ -3587,6 +3591,8 @@ export type Database = {
           metin?: string | null
           participant_id?: string
           revize_at?: string | null
+          sahit_gorunum?: string
+          sahit_metin?: string | null
           sekillendi_at?: string | null
           son_durtme_at?: string | null
           son_tanik_uyari_at?: string | null

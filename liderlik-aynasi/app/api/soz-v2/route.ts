@@ -12,6 +12,7 @@ import {
   tanikRet,
   bekleyenImzalar,
   sozV2KapisiAcik,
+  sozSahitGorunumAyarla,
   TANIK_HEDEF,
   type SozAksiyon,
 } from "@/lib/soz";
@@ -53,6 +54,7 @@ export async function POST(req: Request) {
     imza?: unknown;
     kabul?: unknown; // şahit daveti KABUL (sahibiId)
     ret?: unknown; // şahit daveti RET (sahibiId)
+    gorunum?: unknown; // şahit gizliliği: 'sade' | 'tam'
   };
   try {
     g = await req.json();
@@ -64,6 +66,12 @@ export async function POST(req: Request) {
   if (g.sekillendir === true) {
     const sonuc = await sozSekillendir(db, session.sub, session.ad);
     return Response.json(sonuc);
+  }
+
+  // ŞAHİT GİZLİLİĞİ — kişi kendi sözünde şahitlerin ne göreceğini seçer.
+  if (g.gorunum === "sade" || g.gorunum === "tam") {
+    const ok = await sozSahitGorunumAyarla(db, session.sub, g.gorunum);
+    return Response.json({ ok });
   }
 
   if (g.kaydet && typeof g.kaydet.metin === "string") {

@@ -28,7 +28,9 @@ Sana JSON verilecek: kişinin çekirdek nedeni, iç engeli, kariyer hedefi, ve K
 
 ÖNEMLİ: Eğer veride "emreninSorusuCevabi" DOLUYSA, bu kişinin kapanış eğitiminde Emre'nin canlı sorusuna KENDİ ağzından verdiği cevaptır — sözün KALBİ bu olmalı. Sözü bu cevabın etrafında, onun kendi kelimelerini onurlandırarak ör; o an hissettiğini geleceğe taşı. Cevabı aynen kopyalama, sözün dokusuna işle.
 
-Kurallar: Türkçe, birinci tekil şahıs, 90-140 kelime. Klişe değil, kişinin kendi rakamları/nedeniyle. Sonunda kişiyi geleceğe bağlayan bir cümle. Ayrıca "aksiyonlar" alanında plandan damıtılmış 3 somut adımı (her biri kısa, ölçülebilir) ufkuyla ('10','40','90') ver.`;
+Kurallar: Türkçe, birinci tekil şahıs, 90-140 kelime. Klişe değil, kişinin kendi rakamları/nedeniyle. Sonunda kişiyi geleceğe bağlayan bir cümle. Ayrıca "aksiyonlar" alanında plandan damıtılmış 3 somut adımı (her biri kısa, ölçülebilir) ufkuyla ('10','40','90') ver.
+
+ŞAHİT SÜRÜMÜ (gizlilik): Ayrıca "sahit_metin" alanında, bu sözü kişinin ŞAHİTLERİNİN göreceği SADE bir sürüm yaz. Bu, kişinin nedenini onurlandıran ama MAHREMİYETİNİ koruyan kısa bir metindir. KESİN kurallar: (1) Hiçbir RAKAM geçmesin — gelir, para, rütbe adı, yüzde, süre sayısı YOK. (2) Kişinin ham yarası / özel acısı / aile içi mahrem detayı YOK (ör. "kızıma X alamadım" gibi somut acı → "ailem için" gibi onurlu genelleme). (3) İç engeli/zayıflığı ETİKETLEME. (4) Sıcak, motive edici, birinci tekil, 25-45 kelime; şahidin "neye şahit olduğunu" anlamasına yetecek kadar "neden" verir, fazlası değil. Bu metin adımları TEKRARLAMAZ (adımlar ayrıca gösterilir).`;
 
 const SOZ_SEMASI = {
   type: "object" as const,
@@ -36,6 +38,11 @@ const SOZ_SEMASI = {
     metin: {
       type: "string" as const,
       description: "Kişinin sesli okuyacağı söz metni (birinci tekil, 90-140 kelime)",
+    },
+    sahit_metin: {
+      type: "string" as const,
+      description:
+        "Şahitlerin göreceği SADE sürüm: rakamsız, mahrem detaysız, onurlu 25-45 kelime neden (birinci tekil)",
     },
     aksiyonlar: {
       type: "array" as const,
@@ -51,11 +58,12 @@ const SOZ_SEMASI = {
       },
     },
   },
-  required: ["metin", "aksiyonlar"],
+  required: ["metin", "sahit_metin", "aksiyonlar"],
   additionalProperties: false,
 };
 
 export type SozAksiyon = { metin: string; ufuk: string };
+export type SahitGorunum = "sade" | "tam";
 export type SozKaydi = {
   metin: string | null;
   aksiyonlar: SozAksiyon[];
@@ -63,12 +71,14 @@ export type SozKaydi = {
   durum: string;
   revize_at: string | null; // [B#13] doluysa söz bir kez yenilendi
   duvarda: boolean; // [B#14] söz duvarında görünmeyi kabul etti mi
+  sahit_gorunum: SahitGorunum; // şahitler tam mı sade mi görsün
+  sahit_metin: string | null; // sade sürüm (şahide gidecek, rakamsız)
 };
 
 export async function sozGetir(db: Db, pid: string): Promise<SozKaydi | null> {
   const { data } = await db
     .from("soz")
-    .select("metin, aksiyonlar, voice_path, durum, revize_at, duvarda")
+    .select("metin, aksiyonlar, voice_path, durum, revize_at, duvarda, sahit_gorunum, sahit_metin")
     .eq("participant_id", pid)
     .maybeSingle();
   if (!data) return null;
@@ -79,7 +89,34 @@ export async function sozGetir(db: Db, pid: string): Promise<SozKaydi | null> {
     durum: data.durum,
     revize_at: (data as { revize_at?: string | null }).revize_at ?? null,
     duvarda: !!(data as { duvarda?: boolean }).duvarda,
+    sahit_gorunum:
+      (data as { sahit_gorunum?: string }).sahit_gorunum === "tam" ? "tam" : "sade",
+    sahit_metin: (data as { sahit_metin?: string | null }).sahit_metin ?? null,
   };
+}
+
+// ŞAHİT GİZLİLİĞİ — bir şahidin göreceği söz metni. 'tam' → tam söz; 'sade' →
+// AI'nin yumuşattığı rakamsız sürüm. Sade'de sahit_metin yoksa (eski söz / AI
+// düşmüş) null döner → çağıran yalnız adımları gösterir (güvenli zemin).
+export function sahiteGorunenMetin(soz: {
+  sahit_gorunum: SahitGorunum;
+  metin: string | null;
+  sahit_metin: string | null;
+}): string | null {
+  return soz.sahit_gorunum === "tam" ? soz.metin : soz.sahit_metin;
+}
+
+// Kişi kendi sözünde şahit görünümünü seçer (sade/tam). Yalnız kendi sözü.
+export async function sozSahitGorunumAyarla(
+  db: Db,
+  pid: string,
+  gorunum: SahitGorunum
+): Promise<boolean> {
+  const { error } = await db
+    .from("soz")
+    .update({ sahit_gorunum: gorunum, updated_at: new Date().toISOString() })
+    .eq("participant_id", pid);
+  return !error;
 }
 
 // [B#13] SÖZ REVİZYONU — mühürlü sözün metnini BİR KEZ günceller (revize_at boşsa).
@@ -162,7 +199,7 @@ export async function sozSekillendir(db: Db, pid: string, ad: string): Promise<S
       .filter((b) => b.type === "text")
       .map((b) => b.text)
       .join("");
-    let cikti: { metin: string; aksiyonlar: SozAksiyon[] };
+    let cikti: { metin: string; sahit_metin?: string; aksiyonlar: SozAksiyon[] };
     try {
       cikti = JSON.parse(metin);
     } catch {
@@ -174,6 +211,8 @@ export async function sozSekillendir(db: Db, pid: string, ad: string): Promise<S
       {
         participant_id: pid,
         metin: cikti.metin.slice(0, 4000),
+        // Şahide gidecek sade sürüm — boşsa null (çağıran yalnız adım gösterir).
+        sahit_metin: cikti.sahit_metin ? cikti.sahit_metin.slice(0, 1000) : null,
         aksiyonlar: (cikti.aksiyonlar ?? []).slice(0, 5) as never,
         durum: "taslak",
         sekillendi_at: new Date().toISOString(),
@@ -374,16 +413,24 @@ export async function bekleyenImzalar(db: Db, witnessId: string): Promise<SahitD
   const sahipIdler = satirlar.map((r) => r.soz_sahibi);
   const { data: sozler } = await db
     .from("soz")
-    .select("participant_id, metin, aksiyonlar")
+    .select("participant_id, metin, aksiyonlar, sahit_gorunum, sahit_metin")
     .in("participant_id", sahipIdler);
   const sozMap = new Map((sozler ?? []).map((s) => [s.participant_id, s]));
   return satirlar.map((r) => {
     const s = sozMap.get(r.soz_sahibi);
     const aksiyonlar = Array.isArray(s?.aksiyonlar) ? (s!.aksiyonlar as { metin?: string }[]) : [];
+    // GİZLİLİK: şahit tam metni DEĞİL, sahibinin seçtiği görünümü görür.
+    const gorunenMetin = s
+      ? sahiteGorunenMetin({
+          sahit_gorunum: (s as { sahit_gorunum?: string }).sahit_gorunum === "tam" ? "tam" : "sade",
+          metin: s.metin,
+          sahit_metin: (s as { sahit_metin?: string | null }).sahit_metin ?? null,
+        })
+      : null;
     return {
       sahibiId: r.soz_sahibi,
       ad: (r.sahip as { full_name: string } | null)?.full_name ?? "—",
-      sozMetni: s?.metin ?? null,
+      sozMetni: gorunenMetin,
       ilkAksiyon: aksiyonlar[0]?.metin ?? null,
     };
   });
