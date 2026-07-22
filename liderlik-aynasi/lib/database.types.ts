@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ara_360: {
+        Row: {
+          created_at: string
+          gun: number
+          id: string
+          kor_nokta: string | null
+          p_enerji: number | null
+          p_gelisim: number | null
+          p_netlik: number | null
+          participant_id: string
+        }
+        Insert: {
+          created_at?: string
+          gun: number
+          id?: string
+          kor_nokta?: string | null
+          p_enerji?: number | null
+          p_gelisim?: number | null
+          p_netlik?: number | null
+          participant_id: string
+        }
+        Update: {
+          created_at?: string
+          gun?: number
+          id?: string
+          kor_nokta?: string | null
+          p_enerji?: number | null
+          p_gelisim?: number | null
+          p_netlik?: number | null
+          participant_id?: string
+        }
+        Relationships: []
+      }
       haftalik_tahmin: {
         Row: {
           created_at: string
