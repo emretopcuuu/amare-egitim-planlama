@@ -10,6 +10,7 @@ import { yolGunluguSec, gununSorusuSec } from "@/lib/aynaGunluk";
 import AyMektubuKarti from "@/components/AyMektubuKarti";
 import SozRevizeKarti from "@/components/SozRevizeKarti";
 import HaftalikTahmin from "@/components/HaftalikTahmin";
+import Ara360Karti from "@/components/Ara360Karti";
 import Konfeti from "@/components/Konfeti";
 import KonusanYansima from "@/components/KonusanYansima";
 import BildirimSerit from "@/components/BildirimSerit";
@@ -78,6 +79,8 @@ export default function TakipAkis({
   sozRevizeMetin = null,
   haftalikTahmin = null,
   pazarMi = false,
+  ara360Goster = false,
+  ara360KorNokta = null,
 }: {
   durum: Durum;
   aksiyonlar: Aksiyon[];
@@ -111,6 +114,9 @@ export default function TakipAkis({
   // [C#27] Bu haftanın görüşme tahmini (yoksa null → giriş kartı) + Pazar mı.
   haftalikTahmin?: number | null;
   pazarMi?: boolean;
+  // [E#38] 45. gün ara-360 kartı gösterilsin mi + o anki kör nokta adı.
+  ara360Goster?: boolean;
+  ara360KorNokta?: string | null;
 }) {
   const [durum, setDurum] = useState<Durum>(durumBaslangic);
   // [FAZ 6 · Yaşayan Plan] Tamamlanan aksiyon index'leri — checkbox ile toggle.
@@ -319,6 +325,9 @@ export default function TakipAkis({
 
       {/* [B#13] SÖZ REVİZYONU — 30. günde sözünü bir kez yenileme fırsatı. */}
       {sozRevizeMetin && <SozRevizeKarti mevcutMetin={sozRevizeMetin} />}
+
+      {/* [E#38] 45. GÜN ARA-360 — yolun ortasında 3 soruluk öz-değerlendirme. */}
+      {ara360Goster && <Ara360Karti korNokta={ara360KorNokta} />}
 
       {/* [E#41] AYNA'nın sessizliğine karşı kaydettiği kişisel ses mesajı —
           uzun aradan sonra en sıcak dokunuş; check-in'in hemen üstünde. */}

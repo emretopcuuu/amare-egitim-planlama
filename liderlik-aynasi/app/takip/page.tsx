@@ -16,6 +16,7 @@ import { raporHesapla } from "@/lib/rapor";
 import { aynaKarakterAcikMi } from "@/lib/aynaKarakter";
 import { hangiMilestone } from "@/lib/ayMektubu";
 import { tahminGetir } from "@/lib/haftalikTahmin";
+import { ara360Yapildi, ARA360_GUN } from "@/lib/ara360";
 import { haftaBaslangici } from "@/lib/momentum";
 import YolculukFazSeridi from "@/components/YolculukFazSeridi";
 
@@ -107,6 +108,9 @@ export default async function TakipSayfa() {
       new Date()
     ) === "Sun";
 
+  // [E#38] 45. gün ara-360: gün >= 45 ve henüz yapılmadıysa göster.
+  const ara360Goster = yolGun >= ARA360_GUN && !(await ara360Yapildi(db, session.sub));
+
   // [Faz 6] "Bunu sen söyledin" — milestone anlarında kendi sesini (mühürlü
   // sözü) dinletmek için imzalı URL. Söz hiç kaydedilmemişse null.
   let sozSesUrl: string | null = null;
@@ -189,6 +193,8 @@ export default async function TakipSayfa() {
         sozRevizeMetin={sozRevizeMetin}
         haftalikTahmin={haftalikTahmin}
         pazarMi={pazarMi}
+        ara360Goster={ara360Goster}
+        ara360KorNokta={kasAd}
       />
     </main>
   );
