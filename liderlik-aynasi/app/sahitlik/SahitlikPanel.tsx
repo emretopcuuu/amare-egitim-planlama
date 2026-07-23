@@ -37,6 +37,222 @@ type KendiDurum = {
   kacirilanGun: number;
 };
 
+// KART MODÜL SEVİYESİNDE — bilinçli. Eskiden SahitlikPanel'in render gövdesinde
+// tanımlıydı; her render'da YENİ fonksiyon = React için YENİ bileşen tipi → tüm
+// kart söküp yeniden kuruluyordu. Mesaj kutusuna her harf setMesajlar'ı tetikler
+// → parent render → kart remount → input odağı gider → mobilde KLAVYE KAPANIR
+// (saha bildirimi: "bastığım her harften sonra klavye kayboluyor"). Modül
+// seviyesinde tip sabit; parent yalnız re-render eder, input DOM'u yerinde kalır,
+// odak/klavye korunur. Paylaşılan state ve eylemler prop ile geçer.
+type KartProps = {
+  k: Kisi;
+  gonderilen: Record<string, boolean>;
+  alkislanan: Record<string, boolean>;
+  sozAcik: Record<string, boolean>;
+  setSozAcik: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
+  mesajlar: Record<string, string>;
+  setMesajlar: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  tepkiler: Record<string, string>;
+  mesgul: string | null;
+  durt: (sahibi: string, tip: string) => void;
+  tepkiGonder: (sahibi: string, emoji: string) => void;
+};
+
+function Kart({
+  k,
+  gonderilen,
+  alkislanan,
+  sozAcik,
+  setSozAcik,
+  mesajlar,
+  setMesajlar,
+  tepkiler,
+  mesgul,
+  durt,
+  tepkiGonder,
+}: KartProps) {
+  const takildi = k.kacirilanGun >= 2;
+  const gonder = gonderilen[k.sahibiId];
+  const alkislandi = alkislanan[k.sahibiId];
+  const sozGoster = sozAcik[k.sahibiId];
+  return (
+    <li
+      className={`rounded-2xl border p-4 ${
+        takildi ? "border-amber-400/40 bg-amber-500/[0.06]" : "border-royal/30 bg-midnight-card/60"
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        {/* [Şahitlik geliştirme #1] Foto + tam ekran büyütme + WhatsApp. */}
+        <GrupUyeFoto ad={k.ad} takim={null} telefon={k.telefon} fotoUrl={k.fotoUrl} />
+        <div className="min-w-0 flex-1">
+          <p className="flex items-center gap-1.5 truncate font-semibold text-slate-100">
+            {k.ad}
+            {/* [B#18] Karşılıklı şahitlik — o da senin sözüne şahit. */}
+            {k.karsilikli && (
+              <span
+                title="Karşılıklı şahitsiniz"
+                className="shrink-0 rounded-full bg-royal/25 px-1.5 py-0.5 text-[0.6rem] font-bold text-royal-light"
+              >
+                🔁 karşılıklı
+              </span>
+            )}
+          </p>
+          <p className={`text-xs ${takildi ? "text-amber-300" : "text-emerald-300"}`}>
+            {takildi ? t.kacirdi(k.kacirilanGun) : t.guncel} · {t.seri(k.seri)}
+          </p>
+        </div>
+      </div>
+
+      {/* [Şahitlik geliştirme #3] Son 14 gün mini şerit — /takip'teki desen. */}
+      <div className="mt-2 flex flex-wrap gap-1">
+        {k.son14.map((g) => (
+          <span
+            key={g.gun}
+            title={g.gun}
+            className={`h-2 w-2 rounded-sm ${
+              g.yapildi === true
+                ? "bg-emerald-500/80"
+                : g.yapildi === false
+                  ? "bg-red-500/40"
+                  : "bg-white/10"
+            }`}
+          />
+        ))}
+      </div>
+
+      {/* [Şahitlik geliştirme #2] Sözünü dinle — şahit KİME şahit olduğunu
+          ve neye söz verdiğini unutmasın. */}
+      {k.sozMetni && (
+        <div className="mt-3">
+          <button
+            onClick={() => setSozAcik((s) => ({ ...s, [k.sahibiId]: !s[k.sahibiId] }))}
+            className="text-xs font-medium text-royal-light underline-offset-2 hover:underline"
+          >
+            {sozGoster ? "▲ Sözünü gizle" : "▼ Sözünü ve adımlarını gör"}
+          </button>
+          {sozGoster && (
+            <div className="mt-2 space-y-2 rounded-xl bg-white/[0.03] p-3">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
+                {k.sozMetni}
+              </p>
+              {k.sozSesUrl && (
+                <KonusanYansima videoUrl={null} sesUrl={k.sozSesUrl} etiket="Sözünü dinle" />
+              )}
+              {k.sozAksiyonlari.length > 0 && (
+                <ul className="space-y-1 pt-1">
+                  {k.sozAksiyonlari.map((a, i) => (
+                    <li key={i} className="text-xs text-slate-400">
+                      📌 {a.metin}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* [Faz 9] Şahit Karnesi — haftalık kota gerçekleşmesi. */}
+      {k.haftaKota != null && (
+        <div className="mt-2 rounded-xl bg-white/[0.03] px-3 py-2">
+          <div className="flex items-center justify-between text-[0.7rem] text-slate-400">
+            <span>📞 Bu hafta görüşme</span>
+            <span className="font-semibold text-slate-200">
+              {k.haftaGorusme} / {k.haftaKota}
+            </span>
+          </div>
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+            <div
+              className="h-full rounded-full bg-emerald-400"
+              style={{
+                width: `${Math.min(100, Math.round((k.haftaGorusme / k.haftaKota) * 100))}%`,
+              }}
+            />
+          </div>
+          {/* [Şahitlik geliştirme #4] Kayıt rozeti — kutlanacak anı şahit görsün. */}
+          {k.haftaKayit > 0 && (
+            <p className="mt-1.5 text-[0.7rem] font-semibold text-gold-light">
+              🔔 Bu hafta {k.haftaKayit} kayıt
+            </p>
+          )}
+        </div>
+      )}
+
+      {!gonder && (
+        <input
+          value={mesajlar[k.sahibiId] ?? ""}
+          onChange={(e) => setMesajlar((m) => ({ ...m, [k.sahibiId]: e.target.value.slice(0, 300) }))}
+          placeholder="İsteğe bağlı kişisel mesaj…"
+          className="mt-3 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-gold/40"
+        />
+      )}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {gonder ? (
+          <span className="text-sm font-medium text-emerald-300">{t.gonderildi}</span>
+        ) : (
+          <>
+            <button
+              onClick={() => durt(k.sahibiId, "hatirlatma")}
+              disabled={mesgul !== null}
+              className="rounded-lg bg-midnight-soft px-3 py-1.5 text-sm font-medium text-slate-200 hover:bg-royal/30 disabled:opacity-50"
+            >
+              {t.durt}
+            </button>
+            <button
+              onClick={() => durt(k.sahibiId, "tesvik")}
+              disabled={mesgul !== null}
+              className="rounded-lg bg-gold/15 px-3 py-1.5 text-sm font-medium text-gold-light hover:bg-gold/25 disabled:opacity-50"
+            >
+              {t.tesvik}
+            </button>
+          </>
+        )}
+        {/* [Faz 10] Şahit Alkışı — dürtme değil, tek dokunuşluk takdir. */}
+        {alkislandi ? (
+          <span className="text-sm font-medium text-gold-light">👏 Alkışlandı</span>
+        ) : (
+          <button
+            onClick={() => durt(k.sahibiId, "alkis")}
+            disabled={mesgul !== null}
+            className="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-sm font-medium text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50"
+          >
+            👏 Alkışla
+          </button>
+        )}
+        {k.telefon && (
+          <a
+            href={`tel:${k.telefon}`}
+            className="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-sm font-medium text-emerald-300 hover:bg-emerald-500/25"
+          >
+            {t.ara}
+          </a>
+        )}
+      </div>
+
+      {/* [B#15] Hafif emoji tepkisi — tek dokunuş, mesaj yazmadan. */}
+      {tepkiler[k.sahibiId] ? (
+        <p className="mt-2 text-xs text-slate-400">
+          {tepkiler[k.sahibiId]} gönderildi
+        </p>
+      ) : (
+        <div className="mt-2 flex items-center gap-1.5">
+          {TEPKI_EMOJILERI.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => tepkiGonder(k.sahibiId, emoji)}
+              disabled={mesgul !== null}
+              aria-label={`${emoji} gönder`}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-base transition-transform hover:scale-110 hover:bg-white/[0.1] active:scale-95 disabled:opacity-50"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
+    </li>
+  );
+}
+
 export default function SahitlikPanel({
   kisiler,
   kendiDurum,
@@ -123,188 +339,19 @@ export default function SahitlikPanel({
   const ilgiGerekenler = kisiler.filter((k) => k.kacirilanGun >= 2);
   const yolundakiler = kisiler.filter((k) => k.kacirilanGun < 2);
 
-  function Kart({ k }: { k: Kisi }) {
-    const takildi = k.kacirilanGun >= 2;
-    const gonder = gonderilen[k.sahibiId];
-    const alkislandi = alkislanan[k.sahibiId];
-    const sozGoster = sozAcik[k.sahibiId];
-    return (
-      <li
-        className={`rounded-2xl border p-4 ${
-          takildi ? "border-amber-400/40 bg-amber-500/[0.06]" : "border-royal/30 bg-midnight-card/60"
-        }`}
-      >
-        <div className="flex items-center gap-3">
-          {/* [Şahitlik geliştirme #1] Foto + tam ekran büyütme + WhatsApp. */}
-          <GrupUyeFoto ad={k.ad} takim={null} telefon={k.telefon} fotoUrl={k.fotoUrl} />
-          <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-1.5 truncate font-semibold text-slate-100">
-              {k.ad}
-              {/* [B#18] Karşılıklı şahitlik — o da senin sözüne şahit. */}
-              {k.karsilikli && (
-                <span
-                  title="Karşılıklı şahitsiniz"
-                  className="shrink-0 rounded-full bg-royal/25 px-1.5 py-0.5 text-[0.6rem] font-bold text-royal-light"
-                >
-                  🔁 karşılıklı
-                </span>
-              )}
-            </p>
-            <p className={`text-xs ${takildi ? "text-amber-300" : "text-emerald-300"}`}>
-              {takildi ? t.kacirdi(k.kacirilanGun) : t.guncel} · {t.seri(k.seri)}
-            </p>
-          </div>
-        </div>
-
-        {/* [Şahitlik geliştirme #3] Son 14 gün mini şerit — /takip'teki desen. */}
-        <div className="mt-2 flex flex-wrap gap-1">
-          {k.son14.map((g) => (
-            <span
-              key={g.gun}
-              title={g.gun}
-              className={`h-2 w-2 rounded-sm ${
-                g.yapildi === true
-                  ? "bg-emerald-500/80"
-                  : g.yapildi === false
-                    ? "bg-red-500/40"
-                    : "bg-white/10"
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* [Şahitlik geliştirme #2] Sözünü dinle — şahit KİME şahit olduğunu
-            ve neye söz verdiğini unutmasın. */}
-        {k.sozMetni && (
-          <div className="mt-3">
-            <button
-              onClick={() => setSozAcik((s) => ({ ...s, [k.sahibiId]: !s[k.sahibiId] }))}
-              className="text-xs font-medium text-royal-light underline-offset-2 hover:underline"
-            >
-              {sozGoster ? "▲ Sözünü gizle" : "▼ Sözünü ve adımlarını gör"}
-            </button>
-            {sozGoster && (
-              <div className="mt-2 space-y-2 rounded-xl bg-white/[0.03] p-3">
-                <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-200">
-                  {k.sozMetni}
-                </p>
-                {k.sozSesUrl && (
-                  <KonusanYansima videoUrl={null} sesUrl={k.sozSesUrl} etiket="Sözünü dinle" />
-                )}
-                {k.sozAksiyonlari.length > 0 && (
-                  <ul className="space-y-1 pt-1">
-                    {k.sozAksiyonlari.map((a, i) => (
-                      <li key={i} className="text-xs text-slate-400">
-                        📌 {a.metin}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* [Faz 9] Şahit Karnesi — haftalık kota gerçekleşmesi. */}
-        {k.haftaKota != null && (
-          <div className="mt-2 rounded-xl bg-white/[0.03] px-3 py-2">
-            <div className="flex items-center justify-between text-[0.7rem] text-slate-400">
-              <span>📞 Bu hafta görüşme</span>
-              <span className="font-semibold text-slate-200">
-                {k.haftaGorusme} / {k.haftaKota}
-              </span>
-            </div>
-            <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-              <div
-                className="h-full rounded-full bg-emerald-400"
-                style={{
-                  width: `${Math.min(100, Math.round((k.haftaGorusme / k.haftaKota) * 100))}%`,
-                }}
-              />
-            </div>
-            {/* [Şahitlik geliştirme #4] Kayıt rozeti — kutlanacak anı şahit görsün. */}
-            {k.haftaKayit > 0 && (
-              <p className="mt-1.5 text-[0.7rem] font-semibold text-gold-light">
-                🔔 Bu hafta {k.haftaKayit} kayıt
-              </p>
-            )}
-          </div>
-        )}
-
-        {!gonder && (
-          <input
-            value={mesajlar[k.sahibiId] ?? ""}
-            onChange={(e) => setMesajlar((m) => ({ ...m, [k.sahibiId]: e.target.value.slice(0, 300) }))}
-            placeholder="İsteğe bağlı kişisel mesaj…"
-            className="mt-3 w-full rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none focus:border-gold/40"
-          />
-        )}
-        <div className="mt-3 flex flex-wrap gap-2">
-          {gonder ? (
-            <span className="text-sm font-medium text-emerald-300">{t.gonderildi}</span>
-          ) : (
-            <>
-              <button
-                onClick={() => durt(k.sahibiId, "hatirlatma")}
-                disabled={mesgul !== null}
-                className="rounded-lg bg-midnight-soft px-3 py-1.5 text-sm font-medium text-slate-200 hover:bg-royal/30 disabled:opacity-50"
-              >
-                {t.durt}
-              </button>
-              <button
-                onClick={() => durt(k.sahibiId, "tesvik")}
-                disabled={mesgul !== null}
-                className="rounded-lg bg-gold/15 px-3 py-1.5 text-sm font-medium text-gold-light hover:bg-gold/25 disabled:opacity-50"
-              >
-                {t.tesvik}
-              </button>
-            </>
-          )}
-          {/* [Faz 10] Şahit Alkışı — dürtme değil, tek dokunuşluk takdir. */}
-          {alkislandi ? (
-            <span className="text-sm font-medium text-gold-light">👏 Alkışlandı</span>
-          ) : (
-            <button
-              onClick={() => durt(k.sahibiId, "alkis")}
-              disabled={mesgul !== null}
-              className="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-sm font-medium text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50"
-            >
-              👏 Alkışla
-            </button>
-          )}
-          {k.telefon && (
-            <a
-              href={`tel:${k.telefon}`}
-              className="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-sm font-medium text-emerald-300 hover:bg-emerald-500/25"
-            >
-              {t.ara}
-            </a>
-          )}
-        </div>
-
-        {/* [B#15] Hafif emoji tepkisi — tek dokunuş, mesaj yazmadan. */}
-        {tepkiler[k.sahibiId] ? (
-          <p className="mt-2 text-xs text-slate-400">
-            {tepkiler[k.sahibiId]} gönderildi
-          </p>
-        ) : (
-          <div className="mt-2 flex items-center gap-1.5">
-            {TEPKI_EMOJILERI.map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => tepkiGonder(k.sahibiId, emoji)}
-                disabled={mesgul !== null}
-                aria-label={`${emoji} gönder`}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-white/[0.04] text-base transition-transform hover:scale-110 hover:bg-white/[0.1] active:scale-95 disabled:opacity-50"
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        )}
-      </li>
-    );
-  }
+  // Kart'a geçen paylaşılan state + eylemler (tek yerde toplanır).
+  const ortak = {
+    gonderilen,
+    alkislanan,
+    sozAcik,
+    setSozAcik,
+    mesajlar,
+    setMesajlar,
+    tepkiler,
+    mesgul,
+    durt,
+    tepkiGonder,
+  };
 
   return (
     <div className="mx-auto my-auto w-full max-w-md space-y-5 p-5">
@@ -369,7 +416,7 @@ export default function SahitlikPanel({
               </h2>
               <ul className="space-y-3">
                 {ilgiGerekenler.map((k) => (
-                  <Kart key={k.sahibiId} k={k} />
+                  <Kart key={k.sahibiId} k={k} {...ortak} />
                 ))}
               </ul>
             </section>
@@ -383,7 +430,7 @@ export default function SahitlikPanel({
               )}
               <ul className="space-y-3">
                 {yolundakiler.map((k) => (
-                  <Kart key={k.sahibiId} k={k} />
+                  <Kart key={k.sahibiId} k={k} {...ortak} />
                 ))}
               </ul>
             </section>
