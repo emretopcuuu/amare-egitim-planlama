@@ -45,8 +45,12 @@ const AdminEmailDuzeltTab = () => {
       if (/^\d{4,9}$/.test(giris)) {
         const d = await kyCall({ mode: 'ara', amareId: giris });
         setKySonuc(d);
-        // varsayılan yeni email: mevcut (varsa kilitli, yoksa raw/crm) — admin düzenler
-        const mevcut = d.kilit?.email || d.sistemler?.find(s => s.email)?.email || '';
+        // varsayılan yeni email: mevcut (varsa kilitli, yoksa raw/crm) — admin düzenler.
+        // Maskeli ("*****") veya @'siz değer ASLA prefill edilmez — Abdülkerim Kızak vakası
+        // (2026-07-12): input'a "*****" doluyor, admin Kaydet'e basınca "Geçerli bir email
+        // gir" hatası kafa karıştırıyordu. Maskeli kayıtta kutu BOŞ başlar, admin doğrusunu yazar.
+        const gecerliMi = (e) => !!e && e.includes('@') && !e.includes('*');
+        const mevcut = [d.kilit?.email, ...(d.sistemler || []).map(s => s.email)].find(gecerliMi) || '';
         setKyYeniEmail(mevcut);
       } else {
         if (giris.length < 3) throw new Error('Amare ID, email, telefon veya isim gir (en az 3 karakter).');
@@ -261,7 +265,11 @@ const AdminEmailDuzeltTab = () => {
                   {kySonuc.sistemler.map(s => (
                     <tr key={s.anahtar} className="border-t border-gray-100">
                       <td className="px-3 py-2 font-semibold text-gray-700">{s.ad}</td>
-                      <td className="px-3 py-2 text-gray-600 break-all">{s.email || <span className="text-gray-300">— boş —</span>}</td>
+                      <td className="px-3 py-2 text-gray-600 break-all">
+                        {s.email && s.email.includes('*')
+                          ? <span className="text-[11px] text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full" title="Amare back office bu email'i maskeliyor — gerçek adres sistemde yok, aşağıya doğrusunu yazıp kaydet">🙈 maskeli — gerçek email yok</span>
+                          : (s.email || <span className="text-gray-300">— boş —</span>)}
+                      </td>
                       <td className="px-3 py-2">
                         {!s.kayitVar ? <span className="text-[11px] text-gray-400">kayıt yok</span>
                           : s.resyncEzer ? <span className="text-[11px] text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded-full">re-sync ezer → kilit şart</span>
