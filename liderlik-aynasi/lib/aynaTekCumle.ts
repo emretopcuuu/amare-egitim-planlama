@@ -78,7 +78,7 @@ export async function tekCumleGetirVeyaUret(
   // 3) Üret — tek cümle, sade metin (aynaAniUret deseni).
   let cumle: string;
   try {
-    const client = aynaClient();
+    const client = aynaClient("tek-cumle");
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 400,

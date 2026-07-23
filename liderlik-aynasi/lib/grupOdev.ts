@@ -154,7 +154,7 @@ export async function grupOdevUret(
   };
 
   try {
-    const client = aynaClient();
+    const client = aynaClient("grup-odev");
     const yanit = await client.messages.create({
       // Grup ödevi düşük hacimli (grup başına 1) — kalite için Sonnet, effort low.
       model: "claude-sonnet-5",

@@ -69,7 +69,7 @@ export async function tahminSapmasiGorevUret(
     .sort((a, b) => b.ortalama - a.ortalama);
 
   try {
-    const client = aynaClient();
+    const client = aynaClient("tahmin-sapmasi");
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 400,

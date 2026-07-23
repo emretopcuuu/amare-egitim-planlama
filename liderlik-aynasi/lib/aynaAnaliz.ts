@@ -192,7 +192,7 @@ async function metinUret(
           .join("\n\n")}\n\nBU AYNA FARKLI OLMALI: Yukarıdaki çıkarımları AYNI fikrin yeniden ifadesi olarak TEKRARLAMA — aynı şeyi farklı kelimelerle söylemek YASAK. Öncekileri DESTEKLE ama kişinin verisinin henüz dokunmadığın BAŞKA bir yüzünü aç (farklı bir öncelik, değer, hedef, iç engel ya da çelişki). Kamp kanıtı henüz azsa, onboarding cevaplarının başka bir katmanına yaslan. Bu aşamanın MERCEĞİNE sadık kal.`
       : "";
   try {
-    const client = aynaClient();
+    const client = aynaClient("ayna-analiz");
     const yanit = await client.messages.create({
       model: MODEL,
       max_tokens: 1500,

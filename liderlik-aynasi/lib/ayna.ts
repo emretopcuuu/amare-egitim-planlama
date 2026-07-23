@@ -216,7 +216,7 @@ export async function gorevKaliteDenetle(
   sonGorevBasliklari: string[]
 ): Promise<{ gecti: boolean; sebep: string | null }> {
   try {
-    const client = aynaClient();
+    const client = aynaClient("gorev-kalite");
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 300,
@@ -481,7 +481,7 @@ async function temalarCikar(
   yanitMetni: string
 ): Promise<{ temalar: string[]; taahhut: CikanTaahhut | null }> {
   try {
-    const client = aynaClient();
+    const client = aynaClient("temalar");
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 256,
@@ -1536,7 +1536,7 @@ export async function gorevUret(
   // çekilmez — yalnız API çağrısı tekrarlanır).
   async function tekUretimDenemesi(ekstraYonerge: string): Promise<UretilenGorev | null> {
   try {
-    const client = aynaClient();
+    const client = aynaClient("gorev-uret");
     const yanit = await client.messages.create({
       // Görev üretimi kampın en sık çalışan, en kritik parçası — güncel
       // Sonnet 5'e yükseltildi (kullanıcı isteği). Opus yerine Sonnet seçimi
@@ -1785,7 +1785,7 @@ export async function gorevPuanla(
   yanitMetni: string
 ): Promise<{ puan: number; yorum: string; response_tags: string[]; taahhut: CikanTaahhut | null } | null> {
   try {
-    const client = aynaClient();
+    const client = aynaClient("gorev-puanla");
     // Puanlama (Haiku) ve tema çıkarımı (Haiku) paralel başlar.
     // MALİYET: puanlama yanıt başına çalışır; Haiku 4.5 (5× ucuz) yeterli.
     // Haiku effort'u desteklemiyor → output_config'de yalnız format.
@@ -1846,7 +1846,7 @@ export async function gorevYansit(
   const onFarkindalik = await onFarkindalikOzeti(db, pid);
 
   try {
-    const client = aynaClient();
+    const client = aynaClient("gorev-yansit");
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 256,
@@ -1913,7 +1913,7 @@ export async function aynaAniUret(
   if (kapananlar.length < 3) return null;
 
   try {
-    const client = aynaClient();
+    const client = aynaClient("ayna-ani");
     const yanit = await client.messages.create({
       // MALİYET: ikincil üretim → Haiku 4.5 (effort yok). Kısa, sıcak metin.
       model: "claude-haiku-4-5",
@@ -1961,7 +1961,7 @@ export async function gorevZorlastir(
 ): Promise<{ title: string; body: string } | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   try {
-    const client = aynaClient();
+    const client = aynaClient("gorev-zorlastir");
     const yanit = await client.messages.create({
       // MALİYET: görev zorlaştır/hafiflet → Haiku 4.5 (effort yok, format kalır).
       model: "claude-haiku-4-5",
@@ -2016,7 +2016,7 @@ export async function gorevHafiflet(
 ): Promise<{ title: string; body: string } | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   try {
-    const client = aynaClient();
+    const client = aynaClient("gorev-hafiflet");
     const yanit = await client.messages.create({
       // MALİYET: görev zorlaştır/hafiflet → Haiku 4.5 (effort yok, format kalır).
       model: "claude-haiku-4-5",
@@ -2211,7 +2211,7 @@ export async function korNoktaGuncelle(
   if (!yanitlar?.length && akranYorumSayisi === 0 && takdirSayisi === 0) return;
 
   try {
-    const client = aynaClient();
+    const client = aynaClient("kor-nokta");
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 400,
@@ -2311,7 +2311,7 @@ export async function senkronGorevUret(
 ): Promise<{ baslik: string; govde: string } | null> {
   if (!process.env.ANTHROPIC_API_KEY) return null;
   try {
-    const client = aynaClient();
+    const client = aynaClient("senkron-gorev");
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 1024,
@@ -2363,7 +2363,7 @@ async function mentorlukBodyKisisel(
     null;
   // #5: Kariyer kapısı sohbeti iç engel olmadan da anlamlı — artık zorunlu değil.
   try {
-    const client = aynaClient();
+    const client = aynaClient("mentorluk");
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 400,
@@ -2565,7 +2565,7 @@ export async function gorevNetlestir(gorev: {
     additionalProperties: false,
   };
   try {
-    const client = aynaClient();
+    const client = aynaClient("gorev-netlestir");
     const yanit = await client.messages.create({
       model: "claude-sonnet-5",
       max_tokens: 600,

@@ -77,7 +77,7 @@ export async function seninIcinGetirVeyaUret(
   // 3) Üret.
   let metin: string;
   try {
-    const client = aynaClient();
+    const client = aynaClient("senin-icin");
     const yanit = await client.messages.create({
       // MALİYET: kısa kişisel mesaj → Haiku 4.5 (effort yok).
       model: "claude-haiku-4-5",

@@ -84,7 +84,7 @@ export async function kimlikCumlesiIsle(
       .is("birakildi_at", null);
     if ((aktifSayi ?? 0) >= AKTIF_CUMLE_UST) return;
 
-    const client = aynaClient();
+    const client = aynaClient("kimlik");
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 300,
@@ -148,7 +148,7 @@ export async function kimlikKanitEkle(
       : [];
     if (mevcut.length >= KANIT_UST) return;
 
-    const client = aynaClient();
+    const client = aynaClient("kimlik");
     const yanit = await client.messages.create({
       model: "claude-haiku-4-5",
       max_tokens: 250,

@@ -93,7 +93,7 @@ export async function mektupGetirVeyaUret(
   };
 
   try {
-    const client = aynaClient();
+    const client = aynaClient("mektup");
     const yanit = await client.messages.create({
       model: "claude-opus-4-8",
       max_tokens: 4096,

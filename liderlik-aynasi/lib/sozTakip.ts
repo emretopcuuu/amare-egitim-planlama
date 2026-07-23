@@ -3,7 +3,7 @@ import type { Db } from "@/lib/degerlendirme";
 import { katilimciyaBildir, adminlereBildir } from "@/lib/push";
 import { seslendir, aynaSesId, sesYapilandirildiMi } from "@/lib/eleven";
 import { aynaKarakterAcikMi } from "@/lib/aynaKarakter";
-import { taniklar, sozGetir } from "@/lib/soz";
+import { taniklar, sozGetir, sahiteGorunenMetin } from "@/lib/soz";
 import { haftaBaslangici } from "@/lib/momentum";
 import { hedefCekirdek } from "@/lib/hedef";
 import { haftalikGorusmeKotasi } from "@/lib/oyunPlani";
@@ -190,7 +190,8 @@ export async function takipEttiklerim(db: Db, witnessId: string): Promise<TakipE
       haftaGorusme: hafta.gorusmeToplam,
       haftaKota: haftalikGorusmeKotasi(hedef?.plan?.haftalikSaat ?? null),
       profilFotoPath: sahip?.profil_foto_path ?? null,
-      sozMetni: soz?.metin ?? null,
+      // GİZLİLİK: şahit sözün tam metnini değil, sahibinin seçtiği görünümü görür.
+      sozMetni: soz ? sahiteGorunenMetin(soz) : null,
       sozSesPath: soz?.voice_path ?? null,
       sozAksiyonlari: soz?.aksiyonlar ?? [],
       haftaKayit: hafta.kayitToplam,
