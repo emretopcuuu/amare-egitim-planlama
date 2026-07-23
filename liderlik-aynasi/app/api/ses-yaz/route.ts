@@ -3,7 +3,9 @@ import { aiLimitYaniti } from "@/lib/aiLimit";
 import { sesYapilandirildiMi, sesYaziyaCevir } from "@/lib/eleven";
 import { tr } from "@/lib/i18n/tr";
 
-export const maxDuration = 30;
+// 120 sn'lik kayıt + mobil ağda yükleme + Scribe işleme 30 sn'yi aşabiliyordu →
+// istemcide "çevrilemedi" (502) + gereksiz tarayıcı motoruna düşme. 60 sn pay bırakır.
+export const maxDuration = 60;
 // 120 sn'lik opus/aac kayıt ~1-2 MB; 8 MB tavanı bol güvenlik payı bırakır.
 const AZAMI_BAYT = 8 * 1024 * 1024;
 

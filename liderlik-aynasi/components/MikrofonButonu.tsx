@@ -139,6 +139,11 @@ export default function MikrofonButonu({
   const baslangicMsRef = useRef(0);
   const sesGeldiRef = useRef(false);
   const ipucuZamanlayiciRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Bu oturumda kaç final segmenti zaten metne EKLENDİ. Mobil/uygulama-içi
+  // tarayıcılarda onresult.resultIndex sık sık 0'a düşüp TÜM finalleri her
+  // olayda yeniden yollar → aynı kelime 8-10 kez eklenir (saha bildirimi).
+  // Bu sayaç her final'i yalnız BİR KEZ eklememizi sağlar (her yeni oturumda 0).
+  const islenenFinalRef = useRef(0);
 
   useEffect(() => {
     // Motor seçimi ancak istemcide bilinebilir; tek seferlik.
@@ -366,6 +371,9 @@ export default function MikrofonButonu({
   function oturumBaslat(): boolean {
     const tanima = tanimaOlustur();
     if (!tanima) return false;
+    // Yeni oturum = taze results dizisi → işlenen final sayacını sıfırla
+    // (onend ile otomatik yeniden başlatmada da her oturum 0'dan sayılır).
+    islenenFinalRef.current = 0;
     tanima.lang = "tr-TR";
     tanima.continuous = true;
     tanima.interimResults = true;
@@ -373,11 +381,17 @@ export default function MikrofonButonu({
       sesGeldiRef.current = true;
       setSessizIpucu(false);
       let ara = "";
-      for (let i = e.resultIndex; i < e.results.length; i++) {
+      // resultIndex'e GÜVENME — bazı tarayıcılar onu 0'a düşürüp tüm finalleri
+      // tekrar yollar. Her zaman baştan tara; her final'i yalnız bir kez ekle
+      // (indeks korumasıyla), interim'ler yalnız canlı önizleme.
+      for (let i = 0; i < e.results.length; i++) {
         const sonuc = e.results[i];
         const parca = sonuc[0]?.transcript ?? "";
         if (sonuc.isFinal) {
-          if (parca.trim()) onMetinRef.current(parca.trim());
+          if (i >= islenenFinalRef.current) {
+            if (parca.trim()) onMetinRef.current(parca.trim());
+            islenenFinalRef.current = i + 1;
+          }
         } else {
           ara += parca;
         }
